@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "isabelle-pide-mcp": {
+      "command": "/Users/kfx532/isabelle/bin/isabelle",
+      "args": ["pide_mcp", "-l", "HOL-Probability"]
+    }
+  }
+}
