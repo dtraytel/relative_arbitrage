@@ -1442,10 +1442,12 @@ text \<open>The main theorem of this theory: the axiomatized market class
 theorem Brownian_market_sufficiently_volatile:
   fixes x0 :: "real^'n::finite"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and c: "0 \<le> c"
+    and K: "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
   shows "sufficiently_volatile_market
     (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
     (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
-    (\<lambda>_ _. mat 1) k L UNIV x0 (\<lambda>_. c)"
+    (\<lambda>_ _. mat 1) k L K x0 (\<lambda>_. c)"
 proof (intro sufficiently_volatile_market.intro
     sufficiently_volatile_market_axioms.intro)
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
@@ -1456,8 +1458,8 @@ proof (intro sufficiently_volatile_market.intro
   show "AE \<omega> in ?M. bmX x0 0 \<omega> = x0" by (rule bmX_start)
   show "AE \<omega> in ?M. 0 \<le> c" using c by simp
   show "(\<lambda>_. c) \<in> borel_measurable ?M" by simp
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> UNIV"
-    by simp
+  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
+    by (rule K)
   have psd1: "psd (mat 1 :: real^'n^'n)"
     by (simp add: psd_def)
   show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> psd (mat 1 :: real^'n^'n)"
@@ -1524,5 +1526,647 @@ proof (intro sufficiently_volatile_market.intro
       unfolding 1 2 by (simp add: BMP.prob_space)
   qed
 qed
+
+section \<open>A concrete instance: the class \<open>\<P>\<^sub>x\<close> is inhabited\<close>
+
+text \<open>Specialising the theorem above to the planar market with
+  \<open>k = L = 1\<close>, horizon \<open>1\<close> and start \<open>0\<close> discharges all its side
+  conditions numerically, so the following statement has no hypotheses
+  whatsoever: the axiomatised market class of
+  Relative\_Arbitrage\_Stochastic is non-vacuous.\<close>
+
+theorem sufficiently_volatile_market_nonvacuous:
+  "sufficiently_volatile_market
+    (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (bmX 0)) (bmX (0 :: real^2))
+    (\<lambda>_ _. mat 1) 1 1 UNIV 0 (\<lambda>_. 1)"
+  by (rule Brownian_market_sufficiently_volatile) simp_all
+
+interpretation BM2: sufficiently_volatile_market
+    "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
+    "natural_filtration bm_paths 0 (bmX 0)" "bmX (0 :: real^2)"
+    "\<lambda>_ _. mat 1" 1 1 UNIV 0 "\<lambda>_. 1"
+  by (rule sufficiently_volatile_market_nonvacuous)
+
+text \<open>With the interpretation in place, the locale's facts are ordinary
+  theorems about the Brownian market.  In particular the
+  martingale-problem identity --- an \<^emph>\<open>assumption\<close> of the locale, here a
+  consequence of the construction --- yields a closed numerical
+  statement with no hypotheses: planar Brownian motion started at the
+  origin has expected squared norm \<open>2\<close> at time \<open>1\<close>.\<close>
+
+corollary bm2_expected_square:
+  "(\<integral>\<omega>. bmX (0 :: real^2) 1 \<omega> \<bullet> bmX 0 1 \<omega>
+      \<partial>(bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)) = 2"
+proof -
+  have comp: "set_lebesgue_integral lborel {0..(1 :: real)}
+      (\<lambda>s. trace (mat 1 :: real^2^2)) = 2"
+    by (subst bm_compensator_const) simp_all
+  show ?thesis
+    using BM2.dynkin_quadratic[of 1]
+    by (simp add: BMP.prob_space comp)
+qed
+
+text \<open>The exit-time bound \<open>E[\<tau>] \<le> v(x0)\<close> of Example 3.1 is available
+  inside the locale as \<open>expected_exit_time_bound\<close>, but instantiating it
+  non-degenerately requires \<open>K = cball 0 r\<close> together with the first exit
+  time of the ball; that is a genuine stopping time of the continuous
+  modification and hence belongs to the quadratic-variation phase.\<close>
+
+
+section \<open>Ito's formula for the square: the compensated square is a martingale\<close>
+
+text \<open>The martingale-problem identity used above is the \<^emph>\<open>expectation\<close>
+  form of Ito's formula for the test function \<open>|x|\<^sup>2\<close>.  Its process form,
+
+    \<open>Z t = |B t|\<^sup>2 - int_0^t tr(mat 1) ds\<close> is a martingale,
+
+  is proved in this section.  It is what the locales of Ito\_Market take as
+  their hypothesis, so it shows that the martingale problem in process form
+  is inhabited as well.  Everything rests on the independence of the
+  increment from the past, generalised here from indicators of past events
+  to arbitrary past-measurable factors.\<close>
+
+lemma bm_meas_increment_indep_var:
+  fixes x0 :: "real^'n::finite"
+  assumes s: "0 \<le> s" and st: "s < t"
+    and g_meas: "g \<in> borel_measurable (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+  shows "BMP.indep_var borel (g :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)
+    borel (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?D = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 t \<omega> - bmX x0 s \<omega>"
+  let ?V = "vimage_algebra (space ?M) ?D borel"
+  interpret SP: stochastic_process ?M 0 "bmX x0"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule SP.subalgebra_natural_filtration)
+  have g_M: "g \<in> borel_measurable ?M"
+    by (rule measurable_from_subalg[OF subalg g_meas])
+  have base: "BMP.indep_set (sets ?F) (sets ?V)"
+    by (rule bm_filtration_increment_indep[OF s st])
+  have L: "sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel}
+      \<subseteq> sets ?F"
+  proof -
+    have gen: "{g -` B \<inter> space ?M |B. B \<in> sets borel} \<subseteq> sets ?F"
+    proof safe
+      fix B :: "real set" assume B: "B \<in> sets borel"
+      have "g -` B \<inter> space ?F \<in> sets ?F"
+        by (rule measurable_sets[OF g_meas B])
+      then show "g -` B \<inter> space ?M \<in> sets ?F"
+        using subalg by (simp add: subalgebra_def)
+    qed
+    show ?thesis
+      using sets.sigma_sets_subset[OF gen] by simp
+  qed
+  have nth_meas: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
+  proof -
+    have "(\<lambda>v :: real^'n. v $ i) = (\<lambda>v. inner v (axis i 1))"
+      by (simp add: fun_eq_iff cart_eq_inner_axis)
+    then show ?thesis
+      by simp
+  qed
+  have Dcomp: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s)
+      = (\<lambda>\<omega>. ?D \<omega> $ i)"
+    by (simp add: fun_eq_iff bmX_def)
+  have R: "sigma_sets (space ?M)
+      {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
+        |B. B \<in> sets borel} \<subseteq> sets ?V"
+  proof -
+    have gen: "{(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B
+        \<inter> space ?M |B. B \<in> sets borel} \<subseteq> sets ?V"
+    proof safe
+      fix B :: "real set" assume B: "B \<in> sets borel"
+      have Ci: "(\<lambda>v :: real^'n. v $ i) -` B \<in> sets borel"
+        using measurable_sets[OF nth_meas B] by simp
+      have veq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B
+          \<inter> space ?M
+          = ?D -` ((\<lambda>v. v $ i) -` B) \<inter> space ?M"
+        unfolding Dcomp by auto
+      have "?D -` ((\<lambda>v. v $ i) -` B) \<inter> space ?M
+          \<in> {?D -` C \<inter> space ?M |C. C \<in> sets borel}"
+        using Ci by blast
+      then have "?D -` ((\<lambda>v. v $ i) -` B) \<inter> space ?M
+          \<in> sigma_sets (space ?M) {?D -` C \<inter> space ?M |C. C \<in> sets borel}"
+        by (rule sigma_sets.Basic)
+      then show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B
+          \<inter> space ?M \<in> sets ?V"
+        unfolding veq sets_vimage_algebra .
+    qed
+    show ?thesis
+      using sets.sigma_sets_subset[OF gen] by simp
+  qed
+  show ?thesis
+    unfolding BMP.indep_var_eq
+  proof (intro conjI)
+    show "g \<in> borel_measurable ?M"
+      by (rule g_M)
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s)
+        \<in> borel_measurable ?M"
+      using s st
+      by (intro borel_measurable_diff measurable_bm_coordinate) auto
+    have "BMP.indep_sets (case_bool (sets ?F) (sets ?V)) UNIV"
+      using base unfolding BMP.indep_set_def .
+    then have "BMP.indep_sets (case_bool
+        (sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel})
+        (sigma_sets (space ?M)
+          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
+            |B. B \<in> sets borel})) UNIV"
+      by (rule BMP.indep_sets_mono_sets)
+        (auto split: bool.split simp: L R)
+    then show "BMP.indep_set
+        (sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel})
+        (sigma_sets (space ?M)
+          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
+            |B. B \<in> sets borel})"
+      unfolding BMP.indep_set_def .
+  qed
+qed
+
+lemma bm_meas_increment_product:
+  fixes x0 :: "real^'n::finite"
+  assumes s: "0 \<le> s" and st: "s \<le> t"
+    and g_meas: "g \<in> borel_measurable (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+    and g_int: "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) g"
+  shows bm_meas_increment_product_integrable:
+    "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. g \<omega> * (\<omega> i t - \<omega> i s))"
+    and bm_meas_increment_product_zero:
+    "(\<integral>\<omega>. g \<omega> * (\<omega> i t - \<omega> i s)
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  have t0: "0 \<le> t" using s st by simp
+  show "integrable ?M (\<lambda>\<omega>. g \<omega> * (\<omega> i t - \<omega> i s))"
+  proof (cases "s = t")
+    case True
+    then show ?thesis by simp
+  next
+    case False
+    with st have st': "s < t" by simp
+    show ?thesis
+      by (rule BMP.indep_var_integrable
+          [OF bm_meas_increment_indep_var[OF s st' g_meas] g_int
+            bm_increment_component_integrable[OF s t0]])
+  qed
+  show "(\<integral>\<omega>. g \<omega> * (\<omega> i t - \<omega> i s) \<partial>?M) = 0"
+  proof (cases "s = t")
+    case True
+    then show ?thesis by simp
+  next
+    case False
+    with st have st': "s < t" by simp
+    have "(\<integral>\<omega>. g \<omega> * (\<omega> i t - \<omega> i s) \<partial>?M)
+        = (\<integral>\<omega>. g \<omega> \<partial>?M) * (\<integral>\<omega>. \<omega> i t - \<omega> i s \<partial>?M)"
+      by (rule BMP.indep_var_lebesgue_integral
+          [OF bm_meas_increment_indep_var[OF s st' g_meas] g_int
+            bm_increment_component_integrable[OF s t0]])
+    also have "\<dots> = 0"
+      by (simp add: bm_increment_component_integral[OF s t0])
+    finally show ?thesis .
+  qed
+qed
+
+lemma bm_coordinate_measurable_F:
+  fixes x0 :: "real^'n::finite"
+  assumes s: "0 \<le> s"
+  shows "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i s) \<in> borel_measurable
+    (natural_filtration (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0
+      (bmX x0) s)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  interpret SP: stochastic_process ?M 0 "bmX x0"
+    by unfold_locales (intro measurable_bmX, simp)
+  interpret AP: adapted_process ?M "natural_filtration ?M 0 (bmX x0)" 0
+    "bmX x0"
+    by (rule SP.adapted_process_natural_filtration)
+  have X_F: "bmX x0 s \<in> borel_measurable ?F"
+    by (intro AP.adaptedD s order.refl)
+  have nth_meas: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
+  proof -
+    have "(\<lambda>v :: real^'n. v $ i) = (\<lambda>v. inner v (axis i 1))"
+      by (simp add: fun_eq_iff cart_eq_inner_axis)
+    then show ?thesis by simp
+  qed
+  have comp_F: "(\<lambda>\<omega>. bmX x0 s \<omega> $ i) \<in> borel_measurable ?F"
+    by (rule measurable_compose[OF X_F nth_meas])
+  have eq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i s)
+      = (\<lambda>\<omega>. bmX x0 s \<omega> $ i - x0 $ i)"
+    by (simp add: fun_eq_iff bmX_def)
+  show ?thesis
+    unfolding eq using comp_F by simp
+qed
+
+lemma bm_increment_sq:
+  fixes x0 :: "real^'n::finite"
+  assumes s: "0 \<le> s" and st: "s \<le> t"
+  shows bm_increment_sq_integrable:
+    "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<omega> i t - \<omega> i s)\<^sup>2)"
+    and bm_increment_sq_integral:
+    "(\<integral>\<omega>. (\<omega> i t - \<omega> i s)\<^sup>2
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = t - s"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  have t0: "0 \<le> t" using s st by simp
+  have sq_t: "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<omega> i t)\<^sup>2)"
+    using bm_coordinate_sq_integrable[OF t0, of 0 i] by simp
+  have sq_s: "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<omega> i s)\<^sup>2)"
+    using bm_coordinate_sq_integrable[OF s, of 0 i] by simp
+  have sq_t_val: "(\<integral>\<omega>. (\<omega> i t)\<^sup>2 \<partial>?M) = t"
+    using bm_coordinate_sq_integral[OF t0, of 0 i] by simp
+  have sq_s_val: "(\<integral>\<omega>. (\<omega> i s)\<^sup>2 \<partial>?M) = s"
+    using bm_coordinate_sq_integral[OF s, of 0 i] by simp
+  have cross_int: "integrable ?M
+      (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i s * (\<omega> i t - \<omega> i s))"
+    by (rule bm_meas_increment_product_integrable
+        [OF s st bm_coordinate_measurable_F[OF s]
+          bm_coordinate_mean_integrable[OF s]])
+  have cross_val: "(\<integral>\<omega>. \<omega> i s * (\<omega> i t - \<omega> i s) \<partial>?M) = 0"
+    by (rule bm_meas_increment_product_zero
+        [OF s st bm_coordinate_measurable_F[OF s]
+          bm_coordinate_mean_integrable[OF s]])
+  have decomp: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<omega> i t - \<omega> i s)\<^sup>2)
+      = (\<lambda>\<omega>. (\<omega> i t)\<^sup>2 - (\<omega> i s)\<^sup>2
+            - 2 * (\<omega> i s * (\<omega> i t - \<omega> i s)))"
+    by (simp add: fun_eq_iff power2_eq_square algebra_simps)
+  have int': "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+      (\<omega> i t)\<^sup>2 - (\<omega> i s)\<^sup>2 - 2 * (\<omega> i s * (\<omega> i t - \<omega> i s)))"
+    by (intro Bochner_Integration.integrable_diff sq_t sq_s
+        integrable_mult_right cross_int)
+  show "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<omega> i t - \<omega> i s)\<^sup>2)"
+    unfolding decomp by (rule int')
+  have step1: "(\<integral>\<omega>. (\<omega> i t)\<^sup>2 - (\<omega> i s)\<^sup>2 \<partial>?M)
+      = (\<integral>\<omega>. (\<omega> i t)\<^sup>2 \<partial>?M) - (\<integral>\<omega>. (\<omega> i s)\<^sup>2 \<partial>?M)"
+    by (intro Bochner_Integration.integral_diff sq_t sq_s)
+  have step2: "(\<integral>\<omega>. 2 * (\<omega> i s * (\<omega> i t - \<omega> i s)) \<partial>?M) = 0"
+    using cross_int cross_val by simp
+  have "(\<integral>\<omega>. (\<omega> i t - \<omega> i s)\<^sup>2 \<partial>?M)
+      = (\<integral>\<omega>. (\<omega> i t)\<^sup>2 - (\<omega> i s)\<^sup>2
+            - 2 * (\<omega> i s * (\<omega> i t - \<omega> i s)) \<partial>?M)"
+    unfolding decomp ..
+  also have "\<dots> = (\<integral>\<omega>. (\<omega> i t)\<^sup>2 - (\<omega> i s)\<^sup>2 \<partial>?M)
+      - (\<integral>\<omega>. 2 * (\<omega> i s * (\<omega> i t - \<omega> i s)) \<partial>?M)"
+    by (intro Bochner_Integration.integral_diff
+        Bochner_Integration.integrable_diff sq_t sq_s
+        integrable_mult_right cross_int)
+  also have "\<dots> = t - s"
+    using step1 step2 by (simp add: sq_t_val sq_s_val)
+  finally show "(\<integral>\<omega>. (\<omega> i t - \<omega> i s)\<^sup>2 \<partial>?M) = t - s" .
+qed
+
+section \<open>The compensated square has constant set integrals\<close>
+
+lemma bm_indicator_coord_sq_integrable:
+  assumes u: "0 \<le> u" and A: "A \<in> sets (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)"
+  shows "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (\<lambda>\<omega>. indicator A \<omega> * (c + \<omega> i u)\<^sup>2)"
+proof -
+  have "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. indicator A \<omega> *\<^sub>R (c + \<omega> i u)\<^sup>2)"
+    by (intro integrable_mult_indicator A bm_coordinate_sq_integrable[OF u])
+  then show ?thesis by simp
+qed
+
+lemma bm_indicator_int:
+  assumes A: "A \<in> sets (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)"
+  shows bm_indicator_integrable:
+    "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)"
+    and bm_indicator_integral:
+    "(\<integral>\<omega>. indicator A \<omega>
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = BMP.prob A"
+proof -
+  show "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)"
+  proof (rule BMP.integrable_const_bound[where B = 1])
+    show "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        norm (indicator A \<omega> :: real) \<le> 1"
+      by (intro AE_I2) (simp add: indicator_def)
+    show "(indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)
+        \<in> borel_measurable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+      by (rule borel_measurable_indicator[OF A])
+  qed
+  have ins: "A \<inter> space (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) = A"
+    using A sets.sets_into_space by blast
+  show "(\<integral>\<omega>. indicator A \<omega>
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = BMP.prob A"
+    using ins by simp
+qed
+
+text \<open>One coordinate at a time: the conditional second moment increases by
+  exactly the elapsed time.\<close>
+
+lemma bm_set_integral_coord_sq_eq:
+  fixes x0 :: "real^'n::finite"
+  assumes s: "0 \<le> s" and st: "s \<le> t"
+    and A: "A \<in> sets (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+  shows "(\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i t)\<^sup>2
+        \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2
+        \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+        + (t - s) * BMP.prob A"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?d = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s"
+  let ?g = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+    indicator A \<omega> * (x0 $ i + \<omega> i s)"
+  interpret SP: stochastic_process ?M 0 "bmX x0"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule SP.subalgebra_natural_filtration)
+  have A_M: "A \<in> sets ?M"
+    using A subalg by (auto simp: subalgebra_def)
+  have ind_F: "(indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)
+      \<in> borel_measurable ?F"
+    by (rule borel_measurable_indicator[OF A])
+  have ind_int: "integrable ?M (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)"
+    by (rule bm_indicator_integrable[OF A_M])
+  have ind_val: "(\<integral>\<omega>. indicator A \<omega> \<partial>?M) = BMP.prob A"
+    by (rule bm_indicator_integral[OF A_M])
+  have ins: "A \<inter> space ?M = A"
+    using A_M sets.sets_into_space by blast
+  have g_F: "?g \<in> borel_measurable ?F"
+  proof -
+    have c1: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i s) \<in> borel_measurable ?F"
+      by (rule bm_coordinate_measurable_F[OF s])
+    show ?thesis
+      by (intro borel_measurable_times ind_F borel_measurable_add
+          borel_measurable_const c1)
+  qed
+  have coord_int: "integrable ?M
+      (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. x0 $ i + \<omega> i s)"
+    by (intro Bochner_Integration.integrable_add BMP.integrable_const
+        bm_coordinate_mean_integrable[OF s])
+  have g_int: "integrable ?M ?g"
+  proof -
+    have "integrable ?M (\<lambda>\<omega>. indicator A \<omega> *\<^sub>R (x0 $ i + \<omega> i s))"
+      by (intro integrable_mult_indicator A_M coord_int)
+    then show ?thesis by simp
+  qed
+  have cross_int: "integrable ?M (\<lambda>\<omega>. ?g \<omega> * ?d \<omega>)"
+    by (rule bm_meas_increment_product_integrable[OF s st g_F g_int])
+  have cross_val: "(\<integral>\<omega>. ?g \<omega> * ?d \<omega> \<partial>?M) = 0"
+    by (rule bm_meas_increment_product_zero[OF s st g_F g_int])
+  have inc_sq_int: "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (?d \<omega>)\<^sup>2)"
+    by (rule bm_increment_sq_integrable[OF s st])
+  have sq_int: "integrable ?M (\<lambda>\<omega>. indicator A \<omega> * (?d \<omega>)\<^sup>2)"
+  proof -
+    have "integrable ?M (\<lambda>\<omega>. indicator A \<omega> *\<^sub>R (?d \<omega>)\<^sup>2)"
+      by (intro integrable_mult_indicator A_M inc_sq_int)
+    then show ?thesis by simp
+  qed
+  have sq_val: "(\<integral>\<omega>. indicator A \<omega> * (?d \<omega>)\<^sup>2 \<partial>?M)
+      = BMP.prob A * (t - s)"
+  proof (cases "s = t")
+    case True
+    then show ?thesis by simp
+  next
+    case False
+    with st have st': "s < t" by simp
+    have base: "BMP.indep_var borel
+        (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real) borel ?d"
+      by (rule bm_meas_increment_indep_var[OF s st' ind_F])
+    have "BMP.indep_var borel
+        ((\<lambda>x :: real. x) \<circ> (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real))
+        borel ((\<lambda>x :: real. x\<^sup>2) \<circ> ?d)"
+      by (rule BMP.indep_var_compose[OF base]) simp_all
+    then have indep2: "BMP.indep_var borel
+        (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)
+        borel (\<lambda>\<omega>. (?d \<omega>)\<^sup>2)"
+      by (simp add: comp_def)
+    have "(\<integral>\<omega>. indicator A \<omega> * (?d \<omega>)\<^sup>2 \<partial>?M)
+        = (\<integral>\<omega>. indicator A \<omega> \<partial>?M) * (\<integral>\<omega>. (?d \<omega>)\<^sup>2 \<partial>?M)"
+      by (rule BMP.indep_var_lebesgue_integral[OF indep2 ind_int inc_sq_int])
+    also have "\<dots> = BMP.prob A * (t - s)"
+      by (simp add: ind_val ins bm_increment_sq_integral[OF s st])
+    finally show ?thesis .
+  qed
+  have decomp: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+        indicator A \<omega> * (x0 $ i + \<omega> i t)\<^sup>2)
+      = (\<lambda>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2
+          + 2 * (?g \<omega> * ?d \<omega>) + indicator A \<omega> * (?d \<omega>)\<^sup>2)"
+    by (simp add: fun_eq_iff power2_eq_square algebra_simps)
+  have int_s: "integrable ?M
+      (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2)"
+    by (rule bm_indicator_coord_sq_integrable[OF s A_M])
+  have inner_split: "(\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2
+        + 2 * (?g \<omega> * ?d \<omega>) \<partial>?M)
+      = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2 \<partial>?M)
+        + (\<integral>\<omega>. 2 * (?g \<omega> * ?d \<omega>) \<partial>?M)"
+    by (intro Bochner_Integration.integral_add int_s integrable_mult_right
+        cross_int)
+  have cross2_val: "(\<integral>\<omega>. 2 * (?g \<omega> * ?d \<omega>) \<partial>?M) = 0"
+    using cross_int cross_val by simp
+  have "(\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i t)\<^sup>2 \<partial>?M)
+      = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2
+          + 2 * (?g \<omega> * ?d \<omega>) + indicator A \<omega> * (?d \<omega>)\<^sup>2 \<partial>?M)"
+    unfolding decomp ..
+  also have "\<dots> = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2
+          + 2 * (?g \<omega> * ?d \<omega>) \<partial>?M)
+      + (\<integral>\<omega>. indicator A \<omega> * (?d \<omega>)\<^sup>2 \<partial>?M)"
+    by (intro Bochner_Integration.integral_add
+        Bochner_Integration.integrable_add int_s integrable_mult_right
+        cross_int sq_int)
+  also have "\<dots> = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2 \<partial>?M)
+      + (t - s) * BMP.prob A"
+    using inner_split cross2_val sq_val by (simp add: mult_ac)
+  finally show ?thesis .
+qed
+
+text \<open>Summing the coordinates: the compensated square has equal set
+  integrals over events of the past.\<close>
+
+lemma bm_indicator_sq_sum:
+  fixes x0 :: "real^'n::finite"
+  shows "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+      indicator A \<omega> * (bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>))
+    = (\<lambda>\<omega>. \<Sum>i\<in>(UNIV :: 'n set). indicator A \<omega> * (x0 $ i + \<omega> i u)\<^sup>2)"
+  by (simp add: fun_eq_iff inner_vec_def bmX_def power2_eq_square
+      sum_distrib_left)
+
+lemma bm_indicator_sq_integrable:
+  fixes x0 :: "real^'n::finite"
+  assumes u: "0 \<le> u"
+    and A: "A \<in> sets (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+  shows "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (\<lambda>\<omega>. indicator A \<omega> * (bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>))"
+  unfolding bm_indicator_sq_sum
+  by (intro Bochner_Integration.integrable_sum
+      bm_indicator_coord_sq_integrable[OF u A])
+
+lemma bm_set_integral_sq_eq:
+  fixes x0 :: "real^'n::finite"
+  assumes s: "0 \<le> s" and st: "s \<le> t"
+    and A: "A \<in> sets (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+  shows "(\<integral>\<omega>. indicator A \<omega> * (bmX x0 t \<omega> \<bullet> bmX x0 t \<omega>)
+        \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = (\<integral>\<omega>. indicator A \<omega> * (bmX x0 s \<omega> \<bullet> bmX x0 s \<omega>)
+        \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+        + real CARD('n) * (t - s) * BMP.prob A"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  interpret SP: stochastic_process ?M 0 "bmX x0"
+    by unfold_locales (intro measurable_bmX, simp)
+  have A_M: "A \<in> sets ?M"
+    using A SP.subalgebra_natural_filtration by (auto simp: subalgebra_def)
+  have t0: "0 \<le> t" using s st by simp
+  have "(\<integral>\<omega>. indicator A \<omega> * (bmX x0 t \<omega> \<bullet> bmX x0 t \<omega>) \<partial>?M)
+      = (\<Sum>i\<in>(UNIV :: 'n set).
+          (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i t)\<^sup>2 \<partial>?M))"
+    unfolding bm_indicator_sq_sum
+    by (intro Bochner_Integration.integral_sum
+        bm_indicator_coord_sq_integrable[OF t0 A_M])
+  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set).
+      (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2 \<partial>?M)
+        + (t - s) * BMP.prob A)"
+    by (intro sum.cong refl bm_set_integral_coord_sq_eq[OF s st A])
+  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set).
+      (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2 \<partial>?M))
+      + real CARD('n) * ((t - s) * BMP.prob A)"
+    by (simp add: sum.distrib)
+  also have "(\<Sum>i\<in>(UNIV :: 'n set).
+      (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i s)\<^sup>2 \<partial>?M))
+      = (\<integral>\<omega>. indicator A \<omega> * (bmX x0 s \<omega> \<bullet> bmX x0 s \<omega>) \<partial>?M)"
+    unfolding bm_indicator_sq_sum
+    by (intro Bochner_Integration.integral_sum[symmetric]
+        bm_indicator_coord_sq_integrable[OF s A_M])
+  finally show ?thesis
+    by (simp add: mult_ac)
+qed
+
+section \<open>The compensated square is a martingale\<close>
+
+theorem martingale_bm_square:
+  fixes x0 :: "real^'n::finite"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (bmX x0)) 0
+    (\<lambda>t \<omega>. bmX x0 t \<omega> \<bullet> bmX x0 t \<omega>
+      - set_lebesgue_integral lborel {0..t}
+          (\<lambda>s. trace (mat 1 :: real^'n^'n)))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0)"
+  let ?Z = "\<lambda>t \<omega>. bmX x0 t \<omega> \<bullet> bmX x0 t \<omega>
+    - set_lebesgue_integral lborel {0..t} (\<lambda>s. trace (mat 1 :: real^'n^'n))"
+  interpret SP: stochastic_process ?M 0 "bmX x0"
+    by unfold_locales (intro measurable_bmX, simp)
+  interpret AP: adapted_process ?M ?F 0 "bmX x0"
+    by (rule SP.adapted_process_natural_filtration)
+  have fm: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M (?F i)" for i
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro
+        fm SP.subalgebra_natural_filtration)
+  have sff: "sigma_finite_filtered_measure ?M ?F 0"
+    by (intro sigma_finite_filtered_measure.intro
+        sigma_finite_filtered_measure_axioms.intro
+        SP.filtered_measure_natural_filtration sfs)
+  interpret SFF: sigma_finite_filtered_measure ?M ?F 0
+    by (rule sff)
+  have Zmeas: "?Z u \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
+  proof -
+    have X_F: "bmX x0 u \<in> borel_measurable (?F u)"
+      by (intro AP.adaptedD u order.refl)
+    have "(\<lambda>\<omega>. bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>) \<in> borel_measurable (?F u)"
+      by (intro borel_measurable_inner X_F)
+    then show ?thesis
+      by (intro borel_measurable_diff borel_measurable_const)
+  qed
+  have Zint: "integrable ?M (?Z u)" if u: "0 \<le> u" for u
+    by (intro Bochner_Integration.integrable_diff bmX_sq_integrable[OF u]
+        BMP.integrable_const)
+  have ap: "adapted_process ?M ?F 0 ?Z"
+    by (intro adapted_process.intro[OF SP.filtered_measure_natural_filtration]
+        adapted_process_axioms.intro Zmeas)
+  show ?thesis
+  proof (rule SFF.martingale_of_set_integral_eq[OF ap])
+    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable ?M (?Z i)"
+      by (rule Zint)
+    fix A and u v :: real
+    assume u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> sets (?F u)"
+    have v: "0 \<le> v" using u uv by simp
+    have A_M: "A \<in> sets ?M"
+      using A SP.subalgebra_natural_filtration by (auto simp: subalgebra_def)
+    have ind_int: "integrable ?M
+        (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)"
+      by (rule bm_indicator_integrable[OF A_M])
+    have ind_val: "(\<integral>\<omega>. indicator A \<omega> \<partial>?M) = BMP.prob A"
+      by (rule bm_indicator_integral[OF A_M])
+    have ins: "A \<inter> space ?M = A"
+      using A_M sets.sets_into_space by blast
+    have cst: "(\<integral>\<omega>. indicator A \<omega> * c \<partial>?M) = BMP.prob A * c" for c :: real
+    proof -
+      have "(\<integral>\<omega>. indicator A \<omega> * c \<partial>?M)
+          = (\<integral>\<omega>. indicator A \<omega> \<partial>?M) * c"
+        using ind_int by simp
+      then show ?thesis
+        by (simp add: ind_val ins)
+    qed
+    have split: "set_lebesgue_integral ?M A (?Z w)
+        = (\<integral>\<omega>. indicator A \<omega> * (bmX x0 w \<omega> \<bullet> bmX x0 w \<omega>) \<partial>?M)
+          - BMP.prob A * (real CARD('n) * w)" if w: "0 \<le> w" for w
+    proof -
+      have comp: "set_lebesgue_integral lborel {0..w}
+          (\<lambda>s. trace (mat 1 :: real^'n^'n)) = real CARD('n) * w"
+        by (rule bm_compensator_const[OF w])
+      have comp': "(LBINT x. indicat_real {0..w} x
+            *\<^sub>R trace (mat 1 :: real^'n^'n)) = real CARD('n) * w"
+        using comp unfolding set_lebesgue_integral_def .
+      have i1: "integrable ?M
+          (\<lambda>\<omega>. indicator A \<omega> * (bmX x0 w \<omega> \<bullet> bmX x0 w \<omega>))"
+        by (rule bm_indicator_sq_integrable[OF w A_M])
+      have i2: "integrable ?M
+          (\<lambda>\<omega>. indicator A \<omega> * (real CARD('n) * w))"
+        by (intro integrable_mult_left ind_int)
+      have "set_lebesgue_integral ?M A (?Z w)
+          = (\<integral>\<omega>. indicator A \<omega> * (bmX x0 w \<omega> \<bullet> bmX x0 w \<omega>)
+              - indicator A \<omega> * (real CARD('n) * w) \<partial>?M)"
+        unfolding set_lebesgue_integral_def
+        by (intro Bochner_Integration.integral_cong refl)
+          (simp add: comp' trace_mat1 w algebra_simps)
+      also have "\<dots> = (\<integral>\<omega>. indicator A \<omega>
+            * (bmX x0 w \<omega> \<bullet> bmX x0 w \<omega>) \<partial>?M)
+          - (\<integral>\<omega>. indicator A \<omega> * (real CARD('n) * w) \<partial>?M)"
+        by (intro Bochner_Integration.integral_diff i1 i2)
+      also have "\<dots> = (\<integral>\<omega>. indicator A \<omega>
+            * (bmX x0 w \<omega> \<bullet> bmX x0 w \<omega>) \<partial>?M)
+          - BMP.prob A * (real CARD('n) * w)"
+        by (simp add: cst ins)
+      finally show ?thesis .
+    qed
+    have vsplit: "set_lebesgue_integral ?M A (?Z v)
+        = (\<integral>\<omega>. indicator A \<omega> * (bmX x0 v \<omega> \<bullet> bmX x0 v \<omega>) \<partial>?M)
+          - BMP.prob A * (real CARD('n) * v)"
+      by (rule split[OF v])
+    have usplit: "set_lebesgue_integral ?M A (?Z u)
+        = (\<integral>\<omega>. indicator A \<omega> * (bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>) \<partial>?M)
+          - BMP.prob A * (real CARD('n) * u)"
+      by (rule split[OF u])
+    have vu: "(\<integral>\<omega>. indicator A \<omega> * (bmX x0 v \<omega> \<bullet> bmX x0 v \<omega>) \<partial>?M)
+        = (\<integral>\<omega>. indicator A \<omega> * (bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>) \<partial>?M)
+          + real CARD('n) * (v - u) * BMP.prob A"
+      by (rule bm_set_integral_sq_eq[OF u uv A])
+    show "set_lebesgue_integral ?M A (?Z u)
+        = set_lebesgue_integral ?M A (?Z v)"
+      unfolding usplit vsplit vu by (simp add: algebra_simps)
+  qed
+qed
+
+text \<open>Consequently the process form of the martingale problem is
+  inhabited: with \<open>acov = mat 1\<close> the process of \<open>ito_Z\<close> is exactly \<open>?Z\<close>
+  above, so \<open>martingale_bm_square\<close> discharges the hypothesis
+  \<open>Z_martingale\<close> of \<open>ito_const_horizon_market\<close>.  The instantiation
+  itself belongs to Ito\_Market, which imports this theory's ambient
+  definitions.\<close>
 
 end

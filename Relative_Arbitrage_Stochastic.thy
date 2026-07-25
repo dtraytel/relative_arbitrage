@@ -363,12 +363,34 @@ text \<open>
   \<^item> the exit-time bound \<open>E[tau] \<le> v(x0)\<close> of Example 3.1 in every such
     market (Theorem expected_exit_time_bound above).
 
-  Not formalizable with current library support (documented gaps):
-  stochastic integration (hence the concrete value process \<open>V\<^sup>\<theta>\<close> of
-  Eq. (1.1) and the arbitrage-from-exit-time construction), construction
-  of the optimal martingale of Eq. (3.11), the comparison principle and
-  uniqueness part of Theorem 1.1, and Lemma 3.1 (semicontinuous
-  envelopes of \<open>F\<close>).
+  Proved in the companion theories, without axiomatic input:
+  \<^item> Brownian motion itself (Daniell--Kolmogorov plus Kolmogorov--Chentsov)
+    and a Brownian market satisfying every assumption of the locale
+    \<open>sufficiently_volatile_market\<close> above --- theories Brownian_Motion,
+    Brownian_Motion_Continuity, Brownian_Market;
+  \<^item> the discrete-time quadratic-variation calculus, including optional
+    sampling, and hence the discrete-time counterparts of
+    \<open>dynkin_quadratic\<close>, of the exit-time bound and of the
+    arbitrage-from-exit-time construction, all as theorems --- theories
+    Quadratic_Variation, Relative_Arbitrage_Discrete;
+  \<^item> a concrete such market: the simple symmetric random walk in the
+    plane, stopped on leaving a ball, which instantiates the discrete
+    locales and turns Example 3.1 into the assumption-free statement that
+    its expected exit time from the ball of radius \<open>m + 1\<close> is at most
+    \<open>(m + 1)\<^sup>2\<close> --- theory Random_Walk_Market;
+  \<^item> uniqueness in Theorem 1.1 for Example 3.1 with no comparison
+    principle assumed: the explicit \<open>v\<close> is smooth, so the scaled
+    functions \<open>(1 \<plusminus> e) * v\<close> are strict super-/subsolutions usable as test
+    functions, which replaces the Crandall--Ishii doubling argument ---
+    theory Relative_Arbitrage_Comparison.
+
+  Remaining assumptions (all of them continuous-time constructions that
+  need stochastic integration, which no Isabelle library provides):
+  the martingale-problem identity \<open>dynkin_quadratic\<close> of the locale above
+  (a definition of the model class rather than a known theorem: it ties
+  \<open>acov\<close> to \<open>X\<close>; its discrete counterpart is proved, and it is discharged
+  for the Brownian market), the concrete value process \<open>V\<^sup>\<theta>\<close> of Eq. (1.1),
+  and the optimal martingale of Eq. (3.11).
 \<close>
 
 end

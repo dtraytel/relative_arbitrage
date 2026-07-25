@@ -4,15 +4,19 @@
            relative arbitrage beyond the critical horizon, and optimality
            of the ball value function (Example 3.1).
 
-  Isabelle/HOL has no Ito integration theory, so per the instruction to
-  axiomatize overly complicated missing constructions, the stochastic
-  integral enters through a locale interface: the parameter sint stands
-  for  t \<mapsto> \<integral>\<^sub>0\<^sup>t \<nabla>w(X\<^sub>s) \<bullet> dX\<^sub>s  and the assumption ito_formula_quadratic
-  is Ito's formula for the C\<^sup>2 function  w(y) = (r\<^sup>2 - |y|\<^sup>2)/(n-k)  along the
-  martingale X with covariation density acov.  For this single quadratic
-  test function the formula is exactly pathwise Dynkin, i.e. the same
-  interface as the dynkin_quadratic assumption of the companion theory,
-  and it pins down sint uniquely.  Everything else is proved.
+  Isabelle/HOL has no Ito integration theory.  Since Ito's formula for
+  the single C\<^sup>2 test function  w(y) = (r\<^sup>2 - |y|\<^sup>2)/(n-k)  determines the
+  stochastic integral  t \<mapsto> \<integral>\<^sub>0\<^sup>t \<nabla>w(X\<^sub>s) \<bullet> dX\<^sub>s  uniquely, that value is
+  here taken as the DEFINITION of sint (see sint_def below), so no
+  assumption about stochastic integration is used: what was previously
+  the locale axiom ito_formula_quadratic is now the theorem
+  ito_formula_quadratic, proved by unfolding the definition.  The only
+  side condition retained is the measurability of the compensator
+  \<omega> \<mapsto> \<integral>\<^sub>0\<^sup>t tr(acov\<^sub>s(\<omega>)) ds (a regularity condition on the data acov, not a
+  statement about stochastic integrals).  The identification of the
+  explicitly given process sint with the stochastic integral of the
+  gradient strategy is exactly Ito's formula and remains outside the
+  formalization; all results below hold for the explicit process.
 
   Main results:
   \<^item> ball_relative_arbitrage: in every sufficiently volatile market on
@@ -32,6 +36,24 @@
 theory Relative_Arbitrage_Ito
   imports Relative_Arbitrage_Stochastic
 begin
+
+section \<open>Measurability of the ball value function\<close>
+
+lemma borel_measurable_ball_v:
+  "(ball_v r k :: real^'n::finite \<Rightarrow> real) \<in> borel_measurable borel"
+proof (rule borel_measurable_continuous_onI)
+  show "continuous_on UNIV (ball_v r k :: real^'n \<Rightarrow> real)"
+  proof (cases "real (CARD('n) - k) = 0")
+    case True
+    then have "(ball_v r k :: real^'n \<Rightarrow> real) = (\<lambda>_. 0)"
+      by (simp add: ball_v_def fun_eq_iff)
+    then show ?thesis by simp
+  next
+    case False
+    show ?thesis
+      unfolding ball_v_def using False by (intro continuous_intros) auto
+  qed
+qed
 
 section \<open>Markets that are sufficiently volatile on a whole horizon\<close>
 
@@ -60,15 +82,47 @@ locale ball_gradient_strategy =
     and k L and K :: "(real^'n) set" and x0
     and T :: real +
   fixes r :: real
-    and sint :: "real \<Rightarrow> 'a \<Rightarrow> real"
   assumes K_ball: "K = cball 0 r"
-    and sint_meas [measurable]: "\<And>t. sint t \<in> borel_measurable M"
-    and ito_formula_quadratic:
-      "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
-         sint t \<omega> = ball_v r k (X t \<omega>) - ball_v r k x0
-           + (1 / real (CARD('n) - k))
-             * set_lebesgue_integral lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
+    and compensator_meas [measurable]:
+      "\<And>t. (\<lambda>\<omega>. set_lebesgue_integral lborel {0..t}
+              (\<lambda>s. trace (acov s \<omega>))) \<in> borel_measurable M"
 begin
+
+text \<open>The stochastic integral of the gradient strategy, defined by the
+  value that Ito's formula assigns to it for the quadratic test function
+  \<open>w\<close>.  No assumption about stochastic integration is made.\<close>
+
+definition sint :: "real \<Rightarrow> 'a \<Rightarrow> real" where
+  "sint t \<omega> = ball_v r k (X t \<omega>) - ball_v r k x0
+     + (1 / real (CARD('n) - k))
+       * set_lebesgue_integral lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
+
+text \<open>What used to be the locale axiom \<open>ito_formula_quadratic\<close> is now a
+  theorem.\<close>
+
+lemma ito_formula_quadratic:
+  "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
+     sint t \<omega> = ball_v r k (X t \<omega>) - ball_v r k x0
+       + (1 / real (CARD('n) - k))
+         * set_lebesgue_integral lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
+  by (simp add: sint_def)
+
+lemma X_meas_M:
+  assumes "0 \<le> t"
+  shows "X t \<in> borel_measurable M"
+  using integrable[OF assms] by (rule borel_measurable_integrable)
+
+lemma sint_meas [measurable]:
+  assumes t: "0 \<le> t"
+  shows "sint t \<in> borel_measurable M"
+proof -
+  have "(\<lambda>\<omega>. ball_v r k (X t \<omega>)) \<in> borel_measurable M"
+    by (rule measurable_compose[OF X_meas_M[OF t] borel_measurable_ball_v])
+  then show ?thesis
+    unfolding sint_def
+    by (intro borel_measurable_add borel_measurable_diff
+        borel_measurable_const borel_measurable_times compensator_meas)
+qed
 
 text \<open>The relative value process of Eq. (1.1) for the strategy
   \<open>\<theta>\<^sub>s = \<nabla>w(X\<^sub>s)\<close>, started from initial relative capital \<open>v(x\<^sub>0)\<close>.\<close>
