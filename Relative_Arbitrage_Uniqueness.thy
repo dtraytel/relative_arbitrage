@@ -401,6 +401,63 @@ proof -
     by (rule inf_scale)
 qed
 
+text \<open>The remaining ingredient of Eq. (1.10): every feasible \<open>a\<close> annihilates
+  \<open>p\<close>, so \<open>tr(p p\<^sup>\<top> a) = p \<bullet> (a p) = 0\<close> and adding a multiple of \<open>p p\<^sup>\<top>\<close> to the
+  Hessian argument leaves the objective --- hence \<open>F\<close> --- unchanged.\<close>
+
+lemma trace_outer_prod_feasible:
+  fixes p :: "real^'n"
+  assumes a: "a \<in> feasible k L p"
+  shows "trace (outer_prod p p ** a) = 0"
+proof -
+  have ap: "a *v p = 0"
+    using a by (simp add: feasible_def)
+  have "trace (outer_prod p p ** a) = trace (a ** outer_prod p p)"
+    by (rule trace_mul_sym)
+  also have "\<dots> = trace (outer_prod (a *v p) p)"
+    by (simp add: mult_outer_prod)
+  also have "\<dots> = 0"
+    by (simp add: ap)
+  finally show ?thesis .
+qed
+
+lemma ell_op_add_outer:
+  fixes p :: "real^'n" and M :: "real^'n^'n"
+  shows "ell_op k L p (M + c *\<^sub>R outer_prod p p) = ell_op k L p M"
+proof -
+  have "(\<lambda>a. - trace ((M + c *\<^sub>R outer_prod p p) ** a) / 2) ` feasible k L p
+      = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
+  proof (rule image_cong[OF refl])
+    fix a :: "real^'n^'n" assume a: "a \<in> feasible k L p"
+    have "trace ((M + c *\<^sub>R outer_prod p p) ** a)
+        = trace (M ** a) + c * trace (outer_prod p p ** a)"
+      by (simp add: matrix_add_rdistrib scaleR_matrix_mult trace_add trace_scaleR)
+    then show "- trace ((M + c *\<^sub>R outer_prod p p) ** a) / 2
+        = - trace (M ** a) / 2"
+      by (simp add: trace_outer_prod_feasible[OF a])
+  qed
+  then show ?thesis
+    by (simp add: ell_op_def)
+qed
+
+text \<open>Eq. (1.10) of Remark 1.1(b): the nonlinearity \<open>F\<close> is geometric.\<close>
+
+theorem ell_op_geometric:
+  fixes p :: "real^'n" and M :: "real^'n^'n"
+  assumes c1: "0 < c1" and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
+  shows "ell_op k L (c1 *\<^sub>R p) (c1 *\<^sub>R M + c2 *\<^sub>R outer_prod p p)
+       = c1 * ell_op k L p M"
+proof -
+  have "ell_op k L (c1 *\<^sub>R p) (c1 *\<^sub>R M + c2 *\<^sub>R outer_prod p p)
+      = ell_op k L p (c1 *\<^sub>R M + c2 *\<^sub>R outer_prod p p)"
+    using c1 by (intro ell_op_scale_p) simp
+  also have "\<dots> = ell_op k L p (c1 *\<^sub>R M)"
+    by (rule ell_op_add_outer)
+  also have "\<dots> = c1 * ell_op k L p M"
+    by (rule ell_op_dilation[OF c1 ne])
+  finally show ?thesis .
+qed
+
 section \<open>Comparison implies uniqueness (Theorem 1.1, uniqueness part)\<close>
 
 text \<open>The comparison principle is the content of the Crandall--Ishii
@@ -434,7 +491,7 @@ qed
 
 end
 
-text \<open>In particular, on the punctured ball the explicit function of
+text \<open>In particular, on the open ball the explicit function of
   Eq. (3.9) is THE viscosity solution with its boundary data: any other
   viscosity solution agreeing with it near the boundary coincides with it
   (Theorem 1.1, uniqueness, for Example 3.1).\<close>
@@ -442,11 +499,11 @@ text \<open>In particular, on the punctured ball the explicit function of
 theorem ball_v_unique_solution:
   fixes r :: real and k :: nat and L :: real
   assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
-    and cp: "comparison_principle k L (ball (0::real^'n) r - {0})"
-    and u: "visc_sol k L (ball 0 r - {0}) (u :: real^'n \<Rightarrow> real)"
-    and bd: "\<And>x :: real^'n. x \<in> closure (ball 0 r - {0}) - (ball 0 r - {0})
+    and cp: "comparison_principle k L (ball (0::real^'n) r)"
+    and u: "visc_sol k L (ball 0 r) (u :: real^'n \<Rightarrow> real)"
+    and bd: "\<And>x :: real^'n. x \<in> closure (ball 0 r) - ball 0 r
               \<Longrightarrow> u x = ball_v r k x"
-  shows "\<And>x :: real^'n. x \<in> ball 0 r - {0} \<Longrightarrow> u x = ball_v r k x"
+  shows "\<And>x :: real^'n. x \<in> ball 0 r \<Longrightarrow> u x = ball_v r k x"
   by (rule comparison_principle.viscosity_solution_unique[OF cp u _ bd])
     (use ball_v_solves_pde_viscosity(1)[OF k L] in auto)
 

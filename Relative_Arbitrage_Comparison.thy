@@ -97,19 +97,15 @@ text \<open>Positive homogeneity of \<open>F\<close>: scaling the gradient does 
 lemma ell_op_ball_scaled:
   fixes x :: "real^'n::finite"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and x: "x \<noteq> 0" and c: "0 < c"
+    and c: "0 < c"
     and b: "b = c * (- (2 / real (CARD('n) - k)))"
   shows "ell_op k L (b *\<^sub>R x) (b *\<^sub>R mat 1) = c"
 proof -
   define d where "d = - (2 / real (CARD('n) - k))"
   have b_eq: "b = c * d"
     using b by (simp add: d_def)
-  have d_ne: "d \<noteq> 0"
-    using k by (simp add: d_def)
-  have p_ne: "d *\<^sub>R x \<noteq> 0"
-    using d_ne x by simp
   have ne: "feasible k L (d *\<^sub>R x) \<noteq> ({} :: (real^'n^'n) set)"
-    by (intro feasible_nonempty k L p_ne)
+    by (intro feasible_nonempty k L)
   have "ell_op k L (b *\<^sub>R x) (b *\<^sub>R (mat 1 :: real^'n^'n))
       = ell_op k L (c *\<^sub>R (d *\<^sub>R x)) (c *\<^sub>R (d *\<^sub>R mat 1))"
     unfolding b_eq by simp
@@ -118,7 +114,7 @@ proof -
   also have "\<dots> = c * ell_op k L (d *\<^sub>R x) (d *\<^sub>R mat 1)"
     by (intro ell_op_dilation c ne)
   also have "ell_op k L (d *\<^sub>R x) (d *\<^sub>R (mat 1 :: real^'n^'n)) = 1"
-    unfolding d_def by (intro ell_op_eval k L p_ne[unfolded d_def])
+    unfolding d_def by (intro ell_op_eval k L)
   finally show ?thesis by simp
 qed
 
@@ -214,10 +210,10 @@ theorem visc_subsol_le_ball_v:
   fixes r :: real and u :: "real^'n::finite \<Rightarrow> real"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
     and cont: "continuous_on (cball 0 r) u"
-    and sub: "visc_subsol k L (ball (0::real^'n) r - {0}) u"
-    and bd: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r - {0}
+    and sub: "visc_subsol k L (ball (0::real^'n) r) u"
+    and bd: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
               \<Longrightarrow> u y \<le> ball_v r k y"
-    and x: "x \<in> ball (0::real^'n) r - {0}"
+    and x: "x \<in> ball (0::real^'n) r"
   shows "u x \<le> ball_v r k x"
 proof (rule field_le_epsilon)
   fix d :: real assume d: "0 < d"
@@ -240,9 +236,9 @@ proof (rule field_le_epsilon)
     and zmax: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> \<psi> y \<le> \<psi> z"
     by blast
   have zle: "\<psi> z \<le> 0"
-  proof (cases "z \<in> ball (0::real^'n) r - {0}")
+  proof (cases "z \<in> ball (0::real^'n) r")
     case True
-    then have zr: "norm z < r" and z_ne: "z \<noteq> 0" by auto
+    then have zr: "norm z < r" by auto
     define b where "b = c * (- (2 / real (CARD('n) - k)))"
     have tf: "test_fun_at (\<lambda>y. c * ball_v r k y) (\<lambda>y. b *\<^sub>R y)
         (b *\<^sub>R mat 1) z"
@@ -265,7 +261,7 @@ proof (rule field_le_epsilon)
     then have "ell_op k L (b *\<^sub>R z) (b *\<^sub>R (mat 1 :: real^'n^'n)) \<le> 1"
       by simp
     also have "ell_op k L (b *\<^sub>R z) (b *\<^sub>R (mat 1 :: real^'n^'n)) = c"
-      by (rule ell_op_ball_scaled[OF k L z_ne cpos b_def])
+      by (rule ell_op_ball_scaled[OF k L cpos b_def])
     finally have "c \<le> 1" .
     with c1 show ?thesis by linarith
   next
@@ -296,10 +292,10 @@ theorem ball_v_le_visc_supersol:
   fixes r :: real and u :: "real^'n::finite \<Rightarrow> real"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
     and cont: "continuous_on (cball 0 r) u"
-    and sup: "visc_supersol k L (ball (0::real^'n) r - {0}) u"
-    and bd: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r - {0}
+    and sup: "visc_supersol k L (ball (0::real^'n) r) u"
+    and bd: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
               \<Longrightarrow> ball_v r k y \<le> u y"
-    and x: "x \<in> ball (0::real^'n) r - {0}"
+    and x: "x \<in> ball (0::real^'n) r"
   shows "ball_v r k x \<le> u x"
 proof (rule field_le_epsilon)
   fix d :: real assume d: "0 < d"
@@ -326,9 +322,9 @@ proof (rule field_le_epsilon)
     and zmin: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> \<psi> z \<le> \<psi> y"
     by blast
   have zge: "0 \<le> \<psi> z"
-  proof (cases "z \<in> ball (0::real^'n) r - {0}")
+  proof (cases "z \<in> ball (0::real^'n) r")
     case True
-    then have zr: "norm z < r" and z_ne: "z \<noteq> 0" by auto
+    then have zr: "norm z < r" by auto
     define b where "b = c * (- (2 / real (CARD('n) - k)))"
     have tf: "test_fun_at (\<lambda>y. c * ball_v r k y) (\<lambda>y. b *\<^sub>R y)
         (b *\<^sub>R mat 1) z"
@@ -351,7 +347,7 @@ proof (rule field_le_epsilon)
     then have "1 \<le> ell_op k L (b *\<^sub>R z) (b *\<^sub>R (mat 1 :: real^'n^'n))"
       by simp
     also have "ell_op k L (b *\<^sub>R z) (b *\<^sub>R (mat 1 :: real^'n^'n)) = c"
-      by (rule ell_op_ball_scaled[OF k L z_ne cpos b_def])
+      by (rule ell_op_ball_scaled[OF k L cpos b_def])
     finally have "1 \<le> c" .
     with c1 show ?thesis by linarith
   next
@@ -377,24 +373,24 @@ section \<open>Uniqueness without the Crandall--Ishii comparison principle\<clos
 
 text \<open>Theorem 1.1 (uniqueness) for Example 3.1, with no axiomatic input:
   the explicit function of Eq. (3.9) is the unique continuous viscosity
-  solution of \<open>F(\<nabla>u, \<nabla>\<^sup>2 u) = 1\<close> on the punctured ball with its own
-  boundary data.\<close>
+  solution of \<open>F(\<nabla>u, \<nabla>\<^sup>2 u) = 1\<close> on the whole open ball --- the interior
+  \<open>K\<^sup>\<circ>\<close> of Definition 3.1 --- with its own boundary data on the sphere.\<close>
 
 theorem ball_v_unique_solution_smooth:
   fixes r :: real and u :: "real^'n::finite \<Rightarrow> real"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
     and cont: "continuous_on (cball 0 r) u"
-    and u: "visc_sol k L (ball (0::real^'n) r - {0}) u"
-    and bd: "\<And>y :: real^'n. y \<in> closure (ball 0 r - {0}) - (ball 0 r - {0})
+    and u: "visc_sol k L (ball (0::real^'n) r) u"
+    and bd: "\<And>y :: real^'n. y \<in> closure (ball 0 r) - ball 0 r
               \<Longrightarrow> u y = ball_v r k y"
-  shows "\<And>x :: real^'n. x \<in> ball 0 r - {0} \<Longrightarrow> u x = ball_v r k x"
+  shows "\<And>x :: real^'n. x \<in> ball 0 r \<Longrightarrow> u x = ball_v r k x"
 proof -
-  fix x :: "real^'n" assume x: "x \<in> ball 0 r - {0}"
+  fix x :: "real^'n" assume x: "x \<in> ball 0 r"
   have bd': "u y = ball_v r k y"
-    if that: "y \<in> cball (0::real^'n) r" "y \<notin> ball 0 r - {0}" for y :: "real^'n"
+    if that: "y \<in> cball (0::real^'n) r" "y \<notin> ball 0 r" for y :: "real^'n"
   proof -
-    have "y \<in> closure (ball (0::real^'n) r - {0})"
-      unfolding closure_ball_minus_zero[OF r] by (rule that(1))
+    have "y \<in> closure (ball (0::real^'n) r)"
+      unfolding closure_ball[OF r] by (rule that(1))
     with that(2) show ?thesis
       by (intro bd) simp
   qed
@@ -414,19 +410,19 @@ corollary ball_v_unique_on_cball:
   fixes r :: real and u :: "real^'n::finite \<Rightarrow> real"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
     and cont: "continuous_on (cball 0 r) u"
-    and u: "visc_sol k L (ball (0::real^'n) r - {0}) u"
-    and bd: "\<And>y :: real^'n. y \<in> closure (ball 0 r - {0}) - (ball 0 r - {0})
+    and u: "visc_sol k L (ball (0::real^'n) r) u"
+    and bd: "\<And>y :: real^'n. y \<in> closure (ball 0 r) - ball 0 r
               \<Longrightarrow> u y = ball_v r k y"
     and x: "x \<in> cball (0::real^'n) r"
   shows "u x = ball_v r k x"
-proof (cases "x \<in> ball (0::real^'n) r - {0}")
+proof (cases "x \<in> ball (0::real^'n) r")
   case True
   show ?thesis
     by (rule ball_v_unique_solution_smooth[OF k L r cont u bd True])
 next
   case False
-  have "x \<in> closure (ball (0::real^'n) r - {0})"
-    unfolding closure_ball_minus_zero[OF r] by (rule x)
+  have "x \<in> closure (ball (0::real^'n) r)"
+    unfolding closure_ball[OF r] by (rule x)
   with False show ?thesis
     by (intro bd) simp
 qed
@@ -439,7 +435,7 @@ corollary ball_v_visc_sol_exists:
   fixes r :: real
   assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
   shows "continuous_on (cball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
-    and "visc_sol k L (ball 0 r - {0}) (ball_v r k :: real^'n \<Rightarrow> real)"
+    and "visc_sol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
   by (rule continuous_on_ball_v, rule ball_v_solves_pde_viscosity(1)[OF k L])
 
 end

@@ -917,6 +917,96 @@ proof eventually_elim
   qed
 qed
 
+text \<open>The dominating function is even square integrable, because the L2
+  bound on the grid maxima is uniform in the grid.  This is what dominates
+  the compensated square of a continuous martingale on a finite horizon.\<close>
+
+lemma esup_sq_nn_integral_le:
+  "(\<integral>\<^sup>+\<omega>. (esup \<omega>)\<^sup>2 \<partial>M)
+     \<le> ennreal (4 * (\<integral>\<omega>. (Y u \<omega>)\<^sup>2 \<partial>M))"
+proof -
+  have inc: "incseq (\<lambda>n \<omega>. ennreal ((gsup n \<omega>)\<^sup>2))"
+    using gsup_mono gsup_nonneg
+    by (intro incseq_SucI le_funI ennreal_leI) (simp add: power_mono)
+  have mono_le: "gsup n \<omega> \<le> gsup m \<omega>" if "n \<le> m" for n m \<omega>
+  proof (rule lift_Suc_mono_le)
+    show "gsup k \<omega> \<le> gsup (Suc k) \<omega>" for k
+      by (rule gsup_mono)
+    show "n \<le> m"
+      by (rule that)
+  qed
+  have e_sq: "ennreal ((gsup n \<omega>)\<^sup>2) = (ennreal (gsup n \<omega>))\<^sup>2"
+    for n \<omega>
+    using gsup_nonneg by (simp add: ennreal_power)
+  have diag: "ennreal (gsup n \<omega>) * ennreal (gsup m \<omega>)
+      \<le> (SUP k. ennreal ((gsup k \<omega>)\<^sup>2))" for n m \<omega>
+  proof -
+    have "ennreal (gsup n \<omega>) * ennreal (gsup m \<omega>)
+        \<le> ennreal (gsup (max n m) \<omega>) * ennreal (gsup (max n m) \<omega>)"
+      by (intro mult_mono ennreal_leI mono_le) auto
+    also have "\<dots> = ennreal ((gsup (max n m) \<omega>)\<^sup>2)"
+      using gsup_nonneg by (simp add: power2_eq_square ennreal_mult)
+    also have "\<dots> \<le> (SUP k. ennreal ((gsup k \<omega>)\<^sup>2))"
+      by (rule SUP_upper) simp
+    finally show ?thesis .
+  qed
+  have sq: "(esup \<omega>)\<^sup>2 = (SUP n. ennreal ((gsup n \<omega>)\<^sup>2))" for \<omega>
+  proof (rule antisym)
+    show "(SUP n. ennreal ((gsup n \<omega>)\<^sup>2)) \<le> (esup \<omega>)\<^sup>2"
+    proof (intro SUP_least)
+      fix n
+      have "(ennreal (gsup n \<omega>))\<^sup>2 \<le> (esup \<omega>)\<^sup>2"
+        unfolding esup_def by (intro power_mono SUP_upper) auto
+      then show "ennreal ((gsup n \<omega>)\<^sup>2) \<le> (esup \<omega>)\<^sup>2"
+        unfolding e_sq .
+    qed
+    show "(esup \<omega>)\<^sup>2 \<le> (SUP n. ennreal ((gsup n \<omega>)\<^sup>2))"
+    proof -
+      have "(esup \<omega>)\<^sup>2
+          = (SUP x. SUP xa. ennreal (gsup xa \<omega>) * ennreal (gsup x \<omega>))"
+        unfolding esup_def power2_eq_square
+        by (simp add: SUP_mult_left_ennreal SUP_mult_right_ennreal)
+      also have "\<dots> \<le> (SUP k. ennreal ((gsup k \<omega>)\<^sup>2))"
+        by (intro SUP_least diag)
+      finally show ?thesis .
+    qed
+  qed
+  have "(\<integral>\<^sup>+\<omega>. (esup \<omega>)\<^sup>2 \<partial>M)
+      = (SUP n. \<integral>\<^sup>+\<omega>. ennreal ((gsup n \<omega>)\<^sup>2) \<partial>M)"
+    unfolding sq
+    by (intro nn_integral_monotone_convergence_SUP inc) measurable
+  also have "\<dots> \<le> ennreal (4 * (\<integral>\<omega>. (Y u \<omega>)\<^sup>2 \<partial>M))"
+  proof (intro SUP_least)
+    fix n
+    have "(\<integral>\<^sup>+\<omega>. ennreal ((gsup n \<omega>)\<^sup>2) \<partial>M)
+        = ennreal (\<integral>\<omega>. (gsup n \<omega>)\<^sup>2 \<partial>M)"
+      by (intro nn_integral_eq_integral gsup_sq_integrable AE_I2) simp
+    also have "\<dots> \<le> ennreal (4 * (\<integral>\<omega>. (Y u \<omega>)\<^sup>2 \<partial>M))"
+      using gsup_L2 by (rule ennreal_leI)
+    finally show "(\<integral>\<^sup>+\<omega>. ennreal ((gsup n \<omega>)\<^sup>2) \<partial>M)
+        \<le> ennreal (4 * (\<integral>\<omega>. (Y u \<omega>)\<^sup>2 \<partial>M))" .
+  qed
+  finally show ?thesis .
+qed
+
+lemma Dsup_sq_integrable: "integrable M (\<lambda>\<omega>. (Dsup \<omega>)\<^sup>2)"
+proof (rule integrableI_nonneg)
+  show "(\<lambda>\<omega>. (Dsup \<omega>)\<^sup>2) \<in> borel_measurable M"
+    by measurable
+  show "AE \<omega> in M. 0 \<le> (Dsup \<omega>)\<^sup>2"
+    by (intro AE_I2) simp
+  have "(\<integral>\<^sup>+\<omega>. ennreal ((Dsup \<omega>)\<^sup>2) \<partial>M)
+      = (\<integral>\<^sup>+\<omega>. (esup \<omega>)\<^sup>2 \<partial>M)"
+    using Dsup_eq_AE
+    by (intro nn_integral_cong_AE)
+      (auto simp: ennreal_power[symmetric] Dsup_nonneg)
+  also have "\<dots> \<le> ennreal (4 * (\<integral>\<omega>. (Y u \<omega>)\<^sup>2 \<partial>M))"
+    by (rule esup_sq_nn_integral_le)
+  also have "\<dots> < \<infinity>"
+    by simp
+  finally show "(\<integral>\<^sup>+\<omega>. ennreal ((Dsup \<omega>)\<^sup>2) \<partial>M) < \<infinity>" .
+qed
+
 end
 
 end

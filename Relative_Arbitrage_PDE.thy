@@ -28,7 +28,9 @@
       admissible and attain the bound;
     * Example 3.1 (Eq. 3.9): on the ball B_r(0) the function
         v(x) = max (r^2 - |x|^2) 0 / (n - k)
-      satisfies F(grad v(x), Hess v(x)) = 1 for x in the open ball, x /= 0,
+      satisfies F(grad v(x), Hess v(x)) = 1 for every x in the open ball
+      (including the centre, where the gradient vanishes and the constraint
+      a p = 0 of Eq. 1.9 becomes vacuous),
       with v = 0 on the boundary; we also verify grad and Hess by
       differentiation;
     * the spectral theorem for real symmetric matrices (variational proof),
@@ -38,7 +40,8 @@
       Crandall-Ishii-Lions test-function formulation (no AFP entry covers
       viscosity solutions), together with first- and second-order
       conditions at interior minima, and the theorem that v is a viscosity
-      solution on the punctured open ball with zero boundary values -- the
+      solution on the whole open ball -- the interior of K in Definition
+      3.1 -- with zero boundary values: the
       solvability part of Theorem 1.1 for Example 3.1.
 
   The probabilistic side (Definition 1.1, the class of sufficiently
@@ -380,19 +383,39 @@ subsection \<open>Feasibility: projections onto \<open>(n-k)\<close>-dimensional
 
 lemma feasible_witness:
   fixes p :: "real^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and p: "p \<noteq> 0"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
   obtains a where "a \<in> feasible k L p" "trace a = real (CARD('n) - k)"
 proof -
   define H where "H = {y :: real^'n. p \<bullet> y = 0}"
   have subH: "subspace H"
     by (simp add: H_def subspace_hyperplane)
-  have dimH: "dim H = CARD('n) - 1"
-    using p by (simp add: H_def dim_hyperplane)
+  text \<open>For \<open>p = 0\<close> the \<open>hyperplane\<close> is all of \<open>\<real>\<^sup>n\<close>, so the dimension bound
+    holds without the nondegeneracy assumption; only the inequality is used.\<close>
+  have dimH: "CARD('n) - 1 \<le> dim H"
+  proof (cases "p = 0")
+    case True
+    then have "H = UNIV"
+      by (simp add: H_def)
+    then show ?thesis
+      by simp
+  next
+    case False
+    then show ?thesis
+      by (simp add: H_def dim_hyperplane)
+  qed
   obtain B where B: "B \<subseteq> H" "pairwise orthogonal B" "\<And>x. x \<in> B \<Longrightarrow> norm x = 1"
     "independent B" "card B = dim H" "span B = H"
     using orthonormal_basis_subspace[OF subH] by metis
   have "CARD('n) - k \<le> card B"
-    using k by (simp add: B(5) dimH)
+  proof -
+    have "CARD('n) - k \<le> CARD('n) - 1"
+      using k(1) by (rule diff_le_mono2)
+    also have "CARD('n) - 1 \<le> dim H"
+      by (rule dimH)
+    also have "dim H = card B"
+      by (rule B(5)[symmetric])
+    finally show ?thesis .
+  qed
   then obtain T where T: "T \<subseteq> B" "card T = CARD('n) - k" "finite T"
     by (rule obtain_subset_with_card_n)
   have onT: "onormal T"
@@ -508,14 +531,14 @@ qed
 
 theorem ell_op_eval:
   fixes p :: "real^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and p: "p \<noteq> 0"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
   shows "ell_op k L p (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) = 1"
 proof -
   define c where "c = real (CARD('n) - k)"
   have c_pos: "0 < c"
     using k by (simp add: c_def)
   obtain a0 where a0: "a0 \<in> feasible k L p" "trace a0 = c"
-    unfolding c_def using k L p by (rule feasible_witness)
+    unfolding c_def using k L by (rule feasible_witness)
   have a0_val: "- trace ((- (2 / c) *\<^sub>R mat 1) ** a0) / 2 = 1"
     unfolding neg_half_trace_ball_op[OF c_pos] using c_pos by (simp add: a0(2))
   have "ell_op k L p (- (2 / c) *\<^sub>R mat 1) = 1"
@@ -593,22 +616,21 @@ proof -
 qed
 
 text \<open>
-  Example 3.1: at every interior point \<open>x \<noteq> 0\<close> of the ball, the gradient and
-  Hessian of \<open>v\<close> satisfy the PDE \<open>F(\<nabla>v, \<nabla>\<^sup>2 v) = 1\<close> of Theorem 1.1.
+  Example 3.1: at every interior point of the ball --- including the centre,
+  where the gradient vanishes --- the gradient and Hessian of \<open>v\<close> satisfy the
+  PDE \<open>F(\<nabla>v, \<nabla>\<^sup>2 v) = 1\<close> of Theorem 1.1.  At \<open>p = 0\<close> the constraint \<open>a p = 0\<close>
+  of Eq. (1.9) is vacuous, so the feasible set is larger, but the value of the
+  infimum is unchanged: the trace bound \<open>tr a \<ge> n - k\<close> holds for every
+  feasible \<open>a\<close> and is attained by a rank-\<open>(n-k)\<close> projection, which is feasible
+  for \<open>p = 0\<close> as well.
 \<close>
 
 corollary ball_solves_pde:
   fixes x :: "real^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and x: "x \<noteq> 0"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
   shows "ell_op k L (- (2 / real (CARD('n) - k)) *\<^sub>R x)
                     (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) = 1"
-proof -
-  have "(2 :: real) / real (CARD('n) - k) \<noteq> 0"
-    using k by simp
-  with x have "- (2 / real (CARD('n) - k)) *\<^sub>R x \<noteq> (0 :: real^'n)"
-    by simp
-  from ell_op_eval[OF k L this] show ?thesis .
-qed
+  by (rule ell_op_eval[OF k L])
 
 section \<open>The spectral theorem for real symmetric matrices\<close>
 
@@ -1103,7 +1125,7 @@ qed
 
 lemma feasible_nonempty:
   fixes p :: "real^'n"
-  assumes "1 \<le> k" "k < CARD('n)" "1 \<le> L" "p \<noteq> 0"
+  assumes "1 \<le> k" "k < CARD('n)" "1 \<le> L"
   shows "feasible k L p \<noteq> {}"
   using feasible_witness[OF assms] by blast
 
@@ -1111,7 +1133,7 @@ subsection \<open>Perturbation bounds for the operator\<close>
 
 lemma ell_op_le_one_of_psd_diff:
   fixes p :: "real^'n" and H :: "real^'n^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and p: "p \<noteq> 0"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
     and Q: "psd (H - (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1))"
   shows "ell_op k L p H \<le> 1"
 proof -
@@ -1119,7 +1141,7 @@ proof -
   have c_pos: "0 < c"
     using k by (simp add: c_def)
   obtain a0 where a0: "a0 \<in> feasible k L p" "trace a0 = c"
-    unfolding c_def using k L p by (rule feasible_witness)
+    unfolding c_def using k L by (rule feasible_witness)
   have Qc: "psd (H - (- (2 / c) *\<^sub>R mat 1))"
     using Q by (simp add: c_def)
   have "- trace ((- (2 / c) *\<^sub>R mat 1 + (H - (- (2 / c) *\<^sub>R mat 1))) ** a0) / 2
@@ -1142,7 +1164,7 @@ qed
 
 lemma ell_op_ge_one_of_psd_diff:
   fixes p :: "real^'n" and H :: "real^'n^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and p: "p \<noteq> 0"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
     and Q: "psd ((- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) - H)"
   shows "1 \<le> ell_op k L p H"
 proof -
@@ -1168,7 +1190,7 @@ proof -
   show ?thesis
     unfolding ell_op_def
     by (intro cInf_greatest)
-      (use feasible_nonempty[OF k L p] per in auto)
+      (use feasible_nonempty[OF k L] per in auto)
 qed
 
 subsection \<open>Test functions and viscosity sub-/supersolutions\<close>
@@ -1424,18 +1446,17 @@ lemma quadratic_gradient:
 theorem ball_v_viscosity_subsol:
   fixes r :: real and k :: nat and L :: real
   assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
-  shows "visc_subsol k L (ball 0 r - {0}) (ball_v r k :: real^'n \<Rightarrow> real)"
+  shows "visc_subsol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
   unfolding visc_subsol_def
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume xO: "x \<in> ball 0 r - {0}"
+  assume xO: "x \<in> ball 0 r"
     and tf: "test_fun_at \<phi> g H x"
     and lmax: "\<exists>e>0. \<forall>y \<in> ball x e. ball_v r k y - \<phi> y \<le> ball_v r k x - \<phi> x"
   define c where "c = real (CARD('n) - k)"
   have c_pos: "0 < c"
     using k by (simp add: c_def)
-  from xO have xball: "x \<in> ball 0 r" and xnz: "x \<noteq> 0"
-    by auto
+  from xO have xball: "x \<in> ball 0 r" .
   from tf have symH: "transpose H = H"
     and hessH: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
     by (auto simp: test_fun_at_def)
@@ -1512,29 +1533,26 @@ proof (intro ballI allI impI)
     by (simp add: transpose_def vec_eq_iff mat_def symH')
   have Qpsd: "psd (H + (2 / c) *\<^sub>R mat 1)"
     using symQ quadform by (simp add: psd_def)
-  have pnz: "g x \<noteq> 0"
-    using xnz c_pos by (simp add: gx)
   have "psd (H - (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1))"
     using Qpsd by (simp add: c_def)
-  from ell_op_le_one_of_psd_diff[OF k L pnz this]
+  from ell_op_le_one_of_psd_diff[OF k L this]
   show "ell_op k L (g x) H \<le> 1" .
 qed
 
 theorem ball_v_viscosity_supersol:
   fixes r :: real and k :: nat and L :: real
   assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
-  shows "visc_supersol k L (ball 0 r - {0}) (ball_v r k :: real^'n \<Rightarrow> real)"
+  shows "visc_supersol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
   unfolding visc_supersol_def
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume xO: "x \<in> ball 0 r - {0}"
+  assume xO: "x \<in> ball 0 r"
     and tf: "test_fun_at \<phi> g H x"
     and lmin: "\<exists>e>0. \<forall>y \<in> ball x e. ball_v r k x - \<phi> x \<le> ball_v r k y - \<phi> y"
   define c where "c = real (CARD('n) - k)"
   have c_pos: "0 < c"
     using k by (simp add: c_def)
-  from xO have xball: "x \<in> ball 0 r" and xnz: "x \<noteq> 0"
-    by auto
+  from xO have xball: "x \<in> ball 0 r" .
   from tf have symH: "transpose H = H"
     and hessH: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
     by (auto simp: test_fun_at_def)
@@ -1612,11 +1630,9 @@ proof (intro ballI allI impI)
     by (simp add: transpose_def vec_eq_iff mat_def symH')
   have Qpsd: "psd ((- (2 / c) *\<^sub>R mat 1) - H)"
     using symQ quadform by (simp add: psd_def)
-  have pnz: "g x \<noteq> 0"
-    using xnz c_pos by (simp add: gx)
   have "psd ((- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) - H)"
     using Qpsd by (simp add: c_def)
-  from ell_op_ge_one_of_psd_diff[OF k L pnz this]
+  from ell_op_ge_one_of_psd_diff[OF k L this]
   show "1 \<le> ell_op k L (g x) H" .
 qed
 
@@ -1629,10 +1645,10 @@ text \<open>
 theorem ball_v_solves_pde_viscosity:
   fixes r :: real and k :: nat and L :: real
   assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
-  shows "visc_sol k L (ball 0 r - {0}) (ball_v r k :: real^'n \<Rightarrow> real)"
+  shows "visc_sol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
     and "\<And>x :: real^'n. norm x = r \<Longrightarrow> ball_v r k x = 0"
 proof -
-  show "visc_sol k L (ball 0 r - {0}) (ball_v r k :: real^'n \<Rightarrow> real)"
+  show "visc_sol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
     using ball_v_viscosity_subsol[OF assms] ball_v_viscosity_supersol[OF assms]
     by (simp add: visc_sol_def)
   show "\<And>x :: real^'n. norm x = r \<Longrightarrow> ball_v r k x = 0"
