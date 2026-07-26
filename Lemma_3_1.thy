@@ -1,0 +1,374 @@
+(*
+  Title:   Lemma_3_1.thy
+  Content: Eq. (3.4)-(3.6) of arXiv:2512.17702: the matrix M_p, the closed
+           formula (3.5) for F, and Lemma 3.1.
+
+  IMPORTS: this theory deliberately imports only Threshold_Chain (hence
+  Eigenvalues, Lemma_2_1_Exact, Relative_Arbitrage_Convexity,
+  Relative_Arbitrage_PDE) and NOT Envelopes.  ell_op and feasible already come
+  from Relative_Arbitrage_PDE, which the Eigenvalues chain reaches, so the only
+  thing the Envelopes side ever supplied here was `trace_conjugate` -- a
+  six-line trace identity, reproved locally below as `trace_conj`.
+
+  That matters for development, not just tidiness: PIDE cannot hold the
+  Envelopes chain and the Eigenvalues chain at the same time (it evicts one and
+  then queues forever), so a theory importing both can only be checked by a
+  batch build, with no per-command feedback.  With this import the whole of
+  Eq. (3.4)-(3.5) is PIDE-workable.  Only the final Eq. (3.6) statement, which
+  genuinely mentions F_* and F^*, needs the merged chain, and it lives in its
+  own theory.
+
+  Eq. (3.4) defines, for p /= 0,
+
+    M_p = (I - pp'/|p|^2) M (I - pp'/|p|^2) + min(lambda_(n)(M), 0) pp'/|p|^2
+
+  and M_0 = M.  Note this is an n x n MATRIX: no change of dimension is
+  involved.  The correction term in the p-direction is chosen so that this
+  eigenvalue sorts to the bottom of the spectrum of M_p, which is what makes
+  Eq. (3.5) a clean sum over i = 1..n.
+
+  The point of M_p is that it has the same trace pairing as M against every
+  feasible a (which is psd and annihilates p), so F(p, M) = F(p, M_p), while
+  M_p is diagonalisable in a way adapted to p.
+*)
+
+theory Lemma_3_1
+  imports Threshold_Chain
+begin
+
+section \<open>Elementary matrix algebra not already in the development\<close>
+
+text \<open>A local copy of \<open>trace_conjugate\<close> (Relative_Arbitrage_Uniqueness), so
+  that this theory need not import the Envelopes chain; see the header.\<close>
+
+lemma trace_conj:
+  fixes M Q a :: "real^'n::finite^'n"
+  shows "trace (M ** (transpose Q ** a ** Q)) = trace ((Q ** M ** transpose Q) ** a)"
+proof -
+  have "trace (M ** (transpose Q ** a ** Q))
+      = trace ((M ** transpose Q ** a) ** Q)"
+    by (simp add: matrix_mul_assoc)
+  also have "\<dots> = trace (Q ** (M ** transpose Q ** a))"
+    using trace_mul_sym[of "M ** transpose Q ** a" Q] by simp
+  also have "\<dots> = trace ((Q ** M ** transpose Q) ** a)"
+    by (simp add: matrix_mul_assoc)
+  finally show ?thesis .
+qed
+
+lemma matrix_vector_mult_diff:
+  fixes A B :: "real^'n::finite^'n"
+  shows "(A - B) *v x = A *v x - B *v x"
+proof -
+  have "((A - B) *v x) $ i = (A *v x) $ i - (B *v x) $ i" for i
+  proof -
+    have "((A - B) *v x) $ i = (\<Sum>j\<in>UNIV. (A $ i $ j - B $ i $ j) * x $ j)"
+      by (simp add: matrix_vector_mult_def)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j - B $ i $ j * x $ j)"
+      by (intro sum.cong refl) (simp add: left_diff_distrib)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j) - (\<Sum>j\<in>UNIV. B $ i $ j * x $ j)"
+      by (rule sum_subtractf)
+    also have "\<dots> = (A *v x) $ i - (B *v x) $ i"
+      by (simp add: matrix_vector_mult_def)
+    finally show ?thesis .
+  qed
+  then show ?thesis
+    by (simp add: vec_eq_iff)
+qed
+
+lemma transpose_diff_matrix: "transpose (A - B) = transpose A - transpose B"
+  by (simp add: transpose_def vec_eq_iff)
+
+lemma transpose_mat_one: "transpose (mat c :: real^'n::finite^'n) = mat c"
+  by (auto simp: transpose_def mat_def vec_eq_iff)
+
+lemma scaleR_matrix_matrix_left:
+  fixes A B :: "real^'n::finite^'n"
+  shows "(c *\<^sub>R A) ** B = c *\<^sub>R (A ** B)"
+proof -
+  have "((c *\<^sub>R A) ** B) $ i $ j = (c *\<^sub>R (A ** B)) $ i $ j" for i j
+  proof -
+    have "((c *\<^sub>R A) ** B) $ i $ j = (\<Sum>k\<in>UNIV. c * (A $ i $ k * B $ k $ j))"
+      by (simp add: matrix_matrix_mult_def mult.assoc)
+    also have "\<dots> = c * (\<Sum>k\<in>UNIV. A $ i $ k * B $ k $ j)"
+      by (rule sum_distrib_left[symmetric])
+    also have "\<dots> = (c *\<^sub>R (A ** B)) $ i $ j"
+      by (simp add: matrix_matrix_mult_def)
+    finally show ?thesis .
+  qed
+  then show ?thesis
+    by (simp add: vec_eq_iff)
+qed
+
+lemma trace_scaleR_matrix:
+  fixes A :: "real^'n::finite^'n"
+  shows "trace (c *\<^sub>R A) = c * trace A"
+  by (simp add: trace_def sum_distrib_left)
+
+section \<open>The rank-one projection onto \<open>span p\<close>\<close>
+
+definition rank1proj :: "real^'n::finite \<Rightarrow> real^'n^'n" where
+  "rank1proj p = outer_prod p p /\<^sub>R (p \<bullet> p)"
+
+lemma transpose_rank1proj: "transpose (rank1proj p) = rank1proj p"
+  by (simp add: rank1proj_def transpose_scaleR)
+
+text \<open>A symmetric \<open>a\<close> annihilating \<open>p\<close> also kills the range of the
+  projection, in both orders.\<close>
+
+lemma rank1proj_annihilates:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and ap: "a *v p = 0"
+  shows "rank1proj p *v (a *v x) = 0"
+proof -
+  have "p \<bullet> (a *v x) = x \<bullet> (a *v p)"
+    by (rule sym_inner_swap[OF sym])
+  also have "\<dots> = 0"
+    using ap by simp
+  finally have z: "p \<bullet> (a *v x) = 0" .
+  show ?thesis
+    by (simp add: rank1proj_def scaleR_matrix_vector_assoc[symmetric] z)
+qed
+
+lemma proj_perp_left:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and ap: "a *v p = 0"
+  shows "(mat 1 - rank1proj p) ** a = a"
+proof -
+  have "((mat 1 - rank1proj p) ** a) *v x = a *v x" for x
+  proof -
+    have "((mat 1 - rank1proj p) ** a) *v x
+        = (mat 1 - rank1proj p) *v (a *v x)"
+      by (simp add: matrix_vector_mul_assoc)
+    also have "\<dots> = a *v x - rank1proj p *v (a *v x)"
+      by (simp add: matrix_vector_mult_diff)
+    also have "\<dots> = a *v x"
+      by (simp add: rank1proj_annihilates[OF sym ap])
+    finally show ?thesis .
+  qed
+  then show ?thesis
+    unfolding matrix_eq by blast
+qed
+
+lemma symmetric_perp_proj:
+  "transpose (mat 1 - rank1proj p :: real^'n::finite^'n) = mat 1 - rank1proj p"
+  by (simp add: transpose_diff_matrix transpose_mat_one transpose_rank1proj)
+
+lemma proj_perp_right:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and ap: "a *v p = 0"
+  shows "a ** (mat 1 - rank1proj p) = a"
+proof -
+  have "transpose (a ** (mat 1 - rank1proj p))
+      = transpose (mat 1 - rank1proj p) ** transpose a"
+    by (rule matrix_transpose_mul)
+  also have "\<dots> = (mat 1 - rank1proj p) ** a"
+    by (simp add: symmetric_perp_proj sym)
+  also have "\<dots> = a"
+    by (rule proj_perp_left[OF sym ap])
+  finally have "transpose (a ** (mat 1 - rank1proj p)) = a" .
+  then have "transpose (transpose (a ** (mat 1 - rank1proj p))) = transpose a"
+    by simp
+  then show ?thesis
+    using sym by simp
+qed
+
+lemma trace_rank1proj_mult:
+  fixes a :: "real^'n::finite^'n"
+  assumes ap: "a *v p = 0"
+  shows "trace (rank1proj p ** a) = 0"
+proof -
+  have "trace (outer_prod p p ** a) = trace (a ** outer_prod p p)"
+    by (rule trace_mul_sym)
+  also have "\<dots> = trace (outer_prod (a *v p) p)"
+    by (simp add: mult_outer_prod)
+  also have "\<dots> = 0"
+    by (simp add: ap)
+  finally have z: "trace (outer_prod p p ** a) = 0" .
+  show ?thesis
+    by (simp add: rank1proj_def scaleR_matrix_matrix_left trace_scaleR_matrix z)
+qed
+
+section \<open>The matrix \<open>M\<^sub>p\<close> of Eq. (3.4)\<close>
+
+definition Mp :: "real^'n::finite \<Rightarrow> real^'n^'n \<Rightarrow> real^'n^'n" where
+  "Mp p M =
+     (if p = 0 then M
+      else (mat 1 - rank1proj p) ** M ** (mat 1 - rank1proj p)
+           + min (eigval CARD('n) M) 0 *\<^sub>R rank1proj p)"
+
+lemma Mp_zero [simp]: "Mp 0 M = M"
+  by (simp add: Mp_def)
+
+text \<open>\<open>p\<close> itself is an eigenvector of \<open>M\<^sub>p\<close>, with eigenvalue
+  \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close>: the conjugation kills it and the correction term
+  scales it.  This is the first half of the "sorts to the bottom of the
+  spectrum" claim after Eq. (3.4); the second half is the Poincare bound
+  \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close>, which is what still remains for Eq. (3.5).\<close>
+
+lemma matrix_vector_mult_add:
+  fixes A B :: "real^'n::finite^'n"
+  shows "(A + B) *v x = A *v x + B *v x"
+proof -
+  have "((A + B) *v x) $ i = (A *v x) $ i + (B *v x) $ i" for i
+  proof -
+    have "((A + B) *v x) $ i = (\<Sum>j\<in>UNIV. (A $ i $ j + B $ i $ j) * x $ j)"
+      by (simp add: matrix_vector_mult_def)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j + B $ i $ j * x $ j)"
+      by (intro sum.cong refl) (simp add: distrib_right)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j) + (\<Sum>j\<in>UNIV. B $ i $ j * x $ j)"
+      by (rule sum.distrib)
+    also have "\<dots> = (A *v x) $ i + (B *v x) $ i"
+      by (simp add: matrix_vector_mult_def)
+    finally show ?thesis .
+  qed
+  then show ?thesis
+    by (simp add: vec_eq_iff)
+qed
+
+lemma rank1proj_apply_self:
+  fixes p :: "real^'n::finite"
+  assumes p: "p \<noteq> 0"
+  shows "rank1proj p *v p = p"
+proof -
+  have nz: "p \<bullet> p \<noteq> 0"
+    using p by simp
+  have mv: "outer_prod p p *v p = (p \<bullet> p) *\<^sub>R p"
+    by (rule outer_prod_mv)
+  have "rank1proj p *v p = inverse (p \<bullet> p) *\<^sub>R (outer_prod p p *v p)"
+    unfolding rank1proj_def by (rule scaleR_matrix_vector_assoc[symmetric])
+  also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R ((p \<bullet> p) *\<^sub>R p)"
+    unfolding mv by (rule refl)
+  also have "\<dots> = (inverse (p \<bullet> p) * (p \<bullet> p)) *\<^sub>R p"
+    by (rule scaleR_scaleR)
+  also have "\<dots> = p"
+    using nz by simp
+  finally show ?thesis .
+qed
+
+lemma Mp_apply_p:
+  fixes M :: "real^'n::finite^'n"
+  assumes p: "p \<noteq> 0"
+  shows "Mp p M *v p = min (eigval CARD('n) M) 0 *\<^sub>R p"
+proof -
+  define Q where "Q = (mat 1 - rank1proj p :: real^'n^'n)"
+  define c where "c = min (eigval CARD('n) M) 0"
+  have Qp: "Q *v p = 0"
+    unfolding Q_def
+    by (simp add: matrix_vector_mult_diff rank1proj_apply_self[OF p])
+  have conj: "(Q ** M ** Q) *v p = 0"
+  proof -
+    have "(Q ** M ** Q) *v p = Q *v (M *v (Q *v p))"
+      by (simp add: matrix_vector_mul_assoc matrix_mul_assoc)
+    also have "\<dots> = 0"
+      by (simp add: Qp)
+    finally show ?thesis .
+  qed
+  have corr: "(c *\<^sub>R rank1proj p) *v p = c *\<^sub>R p"
+    by (simp add: scaleR_matrix_vector_assoc[symmetric]
+        rank1proj_apply_self[OF p])
+  have MpQ: "Mp p M = Q ** M ** Q + c *\<^sub>R rank1proj p"
+    unfolding Mp_def Q_def c_def using p by simp
+  have "Mp p M *v p = (Q ** M ** Q) *v p + (c *\<^sub>R rank1proj p) *v p"
+    unfolding MpQ by (rule matrix_vector_mult_add)
+  also have "\<dots> = c *\<^sub>R p"
+    using conj corr by simp
+  finally show ?thesis
+    unfolding c_def .
+qed
+
+text \<open>Consequently \<open>M\<^sub>p\<close> is symmetric whenever \<open>M\<close> is, which every
+  eigenvalue lemma in Eigenvalues.thy requires as a hypothesis.\<close>
+
+lemma transpose_Mp:
+  fixes M :: "real^'n::finite^'n"
+  assumes sym: "transpose M = M"
+  shows "transpose (Mp p M) = Mp p M"
+proof (cases "p = 0")
+  case True
+  then show ?thesis using sym by simp
+next
+  case False
+  have symQ: "transpose (mat 1 - rank1proj p :: real^'n^'n) = mat 1 - rank1proj p"
+    by (rule symmetric_perp_proj)
+  have conj: "transpose ((mat 1 - rank1proj p) ** M ** (mat 1 - rank1proj p))
+      = (mat 1 - rank1proj p) ** M ** (mat 1 - rank1proj p)"
+    by (simp add: matrix_transpose_mul matrix_mul_assoc symQ sym)
+  have corr: "transpose (min (eigval CARD('n) M) 0 *\<^sub>R rank1proj p)
+      = min (eigval CARD('n) M) 0 *\<^sub>R rank1proj p"
+    by (simp add: transpose_scaleR transpose_rank1proj)
+  show ?thesis
+    unfolding Mp_def using False
+    by (simp add: transpose_add conj corr)
+qed
+
+text \<open>The defining property: \<open>M\<^sub>p\<close> pairs with every feasible \<open>a\<close> exactly as
+  \<open>M\<close> does.  Both summands are invisible: the conjugation because \<open>a\<close> is
+  supported on \<open>p\<^sup>\<bottom>\<close>, the correction term because
+  \<open>tr(p p\<^sup>\<top> a) = p \<bullet> (a p) = 0\<close>.  This is the sentence in the paper just
+  before Eq. (3.5).\<close>
+
+theorem trace_Mp:
+  fixes M a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and ap: "a *v p = 0"
+  shows "trace (Mp p M ** a) = trace (M ** a)"
+proof (cases "p = 0")
+  case True
+  then show ?thesis by simp
+next
+  case False
+  define Q where "Q = (mat 1 - rank1proj p :: real^'n^'n)"
+  define c where "c = min (eigval CARD('n) M) 0"
+  have symQ: "transpose Q = Q"
+    unfolding Q_def by (rule symmetric_perp_proj)
+  have MpQ: "Mp p M = Q ** M ** Q + c *\<^sub>R rank1proj p"
+    unfolding Mp_def Q_def c_def using False by simp
+  have QaQ: "Q ** a ** Q = a"
+  proof -
+    have "Q ** a = a"
+      unfolding Q_def by (rule proj_perp_left[OF sym ap])
+    then show ?thesis
+      unfolding Q_def by (simp add: proj_perp_right[OF sym ap])
+  qed
+  have conj: "trace ((Q ** M ** Q) ** a) = trace (M ** a)"
+  proof -
+    have "trace (M ** (transpose Q ** a ** Q)) = trace ((Q ** M ** transpose Q) ** a)"
+      by (rule trace_conj)
+    then have "trace (M ** (Q ** a ** Q)) = trace ((Q ** M ** Q) ** a)"
+      by (simp add: symQ)
+    then show ?thesis
+      by (simp add: QaQ)
+  qed
+  have corr: "trace ((c *\<^sub>R rank1proj p) ** a) = 0"
+    by (simp add: scaleR_matrix_matrix_left trace_scaleR_matrix
+        trace_rank1proj_mult[OF ap])
+  have "trace (Mp p M ** a)
+      = trace ((Q ** M ** Q) ** a) + trace ((c *\<^sub>R rank1proj p) ** a)"
+    unfolding MpQ by (simp add: matrix_add_rdistrib trace_add)
+  also have "\<dots> = trace (M ** a)"
+    using conj corr by simp
+  finally show ?thesis .
+qed
+
+text \<open>Hence \<open>F\<close> does not distinguish \<open>M\<close> from \<open>M\<^sub>p\<close>.\<close>
+
+corollary ell_op_Mp:
+  fixes M :: "real^'n::finite^'n"
+  shows "ell_op k L p (Mp p M) = ell_op k L p M"
+proof -
+  have "(\<lambda>a. - trace (Mp p M ** a) / 2) ` feasible k L p
+      = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
+  proof (rule image_cong[OF refl])
+    fix a :: "real^'n^'n"
+    assume a: "a \<in> feasible k L p"
+    have sym: "transpose a = a"
+      using a by (simp add: feasible_def psd_def)
+    have ap: "a *v p = 0"
+      using a by (simp add: feasible_def)
+    show "- trace (Mp p M ** a) / 2 = - trace (M ** a) / 2"
+      by (simp add: trace_Mp[OF sym ap])
+  qed
+  then show ?thesis
+    by (simp add: ell_op_def)
+qed
+
+end

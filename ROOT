@@ -11,3 +11,11 @@ session Arbitrage = "HOL-Probability" +
     Brownian_Optimal_Boundary
     Relative_Arbitrage_Ito
     Stochastic_Integral
+    Value_Function
+    Envelopes
+    Lemma_2_1_Exact
+    Eigenvalues
+    Eigenvalue_Continuity
+    Threshold_Chain
+    Lemma_3_1
+    Poincare_Separation
