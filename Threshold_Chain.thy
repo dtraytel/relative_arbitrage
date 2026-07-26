@@ -29,8 +29,16 @@
 *)
 
 theory Threshold_Chain
-  imports Eigenvalues
+  imports Eigenvalue_Continuity
 begin
+
+text \<open>The import is \<open>Eigenvalue_Continuity\<close> rather than \<open>Eigenvalues\<close> only to keep
+  the whole development a single LINEAR chain
+  \<open>Eigenvalues \<rightarrow> Eigenvalue_Continuity \<rightarrow> Threshold_Chain \<rightarrow> Lemma_3_1
+   \<rightarrow> Poincare_Separation\<close>,
+  so that the Lipschitz facts (\<open>entrysum\<close>, \<open>kyfan_lipschitz\<close>,
+  \<open>eigval_lipschitz\<close>) are available downstream without creating a diamond that
+  PIDE cannot load.  Nothing in this theory uses them.\<close>
 
 lemma threshold_shrink_one:
   fixes lam :: "'a \<Rightarrow> real"

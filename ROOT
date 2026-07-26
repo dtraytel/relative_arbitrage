@@ -19,3 +19,4 @@ session Arbitrage = "HOL-Probability" +
     Threshold_Chain
     Lemma_3_1
     Poincare_Separation
+    Lemma_3_1_Envelopes
