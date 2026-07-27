@@ -3686,4 +3686,92 @@ proof -
   qed
 qed
 
+section \<open>Towards Section 2: \<open>eigen_lb\<close> is an eigenvalue condition\<close>
+
+text \<open>\<open>eigen_lb a m\<close> is stated as an EXISTENTIAL over subspaces, which is the
+  wrong shape for a closedness argument.  It is equivalent to the single
+  inequality \<open>1 \<le> eigval m a\<close>, and \<open>eigval m\<close> is Lipschitz in \<open>a\<close>
+  (\<open>eigval_lipschitz\<close>), so in that form the condition is visibly closed.  This
+  is what Lemma 2.3's compactness requirement needs.
+
+  Both directions are already available: \<open>eigval_ge_of_eigen_lb\<close> gives
+  \<open>\<Longrightarrow>\<close>, and for \<open>\<Longleftarrow>\<close> the span of a top-\<open>m\<close> threshold set is a witnessing subspace,
+  on which \<open>quadform_ge_on_span_threshold\<close> bounds the Rayleigh quotient below by
+  \<open>eigval m a\<close>.\<close>
+
+theorem eigen_lb_iff_eigval_ge:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and m: "0 < m" "m \<le> CARD('n)"
+  shows "eigen_lb a m \<longleftrightarrow> 1 \<le> eigval m a"
+proof
+  assume "eigen_lb a m"
+  then show "1 \<le> eigval m a"
+    by (rule eigval_ge_of_eigen_lb[OF sym _ m(1) m(2)])
+next
+  assume ge: "1 \<le> eigval m a"
+  obtain B where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF sym] by metis
+  have finB: "finite B"
+    by (rule onormal_finite[OF B(1)])
+  have cardB: "card B = CARD('n)"
+    by (rule onormal_span_card[OF B])
+  have mB: "m \<le> card B"
+    using m(2) cardB by simp
+  obtain T where T: "T \<subseteq> B" "card T = m"
+    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T
+        \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)", OF finB mB]
+    by metis
+  have onT: "onormal T"
+    by (rule onormal_subset[OF B(1) T(1)])
+  show "eigen_lb a m"
+    unfolding eigen_lb_def
+  proof (intro exI[of _ "span T"] conjI)
+    show "subspace (span T)"
+      by (rule subspace_span)
+    show "m \<le> dim (span T)"
+      using onormal_card_dim_span[OF onT] T(2) by simp
+    show "\<forall>x \<in> span T. x \<bullet> x \<le> x \<bullet> (a *v x)"
+    proof (intro ballI)
+      fix x assume x: "x \<in> span T"
+      have nn: "0 \<le> x \<bullet> x"
+        by simp
+      have step1: "x \<bullet> x \<le> eigval m a * (x \<bullet> x)"
+      proof -
+        have "x \<bullet> x = 1 * (x \<bullet> x)"
+          by simp
+        also have "\<dots> \<le> eigval m a * (x \<bullet> x)"
+          using ge nn by (rule mult_right_mono)
+        finally show ?thesis .
+      qed
+      have step2: "eigval m a * (x \<bullet> x) \<le> x \<bullet> (a *v x)"
+        by (rule quadform_ge_on_span_threshold[OF B sym eig T(1) T(2) m(1) thresh x])
+      show "x \<bullet> x \<le> x \<bullet> (a *v x)"
+        using step1 step2 by simp
+    qed
+  qed
+qed
+
+text \<open>Restated as the membership condition on the feasible set, which is the
+  form Section 2 consumes.\<close>
+
+corollary feasible_iff_eigval:
+  fixes a :: "real^'n::finite^'n" and p :: "real^'n"
+  assumes k: "1 \<le> k" "k < CARD('n)"
+  shows "a \<in> feasible k L p \<longleftrightarrow>
+      psd a \<and> a *v p = 0 \<and> 1 \<le> eigval (CARD('n) - k) a
+      \<and> eigen_ub a L"
+proof -
+  have m0: "0 < CARD('n) - k"
+    using k(2) by simp
+  have mn: "CARD('n) - k \<le> CARD('n)"
+    by simp
+  have "psd a \<Longrightarrow> transpose a = a"
+    by (simp add: psd_def)
+  then show ?thesis
+    unfolding feasible_def
+    using eigen_lb_iff_eigval_ge[OF _ m0 mn] by blast
+qed
+
 end

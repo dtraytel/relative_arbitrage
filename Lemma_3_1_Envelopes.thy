@@ -640,73 +640,6 @@ proof -
     by (rule ell_op_strict_no_crossing[OF psd k(1) k(2) L sub])
 qed
 
-section \<open>Towards Section 2: the feasible set is entrywise bounded\<close>
-
-text \<open>Lemma 2.2 of the paper assumes the set \<open>S\<close> of admissible covariances is
-  BOUNDED.  For the paper's \<open>S\<close> that is a purely linear-algebraic fact, provable
-  here without any probability: \<open>psd a\<close> bounds the diagonal below by \<open>0\<close> and
-  \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form at the
-  coordinate vectors.\<close>
-
-lemma inner_axis_one:
-  fixes y :: "real^'n::finite"
-  shows "axis i (1 :: real) \<bullet> y = y $ i"
-  by (simp add: inner_axis')
-
-lemma matrix_vector_axis_one:
-  fixes a :: "real^'n::finite^'n"
-  shows "(a *v axis i (1 :: real)) $ l = a $ l $ i"
-proof -
-  have "(a *v axis i (1 :: real)) $ l
-      = (\<Sum>j\<in>UNIV. a $ l $ j * (if j = i then 1 else 0))"
-    unfolding matrix_vector_mult_def axis_def by simp
-  also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
-    by (intro sum.cong refl) simp
-  also have "\<dots> = a $ l $ i"
-    by simp
-  finally show ?thesis .
-qed
-
-lemma feasible_diag_bound:
-  fixes a :: "real^'n::finite^'n"
-  assumes af: "a \<in> feasible k L p"
-  shows "0 \<le> a $ i $ i" and "a $ i $ i \<le> L"
-proof -
-  have psda: "0 \<le> x \<bullet> (a *v x)" for x
-    using af by (simp add: feasible_def psd_def)
-  have ub: "x \<bullet> (a *v x) \<le> L * (x \<bullet> x)" for x
-    using af by (simp add: feasible_def eigen_ub_def)
-  have q: "axis i (1 :: real) \<bullet> (a *v axis i (1 :: real)) = a $ i $ i"
-    by (simp add: inner_axis_one matrix_vector_axis_one)
-  have nn: "axis i (1 :: real) \<bullet> axis i (1 :: real) = 1"
-    unfolding inner_axis_one by (simp add: axis_def)
-  show "0 \<le> a $ i $ i"
-    using psda[of "axis i 1"] q by simp
-  have "a $ i $ i \<le> L * (axis i (1 :: real) \<bullet> axis i (1 :: real))"
-    using ub[of "axis i 1"] q by simp
-  then show "a $ i $ i \<le> L"
-    unfolding nn by simp
-qed
-
-text \<open>Hence the trace is bounded on the feasible set, which is the quantitative
-  form Lemma 2.2's hypothesis is used in.\<close>
-
-corollary feasible_trace_bound:
-  fixes a :: "real^'n::finite^'n"
-  assumes af: "a \<in> feasible k L p"
-  shows "0 \<le> trace a" and "trace a \<le> real CARD('n) * L"
-proof -
-  show "0 \<le> trace a"
-    unfolding trace_def
-    by (intro sum_nonneg ballI) (rule feasible_diag_bound(1)[OF af])
-  have "trace a \<le> (\<Sum>i\<in>(UNIV :: 'n set). L)"
-    unfolding trace_def
-    by (intro sum_mono) (rule feasible_diag_bound(2)[OF af])
-  also have "\<dots> = real CARD('n) * L"
-    by simp
-  finally show "trace a \<le> real CARD('n) * L" .
-qed
-
 section \<open>Lemma 3.1, the clauses available so far\<close>
 
 text \<open>Collecting what is proved:
@@ -733,5 +666,126 @@ lemma ell_op_lsc_at_zero_eq:
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
   shows "ell_op_lsc k L (0 :: real^'n) M = ereal (ell_op k L (0 :: real^'n) M)"
   by (rule ell_op_lsc_at_zero[OF k L])
+
+
+section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
+
+text \<open>STATE OF THE CRANDALL-ISHII INPUT.  Theorem 4.2(a) of the paper (the
+  maximum principle: for a subsolution \<open>u\<close> and a supersolution \<open>w\<close>, \<open>u - w\<close>
+  attains its maximum over the compact \<open>K\<close> on the BOUNDARY) is proved there by
+  doubling the variables and applying the Crandall-Ishii "theorem on sums",
+  which the paper CITES as [CI90] rather than proving.
+
+  That theorem is not available:
+  \<^item> not in this development -- \<open>comparison_principle\<close>
+    (Relative_Arbitrage_Uniqueness.thy) merely ASSUMES the comparison principle
+    as a locale axiom, is never interpreted, and its single consumer takes it as
+    an explicit hypothesis; the unconditional ball result
+    \<open>ball_v_unique_solution_smooth\<close> deliberately avoids it;
+  \<^item> not in the AFP (nothing on viscosity solutions at all);
+  \<^item> and its analytic prerequisites are not in this HOL-Analysis either --
+    neither Alexandrov's theorem (a.e. twice differentiability of semiconvex
+    functions) nor a Rademacher-type result is present, so building it means
+    sup-convolutions -> semiconvexity -> Alexandrov/Jensen -> theorem on sums,
+    an independent development of its own.
+
+  So 4.2(a) is isolated as the predicate \<open>max_principle_boundary\<close> below and
+  everything downstream of it -- 4.2(b), Theorem 4.3, Proposition 4.1 -- is
+  proved from it UNCONDITIONALLY.  This localises the one genuine gap to a
+  single named interface instead of letting it leak.\<close>
+
+definition max_principle_boundary ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
+  where
+  "max_principle_boundary k L K \<longleftrightarrow>
+     (\<forall>u w. visc_subsol k L (interior K) u \<longrightarrow> visc_supersol k L (interior K) w
+        \<longrightarrow> (\<exists>x \<in> K - interior K.
+               \<forall>y \<in> K. u y - w y \<le> u x - w x))"
+
+text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and NONNEGATIVE boundary
+  data for \<open>w\<close>, the maximum principle gives \<open>u \<le> w\<close> on \<open>K\<close>.  This is the step
+  the paper obtains from (a), and it is pure bookkeeping once (a) is available.\<close>
+
+theorem max_principle_le:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes mp: "max_principle_boundary k L K"
+    and sub: "visc_subsol k L (interior K) u"
+    and sup: "visc_supersol k L (interior K) w"
+    and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
+    and wbd: "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 \<le> w y"
+  shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
+proof -
+  fix y assume y: "y \<in> K"
+  obtain x where x: "x \<in> K - interior K"
+    and mx: "\<And>z. z \<in> K \<Longrightarrow> u z - w z \<le> u x - w x"
+    using mp sub sup unfolding max_principle_boundary_def by blast
+  have "u x - w x \<le> 0"
+    using ubd[OF x] wbd[OF x] by simp
+  then have "u y - w y \<le> 0"
+    using mx[OF y] by simp
+  then show "u y \<le> w y"
+    by simp
+qed
+
+text \<open>Theorem 4.3 (comparison) in the form the paper uses it: a subsolution with
+  zero boundary data is dominated by a supersolution with zero boundary data.
+  Here \<open>w\<^sub>+\<close> of the paper is \<open>max (w y) 0\<close>, which has nonnegative boundary data
+  by construction and is still a supersolution wherever \<open>w\<close> is nonnegative --
+  so the hypothesis is carried explicitly rather than silently assumed.\<close>
+
+theorem comparison_from_max_principle:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes mp: "max_principle_boundary k L K"
+    and sub: "visc_subsol k L (interior K) u"
+    and sup: "visc_supersol k L (interior K) w"
+    and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
+    and wbd: "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
+  shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
+proof -
+  have wbd': "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 \<le> w y"
+    using wbd by simp
+  show "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
+    by (rule max_principle_le[OF mp sub sup ubd wbd'])
+qed
+
+text \<open>Proposition 4.1 (uniqueness): two viscosity solutions with the same
+  boundary data agree.  Applying the comparison step in both directions.  Note
+  this needs the maximum principle for \<open>K\<close> only, and nothing about the
+  \<open>T\<^sub>\<iota>\<close> family -- the transformations enter the paper's Theorem 4.3 to handle
+  boundary data that is merely SEMICONTINUOUS, which is not needed for the
+  equal-boundary-data statement.\<close>
+
+theorem uniqueness_from_max_principle:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes mp: "max_principle_boundary k L K"
+    and u: "visc_sol k L (interior K) u" and w: "visc_sol k L (interior K) w"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = 0"
+    and bd': "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
+  shows "\<And>y. y \<in> K \<Longrightarrow> u y = w y"
+proof -
+  fix y assume y: "y \<in> K"
+  have su: "visc_subsol k L (interior K) u" and pu: "visc_supersol k L (interior K) u"
+    using u by (auto simp: visc_sol_def)
+  have sw: "visc_subsol k L (interior K) w" and pw: "visc_supersol k L (interior K) w"
+    using w by (auto simp: visc_sol_def)
+  have le1: "u y \<le> w y"
+    by (rule comparison_from_max_principle[OF mp su pw _ bd' y]) (simp add: bd)
+  have le2: "w y \<le> u y"
+    by (rule comparison_from_max_principle[OF mp sw pu _ bd y]) (simp add: bd')
+  from le1 le2 show "u y = w y"
+    by simp
+qed
+
+text \<open>And the discharge obligation stated plainly: to remove the interface it
+  suffices to prove \<open>max_principle_boundary k L K\<close> for compact \<open>K\<close>, which is
+  Theorem 4.2(a).  Everything above then becomes unconditional.\<close>
+
+lemma max_principle_boundary_intro:
+  assumes "\<And>u w. visc_subsol k L (interior K) u
+      \<Longrightarrow> visc_supersol k L (interior K) w
+      \<Longrightarrow> \<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
+  shows "max_principle_boundary k L K"
+  unfolding max_principle_boundary_def using assms by blast
+
 
 end

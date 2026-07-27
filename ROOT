@@ -2,6 +2,8 @@ session Arbitrage = "HOL-Probability" +
   sessions
     Martingales
     Kolmogorov_Chentsov
+    Levy_Prokhorov_Metric
+    "HOL-Complex_Analysis"
   theories
     Stopped_Adaptedness
     Brownian_Stopped
@@ -20,3 +22,14 @@ session Arbitrage = "HOL-Probability" +
     Lemma_3_1
     Poincare_Separation
     Lemma_3_1_Envelopes
+    Section_2_Compactness
+    Vitali_Convergence
+    Measure_Continuity_Sets
+    Sampled_Martingale
+    Moment_Bounds
+    Stacking_Intervals
+    Sampled_Quadratic_Variation
+    Ito_Covariation
+    Stochastic_Integral_Simple
+    L2_Limits
+    Stochastic_Integral_L2

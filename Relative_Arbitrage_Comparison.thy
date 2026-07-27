@@ -438,4 +438,400 @@ corollary ball_v_visc_sol_exists:
     and "visc_sol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
   by (rule continuous_on_ball_v, rule ball_v_solves_pde_viscosity(1)[OF k L])
 
+section \<open>Section 4 for the ball, with no Crandall--Ishii input\<close>
+
+text \<open>Theorem 4.3 of the paper (comparison) and Proposition 4.1 (uniqueness) are
+  proved there for a general compact \<open>K\<close>, via Theorem 4.2(a), whose proof doubles
+  the variables and invokes the Crandall--Ishii theorem on sums -- cited in the
+  paper as [CI90] and NOT available in this development (see
+  \<open>max_principle_boundary\<close> in Lemma_3_1_Envelopes.thy for where that gap is
+  isolated).
+
+  For \<open>K\<close> a closed ball, however, the whole of Section 4's conclusion is
+  available UNCONDITIONALLY, because the explicit solution \<open>ball_v\<close> of Eq. (3.9)
+  can be interposed: a subsolution lies below it and a supersolution above it,
+  each by comparison with a strictly scaled copy of \<open>ball_v\<close> used as a test
+  function.  No doubling of variables occurs anywhere.
+
+  This is exactly the case Theorem 1.1 needs for Example 3.1.\<close>
+
+theorem comparison_ball:
+  fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
+    and cu: "continuous_on (cball 0 r) u"
+    and cw: "continuous_on (cball 0 r) w"
+    and sub: "visc_subsol k L (ball (0::real^'n) r) u"
+    and sup: "visc_supersol k L (ball (0::real^'n) r) w"
+    and bdu: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
+                \<Longrightarrow> u y \<le> ball_v r k y"
+    and bdw: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
+                \<Longrightarrow> ball_v r k y \<le> w y"
+    and x: "x \<in> ball (0::real^'n) r"
+  shows "u x \<le> w x"
+proof -
+  have "u x \<le> ball_v r k x"
+    by (rule visc_subsol_le_ball_v[OF k L r cu sub bdu x])
+  also have "\<dots> \<le> w x"
+    by (rule ball_v_le_visc_supersol[OF k L r cw sup bdw x])
+  finally show ?thesis .
+qed
+
+text \<open>Boundary data given as an ORDERED pair on the sphere, which is the form
+  Theorem 4.3 is stated in: \<open>u \<le> w\<close> on the sphere suffices, provided the common
+  value is that of \<open>ball_v\<close>.  Stated separately because it is the shape the
+  assembly of Theorem 1.1 will want.\<close>
+
+corollary comparison_ball_zero_boundary:
+  fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
+    and cu: "continuous_on (cball 0 r) u"
+    and cw: "continuous_on (cball 0 r) w"
+    and sub: "visc_subsol k L (ball (0::real^'n) r) u"
+    and sup: "visc_supersol k L (ball (0::real^'n) r) w"
+    and bd: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
+               \<Longrightarrow> u y \<le> ball_v r k y \<and> ball_v r k y \<le> w y"
+    and x: "x \<in> ball (0::real^'n) r"
+  shows "u x \<le> w x"
+proof -
+  have bdu: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
+      \<Longrightarrow> u y \<le> ball_v r k y"
+    using bd by blast
+  have bdw: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
+      \<Longrightarrow> ball_v r k y \<le> w y"
+    using bd by blast
+  show ?thesis
+    by (rule comparison_ball[OF k L r cu cw sub sup bdu bdw x])
+qed
+
+text \<open>Proposition 4.1 for the ball: two viscosity solutions agreeing with
+  \<open>ball_v\<close> on the sphere agree everywhere.  Both directions of
+  \<open>comparison_ball\<close>.\<close>
+
+corollary uniqueness_ball:
+  fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
+    and cu: "continuous_on (cball 0 r) u"
+    and cw: "continuous_on (cball 0 r) w"
+    and u: "visc_sol k L (ball (0::real^'n) r) u"
+    and w: "visc_sol k L (ball (0::real^'n) r) w"
+    and bdu: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
+                \<Longrightarrow> u y = ball_v r k y"
+    and bdw: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
+                \<Longrightarrow> w y = ball_v r k y"
+    and x: "x \<in> ball (0::real^'n) r"
+  shows "u x = w x"
+proof -
+  have su: "visc_subsol k L (ball (0::real^'n) r) u"
+    and pu: "visc_supersol k L (ball (0::real^'n) r) u"
+    using u by (auto simp: visc_sol_def)
+  have sw: "visc_subsol k L (ball (0::real^'n) r) w"
+    and pw: "visc_supersol k L (ball (0::real^'n) r) w"
+    using w by (auto simp: visc_sol_def)
+  have le1: "u x \<le> w x"
+    by (rule comparison_ball[OF k L r cu cw su pw _ _ x]) (simp_all add: bdu bdw)
+  have le2: "w x \<le> u x"
+    by (rule comparison_ball[OF k L r cw cu sw pu _ _ x]) (simp_all add: bdu bdw)
+  from le1 le2 show ?thesis
+    by simp
+qed
+
+section \<open>Theorem 4.2(a) when one function is smooth: no Crandall--Ishii\<close>
+
+text \<open>The mechanism of the ball argument, abstracted.  Theorem 4.2(a) of the
+  paper needs the Crandall--Ishii theorem on sums because BOTH \<open>u\<close> and \<open>w\<close> are
+  merely semicontinuous, so neither can serve as a test function for the other.
+  If, however, one of them is a SMOOTH STRICT supersolution, the maximum
+  principle is elementary: at an interior maximum of \<open>u - \<psi>\<close> the smooth \<open>\<psi>\<close> IS an
+  admissible test function, so the subsolution property forces
+  \<open>F(\<nabla>\<psi>, \<nabla>\<^sup>2\<psi>) \<le> 1\<close> there, contradicting strictness.  Hence the maximum sits on
+  the boundary.
+
+  This is the general form of what \<open>visc_subsol_le_ball_v\<close> does with
+  \<open>\<psi> = c \<cdot> ball_v\<close>, \<open>c > 1\<close>.  It applies on ANY compact \<open>K\<close> for which a smooth
+  strict supersolution is available, and needs nothing from Section 4's harder
+  half.  The gradient field is \<open>g\<close> and the Hessian field \<open>Hf\<close>, matching the shape
+  of \<open>test_fun_at\<close>.\<close>
+
+theorem visc_subsol_le_smooth_strict:
+  fixes u \<psi> :: "real^'n::finite \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and Hf :: "real^'n \<Rightarrow> real^'n^'n"
+  assumes cpt: "compact K" and Kne: "K \<noteq> {}"
+    and cu: "continuous_on K u" and cpsi: "continuous_on K \<psi>"
+    and sub: "visc_subsol k L (interior K) u"
+    and test: "\<And>z. z \<in> interior K \<Longrightarrow> test_fun_at \<psi> g (Hf z) z"
+    and strict: "\<And>z. z \<in> interior K \<Longrightarrow> 1 < ell_op k L (g z) (Hf z)"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> \<psi> y"
+    and x: "x \<in> K"
+  shows "u x \<le> \<psi> x"
+proof -
+  define \<Phi> where "\<Phi> = (\<lambda>y. u y - \<psi> y)"
+  have cont\<Phi>: "continuous_on K \<Phi>"
+    unfolding \<Phi>_def using cu cpsi by (intro continuous_intros)
+  obtain z where z: "z \<in> K" and zmax: "\<And>y. y \<in> K \<Longrightarrow> \<Phi> y \<le> \<Phi> z"
+    using continuous_attains_sup[OF cpt Kne cont\<Phi>] by blast
+  text \<open>The maximum cannot be interior: there \<open>\<psi>\<close> is a legitimate test function.\<close>
+  have zbd: "z \<in> K - interior K"
+  proof (rule ccontr)
+    assume "z \<notin> K - interior K"
+    then have zi: "z \<in> interior K"
+      using z by blast
+    obtain e where e: "0 < e" and eball: "ball z e \<subseteq> K"
+      using zi unfolding mem_interior by blast
+    have loc: "\<exists>e>0. \<forall>y \<in> ball z e. u y - \<psi> y \<le> u z - \<psi> z"
+    proof (intro exI[of _ e] conjI e ballI)
+      fix y assume "y \<in> ball z e"
+      then have "y \<in> K" using eball by blast
+      then show "u y - \<psi> y \<le> u z - \<psi> z"
+        using zmax unfolding \<Phi>_def by simp
+    qed
+    have "ell_op k L (g z) (Hf z) \<le> 1"
+      using sub zi test[OF zi] loc unfolding visc_subsol_def by blast
+    moreover have "1 < ell_op k L (g z) (Hf z)"
+      by (rule strict[OF zi])
+    ultimately show False
+      by simp
+  qed
+  have "\<Phi> z \<le> 0"
+    unfolding \<Phi>_def using bd[OF zbd] by simp
+  then have "\<Phi> x \<le> 0"
+    using zmax[OF x] by simp
+  then show ?thesis
+    unfolding \<Phi>_def by simp
+qed
+
+text \<open>The dual statement, for a smooth STRICT subsolution below a
+  supersolution.\<close>
+
+theorem smooth_strict_le_visc_supersol:
+  fixes w \<psi> :: "real^'n::finite \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and Hf :: "real^'n \<Rightarrow> real^'n^'n"
+  assumes cpt: "compact K" and Kne: "K \<noteq> {}"
+    and cw: "continuous_on K w" and cpsi: "continuous_on K \<psi>"
+    and sup: "visc_supersol k L (interior K) w"
+    and test: "\<And>z. z \<in> interior K \<Longrightarrow> test_fun_at \<psi> g (Hf z) z"
+    and strict: "\<And>z. z \<in> interior K \<Longrightarrow> ell_op k L (g z) (Hf z) < 1"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> \<psi> y \<le> w y"
+    and x: "x \<in> K"
+  shows "\<psi> x \<le> w x"
+proof -
+  define \<Phi> where "\<Phi> = (\<lambda>y. w y - \<psi> y)"
+  have cont\<Phi>: "continuous_on K \<Phi>"
+    unfolding \<Phi>_def using cw cpsi by (intro continuous_intros)
+  obtain z where z: "z \<in> K" and zmin: "\<And>y. y \<in> K \<Longrightarrow> \<Phi> z \<le> \<Phi> y"
+    using continuous_attains_inf[OF cpt Kne cont\<Phi>] by blast
+  have zbd: "z \<in> K - interior K"
+  proof (rule ccontr)
+    assume "z \<notin> K - interior K"
+    then have zi: "z \<in> interior K"
+      using z by blast
+    obtain e where e: "0 < e" and eball: "ball z e \<subseteq> K"
+      using zi unfolding mem_interior by blast
+    have loc: "\<exists>e>0. \<forall>y \<in> ball z e. w z - \<psi> z \<le> w y - \<psi> y"
+    proof (intro exI[of _ e] conjI e ballI)
+      fix y assume "y \<in> ball z e"
+      then have "y \<in> K" using eball by blast
+      then show "w z - \<psi> z \<le> w y - \<psi> y"
+        using zmin unfolding \<Phi>_def by simp
+    qed
+    have "1 \<le> ell_op k L (g z) (Hf z)"
+      using sup zi test[OF zi] loc unfolding visc_supersol_def by blast
+    moreover have "ell_op k L (g z) (Hf z) < 1"
+      by (rule strict[OF zi])
+    ultimately show False
+      by simp
+  qed
+  have "0 \<le> \<Phi> z"
+    unfolding \<Phi>_def using bd[OF zbd] by simp
+  then have "0 \<le> \<Phi> x"
+    using zmin[OF x] by simp
+  then show ?thesis
+    unfolding \<Phi>_def by simp
+qed
+
+section \<open>Towards Section 2: the feasible set is entrywise bounded\<close>
+
+text \<open>Lemma 2.2 of the paper assumes the set \<open>S\<close> of admissible covariances is
+  BOUNDED.  For the paper's \<open>S\<close> that is a purely linear-algebraic fact, provable
+  here without any probability: \<open>psd a\<close> bounds the diagonal below by \<open>0\<close> and
+  \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form at the
+  coordinate vectors.\<close>
+
+lemma inner_axis_one:
+  fixes y :: "real^'n::finite"
+  shows "axis i (1 :: real) \<bullet> y = y $ i"
+  by (simp add: inner_axis')
+
+lemma matrix_vector_axis_one:
+  fixes a :: "real^'n::finite^'n"
+  shows "(a *v axis i (1 :: real)) $ l = a $ l $ i"
+proof -
+  have "(a *v axis i (1 :: real)) $ l
+      = (\<Sum>j\<in>UNIV. a $ l $ j * (if j = i then 1 else 0))"
+    unfolding matrix_vector_mult_def axis_def by simp
+  also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
+    by (intro sum.cong refl) simp
+  also have "\<dots> = a $ l $ i"
+    by simp
+  finally show ?thesis .
+qed
+
+lemma feasible_diag_bound:
+  fixes a :: "real^'n::finite^'n"
+  assumes af: "a \<in> feasible k L p"
+  shows "0 \<le> a $ i $ i" and "a $ i $ i \<le> L"
+proof -
+  have psda: "0 \<le> x \<bullet> (a *v x)" for x
+    using af by (simp add: feasible_def psd_def)
+  have ub: "x \<bullet> (a *v x) \<le> L * (x \<bullet> x)" for x
+    using af by (simp add: feasible_def eigen_ub_def)
+  have q: "axis i (1 :: real) \<bullet> (a *v axis i (1 :: real)) = a $ i $ i"
+    by (simp add: inner_axis_one matrix_vector_axis_one)
+  have nn: "axis i (1 :: real) \<bullet> axis i (1 :: real) = 1"
+    unfolding inner_axis_one by (simp add: axis_def)
+  show "0 \<le> a $ i $ i"
+    using psda[of "axis i 1"] q by simp
+  have "a $ i $ i \<le> L * (axis i (1 :: real) \<bullet> axis i (1 :: real))"
+    using ub[of "axis i 1"] q by simp
+  then show "a $ i $ i \<le> L"
+    unfolding nn by simp
+qed
+
+text \<open>Hence the trace is bounded on the feasible set, which is the quantitative
+  form Lemma 2.2's hypothesis is used in.\<close>
+
+corollary feasible_trace_bound:
+  fixes a :: "real^'n::finite^'n"
+  assumes af: "a \<in> feasible k L p"
+  shows "0 \<le> trace a" and "trace a \<le> real CARD('n) * L"
+proof -
+  show "0 \<le> trace a"
+    unfolding trace_def
+    by (intro sum_nonneg ballI) (rule feasible_diag_bound(1)[OF af])
+  have "trace a \<le> (\<Sum>i\<in>(UNIV :: 'n set). L)"
+    unfolding trace_def
+    by (intro sum_mono) (rule feasible_diag_bound(2)[OF af])
+  also have "\<dots> = real CARD('n) * L"
+    by simp
+  finally show "trace a \<le> real CARD('n) * L" .
+qed
+
+
+text \<open>The off-diagonal entries are bounded too.  Testing the psd quadratic form
+  at \<open>axis i 1 \<plusminus> axis j 1\<close> gives \<open>a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<plusminus> 2 a\<^sub>i\<^sub>j \<ge> 0\<close>, i.e.
+  \<open>2 \<bar>a\<^sub>i\<^sub>j\<bar> \<le> a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<le> 2 L\<close>.  (For \<open>i = j\<close> the same bound is the diagonal
+  one.)\<close>
+
+lemma quadform_axis_pair:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a"
+  shows "(axis i (1::real) + axis j 1) \<bullet> (a *v (axis i (1::real) + axis j 1))
+       = a $ i $ i + a $ j $ j + 2 * a $ i $ j"
+proof -
+  have aji: "a $ j $ i = a $ i $ j"
+    by (metis sym transpose_def vec_lambda_beta)
+  have mv: "(a *v (axis i (1::real) + axis j 1))
+      = (a *v axis i (1::real)) + (a *v axis j 1)"
+    by (simp add: matrix_vector_right_distrib)
+  have "(axis i (1::real) + axis j 1) \<bullet> (a *v (axis i (1::real) + axis j 1))
+      = (a *v axis i (1::real)) $ i + (a *v axis j (1::real)) $ i
+        + ((a *v axis i (1::real)) $ j + (a *v axis j (1::real)) $ j)"
+    unfolding mv by (simp add: inner_add_left inner_axis_one)
+  also have "\<dots> = a $ i $ i + a $ i $ j + (a $ j $ i + a $ j $ j)"
+    by (simp add: matrix_vector_axis_one)
+  also have "\<dots> = a $ i $ i + a $ j $ j + 2 * a $ i $ j"
+    unfolding aji by simp
+  finally show ?thesis .
+qed
+
+lemma matrix_vector_mult_vec_diff:
+  fixes a :: "real^'n::finite^'n"
+  shows "a *v (x - y) = a *v x - a *v y"
+  by (simp add: matrix_vector_mult_def vec_eq_iff right_diff_distrib sum_subtractf)
+
+lemma quadform_axis_pair_minus:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a"
+  shows "(axis i (1::real) - axis j 1) \<bullet> (a *v (axis i (1::real) - axis j 1))
+       = a $ i $ i + a $ j $ j - 2 * a $ i $ j"
+proof -
+  have aji: "a $ j $ i = a $ i $ j"
+    by (metis sym transpose_def vec_lambda_beta)
+  have mv: "(a *v (axis i (1::real) - axis j 1))
+      = (a *v axis i (1::real)) - (a *v axis j 1)"
+    by (rule matrix_vector_mult_vec_diff)
+  have "(axis i (1::real) - axis j 1) \<bullet> (a *v (axis i (1::real) - axis j 1))
+      = (a *v axis i (1::real)) $ i - (a *v axis j (1::real)) $ i
+        - ((a *v axis i (1::real)) $ j - (a *v axis j (1::real)) $ j)"
+    unfolding mv by (simp add: inner_diff_left inner_axis_one)
+  also have "\<dots> = a $ i $ i - a $ i $ j - (a $ j $ i - a $ j $ j)"
+    by (simp add: matrix_vector_axis_one)
+  also have "\<dots> = a $ i $ i + a $ j $ j - 2 * a $ i $ j"
+    unfolding aji by simp
+  finally show ?thesis .
+qed
+
+lemma feasible_offdiag_abs_le:
+  fixes a :: "real^'n::finite^'n"
+  assumes af: "a \<in> feasible k L p"
+  shows "\<bar>a $ i $ j\<bar> \<le> L"
+proof -
+  have sym: "transpose a = a"
+    using af by (simp add: feasible_def psd_def)
+  have psda: "0 \<le> x \<bullet> (a *v x)" for x
+    using af by (simp add: feasible_def psd_def)
+  have dii: "a $ i $ i \<le> L" and djj: "a $ j $ j \<le> L"
+    by (rule feasible_diag_bound(2)[OF af])+
+  have plus: "0 \<le> a $ i $ i + a $ j $ j + 2 * a $ i $ j"
+    using psda[of "axis i 1 + axis j 1"]
+    unfolding quadform_axis_pair[OF sym] .
+  have minus: "0 \<le> a $ i $ i + a $ j $ j - 2 * a $ i $ j"
+    using psda[of "axis i 1 - axis j 1"]
+    unfolding quadform_axis_pair_minus[OF sym] .
+  have "2 * \<bar>a $ i $ j\<bar> \<le> a $ i $ i + a $ j $ j"
+    using plus minus by (simp add: abs_le_iff)
+  also have "\<dots> \<le> 2 * L"
+    using dii djj by simp
+  finally show ?thesis
+    by simp
+qed
+
+text \<open>Hence Lemma 2.2's hypothesis: the feasible set is BOUNDED.  Combined with
+  the Frobenius entry bound this is the quantitative statement the compactness
+  argument of Section 2 consumes.\<close>
+
+theorem feasible_bounded:
+  fixes p :: "real^'n::finite"
+  assumes L: "0 \<le> L"
+  shows "bounded (feasible k L p :: (real^'n^'n) set)"
+proof (rule boundedI)
+  fix a :: "real^'n^'n"
+  assume af: "a \<in> feasible k L p"
+  have entry: "\<bar>a $ i $ j\<bar> \<le> L" for i j
+    by (rule feasible_offdiag_abs_le[OF af])
+  have sq: "a \<bullet> a \<le> (real CARD('n) * L)^2"
+  proof -
+    have "a \<bullet> a = (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). a $ i $ j * a $ i $ j)"
+      unfolding inner_vec_def by simp
+    also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). L * L)"
+    proof (intro sum_mono)
+      fix i j :: 'n
+      have "a $ i $ j * a $ i $ j = \<bar>a $ i $ j\<bar> * \<bar>a $ i $ j\<bar>"
+        by (simp add: abs_mult[symmetric])
+      also have "\<dots> \<le> L * L"
+        using entry[of i j] by (intro mult_mono) auto
+      finally show "a $ i $ j * a $ i $ j \<le> L * L" .
+    qed
+    also have "\<dots> = (real CARD('n) * L)^2"
+      by (simp add: power2_eq_square algebra_simps)
+    finally show ?thesis .
+  qed
+  have "norm a = sqrt (a \<bullet> a)"
+    by (simp add: norm_eq_sqrt_inner)
+  also have "\<dots> \<le> sqrt ((real CARD('n) * L)^2)"
+    using sq by (rule real_sqrt_le_mono)
+  also have "\<dots> = real CARD('n) * L"
+    using L by simp
+  finally show "norm a \<le> real CARD('n) * L" .
+qed
+
 end
