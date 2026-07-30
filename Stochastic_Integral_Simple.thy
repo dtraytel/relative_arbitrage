@@ -223,8 +223,87 @@ proof -
   thus ?thesis by (simp add: qv)
 qed
 
-subsection \<open>Linearity, and the isometry in difference form\<close>
+subsection \<open>The compensated square as a simple integral, exactly\<close>
 
+text \<open>
+  This is the algebraic heart of "the compensated square is a stochastic integral",
+  and it is an EXACT identity along any partition -- no limit is taken. Writing
+  \<open>Y k = X (t k) - X (t 0)\<close> and telescoping, the compensated square equals the
+  simple integral of \<open>2 Y\<close> against \<open>X\<close> PLUS the accumulated discrepancy between the
+  squared increments of \<open>X\<close> and the increments of the compensator \<open>A\<close>.
+
+  This localises exactly what is missing for Eq. (2.7) of arXiv:2512.17702: the
+  FIRST term is a simple integral, to which the isometry applies and whose
+  contribution is controlled by @{text increment_second_moment_bound}; the SECOND
+  term is what has to vanish as the mesh goes to zero, and it is the term whose
+  second moment involves a FOURTH moment of the increments -- which is why no
+  fixed-partition argument can close the gap. See STATUS.md 25f.
+
+  Note @{term A} is arbitrary: the identity is pure algebra and uses no property of
+  either process.
+\<close>
+
+lemma compensated_square_decomposition:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and t :: "nat \<Rightarrow> real"
+  shows "(X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 - (A (t n) \<omega> - A (t 0) \<omega>)
+           = simple_itg (\<lambda>k \<omega>. 2 * (X (t k) \<omega> - X (t 0) \<omega>)) X t n \<omega>
+             + (\<Sum>k<n. ((X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2
+                         - (A (t (Suc k)) \<omega> - A (t k) \<omega>)))"
+proof (induction n)
+  case 0
+  show ?case by simp
+next
+  case (Suc n)
+  have sq: "(X (t (Suc n)) \<omega> - X (t 0) \<omega>)\<^sup>2
+          = (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+            + 2 * (X (t n) \<omega> - X (t 0) \<omega>) * (X (t (Suc n)) \<omega> - X (t n) \<omega>)
+            + (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2"
+    by (simp add: power2_eq_square algebra_simps)
+  show ?case
+    using Suc.IH by (simp add: sq simple_itg_Suc algebra_simps)
+qed
+
+subsection \<open>The isometry in process form\<close>
+text \<open>
+  The isometry also holds as a statement about PROCESSES, not just expectations:
+  the compensator of the square of the integral is the integral of \<open>H\<^sup>2\<close> against the
+  squared increments. This is the form that
+  \<open>quadratic variation of (integral H dX) = integral of H\<^sup>2 against d[X]\<close>
+  takes for a simple integrand.
+\<close>
+
+theorem ito_isometry_process:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and t :: "nat \<Rightarrow> real"
+  assumes X: "martingale M F (0::real) X"
+    and t0: "\<And>k. 0 \<le> t k" and tmono: "mono t"
+    and sq: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. (X u \<omega>)\<^sup>2)"
+    and H_meas: "\<And>k. H k \<in> borel_measurable (F (t k))"
+    and H_sq: "\<And>k. integrable M (\<lambda>\<omega>. (H k \<omega>)\<^sup>2)"
+    and H_bdd: "\<And>k \<omega>. \<bar>H k \<omega>\<bar> \<le> B"
+  shows "martingale M (\<lambda>k. F (t k)) 0
+           (\<lambda>n \<omega>. (simple_itg H X t n \<omega>)\<^sup>2
+                    - (\<Sum>k<n. (H k \<omega>)\<^sup>2
+                              * (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2))"
+proof -
+  interpret I: sq_int_martingale M "\<lambda>k. F (t k)" "simple_itg H X t"
+  proof (intro sq_int_martingale.intro sq_int_martingale_axioms.intro)
+    show "nat_sigma_finite_filtered_measure M (\<lambda>k. F (t k))"
+      by (rule nat_filtered_of_sampled[OF X t0 tmono])
+    show "martingale M (\<lambda>k. F (t k)) 0 (simple_itg H X t)"
+      by (rule martingale_simple_itg[OF X t0 tmono sq H_meas H_sq])
+    show "integrable M (\<lambda>\<omega>. (simple_itg H X t m \<omega>)\<^sup>2)" for m
+      by (rule simple_itg_sq_integrable[OF X t0 tmono sq H_meas H_sq H_bdd])
+  qed
+  have qv: "qvar (simple_itg H X t) m \<omega>
+      = (\<Sum>k<m. (H k \<omega>)\<^sup>2 * (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2)" for m \<omega>
+    by (simp add: qvar_def simple_itg_Suc power_mult_distrib)
+  have "martingale M (\<lambda>k. F (t k)) 0
+      (\<lambda>n \<omega>. (simple_itg H X t n \<omega>)\<^sup>2 - qvar (simple_itg H X t) n \<omega>)"
+    by (rule I.qvar_compensates)
+  thus ?thesis by (simp add: qv)
+qed
+
+subsection \<open>Linearity, and the isometry in difference form\<close>
 text \<open>
   The integral is linear in the integrand, so the isometry applies to a DIFFERENCE
   of integrands. That is the form the \<open>L\<^sup>2\<close> extension uses: it says the map

@@ -3774,4 +3774,129 @@ proof -
     using eigen_lb_iff_eigval_ge[OF _ m0 mn] by blast
 qed
 
+section \<open>Closedness of the feasible set\<close>
+
+text \<open>
+  The deterministic core of Lemma 2.3's closedness step (STATUS.md, task 25
+  phase B3): the feasible set of Eq. (1.9) is CLOSED. Three of its four
+  defining conditions are universally quantified continuous inequalities and
+  are closed outright; the eigenvalue lower bound is an EXISTENTIAL over
+  subspaces, and closedness comes through \<open>feasible_iff_eigval\<close>, which trades
+  it for \<open>1 \<le> eigval (n-k) a\<close> — a condition on a function that is Lipschitz
+  on the (closed) set of symmetric matrices by \<open>eigval_lipschitz\<close>.
+  Combined with boundedness (\<open>feasible_bounded\<close>,
+  Relative\_Arbitrage\_Comparison) this gives compactness of the constraint
+  set, which is what the closedness of the admissible covariation constraint
+  under weak limits rests on.
+\<close>
+
+lemma continuous_on_matrix_entry:
+  "continuous_on UNIV (\<lambda>a :: real^'n::finite^'n. a $ i $ j)"
+  by (intro continuous_on_component continuous_on_id)
+
+lemma continuous_on_quadform:
+  fixes x :: "real^'n::finite"
+  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. x \<bullet> (a *v x))"
+proof -
+  have eq: "x \<bullet> (a *v x) = (\<Sum>i\<in>UNIV. x $ i * (\<Sum>j\<in>UNIV. a $ i $ j * x $ j))"
+    for a :: "real^'n^'n"
+    unfolding inner_vec_def matrix_vector_mult_def by simp
+  show ?thesis
+    unfolding eq
+    by (intro continuous_intros continuous_on_matrix_entry)
+qed
+
+lemma closed_symmetric_matrices:
+  "closed {a :: real^'n::finite^'n. transpose a = a}"
+proof -
+  have eq: "{a :: real^'n^'n. transpose a = a}
+      = (\<Inter>i. \<Inter>j. {a. a $ j $ i = a $ i $ j})"
+    unfolding transpose_def vec_eq_iff by auto
+  have "closed {a :: real^'n^'n. a $ j $ i = a $ i $ j}" for i j
+    by (intro closed_Collect_eq continuous_on_matrix_entry)
+  thus ?thesis unfolding eq by (intro closed_INT) auto
+qed
+
+lemma closed_psd: "closed {a :: real^'n::finite^'n. psd a}"
+proof -
+  have eq: "{a :: real^'n^'n. psd a}
+      = {a. transpose a = a} \<inter> (\<Inter>x. {a. 0 \<le> x \<bullet> (a *v x)})"
+    unfolding psd_def by auto
+  have "closed {a :: real^'n^'n. 0 \<le> x \<bullet> (a *v x)}" for x
+    by (intro closed_Collect_le continuous_on_quadform continuous_on_const)
+  thus ?thesis
+    unfolding eq
+    by (intro closed_Int closed_symmetric_matrices closed_INT) auto
+qed
+
+lemma closed_annihilator:
+  fixes p :: "real^'n::finite"
+  shows "closed {a :: real^'n^'n. a *v p = 0}"
+proof -
+  have eq: "{a :: real^'n^'n. a *v p = 0}
+      = (\<Inter>i. {a. (\<Sum>j\<in>UNIV. a $ i $ j * p $ j) = 0})"
+    unfolding matrix_vector_mult_def vec_eq_iff by auto
+  have "closed {a :: real^'n^'n. (\<Sum>j\<in>UNIV. a $ i $ j * p $ j) = 0}" for i
+    by (intro closed_Collect_eq continuous_on_const continuous_intros
+          continuous_on_matrix_entry)
+  thus ?thesis unfolding eq by (intro closed_INT) auto
+qed
+
+lemma closed_eigen_ub:
+  "closed {a :: real^'n::finite^'n. eigen_ub a L}"
+proof -
+  have eq: "{a :: real^'n^'n. eigen_ub a L}
+      = (\<Inter>x. {a. x \<bullet> (a *v x) \<le> L * (x \<bullet> x)})"
+    unfolding eigen_ub_def by auto
+  have "closed {a :: real^'n^'n. x \<bullet> (a *v x) \<le> L * (x \<bullet> x)}" for x
+    by (intro closed_Collect_le continuous_on_quadform continuous_on_const)
+  thus ?thesis unfolding eq by (intro closed_INT) auto
+qed
+
+lemma eigval_continuous_on_sym:
+  assumes m: "m \<le> CARD('n)"
+  shows "continuous_on {a :: real^'n::finite^'n. transpose a = a} (eigval m)"
+proof -
+  define C where "C = 2 * real m * real (CARD('n) * CARD('n))"
+  have C0: "0 \<le> C" unfolding C_def by simp
+  have lip: "dist (eigval m A) (eigval m B) \<le> C * dist A B"
+    if A: "A \<in> {a :: real^'n^'n. transpose a = a}"
+      and B: "B \<in> {a :: real^'n^'n. transpose a = a}" for A B
+  proof -
+    have symA: "transpose A = A" and symB: "transpose B = B"
+      using A B by auto
+    have "\<bar>eigval m A - eigval m B\<bar> \<le> 2 * real m * entrysum (A - B)"
+      by (rule eigval_lipschitz[OF symA symB m])
+    also have "\<dots> \<le> 2 * real m * (real (CARD('n) * CARD('n)) * norm (A - B))"
+      by (intro mult_left_mono entrysum_le_norm) simp
+    also have "\<dots> = C * norm (A - B)"
+      unfolding C_def by simp
+    finally show ?thesis
+      by (simp add: dist_real_def dist_norm)
+  qed
+  have "C-lipschitz_on {a :: real^'n^'n. transpose a = a} (eigval m)"
+    by (rule lipschitz_onI[OF lip C0])
+  thus ?thesis by (rule lipschitz_on_continuous_on)
+qed
+
+theorem closed_feasible:
+  fixes p :: "real^'n::finite"
+  assumes k: "1 \<le> k" "k < CARD('n)"
+  shows "closed (feasible k L p)"
+proof -
+  have m: "CARD('n) - k \<le> CARD('n)" by simp
+  have eq: "feasible k L p
+      = {a. psd a} \<inter> {a. a *v p = 0}
+        \<inter> {a \<in> {a. transpose a = a}. 1 \<le> eigval (CARD('n) - k) a}
+        \<inter> {a. eigen_ub a L}"
+    using feasible_iff_eigval[OF k] by (auto simp: psd_def)
+  have c3: "closed {a \<in> {a :: real^'n^'n. transpose a = a}.
+      1 \<le> eigval (CARD('n) - k) a}"
+    by (rule continuous_on_closed_Collect_le[OF continuous_on_const
+          eigval_continuous_on_sym[OF m] closed_symmetric_matrices])
+  show ?thesis
+    unfolding eq
+    by (intro closed_Int closed_psd closed_annihilator c3 closed_eigen_ub)
+qed
+
 end

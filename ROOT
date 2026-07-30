@@ -3,6 +3,7 @@ session Arbitrage = "HOL-Probability" +
     Martingales
     Kolmogorov_Chentsov
     Levy_Prokhorov_Metric
+    Standard_Borel_Spaces
     "HOL-Complex_Analysis"
   theories
     Stopped_Adaptedness
@@ -33,3 +34,15 @@ session Arbitrage = "HOL-Probability" +
     Stochastic_Integral_Simple
     L2_Limits
     Stochastic_Integral_L2
+    Increment_Moments
+    Increment_Tails
+    Dyadic_Chaining
+    Modulus_Tails
+    Conditional_UI
+    Stopped_Localization
+    Holder_Interpolation
+    Path_Space
+    Path_Tightness
+    Path_Tightness_Market
+    Theorem_1_1
+    Sup_Convolution

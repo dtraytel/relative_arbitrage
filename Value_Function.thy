@@ -68,6 +68,95 @@ proof (rule Sup_least)
   finally show "c \<le> (\<integral>\<^sup>+\<omega>. ennreal (tau \<omega>) \<partial>M)" .
 qed
 
+text \<open>
+  Calculus for @{const ess_inf_time}, needed by Proposition 2.4. The
+  dynamic programming principle of Eq. (2.9) is an identity between essential
+  infima, so these are required however the pasting of controls is eventually
+  carried out.
+
+  The workhorse is @{text ess_inf_time_AE}: the essential infimum is ITSELF an
+  almost-sure lower bound. That is not immediate, because it is a supremum over an
+  uncountable family of almost-sure statements and such a supremum need not be
+  almost sure. It works here because @{const ess_inf_time} is a supremum over a
+  set of CONSTANTS in @{typ ennreal}, and @{thm [source] ennreal_Sup_countable_SUP}
+  extracts a countable cofinal sequence, whose almost-sure statements can then be
+  intersected.
+\<close>
+
+lemma ess_inf_timeI:
+  assumes "AE \<omega> in M. c \<le> ennreal (tau \<omega>)"
+  shows "c \<le> ess_inf_time M tau"
+  unfolding ess_inf_time_def using assms by (intro Sup_upper) simp
+
+lemma ess_inf_time_AE: "AE \<omega> in M. ess_inf_time M tau \<le> ennreal (tau \<omega>)"
+proof -
+  define S where "S = {c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}"
+  have "0 \<in> S" unfolding S_def by simp
+  then have ne: "S \<noteq> {}" by blast
+  obtain f :: "nat \<Rightarrow> ennreal" where f: "range f \<subseteq> S" and sup: "Sup S = Sup (range f)"
+    using ennreal_Sup_countable_SUP[OF ne] by blast
+  have fS: "AE \<omega> in M. f n \<le> ennreal (tau \<omega>)" for n
+    using f unfolding S_def by blast
+  have "AE \<omega> in M. \<forall>n. f n \<le> ennreal (tau \<omega>)"
+    using fS by (subst AE_all_countable) blast
+  then have "AE \<omega> in M. Sup (range f) \<le> ennreal (tau \<omega>)"
+    by eventually_elim (auto intro: Sup_least)
+  thus ?thesis unfolding ess_inf_time_def S_def[symmetric] using sup by simp
+qed
+
+lemma ess_inf_time_mono:
+  assumes "AE \<omega> in M. tau \<omega> \<le> sig \<omega>"
+  shows "ess_inf_time M tau \<le> ess_inf_time M sig"
+proof (rule ess_inf_timeI)
+  have "AE \<omega> in M. ess_inf_time M tau \<le> ennreal (tau \<omega>)"
+    by (rule ess_inf_time_AE)
+  thus "AE \<omega> in M. ess_inf_time M tau \<le> ennreal (sig \<omega>)"
+    using assms by eventually_elim (simp add: ennreal_leI order_trans)
+qed
+
+text \<open>
+  Superadditivity. This is the shape in which Eq. (2.9) splits the exit time into
+  the part before the stopping time and the continuation value.
+\<close>
+
+lemma ess_inf_time_superadd:
+  assumes f: "\<And>\<omega>. 0 \<le> f \<omega>" and g: "\<And>\<omega>. 0 \<le> g \<omega>"
+  shows "ess_inf_time M f + ess_inf_time M g \<le> ess_inf_time M (\<lambda>\<omega>. f \<omega> + g \<omega>)"
+proof (rule ess_inf_timeI)
+  have af: "AE \<omega> in M. ess_inf_time M f \<le> ennreal (f \<omega>)" by (rule ess_inf_time_AE)
+  have ag: "AE \<omega> in M. ess_inf_time M g \<le> ennreal (g \<omega>)" by (rule ess_inf_time_AE)
+  from af ag
+  show "AE \<omega> in M. ess_inf_time M f + ess_inf_time M g \<le> ennreal (f \<omega> + g \<omega>)"
+  proof eventually_elim
+    fix \<omega>
+    assume "ess_inf_time M f \<le> ennreal (f \<omega>)" "ess_inf_time M g \<le> ennreal (g \<omega>)"
+    then have "ess_inf_time M f + ess_inf_time M g
+                 \<le> ennreal (f \<omega>) + ennreal (g \<omega>)" by (rule add_mono)
+    also have "\<dots> = ennreal (f \<omega> + g \<omega>)"
+      using f[of \<omega>] g[of \<omega>] by (rule ennreal_plus[symmetric])
+    finally show "ess_inf_time M f + ess_inf_time M g \<le> ennreal (f \<omega> + g \<omega>)" .
+  qed
+qed
+
+text \<open>The essential infimum transported along a pushforward: exit times of
+  a law presented as a distr (e.g.\ a path law, or a member of \<open>\<P>\<^sub>x\<close>
+  reconstructed from a limit) can be computed on either side. Needed when
+  Lemma 2.3 exhibits weak limits as members of \<open>\<P>\<^sub>x\<close> and Proposition 2.4
+  concatenates laws at stopping times.\<close>
+
+lemma ess_inf_time_distr:
+  assumes g: "g \<in> M \<rightarrow>\<^sub>M N" and tau: "tau \<in> borel_measurable N"
+  shows "ess_inf_time (distr M N g) tau = ess_inf_time M (\<lambda>\<omega>. tau (g \<omega>))"
+proof -
+  have m: "{x \<in> space N. c \<le> ennreal (tau x)} \<in> sets N" for c
+    using tau by measurable
+  have iff: "(AE x in distr M N g. c \<le> ennreal (tau x))
+      \<longleftrightarrow> (AE \<omega> in M. c \<le> ennreal (tau (g \<omega>)))" for c
+    by (rule AE_distr_iff[OF g m])
+  show ?thesis
+    unfolding ess_inf_time_def iff by (rule refl)
+qed
+
 section \<open>The class \<open>\<P>\<^sub>x\<close> and the value function of Eq. (1.6)\<close>
 
 text \<open>The set of values \<open>P-ess inf tau\<close> attained by the markets of

@@ -2,7 +2,7 @@
   "mcpServers": {
     "isabelle-pide-mcp": {
       "command": "/Users/kfx532/isabelle/bin/isabelle",
-      "args": ["pide_mcp", "-l", "HOL-Probability"]
+      "args": ["pide_mcp", "-d", "/Users/kfx532/experiment_arbitrage", "-R", "Arbitrage"]
     }
   }
 }
