@@ -5848,4 +5848,380 @@ proof -
   thus ?thesis unfolding K_def .
 qed
 
+subsection \<open>Towards the theorem on sums: doubling of variables\<close>
+
+text \<open>The quantitative core of Crandall-Ishii-Lions Lemma 3.1, in purely
+  algebraic form: no semicontinuity, no compactness, only the two maximality
+  statements. Writing \<open>\<Phi>\<^sub>\<alpha>(x,y) = u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> and
+  \<open>M\<^sub>\<alpha> = max \<Phi>\<^sub>\<alpha>\<close>, testing \<open>\<Phi>\<^sub>\<beta>\<close> at the maximiser OF \<open>\<Phi>\<^sub>\<alpha>\<close> gives at once
+  that \<open>M\<^sub>\<alpha>\<close> is nonincreasing in \<open>\<alpha>\<close> AND that the penalty term is squeezed
+  between consecutive values. That squeeze is what forces
+  \<open>\<alpha> * norm (x\<^sub>\<alpha> - y\<^sub>\<alpha>)\<^sup>2 \<longrightarrow> 0\<close> once \<open>M\<^sub>\<alpha>\<close> is known to converge, and hence
+  drives the two maximisers together.\<close>
+
+lemma doubling_ge_diagonal:
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
+  assumes x: "x \<in> K"
+    and maxa: "\<And>z y. z \<in> K \<Longrightarrow> y \<in> K
+        \<Longrightarrow> u z - w y - (\<alpha>/2) * (norm (z - y))\<^sup>2 \<le> Ma"
+  shows "u x - w x \<le> Ma"
+  using maxa[OF x x] by simp
+
+lemma doubling_ring_identity:
+  fixes A N \<alpha> \<beta> :: real
+  shows "A - (\<beta>/2) * N = (A - (\<alpha>/2) * N) + ((\<alpha> - \<beta>)/2) * N"
+  by (simp add: field_simps)
+
+lemma doubling_penalty_squeeze:
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
+  assumes ab: "\<beta> \<le> \<alpha>"
+    and xa: "xa \<in> K" and ya: "ya \<in> K"
+    and atta: "u xa - w ya - (\<alpha>/2) * (norm (xa - ya))\<^sup>2 = Ma"
+    and maxb: "\<And>z y. z \<in> K \<Longrightarrow> y \<in> K
+        \<Longrightarrow> u z - w y - (\<beta>/2) * (norm (z - y))\<^sup>2 \<le> Mb"
+  shows "((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2 \<le> Mb - Ma"
+proof -
+  have step: "u xa - w ya - (\<beta>/2) * (norm (xa - ya))\<^sup>2 \<le> Mb"
+    by (rule maxb[OF xa ya])
+  have ring: "u xa - w ya - (\<beta>/2) * (norm (xa - ya))\<^sup>2
+      = (u xa - w ya - (\<alpha>/2) * (norm (xa - ya))\<^sup>2)
+        + ((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2"
+    by (rule doubling_ring_identity)
+  show ?thesis using step ring atta by linarith
+qed
+
+lemma doubling_antitone:
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
+  assumes ab: "\<beta> \<le> \<alpha>"
+    and xa: "xa \<in> K" and ya: "ya \<in> K"
+    and atta: "u xa - w ya - (\<alpha>/2) * (norm (xa - ya))\<^sup>2 = Ma"
+    and maxb: "\<And>z y. z \<in> K \<Longrightarrow> y \<in> K
+        \<Longrightarrow> u z - w y - (\<beta>/2) * (norm (z - y))\<^sup>2 \<le> Mb"
+  shows "Ma \<le> Mb"
+proof -
+  have sq: "((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2 \<le> Mb - Ma"
+    by (rule doubling_penalty_squeeze[OF ab xa ya atta maxb])
+  have "0 \<le> ((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2"
+    using ab by (intro mult_nonneg_nonneg) auto
+  with sq show ?thesis by linarith
+qed
+
+text \<open>The limit half of Lemma 3.1. Once \<open>M\<^sub>\<alpha>\<close> is known to converge, applying
+  the squeeze with \<open>\<beta> = \<alpha>/2\<close> traps \<open>(\<alpha>/4) * pen \<alpha>\<close> between \<open>0\<close> and
+  \<open>M\<^bsub>\<alpha>/2\<^esub> - M\<^sub>\<alpha>\<close>, and both ends go to \<open>0\<close>. So the PENALTY term vanishes, not
+  merely the distance: this is what makes the two maximisers usable as a
+  single point in the limit.\<close>
+
+lemma doubling_penalty_tendsto_zero:
+  fixes M pen :: "real \<Rightarrow> real"
+  assumes conv: "(M \<longlongrightarrow> L) at_top"
+    and sq: "\<And>\<alpha>. 1 \<le> \<alpha> \<Longrightarrow> (\<alpha>/4) * pen \<alpha> \<le> M (\<alpha>/2) - M \<alpha>"
+    and nn: "\<And>\<alpha>. 0 \<le> pen \<alpha>"
+  shows "((\<lambda>\<alpha>. \<alpha> * pen \<alpha>) \<longlongrightarrow> 0) at_top"
+proof -
+  have half: "filterlim (\<lambda>\<alpha>::real. \<alpha>/2) at_top at_top"
+  proof (rule filterlim_at_top[THEN iffD2], rule allI)
+    fix Z :: real
+    show "\<forall>\<^sub>F \<alpha> in at_top. Z \<le> \<alpha>/2"
+      using eventually_ge_at_top[of "2*Z"] by (rule eventually_mono) simp
+  qed
+  have c2: "((\<lambda>\<alpha>. M (\<alpha>/2)) \<longlongrightarrow> L) at_top"
+    by (rule filterlim_compose[OF conv half])
+  have diff: "((\<lambda>\<alpha>. M (\<alpha>/2) - M \<alpha>) \<longlongrightarrow> 0) at_top"
+    using tendsto_diff[OF c2 conv] by simp
+  have lo: "\<forall>\<^sub>F \<alpha> in at_top. (0::real) \<le> (\<alpha>/4) * pen \<alpha>"
+  proof (rule eventually_mono[OF eventually_ge_at_top[of "0::real"]])
+    fix \<alpha> :: real assume "0 \<le> \<alpha>"
+    thus "0 \<le> (\<alpha>/4) * pen \<alpha>"
+      by (intro mult_nonneg_nonneg nn) simp
+  qed
+  have hi: "\<forall>\<^sub>F \<alpha> in at_top. (\<alpha>/4) * pen \<alpha> \<le> M (\<alpha>/2) - M \<alpha>"
+  proof (rule eventually_mono[OF eventually_ge_at_top[of "1::real"]])
+    fix \<alpha> :: real assume "1 \<le> \<alpha>"
+    thus "(\<alpha>/4) * pen \<alpha> \<le> M (\<alpha>/2) - M \<alpha>" by (rule sq)
+  qed
+  have "((\<lambda>\<alpha>. (\<alpha>/4) * pen \<alpha>) \<longlongrightarrow> 0) at_top"
+    by (rule tendsto_sandwich[OF lo hi tendsto_const diff])
+  hence "((\<lambda>\<alpha>. 4 * ((\<alpha>/4) * pen \<alpha>)) \<longlongrightarrow> 4 * 0) at_top"
+    by (rule tendsto_mult_left)
+  thus ?thesis by simp
+qed
+
+text \<open>And the hypothesis of the previous lemma is exactly what \<open>doubling_antitone\<close>
+  plus \<open>doubling_ge_diagonal\<close> supply: \<open>M\<^sub>\<alpha>\<close> is antitone and bounded below by any
+  diagonal value, hence convergent along \<open>at_top\<close>.\<close>
+
+lemma antitone_bdd_below_convergent_at_top:
+  fixes M :: "real \<Rightarrow> real"
+  assumes anti: "\<And>\<beta> \<alpha>. 1 \<le> \<beta> \<Longrightarrow> \<beta> \<le> \<alpha> \<Longrightarrow> M \<alpha> \<le> M \<beta>"
+    and bdd: "\<And>\<alpha>. 1 \<le> \<alpha> \<Longrightarrow> B \<le> M \<alpha>"
+  shows "\<exists>L. (M \<longlongrightarrow> L) at_top"
+proof -
+  define S where "S = M ` {1..}"
+  have Sne: "S \<noteq> {}" unfolding S_def by auto
+  have Sbdd: "bdd_below S"
+    unfolding S_def by (rule bdd_belowI[of _ B]) (auto intro: bdd)
+  define L where "L = Inf S"
+  have Llow: "L \<le> M \<alpha>" if a: "1 \<le> \<alpha>" for \<alpha>
+    unfolding L_def by (rule cInf_lower[OF _ Sbdd]) (use a in \<open>auto simp: S_def\<close>)
+  have "(M \<longlongrightarrow> L) at_top"
+  proof (subst tendsto_iff, rule allI, rule impI)
+    fix e :: real assume e: "0 < e"
+    have "L < L + e" using e by simp
+    hence "\<exists>x \<in> S. x < L + e"
+      unfolding L_def using Sne Sbdd by (subst (asm) cInf_less_iff) auto
+    then obtain a where a1: "1 \<le> a" and aM: "M a < L + e"
+      unfolding S_def by auto
+    show "\<forall>\<^sub>F \<alpha> in at_top. dist (M \<alpha>) L < e"
+    proof (rule eventually_mono[OF eventually_ge_at_top[of a]])
+      fix \<alpha> :: real assume aa: "a \<le> \<alpha>"
+      hence a1': "1 \<le> \<alpha>" using a1 by simp
+      have "M \<alpha> \<le> M a" by (rule anti[OF a1 aa])
+      moreover have "L \<le> M \<alpha>" by (rule Llow[OF a1'])
+      ultimately show "dist (M \<alpha>) L < e" using aM by (simp add: dist_real_def)
+    qed
+  qed
+  thus ?thesis by blast
+qed
+
+subsection \<open>Composing the three big theorems on the sup-convolution\<close>
+
+text \<open>\<open>supconv_semiconvex\<close> delivers semiconvexity in the form
+  \<open>(norm x)\<^sup>2 / (2*\<epsilon>)\<close>, while \<open>jensen_lemma\<close> and \<open>semiconvex_alexandrov\<close>
+  consume it in the form \<open>(c/2) * (norm x)\<^sup>2\<close>. The two agree with \<open>c = 1/\<epsilon>\<close>;
+  restating it once here is what lets the three theorems be composed without
+  re-deriving anything, and gives Crandall-Ishii its two working facts about
+  the sup-convolution.\<close>
+
+lemma supconv_semiconvex':
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+  shows "convex_on UNIV (\<lambda>x. supconv u \<epsilon> x + ((1/\<epsilon>)/2) * (norm x)\<^sup>2)"
+proof -
+  have eq: "(\<lambda>x::'a. supconv u \<epsilon> x + ((1/\<epsilon>)/2) * (norm x)\<^sup>2)
+      = (\<lambda>x. supconv u \<epsilon> x + (norm x)\<^sup>2 / (2*\<epsilon>))"
+  proof (rule ext)
+    fix x :: 'a
+    have "((1/\<epsilon>)/2) * (norm x)\<^sup>2 = (norm x)\<^sup>2 / (2*\<epsilon>)"
+      by (simp add: field_simps)
+    thus "supconv u \<epsilon> x + ((1/\<epsilon>)/2) * (norm x)\<^sup>2
+        = supconv u \<epsilon> x + (norm x)\<^sup>2 / (2*\<epsilon>)" by simp
+  qed
+  show ?thesis unfolding eq by (rule supconv_semiconvex[OF B e])
+qed
+
+text \<open>The sup-convolution of ANY bounded-above function is twice differentiable
+  almost everywhere. This is the fact Crandall-Ishii uses to put genuine second
+  derivatives at the perturbed maximiser produced by Jensen's lemma.\<close>
+
+corollary supconv_alexandrov:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+  shows "negligible {y. \<not> (\<exists>p X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
+      \<and> ((\<lambda>k. (supconv u \<epsilon> (y + k) - supconv u \<epsilon> y - p \<bullet> k - (k \<bullet> X k)/2)
+          / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))}"
+  by (rule semiconvex_alexandrov[OF supconv_semiconvex'[OF B e]])
+
+text \<open>And Jensen's lemma applies to it verbatim: the set of points maximising
+  some small linear perturbation of the sup-convolution is not negligible, so
+  it MEETS the full-measure set of the previous corollary. That intersection is
+  exactly the point at which the theorem on sums reads off its matrices.\<close>
+
+corollary supconv_jensen:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+    and rho: "0 < \<rho>" "\<rho> < r"
+    and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi> \<Longrightarrow> supconv u \<epsilon> y \<le> m"
+    and d: "0 < d" and small: "2 * d * r < supconv u \<epsilon> \<xi> - m"
+  shows "\<not> negligible {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
+      \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x)}"
+proof -
+  have cpos: "0 < 1/\<epsilon>" using e by simp
+  show ?thesis
+    by (rule jensen_lemma[OF supconv_semiconvex'[OF B e] cpos rho(1) rho(2)
+        bnd d small])
+qed
+
+text \<open>THE ENGINE OF CRANDALL-ISHII. Jensen's lemma says the perturbed
+  maximisers form a set of positive measure; Alexandrov's says the twice
+  differentiable points form a set of full measure. A non-negligible set cannot
+  sit inside a negligible one, so the two MEET: there is a single point that is
+  simultaneously a maximiser of a small linear perturbation and a point of
+  genuine second-order expansion. Reading the second-order expansion off at
+  such a point is exactly how the theorem on sums produces its matrices.\<close>
+
+theorem supconv_jensen_alexandrov_point:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+    and rho: "0 < \<rho>" "\<rho> < r"
+    and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi> \<Longrightarrow> supconv u \<epsilon> y \<le> m"
+    and d: "0 < d" and small: "2 * d * r < supconv u \<epsilon> \<xi> - m"
+  shows "\<exists>x \<in> cball \<xi> r.
+      (\<exists>p. norm p \<le> d
+         \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x))
+    \<and> (\<exists>q X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
+         \<and> ((\<lambda>k. (supconv u \<epsilon> (x + k) - supconv u \<epsilon> x - q \<bullet> k - (k \<bullet> X k)/2)
+             / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))"
+proof -
+  define J where "J = {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
+      \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x)}"
+  define N where "N = {y. \<not> (\<exists>q X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
+      \<and> ((\<lambda>k. (supconv u \<epsilon> (y + k) - supconv u \<epsilon> y - q \<bullet> k - (k \<bullet> X k)/2)
+          / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))}"
+  have nJ: "\<not> negligible J"
+    unfolding J_def by (rule supconv_jensen[OF B e rho(1) rho(2) bnd d small])
+  have nN: "negligible N"
+    unfolding N_def by (rule supconv_alexandrov[OF B e])
+  have "\<not> (J \<subseteq> N)"
+  proof
+    assume sub: "J \<subseteq> N"
+    have "negligible J" by (rule negligible_subset[OF nN sub])
+    with nJ show False ..
+  qed
+  then obtain x where xJ: "x \<in> J" and xN: "x \<notin> N" by blast
+  show ?thesis
+  proof (rule bexI)
+    show "x \<in> cball \<xi> r" using xJ unfolding J_def by blast
+    show "(\<exists>p. norm p \<le> d
+           \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x))
+        \<and> (\<exists>q X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
+             \<and> ((\<lambda>k. (supconv u \<epsilon> (x + k) - supconv u \<epsilon> x - q \<bullet> k - (k \<bullet> X k)/2)
+                 / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))"
+      using xJ xN unfolding J_def N_def by blast
+  qed
+qed
+
+text \<open>SECOND-ORDER CONDITIONS at an interior maximum. If a function has a
+  second-order expansion with data \<open>(q, X)\<close> at an interior maximiser, then
+  \<open>q = 0\<close> and the quadratic form is negative semidefinite. Both follow from the
+  SAME limit, \<open>R (t *\<^sub>R v) / t\<^sup>2 \<longrightarrow> 0\<close> along \<open>at_right 0\<close>: dividing the
+  maximality inequality by \<open>t\<close> gives the first, and by \<open>t\<^sup>2\<close> the second. This is
+  what upgrades the Alexandrov expansion at the Jensen point into a genuine
+  second-order jet.\<close>
+
+lemma second_order_interior_max:
+  fixes f :: "'a::euclidean_space \<Rightarrow> real"
+  assumes blX: "bounded_linear X"
+    and \<delta>: "0 < \<delta>"
+    and xmax: "\<And>k. norm k < \<delta> \<Longrightarrow> f (x + k) \<le> f x"
+    and exp: "((\<lambda>k. (f (x + k) - f x - q \<bullet> k - (k \<bullet> X k)/2) / (norm k)\<^sup>2)
+        \<longlongrightarrow> 0) (at 0)"
+  shows "q \<bullet> v = 0 \<and> v \<bullet> X v \<le> 0"
+proof -
+  define R where "R = (\<lambda>k. f (x + k) - f x - q \<bullet> k - (k \<bullet> X k)/2)"
+  have linX: "X (t *\<^sub>R w) = t *\<^sub>R X w" for t :: real and w
+    using blX by (simp add: linear_simps)
+  have quad: "(t *\<^sub>R w) \<bullet> X (t *\<^sub>R w) = t\<^sup>2 * (w \<bullet> X w)" for t :: real and w
+    unfolding linX by (simp add: power2_eq_square)
+  have Rexp: "R (t *\<^sub>R w)
+      = f (x + t *\<^sub>R w) - f x - t * (q \<bullet> w) - t\<^sup>2 * (w \<bullet> X w)/2"
+    for t :: real and w
+    unfolding R_def quad by simp
+  have key: "q \<bullet> w \<le> 0 \<and> (q \<bullet> w = 0 \<longrightarrow> w \<bullet> X w \<le> 0)" if wnz: "w \<noteq> 0" for w
+  proof -
+    have nw: "0 < norm w" using wnz by simp
+    have nwsq: "(norm w)\<^sup>2 \<noteq> 0" using nw by simp
+    have flt: "filterlim (\<lambda>t::real. t *\<^sub>R w) (at 0) (at_right 0)"
+    proof (rule filterlim_atI)
+      have "((\<lambda>t::real. t *\<^sub>R w) \<longlongrightarrow> 0 *\<^sub>R w) (at_right 0)"
+        by (intro tendsto_intros)
+      thus "((\<lambda>t::real. t *\<^sub>R w) \<longlongrightarrow> 0) (at_right 0)" by simp
+      show "\<forall>\<^sub>F t in at_right (0::real). t *\<^sub>R w \<noteq> 0"
+        using eventually_at_right_less by (rule eventually_mono) (use wnz in simp)
+    qed
+    have lim2: "((\<lambda>t. R (t *\<^sub>R w) / (norm (t *\<^sub>R w))\<^sup>2) \<longlongrightarrow> 0) (at_right 0)"
+      unfolding R_def by (rule filterlim_compose[OF exp flt])
+    have prod: "((\<lambda>t. (R (t *\<^sub>R w) / (norm (t *\<^sub>R w))\<^sup>2) * (norm w)\<^sup>2)
+        \<longlongrightarrow> 0 * (norm w)\<^sup>2) (at_right 0)"
+      by (rule tendsto_mult[OF lim2 tendsto_const])
+    have rw: "(R (t *\<^sub>R w) / (norm (t *\<^sub>R w))\<^sup>2) * (norm w)\<^sup>2 = R (t *\<^sub>R w) / t\<^sup>2"
+      for t :: real
+    proof -
+      have "(norm (t *\<^sub>R w))\<^sup>2 = t\<^sup>2 * (norm w)\<^sup>2"
+        by (simp add: power_mult_distrib)
+      thus ?thesis using nwsq by simp
+    qed
+    have lim3: "((\<lambda>t. R (t *\<^sub>R w) / t\<^sup>2) \<longlongrightarrow> 0) (at_right 0)"
+      using prod unfolding rw by simp
+    have lim4: "((\<lambda>t. (R (t *\<^sub>R w) / t\<^sup>2) * t) \<longlongrightarrow> 0 * 0) (at_right 0)"
+      by (rule tendsto_mult[OF lim3]) (simp add: tendsto_ident_at)
+    have rw2: "(R (t *\<^sub>R w) / t\<^sup>2) * t = R (t *\<^sub>R w) / t" for t :: real
+      by (cases "t = 0") (auto simp: power2_eq_square)
+    have lim5: "((\<lambda>t. R (t *\<^sub>R w) / t) \<longlongrightarrow> 0) (at_right 0)"
+      using lim4 unfolding rw2 by simp
+    have small: "\<forall>\<^sub>F t in at_right (0::real).
+        R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2 \<le> 0 \<and> 0 < t"
+    proof (rule eventually_mono[OF eventually_conj[OF
+        eventually_at_right_real[OF divide_pos_pos[OF \<delta> nw]] eventually_at_right_less]])
+      fix t :: real assume t: "t \<in> {0<..<\<delta>/norm w} \<and> 0 < t"
+      hence t0: "0 < t" and tlt: "t < \<delta>/norm w" by auto
+      have "norm (t *\<^sub>R w) = t * norm w" using t0 by simp
+      also have "\<dots> < \<delta>" using tlt nw by (simp add: field_simps)
+      finally have "f (x + t *\<^sub>R w) \<le> f x" by (rule xmax)
+      thus "R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2 \<le> 0 \<and> 0 < t"
+        unfolding Rexp using t0 by simp
+    qed
+    have g1: "\<forall>\<^sub>F t in at_right (0::real).
+        R (t *\<^sub>R w) / t + (q \<bullet> w) + t * (w \<bullet> X w)/2 \<le> 0"
+    proof (rule eventually_mono[OF small])
+      fix t :: real
+      assume "R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2 \<le> 0 \<and> 0 < t"
+      hence ineq: "R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2 \<le> 0"
+        and t0: "0 < t" by auto
+      have "(R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2) / t
+          = R (t *\<^sub>R w) / t + (q \<bullet> w) + t * (w \<bullet> X w)/2"
+        using t0 by (simp add: field_simps power2_eq_square)
+      moreover have "(R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2) / t \<le> 0"
+        using ineq t0 by (simp add: divide_nonpos_pos)
+      ultimately show "R (t *\<^sub>R w) / t + (q \<bullet> w) + t * (w \<bullet> X w)/2 \<le> 0" by simp
+    qed
+    have c1: "((\<lambda>t. R (t *\<^sub>R w) / t + (q \<bullet> w) + t * (w \<bullet> X w)/2)
+        \<longlongrightarrow> 0 + (q \<bullet> w) + 0 * (w \<bullet> X w)/2) (at_right 0)"
+      by (intro tendsto_intros lim5) (simp add: tendsto_ident_at)
+    have qle: "q \<bullet> w \<le> 0"
+      by (rule tendsto_upperbound[OF _ g1])
+        (use c1 in \<open>simp_all add: trivial_limit_at_right_real\<close>)
+    have hess: "w \<bullet> X w \<le> 0" if qz: "q \<bullet> w = 0"
+    proof -
+      have g2: "\<forall>\<^sub>F t in at_right (0::real).
+          R (t *\<^sub>R w) / t\<^sup>2 + (w \<bullet> X w)/2 \<le> 0"
+      proof (rule eventually_mono[OF small])
+        fix t :: real
+        assume "R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2 \<le> 0 \<and> 0 < t"
+        hence ineq: "R (t *\<^sub>R w) + t * (q \<bullet> w) + t\<^sup>2 * (w \<bullet> X w)/2 \<le> 0"
+          and t0: "0 < t" by auto
+        have i2: "R (t *\<^sub>R w) + t\<^sup>2 * (w \<bullet> X w)/2 \<le> 0" using ineq qz by simp
+        have "(R (t *\<^sub>R w) + t\<^sup>2 * (w \<bullet> X w)/2) / t\<^sup>2
+            = R (t *\<^sub>R w) / t\<^sup>2 + (w \<bullet> X w)/2"
+          using t0 by (simp add: field_simps)
+        moreover have "(R (t *\<^sub>R w) + t\<^sup>2 * (w \<bullet> X w)/2) / t\<^sup>2 \<le> 0"
+          using i2 t0 by (simp add: divide_nonpos_pos)
+        ultimately show "R (t *\<^sub>R w) / t\<^sup>2 + (w \<bullet> X w)/2 \<le> 0" by simp
+      qed
+      have c2: "((\<lambda>t. R (t *\<^sub>R w) / t\<^sup>2 + (w \<bullet> X w)/2)
+          \<longlongrightarrow> 0 + (w \<bullet> X w)/2) (at_right 0)"
+        by (intro tendsto_intros lim3)
+      have "(w \<bullet> X w)/2 \<le> 0"
+        by (rule tendsto_upperbound[OF _ g2])
+          (use c2 in \<open>simp_all add: trivial_limit_at_right_real\<close>)
+      thus ?thesis by simp
+    qed
+    show ?thesis using qle hess by blast
+  qed
+  show ?thesis
+  proof (cases "v = 0")
+    case True
+    have "X 0 = 0" using blX by (simp add: linear_simps)
+    thus ?thesis unfolding True by simp
+  next
+    case False
+    have nv: "- v \<noteq> 0" using False by simp
+    have le1: "q \<bullet> v \<le> 0" using key[OF False] by blast
+    have le2: "q \<bullet> (- v) \<le> 0" using key[OF nv] by blast
+    have qz: "q \<bullet> v = 0" using le1 le2 by simp
+    have "v \<bullet> X v \<le> 0" using key[OF False] qz by blast
+    with qz show ?thesis by blast
+  qed
+qed
+
 end
