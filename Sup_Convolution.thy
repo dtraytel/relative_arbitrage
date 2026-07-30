@@ -6224,4 +6224,103 @@ proof -
   qed
 qed
 
+subsection \<open>Block structure on the product space\<close>
+
+text \<open>The doubled function lives on \<open>'a \<times> 'b\<close>, which is itself a Euclidean
+  space, so every result above applies to it verbatim. Two things are needed to
+  come back down to the factors. First, the negative semidefiniteness delivered
+  on the product is TESTED on the diagonal: with \<open>w = v\<close> the penalty term
+  vanishes and only \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> survives \<open>this is the matrix
+  inequality of the theorem on sums\<close>. Second, a second-order expansion on the
+  product RESTRICTS to each slice, which is what lets the single product
+  Hessian be read as two separate matrices.\<close>
+
+lemma block_diagonal_test:
+  fixes X Y :: "'a::euclidean_space \<Rightarrow> 'a"
+  assumes neg: "\<And>v w. v \<bullet> X v - w \<bullet> Y w - \<alpha> * (norm (v - w))\<^sup>2 \<le> 0"
+  shows "v \<bullet> X v \<le> v \<bullet> Y v"
+  using neg[of v v] by simp
+
+lemma norm_Pair_right_zero:
+  fixes h :: "'a::euclidean_space"
+  shows "norm ((h, 0) :: 'a \<times> 'b::euclidean_space) = norm h"
+  by (simp add: norm_prod_def)
+
+lemma norm_Pair_left_zero:
+  fixes h :: "'b::euclidean_space"
+  shows "norm ((0, h) :: 'a::euclidean_space \<times> 'b) = norm h"
+  by (simp add: norm_prod_def)
+
+lemma expansion_restrict_fst:
+  fixes \<Psi> :: "'a::euclidean_space \<times> 'b::euclidean_space \<Rightarrow> real"
+  assumes exp: "((\<lambda>k. (\<Psi> (z + k) - \<Psi> z - q \<bullet> k - (k \<bullet> Z k)/2) / (norm k)\<^sup>2)
+      \<longlongrightarrow> 0) (at 0)"
+  shows "((\<lambda>h. (\<Psi> (fst z + h, snd z) - \<Psi> z - (fst q) \<bullet> h
+      - (h \<bullet> fst (Z (h, 0)))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have emb: "filterlim (\<lambda>h::'a. (h, 0::'b)) (at 0) (at 0)"
+  proof (rule filterlim_atI)
+    have "((\<lambda>h::'a. (h, 0::'b)) \<longlongrightarrow> (0, 0)) (at 0)"
+      by (intro tendsto_intros)
+    thus "((\<lambda>h::'a. (h, 0::'b)) \<longlongrightarrow> 0) (at 0)" by (simp add: zero_prod_def)
+    show "\<forall>\<^sub>F h in at (0::'a). (h, 0::'b) \<noteq> 0"
+      by (simp add: eventually_at_filter zero_prod_def)
+  qed
+  have c: "((\<lambda>h. (\<Psi> (z + (h, 0::'b)) - \<Psi> z - q \<bullet> (h, 0::'b)
+      - ((h, 0::'b) \<bullet> Z (h, 0::'b))/2)
+      / (norm ((h, 0::'b) :: 'a \<times> 'b))\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    by (rule filterlim_compose[OF exp emb])
+  have eq: "(\<Psi> (z + (h, 0::'b)) - \<Psi> z - q \<bullet> (h, 0::'b)
+      - ((h, 0::'b) \<bullet> Z (h, 0::'b))/2) / (norm ((h, 0::'b) :: 'a \<times> 'b))\<^sup>2
+      = (\<Psi> (fst z + h, snd z) - \<Psi> z - (fst q) \<bullet> h
+        - (h \<bullet> fst (Z (h, 0::'b)))/2) / (norm h)\<^sup>2" for h :: 'a
+  proof -
+    have zsum: "z + (h, 0::'b) = (fst z + h, snd z)"
+      by (cases z) simp
+    have inn1: "q \<bullet> (h, 0::'b) = (fst q) \<bullet> h"
+      by (cases q) (simp add: inner_commute)
+    have inn2: "(h, 0::'b) \<bullet> Z (h, 0::'b) = h \<bullet> fst (Z (h, 0::'b))"
+      by (cases "Z (h, 0::'b)") simp
+    show ?thesis
+      unfolding zsum inn1 inn2 norm_Pair_right_zero ..
+  qed
+  show ?thesis using c unfolding eq .
+qed
+
+lemma expansion_restrict_snd:
+  fixes \<Psi> :: "'a::euclidean_space \<times> 'b::euclidean_space \<Rightarrow> real"
+  assumes exp: "((\<lambda>k. (\<Psi> (z + k) - \<Psi> z - q \<bullet> k - (k \<bullet> Z k)/2) / (norm k)\<^sup>2)
+      \<longlongrightarrow> 0) (at 0)"
+  shows "((\<lambda>h. (\<Psi> (fst z, snd z + h) - \<Psi> z - (snd q) \<bullet> h
+      - (h \<bullet> snd (Z (0, h)))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have emb: "filterlim (\<lambda>h::'b. (0::'a, h)) (at 0) (at 0)"
+  proof (rule filterlim_atI)
+    have "((\<lambda>h::'b. (0::'a, h)) \<longlongrightarrow> (0, 0)) (at 0)"
+      by (intro tendsto_intros)
+    thus "((\<lambda>h::'b. (0::'a, h)) \<longlongrightarrow> 0) (at 0)" by (simp add: zero_prod_def)
+    show "\<forall>\<^sub>F h in at (0::'b). (0::'a, h) \<noteq> 0"
+      by (simp add: eventually_at_filter zero_prod_def)
+  qed
+  have c: "((\<lambda>h. (\<Psi> (z + (0::'a, h)) - \<Psi> z - q \<bullet> (0::'a, h)
+      - ((0::'a, h) \<bullet> Z (0::'a, h))/2)
+      / (norm ((0::'a, h) :: 'a \<times> 'b))\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    by (rule filterlim_compose[OF exp emb])
+  have eq: "(\<Psi> (z + (0::'a, h)) - \<Psi> z - q \<bullet> (0::'a, h)
+      - ((0::'a, h) \<bullet> Z (0::'a, h))/2) / (norm ((0::'a, h) :: 'a \<times> 'b))\<^sup>2
+      = (\<Psi> (fst z, snd z + h) - \<Psi> z - (snd q) \<bullet> h
+        - (h \<bullet> snd (Z (0::'a, h)))/2) / (norm h)\<^sup>2" for h :: 'b
+  proof -
+    have zsum: "z + (0::'a, h) = (fst z, snd z + h)"
+      by (cases z) simp
+    have inn1: "q \<bullet> (0::'a, h) = (snd q) \<bullet> h"
+      by (cases q) (simp add: inner_commute)
+    have inn2: "(0::'a, h) \<bullet> Z (0::'a, h) = h \<bullet> snd (Z (0::'a, h))"
+      by (cases "Z (0::'a, h)") simp
+    show ?thesis
+      unfolding zsum inn1 inn2 norm_Pair_left_zero ..
+  qed
+  show ?thesis using c unfolding eq .
+qed
+
 end
