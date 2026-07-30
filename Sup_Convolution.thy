@@ -6788,7 +6788,7 @@ theorem product_form_block_diagonal:
   assumes exp: "((\<lambda>k. ((a (fst (z + k)) + b (snd (z + k)))
         - (a (fst z) + b (snd z)) - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
-    and lW: "linear W"
+    and scW: "\<And>s u. W (s *\<^sub>R u) = s *\<^sub>R W u"
     and h: "h \<noteq> 0" and g: "g \<noteq> 0"
   shows "(h, g) \<bullet> W (h, g) = h \<bullet> fst (W (h, 0)) + g \<bullet> snd (W (0, g))"
 proof -
@@ -6796,11 +6796,6 @@ proof -
   have expP: "((\<lambda>k. (\<Psi> (z + k) - \<Psi> z - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
     unfolding \<Psi>_def by (rule exp)
-  have scW: "W (s *\<^sub>R u) = s *\<^sub>R W u" for s :: real and u
-  proof (cases u)
-    case (Pair u1 u2)
-    show ?thesis using lW unfolding Pair by (simp add: linear_iff)
-  qed
   have hg: "((h, g) :: 'a \<times> 'b) \<noteq> 0" using h by (simp add: zero_prod_def)
   have L0: "((\<lambda>t. (\<Psi> (z + t *\<^sub>R (h, g)) - \<Psi> z - q \<bullet> (t *\<^sub>R (h, g))) / t\<^sup>2)
       \<longlongrightarrow> ((h, g) \<bullet> W (h, g))/2) (at_right 0)"
@@ -6909,5 +6904,75 @@ lemma penalty_form_diagonal:
   shows "((v, v) :: 'a \<times> 'a)
       \<bullet> (\<alpha> *\<^sub>R (fst (v, v) - snd (v, v), snd (v, v) - fst (v, v))) = 0"
   by simp
+
+subsection \<open>The theorem on sums: matrix inequality\<close>
+
+text \<open>THE THEOREM ON SUMS, algebraic core. Suppose the doubled functional
+  \<open>a (fst z) + b (snd z) - (\<alpha>/2) * norm (fst z - snd z)\<^sup>2\<close> has a second-order
+  expansion at \<open>zh\<close> with a NEGATIVE SEMIDEFINITE form \<open>W\<close> \<^emph>\<open>which is what an
+  interior maximum supplies\<close>. Adding the penalty's exact expansion turns the
+  form into \<open>WP\<close> and the functional into the SEPARATED form
+  \<open>a (fst z) + b (snd z)\<close>; block diagonality then splits \<open>WP\<close> into its two
+  slice matrices, and testing on the diagonal \<open>(v,v)\<close> \<^emph>\<open>where the penalty
+  contributes nothing\<close> leaves exactly the matrix inequality.
+
+  With \<open>b = - w\<close> the second slice matrix is \<open>- Y\<close>, so the conclusion reads
+  \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>, i.e. \<open>X \<preceq> Y\<close>: this is what the comparison principle
+  feeds to degenerate ellipticity.\<close>
+
+theorem sums_matrix_inequality:
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "'a \<times> 'a \<Rightarrow> 'a \<times> 'a"
+  assumes expPsi: "((\<lambda>k. ((a (fst (zh + k)) + b (snd (zh + k))
+          - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2)
+        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
+        - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and scW: "\<And>s u. W (s *\<^sub>R u) = s *\<^sub>R W u"
+    and neg: "\<And>k. k \<bullet> W k \<le> 0"
+    and v: "v \<noteq> 0"
+  shows "v \<bullet> fst (W (v, 0) + \<alpha> *\<^sub>R (v - 0, 0 - v))
+       + v \<bullet> snd (W (0, v) + \<alpha> *\<^sub>R (0 - v, v - 0)) \<le> 0"
+proof -
+  define P where "P = (\<lambda>k::'a \<times> 'a. \<alpha> *\<^sub>R (fst k - snd k, snd k - fst k))"
+  define WP where "WP = (\<lambda>k::'a \<times> 'a. W k + P k)"
+  define g0 where "g0 = \<alpha> *\<^sub>R (fst zh - snd zh, - (fst zh - snd zh))"
+  have scP: "P (s *\<^sub>R u) = s *\<^sub>R P u" for s :: real and u
+    unfolding P_def by (rule penalty_form_scaleR)
+  have scWP: "WP (s *\<^sub>R u) = s *\<^sub>R WP u" for s :: real and u
+    unfolding WP_def scW scP by (simp add: scaleR_add_right)
+  have pen: "(\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2
+      = (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2 + g0 \<bullet> k + (k \<bullet> P k)/2" for k
+    unfolding g0_def P_def by (rule penalty_exact)
+  have rem: "(a (fst (zh + k)) + b (snd (zh + k)))
+        - (a (fst zh) + b (snd zh)) - (q + g0) \<bullet> k - (k \<bullet> WP k)/2
+      = ((a (fst (zh + k)) + b (snd (zh + k))
+          - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2)
+        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
+        - q \<bullet> k - (k \<bullet> W k)/2)" for k
+  proof -
+    have iWP: "k \<bullet> WP k = k \<bullet> W k + k \<bullet> P k"
+      unfolding WP_def by (simp add: inner_add_right)
+    have iq: "(q + g0) \<bullet> k = q \<bullet> k + g0 \<bullet> k"
+      by (simp add: inner_add_left)
+    show ?thesis unfolding iWP iq pen by simp argo
+  qed
+  have expTheta: "((\<lambda>k. ((a (fst (zh + k)) + b (snd (zh + k)))
+      - (a (fst zh) + b (snd zh)) - (q + g0) \<bullet> k - (k \<bullet> WP k)/2)
+      / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    using expPsi unfolding rem .
+  have blk: "(v, v) \<bullet> WP (v, v)
+      = v \<bullet> fst (WP (v, 0)) + v \<bullet> snd (WP (0, v))"
+    by (rule product_form_block_diagonal[OF expTheta scWP v v])
+  have pdiag: "(v, v) \<bullet> P (v, v) = 0"
+    unfolding P_def by (rule penalty_form_diagonal)
+  have "(v, v) \<bullet> WP (v, v) = (v, v) \<bullet> W (v, v) + (v, v) \<bullet> P (v, v)"
+    unfolding WP_def by (simp add: inner_add_right)
+  hence "(v, v) \<bullet> WP (v, v) = (v, v) \<bullet> W (v, v)"
+    unfolding pdiag by simp
+  moreover have "(v, v) \<bullet> W (v, v) \<le> 0" by (rule neg)
+  ultimately have "v \<bullet> fst (WP (v, 0)) + v \<bullet> snd (WP (0, v)) \<le> 0"
+    unfolding blk[symmetric] by simp
+  thus ?thesis unfolding WP_def P_def by simp
+qed
 
 end
