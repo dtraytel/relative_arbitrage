@@ -46,3 +46,4 @@ session Arbitrage = "HOL-Probability" +
     Path_Tightness_Market
     Theorem_1_1
     Sup_Convolution
+    Comparison_Assembly

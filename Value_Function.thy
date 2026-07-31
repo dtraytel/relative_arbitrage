@@ -243,4 +243,69 @@ proof -
     by (simp add: z)
 qed
 
+
+section \<open>Monotonicity of the value function in the domain\<close>
+
+text \<open>The first structural property of \<open>val_fn\<close>, and the one the dynamic
+  programming work of Section 2 will use repeatedly.  It rests on a single
+  observation about the market locale: of the fourteen assumptions of
+  \<open>sufficiently_volatile_market\<close> (Relative\_Arbitrage\_Stochastic.thy), the
+  domain \<open>K\<close> occurs in exactly ONE, namely
+
+    \<open>X_in_K: AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> X s \<omega> \<in> K\<close>,
+
+  and that assumption is monotone in \<open>K\<close>.  Every other assumption - the
+  martingale property, the eigenvalue bounds on \<open>acov\<close>, the integrability
+  conditions, Dynkin's identity - is untouched by enlarging the domain.
+
+  Hence enlarging \<open>K\<close> can only ADMIT MORE MARKETS, so the index set of the
+  supremum grows and the value function increases.  The argument splits in
+  two.  The locale half is
+  \<open>sufficiently_volatile_market_mono_K\<close>, where \<open>unfold_locales\<close> discharges the
+  whole \<open>martingale\<close> ancestor from the interpretation at the smaller domain and
+  leaves exactly the fourteen assumptions --- thirteen reused verbatim, and
+  \<open>X_in_K\<close> weakened by one \<open>eventually_elim\<close>.  The set-theoretic half
+  (\<open>mkt_exit_vals_mono\<close>) and the conclusion for \<open>val_fn\<close> (\<open>val_fn_mono\<close>) then
+  follow with no further hypotheses.\<close>
+
+lemma sufficiently_volatile_market_mono_K:
+  fixes M :: "'a measure" and X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite"
+  assumes sv: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    and KK: "K \<subseteq> K'"
+  shows "sufficiently_volatile_market M F X acov k L K' x0 tau"
+proof -
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule sv)
+  have K': "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> X s \<omega> \<in> K'"
+    using sv.X_in_K by eventually_elim (use KK in blast)
+  show ?thesis
+    by (unfold_locales; blast intro: sv.k_lb sv.k_ub sv.L_ge sv.X_start
+          sv.tau_nonneg sv.tau_meas K' sv.acov_psd sv.acov_eigen_lb
+          sv.acov_eigen_ub sv.acov_trace_integrable sv.stopped_sq_integrable
+          sv.compensator_integrable sv.dynkin_quadratic)
+qed
+
+lemma mkt_exit_vals_mono:
+  fixes x0 :: "real^'n::finite"
+  assumes KK: "K \<subseteq> K'"
+  shows "mkt_exit_vals k L K x0 \<subseteq> mkt_exit_vals k L K' x0"
+proof (rule subsetI)
+  fix c :: ennreal
+  assume "c \<in> mkt_exit_vals k L K x0"
+  then obtain M :: "('n \<Rightarrow> real \<Rightarrow> real) measure" and F X acov tau
+    where sv: "sufficiently_volatile_market M F X acov k L K x0 tau"
+      and ce: "c = ess_inf_time M tau"
+    unfolding mkt_exit_vals_def by blast
+  have "sufficiently_volatile_market M F X acov k L K' x0 tau"
+    by (rule sufficiently_volatile_market_mono_K[OF sv KK])
+  with ce show "c \<in> mkt_exit_vals k L K' x0"
+    unfolding mkt_exit_vals_def by blast
+qed
+
+theorem val_fn_mono:
+  fixes x0 :: "real^'n::finite"
+  assumes KK: "K \<subseteq> K'"
+  shows "val_fn k L K x0 \<le> val_fn k L K' x0"
+  unfolding val_fn_def
+  by (rule Sup_subset_mono[OF mkt_exit_vals_mono[OF KK]])
 end

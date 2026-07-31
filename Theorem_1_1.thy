@@ -24,13 +24,34 @@ text \<open>
   Section 3.1, which needs weak existence for Eq. (3.11)); and general
   compact \<open>K\<close> (Theorem 4.2(a), behind Crandall--Ishii).
 
+  STATUS OF THE THIRD ITEM (2026-07-31). \<open>Comparison_Assembly\<close> is now imported,
+  and it carries the Crandall--Ishii development: Rademacher, Alexandrov,
+  Jensen's lemma, the theorem on sums, the envelope calculus, and the closing
+  chain of Theorem 4.2(a). Its endpoint is
+  \<open>comparison_supconv_sequence_complete\<close>, which derives \<open>False\<close> from the two
+  viscosity properties together with a SEQUENCE of Jensen applications: for
+  each index, a doubled maximiser, its Alexandrov jet, and the point at which
+  each sup-convolution is attained, plus convergence of the four resulting
+  sequences and \<open>p \<noteq> 0\<close> at the limit.
+
+  What still blocks general \<open>K\<close> is therefore not the Crandall--Ishii analysis
+  but the CONSTRUCTION that feeds it: producing that sequence from the doubling
+  of \<open>\<theta> u\<close> against \<open>w\<close> on \<open>K \<times> K\<close>, with a shrinking Jensen tilt. The
+  existence ingredients for it are proved (\<open>doubling_maximiser_exists\<close>,
+  \<open>doubling_complete\<close>, \<open>doubled_supconv_jet_exists\<close>); what is not written is
+  their instantiation as a single indexed family.
+
   NOTE on imports: Value\_Function (probabilistic chain) and
   Relative\_Arbitrage\_Comparison (Envelopes chain) share draft ancestors, so
-  this theory is BATCH-ONLY, like Path\_Tightness\_Market.
+  this theory is BATCH-ONLY, like Path\_Tightness\_Market. (Adding
+  \<open>Comparison_Assembly\<close> as a third import does NOT change that: it builds
+  green. Note also that the analogous "batch-only" claim once recorded for
+  \<open>Comparison_Assembly\<close> itself was simply WRONG -- PIDE holds that theory
+  fine -- so this note should be re-tested rather than trusted.)
 \<close>
 
 theory Theorem_1_1
-  imports Value_Function Relative_Arbitrage_Comparison
+  imports Value_Function Relative_Arbitrage_Comparison Comparison_Assembly
 begin
 
 theorem theorem_1_1_ball_fragment:
