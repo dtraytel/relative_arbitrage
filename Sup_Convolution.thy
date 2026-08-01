@@ -105,6 +105,49 @@ proof (rule abs_leI)
     by (simp add: norm_minus_commute)
 qed
 
+text \<open>A Lipschitz function is also approximated by its sup-convolution at an
+  EXPLICIT rate: \<open>supconv u \<epsilon> \<le> u + \<epsilon>L\<^sup>2/2\<close>, uniformly in \<open>x\<close>.  With
+  \<open>supconv_ge\<close> this sandwiches \<open>supconv u \<epsilon>\<close> between \<open>u\<close> and \<open>u + \<epsilon>L\<^sup>2/2\<close>, which
+  is what lets a strict inequality between two functions survive replacement by
+  their sup-convolutions once \<open>\<epsilon>\<close> is small.
+
+  The whole content is the completed square
+  \<open>Lr - r\<^sup>2/(2\<epsilon>) = \<epsilon>L\<^sup>2/2 - (r - \<epsilon>L)\<^sup>2/(2\<epsilon>) \<le> \<epsilon>L\<^sup>2/2\<close> at \<open>r = dist x y\<close>: the
+  Lipschitz gain is linear in the distance and the penalty is quadratic, so the
+  competitor can only win by the amount at the turning point \<open>r = \<epsilon>L\<close>.  Note
+  this direction needs NO bound on \<open>u\<close> --- \<open>cSUP_least\<close> asks only for
+  nonemptiness.\<close>
+
+lemma supconv_le_of_lipschitz:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes e: "0 < \<epsilon>"
+    and lip: "\<And>p q. \<bar>u p - u q\<bar> \<le> L * norm (p - q)"
+  shows "supconv u \<epsilon> x \<le> u x + \<epsilon> * L\<^sup>2 / 2"
+  unfolding supconv_def
+proof (rule cSUP_least)
+  show "(UNIV :: 'a set) \<noteq> {}" by simp
+  fix y :: 'a
+  have lipd: "u y - u x \<le> L * dist x y"
+  proof -
+    have "\<bar>u y - u x\<bar> \<le> L * norm (y - x)" by (rule lip)
+    then show ?thesis
+      by (simp add: dist_norm norm_minus_commute)
+  qed
+  have key: "L * dist x y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> \<epsilon> * L\<^sup>2 / 2"
+  proof -
+    have e2: "0 < 2*\<epsilon>" using e by simp
+    have sq: "0 \<le> (dist x y - \<epsilon>*L)\<^sup>2" by simp
+    have nn: "0 \<le> (dist x y - \<epsilon>*L)\<^sup>2 / (2*\<epsilon>)"
+      using sq e2 by simp
+    have exp: "(dist x y - \<epsilon>*L)\<^sup>2 / (2*\<epsilon>)
+        = (dist x y)\<^sup>2 / (2*\<epsilon>) - L * dist x y + \<epsilon> * L\<^sup>2 / 2"
+      using e by (simp add: power2_diff power2_eq_square field_simps)
+    from nn show ?thesis unfolding exp by linarith
+  qed
+  show "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> u x + \<epsilon> * L\<^sup>2 / 2"
+    using lipd key by linarith
+qed
+
 lemma cSUP_plus_const:
   fixes g :: "'b \<Rightarrow> real" and c :: real
   assumes bdd: "bdd_above (range g)"
@@ -6713,8 +6756,75 @@ proof -
   show ?thesis using ABC unfolding eq .
 qed
 
-subsection \<open>The engine in general form\<close>
+text \<open>The doubled functional PERTURBED by \<open>-\<delta>\<parallel>z - \<xi>\<parallel>\<^sup>2\<close> is still semiconvex, with
+  the constant raised by \<open>2\<delta>\<close>.  This is the device that turns a plain maximiser
+  of the doubled functional into a STRICT one, which is what Jensen's lemma
+  needs (\<open>\<Phi>(\<xi>) > m\<close> with \<open>m\<close> bounding \<open>\<Phi>\<close> on the annulus) and what a plain
+  maximiser does not give.
 
+  Two things make this particular perturbation the right one.  It SPLITS across
+  the two blocks --- \<open>\<parallel>z - \<xi>\<parallel>\<^sup>2 = \<parallel>fst z - fst \<xi>\<parallel>\<^sup>2 + \<parallel>snd z - snd \<xi>\<parallel>\<^sup>2\<close> --- so the
+  perturbed functional still has the doubled form every lemma downstream is
+  stated for.  And the whole cost is AFFINE: with \<open>\<parallel>z\<parallel>\<^sup>2 - \<parallel>z - \<xi>\<parallel>\<^sup>2 = 2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2\<close>
+  the perturbation plus its compensating \<open>\<delta>\<parallel>z\<parallel>\<^sup>2\<close> is an affine function of \<open>z\<close>, and
+  convexity is closed under adding one.\<close>
+
+lemma norm_sq_diff_shift:
+  fixes z c :: "'a::euclidean_space"
+  shows "(norm z)\<^sup>2 - (norm (z - c))\<^sup>2 = 2 * (z \<bullet> c) - (norm c)\<^sup>2"
+  by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
+      inner_commute algebra_simps)
+
+theorem doubled_functional_semiconvex_shifted:
+  fixes u v :: "'a::euclidean_space \<Rightarrow> real"
+  assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
+    and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
+  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a.
+      ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+          - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
+        - \<delta> * (norm (z - \<xi>))\<^sup>2)
+      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2)"
+proof -
+  have cvx: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
+      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+        - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
+      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
+    by (rule doubled_functional_semiconvex[OF Bu Bv e a])
+  have aff: "convex_on UNIV
+      (\<lambda>z::'a \<times> 'a. (- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>))"
+    by (rule convex_on_affine_inner)
+  have eq: "(\<lambda>z::'a \<times> 'a.
+        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
+          - \<delta> * (norm (z - \<xi>))\<^sup>2)
+        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2)
+      = (\<lambda>z::'a \<times> 'a.
+        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
+          + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)
+        + ((- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>)))"
+  proof (rule ext)
+    fix z :: "'a \<times> 'a"
+    have sh: "(norm z)\<^sup>2 - (norm (z - \<xi>))\<^sup>2 = 2 * (z \<bullet> \<xi>) - (norm \<xi>)\<^sup>2"
+      by (rule norm_sq_diff_shift)
+    have sh': "(norm (z - \<xi>))\<^sup>2 = (norm z)\<^sup>2 - 2 * (z \<bullet> \<xi>) + (norm \<xi>)\<^sup>2"
+      using sh by linarith
+    have iz: "inner z ((2*\<delta>) *\<^sub>R \<xi>) = 2 * \<delta> * (z \<bullet> \<xi>)"
+      by (simp add: inner_scaleR_right)    show "((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
+          - \<delta> * (norm (z - \<xi>))\<^sup>2)
+        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2
+      = ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
+          + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)
+        + ((- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>))"
+      unfolding iz sh' by (simp add: algebra_simps)
+  qed
+  show ?thesis
+    unfolding eq by (rule convex_on_add[OF cvx aff])
+qed
+
+subsection \<open>The engine in general form\<close>
 text \<open>\<open>supconv_jensen_alexandrov_point\<close> was stated for a sup-convolution, but
   the only property it used was semiconvexity, and the doubled functional is
   semiconvex without being a sup-convolution. So the engine is restated for an

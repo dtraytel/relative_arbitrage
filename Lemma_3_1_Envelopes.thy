@@ -692,15 +692,57 @@ text \<open>STATE OF THE CRANDALL-ISHII INPUT.  Theorem 4.2(a) of the paper (the
   So 4.2(a) is isolated as the predicate \<open>max_principle_boundary\<close> below and
   everything downstream of it -- 4.2(b), Theorem 4.3, Proposition 4.1 -- is
   proved from it UNCONDITIONALLY.  This localises the one genuine gap to a
-  single named interface instead of letting it leak.\<close>
+  single named interface instead of letting it leak.
+
+  READ THIS BEFORE WEAKENING THE HYPOTHESES.  The interface carries CONTINUITY
+  of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>, and that is not decoration: without it the predicate is
+  FALSE, not merely unproved.  \<open>visc_subsol k L (interior K) u\<close> constrains only
+  points of \<open>interior K\<close>, and its local condition may always be shrunk into that
+  OPEN set, so the values of a sub- or supersolution on \<open>K - interior K\<close> are
+  completely free; raising \<open>w\<close> there by a constant destroys every boundary
+  maximum.  The version without continuity is kept below as
+  \<open>max_principle_boundary_raw\<close> precisely so that the refutation
+  (\<open>max_principle_boundary_counterexample\<close>, Comparison\_Assembly) has a target
+  and this cannot be quietly undone.
+
+  Continuity rather than the sharper "usc \<open>u\<close>, lsc \<open>w\<close>" because it is what the
+  rest of this development already carries (\<open>theorem_1_1_ball_fragment\<close> states
+  its uniqueness clause for \<open>continuous_on (cball 0 r) u\<close>) and this
+  HOL-Analysis has no semicontinuity library.  Only
+  \<open>max_principle_boundary_attains\<close> would need reproving to sharpen it.\<close>
+
+definition max_principle_boundary_raw ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
+  where
+  "max_principle_boundary_raw k L K \<longleftrightarrow>
+     (\<forall>u w. visc_subsol k L (interior K) u \<longrightarrow> visc_supersol k L (interior K) w
+        \<longrightarrow> (\<exists>x \<in> K - interior K.
+               \<forall>y \<in> K. u y - w y \<le> u x - w x))"
 
 definition max_principle_boundary ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
   where
   "max_principle_boundary k L K \<longleftrightarrow>
      (\<forall>u w. visc_subsol k L (interior K) u \<longrightarrow> visc_supersol k L (interior K) w
+        \<longrightarrow> continuous_on K u \<longrightarrow> continuous_on K w
         \<longrightarrow> (\<exists>x \<in> K - interior K.
                \<forall>y \<in> K. u y - w y \<le> u x - w x))"
+
+text \<open>The predicate is about WHERE the maximum sits, not whether there is one:
+  under the added hypotheses \<open>u - w\<close> always attains its maximum on a compact
+  \<open>K\<close>.  The raw version silently presupposed this.\<close>
+
+lemma max_principle_boundary_attains:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes cK: "compact K" and ne: "K \<noteq> {}"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
+  shows "\<exists>x \<in> K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
+proof -
+  have "continuous_on K (\<lambda>y. u y - w y)"
+    by (intro continuous_intros cu cw)
+  then show ?thesis
+    by (rule continuous_attains_sup[OF cK ne])
+qed
 
 text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and NONNEGATIVE boundary
   data for \<open>w\<close>, the maximum principle gives \<open>u \<le> w\<close> on \<open>K\<close>.  This is the step
@@ -711,6 +753,7 @@ theorem max_principle_le:
   assumes mp: "max_principle_boundary k L K"
     and sub: "visc_subsol k L (interior K) u"
     and sup: "visc_supersol k L (interior K) w"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
     and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
     and wbd: "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 \<le> w y"
   shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
@@ -718,7 +761,7 @@ proof -
   fix y assume y: "y \<in> K"
   obtain x where x: "x \<in> K - interior K"
     and mx: "\<And>z. z \<in> K \<Longrightarrow> u z - w z \<le> u x - w x"
-    using mp sub sup unfolding max_principle_boundary_def by blast
+    using mp sub sup cu cw unfolding max_principle_boundary_def by blast
   have "u x - w x \<le> 0"
     using ubd[OF x] wbd[OF x] by simp
   then have "u y - w y \<le> 0"
@@ -738,6 +781,7 @@ theorem comparison_from_max_principle:
   assumes mp: "max_principle_boundary k L K"
     and sub: "visc_subsol k L (interior K) u"
     and sup: "visc_supersol k L (interior K) w"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
     and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
     and wbd: "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
   shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
@@ -745,7 +789,7 @@ proof -
   have wbd': "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 \<le> w y"
     using wbd by simp
   show "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
-    by (rule max_principle_le[OF mp sub sup ubd wbd'])
+    by (rule max_principle_le[OF mp sub sup cu cw ubd wbd'])
 qed
 
 text \<open>Proposition 4.1 (uniqueness): two viscosity solutions with the same
@@ -759,6 +803,7 @@ theorem uniqueness_from_max_principle:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes mp: "max_principle_boundary k L K"
     and u: "visc_sol k L (interior K) u" and w: "visc_sol k L (interior K) w"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = 0"
     and bd': "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
   shows "\<And>y. y \<in> K \<Longrightarrow> u y = w y"
@@ -769,23 +814,27 @@ proof -
   have sw: "visc_subsol k L (interior K) w" and pw: "visc_supersol k L (interior K) w"
     using w by (auto simp: visc_sol_def)
   have le1: "u y \<le> w y"
-    by (rule comparison_from_max_principle[OF mp su pw _ bd' y]) (simp add: bd)
+    by (rule comparison_from_max_principle[OF mp su pw cu cw _ bd' y])
+       (simp add: bd)
   have le2: "w y \<le> u y"
-    by (rule comparison_from_max_principle[OF mp sw pu _ bd y]) (simp add: bd')
+    by (rule comparison_from_max_principle[OF mp sw pu cw cu _ bd y])
+       (simp add: bd')
   from le1 le2 show "u y = w y"
     by simp
 qed
 
 text \<open>And the discharge obligation stated plainly: to remove the interface it
   suffices to prove \<open>max_principle_boundary k L K\<close> for compact \<open>K\<close>, which is
-  Theorem 4.2(a).  Everything above then becomes unconditional.\<close>
+  Theorem 4.2(a).  Everything above then becomes unconditional.  Note the
+  obligation is the CONTINUOUS one; \<open>max_principle_boundary_raw\<close> is refutable
+  and must not be used as the target.\<close>
 
 lemma max_principle_boundary_intro:
   assumes "\<And>u w. visc_subsol k L (interior K) u
       \<Longrightarrow> visc_supersol k L (interior K) w
+      \<Longrightarrow> continuous_on K u \<Longrightarrow> continuous_on K w
       \<Longrightarrow> \<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
   shows "max_principle_boundary k L K"
   unfolding max_principle_boundary_def using assms by blast
-
 
 end
