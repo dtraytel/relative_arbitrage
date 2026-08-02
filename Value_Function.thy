@@ -68,6 +68,25 @@ proof (rule Sup_least)
   finally show "c \<le> (\<integral>\<^sup>+\<omega>. ennreal (tau \<omega>) \<partial>M)" .
 qed
 
+text \<open>A deterministic ceiling passes to the essential infimum. Item 2.6 of the
+  Theorem 1.1 plan needs this to know the family of values
+  \<open>{P\<hyphen>essinf \<tau>\<^sub>K : P \<in> \<P>\<^sub>0}\<close> is bounded above --- Berge's supremum has to be a real
+  number, and \<open>ess_inf_time\<close> is \<open>ennreal\<close>-valued. The exit time is capped at \<open>T\<close> by
+  construction (\<open>Exit_Time.etime_le_T\<close>), so the ceiling is available for free.\<close>
+
+lemma ess_inf_time_le_const:
+  assumes M: "prob_space M" and bnd: "\<And>\<omega>. tau \<omega> \<le> T"
+  shows "ess_inf_time M tau \<le> ennreal T"
+proof -
+  interpret PM: prob_space M by (rule M)
+  have "(\<integral>\<^sup>+\<omega>. ennreal (tau \<omega>) \<partial>M) \<le> (\<integral>\<^sup>+\<omega>. ennreal T \<partial>M)"
+    by (intro nn_integral_mono ennreal_leI bnd)
+  also have "(\<integral>\<^sup>+\<omega>. ennreal T \<partial>M) = ennreal T"
+    by (simp add: PM.emeasure_space_1)
+  finally have "(\<integral>\<^sup>+\<omega>. ennreal (tau \<omega>) \<partial>M) \<le> ennreal T" .
+  with ess_inf_time_le_nn_integral[OF M] show ?thesis by (rule order_trans)
+qed
+
 text \<open>
   Calculus for @{const ess_inf_time}, needed by Proposition 2.4. The
   dynamic programming principle of Eq. (2.9) is an identity between essential
