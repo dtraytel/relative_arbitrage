@@ -153,7 +153,51 @@ own `Section_2_Compactness.thy` header analyses this correctly.
   **`path_laws_convergent_subsequence_vec`** — a uniform 4th-moment bound gives a
   weakly convergent subsequence. *That is Lemma 2.2.*
 
-### Work item 1 (~300–600 lines, LOW risk)
+### Work item 1 — RESCOPED 2026-08-02: it is NOT low risk, and it is not about lines
+
+Instantiating Lemma 2.2 at `P_x` runs into a **missing hypothesis in the market
+class**, not a shortage of work. Trace the chain:
+
+| step | needs |
+|---|---|
+| `Path_Tightness.tight_on_set_path_laws_vec` | a uniform 4th-moment bound per component |
+| `Increment_Moments.fourth_moment_bound_bounded` | `covA`: `cond_exp (F u) ((X v − X u)²) = cond_exp (F u) (A v − A u)` |
+| `Stopped_Localization.stopped_covariation` (the only thing that discharges `covA`) | `mgZ`: **`martingale M F 0 (λt ω. (X t ω)² − A t ω)`** |
+
+But `sufficiently_volatile_market` (`Relative_Arbitrage_Stochastic.thy:93`) assumes
+only
+
+    dynkin_quadratic:  E[X_{t∧τ}·X_{t∧τ}] − E[∫₀^{t∧τ} tr(acov s) ds] = x0·x0
+
+which is **unconditional**, about the **trace**, and **stopped**. It says the
+expectation of `|X|² − ∫tr(acov)` is constant in `t`. `mgZ` says the compensated
+square is a martingale, componentwise. Constant expectation does not imply the
+martingale property, and a trace identity does not imply componentwise ones, so
+`mgZ` is **not derivable** from the locale as it stands. A grep confirms nothing
+in the development derives it for a general market of this class.
+
+**Three ways out, and only one is real.**
+
+1. *Strengthen the locale* to assume the componentwise martingale property of the
+   compensated square. This is arguably the FAITHFUL axiomatisation — the paper's
+   class (1.7) is a martingale problem, in which `X` and `X Xᵀ − ∫a` are both
+   martingales — so the current locale is WEAKER than the paper's class, and the
+   fix makes it match. Cost: `P_x` shrinks, so `val_fn` changes, and every
+   existing consumer of the locale must be re-checked. **This is a decision about
+   what the formalisation asserts, and it belongs to the author, not to a
+   mechanical fix.**
+2. *Derive `mgZ` from `dynkin_quadratic`* — impossible, see above.
+3. *Go through quadratic-variation calculus and Itô's formula* — the route the
+   paper takes, and the one this development explicitly declares out of scope
+   (`Relative_Arbitrage_Ito.thy:95`).
+
+Until item 1 is resolved, clause (1) of Theorem 1.1 is complete only as a
+conditional statement: `Section_2_Usc.vshift_sup_usc_of_seq_compact` proves it
+GIVEN sequential weak compactness of the law family, and everything downstream of
+that hypothesis — including the market-to-law bridge `vshift_path_law` — is
+verified.
+
+### Work item 1, as originally scoped (~300–600 lines, LOW risk) — superseded above
 Instantiate the above at `P_x`. Concretely:
 1. From `sufficiently_volatile_market`, derive the hypotheses of
    `fourth_moment_bound_bounded`: `A = tr⟨X⟩`, rate bound `C = nL` from
