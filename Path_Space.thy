@@ -1076,4 +1076,25 @@ proof -
   from less_LiminfD[OF this] show ?thesis by simp
 qed
 
+text \<open>The hypothesis that makes \<open>Section_2_Compactness.box_of_sequential\<close> usable
+  on the LAW space: the weak topology over the path space is metrizable. This is
+  the Lévy--Prokhorov theorem, and it is the entire reason the sequential form of
+  item 2.4 is as good as the topological form Berge wants.
+
+  Both inputs are already here: the path space is a metric space by construction
+  and separable by \<open>path_metric_polish\<close>.\<close>
+
+lemma metrizable_weak_conv_path_topology:
+  "metrizable_space (weak_conv_topology
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric)))"
+proof (rule metrizable_weak_conv_topology)
+  show "metrizable_space
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    unfolding mtopology_of_def
+    by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
+  show "separable_space
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    unfolding mtopology_of_def by (rule path_metric_polish(2))
+qed
+
 end

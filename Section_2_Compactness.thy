@@ -356,4 +356,114 @@ proof -
     by (rule exI[of _ U]) (intro conjI openU xinU ballU)
 qed
 
+section \<open>Feeding \<open>box\<close> from a sequential statement\<close>
+
+text \<open>
+  \<open>usc_sup_over_compact\<close> above asks for \<open>box\<close> topologically: OPEN \<open>U \<ni> x\<close> and
+  \<open>V \<ni> P\<close> on which the strict inequality persists. Weak convergence of measures,
+  however, is naturally a statement about SEQUENCES, and that is the form in
+  which the AFP's Portmanteau theorems come and in which item 2.4 of the
+  Theorem 1.1 plan is proved (\<open>Section_2_Usc.etime_shift_box\<close>).
+
+  The two are equivalent when both spaces are metrizable --- for the law space
+  this is the Lévy--Prokhorov theorem, \<open>metrizable_weak_conv_topology\<close> in the AFP
+  entry, applicable because the path space is metrizable and separable. This
+  lemma is that equivalence, and nothing about measures enters it.
+
+  The direction proved here is the one that is NOT formal nonsense: from
+  sequences to neighbourhoods. Its contrapositive picks, for each \<open>n\<close>, a
+  counterexample inside the \<open>1/Suc n\<close> balls, and those choices assemble into a
+  pair of convergent sequences that the hypothesis forbids. Countable choice is
+  doing real work, which is exactly why metrizability (or at least first
+  countability) cannot be dropped.
+\<close>
+
+lemma box_of_sequential:
+  fixes X :: "'a topology" and Y :: "'b topology"
+  assumes mX: "metrizable_space X" and mY: "metrizable_space Y"
+    and x: "x \<in> topspace X" and P: "P \<in> topspace Y"
+    and seq: "\<And>yi Qi. limitin X yi x sequentially
+        \<Longrightarrow> limitin Y Qi P sequentially
+        \<Longrightarrow> eventually (\<lambda>i. R (yi i) (Qi i)) sequentially"
+  shows "\<exists>U V. openin X U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. R y Q)"
+proof (rule ccontr)
+  assume neg: "\<not> ?thesis"
+  text \<open>\<open>metrizable_space_def\<close> quantifies over the CARRIER as well as the metric,
+    so the carrier has to be identified with \<open>topspace X\<close> afterwards rather than
+    assumed to be it.\<close>
+  obtain MXs dX where dX: "Metric_space MXs dX"
+    and tX: "X = Metric_space.mtopology MXs dX"
+    using mX unfolding metrizable_space_def by blast
+  obtain MYs dY where dY: "Metric_space MYs dY"
+    and tY: "Y = Metric_space.mtopology MYs dY"
+    using mY unfolding metrizable_space_def by blast
+  interpret MX: Metric_space MXs dX by (rule dX)
+  interpret MY: Metric_space MYs dY by (rule dY)
+  have tsX: "topspace X = MXs" unfolding tX by (rule MX.topspace_mtopology)
+  have tsY: "topspace Y = MYs" unfolding tY by (rule MY.topspace_mtopology)
+  have xM: "x \<in> MXs" using x tsX by simp
+  have PM: "P \<in> MYs" using P tsY by simp
+
+  have pick: "\<exists>z W. z \<in> MX.mball x (1 / Suc n) \<and> W \<in> MY.mball P (1 / Suc n)
+      \<and> \<not> R z W" for n :: nat
+  proof -
+    have oU: "openin X (MX.mball x (1 / Suc n))"
+      unfolding tX by (rule MX.openin_mball)
+    have oV: "openin Y (MY.mball P (1 / Suc n))"
+      unfolding tY by (rule MY.openin_mball)
+    have xU: "x \<in> MX.mball x (1 / Suc n)" using xM by simp
+    have PV: "P \<in> MY.mball P (1 / Suc n)" using PM by simp
+    show ?thesis using neg oU oV xU PV by blast
+  qed
+  obtain y Q where yQ: "\<And>n. y n \<in> MX.mball x (1 / Suc n)"
+    "\<And>n. Q n \<in> MY.mball P (1 / Suc n)" "\<And>n. \<not> R (y n) (Q n)"
+    using pick by metis
+
+  have limy: "limitin X y x sequentially"
+  proof -
+    have "limitin MX.mtopology y x sequentially"
+      unfolding MX.limitin_metric
+    proof (intro conjI allI impI xM)
+      fix e :: real assume e: "0 < e"
+      obtain N :: nat where N: "1 / Suc N < e" using e nat_approx_posE by blast
+      have "y n \<in> MXs \<and> dX (y n) x < e" if n: "N \<le> n" for n
+      proof -
+        have lt: "dX x (y n) < 1 / Suc n"
+          using yQ(1)[of n] unfolding MX.mball_def by simp
+        have "(1::real) / Suc n \<le> 1 / Suc N" using n by (simp add: frac_le)
+        with lt N have "dX x (y n) < e" by linarith
+        thus ?thesis
+          using yQ(1)[of n] unfolding MX.mball_def by (simp add: MX.commute)
+      qed
+      thus "eventually (\<lambda>n. y n \<in> MXs \<and> dX (y n) x < e) sequentially"
+        unfolding eventually_sequentially by blast
+    qed
+    thus ?thesis unfolding tX .
+  qed
+  have limQ: "limitin Y Q P sequentially"
+  proof -
+    have "limitin MY.mtopology Q P sequentially"
+      unfolding MY.limitin_metric
+    proof (intro conjI allI impI PM)
+      fix e :: real assume e: "0 < e"
+      obtain N :: nat where N: "1 / Suc N < e" using e nat_approx_posE by blast
+      have "Q n \<in> MYs \<and> dY (Q n) P < e" if n: "N \<le> n" for n
+      proof -
+        have lt: "dY P (Q n) < 1 / Suc n"
+          using yQ(2)[of n] unfolding MY.mball_def by simp
+        have "(1::real) / Suc n \<le> 1 / Suc N" using n by (simp add: frac_le)
+        with lt N have "dY P (Q n) < e" by linarith
+        thus ?thesis
+          using yQ(2)[of n] unfolding MY.mball_def by (simp add: MY.commute)
+      qed
+      thus "eventually (\<lambda>n. Q n \<in> MYs \<and> dY (Q n) P < e) sequentially"
+        unfolding eventually_sequentially by blast
+    qed
+    thus ?thesis unfolding tY .
+  qed
+  from seq[OF limy limQ] have "eventually (\<lambda>i. R (y i) (Q i)) sequentially" .
+  thus False using yQ(3) by simp
+qed
+
 end

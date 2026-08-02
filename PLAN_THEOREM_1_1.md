@@ -456,11 +456,26 @@ So work item 2.2 (`essinf_eq_inf_log_laplace`) is **deleted from the plan**.
   monotonicity step, comes from `open_etime_shift_less` — the event is a
   COUNTABLE union of open sets, by the same `qtimes` decomposition.
 
-  **What 2.4 still owes clause (1): the sequential-to-topological bridge.**
-  `usc_sup_over_compact`'s `box` wants open `U ∋ x` and `V ∋ P`; what is proved is
-  the sequential statement. They are equivalent because Lévy–Prokhorov metrises
-  the weak topology on a Polish space, but that equivalence is a real step and is
-  NOT yet formalised. Budget it separately.
+  **The sequential-to-topological bridge — DONE 2026-08-02.**
+  `usc_sup_over_compact`'s `box` wants open `U ∋ x` and `V ∋ P`; item 2.4 proves
+  the sequential statement. `Section_2_Compactness.box_of_sequential` converts
+  one into the other for any two METRIZABLE spaces:
+
+      metrizable_space X ⟹ metrizable_space Y ⟹ x ∈ topspace X ⟹ P ∈ topspace Y
+        ⟹ (⋀yi Qi. limitin X yi x sequentially ⟹ limitin Y Qi P sequentially
+              ⟹ eventually (λi. R (yi i) (Qi i)) sequentially)
+        ⟹ ∃U V. openin X U ∧ openin Y V ∧ x ∈ U ∧ P ∈ V ∧ (∀y∈U. ∀Q∈V. R y Q)
+
+  and `Path_Space.metrizable_weak_conv_path_topology` supplies the hypothesis for
+  the law space, from the AFP's `metrizable_weak_conv_topology` (Lévy–Prokhorov)
+  plus metrizability and separability of the path space, both already proved.
+
+  Two things worth knowing before touching this proof. `metrizable_space_def`
+  quantifies over the CARRIER as well as the metric, so the carrier must be
+  identified with `topspace X` afterwards — assuming it IS `topspace X` makes the
+  `obtain` fail. And the contrapositive needs countable choice to assemble the
+  per-`n` counterexamples into two sequences, which is exactly why metrizability
+  (or at least first countability) cannot be weakened away.
 
   **One obstruction the plan had not named.** Berge's `box` hypothesis asks for
   an OPEN neighbourhood `V` of `P`, but `mweak_conv3` is a statement about
