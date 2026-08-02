@@ -89,6 +89,22 @@ proof -
     using c b by auto
 qed
 
+text \<open>The converse direction, which item 2.4 needs: a point of the path space IS
+  a continuous function on \<open>{0..T}\<close>, so the countable-witness reduction
+  \<open>Exit_Time.etime_less_iff_qtimes_open\<close> applies to it.\<close>
+
+lemma mspace_path_metricD:
+  fixes f :: "real \<Rightarrow> 'b::polish_space"
+  assumes f: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+  shows "continuous_on {0..T} f"
+proof -
+  have "continuous_map (top_of_set {0..T})
+      (mtopology_of (euclidean_metric :: 'b metric)) f"
+    using f unfolding path_metric_def mspace_cfunspace by simp
+  hence "continuous_map (top_of_set {0..T}) euclidean f" by simp
+  thus ?thesis by (simp add: continuous_map_iff_continuous2)
+qed
+
 theorem compactin_path_holder_ball:
   fixes x :: "'b::{polish_space, real_normed_vector, heine_borel}"
     and T c ga :: real
@@ -744,6 +760,27 @@ proof -
   qed
   show ?thesis unfolding eq
     by (rule openin_Union) (use op in blast)
+qed
+
+text \<open>The brick the proof above used inline, now stated on its own: evaluation at
+  a fixed admissible time is continuous, so an open target pulls back to an open
+  set of paths. Item 2.4 needs it at a SHIFTED target and cannot reach inside the
+  proof of \<open>open_hit_strictly_before\<close> to get it.\<close>
+
+lemma open_eval_preimage:
+  fixes T r :: real and U :: "'b::polish_space set"
+  assumes rT: "r \<in> {0..T}" and U: "open U"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> U}"
+proof -
+  have cm: "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) euclidean (\<lambda>f. f r)"
+    by (rule continuous_map_path_eval[OF rT])
+  have "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)).
+         f r \<in> U}"
+    by (rule openin_continuous_map_preimage[OF cm]) (use U in simp)
+  thus ?thesis by simp
 qed
 
 lemma weak_conv_on_nn_integral_le:

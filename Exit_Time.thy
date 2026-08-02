@@ -660,4 +660,65 @@ proof -
   qed
 qed
 
+subsection \<open>The countable reduction for an OPEN target\<close>
+
+text \<open>\<open>hit_iff_qtimes\<close> above reduces hitting a CLOSED set to rational times, at the
+  price of an approximation \<open>infdist < 1/Suc m\<close>. For an open target the reduction
+  is exact: openness gives room around the witness, so the witness itself can be
+  slid onto a rational.
+
+  This is the step that makes item 2.4's positive-mass argument possible at all.
+  Over an uncountable set of witness times a union of null sets need not be null,
+  so no rational reduction means no single witness time to erode around.
+
+  Note where \<open>\<not> T < c\<close> is used: it forces the witness to satisfy \<open>r < T\<close> rather
+  than merely \<open>r \<le> T\<close> (from \<open>r < c \<le> T\<close>), which is what leaves room to move
+  strictly to the right onto a rational. Without it the witness could sit at the
+  endpoint \<open>T\<close> --- harmless, since \<open>T \<in> qtimes T\<close> by construction, but then the
+  sliding argument is not the one that applies.\<close>
+
+lemma etime_less_iff_qtimes_open:
+  fixes g :: "real \<Rightarrow> 'b :: metric_space"
+  assumes T: "0 \<le> T" and A: "open A" and cT: "\<not> T < c"
+    and cont: "continuous_on {0..T} g"
+  shows "etime T A (\<lambda>s w. g s) \<omega> < c \<longleftrightarrow> (\<exists>q \<in> qtimes T. q < c \<and> g q \<in> A)"
+proof
+  assume "etime T A (\<lambda>s w. g s) \<omega> < c"
+  then obtain r where r: "0 \<le> r" "r \<le> T" "r < c" and mem: "g r \<in> A"
+    using etime_less_iff[OF T, of A "\<lambda>s w. g s" \<omega> c] cT by auto
+  have rT: "r < T" using r cT by linarith
+  obtain e :: real where e: "0 < e" and ball: "ball (g r) e \<subseteq> A"
+    using A mem unfolding open_contains_ball by blast
+  have "continuous (at r within {0..T}) g"
+    using cont r by (simp add: continuous_on_eq_continuous_within)
+  then obtain d :: real where d: "0 < d"
+    and near: "\<And>s. s \<in> {0..T} \<Longrightarrow> dist s r < d \<Longrightarrow> dist (g s) (g r) < e"
+    using e unfolding continuous_within_eps_delta by blast
+  define u where "u = min (r + d) (min c T)"
+  have ru: "r < u" unfolding u_def using d r rT by simp
+  obtain q where q: "q \<in> \<rat>" "r < q" "q < u"
+    using ru Rats_dense_in_real by blast
+  have q0: "0 \<le> q" using q r by simp
+  have qT: "q \<le> T" using q unfolding u_def by simp
+  have qc: "q < c" using q unfolding u_def by simp
+  have "dist q r < d" using q r unfolding u_def dist_real_def by simp
+  from near[OF _ this] q0 qT have "dist (g q) (g r) < e" by simp
+  hence "g q \<in> ball (g r) e" by (simp add: dist_commute)
+  with ball have "g q \<in> A" by blast
+  moreover have "q \<in> qtimes T" unfolding qtimes_def using q q0 qT by simp
+  ultimately show "\<exists>q \<in> qtimes T. q < c \<and> g q \<in> A" using qc by blast
+next
+  assume "\<exists>q \<in> qtimes T. q < c \<and> g q \<in> A"
+  then obtain q where q: "q \<in> qtimes T" "q < c" and mem: "g q \<in> A" by blast
+  have qrange: "q \<in> {0..T}" using qtimes_subset[OF T] q by blast
+  show "etime T A (\<lambda>s w. g s) \<omega> < c"
+  proof (rule etime_less_of_open_witness)
+    show "0 \<le> T" by (rule T)
+    show "0 \<le> q" using qrange by simp
+    show "q \<le> T" using qrange by simp
+    show "q < c" by (rule q(2))
+    show "g q \<in> A" by (rule mem)
+  qed
+qed
+
 end

@@ -407,10 +407,40 @@ So work item 2.2 (`essinf_eq_inf_log_laplace`) is **deleted from the plan**.
   | margin uniform in `ω` | `open_gt_infdist`, `shift_stays_off` |
   | margin survives moving `P` | same erosion + open-set Portmanteau |
 
-  Remaining: chain them — instantiate `hit_iff_qtimes` for the countable witness
-  set, apply the reduction, choose the erosion level, finish with Portmanteau.
-  The cross-branch home now exists: **`Section_2_Usc`** (see 2.3) imports
-  `Exit_Time`, `Path_Space` and `Value_Function` together.
+  **PROGRESS 2026-08-02: the `x`-perturbation half of 2.4 is DONE.**
+  `Section_2_Usc.etime_shift_box_half`: from `f(x,P) < d` ALONE — no continuity
+  of the pushforward map, no joint continuity — there is `δ > 0` and an OPEN set
+  `G` of paths with `P G > 0` such that `τ_K(y+ω) < d` for every `ω ∈ G` and
+  every `y` with `dist x y < δ`. Supporting lemmas, in dependency order:
+
+      Exit_Time.etime_less_iff_qtimes_open   (rational witness for OPEN A)
+      Path_Space.open_eval_preimage          (the brick open_hit_strictly_before used inline)
+      Path_Space.mspace_path_metricD         (a path IS continuous on {0..T})
+      Section_2_Usc.open_shifted_eval_preimage
+      Section_2_Usc.etime_shift_le_of_eroded (the uniform margin)
+      Section_2_Usc.positive_mass_at_some_qtime  (countable reduction, at measure level)
+      Section_2_Usc.etime_shift_uniform_margin
+
+  `hit_iff_qtimes` turned out to be the WRONG tool: it reduces hitting a CLOSED
+  set and pays an `infdist < 1/Suc m` approximation. For an open target the
+  reduction is exact — openness gives room around the witness, so the witness
+  slides onto a rational — hence the new `etime_less_iff_qtimes_open`. It also
+  shows where `¬ T < c` earns its keep: it forces `r < c ≤ T`, so the witness is
+  strictly interior and there IS room to slide right.
+
+  Two Isabelle traps here, both the same shape and both costing a build: applying
+  a lemma whose premise contains `?X ?r ?ω` by chaining a fact into it leaves a
+  higher-order unification with several solutions (`OF: multiple unifiers`). The
+  fix is always to let the CONCLUSION drive — `proof (rule …)` with explicit
+  `show`s — so the process and path are fixed before the premises are matched.
+  Separately, `etime T A (λs w. x + w s) ω` and `etime T A (λs w'. x + ω s) ω`
+  are equal but not syntactically so; `etime` only ever applies its process to
+  the one path, and `unfolding etime_def by simp` bridges them.
+
+  **Remaining for 2.4**: the `P`-perturbation half — `Q(G) > 0` for `Q` in a weak
+  neighbourhood of `P`, which is `G` open plus Portmanteau. The cross-branch home
+  exists: **`Section_2_Usc`** imports `Exit_Time`, `Path_Space` and
+  `Value_Function` together.
 
   **One obstruction the plan had not named.** Berge's `box` hypothesis asks for
   an OPEN neighbourhood `V` of `P`, but `mweak_conv3` is a statement about

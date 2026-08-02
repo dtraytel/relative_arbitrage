@@ -167,4 +167,218 @@ proof -
     using ess_inf_time_ge_iff_measure[OF pN] Smeas[OF sN] Sspace[OF sN] by simp
 qed
 
+subsection \<open>Item 2.4: a shift margin uniform over the sample space\<close>
+
+text \<open>
+  Larsson--Ruf get joint upper semicontinuity of \<open>f(x,P) = ((x + \<cdot>)\<^sub>*P)\<hyphen>essinf \<tau>\<^sub>K\<close>
+  by asserting that \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close> is continuous. Berge's \<open>box\<close> hypothesis
+  asks for much less --- only that \<open>f(x,P) < d\<close> PERSISTS on a product
+  neighbourhood --- and unfolding that is far cheaper than proving continuity of
+  the pushforward map.
+
+  The obstruction is uniformity. \<open>f(x,P) < d\<close> says the event
+  \<open>{\<omega> : \<tau>\<^sub>K(x + \<omega>) < d}\<close> has positive mass, and by \<open>etime_less_iff\<close> each such \<open>\<omega>\<close>
+  is witnessed by a time \<open>r < d\<close> with \<open>x + \<omega>(r) \<in> A\<close>. Each \<omega> then has its OWN
+  room to move \<open>x\<close>, and a pointwise \<open>\<epsilon>(\<omega>)\<close> is worthless against a measure.
+
+  The erosion operator fixes exactly this: \<open>eroded \<delta> A\<close> is open, exhausts \<open>A\<close>, and
+  its margin \<open>\<delta>\<close> is the same at every point. Passing to an erosion costs only mass,
+  and \<open>positive_mass_at_some_erosion\<close> says some level retains it.
+\<close>
+
+lemma open_shifted_eval_preimage:
+  fixes T r :: real
+    and U :: "'b::{polish_space,real_normed_vector} set" and x :: 'b
+  assumes rT: "r \<in> {0..T}" and U: "open U"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> U}"
+proof -
+  have eq: "{z. x + z \<in> U} = (\<lambda>w. (- x) + w) ` U"
+  proof
+    show "{z. x + z \<in> U} \<subseteq> (\<lambda>w. (- x) + w) ` U"
+    proof
+      fix z assume "z \<in> {z. x + z \<in> U}"
+      hence mem: "x + z \<in> U" by simp
+      have "z = (- x) + (x + z)" by simp
+      with mem show "z \<in> (\<lambda>w. (- x) + w) ` U" by blast
+    qed
+  next
+    show "(\<lambda>w. (- x) + w) ` U \<subseteq> {z. x + z \<in> U}" by auto
+  qed
+  have op: "open {z. x + z \<in> U}"
+    unfolding eq by (rule open_translation[OF U])
+  have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> U}
+      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> {z. x + z \<in> U}}"
+    by simp
+  thus ?thesis using open_eval_preimage[OF rT op] by simp
+qed
+
+text \<open>The margin itself. Note what does NOT appear: no property of \<open>\<omega>\<close> beyond the
+  single evaluation \<open>\<omega>(r)\<close>, and no dependence of \<open>\<delta>\<close> on \<open>\<omega>\<close>.\<close>
+
+lemma etime_shift_le_of_eroded:
+  fixes A :: "'b::{polish_space,real_normed_vector} set"
+  assumes T: "0 \<le> T" and rr: "0 \<le> r" "r \<le> T"
+    and mem: "x + \<omega> r \<in> eroded \<delta> A"
+    and near: "dist x y < \<delta>"
+  shows "etime T A (\<lambda>s w. y + w s) \<omega> \<le> r"
+proof -
+  have "dist (x + \<omega> r) (y + \<omega> r) < \<delta>" using near by simp
+  from eroded_shift[OF mem this] have inA: "y + \<omega> r \<in> A" .
+  text \<open>The conclusion has to drive the unification here. Chaining \<open>inA\<close> into the
+    rule instead leaves \<open>?X r \<omega> \<in> A\<close> to be solved higher-order, which has several
+    solutions and makes the step fail.\<close>
+  show ?thesis
+  proof (rule etime_le_of_mem)
+    show "0 \<le> T" by (rule T)
+    show "0 \<le> r" by (rule rr(1))
+    show "r \<le> T" by (rule rr(2))
+    show "y + \<omega> r \<in> A" by (rule inA)
+  qed
+qed
+
+text \<open>The assembly. From a witness time \<open>r\<close> carrying positive mass we extract an
+  OPEN set of paths, still of positive mass, on which the exit time stays below
+  \<open>d\<close> for EVERY nearby starting point. Openness is what lets the second half of
+  Berge's \<open>box\<close> --- moving the measure --- go through by Portmanteau.\<close>
+
+lemma etime_shift_uniform_margin:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
+  assumes T: "0 \<le> T" and A: "open A"
+    and sP: "sets P = sets (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and r: "0 \<le> r" "r \<le> T" "r < d"
+    and pos: "emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> A} \<noteq> 0"
+  shows "\<exists>\<delta>>0. \<exists>G. openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) G
+      \<and> emeasure P G \<noteq> 0
+      \<and> (\<forall>y. dist x y < \<delta> \<longrightarrow> (\<forall>\<omega> \<in> G. etime T A (\<lambda>s w. y + w s) \<omega> < d))"
+proof -
+  have spP: "space P = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    using sets_eq_imp_space_eq[OF sP] by (simp add: space_borel_of)
+  have rT: "r \<in> {0..T}" using r by simp
+  have opn: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         x + f r \<in> eroded (1 / Suc n) A}" for n :: nat
+    by (rule open_shifted_eval_preimage[OF rT open_eroded])
+  have meas: "{\<omega> \<in> space P. x + \<omega> r \<in> eroded (1 / Suc n) A} \<in> sets P" for n :: nat
+    using borel_of_open[OF opn[of n]] unfolding sP spP by simp
+  obtain n :: nat where
+    posn: "emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> eroded (1 / Suc n) A} \<noteq> 0"
+    by (rule positive_mass_at_some_erosion[OF A meas pos, THEN exE])
+  define G where "G = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+      x + f r \<in> eroded (1 / Suc n) A}"
+  have Gspace: "G = {\<omega> \<in> space P. x + \<omega> r \<in> eroded (1 / Suc n) A}"
+    unfolding G_def spP by simp
+  have "(0::real) < 1 / Suc n" by simp
+  moreover have "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) G"
+    unfolding G_def by (rule opn)
+  moreover have "emeasure P G \<noteq> 0" unfolding Gspace by (rule posn)
+  moreover have "etime T A (\<lambda>s w. y + w s) \<omega> < d"
+    if near: "dist x y < 1 / Suc n" and \<omega>: "\<omega> \<in> G" for y \<omega>
+  proof -
+    have le: "etime T A (\<lambda>s w. y + w s) \<omega> \<le> r"
+    proof (rule etime_shift_le_of_eroded)
+      show "0 \<le> T" by (rule T)
+      show "0 \<le> r" by (rule r(1))
+      show "r \<le> T" by (rule r(2))
+      show "x + \<omega> r \<in> eroded (1 / Suc n) A" using \<omega> unfolding G_def by simp
+      show "dist x y < 1 / Suc n" by (rule near)
+    qed
+    from le r(3) show ?thesis by linarith
+  qed
+  ultimately show ?thesis by blast
+qed
+
+text \<open>The countable reduction, at the level of measures. \<open>etime_less_iff_qtimes_open\<close>
+  turns the event into a union over \<open>qtimes T\<close>, which is countable, so
+  \<open>positive_of_countable_UN\<close> extracts a SINGLE witness time still carrying positive
+  mass. Doing this before the erosion is not a matter of taste: the erosion step
+  needs a fixed time \<open>r\<close> to erode around, and over the uncountable family of
+  witness times no such extraction exists.\<close>
+
+lemma positive_mass_at_some_qtime:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
+    and sP: "sets P = sets (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and pos: "emeasure P
+        {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
+  shows "\<exists>r \<in> qtimes T. r < d
+      \<and> emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> A} \<noteq> 0"
+proof -
+  have spP: "space P = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    using sets_eq_imp_space_eq[OF sP] by (simp add: space_borel_of)
+  define R where "R = {r \<in> qtimes T. r < d}"
+  have cR: "countable R" unfolding R_def using countable_qtimes by simp
+
+  text \<open>The pointwise reduction, applied path by path. Continuity of the shifted
+    path is what \<open>mspace_path_metricD\<close> supplies.\<close>
+  have ptw: "etime T A (\<lambda>s w. x + w s) \<omega> < d
+      \<longleftrightarrow> (\<exists>r \<in> R. x + \<omega> r \<in> A)"
+    if w: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" for \<omega>
+  proof -
+    have cont: "continuous_on {0..T} (\<lambda>s. x + \<omega> s)"
+      by (intro continuous_intros mspace_path_metricD[OF w])
+    text \<open>\<open>etime\<close> only ever applies its process to the ONE path \<open>\<omega>\<close>, so freezing
+      the path inside the process changes nothing --- but it does change the
+      term, and the reduction lemma is stated for a frozen process.\<close>
+    have eq: "etime T A (\<lambda>s w. x + w s) \<omega> = etime T A (\<lambda>s w'. x + \<omega> s) \<omega>"
+      unfolding etime_def by simp
+    show ?thesis
+      unfolding eq R_def
+      using etime_less_iff_qtimes_open[OF T A dT cont, of \<omega>] by auto
+  qed
+  have split: "{\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d}
+      = (\<Union>r \<in> R. {\<omega> \<in> space P. x + \<omega> r \<in> A})"
+    using ptw unfolding spP by blast
+
+  text \<open>Measurability of each slice comes from openness of the shifted evaluation
+    preimage, exactly as in \<open>etime_shift_uniform_margin\<close>.\<close>
+  have meas: "{\<omega> \<in> space P. x + \<omega> r \<in> A} \<in> sets P" if r: "r \<in> R" for r
+  proof -
+    have "r \<in> qtimes T" using r unfolding R_def by simp
+    hence rT: "r \<in> {0..T}" using qtimes_subset[OF T] by blast
+    have "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+        {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> A}"
+      by (rule open_shifted_eval_preimage[OF rT A])
+    from borel_of_open[OF this] show ?thesis unfolding sP spP by simp
+  qed
+  have "emeasure P (\<Union>r \<in> R. {\<omega> \<in> space P. x + \<omega> r \<in> A}) \<noteq> 0"
+    using pos unfolding split .
+  from positive_of_countable_UN[OF cR meas this] show ?thesis
+    unfolding R_def by blast
+qed
+
+text \<open>Both halves of item 2.4's \<open>x\<close>-perturbation, in one statement: from
+  \<open>f(x,P) < d\<close> alone --- no continuity of the pushforward map, no joint
+  continuity --- we get an OPEN set of paths of positive \<open>P\<close>-mass on which the
+  exit time stays below \<open>d\<close> for every starting point within \<open>\<delta>\<close> of \<open>x\<close>.\<close>
+
+theorem etime_shift_box_half:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
+    and sP: "sets P = sets (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and pos: "emeasure P
+        {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
+  shows "\<exists>\<delta>>0. \<exists>G. openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) G
+      \<and> emeasure P G \<noteq> 0
+      \<and> (\<forall>y. dist x y < \<delta> \<longrightarrow> (\<forall>\<omega> \<in> G. etime T A (\<lambda>s w. y + w s) \<omega> < d))"
+proof -
+  obtain r where r: "r \<in> qtimes T" "r < d"
+    and posr: "emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> A} \<noteq> 0"
+    using positive_mass_at_some_qtime[OF T A dT sP pos] by blast
+  have rT: "r \<in> {0..T}" using qtimes_subset[OF T] r(1) by blast
+  show ?thesis
+  proof (rule etime_shift_uniform_margin[OF T A sP])
+    show "0 \<le> r" using rT by simp
+    show "r \<le> T" using rT by simp
+    show "r < d" by (rule r(2))
+    show "emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> A} \<noteq> 0" by (rule posr)
+  qed
+qed
+
 end
