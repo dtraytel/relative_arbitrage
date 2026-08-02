@@ -466,4 +466,112 @@ proof (rule ccontr)
   thus False using yQ(3) by simp
 qed
 
+section \<open>Berge over a \<open>topology\<close>-valued index space\<close>
+
+text \<open>
+  \<open>usc_sup_over_compact\<close> is stated with type-class \<open>open\<close> and \<open>compact\<close> on BOTH
+  factors. That is fine for the starting point \<open>x\<close>, which lives in \<open>real^'n\<close>, but
+  not for the laws: the weak topology is a \<open>topology\<close> VALUE
+  (\<open>weak_conv_topology\<close>), not a type-class instance on \<open>'a measure\<close>, and there is
+  no way to make it one --- the type carries no canonical topology, and different
+  base spaces induce different weak topologies on the same type.
+
+  So the second factor is re-stated with \<open>openin\<close>/\<open>compactin\<close>. Only the covering
+  argument changes: \<open>compactinD\<close> hands back a finite SET of opens rather than a
+  finite index set, so the indices are recovered with \<open>finite_subset_image\<close>. The
+  conclusion still lives in the type class, because it is about \<open>nhds x\<close>.
+\<close>
+
+theorem usc_sup_over_compactin:
+  fixes F :: "'a::topological_space \<Rightarrow> 'b \<Rightarrow> real"
+    and Y :: "'b topology" and C :: "'b set" and x :: 'a and c :: real
+  assumes cC: "compactin Y C" and neC: "C \<noteq> {}"
+    and bdd: "\<And>y. bdd_above (F y ` C)"
+    and lt: "Sup (F x ` C) < c"
+    and box: "\<And>P d. P \<in> C \<Longrightarrow> F x P < d \<Longrightarrow>
+        \<exists>U V. open U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
+              \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < d)"
+  shows "eventually (\<lambda>y. Sup (F y ` C) < c) (nhds x)"
+proof -
+  obtain c' where c1: "Sup (F x ` C) < c'" and c2: "c' < c"
+    using lt dense by blast
+  have small: "F x P < c'" if P: "P \<in> C" for P
+  proof -
+    have "F x P \<le> Sup (F x ` C)"
+      by (rule cSup_upper) (use P bdd in auto)
+    with c1 show ?thesis by linarith
+  qed
+  have ex: "\<forall>P \<in> C. \<exists>U V. open U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < c')"
+    using box small by blast
+  have ex': "\<forall>P \<in> C. \<exists>W :: 'a set \<times> 'b set.
+      open (fst W) \<and> openin Y (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
+      \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
+  proof
+    fix P assume P: "P \<in> C"
+    from bspec[OF ex P] obtain U V where
+      "open U" "openin Y V" "x \<in> U" "P \<in> V" "\<forall>y\<in>U. \<forall>Q\<in>V. F y Q < c'"
+      by blast
+    then show "\<exists>W :: 'a set \<times> 'b set.
+        open (fst W) \<and> openin Y (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
+        \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
+      by (intro exI[of _ "(U,V)"]) simp
+  qed
+  have exf: "\<exists>WW. \<forall>P\<in>C.
+      open (fst (WW P)) \<and> openin Y (snd (WW P)) \<and> x \<in> fst (WW P)
+      \<and> P \<in> snd (WW P)
+      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
+    by (rule bchoice[OF ex'])
+  then obtain WW where Wb: "\<forall>P\<in>C.
+      open (fst (WW P)) \<and> openin Y (snd (WW P)) \<and> x \<in> fst (WW P)
+      \<and> P \<in> snd (WW P)
+      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
+    by (rule exE)
+  define UU where "UU = (\<lambda>P. fst (WW P))"
+  define VV where "VV = (\<lambda>P. snd (WW P))"
+  have oU: "open (UU P)" if P: "P \<in> C" for P
+    unfolding UU_def using bspec[OF Wb P] by simp
+  have oV: "openin Y (VV P)" if P: "P \<in> C" for P
+    unfolding VV_def using bspec[OF Wb P] by simp
+  have xU: "x \<in> UU P" if P: "P \<in> C" for P
+    unfolding UU_def using bspec[OF Wb P] by simp
+  have PV: "P \<in> VV P" if P: "P \<in> C" for P
+    unfolding VV_def using bspec[OF Wb P] by simp
+  have less: "F y Q < c'" if P: "P \<in> C" and y: "y \<in> UU P" and Q: "Q \<in> VV P"
+    for P y Q
+    using bspec[OF Wb P] y Q unfolding UU_def VV_def by simp
+
+  text \<open>The covering step, in the \<open>openin\<close> world: cover by the SET \<open>VV ` C\<close>, then
+    turn the finite subcover back into a finite set of INDICES.\<close>
+  have cover: "C \<subseteq> \<Union>(VV ` C)" using PV by blast
+  have opens: "openin Y V" if "V \<in> VV ` C" for V using that oV by blast
+  obtain \<F> where F1: "\<F> \<subseteq> VV ` C" and F2: "finite \<F>" and F3: "C \<subseteq> \<Union>\<F>"
+    using compactinD[OF cC opens cover] by blast
+  obtain D where D1: "D \<subseteq> C" and D2: "finite D" and Deq: "\<F> = VV ` D"
+    using finite_subset_image[OF F2 F1] by blast
+  have D3: "C \<subseteq> (\<Union>P\<in>D. VV P)" using F3 unfolding Deq by simp
+
+  define U where "U = (\<Inter>P\<in>D. UU P)"
+  have oUD: "\<forall>P\<in>D. open (UU P)" using oU D1 by blast
+  have openU: "open U" unfolding U_def by (rule open_INT[OF D2 oUD])
+  have xinU: "x \<in> U" unfolding U_def using xU D1 by blast
+  have key: "Sup (F y ` C) \<le> c'" if yU: "y \<in> U" for y
+  proof (rule cSup_least)
+    show "F y ` C \<noteq> {}" using neC by blast
+  next
+    fix z assume "z \<in> F y ` C"
+    then obtain Q where Q: "Q \<in> C" and zdef: "z = F y Q" by blast
+    from Q D3 obtain P where P: "P \<in> D" and QV: "Q \<in> VV P" by blast
+    have "y \<in> UU P" using yU P unfolding U_def by blast
+    then have "F y Q < c'" using less[of P y Q] P D1 QV by blast
+    then show "z \<le> c'" unfolding zdef by linarith
+  qed
+  have final: "Sup (F y ` C) < c" if yU: "y \<in> U" for y
+    using key[OF yU] c2 by linarith
+  have ballU: "\<forall>y \<in> U. Sup (F y ` C) < c" by (intro ballI) (rule final)
+  show ?thesis
+    unfolding eventually_nhds
+    by (rule exI[of _ U]) (intro conjI openU xinU ballU)
+qed
+
 end

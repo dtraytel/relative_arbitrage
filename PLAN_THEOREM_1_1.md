@@ -483,7 +483,18 @@ So work item 2.2 (`essinf_eq_inf_log_laplace`) is **deleted from the plan**.
   first countable at `P` — true here, since the Lévy–Prokhorov metric metrizes
   it on a Polish space (that is what the AFP entry is for), but it is a real
   step, not a rewriting. Budget for it separately from the 200–350 lines.
-- 2.5 Berge — **DONE**, `usc_sup_over_compact`.
+- 2.5 Berge — **DONE**, `usc_sup_over_compact`, plus **`usc_sup_over_compactin`**
+  (2026-08-02), the same theorem with the SECOND factor over a `topology` value
+  instead of a type class.
+
+  That variant is not a convenience. The weak topology is `weak_conv_topology X`,
+  a `topology` VALUE; it cannot be a type-class instance on `'a measure`, because
+  the type carries no canonical topology and different base spaces induce
+  different weak topologies on the same type. So `compact`/`open` on the law side
+  had to become `compactin`/`openin`. Only the covering step changes: `compactinD`
+  returns a finite SET of opens rather than a finite index set, and the indices
+  come back via `finite_subset_image`. The conclusion stays in the type class,
+  since it is about `nhds x` in `real^'n`.
 - 2.6 `val_fn_usc` — open, but now only assembly once 2.1/2.3/2.4 land.
 
 ### Work item 2 (~800–1,500 lines, MEDIUM risk)
