@@ -1029,6 +1029,98 @@ proof -
 qed
 
 
+subsection \<open>The dichotomy for a general penalty\<close>
+
+text \<open>All four of these use the penalty ONLY through \<open>norm (z - z) = 0\<close>, i.e.
+  through \<open>Pn 0 = 0\<close>: each proof instantiates the maximiser inequality at a
+  DIAGONAL point, where the penalty is \<open>Pn (z - z) = Pn 0\<close>.  Nothing quadratic
+  is used anywhere, so each is a straight transcription.  For \<open>soft_pen\<close> the
+  hypothesis is \<open>soft_pen_zero\<close>.
+
+  \<open>doubling_off_diagonal_gen\<close> is the one that matters for the chain: it says the
+  maximising pair is OFF the diagonal whenever \<open>u - w\<close> beats its value at the
+  common point, which is exactly what makes \<open>soft_grad_nonzero\<close> applicable and
+  supplies the positive lower bound \<open>c\<close>.\<close>
+
+lemma doubling_diagonal_max_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
+    and P0: "Pn 0 = 0"
+    and diag: "xh = yh" and xh: "xh \<in> K"
+    and x: "x \<in> K"
+  shows "u x - w x \<le> u xh - w xh"
+proof -
+  have base: "u x - w x - Pn (x - x) \<le> u xh - w yh - Pn (xh - yh)"
+    by (rule mx[OF x x])
+  have e1: "x - x = (0 :: real^'n)" by simp
+  have e2: "xh - yh = (0 :: real^'n)" using diag by simp
+  from base have "u x - w x - Pn 0 \<le> u xh - w yh - Pn 0"
+    unfolding e1 e2 .
+  then have "u x - w x \<le> u xh - w yh" unfolding P0 by simp
+  then show ?thesis using diag by simp
+qed
+
+lemma doubling_off_diagonal_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
+    and P0: "Pn 0 = 0"
+    and xh: "xh \<in> K" and x: "x \<in> K"
+    and gt: "u xh - w xh < u x - w x"
+  shows "xh \<noteq> yh"
+proof
+  assume e: "xh = yh"
+  from doubling_diagonal_max_gen[OF mx P0 e xh x]
+  have "u x - w x \<le> u xh - w xh" .
+  with gt show False by linarith
+qed
+
+corollary doubling_diff_nonzero_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
+    and P0: "Pn 0 = 0"
+    and xh: "xh \<in> K" and x: "x \<in> K"
+    and gt: "u xh - w xh < u x - w x"
+  shows "xh - yh \<noteq> 0"
+  using doubling_off_diagonal_gen[OF mx P0 xh x gt] by simp
+
+lemma doubling_penalty_bound_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
+    and P0: "Pn 0 = 0"
+    and xh: "xh \<in> K" and yh: "yh \<in> K" and z: "z \<in> K"
+    and bnd: "u xh - w yh \<le> C"
+  shows "Pn (xh - yh) \<le> C - (u z - w z)"
+proof -
+  have base: "u z - w z - Pn (z - z) \<le> u xh - w yh - Pn (xh - yh)"
+    by (rule mx[OF z z])
+  have e: "z - z = (0 :: real^'n)" by simp
+  from base have "u z - w z - Pn 0 \<le> u xh - w yh - Pn (xh - yh)"
+    unfolding e .
+  then have "u z - w z \<le> u xh - w yh - Pn (xh - yh)" unfolding P0 by simp
+  with bnd show ?thesis by linarith
+qed
+
+lemma doubling_ge_diagonal_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
+    and P0: "Pn 0 = 0"
+    and z: "z \<in> K"
+  shows "u z - w z \<le> u xh - w yh - Pn (xh - yh)"
+proof -
+  have base: "u z - w z - Pn (z - z) \<le> u xh - w yh - Pn (xh - yh)"
+    by (rule mx[OF z z])
+  have e: "z - z = (0 :: real^'n)" by simp
+  from base have "u z - w z - Pn 0 \<le> u xh - w yh - Pn (xh - yh)"
+    unfolding e .
+  then show ?thesis unfolding P0 by simp
+qed
+
+
 subsection \<open>Monotonicity of the doubled maximum in the penalty parameter\<close>
 
 text \<open>The other standard ingredient of the \<open>\<alpha> \<rightarrow> \<infinity>\<close> passage: the doubled
@@ -1386,6 +1478,58 @@ proof -
   with zf zs show ?thesis by blast
 qed
 
+text \<open>The same for a general penalty.  The penalty enters the existence proof in
+  exactly ONE place --- the step \<open>cpen\<close> asserting that it is continuous --- so
+  the general version simply takes that continuity as a hypothesis.  Everything
+  else is \<open>compact_Times\<close> plus \<open>continuous_attains_sup\<close> and never looks at the
+  penalty at all.\<close>
+
+theorem doubling_maximiser_exists_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
+    and cPn: "continuous_on UNIV Pn"
+  shows "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
+      u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
+proof -
+  have cp: "compact (K \<times> K)"
+    by (rule compact_Times[OF cK cK])
+  have nep: "K \<times> K \<noteq> {}"
+    using neK by blast
+  have cfst: "continuous_on (K \<times> K) (\<lambda>z. u (fst z))"
+    by (rule continuous_on_compose2[OF cu continuous_on_fst[OF continuous_on_id]])
+       auto
+  have csnd: "continuous_on (K \<times> K) (\<lambda>z. w (snd z))"
+    by (rule continuous_on_compose2[OF cw continuous_on_snd[OF continuous_on_id]])
+       auto
+  have cdiff: "continuous_on (K \<times> K) (\<lambda>z. fst z - snd z)"
+    by (intro continuous_intros)
+  have cpen: "continuous_on (K \<times> K) (\<lambda>z. Pn (fst z - snd z))"
+    by (rule continuous_on_compose2[OF cPn cdiff subset_UNIV])
+  have cont: "continuous_on (K \<times> K)
+      (\<lambda>z. u (fst z) - w (snd z) - Pn (fst z - snd z))"
+    using cfst csnd cpen by (intro continuous_intros)
+  obtain z where z: "z \<in> K \<times> K"
+    and mx: "\<forall>v \<in> K \<times> K.
+        u (fst v) - w (snd v) - Pn (fst v - snd v)
+          \<le> u (fst z) - w (snd z) - Pn (fst z - snd z)"
+    using continuous_attains_sup[OF cp nep cont] by blast
+  have zf: "fst z \<in> K" and zs: "snd z \<in> K"
+    using z by auto
+  have "\<forall>x\<in>K. \<forall>y\<in>K.
+      u x - w y - Pn (x - y)
+        \<le> u (fst z) - w (snd z) - Pn (fst z - snd z)"
+  proof (intro ballI)
+    fix x y assume "x \<in> K" "y \<in> K"
+    then have "(x, y) \<in> K \<times> K" by simp
+    from mx[rule_format, OF this] show
+      "u x - w y - Pn (x - y)
+        \<le> u (fst z) - w (snd z) - Pn (fst z - snd z)"
+      by simp
+  qed
+  with zf zs show ?thesis by blast
+qed
+
 text \<open>And the packaged form the assembly wants: on a compact \<open>K\<close> the doubling
   produces a maximising pair together with the two estimates already proved
   for it, namely the penalty bound and the diagonal lower bound.\<close>
@@ -1574,6 +1718,164 @@ qed
 text \<open>The mirror image for the supersolution side: a SUBjet of \<open>v\<close> at \<open>yh\<close>
   gives the local-MIN statement, with the correction now \<open>- \<delta> I\<close>.  It follows
   from the same theorem applied to \<open>- v\<close>, whose jet data is \<open>(-p, -A)\<close>.\<close>
+
+subsection \<open>The jet hypothesis only ever needs ONE side\<close>
+
+text \<open>\<open>superjet_local_max\<close> (Sup\_Convolution) assumes a genuine limit, but its
+  proof discards half of it two lines later: from \<open>tendstoD\<close> it derives
+  \<open>|q| < \<delta>/2\<close> and then keeps only \<open>q < \<delta>/2\<close>, throwing \<open>-\<delta>/2 < q\<close> away.  Nothing
+  downstream recovers it --- \<open>jet_imp_local_min_test\<close>,
+  \<open>supersol_shifted_bound\<close> and \<open>supersol_no_vanishing_jet\<close> merely forward the
+  hypothesis.
+
+  That matters because the DIAGONAL branch of Theorem 4.2(a) supplies only one
+  side: the maximiser inequality \<open>\<Phi>(p, p+h) \<le> \<Phi>(p,p)\<close> gives an UPPER bound on
+  the increment of \<open>B = supconv (-w) \<epsilon>\<close> and says nothing below.  So the whole
+  chain is restated here with a one-sided hypothesis.  \<open>onesided_of_tendsto\<close>
+  shows this is a genuine WEAKENING, so every existing caller could be routed
+  through it; the two-sided versions are left untouched.
+
+  The quantifier over the threshold \<open>c\<close> is necessary and not cosmetic: in
+  \<open>supersol_no_vanishing_jet\<close> the \<open>\<delta>\<close> is produced INSIDE the proof by
+  \<open>small_multiple_exists\<close>, after the hypothesis has been fixed.\<close>
+
+lemma superjet_local_max_onesided:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F kk in at 0.
+      (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < c"
+    and d: "0 < \<delta>"
+  shows "\<exists>e>0. \<forall>kk. norm kk < e \<longrightarrow>
+      u (xh + kk) - (p \<bullet> kk + (kk \<bullet> X kk)/2 + (\<delta>/2) * (norm kk)\<^sup>2) \<le> u xh"
+proof -
+  have d2: "0 < \<delta>/2" using d by simp
+  from ub[OF d2] obtain e where e: "0 < e"
+    and b: "\<And>kk. kk \<noteq> 0 \<Longrightarrow> dist kk 0 < e
+      \<Longrightarrow> (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < \<delta>/2"
+    unfolding eventually_at by blast
+  have main: "u (xh + kk) - (p \<bullet> kk + (kk \<bullet> X kk)/2 + (\<delta>/2) * (norm kk)\<^sup>2)
+      \<le> u xh" if nk: "norm kk < e" for kk
+  proof (cases "kk = 0")
+    case True
+    show ?thesis unfolding True by simp
+  next
+    case False
+    have nn: "0 < (norm kk)\<^sup>2" using False by simp
+    have dk: "dist kk 0 < e" using nk by (simp add: dist_norm)
+    have "(u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < \<delta>/2"
+      by (rule b[OF False dk])
+    hence "u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2 < (\<delta>/2) * (norm kk)\<^sup>2"
+      using nn by (simp add: field_simps)
+    thus ?thesis by simp
+  qed
+  show ?thesis using e main by blast
+qed
+
+lemma onesided_of_tendsto:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes lim: "((\<lambda>kk. (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2)
+      / (norm kk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and c: "0 < c"
+  shows "\<forall>\<^sub>F kk in at 0.
+      (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < c"
+proof -
+  \<comment> \<open>on an OPAQUE \<open>q\<close> simp cannot push the \<open>\<bar>\<sqdot>\<bar>\<close> inside the quotient, which is
+      what defeats the direct \<open>simp add: dist_real_def\<close> here\<close>
+  have step: "q < c" if "dist q 0 < c" for q :: real
+    using that by (simp add: dist_real_def abs_less_iff)
+  have T: "\<forall>\<^sub>F kk in at 0. dist ((u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2)
+      / (norm kk)\<^sup>2) 0 < c"
+    by (rule tendstoD[OF lim c])
+  show ?thesis by (rule eventually_mono[OF T]) (rule step)
+qed
+
+text \<open>The generic form of the bridge, and the domination step the diagonal
+  branch needs: if the increment of \<open>B\<close> at \<open>p\<close> is DOMINATED (eventually) by some
+  \<open>D\<close> that is \<open>o(|h|^2)\<close>, then the increment satisfies the one-sided hypothesis.
+  Domination is exactly what a diagonal maximiser supplies, with \<open>D\<close> the
+  penalty.  Note \<open>dom\<close> is stated EVENTUALLY, not globally: the maximiser
+  inequality only holds while \<open>p + h\<close> stays in \<open>K\<close>, which for interior \<open>p\<close> is a
+  neighbourhood condition.\<close>
+
+lemma onesided_of_tendsto_gen:
+  fixes D :: "'a::euclidean_space \<Rightarrow> real"
+  assumes lim: "((\<lambda>hh. D hh / (norm hh)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and c: "0 < c"
+  shows "\<forall>\<^sub>F hh in at 0. D hh / (norm hh)\<^sup>2 < c"
+proof -
+  have step: "q < c" if "dist q 0 < c" for q :: real
+    using that by (simp add: dist_real_def abs_less_iff)
+  have T: "\<forall>\<^sub>F hh in at 0. dist (D hh / (norm hh)\<^sup>2) 0 < c"
+    by (rule tendstoD[OF lim c])
+  show ?thesis by (rule eventually_mono[OF T]) (rule step)
+qed
+
+lemma onesided_of_dominated:
+  fixes B D :: "'a::euclidean_space \<Rightarrow> real"
+  assumes dom: "\<forall>\<^sub>F hh in at 0. B (p + hh) - B p \<le> D hh"
+    and lim: "((\<lambda>hh. D hh / (norm hh)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and c: "0 < c"
+  shows "\<forall>\<^sub>F hh in at 0. (B (p + hh) - B p) / (norm hh)\<^sup>2 < c"
+proof -
+  have T: "\<forall>\<^sub>F hh in at 0. D hh / (norm hh)\<^sup>2 < c"
+    by (rule onesided_of_tendsto_gen[OF lim c])
+  from eventually_conj[OF dom T] show ?thesis
+  proof (rule eventually_mono)
+    fix hh :: 'a
+    assume A: "B (p + hh) - B p \<le> D hh \<and> D hh / (norm hh)\<^sup>2 < c"
+    have le: "B (p + hh) - B p \<le> D hh" using A by simp
+    have "(B (p + hh) - B p) / (norm hh)\<^sup>2 \<le> D hh / (norm hh)\<^sup>2"
+      by (rule divide_right_mono[OF le]) simp
+    then show "(B (p + hh) - B p) / (norm hh)\<^sup>2 < c" using A by linarith
+  qed
+qed
+
+theorem jet_imp_local_min_test_onesided:
+  fixes v :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n^'n"
+  assumes ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F kk in at 0.
+      ((- v) (yh + kk) - (- v) yh - (- p) \<bullet> kk
+        - (kk \<bullet> ((- A) *v kk))/2) / (norm kk)\<^sup>2 < c"
+    and d: "0 < \<delta>"
+  shows "\<exists>e>0. \<forall>z \<in> ball yh e.
+      v yh - (p \<bullet> (yh - yh)
+          + ((yh - yh) \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v (yh - yh)))/2)
+      \<le> v z - (p \<bullet> (z - yh)
+          + ((z - yh) \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
+proof -
+  obtain e where e: "0 < e"
+    and b: "\<And>kk. norm kk < e \<Longrightarrow>
+        (- v) (yh + kk) - ((- p) \<bullet> kk + (kk \<bullet> ((- A) *v kk))/2
+          + (\<delta>/2) * (norm kk)\<^sup>2) \<le> (- v) yh"
+    using superjet_local_max_onesided[OF ub d] by blast
+  have "\<forall>z \<in> ball yh e.
+      v yh - (p \<bullet> (yh - yh)
+          + ((yh - yh) \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v (yh - yh)))/2)
+      \<le> v z - (p \<bullet> (z - yh)
+          + ((z - yh) \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
+  proof
+    fix z assume z: "z \<in> ball yh e"
+    have nk: "norm (z - yh) < e"
+      using z by (simp add: dist_norm norm_minus_commute)
+    have yz: "yh + (z - yh) = z" by simp
+    have negq: "(z - yh) \<bullet> ((- A) *v (z - yh))
+        = - ((z - yh) \<bullet> (A *v (z - yh)))"
+      by (simp add: matrix_vector_neg_left)
+    from b[OF nk] have h:
+      "- v z - (- (p \<bullet> (z - yh))
+          + ((z - yh) \<bullet> ((- A) *v (z - yh)))/2
+          + (\<delta>/2) * (norm (z - yh))\<^sup>2) \<le> - v yh"
+      unfolding yz by simp
+    have q: "(z - yh) \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v (z - yh))
+        = (z - yh) \<bullet> (A *v (z - yh)) - \<delta> * (norm (z - yh))\<^sup>2"
+      by (rule quad_form_shift_identity_neg)
+    from h show
+      "v yh - (p \<bullet> (yh - yh)
+          + ((yh - yh) \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v (yh - yh)))/2)
+      \<le> v z - (p \<bullet> (z - yh)
+          + ((z - yh) \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
+      unfolding q negq by (simp add: field_simps)
+  qed
+  with e show ?thesis by blast
+qed
 
 theorem jet_imp_local_min_test:
   fixes v :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n^'n"
@@ -2058,6 +2360,38 @@ proof -
   thus ?thesis unfolding g .
 qed
 
+theorem supersol_shifted_bound_onesided:
+  fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
+  assumes sup: "visc_supersol k L \<Omega> w"
+    and yh: "yh \<in> \<Omega>"
+    and Ys: "transpose Ym = Ym"
+    and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
+        ((- w) (yh + hh) - (- w) yh - (- p) \<bullet> hh
+          - (hh \<bullet> ((- Ym) *v hh))/2) / (norm hh)\<^sup>2 < c"
+    and d: "0 < \<delta>"
+  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+proof -
+  have sym: "transpose (Ym - \<delta> *\<^sub>R mat 1) = Ym - \<delta> *\<^sub>R mat 1"
+    by (rule transpose_shift_diff[OF Ys])
+  have tf: "test_fun_at
+      (\<lambda>z. p \<bullet> (z - yh)
+        + ((z - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)
+      (\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) (Ym - \<delta> *\<^sub>R mat 1) yh"
+    by (rule jet_test_fun_at[OF sym])
+  have g: "(\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh = p"
+    by simp
+  have minloc: "\<exists>e>0. \<forall>z \<in> ball yh e.
+      w yh - (p \<bullet> (yh - yh)
+          + ((yh - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (yh - yh)))/2)
+      \<le> w z - (p \<bullet> (z - yh)
+          + ((z - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
+    by (rule jet_imp_local_min_test_onesided[OF ub d])
+  have "1 \<le> ell_op k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
+      (Ym - \<delta> *\<^sub>R mat 1)"
+    using sup yh tf minloc unfolding visc_supersol_def by blast
+  thus ?thesis unfolding g .
+qed
+
 theorem supersol_shifted_bound:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
   assumes sup: "visc_supersol k L \<Omega> w"
@@ -2336,6 +2670,1621 @@ proof -
     qed
   qed
   show ?thesis unfolding num by (rule main)
+qed
+
+subsection \<open>Semiconvexity of the doubled functional, for a general penalty\<close>
+
+text \<open>The last structural piece, and the one that does NOT follow the
+  substitution pattern.  The Jensen/Alexandrov layer wants GLOBAL semiconvexity
+  of the doubled functional, and in \<open>a(x) + b(y) - P(x - y)\<close> the penalty enters
+  as \<open>-P\<close>, so what is needed is that \<open>P\<close> be semiCONCAVE --- Hessian bounded
+  ABOVE.  A quadratic has constant Hessian and gets this free; a globally
+  quartic penalty does NOT (its Hessian grows like \<open>\<beta>\<parallel>d\<parallel>\<^sup>2\<close>).
+
+  The right abstraction is therefore \<open>P\<close> semiconcave with constant \<open>\<kappa>\<close>, and the
+  identity that makes it work is
+
+    \<open>-P(x-y) + \<kappa>\<parallel>z\<parallel>\<^sup>2 = [(\<kappa>/2)\<parallel>x-y\<parallel>\<^sup>2 - P(x-y)] + (\<kappa>/2)\<parallel>x+y\<parallel>\<^sup>2\<close>,
+
+  a sum of two convex functions: the first bracket is the semiconcavity
+  hypothesis composed with the linear map \<open>z \<mapsto> fst z - snd z\<close>, the second is a
+  norm-square composed with \<open>z \<mapsto> fst z + snd z\<close>.  For the quadratic \<open>P\<close> the
+  first bracket vanishes identically and this collapses to \<open>semiconvex_penalty\<close>,
+  which is exactly how that lemma is proved --- so this is the honest
+  generalisation rather than a new argument.\<close>
+
+lemma convex_on_prod_diff:
+  fixes g :: "'a::euclidean_space \<Rightarrow> real"
+  assumes g: "convex_on UNIV g"
+  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a. g (fst z - snd z))"
+proof (rule convex_onI)
+  fix t :: real and x y :: "'a \<times> 'a"
+  assume t: "0 < t" "t < 1"
+  have L: "fst ((1 - t) *\<^sub>R x + t *\<^sub>R y) - snd ((1 - t) *\<^sub>R x + t *\<^sub>R y)
+      = (1 - t) *\<^sub>R (fst x - snd x) + t *\<^sub>R (fst y - snd y)"
+    by (simp add: algebra_simps)
+  show "g (fst ((1 - t) *\<^sub>R x + t *\<^sub>R y) - snd ((1 - t) *\<^sub>R x + t *\<^sub>R y))
+      \<le> (1 - t) * g (fst x - snd x) + t * g (fst y - snd y)"
+    unfolding L
+    by (rule convex_onD[OF g]) (use t in auto)
+qed simp
+
+lemma convex_on_prod_add:
+  fixes g :: "'a::euclidean_space \<Rightarrow> real"
+  assumes g: "convex_on UNIV g"
+  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a. g (fst z + snd z))"
+proof (rule convex_onI)
+  fix t :: real and x y :: "'a \<times> 'a"
+  assume t: "0 < t" "t < 1"
+  have L: "fst ((1 - t) *\<^sub>R x + t *\<^sub>R y) + snd ((1 - t) *\<^sub>R x + t *\<^sub>R y)
+      = (1 - t) *\<^sub>R (fst x + snd x) + t *\<^sub>R (fst y + snd y)"
+    by (simp add: algebra_simps)
+  show "g (fst ((1 - t) *\<^sub>R x + t *\<^sub>R y) + snd ((1 - t) *\<^sub>R x + t *\<^sub>R y))
+      \<le> (1 - t) * g (fst x + snd x) + t * g (fst y + snd y)"
+    unfolding L
+    by (rule convex_onD[OF g]) (use t in auto)
+qed simp
+
+theorem semiconvex_penalty_gen:
+  fixes P :: "'a::euclidean_space \<Rightarrow> real"
+  assumes k: "0 \<le> \<kappa>"
+    and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - P d)"
+  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a.
+      - P (fst z - snd z) + ((2*\<kappa>)/2) * (norm z)\<^sup>2)"
+proof -
+  have eq: "(\<lambda>z::'a \<times> 'a. - P (fst z - snd z) + ((2*\<kappa>)/2) * (norm z)\<^sup>2)
+      = (\<lambda>z::'a \<times> 'a.
+          ((\<kappa>/2) * (norm (fst z - snd z))\<^sup>2 - P (fst z - snd z))
+          + (\<kappa>/2) * (norm (fst z + snd z))\<^sup>2)"
+  proof (rule ext)
+    fix z :: "'a \<times> 'a"
+    have d: "(norm (fst z - snd z))\<^sup>2
+        = (norm (fst z))\<^sup>2 - 2*(fst z \<bullet> snd z) + (norm (snd z))\<^sup>2"
+      by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
+          inner_commute)
+    have s: "(norm (fst z + snd z))\<^sup>2
+        = (norm (fst z))\<^sup>2 + 2*(fst z \<bullet> snd z) + (norm (snd z))\<^sup>2"
+      by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+          inner_commute)
+    show "- P (fst z - snd z) + ((2*\<kappa>)/2) * (norm z)\<^sup>2
+        = ((\<kappa>/2) * (norm (fst z - snd z))\<^sup>2 - P (fst z - snd z))
+          + (\<kappa>/2) * (norm (fst z + snd z))\<^sup>2"
+      unfolding norm_prod_sq d s by (simp add: algebra_simps)
+  qed
+  have c1: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
+      (\<kappa>/2) * (norm (fst z - snd z))\<^sup>2 - P (fst z - snd z))"
+    by (rule convex_on_prod_diff[OF sc])
+  have cn: "convex_on UNIV (\<lambda>x::'a. (\<kappa>/2) * (norm x)\<^sup>2)"
+  proof -
+    have k2: "0 \<le> \<kappa>/2" using k by simp
+    have "convex_on UNIV (\<lambda>x::'a. (norm x)\<^sup>2)"
+      by (rule convex_on_norm_sq[OF convex_UNIV])
+    then show ?thesis by (rule convex_on_cmul[OF k2])
+  qed
+  have c2: "convex_on UNIV (\<lambda>z::'a \<times> 'a. (\<kappa>/2) * (norm (fst z + snd z))\<^sup>2)"
+    by (rule convex_on_prod_add[OF cn])
+  show ?thesis unfolding eq by (rule convex_on_add[OF c1 c2])
+qed
+
+subsection \<open>A concrete penalty: semiconcave, with a vanishing 2-jet at the origin\<close>
+
+text \<open>\<open>semiconvex_penalty_gen\<close> reduces the whole question to exhibiting ONE
+  penalty that is semiconcave with an explicit constant AND has vanishing
+  gradient and Hessian at \<open>0\<close>.  The pure quartic has the second property and not
+  the first.  A truncated or piecewise quartic has both but is painful to
+  formalise --- the convexity of a piecewise function of \<open>\<parallel>d\<parallel>\<^sup>2\<close> does not follow
+  from any composition rule, because the relevant scalar function is CONCAVE
+  where it matters.
+
+  There is a closed form that avoids all of it.  Take
+
+    \<open>P(d) = (\<kappa>/2)\<parallel>d\<parallel>\<^sup>2 - \<kappa>(\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) - 1)\<close>.
+
+  Semiconcavity is then not something to prove about \<open>P\<close> at all: the required
+  \<open>(\<kappa>/2)\<parallel>d\<parallel>\<^sup>2 - P(d)\<close> is EXACTLY \<open>\<kappa>(\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) - 1)\<close>, and
+  \<open>\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) = \<parallel>(d, 1)\<parallel>\<close> in \<open>'a \<times> real\<close>, so it is the norm composed with the
+  affine map \<open>d \<mapsto> (d,1)\<close> --- convex for free.
+
+  And the 2-jet at \<open>0\<close> vanishes because \<open>\<surd>(s+1) - 1 = s/(\<surd>(s+1)+1)\<close>, so
+  \<open>P(h)/\<parallel>h\<parallel>\<^sup>2 = \<kappa>/2 - \<kappa>/(\<surd>(\<parallel>h\<parallel>\<^sup>2+1)+1) \<rightarrow> \<kappa>/2 - \<kappa>/2 = 0\<close>.  Near \<open>0\<close> the penalty is
+  \<open>\<approx> (\<kappa>/8)\<parallel>d\<parallel>\<^sup>4\<close>, i.e. it IS the quartic there, which is the only place the
+  device needs it; far out it grows quadratically, which is what makes it
+  semiconcave where the quartic is not.\<close>
+
+definition soft_pen :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real" where
+  "soft_pen \<kappa> d = (\<kappa>/2) * (norm d)\<^sup>2 - \<kappa> * (sqrt ((norm d)\<^sup>2 + 1) - 1)"
+
+lemma convex_on_norm_lift:
+  fixes dummy :: "'a::real_normed_vector"
+  shows "convex_on UNIV (\<lambda>d::'a. norm ((d, 1) :: 'a \<times> real))"
+proof (rule convex_onI)
+  fix t :: real and x y :: 'a
+  assume t: "0 < t" "t < 1"
+  have L: "(((1 - t) *\<^sub>R x + t *\<^sub>R y, 1) :: 'a \<times> real)
+      = (1 - t) *\<^sub>R ((x, 1) :: 'a \<times> real) + t *\<^sub>R ((y, 1) :: 'a \<times> real)"
+    by simp
+  have n1: "norm ((1 - t) *\<^sub>R ((x, 1) :: 'a \<times> real))
+      = (1 - t) * norm ((x, 1) :: 'a \<times> real)"
+  proof -
+    have "norm ((1 - t) *\<^sub>R ((x, 1) :: 'a \<times> real))
+        = \<bar>1 - t\<bar> * norm ((x, 1) :: 'a \<times> real)"
+      by (rule norm_scaleR)
+    moreover have "\<bar>1 - t\<bar> = 1 - t" using t by simp
+    ultimately show ?thesis by simp
+  qed
+  have n2: "norm (t *\<^sub>R ((y, 1) :: 'a \<times> real))
+      = t * norm ((y, 1) :: 'a \<times> real)"
+  proof -
+    have "norm (t *\<^sub>R ((y, 1) :: 'a \<times> real))
+        = \<bar>t\<bar> * norm ((y, 1) :: 'a \<times> real)"
+      by (rule norm_scaleR)
+    moreover have "\<bar>t\<bar> = t" using t by simp
+    ultimately show ?thesis by simp
+  qed
+  have "norm ((1 - t) *\<^sub>R ((x, 1) :: 'a \<times> real) + t *\<^sub>R ((y, 1) :: 'a \<times> real))
+      \<le> norm ((1 - t) *\<^sub>R ((x, 1) :: 'a \<times> real))
+        + norm (t *\<^sub>R ((y, 1) :: 'a \<times> real))"
+    by (rule norm_triangle_ineq)
+  also have "\<dots> = (1 - t) * norm ((x, 1) :: 'a \<times> real)
+        + t * norm ((y, 1) :: 'a \<times> real)"
+    unfolding n1 n2 ..
+  finally show "norm (((1 - t) *\<^sub>R x + t *\<^sub>R y, 1) :: 'a \<times> real)
+      \<le> (1 - t) * norm ((x, 1) :: 'a \<times> real)
+        + t * norm ((y, 1) :: 'a \<times> real)"
+    unfolding L .
+qed simp
+
+lemma soft_pen_gap:
+  fixes d :: "real^'n::finite"
+  shows "(\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d
+      = \<kappa> * norm ((d, 1) :: (real^'n) \<times> real) - \<kappa>"
+proof -
+  have n: "norm ((d, 1) :: (real^'n) \<times> real) = sqrt ((norm d)\<^sup>2 + 1)"
+    by (simp add: norm_Pair)
+  show ?thesis unfolding soft_pen_def n by (simp add: algebra_simps)
+qed
+
+theorem soft_pen_semiconcave:
+  fixes \<kappa> :: real
+  assumes k: "0 \<le> \<kappa>"
+  shows "convex_on UNIV (\<lambda>d::real^'n::finite. (\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d)"
+proof -
+  have e: "(\<lambda>d::real^'n. (\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d)
+      = (\<lambda>d::real^'n. \<kappa> * norm ((d, 1) :: (real^'n) \<times> real) + (- \<kappa>))"
+  proof (rule ext)
+    fix d :: "real^'n"
+    show "(\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d
+        = \<kappa> * norm ((d, 1) :: (real^'n) \<times> real) + (- \<kappa>)"
+      using soft_pen_gap[of \<kappa> d] by simp
+  qed
+  have c1: "convex_on UNIV (\<lambda>d::real^'n. norm ((d, 1) :: (real^'n) \<times> real))"
+    by (rule convex_on_norm_lift)
+  have c2: "convex_on UNIV (\<lambda>d::real^'n. \<kappa> * norm ((d, 1) :: (real^'n) \<times> real))"
+    by (rule convex_on_cmul[OF k c1])
+  have c3: "convex_on UNIV (\<lambda>d::real^'n. - \<kappa>)"
+    by (simp add: convex_on_const)
+  show ?thesis unfolding e by (rule convex_on_add[OF c2 c3])
+qed
+
+lemma div_mul_div_cancel_aux:
+  fixes k s r :: real
+  assumes s: "s \<noteq> 0"
+  shows "k * (s / r) / s = k / r"
+  using s by (simp add: field_simps)
+
+lemma soft_pen_quotient:
+  fixes h :: "real^'n::finite"
+  assumes h: "h \<noteq> 0"
+  shows "soft_pen \<kappa> h / (norm h)\<^sup>2
+      = \<kappa>/2 - \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1)"
+proof -
+  have s0: "0 < (norm h)\<^sup>2" using h by simp
+  have r: "0 < sqrt ((norm h)\<^sup>2 + 1) + 1"
+  proof -
+    have "0 \<le> sqrt ((norm h)\<^sup>2 + 1)" by simp
+    then show ?thesis by linarith
+  qed
+  have sq: "sqrt ((norm h)\<^sup>2 + 1) * sqrt ((norm h)\<^sup>2 + 1) = (norm h)\<^sup>2 + 1"
+    using s0 by simp
+  have id: "sqrt ((norm h)\<^sup>2 + 1) - 1
+      = (norm h)\<^sup>2 / (sqrt ((norm h)\<^sup>2 + 1) + 1)"
+  proof -
+    have "(sqrt ((norm h)\<^sup>2 + 1) - 1) * (sqrt ((norm h)\<^sup>2 + 1) + 1)
+        = (norm h)\<^sup>2"
+      using sq by (simp add: algebra_simps)
+    then show ?thesis using r by (simp add: field_simps)
+  qed
+  have "soft_pen \<kappa> h / (norm h)\<^sup>2
+      = ((\<kappa>/2) * (norm h)\<^sup>2
+          - \<kappa> * ((norm h)\<^sup>2 / (sqrt ((norm h)\<^sup>2 + 1) + 1))) / (norm h)\<^sup>2"
+    unfolding soft_pen_def id ..
+  also have "\<dots> = ((\<kappa>/2) * (norm h)\<^sup>2) / (norm h)\<^sup>2
+      - (\<kappa> * ((norm h)\<^sup>2 / (sqrt ((norm h)\<^sup>2 + 1) + 1))) / (norm h)\<^sup>2"
+    by (rule diff_divide_distrib)
+  also have "((\<kappa>/2) * (norm h)\<^sup>2) / (norm h)\<^sup>2 = \<kappa>/2"
+    using s0 by simp
+  also have "(\<kappa> * ((norm h)\<^sup>2 / (sqrt ((norm h)\<^sup>2 + 1) + 1))) / (norm h)\<^sup>2
+      = \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1)"
+    by (rule div_mul_div_cancel_aux) (use s0 in linarith)
+  finally show ?thesis .
+qed
+
+theorem soft_pen_vanishing_jet_at_zero:
+  fixes \<kappa> :: real
+  shows "((\<lambda>h::real^'n::finite. (soft_pen \<kappa> (0 + h) - soft_pen \<kappa> 0)
+      / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have z: "soft_pen \<kappa> 0 = 0" by (simp add: soft_pen_def)
+  have nz0: "\<forall>\<^sub>F h in at (0::real^'n). h \<noteq> 0"
+    by (simp add: eventually_at_filter)
+  have ev: "\<forall>\<^sub>F h in at (0::real^'n).
+      \<kappa>/2 - \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1)
+        = (soft_pen \<kappa> (0 + h) - soft_pen \<kappa> 0) / (norm h)\<^sup>2"
+    using nz0
+  proof eventually_elim
+    case (elim h)
+    then show ?case unfolding z using soft_pen_quotient[OF elim] by simp
+  qed
+  have lim: "((\<lambda>h::real^'n. \<kappa>/2 - \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1))
+      \<longlongrightarrow> \<kappa>/2 - \<kappa> / (sqrt ((norm (0::real^'n))\<^sup>2 + 1) + 1)) (at 0)"
+    by (intro tendsto_intros) simp
+  have val: "\<kappa>/2 - \<kappa> / (sqrt ((norm (0::real^'n))\<^sup>2 + 1) + 1) = 0"
+    by simp
+  show ?thesis
+    by (rule Lim_transform_eventually[OF lim[unfolded val] ev])
+qed
+
+subsection \<open>Second-order expansion of the square root\<close>
+
+text \<open>What \<open>soft_pen\<close>'s jet at a general \<open>d\<close> needs, and the reason the closed
+  form is worth the trouble: the expansion is EXACT, not asymptotic.  Writing
+  \<open>S = \<surd>(u+\<Delta>)\<close> and \<open>R = \<surd>u\<close>, the conjugate identity gives \<open>S - R = \<Delta>/(S+R)\<close>, and
+  then
+
+    \<open>S - R - \<Delta>/(2R) = \<Delta>(R - S)/(2R(S+R)) = -\<Delta>\<^sup>2/(2R(S+R)\<^sup>2)\<close>
+
+  identically.  So the second-order remainder is a QUOTIENT, and the \<open>o(\<Delta>\<^sup>2)\<close>
+  statement is just the continuity of \<open>\<Delta> \<mapsto> 1/(2R(S+R)\<^sup>2)\<close> at \<open>\<Delta> = 0\<close>, where it
+  takes the value \<open>1/(8R\<^sup>3)\<close> --- the Taylor coefficient.  No differentiation and
+  no Taylor theorem are involved.\<close>
+
+lemma sqrt_diff_exact:
+  fixes u D :: real
+  assumes uD: "0 \<le> u + D" and u: "0 \<le> u"
+    and pos: "0 < sqrt (u + D) + sqrt u"
+  shows "sqrt (u + D) - sqrt u = D / (sqrt (u + D) + sqrt u)"
+proof -
+  have s1: "sqrt (u + D) * sqrt (u + D) = u + D" using uD by simp
+  have s2: "sqrt u * sqrt u = u" using u by simp
+  have prod: "(sqrt (u + D) - sqrt u) * (sqrt (u + D) + sqrt u) = D"
+    using s1 s2 by (simp add: algebra_simps)
+  show ?thesis
+    using pos prod by (simp add: nonzero_eq_divide_eq)
+qed
+
+lemma neg_div_cancel_aux:
+  fixes a c :: real
+  assumes a: "a \<noteq> 0"
+  shows "- (a / c) / a = - (1 / c)"
+  using a by (simp add: field_simps)
+
+lemma second_order_algebra_aux:
+  fixes S R D :: real
+  assumes SR: "0 < S + R" and R: "0 < R" and D: "D \<noteq> 0"
+    and e: "S - R = D / (S + R)"
+  shows "(S - R - D/(2*R)) / D\<^sup>2 = - (1/(2*R*(S+R)\<^sup>2))"
+proof -
+  have nz: "S + R \<noteq> 0" using SR by linarith
+  have rz: "R \<noteq> 0" using R by linarith
+  have step1: "S - R - D/(2*R) = D * (R - S) / (2*R*(S+R))"
+  proof -
+    have "S - R - D/(2*R) = D/(S+R) - D/(2*R)"
+      using e by simp
+    also have "\<dots> = (D*(2*R) - D*(S+R)) / ((S+R)*(2*R))"
+      using nz rz by (simp add: field_simps)
+    also have "\<dots> = D * (R - S) / (2*R*(S+R))"
+      by (simp add: algebra_simps)
+    finally show ?thesis .
+  qed
+  have step2: "R - S = - (D / (S + R))"
+    using e by simp
+  have step3: "S - R - D/(2*R) = - (D\<^sup>2 / (2*R*(S+R)\<^sup>2))"
+  proof -
+    have "D * (R - S) / (2*R*(S+R)) = D * (- (D/(S+R))) / (2*R*(S+R))"
+      unfolding step2 ..
+    also have "\<dots> = - (D\<^sup>2 / (2*R*(S+R)\<^sup>2))"
+      using nz rz by (simp add: power2_eq_square field_simps)
+    finally show ?thesis unfolding step1 .
+  qed
+  have dz: "D\<^sup>2 \<noteq> 0" using D by simp
+  show ?thesis
+    unfolding step3 by (rule neg_div_cancel_aux[OF dz])
+qed
+
+theorem sqrt_second_order_quotient:
+  fixes u D :: real
+  assumes u: "0 < u" and uD: "0 < u + D" and D: "D \<noteq> 0"
+  shows "(sqrt (u + D) - sqrt u - D / (2 * sqrt u)) / D\<^sup>2
+      = - (1 / (2 * sqrt u * (sqrt (u + D) + sqrt u)\<^sup>2))"
+proof -
+  have R: "0 < sqrt u" using u by simp
+  have S: "0 \<le> sqrt (u + D)" using uD by simp
+  have SR: "0 < sqrt (u + D) + sqrt u" using R S by linarith
+  have e: "sqrt (u + D) - sqrt u = D / (sqrt (u + D) + sqrt u)"
+    by (rule sqrt_diff_exact) (use uD u SR in linarith)+
+  show ?thesis
+    by (rule second_order_algebra_aux[OF SR R D e])
+qed
+
+text \<open>And the same thing without the quotient, which is the form the composition
+  wants: it holds for EVERY \<open>\<Delta>\<close>, including \<open>\<Delta> = 0\<close>, so there is no side condition
+  to carry through the substitution.  The algebraic heart is
+
+    \<open>(S+R)\<^sup>2 - \<Delta> = S\<^sup>2 + 2SR + R\<^sup>2 - \<Delta> = (u+\<Delta>) + 2SR + u - \<Delta> = 2R(S+R)\<close>,
+
+  after which \<open>\<Delta>/(2R) - \<Delta>\<^sup>2/(2R(S+R)\<^sup>2) = \<Delta>((S+R)\<^sup>2 - \<Delta>)/(2R(S+R)\<^sup>2) = \<Delta>/(S+R)\<close>,
+  which is \<open>S - R\<close> by the conjugate identity.\<close>
+
+lemma sqrt_rhs_aux:
+  fixes D R T :: real
+  assumes R: "R \<noteq> 0" and T: "T \<noteq> 0" and key: "T\<^sup>2 - D = 2 * R * T"
+  shows "D / (2 * R) - D\<^sup>2 / (2 * R * T\<^sup>2) = D / T"
+proof -
+  have n: "D * T\<^sup>2 - D\<^sup>2 = D * (2 * R * T)"
+  proof -
+    have "D * T\<^sup>2 - D\<^sup>2 = D * (T\<^sup>2 - D)"
+      by (simp add: algebra_simps power2_eq_square)
+    also have "\<dots> = D * (2 * R * T)" unfolding key ..
+    finally show ?thesis .
+  qed
+  have "D / (2 * R) - D\<^sup>2 / (2 * R * T\<^sup>2) = (D * T\<^sup>2 - D\<^sup>2) / (2 * R * T\<^sup>2)"
+    using R T by (simp add: field_simps)
+  also have "\<dots> = (D * (2 * R * T)) / (2 * R * T\<^sup>2)" unfolding n ..
+  also have "\<dots> = D / T"
+    using R T by (simp add: power2_eq_square field_simps)
+  finally show ?thesis .
+qed
+
+theorem sqrt_second_order_exact:
+  fixes u D :: real
+  assumes u: "0 < u" and uD: "0 \<le> u + D"
+  shows "sqrt (u + D) - sqrt u
+      = D / (2 * sqrt u)
+        - D\<^sup>2 / (2 * sqrt u * (sqrt (u + D) + sqrt u)\<^sup>2)"
+proof -
+  have R: "0 < sqrt u" using u by simp
+  have S: "0 \<le> sqrt (u + D)" using uD by simp
+  have SR: "0 < sqrt (u + D) + sqrt u" using R S by linarith
+  have s1: "sqrt (u + D) * sqrt (u + D) = u + D" using uD by simp
+  have s2: "sqrt u * sqrt u = u" using u by simp
+  have key: "(sqrt (u + D) + sqrt u)\<^sup>2 - D
+      = 2 * sqrt u * (sqrt (u + D) + sqrt u)"
+    using s1 s2 by (simp add: power2_eq_square algebra_simps)
+  have e: "sqrt (u + D) - sqrt u = D / (sqrt (u + D) + sqrt u)"
+    by (rule sqrt_diff_exact) (use uD u SR in linarith)+
+  have rhs: "D / (2 * sqrt u)
+        - D\<^sup>2 / (2 * sqrt u * (sqrt (u + D) + sqrt u)\<^sup>2)
+      = D / (sqrt (u + D) + sqrt u)"
+    by (rule sqrt_rhs_aux) (use R SR key in auto)
+  show ?thesis unfolding e rhs ..
+qed
+
+text \<open>The composition: \<open>soft_pen\<close>'s increment, exactly.  The quadratic part of
+  \<open>soft_pen\<close> expands exactly, and the square-root part is handled by
+  \<open>sqrt_second_order_exact\<close> at \<open>u = \<parallel>d\<parallel>\<^sup>2 + 1\<close>, \<open>\<Delta> = 2(d \<bullet> h) + h \<bullet> h\<close> --- which is
+  right because \<open>\<parallel>d+h\<parallel>\<^sup>2 + 1 = u + \<Delta>\<close>.  Stated with \<open>u + \<Delta>\<close> rather than
+  \<open>\<parallel>d+h\<parallel>\<^sup>2 + 1\<close> so that no rewriting is needed at the point of use.
+
+  Reading off the orders in \<open>h\<close>: the \<open>O(h)\<close> part is \<open>\<kappa>(1 - 1/R)(d \<bullet> h)\<close>, the
+  \<open>O(h\<^sup>2)\<close> part is \<open>(\<kappa>/2)(1 - 1/R)(h \<bullet> h) + \<kappa>(d \<bullet> h)\<^sup>2/(2R\<^sup>3)\<close>, and everything else
+  is the remainder.  So the gradient is \<open>\<kappa>(1 - 1/R) d\<close> and the Hessian form is
+  \<open>\<kappa>(1 - 1/R)(h \<bullet> h) + \<kappa>(d \<bullet> h)\<^sup>2/R\<^sup>3\<close>, both vanishing at \<open>d = 0\<close> where \<open>R = 1\<close>.\<close>
+
+theorem soft_pen_expand:
+  fixes d h :: "real^'n::finite"
+  shows "soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
+      = (\<kappa>/2) * (2*(d \<bullet> h) + (h \<bullet> h))
+        - \<kappa> * ((2*(d \<bullet> h) + (h \<bullet> h)) / (2 * sqrt ((norm d)\<^sup>2 + 1))
+            - (2*(d \<bullet> h) + (h \<bullet> h))\<^sup>2
+              / (2 * sqrt ((norm d)\<^sup>2 + 1)
+                  * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+                     + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2))"
+proof -
+  have u: "0 < (norm d)\<^sup>2 + 1"
+    by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
+  have D: "(norm (d + h))\<^sup>2 = (norm d)\<^sup>2 + (2*(d \<bullet> h) + (h \<bullet> h))"
+    by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+        inner_commute algebra_simps)
+  have uD: "0 \<le> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))"
+  proof -
+    have e: "((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))
+        = (norm (d + h))\<^sup>2 + 1"
+      using D by simp
+    show ?thesis unfolding e
+      by (rule add_nonneg_nonneg[OF zero_le_power2 zero_le_one])
+  qed
+  have ex: "sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+        - sqrt ((norm d)\<^sup>2 + 1)
+      = (2*(d \<bullet> h) + (h \<bullet> h)) / (2 * sqrt ((norm d)\<^sup>2 + 1))
+        - (2*(d \<bullet> h) + (h \<bullet> h))\<^sup>2
+          / (2 * sqrt ((norm d)\<^sup>2 + 1)
+              * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+                 + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)"
+    by (rule sqrt_second_order_exact[OF u uD])
+  have split: "soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
+      = (\<kappa>/2) * (2*(d \<bullet> h) + (h \<bullet> h))
+        - \<kappa> * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+               - sqrt ((norm d)\<^sup>2 + 1))"
+    unfolding soft_pen_def using D by (simp add: algebra_simps)
+  show ?thesis unfolding split ex ..
+qed
+
+text \<open>Collecting the expansion into gradient + Hessian + remainder.  Everything
+  cancels: with \<open>a = d \<bullet> h\<close>, \<open>b = h \<bullet> h\<close>, \<open>\<Delta> = 2a + b\<close> and \<open>R = \<surd>(\<parallel>d\<parallel>\<^sup>2+1)\<close>,
+
+    \<open>(\<kappa>/2)\<Delta> - \<kappa>\<Delta>/(2R) = \<kappa>(1 - 1/R) a + (\<kappa>/2)(1 - 1/R) b\<close>,
+
+  which is exactly the gradient term plus half the Hessian form.  So the
+  remainder is just the two quotient terms, and it is an IDENTITY, not an
+  estimate --- the only analysis left is that this remainder is \<open>o(\<parallel>h\<parallel>\<^sup>2)\<close>.
+
+  Stated on bare reals first, because the cancellation is pure field algebra and
+  doing it in place fights the simplifier.\<close>
+
+lemma soft_pen_rem_aux:
+  fixes k R a b W :: real
+  assumes R: "R \<noteq> 0"
+  shows "(k/2) * (2*a + b) - k * ((2*a + b) / (2*R) - W)
+        - k * (1 - 1/R) * a
+        - (k * (1 - 1/R) * b + k * a\<^sup>2 / R^3) / 2
+      = k * W - k * a\<^sup>2 / (2 * R^3)"
+  using R by (simp add: field_simps)
+
+theorem soft_pen_rem:
+  fixes d h :: "real^'n::finite"
+  shows "soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
+        - \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)
+        - (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (h \<bullet> h)
+            + \<kappa> * (d \<bullet> h)\<^sup>2 / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) / 2
+      = \<kappa> * ((2*(d \<bullet> h) + (h \<bullet> h))\<^sup>2
+              / (2 * sqrt ((norm d)\<^sup>2 + 1)
+                  * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+                     + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2))
+        - \<kappa> * (d \<bullet> h)\<^sup>2 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)"
+proof -
+  have up: "0 < (norm d)\<^sup>2 + 1"
+    by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
+  have R: "sqrt ((norm d)\<^sup>2 + 1) \<noteq> 0" using up by simp
+  show ?thesis
+    unfolding soft_pen_expand
+    by (rule soft_pen_rem_aux[OF R])
+qed
+
+text \<open>One of the two inputs to the remainder limit, isolated: the factor
+  \<open>(d \<bullet> h)\<^sup>2/\<parallel>h\<parallel>\<^sup>2\<close> that multiplies the vanishing bracket is BOUNDED, uniformly in
+  \<open>h\<close>, by \<open>\<parallel>d\<parallel>\<^sup>2\<close>.  That is Cauchy-Schwarz squared, and it is what makes the
+  \<open>Lim_null_comparison\<close> step available --- the bracket alone tends to \<open>0\<close>, but
+  the product needs the factor controlled.\<close>
+
+lemma inner_sq_over_norm_sq_le:
+  fixes d h :: "real^'n::finite"
+  shows "(d \<bullet> h)\<^sup>2 \<le> (norm d)\<^sup>2 * (norm h)\<^sup>2"
+proof -
+  have cs: "\<bar>d \<bullet> h\<bar> \<le> norm d * norm h"
+    by (rule Cauchy_Schwarz_ineq2)
+  have "(\<bar>d \<bullet> h\<bar>)\<^sup>2 \<le> (norm d * norm h)\<^sup>2"
+    by (rule power_mono[OF cs]) simp
+  then show ?thesis
+    by (simp add: power_mult_distrib power2_abs)
+qed
+
+corollary inner_sq_quotient_bounded:
+  fixes d h :: "real^'n::finite"
+  assumes h: "h \<noteq> 0"
+  shows "(d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2 \<le> (norm d)\<^sup>2"
+proof -
+  have b: "0 < (norm h)\<^sup>2" using h by simp
+  show ?thesis
+    using inner_sq_over_norm_sq_le[of d h] b
+    by (simp add: pos_divide_le_eq)
+qed
+
+text \<open>The other input: the denominator \<open>T h = \<surd>(u + \<Delta> h) + R\<close> tends to \<open>2R\<close> as
+  \<open>h \<rightarrow> 0\<close>.  Pure continuity --- \<open>\<Delta> h \<rightarrow> 0\<close> by bilinearity of the inner product and
+  \<open>sqrt\<close> is continuous --- but it is what makes the bracket
+  \<open>2/(R T\<^sup>2) - 1/(2R\<^sup>3)\<close> vanish, since \<open>R(2R)\<^sup>2 = 4R\<^sup>3\<close> and \<open>2/(4R\<^sup>3) = 1/(2R\<^sup>3)\<close>.\<close>
+
+lemma soft_pen_T_tendsto:
+  fixes d :: "real^'n::finite"
+  shows "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+        + sqrt ((norm d)\<^sup>2 + 1))
+      \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
+proof -
+  have "((\<lambda>h::real^'n. ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+      \<longlongrightarrow> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> (0::real^'n)) + ((0::real^'n) \<bullet> 0)))
+      (at 0)"
+    by (intro tendsto_intros)
+  then have a: "((\<lambda>h::real^'n. ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+      \<longlongrightarrow> (norm d)\<^sup>2 + 1) (at 0)"
+    by simp
+  have b: "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))))
+      \<longlongrightarrow> sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
+    by (rule tendsto_real_sqrt[OF a])
+  have "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+        + sqrt ((norm d)\<^sup>2 + 1))
+      \<longlongrightarrow> sqrt ((norm d)\<^sup>2 + 1) + sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
+    by (rule tendsto_add[OF b tendsto_const])
+  then show ?thesis by simp
+qed
+
+text \<open>And the bracket itself vanishes.  This is where the Taylor coefficient is
+  RECOVERED rather than assumed: \<open>T h \<rightarrow> 2R\<close> gives \<open>R T h\<^sup>2 \<rightarrow> 4R\<^sup>3\<close>, so
+  \<open>2/(R T h\<^sup>2) \<rightarrow> 2/(4R\<^sup>3) = 1/(2R\<^sup>3)\<close> --- exactly the constant subtracted.\<close>
+
+lemma soft_pen_bracket_tendsto:
+  fixes d :: "real^'n::finite"
+  shows "((\<lambda>h::real^'n. 2 / (sqrt ((norm d)\<^sup>2 + 1)
+          * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+             + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
+        - 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have up: "0 < (norm d)\<^sup>2 + 1"
+    by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
+  have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" using up by simp
+  have Tl: "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+        + sqrt ((norm d)\<^sup>2 + 1)) \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
+    by (rule soft_pen_T_tendsto)
+  have Dl: "((\<lambda>h::real^'n. sqrt ((norm d)\<^sup>2 + 1)
+        * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+           + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
+      \<longlongrightarrow> sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2) (at 0)"
+    by (intro tendsto_intros Tl)
+  have dnz: "sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2 \<noteq> 0"
+    using Rp by (simp add: power2_eq_square)
+  have Ql: "((\<lambda>h::real^'n. 2 / (sqrt ((norm d)\<^sup>2 + 1)
+        * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+           + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2))
+      \<longlongrightarrow> 2 / (sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)) (at 0)"
+    by (rule tendsto_divide[OF tendsto_const Dl dnz])
+  have val: "2 / (sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
+      = 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)"
+  proof -
+    have e: "sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2
+        = 4 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3"
+      by (simp add: power2_eq_square power3_eq_cube)
+    show ?thesis unfolding e using Rp by (simp add: field_simps)
+  qed
+  have "((\<lambda>h::real^'n. 2 / (sqrt ((norm d)\<^sup>2 + 1)
+        * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+           + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
+      - 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3))
+      \<longlongrightarrow> 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)
+        - 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)) (at 0)"
+    by (rule tendsto_diff[OF Ql[unfolded val] tendsto_const])
+  then show ?thesis by simp
+qed
+
+text \<open>The second summand of the remainder quotient.  Easier than the first: no
+  bounded-times-vanishing argument, just numerator \<open>\<rightarrow> 0\<close> over denominator
+  \<open>\<rightarrow> 8R\<^sup>3 \<noteq> 0\<close>.\<close>
+
+lemma soft_pen_second_summand_tendsto:
+  fixes d :: "real^'n::finite"
+  shows "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
+      / (2 * sqrt ((norm d)\<^sup>2 + 1)
+          * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+             + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have up: "0 < (norm d)\<^sup>2 + 1"
+    by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
+  have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" using up by simp
+  have Nl: "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))) \<longlongrightarrow> 0) (at 0)"
+  proof -
+    have "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h)))
+        \<longlongrightarrow> \<kappa> * (4*(d \<bullet> (0::real^'n)) + ((0::real^'n) \<bullet> 0))) (at 0)"
+      by (intro tendsto_intros)
+    then show ?thesis by simp
+  qed
+  have Tl: "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+        + sqrt ((norm d)\<^sup>2 + 1)) \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
+    by (rule soft_pen_T_tendsto)
+  have Dl: "((\<lambda>h::real^'n. 2 * sqrt ((norm d)\<^sup>2 + 1)
+        * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+           + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
+      \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2) (at 0)"
+    by (intro tendsto_intros Tl)
+  have dnz: "2 * sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2 \<noteq> 0"
+    using Rp by (simp add: power2_eq_square)
+  have "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
+      / (2 * sqrt ((norm d)\<^sup>2 + 1)
+          * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+             + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2))
+      \<longlongrightarrow> 0 / (2 * sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2))
+      (at 0)"
+    by (rule tendsto_divide[OF Nl Dl dnz])
+  then show ?thesis by simp
+qed
+
+text \<open>The split of the remainder quotient into (bounded factor) x (vanishing
+  bracket) + (vanishing summand).  Stated on bare reals, since it is pure field
+  algebra over \<open>b R\<^sup>3 T\<^sup>2\<close> and doing it in place fights the simplifier.  The
+  numerator identity behind it is \<open>\<Delta>\<^sup>2 = 4a\<^sup>2 + 4ab + b\<^sup>2\<close>: the \<open>4a\<^sup>2\<close> carries the
+  bounded factor, and \<open>4ab + b\<^sup>2\<close> divided by \<open>b\<close> is the \<open>4a + b\<close> of the second
+  summand.\<close>
+
+lemma rem_split_aux:
+  fixes k R T a b :: real
+  assumes R: "R \<noteq> 0" and T: "T \<noteq> 0" and b: "b \<noteq> 0"
+  shows "(k * ((2*a + b)\<^sup>2 / (2 * R * T\<^sup>2)) - k * a\<^sup>2 / (2 * R^3)) / b
+      = (a\<^sup>2 / b) * (k * (2/(R*T\<^sup>2) - 1/(2*R^3)))
+        + k * (4*a + b) / (2*R*T\<^sup>2)"
+  using R T b
+  by (simp add: field_simps power2_eq_square power3_eq_cube)
+
+text \<open>And the jet.  All the analysis is in the four lemmas above; this is the
+  assembly: rewrite the quotient by \<open>soft_pen_rem\<close> and \<open>rem_split_aux\<close>, kill the
+  first summand by \<open>Lim_null_comparison\<close> against \<open>\<parallel>d\<parallel>\<^sup>2\<sqdot>\<bar>\<kappa>\<sqdot>bracket\<bar>\<close>, and add the
+  second.  Stated with the Hessian as a QUADRATIC FORM; the conversion to the
+  matrix \<open>\<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close> is a separate mechanical step.\<close>
+
+theorem soft_pen_jet_form:
+  fixes d :: "real^'n::finite"
+  shows "((\<lambda>h::real^'n. (soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
+      - \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)
+      - (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (h \<bullet> h)
+          + \<kappa> * (d \<bullet> h)\<^sup>2 / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) / 2) / (norm h)\<^sup>2)
+    \<longlongrightarrow> 0) (at 0)"
+proof -
+  let ?R = "sqrt ((norm d)\<^sup>2 + 1)"
+  let ?T = "\<lambda>h::real^'n.
+      sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))) + sqrt ((norm d)\<^sup>2 + 1)"
+  let ?Br = "\<lambda>h::real^'n.
+      2 / (sqrt ((norm d)\<^sup>2 + 1)
+            * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+               + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
+      - 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)"
+  let ?Sc = "\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
+      / (2 * sqrt ((norm d)\<^sup>2 + 1)
+          * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+             + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)"
+  have up: "0 < (norm d)\<^sup>2 + 1"
+    by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
+  have Rp: "0 < ?R" using up by simp
+  have Rnz: "?R \<noteq> 0" using Rp by linarith
+  have uDh: "0 \<le> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))" for h :: "real^'n"
+  proof -
+    have D: "(norm (d + h))\<^sup>2 = (norm d)\<^sup>2 + (2*(d \<bullet> h) + (h \<bullet> h))"
+      by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+          inner_commute algebra_simps)
+    have e: "((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)) = (norm (d + h))\<^sup>2 + 1"
+      using D by simp
+    show ?thesis unfolding e
+      by (rule add_nonneg_nonneg[OF zero_le_power2 zero_le_one])
+  qed
+  have Tnz: "?T h \<noteq> 0" for h :: "real^'n"
+  proof -
+    have "0 \<le> sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))"
+      using uDh[of h] by simp
+    then show ?thesis using Rp by linarith
+  qed
+  have nz0: "\<forall>\<^sub>F h in at (0::real^'n). h \<noteq> 0"
+    by (simp add: eventually_at_filter)
+  have gl: "((\<lambda>h::real^'n. (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>) \<longlongrightarrow> 0) (at 0)"
+  proof -
+    have "((\<lambda>h::real^'n. \<kappa> * ?Br h) \<longlongrightarrow> \<kappa> * 0) (at 0)"
+      by (rule tendsto_mult[OF tendsto_const soft_pen_bracket_tendsto])
+    then have "((\<lambda>h::real^'n. \<bar>\<kappa> * ?Br h\<bar>) \<longlongrightarrow> \<bar>\<kappa> * 0\<bar>) (at 0)"
+      by (rule tendsto_rabs)
+    then have "((\<lambda>h::real^'n. (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>)
+        \<longlongrightarrow> (norm d)\<^sup>2 * \<bar>\<kappa> * 0\<bar>) (at 0)"
+      by (rule tendsto_mult[OF tendsto_const])
+    then show ?thesis by simp
+  qed
+  have cmp: "\<forall>\<^sub>F h in at (0::real^'n).
+      norm (((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h))
+        \<le> (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>"
+    using nz0
+  proof eventually_elim
+    case (elim h)
+    have nn: "0 \<le> (d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2" by simp
+    have bd: "(d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2 \<le> (norm d)\<^sup>2"
+      by (rule inner_sq_quotient_bounded[OF elim])
+    have "norm (((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h))
+        = ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * \<bar>\<kappa> * ?Br h\<bar>"
+      using nn by (simp add: abs_mult)
+    also have "\<dots> \<le> (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>"
+      by (rule mult_right_mono[OF bd]) simp
+    finally show ?case .
+  qed
+  have first: "((\<lambda>h::real^'n. ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h))
+      \<longlongrightarrow> 0) (at 0)"
+    by (rule Lim_null_comparison[OF cmp gl])
+  have second: "((\<lambda>h::real^'n. ?Sc h) \<longlongrightarrow> 0) (at 0)"
+    by (rule soft_pen_second_summand_tendsto)
+  have sum0: "((\<lambda>h::real^'n.
+      ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h) + ?Sc h) \<longlongrightarrow> 0) (at 0)"
+    using tendsto_add[OF first second] by simp
+  have ev: "\<forall>\<^sub>F h in at (0::real^'n).
+      ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h) + ?Sc h
+      = (soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
+          - \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)
+          - (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (h \<bullet> h)
+              + \<kappa> * (d \<bullet> h)\<^sup>2 / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) / 2)
+        / (norm h)\<^sup>2"
+    using nz0
+  proof eventually_elim
+    case (elim h)
+    then have bnz: "h \<bullet> h \<noteq> 0" by simp
+    have nb: "(norm h)\<^sup>2 = h \<bullet> h" by (simp add: power2_norm_eq_inner)
+    show ?case
+      unfolding soft_pen_rem nb
+      by (rule rem_split_aux[symmetric, OF Rnz Tnz bnz])
+  qed
+  show ?thesis by (rule Lim_transform_eventually[OF sum0 ev])
+qed
+
+subsection \<open>The soft penalty's Hessian as a matrix\<close>
+
+text \<open>The last step of the penalty layer: the chain consumes \<open>h \<bullet> (Z *v h)\<close>, not
+  a quadratic form written out, so the form has to be exhibited as a matrix.  It
+  is \<open>Z = \<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close>, and both facts needed --- that it
+  reproduces the form, and that it is symmetric --- are entrywise computations.
+
+  Symmetry is the extra hypothesis the general psd chain carries that the
+  quadratic version did not need (there \<open>Z = \<alpha> I\<close> is symmetric for free), so this
+  is where it gets discharged.\<close>
+
+definition outer_prod :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
+  "outer_prod d e = (\<chi> i. \<chi> j. d $ i * e $ j)"
+
+definition soft_hess :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n^'n" where
+  "soft_hess \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R mat 1
+      + (\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) *\<^sub>R outer_prod d d"
+
+lemma soft_hess_entry:
+  fixes d :: "real^'n::finite"
+  shows "soft_hess \<kappa> d $ i $ j
+      = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) * (if i = j then 1 else 0)
+        + (\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) * (d $ i * d $ j)"
+  by (simp add: soft_hess_def mat_def outer_prod_def)
+
+lemma soft_hess_sym:
+  fixes d :: "real^'n::finite"
+  shows "transpose (soft_hess \<kappa> d) = soft_hess \<kappa> d"
+proof -
+  have "transpose (soft_hess \<kappa> d) $ i $ j = soft_hess \<kappa> d $ i $ j" for i j
+  proof -
+    have "transpose (soft_hess \<kappa> d) $ i $ j = soft_hess \<kappa> d $ j $ i"
+      by (simp add: transpose_def)
+    also have "\<dots> = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)))
+            * (if j = i then 1 else 0)
+          + (\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) * (d $ j * d $ i)"
+      by (rule soft_hess_entry)
+    also have "\<dots> = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)))
+            * (if i = j then 1 else 0)
+          + (\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) * (d $ i * d $ j)"
+      by (simp add: mult.commute eq_commute)
+    also have "\<dots> = soft_hess \<kappa> d $ i $ j"
+      by (rule soft_hess_entry[symmetric])
+    finally show ?thesis .
+  qed
+  then show ?thesis by (simp add: vec_eq_iff)
+qed
+
+lemma soft_hess_quadform:
+  fixes d h :: "real^'n::finite"
+  shows "h \<bullet> (soft_hess \<kappa> d *v h)
+      = \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (h \<bullet> h)
+        + \<kappa> * (d \<bullet> h)\<^sup>2 / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3"
+proof -
+  let ?A = "\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))"
+  let ?B = "\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3"
+  have s1: "(\<Sum>j\<in>UNIV. ?A * (h $ i * ((if i = j then 1 else 0) * h $ j)))
+      = ?A * (h $ i * h $ i)" for i
+  proof -
+    have "(\<Sum>j\<in>UNIV. ?A * (h $ i * ((if i = j then 1 else 0) * h $ j)))
+        = (\<Sum>j\<in>UNIV. if j = i then ?A * (h $ i * h $ j) else 0)"
+      by (rule sum.cong) auto
+    also have "\<dots> = ?A * (h $ i * h $ i)" by simp
+    finally show ?thesis .
+  qed
+  have "h \<bullet> (soft_hess \<kappa> d *v h)
+      = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. h $ i * (soft_hess \<kappa> d $ i $ j * h $ j))"
+    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
+  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV.
+        ?A * (h $ i * ((if i = j then 1 else 0) * h $ j))
+      + ?B * ((h $ i * d $ i) * (d $ j * h $ j)))"
+    by (simp add: soft_hess_entry algebra_simps)
+  also have "\<dots> = (\<Sum>i\<in>UNIV. (\<Sum>j\<in>UNIV.
+          ?A * (h $ i * ((if i = j then 1 else 0) * h $ j)))
+      + (\<Sum>j\<in>UNIV. ?B * ((h $ i * d $ i) * (d $ j * h $ j))))"
+    by (simp add: sum.distrib)
+  also have "\<dots> = (\<Sum>i\<in>UNIV. ?A * (h $ i * h $ i))
+      + (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. ?B * ((h $ i * d $ i) * (d $ j * h $ j)))"
+    by (simp add: s1 sum.distrib)
+  also have "(\<Sum>i\<in>UNIV. ?A * (h $ i * h $ i)) = ?A * (h \<bullet> h)"
+    by (simp add: inner_vec_def sum_distrib_left)
+  also have "(\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. ?B * ((h $ i * d $ i) * (d $ j * h $ j)))
+      = ?B * ((\<Sum>i\<in>UNIV. h $ i * d $ i) * (\<Sum>j\<in>UNIV. d $ j * h $ j))"
+  proof -
+    have a: "(\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. ?B * ((h $ i * d $ i) * (d $ j * h $ j)))
+        = ?B * (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (h $ i * d $ i) * (d $ j * h $ j))"
+      by (simp add: sum_distrib_left)
+    have b: "(\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (h $ i * d $ i) * (d $ j * h $ j))
+        = (\<Sum>i\<in>UNIV. h $ i * d $ i) * (\<Sum>j\<in>UNIV. d $ j * h $ j)"
+      by (rule sum_product[symmetric])
+    show ?thesis unfolding a b ..
+  qed
+  also have "(\<Sum>i\<in>UNIV. h $ i * d $ i) = d \<bullet> h"
+    by (simp add: inner_vec_def mult.commute)
+  also have "(\<Sum>j\<in>UNIV. d $ j * h $ j) = d \<bullet> h"
+    by (simp add: inner_vec_def)
+  finally show ?thesis
+    by (simp add: power2_eq_square)
+qed
+
+subsection \<open>The gradient field of \<open>soft_pen\<close>, and the two uniform bounds\<close>
+
+text \<open>\<open>soft_pen_jet_form\<close> gives the jet with the Hessian written out as a
+  quadratic expression; \<open>soft_hess_quadform\<close> says that expression IS
+  @{term "h \<bullet> (soft_hess \<kappa> d *v h)"}.  Packaging the gradient as a vector field
+  \<open>soft_grad\<close> puts the jet in exactly the shape the \<open>_gen\<close> chain asks for,
+  namely @{term "Gf d \<bullet> h"} and @{term "h \<bullet> (Zf d *v h)"}.
+
+  Then the uniform Hessian bound.  Writing \<open>R = sqrt (norm d ^ 2 + 1)\<close>, we have
+  \<open>R \<ge> 1\<close>, so \<open>0 \<le> 1 - 1/R \<le> 1\<close> and the first summand of the quadratic form lies
+  in \<open>[0, \<kappa>||z||^2]\<close>.  For the second, Cauchy-Schwarz gives
+  \<open>(d.z)^2 \<le> ||d||^2 ||z||^2 = (R^2 - 1)||z||^2 \<le> R^2 ||z||^2\<close>, so that summand is
+  at most \<open>\<kappa>||z||^2 / R \<le> \<kappa>||z||^2\<close>.  Both summands are non-negative, so the
+  form is bounded by \<open>2\<kappa>||z||^2\<close> in absolute value --- uniformly in \<open>d\<close>, which is
+  what the chain needs.\<close>
+
+definition soft_grad :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n" where
+  "soft_grad \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R d"
+
+lemma soft_grad_inner:
+  fixes d h :: "real^'n::finite"
+  shows "soft_grad \<kappa> d \<bullet> h = \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)"
+  unfolding soft_grad_def by (simp add: inner_scaleR_left)
+
+theorem soft_pen_jet_field:
+  fixes d :: "real^'n::finite"
+  shows "((\<lambda>h::real^'n. (soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
+      - soft_grad \<kappa> d \<bullet> h - (h \<bullet> (soft_hess \<kappa> d *v h))/2) / (norm h)\<^sup>2)
+    \<longlongrightarrow> 0) (at 0)"
+  using soft_pen_jet_form[where \<kappa> = \<kappa> and d = d]
+  unfolding soft_grad_inner soft_hess_quadform .
+
+lemma sqrt_norm_sq_add_one_ge_one:
+  fixes d :: "real^'n::finite"
+  shows "1 \<le> sqrt ((norm d)\<^sup>2 + 1)"
+proof -
+  have "(1::real) = sqrt 1" by simp
+  also have "sqrt (1::real) \<le> sqrt ((norm d)\<^sup>2 + 1)"
+    by (rule real_sqrt_le_mono) simp
+  finally show ?thesis .
+qed
+
+lemma soft_hess_quadform_bounds:
+  fixes d z :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>"
+  shows "0 \<le> z \<bullet> (soft_hess \<kappa> d *v z)"
+    and "z \<bullet> (soft_hess \<kappa> d *v z) \<le> (2*\<kappa>) * (norm z)\<^sup>2"
+proof -
+  let ?R = "sqrt ((norm d)\<^sup>2 + 1)"
+  have R1: "1 \<le> ?R" by (rule sqrt_norm_sq_add_one_ge_one)
+  have Rp: "0 < ?R" using R1 by linarith
+  have inv: "0 < 1 / ?R" using Rp by simp
+  have invle: "1 / ?R \<le> 1" using R1 Rp by (simp add: divide_le_eq_1)
+  have A0: "0 \<le> \<kappa> * (1 - 1 / ?R)"
+    by (rule mult_nonneg_nonneg[OF k]) (use invle in linarith)
+  have A1: "\<kappa> * (1 - 1 / ?R) \<le> \<kappa>"
+    using mult_left_mono[OF _ k, of "1 - 1/?R" 1] inv by simp
+  have zz: "z \<bullet> z = (norm z)\<^sup>2" by (simp add: power2_norm_eq_inner)
+  have nz: "0 \<le> (norm z)\<^sup>2" by simp
+  \<comment> \<open>the first summand\<close>
+  have f0: "0 \<le> \<kappa> * (1 - 1 / ?R) * (z \<bullet> z)"
+    unfolding zz by (rule mult_nonneg_nonneg[OF A0 nz])
+  have f1: "\<kappa> * (1 - 1 / ?R) * (z \<bullet> z) \<le> \<kappa> * (norm z)\<^sup>2"
+    unfolding zz by (rule mult_right_mono[OF A1 nz])
+  \<comment> \<open>the second summand: Cauchy-Schwarz, then @{term "(norm d)\<^sup>2 \<le> ?R\<^sup>2"}\<close>
+  have Rne: "?R \<noteq> 0" using Rp by linarith
+  have R2: "?R * ?R = (norm d)\<^sup>2 + 1"
+    using real_sqrt_pow2[of "(norm d)\<^sup>2 + 1"] by (simp add: power2_eq_square)
+  have cs: "(d \<bullet> z)\<^sup>2 \<le> (norm d)\<^sup>2 * (norm z)\<^sup>2"
+  proof -
+    have "(d \<bullet> z)\<^sup>2 = \<bar>d \<bullet> z\<bar>\<^sup>2" by simp
+    also have "\<dots> \<le> (norm d * norm z)\<^sup>2"
+      by (rule power_mono[OF Cauchy_Schwarz_ineq2[of d z]]) simp
+    also have "\<dots> = (norm d)\<^sup>2 * (norm z)\<^sup>2" by (simp add: power_mult_distrib)
+    finally show ?thesis .
+  qed
+  have dR: "(norm d)\<^sup>2 \<le> ?R * ?R" unfolding R2 by simp
+  have cs2: "(d \<bullet> z)\<^sup>2 \<le> (?R * ?R) * (norm z)\<^sup>2"
+    using cs mult_right_mono[OF dR nz] by linarith
+  have cube: "?R ^ 3 = ?R * ?R * ?R" by (simp add: power3_eq_cube)
+  have cubep: "0 < ?R ^ 3" using Rp by simp
+  have s0: "0 \<le> \<kappa> * (d \<bullet> z)\<^sup>2 / ?R ^ 3"
+    by (rule divide_nonneg_pos[OF mult_nonneg_nonneg[OF k] cubep]) simp
+  have cancel: "a * (b * b * c) / (b * b * b) = a * c / b"
+    if "b \<noteq> 0" for a b c :: real
+    using that by (simp add: field_simps)
+  have s1: "\<kappa> * (d \<bullet> z)\<^sup>2 / ?R ^ 3 \<le> \<kappa> * (norm z)\<^sup>2"
+  proof -
+    have "\<kappa> * (d \<bullet> z)\<^sup>2 \<le> \<kappa> * ((?R * ?R) * (norm z)\<^sup>2)"
+      by (rule mult_left_mono[OF cs2 k])
+    then have "\<kappa> * (d \<bullet> z)\<^sup>2 / ?R ^ 3 \<le> (\<kappa> * ((?R * ?R) * (norm z)\<^sup>2)) / ?R ^ 3"
+      by (rule divide_right_mono) (use cubep in linarith)
+    also have "(\<kappa> * ((?R * ?R) * (norm z)\<^sup>2)) / ?R ^ 3 = (\<kappa> * (norm z)\<^sup>2) / ?R"
+      unfolding cube by (rule cancel[OF Rne])
+    also have "(\<kappa> * (norm z)\<^sup>2) / ?R \<le> \<kappa> * (norm z)\<^sup>2"
+    proof -
+      have nn: "0 \<le> \<kappa> * (norm z)\<^sup>2" by (rule mult_nonneg_nonneg[OF k nz])
+      have "\<kappa> * (norm z)\<^sup>2 * 1 \<le> \<kappa> * (norm z)\<^sup>2 * ?R"
+        by (rule mult_left_mono[OF R1 nn])
+      then show ?thesis using Rp by (simp add: divide_le_eq)
+    qed
+    finally show ?thesis .
+  qed
+  have expand: "z \<bullet> (soft_hess \<kappa> d *v z)
+      = \<kappa> * (1 - 1 / ?R) * (z \<bullet> z) + \<kappa> * (d \<bullet> z)\<^sup>2 / ?R ^ 3"
+    by (rule soft_hess_quadform)
+  show "0 \<le> z \<bullet> (soft_hess \<kappa> d *v z)" unfolding expand using f0 s0 by linarith
+  show "z \<bullet> (soft_hess \<kappa> d *v z) \<le> (2*\<kappa>) * (norm z)\<^sup>2"
+    unfolding expand using f1 s1 by linarith
+qed
+
+lemma soft_hess_bound:
+  fixes d z :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>"
+  shows "\<bar>z \<bullet> (soft_hess \<kappa> d *v z)\<bar> \<le> (2*\<kappa>) * (norm z)\<^sup>2"
+  using soft_hess_quadform_bounds[OF k, of z d] by linarith
+
+subsection \<open>\<open>soft_grad\<close> is Lipschitz --- elementarily, at a non-sharp constant\<close>
+
+text \<open>The last hypothesis the \<open>_gen\<close> chain needs at \<open>Pn = soft_pen \<kappa>\<close> is that the
+  gradient field is Lipschitz.  The SHARP constant would need the mean value
+  inequality and a bound on the operator norm of \<open>soft_hess\<close>; but \<open>KG\<close> is a free
+  parameter of the chain, so a non-sharp constant is just as good, and for a
+  non-sharp constant there is a purely algebraic proof.
+
+  Write \<open>R d = sqrt (norm d ^ 2 + 1)\<close>, so \<open>R d \<ge> 1\<close> and \<open>norm d \<le> R d\<close>.
+
+  Step 1 --- \<open>R\<close> is 1-Lipschitz.  From \<open>R x ^ 2 - R y ^ 2 = norm x ^ 2 - norm y ^ 2\<close>
+  and \<open>(R x - R y)(R x + R y) = R x ^ 2 - R y ^ 2\<close> we get
+  \<open>|R x - R y| (R x + R y) = |norm x - norm y| (norm x + norm y)\<close>, and then
+  \<open>|norm x - norm y| \<le> norm (x - y)\<close> together with \<open>norm x + norm y \<le> R x + R y\<close>
+  gives the claim after cancelling the positive factor \<open>R x + R y\<close>.
+
+  Everything here is stated as a PRODUCT inequality and cancelled at the end,
+  never as a quotient --- this dev \<open>linarith\<close> refuses goals with divisions by
+  numerals, and \<open>field_simps\<close> unfolds \<open>sqrt t ^ 2\<close> unhelpfully.\<close>
+
+lemma norm_le_soft_R:
+  fixes x :: "real^'n::finite"
+  shows "norm x \<le> sqrt ((norm x)\<^sup>2 + 1)"
+proof -
+  have "norm x = sqrt ((norm x)\<^sup>2)" by (simp add: real_sqrt_abs)
+  also have "\<dots> \<le> sqrt ((norm x)\<^sup>2 + 1)" by (rule real_sqrt_le_mono) simp
+  finally show ?thesis .
+qed
+
+lemma abs_norm_diff_le:
+  fixes x y :: "'a::real_normed_vector"
+  shows "\<bar>norm x - norm y\<bar> \<le> norm (x - y)"
+proof -
+  have a: "norm x - norm y \<le> norm (x - y)" by (rule norm_triangle_ineq2)
+  have b: "norm y - norm x \<le> norm (y - x)" by (rule norm_triangle_ineq2)
+  have c: "norm (y - x) = norm (x - y)" by (rule norm_minus_commute)
+  show ?thesis using a b unfolding c by linarith
+qed
+
+lemma soft_R_lipschitz:
+  fixes x y :: "real^'n::finite"
+  shows "\<bar>sqrt ((norm x)\<^sup>2 + 1) - sqrt ((norm y)\<^sup>2 + 1)\<bar> \<le> norm (x - y)"
+proof -
+  let ?s = "sqrt ((norm x)\<^sup>2 + 1)"
+  let ?t = "sqrt ((norm y)\<^sup>2 + 1)"
+  have s1: "1 \<le> ?s" by (rule sqrt_norm_sq_add_one_ge_one)
+  have t1: "1 \<le> ?t" by (rule sqrt_norm_sq_add_one_ge_one)
+  have sum_pos: "0 < ?s + ?t" using s1 t1 by linarith
+  have ssq: "?s * ?s = (norm x)\<^sup>2 + 1"
+    using real_sqrt_pow2[of "(norm x)\<^sup>2 + 1"] by (simp add: power2_eq_square)
+  have tsq: "?t * ?t = (norm y)\<^sup>2 + 1"
+    using real_sqrt_pow2[of "(norm y)\<^sup>2 + 1"] by (simp add: power2_eq_square)
+  \<comment> \<open>the difference of squares, both ways round\<close>
+  have diffsq: "(?s - ?t) * (?s + ?t) = (norm x - norm y) * (norm x + norm y)"
+  proof -
+    have "(?s - ?t) * (?s + ?t) = ?s * ?s - ?t * ?t"
+      by (simp add: algebra_simps)
+    also have "\<dots> = (norm x)\<^sup>2 - (norm y)\<^sup>2" unfolding ssq tsq by simp
+    also have "\<dots> = (norm x - norm y) * (norm x + norm y)"
+      by (simp add: power2_eq_square algebra_simps)
+    finally show ?thesis .
+  qed
+  have absprod: "\<bar>?s - ?t\<bar> * (?s + ?t)
+      = \<bar>norm x - norm y\<bar> * (norm x + norm y)"
+  proof -
+    have nn: "0 \<le> ?s + ?t" using sum_pos by linarith
+    have nn2: "0 \<le> norm x + norm y" by simp
+    have "\<bar>?s - ?t\<bar> * (?s + ?t) = \<bar>(?s - ?t) * (?s + ?t)\<bar>"
+      using nn by (simp add: abs_mult)
+    also have "\<dots> = \<bar>(norm x - norm y) * (norm x + norm y)\<bar>"
+      unfolding diffsq ..
+    also have "\<dots> = \<bar>norm x - norm y\<bar> * (norm x + norm y)"
+      using nn2 by (simp add: abs_mult)
+    finally show ?thesis .
+  qed
+  \<comment> \<open>and now the two elementary bounds\<close>
+  have b1: "\<bar>norm x - norm y\<bar> \<le> norm (x - y)" by (rule abs_norm_diff_le)
+  have b2: "norm x + norm y \<le> ?s + ?t"
+    using norm_le_soft_R[of x] norm_le_soft_R[of y] by linarith
+  have chain: "\<bar>?s - ?t\<bar> * (?s + ?t) \<le> norm (x - y) * (?s + ?t)"
+  proof -
+    have "\<bar>norm x - norm y\<bar> * (norm x + norm y)
+        \<le> norm (x - y) * (norm x + norm y)"
+      by (rule mult_right_mono[OF b1]) simp
+    also have "\<dots> \<le> norm (x - y) * (?s + ?t)"
+      by (rule mult_left_mono[OF b2]) simp
+    finally show ?thesis unfolding absprod .
+  qed
+  show ?thesis by (rule mult_right_le_imp_le[OF chain sum_pos])
+qed
+
+text \<open>Step 2 --- the shrink map \<open>d \<mapsto> d / R d\<close> is 2-Lipschitz.  With \<open>s = R x\<close> and
+  \<open>t = R y\<close>, multiply the difference by \<open>s t\<close>:
+  \<open>(s t) (x/s - y/t) = t x - s y = t (x - y) + (t - s) y\<close>, so
+  \<open>s t |shrink x - shrink y| \<le> t|x-y| + |t-s||y| \<le> t|x-y| + |x-y| t = 2 t |x-y|\<close>
+  using Step 1 and \<open>norm y \<le> t\<close>.  Cancel \<open>t > 0\<close>, then use \<open>s \<ge> 1\<close>.
+
+  The constant 2 is not sharp --- the true constant is 1 --- but \<open>KG\<close> is a free
+  parameter of the chain, so this is enough and it avoids the mean value
+  inequality entirely.
+
+  Step 3 --- \<open>soft_grad \<kappa> d = \<kappa> d - \<kappa> (shrink d)\<close>, so \<open>soft_grad \<kappa>\<close> is
+  \<open>3\<kappa>\<close>-Lipschitz.\<close>
+
+definition soft_shrink :: "real^'n::finite \<Rightarrow> real^'n" where
+  "soft_shrink d = (1 / sqrt ((norm d)\<^sup>2 + 1)) *\<^sub>R d"
+
+lemma soft_grad_split:
+  fixes d :: "real^'n::finite"
+  shows "soft_grad \<kappa> d = \<kappa> *\<^sub>R d - \<kappa> *\<^sub>R soft_shrink d"
+proof -
+  have "soft_grad \<kappa> d = (\<kappa> - \<kappa> * (1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R d"
+    unfolding soft_grad_def by (simp add: algebra_simps)
+  also have "\<dots> = \<kappa> *\<^sub>R d - (\<kappa> * (1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R d"
+    by (rule scaleR_left_diff_distrib)
+  also have "\<dots> = \<kappa> *\<^sub>R d - \<kappa> *\<^sub>R ((1 / sqrt ((norm d)\<^sup>2 + 1)) *\<^sub>R d)"
+    by simp
+  finally show ?thesis unfolding soft_shrink_def .
+qed
+
+lemma soft_shrink_lipschitz:
+  fixes x y :: "real^'n::finite"
+  shows "norm (soft_shrink x - soft_shrink y) \<le> 2 * norm (x - y)"
+proof -
+  let ?s = "sqrt ((norm x)\<^sup>2 + 1)"
+  let ?t = "sqrt ((norm y)\<^sup>2 + 1)"
+  let ?D = "norm (soft_shrink x - soft_shrink y)"
+  have s1: "1 \<le> ?s" by (rule sqrt_norm_sq_add_one_ge_one)
+  have t1: "1 \<le> ?t" by (rule sqrt_norm_sq_add_one_ge_one)
+  have sp: "0 < ?s" using s1 by linarith
+  have tp: "0 < ?t" using t1 by linarith
+  have stp: "0 < ?s * ?t" using sp tp by (rule mult_pos_pos)
+  \<comment> \<open>clear the denominators\<close>
+  have key: "(?s * ?t) *\<^sub>R (soft_shrink x - soft_shrink y) = ?t *\<^sub>R x - ?s *\<^sub>R y"
+  proof -
+    have "(?s * ?t) *\<^sub>R ((1/?s) *\<^sub>R x - (1/?t) *\<^sub>R y)
+        = (?s * ?t) *\<^sub>R ((1/?s) *\<^sub>R x) - (?s * ?t) *\<^sub>R ((1/?t) *\<^sub>R y)"
+      by (rule scaleR_right_diff_distrib)
+    also have "\<dots> = ((?s * ?t) * (1/?s)) *\<^sub>R x - ((?s * ?t) * (1/?t)) *\<^sub>R y"
+      by simp
+    also have "\<dots> = ?t *\<^sub>R x - ?s *\<^sub>R y" using sp tp by simp
+    finally show ?thesis unfolding soft_shrink_def .
+  qed
+  have decomp: "?t *\<^sub>R x - ?s *\<^sub>R y = ?t *\<^sub>R (x - y) + (?t - ?s) *\<^sub>R y"
+    by (simp add: scaleR_right_diff_distrib scaleR_left_diff_distrib
+          algebra_simps)
+  \<comment> \<open>the triangle estimate\<close>
+  have tri: "norm (?t *\<^sub>R (x - y) + (?t - ?s) *\<^sub>R y)
+      \<le> norm (?t *\<^sub>R (x - y)) + norm ((?t - ?s) *\<^sub>R y)"
+    by (rule norm_triangle_ineq)
+  have e1: "norm (?t *\<^sub>R (x - y)) = ?t * norm (x - y)" using tp by simp
+  have e2: "norm ((?t - ?s) *\<^sub>R y) = \<bar>?t - ?s\<bar> * norm y" by simp
+  have absb: "\<bar>?t - ?s\<bar> \<le> norm (x - y)"
+  proof -
+    have "\<bar>?s - ?t\<bar> \<le> norm (x - y)" by (rule soft_R_lipschitz)
+    then show ?thesis by (simp add: abs_minus_commute)
+  qed
+  have ny: "norm y \<le> ?t" by (rule norm_le_soft_R)
+  have prod: "\<bar>?t - ?s\<bar> * norm y \<le> ?t * norm (x - y)"
+  proof -
+    have "\<bar>?t - ?s\<bar> * norm y \<le> norm (x - y) * norm y"
+      by (rule mult_right_mono[OF absb]) simp
+    also have "\<dots> \<le> norm (x - y) * ?t" by (rule mult_left_mono[OF ny]) simp
+    also have "norm (x - y) * ?t = ?t * norm (x - y)" by (simp add: mult_ac)
+    finally show ?thesis .
+  qed
+  have bound: "norm (?t *\<^sub>R x - ?s *\<^sub>R y) \<le> 2 * (?t * norm (x - y))"
+    unfolding decomp using tri e1 e2 prod by linarith
+  \<comment> \<open>and cancel\<close>
+  have step: "(?s * ?t) * ?D \<le> 2 * (?t * norm (x - y))"
+  proof -
+    have "(?s * ?t) * ?D = norm ((?s * ?t) *\<^sub>R (soft_shrink x - soft_shrink y))"
+      using stp by simp
+    also have "\<dots> = norm (?t *\<^sub>R x - ?s *\<^sub>R y)" unfolding key ..
+    also have "\<dots> \<le> 2 * (?t * norm (x - y))" by (rule bound)
+    finally show ?thesis .
+  qed
+  have r1: "(?s * ?t) * ?D = ?t * (?s * ?D)" by (simp add: mult_ac)
+  have r2: "2 * (?t * norm (x - y)) = ?t * (2 * norm (x - y))"
+    by (simp add: mult_ac)
+  have cancel: "?t * (?s * ?D) \<le> ?t * (2 * norm (x - y))"
+    using step unfolding r1 r2 .
+  have sN: "?s * ?D \<le> 2 * norm (x - y)"
+    by (rule mult_left_le_imp_le[OF cancel tp])
+  have grow: "?D \<le> ?s * ?D"
+  proof -
+    have "1 * ?D \<le> ?s * ?D" by (rule mult_right_mono[OF s1]) simp
+    then show ?thesis by simp
+  qed
+  show ?thesis using grow sN by linarith
+qed
+
+theorem soft_grad_lipschitz:
+  fixes x y :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>"
+  shows "norm (soft_grad \<kappa> x - soft_grad \<kappa> y) \<le> (3*\<kappa>) * norm (x - y)"
+proof -
+  let ?S = "soft_shrink x - soft_shrink y"
+  have split: "soft_grad \<kappa> x - soft_grad \<kappa> y = \<kappa> *\<^sub>R (x - y) - \<kappa> *\<^sub>R ?S"
+    unfolding soft_grad_split
+    by (simp add: scaleR_right_diff_distrib algebra_simps)
+  have tri: "norm (\<kappa> *\<^sub>R (x - y) - \<kappa> *\<^sub>R ?S)
+      \<le> norm (\<kappa> *\<^sub>R (x - y)) + norm (\<kappa> *\<^sub>R ?S)"
+    by (rule norm_triangle_ineq4)
+  have e1: "norm (\<kappa> *\<^sub>R (x - y)) = \<kappa> * norm (x - y)" using k by simp
+  have e2: "norm (\<kappa> *\<^sub>R ?S) = \<kappa> * norm ?S" using k by simp
+  have sh: "\<kappa> * norm ?S \<le> \<kappa> * (2 * norm (x - y))"
+    by (rule mult_left_mono[OF soft_shrink_lipschitz k])
+  have exp: "(3*\<kappa>) * norm (x - y) = \<kappa> * norm (x - y) + \<kappa> * (2 * norm (x - y))"
+    by (simp add: algebra_simps)
+  show ?thesis unfolding split exp using tri e1 e2 sh by linarith
+qed
+
+subsection \<open>The diagonal dichotomy for \<open>soft_pen\<close>\<close>
+
+text \<open>The two facts that decide the diagonal case.  At \<open>d = 0\<close> the gradient AND
+  the Hessian of \<open>soft_pen\<close> both vanish --- this is exactly the property the
+  penalty was designed to have, and it is what makes the diagonal configuration
+  impossible: the supersolution's test function would have jet \<open>(0,0)\<close>, and
+  \<open>supersol_no_vanishing_jet\<close> forbids that.
+
+  Off the diagonal the gradient is nonzero as soon as \<open>\<kappa> > 0\<close>, because
+  \<open>R d > 1\<close> for \<open>d \<noteq> 0\<close> and hence the scalar \<open>\<kappa>(1 - 1/R d)\<close> is strictly positive.
+  That is what supplies the positive lower bound \<open>c\<close> the chain needs, and with it
+  the parameter \<open>\<rho>\<close> can always be shrunk to restore \<open>rsmall\<close>, since every other
+  constraint on \<open>\<rho>\<close> is an UPPER bound.\<close>
+
+lemma soft_grad_zero: "soft_grad \<kappa> (0 :: real^'n::finite) = 0"
+  unfolding soft_grad_def by simp
+
+lemma outer_prod_zero_left: "outer_prod (0 :: real^'n::finite) e = 0"
+  unfolding outer_prod_def by (simp add: vec_eq_iff)
+
+lemma soft_hess_zero: "soft_hess \<kappa> (0 :: real^'n::finite) = 0"
+proof -
+  have n0: "(norm (0 :: real^'n))\<^sup>2 + 1 = 1" by simp
+  have "soft_hess \<kappa> (0 :: real^'n)
+      = (\<kappa> * (1 - 1 / sqrt ((norm (0 :: real^'n))\<^sup>2 + 1))) *\<^sub>R mat 1
+        + (\<kappa> / (sqrt ((norm (0 :: real^'n))\<^sup>2 + 1)) ^ 3)
+            *\<^sub>R outer_prod (0 :: real^'n) 0"
+    unfolding soft_hess_def ..
+  also have "\<dots> = (\<kappa> * (1 - 1 / sqrt (1::real))) *\<^sub>R mat 1
+        + (\<kappa> / (sqrt (1::real)) ^ 3) *\<^sub>R outer_prod (0 :: real^'n) 0"
+    unfolding n0 ..
+  also have "\<dots> = 0"
+    unfolding outer_prod_zero_left by simp
+  finally show ?thesis .
+qed
+
+lemma soft_R_gt_one:
+  fixes d :: "real^'n::finite"
+  assumes d: "d \<noteq> 0"
+  shows "1 < sqrt ((norm d)\<^sup>2 + 1)"
+proof -
+  have "0 < norm d" using d by simp
+  then have "0 < (norm d)\<^sup>2" by simp
+  then have "(1::real) < (norm d)\<^sup>2 + 1" by linarith
+  then have "sqrt (1::real) < sqrt ((norm d)\<^sup>2 + 1)" by (rule real_sqrt_less_mono)
+  then show ?thesis by simp
+qed
+
+lemma soft_grad_coeff_pos:
+  fixes d :: "real^'n::finite"
+  assumes d: "d \<noteq> 0" and k: "0 < \<kappa>"
+  shows "0 < \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))"
+proof -
+  have R: "1 < sqrt ((norm d)\<^sup>2 + 1)" by (rule soft_R_gt_one[OF d])
+  then have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" by linarith
+  have "1 / sqrt ((norm d)\<^sup>2 + 1) < 1" using R Rp by (simp add: divide_less_eq)
+  then have pos: "0 < 1 - 1 / sqrt ((norm d)\<^sup>2 + 1)" by linarith
+  show ?thesis by (rule mult_pos_pos[OF k pos])
+qed
+
+lemma soft_grad_nonzero:
+  fixes d :: "real^'n::finite"
+  assumes d: "d \<noteq> 0" and k: "0 < \<kappa>"
+  shows "soft_grad \<kappa> d \<noteq> 0"
+proof -
+  have c: "0 < \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))"
+    by (rule soft_grad_coeff_pos[OF d k])
+  then have cne: "\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) \<noteq> 0" by linarith
+  show ?thesis
+    unfolding soft_grad_def using cne d by (simp add: scaleR_eq_0_iff)
+qed
+
+lemma soft_grad_norm_pos:
+  fixes d :: "real^'n::finite"
+  assumes d: "d \<noteq> 0" and k: "0 < \<kappa>"
+  shows "0 < norm (soft_grad \<kappa> d)"
+  using soft_grad_nonzero[OF d k] by simp
+
+text \<open>The parameter choice.  In \<open>rsmall\<close>, taking the natural \<open>c\<close> --- the actual
+  norm of the gradient at the maximiser --- makes \<open>\<kappa>\<close> CANCEL:
+
+    \<open>(3\<kappa>)(2\<rho>) < norm (soft_grad \<kappa> d) = \<kappa>(1 - 1/R d) norm d\<close>
+      \<longleftrightarrow>  \<open>6\<rho> < (1 - 1/R d) * norm d\<close>
+
+  so the condition on \<open>\<rho>\<close> does not depend on \<open>\<kappa>\<close> at all, and the loss from using
+  the non-sharp constant \<open>3\<kappa>\<close> instead of the sharp \<open>\<kappa>\<close> is exactly a factor three
+  in the threshold for \<open>\<rho>\<close> --- nothing else.  Since every other constraint on
+  \<open>\<rho>\<close> in the chain is an UPPER bound (\<open>\<rho> < r\<close>, \<open>\<rho> + R\<^sub>u \<le> \<kappa>\<close>, \<open>\<rho> + R\<^sub>w \<le> \<kappa>\<close>), such a
+  \<open>\<rho>\<close> always exists.\<close>
+
+lemma soft_grad_norm_eq:
+  fixes d :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>"
+  shows "norm (soft_grad \<kappa> d)
+      = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) * norm d"
+proof -
+  have R1: "1 \<le> sqrt ((norm d)\<^sup>2 + 1)" by (rule sqrt_norm_sq_add_one_ge_one)
+  then have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" by linarith
+  have "1 / sqrt ((norm d)\<^sup>2 + 1) \<le> 1" using R1 Rp by (simp add: divide_le_eq_1)
+  then have nn: "0 \<le> \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))"
+    by (intro mult_nonneg_nonneg[OF k]) linarith
+  show ?thesis unfolding soft_grad_def using nn by simp
+qed
+
+lemma soft_rsmall_of_rho:
+  fixes d :: "real^'n::finite"
+  assumes k: "0 < \<kappa>"
+    and small: "6 * \<rho> < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
+  shows "(3*\<kappa>) * (2*\<rho>) < norm (soft_grad \<kappa> d)"
+proof -
+  have knn: "0 \<le> \<kappa>" using k by linarith
+  have eq: "norm (soft_grad \<kappa> d)
+      = \<kappa> * ((1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d)"
+    unfolding soft_grad_norm_eq[OF knn] by (simp add: mult_ac)
+  have "\<kappa> * (6 * \<rho>) < \<kappa> * ((1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d)"
+    by (rule mult_strict_left_mono[OF small k])
+  moreover have "(3*\<kappa>) * (2*\<rho>) = \<kappa> * (6 * \<rho>)" by (simp add: mult_ac)
+  ultimately show ?thesis unfolding eq by linarith
+qed
+
+text \<open>The arithmetic is done on ABSTRACT reals first.  Doing it in place fails
+  three ways at once: this dev \<open>linarith\<close> refuses division by a numeral, and simp
+  reassociates \<open>(1 - 1/R) * norm d\<close> to \<open>norm d * (1 - 1/R)\<close> so that the goal stops
+  matching the hypothesis.  Abstracting to \<open>B\<close> and \<open>G\<close> means neither ever sees the
+  \<open>sqrt\<close> term, and the divisions are handled by giving \<open>linarith\<close> the equations
+  \<open>B = B/2 + B/2\<close> and \<open>G = 12 * (G/12)\<close>, which turn each quotient into an atom it
+  can reason about linearly.\<close>
+
+lemma exists_small_rho_aux:
+  fixes B G :: real
+  assumes B: "0 < B" and G: "0 < G"
+  shows "\<exists>\<rho>. 0 < \<rho> \<and> \<rho> < B \<and> 6 * \<rho> < G"
+proof -
+  have h1: "0 < B/2" by (rule divide_pos_pos[OF B]) simp
+  have h2: "0 < G/12" by (rule divide_pos_pos[OF G]) simp
+  have eB: "B = B/2 + B/2" by simp
+  have eG: "G = 12 * (G/12)" by simp
+  have le1: "min (B/2) (G/12) \<le> B/2" by simp
+  have le2: "min (B/2) (G/12) \<le> G/12" by simp
+  have p1: "0 < min (B/2) (G/12)" using h1 h2 by simp
+  have p2: "min (B/2) (G/12) < B" using le1 h1 eB by linarith
+  have p3: "6 * min (B/2) (G/12) < G"
+  proof -
+    have "6 * min (B/2) (G/12) \<le> 6 * (G/12)"
+      by (rule mult_left_mono[OF le2]) simp
+    then show ?thesis using h2 eG by linarith
+  qed
+  show ?thesis using p1 p2 p3 by blast
+qed
+
+lemma soft_gap_pos:
+  fixes d :: "real^'n::finite"
+  assumes d: "d \<noteq> 0"
+  shows "0 < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
+proof -
+  have R: "1 < sqrt ((norm d)\<^sup>2 + 1)" by (rule soft_R_gt_one[OF d])
+  then have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" by linarith
+  have "1 / sqrt ((norm d)\<^sup>2 + 1) < 1" using R Rp by (simp add: divide_less_eq)
+  then have cpos: "0 < 1 - 1 / sqrt ((norm d)\<^sup>2 + 1)" by linarith
+  have dpos: "0 < norm d" using d by simp
+  show ?thesis by (rule mult_pos_pos[OF cpos dpos])
+qed
+
+lemma soft_rho_exists:
+  fixes d :: "real^'n::finite"
+  assumes d: "d \<noteq> 0" and B: "0 < B"
+  shows "\<exists>\<rho>. 0 < \<rho> \<and> \<rho> < B
+      \<and> 6 * \<rho> < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
+  by (rule exists_small_rho_aux[OF B soft_gap_pos[OF d]])
+
+subsection \<open>Jensen's semiconvexity input, for a general penalty\<close>
+
+text \<open>The first step of stage 9-10 under the substitution, and it is a straight
+  transcription of \<open>doubled_functional_semiconvex\<close> --- the proof is modular in
+  exactly the right way, with the penalty isolated in one \<open>semiconvex_penalty\<close>
+  step.  Replacing that step by \<open>semiconvex_penalty_gen\<close> is the whole change,
+  and the doubled constant becomes \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>, matching the quadratic case
+  at \<open>\<kappa> = \<alpha>\<close>.\<close>
+
+theorem doubled_functional_semiconvex_gen:
+  fixes u v :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
+    and e: "0 < \<epsilon>" and k: "0 \<le> \<kappa>"
+    and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
+  shows "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z) - Pn (fst z - snd z))
+      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
+proof -
+  have ce: "0 \<le> 1/\<epsilon>" using e by simp
+  have A: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      supconv u \<epsilon> (fst z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
+    by (rule semiconvex_of_fst[OF supconv_semiconvex'[OF Bu e] ce])
+  have B: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      supconv v \<epsilon> (snd z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
+    by (rule semiconvex_of_snd[OF supconv_semiconvex'[OF Bv e] ce])
+  have AB: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
+      + ((1/\<epsilon> + 1/\<epsilon>)/2) * (norm z)\<^sup>2)"
+    by (rule semiconvex_add[OF A B])
+  have C: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      - Pn (fst z - snd z) + ((2*\<kappa>)/2) * (norm z)\<^sup>2)"
+    by (rule semiconvex_penalty_gen[OF k sc])
+  have ABC: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)) + - Pn (fst z - snd z))
+      + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
+    by (rule semiconvex_add[OF AB C])
+  have eq: "(\<lambda>z::(real^'n) \<times> (real^'n).
+        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)) + - Pn (fst z - snd z))
+        + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<kappa>)/2) * (norm z)\<^sup>2)
+      = (\<lambda>z::(real^'n) \<times> (real^'n).
+        (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z) - Pn (fst z - snd z))
+        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
+    by (rule ext) simp
+  show ?thesis using ABC unfolding eq .
+qed
+
+text \<open>And Jensen's lemma for the general doubled functional.  Same shape as
+  \<open>doubled_supconv_jet_exists\<close>, with \<open>(\<alpha>/2)\<parallel>fst y - snd y\<parallel>\<^sup>2\<close> replaced by
+  \<open>Pn (fst y - snd y)\<close> and the semiconvexity constant by \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.  The
+  proof is one line: \<open>semiconvex_jensen_alexandrov_point\<close> never knew what the
+  penalty was, only that the doubled functional is semiconvex.\<close>
+
+theorem doubled_supconv_jet_exists_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. w y \<le> Bw"
+    and e: "0 < \<epsilon>" and k: "0 \<le> \<kappa>"
+    and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
+    and rho: "0 < \<rho>" "\<rho> < r"
+    and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi>
+        \<Longrightarrow> supconv u \<epsilon> (fst y) + supconv w \<epsilon> (snd y)
+              - Pn (fst y - snd y) \<le> m"
+    and d: "0 < dd"
+    and small: "2 * dd * r
+        < (supconv u \<epsilon> (fst \<xi>) + supconv w \<epsilon> (snd \<xi>)
+            - Pn (fst \<xi> - snd \<xi>)) - m"
+  shows "\<exists>zh p q W. dist zh \<xi> < \<rho> \<and> norm p \<le> dd
+      \<and> (\<forall>y \<in> cball \<xi> r.
+          (supconv u \<epsilon> (fst y) + supconv w \<epsilon> (snd y)
+            - Pn (fst y - snd y)) + p \<bullet> y
+          \<le> (supconv u \<epsilon> (fst zh) + supconv w \<epsilon> (snd zh)
+            - Pn (fst zh - snd zh)) + p \<bullet> zh)
+      \<and> bounded_linear W \<and> (\<forall>v z. v \<bullet> W z = z \<bullet> W v)
+      \<and> (\<forall>k. - ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>) * (norm k)\<^sup>2) \<le> k \<bullet> W k)
+      \<and> ((\<lambda>k. ((supconv u \<epsilon> (fst (zh + k)) + supconv w \<epsilon> (snd (zh + k))
+              - Pn (fst (zh + k) - snd (zh + k)))
+            - (supconv u \<epsilon> (fst zh) + supconv w \<epsilon> (snd zh)
+              - Pn (fst zh - snd zh))
+            - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have cvx: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      (supconv u \<epsilon> (fst z) + supconv w \<epsilon> (snd z) - Pn (fst z - snd z))
+      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
+    by (rule doubled_functional_semiconvex_gen[OF Bu Bw e k sc])
+  have c: "0 < 1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>"
+  proof -
+    have "0 < 1/\<epsilon>" using e by simp
+    then show ?thesis using k by linarith
+  qed
+  show ?thesis
+    by (rule semiconvex_jensen_alexandrov_point[OF cvx c rho(1) rho(2)
+          bnd d small])
+qed
+
+text \<open>The strict-gap perturbation, stated PENALTY-AGNOSTICALLY.  The existing
+  \<open>doubled_functional_semiconvex_shifted\<close> proves this for the quadratic doubling
+  specifically, but the argument never uses the penalty: subtracting \<open>\<delta>\<parallel>z - \<xi>\<parallel>\<^sup>2\<close>
+  and adding back \<open>\<delta>\<parallel>z\<parallel>\<^sup>2\<close> leaves \<open>\<delta>(2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2)\<close>, which is AFFINE, and
+  convexity is closed under adding an affine function.  So it holds for any
+  semiconvex \<open>\<Psi>\<close> whatever, and the constant rises by exactly \<open>2\<delta>\<close>.
+
+  Stating it this way means the shifted family needs no separate development
+  for the general penalty --- it is this lemma applied to
+  \<open>doubled_functional_semiconvex_gen\<close>.\<close>
+
+lemma semiconvex_shift_perturb:
+  fixes \<Psi> :: "'a::euclidean_space \<Rightarrow> real"
+  assumes cvx: "convex_on UNIV (\<lambda>z. \<Psi> z + (C/2) * (norm z)\<^sup>2)"
+    and dnn: "0 \<le> \<delta>"
+  shows "convex_on UNIV (\<lambda>z. (\<Psi> z - \<delta> * (norm (z - \<xi>))\<^sup>2)
+      + ((C + 2*\<delta>)/2) * (norm z)\<^sup>2)"
+proof -
+  have sq: "(norm (z - \<xi>))\<^sup>2 = (norm z)\<^sup>2 - 2 * (z \<bullet> \<xi>) + (norm \<xi>)\<^sup>2"
+    for z :: 'a
+    by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
+        inner_commute)
+  have e: "(\<lambda>z::'a. (\<Psi> z - \<delta> * (norm (z - \<xi>))\<^sup>2)
+        + ((C + 2*\<delta>)/2) * (norm z)\<^sup>2)
+      = (\<lambda>z::'a. (\<Psi> z + (C/2) * (norm z)\<^sup>2)
+        + \<delta> * (2 * (z \<bullet> \<xi>) - (norm \<xi>)\<^sup>2))"
+  proof (rule ext)
+    fix z :: 'a
+    show "(\<Psi> z - \<delta> * (norm (z - \<xi>))\<^sup>2) + ((C + 2*\<delta>)/2) * (norm z)\<^sup>2
+        = (\<Psi> z + (C/2) * (norm z)\<^sup>2) + \<delta> * (2 * (z \<bullet> \<xi>) - (norm \<xi>)\<^sup>2)"
+      unfolding sq by (simp add: algebra_simps)
+  qed
+  have aff: "convex_on UNIV (\<lambda>z::'a. \<delta> * (2 * (z \<bullet> \<xi>) - (norm \<xi>)\<^sup>2))"
+  proof (rule convex_onI)
+    fix t :: real and x y :: 'a
+    assume "0 < t" "t < 1"
+    show "\<delta> * (2 * (((1 - t) *\<^sub>R x + t *\<^sub>R y) \<bullet> \<xi>) - (norm \<xi>)\<^sup>2)
+        \<le> (1 - t) * (\<delta> * (2 * (x \<bullet> \<xi>) - (norm \<xi>)\<^sup>2))
+          + t * (\<delta> * (2 * (y \<bullet> \<xi>) - (norm \<xi>)\<^sup>2))"
+      by (simp add: inner_add_left inner_scaleR_left algebra_simps)
+  qed simp
+  show ?thesis unfolding e by (rule convex_on_add[OF cvx aff])
+qed
+
+text \<open>Jensen for the SHIFTED general functional --- the strict-gap version, which
+  is what the family construction consumes.  Two lemmas do all of it:
+  \<open>norm_sq_prod_split\<close> says the perturbation splits across the blocks, so the
+  shifted functional is still \<open>\<Phi> - \<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> with \<open>\<Phi>\<close> the general doubled one;
+  and \<open>semiconvex_shift_perturb\<close> says that is semiconvex with constant raised by
+  \<open>2\<delta>\<close>.  No part of the shifted development had to be redone for the general
+  penalty.\<close>
+
+theorem doubled_supconv_jet_exists_shifted_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. w y \<le> Bw"
+    and e: "0 < \<epsilon>" and k: "0 \<le> \<kappa>"
+    and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
+    and dnn: "0 \<le> \<delta>"
+    and rho: "0 < \<rho>" "\<rho> < r"
+    and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi>
+        \<Longrightarrow> (supconv u \<epsilon> (fst y) - \<delta> * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+              + (supconv w \<epsilon> (snd y) - \<delta> * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+              - Pn (fst y - snd y) \<le> m"
+    and d: "0 < dd"
+    and small: "2 * dd * r
+        < ((supconv u \<epsilon> (fst \<xi>) - \<delta> * (norm (fst \<xi> - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd \<xi>) - \<delta> * (norm (snd \<xi> - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst \<xi> - snd \<xi>)) - m"
+  shows "\<exists>zh p q W. dist zh \<xi> < \<rho> \<and> norm p \<le> dd
+      \<and> (\<forall>y \<in> cball \<xi> r.
+          ((supconv u \<epsilon> (fst y) - \<delta> * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd y) - \<delta> * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst y - snd y)) + p \<bullet> y
+          \<le> ((supconv u \<epsilon> (fst zh) - \<delta> * (norm (fst zh - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd zh) - \<delta> * (norm (snd zh - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst zh - snd zh)) + p \<bullet> zh)
+      \<and> bounded_linear W \<and> (\<forall>v z. v \<bullet> W z = z \<bullet> W v)
+      \<and> (\<forall>kk. - ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*\<delta>) * (norm kk)\<^sup>2) \<le> kk \<bullet> W kk)
+      \<and> ((\<lambda>kk. (((supconv u \<epsilon> (fst (zh + kk))
+                - \<delta> * (norm (fst (zh + kk) - fst \<xi>\<^sub>0))\<^sup>2)
+              + (supconv w \<epsilon> (snd (zh + kk))
+                - \<delta> * (norm (snd (zh + kk) - snd \<xi>\<^sub>0))\<^sup>2)
+              - Pn (fst (zh + kk) - snd (zh + kk)))
+            - ((supconv u \<epsilon> (fst zh) - \<delta> * (norm (fst zh - fst \<xi>\<^sub>0))\<^sup>2)
+              + (supconv w \<epsilon> (snd zh) - \<delta> * (norm (snd zh - snd \<xi>\<^sub>0))\<^sup>2)
+              - Pn (fst zh - snd zh))
+            - q \<bullet> kk - (kk \<bullet> W kk)/2) / (norm kk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have split: "(supconv u \<epsilon> (fst z) - \<delta> * (norm (fst z - fst \<xi>\<^sub>0))\<^sup>2)
+        + (supconv w \<epsilon> (snd z) - \<delta> * (norm (snd z - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst z - snd z)
+      = (supconv u \<epsilon> (fst z) + supconv w \<epsilon> (snd z) - Pn (fst z - snd z))
+        - \<delta> * (norm (z - \<xi>\<^sub>0))\<^sup>2"
+    for z :: "(real^'n) \<times> (real^'n)"
+  proof -
+    have nsplit: "(norm (z - \<xi>\<^sub>0))\<^sup>2
+        = (norm (fst z - fst \<xi>\<^sub>0))\<^sup>2 + (norm (snd z - snd \<xi>\<^sub>0))\<^sup>2"
+    proof -
+      have "(norm (z - \<xi>\<^sub>0))\<^sup>2
+          = (norm (fst (z - \<xi>\<^sub>0)))\<^sup>2 + (norm (snd (z - \<xi>\<^sub>0)))\<^sup>2"
+        by (rule norm_prod_sq)
+      then show ?thesis by simp
+    qed
+    show ?thesis unfolding nsplit by (simp add: algebra_simps)
+  qed
+  have base: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      (supconv u \<epsilon> (fst z) + supconv w \<epsilon> (snd z) - Pn (fst z - snd z))
+      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
+    by (rule doubled_functional_semiconvex_gen[OF Bu Bw e k sc])
+  have cvx: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+      ((supconv u \<epsilon> (fst z) - \<delta> * (norm (fst z - fst \<xi>\<^sub>0))\<^sup>2)
+        + (supconv w \<epsilon> (snd z) - \<delta> * (norm (snd z - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst z - snd z))
+      + (((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>) + 2*\<delta>)/2) * (norm z)\<^sup>2)"
+    unfolding split
+    by (rule semiconvex_shift_perturb[OF base dnn])
+  have c: "0 < 1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*\<delta>"
+  proof -
+    have "0 < 1/\<epsilon>" using e by simp
+    then show ?thesis using k dnn by linarith
+  qed
+  show ?thesis
+    by (rule semiconvex_jensen_alexandrov_point[OF cvx c rho(1) rho(2)
+          bnd d small])
+qed
+
+text \<open>The annulus bound that Jensen's strict-gap version needs, for a general
+  penalty --- and it too is penalty-agnostic.  A PLAIN maximiser of \<open>\<Phi>\<close> over
+  \<open>cball \<xi>\<^sub>0 r\<close> gives no strict gap, but subtracting \<open>\<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> creates one:
+  on the annulus \<open>\<rho> \<le> \<parallel>y - \<xi>\<^sub>0\<parallel>\<close> the perturbation costs at least \<open>\<delta>\<rho>\<^sup>2\<close>, so the
+  shifted functional there is below \<open>\<Phi>(\<xi>\<^sub>0) - \<delta>\<rho>\<^sup>2\<close> while at the centre it is
+  \<open>\<Phi>(\<xi>\<^sub>0)\<close> exactly.  Nothing about \<open>Pn\<close> enters --- only that the same \<open>\<Phi>\<close> appears
+  on both sides.\<close>
+
+lemma shifted_annulus_bound_split_gen:
+  fixes A B :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mxK: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow>
+        A (fst y) + B (snd y) - Pn (fst y - snd y)
+        \<le> A (fst \<xi>\<^sub>0) + B (snd \<xi>\<^sub>0) - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+    and dnn: "0 \<le> \<delta>" and rho: "0 < \<rho>"
+    and y: "y \<in> cball \<xi>\<^sub>0 r" and ann: "\<rho> \<le> dist y \<xi>\<^sub>0"
+  shows "(A (fst y) - \<delta> * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+        + (B (snd y) - \<delta> * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst y - snd y)
+      \<le> (A (fst \<xi>\<^sub>0) + B (snd \<xi>\<^sub>0) - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)) - \<delta> * \<rho>\<^sup>2"
+proof -
+  have nsplit: "(norm (y - \<xi>\<^sub>0))\<^sup>2
+      = (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2 + (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2"
+  proof -
+    have "(norm (y - \<xi>\<^sub>0))\<^sup>2
+        = (norm (fst (y - \<xi>\<^sub>0)))\<^sup>2 + (norm (snd (y - \<xi>\<^sub>0)))\<^sup>2"
+      by (rule norm_prod_sq)
+    then show ?thesis by simp
+  qed
+  have dn: "norm (y - \<xi>\<^sub>0) = dist y \<xi>\<^sub>0" by (simp add: dist_norm)
+  have sq: "\<rho>\<^sup>2 \<le> (norm (y - \<xi>\<^sub>0))\<^sup>2"
+    unfolding dn by (rule power_mono[OF ann]) (use rho in linarith)
+  have pen: "\<delta> * \<rho>\<^sup>2 \<le> \<delta> * (norm (y - \<xi>\<^sub>0))\<^sup>2"
+    by (rule mult_left_mono[OF sq dnn])
+  have mx: "A (fst y) + B (snd y) - Pn (fst y - snd y)
+      \<le> A (fst \<xi>\<^sub>0) + B (snd \<xi>\<^sub>0) - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+    by (rule mxK[OF y])
+  have e: "(A (fst y) - \<delta> * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+        + (B (snd y) - \<delta> * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst y - snd y)
+      = (A (fst y) + B (snd y) - Pn (fst y - snd y))
+        - \<delta> * (norm (y - \<xi>\<^sub>0))\<^sup>2"
+    unfolding nsplit by (simp add: algebra_simps)
+  show ?thesis unfolding e using mx pen by linarith
 qed
 
 text \<open>And the ordering itself, for a general penalty.  This is the transcription
@@ -2699,6 +4648,56 @@ proof -
     show ?thesis using ne z by auto
   qed
   show ?thesis unfolding ell_op_def img by simp
+qed
+
+text \<open>The end of the one-sided chain.  Identical to
+  \<open>supersol_no_vanishing_jet\<close> except that the jet hypothesis is the one-sided
+  form, which is what the DIAGONAL branch of Theorem 4.2(a) can actually
+  supply: a maximiser inequality bounds the increment from ABOVE and says
+  nothing below.
+
+  Note for a later strengthening: \<open>ell_op_zero_matrix\<close> below is applied at
+  \<open>p = 0\<close> but is PROVED for an arbitrary \<open>p\<close>.  If \<open>feasible_nonempty\<close>,
+  \<open>ell_op_M_gap\<close> and \<open>mgap_shift_id\<close> are likewise \<open>p\<close>-agnostic then this whole
+  proof goes through with jet data \<open>(p, 0)\<close> for any \<open>p\<close> --- i.e. only the
+  HESSIAN would have to vanish, not the gradient.  Not yet checked; do not rely
+  on it without checking.\<close>
+
+theorem supersol_no_vanishing_jet_onesided:
+  fixes w :: "real^'n::finite \<Rightarrow> real"
+  assumes sup: "visc_supersol k L \<Omega> w"
+    and yh: "yh \<in> \<Omega>"
+    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+    and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
+        ((- w) (yh + hh) - (- w) yh) / (norm hh)\<^sup>2 < c"
+  shows False
+proof -
+  have ne: "feasible k L (0::real^'n) \<noteq> ({} :: (real^'n^'n) set)"
+    by (rule feasible_nonempty[OF k(1) k(2) L])
+  have C0: "0 < real CARD('n) * L / 2" using k L by simp
+  obtain \<delta> where d0: "0 < \<delta>" and d1: "\<delta> < 1"
+    and dlt: "\<delta> * (real CARD('n) * L / 2) < 1"
+    using small_multiple_exists[OF C0 zero_less_one] by blast
+  have Ys: "transpose (0::real^'n^'n) = 0"
+    by (simp add: transpose_def vec_eq_iff)
+  have ub0: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
+      ((- w) (yh + hh) - (- w) yh - (- (0::real^'n)) \<bullet> hh
+        - (hh \<bullet> ((- (0::real^'n^'n)) *v hh))/2) / (norm hh)\<^sup>2 < c"
+    using ub by simp
+  have one: "1 \<le> ell_op k L (0::real^'n) ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)"
+    by (rule supersol_shifted_bound_onesided[OF sup yh Ys ub0 d0])
+  have gap: "ell_op k L (0::real^'n) ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)
+      \<le> ell_op k L (0::real^'n) (0::real^'n^'n)
+        + mgap L ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) 0"
+    by (rule ell_op_M_gap[OF ne])
+  have mg: "mgap L ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) 0
+      = \<delta> * real CARD('n) * L / 2"
+    by (rule mgap_shift_id(2)[OF less_imp_le[OF d0]])
+  have zz: "ell_op k L (0::real^'n) (0::real^'n^'n) = 0"
+    by (rule ell_op_zero_matrix[OF k(1) k(2) L])
+  have e1: "\<delta> * real CARD('n) * L / 2 = \<delta> * (real CARD('n) * L / 2)"
+    by simp
+  from one gap mg zz dlt show False unfolding e1 by linarith
 qed
 
 theorem supersol_no_vanishing_jet:
@@ -3674,6 +5673,80 @@ proof -
   with dpos show ?thesis by blast
 qed
 
+
+subsection \<open>Step 3: descending the one-sided bound to the attainment point\<close>
+
+text \<open>\<open>supconv_local_max_transfer_ball\<close> descends a local max for a FIXED
+  quadratic.  The diagonal branch needs the \<open>o(|h|^2)\<close> version, so it is applied
+  ONCE PER THRESHOLD: given \<open>c\<close>, the one-sided bound at threshold \<open>c/2\<close> is
+  exactly a local max for the quadratic \<open>c *\<^sub>R mat 1\<close> with zero gradient, and
+  the descent then yields \<open>u z - u ys \<le> (c/2)|z - ys|^2\<close> on a ball around \<open>ys\<close>,
+  i.e. the one-sided bound at threshold \<open>c\<close> for \<open>u\<close> at \<open>ys\<close>.
+
+  Quantifying over \<open>c\<close> is what makes the Hessian effectively zero without ever
+  having to produce a jet with a vanishing second-order term directly.\<close>
+
+lemma supconv_onesided_descent:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
+    and opt: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+    and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
+        (supconv u \<epsilon> (x + hh) - supconv u \<epsilon> x) / (norm hh)\<^sup>2 < c"
+    and c: "0 < c"
+  shows "\<forall>\<^sub>F hh in at 0. (u (ys + hh) - u ys) / (norm hh)\<^sup>2 < c"
+proof -
+  have chalf: "0 < c/2" using c by simp
+  have chlt: "c/2 < c" using c by simp
+  from ub[OF chalf] obtain d where dpos: "0 < d"
+    and b: "\<And>hh. hh \<noteq> 0 \<Longrightarrow> dist hh 0 < d \<Longrightarrow>
+      (supconv u \<epsilon> (x + hh) - supconv u \<epsilon> x) / (norm hh)\<^sup>2 < c/2"
+    unfolding eventually_at by blast
+  have quad: "hh \<bullet> ((c *\<^sub>R mat 1) *v hh) = c * (norm hh)\<^sup>2" for hh :: "real^'n"
+    by (simp add: scaleR_matrix_vector_assoc[symmetric] power2_norm_eq_inner)
+  \<comment> \<open>the one-sided bound IS a local max for the quadratic \<open>c *\<^sub>R mat 1\<close>\<close>
+  have lm: "supconv u \<epsilon> (x + h)
+      - ((0::real^'n) \<bullet> h + (h \<bullet> ((c *\<^sub>R mat 1) *v h))/2) \<le> supconv u \<epsilon> x"
+    if nh: "norm h < d" for h
+  proof (cases "h = 0")
+    case True
+    show ?thesis unfolding True by simp
+  next
+    case False
+    have nn: "0 < (norm h)\<^sup>2" using False by simp
+    have dh: "dist h 0 < d" using nh by (simp add: dist_norm)
+    have "(supconv u \<epsilon> (x + h) - supconv u \<epsilon> x) / (norm h)\<^sup>2 < c/2"
+      by (rule b[OF False dh])
+    then have lt: "supconv u \<epsilon> (x + h) - supconv u \<epsilon> x < (c/2) * (norm h)\<^sup>2"
+      using nn by (simp add: field_simps)
+    show ?thesis unfolding quad using lt by simp
+  qed
+  obtain ee where eepos: "0 < ee"
+    and ballb: "\<And>z. z \<in> ball ys ee \<Longrightarrow>
+      u z - ((0::real^'n) \<bullet> (z - ys)
+          + ((z - ys) \<bullet> ((c *\<^sub>R mat 1) *v (z - ys)))/2)
+      \<le> u ys - ((0::real^'n) \<bullet> (ys - ys)
+          + ((ys - ys) \<bullet> ((c *\<^sub>R mat 1) *v (ys - ys)))/2)"
+    using supconv_local_max_transfer_ball[OF B e opt dpos lm] by blast
+  have main: "(u (ys + hh) - u ys) / (norm hh)\<^sup>2 < c"
+    if h0: "hh \<noteq> 0" and hd: "dist hh 0 < ee" for hh
+  proof -
+    have nn: "0 < (norm hh)\<^sup>2" using h0 by simp
+    have zb: "ys + hh \<in> ball ys ee" using hd by (simp add: dist_norm)
+    have zz: "(ys + hh) - ys = hh" by simp
+    from ballb[OF zb]
+    have h1: "u (ys + hh) - (hh \<bullet> ((c *\<^sub>R mat 1) *v hh))/2 \<le> u ys"
+      unfolding zz by simp
+    have h2: "u (ys + hh) - u ys \<le> (c * (norm hh)\<^sup>2)/2"
+      using h1 unfolding quad by linarith
+    have "(u (ys + hh) - u ys) / (norm hh)\<^sup>2
+        \<le> ((c * (norm hh)\<^sup>2)/2) / (norm hh)\<^sup>2"
+      by (rule divide_right_mono[OF h2]) simp
+    also have "((c * (norm hh)\<^sup>2)/2) / (norm hh)\<^sup>2 = c/2"
+      using nn by (simp add: field_simps)
+    finally show ?thesis using chlt by linarith
+  qed
+  show ?thesis unfolding eventually_at using eepos main by blast
+qed
 
 subsection \<open>Symmetry of the two block matrices\<close>
 
@@ -6769,6 +8842,827 @@ proof (rule ccontr)
   from s2 s3 s4 gap show False by linarith
 qed
 
+subsection \<open>The two penalty-carrying localisation helpers, generalised\<close>
+
+text \<open>Of the eleven lemmas in the localisation layer, only these two mention the
+  penalty at all --- and neither uses anything quadratic about it.
+
+  \<open>doubling_maximiser_value_transfer\<close> uses ONLY that the penalty vanishes on the
+  diagonal, i.e. \<open>Pn 0 = 0\<close>: the maximiser inequality is instantiated at
+  \<open>x = y = z\<close> and the penalty term there is \<open>Pn (z - z) = Pn 0\<close>.
+
+  \<open>norm_lt_of_penalty_bound\<close> uses ONLY coercivity, and in the general form it
+  does not even need monotonicity --- it is a one-line contraposition once the
+  hypothesis is phrased as "the penalty exceeds \<open>C\<close> outside radius \<open>\<beta>\<close>".
+
+  \<open>doubling_maximiser_far_from_boundary\<close> itself --- the theorem that PRODUCES
+  the \<open>farx\<close>/\<open>fary\<close> hypotheses of the assembly --- is already penalty-free: it
+  consumes the penalty only through the abstracted \<open>tr\<close> and \<open>near\<close>.\<close>
+
+lemma doubling_maximiser_value_transfer_gen:
+  fixes A Bf f g :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        A x + Bf y - Pn (x - y) \<le> A xh + Bf yh - Pn (xh - yh)"
+    and zK: "z \<in> K"
+    and P0: "Pn 0 = 0"
+    and lowA: "f z \<le> A z" and lowB: "g z \<le> Bf z"
+    and upA: "A xh \<le> f xh + \<sigma>" and upB: "Bf yh \<le> g yh + \<sigma>"
+  shows "f z + g z + Pn (xh - yh) \<le> f xh + g yh + 2*\<sigma>"
+proof -
+  have diag: "A z + Bf z - Pn (z - z) \<le> A xh + Bf yh - Pn (xh - yh)"
+    by (rule mx[OF zK zK])
+  have zz: "z - z = (0 :: real^'n)" by simp
+  have "A z + Bf z \<le> A xh + Bf yh - Pn (xh - yh)"
+    using diag unfolding zz P0 by simp
+  then show ?thesis using lowA lowB upA upB by linarith
+qed
+
+lemma norm_lt_of_penalty_bound_gen:
+  fixes d :: "'a::real_normed_vector" and Pn :: "'a \<Rightarrow> real" and C \<beta> :: real
+  assumes p: "Pn d \<le> C"
+    and coer: "\<And>x. \<beta> \<le> norm x \<Longrightarrow> C < Pn x"
+  shows "norm d < \<beta>"
+proof (rule ccontr)
+  assume "\<not> norm d < \<beta>"
+  then have "\<beta> \<le> norm d" by linarith
+  then have "C < Pn d" by (rule coer)
+  then show False using p by argo
+qed
+
+subsection \<open>\<open>soft_pen\<close> vanishes on the diagonal and is coercive\<close>
+
+text \<open>Both facts reduce to the radial profile \<open>h s = \<kappa>(s/2 - (sqrt (s+1) - 1))\<close>
+  evaluated at \<open>s = norm d ^ 2\<close>.  \<open>h 0 = 0\<close> is immediate.  Monotonicity of \<open>h\<close> is
+  the same difference-of-squares trick as \<open>soft_R_lipschitz\<close>: for \<open>0 \<le> s \<le> t\<close>,
+  \<open>(a - b)(a + b) = t - s\<close> with \<open>a = sqrt (t+1)\<close>, \<open>b = sqrt (s+1)\<close>, and \<open>a + b \<ge> 2\<close>
+  gives \<open>2(a - b) \<le> t - s\<close> --- which is exactly \<open>h\<close> nondecreasing.\<close>
+
+lemma soft_pen_zero: "soft_pen \<kappa> (0 :: real^'n::finite) = 0"
+  unfolding soft_pen_def by simp
+
+lemma sqrt_shift_diff_bound:
+  fixes s t :: real
+  assumes s: "0 \<le> s" and st: "s \<le> t"
+  shows "2 * (sqrt (t + 1) - sqrt (s + 1)) \<le> t - s"
+proof -
+  have tnn: "0 \<le> t" using s st by linarith
+  have a1: "1 \<le> sqrt (t + 1)"
+  proof -
+    have "(1::real) = sqrt 1" by simp
+    also have "sqrt (1::real) \<le> sqrt (t + 1)" by (rule real_sqrt_le_mono) (use tnn in linarith)
+    finally show ?thesis .
+  qed
+  have b1: "1 \<le> sqrt (s + 1)"
+  proof -
+    have "(1::real) = sqrt 1" by simp
+    also have "sqrt (1::real) \<le> sqrt (s + 1)" by (rule real_sqrt_le_mono) (use s in linarith)
+    finally show ?thesis .
+  qed
+  have ab: "sqrt (s + 1) \<le> sqrt (t + 1)" by (rule real_sqrt_le_mono) (use st in linarith)
+  have sq: "sqrt (t + 1) * sqrt (t + 1) - sqrt (s + 1) * sqrt (s + 1) = t - s"
+  proof -
+    have et: "sqrt (t + 1) * sqrt (t + 1) = t + 1"
+      using real_sqrt_pow2[of "t + 1"] tnn by (simp add: power2_eq_square)
+    have es: "sqrt (s + 1) * sqrt (s + 1) = s + 1"
+      using real_sqrt_pow2[of "s + 1"] s by (simp add: power2_eq_square)
+    show ?thesis unfolding et es by simp
+  qed
+  have fact: "(sqrt (t + 1) - sqrt (s + 1)) * (sqrt (t + 1) + sqrt (s + 1))
+      = t - s"
+  proof -
+    have "(sqrt (t + 1) - sqrt (s + 1)) * (sqrt (t + 1) + sqrt (s + 1))
+        = sqrt (t + 1) * sqrt (t + 1) - sqrt (s + 1) * sqrt (s + 1)"
+      by (simp add: algebra_simps)
+    also have "\<dots> = t - s" by (rule sq)
+    finally show ?thesis .
+  qed
+  have dnn: "0 \<le> sqrt (t + 1) - sqrt (s + 1)" using ab by linarith
+  have sum2: "2 \<le> sqrt (t + 1) + sqrt (s + 1)" using a1 b1 by linarith
+  have "(sqrt (t + 1) - sqrt (s + 1)) * 2
+      \<le> (sqrt (t + 1) - sqrt (s + 1)) * (sqrt (t + 1) + sqrt (s + 1))"
+    by (rule mult_left_mono[OF sum2 dnn])
+  then show ?thesis unfolding fact by (simp add: mult_ac)
+qed
+
+text \<open>NB the bound variables here are \<open>a\<close> and \<open>b\<close>, not \<open>s\<close> and \<open>t\<close>: with a
+  variable named \<open>s\<close>, the term \<open>(\<kappa>/2)*s\<close> lexes as the Cartesian scalar-vector
+  product token \<open>*s\<close> and the statement fails to type-check with a
+  \<open>Clash of types "vec" and "real"\<close>.\<close>
+
+lemma soft_pen_radial_mono:
+  fixes a b :: real
+  assumes k: "0 \<le> \<kappa>" and a0: "0 \<le> a" and ab: "a \<le> b"
+  shows "(\<kappa>/2) * a - \<kappa> * (sqrt (a + 1) - 1)
+      \<le> (\<kappa>/2) * b - \<kappa> * (sqrt (b + 1) - 1)"
+proof -
+  have base: "2 * (sqrt (b + 1) - sqrt (a + 1)) \<le> b - a"
+    by (rule sqrt_shift_diff_bound[OF a0 ab])
+  have scaled: "\<kappa> * (2 * (sqrt (b + 1) - sqrt (a + 1))) \<le> \<kappa> * (b - a)"
+    by (rule mult_left_mono[OF base k])
+  have l: "\<kappa> * (2 * (sqrt (b + 1) - sqrt (a + 1)))
+      = 2 * (\<kappa> * (sqrt (b + 1) - sqrt (a + 1)))" by (simp add: mult_ac)
+  have rr: "\<kappa> * (b - a) = 2 * ((\<kappa>/2) * (b - a))" by simp
+  have half: "\<kappa> * (sqrt (b + 1) - sqrt (a + 1)) \<le> (\<kappa>/2) * (b - a)"
+    using scaled unfolding l rr by linarith
+  have e1: "\<kappa> * (sqrt (b + 1) - sqrt (a + 1))
+      = \<kappa> * (sqrt (b + 1) - 1) - \<kappa> * (sqrt (a + 1) - 1)"
+    by (simp add: algebra_simps)
+  have e2: "(\<kappa>/2) * (b - a) = (\<kappa>/2) * b - (\<kappa>/2) * a"
+    by (rule right_diff_distrib)
+  show ?thesis using half unfolding e1 e2 by linarith
+qed
+
+lemma soft_pen_mono_norm:
+  fixes x y :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>" and le: "norm x \<le> norm y"
+  shows "soft_pen \<kappa> x \<le> soft_pen \<kappa> y"
+proof -
+  have s: "0 \<le> (norm x)\<^sup>2" by simp
+  have st: "(norm x)\<^sup>2 \<le> (norm y)\<^sup>2" by (rule power_mono[OF le]) simp
+  show ?thesis
+    unfolding soft_pen_def by (rule soft_pen_radial_mono[OF k s st])
+qed
+
+lemma soft_pen_coercive:
+  fixes x :: "real^'n::finite" and z :: "real^'n"
+  assumes k: "0 \<le> \<kappa>" and b: "norm z \<le> norm x"
+  shows "soft_pen \<kappa> z \<le> soft_pen \<kappa> x"
+  by (rule soft_pen_mono_norm[OF k b])
+
+lemma soft_pen_nonneg:
+  fixes d :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>"
+  shows "0 \<le> soft_pen \<kappa> d"
+proof -
+  have "norm (0 :: real^'n) \<le> norm d" by simp
+  then have "soft_pen \<kappa> (0 :: real^'n) \<le> soft_pen \<kappa> d"
+    by (rule soft_pen_mono_norm[OF k])
+  then show ?thesis unfolding soft_pen_zero .
+qed
+
+lemma soft_pen_little_o:
+  "((\<lambda>h::real^'n::finite. soft_pen \<kappa> h / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  using soft_pen_vanishing_jet_at_zero[where \<kappa> = \<kappa>]
+  unfolding soft_pen_zero by simp
+
+text \<open>Step 2 of the diagonal wiring, complete: a diagonal maximiser's increment
+  bound is exactly the one-sided hypothesis that
+  \<open>supersol_no_vanishing_jet_onesided\<close> consumes.\<close>
+
+lemma diagonal_increment_onesided:
+  fixes B :: "real^'n::finite \<Rightarrow> real"
+  assumes dom: "\<forall>\<^sub>F hh in at 0. B (p + hh) - B p \<le> soft_pen \<kappa> hh"
+    and c: "0 < c"
+  shows "\<forall>\<^sub>F hh in at 0. (B (p + hh) - B p) / (norm hh)\<^sup>2 < c"
+  by (rule onesided_of_dominated[OF dom soft_pen_little_o c])
+
+lemma soft_pen_neg:
+  fixes d :: "real^'n::finite"
+  shows "soft_pen \<kappa> (- d) = soft_pen \<kappa> d"
+  unfolding soft_pen_def by simp
+
+text \<open>What a DIAGONAL maximiser gives.  Note carefully that these are ONE-SIDED:
+  the maximiser inequality bounds the increment of each component ABOVE by the
+  penalty, and says nothing below.  Whether that suffices depends on whether
+  \<open>supersol_no_vanishing_jet\<close>'s two-sided hypothesis is genuinely two-sided ---
+  see the note in STATUS.  These two facts are true and needed either way.\<close>
+
+lemma diagonal_max_increments:
+  fixes A B :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        A x + B y - Pn (x - y) \<le> A p + B p - Pn (p - p)"
+    and P0: "Pn 0 = 0"
+    and pK: "p \<in> K"
+  shows "\<And>y. y \<in> K \<Longrightarrow> B y - B p \<le> Pn (p - y)"
+    and "\<And>x. x \<in> K \<Longrightarrow> A x - A p \<le> Pn (x - p)"
+proof -
+  have e: "p - p = (0 :: real^'n)" by simp
+  show "B y - B p \<le> Pn (p - y)" if y: "y \<in> K" for y
+  proof -
+    have "A p + B y - Pn (p - y) \<le> A p + B p - Pn 0"
+      using mx[OF pK y] unfolding e .
+    then show ?thesis unfolding P0 by simp
+  qed
+  show "A x - A p \<le> Pn (x - p)" if x: "x \<in> K" for x
+  proof -
+    have "A x + B p - Pn (x - p) \<le> A p + B p - Pn 0"
+      using mx[OF x pK] unfolding e .
+    then show ?thesis unfolding P0 by simp
+  qed
+qed
+
+lemma diagonal_max_increment_soft:
+  fixes A B :: "real^'n::finite \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        A x + B y - soft_pen \<kappa> (x - y) \<le> A p + B p - soft_pen \<kappa> (p - p)"
+    and pK: "p \<in> K" and hK: "p + h \<in> K"
+  shows "B (p + h) - B p \<le> soft_pen \<kappa> h"
+proof -
+  have base: "B (p + h) - B p \<le> soft_pen \<kappa> (p - (p + h))"
+    by (rule diagonal_max_increments(1)[OF mx soft_pen_zero pK hK])
+  have e: "p - (p + h) = - h" by simp
+  have "B (p + h) - B p \<le> soft_pen \<kappa> (- h)" using base unfolding e .
+  then show ?thesis unfolding soft_pen_neg .
+qed
+
+lemma gap_split_aux:
+  fixes G :: real
+  assumes G: "0 < G"
+  shows "\<exists>\<sigma> \<tau> \<tau>'. 0 < \<sigma> \<and> 0 < \<tau> \<and> 0 < \<tau>' \<and> 2*\<sigma> + \<tau> + \<tau>' < G"
+proof -
+  have p: "0 < G/8" using G by simp
+  have e: "G = 8*(G/8)" by simp
+  have "2*(G/8) + (G/8) + (G/8) < G" using p e by linarith
+  with p show ?thesis by blast
+qed
+
+subsection \<open>Coercivity of \<open>soft_pen\<close>: recovering the norm bound\<close>
+
+text \<open>The quadratic penalty gets a bound on \<open>norm (xh - yh)\<close> for free, by
+  DIVIDING \<open>(\<alpha>/2)|d|^2 \<le> C\<^sub>0\<close> through by \<open>\<alpha>\<close>.  That inversion has no analogue for
+  a general penalty: \<open>doubling_penalty_bound_gen\<close> gives only \<open>Pn d \<le> C\<^sub>0\<close>, and
+  turning that into \<open>norm d < \<beta>\<close> needs coercivity --- which is exactly the shape
+  \<open>norm_lt_of_penalty_bound_gen\<close> asks for.
+
+  For \<open>soft_pen\<close> the mechanism is that it is LINEAR IN \<open>\<kappa>\<close>: at a fixed radius
+  \<open>\<beta>\<close> the penalty grows like \<open>\<kappa>\<close>, so for \<open>\<kappa>\<close> large it beats the fixed constant
+  \<open>C\<^sub>0\<close>.  This is the \<open>\<kappa> \<rightarrow> \<infinity>\<close> mechanism, exactly parallel to \<open>\<alpha> \<rightarrow> \<infinity>\<close>.
+
+  Positivity of the radial profile is elementary after the substitution
+  \<open>a = 2c\<close>: \<open>sqrt (2c+1) < c+1\<close> squares to \<open>2c+1 < c^2+2c+1\<close>, i.e. \<open>0 < c^2\<close>.
+  Substituting removes every division, which is what makes it go through here.\<close>
+
+lemma sqrt_lt_half_plus_one:
+  fixes c :: real
+  assumes c: "0 < c"
+  shows "sqrt (2*c + 1) < c + 1"
+proof -
+  have p: "0 < c + 1" using c by linarith
+  have sq: "2*c + 1 < (c + 1)\<^sup>2"
+  proof -
+    have e: "(c + 1)\<^sup>2 = c\<^sup>2 + 2*c + 1"
+      by (simp add: power2_eq_square algebra_simps)
+    have "0 < c\<^sup>2" using c by simp
+    then show ?thesis unfolding e by linarith
+  qed
+  have "sqrt (2*c + 1) < sqrt ((c + 1)\<^sup>2)" by (rule real_sqrt_less_mono[OF sq])
+  also have "sqrt ((c + 1)\<^sup>2) = c + 1" using p by (simp add: real_sqrt_abs)
+  finally show ?thesis .
+qed
+
+lemma radial_profile_pos:
+  fixes a :: real
+  assumes k: "0 < \<kappa>" and a: "0 < a"
+  shows "0 < (\<kappa>/2) * a - \<kappa> * (sqrt (a + 1) - 1)"
+proof -
+  define c where "c = a/2"
+  have cpos: "0 < c" unfolding c_def using a by simp
+  have ac: "a = 2*c" unfolding c_def by simp
+  have lt: "sqrt (2*c + 1) < c + 1" by (rule sqrt_lt_half_plus_one[OF cpos])
+  have gap: "0 < (c + 1) - sqrt (2*c + 1)" using lt by linarith
+  have h1: "(\<kappa>/2) * (2*c) = \<kappa> * c" by simp
+  have e: "(\<kappa>/2) * a - \<kappa> * (sqrt (a + 1) - 1)
+      = \<kappa> * ((c + 1) - sqrt (2*c + 1))"
+    unfolding ac h1 by (simp add: algebra_simps)
+  show ?thesis unfolding e by (rule mult_pos_pos[OF k gap])
+qed
+
+lemma soft_pen_ge_radial:
+  fixes x :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>" and bnn: "0 \<le> \<beta>" and b: "\<beta> \<le> norm x"
+  shows "(\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1) \<le> soft_pen \<kappa> x"
+proof -
+  have a0: "0 \<le> \<beta>\<^sup>2" by simp
+  have ab: "\<beta>\<^sup>2 \<le> (norm x)\<^sup>2" by (rule power_mono[OF b bnn])
+  show ?thesis
+    unfolding soft_pen_def by (rule soft_pen_radial_mono[OF k a0 ab])
+qed
+
+text \<open>And the packaged coercivity, in exactly the shape
+  \<open>norm_lt_of_penalty_bound_gen\<close> consumes.  The hypothesis \<open>big\<close> is the
+  \<open>\<kappa> \<rightarrow> \<infinity>\<close> requirement: it says \<open>\<kappa>\<close> has been taken large enough that the penalty
+  at radius \<open>\<beta>\<close> already exceeds the fixed constant \<open>C\<^sub>0\<close>.  Since the profile is
+  strictly positive (\<open>radial_profile_pos\<close>) and \<open>soft_pen\<close> is linear in \<open>\<kappa>\<close>, such
+  a \<open>\<kappa>\<close> always exists --- \<open>soft_pen_kappa_exists\<close>.\<close>
+
+lemma soft_pen_coercive_outside:
+  fixes x :: "real^'n::finite"
+  assumes k: "0 \<le> \<kappa>" and bnn: "0 \<le> \<beta>"
+    and big: "C\<^sub>0 < (\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
+    and b: "\<beta> \<le> norm x"
+  shows "C\<^sub>0 < soft_pen \<kappa> x"
+  using big soft_pen_ge_radial[OF k bnn b] by linarith
+
+lemma soft_pen_kappa_exists:
+  fixes \<beta> C\<^sub>0 :: real
+  assumes b: "0 < \<beta>"
+  shows "\<exists>\<kappa>. 0 < \<kappa> \<and> C\<^sub>0 < (\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
+proof -
+  define P where "P = (1/2) * \<beta>\<^sup>2 - 1 * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
+  have bsq: "0 < \<beta>\<^sup>2" using b by simp
+  have Ppos: "0 < P" unfolding P_def by (rule radial_profile_pos[OF _ bsq]) simp
+  have Pne: "P \<noteq> 0" using Ppos by linarith
+  \<comment> \<open>generic in the scalar, so simp never sees the quotient defining it\<close>
+  have scale: "kk * P = (kk/2) * \<beta>\<^sup>2 - kk * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
+    for kk :: real
+    unfolding P_def by (simp add: algebra_simps)
+  define \<kappa> where "\<kappa> = (max 0 C\<^sub>0 + 1) / P"
+  have numpos: "0 < max 0 C\<^sub>0 + 1" by simp
+  have kpos: "0 < \<kappa>" unfolding \<kappa>_def by (rule divide_pos_pos[OF numpos Ppos])
+  have prod: "\<kappa> * P = max 0 C\<^sub>0 + 1" unfolding \<kappa>_def using Pne by simp
+  have "C\<^sub>0 < max 0 C\<^sub>0 + 1" by simp
+  then have lt: "C\<^sub>0 < \<kappa> * P" using prod by linarith
+  have final: "C\<^sub>0 < (\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
+    using lt unfolding scale[of \<kappa>] .
+  from kpos final show ?thesis by blast
+qed
+
+text \<open>Continuity of \<open>soft_pen\<close>, which is the single hypothesis
+  \<open>doubling_maximiser_exists_gen\<close> needs about the penalty, and the resulting
+  existence statement at the concrete penalty.  Note \<open>sqrt\<close> is total in
+  Isabelle, so no positivity side condition is needed here.\<close>
+
+lemma soft_pen_continuous:
+  "continuous_on UNIV (soft_pen \<kappa> :: real^'n::finite \<Rightarrow> real)"
+  unfolding soft_pen_def by (intro continuous_intros)
+
+theorem doubling_maximiser_exists_soft:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
+  shows "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
+      u x - w y - soft_pen \<kappa> (x - y)
+        \<le> u xh - w yh - soft_pen \<kappa> (xh - yh)"
+  by (rule doubling_maximiser_exists_gen[OF cK neK cu cw soft_pen_continuous])
+
+text \<open>And the sup-convolution form, which is exactly the shape the top-level
+  \<open>mxKK\<close> hypothesis of \<open>comparison_from_localised_maximiser_soft\<close> wants.  This
+  is a transcription of \<open>doubling_maximiser_supconv\<close>: that proof copies the
+  penalty and touches nothing else, so the only change is which existence
+  theorem it calls.  Continuity of the two sup-convolutions is free ---
+  \<open>supconv_continuous\<close> needs only an upper bound and \<open>\<epsilon> > 0\<close> --- which is where
+  the sup-convolution earns its keep.\<close>
+
+corollary doubling_maximiser_supconv_soft:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and e: "0 < \<epsilon>"
+  shows "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
+      supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa> (x - y)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+        - soft_pen \<kappa> (xh - yh)"
+proof -
+  have cA: "continuous_on K (supconv (\<lambda>y. \<theta> * u y) \<epsilon>)"
+    by (rule continuous_on_subset[OF supconv_continuous[OF Bu e] subset_UNIV])
+  have cB0: "continuous_on K (supconv (- w) \<epsilon>)"
+    by (rule continuous_on_subset[OF supconv_continuous[OF Bw e] subset_UNIV])
+  have cB: "continuous_on K (\<lambda>y. - supconv (- w) \<epsilon> y)"
+    by (intro continuous_intros cB0)
+  have "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
+      supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (- supconv (- w) \<epsilon> y) - soft_pen \<kappa> (x - y)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh - (- supconv (- w) \<epsilon> yh)
+        - soft_pen \<kappa> (xh - yh)"
+    by (rule doubling_maximiser_exists_soft[OF cK neK cA cB])
+  then show ?thesis by simp
+qed
+
+subsection \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step for \<open>soft_pen\<close>: the maximiser closes up\<close>
+
+text \<open>This is the \<open>soft_pen\<close> analogue of \<open>doubling_dist_bound\<close>, and it is where
+  the coercivity earns its keep.  For the quadratic penalty one divides
+  \<open>(\<alpha>/2)|d|^2 \<le> C\<^sub>0\<close> by \<open>\<alpha>\<close>; here one instead uses that the penalty at radius \<open>\<beta>\<close>
+  grows linearly in \<open>\<kappa>\<close> and so eventually exceeds the FIXED constant \<open>C\<^sub>0\<close>, which
+  forces the maximiser inside radius \<open>\<beta>\<close>.
+
+  Note the quantifier order, which is the whole point: \<open>\<beta>\<close> is given FIRST, and
+  \<open>\<kappa>\<close> is chosen afterwards to match it.  The maximiser then depends on \<open>\<kappa>\<close>, so
+  the statement has to produce \<open>\<kappa>\<close> and the maximiser together --- one cannot fix
+  a maximiser and then ask for a \<open>\<kappa>\<close>.\<close>
+
+lemma doubling_near_soft:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        u x - w y - soft_pen \<kappa> (x - y)
+          \<le> u xh - w yh - soft_pen \<kappa> (xh - yh)"
+    and k: "0 \<le> \<kappa>"
+    and xh: "xh \<in> K" and yh: "yh \<in> K" and z: "z \<in> K"
+    and bnd: "u xh - w yh \<le> C"
+    and bnn: "0 \<le> \<beta>"
+    and big: "C - (u z - w z) < (\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
+  shows "dist xh yh < \<beta>"
+proof -
+  have pb: "soft_pen \<kappa> (xh - yh) \<le> C - (u z - w z)"
+    by (rule doubling_penalty_bound_gen[OF mx soft_pen_zero xh yh z bnd])
+  have coer: "C - (u z - w z) < soft_pen \<kappa> x" if "\<beta> \<le> norm x"
+    for x :: "real^'n"
+    by (rule soft_pen_coercive_outside[OF k bnn big that])
+  \<comment> \<open>pin every argument: \<open>?Pn ?d\<close> is higher-order and admits several unifiers\<close>
+  have "norm (xh - yh) < \<beta>"
+    by (rule norm_lt_of_penalty_bound_gen
+        [where Pn = "soft_pen \<kappa>" and d = "xh - yh"
+           and C = "C - (u z - w z)" and \<beta> = \<beta>,
+         OF pb coer])
+  then show ?thesis by (simp add: dist_norm)
+qed
+
+theorem doubling_close_maximiser_soft:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
+    and z: "z \<in> K"
+    and bnd: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow> u x - w y \<le> C"
+    and bpos: "0 < \<beta>"
+  shows "\<exists>\<kappa>. 0 < \<kappa> \<and> (\<exists>xh\<in>K. \<exists>yh\<in>K.
+      (\<forall>x\<in>K. \<forall>y\<in>K. u x - w y - soft_pen \<kappa> (x - y)
+          \<le> u xh - w yh - soft_pen \<kappa> (xh - yh))
+      \<and> dist xh yh < \<beta>)"
+proof -
+  obtain \<kappa> where kpos: "0 < \<kappa>"
+    and big: "C - (u z - w z)
+        < (\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
+    using soft_pen_kappa_exists[OF bpos] by blast
+  have knn: "0 \<le> \<kappa>" using kpos by linarith
+  have bnn: "0 \<le> \<beta>" using bpos by linarith
+  obtain xh yh where xh: "xh \<in> K" and yh: "yh \<in> K"
+    and mx: "\<forall>x\<in>K. \<forall>y\<in>K. u x - w y - soft_pen \<kappa> (x - y)
+        \<le> u xh - w yh - soft_pen \<kappa> (xh - yh)"
+    using doubling_maximiser_exists_soft[OF cK neK cu cw, where \<kappa> = \<kappa>] by blast
+  have mxa: "u x - w y - soft_pen \<kappa> (x - y)
+      \<le> u xh - w yh - soft_pen \<kappa> (xh - yh)" if "x \<in> K" "y \<in> K" for x y
+    using mx that by blast
+  have near: "dist xh yh < \<beta>"
+    by (rule doubling_near_soft
+        [OF mxa knn xh yh z bnd[OF xh yh] bnn big])
+  show ?thesis using kpos xh yh mx near by blast
+qed
+
+text \<open>And the \<open>\<kappa> \<rightarrow> \<infinity>\<close> step in the sup-convolution shape the assembly consumes.
+  Same sign flip as \<open>doubling_maximiser_supconv_soft\<close>: instantiate the general
+  form at \<open>u := supconv (\<theta>u) \<epsilon>\<close> and \<open>w := \<lambda>y. - supconv (-w) \<epsilon> y\<close>, so that
+  \<open>u x - w y\<close> becomes \<open>supconv (\<theta>u) \<epsilon> x + supconv (-w) \<epsilon> y\<close>.\<close>
+
+theorem doubling_close_maximiser_supconv_soft:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and e: "0 < \<epsilon>"
+    and z: "z \<in> K"
+    and bnd: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y \<le> C"
+    and bpos: "0 < \<beta>"
+  shows "\<exists>\<kappa>. 0 < \<kappa> \<and> (\<exists>xh\<in>K. \<exists>yh\<in>K.
+      (\<forall>x\<in>K. \<forall>y\<in>K.
+         supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa> (x - y)
+         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+           - soft_pen \<kappa> (xh - yh))
+      \<and> dist xh yh < \<beta>)"
+proof -
+  have cA: "continuous_on K (supconv (\<lambda>y. \<theta> * u y) \<epsilon>)"
+    by (rule continuous_on_subset[OF supconv_continuous[OF Bu e] subset_UNIV])
+  have cB0: "continuous_on K (supconv (- w) \<epsilon>)"
+    by (rule continuous_on_subset[OF supconv_continuous[OF Bw e] subset_UNIV])
+  have cB: "continuous_on K (\<lambda>y. - supconv (- w) \<epsilon> y)"
+    by (intro continuous_intros cB0)
+  have bnd': "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (- supconv (- w) \<epsilon> y) \<le> C"
+    if "x \<in> K" "y \<in> K" for x y
+    using bnd[OF that] by simp
+  have "\<exists>\<kappa>. 0 < \<kappa> \<and> (\<exists>xh\<in>K. \<exists>yh\<in>K.
+      (\<forall>x\<in>K. \<forall>y\<in>K.
+         supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (- supconv (- w) \<epsilon> y) - soft_pen \<kappa> (x - y)
+         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh - (- supconv (- w) \<epsilon> yh)
+           - soft_pen \<kappa> (xh - yh))
+      \<and> dist xh yh < \<beta>)"
+    by (rule doubling_close_maximiser_soft
+        [where u = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>"
+           and w = "\<lambda>y. - supconv (- w) \<epsilon> y" and K = K and z = z and C = C
+           and \<beta> = \<beta>,
+         OF cK neK cA cB z bnd' bpos])
+  then show ?thesis by simp
+qed
+
+subsection \<open>The \<open>\<epsilon> \<rightarrow> 0\<close> step: the sup-convolution is uniformly close on \<open>K\<close>\<close>
+
+text \<open>\<open>supconv_sandwich\<close> is pointwise and needs a LOCAL modulus at the point,
+  valid on a ball that sticks out of \<open>K\<close>.  The assembly needs the bound at the
+  doubling maximiser, which is not known in advance, so it has to be uniform
+  over \<open>K\<close>.
+
+  The fix is to run \<open>uniform_modulus_on_compact\<close> not on \<open>K\<close> but on a closed ball
+  \<open>cball 0 R\<close> containing the 1-neighbourhood of \<open>K\<close>, and then to cap the modulus
+  radius at 1 so that the ball around any point of \<open>K\<close> stays inside \<open>cball 0 R\<close>.
+  This is where the earlier reduction to GLOBALLY continuous, globally bounded
+  data (\<open>continuous_extension_bounded\<close>, \<open>visc_subsol_extend\<close>) pays off: without
+  it there would be no modulus to take just outside \<open>K\<close>.
+
+  \<open>exists_eps_aux\<close> is again stated on abstract reals, so that no simp step ever
+  sees the quotient defining \<open>\<epsilon>\<close>.\<close>
+
+lemma exists_eps_aux:
+  fixes H D :: real
+  assumes H: "0 < H" and D: "0 \<le> D"
+  shows "\<exists>\<epsilon>. 0 < \<epsilon> \<and> 2*\<epsilon>*D < H"
+proof -
+  have dp: "0 < 2*(D+1)" using D by simp
+  define e where "e = H/(2*(D+1))"
+  have epos: "0 < e" unfolding e_def by (rule divide_pos_pos[OF H dp])
+  have ne: "2*(D+1) \<noteq> 0" using dp by linarith
+  have key: "2*e*(D+1) = H"
+  proof -
+    have "2*e*(D+1) = (H/(2*(D+1))) * (2*(D+1))"
+      unfolding e_def by (simp add: mult_ac)
+    also have "\<dots> = H" using ne by simp
+    finally show ?thesis .
+  qed
+  have expd: "2*e*(D+1) = 2*e*D + 2*e" by (simp add: algebra_simps)
+  have "2*e*D < H" using key expd epos by linarith
+  with epos show ?thesis by blast
+qed
+
+lemma eps_mono_aux:
+  fixes \<epsilon> \<epsilon>\<^sub>0 D H :: real
+  assumes ep: "0 < \<epsilon>" and le: "\<epsilon> \<le> \<epsilon>\<^sub>0"
+    and lt: "2*\<epsilon>\<^sub>0*(max 0 D) < H"
+  shows "2*\<epsilon>*D < H"
+proof -
+  have Dnn: "0 \<le> max 0 D" by simp
+  have dle: "D \<le> max 0 D" by simp
+  have e2: "0 \<le> 2*\<epsilon>" using ep by linarith
+  have s1: "2*\<epsilon>*D \<le> 2*\<epsilon>*(max 0 D)" by (rule mult_left_mono[OF dle e2])
+  have le2: "2*\<epsilon> \<le> 2*\<epsilon>\<^sub>0" using le by linarith
+  have s2: "2*\<epsilon>*(max 0 D) \<le> 2*\<epsilon>\<^sub>0*(max 0 D)"
+    by (rule mult_right_mono[OF le2 Dnn])
+  from s1 s2 lt show ?thesis by linarith
+qed
+
+lemma supconv_uniform_upper:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes cK: "compact K"
+    and B: "\<And>y. u y \<le> Bu" and lo: "\<And>y. Bl \<le> u y"
+    and cu: "continuous_on UNIV u"
+    and s: "0 < \<sigma>"
+  shows "\<exists>\<epsilon>\<^sub>0. 0 < \<epsilon>\<^sub>0 \<and> (\<forall>\<epsilon>. 0 < \<epsilon> \<longrightarrow> \<epsilon> \<le> \<epsilon>\<^sub>0
+      \<longrightarrow> (\<forall>x\<in>K. supconv u \<epsilon> x \<le> u x + \<sigma>))"
+proof -
+  have bK: "bounded K" by (rule compact_imp_bounded[OF cK])
+  then obtain R\<^sub>0 where R0: "\<And>x. x \<in> K \<Longrightarrow> norm x \<le> R\<^sub>0"
+    using bounded_iff by blast
+  define R where "R = max 0 R\<^sub>0 + 1"
+  have R1: "1 \<le> R" unfolding R_def by simp
+  have KR: "norm x \<le> R - 1" if "x \<in> K" for x
+    using R0[OF that] unfolding R_def by simp
+  have cb: "compact (cball (0::real^'n) R)" by (rule compact_cball)
+  have cuR: "continuous_on (cball (0::real^'n) R) u"
+    by (rule continuous_on_subset[OF cu subset_UNIV])
+  obtain \<eta> where hpos: "0 < \<eta>"
+    and modu: "\<And>p q. p \<in> cball (0::real^'n) R \<Longrightarrow> q \<in> cball (0::real^'n) R
+        \<Longrightarrow> dist p q \<le> \<eta> \<Longrightarrow> u q \<le> u p + \<sigma>"
+    using uniform_modulus_on_compact[OF cb cuR s] by blast
+  define h where "h = min \<eta> 1"
+  have hp: "0 < h" unfolding h_def using hpos by simp
+  have hle1: "h \<le> 1" unfolding h_def by simp
+  have hlem: "h \<le> \<eta>" unfolding h_def by simp
+  have Dnn: "0 \<le> max 0 (Bu - Bl)" by simp
+  have hsq: "0 < h\<^sup>2" using hp by simp
+  obtain \<epsilon>\<^sub>0 where e0pos: "0 < \<epsilon>\<^sub>0"
+    and esm: "2*\<epsilon>\<^sub>0*(max 0 (Bu - Bl)) < h\<^sup>2"
+    using exists_eps_aux[OF hsq Dnn] by blast
+  \<comment> \<open>the bound survives shrinking \<open>\<epsilon>\<close>, which is what lets the assembly pick ONE
+      \<open>\<epsilon>\<close> serving both sup-convolutions\<close>
+  have esm2: "2*\<epsilon>*(Bu - Bl) < h\<^sup>2" if ep: "0 < \<epsilon>" and ele: "\<epsilon> \<le> \<epsilon>\<^sub>0" for \<epsilon>
+  proof -
+    have le: "Bu - Bl \<le> max 0 (Bu - Bl)" by simp
+    have e2: "0 \<le> 2*\<epsilon>" using ep by linarith
+    have step1: "2*\<epsilon>*(Bu - Bl) \<le> 2*\<epsilon>*(max 0 (Bu - Bl))"
+      by (rule mult_left_mono[OF le e2])
+    have le2: "2*\<epsilon> \<le> 2*\<epsilon>\<^sub>0" using ele by linarith
+    have step2: "2*\<epsilon>*(max 0 (Bu - Bl)) \<le> 2*\<epsilon>\<^sub>0*(max 0 (Bu - Bl))"
+      by (rule mult_right_mono[OF le2 Dnn])
+    from step1 step2 esm show ?thesis by linarith
+  qed
+  have main: "supconv u \<epsilon> x \<le> u x + \<sigma>"
+    if ep: "0 < \<epsilon>" and ele: "\<epsilon> \<le> \<epsilon>\<^sub>0" and x: "x \<in> K" for \<epsilon> x
+  proof -
+    have nx: "norm x \<le> R - 1" by (rule KR[OF x])
+    have xR: "x \<in> cball (0::real^'n) R"
+      using nx R1 by (simp add: dist_norm)
+    have loc: "u y \<le> u x + \<sigma>" if d: "dist x y \<le> h" for y
+    proof -
+      have tri: "dist 0 y \<le> dist 0 x + dist x y" by (rule dist_triangle)
+      have d0y: "dist (0::real^'n) y = norm y" by simp
+      have d0x: "dist (0::real^'n) x = norm x" by simp
+      have "norm y \<le> norm x + h" using tri d hle1 unfolding d0y d0x by linarith
+      then have "norm y \<le> R" using nx hle1 by linarith
+      then have yR: "y \<in> cball (0::real^'n) R" by (simp add: dist_norm)
+      have dh: "dist x y \<le> \<eta>" using d hlem by linarith
+      show ?thesis by (rule modu[OF xR yR dh])
+    qed
+    show ?thesis
+      by (rule supconv_sandwich(2)[OF B lo ep cu hp esm2[OF ep ele] loc])
+  qed
+  show ?thesis using e0pos main by blast
+qed
+
+subsection \<open>Threading the parameters: the localised maximiser for \<open>soft_pen\<close>\<close>
+
+text \<open>All five smallness steps now exist; this threads them.  The ORDER is the
+  whole content, and getting it wrong is the classic way this argument fails to
+  assemble --- the maximiser DEPENDS on \<open>\<kappa>\<^sub>P\<close>, so \<open>\<kappa>\<^sub>P\<close> must be fixed before the
+  maximiser exists, and \<open>\<beta>\<close> before \<open>\<kappa>\<^sub>P\<close>:
+
+    \<open>G = M - m > 0\<close>, split as \<open>\<sigma> = \<tau> = \<tau>' = G/8\<close>, so \<open>m + 2\<sigma> + \<tau> + \<tau>' = m + G/2 < M\<close>
+    \<open>\<tau>\<close>  fixes \<open>\<beta>\<^sub>0\<close>   (modulus of \<open>g\<close> on \<open>K\<close>)
+    \<open>\<tau>'\<close> fixes \<open>\<kappa>\<^sub>0\<close>   (modulus of \<open>f + g\<close> on \<open>K\<close>)
+    \<open>\<kappa>\<^sub>g = \<kappa>\<^sub>0/2\<close> and \<open>\<beta> = min \<beta>\<^sub>0 (\<kappa>\<^sub>0/2)\<close>, so \<open>\<kappa>\<^sub>g + \<beta> \<le> \<kappa>\<^sub>0\<close>
+    \<open>\<sigma>\<close>  fixes \<open>\<epsilon>\<close>    (TWICE --- once per sup-convolution --- then the minimum)
+    \<open>\<beta>\<close>  fixes \<open>\<kappa>\<^sub>P\<close>   and with it the maximiser
+    finally \<open>doubling_maximiser_far_from_boundary\<close> at radius \<open>\<kappa>\<^sub>g + \<beta>\<close>
+
+  The bound for \<open>ŷ\<close> comes free from the one for \<open>x̂\<close>: applying the boundary
+  theorem at radius \<open>\<kappa>\<^sub>g + \<beta>\<close> and using \<open>dist x̂ ŷ < \<beta>\<close> gives
+  \<open>dist ŷ b \<ge> dist x̂ b - dist x̂ ŷ > (\<kappa>\<^sub>g + \<beta>) - \<beta> = \<kappa>\<^sub>g\<close>.  That avoids needing a
+  second modulus, for \<open>f\<close>, which the quadratic development never had either.\<close>
+
+theorem doubling_localised_maximiser_soft:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
+    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
+    and cw: "continuous_on UNIV (- w)"
+    and zK: "z \<in> K"
+    and Mval: "M \<le> \<theta> * u z - w z"
+    and bdry: "\<And>c. c \<in> K - interior K \<Longrightarrow> \<theta> * u c - w c \<le> m"
+    and gapMm: "m < M"
+  shows "\<exists>\<epsilon>>0. \<exists>\<kappa>\<^sub>g>0. \<exists>\<kappa>\<^sub>P>0. \<exists>xh\<in>K. \<exists>yh\<in>K.
+      (\<forall>x\<in>K. \<forall>y\<in>K.
+         supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+           - soft_pen \<kappa>\<^sub>P (xh - yh))
+    \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist xh b)
+    \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist yh b)
+    \<and> 2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2
+    \<and> 2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
+proof -
+  \<comment> \<open>1. split the gap\<close>
+  have Gpos: "0 < M - m" using gapMm by linarith
+  obtain \<sigma> \<tau> \<tau>' where spos: "0 < \<sigma>" and tpos: "0 < \<tau>" and t'pos: "0 < \<tau>'"
+    and gsum: "2*\<sigma> + \<tau> + \<tau>' < M - m"
+    using gap_split_aux[OF Gpos] by blast
+  \<comment> \<open>2. the modulus of \<open>g = -w\<close>, at scale \<open>\<tau>\<close>\<close>
+  have cwK: "continuous_on K (- w)"
+    by (rule continuous_on_subset[OF cw subset_UNIV])
+  obtain \<beta>\<^sub>0 where b0pos: "0 < \<beta>\<^sub>0"
+    and modg0: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> dist p q \<le> \<beta>\<^sub>0 \<Longrightarrow> (- w) q \<le> (- w) p + \<tau>"
+    using uniform_modulus_on_compact[OF cK cwK tpos] by blast
+  \<comment> \<open>3. the modulus of \<open>f + g\<close>, at scale \<open>\<tau>'\<close>\<close>
+  have cFK: "continuous_on K (\<lambda>y. \<theta> * u y + (- w) y)"
+    by (intro continuous_intros
+        continuous_on_subset[OF cu subset_UNIV]
+        continuous_on_subset[OF cw subset_UNIV])
+  obtain \<kappa>\<^sub>0 where k0pos: "0 < \<kappa>\<^sub>0"
+    and modF0: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> dist p q \<le> \<kappa>\<^sub>0
+        \<Longrightarrow> (\<lambda>y. \<theta> * u y + (- w) y) q \<le> (\<lambda>y. \<theta> * u y + (- w) y) p + \<tau>'"
+    using uniform_modulus_on_compact[OF cK cFK t'pos] by blast
+  \<comment> \<open>4. the two radii\<close>
+  define \<kappa>\<^sub>g where "\<kappa>\<^sub>g = \<kappa>\<^sub>0/2"
+  define \<beta> where "\<beta> = min \<beta>\<^sub>0 (\<kappa>\<^sub>0/2)"
+  have kgpos: "0 < \<kappa>\<^sub>g" unfolding \<kappa>\<^sub>g_def using k0pos by simp
+  have bpos: "0 < \<beta>" unfolding \<beta>_def using b0pos k0pos by simp
+  have bleb0: "\<beta> \<le> \<beta>\<^sub>0" unfolding \<beta>_def by simp
+  have fit: "\<kappa>\<^sub>g + \<beta> \<le> \<kappa>\<^sub>0"
+    unfolding \<kappa>\<^sub>g_def \<beta>_def using k0pos by simp
+  \<comment> \<open>5. one \<open>\<epsilon>\<close> for BOTH sup-convolutions\<close>
+  obtain \<epsilon>u where eupos: "0 < \<epsilon>u"
+    and upu: "\<And>e x. 0 < e \<Longrightarrow> e \<le> \<epsilon>u \<Longrightarrow> x \<in> K
+        \<Longrightarrow> supconv (\<lambda>y. \<theta> * u y) e x \<le> \<theta> * u x + \<sigma>"
+    using supconv_uniform_upper[OF cK Bu lou cu spos] by blast
+  obtain \<epsilon>w where ewpos: "0 < \<epsilon>w"
+    and upw: "\<And>e x. 0 < e \<Longrightarrow> e \<le> \<epsilon>w \<Longrightarrow> x \<in> K
+        \<Longrightarrow> supconv (- w) e x \<le> (- w) x + \<sigma>"
+    using supconv_uniform_upper[OF cK Bw low cw spos] by blast
+  \<comment> \<open>\<open>\<epsilon>\<close> must ALSO be small enough that the sup-convolution attainment radii
+      \<open>R\<^sub>u\<close>, \<open>R\<^sub>w\<close> fit inside \<open>\<kappa>\<^sub>g\<close> --- a constraint that comes from downstream,
+      from \<open>smallu\<close>/\<open>fitu\<close> in \<open>comparison_from_localised_maximiser_soft\<close>, and is
+      invisible from the boundary argument alone.  It is consistent because
+      \<open>\<kappa>\<^sub>g\<close> is fixed at step 4, BEFORE \<open>\<epsilon>\<close> is chosen at step 5.\<close>
+  have hq: "0 < (\<kappa>\<^sub>g/4)\<^sup>2" using kgpos by simp
+  have DunN: "0 \<le> max 0 (Bu - Blu)" by simp
+  have DwnN: "0 \<le> max 0 (Bw - Blw)" by simp
+  obtain \<epsilon>A where eApos: "0 < \<epsilon>A"
+    and eAlt: "2*\<epsilon>A*(max 0 (Bu - Blu)) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    using exists_eps_aux[OF hq DunN] by blast
+  obtain \<epsilon>B where eBpos: "0 < \<epsilon>B"
+    and eBlt: "2*\<epsilon>B*(max 0 (Bw - Blw)) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    using exists_eps_aux[OF hq DwnN] by blast
+  define \<epsilon> where "\<epsilon> = min (min \<epsilon>u \<epsilon>w) (min \<epsilon>A \<epsilon>B)"
+  have epos: "0 < \<epsilon>" unfolding \<epsilon>_def using eupos ewpos eApos eBpos by simp
+  have eleu: "\<epsilon> \<le> \<epsilon>u" unfolding \<epsilon>_def by simp
+  have elew: "\<epsilon> \<le> \<epsilon>w" unfolding \<epsilon>_def by simp
+  have eleA: "\<epsilon> \<le> \<epsilon>A" unfolding \<epsilon>_def by simp
+  have eleB: "\<epsilon> \<le> \<epsilon>B" unfolding \<epsilon>_def by simp
+  have smallu: "2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    by (rule eps_mono_aux[OF epos eleA eAlt])
+  have smallw: "2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    by (rule eps_mono_aux[OF epos eleB eBlt])
+  \<comment> \<open>6. an upper bound for the doubled functional on \<open>K \<times> K\<close>\<close>
+  have cA: "continuous_on K (supconv (\<lambda>y. \<theta> * u y) \<epsilon>)"
+    by (rule continuous_on_subset[OF supconv_continuous[OF Bu epos] subset_UNIV])
+  have cB0: "continuous_on K (supconv (- w) \<epsilon>)"
+    by (rule continuous_on_subset[OF supconv_continuous[OF Bw epos] subset_UNIV])
+  have cB: "continuous_on K (\<lambda>y. - supconv (- w) \<epsilon> y)"
+    by (intro continuous_intros cB0)
+  obtain C where Cbnd: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+      supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (\<lambda>y. - supconv (- w) \<epsilon> y) y \<le> C"
+    using doubling_upper_bound_exists[OF cK neK cA cB] by blast
+  have Cbnd': "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y \<le> C"
+    if "x \<in> K" "y \<in> K" for x y
+    using Cbnd[OF that] by simp
+  \<comment> \<open>7. \<open>\<beta>\<close> fixes \<open>\<kappa>\<^sub>P\<close> and with it the maximiser\<close>
+  obtain \<kappa>\<^sub>P xh yh where kPpos: "0 < \<kappa>\<^sub>P" and xhK: "xh \<in> K" and yhK: "yh \<in> K"
+    and mxb: "\<forall>x\<in>K. \<forall>y\<in>K.
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+          - soft_pen \<kappa>\<^sub>P (xh - yh)"
+    and near: "dist xh yh < \<beta>"
+    using doubling_close_maximiser_supconv_soft
+      [OF cK neK Bu Bw epos zK Cbnd' bpos] by blast
+  have mx: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+        - soft_pen \<kappa>\<^sub>P (xh - yh)" if "x \<in> K" "y \<in> K" for x y
+    using mxb that by blast
+  \<comment> \<open>8. transfer the value to the ORIGINAL functions\<close>
+  have kPnn: "0 \<le> \<kappa>\<^sub>P" using kPpos by linarith
+  have vt: "\<theta> * u z + (- w) z + soft_pen \<kappa>\<^sub>P (xh - yh)
+      \<le> \<theta> * u xh + (- w) yh + 2*\<sigma>"
+    by (rule doubling_maximiser_value_transfer_gen
+        [where A = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>" and Bf = "supconv (- w) \<epsilon>"
+           and f = "\<lambda>y. \<theta> * u y" and g = "- w" and Pn = "soft_pen \<kappa>\<^sub>P"
+           and K = K and xh = xh and yh = yh and z = z and \<sigma> = \<sigma>,
+         OF mx zK soft_pen_zero
+            supconv_ge[OF Bu epos] supconv_ge[OF Bw epos]
+            upu[OF epos eleu xhK] upw[OF epos elew yhK]])
+  have pnn: "0 \<le> soft_pen \<kappa>\<^sub>P (xh - yh)" by (rule soft_pen_nonneg[OF kPnn])
+  have tr: "\<theta> * u z + (- w) z \<le> \<theta> * u xh + (- w) yh + 2*\<sigma>"
+    using vt pnn by linarith
+  \<comment> \<open>9. the boundary theorem, at radius \<open>\<kappa>\<^sub>g + \<beta>\<close>\<close>
+  have valM: "M \<le> \<theta> * u z + (- w) z" using Mval by simp
+  have nearle: "dist xh yh \<le> \<beta>" using near by linarith
+  have modg: "(- w) q \<le> (- w) p + \<tau>" if "p \<in> K" "q \<in> K" "dist p q \<le> \<beta>" for p q
+    using modg0[OF that(1) that(2)] that(3) bleb0 by linarith
+  have bdry': "\<theta> * u c + (- w) c \<le> m" if "c \<in> K - interior K" for c
+    using bdry[OF that] by simp
+  have modF: "\<theta> * u p + (- w) p \<le> \<theta> * u q + (- w) q + \<tau>'"
+    if "p \<in> K" "q \<in> K" "dist p q \<le> \<kappa>\<^sub>g + \<beta>" for p q
+  proof -
+    have "dist q p \<le> \<kappa>\<^sub>0" using that(3) fit by (simp add: dist_commute)
+    from modF0[OF that(2) that(1) this] show ?thesis by simp
+  qed
+  have gap: "m + 2*\<sigma> + \<tau> + \<tau>' < M" using gsum by linarith
+  have farx: "\<kappa>\<^sub>g + \<beta> < dist xh b" if b: "b \<in> K - interior K" for b
+    by (rule doubling_maximiser_far_from_boundary
+        [where f = "\<lambda>y. \<theta> * u y" and g = "- w" and K = K and xh = xh
+           and yh = yh and M = M and z = z and \<sigma> = \<sigma> and \<beta> = \<beta>
+           and \<tau> = \<tau> and m = m and \<kappa> = "\<kappa>\<^sub>g + \<beta>" and \<tau>' = \<tau>',
+         OF xhK yhK valM tr nearle modg bdry' modF gap b])
+  \<comment> \<open>10. and the mirror bound for \<open>ŷ\<close>, for free\<close>
+  have fary: "\<kappa>\<^sub>g < dist yh b" if b: "b \<in> K - interior K" for b
+  proof -
+    have tri: "dist xh b \<le> dist xh yh + dist yh b" by (rule dist_triangle)
+    have "\<kappa>\<^sub>g + \<beta> < dist xh b" by (rule farx[OF b])
+    then show ?thesis using tri near by linarith
+  qed
+  \<comment> \<open>explicit introductions: a single \<open>blast\<close> over this nested existential
+      searches instead of just building the witness, and PIDE flags it as
+      possibly nonterminating\<close>
+  have f1: "\<kappa>\<^sub>g < dist xh b" if b: "b \<in> K - interior K" for b
+    using farx[OF b] bpos by linarith
+  have F1: "\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist xh b"
+  proof
+    fix b assume "b \<in> K - interior K"
+    then show "\<kappa>\<^sub>g < dist xh b" by (rule f1)
+  qed
+  have F2: "\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist yh b"
+  proof
+    fix b assume "b \<in> K - interior K"
+    then show "\<kappa>\<^sub>g < dist yh b" by (rule fary)
+  qed
+  have inner: "(\<forall>x\<in>K. \<forall>y\<in>K.
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+          - soft_pen \<kappa>\<^sub>P (xh - yh))
+      \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist xh b)
+      \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist yh b)
+      \<and> 2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2
+      \<and> 2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    by (intro conjI mxb F1 F2 smallu smallw)
+  show ?thesis
+    by (rule exI[of _ \<epsilon>], rule conjI[OF epos],
+        rule exI[of _ \<kappa>\<^sub>g], rule conjI[OF kgpos],
+        rule exI[of _ \<kappa>\<^sub>P], rule conjI[OF kPpos],
+        rule bexI[OF _ xhK], rule bexI[OF _ yhK], rule inner)
+qed
+
 subsection \<open>Skolemising a four-component existential over an index\<close>
 
 text \<open>The jet family needs the same step as \<open>supconv_attained_family\<close>, but
@@ -6931,6 +9825,142 @@ proof -
     unfolding P_def
     by (rule doubled_supconv_jet_exists_shifted
         [OF Bu Bw e a dnn rho(1) rho(2) bnd ddpos small])
+  obtain zf pf qf Wf where famP: "\<forall>i. P i (zf i) (pf i) (qf i) (Wf i)"
+    using choice4[where P = P, OF H] by blast
+  show ?thesis
+    using famP[unfolded P_def] by blast
+qed
+
+text \<open>The shifted Jensen FAMILY for a general penalty: run the shifted
+  construction at the tilts \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> and skolemise with \<open>choice4\<close>.  A
+  transcription of \<open>shifted_jensen_family\<close>, now that every lemma it calls has a
+  general form.  Placed HERE rather than with the other \<open>_gen\<close> lemmas because
+  \<open>choice4\<close> and \<open>shifted_family_parameters\<close> are declared further down the file
+  than they are.\<close>
+
+theorem shifted_jensen_family_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+    and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
+  assumes Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. w y \<le> Bw"
+    and e: "0 < \<epsilon>" and k: "0 \<le> \<kappa>"
+    and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
+    and rho: "0 < \<rho>" "\<rho> < r"
+    and D0: "0 < D\<^sub>0"
+    and mxK: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow>
+        supconv u \<epsilon> (fst y) + supconv w \<epsilon> (snd y) - Pn (fst y - snd y)
+        \<le> supconv u \<epsilon> (fst \<xi>\<^sub>0) + supconv w \<epsilon> (snd \<xi>\<^sub>0)
+            - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+  shows "\<exists>zh p q W. \<forall>i.
+      dist (zh i) \<xi>\<^sub>0 < \<rho>
+      \<and> norm (p i) \<le> D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)
+      \<and> (\<forall>y \<in> cball \<xi>\<^sub>0 r.
+          ((supconv u \<epsilon> (fst y)
+              - (D\<^sub>0/(2 + real i)) * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd y)
+              - (D\<^sub>0/(2 + real i)) * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst y - snd y)) + p i \<bullet> y
+          \<le> ((supconv u \<epsilon> (fst (zh i))
+              - (D\<^sub>0/(2 + real i)) * (norm (fst (zh i) - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd (zh i))
+              - (D\<^sub>0/(2 + real i)) * (norm (snd (zh i) - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst (zh i) - snd (zh i))) + p i \<bullet> (zh i))
+      \<and> bounded_linear (W i) \<and> (\<forall>v z. v \<bullet> W i z = z \<bullet> W i v)
+      \<and> (\<forall>hk. - ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) * (norm hk)\<^sup>2)
+            \<le> hk \<bullet> W i hk)
+      \<and> ((\<lambda>hk. (((supconv u \<epsilon> (fst (zh i + hk))
+              - (D\<^sub>0/(2 + real i)) * (norm (fst (zh i + hk) - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd (zh i + hk))
+              - (D\<^sub>0/(2 + real i)) * (norm (snd (zh i + hk) - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst (zh i + hk) - snd (zh i + hk)))
+          - ((supconv u \<epsilon> (fst (zh i))
+              - (D\<^sub>0/(2 + real i)) * (norm (fst (zh i) - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd (zh i))
+              - (D\<^sub>0/(2 + real i)) * (norm (snd (zh i) - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst (zh i) - snd (zh i)))
+          - q i \<bullet> hk - (hk \<bullet> W i hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have r0: "0 < r" using rho by simp
+  have dpos: "0 < D\<^sub>0/(2 + real i)" for i
+    by (rule shifted_family_parameters(1)[OF D0 rho(1) r0])
+  have dnn: "0 \<le> D\<^sub>0/(2 + real i)" for i using dpos[of i] by linarith
+  have ddpos: "0 < D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)" for i
+    by (rule shifted_family_parameters(2)[OF D0 rho(1) r0])
+  have bnd: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow> \<rho> \<le> dist y \<xi>\<^sub>0 \<Longrightarrow>
+      (supconv u \<epsilon> (fst y) - (D\<^sub>0/(2 + real i)) * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+        + (supconv w \<epsilon> (snd y)
+            - (D\<^sub>0/(2 + real i)) * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst y - snd y)
+      \<le> (supconv u \<epsilon> (fst \<xi>\<^sub>0) + supconv w \<epsilon> (snd \<xi>\<^sub>0)
+            - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))
+          - (D\<^sub>0/(2 + real i)) * \<rho>\<^sup>2" for i
+    by (rule shifted_annulus_bound_split_gen
+        [where \<delta> = "D\<^sub>0/(2 + real i)" and A = "supconv u \<epsilon>"
+           and B = "supconv w \<epsilon>" and Pn = Pn and \<xi>\<^sub>0 = \<xi>\<^sub>0 and r = r,
+         OF mxK dnn rho(1)])
+  have gen: "2 * (Y / (4*r)) * r = Y / 2" for Y :: real
+    using r0 by (simp add: field_simps)
+  have halfgen: "Y / 2 < Y" if "0 < Y" for Y :: real
+    using that by simp
+  have small: "2 * (D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)) * r
+      < ((supconv u \<epsilon> (fst \<xi>\<^sub>0)
+            - (D\<^sub>0/(2 + real i)) * (norm (fst \<xi>\<^sub>0 - fst \<xi>\<^sub>0))\<^sup>2)
+          + (supconv w \<epsilon> (snd \<xi>\<^sub>0)
+            - (D\<^sub>0/(2 + real i)) * (norm (snd \<xi>\<^sub>0 - snd \<xi>\<^sub>0))\<^sup>2)
+          - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))
+        - ((supconv u \<epsilon> (fst \<xi>\<^sub>0) + supconv w \<epsilon> (snd \<xi>\<^sub>0)
+              - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))
+            - (D\<^sub>0/(2 + real i)) * \<rho>\<^sup>2)" for i
+  proof -
+    have pos: "0 < D\<^sub>0/(2 + real i) * \<rho>\<^sup>2"
+      by (rule mult_pos_pos[OF dpos]) (use rho(1) in simp)
+    have lhs: "2 * (D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)) * r
+        = (D\<^sub>0/(2 + real i) * \<rho>\<^sup>2) / 2"
+      by (rule gen)
+    have rhs: "((supconv u \<epsilon> (fst \<xi>\<^sub>0)
+            - (D\<^sub>0/(2 + real i)) * (norm (fst \<xi>\<^sub>0 - fst \<xi>\<^sub>0))\<^sup>2)
+          + (supconv w \<epsilon> (snd \<xi>\<^sub>0)
+            - (D\<^sub>0/(2 + real i)) * (norm (snd \<xi>\<^sub>0 - snd \<xi>\<^sub>0))\<^sup>2)
+          - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))
+        - ((supconv u \<epsilon> (fst \<xi>\<^sub>0) + supconv w \<epsilon> (snd \<xi>\<^sub>0)
+              - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))
+            - (D\<^sub>0/(2 + real i)) * \<rho>\<^sup>2)
+      = D\<^sub>0/(2 + real i) * \<rho>\<^sup>2"
+      by simp
+    show ?thesis
+      unfolding lhs rhs by (rule halfgen[OF pos])
+  qed
+  define P where "P = (\<lambda>i zh p q W.
+      dist zh \<xi>\<^sub>0 < \<rho>
+      \<and> norm p \<le> D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)
+      \<and> (\<forall>y \<in> cball \<xi>\<^sub>0 r.
+          ((supconv u \<epsilon> (fst y)
+              - (D\<^sub>0/(2 + real i)) * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd y)
+              - (D\<^sub>0/(2 + real i)) * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst y - snd y)) + p \<bullet> y
+          \<le> ((supconv u \<epsilon> (fst zh)
+              - (D\<^sub>0/(2 + real i)) * (norm (fst zh - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd zh)
+              - (D\<^sub>0/(2 + real i)) * (norm (snd zh - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst zh - snd zh)) + p \<bullet> zh)
+      \<and> bounded_linear W \<and> (\<forall>v z. v \<bullet> W z = z \<bullet> W v)
+      \<and> (\<forall>hk. - ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) * (norm hk)\<^sup>2)
+            \<le> hk \<bullet> W hk)
+      \<and> ((\<lambda>hk. (((supconv u \<epsilon> (fst (zh + hk))
+              - (D\<^sub>0/(2 + real i)) * (norm (fst (zh + hk) - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd (zh + hk))
+              - (D\<^sub>0/(2 + real i)) * (norm (snd (zh + hk) - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst (zh + hk) - snd (zh + hk)))
+          - ((supconv u \<epsilon> (fst zh)
+              - (D\<^sub>0/(2 + real i)) * (norm (fst zh - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv w \<epsilon> (snd zh)
+              - (D\<^sub>0/(2 + real i)) * (norm (snd zh - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst zh - snd zh))
+          - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0))"
+  have H: "\<exists>zh p q W. P i zh p q W" for i
+    unfolding P_def
+    by (rule doubled_supconv_jet_exists_shifted_gen
+        [OF Bu Bw e k sc dnn rho(1) rho(2) bnd ddpos small])
   obtain zf pf qf Wf where famP: "\<forall>i. P i (zf i) (pf i) (qf i) (Wf i)"
     using choice4[where P = P, OF H] by blast
   show ?thesis
@@ -7180,6 +10210,118 @@ proof -
     by (rule norm_matrix_le_of_form_bound
         [OF linear_block_snd[OF blW] sym_block_snd[OF symW]
            block_form_bound_snd[OF bnd]])
+qed
+
+text \<open>The Hessian norm bounds for a general penalty.  The quadratic version's
+  \<open>\<bar>\<alpha>\<bar>\<close> becomes an operator bound for \<open>Z\<close>, and the library does have what is
+  needed: \<open>onorm_le_matrix_component_sum\<close> bounds \<open>onorm ((*v) Z)\<close> by the entry
+  sum, and \<open>onorm\<close> turns that into \<open>\<parallel>Z v\<parallel> \<le> (\<Sum>\<Sum>\<bar>Z\<^sub>i\<^sub>j\<bar>)\<parallel>v\<parallel>\<close>.  Cauchy-Schwarz then
+  gives the quadratic form bound.  Nothing had to be proved entrywise after all.
+
+  The block bounds take the constant abstractly (\<open>KZ\<close>), so a caller with a
+  sharper bound for its own \<open>Z\<close> --- the quartic's Hessian
+  \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close> has norm \<open>O(\<beta>\<parallel>d\<parallel>\<^sup>2)\<close> --- can supply it instead.\<close>
+
+lemma norm_matrix_vector_le:
+  fixes Z :: "real^'n::finite^'n"
+  shows "norm (Z *v k) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>) * norm k"
+proof -
+  have o1: "norm (Z *v k) \<le> onorm ((*v) Z) * norm k"
+    by (rule onorm[OF matrix_vector_mul_bounded_linear])
+  have o2: "onorm ((*v) Z) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>)"
+    by (rule onorm_le_matrix_component_sum)
+  have "onorm ((*v) Z) * norm k
+      \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>) * norm k"
+    by (rule mult_right_mono[OF o2]) simp
+  with o1 show ?thesis by linarith
+qed
+
+lemma quadform_matrix_bound:
+  fixes Z :: "real^'n::finite^'n"
+  shows "\<bar>k \<bullet> (Z *v k)\<bar> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>) * (norm k)\<^sup>2"
+proof -
+  have cs: "\<bar>k \<bullet> (Z *v k)\<bar> \<le> norm k * norm (Z *v k)"
+    by (rule Cauchy_Schwarz_ineq2)
+  have "norm k * norm (Z *v k)
+      \<le> norm k * ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>) * norm k)"
+    by (rule mult_left_mono[OF norm_matrix_vector_le]) simp
+  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>) * (norm k)\<^sup>2"
+    by (simp add: power2_eq_square algebra_simps)
+  finally show ?thesis using cs by linarith
+qed
+
+lemma block_form_bound_fst_gen:
+  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n"
+  assumes bnd: "\<And>z. \<bar>z \<bullet> W z\<bar> \<le> C * (norm z)\<^sup>2"
+    and bZ: "\<And>z. \<bar>z \<bullet> (Z *v z)\<bar> \<le> KZ * (norm z)\<^sup>2"
+  shows "\<bar>k \<bullet> (fst (W (k, 0)) + Z *v k)\<bar> \<le> (C + KZ) * (norm k)\<^sup>2"
+proof -
+  have n0: "norm ((k, 0) :: (real^'n) \<times> (real^'n)) = norm k"
+    by (simp add: norm_Pair)
+  have b1: "\<bar>k \<bullet> fst (W (k, 0))\<bar> \<le> C * (norm k)\<^sup>2"
+    using bnd[of "(k, 0)"] by (simp add: inner_prod_def n0)
+  have b2: "\<bar>k \<bullet> (Z *v k)\<bar> \<le> KZ * (norm k)\<^sup>2" by (rule bZ)
+  have "\<bar>k \<bullet> (fst (W (k, 0)) + Z *v k)\<bar>
+      \<le> \<bar>k \<bullet> fst (W (k, 0))\<bar> + \<bar>k \<bullet> (Z *v k)\<bar>"
+    by (simp add: inner_add_right abs_triangle_ineq)
+  also have "\<dots> \<le> C * (norm k)\<^sup>2 + KZ * (norm k)\<^sup>2"
+    using b1 b2 by linarith
+  also have "\<dots> = (C + KZ) * (norm k)\<^sup>2"
+    by (simp add: algebra_simps)
+  finally show ?thesis .
+qed
+
+lemma block_form_bound_snd_gen:
+  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n"
+  assumes bnd: "\<And>z. \<bar>z \<bullet> W z\<bar> \<le> C * (norm z)\<^sup>2"
+    and bZ: "\<And>z. \<bar>z \<bullet> (Z *v z)\<bar> \<le> KZ * (norm z)\<^sup>2"
+  shows "\<bar>k \<bullet> (- (snd (W (0, k)) + Z *v k))\<bar> \<le> (C + KZ) * (norm k)\<^sup>2"
+proof -
+  have n0: "norm ((0, k) :: (real^'n) \<times> (real^'n)) = norm k"
+    by (simp add: norm_Pair)
+  have b1: "\<bar>k \<bullet> snd (W (0, k))\<bar> \<le> C * (norm k)\<^sup>2"
+    using bnd[of "(0, k)"] by (simp add: inner_prod_def n0)
+  have b2: "\<bar>k \<bullet> (Z *v k)\<bar> \<le> KZ * (norm k)\<^sup>2" by (rule bZ)
+  have e: "k \<bullet> (- (snd (W (0, k)) + Z *v k))
+      = - (k \<bullet> snd (W (0, k))) - (k \<bullet> (Z *v k))"
+    by (simp add: inner_minus_right inner_add_right inner_diff_right)
+  have "\<bar>k \<bullet> (- (snd (W (0, k)) + Z *v k))\<bar>
+      \<le> \<bar>k \<bullet> snd (W (0, k))\<bar> + \<bar>k \<bullet> (Z *v k)\<bar>"
+    unfolding e by simp
+  also have "\<dots> \<le> C * (norm k)\<^sup>2 + KZ * (norm k)\<^sup>2"
+    using b1 b2 by linarith
+  also have "\<dots> = (C + KZ) * (norm k)\<^sup>2"
+    by (simp add: algebra_simps)
+  finally show ?thesis .
+qed
+
+theorem norm_block_matrices_bounded_gen:
+  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n"
+  assumes blW: "bounded_linear W" and symW: "\<And>u u'. u \<bullet> W u' = u' \<bullet> W u"
+    and symZ: "transpose Z = Z"
+    and lo: "\<And>k. - (C * (norm k)\<^sup>2) \<le> k \<bullet> W k"
+    and hi: "\<And>k. k \<bullet> W k \<le> 0"
+    and bZ: "\<And>z. \<bar>z \<bullet> (Z *v z)\<bar> \<le> KZ * (norm z)\<^sup>2"
+  shows "norm (matrix (\<lambda>v. fst (W (v, 0)) + Z *v v))
+      \<le> real (card (Basis :: (real^'n^'n) set)) * (C + KZ)"
+    and "norm (matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v)))
+      \<le> real (card (Basis :: (real^'n^'n) set)) * (C + KZ)"
+proof -
+  have bnd: "\<bar>z \<bullet> W z\<bar> \<le> C * (norm z)\<^sup>2" for z
+    by (rule hessian_abs_bound_of_two_sided[OF lo hi])
+  show "norm (matrix (\<lambda>v. fst (W (v, 0)) + Z *v v))
+      \<le> real (card (Basis :: (real^'n^'n) set)) * (C + KZ)"
+    by (rule norm_matrix_le_of_form_bound
+        [OF linear_block_fst_gen[OF blW] sym_block_fst_gen[OF symW symZ]
+           block_form_bound_fst_gen[OF bnd bZ]])
+  show "norm (matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v)))
+      \<le> real (card (Basis :: (real^'n^'n) set)) * (C + KZ)"
+    by (rule norm_matrix_le_of_form_bound
+        [OF linear_block_snd_gen[OF blW] sym_block_snd_gen[OF symW symZ]
+           block_form_bound_snd_gen[OF bnd bZ]])
 qed
 
 text \<open>What the \<open>\<delta>\<close>-perturbation does to the three matrix hypotheses.  Its effect
@@ -7798,6 +10940,82 @@ proof -
         [where a = "\<lambda>x. a x + fst pt \<bullet> x" and b = "\<lambda>y. b y + snd pt \<bullet> y"
            and d = "r - dist zh \<xi>" and zh = zh and q = "q + pt" and W = W,
          OF blW symW dpos mxAB expAB])
+qed
+
+text \<open>The psd ordering for a general penalty.  Same shape as the quadratic one:
+  absorb the tilt into the two summands (which \<open>sums_psd_at_interior_max_gen\<close>
+  needs, since it wants an UNtilted maximum), then apply it.  The tilt
+  absorption is done inline here rather than through
+  \<open>doubled_tilted_interior_max\<close>, because that lemma has the quadratic penalty in
+  its statement and the absorption is one \<open>inner_prod_def\<close> step anyway.
+
+  Note the extra hypothesis \<open>transpose Z = Z\<close>, which the quadratic version did
+  not need (there \<open>Z = \<alpha> I\<close> is symmetric for free).  It holds for the quartic,
+  whose Hessian is \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>.\<close>
+
+theorem tilted_doubled_psd_ordering_gen:
+  fixes a b :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and zh \<xi> pt q :: "(real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n" and G :: "real^'n"
+  assumes blW: "bounded_linear W"
+    and symW: "\<And>uu uu'. uu \<bullet> W uu' = uu' \<bullet> W uu"
+    and symZ: "transpose Z = Z"
+    and rz: "dist zh \<xi> < r"
+    and mx: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow>
+        (a (fst y) + b (snd y) - Pn (fst y - snd y)) + pt \<bullet> y
+        \<le> (a (fst zh) + b (snd zh) - Pn (fst zh - snd zh)) + pt \<bullet> zh"
+    and expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
+          - Pn (fst (zh + hk) - snd (zh + hk)))
+        - (a (fst zh) + b (snd zh) - Pn (fst zh - snd zh))
+        - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and Pjet: "((\<lambda>h. (Pn ((fst zh - snd zh) + h) - Pn (fst zh - snd zh)
+        - G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  shows "psd (matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v))
+            - matrix (\<lambda>v. fst (W (v, 0)) + Z *v v))"
+proof -
+  have dpos: "0 < r - dist zh \<xi>"
+    by (rule interior_radius_pos[OF rz])
+  have mxAB: "(a (fst (zh + hk)) + fst pt \<bullet> fst (zh + hk))
+        + (b (snd (zh + hk)) + snd pt \<bullet> snd (zh + hk))
+        - Pn (fst (zh + hk) - snd (zh + hk))
+      \<le> (a (fst zh) + fst pt \<bullet> fst zh) + (b (snd zh) + snd pt \<bullet> snd zh)
+        - Pn (fst zh - snd zh)"
+    if kk: "norm hk < r - dist zh \<xi>" for hk
+  proof -
+    have g: "(a (fst (zh + hk)) + b (snd (zh + hk))
+          - Pn (fst (zh + hk) - snd (zh + hk))) + pt \<bullet> (zh + hk)
+        \<le> (a (fst zh) + b (snd zh) - Pn (fst zh - snd zh)) + pt \<bullet> zh"
+      by (rule global_max_imp_interior_max
+          [where \<Psi> = "\<lambda>z. (a (fst z) + b (snd z) - Pn (fst z - snd z))
+                + pt \<bullet> z"
+             and \<xi> = \<xi> and r = r and zh = zh and k = hk, OF mx kk])
+    show ?thesis using g by (simp add: inner_prod_def algebra_simps)
+  qed
+  have eq: "(((a (fst (zh + hk)) + fst pt \<bullet> fst (zh + hk))
+          + (b (snd (zh + hk)) + snd pt \<bullet> snd (zh + hk))
+          - Pn (fst (zh + hk) - snd (zh + hk)))
+        - ((a (fst zh) + fst pt \<bullet> fst zh) + (b (snd zh) + snd pt \<bullet> snd zh)
+            - Pn (fst zh - snd zh))
+        - (q + pt) \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2
+      = ((a (fst (zh + hk)) + b (snd (zh + hk))
+          - Pn (fst (zh + hk) - snd (zh + hk)))
+        - (a (fst zh) + b (snd zh) - Pn (fst zh - snd zh))
+        - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2" for hk
+    by (simp add: inner_prod_def inner_add_left inner_add_right algebra_simps)
+  have expAB: "((\<lambda>hk. (((a (fst (zh + hk)) + fst pt \<bullet> fst (zh + hk))
+          + (b (snd (zh + hk)) + snd pt \<bullet> snd (zh + hk))
+          - Pn (fst (zh + hk) - snd (zh + hk)))
+        - ((a (fst zh) + fst pt \<bullet> fst zh) + (b (snd zh) + snd pt \<bullet> snd zh)
+            - Pn (fst zh - snd zh))
+        - (q + pt) \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    unfolding eq by (rule expPsi)
+  show ?thesis
+    by (rule sums_psd_at_interior_max_gen
+        [where a = "\<lambda>x. a x + fst pt \<bullet> x" and b = "\<lambda>y. b y + snd pt \<bullet> y"
+           and Pn = Pn and d = "r - dist zh \<xi>" and zh = zh and q = "q + pt"
+           and W = W and Z = Z and G = G,
+         OF blW symW symZ dpos mxAB expAB Pjet])
 qed
 
 subsection \<open>Bundling: one subsequence for the whole family\<close>
@@ -8638,6 +11856,610 @@ proof -
         in blast)+
 qed
 
+text \<open>The four block-matrix helpers under a general Hessian block \<open>Z\<close>.  Each is
+  the corresponding non-general lemma with @{term "\<alpha> *\<^sub>R v"} replaced by
+  @{term "Z *v v"}; the symmetry pair additionally needs \<open>Z\<close> symmetric.\<close>
+
+lemma block_fst_matrix_apply_gen:
+  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n"
+  assumes blW: "bounded_linear W"
+  shows "matrix (\<lambda>v. fst (W (v, 0)) + Z *v v) *v h
+       = fst (W (h, 0)) + Z *v h"
+  by (rule matrix_apply_eq[OF linear_block_fst_gen[OF blW]])
+
+lemma block_snd_matrix_apply_gen:
+  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n"
+  assumes blW: "bounded_linear W"
+  shows "(- matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v))) *v h
+       = snd (W (0, h)) + Z *v h"
+proof -
+  have l: "linear (\<lambda>v. - (snd (W (0, v)) + Z *v v))"
+    by (rule linear_block_snd_gen[OF blW])
+  have "(- matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v))) *v h
+      = - (matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v)) *v h)"
+    by (rule matrix_vector_neg_left)
+  also have "\<dots> = - (- (snd (W (0, h)) + Z *v h))"
+    using matrix_apply_eq[OF l] by simp
+  finally show ?thesis by simp
+qed
+
+lemma transpose_matrix_block_fst_gen:
+  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n"
+  assumes blW: "bounded_linear W"
+    and symW: "\<And>u u'. u \<bullet> W u' = u' \<bullet> W u"
+    and symZ: "transpose Z = Z"
+  shows "transpose (matrix (\<lambda>v. fst (W (v, 0)) + Z *v v))
+       = matrix (\<lambda>v. fst (W (v, 0)) + Z *v v)"
+  by (rule matrix_of_symmetric[OF linear_block_fst_gen[OF blW]
+        sym_block_fst_gen[OF symW symZ]])
+
+lemma transpose_matrix_block_snd_gen:
+  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+    and Z :: "real^'n^'n"
+  assumes blW: "bounded_linear W"
+    and symW: "\<And>u u'. u \<bullet> W u' = u' \<bullet> W u"
+    and symZ: "transpose Z = Z"
+  shows "transpose (matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v)))
+       = matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v))"
+  by (rule matrix_of_symmetric[OF linear_block_snd_gen[OF blW]
+        sym_block_snd_gen[OF symW symZ]])
+
+text \<open>The two locality facts about the penalty gradient, for a general penalty.
+  For the quadratic penalty the gradient is @{term "\<alpha> *\<^sub>R d"}, which is
+  @{term "\<bar>\<alpha>\<bar>"}-Lipschitz in \<open>d\<close>; in general we simply assume a Lipschitz
+  bound \<open>KG\<close> on the gradient field \<open>Gf\<close>.  The displacement \<open>d\<close> moves by at most
+  \<open>2\<rho>\<close> when the base point moves by \<open>\<rho>\<close>, which is where the factor two comes
+  from --- exactly as in the quadratic case.\<close>
+
+lemma diff_displacement_bound:
+  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)"
+  assumes d: "dist zh \<xi> \<le> \<rho>"
+  shows "norm ((fst zh - snd zh) - (fst \<xi> - snd \<xi>)) \<le> 2*\<rho>"
+proof -
+  have e: "(fst zh - snd zh) - (fst \<xi> - snd \<xi>)
+      = (fst zh - fst \<xi>) - (snd zh - snd \<xi>)" by simp
+  have "norm ((fst zh - fst \<xi>) - (snd zh - snd \<xi>))
+      \<le> norm (fst zh - fst \<xi>) + norm (snd zh - snd \<xi>)"
+    by (rule norm_triangle_ineq4)
+  moreover have "norm (fst zh - fst \<xi>) \<le> \<rho>"
+    using dist_fst_le[of zh \<xi>] d by (simp add: dist_norm)
+  moreover have "norm (snd zh - snd \<xi>) \<le> \<rho>"
+    using dist_snd_le[of zh \<xi>] d by (simp add: dist_norm)
+  ultimately show ?thesis unfolding e by linarith
+qed
+
+lemma penalty_gradient_nearby_upper_gen:
+  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)" and Gf :: "real^'n \<Rightarrow> real^'n"
+  assumes d: "dist zh \<xi> \<le> \<rho>"
+    and lip: "\<And>d d'. norm (Gf d - Gf d') \<le> KG * norm (d - d')"
+    and KG: "0 \<le> KG"
+  shows "norm (Gf (fst zh - snd zh)) \<le> norm (Gf (fst \<xi> - snd \<xi>)) + KG * (2*\<rho>)"
+proof -
+  have "norm (Gf (fst zh - snd zh)) - norm (Gf (fst \<xi> - snd \<xi>))
+      \<le> norm (Gf (fst zh - snd zh) - Gf (fst \<xi> - snd \<xi>))"
+    by (rule norm_triangle_ineq2)
+  also have "\<dots> \<le> KG * norm ((fst zh - snd zh) - (fst \<xi> - snd \<xi>))"
+    by (rule lip)
+  also have "\<dots> \<le> KG * (2*\<rho>)"
+    by (rule mult_left_mono[OF diff_displacement_bound[OF d] KG])
+  finally show ?thesis by linarith
+qed
+
+lemma penalty_gradient_nearby_bound_gen:
+  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)" and Gf :: "real^'n \<Rightarrow> real^'n"
+  assumes c: "c \<le> norm (Gf (fst \<xi> - snd \<xi>))"
+    and d: "dist zh \<xi> \<le> \<rho>"
+    and lip: "\<And>d d'. norm (Gf d - Gf d') \<le> KG * norm (d - d')"
+    and KG: "0 \<le> KG"
+  shows "c - KG * (2*\<rho>) \<le> norm (Gf (fst zh - snd zh))"
+proof -
+  have "norm (Gf (fst \<xi> - snd \<xi>)) - norm (Gf (fst zh - snd zh))
+      \<le> norm (Gf (fst \<xi> - snd \<xi>) - Gf (fst zh - snd zh))"
+    by (rule norm_triangle_ineq2)
+  also have "\<dots> \<le> KG * norm ((fst \<xi> - snd \<xi>) - (fst zh - snd zh))"
+    by (rule lip)
+  also have "norm ((fst \<xi> - snd \<xi>) - (fst zh - snd zh))
+      = norm ((fst zh - snd zh) - (fst \<xi> - snd \<xi>))"
+    by (rule norm_minus_commute)
+  finally have "norm (Gf (fst \<xi> - snd \<xi>)) - norm (Gf (fst zh - snd zh))
+      \<le> KG * (2*\<rho>)"
+    using mult_left_mono[OF diff_displacement_bound[OF d] KG] by linarith
+  then show ?thesis using c by linarith
+qed
+
+text \<open>Stage 10 under a general penalty.  This is
+  \<open>comparison_supconv_maximiser_complete\<close> with the quadratic penalty
+  @{term "(\<alpha>/2) * (norm d)\<^sup>2"} replaced by an arbitrary \<open>Pn\<close> that is
+  \<open>\<kappa>\<close>-semiconcave and twice differentiable with gradient field \<open>Gf\<close> and Hessian
+  field \<open>Zf\<close>.  Every occurrence of @{term "\<alpha> *\<^sub>R v"} becomes
+  @{term "Zf d *v v"} and every occurrence of
+  @{term "\<alpha> *\<^sub>R (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"} becomes @{term "Gf d"}, evaluated at the
+  displacement \<open>d = fst (zf i) - snd (zf i)\<close> of the \<open>i\<close>-th maximiser.
+
+  Note that the tilt @{term "- \<delta> * (norm (x - c))\<^sup>2"} introduced by Jensen's lemma
+  is genuinely quadratic and is NOT part of the penalty, so
+  \<open>jet_transfer_quadratic\<close> is still the right transfer lemma here.
+
+  The consumer \<open>comparison_supconv_bounded_family\<close> is penalty-agnostic --- its
+  hypotheses mention only jets, matrices and gradients --- so it is reused
+  verbatim.\<close>
+
+theorem comparison_supconv_maximiser_complete_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+    and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
+    and D\<^sub>0 :: real
+    and Pn :: "real^'n \<Rightarrow> real"
+    and Gf :: "real^'n \<Rightarrow> real^'n" and Zf :: "real^'n \<Rightarrow> real^'n^'n"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+    and t: "0 < \<theta>" "\<theta> < 1"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>"
+    and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
+    and Pjet: "\<And>d. ((\<lambda>h. (Pn (d + h) - Pn d - Gf d \<bullet> h
+          - (h \<bullet> (Zf d *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and symZ: "\<And>d. transpose (Zf d) = Zf d"
+    and bZ: "\<And>d z. \<bar>z \<bullet> (Zf d *v z)\<bar> \<le> KZ * (norm z)\<^sup>2"
+    and lipG: "\<And>d d'. norm (Gf d - Gf d') \<le> KG * norm (d - d')"
+    and KGnn: "0 \<le> KG"
+    and rho: "0 < \<rho>" "\<rho> < r"
+    and D0: "0 < D\<^sub>0"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
+    and cw: "continuous_on UNIV (- w)"
+    and mxK: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst y) + supconv (- w) \<epsilon> (snd y)
+          - Pn (fst y - snd y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst \<xi>\<^sub>0) + supconv (- w) \<epsilon> (snd \<xi>\<^sub>0)
+          - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+    and radu: "\<And>x. dist x (fst \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow>
+        sqrt (max 0 (2*\<epsilon>*(Bu - \<theta> * u x))) < R\<^sub>u"
+    and radw: "\<And>x. dist x (snd \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow>
+        sqrt (max 0 (2*\<epsilon>*(Bw - (- w) x))) < R\<^sub>w"
+    and subu: "\<And>x. dist x (fst \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow> cball x R\<^sub>u \<subseteq> \<Omega>"
+    and subw: "\<And>x. dist x (snd \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow> cball x R\<^sub>w \<subseteq> \<Omega>"
+    and glb: "c \<le> norm (Gf (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))"
+    and rsmall: "KG * (2*\<rho>) < c"
+  shows False
+proof -
+  have r0: "0 < r" using rho by simp
+  obtain zf pf qf Wf where fam: "\<forall>i.
+      dist (zf i) \<xi>\<^sub>0 < \<rho>
+      \<and> norm (pf i) \<le> D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)
+      \<and> (\<forall>y \<in> cball \<xi>\<^sub>0 r.
+          ((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst y)
+              - (D\<^sub>0/(2 + real i)) * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv (- w) \<epsilon> (snd y)
+              - (D\<^sub>0/(2 + real i)) * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst y - snd y)) + pf i \<bullet> y
+          \<le> ((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+              - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i) - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv (- w) \<epsilon> (snd (zf i))
+              - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i) - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst (zf i) - snd (zf i))) + pf i \<bullet> (zf i))
+      \<and> bounded_linear (Wf i) \<and> (\<forall>v z. v \<bullet> Wf i z = z \<bullet> Wf i v)
+      \<and> (\<forall>hk. - ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) * (norm hk)\<^sup>2)
+            \<le> hk \<bullet> Wf i hk)
+      \<and> ((\<lambda>hk. (((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i + hk))
+              - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i + hk) - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv (- w) \<epsilon> (snd (zf i + hk))
+              - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i + hk) - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst (zf i + hk) - snd (zf i + hk)))
+          - ((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+              - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i) - fst \<xi>\<^sub>0))\<^sup>2)
+            + (supconv (- w) \<epsilon> (snd (zf i))
+              - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i) - snd \<xi>\<^sub>0))\<^sup>2)
+            - Pn (fst (zf i) - snd (zf i)))
+          - qf i \<bullet> hk - (hk \<bullet> Wf i hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    using shifted_jensen_family_gen[OF Bu Bw e kap sc rho(1) rho(2) D0 mxK]
+    by blast
+  have dz: "dist (zf i) \<xi>\<^sub>0 < \<rho>" for i using fam by blast
+  have dzle: "dist (zf i) \<xi>\<^sub>0 \<le> \<rho>" for i using dz[of i] by linarith
+  have dzr: "dist (zf i) \<xi>\<^sub>0 < r" for i using dz[of i] rho(2) by linarith
+  have np: "norm (pf i) \<le> D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)" for i
+    using fam by blast
+  have mxf: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow>
+      ((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst y)
+          - (D\<^sub>0/(2 + real i)) * (norm (fst y - fst \<xi>\<^sub>0))\<^sup>2)
+        + (supconv (- w) \<epsilon> (snd y)
+          - (D\<^sub>0/(2 + real i)) * (norm (snd y - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst y - snd y)) + pf i \<bullet> y
+      \<le> ((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+          - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i) - fst \<xi>\<^sub>0))\<^sup>2)
+        + (supconv (- w) \<epsilon> (snd (zf i))
+          - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i) - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst (zf i) - snd (zf i))) + pf i \<bullet> (zf i)" for i
+    using fam by blast
+  have blW: "bounded_linear (Wf i)" for i using fam by blast
+  have symW: "\<And>v z. v \<bullet> Wf i z = z \<bullet> Wf i v" for i using fam by blast
+  have loW: "\<And>hk. - ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) * (norm hk)\<^sup>2)
+      \<le> hk \<bullet> Wf i hk" for i
+    using fam by blast
+  have expf: "((\<lambda>hk. (((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i + hk))
+          - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i + hk) - fst \<xi>\<^sub>0))\<^sup>2)
+        + (supconv (- w) \<epsilon> (snd (zf i + hk))
+          - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i + hk) - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst (zf i + hk) - snd (zf i + hk)))
+      - ((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+          - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i) - fst \<xi>\<^sub>0))\<^sup>2)
+        + (supconv (- w) \<epsilon> (snd (zf i))
+          - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i) - snd \<xi>\<^sub>0))\<^sup>2)
+        - Pn (fst (zf i) - snd (zf i)))
+      - qf i \<bullet> hk - (hk \<bullet> Wf i hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)" for i
+    using fam by blast
+  have dpos: "0 < D\<^sub>0/(2 + real i)" for i by (rule tilt_sequence_pos[OF D0])
+  have dlt: "D\<^sub>0/(2 + real i) < D\<^sub>0" for i by (rule tilt_sequence_lt[OF D0])
+  have dfst: "dist (fst (zf i)) (fst \<xi>\<^sub>0) \<le> \<rho>" for i
+    using dist_fst_le[of "zf i" \<xi>\<^sub>0] dzle[of i] by linarith
+  have dsnd: "dist (snd (zf i)) (snd \<xi>\<^sub>0) \<le> \<rho>" for i
+    using dist_snd_le[of "zf i" \<xi>\<^sub>0] dzle[of i] by linarith
+  have hiW: "\<And>v. v \<bullet> Wf i v \<le> 0" for i
+    by (rule tilted_doubled_hessian_nonpositive_gen
+        [where a = "\<lambda>x. supconv (\<lambda>y. \<theta> * u y) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - fst \<xi>\<^sub>0))\<^sup>2"
+           and b = "\<lambda>x. supconv (- w) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - snd \<xi>\<^sub>0))\<^sup>2"
+           and P = Pn and zh = "zf i" and \<xi> = \<xi>\<^sub>0 and r = r and pt = "pf i"
+           and q = "qf i" and W = "Wf i",
+         OF blW dzr mxf expf])
+  have psdU: "psd (matrix (\<lambda>v. - (snd (Wf i (0, v))
+            + Zf (fst (zf i) - snd (zf i)) *v v))
+          - matrix (\<lambda>v. fst (Wf i (v, 0))
+            + Zf (fst (zf i) - snd (zf i)) *v v))" for i
+    by (rule tilted_doubled_psd_ordering_gen
+        [where a = "\<lambda>x. supconv (\<lambda>y. \<theta> * u y) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - fst \<xi>\<^sub>0))\<^sup>2"
+           and b = "\<lambda>x. supconv (- w) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - snd \<xi>\<^sub>0))\<^sup>2"
+           and Pn = Pn and zh = "zf i" and \<xi> = \<xi>\<^sub>0 and r = r and pt = "pf i"
+           and q = "qf i" and W = "Wf i"
+           and Z = "Zf (fst (zf i) - snd (zf i))"
+           and G = "Gf (fst (zf i) - snd (zf i))",
+         OF blW symW symZ dzr mxf expf Pjet])
+  have psdS: "psd ((matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v))
+          - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
+        - (matrix (\<lambda>v. fst (Wf i (v, 0))
+              + Zf (fst (zf i) - snd (zf i)) *v v)
+            + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
+        + (2*(2*(D\<^sub>0/(2 + real i)))) *\<^sub>R mat 1)" for i
+    using psdU[of i] unfolding shift_cancel_matrix .
+  have cs0: "(\<lambda>i. 2*(2*(D\<^sub>0/(2 + real i)))) \<longlonglongrightarrow> 0"
+  proof -
+    have "(\<lambda>i. 2*(2*(D\<^sub>0/(2 + real i)))) \<longlonglongrightarrow> 2*(2*(0::real))"
+      by (intro tendsto_mult tendsto_const tilt_sequence_tendsto)
+    then show ?thesis by simp
+  qed
+  have jetu: "((\<lambda>h. (supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i) + h)
+        - supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+        - (- fst (pf i) + Gf (fst (zf i) - snd (zf i))
+           + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0)) \<bullet> h
+        - (h \<bullet> ((matrix (\<lambda>v. fst (Wf i (v, 0))
+                    + Zf (fst (zf i) - snd (zf i)) *v v)
+                + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1) *v h))/2)
+        / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)" for i
+  proof -
+    have sliceA: "((\<lambda>h. ((supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i) + h)
+          - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i) + h - fst \<xi>\<^sub>0))\<^sup>2)
+        - (supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+          - (D\<^sub>0/(2 + real i)) * (norm (fst (zf i) - fst \<xi>\<^sub>0))\<^sup>2)
+        - (- fst (pf i) + Gf (fst (zf i) - snd (zf i))) \<bullet> h
+        - (h \<bullet> (fst (Wf i (h, 0))
+              + Zf (fst (zf i) - snd (zf i)) *v h))/2) / (norm h)\<^sup>2)
+        \<longlongrightarrow> 0) (at 0)"
+      by (rule tilted_doubled_jet_slices_gen(2)
+        [where a = "\<lambda>x. supconv (\<lambda>y. \<theta> * u y) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - fst \<xi>\<^sub>0))\<^sup>2"
+           and b = "\<lambda>x. supconv (- w) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - snd \<xi>\<^sub>0))\<^sup>2"
+           and P = Pn and zh = "zf i" and \<xi> = \<xi>\<^sub>0 and r = r and pt = "pf i"
+           and q = "qf i" and W = "Wf i"
+           and Z = "Zf (fst (zf i) - snd (zf i))"
+           and G = "Gf (fst (zf i) - snd (zf i))",
+         OF blW dzr mxf expf Pjet])
+    have transA: "((\<lambda>h. (supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i) + h)
+          - supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+          - (- fst (pf i) + Gf (fst (zf i) - snd (zf i))
+             + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0)) \<bullet> h
+          - (h \<bullet> (fst (Wf i (h, 0)) + Zf (fst (zf i) - snd (zf i)) *v h
+                  + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R h))/2)
+          / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+      by (rule jet_transfer_quadratic
+          [where f = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>" and \<delta> = "D\<^sub>0/(2 + real i)"
+             and c = "fst \<xi>\<^sub>0" and xh = "fst (zf i)"
+             and p = "- fst (pf i) + Gf (fst (zf i) - snd (zf i))"
+             and X = "\<lambda>h. fst (Wf i (h, 0))
+                + Zf (fst (zf i) - snd (zf i)) *v h",
+           OF sliceA])
+    show ?thesis
+      using transA
+      unfolding matrix_shift_apply block_fst_matrix_apply_gen[OF blW] .
+  qed
+  have jetw: "((\<lambda>h. (supconv (- w) \<epsilon> (snd (zf i) + h)
+        - supconv (- w) \<epsilon> (snd (zf i))
+        - (- (snd (pf i) + Gf (fst (zf i) - snd (zf i))
+              - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))) \<bullet> h
+        - (h \<bullet> ((- (matrix (\<lambda>v. - (snd (Wf i (0, v))
+                      + Zf (fst (zf i) - snd (zf i)) *v v))
+                - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)) *v h))/2)
+        / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)" for i
+  proof -
+    have sliceB: "((\<lambda>h. ((supconv (- w) \<epsilon> (snd (zf i) + h)
+          - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i) + h - snd \<xi>\<^sub>0))\<^sup>2)
+        - (supconv (- w) \<epsilon> (snd (zf i))
+          - (D\<^sub>0/(2 + real i)) * (norm (snd (zf i) - snd \<xi>\<^sub>0))\<^sup>2)
+        - (- (snd (pf i) + Gf (fst (zf i) - snd (zf i)))) \<bullet> h
+        - (h \<bullet> (snd (Wf i (0, h))
+              + Zf (fst (zf i) - snd (zf i)) *v h))/2) / (norm h)\<^sup>2)
+        \<longlongrightarrow> 0) (at 0)"
+      by (rule tilted_doubled_jet_slices_gen(3)
+        [where a = "\<lambda>x. supconv (\<lambda>y. \<theta> * u y) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - fst \<xi>\<^sub>0))\<^sup>2"
+           and b = "\<lambda>x. supconv (- w) \<epsilon> x
+              - (D\<^sub>0/(2 + real i)) * (norm (x - snd \<xi>\<^sub>0))\<^sup>2"
+           and P = Pn and zh = "zf i" and \<xi> = \<xi>\<^sub>0 and r = r and pt = "pf i"
+           and q = "qf i" and W = "Wf i"
+           and Z = "Zf (fst (zf i) - snd (zf i))"
+           and G = "Gf (fst (zf i) - snd (zf i))",
+         OF blW dzr mxf expf Pjet])
+    have transB: "((\<lambda>h. (supconv (- w) \<epsilon> (snd (zf i) + h)
+          - supconv (- w) \<epsilon> (snd (zf i))
+          - (- (snd (pf i) + Gf (fst (zf i) - snd (zf i)))
+             + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0)) \<bullet> h
+          - (h \<bullet> (snd (Wf i (0, h)) + Zf (fst (zf i) - snd (zf i)) *v h
+                  + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R h))/2)
+          / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+      by (rule jet_transfer_quadratic
+          [where f = "supconv (- w) \<epsilon>" and \<delta> = "D\<^sub>0/(2 + real i)"
+             and c = "snd \<xi>\<^sub>0" and xh = "snd (zf i)"
+             and p = "- (snd (pf i) + Gf (fst (zf i) - snd (zf i)))"
+             and X = "\<lambda>h. snd (Wf i (0, h))
+                + Zf (fst (zf i) - snd (zf i)) *v h",
+           OF sliceB])
+    have negPw: "- (snd (pf i) + Gf (fst (zf i) - snd (zf i))
+          - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))
+        = - (snd (pf i) + Gf (fst (zf i) - snd (zf i)))
+          + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0)"
+      by simp
+    have negY: "- (matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v))
+          - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
+        = (- matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v)))
+          + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1"
+      by simp
+    show ?thesis
+      using transB
+      unfolding negPw negY matrix_shift_apply
+        block_snd_matrix_apply_gen[OF blW] .
+  qed
+  have symXs: "transpose (matrix (\<lambda>v. fst (Wf i (v, 0))
+          + Zf (fst (zf i) - snd (zf i)) *v v)
+        + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
+      = matrix (\<lambda>v. fst (Wf i (v, 0)) + Zf (fst (zf i) - snd (zf i)) *v v)
+        + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1" for i
+    by (rule transpose_shifted_block
+        [OF transpose_matrix_block_fst_gen[OF blW symW symZ]])
+  have symYs: "transpose (matrix (\<lambda>v. - (snd (Wf i (0, v))
+            + Zf (fst (zf i) - snd (zf i)) *v v))
+        - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
+      = matrix (\<lambda>v. - (snd (Wf i (0, v))
+            + Zf (fst (zf i) - snd (zf i)) *v v))
+        - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1" for i
+  proof -
+    have eqm: "matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v))
+          - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1
+        = matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v))
+          + (- (2*(D\<^sub>0/(2 + real i)))) *\<^sub>R mat 1"
+      by simp
+    show ?thesis
+      unfolding eqm
+      by (rule transpose_shifted_block
+          [OF transpose_matrix_block_snd_gen[OF blW symW symZ]])
+  qed
+  have bXun: "norm (matrix (\<lambda>v. fst (Wf i (v, 0))
+        + Zf (fst (zf i) - snd (zf i)) *v v))
+      \<le> real (card (Basis :: (real^'n^'n) set))
+          * ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) + KZ)" for i
+    by (rule norm_block_matrices_bounded_gen(1)[OF blW symW symZ loW hiW bZ])
+  have bYun: "norm (matrix (\<lambda>v. - (snd (Wf i (0, v))
+        + Zf (fst (zf i) - snd (zf i)) *v v)))
+      \<le> real (card (Basis :: (real^'n^'n) set))
+          * ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) + KZ)" for i
+    by (rule norm_block_matrices_bounded_gen(2)[OF blW symW symZ loW hiW bZ])
+  have Cuni: "real (card (Basis :: (real^'n^'n) set))
+        * ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) + KZ)
+      \<le> real (card (Basis :: (real^'n^'n) set))
+        * ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*D\<^sub>0) + KZ)" for i
+  proof -
+    have "(1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*(D\<^sub>0/(2 + real i))) + KZ
+        \<le> (1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*D\<^sub>0) + KZ"
+      using dlt[of i] by linarith
+    then show ?thesis by (rule mult_left_mono) simp
+  qed
+  have habs: "\<bar>2*(D\<^sub>0/(2 + real i))\<bar> * norm (mat 1 :: real^'n^'n)
+      \<le> 2*D\<^sub>0 * norm (mat 1 :: real^'n^'n)" for i
+  proof -
+    have e1: "\<bar>2*(D\<^sub>0/(2 + real i))\<bar> = 2*(D\<^sub>0/(2 + real i))"
+      using D0 by simp
+    have e2: "2*(D\<^sub>0/(2 + real i)) \<le> 2*D\<^sub>0"
+      using dlt[of i] by linarith
+    show ?thesis
+      unfolding e1 by (rule mult_right_mono[OF e2]) simp
+  qed
+  have bX: "norm (matrix (\<lambda>v. fst (Wf i (v, 0))
+          + Zf (fst (zf i) - snd (zf i)) *v v)
+        + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
+      \<le> real (card (Basis :: (real^'n^'n) set))
+          * ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*D\<^sub>0) + KZ)
+        + 2*D\<^sub>0 * norm (mat 1 :: real^'n^'n)" for i
+    using norm_shifted_block
+        [where M = "matrix (\<lambda>v. fst (Wf i (v, 0))
+            + Zf (fst (zf i) - snd (zf i)) *v v)"
+           and c = "2*(D\<^sub>0/(2 + real i))"]
+      bXun[of i] Cuni[of i] habs[of i]
+    by linarith
+  have bY: "norm (matrix (\<lambda>v. - (snd (Wf i (0, v))
+          + Zf (fst (zf i) - snd (zf i)) *v v))
+        - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
+      \<le> real (card (Basis :: (real^'n^'n) set))
+          * ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*D\<^sub>0) + KZ)
+        + 2*D\<^sub>0 * norm (mat 1 :: real^'n^'n)" for i
+  proof -
+    have eqm: "matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v))
+          - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1
+        = matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v))
+          + (- (2*(D\<^sub>0/(2 + real i)))) *\<^sub>R mat 1"
+      by simp
+    have h2: "\<bar>- (2*(D\<^sub>0/(2 + real i)))\<bar> * norm (mat 1 :: real^'n^'n)
+        = \<bar>2*(D\<^sub>0/(2 + real i))\<bar> * norm (mat 1 :: real^'n^'n)"
+      by simp
+    show ?thesis
+      unfolding eqm
+      using norm_shifted_block
+          [where M = "matrix (\<lambda>v. - (snd (Wf i (0, v))
+              + Zf (fst (zf i) - snd (zf i)) *v v))"
+             and c = "- (2*(D\<^sub>0/(2 + real i)))"]
+        h2 bYun[of i] Cuni[of i] habs[of i]
+      by linarith
+  qed
+  obtain ysu where ysu: "\<forall>i. ysu i \<in> \<Omega>
+      \<and> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+        = \<theta> * u (ysu i) - (dist (fst (zf i)) (ysu i))\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_family_in_rad
+      [where u = "\<lambda>y. \<theta> * u y" and xs = "\<lambda>i. fst (zf i)" and \<Omega> = \<Omega>
+         and Bu = Bu and \<epsilon> = \<epsilon> and R = R\<^sub>u,
+       OF Bu e cu radu[OF dfst] subu[OF dfst]]
+    by blast
+  obtain ysw where ysw: "\<forall>i. ysw i \<in> \<Omega>
+      \<and> supconv (- w) \<epsilon> (snd (zf i))
+        = (- w) (ysw i) - (dist (snd (zf i)) (ysw i))\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_family_in_rad
+      [where u = "- w" and xs = "\<lambda>i. snd (zf i)" and \<Omega> = \<Omega>
+         and Bu = Bw and \<epsilon> = \<epsilon> and R = R\<^sub>w,
+       OF Bw e cw radw[OF dsnd] subw[OF dsnd]]
+    by blast
+  have nfst: "norm (fst (pf i)) \<le> norm (pf i)" for i
+    using norm_fst_le[of "fst (pf i)" "snd (pf i)"] by simp
+  have nsnd: "norm (snd (pf i)) \<le> norm (pf i)" for i
+    using norm_snd_le[where x = "fst (pf i)" and y = "snd (pf i)"] by simp
+  have nshiftA: "norm ((2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0))
+      \<le> 2*(D\<^sub>0/(2 + real i)) * \<rho>" for i
+  proof -
+    have p2: "0 \<le> 2*(D\<^sub>0/(2 + real i))" using dpos[of i] by linarith
+    have "norm ((2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0))
+        = 2*(D\<^sub>0/(2 + real i)) * dist (fst (zf i)) (fst \<xi>\<^sub>0)"
+      using p2 D0 by (simp add: dist_norm)
+    also have "\<dots> \<le> 2*(D\<^sub>0/(2 + real i)) * \<rho>"
+      by (rule mult_left_mono[OF dfst p2])
+    finally show ?thesis .
+  qed
+  have nshiftB: "norm ((2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))
+      \<le> 2*(D\<^sub>0/(2 + real i)) * \<rho>" for i
+  proof -
+    have p2: "0 \<le> 2*(D\<^sub>0/(2 + real i))" using dpos[of i] by linarith
+    have "norm ((2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))
+        = 2*(D\<^sub>0/(2 + real i)) * dist (snd (zf i)) (snd \<xi>\<^sub>0)"
+      using p2 D0 by (simp add: dist_norm)
+    also have "\<dots> \<le> 2*(D\<^sub>0/(2 + real i)) * \<rho>"
+      by (rule mult_left_mono[OF dsnd p2])
+    finally show ?thesis .
+  qed
+  have Elim: "(\<lambda>i. D\<^sub>0/(2 + real i) * \<rho>\<^sup>2/(4*r)
+      + 2*(D\<^sub>0/(2 + real i))*\<rho>) \<longlonglongrightarrow> 0"
+  proof -
+    have l1: "(\<lambda>i. D\<^sub>0/(2 + real i) * \<rho>\<^sup>2/(4*r)) \<longlonglongrightarrow> 0"
+      by (rule shifted_family_parameters(5)[OF D0 rho(1) r0])
+    have l2: "(\<lambda>i. 2*(D\<^sub>0/(2 + real i))*\<rho>) \<longlonglongrightarrow> 0"
+    proof -
+      have h: "(\<lambda>i. (2*\<rho>) * (D\<^sub>0/(2 + real i))) \<longlonglongrightarrow> (2*\<rho>) * 0"
+        by (rule tendsto_mult[OF tendsto_const tilt_sequence_tendsto])
+      have eq: "(\<lambda>i. 2*(D\<^sub>0/(2 + real i))*\<rho>)
+          = (\<lambda>i. (2*\<rho>) * (D\<^sub>0/(2 + real i)))"
+        by (rule ext) (simp add: mult_ac)
+      show ?thesis unfolding eq using h by simp
+    qed
+    from tendsto_add[OF l1 l2] show ?thesis by simp
+  qed
+  have au: "(\<lambda>i. (- fst (pf i) + Gf (fst (zf i) - snd (zf i))
+        + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0))
+      - Gf (fst (zf i) - snd (zf i))) \<longlonglongrightarrow> 0"
+  proof (rule tendsto_of_norm_bound[OF _ Elim])
+    fix i
+    have eq0: "(- fst (pf i) + Gf (fst (zf i) - snd (zf i))
+          + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0))
+        - Gf (fst (zf i) - snd (zf i))
+        = (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0) - fst (pf i)"
+      by simp
+    have tri: "norm ((2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0)
+          - fst (pf i))
+        \<le> norm ((2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0))
+          + norm (fst (pf i))"
+      by (rule norm_triangle_ineq4)
+    show "norm ((- fst (pf i) + Gf (fst (zf i) - snd (zf i))
+          + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0))
+        - Gf (fst (zf i) - snd (zf i)))
+        \<le> D\<^sub>0/(2 + real i) * \<rho>\<^sup>2/(4*r) + 2*(D\<^sub>0/(2 + real i))*\<rho>"
+      unfolding eq0
+      using tri nshiftA[of i] nfst[of i] np[of i] by linarith
+  qed
+  have aw: "(\<lambda>i. (snd (pf i) + Gf (fst (zf i) - snd (zf i))
+        - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))
+      - Gf (fst (zf i) - snd (zf i))) \<longlonglongrightarrow> 0"
+  proof (rule tendsto_of_norm_bound[OF _ Elim])
+    fix i
+    have eq0: "(snd (pf i) + Gf (fst (zf i) - snd (zf i))
+          - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))
+        - Gf (fst (zf i) - snd (zf i))
+        = snd (pf i) - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0)"
+      by simp
+    have tri: "norm (snd (pf i)
+          - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))
+        \<le> norm (snd (pf i))
+          + norm ((2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))"
+      by (rule norm_triangle_ineq4)
+    show "norm ((snd (pf i) + Gf (fst (zf i) - snd (zf i))
+          - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0))
+        - Gf (fst (zf i) - snd (zf i)))
+        \<le> D\<^sub>0/(2 + real i) * \<rho>\<^sup>2/(4*r) + 2*(D\<^sub>0/(2 + real i))*\<rho>"
+      unfolding eq0
+      using tri nshiftB[of i] nsnd[of i] np[of i] by linarith
+  qed
+  have bG: "norm (Gf (fst (zf i) - snd (zf i)))
+      \<le> norm (Gf (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)) + KG * (2*\<rho>)" for i
+    by (rule penalty_gradient_nearby_upper_gen[OF dzle lipG KGnn])
+  have gG: "c - KG * (2*\<rho>) \<le> norm (Gf (fst (zf i) - snd (zf i)))" for i
+    by (rule penalty_gradient_nearby_bound_gen[OF glb dzle lipG KGnn])
+  have cG: "0 < c - KG * (2*\<rho>)" using rsmall by linarith
+  show False
+    by (rule comparison_supconv_bounded_family
+        [where u = u and w = w and \<Omega> = \<Omega> and \<theta> = \<theta> and \<epsilon> = \<epsilon>
+           and X = "\<lambda>i. matrix (\<lambda>v. fst (Wf i (v, 0))
+                + Zf (fst (zf i) - snd (zf i)) *v v)
+              + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1"
+           and Y = "\<lambda>i. matrix (\<lambda>v. - (snd (Wf i (0, v))
+                + Zf (fst (zf i) - snd (zf i)) *v v))
+              - (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1"
+           and G = "\<lambda>i. Gf (fst (zf i) - snd (zf i))"
+           and Pu = "\<lambda>i. - fst (pf i) + Gf (fst (zf i) - snd (zf i))
+              + (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (fst (zf i) - fst \<xi>\<^sub>0)"
+           and Pw = "\<lambda>i. snd (pf i) + Gf (fst (zf i) - snd (zf i))
+              - (2 * (D\<^sub>0/(2 + real i))) *\<^sub>R (snd (zf i) - snd \<xi>\<^sub>0)"
+           and xu = "\<lambda>i. fst (zf i)" and xw = "\<lambda>i. snd (zf i)"
+           and ysu = ysu and ysw = ysw
+           and cs = "\<lambda>i. 2*(2*(D\<^sub>0/(2 + real i)))"
+           and c = "c - KG * (2*\<rho>)",
+         OF sub sup t(1) t(2) kk(1) kk(2) LL e Bu Bw])
+       (use ysu ysw symXs symYs psdS cs0 jetu jetw au aw bX bY bG gG cG
+        in blast)+
+qed
+
 section \<open>The \<open>max_principle_boundary\<close> interface needs continuity: the raw version is refutable\<close>
 
 text \<open>Before assembling stage 10 into Theorem 4.2(a) proper, the target has to
@@ -9033,6 +12855,731 @@ proof -
            and Bu = Bu and Bw = Bw and R\<^sub>u = R\<^sub>u and R\<^sub>w = R\<^sub>w and c = c,
          OF sub sup t(1) t(2) kk(1) kk(2) LL e a rho(1) rho(2) D0 Bu Bw cu cw])
        (use mxK radu radw subu subw glb rsmall in blast)+
+qed
+
+text \<open>The bridge under a general penalty.  Every geometric derivation here ---
+  \<open>mxK\<close>, \<open>radu\<close>, \<open>radw\<close>, \<open>subu\<close>, \<open>subw\<close> --- is untouched by the change of
+  penalty: the penalty appears only as the term that is carried along
+  unchanged from \<open>mxKK\<close> to \<open>mxK\<close>.  Only the gradient conditions \<open>glb\<close> and
+  \<open>rsmall\<close> refer to it, through the gradient field \<open>Gf\<close> and its Lipschitz
+  constant \<open>KG\<close>.\<close>
+
+theorem comparison_from_localised_maximiser_gen:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+    and K :: "(real^'n) set"
+    and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
+    and D\<^sub>0 :: real
+    and Pn :: "real^'n \<Rightarrow> real"
+    and Gf :: "real^'n \<Rightarrow> real^'n" and Zf :: "real^'n \<Rightarrow> real^'n^'n"
+  assumes sub: "visc_subsol k L (interior K) u"
+    and sup: "visc_supersol k L (interior K) w"
+    and t: "0 < \<theta>" "\<theta> < 1"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>\<^sub>P"
+    and scP: "convex_on UNIV (\<lambda>d. (\<kappa>\<^sub>P/2) * (norm d)\<^sup>2 - Pn d)"
+    and Pjet: "\<And>d. ((\<lambda>h. (Pn (d + h) - Pn d - Gf d \<bullet> h
+          - (h \<bullet> (Zf d *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and symZ: "\<And>d. transpose (Zf d) = Zf d"
+    and bZ: "\<And>d z. \<bar>z \<bullet> (Zf d *v z)\<bar> \<le> KZ * (norm z)\<^sup>2"
+    and lipG: "\<And>d d'. norm (Gf d - Gf d') \<le> KG * norm (d - d')"
+    and KGnn: "0 \<le> KG"
+    and cK: "compact K"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
+    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
+    and cw: "continuous_on UNIV (- w)"
+    and mxKK: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - Pn (x - y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst \<xi>\<^sub>0) + supconv (- w) \<epsilon> (snd \<xi>\<^sub>0)
+          - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+    and xK: "fst \<xi>\<^sub>0 \<in> K" and yK: "snd \<xi>\<^sub>0 \<in> K"
+    and farx: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist (fst \<xi>\<^sub>0) b"
+    and fary: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist (snd \<xi>\<^sub>0) b"
+    and rho: "0 < \<rho>" "\<rho> < r" and rk: "r \<le> \<kappa>"
+    and Rup: "0 < R\<^sub>u" and Rwp: "0 < R\<^sub>w"
+    and smallu: "2*\<epsilon>*(Bu - Blu) < R\<^sub>u\<^sup>2"
+    and smallw: "2*\<epsilon>*(Bw - Blw) < R\<^sub>w\<^sup>2"
+    and fitu: "\<rho> + R\<^sub>u \<le> \<kappa>" and fitw: "\<rho> + R\<^sub>w \<le> \<kappa>"
+    and D0: "0 < D\<^sub>0"
+    and glb: "c \<le> norm (Gf (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))"
+    and rsmall: "KG * (2*\<rho>) < c"
+  shows False
+proof -
+  have clK: "closed K" by (rule compact_imp_closed[OF cK])
+  have k0: "0 \<le> \<kappa>" using rho rk by linarith
+  have coll: "(fst \<xi>\<^sub>0, snd \<xi>\<^sub>0) = \<xi>\<^sub>0" by simp
+  have insx: "cball (fst \<xi>\<^sub>0) \<kappa> \<subseteq> interior K"
+    by (rule cball_subset_interior_of_far_from_boundary[OF clK xK k0 farx])
+  have insy: "cball (snd \<xi>\<^sub>0) \<kappa> \<subseteq> interior K"
+    by (rule cball_subset_interior_of_far_from_boundary[OF clK yK k0 fary])
+  have mxK: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst z) + supconv (- w) \<epsilon> (snd z)
+        - Pn (fst z - snd z)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst \<xi>\<^sub>0) + supconv (- w) \<epsilon> (snd \<xi>\<^sub>0)
+        - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+    if z: "z \<in> cball \<xi>\<^sub>0 r" for z
+  proof -
+    have dz: "dist z (fst \<xi>\<^sub>0, snd \<xi>\<^sub>0) \<le> \<kappa>"
+      unfolding coll using z rk by (simp add: dist_commute)
+    have "fst z \<in> K \<and> snd z \<in> K"
+      by (rule cball_prod_subset_of_far_from_boundary
+          [OF clK xK yK k0 farx fary dz])
+    then show ?thesis using mxKK by blast
+  qed
+  have radu: "sqrt (max 0 (2*\<epsilon>*(Bu - \<theta> * u x))) < R\<^sub>u" for x
+    by (rule supconv_radius_uniform[OF lou e Rup smallu])
+  have radw: "sqrt (max 0 (2*\<epsilon>*(Bw - (- w) x))) < R\<^sub>w" for x
+    by (rule supconv_radius_uniform[OF low e Rwp smallw])
+  have subu: "cball x R\<^sub>u \<subseteq> interior K" if d: "dist x (fst \<xi>\<^sub>0) \<le> \<rho>" for x
+  proof -
+    have "cball x R\<^sub>u \<subseteq> cball (fst \<xi>\<^sub>0) \<kappa>"
+    proof
+      fix y assume "y \<in> cball x R\<^sub>u"
+      then have dy: "dist x y \<le> R\<^sub>u" by simp
+      have "dist (fst \<xi>\<^sub>0) y \<le> dist (fst \<xi>\<^sub>0) x + dist x y"
+        by (rule dist_triangle)
+      also have "\<dots> \<le> \<rho> + R\<^sub>u"
+        using d dy by (simp add: dist_commute)
+      finally show "y \<in> cball (fst \<xi>\<^sub>0) \<kappa>" using fitu by simp
+    qed
+    then show ?thesis using insx by blast
+  qed
+  have subw: "cball x R\<^sub>w \<subseteq> interior K" if d: "dist x (snd \<xi>\<^sub>0) \<le> \<rho>" for x
+  proof -
+    have "cball x R\<^sub>w \<subseteq> cball (snd \<xi>\<^sub>0) \<kappa>"
+    proof
+      fix y assume "y \<in> cball x R\<^sub>w"
+      then have dy: "dist x y \<le> R\<^sub>w" by simp
+      have "dist (snd \<xi>\<^sub>0) y \<le> dist (snd \<xi>\<^sub>0) x + dist x y"
+        by (rule dist_triangle)
+      also have "\<dots> \<le> \<rho> + R\<^sub>w"
+        using d dy by (simp add: dist_commute)
+      finally show "y \<in> cball (snd \<xi>\<^sub>0) \<kappa>" using fitw by simp
+    qed
+    then show ?thesis using insy by blast
+  qed
+  show False
+    by (rule comparison_supconv_maximiser_complete_gen
+        [where u = u and w = w and \<xi>\<^sub>0 = \<xi>\<^sub>0 and D\<^sub>0 = D\<^sub>0 and \<Omega> = "interior K"
+           and \<theta> = \<theta> and \<epsilon> = \<epsilon> and \<kappa> = \<kappa>\<^sub>P and \<rho> = \<rho> and r = r
+           and Pn = Pn and Gf = Gf and Zf = Zf and KZ = KZ and KG = KG
+           and Bu = Bu and Bw = Bw and R\<^sub>u = R\<^sub>u and R\<^sub>w = R\<^sub>w and c = c,
+         OF sub sup t(1) t(2) kk(1) kk(2) LL e kap scP Pjet symZ bZ lipG
+            KGnn rho(1) rho(2) D0 Bu Bw cu cw])
+       (use mxK radu radw subu subw glb rsmall in blast)+
+qed
+
+subsection \<open>The chain at the concrete penalty \<open>soft_pen\<close>\<close>
+
+text \<open>Every abstract hypothesis of the \<open>_gen\<close> chain is now discharged at
+  \<open>Pn = soft_pen \<kappa>\<close>:
+
+    \<open>sc\<close>    by \<open>soft_pen_semiconcave\<close>
+    \<open>Pjet\<close>  by \<open>soft_pen_jet_field\<close>   (gradient field \<open>soft_grad \<kappa>\<close>,
+                                      Hessian field \<open>soft_hess \<kappa>\<close>)
+    \<open>symZ\<close>  by \<open>soft_hess_sym\<close>
+    \<open>bZ\<close>    by \<open>soft_hess_bound\<close>       with \<open>KZ = 2\<kappa>\<close>
+    \<open>lipG\<close>  by \<open>soft_grad_lipschitz\<close>   with \<open>KG = 3\<kappa>\<close>
+
+  so the theorem below mentions no penalty data at all beyond \<open>\<kappa>\<close> itself.  Note
+  \<open>2\<kappa>\<close> and \<open>3\<kappa>\<close> are not sharp (the true constants are \<open>2\<kappa>\<close> and \<open>\<kappa>\<close>); they do not
+  need to be, since \<open>KZ\<close> and \<open>KG\<close> are free parameters and the only place \<open>KG\<close> is
+  constrained is \<open>rsmall\<close>, which can always be restored by shrinking \<open>\<rho>\<close>.\<close>
+
+theorem comparison_from_localised_maximiser_soft:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+    and K :: "(real^'n) set"
+    and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
+    and D\<^sub>0 :: real
+  assumes sub: "visc_subsol k L (interior K) u"
+    and sup: "visc_supersol k L (interior K) w"
+    and t: "0 < \<theta>" "\<theta> < 1"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>\<^sub>P"
+    and cK: "compact K"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
+    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
+    and cw: "continuous_on UNIV (- w)"
+    and mxKK: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst \<xi>\<^sub>0) + supconv (- w) \<epsilon> (snd \<xi>\<^sub>0)
+          - soft_pen \<kappa>\<^sub>P (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+    and xK: "fst \<xi>\<^sub>0 \<in> K" and yK: "snd \<xi>\<^sub>0 \<in> K"
+    and farx: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist (fst \<xi>\<^sub>0) b"
+    and fary: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist (snd \<xi>\<^sub>0) b"
+    and rho: "0 < \<rho>" "\<rho> < r" and rk: "r \<le> \<kappa>"
+    and Rup: "0 < R\<^sub>u" and Rwp: "0 < R\<^sub>w"
+    and smallu: "2*\<epsilon>*(Bu - Blu) < R\<^sub>u\<^sup>2"
+    and smallw: "2*\<epsilon>*(Bw - Blw) < R\<^sub>w\<^sup>2"
+    and fitu: "\<rho> + R\<^sub>u \<le> \<kappa>" and fitw: "\<rho> + R\<^sub>w \<le> \<kappa>"
+    and D0: "0 < D\<^sub>0"
+    and glb: "c \<le> norm (soft_grad \<kappa>\<^sub>P (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))"
+    and rsmall: "(3*\<kappa>\<^sub>P) * (2*\<rho>) < c"
+  shows False
+proof -
+  have KGnn: "0 \<le> 3*\<kappa>\<^sub>P" using kap by linarith
+  show False
+    by (rule comparison_from_localised_maximiser_gen
+        [where u = u and w = w and K = K and \<xi>\<^sub>0 = \<xi>\<^sub>0 and D\<^sub>0 = D\<^sub>0
+           and \<theta> = \<theta> and \<epsilon> = \<epsilon> and \<kappa>\<^sub>P = \<kappa>\<^sub>P and \<rho> = \<rho> and r = r and \<kappa> = \<kappa>
+           and Pn = "soft_pen \<kappa>\<^sub>P" and Gf = "soft_grad \<kappa>\<^sub>P"
+           and Zf = "soft_hess \<kappa>\<^sub>P" and KZ = "2*\<kappa>\<^sub>P" and KG = "3*\<kappa>\<^sub>P"
+           and Bu = Bu and Bw = Bw and Blu = Blu and Blw = Blw
+           and R\<^sub>u = R\<^sub>u and R\<^sub>w = R\<^sub>w and c = c,
+         OF sub sup t(1) t(2) kk(1) kk(2) LL e kap
+            soft_pen_semiconcave[OF kap] soft_pen_jet_field soft_hess_sym
+            soft_hess_bound[OF kap] soft_grad_lipschitz[OF kap] KGnn cK
+            Bu Bw lou low cu cw])
+       (use mxKK xK yK farx fary rho rk Rup Rwp smallu smallw fitu fitw
+            D0 glb rsmall in blast)+
+qed
+
+subsection \<open>Branch (A): the off-diagonal case closes\<close>
+
+text \<open>Given the localised maximiser AND that it is off the diagonal, every
+  remaining parameter of \<open>comparison_from_localised_maximiser_soft\<close> is now
+  determined, and the contradiction follows.  The choices are
+
+    \<open>R\<^sub>u = R\<^sub>w = \<kappa>\<^sub>g/4\<close>   (so \<open>smallu\<close>/\<open>smallw\<close> are exactly what
+                       \<open>doubling_localised_maximiser_soft\<close> delivers)
+    \<open>r = \<kappa>\<^sub>g\<close>
+    \<open>\<rho> < 3\<kappa>\<^sub>g/4\<close>       (so \<open>\<rho> + R\<^sub>u < \<kappa>\<^sub>g\<close> and \<open>\<rho> < r\<close>), and small enough that
+                       \<open>6\<rho> < (1 - 1/R d) norm d\<close>, by \<open>soft_rho_exists\<close>
+    \<open>c = norm (soft_grad \<kappa>\<^sub>P d)\<close>, positive by \<open>soft_grad_norm_pos\<close>
+    \<open>D\<^sub>0 = 1\<close>
+
+  \<open>rsmall\<close> is then \<open>soft_rsmall_of_rho\<close>, and \<open>glb\<close> holds by reflexivity because
+  \<open>c\<close> IS the gradient norm.  Recall \<open>\<kappa>\<^sub>P\<close> cancels in \<open>rsmall\<close>, which is why the
+  condition on \<open>\<rho>\<close> does not depend on it.\<close>
+
+theorem comparison_soft_off_diagonal:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes sub: "visc_subsol k L (interior K) u"
+    and sup: "visc_supersol k L (interior K) w"
+    and t: "0 < \<theta>" "\<theta> < 1"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and cK: "compact K"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
+    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
+    and cw: "continuous_on UNIV (- w)"
+    and epos: "0 < \<epsilon>" and kgpos: "0 < \<kappa>\<^sub>g" and kPpos: "0 < \<kappa>\<^sub>P"
+    and xhK: "xh \<in> K" and yhK: "yh \<in> K"
+    and mxKK: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+          - soft_pen \<kappa>\<^sub>P (xh - yh)"
+    and farx: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa>\<^sub>g < dist xh b"
+    and fary: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa>\<^sub>g < dist yh b"
+    and smallu: "2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    and smallw: "2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    and off: "xh \<noteq> yh"
+  shows False
+proof -
+  have kPnn: "0 \<le> \<kappa>\<^sub>P" using kPpos by linarith
+  have dne: "xh - yh \<noteq> 0" using off by simp
+  \<comment> \<open>the positive gradient lower bound\<close>
+  define c where "c = norm (soft_grad \<kappa>\<^sub>P (xh - yh))"
+  have cpos: "0 < c" unfolding c_def by (rule soft_grad_norm_pos[OF dne kPpos])
+  \<comment> \<open>the radii\<close>
+  define R\<^sub>u where "R\<^sub>u = \<kappa>\<^sub>g/4"
+  have Rupos: "0 < R\<^sub>u" unfolding R\<^sub>u_def using kgpos by simp
+  have Bpos: "0 < 3*\<kappa>\<^sub>g/4" using kgpos by simp
+  obtain \<rho> where rpos: "0 < \<rho>" and rlt: "\<rho> < 3*\<kappa>\<^sub>g/4"
+    and rgrad: "6 * \<rho> < (1 - 1 / sqrt ((norm (xh - yh))\<^sup>2 + 1)) * norm (xh - yh)"
+    using soft_rho_exists[OF dne Bpos] by blast
+  have rltk: "\<rho> < \<kappa>\<^sub>g" using rlt kgpos by simp
+  have fitu: "\<rho> + R\<^sub>u \<le> \<kappa>\<^sub>g" unfolding R\<^sub>u_def using rlt by simp
+  have rsmall: "(3*\<kappa>\<^sub>P) * (2*\<rho>) < c"
+    unfolding c_def by (rule soft_rsmall_of_rho[OF kPpos rgrad])
+  have glb: "c \<le> norm (soft_grad \<kappa>\<^sub>P (fst (xh, yh) - snd (xh, yh)))"
+    unfolding c_def by simp
+  \<comment> \<open>the maximiser hypothesis in the paired form\<close>
+  have mxp: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y
+        - soft_pen \<kappa>\<^sub>P (x - y)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (xh, yh))
+        + supconv (- w) \<epsilon> (snd (xh, yh))
+        - soft_pen \<kappa>\<^sub>P (fst (xh, yh) - snd (xh, yh))"
+    if "x \<in> K" "y \<in> K" for x y
+    using mxKK[OF that] by simp
+  have xKp: "fst (xh, yh) \<in> K" using xhK by simp
+  have yKp: "snd (xh, yh) \<in> K" using yhK by simp
+  have farxp: "\<kappa>\<^sub>g < dist (fst (xh, yh)) b" if "b \<in> K - interior K" for b
+    using farx[OF that] by simp
+  have faryp: "\<kappa>\<^sub>g < dist (snd (xh, yh)) b" if "b \<in> K - interior K" for b
+    using fary[OF that] by simp
+  have smu: "2*\<epsilon>*(Bu - Blu) < R\<^sub>u\<^sup>2" unfolding R\<^sub>u_def by (rule smallu)
+  have smw: "2*\<epsilon>*(Bw - Blw) < R\<^sub>u\<^sup>2" unfolding R\<^sub>u_def by (rule smallw)
+  have D0: "(0::real) < 1" by simp
+  show False
+    by (rule comparison_from_localised_maximiser_soft
+        [where u = u and w = w and K = K and \<xi>\<^sub>0 = "(xh, yh)" and D\<^sub>0 = 1
+           and \<theta> = \<theta> and \<epsilon> = \<epsilon> and \<kappa>\<^sub>P = \<kappa>\<^sub>P and \<kappa> = \<kappa>\<^sub>g and \<rho> = \<rho> and r = \<kappa>\<^sub>g
+           and Bu = Bu and Bw = Bw and Blu = Blu and Blw = Blw
+           and R\<^sub>u = R\<^sub>u and R\<^sub>w = R\<^sub>u and c = c,
+         OF sub sup t(1) t(2) kk(1) kk(2) LL epos kPnn cK Bu Bw lou low cu cw])
+       (use mxp xKp yKp farxp faryp rpos rltk order.refl Rupos
+            smu smw fitu D0 glb rsmall in blast)+
+qed
+
+subsection \<open>Branch (B): the diagonal case closes too\<close>
+
+text \<open>The four steps chained.  At a diagonal maximiser \<open>p\<close> (interior, which the
+  localisation already gives), the maximiser inequality bounds the increment of
+  \<open>B = supconv (-w) \<epsilon>\<close> above by the penalty; the penalty is \<open>o(|h|^2)\<close>; that
+  descends to \<open>-w\<close> at the attainment point; and a supersolution cannot have
+  such a flat point.
+
+  Note this uses NO property of the subsolution side at all --- only the \<open>B\<close>
+  half of the maximiser inequality is consumed.  That is why the diagonal case
+  is genuinely a different argument from the off-diagonal one, which needs the
+  full jet machinery on both sides.\<close>
+
+theorem comparison_soft_diagonal:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n \<Rightarrow> real"
+  assumes sup: "visc_supersol k L (interior K) w"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and Bw: "\<And>y. (- w) y \<le> Bw"
+    and cw: "continuous_on UNIV (- w)"
+    and epos: "0 < \<epsilon>"
+    and pK: "p \<in> K" and pint: "p \<in> interior K"
+    and mxKK: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
+        A x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+        \<le> A p + supconv (- w) \<epsilon> p - soft_pen \<kappa>\<^sub>P (p - p)"
+    and rad: "sqrt (max 0 (2*\<epsilon>*(Bw - (- w) p))) < R\<^sub>w"
+    and subw: "cball p R\<^sub>w \<subseteq> interior K"
+  shows False
+proof -
+  \<comment> \<open>the attainment point, and it is interior\<close>
+  obtain ys where ysO: "ys \<in> interior K"
+    and opt: "supconv (- w) \<epsilon> p = (- w) ys - (dist p ys)\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_in_rad[OF Bw epos cw rad subw] by blast
+  \<comment> \<open>\<open>p\<close> is interior, so \<open>p + hh\<close> stays in \<open>K\<close> for small \<open>hh\<close>\<close>
+  \<comment> \<open>\<open>mem_interior\<close> already delivers the ball inside \<open>K\<close> itself, so no
+      subset-transitivity step is needed — routing it through
+      \<open>interior_subset\<close> instead made \<open>blast\<close> search for seconds and PIDE flag it\<close>
+  obtain r\<^sub>0 where r0: "0 < r\<^sub>0" and rb: "ball p r\<^sub>0 \<subseteq> K"
+    using pint unfolding mem_interior by blast
+  have nb: "p + hh \<in> K" if "hh \<noteq> 0" and "dist hh 0 < r\<^sub>0" for hh
+  proof -
+    have "dist (p + hh) p < r\<^sub>0" using that by (simp add: dist_norm)
+    then have "p + hh \<in> ball p r\<^sub>0" by (simp add: dist_commute)
+    then show ?thesis using rb by blast
+  qed
+  have nbhd: "\<forall>\<^sub>F hh in at 0. p + hh \<in> K"
+    unfolding eventually_at using r0 nb by blast
+  \<comment> \<open>step 1: the increment bound\<close>
+  have dom: "\<forall>\<^sub>F hh in at 0.
+      supconv (- w) \<epsilon> (p + hh) - supconv (- w) \<epsilon> p \<le> soft_pen \<kappa>\<^sub>P hh"
+  proof (rule eventually_mono[OF nbhd])
+    fix hh :: "real^'n"
+    assume hK: "p + hh \<in> K"
+    show "supconv (- w) \<epsilon> (p + hh) - supconv (- w) \<epsilon> p \<le> soft_pen \<kappa>\<^sub>P hh"
+      by (rule diagonal_max_increment_soft[OF mxKK pK hK])
+  qed
+  \<comment> \<open>step 2: it is the one-sided hypothesis\<close>
+  have ub: "\<forall>\<^sub>F hh in at 0.
+      (supconv (- w) \<epsilon> (p + hh) - supconv (- w) \<epsilon> p) / (norm hh)\<^sup>2 < c"
+    if c: "0 < c" for c
+    by (rule diagonal_increment_onesided[OF dom c])
+  \<comment> \<open>step 3: descend to the attainment point\<close>
+  have ubw: "\<forall>\<^sub>F hh in at 0. ((- w) (ys + hh) - (- w) ys) / (norm hh)\<^sup>2 < c"
+    if c: "0 < c" for c
+    by (rule supconv_onesided_descent[OF Bw epos opt ub c])
+  \<comment> \<open>step 4: a supersolution has no such flat point\<close>
+  show False
+    by (rule supersol_no_vanishing_jet_onesided
+        [OF sup ysO kk(1) kk(2) LL ubw])
+qed
+
+subsection \<open>A nonempty compact set has a nonempty frontier\<close>
+
+text \<open>Needed by \<open>max_principle_boundary\<close>: the conclusion asserts a maximiser in
+  \<open>K - interior K\<close>, so that set had better be inhabited.  It is, for compact
+  nonempty \<open>K\<close>: if it were empty then \<open>K \<subseteq> interior K\<close>, hence \<open>K = interior K\<close>
+  is open as well as closed, and a nonempty proper clopen subset of the
+  (connected) whole space cannot exist.  \<open>K \<noteq> UNIV\<close> because \<open>K\<close> is bounded.
+
+  NOTE this also shows \<open>max_principle_boundary k L {}\<close> is FALSE: with \<open>K = {}\<close>
+  the hypotheses hold vacuously but the conclusion asserts membership in the
+  empty set.  So any proof of the predicate needs \<open>K \<noteq> {}\<close> as a side condition;
+  that is not a defect, just a fact about how the predicate is phrased.\<close>
+
+lemma compact_frontier_nonempty:
+  fixes K :: "(real^'n::finite) set"
+  assumes cK: "compact K" and ne: "K \<noteq> {}"
+    and dim: "0 < CARD('n)"
+  shows "K - interior K \<noteq> {}"
+proof -
+  have clK: "closed K" by (rule compact_imp_closed[OF cK])
+  have fr: "frontier K = K - interior K"
+    using clK by (simp add: frontier_def closure_closed)
+  have unb: "\<not> bounded (UNIV :: (real^'n) set)"
+  proof -
+    have "\<exists>x :: 'n. True" using dim by (simp add: card_gt_0_iff ex_in_conv)
+    then show ?thesis by simp
+  qed
+  have nU: "K \<noteq> UNIV"
+  proof
+    assume "K = UNIV"
+    then have "bounded (UNIV :: (real^'n) set)"
+      using compact_imp_bounded[OF cK] by simp
+    with unb show False by blast
+  qed
+  have "frontier K \<noteq> {}" using ne nU by (simp add: frontier_eq_empty)
+  then show ?thesis unfolding fr .
+qed
+
+subsection \<open>The two branches combined\<close>
+
+text \<open>The case split.  \<open>doubling_localised_maximiser_soft\<close> produces the
+  maximiser; if it is off the diagonal, branch (A) closes; if on, branch (B)
+  does.  The only work here is supplying branch (B)'s geometric hypotheses,
+  which the localisation already implies:
+
+    \<open>xh \<in> interior K\<close> --- because \<open>farx\<close> gives \<open>\<kappa>\<^sub>g < dist xh b\<close> for every
+      boundary \<open>b\<close>, and if \<open>xh\<close> were a boundary point that would read
+      \<open>\<kappa>\<^sub>g < dist xh xh = 0\<close>.
+    \<open>cball xh R\<^sub>w \<subseteq> interior K\<close> --- from
+      \<open>cball_subset_interior_of_far_from_boundary\<close> at radius \<open>\<kappa>\<^sub>g\<close>, then
+      \<open>R\<^sub>w = \<kappa>\<^sub>g/4 \<le> \<kappa>\<^sub>g\<close>.
+    the attainment radius bound --- from \<open>supconv_radius_uniform\<close>, whose
+      smallness hypothesis is exactly the extra \<open>\<epsilon>\<close>-bound that
+      \<open>doubling_localised_maximiser_soft\<close> was strengthened to deliver.\<close>
+
+theorem comparison_soft_complete:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes sub: "visc_subsol k L (interior K) u"
+    and sup: "visc_supersol k L (interior K) w"
+    and t: "0 < \<theta>" "\<theta> < 1"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and cK: "compact K" and neK: "K \<noteq> {}"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
+    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
+    and cw: "continuous_on UNIV (- w)"
+    and zK: "z \<in> K"
+    and Mval: "M \<le> \<theta> * u z - w z"
+    and bdry: "\<And>c. c \<in> K - interior K \<Longrightarrow> \<theta> * u c - w c \<le> m"
+    and gapMm: "m < M"
+  shows False
+proof -
+  obtain \<epsilon> \<kappa>\<^sub>g \<kappa>\<^sub>P xh yh where
+        epos: "0 < \<epsilon>" and kgpos: "0 < \<kappa>\<^sub>g" and kPpos: "0 < \<kappa>\<^sub>P"
+    and xhK: "xh \<in> K" and yhK: "yh \<in> K"
+    and mxb: "\<forall>x\<in>K. \<forall>y\<in>K.
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+          - soft_pen \<kappa>\<^sub>P (xh - yh)"
+    and farx: "\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist xh b"
+    and fary: "\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist yh b"
+    and smallu: "2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    and smallw: "2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    using doubling_localised_maximiser_soft
+      [OF cK neK Bu Bw lou low cu cw zK Mval bdry gapMm] by blast
+  have mx: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y
+        - soft_pen \<kappa>\<^sub>P (x - y)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+        - soft_pen \<kappa>\<^sub>P (xh - yh)" if "x \<in> K" "y \<in> K" for x y
+    using mxb that by blast
+  have farxa: "\<kappa>\<^sub>g < dist xh b" if "b \<in> K - interior K" for b
+    using farx that by blast
+  have farya: "\<kappa>\<^sub>g < dist yh b" if "b \<in> K - interior K" for b
+    using fary that by blast
+  show False
+  proof (cases "xh = yh")
+    case False
+    show False
+      by (rule comparison_soft_off_diagonal
+          [OF sub sup t(1) t(2) kk(1) kk(2) LL cK Bu Bw lou low cu cw
+              epos kgpos kPpos xhK yhK mx farxa farya smallu smallw False])
+  next
+    case True
+    \<comment> \<open>\<open>xh\<close> is interior: a boundary point would give \<open>\<kappa>\<^sub>g < dist xh xh = 0\<close>\<close>
+    have pint: "xh \<in> interior K"
+    proof (rule ccontr)
+      assume "xh \<notin> interior K"
+      with xhK have "xh \<in> K - interior K" by simp
+      from farxa[OF this] show False using kgpos by simp
+    qed
+    have clK: "closed K" by (rule compact_imp_closed[OF cK])
+    have kgnn: "0 \<le> \<kappa>\<^sub>g" using kgpos by linarith
+    have insx: "cball xh \<kappa>\<^sub>g \<subseteq> interior K"
+      by (rule cball_subset_interior_of_far_from_boundary
+          [OF clK xhK kgnn farxa])
+    have Rwpos: "0 < \<kappa>\<^sub>g/4" using kgpos by simp
+    have shrink: "cball xh (\<kappa>\<^sub>g/4) \<subseteq> cball xh \<kappa>\<^sub>g"
+    proof
+      fix y assume "y \<in> cball xh (\<kappa>\<^sub>g/4)"
+      then have d1: "dist xh y \<le> \<kappa>\<^sub>g/4" by simp
+      have d2: "\<kappa>\<^sub>g/4 \<le> \<kappa>\<^sub>g" using kgpos by simp
+      show "y \<in> cball xh \<kappa>\<^sub>g" using d1 d2 by simp
+    qed
+    have subw: "cball xh (\<kappa>\<^sub>g/4) \<subseteq> interior K" using shrink insx by blast
+    have rad: "sqrt (max 0 (2*\<epsilon>*(Bw - (- w) xh))) < \<kappa>\<^sub>g/4"
+      by (rule supconv_radius_uniform[OF low epos Rwpos smallw])
+    have mxd: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y
+          - soft_pen \<kappa>\<^sub>P (x - y)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> xh
+          - soft_pen \<kappa>\<^sub>P (xh - xh)" if "x \<in> K" "y \<in> K" for x y
+      using mx[OF that] unfolding True[symmetric] .
+    show False
+      by (rule comparison_soft_diagonal
+          [where w = w and K = K and A = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>"
+             and \<epsilon> = \<epsilon> and \<kappa>\<^sub>P = \<kappa>\<^sub>P and p = xh and R\<^sub>w = "\<kappa>\<^sub>g/4" and Bw = Bw,
+           OF sup kk(1) kk(2) LL Bw cw epos xhK pint mxd rad subw])
+  qed
+qed
+
+section \<open>Theorem 4.2(a): \<open>max_principle_boundary\<close>\<close>
+
+text \<open>The packaging.  \<open>comparison_soft_complete\<close> needs GLOBALLY bounded and
+  GLOBALLY continuous data, while the predicate supplies only \<open>continuous_on K\<close>;
+  the gap is closed by \<open>continuous_extension_bounded\<close> together with
+  \<open>visc_subsol_extend\<close> / \<open>visc_supersol_extend\<close>, which work precisely because
+  the viscosity conditions are LOCAL and \<open>interior K\<close> is open.
+
+  \<open>K \<noteq> {}\<close> is a genuine side condition, not an artefact: see
+  \<open>compact_frontier_nonempty\<close>.\<close>
+
+lemma theta_exists_aux:
+  fixes B G :: real
+  assumes B: "0 \<le> B" and G: "0 < G"
+  shows "\<exists>\<theta>. 0 < \<theta> \<and> \<theta> < 1 \<and> (1-\<theta>)*(2*B) < G"
+proof -
+  obtain t where tpos: "0 < t" and tlt: "2*t*B < G"
+    using exists_eps_aux[OF G B] by blast
+  define t' where "t' = min t (1/2)"
+  have t'pos: "0 < t'" unfolding t'_def using tpos by simp
+  have t'le: "t' \<le> t" unfolding t'_def by simp
+  have t'half: "t' \<le> 1/2" unfolding t'_def by simp
+  have le2: "2*t' \<le> 2*t" using t'le by linarith
+  have "2*t'*B \<le> 2*t*B" by (rule mult_right_mono[OF le2 B])
+  then have lt: "2*t'*B < G" using tlt by linarith
+  have eq: "(1 - (1 - t'))*(2*B) = 2*t'*B" by (simp add: algebra_simps)
+  have th1: "0 < 1 - t'" using t'half by linarith
+  have th2: "1 - t' < 1" using t'pos by linarith
+  have final: "(1 - (1 - t'))*(2*B) < G" unfolding eq by (rule lt)
+  show ?thesis by (rule exI[of _ "1 - t'"]) (intro conjI th1 th2 final)
+qed
+
+theorem max_principle_boundary_holds:
+  fixes K :: "(real^'n::finite) set"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+  shows "max_principle_boundary k L K"
+proof -
+  have dim: "0 < CARD('n)" using kk by simp
+  have clK: "closed K" by (rule compact_imp_closed[OF cK])
+  show ?thesis
+    unfolding max_principle_boundary_def
+  proof (intro allI impI)
+    fix u w :: "real^'n \<Rightarrow> real"
+    assume sub: "visc_subsol k L (interior K) u"
+      and sup: "visc_supersol k L (interior K) w"
+      and cu: "continuous_on K u" and cw: "continuous_on K w"
+    show "\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
+    proof (rule ccontr)
+      assume nb: "\<not> (\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x)"
+      \<comment> \<open>the global maximiser\<close>
+      obtain xs where xsK: "xs \<in> K"
+        and xsmax: "\<And>y. y \<in> K \<Longrightarrow> u y - w y \<le> u xs - w xs"
+        using max_principle_boundary_attains[OF cK neK cu cw] by blast
+      \<comment> \<open>the boundary is compact and nonempty\<close>
+      have clS: "closed (K - interior K)"
+        by (intro closed_Diff clK open_interior)
+      have bS: "bounded (K - interior K)"
+        by (rule bounded_subset[OF compact_imp_bounded[OF cK]]) blast
+      have cpS: "compact (K - interior K)"
+        using bS clS by (simp add: compact_eq_bounded_closed)
+      have neS: "K - interior K \<noteq> {}"
+        by (rule compact_frontier_nonempty[OF cK neK dim])
+      have cS: "continuous_on (K - interior K) (\<lambda>y. u y - w y)"
+        by (intro continuous_intros
+            continuous_on_subset[OF cu Diff_subset]
+            continuous_on_subset[OF cw Diff_subset])
+      obtain xb where xbS: "xb \<in> K - interior K"
+        and xbmax: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y - w y \<le> u xb - w xb"
+        using continuous_attains_sup[OF cpS neS cS] by blast
+      \<comment> \<open>the boundary maximum is STRICTLY below the global one\<close>
+      have gap: "u xb - w xb < u xs - w xs"
+      proof -
+        from nb obtain y where yK: "y \<in> K"
+          and ygt: "\<not> (u y - w y \<le> u xb - w xb)"
+          using xbS by blast
+        have "u xb - w xb < u y - w y" using ygt by linarith
+        also have "u y - w y \<le> u xs - w xs" by (rule xsmax[OF yK])
+        finally show ?thesis .
+      qed
+      \<comment> \<open>globally bounded, globally continuous replacements\<close>
+      obtain Bu where Bu0: "0 \<le> Bu" and BuK: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bu"
+        using bounded_on_compact[OF cK cu] by blast
+      obtain Bw where Bw0: "0 \<le> Bw" and BwK: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> Bw"
+        using bounded_on_compact[OF cK cw] by blast
+      define B where "B = max Bu Bw"
+      have B0: "0 \<le> B" unfolding B_def using Bu0 by simp
+      have BuB: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B"
+        unfolding B_def using BuK by (simp add: le_max_iff_disj)
+      have BwB: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> B"
+        unfolding B_def using BwK by (simp add: le_max_iff_disj)
+      obtain u' where cu': "continuous_on UNIV u'"
+        and equ: "\<And>y. y \<in> K \<Longrightarrow> u' y = u y" and bu': "\<And>y. \<bar>u' y\<bar> \<le> B"
+        using continuous_extension_bounded[OF clK cu B0 BuB] by blast
+      obtain w' where cw': "continuous_on UNIV w'"
+        and eqw: "\<And>y. y \<in> K \<Longrightarrow> w' y = w y" and bw': "\<And>y. \<bar>w' y\<bar> \<le> B"
+        using continuous_extension_bounded[OF clK cw B0 BwB] by blast
+      have sub': "visc_subsol k L (interior K) u'"
+        by (rule visc_subsol_extend[OF sub equ])
+      have sup': "visc_supersol k L (interior K) w'"
+        by (rule visc_supersol_extend[OF sup eqw])
+      \<comment> \<open>the \<open>\<theta>\<close>-scaling preserves the gap\<close>
+      have Gpos: "0 < (u xs - w xs) - (u xb - w xb)" using gap by linarith
+      obtain \<theta> where tpos: "0 < \<theta>" and tlt1: "\<theta> < 1"
+        and tgap: "(1-\<theta>)*(2*B) < (u xs - w xs) - (u xb - w xb)"
+        using theta_exists_aux[OF B0 Gpos] by blast
+      have absu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" by (rule BuB)
+      have strict: "\<theta> * u y - w y < \<theta> * u xs - w xs"
+        if y: "y \<in> K - interior K" for y
+        by (rule theta_gap_preserved
+            [where u = u and w = w and K = K and B = B and \<theta> = \<theta>
+               and M = "u xs - w xs" and m = "u xb - w xb"
+               and xs = xs and S = "K - interior K" and y = y,
+             OF absu less_imp_le[OF tlt1] tgap xsK order.refl
+                Diff_subset xbmax y])
+      \<comment> \<open>a uniform boundary bound for the scaled pair\<close>
+      have cS2: "continuous_on (K - interior K) (\<lambda>y. \<theta> * u y - w y)"
+        by (intro continuous_intros
+            continuous_on_subset[OF cu Diff_subset]
+            continuous_on_subset[OF cw Diff_subset])
+      obtain xc where xcS: "xc \<in> K - interior K"
+        and xcmax: "\<And>y. y \<in> K - interior K \<Longrightarrow>
+            \<theta> * u y - w y \<le> \<theta> * u xc - w xc"
+        using continuous_attains_sup[OF cpS neS cS2] by blast
+      define mm where "mm = \<theta> * u xc - w xc"
+      define MM where "MM = \<theta> * u xs - w xs"
+      have mlt: "mm < MM" unfolding mm_def MM_def by (rule strict[OF xcS])
+      \<comment> \<open>transfer everything to the extended data and close\<close>
+      have bdry': "\<theta> * u' c - w' c \<le> mm" if c: "c \<in> K - interior K" for c
+      proof -
+        have cK': "c \<in> K" using c by simp
+        have "\<theta> * u' c - w' c = \<theta> * u c - w c"
+          unfolding equ[OF cK'] eqw[OF cK'] ..
+        also have "\<dots> \<le> mm" unfolding mm_def by (rule xcmax[OF c])
+        finally show ?thesis .
+      qed
+      have Mval': "MM \<le> \<theta> * u' xs - w' xs"
+        unfolding MM_def equ[OF xsK] eqw[OF xsK] by simp
+      have upu: "\<theta> * u' y \<le> \<theta> * B" for y
+        by (rule mult_left_mono) (use bu'[of y] tpos in linarith)+
+      have lou: "- (\<theta> * B) \<le> \<theta> * u' y" for y
+      proof -
+        have "\<theta> * (- B) \<le> \<theta> * u' y"
+          by (rule mult_left_mono) (use bu'[of y] tpos in linarith)+
+        then show ?thesis by simp
+      qed
+      have upw: "(- w') y \<le> B" for y using bw'[of y] by simp
+      have low: "- B \<le> (- w') y" for y using bw'[of y] by simp
+      have cuu: "continuous_on UNIV (\<lambda>y. \<theta> * u' y)"
+        by (intro continuous_intros cu')
+      \<comment> \<open>\<open>continuous_intros\<close> does not see through the FUNCTION-level negation
+          \<open>- w'\<close>; unfold it to a lambda first\<close>
+      have cww: "continuous_on UNIV (- w')"
+      proof -
+        have e: "(- w') = (\<lambda>y. - w' y)" by (rule ext) simp
+        show ?thesis unfolding e by (intro continuous_intros cw')
+      qed
+      show False
+        by (rule comparison_soft_complete
+            [where u = u' and w = w' and K = K and \<theta> = \<theta>
+               and Bu = "\<theta> * B" and Bw = B and Blu = "- (\<theta> * B)" and Blw = "- B"
+               and z = xs and M = MM and m = mm,
+             OF sub' sup' tpos tlt1 kk(1) kk(2) LL cK neK upu upw lou low
+                cuu cww xsK Mval' bdry' mlt])
+    qed
+  qed
+qed
+
+section \<open>Uniqueness on a general compact set\<close>
+
+text \<open>The first consequence of Theorem 4.2(a), and the one Theorem 1.1 wants:
+  two continuous viscosity solutions on a compact \<open>K\<close> that agree on
+  \<open>K - interior K\<close> agree everywhere on \<open>K\<close>.
+
+  Both directions are the same argument with the roles swapped.  \<open>u\<close> is a
+  subsolution and \<open>w\<close> a supersolution, so \<open>max_principle_boundary\<close> puts the
+  maximum of \<open>u - w\<close> on the boundary, where it is zero; hence \<open>u \<le> w\<close> on \<open>K\<close>.
+  Then \<open>w\<close> is a subsolution and \<open>u\<close> a supersolution, giving \<open>w \<le> u\<close>.
+
+  This generalises the third clause of \<open>theorem_1_1_ball_fragment\<close>, which was
+  available only for \<open>K = cball 0 r\<close> --- there via the explicit Example 3.1
+  optimal-boundary formula \<open>ball_v\<close> rather than via comparison.\<close>
+
+text \<open>The comparison principle proper, with ORDERED boundary data --- weaker
+  hypotheses than \<open>viscosity_uniqueness_compact\<close> below and the form most uses
+  want.  A subsolution below a supersolution on the boundary stays below it
+  throughout.\<close>
+
+theorem comparison_compact:
+  fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
+    and subu: "visc_subsol k L (interior K) u"
+    and supw: "visc_supersol k L (interior K) w"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> w y"
+    and x: "x \<in> K"
+  shows "u x \<le> w x"
+proof -
+  have mpb: "max_principle_boundary k L K"
+    by (rule max_principle_boundary_holds[OF cK neK kk(1) kk(2) LL])
+  obtain b where bB: "b \<in> K - interior K"
+    and bmax: "\<And>y. y \<in> K \<Longrightarrow> u y - w y \<le> u b - w b"
+    using mpb subu supw cu cw unfolding max_principle_boundary_def by blast
+  have "u b - w b \<le> 0" using bd[OF bB] by linarith
+  then have "u x - w x \<le> 0" using bmax[OF x] by linarith
+  then show ?thesis by linarith
+qed
+
+theorem viscosity_uniqueness_compact:
+  fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
+    and su: "visc_sol k L (interior K) u"
+    and sw: "visc_sol k L (interior K) w"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
+    and x: "x \<in> K"
+  shows "u x = w x"
+proof -
+  have mpb: "max_principle_boundary k L K"
+    by (rule max_principle_boundary_holds[OF cK neK kk(1) kk(2) LL])
+  have subu: "visc_subsol k L (interior K) u"
+    and supu: "visc_supersol k L (interior K) u"
+    using su by (auto simp: visc_sol_def)
+  have subw: "visc_subsol k L (interior K) w"
+    and supw: "visc_supersol k L (interior K) w"
+    using sw by (auto simp: visc_sol_def)
+  \<comment> \<open>\<open>u - w\<close> peaks on the boundary, where it vanishes\<close>
+  have le: "u x \<le> w x"
+  proof -
+    obtain b where bB: "b \<in> K - interior K"
+      and bmax: "\<And>y. y \<in> K \<Longrightarrow> u y - w y \<le> u b - w b"
+      using mpb subu supw cu cw unfolding max_principle_boundary_def by blast
+    have "u b - w b = 0" using bd[OF bB] by simp
+    then have "u x - w x \<le> 0" using bmax[OF x] by linarith
+    then show ?thesis by linarith
+  qed
+  \<comment> \<open>and the same with the roles swapped\<close>
+  have ge: "w x \<le> u x"
+  proof -
+    obtain b where bB: "b \<in> K - interior K"
+      and bmax: "\<And>y. y \<in> K \<Longrightarrow> w y - u y \<le> w b - u b"
+      using mpb subw supu cw cu unfolding max_principle_boundary_def by blast
+    have "w b - u b = 0" using bd[OF bB] by simp
+    then have "w x - u x \<le> 0" using bmax[OF x] by linarith
+    then show ?thesis by linarith
+  qed
+  from le ge show ?thesis by simp
 qed
 
 section \<open>Map of the Theorem 4.2(a) chain\<close>

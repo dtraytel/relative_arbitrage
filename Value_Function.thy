@@ -198,7 +198,6 @@ proof -
 qed
 
 section \<open>Example 3.1 for the value function: the upper bound of Eq. (3.9)\<close>
-
 text \<open>For every market of \<open>\<P>\<^sub>x\<^sub>0\<close> confined to the ball, the expected exit
   time is at most \<open>v\<close> of Eq. (3.9) (\<open>expected_exit_time_bound\<close>), hence so is
   every almost-sure lower bound on the exit time, hence so is their
@@ -308,4 +307,91 @@ theorem val_fn_mono:
   shows "val_fn k L K x0 \<le> val_fn k L K' x0"
   unfolding val_fn_def
   by (rule Sup_subset_mono[OF mkt_exit_vals_mono[OF KK]])
+
+
+section \<open>Two facts about \<open>val_fn\<close> that need no probability at all\<close>
+
+text \<open>FINITENESS.  This is clause (0) of Theorem 1.1 --- for
+  \<open>v = enn2real \<circ> val_fn\<close> to be a faithful real-valued function one needs
+  \<open>val_fn < \<top>\<close> --- and it is free: a bounded \<open>K\<close> sits inside some \<open>cball 0 a\<close>,
+  \<open>val_fn\<close> is monotone in \<open>K\<close>, and on a ball it is bounded by the explicit
+  Example 3.1 value \<open>ball_v\<close>.
+
+  VANISHING OFF \<open>K\<close>.  The market locale requires \<open>x0 \<in> K\<close>, so outside \<open>K\<close> the
+  index set of the supremum is EMPTY and \<open>val_fn\<close> is \<open>Sup {} = \<bottom> = 0\<close>.\<close>
+
+lemma val_fn_finite_bounded:
+  fixes K :: "(real^'n::finite) set" and x0 :: "real^'n"
+  assumes B: "bounded K"
+  shows "val_fn k L K x0 < \<top>"
+proof -
+  obtain a where a: "\<And>x. x \<in> K \<Longrightarrow> norm x \<le> a"
+    using B unfolding bounded_iff by blast
+  have sub: "K \<subseteq> cball 0 a"
+    using a by (simp add: subset_iff dist_norm)
+  have "val_fn k L K x0 \<le> val_fn k L (cball 0 a) x0"
+    by (rule val_fn_mono[OF sub])
+  also have "\<dots> \<le> ennreal (ball_v a k x0)" by (rule val_fn_le_ball_v)
+  also have "\<dots> < \<top>" by simp
+  finally show ?thesis .
+qed
+
+text \<open>CLAUSE (3) OF THEOREM 1.1, for the ball.  \<open>ball_v r k x\<close> is
+  \<open>max (r\<^sup>2 - x \<bullet> x) 0 / (CARD('n) - k)\<close>, which vanishes exactly when
+  \<open>x \<bullet> x \<ge> r\<^sup>2\<close> --- in particular on the sphere.  Combined with
+  \<open>val_fn_boundary\<close> this gives the zero boundary condition of Eq. (1.10) on
+  \<open>cball 0 r - interior (cball 0 r)\<close>.
+
+  For a GENERAL compact \<open>K\<close> this is Lemma 5.3 of the paper, which reuses the
+  measure constructed in Example 3.1 and is therefore behind the same weak
+  existence result as clauses (1) and (2).\<close>
+
+lemma ball_v_boundary_zero:
+  fixes x0 :: "real^'n::finite"
+  assumes x0: "norm x0 = r"
+  shows "ball_v r k x0 = 0"
+proof -
+  have "x0 \<bullet> x0 = r\<^sup>2" using x0 by (simp add: power2_norm_eq_inner[symmetric])
+  then show ?thesis unfolding ball_v_def by simp
+qed
+
+lemma val_fn_boundary_zero:
+  fixes x0 :: "real^'n::finite"
+  assumes x0: "norm x0 = r"
+  shows "val_fn k L (cball 0 r) x0 = 0"
+proof -
+  have "val_fn k L (cball 0 r) x0 = ennreal (ball_v r k x0)"
+    by (rule val_fn_boundary[OF x0])
+  also have "\<dots> = ennreal 0" unfolding ball_v_boundary_zero[OF x0] ..
+  finally show ?thesis by simp
+qed
+
+lemma val_fn_zero_on_frontier_ball:
+  fixes r :: real and x0 :: "real^'n::finite"
+  assumes x0: "x0 \<in> cball 0 r - interior (cball (0::real^'n) r)"
+  shows "val_fn k L (cball 0 r) x0 = 0"
+proof -
+  have le: "norm x0 \<le> r" using x0 by (simp add: dist_norm)
+  have nlt: "\<not> norm x0 < r"
+    using x0 unfolding interior_cball by (simp add: dist_norm)
+  have "norm x0 = r" using le nlt by linarith
+  then show ?thesis by (rule val_fn_boundary_zero)
+qed
+
+text \<open>NOT PROVED HERE, and worth recording why.  \<open>val_fn k L K x0 = 0\<close> for
+  \<open>x0 \<notin> K\<close> is TRUE and nearly trivial mathematically --- the market locale
+  requires \<open>x0 \<in> K\<close> (\<open>sufficiently_volatile_market.x0_in_K\<close>), so the index set
+  of the supremum is empty and \<open>Sup {} = \<bottom> = 0\<close>.  The obstruction is purely one
+  of TYPE INFERENCE: eliminating the five-fold existential inside
+  \<open>mkt_exit_vals\<close> introduces FRESH type variables for the measure, filtration
+  and process, which then fail to unify with the ones in the membership fact
+  (PIDE reports "Introduced fixed type variable(s): 'a"), and the resulting
+  goal \<open>\<exists>\<dots> \<Longrightarrow> \<exists>\<dots>\<close> is refused by both \<open>simp\<close> and \<open>blast\<close> although the two sides
+  print identically.  Fixing it needs the eliminated variables' types pinned
+  explicitly in the \<open>obtain\<close>.
+
+  Left undone deliberately: it is not on the path to anything, and
+  \<open>val_fn_finite_bounded\<close> above --- which IS clause (0) of Theorem 1.1 --- does
+  not depend on it.\<close>
+
 end

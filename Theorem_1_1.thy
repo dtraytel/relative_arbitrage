@@ -84,4 +84,149 @@ proof -
   from le ge show "u x0 = ball_v r k x0" by simp
 qed
 
+text \<open>UPDATE (2026-08-02).  Blocker (iii) above --- "general compact \<open>K\<close>,
+  behind Crandall--Ishii" --- is GONE.  Theorem 4.2(a) is proved, as
+  \<open>max_principle_boundary_holds\<close> in Comparison\_Assembly:
+
+    \<open>compact K \<Longrightarrow> K \<noteq> {} \<Longrightarrow> 1 \<le> k \<Longrightarrow> k < CARD('n) \<Longrightarrow> 1 \<le> L
+       \<Longrightarrow> max_principle_boundary k L K\<close>
+
+  so the uniqueness clause is no longer tied to the ball.  The third clause of
+  \<open>theorem_1_1_ball_fragment\<close> above reaches \<open>u = ball_v\<close> through Example 3.1's
+  explicit optimal-boundary formula; the theorem below reaches uniqueness for an
+  arbitrary compact \<open>K\<close> through comparison instead, and needs no formula at all.
+
+  What still blocks the FULL Theorem 1.1 is unchanged, and is not PDE work:
+
+  \<^item> upper semicontinuity of \<open>v\<close> and the viscosity property (Prop 2.4 via
+    Lemmas 2.2/2.3);
+  \<^item> the lower bound \<open>ball_v \<le> v\<close> at interior points --- the Section 3.1
+    martingale construction, which needs weak existence for Eq. (3.11).
+
+  Both are stochastic analysis, not comparison.\<close>
+
+section \<open>Theorem 1.1: exactly which clauses are proved\<close>
+
+text \<open>Theorem 1.1 asserts that \<open>v\<close> of Eq. (1.6) is the unique upper
+  semicontinuous viscosity solution with zero boundary values.  In this
+  development's vocabulary, with \<open>v = enn2real \<circ> val_fn k L K\<close>, it has five
+  clauses.  Status as of 2026-08-02:
+
+  \<^item> (0) FINITENESS, \<open>val_fn k L K x < \<top>\<close> --- PROVED for every bounded \<open>K\<close>:
+    \<open>val_fn_finite_bounded\<close> (Value\_Function).
+  \<^item> (1) REGULARITY (the paper's usc; this development has no usc predicate and
+    uses continuity) --- OPEN.
+  \<^item> (2) \<open>visc_sol k L (interior K) v\<close>, Eq. (1.9) --- OPEN.
+  \<^item> (3) ZERO BOUNDARY VALUES, Eq. (1.10) --- PROVED for \<open>K = cball 0 r\<close>:
+    \<open>val_fn_zero_on_frontier_ball\<close> (Value\_Function).  OPEN for general \<open>K\<close>,
+    where it is Lemma 5.3 of the paper.
+  \<^item> (4) UNIQUENESS --- PROVED for every compact \<open>K\<close>:
+    \<open>theorem_1_1_uniqueness_general\<close> below, via Theorem 4.2(a).
+
+  WHAT BLOCKS (1), (2) AND (3)-for-general-\<open>K\<close>, and why it is not a matter of
+  assembly.  All three reduce to two things the paper does not supply:
+
+  \<^item> Proposition 2.4 --- which gives usc of \<open>v\<close>, the dynamic programming
+    principle AND attainment of the supremum --- has NO proof in the paper.  Its
+    entire proof is the sentence "It suffices to repeat [larsson\_minimum\_2022,
+    proofs of Proposition 2.2(ii), (iii)] word by word."  Discharging it without
+    assumption needs a universally measurable selection theorem over analytic
+    sets and a Skorokhod representation on \<open>C([0,\<infinity>))\<close>, NEITHER of which exists
+    in Isabelle/HOL, the AFP, or this repository.
+  \<^item> Example 3.1's lower bound \<open>ball_v \<le> v\<close> needs a global weak solution of
+    Eq. (3.11) --- a bounded, continuous, DEGENERATE, NON-LIPSCHITZ SDE on the
+    punctured space --- for which the paper cites no theorem by name.
+
+  Note the second point means even "Theorem 1.1 for the ball" is out of reach:
+  the \<open>\<le>\<close> half (\<open>val_fn_le_ball_v\<close>) has always been available; it is the \<open>\<ge>\<close>
+  half that is missing, and it is missing structurally.\<close>
+
+section \<open>A SECOND refutable interface, found by scoping Theorem 1.1\<close>
+
+text \<open>\<open>comparison_principle\<close> (Relative\_Arbitrage\_Uniqueness) axiomatises
+  comparison with NO continuity hypothesis on \<open>u\<close> and \<open>w\<close>.  That is the same
+  defect the project already found and repaired in \<open>max_principle_boundary_raw\<close>,
+  and it is fatal for the same reason: \<open>visc_subsol\<close>/\<open>visc_supersol\<close> are LOCAL
+  conditions on \<open>\<Omega>\<close>, so the values of a sub- or supersolution OUTSIDE \<open>\<Omega>\<close> are
+  completely unconstrained and can be moved to violate any boundary comparison.
+
+  Concretely: take \<open>u = ball_v + 1\<close> (a subsolution, since adding a constant
+  changes neither gradient nor Hessian of a test function) and \<open>w'\<close> equal to
+  \<open>ball_v\<close> INSIDE the ball and to \<open>ball_v + 1\<close> outside.  \<open>visc_supersol_cong_on\<close>
+  keeps \<open>w'\<close> a supersolution because it agrees with \<open>ball_v\<close> on the open ball;
+  on \<open>closure (ball 0 r) - ball 0 r\<close> the two functions are EQUAL, so the
+  locale's boundary hypothesis holds; and the locale then forces
+  \<open>ball_v + 1 \<le> ball_v\<close> at the centre.
+
+  CONSEQUENCE: \<open>ball_v_unique_solution\<close> (Relative\_Arbitrage\_Uniqueness:499),
+  which carries \<open>comparison_principle k L (ball 0 r)\<close> as a hypothesis, is
+  VACUOUS for every \<open>r > 0\<close>.  It should be restated against
+  \<open>comparison_compact\<close> or \<open>viscosity_uniqueness_compact\<close>, both of which are now
+  unconditional --- \<open>theorem_1_1_uniqueness_general\<close> below is the replacement.\<close>
+
+lemma visc_subsol_shift:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes s: "visc_subsol k L \<Omega> u"
+  shows "visc_subsol k L \<Omega> (\<lambda>y. u y + c)"
+  unfolding visc_subsol_def
+proof (intro ballI allI impI)
+  fix x \<phi> g H
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. (u y + c) - \<phi> y \<le> (u x + c) - \<phi> x"
+  from lm have "\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x" by auto
+  with s x tf show "ell_op k L (g x) H \<le> 1"
+    unfolding visc_subsol_def by blast
+qed
+
+theorem comparison_principle_refuted:
+  fixes r :: real and k :: nat and L :: real
+  assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L" and r: "0 < r"
+  shows "\<not> comparison_principle k L (ball (0::real^'n) r)"
+proof
+  assume cp: "comparison_principle k L (ball (0::real^'n) r)"
+  have vs: "visc_sol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
+    by (rule ball_v_visc_sol_exists(2)[OF k L])
+  have subv: "visc_subsol k L (ball (0::real^'n) r) (ball_v r k)"
+    and supv: "visc_supersol k L (ball (0::real^'n) r) (ball_v r k)"
+    using vs by (auto simp: visc_sol_def)
+  \<comment> \<open>the raised subsolution\<close>
+  have subu: "visc_subsol k L (ball (0::real^'n) r) (\<lambda>y. ball_v r k y + 1)"
+    by (rule visc_subsol_shift[OF subv])
+  \<comment> \<open>the supersolution altered only OUTSIDE the ball\<close>
+  define w' :: "real^'n \<Rightarrow> real" where
+    "w' = (\<lambda>y. if y \<in> ball (0::real^'n) r then ball_v r k y else ball_v r k y + 1)"
+  have eqw: "w' y = ball_v r k y" if "y \<in> ball (0::real^'n) r" for y
+    unfolding w'_def using that by simp
+  have supw: "visc_supersol k L (ball (0::real^'n) r) w'"
+    by (rule visc_supersol_cong_on[OF supv open_ball eqw])
+  \<comment> \<open>on the boundary the two agree, so the locale's hypothesis holds\<close>
+  have bdy: "\<forall>y \<in> closure (ball (0::real^'n) r) - ball (0::real^'n) r.
+      ball_v r k y + 1 \<le> w' y"
+  proof
+    fix y assume y: "y \<in> closure (ball (0::real^'n) r) - ball (0::real^'n) r"
+    have "y \<notin> ball (0::real^'n) r" using y by simp
+    then show "ball_v r k y + 1 \<le> w' y" unfolding w'_def by simp
+  qed
+  have zin: "(0::real^'n) \<in> ball (0::real^'n) r" using r by simp
+  \<comment> \<open>and the locale then forces an absurdity at the centre\<close>
+  have lt: "ball_v r k (0::real^'n) + 1 \<le> w' 0"
+    by (rule comparison_principle.comparison[OF cp subu supw bdy zin])
+  have eq0: "w' (0::real^'n) = ball_v r k (0::real^'n)"
+    unfolding w'_def by (rule if_P[OF zin])
+  from lt[unfolded eq0] show False by simp
+qed
+
+theorem theorem_1_1_uniqueness_general:
+  fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+    and cu: "continuous_on K u" and cw: "continuous_on K w"
+    and su: "visc_sol k L (interior K) u"
+    and sw: "visc_sol k L (interior K) w"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
+    and x: "x \<in> K"
+  shows "u x = w x"
+  by (rule viscosity_uniqueness_compact
+      [OF cK neK k(1) k(2) L cu cw su sw bd x])
+
 end
