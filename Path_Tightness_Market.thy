@@ -76,4 +76,57 @@ proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0
   qed
 qed
 
+
+section \<open>Item 2.1 of the Theorem 1.1 plan: the exit time is upper semicontinuous\<close>
+
+text \<open>The join.  \<open>Exit_Time.etime_less_iff\<close> says being strictly below \<open>c\<close> is
+  WITNESSED by a single time \<open>r < c\<close> at which the path is already in \<open>A\<close>;
+  \<open>Path_Space.open_hit_strictly_before\<close> says the witnessed condition is OPEN in
+  the path topology.  Together they give upper semicontinuity of the exit time,
+  which is what Larsson--Ruf's Lemma 2.1 needs and what feeds item 2.3.
+
+  This theory is the ONLY one in the development that sees both halves:
+  \<open>Exit_Time\<close> sits under \<open>Ito_Market\<close> while \<open>Path_Space\<close> sits under the AFP
+  Prokhorov entry, and the two branches meet nowhere else.
+
+  The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one --- a
+  path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close> EVERY path
+  qualifies and the set is the whole space.\<close>
+
+lemma etime_usc_on_paths:
+  fixes T c :: real and A :: "'b::polish_space set"
+  assumes T: "0 \<le> T" and A: "open A"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         etime T A (\<lambda>s w. w s) f < c}"
+proof (cases "T < c")
+  case True
+  have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+        etime T A (\<lambda>s w. w s) f < c}
+      = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+  proof -
+    have "etime T A (\<lambda>s w. w s) f < c" for f :: "real \<Rightarrow> 'b"
+      using etime_le_T[OF T, of A "\<lambda>s w. w s" f] True by linarith
+    thus ?thesis by blast
+  qed
+  then show ?thesis
+    using openin_topspace[of
+        "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)"]
+    by simp
+next
+  case False
+  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+        etime T A (\<lambda>s w. w s) f < c}
+      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         \<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A}"
+  proof -
+    have "etime T A (\<lambda>s w. w s) f < c
+        \<longleftrightarrow> (\<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A)"
+      for f :: "real \<Rightarrow> 'b"
+      using etime_less_iff[OF T, of A "\<lambda>s w. w s" f c] False by auto
+    thus ?thesis by blast
+  qed
+  show ?thesis unfolding eq by (rule open_hit_strictly_before[OF A])
+qed
+
 end

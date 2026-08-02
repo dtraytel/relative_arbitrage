@@ -2185,6 +2185,45 @@ text \<open>The remaining step of RQ-A is to upgrade weak convergence by uniform
   only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the whole error is
   dominated by the tail integral that \<open>sq_tail_bound_of_fourth_moment\<close> bounds.\<close>
 
+text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with all measure theory removed.
+
+  RQ-A passes a linear inequality to a weak limit by truncating the integrand at
+  height \<open>R\<close>: the truncation is bounded and continuous, so weak convergence
+  applies to it directly, and the two truncation errors are controlled uniformly
+  by \<open>sq_tail_bound_of_fourth_moment\<close>.  What that leaves is precisely this
+  real-analysis fact --- a sequence that is UNIFORMLY within \<open>e\<close> of some
+  convergent sequence, whose limit is itself within \<open>e\<close> of \<open>z\<close>, for EVERY \<open>e\<close>,
+  converges to \<open>z\<close>.
+
+  Isolating it here means the measure-theoretic assembly never has to do
+  \<open>\<epsilon>\<close>-juggling inline.  The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so that the
+  three terms sum to \<open>3\<epsilon>/4 < \<epsilon>\<close> STRICTLY, which is what \<open>LIMSEQ_I\<close> wants.\<close>
+
+lemma tendsto_real_of_approximants:
+  fixes x :: "nat \<Rightarrow> real" and z :: real
+  assumes approx: "\<And>e. 0 < e \<Longrightarrow>
+      \<exists>y w. (\<forall>m. \<bar>x m - y m\<bar> \<le> e) \<and> (y \<longlonglongrightarrow> w) \<and> \<bar>w - z\<bar> \<le> e"
+  shows "x \<longlonglongrightarrow> z"
+proof (rule LIMSEQ_I)
+  fix r :: real assume r: "0 < r"
+  have q: "0 < r/4" using r by simp
+  obtain y w where near: "\<And>m. \<bar>x m - y m\<bar> \<le> r/4"
+    and lim: "y \<longlonglongrightarrow> w" and wz: "\<bar>w - z\<bar> \<le> r/4"
+    using approx[OF q] by blast
+  obtain no where no: "\<And>m. no \<le> m \<Longrightarrow> norm (y m - w) < r/4"
+    using LIMSEQ_D[OF lim q] by blast
+  have "norm (x m - z) < r" if m: "no \<le> m" for m
+  proof -
+    have "\<bar>x m - z\<bar> \<le> \<bar>x m - y m\<bar> + \<bar>y m - w\<bar> + \<bar>w - z\<bar>" by simp
+    moreover have "\<bar>y m - w\<bar> < r/4" using no[OF m] by simp
+    ultimately have "\<bar>x m - z\<bar> < r/4 + r/4 + r/4"
+      using near[of m] wz by linarith
+    moreover have "r/4 + r/4 + r/4 < r" using r by simp
+    ultimately show ?thesis by simp
+  qed
+  then show "\<exists>no. \<forall>m\<ge>no. norm (x m - z) < r" by blast
+qed
+
 lemma clamp_diff_le_tail_pointwise:
   fixes z R :: real
   assumes Rnn: "0 \<le> R"

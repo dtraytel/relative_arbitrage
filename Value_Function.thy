@@ -104,6 +104,89 @@ proof -
   thus ?thesis unfolding ess_inf_time_def S_def[symmetric] using sup by simp
 qed
 
+text \<open>The characterisation the upper-semicontinuity argument runs on: the
+  essential infimum is at least \<open>c\<close> EXACTLY when \<open>c\<close> is an almost-sure lower
+  bound.  Both directions are already available --- \<open>ess_inf_timeI\<close> one way,
+  \<open>ess_inf_time_AE\<close> the other --- but having the iff is what lets the weak
+  convergence argument work with the SET \<open>{\<tau> \<ge> c}\<close> rather than with the
+  essential infimum itself.
+
+  This gives a route to Larsson--Ruf's Lemma 2.1 that is SHORTER than theirs.
+  They prove \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close> usc by writing it as \<open>inf\<^bsub>\<lambda>>0\<^esub> f\<^sub>\<lambda>\<close> with
+  \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) log E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close> and applying the Portmanteau theorem to each
+  \<open>f\<^sub>\<lambda>\<close>.  But upper semicontinuity is exactly closedness of every superlevel set
+  \<open>{P : c \<le> P-essinf \<tau>}\<close>, and by the iff below that set is
+  \<open>{P : P{\<tau> \<ge> c} = 1}\<close>.  Since \<open>\<tau>\<^sub>K\<close> is usc the set \<open>{\<tau>\<^sub>K \<ge> c}\<close> is CLOSED, and the
+  closed-set form of Portmanteau --- \<open>limsup P\<^sub>m(A) \<le> P(A)\<close> for closed \<open>A\<close>, which
+  is the form the AFP's \<open>Levy_Prokhorov_Metric\<close> actually provides --- closes it
+  in one step, with no Laplace transform anywhere.\<close>
+
+lemma ess_inf_time_ge_iff:
+  "c \<le> ess_inf_time M tau \<longleftrightarrow> (AE \<omega> in M. c \<le> ennreal (tau \<omega>))"
+proof
+  assume c: "c \<le> ess_inf_time M tau"
+  have ae: "AE \<omega> in M. ess_inf_time M tau \<le> ennreal (tau \<omega>)"
+    by (rule ess_inf_time_AE)
+  show "AE \<omega> in M. c \<le> ennreal (tau \<omega>)"
+  proof (rule eventually_mono[OF ae])
+    fix \<omega> assume h: "ess_inf_time M tau \<le> ennreal (tau \<omega>)"
+    show "c \<le> ennreal (tau \<omega>)" by (rule order_trans[OF c h])
+  qed
+next
+  assume "AE \<omega> in M. c \<le> ennreal (tau \<omega>)"
+  then show "c \<le> ess_inf_time M tau" by (rule ess_inf_timeI)
+qed
+
+text \<open>The form item 2.3 consumes, in the AFP's own vocabulary.  \<open>mweak_conv2\<close>
+  (\<open>Levy_Prokhorov_Metric.General_Weak_Convergence\<close>) states the closed-set
+  Portmanteau with \<open>measure\<close>, not \<open>emeasure\<close> and not \<open>AE\<close>, so the superlevel set
+  of the essential infimum has to be presented as a set of FULL MEASURE.
+
+  With that, item 2.3 is three lines: \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed because \<open>\<tau>\<^sub>K\<close> is usc,
+  every \<open>N\<^sub>i\<close> gives it measure 1, and \<open>mweak_conv2\<close> yields
+  \<open>1 = limsup N\<^sub>i(A) \<le> N(A) \<le> 1\<close>.\<close>
+
+lemma ess_inf_time_ge_iff_measure:
+  assumes P: "prob_space M"
+    and m: "{\<omega> \<in> space M. c \<le> ennreal (tau \<omega>)} \<in> sets M"
+  shows "c \<le> ess_inf_time M tau
+      \<longleftrightarrow> measure M {\<omega> \<in> space M. c \<le> ennreal (tau \<omega>)} = 1"
+proof -
+  interpret prob_space M by (rule P)
+  have "c \<le> ess_inf_time M tau \<longleftrightarrow> (AE \<omega> in M. c \<le> ennreal (tau \<omega>))"
+    by (rule ess_inf_time_ge_iff)
+  also have "\<dots> \<longleftrightarrow> (AE \<omega> in M. \<omega> \<in> {\<omega> \<in> space M. c \<le> ennreal (tau \<omega>)})"
+    by (rule AE_cong) simp
+  also have "\<dots> \<longleftrightarrow> measure M {\<omega> \<in> space M. c \<le> ennreal (tau \<omega>)} = 1"
+    by (rule AE_in_set_eq_1[OF m])
+  finally show ?thesis .
+qed
+
+text \<open>The form item 2.4 actually consumes.  Portmanteau is a statement about
+  MEASURES OF SETS, so the essential infimum has to be traded for one: being
+  strictly below \<open>d\<close> is exactly the event \<open>{\<tau> < d}\<close> carrying positive mass.
+  This is \<open>ess_inf_time_ge_iff\<close> negated, with the almost-sure statement turned
+  into an \<open>emeasure\<close> --- which is where measurability of the event is needed and
+  is the only hypothesis.\<close>
+
+lemma ess_inf_time_less_iff:
+  assumes m: "{\<omega> \<in> space M. ennreal (tau \<omega>) < d} \<in> sets M"
+  shows "ess_inf_time M tau < d
+      \<longleftrightarrow> emeasure M {\<omega> \<in> space M. ennreal (tau \<omega>) < d} \<noteq> 0"
+proof -
+  have eq: "{\<omega> \<in> space M. \<not> (d \<le> ennreal (tau \<omega>))}
+      = {\<omega> \<in> space M. ennreal (tau \<omega>) < d}" by auto
+  have ae: "(AE \<omega> in M. d \<le> ennreal (tau \<omega>))
+      \<longleftrightarrow> emeasure M {\<omega> \<in> space M. ennreal (tau \<omega>) < d} = 0"
+    by (rule AE_iff_measurable[OF m eq])
+  have "ess_inf_time M tau < d \<longleftrightarrow> \<not> (d \<le> ess_inf_time M tau)" by auto
+  also have "\<dots> \<longleftrightarrow> \<not> (AE \<omega> in M. d \<le> ennreal (tau \<omega>))"
+    unfolding ess_inf_time_ge_iff ..
+  also have "\<dots> \<longleftrightarrow> emeasure M {\<omega> \<in> space M. ennreal (tau \<omega>) < d} \<noteq> 0"
+    using ae by simp
+  finally show ?thesis .
+qed
+
 lemma ess_inf_time_mono:
   assumes "AE \<omega> in M. tau \<omega> \<le> sig \<omega>"
   shows "ess_inf_time M tau \<le> ess_inf_time M sig"

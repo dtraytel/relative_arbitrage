@@ -47,6 +47,187 @@ lemma etime_le_of_mem:
   unfolding etime_def
   using etime_bdd_below[OF T] r mem by (intro cInf_lower) auto
 
+text \<open>The STRICT characterisation, which is the handle upper semicontinuity of
+  the exit time needs.  Larsson--Ruf's Lemma 2.1 argues: if \<open>\<omega>\<^sub>n \<rightarrow> \<omega>\<close> and
+  \<open>\<omega>(\<tau>(\<omega>)+\<epsilon>) \<notin> K\<close>, then \<open>\<omega>\<^sub>n(\<tau>(\<omega>)+\<epsilon>) \<notin> K\<close> for large \<open>n\<close>, so \<open>\<tau>(\<omega>\<^sub>n) \<le> \<tau>(\<omega>)+\<epsilon>\<close>.
+  Unwound, that is exactly this: being strictly below \<open>c\<close> is WITNESSED, by a
+  single time \<open>r < c\<close> at which the path is already in \<open>A\<close>.  Since \<open>A\<close> is open
+  (it is the complement of the compact \<open>K\<close>) the witness survives small
+  perturbations of the path at that one time, which is what makes the sublevel
+  set \<open>{\<omega> : \<tau>(\<omega>) < c}\<close> open.
+
+  Note the disjunct \<open>T < c\<close>: the infimum is over the hitting times TOGETHER with
+  the cap \<open>T\<close>, so a path that never reaches \<open>A\<close> still has exit time \<open>T\<close>, and that
+  branch is independent of \<open>\<omega>\<close> altogether.\<close>
+
+lemma etime_less_iff:
+  assumes T: "0 \<le> T"
+  shows "etime T A X \<omega> < c
+      \<longleftrightarrow> ((\<exists>r. 0 \<le> r \<and> r \<le> T \<and> X r \<omega> \<in> A \<and> r < c) \<or> T < c)"
+proof -
+  have ne: "({r. 0 \<le> r \<and> r \<le> T \<and> X r \<omega> \<in> A} \<union> {T}) \<noteq> {}" by blast
+  have bd: "bdd_below ({r. 0 \<le> r \<and> r \<le> T \<and> X r \<omega> \<in> A} \<union> {T})"
+    by (rule etime_bdd_below[OF T])
+  have "etime T A X \<omega> < c
+      \<longleftrightarrow> (\<exists>x \<in> {r. 0 \<le> r \<and> r \<le> T \<and> X r \<omega> \<in> A} \<union> {T}. x < c)"
+    unfolding etime_def by (rule cInf_less_iff[OF ne bd])
+  also have "\<dots> \<longleftrightarrow> ((\<exists>r. 0 \<le> r \<and> r \<le> T \<and> X r \<omega> \<in> A \<and> r < c) \<or> T < c)"
+    by blast
+  finally show ?thesis .
+qed
+
+text \<open>And the perturbation step it powers: an OPEN \<open>A\<close> already entered at some
+  \<open>r < c\<close> keeps the exit time below \<open>c\<close> for every path agreeing closely enough
+  with \<open>\<omega>\<close> at that single time \<open>r\<close>.\<close>
+
+lemma etime_less_of_open_witness:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: metric_space"
+  assumes T: "0 \<le> T" and r: "0 \<le> r" "r \<le> T" "r < c"
+    and mem: "X r \<omega>' \<in> A"
+  shows "etime T A X \<omega>' < c"
+  unfolding etime_less_iff[OF T] using r mem by blast
+
+subsection \<open>An open erosion of \<open>A\<close>: the uniformity device for item 2.4\<close>
+
+text \<open>Item 2.4 of the Theorem 1.1 plan needs joint upper semicontinuity of
+  \<open>f(x,P) = ((x+\<cdot>)\<^sub>*P)-essinf \<tau>\<^sub>K\<close>, where BOTH the shift \<open>x\<close> and the measure \<open>P\<close>
+  vary.  Unfolding, \<open>f(x,P) < d\<close> says \<open>P{\<omega> : \<tau>\<^sub>K(x+\<omega>) < d} > 0\<close>, and by
+  \<open>etime_less_iff\<close> that event is witnessed at a single time \<open>r\<close> by
+  \<open>x + \<omega>(r) \<in> A\<close> with \<open>A\<close> open.
+
+  The obstruction is uniformity: each \<open>\<omega>\<close> has its own room to move \<open>x\<close>, and a
+  pointwise \<open>\<epsilon>(\<omega>)\<close> is useless against a measure.  The fix is to erode \<open>A\<close>: the
+  sets \<open>{z. d < infdist z (-A)}\<close> are OPEN, increase to \<open>A\<close> as \<open>d \<downarrow> 0\<close>, and give a
+  margin \<open>d\<close> that does NOT depend on \<open>\<omega>\<close>.  Choosing \<open>d\<close> so the eroded event still
+  has positive mass makes the shift-perturbation uniform, and the eroded event
+  being open is then exactly what the open-set form of Portmanteau
+  (\<open>liminf Q\<^sub>m(G) \<ge> Q(G)\<close>) needs to keep the mass positive as the measure moves.
+
+  These two lemmas are that device.  Note \<open>shift_stays_off\<close> needs no closedness
+  and no completeness: if \<open>w\<close> were in \<open>S\<close> then \<open>infdist z S \<le> dist z w < d\<close>,
+  contradicting the margin outright.\<close>
+
+lemma open_gt_infdist: "open {z. d < infdist z S}"
+proof -
+  have "continuous_on UNIV (\<lambda>z. infdist z S)"
+    by (intro continuous_intros)
+  then show ?thesis
+    by (rule open_Collect_less[OF continuous_on_const])
+qed
+
+lemma shift_stays_off:
+  fixes z w :: "'b :: metric_space"
+  assumes marg: "d < infdist z S" and near: "dist z w < d"
+  shows "w \<notin> S"
+proof
+  assume wS: "w \<in> S"
+  have "infdist z S \<le> dist z w" by (rule infdist_le[OF wS])
+  with near marg show False by linarith
+qed
+
+subsection \<open>The erosion operator\<close>
+
+text \<open>The two lemmas above are packaged here as a single operator, because the
+  uniformity argument uses all three of its properties together and getting them
+  from \<open>infdist\<close> afresh at each use is where the ``margin depends on \<open>\<omega>\<close>'' mistake
+  creeps back in.
+
+  The \<open>A = UNIV\<close> case has to be split off and is NOT bookkeeping. Isabelle's
+  \<open>infdist z {} = 0\<close>, so the naive \<open>{z. \<delta> < infdist z (- A)}\<close> would be EMPTY exactly
+  when \<open>A\<close> is everything --- the one case where no erosion is needed at all. With
+  the split, \<open>eroded\<close> satisfies its three laws unconditionally.\<close>
+
+definition eroded :: "real \<Rightarrow> 'b::metric_space set \<Rightarrow> 'b set" where
+  "eroded d A = (if A = UNIV then UNIV else {z. d < infdist z (- A)})"
+
+lemma open_eroded: "open (eroded d A)"
+  unfolding eroded_def by (simp add: open_gt_infdist)
+
+lemma eroded_subset:
+  assumes d: "0 \<le> d"
+  shows "eroded d A \<subseteq> A"
+proof (cases "A = UNIV")
+  case True thus ?thesis by simp
+next
+  case False
+  have "z \<in> A" if z: "d < infdist z (- A)" for z
+  proof (rule ccontr)
+    assume "z \<notin> A"
+    hence "z \<in> - A" by simp
+    hence "infdist z (- A) = 0" by simp
+    with z d show False by linarith
+  qed
+  thus ?thesis using False unfolding eroded_def by auto
+qed
+
+text \<open>The uniform-margin property: membership in \<open>eroded d A\<close> buys a shift budget
+  \<open>d\<close> that is the SAME for every point of the eroded set.\<close>
+
+lemma eroded_shift:
+  fixes z w :: "'b::metric_space"
+  assumes z: "z \<in> eroded d A" and near: "dist z w < d"
+  shows "w \<in> A"
+proof (cases "A = UNIV")
+  case True thus ?thesis by simp
+next
+  case False
+  have "d < infdist z (- A)" using z False unfolding eroded_def by simp
+  from shift_stays_off[OF this near] show ?thesis by simp
+qed
+
+lemma eroded_mono:
+  assumes "d' \<le> d"
+  shows "eroded d A \<subseteq> eroded d' A"
+  using assms unfolding eroded_def by auto
+
+text \<open>The erosions exhaust an open set. This is the half that fails for general
+  \<open>A\<close>: a point of \<open>A\<close> needs interior room before any positive margin exists.\<close>
+
+lemma eroded_exhausts:
+  fixes A :: "'b::metric_space set"
+  assumes A: "open A"
+  shows "(\<Union>n. eroded (1 / Suc n) A) = A"
+proof
+  show "(\<Union>n. eroded (1 / Suc n) A) \<subseteq> A"
+  proof
+    fix z assume "z \<in> (\<Union>n. eroded (1 / Suc n) A)"
+    then obtain n where zn: "z \<in> eroded (1 / Suc n) A" by blast
+    have "(0::real) \<le> 1 / Suc n" by simp
+    from eroded_subset[OF this] zn show "z \<in> A" by blast
+  qed
+next
+  show "A \<subseteq> (\<Union>n. eroded (1 / Suc n) A)"
+  proof (cases "A = UNIV")
+    case True thus ?thesis unfolding eroded_def by auto
+  next
+    case False
+    have "z \<in> (\<Union>n. eroded (1 / Suc n) A)" if zA: "z \<in> A" for z
+    proof -
+      obtain e :: real where e: "0 < e" and ball: "ball z e \<subseteq> A"
+        using A zA unfolding open_contains_ball by blast
+      have far: "e \<le> dist z w" if w: "w \<in> - A" for w
+      proof (rule ccontr)
+        assume "\<not> e \<le> dist z w"
+        hence "w \<in> ball z e" by simp
+        with ball w show False by blast
+      qed
+      have neA: "- A \<noteq> {}" using False by auto
+      have "e \<le> infdist z (- A)"
+        unfolding infdist_notempty[OF neA]
+        by (intro cINF_greatest[OF neA] far)
+      moreover obtain n :: nat where n: "1 / Suc n < e"
+        using e nat_approx_posE by blast
+      ultimately have "1 / Suc n < infdist z (- A)" by linarith
+      hence "z \<in> eroded (1 / Suc n) A" using False unfolding eroded_def by simp
+      thus ?thesis by blast
+    qed
+    thus ?thesis by blast
+  qed
+qed
+
+text \<open>The measure-theoretic companion to \<open>eroded_exhausts\<close> is deferred to just
+  after \<open>positive_of_countable_UN\<close> below, which it uses.\<close>
+
 text \<open>With closed \<open>A\<close> and continuous paths the infimum is attained, so the
   exit time is at most \<open>t\<close> exactly when the process visits \<open>A\<close> before
   \<open>t\<close>.\<close>
@@ -123,6 +304,56 @@ text \<open>The event that the process visits the closed set \<open>A\<close> be
   is a countable combination of events at rational times: continuity gives
   one inclusion, and attainment of the infimum of the (continuous) distance
   to \<open>A\<close> on the compact interval gives the other.\<close>
+
+text \<open>The countable reduction step of item 2.4.  Unfolding \<open>f(x,P) < d\<close> gives
+  \<open>P(\<Union>\<^bsub>r\<^esub> H\<^sub>r) > 0\<close> over the witness times \<open>r\<close>, but the erosion argument needs a
+  SINGLE \<open>r\<close> with \<open>P(H\<^sub>r) > 0\<close>.  That is exactly the contrapositive of "a
+  countable union of null sets is null", which is why the reduction to
+  \<open>qtimes\<close> (via \<open>hit_iff_qtimes\<close> below) has to happen first: over an uncountable
+  index set the step is FALSE.\<close>
+
+lemma positive_of_countable_UN:
+  assumes cR: "countable R"
+    and meas: "\<And>r. r \<in> R \<Longrightarrow> H r \<in> sets M"
+    and pos: "emeasure M (\<Union>r\<in>R. H r) \<noteq> 0"
+  shows "\<exists>r \<in> R. emeasure M (H r) \<noteq> 0"
+proof (rule ccontr)
+  assume "\<not> (\<exists>r \<in> R. emeasure M (H r) \<noteq> 0)"
+  then have z: "\<And>r. r \<in> R \<Longrightarrow> H r \<in> null_sets M"
+    using meas by (simp add: null_sets_def)
+  have "(\<Union>r\<in>R. H r) \<in> null_sets M"
+    by (rule null_sets_UN'[OF cR z])
+  then have "emeasure M (\<Union>r\<in>R. H r) = 0"
+    by (simp add: null_sets_def)
+  with pos show False by simp
+qed
+
+text \<open>The measure-theoretic companion to \<open>eroded_exhausts\<close>. This is the step
+  that converts ``\<open>A\<close> has positive mass'' into ``SOME erosion of \<open>A\<close> still has
+  positive mass'' --- i.e. it buys a shift margin that is uniform over the whole
+  sample space, at the cost of an unspecified level. Countability of the
+  exhausting family is exactly what makes it work: over an uncountable family
+  the step is false, since an uncountable union of null sets need not be null.\<close>
+
+lemma positive_mass_at_some_erosion:
+  fixes A :: "'b::metric_space set"
+  assumes A: "open A"
+    and meas: "\<And>n::nat. {\<omega> \<in> space M. Y \<omega> \<in> eroded (1 / Suc n) A} \<in> sets M"
+    and pos: "emeasure M {\<omega> \<in> space M. Y \<omega> \<in> A} \<noteq> 0"
+  shows "\<exists>n::nat. emeasure M {\<omega> \<in> space M. Y \<omega> \<in> eroded (1 / Suc n) A} \<noteq> 0"
+proof -
+  have "{\<omega> \<in> space M. Y \<omega> \<in> A}
+      = (\<Union>n \<in> (UNIV :: nat set). {\<omega> \<in> space M. Y \<omega> \<in> eroded (1 / Suc n) A})"
+    using eroded_exhausts[OF A] by blast
+  with pos have un: "emeasure M
+      (\<Union>n \<in> (UNIV :: nat set). {\<omega> \<in> space M. Y \<omega> \<in> eroded (1 / Suc n) A}) \<noteq> 0"
+    by simp
+  have cU: "countable (UNIV :: nat set)" by simp
+  have "\<exists>n \<in> (UNIV :: nat set).
+      emeasure M {\<omega> \<in> space M. Y \<omega> \<in> eroded (1 / Suc n) A} \<noteq> 0"
+    by (rule positive_of_countable_UN[OF cU _ un]) (use meas in blast)
+  thus ?thesis by blast
+qed
 
 definition qtimes :: "real \<Rightarrow> real set" where
   "qtimes t = insert t {q \<in> {0..t}. q \<in> \<rat>}"

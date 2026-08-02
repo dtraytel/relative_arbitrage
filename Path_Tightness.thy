@@ -2453,4 +2453,87 @@ proof (rule measurable_restrict)
   qed
 qed
 
+
+text \<open>RQ-A's final piece: weak convergence UPGRADED by uniform integrability.
+
+  \<open>weak_conv_on_nn_integral_le\<close> below handles a non-negative integrand and gives
+  an UPPER bound on the limit, by truncating at \<open>K\<close> and letting monotone
+  convergence do the work --- no integrability hypothesis at all.  That covers
+  exactly the \<open>\<preceq> L\<cdot>I\<close> half of the covariation constraint.
+
+  It does NOT cover the other half.  The constraint set also carries LOWER
+  bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>), and for those the inequality runs the other way, where
+  weak convergence gives only the Fatou direction \<open>liminf \<ge> lim\<close>.  Recovering
+  \<open>limsup \<le>\<close> is exactly what uniform integrability buys, and this is the lemma
+  that buys it.
+
+  The argument is the \<open>3\<epsilon>\<close> one: truncate \<open>f\<close> at height \<open>R\<close> --- the truncation is
+  bounded and continuous, so weak convergence applies to it directly --- and
+  control both truncation errors by the tail hypothesis.  All three pieces are
+  already proved: \<open>Increment_Moments.clamp_integral_error\<close> for the errors,
+  \<open>Increment_Moments.tendsto_real_of_approximants\<close> for the limit passage, and
+  \<open>Increment_Moments.sq_tail_bound_of_fourth_moment\<close> supplies \<open>ui\<close> in the
+  application from the fourth-moment bound of Eq. (2.7).
+
+  The integrability side conditions are hypotheses rather than derived: in the
+  application they all come from the moment bounds, and deriving them here would
+  obscure the one idea.\<close>
+
+lemma weak_conv_on_integral_unif_integrable:
+  fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
+  assumes wc: "weak_conv_on Ni N sequentially X"
+    and f: "continuous_map X euclideanreal f"
+    and fmi: "\<And>i. finite_measure (Ni i)" and fmN: "finite_measure N"
+    and iNi: "\<And>i. integrable (Ni i) f" and iN: "integrable N f"
+    and iCi: "\<And>i R. integrable (Ni i) (\<lambda>x. max (- R) (min R (f x)))"
+    and iCN: "\<And>R. integrable N (\<lambda>x. max (- R) (min R (f x)))"
+    and iTi: "\<And>i R. integrable (Ni i)
+        (\<lambda>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x))"
+    and iTN: "\<And>R. integrable N
+        (\<lambda>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x))"
+    and ui: "\<And>e. 0 < e \<Longrightarrow> \<exists>R. 0 \<le> R
+        \<and> (\<forall>i. (\<integral>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x) \<partial>(Ni i)) \<le> e)
+        \<and> (\<integral>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x) \<partial>N) \<le> e"
+  shows "(\<lambda>i. \<integral>x. f x \<partial>(Ni i)) \<longlonglongrightarrow> (\<integral>x. f x \<partial>N)"
+proof (rule tendsto_real_of_approximants)
+  fix e :: real assume e: "0 < e"
+  obtain R where R0: "0 \<le> R"
+    and tNi: "\<And>i. (\<integral>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x) \<partial>(Ni i)) \<le> e"
+    and tN: "(\<integral>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x) \<partial>N) \<le> e"
+    using ui[OF e] by blast
+  \<comment> \<open>the truncation is bounded and continuous, so weak convergence applies\<close>
+  have cc: "continuous_map X euclideanreal (\<lambda>x. max (- R) (min R (f x)))"
+    by (intro continuous_map_real_max continuous_map_real_min f) simp_all
+  have cb: "\<exists>B. \<forall>x\<in>topspace X. \<bar>max (- R) (min R (f x))\<bar> \<le> B"
+  proof -
+    have "\<bar>max (- R) (min R (f x))\<bar> \<le> R" for x using R0 by simp
+    thus ?thesis by blast
+  qed
+  have lim: "(\<lambda>i. \<integral>x. max (- R) (min R (f x)) \<partial>(Ni i))
+      \<longlonglongrightarrow> (\<integral>x. max (- R) (min R (f x)) \<partial>N)"
+    using wc[unfolded weak_conv_on_def] cc cb by blast
+  \<comment> \<open>and the two truncation errors are the tails\<close>
+  have errNi: "\<bar>(\<integral>x. f x \<partial>(Ni i)) - (\<integral>x. max (- R) (min R (f x)) \<partial>(Ni i))\<bar> \<le> e"
+    for i
+  proof -
+    have "\<bar>(\<integral>x. f x \<partial>(Ni i)) - (\<integral>x. max (- R) (min R (f x)) \<partial>(Ni i))\<bar>
+        \<le> (\<integral>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x) \<partial>(Ni i))"
+      by (rule clamp_integral_error[OF fmi R0 iNi iCi iTi])
+    also have "\<dots> \<le> e" by (rule tNi)
+    finally show ?thesis .
+  qed
+  have errN: "\<bar>(\<integral>x. max (- R) (min R (f x)) \<partial>N) - (\<integral>x. f x \<partial>N)\<bar> \<le> e"
+  proof -
+    have "\<bar>(\<integral>x. f x \<partial>N) - (\<integral>x. max (- R) (min R (f x)) \<partial>N)\<bar>
+        \<le> (\<integral>x. \<bar>f x\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f x) \<partial>N)"
+      by (rule clamp_integral_error[OF fmN R0 iN iCN iTN])
+    with tN show ?thesis by (simp add: abs_minus_commute)
+  qed
+  show "\<exists>y w. (\<forall>m. \<bar>(\<integral>x. f x \<partial>(Ni m)) - y m\<bar> \<le> e)
+      \<and> (y \<longlonglongrightarrow> w) \<and> \<bar>w - (\<integral>x. f x \<partial>N)\<bar> \<le> e"
+    by (intro exI[of _ "\<lambda>m. \<integral>x. max (- R) (min R (f x)) \<partial>(Ni m)"]
+               exI[of _ "\<integral>x. max (- R) (min R (f x)) \<partial>N"]
+               conjI allI errNi lim errN)
+qed
+
 end

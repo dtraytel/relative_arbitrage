@@ -704,6 +704,48 @@ lemma continuous_map_path_eval:
   using Lipschitz_continuous_imp_continuous_map[OF Lipschitz_path_eval[OF t]]
   by simp
 
+text \<open>Item 2.1 of the Theorem 1.1 plan, topological half.  The exit time is
+  upper semicontinuous because "has already entered \<open>A\<close> strictly before \<open>c\<close>" is
+  an OPEN condition on the path: it is witnessed at a single time \<open>r\<close>, and
+  evaluation at a fixed time is continuous (\<open>continuous_map_path_eval\<close>), so an
+  open \<open>A\<close> pulls back to an open set of paths.  Taking the union over the
+  admissible witness times \<open>r\<close> keeps it open.
+
+  Stated here rather than in \<open>Exit_Time\<close> because it is purely about the path
+  topology; \<open>Exit_Time.etime_less_iff\<close> is the other half, identifying this set
+  with \<open>{f. etime T A (\<lambda>s w. w s) f < c}\<close> whenever \<open>\<not> T < c\<close>.  The two theories
+  sit on different import branches, so they are joined downstream.\<close>
+
+lemma open_hit_strictly_before:
+  fixes T c :: real and A :: "'b::polish_space set"
+  assumes A: "open A"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         \<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A}"
+proof -
+  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+        \<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A}
+      = (\<Union>r \<in> {r. 0 \<le> r \<and> r \<le> T \<and> r < c}.
+           {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> A})"
+    by blast
+  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> A}"
+    if r: "r \<in> {r. 0 \<le> r \<and> r \<le> T \<and> r < c}" for r
+  proof -
+    have rT: "r \<in> {0..T}" using r by simp
+    have cm: "continuous_map
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) euclidean (\<lambda>f. f r)"
+      by (rule continuous_map_path_eval[OF rT])
+    have "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+        {f \<in> topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)).
+           f r \<in> A}"
+      by (rule openin_continuous_map_preimage[OF cm]) (use A in simp)
+    then show ?thesis by simp
+  qed
+  show ?thesis unfolding eq
+    by (rule openin_Union) (use op in blast)
+qed
+
 lemma weak_conv_on_nn_integral_le:
   fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
   assumes wc: "weak_conv_on Ni N sequentially X"
@@ -850,4 +892,70 @@ proof -
        (simp add: finite_measure.emeasure_eq_measure[OF fN])
 qed
 
+subsection \<open>Portmanteau: a closed set of full measure survives the weak limit\<close>
+
+text \<open>Item 2.3 of the Theorem 1.1 plan needs exactly this shape of the
+  closed-set half of the Portmanteau theorem. The AFP proves the general
+  statement as \<open>mweak_conv2\<close>, but inside the \<open>mweak_conv_fin\<close> locale, whose
+  parameters have to be discharged; \<open>weak_conv_on_def\<close> supplies all four.
+
+  Packaging the \<open>measure = 1\<close> instance is not laziness: it is the ONLY instance
+  the usc argument for \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close> ever uses. The superlevel set
+  \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed because \<open>\<tau>\<^sub>K\<close> is upper semicontinuous, and
+  \<open>c \<le> P-essinf \<tau>\<^sub>K\<close> is by definition \<open>P {\<tau>\<^sub>K \<ge> c} = 1\<close> — see
+  \<open>Value_Function.ess_inf_time_ge_iff_measure\<close>, which was stated with \<open>measure\<close>
+  rather than \<open>AE\<close> for precisely this junction.\<close>
+
+lemma weak_conv_closed_full_measure:
+  fixes m :: "'a metric" and Ni :: "nat \<Rightarrow> 'a measure"
+  assumes wc: "weak_conv_on Ni N sequentially (mtopology_of m)"
+    and clA: "closedin (mtopology_of m) A"
+    and one: "\<And>i. measure (Ni i) A = 1"
+    and pN: "prob_space N"
+  shows "measure N A = 1"
+proof -
+  interpret PM: Metric_space "mspace m" "mdist m"
+    by (rule Metric_space_mspace_mdist)
+  interpret PN: prob_space N by (rule pN)
+  have top: "PM.mtopology = mtopology_of m"
+    by (simp add: mtopology_of_def)
+  have sN: "sets N = sets (borel_of (mtopology_of m))"
+    and ev: "\<forall>\<^sub>F i in sequentially.
+        sets (Ni i) = sets (borel_of (mtopology_of m)) \<and> finite_measure (Ni i)"
+    using wc[unfolded weak_conv_on_def] by blast+
+  have int: "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
+        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
+    if "continuous_map (mtopology_of m) euclideanreal g"
+       "\<exists>B. \<forall>x \<in> topspace (mtopology_of m). \<bar>g x\<bar> \<le> B" for g
+    using wc[unfolded weak_conv_on_def] that by blast
+  interpret MW: mweak_conv_fin "mspace m" "mdist m" Ni N sequentially
+  proof
+    show "\<forall>\<^sub>F i in sequentially.
+        sets (Ni i) = sets (borel_of PM.mtopology)"
+      using ev unfolding top by (simp add: eventually_mono)
+    show "sets N = sets (borel_of PM.mtopology)" using sN unfolding top by simp
+    show "\<forall>\<^sub>F i in sequentially. finite_measure (Ni i)"
+      using ev by (simp add: eventually_mono)
+  qed
+  have key: "Limsup sequentially (\<lambda>x. ereal (measure (Ni x) A))
+      \<le> ereal (measure N A)"
+  proof (rule MW.mweak_conv2)
+    fix g :: "'a \<Rightarrow> real"
+    assume u: "uniformly_continuous_map PM.Self euclidean_metric g"
+      and b: "\<exists>B. \<forall>x \<in> mspace m. \<bar>g x\<bar> \<le> B"
+    have cg: "continuous_map (mtopology_of m) euclideanreal g"
+      using uniformly_continuous_imp_continuous_map[OF u]
+      by (simp add: mtopology_of_def)
+    show "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
+        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
+      by (rule int[OF cg]) (use b in simp)
+  next
+    show "closedin PM.mtopology A" using clA unfolding top by simp
+  qed
+  have "Limsup sequentially (\<lambda>x. ereal (measure (Ni x) A)) = ereal 1"
+    by (simp add: one Limsup_const)
+  hence "(1::real) \<le> measure N A" using key by simp
+  moreover have "measure N A \<le> 1" by (rule PN.prob_le_1)
+  ultimately show ?thesis by linarith
+qed
 end
