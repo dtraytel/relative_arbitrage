@@ -229,4 +229,131 @@ proof (intro conjI ga exI[of _ c] conjI c ballI)
     using bnd by (simp add: dist_commute)
 qed
 
+
+section \<open>Proposition 2.4: the upper semicontinuity half, without a selection theorem\<close>
+
+text \<open>Proposition 2.4 of the paper has no proof there --- it says only "It
+  suffices to repeat [Larsson--Ruf, proofs of Proposition 2.2(ii), (iii)] word by
+  word".  Following that reference, Larsson--Ruf argue:
+
+  \<^item> \<open>\<P>\<^sub>x\<close> consists of the pushforwards \<open>(x+\<cdot>)\<^sub>*P\<close> with \<open>P \<in> \<P>\<^sub>0\<close>, so
+    \<open>v(x) = sup\<^bsub>P \<in> \<P>\<^sub>0\<^esub> f(x,P)\<close> with \<open>f(x,P) = ((x+\<cdot>)\<^sub>*P)-essinf \<tau>\<^sub>K\<close>;
+  \<^item> \<open>f\<close> is jointly upper semicontinuous;
+  \<^item> \<open>\<P>\<^sub>0\<close> is compact;
+  \<^item> "A suitable selection theorem, see e.g. [Bertsekas--Shreve, Proposition
+    7.33], yields upper semicontinuity of \<open>v\<close> AS WELL AS a measurable map
+    \<open>x \<mapsto> Q\<^sub>x\<close> \<dots>".
+
+  THE POINT OF THIS SECTION.  The selection theorem is invoked for TWO
+  conclusions, and is needed for only the second.  Upper semicontinuity of a
+  supremum of a jointly usc function over a COMPACT index set is the upper half
+  of Berge's maximum theorem, and it is elementary: it needs no measurable
+  selection, no analytic sets, and no descriptive set theory --- none of which
+  exist in Isabelle/HOL or the AFP.  Only the MEASURABLE optimiser needs
+  Bertsekas 7.33, and only the dynamic programming principle needs that.
+
+  So this theorem discharges the regularity half of Proposition 2.4 outright,
+  and isolates the measurable selection to the DPP alone.
+
+  The hypothesis \<open>box\<close> below is joint upper semicontinuity at \<open>(x,P)\<close>, written
+  out in terms of a product neighbourhood rather than via \<open>nhds (x,P)\<close>, which
+  keeps the proof independent of how the product topology is packaged.
+
+  The argument: pick \<open>c'\<close> strictly between the supremum and \<open>c\<close>; every \<open>P \<in> C\<close>
+  then has \<open>F x P < c'\<close>, so joint usc gives a box \<open>U\<^sub>P \<times> V\<^sub>P\<close> on which \<open>F < c'\<close>;
+  the \<open>V\<^sub>P\<close> cover the compact \<open>C\<close>, so finitely many suffice; and the
+  corresponding finite intersection of the \<open>U\<^sub>P\<close> is a neighbourhood of \<open>x\<close> on
+  which the whole supremum is at most \<open>c' < c\<close>.\<close>
+
+theorem usc_sup_over_compact:
+  fixes F :: "'a::topological_space \<Rightarrow> 'b::topological_space \<Rightarrow> real"
+    and C :: "'b set" and x :: 'a and c :: real
+  assumes cC: "compact C" and neC: "C \<noteq> {}"
+    and bdd: "\<And>y. bdd_above (F y ` C)"
+    and lt: "Sup (F x ` C) < c"
+    and box: "\<And>P d. P \<in> C \<Longrightarrow> F x P < d \<Longrightarrow>
+        \<exists>U V. open U \<and> open V \<and> x \<in> U \<and> P \<in> V
+              \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < d)"
+  shows "eventually (\<lambda>y. Sup (F y ` C) < c) (nhds x)"
+proof -
+  obtain c' where c1: "Sup (F x ` C) < c'" and c2: "c' < c"
+    using lt dense by blast
+  have small: "F x P < c'" if P: "P \<in> C" for P
+  proof -
+    have "F x P \<le> Sup (F x ` C)"
+      by (rule cSup_upper) (use P bdd in auto)
+    with c1 show ?thesis by linarith
+  qed
+  have ex: "\<forall>P \<in> C. \<exists>U V. open U \<and> open V \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < c')"
+    using box small by blast
+  \<comment> \<open>choose the two neighbourhoods TOGETHER, as a pair: a double \<open>bchoice\<close> is
+      beyond \<open>metis\<close> here, but one choice over pairs is routine\<close>
+  have ex': "\<forall>P \<in> C. \<exists>W :: 'a set \<times> 'b set.
+      open (fst W) \<and> open (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
+      \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
+  proof
+    fix P assume P: "P \<in> C"
+    \<comment> \<open>eliminate ONLY the two existentials: chaining the bounded \<open>\<forall>P\<in>C\<close> into the
+        same \<open>blast\<close> makes it search, and it does not terminate\<close>
+    from bspec[OF ex P] obtain U V where
+      "open U" "open V" "x \<in> U" "P \<in> V" "\<forall>y\<in>U. \<forall>Q\<in>V. F y Q < c'"
+      by blast
+    then show "\<exists>W :: 'a set \<times> 'b set.
+        open (fst W) \<and> open (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
+        \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
+      by (intro exI[of _ "(U,V)"]) simp
+  qed
+  \<comment> \<open>eliminate the choice in EXACTLY the shape \<open>bchoice\<close> produces: bridging
+      \<open>\<forall>P\<in>C\<close> to \<open>\<And>P. P \<in> C \<Longrightarrow>\<close> inside the \<open>obtain\<close> sends \<open>blast\<close> searching, and
+      it does not terminate\<close>
+  have exf: "\<exists>WW. \<forall>P\<in>C.
+      open (fst (WW P)) \<and> open (snd (WW P)) \<and> x \<in> fst (WW P) \<and> P \<in> snd (WW P)
+      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
+    by (rule bchoice[OF ex'])
+  then obtain WW where Wb: "\<forall>P\<in>C.
+      open (fst (WW P)) \<and> open (snd (WW P)) \<and> x \<in> fst (WW P) \<and> P \<in> snd (WW P)
+      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
+    by (rule exE)
+  define UU where "UU = (\<lambda>P. fst (WW P))"
+  define VV where "VV = (\<lambda>P. snd (WW P))"
+  have oU: "open (UU P)" if P: "P \<in> C" for P
+    unfolding UU_def using bspec[OF Wb P] by simp
+  have oV: "open (VV P)" if P: "P \<in> C" for P
+    unfolding VV_def using bspec[OF Wb P] by simp
+  have xU: "x \<in> UU P" if P: "P \<in> C" for P
+    unfolding UU_def using bspec[OF Wb P] by simp
+  have PV: "P \<in> VV P" if P: "P \<in> C" for P
+    unfolding VV_def using bspec[OF Wb P] by simp
+  have less: "F y Q < c'" if P: "P \<in> C" and y: "y \<in> UU P" and Q: "Q \<in> VV P"
+    for P y Q
+    using bspec[OF Wb P] y Q unfolding UU_def VV_def by simp
+  have cover: "C \<subseteq> (\<Union>P\<in>C. VV P)" using PV by blast
+  have oVall: "\<And>T. T \<in> C \<Longrightarrow> open (VV T)" by (rule oV)
+  obtain D where D1: "D \<subseteq> C" and D2: "finite D" and D3: "C \<subseteq> (\<Union>P\<in>D. VV P)"
+    by (rule compactE_image[OF cC oVall cover])
+  define U where "U = (\<Inter>P\<in>D. UU P)"
+  \<comment> \<open>\<open>open_INT\<close> takes a BOUNDED-\<open>\<forall>\<close> premise, not a \<open>\<And>\<close>-rule\<close>
+  have oUD: "\<forall>P\<in>D. open (UU P)" using oU D1 by blast
+  have openU: "open U" unfolding U_def by (rule open_INT[OF D2 oUD])
+  have xinU: "x \<in> U" unfolding U_def using xU D1 by blast
+  have key: "Sup (F y ` C) \<le> c'" if yU: "y \<in> U" for y
+  proof (rule cSup_least)
+    show "F y ` C \<noteq> {}" using neC by blast
+  next
+    fix z assume "z \<in> F y ` C"
+    then obtain Q where Q: "Q \<in> C" and zdef: "z = F y Q" by blast
+    from Q D3 obtain P where P: "P \<in> D" and QV: "Q \<in> VV P" by blast
+    have "y \<in> UU P" using yU P unfolding U_def by blast
+    then have "F y Q < c'" using less[of P y Q] P D1 QV by blast
+    then show "z \<le> c'" unfolding zdef by linarith
+  qed
+  have final: "Sup (F y ` C) < c" if yU: "y \<in> U" for y
+    using key[OF yU] c2 by linarith
+  have ballU: "\<forall>y \<in> U. Sup (F y ` C) < c" by (intro ballI) (rule final)
+  show ?thesis
+    unfolding eventually_nhds
+    by (rule exI[of _ U]) (intro conjI openU xinU ballU)
+qed
+
 end

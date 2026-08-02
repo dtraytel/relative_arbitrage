@@ -1125,4 +1125,70 @@ theorem lemma_2_1:
        \<subseteq> closure (convex hull (suff_volatile k))"
   by (rule lemma_2_1_easy) (rule lemma_2_1_hard[OF k])
 
+
+section \<open>Support-function characterisation of a closed convex constraint set\<close>
+
+text \<open>This is the crux of research question A in \<open>PLAN_THEOREM_1_1.md\<close>: whether
+  the closedness half of Lemma 2.3 can be obtained without a Skorokhod
+  representation theorem (which does not exist in the AFP).
+
+  The proposed route replaces the constraint \<open>d\<langle>X\<rangle>/dt \<in> S\<close> by the family of
+  LINEAR inequalities \<open>tr(M a) \<le> sup\<^bsub>b\<in>S\<^esub> tr(M b)\<close>, one for each symmetric \<open>M\<close>.
+  Linear inequalities in the law pass to weak limits (given uniform
+  integrability, which the fourth-moment bound supplies through
+  \<open>Vitali_Convergence\<close>), whereas the constraint in its original form does not.
+
+  What makes the replacement FAITHFUL --- i.e. what makes the linear
+  inequalities imply membership rather than merely follow from it --- is
+  precisely that \<open>S\<close> is closed and CONVEX.  That is the content below, and it is
+  where \<open>lemma_2_1_exact\<close> earns its keep: the constraint set of Eq. (1.5)/(1.7)
+  is convex exactly because it is the convex hull of the eigenvalue condition.
+
+  Note the argument is run on the SYMMETRISED separating functional.  The
+  ambient inner product \<open>m \<bullet> x\<close> on \<open>real^'n^'n\<close> is the Frobenius product, which
+  agrees with \<open>tr(m x)\<close> on symmetric matrices; \<open>inner_sym_part\<close> is what lets the
+  separating \<open>m\<close> be replaced by its symmetric part without changing any of the
+  inner products in play.\<close>
+
+theorem support_characterisation:
+  fixes S :: "(real^'n::finite^'n) set" and a :: "real^'n^'n"
+  assumes cS: "convex S" and clS: "closed S"
+    and asym: "transpose a = a"
+    and Ssym: "\<And>b. b \<in> S \<Longrightarrow> transpose b = b"
+    and supp: "\<And>M. transpose M = M \<Longrightarrow> \<exists>b\<in>S. M \<bullet> a \<le> M \<bullet> b"
+  shows "a \<in> S"
+proof (rule ccontr)
+  assume not_in: "a \<notin> S"
+  obtain m c where sep: "m \<bullet> a < c"
+    and sep2: "\<And>x. x \<in> S \<Longrightarrow> m \<bullet> x > c"
+    using separating_hyperplane_closed_point[OF cS clS not_in] by blast
+  define Ms where "Ms = (1 / 2) *\<^sub>R (m + transpose m)"
+  have Ms_sym: "transpose Ms = Ms"
+    unfolding Ms_def by (rule transpose_sym_part)
+  have Ms_a: "m \<bullet> a = Ms \<bullet> a"
+    unfolding Ms_def by (rule inner_sym_part[OF asym])
+  have Ms_b: "m \<bullet> b = Ms \<bullet> b" if "b \<in> S" for b
+    unfolding Ms_def by (rule inner_sym_part[OF Ssym[OF that]])
+  \<comment> \<open>the separation, transported to the symmetric part\<close>
+  have strict: "Ms \<bullet> a < Ms \<bullet> b" if "b \<in> S" for b
+  proof -
+    have "Ms \<bullet> a = m \<bullet> a" using Ms_a by simp
+    also have "\<dots> < c" by (rule sep)
+    also have "c < m \<bullet> b" by (rule sep2[OF that])
+    also have "m \<bullet> b = Ms \<bullet> b" by (rule Ms_b[OF that])
+    finally show ?thesis .
+  qed
+  \<comment> \<open>the hypothesis at the NEGATED functional gives the opposite\<close>
+  \<comment> \<open>\<open>transpose_minus\<close> does not exist in this HOL-Analysis (same family as
+      \<open>transpose_diff\<close>); it is one line entrywise\<close>
+  have tneg: "transpose (- A) = - transpose A" for A :: "real^'n^'n"
+    by (simp add: transpose_def vec_eq_iff)
+  have negsym: "transpose (- Ms) = - Ms"
+    unfolding tneg using Ms_sym by simp
+  obtain b where bS: "b \<in> S" and ble: "(- Ms) \<bullet> a \<le> (- Ms) \<bullet> b"
+    using supp[OF negsym] by blast
+  have "Ms \<bullet> b \<le> Ms \<bullet> a" using ble by simp
+  with strict[OF bS] show False by simp
+qed
+
 end

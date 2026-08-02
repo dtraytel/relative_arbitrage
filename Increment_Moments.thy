@@ -2102,4 +2102,143 @@ proof -
   thus ?thesis by simp
 qed
 
+
+section \<open>Uniform integrability of the squared increments (RQ-A)\<close>
+
+text \<open>Research question A of \<open>PLAN_THEOREM_1_1.md\<close> asks whether the closedness
+  half of Lemma 2.3 can avoid a Skorokhod representation by passing the
+  covariation constraint to weak limits through the LINEAR inequalities
+
+    \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>.
+
+  RESOLVED NEGATIVELY, the shortcut does not cover everything.  For \<open>M \<succeq> 0\<close> the
+  integrand is non-negative and one can truncate and use monotone convergence,
+  needing no integrability hypothesis at all.  But PSD test matrices alone do NOT
+  characterise this \<open>S\<close>: the set cut out by \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is the
+  DOWNWARD closure of \<open>S\<close> in the psd order, whereas \<open>S\<close> carries LOWER bounds
+  (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and so is not downward closed --- \<open>0 \<preceq> a\<close> for \<open>a \<in> S\<close> yet \<open>0 \<notin> S\<close>.
+  For the lower constraints the required inequality runs the other way, and weak
+  convergence alone gives only the Fatou direction \<open>liminf \<ge> lim\<close>.
+
+  So uniform integrability is genuinely needed, and this is the lemma that
+  supplies it: the fourth-moment bound of Eq. (2.7) --- already available here as
+  \<open>fourth_moment_bound_bounded\<close>, and already free of Ito and BDG --- controls the
+  tail of the SQUARED increment uniformly over the family.  That is exactly the
+  hypothesis \<open>unif_integrable\<close> of \<open>Vitali_Convergence.vitali_convergence\<close>.
+
+  The estimate itself is pointwise and elementary: on \<open>{Z\<^sup>2 > R}\<close> one has
+  \<open>Z\<^sup>2 = Z\<^sup>4/Z\<^sup>2 < Z\<^sup>4/R\<close>, and off that set the left-hand side vanishes.\<close>
+
+lemma sq_tail_le_fourth_moment_pointwise:
+  fixes z R :: real
+  assumes R: "0 < R"
+  shows "z\<^sup>2 * indicat_real {w. R < w\<^sup>2} z \<le> z^4 / R"
+proof (cases "R < z\<^sup>2")
+  case True
+  have z2: "0 < z\<^sup>2" using True R by linarith
+  have "z\<^sup>2 * R \<le> z\<^sup>2 * z\<^sup>2"
+    by (rule mult_left_mono) (use True z2 in linarith)+
+  also have "z\<^sup>2 * z\<^sup>2 = z^4" by (simp add: power2_eq_square power4_eq_xxxx)
+  finally have "z\<^sup>2 * R \<le> z^4" .
+  then have "z\<^sup>2 \<le> z^4 / R" using R by (simp add: field_simps)
+  then show ?thesis using True by simp
+next
+  case False
+  have "0 \<le> z^4 / R" using R by simp
+  then show ?thesis using False by simp
+qed
+
+lemma sq_tail_bound_of_fourth_moment:
+  fixes Z :: "'a \<Rightarrow> real"
+  assumes M: "finite_measure M"
+    and i4: "integrable M (\<lambda>\<omega>. (Z \<omega>)^4)"
+    and i2: "integrable M (\<lambda>\<omega>. (Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>))"
+    and B: "(\<integral>\<omega>. (Z \<omega>)^4 \<partial>M) \<le> B"
+    and R: "0 < R"
+  shows "(\<integral>\<omega>. (Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>) \<partial>M) \<le> B / R"
+proof -
+  have ptw: "(Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>) \<le> (Z \<omega>)^4 / R" for \<omega>
+    by (rule sq_tail_le_fourth_moment_pointwise[OF R])
+  have idiv: "integrable M (\<lambda>\<omega>. (Z \<omega>)^4 / R)"
+    by (rule integrable_divide_zero[OF i4])
+  have "(\<integral>\<omega>. (Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>) \<partial>M)
+      \<le> (\<integral>\<omega>. (Z \<omega>)^4 / R \<partial>M)"
+    by (rule integral_mono[OF i2 idiv]) (rule ptw)
+  also have "(\<integral>\<omega>. (Z \<omega>)^4 / R \<partial>M) = (\<integral>\<omega>. (Z \<omega>)^4 \<partial>M) / R"
+    by simp
+  also have "\<dots> \<le> B / R"
+    by (rule divide_right_mono[OF B]) (use R in linarith)
+  finally show ?thesis .
+qed
+
+
+subsection \<open>Truncation: the other half of the \<open>3\<epsilon>\<close> argument\<close>
+
+text \<open>The remaining step of RQ-A is to upgrade weak convergence by uniform
+  integrability: if \<open>P\<^sub>m \<rightarrow> P\<close> weakly and \<open>f\<close> is continuous with uniformly
+  integrable tails, then \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> even though \<open>f\<close> is unbounded.  The
+  argument truncates \<open>f\<close> at height \<open>R\<close> --- the truncation is bounded and
+  continuous, so weak convergence applies to it directly --- and controls the two
+  truncation errors by the tail bound above.
+
+  This is the error estimate.  Pointwise the clamped function differs from \<open>f\<close>
+  only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the whole error is
+  dominated by the tail integral that \<open>sq_tail_bound_of_fourth_moment\<close> bounds.\<close>
+
+lemma clamp_diff_le_tail_pointwise:
+  fixes z R :: real
+  assumes Rnn: "0 \<le> R"
+  shows "\<bar>z - max (- R) (min R z)\<bar> \<le> \<bar>z\<bar> * indicat_real {w. R < \<bar>w\<bar>} z"
+proof (cases "R < \<bar>z\<bar>")
+  case False
+  then have zR: "\<bar>z\<bar> \<le> R" by linarith
+  then have "min R z = z" by (simp add: abs_le_iff)
+  moreover have "max (- R) z = z" using zR by (simp add: abs_le_iff)
+  ultimately show ?thesis by simp
+next
+  case True
+  have ind: "indicat_real {w. R < \<bar>w\<bar>} z = 1" using True by simp
+  show ?thesis
+  proof (cases "0 \<le> z")
+    case True
+    then have zgt: "R < z" using \<open>R < \<bar>z\<bar>\<close> by simp
+    have "min R z = R" using zgt by simp
+    moreover have "max (- R) R = R" using Rnn by simp
+    ultimately have "max (- R) (min R z) = R" by simp
+    then show ?thesis unfolding ind using zgt True Rnn by simp
+  next
+    case False
+    then have zlt: "z < - R" using \<open>R < \<bar>z\<bar>\<close> by simp
+    have zleR: "z \<le> R" using zlt Rnn by linarith
+    have "min R z = z" by (rule min_absorb2[OF zleR])
+    moreover have "max (- R) z = - R" using zlt by simp
+    ultimately have "max (- R) (min R z) = - R" by simp
+    then show ?thesis unfolding ind using zlt False Rnn by simp
+  qed
+qed
+
+lemma clamp_integral_error:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes M: "finite_measure M"
+    and R: "0 \<le> R"
+    and iF: "integrable M f"
+    and iC: "integrable M (\<lambda>\<omega>. max (- R) (min R (f \<omega>)))"
+    and iT: "integrable M (\<lambda>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>))"
+  shows "\<bar>(\<integral>\<omega>. f \<omega> \<partial>M) - (\<integral>\<omega>. max (- R) (min R (f \<omega>)) \<partial>M)\<bar>
+      \<le> (\<integral>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>) \<partial>M)"
+proof -
+  have diff: "(\<integral>\<omega>. f \<omega> \<partial>M) - (\<integral>\<omega>. max (- R) (min R (f \<omega>)) \<partial>M)
+      = (\<integral>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)) \<partial>M)"
+    by (rule Bochner_Integration.integral_diff[symmetric, OF iF iC])
+  have idiff: "integrable M (\<lambda>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)))"
+    by (rule Bochner_Integration.integrable_diff[OF iF iC])
+  have "\<bar>(\<integral>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)) \<partial>M)\<bar>
+      \<le> (\<integral>\<omega>. \<bar>f \<omega> - max (- R) (min R (f \<omega>))\<bar> \<partial>M)"
+    by (rule integral_abs_bound)
+  also have "\<dots> \<le> (\<integral>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>) \<partial>M)"
+    by (rule integral_mono[OF integrable_abs[OF idiff] iT])
+       (rule clamp_diff_le_tail_pointwise[OF R])
+  finally show ?thesis unfolding diff .
+qed
+
 end
