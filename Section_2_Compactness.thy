@@ -379,14 +379,15 @@ text \<open>
 \<close>
 
 lemma box_of_sequential:
-  fixes X :: "'a topology" and Y :: "'b topology"
+  fixes X :: "'a topology" and Y :: "'b topology" and S :: "'b set"
   assumes mX: "metrizable_space X" and mY: "metrizable_space Y"
     and x: "x \<in> topspace X" and P: "P \<in> topspace Y"
     and seq: "\<And>yi Qi. limitin X yi x sequentially
         \<Longrightarrow> limitin Y Qi P sequentially
+        \<Longrightarrow> (\<And>i. Qi i \<in> S)
         \<Longrightarrow> eventually (\<lambda>i. R (yi i) (Qi i)) sequentially"
   shows "\<exists>U V. openin X U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
-      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. R y Q)"
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
 proof (rule ccontr)
   assume neg: "\<not> ?thesis"
   text \<open>\<open>metrizable_space_def\<close> quantifies over the CARRIER as well as the metric,
@@ -405,8 +406,8 @@ proof (rule ccontr)
   have xM: "x \<in> MXs" using x tsX by simp
   have PM: "P \<in> MYs" using P tsY by simp
 
-  have pick: "\<exists>z W. z \<in> MX.mball x (1 / Suc n) \<and> W \<in> MY.mball P (1 / Suc n)
-      \<and> \<not> R z W" for n :: nat
+  have pick: "\<exists>z W. z \<in> MX.mball x (1 / Suc n)
+      \<and> W \<in> MY.mball P (1 / Suc n) \<and> W \<in> S \<and> \<not> R z W" for n :: nat
   proof -
     have oU: "openin X (MX.mball x (1 / Suc n))"
       unfolding tX by (rule MX.openin_mball)
@@ -417,7 +418,8 @@ proof (rule ccontr)
     show ?thesis using neg oU oV xU PV by blast
   qed
   obtain y Q where yQ: "\<And>n. y n \<in> MX.mball x (1 / Suc n)"
-    "\<And>n. Q n \<in> MY.mball P (1 / Suc n)" "\<And>n. \<not> R (y n) (Q n)"
+    "\<And>n. Q n \<in> MY.mball P (1 / Suc n)" "\<And>n. Q n \<in> S"
+    "\<And>n. \<not> R (y n) (Q n)"
     using pick by metis
 
   have limy: "limitin X y x sequentially"
@@ -462,8 +464,47 @@ proof (rule ccontr)
     qed
     thus ?thesis unfolding tY .
   qed
-  from seq[OF limy limQ] have "eventually (\<lambda>i. R (y i) (Q i)) sequentially" .
-  thus False using yQ(3) by simp
+  from seq[OF limy limQ yQ(3)]
+  have "eventually (\<lambda>i. R (y i) (Q i)) sequentially" .
+  thus False using yQ(4) by simp
+qed
+
+text \<open>The specialisation actually used: the first factor is a metric TYPE, so
+  Berge's \<open>box\<close> wants the type-class \<open>open\<close> there rather than \<open>openin euclidean\<close>.
+
+  Do the conversion here and only here. \<open>euclidean\<close> is the abbreviation
+  \<open>topology open\<close>, so \<open>unfolding open_openin\<close> rewrites the bare \<open>open\<close> INSIDE
+  \<open>euclidean\<close> and regenerates its own redex --- it does not terminate. The
+  \<open>[symmetric]\<close> orientation is the declared simp rule precisely because it is the
+  safe one, and plain \<open>simp\<close> takes it.\<close>
+
+lemma box_of_sequential_euclidean:
+  fixes Y :: "'b topology" and S :: "'b set" and x :: "'a::metric_space"
+  assumes mY: "metrizable_space Y" and P: "P \<in> topspace Y"
+    and seq: "\<And>yi Qi. yi \<longlonglongrightarrow> x
+        \<Longrightarrow> limitin Y Qi P sequentially
+        \<Longrightarrow> (\<And>i. Qi i \<in> S)
+        \<Longrightarrow> eventually (\<lambda>i. R (yi i) (Qi i)) sequentially"
+  shows "\<exists>U V. open U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
+proof -
+  have "\<exists>U V. openin (euclidean :: 'a topology) U \<and> openin Y V
+      \<and> x \<in> U \<and> P \<in> V \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
+  proof (rule box_of_sequential)
+    show "metrizable_space (euclidean :: 'a topology)"
+      by (rule metrizable_space_euclidean)
+    show "metrizable_space Y" by (rule mY)
+    show "x \<in> topspace (euclidean :: 'a topology)" by simp
+    show "P \<in> topspace Y" by (rule P)
+  next
+    fix yi :: "nat \<Rightarrow> 'a" and Qi :: "nat \<Rightarrow> 'b"
+    assume ly: "limitin (euclidean :: 'a topology) yi x sequentially"
+      and lQ: "limitin Y Qi P sequentially" and inS: "\<And>i. Qi i \<in> S"
+    have "yi \<longlonglongrightarrow> x" using ly by (simp add: limitin_canonical_iff)
+    from seq[OF this lQ inS]
+    show "eventually (\<lambda>i. R (yi i) (Qi i)) sequentially" .
+  qed
+  thus ?thesis by simp
 qed
 
 section \<open>Berge over a \<open>topology\<close>-valued index space\<close>
@@ -490,7 +531,7 @@ theorem usc_sup_over_compactin:
     and lt: "Sup (F x ` C) < c"
     and box: "\<And>P d. P \<in> C \<Longrightarrow> F x P < d \<Longrightarrow>
         \<exists>U V. open U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
-              \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < d)"
+              \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> C. F y Q < d)"
   shows "eventually (\<lambda>y. Sup (F y ` C) < c) (nhds x)"
 proof -
   obtain c' where c1: "Sup (F x ` C) < c'" and c2: "c' < c"
@@ -502,30 +543,30 @@ proof -
     with c1 show ?thesis by linarith
   qed
   have ex: "\<forall>P \<in> C. \<exists>U V. open U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
-      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < c')"
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> C. F y Q < c')"
     using box small by blast
   have ex': "\<forall>P \<in> C. \<exists>W :: 'a set \<times> 'b set.
       open (fst W) \<and> openin Y (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
-      \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
+      \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W \<inter> C. F y Q < c')"
   proof
     fix P assume P: "P \<in> C"
     from bspec[OF ex P] obtain U V where
-      "open U" "openin Y V" "x \<in> U" "P \<in> V" "\<forall>y\<in>U. \<forall>Q\<in>V. F y Q < c'"
+      "open U" "openin Y V" "x \<in> U" "P \<in> V" "\<forall>y\<in>U. \<forall>Q\<in>V \<inter> C. F y Q < c'"
       by blast
     then show "\<exists>W :: 'a set \<times> 'b set.
         open (fst W) \<and> openin Y (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
-        \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
+        \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W \<inter> C. F y Q < c')"
       by (intro exI[of _ "(U,V)"]) simp
   qed
   have exf: "\<exists>WW. \<forall>P\<in>C.
       open (fst (WW P)) \<and> openin Y (snd (WW P)) \<and> x \<in> fst (WW P)
       \<and> P \<in> snd (WW P)
-      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
+      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P) \<inter> C. F y Q < c')"
     by (rule bchoice[OF ex'])
   then obtain WW where Wb: "\<forall>P\<in>C.
       open (fst (WW P)) \<and> openin Y (snd (WW P)) \<and> x \<in> fst (WW P)
       \<and> P \<in> snd (WW P)
-      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
+      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P) \<inter> C. F y Q < c')"
     by (rule exE)
   define UU where "UU = (\<lambda>P. fst (WW P))"
   define VV where "VV = (\<lambda>P. snd (WW P))"
@@ -537,10 +578,10 @@ proof -
     unfolding UU_def using bspec[OF Wb P] by simp
   have PV: "P \<in> VV P" if P: "P \<in> C" for P
     unfolding VV_def using bspec[OF Wb P] by simp
-  have less: "F y Q < c'" if P: "P \<in> C" and y: "y \<in> UU P" and Q: "Q \<in> VV P"
+  have less: "F y Q < c'" if P: "P \<in> C" and y: "y \<in> UU P"
+    and Q: "Q \<in> VV P" and QC: "Q \<in> C"
     for P y Q
-    using bspec[OF Wb P] y Q unfolding UU_def VV_def by simp
-
+    using bspec[OF Wb P] y Q QC unfolding UU_def VV_def by simp
   text \<open>The covering step, in the \<open>openin\<close> world: cover by the SET \<open>VV ` C\<close>, then
     turn the finite subcover back into a finite set of INDICES.\<close>
   have cover: "C \<subseteq> \<Union>(VV ` C)" using PV by blast
@@ -563,7 +604,7 @@ proof -
     then obtain Q where Q: "Q \<in> C" and zdef: "z = F y Q" by blast
     from Q D3 obtain P where P: "P \<in> D" and QV: "Q \<in> VV P" by blast
     have "y \<in> UU P" using yU P unfolding U_def by blast
-    then have "F y Q < c'" using less[of P y Q] P D1 QV by blast
+    then have "F y Q < c'" using less[of P y Q] P D1 QV Q by blast
     then show "z \<le> c'" unfolding zdef by linarith
   qed
   have final: "Sup (F y ` C) < c" if yU: "y \<in> U" for y

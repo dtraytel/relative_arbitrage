@@ -495,7 +495,36 @@ So work item 2.2 (`essinf_eq_inf_log_laplace`) is **deleted from the plan**.
   returns a finite SET of opens rather than a finite index set, and the indices
   come back via `finite_subset_image`. The conclusion stays in the type class,
   since it is about `nhds x` in `real^'n`.
-- 2.6 `val_fn_usc` — open, but now only assembly once 2.1/2.3/2.4 land.
+- 2.6 — **DONE 2026-08-02**, `Section_2_Usc.vshift_sup_usc`: for a weakly
+  COMPACT family `C` of laws, `x ↦ Sup {P-essinf τ_K(x+·) : P ∈ C}` is upper
+  semicontinuous. Every hypothesis of Berge is discharged; the only assumption
+  left standing is compactness of `C`, i.e. Lemma 2.3.
+
+  Supporting definitions and lemmas:
+
+      Section_2_Usc.vshift T A y Q = enn2real (Q-essinf τ_K(y+·))
+      Section_2_Usc.vshift_le                     (bounded by T)
+      Section_2_Usc.vshift_less_iff_positive_mass (the ennreal/real bridge)
+      Section_2_Compactness.box_of_sequential_euclidean
+
+  **A case the plan had not anticipated.** Berge quantifies `box` over EVERY
+  threshold `d` above `F x P`, including `d > T`. Nothing excludes it — `vshift`
+  could be `0` while `d` is huge — so `¬ T < d` is NOT available, and the whole
+  item-2.4 witness machinery assumes it. That branch is trivial rather than
+  impossible (the exit time never exceeds `T`, so the whole space works), but it
+  has to be split off explicitly.
+
+  **Three Isabelle traps, each costing a build or worse.**
+  1. `unfolding open_openin` DOES NOT TERMINATE. `euclidean` is the abbreviation
+     `topology open`, so rewriting `open S → openin euclidean S` rewrites the bare
+     `open` inside `euclidean` and regenerates its own redex. The `[symmetric]`
+     orientation is the declared simp rule precisely because it is the safe one.
+     The conversion is now done once, in `box_of_sequential_euclidean`.
+  2. `blast` asked to prove `∃U V. …` with `U = UNIV` does not terminate — it has
+     to INVENT the witness. Supply the instance first, then `blast` only has to
+     apply `exI`.
+  3. `(use … in blast)+` to discharge side conditions of a rule application is a
+     silent hazard for the same reason; explicit `have`s are cheap insurance.
 
 ### Work item 2 (~800–1,500 lines, MEDIUM risk)
 - 2.1 `tau_K_usc`: `ω ↦ τ_K` usc on path space. Uses `Path_Space` and

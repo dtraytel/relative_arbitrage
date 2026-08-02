@@ -507,4 +507,194 @@ proof -
   qed
 qed
 
+subsection \<open>Item 2.6: upper semicontinuity of the supremum over a compact family\<close>
+
+text \<open>
+  The value functional, real-valued. \<open>ess_inf_time\<close> is \<open>ennreal\<close>-valued and Berge's
+  supremum has to be a real number; the conversion is faithful because the exit
+  time is capped at \<open>T\<close>, so the essential infimum is never \<open>\<top>\<close>.
+\<close>
+
+definition vshift :: "real \<Rightarrow> 'b::{polish_space,real_normed_vector} set
+    \<Rightarrow> 'b \<Rightarrow> (real \<Rightarrow> 'b) measure \<Rightarrow> real" where
+  "vshift T A y Q = enn2real (ess_inf_time Q (etime T A (\<lambda>s w. y + w s)))"
+
+lemma vshift_le:
+  fixes A :: "'b::{polish_space,real_normed_vector} set"
+  assumes T: "0 \<le> T" and Q: "prob_space Q"
+  shows "vshift T A y Q \<le> T"
+proof -
+  have "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) \<le> ennreal T"
+    by (rule ess_inf_time_le_const[OF Q]) (rule etime_le_T[OF T])
+  from enn2real_mono[OF this] show ?thesis
+    unfolding vshift_def using T by simp
+qed
+
+text \<open>The bridge from the real-valued functional back to the positive-mass
+  statement the two halves of item 2.4 speak. Both directions of the \<open>ennreal\<close>
+  conversion need the ceiling: without it \<open>enn2real\<close> could collapse \<open>\<top>\<close> to \<open>0\<close> and
+  the strict inequality would be an artefact.\<close>
+
+lemma vshift_less_iff_positive_mass:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and Q :: "(real \<Rightarrow> 'b) measure"
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d" and d0: "0 \<le> d"
+    and sQ: "sets Q = sets (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and pQ: "prob_space Q"
+  shows "vshift T A y Q < d
+      \<longleftrightarrow> emeasure Q {\<omega> \<in> space Q. etime T A (\<lambda>s w. y + w s) \<omega> < d} \<noteq> 0"
+proof -
+  have spQ: "space Q = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    using sets_eq_imp_space_eq[OF sQ] by (simp add: space_borel_of)
+  have setseq: "{\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d}
+      = {\<omega> \<in> space Q. etime T A (\<lambda>s w. y + w s) \<omega> < d}"
+    using etime_nonneg[OF T, of A "\<lambda>s w. y + w s"]
+    by (auto simp: ennreal_less_iff)
+  have meas: "{\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d}
+      \<in> sets Q"
+    unfolding setseq
+    using borel_of_open[OF open_etime_shift_less[OF T A dT]]
+    unfolding sQ spQ by simp
+  have le: "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) \<le> ennreal T"
+    by (rule ess_inf_time_le_const[OF pQ]) (rule etime_le_T[OF T])
+  have fin: "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) < \<top>"
+    using le ennreal_less_top by (rule order_le_less_trans)
+  have "vshift T A y Q < d
+      \<longleftrightarrow> ennreal (vshift T A y Q) < ennreal d"
+    unfolding vshift_def by (simp add: ennreal_less_iff)
+  also have "\<dots> \<longleftrightarrow> ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) < ennreal d"
+    unfolding vshift_def by (simp add: ennreal_enn2real[OF fin])
+  also have "\<dots> \<longleftrightarrow> emeasure Q
+      {\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d} \<noteq> 0"
+    by (rule ess_inf_time_less_iff[OF meas])
+  finally show ?thesis unfolding setseq .
+qed
+
+text \<open>
+  Item 2.6 --- and, granted Lemma 2.3, clause (1) of Theorem 1.1. The supremum
+  of \<open>P \<mapsto> P\<hyphen>essinf \<tau>\<^sub>K(x + \<cdot>)\<close> over a weakly compact family of laws is upper
+  semicontinuous in the starting point \<open>x\<close>.
+
+  Every hypothesis of Berge is discharged here EXCEPT compactness of the family,
+  which is Lemma 2.3 and is assumed. That is the honest statement of where the
+  development stands: the semicontinuity argument is complete, and the only
+  outstanding input is that \<open>\<P>\<^sub>0\<close> is weakly compact.
+\<close>
+
+theorem vshift_sup_usc:
+  fixes T c :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and C :: "(real \<Rightarrow> 'b) measure set" and x :: 'b
+  assumes T: "0 \<le> T" and A: "open A"
+    and cC: "compactin (weak_conv_topology
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) C"
+    and neC: "C \<noteq> {}"
+    and sC: "\<And>Q. Q \<in> C \<Longrightarrow> sets Q = sets (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and pC: "\<And>Q. Q \<in> C \<Longrightarrow> prob_space Q"
+    and lt: "Sup (vshift T A x ` C) < c"
+  shows "eventually (\<lambda>y. Sup (vshift T A y ` C) < c) (nhds x)"
+proof (rule usc_sup_over_compactin)
+  show "compactin (weak_conv_topology
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) C"
+    by (rule cC)
+  show "C \<noteq> {}" by (rule neC)
+  show "bdd_above (vshift T A y ` C)" for y
+    by (rule bdd_aboveI2[of _ _ T]) (use vshift_le[OF T] pC in blast)
+  show "Sup (vshift T A x ` C) < c" by (rule lt)
+next
+  fix P :: "(real \<Rightarrow> 'b) measure" and d :: real
+  assume P: "P \<in> C" and small: "vshift T A x P < d"
+  have d0: "0 \<le> d"
+  proof -
+    have "0 \<le> vshift T A x P" unfolding vshift_def by simp
+    with small show ?thesis by linarith
+  qed
+  show "\<exists>U V. open U \<and> openin (weak_conv_topology
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) V
+      \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> C. vshift T A y Q < d)"
+  proof (cases "T < d")
+    text \<open>Berge quantifies \<open>box\<close> over EVERY threshold above \<open>vshift T A x P\<close>, and a
+      threshold beyond \<open>T\<close> is not excluded by anything --- \<open>vshift\<close> could be \<open>0\<close>
+      while \<open>d\<close> is huge. That branch is trivial rather than impossible: the exit
+      time never exceeds \<open>T\<close>, so the whole space works. It has to be split off
+      because the witness machinery of item 2.4 assumes \<open>\<not> T < d\<close> throughout.\<close>
+    case True
+    have allQ: "vshift T A y Q < d" if "Q \<in> C" for y Q
+    proof -
+      have "vshift T A y Q \<le> T" by (rule vshift_le[OF T pC[OF that]])
+      with True show ?thesis by linarith
+    qed
+    have oT: "openin (weak_conv_topology
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))
+        (topspace (weak_conv_topology
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))))"
+      by (rule openin_topspace)
+    have Ptop: "P \<in> topspace (weak_conv_topology
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+      using sC[OF P] prob_space.finite_measure[OF pC[OF P]] by simp
+    text \<open>The witnesses have to be handed over explicitly. Left to invent
+      \<open>U = UNIV\<close> and \<open>V = topspace\<close> for itself, \<open>blast\<close> does not terminate.\<close>
+    have inst: "open (UNIV :: 'b set)
+        \<and> openin (weak_conv_topology
+            (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))
+           (topspace (weak_conv_topology
+              (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))))
+        \<and> x \<in> (UNIV :: 'b set)
+        \<and> P \<in> topspace (weak_conv_topology
+            (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))
+        \<and> (\<forall>y \<in> (UNIV :: 'b set).
+             \<forall>Q \<in> topspace (weak_conv_topology
+                 (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) \<inter> C.
+               vshift T A y Q < d)"
+      using oT Ptop allQ by simp
+    thus ?thesis by blast
+  next
+    case False
+    hence dT: "\<not> T < d" by simp
+    have posP: "emeasure P {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
+      using small
+      unfolding vshift_less_iff_positive_mass[OF T A dT d0 sC[OF P] pC[OF P]] .
+    show ?thesis
+    proof (rule box_of_sequential_euclidean)
+      show "metrizable_space (weak_conv_topology
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+        by (rule metrizable_weak_conv_path_topology)
+      show "P \<in> topspace (weak_conv_topology
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+        using sC[OF P] prob_space.finite_measure[OF pC[OF P]] by simp
+    next
+      fix yi :: "nat \<Rightarrow> 'b" and Qi :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure"
+      assume yconv: "yi \<longlonglongrightarrow> x"
+        and lQ: "limitin (weak_conv_topology
+            (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) Qi P sequentially"
+        and inC: "\<And>i. Qi i \<in> C"
+      text \<open>\<open>weak_conv_on\<close> IS \<open>limitin (weak_conv_topology \<dots>)\<close> by definition. The
+        membership \<open>Qi i \<in> C\<close> is what cannot be dropped: \<open>etime_shift_box\<close> needs each
+        \<open>Qi i\<close> to be a PROBABILITY measure, and an arbitrary measure near \<open>P\<close> in the
+        weak topology is only a finite one.\<close>
+      have wc: "weak_conv_on Qi P sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+        using lQ .
+      have sQi: "sets (Qi i) = sets (borel_of
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))" for i
+        by (rule sC[OF inC])
+      have pQi: "prob_space (Qi i)" for i by (rule pC[OF inC])
+      have ev: "eventually (\<lambda>i. emeasure (Qi i)
+          {\<omega> \<in> space (Qi i). etime T A (\<lambda>s w. yi i + w s) \<omega> < d} \<noteq> 0) sequentially"
+        by (rule etime_shift_box[OF T A dT wc sQi pQi pC[OF P] yconv posP])
+      show "eventually (\<lambda>i. vshift T A (yi i) (Qi i) < d) sequentially"
+      proof (rule eventually_mono[OF ev])
+        fix i
+        assume "emeasure (Qi i)
+            {\<omega> \<in> space (Qi i). etime T A (\<lambda>s w. yi i + w s) \<omega> < d} \<noteq> 0"
+        thus "vshift T A (yi i) (Qi i) < d"
+          unfolding vshift_less_iff_positive_mass[OF T A dT d0
+              sC[OF inC] pC[OF inC]] .
+      qed
+    qed
+  qed
+qed
+
 end
