@@ -381,4 +381,130 @@ proof -
   qed
 qed
 
+text \<open>The same decomposition, used for measurability rather than for extraction:
+  the event \<open>{\<tau>\<^sub>K(y + \<cdot>) < d}\<close> is a COUNTABLE union of open sets, hence open, hence
+  Borel. Without this the final monotonicity step below has no set to be
+  monotone into.\<close>
+
+lemma open_etime_shift_less:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set" and y :: 'b
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         etime T A (\<lambda>s w. y + w s) f < d}"
+proof -
+  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+        etime T A (\<lambda>s w. y + w s) f < d}
+      = (\<Union>r \<in> {r \<in> qtimes T. r < d}.
+           {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A})"
+  proof -
+    have "etime T A (\<lambda>s w. y + w s) f < d
+        \<longleftrightarrow> (\<exists>r \<in> {r \<in> qtimes T. r < d}. y + f r \<in> A)"
+      if w: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" for f
+    proof -
+      have cont: "continuous_on {0..T} (\<lambda>s. y + f s)"
+        by (intro continuous_intros mspace_path_metricD[OF w])
+      have e: "etime T A (\<lambda>s w. y + w s) f = etime T A (\<lambda>s w'. y + f s) f"
+        unfolding etime_def by simp
+      show ?thesis unfolding e
+        using etime_less_iff_qtimes_open[OF T A dT cont, of f] by auto
+    qed
+    thus ?thesis by blast
+  qed
+  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A}"
+    if r: "r \<in> {r \<in> qtimes T. r < d}" for r
+  proof -
+    have "r \<in> qtimes T" using r by simp
+    hence rT: "r \<in> {0..T}" using qtimes_subset[OF T] by blast
+    show ?thesis by (rule open_shifted_eval_preimage[OF rT A])
+  qed
+  show ?thesis unfolding eq by (rule openin_Union) (use op in blast)
+qed
+
+subsection \<open>Item 2.4 complete: Berge's box hypothesis for the shifted exit time\<close>
+
+text \<open>
+  Both perturbations at once, in the sequential form the Lévy--Prokhorov
+  metrisation makes equivalent to the topological one. The strict inequality
+  \<open>f(x,P) < d\<close> --- read as ``the event \<open>\<tau>\<^sub>K(x + \<cdot>) < d\<close> has positive mass'' ---
+  persists when the starting point moves to any \<open>y\<^sub>i \<rightarrow> x\<close> AND the law moves to any
+  \<open>Q\<^sub>i \<rightarrow> P\<close> weakly.
+
+  Larsson--Ruf get this from continuity of \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; no such theorem
+  is used here. The single set \<open>G\<close> does all the work: the erosion makes it survive
+  moving \<open>x\<close>, and its openness makes it survive moving \<open>P\<close>. That is why the
+  erosion had to be OPEN and not merely closed --- a closed eroded set would give
+  the wrong Portmanteau direction.
+\<close>
+
+theorem etime_shift_box:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and P :: "(real \<Rightarrow> 'b) measure" and Qi :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure"
+    and x :: 'b and yi :: "nat \<Rightarrow> 'b"
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
+    and wc: "weak_conv_on Qi P sequentially
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    and sQ: "\<And>i. sets (Qi i) = sets (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and pQ: "\<And>i. prob_space (Qi i)" and pP: "prob_space P"
+    and yconv: "yi \<longlonglongrightarrow> x"
+    and pos: "emeasure P {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
+  shows "eventually (\<lambda>i. emeasure (Qi i)
+      {\<omega> \<in> space (Qi i). etime T A (\<lambda>s w. yi i + w s) \<omega> < d} \<noteq> 0) sequentially"
+proof -
+  interpret PP: prob_space P by (rule pP)
+  have sP: "sets P = sets (borel_of
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    using wc[unfolded weak_conv_on_def] by blast
+  obtain \<delta> G where d0: "0 < \<delta>"
+    and Gopen: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) G"
+    and Gpos: "emeasure P G \<noteq> 0"
+    and marg: "\<And>y \<omega>. dist x y < \<delta> \<Longrightarrow> \<omega> \<in> G
+        \<Longrightarrow> etime T A (\<lambda>s w. y + w s) \<omega> < d"
+    using etime_shift_box_half[OF T A dT sP pos] by blast
+  have GP: "0 < measure P G"
+  proof (rule ccontr)
+    assume "\<not> 0 < measure P G"
+    hence "measure P G = 0" using measure_nonneg[of P G] by linarith
+    hence "ennreal (measure P G) = 0" by simp
+    thus False using Gpos PP.emeasure_eq_measure by simp
+  qed
+  have ev1: "eventually (\<lambda>i. 0 < measure (Qi i) G) sequentially"
+    by (rule weak_conv_open_positive_eventually[OF wc Gopen GP sQ pQ pP])
+  have ev2: "eventually (\<lambda>i. dist x (yi i) < \<delta>) sequentially"
+    using tendstoD[OF yconv d0] by (simp add: dist_commute)
+  show ?thesis
+  proof (rule eventually_mono[OF eventually_conj[OF ev1 ev2]])
+    fix i
+    assume h: "0 < measure (Qi i) G \<and> dist x (yi i) < \<delta>"
+    interpret QQ: prob_space "Qi i" by (rule pQ)
+    have spQ: "space (Qi i) = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+      using sets_eq_imp_space_eq[OF sQ[of i]] by (simp add: space_borel_of)
+    have Gsub: "G \<subseteq> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+      using openin_subset[OF Gopen] by simp
+    have sub: "G \<subseteq> {\<omega> \<in> space (Qi i).
+        etime T A (\<lambda>s w. yi i + w s) \<omega> < d}"
+    proof
+      fix \<omega> assume w: "\<omega> \<in> G"
+      have "etime T A (\<lambda>s w. yi i + w s) \<omega> < d"
+        using marg[OF _ w] h by simp
+      thus "\<omega> \<in> {\<omega> \<in> space (Qi i). etime T A (\<lambda>s w. yi i + w s) \<omega> < d}"
+        using w Gsub spQ by auto
+    qed
+    have meas: "{\<omega> \<in> space (Qi i). etime T A (\<lambda>s w. yi i + w s) \<omega> < d}
+        \<in> sets (Qi i)"
+      using borel_of_open[OF open_etime_shift_less[OF T A dT]]
+      unfolding sQ spQ by simp
+    have "emeasure (Qi i) G \<noteq> 0"
+      using h QQ.emeasure_eq_measure by simp
+    moreover have "emeasure (Qi i) G
+        \<le> emeasure (Qi i) {\<omega> \<in> space (Qi i).
+             etime T A (\<lambda>s w. yi i + w s) \<omega> < d}"
+      by (rule emeasure_mono[OF sub meas])
+    ultimately show "emeasure (Qi i) {\<omega> \<in> space (Qi i).
+        etime T A (\<lambda>s w. yi i + w s) \<omega> < d} \<noteq> 0" by auto
+  qed
+qed
+
 end

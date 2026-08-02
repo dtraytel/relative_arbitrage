@@ -437,10 +437,30 @@ So work item 2.2 (`essinf_eq_inf_log_laplace`) is **deleted from the plan**.
   are equal but not syntactically so; `etime` only ever applies its process to
   the one path, and `unfolding etime_def by simp` bridges them.
 
-  **Remaining for 2.4**: the `P`-perturbation half — `Q(G) > 0` for `Q` in a weak
-  neighbourhood of `P`, which is `G` open plus Portmanteau. The cross-branch home
-  exists: **`Section_2_Usc`** imports `Exit_Time`, `Path_Space` and
-  `Value_Function` together.
+  **2.4 is DONE in sequential form — `Section_2_Usc.etime_shift_box`.** Both
+  perturbations at once: if `yᵢ → x` and `Qᵢ → P` weakly, then the event
+  `{τ_K(yᵢ + ·) < d}` eventually has positive `Qᵢ`-mass. Two further lemmas:
+
+      Path_Space.weak_conv_open_positive_eventually  (open-set Portmanteau)
+      Section_2_Usc.open_etime_shift_less            (the event is OPEN)
+
+  The single set `G` does all the work, and this is what makes the erosion device
+  pay off twice: erosion makes `G` survive moving `x`, and OPENNESS of `G` makes
+  it survive moving `P`. Had the erosion been closed instead, Portmanteau would
+  point the wrong way.
+
+  `weak_conv_open_positive_eventually` assumes the `sets` equation at EVERY index
+  rather than eventually. That is forced: `mweak_conv3` needs convergence of the
+  total mass, which here is the constant 1 only because `space (Nᵢ) = mspace m`
+  with no exceptions. The measurability of the target event, needed for the final
+  monotonicity step, comes from `open_etime_shift_less` — the event is a
+  COUNTABLE union of open sets, by the same `qtimes` decomposition.
+
+  **What 2.4 still owes clause (1): the sequential-to-topological bridge.**
+  `usc_sup_over_compact`'s `box` wants open `U ∋ x` and `V ∋ P`; what is proved is
+  the sequential statement. They are equivalent because Lévy–Prokhorov metrises
+  the weak topology on a Polish space, but that equivalence is a real step and is
+  NOT yet formalised. Budget it separately.
 
   **One obstruction the plan had not named.** Berge's `box` hypothesis asks for
   an OPEN neighbourhood `V` of `P`, but `mweak_conv3` is a statement about

@@ -995,4 +995,85 @@ proof -
   moreover have "measure N A \<le> 1" by (rule PN.prob_le_1)
   ultimately show ?thesis by linarith
 qed
+
+subsection \<open>Portmanteau, open sets: positive mass survives a weak perturbation\<close>
+
+text \<open>The mirror of \<open>weak_conv_closed_full_measure\<close>, and the second half of plan
+  item 2.4. Note the orientation: it is the LIMIT measure that is known to charge
+  \<open>G\<close>, and the nearby measures that inherit it. That is exactly what Berge's \<open>box\<close>
+  hypothesis wants --- a neighbourhood of the given \<open>P\<close> on which the strict
+  inequality persists --- and it is the reason the argument needs the OPEN-set
+  half of Portmanteau rather than the closed-set half used for item 2.3.
+
+  The AFP's \<open>mweak_conv3\<close> asks for the closed-set half as a hypothesis plus
+  convergence of the total mass. The first comes from \<open>mweak_conv2\<close> in the same
+  locale; the second is trivial here because every measure in sight is a
+  probability measure, so both sides are constantly one. That is why the \<open>sets\<close>
+  equation is assumed at EVERY index rather than eventually --- the total-mass
+  step needs \<open>space (Ni i) = mspace m\<close> with no exceptions.\<close>
+
+lemma weak_conv_open_positive_eventually:
+  fixes m :: "'a metric" and Ni :: "nat \<Rightarrow> 'a measure"
+  assumes wc: "weak_conv_on Ni N sequentially (mtopology_of m)"
+    and G: "openin (mtopology_of m) G"
+    and pos: "0 < measure N G"
+    and si: "\<And>i. sets (Ni i) = sets (borel_of (mtopology_of m))"
+    and pi: "\<And>i. prob_space (Ni i)" and pN: "prob_space N"
+  shows "eventually (\<lambda>i. 0 < measure (Ni i) G) sequentially"
+proof -
+  interpret PM: Metric_space "mspace m" "mdist m"
+    by (rule Metric_space_mspace_mdist)
+  interpret PN: prob_space N by (rule pN)
+  have top: "PM.mtopology = mtopology_of m"
+    by (simp add: mtopology_of_def)
+  have sN: "sets N = sets (borel_of (mtopology_of m))"
+    using wc[unfolded weak_conv_on_def] by blast
+  have int: "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
+        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
+    if "continuous_map (mtopology_of m) euclideanreal g"
+       "\<exists>B. \<forall>x \<in> topspace (mtopology_of m). \<bar>g x\<bar> \<le> B" for g
+    using wc[unfolded weak_conv_on_def] that by blast
+  interpret MW: mweak_conv_fin "mspace m" "mdist m" Ni N sequentially
+  proof
+    show "\<forall>\<^sub>F i in sequentially.
+        sets (Ni i) = sets (borel_of PM.mtopology)"
+      using si unfolding top by simp
+    show "sets N = sets (borel_of PM.mtopology)" using sN unfolding top by simp
+    show "\<forall>\<^sub>F i in sequentially. finite_measure (Ni i)"
+      using pi by (simp add: prob_space.finite_measure)
+  qed
+  have closed_half: "Limsup sequentially (\<lambda>n. ereal (measure (Ni n) A))
+      \<le> ereal (measure N A)" if clA: "closedin PM.mtopology A" for A
+  proof (rule MW.mweak_conv2)
+    fix g :: "'a \<Rightarrow> real"
+    assume u: "uniformly_continuous_map PM.Self euclidean_metric g"
+      and b: "\<exists>B. \<forall>x \<in> mspace m. \<bar>g x\<bar> \<le> B"
+    have cg: "continuous_map (mtopology_of m) euclideanreal g"
+      using uniformly_continuous_imp_continuous_map[OF u]
+      by (simp add: mtopology_of_def)
+    show "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
+        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
+      by (rule int[OF cg]) (use b in simp)
+  next
+    show "closedin PM.mtopology A" by (rule clA)
+  qed
+  have spi: "space (Ni i) = mspace m" for i
+    using sets_eq_imp_space_eq[OF si[of i]] by (simp add: space_borel_of)
+  have massi: "measure (Ni i) (mspace m) = 1" for i
+    using prob_space.prob_space[OF pi[of i]] unfolding spi[of i] .
+  have massN: "measure N (mspace m) = 1"
+    using PN.prob_space
+      sets_eq_imp_space_eq[OF sN] by (simp add: space_borel_of)
+  have mass: "((\<lambda>n. measure (Ni n) (mspace m))
+      \<longlongrightarrow> measure N (mspace m)) sequentially"
+    unfolding massN by (simp add: massi)
+  have lim_ge: "ereal (measure N G)
+      \<le> Liminf sequentially (\<lambda>n. ereal (measure (Ni n) G))"
+    using MW.mweak_conv3[OF closed_half mass] G unfolding top by simp
+  have posE: "ereal 0 < ereal (measure N G)" using pos by simp
+  have "ereal 0 < Liminf sequentially (\<lambda>n. ereal (measure (Ni n) G))"
+    using posE lim_ge by (rule order_less_le_trans)
+  from less_LiminfD[OF this] show ?thesis by simp
+qed
+
 end
