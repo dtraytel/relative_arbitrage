@@ -507,6 +507,46 @@ proof -
   thus ?thesis by simp
 qed
 
+section \<open>Sequential compactness gives \<open>compactin\<close> in a metrizable space\<close>
+
+text \<open>
+  The glue between Lemmas 2.2/2.3 of arXiv:2512.17702 and Berge. Those two
+  lemmas deliver SEQUENTIAL compactness of the law set --- 2.2 extracts a weakly
+  convergent subsequence, 2.3 puts the limit back in the set --- whereas
+  \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the two
+  coincide, and \<open>Metric_space.compactin_sequentially\<close> is exactly that fact; what
+  is missing is only its transport from a \<open>Metric_space\<close> locale to a \<open>topology\<close>
+  value, which is what this lemma does.
+
+  Stating it separately is worth it because it is the interface: whoever proves
+  Lemma 2.3 has to supply precisely the \<open>seq\<close> hypothesis below and nothing more.
+\<close>
+
+lemma compactin_of_seq_compact:
+  fixes Y :: "'b topology" and C :: "'b set"
+  assumes mY: "metrizable_space Y" and sub: "C \<subseteq> topspace Y"
+    and seq: "\<And>\<sigma> :: nat \<Rightarrow> 'b. range \<sigma> \<subseteq> C \<Longrightarrow>
+        \<exists>l r. l \<in> C \<and> strict_mono r \<and> limitin Y (\<sigma> \<circ> r) l sequentially"
+  shows "compactin Y C"
+proof -
+  obtain MYs dY where dY: "Metric_space MYs dY"
+    and tY: "Y = Metric_space.mtopology MYs dY"
+    using mY unfolding metrizable_space_def by blast
+  interpret MY: Metric_space MYs dY by (rule dY)
+  have tsY: "topspace Y = MYs" unfolding tY by (rule MY.topspace_mtopology)
+  have "compactin MY.mtopology C"
+    unfolding MY.compactin_sequentially
+  proof
+    show "C \<subseteq> MYs" using sub tsY by simp
+  next
+    show "\<forall>\<sigma>::nat \<Rightarrow> 'b. range \<sigma> \<subseteq> C \<longrightarrow>
+        (\<exists>l r. l \<in> C \<and> strict_mono r
+             \<and> limitin MY.mtopology (\<sigma> \<circ> r) l sequentially)"
+      using seq unfolding tY[symmetric] by blast
+  qed
+  thus ?thesis unfolding tY .
+qed
+
 section \<open>Berge over a \<open>topology\<close>-valued index space\<close>
 
 text \<open>

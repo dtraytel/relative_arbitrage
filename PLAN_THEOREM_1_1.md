@@ -715,6 +715,22 @@ the covariation functionals `f(ω) = tr(M (X_t−X_s)(X_t−X_s)ᵀ)·g(ω)`, di
 `ui` from `sq_tail_bound_of_fourth_moment` + `fourth_moment_bound_bounded`, and
 conclude membership via `support_characterisation`.
 
+**The target is now a single named obligation (2026-08-02).**
+`Section_2_Usc.vshift_sup_usc_of_seq_compact` reduces clause (1) to exactly
+
+    ⋀σ. range σ ⊆ P₀ ⟹ ∃L r. L ∈ P₀ ∧ strict_mono r
+          ∧ weak_conv_on (σ ∘ r) L sequentially (mtopology_of (path_metric T))
+
+and nothing else about `P₀` is used. That IS Lemmas 2.2 and 2.3 together, in
+their natural form: 2.2 extracts the subsequence, 2.3 puts the limit back.
+The conversion to Berge's `compactin` is `Section_2_Compactness.compactin_of_seq_compact`
+(sequential compactness = compactness in a metrizable space, transported from
+`Metric_space.compactin_sequentially` to a `topology` value).
+
+Two hypotheses that do NOT have to be proved separately: membership of `P₀` in
+the weak topology's carrier is derivable from `prob_space` plus the `sets`
+equation, and boundedness of the value family comes from `ess_inf_time_le_const`.
+
 **Note the theory placement.** This lemma needs BOTH `Increment_Moments` (for
 `clamp_integral_error`, `tendsto_real_of_approximants`) and `Path_Space` (for
 `weak_conv_on`). Those are different import branches; the only theory reaching

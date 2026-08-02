@@ -697,4 +697,45 @@ next
   qed
 qed
 
+text \<open>
+  The interface to Lemma 2.3, stated so that its eventual proof has exactly one
+  obligation. Lemmas 2.2 and 2.3 of arXiv:2512.17702 together say precisely that
+  \<open>\<P>\<^sub>0\<close> is SEQUENTIALLY compact for weak convergence: 2.2 extracts a convergent
+  subsequence from any sequence of laws, 2.3 puts the limit back into the set.
+  That is the \<open>seq\<close> hypothesis below verbatim, and nothing else about \<open>\<P>\<^sub>0\<close> is
+  used.
+
+  Note what does NOT have to be assumed: the family being a subset of the weak
+  topology's carrier is derivable, since a probability measure on the path
+  \<open>\<sigma>\<close>-algebra is in particular a finite measure with the right \<open>sets\<close>.
+\<close>
+
+corollary vshift_sup_usc_of_seq_compact:
+  fixes T c :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and C :: "(real \<Rightarrow> 'b) measure set" and x :: 'b
+  assumes T: "0 \<le> T" and A: "open A" and neC: "C \<noteq> {}"
+    and sC: "\<And>Q. Q \<in> C \<Longrightarrow> sets Q = sets (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and pC: "\<And>Q. Q \<in> C \<Longrightarrow> prob_space Q"
+    and seq: "\<And>\<sigma> :: nat \<Rightarrow> (real \<Rightarrow> 'b) measure. range \<sigma> \<subseteq> C \<Longrightarrow>
+        \<exists>L r. L \<in> C \<and> strict_mono r \<and> weak_conv_on (\<sigma> \<circ> r) L sequentially
+              (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    and lt: "Sup (vshift T A x ` C) < c"
+  shows "eventually (\<lambda>y. Sup (vshift T A y ` C) < c) (nhds x)"
+proof -
+  have sub: "C \<subseteq> topspace (weak_conv_topology
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+  proof
+    fix Q assume Q: "Q \<in> C"
+    show "Q \<in> topspace (weak_conv_topology
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+      using sC[OF Q] prob_space.finite_measure[OF pC[OF Q]] by simp
+  qed
+  have cC: "compactin (weak_conv_topology
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) C"
+    by (rule compactin_of_seq_compact[OF metrizable_weak_conv_path_topology sub])
+       (use seq in blast)
+  show ?thesis by (rule vshift_sup_usc[OF T A cC neC sC pC lt])
+qed
+
 end
