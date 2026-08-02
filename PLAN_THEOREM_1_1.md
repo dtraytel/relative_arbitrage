@@ -731,6 +731,24 @@ Two hypotheses that do NOT have to be proved separately: membership of `P₀` in
 the weak topology's carrier is derivable from `prob_space` plus the `sets`
 equation, and boundedness of the value family comes from `ess_inf_time_le_const`.
 
+**The market-to-law bridge is now closed too (2026-08-02).** Everything above
+speaks about LAWS on the path space, while `Value_Function.val_fn` is a supremum
+over MARKETS. `Path_Space.path_law` connects them, and
+
+    Section_2_Usc.vshift_path_law
+      vshift T A y (path_law M X T)
+        = enn2real (P-essinf (etime T A (λs ω. y + X s ω)))
+
+carries the essential infimum of the exit time across it, resting on
+`ess_inf_time_distr` (an `AE_distr_iff` argument), `etime_shift_of_restrict`
+(the exit time never inspects times outside `[0,T]`, so `path_law`'s restriction
+is invisible to it) and `etime_shift_superlevel_closed`.
+
+That last one splits on `ennreal T < c` rather than on `ennreal_cases`: above the
+cap every path qualifies, and below it the threshold is automatically a real `r`
+with `¬ T < r`, which is exactly what `open_etime_shift_less` needs. Splitting on
+`ennreal_cases` instead leaves the `T < r` sub-case to be redone by hand.
+
 **Note the theory placement.** This lemma needs BOTH `Increment_Moments` (for
 `clamp_integral_error`, `tendsto_real_of_approximants`) and `Path_Space` (for
 `weak_conv_on`). Those are different import branches; the only theory reaching

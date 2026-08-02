@@ -738,4 +738,134 @@ proof -
   show ?thesis by (rule vshift_sup_usc[OF T A cC neC sC pC lt])
 qed
 
+subsection \<open>From a market to its law: transferring the exit time\<close>
+
+text \<open>
+  \<open>vshift\<close> and everything above it speak about LAWS on the path space, while the
+  repository's value function \<open>Value_Function.val_fn\<close> is a supremum over MARKETS
+  --- a measure, a filtration, a process and a covariation. \<open>Path_Space.path_law\<close>
+  is the bridge between the two, and these lemmas carry the essential infimum of
+  the exit time across it.
+
+  Nothing here is deep, but it cannot be skipped: without it the semicontinuity
+  results proved above are statements about a set of measures that has not been
+  connected to \<open>\<P>\<^sub>x\<close>.
+\<close>
+
+lemma etime_shift_superlevel_closed:
+  fixes T :: real and c :: ennreal
+    and A :: "'b::{polish_space,real_normed_vector} set" and y :: 'b
+  assumes T: "0 \<le> T" and A: "open A"
+  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}"
+proof -
+  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
+  proof (cases "ennreal T < c")
+    text \<open>One split, on whether the threshold is beyond the cap, rather than the
+      two that \<open>ennreal_cases\<close> would give: above the cap EVERY path qualifies,
+      and below it the threshold is automatically a real \<open>r\<close> with \<open>\<not> T < r\<close>,
+      which is exactly the hypothesis \<open>open_etime_shift_less\<close> wants.\<close>
+    case True
+    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
+        = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    proof -
+      have "ennreal (etime T A (\<lambda>s w. y + w s) f) < c" for f
+      proof -
+        have "etime T A (\<lambda>s w. y + w s) f \<le> T" by (rule etime_le_T[OF T])
+        hence "ennreal (etime T A (\<lambda>s w. y + w s) f) \<le> ennreal T"
+          by (rule ennreal_leI)
+        thus ?thesis using True by (rule order_le_less_trans)
+      qed
+      thus ?thesis by blast
+    qed
+    then show ?thesis
+      using openin_topspace[of
+          "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)"]
+      by simp
+  next
+    case False
+    hence cT: "c \<le> ennreal T" by simp
+    then obtain r where r: "0 \<le> r" "c = ennreal r"
+      by (cases c rule: ennreal_cases) (auto simp: top_unique)
+    have rT: "\<not> T < r"
+    proof
+      assume "T < r"
+      hence "ennreal T < ennreal r" using T by (simp add: ennreal_less_iff)
+      thus False using False r(2) by simp
+    qed
+    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
+        = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+          etime T A (\<lambda>s w. y + w s) f < r}"
+      unfolding r(2)
+      using etime_nonneg[OF T, of A "\<lambda>s w. y + w s"]
+      by (auto simp: ennreal_less_iff)
+    then show ?thesis by (simp add: open_etime_shift_less[OF T A rT])
+  qed
+  have compl: "topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+        - {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+             c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}
+      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+           ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
+    by (auto simp: not_le)
+  show ?thesis
+    unfolding closedin_def using op unfolding compl by auto
+qed
+
+lemma ess_inf_time_distr:
+  assumes fm: "f \<in> M \<rightarrow>\<^sub>M N"
+    and meas: "\<And>c :: ennreal. {\<omega> \<in> space N. c \<le> ennreal (tau \<omega>)} \<in> sets N"
+  shows "ess_inf_time (distr M N f) tau = ess_inf_time M (\<lambda>\<omega>. tau (f \<omega>))"
+  unfolding ess_inf_time_def
+proof (rule arg_cong[where f = Sup])
+  show "{c. AE \<omega> in distr M N f. c \<le> ennreal (tau \<omega>)}
+      = {c. AE \<omega> in M. c \<le> ennreal (tau (f \<omega>))}"
+    using AE_distr_iff[OF fm meas] by blast
+qed
+
+text \<open>The exit time does not notice the restriction to \<open>{0..T}\<close> that \<open>path_law\<close>
+  performs, because it only ever inspects times in \<open>[0,T]\<close>.\<close>
+
+lemma etime_shift_of_restrict:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,real_normed_vector}" and y :: 'b
+  shows "etime T A (\<lambda>s w. y + w s) (restrict (\<lambda>t. X t \<omega>) {0..T})
+       = etime T A (\<lambda>s \<omega>'. y + X s \<omega>') \<omega>"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> T \<and> y + restrict (\<lambda>t. X t \<omega>) {0..T} r \<in> A}
+      = {r. 0 \<le> r \<and> r \<le> T \<and> y + X r \<omega> \<in> A}"
+    by (auto simp: restrict_def)
+  thus ?thesis unfolding etime_def by simp
+qed
+
+theorem vshift_path_law:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,real_normed_vector}" and y :: 'b
+  assumes T: "0 \<le> T" and A: "open A"
+    and Xm: "\<And>t. t \<in> {0..T} \<Longrightarrow> X t \<in> borel_measurable M"
+    and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..T} (\<lambda>t. X t \<omega>)"
+  shows "vshift T A y (path_law M X T)
+       = enn2real (ess_inf_time M (etime T A (\<lambda>s \<omega>'. y + X s \<omega>')))"
+proof -
+  have pm: "(\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T})
+      \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    by (rule pathify_measurable[OF T Xm cont])
+  have meas: "{\<omega> \<in> space (borel_of
+        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))).
+        c \<le> ennreal (etime T A (\<lambda>s w. y + w s) \<omega>)}
+      \<in> sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    for c :: ennreal
+    using borel_of_closed[OF etime_shift_superlevel_closed[OF T A, of c y]]
+    by (simp add: space_borel_of)
+  have "ess_inf_time (path_law M X T) (etime T A (\<lambda>s w. y + w s))
+      = ess_inf_time M
+          (\<lambda>\<omega>. etime T A (\<lambda>s w. y + w s) (restrict (\<lambda>t. X t \<omega>) {0..T}))"
+    unfolding path_law_def by (rule ess_inf_time_distr[OF pm meas])
+  also have "\<dots> = ess_inf_time M (etime T A (\<lambda>s \<omega>'. y + X s \<omega>'))"
+    by (simp add: etime_shift_of_restrict)
+  finally show ?thesis unfolding vshift_def by simp
+qed
+
 end
