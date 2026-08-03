@@ -3003,4 +3003,102 @@ lemma covariation_test_nonneg:
   by (intro integral_nonneg_AE AE_I2 mult_nonneg_nonneg
       zero_le_power2 hpos)
 
+subsection \<open>The paper-class value function and its usc majorant\<close>
+
+text \<open>The class (1.7) of the paper consists of STOPPED markets: the process
+  is stopped at its horizon, the covariance vanishes after it, and its
+  diagonal entries are pathwise integrable --- exactly the witness
+  predicate without its path-law clause.  \<open>val_fn\<close> (Value\_Function)
+  quantifies over the bare locale; here we introduce the value function of
+  the paper class and lift the per-witness domination
+  \<open>witness_value_le_law_sup_ball\<close> to its supremum: the paper-class value
+  function is dominated by the law-level value function, which
+  \<open>vshift_sup_usc_mkt\<close> proves usc.  The bare-locale \<open>val_fn\<close> dominates the
+  paper-class one by inclusion of the index sets; identifying the two is
+  Doob's optional stopping for the whole class, which needs integrability
+  of the unstopped process beyond its horizon --- information the locale
+  does not carry.\<close>
+
+definition stopped_market ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m
+     \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) measure
+     \<Rightarrow> (real \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) measure)
+     \<Rightarrow> (real \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'m)
+     \<Rightarrow> (real \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'m^'m)
+     \<Rightarrow> (('m \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "stopped_market k L K x0 M F X acov tau \<longleftrightarrow>
+     sufficiently_volatile_market M F X acov k L K x0 tau
+     \<and> (\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> X s \<omega> = X (min s (tau \<omega>)) \<omega>)
+     \<and> (\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> tau \<omega> < s \<longrightarrow> acov s \<omega> = 0)
+     \<and> (AE \<omega> in M. \<forall>l t. 0 \<le> t \<longrightarrow>
+           set_integrable lborel {0..t} (\<lambda>s. acov s \<omega> $ l $ l))"
+
+lemma mkt_law_witness_iff:
+  "mkt_law_witness k L K x0 T Q M F X acov tau \<longleftrightarrow>
+     Q = path_law M X T \<and> stopped_market k L K x0 M F X acov tau"
+  unfolding mkt_law_witness_def stopped_market_def by blast
+
+definition stopped_exit_vals ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> ennreal set"
+  where
+  "stopped_exit_vals k L K x0 =
+     {c. \<exists>M F X acov tau. stopped_market k L K x0 M F X acov tau
+           \<and> c = ess_inf_time M tau}"
+
+definition stopped_val_fn ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> ennreal"
+  where
+  "stopped_val_fn k L K x0 = Sup (stopped_exit_vals k L K x0)"
+
+lemma stopped_exit_vals_subset:
+  "stopped_exit_vals k L K x0 \<subseteq> mkt_exit_vals k L K x0"
+  unfolding stopped_exit_vals_def mkt_exit_vals_def stopped_market_def
+  by blast
+
+lemma stopped_val_fn_le_val_fn:
+  "stopped_val_fn k L K x0 \<le> val_fn k L K x0"
+  unfolding stopped_val_fn_def val_fn_def
+  by (rule Sup_subset_mono[OF stopped_exit_vals_subset])
+
+lemma stopped_exit_vals_nonempty:
+  fixes x0 :: "real^'m::finite" and K :: "(real^'m) set"
+  assumes k: "1 \<le> k" "k < CARD('m)" and L: "1 \<le> L" and x0K: "x0 \<in> K"
+  shows "stopped_exit_vals k L K x0 \<noteq> {}"
+proof -
+  obtain Q where "Q \<in> mkt_path_laws k L K x0 0"
+    using mkt_path_laws_nonempty[OF k L x0K] by blast
+  then obtain M F X acov tau
+    where "mkt_law_witness k L K x0 0 Q M F X acov tau"
+    unfolding mkt_path_laws_def mem_Collect_eq by blast
+  then have "stopped_market k L K x0 M F X acov tau"
+    unfolding mkt_law_witness_iff by blast
+  then show ?thesis
+    unfolding stopped_exit_vals_def by blast
+qed
+
+theorem stopped_val_fn_le_law_sup:
+  fixes x0 :: "real^'m::finite" and K :: "(real^'m) set"
+    and A :: "(real^'m) set" and T r :: real
+  assumes Kball: "K \<subseteq> cball 0 r" and x0K: "x0 \<in> K"
+    and A: "open A" and AK: "A \<inter> K = {}" and T0: "0 \<le> T"
+    and bT: "ball_v r k x0 \<le> T"
+  shows "stopped_val_fn k L K x0
+      \<le> ennreal (Sup (vshift T A x0
+          ` mkt_law_closure k L (cball 0 (2 * r)) 0 T))"
+  unfolding stopped_val_fn_def
+proof (rule Sup_least)
+  fix c assume "c \<in> stopped_exit_vals k L K x0"
+  then obtain M F X acov tau
+    where SM: "stopped_market k L K x0 M F X acov tau"
+      and c: "c = ess_inf_time M tau"
+    unfolding stopped_exit_vals_def mem_Collect_eq by blast
+  have W: "mkt_law_witness k L K x0 T (path_law M X T) M F X acov tau"
+    unfolding mkt_law_witness_iff using SM by blast
+  show "c \<le> ennreal (Sup (vshift T A x0
+      ` mkt_law_closure k L (cball 0 (2 * r)) 0 T))"
+    unfolding c
+    by (rule witness_value_le_law_sup_ball[OF W Kball x0K A AK T0 bT])
+qed
+
 end
