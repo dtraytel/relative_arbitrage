@@ -2169,4 +2169,148 @@ text \<open>Consequently the process form of the martingale problem is
   itself belongs to Ito\_Market, which imports this theory's ambient
   definitions.\<close>
 
+section \<open>The compensated square of a SINGLE coordinate is a martingale\<close>
+
+text \<open>
+  \<open>martingale_bm_square\<close> above compensates the squared NORM by the trace. That is
+  what \<open>ito_Z\<close> and \<open>dynkin_quadratic\<close> speak about, and it is all the market
+  locales currently demand.
+
+  It is not enough for Lemma 2.2 of arXiv:2512.17702. The tightness chain
+  (\<open>Path_Tightness.tight_on_set_path_laws_vec\<close> \<open>\<leftarrow>\<close>
+  \<open>Increment_Moments.fourth_moment_bound_bounded\<close> \<open>\<leftarrow>\<close>
+  \<open>Stopped_Localization.stopped_covariation\<close>) needs a fourth-moment bound on each
+  COORDINATE separately, hence the compensated square of each coordinate must be
+  a martingale in its own right. A trace identity does not give the coordinate
+  ones, so this has to be proved.
+
+  It costs little: \<open>bm_set_integral_coord_sq_eq\<close> is already the per-coordinate
+  increment identity that \<open>bm_set_integral_sq_eq\<close> sums up. The proof below is the
+  proof of \<open>martingale_bm_square\<close> with the sum removed --- the compensator drops
+  from \<open>CARD('n) * w\<close> to \<open>w\<close>, since \<open>mat 1 $ i $ i = 1\<close>.
+\<close>
+
+lemma bm_compensator_coord:
+  assumes u: "0 \<le> u"
+  shows "set_lebesgue_integral lborel {0..u}
+      (\<lambda>_. (mat 1 :: real^'n::finite^'n) $ i $ i) = u"
+proof -
+  have "set_lebesgue_integral lborel {0..u}
+      (\<lambda>_. (mat 1 :: real^'n^'n) $ i $ i)
+      = u * ((mat 1 :: real^'n^'n) $ i $ i)"
+    using u by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+  then show ?thesis by (simp add: mat_def)
+qed
+
+theorem martingale_bm_coord_square:
+  fixes x0 :: "real^'n::finite"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (bmX x0)) 0
+    (\<lambda>t \<omega>. (bmX x0 t \<omega> $ i)\<^sup>2
+      - set_lebesgue_integral lborel {0..t}
+          (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0)"
+  let ?Z = "\<lambda>t \<omega>. (bmX x0 t \<omega> $ i)\<^sup>2
+    - set_lebesgue_integral lborel {0..t}
+        (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i)"
+  interpret SP: stochastic_process ?M 0 "bmX x0"
+    by unfold_locales (intro measurable_bmX, simp)
+  interpret AP: adapted_process ?M ?F 0 "bmX x0"
+    by (rule SP.adapted_process_natural_filtration)
+  have fm: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M (?F j)" for j
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro
+        fm SP.subalgebra_natural_filtration)
+  have sff: "sigma_finite_filtered_measure ?M ?F 0"
+    by (intro sigma_finite_filtered_measure.intro
+        sigma_finite_filtered_measure_axioms.intro
+        SP.filtered_measure_natural_filtration sfs)
+  interpret SFF: sigma_finite_filtered_measure ?M ?F 0
+    by (rule sff)
+  have coord: "bmX x0 w \<omega> $ i = x0 $ i + \<omega> i w" for w \<omega>
+    by (simp add: bmX_def)
+  have Zmeas: "?Z u \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
+  proof -
+    have X_F: "bmX x0 u \<in> borel_measurable (?F u)"
+      by (intro AP.adaptedD u order.refl)
+    have cnt: "continuous_on UNIV (\<lambda>x :: real^'n. x $ i)"
+      by (intro linear_continuous_on bounded_linear_vec_nth)
+    have prj: "(\<lambda>x :: real^'n. x $ i) \<in> borel_measurable borel"
+      by (rule borel_measurable_continuous_onI[OF cnt])
+    have "(\<lambda>\<omega>. bmX x0 u \<omega> $ i) \<in> borel_measurable (?F u)"
+      by (rule measurable_compose[OF X_F prj])
+    hence "(\<lambda>\<omega>. (bmX x0 u \<omega> $ i)\<^sup>2) \<in> borel_measurable (?F u)"
+      by (intro borel_measurable_power)
+    then show ?thesis
+      by (intro borel_measurable_diff borel_measurable_const)
+  qed
+  have Zint: "integrable ?M (?Z u)" if u: "0 \<le> u" for u
+    unfolding coord
+    by (intro Bochner_Integration.integrable_diff
+        bm_coordinate_sq_integrable[OF u] BMP.integrable_const)
+  have ap: "adapted_process ?M ?F 0 ?Z"
+    by (intro adapted_process.intro[OF SP.filtered_measure_natural_filtration]
+        adapted_process_axioms.intro Zmeas)
+  show ?thesis
+  proof (rule SFF.martingale_of_set_integral_eq[OF ap])
+    show "\<And>j. 0 \<le> j \<Longrightarrow> integrable ?M (?Z j)"
+      by (rule Zint)
+    fix A and u v :: real
+    assume u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> sets (?F u)"
+    have v: "0 \<le> v" using u uv by simp
+    have A_M: "A \<in> sets ?M"
+      using A SP.subalgebra_natural_filtration by (auto simp: subalgebra_def)
+    have ind_int: "integrable ?M
+        (indicator A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)"
+      by (rule bm_indicator_integrable[OF A_M])
+    have ind_val: "(\<integral>\<omega>. indicator A \<omega> \<partial>?M) = BMP.prob A"
+      by (rule bm_indicator_integral[OF A_M])
+    have ins: "A \<inter> space ?M = A"
+      using A_M sets.sets_into_space by blast
+    have cst: "(\<integral>\<omega>. indicator A \<omega> * c \<partial>?M) = BMP.prob A * c" for c :: real
+    proof -
+      have "(\<integral>\<omega>. indicator A \<omega> * c \<partial>?M) = (\<integral>\<omega>. indicator A \<omega> \<partial>?M) * c"
+        using ind_int by simp
+      then show ?thesis by (simp add: ind_val ins)
+    qed
+    have split: "set_lebesgue_integral ?M A (?Z w)
+        = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i w)\<^sup>2 \<partial>?M) - BMP.prob A * w"
+      if w: "0 \<le> w" for w
+    proof -
+      have comp: "set_lebesgue_integral lborel {0..w}
+          (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i) = w"
+        by (rule bm_compensator_coord[OF w])
+      have i1: "integrable ?M (\<lambda>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i w)\<^sup>2)"
+        by (rule bm_indicator_coord_sq_integrable[OF w A_M])
+      have i2: "integrable ?M (\<lambda>\<omega>. indicator A \<omega> * w)"
+        by (intro integrable_mult_left ind_int)
+      have "set_lebesgue_integral ?M A (?Z w)
+          = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i w)\<^sup>2
+              - indicator A \<omega> * w \<partial>?M)"
+        unfolding set_lebesgue_integral_def
+        by (intro Bochner_Integration.integral_cong refl)
+          (simp add: comp coord mat_def w algebra_simps)
+      also have "\<dots> = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i w)\<^sup>2 \<partial>?M)
+          - (\<integral>\<omega>. indicator A \<omega> * w \<partial>?M)"
+        by (intro Bochner_Integration.integral_diff i1 i2)
+      also have "\<dots> = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i w)\<^sup>2 \<partial>?M)
+          - BMP.prob A * w"
+        by (simp add: cst ins)
+      finally show ?thesis .
+    qed
+    have vu: "(\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i v)\<^sup>2 \<partial>?M)
+        = (\<integral>\<omega>. indicator A \<omega> * (x0 $ i + \<omega> i u)\<^sup>2 \<partial>?M)
+          + (v - u) * BMP.prob A"
+      by (rule bm_set_integral_coord_sq_eq[OF u uv A])
+    show "set_lebesgue_integral ?M A (?Z u)
+        = set_lebesgue_integral ?M A (?Z v)"
+      unfolding split[OF u] split[OF v] vu by (simp add: algebra_simps)
+  qed
+qed
+
 end
