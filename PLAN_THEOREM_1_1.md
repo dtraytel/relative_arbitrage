@@ -186,7 +186,13 @@ this before deploying the UI route in N3 — it shortens the work.
 
 In order. N1 is a warm-up; N2 is structural plumbing; N3 is the hard core.
 
-### N1. Nonemptiness witness for `mkt_path_laws` (~100–200 lines, LOW risk)
+### N1. Nonemptiness witness — DONE 2026-08-03 (commit 28b5011)
+
+`Section_2_Usc.mkt_path_laws_nonempty`: the immediate-stop market inhabits
+the family whenever `x0 ∈ K` (plus the numeric side conditions).  Helper:
+`set_integral_at_origin`.  The original scoping follows for reference.
+
+#### N1 as originally scoped
 
 `vshift_sup_usc_mkt` assumes `mkt_path_laws k L K x0 T ≠ {}`. Provide the
 IMMEDIATE-STOP market, in the class whenever `x0 ∈ K`, `1 ≤ k`,
@@ -209,7 +215,29 @@ nonzero only on the Lebesgue-null `{0}`), eigen bounds needed only AT
 integrable (bounded step function). Put it in `Section_2_Usc.thy` next to
 the definitions.
 
-### N2. The pushforward half of LR Prop 2.2 (~300–600 lines, MEDIUM risk)
+### N2. The pushforward half — DONE 2026-08-03 (commit b62098b)
+
+All in `Section_2_Usc`: `mkt_law_witness_shift` (markets shift; the
+coord_Z/dynkin transfers go through `martingale.{diff,add,scaleR_const}`,
+`martingale_vec_component`, `martingale_expectation_eq`),
+`mkt_law_witness_mono_K`, `witness_value_le_vshift` (the value is dominated
+by the vshift of the shifted law when the open target `A` is disjoint from
+`K` and the value is ≤ the horizon — hypothesis `vT`, dischargeable from
+`expected_exit_time_bound` via mono to the ball), and the assembly
+`witness_value_le_law_sup`:
+
+    ess_inf_time M tau
+      ≤ ennreal (Sup (vshift T A x0 ` mkt_law_closure k L (cball 0 (2r)) 0 T)).
+
+So every WITNESS value sits under the unconditionally-usc law-level
+majorant of `vshift_sup_usc_mkt`.  Still missing on this side, besides N3:
+(a) `val_fn` quantifies over ALL class markets, witnesses only over stopped
+confined ones — either prove "stopping a market preserves the class and the
+value" (optional-stopping closure; `stopped_martingale_L2` machinery) or
+restate clause (1) for the stopped subclass; (b) discharge `vT` uniformly
+(T := r²/(CARD − k) works via `ball_v`).  The original scoping follows.
+
+#### N2 as originally scoped
 
 Goal: relate `val_fn k L K x` to the law family started at the origin.
 
