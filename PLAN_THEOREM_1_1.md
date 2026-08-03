@@ -265,7 +265,28 @@ Deliverable: `val_fn ≤` the law supremum (one half of the identification).
 Combined with `vshift_sup_usc_mkt`: `val_fn` is dominated by an usc
 function that EQUALS it once N3 closes.
 
-### N3. The closure adds no value (HARD; the real remaining content of 2.3)
+### N3 — OPENED 2026-08-03 (commit 39e9807); the hard core remains
+
+Done: closure laws inherit start and confinement.
+`Section_2_Usc.confined_paths` is closed in the path topology
+(`closedin_confined_paths`); members carry full mass on it
+(`mkt_path_laws_confined`); the closed-set Portmanteau pushes it to every
+closure point (`mkt_law_closure_confined`, AE form
+`mkt_law_closure_confined_AE`).  Also the N2 domination is now
+hypothesis-free: `witness_value_le_ball_v` + `witness_value_le_law_sup_ball`
+(any `T ≥ ball_v r k x0`).
+
+Still open, in order of attack: (a) integrated martingale/covariation
+identities for members with CLAMPED continuous test functionals (bounded on
+the support by confinement — use `mkt_law_closure_confined_AE` to make the
+clamp invisible), and their passage to closure points via
+`weak_conv_on_def`'s integral clause; (b) the canonical-market construction
+(monotone-class martingale property, `acov` by differentiation) OR the
+author-level decision to restate clause (1) at the law level; (c) the
+optional-stopping closure of the class (`val_fn` over all markets vs
+stopped witnesses).
+
+#### N3 as originally scoped
 
 Goal: for `Λ ∈ mkt_law_closure`, `vshift T A x Λ ≤ Sup` over the base
 family; then the closure supremum equals the base supremum, and with N2 the
