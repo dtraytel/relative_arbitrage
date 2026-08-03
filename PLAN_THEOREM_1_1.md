@@ -276,15 +276,31 @@ closure point (`mkt_law_closure_confined`, AE form
 hypothesis-free: `witness_value_le_ball_v` + `witness_value_le_law_sup_ball`
 (any `T ≥ ball_v r k x0`).
 
-Still open, in order of attack: (a) integrated martingale/covariation
-identities for members with CLAMPED continuous test functionals (bounded on
-the support by confinement — use `mkt_law_closure_confined_AE` to make the
-clamp invisible), and their passage to closure points via
-`weak_conv_on_def`'s integral clause; (b) the canonical-market construction
-(monotone-class martingale property, `acov` by differentiation) OR the
-author-level decision to restate clause (1) at the law level; (c) the
-optional-stopping closure of the class (`val_fn` over all markets vs
-stopped witnesses).
+Done (commit 8faef17, 2026-08-03): the integrated MARTINGALE identity and
+its passage to the closure.  `rclamp` (clamped increments, with
+`rclamp_bound/rclamp_id/rclamp_cont`); witness paths live in `cball 0 r`
+(`mkt_law_witness_bound`), so the clamp is invisible on members;
+`martingale_bounded_test` is the cond_exp pull-out core (`Z`
+`F s`-measurable bounded, `Y` martingale ⟹ `E[Z·Y_t] = E[Z·Y_s]`);
+`martingale_test_functional_cont` gives continuity of
+`λf. rclamp c (f t $ i − f s $ i) * h (restrict f {0..s})` on path space.
+Members satisfy `(LINT f|Q. rclamp (2r) (f t $ i − f s $ i) *
+h (restrict f {0..s})) = 0` (`mkt_path_laws_martingale_test`) and every
+closure point inherits it (`mkt_law_closure_martingale_test`, via the
+bounded-continuous integral clause of `weak_conv_on_def` +
+`LIMSEQ_unique`) — i.e. step 1 (martingale part) and step 2 below are
+DISCHARGED for the drift identity.
+
+Still open, in order of attack: (a) the COVARIATION analogues — same
+template as `mkt_path_laws_martingale_test`, but from
+`coord_Z_martingale`-style compensated squares: the inequality
+`E_Q[tr(M(ω_t−ω_s)(ω_t−ω_s)ᵀ) g] ⋚ (t−s)·h_S(M)·E_Q[g]`; reuse
+`martingale_bounded_test` with `Y := coord_Z`-type processes and clamp
+the quadratic functional the same way; (b) the canonical-market
+construction (monotone-class martingale property, `acov` by
+differentiation) OR the author-level decision to restate clause (1) at
+the law level; (c) the optional-stopping closure of the class (`val_fn`
+over all markets vs stopped witnesses).
 
 #### N3 as originally scoped
 
