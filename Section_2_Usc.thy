@@ -1354,4 +1354,467 @@ proof -
     unfolding mkt_path_laws_def by blast
 qed
 
+subsection \<open>N2: witness values are dominated by the law supremum\<close>
+
+text \<open>The pushforward half of Larsson--Ruf Prop.\ 2.2, in market form: a
+  witness market for \<open>(K, x0)\<close> shifted by \<open>-x0\<close> is a witness market for
+  \<open>(K - x0, 0)\<close>; enlarging the domain moves it into the FIXED family over
+  \<open>cball 0 (2r)\<close>; and its value \<open>ess_inf_time M tau\<close> is dominated by the
+  \<open>vshift\<close> of its shifted path law at \<open>x0\<close>, because the path avoids the
+  open target \<open>A\<close> (disjoint from \<open>K\<close>) up to \<open>tau\<close>.  Together: every
+  witness value for \<open>(K, x0)\<close> is at most the law-level supremum over
+  \<open>mkt_law_closure k L (cball 0 (2r)) 0 T\<close>.\<close>
+
+lemma mkt_law_witness_mono_K:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and KK: "K \<subseteq> K'"
+  shows "mkt_law_witness k L K' x0 T Q M F X acov tau"
+  using W sufficiently_volatile_market_mono_K[OF _ KK]
+  unfolding mkt_law_witness_def by blast
+
+lemma inner_diff_self_expand:
+  fixes a c :: "real^'m::finite"
+  shows "(a - c) \<bullet> (a - c) = a \<bullet> a - 2 * (c \<bullet> a) + c \<bullet> c"
+  by (simp add: inner_diff_left inner_diff_right inner_commute)
+
+lemma mkt_law_witness_shift:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+    and c :: "real^'m" and r :: real
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and Kball: "K \<subseteq> cball 0 r"
+  shows "mkt_law_witness k L ((\<lambda>y. y - c) ` K) (x0 - c) T
+      (path_law M (\<lambda>s \<omega>. X s \<omega> - c) T) M F (\<lambda>s \<omega>. X s \<omega> - c) acov tau"
+proof -
+  have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    and stp: "\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> X s \<omega> = X (min s (tau \<omega>)) \<omega>"
+    and astop: "\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> tau \<omega> < s \<longrightarrow> acov s \<omega> = 0"
+    and aint: "AE \<omega> in M. \<forall>l t. 0 \<le> t \<longrightarrow>
+        set_integrable lborel {0..t} (\<lambda>s. acov s \<omega> $ l $ l)"
+    using W unfolding mkt_law_witness_def by blast+
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have stp': "X (min t (tau \<omega>)) \<omega> = X t \<omega>"
+    if "\<omega> \<in> space M" for t \<omega>
+    using stp that by metis
+  have fin: "finite_measure M"
+    by (rule prob_space.finite_measure[OF sv.prob_space_M])
+  have prj: "(\<lambda>x :: real^'m. x $ i) \<in> borel_measurable borel" for i
+    by (intro borel_measurable_continuous_onI linear_continuous_on
+        bounded_linear_vec_nth)
+  have bndX: "AE \<omega> in M. norm (X t \<omega>) \<le> r" if t: "0 \<le> t" for t
+    using sv.X_in_K sv.tau_nonneg AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    have m0: "0 \<le> min t (tau \<omega>)" using t elim by simp
+    have "X t \<omega> = X (min t (tau \<omega>)) \<omega>"
+      using stp elim by blast
+    also have "\<dots> \<in> K"
+      using elim m0 by auto
+    finally have "X t \<omega> \<in> K" .
+    then show ?case using Kball by (auto simp: dist_norm)
+  qed
+  have measX: "X t \<in> borel_measurable M" if "0 \<le> t" for t
+    by (rule sv.random_variable[OF that])
+  have mgc: "martingale M F 0 (\<lambda>_ \<omega>. c)"
+    by (intro sv.martingale_const_fun finite_measure.integrable_const fin
+        borel_measurable_const)
+  have mgX': "martingale M F 0 (\<lambda>s \<omega>. X s \<omega> - c)"
+    using martingale.diff[OF sv.martingale_axioms mgc] by simp
+  have intXi: "integrable M (\<lambda>\<omega>. X t \<omega> $ i)" if t: "0 \<le> t" for t i
+  proof (rule finite_measure.integrable_const_bound[OF fin, of _ r])
+    show "(\<lambda>\<omega>. X t \<omega> $ i) \<in> borel_measurable M"
+      by (intro measurable_compose[OF measX[OF t] prj])
+    show "AE \<omega> in M. norm (X t \<omega> $ i) \<le> r"
+      using bndX[OF t]
+    proof eventually_elim
+      case (elim \<omega>)
+      have "\<bar>X t \<omega> $ i\<bar> \<le> norm (X t \<omega>)"
+        by (rule component_le_norm_cart)
+      then show ?case using elim by simp
+    qed
+  qed
+  have EXi: "(\<integral>\<omega>. X t \<omega> $ i \<partial>M) = x0 $ i" if t: "0 \<le> t" for t i
+  proof -
+    have mXi: "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ i)"
+      by (rule martingale_vec_component[OF sv.martingale_axioms])
+    have e0t: "(\<integral>\<omega>. X 0 \<omega> $ i \<partial>M) = (\<integral>\<omega>. X t \<omega> $ i \<partial>M)"
+      by (rule martingale_expectation_eq[OF mXi]) (simp_all add: t)
+    have aeX0: "AE \<omega> in M. X 0 \<omega> $ i = x0 $ i"
+      using sv.X_start by eventually_elim simp
+    have m0: "(\<lambda>\<omega>. X 0 \<omega> $ i) \<in> borel_measurable M"
+      by (intro measurable_compose[OF measX prj]) simp
+    have "(\<integral>\<omega>. X 0 \<omega> $ i \<partial>M) = (\<integral>\<omega>. x0 $ i \<partial>M)"
+      using aeX0 by (intro integral_cong_AE m0 borel_measurable_const)
+    also have "\<dots> = x0 $ i"
+      using prob_space.prob_space[OF sv.prob_space_M] by simp
+    finally show ?thesis using e0t by simp
+  qed
+  have EcX: "(\<integral>\<omega>. c \<bullet> X t \<omega> \<partial>M) = c \<bullet> x0" if t: "0 \<le> t" for t
+  proof -
+    have pw: "c \<bullet> X t \<omega> = (\<Sum>i\<in>UNIV. c $ i * (X t \<omega> $ i))" for \<omega>
+      by (simp add: inner_vec_def)
+    have "(\<integral>\<omega>. c \<bullet> X t \<omega> \<partial>M)
+        = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. c $ i * (X t \<omega> $ i) \<partial>M))"
+      unfolding pw
+      by (intro Bochner_Integration.integral_sum integrable_mult_right
+          intXi[OF t])
+    also have "\<dots> = (\<Sum>i\<in>UNIV. c $ i * x0 $ i)"
+      using EXi[OF t] by simp
+    also have "\<dots> = c \<bullet> x0"
+      by (simp add: inner_vec_def)
+    finally show ?thesis .
+  qed
+  have measXX: "(\<lambda>\<omega>. (X t \<omega> - c) \<bullet> (X t \<omega> - c)) \<in> borel_measurable M"
+    if "0 \<le> t" for t
+    by (intro borel_measurable_inner borel_measurable_diff
+        borel_measurable_const measX that)
+  have intXX: "integrable M (\<lambda>\<omega>. X t \<omega> \<bullet> X t \<omega>)" if t: "0 \<le> t" for t
+  proof (rule finite_measure.integrable_const_bound[OF fin, of _ "r\<^sup>2"])
+    show "(\<lambda>\<omega>. X t \<omega> \<bullet> X t \<omega>) \<in> borel_measurable M"
+      by (intro borel_measurable_inner measX t)
+    show "AE \<omega> in M. norm (X t \<omega> \<bullet> X t \<omega>) \<le> r\<^sup>2"
+      using bndX[OF t]
+    proof eventually_elim
+      case (elim \<omega>)
+      have "X t \<omega> \<bullet> X t \<omega> = (norm (X t \<omega>))\<^sup>2"
+        by (simp add: power2_norm_eq_inner)
+      also have "\<dots> \<le> r\<^sup>2"
+        using elim by (intro power_mono) auto
+      finally show ?case
+        by (simp add: power2_norm_eq_inner)
+    qed
+  qed
+  have intcX: "integrable M (\<lambda>\<omega>. c \<bullet> X t \<omega>)" if t: "0 \<le> t" for t
+  proof (rule finite_measure.integrable_const_bound[OF fin,
+        of _ "norm c * r"])
+    show "(\<lambda>\<omega>. c \<bullet> X t \<omega>) \<in> borel_measurable M"
+      by (intro borel_measurable_inner borel_measurable_const measX t)
+    show "AE \<omega> in M. norm (c \<bullet> X t \<omega>) \<le> norm c * r"
+      using bndX[OF t]
+    proof eventually_elim
+      case (elim \<omega>)
+      have "\<bar>c \<bullet> X t \<omega>\<bar> \<le> norm c * norm (X t \<omega>)"
+        by (rule Cauchy_Schwarz_ineq2)
+      also have "\<dots> \<le> norm c * r"
+        using elim by (intro mult_left_mono) auto
+      finally show ?case by simp
+    qed
+  qed
+  have EXXc: "(\<integral>\<omega>. (X t \<omega> - c) \<bullet> (X t \<omega> - c) \<partial>M)
+      = (\<integral>\<omega>. X t \<omega> \<bullet> X t \<omega> \<partial>M) - 2 * (c \<bullet> x0) + c \<bullet> c"
+    if t: "0 \<le> t" for t
+  proof -
+    have pw: "(X t \<omega> - c) \<bullet> (X t \<omega> - c)
+        = X t \<omega> \<bullet> X t \<omega> - 2 * (c \<bullet> X t \<omega>) + c \<bullet> c" for \<omega>
+      by (rule inner_diff_self_expand)
+    have int2: "integrable M (\<lambda>\<omega>. 2 * (c \<bullet> X t \<omega>))"
+      by (intro integrable_mult_right intcX t)
+    have "(\<integral>\<omega>. (X t \<omega> - c) \<bullet> (X t \<omega> - c) \<partial>M)
+        = (\<integral>\<omega>. (X t \<omega> \<bullet> X t \<omega> - 2 * (c \<bullet> X t \<omega>)) + c \<bullet> c \<partial>M)"
+      unfolding pw by simp
+    also have "\<dots> = (\<integral>\<omega>. X t \<omega> \<bullet> X t \<omega> - 2 * (c \<bullet> X t \<omega>) \<partial>M)
+        + (\<integral>\<omega>. c \<bullet> c \<partial>M)"
+      by (intro Bochner_Integration.integral_add
+          Bochner_Integration.integrable_diff intXX[OF t] int2
+          finite_measure.integrable_const fin)
+    also have "(\<integral>\<omega>. X t \<omega> \<bullet> X t \<omega> - 2 * (c \<bullet> X t \<omega>) \<partial>M)
+        = (\<integral>\<omega>. X t \<omega> \<bullet> X t \<omega> \<partial>M) - (\<integral>\<omega>. 2 * (c \<bullet> X t \<omega>) \<partial>M)"
+      by (intro Bochner_Integration.integral_diff intXX[OF t] int2)
+    also have "(\<integral>\<omega>. 2 * (c \<bullet> X t \<omega>) \<partial>M)
+        = 2 * (\<integral>\<omega>. c \<bullet> X t \<omega> \<partial>M)"
+      by (rule Bochner_Integration.integral_mult_right)
+        (use intcX[OF t] in simp)
+    also have "(\<integral>\<omega>. c \<bullet> X t \<omega> \<partial>M) = c \<bullet> x0"
+      by (rule EcX[OF t])
+    also have "(\<integral>\<omega>. c \<bullet> c \<partial>M) = c \<bullet> c"
+      using prob_space.prob_space[OF sv.prob_space_M] by simp
+    finally show ?thesis by simp
+  qed
+  have dyn0: "(\<integral>\<omega>. X t \<omega> \<bullet> X t \<omega> \<partial>M)
+      - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+          (\<lambda>s. trace (acov s \<omega>)) \<partial>M) = x0 \<bullet> x0"
+    if t: "0 \<le> t" for t
+  proof -
+    have e: "(\<integral>\<omega>. X (min t (tau \<omega>)) \<omega> \<bullet> X (min t (tau \<omega>)) \<omega> \<partial>M)
+        = (\<integral>\<omega>. X t \<omega> \<bullet> X t \<omega> \<partial>M)"
+      by (intro Bochner_Integration.integral_cong refl) (simp add: stp')
+    show ?thesis
+      using sv.dynkin_quadratic[OF t] e by simp
+  qed
+  have svm': "sufficiently_volatile_market M F (\<lambda>s \<omega>. X s \<omega> - c) acov
+      k L ((\<lambda>y. y - c) ` K) (x0 - c) tau"
+  proof (intro sufficiently_volatile_market.intro
+      sufficiently_volatile_market_axioms.intro)
+    show "martingale M F 0 (\<lambda>s \<omega>. X s \<omega> - c)" by (rule mgX')
+    show "prob_space M" by (rule sv.prob_space_M)
+    show "1 \<le> k" by (rule sv.k_lb)
+    show "k < CARD('m)" by (rule sv.k_ub)
+    show "1 \<le> L" by (rule sv.L_ge)
+    show "AE \<omega> in M. X 0 \<omega> - c = x0 - c"
+      using sv.X_start by eventually_elim simp
+    show "AE \<omega> in M. 0 \<le> tau \<omega>" by (rule sv.tau_nonneg)
+    show "tau \<in> borel_measurable M" by (rule sv.tau_meas)
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow>
+        X s \<omega> - c \<in> (\<lambda>y. y - c) ` K"
+      using sv.X_in_K by eventually_elim blast
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> psd (acov s \<omega>)"
+      by (rule sv.acov_psd)
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow>
+        eigen_lb (acov s \<omega>) (CARD('m) - k)"
+      by (rule sv.acov_eigen_lb)
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow>
+        eigen_ub (acov s \<omega>) L"
+      by (rule sv.acov_eigen_ub)
+    show "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
+        set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
+      by (rule sv.acov_trace_integrable)
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable M
+        (\<lambda>\<omega>. (X (min t (tau \<omega>)) \<omega> - c) \<bullet> (X (min t (tau \<omega>)) \<omega> - c))"
+    proof -
+      fix t :: real assume t: "0 \<le> t"
+      have "integrable M (\<lambda>\<omega>. (X t \<omega> - c) \<bullet> (X t \<omega> - c))"
+      proof (rule finite_measure.integrable_const_bound[OF fin,
+            of _ "(r + norm c)\<^sup>2"])
+        show "(\<lambda>\<omega>. (X t \<omega> - c) \<bullet> (X t \<omega> - c)) \<in> borel_measurable M"
+          by (rule measXX[OF t])
+        show "AE \<omega> in M. norm ((X t \<omega> - c) \<bullet> (X t \<omega> - c)) \<le> (r + norm c)\<^sup>2"
+          using bndX[OF t]
+        proof eventually_elim
+          case (elim \<omega>)
+          have n1: "norm (X t \<omega> - c) \<le> r + norm c"
+            using norm_triangle_ineq4[of "X t \<omega>" c] elim by simp
+          have "(X t \<omega> - c) \<bullet> (X t \<omega> - c) = (norm (X t \<omega> - c))\<^sup>2"
+            by (simp add: power2_norm_eq_inner)
+          also have "\<dots> \<le> (r + norm c)\<^sup>2"
+            using n1 by (intro power_mono) auto
+          finally show ?case
+            by (simp add: power2_norm_eq_inner)
+        qed
+      qed
+      then show "integrable M
+          (\<lambda>\<omega>. (X (min t (tau \<omega>)) \<omega> - c) \<bullet> (X (min t (tau \<omega>)) \<omega> - c))"
+        by (rule Bochner_Integration.integrable_cong[OF refl, THEN iffD1,
+            rotated]) (simp add: stp')
+    qed
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable M
+        (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+          (\<lambda>s. trace (acov s \<omega>)))"
+      by (rule sv.compensator_integrable)
+    show "\<And>t. 0 \<le> t \<Longrightarrow>
+        (\<integral>\<omega>. (X (min t (tau \<omega>)) \<omega> - c) \<bullet> (X (min t (tau \<omega>)) \<omega> - c) \<partial>M)
+          - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+                   (\<lambda>s. trace (acov s \<omega>)) \<partial>M)
+        = (x0 - c) \<bullet> (x0 - c)"
+    proof -
+      fix t :: real assume t: "0 \<le> t"
+      have e1: "(\<integral>\<omega>. (X (min t (tau \<omega>)) \<omega> - c)
+            \<bullet> (X (min t (tau \<omega>)) \<omega> - c) \<partial>M)
+          = (\<integral>\<omega>. (X t \<omega> - c) \<bullet> (X t \<omega> - c) \<partial>M)"
+        by (intro Bochner_Integration.integral_cong refl) (simp add: stp')
+      have "(\<integral>\<omega>. (X t \<omega> - c) \<bullet> (X t \<omega> - c) \<partial>M)
+          - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+                   (\<lambda>s. trace (acov s \<omega>)) \<partial>M)
+          = ((\<integral>\<omega>. X t \<omega> \<bullet> X t \<omega> \<partial>M) - 2 * (c \<bullet> x0) + c \<bullet> c)
+            - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+                     (\<lambda>s. trace (acov s \<omega>)) \<partial>M)"
+        using EXXc[OF t] by simp
+      also have "\<dots> = x0 \<bullet> x0 - 2 * (c \<bullet> x0) + c \<bullet> c"
+        using dyn0[OF t] by simp
+      also have "\<dots> = (x0 - c) \<bullet> (x0 - c)"
+        by (simp add: inner_diff_self_expand)
+      finally show "(\<integral>\<omega>. (X (min t (tau \<omega>)) \<omega> - c)
+            \<bullet> (X (min t (tau \<omega>)) \<omega> - c) \<partial>M)
+          - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+                   (\<lambda>s. trace (acov s \<omega>)) \<partial>M)
+          = (x0 - c) \<bullet> (x0 - c)"
+        using e1 by simp
+    qed
+    show "martingale M F 0 (coord_Z (\<lambda>s \<omega>. X s \<omega> - c) acov i)" for i
+    proof -
+      have mXi: "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ i)"
+        by (rule martingale_vec_component[OF sv.martingale_axioms])
+      have mB: "martingale M F 0 (\<lambda>t \<omega>. (2 * c $ i) *\<^sub>R (X t \<omega> $ i))"
+        by (rule martingale.scaleR_const[OF mXi])
+      have mAB: "martingale M F 0 (\<lambda>t \<omega>. coord_Z X acov i t \<omega>
+          - (2 * c $ i) *\<^sub>R (X t \<omega> $ i))"
+        by (rule martingale.diff[OF sv.coord_Z_martingale mB])
+      have mCst: "martingale M F 0 (\<lambda>_ \<omega>. (c $ i)\<^sup>2)"
+        by (intro sv.martingale_const_fun finite_measure.integrable_const
+            fin borel_measurable_const)
+      have mFinal: "martingale M F 0 (\<lambda>t \<omega>. (coord_Z X acov i t \<omega>
+          - (2 * c $ i) *\<^sub>R (X t \<omega> $ i)) + (c $ i)\<^sup>2)"
+        by (rule martingale.add[OF mAB mCst])
+      have cz_eq: "coord_Z (\<lambda>s \<omega>. X s \<omega> - c) acov i
+          = (\<lambda>t \<omega>. (coord_Z X acov i t \<omega>
+              - (2 * c $ i) *\<^sub>R (X t \<omega> $ i)) + (c $ i)\<^sup>2)"
+      proof (intro ext)
+        fix t :: real and \<omega>
+        have comp: "(X t \<omega> - c) $ i = X t \<omega> $ i - c $ i"
+          by (simp add: vector_minus_component)
+        show "coord_Z (\<lambda>s \<omega>. X s \<omega> - c) acov i t \<omega>
+            = (coord_Z X acov i t \<omega>
+                - (2 * c $ i) *\<^sub>R (X t \<omega> $ i)) + (c $ i)\<^sup>2"
+          unfolding coord_Z_def comp
+          by (simp add: power2_diff algebra_simps)
+      qed
+      show ?thesis
+        unfolding cz_eq by (rule mFinal)
+    qed
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+      by (rule sv.tau_stopping)
+    show "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega> - c)"
+      by (intro continuous_on_diff continuous_on_const sv.X_paths_cont)
+  qed
+  show ?thesis
+    unfolding mkt_law_witness_def
+  proof (intro conjI)
+    show "path_law M (\<lambda>s \<omega>. X s \<omega> - c) T
+        = path_law M (\<lambda>s \<omega>. X s \<omega> - c) T" by (rule refl)
+    show "sufficiently_volatile_market M F (\<lambda>s \<omega>. X s \<omega> - c) acov
+        k L ((\<lambda>y. y - c) ` K) (x0 - c) tau" by (rule svm')
+    show "\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow>
+        X s \<omega> - c = X (min s (tau \<omega>)) \<omega> - c"
+    proof (intro allI impI)
+      fix s :: real and \<omega> assume w: "\<omega> \<in> space M"
+      have "X s \<omega> = X (min s (tau \<omega>)) \<omega>"
+        using stp w by blast
+      then show "X s \<omega> - c = X (min s (tau \<omega>)) \<omega> - c" by simp
+    qed
+    show "\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> tau \<omega> < s \<longrightarrow> acov s \<omega> = 0"
+      using astop by blast
+    show "AE \<omega> in M. \<forall>l t. 0 \<le> t \<longrightarrow>
+        set_integrable lborel {0..t} (\<lambda>s. acov s \<omega> $ l $ l)"
+      by (rule aint)
+  qed
+qed
+
+lemma witness_value_le_vshift:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+    and A :: "(real^'m) set" and T :: real
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and A: "open A" and AK: "A \<inter> K = {}" and T0: "0 \<le> T"
+    and vT: "ess_inf_time M tau \<le> ennreal T"
+  shows "ess_inf_time M tau
+      \<le> ennreal (vshift T A x0 (path_law M (\<lambda>s \<omega>. X s \<omega> - x0) T))"
+proof -
+  have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    using W unfolding mkt_law_witness_def by blast
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have Xm: "(\<lambda>\<omega>. X t \<omega> - x0) \<in> borel_measurable M" if "t \<in> {0..T}" for t
+    using that
+    by (intro borel_measurable_diff borel_measurable_const
+        sv.random_variable) simp
+  have cont: "continuous_on {0..T} (\<lambda>t. X t \<omega> - x0)"
+    if "\<omega> \<in> space M" for \<omega>
+    by (intro continuous_on_diff continuous_on_const
+        continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
+  have vpl: "vshift T A x0 (path_law M (\<lambda>s \<omega>. X s \<omega> - x0) T)
+      = enn2real (ess_inf_time M
+          (etime T A (\<lambda>s \<omega>'. x0 + (X s \<omega>' - x0))))"
+    by (rule vshift_path_law[OF T0 A Xm cont])
+  have peq: "(\<lambda>s \<omega>'. x0 + (X s \<omega>' - x0)) = X"
+    by (intro ext) simp
+  have core: "ess_inf_time M tau \<le> ess_inf_time M (etime T A X)"
+  proof (subst ess_inf_time_ge_iff)
+    show "AE \<omega> in M. ess_inf_time M tau \<le> ennreal (etime T A X \<omega>)"
+      using sv.X_in_K sv.tau_nonneg
+        ess_inf_time_ge_iff[of "ess_inf_time M tau" M tau, THEN iffD1,
+          OF order.refl]
+    proof eventually_elim
+      case (elim \<omega>)
+      have et_ge: "min T (tau \<omega>) \<le> etime T A X \<omega>"
+      proof (rule ccontr)
+        assume "\<not> min T (tau \<omega>) \<le> etime T A X \<omega>"
+        then have "etime T A X \<omega> < min T (tau \<omega>)" by linarith
+        then have "(\<exists>u. 0 \<le> u \<and> u \<le> T \<and> X u \<omega> \<in> A
+            \<and> u < min T (tau \<omega>)) \<or> T < min T (tau \<omega>)"
+          using etime_less_iff[OF T0, of A X \<omega> "min T (tau \<omega>)"] by blast
+        moreover have "\<not> T < min T (tau \<omega>)" by simp
+        ultimately obtain u where u: "0 \<le> u" "u \<le> T" "X u \<omega> \<in> A"
+          "u < min T (tau \<omega>)" by blast
+        have "X u \<omega> \<in> K"
+          using elim u by auto
+        then show False using u AK by blast
+      qed
+      have "ess_inf_time M tau \<le> ennreal (min T (tau \<omega>))"
+      proof (cases "T \<le> tau \<omega>")
+        case True
+        then show ?thesis using vT by (simp add: min_absorb1)
+      next
+        case False
+        then show ?thesis using elim by (simp add: min_absorb2)
+      qed
+      also have "\<dots> \<le> ennreal (etime T A X \<omega>)"
+        using et_ge by (intro ennreal_leI)
+      finally show ?case .
+    qed
+  qed
+  have fin_et: "ess_inf_time M (etime T A X) \<le> ennreal T"
+    by (rule ess_inf_time_le_const[OF sv.prob_space_M etime_le_T[OF T0]])
+  have "ennreal (enn2real (ess_inf_time M (etime T A X)))
+      = ess_inf_time M (etime T A X)"
+    using fin_et by (intro ennreal_enn2real) (simp add: le_less_trans)
+  then show ?thesis
+    unfolding vpl peq using core by simp
+qed
+
+theorem witness_value_le_law_sup:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+    and A :: "(real^'m) set" and T r :: real
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and Kball: "K \<subseteq> cball 0 r" and x0K: "x0 \<in> K"
+    and A: "open A" and AK: "A \<inter> K = {}" and T0: "0 \<le> T"
+    and vT: "ess_inf_time M tau \<le> ennreal T"
+  shows "ess_inf_time M tau
+      \<le> ennreal (Sup (vshift T A x0
+          ` mkt_law_closure k L (cball 0 (2 * r)) 0 T))"
+proof -
+  have W1: "mkt_law_witness k L ((\<lambda>y. y - x0) ` K) (x0 - x0) T
+      (path_law M (\<lambda>s \<omega>. X s \<omega> - x0) T) M F (\<lambda>s \<omega>. X s \<omega> - x0) acov tau"
+    by (rule mkt_law_witness_shift[OF W Kball])
+  have sub2r: "(\<lambda>y. y - x0) ` K \<subseteq> cball 0 (2 * r)"
+  proof
+    fix z assume "z \<in> (\<lambda>y. y - x0) ` K"
+    then obtain y where y: "y \<in> K" and z: "z = y - x0" by blast
+    have ny: "norm y \<le> r"
+      using y Kball by (auto simp: dist_norm)
+    have nx: "norm x0 \<le> r"
+      using x0K Kball by (auto simp: dist_norm)
+    have "norm (y - x0) \<le> norm y + norm x0"
+      by (rule norm_triangle_ineq4)
+    also have "\<dots> \<le> 2 * r"
+      using ny nx by linarith
+    finally show "z \<in> cball 0 (2 * r)"
+      using z by (simp add: dist_norm norm_minus_commute)
+  qed
+  have W2: "mkt_law_witness k L (cball 0 (2 * r)) 0 T
+      (path_law M (\<lambda>s \<omega>. X s \<omega> - x0) T) M F (\<lambda>s \<omega>. X s \<omega> - x0) acov tau"
+    using mkt_law_witness_mono_K[OF W1 sub2r] by simp
+  have Qmem: "path_law M (\<lambda>s \<omega>. X s \<omega> - x0) T
+      \<in> mkt_path_laws k L (cball 0 (2 * r)) 0 T"
+    using W2 unfolding mkt_path_laws_def by blast
+  then have Qcl: "path_law M (\<lambda>s \<omega>. X s \<omega> - x0) T
+      \<in> mkt_law_closure k L (cball 0 (2 * r)) 0 T"
+    using mkt_path_laws_subset_closure[OF T0] by blast
+  have bdd: "bdd_above (vshift T A x0
+      ` mkt_law_closure k L (cball 0 (2 * r)) 0 T)"
+  proof (rule bdd_aboveI[of _ T])
+    fix v assume "v \<in> vshift T A x0
+        ` mkt_law_closure k L (cball 0 (2 * r)) 0 T"
+    then obtain N where N: "N \<in> mkt_law_closure k L (cball 0 (2 * r)) 0 T"
+      and v: "v = vshift T A x0 N" by blast
+    show "v \<le> T"
+      unfolding v
+      by (rule vshift_le[OF T0 mkt_law_closure_prob[OF T0 N]])
+  qed
+  have "vshift T A x0 (path_law M (\<lambda>s \<omega>. X s \<omega> - x0) T)
+      \<le> Sup (vshift T A x0 ` mkt_law_closure k L (cball 0 (2 * r)) 0 T)"
+    by (intro cSup_upper imageI Qcl bdd)
+  then show ?thesis
+    using witness_value_le_vshift[OF W A AK T0 vT] ennreal_leI
+    by (meson order.trans)
+qed
+
 end
