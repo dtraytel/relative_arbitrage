@@ -344,14 +344,37 @@ either (i) treat `stopped_val_fn` as THE value function of the paper
 integrability axiom to the locale and run optional stopping.  Downstream
 work (DPP, viscosity clauses) should consume `stopped_val_fn`.
 
+Done (commit c975f4e, 2026-08-03): the MONOTONE-CLASS step of the
+canonical-market construction.  `metric_measure_eqI_bounded_cts`: a
+finite Borel measure on a metric space is determined by integrals of
+bounded continuous functions (constant-sequence Portmanteau in both
+directions + `measure_eqI_generator_eq` over the closed-set generator
+`sets_borel_of_closed`).  `mkt_law_closure_martingale_event`: for a
+closure point `Λ` and ANY Borel event `B` of the s-path space,
+`∫ rclamp (2r) (f t $ i − f s $ i) · 1_B(restrict f {0..s}) dΛ = 0` —
+the canonical coordinate process is a martingale under `Λ` w.r.t. its
+natural filtration, in integrated clamped form.  Proof pattern (reuse
+it for the covariation upgrade): split the increment into `gp/gm`
+(positive/negative parts), push both through the restriction map as
+`distr (density Λ ·)` image measures; the continuous-test identity
+makes the two image measures agree on bounded continuous functions,
+hence they are EQUAL.
+
 Still open, in order of attack: (a) the law-level form of the LOWER
-(trace / `eigen_lb`) constraint, see the note above; (b) the
-canonical-market construction (monotone-class martingale property,
-`acov` by differentiation) OR the author-level decision to restate
-clause (1) at the law level — with (b) resolved in favour of the law
-level, clause (1) reduces to `vshift_sup_usc_mkt` +
-`stopped_val_fn_le_law_sup` + the reverse inequality (closure adds no
-value), which is exactly where the canonical market re-enters.
+(trace / `eigen_lb`) constraint, see the note above; (b) the rest of
+the canonical-market construction — with the event-level martingale
+identity in hand, what remains is: the unclamped/AE version (via
+`mkt_law_closure_confined_AE`, trivial), the event-level covariation
+INEQUALITY (needs inner regularity of finite Borel measures by closed
+sets, since one-sided bounds do not extend from a generator — check the
+AFP `Levy_Prokhorov_Metric`/`Standard_Borel_Spaces` entries for a
+regularity lemma first), `acov` by differentiation of the compensator,
+and the natural filtration/exit-time packaging into a
+`sufficiently_volatile_market` instance on path space; OR the
+author-level decision to restate clause (1) at the law level, under
+which clause (1) is COMPLETE as `vshift_sup_usc_mkt` +
+`stopped_val_fn_le_law_sup` and the canonical market is only needed for
+"the closure adds no value".
 
 #### N3 as originally scoped
 
