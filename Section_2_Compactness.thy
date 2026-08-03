@@ -547,6 +547,143 @@ proof -
   thus ?thesis unfolding tY .
 qed
 
+text \<open>Two closure companions of the lemma above, both for a metrizable
+  topology.  First: a point of the closure of \<open>A\<close> is a sequential limit of
+  points of \<open>A\<close>.  Second — the form Lemma 2.3 consumes — subsequence
+  extraction on \<open>A\<close> extends to the closure of \<open>A\<close>, with the limit again in
+  the closure: approximate the given sequence by an \<open>A\<close>-sequence within
+  \<open>1/(n+1)\<close>, extract there, and carry the limit across by the triangle
+  inequality.  Nothing about the family beyond the extraction property is
+  used, which is what lets the closure play the role of the compact index
+  set without a membership theorem for its new points.\<close>
+
+lemma closure_of_sequential_limit:
+  fixes Y :: "'b topology" and A :: "'b set"
+  assumes mY: "metrizable_space Y"
+    and Q: "Q \<in> Y closure_of A"
+  shows "\<exists>\<sigma>. range \<sigma> \<subseteq> A \<and> limitin Y \<sigma> Q sequentially"
+proof -
+  obtain MYs dY where dY: "Metric_space MYs dY"
+    and tY: "Y = Metric_space.mtopology MYs dY"
+    using mY unfolding metrizable_space_def by blast
+  interpret MY: Metric_space MYs dY by (rule dY)
+  have QM: "Q \<in> MYs" and near: "\<And>\<rho>. 0 < \<rho> \<Longrightarrow> \<exists>y\<in>A. y \<in> MY.mball Q \<rho>"
+    using Q unfolding tY MY.metric_closure_of by auto
+  have apx: "\<exists>y. y \<in> A \<and> y \<in> MYs \<and> dY Q y < 1 / real (Suc n)" for n
+  proof -
+    have "0 < 1 / real (Suc n)" by simp
+    from near[OF this] obtain y where "y \<in> A" "y \<in> MY.mball Q (1 / real (Suc n))"
+      by blast
+    then show ?thesis by auto
+  qed
+  define \<sigma> where "\<sigma> = (\<lambda>n. SOME y. y \<in> A \<and> y \<in> MYs
+      \<and> dY Q y < 1 / real (Suc n))"
+  have \<sigma>A: "\<sigma> n \<in> A" and \<sigma>M: "\<sigma> n \<in> MYs"
+    and \<sigma>d: "dY Q (\<sigma> n) < 1 / real (Suc n)" for n
+    using someI_ex[OF apx[of n]] by (auto simp: \<sigma>_def)
+  have "limitin MY.mtopology \<sigma> Q sequentially"
+    unfolding MY.limitin_metric
+  proof (intro conjI QM allI impI)
+    fix \<epsilon> :: real assume e: "0 < \<epsilon>"
+    obtain n0 where n0: "1 / real (Suc n0) < \<epsilon>"
+      using e nat_approx_posE by blast
+    show "\<forall>\<^sub>F n in sequentially. \<sigma> n \<in> MYs \<and> dY (\<sigma> n) Q < \<epsilon>"
+    proof (intro eventually_sequentiallyI[of n0] conjI \<sigma>M)
+      fix n assume n: "n0 \<le> n"
+      have "dY (\<sigma> n) Q = dY Q (\<sigma> n)" by (rule MY.commute)
+      also have "\<dots> < 1 / real (Suc n)" by (rule \<sigma>d)
+      also have "\<dots> \<le> 1 / real (Suc n0)"
+        using n by (intro divide_left_mono) auto
+      also have "\<dots> < \<epsilon>" by (rule n0)
+      finally show "dY (\<sigma> n) Q < \<epsilon>" .
+    qed
+  qed
+  then show ?thesis using \<sigma>A unfolding tY by blast
+qed
+
+lemma seq_compact_closure_of:
+  fixes Y :: "'b topology" and A :: "'b set" and \<tau> :: "nat \<Rightarrow> 'b"
+  assumes mY: "metrizable_space Y" and sub: "A \<subseteq> topspace Y"
+    and seq: "\<And>\<sigma> :: nat \<Rightarrow> 'b. range \<sigma> \<subseteq> A \<Longrightarrow>
+        \<exists>l r. l \<in> topspace Y \<and> strict_mono r \<and> limitin Y (\<sigma> \<circ> r) l sequentially"
+    and rng: "range \<tau> \<subseteq> Y closure_of A"
+  shows "\<exists>l r. l \<in> Y closure_of A \<and> strict_mono r
+      \<and> limitin Y (\<tau> \<circ> r) l sequentially"
+proof -
+  obtain MYs dY where dY: "Metric_space MYs dY"
+    and tY: "Y = Metric_space.mtopology MYs dY"
+    using mY unfolding metrizable_space_def by blast
+  interpret MY: Metric_space MYs dY by (rule dY)
+  have tsY: "topspace Y = MYs" unfolding tY by (rule MY.topspace_mtopology)
+  have \<tau>M: "\<tau> n \<in> MYs" and near: "\<And>\<rho>. 0 < \<rho> \<Longrightarrow> \<exists>y\<in>A. y \<in> MY.mball (\<tau> n) \<rho>" for n
+    using rng unfolding tY MY.metric_closure_of by auto
+  have apx: "\<exists>y. y \<in> A \<and> y \<in> MYs \<and> dY (\<tau> n) y < 1 / real (Suc n)" for n
+  proof -
+    have "0 < 1 / real (Suc n)" by simp
+    from near[OF this] obtain y where "y \<in> A" "y \<in> MY.mball (\<tau> n) (1 / real (Suc n))"
+      by blast
+    then show ?thesis by auto
+  qed
+  define a where "a = (\<lambda>n. SOME y. y \<in> A \<and> y \<in> MYs
+      \<and> dY (\<tau> n) y < 1 / real (Suc n))"
+  have aA: "a n \<in> A" and aM: "a n \<in> MYs"
+    and ad: "dY (\<tau> n) (a n) < 1 / real (Suc n)" for n
+    using someI_ex[OF apx[of n]] by (auto simp: a_def)
+  have raA: "range a \<subseteq> A" using aA by blast
+  obtain l r where l: "l \<in> topspace Y" and r: "strict_mono r"
+    and lim: "limitin Y (a \<circ> r) l sequentially"
+    using seq[OF raA] by blast
+  have lM: "l \<in> MYs" using l tsY by simp
+  have limM: "limitin MY.mtopology (a \<circ> r) l sequentially"
+    using lim unfolding tY .
+  have lim\<tau>: "limitin MY.mtopology (\<tau> \<circ> r) l sequentially"
+    unfolding MY.limitin_metric
+  proof (intro conjI lM allI impI)
+    fix \<epsilon> :: real assume e: "0 < \<epsilon>"
+    have e2: "0 < \<epsilon> / 2" using e by simp
+    have ev1: "\<forall>\<^sub>F n in sequentially. (a \<circ> r) n \<in> MYs \<and> dY ((a \<circ> r) n) l < \<epsilon> / 2"
+      using limM e2 unfolding MY.limitin_metric by blast
+    obtain n0 where n0: "1 / real (Suc n0) < \<epsilon> / 2"
+      using e2 nat_approx_posE by blast
+    have ev2: "\<forall>\<^sub>F n in sequentially. dY (\<tau> (r n)) (a (r n)) < \<epsilon> / 2"
+    proof (intro eventually_sequentiallyI[of n0])
+      fix n assume n: "n0 \<le> n"
+      have "dY (\<tau> (r n)) (a (r n)) < 1 / real (Suc (r n))" by (rule ad)
+      also have "\<dots> \<le> 1 / real (Suc n)"
+        using seq_suble[OF r, of n] by (intro divide_left_mono) auto
+      also have "\<dots> \<le> 1 / real (Suc n0)"
+        using n by (intro divide_left_mono) auto
+      also have "\<dots> < \<epsilon> / 2" by (rule n0)
+      finally show "dY (\<tau> (r n)) (a (r n)) < \<epsilon> / 2" .
+    qed
+    show "\<forall>\<^sub>F n in sequentially. (\<tau> \<circ> r) n \<in> MYs \<and> dY ((\<tau> \<circ> r) n) l < \<epsilon>"
+      using ev1 ev2
+    proof eventually_elim
+      case (elim n)
+      have "dY (\<tau> (r n)) l \<le> dY (\<tau> (r n)) (a (r n)) + dY (a (r n)) l"
+        by (intro MY.triangle \<tau>M aM lM)
+      also have "\<dots> < \<epsilon> / 2 + \<epsilon> / 2"
+        using elim by (intro add_strict_mono) (auto simp: o_def)
+      finally show ?case using \<tau>M by (simp add: o_def)
+    qed
+  qed
+  have lcl: "l \<in> Y closure_of A"
+    unfolding tY MY.metric_closure_of
+  proof (intro CollectI conjI lM allI impI)
+    fix \<rho> :: real assume \<rho>: "0 < \<rho>"
+    have "\<forall>\<^sub>F n in sequentially. (a \<circ> r) n \<in> MYs \<and> dY ((a \<circ> r) n) l < \<rho>"
+      using limM \<rho> unfolding MY.limitin_metric by blast
+    then obtain n where n: "a (r n) \<in> MYs" "dY (a (r n)) l < \<rho>"
+      unfolding eventually_sequentially o_def by blast
+    have "a (r n) \<in> MY.mball l \<rho>"
+      using n lM by (auto simp: MY.commute)
+    then show "\<exists>y\<in>A. y \<in> MY.mball l \<rho>"
+      using aA by blast
+  qed
+  show ?thesis
+    using lcl r lim\<tau> unfolding tY by blast
+qed
+
 section \<open>Berge over a \<open>topology\<close>-valued index space\<close>
 
 text \<open>

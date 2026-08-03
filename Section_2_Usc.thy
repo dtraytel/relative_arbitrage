@@ -868,4 +868,288 @@ proof -
   finally show ?thesis unfolding vshift_def by simp
 qed
 
+section \<open>Lemma 2.3: the compact family of laws for clause (1)\<close>
+
+text \<open>The single obligation of \<open>vshift_sup_usc_of_seq_compact\<close> asks for a
+  family of laws in which every sequence has a weakly convergent subsequence
+  WITH LIMIT IN THE FAMILY.  Lemma 2.2 (the market form,
+  \<open>market_path_laws_convergent_subsequence\<close>) provides the subsequence for
+  sequences of market path laws; Lemma 2.3 must put the limit back.  The
+  family below makes that step definitional: take the WEAK CLOSURE of the
+  market path laws.  Sequential compactness of the closure needs nothing
+  beyond the extraction property of the base set and metrizability of the
+  weak topology (\<open>seq_compact_closure_of\<close>), and every closure point is a
+  probability measure with the right \<open>sets\<close> because total mass survives weak
+  limits.
+
+  What this does NOT settle is that the closure adds no VALUE: identifying
+  \<open>Sup (vshift T A x ` mkt_law_closure \<dots>)\<close> with the market-form value
+  function \<open>val_fn\<close> is the pushforward analysis of Larsson--Ruf
+  Proposition 2.2 and remains open.  The theorem at the end of this section
+  is clause (1) of Theorem 1.1 for the LAW-LEVEL value function of the
+  closure, with no compactness hypothesis left.\<close>
+
+definition mkt_law_witness ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> real
+     \<Rightarrow> (real \<Rightarrow> real^'m) measure \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) measure
+     \<Rightarrow> (real \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) measure)
+     \<Rightarrow> (real \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'m)
+     \<Rightarrow> (real \<Rightarrow> ('m \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'m^'m)
+     \<Rightarrow> (('m \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "mkt_law_witness k L K x0 T Q M F X acov tau \<longleftrightarrow>
+     Q = path_law M X T
+     \<and> sufficiently_volatile_market M F X acov k L K x0 tau
+     \<and> (\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> X s \<omega> = X (min s (tau \<omega>)) \<omega>)
+     \<and> (\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> tau \<omega> < s \<longrightarrow> acov s \<omega> = 0)
+     \<and> (AE \<omega> in M. \<forall>l t. 0 \<le> t \<longrightarrow>
+           set_integrable lborel {0..t} (\<lambda>s. acov s \<omega> $ l $ l))"
+
+definition mkt_path_laws ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> real
+     \<Rightarrow> (real \<Rightarrow> real^'m) measure set"
+  where
+  "mkt_path_laws k L K x0 T =
+     {Q. \<exists>M F X acov tau. mkt_law_witness k L K x0 T Q M F X acov tau}"
+
+text \<open>The four side conditions beyond the locale are part of the paper's
+  class (1.7): the process is stopped at its horizon, the covariance
+  vanishes after it, and its diagonal entries are pathwise integrable.\<close>
+
+lemma mkt_path_laws_prob:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+  assumes T: "0 \<le> T" and Q: "Q \<in> mkt_path_laws k L K x0 T"
+  shows "prob_space Q"
+proof -
+  from Q obtain M F X acov tau
+    where W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    unfolding mkt_path_laws_def mem_Collect_eq by blast
+  have QM: "Q = path_law M X T"
+    and svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    using W unfolding mkt_law_witness_def by blast+
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have Xm: "X t \<in> borel_measurable M" if "t \<in> {0..T}" for t
+    using that by (intro sv.random_variable) simp
+  have cont: "continuous_on {0..T} (\<lambda>t. X t \<omega>)" if "\<omega> \<in> space M" for \<omega>
+    by (rule continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
+  show ?thesis
+    unfolding QM by (rule prob_space_path_law[OF sv.prob_space_M T Xm cont])
+qed
+
+lemma mkt_path_laws_sets:
+  assumes "Q \<in> mkt_path_laws k L K x0 T"
+  shows "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: (real \<Rightarrow> real^'m::finite) metric)))"
+  using assms unfolding mkt_path_laws_def mkt_law_witness_def by auto
+
+lemma mkt_path_laws_topspace:
+  assumes T: "0 \<le> T"
+  shows "mkt_path_laws k L K x0 T \<subseteq> topspace (weak_conv_topology
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m::finite) metric)))"
+proof
+  fix Q assume Q: "Q \<in> mkt_path_laws k L K x0 T"
+  have fin: "finite_measure Q"
+    by (rule prob_space.finite_measure[OF mkt_path_laws_prob[OF T Q]])
+  show "Q \<in> topspace (weak_conv_topology
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    using fin mkt_path_laws_sets[OF Q] by simp
+qed
+
+text \<open>Lemma 2.2, restated for members of the family: unpack the defining
+  markets by choice and hand them to the tightness package.\<close>
+
+lemma mkt_path_laws_seq_extraction:
+  fixes \<sigma> :: "nat \<Rightarrow> (real \<Rightarrow> real^'m::finite) measure"
+  assumes T: "0 \<le> T" and Kball: "K \<subseteq> cball 0 r"
+    and rng: "range \<sigma> \<subseteq> mkt_path_laws k L K x0 T"
+  shows "\<exists>N \<rho>. N \<in> topspace (weak_conv_topology
+        (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+      \<and> strict_mono \<rho>
+      \<and> weak_conv_on (\<sigma> \<circ> \<rho>) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+proof -
+  have H: "\<exists>M F X acov tau. mkt_law_witness k L K x0 T (\<sigma> i) M F X acov tau"
+    for i
+    using rng unfolding mkt_path_laws_def mem_Collect_eq by blast
+  define MM where "MM = (\<lambda>i. SOME M. \<exists>F X acov tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) M F X acov tau)"
+  have exM: "\<exists>F X acov tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) F X acov tau" for i
+    unfolding MM_def by (rule someI_ex[OF H])
+  define FF where "FF = (\<lambda>i. SOME F. \<exists>X acov tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) F X acov tau)"
+  have exF: "\<exists>X acov tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) (FF i) X acov tau" for i
+    unfolding FF_def by (rule someI_ex[OF exM])
+  define XX where "XX = (\<lambda>i. SOME X. \<exists>acov tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) (FF i) X acov tau)"
+  have exX: "\<exists>acov tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) (FF i) (XX i) acov tau" for i
+    unfolding XX_def by (rule someI_ex[OF exF])
+  define aa where "aa = (\<lambda>i. SOME acov. \<exists>tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) (FF i) (XX i) acov tau)"
+  have exA: "\<exists>tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) (FF i) (XX i) (aa i) tau" for i
+    unfolding aa_def by (rule someI_ex[OF exX])
+  define tt where "tt = (\<lambda>i. SOME tau.
+      mkt_law_witness k L K x0 T (\<sigma> i) (MM i) (FF i) (XX i) (aa i) tau)"
+  have Wi: "mkt_law_witness k L K x0 T (\<sigma> i) (MM i) (FF i) (XX i) (aa i) (tt i)"
+    for i
+    unfolding tt_def by (rule someI_ex[OF exA])
+  have c1: "\<And>i. \<sigma> i = path_law (MM i) (XX i) T"
+    using Wi unfolding mkt_law_witness_def by blast
+  have c2: "\<And>i. sufficiently_volatile_market (MM i) (FF i) (XX i) (aa i)
+      k L K x0 (tt i)"
+    using Wi unfolding mkt_law_witness_def by blast
+  have c3: "\<And>i s \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow>
+      XX i s \<omega> = XX i (min s (tt i \<omega>)) \<omega>"
+    using Wi unfolding mkt_law_witness_def by blast
+  have c4: "\<And>i s \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> tt i \<omega> < s \<Longrightarrow>
+      aa i s \<omega> = 0"
+    using Wi unfolding mkt_law_witness_def by blast
+  have c5: "\<And>i. AE \<omega> in MM i. \<forall>l t. 0 \<le> t \<longrightarrow>
+      set_integrable lborel {0..t} (\<lambda>s. aa i s \<omega> $ l $ l)"
+    using Wi unfolding mkt_law_witness_def by blast
+  obtain a N where aN1: "strict_mono a" and aN2: "finite_measure N"
+    and aN3: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    and aN5: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N
+        sequentially
+        (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+    using market_path_laws_convergent_subsequence[where MM = MM and FF = FF
+        and XX = XX and aa = aa and tt = tt, OF c2 c3 c4 Kball c5 T]
+    by blast
+  have "\<sigma> \<circ> a = (\<lambda>i. path_law (MM i) (XX i) T) \<circ> a"
+    by (intro ext) (simp add: c1)
+  then have "weak_conv_on (\<sigma> \<circ> a) N sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+    using aN5 by simp
+  moreover have "N \<in> topspace (weak_conv_topology
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    using aN2 aN3 by simp
+  ultimately show ?thesis using aN1 by blast
+qed
+
+subsection \<open>The closure and its properties\<close>
+
+definition mkt_law_closure ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> real
+     \<Rightarrow> (real \<Rightarrow> real^'m) measure set"
+  where
+  "mkt_law_closure k L K x0 T =
+     (weak_conv_topology (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+       closure_of (mkt_path_laws k L K x0 T)"
+
+lemma mkt_path_laws_subset_closure:
+  assumes T: "0 \<le> T"
+  shows "mkt_path_laws k L K x0 T \<subseteq> mkt_law_closure k L K x0 T"
+  unfolding mkt_law_closure_def
+  by (rule closure_of_subset[OF mkt_path_laws_topspace[OF T]])
+
+lemma mkt_law_closure_sets:
+  assumes "Q \<in> mkt_law_closure k L K x0 T"
+  shows "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: (real \<Rightarrow> real^'m::finite) metric)))"
+  using closure_of_subset_topspace assms
+  unfolding mkt_law_closure_def by fastforce
+
+lemma mkt_law_closure_finite:
+  assumes "Q \<in> mkt_law_closure k L K x0 T"
+  shows "finite_measure Q"
+  using closure_of_subset_topspace assms
+  unfolding mkt_law_closure_def by fastforce
+
+text \<open>Total mass survives a weak limit: test against the constant \<open>1\<close>.\<close>
+
+lemma weak_conv_on_prob_limit:
+  fixes X :: "'b topology"
+  assumes wc: "weak_conv_on Ni N sequentially X"
+    and P: "\<And>i. prob_space (Ni i)"
+  shows "prob_space N"
+proof -
+  have fin: "finite_measure N"
+    using wc unfolding weak_conv_on_def by blast
+  have cm: "continuous_map X euclideanreal (\<lambda>_. 1 :: real)"
+    by simp
+  have bd: "\<exists>B. \<forall>x\<in>topspace X. \<bar>(\<lambda>_. 1 :: real) x\<bar> \<le> B"
+    by (intro exI[of _ 1]) simp
+  have lim: "(\<lambda>i. \<integral>x. (1 :: real) \<partial>(Ni i)) \<longlonglongrightarrow> (\<integral>x. (1 :: real) \<partial>N)"
+    using wc cm bd unfolding weak_conv_on_def by blast
+  have one: "(\<integral>x. (1 :: real) \<partial>(Ni i)) = 1" for i
+    using prob_space.prob_space[OF P] by simp
+  have "(\<integral>x. (1 :: real) \<partial>N) = 1"
+    using LIMSEQ_unique[OF lim] one tendsto_const[of "1 :: real"] by simp
+  then have m1: "measure N (space N) = 1"
+    by simp
+  show ?thesis
+    by (intro prob_spaceI)
+      (simp add: finite_measure.emeasure_eq_measure[OF fin] m1)
+qed
+
+lemma mkt_law_closure_prob:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+  assumes T: "0 \<le> T" and Q: "Q \<in> mkt_law_closure k L K x0 T"
+  shows "prob_space Q"
+proof -
+  obtain \<sigma> where r\<sigma>: "range \<sigma> \<subseteq> mkt_path_laws k L K x0 T"
+    and lim: "limitin (weak_conv_topology (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'m) metric))) \<sigma> Q sequentially"
+    using closure_of_sequential_limit[OF metrizable_weak_conv_path_topology
+        Q[unfolded mkt_law_closure_def]] by blast
+  have Pi: "prob_space (\<sigma> i)" for i
+    using r\<sigma> by (intro mkt_path_laws_prob[OF T]) blast
+  show ?thesis
+    by (rule weak_conv_on_prob_limit[OF lim Pi])
+qed
+
+text \<open>Sequential compactness of the closure: approximate, extract on the
+  base family by Lemma 2.2, carry the limit across.\<close>
+
+theorem mkt_law_closure_seq_compact:
+  fixes \<tau> :: "nat \<Rightarrow> (real \<Rightarrow> real^'m::finite) measure"
+  assumes T: "0 \<le> T" and Kball: "K \<subseteq> cball 0 r"
+    and rng: "range \<tau> \<subseteq> mkt_law_closure k L K x0 T"
+  shows "\<exists>N \<rho>. N \<in> mkt_law_closure k L K x0 T \<and> strict_mono \<rho>
+      \<and> weak_conv_on (\<tau> \<circ> \<rho>) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+  unfolding mkt_law_closure_def
+  by (rule seq_compact_closure_of[where Y = "weak_conv_topology (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+      and A = "mkt_path_laws k L K x0 T" and \<tau> = \<tau>,
+      OF metrizable_weak_conv_path_topology
+      mkt_path_laws_topspace[OF T]
+      mkt_path_laws_seq_extraction[OF T Kball]
+      rng[unfolded mkt_law_closure_def]])
+
+subsection \<open>Clause (1) for the law-level value function, unconditional\<close>
+
+theorem vshift_sup_usc_mkt:
+  fixes T c :: real and A :: "(real^'m::finite) set" and x :: "real^'m"
+  assumes T: "0 \<le> T" and A: "open A"
+    and ne: "mkt_path_laws k L K x0 T \<noteq> {}"
+    and Kball: "K \<subseteq> cball 0 r"
+    and lt: "Sup (vshift T A x ` mkt_law_closure k L K x0 T) < c"
+  shows "eventually
+      (\<lambda>y. Sup (vshift T A y ` mkt_law_closure k L K x0 T) < c) (nhds x)"
+proof (rule vshift_sup_usc_of_seq_compact[OF T A])
+  show "mkt_law_closure k L K x0 T \<noteq> {}"
+    using mkt_path_laws_subset_closure[OF T] ne by blast
+  show "\<And>Q. Q \<in> mkt_law_closure k L K x0 T \<Longrightarrow>
+      sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    by (rule mkt_law_closure_sets)
+  show "\<And>Q. Q \<in> mkt_law_closure k L K x0 T \<Longrightarrow> prob_space Q"
+    by (rule mkt_law_closure_prob[OF T])
+  show "\<And>\<sigma> :: nat \<Rightarrow> (real \<Rightarrow> real^'m) measure.
+      range \<sigma> \<subseteq> mkt_law_closure k L K x0 T \<Longrightarrow>
+      \<exists>N \<rho>. N \<in> mkt_law_closure k L K x0 T \<and> strict_mono \<rho>
+          \<and> weak_conv_on (\<sigma> \<circ> \<rho>) N sequentially
+              (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+    by (rule mkt_law_closure_seq_compact[OF T Kball])
+  show "Sup (vshift T A x ` mkt_law_closure k L K x0 T) < c"
+    by (rule lt)
+qed
+
 end
