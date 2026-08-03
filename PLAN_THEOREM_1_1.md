@@ -867,6 +867,16 @@ the covariation functionals `f(ω) = tr(M (X_t−X_s)(X_t−X_s)ᵀ)·g(ω)`, di
 `ui` from `sq_tail_bound_of_fourth_moment` + `fourth_moment_bound_bounded`, and
 conclude membership via `support_characterisation`.
 
+**UPDATE 2026-08-03 (commit 1d80e06): the obligation below is DISCHARGED**
+at `C = mkt_law_closure k L K x0 T`, the weak closure of the market path
+laws (`Section_2_Usc.mkt_path_laws`).  Lemma 2.2 = market form of the
+tightness package; Lemma 2.3 is definitional for the closure
+(`seq_compact_closure_of`).  `vshift_sup_usc_mkt` is clause (1) for the
+law-level value function with no compactness hypothesis.  REMAINING for
+clause (1) proper: the val_fn <-> law-supremum identification (LR Prop 2.2
+pushforwards; the closure-adds-no-value half needs the canonical-market
+construction), and a nonemptiness witness for mkt_path_laws.
+
 **The target is now a single named obligation (2026-08-02).**
 `Section_2_Usc.vshift_sup_usc_of_seq_compact` reduces clause (1) to exactly
 
