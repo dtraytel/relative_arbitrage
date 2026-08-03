@@ -2382,4 +2382,625 @@ proof -
     using LIMSEQ_unique[OF blim' tendsto_const] by simp
 qed
 
+subsection \<open>N3, integrated identities: the covariation upper bound\<close>
+
+text \<open>The covariation analogue: against a NONNEGATIVE bounded continuous
+  past-measurable test functional, the expected squared coordinate increment
+  is at most \<open>L * (t - s)\<close> times the expected test value.  On a witness
+  market this is the compensator identity for \<open>coord_Z\<close> together with the
+  pointwise bounds \<open>0 \<le> acov $ i $ i \<le> L\<close> (psd and the eigenvalue upper
+  bound before the horizon, \<open>acov = 0\<close> after); the clamped form passes to
+  closure points by weak convergence exactly as the martingale identity
+  did.\<close>
+
+lemma witness_compensator_increment_bounds:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and st: "0 \<le> s" and ts: "s \<le> t"
+  shows "AE \<omega> in M.
+      0 \<le> set_lebesgue_integral lborel {0..t} (\<lambda>u. acov u \<omega> $ i $ i)
+           - set_lebesgue_integral lborel {0..s} (\<lambda>u. acov u \<omega> $ i $ i)
+      \<and> set_lebesgue_integral lborel {0..t} (\<lambda>u. acov u \<omega> $ i $ i)
+           - set_lebesgue_integral lborel {0..s} (\<lambda>u. acov u \<omega> $ i $ i)
+        \<le> L * (t - s)"
+proof -
+  have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    and astop: "\<forall>u \<omega>. \<omega> \<in> space M \<longrightarrow> tau \<omega> < u \<longrightarrow> acov u \<omega> = 0"
+    and aint: "AE \<omega> in M. \<forall>l u. 0 \<le> u \<longrightarrow>
+        set_integrable lborel {0..u} (\<lambda>v. acov v \<omega> $ l $ l)"
+    using W unfolding mkt_law_witness_def by blast+
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have L0: "0 \<le> L" using sv.L_ge by simp
+  show ?thesis
+    using sv.acov_psd sv.acov_eigen_ub aint AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    have psdg: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
+      and ubg: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
+      and ent: "\<And>u. 0 \<le> u \<Longrightarrow>
+          set_integrable lborel {0..u} (\<lambda>v. acov v \<omega> $ i $ i)"
+      and wsp: "\<omega> \<in> space M"
+      using elim by blast+
+    have pt: "0 \<le> acov \<sigma> \<omega> $ i $ i \<and> acov \<sigma> \<omega> $ i $ i \<le> L"
+      if \<sigma>: "\<sigma> \<in> {s<..t}" for \<sigma>
+    proof (cases "\<sigma> \<le> tau \<omega>")
+      case True
+      have s0: "0 \<le> \<sigma>" using \<sigma> st by auto
+      with True psdg ubg have "psd (acov \<sigma> \<omega>)" "eigen_ub (acov \<sigma> \<omega>) L"
+        by blast+
+      then show ?thesis by (auto intro: psd_diag_nonneg eigen_ub_diag)
+    next
+      case False
+      then have "acov \<sigma> \<omega> = 0"
+        using astop[rule_format, OF wsp] by simp
+      then show ?thesis using L0 by simp
+    qed
+    have splitset: "{0..t} = {0..s} \<union> {s<..t}" using st ts by auto
+    have int_t: "set_integrable lborel {0..t} (\<lambda>v. acov v \<omega> $ i $ i)"
+      using ent st ts by simp
+    have int_s: "set_integrable lborel {0..s} (\<lambda>v. acov v \<omega> $ i $ i)"
+      using ent st by simp
+    have int_st: "set_integrable lborel {s<..t} (\<lambda>v. acov v \<omega> $ i $ i)"
+      by (rule set_integrable_subset[OF int_t]) (use st in auto)
+    have add: "set_lebesgue_integral lborel {0..t} (\<lambda>v. acov v \<omega> $ i $ i)
+        = set_lebesgue_integral lborel {0..s} (\<lambda>v. acov v \<omega> $ i $ i)
+          + set_lebesgue_integral lborel {s<..t} (\<lambda>v. acov v \<omega> $ i $ i)"
+      unfolding splitset
+      by (rule set_integral_Un) (auto intro: int_s int_st)
+    have zero_int: "set_integrable lborel {s<..t} (\<lambda>_. 0 :: real)"
+      by (simp add: set_integrable_def)
+    have lower: "0 \<le> set_lebesgue_integral lborel {s<..t}
+        (\<lambda>v. acov v \<omega> $ i $ i)"
+    proof -
+      have "set_lebesgue_integral lborel {s<..t} (\<lambda>_. 0 :: real)
+          \<le> set_lebesgue_integral lborel {s<..t} (\<lambda>v. acov v \<omega> $ i $ i)"
+        by (rule set_integral_mono[OF zero_int int_st]) (use pt in blast)
+      then show ?thesis by simp
+    qed
+    have Lint: "set_integrable lborel {s<..t} (\<lambda>_. L)"
+      unfolding set_integrable_def
+      by (intro integrable_scaleR_left integrable_real_indicator)
+        (use ts in \<open>auto simp: emeasure_lborel_Ioc\<close>)
+    have upper: "set_lebesgue_integral lborel {s<..t}
+        (\<lambda>v. acov v \<omega> $ i $ i) \<le> L * (t - s)"
+    proof -
+      have "set_lebesgue_integral lborel {s<..t} (\<lambda>v. acov v \<omega> $ i $ i)
+          \<le> set_lebesgue_integral lborel {s<..t} (\<lambda>_. L)"
+        by (rule set_integral_mono[OF int_st Lint]) (use pt in blast)
+      also have "set_lebesgue_integral lborel {s<..t} (\<lambda>_. L)
+          = measure lborel {s<..t} *\<^sub>R L"
+        by (intro set_integral_const)
+          (use ts in \<open>auto simp: emeasure_lborel_Ioc\<close>)
+      also have "measure lborel {s<..t} = t - s"
+        using ts by simp
+      finally show ?thesis by (simp add: mult.commute)
+    qed
+    show ?case using add lower upper by simp
+  qed
+qed
+
+lemma coord_sq_bounded_test:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+    and Z :: "('m \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real" and B r :: real
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and Kball: "K \<subseteq> cball 0 r" and r0: "0 \<le> r"
+    and st: "0 \<le> s" and ts: "s \<le> t"
+    and ZFs: "Z \<in> borel_measurable (F s)"
+    and Zpos: "\<And>\<omega>. 0 \<le> Z \<omega>" and Zb: "\<And>\<omega>. Z \<omega> \<le> B"
+  shows "(\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2 \<partial>M)
+      \<le> L * (t - s) * (\<integral>\<omega>. Z \<omega> \<partial>M)"
+proof -
+  let ?A = "\<lambda>u \<omega>. set_lebesgue_integral lborel {0..u}
+      (\<lambda>v. acov v \<omega> $ i $ i)"
+  have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    using W unfolding mkt_law_witness_def by blast
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  interpret cz: martingale M F 0 "coord_Z X acov i"
+    by (rule sv.coord_Z_martingale)
+  have fin: "finite_measure M"
+    by (rule prob_space.finite_measure[OF sv.prob_space_M])
+  have t0: "0 \<le> t" using st ts by linarith
+  have B0: "0 \<le> B" using Zpos[of undefined] Zb[of undefined] by linarith
+  have Zabs: "\<And>\<omega>. \<bar>Z \<omega>\<bar> \<le> B"
+    using Zpos Zb by (auto simp: abs_of_nonneg)
+  have prj: "(\<lambda>x :: real^'m. x $ i) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI linear_continuous_on
+        bounded_linear_vec_nth)
+  have Xm: "X u \<in> borel_measurable M" if "0 \<le> u" for u
+    using that by (intro sv.random_variable) simp
+  have XiM: "(\<lambda>\<omega>. X u \<omega> $ i) \<in> borel_measurable M" if "0 \<le> u" for u
+    by (intro measurable_compose[OF Xm[OF that] prj])
+  have ZM: "Z \<in> borel_measurable M"
+    by (rule measurable_from_subalg[OF sv.subalgebras[OF st] ZFs])
+  have bnd: "AE \<omega> in M. norm (X u \<omega>) \<le> r" if "0 \<le> u" for u
+    by (rule mkt_law_witness_bound[OF W Kball that])
+  have A0: "set_lebesgue_integral lborel {0..(0::real)} g = 0"
+    for g :: "real \<Rightarrow> real"
+  proof -
+    have s0: "{(0::real)..0} = {0}" by auto
+    have "AE x in lborel. indicat_real {(0::real)..0} x *\<^sub>R g x = 0"
+      using AE_lborel_singleton[of "0::real"]
+      by eventually_elim (auto simp: s0 indicator_def)
+    then show ?thesis
+      unfolding set_lebesgue_integral_def by (rule integral_eq_zero_AE)
+  qed
+  have cbnd: "AE \<omega> in M. 0 \<le> ?A u \<omega> \<and> ?A u \<omega> \<le> L * u"
+    if u: "0 \<le> u" for u
+    using witness_compensator_increment_bounds[OF W order_refl u]
+    by eventually_elim (simp add: A0)
+  have int_ZX2: "integrable M (\<lambda>\<omega>. Z \<omega> * (X u \<omega> $ i)\<^sup>2)"
+    if u: "0 \<le> u" for u
+  proof (rule finite_measure.integrable_const_bound[OF fin,
+      of _ "B * r\<^sup>2"])
+    show "(\<lambda>\<omega>. Z \<omega> * (X u \<omega> $ i)\<^sup>2) \<in> borel_measurable M"
+      by (intro borel_measurable_times ZM borel_measurable_power XiM[OF u])
+    show "AE \<omega> in M. norm (Z \<omega> * (X u \<omega> $ i)\<^sup>2) \<le> B * r\<^sup>2"
+      using bnd[OF u]
+    proof eventually_elim
+      case (elim \<omega>)
+      have absi: "\<bar>X u \<omega> $ i\<bar> \<le> r"
+        using component_le_norm_cart[of "X u \<omega>" i] elim by linarith
+      have "(X u \<omega> $ i)\<^sup>2 = \<bar>X u \<omega> $ i\<bar>\<^sup>2" by simp
+      also have "\<dots> \<le> r\<^sup>2" by (intro power_mono absi) simp
+      finally have sq: "(X u \<omega> $ i)\<^sup>2 \<le> r\<^sup>2" .
+      have "\<bar>Z \<omega> * (X u \<omega> $ i)\<^sup>2\<bar> = Z \<omega> * (X u \<omega> $ i)\<^sup>2"
+        using Zpos by (simp add: abs_mult abs_of_nonneg)
+      also have "\<dots> \<le> B * r\<^sup>2"
+        by (intro mult_mono Zb sq) (use B0 in \<open>auto simp: Zpos\<close>)
+      finally show ?case by simp
+    qed
+  qed
+  have int_cross: "integrable M
+      (\<lambda>\<omega>. (Z \<omega> * X s \<omega> $ i) * X u \<omega> $ i)"
+    if u: "0 \<le> u" for u
+  proof (rule finite_measure.integrable_const_bound[OF fin,
+      of _ "B * r * r"])
+    show "(\<lambda>\<omega>. (Z \<omega> * X s \<omega> $ i) * X u \<omega> $ i) \<in> borel_measurable M"
+      by (intro borel_measurable_times ZM XiM[OF st] XiM[OF u])
+    show "AE \<omega> in M. norm ((Z \<omega> * X s \<omega> $ i) * X u \<omega> $ i) \<le> B * r * r"
+      using bnd[OF u] bnd[OF st]
+    proof eventually_elim
+      case (elim \<omega>)
+      have au: "\<bar>X u \<omega> $ i\<bar> \<le> r" and as: "\<bar>X s \<omega> $ i\<bar> \<le> r"
+        using component_le_norm_cart[of "X u \<omega>" i]
+          component_le_norm_cart[of "X s \<omega>" i] elim by linarith+
+      have "\<bar>(Z \<omega> * X s \<omega> $ i) * X u \<omega> $ i\<bar>
+          = \<bar>Z \<omega>\<bar> * \<bar>X s \<omega> $ i\<bar> * \<bar>X u \<omega> $ i\<bar>"
+        by (simp add: abs_mult)
+      also have "\<dots> \<le> B * r * r"
+        by (intro mult_mono Zabs as au) (use B0 r0 in auto)
+      finally show ?case by simp
+    qed
+  qed
+  have Am: "(\<lambda>\<omega>. ?A u \<omega>) \<in> borel_measurable M" if u: "0 \<le> u" for u
+  proof -
+    have eq: "(\<lambda>\<omega>. ?A u \<omega>)
+        = (\<lambda>\<omega>. (X u \<omega> $ i)\<^sup>2 - coord_Z X acov i u \<omega>)"
+      by (simp add: coord_Z_def)
+    show ?thesis
+      unfolding eq
+      by (intro borel_measurable_diff borel_measurable_power XiM[OF u]
+          borel_measurable_integrable[OF cz.integrable[OF u]])
+  qed
+  have int_ZA: "integrable M (\<lambda>\<omega>. Z \<omega> * ?A u \<omega>)" if u: "0 \<le> u" for u
+  proof (rule finite_measure.integrable_const_bound[OF fin,
+      of _ "B * (L * u)"])
+    show "(\<lambda>\<omega>. Z \<omega> * ?A u \<omega>) \<in> borel_measurable M"
+      by (intro borel_measurable_times ZM Am[OF u])
+    show "AE \<omega> in M. norm (Z \<omega> * ?A u \<omega>) \<le> B * (L * u)"
+      using cbnd[OF u]
+    proof eventually_elim
+      case (elim \<omega>)
+      have "\<bar>Z \<omega> * ?A u \<omega>\<bar> = Z \<omega> * ?A u \<omega>"
+        using Zpos elim by (simp add: abs_mult abs_of_nonneg)
+      also have "\<dots> \<le> B * (L * u)"
+        by (intro mult_mono Zb) (use elim B0 in \<open>auto simp: Zpos\<close>)
+      finally show ?case by simp
+    qed
+  qed
+  have int_ZcZ: "integrable M (\<lambda>\<omega>. Z \<omega> * coord_Z X acov i u \<omega>)"
+    if u: "0 \<le> u" for u
+  proof -
+    have eq: "(\<lambda>\<omega>. Z \<omega> * coord_Z X acov i u \<omega>)
+        = (\<lambda>\<omega>. Z \<omega> * (X u \<omega> $ i)\<^sup>2 - Z \<omega> * ?A u \<omega>)"
+      by (simp add: coord_Z_def right_diff_distrib)
+    show ?thesis
+      unfolding eq
+      by (intro Bochner_Integration.integrable_diff int_ZX2[OF u]
+          int_ZA[OF u])
+  qed
+  have splitE: "(\<integral>\<omega>. Z \<omega> * coord_Z X acov i u \<omega> \<partial>M)
+      = (\<integral>\<omega>. Z \<omega> * (X u \<omega> $ i)\<^sup>2 \<partial>M) - (\<integral>\<omega>. Z \<omega> * ?A u \<omega> \<partial>M)"
+    if u: "0 \<le> u" for u
+  proof -
+    have eq: "(\<lambda>\<omega>. Z \<omega> * coord_Z X acov i u \<omega>)
+        = (\<lambda>\<omega>. Z \<omega> * (X u \<omega> $ i)\<^sup>2 - Z \<omega> * ?A u \<omega>)"
+      by (simp add: coord_Z_def right_diff_distrib)
+    show ?thesis
+      unfolding eq
+      by (rule Bochner_Integration.integral_diff[OF int_ZX2[OF u]
+          int_ZA[OF u]])
+  qed
+  have XsFs: "(\<lambda>\<omega>. X s \<omega> $ i) \<in> borel_measurable (F s)"
+    by (intro measurable_compose[OF _ prj] sv.adaptedD) (use st in auto)
+  have ZXsFs: "(\<lambda>\<omega>. Z \<omega> * X s \<omega> $ i) \<in> borel_measurable (F s)"
+    by (intro borel_measurable_times ZFs XsFs)
+  have cross: "(\<integral>\<omega>. (Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i \<partial>M)
+      = (\<integral>\<omega>. (Z \<omega> * X s \<omega> $ i) * X s \<omega> $ i \<partial>M)"
+    by (rule martingale_bounded_test[OF martingale_vec_component[OF
+        sv.martingale_axioms] st ts ZXsFs int_cross[OF t0]
+        int_cross[OF st]])
+  have czid: "(\<integral>\<omega>. Z \<omega> * coord_Z X acov i t \<omega> \<partial>M)
+      = (\<integral>\<omega>. Z \<omega> * coord_Z X acov i s \<omega> \<partial>M)"
+    by (rule martingale_bounded_test[OF sv.coord_Z_martingale st ts ZFs
+        int_ZcZ[OF t0] int_ZcZ[OF st]])
+  have int2: "integrable M (\<lambda>\<omega>. 2 * ((Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i))"
+    using int_cross[OF t0] by simp
+  have int12: "integrable M (\<lambda>\<omega>. Z \<omega> * (X t \<omega> $ i)\<^sup>2
+      - 2 * ((Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i))"
+    by (intro Bochner_Integration.integrable_diff int_ZX2[OF t0] int2)
+  have LHS_eq: "(\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2 \<partial>M)
+      = (\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i)\<^sup>2 \<partial>M)
+        - (\<integral>\<omega>. Z \<omega> * (X s \<omega> $ i)\<^sup>2 \<partial>M)"
+  proof -
+    have e1: "(\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2 \<partial>M)
+        = (\<integral>\<omega>. (Z \<omega> * (X t \<omega> $ i)\<^sup>2
+            - 2 * ((Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i))
+            + Z \<omega> * (X s \<omega> $ i)\<^sup>2 \<partial>M)"
+      by (intro Bochner_Integration.integral_cong refl)
+        (simp add: power2_diff algebra_simps)
+    have e2: "\<dots> = (\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i)\<^sup>2
+            - 2 * ((Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i) \<partial>M)
+            + (\<integral>\<omega>. Z \<omega> * (X s \<omega> $ i)\<^sup>2 \<partial>M)"
+      by (rule Bochner_Integration.integral_add[OF int12 int_ZX2[OF st]])
+    have e3: "(\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i)\<^sup>2
+        - 2 * ((Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i) \<partial>M)
+        = (\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i)\<^sup>2 \<partial>M)
+          - 2 * (\<integral>\<omega>. (Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i \<partial>M)"
+      using Bochner_Integration.integral_diff[OF int_ZX2[OF t0] int2]
+      by simp
+    have e4: "(\<integral>\<omega>. (Z \<omega> * X s \<omega> $ i) * X t \<omega> $ i \<partial>M)
+        = (\<integral>\<omega>. Z \<omega> * (X s \<omega> $ i)\<^sup>2 \<partial>M)"
+      using cross by (simp add: power2_eq_square mult.assoc)
+    show ?thesis using e1 e2 e3 e4 by linarith
+  qed
+  have intZ: "integrable M Z"
+    by (rule finite_measure.integrable_const_bound[OF fin, of _ B])
+      (use ZM Zabs in auto)
+  have int_LZ: "integrable M (\<lambda>\<omega>. Z \<omega> * (L * (t - s)))"
+    using intZ by simp
+  have int_ZAd: "integrable M (\<lambda>\<omega>. Z \<omega> * (?A t \<omega> - ?A s \<omega>))"
+    using Bochner_Integration.integrable_diff[OF int_ZA[OF t0]
+        int_ZA[OF st]]
+    by (simp add: right_diff_distrib)
+  have mono_step: "(\<integral>\<omega>. Z \<omega> * (?A t \<omega> - ?A s \<omega>) \<partial>M)
+      \<le> (\<integral>\<omega>. Z \<omega> * (L * (t - s)) \<partial>M)"
+  proof (rule integral_mono_AE[OF int_ZAd int_LZ])
+    show "AE \<omega> in M. Z \<omega> * (?A t \<omega> - ?A s \<omega>)
+        \<le> Z \<omega> * (L * (t - s))"
+      using witness_compensator_increment_bounds[OF W st ts, where i = i]
+    proof eventually_elim
+      case (elim \<omega>)
+      show ?case
+        by (intro mult_left_mono) (use elim Zpos in auto)
+    qed
+  qed
+  have "(\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2 \<partial>M)
+      = (\<integral>\<omega>. Z \<omega> * ?A t \<omega> \<partial>M) - (\<integral>\<omega>. Z \<omega> * ?A s \<omega> \<partial>M)"
+    using LHS_eq czid splitE[OF t0] splitE[OF st] by linarith
+  also have "\<dots> = (\<integral>\<omega>. Z \<omega> * (?A t \<omega> - ?A s \<omega>) \<partial>M)"
+    using Bochner_Integration.integral_diff[OF int_ZA[OF t0]
+        int_ZA[OF st]]
+    by (simp add: right_diff_distrib)
+  also have "\<dots> \<le> (\<integral>\<omega>. Z \<omega> * (L * (t - s)) \<partial>M)"
+    by (rule mono_step)
+  also have "\<dots> = L * (t - s) * (\<integral>\<omega>. Z \<omega> \<partial>M)"
+    by (simp add: mult.commute)
+  finally show ?thesis .
+qed
+
+lemma past_test_functional_cont:
+  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real"
+  assumes st: "0 \<le> s" and sT: "s \<le> T"
+    and hc: "continuous_map (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal (\<lambda>f. h (restrict f {0..s}))"
+proof -
+  have rc: "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
+      (\<lambda>f. restrict f {0..s})"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal (h \<circ> (\<lambda>f. restrict f {0..s}))"
+    by (rule continuous_map_compose[OF rc hc])
+  then show ?thesis by (simp add: o_def)
+qed
+
+lemma covariation_test_functional_cont:
+  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
+  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
+    and hc: "continuous_map (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal
+      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2 * h (restrict f {0..s}))"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  have sI: "s \<in> {0..T}" using st sT by simp
+  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
+    by (intro continuous_map_diff continuous_map_path_eval tI sI)
+  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
+      euclideanreal (\<lambda>v. v $ i)"
+    unfolding continuous_map_iff_continuous2
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have part1': "continuous_map ?PT euclideanreal
+      ((rclamp c \<circ> (\<lambda>v. v $ i)) \<circ> (\<lambda>f. f t - f s))"
+    by (intro continuous_map_compose[OF evdiff]
+        continuous_map_compose[OF cmp_i] rclamp_cont)
+  have part1: "continuous_map ?PT euclideanreal
+      (\<lambda>f. rclamp c (f t $ i - f s $ i))"
+    using part1' by (simp add: o_def vector_minus_component)
+  have part1sq: "continuous_map ?PT euclideanreal
+      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2)"
+    using continuous_map_real_mult[OF part1 part1]
+    by (simp add: power2_eq_square)
+  have part2: "continuous_map ?PT euclideanreal
+      (\<lambda>f. h (restrict f {0..s}))"
+    by (rule past_test_functional_cont[OF st sT hc])
+  show ?thesis
+    by (rule continuous_map_real_mult[OF part1sq part2])
+qed
+
+lemma mkt_path_laws_covariation_test:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+    and h :: "(real \<Rightarrow> real^'m) \<Rightarrow> real" and B r :: real
+  assumes T0: "0 \<le> T" and Kball: "K \<subseteq> cball 0 r" and r0: "0 \<le> r"
+    and Q: "Q \<in> mkt_path_laws k L K x0 T"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
+    and hpos: "\<And>f. 0 \<le> h f" and hb: "\<And>f. h f \<le> B"
+  shows "(\<integral>f. (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2
+        * h (restrict f {0..s}) \<partial>Q)
+      \<le> L * (t - s) * (\<integral>f. h (restrict f {0..s}) \<partial>Q)"
+proof -
+  let ?G = "\<lambda>f :: real \<Rightarrow> real^'m.
+      (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2 * h (restrict f {0..s})"
+  let ?H = "\<lambda>f :: real \<Rightarrow> real^'m. h (restrict f {0..s})"
+  have B0: "0 \<le> B" using hpos[of "\<lambda>_. 0"] hb[of "\<lambda>_. 0"] by linarith
+  have t0: "0 \<le> t" and sT: "s \<le> T" using st ts tT by linarith+
+  have sI: "s \<in> {0..T}" and tI: "t \<in> {0..T}" using st ts tT by auto
+  from Q obtain M F X acov tau
+    where W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    unfolding mkt_path_laws_def mem_Collect_eq by blast
+  have QM: "Q = path_law M X T"
+    and svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    using W unfolding mkt_law_witness_def by blast+
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have prj: "(\<lambda>x :: real^'m. x $ i) \<in> borel_measurable borel" for i
+    by (intro borel_measurable_continuous_onI linear_continuous_on
+        bounded_linear_vec_nth)
+  have Xm: "X u \<in> borel_measurable M" if "u \<in> {0..T}" for u
+    using that by (intro sv.random_variable) simp
+  have cont: "continuous_on {0..T} (\<lambda>u. X u \<omega>)" if "\<omega> \<in> space M" for \<omega>
+    by (rule continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
+  have pm: "(\<lambda>\<omega>. restrict (\<lambda>u. X u \<omega>) {0..T}) \<in> M \<rightarrow>\<^sub>M
+      borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+    by (rule pathify_measurable[OF T0 Xm cont])
+  have Gcont: "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal ?G"
+    by (rule covariation_test_functional_cont[OF st sT tI hc])
+  have Gmeas: "?G \<in> borel_measurable (borel_of
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    using continuous_map_measurable[OF Gcont]
+    by (simp add: borel_of_euclidean)
+  have Hcont: "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal ?H"
+    by (rule past_test_functional_cont[OF st sT hc])
+  have Hmeas: "?H \<in> borel_measurable (borel_of
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    using continuous_map_measurable[OF Hcont]
+    by (simp add: borel_of_euclidean)
+  have rr: "restrict (restrict g {0..T}) {0..s} = restrict g {0..s}"
+    for g :: "real \<Rightarrow> real^'m"
+    using sT by (auto simp: restrict_def fun_eq_iff)
+  define Z where "Z = (\<lambda>\<omega>. h (restrict (\<lambda>u. X u \<omega>) {0..s}))"
+  have Xm_Fs: "X u \<in> borel_measurable (F s)" if "u \<in> {0..s}" for u
+    using that by (intro sv.adaptedD) auto
+  have cont_Fs: "continuous_on {0..s} (\<lambda>u. X u \<omega>)"
+    if "\<omega> \<in> space (F s)" for \<omega>
+  proof -
+    have "\<omega> \<in> space M" using that sv.space_F[OF st] by simp
+    then show ?thesis
+      by (intro continuous_on_subset[OF sv.X_paths_cont]) auto
+  qed
+  have pms: "(\<lambda>\<omega>. restrict (\<lambda>u. X u \<omega>) {0..s}) \<in> (F s) \<rightarrow>\<^sub>M
+      borel_of (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))"
+    by (rule pathify_measurable[OF st Xm_Fs cont_Fs])
+  have hmeas: "h \<in> borel_measurable (borel_of
+      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    using continuous_map_measurable[OF hc]
+    by (simp add: borel_of_euclidean)
+  have ZFs: "Z \<in> borel_measurable (F s)"
+    unfolding Z_def
+    using measurable_comp[OF pms hmeas] by (simp add: o_def)
+  have ZM: "Z \<in> borel_measurable M"
+    by (rule measurable_from_subalg[OF sv.subalgebras[OF st] ZFs])
+  have XiM: "(\<lambda>\<omega>. X u \<omega> $ i) \<in> borel_measurable M" if "u \<in> {0..T}" for u
+    by (intro measurable_compose[OF Xm[OF that] prj])
+  have step1: "(\<integral>f. ?G f \<partial>Q)
+      = (\<integral>\<omega>. ?G (restrict (\<lambda>u. X u \<omega>) {0..T}) \<partial>M)"
+    unfolding QM path_law_def
+    by (rule Bochner_Integration.integral_distr[OF pm Gmeas])
+  have step1H: "(\<integral>f. ?H f \<partial>Q)
+      = (\<integral>\<omega>. ?H (restrict (\<lambda>u. X u \<omega>) {0..T}) \<partial>M)"
+    unfolding QM path_law_def
+    by (rule Bochner_Integration.integral_distr[OF pm Hmeas])
+  have step2: "(\<integral>\<omega>. ?G (restrict (\<lambda>u. X u \<omega>) {0..T}) \<partial>M)
+      = (\<integral>\<omega>. (rclamp (2 * r) (X t \<omega> $ i - X s \<omega> $ i))\<^sup>2 * Z \<omega> \<partial>M)"
+    unfolding Z_def
+    by (intro Bochner_Integration.integral_cong refl)
+      (use st ts tT sT in \<open>simp add: rr\<close>)
+  have step2H: "(\<integral>\<omega>. ?H (restrict (\<lambda>u. X u \<omega>) {0..T}) \<partial>M)
+      = (\<integral>\<omega>. Z \<omega> \<partial>M)"
+    unfolding Z_def
+    by (intro Bochner_Integration.integral_cong refl)
+      (use st ts tT sT in \<open>simp add: rr min_absorb2\<close>)
+  have bnd_t: "AE \<omega> in M. norm (X t \<omega>) \<le> r"
+    by (rule mkt_law_witness_bound[OF W Kball t0])
+  have bnd_s: "AE \<omega> in M. norm (X s \<omega>) \<le> r"
+    by (rule mkt_law_witness_bound[OF W Kball st])
+  have ae_inc: "AE \<omega> in M. \<bar>X t \<omega> $ i - X s \<omega> $ i\<bar> \<le> 2 * r"
+    using bnd_t bnd_s
+  proof eventually_elim
+    case (elim \<omega>)
+    have "\<bar>X t \<omega> $ i - X s \<omega> $ i\<bar>
+        \<le> \<bar>X t \<omega> $ i\<bar> + \<bar>X s \<omega> $ i\<bar>"
+      by (rule abs_triangle_ineq4)
+    also have "\<dots> \<le> norm (X t \<omega>) + norm (X s \<omega>)"
+      by (intro add_mono component_le_norm_cart)
+    also have "\<dots> \<le> 2 * r" using elim by linarith
+    finally show ?case .
+  qed
+  have rcm: "rclamp (2 * r) \<in> borel_measurable borel"
+  proof -
+    have "continuous_on UNIV (rclamp (2 * r))"
+      using rclamp_cont[of "2 * r"]
+      by (simp add: continuous_map_iff_continuous2)
+    then show ?thesis by (rule borel_measurable_continuous_onI)
+  qed
+  have mcl2: "(\<lambda>\<omega>. (rclamp (2 * r) (X t \<omega> $ i - X s \<omega> $ i))\<^sup>2 * Z \<omega>)
+      \<in> borel_measurable M"
+    by (intro borel_measurable_times ZM borel_measurable_power
+        measurable_compose[OF _ rcm] borel_measurable_diff
+        XiM[OF tI] XiM[OF sI])
+  have mun2: "(\<lambda>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2)
+      \<in> borel_measurable M"
+    by (intro borel_measurable_times ZM borel_measurable_power
+        borel_measurable_diff XiM[OF tI] XiM[OF sI])
+  have step3: "(\<integral>\<omega>. (rclamp (2 * r) (X t \<omega> $ i - X s \<omega> $ i))\<^sup>2
+        * Z \<omega> \<partial>M)
+      = (\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2 \<partial>M)"
+  proof (rule integral_cong_AE[OF mcl2 mun2])
+    show "AE \<omega> in M. (rclamp (2 * r) (X t \<omega> $ i - X s \<omega> $ i))\<^sup>2 * Z \<omega>
+        = Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2"
+      using ae_inc
+    proof eventually_elim
+      case (elim \<omega>)
+      show ?case
+        unfolding rclamp_id[OF elim] by (simp add: mult.commute)
+    qed
+  qed
+  have Zpos: "\<And>\<omega>. 0 \<le> Z \<omega>" unfolding Z_def by (rule hpos)
+  have Zb: "\<And>\<omega>. Z \<omega> \<le> B" unfolding Z_def by (rule hb)
+  have step4: "(\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2 \<partial>M)
+      \<le> L * (t - s) * (\<integral>\<omega>. Z \<omega> \<partial>M)"
+    by (rule coord_sq_bounded_test[OF W Kball r0 st ts ZFs Zpos Zb])
+  have "(\<integral>f. ?G f \<partial>Q)
+      = (\<integral>\<omega>. Z \<omega> * (X t \<omega> $ i - X s \<omega> $ i)\<^sup>2 \<partial>M)"
+    using step1 step2 step3 by simp
+  also have "\<dots> \<le> L * (t - s) * (\<integral>\<omega>. Z \<omega> \<partial>M)"
+    by (rule step4)
+  also have "\<dots> = L * (t - s) * (\<integral>f. ?H f \<partial>Q)"
+    using step1H step2H by simp
+  finally show ?thesis .
+qed
+
+theorem mkt_law_closure_covariation_test:
+  fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure"
+    and h :: "(real \<Rightarrow> real^'m) \<Rightarrow> real" and B r :: real
+  assumes T0: "0 \<le> T" and Kball: "K \<subseteq> cball 0 r" and r0: "0 \<le> r"
+    and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
+    and hpos: "\<And>f. 0 \<le> h f" and hb: "\<And>f. h f \<le> B"
+  shows "(\<integral>f. (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2
+        * h (restrict f {0..s}) \<partial>\<Lambda>)
+      \<le> L * (t - s) * (\<integral>f. h (restrict f {0..s}) \<partial>\<Lambda>)"
+proof -
+  let ?G = "\<lambda>f :: real \<Rightarrow> real^'m.
+      (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2 * h (restrict f {0..s})"
+  let ?H = "\<lambda>f :: real \<Rightarrow> real^'m. h (restrict f {0..s})"
+  have B0: "0 \<le> B" using hpos[of "\<lambda>_. 0"] hb[of "\<lambda>_. 0"] by linarith
+  have sT: "s \<le> T" using ts tT by linarith
+  have tI: "t \<in> {0..T}" using st ts tT by auto
+  obtain \<sigma> where r\<sigma>: "range \<sigma> \<subseteq> mkt_path_laws k L K x0 T"
+    and lim: "limitin (weak_conv_topology (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'m) metric))) \<sigma> \<Lambda> sequentially"
+    using closure_of_sequential_limit[OF metrizable_weak_conv_path_topology
+        L[unfolded mkt_law_closure_def]] by blast
+  have perj: "(\<integral>f. ?G f \<partial>(\<sigma> j))
+      \<le> L * (t - s) * (\<integral>f. ?H f \<partial>(\<sigma> j))" for j
+    using r\<sigma>
+    by (intro mkt_path_laws_covariation_test[OF T0 Kball r0 _ st ts tT hc
+        hpos hb]) blast
+  have Gcont: "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal ?G"
+    by (rule covariation_test_functional_cont[OF st sT tI hc])
+  have sqb: "(rclamp (2 * r) y)\<^sup>2 \<le> (2 * r)\<^sup>2" for y
+  proof -
+    have "(rclamp (2 * r) y)\<^sup>2 = \<bar>rclamp (2 * r) y\<bar>\<^sup>2" by simp
+    also have "\<dots> \<le> (2 * r)\<^sup>2"
+      by (intro power_mono rclamp_bound) (use r0 in auto)
+    finally show ?thesis .
+  qed
+  have Gbd: "\<exists>B'. \<forall>f\<in>topspace (mtopology_of
+      (path_metric T :: (real \<Rightarrow> real^'m) metric)). \<bar>?G f\<bar> \<le> B'"
+  proof (intro exI[of _ "(2 * r)\<^sup>2 * B"] ballI)
+    fix f :: "real \<Rightarrow> real^'m"
+    have "\<bar>?G f\<bar> = (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2 * \<bar>?H f\<bar>"
+      by (simp add: abs_mult)
+    also have "\<dots> \<le> (2 * r)\<^sup>2 * B"
+      by (intro mult_mono sqb)
+        (use hpos hb B0 in \<open>auto simp: abs_of_nonneg\<close>)
+    finally show "\<bar>?G f\<bar> \<le> (2 * r)\<^sup>2 * B" .
+  qed
+  have Hcont: "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal ?H"
+    by (rule past_test_functional_cont[OF st sT hc])
+  have Hbd: "\<exists>B'. \<forall>f\<in>topspace (mtopology_of
+      (path_metric T :: (real \<Rightarrow> real^'m) metric)). \<bar>?H f\<bar> \<le> B'"
+    by (intro exI[of _ B] ballI)
+      (use hpos hb in \<open>auto simp: abs_of_nonneg\<close>)
+  have blimG: "(\<lambda>j. \<integral>f. ?G f \<partial>(\<sigma> j)) \<longlonglongrightarrow> (\<integral>f. ?G f \<partial>\<Lambda>)"
+    using lim Gcont Gbd unfolding weak_conv_on_def by blast
+  have blimH: "(\<lambda>j. \<integral>f. ?H f \<partial>(\<sigma> j)) \<longlonglongrightarrow> (\<integral>f. ?H f \<partial>\<Lambda>)"
+    using lim Hcont Hbd unfolding weak_conv_on_def by blast
+  have blimH': "(\<lambda>j. L * (t - s) * (\<integral>f. ?H f \<partial>(\<sigma> j)))
+      \<longlonglongrightarrow> L * (t - s) * (\<integral>f. ?H f \<partial>\<Lambda>)"
+    by (rule tendsto_mult_left[OF blimH])
+  show ?thesis
+  proof (rule LIMSEQ_le[OF blimG blimH'])
+    show "\<exists>N. \<forall>j\<ge>N. (\<integral>f. ?G f \<partial>(\<sigma> j))
+        \<le> L * (t - s) * (\<integral>f. ?H f \<partial>(\<sigma> j))"
+      using perj by blast
+  qed
+qed
+
+text \<open>The matching lower bound holds at ANY measure: the integrand is
+  pointwise nonnegative for a nonnegative test functional.\<close>
+
+lemma covariation_test_nonneg:
+  fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure"
+    and h :: "(real \<Rightarrow> real^'m) \<Rightarrow> real"
+  assumes hpos: "\<And>f. 0 \<le> h f"
+  shows "0 \<le> (\<integral>f. (rclamp c (f t $ i - f s $ i))\<^sup>2
+      * h (restrict f {0..s}) \<partial>\<Lambda>)"
+  by (intro integral_nonneg_AE AE_I2 mult_nonneg_nonneg
+      zero_le_power2 hpos)
+
 end
