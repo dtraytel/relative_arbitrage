@@ -315,12 +315,43 @@ functional; how to encode it (via the path's exit time from the closed
 confinement set, or only in the canonical-market step) is entangled with
 (b) below and should be decided together with it.
 
+Done (commit 992ed8c, 2026-08-03): the PAPER-CLASS value function and
+its usc majorant.  `stopped_market` (the witness predicate minus its
+path-law clause; `mkt_law_witness_iff` relates them) captures the
+paper's class (1.7) — the process stopped at its horizon, `acov` killed
+after it, diag entries pathwise integrable.  `stopped_exit_vals` /
+`stopped_val_fn` form its value function; `stopped_val_fn_le_law_sup`
+lifts the per-witness domination through `Sup_least`:
+
+    K ⊆ cball 0 r, x0 ∈ K, open A with A ∩ K = {}, T ≥ ball_v r k x0 ⟹
+    stopped_val_fn k L K x0
+      ≤ ennreal (Sup (vshift T A x0 ` mkt_law_closure k L (cball 0 (2r)) 0 T))
+
+and the RHS is usc in x0 by `vshift_sup_usc_mkt`.  Also
+`stopped_val_fn_le_val_fn` (index inclusion) and
+`stopped_exit_vals_nonempty` (the immediate-stop market).
+
+RESOLVED SCOPE for item (c): the bare-locale `val_fn` vs the paper class.
+Aligning them is Doob's optional stopping applied to every class market;
+the repo's `Optional_Sampling.optional_stopping` +
+`Stopped_Adaptedness.stopped_adapted_of_cont` exist and fit, BUT they
+require domination of the UNSTOPPED process on bounded time intervals
+(an integrable envelope `D u`), and the bare locale controls `X` only up
+to `tau` (`X_in_K`) — beyond the horizon nothing is integrable-bounded.
+So `val_fn = stopped_val_fn` is not provable from the locale as stated;
+either (i) treat `stopped_val_fn` as THE value function of the paper
+(faithful to (1.7), recommended), or (ii) add a post-horizon
+integrability axiom to the locale and run optional stopping.  Downstream
+work (DPP, viscosity clauses) should consume `stopped_val_fn`.
+
 Still open, in order of attack: (a) the law-level form of the LOWER
 (trace / `eigen_lb`) constraint, see the note above; (b) the
 canonical-market construction (monotone-class martingale property,
 `acov` by differentiation) OR the author-level decision to restate
-clause (1) at the law level; (c) the optional-stopping closure of the
-class (`val_fn` over all markets vs stopped witnesses).
+clause (1) at the law level — with (b) resolved in favour of the law
+level, clause (1) reduces to `vshift_sup_usc_mkt` +
+`stopped_val_fn_le_law_sup` + the reverse inequality (closure adds no
+value), which is exactly where the canonical market re-enters.
 
 #### N3 as originally scoped
 
