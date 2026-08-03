@@ -2269,6 +2269,31 @@ proof (intro sufficiently_volatile_market.intro
   show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0
       (coord_Z (bmX x0) (\<lambda>_ _. mat 1) i)" for i
     unfolding coord_Z_def by (rule martingale_bm_coord_square)
+  text \<open>A constant horizon is a stopping time for free: the event is the whole
+    space or empty, and both lie in every sub-\<open>\<sigma>\<close>-algebra.\<close>
+  show "\<And>s. 0 \<le> s \<Longrightarrow>
+      {\<omega> \<in> space ?M. c \<le> s} \<in> sets (natural_filtration ?M 0 (bmX x0) s)"
+  proof -
+    fix s :: real assume s: "0 \<le> s"
+    show "{\<omega> \<in> space ?M. c \<le> s}
+        \<in> sets (natural_filtration ?M 0 (bmX x0) s)"
+    proof (cases "c \<le> s")
+      case True
+      have "{\<omega> \<in> space ?M. c \<le> s}
+          = space (natural_filtration ?M 0 (bmX x0) s)"
+        using True by simp
+      moreover have "space (natural_filtration ?M 0 (bmX x0) s)
+          \<in> sets (natural_filtration ?M 0 (bmX x0) s)"
+        by (rule sets.top)
+      ultimately show ?thesis by simp
+    next
+      case False
+      have "{\<omega> \<in> space ?M. c \<le> s} = {}" using False by simp
+      moreover have "{} \<in> sets (natural_filtration ?M 0 (bmX x0) s)"
+        by (rule sets.empty_sets)
+      ultimately show ?thesis by metis
+    qed
+  qed
 qed
 
 section \<open>A concrete instance: the class \<open>\<P>\<^sub>x\<close> is inhabited\<close>

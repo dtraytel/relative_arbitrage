@@ -251,6 +251,8 @@ proof -
       by (rule dynkin_quadratic_holds)
     show "\<And>i. martingale M F 0 (coord_Z X acov i)"
       by (rule coordZ_martingale)
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+      by (rule tau_stopping)
   qed
 qed
 
@@ -726,6 +728,23 @@ proof -
       by (rule const_dynkin_quadratic)
     show "\<And>i. martingale M F 0 (coord_Z X acov i)"
       by (rule coordZ_martingale)
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. c \<le> s} \<in> sets (F s)"
+    proof -
+      fix s :: real assume s: "0 \<le> s"
+      show "{\<omega> \<in> space M. c \<le> s} \<in> sets (F s)"
+      proof (cases "c \<le> s")
+        case True
+        have "{\<omega> \<in> space M. c \<le> s} = space (F s)"
+          using True s by (simp add: space_F)
+        moreover have "space (F s) \<in> sets (F s)" by (rule sets.top)
+        ultimately show ?thesis by simp
+      next
+        case False
+        have "{\<omega> \<in> space M. c \<le> s} = {}" using False by simp
+        moreover have "{} \<in> sets (F s)" by (rule sets.empty_sets)
+        ultimately show ?thesis by simp
+      qed
+    qed
   qed
 qed
 

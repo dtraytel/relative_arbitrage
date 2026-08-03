@@ -421,6 +421,8 @@ proof -
       by (rule sv.dynkin_quadratic)
     show "\<And>i. martingale M F 0 (coord_Z X acov i)"
       by (rule sv.coord_Z_martingale)
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+      by (rule sv.tau_stopping)
   qed
 qed
 
