@@ -1817,4 +1817,200 @@ proof -
     by (meson order.trans)
 qed
 
+subsection \<open>N3 opening: closure laws inherit start and confinement\<close>
+
+text \<open>The first piece of "the closure adds no value": whatever a closure
+  point turns out to be, it is supported on paths that start at \<open>x0\<close> and
+  stay in \<open>K\<close>.  The set of such paths is CLOSED in the path topology (an
+  arbitrary intersection of closed evaluation preimages, no rational
+  reduction needed), members of \<open>mkt_path_laws\<close> carry full mass on it
+  because their markets are stopped and confined, and the closed-set
+  Portmanteau (\<open>weak_conv_closed_full_measure\<close>) pushes full mass to every
+  weak limit.  Both the canonical-market route and a law-level restatement
+  of clause (1) will consume these facts.\<close>
+
+definition confined_paths ::
+  "real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> (real \<Rightarrow> real^'m) set"
+  where
+  "confined_paths T K x0 =
+     {f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
+        f 0 = x0 \<and> (\<forall>t\<in>{0..T}. f t \<in> K)}"
+
+lemma closedin_confined_paths:
+  fixes K :: "(real^'m::finite) set"
+  assumes T: "0 \<le> T" and K: "closed K"
+  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      (confined_paths T K x0)"
+proof -
+  let ?X = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  interpret PM: Metric_space
+      "mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+      "mdist (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+    by (rule Metric_space_mspace_mdist)
+  have ts: "topspace ?X
+      = mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+    unfolding mtopology_of_def by (rule PM.topspace_mtopology)
+  have c0: "closedin ?X {f \<in> topspace ?X. f 0 \<in> {x0}}"
+    by (rule closedin_continuous_map_preimage[OF continuous_map_path_eval])
+      (use T in \<open>auto simp: closed_closedin[symmetric]\<close>)
+  have ct: "closedin ?X {f \<in> topspace ?X. f t \<in> K}"
+    if t: "t \<in> {0..T}" for t
+    by (rule closedin_continuous_map_preimage[OF
+          continuous_map_path_eval[OF t]])
+      (simp add: closed_closedin[symmetric] K)
+  have eq: "confined_paths T K x0
+      = {f \<in> topspace ?X. f 0 \<in> {x0}}
+        \<inter> (\<Inter>t\<in>{0..T}. {f \<in> topspace ?X. f t \<in> K})"
+    using T unfolding confined_paths_def ts by auto
+  show ?thesis
+    unfolding eq
+    by (intro closedin_Int c0 closedin_INT ct) (use T in auto)
+qed
+
+lemma mkt_path_laws_confined:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+  assumes T: "0 \<le> T" and K: "closed K"
+    and Q: "Q \<in> mkt_path_laws k L K x0 T"
+  shows "measure Q (confined_paths T K x0) = 1"
+proof -
+  from Q obtain M F X acov tau
+    where W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    unfolding mkt_path_laws_def mem_Collect_eq by blast
+  have QM: "Q = path_law M X T"
+    and svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    and stp: "\<forall>s \<omega>. \<omega> \<in> space M \<longrightarrow> X s \<omega> = X (min s (tau \<omega>)) \<omega>"
+    using W unfolding mkt_law_witness_def by blast+
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have Xm: "X t \<in> borel_measurable M" if "t \<in> {0..T}" for t
+    using that by (intro sv.random_variable) simp
+  have cont: "continuous_on {0..T} (\<lambda>t. X t \<omega>)" if "\<omega> \<in> space M" for \<omega>
+    by (rule continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
+  have pm: "(\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T}) \<in> M \<rightarrow>\<^sub>M
+      borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+    by (rule pathify_measurable[OF T Xm cont])
+  interpret PQ: prob_space Q
+    by (rule mkt_path_laws_prob[OF T Q])
+  have setB: "confined_paths T K x0 \<in> sets (borel_of
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    by (rule borel_of_closed[OF closedin_confined_paths[OF T K]])
+  then have setQ: "confined_paths T K x0 \<in> sets Q"
+    using mkt_path_laws_sets[OF Q] by simp
+  have ae: "AE \<omega> in M. restrict (\<lambda>t. X t \<omega>) {0..T}
+      \<in> confined_paths T K x0"
+    using sv.X_start sv.X_in_K sv.tau_nonneg AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    have msp: "restrict (\<lambda>t. X t \<omega>) {0..T}
+        \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+      using measurable_space[OF pm] elim
+      by (simp add: space_borel_of mtopology_of_def
+          Metric_space.topspace_mtopology[OF Metric_space_mspace_mdist])
+    have v0: "restrict (\<lambda>t. X t \<omega>) {0..T} 0 = x0"
+      using T elim by simp
+    have vt: "restrict (\<lambda>t. X t \<omega>) {0..T} t \<in> K"
+      if t: "t \<in> {0..T}" for t
+    proof -
+      have t0: "0 \<le> t" using t by simp
+      have m0: "0 \<le> min t (tau \<omega>)" using t0 elim by simp
+      have "X t \<omega> = X (min t (tau \<omega>)) \<omega>"
+        using stp elim by blast
+      also have "\<dots> \<in> K"
+        using elim m0 by auto
+      finally show ?thesis using t by simp
+    qed
+    show ?case
+      unfolding confined_paths_def using msp v0 vt by blast
+  qed
+  have ceq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
+      f \<in> confined_paths T K x0} = confined_paths T K x0"
+    unfolding confined_paths_def by auto
+  have "AE f in Q. f \<in> confined_paths T K x0"
+    unfolding QM path_law_def
+    by (subst AE_distr_iff[OF pm])
+      (use setB ae ceq in \<open>auto simp: space_borel_of\<close>)
+  then show ?thesis
+    using PQ.AE_in_set_eq_1[OF setQ] by simp
+qed
+
+theorem mkt_law_closure_confined:
+  fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure"
+  assumes T: "0 \<le> T" and K: "closed K"
+    and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
+  shows "measure \<Lambda> (confined_paths T K x0) = 1"
+proof -
+  obtain \<sigma> where r\<sigma>: "range \<sigma> \<subseteq> mkt_path_laws k L K x0 T"
+    and lim: "limitin (weak_conv_topology (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'m) metric))) \<sigma> \<Lambda> sequentially"
+    using closure_of_sequential_limit[OF metrizable_weak_conv_path_topology
+        L[unfolded mkt_law_closure_def]] by blast
+  show ?thesis
+  proof (rule weak_conv_closed_full_measure[OF lim
+      closedin_confined_paths[OF T K]])
+    show "\<And>i. measure (\<sigma> i) (confined_paths T K x0) = 1"
+      using r\<sigma> by (intro mkt_path_laws_confined[OF T K]) blast
+    show "prob_space \<Lambda>"
+      by (rule mkt_law_closure_prob[OF T L])
+  qed
+qed
+
+corollary mkt_law_closure_confined_AE:
+  fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure"
+  assumes T: "0 \<le> T" and K: "closed K"
+    and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
+  shows "AE f in \<Lambda>. f 0 = x0 \<and> (\<forall>t\<in>{0..T}. f t \<in> K)"
+proof -
+  interpret PL: prob_space \<Lambda>
+    by (rule mkt_law_closure_prob[OF T L])
+  have setL: "confined_paths T K x0 \<in> sets \<Lambda>"
+    using borel_of_closed[OF closedin_confined_paths[OF T K]]
+      mkt_law_closure_sets[OF L] by simp
+  have "AE f in \<Lambda>. f \<in> confined_paths T K x0"
+    using PL.AE_in_set_eq_1[OF setL]
+      mkt_law_closure_confined[OF T K L] by simp
+  then show ?thesis
+    by eventually_elim (simp add: confined_paths_def)
+qed
+
+subsection \<open>The domination theorem, hypothesis-free\<close>
+
+text \<open>The value-below-horizon hypothesis of \<open>witness_value_le_law_sup\<close> is
+  discharged uniformly: every witness value is at most \<open>ball_v r k x0\<close>, by
+  monotonicity into the ball and the exit-time bound of Lemma 2.1.\<close>
+
+lemma witness_value_le_ball_v:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure" and r :: real
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and Kball: "K \<subseteq> cball 0 r"
+  shows "ess_inf_time M tau \<le> ennreal (ball_v r k x0)"
+proof -
+  have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    using W unfolding mkt_law_witness_def by blast
+  interpret sv: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have svm': "sufficiently_volatile_market M F X acov k L (cball 0 r) x0 tau"
+    by (rule sufficiently_volatile_market_mono_K[OF svm Kball])
+  have "ess_inf_time M tau \<le> (\<integral>\<^sup>+\<omega>. ennreal (tau \<omega>) \<partial>M)"
+    by (rule ess_inf_time_le_nn_integral[OF sv.prob_space_M])
+  also have "\<dots> \<le> ennreal (ball_v r k x0)"
+    by (rule sufficiently_volatile_market.expected_exit_time_bound[OF svm' refl])
+  finally show ?thesis .
+qed
+
+theorem witness_value_le_law_sup_ball:
+  fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
+    and A :: "(real^'m) set" and T r :: real
+  assumes W: "mkt_law_witness k L K x0 T Q M F X acov tau"
+    and Kball: "K \<subseteq> cball 0 r" and x0K: "x0 \<in> K"
+    and A: "open A" and AK: "A \<inter> K = {}" and T0: "0 \<le> T"
+    and bT: "ball_v r k x0 \<le> T"
+  shows "ess_inf_time M tau
+      \<le> ennreal (Sup (vshift T A x0
+          ` mkt_law_closure k L (cball 0 (2 * r)) 0 T))"
+proof (rule witness_value_le_law_sup[OF W Kball x0K A AK T0])
+  show "ess_inf_time M tau \<le> ennreal T"
+    using witness_value_le_ball_v[OF W Kball] ennreal_leI[OF bT]
+    by (rule order_trans)
+qed
+
 end
