@@ -196,6 +196,67 @@ Two things this cost that were not obvious in advance:
   leaving it as one goal. It now goes through
   `sufficiently_volatile_market.intro` with explicit `show`s.
 
+### Work item 1 — NEXT STEPS, verified by direct inspection 2026-08-03
+
+With the martingale-problem strengthening landed, TWO further assumptions are still
+missing from `sufficiently_volatile_market` before Lemma 2.2 can be instantiated.
+Both were confirmed by listing the locale's assumption names:
+
+    k_lb k_ub L_ge X_start tau_nonneg tau_meas X_in_K acov_psd acov_eigen_lb
+    acov_eigen_ub acov_trace_integrable stopped_sq_integrable
+    compensator_integrable dynkin_quadratic coord_Z_martingale
+
+1. **`tau_stopping`** — `⋀s. 0 ≤ s ⟹ {ω ∈ space M. tau ω ≤ s} ∈ sets (F s)`.
+   Needed by `Stopped_Localization.stopped_covariation`. `ito_volatile_market` and
+   `ito_stopped_market` ALREADY assume it, so those two sublocale proofs pass it
+   straight through; only `ito_const_horizon_market` (where `tau = λ_. c`) and
+   `Brownian_market_sufficiently_volatile` need a discharge, and there it is
+   trivial — the event is `space M` or `{}`.
+
+   A working discharge was drafted and checked in PIDE but is NOT committed,
+   because a full build could not be completed inside the session. Shape that
+   works (the `if/for` form does NOT refine the goal; use `fix`/`assume`):
+
+       show "⋀s. 0 ≤ s ⟹ {ω ∈ space ?M. c ≤ s} ∈ sets (natural_filtration ?M 0 (bmX x0) s)"
+       proof -
+         fix s :: real assume s: "0 ≤ s"
+         show "{ω ∈ space ?M. c ≤ s} ∈ sets (natural_filtration ?M 0 (bmX x0) s)"
+         proof (cases "c ≤ s")
+           case True
+           have "{ω ∈ space ?M. c ≤ s} = space (natural_filtration ?M 0 (bmX x0) s)"
+             using True by simp
+           moreover have "space (natural_filtration ?M 0 (bmX x0) s)
+               ∈ sets (natural_filtration ?M 0 (bmX x0) s)" by (rule sets.top)
+           ultimately show ?thesis by simp
+         next
+           case False
+           have "{ω ∈ space ?M. c ≤ s} = {}" using False by simp
+           moreover have "{} ∈ sets (natural_filtration ?M 0 (bmX x0) s)"
+             by (rule sets.empty_sets)
+           ultimately show ?thesis by simp
+         qed
+       qed
+
+   Do NOT write the `{} ∈ sets` step as a bare `by simp` — it spins.
+
+2. **Path continuity of `X`** — `Path_Tightness.tight_on_set_path_laws_vec`
+   demands `continuous_on {0..T} (λt. XX i t ω)` for `ω ∈ space`, and
+   `Stopped_Localization` uses the pointwise form
+   `⋀ω. ω ∈ space M ⟹ continuous_on {0..} (λs. X s ω)`. `sufficiently_volatile_market`
+   assumes NOTHING about paths, and neither does `ito_volatile_market` (its
+   `Z_paths_cont` is about `Z`, not `X`).
+
+   **This one is not just plumbing.** The concrete non-vacuity witness uses `bmX`,
+   the raw coordinate process on `bm_paths`, which is NOT continuous. The
+   development already has a continuous modification, `cbmX`
+   (`Brownian_Continuous.cbmX_cont`, `Brownian_Stopped`, `Brownian_Exit`), so
+   adding path continuity means REBASING the Brownian witness from `bmX` onto
+   `cbmX`. Budget that separately; it is the larger of the two.
+
+Both assumptions are implied by the paper's class (1.7) — `τ` there is the exit
+time from `K`, a stopping time, and `X` is a continuous martingale — so adding
+them keeps the formalisation faithful rather than narrowing it.
+
 **Three ways out, and only one is real.**
 
 1. *Strengthen the locale* to assume the componentwise martingale property of the
