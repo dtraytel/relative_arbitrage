@@ -3101,4 +3101,355 @@ proof (rule Sup_least)
     by (rule witness_value_le_law_sup_ball[OF W Kball x0K A AK T0 bT])
 qed
 
+subsection \<open>From continuous tests to the past \<open>\<sigma>\<close>-algebra\<close>
+
+text \<open>A finite Borel measure on a metric space is determined by its
+  integrals against bounded continuous functions: apply the closed-set
+  Portmanteau bound to the CONSTANT sequence in both directions, then
+  extend from closed sets (an intersection-stable generator of the Borel
+  \<open>\<sigma>\<close>-algebra, \<open>sets_borel_of_closed\<close>) by \<open>measure_eqI_generator_eq\<close>.
+  This is the monotone-class engine that upgrades the integrated
+  identities on closure points from continuous past functionals to
+  arbitrary past events.\<close>
+
+lemma metric_measure_eqI_bounded_cts:
+  fixes m :: "'a metric" and M1 M2 :: "'a measure"
+  assumes s1: "sets M1 = sets (borel_of (mtopology_of m))"
+    and s2: "sets M2 = sets (borel_of (mtopology_of m))"
+    and f1: "finite_measure M1" and f2: "finite_measure M2"
+    and eq: "\<And>g. continuous_map (mtopology_of m) euclideanreal g \<Longrightarrow>
+        \<exists>B. \<forall>x\<in>topspace (mtopology_of m). \<bar>g x\<bar> \<le> B \<Longrightarrow>
+        (\<integral>x. g x \<partial>M1) = (\<integral>x. g x \<partial>M2)"
+  shows "M1 = M2"
+proof -
+  interpret PM: Metric_space "mspace m" "mdist m"
+    by (rule Metric_space_mspace_mdist)
+  have top: "PM.mtopology = mtopology_of m"
+    by (simp add: mtopology_of_def)
+  have tsp: "topspace (mtopology_of m) = mspace m"
+    using top PM.topspace_mtopology by simp
+  have le: "measure Ma A \<le> measure Mb A"
+    if sa: "sets Ma = sets (borel_of (mtopology_of m))"
+    and sb: "sets Mb = sets (borel_of (mtopology_of m))"
+    and fa: "finite_measure Ma" and fb: "finite_measure Mb"
+    and eqab: "\<And>g. continuous_map (mtopology_of m) euclideanreal g \<Longrightarrow>
+        \<exists>B. \<forall>x\<in>topspace (mtopology_of m). \<bar>g x\<bar> \<le> B \<Longrightarrow>
+        (\<integral>x. g x \<partial>Ma) = (\<integral>x. g x \<partial>Mb)"
+    and clA: "closedin (mtopology_of m) A"
+    for Ma Mb :: "'a measure" and A
+  proof -
+    interpret MW: mweak_conv_fin "mspace m" "mdist m" "\<lambda>_ :: nat. Ma"
+        Mb sequentially
+    proof
+      show "\<forall>\<^sub>F i in sequentially.
+          sets ((\<lambda>_ :: nat. Ma) i) = sets (borel_of PM.mtopology)"
+        using sa top by simp
+      show "sets Mb = sets (borel_of PM.mtopology)"
+        using sb top by simp
+      show "\<forall>\<^sub>F i in sequentially. finite_measure ((\<lambda>_ :: nat. Ma) i)"
+        using fa by simp
+      show "\<exists>A. countable A \<and> A \<subseteq> sets Mb \<and> \<Union> A = space Mb
+          \<and> (\<forall>a\<in>A. emeasure Mb a \<noteq> \<infinity>)"
+        by (intro exI[of _ "{space Mb}"])
+          (auto simp: finite_measure.emeasure_eq_measure[OF fb])
+      show "emeasure Mb (space Mb) \<noteq> \<top>"
+        by (simp add: finite_measure.emeasure_eq_measure[OF fb])
+    qed
+    have key: "Limsup sequentially (\<lambda>x. ereal (measure Ma A))
+        \<le> ereal (measure Mb A)"
+    proof (rule MW.mweak_conv2)
+      fix g :: "'a \<Rightarrow> real"
+      assume u: "uniformly_continuous_map PM.Self euclidean_metric g"
+        and b: "\<exists>B. \<forall>x\<in>mspace m. \<bar>g x\<bar> \<le> B"
+      have cg: "continuous_map (mtopology_of m) euclideanreal g"
+        using uniformly_continuous_imp_continuous_map[OF u]
+        by (simp add: mtopology_of_def)
+      have "(\<integral>x. g x \<partial>Ma) = (\<integral>x. g x \<partial>Mb)"
+        by (rule eqab[OF cg]) (use b in \<open>simp add: tsp\<close>)
+      then show "((\<lambda>i. \<integral>x. g x \<partial>((\<lambda>_ :: nat. Ma) i))
+          \<longlongrightarrow> (\<integral>x. g x \<partial>Mb)) sequentially"
+        by simp
+    next
+      show "closedin PM.mtopology A" using clA top by simp
+    qed
+    have "Limsup sequentially (\<lambda>x. ereal (measure Ma A))
+        = ereal (measure Ma A)"
+      by (simp add: Limsup_const)
+    with key show ?thesis by simp
+  qed
+  have eqC: "emeasure M1 C = emeasure M2 C"
+    if C: "closedin (mtopology_of m) C" for C
+  proof -
+    have "measure M1 C \<le> measure M2 C"
+      by (rule le[OF s1 s2 f1 f2 eq C])
+    moreover have "measure M2 C \<le> measure M1 C"
+      by (rule le[OF s2 s1 f2 f1 eq[symmetric] C])
+    ultimately have "measure M1 C = measure M2 C" by linarith
+    then show ?thesis
+      by (simp add: finite_measure.emeasure_eq_measure[OF f1]
+          finite_measure.emeasure_eq_measure[OF f2])
+  qed
+  show ?thesis
+  proof (rule measure_eqI_generator_eq[of "{C. closedin (mtopology_of m) C}"
+      "topspace (mtopology_of m)" M1 M2
+      "\<lambda>_ :: nat. topspace (mtopology_of m)"])
+    show "Int_stable {C. closedin (mtopology_of m) C}"
+      by (auto simp: Int_stable_def closedin_Int)
+    show "{C. closedin (mtopology_of m) C} \<subseteq> Pow (topspace (mtopology_of m))"
+      by (fastforce dest: closedin_subset)
+    show "\<And>X. X \<in> {C. closedin (mtopology_of m) C}
+        \<Longrightarrow> emeasure M1 X = emeasure M2 X"
+      using eqC by auto
+    show "sets M1 = sigma_sets (topspace (mtopology_of m))
+        {C. closedin (mtopology_of m) C}"
+      unfolding s1 by (rule sets_borel_of_closed)
+    show "sets M2 = sigma_sets (topspace (mtopology_of m))
+        {C. closedin (mtopology_of m) C}"
+      unfolding s2 by (rule sets_borel_of_closed)
+    show "range (\<lambda>_ :: nat. topspace (mtopology_of m))
+        \<subseteq> {C. closedin (mtopology_of m) C}"
+      using closedin_topspace[of "mtopology_of m"] by auto
+    show "(\<Union>i :: nat. topspace (mtopology_of m)) = topspace (mtopology_of m)"
+      by simp
+    show "\<And>i :: nat. emeasure M1 (topspace (mtopology_of m)) \<noteq> \<infinity>"
+      by (simp add: finite_measure.emeasure_eq_measure[OF f1])
+  qed
+qed
+
+text \<open>The integrated martingale identity holds against EVERY past event, not
+  just against continuous past functionals: split the clamped increment
+  into its positive and negative parts, push both through the restriction
+  map as densities, and observe that the two image measures integrate every
+  bounded continuous function identically --- so they are EQUAL, and their
+  agreement on all Borel sets is exactly the identity against indicator
+  test functions.  This is the monotone-class step of the canonical-market
+  construction.\<close>
+
+theorem mkt_law_closure_martingale_event:
+  fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure" and r :: real
+  assumes T0: "0 \<le> T" and Kball: "K \<subseteq> cball 0 r" and r0: "0 \<le> r"
+    and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and B: "B \<in> sets (borel_of (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+  shows "(\<integral>f. rclamp (2 * r) (f t $ i - f s $ i)
+      * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>) = 0"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  let ?PS = "mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric)"
+  let ?g = "\<lambda>f :: real \<Rightarrow> real^'m. rclamp (2 * r) (f t $ i - f s $ i)"
+  let ?p = "\<lambda>f :: real \<Rightarrow> real^'m. restrict f {0..s}"
+  have sT: "s \<le> T" and t0: "0 \<le> t" using st ts tT by linarith+
+  have tI: "t \<in> {0..T}" using st ts tT by auto
+  have finL: "finite_measure \<Lambda>"
+    by (rule prob_space.finite_measure[OF mkt_law_closure_prob[OF T0 L]])
+  have s\<Lambda>: "sets \<Lambda> = sets (borel_of ?PT)"
+    by (rule mkt_law_closure_sets[OF L])
+  have onec: "continuous_map ?PS euclideanreal (\<lambda>_. 1 :: real)" by simp
+  have gcont: "continuous_map ?PT euclideanreal ?g"
+    using martingale_test_functional_cont[OF st sT tI onec,
+        where c = "2 * r" and i = i] by simp
+  have gmeas: "?g \<in> borel_measurable (borel_of ?PT)"
+    using continuous_map_measurable[OF gcont]
+    by (simp add: borel_of_euclidean)
+  have gmeasL: "?g \<in> borel_measurable \<Lambda>"
+    using gmeas measurable_cong_sets[OF s\<Lambda> refl] by blast
+  have gbnd: "\<bar>?g f\<bar> \<le> 2 * r" for f
+    using rclamp_bound[of "2 * r"] r0 by simp
+  have rc: "continuous_map ?PT ?PS ?p"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have pim: "?p \<in> borel_of ?PT \<rightarrow>\<^sub>M borel_of ?PS"
+    by (rule continuous_map_measurable[OF rc])
+  have pimL: "?p \<in> \<Lambda> \<rightarrow>\<^sub>M borel_of ?PS"
+    using pim measurable_cong_sets[OF s\<Lambda> refl] by blast
+  define gp where "gp = (\<lambda>f :: real \<Rightarrow> real^'m. max (?g f) 0)"
+  define gm where "gm = (\<lambda>f :: real \<Rightarrow> real^'m. max (- ?g f) 0)"
+  have gp0: "\<And>f. 0 \<le> gp f" and gm0: "\<And>f. 0 \<le> gm f"
+    unfolding gp_def gm_def by simp_all
+  have gpb: "\<And>f. gp f \<le> 2 * r" and gmb: "\<And>f. gm f \<le> 2 * r"
+    unfolding gp_def gm_def using gbnd r0 by (auto simp: abs_le_iff)
+  have gdiff: "gp f - gm f = ?g f" for f
+    unfolding gp_def gm_def by (simp add: max_def)
+  have gpm: "gp \<in> borel_measurable \<Lambda>" and gmm: "gm \<in> borel_measurable \<Lambda>"
+    unfolding gp_def gm_def
+    by (intro borel_measurable_max gmeasL borel_measurable_const
+        borel_measurable_uminus)+
+  define N1 where
+    "N1 = distr (density \<Lambda> (\<lambda>f. ennreal (gp f))) (borel_of ?PS) ?p"
+  define N2 where
+    "N2 = distr (density \<Lambda> (\<lambda>f. ennreal (gm f))) (borel_of ?PS) ?p"
+  have sN1: "sets N1 = sets (borel_of ?PS)"
+    and sN2: "sets N2 = sets (borel_of ?PS)"
+    unfolding N1_def N2_def by simp_all
+  have pdm: "?p \<in> density \<Lambda> (\<lambda>f. ennreal (w f)) \<rightarrow>\<^sub>M borel_of ?PS" for w
+    using pimL measurable_cong_sets[OF sets_density refl] by blast
+  have push: "(\<integral>x. u x \<partial>(distr (density \<Lambda> (\<lambda>f. ennreal (w f)))
+        (borel_of ?PS) ?p))
+      = (\<integral>f. u (?p f) * w f \<partial>\<Lambda>)"
+    if um: "u \<in> borel_measurable (borel_of ?PS)"
+    and wm: "w \<in> borel_measurable \<Lambda>" and w0: "\<And>f. 0 \<le> w f"
+    for u w
+  proof -
+    have cmp: "(\<lambda>f. u (?p f)) \<in> borel_measurable \<Lambda>"
+      using measurable_comp[OF pimL um] by (simp add: o_def)
+    have "(\<integral>x. u x \<partial>(distr (density \<Lambda> (\<lambda>f. ennreal (w f)))
+          (borel_of ?PS) ?p))
+        = (\<integral>f. u (?p f) \<partial>(density \<Lambda> (\<lambda>f. ennreal (w f))))"
+      by (rule Bochner_Integration.integral_distr[OF pdm um])
+    also have "\<dots> = (\<integral>f. u (?p f) * w f \<partial>\<Lambda>)"
+      by (subst integral_density)
+        (use cmp wm w0 in \<open>auto simp: mult.commute intro!: AE_I2\<close>)
+    finally show ?thesis .
+  qed
+  have finw: "finite_measure (distr (density \<Lambda> (\<lambda>f. ennreal (w f)))
+      (borel_of ?PS) ?p)"
+    if wm: "w \<in> borel_measurable \<Lambda>" and w0: "\<And>f. 0 \<le> w f"
+    and wb: "\<And>f. w f \<le> 2 * r" for w
+  proof (rule finite_measureI)
+    let ?D = "density \<Lambda> (\<lambda>f. ennreal (w f))"
+    have sp: "space (distr ?D (borel_of ?PS) ?p) = space (borel_of ?PS)"
+      by simp
+    have pre: "?p -` space (borel_of ?PS) \<inter> space ?D = space \<Lambda>"
+      using measurable_space[OF pdm[of w]] by (auto simp: space_density)
+    have "emeasure (distr ?D (borel_of ?PS) ?p)
+        (space (distr ?D (borel_of ?PS) ?p))
+        = emeasure ?D (?p -` space (borel_of ?PS) \<inter> space ?D)"
+      unfolding sp
+      by (intro emeasure_distr pdm)
+        (metis sets.top space_borel_of)
+    also have "\<dots> = emeasure ?D (space \<Lambda>)" unfolding pre ..
+    also have "\<dots> = (\<integral>\<^sup>+f. ennreal (w f) * indicator (space \<Lambda>) f \<partial>\<Lambda>)"
+      by (intro emeasure_density measurable_compose[OF wm measurable_ennreal])
+        auto
+    also have "\<dots> \<le> (\<integral>\<^sup>+f. ennreal (2 * r) \<partial>\<Lambda>)"
+      by (intro nn_integral_mono)
+        (auto simp: indicator_def intro: ennreal_leI wb)
+    also have "\<dots> = ennreal (2 * r) * emeasure \<Lambda> (space \<Lambda>)"
+      by (rule nn_integral_const)
+    also have "\<dots> < \<infinity>"
+      using finite_measure.emeasure_eq_measure[OF finL]
+      by (simp add: ennreal_mult_less_top)
+    finally show "emeasure (distr ?D (borel_of ?PS) ?p)
+        (space (distr ?D (borel_of ?PS) ?p)) \<noteq> \<infinity>"
+      by simp
+  qed
+  have int_pair: "integrable \<Lambda> (\<lambda>f. u (?p f) * w f)"
+    if um: "u \<in> borel_measurable (borel_of ?PS)"
+    and ub: "\<And>x. \<bar>u x\<bar> \<le> C"
+    and wm: "w \<in> borel_measurable \<Lambda>" and w0: "\<And>f. 0 \<le> w f"
+    and wb: "\<And>f. w f \<le> 2 * r" for u w C
+  proof (rule finite_measure.integrable_const_bound[OF finL,
+      of _ "C * (2 * r)"])
+    have cmp: "(\<lambda>f. u (?p f)) \<in> borel_measurable \<Lambda>"
+      using measurable_comp[OF pimL um] by (simp add: o_def)
+    show "(\<lambda>f. u (?p f) * w f) \<in> borel_measurable \<Lambda>"
+      by (intro borel_measurable_times cmp wm)
+    have C0: "0 \<le> C" using ub[of undefined] by auto
+    show "AE f in \<Lambda>. norm (u (?p f) * w f) \<le> C * (2 * r)"
+    proof (intro AE_I2)
+      fix f :: "real \<Rightarrow> real^'m"
+      have "\<bar>u (?p f) * w f\<bar> = \<bar>u (?p f)\<bar> * \<bar>w f\<bar>"
+        by (simp add: abs_mult)
+      also have "\<dots> \<le> C * (2 * r)"
+        by (intro mult_mono ub) (use w0 wb C0 in auto)
+      finally show "norm (u (?p f) * w f) \<le> C * (2 * r)" by simp
+    qed
+  qed
+  have zero_diff: "(\<integral>f. u (?p f) * gp f \<partial>\<Lambda>) = (\<integral>f. u (?p f) * gm f \<partial>\<Lambda>)"
+    if um: "u \<in> borel_measurable (borel_of ?PS)"
+    and ub: "\<And>x. \<bar>u x\<bar> \<le> C"
+    and z: "(\<integral>f. ?g f * u (?p f) \<partial>\<Lambda>) = 0" for u C
+  proof -
+    have i1: "integrable \<Lambda> (\<lambda>f. u (?p f) * gp f)"
+      by (rule int_pair[OF um ub gpm gp0 gpb])
+    have i2: "integrable \<Lambda> (\<lambda>f. u (?p f) * gm f)"
+      by (rule int_pair[OF um ub gmm gm0 gmb])
+    have "(\<integral>f. u (?p f) * gp f \<partial>\<Lambda>) - (\<integral>f. u (?p f) * gm f \<partial>\<Lambda>)
+        = (\<integral>f. u (?p f) * gp f - u (?p f) * gm f \<partial>\<Lambda>)"
+      by (rule Bochner_Integration.integral_diff[OF i1 i2, symmetric])
+    also have "\<dots> = (\<integral>f. ?g f * u (?p f) \<partial>\<Lambda>)"
+      by (intro Bochner_Integration.integral_cong refl)
+        (metis gdiff right_diff_distrib mult.commute)
+    also have "\<dots> = 0" by (rule z)
+    finally show ?thesis by simp
+  qed
+  have N12: "N1 = N2"
+  proof (rule metric_measure_eqI_bounded_cts[where m = "path_metric s"])
+    show "sets N1 = sets (borel_of (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+      by (rule sN1)
+    show "sets N2 = sets (borel_of (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+      by (rule sN2)
+    show "finite_measure N1"
+      unfolding N1_def by (rule finw[OF gpm gp0 gpb])
+    show "finite_measure N2"
+      unfolding N2_def by (rule finw[OF gmm gm0 gmb])
+  next
+    fix h :: "(real \<Rightarrow> real^'m) \<Rightarrow> real"
+    assume hc: "continuous_map ?PS euclideanreal h"
+      and hbex: "\<exists>B. \<forall>x\<in>topspace ?PS. \<bar>h x\<bar> \<le> B"
+    obtain Bh where Bh: "\<And>x. x \<in> topspace ?PS \<Longrightarrow> \<bar>h x\<bar> \<le> Bh"
+      using hbex by blast
+    define BB where "BB = max Bh 0"
+    define h' where "h' = (\<lambda>x. rclamp BB (h x))"
+    have BB0: "0 \<le> BB" unfolding BB_def by simp
+    have h'b: "\<And>x. \<bar>h' x\<bar> \<le> BB"
+      unfolding h'_def by (intro rclamp_bound BB0)
+    have h'c: "continuous_map ?PS euclideanreal h'"
+      unfolding h'_def
+      using continuous_map_compose[OF hc rclamp_cont]
+      by (simp add: o_def)
+    have h'meas: "h' \<in> borel_measurable (borel_of ?PS)"
+      using continuous_map_measurable[OF h'c]
+      by (simp add: borel_of_euclidean)
+    have hh': "h' x = h x" if x: "x \<in> topspace ?PS" for x
+      unfolding h'_def
+      by (intro rclamp_id order_trans[OF Bh[OF x]]) (simp add: BB_def)
+    have z: "(\<integral>f. ?g f * h' (?p f) \<partial>\<Lambda>) = 0"
+      by (rule mkt_law_closure_martingale_test[OF T0 Kball r0 L st ts tT
+          h'c, of BB]) (use h'b in auto)
+    have eqh': "(\<integral>x. h' x \<partial>N1) = (\<integral>x. h' x \<partial>N2)"
+      unfolding N1_def N2_def
+      unfolding push[OF h'meas gpm gp0] push[OF h'meas gmm gm0]
+      by (rule zero_diff[OF h'meas h'b z])
+    have c1: "(\<integral>x. h x \<partial>N1) = (\<integral>x. h' x \<partial>N1)"
+      by (intro Bochner_Integration.integral_cong refl)
+        (simp add: hh' space_borel_of N1_def)
+    have c2: "(\<integral>x. h x \<partial>N2) = (\<integral>x. h' x \<partial>N2)"
+      by (intro Bochner_Integration.integral_cong refl)
+        (simp add: hh' space_borel_of N2_def)
+    show "(\<integral>x. h x \<partial>N1) = (\<integral>x. h x \<partial>N2)"
+      using eqh' c1 c2 by simp
+  qed
+  have iB: "indicat_real B \<in> borel_measurable (borel_of ?PS)"
+    using B by (rule borel_measurable_indicator)
+  have iBb: "\<And>x. \<bar>indicat_real B x\<bar> \<le> 1"
+    by (simp add: indicator_def)
+  have tr1: "(\<integral>x. indicat_real B x \<partial>N1)
+      = (\<integral>f. indicat_real B (?p f) * gp f \<partial>\<Lambda>)"
+    unfolding N1_def by (rule push[OF iB gpm gp0])
+  have tr2: "(\<integral>x. indicat_real B x \<partial>N2)
+      = (\<integral>f. indicat_real B (?p f) * gm f \<partial>\<Lambda>)"
+    unfolding N2_def by (rule push[OF iB gmm gm0])
+  have same: "(\<integral>f. indicat_real B (?p f) * gp f \<partial>\<Lambda>)
+      = (\<integral>f. indicat_real B (?p f) * gm f \<partial>\<Lambda>)"
+    using N12 tr1 tr2 by simp
+  have i1: "integrable \<Lambda> (\<lambda>f. indicat_real B (?p f) * gp f)"
+    by (rule int_pair[OF iB iBb gpm gp0 gpb])
+  have i2: "integrable \<Lambda> (\<lambda>f. indicat_real B (?p f) * gm f)"
+    by (rule int_pair[OF iB iBb gmm gm0 gmb])
+  have "(\<integral>f. ?g f * indicat_real B (?p f) \<partial>\<Lambda>)
+      = (\<integral>f. indicat_real B (?p f) * gp f
+          - indicat_real B (?p f) * gm f \<partial>\<Lambda>)"
+    by (intro Bochner_Integration.integral_cong refl)
+      (metis gdiff right_diff_distrib mult.commute)
+  also have "\<dots> = (\<integral>f. indicat_real B (?p f) * gp f \<partial>\<Lambda>)
+      - (\<integral>f. indicat_real B (?p f) * gm f \<partial>\<Lambda>)"
+    by (rule Bochner_Integration.integral_diff[OF i1 i2])
+  also have "\<dots> = 0" using same by simp
+  finally show ?thesis .
+qed
+
 end
