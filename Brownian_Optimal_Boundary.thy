@@ -19,7 +19,7 @@
 
 theory Brownian_Optimal_Boundary
   imports
-    Brownian_Market
+    Brownian_Continuous
     Relative_Arbitrage_Ito
 begin
 
@@ -34,20 +34,23 @@ theorem Brownian_boundary_market:
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and x0: "norm x0 \<le> r"
   shows "sufficiently_volatile_market
     (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
+    (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
     (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0)"
 proof (rule Brownian_market_sufficiently_volatile[OF k L])
   show "(0 :: real) \<le> 0" by simp
+  have start: "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      cbmX x0 0 \<omega> = bmX x0 0 \<omega>"
+    by (intro cbmX_ae_eq) simp
   show "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
-      \<forall>s. 0 \<le> s \<longrightarrow> s \<le> 0 \<longrightarrow> bmX x0 s \<omega> \<in> cball 0 r"
-    using bmX_start[of x0]
+      \<forall>s. 0 \<le> s \<longrightarrow> s \<le> 0 \<longrightarrow> cbmX x0 s \<omega> \<in> cball 0 r"
+    using bmX_start[of x0] start
   proof eventually_elim
     case (elim \<omega>)
     show ?case
     proof (intro allI impI)
       fix s :: real assume "0 \<le> s" "s \<le> 0"
       then have "s = 0" by simp
-      with elim x0 show "bmX x0 s \<omega> \<in> cball 0 r"
+      with elim x0 show "cbmX x0 s \<omega> \<in> cball 0 r"
         by (simp add: mem_cball dist_norm)
     qed
   qed
@@ -65,12 +68,12 @@ theorem optimal_ball_market_boundary:
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and x0: "norm x0 = r"
   shows "optimal_ball_market
     (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
+    (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
     (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0) r"
 proof -
   have svm: "sufficiently_volatile_market
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
+      (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
       (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0)"
     using x0 by (intro Brownian_boundary_market k L) simp
   show ?thesis
@@ -92,7 +95,7 @@ corollary optimal_exit_time_value_boundary:
 proof -
   have inst: "optimal_ball_market
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
+      (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
       (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0) r"
     by (intro optimal_ball_market_boundary k L x0)
   show ?thesis

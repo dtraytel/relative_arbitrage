@@ -66,6 +66,7 @@ locale ito_volatile_market =
     and tau_nonneg': "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
     and tau_meas: "tau \<in> borel_measurable M"
     and tau_stopping: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+    and X_paths_cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
     and X_in_K: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> X s \<omega> \<in> K"
     and acov_psd: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> psd (acov s \<omega>)"
     and acov_eigen_lb:
@@ -253,6 +254,8 @@ proof -
       by (rule coordZ_martingale)
     show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
       by (rule tau_stopping)
+    show "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+      by (rule X_paths_cont)
   qed
 qed
 
@@ -341,6 +344,7 @@ locale ito_stopped_market =
     and tau_nonneg': "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
     and tau_meas: "tau \<in> borel_measurable M"
     and tau_stopping: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+    and X_paths_cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
     and X_in_K: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> X s \<omega> \<in> K"
     and K_ball: "K \<subseteq> cball 0 r"
     and X_stopped: "\<And>s \<omega>. \<omega> \<in> space M \<Longrightarrow> X s \<omega> = X (min s (tau \<omega>)) \<omega>"
@@ -559,6 +563,8 @@ proof -
       by simp
     show "\<And>i. martingale M F 0 (coord_Z X acov i)"
       by (rule coordZ_martingale)
+    show "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+      by (rule X_paths_cont)
   qed
 qed
 
@@ -604,6 +610,7 @@ locale ito_const_horizon_market =
     and Z_martingale: "martingale M F 0 (ito_Z X acov)"
 
     and coordZ_martingale: "\<And>i. martingale M F 0 (coord_Z X acov i)"
+    and X_paths_cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
 
 sublocale ito_const_horizon_market \<subseteq> prob_space M
   by (rule prob_space_M)
@@ -742,9 +749,11 @@ proof -
         case False
         have "{\<omega> \<in> space M. c \<le> s} = {}" using False by simp
         moreover have "{} \<in> sets (F s)" by (rule sets.empty_sets)
-        ultimately show ?thesis by simp
+        ultimately show ?thesis by metis
       qed
     qed
+    show "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+      by (rule X_paths_cont)
   qed
 qed
 
@@ -757,108 +766,5 @@ theorem (in ito_stopped_market) stopped_expected_time_bound:
   assumes t: "0 \<le> t"
   shows "real (CARD('n) - k) * (\<integral>\<omega>. min t (tau \<omega>) \<partial>M) \<le> r\<^sup>2 - x0 \<bullet> x0"
   using K_ball t by (rule IV.SV.expected_stopped_time_bound)
-
-section \<open>The process form of the martingale problem is inhabited\<close>
-
-text \<open>Ito's formula for the test function \<open>|x|\<^sup>2\<close> is a theorem for the
-  constructed Brownian motion (\<open>martingale_bm_square\<close> of
-  Brownian\_Market), and for \<open>acov = mat 1\<close> the process it is about is
-  literally \<open>ito_Z\<close>.  Hence the Brownian market with a deterministic
-  horizon inhabits \<open>ito_const_horizon_market\<close>: every assumption of that
-  locale is proved for this instance, so the exit-time bound of Lemma 2.1
-  follows from the martingale problem in process form with nothing
-  assumed.\<close>
-
-theorem Brownian_ito_const_horizon_market:
-  fixes x0 :: "real^'n::finite"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and c: "0 \<le> c"
-    and K: "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
-      \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
-  shows "ito_const_horizon_market
-    (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
-    (\<lambda>_ _. mat 1) k L K x0 c"
-proof (intro ito_const_horizon_market.intro
-    ito_const_horizon_market_axioms.intro)
-  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0 (bmX x0)"
-    by (rule martingale_bmX)
-  show "prob_space ?M" by simp
-  show "1 \<le> k" "k < CARD('n)" "1 \<le> L" "0 \<le> c" by fact+
-  show "AE \<omega> in ?M. bmX x0 0 \<omega> = x0" by (rule bmX_start)
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
-    by (rule K)
-  have psd1: "psd (mat 1 :: real^'n^'n)"
-    by (simp add: psd_def)
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> psd (mat 1 :: real^'n^'n)"
-    using psd1 by simp
-  have elb: "eigen_lb (mat 1 :: real^'n^'n) (CARD('n) - k)"
-    unfolding eigen_lb_def
-  proof (intro exI[of _ UNIV] conjI)
-    show "subspace (UNIV :: (real^'n) set)" by simp
-    show "CARD('n) - k \<le> dim (UNIV :: (real^'n) set)" by simp
-    show "\<forall>x\<in>(UNIV :: (real^'n) set). x \<bullet> x \<le> x \<bullet> (mat 1 *v x)"
-      by simp
-  qed
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow>
-      eigen_lb (mat 1 :: real^'n^'n) (CARD('n) - k)"
-    using elb by simp
-  have eub: "eigen_ub (mat 1 :: real^'n^'n) L"
-  proof -
-    have "x \<bullet> x \<le> L * (x \<bullet> x)" for x :: "real^'n"
-      using mult_right_mono[OF L inner_ge_zero] by simp
-    then show ?thesis
-      by (simp add: eigen_ub_def)
-  qed
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow>
-      eigen_ub (mat 1 :: real^'n^'n) L"
-    using eub by simp
-  have ti: "set_integrable lborel {0..t}
-      (\<lambda>s. trace (mat 1 :: real^'n^'n))" for t :: real
-  proof -
-    have "integrable lborel
-        (\<lambda>s. indicator {0..t} s *\<^sub>R trace (mat 1 :: real^'n^'n))"
-    proof (intro integrable_scaleR_left integrable_real_indicator)
-      show "{0..t} \<in> sets lborel"
-        unfolding sets_lborel
-        by (intro borel_closed closed_atLeastAtMost)
-      show "emeasure lborel {0..t} < \<infinity>"
-        by (simp add: emeasure_lborel_Icc_eq)
-    qed
-    then show ?thesis
-      unfolding set_integrable_def .
-  qed
-  show "AE \<omega> in ?M. \<forall>t :: real. 0 \<le> t \<longrightarrow>
-      set_integrable lborel {0..t} (\<lambda>s. trace (mat 1 :: real^'n^'n))"
-    using ti by (intro AE_I2) blast
-  show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
-      (\<lambda>\<omega>. bmX x0 (min t c) \<omega> \<bullet> bmX x0 (min t c) \<omega>)"
-    using c by (intro bmX_sq_integrable) simp
-  show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
-      (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t c}
-        (\<lambda>s. trace (mat 1 :: real^'n^'n)))"
-    by (rule BMP.integrable_const)
-  have Zeq: "ito_Z (bmX x0) (\<lambda>_ _. mat 1 :: real^'n^'n)
-      = (\<lambda>t \<omega>. bmX x0 t \<omega> \<bullet> bmX x0 t \<omega>
-          - set_lebesgue_integral lborel {0..t}
-              (\<lambda>s. trace (mat 1 :: real^'n^'n)))"
-    by (intro ext) (simp add: ito_Z_def)
-  show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0
-      (ito_Z (bmX x0) (\<lambda>_ _. mat 1))"
-    unfolding Zeq by (rule martingale_bm_square)
-  show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0
-      (coord_Z (bmX x0) (\<lambda>_ _. mat 1) i)" for i
-    unfolding coord_Z_def by (rule martingale_bm_coord_square)
-qed
-
-text \<open>Specialised to the planar market with \<open>k = L = 1\<close>, horizon \<open>1\<close> and
-  start \<open>0\<close>, the statement has no hypotheses at all.\<close>
-
-theorem ito_const_horizon_market_nonvacuous:
-  "ito_const_horizon_market
-    (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (bmX 0)) (bmX (0 :: real^2))
-    (\<lambda>_ _. mat 1) 1 1 UNIV 0 1"
-  by (rule Brownian_ito_const_horizon_market) simp_all
 
 end

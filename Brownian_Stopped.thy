@@ -529,6 +529,245 @@ proof -
     unfolding eq by (rule cbmZ_stopped_martingale[OF T])
 qed
 
+section \<open>The compensated coordinate square of the stopped market\<close>
+
+text \<open>The martingale-problem form of the market class also demands the
+  compensated square COORDINATE BY COORDINATE.  The chain below mirrors the
+  trace chain above verbatim: the unstopped coordinate martingale is
+  \<open>martingale_cbm_coord_square\<close>, optional stopping transfers it to the ball
+  exit time, and the \<open>coord_Z\<close> of the stopped process with covariance
+  \<open>cbmA\<close> is literally that stopped process.\<close>
+
+definition cbmC :: "real^'n::finite \<Rightarrow> 'n \<Rightarrow> real
+    \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real"
+  where "cbmC x0 i t \<omega> = (cbmX x0 t \<omega> $ i)\<^sup>2
+    - set_lebesgue_integral lborel {0..t}
+        (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i)"
+
+lemma martingale_cbmC:
+  fixes x0 :: "real^'n::finite"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (cbmX x0)) 0 (cbmC x0 i)"
+  unfolding cbmC_def by (rule martingale_cbm_coord_square)
+
+lemma cbmC_alt:
+  fixes x0 :: "real^'n::finite"
+  assumes t: "0 \<le> t"
+  shows "cbmC x0 i t \<omega> = (cbmX x0 t \<omega> $ i)\<^sup>2 - t"
+  unfolding cbmC_def by (simp add: bm_compensator_coord[OF t])
+
+lemma cbmC_cont:
+  fixes x0 :: "real^'n::finite"
+  shows "continuous_on {0..} (\<lambda>s. cbmC x0 i s \<omega>)"
+proof (rule continuous_on_cong[OF refl, THEN iffD1])
+  show "cbmX x0 s \<omega> $ i * (cbmX x0 s \<omega> $ i) - s = cbmC x0 i s \<omega>"
+    if "s \<in> {0..}" for s
+    using that by (simp add: cbmC_alt power2_eq_square)
+  show "continuous_on {0..} (\<lambda>s. cbmX x0 s \<omega> $ i * (cbmX x0 s \<omega> $ i) - s)"
+    by (intro continuous_on_diff continuous_on_mult cbmX_comp_cont
+        continuous_on_id)
+qed
+
+lemma cbmC_measurable:
+  fixes x0 :: "real^'n::finite"
+  shows "cbmC x0 i t
+    \<in> borel_measurable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+proof -
+  have prj: "(\<lambda>x :: real^'n. x $ i) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI linear_continuous_on
+        bounded_linear_vec_nth)
+  show ?thesis
+    unfolding cbmC_def
+    by (intro borel_measurable_diff borel_measurable_const
+        borel_measurable_power measurable_compose[OF measurable_cbmX prj])
+qed
+
+lemma cbmC_dominated:
+  fixes x0 :: "real^'n::finite"
+  assumes u: "0 < u"
+  shows "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+    \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
+      \<bar>cbmC x0 i s \<omega>\<bar> \<le> (cbmD x0 i u \<omega>)\<^sup>2 + u"
+proof -
+  from cbmD_dominates[OF u] show ?thesis
+  proof eventually_elim
+    fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    assume bnd: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
+        \<bar>cbmX x0 s \<omega> $ i\<bar> \<le> cbmD x0 i u \<omega>"
+    show "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
+        \<bar>cbmC x0 i s \<omega>\<bar> \<le> (cbmD x0 i u \<omega>)\<^sup>2 + u"
+    proof (intro allI impI)
+      fix s :: real
+      assume s: "0 \<le> s" and su: "s \<le> u"
+      have "\<bar>cbmX x0 s \<omega> $ i\<bar> \<le> cbmD x0 i u \<omega>"
+        using bnd s su by blast
+      then have "\<bar>cbmX x0 s \<omega> $ i\<bar>\<^sup>2 \<le> (cbmD x0 i u \<omega>)\<^sup>2"
+        by (intro power_mono) auto
+      then have sq: "(cbmX x0 s \<omega> $ i)\<^sup>2 \<le> (cbmD x0 i u \<omega>)\<^sup>2"
+        by simp
+      have nn: "0 \<le> (cbmX x0 s \<omega> $ i)\<^sup>2"
+        by simp
+      have "\<bar>cbmC x0 i s \<omega>\<bar> = \<bar>(cbmX x0 s \<omega> $ i)\<^sup>2 - s\<bar>"
+        using s by (simp add: cbmC_alt)
+      also have "\<dots> \<le> (cbmX x0 s \<omega> $ i)\<^sup>2 + s"
+        using nn s by (simp add: abs_diff_le_iff)
+      also have "\<dots> \<le> (cbmD x0 i u \<omega>)\<^sup>2 + u"
+        using sq su by linarith
+      finally show "\<bar>cbmC x0 i s \<omega>\<bar> \<le> (cbmD x0 i u \<omega>)\<^sup>2 + u" .
+    qed
+  qed
+qed
+
+lemma cbmC_adapted:
+  fixes x0 :: "real^'n::finite"
+  shows "adapted_process (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (cbmX x0)) 0 (cbmC x0 i)"
+proof -
+  have prj: "(\<lambda>x :: real^'n. x $ i) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI linear_continuous_on
+        bounded_linear_vec_nth)
+  show ?thesis
+    unfolding cbmC_def
+  proof (rule adapted_of_natural_filtration
+      [where f = "\<lambda>u y. (y $ i)\<^sup>2
+        - set_lebesgue_integral lborel {0..u}
+            (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i)"])
+    show "\<And>u. 0 \<le> u \<Longrightarrow>
+        cbmX x0 u \<in> borel_measurable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+      by (rule measurable_cbmX)
+    show "\<And>u. (\<lambda>y :: real^'n. (y $ i)\<^sup>2
+        - set_lebesgue_integral lborel {0..u}
+            (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i))
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_diff borel_measurable_const
+          borel_measurable_power prj)
+  qed
+qed
+
+theorem cbmC_stopped_martingale:
+  fixes x0 :: "real^'n::finite"
+  assumes T: "0 \<le> T"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (cbmX x0)) 0
+    (\<lambda>v \<omega>. cbmC x0 i (min v (btau T r x0 \<omega>)) \<omega>)"
+proof (rule optional_stopping[where D = "\<lambda>u \<omega>. (cbmD x0 i u \<omega>)\<^sup>2 + u"])
+  show "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (cbmX x0)) 0 (cbmC x0 i)"
+    by (rule martingale_cbmC)
+  show "\<And>\<omega>. \<omega> \<in> space (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) \<Longrightarrow>
+      0 \<le> btau T r x0 \<omega>"
+    by (rule btau_nonneg[OF T])
+  show "\<And>s. 0 \<le> s \<Longrightarrow>
+      {\<omega> \<in> space (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        btau T r x0 \<omega> \<le> s}
+      \<in> sets (natural_filtration bm_paths 0 (cbmX x0) s)"
+    by (rule btau_stopping_time[OF T])
+  show "\<And>u. 0 < u \<Longrightarrow>
+      AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        continuous_on {0..u} (\<lambda>s. cbmC x0 i s \<omega>)"
+    by (intro always_eventually allI continuous_on_subset[OF cbmC_cont]) auto
+  show "\<And>u. 0 < u \<Longrightarrow>
+      AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
+          \<bar>cbmC x0 i s \<omega>\<bar> \<le> (cbmD x0 i u \<omega>)\<^sup>2 + u"
+    by (rule cbmC_dominated)
+  show "\<And>u. 0 < u \<Longrightarrow>
+      integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+        (\<lambda>\<omega>. (cbmD x0 i u \<omega>)\<^sup>2 + u)"
+    by (intro Bochner_Integration.integrable_add cbmD_sq_integrable
+        BMP.integrable_const)
+  fix v :: real assume v: "0 \<le> v"
+  show "(\<lambda>\<omega>. cbmC x0 i (min v (btau T r x0 \<omega>)) \<omega>)
+      \<in> borel_measurable (natural_filtration bm_paths 0 (cbmX x0) v)"
+  proof (rule stopped_adapted_of_cont[where tau = "btau T r x0"])
+    show "adapted_process (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+        (natural_filtration bm_paths 0 (cbmX x0)) 0 (cbmC x0 i)"
+      by (rule cbmC_adapted)
+    show "\<And>\<omega>. \<omega> \<in> space (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) \<Longrightarrow>
+        0 \<le> btau T r x0 \<omega>"
+      by (rule btau_nonneg[OF T])
+    show "\<And>s. 0 \<le> s \<Longrightarrow>
+        {\<omega> \<in> space (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+          btau T r x0 \<omega> \<le> s}
+        \<in> sets (natural_filtration bm_paths 0 (cbmX x0) s)"
+      by (rule btau_stopping_time[OF T])
+    show "\<And>\<omega>. \<omega> \<in> space (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) \<Longrightarrow>
+        continuous_on {0..} (\<lambda>s. cbmC x0 i s \<omega>)"
+      by (rule cbmC_cont)
+    show "0 \<le> v"
+      by (rule v)
+  qed
+qed
+
+lemma compensator_coord_cbmA:
+  fixes x0 :: "real^'n::finite"
+  assumes T: "0 \<le> T" and v: "0 \<le> v"
+  shows "set_lebesgue_integral lborel {0..v}
+      (\<lambda>s. (cbmA T r x0 s \<omega> :: real^'n^'n) $ i $ i)
+    = min v (btau T r x0 \<omega>)"
+proof -
+  have tau: "0 \<le> btau T r x0 \<omega>"
+    by (rule btau_nonneg[OF T])
+  have entry: "(cbmA T r x0 s \<omega> :: real^'n^'n) $ i $ i
+      = (if s \<le> btau T r x0 \<omega> then 1 else 0)" for s
+    unfolding cbmA_def by (simp add: mat_def)
+  have "set_lebesgue_integral lborel {0..v}
+      (\<lambda>s. (cbmA T r x0 s \<omega> :: real^'n^'n) $ i $ i)
+      = set_lebesgue_integral lborel {0..min v (btau T r x0 \<omega>)}
+          (\<lambda>_. 1 :: real)"
+    unfolding set_lebesgue_integral_def
+    by (intro Bochner_Integration.integral_cong refl)
+      (auto simp: entry indicator_def)
+  also have "\<dots> = min v (btau T r x0 \<omega>) * 1"
+    using v tau by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+  finally show ?thesis
+    by simp
+qed
+
+lemma coord_Z_cbmA:
+  fixes x0 :: "real^'n::finite"
+  assumes T: "0 \<le> T"
+  shows "coord_Z (\<lambda>v \<omega>. cbmX x0 (min v (btau T r x0 \<omega>)) \<omega>)
+      (cbmA T r x0) i v \<omega>
+    = cbmC x0 i (min v (btau T r x0 \<omega>)) \<omega>"
+proof (cases "0 \<le> v")
+  case True
+  have tau: "0 \<le> btau T r x0 \<omega>"
+    by (rule btau_nonneg[OF T])
+  have m: "0 \<le> min v (btau T r x0 \<omega>)"
+    using True tau by simp
+  show ?thesis
+    unfolding coord_Z_def
+    by (simp add: compensator_coord_cbmA[OF T True] cbmC_alt[OF m])
+next
+  case False
+  then have empty: "{0..v} = {}"
+    by simp
+  have mv: "min v (btau T r x0 \<omega>) = v"
+  proof (rule min_absorb1)
+    show "v \<le> btau T r x0 \<omega>"
+      using False btau_nonneg[OF T, of r x0 \<omega>] by simp
+  qed
+  show ?thesis
+    unfolding coord_Z_def cbmC_def mv empty
+    by (simp add: set_lebesgue_integral_def)
+qed
+
+theorem martingale_coord_Z_cbmA:
+  fixes x0 :: "real^'n::finite"
+  assumes T: "0 \<le> T"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (cbmX x0)) 0
+    (coord_Z (\<lambda>v \<omega>. cbmX x0 (min v (btau T r x0 \<omega>)) \<omega>) (cbmA T r x0) i)"
+proof -
+  have eq: "coord_Z (\<lambda>v \<omega>. cbmX x0 (min v (btau T r x0 \<omega>)) \<omega>)
+      (cbmA T r x0) i
+      = (\<lambda>v \<omega>. cbmC x0 i (min v (btau T r x0 \<omega>)) \<omega>)"
+    by (intro ext coord_Z_cbmA[OF T])
+  show ?thesis
+    unfolding eq by (rule cbmC_stopped_martingale[OF T])
+qed
+
 section \<open>The ball exit time gives an Ito stopped market\<close>
 
 theorem Brownian_ball_exit_market:
@@ -685,6 +924,25 @@ proof (intro ito_stopped_market.intro[OF martingale_cbmX_stopped[OF T]]
       (\<lambda>s. ito_Z (\<lambda>v \<omega>. cbmX x0 (min v (btau T r x0 \<omega>)) \<omega>)
         (cbmA T r x0) s \<omega>)"
     by (intro always_eventually allI ito_Z_cbmA_cont[OF T])
+  show "\<And>i. martingale ?M (natural_filtration bm_paths 0 (cbmX x0)) 0
+      (coord_Z (\<lambda>v \<omega>. cbmX x0 (min v (btau T r x0 \<omega>)) \<omega>)
+        (cbmA T r x0) i)"
+    by (rule martingale_coord_Z_cbmA[OF T])
+  show "\<And>\<omega>. \<omega> \<in> space ?M \<Longrightarrow>
+      continuous_on {0..} (\<lambda>s. cbmX x0 (min s (?tau \<omega>)) \<omega>)"
+  proof -
+    fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real" assume "\<omega> \<in> space ?M"
+    have cm: "continuous_on {0..} (\<lambda>s. min s (?tau \<omega>))"
+      by (intro continuous_intros)
+    have sub: "(\<lambda>s. min s (?tau \<omega>)) ` {0..} \<subseteq> {0..}"
+      using tau0[of \<omega>] by auto
+    have "continuous_on {0..}
+        ((\<lambda>v. cbmX x0 v \<omega>) \<circ> (\<lambda>s. min s (?tau \<omega>)))"
+      by (rule continuous_on_compose
+          [OF cm continuous_on_subset[OF cbmX_cont sub]])
+    then show "continuous_on {0..} (\<lambda>s. cbmX x0 (min s (?tau \<omega>)) \<omega>)"
+      by (simp add: comp_def)
+  qed
 qed
 
 

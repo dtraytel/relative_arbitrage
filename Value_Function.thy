@@ -292,7 +292,7 @@ lemma mkt_exit_vals_nonempty:
 proof -
   have "sufficiently_volatile_market
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
+      (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
       (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0)"
     by (rule Brownian_boundary_market[OF k L x0])
   then show ?thesis
@@ -423,6 +423,8 @@ proof -
       by (rule sv.coord_Z_martingale)
     show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
       by (rule sv.tau_stopping)
+    show "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+      by (rule sv.X_paths_cont)
   qed
 qed
 

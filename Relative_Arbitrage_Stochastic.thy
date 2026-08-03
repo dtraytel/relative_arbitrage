@@ -149,6 +149,7 @@ locale sufficiently_volatile_market =
 
     and coord_Z_martingale: "\<And>i. martingale M F 0 (coord_Z X acov i)"
     and tau_stopping: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+    and X_paths_cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
 
 sublocale sufficiently_volatile_market \<subseteq> prob_space M
   by (rule prob_space_M)
