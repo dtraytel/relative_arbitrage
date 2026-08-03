@@ -463,11 +463,38 @@ proof -
     by (rule convex_epigraphI[OF cvx])
   have clE: "closed (epigraph UNIV f)"
     by (rule closed_epigraph_UNIV[OF cf])
+  text \<open>The supporting hyperplane is derived from
+    \<open>supporting_hyperplane_rel_boundary\<close> rather than the frontier version,
+    which does not exist in all Isabelle versions.  The epigraph of a
+    (continuous) convex function on \<open>UNIV\<close> has nonempty interior, so its
+    relative interior IS its interior, and the frontier point of
+    \<open>epigraph_frontier_point\<close> is a relative-boundary point.\<close>
+  have mem: "(x, f x) \<in> epigraph UNIV f"
+    by (simp add: mem_epigraph)
+  have neI: "interior (epigraph UNIV f) \<noteq> {}"
+  proof -
+    have op: "open {z :: 'a \<times> real. f (fst z) - snd z < 0}"
+      by (intro open_Collect_less continuous_on_diff continuous_on_snd
+          continuous_on_compose2[OF cf continuous_on_fst]) auto
+    have subep: "{z :: 'a \<times> real. f (fst z) - snd z < 0} \<subseteq> epigraph UNIV f"
+      by (auto simp: epigraph_def)
+    have "(x, f x + 1) \<in> {z :: 'a \<times> real. f (fst z) - snd z < 0}"
+      by simp
+    then have "(x, f x + 1) \<in> interior (epigraph UNIV f)"
+      using interior_maximal[OF subep op] by blast
+    then show ?thesis by blast
+  qed
+  have notint: "(x, f x) \<notin> interior (epigraph UNIV f)"
+    using epigraph_frontier_point[OF cf, of x]
+    by (auto simp: frontier_def)
+  have notrel: "(x, f x) \<notin> rel_interior (epigraph UNIV f)"
+    using rel_interior_nonempty_interior[OF neI] notint by simp
   obtain a where a0: "a \<noteq> 0"
-    and sup: "\<And>z. z \<in> closure (epigraph UNIV f) \<Longrightarrow>
-      a \<bullet> (x, f x) \<le> a \<bullet> z"
-    using supporting_hyperplane_frontier[OF cvxE epigraph_frontier_point[OF cf]]
-    by blast
+    and supE0: "\<And>y. y \<in> epigraph UNIV f \<Longrightarrow> a \<bullet> (x, f x) \<le> a \<bullet> y"
+    by (rule supporting_hyperplane_rel_boundary[OF cvxE mem notrel]) blast
+  have sup: "a \<bullet> (x, f x) \<le> a \<bullet> z"
+    if "z \<in> closure (epigraph UNIV f)" for z
+    using supE0 that clE by (simp add: closure_closed)
   obtain p\<^sub>0 c where ac: "a = (p\<^sub>0, c)" by (cases a) auto
   have supE: "p\<^sub>0 \<bullet> x + c * f x \<le> p\<^sub>0 \<bullet> y + c * t" if "f y \<le> t" for y t
   proof -

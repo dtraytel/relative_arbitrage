@@ -1152,4 +1152,206 @@ proof (rule vshift_sup_usc_of_seq_compact[OF T A])
     by (rule lt)
 qed
 
+subsection \<open>N1: the family is nonempty --- the immediate-stop market\<close>
+
+text \<open>The market that stops at time \<open>0\<close>: the state is the constant \<open>x0\<close>, the
+  horizon is \<open>0\<close>, and the covariance is \<open>mat 1\<close> at the single instant \<open>s = 0\<close>
+  and \<open>0\<close> afterwards.  The eigenvalue constraints are only imposed on
+  \<open>[0, tau]\<close> = \<open>{0}\<close>, where \<open>mat 1\<close> satisfies them; the compensator integrals
+  all vanish because the covariance is supported on a Lebesgue-null set.  The
+  filtration is the constant one.\<close>
+
+lemma set_integral_at_origin:
+  fixes c t :: real
+  shows "set_integrable lborel {0..t} (\<lambda>s. if s = 0 then c else 0)"
+    and "set_lebesgue_integral lborel {0..t} (\<lambda>s. if s = 0 then c else 0) = 0"
+proof -
+  have m: "(\<lambda>s :: real. indicator {0..t} s *\<^sub>R (if s = 0 then c else 0))
+      \<in> borel_measurable lborel"
+    by measurable
+  have ae: "AE s in lborel.
+      indicator {0..t} s *\<^sub>R (if s = 0 then c else 0) = (0 :: real)"
+    using AE_lborel_singleton[of 0] by eventually_elim auto
+  have "integrable lborel
+      (\<lambda>s :: real. indicator {0..t} s *\<^sub>R (if s = 0 then c else 0))"
+    using integrable_cong_AE[OF m borel_measurable_const ae] by simp
+  then show "set_integrable lborel {0..t} (\<lambda>s. if s = 0 then c else 0)"
+    unfolding set_integrable_def .
+  show "set_lebesgue_integral lborel {0..t}
+      (\<lambda>s. if s = 0 then c else 0) = 0"
+    unfolding set_lebesgue_integral_def
+    using integral_cong_AE[OF m borel_measurable_const ae] by simp
+qed
+
+theorem mkt_path_laws_nonempty:
+  fixes x0 :: "real^'m::finite" and K :: "(real^'m) set"
+  assumes k: "1 \<le> k" "k < CARD('m)" and L: "1 \<le> L" and x0K: "x0 \<in> K"
+  shows "mkt_path_laws k L K x0 T \<noteq> {}"
+proof -
+  let ?M = "bm_paths :: ('m \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "\<lambda>_ :: real. bm_paths :: ('m \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?X = "\<lambda>(s :: real) (\<omega> :: 'm \<Rightarrow> real \<Rightarrow> real). x0"
+  let ?acov = "\<lambda>(s :: real) (\<omega> :: 'm \<Rightarrow> real \<Rightarrow> real).
+      if s = 0 then mat 1 :: real^'m^'m else 0"
+  let ?tau = "\<lambda>\<omega> :: 'm \<Rightarrow> real \<Rightarrow> real. 0 :: real"
+  have fin: "finite_measure ?M"
+    by (rule prob_space.finite_measure) simp
+  have sub: "subalgebra ?M ?M"
+    by (simp add: subalgebra_def)
+  have fm: "filtered_measure ?M ?F 0"
+    by unfold_locales (simp_all add: subalgebra_def)
+  have sff: "sigma_finite_filtered_measure ?M ?F 0"
+    by (intro sigma_finite_filtered_measure.intro fm
+        sigma_finite_filtered_measure_axioms.intro
+        finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fin sub)
+  interpret SFF: sigma_finite_filtered_measure ?M ?F 0
+    by (rule sff)
+  have mgX: "martingale ?M ?F 0 ?X"
+    by (intro SFF.martingale_const_fun BMP.integrable_const
+        borel_measurable_const)
+  have entry: "(?acov s \<omega>) $ l $ l = (if s = 0 then 1 else 0)"
+    for s :: real and l :: 'm and \<omega> :: "'m \<Rightarrow> real \<Rightarrow> real"
+    by (simp add: mat_def)
+  have tr: "trace (?acov s \<omega>) = (if s = 0 then real CARD('m) else 0)"
+    for s :: real and \<omega> :: "'m \<Rightarrow> real \<Rightarrow> real"
+  proof (cases "s = 0")
+    case True
+    then show ?thesis by (simp add: trace_mat1)
+  next
+    case False
+    then show ?thesis by (simp add: trace_def)
+  qed
+  have comp0: "set_lebesgue_integral lborel {0..t}
+      (\<lambda>s. trace (?acov s \<omega>)) = 0"
+    for t :: real and \<omega> :: "'m \<Rightarrow> real \<Rightarrow> real"
+  proof -
+    have "(\<lambda>s. trace (?acov s \<omega>))
+        = (\<lambda>s. if s = 0 then real CARD('m) else 0)"
+      using tr by (intro ext) simp
+    then show ?thesis
+      using set_integral_at_origin(2)[of t "real CARD('m)"] by simp
+  qed
+  have psd1: "psd (mat 1 :: real^'m^'m)"
+    by (simp add: psd_def)
+  have elb: "eigen_lb (mat 1 :: real^'m^'m) (CARD('m) - k)"
+    unfolding eigen_lb_def
+  proof (intro exI[of _ UNIV] conjI)
+    show "subspace (UNIV :: (real^'m) set)" by simp
+    show "CARD('m) - k \<le> dim (UNIV :: (real^'m) set)" by simp
+    show "\<forall>x\<in>(UNIV :: (real^'m) set). x \<bullet> x \<le> x \<bullet> (mat 1 *v x)"
+      by simp
+  qed
+  have eub: "eigen_ub (mat 1 :: real^'m^'m) L"
+  proof -
+    have "x \<bullet> x \<le> L * (x \<bullet> x)" for x :: "real^'m"
+      using mult_right_mono[OF L inner_ge_zero] by simp
+    then show ?thesis
+      by (simp add: eigen_ub_def)
+  qed
+  have svm: "sufficiently_volatile_market ?M ?F ?X ?acov k L K x0 ?tau"
+  proof (intro sufficiently_volatile_market.intro
+      sufficiently_volatile_market_axioms.intro)
+    show "martingale ?M ?F 0 ?X" by (rule mgX)
+    show "prob_space ?M" by simp
+    show "1 \<le> k" "k < CARD('m)" "1 \<le> L" by fact+
+    show "AE \<omega> in ?M. ?X 0 \<omega> = x0" by simp
+    show "AE \<omega> in ?M. 0 \<le> ?tau \<omega>" by simp
+    show "?tau \<in> borel_measurable ?M" by simp
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> ?tau \<omega> \<longrightarrow> ?X s \<omega> \<in> K"
+      using x0K by (intro AE_I2) auto
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> ?tau \<omega> \<longrightarrow> psd (?acov s \<omega>)"
+      using psd1 by (intro AE_I2) auto
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> ?tau \<omega> \<longrightarrow>
+        eigen_lb (?acov s \<omega>) (CARD('m) - k)"
+      using elb by (intro AE_I2) auto
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> ?tau \<omega> \<longrightarrow>
+        eigen_ub (?acov s \<omega>) L"
+      using eub by (intro AE_I2) auto
+    show "AE \<omega> in ?M. \<forall>t. 0 \<le> t \<longrightarrow>
+        set_integrable lborel {0..t} (\<lambda>s. trace (?acov s \<omega>))"
+    proof (intro AE_I2 allI impI)
+      fix \<omega> :: "'m \<Rightarrow> real \<Rightarrow> real" and t :: real
+      have "(\<lambda>s. trace (?acov s \<omega>))
+          = (\<lambda>s. if s = 0 then real CARD('m) else 0)"
+        using tr by (intro ext) simp
+      then show "set_integrable lborel {0..t} (\<lambda>s. trace (?acov s \<omega>))"
+        using set_integral_at_origin(1)[of t "real CARD('m)"] by simp
+    qed
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
+        (\<lambda>\<omega>. ?X (min t (?tau \<omega>)) \<omega> \<bullet> ?X (min t (?tau \<omega>)) \<omega>)"
+      by (intro BMP.integrable_const)
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
+        (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t (?tau \<omega>)}
+          (\<lambda>s. trace (?acov s \<omega>)))"
+      by (intro BMP.integrable_const)
+    show "\<And>t. 0 \<le> t \<Longrightarrow>
+        (\<integral>\<omega>. ?X (min t (?tau \<omega>)) \<omega> \<bullet> ?X (min t (?tau \<omega>)) \<omega> \<partial>?M)
+          - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (?tau \<omega>)}
+                   (\<lambda>s. trace (?acov s \<omega>)) \<partial>?M)
+        = x0 \<bullet> x0"
+    proof -
+      fix t :: real assume "0 \<le> t"
+      show "(\<integral>\<omega>. ?X (min t (?tau \<omega>)) \<omega>
+            \<bullet> ?X (min t (?tau \<omega>)) \<omega> \<partial>?M)
+          - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (?tau \<omega>)}
+                   (\<lambda>s. trace (?acov s \<omega>)) \<partial>?M)
+          = x0 \<bullet> x0"
+        by (simp add: comp0 BMP.prob_space)
+    qed
+    show "martingale ?M ?F 0 (coord_Z ?X ?acov i)" for i
+    proof -
+      have cz: "coord_Z ?X ?acov i = (\<lambda>t \<omega>. (x0 $ i)\<^sup>2)"
+      proof (intro ext)
+        fix t :: real and \<omega> :: "'m \<Rightarrow> real \<Rightarrow> real"
+        have "(\<lambda>s. ?acov s \<omega> $ i $ i)
+            = (\<lambda>s. if s = 0 then 1 else 0)"
+          using entry by (intro ext) simp
+        then have "set_lebesgue_integral lborel {0..t}
+            (\<lambda>s. ?acov s \<omega> $ i $ i) = 0"
+          using set_integral_at_origin(2)[of t 1] by simp
+        then show "coord_Z ?X ?acov i t \<omega> = (x0 $ i)\<^sup>2"
+          unfolding coord_Z_def by simp
+      qed
+      show ?thesis
+        unfolding cz
+        by (intro SFF.martingale_const_fun BMP.integrable_const
+            borel_measurable_const)
+    qed
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space ?M. ?tau \<omega> \<le> s} \<in> sets (?F s)"
+    proof -
+      fix s :: real assume s: "0 \<le> s"
+      have "{\<omega> \<in> space ?M. ?tau \<omega> \<le> s} = space ?M"
+        using s by blast
+      then show "{\<omega> \<in> space ?M. ?tau \<omega> \<le> s} \<in> sets (?F s)"
+        using sets.top[of ?M] by metis
+    qed
+    show "\<And>\<omega>. \<omega> \<in> space ?M \<Longrightarrow> continuous_on {0..} (\<lambda>s. ?X s \<omega>)"
+      by (intro continuous_on_const)
+  qed
+  have W: "mkt_law_witness k L K x0 T (path_law ?M ?X T) ?M ?F ?X ?acov ?tau"
+    unfolding mkt_law_witness_def
+  proof (intro conjI)
+    show "path_law ?M ?X T = path_law ?M ?X T" by (rule refl)
+    show "sufficiently_volatile_market ?M ?F ?X ?acov k L K x0 ?tau"
+      by (rule svm)
+    show "\<forall>s \<omega>. \<omega> \<in> space ?M \<longrightarrow> ?X s \<omega> = ?X (min s (?tau \<omega>)) \<omega>"
+      by simp
+    show "\<forall>s \<omega>. \<omega> \<in> space ?M \<longrightarrow> ?tau \<omega> < s \<longrightarrow> ?acov s \<omega> = 0"
+      by auto
+    show "AE \<omega> in ?M. \<forall>l t. 0 \<le> t \<longrightarrow>
+        set_integrable lborel {0..t} (\<lambda>s. ?acov s \<omega> $ l $ l)"
+    proof (intro AE_I2 allI impI)
+      fix \<omega> :: "'m \<Rightarrow> real \<Rightarrow> real" and l :: 'm and t :: real
+      have "(\<lambda>s. ?acov s \<omega> $ l $ l) = (\<lambda>s. if s = 0 then 1 else 0)"
+        using entry by (intro ext) simp
+      then show "set_integrable lborel {0..t} (\<lambda>s. ?acov s \<omega> $ l $ l)"
+        using set_integral_at_origin(1)[of t 1] by simp
+    qed
+  qed
+  then show ?thesis
+    unfolding mkt_path_laws_def by blast
+qed
+
 end
