@@ -360,19 +360,30 @@ it for the covariation upgrade): split the increment into `gp/gm`
 makes the two image measures agree on bounded continuous functions,
 hence they are EQUAL.
 
+Done (commit e74b4fd, 2026-08-03): the event-level COVARIATION upper
+bound.  `metric_measure_mono_bounded_cts` is the one-sided companion of
+the uniqueness lemma: domination on continuous `[0,1]`-valued tests
+gives domination on every Borel set — closed sets via the Urysohn
+sandwich (`Urysohn_lemma_uniform`, open `1/(m+1)`-neighbourhoods
+decreasing to the closed set, continuity from above), general sets via
+`finite_measure.inner_regular'` (AFP Riesz_Representation, reachable
+through the Lévy–Prokhorov imports).  `mkt_law_closure_covariation_event`:
+`∫ (rclamp (2r)(f t $ i − f s $ i))² · 1_B(restrict f {0..s}) dΛ ≤
+L(t−s) · ∫ 1_B(restrict f {0..s}) dΛ` for every past Borel event `B`.
+With `mkt_law_closure_martingale_event`, the canonical process under a
+closure law is a martingale (in integrated clamped form) whose squared
+coordinate increments grow conditionally at most `L·(t−s)` — the two
+integrated inputs the `acov`-differentiation step consumes.
+
 Still open, in order of attack: (a) the law-level form of the LOWER
 (trace / `eigen_lb`) constraint, see the note above; (b) the rest of
-the canonical-market construction — with the event-level martingale
-identity in hand, what remains is: the unclamped/AE version (via
-`mkt_law_closure_confined_AE`, trivial), the event-level covariation
-INEQUALITY (needs inner regularity of finite Borel measures by closed
-sets, since one-sided bounds do not extend from a generator — check the
-AFP `Levy_Prokhorov_Metric`/`Standard_Borel_Spaces` entries for a
-regularity lemma first), `acov` by differentiation of the compensator,
-and the natural filtration/exit-time packaging into a
-`sufficiently_volatile_market` instance on path space; OR the
-author-level decision to restate clause (1) at the law level, under
-which clause (1) is COMPLETE as `vshift_sup_usc_mkt` +
+the canonical-market construction — the unclamped/AE versions of the
+two event-level results (via `mkt_law_closure_confined_AE`, trivial),
+`acov` by differentiation of the compensator (Lebesgue differentiation
+— the hard analytic core), and the natural filtration/exit-time
+packaging into a `sufficiently_volatile_market` instance on path space;
+OR the author-level decision to restate clause (1) at the law level,
+under which clause (1) is COMPLETE as `vshift_sup_usc_mkt` +
 `stopped_val_fn_le_law_sup` and the canonical market is only needed for
 "the closure adds no value".
 
