@@ -89,6 +89,8 @@ locale ito_volatile_market =
          \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>ito_Z X acov s \<omega>\<bar> \<le> Dom u \<omega>"
     and Dom_integrable: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (Dom u)"
 
+    and coordZ_martingale: "\<And>i. martingale M F 0 (coord_Z X acov i)"
+
 sublocale ito_volatile_market \<subseteq> prob_space M
   by (rule prob_space_M)
 
@@ -247,6 +249,8 @@ proof -
                    (\<lambda>s. trace (acov s \<omega>)) \<partial>M)
         = x0 \<bullet> x0"
       by (rule dynkin_quadratic_holds)
+    show "\<And>i. martingale M F 0 (coord_Z X acov i)"
+      by (rule coordZ_martingale)
   qed
 qed
 
@@ -357,6 +361,8 @@ locale ito_stopped_market =
                 (\<lambda>s. trace (acov s \<omega>)))"
     and Z_martingale: "martingale M F 0 (ito_Z X acov)"
     and Z_paths_cont: "AE \<omega> in M. continuous_on {0..} (\<lambda>s. ito_Z X acov s \<omega>)"
+
+    and coordZ_martingale: "\<And>i. martingale M F 0 (coord_Z X acov i)"
 
 sublocale ito_stopped_market \<subseteq> prob_space M
   by (rule prob_space_M)
@@ -549,6 +555,8 @@ proof -
     show "\<And>u. 0 \<le> u \<Longrightarrow>
         integrable M (\<lambda>\<omega>. r\<^sup>2 + L * real CARD('n) * u)"
       by simp
+    show "\<And>i. martingale M F 0 (coord_Z X acov i)"
+      by (rule coordZ_martingale)
   qed
 qed
 
@@ -592,6 +600,8 @@ locale ito_const_horizon_market =
          (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t c}
                 (\<lambda>s. trace (acov s \<omega>)))"
     and Z_martingale: "martingale M F 0 (ito_Z X acov)"
+
+    and coordZ_martingale: "\<And>i. martingale M F 0 (coord_Z X acov i)"
 
 sublocale ito_const_horizon_market \<subseteq> prob_space M
   by (rule prob_space_M)
@@ -714,6 +724,8 @@ proof -
                    (\<lambda>s. trace (acov s \<omega>)) \<partial>M)
         = x0 \<bullet> x0"
       by (rule const_dynkin_quadratic)
+    show "\<And>i. martingale M F 0 (coord_Z X acov i)"
+      by (rule coordZ_martingale)
   qed
 qed
 
@@ -815,6 +827,9 @@ proof (intro ito_const_horizon_market.intro
   show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0
       (ito_Z (bmX x0) (\<lambda>_ _. mat 1))"
     unfolding Zeq by (rule martingale_bm_square)
+  show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0
+      (coord_Z (bmX x0) (\<lambda>_ _. mat 1) i)" for i
+    unfolding coord_Z_def by (rule martingale_bm_coord_square)
 qed
 
 text \<open>Specialised to the planar market with \<open>k = L = 1\<close>, horizon \<open>1\<close> and

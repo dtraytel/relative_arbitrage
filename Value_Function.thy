@@ -379,11 +379,49 @@ proof -
     by (rule sv)
   have K': "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> X s \<omega> \<in> K'"
     using sv.X_in_K by eventually_elim (use KK in blast)
+  have mg: "martingale M F 0 X"
+    using sv by (simp add: sufficiently_volatile_market_def)
+  text \<open>\<open>unfold_locales\<close> is no longer usable here: the new assumption
+    \<open>coord_Z_martingale\<close> is itself a locale predicate, and \<open>unfold_locales\<close>
+    recursively unfolds it into the martingale axioms instead of leaving it as
+    one goal. The explicit \<open>intro\<close> route keeps the assumptions atomic.\<close>
   show ?thesis
-    by (unfold_locales; blast intro: sv.k_lb sv.k_ub sv.L_ge sv.X_start
-          sv.tau_nonneg sv.tau_meas K' sv.acov_psd sv.acov_eigen_lb
-          sv.acov_eigen_ub sv.acov_trace_integrable sv.stopped_sq_integrable
-          sv.compensator_integrable sv.dynkin_quadratic)
+  proof (intro sufficiently_volatile_market.intro[OF mg]
+      sufficiently_volatile_market_axioms.intro)
+    show "prob_space M" by (rule sv.prob_space_M)
+    show "1 \<le> k" by (rule sv.k_lb)
+    show "k < CARD('n)" by (rule sv.k_ub)
+    show "1 \<le> L" by (rule sv.L_ge)
+    show "AE \<omega> in M. X 0 \<omega> = x0" by (rule sv.X_start)
+    show "AE \<omega> in M. 0 \<le> tau \<omega>" by (rule sv.tau_nonneg)
+    show "tau \<in> borel_measurable M" by (rule sv.tau_meas)
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> X s \<omega> \<in> K'" by (rule K')
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> psd (acov s \<omega>)"
+      by (rule sv.acov_psd)
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow>
+        eigen_lb (acov s \<omega>) (CARD('n) - k)"
+      by (rule sv.acov_eigen_lb)
+    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> eigen_ub (acov s \<omega>) L"
+      by (rule sv.acov_eigen_ub)
+    show "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
+        set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
+      by (rule sv.acov_trace_integrable)
+    show "\<And>t. 0 \<le> t \<Longrightarrow>
+        integrable M (\<lambda>\<omega>. X (min t (tau \<omega>)) \<omega> \<bullet> X (min t (tau \<omega>)) \<omega>)"
+      by (rule sv.stopped_sq_integrable)
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable M
+        (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+               (\<lambda>s. trace (acov s \<omega>)))"
+      by (rule sv.compensator_integrable)
+    show "\<And>t. 0 \<le> t \<Longrightarrow>
+        (\<integral>\<omega>. X (min t (tau \<omega>)) \<omega> \<bullet> X (min t (tau \<omega>)) \<omega> \<partial>M)
+          - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
+                   (\<lambda>s. trace (acov s \<omega>)) \<partial>M)
+        = x0 \<bullet> x0"
+      by (rule sv.dynkin_quadratic)
+    show "\<And>i. martingale M F 0 (coord_Z X acov i)"
+      by (rule sv.coord_Z_martingale)
+  qed
 qed
 
 lemma mkt_exit_vals_mono:

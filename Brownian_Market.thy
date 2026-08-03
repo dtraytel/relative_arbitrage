@@ -1439,139 +1439,6 @@ text \<open>The main theorem of this theory: the axiomatized market class
   assumption of the locale --- in particular the martingale-problem
   identity \<open>dynkin_quadratic\<close> is here a theorem, not an axiom.\<close>
 
-theorem Brownian_market_sufficiently_volatile:
-  fixes x0 :: "real^'n::finite"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and c: "0 \<le> c"
-    and K: "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
-      \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
-  shows "sufficiently_volatile_market
-    (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
-    (\<lambda>_ _. mat 1) k L K x0 (\<lambda>_. c)"
-proof (intro sufficiently_volatile_market.intro
-    sufficiently_volatile_market_axioms.intro)
-  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0 (bmX x0)"
-    by (rule martingale_bmX)
-  show "prob_space ?M" by simp
-  show "1 \<le> k" "k < CARD('n)" "1 \<le> L" by fact+
-  show "AE \<omega> in ?M. bmX x0 0 \<omega> = x0" by (rule bmX_start)
-  show "AE \<omega> in ?M. 0 \<le> c" using c by simp
-  show "(\<lambda>_. c) \<in> borel_measurable ?M" by simp
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
-    by (rule K)
-  have psd1: "psd (mat 1 :: real^'n^'n)"
-    by (simp add: psd_def)
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> psd (mat 1 :: real^'n^'n)"
-    using psd1 by simp
-  have elb: "eigen_lb (mat 1 :: real^'n^'n) (CARD('n) - k)"
-    unfolding eigen_lb_def
-  proof (intro exI[of _ UNIV] conjI)
-    show "subspace (UNIV :: (real^'n) set)" by simp
-    show "CARD('n) - k \<le> dim (UNIV :: (real^'n) set)" by simp
-    show "\<forall>x\<in>(UNIV :: (real^'n) set). x \<bullet> x \<le> x \<bullet> (mat 1 *v x)"
-      by simp
-  qed
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow>
-      eigen_lb (mat 1 :: real^'n^'n) (CARD('n) - k)"
-    using elb by simp
-  have eub: "eigen_ub (mat 1 :: real^'n^'n) L"
-  proof -
-    have "x \<bullet> x \<le> L * (x \<bullet> x)" for x :: "real^'n"
-      using mult_right_mono[OF L inner_ge_zero] by simp
-    then show ?thesis
-      by (simp add: eigen_ub_def)
-  qed
-  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow>
-      eigen_ub (mat 1 :: real^'n^'n) L"
-    using eub by simp
-  have ti: "set_integrable lborel {0..t}
-      (\<lambda>s. trace (mat 1 :: real^'n^'n))" for t :: real
-  proof -
-    have "integrable lborel
-        (\<lambda>s. indicator {0..t} s *\<^sub>R trace (mat 1 :: real^'n^'n))"
-    proof (intro integrable_scaleR_left integrable_real_indicator)
-      show "{0..t} \<in> sets lborel"
-        unfolding sets_lborel
-        by (intro borel_closed closed_atLeastAtMost)
-      show "emeasure lborel {0..t} < \<infinity>"
-        by (simp add: emeasure_lborel_Icc_eq)
-    qed
-    then show ?thesis
-      unfolding set_integrable_def .
-  qed
-  show "AE \<omega> in ?M. \<forall>t :: real. 0 \<le> t \<longrightarrow>
-      set_integrable lborel {0..t} (\<lambda>s. trace (mat 1 :: real^'n^'n))"
-    using ti by (intro AE_I2) blast
-  show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
-      (\<lambda>\<omega>. bmX x0 (min t c) \<omega> \<bullet> bmX x0 (min t c) \<omega>)"
-    using c by (intro bmX_sq_integrable) simp
-  show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
-      (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t c}
-        (\<lambda>s. trace (mat 1 :: real^'n^'n)))"
-    by (rule BMP.integrable_const)
-  show "(\<integral>\<omega>. bmX x0 (min t c) \<omega> \<bullet> bmX x0 (min t c) \<omega> \<partial>?M)
-      - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t c}
-          (\<lambda>s. trace (mat 1 :: real^'n^'n)) \<partial>?M) = x0 \<bullet> x0"
-    if t: "0 \<le> t" for t
-  proof -
-    have u: "0 \<le> min t c" using t c by simp
-    have 1: "(\<integral>\<omega>. bmX x0 (min t c) \<omega> \<bullet> bmX x0 (min t c) \<omega> \<partial>?M)
-        = x0 \<bullet> x0 + real CARD('n) * min t c"
-      by (rule bmX_sq_integral[OF u])
-    have 2: "set_lebesgue_integral lborel {0..min t c}
-        (\<lambda>s. trace (mat 1 :: real^'n^'n)) = real CARD('n) * min t c"
-      by (rule bm_compensator_const[OF u])
-    show ?thesis
-      unfolding 1 2 by (simp add: BMP.prob_space)
-  qed
-qed
-
-section \<open>A concrete instance: the class \<open>\<P>\<^sub>x\<close> is inhabited\<close>
-
-text \<open>Specialising the theorem above to the planar market with
-  \<open>k = L = 1\<close>, horizon \<open>1\<close> and start \<open>0\<close> discharges all its side
-  conditions numerically, so the following statement has no hypotheses
-  whatsoever: the axiomatised market class of
-  Relative\_Arbitrage\_Stochastic is non-vacuous.\<close>
-
-theorem sufficiently_volatile_market_nonvacuous:
-  "sufficiently_volatile_market
-    (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (bmX 0)) (bmX (0 :: real^2))
-    (\<lambda>_ _. mat 1) 1 1 UNIV 0 (\<lambda>_. 1)"
-  by (rule Brownian_market_sufficiently_volatile) simp_all
-
-interpretation BM2: sufficiently_volatile_market
-    "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
-    "natural_filtration bm_paths 0 (bmX 0)" "bmX (0 :: real^2)"
-    "\<lambda>_ _. mat 1" 1 1 UNIV 0 "\<lambda>_. 1"
-  by (rule sufficiently_volatile_market_nonvacuous)
-
-text \<open>With the interpretation in place, the locale's facts are ordinary
-  theorems about the Brownian market.  In particular the
-  martingale-problem identity --- an \<^emph>\<open>assumption\<close> of the locale, here a
-  consequence of the construction --- yields a closed numerical
-  statement with no hypotheses: planar Brownian motion started at the
-  origin has expected squared norm \<open>2\<close> at time \<open>1\<close>.\<close>
-
-corollary bm2_expected_square:
-  "(\<integral>\<omega>. bmX (0 :: real^2) 1 \<omega> \<bullet> bmX 0 1 \<omega>
-      \<partial>(bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)) = 2"
-proof -
-  have comp: "set_lebesgue_integral lborel {0..(1 :: real)}
-      (\<lambda>s. trace (mat 1 :: real^2^2)) = 2"
-    by (subst bm_compensator_const) simp_all
-  show ?thesis
-    using BM2.dynkin_quadratic[of 1]
-    by (simp add: BMP.prob_space comp)
-qed
-
-text \<open>The exit-time bound \<open>E[\<tau>] \<le> v(x0)\<close> of Example 3.1 is available
-  inside the locale as \<open>expected_exit_time_bound\<close>, but instantiating it
-  non-degenerately requires \<open>K = cball 0 r\<close> together with the first exit
-  time of the ball; that is a genuine stopping time of the continuous
-  modification and hence belongs to the quadratic-variation phase.\<close>
 
 
 section \<open>Ito's formula for the square: the compensated square is a martingale\<close>
@@ -2312,5 +2179,142 @@ proof -
       unfolding split[OF u] split[OF v] vu by (simp add: algebra_simps)
   qed
 qed
+
+theorem Brownian_market_sufficiently_volatile:
+  fixes x0 :: "real^'n::finite"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and c: "0 \<le> c"
+    and K: "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
+  shows "sufficiently_volatile_market
+    (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (bmX x0)) (bmX x0)
+    (\<lambda>_ _. mat 1) k L K x0 (\<lambda>_. c)"
+proof (intro sufficiently_volatile_market.intro
+    sufficiently_volatile_market_axioms.intro)
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0 (bmX x0)"
+    by (rule martingale_bmX)
+  show "prob_space ?M" by simp
+  show "1 \<le> k" "k < CARD('n)" "1 \<le> L" by fact+
+  show "AE \<omega> in ?M. bmX x0 0 \<omega> = x0" by (rule bmX_start)
+  show "AE \<omega> in ?M. 0 \<le> c" using c by simp
+  show "(\<lambda>_. c) \<in> borel_measurable ?M" by simp
+  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> bmX x0 s \<omega> \<in> K"
+    by (rule K)
+  have psd1: "psd (mat 1 :: real^'n^'n)"
+    by (simp add: psd_def)
+  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> psd (mat 1 :: real^'n^'n)"
+    using psd1 by simp
+  have elb: "eigen_lb (mat 1 :: real^'n^'n) (CARD('n) - k)"
+    unfolding eigen_lb_def
+  proof (intro exI[of _ UNIV] conjI)
+    show "subspace (UNIV :: (real^'n) set)" by simp
+    show "CARD('n) - k \<le> dim (UNIV :: (real^'n) set)" by simp
+    show "\<forall>x\<in>(UNIV :: (real^'n) set). x \<bullet> x \<le> x \<bullet> (mat 1 *v x)"
+      by simp
+  qed
+  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow>
+      eigen_lb (mat 1 :: real^'n^'n) (CARD('n) - k)"
+    using elb by simp
+  have eub: "eigen_ub (mat 1 :: real^'n^'n) L"
+  proof -
+    have "x \<bullet> x \<le> L * (x \<bullet> x)" for x :: "real^'n"
+      using mult_right_mono[OF L inner_ge_zero] by simp
+    then show ?thesis
+      by (simp add: eigen_ub_def)
+  qed
+  show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow>
+      eigen_ub (mat 1 :: real^'n^'n) L"
+    using eub by simp
+  have ti: "set_integrable lborel {0..t}
+      (\<lambda>s. trace (mat 1 :: real^'n^'n))" for t :: real
+  proof -
+    have "integrable lborel
+        (\<lambda>s. indicator {0..t} s *\<^sub>R trace (mat 1 :: real^'n^'n))"
+    proof (intro integrable_scaleR_left integrable_real_indicator)
+      show "{0..t} \<in> sets lborel"
+        unfolding sets_lborel
+        by (intro borel_closed closed_atLeastAtMost)
+      show "emeasure lborel {0..t} < \<infinity>"
+        by (simp add: emeasure_lborel_Icc_eq)
+    qed
+    then show ?thesis
+      unfolding set_integrable_def .
+  qed
+  show "AE \<omega> in ?M. \<forall>t :: real. 0 \<le> t \<longrightarrow>
+      set_integrable lborel {0..t} (\<lambda>s. trace (mat 1 :: real^'n^'n))"
+    using ti by (intro AE_I2) blast
+  show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
+      (\<lambda>\<omega>. bmX x0 (min t c) \<omega> \<bullet> bmX x0 (min t c) \<omega>)"
+    using c by (intro bmX_sq_integrable) simp
+  show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
+      (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t c}
+        (\<lambda>s. trace (mat 1 :: real^'n^'n)))"
+    by (rule BMP.integrable_const)
+  show "(\<integral>\<omega>. bmX x0 (min t c) \<omega> \<bullet> bmX x0 (min t c) \<omega> \<partial>?M)
+      - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t c}
+          (\<lambda>s. trace (mat 1 :: real^'n^'n)) \<partial>?M) = x0 \<bullet> x0"
+    if t: "0 \<le> t" for t
+  proof -
+    have u: "0 \<le> min t c" using t c by simp
+    have 1: "(\<integral>\<omega>. bmX x0 (min t c) \<omega> \<bullet> bmX x0 (min t c) \<omega> \<partial>?M)
+        = x0 \<bullet> x0 + real CARD('n) * min t c"
+      by (rule bmX_sq_integral[OF u])
+    have 2: "set_lebesgue_integral lborel {0..min t c}
+        (\<lambda>s. trace (mat 1 :: real^'n^'n)) = real CARD('n) * min t c"
+      by (rule bm_compensator_const[OF u])
+    show ?thesis
+      unfolding 1 2 by (simp add: BMP.prob_space)
+  qed
+  show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0
+      (coord_Z (bmX x0) (\<lambda>_ _. mat 1) i)" for i
+    unfolding coord_Z_def by (rule martingale_bm_coord_square)
+qed
+
+section \<open>A concrete instance: the class \<open>\<P>\<^sub>x\<close> is inhabited\<close>
+
+text \<open>Specialising the theorem above to the planar market with
+  \<open>k = L = 1\<close>, horizon \<open>1\<close> and start \<open>0\<close> discharges all its side
+  conditions numerically, so the following statement has no hypotheses
+  whatsoever: the axiomatised market class of
+  Relative\_Arbitrage\_Stochastic is non-vacuous.\<close>
+
+theorem sufficiently_volatile_market_nonvacuous:
+  "sufficiently_volatile_market
+    (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (bmX 0)) (bmX (0 :: real^2))
+    (\<lambda>_ _. mat 1) 1 1 UNIV 0 (\<lambda>_. 1)"
+  by (rule Brownian_market_sufficiently_volatile) simp_all
+
+interpretation BM2: sufficiently_volatile_market
+    "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
+    "natural_filtration bm_paths 0 (bmX 0)" "bmX (0 :: real^2)"
+    "\<lambda>_ _. mat 1" 1 1 UNIV 0 "\<lambda>_. 1"
+  by (rule sufficiently_volatile_market_nonvacuous)
+
+text \<open>With the interpretation in place, the locale's facts are ordinary
+  theorems about the Brownian market.  In particular the
+  martingale-problem identity --- an \<^emph>\<open>assumption\<close> of the locale, here a
+  consequence of the construction --- yields a closed numerical
+  statement with no hypotheses: planar Brownian motion started at the
+  origin has expected squared norm \<open>2\<close> at time \<open>1\<close>.\<close>
+
+corollary bm2_expected_square:
+  "(\<integral>\<omega>. bmX (0 :: real^2) 1 \<omega> \<bullet> bmX 0 1 \<omega>
+      \<partial>(bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)) = 2"
+proof -
+  have comp: "set_lebesgue_integral lborel {0..(1 :: real)}
+      (\<lambda>s. trace (mat 1 :: real^2^2)) = 2"
+    by (subst bm_compensator_const) simp_all
+  show ?thesis
+    using BM2.dynkin_quadratic[of 1]
+    by (simp add: BMP.prob_space comp)
+qed
+
+text \<open>The exit-time bound \<open>E[\<tau>] \<le> v(x0)\<close> of Example 3.1 is available
+  inside the locale as \<open>expected_exit_time_bound\<close>, but instantiating it
+  non-degenerately requires \<open>K = cball 0 r\<close> together with the first exit
+  time of the ball; that is a genuine stopping time of the continuous
+  modification and hence belongs to the quadratic-variation phase.\<close>
 
 end

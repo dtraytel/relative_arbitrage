@@ -90,6 +90,24 @@ qed
 
 section \<open>Sufficiently volatile markets: the class \<open>\<P>\<^sub>x\<close> in martingale-problem form\<close>
 
+text \<open>The compensated square of a SINGLE coordinate. The trace analogue is
+  \<open>Ito_Market.ito_Z\<close>, and until 2026-08-03 the trace version was all the market
+  class demanded --- in the weak form \<open>dynkin_quadratic\<close>, which says only that an
+  expectation is constant in \<open>t\<close>.
+
+  That is strictly weaker than the paper's class (1.7), a martingale problem in
+  which \<open>X\<close> and \<open>X X\<^sup>T - \<int>a\<close> are BOTH martingales, and it is too weak to reach
+  Lemma 2.2: the tightness chain needs a fourth-moment bound COORDINATE BY
+  COORDINATE, and a trace identity does not give the coordinate ones. Hence
+  \<open>coord_Z_martingale\<close> below.\<close>
+
+definition coord_Z ::
+  "(real \<Rightarrow> 'a \<Rightarrow> real^'n::finite) \<Rightarrow> (real \<Rightarrow> 'a \<Rightarrow> real^'n^'n)
+     \<Rightarrow> 'n \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real"
+  where
+  "coord_Z X acov i t \<omega> = (X t \<omega> $ i)\<^sup>2
+     - set_lebesgue_integral lborel {0..t} (\<lambda>s. acov s \<omega> $ i $ i)"
+
 locale sufficiently_volatile_market =
   martingale M F 0 X
   for M :: "'a measure"
@@ -128,6 +146,8 @@ locale sufficiently_volatile_market =
            - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t (tau \<omega>)}
                     (\<lambda>s. trace (acov s \<omega>)) \<partial>M)
          = x0 \<bullet> x0"
+
+    and coord_Z_martingale: "\<And>i. martingale M F 0 (coord_Z X acov i)"
 
 sublocale sufficiently_volatile_market \<subseteq> prob_space M
   by (rule prob_space_M)

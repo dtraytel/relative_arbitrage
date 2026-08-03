@@ -176,6 +176,26 @@ martingale property, and a trace identity does not imply componentwise ones, so
 `mgZ` is **not derivable** from the locale as it stands. A grep confirms nothing
 in the development derives it for a general market of this class.
 
+**RESOLVED 2026-08-03 by option 1 below: the locale has been strengthened.**
+`Relative_Arbitrage_Stochastic` now defines
+
+    coord_Z X acov i t ω = (X t ω $ i)² − ∫₀ᵗ acov s ω $ i $ i ds
+
+and `sufficiently_volatile_market` assumes `⋀i. martingale M F 0 (coord_Z X acov i)`.
+The same assumption was threaded through `ito_volatile_market`,
+`ito_stopped_market` and `ito_const_horizon_market`, and discharged at every
+instantiation site from the new `Brownian_Market.martingale_bm_coord_square`.
+
+Two things this cost that were not obvious in advance:
+- `Brownian_market_sufficiently_volatile` had to MOVE to the end of
+  `Brownian_Market.thy`, because it now depends on `martingale_bm_coord_square`,
+  which in turn depends on the per-coordinate machinery defined later in the file.
+- `Value_Function.sufficiently_volatile_market_mono_K` could no longer be proved
+  by `unfold_locales; blast`. The new assumption is itself a LOCALE PREDICATE, and
+  `unfold_locales` recursively unfolds it into the martingale axioms rather than
+  leaving it as one goal. It now goes through
+  `sufficiently_volatile_market.intro` with explicit `show`s.
+
 **Three ways out, and only one is real.**
 
 1. *Strengthen the locale* to assume the componentwise martingale property of the
