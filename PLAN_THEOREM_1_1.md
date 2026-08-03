@@ -196,7 +196,34 @@ Two things this cost that were not obvious in advance:
   leaving it as one goal. It now goes through
   `sufficiently_volatile_market.intro` with explicit `show`s.
 
-### Work item 1 — NEXT STEPS, verified by direct inspection 2026-08-03
+### Work item 1 — DONE 2026-08-03 (commits 530eb12, 3f6c292)
+
+Both missing assumptions landed and Lemma 2.2 is INSTANTIATED:
+
+* `tau_stopping` and `X_paths_cont` are locale assumptions now, threaded
+  through the three Ito locales; every Brownian witness was rebased onto the
+  continuous modification `cbmX` and MOVED to `Brownian_Continuous.thy`
+  (import-cycle constraint).  Repairing `Brownian_ball_exit_market` exposed
+  and closed a latent undischarged `coordZ_martingale` goal via the `cbmC`
+  chain in `Brownian_Stopped`.
+* **`Path_Tightness_Market.market_path_laws_convergent_subsequence`** — for a
+  sequence of `sufficiently_volatile_market` instances that are stopped at
+  the horizon, confined to `cball 0 r`, with `acov = 0` after the horizon
+  and pathwise-integrable diagonal entries, the path laws admit a weakly
+  convergent subsequence.  That is Lemma 2.2 at the class.  The AE/pointwise
+  gap is closed by restriction to a full-measure good event — transfer
+  package (`martingale_restrict_full` etc.) at the end of
+  `Stopped_Localization`; `distr_restrict_full` keeps the path laws
+  unchanged.  NOTE the four extra hypotheses are part of the paper's class
+  (1.7) but NOT of the locale — the definition of `P₀` for clause (1) must
+  carry them.
+
+Remaining for clause (1): Lemma 2.3 (limit membership, RQ-A assembly), the
+definition of `P₀` as a set of laws, and the `val_fn` ↔ Berge-sup
+identification (Larsson–Ruf Prop 2.2's pushforward structure).
+
+### Work item 1 — superseded planning notes (2026-08-03 morning)
+#### Work item 1 — NEXT STEPS, verified by direct inspection 2026-08-03
 
 With the martingale-problem strengthening landed, TWO further assumptions are still
 missing from `sufficiently_volatile_market` before Lemma 2.2 can be instantiated.
