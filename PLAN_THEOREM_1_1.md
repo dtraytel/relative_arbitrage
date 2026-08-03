@@ -291,16 +291,36 @@ bounded-continuous integral clause of `weak_conv_on_def` +
 `LIMSEQ_unique`) — i.e. step 1 (martingale part) and step 2 below are
 DISCHARGED for the drift identity.
 
-Still open, in order of attack: (a) the COVARIATION analogues — same
-template as `mkt_path_laws_martingale_test`, but from
-`coord_Z_martingale`-style compensated squares: the inequality
-`E_Q[tr(M(ω_t−ω_s)(ω_t−ω_s)ᵀ) g] ⋚ (t−s)·h_S(M)·E_Q[g]`; reuse
-`martingale_bounded_test` with `Y := coord_Z`-type processes and clamp
-the quadratic functional the same way; (b) the canonical-market
-construction (monotone-class martingale property, `acov` by
-differentiation) OR the author-level decision to restate clause (1) at
-the law level; (c) the optional-stopping closure of the class (`val_fn`
-over all markets vs stopped witnesses).
+Done (commit c93e615, 2026-08-03): the COVARIATION upper bound and its
+passage to the closure.  `witness_compensator_increment_bounds` squeezes
+the `coord_Z` compensator increment into `[0, L·(t−s)]` a.e. (psd +
+eigenvalue upper bound give `0 ≤ acov $ i $ i ≤ L` before the horizon,
+the witness kills `acov` after it); `coord_sq_bounded_test` is the
+market-level core: `E[Z·(X_t$i − X_s$i)²] = E[Z·(A_t − A_s)]` via
+`martingale_bounded_test` at `coord_Z` plus the vanishing cross term.
+Members satisfy `∫ (rclamp (2r) (f t $ i − f s $ i))² · h(restrict f
+{0..s}) dQ ≤ L(t−s) · ∫ h(restrict f {0..s}) dQ` for nonnegative bounded
+continuous past-measurable `h` (`mkt_path_laws_covariation_test`), every
+closure point inherits it (`mkt_law_closure_covariation_test`, via the
+integral clause of weak convergence + `LIMSEQ_le`), and the matching
+lower bound is pointwise trivial (`covariation_test_nonneg`).
+Continuity plumbing: `past_test_functional_cont`,
+`covariation_test_functional_cont`.
+
+NOTE the deliberate scope cut: the LOWER covariation constraint from
+`eigen_lb` (sufficient volatility, `trace acov ≥ n − k` before the
+horizon) is NOT yet stated at the law level — its natural integrated
+form involves the horizon `min(t, τ)`, which is not a continuous path
+functional; how to encode it (via the path's exit time from the closed
+confinement set, or only in the canonical-market step) is entangled with
+(b) below and should be decided together with it.
+
+Still open, in order of attack: (a) the law-level form of the LOWER
+(trace / `eigen_lb`) constraint, see the note above; (b) the
+canonical-market construction (monotone-class martingale property,
+`acov` by differentiation) OR the author-level decision to restate
+clause (1) at the law level; (c) the optional-stopping closure of the
+class (`val_fn` over all markets vs stopped witnesses).
 
 #### N3 as originally scoped
 
