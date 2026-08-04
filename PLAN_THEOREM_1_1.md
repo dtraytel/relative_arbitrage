@@ -363,16 +363,29 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
      `bm_cos/sin_cond_exp` as centered set-integral identities
      (D := cos(a·W_t+b) − cos(a·W_s+b)e^{−a²(t−s)/2}), transfer, and
      re-package as `has_cond_exp` on the cbmX side via `has_cond_expI'`.
-     TRANSFER COMPLETE (commits a9ae868, 2f563a1, 580240a, 1c83b51):
-     `bm_cos/sin_set_integral` and `cbm_cos/sin_set_integral` — both
-     trig drift identities hold in set-integral form against the
-     natural filtration of the continuous modification `cbmX`.  Next
-     micro-steps: the `has_cond_expI'` repackaging on the cbmX side
-     (candidate `cos/sin(a·Bcont s (ω i) + b)·e^{−a²(t−s)/2}`, adapted
-     via `measurable_cbmX` and the `(cbmX x0 s ω − x0) $ i` component
-     trick; the set-integral clause is `∫_A f = ∫_A g ⟸ ∫_A (f−g) = 0`
-     from the transferred lemmas plus integrability), and only then the
-     process definition and its martingale property.
+     ANALYTIC LAYER COMPLETE (commits …, 1c83b51, a7c8763):
+     `bm_cos/sin_set_integral`, `cbm_cos/sin_set_integral`, and the
+     repackaged **`cbm_cos_cond_exp` / `cbm_sin_cond_exp`** —
+     `E[cos/sin(a·Bcont_t(ω i)+b) | F^cbmX_s] =
+      cos/sin(a·Bcont_s(ω i)+b)·e^{−a²(t−s)/2}` AE.  At `a = 1` these
+     give the martingale property (with `R(t)e^{−c(t)/2} = √q`), at
+     `a = 2` the `coord_Z` compensator identities via double angle
+     (`cos² u = (1+cos 2u)/2`, `sin² u = (1−cos 2u)/2`,
+     `sin u cos u = (sin 2u)/2`).  What remains in brick 4 is PURE
+     CONSTRUCTION: define
+     `drX q φ t ω = √(q+t) ·⇩R (χ j. if j = 1 then
+        cos (Bcont (c t) (ω 1) + φ) else sin (Bcont (c t) (ω 1) + φ))`
+     on the 2-dim product model with `c t = ln (1+t/q)`, the filtration
+     `G t = natural_filtration bm_paths 0 (cbmX x0') (c t)`, prove the
+     locale axioms (martingale via the two lemmas at time-changed
+     instants; `coord_Z` with
+     `acov t = (χ j k. …sin/cos products at (Bcont (c t) (ω 1) + φ)…)`;
+     path continuity from `Bcont`'s pointwise continuity (`cbmX_cont`)
+     and continuity of `c`; the deterministic radius `|drX t| = √(q+t)`
+     is definitional), the stopped/witness side conditions with the
+     constant horizon `τ ≡ r² − q`, and conclude
+     `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)` for
+     `CARD = 2`, `0 < |x| ≤ r` via `sincos_total`.
      The `coord_Z` step needs only the SAME identities at doubled
      angle (`cos² = (1+cos 2u)/2`), which the general-`a` statements
      already cover.
