@@ -613,4 +613,124 @@ proof -
     unfolding fun_eq by eventually_elim simp
 qed
 
+
+lemma bm_sin_cond_exp:
+  fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
+  assumes s: "0 \<le> s" and st: "s < t"
+  shows "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      cond_exp bm_paths (natural_filtration bm_paths 0 (bmX x0) s)
+        (\<lambda>\<omega>. sin (a * \<omega> i t + b)) \<omega>
+      = sin (a * \<omega> i s + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?D = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s"
+  have ts0: "0 \<le> t - s" using st by simp
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have fmeas: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M ?F"
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fmeas
+        Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have bs: "bmX x0 s \<in> borel_measurable ?F"
+    by (rule Stochastic_Process.adapted_process.adapted[OF
+        Stochastic_Process.stochastic_process.adapted_process_natural_filtration
+        [OF SPfact] s])
+  have nth: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
+  proof -
+    have "(\<lambda>v :: real^'n. v $ i) = (\<lambda>v. inner v (axis i 1))"
+      by (simp add: fun_eq_iff cart_eq_inner_axis)
+    then show ?thesis by simp
+  qed
+  have wsF: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i s) \<in> borel_measurable ?F"
+  proof -
+    have eq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i s)
+        = (\<lambda>\<omega>. (bmX x0 s \<omega> - x0) $ i)"
+      by (simp add: fun_eq_iff bmX_def)
+    show ?thesis
+      unfolding eq
+      by (intro measurable_compose[OF _ nth] borel_measurable_diff bs
+          borel_measurable_const)
+  qed
+  have Z1F: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sin (a * \<omega> i s + b))
+      \<in> borel_measurable ?F"
+    using wsF by measurable
+  have Z2F: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cos (a * \<omega> i s + b))
+      \<in> borel_measurable ?F"
+    using wsF by measurable
+  have cosm: "(\<lambda>y :: real. cos (a * y)) \<in> borel_measurable borel"
+    by measurable
+  have sinm: "(\<lambda>y :: real. sin (a * y)) \<in> borel_measurable borel"
+    by measurable
+  have T1: "AE \<omega> in ?M. cond_exp ?M ?F
+      (\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>)) \<omega>
+      = sin (a * \<omega> i s + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+    using bm_past_increment_cond_exp[OF s st Z1F _ cosm,
+        of 1 1, simplified]
+    by (simp add: gauss_measure_cos[OF ts0])
+  have T2: "AE \<omega> in ?M. cond_exp ?M ?F
+      (\<lambda>\<omega>. cos (a * \<omega> i s + b) * sin (a * ?D \<omega>)) \<omega> = 0"
+    using bm_past_increment_cond_exp[OF s st Z2F _ sinm,
+        of 1 1, simplified]
+    by (simp add: gauss_measure_sin[OF ts0])
+  have Dm: "?D \<in> borel_measurable ?M"
+    using s st
+    by (intro borel_measurable_diff measurable_bm_coordinate) auto
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have Z1M: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sin (a * \<omega> i s + b))
+      \<in> borel_measurable ?M"
+    by (rule measurable_from_subalg[OF subalg Z1F])
+  have Z2M: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cos (a * \<omega> i s + b))
+      \<in> borel_measurable ?M"
+    by (rule measurable_from_subalg[OF subalg Z2F])
+  have m1: "(\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>))
+      \<in> borel_measurable ?M"
+    using Z1M Dm by measurable
+  have m2: "(\<lambda>\<omega>. cos (a * \<omega> i s + b) * sin (a * ?D \<omega>))
+      \<in> borel_measurable ?M"
+    using Z2M Dm by measurable
+  have int1: "integrable ?M
+      (\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>))"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use m1 in \<open>auto intro!: AE_I2 mult_le_one
+        abs_cos_le_one abs_sin_le_one simp: abs_mult\<close>)
+  have int2: "integrable ?M
+      (\<lambda>\<omega>. cos (a * \<omega> i s + b) * sin (a * ?D \<omega>))"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use m2 in \<open>auto intro!: AE_I2 mult_le_one
+        abs_cos_le_one abs_sin_le_one simp: abs_mult\<close>)
+  have fun_eq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sin (a * \<omega> i t + b))
+      = (\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>)
+          + cos (a * \<omega> i s + b) * sin (a * ?D \<omega>))"
+  proof (rule ext)
+    fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    have "a * \<omega> i t + b = (a * \<omega> i s + b) + a * (\<omega> i t - \<omega> i s)"
+      by (simp add: algebra_simps)
+    then have "sin (a * \<omega> i t + b)
+        = sin ((a * \<omega> i s + b) + a * (\<omega> i t - \<omega> i s))"
+      by (simp add: algebra_simps)
+    also have "\<dots> = sin (a * \<omega> i s + b) * cos (a * (\<omega> i t - \<omega> i s))
+        + cos (a * \<omega> i s + b) * sin (a * (\<omega> i t - \<omega> i s))"
+      by (rule sin_add)
+    finally show "sin (a * \<omega> i t + b)
+        = sin (a * \<omega> i s + b) * cos (a * ?D \<omega>)
+          + cos (a * \<omega> i s + b) * sin (a * ?D \<omega>)" .
+  qed
+  have "AE \<omega> in ?M. cond_exp ?M ?F
+      (\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>)
+        + cos (a * \<omega> i s + b) * sin (a * ?D \<omega>)) \<omega>
+      = cond_exp ?M ?F (\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>)) \<omega>
+        + cond_exp ?M ?F (\<lambda>\<omega>. cos (a * \<omega> i s + b) * sin (a * ?D \<omega>)) \<omega>"
+    by (rule sigma_finite_subalgebra.cond_exp_add[OF sfs int1 int2])
+  with T1 T2 show ?thesis
+    unfolding fun_eq by eventually_elim simp
+qed
+
 end
