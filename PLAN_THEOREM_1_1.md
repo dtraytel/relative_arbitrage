@@ -375,15 +375,27 @@ closure law is a martingale (in integrated clamped form) whose squared
 coordinate increments grow conditionally at most `L·(t−s)` — the two
 integrated inputs the `acov`-differentiation step consumes.
 
+Done (commit 5322748, 2026-08-04): the UNCLAMPED event-level identities.
+For closed `K ⊆ cball 0 r`, closure laws are supported on confined
+paths, so the clamp is the identity a.e. and
+
+    mkt_law_closure_increment_event:
+      ∫ (f t $ i − f s $ i) · 1_B(restrict f {0..s}) dΛ = 0
+    mkt_law_closure_sq_increment_event:
+      ∫ (f t $ i − f s $ i)² · 1_B(…) dΛ ≤ L(t−s) · ∫ 1_B(…) dΛ
+
+for every past Borel event `B` — the two integrated inputs of the
+canonical-market construction in their FINAL form: raw increments, full
+past σ-algebra, no clamp.
+
 Still open, in order of attack: (a) the law-level form of the LOWER
 (trace / `eigen_lb`) constraint, see the note above; (b) the rest of
-the canonical-market construction — the unclamped/AE versions of the
-two event-level results (via `mkt_law_closure_confined_AE`, trivial),
-`acov` by differentiation of the compensator (Lebesgue differentiation
-— the hard analytic core), and the natural filtration/exit-time
-packaging into a `sufficiently_volatile_market` instance on path space;
-OR the author-level decision to restate clause (1) at the law level,
-under which clause (1) is COMPLETE as `vshift_sup_usc_mkt` +
+the canonical-market construction — `acov` by differentiation of the
+compensator (Lebesgue differentiation — the hard analytic core), and
+the natural filtration/exit-time packaging into a
+`sufficiently_volatile_market` instance on path space; OR the
+author-level decision to restate clause (1) at the law level, under
+which clause (1) is COMPLETE as `vshift_sup_usc_mkt` +
 `stopped_val_fn_le_law_sup` and the canonical market is only needed for
 "the closure adds no value".
 
