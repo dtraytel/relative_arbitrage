@@ -1110,7 +1110,7 @@ proof -
   have t0: "0 \<le> t" using s st by simp
   have SPfact: "Stochastic_Process.stochastic_process
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (cbmX x0)"
-    by unfold_locales (intro measurable_cbmX, simp)
+    by unfold_locales (auto intro: measurable_cbmX)
   have subalg: "subalgebra ?M ?F"
     by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
         [OF SPfact])
@@ -1207,7 +1207,7 @@ proof -
   have t0: "0 \<le> t" using s st by simp
   have SPfact: "Stochastic_Process.stochastic_process
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (cbmX x0)"
-    by unfold_locales (intro measurable_cbmX, simp)
+    by unfold_locales (auto intro: measurable_cbmX)
   have subalg: "subalgebra ?M ?F"
     by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
         [OF SPfact])
@@ -1726,5 +1726,69 @@ proof (rule martingale_vecI)
       using martingale_drX_sin[OF q, of \<phi>] by simp
   qed
 qed
+
+text \<open>Stopping a martingale at a DETERMINISTIC time needs no optional
+  stopping: below the horizon it is the base property, above it the
+  stopped value is measurable at the earlier time.\<close>
+
+lemma martingale_stopped_deterministic:
+  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach, second_countable_topology}"
+    and T0 :: real
+  assumes mg: "martingale M F 0 Y" and T0: "0 \<le> T0"
+  shows "martingale M F 0 (\<lambda>t. Y (min t T0))"
+proof -
+  interpret MY: martingale M F 0 Y by (rule mg)
+  show ?thesis
+  proof (intro martingale.intro martingale_axioms.intro)
+    show "sigma_finite_filtered_measure M F 0"
+      by (rule MY.sigma_finite_filtered_measure_axioms)
+    show "adapted_process M F 0 (\<lambda>t \<omega>. Y (min t T0) \<omega>)"
+    proof (unfold_locales)
+      fix i :: real assume i: "0 \<le> i"
+      have m0: "0 \<le> min i T0" using i T0 by simp
+      have "Y (min i T0) \<in> borel_measurable (F (min i T0))"
+        by (rule MY.adapted[OF m0])
+      then show "(\<lambda>\<omega>. Y (min i T0) \<omega>) \<in> borel_measurable (F i)"
+        using MY.subalgebra_F[OF m0, of i] i
+        by (auto intro: measurable_from_subalg)
+    qed
+    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. Y (min i T0) \<omega>)"
+      using T0 by (intro MY.integrable) simp
+    fix i j :: real assume ij: "0 \<le> i" "i \<le> j"
+    show "AE \<omega> in M. Y (min i T0) \<omega>
+        = cond_exp M (F i) (\<lambda>\<omega>. Y (min j T0) \<omega>) \<omega>"
+    proof (cases "T0 \<le> i")
+      case True
+      then have mi: "min i T0 = T0" and mj: "min j T0 = T0"
+        using ij by auto
+      have YT0F: "Y T0 \<in> borel_measurable (F i)"
+        using MY.adapted[OF T0] MY.subalgebra_F[OF T0 True] ij(1)
+        by (auto intro: measurable_from_subalg)
+      show ?thesis
+        unfolding mi mj
+        by (rule sigma_finite_subalgebra.cond_exp_F_meas
+            [OF MY.sigma_finite_subalgebra_F[OF ij(1)]
+              MY.integrable[OF T0] YT0F, THEN AE_symmetric])
+    next
+      case False
+      then have mi: "min i T0 = i" by simp
+      have imj: "i \<le> min j T0" using False ij by simp
+      have mj0: "0 \<le> min j T0" using ij(1) imj by simp
+      have "AE \<omega> in M. Y i \<omega>
+          = cond_exp M (F i) (Y (min j T0)) \<omega>"
+        by (rule MY.martingale_property[OF ij(1) imj])
+      then show ?thesis
+        unfolding mi by simp
+    qed
+  qed
+qed
+
+theorem martingale_drXs:
+  fixes q \<phi> T0 :: real
+  assumes q: "0 < q" and T0: "0 \<le> T0"
+  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      0 (\<lambda>t. drX q \<phi> (min t T0))"
+  by (rule martingale_stopped_deterministic[OF martingale_drX[OF q] T0])
 
 end
