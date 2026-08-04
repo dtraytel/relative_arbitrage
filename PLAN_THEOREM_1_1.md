@@ -333,14 +333,13 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
    `bm_past_increment_indep_var` (any past-measurable `Z`, the
    indicator proof verbatim) and the product factorization
    `bm_past_increment_cond_exp`
-   (`cond_exp (Z·g(Δ)) =AE Z·∫g dgauss`).  STILL TO DO in this brick:
-   the `cos/sin(a·+b)` instances — rewrite
-   `cos(a·ω_t+b) = cos(a·ω_s+b)cos(aΔ) − sin(a·ω_s+b)sin(aΔ)` by
-   `ext` + `cos_add`, apply `sigma_finite_subalgebra.cond_exp_diff` and
-   `bm_past_increment_cond_exp` twice (Z := the `F s`-measurable trig
-   factors, measurable via the adapted `bmX` component), then
-   `gauss_measure_cos/sin`, yielding
-   `E[cos(a·ω_t+b)|F_s] =AE cos(a·ω_s+b)·e^{−a²(t−s)/2}`.
+   (`cond_exp (Z·g(Δ)) =AE Z·∫g dgauss`); and the cosine instance
+   **DONE**: `bm_cos_cond_exp` —
+   `E[cos(a·ω_t+b)|F_s] =AE cos(a·ω_s+b)·e^{−a²(t−s)/2}` (angle
+   addition + `cond_exp_diff` + the product factorization +
+   `gauss_measure_cos/sin`).  A `bm_sin_cond_exp` twin (same proof with
+   `sin_add`) will be needed for the second coordinate — write it when
+   brick 4 consumes it.  The Gaussian toolkit is COMPLETE.
 4. The process: definition on `bm_paths` (or `wiener_pre`) via the 1-D
    continuous modification, martingale + `coord_Z` from 3 and the
    constancy `R(t)e^{−c(t)/2} = |x|`; time change `c` is deterministic,
