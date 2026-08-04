@@ -363,6 +363,14 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
      `bm_cos/sin_cond_exp` as centered set-integral identities
      (D := cos(a·W_t+b) − cos(a·W_s+b)e^{−a²(t−s)/2}), transfer, and
      re-package as `has_cond_exp` on the cbmX side via `has_cond_expI'`.
+     The cosine input `bm_cos_set_integral` is DONE (commit a9ae868);
+     next: its `sin` twin (same proof with `bm_sin_cond_exp`), then the
+     `set_integral_zero_transfer` application with `X := bmX x0`,
+     `X' := cbmX x0`, AE-equality from `cbmX_ae_eq` (coordinatewise:
+     `Bcont u (ω i) = ω i u` AE, extract from the vector identity by
+     component cancellation), then `has_cond_expI'` against the
+     `natural_filtration bm_paths 0 (cbmX x0)` with the adapted
+     candidate `cos(a·Bcont s (ω i) + b)·e^{−a²(t−s)/2}`.
      The `coord_Z` step needs only the SAME identities at doubled
      angle (`cos² = (1+cos 2u)/2`), which the general-`a` statements
      already cover.
