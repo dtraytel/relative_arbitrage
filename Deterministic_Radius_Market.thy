@@ -289,4 +289,114 @@ proof -
     by eventually_elim simp
 qed
 
+
+text \<open>Generalize the indicator/increment independence to any past-measurable
+  real variable (the proof of \<open>bm_indicator_increment_indep_var\<close> verbatim,
+  with the indicator replaced by \<open>Z\<close>).\<close>
+
+lemma bm_past_increment_indep_var:
+  fixes x0 :: "real^'n::finite" and Z :: "('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real"
+  assumes s: "0 \<le> s" and st: "s < t"
+    and Zm: "Z \<in> borel_measurable (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+  shows "BMP.indep_var borel Z
+    borel (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?D = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 t \<omega> - bmX x0 s \<omega>"
+  let ?V = "vimage_algebra (space ?M) ?D borel"
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have Z_M: "Z \<in> borel_measurable ?M"
+    by (rule measurable_from_subalg[OF subalg Zm])
+  have base: "BMP.indep_set (sets ?F) (sets ?V)"
+    by (rule bm_filtration_increment_indep[OF s st])
+  have L: "sigma_sets (space ?M)
+      {Z -` B \<inter> space ?M |B. B \<in> sets borel}
+      \<subseteq> sets ?F"
+  proof -
+    have gen: "{Z -` B \<inter> space ?M |B. B \<in> sets borel} \<subseteq> sets ?F"
+    proof safe
+      fix B :: "real set" assume B: "B \<in> sets borel"
+      have ZB: "Z -` B \<inter> space ?F \<in> sets ?F"
+        by (rule measurable_sets[OF Zm B])
+      have "space ?F = space ?M"
+        using subalg by (auto simp: subalgebra_def)
+      then show "Z -` B \<inter> space ?M \<in> sets ?F"
+        using ZB by simp
+    qed
+    show ?thesis
+      using sets.sigma_sets_subset[OF gen] by simp
+  qed
+  have nth_meas: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
+  proof -
+    have "(\<lambda>v :: real^'n. v $ i) = (\<lambda>v. inner v (axis i 1))"
+      by (simp add: fun_eq_iff cart_eq_inner_axis)
+    then show ?thesis
+      by simp
+  qed
+  have Dcomp: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s)
+      = (\<lambda>\<omega>. ?D \<omega> $ i)"
+    by (simp add: fun_eq_iff bmX_def)
+  have R: "sigma_sets (space ?M)
+      {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
+        |B. B \<in> sets borel} \<subseteq> sets ?V"
+  proof -
+    have gen: "{(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B
+        \<inter> space ?M |B. B \<in> sets borel} \<subseteq> sets ?V"
+    proof safe
+      fix B :: "real set" assume B: "B \<in> sets borel"
+      have Ci: "(\<lambda>v :: real^'n. v $ i) -` B \<in> sets borel"
+        using measurable_sets[OF nth_meas B] by simp
+      have veq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B
+          \<inter> space ?M
+          = ?D -` ((\<lambda>v. v $ i) -` B) \<inter> space ?M"
+        unfolding Dcomp by auto
+      have "?D -` ((\<lambda>v. v $ i) -` B) \<inter> space ?M
+          \<in> {?D -` C \<inter> space ?M |C. C \<in> sets borel}"
+        using Ci by blast
+      then have "?D -` ((\<lambda>v. v $ i) -` B) \<inter> space ?M
+          \<in> sigma_sets (space ?M) {?D -` C \<inter> space ?M |C. C \<in> sets borel}"
+        by (rule sigma_sets.Basic)
+      then show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B
+          \<inter> space ?M \<in> sets ?V"
+        unfolding veq sets_vimage_algebra .
+    qed
+    show ?thesis
+      using sets.sigma_sets_subset[OF gen] by simp
+  qed
+  show ?thesis
+    unfolding BMP.indep_var_eq
+  proof (intro conjI)
+    show "Z \<in> borel_measurable ?M"
+      by (rule Z_M)
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s)
+        \<in> borel_measurable ?M"
+      using s st
+      by (intro borel_measurable_diff measurable_bm_coordinate) auto
+    have "BMP.indep_sets (case_bool (sets ?F) (sets ?V)) UNIV"
+      using base unfolding BMP.indep_set_def .
+    then have "BMP.indep_sets (case_bool
+        (sigma_sets (space ?M)
+          {Z -` B \<inter> space ?M |B. B \<in> sets borel})
+        (sigma_sets (space ?M)
+          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
+            |B. B \<in> sets borel})) UNIV"
+      by (rule BMP.indep_sets_mono_sets)
+        (auto split: bool.split simp: L R)
+    then show "BMP.indep_set
+        (sigma_sets (space ?M)
+          {Z -` B \<inter> space ?M |B. B \<in> sets borel})
+        (sigma_sets (space ?M)
+          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
+            |B. B \<in> sets borel})"
+      unfolding BMP.indep_set_def .
+  qed
+qed
+
 end
