@@ -525,6 +525,74 @@ proof -
   qed
 qed
 
+lemma pstep_integral:
+  fixes K :: "('b :: polish_space) set"
+    and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes T: "0 \<le> T" and K: "closed K"
+    and s\<Lambda>: "sets \<Lambda> = sets (borel_of (mtopology_of
+      (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and fin: "finite_measure \<Lambda>"
+  shows "(\<integral>f. pstep T K l N f \<partial>\<Lambda>)
+      = exp (- l * T) * measure \<Lambda> (space \<Lambda>)
+        + (\<Sum> j = 1..<N.
+            (exp (- l * (real j * T / real N))
+              - exp (- l * (real (Suc j) * T / real N)))
+            * measure \<Lambda> {f \<in> mspace (path_metric T).
+                pexit T K f < real j * T / real N})"
+proof -
+  interpret finite_measure \<Lambda> by fact
+  have sp\<Lambda>: "space \<Lambda> = mspace (path_metric T)"
+    using sets_eq_imp_space_eq[OF s\<Lambda>]
+    by (simp add: space_borel_of topspace_mtopology_of)
+  have setj: "{g. pexit T K g < real j * T / real N} \<inter> space \<Lambda>
+      = {f \<in> mspace (path_metric T).
+          pexit T K f < real j * T / real N}" for j
+    unfolding sp\<Lambda> by auto
+  have memj: "{g. pexit T K g < real j * T / real N} \<inter> space \<Lambda>
+      \<in> sets \<Lambda>" for j
+    unfolding setj s\<Lambda>
+    by (intro borel_of_open pexit_sublevel_open[OF T K])
+  have int_ind: "integrable \<Lambda>
+      (\<lambda>f. indicat_real {g. pexit T K g < real j * T / real N} f)"
+    for j
+    using memj[of j]
+    by (auto simp: integrable_indicator_iff emeasure_eq_measure)
+  have int_term: "integrable \<Lambda>
+      (\<lambda>f. (exp (- l * (real j * T / real N))
+          - exp (- l * (real (Suc j) * T / real N)))
+        * indicat_real {g. pexit T K g < real j * T / real N} f)"
+    for j
+    by (intro integrable_mult_right int_ind)
+  have "(\<integral>f. pstep T K l N f \<partial>\<Lambda>)
+      = (\<integral>f. exp (- l * T) \<partial>\<Lambda>)
+        + (\<integral>f. (\<Sum> j = 1..<N.
+            (exp (- l * (real j * T / real N))
+              - exp (- l * (real (Suc j) * T / real N)))
+            * indicat_real {g. pexit T K g < real j * T / real N} f) \<partial>\<Lambda>)"
+    unfolding pstep_def
+    by (intro Bochner_Integration.integral_add integrable_const
+        Bochner_Integration.integrable_sum int_term)
+  also have "(\<integral>f. exp (- l * T) \<partial>\<Lambda>)
+      = exp (- l * T) * measure \<Lambda> (space \<Lambda>)"
+    by (simp add: mult.commute)
+  also have "(\<integral>f. (\<Sum> j = 1..<N.
+      (exp (- l * (real j * T / real N))
+        - exp (- l * (real (Suc j) * T / real N)))
+      * indicat_real {g. pexit T K g < real j * T / real N} f) \<partial>\<Lambda>)
+      = (\<Sum> j = 1..<N. (\<integral>f.
+          (exp (- l * (real j * T / real N))
+            - exp (- l * (real (Suc j) * T / real N)))
+          * indicat_real {g. pexit T K g < real j * T / real N} f \<partial>\<Lambda>))"
+    by (rule Bochner_Integration.integral_sum[OF int_term])
+  also have "\<dots> = (\<Sum> j = 1..<N.
+      (exp (- l * (real j * T / real N))
+        - exp (- l * (real (Suc j) * T / real N)))
+      * measure \<Lambda> {f \<in> mspace (path_metric T).
+          pexit T K f < real j * T / real N})"
+    by (intro sum.cong refl) (simp add: setj)
+  finally show ?thesis .
+qed
+
 lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
