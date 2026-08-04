@@ -457,6 +457,38 @@ constraint passes to the limit by the RQ-A toolkit; the radius identity is
 a closed path condition and survives weak limits directly. Falsify cheaply
 before building.
 
+**SCOPING RESULT (2026-08-04), the cheap route for `n − k = 1`:** the
+Example 3.1 process admits an EXPLICIT representation with no SDE
+theory.  For `x ≠ 0` in the plane (prototype `n = 2`, `k = 1`):
+
+    X_t = √(|x|² + t) · (cos(W_{c(t)} + φ₀), sin(W_{c(t)} + φ₀)),
+    c(t) = ln(1 + t/|x|²),  (cos φ₀, sin φ₀) = x/|x|.
+
+Both the martingale property and the compensated-square identities
+follow from GAUSSIAN CONDITIONAL TRIGONOMETRIC EXPECTATIONS:
+`E[cos(a·W_{c(t)} + b) | F_{c(s)}] = cos(a·W_{c(s)} + b)·e^{−a²(c(t)−c(s))/2}`,
+and `R(t)·e^{−(c(t))/2} = |x|` is constant — the drift cancels
+identically.  The covariance works out to `a(X_t) = I − X Xᵀ/|X|²`
+(trace 1 = n − k), the radius is deterministic, and with the constant
+horizon `τ ≡ r² − |x|²` the market lies in the (stopped) class with
+`ess_inf_time = ennreal (r² − |x|²) = ennreal (ball_v r 1 x)` —
+matching `stopped_val_fn_le_ball_v`, hence `stopped_val_fn = ball_v` at
+such `x`.  For general `k < n` the same construction embedded in an
+`(n−k+1)`-dimensional coordinate subspace needs SPHERICAL Brownian
+motion for `n − k ≥ 2` — that part stays on the discrete route.
+
+Ingredient inventory (all in `Brownian_Market.thy` except the last):
+past/increment independence (`bm_paths_past_increment_indep`, the
+"Increments are independent of the natural filtration" section),
+Gaussian moments (`gauss_measure_mean`, `gauss_measure_snd_moment`);
+MISSING: the Gaussian trig integral `∫ cos(a·ξ) dgauss(τ) = e^{−a²τ/2}`
+(derive from HOL-Probability's normal characteristic function or by
+differentiating under the integral) and its conditional form for
+bounded `g(increment)·past` factorizations.  First brick: a
+`bm_increment_cond_exp` lemma — for bounded measurable `g`,
+`AE ω. cond_exp M (F s) (λω. g (W_t ω − W_s ω)) ω = ∫ g dgauss(t−s)` —
+then the trig instances.
+
 ### N5. The weak DPP (RQ-B; ~1,500–3,000 lines, HIGH risk)
 
 Bouchard–Touzi's weak DPP avoids measurable selection by replacing `v` with
