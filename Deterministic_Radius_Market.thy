@@ -3085,4 +3085,177 @@ theorem martingale_coord_Z_drXs:
   by (rule martingale_stopped_deterministic
       [OF martingale_coord_Z_drX[OF q] T0])
 
+subsection \<open>Spectral facts of the tangent projection\<close>
+
+definition drv :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2"
+  where
+  "drv q \<phi> u \<omega> = (\<chi> j. if j = 1 then sin (drW (drc q u) \<omega> + \<phi>)
+                       else - cos (drW (drc q u) \<omega> + \<phi>))"
+
+lemma dra_outer:
+  "dra q \<phi> u \<omega> $ j $ l = drv q \<phi> u \<omega> $ j * drv q \<phi> u \<omega> $ l"
+  by (simp add: dra_def drv_def)
+
+lemma drv_norm: "drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega> = 1"
+proof -
+  define sn where "sn = sin (drW (drc q u) \<omega> + \<phi>)"
+  define c where "c = cos (drW (drc q u) \<omega> + \<phi>)"
+  have "drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega> = sn * sn + c * c"
+    by (simp add: drv_def inner_vec_def UNIV_2 sn_def c_def)
+  also have "\<dots> = 1"
+    unfolding sn_def c_def
+    by (metis sin_cos_squared_add3 add.commute)
+  finally show ?thesis .
+qed
+
+lemma dra_mult_vec:
+  "dra q \<phi> u \<omega> *v x = (drv q \<phi> u \<omega> \<bullet> x) *\<^sub>R drv q \<phi> u \<omega>"
+  by (simp add: matrix_vector_mult_def dra_outer inner_vec_def
+      vec_eq_iff UNIV_2 algebra_simps)
+
+lemma dra_sym: "transpose (dra q \<phi> u \<omega>) = dra q \<phi> u \<omega>"
+  by (simp add: transpose_def vec_eq_iff dra_outer mult.commute)
+
+lemma dra_psd: "psd (dra q \<phi> u \<omega>)"
+proof -
+  have "0 \<le> x \<bullet> (dra q \<phi> u \<omega> *v x)" for x
+  proof -
+    have "x \<bullet> (dra q \<phi> u \<omega> *v x)
+        = (drv q \<phi> u \<omega> \<bullet> x) * (drv q \<phi> u \<omega> \<bullet> x)"
+      by (simp add: dra_mult_vec inner_commute)
+    then show ?thesis by simp
+  qed
+  then show ?thesis by (simp add: psd_def dra_sym)
+qed
+
+lemma dra_eigen_lb: "eigen_lb (dra q \<phi> u \<omega>) 1"
+  unfolding eigen_lb_def
+proof (intro exI[of _ "span {drv q \<phi> u \<omega>}"] conjI)
+  show "subspace (span {drv q \<phi> u \<omega>})" by (rule subspace_span)
+  have v0: "drv q \<phi> u \<omega> \<noteq> 0"
+    using drv_norm[of q \<phi> u \<omega>] by auto
+  have "drv q \<phi> u \<omega> \<in> span {drv q \<phi> u \<omega>}"
+    by (rule span_base) simp
+  with v0 have ne: "\<not> span {drv q \<phi> u \<omega>} \<subseteq> {0}" by auto
+  have "dim (span {drv q \<phi> u \<omega>}) \<noteq> 0"
+    using ne dim_eq_0 by blast
+  then show "1 \<le> dim (span {drv q \<phi> u \<omega>})" by linarith
+  show "\<forall>x \<in> span {drv q \<phi> u \<omega>}.
+      x \<bullet> x \<le> x \<bullet> (dra q \<phi> u \<omega> *v x)"
+  proof
+    fix x assume "x \<in> span {drv q \<phi> u \<omega>}"
+    then obtain c where x: "x = c *\<^sub>R drv q \<phi> u \<omega>"
+      by (auto simp: span_singleton)
+    have "x \<bullet> x = c * c"
+      unfolding x by (simp add: drv_norm)
+    moreover have "x \<bullet> (dra q \<phi> u \<omega> *v x) = c * c"
+      unfolding x by (simp add: dra_mult_vec drv_norm inner_commute)
+    ultimately show "x \<bullet> x \<le> x \<bullet> (dra q \<phi> u \<omega> *v x)" by simp
+  qed
+qed
+
+lemma dra_eigen_ub:
+  assumes L: "1 \<le> L"
+  shows "eigen_ub (dra q \<phi> u \<omega>) L"
+  unfolding eigen_ub_def
+proof
+  fix x :: "real^2"
+  have "x \<bullet> (dra q \<phi> u \<omega> *v x) = (drv q \<phi> u \<omega> \<bullet> x)\<^sup>2"
+    by (simp add: dra_mult_vec inner_commute power2_eq_square)
+  also have "\<dots> \<le> (drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega>) * (x \<bullet> x)"
+    by (rule Cauchy_Schwarz_ineq)
+  also have "\<dots> = x \<bullet> x" by (simp add: drv_norm)
+  also have "\<dots> \<le> L * (x \<bullet> x)"
+    using mult_right_mono[OF L inner_ge_zero] by simp
+  finally show "x \<bullet> (dra q \<phi> u \<omega> *v x) \<le> L * (x \<bullet> x)" .
+qed
+
+lemma dra_trace: "trace (dra q \<phi> u \<omega>) = 1"
+proof -
+  have "trace (dra q \<phi> u \<omega>) = drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega>"
+    by (simp add: trace_def dra_outer inner_vec_def)
+  then show ?thesis by (simp add: drv_norm)
+qed
+
+subsection \<open>Geometric facts of the stopped process\<close>
+
+lemma drXs_norm:
+  assumes q: "0 < q" and t: "0 \<le> t" and T0: "0 \<le> T0"
+  shows "norm (drXs q \<phi> T0 t \<omega>) = drR q (min t T0)"
+  unfolding drXs_def
+  by (rule drX_norm[OF q]) (use t T0 in auto)
+
+lemma drXs_stopped: "drXs q \<phi> T0 s \<omega> = drXs q \<phi> T0 (min s T0) \<omega>"
+proof -
+  have "min (min s T0) T0 = min s T0"
+    by (metis min.assoc min.idem)
+  then show ?thesis by (simp add: drXs_def)
+qed
+
+lemma drXs_start_AE:
+  fixes q \<phi> T0 :: real
+  assumes q: "0 < q" and T0: "0 \<le> T0"
+  shows "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
+      drXs q \<phi> T0 0 \<omega>
+      = sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)"
+proof -
+  have "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
+      cbmX (0 :: real^2) 0 \<omega> = bmX (0 :: real^2) 0 \<omega>"
+    by (intro cbmX_ae_eq) simp
+  moreover have "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
+      bmX (0 :: real^2) 0 \<omega> = 0"
+    by (rule bmX_start)
+  ultimately have z: "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
+      Bcont 0 (\<omega> 1) = 0"
+  proof (eventually_elim)
+    case (elim \<omega>)
+    then have "cbmX (0 :: real^2) 0 \<omega> = 0" by simp
+    then have "cbmX (0 :: real^2) 0 \<omega> $ 1 = 0" by simp
+    then show ?case by (simp add: cbmX_def)
+  qed
+  show ?thesis
+    using z
+  proof (eventually_elim)
+    case (elim \<omega>)
+    have m0: "min 0 T0 = 0" using T0 by simp
+    show ?case
+      unfolding drXs_def m0
+      by (simp add: drX_def drW_def elim drR_def cong: if_cong)
+  qed
+qed
+
+lemma drX_cont:
+  assumes q: "0 < q"
+  shows "continuous_on {0..} (\<lambda>t. drX q \<phi> t \<omega>)"
+proof -
+  have cW: "continuous_on {0..} (\<lambda>t. Bcont (drc q t) (\<omega> 1))"
+    by (rule continuous_on_compose2[OF Bcont_cont drc_cont[OF q]])
+      (auto intro: drc_nonneg[OF q])
+  have cR: "continuous_on {0..} (\<lambda>t. drR q t)"
+    unfolding drR_def by (intro continuous_intros)
+  have comp: "continuous_on {0..}
+      (\<lambda>t. if i = (1 :: 2) then cos (drW (drc q t) \<omega> + \<phi>)
+           else sin (drW (drc q t) \<omega> + \<phi>))" for i
+  proof (cases "i = 1")
+    case True
+    show ?thesis
+      unfolding True drW_def by (auto intro!: continuous_intros cW)
+  next
+    case False
+    show ?thesis
+      using False unfolding drW_def
+      by (auto intro!: continuous_intros cW)
+  qed
+  show ?thesis
+    unfolding drX_def
+    by (intro continuous_intros cR comp)
+qed
+
+lemma drXs_cont:
+  assumes q: "0 < q" and T0: "0 \<le> T0"
+  shows "continuous_on {0..} (\<lambda>t. drXs q \<phi> T0 t \<omega>)"
+  unfolding drXs_def
+  by (rule continuous_on_compose2[OF drX_cont[OF q]])
+    (auto intro!: continuous_intros simp: T0)
+
 end
