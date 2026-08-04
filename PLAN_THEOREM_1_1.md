@@ -348,8 +348,46 @@ Faithful decomposition (statuses of ingredients in brackets):
    `f_λ(P) = −(1/λ) log E_P[e^{−λ τ_K}]` (τ_K USC ⇒ e^{−λτ_K} LSC
    bounded ⇒ E_P LSC by portmanteau ⇒ f_λ USC; essinf = inf_λ f_λ).
    This replaces/simplifies the `vshift` route for Prop 2.4 and is
-   what the DPP consumes.  [New but short; `Exit_Time.thy` exists —
-   check its τ_K against the paper's (1.8).]
+   what the DPP consumes.
+   STARTED (commit 146c4d4): new theory `Exit_Semicontinuity.thy`
+   (in ROOT after Section_2_Usc; imports only Path_Space + Exit_Time
+   + Value_Function, so its PIDE cone is small): `pexit T K =
+   etime T (−K) (λr g. g r)` (capped path exit),
+   `pexit_sublevel_open` (strict sublevels open in
+   `mtopology_of (path_metric T)` — witness time in the open
+   complement + `continuous_map_path_eval`), `pexit_measurable`.
+   PIDE-green.
+   REMAINING, with worked-out proof designs:
+   L1 `ess_inf_time_le_laplace` (each `f_λ` dominates the essinf):
+   members `c` of the Sup-set are ≤ `ennreal T`, write `c = ennreal
+   c'`; `e^{−λτ} ≤ e^{−λc'}` AE; `∫ ∈ [e^{−λT}, e^{−λc'}]` so `ln` is
+   safe; monotonicity.  Needs τ bounded in `[0, T]` (pexit ✓).
+   L2 `ess_inf_time_eq_laplace_inf`
+   (`INF λ∈{0<..}. ennreal (f_λ) = ess_inf_time`): ≥ by L1 +
+   `INF_greatest`; ≤ by ε-argument: `p := prob {τ ≤ e' + ε} > 0`
+   (else `e' + ε` would be a member above the Sup), pick
+   `λ ≥ max 1 ((− ln p)/ε)`, then
+   `∫ e^{−λτ} ≥ e^{−λ(e'+ε)}·p` pointwise-minorant argument gives
+   `f_λ ≤ e' + 2ε`; close with `ennreal_le_epsilon`-style reasoning.
+   L3 `liminf` of `∫ e^{−λ·pexit} dΛ_i` ≥ `∫ … dΛ` along
+   `weak_conv_on` WITHOUT a general LSC portmanteau (none exists in
+   the AFP; no layer-cake for real integrands in HOL either — checked)
+   via the TELESCOPING STEP MINORANT: for a partition
+   `0 = s_0 < … < s_N = T` and `φ = exp(−λ·)` (decreasing, uniformly
+   continuous on `[0,T]`), the step function
+   `ψ = φ(T) + Σ_j (φ(s_j) − φ(s_{j+1}))·1_{pexit < s_j}` satisfies
+   `φ(pexit) − ω_φ(mesh) ≤ ψ ≤ φ(pexit)` (telescope; coefficients
+   ≥ 0), `∫ψ` is a finite positive combination of measures of OPEN
+   sets `{pexit < s_j}` (`pexit_sublevel_open`), so
+   `liminf ∫ψ dΛ_i ≥ ∫ψ dΛ` by the open-set liminf (`mweak_conv3`
+   inside a `mweak_conv_fin` interpretation as in Section_2_Usc line
+   ~3141) + `ereal_Liminf_add_mono` finite induction.  Mesh → 0 gives
+   L3; L1 + L2 + L3 then give the crown
+   `ess_inf_pexit_usc`: `limsup_i ess_inf_time (Λ_i) (pexit T K) ≤
+   ess_inf_time Λ (pexit T K)` along `weak_conv_on Λ_i Λ sequentially
+   (mtopology_of (path_metric T))` — the chain is
+   `essinf(Λ_i) ≤ f_λ(Λ_i)` (L1), `limsup f_λ(Λ_i) ≤ f_λ(Λ)` (L3 +
+   antitone log), `INF_λ` (L2); no USC-of-INF needed.
 
 Do NOT believe shortcuts through usc of `vshift` in the law argument:
 usc gives `vshift(Λ) ≥ limsup vshift(Qₘ)` — the WRONG direction.
