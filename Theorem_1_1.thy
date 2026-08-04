@@ -52,6 +52,7 @@ text \<open>
 
 theory Theorem_1_1
   imports Value_Function Relative_Arbitrage_Comparison Comparison_Assembly
+    Section_2_Usc Deterministic_Radius_Market
 begin
 
 theorem theorem_1_1_ball_fragment:
@@ -228,5 +229,110 @@ theorem theorem_1_1_uniqueness_general:
   shows "u x = w x"
   by (rule viscosity_uniqueness_compact
       [OF cK neK k(1) k(2) L cu cw su sw bd x])
+
+section \<open>Example 3.1 realises the ball value exactly (clause (3), n − k = 1)\<close>
+
+lemma ess_inf_time_const:
+  assumes M: "prob_space M"
+  shows "ess_inf_time M (\<lambda>_. c) = ennreal c"
+proof (rule antisym)
+  show "ess_inf_time M (\<lambda>_. c) \<le> ennreal c"
+    by (rule ess_inf_time_le_const[OF M]) simp
+  have "AE \<omega> in M. ennreal c \<le> ennreal c" by simp
+  then show "ennreal c \<le> ess_inf_time M (\<lambda>_. c)"
+    unfolding ess_inf_time_def by (intro Sup_upper) simp
+qed
+
+theorem deterministic_radius_stopped_market:
+  fixes q \<phi> r L :: real
+  assumes q: "0 < q" and L: "1 \<le> L" and qr: "q \<le> r\<^sup>2" and r0: "0 \<le> r"
+  shows "stopped_market 1 L (cball 0 r)
+      (sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>))
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      (drXs q \<phi> (r\<^sup>2 - q)) (dras q \<phi> (r\<^sup>2 - q)) (\<lambda>_. r\<^sup>2 - q)"
+  unfolding stopped_market_def
+proof (intro conjI)
+  show "sufficiently_volatile_market
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      (drXs q \<phi> (r\<^sup>2 - q)) (dras q \<phi> (r\<^sup>2 - q)) 1 L (cball 0 r)
+      (sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>))
+      (\<lambda>_. r\<^sup>2 - q)"
+    by (rule deterministic_radius_sufficiently_volatile[OF assms])
+  show "\<forall>s \<omega>. \<omega> \<in> space (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) \<longrightarrow>
+      drXs q \<phi> (r\<^sup>2 - q) s \<omega> = drXs q \<phi> (r\<^sup>2 - q) (min s (r\<^sup>2 - q)) \<omega>"
+    using drXs_stopped by blast
+  show "\<forall>s \<omega>. \<omega> \<in> space (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) \<longrightarrow>
+      r\<^sup>2 - q < s \<longrightarrow> dras q \<phi> (r\<^sup>2 - q) s \<omega> = 0"
+    using dras_killed by blast
+  have T0: "0 \<le> r\<^sup>2 - q" using qr by simp
+  show "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure). \<forall>l t. 0 \<le> t \<longrightarrow>
+      set_integrable lborel {0..t} (\<lambda>s. dras q \<phi> (r\<^sup>2 - q) s \<omega> $ l $ l)"
+    by (intro AE_I2 allI impI dras_diag_time_integrable[OF q T0])
+qed
+
+theorem stopped_val_fn_ball_eq_2d:
+  fixes x :: "real^2" and r L :: real
+  assumes L: "1 \<le> L" and x0: "0 < norm x" and xr: "norm x \<le> r"
+  shows "stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)"
+proof (rule antisym)
+  show "stopped_val_fn 1 L (cball 0 r) x \<le> ennreal (ball_v r 1 x)"
+    by (rule stopped_val_fn_le_ball_v)
+  define q where "q = x \<bullet> x"
+  have xne: "x \<noteq> 0" using x0 by auto
+  have qpos: "0 < q" unfolding q_def using xne
+    by (simp add: inner_gt_zero_iff)
+  have nsq: "(norm x)\<^sup>2 = q"
+    unfolding q_def by (simp add: power2_norm_eq_inner)
+  have qr: "q \<le> r\<^sup>2"
+    using power_mono[OF xr norm_ge_zero] nsq by simp
+  have r0: "0 \<le> r" using x0 xr by linarith
+  have sqn: "sqrt q = norm x"
+    using nsq by (metis norm_ge_zero real_sqrt_abs real_sqrt_pow2_iff
+        real_sqrt_power)
+  have unit: "(x $ 1 / norm x)\<^sup>2 + (x $ 2 / norm x)\<^sup>2 = 1"
+  proof -
+    have "x \<bullet> x = x $ 1 * x $ 1 + x $ 2 * x $ 2"
+      by (simp add: inner_vec_def UNIV_2)
+    then have "(x $ 1)\<^sup>2 + (x $ 2)\<^sup>2 = q"
+      unfolding q_def by (simp add: power2_eq_square)
+    then show ?thesis
+      using qpos nsq
+      by (simp add: power_divide add_divide_distrib [symmetric])
+  qed
+  obtain \<phi> where \<phi>1: "x $ 1 / norm x = cos \<phi>"
+    and \<phi>2: "x $ 2 / norm x = sin \<phi>"
+    by (rule sincos_total_2pi[OF unit]) blast
+  have xrep: "x = sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)"
+  proof -
+    have c1: "x $ 1 = norm x * cos \<phi>"
+      using \<phi>1 x0 by (simp add: field_simps)
+    have c2: "x $ 2 = norm x * sin \<phi>"
+      using \<phi>2 x0 by (simp add: field_simps)
+    show ?thesis
+      unfolding sqn
+      by (rule vec_eq_iff[THEN iffD2])
+        (auto simp: c1 c2 exhaust_2)
+  qed
+  have SM: "stopped_market 1 L (cball 0 r) x
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      (drXs q \<phi> (r\<^sup>2 - q)) (dras q \<phi> (r\<^sup>2 - q)) (\<lambda>_. r\<^sup>2 - q)"
+    using deterministic_radius_stopped_market[OF qpos L qr r0, of \<phi>]
+    unfolding xrep[symmetric] .
+  have EI: "ess_inf_time (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>_. r\<^sup>2 - q) = ennreal (r\<^sup>2 - q)"
+    by (rule ess_inf_time_const) simp
+  have mem: "ennreal (r\<^sup>2 - q) \<in> stopped_exit_vals 1 L (cball 0 r) x"
+    unfolding stopped_exit_vals_def
+    using SM EI by blast
+  have bv: "ball_v r 1 x = r\<^sup>2 - q"
+    unfolding ball_v_def q_def[symmetric]
+    using qr by (simp add: max_absorb1)
+  show "ennreal (ball_v r 1 x) \<le> stopped_val_fn 1 L (cball 0 r) x"
+    unfolding stopped_val_fn_def bv
+    by (rule Sup_upper[OF mem])
+qed
 
 end
