@@ -510,7 +510,31 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
       matrix (`eigen_lb` at dim 1 via the tangent direction,
       `eigen_ub` with `L ≥ 1`); `stopped_market` side conditions are
       definitional (stopped, killed, bounded diag).
-      STARTED (commit 1916b50): `drXs q φ T0 t = drX q φ (min t T0)`,
+      ESSENTIALLY DONE (commits 1916b50, 8423cc5, 5eef1b8):
+      **`deterministic_radius_sufficiently_volatile`** — for
+      `0 < q ≤ r²`, `0 ≤ r`, `1 ≤ L`, the stopped pair
+      `(drXs q φ (r²−q), dras q φ (r²−q))` with constant horizon,
+      `K = cball 0 r`, start `√q·(cos φ, sin φ)` satisfies ALL
+      clauses of `sufficiently_volatile_market` at `k=1, CARD=2`.
+      Spectral layer: `drv` (unit tangent), `dra = drv drvᵀ`,
+      `dra_psd`, `dra_eigen_lb` (span of the tangent, `dim_eq_0` +
+      linarith — the `by simp` route loops on span-subset rewrites),
+      `dra_eigen_ub` (Cauchy–Schwarz), `dra_trace = 1`.
+      CROSS-THEORY CAVEAT: `stopped_market` is defined in
+      `Section_2_Usc`, NOT in this theory's import closure — an
+      undefined name in a shows-clause silently becomes a FREE
+      variable (only symptom: "Undefined fact: stopped_market_def").
+      The packaging must live in a theory importing BOTH
+      `Section_2_Usc` and `Deterministic_Radius_Market` (natural
+      place: `Theorem_1_1.thy`, together with (f)); the three extra
+      clauses are exported as `drXs_stopped`, `dras_killed`,
+      `dras_diag_time_integrable`.
+      Other traps: `CARD(2) − 1` normalizes to `Suc 0` — instantiate
+      `dra_eigen_lb[unfolded One_nat_def]`; don't put `trace_def` in
+      a simpset where `dra_trace` (stated about `trace`) must fire;
+      `if_weak_cong` blocks rewriting under unresolved if-branches —
+      add `cong: if_cong`.
+      History of the block: `drXs q φ T0 t = drX q φ (min t T0)`,
       `dras q φ T0 u = (if u ≤ T0 then dra q φ u else 0)`;
       `set_integral_stopped_split` (generic killed-compensator
       reduction), `dra_diag_drC2` (diagonal = `(1 ∓ drC2)/2`),
