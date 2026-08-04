@@ -324,12 +324,18 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
    `char_std_normal_distribution`).
    **DONE** `gauss_measure_cos` / `gauss_measure_sin` (Re/Im ∘ char via
    `integral_Re/Im` + `prob_space.integrable_iexp`, `iexp → cis`).
-3. `bm_increment_cond_exp`: for bounded measurable `g`,
-   `AE ω. cond_exp bm_paths (F s) (λω. g (ω i t − ω i s)) ω
-      = ∫ y. g y ∂gauss_measure (t−s)` — copy the `bmX_has_cond_exp`
-   proof shape (`has_cond_expI'` + `indep_var_lebesgue_integral` over
-   `bm_indicator_increment_indep_var`); then the `cos/sin(a·+b)`
-   instances by angle-addition.
+3. **DONE** `bm_increment_has_cond_exp` — for bounded measurable `g`,
+   `has_cond_exp bm_paths (natural_filtration bm_paths 0 (bmX x0) s)
+   (λω. g (ω i t − ω i s)) (λω. ∫ y. g y ∂gauss_measure (t−s))`
+   (`has_cond_expI'` + `indep_var_lebesgue_integral` over
+   `bm_indicator_increment_indep_var`).  STILL TO DO in this brick: the
+   AE `cond_exp`-form via `has_cond_exp_charact(2)` (needs a
+   `sigma_finite_subalgebra` interpretation), and the `cos/sin(a·+b)`
+   instances by angle-addition
+   (`cos(a(W_s+Δ)+b) = cos(aW_s+b)cos(aΔ) − sin(aW_s+b)sin(aΔ)`, pull
+   the `F s`-measurable factors out with
+   `sigma_finite_subalgebra.cond_exp_measurable_mult`, then
+   `gauss_measure_cos/sin`).
 4. The process: definition on `bm_paths` (or `wiener_pre`) via the 1-D
    continuous modification, martingale + `coord_Z` from 3 and the
    constancy `R(t)e^{−c(t)/2} = |x|`; time change `c` is deterministic,
