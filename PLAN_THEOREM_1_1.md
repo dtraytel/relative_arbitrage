@@ -384,6 +384,20 @@ Faithful decomposition (statuses of ingredients in brackets):
    {pexit < s_j}` — finitely many OPEN sets (`pexit_sublevel_open`),
    so `liminf_i ∫ψ_N dΛ_i ≥ ∫ψ_N dΛ` via `mweak_conv3` +
    `ereal_Liminf_add_mono` finite induction; then `N → ∞`.
+   L3a DONE (commit 08ab029): `pstep` + `pstep_sandwich` exactly as
+   constructed above (traps: `LeastI_ex` not `LeastI[of]`;
+   `sum.mono_neutral_cong_right` not `sum.inter_filter`; exp-monotone
+   steps via `subst exp_le_cancel_iff` + linarith).
+   L3b REMAINING: (i) `∫ pstep dΛ = exp(−l·T)·measure(mspace) +
+   Σ coeff_j · measure {f ∈ mspace. pexit < s_j}` (finite sum of
+   indicator integrals; measurability from `pexit_sublevel_open` +
+   `borel_of_open`); (ii) `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
+   `mweak_conv3` open-set liminf (interpretation pattern
+   `mweak_conv_fin` as Section_2_Usc line ~3141) +
+   `ereal_Liminf_add_mono` over the finitely many terms; (iii) with
+   the sandwich, `liminf ∫ e^{−l·pexit} dΛ_i ≥ ∫ e^{−l·pexit} dΛ −
+   2(1 − e^{−lT/N})` for every N, let `N → ∞`; (iv) the crown
+   `ess_inf_pexit_usc` from L1 + L2 + L3 as designed below.
    L3 `liminf` of `∫ e^{−λ·pexit} dΛ_i` ≥ `∫ … dΛ` along
    `weak_conv_on` WITHOUT a general LSC portmanteau (none exists in
    the AFP; no layer-cake for real integrands in HOL either — checked)
