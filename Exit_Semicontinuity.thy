@@ -78,6 +78,24 @@ next
   ultimately show ?thesis by simp
 qed
 
+lemma pexit_measurable:
+  fixes K :: "('b :: polish_space) set"
+  assumes T: "0 \<le> T" and K: "closed K"
+  shows "pexit T K \<in> borel_measurable
+      (borel_of (mtopology_of (path_metric T
+        :: (real \<Rightarrow> 'b) metric)))"
+proof (rule borel_measurableI_less)
+  fix c :: real
+  have "{f \<in> space (borel_of (mtopology_of (path_metric T
+        :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
+      = {f \<in> mspace (path_metric T). pexit T K f < c}"
+    by (simp add: space_borel_of topspace_mtopology_of)
+  then show "{f \<in> space (borel_of (mtopology_of (path_metric T
+        :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
+      \<in> sets (borel_of (mtopology_of (path_metric T)))"
+    using borel_of_open[OF pexit_sublevel_open[OF T K]] by simp
+qed
+
 section \<open>The Laplace representation of the essential infimum\<close>
 
 text \<open>LR, proof of Lemma 2.1: with \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) ln E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close>, the
@@ -830,22 +848,170 @@ proof -
   qed
 qed
 
-lemma pexit_measurable:
-  fixes K :: "('b :: polish_space) set"
+lemma pstep_integrable:
+  fixes K :: "('b :: polish_space) set" and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
   assumes T: "0 \<le> T" and K: "closed K"
-  shows "pexit T K \<in> borel_measurable
-      (borel_of (mtopology_of (path_metric T
-        :: (real \<Rightarrow> 'b) metric)))"
-proof (rule borel_measurableI_less)
-  fix c :: real
-  have "{f \<in> space (borel_of (mtopology_of (path_metric T
-        :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
-      = {f \<in> mspace (path_metric T). pexit T K f < c}"
-    by (simp add: space_borel_of topspace_mtopology_of)
-  then show "{f \<in> space (borel_of (mtopology_of (path_metric T
-        :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
-      \<in> sets (borel_of (mtopology_of (path_metric T)))"
-    using borel_of_open[OF pexit_sublevel_open[OF T K]] by simp
+    and s\<Lambda>: "sets \<Lambda> = sets (borel_of (mtopology_of
+      (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and fin: "finite_measure \<Lambda>"
+  shows "integrable \<Lambda> (pstep T K l N)"
+proof -
+  interpret finite_measure \<Lambda> by fact
+  have memj: "{g. pexit T K g < real j * T / real N} \<inter> space \<Lambda>
+      \<in> sets \<Lambda>" for j
+  proof -
+    have sp\<Lambda>: "space \<Lambda> = mspace (path_metric T)"
+      using sets_eq_imp_space_eq[OF s\<Lambda>]
+      by (simp add: space_borel_of topspace_mtopology_of)
+    have eq: "{g. pexit T K g < real j * T / real N} \<inter> space \<Lambda>
+        = {f \<in> mspace (path_metric T).
+            pexit T K f < real j * T / real N}"
+      unfolding sp\<Lambda> by auto
+    have "{f \<in> mspace (path_metric T).
+        pexit T K f < real j * T / real N}
+        \<in> sets (borel_of (mtopology_of (path_metric T)))"
+      by (intro borel_of_open pexit_sublevel_open[OF T K])
+    then show ?thesis
+      unfolding eq s\<Lambda> .
+  qed
+  have int_ind: "integrable \<Lambda>
+      (\<lambda>f. indicat_real {g. pexit T K g < real j * T / real N} f)"
+    for j
+    using memj[of j]
+    by (auto simp: integrable_indicator_iff emeasure_eq_measure)
+  show ?thesis
+    unfolding pstep_def
+    by (intro Bochner_Integration.integrable_add integrable_const
+        Bochner_Integration.integrable_sum integrable_mult_right
+        int_ind)
+qed
+
+lemma exp_pexit_integral_liminf:
+  fixes K :: "('b :: polish_space) set"
+    and \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure" and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes T: "0 < T" and K: "closed K" and l: "0 < l"
+    and wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+  shows "ereal (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)
+      \<le> Liminf sequentially
+        (\<lambda>i. ereal (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i)))"
+proof -
+  let ?m = "path_metric T :: (real \<Rightarrow> 'b) metric"
+  let ?E = "\<lambda>M. (\<integral>f. exp (- l * pexit T K f) \<partial>M)"
+  let ?L = "Liminf sequentially
+      (\<lambda>i. ereal (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i)))"
+  have T0: "0 \<le> T" using T by simp
+  have wc': "(\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i)
+        = sets (borel_of (mtopology_of ?m)) \<and> finite_measure (\<Lambda>i i))
+      \<and> sets \<Lambda> = sets (borel_of (mtopology_of ?m)) \<and> finite_measure \<Lambda>"
+    using wc unfolding weak_conv_on_def by blast
+  have exp_int: "integrable M (\<lambda>f. exp (- l * pexit T K f))"
+    if s: "sets M = sets (borel_of (mtopology_of ?m))"
+      and f: "finite_measure M" for M
+  proof -
+    interpret finite_measure M by fact
+    have p: "pexit T K \<in> borel_measurable M"
+      using pexit_measurable[OF T0 K] s
+      by (metis measurable_cong_sets)
+    have m: "(\<lambda>f. exp (- l * pexit T K f)) \<in> borel_measurable M"
+      using p by measurable
+    have b: "norm (exp (- l * pexit T K f)) \<le> 1" for f
+      using pexit_nonneg[OF T0, of K f] l
+      by (simp add: exp_le_one_iff mult_nonneg_nonneg)
+    show ?thesis
+      by (rule integrable_const_bound[where B = 1])
+        (use m b in \<open>auto intro!: AE_I2\<close>)
+  qed
+  have key: "ereal (?E \<Lambda> - (1 - exp (- l * (T / real N)))
+      * measure \<Lambda> (space \<Lambda>)) \<le> ?L" if N: "0 < N" for N
+  proof -
+    have sand: "pstep T K l N f \<le> exp (- l * pexit T K f)
+        \<and> exp (- l * pexit T K f)
+          \<le> pstep T K l N f + (1 - exp (- l * (T / real N)))" for f
+      by (rule pstep_sandwich[OF T l N])
+    have int_pstep: "integrable \<Lambda> (pstep T K l N)"
+      using wc' by (intro pstep_integrable[OF T0 K]) auto
+    have int_e: "integrable \<Lambda> (\<lambda>f. exp (- l * pexit T K f))"
+      using wc' by (intro exp_int) auto
+    have up: "?E \<Lambda> \<le> (\<integral>f. pstep T K l N f \<partial>\<Lambda>)
+        + (1 - exp (- l * (T / real N))) * measure \<Lambda> (space \<Lambda>)"
+    proof -
+      have "?E \<Lambda> \<le> (\<integral>f. pstep T K l N f
+          + (1 - exp (- l * (T / real N))) \<partial>\<Lambda>)"
+        by (intro Bochner_Integration.integral_mono int_e
+            Bochner_Integration.integrable_add int_pstep
+            integrable_const)
+          (simp add: sand[THEN conjunct2])
+      also have "\<dots> = (\<integral>f. pstep T K l N f \<partial>\<Lambda>)
+          + (1 - exp (- l * (T / real N))) * measure \<Lambda> (space \<Lambda>)"
+        by (subst Bochner_Integration.integral_add
+            [OF int_pstep integrable_const])
+          (simp add: mult.commute)
+      finally show ?thesis .
+    qed
+    have lo: "\<forall>\<^sub>F i in sequentially.
+        ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i))
+        \<le> ereal (?E (\<Lambda>i i))"
+      using wc'[THEN conjunct1]
+    proof (eventually_elim)
+      case (elim i)
+      have i1: "integrable (\<Lambda>i i) (pstep T K l N)"
+        using elim by (intro pstep_integrable[OF T0 K]) auto
+      have i2: "integrable (\<Lambda>i i) (\<lambda>f. exp (- l * pexit T K f))"
+        using elim by (intro exp_int) auto
+      show ?case
+        by (intro ereal_less_eq(3)[THEN iffD2]
+            Bochner_Integration.integral_mono i1 i2)
+          (simp add: sand[THEN conjunct1])
+    qed
+    have "ereal (?E \<Lambda> - (1 - exp (- l * (T / real N)))
+        * measure \<Lambda> (space \<Lambda>)) \<le> ereal (\<integral>f. pstep T K l N f \<partial>\<Lambda>)"
+      using up by simp
+    also have "\<dots> \<le> Liminf sequentially
+        (\<lambda>i. ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i)))"
+      by (rule pstep_integral_liminf[OF T0 K less_imp_le[OF l] wc])
+    also have "\<dots> \<le> ?L"
+      by (rule Liminf_mono[OF lo])
+    finally show ?thesis .
+  qed
+  show ?thesis
+  proof (cases ?L)
+    case (real r)
+    have Nbound: "?E \<Lambda> - (1 - exp (- l * (T / real N)))
+        * measure \<Lambda> (space \<Lambda>) \<le> r" if N: "0 < N" for N
+      using key[OF N] real by simp
+    have errlim: "(\<lambda>N. ?E \<Lambda> - (1 - exp (- l * (T / real N)))
+        * measure \<Lambda> (space \<Lambda>)) \<longlonglongrightarrow> ?E \<Lambda>"
+    proof -
+      have "(\<lambda>N. T * (1 / real N)) \<longlonglongrightarrow> T * 0"
+        by (intro tendsto_mult tendsto_const lim_1_over_n)
+      then have "(\<lambda>N. T / real N) \<longlonglongrightarrow> 0" by simp
+      then have "(\<lambda>N. exp (- l * (T / real N))) \<longlonglongrightarrow> exp (- l * 0)"
+        by (intro tendsto_intros)
+      then have z: "(\<lambda>N. (1 - exp (- l * (T / real N)))
+          * measure \<Lambda> (space \<Lambda>)) \<longlonglongrightarrow> (1 - exp (- l * 0))
+          * measure \<Lambda> (space \<Lambda>)"
+        by (intro tendsto_intros)
+      have "(\<lambda>N. ?E \<Lambda> - (1 - exp (- l * (T / real N)))
+          * measure \<Lambda> (space \<Lambda>)) \<longlonglongrightarrow> ?E \<Lambda> - (1 - exp (- l * 0))
+          * measure \<Lambda> (space \<Lambda>)"
+        by (intro tendsto_diff tendsto_const z)
+      then show ?thesis by simp
+    qed
+    have "?E \<Lambda> \<le> r"
+      by (intro LIMSEQ_le_const2[OF errlim])
+        (metis Nbound Suc_le_eq gr0I le0 zero_less_Suc)
+    then show ?thesis using real by simp
+  next
+    case PInf
+    then show ?thesis by simp
+  next
+    case MInf
+    have "ereal (?E \<Lambda> - (1 - exp (- l * (T / real 1)))
+        * measure \<Lambda> (space \<Lambda>)) \<le> ?L"
+      by (rule key) simp
+    then show ?thesis using MInf by simp
+  qed
 qed
 
 end
