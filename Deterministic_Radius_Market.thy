@@ -1974,4 +1974,251 @@ proof -
     using swap lhs rhs by simp
 qed
 
+subsection \<open>The doubled decay and the compensator integral\<close>
+
+lemma drc_exp_diff:
+  fixes q s t :: real
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "exp (- (drc q t - drc q s)) = (q + s) / (q + t)"
+proof -
+  have qs: "0 < q + s" and qt: "0 < q + t" using q s st by auto
+  have e1: "1 + t / q = (q + t) / q" and e2: "1 + s / q = (q + s) / q"
+    using q by (simp_all add: field_simps)
+  have "drc q t - drc q s = ln ((q + t) / q) - ln ((q + s) / q)"
+    unfolding drc_def e1 e2 ..
+  also have "\<dots> = ln (q + t) - ln (q + s)"
+    using q qs qt by (simp add: ln_div)
+  finally have *: "drc q t - drc q s = ln (q + t) - ln (q + s)" .
+  have "exp (- (drc q t - drc q s)) = exp (ln (q + s) - ln (q + t))"
+    unfolding * by simp
+  also have "\<dots> = (q + s) / (q + t)"
+    using qs qt by (simp add: exp_diff exp_ln)
+  finally show ?thesis .
+qed
+
+lemma drc_exp_diff_sq:
+  fixes q s t :: real
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "exp (- (2::real)\<^sup>2 * (drc q t - drc q s) / 2)
+       = ((q + s) / (q + t))\<^sup>2"
+proof -
+  have eq: "- (2::real)\<^sup>2 * (drc q t - drc q s) / 2
+      = (- (drc q t - drc q s)) + (- (drc q t - drc q s))"
+    by simp
+  have "exp (- (2::real)\<^sup>2 * (drc q t - drc q s) / 2)
+      = exp (- (drc q t - drc q s)) * exp (- (drc q t - drc q s))"
+    unfolding eq by (rule exp_add)
+  also have "\<dots> = ((q + s) / (q + t))\<^sup>2"
+    unfolding drc_exp_diff[OF q s st] by (simp add: power2_eq_square)
+  finally show ?thesis .
+qed
+
+lemma drN_compensator_integral:
+  fixes q s t :: real
+  assumes qs: "0 < q + s" and st: "s \<le> t"
+  shows "(\<integral>u\<in>{s..t}. ((q + s) / (q + u))\<^sup>2 \<partial>lborel)
+       = (q + s) - (q + s)\<^sup>2 / (q + t)"
+proof -
+  have qu: "0 < q + u" if "s \<le> u" for u using qs that by auto
+  have cont: "continuous_on {s..t} (\<lambda>u. ((q + s) / (q + u))\<^sup>2)"
+    by (intro continuous_intros) (fastforce dest: qu)
+  have deriv: "((\<lambda>u. - (q + s)\<^sup>2 / (q + u)) has_vector_derivative
+      ((q + s) / (q + u))\<^sup>2) (at u within {s..t})"
+    if u: "s \<le> u" "u \<le> t" for u
+  proof -
+    have "((\<lambda>u. - (q + s)\<^sup>2 / (q + u)) has_real_derivative
+        (q + s)\<^sup>2 / (q + u)\<^sup>2) (at u within {s..t})"
+      using qu[OF u(1)]
+      by (auto intro!: derivative_eq_intros simp: power2_eq_square)
+    then show ?thesis
+      by (simp add: has_real_derivative_iff_has_vector_derivative
+          power_divide)
+  qed
+  have "(\<integral>x. indicat_real {s..t} x *\<^sub>R ((q + s) / (q + x))\<^sup>2 \<partial>lborel)
+      = (- (q + s)\<^sup>2 / (q + t)) - (- (q + s)\<^sup>2 / (q + s))"
+    by (rule integral_FTC_atLeastAtMost[OF st deriv cont])
+  also have "\<dots> = (q + s) - (q + s)\<^sup>2 / (q + t)"
+    using qs by (simp add: power2_eq_square)
+  finally show ?thesis
+    unfolding set_lebesgue_integral_def .
+qed
+
+subsection \<open>The double-angle process\<close>
+
+definition drC2 :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real" where
+  "drC2 q \<phi> u \<omega> = cos (2 * drW (drc q (max u 0)) \<omega> + 2 * \<phi>)"
+
+lemma drC2_eq:
+  "0 \<le> u \<Longrightarrow> drC2 q \<phi> u \<omega> = cos (2 * Bcont (drc q u) (\<omega> 1) + 2 * \<phi>)"
+  by (simp add: drC2_def drW_def max.absorb1)
+
+lemma drC2_abs: "\<bar>drC2 q \<phi> u \<omega>\<bar> \<le> 1"
+  by (simp add: drC2_def abs_cos_le_one)
+
+lemma drC2_cont:
+  assumes q: "0 < q"
+  shows "continuous_on UNIV (\<lambda>u. drC2 q \<phi> u \<omega>)"
+proof -
+  have m1: "continuous_on UNIV (\<lambda>u :: real. max u 0)"
+    by (intro continuous_intros)
+  have m2: "continuous_on UNIV (\<lambda>u :: real. drc q (max u 0))"
+    by (rule continuous_on_compose2[OF drc_cont[OF q] m1]) auto
+  have img: "(\<lambda>u :: real. drc q (max u 0)) ` UNIV \<subseteq> {0..}"
+    by (auto intro!: drc_nonneg[OF q])
+  have m3: "continuous_on UNIV (\<lambda>u. Bcont (drc q (max u 0)) (\<omega> 1))"
+    by (rule continuous_on_compose2[OF Bcont_cont m2 img])
+  show ?thesis
+    unfolding drC2_def drW_def
+    by (auto intro!: continuous_intros m3)
+qed
+
+lemma drC2_meas:
+  "drC2 q \<phi> u \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+  using measurable_cbmX_coord[of "drc q (max u 0)" "1 :: 2"]
+  unfolding drC2_def drW_def by measurable
+
+lemma SP_cbmX2: "Stochastic_Process.stochastic_process
+    (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0 (cbmX (0 :: real^2))"
+  by unfold_locales
+
+lemma drG_subalgebra: "subalgebra (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (cbmX (0 :: real^2)) u)"
+  by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+      [OF SP_cbmX2])
+
+lemma drG_filtered: "filtered_measure
+    (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (cbmX (0 :: real^2))) 0"
+  by (rule Stochastic_Process.stochastic_process.filtered_measure_natural_filtration
+      [OF SP_cbmX2])
+
+lemma drG_subalgebra_mono:
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "subalgebra
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) (drc q t))
+      (natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q s))"
+  by (rule filtered_measure.subalgebra_F[OF drG_filtered
+      drc_nonneg[OF q s] drc_mono[OF q s st]])
+
+lemma nth1_meas: "(\<lambda>v :: real^2. v $ 1) \<in> borel_measurable borel"
+proof -
+  have "(\<lambda>v :: real^2. v $ 1) = (\<lambda>v. inner v (axis 1 1))"
+    by (simp add: fun_eq_iff cart_eq_inner_axis)
+  then show ?thesis by simp
+qed
+
+lemma drW_adapted:
+  assumes u: "0 \<le> u"
+  shows "drW u \<in> borel_measurable
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) u)"
+proof -
+  have bu: "cbmX (0 :: real^2) u \<in> borel_measurable
+      (natural_filtration bm_paths 0 (cbmX (0 :: real^2)) u)"
+    by (rule Stochastic_Process.adapted_process.adapted[OF
+        Stochastic_Process.stochastic_process.adapted_process_natural_filtration
+        [OF SP_cbmX2] u])
+  have drW_cbmX: "drW u \<omega> = cbmX (0 :: real^2) u \<omega> $ 1" for \<omega>
+    by (simp add: drW_def cbmX_def)
+  show ?thesis
+    unfolding drW_cbmX[abs_def]
+    by (rule measurable_compose[OF bu nth1_meas])
+qed
+
+lemma drC2_adapted:
+  assumes q: "0 < q" and u: "0 \<le> u" and us: "u \<le> s"
+  shows "drC2 q \<phi> u \<in> borel_measurable
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) (drc q s))"
+proof -
+  have "drW (drc q u) \<in> borel_measurable
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) (drc q u))"
+    by (rule drW_adapted[OF drc_nonneg[OF q u]])
+  then have m: "drW (drc q u) \<in> borel_measurable
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) (drc q s))"
+    using drG_subalgebra_mono[OF q u us]
+    by (auto intro: measurable_from_subalg)
+  have "drC2 q \<phi> u = (\<lambda>\<omega>. cos (2 * drW (drc q u) \<omega> + 2 * \<phi>))"
+    unfolding drC2_def using u by (simp add: max.absorb1)
+  then show ?thesis
+    using m by simp measurable
+qed
+
+subsection \<open>The decay of the double-angle cosine against past events\<close>
+
+lemma drC2_event_integrable:
+  assumes B: "B \<in> sets (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+  shows "integrable bm_paths (\<lambda>\<omega>. indicat_real B \<omega> * drC2 q \<phi> v \<omega>)"
+proof -
+  have m: "(\<lambda>\<omega>. indicat_real B \<omega> * drC2 q \<phi> v \<omega>)
+      \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+    using B drC2_meas by measurable
+  show ?thesis
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use m drC2_abs in \<open>auto intro!: AE_I2 mult_le_one
+        simp: abs_mult indicator_def\<close>)
+qed
+
+lemma drC2_set_integral_decay:
+  fixes q \<phi> s u :: real
+  assumes q: "0 < q" and s: "0 \<le> s" and su: "s \<le> u"
+    and B: "B \<in> sets (natural_filtration
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+      (cbmX (0 :: real^2)) (drc q s))"
+  shows "(\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> u \<omega> \<partial>bm_paths)
+       = ((q + s) / (q + u))\<^sup>2
+         * (\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega> \<partial>bm_paths)"
+proof (cases "s = u")
+  case True
+  have "0 < q + u" using q s su by simp
+  then show ?thesis unfolding True[symmetric] using q s by simp
+next
+  case False
+  then have slu: "s < u" using su by simp
+  have c0: "0 \<le> drc q s" by (rule drc_nonneg[OF q s])
+  have clt: "drc q s < drc q u" by (rule drc_strict_mono[OF q s slu])
+  have BM: "B \<in> sets (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+    using B drG_subalgebra by (auto simp: subalgebra_def)
+  have KEY: "(\<integral>\<omega>. indicat_real B \<omega> *
+      (cos (2 * Bcont (drc q u) (\<omega> 1) + 2 * \<phi>)
+        - cos (2 * Bcont (drc q s) (\<omega> 1) + 2 * \<phi>)
+          * exp (- (2::real)\<^sup>2 * (drc q u - drc q s) / 2))
+      \<partial>bm_paths) = 0"
+    by (rule cbm_cos_set_integral[OF c0 clt B])
+  let ?e = "exp (- (2::real)\<^sup>2 * (drc q u - drc q s) / 2)"
+  have intu: "integrable bm_paths (\<lambda>\<omega>. indicat_real B \<omega> * drC2 q \<phi> u \<omega>)"
+    and ints: "integrable bm_paths (\<lambda>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega>)"
+    by (rule drC2_event_integrable[OF BM])+
+  have ints': "integrable bm_paths
+      (\<lambda>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega> * ?e)"
+    by (rule integrable_mult_left[OF ints])
+  have expand: "indicat_real B \<omega> *
+      (cos (2 * Bcont (drc q u) (\<omega> 1) + 2 * \<phi>)
+        - cos (2 * Bcont (drc q s) (\<omega> 1) + 2 * \<phi>) * ?e)
+      = indicat_real B \<omega> * drC2 q \<phi> u \<omega>
+        - indicat_real B \<omega> * drC2 q \<phi> s \<omega> * ?e" for \<omega>
+    using s su
+    by (simp add: drC2_eq[OF s] drC2_eq[OF order_trans[OF s su]]
+        right_diff_distrib mult_ac)
+  have Z: "(\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> u \<omega>
+        - indicat_real B \<omega> * drC2 q \<phi> s \<omega> * ?e \<partial>bm_paths) = 0"
+    using KEY unfolding expand .
+  have D: "(\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> u \<omega>
+        - indicat_real B \<omega> * drC2 q \<phi> s \<omega> * ?e \<partial>bm_paths)
+      = (\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> u \<omega> \<partial>bm_paths)
+        - (\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega> * ?e \<partial>bm_paths)"
+    by (rule Bochner_Integration.integral_diff[OF intu ints'])
+  have pull: "(\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega> * ?e \<partial>bm_paths)
+      = (\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega> \<partial>bm_paths) * ?e"
+    by (rule integral_mult_left_zero)
+  have *: "(\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> u \<omega> \<partial>bm_paths)
+      = ?e * (\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega> \<partial>bm_paths)"
+    using Z unfolding D pull by simp
+  show ?thesis
+    using * unfolding drc_exp_diff_sq[OF q s su] .
+qed
+
 end
