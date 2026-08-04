@@ -396,7 +396,25 @@ Faithful decomposition (statuses of ingredients in brackets):
    from the `f = 1` instance — instantiate the ∀f-clause MANUALLY,
    auto rewrites `∫1` to a measure first; the sequential-tendsto
    arrow `⇢` already carries `sequentially`).
-   REMAINING (assembly): (ii') `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
+   L3b-ii' DONE (commit 8eea75a): `pstep_integral_liminf` (the
+   ε/(number of terms) argument; traps: chain </≤ with `by order`;
+   ball facts need manual bspec extraction; `sum_distrib_left` AND
+   `_right`; `ereal_le_epsilon2` — the ⋀e::real form).
+   L3 WRITTEN, PIDE RE-VERIFY PENDING (commit c1c8391):
+   `pstep_integrable` + `exp_pexit_integral_liminf` (squeeze +
+   `lim_1_over_n` + `LIMSEQ_le_const2` with ereal case split;
+   `pexit_measurable` moved BEFORE its first use).  The PIDE session
+   wedged on an orphaned zombie task from a replaced command
+   (survives unload/reload) — after the next server restart, load
+   `Exit_Semicontinuity.thy` and check it is green before continuing.
+   THEN REMAINING: (iv) the crown `ess_inf_pexit_usc` — design: per
+   `l > 0`, eventually `essinf(Λ_i) ≤ ennreal(f_l(Λ_i))` (L1;
+   measurability via `measurable_cong_sets` from the eventually-sets
+   clause), and eventually `∫_i > ∫·e^{−lε}` (from L3 +
+   `le_Liminf_iff`) hence `f_l(Λ_i) ≤ f_l(Λ) + ε`; `Limsup_bounded`
+   then ε→0 (ennreal) then `INF_greatest` + L2 at Λ give
+   `Limsup_i essinf(Λ_i) ≤ ess_inf_time Λ (pexit T K)`.
+   OLD enumeration (superseded): (ii') `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
    `mweak_conv3` open-set liminf (interpretation pattern
    `mweak_conv_fin` as Section_2_Usc line ~3141) +
    `ereal_Liminf_add_mono` over the finitely many terms; (iii) with
