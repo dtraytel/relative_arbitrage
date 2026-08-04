@@ -550,10 +550,22 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
       tau_stopping for constant tau — the event is `{}` or `space`;
       X_paths_cont from `Bcont_cont` composition) and the final
       `interpretation`/lemma stating membership.
-   f. `ess_inf_time = ennreal (r² − q)` (constant tau) and the headline
-      `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)` for
-      `CARD = 2`, `0 < |x| ≤ r`, via `stopped_val_fn_le_ball_v` for ≤
-      and this witness for ≥.
+   f. **DONE AND PIDE-VERIFIED** (commits 631cb8c, 8cee2a6):
+      `Theorem_1_1.thy` now imports `Section_2_Usc` +
+      `Deterministic_Radius_Market` (the only place both are in scope)
+      and is green end to end: `ess_inf_time_const`,
+      `deterministic_radius_stopped_market` (the `stopped_market`
+      packaging), and the HEADLINE **`stopped_val_fn_ball_eq_2d`** —
+      for `x :: real^2`, `0 < ¦x¦ ≤ r`, `1 ≤ L`:
+      `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)`.
+      ≤ is `stopped_val_fn_le_ball_v`; ≥ exhibits the witness with
+      `essinf τ = r² − ¦x¦²` (polar representation via
+      `sincos_total_2pi`; membership in `stopped_exit_vals` by
+      EXPLICIT `exI` where-pins — blast diverges on the 5-fold ∃;
+      `power_mono` needs `[of 2]`; per-component vector equality via
+      `exhaust_2` in a `for i` have).
+      ITEM N4 (n − k = 1) IS COMPLETE.  General `n − k ≥ 2` (spherical
+      BM) remains on the discrete route as noted above.
 
 WORKFLOW for this item: develop each brick in a PIDE scratch importing
 `Arbitrage.Brownian_Continuous` (fast iteration, no downstream
