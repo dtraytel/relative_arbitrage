@@ -1791,4 +1791,187 @@ theorem martingale_drXs:
       0 (\<lambda>t. drX q \<phi> (min t T0))"
   by (rule martingale_stopped_deterministic[OF martingale_drX[OF q] T0])
 
+subsection \<open>Joint measurability of time-continuous processes\<close>
+
+text \<open>A function that is continuous in time and measurable in the sample
+  point is jointly measurable (dyadic discretization of time).  Needed to
+  interchange the compensator's time integral with expectations.\<close>
+
+lemma borel_measurable_continuous_time_process:
+  fixes f :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on UNIV (\<lambda>u. f u \<omega>)"
+    and meas: "\<And>u. f u \<in> borel_measurable M"
+  shows "(\<lambda>p. f (fst p) (snd p)) \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)"
+proof -
+  define g :: "nat \<Rightarrow> real \<Rightarrow> real"
+    where "g n u = real_of_int \<lfloor>u * 2 ^ n\<rfloor> / 2 ^ n" for n u
+  have mul_meas: "(\<lambda>u :: real. u * 2 ^ n) \<in> borel_measurable borel" for n
+    by measurable
+  have g_meas: "g n \<in> borel_measurable borel" for n
+    unfolding g_def
+    by (intro borel_measurable_divide borel_measurable_const
+        measurable_compose[OF mul_meas borel_measurable_real_floor])
+  have g_range: "range (g n) \<subseteq> (\<lambda>k. real_of_int k / 2 ^ n) ` UNIV" for n
+    unfolding g_def by auto
+  have g_cnt: "countable (range (g n))" for n
+    by (rule countable_subset[OF g_range]) auto
+  have pow_pos: "0 < (2 :: real) ^ n" for n by simp
+  have g_le: "g n u \<le> u" for n u
+  proof -
+    have "real_of_int \<lfloor>u * 2 ^ n\<rfloor> / 2 ^ n \<le> (u * 2 ^ n) / 2 ^ n"
+      by (intro divide_right_mono of_int_floor_le) simp
+    then show ?thesis unfolding g_def by simp
+  qed
+  have g_ge: "u - 1 / 2 ^ n \<le> g n u" for n u
+  proof -
+    have "(u * 2 ^ n - 1) / 2 ^ n \<le> real_of_int \<lfloor>u * 2 ^ n\<rfloor> / 2 ^ n"
+      by (intro divide_right_mono) simp_all
+    then show ?thesis
+      unfolding g_def by (simp add: diff_divide_distrib)
+  qed
+  have g_lim: "(\<lambda>n. g n u) \<longlonglongrightarrow> u" for u
+  proof (rule tendsto_sandwich)
+    show "\<forall>\<^sub>F n in sequentially. u - (1 / 2) ^ n \<le> g n u"
+      using g_ge by (intro always_eventually allI) (simp add: power_one_over)
+    show "\<forall>\<^sub>F n in sequentially. g n u \<le> u"
+      using g_le by (intro always_eventually allI)
+    have "(\<lambda>n. (1 / 2 :: real) ^ n) \<longlonglongrightarrow> 0"
+      by (rule LIMSEQ_realpow_zero) auto
+    then have "(\<lambda>n. u - (1 / 2 :: real) ^ n) \<longlonglongrightarrow> u - 0"
+      by (intro tendsto_diff tendsto_const)
+    then show "(\<lambda>n. u - (1 / 2 :: real) ^ n) \<longlonglongrightarrow> u" by simp
+  qed simp
+  have g_meas_l: "g n \<in> borel_measurable lborel" for n
+    using g_meas measurable_cong_sets[OF sets_lborel refl] by blast
+  have m: "(\<lambda>p :: real \<times> 'a. g n (fst p))
+      \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)" for n
+    by (intro measurable_compose[OF measurable_fst g_meas_l])
+  have step: "(\<lambda>p. f (g n (fst p)) (snd p))
+      \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)" for n
+  proof (rule measurable_compose_countable'
+      [where g = "\<lambda>p. g n (fst p)" and I = "range (g n)"])
+    show "\<And>i. i \<in> range (g n) \<Longrightarrow>
+        (\<lambda>p :: real \<times> 'a. f i (snd p)) \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)"
+      by (intro measurable_compose[OF measurable_snd meas])
+    show "countable (range (g n))" by (rule g_cnt)
+    have pre: "(\<lambda>p :: real \<times> 'a. g n (fst p)) -` {a} \<inter> space (lborel \<Otimes>\<^sub>M M)
+        \<in> sets (lborel \<Otimes>\<^sub>M M)" for a
+      by (rule measurable_sets[OF m]) simp
+    show "(\<lambda>p :: real \<times> 'a. g n (fst p))
+        \<in> measurable (lborel \<Otimes>\<^sub>M M) (count_space (range (g n)))"
+      by (rule measurable_count_space_eq_countable[THEN iffD2, OF g_cnt])
+        (use pre in auto)
+  qed
+  show ?thesis
+  proof (rule borel_measurable_LIMSEQ_real[OF _ step])
+    fix p :: "real \<times> 'a" assume p: "p \<in> space (lborel \<Otimes>\<^sub>M M)"
+    then have "snd p \<in> space M"
+      by (auto simp: space_pair_measure mem_Times_iff)
+    then have "isCont (\<lambda>u. f u (snd p)) (fst p)"
+      using cont continuous_on_interior[of UNIV "\<lambda>u. f u (snd p)"]
+      by (simp add: interior_UNIV)
+    then show "(\<lambda>n. f (g n (fst p)) (snd p)) \<longlonglongrightarrow> f (fst p) (snd p)"
+      using g_lim[of "fst p"]
+      by (rule isCont_tendsto_compose)
+  qed
+qed
+
+lemma borel_measurable_time_integral:
+  fixes f :: "real \<Rightarrow> 'a \<Rightarrow> real" and a b :: real
+  assumes cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on UNIV (\<lambda>u. f u \<omega>)"
+    and meas: "\<And>u. f u \<in> borel_measurable M"
+  shows "(\<lambda>\<omega>. \<integral>u\<in>{a..b}. f u \<omega> \<partial>lborel) \<in> borel_measurable M"
+proof -
+  have jm: "(\<lambda>p. f (fst p) (snd p)) \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)"
+    by (rule borel_measurable_continuous_time_process[OF cont meas])
+  have jm2: "(\<lambda>p. indicat_real {a..b} (fst p) * f (fst p) (snd p))
+      \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)"
+    using jm by measurable
+  have jm3: "(\<lambda>p. indicat_real {a..b} (snd p) * f (snd p) (fst p))
+      \<in> borel_measurable (M \<Otimes>\<^sub>M lborel)"
+    using measurable_pair_swap[OF jm2] by (simp add: case_prod_beta)
+  have "(\<lambda>\<omega>. \<integral>u. indicat_real {a..b} u * f u \<omega> \<partial>lborel) \<in> borel_measurable M"
+    by (rule sigma_finite_measure.borel_measurable_lebesgue_integral
+        [OF lborel.sigma_finite_measure_axioms])
+      (use jm3 in \<open>simp add: case_prod_beta\<close>)
+  then show ?thesis
+    unfolding set_lebesgue_integral_def by simp
+qed
+
+lemma time_integral_swap_event:
+  fixes f :: "real \<Rightarrow> 'a \<Rightarrow> real" and a b C :: real
+  assumes fin: "finite_measure M"
+    and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on UNIV (\<lambda>u. f u \<omega>)"
+    and meas: "\<And>u. f u \<in> borel_measurable M"
+    and bnd: "\<And>u \<omega>. \<omega> \<in> space M \<Longrightarrow> \<bar>f u \<omega>\<bar> \<le> C"
+    and B: "B \<in> sets M"
+  shows "(\<integral>\<omega>. indicat_real B \<omega> * (\<integral>u\<in>{a..b}. f u \<omega> \<partial>lborel) \<partial>M)
+       = (\<integral>u\<in>{a..b}. (\<integral>\<omega>. indicat_real B \<omega> * f u \<omega> \<partial>M) \<partial>lborel)"
+proof -
+  interpret finite_measure M by fact
+  interpret P: pair_sigma_finite lborel M
+    by (intro pair_sigma_finite.intro lborel.sigma_finite_measure_axioms
+        sigma_finite_measure_axioms)
+  define F where "F u \<omega> = indicat_real {a..b} u * (indicat_real B \<omega> * f u \<omega>)"
+    for u \<omega>
+  have jm: "(\<lambda>p. f (fst p) (snd p)) \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)"
+    by (rule borel_measurable_continuous_time_process[OF cont meas])
+  have Fm: "(\<lambda>p. F (fst p) (snd p)) \<in> borel_measurable (lborel \<Otimes>\<^sub>M M)"
+    unfolding F_def using jm B by measurable
+  have rect: "{a..b} \<times> B \<in> sets (lborel \<Otimes>\<^sub>M M)"
+    using B by (intro pair_measureI) auto
+  have rect_fin: "emeasure (lborel \<Otimes>\<^sub>M M) ({a..b} \<times> B) < \<infinity>"
+  proof -
+    have "emeasure (lborel \<Otimes>\<^sub>M M) ({a..b} \<times> B)
+        = emeasure lborel {a..b} * emeasure M B"
+      using B by (intro emeasure_pair_measure_Times) auto
+    also have "\<dots> < \<infinity>"
+    proof -
+      have "emeasure M B < \<infinity>"
+        by (simp add: emeasure_eq_measure)
+      moreover have "emeasure lborel {a..b} < \<infinity>"
+        by (cases "a \<le> b") (auto simp: emeasure_lborel_Icc)
+      ultimately show ?thesis
+        by (auto simp: ennreal_mult_less_top)
+    qed
+    finally show ?thesis .
+  qed
+  have int_ind: "integrable (lborel \<Otimes>\<^sub>M M)
+      (\<lambda>p. indicat_real ({a..b} \<times> B) p)"
+    using rect rect_fin
+    by (intro integrable_indicator_iff[THEN iffD2])
+      (auto simp: Int_absorb2 sets.sets_into_space)
+  have int_bnd: "integrable (lborel \<Otimes>\<^sub>M M)
+      (\<lambda>p. \<bar>C\<bar> * indicat_real ({a..b} \<times> B) p)"
+    by (intro integrable_mult_right int_ind)
+  have Fbound: "AE p in lborel \<Otimes>\<^sub>M M.
+      norm (F (fst p) (snd p)) \<le> norm (\<bar>C\<bar> * indicat_real ({a..b} \<times> B) p)"
+  proof (intro AE_I2)
+    fix p :: "real \<times> 'a" assume p: "p \<in> space (lborel \<Otimes>\<^sub>M M)"
+    then have sp: "snd p \<in> space M"
+      by (auto simp: space_pair_measure mem_Times_iff)
+    have "\<bar>f (fst p) (snd p)\<bar> \<le> C" by (rule bnd[OF sp])
+    then show "norm (F (fst p) (snd p))
+        \<le> norm (\<bar>C\<bar> * indicat_real ({a..b} \<times> B) p)"
+      by (cases p)
+        (auto simp: F_def indicator_def abs_mult mem_Times_iff)
+  qed
+  have intF: "integrable (lborel \<Otimes>\<^sub>M M) (\<lambda>p. F (fst p) (snd p))"
+    by (rule Bochner_Integration.integrable_bound[OF int_bnd Fm Fbound])
+  have intF': "integrable (lborel \<Otimes>\<^sub>M M) (case_prod F)"
+    using intF by (simp add: case_prod_beta')
+  have swap: "(\<integral>\<omega>. (\<integral>u. F u \<omega> \<partial>lborel) \<partial>M) = (\<integral>u. (\<integral>\<omega>. F u \<omega> \<partial>M) \<partial>lborel)"
+    by (rule P.Fubini_integral[OF intF'])
+  have lhs: "(\<integral>\<omega>. (\<integral>u. F u \<omega> \<partial>lborel) \<partial>M)
+      = (\<integral>\<omega>. indicat_real B \<omega> * (\<integral>u\<in>{a..b}. f u \<omega> \<partial>lborel) \<partial>M)"
+    unfolding set_lebesgue_integral_def F_def
+    by (simp add: mult_ac flip: integral_mult_right_zero)
+  have rhs: "(\<integral>u. (\<integral>\<omega>. F u \<omega> \<partial>M) \<partial>lborel)
+      = (\<integral>u\<in>{a..b}. (\<integral>\<omega>. indicat_real B \<omega> * f u \<omega> \<partial>M) \<partial>lborel)"
+    unfolding set_lebesgue_integral_def F_def
+    by (simp flip: integral_mult_right_zero)
+  show ?thesis
+    using swap lhs rhs by simp
+qed
+
 end
