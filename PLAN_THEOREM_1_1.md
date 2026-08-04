@@ -477,17 +477,36 @@ such `x`.  For general `k < n` the same construction embedded in an
 `(n−k+1)`-dimensional coordinate subspace needs SPHERICAL Brownian
 motion for `n − k ≥ 2` — that part stays on the discrete route.
 
-Ingredient inventory (all in `Brownian_Market.thy` except the last):
-past/increment independence (`bm_paths_past_increment_indep`, the
-"Increments are independent of the natural filtration" section),
-Gaussian moments (`gauss_measure_mean`, `gauss_measure_snd_moment`);
-MISSING: the Gaussian trig integral `∫ cos(a·ξ) dgauss(τ) = e^{−a²τ/2}`
-(derive from HOL-Probability's normal characteristic function or by
-differentiating under the integral) and its conditional form for
-bounded `g(increment)·past` factorizations.  First brick: a
-`bm_increment_cond_exp` lemma — for bounded measurable `g`,
-`AE ω. cond_exp M (F s) (λω. g (W_t ω − W_s ω)) ω = ∫ g dgauss(t−s)` —
-then the trig instances.
+Ingredient inventory — FALSIFICATION COMPLETE (2026-08-04), all
+positive, verified by scratch probes against the running session:
+`bm_indicator_increment_indep_var` (indicator of a past event and a
+coordinate increment are `indep_var` — the factorization engine, same
+shape as in `bmX_has_cond_exp`); `gauss_measure v = density lborel
+(normal_density 0 (sqrt v))` (`gauss_measure_def`);
+`char_std_normal_distribution : char std_normal_distribution =
+(λt. exp (−t²/2))` (HOL-Probability, in scope); `normal_density_affine`
+(instances in several locales) for rescaling.  NOT found ready-made:
+`distr bm_paths borel (λω. ω i t − ω i s) = gauss_measure (t−s)` —
+derive it from the product/increment structure (check
+`Increment_Moments` first: its moment computations must already contain
+the distributional fact or its proof pattern).
+
+Brick sequence for the `n − k = 1` build (in a scratch importing
+`Arbitrage.Brownian_Continuous`, moved into the tree when green):
+1. increment distribution = `gauss_measure (t−s)`;
+2. `∫ cos (a·y) dgauss v = exp (−a²v/2)` via `Re ∘ char` and the affine
+   rescale to `std_normal_distribution` (similarly `sin` ↦ 0);
+3. `bm_increment_cond_exp`: for bounded measurable `g`,
+   `AE ω. cond_exp bm_paths (F s) (λω. g (ω i t − ω i s)) ω
+      = ∫ y. g y ∂gauss_measure (t−s)`
+   by `has_cond_expI'` + `indep_var_lebesgue_integral` (copy the
+   `bmX_has_cond_exp` proof shape);
+4. the process `X_t = √(|x|²+t)·(cos(W_{c(t)}+φ), sin(W_{c(t)}+φ))`,
+   `c(t) = ln(1+t/|x|²)`, martingale + `coord_Z` via 3 with
+   `g := cos/sin(a·+b)` and the constancy `R(t)e^{−c(t)/2} = |x|`;
+5. locale membership + `ess_inf_time = ennreal (r²−|x|²)`, giving
+   `stopped_val_fn k L (cball 0 r) x = ennreal (ball_v r k x)` at
+   `0 < |x| ≤ r` for `k = n−1 = 1` — Example 3.1's prototype.
 
 ### N5. The weak DPP (RQ-B; ~1,500–3,000 lines, HIGH risk)
 
