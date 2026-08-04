@@ -261,4 +261,32 @@ proof (rule has_cond_expI')
   finally show "(\<integral>\<omega> \<in> A. g (?D \<omega>) \<partial>?M) = (\<integral>\<omega> \<in> A. ?c \<partial>?M)" .
 qed
 
+lemma bm_increment_cond_exp_AE:
+  fixes g :: "real \<Rightarrow> real" and i :: "'n::finite" and x0 :: "real^'n"
+  assumes s: "0 \<le> s" and st: "s < t"
+    and gm: "g \<in> borel_measurable borel" and gb: "\<And>y. \<bar>g y\<bar> \<le> C"
+  shows "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      cond_exp bm_paths (natural_filtration bm_paths 0 (bmX x0) s)
+        (\<lambda>\<omega>. g (\<omega> i t - \<omega> i s)) \<omega>
+      = (\<integral>y. g y \<partial>gauss_measure (t - s))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have fm: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M ?F"
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fm
+        Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  show ?thesis
+    using sigma_finite_subalgebra.has_cond_exp_charact(2)
+        [OF sfs bm_increment_has_cond_exp[OF s st gm gb]]
+    by eventually_elim simp
+qed
+
 end
