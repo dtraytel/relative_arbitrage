@@ -1288,4 +1288,115 @@ proof -
     by eventually_elim simp
 qed
 
+
+text \<open>The deterministic layer: time change and radius.\<close>
+
+definition drc :: "real \<Rightarrow> real \<Rightarrow> real" where "drc q t = ln (1 + t / q)"
+definition drR :: "real \<Rightarrow> real \<Rightarrow> real" where "drR q t = sqrt (q + t)"
+
+lemma drc_zero [simp]: "drc q 0 = 0"
+  by (simp add: drc_def)
+
+lemma drR_pos: "0 < q \<Longrightarrow> 0 \<le> t \<Longrightarrow> 0 < drR q t"
+  by (simp add: drR_def add_pos_nonneg)
+
+lemma drc_nonneg: "0 < q \<Longrightarrow> 0 \<le> t \<Longrightarrow> 0 \<le> drc q t"
+  by (simp add: drc_def divide_nonneg_pos)
+
+lemma drc_mono: "0 < q \<Longrightarrow> 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> drc q s \<le> drc q t"
+  by (auto simp: drc_def divide_nonneg_pos add_pos_nonneg
+      intro!: ln_mono? divide_right_mono)
+
+lemma drc_strict_mono: "0 < q \<Longrightarrow> 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> drc q s < drc q t"
+  by (auto simp: drc_def add_pos_nonneg
+      intro!: ln_strict_mono? divide_strict_right_mono)
+
+lemma exp_neg_ln_half:
+  assumes x: "0 < x"
+  shows "exp (- ln x / 2) = 1 / sqrt x"
+proof -
+  have "exp (- ln x / 2) = exp (ln x * (- (1 / 2)))"
+    by (simp add: field_simps)
+  also have "\<dots> = x powr (- (1 / 2))"
+    using x by (simp add: powr_def mult.commute)
+  also have "\<dots> = 1 / x powr (1 / 2)"
+    by (simp add: powr_minus_divide)
+  also have "\<dots> = 1 / sqrt x"
+    using x by (simp add: powr_half_sqrt)
+  finally show ?thesis .
+qed
+
+lemma drR_decay:
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "drR q t * exp (- (drc q t - drc q s) / 2) = drR q s"
+proof -
+  have qs: "0 < q + s" and qt: "0 < q + t" using q s st by auto
+  have a1: "0 < 1 + t / q" and a2: "0 < 1 + s / q"
+    using q s st by (auto simp: add_pos_nonneg divide_nonneg_pos)
+  have "drc q t - drc q s = ln ((1 + t / q) / (1 + s / q))"
+    unfolding drc_def using a1 a2 by (simp add: ln_div)
+  also have "(1 + t / q) / (1 + s / q) = (q + t) / (q + s)"
+    using a2 qs q by (subst frac_eq_eq) (auto simp: field_simps)
+  finally have dd: "drc q t - drc q s = ln ((q + t) / (q + s))" .
+  have pos: "0 < (q + t) / (q + s)" using qt qs by simp
+  have "exp (- (drc q t - drc q s) / 2) = 1 / sqrt ((q + t) / (q + s))"
+    unfolding dd by (rule exp_neg_ln_half[OF pos])
+  also have "sqrt ((q + t) / (q + s)) = sqrt (q + t) / sqrt (q + s)"
+    by (rule real_sqrt_divide)
+  also have "1 / (sqrt (q + t) / sqrt (q + s))
+      = sqrt (q + s) / sqrt (q + t)"
+    using qt by (simp add: field_simps)
+  finally have e: "exp (- (drc q t - drc q s) / 2)
+      = sqrt (q + s) / sqrt (q + t)" .
+  show ?thesis
+    unfolding drR_def e using qt by (simp add: field_simps)
+qed
+
+lemma drc_cont:
+  assumes q: "0 < q"
+  shows "continuous_on {0..} (drc q)"
+proof -
+  have ne: "1 + t / q \<noteq> 0" if "0 \<le> t" for t
+  proof -
+    have "0 \<le> t / q" by (rule divide_nonneg_pos[OF that q])
+    then show ?thesis by linarith
+  qed
+  show ?thesis
+    unfolding drc_def
+    by (intro continuous_intros) (use ne q in auto)
+qed
+
+text \<open>The process.\<close>
+
+definition drW :: "real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real" where
+  "drW u \<omega> = Bcont u (\<omega> 1)"
+
+definition drX :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2"
+  where
+  "drX q \<phi> t \<omega> = drR q t *\<^sub>R
+     (\<chi> j. if j = 1 then cos (drW (drc q t) \<omega> + \<phi>)
+           else sin (drW (drc q t) \<omega> + \<phi>))"
+
+lemma drX_norm:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "norm (drX q \<phi> t \<omega>) = drR q t"
+proof -
+  define c where "c = cos (drW (drc q t) \<omega> + \<phi>)"
+  define sn where "sn = sin (drW (drc q t) \<omega> + \<phi>)"
+  have cs: "c * c + sn * sn = 1"
+    unfolding c_def sn_def by (rule sin_cos_squared_add3)
+  have "drX q \<phi> t \<omega> \<bullet> drX q \<phi> t \<omega>
+      = (drR q t * c) * (drR q t * c) + (drR q t * sn) * (drR q t * sn)"
+    by (simp add: drX_def inner_vec_def UNIV_2 c_def sn_def)
+  also have "\<dots> = drR q t * drR q t * (c * c + sn * sn)"
+    by (simp add: algebra_simps)
+  also have "\<dots> = drR q t * drR q t"
+    unfolding cs by simp
+  finally have "norm (drX q \<phi> t \<omega>) = sqrt (drR q t * drR q t)"
+    by (simp add: norm_eq_sqrt_inner)
+  then show ?thesis
+    using drR_pos[OF q t]
+    by (simp add: power2_eq_square[symmetric])
+qed
+
 end
