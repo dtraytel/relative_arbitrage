@@ -401,12 +401,24 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
    b. **DONE** (commit c6788ff) `martingale_drX` — the VECTOR
       MARTINGALE of `drX q φ` via `martingale_vecI` + `exhaust_2`
       component split.
-   c. The stopped process `drXs q φ r t := drX q φ (min t (r² − q))`
-      with the constant horizon `τ ≡ r² − q` (assume `q ≤ r²`):
-      martingale because a deterministically-stopped martingale is one
-      (reindex; for `s ≤ t`: if `τ0 ≤ s` both sides equal `drX τ0`, if
-      `s < τ0` use the base property at `min t τ0` — NO optional
-      stopping needed, the time is deterministic).
+   c. **DONE** (commit e119204) `martingale_stopped_deterministic` —
+      GENERIC: `martingale M F 0 Y ⟹ 0 ≤ T0 ⟹
+      martingale M F 0 (λt. Y (min t T0))` (case split `T0 ≤ i` /
+      `i < T0`; `cond_exp_F_meas` above the horizon, the base property
+      at `min j T0` below — no optional stopping); instance
+      `martingale_drXs` for `drX`.  Proof-shape notes: in the
+      `martingale.intro` assembly, `unfold_locales` for the
+      `adapted_process` part leaves ONLY the `F i`-adaptedness goal
+      (plain-`M` measurability is auto-discharged — a leftover `show`
+      for it fails to refine); lift adaptedness with
+      `MY.subalgebra_F[OF m0, of i]` + `measurable_from_subalg`.
+      Same commit: the two `stochastic_process` side conditions in
+      `cbm_cos/sin_cond_exp` are now
+      `by unfold_locales (auto intro: measurable_cbmX)` — the previous
+      `(intro measurable_cbmX, simp)` had silently regressed in PIDE
+      (failed `have`s still feed downstream, so the regression was
+      invisible until a full-file `get_state`; CHECK `errors` on the
+      WHOLE file after big edits, not just the new region).
    d. `coord_Z` for the stopped process with
       `acov j k t ω := (if t ≤ r² − q then …trig products at
       (drW (drc q t) ω + φ)… else 0)`; the compensated-square
