@@ -397,14 +397,10 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
 
    NEXT MICRO-STEPS in brick 4, in order (each a scratch-and-copy
    iteration; the martingale_drX_cos proof is the template):
-   a. `martingale_drX_sin` — verbatim twin (`cbm_sin_cond_exp`; every
-      other line identical).
-   b. `martingale_drX` — the vector martingale of `drX q φ` via
-      `martingale_vecI` (Ito_Market; already in the import closure):
-      components by `exhaust_2` (`k = 1` → cos, `k = 2` → sin; the
-      component of `drX` is
-      `drX q φ t ω $ k = drR q t * (if k = 1 then cos … else sin …)`
-      by `drX_def` + `vector_scaleR_component`).
+   a. **DONE** (commit c6788ff) `martingale_drX_sin` — verbatim twin.
+   b. **DONE** (commit c6788ff) `martingale_drX` — the VECTOR
+      MARTINGALE of `drX q φ` via `martingale_vecI` + `exhaust_2`
+      component split.
    c. The stopped process `drXs q φ r t := drX q φ (min t (r² − q))`
       with the constant horizon `τ ≡ r² − q` (assume `q ≤ r²`):
       martingale because a deterministically-stopped martingale is one
