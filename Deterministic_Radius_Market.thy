@@ -996,4 +996,98 @@ proof -
   qed
 qed
 
+
+lemma cbm_sin_set_integral:
+  fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
+  assumes s: "0 \<le> s" and st: "s < t"
+    and A: "A \<in> sets (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (cbmX x0) s)"
+  shows "(\<integral>\<omega>. indicat_real A \<omega> *
+      (sin (a * Bcont t (\<omega> i) + b)
+        - sin (a * Bcont s (\<omega> i) + b) * exp (- a\<^sup>2 * (t - s) / 2))
+      \<partial>bm_paths) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?D = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sin (a * \<omega> i t + b)
+      - sin (a * \<omega> i s + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+  let ?D' = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sin (a * Bcont t (\<omega> i) + b)
+      - sin (a * Bcont s (\<omega> i) + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+  have t0: "0 \<le> t" using s st by simp
+  have aecoord: "AE \<omega> in ?M. Bcont u (\<omega> i) = \<omega> i u"
+    if u: "0 \<le> u" for u
+  proof -
+    have "AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
+      by (rule cbmX_ae_eq) (use u in simp)
+    then show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      then have "cbmX x0 u \<omega> $ i = bmX x0 u \<omega> $ i" by simp
+      then show ?case by (simp add: cbmX_def bmX_def)
+    qed
+  qed
+  have wM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i u) \<in> borel_measurable ?M"
+    if u: "0 \<le> u" for u
+    using u by (intro measurable_bm_coordinate) auto
+  have cwM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont u (\<omega> i))
+      \<in> borel_measurable ?M" for u
+    by (rule measurable_cbmX_coord)
+  have Dm: "?D \<in> borel_measurable ?M"
+    using wM[OF t0] wM[OF s] by measurable
+  have D'm: "?D' \<in> borel_measurable ?M"
+    using cwM by measurable
+  have expnn: "0 \<le> a\<^sup>2 * (t - s)"
+    using st by (intro mult_nonneg_nonneg) auto
+  have exple: "exp (- a\<^sup>2 * (t - s) / 2) \<le> 1"
+    using expnn by (simp add: exp_le_one_iff)
+  have Dabs: "\<bar>?D \<omega>\<bar> \<le> 2" for \<omega>
+  proof -
+    have "\<bar>?D \<omega>\<bar> \<le> \<bar>sin (a * \<omega> i t + b)\<bar>
+        + \<bar>sin (a * \<omega> i s + b) * exp (- a\<^sup>2 * (t - s) / 2)\<bar>"
+      by (rule abs_triangle_ineq4)
+    also have "\<dots> \<le> 1 + 1"
+      by (intro add_mono abs_sin_le_one)
+        (use exple in \<open>auto simp: abs_mult
+          intro!: mult_le_one abs_sin_le_one\<close>)
+    finally show ?thesis by simp
+  qed
+  have D'abs: "\<bar>?D' \<omega>\<bar> \<le> 2" for \<omega>
+  proof -
+    have "\<bar>?D' \<omega>\<bar> \<le> \<bar>sin (a * Bcont t (\<omega> i) + b)\<bar>
+        + \<bar>sin (a * Bcont s (\<omega> i) + b) * exp (- a\<^sup>2 * (t - s) / 2)\<bar>"
+      by (rule abs_triangle_ineq4)
+    also have "\<dots> \<le> 1 + 1"
+      by (intro add_mono abs_sin_le_one)
+        (use exple in \<open>auto simp: abs_mult
+          intro!: mult_le_one abs_sin_le_one\<close>)
+    finally show ?thesis by simp
+  qed
+  have D_int: "integrable ?M ?D"
+    by (rule BMP.integrable_const_bound[where B = 2])
+      (use Dm Dabs in \<open>auto intro!: AE_I2\<close>)
+  have D'_int: "integrable ?M ?D'"
+    by (rule BMP.integrable_const_bound[where B = 2])
+      (use D'm D'abs in \<open>auto intro!: AE_I2\<close>)
+  have ae_D: "AE \<omega> in ?M. ?D' \<omega> = ?D \<omega>"
+    using aecoord[OF t0] aecoord[OF s]
+    by eventually_elim simp
+  show ?thesis
+  proof (rule set_integral_zero_transfer[where X = "bmX x0"
+      and X' = "cbmX x0" and t = s])
+    show "\<And>u. 0 \<le> u \<Longrightarrow> bmX x0 u \<in> borel_measurable ?M"
+      by (intro measurable_bmX) simp
+    show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
+      by (intro measurable_cbmX)
+    show "\<And>u. u \<in> {0..s} \<Longrightarrow> AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
+      by (rule cbmX_ae_eq) auto
+    show "integrable ?M ?D" by (rule D_int)
+    show "integrable ?M ?D'" by (rule D'_int)
+    show "AE \<omega> in ?M. ?D' \<omega> = ?D \<omega>" by (rule ae_D)
+    show "\<And>B. B \<in> sets (natural_filtration ?M 0 (bmX x0) s)
+        \<Longrightarrow> (\<integral>\<omega>. indicat_real B \<omega> * ?D \<omega> \<partial>?M) = 0"
+      by (rule bm_sin_set_integral[OF s st])
+    show "A \<in> sets (natural_filtration ?M 0 (cbmX x0) s)"
+      by (rule A)
+  qed
+qed
+
 end
