@@ -1303,13 +1303,29 @@ lemma drR_pos: "0 < q \<Longrightarrow> 0 \<le> t \<Longrightarrow> 0 < drR q t"
 lemma drc_nonneg: "0 < q \<Longrightarrow> 0 \<le> t \<Longrightarrow> 0 \<le> drc q t"
   by (simp add: drc_def divide_nonneg_pos)
 
-lemma drc_mono: "0 < q \<Longrightarrow> 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> drc q s \<le> drc q t"
-  by (auto simp: drc_def divide_nonneg_pos add_pos_nonneg
-      intro!: ln_mono? divide_right_mono)
+lemma drc_mono:
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "drc q s \<le> drc q t"
+proof -
+  have ps: "0 < 1 + s / q" and pt: "0 < 1 + t / q"
+    using q s st by (auto simp: add_pos_nonneg divide_nonneg_pos)
+  have "1 + s / q \<le> 1 + t / q"
+    using st q by (simp add: divide_right_mono)
+  then show ?thesis
+    unfolding drc_def using ps pt by (simp add: ln_le_cancel_iff)
+qed
 
-lemma drc_strict_mono: "0 < q \<Longrightarrow> 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> drc q s < drc q t"
-  by (auto simp: drc_def add_pos_nonneg
-      intro!: ln_strict_mono? divide_strict_right_mono)
+lemma drc_strict_mono:
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s < t"
+  shows "drc q s < drc q t"
+proof -
+  have ps: "0 < 1 + s / q" and pt: "0 < 1 + t / q"
+    using q s st by (auto simp: add_pos_nonneg divide_nonneg_pos)
+  have "1 + s / q < 1 + t / q"
+    using st q by (simp add: divide_strict_right_mono)
+  then show ?thesis
+    unfolding drc_def using ps pt by (simp add: ln_less_cancel_iff)
+qed
 
 lemma exp_neg_ln_half:
   assumes x: "0 < x"
@@ -2457,6 +2473,167 @@ proof -
   also have "\<dots> = (\<integral>\<omega>. indicat_real B \<omega> * drN q \<phi> s \<omega> \<partial>?M)"
     unfolding RHS S1 ..
   finally show ?thesis .
+qed
+
+subsection \<open>The compensated double-angle process is a martingale\<close>
+
+lemma drN_meas:
+  assumes q: "0 < q"
+  shows "drN q \<phi> t \<in> borel_measurable
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+  unfolding drN_def
+  using drC2_meas drC2_time_integral_meas[OF q] by measurable
+
+lemma drN_abs:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "\<bar>drN q \<phi> t \<omega>\<bar> \<le> (q + t) + t"
+proof -
+  have "\<bar>drN q \<phi> t \<omega>\<bar> \<le> \<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar>
+      + \<bar>set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>"
+    unfolding drN_def by (rule abs_triangle_ineq)
+  also have "\<dots> \<le> \<bar>q + t\<bar> * 1 + (t - 0)"
+  proof (intro add_mono)
+    have "\<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar> = \<bar>q + t\<bar> * \<bar>drC2 q \<phi> t \<omega>\<bar>"
+      by (simp add: abs_mult)
+    also have "\<dots> \<le> \<bar>q + t\<bar> * 1"
+      by (intro mult_left_mono drC2_abs abs_ge_zero)
+    finally show "\<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar> \<le> \<bar>q + t\<bar> * 1" .
+    show "\<bar>set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>
+        \<le> t - 0"
+      by (rule drC2_time_integral_abs[OF q t])
+  qed
+  also have "\<dots> = (q + t) + t" using q t by simp
+  finally show ?thesis .
+qed
+
+lemma drN_integrable:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "integrable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) (drN q \<phi> t)"
+  by (rule BMP.integrable_const_bound[where B = "(q + t) + t"])
+    (use drN_meas[OF q] drN_abs[OF q t] in \<open>auto intro!: AE_I2\<close>)
+
+lemma drC2_max: "drC2 q \<phi> (max u 0) = drC2 q \<phi> u"
+proof -
+  have eq: "max (max u 0) 0 = max u 0"
+    by (metis max.assoc max.idem)
+  show ?thesis
+    by (intro ext) (simp add: drC2_def eq)
+qed
+
+lemma drC2_adapted':
+  assumes q: "0 < q" and t: "0 \<le> t" and ut: "u \<le> t"
+  shows "drC2 q \<phi> u \<in> borel_measurable
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) (drc q t))"
+proof -
+  have "drC2 q \<phi> (max u 0) \<in> borel_measurable
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) (drc q t))"
+    by (rule drC2_adapted[OF q]) (use t ut in auto)
+  then show ?thesis unfolding drC2_max .
+qed
+
+lemma drN_adapted:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "drN q \<phi> t \<in> borel_measurable
+      (natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^2)) (drc q t))"
+proof -
+  let ?G = "natural_filtration (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+      (cbmX (0 :: real^2)) (drc q t)"
+  have part1: "(\<lambda>\<omega>. (q + t) * drC2 q \<phi> t \<omega>) \<in> borel_measurable ?G"
+    using drC2_adapted[OF q t order_refl] by measurable
+  have eqI: "set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)
+      = set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> (min u t) \<omega>)"
+    for \<omega>
+    by (rule set_lebesgue_integral_cong) (auto simp: min_absorb1)
+  have mc: "continuous_on UNIV (\<lambda>u :: real. min u t)"
+    by (intro continuous_intros)
+  have contmin: "continuous_on UNIV (\<lambda>u. drC2 q \<phi> (min u t) \<omega>)" for \<omega>
+    by (rule continuous_on_compose2[OF drC2_cont[OF q] mc]) auto
+  have measmin: "drC2 q \<phi> (min u t) \<in> borel_measurable ?G" for u
+    by (rule drC2_adapted'[OF q t]) simp
+  have part2: "(\<lambda>\<omega>. set_lebesgue_integral lborel {0..t}
+      (\<lambda>u. drC2 q \<phi> (min u t) \<omega>)) \<in> borel_measurable ?G"
+    by (rule borel_measurable_time_integral)
+      (use contmin measmin in auto)
+  have expand: "drN q \<phi> t = (\<lambda>\<omega>. (q + t) * drC2 q \<phi> t \<omega>
+      + set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> (min u t) \<omega>))"
+    unfolding drN_def using eqI by (intro ext) simp
+  show ?thesis
+    unfolding expand by (intro borel_measurable_add part1 part2)
+qed
+
+lemma drG_sigma_finite_subalgebra:
+  "sigma_finite_subalgebra (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (cbmX (0 :: real^2)) u)"
+proof -
+  have fm: "finite_measure (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  show ?thesis
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fm drG_subalgebra)
+qed
+
+lemma drG_sigma_finite_filtered:
+  assumes q: "0 < q"
+  shows "sigma_finite_filtered_measure
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t)) 0"
+proof -
+  have FMG: "filtered_measure (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t)) 0"
+    unfolding filtered_measure_def
+    using drG_subalgebra drG_subalgebra_mono[OF q]
+    by (auto simp: subalgebra_def)
+  show ?thesis
+    by (intro sigma_finite_filtered_measure.intro
+        sigma_finite_filtered_measure_axioms.intro FMG
+        drG_sigma_finite_subalgebra)
+qed
+
+theorem martingale_drN:
+  fixes q \<phi> :: real
+  assumes q: "0 < q"
+  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      0 (drN q \<phi>)"
+proof -
+  let ?M = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?G = "\<lambda>t. natural_filtration ?M 0 (cbmX (0 :: real^2)) (drc q t)"
+  have Gmono: "sets (?G s) \<subseteq> sets (?G t)" if "0 \<le> s" "s \<le> t" for s t
+    using drG_subalgebra_mono[OF q that]
+    by (auto simp: subalgebra_def)
+  show ?thesis
+  proof (intro martingale.intro martingale_axioms.intro)
+    show "sigma_finite_filtered_measure ?M ?G 0"
+      by (rule drG_sigma_finite_filtered[OF q])
+    show "adapted_process ?M ?G 0 (drN q \<phi>)"
+      by unfold_locales
+        (auto intro: drG_subalgebra drN_adapted[OF q]
+          dest: Gmono[THEN subsetD])
+    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable ?M (drN q \<phi> i)"
+      by (rule drN_integrable[OF q])
+    fix i j :: real assume ij: "0 \<le> i" "i \<le> j"
+    have hce: "has_cond_exp ?M (?G i) (drN q \<phi> j) (drN q \<phi> i)"
+    proof (rule has_cond_expI')
+      show "integrable ?M (drN q \<phi> j)"
+        by (rule drN_integrable[OF q order_trans[OF ij(1) ij(2)]])
+      show "integrable ?M (drN q \<phi> i)"
+        by (rule drN_integrable[OF q ij(1)])
+      show "drN q \<phi> i \<in> borel_measurable (?G i)"
+        by (rule drN_adapted[OF q ij(1)])
+      fix A assume A: "A \<in> sets (?G i)"
+      show "(\<integral>\<omega>\<in>A. drN q \<phi> j \<omega> \<partial>?M) = (\<integral>\<omega>\<in>A. drN q \<phi> i \<omega> \<partial>?M)"
+        using drN_set_integral_identity[OF q ij(1) ij(2) A]
+        unfolding set_lebesgue_integral_def by simp
+    qed
+    show "AE \<omega> in ?M. drN q \<phi> i \<omega> = cond_exp ?M (?G i) (drN q \<phi> j) \<omega>"
+      using sigma_finite_subalgebra.has_cond_exp_charact(2)
+          [OF drG_sigma_finite_subalgebra hce]
+      by eventually_elim simp
+  qed
 qed
 
 end
