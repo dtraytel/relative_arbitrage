@@ -2804,4 +2804,125 @@ proof -
     by argo
 qed
 
+subsection \<open>The compensated coordinate squares are martingales\<close>
+
+lemma coord_Z_drX_meas_neg:
+  fixes i :: 2
+  assumes q: "0 < q" and t: "t < 0"
+  shows "coord_Z (drX q \<phi>) (dra q \<phi>) i t \<in> borel_measurable
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+proof -
+  have e: "{0..t} = ({} :: real set)" using t by auto
+  have z: "coord_Z (drX q \<phi>) (dra q \<phi>) i t = (\<lambda>\<omega>. (drX q \<phi> t \<omega> $ i)\<^sup>2)"
+    unfolding coord_Z_def e
+    by (simp add: fun_eq_iff set_lebesgue_integral_def)
+  have comp: "drX q \<phi> t \<omega> $ i
+      = drR q t * (if i = 1 then cos (drW (drc q t) \<omega> + \<phi>)
+          else sin (drW (drc q t) \<omega> + \<phi>))" for \<omega>
+    by (simp add: drX_def)
+  have m: "(\<lambda>\<omega>. drX q \<phi> t \<omega> $ i) \<in> borel_measurable
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+  proof (cases "i = 1")
+    case True
+    have m1: "(\<lambda>\<omega> :: 2 \<Rightarrow> real \<Rightarrow> real.
+        drR q t * cos (Bcont (drc q t) (\<omega> 1) + \<phi>))
+        \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+      using measurable_cbmX_coord[of "drc q t" "1 :: 2"] by measurable
+    have comp1: "(\<lambda>\<omega> :: 2 \<Rightarrow> real \<Rightarrow> real. drX q \<phi> t \<omega> $ i)
+        = (\<lambda>\<omega>. drR q t * cos (drW (drc q t) \<omega> + \<phi>))"
+      by (simp add: fun_eq_iff drX_def True)
+    show ?thesis
+      unfolding comp1 using m1 by (simp add: drW_def)
+  next
+    case False
+    have m2: "(\<lambda>\<omega> :: 2 \<Rightarrow> real \<Rightarrow> real.
+        drR q t * sin (Bcont (drc q t) (\<omega> 1) + \<phi>))
+        \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+      using measurable_cbmX_coord[of "drc q t" "1 :: 2"] by measurable
+    show ?thesis
+      using m2 False by (simp add: comp[abs_def] drW_def)
+  qed
+  show ?thesis
+    unfolding z by (intro borel_measurable_power m)
+qed
+
+theorem martingale_coord_Z_drX:
+  fixes q \<phi> :: real and i :: 2
+  assumes q: "0 < q"
+  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      0 (coord_Z (drX q \<phi>) (dra q \<phi>) i)"
+proof -
+  let ?M = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?G = "\<lambda>t. natural_filtration ?M 0 (cbmX (0 :: real^2)) (drc q t)"
+  define d where "d = (if i = 1 then (1 :: real) else - 1)"
+  have ID: "coord_Z (drX q \<phi>) (dra q \<phi>) i t
+      = (\<lambda>\<omega>. q / 2 + d / 2 * drN q \<phi> t \<omega>)" if t: "0 \<le> t" for t
+    using exhaust_2[of i] coord_Z_drX_1[OF q t, of \<phi>]
+      coord_Z_drX_2[OF q t, of \<phi>]
+    by (auto simp: d_def fun_eq_iff)
+  have Gmono: "sets (?G s) \<subseteq> sets (?G t)" if "0 \<le> s" "s \<le> t" for s t
+    using drG_subalgebra_mono[OF q that]
+    by (auto simp: subalgebra_def)
+  have adaptedI: "coord_Z (drX q \<phi>) (dra q \<phi>) i t
+      \<in> borel_measurable (?G t)" if t: "0 \<le> t" for t
+    unfolding ID[OF t]
+    using drN_adapted[OF q t, of \<phi>] by measurable
+  have measI: "coord_Z (drX q \<phi>) (dra q \<phi>) i t \<in> borel_measurable ?M"
+    for t
+  proof (cases "0 \<le> t")
+    case True
+    show ?thesis
+      unfolding ID[OF True] using drN_meas[OF q, of \<phi> t] by measurable
+  next
+    case False
+    then show ?thesis by (intro coord_Z_drX_meas_neg[OF q]) simp
+  qed
+  have intI: "integrable ?M (coord_Z (drX q \<phi>) (dra q \<phi>) i t)"
+    if t: "0 \<le> t" for t
+    unfolding ID[OF t]
+    by (intro Bochner_Integration.integrable_add BMP.integrable_const
+        integrable_mult_right drN_integrable[OF q t])
+  show ?thesis
+  proof (intro martingale.intro martingale_axioms.intro)
+    show "sigma_finite_filtered_measure ?M ?G 0"
+      by (rule drG_sigma_finite_filtered[OF q])
+    show "adapted_process ?M ?G 0 (coord_Z (drX q \<phi>) (dra q \<phi>) i)"
+      by unfold_locales
+        (auto intro: drG_subalgebra adaptedI measI
+          dest: Gmono[THEN subsetD])
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M (coord_Z (drX q \<phi>) (dra q \<phi>) i t)"
+      by (rule intI)
+    fix s t :: real assume st: "0 \<le> s" "s \<le> t"
+    have t0: "0 \<le> t" using st by simp
+    have int_c: "integrable ?M (\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. q / 2)"
+      by (rule BMP.integrable_const)
+    have int_d: "integrable ?M (\<lambda>\<omega>. (d / 2) *\<^sub>R drN q \<phi> t \<omega>)"
+      by (intro integrable_scaleR_right drN_integrable[OF q t0])
+    have E_add: "AE \<omega> in ?M. cond_exp ?M (?G s)
+        (\<lambda>\<omega>. q / 2 + (d / 2) *\<^sub>R drN q \<phi> t \<omega>) \<omega>
+        = cond_exp ?M (?G s) (\<lambda>_. q / 2) \<omega>
+          + cond_exp ?M (?G s) (\<lambda>\<omega>. (d / 2) *\<^sub>R drN q \<phi> t \<omega>) \<omega>"
+      by (rule sigma_finite_subalgebra.cond_exp_add
+          [OF drG_sigma_finite_subalgebra int_c int_d])
+    have E_c: "AE \<omega> in ?M. cond_exp ?M (?G s)
+        (\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. q / 2) \<omega> = q / 2"
+      by (rule sigma_finite_subalgebra.cond_exp_F_meas
+          [OF drG_sigma_finite_subalgebra int_c]) simp
+    have E_d: "AE \<omega> in ?M. cond_exp ?M (?G s)
+        (\<lambda>\<omega>. (d / 2) *\<^sub>R drN q \<phi> t \<omega>) \<omega>
+        = (d / 2) *\<^sub>R cond_exp ?M (?G s) (drN q \<phi> t) \<omega>"
+      by (rule sigma_finite_subalgebra.cond_exp_scaleR_right
+          [OF drG_sigma_finite_subalgebra drN_integrable[OF q t0]])
+    have P: "AE \<omega> in ?M. drN q \<phi> s \<omega>
+        = cond_exp ?M (?G s) (drN q \<phi> t) \<omega>"
+      by (rule martingale.martingale_property
+          [OF martingale_drN[OF q] st])
+    show "AE \<omega> in ?M. coord_Z (drX q \<phi>) (dra q \<phi>) i s \<omega>
+        = cond_exp ?M (?G s) (coord_Z (drX q \<phi>) (dra q \<phi>) i t) \<omega>"
+      unfolding ID[OF st(1)] ID[OF t0]
+      using E_add E_c E_d P by eventually_elim simp
+  qed
+qed
+
 end
