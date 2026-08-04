@@ -1090,4 +1090,202 @@ proof -
   qed
 qed
 
+
+text \<open>Repackage the transferred identities as conditional expectations
+  against the cbmX filtration.\<close>
+
+lemma cbm_cos_cond_exp:
+  fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
+  assumes s: "0 \<le> s" and st: "s < t"
+  shows "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      cond_exp bm_paths (natural_filtration bm_paths 0 (cbmX x0) s)
+        (\<lambda>\<omega>. cos (a * Bcont t (\<omega> i) + b)) \<omega>
+      = cos (a * Bcont s (\<omega> i) + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (cbmX x0) s"
+  let ?f = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cos (a * Bcont t (\<omega> i) + b)"
+  let ?g = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+      cos (a * Bcont s (\<omega> i) + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+  have t0: "0 \<le> t" using s st by simp
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (cbmX x0)"
+    by unfold_locales (intro measurable_cbmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have fmeas: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M ?F"
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fmeas
+        Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have expnn: "0 \<le> a\<^sup>2 * (t - s)"
+    using st by (intro mult_nonneg_nonneg) auto
+  have exple: "exp (- a\<^sup>2 * (t - s) / 2) \<le> 1"
+    using expnn by (simp add: exp_le_one_iff)
+  have cwM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont u (\<omega> i))
+      \<in> borel_measurable ?M" for u
+    by (rule measurable_cbmX_coord)
+  have fM: "?f \<in> borel_measurable ?M"
+    using cwM by measurable
+  have gM: "?g \<in> borel_measurable ?M"
+    using cwM by measurable
+  have int_f: "integrable ?M ?f"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use fM in \<open>auto intro!: AE_I2 abs_cos_le_one\<close>)
+  have int_g: "integrable ?M ?g"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use gM exple in \<open>auto intro!: AE_I2 mult_le_one abs_cos_le_one
+        simp: abs_mult\<close>)
+  have bs: "cbmX x0 s \<in> borel_measurable ?F"
+    by (rule Stochastic_Process.adapted_process.adapted[OF
+        Stochastic_Process.stochastic_process.adapted_process_natural_filtration
+        [OF SPfact] s])
+  have nth: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
+  proof -
+    have "(\<lambda>v :: real^'n. v $ i) = (\<lambda>v. inner v (axis i 1))"
+      by (simp add: fun_eq_iff cart_eq_inner_axis)
+    then show ?thesis by simp
+  qed
+  have cwsF: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont s (\<omega> i))
+      \<in> borel_measurable ?F"
+  proof -
+    have eq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont s (\<omega> i))
+        = (\<lambda>\<omega>. (cbmX x0 s \<omega> - x0) $ i)"
+      by (simp add: fun_eq_iff cbmX_def)
+    show ?thesis
+      unfolding eq
+      by (intro measurable_compose[OF _ nth] borel_measurable_diff bs
+          borel_measurable_const)
+  qed
+  have gF: "?g \<in> borel_measurable ?F"
+    using cwsF by measurable
+  have hce: "has_cond_exp ?M ?F ?f ?g"
+  proof (rule has_cond_expI')
+    show "integrable ?M ?f" by (rule int_f)
+    show "integrable ?M ?g" by (rule int_g)
+    show "?g \<in> borel_measurable ?F" by (rule gF)
+    fix A assume A: "A \<in> sets ?F"
+    have A_M: "A \<in> sets ?M"
+      using A subalg by (auto simp: subalgebra_def)
+    have "(\<integral>\<omega> \<in> A. ?f \<omega> \<partial>?M) - (\<integral>\<omega> \<in> A. ?g \<omega> \<partial>?M)
+        = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?f \<omega>
+            - indicat_real A \<omega> *\<^sub>R ?g \<omega> \<partial>?M)"
+      unfolding set_lebesgue_integral_def
+      by (rule Bochner_Integration.integral_diff
+          [OF integrable_mult_indicator[OF A_M int_f]
+              integrable_mult_indicator[OF A_M int_g], symmetric])
+    also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> * (?f \<omega> - ?g \<omega>) \<partial>?M)"
+      by (intro Bochner_Integration.integral_cong refl)
+        (simp add: right_diff_distrib)
+    also have "\<dots> = 0"
+      by (rule cbm_cos_set_integral[OF s st A])
+    finally show "(\<integral>\<omega> \<in> A. ?f \<omega> \<partial>?M) = (\<integral>\<omega> \<in> A. ?g \<omega> \<partial>?M)"
+      by simp
+  qed
+  show ?thesis
+    using sigma_finite_subalgebra.has_cond_exp_charact(2)[OF sfs hce]
+    by eventually_elim simp
+qed
+
+lemma cbm_sin_cond_exp:
+  fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
+  assumes s: "0 \<le> s" and st: "s < t"
+  shows "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      cond_exp bm_paths (natural_filtration bm_paths 0 (cbmX x0) s)
+        (\<lambda>\<omega>. sin (a * Bcont t (\<omega> i) + b)) \<omega>
+      = sin (a * Bcont s (\<omega> i) + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (cbmX x0) s"
+  let ?f = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sin (a * Bcont t (\<omega> i) + b)"
+  let ?g = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+      sin (a * Bcont s (\<omega> i) + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+  have t0: "0 \<le> t" using s st by simp
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (cbmX x0)"
+    by unfold_locales (intro measurable_cbmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have fmeas: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M ?F"
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fmeas
+        Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have expnn: "0 \<le> a\<^sup>2 * (t - s)"
+    using st by (intro mult_nonneg_nonneg) auto
+  have exple: "exp (- a\<^sup>2 * (t - s) / 2) \<le> 1"
+    using expnn by (simp add: exp_le_one_iff)
+  have cwM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont u (\<omega> i))
+      \<in> borel_measurable ?M" for u
+    by (rule measurable_cbmX_coord)
+  have fM: "?f \<in> borel_measurable ?M"
+    using cwM by measurable
+  have gM: "?g \<in> borel_measurable ?M"
+    using cwM by measurable
+  have int_f: "integrable ?M ?f"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use fM in \<open>auto intro!: AE_I2 abs_sin_le_one\<close>)
+  have int_g: "integrable ?M ?g"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use gM exple in \<open>auto intro!: AE_I2 mult_le_one abs_sin_le_one
+        simp: abs_mult\<close>)
+  have bs: "cbmX x0 s \<in> borel_measurable ?F"
+    by (rule Stochastic_Process.adapted_process.adapted[OF
+        Stochastic_Process.stochastic_process.adapted_process_natural_filtration
+        [OF SPfact] s])
+  have nth: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
+  proof -
+    have "(\<lambda>v :: real^'n. v $ i) = (\<lambda>v. inner v (axis i 1))"
+      by (simp add: fun_eq_iff cart_eq_inner_axis)
+    then show ?thesis by simp
+  qed
+  have cwsF: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont s (\<omega> i))
+      \<in> borel_measurable ?F"
+  proof -
+    have eq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont s (\<omega> i))
+        = (\<lambda>\<omega>. (cbmX x0 s \<omega> - x0) $ i)"
+      by (simp add: fun_eq_iff cbmX_def)
+    show ?thesis
+      unfolding eq
+      by (intro measurable_compose[OF _ nth] borel_measurable_diff bs
+          borel_measurable_const)
+  qed
+  have gF: "?g \<in> borel_measurable ?F"
+    using cwsF by measurable
+  have hce: "has_cond_exp ?M ?F ?f ?g"
+  proof (rule has_cond_expI')
+    show "integrable ?M ?f" by (rule int_f)
+    show "integrable ?M ?g" by (rule int_g)
+    show "?g \<in> borel_measurable ?F" by (rule gF)
+    fix A assume A: "A \<in> sets ?F"
+    have A_M: "A \<in> sets ?M"
+      using A subalg by (auto simp: subalgebra_def)
+    have "(\<integral>\<omega> \<in> A. ?f \<omega> \<partial>?M) - (\<integral>\<omega> \<in> A. ?g \<omega> \<partial>?M)
+        = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?f \<omega>
+            - indicat_real A \<omega> *\<^sub>R ?g \<omega> \<partial>?M)"
+      unfolding set_lebesgue_integral_def
+      by (rule Bochner_Integration.integral_diff
+          [OF integrable_mult_indicator[OF A_M int_f]
+              integrable_mult_indicator[OF A_M int_g], symmetric])
+    also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> * (?f \<omega> - ?g \<omega>) \<partial>?M)"
+      by (intro Bochner_Integration.integral_cong refl)
+        (simp add: right_diff_distrib)
+    also have "\<dots> = 0"
+      by (rule cbm_sin_set_integral[OF s st A])
+    finally show "(\<integral>\<omega> \<in> A. ?f \<omega> \<partial>?M) = (\<integral>\<omega> \<in> A. ?g \<omega> \<partial>?M)"
+      by simp
+  qed
+  show ?thesis
+    using sigma_finite_subalgebra.has_cond_exp_charact(2)[OF sfs hce]
+    by eventually_elim simp
+qed
+
 end
