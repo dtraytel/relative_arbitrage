@@ -307,6 +307,42 @@ difference quotients `(Y∞(t)−Y∞(s))/(t−s) ∈ S` a.s. because averages
 of S-valued densities lie in the closed convex S; then 1-d
 a.e.-differentiability + FTC give `dY∞/dt ∈ S` a.e.
 
+**PAPER READING COMPLETE (pp. 7–9 of 2512.17702, 2026-08-04):**
+- **Prop 2.4** = usc of `v` + the DPP `(2.9): v(x) = sup_{P∈P_x}
+  P-essinf(θ ∧ τ_K + v(X(θ))·1_{θ≤τ_K})`, attained; proof is "repeat
+  LR Prop 2.2(ii),(iii) word by word" — Berge (HAVE:
+  `usc_sup_over_compactin`) + Bertsekas–Shreve selection + the
+  concatenation-by-kernel construction (LR p. 11, read).  This is the
+  EXACT N5 target statement.
+- **Definition 3.1/Lemma 3.1** (viscosity + envelopes): already
+  formalized (`Lemma_3_1.thy`).
+- **Example 3.1 for general n** (p. 9): `v(x) = max(r²−|x|²,0)/(n−k)`
+  = `ball_v` ✓.  Upper bound (3.10): Itô + the trace lower bound —
+  our `stopped_val_fn_le_ball_v` route.  Lower bound: the sphere
+  process runs in the FIRST `n' = n−k+1` coordinates (relabeled so
+  `x_{[n']} ≠ 0`), REMAINING COORDINATES CONSTANT; and `x = 0` is
+  handled by COMPACTNESS (laws `P*_{x^m}` for `x^m → 0` have a
+  convergent subsequence; the limit has `τ_K = r²/(n−k)` a.s.).
+  ⇒ N4-DELTAS for the paper-faithful Example 3.1 at `n−k = 1`,
+  arbitrary `n`: (i) embed the 2-d circle process
+  (`Deterministic_Radius_Market`) into `n` coordinates with the rest
+  constant (product/embedding of the witness — mechanical but real);
+  (ii) the `x = 0` compactness argument (needs exactly the NC-2/3
+  closedness machinery).  Our `stopped_val_fn_ball_eq_2d` is the
+  `n = 2` instance.
+
+**NC-1 DEFINITIONAL LAYER WRITTEN (Paper_Class.thy, in ROOT after
+Exit_Semicontinuity; PIDE-verify after restart):** `sconstraint k L =
+Pi_constraint k ∩ {eigen_ub · L}` (constants from
+`Relative_Arbitrage_Convexity`; `lemma_2_1_exact` identifies the hull),
+`outerp`, `paper_pair_class k L T x` (prob path laws of the pair
+(X, Y): start `(x, 0)` a.s., difference quotients of `Y` in
+`sconstraint` a.s., `X` and `outerp X − Y` martingales w.r.t. the pair
+natural filtration), `paper_v k L T K x = Sup (essinf pexit ∘ fst)` —
+Eq. (1.6) capped at `T`.  BRIDGING OBLIGATIONS recorded in the file:
+cap-invisibility for large `T` (Lemma 1.9/(3.10)), compactness of
+`sconstraint`, and the equivalence with `stopped_market` witnesses.
+
 Faithful decomposition (statuses of ingredients in brackets):
 
 1. **Pair-law encoding of (1.7).**  Operational reading (equivalent to
