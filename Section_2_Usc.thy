@@ -3831,4 +3831,196 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>For a CLOSED confinement set the clamp is invisible: closure laws are
+  supported on confined paths, so the RAW coordinate increments satisfy
+  the martingale identity and the covariation bound against every past
+  event.  These are the two integrated inputs of the canonical-market
+  construction, in their final form.\<close>
+
+corollary mkt_law_closure_increment_event:
+  fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure" and r :: real
+  assumes T0: "0 \<le> T" and Kcl: "closed K" and Kball: "K \<subseteq> cball 0 r"
+    and r0: "0 \<le> r"
+    and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and B: "B \<in> sets (borel_of (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+  shows "(\<integral>f. (f t $ i - f s $ i)
+      * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>) = 0"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  let ?PS = "mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric)"
+  have sT: "s \<le> T" and t0: "0 \<le> t" using st ts tT by linarith+
+  have sI: "s \<in> {0..T}" and tI: "t \<in> {0..T}" using st ts tT by auto
+  have s\<Lambda>: "sets \<Lambda> = sets (borel_of ?PT)"
+    by (rule mkt_law_closure_sets[OF L])
+  have ae: "AE f in \<Lambda>. rclamp (2 * r) (f t $ i - f s $ i)
+      = f t $ i - f s $ i"
+    using mkt_law_closure_confined_AE[OF T0 Kcl L]
+  proof eventually_elim
+    case (elim f)
+    have ftK: "f t \<in> K" using elim tI by blast
+    have fsK: "f s \<in> K" using elim sI by blast
+    have nt: "norm (f t) \<le> r"
+      using ftK Kball by (auto simp: dist_norm)
+    have ns: "norm (f s) \<le> r"
+      using fsK Kball by (auto simp: dist_norm)
+    have "\<bar>f t $ i - f s $ i\<bar> \<le> \<bar>f t $ i\<bar> + \<bar>f s $ i\<bar>"
+      by (rule abs_triangle_ineq4)
+    also have "\<dots> \<le> norm (f t) + norm (f s)"
+      by (intro add_mono component_le_norm_cart)
+    also have "\<dots> \<le> 2 * r" using nt ns by linarith
+    finally show ?case by (rule rclamp_id)
+  qed
+  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
+      euclideanreal (\<lambda>v. v $ i)"
+    unfolding continuous_map_iff_continuous2
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
+    by (intro continuous_map_diff continuous_map_path_eval tI sI)
+  have inc_cont: "continuous_map ?PT euclideanreal
+      (\<lambda>f. f t $ i - f s $ i)"
+    using continuous_map_compose[OF evdiff cmp_i]
+    by (simp add: o_def vector_minus_component)
+  have incM: "(\<lambda>f. f t $ i - f s $ i) \<in> borel_measurable \<Lambda>"
+    using continuous_map_measurable[OF inc_cont]
+      measurable_cong_sets[OF s\<Lambda> refl]
+    by (auto simp: borel_of_euclidean)
+  have rcM: "(\<lambda>f. rclamp (2 * r) (f t $ i - f s $ i))
+      \<in> borel_measurable \<Lambda>"
+  proof -
+    have "continuous_on UNIV (rclamp (2 * r))"
+      using rclamp_cont[of "2 * r"]
+      by (simp add: continuous_map_iff_continuous2)
+    then show ?thesis
+      by (intro measurable_compose[OF incM
+          borel_measurable_continuous_onI])
+  qed
+  have rc: "continuous_map ?PT ?PS (\<lambda>f. restrict f {0..s})"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have pimL: "(\<lambda>f. restrict f {0..s}) \<in> \<Lambda> \<rightarrow>\<^sub>M borel_of ?PS"
+    using continuous_map_measurable[OF rc]
+      measurable_cong_sets[OF s\<Lambda> refl] by blast
+  have iB: "indicat_real B \<in> borel_measurable (borel_of ?PS)"
+    using B by (rule borel_measurable_indicator)
+  have indM: "(\<lambda>f. indicat_real B (restrict f {0..s}))
+      \<in> borel_measurable \<Lambda>"
+    using measurable_comp[OF pimL iB] by (simp add: o_def)
+  have "(\<integral>f. (f t $ i - f s $ i)
+        * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)
+      = (\<integral>f. rclamp (2 * r) (f t $ i - f s $ i)
+        * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)"
+  proof (rule integral_cong_AE)
+    show "(\<lambda>f. (f t $ i - f s $ i)
+        * indicat_real B (restrict f {0..s})) \<in> borel_measurable \<Lambda>"
+      by (intro borel_measurable_times incM indM)
+    show "(\<lambda>f. rclamp (2 * r) (f t $ i - f s $ i)
+        * indicat_real B (restrict f {0..s})) \<in> borel_measurable \<Lambda>"
+      by (intro borel_measurable_times rcM indM)
+    show "AE f in \<Lambda>. (f t $ i - f s $ i)
+        * indicat_real B (restrict f {0..s})
+        = rclamp (2 * r) (f t $ i - f s $ i)
+          * indicat_real B (restrict f {0..s})"
+      using ae by eventually_elim simp
+  qed
+  also have "\<dots> = 0"
+    by (rule mkt_law_closure_martingale_event[OF T0 Kball r0 L st ts tT B])
+  finally show ?thesis .
+qed
+
+corollary mkt_law_closure_sq_increment_event:
+  fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure" and r :: real
+  assumes T0: "0 \<le> T" and Kcl: "closed K" and Kball: "K \<subseteq> cball 0 r"
+    and r0: "0 \<le> r"
+    and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and B: "B \<in> sets (borel_of (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+  shows "(\<integral>f. (f t $ i - f s $ i)\<^sup>2
+        * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)
+      \<le> L * (t - s) * (\<integral>f. indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  let ?PS = "mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric)"
+  have sT: "s \<le> T" and t0: "0 \<le> t" using st ts tT by linarith+
+  have sI: "s \<in> {0..T}" and tI: "t \<in> {0..T}" using st ts tT by auto
+  have s\<Lambda>: "sets \<Lambda> = sets (borel_of ?PT)"
+    by (rule mkt_law_closure_sets[OF L])
+  have ae: "AE f in \<Lambda>. rclamp (2 * r) (f t $ i - f s $ i)
+      = f t $ i - f s $ i"
+    using mkt_law_closure_confined_AE[OF T0 Kcl L]
+  proof eventually_elim
+    case (elim f)
+    have ftK: "f t \<in> K" using elim tI by blast
+    have fsK: "f s \<in> K" using elim sI by blast
+    have nt: "norm (f t) \<le> r"
+      using ftK Kball by (auto simp: dist_norm)
+    have ns: "norm (f s) \<le> r"
+      using fsK Kball by (auto simp: dist_norm)
+    have "\<bar>f t $ i - f s $ i\<bar> \<le> \<bar>f t $ i\<bar> + \<bar>f s $ i\<bar>"
+      by (rule abs_triangle_ineq4)
+    also have "\<dots> \<le> norm (f t) + norm (f s)"
+      by (intro add_mono component_le_norm_cart)
+    also have "\<dots> \<le> 2 * r" using nt ns by linarith
+    finally show ?case by (rule rclamp_id)
+  qed
+  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
+      euclideanreal (\<lambda>v. v $ i)"
+    unfolding continuous_map_iff_continuous2
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
+    by (intro continuous_map_diff continuous_map_path_eval tI sI)
+  have inc_cont: "continuous_map ?PT euclideanreal
+      (\<lambda>f. f t $ i - f s $ i)"
+    using continuous_map_compose[OF evdiff cmp_i]
+    by (simp add: o_def vector_minus_component)
+  have incM: "(\<lambda>f. f t $ i - f s $ i) \<in> borel_measurable \<Lambda>"
+    using continuous_map_measurable[OF inc_cont]
+      measurable_cong_sets[OF s\<Lambda> refl]
+    by (auto simp: borel_of_euclidean)
+  have rcM: "(\<lambda>f. rclamp (2 * r) (f t $ i - f s $ i))
+      \<in> borel_measurable \<Lambda>"
+  proof -
+    have "continuous_on UNIV (rclamp (2 * r))"
+      using rclamp_cont[of "2 * r"]
+      by (simp add: continuous_map_iff_continuous2)
+    then show ?thesis
+      by (intro measurable_compose[OF incM
+          borel_measurable_continuous_onI])
+  qed
+  have rc: "continuous_map ?PT ?PS (\<lambda>f. restrict f {0..s})"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have pimL: "(\<lambda>f. restrict f {0..s}) \<in> \<Lambda> \<rightarrow>\<^sub>M borel_of ?PS"
+    using continuous_map_measurable[OF rc]
+      measurable_cong_sets[OF s\<Lambda> refl] by blast
+  have iB: "indicat_real B \<in> borel_measurable (borel_of ?PS)"
+    using B by (rule borel_measurable_indicator)
+  have indM: "(\<lambda>f. indicat_real B (restrict f {0..s}))
+      \<in> borel_measurable \<Lambda>"
+    using measurable_comp[OF pimL iB] by (simp add: o_def)
+  have "(\<integral>f. (f t $ i - f s $ i)\<^sup>2
+        * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)
+      = (\<integral>f. (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2
+        * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)"
+  proof (rule integral_cong_AE)
+    show "(\<lambda>f. (f t $ i - f s $ i)\<^sup>2
+        * indicat_real B (restrict f {0..s})) \<in> borel_measurable \<Lambda>"
+      by (intro borel_measurable_times borel_measurable_power incM indM)
+    show "(\<lambda>f. (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2
+        * indicat_real B (restrict f {0..s})) \<in> borel_measurable \<Lambda>"
+      by (intro borel_measurable_times borel_measurable_power rcM indM)
+    show "AE f in \<Lambda>. (f t $ i - f s $ i)\<^sup>2
+        * indicat_real B (restrict f {0..s})
+        = (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2
+          * indicat_real B (restrict f {0..s})"
+      using ae by eventually_elim simp
+  qed
+  also have "\<dots> \<le> L * (t - s)
+      * (\<integral>f. indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)"
+    by (rule mkt_law_closure_covariation_event[OF T0 Kball r0 L st ts tT B])
+  finally show ?thesis .
+qed
+
 end
