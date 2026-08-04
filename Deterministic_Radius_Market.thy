@@ -2636,4 +2636,172 @@ proof -
   qed
 qed
 
+subsection \<open>The tangent covariance and the coordinate identities\<close>
+
+text \<open>The instantaneous covariance of the deterministic-radius market is
+  the projection onto the tangent direction \<open>v = (sin \<Theta>, −cos \<Theta>)\<close>:
+  \<open>a(X) = v vᵀ = I − X Xᵀ/|X|²\<close>.\<close>
+
+definition dra :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2^2"
+  where
+  "dra q \<phi> u \<omega> = (\<chi> j. \<chi> l.
+     (if j = 1 then sin (drW (drc q u) \<omega> + \<phi>)
+      else - cos (drW (drc q u) \<omega> + \<phi>))
+     * (if l = 1 then sin (drW (drc q u) \<omega> + \<phi>)
+        else - cos (drW (drc q u) \<omega> + \<phi>)))"
+
+lemma dra_11: "dra q \<phi> u \<omega> $ 1 $ 1 = (sin (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
+  by (simp add: dra_def power2_eq_square)
+
+lemma dra_22: "dra q \<phi> u \<omega> $ 2 $ 2 = (cos (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
+  by (simp add: dra_def power2_eq_square)
+
+lemma drC2_cos2:
+  assumes u: "0 \<le> u"
+  shows "cos (2 * (drW (drc q u) \<omega> + \<phi>)) = drC2 q \<phi> u \<omega>"
+  unfolding drC2_eq[OF u] drW_def by (simp add: algebra_simps)
+
+lemma dra_diag_integrable:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "set_integrable lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2)"
+    and "set_integrable lborel {0..t} (\<lambda>_ :: real. 1 / 2 :: real)"
+proof -
+  show "set_integrable lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2)"
+    by (rule borel_integrable_atLeastAtMost')
+      (auto intro!: continuous_intros
+        continuous_on_subset[OF drC2_cont[OF q] subset_UNIV])
+  show "set_integrable lborel {0..t} (\<lambda>_ :: real. 1 / 2 :: real)"
+    by (rule borel_integrable_atLeastAtMost') simp
+qed
+
+lemma dra_compensator_11:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "set_lebesgue_integral lborel {0..t} (\<lambda>u. dra q \<phi> u \<omega> $ 1 $ 1)
+       = t / 2
+         - (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)) / 2"
+proof -
+  have ptw: "dra q \<phi> u \<omega> $ 1 $ 1 = 1 / 2 - drC2 q \<phi> u \<omega> / 2"
+    if u: "u \<in> {0..t}" for u
+  proof -
+    have "dra q \<phi> u \<omega> $ 1 $ 1 = (sin (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
+      by (rule dra_11)
+    also have "\<dots> = (1 - cos (2 * (drW (drc q u) \<omega> + \<phi>))) / 2"
+      using cos_double_sin[of "drW (drc q u) \<omega> + \<phi>"] by simp
+    also have "\<dots> = (1 - drC2 q \<phi> u \<omega>) / 2"
+      using u by (simp add: drC2_eq drW_def)
+    finally show ?thesis by simp
+  qed
+  have "set_lebesgue_integral lborel {0..t} (\<lambda>u. dra q \<phi> u \<omega> $ 1 $ 1)
+      = set_lebesgue_integral lborel {0..t}
+          (\<lambda>u. 1 / 2 - drC2 q \<phi> u \<omega> / 2)"
+    by (rule set_lebesgue_integral_cong) (use ptw in auto)
+  also have "\<dots> = (set_lebesgue_integral lborel {0..t} (\<lambda>_. 1 / 2 :: real))
+      - (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2))"
+    by (intro set_integral_diff dra_diag_integrable[OF q t])
+  also have "set_lebesgue_integral lborel {0..t} (\<lambda>_. 1 / 2 :: real)
+      = t / 2"
+    using t by (subst set_integral_const)
+      (auto simp: emeasure_lborel_Icc measure_lborel_Icc)
+  also have "set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2)
+      = (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)) / 2"
+    by (rule set_integral_divide_zero)
+  finally show ?thesis .
+qed
+
+lemma dra_compensator_22:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "set_lebesgue_integral lborel {0..t} (\<lambda>u. dra q \<phi> u \<omega> $ 2 $ 2)
+       = t / 2
+         + (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)) / 2"
+proof -
+  have ptw: "dra q \<phi> u \<omega> $ 2 $ 2 = 1 / 2 + drC2 q \<phi> u \<omega> / 2"
+    if u: "u \<in> {0..t}" for u
+  proof -
+    have "dra q \<phi> u \<omega> $ 2 $ 2 = (cos (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
+      by (rule dra_22)
+    also have "\<dots> = (1 + cos (2 * (drW (drc q u) \<omega> + \<phi>))) / 2"
+      using cos_double_cos[of "drW (drc q u) \<omega> + \<phi>"] by simp
+    also have "\<dots> = (1 + drC2 q \<phi> u \<omega>) / 2"
+      using u by (simp add: drC2_eq drW_def)
+    finally show ?thesis by simp
+  qed
+  have "set_lebesgue_integral lborel {0..t} (\<lambda>u. dra q \<phi> u \<omega> $ 2 $ 2)
+      = set_lebesgue_integral lborel {0..t}
+          (\<lambda>u. 1 / 2 + drC2 q \<phi> u \<omega> / 2)"
+    by (rule set_lebesgue_integral_cong) (use ptw in auto)
+  also have "\<dots> = (set_lebesgue_integral lborel {0..t} (\<lambda>_. 1 / 2 :: real))
+      + (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2))"
+    by (intro set_integral_add dra_diag_integrable[OF q t])
+  also have "set_lebesgue_integral lborel {0..t} (\<lambda>_. 1 / 2 :: real)
+      = t / 2"
+    using t by (subst set_integral_const)
+      (auto simp: emeasure_lborel_Icc measure_lborel_Icc)
+  also have "set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2)
+      = (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)) / 2"
+    by (rule set_integral_divide_zero)
+  finally show ?thesis .
+qed
+
+lemma coord_Z_drX_1:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "coord_Z (drX q \<phi>) (dra q \<phi>) 1 t \<omega> = q / 2 + drN q \<phi> t \<omega> / 2"
+proof -
+  have comp1: "drX q \<phi> t \<omega> $ 1 = drR q t * cos (drW (drc q t) \<omega> + \<phi>)"
+    by (simp add: drX_def)
+  have drRsq: "(drR q t)\<^sup>2 = q + t"
+    using q t by (simp add: drR_def)
+  have sq: "(drX q \<phi> t \<omega> $ 1)\<^sup>2
+      = (q + t) * (cos (drW (drc q t) \<omega> + \<phi>))\<^sup>2"
+    unfolding comp1 power_mult_distrib drRsq ..
+  have cossq: "(q + t) * (cos (drW (drc q t) \<omega> + \<phi>))\<^sup>2
+      = (q + t) / 2 + (q + t) * drC2 q \<phi> t \<omega> / 2"
+  proof -
+    have c2: "(cos (drW (drc q t) \<omega> + \<phi>))\<^sup>2 = (1 + drC2 q \<phi> t \<omega>) / 2"
+    proof -
+      have "(cos (drW (drc q t) \<omega> + \<phi>))\<^sup>2
+          = (1 + cos (2 * (drW (drc q t) \<omega> + \<phi>))) / 2"
+        using cos_double_cos[of "drW (drc q t) \<omega> + \<phi>"] by simp
+      also have "\<dots> = (1 + drC2 q \<phi> t \<omega>) / 2"
+        using t by (simp add: drC2_eq drW_def)
+      finally show ?thesis .
+    qed
+    show ?thesis
+      unfolding c2 by (simp add: distrib_left add_divide_distrib)
+  qed
+  show ?thesis
+    unfolding coord_Z_def sq cossq dra_compensator_11[OF q t] drN_def
+    by argo
+qed
+
+lemma coord_Z_drX_2:
+  assumes q: "0 < q" and t: "0 \<le> t"
+  shows "coord_Z (drX q \<phi>) (dra q \<phi>) 2 t \<omega> = q / 2 - drN q \<phi> t \<omega> / 2"
+proof -
+  have comp2: "drX q \<phi> t \<omega> $ 2 = drR q t * sin (drW (drc q t) \<omega> + \<phi>)"
+    by (simp add: drX_def)
+  have drRsq: "(drR q t)\<^sup>2 = q + t"
+    using q t by (simp add: drR_def)
+  have sq: "(drX q \<phi> t \<omega> $ 2)\<^sup>2
+      = (q + t) * (sin (drW (drc q t) \<omega> + \<phi>))\<^sup>2"
+    unfolding comp2 power_mult_distrib drRsq ..
+  have sinsq: "(q + t) * (sin (drW (drc q t) \<omega> + \<phi>))\<^sup>2
+      = (q + t) / 2 - (q + t) * drC2 q \<phi> t \<omega> / 2"
+  proof -
+    have s2: "(sin (drW (drc q t) \<omega> + \<phi>))\<^sup>2 = (1 - drC2 q \<phi> t \<omega>) / 2"
+    proof -
+      have "(sin (drW (drc q t) \<omega> + \<phi>))\<^sup>2
+          = (1 - cos (2 * (drW (drc q t) \<omega> + \<phi>))) / 2"
+        using cos_double_sin[of "drW (drc q t) \<omega> + \<phi>"] by simp
+      also have "\<dots> = (1 - drC2 q \<phi> t \<omega>) / 2"
+        using t by (simp add: drC2_eq drW_def)
+      finally show ?thesis .
+    qed
+    show ?thesis
+      unfolding s2 by (simp add: right_diff_distrib diff_divide_distrib)
+  qed
+  show ?thesis
+    unfolding coord_Z_def sq sinsq dra_compensator_22[OF q t] drN_def
+    by argo
+qed
+
 end
