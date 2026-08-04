@@ -363,15 +363,16 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
      `bm_cos/sin_cond_exp` as centered set-integral identities
      (D := cos(a·W_t+b) − cos(a·W_s+b)e^{−a²(t−s)/2}), transfer, and
      re-package as `has_cond_exp` on the cbmX side via `has_cond_expI'`.
-     DONE up to the transfer (commits a9ae868, 2f563a1, 580240a):
-     `bm_cos_set_integral`, `bm_sin_set_integral`, and
-     `cbm_cos_set_integral` — the cosine identity on the cbmX
-     filtration.  Next micro-steps: `cbm_sin_set_integral` (verbatim
-     twin), then the `has_cond_expI'` repackaging on the cbmX side
+     TRANSFER COMPLETE (commits a9ae868, 2f563a1, 580240a, 1c83b51):
+     `bm_cos/sin_set_integral` and `cbm_cos/sin_set_integral` — both
+     trig drift identities hold in set-integral form against the
+     natural filtration of the continuous modification `cbmX`.  Next
+     micro-steps: the `has_cond_expI'` repackaging on the cbmX side
      (candidate `cos/sin(a·Bcont s (ω i) + b)·e^{−a²(t−s)/2}`, adapted
      via `measurable_cbmX` and the `(cbmX x0 s ω − x0) $ i` component
-     trick), and only then the process definition and its martingale
-     property.
+     trick; the set-integral clause is `∫_A f = ∫_A g ⟸ ∫_A (f−g) = 0`
+     from the transferred lemmas plus integrability), and only then the
+     process definition and its martingale property.
      The `coord_Z` step needs only the SAME identities at doubled
      angle (`cos² = (1+cos 2u)/2`), which the general-`a` statements
      already cover.
