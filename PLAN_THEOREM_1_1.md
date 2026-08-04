@@ -370,6 +370,20 @@ Faithful decomposition (statuses of ingredients in brackets):
    in a simpset (loops); nn_integrals must be written with the
    `⇧+` sup-block (a raw superscript-plus slips through the MCP
    encoder as a lexical error).
+   L3 EXACT CONSTRUCTION (uniform grid `s_j = j·T/N`, `φ = exp(−l·)`):
+   `ψ_N f := exp(−l·T) + Σ_{j=1}^{N−1} (exp(−l·s_j) − exp(−l·s_{j+1}))
+   · indicat {f. pexit T K f < s_j} f`.  For `pexit ∈ [s_{m−1}, s_m)`
+   the indicators are exactly `j ≥ m` and the sum telescopes to
+   `ψ_N = φ(s_m)`; for `pexit = T`, `ψ_N = φ(T)`.  Hence pointwise
+   `ψ_N ≤ e^{−l·pexit} ≤ ψ_N + (1 − e^{−l·T/N})` (the error uses
+   `s_m ≤ pexit + T/N` and
+   `φ(pexit) − φ(pexit + h) ≤ 1 − e^{−l·h}`).  Locate `m` via
+   `m − 1 = ⌊pexit·N/T⌋` or, easier in Isabelle, define
+   `m = (LEAST j. pexit < s_j)` on the case `pexit < T`.
+   `∫ψ_N dΛ = exp(−l·T)·(total mass) + Σ (coeff_j ≥ 0)·measure
+   {pexit < s_j}` — finitely many OPEN sets (`pexit_sublevel_open`),
+   so `liminf_i ∫ψ_N dΛ_i ≥ ∫ψ_N dΛ` via `mweak_conv3` +
+   `ereal_Liminf_add_mono` finite induction; then `N → ∞`.
    L3 `liminf` of `∫ e^{−λ·pexit} dΛ_i` ≥ `∫ … dΛ` along
    `weak_conv_on` WITHOUT a general LSC portmanteau (none exists in
    the AFP; no layer-cake for real integrands in HOL either — checked)
