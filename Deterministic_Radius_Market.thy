@@ -399,4 +399,111 @@ proof -
   qed
 qed
 
+
+lemma bm_past_increment_cond_exp:
+  fixes g :: "real \<Rightarrow> real"
+    and Z :: "('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real"
+    and i :: 'n and x0 :: "real^'n"
+  assumes s: "0 \<le> s" and st: "s < t"
+    and Zm: "Z \<in> borel_measurable (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+    and Zb: "\<And>\<omega>. \<bar>Z \<omega>\<bar> \<le> B"
+    and gm: "g \<in> borel_measurable borel" and gb: "\<And>y. \<bar>g y\<bar> \<le> C"
+  shows "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+      cond_exp bm_paths (natural_filtration bm_paths 0 (bmX x0) s)
+        (\<lambda>\<omega>. Z \<omega> * g (\<omega> i t - \<omega> i s)) \<omega>
+      = Z \<omega> * (\<integral>y. g y \<partial>gauss_measure (t - s))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?D = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s"
+  let ?c = "\<integral>y. g y \<partial>gauss_measure (t - s)"
+  have t0: "0 \<le> t" using s st by simp
+  have B0: "0 \<le> B" using Zb[of undefined] by auto
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have fmeas: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M ?F"
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fmeas
+        Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have Z_M: "Z \<in> borel_measurable ?M"
+    by (rule measurable_from_subalg[OF subalg Zm])
+  have Dm: "?D \<in> borel_measurable ?M"
+    using s t0
+    by (intro borel_measurable_diff measurable_bm_coordinate) auto
+  have gDm: "(\<lambda>\<omega>. g (?D \<omega>)) \<in> borel_measurable ?M"
+    by (rule measurable_compose[OF Dm gm])
+  have int_gD: "integrable ?M (\<lambda>\<omega>. g (?D \<omega>))"
+    by (rule BMP.integrable_const_bound[where B = C])
+      (use gb gDm in \<open>auto intro!: AE_I2\<close>)
+  have int_Z: "integrable ?M Z"
+    by (rule BMP.integrable_const_bound[where B = B])
+      (use Zb Z_M in \<open>auto intro!: AE_I2\<close>)
+  have int_ZgD: "integrable ?M (\<lambda>\<omega>. Z \<omega> * g (?D \<omega>))"
+    by (rule BMP.integrable_const_bound[where B = "B * C"])
+      (use Zb gb Z_M gDm in
+        \<open>auto intro!: AE_I2 mult_mono' abs_ge_zero
+          simp: abs_mult intro: order_trans\<close>)
+  have hce: "has_cond_exp ?M ?F (\<lambda>\<omega>. Z \<omega> * g (?D \<omega>)) (\<lambda>\<omega>. Z \<omega> * ?c)"
+  proof (rule has_cond_expI')
+    show "integrable ?M (\<lambda>\<omega>. Z \<omega> * g (?D \<omega>))" by (rule int_ZgD)
+    show "integrable ?M (\<lambda>\<omega>. Z \<omega> * ?c)"
+      by (rule integrable_mult_left[OF int_Z])
+    show "(\<lambda>\<omega>. Z \<omega> * ?c) \<in> borel_measurable ?F"
+      by (intro borel_measurable_times Zm borel_measurable_const)
+    fix A assume A: "A \<in> sets ?F"
+    have A_M: "A \<in> sets ?M"
+      using A subalg by (auto simp: subalgebra_def)
+    have iAZ_F: "(\<lambda>\<omega>. indicat_real A \<omega> * Z \<omega>) \<in> borel_measurable ?F"
+      by (intro borel_measurable_times borel_measurable_indicator[OF A] Zm)
+    have iAZ_M: "(\<lambda>\<omega>. indicat_real A \<omega> * Z \<omega>) \<in> borel_measurable ?M"
+      by (rule measurable_from_subalg[OF subalg iAZ_F])
+    have int_iAZ: "integrable ?M (\<lambda>\<omega>. indicat_real A \<omega> * Z \<omega>)"
+      by (rule BMP.integrable_const_bound[where B = B])
+        (use Zb iAZ_M B0 in
+          \<open>auto intro!: AE_I2 simp: abs_mult indicator_def\<close>)
+    have iv: "BMP.indep_var borel (\<lambda>\<omega>. indicat_real A \<omega> * Z \<omega>)
+        borel (\<lambda>\<omega>. g (?D \<omega>))"
+      using BMP.indep_var_compose[OF bm_past_increment_indep_var
+          [OF s st iAZ_F] measurable_ident gm]
+      by (simp add: o_def)
+    have EgD: "(\<integral>\<omega>. g (?D \<omega>) \<partial>?M) = ?c"
+    proof -
+      have "(\<integral>\<omega>. g (?D \<omega>) \<partial>?M) = (\<integral>y. g y \<partial>distr ?M borel ?D)"
+        by (rule Bochner_Integration.integral_distr[OF Dm gm, symmetric])
+      also have "distr ?M borel ?D = gauss_measure (t - s)"
+        by (rule bm_increment_distr[OF s less_imp_le[OF st]])
+      finally show ?thesis .
+    qed
+    have "(\<integral>\<omega> \<in> A. Z \<omega> * g (?D \<omega>) \<partial>?M)
+        = (\<integral>\<omega>. (indicat_real A \<omega> * Z \<omega>) * g (?D \<omega>) \<partial>?M)"
+      unfolding set_lebesgue_integral_def
+      by (intro Bochner_Integration.integral_cong refl)
+        (simp add: mult.assoc)
+    also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> * Z \<omega> \<partial>?M)
+        * (\<integral>\<omega>. g (?D \<omega>) \<partial>?M)"
+      by (rule BMP.indep_var_lebesgue_integral[OF iv int_iAZ int_gD])
+    also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> * Z \<omega> \<partial>?M) * ?c"
+      using EgD by simp
+    also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> * (Z \<omega> * ?c) \<partial>?M)"
+      by (simp add: mult.assoc[symmetric])
+    also have "\<dots> = (\<integral>\<omega> \<in> A. Z \<omega> * ?c \<partial>?M)"
+      unfolding set_lebesgue_integral_def
+      by (intro Bochner_Integration.integral_cong refl) simp
+    finally show "(\<integral>\<omega> \<in> A. Z \<omega> * g (?D \<omega>) \<partial>?M)
+        = (\<integral>\<omega> \<in> A. Z \<omega> * ?c \<partial>?M)" .
+  qed
+  show ?thesis
+    using sigma_finite_subalgebra.has_cond_exp_charact(2)[OF sfs hce]
+    by eventually_elim simp
+qed
+
 end
