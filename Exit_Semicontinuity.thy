@@ -14,6 +14,9 @@ theory Exit_Semicontinuity
 begin
 
 section \<open>The path-space exit time\<close>
+text \<open>(The crowning theorem of this theory is \<open>ess_inf_pexit_usc\<close> at the
+  end: the essential infimum of the exit time is upper semicontinuous
+  along weak convergence of path laws.)\<close>
 
 text \<open>The capped exit time from \<open>K\<close>, read off a PATH rather than a sample
   point: the composition of \<open>etime\<close> with the identity process.  All laws in
@@ -1012,6 +1015,181 @@ proof -
       by (rule key) simp
     then show ?thesis using MInf by simp
   qed
+qed
+
+section \<open>Upper semicontinuity of the essential infimum of the exit time\<close>
+
+theorem ess_inf_pexit_usc:
+  fixes K :: "('b :: polish_space) set"
+    and \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure" and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes T: "0 < T" and K: "closed K"
+    and wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    and probs: "\<And>i. prob_space (\<Lambda>i i)" and prob: "prob_space \<Lambda>"
+  shows "Limsup sequentially (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
+      \<le> ess_inf_time \<Lambda> (pexit T K)"
+proof -
+  let ?m = "path_metric T :: (real \<Rightarrow> 'b) metric"
+  let ?E = "\<lambda>M. (\<integral>f. exp (- l * pexit T K f) \<partial>M)" for l :: real
+  have T0: "0 \<le> T" using T by simp
+  have wc': "(\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i)
+        = sets (borel_of (mtopology_of ?m)) \<and> finite_measure (\<Lambda>i i))
+      \<and> sets \<Lambda> = sets (borel_of (mtopology_of ?m)) \<and> finite_measure \<Lambda>"
+    using wc unfolding weak_conv_on_def by blast
+  have pm: "pexit T K \<in> borel_measurable M"
+    if s: "sets M = sets (borel_of (mtopology_of ?m))"
+    for M :: "(real \<Rightarrow> 'b) measure"
+    using pexit_measurable[OF T0 K] s
+    by (metis measurable_cong_sets)
+  have pm\<Lambda>: "pexit T K \<in> borel_measurable \<Lambda>"
+    using wc' by (intro pm) blast
+  have Epos\<Lambda>: "0 < (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)"
+    if l: "0 < l" for l
+  proof -
+    have "(0 :: real) < exp (- l * T)" by simp
+    also have "\<dots> \<le> (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)"
+      by (rule exp_neg_time_integral_lower[OF prob pm\<Lambda>
+          pexit_nonneg[OF T0] pexit_le_T[OF T0]
+          less_imp_le[OF l]])
+    finally show ?thesis .
+  qed
+  have Ele1\<Lambda>: "(\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) \<le> 1"
+    if l: "0 < l" for l
+  proof -
+    interpret prob_space \<Lambda> by fact
+    have "(\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) \<le> (\<integral>f. 1 \<partial>\<Lambda>)"
+      by (intro Bochner_Integration.integral_mono integrable_const
+          exp_neg_time_integrable[OF prob pm\<Lambda>
+            pexit_nonneg[OF T0] less_imp_le[OF l]])
+        (use pexit_nonneg[OF T0] l in
+          \<open>auto simp: exp_le_one_iff mult_nonneg_nonneg\<close>)
+    then show ?thesis by (simp add: prob_space)
+  qed
+  have flnn: "0 \<le> - (1 / l) * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)"
+    if l: "0 < l" for l
+  proof -
+    have "ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) \<le> ln 1"
+      using Epos\<Lambda>[OF l] Ele1\<Lambda>[OF l]
+      by (simp add: ln_le_cancel_iff)
+    then have "ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) \<le> 0" by simp
+    then show ?thesis
+      using l by (simp add: mult_nonneg_nonpos2 divide_nonneg_pos)
+  qed
+  have step: "Limsup sequentially
+      (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
+      \<le> ennreal (- (1 / l) * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + \<epsilon>)"
+    if l: "0 < l" and \<epsilon>: "0 < \<epsilon>" for l \<epsilon>
+  proof -
+    have lower: "ereal (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)
+        \<le> Liminf sequentially
+          (\<lambda>i. ereal (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i)))"
+      by (rule exp_pexit_integral_liminf[OF T K l wc])
+    have shrink: "(\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>)
+        < (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)"
+    proof -
+      have "exp (- l * \<epsilon>) < 1"
+        using l \<epsilon> by (simp add: mult_pos_pos)
+      then show ?thesis
+        using Epos\<Lambda>[OF l] by (simp add: mult_less_cancel_left)
+    qed
+    have evE: "\<forall>\<^sub>F i in sequentially.
+        (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>)
+        < (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
+    proof -
+      have "ereal ((\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>))
+          < Liminf sequentially
+            (\<lambda>i. ereal (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i)))"
+        using shrink lower by (simp add: less_le_trans)
+      then have "\<forall>\<^sub>F i in sequentially.
+          ereal ((\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>))
+          < ereal (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
+        using le_Liminf_iff[THEN iffD1, OF order_refl] by blast
+      then show ?thesis
+        by (simp add: eventually_mono)
+    qed
+    have main: "\<forall>\<^sub>F i in sequentially.
+        ess_inf_time (\<Lambda>i i) (pexit T K)
+        \<le> ennreal (- (1 / l)
+          * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + \<epsilon>)"
+      using evE wc'[THEN conjunct1]
+    proof (eventually_elim)
+      case (elim i)
+      have si: "sets (\<Lambda>i i) = sets (borel_of (mtopology_of ?m))"
+        and fi: "finite_measure (\<Lambda>i i)"
+        using elim by auto
+      have pmi: "pexit T K \<in> borel_measurable (\<Lambda>i i)"
+        by (rule pm[OF si])
+      have L1i: "ess_inf_time (\<Lambda>i i) (pexit T K)
+          \<le> ennreal (- (1 / l)
+            * ln (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i)))"
+        by (rule ess_inf_time_le_laplace[OF probs pmi
+            pexit_nonneg[OF T0] pexit_le_T[OF T0] l])
+      have pos_i: "0 < (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
+      proof -
+        have "(0 :: real)
+            < (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>)"
+          using Epos\<Lambda>[OF l] by (simp add: mult_pos_pos)
+        also have "\<dots> < (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
+          by (rule elim(1))
+        finally show ?thesis .
+      qed
+      have lnb: "ln ((\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)
+          * exp (- l * \<epsilon>))
+          \<le> ln (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
+        using elim(1) pos_i Epos\<Lambda>[OF l]
+        by (subst ln_le_cancel_iff) (auto simp: mult_pos_pos)
+      have lnsplit: "ln ((\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)
+          * exp (- l * \<epsilon>))
+          = ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + (- l * \<epsilon>)"
+        using Epos\<Lambda>[OF l] by (simp add: ln_mult)
+      have "- (1 / l) * ln (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))
+          \<le> - (1 / l) * (ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)
+            + (- l * \<epsilon>))"
+        using lnb lnsplit l
+        by (intro mult_left_mono_neg) auto
+      also have "\<dots> = - (1 / l)
+          * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + \<epsilon>"
+        using l by (simp add: field_simps)
+      finally have "- (1 / l)
+          * ln (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))
+          \<le> - (1 / l) * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + \<epsilon>" .
+      then show ?case
+        using L1i by (meson ennreal_leI order_trans)
+    qed
+    show ?thesis
+      by (intro Limsup_bounded main)
+  qed
+  have perl: "Limsup sequentially
+      (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
+      \<le> ennreal (- (1 / l) * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>))"
+    if l: "0 < l" for l
+  proof (rule ennreal_le_epsilon)
+    fix \<epsilon> :: real
+    assume "ennreal (- (1 / l)
+        * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)) < \<top>"
+      and \<epsilon>: "0 < \<epsilon>"
+    have "Limsup sequentially (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
+        \<le> ennreal (- (1 / l)
+          * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + \<epsilon>)"
+      by (rule step[OF l \<epsilon>])
+    also have "ennreal (- (1 / l)
+        * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + \<epsilon>)
+        = ennreal (- (1 / l)
+          * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)) + ennreal \<epsilon>"
+      using flnn[OF l] less_imp_le[OF \<epsilon>] by (rule ennreal_plus)
+    finally show "Limsup sequentially
+        (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
+        \<le> ennreal (- (1 / l)
+          * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)) + ennreal \<epsilon>" .
+  qed
+  have "Limsup sequentially (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
+      \<le> (INF l \<in> {0<..}. ennreal (- (1 / l)
+        * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)))"
+    by (intro INF_greatest perl) auto
+  also have "\<dots> = ess_inf_time \<Lambda> (pexit T K)"
+    by (rule ess_inf_time_eq_laplace_inf[OF prob pm\<Lambda>
+        pexit_nonneg[OF T0] pexit_le_T[OF T0]])
+  finally show ?thesis .
 qed
 
 end
