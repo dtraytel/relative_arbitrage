@@ -419,7 +419,42 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
       (failed `have`s still feed downstream, so the regression was
       invisible until a full-file `get_state`; CHECK `errors` on the
       WHOLE file after big edits, not just the new region).
-   d. `coord_Z` for the stopped process with
+   d. IN PROGRESS (2026-08-04).  Worked-out mathematical shape: with
+      `Θ_t = W_{c(t)} + φ`, both coordinate obligations reduce to the
+      SINGLE process `drN t := (q+t)·cos(2Θ_t) + ∫_0^t cos(2Θ_u) du`
+      being a martingale — `coord_Z (drX q φ) (dra q φ) 1 = q/2 + drN/2`
+      and for coordinate 2 `= q/2 − drN/2` (double angle
+      `cos² = (1+cos 2u)/2`, `sin² = (1−cos 2u)/2`, and
+      `R(t)² − t = q`); the stopped versions then follow from
+      `martingale_stopped_deterministic` since
+      `∫_0^t (stopped integrand) = ∫_0^{min t T0} (unstopped)`.
+      The conditional-expectation computation:
+      `E[cos 2Θ_t|G_s] = cos 2Θ_s·((q+s)/(q+t))²` (a = 2 decay), and
+      `∫_s^t ((q+s)/(q+u))² du = (q+s) − (q+s)²/(q+t)` — the two terms
+      cancel so `∫_B (drN_t − drN_s) dM = 0`.
+      DONE so far (commit 8f889f7): the measure-theoretic engine —
+      `borel_measurable_continuous_time_process` (continuous in t +
+      measurable in ω ⇒ jointly measurable; dyadic discretization,
+      `measurable_compose_countable'` + `borel_measurable_LIMSEQ_real`;
+      searched HOL + AFP: no such lemma existed), corollary
+      `borel_measurable_time_integral` (ω ↦ ∫_{a..b} f u ω du
+      measurable), and `time_integral_swap_event` (bounded integrand:
+      `∫_B ∫_{a..b} f du dM = ∫_{a..b} ∫_B f dM du` via
+      `pair_sigma_finite.Fubini_integral` on `lborel ⨂⇩M M`).
+      Proof-shape notes: pair measure is `⨂⇩M` = `\<Otimes>\<^sub>M`
+      (CAPITAL Otimes — lowercase ⊗ is a lexical error); direct python
+      edits to the scratch are NOT picked up by the PIDE buffer — go
+      through the MCP `edit` tool; `emeasure M B < ∞` for a finite
+      measure via `emeasure_eq_measure` (metis on
+      `emeasure_finite`/`top.not_eq_extremum` fails);
+      `integrable (case_prod F)` from the fst/snd form via
+      `case_prod_beta'` (unprimed `case_prod_beta` does not rewrite).
+      REMAINING in (d): the a = 2 decay set-integral identity
+      (`cbm_cos_set_integral` at `a=2, b=2φ` + algebra
+      `e^{−2(c_t−c_s)} = ((q+s)/(q+t))²`); the FTC integral; `drN` and
+      its martingale property via `has_cond_expI'`; the `dra` matrix
+      (`vvᵀ`, `v = (sin Θ, −cos Θ)`) and the two `coord_Z` martingales.
+      OLD SPEC (kept for reference): `coord_Z` for the stopped process with
       `acov j k t ω := (if t ≤ r² − q then …trig products at
       (drW (drc q t) ω + φ)… else 0)`; the compensated-square
       martingale property reduces, via `cos² u = (1 + cos 2u)/2` and
