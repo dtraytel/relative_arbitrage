@@ -328,14 +328,19 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
    `has_cond_exp bm_paths (natural_filtration bm_paths 0 (bmX x0) s)
    (λω. g (ω i t − ω i s)) (λω. ∫ y. g y ∂gauss_measure (t−s))`
    (`has_cond_expI'` + `indep_var_lebesgue_integral` over
-   `bm_indicator_increment_indep_var`).  STILL TO DO in this brick: the
-   AE `cond_exp`-form via `has_cond_exp_charact(2)` (needs a
-   `sigma_finite_subalgebra` interpretation), and the `cos/sin(a·+b)`
-   instances by angle-addition
-   (`cos(a(W_s+Δ)+b) = cos(aW_s+b)cos(aΔ) − sin(aW_s+b)sin(aΔ)`, pull
-   the `F s`-measurable factors out with
-   `sigma_finite_subalgebra.cond_exp_measurable_mult`, then
-   `gauss_measure_cos/sin`).
+   `bm_indicator_increment_indep_var`); AE form
+   `bm_increment_cond_exp_AE`; the generalized independence
+   `bm_past_increment_indep_var` (any past-measurable `Z`, the
+   indicator proof verbatim) and the product factorization
+   `bm_past_increment_cond_exp`
+   (`cond_exp (Z·g(Δ)) =AE Z·∫g dgauss`).  STILL TO DO in this brick:
+   the `cos/sin(a·+b)` instances — rewrite
+   `cos(a·ω_t+b) = cos(a·ω_s+b)cos(aΔ) − sin(a·ω_s+b)sin(aΔ)` by
+   `ext` + `cos_add`, apply `sigma_finite_subalgebra.cond_exp_diff` and
+   `bm_past_increment_cond_exp` twice (Z := the `F s`-measurable trig
+   factors, measurable via the adapted `bmX` component), then
+   `gauss_measure_cos/sin`, yielding
+   `E[cos(a·ω_t+b)|F_s] =AE cos(a·ω_s+b)·e^{−a²(t−s)/2}`.
 4. The process: definition on `bm_paths` (or `wiener_pre`) via the 1-D
    continuous modification, martingale + `coord_Z` from 3 and the
    constancy `R(t)e^{−c(t)/2} = |x|`; time change `c` is deterministic,
