@@ -474,11 +474,22 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
       the martingale assembly uses the exact drX_cos combination
       `(auto intro: drG_subalgebra drN_adapted[OF q] dest:
       Gmono[THEN subsetD])` — other combinations loop.
-      REMAINING in (d): the `dra` matrix (`vvᵀ`, `v = (sin Θ,
-      −cos Θ)`) and the two `coord_Z (drX q φ) (dra q φ) i`
-      martingales via `coord_Z = q/2 ± drN/2` (affine images of drN —
-      needs martingale scale/add-constant combinators or a direct
-      has_cond_exp argument).
+      (d) IS COMPLETE (commits b9d97fc, e0e9aa1): `dra q φ = vvᵀ`
+      with `v = (sin Θ, −cos Θ)` (`dra_11/22` diagonal =
+      sin²/cos²), compensators `dra_compensator_11/22 = t/2 ∓
+      (∫drC2)/2`, coordinate identities `coord_Z_drX_1/2 = q/2 ±
+      drN/2` (t ≥ 0), and **`martingale_coord_Z_drX`** — both
+      compensated coordinate squares are martingales (manual assembly:
+      identity-rewrite per fixed nonneg time; negative-time
+      measurability from the empty compensator; cond_exp
+      add/const/scaleR chain + drN property under eventually_elim).
+      Traps: `d / 2 *⇩R x` parses as `d / (2 *⇩R x)` — parenthesize;
+      in a `cases "i = 1"` True-branch simp rewrites `i` before an
+      i-form rule LHS can match — instantiate component equations by
+      hand via `fun_eq_iff drX_def True`; final linear identities
+      close with `argo` (linarith balks); conditional trig rewrites
+      die when simp first distributes `2*(x+φ)` — use `drC2_eq
+      drW_def`.
       OLD SPEC (kept for reference): `coord_Z` for the stopped process with
       `acov j k t ω := (if t ≤ r² − q then …trig products at
       (drW (drc q t) ω + φ)… else 0)`; the compensated-square
