@@ -449,11 +449,36 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
       `emeasure_finite`/`top.not_eq_extremum` fails);
       `integrable (case_prod F)` from the fst/snd form via
       `case_prod_beta'` (unprimed `case_prod_beta` does not rewrite).
-      REMAINING in (d): the a = 2 decay set-integral identity
-      (`cbm_cos_set_integral` at `a=2, b=2φ` + algebra
-      `e^{−2(c_t−c_s)} = ((q+s)/(q+t))²`); the FTC integral; `drN` and
-      its martingale property via `has_cond_expI'`; the `dra` matrix
-      (`vvᵀ`, `v = (sin Θ, −cos Θ)`) and the two `coord_Z` martingales.
+      DONE (commits b10515b, d75bafe, 07e9c1d): the clamped
+      double-angle process `drC2 q φ u ω = cos(2·drW(drc q (max u 0))ω
+      + 2φ)` with continuity/measurability/adaptedness; the decay
+      `drC2_set_integral_decay` (∫_B drC2_u = ((q+s)/(q+u))²·∫_B drC2_s
+      for B in the filtration at s); `drc_exp_diff_sq`;
+      `drN_compensator_integral` (FTC); `drN q φ t = (q+t)·drC2_t +
+      ∫_0^t drC2_u du` with `drN_set_integral_identity` (T1 decay
+      cancels against T3 Fubini compensator increment) and
+      **`martingale_drN`**.  IMPORTANT WORKFLOW CHANGE (user request
+      2026-08-04): after a PIDE restart wiped the scratch, development
+      now happens DIRECTLY in `Deterministic_Radius_Market.thy` via the
+      MCP edit tool (a restarted server has the current ROOT snapshot,
+      so the theory loads by name; downstream Theorem_1_1 is not open
+      in PIDE so edits don't trigger huge re-elaboration).  The theory
+      is fully PIDE-green: 4537 commands, 0 failures.  This also
+      surfaced and fixed silently-broken committed proofs
+      (`drc_mono`/`drc_strict_mono` had stale `ln_mono?` placeholder
+      text) — failed lemma-level proofs abort the LEMMA (undefined
+      fact downstream), unlike failed `have`s inside proofs.
+      Traps: `drC2_max` is a FUNCTION equality — needs `(intro ext)`
+      before simp; `filtered_measure_def` clauses need
+      `subalgebra_def` in the simp set; the `adapted_process` goal in
+      the martingale assembly uses the exact drX_cos combination
+      `(auto intro: drG_subalgebra drN_adapted[OF q] dest:
+      Gmono[THEN subsetD])` — other combinations loop.
+      REMAINING in (d): the `dra` matrix (`vvᵀ`, `v = (sin Θ,
+      −cos Θ)`) and the two `coord_Z (drX q φ) (dra q φ) i`
+      martingales via `coord_Z = q/2 ± drN/2` (affine images of drN —
+      needs martingale scale/add-constant combinators or a direct
+      has_cond_exp argument).
       OLD SPEC (kept for reference): `coord_Z` for the stopped process with
       `acov j k t ω := (if t ≤ r² − q then …trig products at
       (drW (drc q t) ω + φ)… else 0)`; the compensated-square
