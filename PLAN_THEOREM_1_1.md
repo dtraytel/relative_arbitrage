@@ -1,12 +1,28 @@
 # Plan: reaching Theorem 1.1 of arXiv:2512.17702
 
-Rewritten 2026-08-04 after the clause-(1) packaging and the N4 opening.
+Rewritten 2026-08-04 after the clause-(1) packaging and the N4 opening;
+status refreshed later the same day after N4 CLOSED (commit `8cee2a6`).
 This document is the single source of truth for what is proved, what is
 open, and what to do next. Everything referenced below is PIDE-verified
-(commit `04d679f`) unless marked open; `Deterministic_Radius_Market.thy`
-additionally awaits the batch-build cross-check (see §3/N4). History and
-superseded scoping live in git (`git log -p PLAN_THEOREM_1_1.md`) — do not
-resurrect them.
+unless marked open — including ALL of `Deterministic_Radius_Market.thy`
+(6,023 commands green) and `Theorem_1_1.thy` (369 commands green, now
+importing `Section_2_Usc` + `Deterministic_Radius_Market`); the user's
+batch build remains the final cross-check. WORKFLOW (user request):
+develop DIRECTLY in the theory files via the PIDE MCP edit tool — the
+current server session has the full ROOT and elaborates the tree
+theories by name; scratches are only for throwaway probes. History and
+superseded scoping live in git (`git log -p PLAN_THEOREM_1_1.md`) — do
+not resurrect them.
+
+**Remaining road to Theorem 1.1** (in recommended order):
+1. NC — canonical market ("the closure adds no value") OR the
+   author-level decision to cite clause (1) in law-level form (under
+   which clause (1) is complete). §3/NC.
+2. N5 — the essinf weak DPP; reading done, fit assessed, build order
+   (a)–(d) scripted in §3/N5. Unblocks clause (2) together with the
+   (now complete) N4 witness.
+3. Clause (3) beyond the ball / general `n − k ≥ 2` — spherical BM on
+   the discrete route (only needed for the general-K statement).
 
 Sources: the paper (Lai/Shkolnikov/Soner, arXiv:2512.17702), its main
 reference for Section 2 (Larsson–Ruf, *Minimum curvature flow and martingale
@@ -33,8 +49,8 @@ faithful rendering of the paper's Eq. (1.6).
 |---|---|---|
 | (0) | `v < ⊤` | **DONE** — `val_fn_finite_bounded`, `stopped_val_fn_finite_bounded` |
 | (1) | regularity (usc) | **DONE in law-level form** — `clause_one_law_level`; the identification `w = ` class-sup ("the closure adds no value") is the canonical-market construction, §3/NC |
-| (2) | `visc_sol k L (interior K) v` | open — items N4, N5 |
-| (3) | `v = 0` on `K − interior K` | ball case **DONE** — `val_fn_boundary_zero`, `stopped_val_fn_boundary_zero`; general open — N4 |
+| (2) | `visc_sol k L (interior K) v` | open — needs N5 (DPP); the N4 witness input is now DONE |
+| (3) | `v = 0` on `K − interior K` | ball case **DONE** — `val_fn_boundary_zero`, `stopped_val_fn_boundary_zero`; **and the interior value is REALIZED exactly for `n−k=1`**: `Theorem_1_1.stopped_val_fn_ball_eq_2d` — `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)` for `0 < ¦x¦ ≤ r` (N4, complete); general `n−k ≥ 2` open (spherical BM, discrete route) |
 | (4) | uniqueness | **DONE** — `theorem_1_1_uniqueness_general` via Theorem 4.2(a) |
 
 **The clause-(1) headline** (`Section_2_Usc.clause_one_law_level`): for
@@ -581,6 +597,53 @@ test functions — exactly the form the viscosity proofs consume. Read BT09
 and arXiv:1105.0745 against Definition 3.1's needs BEFORE formalising
 anything: this is a stochastic-target problem with an essinf objective and
 the fit is unverified. Unblocks clause (2) together with N4.
+
+**READING DONE (2026-08-04; BT09 = SIAM J. Control Optim. 49(3)
+948–962, fetched from ceremade.dauphine.fr/~bouchard/pdf/BT09.pdf,
+pp. 948–955 read).** Structure of BT09: Mayer-form
+`V(t,x) = sup_ν E[f(X_T)]`; assumptions A1 (controls/state
+𝔽ᵗ-progressively measurable, independent of ℱ_t), A2 (causality),
+A3 (concatenation stability at stopping times — implies A5,
+bifurcation along an ℱ-partition), A4a/b (tower-compatibility of the
+conditional reward at stopping times).  Theorem 3.5: (3.1)
+`V ≤ sup_ν E[V*(θ_ν, X(θ_ν))]` (USC envelope; only the tower property
++ A4a) and (3.2) for every USC minorant `φ ≤ V` (with `J(·;ν)` LSC in
+the initial condition): `V ≥ sup_ν E[φ(θ_ν, X(θ_ν))]`.  Measurable
+selection is replaced by: ε-optimal control per point + LSC of J +
+Lindelöf countable cover of half-open boxes `B(s,y;r) =
+{(t',x'): t' ∈ (s−r,s], |x'−y| < r}` + countable pasting via A3/A5.
+
+FIT ASSESSMENT for our Definition 3.1 (objective
+`stopped_val_fn = Sup {essinf_M τ}`):
+1. The objective is a SUP of ESSENTIAL INFIMA, not of expectations —
+   BT09's reward calculus (tower property, dominated convergence in
+   (3.2)'s proof) does NOT transfer verbatim.  The essinf analogue of
+   the tower property is essinf-pasting:
+   `essinf τ = θ + essinf(shifted τ)` under concatenation at a
+   deterministic/stopping time θ — this needs the CLASS to be closed
+   under (i) conditioning/shifting at stopping times and (ii)
+   countable pasting along a past-measurable partition.
+2. (ii) is the crux: pasting stopped_market witnesses into one
+   measure = gluing via regular conditional distributions on the
+   Polish path space.  INFRASTRUCTURE EXISTS: AFP `Disintegration`
+   (`measure_disintegration`, built on Standard_Borel_Spaces — already
+   a session dependency) gives disintegration of measures on standard
+   Borel spaces; the path space is Polish (Path_Space.thy).  Still a
+   large step (~2–4k lines): shift/concatenation operators on path
+   measures + closure of `stopped_market` under both.
+3. The ≤-half of the DPP (our Eq. (2.9) upper bound) needs only the
+   shift/conditioning closure (BT09's A4a analogue) — substantially
+   easier than the ≥-half, and may suffice for ONE of the two
+   viscosity inequalities of clause (2) (check which one Definition
+   3.1's supersolution proof consumes before building the ≥-half).
+4. The Lindelöf-cover trick itself is formalizable (countable cover
+   by rational boxes; Isabelle: `Lindelof_space` or direct second-
+   countability) and is NOT the bottleneck.
+RECOMMENDED ORDER: (a) shift operator on path laws + class closure
+under conditioning (reusable from NC's canonical-market needs);
+(b) the ≤-half of the essinf DPP; (c) assess which viscosity
+inequality remains; only then (d) the pasting ≥-half via
+Disintegration.
 
 ### Fallback
 
