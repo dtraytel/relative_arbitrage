@@ -2925,4 +2925,164 @@ proof -
   qed
 qed
 
+subsection \<open>The stopped market\<close>
+
+definition drXs :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2"
+  where "drXs q \<phi> T0 t = drX q \<phi> (min t T0)"
+
+definition dras ::
+  "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2^2"
+  where "dras q \<phi> T0 u \<omega> = (if u \<le> T0 then dra q \<phi> u \<omega> else 0)"
+
+lemma set_integral_stopped_split:
+  fixes g :: "real \<Rightarrow> real" and T0 t :: real
+  assumes T0: "0 \<le> T0"
+    and int: "\<And>a b :: real. 0 \<le> a \<Longrightarrow> set_integrable lborel {a..b} g"
+  shows "set_lebesgue_integral lborel {0..t} (\<lambda>u. if u \<le> T0 then g u else 0)
+       = set_lebesgue_integral lborel {0..min t T0} g"
+proof (cases "t \<le> T0")
+  case True
+  then have m: "min t T0 = t" by simp
+  show ?thesis
+    unfolding m
+    by (rule set_lebesgue_integral_cong) (use True in auto)
+next
+  case False
+  then have m: "min t T0 = T0" and Tt: "T0 \<le> t" by auto
+  have un: "{0..t} = {0..T0} \<union> {T0<..t}"
+    using T0 Tt by auto
+  have dis: "{0..T0} \<inter> {T0<..t} = {}" by auto
+  have intA: "set_integrable lborel {0..T0}
+      (\<lambda>u. if u \<le> T0 then g u else 0)"
+  proof -
+    have "(\<lambda>u. indicat_real {0..T0} u *\<^sub>R (if u \<le> T0 then g u else 0))
+        = (\<lambda>u. indicat_real {0..T0} u *\<^sub>R g u)"
+      by (auto simp: fun_eq_iff indicator_def)
+    then show ?thesis
+      using int[OF order_refl, of T0]
+      unfolding set_integrable_def by simp
+  qed
+  have intB: "set_integrable lborel {T0<..t}
+      (\<lambda>u. if u \<le> T0 then g u else 0)"
+  proof -
+    have "(\<lambda>u. indicat_real {T0<..t} u *\<^sub>R (if u \<le> T0 then g u else 0))
+        = (\<lambda>_. 0)"
+      by (auto simp: fun_eq_iff indicator_def)
+    then show ?thesis
+      unfolding set_integrable_def by simp
+  qed
+  have "set_lebesgue_integral lborel {0..t} (\<lambda>u. if u \<le> T0 then g u else 0)
+      = set_lebesgue_integral lborel {0..T0}
+          (\<lambda>u. if u \<le> T0 then g u else 0)
+        + set_lebesgue_integral lborel {T0<..t}
+            (\<lambda>u. if u \<le> T0 then g u else 0)"
+    unfolding un by (rule set_integral_Un[OF dis intA intB])
+  moreover have "set_lebesgue_integral lborel {0..T0}
+      (\<lambda>u. if u \<le> T0 then g u else 0)
+      = set_lebesgue_integral lborel {0..T0} g"
+    by (rule set_lebesgue_integral_cong) auto
+  moreover have "set_lebesgue_integral lborel {T0<..t}
+      (\<lambda>u. if u \<le> T0 then g u else 0) = 0"
+  proof -
+    have "set_lebesgue_integral lborel {T0<..t}
+        (\<lambda>u. if u \<le> T0 then g u else 0)
+        = set_lebesgue_integral lborel {T0<..t} (\<lambda>_. 0)"
+      by (rule set_lebesgue_integral_cong) auto
+    then show ?thesis
+      by (simp add: set_lebesgue_integral_def)
+  qed
+  ultimately show ?thesis unfolding m by simp
+qed
+
+lemma dra_diag_drC2:
+  fixes i :: 2
+  assumes u: "0 \<le> u"
+  shows "dra q \<phi> u \<omega> $ i $ i
+      = (if i = 1 then (1 - drC2 q \<phi> u \<omega>) / 2
+         else (1 + drC2 q \<phi> u \<omega>) / 2)"
+proof (cases "i = 1")
+  case True
+  have "dra q \<phi> u \<omega> $ 1 $ 1 = (sin (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
+    by (rule dra_11)
+  also have "\<dots> = (1 - cos (2 * (drW (drc q u) \<omega> + \<phi>))) / 2"
+    using cos_double_sin[of "drW (drc q u) \<omega> + \<phi>"] by simp
+  also have "\<dots> = (1 - drC2 q \<phi> u \<omega>) / 2"
+    using u by (simp add: drC2_eq drW_def)
+  finally show ?thesis using True by simp
+next
+  case False
+  then have i2: "i = 2" using exhaust_2[of i] by auto
+  have "dra q \<phi> u \<omega> $ 2 $ 2 = (cos (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
+    by (rule dra_22)
+  also have "\<dots> = (1 + cos (2 * (drW (drc q u) \<omega> + \<phi>))) / 2"
+    using cos_double_cos[of "drW (drc q u) \<omega> + \<phi>"] by simp
+  also have "\<dots> = (1 + drC2 q \<phi> u \<omega>) / 2"
+    using u by (simp add: drC2_eq drW_def)
+  finally show ?thesis using i2 False by simp
+qed
+
+lemma dra_diag_set_integrable:
+  fixes i :: 2
+  assumes q: "0 < q" and a: "0 \<le> a"
+  shows "set_integrable lborel {a..b} (\<lambda>u. dra q \<phi> u \<omega> $ i $ i)"
+proof -
+  have int1: "set_integrable lborel {a..b}
+      (\<lambda>u. (if i = 1 then (1 - drC2 q \<phi> u \<omega>) / 2
+            else (1 + drC2 q \<phi> u \<omega>) / 2))"
+  proof (cases "i = 1")
+    case True
+    show ?thesis
+      unfolding True
+      by (rule borel_integrable_atLeastAtMost')
+        (auto intro!: continuous_intros
+          continuous_on_subset[OF drC2_cont[OF q] subset_UNIV])
+  next
+    case False
+    show ?thesis
+      using False
+      by (simp, intro borel_integrable_atLeastAtMost')
+        (auto intro!: continuous_intros
+          continuous_on_subset[OF drC2_cont[OF q] subset_UNIV])
+  qed
+  have eq: "(\<lambda>u. indicat_real {a..b} u *\<^sub>R (dra q \<phi> u \<omega> $ i $ i))
+      = (\<lambda>u. indicat_real {a..b} u *\<^sub>R
+          (if i = 1 then (1 - drC2 q \<phi> u \<omega>) / 2
+           else (1 + drC2 q \<phi> u \<omega>) / 2))"
+    using a by (auto simp: fun_eq_iff indicator_def dra_diag_drC2)
+  show ?thesis
+    using int1 unfolding set_integrable_def eq .
+qed
+
+lemma coord_Z_drXs_eq:
+  fixes i :: 2
+  assumes q: "0 < q" and T0: "0 \<le> T0"
+  shows "coord_Z (drXs q \<phi> T0) (dras q \<phi> T0) i
+       = (\<lambda>t. coord_Z (drX q \<phi>) (dra q \<phi>) i (min t T0))"
+proof (intro ext)
+  fix t :: real and \<omega> :: "2 \<Rightarrow> real \<Rightarrow> real"
+  have "set_lebesgue_integral lborel {0..t}
+      (\<lambda>u. dras q \<phi> T0 u \<omega> $ i $ i)
+      = set_lebesgue_integral lborel {0..t}
+          (\<lambda>u. if u \<le> T0 then dra q \<phi> u \<omega> $ i $ i else 0)"
+    by (rule set_lebesgue_integral_cong)
+      (auto simp: dras_def zero_vec_def)
+  also have "\<dots> = set_lebesgue_integral lborel {0..min t T0}
+      (\<lambda>u. dra q \<phi> u \<omega> $ i $ i)"
+    by (rule set_integral_stopped_split[OF T0
+        dra_diag_set_integrable[OF q]])
+  finally show "coord_Z (drXs q \<phi> T0) (dras q \<phi> T0) i t \<omega>
+      = coord_Z (drX q \<phi>) (dra q \<phi>) i (min t T0) \<omega>"
+    unfolding coord_Z_def drXs_def by simp
+qed
+
+theorem martingale_coord_Z_drXs:
+  fixes q \<phi> T0 :: real and i :: 2
+  assumes q: "0 < q" and T0: "0 \<le> T0"
+  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      0 (coord_Z (drXs q \<phi> T0) (dras q \<phi> T0) i)"
+  unfolding coord_Z_drXs_eq[OF q T0]
+  by (rule martingale_stopped_deterministic
+      [OF martingale_coord_Z_drX[OF q] T0])
+
 end
