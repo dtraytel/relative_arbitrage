@@ -2221,4 +2221,242 @@ next
     using * unfolding drc_exp_diff_sq[OF q s su] .
 qed
 
+subsection \<open>The compensated double-angle process\<close>
+
+definition drN :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real" where
+  "drN q \<phi> t \<omega> = (q + t) * drC2 q \<phi> t \<omega>
+     + set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+
+lemma drC2_time_integrable:
+  assumes q: "0 < q"
+  shows "set_integrable lborel {a..b} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+  by (rule borel_integrable_atLeastAtMost')
+    (rule continuous_on_subset[OF drC2_cont[OF q] subset_UNIV])
+
+lemma drC2_time_integral_abs:
+  assumes q: "0 < q" and ab: "a \<le> b"
+  shows "\<bar>set_lebesgue_integral lborel {a..b} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar> \<le> b - a"
+proof -
+  have int: "integrable lborel
+      (\<lambda>u. indicat_real {a..b} u *\<^sub>R drC2 q \<phi> u \<omega>)"
+    using drC2_time_integrable[OF q, of a b \<phi> \<omega>]
+    by (simp add: set_integrable_def)
+  have int1: "integrable lborel (indicat_real {a..b})"
+    by (auto simp: integrable_indicator_iff emeasure_lborel_Icc ab)
+  have "\<bar>set_lebesgue_integral lborel {a..b} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>
+      \<le> (\<integral>u. \<bar>indicat_real {a..b} u *\<^sub>R drC2 q \<phi> u \<omega>\<bar> \<partial>lborel)"
+    unfolding set_lebesgue_integral_def
+    by (rule integral_abs_bound)
+  also have "\<dots> \<le> (\<integral>u. indicat_real {a..b} u \<partial>lborel)"
+    by (intro integral_mono integrable_abs int int1)
+      (use drC2_abs in \<open>auto simp: indicator_def abs_mult mult_le_one\<close>)
+  also have "\<dots> = b - a"
+    using ab by (simp add: measure_lborel_Icc)
+  finally show ?thesis .
+qed
+
+lemma drC2_time_integral_meas:
+  assumes q: "0 < q"
+  shows "(\<lambda>\<omega>. set_lebesgue_integral lborel {a..b} (\<lambda>u. drC2 q \<phi> u \<omega>))
+      \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+  by (rule borel_measurable_time_integral)
+    (auto intro: drC2_cont[OF q] drC2_meas)
+
+lemma drC2_integral_split:
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)
+       = set_lebesgue_integral lborel {0..s} (\<lambda>u. drC2 q \<phi> u \<omega>)
+         + set_lebesgue_integral lborel {s..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+proof -
+  have un: "{0..t} = {0..s} \<union> {s<..t}"
+    using s st by auto
+  have dis: "{0..s} \<inter> {s<..t} = {}" by auto
+  have intA: "set_integrable lborel {0..s} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+    by (rule drC2_time_integrable[OF q])
+  have intT: "set_integrable lborel {s..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+    by (rule drC2_time_integrable[OF q])
+  have intB: "set_integrable lborel {s<..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+    by (rule set_integrable_subset[OF intT]) auto
+  have "set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)
+      = set_lebesgue_integral lborel {0..s} (\<lambda>u. drC2 q \<phi> u \<omega>)
+        + set_lebesgue_integral lborel {s<..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+    unfolding un by (rule set_integral_Un[OF dis intA intB])
+  moreover have "set_lebesgue_integral lborel {s<..t} (\<lambda>u. drC2 q \<phi> u \<omega>)
+      = set_lebesgue_integral lborel {s..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+  proof (rule set_integral_cong_set)
+    show "AE x in lborel. x \<in> {s..t} \<longleftrightarrow> x \<in> {s<..t}"
+      by (rule AE_I'[where N = "{s}"]) auto
+    show "set_borel_measurable lborel {s<..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+      using intB unfolding set_integrable_def set_borel_measurable_def
+      by (rule borel_measurable_integrable)
+    show "set_borel_measurable lborel {s..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+      using intT unfolding set_integrable_def set_borel_measurable_def
+      by (rule borel_measurable_integrable)
+  qed
+  ultimately show ?thesis by simp
+qed
+
+lemma drN_event_integrable:
+  assumes q: "0 < q" and t: "0 \<le> t"
+    and B: "B \<in> sets (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+  shows "integrable bm_paths (\<lambda>\<omega>. indicat_real B \<omega> * drN q \<phi> t \<omega>)"
+proof -
+  have m: "(\<lambda>\<omega>. indicat_real B \<omega> * drN q \<phi> t \<omega>)
+      \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
+    unfolding drN_def
+    using B drC2_meas drC2_time_integral_meas[OF q] by measurable
+  have bnd: "\<bar>indicat_real B \<omega> * drN q \<phi> t \<omega>\<bar> \<le> (q + t) + t" for \<omega>
+  proof -
+    have "\<bar>drN q \<phi> t \<omega>\<bar> \<le> \<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar>
+        + \<bar>set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>"
+      unfolding drN_def by (rule abs_triangle_ineq)
+    also have "\<dots> \<le> \<bar>q + t\<bar> * 1 + (t - 0)"
+    proof (intro add_mono)
+      have "\<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar> = \<bar>q + t\<bar> * \<bar>drC2 q \<phi> t \<omega>\<bar>"
+        by (simp add: abs_mult)
+      also have "\<dots> \<le> \<bar>q + t\<bar> * 1"
+        by (intro mult_left_mono drC2_abs abs_ge_zero)
+      finally show "\<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar> \<le> \<bar>q + t\<bar> * 1" .
+      show "\<bar>set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>
+          \<le> t - 0"
+        by (rule drC2_time_integral_abs[OF q t])
+    qed
+    also have "\<dots> = \<bar>q + t\<bar> + t" by simp
+    also have "\<dots> = (q + t) + t" using q t by simp
+    finally have *: "\<bar>drN q \<phi> t \<omega>\<bar> \<le> (q + t) + t" .
+    have "\<bar>indicat_real B \<omega> * drN q \<phi> t \<omega>\<bar> \<le> \<bar>drN q \<phi> t \<omega>\<bar>"
+      by (simp add: abs_mult indicator_def)
+    with * show ?thesis by linarith
+  qed
+  show ?thesis
+    by (rule BMP.integrable_const_bound[where B = "(q + t) + t"])
+      (use m bnd in \<open>auto intro!: AE_I2\<close>)
+qed
+
+lemma drN_set_integral_identity:
+  fixes q \<phi> s t :: real
+  assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
+    and B: "B \<in> sets (natural_filtration
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) 0
+      (cbmX (0 :: real^2)) (drc q s))"
+  shows "(\<integral>\<omega>. indicat_real B \<omega> * drN q \<phi> t \<omega> \<partial>bm_paths)
+       = (\<integral>\<omega>. indicat_real B \<omega> * drN q \<phi> s \<omega> \<partial>bm_paths)"
+proof -
+  let ?M = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?I = "\<lambda>v \<omega>. set_lebesgue_integral lborel {0..v} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+  let ?Is = "\<lambda>\<omega>. set_lebesgue_integral lborel {s..t} (\<lambda>u. drC2 q \<phi> u \<omega>)"
+  have qs: "0 < q + s" and qt: "0 < q + t" using q s st by auto
+  have t0: "0 \<le> t" using s st by simp
+  have BM: "B \<in> sets ?M"
+    using B drG_subalgebra by (auto simp: subalgebra_def)
+  have fm: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  let ?J = "\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> s \<omega> \<partial>?M"
+  have T1: "(\<integral>\<omega>. indicat_real B \<omega> * ((q + t) * drC2 q \<phi> t \<omega>) \<partial>?M)
+      = (q + s)\<^sup>2 / (q + t) * ?J"
+  proof -
+    have "(\<integral>\<omega>. indicat_real B \<omega> * ((q + t) * drC2 q \<phi> t \<omega>) \<partial>?M)
+        = (q + t) * (\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> t \<omega> \<partial>?M)"
+      by (subst integral_mult_right_zero[symmetric])
+        (simp add: mult_ac)
+    also have "\<dots> = (q + t) * (((q + s) / (q + t))\<^sup>2 * ?J)"
+      unfolding drC2_set_integral_decay[OF q s st B] ..
+    also have "\<dots> = (q + s)\<^sup>2 / (q + t) * ?J"
+      using qt by (simp add: power_divide power2_eq_square)
+    finally show ?thesis .
+  qed
+  have T3: "(\<integral>\<omega>. indicat_real B \<omega> * ?Is \<omega> \<partial>?M)
+      = ((q + s) - (q + s)\<^sup>2 / (q + t)) * ?J"
+  proof -
+    have "(\<integral>\<omega>. indicat_real B \<omega> * ?Is \<omega> \<partial>?M)
+        = (\<integral>u\<in>{s..t}. (\<integral>\<omega>. indicat_real B \<omega> * drC2 q \<phi> u \<omega> \<partial>?M) \<partial>lborel)"
+      by (rule time_integral_swap_event[OF fm _ _ _ BM, of _ 1])
+        (auto intro: drC2_cont[OF q] drC2_meas drC2_abs)
+    also have "\<dots> = (\<integral>u\<in>{s..t}. ((q + s) / (q + u))\<^sup>2 * ?J \<partial>lborel)"
+      by (rule set_lebesgue_integral_cong)
+        (auto intro!: drC2_set_integral_decay[OF q s _ B])
+    also have "\<dots> = (\<integral>u\<in>{s..t}. ((q + s) / (q + u))\<^sup>2 \<partial>lborel) * ?J"
+      by (rule set_integral_mult_left)
+    also have "\<dots> = ((q + s) - (q + s)\<^sup>2 / (q + t)) * ?J"
+      unfolding drN_compensator_integral[OF qs st] ..
+    finally show ?thesis .
+  qed
+  have i_dc_t: "integrable ?M
+      (\<lambda>\<omega>. indicat_real B \<omega> * ((q + t) * drC2 q \<phi> t \<omega>))"
+    using drC2_event_integrable[OF BM, of q \<phi> t]
+    by (subst mult.left_commute) (rule integrable_mult_right)
+  have i_dc_s: "integrable ?M
+      (\<lambda>\<omega>. indicat_real B \<omega> * ((q + s) * drC2 q \<phi> s \<omega>))"
+    using drC2_event_integrable[OF BM, of q \<phi> s]
+    by (subst mult.left_commute) (rule integrable_mult_right)
+  have i_I: "integrable ?M (\<lambda>\<omega>. indicat_real B \<omega> * ?I v \<omega>)"
+    if v: "0 \<le> v" for v
+  proof -
+    have m: "(\<lambda>\<omega>. indicat_real B \<omega> * ?I v \<omega>) \<in> borel_measurable ?M"
+      using BM drC2_time_integral_meas[OF q] by measurable
+    have bnd: "\<bar>indicat_real B \<omega> * ?I v \<omega>\<bar> \<le> v" for \<omega>
+    proof -
+      have "\<bar>indicat_real B \<omega> * ?I v \<omega>\<bar> \<le> \<bar>?I v \<omega>\<bar>"
+        by (simp add: abs_mult indicator_def)
+      also have "\<dots> \<le> v - 0"
+        by (rule drC2_time_integral_abs[OF q v])
+      finally show ?thesis by simp
+    qed
+    show ?thesis
+      by (rule BMP.integrable_const_bound[where B = v])
+        (use m bnd in \<open>auto intro!: AE_I2\<close>)
+  qed
+  have i_Is: "integrable ?M (\<lambda>\<omega>. indicat_real B \<omega> * ?Is \<omega>)"
+  proof -
+    have m: "(\<lambda>\<omega>. indicat_real B \<omega> * ?Is \<omega>) \<in> borel_measurable ?M"
+      using BM drC2_time_integral_meas[OF q] by measurable
+    have bnd: "\<bar>indicat_real B \<omega> * ?Is \<omega>\<bar> \<le> t - s" for \<omega>
+    proof -
+      have "\<bar>indicat_real B \<omega> * ?Is \<omega>\<bar> \<le> \<bar>?Is \<omega>\<bar>"
+        by (simp add: abs_mult indicator_def)
+      also have "\<dots> \<le> t - s"
+        by (rule drC2_time_integral_abs[OF q st])
+      finally show ?thesis .
+    qed
+    show ?thesis
+      by (rule BMP.integrable_const_bound[where B = "t - s"])
+        (use m bnd in \<open>auto intro!: AE_I2\<close>)
+  qed
+  have exp_t: "indicat_real B \<omega> * drN q \<phi> t \<omega>
+      = indicat_real B \<omega> * ((q + t) * drC2 q \<phi> t \<omega>)
+        + indicat_real B \<omega> * ?I s \<omega>
+        + indicat_real B \<omega> * ?Is \<omega>" for \<omega>
+    unfolding drN_def drC2_integral_split[OF q s st, of \<phi> \<omega>]
+    by (simp add: distrib_left)
+  have exp_s: "indicat_real B \<omega> * drN q \<phi> s \<omega>
+      = indicat_real B \<omega> * ((q + s) * drC2 q \<phi> s \<omega>)
+        + indicat_real B \<omega> * ?I s \<omega>" for \<omega>
+    unfolding drN_def by (simp add: distrib_left)
+  have LHS: "(\<integral>\<omega>. indicat_real B \<omega> * drN q \<phi> t \<omega> \<partial>?M)
+      = (\<integral>\<omega>. indicat_real B \<omega> * ((q + t) * drC2 q \<phi> t \<omega>) \<partial>?M)
+        + (\<integral>\<omega>. indicat_real B \<omega> * ?I s \<omega> \<partial>?M)
+        + (\<integral>\<omega>. indicat_real B \<omega> * ?Is \<omega> \<partial>?M)"
+    unfolding exp_t
+    by (simp add: Bochner_Integration.integral_add[OF
+        Bochner_Integration.integrable_add[OF i_dc_t i_I[OF s]] i_Is]
+        Bochner_Integration.integral_add[OF i_dc_t i_I[OF s]])
+  have RHS: "(\<integral>\<omega>. indicat_real B \<omega> * drN q \<phi> s \<omega> \<partial>?M)
+      = (\<integral>\<omega>. indicat_real B \<omega> * ((q + s) * drC2 q \<phi> s \<omega>) \<partial>?M)
+        + (\<integral>\<omega>. indicat_real B \<omega> * ?I s \<omega> \<partial>?M)"
+    unfolding exp_s
+    by (rule Bochner_Integration.integral_add[OF i_dc_s i_I[OF s]])
+  have S1: "(\<integral>\<omega>. indicat_real B \<omega> * ((q + s) * drC2 q \<phi> s \<omega>) \<partial>?M)
+      = (q + s) * ?J"
+    by (subst integral_mult_right_zero[symmetric]) (simp add: mult_ac)
+  have "(\<integral>\<omega>. indicat_real B \<omega> * drN q \<phi> t \<omega> \<partial>?M)
+      = (q + s)\<^sup>2 / (q + t) * ?J + (\<integral>\<omega>. indicat_real B \<omega> * ?I s \<omega> \<partial>?M)
+        + ((q + s) - (q + s)\<^sup>2 / (q + t)) * ?J"
+    unfolding LHS T1 T3 ..
+  also have "\<dots> = (q + s) * ?J + (\<integral>\<omega>. indicat_real B \<omega> * ?I s \<omega> \<partial>?M)"
+    by (simp add: algebra_simps)
+  also have "\<dots> = (\<integral>\<omega>. indicat_real B \<omega> * drN q \<phi> s \<omega> \<partial>?M)"
+    unfolding RHS S1 ..
+  finally show ?thesis .
+qed
+
 end
