@@ -371,8 +371,13 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
      give the martingale property (with `R(t)e^{−c(t)/2} = √q`), at
      `a = 2` the `coord_Z` compensator identities via double angle
      (`cos² u = (1+cos 2u)/2`, `sin² u = (1−cos 2u)/2`,
-     `sin u cos u = (sin 2u)/2`).  What remains in brick 4 is PURE
-     CONSTRUCTION: define
+     `sin u cos u = (sin 2u)/2`).  THE PROCESS IS DEFINED
+     (commit 7cf4aef): `drc`/`drR` with `drc_cont`, `drc_(strict_)mono`,
+     and the crown constancy `drR_decay: drR q t·e^{−(c_t−c_s)/2} =
+     drR q s`; `drW u ω = Bcont u (ω 1)`; `drX q φ t ω` as scripted;
+     `drX_norm`: the radius is deterministically `√(q+t)` POINTWISE
+     (opaque-atom trick for `cos²+sin²` — the default trig simp rule
+     fires prematurely otherwise).  What remains in brick 4:
      `drX q φ t ω = √(q+t) ·⇩R (χ j. if j = 1 then
         cos (Bcont (c t) (ω 1) + φ) else sin (Bcont (c t) (ω 1) + φ))`
      on the 2-dim product model with `c t = ln (1+t/q)`, the filtration
