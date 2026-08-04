@@ -3258,4 +3258,198 @@ lemma drXs_cont:
   by (rule continuous_on_compose2[OF drX_cont[OF q]])
     (auto intro!: continuous_intros simp: T0)
 
+subsection \<open>The deterministic-radius market is sufficiently volatile\<close>
+
+text \<open>The \<open>stopped_market\<close> packaging (which additionally records that the
+  process is stopped, the covariance killed, and the diagonal
+  compensators integrable) lives in \<open>Section_2_Usc\<close>, outside this
+  theory's import closure; the three extra clauses are provided as
+  standalone lemmas below and assembled where both theories are in
+  scope.\<close>
+
+theorem deterministic_radius_sufficiently_volatile:
+  fixes q \<phi> r L :: real
+  assumes q: "0 < q" and L: "1 \<le> L" and qr: "q \<le> r\<^sup>2" and r0: "0 \<le> r"
+  shows "sufficiently_volatile_market
+      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      (drXs q \<phi> (r\<^sup>2 - q)) (dras q \<phi> (r\<^sup>2 - q)) 1 L (cball 0 r)
+      (sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>))
+      (\<lambda>_. r\<^sup>2 - q)"
+proof -
+  let ?M = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "\<lambda>t. natural_filtration ?M 0 (cbmX (0 :: real^2)) (drc q t)"
+  let ?x0 = "sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)"
+  define T0 where "T0 = r\<^sup>2 - q"
+  have T0: "0 \<le> T0" unfolding T0_def using qr by simp
+  have qT0: "q + T0 = r\<^sup>2" unfolding T0_def by simp
+  have SVM: "sufficiently_volatile_market ?M ?F (drXs q \<phi> T0)
+      (dras q \<phi> T0) 1 L (cball 0 r) ?x0 (\<lambda>_. T0)"
+  proof (intro sufficiently_volatile_market.intro
+      sufficiently_volatile_market_axioms.intro)
+    show "martingale ?M ?F 0 (drXs q \<phi> T0)"
+      unfolding drXs_def[abs_def]
+      by (rule martingale_drXs[OF q T0])
+    show "prob_space ?M" by simp
+    show "1 \<le> (1 :: nat)" "(1 :: nat) < CARD(2)" "1 \<le> L"
+      using L by simp_all
+    show "AE \<omega> in ?M. drXs q \<phi> T0 0 \<omega> = ?x0"
+      by (rule drXs_start_AE[OF q T0])
+    show "AE \<omega> in ?M. 0 \<le> T0" using T0 by simp
+    show "(\<lambda>_. T0) \<in> borel_measurable ?M" by simp
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T0 \<longrightarrow>
+        drXs q \<phi> T0 s \<omega> \<in> cball 0 r"
+    proof (intro AE_I2 allI impI)
+      fix \<omega> :: "2 \<Rightarrow> real \<Rightarrow> real" and s :: real
+      assume s: "0 \<le> s" and sT: "s \<le> T0"
+      have "norm (drXs q \<phi> T0 s \<omega>) = drR q (min s T0)"
+        by (rule drXs_norm[OF q s T0])
+      also have "\<dots> \<le> drR q T0"
+        unfolding drR_def using s sT
+        by (intro real_sqrt_le_mono) simp
+      also have "\<dots> = r"
+        unfolding drR_def qT0 using r0
+        by (simp add: real_sqrt_abs)
+      finally show "drXs q \<phi> T0 s \<omega> \<in> cball 0 r"
+        by (simp add: mem_cball_0)
+    qed
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T0 \<longrightarrow> psd (dras q \<phi> T0 s \<omega>)"
+      by (intro AE_I2 allI impI) (simp add: dras_def dra_psd)
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T0 \<longrightarrow>
+        eigen_lb (dras q \<phi> T0 s \<omega>) (CARD(2) - 1)"
+      by (intro AE_I2 allI impI)
+        (simp add: dras_def dra_eigen_lb[unfolded One_nat_def])
+    show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T0 \<longrightarrow>
+        eigen_ub (dras q \<phi> T0 s \<omega>) L"
+      by (intro AE_I2 allI impI) (simp add: dras_def dra_eigen_ub[OF L])
+    have trace0: "trace (0 :: real^2^2) = 0"
+      by (simp add: trace_def zero_vec_def)
+    have trace_dras: "trace (dras q \<phi> T0 s \<omega>)
+        = (if s \<le> T0 then 1 else 0)" for s \<omega>
+      by (simp add: dras_def dra_trace trace0)
+    have trace_int: "set_integrable lborel {0..t}
+        (\<lambda>s. trace (dras q \<phi> T0 s \<omega>))" if t: "0 \<le> t" for t \<omega>
+    proof -
+      have eq: "(\<lambda>s. indicat_real {0..t} s *\<^sub>R trace (dras q \<phi> T0 s \<omega>))
+          = (\<lambda>s. indicat_real {0..min t T0} s)"
+        using T0 by (auto simp: fun_eq_iff indicator_def trace_dras)
+      have "integrable lborel (\<lambda>s. indicat_real {0..min t T0} s)"
+        by (auto simp: integrable_indicator_iff emeasure_lborel_Icc_eq)
+      then show ?thesis
+        unfolding set_integrable_def eq .
+    qed
+    show "AE \<omega> in ?M. \<forall>t. 0 \<le> t \<longrightarrow> set_integrable lborel {0..t}
+        (\<lambda>s. trace (dras q \<phi> T0 s \<omega>))"
+      by (intro AE_I2 allI impI) (rule trace_int)
+    have sq_const: "(\<lambda>\<omega>. drXs q \<phi> T0 (min t T0) \<omega> \<bullet> drXs q \<phi> T0 (min t T0) \<omega>)
+        = (\<lambda>_. q + min t T0)" if t: "0 \<le> t" for t
+    proof (intro ext)
+      fix \<omega> :: "2 \<Rightarrow> real \<Rightarrow> real"
+      have m0: "0 \<le> min t T0" using t T0 by simp
+      have mm: "min (min t T0) T0 = min t T0"
+        by (metis min.assoc min.idem)
+      have "drXs q \<phi> T0 (min t T0) \<omega> \<bullet> drXs q \<phi> T0 (min t T0) \<omega>
+          = (norm (drXs q \<phi> T0 (min t T0) \<omega>))\<^sup>2"
+        by (simp add: power2_norm_eq_inner)
+      also have "\<dots> = (drR q (min t T0))\<^sup>2"
+        unfolding drXs_norm[OF q m0 T0] mm ..
+      also have "\<dots> = q + min t T0"
+        unfolding drR_def using q m0 by simp
+      finally show "drXs q \<phi> T0 (min t T0) \<omega> \<bullet> drXs q \<phi> T0 (min t T0) \<omega>
+          = q + min t T0" .
+    qed
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
+        (\<lambda>\<omega>. drXs q \<phi> T0 (min t T0) \<omega> \<bullet> drXs q \<phi> T0 (min t T0) \<omega>)"
+      by (subst sq_const) (simp_all add: BMP.integrable_const)
+    have comp_const: "(\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t T0}
+        (\<lambda>s. trace (dras q \<phi> T0 s \<omega>))) = (\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. min t T0)"
+      if t: "0 \<le> t" for t
+    proof (intro ext)
+      fix \<omega> :: "2 \<Rightarrow> real \<Rightarrow> real"
+      have m0: "0 \<le> min t T0" using t T0 by simp
+      have "set_lebesgue_integral lborel {0..min t T0}
+          (\<lambda>s. trace (dras q \<phi> T0 s \<omega>))
+          = set_lebesgue_integral lborel {0..min t T0} (\<lambda>_. 1 :: real)"
+        by (rule set_lebesgue_integral_cong) (auto simp: trace_dras)
+      also have "\<dots> = min t T0"
+        using m0
+        by (subst set_integral_const)
+          (auto simp: emeasure_lborel_Icc measure_lborel_Icc)
+      finally show "set_lebesgue_integral lborel {0..min t T0}
+          (\<lambda>s. trace (dras q \<phi> T0 s \<omega>)) = min t T0" .
+    qed
+    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
+        (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t T0}
+          (\<lambda>s. trace (dras q \<phi> T0 s \<omega>)))"
+      by (subst comp_const) (simp_all add: BMP.integrable_const)
+    have x0sq: "?x0 \<bullet> ?x0 = q"
+    proof -
+      have v1: "(\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)
+          \<bullet> (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>) = 1"
+        by (simp add: inner_vec_def UNIV_2 sin_cos_squared_add3)
+      have "?x0 \<bullet> ?x0 = sqrt q * sqrt q *
+          ((\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)
+            \<bullet> (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>))"
+        by (simp add: algebra_simps)
+      also have "\<dots> = sqrt q * sqrt q" unfolding v1 by simp
+      also have "\<dots> = q" using q by simp
+      finally show ?thesis .
+    qed
+    show "\<And>t. 0 \<le> t \<Longrightarrow>
+        (\<integral>\<omega>. drXs q \<phi> T0 (min t T0) \<omega> \<bullet> drXs q \<phi> T0 (min t T0) \<omega> \<partial>?M)
+        - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t T0}
+            (\<lambda>s. trace (dras q \<phi> T0 s \<omega>)) \<partial>?M) = ?x0 \<bullet> ?x0"
+    proof -
+      fix t :: real assume t: "0 \<le> t"
+      show "(\<integral>\<omega>. drXs q \<phi> T0 (min t T0) \<omega> \<bullet> drXs q \<phi> T0 (min t T0) \<omega> \<partial>?M)
+          - (\<integral>\<omega>. set_lebesgue_integral lborel {0..min t T0}
+              (\<lambda>s. trace (dras q \<phi> T0 s \<omega>)) \<partial>?M) = ?x0 \<bullet> ?x0"
+        unfolding sq_const[OF t] comp_const[OF t] x0sq
+        by (simp add: BMP.prob_space)
+    qed
+    show "\<And>i. martingale ?M ?F 0 (coord_Z (drXs q \<phi> T0) (dras q \<phi> T0) i)"
+      by (rule martingale_coord_Z_drXs[OF q T0])
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space ?M. T0 \<le> s} \<in> sets (?F s)"
+    proof -
+      fix s :: real assume "0 \<le> s"
+      show "{\<omega> \<in> space ?M. T0 \<le> s} \<in> sets (?F s)"
+      proof (cases "T0 \<le> s")
+        case True
+        have "{\<omega> \<in> space ?M. T0 \<le> s} = space (?F s)"
+          using True drG_subalgebra[of "drc q s"]
+          by (auto simp: subalgebra_def)
+        then show ?thesis
+          by (metis sets.top)
+      next
+        case False
+        have "{\<omega> \<in> space ?M. T0 \<le> s} = {}" using False by simp
+        then show ?thesis
+          by (metis sets.empty_sets)
+      qed
+    qed
+    show "\<And>\<omega>. \<omega> \<in> space ?M \<Longrightarrow>
+        continuous_on {0..} (\<lambda>s. drXs q \<phi> T0 s \<omega>)"
+      by (rule drXs_cont[OF q T0])
+  qed
+  show ?thesis
+    using SVM unfolding T0_def .
+qed
+
+lemma dras_killed: "T0 < s \<Longrightarrow> dras q \<phi> T0 s \<omega> = 0"
+  by (simp add: dras_def)
+
+lemma dras_diag_time_integrable:
+  fixes l :: 2
+  assumes q: "0 < q" and T0: "0 \<le> T0" and t: "0 \<le> t"
+  shows "set_integrable lborel {0..t} (\<lambda>s. dras q \<phi> T0 s \<omega> $ l $ l)"
+proof -
+  have eq: "(\<lambda>s. indicat_real {0..t} s *\<^sub>R (dras q \<phi> T0 s \<omega> $ l $ l))
+      = (\<lambda>s. indicat_real {0..min t T0} s *\<^sub>R (dra q \<phi> s \<omega> $ l $ l))"
+    using T0 by (auto simp: fun_eq_iff indicator_def dras_def
+        zero_vec_def)
+  show ?thesis
+    using dra_diag_set_integrable[OF q order_refl, of "min t T0" \<phi> \<omega> l]
+    unfolding set_integrable_def eq .
+qed
+
 end
