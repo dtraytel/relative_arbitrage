@@ -353,15 +353,19 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
      and `R(t)e^{−c(t)/2} = √q` is constant — from
      `bm_cos_cond_exp`/`bm_sin_cond_exp` at `a = 1`,
      `s ↦ c(s), t ↦ c(t)`;
-   - CAVEAT (the real remaining work): the locale demands POINTWISE
-     path continuity, so the process must be built on the CONTINUOUS
-     modification `cbmX` (its coordinate), and the trig conditional
-     identities must transfer along the modification and its
-     filtration — study `Modification_Transfer.thy`'s interface (it
-     transferred the bmX martingale to cbmX already) and replicate its
-     technique for `bm_cos/sin_cond_exp`, OR state the identities
-     directly against the cbmX filtration by re-running the
-     independence argument there if the transfer interface is awkward.
+   - the locale demands POINTWISE path continuity, so the process must
+     be built on the CONTINUOUS modification `cbmX` (its coordinate).
+     TRANSFER INTERFACE CONFIRMED (2026-08-04):
+     `Modification_Transfer.set_integral_zero_transfer` moves
+     "∫_B D dM = 0 for all B in the natural filtration of X at s" to
+     the natural filtration of any modification X', given AE-equality
+     of the D's and of the processes on `{0..s}`.  So: state
+     `bm_cos/sin_cond_exp` as centered set-integral identities
+     (D := cos(a·W_t+b) − cos(a·W_s+b)e^{−a²(t−s)/2}), transfer, and
+     re-package as `has_cond_exp` on the cbmX side via `has_cond_expI'`.
+     The `coord_Z` step needs only the SAME identities at doubled
+     angle (`cos² = (1+cos 2u)/2`), which the general-`a` statements
+     already cover.
 5. Locale + witness membership, `ess_inf_time = ennreal (r² − |x|²)`,
    and the headline `stopped_val_fn k L (cball 0 r) x = ennreal (ball_v
    r k x)` for `CARD = 2, k = 1`, `0 < |x| ≤ r`.
