@@ -78,6 +78,133 @@ next
   ultimately show ?thesis by simp
 qed
 
+section \<open>The Laplace representation of the essential infimum\<close>
+
+text \<open>LR, proof of Lemma 2.1: with \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) ln E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close>, the
+  essential infimum of a time bounded in \<open>[0, T]\<close> is \<open>inf\<^sub>\<lambda> f\<^sub>\<lambda>\<close>.  Each
+  \<open>f\<^sub>\<lambda>\<close> dominates the essential infimum (Jensen-free: the a.s. lower
+  bound passes through the decreasing exponential), and as \<open>\<lambda> \<rightarrow> \<infinity>\<close>
+  the transform concentrates at the essential infimum.\<close>
+
+lemma exp_neg_time_integrable:
+  fixes tau :: "'a \<Rightarrow> real" and l :: real
+  assumes M: "prob_space M" and meas: "tau \<in> borel_measurable M"
+    and nn: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
+    and lam: "0 \<le> l"
+  shows "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
+proof -
+  interpret prob_space M by fact
+  have m: "(\<lambda>\<omega>. exp (- l * tau \<omega>)) \<in> borel_measurable M"
+    using meas by measurable
+  have b: "norm (exp (- l * tau \<omega>)) \<le> 1" if w: "\<omega> \<in> space M" for \<omega>
+    using nn[OF w] lam
+    by (simp add: exp_le_one_iff mult_nonneg_nonneg abs_of_pos)
+  show ?thesis
+    by (rule integrable_const_bound[where B = 1])
+      (use m b in \<open>auto intro!: AE_I2\<close>)
+qed
+
+lemma exp_neg_time_integral_lower:
+  fixes tau :: "'a \<Rightarrow> real" and l T :: real
+  assumes M: "prob_space M" and meas: "tau \<in> borel_measurable M"
+    and nn: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
+    and le: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> tau \<omega> \<le> T"
+    and lam: "0 \<le> l"
+  shows "exp (- l * T) \<le> (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
+proof -
+  interpret prob_space M by fact
+  have "exp (- l * T) = (\<integral>\<omega>. exp (- l * T) \<partial>M)"
+    by (simp add: prob_space)
+  also have "\<dots> \<le> (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
+  proof (rule Bochner_Integration.integral_mono)
+    show "integrable M (\<lambda>\<omega>. exp (- l * T))"
+      by (rule integrable_const)
+    show "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
+      by (rule exp_neg_time_integrable[OF M meas nn lam])
+    show "exp (- l * T) \<le> exp (- l * tau \<omega>)"
+      if w: "\<omega> \<in> space M" for \<omega>
+    proof -
+      have "l * tau \<omega> \<le> l * T"
+        by (rule mult_left_mono[OF le[OF w] lam])
+      then show ?thesis by simp
+    qed
+  qed
+  finally show ?thesis .
+qed
+
+lemma ess_inf_time_le_laplace:
+  fixes tau :: "'a \<Rightarrow> real" and T l :: real
+  assumes M: "prob_space M" and meas: "tau \<in> borel_measurable M"
+    and nn: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
+    and le: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> tau \<omega> \<le> T"
+    and lam: "0 < l"
+  shows "ess_inf_time M tau
+      \<le> ennreal (- (1 / l) * ln (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M))"
+  unfolding ess_inf_time_def
+proof (rule Sup_least)
+  interpret prob_space M by fact
+  fix c assume "c \<in> {c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}"
+  then have ae: "AE \<omega> in M. c \<le> ennreal (tau \<omega>)" by simp
+  have T0: "0 \<le> T"
+    using nn le not_empty by (metis all_not_in_conv order_trans)
+  have cT: "c \<le> ennreal T"
+  proof -
+    have "c = (\<integral>\<^sup>+\<omega>. c \<partial>M)"
+      by (simp add: emeasure_space_1)
+    also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>. ennreal (tau \<omega>) \<partial>M)"
+      by (rule nn_integral_mono_AE[OF ae])
+    also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>. ennreal T \<partial>M)"
+      by (intro nn_integral_mono ennreal_leI le)
+    also have "\<dots> = ennreal T"
+      by (simp add: emeasure_space_1)
+    finally show ?thesis .
+  qed
+  then have cfin: "c < \<top>"
+    by (rule le_less_trans) (simp add: less_top)
+  define c' where "c' = enn2real c"
+  have cc': "c = ennreal c'"
+    using cfin by (simp add: c'_def)
+  have c'0: "0 \<le> c'" by (simp add: c'_def)
+  have aeR: "AE \<omega> in M. c' \<le> tau \<omega>"
+    using ae AE_space
+  proof (eventually_elim)
+    case (elim \<omega>)
+    then have "ennreal c' \<le> ennreal (tau \<omega>)"
+      using cc' by simp
+    then show ?case
+      using nn[OF elim(2)] by (simp add: ennreal_le_iff)
+  qed
+  have intg: "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
+    by (rule exp_neg_time_integrable[OF M meas nn less_imp_le[OF lam]])
+  have up: "(\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M) \<le> exp (- l * c')"
+  proof -
+    have "AE \<omega> in M. exp (- l * tau \<omega>) \<le> exp (- l * c')"
+      using aeR
+      by eventually_elim
+        (use lam in \<open>simp add: mult_left_mono_neg\<close>)
+    then have "(\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M) \<le> (\<integral>\<omega>. exp (- l * c') \<partial>M)"
+      by (intro integral_mono_AE intg integrable_const)
+    then show ?thesis by (simp add: prob_space)
+  qed
+  have pos: "0 < (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
+    using exp_neg_time_integral_lower[OF M meas nn le less_imp_le[OF lam]]
+    by (rule less_le_trans[OF exp_gt_zero])
+  have lnle: "ln (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M) \<le> - l * c'"
+  proof -
+    have "ln (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M) \<le> ln (exp (- l * c'))"
+      by (subst ln_le_cancel_iff) (use pos up in auto)
+    then show ?thesis by simp
+  qed
+  then have "l * c' \<le> - ln (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
+    by linarith
+  then have "c' \<le> - ln (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M) / l"
+    using lam by (metis pos_le_divide_eq mult.commute)
+  then have "c' \<le> - (1 / l) * ln (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
+    by (simp add: field_simps)
+  then show "c \<le> ennreal (- (1 / l) * ln (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M))"
+    unfolding cc' by (rule ennreal_leI)
+qed
+
 lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
