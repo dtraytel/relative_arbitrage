@@ -671,6 +671,31 @@ proof -
     using MW.mweak_conv3[OF cls mass] U top by simp
 qed
 
+lemma weak_conv_total_mass:
+  fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
+    and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+  shows "(\<lambda>i. measure (\<Lambda>i i) (space (\<Lambda>i i))) \<longlonglongrightarrow> measure \<Lambda> (space \<Lambda>)"
+proof -
+  let ?m = "path_metric T :: (real \<Rightarrow> 'b) metric"
+  have wc': "(\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i)
+        = sets (borel_of (mtopology_of ?m)) \<and> finite_measure (\<Lambda>i i))
+      \<and> sets \<Lambda> = sets (borel_of (mtopology_of ?m)) \<and> finite_measure \<Lambda>
+      \<and> (\<forall>f. continuous_map (mtopology_of ?m) euclideanreal f \<longrightarrow>
+          (\<exists>B. \<forall>x\<in>topspace (mtopology_of ?m). \<bar>f x\<bar> \<le> B) \<longrightarrow>
+          ((\<lambda>i. \<integral>x. f x \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. f x \<partial>\<Lambda>)))"
+    using wc unfolding weak_conv_on_def by blast
+  have wcf: "(\<lambda>i. \<integral>x. g x \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. g x \<partial>\<Lambda>)"
+    if "continuous_map (mtopology_of ?m) euclideanreal g"
+      and "\<exists>B. \<forall>x\<in>topspace (mtopology_of ?m). \<bar>g x\<bar> \<le> B"
+    for g :: "(real \<Rightarrow> 'b) \<Rightarrow> real"
+    using wc' that by blast
+  have "(\<lambda>i. \<integral>x. 1 \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. (1::real) \<partial>\<Lambda>)"
+    by (rule wcf) (auto intro!: exI[of _ 1])
+  then show ?thesis by simp
+qed
+
 lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
