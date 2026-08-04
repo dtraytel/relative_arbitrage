@@ -371,32 +371,70 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
      give the martingale property (with `R(t)e^{−c(t)/2} = √q`), at
      `a = 2` the `coord_Z` compensator identities via double angle
      (`cos² u = (1+cos 2u)/2`, `sin² u = (1−cos 2u)/2`,
-     `sin u cos u = (sin 2u)/2`).  THE PROCESS IS DEFINED
-     (commit 7cf4aef): `drc`/`drR` with `drc_cont`, `drc_(strict_)mono`,
-     and the crown constancy `drR_decay: drR q t·e^{−(c_t−c_s)/2} =
-     drR q s`; `drW u ω = Bcont u (ω 1)`; `drX q φ t ω` as scripted;
-     `drX_norm`: the radius is deterministically `√(q+t)` POINTWISE
-     (opaque-atom trick for `cos²+sin²` — the default trig simp rule
-     fires prematurely otherwise).  What remains in brick 4:
-     `drX q φ t ω = √(q+t) ·⇩R (χ j. if j = 1 then
-        cos (Bcont (c t) (ω 1) + φ) else sin (Bcont (c t) (ω 1) + φ))`
-     on the 2-dim product model with `c t = ln (1+t/q)`, the filtration
-     `G t = natural_filtration bm_paths 0 (cbmX x0') (c t)`, prove the
-     locale axioms (martingale via the two lemmas at time-changed
-     instants; `coord_Z` with
-     `acov t = (χ j k. …sin/cos products at (Bcont (c t) (ω 1) + φ)…)`;
-     path continuity from `Bcont`'s pointwise continuity (`cbmX_cont`)
-     and continuity of `c`; the deterministic radius `|drX t| = √(q+t)`
-     is definitional), the stopped/witness side conditions with the
-     constant horizon `τ ≡ r² − q`, and conclude
-     `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)` for
-     `CARD = 2`, `0 < |x| ≤ r` via `sincos_total`.
-     The `coord_Z` step needs only the SAME identities at doubled
-     angle (`cos² = (1+cos 2u)/2`), which the general-`a` statements
-     already cover.
-5. Locale + witness membership, `ess_inf_time = ennreal (r² − |x|²)`,
-   and the headline `stopped_val_fn k L (cball 0 r) x = ennreal (ball_v
-   r k x)` for `CARD = 2, k = 1`, `0 < |x| ≤ r`.
+     `sin u cos u = (sin 2u)/2`).  THE PROCESS IS DEFINED AND ITS FIRST
+     COMPONENT IS A MARTINGALE (commits 7cf4aef, a6015de):
+     `drc`/`drR` with `drc_cont`, `drc_(strict_)mono` (via
+     `ln_le/less_cancel_iff` — do NOT try `ln_mono`, wrong name), the
+     crown constancy `drR_decay: drR q t·e^{−(c_t−c_s)/2} = drR q s`
+     (via `exp_neg_ln_half` and `frac_eq_eq` cross-multiplication —
+     plain `field_simps` explodes); `drW u ω = Bcont u (ω 1)`;
+     `drX q φ t ω` as scripted; `drX_norm` (deterministic radius,
+     opaque-atom trick for `cos²+sin²`); and
+     **`martingale_drX_cos`**: `t ↦ drR q t · cos(drW (drc q t) ω + φ)`
+     is a martingale w.r.t.
+     `G t = natural_filtration bm_paths 0 (cbmX 0) (drc q t)`.
+     Proof-shape notes for the next agent (each cost a round-trip):
+     the filtration axioms of `adapted_process` include the
+     `filtered_measure` clauses — discharge sets-mono with
+     `dest: Gmono[THEN subsetD]`, not `intro: Gmono`;
+     `cbm_cos_cond_exp` instantiates by stating the specialized `have`
+     with literal `1 *` and `(1::real)⇧2` and closing `by (rule …)`
+     then `simp` (the `where`-attribute mysteriously fails with
+     "No such variable ?x"); instantiate `drR_decay` by `OF q ij(1)
+     ij(2)` (passing `drc`-composed nonneg facts silently instantiates
+     `s := drc q i` — WRONG); the final pointwise step is
+     `metis Ydecay mult.assoc mult.commute`.
+
+   NEXT MICRO-STEPS in brick 4, in order (each a scratch-and-copy
+   iteration; the martingale_drX_cos proof is the template):
+   a. `martingale_drX_sin` — verbatim twin (`cbm_sin_cond_exp`; every
+      other line identical).
+   b. `martingale_drX` — the vector martingale of `drX q φ` via
+      `martingale_vecI` (Ito_Market; already in the import closure):
+      components by `exhaust_2` (`k = 1` → cos, `k = 2` → sin; the
+      component of `drX` is
+      `drX q φ t ω $ k = drR q t * (if k = 1 then cos … else sin …)`
+      by `drX_def` + `vector_scaleR_component`).
+   c. The stopped process `drXs q φ r t := drX q φ (min t (r² − q))`
+      with the constant horizon `τ ≡ r² − q` (assume `q ≤ r²`):
+      martingale because a deterministically-stopped martingale is one
+      (reindex; for `s ≤ t`: if `τ0 ≤ s` both sides equal `drX τ0`, if
+      `s < τ0` use the base property at `min t τ0` — NO optional
+      stopping needed, the time is deterministic).
+   d. `coord_Z` for the stopped process with
+      `acov j k t ω := (if t ≤ r² − q then …trig products at
+      (drW (drc q t) ω + φ)… else 0)`; the compensated-square
+      martingale property reduces, via `cos² u = (1 + cos 2u)/2` and
+      the compensator integral `∫_s^t sin²/cos²`, to
+      `cbm_cos_cond_exp/cbm_sin_cond_exp` at `a = 2` plus a
+      deterministic ODE-style identity
+      `d/dt [R(t)² cos²-part-expectation]` — work it out on paper
+      first; the expected shape is
+      `E[(drX_t $ 1)² − ∫_0^t sin²(...) du | G_s]
+         = (drX_s $ 1)² − ∫_0^s sin²(...) du`
+      via the DOUBLED-angle decay `e^{−2(c_t−c_s)}
+      = ((q+s)/(q+t))²` and explicit integration of
+      `u ↦ (q+u)⁻¹`-type integrands (all deterministic calculus).
+   e. Locale membership (`sufficiently_volatile_market` at
+      `k = 1, CARD = 2`, `K = cball 0 r`, `x0` from polar
+      `sincos_total`, `tau ≡ r² − q`): eigen bounds for the projection
+      matrix (`eigen_lb` at dim 1 via the tangent direction,
+      `eigen_ub` with `L ≥ 1`); `stopped_market` side conditions are
+      definitional (stopped, killed, bounded diag).
+   f. `ess_inf_time = ennreal (r² − q)` (constant tau) and the headline
+      `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)` for
+      `CARD = 2`, `0 < |x| ≤ r`, via `stopped_val_fn_le_ball_v` for ≤
+      and this witness for ≥.
 
 WORKFLOW for this item: develop each brick in a PIDE scratch importing
 `Arbitrage.Brownian_Continuous` (fast iteration, no downstream
