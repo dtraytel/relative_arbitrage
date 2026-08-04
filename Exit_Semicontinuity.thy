@@ -696,6 +696,140 @@ proof -
   then show ?thesis by simp
 qed
 
+text \<open>The step integrals are lower semicontinuous along weak
+  convergence: the mass term converges outright and each open-set term
+  can only gain mass, so an \<open>\<epsilon>/(number of terms)\<close> argument gives an
+  eventual lower bound.\<close>
+
+lemma pstep_integral_liminf:
+  fixes K :: "('b :: polish_space) set"
+    and \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure" and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes T: "0 \<le> T" and K: "closed K" and l: "0 \<le> l"
+    and wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+  shows "ereal (\<integral>f. pstep T K l N f \<partial>\<Lambda>)
+      \<le> Liminf sequentially (\<lambda>i. ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i)))"
+proof -
+  let ?m = "path_metric T :: (real \<Rightarrow> 'b) metric"
+  let ?U = "\<lambda>j. {f \<in> mspace ?m. pexit T K f < real j * T / real N}"
+  let ?c = "\<lambda>j. exp (- l * (real j * T / real N))
+      - exp (- l * (real (Suc j) * T / real N))"
+  have wc': "(\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i)
+        = sets (borel_of (mtopology_of ?m)) \<and> finite_measure (\<Lambda>i i))
+      \<and> sets \<Lambda> = sets (borel_of (mtopology_of ?m)) \<and> finite_measure \<Lambda>"
+    using wc unfolding weak_conv_on_def by blast
+  have dec\<Lambda>: "(\<integral>f. pstep T K l N f \<partial>\<Lambda>)
+      = exp (- l * T) * measure \<Lambda> (space \<Lambda>)
+        + (\<Sum> j = 1..<N. ?c j * measure \<Lambda> (?U j))"
+    using wc' by (intro pstep_integral[OF T K]) auto
+  have c0: "0 \<le> exp (- l * T)" by simp
+  have cj0: "0 \<le> ?c j" for j
+  proof -
+    have "l * (real j * T / real N) \<le> l * (real (Suc j) * T / real N)"
+      by (intro mult_left_mono l)
+        (use T in \<open>auto intro!: divide_right_mono mult_right_mono\<close>)
+    then show ?thesis
+      by (simp add: exp_le_cancel_iff)
+  qed
+  have eps: "ereal ((\<integral>f. pstep T K l N f \<partial>\<Lambda>) - e)
+      \<le> Liminf sequentially (\<lambda>i. ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i)))"
+    if e: "0 < e" for e
+  proof -
+    define S where "S = exp (- l * T) + (\<Sum> j = 1..<N. ?c j)"
+    have S0: "0 \<le> S"
+      unfolding S_def by (intro add_nonneg_nonneg sum_nonneg cj0) simp
+    define e' where "e' = e / (S + 1)"
+    have e': "0 < e'"
+      unfolding e'_def using e S0 by simp
+    have massT: "(\<lambda>i. measure (\<Lambda>i i) (space (\<Lambda>i i)))
+        \<longlonglongrightarrow> measure \<Lambda> (space \<Lambda>)"
+      by (rule weak_conv_total_mass[OF wc])
+    have evm: "\<forall>\<^sub>F i in sequentially.
+        measure \<Lambda> (space \<Lambda>) - e' < measure (\<Lambda>i i) (space (\<Lambda>i i))"
+      by (rule order_tendstoD[OF massT]) (use e' in simp)
+    have evU: "\<forall>\<^sub>F i in sequentially.
+        measure \<Lambda> (?U j) - e' < measure (\<Lambda>i i) (?U j)" for j
+    proof -
+      have "ereal (measure \<Lambda> (?U j))
+          \<le> Liminf sequentially (\<lambda>i. ereal (measure (\<Lambda>i i) (?U j)))"
+        by (rule weak_conv_open_liminf[OF wc
+            pexit_sublevel_open[OF T K]])
+      moreover have "ereal (measure \<Lambda> (?U j) - e')
+          < ereal (measure \<Lambda> (?U j))"
+        using e' by simp
+      ultimately have "ereal (measure \<Lambda> (?U j) - e')
+          < Liminf sequentially (\<lambda>i. ereal (measure (\<Lambda>i i) (?U j)))"
+        by order
+      then have "\<forall>\<^sub>F i in sequentially. ereal (measure \<Lambda> (?U j) - e')
+          < ereal (measure (\<Lambda>i i) (?U j))"
+        using le_Liminf_iff[THEN iffD1, OF order_refl] by blast
+      then show ?thesis
+        by (simp add: eventually_mono)
+    qed
+    have evS: "\<forall>\<^sub>F i in sequentially.
+        sets (\<Lambda>i i) = sets (borel_of (mtopology_of ?m))
+        \<and> finite_measure (\<Lambda>i i)"
+      using wc' by blast
+    have evAll: "\<forall>\<^sub>F i in sequentially.
+        \<forall>j \<in> {1..<N}. measure \<Lambda> (?U j) - e' < measure (\<Lambda>i i) (?U j)"
+      by (rule eventually_ball_finite) (auto intro: evU)
+    have main: "\<forall>\<^sub>F i in sequentially.
+        ereal ((\<integral>f. pstep T K l N f \<partial>\<Lambda>) - e)
+        \<le> ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i))"
+      using evm evAll evS
+    proof (eventually_elim)
+      case (elim i)
+      have deci: "(\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i))
+          = exp (- l * T) * measure (\<Lambda>i i) (space (\<Lambda>i i))
+            + (\<Sum> j = 1..<N. ?c j * measure (\<Lambda>i i) (?U j))"
+        using elim by (intro pstep_integral[OF T K]) auto
+      have t0: "exp (- l * T) * (measure \<Lambda> (space \<Lambda>) - e')
+          \<le> exp (- l * T) * measure (\<Lambda>i i) (space (\<Lambda>i i))"
+        by (intro mult_left_mono c0) (use elim in auto)
+      have tj: "?c j * (measure \<Lambda> (?U j) - e')
+          \<le> ?c j * measure (\<Lambda>i i) (?U j)"
+        if j: "j \<in> {1..<N}" for j
+      proof -
+        have "measure \<Lambda> (?U j) - e' < measure (\<Lambda>i i) (?U j)"
+          using elim(2) j by blast
+        then show ?thesis
+          by (intro mult_left_mono cj0) simp
+      qed
+      have "(\<integral>f. pstep T K l N f \<partial>\<Lambda>) - S * e'
+          = exp (- l * T) * (measure \<Lambda> (space \<Lambda>) - e')
+            + (\<Sum> j = 1..<N. ?c j * (measure \<Lambda> (?U j) - e'))"
+        unfolding dec\<Lambda> S_def
+        by (simp add: algebra_simps sum.distrib sum_distrib_left
+            sum_distrib_right sum_subtractf)
+      also have "\<dots> \<le> exp (- l * T) * measure (\<Lambda>i i) (space (\<Lambda>i i))
+          + (\<Sum> j = 1..<N. ?c j * measure (\<Lambda>i i) (?U j))"
+        by (intro add_mono t0 sum_mono tj)
+      also have "\<dots> = (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i))"
+        by (rule deci[symmetric])
+      finally have le1: "(\<integral>f. pstep T K l N f \<partial>\<Lambda>) - S * e'
+          \<le> (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i))" .
+      have "S * e' \<le> e"
+        unfolding e'_def using S0 e
+        by (simp add: divide_le_eq mult_left_mono field_simps)
+      with le1 show ?case by simp
+    qed
+    show ?thesis
+      by (intro Liminf_bounded main)
+  qed
+  show ?thesis
+  proof (rule ereal_le_epsilon2)
+    fix e :: real assume e: "0 < e"
+    have "ereal ((\<integral>f. pstep T K l N f \<partial>\<Lambda>) - e)
+        \<le> Liminf sequentially (\<lambda>i. ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i)))"
+      by (rule eps[OF e])
+    then show "ereal (\<integral>f. pstep T K l N f \<partial>\<Lambda>)
+        \<le> Liminf sequentially
+          (\<lambda>i. ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i))) + ereal e"
+      by (cases "Liminf sequentially
+          (\<lambda>i. ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i)))") auto
+  qed
+qed
+
 lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
