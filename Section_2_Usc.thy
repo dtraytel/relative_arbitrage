@@ -4023,4 +4023,52 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>Clause (1) of Theorem 1.1, law-level form\<close>
+
+text \<open>The consolidation of Section 2: on a confinement set
+  \<open>K \<subseteq> cball 0 r\<close>, the paper-class value function \<open>stopped_val_fn\<close> is
+  dominated by the law-level value function
+  \<open>w x = Sup (vshift T A x ` mkt_law_closure k L (cball 0 (2r)) 0 T)\<close>,
+  and \<open>w\<close> is upper semicontinuous in the starting point --- with a
+  horizon that is UNIFORM over \<open>K\<close>, namely any
+  \<open>T \<ge> r\<^sup>2 / (n - k)\<close>, the exit-time bound of Lemma 2.1 at the origin.
+  This is clause (1) of Theorem 1.1 in its law-level form; identifying
+  \<open>w\<close> with the class supremum ("the closure adds no value") is the
+  canonical-market construction, whose integrated inputs are
+  \<open>mkt_law_closure_increment_event\<close> and
+  \<open>mkt_law_closure_sq_increment_event\<close>.\<close>
+
+lemma ball_v_le:
+  fixes x :: "real^'n::finite"
+  shows "ball_v r k x \<le> r\<^sup>2 / real (CARD('n) - k)"
+  unfolding ball_v_def
+  by (intro divide_right_mono) (auto simp: dot_square_norm)
+
+theorem clause_one_law_level:
+  fixes K :: "(real^'m::finite) set" and A :: "(real^'m) set"
+    and T r :: real and k :: nat and L :: real
+  defines "w \<equiv> (\<lambda>x :: real^'m.
+      Sup (vshift T A x ` mkt_law_closure k L (cball 0 (2 * r)) 0 T))"
+  assumes k: "1 \<le> k" "k < CARD('m)" and L1: "1 \<le> L"
+    and r0: "0 \<le> r" and Kball: "K \<subseteq> cball 0 r"
+    and A: "open A" and AK: "A \<inter> K = {}"
+    and T0: "0 \<le> T" and bT: "r\<^sup>2 / real (CARD('m) - k) \<le> T"
+  shows clause_one_usc:
+    "\<And>x c. w x < c \<Longrightarrow> eventually (\<lambda>y. w y < c) (nhds x)"
+  and clause_one_dom:
+    "\<And>x. x \<in> K \<Longrightarrow> stopped_val_fn k L K x \<le> ennreal (w x)"
+proof -
+  have ne: "mkt_path_laws k L (cball 0 (2 * r)) (0 :: real^'m) T \<noteq> {}"
+    by (rule mkt_path_laws_nonempty[OF k L1]) (use r0 in simp)
+  show "eventually (\<lambda>y. w y < c) (nhds x)" if lt: "w x < c" for x c
+    using lt unfolding w_def
+    by (rule vshift_sup_usc_mkt[OF T0 A ne subset_refl])
+  show "stopped_val_fn k L K x \<le> ennreal (w x)" if xK: "x \<in> K" for x
+    unfolding w_def
+  proof (rule stopped_val_fn_le_law_sup[OF Kball xK A AK T0])
+    show "ball_v r k x \<le> T"
+      by (rule order_trans[OF ball_v_le bT])
+  qed
+qed
+
 end
