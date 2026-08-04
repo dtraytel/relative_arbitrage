@@ -289,26 +289,70 @@ remains free (e.g. the weak DPP may replace LR's measurable selection),
 but every clause STATEMENT must match the paper. Hence NC is now ON the
 critical path.
 
-Goal: for `Λ ∈ mkt_law_closure`, `vshift T A x Λ ≤` the class supremum;
-then `w = stopped_val_fn`-sup and the law-level clause (1) becomes the
-paper's. Do NOT believe shortcuts through usc of `vshift` in the law
-argument: usc gives `vshift(Λ) ≥ limsup vshift(Qₘ)` — the WRONG direction.
+**RE-SCOPED 2026-08-04 after reading the paper's own Lemma 2.3 proof
+(arXiv:2512.17702 pp. 3–6) and LR's Section 2 (arXiv:2003.13611
+pp. 9–11).**  The paper's actual argument needs NO Doléans measures,
+NO Radon–Nikodym on products, and NO Skorokhod representation if we
+substitute portmanteau (see NC-3).  Their class (1.7) on
+`Ω = C([0,∞), ℝⁿ)`: X is a coordinate-process martingale from x with
+`Π_m(d⟨X⟩/dt) ≥ m − k` (m = k+1..n) and `λ_(1)(d⟨X⟩/dt) ≤ L` a.e. —
+i.e. `d⟨X⟩/dt ∈ S` for the COMPACT CONVEX
+`S = {a ⪰ 0 : Π_m(a) ≥ m−k ∀m, λ_(1)(a) ≤ L}` (Lemma 2.1 = our
+`Lemma_2_1_Exact` says S is the convex hull of the unconvexified
+(1.4)-set).  Their Lemma 2.3 (closedness):
+carry `⟨X⟩` along as a SECOND PATH COMPONENT; it is uniformly
+Lipschitz (bounded by tr ≤ nL), so the pair laws are tight; in the
+limit `(X∞, Y∞)`: X∞ and X∞X∞ᵀ − Y∞ martingales (Vitali + moments);
+difference quotients `(Y∞(t)−Y∞(s))/(t−s) ∈ S` a.s. because averages
+of S-valued densities lie in the closed convex S; then 1-d
+a.e.-differentiability + FTC give `dY∞/dt ∈ S` a.e.
 
-Status: the integrated inputs are DONE (§2.6). Remaining, in order:
+Faithful decomposition (statuses of ingredients in brackets):
 
-1. **The LOWER (trace / `eigen_lb`) constraint at the law level.** Its
-   integrated form involves `min(t, τ)`, which is not a continuous path
-   functional; decide its encoding (path exit time from the closed
-   confinement set, or only inside the canonical-market step) together
-   with 2.
-2. **`acov` by Lebesgue differentiation** of the conditional
-   quadratic-variation compensator — the hard analytic core; no repo
-   infrastructure; PROTOTYPE before committing.
-3. **Packaging**: canonical process, natural filtration, exit-time horizon
-   into a `sufficiently_volatile_market`/`stopped_market` instance on path
-   space (`mkt_path_laws` pins the sample type `('m ⇒ real ⇒ real)`;
-   path-space markets need the same type — reuse `bm_paths`-style tricks
-   or generalize the pin).
+1. **Pair-law encoding of (1.7).**  Operational reading (equivalent to
+   (1.7) by compensator uniqueness): `P ∈ P_x` iff X is a martingale
+   from x and THERE EXISTS an adapted process Y with Y 0 = 0,
+   t ↦ Y t ω Lipschitz with difference quotients in S, and
+   `X Xᵀ − Y` a martingale.  Define the paper's `P_x` this way on path
+   space; bridge to `stopped_market` witnesses (their Y := ∫₀ acov).
+   [`Lemma_2_1_Exact` DONE; martingale/covariation machinery §2.6
+   DONE; matrix-valued paths need a second component type — the
+   `mkt_path_laws` sample-type pin must be generalized or the pair
+   packed into `real^('n × 'n + 'n)`-style coordinates.]
+2. **Pair tightness.**  X-side: DONE (4th-moment → Kolmogorov →
+   Arzelà–Ascoli, `Path_Tightness_Market`).  Y-side: deterministic
+   Lipschitz modulus — Arzelà–Ascoli directly; product tightness.
+   [Moderate; reuses `Path_Tightness`.]
+3. **Limit identities WITHOUT Skorokhod.**  The paper uses Skorokhod's
+   representation (NOT in the AFP); substitute our proven technique:
+   integrated identities against bounded continuous past functionals
+   pass through weak limits, then monotone-class to events (§2.6
+   engines `metric_measure_eqI_bounded_cts` /
+   `metric_measure_mono_bounded_cts`).  The difference-quotient
+   constraint is CLOSED-SET portmanteau: for fixed rational s < t,
+   `{(x-path, y-path): (y(t)−y(s))/(t−s) ∈ S}` is closed (S closed,
+   evaluation continuous), so the limit law gives it mass 1; then all
+   real s < t by path continuity.  [Engines DONE; applications new.]
+4. **Density recovery = library call.**  Lipschitz ⇒ BV ⇒ a.e.
+   differentiable is `HOL-Analysis.Lebesgue_Differentiation`
+   (`Lebesgue_differentiation_thm_open`, real ⇒ euclidean_space —
+   covers matrix values componentwise); derivative ∈ S a.e. since the
+   difference quotients are and S is closed; FTC for Lipschitz
+   (Y t − Y s = ∫ Y′) to recover the compensator form — check
+   `Henstock`/`Equivalence_Lebesgue_Henstock_Integration` for the AC
+   FTC, else derive from BV + a.e. derivative + dominated convergence.
+   [KEY INGREDIENT EXISTS — this was believed the "hard analytic
+   core"; it is not.]
+5. **Value side (LR Lemma 2.1 trick).**  `ω ↦ τ_K(ω)` is USC on paths
+   and `P ↦ P-essinf τ_K` is USC in the weak topology via
+   `f_λ(P) = −(1/λ) log E_P[e^{−λ τ_K}]` (τ_K USC ⇒ e^{−λτ_K} LSC
+   bounded ⇒ E_P LSC by portmanteau ⇒ f_λ USC; essinf = inf_λ f_λ).
+   This replaces/simplifies the `vshift` route for Prop 2.4 and is
+   what the DPP consumes.  [New but short; `Exit_Time.thy` exists —
+   check its τ_K against the paper's (1.8).]
+
+Do NOT believe shortcuts through usc of `vshift` in the law argument:
+usc gives `vshift(Λ) ≥ limsup vshift(Qₘ)` — the WRONG direction.
 
 ### N4. Example 3.1 / clause (3) general (RQ-C)
 
