@@ -106,4 +106,85 @@ proof -
   finally show ?thesis by simp
 qed
 
+section \<open>Trigonometric moments of \<open>gauss_measure\<close>\<close>
+
+text \<open>Real and imaginary parts of the characteristic function; the
+  degenerate case \<open>v = 0\<close> is the point mass at the origin.\<close>
+
+lemma gauss_measure_cos:
+  assumes v: "0 \<le> v"
+  shows "(\<integral>y. cos (a * y) \<partial>gauss_measure v) = exp (- a\<^sup>2 * v / 2)"
+proof (cases "v = 0")
+  case True
+  then have g0: "gauss_measure v = return borel 0"
+    by (simp add: gauss_measure_def)
+  show ?thesis
+    unfolding g0 using True by (subst integral_return) auto
+next
+  case False
+  with v have v': "0 < v" by simp
+  interpret G: prob_space "gauss_measure v"
+    by (rule prob_space_gauss_measure)
+  have setsG: "sets (gauss_measure v) = sets borel"
+    using v' by (simp add: gauss_measure_def)
+  have fm': "(\<lambda>y :: real. complex_of_real (a * y))
+      \<in> borel_measurable borel"
+    by measurable
+  have fm: "(\<lambda>y. complex_of_real (a * y))
+      \<in> borel_measurable (gauss_measure v)"
+    using fm' measurable_cong_sets[OF setsG refl] by blast
+  have ii: "complex_integrable (gauss_measure v) (\<lambda>y. iexp (a * y))"
+    using G.integrable_iexp[OF fm] by simp
+  have iic: "complex_integrable (gauss_measure v) (\<lambda>y. cis (a * y))"
+    using ii by (simp add: cis_conv_exp)
+  have "(\<integral>y. cos (a * y) \<partial>gauss_measure v)
+      = (\<integral>y. Re (cis (a * y)) \<partial>gauss_measure v)"
+    by simp
+  also have "\<dots> = Re (CLINT y|gauss_measure v. cis (a * y))"
+    by (rule integral_Re[OF iic])
+  also have "\<dots> = Re (char (gauss_measure v) a)"
+    unfolding char_def by (simp add: cis_conv_exp)
+  also have "\<dots> = exp (- a\<^sup>2 * v / 2)"
+    by (simp add: char_gauss_measure[OF v'])
+  finally show ?thesis .
+qed
+
+lemma gauss_measure_sin:
+  assumes v: "0 \<le> v"
+  shows "(\<integral>y. sin (a * y) \<partial>gauss_measure v) = 0"
+proof (cases "v = 0")
+  case True
+  then have g0: "gauss_measure v = return borel 0"
+    by (simp add: gauss_measure_def)
+  show ?thesis
+    unfolding g0 by (subst integral_return) auto
+next
+  case False
+  with v have v': "0 < v" by simp
+  interpret G: prob_space "gauss_measure v"
+    by (rule prob_space_gauss_measure)
+  have setsG: "sets (gauss_measure v) = sets borel"
+    using v' by (simp add: gauss_measure_def)
+  have fm': "(\<lambda>y :: real. complex_of_real (a * y))
+      \<in> borel_measurable borel"
+    by measurable
+  have fm: "(\<lambda>y. complex_of_real (a * y))
+      \<in> borel_measurable (gauss_measure v)"
+    using fm' measurable_cong_sets[OF setsG refl] by blast
+  have ii: "complex_integrable (gauss_measure v) (\<lambda>y. iexp (a * y))"
+    using G.integrable_iexp[OF fm] by simp
+  have iic: "complex_integrable (gauss_measure v) (\<lambda>y. cis (a * y))"
+    using ii by (simp add: cis_conv_exp)
+  have "(\<integral>y. sin (a * y) \<partial>gauss_measure v)
+      = (\<integral>y. Im (cis (a * y)) \<partial>gauss_measure v)"
+    by simp
+  also have "\<dots> = Im (CLINT y|gauss_measure v. cis (a * y))"
+    by (rule integral_Im[OF iic])
+  also have "\<dots> = Im (char (gauss_measure v) a)"
+    unfolding char_def by (simp add: cis_conv_exp)
+  also have "\<dots> = 0"
+    by (simp add: char_gauss_measure[OF v'])
+  finally show ?thesis .
+qed
+
 end
