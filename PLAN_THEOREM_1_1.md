@@ -340,10 +340,28 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
    `gauss_measure_cos/sin`).  A `bm_sin_cond_exp` twin (same proof with
    `sin_add`) will be needed for the second coordinate — write it when
    brick 4 consumes it.  The Gaussian toolkit is COMPLETE.
-4. The process: definition on `bm_paths` (or `wiener_pre`) via the 1-D
-   continuous modification, martingale + `coord_Z` from 3 and the
-   constancy `R(t)e^{−c(t)/2} = |x|`; time change `c` is deterministic,
-   so the filtration is the natural one reindexed.
+4. The process.  Design points settled 2026-08-04:
+   - the sine twin `bm_sin_cond_exp` is DONE (commit d02f134);
+   - parametrize by `q > 0` (the squared start radius) and a phase `φ`,
+     NOT by `x0` — instantiate at the end via `sincos_total`-style polar
+     decomposition (`∃φ. x0 $ 1 = |x0| cos φ ∧ x0 $ 2 = |x0| sin φ`);
+   - `X t ω = √(q+t) ·⇩R (χ j. if j = 1 then cos (W (c t) ω + φ)
+     else sin (W (c t) ω + φ))` on the 2-dim product model, driven by
+     ONE coordinate; `c t = ln (1 + t/q)`; filtration `G t := F (c t)`
+     (deterministic increasing time change of the natural filtration);
+   - martingale property: `E[X_t | G_s] = R(t)e^{−(c(t)−c(s))/2}·(…)`
+     and `R(t)e^{−c(t)/2} = √q` is constant — from
+     `bm_cos_cond_exp`/`bm_sin_cond_exp` at `a = 1`,
+     `s ↦ c(s), t ↦ c(t)`;
+   - CAVEAT (the real remaining work): the locale demands POINTWISE
+     path continuity, so the process must be built on the CONTINUOUS
+     modification `cbmX` (its coordinate), and the trig conditional
+     identities must transfer along the modification and its
+     filtration — study `Modification_Transfer.thy`'s interface (it
+     transferred the bmX martingale to cbmX already) and replicate its
+     technique for `bm_cos/sin_cond_exp`, OR state the identities
+     directly against the cbmX filtration by re-running the
+     independence argument there if the transfer interface is awkward.
 5. Locale + witness membership, `ess_inf_time = ennreal (r² − |x|²)`,
    and the headline `stopped_val_fn k L (cball 0 r) x = ennreal (ball_v
    r k x)` for `CARD = 2, k = 1`, `0 < |x| ≤ r`.
