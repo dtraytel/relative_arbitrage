@@ -390,6 +390,141 @@ proof (rule antisym)
   qed
 qed
 
+section \<open>The telescoping step minorant\<close>
+
+text \<open>A decreasing continuous transform of the exit time is approximated
+  from below, uniformly up to the mesh modulus, by a positive
+  combination of indicators of the OPEN sublevels \<open>{pexit < s_j}\<close> on a
+  uniform grid — the device that carries the Laplace transforms through
+  weak convergence with nothing but the open-set liminf half of the
+  portmanteau theorem.\<close>
+
+definition pstep ::
+  "real \<Rightarrow> ('b :: polish_space) set \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> real"
+  where
+  "pstep T K l N f = exp (- l * T)
+     + (\<Sum> j = 1..<N. (exp (- l * (real j * T / real N))
+          - exp (- l * (real (Suc j) * T / real N)))
+        * indicat_real {g. pexit T K g < real j * T / real N} f)"
+
+lemma pstep_sandwich:
+  fixes K :: "('b :: polish_space) set" and f :: "real \<Rightarrow> 'b"
+  assumes T: "0 < T" and l: "0 < l" and N: "0 < N"
+  shows "pstep T K l N f \<le> exp (- l * pexit T K f)
+      \<and> exp (- l * pexit T K f)
+        \<le> pstep T K l N f + (1 - exp (- l * (T / real N)))"
+proof -
+  let ?\<tau> = "pexit T K f"
+  let ?s = "\<lambda>j. real j * T / real N"
+  let ?\<phi> = "\<lambda>j. exp (- l * ?s j)"
+  have T0: "0 \<le> T" using T by simp
+  have \<tau>0: "0 \<le> ?\<tau>" by (rule pexit_nonneg[OF T0])
+  have \<tau>T: "?\<tau> \<le> T" by (rule pexit_le_T[OF T0])
+  have err0: "0 \<le> 1 - exp (- l * (T / real N))"
+    using T l N by (simp add: mult_nonneg_nonneg)
+  show ?thesis
+  proof (cases "?\<tau> < T")
+    case False
+    then have \<tau>eq: "?\<tau> = T" using \<tau>T by simp
+    have no_ind: "\<not> ?\<tau> < ?s j" if "j < N" for j
+    proof -
+      have "?s j \<le> T"
+        using that N T
+        by (simp add: divide_le_eq mult_right_mono)
+      then show ?thesis using \<tau>eq by simp
+    qed
+    then have "pstep T K l N f = exp (- l * T)"
+      unfolding pstep_def by (simp add: indicator_def)
+    then show ?thesis
+      using \<tau>eq err0 by simp
+  next
+    case True
+    define m where "m = (LEAST j. ?\<tau> < ?s j)"
+    have exN: "?\<tau> < ?s N"
+      using True N by simp
+    have exE: "\<exists>j. ?\<tau> < ?s j" using exN by blast
+    have mless: "?\<tau> < ?s m"
+      unfolding m_def by (rule LeastI_ex[OF exE])
+    have mmin: "\<not> ?\<tau> < ?s j" if "j < m" for j
+      using that unfolding m_def by (rule not_less_Least)
+    have mN: "m \<le> N"
+      unfolding m_def using exN by (rule Least_le)
+    have m1: "1 \<le> m"
+    proof (rule ccontr)
+      assume "\<not> 1 \<le> m"
+      then have "m = 0" by simp
+      with mless have "?\<tau> < 0" by simp
+      with \<tau>0 show False by simp
+    qed
+    have s_mono: "?s j \<le> ?s k" if "j \<le> k" for j k
+      using that T N
+      by (simp add: divide_right_mono mult_right_mono)
+    have ind_iff: "?\<tau> < ?s j \<longleftrightarrow> m \<le> j" for j
+    proof
+      assume "?\<tau> < ?s j"
+      then show "m \<le> j"
+        using mmin[of j] by (cases "j < m") auto
+    next
+      assume "m \<le> j"
+      then have "?s m \<le> ?s j" by (rule s_mono)
+      with mless show "?\<tau> < ?s j" by simp
+    qed
+    have sum_eq: "(\<Sum> j = 1..<N. (?\<phi> j - ?\<phi> (Suc j))
+        * indicat_real {g. pexit T K g < ?s j} f)
+        = (\<Sum> j = m..<N. ?\<phi> j - ?\<phi> (Suc j))"
+      by (intro sum.mono_neutral_cong_right)
+        (use m1 in \<open>auto simp: indicator_def ind_iff\<close>)
+    have tele: "(\<Sum> j = m..<N. ?\<phi> j - ?\<phi> (Suc j)) = ?\<phi> m - ?\<phi> N"
+    proof -
+      have "(\<Sum> j = m..<N. ?\<phi> (Suc j) - ?\<phi> j) = ?\<phi> N - ?\<phi> m"
+        by (rule sum_Suc_diff'[OF mN])
+      moreover have "(\<Sum> j = m..<N. ?\<phi> j - ?\<phi> (Suc j))
+          = - (\<Sum> j = m..<N. ?\<phi> (Suc j) - ?\<phi> j)"
+        by (simp add: sum_subtractf)
+      ultimately show ?thesis by simp
+    qed
+    have sN: "?s N = T" using N by simp
+    have pstep_eq: "pstep T K l N f = ?\<phi> m"
+      unfolding pstep_def sum_eq tele using sN by simp
+    have lo: "pstep T K l N f \<le> exp (- l * ?\<tau>)"
+    proof -
+      have "l * ?\<tau> \<le> l * ?s m"
+        by (intro mult_left_mono) (use mless l in auto)
+      then have "?\<phi> m \<le> exp (- l * ?\<tau>)"
+        by (subst exp_le_cancel_iff) linarith
+      then show ?thesis unfolding pstep_eq .
+    qed
+    have hi: "exp (- l * ?\<tau>) \<le> pstep T K l N f
+        + (1 - exp (- l * (T / real N)))"
+    proof -
+      have sm_le: "?s m \<le> ?\<tau> + T / real N"
+      proof -
+        have "?s (m - 1) \<le> ?\<tau>"
+          using mmin[of "m - 1"] m1 by force
+        moreover have "?s m = ?s (m - 1) + T / real N"
+          using m1 N
+          by (simp add: field_simps of_nat_diff)
+        ultimately show ?thesis by simp
+      qed
+      have "l * ?s m \<le> l * (?\<tau> + T / real N)"
+        by (intro mult_left_mono sm_le) (use l in auto)
+      then have "exp (- l * (?\<tau> + T / real N)) \<le> ?\<phi> m"
+        by (subst exp_le_cancel_iff) linarith
+      then have "exp (- l * ?\<tau>) - ?\<phi> m
+          \<le> exp (- l * ?\<tau>) - exp (- l * (?\<tau> + T / real N))"
+        by linarith
+      also have "\<dots> = exp (- l * ?\<tau>) * (1 - exp (- l * (T / real N)))"
+        by (simp add: algebra_simps exp_add[symmetric] flip: exp_add)
+      also have "\<dots> \<le> 1 * (1 - exp (- l * (T / real N)))"
+        using \<tau>0 l err0
+        by (intro mult_right_mono)
+          (auto simp: exp_le_one_iff mult_nonneg_nonneg)
+      finally show ?thesis unfolding pstep_eq by simp
+    qed
+    show ?thesis using lo hi by blast
+  qed
+qed
+
 lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
