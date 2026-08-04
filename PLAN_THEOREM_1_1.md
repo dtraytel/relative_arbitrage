@@ -357,11 +357,13 @@ Faithful decomposition (statuses of ingredients in brackets):
    `mtopology_of (path_metric T)` — witness time in the open
    complement + `continuous_map_path_eval`), `pexit_measurable`.
    PIDE-green.
+   L1 `ess_inf_time_le_laplace` DONE (commit 58933f2), with helpers
+   `exp_neg_time_integrable` / `exp_neg_time_integral_lower`.
+   TRAP: state EVERY lemma here with `fixes tau :: "'a ⇒ real"` —
+   without it τ generalizes to a Banach-algebra type and all
+   real-specific rules fail to APPLY (rule-application failures on
+   obviously-right goals, no type error shown).
    REMAINING, with worked-out proof designs:
-   L1 `ess_inf_time_le_laplace` (each `f_λ` dominates the essinf):
-   members `c` of the Sup-set are ≤ `ennreal T`, write `c = ennreal
-   c'`; `e^{−λτ} ≤ e^{−λc'}` AE; `∫ ∈ [e^{−λT}, e^{−λc'}]` so `ln` is
-   safe; monotonicity.  Needs τ bounded in `[0, T]` (pexit ✓).
    L2 `ess_inf_time_eq_laplace_inf`
    (`INF λ∈{0<..}. ennreal (f_λ) = ess_inf_time`): ≥ by L1 +
    `INF_greatest`; ≤ by ε-argument: `p := prob {τ ≤ e' + ε} > 0`
