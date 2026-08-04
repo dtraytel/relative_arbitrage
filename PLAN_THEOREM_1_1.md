@@ -388,7 +388,15 @@ Faithful decomposition (statuses of ingredients in brackets):
    constructed above (traps: `LeastI_ex` not `LeastI[of]`;
    `sum.mono_neutral_cong_right` not `sum.inter_filter`; exp-monotone
    steps via `subst exp_le_cancel_iff` + linarith).
-   L3b-i DONE (commit c4459f2): `pstep_integral`.  REMAINING: (ii) `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
+   L3b-i DONE (commit c4459f2): `pstep_integral`.
+   L3b-ii CORE DONE (commit efaa2d4): `weak_conv_open_liminf` — the
+   open-set portmanteau liminf along `weak_conv_on` on the path
+   metric (mweak_conv_fin interpretation discharged from
+   `weak_conv_on_def`; closed-limsup via `MW.mweak_conv2`; total mass
+   from the `f = 1` instance — instantiate the ∀f-clause MANUALLY,
+   auto rewrites `∫1` to a measure first; the sequential-tendsto
+   arrow `⇢` already carries `sequentially`).
+   REMAINING (assembly): (ii') `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
    `mweak_conv3` open-set liminf (interpretation pattern
    `mweak_conv_fin` as Section_2_Usc line ~3141) +
    `ereal_Liminf_add_mono` over the finitely many terms; (iii) with
