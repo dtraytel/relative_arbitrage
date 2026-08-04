@@ -1550,4 +1550,181 @@ proof -
   qed
 qed
 
+
+lemma martingale_drX_sin:
+  fixes q \<phi> :: real
+  assumes q: "0 < q"
+  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      0 (\<lambda>t \<omega>. drR q t * sin (drW (drc q t) \<omega> + \<phi>))"
+proof -
+  let ?M = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?FB = "natural_filtration ?M 0 (cbmX (0 :: real^2))"
+  let ?G = "\<lambda>t. ?FB (drc q t)"
+  let ?Y = "\<lambda>t \<omega>. drR q t * sin (drW (drc q t) \<omega> + \<phi>)"
+  have SPfact: "Stochastic_Process.stochastic_process ?M 0
+      (cbmX (0 :: real^2))"
+    by unfold_locales
+  have fm: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have subB: "subalgebra ?M (?FB u)" for u
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have sfsB: "sigma_finite_subalgebra ?M (?FB u)" for u
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fm subB)
+  have FMbase: "filtered_measure ?M ?FB 0"
+    by (rule Stochastic_Process.stochastic_process.filtered_measure_natural_filtration
+        [OF SPfact])
+  have Gmono: "sets (?G s) \<subseteq> sets (?G t)"
+    if st: "0 \<le> s" "s \<le> t" for s t
+    using filtered_measure.subalgebra_F[OF FMbase
+        drc_nonneg[OF q st(1)] drc_mono[OF q st(1) st(2)]]
+    by (auto simp: subalgebra_def)
+  have FMG: "filtered_measure ?M ?G 0"
+    unfolding filtered_measure_def using subB Gmono by auto
+  have sffG: "sigma_finite_filtered_measure ?M ?G 0"
+    by (intro sigma_finite_filtered_measure.intro
+        sigma_finite_filtered_measure_axioms.intro FMG sfsB)
+  have drW_cbmX: "drW u \<omega> = cbmX (0 :: real^2) u \<omega> $ 1" for u \<omega>
+    by (simp add: drW_def cbmX_def)
+  have nth1: "(\<lambda>v :: real^2. v $ 1) \<in> borel_measurable borel"
+  proof -
+    have "(\<lambda>v :: real^2. v $ 1) = (\<lambda>v. inner v (axis 1 1))"
+      by (simp add: fun_eq_iff cart_eq_inner_axis)
+    then show ?thesis by simp
+  qed
+  have YM: "?Y t \<in> borel_measurable ?M" for t
+    using measurable_cbmX_coord[of "drc q t" "1 :: 2"]
+    by (simp add: drW_def) measurable
+  have drWF: "(\<lambda>\<omega>. drW u \<omega>) \<in> borel_measurable (?FB u)"
+    if u: "0 \<le> u" for u
+  proof -
+    have bu: "cbmX (0 :: real^2) u \<in> borel_measurable (?FB u)"
+      by (rule Stochastic_Process.adapted_process.adapted[OF
+          Stochastic_Process.stochastic_process.adapted_process_natural_filtration
+          [OF SPfact] u])
+    show ?thesis
+      unfolding drW_cbmX
+      by (rule measurable_compose[OF bu nth1])
+  qed
+  have YF: "?Y t \<in> borel_measurable (?G t)" if t: "0 \<le> t" for t
+    using drWF[OF drc_nonneg[OF q t]] by measurable
+  have Yabs: "\<bar>?Y t \<omega>\<bar> \<le> \<bar>drR q t\<bar>" for t \<omega>
+  proof -
+    have "\<bar>?Y t \<omega>\<bar> = \<bar>drR q t\<bar> * \<bar>sin (drW (drc q t) \<omega> + \<phi>)\<bar>"
+      by (simp add: abs_mult)
+    also have "\<dots> \<le> \<bar>drR q t\<bar> * 1"
+      by (intro mult_left_mono abs_sin_le_one abs_ge_zero)
+    finally show ?thesis by simp
+  qed
+  have Yint: "integrable ?M (?Y t)" for t
+    by (rule BMP.integrable_const_bound[where B = "\<bar>drR q t\<bar>"])
+      (use YM Yabs in \<open>auto intro!: AE_I2\<close>)
+  have intsin: "integrable ?M (\<lambda>\<omega>. sin (Bcont (drc q u) (\<omega> 1) + \<phi>))"
+    for u
+  proof -
+    have m: "(\<lambda>\<omega> :: 2 \<Rightarrow> real \<Rightarrow> real. sin (Bcont (drc q u) (\<omega> 1) + \<phi>))
+        \<in> borel_measurable ?M"
+      using measurable_cbmX_coord[of "drc q u" "1 :: 2"] by measurable
+    show ?thesis
+      by (rule BMP.integrable_const_bound[where B = 1])
+        (use m in \<open>auto intro!: AE_I2 abs_sin_le_one\<close>)
+  qed
+  show ?thesis
+  proof (intro martingale.intro martingale_axioms.intro)
+    show "sigma_finite_filtered_measure ?M ?G 0"
+      by (rule sffG)
+    show "adapted_process ?M ?G 0 ?Y"
+      by unfold_locales
+        (auto intro: subB YF dest: Gmono[THEN subsetD])
+    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable ?M (?Y i)"
+      by (rule Yint)
+    fix i j :: real assume ij: "0 \<le> i" "i \<le> j"
+    show "AE \<omega> in ?M. ?Y i \<omega> = cond_exp ?M (?G i) (?Y j) \<omega>"
+    proof (cases "i = j")
+      case True
+      show ?thesis
+        unfolding True
+        by (rule sigma_finite_subalgebra.cond_exp_F_meas
+            [OF sfsB Yint YF[OF order_trans[OF ij(1) ij(2)]],
+              THEN AE_symmetric])
+    next
+      case False
+      with ij have iltj: "i < j" by simp
+      have ci0: "0 \<le> drc q i" by (rule drc_nonneg[OF q ij(1)])
+      have cicj: "drc q i < drc q j"
+        by (rule drc_strict_mono[OF q ij(1) iltj])
+      have CE: "AE \<omega> in ?M. cond_exp ?M (?G i)
+          (\<lambda>\<omega>. sin (Bcont (drc q j) (\<omega> 1) + \<phi>)) \<omega>
+          = sin (Bcont (drc q i) (\<omega> 1) + \<phi>)
+            * exp (- (drc q j - drc q i) / 2)"
+      proof -
+        have "AE \<omega> in ?M. cond_exp ?M (?G i)
+            (\<lambda>\<omega>. sin (1 * Bcont (drc q j) (\<omega> 1) + \<phi>)) \<omega>
+            = sin (1 * Bcont (drc q i) (\<omega> 1) + \<phi>)
+              * exp (- (1 :: real)\<^sup>2 * (drc q j - drc q i) / 2)"
+          by (rule cbm_sin_cond_exp[OF ci0 cicj])
+        then show ?thesis by simp
+      qed
+      have SC: "AE \<omega> in ?M. cond_exp ?M (?G i) (?Y j) \<omega>
+          = drR q j *\<^sub>R cond_exp ?M (?G i)
+              (\<lambda>\<omega>. sin (Bcont (drc q j) (\<omega> 1) + \<phi>)) \<omega>"
+      proof -
+        have "AE \<omega> in ?M. cond_exp ?M (?G i)
+            (\<lambda>\<omega>. drR q j *\<^sub>R sin (Bcont (drc q j) (\<omega> 1) + \<phi>)) \<omega>
+            = drR q j *\<^sub>R cond_exp ?M (?G i)
+                (\<lambda>\<omega>. sin (Bcont (drc q j) (\<omega> 1) + \<phi>)) \<omega>"
+          by (rule sigma_finite_subalgebra.cond_exp_scaleR_right
+              [OF sfsB intsin])
+        then show ?thesis by (simp add: drW_def)
+      qed
+      show ?thesis
+        using SC CE
+      proof eventually_elim
+        case (elim \<omega>)
+        have Ydecay: "drR q j * exp (- (drc q j - drc q i) / 2)
+            = drR q i"
+          by (rule drR_decay[OF q ij(1) ij(2)])
+        have "?Y i \<omega> = drR q j
+            * (sin (Bcont (drc q i) (\<omega> 1) + \<phi>)
+                * exp (- (drc q j - drc q i) / 2))"
+          unfolding drW_def
+          by (metis Ydecay mult.assoc mult.commute)
+        with elim show ?case by simp
+      qed
+    qed
+  qed
+qed
+
+theorem martingale_drX:
+  fixes q \<phi> :: real
+  assumes q: "0 < q"
+  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      0 (drX q \<phi>)"
+proof (rule martingale_vecI)
+  fix k :: 2
+  show "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
+      0 (\<lambda>t \<omega>. drX q \<phi> t \<omega> $ k)"
+  proof (cases "k = 1")
+    case True
+    have "(\<lambda>t \<omega>. drX q \<phi> t \<omega> $ k)
+        = (\<lambda>t \<omega>. drR q t * cos (drW (drc q t) \<omega> + \<phi>))"
+      by (simp add: drX_def fun_eq_iff True)
+    then show ?thesis
+      using martingale_drX_cos[OF q, of \<phi>] by simp
+  next
+    case False
+    then have k2: "k = 2" using exhaust_2 by auto
+    have "(\<lambda>t \<omega>. drX q \<phi> t \<omega> $ k)
+        = (\<lambda>t \<omega>. drR q t * sin (drW (drc q t) \<omega> + \<phi>))"
+      by (simp add: drX_def fun_eq_iff k2)
+    then show ?thesis
+      using martingale_drX_sin[OF q, of \<phi>] by simp
+  qed
+qed
+
 end
