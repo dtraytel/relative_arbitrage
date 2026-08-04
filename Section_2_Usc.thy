@@ -4071,4 +4071,35 @@ proof -
   qed
 qed
 
+subsection \<open>Clauses (0) and (3, ball) for the paper-class value function\<close>
+
+text \<open>The bare-locale facts transfer to \<open>stopped_val_fn\<close> by the index
+  inclusion: finiteness on bounded confinement sets (clause (0)), the
+  Lemma 2.1 upper bound on the ball, and the zero boundary values on the
+  sphere (clause (3) for the ball).\<close>
+
+lemma stopped_val_fn_finite_bounded:
+  fixes K :: "(real^'m::finite) set" and x0 :: "real^'m"
+  assumes B: "bounded K"
+  shows "stopped_val_fn k L K x0 < \<top>"
+  using stopped_val_fn_le_val_fn val_fn_finite_bounded[OF B]
+  by (rule le_less_trans)
+
+lemma stopped_val_fn_le_ball_v:
+  fixes x0 :: "real^'m::finite"
+  shows "stopped_val_fn k L (cball 0 r) x0 \<le> ennreal (ball_v r k x0)"
+  using stopped_val_fn_le_val_fn val_fn_le_ball_v
+  by (rule order_trans)
+
+lemma stopped_val_fn_boundary_zero:
+  fixes x0 :: "real^'m::finite"
+  assumes x0: "norm x0 = r"
+  shows "stopped_val_fn k L (cball 0 r) x0 = 0"
+proof -
+  have "stopped_val_fn k L (cball 0 r) x0 \<le> val_fn k L (cball 0 r) x0"
+    by (rule stopped_val_fn_le_val_fn)
+  also have "\<dots> = 0" by (rule val_fn_boundary_zero[OF x0])
+  finally show ?thesis by simp
+qed
+
 end
