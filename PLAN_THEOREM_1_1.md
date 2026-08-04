@@ -388,10 +388,7 @@ Faithful decomposition (statuses of ingredients in brackets):
    constructed above (traps: `LeastI_ex` not `LeastI[of]`;
    `sum.mono_neutral_cong_right` not `sum.inter_filter`; exp-monotone
    steps via `subst exp_le_cancel_iff` + linarith).
-   L3b REMAINING: (i) `∫ pstep dΛ = exp(−l·T)·measure(mspace) +
-   Σ coeff_j · measure {f ∈ mspace. pexit < s_j}` (finite sum of
-   indicator integrals; measurability from `pexit_sublevel_open` +
-   `borel_of_open`); (ii) `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
+   L3b-i DONE (commit c4459f2): `pstep_integral`.  REMAINING: (ii) `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
    `mweak_conv3` open-set liminf (interpretation pattern
    `mweak_conv_fin` as Section_2_Usc line ~3141) +
    `ereal_Liminf_add_mono` over the finitely many terms; (iii) with
