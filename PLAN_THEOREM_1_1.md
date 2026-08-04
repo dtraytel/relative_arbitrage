@@ -375,6 +375,16 @@ closure law is a martingale (in integrated clamped form) whose squared
 coordinate increments grow conditionally at most `L·(t−s)` — the two
 integrated inputs the `acov`-differentiation step consumes.
 
+Done (commit 6b74fef, 2026-08-04): CLAUSE (1) PACKAGED, law-level form.
+`clause_one_law_level` (Section_2_Usc): for `K ⊆ cball 0 r`, open `A`
+disjoint from `K`, `T ≥ r²/(n−k)` (uniform over `K` by `ball_v_le`),
+the law-level value function `w x = Sup (vshift T A x ` mkt_law_closure
+k L (cball 0 (2r)) 0 T)` is usc (`clause_one_usc`) and dominates the
+paper-class value function on `K` (`clause_one_dom`:
+`stopped_val_fn k L K x ≤ ennreal (w x)`).  This is the single theorem
+downstream sections should cite for clause (1) until/unless the
+canonical market closes the `w = stopped_val_fn`-sup gap.
+
 Done (commit 5322748, 2026-08-04): the UNCLAMPED event-level identities.
 For closed `K ⊆ cball 0 r`, closure laws are supported on confined
 paths, so the clamp is the identity a.e. and
