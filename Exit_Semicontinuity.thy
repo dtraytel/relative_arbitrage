@@ -593,6 +593,84 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>Along weak convergence of path laws, the measure of each open
+  sublevel can only gain mass in the limit (portmanteau), and the step
+  minorant is a positive combination of such measures plus a
+  total-mass term — so its integral is lower semicontinuous.\<close>
+
+lemma weak_conv_open_liminf:
+  fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
+    and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    and U: "openin (mtopology_of (path_metric T
+      :: (real \<Rightarrow> 'b) metric)) U"
+  shows "ereal (measure \<Lambda> U)
+      \<le> Liminf sequentially (\<lambda>i. ereal (measure (\<Lambda>i i) U))"
+proof -
+  let ?m = "path_metric T :: (real \<Rightarrow> 'b) metric"
+  interpret PM: Metric_space "mspace ?m" "mdist ?m"
+    by (rule Metric_space_mspace_mdist)
+  have wc': "(\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i)
+        = sets (borel_of (mtopology_of ?m)) \<and> finite_measure (\<Lambda>i i))
+      \<and> sets \<Lambda> = sets (borel_of (mtopology_of ?m)) \<and> finite_measure \<Lambda>
+      \<and> (\<forall>f. continuous_map (mtopology_of ?m) euclideanreal f \<longrightarrow>
+          (\<exists>B. \<forall>x\<in>topspace (mtopology_of ?m). \<bar>f x\<bar> \<le> B) \<longrightarrow>
+          ((\<lambda>i. \<integral>x. f x \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. f x \<partial>\<Lambda>)))"
+    using wc unfolding weak_conv_on_def by blast
+  have top: "PM.mtopology = mtopology_of ?m"
+    by (simp add: mtopology_of_def)
+  interpret MW: mweak_conv_fin "mspace ?m" "mdist ?m" \<Lambda>i \<Lambda> sequentially
+  proof
+    show "\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i) = sets (borel_of PM.mtopology)"
+      using wc' top by (auto elim: eventually_mono)
+    show "sets \<Lambda> = sets (borel_of PM.mtopology)"
+      using wc' top by simp
+    show "\<forall>\<^sub>F i in sequentially. finite_measure (\<Lambda>i i)"
+      using wc' by (auto elim: eventually_mono)
+    show "\<exists>A. countable A \<and> A \<subseteq> sets \<Lambda> \<and> \<Union> A = space \<Lambda>
+        \<and> (\<forall>a\<in>A. emeasure \<Lambda> a \<noteq> \<infinity>)"
+      by (intro exI[of _ "{space \<Lambda>}"])
+        (use wc' in \<open>auto simp: finite_measure.emeasure_eq_measure\<close>)
+    show "emeasure \<Lambda> (space \<Lambda>) \<noteq> \<top>"
+      using wc' by (simp add: finite_measure.emeasure_eq_measure)
+  qed
+  have cb: "(\<lambda>i. \<integral>x. g x \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. g x \<partial>\<Lambda>)"
+    if u: "uniformly_continuous_map PM.Self euclidean_metric g"
+      and b: "\<exists>B. \<forall>x\<in>mspace ?m. \<bar>g x\<bar> \<le> B" for g :: "(real \<Rightarrow> 'b) \<Rightarrow> real"
+  proof -
+    have cg: "continuous_map (mtopology_of ?m) euclideanreal g"
+      using uniformly_continuous_imp_continuous_map[OF u]
+      by (simp add: mtopology_of_def)
+    show ?thesis
+      using wc' cg b by (auto simp: topspace_mtopology_of)
+  qed
+  have cls: "Limsup sequentially (\<lambda>i. ereal (measure (\<Lambda>i i) A))
+      \<le> ereal (measure \<Lambda> A)"
+    if A: "closedin PM.mtopology A" for A
+    by (rule MW.mweak_conv2[OF cb A])
+  have mass: "(\<lambda>i. measure (\<Lambda>i i) (mspace ?m))
+      \<longlonglongrightarrow> measure \<Lambda> (mspace ?m)"
+  proof -
+    have wcf: "(\<lambda>i. \<integral>x. g x \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. g x \<partial>\<Lambda>)"
+      if "continuous_map (mtopology_of ?m) euclideanreal g"
+        and "\<exists>B. \<forall>x\<in>topspace (mtopology_of ?m). \<bar>g x\<bar> \<le> B"
+      for g :: "(real \<Rightarrow> 'b) \<Rightarrow> real"
+      using wc' that by blast
+    have "(\<lambda>i. \<integral>x. 1 \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. (1::real) \<partial>\<Lambda>)"
+      by (rule wcf) (auto intro!: exI[of _ 1])
+    moreover have "(\<integral>x. (1::real) \<partial>(\<Lambda>i i)) = measure (\<Lambda>i i) (space (\<Lambda>i i))"
+      for i by simp
+    moreover have "(\<integral>x. (1::real) \<partial>\<Lambda>) = measure \<Lambda> (space \<Lambda>)" by simp
+    ultimately show ?thesis
+      using MW.space_N MW.space_Ni
+      by (auto elim!: tendsto_cong[THEN iffD1, rotated]
+          intro: eventually_mono)
+  qed
+  show ?thesis
+    using MW.mweak_conv3[OF cls mass] U top by simp
+qed
+
 lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
