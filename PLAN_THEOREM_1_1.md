@@ -14,15 +14,17 @@ theories by name; scratches are only for throwaway probes. History and
 superseded scoping live in git (`git log -p PLAN_THEOREM_1_1.md`) — do
 not resurrect them.
 
-**Remaining road to Theorem 1.1** (in recommended order):
-1. NC — canonical market ("the closure adds no value") OR the
-   author-level decision to cite clause (1) in law-level form (under
-   which clause (1) is complete). §3/NC.
+**Remaining road to Theorem 1.1** (in recommended order). USER
+DECISION 2026-08-04: formalize PRECISELY the paper's result — clause
+statements must match the paper (proof techniques free); the law-level
+restatement of clause (1) is a stepping stone, not a deliverable:
+1. NC — the canonical market ("the closure adds no value"), now ON the
+   critical path. §3/NC.
 2. N5 — the essinf weak DPP; reading done, fit assessed, build order
    (a)–(d) scripted in §3/N5. Unblocks clause (2) together with the
    (now complete) N4 witness.
 3. Clause (3) beyond the ball / general `n − k ≥ 2` — spherical BM on
-   the discrete route (only needed for the general-K statement).
+   the discrete route (needed for the paper's general-K statement).
 
 Sources: the paper (Lai/Shkolnikov/Soner, arXiv:2512.17702), its main
 reference for Section 2 (Larsson–Ruf, *Minimum curvature flow and martingale
@@ -277,6 +279,16 @@ continuous tests to the full past σ-algebra:
 
 ### NC. The canonical market — "the closure adds no value" (clause (1) gap)
 
+**AUTHOR-FIDELITY DECISION (user, 2026-08-04): formalize PRECISELY the
+paper's result.** The former item 4 (restating clause (1) at law level)
+is OFF THE TABLE as a final target: `clause_one_law_level` stays as a
+proven stepping stone, but Theorem 1.1's clause (1) must be delivered
+for the paper's own value function `v(x) = sup_{P ∈ P_x} P-essinf τ_K`
+(faithful rendering: `stopped_val_fn` — see §0). Proof TECHNIQUE
+remains free (e.g. the weak DPP may replace LR's measurable selection),
+but every clause STATEMENT must match the paper. Hence NC is now ON the
+critical path.
+
 Goal: for `Λ ∈ mkt_law_closure`, `vshift T A x Λ ≤` the class supremum;
 then `w = stopped_val_fn`-sup and the law-level clause (1) becomes the
 paper's. Do NOT believe shortcuts through usc of `vshift` in the law
@@ -297,12 +309,6 @@ Status: the integrated inputs are DONE (§2.6). Remaining, in order:
    space (`mkt_path_laws` pins the sample type `('m ⇒ real ⇒ real)`;
    path-space markets need the same type — reuse `bm_paths`-style tricks
    or generalize the pin).
-4. **Author-level alternative, worth deciding FIRST**: restate clause (1)
-   and the downstream §3 arguments for the LAW-level value function `w`
-   directly. If the sub/supersolution proofs only consume the DPP and
-   `v > 0`, the identification is deferrable for the whole existence half
-   — that demotes 1–3 from the critical path. Under this alternative,
-   clause (1) is COMPLETE (`clause_one_law_level`).
 
 ### N4. Example 3.1 / clause (3) general (RQ-C)
 
