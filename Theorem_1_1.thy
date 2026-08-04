@@ -286,7 +286,7 @@ proof (rule antisym)
   have nsq: "(norm x)\<^sup>2 = q"
     unfolding q_def by (simp add: power2_norm_eq_inner)
   have qr: "q \<le> r\<^sup>2"
-    using power_mono[OF xr norm_ge_zero] nsq by simp
+    using power_mono[OF xr norm_ge_zero, of 2] nsq by simp
   have r0: "0 \<le> r" using x0 xr by linarith
   have sqn: "sqrt q = norm x"
     using nsq by (metis norm_ge_zero real_sqrt_abs real_sqrt_pow2_iff
@@ -310,10 +310,12 @@ proof (rule antisym)
       using \<phi>1 x0 by (simp add: field_simps)
     have c2: "x $ 2 = norm x * sin \<phi>"
       using \<phi>2 x0 by (simp add: field_simps)
+    have comp: "x $ i
+        = (sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)) $ i"
+      for i
+      using exhaust_2[of i] c1 c2 sqn by auto
     show ?thesis
-      unfolding sqn
-      by (rule vec_eq_iff[THEN iffD2])
-        (auto simp: c1 c2 exhaust_2)
+      by (rule vec_eq_iff[THEN iffD2]) (simp add: comp)
   qed
   have SM: "stopped_market 1 L (cball 0 r) x
       (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
@@ -326,7 +328,18 @@ proof (rule antisym)
     by (rule ess_inf_time_const) simp
   have mem: "ennreal (r\<^sup>2 - q) \<in> stopped_exit_vals 1 L (cball 0 r) x"
     unfolding stopped_exit_vals_def
-    using SM EI by blast
+  proof (intro CollectI)
+    show "\<exists>M F X acov tau.
+        stopped_market 1 L (cball 0 r) x M F X acov tau
+        \<and> ennreal (r\<^sup>2 - q) = ess_inf_time M tau"
+      by (intro exI[where x = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"]
+          exI[where x = "\<lambda>t. natural_filtration bm_paths 0
+            (cbmX (0 :: real^2)) (drc q t)"]
+          exI[where x = "drXs q \<phi> (r\<^sup>2 - q)"]
+          exI[where x = "dras q \<phi> (r\<^sup>2 - q)"]
+          exI[where x = "\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. r\<^sup>2 - q"]
+          conjI SM EI[symmetric])
+  qed
   have bv: "ball_v r 1 x = r\<^sup>2 - q"
     unfolding ball_v_def q_def[symmetric]
     using qr by (simp add: max_absorb1)
