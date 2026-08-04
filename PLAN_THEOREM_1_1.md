@@ -364,13 +364,12 @@ Faithful decomposition (statuses of ingredients in brackets):
    real-specific rules fail to APPLY (rule-application failures on
    obviously-right goals, no type error shown).
    REMAINING, with worked-out proof designs:
-   L2 `ess_inf_time_eq_laplace_inf`
-   (`INF λ∈{0<..}. ennreal (f_λ) = ess_inf_time`): ≥ by L1 +
-   `INF_greatest`; ≤ by ε-argument: `p := prob {τ ≤ e' + ε} > 0`
-   (else `e' + ε` would be a member above the Sup), pick
-   `λ ≥ max 1 ((− ln p)/ε)`, then
-   `∫ e^{−λτ} ≥ e^{−λ(e'+ε)}·p` pointwise-minorant argument gives
-   `f_λ ≤ e' + 2ε`; close with `ennreal_le_epsilon`-style reasoning.
+   L2 `ess_inf_time_eq_laplace_inf` DONE (commit 54a5e3c).  Extra
+   traps found: `ennreal_le_epsilon` carries a `y < top` premise that
+   the proof block must `assume`; never put `ennreal_plus[symmetric]`
+   in a simpset (loops); nn_integrals must be written with the
+   `⇧+` sup-block (a raw superscript-plus slips through the MCP
+   encoder as a lexical error).
    L3 `liminf` of `∫ e^{−λ·pexit} dΛ_i` ≥ `∫ … dΛ` along
    `weak_conv_on` WITHOUT a general LSC portmanteau (none exists in
    the AFP; no layer-cake for real integrands in HOL either — checked)
