@@ -510,6 +510,22 @@ bricks 1–2b PIDE-scratch-verified, awaiting batch cross-check):
       matrix (`eigen_lb` at dim 1 via the tangent direction,
       `eigen_ub` with `L ≥ 1`); `stopped_market` side conditions are
       definitional (stopped, killed, bounded diag).
+      STARTED (commit 1916b50): `drXs q φ T0 t = drX q φ (min t T0)`,
+      `dras q φ T0 u = (if u ≤ T0 then dra q φ u else 0)`;
+      `set_integral_stopped_split` (generic killed-compensator
+      reduction), `dra_diag_drC2` (diagonal = `(1 ∓ drC2)/2`),
+      `dra_diag_set_integrable`, `coord_Z_drXs_eq`, and
+      **`martingale_coord_Z_drXs`** — the stopped pair's coord_Z
+      obligations, via `martingale_stopped_deterministic`.  Both
+      X-martingale (`martingale_drXs`) and coord_Z martingales for the
+      stopped market are now in place; remaining for (e): the locale's
+      pointwise/integrability clauses (X_start via `drX` at 0;
+      X_in_K with `K = cball 0 r` from `drX_norm`; psd/eigen bounds of
+      the rank-1 projection `dra`; trace integrability;
+      stopped_sq_integrable; compensator_integrable; dynkin_quadratic;
+      tau_stopping for constant tau — the event is `{}` or `space`;
+      X_paths_cont from `Bcont_cont` composition) and the final
+      `interpretation`/lemma stating membership.
    f. `ess_inf_time = ennreal (r² − q)` (constant tau) and the headline
       `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)` for
       `CARD = 2`, `0 < |x| ≤ r`, via `stopped_val_fn_le_ball_v` for ≤
