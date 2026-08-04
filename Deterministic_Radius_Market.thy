@@ -733,4 +733,89 @@ proof -
     unfolding fun_eq by eventually_elim simp
 qed
 
+
+text \<open>The centered set-integral form of the trig identities, the input to
+  \<open>Modification_Transfer.set_integral_zero_transfer\<close>.\<close>
+
+lemma bm_cos_set_integral:
+  fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
+  assumes s: "0 \<le> s" and st: "s < t"
+    and B: "B \<in> sets (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+  shows "(\<integral>\<omega>. indicat_real B \<omega> *
+      (cos (a * \<omega> i t + b)
+        - cos (a * \<omega> i s + b) * exp (- a\<^sup>2 * (t - s) / 2))
+      \<partial>bm_paths) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?f = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cos (a * \<omega> i t + b)"
+  let ?g = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+      cos (a * \<omega> i s + b) * exp (- a\<^sup>2 * (t - s) / 2)"
+  have t0: "0 \<le> t" using s st by simp
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have fmeas: "finite_measure ?M"
+    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
+  have sfs: "sigma_finite_subalgebra ?M ?F"
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fmeas
+        Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have B_M: "B \<in> sets ?M"
+    using B subalg by (auto simp: subalgebra_def)
+  have wtM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t) \<in> borel_measurable ?M"
+    using t0 by (intro measurable_bm_coordinate) auto
+  have wsM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i s) \<in> borel_measurable ?M"
+    using s by (intro measurable_bm_coordinate) auto
+  have fM: "?f \<in> borel_measurable ?M"
+    using wtM by measurable
+  have gM: "?g \<in> borel_measurable ?M"
+    using wsM by measurable
+  have int_f: "integrable ?M ?f"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use fM in \<open>auto intro!: AE_I2 abs_cos_le_one\<close>)
+  have int_g: "integrable ?M ?g"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use gM st in \<open>auto intro!: AE_I2 mult_le_one abs_cos_le_one
+        mult_nonneg_nonneg zero_le_power2 simp: abs_mult\<close>)
+  have e1: "(\<integral>\<omega> \<in> B. ?f \<omega> \<partial>?M) = (\<integral>\<omega> \<in> B. cond_exp ?M ?F ?f \<omega> \<partial>?M)"
+    by (rule sigma_finite_subalgebra.cond_exp_set_integral
+        [OF sfs int_f B])
+  have ce_M: "cond_exp ?M ?F ?f \<in> borel_measurable ?M"
+    by (rule measurable_from_subalg[OF subalg borel_measurable_cond_exp])
+  have e2: "(\<integral>\<omega> \<in> B. cond_exp ?M ?F ?f \<omega> \<partial>?M) = (\<integral>\<omega> \<in> B. ?g \<omega> \<partial>?M)"
+    unfolding set_lebesgue_integral_def
+  proof (rule integral_cong_AE)
+    show "(\<lambda>\<omega>. indicat_real B \<omega> *\<^sub>R cond_exp ?M ?F ?f \<omega>)
+        \<in> borel_measurable ?M"
+      by (intro borel_measurable_scaleR
+          borel_measurable_indicator B_M ce_M)
+    show "(\<lambda>\<omega>. indicat_real B \<omega> *\<^sub>R ?g \<omega>) \<in> borel_measurable ?M"
+      by (intro borel_measurable_scaleR
+          borel_measurable_indicator B_M gM)
+    show "AE \<omega> in ?M. indicat_real B \<omega> *\<^sub>R cond_exp ?M ?F ?f \<omega>
+        = indicat_real B \<omega> *\<^sub>R ?g \<omega>"
+      using bm_cos_cond_exp[OF s st, of x0 a i b]
+      by eventually_elim simp
+  qed
+  have "(\<integral>\<omega>. indicat_real B \<omega> * (?f \<omega> - ?g \<omega>) \<partial>?M)
+      = (\<integral>\<omega>. indicat_real B \<omega> *\<^sub>R ?f \<omega>
+          - indicat_real B \<omega> *\<^sub>R ?g \<omega> \<partial>?M)"
+    by (intro Bochner_Integration.integral_cong refl)
+      (simp add: right_diff_distrib)
+  also have "\<dots> = (\<integral>\<omega> \<in> B. ?f \<omega> \<partial>?M) - (\<integral>\<omega> \<in> B. ?g \<omega> \<partial>?M)"
+    unfolding set_lebesgue_integral_def
+    by (intro Bochner_Integration.integral_diff
+        integrable_mult_indicator[OF B_M] int_f int_g)
+  also have "\<dots> = 0"
+    using e1 e2 by simp
+  finally show ?thesis .
+qed
+
 end
