@@ -187,4 +187,78 @@ next
   finally show ?thesis .
 qed
 
+section \<open>Conditional expectation of a function of an increment\<close>
+
+text \<open>A bounded measurable function of a coordinate increment has as its
+  conditional expectation, given the natural filtration of the market
+  process at the earlier time, simply its Gaussian mean: the past and the
+  increment are independent (\<open>bm_indicator_increment_indep_var\<close>), so the
+  set-integral characterisation factorises.  Note the qualified locale
+  name: \<open>Kolmogorov_Chentsov\<close> shadows the \<open>Martingales\<close> notion of
+  \<open>stochastic_process\<close> in this import closure.\<close>
+
+lemma bm_increment_has_cond_exp:
+  fixes g :: "real \<Rightarrow> real" and i :: "'n::finite" and x0 :: "real^'n"
+  assumes s: "0 \<le> s" and st: "s < t"
+    and gm: "g \<in> borel_measurable borel" and gb: "\<And>y. \<bar>g y\<bar> \<le> C"
+  shows "has_cond_exp (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (bmX x0) s)
+      (\<lambda>\<omega>. g (\<omega> i t - \<omega> i s))
+      (\<lambda>\<omega>. \<integral>y. g y \<partial>gauss_measure (t - s))"
+proof (rule has_cond_expI')
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?D = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s"
+  let ?c = "\<integral>y. g y \<partial>gauss_measure (t - s)"
+  have t0: "0 \<le> t" using s st by simp
+  have SPfact: "Stochastic_Process.stochastic_process
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration
+        [OF SPfact])
+  have Dm: "?D \<in> borel_measurable ?M"
+    using s t0
+    by (intro borel_measurable_diff measurable_bm_coordinate) auto
+  have gDm: "(\<lambda>\<omega>. g (?D \<omega>)) \<in> borel_measurable ?M"
+    by (rule measurable_compose[OF Dm gm])
+  have int_gD: "integrable ?M (\<lambda>\<omega>. g (?D \<omega>))"
+    by (rule BMP.integrable_const_bound[where B = C])
+      (use gb gDm in \<open>auto intro!: AE_I2\<close>)
+  show "integrable ?M (\<lambda>\<omega>. g (?D \<omega>))" by (rule int_gD)
+  show "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. ?c)" by simp
+  show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. ?c) \<in> borel_measurable ?F"
+    by simp
+  fix A assume A: "A \<in> sets ?F"
+  have A_M: "A \<in> sets ?M"
+    using A subalg by (auto simp: subalgebra_def)
+  have indA_int: "integrable ?M (indicat_real A)"
+    by (rule BMP.integrable_const_bound[where B = 1])
+      (use A_M in \<open>auto intro!: AE_I2 simp: indicator_def\<close>)
+  have iv: "BMP.indep_var borel (indicat_real A) borel (\<lambda>\<omega>. g (?D \<omega>))"
+    using BMP.indep_var_compose[OF bm_indicator_increment_indep_var
+        [OF s st A] measurable_ident gm]
+    by (simp add: o_def)
+  have EgD: "(\<integral>\<omega>. g (?D \<omega>) \<partial>?M) = ?c"
+  proof -
+    have "(\<integral>\<omega>. g (?D \<omega>) \<partial>?M) = (\<integral>y. g y \<partial>distr ?M borel ?D)"
+      by (rule Bochner_Integration.integral_distr[OF Dm gm, symmetric])
+    also have "distr ?M borel ?D = gauss_measure (t - s)"
+      by (rule bm_increment_distr[OF s less_imp_le[OF st]])
+    finally show ?thesis .
+  qed
+  have "(\<integral>\<omega> \<in> A. g (?D \<omega>) \<partial>?M)
+      = (\<integral>\<omega>. indicat_real A \<omega> * g (?D \<omega>) \<partial>?M)"
+    unfolding set_lebesgue_integral_def by (simp add: mult.commute)
+  also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> \<partial>?M) * (\<integral>\<omega>. g (?D \<omega>) \<partial>?M)"
+    by (rule BMP.indep_var_lebesgue_integral[OF iv indA_int int_gD])
+  also have "\<dots> = measure ?M A * ?c"
+    using A_M EgD by simp
+  also have "\<dots> = (\<integral>\<omega> \<in> A. ?c \<partial>?M)"
+    unfolding set_lebesgue_integral_def
+    using A_M by (simp add: finite_measure.emeasure_eq_measure
+        [OF BMP.finite_measure])
+  finally show "(\<integral>\<omega> \<in> A. g (?D \<omega>) \<partial>?M) = (\<integral>\<omega> \<in> A. ?c \<partial>?M)" .
+qed
+
 end
