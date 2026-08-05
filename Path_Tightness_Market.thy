@@ -233,12 +233,23 @@ proof -
   define GG where "GG = (\<lambda>i. SOME G. G \<in> sets (MM i)
       \<and> (AE \<omega> in MM i. \<omega> \<in> G)
       \<and> (\<forall>\<omega>\<in>G. \<omega> \<in> space (MM i) \<and> good i \<omega>))"
+  \<comment> \<open>Extract the defining property ONCE, then project.  Using
+      \<^verbatim>\<open>auto simp: GG_def\<close> for each conjunct separately is very slow: it
+      unfolds \<^verbatim>\<open>GG_def\<close> into the goal, leaving a \<^verbatim>\<open>SOME\<close>-term that the
+      simplifier then rewrites underneath — inside \<^verbatim>\<open>good\<close>, inside the
+      \<^verbatim>\<open>AE\<close>, and inside the bounded quantifier — on each of the three
+      calls.  \<^verbatim>\<open>someI_ex\<close> already delivers the conjunction, so no search
+      is needed at all.\<close>
+  have GGspec: "GG i \<in> sets (MM i)
+      \<and> (AE \<omega> in MM i. \<omega> \<in> GG i)
+      \<and> (\<forall>\<omega>\<in>GG i. \<omega> \<in> space (MM i) \<and> good i \<omega>)" for i
+    unfolding GG_def by (rule someI_ex[OF exG[of i]])
   have GG1: "GG i \<in> sets (MM i)" for i
-    using someI_ex[OF exG[of i]] by (auto simp: GG_def)
+    using GGspec[of i] by (rule conjunct1)
   have GG2: "AE \<omega> in MM i. \<omega> \<in> GG i" for i
-    using someI_ex[OF exG[of i]] by (auto simp: GG_def)
+    using GGspec[of i] by (rule conjunct2[THEN conjunct1])
   have GG3: "\<omega> \<in> space (MM i) \<and> good i \<omega>" if "\<omega> \<in> GG i" for i \<omega>
-    using someI_ex[OF exG[of i]] that by (auto simp: GG_def)
+    using GGspec[of i, THEN conjunct2, THEN conjunct2] that by (rule bspec)
   let ?M' = "\<lambda>i. restrict_space (MM i) (GG i)"
   let ?F' = "\<lambda>i t. restrict_space (FF i t) (GG i)"
   let ?A = "\<lambda>i l t \<omega>. set_lebesgue_integral lborel {0..t}
