@@ -1849,4 +1849,64 @@ proof -
   qed
 qed
 
+subsection \<open>The compensator rate at the stopped times\<close>
+
+text \<open>Step (a) of the four that remain.  Stopping can only shrink an
+  interval --- \<open>w \<mapsto> min w c\<close> is nondecreasing and 1-Lipschitz --- so the
+  class's diagonal rate bound survives it verbatim.\<close>
+
+lemma paper_pair_class_stopped_compensator_rate:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L" and Q: "Q \<in> paper_pair_class k L T x"
+  shows "AE \<omega> in Q. \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+      0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+        - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
+      \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+        - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i \<le> L * (v - u)"
+proof -
+  have inc: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
+      0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+      \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
+    by (rule paper_pair_class_Y_diag_increment[OF L Q])
+  from inc show ?thesis
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume h: "\<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
+        0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+        \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
+    show "\<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+        0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+          - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
+        \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+          - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i \<le> L * (v - u)"
+    proof (intro allI impI)
+      fix u v :: real assume u: "0 \<le> u" and uv: "u \<le> v"
+      have l0: "0 \<le> ploc T i R \<omega>" by (rule ploc_nonneg[OF T])
+      have anz: "0 \<le> min (min u (ploc T i R \<omega>)) T" using u l0 T by simp
+      have ab: "min (min u (ploc T i R \<omega>)) T
+          \<le> min (min v (ploc T i R \<omega>)) T"
+        by (intro min.mono uv order_refl)
+      have bT: "min (min v (ploc T i R \<omega>)) T \<le> T" by simp
+      have diff: "min (min v (ploc T i R \<omega>)) T
+          - min (min u (ploc T i R \<omega>)) T \<le> v - u"
+        using uv by (auto simp: min_def)
+      have base: "0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
+          \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
+            \<le> L * (min (min v (ploc T i R \<omega>)) T
+                - min (min u (ploc T i R \<omega>)) T)"
+        using h anz ab bT by blast
+      have "L * (min (min v (ploc T i R \<omega>)) T
+          - min (min u (ploc T i R \<omega>)) T) \<le> L * (v - u)"
+        by (rule mult_left_mono[OF diff L])
+      then show "0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
+          \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i \<le> L * (v - u)"
+        using base by linarith
+    qed
+  qed
+qed
+
 end

@@ -1117,6 +1117,74 @@ proof -
   qed
 qed
 
+text \<open>The DIAGONAL form of the covariation clause, which is what a
+  compensator bound asks for: the \<open>(i,i)\<close> entry of \<open>Y\<close> increases, at rate
+  at most \<open>L\<close>.  Both halves come from the constraint set --- \<open>psd\<close> gives
+  the lower bound on a diagonal entry and \<open>eigen_ub\<close> the upper one
+  (\<open>psd_eigen_ub_diag\<close>).\<close>
+
+lemma sconstraint_diag:
+  fixes a :: "real^'n::finite^'n"
+  assumes a: "a \<in> sconstraint k L"
+  shows "0 \<le> a $ i $ i" and "a $ i $ i \<le> L"
+proof -
+  have p: "psd a" and u: "eigen_ub a L"
+    using a unfolding sconstraint_def Pi_constraint_def by auto
+  show "0 \<le> a $ i $ i" by (rule psd_eigen_ub_diag(1)[OF p u])
+  show "a $ i $ i \<le> L" by (rule psd_eigen_ub_diag(2)[OF p u])
+qed
+
+theorem paper_pair_class_Y_diag_increment:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes L: "0 \<le> L" and Q: "Q \<in> paper_pair_class k L T x"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
+      0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+      \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
+proof -
+  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding paper_pair_class_def by blast
+  from dq show ?thesis
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume h: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    show "\<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
+        0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+        \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
+    proof (intro allI impI)
+      fix s t :: real
+      assume s: "0 \<le> s" and st: "s \<le> t" and tT: "t \<le> T"
+      show "0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+          \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
+      proof (cases "s = t")
+        case True
+        then show ?thesis using L by simp
+      next
+        case False
+        then have lt: "s < t" using st by simp
+        have d0: "0 < t - s" using lt by simp
+        have mem: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+          using h s lt tT by blast
+        have ent: "((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))) $ i $ i
+            = (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
+          by simp
+        have nn: "0 \<le> (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
+          using sconstraint_diag(1)[OF mem] ent by simp
+        have ub: "(snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s) \<le> L"
+          using sconstraint_diag(2)[OF mem] ent by simp
+        have p1: "0 \<le> ((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
+            * (t - s)"
+          using nn d0 by (intro mult_nonneg_nonneg) auto
+        have p2: "((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
+            * (t - s) \<le> L * (t - s)"
+          using ub d0 by (intro mult_right_mono) auto
+        show ?thesis using p1 p2 d0 by simp
+      qed
+    qed
+  qed
+qed
+
 subsection \<open>Square integrability of the class member's process\<close>
 
 text \<open>The promised consequence.  Under a class law the coordinate process
