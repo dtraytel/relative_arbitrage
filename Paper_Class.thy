@@ -14,7 +14,7 @@
            (NC-2/3/4) and the bridge to the stopped_market witnesses
            build on it.
 
-  STATUS:  PIDE-green (413 commands) as of 2026-08-05.
+  STATUS:  PIDE-green as of 2026-08-05.
 *)
 
 theory Paper_Class
@@ -346,6 +346,99 @@ proof -
         continuous_map_diffquot[OF s t] closed_sconstraint closedin_topspace)
   then show ?thesis
     by (simp add: topspace_mtopology_of)
+qed
+
+text \<open>The second half of NC-3: the weak limit only delivers the constraint
+  for the COUNTABLY many rational pairs (one closed set per pair, all of
+  full mass, intersected).  Path continuity and closedness of the
+  constraint set upgrade that to all real \<open>s < t\<close>: squeeze rationals
+  \<open>p\<^sub>n \<down> s\<close>, \<open>q\<^sub>n \<up> t\<close> strictly inside \<open>(s,t)\<close>, so every approximating
+  quotient is constrained, and pass to the limit.\<close>
+
+lemma diffquot_all_of_rational:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes S: "closed S"
+    and cont: "continuous_on {0..T} Y"
+    and rat: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
+    and st: "0 \<le> s" "s < t" "t \<le> T"
+  shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+proof -
+  define d where "d = (t - s) / 3"
+  have d0: "0 < d" using st unfolding d_def by simp
+  define e where "e = (\<lambda>n :: nat. min d (1 / real (Suc n)))"
+  have e0: "0 < e n" for n using d0 unfolding e_def by simp
+  have ed: "e n \<le> d" for n unfolding e_def by simp
+  have elim: "e \<longlonglongrightarrow> 0"
+  proof (rule tendsto_sandwich[of "\<lambda>n. 0" e sequentially
+      "\<lambda>n. 1 / real (Suc n)"])
+    show "\<forall>\<^sub>F n in sequentially. 0 \<le> e n"
+      using e0 by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. e n \<le> 1 / real (Suc n)"
+      by (simp add: e_def)
+    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
+    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
+      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
+  qed
+  have exp: "\<exists>r. r \<in> \<rat> \<and> s < r \<and> r < s + e n" for n
+  proof -
+    have "s < s + e n" using e0 by simp
+    from Rats_dense_in_real[OF this] show ?thesis by blast
+  qed
+  have exq: "\<exists>r. r \<in> \<rat> \<and> t - e n < r \<and> r < t" for n
+  proof -
+    have "t - e n < t" using e0 by simp
+    from Rats_dense_in_real[OF this] show ?thesis by blast
+  qed
+  obtain p where p: "\<And>n. p n \<in> \<rat>" "\<And>n. s < p n" "\<And>n. p n < s + e n"
+    using exp by metis
+  obtain q where q: "\<And>n. q n \<in> \<rat>" "\<And>n. t - e n < q n" "\<And>n. q n < t"
+    using exq by metis
+  have mid: "s + d < t - d"
+    unfolding d_def using st by argo
+  have pq: "p n < q n" for n
+  proof -
+    have "p n < s + d" using p(3)[of n] ed[of n] by simp
+    also have "\<dots> < t - d" by (rule mid)
+    also have "\<dots> \<le> t - e n" using ed[of n] by simp
+    also have "\<dots> < q n" by (rule q(2))
+    finally show ?thesis .
+  qed
+  have pmem: "p n \<in> {0..T}" for n
+    using p(2)[of n] pq[of n] q(3)[of n] st by auto
+  have qmem: "q n \<in> {0..T}" for n
+    using q(3)[of n] p(2)[of n] pq[of n] st by auto
+  have inS: "(1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)) \<in> S" for n
+    using p q pq pmem qmem st by (intro rat) auto
+  have pl: "p \<longlonglongrightarrow> s"
+  proof (rule tendsto_sandwich[of "\<lambda>n. s" p sequentially "\<lambda>n. s + e n"])
+    show "\<forall>\<^sub>F n in sequentially. s \<le> p n"
+      using p(2) by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. p n \<le> s + e n"
+      using p(3) by (simp add: less_imp_le)
+    show "(\<lambda>n. s) \<longlonglongrightarrow> s" by simp
+    show "(\<lambda>n. s + e n) \<longlonglongrightarrow> s"
+      using tendsto_add[OF tendsto_const elim] by simp
+  qed
+  have ql: "q \<longlonglongrightarrow> t"
+  proof (rule tendsto_sandwich[of "\<lambda>n. t - e n" q sequentially "\<lambda>n. t"])
+    show "\<forall>\<^sub>F n in sequentially. t - e n \<le> q n"
+      using q(2) by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. q n \<le> t"
+      using q(3) by (simp add: less_imp_le)
+    show "(\<lambda>n. t - e n) \<longlonglongrightarrow> t"
+      using tendsto_diff[OF tendsto_const elim] by simp
+    show "(\<lambda>n. t) \<longlonglongrightarrow> t" by simp
+  qed
+  have Yp: "(\<lambda>n. Y (p n)) \<longlonglongrightarrow> Y s"
+    using st pmem by (intro continuous_on_tendsto_compose[OF cont pl]) auto
+  have Yq: "(\<lambda>n. Y (q n)) \<longlonglongrightarrow> Y t"
+    using st qmem by (intro continuous_on_tendsto_compose[OF cont ql]) auto
+  have "(\<lambda>n. (1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)))
+      \<longlonglongrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s)"
+    using st by (intro tendsto_intros Yp Yq ql pl) auto
+  then show ?thesis
+    by (rule closed_sequentially[OF S inS])
 qed
 
 text \<open>The NC-3 transfer itself: a single difference-quotient constraint,
