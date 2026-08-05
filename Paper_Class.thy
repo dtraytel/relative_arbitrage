@@ -552,6 +552,42 @@ proof -
     by (rule closed_sequentially[OF S quot])
 qed
 
+text \<open>The density statement of Eq. (1.7).  The constraint on the difference
+  quotients makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence — by
+  Lebesgue's differentiation theorem for BV functions, which HOL-Analysis
+  has as \<open>Lebesgue_differentiation_thm\<close> — differentiable off a negligible
+  set; and at every point of differentiability the derivative lies in the
+  constraint set.  So \<open>dY/dt \<in> S\<close> for all but negligibly many \<open>t\<close>.\<close>
+
+theorem diffquot_density_ae:
+  fixes Y :: "real \<Rightarrow> 'b :: {euclidean_space, real_normed_vector}"
+    and S :: "'b set"
+  assumes T: "0 < T" and S: "closed S"
+    and B0: "0 \<le> B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
+        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+  shows "negligible {x \<in> {0..T}. \<not> Y differentiable (at x)}"
+    and "\<And>x D. 0 \<le> x \<Longrightarrow> x < T
+        \<Longrightarrow> (Y has_vector_derivative D) (at x within {x..T}) \<Longrightarrow> D \<in> S"
+proof -
+  have lip: "B-lipschitz_on {0..T} Y"
+    by (rule diffquot_lipschitz[OF B0 B dq])
+  have norm_le: "norm (Y u - Y v) \<le> B * norm (u - v)"
+    if "u \<in> {0..T}" "v \<in> {0..T}" for u v
+    using lipschitz_onD[OF lip that] by (simp add: dist_norm)
+  have bv: "has_bounded_variation_on Y {0..T}"
+    by (rule Lipschitz_imp_has_bounded_variation[where B = B])
+      (use norm_le in auto)
+  show "negligible {x \<in> {0..T}. \<not> Y differentiable (at x)}"
+    by (rule Lebesgue_differentiation_thm[OF is_interval_cc bv])
+next
+  fix x D
+  assume x: "0 \<le> x" "x < T"
+    and Dx: "(Y has_vector_derivative D) (at x within {x..T})"
+  show "D \<in> S"
+    by (rule diffquot_deriv_in_constraint[OF S dq x Dx])
+qed
+
 text \<open>The NC-3 transfer itself: a single difference-quotient constraint,
   holding almost surely under every approximating law, holds almost surely
   under the weak limit.  (The a.s. statements are read as full mass of the
