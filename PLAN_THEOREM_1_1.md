@@ -529,9 +529,18 @@ the degenerate market) — ALL FOUR VERIFIED; `Brownian_Continuous`
 PIDE-CHECKED, see below.  Once checked, drop the `meas` hypothesis
 from `Paper_Bridge.stopped_market_acont_integrable`.
 
-**FIRST ACTION AFTER THE NEXT RESTART:** an `edit_all` against
-`Brownian_Continuous.thy` corrupted the MCP server's in-memory buffer
-for that file — it reports the file as a 7-line fragment, and
+**LOCALE ASSUMPTION RESTATED ON `{0..}` (commit `d94b760`).**  It now
+reads `acov_time_measurable: AE ω in M. set_borel_measurable lborel
+{0..} (λs. acov s ω)`.  MORE faithful — the paper's (1.7) constrains the
+density for "a.e. `t ≥ 0`" — and forced by a real bug: the
+all-of-`ℝ` form is FALSE for the deterministic-radius witness, since
+`dras q φ T0 u ω = dra q φ u ω` for `u < 0`, which is not
+`dra q φ (max u 0) ω`.  On `{0..}` the truncation is invisible and
+`dra_cont` applies.
+
+**FIRST ACTION AFTER THE NEXT RESTART:** the MCP server's file buffers are
+corrupted for the WHOLE affected chain (it reports `Ito_Market` and
+`Brownian_Continuous` as few-line fragments) — it reports the file as a 7-line fragment, and
 `unload` / `touch` / `git checkout` all fail to clear it, while the
 file on disk is correct throughout.  That blocks PIDE verification of
 `Brownian_Continuous` and everything downstream.  After restart, check
