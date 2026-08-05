@@ -700,6 +700,129 @@ lemma pair_holder_ball_mem:
   using mem start
   by (auto intro!: pair_holder_of_components[OF T ga c B X Y])
 
+text \<open>The tightness criterion the pair laws are checked against.  Because
+  \<open>compactin_pair_holder_ball\<close> supplies the compact set outright, a family
+  of pair laws is tight as soon as, for every \<open>e\<close>, SOME Hölder ball carries
+  all but \<open>e\<close> of every law's mass.\<close>
+
+theorem tight_on_set_pair_holder_charge:
+  fixes \<Gamma> :: "(('n::finite) pairpath) measure set" and x :: "real^'n"
+  assumes T: "0 \<le> T" and ga: "0 < ga"
+    and fm: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> finite_measure N"
+    and st: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric))) = sets N"
+    and charge: "\<And>e. 0 < e \<Longrightarrow> \<exists>c. 0 \<le> c \<and> (\<forall>N\<in>\<Gamma>. measure N (space N -
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<omega> 0 = (x, 0)
+         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+              norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}) < e)"
+  shows "tight_on_set (mtopology_of (path_metric T :: ('n pairpath) metric)) \<Gamma>"
+  unfolding tight_on_set_def
+proof (intro conjI)
+  show "\<forall>M\<in>\<Gamma>. finite_measure M \<and> sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric))) = sets M"
+    using fm st by blast
+next
+  show "\<forall>e>0. \<exists>K.
+      compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) K
+      \<and> (\<forall>M\<in>\<Gamma>. measure M (space M - K) < e)"
+  proof (intro allI impI)
+    fix e :: real assume e: "0 < e"
+    obtain c where c: "0 \<le> c"
+      and ch: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> measure N (space N -
+        {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+           \<omega> 0 = (x, 0)
+           \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+                norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}) < e"
+      using charge[OF e] by blast
+    show "\<exists>K.
+        compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) K
+        \<and> (\<forall>M\<in>\<Gamma>. measure M (space M - K) < e)"
+      by (intro exI[of _ "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+             \<omega> 0 = (x, 0)
+             \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+                  norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}"] conjI ballI
+          compactin_pair_holder_ball[OF T ga c] ch)
+  qed
+qed
+
+text \<open>And the charge itself splits along the components: the \<open>X\<close>-side
+  Hölder event and the \<open>Y\<close>-side Lipschitz event intersect INSIDE a pair
+  Hölder ball (\<open>pair_holder_of_components\<close>), so their complements cover the
+  ball's complement and subadditivity finishes.  In the application the
+  \<open>Y\<close>-event has probability one (\<open>diffquot_lipschitz\<close>), so only the
+  \<open>X\<close>-side estimate carries content.\<close>
+
+lemma pair_holder_charge_split:
+  fixes N :: "(('n::finite) pairpath) measure" and x :: "real^'n"
+    and T ga c B :: real
+    and AX :: "real \<Rightarrow> (('n) pairpath) set" and AY :: "(('n) pairpath) set"
+  assumes AX_def: "AX = (\<lambda>c. {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      fst (\<omega> 0) = x
+      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+           norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga)})"
+    and AY_def: "AY = {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      snd (\<omega> 0) = 0
+      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}. norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>)}"
+  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
+    and fm: "finite_measure N"
+    and sp: "space N = mspace (path_metric T :: ('n pairpath) metric)"
+    and mX: "AX c \<in> sets N" and mY: "AY \<in> sets N"
+  shows "measure N (space N -
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<omega> 0 = (x, 0)
+         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+              norm (\<omega> v - \<omega> u)
+                \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)})
+      \<le> measure N (space N - AX c) + measure N (space N - AY)"
+proof -
+  interpret FM: finite_measure N by fact
+  have sub: "AX c \<inter> AY \<subseteq> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<omega> 0 = (x, 0)
+      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+           norm (\<omega> v - \<omega> u)
+             \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
+  proof
+    fix \<omega> assume w: "\<omega> \<in> AX c \<inter> AY"
+    then have mem: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      and x0: "fst (\<omega> 0) = x" and y0: "snd (\<omega> 0) = 0"
+      and Xb: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
+          \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
+      and Yb: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
+          \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
+      unfolding AX_def AY_def by auto
+    have "\<omega> 0 = (x, 0)" using x0 y0 by (simp add: prod_eq_iff)
+    then show "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+        \<omega> 0 = (x, 0)
+        \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+             norm (\<omega> v - \<omega> u)
+               \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
+      using mem
+      by (auto intro!: pair_holder_of_components[OF T ga c B Xb Yb])
+  qed
+  have "space N - {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<omega> 0 = (x, 0)
+      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+           norm (\<omega> v - \<omega> u)
+             \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}
+      \<subseteq> (space N - AX c) \<union> (space N - AY)"
+    using sub by blast
+  then have "measure N (space N -
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<omega> 0 = (x, 0)
+         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+              norm (\<omega> v - \<omega> u)
+                \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)})
+      \<le> measure N ((space N - AX c) \<union> (space N - AY))"
+    using mX mY sp
+    by (intro FM.finite_measure_mono sets.Un sets.compl_sets) auto
+  also have "\<dots> \<le> measure N (space N - AX c) + measure N (space N - AY)"
+    using mX mY
+    by (intro measure_subadditive sets.compl_sets)
+      (auto simp: FM.emeasure_eq_measure)
+  finally show ?thesis .
+qed
+
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>
 
 definition paper_v ::
