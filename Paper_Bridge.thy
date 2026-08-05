@@ -334,15 +334,19 @@ lemma past_test_measurable_natural_filtration:
 
 subsection \<open>The identity at a class member, against a bounded test\<close>
 
+lemma paper_pair_class_X_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+  using Q unfolding paper_pair_class_def by blast
+
 lemma paper_pair_class_coord_martingale:
   fixes Q :: "('n::finite pairpath) measure"
   assumes Q: "Q \<in> paper_pair_class k L T x"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. fst (\<omega> u) $ i)"
-proof (rule martingale_vec_nth)
-  show "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0 (\<lambda>u \<omega>. fst (\<omega> u))"
-    using Q unfolding paper_pair_class_def by blast
-qed
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i)"
+  by (rule martingale_vec_nth[OF paper_pair_class_X_martingale[OF Q]])
 
 theorem paper_pair_class_martingale_test:
   fixes Q :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
@@ -354,10 +358,15 @@ theorem paper_pair_class_martingale_test:
   shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i) \<partial>Q) = 0"
 proof -
   let ?F = "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)"
-  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> u) $ i"
+  \<comment> \<open>the class's martingale clause STOPS the process at \<open>T\<close> (it must ---
+      see the note at \<open>paper_pair_class\<close>), and on \<open>[0,T]\<close> the stopping is
+      invisible, which is what the two \<open>min\<close> rewrites below record.\<close>
+  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ i"
   let ?Z = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s})"
   have sT: "s \<le> T" using ts tT by simp
   have t0: "0 \<le> t" using st ts by simp
+  have mt: "min t T = t" using tT by simp
+  have ms: "min s T = s" using sT by simp
   interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
   have MY: "martingale Q ?F 0 ?Y" by (rule paper_pair_class_coord_martingale[OF Q])
   then interpret MY: martingale Q ?F 0 ?Y .
@@ -391,7 +400,7 @@ proof -
       = (\<integral>\<omega>. ?Z \<omega> * ?Y t \<omega> \<partial>Q) - (\<integral>\<omega>. ?Z \<omega> * ?Y s \<omega> \<partial>Q)"
     using Bochner_Integration.integral_diff[OF int_t int_s]
     by (simp add: right_diff_distrib)
-  then show ?thesis using eqts by simp
+  then show ?thesis using eqts mt ms by simp
 qed
 
 subsection \<open>The test functional is continuous on path space\<close>

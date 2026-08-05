@@ -270,7 +270,19 @@ text \<open>Operational reading of (1.7), equivalent by compensator
   \<open>S\<close> by Lebesgue differentiation, NC-4), and \<open>X X\<^sup>T - Y\<close> is a
   martingale, so \<open>Y\<close> IS the quadratic covariation.  The horizon cap at
   \<open>T\<close> is invisible for \<open>T\<close> beyond the uniform exit-time bound
-  (paper's Lemma 1.9 / Eq. (3.10)); the bridge is part of NC-1.\<close>
+  (paper's Lemma 1.9 / Eq. (3.10)); the bridge is part of NC-1.
+
+  THE MARTINGALE CLAUSES MUST STOP THE PROCESS AT \<open>T\<close> (\<open>min t T\<close>), and
+  this is not cosmetic.  Points of \<^term>\<open>mspace (path_metric T)\<close> are
+  EXTENSIONAL on \<open>{0..T}\<close>, so \<open>\<omega> u = undefined\<close> for \<open>u > T\<close>; a martingale
+  clause quantified over all \<open>u \<ge> 0\<close> would therefore compare \<open>X\<^sub>t\<close> with the
+  conditional expectation of the CONSTANT \<open>fst undefined\<close> and force the
+  coordinate process to be almost surely constant.  With the covariation
+  clause excluding a vanishing \<open>Y\<close> (\<open>0 \<notin> sconstraint k L\<close> for \<open>k < n\<close>),
+  the class defined that way is EMPTY for every \<open>T > 0\<close> --- and every
+  theorem about it vacuous.  Stopping at \<open>T\<close> says exactly what (1.7) says
+  on \<open>[0,T]\<close> and nothing beyond it.  The FILTRATION needs no cap: the
+  evaluations past \<open>T\<close> are constant maps, so they generate nothing.\<close>
 
 definition paper_pair_class ::
   "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n::finite
@@ -285,10 +297,11 @@ definition paper_pair_class ::
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))
           \<in> sconstraint k L) \<and>
      martingale Q
-       (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0 (\<lambda>t \<omega>. fst (\<omega> t)) \<and>
+       (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+       (\<lambda>t \<omega>. fst (\<omega> (min t T))) \<and>
      martingale Q
        (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
-       (\<lambda>t \<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))}"
+       (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))}"
 
 text \<open>Projections out of the definition, used throughout.\<close>
 
@@ -1184,22 +1197,29 @@ proof -
             paper_pair_class_Y_entry_measurable[OF Q t]])
 qed
 
+lemma paper_pair_class_compensated_martingale:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+  using Q unfolding paper_pair_class_def by blast
+
 lemma paper_pair_class_compensated_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "0 \<le> t"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
 proof -
-  have MG: "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u))"
-    using Q unfolding paper_pair_class_def by blast
-  then interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
-      "\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u)" .
-  show ?thesis by (rule MG.integrable[OF t])
+  interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
+      "\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
+    by (rule paper_pair_class_compensated_martingale[OF Q])
+  have "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
+    using t by (intro MG.integrable) simp
+  then show ?thesis using t by simp
 qed
 
 lemma paper_pair_class_compensated_entry_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "0 \<le> t"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ j)"
   by (rule integrable_bounded_linear[OF bounded_linear_vec_nth,
         OF integrable_bounded_linear[OF bounded_linear_vec_nth
@@ -1227,7 +1247,7 @@ proof -
   show ?thesis
     unfolding eq
     by (rule Bochner_Integration.integrable_add
-        [OF paper_pair_class_compensated_entry_integrable[OF Q t0]
+        [OF paper_pair_class_compensated_entry_integrable[OF Q t]
             paper_pair_class_Y_entry_integrable[OF T L Q t]])
 qed
 
@@ -1331,17 +1351,17 @@ corollary martingale_mat_nth:
 
 theorem paper_pair_class_compensated_mean:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "0 \<le> t"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
 proof -
   interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
-  have MG: "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u))"
-    using Q unfolding paper_pair_class_def by blast
-  then interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
-      "\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u)" .
+  interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
+      "\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
+    by (rule paper_pair_class_compensated_martingale[OF Q])
+  have t0: "0 \<le> t" and tT: "t \<le> T" using t by simp_all
+  have z: "(0::real) \<in> {0..T}" using t by simp
   have i0: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0))"
-    by (rule paper_pair_class_compensated_integrable[OF Q]) simp
+    by (rule paper_pair_class_compensated_integrable[OF Q z])
   have it: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
     by (rule paper_pair_class_compensated_integrable[OF Q t])
   \<comment> \<open>the whole space is in the filtration at time \<open>0\<close>, so the martingale's
@@ -1351,7 +1371,7 @@ proof -
     by simp
   have const: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q)
       = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q)"
-    using MG.set_integral_eq[OF top order.refl t]
+    using MG.set_integral_eq[OF top order.refl t0] t0 tT
     by (simp add: set_integral_space[OF i0] set_integral_space[OF it])
   have start: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q) = outerp x"
   proof -
@@ -1378,7 +1398,7 @@ proof -
   interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
   have t0: "0 \<le> t" using t by simp
   have iA: "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i)"
-    by (rule paper_pair_class_compensated_entry_integrable[OF Q t0])
+    by (rule paper_pair_class_compensated_entry_integrable[OF Q t])
   have iB: "integrable Q (\<lambda>\<omega>. snd (\<omega> t) $ i $ i)"
     by (rule paper_pair_class_Y_entry_integrable[OF T L Q t])
   have eq: "(\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)
@@ -1397,13 +1417,13 @@ proof -
         = (\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q) $ i"
       by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth]
           , rule integrable_bounded_linear[OF bounded_linear_vec_nth])
-        (rule paper_pair_class_compensated_integrable[OF Q t0])
+        (rule paper_pair_class_compensated_integrable[OF Q t])
     also have "(\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q)
         = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) $ i"
       by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth
-            paper_pair_class_compensated_integrable[OF Q t0]])
+            paper_pair_class_compensated_integrable[OF Q t]])
     also have "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
-      by (rule paper_pair_class_compensated_mean[OF Q t0])
+      by (rule paper_pair_class_compensated_mean[OF Q t])
     finally show ?thesis by (simp add: outerp_def power2_eq_square)
   qed
   have partB: "(\<integral>\<omega>. snd (\<omega> t) $ i $ i \<partial>Q) \<le> real CARD('n) * L * T"
