@@ -348,7 +348,7 @@ genuine obstruction to it was found today (see BLOCKER below).
 | NC-4 | density recovery `dY/dt ∈ S` a.e. | **DONE** |
 | NC-5 | value-side usc of the essinf | **DONE** |
 
-`Paper_Class.thy` is PIDE-green (1,529 commands, `overall_status ok`).
+`Paper_Class.thy` is PIDE-green (1,710 commands, `overall_status ok`).
 In ROOT after `Exit_Semicontinuity`; imports `Path_Space`,
 `Path_Tightness`, `Exit_Semicontinuity`, `Poincare_Separation` and
 `Relative_Arbitrage_Comparison` (the last two deterministic-side, no
@@ -394,6 +394,17 @@ cycle).  What it carries:
 - **Class-level forms.**  `paper_pair_class_lipschitz_ae` (the
   `Y`-event of the tightness split has probability ONE) and
   `paper_pair_class_density_ae`.
+
+- **The Lemma 2.1 step (needed by the bridge either way).**
+  `average_in_closed_convex`: the average of a density taking values in
+  a CLOSED CONVEX set again lies in that set — proved by separation
+  (`separating_hyperplane_closed_point`, then `integral_inner_left` to
+  pull the functional under the integral).  The average IS the
+  difference quotient of `Y t = ∫₀ᵗ a`, so this is the mathematical
+  heart of the covariation condition.  Specialised by
+  `suff_volatile_cap_in_sconstraint` (via the EASY inclusion
+  `lemma_2_1_easy`; the hard `lemma_2_1_exact` is not needed for this
+  direction) and `diffquot_of_density_in_sconstraint`.
 
 **BLOCKER FOUND 2026-08-05 — the witness/class mismatch.**  The obvious
 bridge "given a `stopped_market` witness, take `Y t = ∫₀ᵗ acov`" DOES
