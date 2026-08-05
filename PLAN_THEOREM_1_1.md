@@ -470,6 +470,25 @@ it stands:
   — note evaluations past `T` are constant on the space, so measurable —
   then `finite_filtered_measure_natural_filtration`).
 
+**(iv) DONE 2026-08-05 (commit `210cb0a`)** —
+`paper_pair_class_coord_martingale_limit` and its vector form
+`paper_pair_class_X_martingale_limit`: under the limit law the coordinate
+process IS a martingale for the natural filtration. The enabling lemma is
+`natural_filtration_eq_restrict_vimage`, the converse inclusion
+`𝔉_s ⊆ σ(restriction)` — easy, since for `u ≤ s` the evaluation factors as
+`ev_u ∘ restrict` and `ev_u` is continuous on the `s`-path space
+(AFP `measurable_family_iff_sets` + `sets_vimage_algebra2`). Also
+`pair_law_eval_measurable` (evaluations past the horizon are the CONSTANT
+`undefined` on the capped space, hence measurable), `fst_coord_borel`, and
+`Ito_Market.martingale_vecI` to assemble the vector martingale from its
+coordinates. **`paper_pair_class_limit_three_clauses`** states the
+resulting position of Lemma 2.3 explicitly and machine-checked: the limit
+satisfies the START, COVARIATION and X-MARTINGALE clauses.
+
+Trap: `stochastic_process` is shadowed by Kolmogorov_Chentsov's homonym
+(different arity); write `Stochastic_Process.stochastic_process`, and do
+not break a qualified name across lines at the dot.
+
 **THE SECOND MARTINGALE CLAUSE IS BLOCKED ON A FOURTH MOMENT, and it is
 the SAME obstruction as NC-2's tightness.** Carrying
 `outerp X − Y` through the weak limit needs an `L²` bound on
@@ -477,13 +496,40 @@ the SAME obstruction as NC-2's tightness.** Carrying
 under the class. The repo's supplier
 `Increment_Moments.fourth_moment_bound_bounded` assumes a uniform sup
 bound on the process, true for confined market witnesses and false for
-class members. Two ways out, both real work: generalise that theorem to
-replace the sup bound by an `L⁴`-integrability hypothesis (its use of the
-bound is only to get `integrable M (X u ^ 4)`), and then establish `L⁴`
-for the class — which the paper gets from BDG, unavailable here; or find
-a BDG-free route to `E|X_t|⁴ < ∞` from the class's own two martingale
-clauses plus the Lipschitz `Y`. Scope this before starting either
-NC-2 or the second clause; they stand or fall together.
+class members.
+
+**Do NOT try to generalise that theorem — the sup bound is structural, not
+incidental** (checked 2026-08-05). It is used twice: to get
+`integrable M (X u ^ 4)` (that use IS incidental), and inside
+`remainder_tendsto_zero`, whose whole estimate runs through the constant
+`B = 4R²C(T − s) + C²(T − s)²` and `sum_sq_squared_bound`. Replacing `R`
+by an `L⁴` hypothesis means redoing the remainder argument with a
+different domination.
+
+**THE ROUTE THAT AVOIDS ALL OF THAT IS LOCALIZATION, and it needs no BDG
+and no change to `Increment_Moments`.** Apply the EXISTING bounded theorem
+to the STOPPED process, which is bounded by construction:
+
+1. `τ_R ω = inf {t ∈ [0,T]. R ≤ ¦X_t ω¦}` (capped at `T`) — a stopping
+   time for the natural filtration, since `X` is continuous and adapted.
+2. `X^{τ_R}_t = X_{t ∧ τ_R}` satisfies `¦X^{τ_R}_t¦ ≤ max (¦x$i¦) R` by
+   path continuity, so `fourth_moment_bound_bounded` applies to it with
+   `R' = max (¦x$i¦) R` and rate `C = L`, giving
+   `E[(X_{T∧τ_R} − X_{s∧τ_R})⁴] ≤ 8L²(T − s)²` UNIFORMLY in `R`.
+   Inputs: the stopped process is a martingale, and its compensator is
+   `A^{τ_R}` with the same rate — both are optional stopping, for which the
+   repo has `Optional_Sampling.thy` and
+   `Deterministic_Radius_Market.martingale_stopped_deterministic`.
+3. PATHWISE, `ω` is continuous on the compact `[0,T]`, so
+   `sup_{[0,T]} ¦X¦ < ∞` and `τ_R > T` for all large `R` — hence
+   `(X_{T∧τ_R} − X_{s∧τ_R})⁴ → (X_T − X_s)⁴` pointwise.
+4. Fatou gives `E[(X_T − X_s)⁴] ≤ 8L²(T − s)²`, and with the start
+   condition the absolute fourth moment follows.
+
+That single estimate unblocks BOTH the second martingale clause of
+Lemma 2.3 AND NC-2's tightness (`path_law_holder_ball_bound_vec`); they
+stand or fall together, so build it once. Estimated a few hundred lines,
+the bulk being optional stopping at the path-space level.
 
 Proof-shape notes: chaining a non-AE fact into `eventually_elim` fails with
 "RSN: no unifiers" — use `by (rule eventually_mono) (use … in auto)`;
@@ -1311,6 +1357,16 @@ the bounded alternative target is the rest of Section 4 (Theorem 4.2(b),
 - Chaining a NON-`AE` fact into `eventually_elim` fails with
   `exception THM 1 … RSN: no unifiers`. Use
   `by (rule eventually_mono) (use … in auto)` instead.
+- **`stochastic_process` is SHADOWED** by Kolmogorov_Chentsov's homonym,
+  which has a different arity; the symptom is a type error blaming the
+  `t⇩0` argument ("No type arity measure :: zero"). Write
+  `Stochastic_Process.stochastic_process` — and note a qualified name may
+  NOT be broken across lines at the dot.
+- `measurable_cong` refuses to apply as `rule measurable_cong` on a
+  measurability goal (it is an `iff` and over-generalises, cf. the older
+  note). To prove a function measurable because it is CONSTANT on the
+  space, go through `measurableI` and compute the preimage
+  (`= (if c ∈ C then space M else {})`).
 - Fuller lists live in the agent memory files
   (`isabelle-pide-mcp-environment`, `isabelle-nonterminating-tactics`,
   `isabelle-mcp-buffer-desync`, `isabelle-pide-stale-root`); read them
@@ -1365,12 +1421,20 @@ In priority order:
    `mat_1_in_sconstraint`); the work is the off-diagonal covariation, i.e.
    `X_i X_j` a martingale for `i ≠ j`, which needs the independence of the
    Brownian coordinates. This would have caught the vacuity bug on day one.
-1. **NC-3, the martingale clauses of Lemma 2.3.** The two closed clauses
-   are DONE (`paper_pair_class_start_limit`,
-   `paper_pair_class_diffquot_limit`); the X-clause is carried to the limit
-   in event form (steps (i)–(iii), §3/NC), and step (iv) reassembles it.
-   The SECOND clause is blocked on a uniform fourth moment — see §3/NC. The
-   route for the remaining two:
+1. **THE UNIFORM FOURTH MOMENT, BY LOCALIZATION.** This is now the single
+   highest-value item: it unblocks BOTH the second martingale clause of
+   Lemma 2.3 AND NC-2's tightness, and the four-step recipe is written out
+   in §3/NC. It needs no BDG and no change to `Increment_Moments` — apply
+   the existing bounded estimate to the process stopped at
+   `τ_R = inf{t. R ≤ ¦X_t¦}`, which is bounded by construction, then let
+   `R → ∞` by Fatou (pathwise continuity on the compact `[0,T]` makes
+   `τ_R > T` eventually). The bulk of the work is optional stopping at the
+   path-space level.
+2. **NC-3, Lemma 2.3.** THREE of the four clauses now pass to the weak
+   limit (`paper_pair_class_limit_three_clauses`: start, covariation,
+   X-martingale — steps (i)–(iv), §3/NC). The fourth is the compensated
+   clause and follows the same four-step route once item 1 supplies its
+   `L²` bound. The route, for reference:
    (a) **DONE** (commit `c3434e8`) — `paper_pair_class_sq_integrable`:
    square-integrability of `X` under a class law, from `martingale.integrable`
    on the `outerp X − Y` clause plus `paper_pair_class_Y_bounded_ae`, with
