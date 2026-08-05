@@ -421,6 +421,15 @@ It carries:
   Instantiate at `f = Z·((X⇩t − X⇩s) ∙ e⇩j)` for the martingale identity
   and at the squared increment for the covariation one.
 
+- **The class's own Y-side facts.**  `sconstraint_norm_le` (every
+  element of `S` has norm `≤ n·L`, factored out of the boundedness
+  proof) feeds `paper_pair_class_lipschitz_ae`: for `Q ∈
+  paper_pair_class k L T x` the `Y`-component is a.s. `n·L`-Lipschitz —
+  i.e. the `Y`-event of `pair_holder_charge_split` has probability ONE.
+  And `paper_pair_class_density_ae` states NC-4 for the class itself:
+  a.s. `Y` is differentiable off a negligible set of times with
+  derivative in `S`.
+
 STILL OPEN in NC-2/3: instantiating the X-side estimate at the pair
 laws (mechanical: feed `path_law_holder_ball_bound_vec` into
 `pair_holder_charge_split` and `tight_on_set_pair_holder_charge`), and
