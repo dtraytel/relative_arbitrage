@@ -1128,67 +1128,215 @@ proof -
     using measurable_cong_sets[OF paper_pair_class_sets[OF Q] refl] by blast
 qed
 
+lemma paper_pair_class_Y_entry_measurable:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "(\<lambda>\<omega>. snd (\<omega> t) $ i $ j) \<in> borel_measurable Q"
+proof (rule measurable_compose[OF paper_pair_class_eval_measurable[OF Q t]])
+  have s: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  \<comment> \<open>\<^verbatim>\<open>borel_measurable_nth\<close> is only the REAL-valued instance
+      \<open>real^'n \<Rightarrow> real\<close>; the matrix row map needs the linear-continuity
+      route.\<close>
+  have n1: "(\<lambda>v :: real^'n^'n. v $ i) \<in> borel_measurable borel"
+    by (rule borel_measurable_continuous_onI)
+      (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have n2: "(\<lambda>v :: real^'n. v $ j) \<in> borel_measurable borel"
+    by (rule borel_measurable_nth)
+  show "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). snd p $ i $ j)
+      \<in> borel_measurable borel"
+    by (rule measurable_compose[OF measurable_compose[OF s n1] n2])
+qed
+
+lemma paper_pair_class_Y_entry_bound_ae:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "AE \<omega> in Q. norm (snd (\<omega> t) $ i $ j) \<le> real CARD('n) * L * T"
+proof -
+  have "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+    by (rule paper_pair_class_Y_bounded_ae[OF T L Q])
+  then show ?thesis
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+    then have b: "norm (snd (\<omega> t)) \<le> real CARD('n) * L * T" using t by blast
+    have "norm (snd (\<omega> t) $ i $ j) \<le> norm (snd (\<omega> t) $ i)"
+      by (rule Finite_Cartesian_Product.norm_nth_le)
+    also have "\<dots> \<le> norm (snd (\<omega> t))"
+      by (rule Finite_Cartesian_Product.norm_nth_le)
+    finally show "norm (snd (\<omega> t) $ i $ j) \<le> real CARD('n) * L * T"
+      using b by simp
+  qed
+qed
+
+lemma paper_pair_class_Y_entry_integrable:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "integrable Q (\<lambda>\<omega>. snd (\<omega> t) $ i $ j)"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  show ?thesis
+    by (rule P.integrable_const_bound
+        [OF paper_pair_class_Y_entry_bound_ae[OF T L Q t]
+            paper_pair_class_Y_entry_measurable[OF Q t]])
+qed
+
+lemma paper_pair_class_compensated_integrable:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "0 \<le> t"
+  shows "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+proof -
+  have MG: "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u))"
+    using Q unfolding paper_pair_class_def by blast
+  then interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
+      "\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u)" .
+  show ?thesis by (rule MG.integrable[OF t])
+qed
+
+lemma paper_pair_class_compensated_entry_integrable:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "0 \<le> t"
+  shows "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ j)"
+  by (rule integrable_bounded_linear[OF bounded_linear_vec_nth,
+        OF integrable_bounded_linear[OF bounded_linear_vec_nth
+          paper_pair_class_compensated_integrable[OF Q t]]])
+
+text \<open>Squaring the coordinate is the DIAGONAL entry of \<open>outerp\<close>, so the
+  split of \<open>(X\<^sub>t $ i)\<^sup>2\<close> into the compensated part plus \<open>Y\<close> is an identity of
+  functions, not an inequality.\<close>
+
+lemma sq_coord_split:
+  fixes v :: "real^'n::finite" and w :: "real^'n^'n"
+  shows "(v $ i)\<^sup>2 = (outerp v - w) $ i $ i + w $ i $ i"
+  by (simp add: outerp_def power2_eq_square)
+
 theorem paper_pair_class_sq_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
     and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
   have t0: "0 \<le> t" using t by simp
+  have eq: "(\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)
+      = (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i + snd (\<omega> t) $ i $ i)"
+    by (rule ext) (rule sq_coord_split)
+  show ?thesis
+    unfolding eq
+    by (rule Bochner_Integration.integrable_add
+        [OF paper_pair_class_compensated_entry_integrable[OF Q t0]
+            paper_pair_class_Y_entry_integrable[OF T L Q t]])
+qed
+
+subsection \<open>The uniform \<open>L\<^sup>2\<close> bound on the class\<close>
+
+text \<open>The bound the weak-limit machinery needs.  Its proof needs no
+  conditioning and no tower property: a martingale has a CONSTANT MEAN, so
+  \<open>E[outerp X\<^sub>t - Y\<^sub>t] = E[outerp X\<^sub>0 - Y\<^sub>0] = outerp x\<close>, and the diagonal entry
+  of that is \<open>(x $ i)\<^sup>2 - E[Y\<^sub>t $ i $ i]\<close>.  Since \<open>Y\<close> is bounded by \<open>n\<sqdot>L\<sqdot>T\<close>
+  the second moments are bounded UNIFORMLY over the whole class --- which is
+  exactly the hypothesis of \<open>unif_integrable_of_L2_bound\<close> further down.\<close>
+
+lemma integral_of_bounded_linear:
+  fixes T :: "'b::{second_countable_topology,banach}
+      \<Rightarrow> 'c::{second_countable_topology,banach}"
+  assumes T: "bounded_linear T" and f: "integrable M f"
+  shows "(\<integral>\<omega>. T (f \<omega>) \<partial>M) = T (\<integral>\<omega>. f \<omega> \<partial>M)"
+  by (rule has_bochner_integral_integral_eq
+      [OF has_bochner_integral_bounded_linear
+        [OF T has_bochner_integral_integrable[OF f]]])
+
+theorem paper_pair_class_compensated_mean:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "0 \<le> t"
+  shows "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
   have MG: "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u))"
     using Q unfolding paper_pair_class_def by blast
   then interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
       "\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u)" .
-  have iA: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-    by (rule MG.integrable[OF t0])
-  have iA2: "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i)"
-    by (rule integrable_bounded_linear[OF bounded_linear_vec_nth,
-          OF integrable_bounded_linear[OF bounded_linear_vec_nth iA]])
-  have em: "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
-    by (rule paper_pair_class_eval_measurable[OF Q t])
-  have Bm: "(\<lambda>\<omega>. snd (\<omega> t) $ i $ i) \<in> borel_measurable Q"
-  proof (rule measurable_compose[OF em])
-    have s: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
-        \<in> borel_measurable borel"
-      by (intro borel_measurable_continuous_onI continuous_intros)
-    \<comment> \<open>\<^verbatim>\<open>borel_measurable_nth\<close> is only the REAL-valued instance
-        \<open>real^'n \<Rightarrow> real\<close>; the matrix row map needs the linear-continuity
-        route.\<close>
-    have n1: "(\<lambda>v :: real^'n^'n. v $ i) \<in> borel_measurable borel"
-      by (rule borel_measurable_continuous_onI)
-        (rule linear_continuous_on[OF bounded_linear_vec_nth])
-    have n2: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
-      by (rule borel_measurable_nth)
-    show "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). snd p $ i $ i)
-        \<in> borel_measurable borel"
-      by (rule measurable_compose[OF measurable_compose[OF s n1] n2])
-  qed
-  have Bb: "AE \<omega> in Q. norm (snd (\<omega> t) $ i $ i) \<le> real CARD('n) * L * T"
+  have i0: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0))"
+    by (rule paper_pair_class_compensated_integrable[OF Q]) simp
+  have it: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+    by (rule paper_pair_class_compensated_integrable[OF Q t])
+  \<comment> \<open>the whole space is in the filtration at time \<open>0\<close>, so the martingale's
+      set-integral identity there IS constancy of the mean.\<close>
+  have top: "space Q \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0)"
+    using sets.top[of "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0"]
+    by simp
+  have const: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q)
+      = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q)"
+    using MG.set_integral_eq[OF top order.refl t]
+    by (simp add: set_integral_space[OF i0] set_integral_space[OF it])
+  have start: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q) = outerp x"
   proof -
-    have "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
-      by (rule paper_pair_class_Y_bounded_ae[OF T L Q])
-    then show ?thesis
-    proof (rule eventually_mono)
-      fix \<omega> :: "'n pairpath"
-      assume "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
-      then have b: "norm (snd (\<omega> t)) \<le> real CARD('n) * L * T" using t by blast
-      have "norm (snd (\<omega> t) $ i $ i) \<le> norm (snd (\<omega> t) $ i)"
-        by (rule Finite_Cartesian_Product.norm_nth_le)
-      also have "\<dots> \<le> norm (snd (\<omega> t))"
-        by (rule Finite_Cartesian_Product.norm_nth_le)
-      finally show "norm (snd (\<omega> t) $ i $ i) \<le> real CARD('n) * L * T"
-        using b by simp
+    have ae: "AE \<omega> in Q. outerp (fst (\<omega> 0)) - snd (\<omega> 0) = outerp x"
+    proof -
+      have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+        using Q unfolding paper_pair_class_def by blast
+      then show ?thesis by (rule eventually_mono) simp
     qed
+    have "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q) = (\<integral>\<omega>. outerp x \<partial>Q)"
+      by (rule integral_cong_AE[OF borel_measurable_integrable[OF i0] _ ae])
+        measurable
+    then show ?thesis by (simp add: P.prob_space)
   qed
+  from const start show ?thesis by simp
+qed
+
+theorem paper_pair_class_sq_mean_le:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> (x $ i)\<^sup>2 + real CARD('n) * L * T"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have t0: "0 \<le> t" using t by simp
+  have iA: "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i)"
+    by (rule paper_pair_class_compensated_entry_integrable[OF Q t0])
   have iB: "integrable Q (\<lambda>\<omega>. snd (\<omega> t) $ i $ i)"
-    by (rule P.integrable_const_bound[OF Bb Bm])
+    by (rule paper_pair_class_Y_entry_integrable[OF T L Q t])
   have eq: "(\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)
       = (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i + snd (\<omega> t) $ i $ i)"
-    by (rule ext) (simp add: outerp_def power2_eq_square)
-  show ?thesis
-    unfolding eq by (rule Bochner_Integration.integrable_add[OF iA2 iB])
+    by (rule ext) (rule sq_coord_split)
+  have split: "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q)
+      = (\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i \<partial>Q)
+        + (\<integral>\<omega>. snd (\<omega> t) $ i $ i \<partial>Q)"
+    unfolding eq by (rule Bochner_Integration.integral_add[OF iA iB])
+  \<comment> \<open>the compensated part: pull the two \<open>$\<close> projections, both bounded
+      linear, out through the integral, then apply the mean identity.\<close>
+  have partA: "(\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i \<partial>Q)
+      = (x $ i)\<^sup>2"
+  proof -
+    have "(\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i \<partial>Q)
+        = (\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q) $ i"
+      by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth]
+          , rule integrable_bounded_linear[OF bounded_linear_vec_nth])
+        (rule paper_pair_class_compensated_integrable[OF Q t0])
+    also have "(\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q)
+        = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) $ i"
+      by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth
+            paper_pair_class_compensated_integrable[OF Q t0]])
+    also have "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
+      by (rule paper_pair_class_compensated_mean[OF Q t0])
+    finally show ?thesis by (simp add: outerp_def power2_eq_square)
+  qed
+  have partB: "(\<integral>\<omega>. snd (\<omega> t) $ i $ i \<partial>Q) \<le> real CARD('n) * L * T"
+  proof -
+    have "(\<integral>\<omega>. snd (\<omega> t) $ i $ i \<partial>Q) \<le> (\<integral>\<omega>. real CARD('n) * L * T \<partial>Q)"
+    proof (rule integral_mono_AE[OF iB P.integrable_const])
+      show "AE \<omega> in Q. snd (\<omega> t) $ i $ i \<le> real CARD('n) * L * T"
+        using paper_pair_class_Y_entry_bound_ae[OF T L Q t, of i i]
+        by (rule eventually_mono) simp
+    qed
+    then show ?thesis by (simp add: P.prob_space)
+  qed
+  from split partA partB show ?thesis by simp
 qed
 
 section \<open>NC-2: pair tightness from the two component moduli\<close>
