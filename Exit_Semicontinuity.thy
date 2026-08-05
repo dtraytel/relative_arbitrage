@@ -692,6 +692,91 @@ proof -
     using MW.mweak_conv3[OF cls mass] U top by simp
 qed
 
+text \<open>The companion CLOSED-set half of the portmanteau theorem on the path
+  space, exported for the constraint-passing step of the canonical-market
+  construction (plan item NC-3): a closed condition on paths that every
+  approximating law satisfies with full mass survives the weak limit.\<close>
+
+lemma weak_conv_closed_limsup:
+  fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
+    and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    and A: "closedin (mtopology_of (path_metric T
+      :: (real \<Rightarrow> 'b) metric)) A"
+  shows "Limsup sequentially (\<lambda>i. ereal (measure (\<Lambda>i i) A))
+      \<le> ereal (measure \<Lambda> A)"
+proof -
+  let ?m = "path_metric T :: (real \<Rightarrow> 'b) metric"
+  interpret PM: Metric_space "mspace ?m" "mdist ?m"
+    by (rule Metric_space_mspace_mdist)
+  have wc': "(\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i)
+        = sets (borel_of (mtopology_of ?m)) \<and> finite_measure (\<Lambda>i i))
+      \<and> sets \<Lambda> = sets (borel_of (mtopology_of ?m)) \<and> finite_measure \<Lambda>
+      \<and> (\<forall>f. continuous_map (mtopology_of ?m) euclideanreal f \<longrightarrow>
+          (\<exists>B. \<forall>x\<in>topspace (mtopology_of ?m). \<bar>f x\<bar> \<le> B) \<longrightarrow>
+          ((\<lambda>i. \<integral>x. f x \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. f x \<partial>\<Lambda>)))"
+    using wc unfolding weak_conv_on_def by blast
+  have top: "PM.mtopology = mtopology_of ?m"
+    by (simp add: mtopology_of_def)
+  interpret MW: mweak_conv_fin "mspace ?m" "mdist ?m" \<Lambda>i \<Lambda> sequentially
+  proof
+    show "\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i) = sets (borel_of PM.mtopology)"
+      using wc' top by (auto elim: eventually_mono)
+    show "sets \<Lambda> = sets (borel_of PM.mtopology)"
+      using wc' top by simp
+    show "\<forall>\<^sub>F i in sequentially. finite_measure (\<Lambda>i i)"
+      using wc' by (auto elim: eventually_mono)
+    show "\<exists>A. countable A \<and> A \<subseteq> sets \<Lambda> \<and> \<Union> A = space \<Lambda>
+        \<and> (\<forall>a\<in>A. emeasure \<Lambda> a \<noteq> \<infinity>)"
+      by (intro exI[of _ "{space \<Lambda>}"])
+        (use wc' in \<open>auto simp: finite_measure.emeasure_eq_measure\<close>)
+    show "emeasure \<Lambda> (space \<Lambda>) \<noteq> \<top>"
+      using wc' by (simp add: finite_measure.emeasure_eq_measure)
+  qed
+  have cb: "(\<lambda>i. \<integral>x. g x \<partial>(\<Lambda>i i)) \<longlonglongrightarrow> (\<integral>x. g x \<partial>\<Lambda>)"
+    if u: "uniformly_continuous_map PM.Self euclidean_metric g"
+      and b: "\<exists>B. \<forall>x\<in>mspace ?m. \<bar>g x\<bar> \<le> B" for g :: "(real \<Rightarrow> 'b) \<Rightarrow> real"
+  proof -
+    have cg: "continuous_map (mtopology_of ?m) euclideanreal g"
+      using uniformly_continuous_imp_continuous_map[OF u]
+      by (simp add: mtopology_of_def)
+    show ?thesis
+      using wc' cg b by (auto simp: topspace_mtopology_of)
+  qed
+  have A': "closedin PM.mtopology A"
+    using A top by metis
+  show ?thesis
+    by (rule MW.mweak_conv2[OF cb A'])
+qed
+
+text \<open>The form the constraint step consumes: a closed set carrying full mass
+  under every approximating PROBABILITY law carries full mass in the limit.\<close>
+
+lemma weak_conv_closed_full_mass:
+  fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
+    and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
+  assumes wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    and A: "closedin (mtopology_of (path_metric T
+      :: (real \<Rightarrow> 'b) metric)) A"
+    and probs: "\<And>i. prob_space (\<Lambda>i i)" and prob: "prob_space \<Lambda>"
+    and full: "\<And>i. measure (\<Lambda>i i) A = 1"
+  shows "measure \<Lambda> A = 1"
+proof -
+  have "ereal 1 = Limsup sequentially (\<lambda>i. ereal (measure (\<Lambda>i i) A))"
+    using full by (simp add: Limsup_const)
+  also have "\<dots> \<le> ereal (measure \<Lambda> A)"
+    by (rule weak_conv_closed_limsup[OF wc A])
+  finally have ge: "1 \<le> measure \<Lambda> A" by simp
+  have le1: "measure \<Lambda> A \<le> 1"
+  proof -
+    interpret P: prob_space \<Lambda> by (rule prob)
+    show ?thesis by simp
+  qed
+  from ge le1 show ?thesis by simp
+qed
+
 lemma weak_conv_total_mass:
   fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
     and \<Lambda> :: "(real \<Rightarrow> 'b) measure"

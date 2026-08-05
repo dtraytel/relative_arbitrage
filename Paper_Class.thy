@@ -286,6 +286,89 @@ definition paper_pair_class ::
        (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
        (\<lambda>t \<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))}"
 
+section \<open>NC-3: the constraint passes to weak limits (no Skorokhod)\<close>
+
+text \<open>The paper passes the covariation constraint to the limit law using
+  Skorokhod's representation theorem, which the AFP does not have.  We
+  substitute the CLOSED-SET half of the portmanteau theorem
+  (\<open>weak_conv_closed_full_mass\<close>): for FIXED times \<open>s < t\<close> the difference
+  quotient is a continuous function of the path, and the constraint set is
+  closed (\<open>closed_sconstraint\<close>), so
+  \<open>{\<omega>. (Y t \<omega> − Y s \<omega>)/(t − s) \<in> S}\<close> is a closed set of paths.  A closed set
+  of full mass under every approximating law has full mass in the limit.
+  Ranging over the countably many rational pairs and using path continuity
+  then gives the constraint for all real \<open>s < t\<close>.\<close>
+
+lemma continuous_map_diffquot:
+  fixes s t :: real
+  assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}"
+  shows "continuous_map (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+      euclidean (\<lambda>\<omega>. (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)))"
+proof -
+  have "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+      euclidean (\<lambda>\<omega>. \<omega> t)"
+    by (rule continuous_map_path_eval[OF t])
+  moreover have "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+      euclidean (\<lambda>\<omega>. \<omega> s)"
+    by (rule continuous_map_path_eval[OF s])
+  moreover have sndc:
+    "continuous_map euclidean euclidean
+       (snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)"
+    by (simp add: continuous_map_iff_continuous2 continuous_on_snd)
+  ultimately have "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclidean
+      (\<lambda>\<omega>. snd (\<omega> t) - snd (\<omega> s))"
+    by (intro continuous_map_diff)
+      (auto intro: continuous_map_compose[OF _ sndc, unfolded o_def])
+  moreover have scl: "continuous_map euclidean euclidean
+      (\<lambda>v :: real^'n^'n. (1 / (t - s)) *\<^sub>R v)"
+    by (simp add: continuous_map_iff_continuous2
+        continuous_on_scaleR continuous_on_const continuous_on_id)
+  ultimately have "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclidean
+      ((\<lambda>v :: real^'n^'n. (1 / (t - s)) *\<^sub>R v)
+        \<circ> (\<lambda>\<omega>. snd (\<omega> t) - snd (\<omega> s)))"
+    by (intro continuous_map_compose)
+  then show ?thesis by (simp add: o_def)
+qed
+
+lemma closedin_diffquot_constraint:
+  fixes s t :: real
+  assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}"
+  shows "closedin (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}"
+proof -
+  have "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      {\<omega> \<in> topspace (mtopology_of (path_metric T :: ('n pairpath) metric)).
+         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}"
+    by (intro closedin_continuous_map_preimage_gen[where Y = euclidean, simplified]
+        continuous_map_diffquot[OF s t] closed_sconstraint closedin_topspace)
+  then show ?thesis
+    by (simp add: topspace_mtopology_of)
+qed
+
+text \<open>The NC-3 transfer itself: a single difference-quotient constraint,
+  holding almost surely under every approximating law, holds almost surely
+  under the weak limit.  (The a.s. statements are read as full mass of the
+  closed set, which is how the class is phrased.)\<close>
+
+theorem diffquot_constraint_weak_limit:
+  fixes \<Lambda>i :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and \<Lambda> :: "('n pairpath) measure"
+  assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}"
+    and wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
+      (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and probs: "\<And>i. prob_space (\<Lambda>i i)" and prob: "prob_space \<Lambda>"
+    and full: "\<And>i. measure (\<Lambda>i i)
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
+  shows "measure \<Lambda>
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
+  by (rule weak_conv_closed_full_mass
+      [OF wc closedin_diffquot_constraint[OF s t] probs prob full])
+
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>
 
 definition paper_v ::
