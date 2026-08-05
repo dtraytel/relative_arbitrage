@@ -1452,4 +1452,79 @@ proof -
     by (rule paper_pair_class_X_martingale_limit[OF T L mem wc prob setsQ])
 qed
 
+section \<open>The uniform fourth moment of the class, by localization\<close>
+
+text \<open>The bound that unblocks BOTH the compensated clause of Lemma 2.3 and
+  NC-2's tightness.  The repo's estimate
+  \<open>Increment_Moments.fourth_moment_bound_bounded\<close> wants a UNIFORM SUP BOUND
+  on the process, which a class member does not have --- and that bound is
+  structural there, not incidental (it also fixes the constant of
+  \<open>remainder_tendsto_zero\<close>), so generalising the estimate is the wrong
+  move.  The process STOPPED at \<open>\<tau>\<^sub>R = inf {t. R \<le> \<bar>X\<^sub>t\<bar>}\<close> does have a sup
+  bound, by construction.  Applying the estimate there gives a bound
+  UNIFORM IN \<open>R\<close>; path continuity on the compact \<open>[0,T]\<close> makes
+  \<open>\<tau>\<^sub>R > T\<close> for large \<open>R\<close> pathwise, so Fatou removes the localization.  No
+  Burkholder--Davis--Gundy anywhere.
+
+  Everything the argument needs is already in the repo:
+  \<open>Exit_Time.etime_stopping_time\<close> for \<open>\<tau>\<^sub>R\<close>,
+  \<open>Doob_Inequality.horizon_sq_int_martingale\<close> for the integrable envelope
+  that \<open>Optional_Sampling.optional_stopping\<close> asks for, and
+  \<open>optional_stopping\<close> itself.\<close>
+
+subsection \<open>The coordinate process, its compensator, and its paths\<close>
+
+lemma paper_pair_class_coord_adapted:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "adapted_process Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i)"
+proof -
+  interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
+      "\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i"
+    by (rule paper_pair_class_coord_martingale[OF Q])
+  show ?thesis by unfold_locales
+qed
+
+lemma paper_pair_class_coord_paths_cont:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and w: "\<omega> \<in> space Q"
+  shows "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
+proof -
+  have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    using w space_of_path_sets[OF setsQ] by simp
+  from mspace_path_metricD[OF this] have c: "continuous_on {0..T} \<omega>" .
+  have m: "continuous_on {0..T} (\<lambda>s :: real. min s T)"
+    by (intro continuous_intros)
+  have mim: "(\<lambda>s :: real. min s T) ` {0..T} \<subseteq> {0..T}" using T by auto
+  have c1: "continuous_on {0..T} (\<lambda>s. \<omega> (min s T))"
+    by (rule continuous_on_compose2[OF c m mim])
+  have c2: "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)))"
+    by (rule continuous_on_fst[OF c1])
+  have c3: "continuous_on UNIV (\<lambda>v :: real^'n. v $ i)"
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  show ?thesis by (rule continuous_on_compose2[OF c3 c2]) simp
+qed
+
+lemma paper_pair_class_compensated_coord_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. (fst (\<omega> (min u T)) $ i)\<^sup>2 - snd (\<omega> (min u T)) $ i $ i)"
+proof -
+  have mg: "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ i $ i)"
+    by (rule martingale_mat_nth
+        [OF paper_pair_class_compensated_martingale[OF Q]])
+  have eq: "(\<lambda>u \<omega> :: 'n pairpath.
+        (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ i $ i)
+      = (\<lambda>u \<omega> :: 'n pairpath.
+        (fst (\<omega> (min u T)) $ i)\<^sup>2 - snd (\<omega> (min u T)) $ i $ i)"
+    by (rule ext, rule ext) (simp add: outerp_def power2_eq_square)
+  show ?thesis using mg unfolding eq .
+qed
+
 end

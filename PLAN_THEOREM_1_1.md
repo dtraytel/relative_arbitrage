@@ -1382,6 +1382,21 @@ the bounded alternative target is the rest of Section 4 (Theorem 4.2(b),
   because the locale carries the paper's standing `L ≥ 1`). Do NOT
   instead weaken `paper_pair_class` to constrain only up to the exit
   time — that is a different class from the paper's.
+- **Do not confuse that with the `min t T` in the martingale clauses.**
+  Two different stoppings are in play and only one of them is forbidden.
+  Forbidden: stopping at `τ_K` (or at a market's `tau`), which would
+  change the class. Required: stopping at the HORIZON `T`, because our
+  path space is capped there and its points are `undefined` beyond `T`
+  (see the extensionality bullet below). On `[0,T]` the clause says
+  exactly what (1.7) says; `min t T` is only how one writes "martingale
+  on `[0,T]`" inside the AFP's `martingale` locale, which quantifies over
+  all times. The alternative is to move the whole development to
+  `C([0,∞),ℝⁿ)` as the paper does — a redesign of the entire Section-2
+  toolchain (path metric, tightness, portmanteau), not a local change.
+  Worth recording for the record: the two classes have the same value,
+  because a continuous martingale on `[0,T]` obeying (1.7) extends to
+  `[0,∞)` by continuing with `mat 1` (admissible since `L ≥ 1`) — the
+  same continuation the bridge needs, so prove it once.
 - The horizon cap at `T` is OURS, not the paper's (they work on
   `C([0,∞),ℝⁿ)` with locally uniform convergence). Its invisibility is
   discharged at both path and law level; keep it that way.
