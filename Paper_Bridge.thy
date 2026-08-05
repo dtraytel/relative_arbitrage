@@ -1490,6 +1490,23 @@ text \<open>Continuity holds on the WHOLE half-line, not just on \<open>{0..T}\<
   stopped process is constant after the horizon.  That is the form
   \<open>Stopped_Adaptedness.stopped_adapted_of_cont\<close> asks for.\<close>
 
+lemma paper_pair_class_path_cont:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and w: "\<omega> \<in> space Q"
+  shows "continuous_on {0..} (\<lambda>s. \<omega> (min s T))"
+proof -
+  have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    using w space_of_path_sets[OF setsQ] by simp
+  from mspace_path_metricD[OF this] have c: "continuous_on {0..T} \<omega>" .
+  have m: "continuous_on {0..} (\<lambda>s :: real. min s T)"
+    by (intro continuous_intros)
+  have mim: "(\<lambda>s :: real. min s T) ` {0..} \<subseteq> {0..T}" using T by auto
+  show ?thesis by (rule continuous_on_compose2[OF c m mim])
+qed
+
 lemma paper_pair_class_coord_paths_cont:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
@@ -1498,19 +1515,36 @@ lemma paper_pair_class_coord_paths_cont:
     and w: "\<omega> \<in> space Q"
   shows "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
 proof -
-  have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    using w space_of_path_sets[OF setsQ] by simp
-  from mspace_path_metricD[OF this] have c: "continuous_on {0..T} \<omega>" .
-  have m: "continuous_on {0..} (\<lambda>s :: real. min s T)"
-    by (intro continuous_intros)
-  have mim: "(\<lambda>s :: real. min s T) ` {0..} \<subseteq> {0..T}" using T by auto
-  have c1: "continuous_on {0..} (\<lambda>s. \<omega> (min s T))"
-    by (rule continuous_on_compose2[OF c m mim])
   have c2: "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)))"
-    by (rule continuous_on_fst[OF c1])
+    by (rule continuous_on_fst[OF paper_pair_class_path_cont[OF T setsQ w]])
   have c3: "continuous_on UNIV (\<lambda>v :: real^'n. v $ i)"
     by (rule linear_continuous_on[OF bounded_linear_vec_nth])
   show ?thesis by (rule continuous_on_compose2[OF c3 c2]) simp
+qed
+
+lemma paper_pair_class_comp_paths_cont:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and w: "\<omega> \<in> space Q"
+  shows "continuous_on {0..}
+      (\<lambda>s. (fst (\<omega> (min s T)) $ i)\<^sup>2 - snd (\<omega> (min s T)) $ i $ i)"
+proof -
+  have cx: "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
+    by (rule paper_pair_class_coord_paths_cont[OF T setsQ w])
+  have c2: "continuous_on {0..} (\<lambda>s. snd (\<omega> (min s T)))"
+    by (rule continuous_on_snd[OF paper_pair_class_path_cont[OF T setsQ w]])
+  have c3: "continuous_on UNIV (\<lambda>v :: real^'n^'n. v $ i)"
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have c4: "continuous_on {0..} (\<lambda>s. snd (\<omega> (min s T)) $ i)"
+    by (rule continuous_on_compose2[OF c3 c2]) simp
+  have c5: "continuous_on UNIV (\<lambda>v :: real^'n. v $ i)"
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have cy: "continuous_on {0..} (\<lambda>s. snd (\<omega> (min s T)) $ i $ i)"
+    by (rule continuous_on_compose2[OF c5 c4]) simp
+  show ?thesis
+    by (rule continuous_on_diff[OF continuous_on_power[OF cx] cy])
 qed
 
 lemma paper_pair_class_compensated_coord_martingale:
@@ -1700,6 +1734,118 @@ proof -
         \<in> borel_measurable (?F v)"
       by (rule stopped_adapted_of_cont
           [OF adp lnn paper_pair_class_ploc_stopping[OF T0 setsQ Q] cont0])
+  qed
+qed
+
+text \<open>The compensated process is stopped by the same argument.  Its
+  envelope is \<open>Dsup\<^sup>2 + n\<sqdot>L\<sqdot>T\<close>: the squared coordinate is dominated by the
+  square of Doob's envelope (\<open>Dsup_sq_integrable\<close>) and the compensator by
+  the class's Lipschitz bound on \<open>Y\<close>.\<close>
+
+theorem paper_pair_class_stopped_comp_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>v \<omega>. (fst (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i)\<^sup>2
+        - snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i)"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+  let ?Z = "\<lambda>u \<omega> :: 'n pairpath.
+      (fst (\<omega> (min u T)) $ i)\<^sup>2 - snd (\<omega> (min u T)) $ i $ i"
+  have T0: "0 \<le> T" using T by simp
+  have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have mgZ: "martingale Q ?F 0 ?Z"
+    by (rule paper_pair_class_compensated_coord_martingale[OF Q])
+  have adpZ: "adapted_process Q ?F 0 ?Z"
+  proof -
+    interpret MZ: martingale Q ?F 0 ?Z by (rule mgZ)
+    show ?thesis by unfold_locales
+  qed
+  have contZ: "continuous_on {0..} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space Q" for \<omega>
+    by (rule paper_pair_class_comp_paths_cont[OF T0 setsQ w])
+  have contZu: "continuous_on {0..u} (\<lambda>s. ?Z s \<omega>)"
+    if w: "\<omega> \<in> space Q" for \<omega> u
+    by (rule continuous_on_subset[OF contZ[OF w]]) auto
+  have lnn: "0 \<le> ploc T i R \<omega>" for \<omega> by (rule ploc_nonneg[OF T0])
+  \<comment> \<open>the \<open>X\<close>-side envelope, from Doob, exactly as for the coordinate.\<close>
+  have mg: "martingale Q ?F 0 (pcoord T i)"
+    unfolding pcoord_def by (rule paper_pair_class_coord_martingale[OF Q])
+  have sq: "integrable Q (\<lambda>\<omega>. (pcoord T i s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
+    unfolding pcoord_def
+    using T0 s by (intro paper_pair_class_sq_integrable[OF T0 L Q]) simp
+  have contX: "continuous_on {0..u} (\<lambda>s. pcoord T i s \<omega>)"
+    if w: "\<omega> \<in> space Q" for \<omega> u
+    unfolding pcoord_def
+    by (rule continuous_on_subset
+        [OF paper_pair_class_coord_paths_cont[OF T0 setsQ w]]) auto
+  interpret HM: horizon_sq_int_martingale Q ?F "pcoord T i" T
+    by (intro horizon_sq_int_martingale.intro
+        horizon_sq_int_martingale_axioms.intro mg T prob sq)
+  have domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    by (rule HM.Dsup_dominates) (intro AE_I2 contX)
+  \<comment> \<open>the \<open>Y\<close>-side envelope is the class's own Lipschitz bound.\<close>
+  have ybnd: "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+    by (rule paper_pair_class_Y_bounded_ae[OF T0 L Q])
+  have domZ: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
+      \<bar>?Z s \<omega>\<bar> \<le> (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T" for u
+    using domT ybnd
+  proof eventually_elim
+    case (elim \<omega>)
+    then have hX: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+      and hY: "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+      by blast+
+    show ?case
+    proof (intro allI impI)
+      fix s :: real assume s: "0 \<le> s"
+      have mT: "min s T \<in> {0..T}" using s T0 by simp
+      have bX: "\<bar>fst (\<omega> (min s T)) $ i\<bar> \<le> HM.Dsup \<omega>"
+        using hX mT unfolding pcoord_def by simp
+      have "\<bar>snd (\<omega> (min s T)) $ i $ i\<bar> \<le> norm (snd (\<omega> (min s T)) $ i)"
+        using Finite_Cartesian_Product.norm_nth_le[of "snd (\<omega> (min s T)) $ i" i]
+        by simp
+      also have "\<dots> \<le> norm (snd (\<omega> (min s T)))"
+        by (rule Finite_Cartesian_Product.norm_nth_le)
+      also have "\<dots> \<le> real CARD('n) * L * T" using hY mT by blast
+      finally have bY: "\<bar>snd (\<omega> (min s T)) $ i $ i\<bar> \<le> real CARD('n) * L * T" .
+      have sqe: "(fst (\<omega> (min s T)) $ i)\<^sup>2 = \<bar>fst (\<omega> (min s T)) $ i\<bar>\<^sup>2"
+        by simp
+      have bX2: "(fst (\<omega> (min s T)) $ i)\<^sup>2 \<le> (HM.Dsup \<omega>)\<^sup>2"
+        unfolding sqe by (rule power_mono[OF bX abs_ge_zero])
+      have t1: "\<bar>?Z s \<omega>\<bar> \<le> (fst (\<omega> (min s T)) $ i)\<^sup>2
+          + \<bar>snd (\<omega> (min s T)) $ i $ i\<bar>"
+        using abs_triangle_ineq4[of "(fst (\<omega> (min s T)) $ i)\<^sup>2"
+            "snd (\<omega> (min s T)) $ i $ i"]
+        by simp
+      show "\<bar>?Z s \<omega>\<bar> \<le> (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T"
+        using t1 bX2 bY by linarith
+    qed
+  qed
+  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
+  have envint: "integrable Q (\<lambda>\<omega>. (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T)"
+    by (intro Bochner_Integration.integrable_add HM.Dsup_sq_integrable
+        finite_measure.integrable_const[OF fmQ])
+  show ?thesis
+  proof (rule optional_stopping
+      [where D = "\<lambda>_ \<omega>. (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T"])
+    show "martingale Q ?F 0 ?Z" by (rule mgZ)
+    show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> ploc T i R \<omega>" by (rule lnn)
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space Q. ploc T i R \<omega> \<le> s} \<in> sets (?F s)"
+      by (rule paper_pair_class_ploc_stopping[OF T0 setsQ Q])
+    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. continuous_on {0..u} (\<lambda>s. ?Z s \<omega>)"
+      by (intro AE_I2 contZu)
+    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
+        \<bar>?Z s \<omega>\<bar> \<le> (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T"
+      by (rule domZ)
+    show "\<And>u. 0 < u \<Longrightarrow>
+        integrable Q (\<lambda>\<omega>. (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T)"
+      by (rule envint)
+    show "\<And>v. 0 \<le> v \<Longrightarrow> (\<lambda>\<omega>. ?Z (min v (ploc T i R \<omega>)) \<omega>)
+        \<in> borel_measurable (?F v)"
+      by (rule stopped_adapted_of_cont
+          [OF adpZ lnn paper_pair_class_ploc_stopping[OF T0 setsQ Q] contZ])
   qed
 qed
 
