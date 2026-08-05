@@ -38,6 +38,92 @@ lemma pexit_less_iff:
     \<longleftrightarrow> ((\<exists>r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K \<and> r < c) \<or> T < c)"
   unfolding pexit_def by (rule etime_less_iff)
 
+text \<open>CAP INVISIBILITY.  The paper (arXiv:2512.17702, (1.6)–(1.8)) works on
+  \<open>C([0,\<infinity>), \<real>ⁿ)\<close> and takes the essential infimum of the UNCAPPED exit time
+  \<open>\<tau>\<^sub>K = inf {t \<ge> 0 : X t \<notin> K}\<close>; our \<open>pexit T K\<close> caps at the horizon \<open>T\<close>.
+  The cap is ours, so it needs justifying.  It is monotone in \<open>T\<close>, and once
+  a path has actually exited before \<open>T\<close> the cap is invisible: raising the
+  horizon does not move the value.  Hence for laws under which the exit
+  happens before \<open>T\<close> almost surely, every capped horizon beyond that point
+  gives the same essential infimum — which is what licenses working at a
+  fixed finite \<open>T\<close>.\<close>
+
+lemma pexit_mono_T:
+  assumes T: "0 \<le> T" and TT: "T \<le> T'"
+  shows "pexit T K f \<le> pexit T' K f"
+proof (rule ccontr)
+  assume "\<not> pexit T K f \<le> pexit T' K f"
+  then have lt: "pexit T' K f < pexit T K f" by simp
+  have T'0: "0 \<le> T'" using T TT by simp
+  from lt have "(\<exists>r. 0 \<le> r \<and> r \<le> T' \<and> f r \<in> - K \<and> r < pexit T K f)
+      \<or> T' < pexit T K f"
+    using pexit_less_iff[OF T'0] by blast
+  then have "pexit T K f < pexit T K f"
+  proof
+    assume "\<exists>r. 0 \<le> r \<and> r \<le> T' \<and> f r \<in> - K \<and> r < pexit T K f"
+    then obtain r where r: "0 \<le> r" "r \<le> T'" "f r \<in> - K"
+      and rlt: "r < pexit T K f" by blast
+    show ?thesis
+    proof (cases "r \<le> T")
+      case True
+      then show ?thesis
+        using pexit_less_iff[OF T] r rlt by blast
+    next
+      case False
+      then have "T < pexit T K f" using rlt by simp
+      then show ?thesis
+        using pexit_less_iff[OF T] by blast
+    qed
+  next
+    assume "T' < pexit T K f"
+    then have "T < pexit T K f" using TT by simp
+    then show ?thesis using pexit_less_iff[OF T] by blast
+  qed
+  then show False by simp
+qed
+
+lemma pexit_stable_above_T:
+  assumes T: "0 \<le> T" and TT: "T \<le> T'" and ex: "pexit T K f < T"
+  shows "pexit T' K f = pexit T K f"
+proof (rule antisym)
+  show "pexit T K f \<le> pexit T' K f" by (rule pexit_mono_T[OF T TT])
+next
+  have T'0: "0 \<le> T'" using T TT by simp
+  have "pexit T' K f < c" if c: "pexit T K f < c" "c \<le> T" for c
+  proof -
+    have "\<not> T < c" using c by simp
+    with pexit_less_iff[OF T] c(1)
+    obtain r where r: "0 \<le> r" "r \<le> T" "f r \<in> - K" "r < c" by blast
+    then have "r \<le> T'" using TT by simp
+    with r show ?thesis using pexit_less_iff[OF T'0] by blast
+  qed
+  note key = this
+  show "pexit T' K f \<le> pexit T K f"
+  proof (rule ccontr)
+    assume "\<not> pexit T' K f \<le> pexit T K f"
+    then have ab: "pexit T K f < pexit T' K f" by simp
+    define c where "c = min ((pexit T K f + pexit T' K f) / 2)
+        ((pexit T K f + T) / 2)"
+    have c1: "pexit T K f < c" using ab ex unfolding c_def by simp
+    have c2: "c \<le> T"
+    proof -
+      have "c \<le> (pexit T K f + T) / 2"
+        unfolding c_def by (rule min.cobounded2)
+      also have "\<dots> \<le> T" using ex by argo
+      finally show ?thesis .
+    qed
+    have c3: "c < pexit T' K f"
+    proof -
+      have "c \<le> (pexit T K f + pexit T' K f) / 2"
+        unfolding c_def by (rule min.cobounded1)
+      also have "\<dots> < pexit T' K f" using ab by argo
+      finally show ?thesis .
+    qed
+    have "pexit T' K f < c" by (rule key[OF c1 c2])
+    with c3 show False by simp
+  qed
+qed
+
 text \<open>Upper semicontinuity, in sublevel-set form: strict sublevels of the
   exit time are open in the path topology.  A path that exits before \<open>c\<close>
   does so at a time where it sits in the OPEN complement of \<open>K\<close>, and
