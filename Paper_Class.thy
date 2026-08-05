@@ -198,14 +198,13 @@ proof -
   finally show ?thesis by simp
 qed
 
-theorem bounded_sconstraint:
-  assumes L: "0 \<le> L"
-  shows "bounded (sconstraint k L :: (real^'n::finite^'n) set)"
-proof (rule boundedI)
-  fix a :: "real^'n^'n"
-  assume as: "a \<in> sconstraint k L"
-  then have a: "psd a" and ub: "eigen_ub a L"
-    by (auto simp: sconstraint_def Pi_constraint_def)
+theorem sconstraint_norm_le:
+  fixes a :: "real^'n::finite^'n"
+  assumes L: "0 \<le> L" and as: "a \<in> sconstraint k L"
+  shows "norm a \<le> real CARD('n) * L"
+proof -
+  have a: "psd a" and ub: "eigen_ub a L"
+    using as by (auto simp: sconstraint_def Pi_constraint_def)
   have entry: "\<bar>a $ i $ j\<bar> \<le> L" for i j
     by (rule psd_eigen_ub_entry_abs_le[OF a ub])
   have sq: "a \<bullet> a \<le> (real CARD('n) * L)^2"
@@ -232,6 +231,11 @@ proof (rule boundedI)
     using L by simp
   finally show "norm a \<le> real CARD('n) * L" .
 qed
+
+theorem bounded_sconstraint:
+  assumes L: "0 \<le> L"
+  shows "bounded (sconstraint k L :: (real^'n::finite^'n) set)"
+  by (rule boundedI) (use sconstraint_norm_le[OF L] in blast)
 
 theorem compact_sconstraint:
   assumes L: "0 \<le> L"
@@ -608,6 +612,96 @@ theorem diffquot_constraint_weak_limit:
          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
   by (rule weak_conv_closed_full_mass
       [OF wc closedin_diffquot_constraint[OF s t] probs prob full])
+
+subsection \<open>What the class gives the tightness argument for free\<close>
+
+text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class already
+  asserts that the difference quotients of \<open>Y\<close> lie in \<open>sconstraint k L\<close>
+  almost surely, and every element of that set has norm at most \<open>n\<sqdot>L\<close>
+  (\<open>sconstraint_norm_le\<close>), so \<open>diffquot_lipschitz\<close> makes \<open>Y\<close> almost surely
+  \<open>n\<sqdot>L\<close>-Lipschitz.  That is the \<open>Y\<close>-event of \<open>pair_holder_charge_split\<close>,
+  with probability ONE — leaving the \<open>X\<close>-side Hölder estimate as the only
+  part of the tightness with content.\<close>
+
+theorem paper_pair_class_lipschitz_ae:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+  shows "AE \<omega> in Q. (real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+proof -
+  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding paper_pair_class_def by blast
+  have B0: "0 \<le> real CARD('n) * L" using L by simp
+  show ?thesis
+  proof (rule AE_mp[OF dq], rule AE_I2, intro impI)
+    fix \<omega> :: "'n pairpath"
+    assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    show "(real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+    proof (rule diffquot_lipschitz[OF B0])
+      fix a :: "real^'n^'n"
+      assume "a \<in> sconstraint k L"
+      then show "norm a \<le> real CARD('n) * L"
+        by (rule sconstraint_norm_le[OF L])
+    next
+      fix s t :: real
+      assume "0 \<le> s" "s < t" "t \<le> T"
+      then show "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+        using q by blast
+    qed
+  qed
+qed
+
+text \<open>And, combined with NC-4, the class member's \<open>Y\<close> is almost surely
+  differentiable off a negligible set of times with derivative in the
+  constraint set — the density statement of Eq. (1.7), now stated for the
+  class itself rather than for a bare path.\<close>
+
+theorem paper_pair_class_density_ae:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+  shows "AE \<omega> in Q.
+      negligible {u \<in> {0..T}. \<not> (\<lambda>t. snd (\<omega> t)) differentiable (at u)}
+      \<and> (\<forall>u D. 0 \<le> u \<longrightarrow> u < T
+           \<longrightarrow> ((\<lambda>t. snd (\<omega> t)) has_vector_derivative D) (at u within {u..T})
+           \<longrightarrow> D \<in> sconstraint k L)"
+proof -
+  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding paper_pair_class_def by blast
+  have B0: "0 \<le> real CARD('n) * L" using L by simp
+  show ?thesis
+  proof (rule AE_mp[OF dq], rule AE_I2, intro impI)
+    fix \<omega> :: "'n pairpath"
+    assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    have dqw: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      if "0 \<le> s" "s < t" "t \<le> T" for s t
+      using q that by blast
+    have nb: "norm a \<le> real CARD('n) * L" if "a \<in> sconstraint k L"
+      for a :: "real^'n^'n"
+      using that by (rule sconstraint_norm_le[OF L])
+    show "negligible {u \<in> {0..T}. \<not> (\<lambda>t. snd (\<omega> t)) differentiable (at u)}
+        \<and> (\<forall>u D. 0 \<le> u \<longrightarrow> u < T
+             \<longrightarrow> ((\<lambda>t. snd (\<omega> t)) has_vector_derivative D) (at u within {u..T})
+             \<longrightarrow> D \<in> sconstraint k L)"
+    proof -
+      have part1:
+        "negligible {u \<in> {0..T}. \<not> (\<lambda>t. snd (\<omega> t)) differentiable (at u)}"
+        by (rule diffquot_density_ae(1)[OF T closed_sconstraint B0 nb dqw])
+      have part2: "D \<in> sconstraint k L"
+        if u: "0 \<le> u" "u < T"
+          and Du: "((\<lambda>t. snd (\<omega> t)) has_vector_derivative D)
+            (at u within {u..T})"
+        for u D
+        by (rule diffquot_deriv_in_constraint
+            [OF closed_sconstraint dqw u(1) u(2) Du])
+      from part1 part2 show ?thesis by blast
+    qed
+  qed
+qed
 
 section \<open>NC-2: pair tightness from the two component moduli\<close>
 
