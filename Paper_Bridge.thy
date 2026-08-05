@@ -1909,4 +1909,63 @@ proof -
   qed
 qed
 
+subsection \<open>The stopped process is bounded, hence integrable to any power\<close>
+
+text \<open>The pay-off of localizing: on the stopped process every moment is
+  free.  The starting coordinate is \<open>x $ i\<close> almost surely, so the strict
+  hypothesis of \<open>pcoord_stopped_bounded\<close> holds as soon as \<open>R\<close> exceeds it.\<close>
+
+lemma paper_pair_class_stopped_abs_le:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R" and w: "0 \<le> w"
+  shows "AE \<omega> in Q. \<bar>pcoord T i (min w (ploc T i R \<omega>)) \<omega>\<bar> \<le> R"
+proof -
+  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using Q unfolding paper_pair_class_def by blast
+  from st AE_space show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have s0: "fst (\<omega> 0) = x" and mem: "\<omega> \<in> space Q" by blast+
+    have p0: "pcoord T i 0 \<omega> = x $ i"
+      unfolding pcoord_def using T s0 by simp
+    have c: "continuous_on {0..T} (\<lambda>s. pcoord T i s \<omega>)"
+      unfolding pcoord_def
+      by (rule continuous_on_subset
+          [OF paper_pair_class_coord_paths_cont[OF T setsQ mem]]) auto
+    show ?case
+      by (rule pcoord_stopped_bounded[OF T R _ c w]) (use p0 xR in simp)
+  qed
+qed
+
+lemma paper_pair_class_stopped_A_abs_le:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and w: "0 \<le> w"
+  shows "AE \<omega> in Q. \<bar>snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i\<bar>
+      \<le> real CARD('n) * L * T"
+proof -
+  have yb: "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+    by (rule paper_pair_class_Y_bounded_ae[OF T L Q])
+  from yb show ?thesis
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume h: "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+    have m: "min (min w (ploc T i R \<omega>)) T \<in> {0..T}"
+      using w ploc_nonneg[OF T, of i R \<omega>] T by simp
+    have "\<bar>snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i\<bar>
+        \<le> norm (snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i)"
+      using Finite_Cartesian_Product.norm_nth_le
+        [of "snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i" i] by simp
+    also have "\<dots> \<le> norm (snd (\<omega> (min (min w (ploc T i R \<omega>)) T)))"
+      by (rule Finite_Cartesian_Product.norm_nth_le)
+    also have "\<dots> \<le> real CARD('n) * L * T" using h m by blast
+    finally show "\<bar>snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i\<bar>
+        \<le> real CARD('n) * L * T" .
+  qed
+qed
+
 end
