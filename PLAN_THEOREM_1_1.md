@@ -485,7 +485,13 @@ the `ROOT` edit does NOT recover it.  A server restart is required.
 
 FIRST ACTION AFTER RESTART: load `Paper_Bridge.thy` and check
 `stopped_market_acont_in_sconstraint` — it is committed but NOT
-PIDE-verified.  Then re-confirm `Paper_Class` (2,002) and
+PIDE-verified.  It HAS been desk-checked against every definition site
+it uses (locale idiom and parameter order vs
+`Path_Tightness_Market.thy:209`; hypothesis shapes vs
+`Relative_Arbitrage_Stochastic.thy:122–133`; `suff_volatile_def` vs
+`Relative_Arbitrage_Convexity.thy:458`; `acont_in_sconstraint`'s five
+premises vs `Paper_Class.thy:810–816`), so it is expected to load with
+at most cosmetic fixes — but desk-checking is not proof.  Then re-confirm `Paper_Class` (2,002) and
 `Exit_Semicontinuity` (2,676), whose reported failures were artifacts.
 
 LESSON (also in memory `isabelle-pide-stale-root`): do NOT register a
