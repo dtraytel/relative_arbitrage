@@ -2131,4 +2131,91 @@ proof -
     unfolding pcoord_def[symmetric] by eventually_elim simp
 qed
 
+subsection \<open>Step (c): the bounded estimate at the stopped pair\<close>
+
+lemma pcoord_stopped_paths_cont:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and w: "\<omega> \<in> space Q"
+  shows "continuous_on {0..} (\<lambda>s. pcoord T i (min s (ploc T i R \<omega>)) \<omega>)"
+proof -
+  have c: "continuous_on {0..} (\<lambda>s. pcoord T i s \<omega>)"
+    unfolding pcoord_def
+    by (rule paper_pair_class_coord_paths_cont[OF T setsQ w])
+  have m: "continuous_on {0..} (\<lambda>s :: real. min s (ploc T i R \<omega>))"
+    by (intro continuous_intros)
+  have mim: "(\<lambda>s :: real. min s (ploc T i R \<omega>)) ` {0..} \<subseteq> {0..}"
+    using ploc_nonneg[OF T, of i R \<omega>] by auto
+  show ?thesis by (rule continuous_on_compose2[OF c m mim])
+qed
+
+theorem paper_pair_class_stopped_fourth_moment:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R"
+    and st: "0 \<le> s" and sT: "s \<le> T"
+  shows "(\<integral>\<omega>. (pcoord T i (min T (ploc T i R \<omega>)) \<omega>
+        - pcoord T i (min s (ploc T i R \<omega>)) \<omega>)^4 \<partial>Q)
+      \<le> 8 * L\<^sup>2 * (T - s)\<^sup>2"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>w \<omega> :: 'n pairpath. \<omega> w)"
+  let ?X = "\<lambda>w \<omega> :: 'n pairpath. pcoord T i (min w (ploc T i R \<omega>)) \<omega>"
+  let ?A = "\<lambda>w \<omega> :: 'n pairpath.
+      snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i"
+  have T0: "0 \<le> T" using T by simp
+  have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
+  have mgX: "martingale Q ?F 0 ?X"
+    by (rule paper_pair_class_stopped_coord_martingale[OF T L setsQ Q])
+  then interpret MX: martingale Q ?F 0 ?X .
+  have mgZ: "martingale Q ?F 0 (\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>)"
+    using paper_pair_class_stopped_comp_martingale[OF T L setsQ Q]
+    unfolding pcoord_def by simp
+  then interpret MZ: martingale Q ?F 0 "\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>" .
+  have Ab: "AE \<omega> in Q. \<bar>?A w \<omega>\<bar> \<le> real CARD('n) * L * T" if w: "0 \<le> w" for w
+    by (rule paper_pair_class_stopped_A_abs_le[OF T0 L Q w])
+  have XQ: "?X w \<in> borel_measurable Q" if w: "0 \<le> w" for w
+    by (rule borel_measurable_integrable[OF MX.integrable[OF w]])
+  have AQ: "?A w \<in> borel_measurable Q" if w: "0 \<le> w" for w
+  proof -
+    have z: "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>) \<in> borel_measurable Q"
+      by (rule borel_measurable_integrable[OF MZ.integrable[OF w]])
+    have "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ((?X w \<omega>)\<^sup>2 - ?A w \<omega>)) \<in> borel_measurable Q"
+      by (intro borel_measurable_diff borel_measurable_power XQ[OF w] z)
+    then show ?thesis by simp
+  qed
+  have Ai: "integrable Q (?A w)" if w: "0 \<le> w" for w
+  proof (rule finite_measure.integrable_const_bound
+      [OF fmQ _ AQ[OF w], of "real CARD('n) * L * T"])
+    show "AE \<omega> in Q. norm (?A w \<omega>) \<le> real CARD('n) * L * T"
+      using Ab[OF w] by (rule eventually_mono) simp
+  qed
+  have cont: "AE \<omega> in Q. continuous_on {s..T} (\<lambda>w. ?X w \<omega>)"
+  proof (intro AE_I2)
+    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space Q"
+    from pcoord_stopped_paths_cont[OF T0 setsQ this]
+    show "continuous_on {s..T} (\<lambda>w. ?X w \<omega>)"
+      by (rule continuous_on_subset) (use st in auto)
+  qed
+  show ?thesis
+  proof (rule fourth_moment_bound_bounded
+      [OF prob mgX st sT Ai _ _ L _ _ cont])
+    show "AE \<omega> in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a \<le> b \<longrightarrow>
+        0 \<le> ?A b \<omega> - ?A a \<omega> \<and> ?A b \<omega> - ?A a \<omega> \<le> L * (b - a)"
+      by (rule paper_pair_class_stopped_compensator_rate[OF T0 L Q])
+    show "\<And>a b. 0 \<le> a \<Longrightarrow> a \<le> b \<Longrightarrow> AE \<omega> in Q.
+        cond_exp Q (?F a) (\<lambda>\<omega>. (?X b \<omega> - ?X a \<omega>)\<^sup>2) \<omega>
+          = cond_exp Q (?F a) (\<lambda>\<omega>. ?A b \<omega> - ?A a \<omega>) \<omega>"
+      by (rule paper_pair_class_stopped_cond_exp[OF T L setsQ Q R xR])
+    show "0 \<le> R" using R by simp
+    show "\<And>w. 0 \<le> w \<Longrightarrow> AE \<omega> in Q. \<bar>?X w \<omega>\<bar> \<le> R"
+      by (rule paper_pair_class_stopped_abs_le[OF T0 setsQ Q R xR])
+  qed
+qed
+
 end
