@@ -1486,23 +1486,27 @@ proof -
   show ?thesis by unfold_locales
 qed
 
+text \<open>Continuity holds on the WHOLE half-line, not just on \<open>{0..T}\<close>: the
+  stopped process is constant after the horizon.  That is the form
+  \<open>Stopped_Adaptedness.stopped_adapted_of_cont\<close> asks for.\<close>
+
 lemma paper_pair_class_coord_paths_cont:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
     and setsQ: "sets Q = sets (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
     and w: "\<omega> \<in> space Q"
-  shows "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
+  shows "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
 proof -
   have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
     using w space_of_path_sets[OF setsQ] by simp
   from mspace_path_metricD[OF this] have c: "continuous_on {0..T} \<omega>" .
-  have m: "continuous_on {0..T} (\<lambda>s :: real. min s T)"
+  have m: "continuous_on {0..} (\<lambda>s :: real. min s T)"
     by (intro continuous_intros)
-  have mim: "(\<lambda>s :: real. min s T) ` {0..T} \<subseteq> {0..T}" using T by auto
-  have c1: "continuous_on {0..T} (\<lambda>s. \<omega> (min s T))"
+  have mim: "(\<lambda>s :: real. min s T) ` {0..} \<subseteq> {0..T}" using T by auto
+  have c1: "continuous_on {0..} (\<lambda>s. \<omega> (min s T))"
     by (rule continuous_on_compose2[OF c m mim])
-  have c2: "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)))"
+  have c2: "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)))"
     by (rule continuous_on_fst[OF c1])
   have c3: "continuous_on UNIV (\<lambda>v :: real^'n. v $ i)"
     by (rule linear_continuous_on[OF bounded_linear_vec_nth])
@@ -1525,6 +1529,99 @@ proof -
         (fst (\<omega> (min u T)) $ i)\<^sup>2 - snd (\<omega> (min u T)) $ i $ i)"
     by (rule ext, rule ext) (simp add: outerp_def power2_eq_square)
   show ?thesis using mg unfolding eq .
+qed
+
+subsection \<open>The localizing stopping time\<close>
+
+text \<open>\<open>ploc T i R\<close> is the first time the \<open>i\<close>-th coordinate reaches level
+  \<open>R\<close> in absolute value, capped at the horizon.  It is a stopping time by
+  \<open>Exit_Time.etime_stopping_time\<close> --- the set \<open>{y. R \<le> \<bar>y\<bar>}\<close> is closed and
+  nonempty and the paths are continuous --- and the process stopped at it
+  is bounded, which is the whole point.\<close>
+
+definition pcoord :: "real \<Rightarrow> 'n::finite \<Rightarrow> real \<Rightarrow> ('n pairpath) \<Rightarrow> real"
+  where "pcoord T i u \<omega> = fst (\<omega> (min u T)) $ i"
+
+definition ploc :: "real \<Rightarrow> 'n::finite \<Rightarrow> real \<Rightarrow> ('n pairpath) \<Rightarrow> real"
+  where "ploc T i R \<omega> = etime T {y. R \<le> \<bar>y\<bar>} (pcoord T i) \<omega>"
+
+lemma closed_abs_ge: "closed {y :: real. R \<le> \<bar>y\<bar>}"
+  by (intro closed_Collect_le continuous_intros)
+
+lemma abs_ge_nonempty: "{y :: real. R \<le> \<bar>y\<bar>} \<noteq> {}"
+  by (rule notI) (use abs_ge_self[of R] in blast)
+
+lemma ploc_nonneg: "0 \<le> T \<Longrightarrow> 0 \<le> ploc T i R \<omega>"
+  unfolding ploc_def by (rule etime_nonneg)
+
+lemma ploc_le_T: "0 \<le> T \<Longrightarrow> ploc T i R \<omega> \<le> T"
+  unfolding ploc_def by (rule etime_le_T)
+
+lemma paper_pair_class_cont_adapted:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+  shows "cont_adapted_process Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u))
+      (pcoord T i) T"
+proof (intro cont_adapted_process.intro cont_adapted_process_axioms.intro)
+  show "adapted_process Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (pcoord T i)"
+    unfolding pcoord_def by (rule paper_pair_class_coord_adapted[OF Q])
+  show "0 \<le> T" by (rule T)
+  show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> continuous_on {0..T} (\<lambda>s. pcoord T i s \<omega>)"
+    unfolding pcoord_def
+    by (rule continuous_on_subset
+        [OF paper_pair_class_coord_paths_cont[OF T setsQ]]) auto
+qed
+
+lemma paper_pair_class_ploc_stopping:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and t: "0 \<le> t"
+  shows "{\<omega> \<in> space Q. ploc T i R \<omega> \<le> t}
+      \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) t)"
+proof -
+  interpret CA: cont_adapted_process Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)"
+      "pcoord T i" T
+    by (rule paper_pair_class_cont_adapted[OF T setsQ Q])
+  show ?thesis
+    unfolding ploc_def
+    by (rule CA.etime_stopping_time[OF closed_abs_ge abs_ge_nonempty t])
+qed
+
+text \<open>The point of the localization: below the level the stopped path has
+  not yet reached \<open>R\<close>, and at the level it is exactly \<open>R\<close> by continuity, so
+  the stopped process never exceeds \<open>R\<close> in absolute value --- except
+  possibly at time \<open>0\<close>, where it is the starting coordinate.\<close>
+
+text \<open>At the stopping time itself the path has value exactly \<open>R\<close>, not more,
+  which is why the bound needs CONTINUITY and not just the definition of an
+  infimum.  \<open>Exit_Time.etime_stays_in_cball\<close> is precisely that statement,
+  and it is why the theory exists.\<close>
+
+lemma pcoord_stopped_bounded:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T: "0 \<le> T" and R: "0 < R"
+    and start: "\<bar>pcoord T i 0 \<omega>\<bar> < R"
+    and cont: "continuous_on {0..T} (\<lambda>s. pcoord T i s \<omega>)"
+    and v: "0 \<le> v"
+  shows "\<bar>pcoord T i (min v (ploc T i R \<omega>)) \<omega>\<bar> \<le> R"
+proof -
+  have nrm: "{y :: real. R \<le> \<bar>y\<bar>} = {y. R \<le> norm y}" by simp
+  have s0: "0 \<le> min v (ploc T i R \<omega>)"
+    using v ploc_nonneg[OF T, of i R \<omega>] by simp
+  have sle: "min v (ploc T i R \<omega>)
+      \<le> etime T {y. R \<le> norm y} (pcoord T i) \<omega>"
+    unfolding ploc_def[symmetric] nrm[symmetric] by simp
+  have "pcoord T i (min v (ploc T i R \<omega>)) \<omega> \<in> cball 0 R"
+    using start cont
+    by (intro etime_stays_in_cball[OF T R _ _ s0 sle]) simp_all
+  then show ?thesis by (simp add: dist_real_def)
 qed
 
 end
