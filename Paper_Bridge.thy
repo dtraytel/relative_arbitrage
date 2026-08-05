@@ -394,4 +394,176 @@ proof -
   then show ?thesis using eqts by simp
 qed
 
+subsection \<open>The test functional is continuous on path space\<close>
+
+text \<open>What weak convergence sees.  Unlike the confined market laws of
+  \<open>Section_2_Usc\<close>, the paper's class admits no clamp --- its processes are
+  neither stopped nor bounded --- so the test functional is CONTINUOUS but
+  UNBOUNDED, and the transfer runs through the uniform \<open>L\<^sup>2\<close> bound
+  (\<open>Paper_Class.paper_pair_class_sq_mean_le\<close>) rather than through
+  boundedness.\<close>
+
+lemma pair_eval_coord_cont:
+  fixes t T :: real
+  assumes t: "t \<in> {0..T}"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+      euclideanreal (\<lambda>\<omega>. fst (\<omega> t) $ i)"
+proof -
+  have ev: "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+      euclidean (\<lambda>\<omega>. \<omega> t)"
+    by (rule continuous_map_path_eval[OF t])
+  have fstc: "continuous_map (euclidean :: ((real^'n) \<times> (real^'n^'n)) topology)
+      euclidean fst"
+    by (simp add: continuous_on_fst)
+  have nthc: "continuous_map (euclidean :: (real^'n) topology) euclideanreal
+      (\<lambda>v. v $ i)"
+    unfolding continuous_map_iff_continuous2
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+      euclideanreal (((\<lambda>v. v $ i) \<circ> fst) \<circ> (\<lambda>\<omega>. \<omega> t))"
+    by (intro continuous_map_compose[OF ev] continuous_map_compose[OF fstc] nthc)
+  then show ?thesis by (simp add: o_def)
+qed
+
+lemma pair_eval_coord_sq_cont:
+  fixes t T :: real
+  assumes t: "t \<in> {0..T}"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+      euclideanreal (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
+proof -
+  have "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
+      (\<lambda>\<omega>. fst (\<omega> t) $ i * fst (\<omega> t) $ i)"
+    by (rule continuous_map_real_mult[OF pair_eval_coord_cont[OF t]
+          pair_eval_coord_cont[OF t]])
+  then show ?thesis by (simp add: power2_eq_square)
+qed
+
+lemma pair_test_functional_cont:
+  fixes h :: "('n::finite pairpath) \<Rightarrow> real"
+  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
+      (\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  have sI: "s \<in> {0..T}" using st sT by simp
+  have part1: "continuous_map ?PT euclideanreal
+      (\<lambda>\<omega>. fst (\<omega> t) $ i - fst (\<omega> s) $ i)"
+    by (intro continuous_map_diff pair_eval_coord_cont tI sI)
+  have rc: "continuous_map ?PT
+      (mtopology_of (path_metric s :: ('n pairpath) metric))
+      (\<lambda>\<omega>. restrict \<omega> {0..s})"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have part2: "continuous_map ?PT euclideanreal (\<lambda>\<omega>. h (restrict \<omega> {0..s}))"
+    using continuous_map_compose[OF rc hc] by (simp add: o_def)
+  show ?thesis by (rule continuous_map_real_mult[OF part2 part1])
+qed
+
+subsection \<open>Integrability from the \<open>L\<^sup>2\<close> bound, for members and for limits\<close>
+
+text \<open>The transfer theorem \<open>weak_conv_integral_of_L2_bound\<close> asks for a
+  battery of integrability facts under EVERY approximating law and under
+  the limit.  All of them follow from one input: a bound on the second
+  moment of the coordinate, which the members have by
+  \<open>paper_pair_class_sq_mean_le\<close> and which the limit inherits because
+  \<open>\<omega> \<mapsto> (X\<^sub>u $ i)\<^sup>2\<close> is continuous and nonnegative
+  (\<open>Path_Space.weak_conv_on_nn_integral_le\<close>).  So this subsection works with
+  a bare "pair law with an \<open>L\<^sup>2\<close> bound" and never mentions the class.\<close>
+
+lemma integrable_of_sq_integrable:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes fm: "finite_measure N" and m: "f \<in> borel_measurable N"
+    and sq: "integrable N (\<lambda>\<omega>. (f \<omega>)\<^sup>2)"
+  shows "integrable N f"
+proof (rule Bochner_Integration.integrable_bound)
+  show "integrable N (\<lambda>\<omega>. 1 + (f \<omega>)\<^sup>2)"
+    by (intro Bochner_Integration.integrable_add
+        finite_measure.integrable_const[OF fm] sq)
+  show "f \<in> borel_measurable N" by (rule m)
+  show "AE \<omega> in N. norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)"
+  proof (intro AE_I2)
+    fix \<omega>
+    have nn: "(0::real) \<le> (1 - \<bar>f \<omega>\<bar>)\<^sup>2" by simp
+    have exp: "(1 - \<bar>f \<omega>\<bar>)\<^sup>2 = 1 - 2 * \<bar>f \<omega>\<bar> + (f \<omega>)\<^sup>2"
+      by (simp add: power2_diff)
+    have "\<bar>f \<omega>\<bar> \<le> 1 + (f \<omega>)\<^sup>2"
+      using nn abs_ge_zero[of "f \<omega>"] unfolding exp by linarith
+    then show "norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)" by simp
+  qed
+qed
+
+lemma pair_law_coord_measurable:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes setsN: "sets N = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and u: "u \<in> {0..T}"
+  shows "(\<lambda>\<omega>. fst (\<omega> u) $ i) \<in> borel_measurable N"
+proof -
+  have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) $ i)
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel"
+    using continuous_map_measurable[OF pair_eval_coord_cont[OF u]]
+    by (simp add: borel_of_euclidean)
+  then show ?thesis
+    using measurable_cong_sets[OF setsN refl] by blast
+qed
+
+lemma pair_law_coord_sq_measurable:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes setsN: "sets N = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and u: "u \<in> {0..T}"
+  shows "(\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2) \<in> borel_measurable N"
+proof -
+  have "(\<lambda>\<omega> :: 'n pairpath. (fst (\<omega> u) $ i)\<^sup>2)
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel"
+    using continuous_map_measurable[OF pair_eval_coord_sq_cont[OF u]]
+    by (simp add: borel_of_euclidean)
+  then show ?thesis
+    using measurable_cong_sets[OF setsN refl] by blast
+qed
+
+lemma pair_law_sq_integrable_of_nn_bound:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes setsN: "sets N = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and u: "u \<in> {0..T}"
+    and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
+  shows "integrable N (\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2)"
+proof -
+  have m: "(\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2) \<in> borel_measurable N"
+    by (rule pair_law_coord_sq_measurable[OF setsN u])
+  have lt: "(\<integral>\<^sup>+\<omega>. ennreal (norm ((fst (\<omega> u) $ i)\<^sup>2)) \<partial>N) < \<infinity>"
+  proof -
+    have "(\<integral>\<^sup>+\<omega>. ennreal (norm ((fst (\<omega> u) $ i)\<^sup>2)) \<partial>N) \<le> ennreal C"
+      using bnd by simp
+    also have "ennreal C < \<infinity>" by simp
+    finally show ?thesis .
+  qed
+  show ?thesis unfolding integrable_iff_bounded using m lt by blast
+qed
+
+lemma pair_law_coord_sq_nn_bound:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes setsN: "sets N = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and u: "u \<in> {0..T}"
+    and int: "integrable N (\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2)"
+    and le: "(\<integral>\<omega>. (fst (\<omega> u) $ i)\<^sup>2 \<partial>N) \<le> C"
+  shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
+proof -
+  have "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N)
+      = ennreal (\<integral>\<omega>. (fst (\<omega> u) $ i)\<^sup>2 \<partial>N)"
+    by (rule nn_integral_eq_integral[OF int]) simp
+  also have "\<dots> \<le> ennreal C" using le by (rule ennreal_leI)
+  finally show ?thesis .
+qed
+
 end
