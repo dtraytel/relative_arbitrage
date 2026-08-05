@@ -1968,4 +1968,167 @@ proof -
   qed
 qed
 
+subsection \<open>Step (b): the conditional identity for the stopped pair\<close>
+
+text \<open>\<open>E[(\<Delta>X\<^sup>\<tau>)\<^sup>2 | \<F>\<^sub>u] = E[\<Delta>A\<^sup>\<tau> | \<F>\<^sub>u]\<close>, the last hypothesis of
+  \<open>Increment_Moments.fourth_moment_bound_bounded\<close> that is not immediate.
+  It is the usual expansion --- the cross term is pulled out because
+  \<open>X\<^sup>\<tau>\<^sub>u\<close> is \<open>\<F>\<^sub>u\<close>-measurable, and the compensated martingale converts
+  \<open>E[(X\<^sup>\<tau>\<^sub>v)\<^sup>2 | \<F>\<^sub>u]\<close> into \<open>(X\<^sup>\<tau>\<^sub>u)\<^sup>2 - A\<^sup>\<tau>\<^sub>u + E[A\<^sup>\<tau>\<^sub>v | \<F>\<^sub>u]\<close>.  Every
+  integrability side condition is free, because the stopped pair is
+  BOUNDED.\<close>
+
+theorem paper_pair_class_stopped_cond_exp:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R"
+    and uv: "0 \<le> u" "u \<le> v"
+  shows "AE \<omega> in Q.
+      cond_exp Q (natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w) u)
+        (\<lambda>\<omega>. (pcoord T i (min v (ploc T i R \<omega>)) \<omega>
+              - pcoord T i (min u (ploc T i R \<omega>)) \<omega>)\<^sup>2) \<omega>
+      = cond_exp Q (natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w) u)
+        (\<lambda>\<omega>. snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
+              - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i) \<omega>"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>w \<omega> :: 'n pairpath. \<omega> w)"
+  let ?X = "\<lambda>w \<omega> :: 'n pairpath. pcoord T i (min w (ploc T i R \<omega>)) \<omega>"
+  let ?A = "\<lambda>w \<omega> :: 'n pairpath.
+      snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i"
+  have T0: "0 \<le> T" using T by simp
+  have v0: "0 \<le> v" using uv by simp
+  have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
+  interpret MX: martingale Q ?F 0 ?X
+    by (rule paper_pair_class_stopped_coord_martingale[OF T L setsQ Q])
+  have mgZ: "martingale Q ?F 0 (\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>)"
+    using paper_pair_class_stopped_comp_martingale[OF T L setsQ Q]
+    unfolding pcoord_def by simp
+  then interpret MZ: martingale Q ?F 0 "\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>" .
+  interpret SFS: sigma_finite_subalgebra Q "?F u"
+    by (rule MX.sigma_finite_subalgebra_F[OF uv(1)])
+  \<comment> \<open>bounds and the integrability they buy\<close>
+  have Xb: "AE \<omega> in Q. \<bar>?X w \<omega>\<bar> \<le> R" if w: "0 \<le> w" for w
+    by (rule paper_pair_class_stopped_abs_le[OF T0 setsQ Q R xR w])
+  have Ab: "AE \<omega> in Q. \<bar>?A w \<omega>\<bar> \<le> real CARD('n) * L * T" if w: "0 \<le> w" for w
+    by (rule paper_pair_class_stopped_A_abs_le[OF T0 L Q w])
+  have XQ: "?X w \<in> borel_measurable Q" if w: "0 \<le> w" for w
+    by (rule borel_measurable_integrable[OF MX.integrable[OF w]])
+  have AQ: "?A w \<in> borel_measurable Q" if w: "0 \<le> w" for w
+  proof -
+    have z: "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>) \<in> borel_measurable Q"
+      by (rule borel_measurable_integrable[OF MZ.integrable[OF w]])
+    have "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ((?X w \<omega>)\<^sup>2 - ?A w \<omega>)) \<in> borel_measurable Q"
+      by (intro borel_measurable_diff borel_measurable_power XQ[OF w] z)
+    then show ?thesis by simp
+  qed
+  have Ai: "integrable Q (?A w)" if w: "0 \<le> w" for w
+  proof (rule finite_measure.integrable_const_bound
+      [OF fmQ _ AQ[OF w], of "real CARD('n) * L * T"])
+    show "AE \<omega> in Q. norm (?A w \<omega>) \<le> real CARD('n) * L * T"
+      using Ab[OF w] by (rule eventually_mono) simp
+  qed
+  have prodb: "integrable Q (\<lambda>\<omega>. ?X a \<omega> * ?X b \<omega>)"
+    if a: "0 \<le> a" and b: "0 \<le> b" for a b
+  proof (rule finite_measure.integrable_const_bound[OF fmQ, of _ "R * R"])
+    show "AE \<omega> in Q. norm (?X a \<omega> * ?X b \<omega>) \<le> R * R"
+      using Xb[OF a] Xb[OF b]
+    proof eventually_elim
+      case (elim \<omega>)
+      then show ?case
+        using R by (simp add: abs_mult mult_mono)
+    qed
+    show "(\<lambda>\<omega>. ?X a \<omega> * ?X b \<omega>) \<in> borel_measurable Q"
+      using XQ[OF a] XQ[OF b] by simp
+  qed
+  have Xsqi: "integrable Q (\<lambda>\<omega>. (?X w \<omega>)\<^sup>2)" if w: "0 \<le> w" for w
+    using prodb[OF w w] by (simp add: power2_eq_square)
+  \<comment> \<open>the cross term: pull out the \<open>\<F>\<^sub>u\<close>-measurable factor\<close>
+  have Xum: "?X u \<in> borel_measurable (?F u)" by (rule MX.adapted[OF uv(1)])
+  have cross: "AE \<omega> in Q.
+      cond_exp Q (?F u) (\<lambda>\<omega>. ?X u \<omega> * ?X v \<omega>) \<omega> = (?X u \<omega>)\<^sup>2"
+  proof -
+    have "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. ?X u \<omega> * ?X v \<omega>) \<omega>
+        = ?X u \<omega> * cond_exp Q (?F u) (?X v) \<omega>"
+      by (rule SFS.cond_exp_measurable_mult(2)
+          [OF prodb[OF uv(1) v0] MX.integrable[OF v0] Xum])
+    moreover have "AE \<omega> in Q. ?X u \<omega> = cond_exp Q (?F u) (?X v) \<omega>"
+      by (rule MX.martingale_property[OF uv])
+    ultimately show ?thesis
+      by eventually_elim (simp add: power2_eq_square)
+  qed
+  \<comment> \<open>the compensated martingale converts the square at \<open>v\<close>.\<close>
+  have zsplit: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega>
+      - cond_exp Q (?F u) (?A v) \<omega> = (?X u \<omega>)\<^sup>2 - ?A u \<omega>"
+  proof -
+    have "AE \<omega> in Q. (?X u \<omega>)\<^sup>2 - ?A u \<omega>
+        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - ?A v \<omega>) \<omega>"
+      by (rule MZ.martingale_property[OF uv])
+    moreover have "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - ?A v \<omega>) \<omega>
+        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega> - cond_exp Q (?F u) (?A v) \<omega>"
+      by (rule SFS.cond_exp_diff[OF Xsqi[OF v0] Ai[OF v0]])
+    ultimately show ?thesis by eventually_elim simp
+  qed
+  \<comment> \<open>and the two terms that are already \<open>\<F>\<^sub>u\<close>-measurable.\<close>
+  have Ameas: "AE \<omega> in Q. cond_exp Q (?F u) (?A u) \<omega> = ?A u \<omega>"
+  proof -
+    have "?A u \<in> borel_measurable (?F u)"
+    proof -
+      have z: "(\<lambda>\<omega>. (?X u \<omega>)\<^sup>2 - ?A u \<omega>) \<in> borel_measurable (?F u)"
+        by (rule MZ.adapted[OF uv(1)])
+      have "(\<lambda>\<omega>. (?X u \<omega>)\<^sup>2 - ((?X u \<omega>)\<^sup>2 - ?A u \<omega>))
+          \<in> borel_measurable (?F u)"
+        by (intro borel_measurable_diff borel_measurable_power Xum z)
+      then show ?thesis by simp
+    qed
+    then show ?thesis by (rule SFS.cond_exp_F_meas[OF Ai[OF uv(1)]])
+  qed
+  have Xusq: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X u \<omega>)\<^sup>2) \<omega> = (?X u \<omega>)\<^sup>2"
+    by (rule SFS.cond_exp_F_meas[OF Xsqi[OF uv(1)]])
+      (use Xum in \<open>simp add: borel_measurable_power\<close>)
+  \<comment> \<open>expand the square and assemble\<close>
+  have expand: "(\<lambda>\<omega>. (?X v \<omega> - ?X u \<omega>)\<^sup>2)
+      = (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>) + (?X u \<omega>)\<^sup>2)"
+    by (rule ext) (simp add: power2_diff mult.commute)
+  have lhs: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega> - ?X u \<omega>)\<^sup>2) \<omega>
+      = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega>
+        - 2 * (?X u \<omega>)\<^sup>2 + (?X u \<omega>)\<^sup>2"
+  proof -
+    have i1: "integrable Q (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>))"
+      by (intro Bochner_Integration.integrable_diff Xsqi[OF v0]
+          integrable_mult_right prodb[OF uv(1) v0])
+    have "AE \<omega> in Q. cond_exp Q (?F u)
+        (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>) + (?X u \<omega>)\<^sup>2) \<omega>
+        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>
+          + cond_exp Q (?F u) (\<lambda>\<omega>. (?X u \<omega>)\<^sup>2) \<omega>"
+      by (rule SFS.cond_exp_add[OF i1 Xsqi[OF uv(1)]])
+    moreover have "AE \<omega> in Q.
+        cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>
+        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega>
+          - cond_exp Q (?F u) (\<lambda>\<omega>. 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>"
+      by (rule SFS.cond_exp_diff[OF Xsqi[OF v0]
+            integrable_mult_right[OF prodb[OF uv(1) v0]]])
+    moreover have "AE \<omega> in Q.
+        cond_exp Q (?F u) (\<lambda>\<omega>. 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>
+        = 2 * cond_exp Q (?F u) (\<lambda>\<omega>. ?X u \<omega> * ?X v \<omega>) \<omega>"
+      using SFS.cond_exp_scaleR_right
+        [OF prodb[OF uv(1) v0], where c = 2] by simp
+    ultimately show ?thesis using cross Xusq unfolding expand
+      by eventually_elim simp
+  qed
+  have rhs: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. ?A v \<omega> - ?A u \<omega>) \<omega>
+      = cond_exp Q (?F u) (?A v) \<omega> - ?A u \<omega>"
+  proof -
+    have "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. ?A v \<omega> - ?A u \<omega>) \<omega>
+        = cond_exp Q (?F u) (?A v) \<omega> - cond_exp Q (?F u) (?A u) \<omega>"
+      by (rule SFS.cond_exp_diff[OF Ai[OF v0] Ai[OF uv(1)]])
+    then show ?thesis using Ameas by eventually_elim simp
+  qed
+  from lhs zsplit rhs show ?thesis
+    unfolding pcoord_def[symmetric] by eventually_elim simp
+qed
+
 end
