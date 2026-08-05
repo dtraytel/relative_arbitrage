@@ -17,13 +17,14 @@
            This theory sits downstream of BOTH Paper_Class and the
            market stack, so that neither has to import the other.
 
-  STATUS:  *** NOT PIDE-VERIFIED. ***  Registering this NEW theory in
-           ROOT wedged the running PIDE session: the server snapshots
-           ROOT at startup, so afterwards every theory in the project
-           reports "Malformed theory".  Reverting the ROOT edit does
-           NOT recover the session -- a server restart is required.
-           The content below is therefore written but unchecked; verify
-           it first after the next restart, before extending it.
+  STATUS:  PIDE-verified (79 commands, overall_status ok).
+
+           HISTORY: registering this NEW theory in ROOT wedged the
+           running PIDE session -- the server snapshots ROOT at startup,
+           so afterwards every theory reported "Malformed theory", and
+           reverting the ROOT edit did NOT recover it.  A restart was
+           required.  To add a theory mid-session, prefer adding an
+           import to an existing theory instead.
 *)
 
 theory Paper_Bridge
@@ -38,7 +39,7 @@ text \<open>The locale's volatility hypotheses are stated as three separate
   times, which is the shape \<open>paper_pair_class\<close> asks for.\<close>
 
 theorem stopped_market_acont_in_sconstraint:
-  fixes acov :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite^'n"
+  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
   assumes SM: "stopped_market k L K x0 M F X acov tau"
   shows "AE \<omega> in M. \<forall>s. 0 \<le> s
       \<longrightarrow> acont (\<lambda>u. acov u \<omega>) (tau \<omega>) s \<in> sconstraint k L"
@@ -77,7 +78,7 @@ text \<open>In particular the continued volatility of a market witness never
   exists to repair.\<close>
 
 corollary stopped_market_acov_leaves_sconstraint:
-  fixes acov :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite^'n"
+  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
   assumes SM: "stopped_market k L K x0 M F X acov tau"
     and s: "\<omega> \<in> space M" "tau \<omega> < s"
   shows "acov s \<omega> = 0"
