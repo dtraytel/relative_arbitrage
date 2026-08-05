@@ -182,6 +182,68 @@ proof -
   qed
 qed
 
+section \<open>The witness satisfies the class's covariation condition\<close>
+
+text \<open>The payoff of the volatility side of the bridge.  For a market
+  witness, the CONTINUED running covariation \<open>Yint (acont \<dots>)\<close> has all its
+  difference quotients in the constraint set, almost surely — which is
+  verbatim the covariation clause of \<open>paper_pair_class\<close>, with no stopping
+  caveat, exactly as (1.7) requires.  The witness's OWN covariation does
+  not have this property (\<open>stopped_market_acov_leaves_sconstraint\<close>); the
+  continuation is what repairs it, and by (1.8) it costs nothing, since
+  \<open>\<tau>\<^sub>K\<close> only sees the path up to the first exit from \<open>K\<close>.\<close>
+
+theorem stopped_market_Yint_diffquot_in_sconstraint:
+  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
+  assumes SM: "stopped_market k L K x0 M F X acov tau"
+    and meas: "AE \<omega> in M. (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
+        \<in> borel_measurable lborel"
+    and st: "0 \<le> s" "s < t"
+  shows "AE \<omega> in M.
+      (1 / (t - s)) *\<^sub>R (Yint (acont (\<lambda>r. acov r \<omega>) (tau \<omega>)) t
+          - Yint (acont (\<lambda>r. acov r \<omega>) (tau \<omega>)) s) \<in> sconstraint k L"
+proof -
+  from SM have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
+    unfolding stopped_market_def by blast
+  interpret SV: sufficiently_volatile_market M F X acov k L K x0 tau
+    by (rule svm)
+  have L1: "1 \<le> L" by (rule SV.L_ge)
+  have i1: "AE \<omega> in M.
+      set_integrable lborel {0..s} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
+    by (rule stopped_market_acont_integrable[OF SM meas]) (use st in auto)
+  have i2: "AE \<omega> in M.
+      set_integrable lborel {s..t} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
+    using st by (intro stopped_market_acont_integrable[OF SM meas]) auto
+  show ?thesis
+    using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub i1 i2
+  proof eventually_elim
+    case (elim \<omega>)
+    then have pd: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
+      and lb: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega>
+          \<Longrightarrow> eigen_lb (acov u \<omega>) (CARD('n) - k)"
+      and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
+      and j1: "set_integrable lborel {0..s} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
+      and j2: "set_integrable lborel {s..t} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
+      by blast+
+    have sv: "acov u \<omega> \<in> suff_volatile k" if "0 \<le> u" "u \<le> tau \<omega>" for u
+      unfolding suff_volatile_def using pd[OF that] lb[OF that] by simp
+    show ?case
+    proof (rule Yint_diffquot_in_sconstraint)
+      show "1 \<le> L" by (rule L1)
+      show "0 \<le> s" by (rule st(1))
+      show "s < t" by (rule st(2))
+      show "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> acov u \<omega> \<in> suff_volatile k"
+        by (rule sv)
+      show "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
+        by (rule ub)
+      show "set_integrable lborel {0..s} (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
+        by (rule j1)
+      show "set_integrable lborel {s..t} (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
+        by (rule j2)
+    qed
+  qed
+qed
+
 corollary stopped_market_acov_leaves_sconstraint:
   fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
   assumes SM: "stopped_market k L K x0 M F X acov tau"
