@@ -476,6 +476,23 @@ CONSEQUENCES, and they are decisions, not options:
    and recovering the density by Lebesgue differentiation (NC-4) is the
    faithful encoding, not a convenience.
 
+**SESSION WEDGED 2026-08-05 — READ BEFORE RESUMING.**  `Paper_Bridge.thy`
+(new, downstream of BOTH `Paper_Class` and `Section_2_Usc`) was written
+and registered in `ROOT`; registering a NEW theory mid-session wedges
+the PIDE server, which snapshots `ROOT` at startup.  Every theory then
+reports "Malformed theory", INCLUDING already-green ones, and reverting
+the `ROOT` edit does NOT recover it.  A server restart is required.
+
+FIRST ACTION AFTER RESTART: load `Paper_Bridge.thy` and check
+`stopped_market_acont_in_sconstraint` — it is committed but NOT
+PIDE-verified.  Then re-confirm `Paper_Class` (2,002) and
+`Exit_Semicontinuity` (2,676), whose reported failures were artifacts.
+
+LESSON (also in memory `isabelle-pide-stale-root`): do NOT register a
+new theory in `ROOT` mid-session.  If new material needs imports an
+existing theory lacks, ADD THE IMPORT to that existing theory — editing
+an existing `imports` line works fine in-session.
+
 STILL OPEN in NC-2/3: instantiating the X-side
 estimate at the pair laws (`path_law_holder_ball_bound_vec` into
 `pair_holder_charge_split` and `tight_on_set_pair_holder_charge`), and
