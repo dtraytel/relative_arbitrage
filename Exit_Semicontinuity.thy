@@ -936,6 +936,7 @@ proof -
       using wc' by (intro pstep_integrable[OF T0 K]) auto
     have int_e: "integrable \<Lambda> (\<lambda>f. exp (- l * pexit T K f))"
       using wc' by (intro exp_int) auto
+    have fm\<Lambda>: "finite_measure \<Lambda>" using wc' by blast
     have up: "?E \<Lambda> \<le> (\<integral>f. pstep T K l N f \<partial>\<Lambda>)
         + (1 - exp (- l * (T / real N))) * measure \<Lambda> (space \<Lambda>)"
     proof -
@@ -943,12 +944,12 @@ proof -
           + (1 - exp (- l * (T / real N))) \<partial>\<Lambda>)"
         by (intro Bochner_Integration.integral_mono int_e
             Bochner_Integration.integrable_add int_pstep
-            integrable_const)
-          (simp add: sand[THEN conjunct2])
+            finite_measure.integrable_const[OF fm\<Lambda>])
+          (use sand in simp)
       also have "\<dots> = (\<integral>f. pstep T K l N f \<partial>\<Lambda>)
           + (1 - exp (- l * (T / real N))) * measure \<Lambda> (space \<Lambda>)"
         by (subst Bochner_Integration.integral_add
-            [OF int_pstep integrable_const])
+            [OF int_pstep finite_measure.integrable_const[OF fm\<Lambda>]])
           (simp add: mult.commute)
       finally show ?thesis .
     qed
@@ -965,7 +966,7 @@ proof -
       show ?case
         by (intro ereal_less_eq(3)[THEN iffD2]
             Bochner_Integration.integral_mono i1 i2)
-          (simp add: sand[THEN conjunct1])
+          (use sand in simp)
     qed
     have "ereal (?E \<Lambda> - (1 - exp (- l * (T / real N)))
         * measure \<Lambda> (space \<Lambda>)) \<le> ereal (\<integral>f. pstep T K l N f \<partial>\<Lambda>)"
@@ -1030,7 +1031,6 @@ theorem ess_inf_pexit_usc:
       \<le> ess_inf_time \<Lambda> (pexit T K)"
 proof -
   let ?m = "path_metric T :: (real \<Rightarrow> 'b) metric"
-  let ?E = "\<lambda>M. (\<integral>f. exp (- l * pexit T K f) \<partial>M)" for l :: real
   have T0: "0 \<le> T" using T by simp
   have wc': "(\<forall>\<^sub>F i in sequentially. sets (\<Lambda>i i)
         = sets (borel_of (mtopology_of ?m)) \<and> finite_measure (\<Lambda>i i))
@@ -1062,7 +1062,7 @@ proof -
           exp_neg_time_integrable[OF prob pm\<Lambda>
             pexit_nonneg[OF T0] less_imp_le[OF l]])
         (use pexit_nonneg[OF T0] l in
-          \<open>auto simp: exp_le_one_iff mult_nonneg_nonneg\<close>)
+          \<open>auto simp: exp_le_one_iff intro!: mult_nonneg_nonneg\<close>)
     then show ?thesis by (simp add: prob_space)
   qed
   have flnn: "0 \<le> - (1 / l) * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)"
@@ -1073,7 +1073,7 @@ proof -
       by (simp add: ln_le_cancel_iff)
     then have "ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) \<le> 0" by simp
     then show ?thesis
-      using l by (simp add: mult_nonneg_nonpos2 divide_nonneg_pos)
+      using l by (simp add: divide_nonpos_pos)
   qed
   have step: "Limsup sequentially
       (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
@@ -1099,7 +1099,7 @@ proof -
       have "ereal ((\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>))
           < Liminf sequentially
             (\<lambda>i. ereal (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i)))"
-        using shrink lower by (simp add: less_le_trans)
+        by (rule less_le_trans[OF _ lower]) (use shrink in simp)
       then have "\<forall>\<^sub>F i in sequentially.
           ereal ((\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>))
           < ereal (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
