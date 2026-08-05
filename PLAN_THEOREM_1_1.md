@@ -348,7 +348,7 @@ genuine obstruction to it was found today (see BLOCKER below).
 | NC-4 | density recovery `dY/dt ∈ S` a.e. | **DONE** |
 | NC-5 | value-side usc of the essinf | **DONE** |
 
-`Paper_Class.thy` is PIDE-green (1,826 commands, `overall_status ok`).
+`Paper_Class.thy` is PIDE-green (1,906 commands, `overall_status ok`).
 In ROOT after `Exit_Semicontinuity`; imports `Path_Space`,
 `Path_Tightness`, `Exit_Semicontinuity`, `Poincare_Separation` and
 `Relative_Arbitrage_Comparison` (the last two deterministic-side, no
@@ -412,6 +412,15 @@ cycle).  What it carries:
   `psd_mat_1`, `Pi_proj_mat_1`, `sconstraint_nonempty`.  This is the
   matrix the faithful bridge continues a stopped witness with; `L ≥ 1`
   is exactly what makes it available.
+
+- **The continuation construction (the faithful bridge's volatility
+  side) — DONE.**  `acont a tv s = (if s ≤ tv then a s else mat 1)`,
+  with `acont_in_sconstraint` (S-valued for EVERY `s ≥ 0`: before `tv`
+  by `suff_volatile_cap_in_sconstraint`, after `tv` by
+  `mat_1_in_sconstraint` — this is where `L ≥ 1` is used) and
+  `diffquot_of_continued_density` (hence every difference quotient of
+  the continued running covariation lies in `S`, for all `0 ≤ s < t`
+  with NO stopping caveat, exactly as (1.7) demands).
 
 **THE WITNESS/CLASS MISMATCH — RESOLVED FROM THE SOURCE 2026-08-05.**
 Re-read of arXiv:2512.17702 p. 3, definitions (1.6)–(1.8), settles it:
