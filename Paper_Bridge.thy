@@ -1624,4 +1624,83 @@ proof -
   then show ?thesis by (simp add: dist_real_def)
 qed
 
+subsection \<open>Optional stopping at the localizing time\<close>
+
+text \<open>\<open>Optional_Sampling.optional_stopping\<close> asks for an INTEGRABLE ENVELOPE
+  of the unstopped process --- the one thing the market locale could not
+  supply, and the reason the plan long recorded optional stopping as out of
+  reach here.  For a class member it IS available:
+  \<open>Doob_Inequality.horizon_sq_int_martingale\<close> builds \<open>Dsup\<close> from Doob's
+  \<open>L\<^sup>2\<close> inequality out of nothing but square-integrability, which
+  \<open>paper_pair_class_sq_integrable\<close> provides.\<close>
+
+theorem paper_pair_class_stopped_coord_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>v \<omega>. pcoord T i (min v (ploc T i R \<omega>)) \<omega>)"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+  have T0: "0 \<le> T" using T by simp
+  have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have mg: "martingale Q ?F 0 (pcoord T i)"
+    unfolding pcoord_def by (rule paper_pair_class_coord_martingale[OF Q])
+  have sq: "integrable Q (\<lambda>\<omega>. (pcoord T i s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
+    unfolding pcoord_def
+    using T0 s by (intro paper_pair_class_sq_integrable[OF T0 L Q]) simp
+  have adp: "adapted_process Q ?F 0 (pcoord T i)"
+    unfolding pcoord_def by (rule paper_pair_class_coord_adapted[OF Q])
+  have cont0: "continuous_on {0..} (\<lambda>s. pcoord T i s \<omega>)"
+    if w: "\<omega> \<in> space Q" for \<omega>
+    unfolding pcoord_def
+    by (rule paper_pair_class_coord_paths_cont[OF T0 setsQ w])
+  have contu: "continuous_on {0..u} (\<lambda>s. pcoord T i s \<omega>)"
+    if w: "\<omega> \<in> space Q" for \<omega> u
+    by (rule continuous_on_subset[OF cont0[OF w]]) auto
+  have lnn: "0 \<le> ploc T i R \<omega>" for \<omega> by (rule ploc_nonneg[OF T0])
+  interpret HM: horizon_sq_int_martingale Q ?F "pcoord T i" T
+    by (intro horizon_sq_int_martingale.intro
+        horizon_sq_int_martingale_axioms.intro mg T prob sq)
+  have domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    by (rule HM.Dsup_dominates) (intro AE_I2 contu)
+  \<comment> \<open>past the horizon the process no longer moves, so the envelope built at
+      \<open>T\<close> dominates it at every later time as well.\<close>
+  have domA: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    for u
+    using domT
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume h: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    show "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    proof (intro allI impI)
+      fix s :: real assume s: "0 \<le> s"
+      have "pcoord T i s \<omega> = pcoord T i (min s T) \<omega>"
+        unfolding pcoord_def by simp
+      moreover have "\<bar>pcoord T i (min s T) \<omega>\<bar> \<le> HM.Dsup \<omega>"
+        using h s T0 by simp
+      ultimately show "\<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>" by simp
+    qed
+  qed
+  show ?thesis
+  proof (rule optional_stopping[where D = "\<lambda>_. HM.Dsup"])
+    show "martingale Q ?F 0 (pcoord T i)" by (rule mg)
+    show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> ploc T i R \<omega>" by (rule lnn)
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space Q. ploc T i R \<omega> \<le> s} \<in> sets (?F s)"
+      by (rule paper_pair_class_ploc_stopping[OF T0 setsQ Q])
+    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. continuous_on {0..u} (\<lambda>s. pcoord T i s \<omega>)"
+      by (intro AE_I2 contu)
+    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q.
+        \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+      by (rule domA)
+    show "\<And>u. 0 < u \<Longrightarrow> integrable Q HM.Dsup" by (rule HM.Dsup_integrable)
+    show "\<And>v. 0 \<le> v \<Longrightarrow> (\<lambda>\<omega>. pcoord T i (min v (ploc T i R \<omega>)) \<omega>)
+        \<in> borel_measurable (?F v)"
+      by (rule stopped_adapted_of_cont
+          [OF adp lnn paper_pair_class_ploc_stopping[OF T0 setsQ Q] cont0])
+  qed
+qed
+
 end
