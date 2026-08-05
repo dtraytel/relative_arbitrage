@@ -1269,8 +1269,9 @@ proof -
     show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> ?tau \<omega> \<longrightarrow>
         eigen_ub (?acov s \<omega>) L"
       using eub by (intro AE_I2) auto
-    show "AE \<omega> in ?M. (\<lambda>s. ?acov s \<omega>) \<in> borel_measurable lborel"
-      by (intro AE_I2 measurable_If) auto
+    show "AE \<omega> in ?M. set_borel_measurable lborel {0..} (\<lambda>s. ?acov s \<omega>)"
+      unfolding set_borel_measurable_def
+      by (intro AE_I2 borel_measurable_scaleR measurable_If) auto
     show "AE \<omega> in ?M. \<forall>t. 0 \<le> t \<longrightarrow>
         set_integrable lborel {0..t} (\<lambda>s. trace (?acov s \<omega>))"
     proof (intro AE_I2 allI impI)
@@ -1568,7 +1569,7 @@ proof -
     show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow>
         eigen_ub (acov s \<omega>) L"
       by (rule sv.acov_eigen_ub)
-    show "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+    show "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
       by (rule sv.acov_time_measurable)
     show "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
         set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"

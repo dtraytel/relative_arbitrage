@@ -75,7 +75,7 @@ locale ito_volatile_market =
     and acov_eigen_ub:
       "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> eigen_ub (acov s \<omega>) L"
     and acov_time_measurable:
-      "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+      "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
     and acov_trace_integrable:
       "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
          set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
@@ -236,7 +236,7 @@ proof -
       by (rule acov_eigen_lb)
     show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> eigen_ub (acov s \<omega>) L"
       by (rule acov_eigen_ub)
-    show "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+    show "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
       by (rule acov_time_measurable)
     show "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
         set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
@@ -360,7 +360,7 @@ locale ito_stopped_market =
     and acov_eigen_ub:
       "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> eigen_ub (acov s \<omega>) L"
     and acov_time_measurable:
-      "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+      "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
     and acov_trace_integrable:
       "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
          set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
@@ -548,7 +548,7 @@ proof -
       by (rule acov_eigen_lb)
     show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> eigen_ub (acov s \<omega>) L"
       by (rule acov_eigen_ub)
-    show "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+    show "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
       by (rule acov_time_measurable)
     show "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
         set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
@@ -606,7 +606,7 @@ locale ito_const_horizon_market =
     and acov_eigen_ub:
       "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> eigen_ub (acov s \<omega>) L"
     and acov_time_measurable:
-      "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+      "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
     and acov_trace_integrable:
       "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
          set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
@@ -727,7 +727,7 @@ proof -
       by (rule acov_eigen_lb)
     show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> c \<longrightarrow> eigen_ub (acov s \<omega>) L"
       by (rule acov_eigen_ub)
-    show "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+    show "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
       by (rule acov_time_measurable)
     show "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
         set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"

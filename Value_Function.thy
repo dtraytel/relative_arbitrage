@@ -403,7 +403,7 @@ proof -
       by (rule sv.acov_eigen_lb)
     show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> eigen_ub (acov s \<omega>) L"
       by (rule sv.acov_eigen_ub)
-    show "AE \<omega> in M. (\<lambda>s. acov s \<omega>) \<in> borel_measurable lborel"
+    show "AE \<omega> in M. set_borel_measurable lborel {0..} (\<lambda>s. acov s \<omega>)"
       by (rule sv.acov_time_measurable)
     show "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
         set_integrable lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"

@@ -343,6 +343,9 @@ proof (intro sufficiently_volatile_market.intro
   show "AE \<omega> in ?M. (\<lambda>s :: real. mat 1 :: real^'n^'n)
       \<in> borel_measurable lborel"
     by (intro AE_I2) simp
+  show "AE \<omega> in ?M. set_borel_measurable lborel {0..}
+      (\<lambda>s :: real. mat 1 :: real^'n^'n)"
+    unfolding set_borel_measurable_def by (intro AE_I2) simp
   show "AE \<omega> in ?M. \<forall>t :: real. 0 \<le> t \<longrightarrow>
       set_integrable lborel {0..t} (\<lambda>s. trace (mat 1 :: real^'n^'n))"
     using ti by (intro AE_I2) blast
@@ -546,6 +549,9 @@ proof (intro ito_const_horizon_market.intro
   show "AE \<omega> in ?M. (\<lambda>s :: real. mat 1 :: real^'n^'n)
       \<in> borel_measurable lborel"
     by (intro AE_I2) simp
+  show "AE \<omega> in ?M. set_borel_measurable lborel {0..}
+      (\<lambda>s :: real. mat 1 :: real^'n^'n)"
+    unfolding set_borel_measurable_def by (intro AE_I2) simp
   show "AE \<omega> in ?M. \<forall>t :: real. 0 \<le> t \<longrightarrow>
       set_integrable lborel {0..t} (\<lambda>s. trace (mat 1 :: real^'n^'n))"
     using ti by (intro AE_I2) blast
