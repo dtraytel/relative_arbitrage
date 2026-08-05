@@ -361,7 +361,28 @@ genuine obstruction to it was found today (see BLOCKER below).
 |---|---|---|
 | NC-1 | pair-law encoding of class (1.7) | **DONE** |
 | NC-2 | pair compactness + tightness | **criterion DONE**, instantiation open (and NOT mechanical — see below) |
-| NC-3 | limit identities without Skorokhod | **engines DONE; the two CLOSED clauses (start, covariation) are now INSTANTIATED**; the two martingale clauses open |
+| NC-3 | limit identities without Skorokhod | **engines DONE; the two CLOSED clauses (start, covariation) INSTANTIATED; the X-martingale clause carried to the limit in EVENT form (steps (i)–(iii))**; step (iv) and the second martingale clause open |
+
+**⚠ THE CLASS DEFINITION WAS VACUOUS UNTIL 2026-08-05 (commit `080bd30`).**
+Points of `mspace (path_metric T)` are EXTENSIONAL on `{0..T}`, so
+`ω u = undefined` for `u > T`. The two martingale clauses of
+`paper_pair_class` were quantified over ALL `u ≥ 0`, which therefore
+compared `X_t` with the conditional expectation of the CONSTANT
+`fst undefined` and forced the coordinate process to be a.s. constant;
+together with the covariation clause (which excludes a vanishing `Y`,
+since `0 ∉ sconstraint k L` for `k < n`) that makes the class EMPTY for
+every `T > 0`, and every theorem about it vacuous. The clauses now stop
+the process at `T` (`fst (ω (min t T))`, `outerp (fst (ω (min t T))) −
+snd (ω (min t T))`), saying exactly what (1.7) says on `[0,T]` and
+nothing beyond. The FILTRATION needs no cap — evaluations past `T` are
+constant maps and generate nothing.
+
+**LESSON, and it generalises:** on the CAPPED path space every statement
+quantified over unbounded time is a trap. Before proving anything about a
+new class of path laws, prove (or at least sanity-check) that it is
+NONEMPTY — the Brownian pair law with `Y t = t · mat 1` is the obvious
+witness and is still not formalised. That check would have caught this
+immediately.
 | NC-4 | density recovery `dY/dt ∈ S` a.e. | **DONE** |
 | NC-5 | value-side usc of the essinf | **DONE** |
 
@@ -397,6 +418,72 @@ clauses of (1.7) that are closed conditions on a single path:
   neither stopped nor confined, so square integrability CANNOT come from a
   uniform bound on `X`; it comes from the `outerp X − Y` martingale clause
   plus the bounded `Y`.
+
+**NC-3, THE X-MARTINGALE CLAUSE THROUGH THE WEAK LIMIT — steps (i)–(iii)
+DONE 2026-08-05** (commits `6502c11`, `754edd9`, `ac1ca9b`, `512a989`,
+`99a0be1`; all in `Paper_Bridge.thy`, which is where the class and the
+Section-2 law machinery are both in scope). The four-step route and where
+it stands:
+
+- **(i) the identity at a member** — `paper_pair_class_martingale_test`:
+  `E[h(restrict ω {0..s})·(X_t$i − X_s$i)] = 0` for bounded Borel `h`, via
+  `Section_2_Usc.martingale_bounded_test`. The enabling step is
+  `restrict_measurable_natural_filtration`: the non-trivial inclusion
+  `σ(restriction to [0,s]) ⊆ 𝔉_s` is EXACTLY what
+  `Path_Space.pathify_measurable` proves — the restriction map IS the path
+  map of the coordinate process on `{0..s}`, and that theorem reduces a
+  ball of the path metric to countably many evaluation conditions. Also
+  `martingale_bounded_linear_image` / `martingale_vec_nth` /
+  `martingale_mat_nth` (Paper_Class): a bounded linear map carries a
+  martingale to a martingale, proved through the set-integral
+  characterisation so that no conditional expectation has to be moved.
+- **(ii) through the weak limit** —
+  `paper_pair_class_martingale_test_limit`. This is where the paper uses
+  Skorokhod; we use `weak_conv_integral_of_L2_bound` fed by the class's
+  uniform second moment. The integrand is continuous but UNBOUNDED (no
+  clamp is available: the paper's processes are neither stopped nor
+  confined), so all fifteen hypotheses are discharged from one input, the
+  `L²` bound, in nn-integral form so that `weak_conv_on_nn_integral_le`
+  carries it to the limit without presupposing anything there
+  (`paper_pair_class_sq_nn_bound`, `pair_law_limit_sq_nn_bound`,
+  `pair_test_integrable`, `pair_test_sq_bound`, plus the generic
+  `clamp_integrable` / `tail_integrable`).
+- **(iii) continuous tests → past events** —
+  `paper_pair_class_martingale_event_limit`: the same identity against
+  `1_B(restrict ω {0..s})` for EVERY Borel past event `B`. Positive and
+  negative parts of the increment are pushed through the restriction map
+  as densities; step (ii) says the two image measures integrate every
+  bounded continuous function alike, and
+  `Section_2_Usc.metric_measure_eqI_bounded_cts` makes them EQUAL. Wrinkle
+  handled: that engine supplies tests bounded only on the TOPSPACE while
+  step (ii) wants a global bound — compose with `Section_2_Usc.rclamp`.
+  Unlike the confined market laws the density is only INTEGRABLE, not
+  bounded, so finiteness of the pushforwards comes from
+  `nn_integral_eq_integral`.
+- **(iv) reassemble — OPEN.** Feed step (iii) into
+  `sigma_finite_filtered_measure.martingale_of_set_integral_eq`. Two
+  obligations remain: the σ-algebra step `𝔉_s ⊆ σ(restriction)` (the
+  converse of the inclusion already proved — easy direction: for `u ≤ s`,
+  `ω u = ev_u (restrict ω {0..s})` and `ev_u` is continuous on the
+  `s`-path space, so the preimage σ-algebra contains all generators), and
+  the locale obligations (`stochastic_process` for the coordinate process
+  — note evaluations past `T` are constant on the space, so measurable —
+  then `finite_filtered_measure_natural_filtration`).
+
+**THE SECOND MARTINGALE CLAUSE IS BLOCKED ON A FOURTH MOMENT, and it is
+the SAME obstruction as NC-2's tightness.** Carrying
+`outerp X − Y` through the weak limit needs an `L²` bound on
+`(outerp X)$i$j = X_i X_j`, i.e. a uniform FOURTH-moment bound on `X`
+under the class. The repo's supplier
+`Increment_Moments.fourth_moment_bound_bounded` assumes a uniform sup
+bound on the process, true for confined market witnesses and false for
+class members. Two ways out, both real work: generalise that theorem to
+replace the sup bound by an `L⁴`-integrability hypothesis (its use of the
+bound is only to get `integrable M (X u ^ 4)`), and then establish `L⁴`
+for the class — which the paper gets from BDG, unavailable here; or find
+a BDG-free route to `E|X_t|⁴ < ∞` from the class's own two martingale
+clauses plus the Lipschitz `Y`. Scope this before starting either
+NC-2 or the second clause; they stand or fall together.
 
 Proof-shape notes: chaining a non-AE fact into `eventually_elim` fails with
 "RSN: no unifiers" — use `by (rule eventually_mono) (use … in auto)`;
@@ -1244,6 +1331,12 @@ the bounded alternative target is the rest of Section 4 (Theorem 4.2(b),
   discharged at both path and law level; keep it that way.
 - `real^'n × real^'n^'n` PARSES AS `real^('n × real)^'n^'n`. Use the
   `'n pairpath` type synonym.
+- **The capped path space is EXTENSIONAL.** `ω ∈ mspace (path_metric T)`
+  implies `ω u = undefined` for `u ∉ {0..T}`, so ANY clause of a path-law
+  class that quantifies over unbounded time silently talks about a
+  constant. That made `paper_pair_class` empty for a whole session (§3/NC,
+  commit `080bd30`). Every time-quantified clause must carry `≤ T` or
+  `min t T`.
 - `mkt_path_laws` pins the market sample type to `('m ⇒ real ⇒ real)`
   because HOL cannot quantify over sample-space types and `bm_paths`
   lives there. Keep new market constructions on that type.
@@ -1258,11 +1351,26 @@ needs a product construction with an independent Brownian continuation
 Finish Lemma 2.3 *inside the class* first; it needs no witnesses at all,
 half of it is now done, and it is what clause (1) actually consumes.
 
+**UPDATED 2026-08-05 (second session).** Items 1(a),(b) below are DONE and
+the whole four-step route to the martingale clauses is scripted in §3/NC;
+steps (i)–(iii) are proved, step (iv) is the next thing to write. Read the
+vacuity warning in §3/NC first — and before proving anything about a class
+of path laws, prove it NONEMPTY.
+
 In priority order:
 
+0. **`paper_pair_class` NONEMPTINESS.** Not proved, and until it is, every
+   theorem about the class is only conditionally useful. The witness is the
+   Brownian pair law with `Y t = t · mat 1` (admissible since `L ≥ 1`,
+   `mat_1_in_sconstraint`); the work is the off-diagonal covariation, i.e.
+   `X_i X_j` a martingale for `i ≠ j`, which needs the independence of the
+   Brownian coordinates. This would have caught the vacuity bug on day one.
 1. **NC-3, the martingale clauses of Lemma 2.3.** The two closed clauses
    are DONE (`paper_pair_class_start_limit`,
-   `paper_pair_class_diffquot_limit`). The route for the remaining two:
+   `paper_pair_class_diffquot_limit`); the X-clause is carried to the limit
+   in event form (steps (i)–(iii), §3/NC), and step (iv) reassembles it.
+   The SECOND clause is blocked on a uniform fourth moment — see §3/NC. The
+   route for the remaining two:
    (a) **DONE** (commit `c3434e8`) — `paper_pair_class_sq_integrable`:
    square-integrability of `X` under a class law, from `martingale.integrable`
    on the `outerp X − Y` clause plus `paper_pair_class_Y_bounded_ae`, with
