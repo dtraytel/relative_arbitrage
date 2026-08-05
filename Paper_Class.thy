@@ -847,6 +847,69 @@ proof (rule average_in_closed_convex
     by (rule acont_in_sconstraint[OF L sv ub u0])
 qed
 
+subsection \<open>The running covariation built from a continued volatility\<close>
+
+text \<open>Packaging the volatility side of the bridge: \<open>Yint a t = \<integral>₀ᵗ a\<close> starts
+  at \<open>0\<close>, has increments given by the interval integrals, and — when \<open>a\<close> is
+  the CONTINUED density — difference quotients in the constraint set for
+  every \<open>0 \<le> s < t\<close>.  That is precisely the covariation half of
+  \<open>paper_pair_class\<close>.\<close>
+
+definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
+  where "Yint a t = set_lebesgue_integral lborel {0..t} a"
+
+lemma Yint_0: "Yint a 0 = 0"
+  unfolding Yint_def set_lebesgue_integral_def
+proof (rule integral_eq_zero_AE)
+  have "AE x in lborel. x \<notin> {0 :: real}"
+    using finite_imp_null_set_lborel[of "{0 :: real}"]
+    by (simp add: AE_iff_null_sets)
+  then show "AE x in lborel. indicat_real {0..0} x *\<^sub>R a x = 0"
+    by (rule eventually_mono) auto
+qed
+
+lemma Yint_increment:
+  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes st: "0 \<le> s" "s \<le> t"
+    and i1: "set_integrable lborel {0..s} a"
+    and i2: "set_integrable lborel {s..t} a"
+  shows "Yint a t - Yint a s = set_lebesgue_integral lborel {s..t} a"
+proof -
+  have ae: "AE u in lborel. \<not> (u \<in> {0..s} \<and> u \<in> {s..t})"
+  proof -
+    have "AE u in lborel. u \<notin> {s :: real}"
+      using finite_imp_null_set_lborel[of "{s :: real}"]
+      by (simp add: AE_iff_null_sets)
+    then show ?thesis
+      by (rule eventually_mono) auto
+  qed
+  have un: "{0..s} \<union> {s..t} = {0..t}" using st by auto
+  have "Yint a t = set_lebesgue_integral lborel ({0..s} \<union> {s..t}) a"
+    unfolding Yint_def un ..
+  also have "\<dots> = set_lebesgue_integral lborel {0..s} a
+      + set_lebesgue_integral lborel {s..t} a"
+    by (rule set_integral_Un_AE[OF ae _ _ i1 i2]) auto
+  finally show ?thesis
+    unfolding Yint_def[of a s] by simp
+qed
+
+theorem Yint_diffquot_in_sconstraint:
+  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes L: "1 \<le> L" and s0: "0 \<le> s" and st: "s < t"
+    and sv: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> a u \<in> suff_volatile k"
+    and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> eigen_ub (a u) L"
+    and i1: "set_integrable lborel {0..s} (acont a tv)"
+    and i2: "set_integrable lborel {s..t} (acont a tv)"
+  shows "(1 / (t - s)) *\<^sub>R (Yint (acont a tv) t - Yint (acont a tv) s)
+      \<in> sconstraint k L"
+proof -
+  have "Yint (acont a tv) t - Yint (acont a tv) s
+      = set_lebesgue_integral lborel {s..t} (acont a tv)"
+    using st by (intro Yint_increment[OF s0 _ i1 i2]) simp
+  then show ?thesis
+    using diffquot_of_continued_density[OF L s0 st sv ub i2] by simp
+qed
+
 subsection \<open>What the class gives the tightness argument for free\<close>
 
 text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class already
