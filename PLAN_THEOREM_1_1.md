@@ -406,25 +406,45 @@ cycle).  What it carries:
   `lemma_2_1_easy`; the hard `lemma_2_1_exact` is not needed for this
   direction) and `diffquot_of_density_in_sconstraint`.
 
-**BLOCKER FOUND 2026-08-05 — the witness/class mismatch.**  The obvious
-bridge "given a `stopped_market` witness, take `Y t = ∫₀ᵗ acov`" DOES
-NOT land in `paper_pair_class`.  Reason: `stopped_market` carries
-`acov s ω = 0` for `s > tau ω` (Section_2_Usc line ~904), while
-`0 ∉ sconstraint k L` whenever `k < n` (`Pi_proj 0 m = 0 < m − k`).  So
-for an interval `[s,t]` extending past `tau`, the difference quotient
-of that `Y` is a convex combination of `S`-elements with `0`, and
-leaves `S`.  This is not a formalization artifact: the paper's class
-(1.7) has NO stopping in the dynamics — `X` is a martingale on all of
-`[0,∞)` with `d⟨X⟩/dt ∈ S` throughout, and `τ_K` is merely a functional
-of the path.  Our `stopped_market` adds stopping as a technical device.
-CONSEQUENCE: the bridge needs the witness CONTINUED past `tau` with
-some `S`-admissible volatility (any element of `S` will do — the exit
-time is unaffected once the path has left `K`), OR `paper_pair_class`
-must be restated with the constraint only up to the exit time.  Decide
-this before writing more bridge code; it changes the statement of
-NC-1's bridging obligation.
+**THE WITNESS/CLASS MISMATCH — RESOLVED FROM THE SOURCE 2026-08-05.**
+Re-read of arXiv:2512.17702 p. 3, definitions (1.6)–(1.8), settles it:
+`P_x` is the set of laws on `Ω := C([0,∞), ℝⁿ)` (Borel σ-algebra for the
+topology of LOCALLY UNIFORM CONVERGENCE) under which the coordinate
+process `X` is a martingale from `x` and BOTH constraints of (1.7) hold
+"a.e. `t ≥ 0`", almost surely.  Only THEN, separately, does (1.8) define
+`τ_K := inf{t ≥ 0 : X(t) ∉ K}`.
 
-STILL OPEN in NC-2/3 (beyond the blocker): instantiating the X-side
+CONSEQUENCES, and they are decisions, not options:
+
+1. **THE AUTHORS DO NOT STOP THE PROCESS.**  The constraint holds for
+   ALL time; `τ_K` is merely a path functional defined after the class.
+   There is no stopped member of `P_x`.  Our `stopped_market` locale is
+   OUR technical device — a stopped witness is NOT an element of the
+   paper's class, which is exactly why `Y t = ∫₀ᵗ acov` fails to land in
+   `paper_pair_class` (`acov = 0` after `tau`, and `0 ∉ sconstraint k L`
+   for `k < n`).  The faithful bridge therefore CONTINUES each witness
+   past `tau` with any `S`-admissible volatility.  This is legitimate
+   and changes nothing: by (1.8) `τ_K` depends only on the path up to
+   the first exit from `K`, so continuing after the exit leaves it
+   untouched.  DO NOT instead weaken `paper_pair_class` to constrain
+   only up to the exit time — that would be a different class from the
+   paper's.
+2. **`paper_pair_class` is right in substance**: it constrains the
+   difference quotients on the whole of `[0,T]` with no reference to
+   stopping.  Keep it that way.
+3. **The horizon cap is OURS and needs its invisibility proved.**  The
+   paper works on `C([0,∞), ℝⁿ)` with locally uniform convergence; we
+   cap at `T`.  The cap is defensible — `essinf (τ_K ∧ T) = essinf τ_K`
+   once `T` exceeds the uniform bound `r²/(n−k)` on the value (repo:
+   `ball_v_le`), so the SUPREMUM is unaffected — but that argument must
+   be written down.  It is the cap-invisibility obligation already
+   recorded, now with a precise justification.
+4. The constraint is on `d⟨X_i,X_j⟩/dt`, i.e. the DENSITY must exist
+   a.e. — which is why carrying `⟨X⟩` as a Lipschitz second component
+   and recovering the density by Lebesgue differentiation (NC-4) is the
+   faithful encoding, not a convenience.
+
+STILL OPEN in NC-2/3: instantiating the X-side
 estimate at the pair laws (`path_law_holder_ball_bound_vec` into
 `pair_holder_charge_split` and `tight_on_set_pair_holder_charge`), and
 instantiating `weak_conv_integral_of_L2_bound` with the class's own
