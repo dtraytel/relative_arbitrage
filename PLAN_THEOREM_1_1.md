@@ -333,17 +333,49 @@ a.e.-differentiability + FTC give `dY∞/dt ∈ S` a.e.
   closedness machinery).  Our `stopped_val_fn_ball_eq_2d` is the
   `n = 2` instance.
 
-**NC-1 DEFINITIONAL LAYER WRITTEN (Paper_Class.thy, in ROOT after
-Exit_Semicontinuity; PIDE-verify after restart):** `sconstraint k L =
-Pi_constraint k ∩ {eigen_ub · L}` (constants from
-`Relative_Arbitrage_Convexity`; `lemma_2_1_exact` identifies the hull),
-`outerp`, `paper_pair_class k L T x` (prob path laws of the pair
-(X, Y): start `(x, 0)` a.s., difference quotients of `Y` in
-`sconstraint` a.s., `X` and `outerp X − Y` martingales w.r.t. the pair
-natural filtration), `paper_v k L T K x = Sup (essinf pexit ∘ fst)` —
-Eq. (1.6) capped at `T`.  BRIDGING OBLIGATIONS recorded in the file:
-cap-invisibility for large `T` (Lemma 1.9/(3.10)), compactness of
-`sconstraint`, and the equivalence with `stopped_market` witnesses.
+**`Paper_Class.thy` IS PIDE-GREEN (485 commands, commits `382be79`,
+`32a23ef`).**  In ROOT after `Exit_Semicontinuity`; imports
+`Path_Space`, `Exit_Semicontinuity`, `Poincare_Separation` and
+`Relative_Arbitrage_Comparison` (both deterministic-side, no cycle).
+It carries:
+
+- **NC-1 definitional layer.**  `type_synonym 'n pairpath =
+  real ⇒ (real^'n) × (real^'n^'n)` — NOTE `real^'n × real^'n^'n`
+  PARSES AS `real^('n × real)^'n^'n`, which is why the synonym exists.
+  `sconstraint k L = Pi_constraint k ∩ {a. eigen_ub a L}` (constants
+  from `Relative_Arbitrage_Convexity`; `lemma_2_1_exact` identifies the
+  hull), `outerp`, `paper_pair_class k L T x` (probability path laws of
+  the pair (X, Y): start `(x, 0)` a.s., difference quotients of `Y` in
+  `sconstraint` a.s., `X` and `outerp X − Y` martingales for the pair
+  natural filtration), `paper_v k L T K x = Sup (essinf pexit ∘ fst)` —
+  Eq. (1.6) capped at `T`.
+- **NC-2, deterministic half: `S` IS COMPACT CONVEX.**
+  `sconstraint_convex` (`Pi_constraint_convex` + `convex_eigen_ub`),
+  `closed_sconstraint` (via `closed_Pi_constraint`, which rests on
+  `Pi_proj_ge_iff`: on the psd cone `c ≤ Pi_proj a m` is EXACTLY the
+  family of linear inequalities `c ≤ trace (a ** P)` over rank-`m`
+  projections, so `Pi_constraint` is an intersection of closed
+  half-spaces), `bounded_sconstraint` / `compact_sconstraint` (psd +
+  the cap bound every entry by `L`: `psd_eigen_ub_diag`,
+  `psd_eigen_ub_entry_abs_le`).
+- **NC-3, the Skorokhod replacement.**  `Exit_Semicontinuity` now also
+  exports the CLOSED half of the path-space portmanteau theorem —
+  `weak_conv_closed_limsup` and `weak_conv_closed_full_mass` (a closed
+  set of full mass under every approximating probability law has full
+  mass in the limit).  On top of them:
+  `continuous_map_diffquot` (for fixed `s, t ∈ [0,T]` the difference
+  quotient is continuous on paths), `closedin_diffquot_constraint`
+  (its preimage of `S` is closed), and
+  `diffquot_constraint_weak_limit` — a difference-quotient constraint
+  holding a.s. under every approximating law holds a.s. under the weak
+  limit.
+
+STILL OPEN in NC-2/3: the pair TIGHTNESS (Y-side Arzelà–Ascoli from the
+deterministic Lipschitz modulus, then product tightness), the extension
+from rational to all real `s < t` by path continuity, and the two
+martingale identities in the limit (§2.6 engines).  BRIDGING
+OBLIGATIONS still recorded: cap-invisibility for large `T`
+(Lemma 1.9/(3.10)) and the equivalence with `stopped_market` witnesses.
 
 Faithful decomposition (statuses of ingredients in brackets):
 
