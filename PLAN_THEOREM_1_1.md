@@ -408,11 +408,26 @@ It carries:
   `diffquot_lipschitz`, the only remaining content is the `X`-side
   estimate, which is `Path_Tightness.path_law_holder_ball_bound_vec`.
 
+- **NC-3, martingale identities through the limit — the L² bridge.**
+  The class's integrated identities (`E[Z·(X⇩t − X⇩s)] = 0` for a bounded
+  continuous past test `Z`, and its covariation analogue) integrate
+  CONTINUOUS but UNBOUNDED path functionals, so plain weak convergence
+  does not transfer them.  `Path_Tightness.weak_conv_on_integral_unif_integrable`
+  closes that gap given uniform integrability; the moment machinery
+  produces a uniform L² bound, and `unif_integrable_of_L2_bound` turns
+  one into the other (Chebyshev–Markov, `R = (C+1)/e`).  Packaged as
+  `weak_conv_integral_of_L2_bound`: a continuous path functional with a
+  uniform second moment has its integral pass to the weak limit.
+  Instantiate at `f = Z·((X⇩t − X⇩s) ∙ e⇩j)` for the martingale identity
+  and at the squared increment for the covariation one.
+
 STILL OPEN in NC-2/3: instantiating the X-side estimate at the pair
 laws (mechanical: feed `path_law_holder_ball_bound_vec` into
 `pair_holder_charge_split` and `tight_on_set_pair_holder_charge`), and
-the two limit MARTINGALE identities (§2.6 engines
-`metric_measure_eqI_bounded_cts` / `..._mono_bounded_cts`).  BRIDGING
+instantiating `weak_conv_integral_of_L2_bound` at the pair laws with
+the class's own second-moment bound (the §2.6 market-level cores
+`martingale_bounded_test` / `coord_sq_bounded_test` supply the
+identities on members).  BRIDGING
 OBLIGATIONS still recorded: cap-invisibility for large `T`
 (Lemma 1.9/(3.10)) and the equivalence with `stopped_market`
 witnesses.
