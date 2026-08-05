@@ -513,7 +513,32 @@ WHAT REMAINS for the bridge: the MARTINGALE side — `X` and
 then the pair-law construction itself (pushforward of `(X, Y)` to the
 pair path space), after which NC-2/3's engines can be instantiated.
 
-**GAP FOUND IN THE MARKET LOCALE (2026-08-05).**  That lemma needs
+**LOCALE UPGRADED (2026-08-05, commit `6125a9a`) — the gap below is
+CLOSED in the locale, verification of two sites pending.**
+`sufficiently_volatile_market` now carries
+`acov_time_measurable: AE ω in M. (λs. acov s ω) ∈ borel_measurable
+lborel`.  Faithful, not a strengthening: the paper's (1.7) constrains
+`d⟨X⇩i,X⇩j⟩(t)/dt`, an a.e. derivative of a continuous
+finite-variation function, whose time-measurability is automatic; our
+locale takes `acov` as primitive so it must be stated.  Six discharge
+sites: `Ito_Market` ×2 (mirrored as a sub-locale assumption),
+`Value_Function`, `Section_2_Usc` ×2 (inherited / `measurable_If` for
+the degenerate market) — ALL FOUR VERIFIED; `Brownian_Continuous`
+(constant `mat 1`) and `Deterministic_Radius_Market` (new `dra_cont`
++ `dras_measurable_time`, by the `drC2_cont` route) — WRITTEN, NOT YET
+PIDE-CHECKED, see below.  Once checked, drop the `meas` hypothesis
+from `Paper_Bridge.stopped_market_acont_integrable`.
+
+**FIRST ACTION AFTER THE NEXT RESTART:** an `edit_all` against
+`Brownian_Continuous.thy` corrupted the MCP server's in-memory buffer
+for that file — it reports the file as a 7-line fragment, and
+`unload` / `touch` / `git checkout` all fail to clear it, while the
+file on disk is correct throughout.  That blocks PIDE verification of
+`Brownian_Continuous` and everything downstream.  After restart, check
+those two discharges.  LESSON: never use `edit_all` without first
+inspecting every occurrence; prefer separate targeted edits.
+
+**GAP (now addressed, kept for context).**  That lemma needs
 `acov` MEASURABLE IN THE TIME VARIABLE, and the locale does not supply
 it: `acov_trace_integrable` covers only the TRACE, and `coord_Z` only
 the DIAGONAL entries — nothing gives the off-diagonal entries as
