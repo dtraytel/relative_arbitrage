@@ -493,10 +493,38 @@ Plus `stopped_market_acov_leaves_sconstraint`, recording the contrast
 that the witness's OWN volatility is `0`, hence outside the constraint
 set, from the stopping time onward.
 
+Also `stopped_market_acont_integrable`: the continued volatility is
+`set_integrable` on every `{s..t}` (boundedness via `acont_bounded` →
+`sconstraint_norm_le`, then `Bochner_Integration.integrable_bound`).
+
+**GAP FOUND IN THE MARKET LOCALE (2026-08-05).**  That lemma needs
+`acov` MEASURABLE IN THE TIME VARIABLE, and the locale does not supply
+it: `acov_trace_integrable` covers only the TRACE, and `coord_Z` only
+the DIAGONAL entries — nothing gives the off-diagonal entries as
+measurable functions of `t`.  It is currently an explicit hypothesis of
+`stopped_market_acont_integrable`.  Assuming it is faithful (the
+paper's (1.7) constrains `d⟨X⇩i,X⇩j⟩(t)/dt`, which presupposes the
+density exists measurably), but the RIGHT fix is to add entrywise
+time-measurability to `sufficiently_volatile_market` and discharge it
+in the Brownian witnesses, rather than carry it as a hypothesis
+downstream.  Do that before the pair-law construction, which will need
+it everywhere.
+
+**PERFORMANCE FIX (2026-08-05, commit `40e3796`).**  The three `GG`
+lemmas in `Path_Tightness_Market` each ran `auto simp: GG_def`, which
+unfolds the definition into the goal and lets the simplifier rewrite
+underneath the resulting `SOME`-term — inside the `AE` and inside the
+big `good` predicate.  `GG3` never finished (>143 s CPU) and blocked
+the whole downstream chain in PIDE; it would hang the batch build the
+same way.  Fixed by extracting the `someI_ex` conjunction ONCE as
+`GGspec` and projecting: now 3 ms.  The same shape in
+`Section_2_Compactness` (~583, ~631) is 5 ms — its `SOME` predicate is
+small — and was deliberately left alone.
+
 The three theories touched this cycle all re-confirmed green after the
 restart: `Exit_Semicontinuity` 2,676, `Paper_Class` 2,002,
-`Paper_Bridge` 79 (and `Section_2_Usc` 6,995, `Path_Tightness_Market`
-832 unchanged).  The mass "failures" seen while the session was wedged
+`Paper_Bridge` 241 (and `Section_2_Usc` 6,995, `Path_Tightness_Market`
+838 after the performance fix).  The mass "failures" seen while the session was wedged
 were artifacts of the ROOT snapshot, exactly as suspected.  Then re-confirm `Paper_Class` (2,002) and
 `Exit_Semicontinuity` (2,676), whose reported failures were artifacts.
 
