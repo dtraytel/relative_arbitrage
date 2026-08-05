@@ -1042,6 +1042,46 @@ proof -
   qed
 qed
 
+text \<open>A consequence used repeatedly downstream: on the capped horizon the
+  second component of a class member is UNIFORMLY BOUNDED, almost surely,
+  by \<open>n\<sqdot>L\<sqdot>T\<close>.  It starts at \<open>0\<close> and is \<open>n\<sqdot>L\<close>-Lipschitz, so no
+  probabilistic input is needed.  This is what makes \<open>X\<close> square-integrable
+  under a class law: the martingale clause makes \<open>outerp X - Y\<close> integrable,
+  and \<open>Y\<close> being bounded transfers the integrability to \<open>outerp X\<close>.\<close>
+
+theorem paper_pair_class_Y_bounded_ae:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+  shows "AE \<omega> in Q. \<forall>t\<in>{0..T}. norm (snd (\<omega> t)) \<le> real CARD('n) * L * T"
+proof -
+  have B0: "0 \<le> real CARD('n) * L" using L by simp
+  have z0: "(0::real) \<in> {0..T}" using T by simp
+  have lip: "AE \<omega> in Q. (real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+    by (rule paper_pair_class_lipschitz_ae[OF T L Q])
+  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using Q unfolding paper_pair_class_def by blast
+  from lip st show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have lp: "(real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+      and z: "snd (\<omega> 0) = 0" by blast+
+    show ?case
+    proof (intro ballI)
+      fix t :: real assume t: "t \<in> {0..T}"
+      have "norm (snd (\<omega> t)) = dist (snd (\<omega> t)) (snd (\<omega> 0))"
+        using z by (simp add: dist_norm)
+      also have "\<dots> \<le> real CARD('n) * L * dist t 0"
+        by (rule lipschitz_onD[OF lp t z0])
+      also have "\<dots> = real CARD('n) * L * t"
+        using t by (simp add: dist_real_def)
+      also have "\<dots> \<le> real CARD('n) * L * T"
+        using t B0 by (intro mult_left_mono) auto
+      finally show "norm (snd (\<omega> t)) \<le> real CARD('n) * L * T" .
+    qed
+  qed
+qed
+
 section \<open>NC-2: pair tightness from the two component moduli\<close>
 
 text \<open>The pair tightness does NOT need a matrix-valued Kolmogorov
