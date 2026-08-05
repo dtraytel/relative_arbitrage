@@ -391,8 +391,22 @@ clauses of (1.7) that are closed conditions on a single path:
   exactly the `L2` input `weak_conv_integral_of_L2_bound` wants for the
   martingale clauses.
 
+- `paper_pair_class_eval_measurable` and **`paper_pair_class_sq_integrable`**
+  (commit `c3434e8`) — path evaluation is `Q`-measurable, and
+  `E[(X_t$i)²] < ∞` for `t ∈ [0..T]`.  The route matters: a class member is
+  neither stopped nor confined, so square integrability CANNOT come from a
+  uniform bound on `X`; it comes from the `outerp X − Y` martingale clause
+  plus the bounded `Y`.
+
 Proof-shape notes: chaining a non-AE fact into `eventually_elim` fails with
 "RSN: no unifiers" — use `by (rule eventually_mono) (use … in auto)`;
+`bounded_linear.integrable` does not exist — the name is
+`integrable_bounded_linear`; `norm_nth_le` is AMBIGUOUS (two lemmas, the
+`Topology_Euclidean_Space` one about `x ∙ i` shadows) — qualify it
+`Finite_Cartesian_Product.norm_nth_le`; `borel_measurable_nth` is only the
+real-valued instance `real^'n ⇒ real`, so the matrix row map
+`real^'n^'n ⇒ real^'n` needs `borel_measurable_continuous_onI` +
+`linear_continuous_on[OF bounded_linear_vec_nth]`;
 `AE_ball_countable'` (primed) is the intro form, `AE_ball_countable` is the
 `iff`; `prob_space.prob_Collect_eq_1` converts full mass ↔ AE and wants the
 set written as `{ω ∈ space Q. …}`, so `unfolding sp` where
@@ -1249,12 +1263,20 @@ In priority order:
 1. **NC-3, the martingale clauses of Lemma 2.3.** The two closed clauses
    are DONE (`paper_pair_class_start_limit`,
    `paper_pair_class_diffquot_limit`). The route for the remaining two:
-   (a) square-integrability of `X` under a class law — `martingale.integrable`
+   (a) **DONE** (commit `c3434e8`) — `paper_pair_class_sq_integrable`:
+   square-integrability of `X` under a class law, from `martingale.integrable`
    on the `outerp X − Y` clause plus `paper_pair_class_Y_bounded_ae`, with
-   `bounded_linear.integrable[OF bounded_linear_vec_nth]` to get at the
-   `(i,j)` entry; (b) the class's own second-moment identity
-   `E[(ΔX_i)²] = E[ΔY_ii] ≤ L(t−s)` — note the *unconditional* form needs
-   only constancy of the mean of `outerp X − Y`, no conditioning;
+   `integrable_bounded_linear[OF bounded_linear_vec_nth]` to get at the
+   `(i,j)` entry; supporting `paper_pair_class_eval_measurable`;
+   (b) the L2 BOUND — `E[(X_t$i)²] ≤ (x$i)² + n·L·T`, uniform over the class.
+   Scouted: it needs only CONSTANCY OF THE MEAN of `outerp X − Y`, no
+   conditioning and no tower property. Take `martingale.set_integral_eq`
+   (premises in the order `A ∈ F i`, `t₀ ≤ i`, `i ≤ j`) at `A = space Q`,
+   convert with `set_integral_space`, evaluate the `t = 0` side by
+   AE-congruence to the constant `outerp x`, and pull the `(i,i)` entry
+   through the integral. NOTE there is no `integral_bounded_linear` in the
+   library — go through `has_bochner_integral_bounded_linear` +
+   `has_bochner_integral_integral_eq`;
    (c) `unif_integrable_of_L2_bound` + `weak_conv_integral_of_L2_bound`
    to carry the integrated identities to the limit; (d) upgrade continuous
    tests to events with the §2.6 engines (`metric_measure_eqI_bounded_cts`,
