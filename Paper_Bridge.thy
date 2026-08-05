@@ -52,13 +52,16 @@ proof -
     using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub
   proof eventually_elim
     case (elim \<omega>)
-    then have psd: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
+    then have pd: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
       and lb: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega>
           \<Longrightarrow> eigen_lb (acov u \<omega>) (CARD('n) - k)"
       and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
       by blast+
+    \<comment> \<open>\<open>pd\<close>, not \<open>psd\<close>: naming a local fact after the constant \<open>psd\<close>
+        is legal (facts and constants live in separate namespaces) but
+        invites misreading in the \<open>unfolding\<close> step just below.\<close>
     have sv: "acov u \<omega> \<in> suff_volatile k" if "0 \<le> u" "u \<le> tau \<omega>" for u
-      unfolding suff_volatile_def using psd[OF that] lb[OF that] by simp
+      unfolding suff_volatile_def using pd[OF that] lb[OF that] by simp
     show ?case
     proof (intro allI impI)
       fix s :: real assume s: "0 \<le> s"
