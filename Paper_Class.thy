@@ -290,6 +290,28 @@ definition paper_pair_class ::
        (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
        (\<lambda>t \<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))}"
 
+text \<open>Projections out of the definition, used throughout.\<close>
+
+lemma paper_pair_class_prob:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "prob_space Q"
+  using Q unfolding paper_pair_class_def by blast
+
+lemma paper_pair_class_sets:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  using Q unfolding paper_pair_class_def by blast
+
+lemma space_of_path_sets:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  shows "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+  using sets_eq_imp_space_eq[OF assms] by (simp add: space_borel_of)
+
 section \<open>NC-3: the constraint passes to weak limits (no Skorokhod)\<close>
 
 text \<open>The paper passes the covariation constraint to the limit law using
@@ -1082,6 +1104,93 @@ proof -
   qed
 qed
 
+subsection \<open>Square integrability of the class member's process\<close>
+
+text \<open>The promised consequence.  Under a class law the coordinate process
+  is square integrable on the capped horizon --- and, unlike for the repo's
+  market witnesses, this cannot be read off a uniform bound on \<open>X\<close>: the
+  paper's processes are neither stopped nor confined ((1.7)--(1.8)).  It
+  comes instead from the SECOND martingale clause: \<open>outerp X - Y\<close> is
+  integrable by definition of a martingale, \<open>Y\<close> is bounded
+  (\<open>paper_pair_class_Y_bounded_ae\<close>), and the sum of the two is \<open>outerp X\<close>,
+  whose diagonal entries are the squared coordinates.\<close>
+
+lemma paper_pair_class_eval_measurable:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
+proof -
+  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)) \<rightarrow>\<^sub>M borel"
+    using continuous_map_measurable[OF continuous_map_path_eval[OF t]]
+    by (simp add: borel_of_euclidean)
+  then show ?thesis
+    using measurable_cong_sets[OF paper_pair_class_sets[OF Q] refl] by blast
+qed
+
+theorem paper_pair_class_sq_integrable:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "integrable Q (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have t0: "0 \<le> t" using t by simp
+  have MG: "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u))"
+    using Q unfolding paper_pair_class_def by blast
+  then interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
+      "\<lambda>u \<omega>. outerp (fst (\<omega> u)) - snd (\<omega> u)" .
+  have iA: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+    by (rule MG.integrable[OF t0])
+  have iA2: "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i)"
+    by (rule integrable_bounded_linear[OF bounded_linear_vec_nth,
+          OF integrable_bounded_linear[OF bounded_linear_vec_nth iA]])
+  have em: "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
+    by (rule paper_pair_class_eval_measurable[OF Q t])
+  have Bm: "(\<lambda>\<omega>. snd (\<omega> t) $ i $ i) \<in> borel_measurable Q"
+  proof (rule measurable_compose[OF em])
+    have s: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    \<comment> \<open>\<^verbatim>\<open>borel_measurable_nth\<close> is only the REAL-valued instance
+        \<open>real^'n \<Rightarrow> real\<close>; the matrix row map needs the linear-continuity
+        route.\<close>
+    have n1: "(\<lambda>v :: real^'n^'n. v $ i) \<in> borel_measurable borel"
+      by (rule borel_measurable_continuous_onI)
+        (rule linear_continuous_on[OF bounded_linear_vec_nth])
+    have n2: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel"
+      by (rule borel_measurable_nth)
+    show "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). snd p $ i $ i)
+        \<in> borel_measurable borel"
+      by (rule measurable_compose[OF measurable_compose[OF s n1] n2])
+  qed
+  have Bb: "AE \<omega> in Q. norm (snd (\<omega> t) $ i $ i) \<le> real CARD('n) * L * T"
+  proof -
+    have "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+      by (rule paper_pair_class_Y_bounded_ae[OF T L Q])
+    then show ?thesis
+    proof (rule eventually_mono)
+      fix \<omega> :: "'n pairpath"
+      assume "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+      then have b: "norm (snd (\<omega> t)) \<le> real CARD('n) * L * T" using t by blast
+      have "norm (snd (\<omega> t) $ i $ i) \<le> norm (snd (\<omega> t) $ i)"
+        by (rule Finite_Cartesian_Product.norm_nth_le)
+      also have "\<dots> \<le> norm (snd (\<omega> t))"
+        by (rule Finite_Cartesian_Product.norm_nth_le)
+      finally show "norm (snd (\<omega> t) $ i $ i) \<le> real CARD('n) * L * T"
+        using b by simp
+    qed
+  qed
+  have iB: "integrable Q (\<lambda>\<omega>. snd (\<omega> t) $ i $ i)"
+    by (rule P.integrable_const_bound[OF Bb Bm])
+  have eq: "(\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)
+      = (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i + snd (\<omega> t) $ i $ i)"
+    by (rule ext) (simp add: outerp_def power2_eq_square)
+  show ?thesis
+    unfolding eq by (rule Bochner_Integration.integrable_add[OF iA2 iB])
+qed
+
 section \<open>NC-2: pair tightness from the two component moduli\<close>
 
 text \<open>The pair tightness does NOT need a matrix-valued Kolmogorov
@@ -1412,27 +1521,6 @@ text \<open>Lemma 2.3 of the paper says the class is CLOSED, and its proof passe
   are the martingale properties; those are not closed conditions on single
   paths and go through the integrated identities instead
   (\<open>weak_conv_integral_of_L2_bound\<close>).\<close>
-
-lemma paper_pair_class_prob:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x"
-  shows "prob_space Q"
-  using Q unfolding paper_pair_class_def by blast
-
-lemma paper_pair_class_sets:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x"
-  shows "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
-  using Q unfolding paper_pair_class_def by blast
-
-lemma space_of_path_sets:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
-  shows "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-  using sets_eq_imp_space_eq[OF assms]
-  by (simp add: space_borel_of topspace_mtopology_of)
 
 subsection \<open>Full mass of the two closed clauses on a class member\<close>
 
