@@ -497,6 +497,22 @@ Also `stopped_market_acont_integrable`: the continued volatility is
 `set_integrable` on every `{s..t}` (boundedness via `acont_bounded` →
 `sconstraint_norm_le`, then `Bochner_Integration.integrable_bound`).
 
+**THE VOLATILITY SIDE OF THE BRIDGE IS COMPLETE.**
+`stopped_market_Yint_diffquot_in_sconstraint`: for a `stopped_market`
+witness the CONTINUED running covariation has every difference quotient
+in `sconstraint k L`, a.s., for all `0 ≤ s < t` — verbatim the
+covariation clause of `paper_pair_class`, no stopping caveat.  The
+chain is: witness `acov` → `acont` (continue past `tau` with `mat 1`,
+admissible since `L ≥ 1`) → integrable on bounded intervals
+(`acont_bounded` + Bochner bound) → `Yint` (additive by
+`set_integral_Un_AE`) → quotients in `S` (`average_in_closed_convex`,
+the paper's Lemma 2.1 step).
+
+WHAT REMAINS for the bridge: the MARTINGALE side — `X` and
+`outerp X − Y` as martingales for the PAIR natural filtration — and
+then the pair-law construction itself (pushforward of `(X, Y)` to the
+pair path space), after which NC-2/3's engines can be instantiated.
+
 **GAP FOUND IN THE MARKET LOCALE (2026-08-05).**  That lemma needs
 `acov` MEASURABLE IN THE TIME VARIABLE, and the locale does not supply
 it: `acov_trace_integrable` covers only the TRACE, and `coord_Z` only
@@ -523,7 +539,7 @@ small — and was deliberately left alone.
 
 The three theories touched this cycle all re-confirmed green after the
 restart: `Exit_Semicontinuity` 2,676, `Paper_Class` 2,002,
-`Paper_Bridge` 241 (and `Section_2_Usc` 6,995, `Path_Tightness_Market`
+`Paper_Bridge` 335 (and `Section_2_Usc` 6,995, `Path_Tightness_Market`
 838 after the performance fix).  The mass "failures" seen while the session was wedged
 were artifacts of the ROOT snapshot, exactly as suspected.  Then re-confirm `Paper_Class` (2,002) and
 `Exit_Semicontinuity` (2,676), whose reported failures were artifacts.
