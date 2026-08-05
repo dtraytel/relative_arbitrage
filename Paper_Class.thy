@@ -1354,6 +1354,239 @@ theorem weak_conv_integral_of_L2_bound:
     (rule unif_integrable_of_L2_bound
       [OF C iTi iTN sqi sqN sqiI sqNI])
 
+section \<open>NC-3: the clauses of the class that survive a weak limit\<close>
+
+text \<open>Lemma 2.3 of the paper says the class is CLOSED, and its proof passes
+  each defining clause of (1.7) to the limit law.  The paper does that
+  through Prokhorov followed by Skorokhod's representation theorem; we
+  substitute the closed-set half of the portmanteau theorem
+  (\<open>weak_conv_closed_full_mass\<close>), which needs no almost-sure realisation and
+  is already available here.
+
+  This section discharges the two clauses that are CLOSED CONDITIONS ON A
+  SINGLE PATH: the starting point \<open>(x, 0)\<close> and the covariation constraint of
+  (1.7).  Portmanteau gives them only for the countably many RATIONAL pairs
+  \<open>s < t\<close> --- one closed set per pair --- and path continuity upgrades that
+  to all real pairs (\<open>diffquot_all_of_rational\<close>), exactly as in the last
+  step of the paper's own argument.  The remaining two clauses of the class
+  are the martingale properties; those are not closed conditions on single
+  paths and go through the integrated identities instead
+  (\<open>weak_conv_integral_of_L2_bound\<close>).\<close>
+
+lemma paper_pair_class_prob:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "prob_space Q"
+  using Q unfolding paper_pair_class_def by blast
+
+lemma paper_pair_class_sets:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  using Q unfolding paper_pair_class_def by blast
+
+lemma space_of_path_sets:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  shows "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+  using sets_eq_imp_space_eq[OF assms]
+  by (simp add: space_borel_of topspace_mtopology_of)
+
+subsection \<open>Full mass of the two closed clauses on a class member\<close>
+
+lemma paper_pair_class_diffquot_full_mass:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+    and s: "s \<in> {0..T}" and t: "t \<in> {0..T}" and st: "s < t"
+  shows "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have mm: "{\<omega> \<in> space Q. (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))
+      \<in> sconstraint k L} \<in> sets Q"
+    unfolding sp setsQ
+    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF s t]])
+  have ae: "AE \<omega> in Q. (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))
+      \<in> sconstraint k L"
+  proof -
+    have "AE \<omega> in Q. \<forall>u v. 0 \<le> u \<longrightarrow> u < v \<longrightarrow> v \<le> T \<longrightarrow>
+        (1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
+      using Q unfolding paper_pair_class_def by blast
+    then show ?thesis
+      by (rule eventually_mono) (use s t st in auto)
+  qed
+  show ?thesis using P.prob_Collect_eq_1[OF mm] ae unfolding sp by blast
+qed
+
+text \<open>The starting point is a closed condition too: evaluation at time \<open>0\<close>
+  is continuous and \<open>{(x, 0)}\<close> is closed.\<close>
+
+lemma closedin_start_point:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 \<le> T"
+  shows "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)}"
+proof -
+  have z: "(0::real) \<in> {0..T}" using T by simp
+  have "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      {\<omega> \<in> topspace (mtopology_of (path_metric T :: ('n pairpath) metric)).
+         \<omega> 0 \<in> {(x, 0)}}"
+    by (intro closedin_continuous_map_preimage_gen
+          [where Y = euclidean, simplified]
+        continuous_map_path_eval[OF z] closed_singleton closedin_topspace)
+  then show ?thesis by (simp add: topspace_mtopology_of)
+qed
+
+lemma paper_pair_class_start_full_mass:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and Q: "Q \<in> paper_pair_class k L T x"
+  shows "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<omega> 0 = (x, 0)} = 1"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
+    unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
+  have ae: "AE \<omega> in Q. \<omega> 0 = (x, 0)"
+  proof -
+    have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+      using Q unfolding paper_pair_class_def by blast
+    then show ?thesis
+      by (rule eventually_mono) (simp add: prod_eq_iff)
+  qed
+  show ?thesis using P.prob_Collect_eq_1[OF mm] ae unfolding sp by blast
+qed
+
+subsection \<open>Both closed clauses pass to the weak limit\<close>
+
+text \<open>The start clause needs nothing beyond portmanteau.  The covariation
+  clause is available from portmanteau only pair by pair; the countable
+  conjunction over rational pairs is an almost-sure statement
+  (\<open>AE_ball_countable'\<close>), and \<open>diffquot_all_of_rational\<close> --- the paper's own
+  last step, "by continuity" --- extends it to every real pair.\<close>
+
+theorem paper_pair_class_start_limit:
+  fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes T: "0 \<le> T"
+    and mem: "\<And>i. Qi i \<in> paper_pair_class k L T x"
+    and wc: "weak_conv_on Qi Q sequentially
+      (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+proof -
+  interpret P: prob_space Q by (rule prob)
+  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
+    unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
+  have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<omega> 0 = (x, 0)} = 1"
+  proof (rule weak_conv_closed_full_mass[OF wc closedin_start_point[OF T]])
+    show "\<And>i. prob_space (Qi i)" by (rule paper_pair_class_prob[OF mem])
+    show "prob_space Q" by (rule prob)
+    show "\<And>i. measure (Qi i)
+        {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)} = 1"
+      by (rule paper_pair_class_start_full_mass[OF T mem])
+  qed
+  then have "AE \<omega> in Q. \<omega> 0 = (x, 0)"
+    using P.prob_Collect_eq_1[OF mm] unfolding sp by blast
+  then show ?thesis by (rule eventually_mono) (simp add: prod_eq_iff)
+qed
+
+theorem paper_pair_class_diffquot_limit:
+  fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes mem: "\<And>i. Qi i \<in> paper_pair_class k L T x"
+    and wc: "weak_conv_on Qi Q sequentially
+      (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+proof -
+  interpret P: prob_space Q by (rule prob)
+  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have one: "AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p))
+      \<in> sconstraint k L"
+    if pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" for p q :: real
+  proof -
+    have mm: "{\<omega> \<in> space Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p))
+        \<in> sconstraint k L} \<in> sets Q"
+      unfolding sp setsQ
+      by (rule borel_of_closed
+          [OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
+    have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} = 1"
+    proof (rule diffquot_constraint_weak_limit[OF pq(1) pq(2) wc])
+      show "\<And>i. prob_space (Qi i)" by (rule paper_pair_class_prob[OF mem])
+      show "prob_space Q" by (rule prob)
+      show "\<And>i. measure (Qi i)
+          {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+             (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} = 1"
+        by (rule paper_pair_class_diffquot_full_mass[OF mem pq])
+    qed
+    then show ?thesis
+      using P.prob_Collect_eq_1[OF mm] unfolding sp by blast
+  qed
+  have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE \<omega> in Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE \<omega> in Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
+        case True
+        then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
+        from one[OF this] show ?thesis by (rule eventually_mono) simp
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  from rat AE_space show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      and W: "\<omega> \<in> space Q"
+      by blast+
+    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W sp by simp
+    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
+      using mspace_path_metricD[OF mw] by (intro continuous_intros)
+    show ?case
+    proof (intro allI impI)
+      fix u v :: real
+      assume uv: "0 \<le> u" "u < v" "v \<le> T"
+      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
+        by (rule diffquot_all_of_rational
+            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
+    qed
+  qed
+qed
+
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>
 
 definition paper_v ::
