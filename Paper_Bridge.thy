@@ -17,7 +17,12 @@
            This theory sits downstream of BOTH Paper_Class and the
            market stack, so that neither has to import the other.
 
-  STATUS:  PIDE-verified (79 commands, overall_status ok).
+  STATUS:  PIDE-verified (359 commands, overall_status ok).  Since
+           2026-08-05 the volatility side of the bridge is HYPOTHESIS-FREE:
+           the time-measurability of `acov' that the two integrability
+           results used to assume is now a locale assumption
+           (`acov_time_measurable', on {0..}), transported to the
+           continuation by `Paper_Class.acont_set_borel_measurable'.
 
            HISTORY: registering this NEW theory in ROOT wedged the
            running PIDE session -- the server snapshots ROOT at startup,
@@ -87,11 +92,15 @@ text \<open>To build the running covariation \<open>Yint\<close> from a witness 
   \<open>acov\<close> in the TIME variable: \<open>acov_trace_integrable\<close> covers only the
   trace, and \<open>coord_Z\<close> only the diagonal entries.
 
-  So time-measurability is an explicit hypothesis here.  That is faithful
-  rather than a weakening: the paper's (1.7) constrains \<open>d\<langle>X\<^sub>i,X\<^sub>j\<rangle>(t)/dt\<close>,
-  which presupposes the covariation density exists as a measurable object
-  in \<open>t\<close>.  Recorded in PLAN\_THEOREM\_1\_1.md as a gap in the locale, to be
-  closed there rather than assumed away here.\<close>
+  That gap is now CLOSED IN THE LOCALE: \<open>sufficiently_volatile_market\<close>
+  carries \<open>acov_time_measurable\<close>, stated on the nonnegative axis, which is
+  faithful rather than a strengthening --- the paper's (1.7) constrains
+  \<open>d\<langle>X\<^sub>i,X\<^sub>j\<rangle>(t)/dt\<close>, and that presupposes the covariation density exists
+  as a measurable object in \<open>t\<close>.  So the theorem below no longer carries a
+  measurability hypothesis; \<open>Paper_Class.acont_set_borel_measurable\<close>
+  transports the locale's fact to the continuation, and
+  \<open>set_borel_measurable_subset\<close> cuts it down to the interval at hand
+  (legitimately, since \<open>0 \<le> s\<close> puts \<open>{s..t}\<close> inside \<open>{0..}\<close>).\<close>
 
 lemma acont_bounded:
   fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
@@ -109,8 +118,6 @@ qed
 theorem stopped_market_acont_integrable:
   fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
   assumes SM: "stopped_market k L K x0 M F X acov tau"
-    and meas: "AE \<omega> in M. (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
-        \<in> borel_measurable lborel"
     and st: "0 \<le> s" "s \<le> t"
   shows "AE \<omega> in M.
       set_integrable lborel {s..t} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
@@ -122,15 +129,25 @@ proof -
   have L1: "1 \<le> L" by (rule SV.L_ge)
   have Bnn: "0 \<le> real CARD('n) * L" using L1 by simp
   show ?thesis
-    using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub meas
+    using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub
+      SV.acov_time_measurable
   proof eventually_elim
     case (elim \<omega>)
     then have pd: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
       and lb: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega>
           \<Longrightarrow> eigen_lb (acov u \<omega>) (CARD('n) - k)"
       and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
-      and m: "(\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u) \<in> borel_measurable lborel"
+      and m0: "set_borel_measurable lborel {0..} (\<lambda>r. acov r \<omega>)"
       by blast+
+    have m: "set_borel_measurable lborel {s..t}
+        (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
+    proof (rule set_borel_measurable_subset)
+      show "set_borel_measurable lborel {0..}
+          (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
+        by (rule acont_set_borel_measurable[OF m0])
+      show "{s..t} \<in> sets lborel" by simp
+      show "{s..t} \<subseteq> {0..}" using st(1) by auto
+    qed
     have sv: "acov u \<omega> \<in> suff_volatile k" if "0 \<le> u" "u \<le> tau \<omega>" for u
       unfolding suff_volatile_def using pd[OF that] lb[OF that] by simp
     \<comment> \<open>the conclusion must drive the unification here: an \<^verbatim>\<open>OF\<close> chain on
@@ -161,7 +178,7 @@ proof -
     proof (rule Bochner_Integration.integrable_bound[OF dom])
       show "(\<lambda>u. indicat_real {s..t} u *\<^sub>R acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
           \<in> borel_measurable lborel"
-        using m by measurable
+        using m unfolding set_borel_measurable_def by simp
       show "AE u in lborel.
           norm (indicat_real {s..t} u *\<^sub>R acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
           \<le> norm (indicat_real {s..t} u * (real CARD('n) * L))"
@@ -196,8 +213,6 @@ text \<open>The payoff of the volatility side of the bridge.  For a market
 theorem stopped_market_Yint_diffquot_in_sconstraint:
   fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
   assumes SM: "stopped_market k L K x0 M F X acov tau"
-    and meas: "AE \<omega> in M. (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
-        \<in> borel_measurable lborel"
     and st: "0 \<le> s" "s < t"
   shows "AE \<omega> in M.
       (1 / (t - s)) *\<^sub>R (Yint (acont (\<lambda>r. acov r \<omega>) (tau \<omega>)) t
@@ -210,10 +225,10 @@ proof -
   have L1: "1 \<le> L" by (rule SV.L_ge)
   have i1: "AE \<omega> in M.
       set_integrable lborel {0..s} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
-    by (rule stopped_market_acont_integrable[OF SM meas]) (use st in auto)
+    by (rule stopped_market_acont_integrable[OF SM]) (use st in auto)
   have i2: "AE \<omega> in M.
       set_integrable lborel {s..t} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
-    using st by (intro stopped_market_acont_integrable[OF SM meas]) auto
+    using st by (intro stopped_market_acont_integrable[OF SM]) auto
   show ?thesis
     using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub i1 i2
   proof eventually_elim

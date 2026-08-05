@@ -807,6 +807,48 @@ lemma acont_before: "s \<le> tv \<Longrightarrow> acont a tv s = a s"
 lemma acont_after: "tv < s \<Longrightarrow> acont a tv s = mat 1"
   unfolding acont_def by simp
 
+text \<open>Time-measurability is inherited by the continuation.  The locale
+  assumption \<open>acov_time_measurable\<close> is stated on the NONNEGATIVE axis only
+  --- faithfully so, since (1.7) constrains the density for "a.e. \<open>t \<ge> 0\<close>"
+  --- and that is also all that is available here: for \<open>u < 0 \<le> tv\<close> the
+  continuation still reads off \<open>a u\<close>, about which nothing is known.
+
+  TRAP (cost several round-trips): \<^const>\<open>lborel\<close> is POLYMORPHIC, and
+  \<^typ>\<open>real^'n^'n\<close> carries an \<^class>\<open>ord\<close> instance, so an unannotated
+  binder in a goal \<open>(\<lambda>u. \<dots>) \<in> borel_measurable lborel\<close> silently elaborates
+  at the MATRIX type instead of at \<open>real\<close>.  The symptoms are baffling:
+  \<open>show\<close>s that "fail to refine any pending goal" although they print
+  identically, and \<open>simp\<close> unable to prove \<open>open {..<0}\<close>.  Pin
+  \<open>lborel :: real measure\<close> and annotate every binder.\<close>
+
+lemma acont_set_borel_measurable:
+  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes a: "set_borel_measurable lborel {0..} a"
+  shows "set_borel_measurable lborel {0..} (acont a tv)"
+proof -
+  have "(\<lambda>u::real. indicat_real {0..} u *\<^sub>R acont a tv u)
+      = (\<lambda>u::real. if u \<le> tv then indicat_real {0..} u *\<^sub>R a u
+             else (if u < 0 then 0 else (mat 1 :: real^'n^'n)))"
+    by (rule ext) (simp add: acont_def)
+  moreover have "(\<lambda>u::real. if u \<le> tv then indicat_real {0..} u *\<^sub>R a u
+             else (if u < 0 then 0 else (mat 1 :: real^'n^'n)))
+      \<in> borel_measurable (lborel :: real measure)"
+  proof (rule measurable_If)
+    show "(\<lambda>u::real. indicat_real {0..} u *\<^sub>R a u)
+        \<in> borel_measurable (lborel :: real measure)"
+      using a unfolding set_borel_measurable_def .
+    \<comment> \<open>the \<^verbatim>\<open>if u < 0\<close> form, not an indicator: the \<open>measurable\<close>
+        method reduces the branch condition to \<open>open {..<0}\<close>, whereas the
+        indicator form leaves the FALSE goal \<open>open {0..}\<close>.\<close>
+    show "(\<lambda>u::real. if u < 0 then 0 else (mat 1 :: real^'n^'n))
+        \<in> borel_measurable (lborel :: real measure)"
+      by measurable
+    show "{u \<in> space (lborel :: real measure). u \<le> tv} \<in> sets lborel"
+      by simp
+  qed
+  ultimately show ?thesis unfolding set_borel_measurable_def by simp
+qed
+
 lemma acont_in_sconstraint:
   fixes a :: "real \<Rightarrow> real^'n::finite^'n"
   assumes L: "1 \<le> L"
