@@ -1,12 +1,13 @@
 # Plan: reaching Theorem 1.1 of arXiv:2512.17702
 
-**HANDOVER, 2026-08-05.** This document is the single source of truth for
-what is proved, what is open, and what to do next. Everything referenced is
-PIDE-verified unless explicitly marked otherwise; the user runs the batch
-build as the final cross-check. Read §0 for the clause-by-clause status,
-§1 for how the paper argues, §2 for the machinery you may assume, §3 for
-the open items, and **§4 before touching anything** — it lists the traps
-that have each cost a round-trip or a server restart.
+**HANDOVER, 2026-08-05 (second session of the day).** This document is the
+single source of truth for what is proved, what is open, and what to do
+next. Everything referenced is PIDE-verified unless explicitly marked
+otherwise; the user runs the batch build as the final cross-check. Read §0
+for the clause-by-clause status, §1 for how the paper argues, §2 for the
+machinery you may assume, §3 for the open items, and **§4 before touching
+anything** — it lists the traps that have each cost a round-trip or a
+server restart.
 
 **Verified green as of this handover** (`get_progress`, `commands_failed
 = 0` at 100%):
@@ -14,23 +15,19 @@ that have each cost a round-trip or a server restart.
 | theory | cmds | theory | cmds |
 |---|---|---|---|
 | `Relative_Arbitrage_Stochastic` | 531 | `Exit_Semicontinuity` | 2,676 |
-| `Ito_Market` | 1,446 | `Paper_Class` | 2,002 |
-| `Brownian_Continuous` | 952 | `Paper_Bridge` | 335 |
+| `Ito_Market` | 1,446 | `Paper_Class` | 2,496 |
+| `Brownian_Continuous` | 952 | `Paper_Bridge` | 357 |
 | `Deterministic_Radius_Market` | 6,100 | `Path_Tightness_Market` | 838 |
-| `Theorem_1_1` | 369 | | |
+| `Theorem_1_1` | 369 | `Value_Function` | 724 |
+| `Section_2_Usc` | 7,005 | | |
 
-**NOT independently confirmed by the agent: `Value_Function` and
-`Section_2_Usc`.** Each carries a one-line inherited
-`acov_time_measurable` discharge (`by (rule sv.acov_time_measurable)`,
-plus one `measurable_If` for the degenerate market in `Section_2_Usc`)
-added at the very end of the session. The PIDE loader in that session
-would not schedule that branch — it accepted the queue request and never
-ran it, with both the JVM and Poly/ML idle — so the agent could not
-check them. The USER confirmed manually that these theories load.
-`Section_2_Usc` last measured 6,995 commands BEFORE this edit, so that
-figure is stale. **First action next session: `get_progress` on both.**
-Expected to be a formality, but do not carry them as verified until you
-have seen it.
+**THE TWO PENDING DISCHARGES ARE CONFIRMED.** The previous handover left
+`Value_Function` and `Section_2_Usc` unverified because that session's PIDE
+loader would not schedule the branch. Both loaded clean on the first
+`get_progress` of this session — `Value_Function` 724, `Section_2_Usc`
+7,005 (up from 6,995, the ten extra commands being the inherited
+`acov_time_measurable` discharges). **The locale upgrade is fully verified
+at all six discharge sites.** Nothing about it is open.
 
 WORKFLOW (user instruction): develop DIRECTLY in the tree theory files
 via the PIDE MCP `edit` tool; scratches are only for throwaway probes.
@@ -73,7 +70,7 @@ faithful rendering of the paper's Eq. (1.6).
 | | clause | status |
 |---|---|---|
 | (0) | `v < ⊤` | **DONE** — `val_fn_finite_bounded`, `stopped_val_fn_finite_bounded` |
-| (1) | regularity (usc) | **DONE in law-level form** — `clause_one_law_level`; the identification `w = ` class-sup ("the closure adds no value") is the canonical-market construction, §3/NC |
+| (1) | regularity (usc) | **DONE in law-level form** — `clause_one_law_level`; for the PAPER's `v` the target is now usc of `Paper_Class.paper_v` = Eq. (1.6) directly, via Lemma 2.3 in the class + Berge, §3/NC and §4.5 |
 | (2) | `visc_sol k L (interior K) v` | open — needs N5 (DPP); the N4 witness input is now DONE |
 | (3) | `v = 0` on `K − interior K` | ball case **DONE** — `val_fn_boundary_zero`, `stopped_val_fn_boundary_zero`; **and the interior value is REALIZED exactly for `n−k=1`**: `Theorem_1_1.stopped_val_fn_ball_eq_2d` — `stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)` for `0 < ¦x¦ ≤ r` (N4, complete); general `n−k ≥ 2` open (spherical BM, discrete route) |
 | (4) | uniqueness | **DONE** — `theorem_1_1_uniqueness_general` via Theorem 4.2(a) |
@@ -363,12 +360,45 @@ genuine obstruction to it was found today (see BLOCKER below).
 | item | content | status |
 |---|---|---|
 | NC-1 | pair-law encoding of class (1.7) | **DONE** |
-| NC-2 | pair compactness + tightness | **criterion DONE**, instantiation open |
-| NC-3 | limit identities without Skorokhod | **engines DONE**, instantiation open |
+| NC-2 | pair compactness + tightness | **criterion DONE**, instantiation open (and NOT mechanical — see below) |
+| NC-3 | limit identities without Skorokhod | **engines DONE; the two CLOSED clauses (start, covariation) are now INSTANTIATED**; the two martingale clauses open |
 | NC-4 | density recovery `dY/dt ∈ S` a.e. | **DONE** |
 | NC-5 | value-side usc of the essinf | **DONE** |
 
-`Paper_Class.thy` is PIDE-green (2,002 commands, `overall_status ok`).
+**NC-3, closed clauses — DONE 2026-08-05 (commit `9a4db3c`).** For a
+weakly convergent sequence of class members the limit law satisfies both
+clauses of (1.7) that are closed conditions on a single path:
+
+- `paper_pair_class_prob` / `paper_pair_class_sets` / `space_of_path_sets`
+  — projections out of the class definition (`space Q = mspace (path_metric
+  T)`), used everywhere below.
+- `closedin_start_point`, `paper_pair_class_start_full_mass`,
+  **`paper_pair_class_start_limit`** — `AE ω. fst (ω 0) = x ∧ snd (ω 0) = 0`
+  passes to the limit (evaluation at `0` continuous, `{(x,0)}` closed).
+- `paper_pair_class_diffquot_full_mass` and the headline
+  **`paper_pair_class_diffquot_limit`** — the covariation clause of (1.7)
+  holds under the limit law for ALL real `0 ≤ s < t ≤ T`.  Portmanteau
+  yields one closed set per RATIONAL pair (`diffquot_constraint_weak_limit`);
+  `AE_ball_countable'` conjoins the countably many; and
+  `diffquot_all_of_rational` — the paper's own closing "by continuity" step
+  — extends to every real pair, using `mspace_path_metricD` for the path
+  continuity.
+- `paper_pair_class_Y_bounded_ae` (commit `2167fc2`) — `‖Y t‖ ≤ n·L·T` on
+  `[0..T]` a.s., from `paper_pair_class_lipschitz_ae` plus `Y 0 = 0`.  No
+  probabilistic input.  This is the step that will make `X` square
+  integrable under a class law: the martingale clause gives integrability of
+  `outerp X − Y`, and a bounded `Y` transfers it to `outerp X` — which is
+  exactly the `L2` input `weak_conv_integral_of_L2_bound` wants for the
+  martingale clauses.
+
+Proof-shape notes: chaining a non-AE fact into `eventually_elim` fails with
+"RSN: no unifiers" — use `by (rule eventually_mono) (use … in auto)`;
+`AE_ball_countable'` (primed) is the intro form, `AE_ball_countable` is the
+`iff`; `prob_space.prob_Collect_eq_1` converts full mass ↔ AE and wants the
+set written as `{ω ∈ space Q. …}`, so `unfolding sp` where
+`sp : space Q = mspace …`.
+
+`Paper_Class.thy` is PIDE-green (2,496 commands, `overall_status ok`).
 In ROOT after `Exit_Semicontinuity`; imports `Path_Space`,
 `Path_Tightness`, `Exit_Semicontinuity`, `Poincare_Separation` and
 `Relative_Arbitrage_Comparison` (the last two deterministic-side, no
@@ -528,10 +558,43 @@ admissible since `L ≥ 1`) → integrable on bounded intervals
 `set_integral_Un_AE`) → quotients in `S` (`average_in_closed_convex`,
 the paper's Lemma 2.1 step).
 
-WHAT REMAINS for the bridge: the MARTINGALE side — `X` and
-`outerp X − Y` as martingales for the PAIR natural filtration — and
-then the pair-law construction itself (pushforward of `(X, Y)` to the
-pair path space), after which NC-2/3's engines can be instantiated.
+**CORRECTION 2026-08-05 — THE BRIDGE NEEDS A CONTINUED *PROCESS*, NOT
+JUST A CONTINUED VOLATILITY.  Read this before starting the martingale
+side; the previous handover understated the work by a large factor.**
+
+The volatility side above is correct and complete, but it does NOT pair
+with the witness's own `X`.  A `stopped_market` witness has
+`X s ω = X (min s (tau ω)) ω`, so after `tau` the process is FROZEN while
+`Yint (acont …)` keeps growing at rate `mat 1`.  Then
+
+    E[outerp X_t − Y_t | F_s] = outerp X_s − Y_s − (t − s)·mat 1
+                              ≠ outerp X_s − Y_s
+
+for `s ≥ tau`, so `outerp X − Y` is *not* a martingale and the pair
+`(X, Yint (acont …))` is *not* a member of `paper_pair_class`.  This is
+not a proof-engineering gap; it is forced by (1.7), which admits no
+volatility that vanishes (`0 ∉ sconstraint k L` for `k < n`).
+
+Consequently the faithful bridge must CONTINUE THE PROCESS as well:
+after `tau`, run an independent Brownian motion, i.e. work on a product
+space `M ⊗⇩M bm_paths` with
+
+    X̃ t ω = X (min t (tau ω)) ω + (B t − B (min t (tau ω)))
+
+whose covariation density is `acov` before `tau` and `mat 1` after —
+exactly `acont`.  That means: product measure, product filtration, the
+martingale property of the concatenation, and the compensated-square
+identity.  Realistically ~1–2k lines, and it is the true content of "the
+martingale side of the bridge".
+
+The pay-off is still worth it and the value estimate is unchanged: `tau`
+is a PRE-exit time (`X_in_K` up to `tau`), so the first exit of the
+continued path is `≥ tau`, giving `stopped_val_fn ≤ paper_v`.
+
+WHAT REMAINS for the bridge, in order: (i) the product/continuation
+construction of `X̃` just described; (ii) `X̃` and `outerp X̃ − Yint (acont …)`
+as martingales for the PAIR natural filtration; (iii) the pair-law
+construction itself (pushforward of `(X̃, Y)` to the pair path space).
 
 **LOCALE UPGRADED (2026-08-05, commit `6125a9a`) — the gap below is
 CLOSED in the locale, verification of two sites pending.**
@@ -567,35 +630,20 @@ and BOTH discharges that needed real proofs (`dra_cont` +
 constant `mat 1` for the Brownian one).  A duplicated `show`, left by
 the earlier git-checkout/MCP interleaving, was found and removed here.
 
-STILL UNVERIFIED: the one-line inherited discharges in `Value_Function`
-and `Section_2_Usc` (`by (rule sv.acov_time_measurable)`, plus one
-`measurable_If` for the degenerate market).  That branch would not
-leave the PIDE load queue — 30+ minutes with no progress while every
-other theory loaded normally, Poly/ML idle and the Scala side spinning.
-Check it first next session; if it still will not load, the batch build
-settles it.
+**ALL SIX DISCHARGES VERIFIED (2026-08-05, second session).**  The two
+that the previous session could not schedule loaded clean on the first
+`get_progress`: `Value_Function` 724, `Section_2_Usc` 7,005.  Nothing about
+the locale upgrade is open, and the buffer-corruption episode described in
+the previous handover did not recur after the restart.
 
-**FIRST ACTION AFTER THE NEXT RESTART:** the MCP server's file buffers are
-corrupted for the WHOLE affected chain (it reports `Ito_Market` and
-`Brownian_Continuous` as few-line fragments) — it reports the file as a 7-line fragment, and
-`unload` / `touch` / `git checkout` all fail to clear it, while the
-file on disk is correct throughout.  That blocks PIDE verification of
-`Brownian_Continuous` and everything downstream.  After restart, check
-those two discharges.  LESSON: never use `edit_all` without first
-inspecting every occurrence; prefer separate targeted edits.
-
-**GAP (now addressed, kept for context).**  That lemma needs
-`acov` MEASURABLE IN THE TIME VARIABLE, and the locale does not supply
-it: `acov_trace_integrable` covers only the TRACE, and `coord_Z` only
-the DIAGONAL entries — nothing gives the off-diagonal entries as
-measurable functions of `t`.  It is currently an explicit hypothesis of
-`stopped_market_acont_integrable`.  Assuming it is faithful (the
-paper's (1.7) constrains `d⟨X⇩i,X⇩j⟩(t)/dt`, which presupposes the
-density exists measurably), but the RIGHT fix is to add entrywise
-time-measurability to `sufficiently_volatile_market` and discharge it
-in the Brownian witnesses, rather than carry it as a hypothesis
-downstream.  Do that before the pair-law construction, which will need
-it everywhere.
+**THE MEASURABILITY GAP IS CLOSED END TO END (commit `297d340`).**  The
+locale carries `acov_time_measurable`; `Paper_Class.acont_set_borel_measurable`
+transports it to the continuation (`set_borel_measurable lborel {0..}`), and
+`set_borel_measurable_subset` cuts it to `{s..t}` — legitimate because
+`0 ≤ s` puts `{s..t}` inside `{0..}`.  Both `Paper_Bridge` integrability
+results have LOST their `meas` hypothesis; the volatility side of the
+bridge is now HYPOTHESIS-FREE.  Do not reintroduce a measurability
+assumption downstream — take it from the locale.
 
 **PERFORMANCE FIX (2026-08-05, commit `40e3796`).**  The three `GG`
 lemmas in `Path_Tightness_Market` each ran `auto simp: GG_def`, which
@@ -627,6 +675,20 @@ instantiating `weak_conv_integral_of_L2_bound` with the class's own
 second-moment bound (§2.6 `martingale_bounded_test` /
 `coord_sq_bounded_test` supply the identities on members).  Also still
 recorded: cap-invisibility for large `T` (Lemma 1.9/(3.10)).
+
+**WARNING (2026-08-05): the NC-2 X-side instantiation is NOT a plug-in.**
+The chain `path_law_holder_ball_bound_vec` consumes a fourth-moment bound,
+and the repo's supplier `Increment_Moments.fourth_moment_bound_bounded`
+assumes a UNIFORM SUP BOUND on the process (`bnd: AE ω. ¦X u ω¦ ≤ R`), used
+to get `X⁴` integrable.  That hypothesis holds for market witnesses because
+they are CONFINED to `K ⊆ cball 0 r` up to `tau` — it does NOT hold for a
+member of `paper_pair_class`, whose process is neither stopped nor confined
+(the paper's (1.7)–(1.8), §3/NC).  So the fourth-moment estimate has to be
+redone from square-integrability alone (`paper_pair_class_Y_bounded_ae` is
+the entry point: bounded `Y` ⟹ `E[¦X_t¦²] < ∞` through the `outerp X − Y`
+martingale clause), or `fourth_moment_bound_bounded` has to be generalised
+to replace `bnd` by an `L⁴`-integrability hypothesis.  Budget for it
+accordingly; do not schedule it as "instantiation".
 
 Faithful decomposition (statuses of ingredients in brackets):
 
@@ -1132,6 +1194,22 @@ the bounded alternative target is the rest of Section 4 (Theorem 4.2(b),
   `f = (λi. SOME x. P i x)` and `P` is large — that one measured >143 s
   without finishing in `Path_Tightness_Market` and is now 3 ms
   (`someI_ex` once, then `conjunct1`/`conjunct2`/`bspec`).
+- **`lborel` is POLYMORPHIC and `real^'n^'n` has an `ord` instance.** In a
+  goal `(λu. …) ∈ borel_measurable lborel` an unannotated binder can
+  silently elaborate at the MATRIX type rather than at `real`. The symptoms
+  do not point at types at all: `show`s that "fail to refine any pending
+  goal" while printing *identically* to the goal, and `simp` unable to prove
+  `open {..<0}`. Pin `lborel :: real measure` and annotate every binder.
+  (Cost ~8 round-trips on a three-line measurability lemma; see
+  `Paper_Class.acont_set_borel_measurable`, where the trap is also written
+  into the theory text.)
+- Related: the `measurable` method turns an indicator branch condition into
+  a goal about the branch SET. `if u < 0 then … else …` leaves the true
+  `open {..<0}`; the `indicat_real {0..}` form leaves the FALSE `open {0..}`
+  and cannot be closed. Prefer the strict-inequality form.
+- Chaining a NON-`AE` fact into `eventually_elim` fails with
+  `exception THM 1 … RSN: no unifiers`. Use
+  `by (rule eventually_mono) (use … in auto)` instead.
 - Fuller lists live in the agent memory files
   (`isabelle-pide-mcp-environment`, `isabelle-nonterminating-tactics`,
   `isabelle-mcp-buffer-desync`, `isabelle-pide-stale-root`); read them
@@ -1159,25 +1237,71 @@ the bounded alternative target is the rest of Section 4 (Theorem 4.2(b),
 
 ### 4.5 Where to pick up
 
+**REORDERED 2026-08-05 (second session).** The bridge is no longer the
+cheapest way forward — see the CORRECTION in §3/NC: its martingale side
+needs a product construction with an independent Brownian continuation
+(~1–2k lines), because a stopped `X` cannot be paired with a growing `Y`.
+Finish Lemma 2.3 *inside the class* first; it needs no witnesses at all,
+half of it is now done, and it is what clause (1) actually consumes.
+
 In priority order:
 
-1. **NC, martingale side of the bridge** — `X` and `outerp X − Y` as
-   martingales for the PAIR natural filtration. The volatility side is
-   COMPLETE end to end (§3/NC), so this is the remaining half.
-2. **NC, pair-law construction** — push `(X, Y)` forward to the pair path
-   space, then instantiate the engines that are already proved: the
-   X-side Hölder estimate into `pair_holder_charge_split` /
-   `tight_on_set_pair_holder_charge`, and `weak_conv_integral_of_L2_bound`
-   with the class's own second-moment bound.
-3. **NC headline** — "the closure adds no value", i.e. identify
-   `stopped_val_fn` with the class supremum. Everything above feeds this.
-   It is NOT proved and it is what clause (1) needs.
-4. **N5, the weak DPP** — untouched. Prop 2.4's (2.9) is the exact
+1. **NC-3, the martingale clauses of Lemma 2.3.** The two closed clauses
+   are DONE (`paper_pair_class_start_limit`,
+   `paper_pair_class_diffquot_limit`). The route for the remaining two:
+   (a) square-integrability of `X` under a class law — `martingale.integrable`
+   on the `outerp X − Y` clause plus `paper_pair_class_Y_bounded_ae`, with
+   `bounded_linear.integrable[OF bounded_linear_vec_nth]` to get at the
+   `(i,j)` entry; (b) the class's own second-moment identity
+   `E[(ΔX_i)²] = E[ΔY_ii] ≤ L(t−s)` — note the *unconditional* form needs
+   only constancy of the mean of `outerp X − Y`, no conditioning;
+   (c) `unif_integrable_of_L2_bound` + `weak_conv_integral_of_L2_bound`
+   to carry the integrated identities to the limit; (d) upgrade continuous
+   tests to events with the §2.6 engines (`metric_measure_eqI_bounded_cts`,
+   `metric_measure_mono_bounded_cts` — they live in `Section_2_Usc`, so this
+   step belongs in `Paper_Bridge` or needs an import added; do NOT create a
+   new theory mid-session, §4.1); (e) assemble with the AFP's
+   `sigma_finite_filtered_measure.martingale_of_set_integral_eq`, the
+   set-integral characterisation, which is the right interface for
+   integrated identities.
+2. **NC-2, tightness of the class.** Read the WARNING in §3/NC first: this
+   is NOT an instantiation, because `fourth_moment_bound_bounded` assumes a
+   uniform sup bound the class does not have.
+3. **NC, the shift structure (LR Prop 2.2(ii))** — `paper_pair_class k L T x`
+   is the image of `paper_pair_class k L T 0` under
+   `ω ↦ restrict (λt. (x + fst (ω t), snd (ω t))) {0..T}`. Needed so Berge
+   gets a *fixed* compact index set. Scouted this session; the enabling
+   facts are: `natural_filtration M t₀ Y = (λt. family_vimage_algebra
+   (space M) {Y i | i ∈ {t₀..t}} borel)` depends ONLY on `space M` and the
+   process, so the natural filtration is LITERALLY THE SAME measure for `Q`
+   and its shift; and the martingale clauses then transfer through
+   `martingale_of_set_integral_eq` + `integral_distr`, with
+   `outerp (x + v) = outerp v + outerp x + (χ i j. x$i·v$j + v$i·x$j)`
+   splitting the second clause into the first clause, a constant, and a
+   linear function of `X`. Watch extensionality: points of
+   `mspace (path_metric T)` are `extensional {0..T}`, so the shift must
+   `restrict` (hence it depends on `T`).
+4. **NC headline** — with 1–3, clause (1) is Berge (`usc_sup_over_compactin`)
+   against `Exit_Semicontinuity.ess_inf_pexit_usc`, applied to `paper_v`
+   DIRECTLY. Note this is a cleaner target than "identify `stopped_val_fn`
+   with the class supremum": `paper_v` *is* Eq. (1.6), so proving it usc IS
+   clause (1) for the paper's own value function. The bridge
+   (`stopped_val_fn ≤ paper_v`) is then only needed for the clause-(3)
+   lower bound via N4, not for clause (1).
+5. **NC, the bridge's martingale side** — the product/continuation
+   construction, per the CORRECTION in §3/NC.
+6. **N5, the weak DPP** — untouched. Prop 2.4's (2.9) is the exact
    target; build order scripted in §3/N5. Unblocks clause (2) with N4.
-5. Clause (3) beyond the ball / general `n − k ≥ 2`.
+7. Clause (3) beyond the ball / general `n − k ≥ 2`.
 
 Realistic assessment: NC and N5 are each substantial multi-thousand-line
 items. Do not expect Theorem 1.1 to fall out of a single session, and do
 not let the goal-hook pressure you into writing unverified proof text —
 committing material the prover has not checked is worse than committing
 nothing.
+
+**Getting the paper.** `curl -sL https://arxiv.org/html/2512.17702v1`
+returns the full LaTeXML HTML; strip tags and keep each `<math>`'s
+`alttext` attribute to recover the formulas. (`WebFetch` summarises and is
+useless for statements.) LR is at `https://arxiv.org/pdf/2003.13611` —
+note the versioned URL `…/2003.13611v3` 404s.
