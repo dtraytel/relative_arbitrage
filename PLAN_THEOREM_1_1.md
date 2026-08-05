@@ -348,7 +348,7 @@ genuine obstruction to it was found today (see BLOCKER below).
 | NC-4 | density recovery `dY/dt ∈ S` a.e. | **DONE** |
 | NC-5 | value-side usc of the essinf | **DONE** |
 
-`Paper_Class.thy` is PIDE-green (1,906 commands, `overall_status ok`).
+`Paper_Class.thy` is PIDE-green (2,002 commands, `overall_status ok`).
 In ROOT after `Exit_Semicontinuity`; imports `Path_Space`,
 `Path_Tightness`, `Exit_Semicontinuity`, `Poincare_Separation` and
 `Relative_Arbitrage_Comparison` (the last two deterministic-side, no
@@ -421,6 +421,17 @@ cycle).  What it carries:
   `diffquot_of_continued_density` (hence every difference quotient of
   the continued running covariation lies in `S`, for all `0 ≤ s < t`
   with NO stopping caveat, exactly as (1.7) demands).
+
+- **The running covariation, packaged.**  `Yint a t =
+  set_lebesgue_integral lborel {0..t} a`, with `Yint_0` (starts at `0`),
+  `Yint_increment` (`Yint a t − Yint a s = ∫_{s..t} a`, via
+  `set_integral_Un_AE` — the AE-disjoint union rule avoids the
+  `{s<..t}` measurability detour, since `{0..s}` and `{s..t}` overlap
+  only in the null set `{s}`) and `Yint_diffquot_in_sconstraint`.
+  **The volatility side of the faithful bridge is COMPLETE**: from a
+  witness density one now gets a `Y` starting at `0` whose difference
+  quotients lie in `S` for every `0 ≤ s < t`, i.e. the covariation half
+  of `paper_pair_class` verbatim.
 
 **THE WITNESS/CLASS MISMATCH — RESOLVED FROM THE SOURCE 2026-08-05.**
 Re-read of arXiv:2512.17702 p. 3, definitions (1.6)–(1.8), settles it:
