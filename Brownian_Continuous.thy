@@ -340,9 +340,6 @@ proof (intro sufficiently_volatile_market.intro
     then show ?thesis
       unfolding set_integrable_def .
   qed
-  show "AE \<omega> in ?M. (\<lambda>s :: real. mat 1 :: real^'n^'n)
-      \<in> borel_measurable lborel"
-    by (intro AE_I2) simp
   show "AE \<omega> in ?M. set_borel_measurable lborel {0..}
       (\<lambda>s :: real. mat 1 :: real^'n^'n)"
     unfolding set_borel_measurable_def by (intro AE_I2) simp
@@ -546,9 +543,6 @@ proof (intro ito_const_horizon_market.intro
     then show ?thesis
       unfolding set_integrable_def .
   qed
-  show "AE \<omega> in ?M. (\<lambda>s :: real. mat 1 :: real^'n^'n)
-      \<in> borel_measurable lborel"
-    by (intro AE_I2) simp
   show "AE \<omega> in ?M. set_borel_measurable lborel {0..}
       (\<lambda>s :: real. mat 1 :: real^'n^'n)"
     unfolding set_borel_measurable_def by (intro AE_I2) simp
