@@ -538,6 +538,23 @@ all-of-`ℝ` form is FALSE for the deterministic-radius witness, since
 `dra q φ (max u 0) ω`.  On `{0..}` the truncation is invisible and
 `dra_cont` applies.
 
+**LOCALE UPGRADE VERIFIED (2026-08-05, commit `fcd26dd`).**
+`Relative_Arbitrage_Stochastic` 531, `Ito_Market` 1446,
+`Brownian_Continuous` 952, `Deterministic_Radius_Market` 6100 — all
+`ok`.  That covers the upgraded locale itself, the `{0..}` restatement,
+and BOTH discharges that needed real proofs (`dra_cont` +
+`dras_measurable_time` for the deterministic-radius witness; the
+constant `mat 1` for the Brownian one).  A duplicated `show`, left by
+the earlier git-checkout/MCP interleaving, was found and removed here.
+
+STILL UNVERIFIED: the one-line inherited discharges in `Value_Function`
+and `Section_2_Usc` (`by (rule sv.acov_time_measurable)`, plus one
+`measurable_If` for the degenerate market).  That branch would not
+leave the PIDE load queue — 30+ minutes with no progress while every
+other theory loaded normally, Poly/ML idle and the Scala side spinning.
+Check it first next session; if it still will not load, the batch build
+settles it.
+
 **FIRST ACTION AFTER THE NEXT RESTART:** the MCP server's file buffers are
 corrupted for the WHOLE affected chain (it reports `Ito_Market` and
 `Brownian_Continuous` as few-line fragments) — it reports the file as a 7-line fragment, and
