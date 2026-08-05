@@ -334,112 +334,92 @@ a.e.-differentiability + FTC give `dY∞/dt ∈ S` a.e.
   closedness machinery).  Our `stopped_val_fn_ball_eq_2d` is the
   `n = 2` instance.
 
-**`Paper_Class.thy` IS PIDE-GREEN (485 commands, commits `382be79`,
-`32a23ef`).**  In ROOT after `Exit_Semicontinuity`; imports
-`Path_Space`, `Exit_Semicontinuity`, `Poincare_Separation` and
-`Relative_Arbitrage_Comparison` (both deterministic-side, no cycle).
-It carries:
+**NC STATUS TABLE (2026-08-05).  NC IS *NOT* DONE**: the five
+sub-items below are individually complete or nearly so, but the
+HEADLINE of NC — "the closure adds no value", i.e. the identification
+of `stopped_val_fn` with the class supremum — is NOT proved, and one
+genuine obstruction to it was found today (see BLOCKER below).
 
-- **NC-1 definitional layer.**  `type_synonym 'n pairpath =
-  real ⇒ (real^'n) × (real^'n^'n)` — NOTE `real^'n × real^'n^'n`
-  PARSES AS `real^('n × real)^'n^'n`, which is why the synonym exists.
-  `sconstraint k L = Pi_constraint k ∩ {a. eigen_ub a L}` (constants
-  from `Relative_Arbitrage_Convexity`; `lemma_2_1_exact` identifies the
-  hull), `outerp`, `paper_pair_class k L T x` (probability path laws of
-  the pair (X, Y): start `(x, 0)` a.s., difference quotients of `Y` in
-  `sconstraint` a.s., `X` and `outerp X − Y` martingales for the pair
-  natural filtration), `paper_v k L T K x = Sup (essinf pexit ∘ fst)` —
-  Eq. (1.6) capped at `T`.
-- **NC-2, deterministic half: `S` IS COMPACT CONVEX.**
-  `sconstraint_convex` (`Pi_constraint_convex` + `convex_eigen_ub`),
-  `closed_sconstraint` (via `closed_Pi_constraint`, which rests on
+| item | content | status |
+|---|---|---|
+| NC-1 | pair-law encoding of class (1.7) | **DONE** |
+| NC-2 | pair compactness + tightness | **criterion DONE**, instantiation open |
+| NC-3 | limit identities without Skorokhod | **engines DONE**, instantiation open |
+| NC-4 | density recovery `dY/dt ∈ S` a.e. | **DONE** |
+| NC-5 | value-side usc of the essinf | **DONE** |
+
+`Paper_Class.thy` is PIDE-green (1,529 commands, `overall_status ok`).
+In ROOT after `Exit_Semicontinuity`; imports `Path_Space`,
+`Path_Tightness`, `Exit_Semicontinuity`, `Poincare_Separation` and
+`Relative_Arbitrage_Comparison` (the last two deterministic-side, no
+cycle).  What it carries:
+
+- **NC-1.**  `type_synonym 'n pairpath = real ⇒ (real^'n) × (real^'n^'n)`
+  — NOTE `real^'n × real^'n^'n` PARSES AS `real^('n × real)^'n^'n`,
+  which is why the synonym exists.  `sconstraint k L = Pi_constraint k
+  ∩ {a. eigen_ub a L}`, `outerp`, `paper_pair_class k L T x` (pair laws
+  starting at `(x, 0)`, difference quotients of `Y` in `sconstraint`
+  a.s., `X` and `outerp X − Y` martingales for the pair natural
+  filtration), `paper_v` = Eq. (1.6) capped at `T`.
+- **NC-2, deterministic half.**  `sconstraint_convex`,
+  `closed_sconstraint` (via `closed_Pi_constraint`, resting on
   `Pi_proj_ge_iff`: on the psd cone `c ≤ Pi_proj a m` is EXACTLY the
   family of linear inequalities `c ≤ trace (a ** P)` over rank-`m`
-  projections, so `Pi_constraint` is an intersection of closed
-  half-spaces), `bounded_sconstraint` / `compact_sconstraint` (psd +
-  the cap bound every entry by `L`: `psd_eigen_ub_diag`,
-  `psd_eigen_ub_entry_abs_le`).
-- **NC-3, the Skorokhod replacement.**  `Exit_Semicontinuity` now also
-  exports the CLOSED half of the path-space portmanteau theorem —
-  `weak_conv_closed_limsup` and `weak_conv_closed_full_mass` (a closed
-  set of full mass under every approximating probability law has full
-  mass in the limit).  On top of them:
-  `continuous_map_diffquot` (for fixed `s, t ∈ [0,T]` the difference
-  quotient is continuous on paths), `closedin_diffquot_constraint`
-  (its preimage of `S` is closed), and
-  `diffquot_constraint_weak_limit` — a difference-quotient constraint
-  holding a.s. under every approximating law holds a.s. under the weak
-  limit.
+  projections), `sconstraint_norm_le` / `bounded_sconstraint` /
+  `compact_sconstraint`.
+- **NC-2, tightness.**  A Lipschitz bound IS a Hölder-`ga` bound on a
+  bounded horizon (`lipschitz_imp_holder_bound`), so the two component
+  moduli add through `norm_Pair_le` into ONE Hölder ball of the PRODUCT
+  type (`pair_holder_of_components`) — and
+  `Path_Space.compactin_path_holder_ball` applies VERBATIM at the pair
+  type (`compactin_pair_holder_ball`), since products of
+  `polish_space`/`real_normed_vector`/`heine_borel` are again such.
+  Packaged: `tight_on_set_pair_holder_charge`,
+  `pair_holder_charge_split`.  NO matrix-valued Kolmogorov criterion is
+  needed.
+- **NC-3.**  `Exit_Semicontinuity` also exports the CLOSED half of the
+  path-space portmanteau (`weak_conv_closed_limsup`,
+  `weak_conv_closed_full_mass`).  On top:
+  `continuous_map_diffquot`, `closedin_diffquot_constraint`,
+  `diffquot_constraint_weak_limit` (the Skorokhod replacement), and
+  `diffquot_all_of_rational` (rationals → all real `s < t`, since
+  portmanteau only gives one closed set per pair).  For the martingale
+  identities — integrals of CONTINUOUS but UNBOUNDED functionals —
+  `unif_integrable_of_L2_bound` + `weak_conv_integral_of_L2_bound` feed
+  `Path_Tightness.weak_conv_on_integral_unif_integrable`.
+- **NC-4 (complete).**  `diffquot_lipschitz`,
+  `diffquot_deriv_in_constraint`, `diffquot_density_ae`.  Library calls:
+  `Lipschitz_imp_has_bounded_variation`, `Lebesgue_differentiation_thm`.
+  The step once feared to be the hard analytic core is a library call.
+- **Class-level forms.**  `paper_pair_class_lipschitz_ae` (the
+  `Y`-event of the tightness split has probability ONE) and
+  `paper_pair_class_density_ae`.
 
-- **NC-3, rational-to-real.**  `diffquot_all_of_rational`: portmanteau
-  only delivers one closed set per pair, so only COUNTABLY many pairs
-  can be intersected; this lemma upgrades the rational pairs to all
-  real `s < t` by squeezing rationals `p⇩n ↓ s`, `q⇩n ↑ t` strictly
-  inside `(s,t)` (width `min ((t−s)/3) (1/(n+1))`) and passing to the
-  limit (`continuous_on_tendsto_compose`, `closed_sequentially`).
-- **NC-4 COMPLETE: the density statement.**  `diffquot_lipschitz` (S
-  bounded ⇒ `Y` is `B`-Lipschitz on `[0,T]`, `B = n·L` — this is ALSO
-  the deterministic modulus the `Y`-side tightness needs),
-  `diffquot_deriv_in_constraint` (wherever the within-`[x,T]` vector
-  derivative exists it is a limit of constrained quotients, hence in
-  the closed `S`), and the packaged
-  `diffquot_density_ae`: `Y` is differentiable off a NEGLIGIBLE subset
-  of `[0,T]` and `dY/dt ∈ S` there.  Library calls used:
-  `Lipschitz_imp_has_bounded_variation` (Bounded_Variation) and
-  `Lebesgue_differentiation_thm` (Lebesgue_Differentiation) — the step
-  once feared to be the hard analytic core is a library call, exactly
-  as the re-scoping predicted.
+**BLOCKER FOUND 2026-08-05 — the witness/class mismatch.**  The obvious
+bridge "given a `stopped_market` witness, take `Y t = ∫₀ᵗ acov`" DOES
+NOT land in `paper_pair_class`.  Reason: `stopped_market` carries
+`acov s ω = 0` for `s > tau ω` (Section_2_Usc line ~904), while
+`0 ∉ sconstraint k L` whenever `k < n` (`Pi_proj 0 m = 0 < m − k`).  So
+for an interval `[s,t]` extending past `tau`, the difference quotient
+of that `Y` is a convex combination of `S`-elements with `0`, and
+leaves `S`.  This is not a formalization artifact: the paper's class
+(1.7) has NO stopping in the dynamics — `X` is a martingale on all of
+`[0,∞)` with `d⟨X⟩/dt ∈ S` throughout, and `τ_K` is merely a functional
+of the path.  Our `stopped_market` adds stopping as a technical device.
+CONSEQUENCE: the bridge needs the witness CONTINUED past `tau` with
+some `S`-admissible volatility (any element of `S` will do — the exit
+time is unaffected once the path has left `K`), OR `paper_pair_class`
+must be restated with the constraint only up to the exit time.  Decide
+this before writing more bridge code; it changes the statement of
+NC-1's bridging obligation.
 
-- **NC-2, pair tightness — REDUCED TO THE X-SIDE ESTIMATE.**  No
-  matrix-valued Kolmogorov criterion is needed.  On a bounded horizon a
-  Lipschitz bound IS a Hölder-`ga` bound (`lipschitz_imp_holder_bound`),
-  so adding the `X`-side Hölder modulus and the `Y`-side Lipschitz
-  modulus through `norm_Pair_le` puts the whole pair path in ONE Hölder
-  ball of the PRODUCT type (`pair_holder_of_components`).  And
-  `Path_Space.compactin_path_holder_ball` — the Arzelà–Ascoli input —
-  applies VERBATIM at the pair type, since products of
-  `polish_space`/`real_normed_vector`/`heine_borel` spaces are again
-  such: `compactin_pair_holder_ball`.  Packaged as
-  `tight_on_set_pair_holder_charge` (a family is tight as soon as some
-  Hölder ball carries all but `e` of every law's mass — the compact
-  witness `tight_on_set_def` asks for is supplied) and
-  `pair_holder_charge_split` (the charge splits along the components by
-  subadditivity).  Since the `Y`-event has probability ONE by
-  `diffquot_lipschitz`, the only remaining content is the `X`-side
-  estimate, which is `Path_Tightness.path_law_holder_ball_bound_vec`.
-
-- **NC-3, martingale identities through the limit — the L² bridge.**
-  The class's integrated identities (`E[Z·(X⇩t − X⇩s)] = 0` for a bounded
-  continuous past test `Z`, and its covariation analogue) integrate
-  CONTINUOUS but UNBOUNDED path functionals, so plain weak convergence
-  does not transfer them.  `Path_Tightness.weak_conv_on_integral_unif_integrable`
-  closes that gap given uniform integrability; the moment machinery
-  produces a uniform L² bound, and `unif_integrable_of_L2_bound` turns
-  one into the other (Chebyshev–Markov, `R = (C+1)/e`).  Packaged as
-  `weak_conv_integral_of_L2_bound`: a continuous path functional with a
-  uniform second moment has its integral pass to the weak limit.
-  Instantiate at `f = Z·((X⇩t − X⇩s) ∙ e⇩j)` for the martingale identity
-  and at the squared increment for the covariation one.
-
-- **The class's own Y-side facts.**  `sconstraint_norm_le` (every
-  element of `S` has norm `≤ n·L`, factored out of the boundedness
-  proof) feeds `paper_pair_class_lipschitz_ae`: for `Q ∈
-  paper_pair_class k L T x` the `Y`-component is a.s. `n·L`-Lipschitz —
-  i.e. the `Y`-event of `pair_holder_charge_split` has probability ONE.
-  And `paper_pair_class_density_ae` states NC-4 for the class itself:
-  a.s. `Y` is differentiable off a negligible set of times with
-  derivative in `S`.
-
-STILL OPEN in NC-2/3: instantiating the X-side estimate at the pair
-laws (mechanical: feed `path_law_holder_ball_bound_vec` into
+STILL OPEN in NC-2/3 (beyond the blocker): instantiating the X-side
+estimate at the pair laws (`path_law_holder_ball_bound_vec` into
 `pair_holder_charge_split` and `tight_on_set_pair_holder_charge`), and
-instantiating `weak_conv_integral_of_L2_bound` at the pair laws with
-the class's own second-moment bound (the §2.6 market-level cores
-`martingale_bounded_test` / `coord_sq_bounded_test` supply the
-identities on members).  BRIDGING
-OBLIGATIONS still recorded: cap-invisibility for large `T`
-(Lemma 1.9/(3.10)) and the equivalence with `stopped_market`
-witnesses.
+instantiating `weak_conv_integral_of_L2_bound` with the class's own
+second-moment bound (§2.6 `martingale_bounded_test` /
+`coord_sq_bounded_test` supply the identities on members).  Also still
+recorded: cap-invisibility for large `T` (Lemma 1.9/(3.10)).
 
 Faithful decomposition (statuses of ingredients in brackets):
 
