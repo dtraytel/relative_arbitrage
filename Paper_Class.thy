@@ -696,6 +696,34 @@ proof (rule ccontr)
   with eq show False by simp
 qed
 
+text \<open>The specialisation the bridge will consume.  A market witness carries
+  its volatility as a \<open>suff_volatile\<close> density with the \<open>eigen_ub\<close> cap;
+  \<open>lemma_2_1_easy\<close> puts each value in \<open>sconstraint k L\<close> (this is the EASY
+  inclusion of Lemma 2.1 — the hard one, \<open>lemma_2_1_exact\<close>, is what makes
+  the two sets the same and is not needed here), and the average lemma then
+  puts the difference quotient of \<open>Y t = \<integral>₀ᵗ a\<close> there too.\<close>
+
+lemma suff_volatile_cap_in_sconstraint:
+  fixes a :: "real^'n::finite^'n"
+  assumes sv: "a \<in> suff_volatile k" and ub: "eigen_ub a L"
+  shows "a \<in> sconstraint k L"
+  unfolding sconstraint_def
+  using sv ub hull_subset[of "suff_volatile k"] lemma_2_1_easy by auto
+
+theorem diffquot_of_density_in_sconstraint:
+  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes st: "s < t"
+    and sv: "\<And>u. u \<in> {s..t} \<Longrightarrow> a u \<in> suff_volatile k"
+    and ub: "\<And>u. u \<in> {s..t} \<Longrightarrow> eigen_ub (a u) L"
+    and int: "set_integrable lborel {s..t} a"
+  shows "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} a)
+      \<in> sconstraint k L"
+proof (rule average_in_closed_convex[OF sconstraint_convex closed_sconstraint st _ int])
+  fix u assume "u \<in> {s..t}"
+  then show "a u \<in> sconstraint k L"
+    using sv ub by (intro suff_volatile_cap_in_sconstraint) auto
+qed
+
 subsection \<open>What the class gives the tightness argument for free\<close>
 
 text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class already
