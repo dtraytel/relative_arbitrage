@@ -613,6 +613,89 @@ theorem diffquot_constraint_weak_limit:
   by (rule weak_conv_closed_full_mass
       [OF wc closedin_diffquot_constraint[OF s t] probs prob full])
 
+subsection \<open>Averages of constrained densities stay constrained\<close>
+
+text \<open>The mathematical heart of the class's covariation condition, and the
+  place where the paper uses its Lemma 2.1: if a density takes values in the
+  CLOSED CONVEX constraint set, then so does its average over any interval —
+  which is exactly the difference quotient of the running covariation
+  \<open>Y t = \<integral>₀ᵗ a\<close>.  The proof is separation: were the average outside, a
+  hyperplane would separate it from \<open>S\<close>, but the same linear functional
+  applied under the integral sign cannot cross that hyperplane.
+
+  This holds for ANY closed convex set, so it is stated that way; the
+  application takes \<open>S = sconstraint k L\<close> (\<open>closed_sconstraint\<close>,
+  \<open>sconstraint_convex\<close>), whose members arrive as \<open>suff_volatile\<close> densities
+  through \<open>lemma_2_1_easy\<close>.\<close>
+
+lemma average_in_closed_convex:
+  fixes a :: "real \<Rightarrow> 'b :: {euclidean_space, real_inner, heine_borel}"
+    and S :: "'b set"
+  assumes S: "convex S" "closed S" and st: "s < t"
+    and mem: "\<And>u. u \<in> {s..t} \<Longrightarrow> a u \<in> S"
+    and int: "set_integrable lborel {s..t} a"
+  shows "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} a) \<in> S"
+proof (rule ccontr)
+  assume out: "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} a) \<notin> S"
+  obtain b c where bc: "inner b ((1 / (t - s))
+      *\<^sub>R (set_lebesgue_integral lborel {s..t} a)) < c"
+    and sep: "\<And>y. y \<in> S \<Longrightarrow> c < inner b y"
+    using separating_hyperplane_closed_point[OF S out] by blast
+  have ts: "0 < t - s" using st by simp
+  have iint: "set_integrable lborel {s..t} (\<lambda>u. inner (a u) b)"
+  proof -
+    have "integrable lborel (\<lambda>u. (indicat_real {s..t} u *\<^sub>R a u) \<bullet> b)"
+      using int unfolding set_integrable_def by (rule integrable_inner_left)
+    then show ?thesis
+      unfolding set_integrable_def by simp
+  qed
+  have icst: "set_integrable lborel {s..t} (\<lambda>_ :: real. c)"
+    unfolding set_integrable_def
+  proof -
+    have "integrable lborel (indicat_real {s..t})"
+      by (rule integrable_real_indicator)
+        (use st in \<open>auto simp: emeasure_lborel_Icc\<close>)
+    then show "integrable lborel (\<lambda>u. indicat_real {s..t} u *\<^sub>R c)"
+      by simp
+  qed
+  have low: "c * (t - s)
+      \<le> set_lebesgue_integral lborel {s..t} (\<lambda>u. inner (a u) b)"
+  proof -
+    have pt: "c \<le> inner (a u) b" if "u \<in> {s..t}" for u
+      using sep[OF mem[OF that]] by (simp add: inner_commute)
+    have "set_lebesgue_integral lborel {s..t} (\<lambda>_. c)
+        \<le> set_lebesgue_integral lborel {s..t} (\<lambda>u. inner (a u) b)"
+      using pt by (intro set_integral_mono[OF icst iint]) auto
+    moreover have "set_lebesgue_integral lborel {s..t} (\<lambda>_. c) = c * (t - s)"
+      using st by (simp add: set_integral_const)
+    ultimately show ?thesis by simp
+  qed
+  have comm: "set_lebesgue_integral lborel {s..t} (\<lambda>u. inner (a u) b)
+      = inner (set_lebesgue_integral lborel {s..t} a) b"
+    using int unfolding set_lebesgue_integral_def
+    by (simp add: set_integrable_def flip: integral_inner_left)
+  have eq: "c * (t - s) \<le> inner (set_lebesgue_integral lborel {s..t} a) b"
+    using low unfolding comm .
+  have "inner (set_lebesgue_integral lborel {s..t} a) b < c * (t - s)"
+  proof -
+    have "inner b ((1 / (t - s))
+        *\<^sub>R (set_lebesgue_integral lborel {s..t} a))
+        = (1 / (t - s)) * inner (set_lebesgue_integral lborel {s..t} a) b"
+      by (simp add: inner_commute)
+    with bc have lt: "(1 / (t - s))
+        * inner (set_lebesgue_integral lborel {s..t} a) b < c"
+      by (simp add: inner_commute)
+    have "inner (set_lebesgue_integral lborel {s..t} a) b
+        = (t - s) * ((1 / (t - s))
+            * inner (set_lebesgue_integral lborel {s..t} a) b)"
+      using ts by simp
+    also have "\<dots> < (t - s) * c"
+      using lt ts by (intro mult_strict_left_mono)
+    finally show ?thesis by (simp add: mult.commute)
+  qed
+  with eq show False by simp
+qed
+
 subsection \<open>What the class gives the tightness argument for free\<close>
 
 text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class already
