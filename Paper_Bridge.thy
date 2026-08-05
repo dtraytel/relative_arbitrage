@@ -266,4 +266,132 @@ corollary stopped_market_acov_leaves_sconstraint:
   shows "acov s \<omega> = 0"
   using SM s unfolding stopped_market_def by blast
 
+section \<open>NC-3: the martingale clauses of Lemma 2.3\<close>
+
+text \<open>This section needs BOTH sides of the development --- the paper class
+  from \<open>Paper_Class\<close> and the Section-2 law machinery from \<open>Section_2_Usc\<close>
+  (\<open>martingale_bounded_test\<close>, \<open>metric_measure_eqI_bounded_cts\<close>) --- which is
+  why it lives here rather than in \<open>Paper_Class\<close>.
+
+  The two clauses of (1.7) that are CLOSED conditions on a single path
+  already pass to a weak limit (\<open>Paper_Class.paper_pair_class_start_limit\<close>,
+  \<open>\<dots>_diffquot_limit\<close>).  The martingale clauses are not of that kind: they
+  are statements about integrals against past-measurable test functions, and
+  only BOUNDED CONTINUOUS tests survive a weak limit.  So the route is
+  (i) state the identity at a class member against a bounded continuous
+  test, (ii) pass it through the weak limit using the uniform \<open>L\<^sup>2\<close> bound,
+  (iii) upgrade from continuous tests to past events, (iv) reassemble a
+  martingale through the set-integral characterisation.
+
+  Step (i) needs the test function to be measurable for the NATURAL
+  FILTRATION of the coordinate process, while it is naturally a function of
+  the RESTRICTED path.  The two agree, and the non-trivial inclusion ---
+  \<open>\<sigma>(restriction) \<subseteq> \<F>\<^sub>s\<close> --- is exactly what
+  \<open>Path_Space.pathify_measurable\<close> proves: the restriction map is the
+  "path map" of the coordinate process on \<open>{0..s}\<close>, and that theorem reduces
+  a ball of the path metric to countably many evaluation conditions.\<close>
+
+subsection \<open>The restriction map is measurable for the natural filtration\<close>
+
+lemma restrict_measurable_natural_filtration:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and s: "0 \<le> s" and sT: "s \<le> T"
+  shows "(\<lambda>\<omega>. restrict \<omega> {0..s})
+      \<in> natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s
+        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric s :: ('n pairpath) metric))"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s"
+  have spF: "space ?F = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_of_path_sets[OF setsQ])
+  have evm: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable ?F"
+    if u: "u \<in> {0..s}" for u
+    unfolding natural_filtration_def
+    by (rule measurable_family_vimage_algebra) (use u in auto)
+  have cont: "continuous_on {0..s} (\<lambda>u. \<omega> u)"
+    if w: "\<omega> \<in> space ?F" for \<omega> :: "'n pairpath"
+  proof -
+    have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using w spF by simp
+    from mspace_path_metricD[OF this] show ?thesis
+      by (rule continuous_on_subset) (use sT s in auto)
+  qed
+  show ?thesis by (rule pathify_measurable[OF s evm cont])
+qed
+
+lemma past_test_measurable_natural_filtration:
+  fixes Q :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and s: "0 \<le> s" and sT: "s \<le> T"
+    and h: "h \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric s :: ('n pairpath) metric)))"
+  shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}))
+      \<in> borel_measurable (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s)"
+  by (rule measurable_compose
+      [OF restrict_measurable_natural_filtration[OF setsQ s sT] h])
+
+subsection \<open>The identity at a class member, against a bounded test\<close>
+
+lemma paper_pair_class_coord_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> u) $ i)"
+proof (rule martingale_vec_nth)
+  show "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0 (\<lambda>u \<omega>. fst (\<omega> u))"
+    using Q unfolding paper_pair_class_def by blast
+qed
+
+theorem paper_pair_class_martingale_test:
+  fixes Q :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hm: "h \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric s :: ('n pairpath) metric)))"
+    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
+  shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i) \<partial>Q) = 0"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)"
+  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> u) $ i"
+  let ?Z = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s})"
+  have sT: "s \<le> T" using ts tT by simp
+  have t0: "0 \<le> t" using st ts by simp
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have MY: "martingale Q ?F 0 ?Y" by (rule paper_pair_class_coord_martingale[OF Q])
+  then interpret MY: martingale Q ?F 0 ?Y .
+  have Zm: "?Z \<in> borel_measurable (?F s)"
+    by (rule past_test_measurable_natural_filtration
+        [OF paper_pair_class_sets[OF Q] st sT hm])
+  have ZM: "?Z \<in> borel_measurable Q"
+    by (rule measurable_from_subalg[OF MY.subalgebras[OF st] Zm])
+  have prod_int: "integrable Q (\<lambda>\<omega>. ?Z \<omega> * ?Y u \<omega>)" if u: "0 \<le> u" for u
+  proof (rule Bochner_Integration.integrable_bound)
+    show "integrable Q (\<lambda>\<omega>. \<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)"
+      by (intro integrable_mult_right Bochner_Integration.integrable_abs
+          MY.integrable[OF u])
+    show "(\<lambda>\<omega>. ?Z \<omega> * ?Y u \<omega>) \<in> borel_measurable Q"
+      using ZM borel_measurable_integrable[OF MY.integrable[OF u]]
+      by measurable
+    show "AE \<omega> in Q. norm (?Z \<omega> * ?Y u \<omega>) \<le> norm (\<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n pairpath"
+      have "\<bar>?Z \<omega>\<bar> \<le> \<bar>B\<bar>" using hb[of "restrict \<omega> {0..s}"] by simp
+      then have "\<bar>?Z \<omega> * ?Y u \<omega>\<bar> \<le> \<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>"
+        by (simp add: abs_mult mult_right_mono)
+      then show "norm (?Z \<omega> * ?Y u \<omega>) \<le> norm (\<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)" by simp
+    qed
+  qed
+  have int_t: "integrable Q (\<lambda>\<omega>. ?Z \<omega> * ?Y t \<omega>)" by (rule prod_int[OF t0])
+  have int_s: "integrable Q (\<lambda>\<omega>. ?Z \<omega> * ?Y s \<omega>)" by (rule prod_int[OF st])
+  have eqts: "(\<integral>\<omega>. ?Z \<omega> * ?Y t \<omega> \<partial>Q) = (\<integral>\<omega>. ?Z \<omega> * ?Y s \<omega> \<partial>Q)"
+    by (rule martingale_bounded_test[OF MY st ts Zm int_t int_s])
+  have "(\<integral>\<omega>. ?Z \<omega> * (?Y t \<omega> - ?Y s \<omega>) \<partial>Q)
+      = (\<integral>\<omega>. ?Z \<omega> * ?Y t \<omega> \<partial>Q) - (\<integral>\<omega>. ?Z \<omega> * ?Y s \<omega> \<partial>Q)"
+    using Bochner_Integration.integral_diff[OF int_t int_s]
+    by (simp add: right_diff_distrib)
+  then show ?thesis using eqts by simp
+qed
+
 end
