@@ -566,4 +566,175 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>Generic integrability side conditions of the transfer theorem\<close>
+
+text \<open>\<open>weak_conv_integral_of_L2_bound\<close> asks, besides the \<open>L\<^sup>2\<close> bound
+  itself, for integrability of the CLAMPED and of the TAIL-TRUNCATED
+  integrand under every law involved.  Neither depends on the path space:
+  a clamp is bounded, and a tail truncation is dominated by \<open>\<bar>f\<bar>\<close>.\<close>
+
+lemma bounded_measurable_integrable:
+  fixes g :: "'a \<Rightarrow> real"
+  assumes P: "finite_measure N" and m: "g \<in> borel_measurable N"
+    and b: "\<And>w. \<bar>g w\<bar> \<le> D"
+  shows "integrable N g"
+  by (rule finite_measure.integrable_const_bound[OF P _ m]) (use b in auto)
+
+lemma clamp_integrable:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes P: "finite_measure N" and m: "f \<in> borel_measurable N"
+  shows "integrable N (\<lambda>w. max (- R) (min R (f w)))"
+proof (rule bounded_measurable_integrable[OF P])
+  show "(\<lambda>w. max (- R) (min R (f w))) \<in> borel_measurable N"
+    using m by measurable
+  show "\<And>w. \<bar>max (- R) (min R (f w))\<bar> \<le> \<bar>R\<bar>" by auto
+qed
+
+lemma tail_indicator_measurable:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes m: "f \<in> borel_measurable N"
+  shows "(\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w)) \<in> borel_measurable N"
+proof -
+  have os: "open {z::real. R < \<bar>z\<bar>}"
+    by (intro open_Collect_less continuous_intros)
+  have "{z::real. R < \<bar>z\<bar>} \<in> sets borel" by (rule borel_open[OF os])
+  note this[measurable] m[measurable]
+  show ?thesis by measurable
+qed
+
+lemma tail_integrable:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes int: "integrable N f"
+  shows "integrable N (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+proof (rule Bochner_Integration.integrable_bound
+    [OF Bochner_Integration.integrable_abs[OF int]])
+  show "(\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w)) \<in> borel_measurable N"
+    by (rule tail_indicator_measurable[OF borel_measurable_integrable[OF int]])
+  show "AE w in N. norm (\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w)) \<le> norm \<bar>f w\<bar>"
+    by (intro AE_I2) (auto simp: indicator_def)
+qed
+
+subsection \<open>The test functional under a pair law with an \<open>L\<^sup>2\<close> bound\<close>
+
+lemma pair_law_sq_mean_of_nn_bound:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes int: "integrable N (\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2)" and C0: "0 \<le> C"
+    and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
+  shows "(\<integral>\<omega>. (fst (\<omega> u) $ i)\<^sup>2 \<partial>N) \<le> C"
+proof -
+  have "ennreal (\<integral>\<omega>. (fst (\<omega> u) $ i)\<^sup>2 \<partial>N)
+      = (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N)"
+    by (rule nn_integral_eq_integral[OF int, symmetric]) simp
+  also have "\<dots> \<le> ennreal C" by (rule bnd)
+  finally show ?thesis using C0 by simp
+qed
+
+lemma pair_test_measurable:
+  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+  assumes setsN: "sets N = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+  shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))
+      \<in> borel_measurable N"
+proof -
+  have sT: "s \<le> T" using ts tT by simp
+  have tI: "t \<in> {0..T}" using st ts tT by simp
+  have "(\<lambda>\<omega> :: 'n pairpath.
+        h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel"
+    using continuous_map_measurable
+      [OF pair_test_functional_cont[OF st sT tI hc, of i]]
+    by (simp add: borel_of_euclidean)
+  then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
+qed
+
+lemma pair_test_sq_bound:
+  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+  assumes P: "prob_space N"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
+    and C0: "0 \<le> C"
+    and Cs: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> s) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
+    and Ct: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> t) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
+  shows "integrable N (\<lambda>\<omega>. (h (restrict \<omega> {0..s})
+        * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))\<^sup>2)"
+    and "(\<integral>\<omega>. (h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))\<^sup>2 \<partial>N)
+        \<le> 4 * B\<^sup>2 * C"
+proof -
+  let ?f = "\<lambda>\<omega> :: 'n pairpath.
+      h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i)"
+  let ?D = "\<lambda>\<omega> :: 'n pairpath.
+      2 * B\<^sup>2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2)"
+  have sI: "s \<in> {0..T}" using st ts tT by simp
+  have tI: "t \<in> {0..T}" using st ts tT by simp
+  have B0: "0 \<le> B" by (rule order_trans[OF abs_ge_zero hb])
+  have iss: "integrable N (\<lambda>\<omega>. (fst (\<omega> s) $ i)\<^sup>2)"
+    by (rule pair_law_sq_integrable_of_nn_bound[OF setsN sI Cs])
+  have itt: "integrable N (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
+    by (rule pair_law_sq_integrable_of_nn_bound[OF setsN tI Ct])
+  have fm: "?f \<in> borel_measurable N"
+    by (rule pair_test_measurable[OF setsN st ts tT hc])
+  have fsqm: "(\<lambda>\<omega>. (?f \<omega>)\<^sup>2) \<in> borel_measurable N" using fm by measurable
+  have dom_int: "integrable N ?D"
+    by (intro integrable_mult_right Bochner_Integration.integrable_add itt iss)
+  \<comment> \<open>pointwise: the test factor contributes at most \<open>B\<^sup>2\<close>, and the squared
+      increment at most twice the sum of the two squared coordinates.\<close>
+  have ptwise: "(?f \<omega>)\<^sup>2 \<le> ?D \<omega>" for \<omega>
+  proof -
+    have hsq: "(h (restrict \<omega> {0..s}))\<^sup>2 \<le> B\<^sup>2"
+    proof -
+      have "\<bar>h (restrict \<omega> {0..s})\<bar>\<^sup>2 \<le> B\<^sup>2"
+        by (rule power_mono[OF hb abs_ge_zero])
+      then show ?thesis by simp
+    qed
+    \<comment> \<open>\<open>2(a²+b²) − (a−b)² = (a+b)² \<ge> 0\<close>: stated as an EQUATION between
+        squares so that \<open>linarith\<close> sees only linear atoms.\<close>
+    have e1: "2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2)
+          - (fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2
+        = (fst (\<omega> t) $ i + fst (\<omega> s) $ i)\<^sup>2"
+      by (simp add: power2_diff power2_sum)
+    have sq_le: "(fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2
+        \<le> 2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2)"
+      using e1 zero_le_power2[of "fst (\<omega> t) $ i + fst (\<omega> s) $ i"] by linarith
+    have "(?f \<omega>)\<^sup>2 = (h (restrict \<omega> {0..s}))\<^sup>2
+        * (fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2"
+      by (simp add: power_mult_distrib)
+    also have "\<dots> \<le> B\<^sup>2 * (fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2"
+      by (rule mult_right_mono[OF hsq zero_le_power2])
+    also have "\<dots> \<le> B\<^sup>2 * (2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2))"
+      by (rule mult_left_mono[OF sq_le zero_le_power2])
+    also have "\<dots> = ?D \<omega>" by simp
+    finally show ?thesis .
+  qed
+  show fsq_int: "integrable N (\<lambda>\<omega>. (?f \<omega>)\<^sup>2)"
+  proof (rule Bochner_Integration.integrable_bound[OF dom_int fsqm])
+    show "AE \<omega> in N. norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n pairpath"
+      have "0 \<le> ?D \<omega>" by simp
+      then show "norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)" using ptwise[of \<omega>] by simp
+    qed
+  qed
+  have Bs: "(\<integral>\<omega>. (fst (\<omega> s) $ i)\<^sup>2 \<partial>N) \<le> C"
+    by (rule pair_law_sq_mean_of_nn_bound[OF iss C0 Cs])
+  have Bt: "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>N) \<le> C"
+    by (rule pair_law_sq_mean_of_nn_bound[OF itt C0 Ct])
+  have "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> (\<integral>\<omega>. ?D \<omega> \<partial>N)"
+    by (rule integral_mono[OF fsq_int dom_int]) (rule ptwise)
+  also have "(\<integral>\<omega>. ?D \<omega> \<partial>N)
+      = 2 * B\<^sup>2 * ((\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>N) + (\<integral>\<omega>. (fst (\<omega> s) $ i)\<^sup>2 \<partial>N))"
+    by (simp add: Bochner_Integration.integral_add[OF itt iss])
+  also have "\<dots> \<le> 2 * B\<^sup>2 * (2 * C)"
+    by (rule mult_left_mono) (use Bs Bt zero_le_power2 in auto)
+  also have "\<dots> = 4 * B\<^sup>2 * C" by simp
+  finally show "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> 4 * B\<^sup>2 * C" .
+qed
+
 end
