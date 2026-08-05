@@ -8,8 +8,8 @@ open, and what to do next. Everything referenced below is PIDE-verified
 unless marked open — including ALL of `Deterministic_Radius_Market.thy`
 (6,023 commands green), `Theorem_1_1.thy` (369 commands green, now
 importing `Section_2_Usc` + `Deterministic_Radius_Market`) and ALL of
-`Exit_Semicontinuity.thy` (2,245 commands green, crown
-`ess_inf_pexit_usc` included); the user's
+`Exit_Semicontinuity.thy` (2,604 commands green, crown
+`ess_inf_pexit_usc` and the cap-invisibility lemmas included); the user's
 batch build remains the final cross-check. WORKFLOW (user request):
 develop DIRECTLY in the theory files via the PIDE MCP edit tool — the
 current server session has the full ROOT and elaborates the tree
@@ -459,13 +459,15 @@ CONSEQUENCES, and they are decisions, not options:
 2. **`paper_pair_class` is right in substance**: it constrains the
    difference quotients on the whole of `[0,T]` with no reference to
    stopping.  Keep it that way.
-3. **The horizon cap is OURS and needs its invisibility proved.**  The
-   paper works on `C([0,∞), ℝⁿ)` with locally uniform convergence; we
-   cap at `T`.  The cap is defensible — `essinf (τ_K ∧ T) = essinf τ_K`
-   once `T` exceeds the uniform bound `r²/(n−k)` on the value (repo:
-   `ball_v_le`), so the SUPREMUM is unaffected — but that argument must
-   be written down.  It is the cap-invisibility obligation already
-   recorded, now with a precise justification.
+3. **The horizon cap is OURS — PATH-LEVEL INVISIBILITY NOW PROVED.**
+   The paper works on `C([0,∞), ℝⁿ)` with locally uniform convergence;
+   we cap at `T`.  `Exit_Semicontinuity` now carries `pexit_mono_T`
+   (the capped exit is monotone in the horizon) and
+   `pexit_stable_above_T` (once a path exits strictly before `T`,
+   raising the horizon does not move its value at all).  What REMAINS
+   of this obligation is the law-level step: `essinf (τ_K ∧ T) =
+   essinf τ_K` once `T` exceeds the uniform value bound `r²/(n−k)`
+   (repo: `ball_v_le`), so the SUPREMUM is unaffected.
 4. The constraint is on `d⟨X_i,X_j⟩/dt`, i.e. the DENSITY must exist
    a.e. — which is why carrying `⟨X⟩` as a Lipschitz second component
    and recovering the density by Lebesgue differentiation (NC-4) is the
