@@ -390,10 +390,28 @@ It carries:
   once feared to be the hard analytic core is a library call, exactly
   as the re-scoping predicted.
 
-STILL OPEN in NC-2/3: the pair TIGHTNESS itself (X-side is
-`Path_Tightness_Market`; Y-side is Arzelà–Ascoli on the Lipschitz
-modulus now available; then product tightness), and the two limit
-MARTINGALE identities (§2.6 engines
+- **NC-2, pair tightness — REDUCED TO THE X-SIDE ESTIMATE.**  No
+  matrix-valued Kolmogorov criterion is needed.  On a bounded horizon a
+  Lipschitz bound IS a Hölder-`ga` bound (`lipschitz_imp_holder_bound`),
+  so adding the `X`-side Hölder modulus and the `Y`-side Lipschitz
+  modulus through `norm_Pair_le` puts the whole pair path in ONE Hölder
+  ball of the PRODUCT type (`pair_holder_of_components`).  And
+  `Path_Space.compactin_path_holder_ball` — the Arzelà–Ascoli input —
+  applies VERBATIM at the pair type, since products of
+  `polish_space`/`real_normed_vector`/`heine_borel` spaces are again
+  such: `compactin_pair_holder_ball`.  Packaged as
+  `tight_on_set_pair_holder_charge` (a family is tight as soon as some
+  Hölder ball carries all but `e` of every law's mass — the compact
+  witness `tight_on_set_def` asks for is supplied) and
+  `pair_holder_charge_split` (the charge splits along the components by
+  subadditivity).  Since the `Y`-event has probability ONE by
+  `diffquot_lipschitz`, the only remaining content is the `X`-side
+  estimate, which is `Path_Tightness.path_law_holder_ball_bound_vec`.
+
+STILL OPEN in NC-2/3: instantiating the X-side estimate at the pair
+laws (mechanical: feed `path_law_holder_ball_bound_vec` into
+`pair_holder_charge_split` and `tight_on_set_pair_holder_charge`), and
+the two limit MARTINGALE identities (§2.6 engines
 `metric_measure_eqI_bounded_cts` / `..._mono_bounded_cts`).  BRIDGING
 OBLIGATIONS still recorded: cap-invisibility for large `T`
 (Lemma 1.9/(3.10)) and the equivalence with `stopped_market`
