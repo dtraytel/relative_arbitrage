@@ -2218,4 +2218,142 @@ proof -
   qed
 qed
 
+subsection \<open>Step (d): Fatou removes the localization\<close>
+
+text \<open>Pathwise the localization is eventually inactive: a path is
+  continuous on the COMPACT \<open>{0..T}\<close>, hence bounded there, so once \<open>R\<close>
+  exceeds that bound the level is never reached and \<open>\<tau>\<^sub>R = T\<close>.  The stopped
+  increments are therefore eventually EQUAL to the unstopped ones, and
+  Fatou turns the uniform bound of step (c) into the bound itself.\<close>
+
+lemma abs_diff_le_two:
+  fixes a b C :: real
+  assumes "\<bar>a\<bar> \<le> C" and "\<bar>b\<bar> \<le> C"
+  shows "\<bar>a - b\<bar> \<le> 2 * C"
+  using assms by (simp add: abs_le_iff)
+
+lemma ploc_eq_T_of_below:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes h: "\<And>r. 0 \<le> r \<Longrightarrow> r \<le> T \<Longrightarrow> \<bar>pcoord T i r \<omega>\<bar> < R"
+  shows "ploc T i R \<omega> = T"
+proof -
+  have e: "{r. 0 \<le> r \<and> r \<le> T \<and> pcoord T i r \<omega> \<in> {y :: real. R \<le> \<bar>y\<bar>}} \<union> {T}
+      = {T}"
+    using h by fastforce
+  show ?thesis unfolding ploc_def etime_def e by simp
+qed
+
+theorem paper_pair_class_fourth_moment:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and st: "0 \<le> s" and sT: "s \<le> T"
+  shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> T) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
+      \<le> ennreal (8 * L\<^sup>2 * (T - s)\<^sup>2)"
+proof -
+  let ?RR = "\<lambda>m :: nat. \<bar>x $ i\<bar> + 1 + real m"
+  let ?g = "\<lambda>m \<omega> :: 'n pairpath.
+      (pcoord T i (min T (ploc T i (?RR m) \<omega>)) \<omega>
+        - pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>)^4"
+  have T0: "0 \<le> T" using T by simp
+  have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
+  have Rpos: "0 < ?RR m" for m by simp
+  have Rgt: "\<bar>x $ i\<bar> < ?RR m" for m by simp
+  have gint: "integrable Q (?g m)" for m
+  proof -
+    have mgX: "martingale Q (natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w)) 0
+        (\<lambda>w \<omega>. pcoord T i (min w (ploc T i (?RR m) \<omega>)) \<omega>)"
+      by (rule paper_pair_class_stopped_coord_martingale[OF T L setsQ Q])
+    then interpret MX: martingale Q "natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w)" 0
+        "\<lambda>w \<omega>. pcoord T i (min w (ploc T i (?RR m) \<omega>)) \<omega>" .
+    have m1: "(\<lambda>\<omega>. pcoord T i (min T (ploc T i (?RR m) \<omega>)) \<omega>)
+        \<in> borel_measurable Q"
+      by (rule borel_measurable_integrable[OF MX.integrable[OF T0]])
+    have m2: "(\<lambda>\<omega>. pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>)
+        \<in> borel_measurable Q"
+      by (rule borel_measurable_integrable[OF MX.integrable[OF st]])
+    have b1: "AE \<omega> in Q. \<bar>pcoord T i (min T (ploc T i (?RR m) \<omega>)) \<omega>\<bar> \<le> ?RR m"
+      by (rule paper_pair_class_stopped_abs_le[OF T0 setsQ Q Rpos Rgt T0])
+    have b2: "AE \<omega> in Q. \<bar>pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>\<bar> \<le> ?RR m"
+      by (rule paper_pair_class_stopped_abs_le[OF T0 setsQ Q Rpos Rgt st])
+    show ?thesis
+    proof (rule finite_measure.integrable_const_bound
+        [OF fmQ _ _, of _ "(2 * ?RR m)^4"])
+      show "AE \<omega> in Q. norm (?g m \<omega>) \<le> (2 * ?RR m)^4"
+        using b1 b2
+      proof eventually_elim
+        case (elim \<omega>)
+        have le2: "\<bar>pcoord T i (min T (ploc T i (?RR m) \<omega>)) \<omega>
+              - pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>\<bar> \<le> 2 * ?RR m"
+          using elim by (rule abs_diff_le_two)
+        have "\<bar>pcoord T i (min T (ploc T i (?RR m) \<omega>)) \<omega>
+              - pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>\<bar>^4
+            \<le> (2 * ?RR m)^4"
+          by (rule power_mono[OF le2 abs_ge_zero])
+        then show ?case by (simp add: power_abs)
+      qed
+      show "?g m \<in> borel_measurable Q" using m1 m2 by simp
+    qed
+  qed
+  have gbound: "(\<integral>\<omega>. ?g m \<omega> \<partial>Q) \<le> 8 * L\<^sup>2 * (T - s)\<^sup>2" for m
+    by (rule paper_pair_class_stopped_fourth_moment
+        [OF T L setsQ Q Rpos Rgt st sT])
+  have gmeas: "(\<lambda>\<omega>. ennreal (?g m \<omega>)) \<in> borel_measurable Q" for m
+    using borel_measurable_integrable[OF gint] by measurable
+  have lim: "AE \<omega> in Q. ennreal ((fst (\<omega> T) $ i - fst (\<omega> s) $ i)^4)
+      = liminf (\<lambda>m. ennreal (?g m \<omega>))"
+  proof (intro AE_I2)
+    fix \<omega> :: "'n pairpath" assume mem: "\<omega> \<in> space Q"
+    have c: "continuous_on {0..T} (\<lambda>r. pcoord T i r \<omega>)"
+      unfolding pcoord_def
+      by (rule continuous_on_subset
+          [OF paper_pair_class_coord_paths_cont[OF T0 setsQ mem]]) auto
+    have "bounded ((\<lambda>r. pcoord T i r \<omega>) ` {0..T})"
+      by (intro compact_imp_bounded compact_continuous_image c) simp
+    then obtain B where B: "\<forall>r\<in>{0..T}. \<bar>pcoord T i r \<omega>\<bar> \<le> B"
+      unfolding bounded_iff by auto
+    obtain M0 :: nat where M0: "B - \<bar>x $ i\<bar> - 1 < real M0"
+      using reals_Archimedean2 by blast
+    have eq: "?g m \<omega> = (fst (\<omega> T) $ i - fst (\<omega> s) $ i)^4" if m: "M0 \<le> m" for m
+    proof -
+      have RB: "B < ?RR m" using M0 m by simp
+      have "ploc T i (?RR m) \<omega> = T"
+        by (rule ploc_eq_T_of_below) (use B RB in force)
+      then show ?thesis
+        unfolding pcoord_def using st sT T0 by simp
+    qed
+    have tt: "(\<lambda>m. ennreal (?g m \<omega>))
+        \<longlonglongrightarrow> ennreal ((fst (\<omega> T) $ i - fst (\<omega> s) $ i)^4)"
+      by (rule tendsto_eventually)
+        (use eq in \<open>auto simp: eventually_sequentially\<close>)
+    have "liminf (\<lambda>m. ennreal (?g m \<omega>))
+        = ennreal ((fst (\<omega> T) $ i - fst (\<omega> s) $ i)^4)"
+      by (rule lim_imp_Liminf[OF _ tt]) simp
+    then show "ennreal ((fst (\<omega> T) $ i - fst (\<omega> s) $ i)^4)
+        = liminf (\<lambda>m. ennreal (?g m \<omega>))" by simp
+  qed
+  have bnd: "(\<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q) \<le> ennreal (8 * L\<^sup>2 * (T - s)\<^sup>2)"
+    for m
+  proof -
+    have "(\<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q) = ennreal (\<integral>\<omega>. ?g m \<omega> \<partial>Q)"
+      by (rule nn_integral_eq_integral[OF gint]) simp
+    also have "\<dots> \<le> ennreal (8 * L\<^sup>2 * (T - s)\<^sup>2)"
+      using gbound by (rule ennreal_leI)
+    finally show ?thesis .
+  qed
+  have "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> T) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
+      = (\<integral>\<^sup>+\<omega>. liminf (\<lambda>m. ennreal (?g m \<omega>)) \<partial>Q)"
+    using lim by (rule nn_integral_cong_AE)
+  also have "\<dots> \<le> liminf (\<lambda>m. \<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q)"
+    by (rule nn_integral_liminf[OF gmeas])
+  also have "\<dots> \<le> limsup (\<lambda>m. \<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q)"
+    by (rule Liminf_le_Limsup) simp
+  also have "\<dots> \<le> ennreal (8 * L\<^sup>2 * (T - s)\<^sup>2)"
+    by (rule Limsup_bounded) (intro always_eventually allI bnd)
+  finally show ?thesis .
+qed
+
 end
