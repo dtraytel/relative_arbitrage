@@ -724,6 +724,71 @@ proof (rule average_in_closed_convex[OF sconstraint_convex closed_sconstraint st
     using sv ub by (intro suff_volatile_cap_in_sconstraint) auto
 qed
 
+subsection \<open>The constraint set is inhabited — and why that matters\<close>
+
+text \<open>The paper's standing assumption is \<open>L \<ge> 1\<close> (Theorem 1.1), and that is
+  exactly what makes the IDENTITY matrix admissible: \<open>\<Pi>\<^sub>m(I) = m \<ge> m − k\<close> and
+  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(I) = 1 \<le> L\<close>.  This is not a curiosity.  Per the paper's (1.7) the
+  constraint holds for a.e. \<open>t \<ge> 0\<close> — the process is NEVER stopped, and
+  \<open>\<tau>\<^sub>K\<close> of (1.8) is merely a functional of the path — so the bridge from a
+  stopped market witness must CONTINUE its volatility past the stopping
+  time with some admissible value.  \<open>mat 1\<close> is that value.\<close>
+
+lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
+  unfolding psd_def
+proof (intro conjI allI)
+  show "transpose (mat 1 :: real^'n^'n) = mat 1"
+    by (simp add: transpose_mat)
+  fix x :: "real^'n"
+  show "0 \<le> x \<bullet> (mat 1 *v x)"
+    by (simp add: matrix_vector_mul_lid)
+qed
+
+lemma Pi_proj_mat_1:
+  assumes m: "m \<le> CARD('n::finite)"
+  shows "real m \<le> Pi_proj (mat 1 :: real^'n^'n) m"
+proof (rule Pi_proj_ge[OF m])
+  fix P :: "real^'n^'n"
+  assume P: "is_proj P" "trace P = real m"
+  have "trace ((mat 1 :: real^'n^'n) ** P) = trace P"
+    by (simp add: matrix_mul_lid)
+  then show "real m \<le> trace ((mat 1 :: real^'n^'n) ** P)"
+    using P by simp
+qed
+
+theorem mat_1_in_sconstraint:
+  assumes L: "1 \<le> L"
+  shows "(mat 1 :: real^'n::finite^'n) \<in> sconstraint k L"
+  unfolding sconstraint_def Pi_constraint_def
+proof (intro IntI CollectI conjI allI impI psd_mat_1)
+  fix m
+  assume m: "k < m" "m \<le> CARD('n)"
+  have "real (m - k) \<le> real m" by simp
+  also have "\<dots> \<le> Pi_proj (mat 1 :: real^'n^'n) m"
+    by (rule Pi_proj_mat_1[OF m(2)])
+  finally show "real (m - k) \<le> Pi_proj (mat 1 :: real^'n^'n) m" .
+next
+  show "eigen_ub (mat 1 :: real^'n^'n) L"
+    unfolding eigen_ub_def
+  proof (intro allI)
+    fix x :: "real^'n"
+    have "x \<bullet> ((mat 1 :: real^'n^'n) *v x) = x \<bullet> x"
+      by (simp add: matrix_vector_mul_lid)
+    also have "\<dots> \<le> L * (x \<bullet> x)"
+    proof -
+      have "1 * (x \<bullet> x) \<le> L * (x \<bullet> x)"
+        using L inner_ge_zero[of x] by (rule mult_right_mono)
+      then show ?thesis by simp
+    qed
+    finally show "x \<bullet> ((mat 1 :: real^'n^'n) *v x) \<le> L * (x \<bullet> x)" .
+  qed
+qed
+
+corollary sconstraint_nonempty:
+  assumes L: "1 \<le> L"
+  shows "(sconstraint k L :: (real^'n::finite^'n) set) \<noteq> {}"
+  using mat_1_in_sconstraint[OF L] by blast
+
 subsection \<open>What the class gives the tightness argument for free\<close>
 
 text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class already
