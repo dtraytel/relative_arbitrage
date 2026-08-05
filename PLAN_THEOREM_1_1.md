@@ -1436,10 +1436,17 @@ In priority order:
    `mat_1_in_sconstraint`); the work is the off-diagonal covariation, i.e.
    `X_i X_j` a martingale for `i ≠ j`, which needs the independence of the
    Brownian coordinates. This would have caught the vacuity bug on day one.
-1. **THE UNIFORM FOURTH MOMENT, BY LOCALIZATION — HALF BUILT.** Still the
-   single highest-value item: it unblocks BOTH the second martingale clause
-   of Lemma 2.3 AND NC-2's tightness. It needs no BDG and no change to
-   `Increment_Moments`.
+0. ~~**THE UNIFORM FOURTH MOMENT**~~ — **DONE 2026-08-05**, commit
+   `6ffd5b4`. **`Paper_Bridge.paper_pair_class_fourth_moment`**: for every
+   member of `paper_pair_class` and `0 ≤ s ≤ T`,
+   `E[(X_T$i − X_s$i)⁴] ≤ 8L²(T−s)²` (nn-integral form). No BDG, no change
+   to `Increment_Moments`. This was the obstruction shared by the
+   compensated clause of Lemma 2.3 and by NC-2's tightness; both are now
+   unblocked. Details below.
+
+1. **THE UNIFORM FOURTH MOMENT, BY LOCALIZATION — ALL FOUR STEPS DONE.**
+   It unblocked BOTH the second martingale clause of Lemma 2.3 AND NC-2's
+   tightness, and needed no BDG and no change to `Increment_Moments`.
 
    **DONE 2026-08-05** (commits `e6d1db1`, `9206228`, `a9f031d`,
    `b607cb6`), all in `Paper_Bridge.thy`:
@@ -1466,23 +1473,43 @@ In priority order:
      the form `stopped_adapted_of_cont` and `optional_stopping` ask for),
      `paper_pair_class_compensated_coord_martingale`.
 
-   **WHAT REMAINS**, in order: (a) the compensator rate bound at the
-   stopped times, `0 ≤ A_{v∧τ} − A_{u∧τ} ≤ L(v−u)`, from the class's
-   diffquot clause plus `v∧τ − u∧τ ≤ v − u`; (b) the conditional identity
-   `cond_exp ((ΔX^τ)²) = cond_exp (ΔA^τ)`, the standard cross-term
-   computation from the two stopped martingales (cf.
-   `Section_2_Usc.coord_sq_bounded_test`, same shape); (c) apply
-   `fourth_moment_bound_bounded` at the stopped pair with `C = L` and the
-   sup bound `R`; (d) Fatou — pathwise `sup_{[0,T]}¦X¦ < ∞` by continuity
-   on a compact, so `τ_R > T` for large `R` and
-   `(X_{T∧τ_R} − X_{s∧τ_R})⁴ → (X_T − X_s)⁴`.
+   **THE FOUR STEPS, ALL VERIFIED** (commits `47b26a5`, `50e9286`,
+   `f6301f3`, `4379916`, `6ffd5b4`):
+   - (a) `sconstraint_diag` (a constraint matrix has diagonal entries in
+     `[0,L]`), `paper_pair_class_Y_diag_increment` (the diagonal form of
+     the covariation clause) and `paper_pair_class_stopped_compensator_rate`
+     — stopping only shrinks an interval, so the rate survives it.
+   - (b) `paper_pair_class_stopped_cond_exp` —
+     `E[(ΔX^τ)²|𝔉_u] = E[ΔA^τ|𝔉_u]`, the usual expansion: the cross term
+     is pulled out because `X^τ_u` is `𝔉_u`-measurable
+     (`cond_exp_measurable_mult`), and the compensated martingale converts
+     `E[(X^τ_v)²|𝔉_u]`. Every integrability side condition is FREE because
+     the stopped pair is bounded (`paper_pair_class_stopped_abs_le`,
+     `_stopped_A_abs_le`) — that is exactly what localizing buys.
+   - (c) `paper_pair_class_stopped_fourth_moment` — `fourth_moment_bound_bounded`
+     at the stopped pair, uniformly in `R`.
+   - (d) `ploc_eq_T_of_below` + `paper_pair_class_fourth_moment` — pathwise
+     `τ_R = T` once `R` exceeds the (finite, by compactness) sup of the
+     path, so the stopped increments are eventually EQUAL to the unstopped
+     ones along `R_m = ¦x$i¦+1+m`, and `nn_integral_liminf` finishes.
 
    Traps met: `prob_space.integrable_const` does not resolve — use
    `finite_measure.integrable_const[OF fm]` (same shadowing family as
    `integrable_bound`); a calculational chain through `¦a²¦` breaks when
    simp normalises it away, so state the square bound via `power_mono` on
    `¦a¦` (that also cleared a `still_running_possibly_nonterminating`
-   flag).
+   flag); and this dev `linarith` failed (after 5.9 s) on
+   `¦a−b¦ ≤ 2C` from `¦a−b¦ ≤ ¦a¦+¦b¦`, `¦a¦ ≤ C`, `¦b¦ ≤ C` when the
+   atoms were large `pcoord …` terms — abstracting it into a standalone
+   lemma over plain reals (`abs_diff_le_two`, `simp add: abs_le_iff`)
+   closes it instantly. **The recurring rule: state arithmetic at the
+   level of plain reals, never over big application terms.**
+
+   **NEXT, now that the bound exists:** feed it into (i) the compensated
+   clause of Lemma 2.3 — rerun steps (i)–(iv) of §3/NC with the process
+   `(outerp X − Y)$i$j`, whose `L²` bound is now available since
+   `(X_i X_j)² ≤ (X_i⁴ + X_j⁴)/2`; and (ii) NC-2's tightness, feeding
+   `path_law_holder_ball_bound_vec`.
 2. **NC-3, Lemma 2.3.** THREE of the four clauses now pass to the weak
    limit (`paper_pair_class_limit_three_clauses`: start, covariation,
    X-martingale — steps (i)–(iv), §3/NC). The fourth is the compensated
