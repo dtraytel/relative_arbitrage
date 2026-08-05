@@ -789,6 +789,64 @@ corollary sconstraint_nonempty:
   shows "(sconstraint k L :: (real^'n::finite^'n) set) \<noteq> {}"
   using mat_1_in_sconstraint[OF L] by blast
 
+subsection \<open>Continuing a stopped volatility past its stopping time\<close>
+
+text \<open>The faithful bridge, per (1.7)–(1.8): the paper's processes are NEVER
+  stopped, so a market witness — whose volatility vanishes after its
+  stopping time — must be CONTINUED to become a class member.  Continue with
+  \<open>mat 1\<close>, admissible because \<open>L \<ge> 1\<close> (\<open>mat_1_in_sconstraint\<close>).  The exit
+  time is untouched: by (1.8) \<open>\<tau>\<^sub>K\<close> depends only on the path up to the first
+  exit from \<open>K\<close>, and the continuation acts only afterwards.\<close>
+
+definition acont :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n^'n"
+  where "acont a tv s = (if s \<le> tv then a s else mat 1)"
+
+lemma acont_before: "s \<le> tv \<Longrightarrow> acont a tv s = a s"
+  unfolding acont_def by simp
+
+lemma acont_after: "tv < s \<Longrightarrow> acont a tv s = mat 1"
+  unfolding acont_def by simp
+
+lemma acont_in_sconstraint:
+  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes L: "1 \<le> L"
+    and sv: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> a u \<in> suff_volatile k"
+    and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> eigen_ub (a u) L"
+    and s: "0 \<le> s"
+  shows "acont a tv s \<in> sconstraint k L"
+proof (cases "s \<le> tv")
+  case True
+  then have "acont a tv s = a s" by (rule acont_before)
+  then show ?thesis
+    using suff_volatile_cap_in_sconstraint[OF sv[OF s True] ub[OF s True]]
+    by simp
+next
+  case False
+  then have "acont a tv s = mat 1" by (simp add: acont_after)
+  then show ?thesis using mat_1_in_sconstraint[OF L] by simp
+qed
+
+text \<open>Hence the continued volatility has ALL its difference quotients in the
+  constraint set — which is exactly the covariation condition of
+  \<open>paper_pair_class\<close>, now holding for every \<open>0 \<le> s < t\<close> with no stopping
+  caveat, as (1.7) demands.\<close>
+
+theorem diffquot_of_continued_density:
+  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes L: "1 \<le> L" and s0: "0 \<le> s" and st: "s < t"
+    and sv: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> a u \<in> suff_volatile k"
+    and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> eigen_ub (a u) L"
+    and int: "set_integrable lborel {s..t} (acont a tv)"
+  shows "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} (acont a tv))
+      \<in> sconstraint k L"
+proof (rule average_in_closed_convex
+    [OF sconstraint_convex closed_sconstraint st _ int])
+  fix u assume u: "u \<in> {s..t}"
+  have u0: "0 \<le> u" using u s0 by simp
+  show "acont a tv u \<in> sconstraint k L"
+    by (rule acont_in_sconstraint[OF L sv ub u0])
+qed
+
 subsection \<open>What the class gives the tightness argument for free\<close>
 
 text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class already
