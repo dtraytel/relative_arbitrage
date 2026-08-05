@@ -441,6 +441,117 @@ proof -
     by (rule closed_sequentially[OF S inS])
 qed
 
+section \<open>NC-4: from difference quotients to the density\<close>
+
+text \<open>Once the constraint holds for ALL \<open>s < t\<close>, two things follow with no
+  measure theory.  First, \<open>Y\<close> is LIPSCHITZ, because the constraint set is
+  bounded — this is the modulus that makes the \<open>Y\<close>-side of the pair
+  tightness an Arzelà–Ascoli argument and, by Lebesgue differentiation,
+  gives a.e. differentiability.  Second, WHEREVER the derivative exists it
+  lies in the constraint set, because it is a limit of constrained
+  difference quotients and the set is closed.  Together: \<open>dY/dt \<in> S\<close> a.e.,
+  which is the density statement of Eq. (1.7).\<close>
+
+lemma diffquot_lipschitz:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes B0: "0 \<le> B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
+        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+  shows "B-lipschitz_on {0..T} Y"
+proof (rule lipschitz_onI[OF _ B0])
+  fix u v :: real
+  assume uv: "u \<in> {0..T}" "v \<in> {0..T}"
+  have key: "dist (Y a) (Y b) \<le> B * dist a b"
+    if ab: "a \<in> {0..T}" "b \<in> {0..T}" "a < b" for a b
+  proof -
+    have ba: "0 < b - a" using ab by simp
+    have "(1 / (b - a)) *\<^sub>R (Y b - Y a) \<in> S"
+      using ab by (intro dq) auto
+    then have "norm ((1 / (b - a)) *\<^sub>R (Y b - Y a)) \<le> B" by (rule B)
+    then have "(1 / (b - a)) * norm (Y b - Y a) \<le> B"
+      using ba by simp
+    then have "norm (Y b - Y a) \<le> B * (b - a)"
+      using ba by (simp add: field_simps)
+    then show ?thesis
+      using ba by (simp add: dist_norm norm_minus_commute)
+  qed
+  show "dist (Y u) (Y v) \<le> B * dist u v"
+  proof (cases "u = v")
+    case True
+    then show ?thesis using B0 by simp
+  next
+    case ne: False
+    show ?thesis
+    proof (cases "u < v")
+      case True
+      show ?thesis by (rule key[OF uv True])
+    next
+      case False
+      with ne have vu: "v < u" by simp
+      have "dist (Y v) (Y u) \<le> B * dist v u"
+        by (rule key[OF uv(2) uv(1) vu])
+      then show ?thesis by (simp add: dist_commute)
+    qed
+  qed
+qed
+
+lemma diffquot_deriv_in_constraint:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes S: "closed S"
+    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
+        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+    and x: "0 \<le> x" "x < T"
+    and D: "(Y has_vector_derivative D) (at x within {x..T})"
+  shows "D \<in> S"
+proof -
+  define h where "h = (\<lambda>n :: nat. min (T - x) (1 / real (Suc n)))"
+  have h0: "0 < h n" for n using x unfolding h_def by simp
+  have hT: "h n \<le> T - x" for n unfolding h_def by simp
+  have hlim: "h \<longlonglongrightarrow> 0"
+  proof (rule tendsto_sandwich[of "\<lambda>n. 0" h sequentially
+      "\<lambda>n. 1 / real (Suc n)"])
+    show "\<forall>\<^sub>F n in sequentially. 0 \<le> h n" using h0 by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. h n \<le> 1 / real (Suc n)" by (simp add: h_def)
+    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
+    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
+      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
+  qed
+  define u where "u = (\<lambda>n. x + h n)"
+  have umem: "u n \<in> {x..T} - {x}" for n
+    using h0[of n] hT[of n] unfolding u_def by auto
+  have ulim: "u \<longlonglongrightarrow> x"
+    using tendsto_add[OF tendsto_const hlim] unfolding u_def by simp
+  have quot: "(1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) \<in> S" for n
+    using x h0[of n] hT[of n] unfolding u_def by (intro dq) auto
+  have lim0: "((\<lambda>y. (1 / norm (y - x)) *\<^sub>R (Y y - (Y x + (y - x) *\<^sub>R D))) \<longlongrightarrow> 0)
+      (at x within {x..T})"
+    using D by (simp add: has_vector_derivative_def has_derivative_within)
+  have seq0: "(\<lambda>n. (1 / norm (u n - x))
+      *\<^sub>R (Y (u n) - (Y x + (u n - x) *\<^sub>R D))) \<longlonglongrightarrow> 0"
+    using lim0 umem ulim by (simp add: tendsto_at_iff_sequentially o_def)
+  have alg: "(1 / norm (u n - x)) *\<^sub>R (Y (u n) - (Y x + (u n - x) *\<^sub>R D))
+      = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) - D" for n
+  proof -
+    have pos: "0 < u n - x" using h0[of n] unfolding u_def by simp
+    then have nrm: "norm (u n - x) = u n - x" by simp
+    have inv: "(1 / (u n - x)) *\<^sub>R ((u n - x) *\<^sub>R D) = D"
+      using pos by simp
+    have "(1 / (u n - x)) *\<^sub>R (Y (u n) - (Y x + (u n - x) *\<^sub>R D))
+        = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x)
+          - (1 / (u n - x)) *\<^sub>R ((u n - x) *\<^sub>R D)"
+      by (simp add: scaleR_diff_right algebra_simps)
+    also have "\<dots> = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) - D"
+      using inv by simp
+    finally show ?thesis unfolding nrm .
+  qed
+  have "(\<lambda>n. (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) - D) \<longlonglongrightarrow> 0"
+    using seq0 unfolding alg .
+  then have "(\<lambda>n. (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x)) \<longlonglongrightarrow> D"
+    using LIM_zero_cancel by fastforce
+  then show ?thesis
+    by (rule closed_sequentially[OF S quot])
+qed
+
 text \<open>The NC-3 transfer itself: a single difference-quotient constraint,
   holding almost surely under every approximating law, holds almost surely
   under the weak limit.  (The a.s. statements are read as full mass of the
