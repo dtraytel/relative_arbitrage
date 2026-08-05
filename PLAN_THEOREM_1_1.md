@@ -8,7 +8,7 @@ open, and what to do next. Everything referenced below is PIDE-verified
 unless marked open — including ALL of `Deterministic_Radius_Market.thy`
 (6,023 commands green), `Theorem_1_1.thy` (369 commands green, now
 importing `Section_2_Usc` + `Deterministic_Radius_Market`) and ALL of
-`Exit_Semicontinuity.thy` (2,604 commands green, crown
+`Exit_Semicontinuity.thy` (2,676 commands green, crown
 `ess_inf_pexit_usc` and the cap-invisibility lemmas included); the user's
 batch build remains the final cross-check. WORKFLOW (user request):
 develop DIRECTLY in the theory files via the PIDE MCP edit tool — the
@@ -464,10 +464,13 @@ CONSEQUENCES, and they are decisions, not options:
    we cap at `T`.  `Exit_Semicontinuity` now carries `pexit_mono_T`
    (the capped exit is monotone in the horizon) and
    `pexit_stable_above_T` (once a path exits strictly before `T`,
-   raising the horizon does not move its value at all).  What REMAINS
-   of this obligation is the law-level step: `essinf (τ_K ∧ T) =
-   essinf τ_K` once `T` exceeds the uniform value bound `r²/(n−k)`
-   (repo: `ball_v_le`), so the SUPREMUM is unaffected.
+   raising the horizon does not move its value at all), AND the
+   law-level `ess_inf_time_cong_AE` / `ess_inf_pexit_cap_invisible`:
+   if the exit is a.s. before `T` then every `T' ≥ T` gives the SAME
+   essential infimum.  **The cap-invisibility obligation is DISCHARGED**
+   at both levels; all that a caller must supply is that `T` exceeds
+   the uniform value bound `r²/(n−k)` (repo: `ball_v_le`), which makes
+   the exit a.s. before `T`.
 4. The constraint is on `d⟨X_i,X_j⟩/dt`, i.e. the DENSITY must exist
    a.e. — which is why carrying `⟨X⟩` as a Lipschitz second component
    and recovering the density by Lebesgue differentiation (NC-4) is the
