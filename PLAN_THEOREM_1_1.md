@@ -1,7 +1,8 @@
 # Plan: reaching Theorem 1.1 of arXiv:2512.17702
 
 Rewritten 2026-08-04 after the clause-(1) packaging and the N4 opening;
-status refreshed 2026-08-05 after **NC-5 CLOSED** (commit `48d176f`).
+status refreshed 2026-08-05 after **NC-5, NC-1 and NC-4 CLOSED**
+(commits `48d176f`, `382be79`, `c3ab9df`).
 This document is the single source of truth for what is proved, what is
 open, and what to do next. Everything referenced below is PIDE-verified
 unless marked open — including ALL of `Deterministic_Radius_Market.thy`
@@ -370,12 +371,33 @@ It carries:
   holding a.s. under every approximating law holds a.s. under the weak
   limit.
 
-STILL OPEN in NC-2/3: the pair TIGHTNESS (Y-side Arzelà–Ascoli from the
-deterministic Lipschitz modulus, then product tightness), the extension
-from rational to all real `s < t` by path continuity, and the two
-martingale identities in the limit (§2.6 engines).  BRIDGING
+- **NC-3, rational-to-real.**  `diffquot_all_of_rational`: portmanteau
+  only delivers one closed set per pair, so only COUNTABLY many pairs
+  can be intersected; this lemma upgrades the rational pairs to all
+  real `s < t` by squeezing rationals `p⇩n ↓ s`, `q⇩n ↑ t` strictly
+  inside `(s,t)` (width `min ((t−s)/3) (1/(n+1))`) and passing to the
+  limit (`continuous_on_tendsto_compose`, `closed_sequentially`).
+- **NC-4 COMPLETE: the density statement.**  `diffquot_lipschitz` (S
+  bounded ⇒ `Y` is `B`-Lipschitz on `[0,T]`, `B = n·L` — this is ALSO
+  the deterministic modulus the `Y`-side tightness needs),
+  `diffquot_deriv_in_constraint` (wherever the within-`[x,T]` vector
+  derivative exists it is a limit of constrained quotients, hence in
+  the closed `S`), and the packaged
+  `diffquot_density_ae`: `Y` is differentiable off a NEGLIGIBLE subset
+  of `[0,T]` and `dY/dt ∈ S` there.  Library calls used:
+  `Lipschitz_imp_has_bounded_variation` (Bounded_Variation) and
+  `Lebesgue_differentiation_thm` (Lebesgue_Differentiation) — the step
+  once feared to be the hard analytic core is a library call, exactly
+  as the re-scoping predicted.
+
+STILL OPEN in NC-2/3: the pair TIGHTNESS itself (X-side is
+`Path_Tightness_Market`; Y-side is Arzelà–Ascoli on the Lipschitz
+modulus now available; then product tightness), and the two limit
+MARTINGALE identities (§2.6 engines
+`metric_measure_eqI_bounded_cts` / `..._mono_bounded_cts`).  BRIDGING
 OBLIGATIONS still recorded: cap-invisibility for large `T`
-(Lemma 1.9/(3.10)) and the equivalence with `stopped_market` witnesses.
+(Lemma 1.9/(3.10)) and the equivalence with `stopped_market`
+witnesses.
 
 Faithful decomposition (statuses of ingredients in brackets):
 
