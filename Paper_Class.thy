@@ -609,6 +609,97 @@ theorem diffquot_constraint_weak_limit:
   by (rule weak_conv_closed_full_mass
       [OF wc closedin_diffquot_constraint[OF s t] probs prob full])
 
+section \<open>NC-2: pair tightness from the two component moduli\<close>
+
+text \<open>The pair tightness does NOT need a matrix-valued Kolmogorov
+  criterion.  The two components carry moduli of different origins — the
+  \<open>X\<close>-side a stochastic Hölder estimate (\<open>Path_Tightness\<close>), the \<open>Y\<close>-side the
+  DETERMINISTIC Lipschitz modulus of \<open>diffquot_lipschitz\<close> — and on a bounded
+  horizon a Lipschitz bound is itself a Hölder-\<open>ga\<close> bound.  Adding the two
+  through \<open>norm_Pair_le\<close> puts the whole pair path in a single Hölder ball of
+  the PRODUCT type, and \<open>compactin_path_holder_ball\<close> (Path\_Space, the
+  Arzelà–Ascoli input) applies there verbatim: products of
+  \<open>polish_space\<close>/\<open>real_normed_vector\<close>/\<open>heine_borel\<close> spaces are again such.
+  So the compact set the tightness argument needs is a single pair-Hölder
+  ball.\<close>
+
+lemma lipschitz_imp_holder_bound:
+  fixes s t :: real
+  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and B: "0 \<le> B"
+    and st: "s \<in> {0..T}" "t \<in> {0..T}"
+  shows "B * \<bar>t - s\<bar> \<le> B * T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
+proof (cases "t = s")
+  case True
+  then show ?thesis using B ga T by simp
+next
+  case False
+  then have d: "0 < \<bar>t - s\<bar>" by simp
+  have dT: "\<bar>t - s\<bar> \<le> T" using st by auto
+  have "\<bar>t - s\<bar> = \<bar>t - s\<bar> powr (1 - ga) * \<bar>t - s\<bar> powr ga"
+    using d by (simp flip: powr_add)
+  also have "\<dots> \<le> T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
+    using d dT ga by (intro mult_right_mono powr_mono2) auto
+  finally have "\<bar>t - s\<bar> \<le> T powr (1 - ga) * \<bar>t - s\<bar> powr ga" .
+  then show ?thesis
+    using B by (simp add: mult_left_mono mult.assoc)
+qed
+
+lemma pair_holder_of_components:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
+    and X: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
+        \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
+    and Y: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
+        \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
+    and st: "s \<in> {0..T}" "t \<in> {0..T}"
+  shows "norm (\<omega> t - \<omega> s) \<le> (c + B * T powr (1 - ga)) * \<bar>t - s\<bar> powr ga"
+proof -
+  have split: "\<omega> t - \<omega> s = (fst (\<omega> t) - fst (\<omega> s), snd (\<omega> t) - snd (\<omega> s))"
+    by (simp add: prod_eq_iff)
+  have "norm (\<omega> t - \<omega> s)
+      \<le> norm (fst (\<omega> t) - fst (\<omega> s)) + norm (snd (\<omega> t) - snd (\<omega> s))"
+    unfolding split by (rule norm_Pair_le)
+  also have "\<dots> \<le> c * \<bar>t - s\<bar> powr ga + B * \<bar>t - s\<bar>"
+    by (intro add_mono X[OF st] Y[OF st])
+  also have "\<dots> \<le> c * \<bar>t - s\<bar> powr ga + B * T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
+    by (intro add_left_mono lipschitz_imp_holder_bound[OF T ga B st])
+  also have "\<dots> = (c + B * T powr (1 - ga)) * \<bar>t - s\<bar> powr ga"
+    by (simp add: algebra_simps)
+  finally show ?thesis .
+qed
+
+text \<open>Hence the compact set: pair paths starting at \<open>(x, 0)\<close> whose \<open>X\<close>-part
+  obeys a Hölder-\<open>ga\<close> bound and whose \<open>Y\<close>-part is \<open>B\<close>-Lipschitz form a
+  subset of a compact pair-Hölder ball.  This is the set the tightness
+  estimate has to charge; the \<open>X\<close>-side probability bound is
+  \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close> and the \<open>Y\<close>-side holds
+  with probability one by \<open>diffquot_lipschitz\<close>.\<close>
+
+theorem compactin_pair_holder_ball:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 \<le> T" and ga: "0 < ga" and c: "0 \<le> c"
+  shows "compactin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<omega> 0 = (x, 0)
+         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}. norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}"
+  by (rule compactin_path_holder_ball[OF T ga c])
+
+lemma pair_holder_ball_mem:
+  fixes \<omega> :: "'n::finite pairpath" and x :: "real^'n"
+  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
+    and mem: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and start: "\<omega> 0 = (x, 0)"
+    and X: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
+        \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
+    and Y: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
+        \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
+  shows "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<omega> 0 = (x, 0)
+      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
+           norm (\<omega> v - \<omega> u) \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
+  using mem start
+  by (auto intro!: pair_holder_of_components[OF T ga c B X Y])
+
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>
 
 definition paper_v ::
