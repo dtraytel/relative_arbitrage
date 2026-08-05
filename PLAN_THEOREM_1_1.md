@@ -1,21 +1,41 @@
 # Plan: reaching Theorem 1.1 of arXiv:2512.17702
 
-Rewritten 2026-08-04 after the clause-(1) packaging and the N4 opening;
-status refreshed 2026-08-05 after **NC-5, NC-1 and NC-4 CLOSED**
-(commits `48d176f`, `382be79`, `c3ab9df`).
-This document is the single source of truth for what is proved, what is
-open, and what to do next. Everything referenced below is PIDE-verified
-unless marked open — including ALL of `Deterministic_Radius_Market.thy`
-(6,023 commands green), `Theorem_1_1.thy` (369 commands green, now
-importing `Section_2_Usc` + `Deterministic_Radius_Market`) and ALL of
-`Exit_Semicontinuity.thy` (2,676 commands green, crown
-`ess_inf_pexit_usc` and the cap-invisibility lemmas included); the user's
-batch build remains the final cross-check. WORKFLOW (user request):
-develop DIRECTLY in the theory files via the PIDE MCP edit tool — the
-current server session has the full ROOT and elaborates the tree
-theories by name; scratches are only for throwaway probes. History and
-superseded scoping live in git (`git log -p PLAN_THEOREM_1_1.md`) — do
-not resurrect them.
+**HANDOVER, 2026-08-05.** This document is the single source of truth for
+what is proved, what is open, and what to do next. Everything referenced is
+PIDE-verified unless explicitly marked otherwise; the user runs the batch
+build as the final cross-check. Read §0 for the clause-by-clause status,
+§1 for how the paper argues, §2 for the machinery you may assume, §3 for
+the open items, and **§4 before touching anything** — it lists the traps
+that have each cost a round-trip or a server restart.
+
+**Verified green as of this handover** (`get_progress`, `commands_failed
+= 0` at 100%):
+
+| theory | cmds | theory | cmds |
+|---|---|---|---|
+| `Relative_Arbitrage_Stochastic` | 531 | `Exit_Semicontinuity` | 2,676 |
+| `Ito_Market` | 1,446 | `Paper_Class` | 2,002 |
+| `Brownian_Continuous` | 952 | `Paper_Bridge` | 335 |
+| `Deterministic_Radius_Market` | 6,100 | `Path_Tightness_Market` | 838 |
+| `Theorem_1_1` | 369 | | |
+
+**NOT independently confirmed by the agent: `Value_Function` and
+`Section_2_Usc`.** Each carries a one-line inherited
+`acov_time_measurable` discharge (`by (rule sv.acov_time_measurable)`,
+plus one `measurable_If` for the degenerate market in `Section_2_Usc`)
+added at the very end of the session. The PIDE loader in that session
+would not schedule that branch — it accepted the queue request and never
+ran it, with both the JVM and Poly/ML idle — so the agent could not
+check them. The USER confirmed manually that these theories load.
+`Section_2_Usc` last measured 6,995 commands BEFORE this edit, so that
+figure is stale. **First action next session: `get_progress` on both.**
+Expected to be a formality, but do not carry them as verified until you
+have seen it.
+
+WORKFLOW (user instruction): develop DIRECTLY in the tree theory files
+via the PIDE MCP `edit` tool; scratches are only for throwaway probes.
+History and superseded scoping live in git
+(`git log -p PLAN_THEOREM_1_1.md`) — do not resurrect them.
 
 **Remaining road to Theorem 1.1** (in recommended order). USER
 DECISION 2026-08-04: formalize PRECISELY the paper's result — clause
@@ -1040,43 +1060,124 @@ the bounded alternative target is the rest of Section 4 (Theorem 4.2(b),
 
 ---
 
-## 4. Working notes for the next agent
+## 4. Working notes for the next agent — READ BEFORE EDITING
 
-- **Verify with PIDE MCP, not batch builds** (user instruction; the user
-  runs the batch build at the end). The loop is: edit →
-  `get_progress`/`get_state`; `commands_failed = 0` at 100% IS
-  verification. The first load after a server restart re-elaborates the
-  whole graph (several minutes). If a theory sits in "queued for loading"
-  forever, the server is wedged — ask the user for a restart. Treat any
-  `still_running_possibly_nonterminating` flag as a stop condition, even
-  at `timing_ms 1` (e.g. `of_real_mult[symmetric]` in simp loops —
-  convert `iexp` to `cis` instead of reversing distribution rules).
-- **Editing upstream theories re-elaborates everything downstream** —
-  prototype in `create_scratch` files (imports like
-  `Arbitrage.Brownian_Continuous` work) and copy verified text into the
-  tree in one edit. New theories cannot be loaded by a running PIDE
-  (ROOT snapshot); register them in ROOT and rely on the batch build.
-- **Proof-engineering traps** (each cost a round-trip): eliminating a
-  multi-`∃` whose conjuncts contain `∀`/`AE` with `obtain … by blast`
-  diverges — keep set-comprehension bodies ATOMIC (`mkt_law_witness`) and
-  do choice by iterated `SOME` + `someI_ex`; instantiate multi-parameter
-  theorems with explicit `where`-pins (bare `OF` mangles function
-  arguments by higher-order unification); when a lemma's conclusion is
-  literally the goal, use `unfolding defs by (rule lemma[OF …])`;
-  type-annotate every statement-level function variable AND every
-  `obtain`ed variable when a clause is dropped (`σ :: nat ⇒ _`, Urysohn's
-  `f :: 'a ⇒ real`) — otherwise they stay polymorphic and everything
-  downstream type-fails; `auto` will not instantiate bounded quantifiers
-  like `∀t∈{0..T}. f t ∈ K` mid-chain — project with `blast` first.
-- The broader environment traps (dev Isabelle without `nlinarith`, simp
-  preferring cancellation, PIDE desync symptoms and fixes, …) are in the
-  agent memory file `isabelle-pide-mcp-environment`; read it before long
-  proof work.
-- `mkt_path_laws` pins the market sample type to `('m ⇒ real ⇒ real)` for
-  the same reason `val_fn` does: HOL cannot quantify over sample-space
-  types, and `bm_paths` lives there. Keep new market constructions on that
-  type.
-- Zero `sorry` across the session is an invariant; the last one
-  (`Sup_Convolution.subdiff_nonempty`) was closed 2026-08-03 —
-  `supporting_hyperplane_frontier` exists in this Isabelle
-  (`HOL/Analysis/Starlike.thy`), despite an old note claiming otherwise.
+### 4.1 The three ways to lose a session (all cost a user restart)
+
+1. **Never register a NEW theory in `ROOT` mid-session.** The PIDE server
+   snapshots `ROOT` at startup. Registering a new node makes every theory
+   in the project report "Malformed theory", including already-green ones,
+   and REVERTING THE ROOT EDIT DOES NOT RECOVER IT. If new material needs
+   imports an existing theory lacks, ADD THE IMPORT to that existing
+   theory — that works fine in-session (verified: `Path_Tightness` was
+   added to `Paper_Class`'s imports without incident). Create separate
+   theories only when a restart is already due. `Paper_Bridge` exists
+   because this rule was broken; it cost two restarts.
+2. **Route EVERY edit through the MCP `edit` tool.** The server keeps its
+   own buffer per file and treats it, not the disk, as authoritative. A
+   `git checkout`, a Write/Edit-tool write, or a script edit desyncs it;
+   a later `mcp edit` then writes *the stale buffer plus your change*
+   back to disk, silently reverting your work. **The resync tool is
+   `read`** — its own description says so, and it works immediately where
+   `unload`, `touch` and `git checkout` all fail. Reach for `read` FIRST
+   on any disk/PIDE discrepancy.
+3. **Never use `edit_all` without inspecting every occurrence.** It
+   silently edits matches you did not look at. In this session it
+   corrupted `Brownian_Continuous`'s buffer outright (reported as a
+   7-line fragment, unrecoverable by `unload`) and separately left a
+   duplicated `show` that only the prover caught.
+
+### 4.2 Verifying
+
+- **PIDE MCP, not batch builds** (user instruction). The loop is: edit →
+  `get_progress` / `get_state`; `commands_failed = 0` at 100% IS
+  verification. The first load after a restart re-elaborates the whole
+  graph — budget 30-45 minutes and do non-prover work meanwhile.
+- **Do not judge a theory mid-elaboration.** Failure counts are not final
+  until `percentage_commands_processed` is 100 and nothing is listed as
+  running. Several "22 failures" scares in this session resolved to 0.
+- **`still_running_possibly_nonterminating` is ambiguous.** A FINISHED
+  command can carry the flag with "No subgoals!". The diagnostic is
+  whether `timing_ms` is GROWING between polls, plus `ps` on the Poly/ML
+  process: real work shows ~100% CPU on one core. If both the JVM and
+  Poly/ML sit at ~0% while `get_state` answers "queued for loading",
+  nothing is being scheduled and only a restart helps.
+- Editing an upstream theory re-elaborates everything downstream; batch
+  related edits into one pass.
+
+### 4.3 Proof-engineering traps seen repeatedly
+
+- **Name collisions with the Henstock library.** `integrable_const` and
+  `integrable_bound` resolve to the gauge-integral lemmas about
+  `integrable_on cbox`. Use `Bochner_Integration.integrable_bound` and
+  `finite_measure.integrable_const[OF fm]` (the latter lives in the
+  locale; interpreting `finite_measure`/`prob_space` first also works).
+- **"OF: multiple unifiers"** — let the conclusion drive unification:
+  `proof (rule L)` with explicit `show`s, not an `OF` chain. Same for
+  bare `OF` mangling function arguments; pin with `where`.
+- **Always `fixes tau :: "'a ⇒ real"`** (or the analogous annotation) on
+  statements about time functionals. Without it the variable generalises
+  to a Banach algebra and every real-specific rule fails to APPLY with no
+  type error — the symptom is rule-application failures on obviously
+  correct goals.
+- **Type-annotate `obtain`ed and statement-level function variables**;
+  otherwise they stay polymorphic and everything downstream type-fails.
+- `auto` will not instantiate bounded quantifiers (`∀t∈{0..T}. …`)
+  mid-chain — project with `blast` first.
+- `eventually_mono` is the reliable way to weaken an `AE` fact;
+  `AE_mp`-as-elimination repeatedly failed to thread.
+- Four tactic patterns HANG rather than fail: `unfolding open_openin`;
+  `blast` asked to invent an existential witness; `(use … in blast)+` on
+  schematic side conditions; and `auto simp: f_def` where
+  `f = (λi. SOME x. P i x)` and `P` is large — that one measured >143 s
+  without finishing in `Path_Tightness_Market` and is now 3 ms
+  (`someI_ex` once, then `conjunct1`/`conjunct2`/`bspec`).
+- Fuller lists live in the agent memory files
+  (`isabelle-pide-mcp-environment`, `isabelle-nonterminating-tactics`,
+  `isabelle-mcp-buffer-desync`, `isabelle-pide-stale-root`); read them
+  before long proof work.
+
+### 4.4 Design constraints you must not "simplify"
+
+- **The paper's class has NO stopping** ((1.7)-(1.8), p. 3): `X` is a
+  martingale on all of `[0,∞)` with the covariation constraint for a.e.
+  `t ≥ 0`, and `τ_K` is merely a functional of the path. A
+  `stopped_market` witness is therefore NOT a class member. The bridge
+  CONTINUES the witness past `tau` (`acont`, with `mat 1`, admissible
+  because the locale carries the paper's standing `L ≥ 1`). Do NOT
+  instead weaken `paper_pair_class` to constrain only up to the exit
+  time — that is a different class from the paper's.
+- The horizon cap at `T` is OURS, not the paper's (they work on
+  `C([0,∞),ℝⁿ)` with locally uniform convergence). Its invisibility is
+  discharged at both path and law level; keep it that way.
+- `real^'n × real^'n^'n` PARSES AS `real^('n × real)^'n^'n`. Use the
+  `'n pairpath` type synonym.
+- `mkt_path_laws` pins the market sample type to `('m ⇒ real ⇒ real)`
+  because HOL cannot quantify over sample-space types and `bm_paths`
+  lives there. Keep new market constructions on that type.
+- Zero `sorry` across the development is an invariant.
+
+### 4.5 Where to pick up
+
+In priority order:
+
+1. **NC, martingale side of the bridge** — `X` and `outerp X − Y` as
+   martingales for the PAIR natural filtration. The volatility side is
+   COMPLETE end to end (§3/NC), so this is the remaining half.
+2. **NC, pair-law construction** — push `(X, Y)` forward to the pair path
+   space, then instantiate the engines that are already proved: the
+   X-side Hölder estimate into `pair_holder_charge_split` /
+   `tight_on_set_pair_holder_charge`, and `weak_conv_integral_of_L2_bound`
+   with the class's own second-moment bound.
+3. **NC headline** — "the closure adds no value", i.e. identify
+   `stopped_val_fn` with the class supremum. Everything above feeds this.
+   It is NOT proved and it is what clause (1) needs.
+4. **N5, the weak DPP** — untouched. Prop 2.4's (2.9) is the exact
+   target; build order scripted in §3/N5. Unblocks clause (2) with N4.
+5. Clause (3) beyond the ball / general `n − k ≥ 2`.
+
+Realistic assessment: NC and N5 are each substantial multi-thousand-line
+items. Do not expect Theorem 1.1 to fall out of a single session, and do
+not let the goal-hook pressure you into writing unverified proof text —
+committing material the prover has not checked is worse than committing
+nothing.

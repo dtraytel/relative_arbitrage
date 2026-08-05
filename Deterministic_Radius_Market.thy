@@ -1558,8 +1558,7 @@ proof -
         have "?Y i \<omega> = drR q j
             * (cos (Bcont (drc q i) (\<omega> 1) + \<phi>)
                 * exp (- (drc q j - drc q i) / 2))"
-          unfolding drW_def
-          by (metis Ydecay mult.assoc mult.commute)
+          unfolding drW_def using Ydecay by auto
         with elim show ?case by simp
       qed
     qed
@@ -1706,8 +1705,7 @@ proof -
         have "?Y i \<omega> = drR q j
             * (sin (Bcont (drc q i) (\<omega> 1) + \<phi>)
                 * exp (- (drc q j - drc q i) / 2))"
-          unfolding drW_def
-          by (metis Ydecay mult.assoc mult.commute)
+          unfolding drW_def using Ydecay by auto
         with elim show ?case by simp
       qed
     qed
