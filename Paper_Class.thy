@@ -18,7 +18,7 @@
 *)
 
 theory Paper_Class
-  imports Path_Space Exit_Semicontinuity Poincare_Separation
+  imports Path_Space Path_Tightness Exit_Semicontinuity Poincare_Separation
     Relative_Arbitrage_Comparison
 begin
 
@@ -822,6 +822,104 @@ proof -
       (auto simp: FM.emeasure_eq_measure)
   finally show ?thesis .
 qed
+
+section \<open>NC-3: passing the martingale identities through the weak limit\<close>
+
+text \<open>The integrated identities the class carries — \<open>E[Z\<sqdot>(X\<^sub>t − X\<^sub>s)] = 0\<close> for
+  a bounded continuous test \<open>Z\<close> of the past, and its covariation analogue —
+  are integrals of CONTINUOUS but UNBOUNDED functions of the path, so plain
+  weak convergence does not transfer them.  \<open>Path_Tightness\<close>'s
+  \<open>weak_conv_on_integral_unif_integrable\<close> closes exactly that gap, given
+  uniform integrability.  What the moment machinery actually produces is a
+  uniform \<open>L\<^sup>2\<close> bound, so the usable form is the specialisation below:
+  a uniform second moment implies the uniform-integrability hypothesis by
+  Chebyshev–Markov, \<open>\<integral>\<bar>f\<bar>\<sqdot>1\<^bsub>{\<bar>f\<bar>>R}\<^esub> \<le> (1/R)\<sqdot>\<integral>f\<^sup>2 \<le> C/R\<close>.\<close>
+
+lemma unif_integrable_of_L2_bound:
+  fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
+  assumes C: "0 \<le> C"
+    and iTi: "\<And>i R. integrable (Ni i)
+        (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and iTN: "\<And>R. integrable N (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and sqi: "\<And>i. (\<integral>w. (f w)\<^sup>2 \<partial>(Ni i)) \<le> C"
+    and sqN: "(\<integral>w. (f w)\<^sup>2 \<partial>N) \<le> C"
+    and sqiI: "\<And>i. integrable (Ni i) (\<lambda>w. (f w)\<^sup>2)"
+    and sqNI: "integrable N (\<lambda>w. (f w)\<^sup>2)"
+    and e: "0 < e"
+  shows "\<exists>R. 0 \<le> R
+      \<and> (\<forall>i. (\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>(Ni i)) \<le> e)
+      \<and> (\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>N) \<le> e"
+proof -
+  define R where "R = (C + 1) / e"
+  have R0: "0 < R" using C e unfolding R_def by (simp add: divide_pos_pos)
+  have key: "(\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>M) \<le> e"
+    if int: "integrable M (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+      and sq: "(\<integral>w. (f w)\<^sup>2 \<partial>M) \<le> C"
+      and sqI: "integrable M (\<lambda>w. (f w)\<^sup>2)"
+    for M :: "'b measure"
+  proof -
+    have pt: "\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<le> (1 / R) * (f w)\<^sup>2"
+      for w
+    proof (cases "R < \<bar>f w\<bar>")
+      case True
+      have "\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) = \<bar>f w\<bar>"
+        using True by (simp add: indicator_def)
+      also have "\<dots> = (1 / R) * (R * \<bar>f w\<bar>)" using R0 by simp
+      also have "\<dots> \<le> (1 / R) * (\<bar>f w\<bar> * \<bar>f w\<bar>)"
+        using True R0 by (intro mult_left_mono mult_right_mono) auto
+      also have "\<dots> = (1 / R) * (f w)\<^sup>2"
+        by (simp add: power2_eq_square flip: power2_abs)
+      finally show ?thesis .
+    next
+      case False
+      have "\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) = 0"
+        using False by (simp add: indicator_def)
+      also have "\<dots> \<le> (1 / R) * (f w)\<^sup>2"
+        using R0 by simp
+      finally show ?thesis .
+    qed
+    have "(\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>M)
+        \<le> (\<integral>w. (1 / R) * (f w)\<^sup>2 \<partial>M)"
+      using pt int sqI by (intro Bochner_Integration.integral_mono) auto
+    also have "\<dots> = (1 / R) * (\<integral>w. (f w)\<^sup>2 \<partial>M)" by simp
+    also have "\<dots> \<le> (1 / R) * C"
+      using sq R0 by (intro mult_left_mono) auto
+    also have "\<dots> \<le> e"
+      using C e R0 unfolding R_def by (simp add: field_simps)
+    finally show ?thesis .
+  qed
+  show ?thesis
+    using R0 key[OF iTi sqi sqiI] key[OF iTN sqN sqNI]
+    by (intro exI[of _ R]) auto
+qed
+
+text \<open>Hence the transfer in the form the canonical-market construction uses:
+  a continuous path functional with a UNIFORM second-moment bound has its
+  integral pass to the weak limit.  Applied with
+  \<open>f \<omega> = Z \<omega> \<sqdot> ((X\<^sub>t − X\<^sub>s) \<bullet> e\<^sub>j)\<close> this carries the martingale identity of
+  the approximating laws to the limit law, and with the squared increment it
+  carries the covariation identity.\<close>
+
+theorem weak_conv_integral_of_L2_bound:
+  fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
+  assumes wc: "weak_conv_on Ni N sequentially X"
+    and f: "continuous_map X euclideanreal f"
+    and fmi: "\<And>i. finite_measure (Ni i)" and fmN: "finite_measure N"
+    and iNi: "\<And>i. integrable (Ni i) f" and iN: "integrable N f"
+    and iCi: "\<And>i R. integrable (Ni i) (\<lambda>w. max (- R) (min R (f w)))"
+    and iCN: "\<And>R. integrable N (\<lambda>w. max (- R) (min R (f w)))"
+    and iTi: "\<And>i R. integrable (Ni i)
+        (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and iTN: "\<And>R. integrable N (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and C: "0 \<le> C"
+    and sqi: "\<And>i. (\<integral>w. (f w)\<^sup>2 \<partial>(Ni i)) \<le> C" and sqN: "(\<integral>w. (f w)\<^sup>2 \<partial>N) \<le> C"
+    and sqiI: "\<And>i. integrable (Ni i) (\<lambda>w. (f w)\<^sup>2)"
+    and sqNI: "integrable N (\<lambda>w. (f w)\<^sup>2)"
+  shows "(\<lambda>i. \<integral>w. f w \<partial>(Ni i)) \<longlonglongrightarrow> (\<integral>w. f w \<partial>N)"
+  by (rule weak_conv_on_integral_unif_integrable
+      [OF wc f fmi fmN iNi iN iCi iCN iTi iTN])
+    (rule unif_integrable_of_L2_bound
+      [OF C iTi iTN sqi sqN sqiI sqNI])
 
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>
 
