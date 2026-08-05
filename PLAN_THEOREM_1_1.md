@@ -1,12 +1,14 @@
 # Plan: reaching Theorem 1.1 of arXiv:2512.17702
 
 Rewritten 2026-08-04 after the clause-(1) packaging and the N4 opening;
-status refreshed later the same day after N4 CLOSED (commit `8cee2a6`).
+status refreshed 2026-08-05 after **NC-5 CLOSED** (commit `48d176f`).
 This document is the single source of truth for what is proved, what is
 open, and what to do next. Everything referenced below is PIDE-verified
 unless marked open — including ALL of `Deterministic_Radius_Market.thy`
-(6,023 commands green) and `Theorem_1_1.thy` (369 commands green, now
-importing `Section_2_Usc` + `Deterministic_Radius_Market`); the user's
+(6,023 commands green), `Theorem_1_1.thy` (369 commands green, now
+importing `Section_2_Usc` + `Deterministic_Radius_Market`) and ALL of
+`Exit_Semicontinuity.thy` (2,245 commands green, crown
+`ess_inf_pexit_usc` included); the user's
 batch build remains the final cross-check. WORKFLOW (user request):
 develop DIRECTLY in the theory files via the PIDE MCP edit tool — the
 current server session has the full ROOT and elaborates the tree
@@ -379,104 +381,50 @@ Faithful decomposition (statuses of ingredients in brackets):
    FTC, else derive from BV + a.e. derivative + dominated convergence.
    [KEY INGREDIENT EXISTS — this was believed the "hard analytic
    core"; it is not.]
-5. **Value side (LR Lemma 2.1 trick).**  `ω ↦ τ_K(ω)` is USC on paths
-   and `P ↦ P-essinf τ_K` is USC in the weak topology via
-   `f_λ(P) = −(1/λ) log E_P[e^{−λ τ_K}]` (τ_K USC ⇒ e^{−λτ_K} LSC
-   bounded ⇒ E_P LSC by portmanteau ⇒ f_λ USC; essinf = inf_λ f_λ).
-   This replaces/simplifies the `vshift` route for Prop 2.4 and is
-   what the DPP consumes.
-   STARTED (commit 146c4d4): new theory `Exit_Semicontinuity.thy`
-   (in ROOT after Section_2_Usc; imports only Path_Space + Exit_Time
-   + Value_Function, so its PIDE cone is small): `pexit T K =
-   etime T (−K) (λr g. g r)` (capped path exit),
-   `pexit_sublevel_open` (strict sublevels open in
-   `mtopology_of (path_metric T)` — witness time in the open
-   complement + `continuous_map_path_eval`), `pexit_measurable`.
-   PIDE-green.
-   L1 `ess_inf_time_le_laplace` DONE (commit 58933f2), with helpers
-   `exp_neg_time_integrable` / `exp_neg_time_integral_lower`.
-   TRAP: state EVERY lemma here with `fixes tau :: "'a ⇒ real"` —
-   without it τ generalizes to a Banach-algebra type and all
-   real-specific rules fail to APPLY (rule-application failures on
-   obviously-right goals, no type error shown).
-   REMAINING, with worked-out proof designs:
-   L2 `ess_inf_time_eq_laplace_inf` DONE (commit 54a5e3c).  Extra
-   traps found: `ennreal_le_epsilon` carries a `y < top` premise that
-   the proof block must `assume`; never put `ennreal_plus[symmetric]`
-   in a simpset (loops); nn_integrals must be written with the
-   `⇧+` sup-block (a raw superscript-plus slips through the MCP
-   encoder as a lexical error).
-   L3 EXACT CONSTRUCTION (uniform grid `s_j = j·T/N`, `φ = exp(−l·)`):
-   `ψ_N f := exp(−l·T) + Σ_{j=1}^{N−1} (exp(−l·s_j) − exp(−l·s_{j+1}))
-   · indicat {f. pexit T K f < s_j} f`.  For `pexit ∈ [s_{m−1}, s_m)`
-   the indicators are exactly `j ≥ m` and the sum telescopes to
-   `ψ_N = φ(s_m)`; for `pexit = T`, `ψ_N = φ(T)`.  Hence pointwise
-   `ψ_N ≤ e^{−l·pexit} ≤ ψ_N + (1 − e^{−l·T/N})` (the error uses
-   `s_m ≤ pexit + T/N` and
-   `φ(pexit) − φ(pexit + h) ≤ 1 − e^{−l·h}`).  Locate `m` via
-   `m − 1 = ⌊pexit·N/T⌋` or, easier in Isabelle, define
-   `m = (LEAST j. pexit < s_j)` on the case `pexit < T`.
-   `∫ψ_N dΛ = exp(−l·T)·(total mass) + Σ (coeff_j ≥ 0)·measure
-   {pexit < s_j}` — finitely many OPEN sets (`pexit_sublevel_open`),
-   so `liminf_i ∫ψ_N dΛ_i ≥ ∫ψ_N dΛ` via `mweak_conv3` +
-   `ereal_Liminf_add_mono` finite induction; then `N → ∞`.
-   L3a DONE (commit 08ab029): `pstep` + `pstep_sandwich` exactly as
-   constructed above (traps: `LeastI_ex` not `LeastI[of]`;
-   `sum.mono_neutral_cong_right` not `sum.inter_filter`; exp-monotone
-   steps via `subst exp_le_cancel_iff` + linarith).
-   L3b-i DONE (commit c4459f2): `pstep_integral`.
-   L3b-ii CORE DONE (commit efaa2d4): `weak_conv_open_liminf` — the
-   open-set portmanteau liminf along `weak_conv_on` on the path
-   metric (mweak_conv_fin interpretation discharged from
-   `weak_conv_on_def`; closed-limsup via `MW.mweak_conv2`; total mass
-   from the `f = 1` instance — instantiate the ∀f-clause MANUALLY,
-   auto rewrites `∫1` to a measure first; the sequential-tendsto
-   arrow `⇢` already carries `sequentially`).
-   L3b-ii' DONE (commit 8eea75a): `pstep_integral_liminf` (the
-   ε/(number of terms) argument; traps: chain </≤ with `by order`;
-   ball facts need manual bspec extraction; `sum_distrib_left` AND
-   `_right`; `ereal_le_epsilon2` — the ⋀e::real form).
-   L3 WRITTEN, PIDE RE-VERIFY PENDING (commit c1c8391):
-   `pstep_integrable` + `exp_pexit_integral_liminf` (squeeze +
-   `lim_1_over_n` + `LIMSEQ_le_const2` with ereal case split;
-   `pexit_measurable` moved BEFORE its first use).  The PIDE session
-   wedged on an orphaned zombie task from a replaced command
-   (survives unload/reload) — after the next server restart, load
-   `Exit_Semicontinuity.thy` and check it is green before continuing.
-   THEN REMAINING: (iv) the crown `ess_inf_pexit_usc` — design: per
-   `l > 0`, eventually `essinf(Λ_i) ≤ ennreal(f_l(Λ_i))` (L1;
-   measurability via `measurable_cong_sets` from the eventually-sets
-   clause), and eventually `∫_i > ∫·e^{−lε}` (from L3 +
-   `le_Liminf_iff`) hence `f_l(Λ_i) ≤ f_l(Λ) + ε`; `Limsup_bounded`
-   then ε→0 (ennreal) then `INF_greatest` + L2 at Λ give
-   `Limsup_i essinf(Λ_i) ≤ ess_inf_time Λ (pexit T K)`.
-   OLD enumeration (superseded): (ii') `liminf_i ∫ pstep dΛ_i ≥ ∫ pstep dΛ` via
-   `mweak_conv3` open-set liminf (interpretation pattern
-   `mweak_conv_fin` as Section_2_Usc line ~3141) +
-   `ereal_Liminf_add_mono` over the finitely many terms; (iii) with
-   the sandwich, `liminf ∫ e^{−l·pexit} dΛ_i ≥ ∫ e^{−l·pexit} dΛ −
-   2(1 − e^{−lT/N})` for every N, let `N → ∞`; (iv) the crown
-   `ess_inf_pexit_usc` from L1 + L2 + L3 as designed below.
-   L3 `liminf` of `∫ e^{−λ·pexit} dΛ_i` ≥ `∫ … dΛ` along
-   `weak_conv_on` WITHOUT a general LSC portmanteau (none exists in
-   the AFP; no layer-cake for real integrands in HOL either — checked)
-   via the TELESCOPING STEP MINORANT: for a partition
-   `0 = s_0 < … < s_N = T` and `φ = exp(−λ·)` (decreasing, uniformly
-   continuous on `[0,T]`), the step function
-   `ψ = φ(T) + Σ_j (φ(s_j) − φ(s_{j+1}))·1_{pexit < s_j}` satisfies
-   `φ(pexit) − ω_φ(mesh) ≤ ψ ≤ φ(pexit)` (telescope; coefficients
-   ≥ 0), `∫ψ` is a finite positive combination of measures of OPEN
-   sets `{pexit < s_j}` (`pexit_sublevel_open`), so
-   `liminf ∫ψ dΛ_i ≥ ∫ψ dΛ` by the open-set liminf (`mweak_conv3`
-   inside a `mweak_conv_fin` interpretation as in Section_2_Usc line
-   ~3141) + `ereal_Liminf_add_mono` finite induction.  Mesh → 0 gives
-   L3; L1 + L2 + L3 then give the crown
-   `ess_inf_pexit_usc`: `limsup_i ess_inf_time (Λ_i) (pexit T K) ≤
-   ess_inf_time Λ (pexit T K)` along `weak_conv_on Λ_i Λ sequentially
-   (mtopology_of (path_metric T))` — the chain is
-   `essinf(Λ_i) ≤ f_λ(Λ_i)` (L1), `limsup f_λ(Λ_i) ≤ f_λ(Λ)` (L3 +
-   antitone log), `INF_λ` (L2); no USC-of-INF needed.
-
+5. **Value side (LR Lemma 2.1 trick) — DONE 2026-08-05 (commit
+   `48d176f`), the whole of `Exit_Semicontinuity.thy` is PIDE-green
+   (2,245 commands).**  Theory in ROOT after `Section_2_Usc`; imports
+   only `Path_Space` + `Exit_Time` + `Value_Function`, so its cone is
+   small.  What it exports, in dependency order:
+   - `pexit T K = etime T (−K) (λr g. g r)` — the capped exit time read
+     off a PATH; `pexit_le_T`, `pexit_nonneg`, `pexit_less_iff`.
+   - `pexit_sublevel_open` — strict sublevels are open in
+     `mtopology_of (path_metric T)` (witness time in the open
+     complement + `continuous_map_path_eval`); `pexit_measurable`.
+   - L1 `ess_inf_time_le_laplace` (+ `exp_neg_time_integrable`,
+     `exp_neg_time_integral_lower`): `essinf τ ≤ −(1/λ) ln E[e^{−λτ}]`.
+   - L2 `ess_inf_time_eq_laplace_inf`: `essinf τ = INF_{λ>0} f_λ`.
+   - L3a `pstep` + `pstep_sandwich`: the uniform-grid telescoping step
+     minorant `ψ_N = e^{−lT} + Σ_{j=1}^{N−1}(e^{−l s_j} − e^{−l s_{j+1}})
+     ·1_{pexit < s_j}` with `ψ_N ≤ e^{−l·pexit} ≤ ψ_N + (1 − e^{−lT/N})`.
+   - L3b `pstep_integral`, `weak_conv_open_liminf` (open-set portmanteau
+     liminf along `weak_conv_on`), `weak_conv_total_mass`,
+     `pstep_integral_liminf`, `pstep_integrable`.
+   - L3 `exp_pexit_integral_liminf` — the squeeze `N → ∞`:
+     `liminf_i ∫e^{−l·pexit} dΛ_i ≥ ∫e^{−l·pexit} dΛ`.
+   - **CROWN `ess_inf_pexit_usc`**: for `0 < T`, `closed K`, probability
+     laws with `weak_conv_on Λi Λ sequentially (mtopology_of
+     (path_metric T))`,
+     `Limsup_i (ess_inf_time (Λi i) (pexit T K)) ≤ ess_inf_time Λ
+     (pexit T K)`.
+   This is the value-side semicontinuity Prop 2.4 and the DPP consume;
+   it replaces the `vshift` route entirely.
+   TRAPS worth keeping (all cost real time here): state EVERY lemma
+   about a time functional with `fixes tau :: "'a ⇒ real"` — without it
+   τ generalizes to a Banach algebra and every real-specific rule fails
+   to APPLY with no type error; unqualified `integrable_const`
+   resolves to Henstock's `integrable_on` lemma — the Bochner fact is
+   `finite_measure.integrable_const`, so either interpret
+   `finite_measure`/`prob_space` first or pass `[OF fm]` explicitly;
+   `ennreal_le_epsilon` carries a `y < top` premise the block must
+   `assume`; never put `ennreal_plus[symmetric]` in a simpset (loops);
+   nn-integrals need the `⇧+` sup-block (a raw superscript-plus is a
+   lexical error through the MCP encoder); `LeastI_ex` not
+   `LeastI[of]`; `sum.mono_neutral_cong_right` not `sum.inter_filter`;
+   the ∀f clause of `weak_conv_on_def` needs MANUAL instantiation at
+   `f = 1` (auto rewrites `∫1` to a measure first); `⇢` already carries
+   `sequentially`; chain `<`/`≤` with `by order` or an explicit
+   `rule less_le_trans[OF _ …]`.
 Do NOT believe shortcuts through usc of `vshift` in the law argument:
 usc gives `vshift(Λ) ≥ limsup vshift(Qₘ)` — the WRONG direction.
 
