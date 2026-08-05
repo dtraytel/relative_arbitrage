@@ -2650,6 +2650,61 @@ definition dra :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \
      * (if l = 1 then sin (drW (drc q u) \<omega> + \<phi>)
         else - cos (drW (drc q u) \<omega> + \<phi>)))"
 
+text \<open>Continuity of \<^const>\<open>dra\<close> in TIME, by the same route as
+  \<^const>\<open>drC2\<close>'s continuity lemma: the clock is continuous on the
+  nonnegative reals, the Brownian path is continuous, and the entries are
+  sines and cosines of their composition.  This is what the market locale's
+  \<^const>\<open>acov\<close> time-measurability assumption needs.  The paper gets that
+  property for free, because there the covariation density is an a.e.
+  derivative and so measurable by construction; here the density is
+  primitive, so it has to be proved.\<close>
+
+lemma dra_cont:
+  assumes q: "0 < q"
+  shows "continuous_on UNIV (\<lambda>u. dra q \<phi> (max u 0) \<omega>)"
+proof -
+  have m1: "continuous_on UNIV (\<lambda>u :: real. max u 0)"
+    by (intro continuous_intros)
+  have m2: "continuous_on UNIV (\<lambda>u :: real. drc q (max u 0))"
+    by (rule continuous_on_compose2[OF drc_cont[OF q] m1]) auto
+  have img: "(\<lambda>u :: real. drc q (max u 0)) ` UNIV \<subseteq> {0..}"
+    by (auto intro!: drc_nonneg[OF q])
+  have m3: "continuous_on UNIV (\<lambda>u. Bcont (drc q (max u 0)) (\<omega> 1))"
+    by (rule continuous_on_compose2[OF Bcont_cont m2 img])
+  have ent: "continuous_on UNIV
+      (\<lambda>u. dra q \<phi> (max u 0) \<omega> $ j $ l)" for j l
+    unfolding dra_def drW_def
+    by (cases "j = 1"; cases "l = 1")
+      (auto intro!: continuous_intros m3)
+  show ?thesis
+    by (rule continuous_on_vec_lambda_pair) (rule ent)
+qed
+
+lemma dras_measurable_time:
+  assumes q: "0 < q" and T0: "0 \<le> T0"
+  shows "(\<lambda>u. dras q \<phi> T0 u \<omega>) \<in> borel_measurable lborel"
+proof -
+  have "continuous_on UNIV (\<lambda>u. dra q \<phi> (max u 0) \<omega>)"
+    by (rule dra_cont[OF q])
+  then have c: "(\<lambda>u. dra q \<phi> (max u 0) \<omega>) \<in> borel_measurable lborel"
+    by (simp add: borel_measurable_continuous_onI)
+  have eq: "(\<lambda>u. dras q \<phi> T0 u \<omega>)
+      = (\<lambda>u. if u \<le> T0 then dra q \<phi> (max u 0) \<omega> else 0)"
+  proof
+    fix u :: real
+    show "dras q \<phi> T0 u \<omega> = (if u \<le> T0 then dra q \<phi> (max u 0) \<omega> else 0)"
+    proof (cases "0 \<le> u")
+      case True then show ?thesis by (simp add: dras_def)
+    next
+      case False
+      then have "\<not> (0 \<le> u)" .
+      then show ?thesis using T0 by (simp add: dras_def)
+    qed
+  qed
+  show ?thesis
+    unfolding eq using c by (intro measurable_If) auto
+qed
+
 lemma dra_11: "dra q \<phi> u \<omega> $ 1 $ 1 = (sin (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
   by (simp add: dra_def power2_eq_square)
 
@@ -3338,6 +3393,8 @@ proof -
       then show ?thesis
         unfolding set_integrable_def eq .
     qed
+    show "AE \<omega> in ?M. (\<lambda>s. dras q \<phi> T0 s \<omega>) \<in> borel_measurable lborel"
+      by (intro AE_I2) (rule dras_measurable_time[OF q T0])
     show "AE \<omega> in ?M. \<forall>t. 0 \<le> t \<longrightarrow> set_integrable lborel {0..t}
         (\<lambda>s. trace (dras q \<phi> T0 s \<omega>))"
       by (intro AE_I2 allI impI) (rule trace_int)
