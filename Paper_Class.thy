@@ -1249,6 +1249,86 @@ lemma integral_of_bounded_linear:
       [OF has_bochner_integral_bounded_linear
         [OF T has_bochner_integral_integrable[OF f]]])
 
+text \<open>A bounded linear map commutes with the Bochner integral, hence with
+  set integrals, hence it maps martingales to martingales.  The
+  set-integral characterisation \<open>martingale_of_set_integral_eq\<close> is the
+  right interface for this: no conditional expectation has to be moved.
+  We need it to descend from the class's VECTOR martingales to the real
+  COORDINATE processes that the integrated identities are stated for.\<close>
+
+lemma set_integral_of_bounded_linear:
+  fixes T :: "'b::{second_countable_topology,banach}
+      \<Rightarrow> 'c::{second_countable_topology,banach}"
+  assumes T: "bounded_linear T" and f: "set_integrable M A f"
+  shows "set_lebesgue_integral M A (\<lambda>\<omega>. T (f \<omega>))
+      = T (set_lebesgue_integral M A f)"
+proof -
+  have fe: "(\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R T (f \<omega>))
+      = (\<lambda>\<omega>. T (indicat_real A \<omega> *\<^sub>R f \<omega>))"
+    by (rule ext) (simp add: T linear_simps)
+  have "set_lebesgue_integral M A (\<lambda>\<omega>. T (f \<omega>))
+      = (\<integral>\<omega>. T (indicat_real A \<omega> *\<^sub>R f \<omega>) \<partial>M)"
+    unfolding set_lebesgue_integral_def by (simp only: fe)
+  also have "\<dots> = T (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R f \<omega> \<partial>M)"
+    using f by (intro integral_of_bounded_linear[OF T])
+      (simp add: set_integrable_def)
+  finally show ?thesis unfolding set_lebesgue_integral_def .
+qed
+
+lemma martingale_bounded_linear_image:
+  fixes T :: "'b::{second_countable_topology,banach}
+      \<Rightarrow> 'c::{second_countable_topology,banach}"
+    and Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b"
+  assumes T: "bounded_linear T" and mg: "martingale M F t0 Y"
+  shows "martingale M F t0 (\<lambda>u \<omega>. T (Y u \<omega>))"
+proof -
+  interpret MY: martingale M F t0 Y by (rule mg)
+  have Tm: "T \<in> borel_measurable borel"
+    by (rule borel_measurable_continuous_onI)
+      (rule linear_continuous_on[OF T])
+  show ?thesis
+  proof (rule MY.martingale_of_set_integral_eq)
+    show "adapted_process M F t0 (\<lambda>u \<omega>. T (Y u \<omega>))"
+    proof (unfold_locales)
+      fix i :: real assume i: "t0 \<le> i"
+      show "(\<lambda>\<omega>. T (Y i \<omega>)) \<in> borel_measurable (F i)"
+        by (rule measurable_compose[OF MY.adapted[OF i] Tm])
+    qed
+    show "\<And>i. t0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. T (Y i \<omega>))"
+      by (rule integrable_bounded_linear[OF T MY.integrable])
+    fix A and i j :: real
+    assume A: "A \<in> F i" and ij: "t0 \<le> i" "i \<le> j"
+    have Ai: "A \<in> sets M"
+      using A MY.subalgebras[OF ij(1)] by (auto simp: subalgebra_def)
+    have si: "set_integrable M A (Y i)"
+      unfolding set_integrable_def
+      by (rule integrable_mult_indicator[OF Ai MY.integrable[OF ij(1)]])
+    have sj: "set_integrable M A (Y j)"
+      unfolding set_integrable_def
+      using ij by (intro integrable_mult_indicator[OF Ai] MY.integrable) simp
+    have base: "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (Y j)"
+      by (rule MY.set_integral_eq[OF A ij])
+    show "set_lebesgue_integral M A (\<lambda>\<omega>. T (Y i \<omega>))
+        = set_lebesgue_integral M A (\<lambda>\<omega>. T (Y j \<omega>))"
+      using set_integral_of_bounded_linear[OF T si]
+        set_integral_of_bounded_linear[OF T sj] base
+      by simp
+  qed
+qed
+
+corollary martingale_vec_nth:
+  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> (real^'n::finite)"
+  assumes mg: "martingale M F t0 Y"
+  shows "martingale M F t0 (\<lambda>u \<omega>. Y u \<omega> $ i)"
+  by (rule martingale_bounded_linear_image[OF bounded_linear_vec_nth mg])
+
+corollary martingale_mat_nth:
+  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> (real^'n::finite^'n)"
+  assumes mg: "martingale M F t0 Y"
+  shows "martingale M F t0 (\<lambda>u \<omega>. Y u \<omega> $ i $ j)"
+  by (rule martingale_vec_nth
+      [OF martingale_bounded_linear_image[OF bounded_linear_vec_nth mg]])
+
 theorem paper_pair_class_compensated_mean:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> paper_pair_class k L T x" and t: "0 \<le> t"
