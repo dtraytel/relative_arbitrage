@@ -1436,15 +1436,53 @@ In priority order:
    `mat_1_in_sconstraint`); the work is the off-diagonal covariation, i.e.
    `X_i X_j` a martingale for `i ≠ j`, which needs the independence of the
    Brownian coordinates. This would have caught the vacuity bug on day one.
-1. **THE UNIFORM FOURTH MOMENT, BY LOCALIZATION.** This is now the single
-   highest-value item: it unblocks BOTH the second martingale clause of
-   Lemma 2.3 AND NC-2's tightness, and the four-step recipe is written out
-   in §3/NC. It needs no BDG and no change to `Increment_Moments` — apply
-   the existing bounded estimate to the process stopped at
-   `τ_R = inf{t. R ≤ ¦X_t¦}`, which is bounded by construction, then let
-   `R → ∞` by Fatou (pathwise continuity on the compact `[0,T]` makes
-   `τ_R > T` eventually). The bulk of the work is optional stopping at the
-   path-space level.
+1. **THE UNIFORM FOURTH MOMENT, BY LOCALIZATION — HALF BUILT.** Still the
+   single highest-value item: it unblocks BOTH the second martingale clause
+   of Lemma 2.3 AND NC-2's tightness. It needs no BDG and no change to
+   `Increment_Moments`.
+
+   **DONE 2026-08-05** (commits `e6d1db1`, `9206228`, `a9f031d`,
+   `b607cb6`), all in `Paper_Bridge.thy`:
+   - `pcoord` / `ploc` — the class member's stopped coordinate process and
+     the localizing time `τ_R`; `paper_pair_class_cont_adapted` and
+     **`paper_pair_class_ploc_stopping`** (it IS a stopping time, via
+     `Exit_Time.etime_stopping_time`); `pcoord_stopped_bounded` (the
+     stopped process never leaves `[−R,R]` — this needs CONTINUITY, not
+     just the infimum, because at `τ_R` the path is exactly at `R`, and
+     `Exit_Time.etime_stays_in_cball` is that statement).
+   - **`paper_pair_class_stopped_coord_martingale`** and
+     **`paper_pair_class_stopped_comp_martingale`** — optional stopping
+     for `X` AND for `X² − Y_ii`. This is the step the plan long recorded
+     as out of reach: `Optional_Sampling.optional_stopping` wants an
+     INTEGRABLE ENVELOPE of the unstopped process, which the market locale
+     cannot supply. For a class member it exists —
+     `Doob_Inequality.horizon_sq_int_martingale` builds `Dsup` out of
+     nothing but square-integrability, which `paper_pair_class_sq_integrable`
+     provides, and `Dsup_sq_integrable` covers the compensated envelope
+     `Dsup² + n·L·T`.
+   - Supporting: `paper_pair_class_coord_adapted`, `_path_cont`,
+     `_coord_paths_cont`, `_comp_paths_cont` (continuity on the WHOLE
+     half-line — the stopped process is constant after `T`, and `{0..}` is
+     the form `stopped_adapted_of_cont` and `optional_stopping` ask for),
+     `paper_pair_class_compensated_coord_martingale`.
+
+   **WHAT REMAINS**, in order: (a) the compensator rate bound at the
+   stopped times, `0 ≤ A_{v∧τ} − A_{u∧τ} ≤ L(v−u)`, from the class's
+   diffquot clause plus `v∧τ − u∧τ ≤ v − u`; (b) the conditional identity
+   `cond_exp ((ΔX^τ)²) = cond_exp (ΔA^τ)`, the standard cross-term
+   computation from the two stopped martingales (cf.
+   `Section_2_Usc.coord_sq_bounded_test`, same shape); (c) apply
+   `fourth_moment_bound_bounded` at the stopped pair with `C = L` and the
+   sup bound `R`; (d) Fatou — pathwise `sup_{[0,T]}¦X¦ < ∞` by continuity
+   on a compact, so `τ_R > T` for large `R` and
+   `(X_{T∧τ_R} − X_{s∧τ_R})⁴ → (X_T − X_s)⁴`.
+
+   Traps met: `prob_space.integrable_const` does not resolve — use
+   `finite_measure.integrable_const[OF fm]` (same shadowing family as
+   `integrable_bound`); a calculational chain through `¦a²¦` breaks when
+   simp normalises it away, so state the square bound via `power_mono` on
+   `¦a¦` (that also cleared a `still_running_possibly_nonterminating`
+   flag).
 2. **NC-3, Lemma 2.3.** THREE of the four clauses now pass to the weak
    limit (`paper_pair_class_limit_three_clauses`: start, covariation,
    X-martingale — steps (i)–(iv), §3/NC). The fourth is the compensated
