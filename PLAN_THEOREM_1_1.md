@@ -483,15 +483,21 @@ the PIDE server, which snapshots `ROOT` at startup.  Every theory then
 reports "Malformed theory", INCLUDING already-green ones, and reverting
 the `ROOT` edit does NOT recover it.  A server restart is required.
 
-FIRST ACTION AFTER RESTART: load `Paper_Bridge.thy` and check
-`stopped_market_acont_in_sconstraint` — it is committed but NOT
-PIDE-verified.  It HAS been desk-checked against every definition site
-it uses (locale idiom and parameter order vs
-`Path_Tightness_Market.thy:209`; hypothesis shapes vs
-`Relative_Arbitrage_Stochastic.thy:122–133`; `suff_volatile_def` vs
-`Relative_Arbitrage_Convexity.thy:458`; `acont_in_sconstraint`'s five
-premises vs `Paper_Class.thy:810–816`), so it is expected to load with
-at most cosmetic fixes — but desk-checking is not proof.  Then re-confirm `Paper_Class` (2,002) and
+**`Paper_Bridge.thy` IS VERIFIED** (79 commands, `overall_status ok`;
+commit `63bf783`).  In ROOT after `Paper_Class`; imports `Paper_Class`
+and `Section_2_Usc` so neither of those has to import the other.  It
+exports `stopped_market_acont_in_sconstraint`: for ANY `stopped_market`
+witness, the CONTINUED volatility lies in `sconstraint k L` at every
+time `s ≥ 0`, almost surely — the witness side of the faithful bridge.
+Plus `stopped_market_acov_leaves_sconstraint`, recording the contrast
+that the witness's OWN volatility is `0`, hence outside the constraint
+set, from the stopping time onward.
+
+The three theories touched this cycle all re-confirmed green after the
+restart: `Exit_Semicontinuity` 2,676, `Paper_Class` 2,002,
+`Paper_Bridge` 79 (and `Section_2_Usc` 6,995, `Path_Tightness_Market`
+832 unchanged).  The mass "failures" seen while the session was wedged
+were artifacts of the ROOT snapshot, exactly as suspected.  Then re-confirm `Paper_Class` (2,002) and
 `Exit_Semicontinuity` (2,676), whose reported failures were artifacts.
 
 LESSON (also in memory `isabelle-pide-stale-root`): do NOT register a
