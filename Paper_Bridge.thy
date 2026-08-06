@@ -8355,4 +8355,170 @@ theorem paper_pair_class_pglue_law:
     pglue_law_comp_martingale[OF r rT Q R]
   by blast
 
+text \<open>The immediate payoff: \<open>paper_v\<close> is NONDECREASING in the horizon.  Paste
+  the Brownian witness onto the tail of a horizon-\<open>S\<close> member; the glued path
+  agrees with the original on \<open>[0,S]\<close>, so it cannot exit earlier.  Together
+  with \<open>paper_v_horizon_stable\<close> this makes \<open>paper_v k L T K x\<close> CONSTANT for
+  \<open>T\<close> beyond the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> --- the horizon cap of the capped
+  path space is invisible, and \<open>paper_v\<close> is the paper's uncapped \<open>v\<close>.\<close>
+
+lemma pexit_pglue_ge:
+  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
+  assumes S: "0 \<le> S" and ST: "S \<le> T"
+  shows "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))"
+proof -
+  have lb: "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> z"
+    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
+        \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue S T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
+      using z by blast
+    then show ?thesis
+    proof cases
+      case hit
+      show ?thesis
+      proof (cases "z \<le> S")
+        case True
+        have zI: "z \<in> {0..T}" using hit by simp
+        have notin: "fst (\<omega> z) \<in> - K"
+          using hit True by (simp add: pglue_le[OF zI])
+        show ?thesis
+          unfolding pexit_def
+          by (rule etime_le_of_mem[OF S hit(1) True]) (use notin in simp)
+      next
+        case False
+        then show ?thesis
+          using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] by linarith
+      qed
+    next
+      case cap
+      then show ?thesis
+        using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] ST by linarith
+    qed
+  qed
+  have "pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))
+      = Inf ({t. 0 \<le> t \<and> t \<le> T
+          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
+    unfolding pexit_def etime_def ..
+  moreover have "pexit S K (\<lambda>t. fst (\<omega> t))
+      \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
+          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show ?thesis by simp
+qed
+
+theorem paper_v_horizon_mono:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes S: "0 \<le> S" and ST: "S \<le> T" and L: "1 \<le> L" and K: "closed K"
+  shows "paper_v k L S K x \<le> paper_v k L T K x"
+proof -
+  have T0: "0 \<le> T" using S ST by simp
+  have TS: "0 \<le> T - S" using ST by simp
+  have "paper_v k L S K x = Sup ((\<lambda>Q. ess_inf_time Q
+      (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))) ` paper_pair_class k L S x)"
+    unfolding paper_v_def ..
+  also have "\<dots> \<le> paper_v k L T K x"
+  proof (rule Sup_least)
+    fix e :: ennreal
+    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t))))
+        ` paper_pair_class k L S x"
+    then obtain Q :: "('n pairpath) measure"
+      where Q: "Q \<in> paper_pair_class k L S x"
+        and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))" by blast
+    define R where "R = pair_law_of (T - S) (bmpair (T - S))
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+    have R: "R \<in> paper_pair_class k L (T - S) (0 :: real^'n)"
+      unfolding R_def by (rule bmpair_law_in_paper_pair_class[OF TS L])
+    have G: "pglue_law S T Q R \<in> paper_pair_class k L T x"
+      by (rule paper_pair_class_pglue_law[OF S ST Q R])
+    let ?M = "Q \<Otimes>\<^sub>M R"
+    let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue S T (fst p) (snd p)"
+    let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    have PQ: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+    have PR: "prob_space R" by (rule paper_pair_class_prob[OF R])
+    interpret PP: pair_prob_space Q R
+      by (simp add: pair_prob_space_def pair_sigma_finite_def PQ PR
+          prob_space_imp_sigma_finite)
+    have setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric S :: ('n pairpath) metric)))"
+      by (rule paper_pair_class_sets[OF Q])
+    have setsR: "sets R = sets (borel_of (mtopology_of
+        (path_metric (T - S) :: ('n pairpath) metric)))"
+      by (rule paper_pair_class_sets[OF R])
+    have tauS: "(\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t)))
+        \<in> borel_measurable Q"
+    proof -
+      have "(\<lambda>\<omega> :: 'n pairpath. pexit S K (pfst S \<omega>)) \<in> borel_measurable Q"
+        by (rule measurable_compose[OF pfst_measurable[OF S setsQ]
+              pexit_measurable[OF S K]])
+      then show ?thesis by (simp add: pexit_pfst)
+    qed
+    have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
+        \<in> borel_measurable ?BT"
+    proof -
+      have "(\<lambda>\<omega> :: 'n pairpath. pexit T K (pfst T \<omega>)) \<in> borel_measurable ?BT"
+        by (rule measurable_compose[OF pfst_measurable[OF T0 refl]
+              pexit_measurable[OF T0 K]])
+      then show ?thesis by (simp add: pexit_pfst)
+    qed
+    have aeQ: "AE \<omega> in Q. e \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))"
+      unfolding e by (rule ess_inf_time_AE)
+    have aeM: "AE p in ?M. e \<le> ennreal (pexit S K (\<lambda>t. fst (fst p t)))"
+    proof (rule PP.AE_pair_measure)
+      have m1: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. pexit S K (\<lambda>t. fst (fst p t)))
+          \<in> borel_measurable ?M"
+        by (rule measurable_compose[OF measurable_fst tauS])
+      show "{p \<in> space ?M. e \<le> ennreal (pexit S K (\<lambda>t. fst (fst p t)))}
+          \<in> sets ?M" using m1 by measurable
+      show "AE \<omega> in Q. AE \<omega>' in R.
+          e \<le> ennreal (pexit S K (\<lambda>t. fst (fst (\<omega>, \<omega>') t)))"
+        using aeQ by simp
+    qed
+    have aeG: "AE p in ?M. e \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t)))"
+    proof (rule eventually_mono[OF aeM])
+      fix p :: "'n pairpath \<times> 'n pairpath"
+      assume "e \<le> ennreal (pexit S K (\<lambda>t. fst (fst p t)))"
+      also have "\<dots> \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t)))"
+        by (intro ennreal_leI pexit_pglue_ge[OF S ST])
+      finally show "e \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t)))" .
+    qed
+    have iff: "(AE \<omega> in pglue_law S T Q R.
+          e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))
+        = (AE p in ?M. e \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t))))"
+    proof -
+      have mset: "{\<omega> \<in> space ?BT.
+          e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?BT"
+        using tauT by measurable
+      show ?thesis
+        unfolding pglue_law_def pair_law_of_def
+        by (rule AE_distr_iff[OF pglue_measurable[OF S ST setsQ setsR] mset])
+    qed
+    have "e \<le> ess_inf_time (pglue_law S T Q R)
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+      unfolding ess_inf_time_def using aeG unfolding iff[symmetric]
+      by (intro Sup_upper) simp
+    also have "\<dots> \<le> paper_v k L T K x"
+      unfolding paper_v_def using G by (intro Sup_upper imageI)
+    finally show "e \<le> paper_v k L T K x" .
+  qed
+  finally show ?thesis .
+qed
+
+text \<open>Horizon-cap invisibility, both halves.  Past the natural scale of
+  Example 3.1 the horizon does not matter at all, so \<open>paper_v\<close> --- defined
+  on the CAPPED path space --- computes the paper's uncapped \<open>v\<close> of (1.6).\<close>
+
+corollary paper_v_horizon_eq:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
+  assumes k: "k < CARD('n)" and L: "1 \<le> L" and K: "closed K"
+    and KB: "K \<subseteq> cball 0 r" and S0: "0 \<le> S" and ST: "S \<le> T"
+    and big: "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S"
+  shows "paper_v k L T K x = paper_v k L S K x"
+proof (rule order.antisym)
+  show "paper_v k L T K x \<le> paper_v k L S K x"
+    using L by (intro paper_v_horizon_stable[OF k _ S0 ST K KB big]) simp
+  show "paper_v k L S K x \<le> paper_v k L T K x"
+    by (rule paper_v_horizon_mono[OF S0 ST L K])
+qed
+
 end
