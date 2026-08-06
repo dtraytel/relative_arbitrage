@@ -1807,3 +1807,53 @@ Checklist, in dependency order:
          from each other (`bm_paths` is built as a product of independent
          one-dimensional motions, so the second is structural).
      Budget this as the real work; everything else on the list is plumbing.
+
+### The off-diagonal covariation, scouted precisely (2026-08-06)
+
+`Brownian_Stopped.thy`'s `sorry` is filled (commit `0941c46`) and
+`isabelle build -d . Arbitrage` is GREEN again — it had been red since
+2026-08-03, when `sufficiently_volatile_market` gained
+`acov_time_measurable` and that instance was not updated.
+
+For NC nonemptiness, the last missing input — `W_i W_j` a martingale for
+`i ≠ j` — reduces to exactly TWO facts about `bm_paths`, and the relevant
+infrastructure has now been located:
+
+- `bm_paths = Pi⇩M UNIV (λ_. wiener_pre)` (`Brownian_Market.thy:466`), so the
+  COORDINATES are independent by construction.
+- `Brownian_Market.bm_filtration_increment_indep` gives
+  `indep_set (F_s) (vimage_algebra (space M) (λω. bmX x0 t ω − bmX x0 s ω) borel)`
+  — the FULL VECTOR increment is independent of the past.
+- `Brownian_Market.bm_indicator_increment_indep_var` turns that into
+  `indep_var (indicator A) (λω. ω i t − ω i s)` for `A ∈ F_s`; and
+  `bm_meas_increment_product` gives `∫ g·Δ_i = 0` for `F_s`-measurable
+  integrable `g`. That kills the two CROSS terms of
+
+      W_i(t)W_j(t) − W_i(s)W_j(s) = W_i(s)Δ_j + W_j(s)Δ_i + Δ_iΔ_j
+
+  immediately (take `g = indicator A · W_i(s)`, resp. `· W_j(s)`).
+
+So only the LAST term needs new work, and it splits into:
+
+1. `indep_var (indicator A) (λω. Δ_i ω * Δ_j ω)` for `A ∈ F_s`. This is a
+   near-copy of `bm_indicator_increment_indep_var` — that proof only ever
+   uses that its second function factors through the VECTOR increment
+   `λω. bmX x0 t ω − bmX x0 s ω`, and `v ↦ v$i · v$j` factors through it
+   just as `v ↦ v$i` does. Cheap.
+2. `E[Δ_i Δ_j] = 0` for `i ≠ j`. This is the genuinely new one: it needs
+   independence ACROSS the components of the `Pi⇩M`. The repo's
+   `Brownian_Market.indep_var_PiM_components` is NOT the right shape (it
+   makes two componentwise-applied FAMILIES independent, not two distinct
+   components). The tool to reach for is
+   `HOL-Probability.Independent_Family.indep_vars_iff_distr_eq_PiM`, or a
+   direct `product_sigma_finite` Fubini computation on
+   `Pi⇩M UNIV (λ_. wiener_pre)` — each factor contributing
+   `∫ (w t − w s) ∂wiener_pre = 0`, which is
+   `Brownian_Market.bm_increment_component_integral` at the single-coordinate
+   level.
+
+With those two, the compensated clause assembles by `martingale_matI` from
+`coord_Z_martingale` (diagonal) and the new off-diagonal, and the rest of
+the nonemptiness checklist above is plumbing that is already written
+(`martingale_pair_law`, `martingale_stopped_const`, `pathify_measurable`,
+`mat_1_in_sconstraint`).
