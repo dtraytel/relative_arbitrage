@@ -2994,4 +2994,139 @@ proof -
   finally show ?thesis .
 qed
 
+theorem martingale_F_limit:
+  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes T: "0 \<le> T" and Fc: "continuous_on UNIV F"
+    and Pm: "\<And>m. prob_space (Qm m)"
+    and setsm: "\<And>m. sets (Qm m) = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
+        (\<lambda>u \<omega>. F (\<omega> (min u T)))"
+    and wc: "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and C0: "0 \<le> C"
+    and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
+        (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. F (\<omega> (min u T)))"
+proof -
+  let ?FF = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. F (\<omega> (min u T))"
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
+  have SP: "Stochastic_Process.stochastic_process Q (0::real)
+      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+    by unfold_locales (rule pair_law_eval_measurable[OF setsQ])
+  interpret SF: finite_filtered_measure Q ?FF 0
+    by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration[OF SP finQ])
+  have mI: "min u T \<in> {0..T}" if "0 \<le> u" for u using that T by simp
+  have nnQ: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>Q) \<le> ennreal C" if u: "u \<in> {0..T}"
+    for u
+    by (rule weak_conv_on_nn_integral_le
+        [OF wc pair_eval_F_sq_cont[OF Fc u] _ C0 nnm[OF u]]) simp
+  have Fb: "F \<in> borel_measurable borel"
+    by (rule borel_measurable_continuous_onI[OF Fc])
+  have iY: "integrable Q (?Y u)" if u: "0 \<le> u" for u
+  proof (rule integrable_of_sq_integrable[OF finQ])
+    show "?Y u \<in> borel_measurable Q"
+      by (rule pair_law_F_measurable[OF Fc setsQ mI[OF u]])
+    show "integrable Q (\<lambda>\<omega>. (?Y u \<omega>)\<^sup>2)"
+      by (rule pair_law_F_sq_integrable_of_nn_bound
+          [OF Fc setsQ mI[OF u] nnQ[OF mI[OF u]]])
+  qed
+  show ?thesis
+  proof (rule SF.martingale_of_set_integral_eq)
+    show "adapted_process Q ?FF 0 ?Y"
+    proof (unfold_locales)
+      fix u :: real assume u: "0 \<le> u"
+      have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?FF u \<rightarrow>\<^sub>M borel"
+        unfolding natural_filtration_def
+        by (rule measurable_family_vimage_algebra) (use u T in auto)
+      show "?Y u \<in> borel_measurable (?FF u)"
+        by (rule measurable_compose[OF ev Fb])
+    qed
+    show "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q (?Y u)" by (rule iY)
+    fix A and u v :: real
+    assume A: "A \<in> ?FF u" and uv: "0 \<le> u" "u \<le> v"
+    have v0: "0 \<le> v" using uv by simp
+    have Ai: "A \<in> sets Q"
+      using A SF.subalgebras[OF uv(1)] by (auto simp: subalgebra_def)
+    have siY: "set_integrable Q A (?Y w)" if w: "0 \<le> w" for w
+      unfolding set_integrable_def
+      by (rule integrable_mult_indicator[OF Ai iY[OF w]])
+    show "set_lebesgue_integral Q A (?Y u) = set_lebesgue_integral Q A (?Y v)"
+    proof (cases "u \<le> T")
+      case False
+      then have "min u T = T" and "min v T = T" using uv by simp_all
+      then show ?thesis by simp
+    next
+      case True
+      have mu: "min u T = u" using True by simp
+      have tI: "min v T \<in> {0..T}" by (rule mI[OF v0])
+      have tT: "min v T \<le> T" using tI by simp
+      have ut: "u \<le> min v T" using True uv by simp
+      obtain Bs where Bs: "Bs \<in> sets (borel_of (mtopology_of
+            (path_metric u :: ('n pairpath) metric)))"
+        and Aeq: "A = (\<lambda>\<omega>. restrict \<omega> {0..u}) -` Bs \<inter> space Q"
+        using natural_filtration_eq_restrict_vimage[OF setsQ uv(1) True A]
+        by blast
+      have ind: "indicat_real A \<omega> = indicat_real Bs (restrict \<omega> {0..u})"
+        if "\<omega> \<in> space Q" for \<omega> using Aeq that by (simp add: indicator_def)
+      have zero: "(\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..u})
+          * (F (\<omega> (min v T)) - F (\<omega> u)) \<partial>Q) = 0"
+        by (rule martingale_event_F_limit
+            [OF Fc Pm setsm mgm wc prob setsQ C0 nnm uv(1) ut tT Bs])
+      have mR: "(\<lambda>\<omega> :: 'n pairpath. indicat_real Bs (restrict \<omega> {0..u})
+            * (F (\<omega> (min v T)) - F (\<omega> u))) \<in> borel_measurable Q"
+      proof -
+        have rm: "(\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..u}) \<in> Q \<rightarrow>\<^sub>M
+            borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))"
+          using continuous_map_measurable
+            [OF Lipschitz_continuous_imp_continuous_map
+              [OF Lipschitz_restrict_path_metric[OF uv(1) True]]]
+            measurable_cong_sets[OF setsQ refl] by blast
+        have im: "(\<lambda>\<omega> :: 'n pairpath. indicat_real Bs (restrict \<omega> {0..u}))
+            \<in> borel_measurable Q"
+          by (rule measurable_compose[OF rm borel_measurable_indicator[OF Bs]])
+        have c1: "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> (min v T))) \<in> borel_measurable Q"
+          by (rule pair_law_F_measurable[OF Fc setsQ tI])
+        have c2: "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> u)) \<in> borel_measurable Q"
+          using True uv(1) by (intro pair_law_F_measurable[OF Fc setsQ]) simp
+        show ?thesis by (intro borel_measurable_times im
+            borel_measurable_diff c1 c2)
+      qed
+      have mD: "(\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y v \<omega>
+          - indicat_real A \<omega> *\<^sub>R ?Y u \<omega>) \<in> borel_measurable Q"
+        using siY[OF v0] siY[OF uv(1)]
+        by (intro borel_measurable_diff)
+          (auto simp: set_integrable_def dest: borel_measurable_integrable)
+      have "(\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y v \<omega> \<partial>Q)
+          - (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y u \<omega> \<partial>Q)
+          = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y v \<omega>
+              - indicat_real A \<omega> *\<^sub>R ?Y u \<omega> \<partial>Q)"
+        using siY[OF v0] siY[OF uv(1)]
+        by (intro Bochner_Integration.integral_diff[symmetric])
+          (auto simp: set_integrable_def)
+      also have "\<dots> = (\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..u})
+          * (F (\<omega> (min v T)) - F (\<omega> u)) \<partial>Q)"
+      proof (rule integral_cong_AE[OF mD mR])
+        show "AE \<omega> in Q. indicat_real A \<omega> *\<^sub>R ?Y v \<omega>
+            - indicat_real A \<omega> *\<^sub>R ?Y u \<omega>
+            = indicat_real Bs (restrict \<omega> {0..u})
+              * (F (\<omega> (min v T)) - F (\<omega> u))"
+          by (intro AE_I2) (simp add: ind mu right_diff_distrib)
+      qed
+      also have "\<dots> = 0" by (rule zero)
+      finally show ?thesis
+        unfolding set_lebesgue_integral_def by simp
+    qed
+  qed
+qed
+
 end
