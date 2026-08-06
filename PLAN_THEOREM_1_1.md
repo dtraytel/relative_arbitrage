@@ -89,6 +89,7 @@ All in `Paper_Bridge.thy` unless noted. `paper_pair_class k L T x`
 | `paper_pair_class_shift_image` | the class at `x` is the `x`-translate of the class at `0` (LR Prop. 2.2(ii)) |
 | `bmpair_law_in_paper_pair_class` | the class is NONEMPTY: Brownian motion paired with `Y_t = t·I`, capped at `T` |
 | `paper_v_usc_unconditional` | **clause (1) for `paper_v`** |
+| `paper_v_attained` | the supremum in (1.6) is a MAXIMUM — an optimizer exists in the class (pointwise half of LR Prop. 2.2(ii)); via `Lipschitz_pfst`, `ess_inf_time_pfst`, `ess_inf_pexit_usc` |
 
 Reusable machinery built for the above, none of it in the AFP — use it, do
 not rebuild it:
@@ -326,17 +327,27 @@ DPP.**
        `ε → 0` closes it) — but a countable ε-net does NOT come for free from
        separability of `𝒫₀`, because the supremum of a usc function over a
        dense subset can be strictly smaller than its supremum.
-     - **The next concrete step is `paper_v_attained`**: the supremum in
-       (1.6) is attained. That is the pointwise half of LR (ii), needs no
-       selection theorem — sequential compactness of the class plus usc of
-       `Q ↦ ess_inf_time Q (pexit T K ∘ fst)` along weak convergence — and it
-       is required by the paper's §3.1 independently of the DPP, since that
-       proof begins "fix an optimizer P ∈ 𝒫ₓ on the right-hand side of
-       (1.6)". Route: push forward along `pfst T` (needs `pfst T` shown
-       Lipschitz as a map of path spaces, cf. `Lipschitz_restrict_path_metric`),
-       transport the functional with `ess_inf_time_distr` and `pexit_pfst`,
-       transport weak convergence with `Path_Space.weak_conv_on_pushforward`,
-       then apply `Exit_Semicontinuity.ess_inf_pexit_usc`.
+     - **`paper_v_attained` — DONE 2026-08-06.** The supremum in (1.6) is a
+       maximum: for `0 < T`, `1 ≤ L`, `closed K`, some `Q ∈ paper_pair_class
+       k L T x` has `ess_inf_time Q (λω. pexit T K (λt. fst (ω t)))
+       = paper_v k L T K x`. This is the pointwise half of LR (ii); it needs
+       no selection theorem, only `paper_pair_class_convergent_subsequence`
+       plus usc of the functional along weak convergence. §3.1 consumes it
+       independently of the DPP, since that proof begins "fix an optimizer
+       P ∈ 𝒫ₓ on the right-hand side of (1.6)".
+
+       Supporting lemmas, both new: `Lipschitz_pfst` (with `pfst_mspace`) —
+       `pfst T` is `1`-Lipschitz from the pair path metric to the vector one,
+       so `Path_Space.weak_conv_on_pushforward` applies; and
+       `ess_inf_time_pfst` — the essinf of `pexit` under the pushforward is
+       the essinf of `pexit ∘ fst` under `Q`. Then
+       `Exit_Semicontinuity.ess_inf_pexit_usc` bounds the `Limsup`, and
+       `ennreal_Sup_countable_SUP` + `LIMSEQ_SUP` + `LIMSEQ_subseq_LIMSEQ`
+       identify that `Limsup` with the supremum.
+
+       What is STILL missing for LR (ii) is the *uniform in `x`* statement:
+       a MEASURABLE `x ↦ Q_x` picking an optimizer. Attainment gives the
+       optimizer pointwise; the selector is what §2.1(c)(2) below is about.
 
   4. **The `≤` half** — conditioning, i.e. regular conditional distributions on
      the Polish path space via AFP `Disintegration` (`measure_disintegration`,
@@ -489,3 +500,15 @@ The full list lives in the agent memory file
 - **This dev `linarith` fails on plainly linear goals**; `argo` closes
   exactly those. And a division by a numeral in a premise makes it fail
   outright — restate the arithmetic without divisions.
+- **`OF` against a `⋀`-bound premise can leave a schematic in the CONCLUSION.**
+  `paper_pair_class_convergent_subsequence[OF T L0 Qm]` with
+  `Qm: "⋀i. Qm i ∈ ?C"` produced `(λm. Qm (?i1 m)) ∘ a` — the higher-order
+  match instantiated the sequence, not the index. `blast` then searched for
+  168 seconds and failed. State the conclusion with an explicit `have` and
+  discharge with `(rule …[OF …]) (rule …)` so the conclusion drives
+  unification: 4 ms. Same lesson as
+  `isabelle-conclusion-drives-unification.md`, new symptom.
+- **`ess_inf_time_distr` is AMBIGUOUS.** `Section_2_Usc.ess_inf_time_distr`
+  takes a set-measurability premise, `Value_Function.ess_inf_time_distr`
+  takes `tau ∈ borel_measurable N`. `rule` picks the former and reports
+  "OF: no unifiers". Qualify the name.
