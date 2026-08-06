@@ -10593,4 +10593,156 @@ proof -
     by (rule paper_v_horizon_eq[OF k L K KB])
 qed
 
+section \<open>The supremum in (1.6) is attained\<close>
+
+text \<open>The pointwise half of Larsson--Ruf's Proposition 2.2(ii): the class is
+  sequentially compact and the essential infimum of the exit time is upper
+  semicontinuous along weak convergence, so the supremum defining \<open>paper_v\<close>
+  is a maximum.  The paper's Section 3.1 opens by fixing an optimizer, so
+  this is needed there independently of the dynamic programming principle.
+
+  The usc input (\<open>Exit_Semicontinuity.ess_inf_pexit_usc\<close>) lives on the
+  VECTOR path space, so the functional is first transported along the
+  \<open>X\<close>-component map \<open>pfst\<close>, which is \<open>1\<close>-Lipschitz between the two path
+  metrics --- weak convergence then pushes forward.\<close>
+
+lemma pfst_mspace:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T: "0 \<le> T" and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pfst T \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> real^'n) metric)"
+proof -
+  have "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
+  then have "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))" by (intro continuous_intros)
+  then show ?thesis unfolding pfst_def by (rule mspace_path_metricI)
+qed
+
+lemma Lipschitz_pfst:
+  fixes T :: real
+  assumes T: "0 \<le> T"
+  shows "Lipschitz_continuous_map (path_metric T :: ('n::finite pairpath) metric)
+      (path_metric T :: (real \<Rightarrow> real^'n) metric) (pfst T)"
+  unfolding Lipschitz_continuous_map_def
+proof (intro conjI)
+  show "pfst T \<in> mspace (path_metric T :: ('n pairpath) metric)
+      \<rightarrow> mspace (path_metric T :: (real \<Rightarrow> real^'n) metric)"
+    by (intro funcsetI pfst_mspace[OF T])
+  have key: "mdist (path_metric T :: (real \<Rightarrow> real^'n) metric)
+        (pfst T \<omega>) (pfst T \<omega>')
+      \<le> 1 * mdist (path_metric T :: ('n pairpath) metric) \<omega> \<omega>'"
+    if w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      and w': "\<omega>' \<in> mspace (path_metric T :: ('n pairpath) metric)" for \<omega> \<omega>'
+  proof -
+    have rw: "pfst T \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> real^'n) metric)"
+      by (rule pfst_mspace[OF T w])
+    have rw': "pfst T \<omega>' \<in> mspace (path_metric T :: (real \<Rightarrow> real^'n) metric)"
+      by (rule pfst_mspace[OF T w'])
+    have pw: "\<forall>t\<in>{0..T}. dist (\<omega> t) (\<omega>' t)
+        \<le> mdist (path_metric T :: ('n pairpath) metric) \<omega> \<omega>'"
+      using path_mdist_le_iff_all[OF T w w'] by blast
+    have pwr: "dist (pfst T \<omega> t) (pfst T \<omega>' t)
+        \<le> mdist (path_metric T :: ('n pairpath) metric) \<omega> \<omega>'"
+      if t: "t \<in> {0..T}" for t
+    proof -
+      have "dist (fst (\<omega> t)) (fst (\<omega>' t)) \<le> dist (\<omega> t) (\<omega>' t)"
+        by (rule dist_fst_le)
+      then show ?thesis using bspec[OF pw t] t by (simp add: pfst_def)
+    qed
+    have "mdist (path_metric T :: (real \<Rightarrow> real^'n) metric)
+          (pfst T \<omega>) (pfst T \<omega>')
+        \<le> mdist (path_metric T :: ('n pairpath) metric) \<omega> \<omega>'"
+      using path_mdist_le_iff_all[OF T rw rw'] pwr by blast
+    then show ?thesis by simp
+  qed
+  show "\<exists>B. \<forall>\<omega>\<in>mspace (path_metric T :: ('n pairpath) metric).
+      \<forall>\<omega>'\<in>mspace (path_metric T :: ('n pairpath) metric).
+        mdist (path_metric T :: (real \<Rightarrow> real^'n) metric)
+            (pfst T \<omega>) (pfst T \<omega>')
+          \<le> B * mdist (path_metric T :: ('n pairpath) metric) \<omega> \<omega>'"
+    by (intro exI[of _ 1] ballI key)
+qed
+
+lemma ess_inf_time_pfst:
+  fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes T: "0 \<le> T" and K: "closed K"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "ess_inf_time (distr Q (borel_of (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'n) metric))) (pfst T)) (pexit T K)
+      = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+proof -
+  have "ess_inf_time (distr Q (borel_of (mtopology_of
+        (path_metric T :: (real \<Rightarrow> real^'n) metric))) (pfst T)) (pexit T K)
+      = ess_inf_time Q (\<lambda>\<omega>. pexit T K (pfst T \<omega>))"
+    by (rule Value_Function.ess_inf_time_distr
+        [OF pfst_measurable[OF T setsQ] pexit_measurable[OF T K]])
+  then show ?thesis by (simp add: pexit_pfst)
+qed
+
+theorem paper_v_attained:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+  shows "\<exists>Q \<in> paper_pair_class k L T x.
+      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = paper_v k L T K x"
+proof -
+  let ?C = "paper_pair_class k L T x"
+  let ?S = "\<lambda>Q :: ('n pairpath) measure.
+      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+  let ?Y = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'n) metric)"
+  let ?p = "\<lambda>Q :: ('n pairpath) measure. distr Q (borel_of ?Y) (pfst T)"
+  have T0: "0 \<le> T" using T by simp
+  have L0: "0 \<le> L" using L by simp
+  have ne: "?C \<noteq> {}"
+    using paper_pair_class_shift_image[OF T0, of k L x]
+      paper_pair_class_nonempty[OF T0 L] by auto
+  have imne: "?S ` ?C \<noteq> {}" using ne by simp
+  obtain f :: "nat \<Rightarrow> ennreal" where finc: "incseq f"
+    and frange: "range f \<subseteq> ?S ` ?C"
+    and fsup: "Sup (?S ` ?C) = (SUP i. f i)"
+    using ennreal_Sup_countable_SUP[OF imne] by blast
+  have "\<forall>i. \<exists>Q. Q \<in> ?C \<and> f i = ?S Q" using frange by blast
+  then obtain Qm :: "nat \<Rightarrow> ('n pairpath) measure"
+    where Qm: "\<And>i. Qm i \<in> ?C" and fQ: "\<And>i. f i = ?S (Qm i)" by metis
+  have sub: "\<exists>a Q. strict_mono a \<and> Q \<in> ?C
+      \<and> weak_conv_on (Qm \<circ> a) Q sequentially
+          (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    by (rule paper_pair_class_convergent_subsequence[OF T L0]) (rule Qm)
+  obtain a Q where sm: "strict_mono a" and Qc: "Q \<in> ?C"
+    and wc: "weak_conv_on (Qm \<circ> a) Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    using sub by blast
+  have pQ: "prob_space (Qm i)" for i by (rule paper_pair_class_prob[OF Qm])
+  have pQc: "prob_space Q" by (rule paper_pair_class_prob[OF Qc])
+  have wcY: "weak_conv_on (\<lambda>i. ?p (Qm (a i))) (?p Q) sequentially ?Y"
+  proof -
+    have "weak_conv_on (\<lambda>i. distr ((Qm \<circ> a) i) (borel_of ?Y) (pfst T))
+        (distr Q (borel_of ?Y) (pfst T)) sequentially ?Y"
+      by (rule weak_conv_on_pushforward
+          [OF Lipschitz_continuous_imp_continuous_map[OF Lipschitz_pfst[OF T0]] wc])
+    then show ?thesis by simp
+  qed
+  have lim: "Limsup sequentially (\<lambda>i. ess_inf_time (?p (Qm (a i))) (pexit T K))
+      \<le> ess_inf_time (?p Q) (pexit T K)"
+  proof (rule ess_inf_pexit_usc[OF T K wcY])
+    show "prob_space (?p (Qm (a i)))" for i
+      by (rule prob_space.prob_space_distr[OF pQ pfst_measurable[OF T0]])
+        (rule paper_pair_class_sets[OF Qm])
+    show "prob_space (?p Q)"
+      by (rule prob_space.prob_space_distr[OF pQc pfst_measurable[OF T0]])
+        (rule paper_pair_class_sets[OF Qc])
+  qed
+  have eqS: "ess_inf_time (?p R) (pexit T K) = ?S R" if "R \<in> ?C" for R
+    by (rule ess_inf_time_pfst[OF T0 K paper_pair_class_sets[OF that]])
+  have lim': "Limsup sequentially (\<lambda>i. ?S (Qm (a i))) \<le> ?S Q"
+    using lim by (simp add: eqS[OF Qm] eqS[OF Qc])
+  have "f \<longlonglongrightarrow> (SUP i. f i)" using finc by (rule LIMSEQ_SUP)
+  then have "(f \<circ> a) \<longlonglongrightarrow> (SUP i. f i)"
+    by (rule LIMSEQ_subseq_LIMSEQ[OF _ sm])
+  then have "Limsup sequentially (\<lambda>i. ?S (Qm (a i))) = (SUP i. f i)"
+    using fQ by (simp add: lim_imp_Limsup o_def)
+  with lim' fsup have ge: "Sup (?S ` ?C) \<le> ?S Q" by simp
+  have le: "?S Q \<le> Sup (?S ` ?C)" using Qc by (intro Sup_upper imageI)
+  from ge le have "?S Q = Sup (?S ` ?C)" by simp
+  then show ?thesis using Qc unfolding paper_v_def by blast
+qed
+
 end
