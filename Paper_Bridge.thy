@@ -5272,4 +5272,57 @@ proof -
   qed
 qed
 
+text \<open>The other plumbing piece the witness needs: the class stops its
+  processes at the horizon, so a martingale must be stopped at the
+  DETERMINISTIC time \<open>T\<close>.  (The repo's
+  \<open>Deterministic_Radius_Market.martingale_stopped_deterministic\<close> is not
+  reachable from here.)\<close>
+
+lemma martingale_stopped_const:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes T: "0 \<le> T" and mg: "martingale M F 0 X"
+  shows "martingale M F 0 (\<lambda>u \<omega>. X (min u T) \<omega>)"
+proof -
+  interpret MX: martingale M F 0 X by (rule mg)
+  have mu: "0 \<le> min u T" if "0 \<le> u" for u using that T by simp
+  show ?thesis
+  proof (rule MX.martingale_of_set_integral_eq)
+    show "adapted_process M F 0 (\<lambda>u \<omega>. X (min u T) \<omega>)"
+    proof (unfold_locales)
+      fix u :: real assume u: "0 \<le> u"
+      have "X (min u T) \<in> borel_measurable (F (min u T))"
+        by (rule MX.adapted[OF mu[OF u]])
+      moreover have "borel_measurable (F (min u T)) \<subseteq> borel_measurable (F u)"
+        by (rule MX.borel_measurable_mono[OF mu[OF u]]) simp
+      ultimately show "X (min u T) \<in> borel_measurable (F u)" by blast
+    qed
+    show "integrable M (\<lambda>\<omega>. X (min u T) \<omega>)" if u: "0 \<le> u" for u
+      using MX.integrable[OF mu[OF u]] by simp
+    fix A and u v :: real
+    assume A: "A \<in> F u" and uv: "0 \<le> u" "u \<le> v"
+    show "set_lebesgue_integral M A (\<lambda>\<omega>. X (min u T) \<omega>)
+        = set_lebesgue_integral M A (\<lambda>\<omega>. X (min v T) \<omega>)"
+    proof (cases "u \<le> T")
+      case True
+      then have mu': "min u T = u" by simp
+      show ?thesis
+      proof (cases "v \<le> T")
+        case True
+        then have mv': "min v T = v" by simp
+        show ?thesis unfolding mu' mv'
+          using MX.set_integral_eq[OF A uv] by simp
+      next
+        case False
+        then have mv': "min v T = T" by simp
+        show ?thesis unfolding mu' mv'
+          using MX.set_integral_eq[OF A uv(1) True] by simp
+      qed
+    next
+      case False
+      then have "min u T = T" and "min v T = T" using uv by simp_all
+      then show ?thesis by simp
+    qed
+  qed
+qed
+
 end
