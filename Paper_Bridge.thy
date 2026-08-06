@@ -7404,4 +7404,218 @@ proof -
   finally show ?thesis .
 qed
 
+section \<open>Martingales on a product of two filtered measures\<close>
+
+text \<open>The pasting theorem needs three transfer results: a martingale of the
+  FIRST factor, read as a process on the product, is a martingale for the
+  PRODUCT filtration; likewise for the second factor; and so is the product
+  of a first-factor variable with a second-factor martingale.  All three come
+  out of Fubini plus a SECTIONWISE use of the factor's set-integral identity:
+  a section of a set of \<open>F u \<Otimes>\<^sub>M G u\<close> is a set of \<open>F u\<close> (resp. \<open>G u\<close>), so
+  the factor's martingale property applies to it directly.  No conditional
+  expectation on the product, and no \<open>\<pi>\<close>-\<open>\<lambda>\<close> argument, is needed.\<close>
+
+lemma sets_pair_measure_mono:
+  assumes A: "sets A \<subseteq> sets M" "space A = space M"
+    and B: "sets B \<subseteq> sets N" "space B = space N"
+  shows "sets (A \<Otimes>\<^sub>M B) \<subseteq> sets (M \<Otimes>\<^sub>M N)"
+proof -
+  have "{a \<times> b | a b. a \<in> sets A \<and> b \<in> sets B} \<subseteq> sets (M \<Otimes>\<^sub>M N)"
+    using A(1) B(1) by auto
+  then have "sigma_sets (space (M \<Otimes>\<^sub>M N))
+      {a \<times> b | a b. a \<in> sets A \<and> b \<in> sets B} \<subseteq> sets (M \<Otimes>\<^sub>M N)"
+    by (rule sets.sigma_sets_subset)
+  then show ?thesis
+    using A(2) B(2) by (simp add: sets_pair_measure space_pair_measure)
+qed
+
+lemma filtered_measure_pair:
+  fixes F :: "real \<Rightarrow> 'a measure" and G :: "real \<Rightarrow> 'b measure"
+  assumes MF: "filtered_measure M F (0::real)"
+    and NG: "filtered_measure N G (0::real)"
+  shows "filtered_measure (M \<Otimes>\<^sub>M N) (\<lambda>u. F u \<Otimes>\<^sub>M G u) (0::real)"
+proof -
+  interpret MF: filtered_measure M F "0::real" by (rule MF)
+  interpret NG: filtered_measure N G "0::real" by (rule NG)
+  show ?thesis
+  proof (unfold_locales)
+    fix i :: real assume i: "0 \<le> i"
+    have "sets (F i \<Otimes>\<^sub>M G i) \<subseteq> sets (M \<Otimes>\<^sub>M N)"
+      using MF.sets_F_subset[OF i] NG.sets_F_subset[OF i]
+        MF.space_F[OF i] NG.space_F[OF i]
+      by (intro sets_pair_measure_mono)
+    moreover have "space (F i \<Otimes>\<^sub>M G i) = space (M \<Otimes>\<^sub>M N)"
+      using MF.space_F[OF i] NG.space_F[OF i] by (simp add: space_pair_measure)
+    ultimately show "subalgebra (M \<Otimes>\<^sub>M N) (F i \<Otimes>\<^sub>M G i)"
+      by (simp add: subalgebra_def)
+  next
+    fix i j :: real assume ij: "0 \<le> i" "i \<le> j"
+    then have j: "0 \<le> j" by simp
+    show "sets (F i \<Otimes>\<^sub>M G i) \<le> sets (F j \<Otimes>\<^sub>M G j)"
+      using MF.sets_F_mono[OF ij] NG.sets_F_mono[OF ij]
+        MF.space_F[OF ij(1)] MF.space_F[OF j]
+        NG.space_F[OF ij(1)] NG.space_F[OF j]
+      by (intro sets_pair_measure_mono) simp_all
+  qed
+qed
+
+theorem martingale_pair_fst:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes M: "prob_space M" and N: "prob_space N"
+    and mg: "martingale M F (0::real) X"
+    and NG: "filtered_measure N G (0::real)"
+  shows "martingale (M \<Otimes>\<^sub>M N) (\<lambda>u. F u \<Otimes>\<^sub>M G u) 0 (\<lambda>u p. X u (fst p))"
+proof -
+  interpret PM: prob_space M by (rule M)
+  interpret PN: prob_space N by (rule N)
+  interpret MG: martingale M F "0::real" X by (rule mg)
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PS: pair_sigma_finite M N by unfold_locales
+  have FMF: "filtered_measure M F (0::real)" by unfold_locales
+  interpret FP: finite_filtered_measure "M \<Otimes>\<^sub>M N" "\<lambda>u. F u \<Otimes>\<^sub>M G u" "0::real"
+    unfolding finite_filtered_measure_def
+    using filtered_measure_pair[OF FMF NG] PP.finite_measure_axioms by blast
+  have Xm: "X u \<in> borel_measurable M" if u: "0 \<le> u" for u
+    by (rule measurable_from_subalg[OF MG.subalgebras[OF u] MG.adapted[OF u]])
+  have int: "integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. X u (fst p))" if u: "0 \<le> u" for u
+  proof -
+    have e: "integrable (distr (M \<Otimes>\<^sub>M N) M fst) (X u)
+        = integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. X u (fst p))"
+      by (rule integrable_distr_eq[OF measurable_fst Xm[OF u]])
+    have "integrable (distr (M \<Otimes>\<^sub>M N) M fst) (X u)"
+      using MG.integrable[OF u] by (simp add: PN.distr_pair_fst)
+    then show ?thesis unfolding e .
+  qed
+  have si: "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X u (fst p))
+      = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X v (fst p))"
+    if u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> sets (F u \<Otimes>\<^sub>M G u)" for A u v
+  proof -
+    have v: "0 \<le> v" using u uv by simp
+    have AM: "A \<in> sets (M \<Otimes>\<^sub>M N)" using A FP.sets_F_subset[OF u] by auto
+    have key: "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X w (fst p))
+        = (\<integral>\<omega>'. set_lebesgue_integral M ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) (X w) \<partial>N)"
+      if w: "0 \<le> w" for w
+    proof -
+      have ii: "integrable (M \<Otimes>\<^sub>M N)
+          (case_prod (\<lambda>\<omega> \<omega>'. indicator A (\<omega>, \<omega>') *\<^sub>R X w \<omega>))"
+        using integrable_mult_indicator[OF AM int[OF w]]
+        by (simp add: case_prod_unfold)
+      have "(\<integral>\<omega>'. (\<integral>\<omega>. indicator A (\<omega>, \<omega>') *\<^sub>R X w \<omega> \<partial>M) \<partial>N)
+          = (\<integral>p. indicator A p *\<^sub>R X w (fst p) \<partial>(M \<Otimes>\<^sub>M N))"
+        using PS.integral_snd[OF ii] by (simp add: case_prod_unfold)
+      then show ?thesis
+        by (simp add: set_lebesgue_integral_def indicator_def)
+    qed
+    have sec: "(\<lambda>\<omega>. (\<omega>, \<omega>')) -` A \<in> sets (F u)" for \<omega>'
+      by (rule sets_Pair2[OF A])
+    have "(\<integral>\<omega>'. set_lebesgue_integral M ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) (X u) \<partial>N)
+        = (\<integral>\<omega>'. set_lebesgue_integral M ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) (X v) \<partial>N)"
+      using MG.set_integral_eq[OF sec u uv] by simp
+    then show ?thesis unfolding key[OF u] key[OF v] .
+  qed
+  show ?thesis
+  proof (rule FP.martingale_of_set_integral_eq)
+    show "adapted_process (M \<Otimes>\<^sub>M N) (\<lambda>u. F u \<Otimes>\<^sub>M G u) 0 (\<lambda>u p. X u (fst p))"
+    proof (unfold_locales)
+      fix i :: real assume i: "0 \<le> i"
+      show "(\<lambda>p. X i (fst p)) \<in> borel_measurable (F i \<Otimes>\<^sub>M G i)"
+        by (rule measurable_compose[OF measurable_fst MG.adapted[OF i]])
+    qed
+    show "integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. X i (fst p))" if "0 \<le> i" for i
+      by (rule int[OF that])
+    show "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X i (fst p))
+        = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X j (fst p))"
+      if "0 \<le> i" "i \<le> j" "A \<in> sets (F i \<Otimes>\<^sub>M G i)" for A i j
+      by (rule si[OF that])
+  qed
+qed
+
+lemma distr_pair_snd:
+  assumes M: "prob_space M" and N: "sigma_finite_measure N"
+  shows "distr (M \<Otimes>\<^sub>M N) N snd = N"
+proof (intro measure_eqI)
+  interpret PM: prob_space M by (rule M)
+  interpret SN: sigma_finite_measure N by (rule N)
+  fix A assume "A \<in> sets (distr (M \<Otimes>\<^sub>M N) N snd)"
+  then have A: "A \<in> sets N" by simp
+  have "emeasure (distr (M \<Otimes>\<^sub>M N) N snd) A = emeasure (M \<Otimes>\<^sub>M N) (space M \<times> A)"
+    using A by (auto simp add: emeasure_distr space_pair_measure
+        dest: sets.sets_into_space intro!: arg_cong2[where f = emeasure])
+  also have "\<dots> = emeasure N A"
+    using A by (simp add: SN.emeasure_pair_measure_Times PM.emeasure_space_1)
+  finally show "emeasure (distr (M \<Otimes>\<^sub>M N) N snd) A = emeasure N A" .
+qed simp
+
+theorem martingale_pair_snd:
+  fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes M: "prob_space M" and N: "prob_space N"
+    and MF: "filtered_measure M F (0::real)"
+    and mg: "martingale N G (0::real) Y"
+  shows "martingale (M \<Otimes>\<^sub>M N) (\<lambda>u. F u \<Otimes>\<^sub>M G u) 0 (\<lambda>u p. Y u (snd p))"
+proof -
+  interpret PM: prob_space M by (rule M)
+  interpret PN: prob_space N by (rule N)
+  interpret MG: martingale N G "0::real" Y by (rule mg)
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PS: pair_sigma_finite M N by unfold_locales
+  have FMG: "filtered_measure N G (0::real)" by unfold_locales
+  interpret FP: finite_filtered_measure "M \<Otimes>\<^sub>M N" "\<lambda>u. F u \<Otimes>\<^sub>M G u" "0::real"
+    unfolding finite_filtered_measure_def
+    using filtered_measure_pair[OF MF FMG] PP.finite_measure_axioms by blast
+  have Ym: "Y u \<in> borel_measurable N" if u: "0 \<le> u" for u
+    by (rule measurable_from_subalg[OF MG.subalgebras[OF u] MG.adapted[OF u]])
+  have int: "integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. Y u (snd p))" if u: "0 \<le> u" for u
+  proof -
+    have e: "integrable (distr (M \<Otimes>\<^sub>M N) N snd) (Y u)
+        = integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. Y u (snd p))"
+      by (rule integrable_distr_eq[OF measurable_snd Ym[OF u]])
+    have "integrable (distr (M \<Otimes>\<^sub>M N) N snd) (Y u)"
+      using MG.integrable[OF u]
+      by (simp add: distr_pair_snd[OF M PN.sigma_finite_measure_axioms])
+    then show ?thesis unfolding e .
+  qed
+  have si: "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. Y u (snd p))
+      = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. Y v (snd p))"
+    if u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> sets (F u \<Otimes>\<^sub>M G u)" for A u v
+  proof -
+    have v: "0 \<le> v" using u uv by simp
+    have AM: "A \<in> sets (M \<Otimes>\<^sub>M N)" using A FP.sets_F_subset[OF u] by auto
+    have key: "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. Y w (snd p))
+        = (\<integral>\<omega>. set_lebesgue_integral N (Pair \<omega> -` A) (Y w) \<partial>M)"
+      if w: "0 \<le> w" for w
+    proof -
+      have ii: "integrable (M \<Otimes>\<^sub>M N)
+          (case_prod (\<lambda>\<omega> \<omega>'. indicator A (\<omega>, \<omega>') *\<^sub>R Y w \<omega>'))"
+        using integrable_mult_indicator[OF AM int[OF w]]
+        by (simp add: case_prod_unfold)
+      have "(\<integral>\<omega>. (\<integral>\<omega>'. indicator A (\<omega>, \<omega>') *\<^sub>R Y w \<omega>' \<partial>N) \<partial>M)
+          = (\<integral>p. indicator A p *\<^sub>R Y w (snd p) \<partial>(M \<Otimes>\<^sub>M N))"
+        using PS.integral_fst[OF ii] by (simp add: case_prod_unfold)
+      then show ?thesis
+        by (simp add: set_lebesgue_integral_def indicator_def)
+    qed
+    have sec: "Pair \<omega> -` A \<in> sets (G u)" for \<omega>
+      by (rule sets_Pair1[OF A])
+    have "(\<integral>\<omega>. set_lebesgue_integral N (Pair \<omega> -` A) (Y u) \<partial>M)
+        = (\<integral>\<omega>. set_lebesgue_integral N (Pair \<omega> -` A) (Y v) \<partial>M)"
+      using MG.set_integral_eq[OF sec u uv] by simp
+    then show ?thesis unfolding key[OF u] key[OF v] .
+  qed
+  show ?thesis
+  proof (rule FP.martingale_of_set_integral_eq)
+    show "adapted_process (M \<Otimes>\<^sub>M N) (\<lambda>u. F u \<Otimes>\<^sub>M G u) 0 (\<lambda>u p. Y u (snd p))"
+    proof (unfold_locales)
+      fix i :: real assume i: "0 \<le> i"
+      show "(\<lambda>p. Y i (snd p)) \<in> borel_measurable (F i \<Otimes>\<^sub>M G i)"
+        by (rule measurable_compose[OF measurable_snd MG.adapted[OF i]])
+    qed
+    show "integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. Y i (snd p))" if "0 \<le> i" for i
+      by (rule int[OF that])
+    show "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. Y i (snd p))
+        = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. Y j (snd p))"
+      if "0 \<le> i" "i \<le> j" "A \<in> sets (F i \<Otimes>\<^sub>M G i)" for A i j
+      by (rule si[OF that])
+  qed
+qed
+
 end
