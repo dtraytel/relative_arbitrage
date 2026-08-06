@@ -8939,4 +8939,270 @@ proof -
   then show ?thesis unfolding D .
 qed
 
+section \<open>Kernel pasting: a continuation chosen by the endpoint\<close>
+
+text \<open>The step from \<open>pglue_law\<close> (one continuation for every endpoint) to what
+  (2.9) needs: a countable family \<open>RR\<close> of candidate continuations and a
+  past-measurable index \<open>N\<close> selecting one of them.  The second factor is the
+  product \<open>\<Pi>\<^sub>M i. RR i\<close> of all candidates --- a probability space, from which
+  the glue picks the \<open>N \<omega>\<close>-th.  For a FROZEN first coordinate the index is a
+  constant, which is why \<open>martingale_pair_snd_param\<close> and
+  \<open>martingale_PiM_component\<close> are the two lemmas this construction rests on.\<close>
+
+definition kglue :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath \<Rightarrow> nat)
+    \<Rightarrow> ('n pairpath \<times> (nat \<Rightarrow> 'n pairpath)) \<Rightarrow> 'n pairpath"
+  where "kglue r T N p = pglue r T (fst p) (snd p (N (fst p)))"
+
+definition kglue_law :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath \<Rightarrow> nat)
+    \<Rightarrow> ('n pairpath) measure \<Rightarrow> (nat \<Rightarrow> ('n pairpath) measure)
+    \<Rightarrow> ('n pairpath) measure"
+  where "kglue_law r T N Q RR
+     = pair_law_of T (kglue r T N) (Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR)"
+
+lemma sets_kglue_law[simp]:
+  "sets (kglue_law r T N Q RR)
+     = sets (borel_of (mtopology_of (path_metric T
+         :: ('n::finite pairpath) metric)))"
+  unfolding kglue_law_def by (rule sets_pair_law_of)
+
+lemma space_kglue_law:
+  "space (kglue_law r T N Q RR)
+     = mspace (path_metric T :: ('n::finite pairpath) metric)"
+  unfolding kglue_law_def by (rule space_pair_law_of)
+
+lemma kglue_measurable:
+  fixes Q :: "('n::finite pairpath) measure"
+    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
+  shows "kglue r T N \<in> Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M
+      borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?M = "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
+  have T0: "0 \<le> T" using r rT by simp
+  have eQ: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). fst p v)
+      \<in> borel_measurable ?M" for v
+    by (rule measurable_compose[OF measurable_fst
+          pair_law_eval_measurable[OF setsQ]])
+  have Nfst: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). N (fst p))
+      \<in> ?M \<rightarrow>\<^sub>M count_space UNIV"
+    by (rule measurable_compose[OF measurable_fst Nm])
+  have eS: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p (N (fst p)) v)
+      \<in> borel_measurable ?M" for v
+  proof (rule measurable_compose_countable[OF _ Nfst])
+    fix j :: nat
+    have "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M RR j"
+      by (rule measurable_component_singleton) simp
+    from measurable_compose[OF measurable_snd this]
+    have "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p j) \<in> ?M \<rightarrow>\<^sub>M RR j" .
+    from measurable_compose[OF this pair_law_eval_measurable[OF setsR]]
+    show "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p j v)
+        \<in> borel_measurable ?M" .
+  qed
+  have Xm: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). if t \<le> r then fst p t
+        else fst p r + (snd p (N (fst p)) (t - r) - snd p (N (fst p)) 0))
+      \<in> borel_measurable ?M" for t
+    using eQ eS by simp
+  have cont: "continuous_on {0..T} (\<lambda>t. if t \<le> r then fst p t
+        else fst p r + (snd p (N (fst p)) (t - r) - snd p (N (fst p)) 0))"
+    if p: "p \<in> space ?M" for p :: "'n pairpath \<times> (nat \<Rightarrow> 'n pairpath)"
+  proof (rule continuous_on_pglue[OF r rT])
+    have "fst p \<in> space Q" and sp: "snd p \<in> space (Pi\<^sub>M UNIV RR)"
+      using p by (auto simp: space_pair_measure)
+    then show "continuous_on {0..r} (fst p)"
+      using space_of_path_sets[OF setsQ] by (auto intro: mspace_path_metricD)
+    have "snd p (N (fst p)) \<in> space (RR (N (fst p)))"
+      using sp by (simp add: space_PiM PiE_iff)
+    then show "continuous_on {0..T - r} (snd p (N (fst p)))"
+      using space_of_path_sets[OF setsR] by (auto intro: mspace_path_metricD)
+  qed
+  show ?thesis
+    using pathify_measurable[OF T0 Xm cont]
+    unfolding kglue_def pglue_def by simp
+qed
+
+lemma prob_space_kglue_law:
+  fixes Q :: "('n::finite pairpath) measure"
+    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
+  shows "prob_space (kglue_law r T N Q RR)"
+proof -
+  interpret PP: prob_space "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
+    by (rule prob_space_pair_measure[OF PQ prob_space_PiM]) (rule PR)
+  show ?thesis
+    unfolding kglue_law_def pair_law_of_def
+    by (rule PP.prob_space_distr
+        [OF kglue_measurable[OF r rT setsQ setsR Nm]])
+qed
+
+lemma AE_kglue_law:
+  fixes Q :: "('n::finite pairpath) measure"
+    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
+    and mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). P \<omega>}
+        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    and A: "AE \<omega> in Q. A \<omega>" and B: "AE f in Pi\<^sub>M UNIV RR. B f"
+    and imp: "\<And>\<omega> f. \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric) \<Longrightarrow>
+        f \<in> space (Pi\<^sub>M UNIV RR) \<Longrightarrow> A \<omega> \<Longrightarrow> B f \<Longrightarrow> P (kglue r T N (\<omega>, f))"
+  shows "AE \<omega> in kglue_law r T N Q RR. P \<omega>"
+proof -
+  let ?S = "Pi\<^sub>M UNIV RR"
+  let ?M = "Q \<Otimes>\<^sub>M ?S"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  interpret PQ: prob_space Q by (rule PQ)
+  interpret PS: prob_space ?S by (rule prob_space_PiM) (rule PR)
+  interpret PP: pair_prob_space Q ?S by unfold_locales
+  have phim: "kglue r T N \<in> ?M \<rightarrow>\<^sub>M ?B"
+    by (rule kglue_measurable[OF r rT setsQ setsR Nm])
+  have mset': "{\<omega> \<in> space ?B. P \<omega>} \<in> sets ?B"
+    using mset by (simp add: space_borel_of)
+  have iff: "(AE \<omega> in kglue_law r T N Q RR. P \<omega>)
+      = (AE p in ?M. P (kglue r T N p))"
+    unfolding kglue_law_def pair_law_of_def by (rule AE_distr_iff[OF phim mset'])
+  have evm: "{p \<in> space ?M. P (kglue r T N p)} \<in> sets ?M"
+  proof -
+    have "{p \<in> space ?M. P (kglue r T N p)}
+        = kglue r T N -` {\<omega> \<in> space ?B. P \<omega>} \<inter> space ?M"
+      using measurable_space[OF phim] by auto
+    then show ?thesis using measurable_sets[OF phim mset'] by simp
+  qed
+  have inner: "AE \<omega> in Q. AE f in ?S. P (kglue r T N (\<omega>, f))"
+  proof -
+    have SB: "AE f in ?S. B f \<and> f \<in> space ?S"
+      using B AE_space[of ?S] by (auto intro: eventually_conj)
+    have QA: "AE \<omega> in Q. A \<omega>
+        \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      using A AE_space[of Q] space_of_path_sets[OF setsQ]
+      by (auto intro: eventually_conj)
+    show ?thesis
+    proof (rule eventually_mono[OF QA])
+      fix \<omega> :: "'n pairpath"
+      assume w: "A \<omega> \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      show "AE f in ?S. P (kglue r T N (\<omega>, f))"
+      proof (rule eventually_mono[OF SB])
+        fix f :: "nat \<Rightarrow> 'n pairpath"
+        assume "B f \<and> f \<in> space ?S"
+        with w show "P (kglue r T N (\<omega>, f))" by (simp add: imp)
+      qed
+    qed
+  qed
+  have "AE p in ?M. P (kglue r T N p)"
+    using PP.AE_pair_measure[OF evm] inner by simp
+  then show ?thesis unfolding iff .
+qed
+
+lemma kglue_law_start:
+  fixes Q :: "('n::finite pairpath) measure"
+    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "\<And>j. RR j \<in> paper_pair_class k L (T - r) 0"
+    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
+  shows "AE \<omega> in kglue_law r T N Q RR. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
+  proof -
+    have "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+        fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
+        = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(x, 0)} \<inter> space ?B"
+      by (auto simp: prod_eq_iff space_borel_of)
+    then show ?thesis using measurable_sets[OF ev] by simp
+  qed
+  show ?thesis
+  proof (rule AE_kglue_law[OF r rT paper_pair_class_prob[OF Q]
+        paper_pair_class_prob[OF R] paper_pair_class_sets[OF Q]
+        paper_pair_class_sets[OF R] Nm mset])
+    show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+      using Q unfolding paper_pair_class_def by blast
+    show "AE f in Pi\<^sub>M UNIV RR. True" by simp
+    fix \<omega> :: "'n pairpath" and f :: "nat \<Rightarrow> 'n pairpath"
+    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and "f \<in> space (Pi\<^sub>M UNIV RR)"
+      and st: "fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0" and "True"
+    from st show "fst (kglue r T N (\<omega>, f) 0) = x
+        \<and> snd (kglue r T N (\<omega>, f) 0) = 0"
+      using r rT by (simp add: kglue_def pglue_zero)
+  qed
+qed
+
+lemma kglue_law_diffquot:
+  fixes Q :: "('n::finite pairpath) measure"
+    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "\<And>j. RR j \<in> paper_pair_class k L (T - r) 0"
+    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
+  shows "AE \<omega> in kglue_law r T N Q RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+proof (rule paper_pair_class_diffquot_of_pairs[OF sets_kglue_law])
+  fix p q :: real
+  assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
+    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
+  show "AE \<omega> in kglue_law r T N Q RR.
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  proof (rule AE_kglue_law[OF r rT paper_pair_class_prob[OF Q]
+        paper_pair_class_prob[OF R] paper_pair_class_sets[OF Q]
+        paper_pair_class_sets[OF R] Nm mset])
+    show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      using Q unfolding paper_pair_class_def by blast
+    show "AE f in Pi\<^sub>M UNIV RR. \<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
+      unfolding AE_all_countable
+    proof
+      fix j :: nat
+      have Pj: "prob_space (RR i)" if "i \<in> (UNIV :: nat set)" for i
+        by (rule paper_pair_class_prob[OF R])
+      have dj: "distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j) = RR j"
+        by (rule distr_PiM_component[OF Pj UNIV_I])
+      have mj: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M RR j"
+        by (rule measurable_component_singleton) simp
+      have "AE \<omega>' in RR j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+        using R unfolding paper_pair_class_def by blast
+      then have "AE \<omega>' in distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j).
+          \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+            (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+        unfolding dj .
+      from AE_distrD[OF mj this]
+      show "AE f in Pi\<^sub>M UNIV RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L" .
+    qed
+    fix \<omega> :: "'n pairpath" and f :: "nat \<Rightarrow> 'n pairpath"
+    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and "f \<in> space (Pi\<^sub>M UNIV RR)"
+      and Aw: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      and Bf: "\<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
+    show "(1 / (q - p)) *\<^sub>R (snd (kglue r T N (\<omega>, f) q)
+        - snd (kglue r T N (\<omega>, f) p)) \<in> sconstraint k L"
+      using pq Aw Bf unfolding kglue_def
+      by (intro pglue_diffquot[OF r rT]) auto
+  qed
+qed
+
 end
