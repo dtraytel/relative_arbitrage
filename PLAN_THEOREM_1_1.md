@@ -250,12 +250,19 @@ Needed for the theorem to be about ONE object.
   Same fixed-time estimate as above, no Itô and no optional stopping (the
   paper uses both). `paper_v_boundary_zero` is the case `|x| = r`, and this
   is the sharp form of clause (0) — note the bound does NOT mention `T`.
-- **Horizon-cap invisibility**: `paper_v` caps the exit time at `T`, while
-  the paper's `v` does not. The `≤` half is now unconditional
-  (`paper_v_le_ball_bound`); what remains is MONOTONICITY in `T`, i.e. that
-  a member at horizon `S` extends to one at horizon `T ≥ S`. That is exactly
-  §2.1 (b′) with `R` the Brownian witness — so horizon-cap invisibility is
-  a corollary of the pasting theorem, not an independent item.
+- **Horizon-cap invisibility, `≥` half** — **DONE**,
+  `paper_v_horizon_stable`: for `K ⊆ cball 0 r` closed, `0 ≤ S ≤ T` and
+  `(r²−x∙x)/(n−k) ≤ S`, `paper_v k L T K x ≤ paper_v k L S K x`. Cutting a
+  horizon-`T` member back with `paper_pair_class_pcut` shortens the exit
+  time only to `min τ S`, and `paper_v_le_ball_bound` says the value never
+  exceeds `S` anyway, so the `min` never bites. Supporting: `pfst`,
+  `pexit_pfst`, `pfst_measurable`, `ennreal_min_eq`, `pexit_pcut_ge`.
+- **Horizon-cap invisibility, `≤` half** — the converse
+  `paper_v k L S K x ≤ paper_v k L T K x` for `S ≤ T` needs a member at
+  horizon `S` to EXTEND to horizon `T`. That is exactly §2.1 (b′) with `R`
+  the Brownian witness — a corollary of the pasting theorem, not an
+  independent item. With both halves, `paper_v k L T K x` is constant for
+  `T ≥ (r²−x∙x)/(n−k)` and equals the paper's uncapped `v`.
 - **`stopped_val_fn ≤ paper_v`**: the bridge from market witnesses to class
   members. NOTE the recorded obstruction — a `stopped_market` witness is
   NOT a class member, because the paper's class never stops; the bridge must
