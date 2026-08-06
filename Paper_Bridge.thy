@@ -5422,4 +5422,146 @@ proof -
   finally show "(\<integral>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s) \<partial>?M) = 0" .
 qed
 
+text \<open>\<open>Brownian_Market.bm_meas_increment_indep_var\<close> makes the past
+  independent of ONE COORDINATE of the increment.  Its argument never uses
+  more than that the second function factors through the VECTOR increment,
+  so it generalises verbatim to any Borel function of it --- and \<open>v \<mapsto> v$i
+  \<sqdot> v$j\<close> is one.\<close>
+
+lemma bm_meas_increment_fun_indep_var:
+  fixes x0 :: "real^'n::finite"
+  assumes s: "0 \<le> s" and st: "s < t"
+    and g_meas: "g \<in> borel_measurable (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+    and h: "h \<in> borel_measurable (borel :: (real^'n) measure)"
+  shows "BMP.indep_var borel (g :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)
+    borel (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (bmX x0 t \<omega> - bmX x0 s \<omega>))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  let ?D = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 t \<omega> - bmX x0 s \<omega>"
+  let ?V = "vimage_algebra (space ?M) ?D borel"
+  have SP: "Stochastic_Process.stochastic_process ?M (0::real) (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration[OF SP])
+  have g_M: "g \<in> borel_measurable ?M"
+    by (rule measurable_from_subalg[OF subalg g_meas])
+  have base: "BMP.indep_set (sets ?F) (sets ?V)"
+    by (rule bm_filtration_increment_indep[OF s st])
+  have L: "sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel}
+      \<subseteq> sets ?F"
+  proof -
+    have gen: "{g -` B \<inter> space ?M |B. B \<in> sets borel} \<subseteq> sets ?F"
+    proof safe
+      fix B :: "real set" assume B: "B \<in> sets borel"
+      have "g -` B \<inter> space ?F \<in> sets ?F"
+        by (rule measurable_sets[OF g_meas B])
+      then show "g -` B \<inter> space ?M \<in> sets ?F"
+        using subalg by (simp add: subalgebra_def)
+    qed
+    show ?thesis using sets.sigma_sets_subset[OF gen] by simp
+  qed
+  have R: "sigma_sets (space ?M)
+      {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (?D \<omega>)) -` B \<inter> space ?M
+        |B. B \<in> sets borel} \<subseteq> sets ?V"
+  proof -
+    have gen: "{(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (?D \<omega>)) -` B \<inter> space ?M
+        |B. B \<in> sets borel} \<subseteq> sets ?V"
+    proof safe
+      fix B :: "real set" assume B: "B \<in> sets borel"
+      have Ci: "h -` B \<in> sets borel"
+        using measurable_sets[OF h B] by simp
+      have veq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (?D \<omega>)) -` B \<inter> space ?M
+          = ?D -` (h -` B) \<inter> space ?M" by auto
+      have "?D -` (h -` B) \<inter> space ?M
+          \<in> {?D -` C \<inter> space ?M |C. C \<in> sets borel}"
+        using Ci by blast
+      then have "?D -` (h -` B) \<inter> space ?M
+          \<in> sigma_sets (space ?M) {?D -` C \<inter> space ?M |C. C \<in> sets borel}"
+        by (rule sigma_sets.Basic)
+      then show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (?D \<omega>)) -` B \<inter> space ?M
+          \<in> sets ?V"
+        unfolding veq sets_vimage_algebra .
+    qed
+    show ?thesis using sets.sigma_sets_subset[OF gen] by simp
+  qed
+  show ?thesis
+    unfolding BMP.indep_var_eq
+  proof (intro conjI)
+    show "g \<in> borel_measurable ?M" by (rule g_M)
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (?D \<omega>)) \<in> borel_measurable ?M"
+      using s st
+      by (intro measurable_compose[OF _ h] borel_measurable_diff
+          measurable_bmX) auto
+    have "BMP.indep_sets (case_bool (sets ?F) (sets ?V)) UNIV"
+      using base unfolding BMP.indep_set_def .
+    then have "BMP.indep_sets (case_bool
+        (sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel})
+        (sigma_sets (space ?M)
+          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (?D \<omega>)) -` B \<inter> space ?M
+            |B. B \<in> sets borel})) UNIV"
+      by (rule BMP.indep_sets_mono_sets)
+        (auto split: bool.split simp: L R)
+    then show "BMP.indep_set
+        (sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel})
+        (sigma_sets (space ?M)
+          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. h (?D \<omega>)) -` B \<inter> space ?M
+            |B. B \<in> sets borel})"
+      unfolding BMP.indep_set_def .
+  qed
+qed
+
+text \<open>Hence the set-integral form: over a PAST event the cross increment
+  has integral zero.  This is the off-diagonal analogue of
+  \<open>Brownian_Market.bm_set_integral_coord_sq_eq\<close>, and the compensator is
+  \<open>0\<close> rather than \<open>t - s\<close> precisely because the coordinates are
+  independent.\<close>
+
+lemma bm_cross_set_integral_zero:
+  fixes x0 :: "real^'n::finite" and i j :: 'n
+  assumes ij: "i \<noteq> j" and s: "0 \<le> s" and st: "s \<le> t"
+    and A: "A \<in> sets (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) s)"
+  shows "(\<integral>\<omega>. indicat_real A \<omega> * ((\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s))
+       \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = 0"
+proof (cases "s = t")
+  case True
+  then show ?thesis by simp
+next
+  case False
+  with st have st': "s < t" by simp
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) s"
+  have SP: "Stochastic_Process.stochastic_process ?M (0::real) (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration[OF SP])
+  have AM: "A \<in> sets ?M" using A subalg by (auto simp: subalgebra_def)
+  have hB: "(\<lambda>v :: real^'n. v $ i * v $ j) \<in> borel_measurable borel"
+    by (intro borel_measurable_times borel_measurable_nth)
+  have feq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+        (bmX x0 t \<omega> - bmX x0 s \<omega>) $ i * (bmX x0 t \<omega> - bmX x0 s \<omega>) $ j)
+      = (\<lambda>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s))"
+    by (simp add: fun_eq_iff bmX_def)
+  have ind: "BMP.indep_var borel (indicat_real A :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real)
+      borel (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s))"
+    using bm_meas_increment_fun_indep_var[OF s st'
+        borel_measurable_indicator[OF A] hB]
+    unfolding feq .
+  have int1: "integrable ?M (indicat_real A)"
+    by (rule integrable_real_indicator[OF AM])
+      (simp add: BMP.emeasure_eq_measure)
+  have int2: "integrable ?M
+      (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s))"
+    by (rule bm_increment_cross_integrable[OF ij s st])
+  have "(\<integral>\<omega>. indicat_real A \<omega> * ((\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s)) \<partial>?M)
+      = (\<integral>\<omega>. indicat_real A \<omega> \<partial>?M)
+        * (\<integral>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s) \<partial>?M)"
+    by (rule BMP.indep_var_lebesgue_integral[OF ind int1 int2])
+  also have "\<dots> = 0"
+    by (simp add: bm_increment_cross_integral[OF ij s st])
+  finally show ?thesis .
+qed
+
 end
