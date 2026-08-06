@@ -211,13 +211,48 @@ DPP.**
   `martingale_pair_mult`. The decomposition holds only a.e. — it uses
   `X'(0) = 0` from the second factor — hence `martingale_cong_AE`.
 
-- **(c) THE NEXT STEP — the essinf DPP itself**, from (b′) plus the shift
-  (`paper_pair_class_shift_image`, `ess_inf_time_pshift_law`): the `≥` half by
-  pasting ε-optimal continuations along a countable Borel partition of `X(θ)`
-  (BT09's Lindelöf cover — formalizable, not the bottleneck), the `≤` half by
-  conditioning, i.e. regular conditional distributions on the Polish path
-  space via AFP `Disintegration` (`measure_disintegration`, already a session
-  dependency; `Path_Space.path_metric_polish`).
+- **(c) the essinf DPP itself — IN PROGRESS.**
+
+  Done so far:
+
+  | result | content |
+  |---|---|
+  | `pexit_path_measurable` | the exit time of the X-component is Borel on the path space |
+  | `paper_v_paste_ge` | if the glued path's exit time is a.s. `≥ c` then `ennreal c ≤ paper_v k L T K x` |
+  | `pexit_pglue_split` | the glued path's exit time is `≥ r + c` once the first piece stays in `K` to `r` and the re-based continuation a further `c` |
+  | `paper_v_paste_lower` | the two combined: **the pasting lower bound `ennreal (r + c) ≤ paper_v k L T K x`** — the `≥` half of (2.9) with ONE continuation |
+  | `martingale_pair_snd_param` | the second-factor lift for a process that depends on the first coordinate too — the enabling lemma for an endpoint-DEPENDENT continuation |
+
+  `pglue` re-bases the continuation at the endpoint automatically, so a single
+  `R` started at `0` already supplies a continuation from EVERY endpoint. What
+  (2.9) needs on top is to CHOOSE that law per endpoint. Remaining, in
+  dependency order:
+
+  1. **Kernel pasting at a deterministic time.** Route: take the second factor
+     to be `Pi⇩M UNIV R` (a `product_prob_space`, hence a probability space) and
+     the glue map `(ω, f) ↦ pglue r T ω (f (N ω))`, with `N` a Borel index map
+     on the `r`-path space. For FROZEN `ω` the index is constant, so the
+     second-factor process is the `N ω`-th coordinate process — a martingale —
+     and `martingale_pair_snd_param` applies verbatim. Still needed: the
+     component lift for `Pi⇩M` (same section argument, but Fubini over
+     `product_prob_space`), and a parametrized `martingale_pair_mult` for the
+     compensated clause's cross term.
+  2. **ε-optimal selection.** For each `y` pick `R_y` with essinf `≈ v(y)`;
+     BT09's Lindelöf cover of `K` by balls on which `v` varies by `< ε` gives
+     the countable Borel partition. Formalizable, not the bottleneck.
+  3. **The `≥` half of (2.9)** from 1 + 2, first at a deterministic time, then
+     at a stopping time.
+  4. **The `≤` half** — conditioning, i.e. regular conditional distributions on
+     the Polish path space via AFP `Disintegration` (`measure_disintegration`,
+     already a session dependency; `Path_Space.path_metric_polish`).
+
+  **Warning about stopping times.** At a stopping time `θ` BOTH clocks `u ∧ θ`
+  and `(u − θ)⁺` are random, so the product-filtration structure that carries
+  (b′) — `F^Q_{min u r} ⊗ₘ F^R_{(u−r)⁺}` — breaks down. That is why the
+  literature does this via regular conditional distributions rather than
+  product measures; expect the stopping-time version to need a different
+  construction from the deterministic-time one.
+
 - **(d) §3**, the two viscosity inequalities — see the table above.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
