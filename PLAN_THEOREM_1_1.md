@@ -175,18 +175,40 @@ dimensional coordinate subspace. Planned on the discrete route:
 
 ### 2.3 Consolidating the clauses onto `paper_v`
 
-Small, mechanical, and needed for the theorem to be about ONE object.
+Needed for the theorem to be about ONE object.
 
-- **`paper_v` is bounded**: `paper_v k L T K x ≤ ennreal T` because
-  `pexit T K f ≤ T` (`Exit_Time.etime_le_T`). One lemma; gives clause (0).
+- **`paper_v` is bounded** — **DONE**, `paper_v_le_T`
+  (`paper_v k L T K x ≤ ennreal T`, since `pexit T K f ≤ T`). That is
+  clause (0) for the paper's value function.
+- **Lemma 2.1's estimate at the class level** — **DONE**:
+  `sconstraint_trace_ge` (`n − k ≤ trace a` on the constraint set, via
+  `Pi_proj_le` at the identity projection), `bounded_linear_trace`,
+  `trace_outerp`, `paper_pair_class_trace_martingale` (`|X|² − trace Y` is
+  a martingale), `paper_pair_class_trace_rate` (`trace Y` grows at rate
+  `≥ n − k`), and
+
+      paper_pair_class_sq_norm_mean_ge:
+        x∙x + (n−k)·t ≤ E[X_t ∙ X_t]   for 0 ≤ t ≤ T
+
+  proved at a FIXED time — no stopping, no optional sampling.
+- **Clause (3) for `paper_v` at the ball — NEXT, and it is short.** Let
+  `K = cball 0 r`, `|x| = r`, `0 < T`, `k < CARD('n)`. Suppose
+  `paper_v k L T K x > 0`; then some member `Q` has
+  `ess_inf_time Q (pexit T K ∘ X) ≥ ennreal c` for some real `c > 0`, so by
+  `ess_inf_time_AE` almost every path stays in `K` on `[0, min c T)`. Pick
+  `0 < t < min c T`. Then `E[X_t ∙ X_t] ≤ r²` (a.s. `|X_t| ≤ r`), while
+  `paper_pair_class_sq_norm_mean_ge` gives
+  `E[X_t ∙ X_t] ≥ r² + (n−k)t > r²`. Contradiction. Only two new
+  ingredients: reading "path stays in `K` before `c`" out of `pexit ≥ c`
+  (unfold `pexit_def`/`etime_def`, `cInf_greatest`), and
+  `AE |X_t| ≤ r ⟹ E[X_t∙X_t] ≤ r²` (`integral_mono_AE` against a constant).
 - **Horizon-cap invisibility**: `paper_v` caps the exit time at `T`, while
   the paper's `v` does not. For `K ⊆ cball 0 r` and `T ≥ r²/(n−k)` the cap
-  does not bind — the same `ball_v_le` + `expected_exit_time_bound`
-  argument already used for `clause_one_law_level`. State it once and cite
-  it wherever a horizon appears.
-- **Clause (3) at the class level**: transfer `stopped_val_fn_boundary_zero`
-  to `paper_v` (or reprove directly: on `K − interior K` every class member
-  exits immediately).
+  does not bind — same `ball_v_le` argument used for
+  `clause_one_law_level`. The sharp form `paper_v ≤ ennreal (ball_v r k x)`
+  follows from the same estimate but needs optional stopping at `pexit`
+  (`Optional_Sampling.optional_stopping` with the `Doob_Inequality` envelope,
+  as in the NC-1 localization).
 - **`stopped_val_fn ≤ paper_v`**: the bridge from market witnesses to class
   members. NOTE the recorded obstruction — a `stopped_market` witness is
   NOT a class member, because the paper's class never stops; the bridge must
