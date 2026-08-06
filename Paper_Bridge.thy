@@ -6274,4 +6274,68 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>Tracing the compensated clause turns it into the SUBMARTINGALE
+  statement Lemma 2.1 runs on: \<open>|X|\<^sup>2 - trace Y\<close> is a martingale, and
+  \<open>trace Y\<close> grows at rate at least \<open>n - k\<close>.  Together these give
+  \<open>E[|X\<^sub>t|\<^sup>2] - |x|\<^sup>2 \<ge> (n-k)\<sqdot>t\<close>, which is what bounds the exit time.\<close>
+
+lemma bounded_linear_trace:
+  "bounded_linear (trace :: real^'n::finite^'n \<Rightarrow> real)"
+  unfolding linear_conv_bounded_linear[symmetric]
+  by (intro linearI) (simp_all add: trace_add trace_scaleR_matrix)
+
+lemma trace_outerp:
+  fixes v :: "real^'n::finite"
+  shows "trace (outerp v) = v \<bullet> v"
+  by (simp add: outerp_def trace_def inner_vec_def)
+
+theorem paper_pair_class_trace_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)) \<bullet> fst (\<omega> (min u T))
+             - trace (snd (\<omega> (min u T))))"
+proof -
+  have "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. trace (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))))"
+    by (rule martingale_bounded_linear_image[OF bounded_linear_trace
+        paper_pair_class_compensated_martingale[OF Q]])
+  then show ?thesis by (simp add: trace_diff_matrix trace_outerp)
+qed
+
+theorem paper_pair_class_trace_rate:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes k: "k < CARD('n)" and Q: "Q \<in> paper_pair_class k L T x"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      real (CARD('n) - k) * (t - s)
+        \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
+proof -
+  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding paper_pair_class_def by blast
+  show ?thesis
+  proof (rule eventually_mono[OF dq])
+    fix \<omega> :: "'n pairpath"
+    assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        real (CARD('n) - k) * (t - s)
+          \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
+    proof (intro allI impI)
+      fix s t :: real
+      assume s: "0 \<le> s" and st: "s < t" and tT: "t \<le> T"
+      have mem: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+        using q s st tT by blast
+      have "real (CARD('n) - k)
+          \<le> trace ((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)))"
+        by (rule sconstraint_trace_ge[OF k mem])
+      also have "\<dots> = (trace (snd (\<omega> t)) - trace (snd (\<omega> s))) / (t - s)"
+        by (simp add: trace_scaleR_matrix trace_diff_matrix)
+      finally show "real (CARD('n) - k) * (t - s)
+          \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
+        using st by (simp add: pos_le_divide_eq)
+    qed
+  qed
+qed
+
 end
