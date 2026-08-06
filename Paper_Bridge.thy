@@ -9664,4 +9664,160 @@ proof -
         Zm[unfolded kglue_law_def] mgl])
 qed
 
+text \<open>Material for clause (iv).  The cross term of \<open>outerp (X\<^sub>r + W)\<close> is
+  \<open>X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r\<close>; once the first coordinate is FROZEN, \<open>X\<^sub>r\<close> is a
+  constant and the map \<open>v \<mapsto> c \<otimes> v + v \<otimes> c\<close> is linear --- hence bounded,
+  the space being finite-dimensional --- so the cross term is a
+  bounded-linear image of the second factor's martingale, not a product of
+  two martingales.\<close>
+
+lemma norm_outer_prod:
+  fixes a b :: "real^'n::finite"
+  shows "norm (\<chi> i j. a $ i * b $ j) = norm a * norm b"
+proof -
+  have "(\<chi> i j. a $ i * b $ j) \<bullet> (\<chi> i j. a $ i * b $ j)
+      = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (a $ i * b $ j) * (a $ i * b $ j))"
+    by (simp add: inner_vec_def)
+  also have "\<dots> = (\<Sum>i\<in>UNIV. (a $ i * a $ i) * (\<Sum>j\<in>UNIV. b $ j * b $ j))"
+    by (simp add: sum_distrib_left) (simp add: algebra_simps)
+  also have "\<dots> = (a \<bullet> a) * (b \<bullet> b)"
+    by (simp add: inner_vec_def sum_distrib_right)
+  finally have e: "(\<chi> i j. a $ i * b $ j) \<bullet> (\<chi> i j. a $ i * b $ j)
+      = (a \<bullet> a) * (b \<bullet> b)" .
+  show ?thesis
+    unfolding norm_eq_sqrt_inner e
+    by (simp add: real_sqrt_mult)
+qed
+
+lemma norm_outerp: "norm (outerp (v :: real^'n::finite)) = norm v * norm v"
+proof -
+  have "outerp v = (\<chi> i j. v $ i * v $ j)" by (simp add: outerp_def)
+  then show ?thesis by (simp add: norm_outer_prod)
+qed
+
+lemma bounded_linear_cross_pair:
+  fixes c :: "real^'n::finite"
+  shows "bounded_linear
+      (\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))"
+proof -
+  have "linear (\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))"
+    by (rule linearI) (auto simp: vec_eq_iff algebra_simps)
+  then show ?thesis by (simp add: linear_conv_bounded_linear)
+qed
+
+lemma pair_fst_borel:
+  "(fst :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI continuous_intros)
+
+lemma pair_snd_borel:
+  "(snd :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
+     \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI continuous_intros)
+
+lemma outerp_borel:
+  "(outerp :: real^'n::finite \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
+proof -
+  have e: "(outerp :: real^'n \<Rightarrow> real^'n^'n) = (\<lambda>v. \<chi> i j. v $ i * v $ j)"
+    by (rule ext) (simp add: outerp_def)
+  show ?thesis unfolding e
+    by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
+        continuous_intros)
+qed
+
+lemma cross_borel:
+  fixes c :: "real^'n::finite"
+  shows "(\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))
+      \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
+      continuous_intros)
+
+lemma kglue_param_comp_martingale:
+  fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+  assumes rT: "r \<le> T"
+    and R: "\<And>j. RR j \<in> paper_pair_class k L (T - r) 0"
+  shows "martingale (Pi\<^sub>M UNIV RR)
+      (\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega>. \<omega> v) (max (u - r) 0)))
+      0 (\<lambda>u f. outerp (fst (f i (min (max (u - r) 0) (T - r)))
+              - fst (f i 0) :: real^'n)
+          - (snd (f i (min (max (u - r) 0) (T - r))) - snd (f i 0)))"
+proof -
+  let ?S = "Pi\<^sub>M UNIV RR"
+  let ?GR = "\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?s = "\<lambda>u :: real. max (u - r) 0"
+  let ?t = "\<lambda>u :: real. min (max (u - r) 0) (T - r)"
+  let ?GS = "\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. ?GR j (?s u))"
+  have TR: "0 \<le> T - r" using rT by simp
+  have PRj: "prob_space (RR j)" for j by (rule paper_pair_class_prob[OF R])
+  have m0: "martingale ?S ?GS 0
+      (\<lambda>u f. outerp (fst (f i (?t u)) :: real^'n) - snd (f i (?t u)))"
+    by (rule kglue_param_martingale
+        [OF rT paper_pair_class_compensated_martingale[OF R] PRj])
+  have FSf: "filtered_measure ?S ?GS (0::real)"
+  proof -
+    interpret MS: martingale ?S ?GS "0::real"
+      "\<lambda>u f. outerp (fst (f i (?t u)) :: real^'n) - snd (f i (?t u))"
+      by (rule m0)
+    show ?thesis by unfold_locales
+  qed
+  have start: "AE f in ?S. fst (f i 0) = (0::real^'n) \<and> snd (f i 0) = 0"
+  proof -
+    have Pj: "prob_space (RR j)" if "j \<in> (UNIV::nat set)" for j by (rule PRj)
+    have dj: "distr ?S (RR i) (\<lambda>f. f i) = RR i"
+      by (rule distr_PiM_component[OF Pj UNIV_I])
+    have mi: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f i) \<in> ?S \<rightarrow>\<^sub>M RR i"
+      by (rule measurable_component_singleton) simp
+    have "AE \<omega>' in RR i. fst (\<omega>' 0) = (0::real^'n) \<and> snd (\<omega>' 0) = 0"
+      using R unfolding paper_pair_class_def by blast
+    then have "AE \<omega>' in distr ?S (RR i) (\<lambda>f. f i).
+        fst (\<omega>' 0) = (0::real^'n) \<and> snd (\<omega>' 0) = 0" unfolding dj .
+    from AE_distrD[OF mi this] show ?thesis .
+  qed
+  have adap: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath.
+      outerp (fst (f i (?t u)) - fst (f i 0) :: real^'n)
+        - (snd (f i (?t u)) - snd (f i 0))) \<in> borel_measurable (?GS u)"
+    if u: "0 \<le> u" for u
+  proof -
+    have ev: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f i v) \<in> borel_measurable (?GS u)"
+      if "0 \<le> v" "v \<le> ?s u" for v
+    proof -
+      have "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f i) \<in> ?GS u \<rightarrow>\<^sub>M ?GR i (?s u)"
+        by (rule measurable_component_singleton) simp
+      from measurable_compose[OF this nat_filt_eval[OF that]] show ?thesis .
+    qed
+    have e1: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f i (?t u)) \<in> borel_measurable (?GS u)"
+      by (rule ev) (use TR in auto)
+    have e2: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f i 0) \<in> borel_measurable (?GS u)"
+      by (rule ev) auto
+    have a1: "(\<lambda>f. fst (f i (?t u)) :: real^'n) \<in> borel_measurable (?GS u)"
+      by (rule measurable_compose[OF e1 pair_fst_borel])
+    have a2: "(\<lambda>f. fst (f i 0) :: real^'n) \<in> borel_measurable (?GS u)"
+      by (rule measurable_compose[OF e2 pair_fst_borel])
+    have b1: "(\<lambda>f. snd (f i (?t u)) :: real^'n^'n) \<in> borel_measurable (?GS u)"
+      by (rule measurable_compose[OF e1 pair_snd_borel])
+    have b2: "(\<lambda>f. snd (f i 0) :: real^'n^'n) \<in> borel_measurable (?GS u)"
+      by (rule measurable_compose[OF e2 pair_snd_borel])
+    have d1: "(\<lambda>f. fst (f i (?t u)) - fst (f i 0) :: real^'n)
+        \<in> borel_measurable (?GS u)" using a1 a2 by (rule borel_measurable_diff)
+    have o1: "(\<lambda>f. outerp (fst (f i (?t u)) - fst (f i 0)) :: real^'n^'n)
+        \<in> borel_measurable (?GS u)"
+      by (rule measurable_compose[OF d1 outerp_borel])
+    have d2: "(\<lambda>f. snd (f i (?t u)) - snd (f i 0) :: real^'n^'n)
+        \<in> borel_measurable (?GS u)" using b1 b2 by (rule borel_measurable_diff)
+    show ?thesis using o1 d2 by (rule borel_measurable_diff)
+  qed
+  show ?thesis
+  proof (rule martingale_cong_AE[OF m0])
+    show "adapted_process ?S ?GS 0 (\<lambda>u f.
+        outerp (fst (f i (?t u)) - fst (f i 0) :: real^'n)
+          - (snd (f i (?t u)) - snd (f i 0)))"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using FSf adap by blast
+  next
+    fix u :: real assume "0 \<le> u"
+    show "AE f in ?S. outerp (fst (f i (?t u)) :: real^'n) - snd (f i (?t u))
+        = outerp (fst (f i (?t u)) - fst (f i 0)) - (snd (f i (?t u)) - snd (f i 0))"
+      by (rule eventually_mono[OF start]) simp
+  qed
+qed
+
 end
