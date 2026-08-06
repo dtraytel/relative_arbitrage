@@ -5762,4 +5762,107 @@ proof -
   qed
 qed
 
+text \<open>Transfer to the CONTINUOUS modification, which is the process the
+  path space wants.  This is \<open>Modification_Transfer.martingale_of_modification_gen\<close>,
+  exactly as \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> does for the
+  diagonal.\<close>
+
+lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI linear_continuous_on
+      bounded_linear_vec_nth)
+
+theorem martingale_cbm_cross:
+  fixes x0 :: "real^'n::finite" and i j :: 'n
+  assumes ij: "i \<noteq> j"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (cbmX x0)) 0
+      (\<lambda>t \<omega>. cbmX x0 t \<omega> $ i * cbmX x0 t \<omega> $ j)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (cbmX x0)"
+  let ?Y = "\<lambda>t \<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 t \<omega> $ i * bmX x0 t \<omega> $ j"
+  let ?Y' = "\<lambda>t \<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cbmX x0 t \<omega> $ i * cbmX x0 t \<omega> $ j"
+  have measY': "?Y' u \<in> borel_measurable ?M" for u
+    by (intro borel_measurable_times
+        measurable_compose[OF measurable_cbmX bm_prj_measurable])
+  have aeY: "AE \<omega> in ?M. ?Y' u \<omega> = ?Y u \<omega>" if u: "0 \<le> u" for u
+  proof -
+    have "AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
+      using u by (intro cbmX_ae_eq) simp
+    then show ?thesis by eventually_elim simp
+  qed
+  show ?thesis
+  proof (rule martingale_of_modification_gen[where X = "bmX x0" and Y = ?Y])
+    show "prob_space ?M" by simp
+    show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0 ?Y"
+      by (rule martingale_bm_cross[OF ij])
+    show "\<And>u. 0 \<le> u \<Longrightarrow> bmX x0 u \<in> borel_measurable ?M"
+      by (intro measurable_bmX) simp
+    show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
+      by (rule measurable_cbmX)
+    show "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
+      by (intro cbmX_ae_eq) simp
+    show "\<And>u. 0 \<le> u \<Longrightarrow> ?Y' u \<in> borel_measurable ?M" by (rule measY')
+    show "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in ?M. ?Y' u \<omega> = ?Y u \<omega>" by (rule aeY)
+    show "adapted_process ?M ?F 0 ?Y'"
+    proof (rule adapted_of_natural_filtration
+        [where f = "\<lambda>u y :: real^'n. (y $ i) * (y $ j)"])
+      show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
+        by (rule measurable_cbmX)
+      show "\<And>u. (\<lambda>y :: real^'n. (y $ i) * (y $ j)) \<in> borel_measurable borel"
+        by (intro borel_measurable_times bm_prj_measurable)
+    qed
+  qed
+qed
+
+text \<open>The whole matrix, assembled from its entries by \<open>martingale_matI\<close>:
+  the DIAGONAL is \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> (whose
+  compensator \<open>\<integral>\<^sub>0\<^sup>t (mat 1)\<^sub>i\<^sub>i\<close> is just \<open>t\<close>, so \<open>martingale_cong_ge\<close>
+  rewrites it), the OFF-DIAGONAL is \<open>martingale_cbm_cross\<close> with compensator
+  \<open>0\<close>.\<close>
+
+theorem martingale_cbm_outerp:
+  fixes x0 :: "real^'n::finite"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (cbmX x0)) 0
+      (\<lambda>t \<omega>. outerp (cbmX x0 t \<omega>) - t *\<^sub>R mat 1)"
+proof (rule martingale_matI)
+  fix i j :: 'n
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (cbmX x0)"
+  have comp: "set_lebesgue_integral lborel {0..t}
+      (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i) = t" if t: "0 \<le> t" for t
+  proof -
+    have "set_lebesgue_integral lborel {0..t}
+        (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i)
+        = t * ((mat 1 :: real^'n^'n) $ i $ i)"
+      using t by (subst set_integral_const) auto
+    then show ?thesis by (simp add: mat_def)
+  qed
+  show "martingale ?M ?F 0
+      (\<lambda>t \<omega>. (outerp (cbmX x0 t \<omega>) - t *\<^sub>R mat 1) $ i $ j)"
+  proof (cases "i = j")
+    case True
+    show ?thesis
+    proof (rule martingale_cong_ge[OF martingale_cbm_coord_square])
+      fix t :: real assume t: "0 \<le> t"
+      show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (cbmX x0 t \<omega> $ i)\<^sup>2
+            - set_lebesgue_integral lborel {0..t}
+                (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i))
+          = (\<lambda>\<omega>. (outerp (cbmX x0 t \<omega>) - t *\<^sub>R mat 1) $ i $ j)"
+        using True comp[OF t]
+        by (simp add: outerp_def power2_eq_square mat_def)
+    qed
+  next
+    case False
+    show ?thesis
+    proof (rule martingale_cong_ge[OF martingale_cbm_cross[OF False]])
+      fix t :: real assume t: "0 \<le> t"
+      show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cbmX x0 t \<omega> $ i * cbmX x0 t \<omega> $ j)
+          = (\<lambda>\<omega>. (outerp (cbmX x0 t \<omega>) - t *\<^sub>R mat 1) $ i $ j)"
+        using False by (simp add: outerp_def mat_def)
+    qed
+  qed
+qed
+
 end
