@@ -9820,4 +9820,96 @@ proof -
   qed
 qed
 
+lemma paper_pair_class_inner_mean_le:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
+  shows "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+      \<le> real CARD('n) * (real CARD('n) * L * T)"
+proof -
+  have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+      = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
+  proof -
+    have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+        = (\<integral>\<omega>. (\<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2) \<partial>Q)"
+      by (rule Bochner_Integration.integral_cong)
+        (simp_all add: inner_vec_def power2_eq_square)
+    also have "\<dots> = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
+      by (rule Bochner_Integration.integral_sum)
+        (rule paper_pair_class_sq_integrable[OF T L Q t])
+    finally show ?thesis .
+  qed
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). real CARD('n) * L * T)"
+  proof (rule sum_mono)
+    fix i :: 'n
+    have "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q)
+        \<le> ((0 :: real^'n) $ i)\<^sup>2 + real CARD('n) * L * T"
+      by (rule paper_pair_class_sq_mean_le[OF T L Q t])
+    then show "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> real CARD('n) * L * T" by simp
+  qed
+  finally show ?thesis by simp
+qed
+
+lemma paper_pair_class_comp_norm_mean_le:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
+  shows "(\<integral>\<omega>. norm (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
+      \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have iC: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+    by (rule paper_pair_class_compensated_integrable[OF Q t])
+  have iN: "integrable Q (\<lambda>\<omega>. norm (outerp (fst (\<omega> t)) - snd (\<omega> t)))"
+    by (rule integrable_norm[OF iC])
+  have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
+    by (rule paper_pair_class_norm_sq_integrable[OF T L Q t])
+  have Ym: "(\<lambda>\<omega> :: 'n pairpath. norm (snd (\<omega> t))) \<in> borel_measurable Q"
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> t)) \<in> borel_measurable Q"
+      by (rule measurable_compose
+          [OF paper_pair_class_eval_measurable[OF Q t] pair_snd_borel])
+    then show ?thesis by measurable
+  qed
+  have Yb: "AE \<omega> in Q. norm (snd (\<omega> t)) \<le> real CARD('n) * L * T"
+    using paper_pair_class_Y_bounded_ae[OF T L Q] t by (auto elim: eventually_mono)
+  have iY: "integrable Q (\<lambda>\<omega> :: 'n pairpath. norm (snd (\<omega> t)))"
+  proof (rule P.integrable_const_bound[where B = "real CARD('n) * L * T"])
+    show "AE \<omega> in Q. norm (norm (snd (\<omega> t))) \<le> real CARD('n) * L * T"
+      using Yb by simp
+  qed (rule Ym)
+  have "(\<integral>\<omega>. norm (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
+      \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) + norm (snd (\<omega> t)) \<partial>Q)"
+  proof (rule integral_mono[OF iN])
+    show "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) + norm (snd (\<omega> t)))"
+      using iX iY by simp
+    fix \<omega> :: "'n pairpath"
+    have "norm (outerp (fst (\<omega> t)) - snd (\<omega> t))
+        \<le> norm (outerp (fst (\<omega> t))) + norm (snd (\<omega> t))"
+      by (rule norm_triangle_ineq4)
+    then show "norm (outerp (fst (\<omega> t)) - snd (\<omega> t))
+        \<le> fst (\<omega> t) \<bullet> fst (\<omega> t) + norm (snd (\<omega> t))"
+      by (simp add: norm_outerp power2_norm_eq_inner[symmetric] power2_eq_square)
+  qed
+  also have "\<dots> = (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+      + (\<integral>\<omega>. norm (snd (\<omega> t)) \<partial>Q)" using iX iY by simp
+  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * T)
+      + real CARD('n) * L * T"
+  proof -
+    have b1: "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+        \<le> real CARD('n) * (real CARD('n) * L * T)"
+      by (rule paper_pair_class_inner_mean_le[OF T L Q t])
+    have b2: "(\<integral>\<omega>. norm (snd (\<omega> t)) \<partial>Q) \<le> real CARD('n) * L * T"
+    proof -
+      have "(\<integral>\<omega>. norm (snd (\<omega> t)) \<partial>Q)
+          \<le> (\<integral>\<omega>. real CARD('n) * L * T \<partial>Q)"
+        using iY Yb by (intro integral_mono_AE) auto
+      also have "\<dots> = real CARD('n) * L * T" by (simp add: P.prob_space)
+      finally show ?thesis .
+    qed
+    from b1 b2 show ?thesis by simp
+  qed
+  finally show ?thesis .
+qed
+
 end
