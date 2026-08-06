@@ -1901,3 +1901,53 @@ matrix martingale with `martingale_matI` from the diagonal
 (`martingale_bm_coord_square`) and this off-diagonal, and feed the whole
 thing through `martingale_pair_law` with
 `φ ω = restrict (λt. (cbmX 0 t ω, t *⇩R mat 1)) {0..T}`.
+
+### Packaging progress (2026-08-06, commits `8e344c2` … `c9eb79a`)
+
+- `martingale_bm_cross` — `W_i W_j` IS a martingale for `i ≠ j`
+  (`martingale_of_set_integral_eq` over the previous section's identity;
+  supporting `bmX_coord_measurable_F`, `bmX_cross_integrable`).
+- `martingale_cbm_cross` — transferred to the continuous modification by
+  `Modification_Transfer.martingale_of_modification_gen`.
+- **`martingale_cbm_outerp`** — the whole matrix
+  `outerp (cbmX x0 t ω) − t *⇩R mat 1` is a martingale, assembled from its
+  entries by `martingale_matI`: diagonal = `martingale_cbm_coord_square`
+  (its compensator `∫₀ᵗ (mat 1)ᵢᵢ` is just `t`, rewritten with
+  `martingale_cong_ge`), off-diagonal = `martingale_cbm_cross`.
+  **This IS the compensated clause of (1.7) for the witness.**
+- `bmpair`, `continuous_on_bmpair_path`, `bmpair_measurable`,
+  `prob_space_bmpair_law` — the witness path map
+  `ω ↦ restrict (λt. (cbmX 0 t ω, t *⇩R mat 1)) {0..T}` and its law.
+
+**TRAP worth remembering:** the obligations `pathify_measurable` generates
+elaborate at types the component lemmas do NOT match —
+`continuous_on {0..T} (λt. t *⇩R mat 1)` resisted `continuous_on_scaleR`,
+`linear_continuous_on`, `continuous_intros` AND a separately proved fact
+that printed identically. Fix: state the intermediate goal with FULL type
+annotations (`cbmX (0 :: real^'n)`, `mat 1 :: real^'n^'n`) before applying
+the rule. Same family as the recorded `lborel` polymorphism trap.
+
+### What is left, and it is now four clause checks
+
+`Q = pair_law_of T (bmpair T) bm_paths`; show `Q ∈ paper_pair_class k L T 0`
+for `1 ≤ k`, `k < CARD('n)`, `1 ≤ L`, `0 ≤ T`:
+
+1. `prob_space Q` — `prob_space_bmpair_law`. DONE.
+2. `sets Q` — `sets_pair_law_of`. DONE.
+3. START — `AE_distr_iff` (the event `{ω. ω 0 = (0,0)}` is the preimage of a
+   closed singleton under `pair_law_eval_measurable`), then
+   `cbmX 0 0 ω = 0` a.e. (chain `cbmX_ae_eq` with `bmX_start`, as
+   `Brownian_market_sufficiently_volatile` does).
+4. COVARIATION — for each `p < q` in `{0..T}` the event is closed
+   (`Paper_Class.closedin_diffquot_constraint`), so `AE_distr_iff` applies
+   and the value is the CONSTANT `mat 1 ∈ sconstraint k L`
+   (`Paper_Class.mat_1_in_sconstraint`, needs `1 ≤ L`). Then the ∀-form by
+   the rational reduction — copy the second half of
+   `Paper_Class.paper_pair_class_diffquot_limit` (`AE_ball_countable'` over
+   `ℚ ∩ {0..T}` plus `diffquot_all_of_rational`).
+5. X-MARTINGALE and COMPENSATED — `martingale_pair_law` at
+   `Z u ω = fst (ω (min u T))` and
+   `Z u ω = outerp (fst (ω (min u T))) − snd (ω (min u T))`, whose
+   process-side hypotheses are `martingale_stopped_const` applied to
+   `martingale_cbmX` and to `martingale_cbm_outerp`. The `Zm` obligation is
+   the `measurable_family_vimage_algebra` route used throughout NC-3.
