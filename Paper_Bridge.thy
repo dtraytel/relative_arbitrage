@@ -6522,4 +6522,264 @@ proof -
   then show ?thesis by simp
 qed
 
+section \<open>Towards the DPP: the class is closed under shortening the horizon\<close>
+
+text \<open>The conditioning-free half of the closure the weak DPP needs.  A
+  member on \<open>[0,T]\<close> restricted to \<open>[0,S]\<close> is a member on \<open>[0,S]\<close>.  Both
+  martingale clauses come out of \<open>martingale_pair_law\<close> with the RESTRICTION
+  as the path map: it is adapted for free, because \<open>pcut S \<omega> r = \<omega> r\<close> on
+  \<open>{0..S}\<close>, and \<open>martingale_stopped_const\<close> turns the \<open>T\<close>-clause into the
+  \<open>S\<close>-clause.\<close>
+
+definition pcut :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+  where "pcut S \<omega> = restrict \<omega> {0..S}"
+
+lemma pcut_apply: "r \<in> {0..S} \<Longrightarrow> pcut S \<omega> r = \<omega> r"
+  by (simp add: pcut_def)
+
+lemma pcut_measurable:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes S: "0 \<le> S" and ST: "S \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "pcut S \<in> Q \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric S :: ('n pairpath) metric))"
+proof -
+  have "(\<lambda>f :: 'n pairpath. restrict f {0..S})
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+    by (rule restrict_measurable_path_borel[OF S ST])
+  then show ?thesis
+    unfolding pcut_def using measurable_cong_sets[OF setsQ refl] by blast
+qed
+
+lemma pcut_adapted:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes S: "0 \<le> S"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and r: "0 \<le> r" and ru: "r \<le> u"
+  shows "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable
+      (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u)"
+proof (cases "r \<in> {0..S}")
+  case True
+  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u
+      \<rightarrow>\<^sub>M borel"
+    unfolding natural_filtration_def
+    by (rule measurable_family_vimage_algebra) (use r ru in auto)
+  then show ?thesis using True by (simp add: pcut_apply)
+next
+  case False
+  then have "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) = (\<lambda>\<omega>. undefined)"
+    by (auto simp: pcut_def)
+  then show ?thesis by simp
+qed
+
+text \<open>The rational reduction of the covariation clause, factored out: it is
+  needed once per construction of a class member (the Brownian witness, the
+  restricted law, and every later DPP construction), and the argument is
+  always the same — countably many pairs by \<open>AE_ball_countable'\<close>, then
+  \<open>diffquot_all_of_rational\<close> against path continuity.\<close>
+
+lemma paper_pair_class_diffquot_of_pairs:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and one: "\<And>p q :: real. p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
+      AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+proof -
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE \<omega> in Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE \<omega> in Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
+        case True
+        then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
+        from one[OF this] show ?thesis by (rule eventually_mono) simp
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  from rat AE_space show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      and W: "\<omega> \<in> space Q" by blast+
+    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W spQ by simp
+    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
+      using mspace_path_metricD[OF mw] by (intro continuous_intros)
+    show ?case
+    proof (intro allI impI)
+      fix u v :: real
+      assume uv: "0 \<le> u" "u < v" "v \<le> T"
+      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
+        by (rule diffquot_all_of_rational
+            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
+    qed
+  qed
+qed
+
+text \<open>Brick (a) of the DPP: a member of the class at horizon \<open>T\<close>, cut back
+  to \<open>[0,S]\<close>, is a member of the class at horizon \<open>S\<close>.  All four clauses of
+  (1.7) survive: the two \<open>AE\<close> clauses because \<open>pcut\<close> is the identity on
+  \<open>[0,S]\<close>, and the two martingale clauses because stopping at \<open>S\<close> is
+  harmless (\<open>martingale_stopped_const\<close>) and transports along \<open>pcut\<close>
+  (\<open>martingale_pair_law\<close>).\<close>
+
+theorem paper_pair_class_pcut:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes S: "0 \<le> S" and ST: "S \<le> T" and Q: "Q \<in> paper_pair_class k L T x"
+  shows "pair_law_of S (pcut S) Q \<in> paper_pair_class k L S x"
+proof -
+  let ?Q = "pair_law_of S (pcut S) Q"
+  let ?B = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have phim: "pcut S \<in> Q \<rightarrow>\<^sub>M ?B" by (rule pcut_measurable[OF S ST setsQ])
+  have prob': "prob_space ?Q"
+    unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
+  have adap: "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable (?F u)"
+    if "0 \<le> r" "r \<le> u" for r u
+    by (rule pcut_adapted[OF S setsQ that])
+  have mT: "min u S \<le> T" for u
+    using min.cobounded2[of u S] ST by linarith
+
+  \<comment> \<open>clause (i): the initial condition\<close>
+  have start': "AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have mset: "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
+    proof -
+      have "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
+          = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(x, 0)} \<inter> space ?B"
+        by (auto simp: prod_eq_iff)
+      then show ?thesis using measurable_sets[OF ev] by simp
+    qed
+    have iff: "(AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0)
+        = (AE \<omega> in Q. fst (pcut S \<omega> 0) = x \<and> snd (pcut S \<omega> 0) = 0)"
+      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+    have z: "(0::real) \<in> {0..S}" using S by simp
+    have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+      using Q unfolding paper_pair_class_def by blast
+    then have "AE \<omega> in Q. fst (pcut S \<omega> 0) = x \<and> snd (pcut S \<omega> 0) = 0"
+      by eventually_elim (simp add: pcut_apply[OF z])
+    then show ?thesis unfolding iff .
+  qed
+
+  \<comment> \<open>clause (ii): the eigenvalue constraint on the covariation\<close>
+  have cov': "AE \<omega> in ?Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  proof (rule paper_pair_class_diffquot_of_pairs[OF sets_pair_law_of])
+    fix p q :: real
+    assume pq: "p \<in> {0..S}" "q \<in> {0..S}" "p < q"
+    have mm: "{\<omega> \<in> space ?B.
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
+      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
+      by (simp add: space_borel_of)
+    have iff: "(AE \<omega> in ?Q.
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)
+        = (AE \<omega> in Q. (1 / (q - p))
+            *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L)"
+      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+    have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      using Q unfolding paper_pair_class_def by blast
+    then have "AE \<omega> in Q. (1 / (q - p))
+        *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L"
+    proof eventually_elim
+      case (elim \<omega>)
+      have "(1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+        using elim pq ST by auto
+      then show ?case using pq by (simp add: pcut_apply)
+    qed
+    then show "AE \<omega> in ?Q.
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      unfolding iff .
+  qed
+
+  \<comment> \<open>clause (iii): \<open>X\<close> is a martingale\<close>
+  have mgX': "martingale ?Q ?G 0 (\<lambda>u \<omega>. fst (\<omega> (min u S)) :: real^'n)"
+  proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
+    fix u :: real assume u: "0 \<le> u"
+    have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u S in auto)
+    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u S))) \<in> borel_measurable (?G u)"
+      by (rule measurable_compose[OF ev fstB])
+  next
+    show "martingale Q ?F 0 (\<lambda>u \<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
+    proof (rule martingale_cong_ge
+        [OF martingale_stopped_const[OF S paper_pair_class_X_martingale[OF Q]]])
+      fix u :: real assume u: "0 \<le> u"
+      have mI: "min u S \<in> {0..S}" using u S by simp
+      have e1: "min (min u S) T = min u S" using mT by (rule min_absorb1)
+      show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min (min u S) T)))
+          = (\<lambda>\<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
+        by (rule ext) (simp add: e1 pcut_apply[OF mI])
+    qed
+  qed
+
+  \<comment> \<open>clause (iv): the compensated process is a martingale\<close>
+  have mgC': "martingale ?Q ?G 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u S)) :: real^'n) - snd (\<omega> (min u S)))"
+  proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
+    fix u :: real assume u: "0 \<le> u"
+    have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+        = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
+      by (rule ext) (simp add: outerp_def vec_eq_iff)
+    have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+        \<in> borel_measurable borel"
+      unfolding e
+      by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
+          continuous_intros)
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u S in auto)
+    show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u S))) - snd (\<omega> (min u S)))
+        \<in> borel_measurable (?G u)"
+      by (rule measurable_compose[OF ev cB])
+  next
+    show "martingale Q ?F 0 (\<lambda>u \<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
+        - snd (pcut S \<omega> (min u S)))"
+    proof (rule martingale_cong_ge[OF martingale_stopped_const
+          [OF S paper_pair_class_compensated_martingale[OF Q]]])
+      fix u :: real assume u: "0 \<le> u"
+      have mI: "min u S \<in> {0..S}" using u S by simp
+      have e1: "min (min u S) T = min u S" using mT by (rule min_absorb1)
+      show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min (min u S) T)))
+            - snd (\<omega> (min (min u S) T)))
+          = (\<lambda>\<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
+              - snd (pcut S \<omega> (min u S)))"
+        by (rule ext) (simp add: e1 pcut_apply[OF mI])
+    qed
+  qed
+
+  show ?thesis
+    unfolding paper_pair_class_def mem_Collect_eq
+    using prob' sets_pair_law_of start' cov' mgX' mgC' by blast
+qed
+
 end
