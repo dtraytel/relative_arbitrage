@@ -6782,4 +6782,163 @@ proof -
     using prob' sets_pair_law_of start' cov' mgX' mgC' by blast
 qed
 
+section \<open>Concatenation of pair paths\<close>
+
+text \<open>The other half of the dynamic programming principle needs the class to
+  be closed under PASTING: run \<open>\<omega>\<close> up to a time \<open>r\<close>, then continue with an
+  independent path \<open>\<omega>'\<close> re-based at \<open>\<omega> r\<close>.  Both components of the pair
+  concatenate additively --- for \<open>X\<close> because the increments do, for
+  \<open>Y = \<langle>X\<rangle>\<close> because the covariation of a concatenation is the concatenation
+  of the covariations.  We allow \<open>r\<close> to be an arbitrary real here; a
+  stopping-time glue is obtained by instantiating \<open>r\<close> with \<open>\<theta> \<omega>\<close>.\<close>
+
+definition pglue :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath
+    \<Rightarrow> 'n pairpath"
+  where "pglue r T \<omega> \<omega>' =
+     restrict (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)) {0..T}"
+
+lemma pglue_le: "t \<in> {0..T} \<Longrightarrow> t \<le> r \<Longrightarrow> pglue r T \<omega> \<omega>' t = \<omega> t"
+  by (simp add: pglue_def)
+
+lemma pglue_ge:
+  "t \<in> {0..T} \<Longrightarrow> r \<le> t \<Longrightarrow> pglue r T \<omega> \<omega>' t = \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
+  by (cases "t = r") (auto simp: pglue_def)
+
+lemma pglue_zero: "0 \<le> r \<Longrightarrow> 0 \<le> T \<Longrightarrow> pglue r T \<omega> \<omega>' 0 = \<omega> 0"
+  by (rule pglue_le) auto
+
+lemma continuous_on_pglue:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and c1: "continuous_on {0..r} \<omega>"
+    and c2: "continuous_on {0..T - r} \<omega>'"
+  shows "continuous_on {0..T}
+      (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
+proof -
+  let ?f = "\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
+  have U: "{0..T} = {0..r} \<union> {r..T}" using r rT by auto
+  have A: "continuous_on {0..r} ?f"
+    by (rule continuous_on_eq[OF c1]) simp
+  have B: "continuous_on {r..T} ?f"
+  proof (rule continuous_on_eq)
+    have "continuous_on {r..T} (\<lambda>t. \<omega>' (t - r))"
+      by (rule continuous_on_compose2[OF c2 continuous_on_diff
+            [OF continuous_on_id continuous_on_const]]) auto
+    then show "continuous_on {r..T} (\<lambda>t. \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
+      by (intro continuous_intros)
+  next
+    fix t :: real assume "t \<in> {r..T}"
+    then show "\<omega> r + (\<omega>' (t - r) - \<omega>' 0) = ?f t" by (cases "t = r") auto
+  qed
+  show ?thesis unfolding U by (rule continuous_on_closed_Un[OF _ _ A B]) auto
+qed
+
+lemma pglue_in_mspace:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+    and w': "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+  shows "pglue r T \<omega> \<omega>' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  unfolding pglue_def
+  by (rule mspace_path_metricI[OF continuous_on_pglue[OF r rT
+        mspace_path_metricD[OF w] mspace_path_metricD[OF w']]])
+
+lemma pglue_measurable:
+  fixes Q R :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and setsR: "sets R = sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+  shows "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M R \<rightarrow>\<^sub>M
+      borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  have T0: "0 \<le> T" using r rT by simp
+  have eQ: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
+    for v
+    by (rule measurable_compose[OF measurable_fst
+          pair_law_eval_measurable[OF setsQ]])
+  have eR: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
+    for v
+    by (rule measurable_compose[OF measurable_snd
+          pair_law_eval_measurable[OF setsR]])
+  have Xm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
+        if t \<le> r then fst p t else fst p r + (snd p (t - r) - snd p 0))
+      \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" for t
+    using eQ eR by simp
+  have cont: "continuous_on {0..T} (\<lambda>t. if t \<le> r then fst p t
+        else fst p r + (snd p (t - r) - snd p 0))"
+    if p: "p \<in> space (Q \<Otimes>\<^sub>M R)" for p :: "'n pairpath \<times> 'n pairpath"
+  proof (rule continuous_on_pglue[OF r rT])
+    have "fst p \<in> space Q" "snd p \<in> space R"
+      using p by (auto simp: space_pair_measure)
+    then show "continuous_on {0..r} (fst p)" "continuous_on {0..T - r} (snd p)"
+      using space_of_path_sets[OF setsQ] space_of_path_sets[OF setsR]
+      by (auto intro: mspace_path_metricD)
+  qed
+  show ?thesis
+    using pathify_measurable[OF T0 Xm cont] unfolding pglue_def by simp
+qed
+
+text \<open>The eigenvalue constraint (1.7) survives concatenation.  Across the
+  glue point the difference quotient is a CONVEX COMBINATION of one quotient
+  from each piece, which is why the constraint set had to be convexified
+  (Lemma 2.1, \<open>sconstraint_convex\<close>) --- the unconvexified set of (1.4) would
+  not do.\<close>
+
+lemma pglue_diffquot:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and A: "\<And>p q :: real. 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> r \<Longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    and B: "\<And>p q :: real. 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T - r \<Longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (\<omega>' q) - snd (\<omega>' p)) \<in> sconstraint k L"
+    and s: "0 \<le> s" and st: "s < t" and tT: "t \<le> T"
+  shows "(1 / (t - s)) *\<^sub>R
+      (snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)) \<in> sconstraint k L"
+proof -
+  have sT: "s \<in> {0..T}" and tI: "t \<in> {0..T}" using s st tT by auto
+  consider (early) "t \<le> r" | (late) "r \<le> s" | (mid) "s < r" "r < t" by fastforce
+  then show ?thesis
+  proof cases
+    case early
+    then have "s \<le> r" using st by simp
+    then show ?thesis
+      using A[OF s st early] by (simp add: pglue_le[OF sT] pglue_le[OF tI early])
+  next
+    case late
+    then have rt: "r \<le> t" using st by simp
+    have "(1 / ((t - r) - (s - r))) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' (s - r)))
+        \<in> sconstraint k L"
+      using B[of "s - r" "t - r"] late st tT by simp
+    then show ?thesis
+      by (simp add: pglue_ge[OF sT late] pglue_ge[OF tI rt])
+  next
+    case mid
+    let ?a = "(1 / (r - s)) *\<^sub>R (snd (\<omega> r) - snd (\<omega> s))"
+    let ?b = "(1 / (t - r)) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' 0))"
+    have aA: "?a \<in> sconstraint k L" by (rule A[OF s mid(1) order_refl])
+    have bB: "?b \<in> sconstraint k L"
+      using B[of 0 "t - r"] mid(2) tT by simp
+    have pos: "0 < r - s" "0 < t - r" "0 < t - s" using mid st by auto
+    have sum1: "(r - s) / (t - s) + (t - r) / (t - s) = 1"
+      by (subst add_divide_distrib[symmetric]) (use pos(3) in simp)
+    have cc: "((r - s) / (t - s)) *\<^sub>R ?a + ((t - r) / (t - s)) *\<^sub>R ?b
+        \<in> sconstraint k L"
+      using pos by (intro convexD[OF sconstraint_convex aA bB] sum1) auto
+    have e1: "((r - s) / (t - s)) *\<^sub>R ?a
+        = (1 / (t - s)) *\<^sub>R (snd (\<omega> r) - snd (\<omega> s))"
+      using pos by simp
+    have e2: "((t - r) / (t - s)) *\<^sub>R ?b
+        = (1 / (t - s)) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' 0))"
+      using pos by simp
+    have "snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)
+        = (snd (\<omega> r) - snd (\<omega> s)) + (snd (\<omega>' (t - r)) - snd (\<omega>' 0))"
+      using mid(1) less_imp_le[OF mid(2)]
+      by (simp add: pglue_le[OF sT] pglue_ge[OF tI])
+    then show ?thesis
+      using cc unfolding e1 e2 by (simp add: scaleR_right_distrib)
+  qed
+qed
+
 end
