@@ -4821,4 +4821,312 @@ proof
   qed
 qed
 
+section \<open>NC: the value function of Eq. (1.6) is upper semicontinuous\<close>
+
+subsection \<open>The shift is an involution on laws\<close>
+
+lemma pshift_law_compose:
+  fixes Q :: "('n::finite pairpath) measure" and x y :: "real^'n"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "pshift_law T y (pshift_law T x Q) = pshift_law T (y + x) Q"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have shx: "pshift T x \<in> Q \<rightarrow>\<^sub>M ?B"
+    using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
+  have shy: "pshift T y \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule pshift_measurable[OF T])
+  have "pshift_law T y (pshift_law T x Q) = distr Q ?B (pshift T y \<circ> pshift T x)"
+    unfolding pshift_law_def by (rule distr_distr[OF shy shx])
+  also have "\<dots> = distr Q ?B (pshift T (y + x))"
+    by (rule distr_cong) (auto simp: pshift_pshift)
+  finally show ?thesis unfolding pshift_law_def .
+qed
+
+lemma pshift_law_zero:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  shows "pshift_law T 0 Q = Q"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have "pshift_law T 0 Q = distr Q ?B (\<lambda>\<omega>. \<omega>)"
+    unfolding pshift_law_def
+    by (rule distr_cong) (use spQ in \<open>auto simp: pshift_zero\<close>)
+  also have "\<dots> = Q" by (rule distr_id2[OF setsQ[symmetric]])
+  finally show ?thesis .
+qed
+
+text \<open>Hence the almost-sure transfer is an EQUIVALENCE, not just an
+  implication: apply it at \<open>-x\<close> to the shifted law.\<close>
+
+lemma AE_pshift_law_iff:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "(AE \<omega> in pshift_law T x Q. P \<omega>)
+       \<longleftrightarrow> (AE \<omega> in Q. P (pshift T x \<omega>))"
+proof
+  assume "AE \<omega> in Q. P (pshift T x \<omega>)"
+  then show "AE \<omega> in pshift_law T x Q. P \<omega>"
+    by (rule AE_pshift_law[OF T setsQ])
+next
+  let ?Q' = "pshift_law T x Q"
+  assume h: "AE \<omega> in ?Q'. P \<omega>"
+  have setsQ': "sets ?Q' = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))" by simp
+  have spQ': "space ?Q' = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_pshift_law)
+  have id': "AE \<omega> in ?Q'. pshift T x (pshift T (- x) \<omega>) = \<omega>"
+  proof (rule AE_I2)
+    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space ?Q'"
+    then have wm: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using spQ' by simp
+    show "pshift T x (pshift T (- x) \<omega>) = \<omega>"
+      using pshift_pshift[of T x "- x" \<omega>] pshift_zero[OF wm] by simp
+  qed
+  have h2: "AE \<omega> in ?Q'. P (pshift T x (pshift T (- x) \<omega>))"
+    using h id' by eventually_elim simp
+  have step: "AE \<omega> in pshift_law T (- x) ?Q'. P (pshift T x \<omega>)"
+    by (rule AE_pshift_law[OF T setsQ' h2])
+  \<comment> \<open>the measure INSIDE an \<open>AE\<close> cannot be rewritten by simp; \<open>unfolding\<close>
+      acts on the chained fact and does it.\<close>
+  have eqQ: "pshift_law T (- x) ?Q' = Q"
+    using pshift_law_compose[OF T setsQ, of "- x"] pshift_law_zero[OF setsQ]
+    by simp
+  show "AE \<omega> in Q. P (pshift T x \<omega>)" using step unfolding eqQ .
+qed
+
+lemma ess_inf_time_pshift_law:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "ess_inf_time (pshift_law T x Q) g
+       = ess_inf_time Q (\<lambda>\<omega>. g (pshift T x \<omega>))"
+proof -
+  have "{c. AE \<omega> in pshift_law T x Q. c \<le> ennreal (g \<omega>)}
+      = {c. AE \<omega> in Q. c \<le> ennreal (g (pshift T x \<omega>))}"
+    by (intro Collect_cong) (rule AE_pshift_law_iff[OF T setsQ])
+  then show ?thesis unfolding ess_inf_time_def by simp
+qed
+
+subsection \<open>The exit functional of (1.6) IS the shifted exit time\<close>
+
+text \<open>Both sides are the same infimum: the times range over \<open>{0..T}\<close>, and
+  there \<open>fst (pshift T x \<omega> r) = x + fst (\<omega> r) = fst ((x,0) + \<omega> r)\<close>.  No
+  path-space membership is needed.\<close>
+
+lemma pexit_pshift_eq_etime:
+  fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set" and x :: "real^'n"
+  shows "pexit T K (\<lambda>t. fst (pshift T x \<omega> t))
+       = etime T {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}
+           (\<lambda>s w. (x, 0) + w s) \<omega>"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> T \<and> fst (pshift T x \<omega> r) \<in> - K}
+      = {r. 0 \<le> r \<and> r \<le> T
+            \<and> (x, 0) + \<omega> r \<in> {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}}"
+    by (auto simp: pshift_fst)
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+subsection \<open>Turning a supremum of \<open>ennreal\<close>s into a supremum of reals\<close>
+
+lemma ennreal_Sup_image:
+  fixes S :: "real set" and B :: real
+  assumes ne: "S \<noteq> {}" and bnd: "\<And>s. s \<in> S \<Longrightarrow> 0 \<le> s \<and> s \<le> B"
+  shows "Sup (ennreal ` S) = ennreal (Sup S)"
+proof -
+  have bdd: "bdd_above S" using bnd by (intro bdd_aboveI[of _ B]) auto
+  have le1: "Sup (ennreal ` S) \<le> ennreal (Sup S)"
+  proof (rule Sup_least)
+    fix e assume "e \<in> ennreal ` S"
+    then obtain s where s: "s \<in> S" and e: "e = ennreal s" by blast
+    have "s \<le> Sup S" using s bdd by (rule cSup_upper)
+    then show "e \<le> ennreal (Sup S)" unfolding e by (rule ennreal_leI)
+  qed
+  have leB: "Sup (ennreal ` S) \<le> ennreal B"
+    by (rule Sup_least) (use bnd in \<open>auto intro: ennreal_leI\<close>)
+  have fin: "Sup (ennreal ` S) < \<top>"
+    using leB ennreal_less_top by (rule order_le_less_trans)
+  have "Sup S \<le> enn2real (Sup (ennreal ` S))"
+  proof (rule cSup_least[OF ne])
+    fix s assume s: "s \<in> S"
+    have "ennreal s \<le> Sup (ennreal ` S)" using s by (intro Sup_upper) auto
+    also have "\<dots> = ennreal (enn2real (Sup (ennreal ` S)))"
+      using fin by simp
+    finally show "s \<le> enn2real (Sup (ennreal ` S))" by simp
+  qed
+  then have "ennreal (Sup S) \<le> ennreal (enn2real (Sup (ennreal ` S)))"
+    by (rule ennreal_leI)
+  then have le2: "ennreal (Sup S) \<le> Sup (ennreal ` S)"
+    using fin by simp
+  from le1 le2 show ?thesis by simp
+qed
+
+subsection \<open>Eq. (1.6) as a shifted supremum over the class at \<open>0\<close>\<close>
+
+theorem paper_v_eq_vshift_sup:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  \<comment> \<open>the \<open>0\<close> MUST be annotated: without it the class in the assumption
+      elaborates at a fresh type variable and \<open>rule ne\<close> silently fails.\<close>
+  assumes T: "0 \<le> T" and ne: "paper_pair_class k L T (0 :: real^'n) \<noteq> {}"
+  shows "paper_v k L T K x
+      = ennreal (Sup (vshift T {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K} (x, 0)
+          ` paper_pair_class k L T 0))"
+proof -
+  let ?A = "{p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}"
+  let ?C = "paper_pair_class k L T 0"
+  let ?g = "\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))"
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))" if "Q \<in> ?C" for Q
+    by (rule paper_pair_class_sets[OF that])
+  have probQ: "prob_space Q" if "Q \<in> ?C" for Q :: "('n pairpath) measure"
+    by (rule paper_pair_class_prob[OF that])
+  have key: "ess_inf_time (pshift_law T x Q) ?g = ennreal (vshift T ?A (x, 0) Q)"
+    if Q: "Q \<in> ?C" for Q
+  proof -
+    have "ess_inf_time (pshift_law T x Q) ?g
+        = ess_inf_time Q (\<lambda>\<omega>. ?g (pshift T x \<omega>))"
+      by (rule ess_inf_time_pshift_law[OF T setsQ[OF Q]])
+    also have "\<dots> = ess_inf_time Q (etime T ?A (\<lambda>s w. (x, 0) + w s))"
+      by (rule arg_cong[where f = "ess_inf_time Q"])
+        (rule ext, rule pexit_pshift_eq_etime)
+    finally have e: "ess_inf_time (pshift_law T x Q) ?g
+        = ess_inf_time Q (etime T ?A (\<lambda>s w. (x, 0) + w s))" .
+    have le: "ess_inf_time Q (etime T ?A (\<lambda>s w. (x, 0) + w s)) \<le> ennreal T"
+      by (rule ess_inf_time_le_const[OF probQ[OF Q]]) (rule etime_le_T[OF T])
+    have fin: "ess_inf_time Q (etime T ?A (\<lambda>s w. (x, 0) + w s)) < \<top>"
+      using le ennreal_less_top by (rule order_le_less_trans)
+    show ?thesis unfolding e vshift_def using fin by simp
+  qed
+  have img: "paper_pair_class k L T x = pshift_law T x ` ?C"
+    by (rule paper_pair_class_shift_image[OF T])
+  have "paper_v k L T K x
+      = Sup ((\<lambda>Q. ess_inf_time Q ?g) ` (pshift_law T x ` ?C))"
+    unfolding paper_v_def img ..
+  also have "\<dots> = Sup ((\<lambda>Q. ess_inf_time (pshift_law T x Q) ?g) ` ?C)"
+    by (simp add: image_image)
+  also have "\<dots> = Sup ((\<lambda>Q. ennreal (vshift T ?A (x, 0) Q)) ` ?C)"
+    using key by (intro arg_cong[where f = Sup] image_cong refl)
+  also have "\<dots> = Sup (ennreal ` (vshift T ?A (x, 0) ` ?C))"
+    by (simp add: image_image)
+  also have "\<dots> = ennreal (Sup (vshift T ?A (x, 0) ` ?C))"
+  proof (rule ennreal_Sup_image[where B = T])
+    show "vshift T ?A (x, 0) ` ?C \<noteq> {}"
+      unfolding image_is_empty by (rule ne)
+    fix s :: real assume "s \<in> vshift T ?A (x, 0) ` ?C"
+    then obtain Q where Q: "Q \<in> ?C" and s: "s = vshift T ?A (x, 0) Q" by blast
+    have "0 \<le> s" unfolding s vshift_def by simp
+    moreover have "s \<le> T" unfolding s by (rule vshift_le[OF T probQ[OF Q]])
+    ultimately show "0 \<le> s \<and> s \<le> T" by blast
+  qed
+  finally show ?thesis .
+qed
+
+subsection \<open>Clause (1) of Theorem 1.1, for the paper's own value function\<close>
+
+text \<open>\<open>paper_v\<close> IS Eq. (1.6): the supremum, over the class (1.7) started at
+  \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>.  Upper
+  semicontinuity in \<open>x\<close> is exactly clause (1).  Every input is now proved:
+  the class is sequentially compact (NC-2 + NC-3) and shift-equivariant
+  (Prop. 2.2(ii)), so Berge applies through
+  \<open>Section_2_Usc.vshift_sup_usc_of_seq_compact\<close>.  The only hypothesis left
+  is NONEMPTINESS of the class at \<open>0\<close>, which is a separate construction.\<close>
+
+theorem paper_v_usc:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and b :: ennreal
+  assumes T: "0 < T" and L: "0 \<le> L" and K: "closed K"
+    and ne: "paper_pair_class k L T (0 :: real^'n) \<noteq> {}"
+    and lt: "paper_v k L T K x < b"
+  shows "eventually (\<lambda>y. paper_v k L T K y < b) (nhds x)"
+proof -
+  let ?A = "{p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}"
+  let ?C = "paper_pair_class k L T (0 :: real^'n)"
+  let ?S = "\<lambda>y :: real^'n. Sup (vshift T ?A (y, 0) ` ?C)"
+  let ?e = "\<lambda>y :: real^'n. (y, 0 :: real^'n^'n)"
+  have T0: "0 \<le> T" using T by simp
+  have Aopen: "open ?A"
+  proof -
+    have e: "?A = (fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) -` (- K)" by auto
+    show ?thesis unfolding e by (rule open_vimage_fst[OF open_Compl[OF K]])
+  qed
+  have probQ: "prob_space Q" if "Q \<in> ?C" for Q :: "('n pairpath) measure"
+    by (rule paper_pair_class_prob[OF that])
+  have eqv: "paper_v k L T K y = ennreal (?S y)" for y :: "real^'n"
+    by (rule paper_v_eq_vshift_sup[OF T0 ne])
+  have bdd: "bdd_above (vshift T ?A (y, 0) ` ?C)" for y :: "real^'n"
+    by (rule bdd_aboveI[of _ T]) (auto intro: vshift_le[OF T0] probQ)
+  have S0: "0 \<le> ?S y" for y :: "real^'n"
+  proof -
+    from ne obtain Q0 :: "('n pairpath) measure" where Q0: "Q0 \<in> ?C" by auto
+    have "0 \<le> vshift T ?A (y, 0) Q0" unfolding vshift_def by simp
+    also have "\<dots> \<le> ?S y" using Q0 bdd by (intro cSup_upper) auto
+    finally show ?thesis .
+  qed
+  have usc: "eventually (\<lambda>z. Sup (vshift T ?A z ` ?C) < c) (nhds (?e x))"
+    if c: "?S x < c" for c :: real
+  proof (rule vshift_sup_usc_of_seq_compact[OF T0 Aopen])
+    show "?C \<noteq> {}" by (rule ne)
+    show "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))" if "Q \<in> ?C" for Q
+      by (rule paper_pair_class_sets[OF that])
+    show "prob_space Q" if "Q \<in> ?C" for Q by (rule probQ[OF that])
+    show "\<exists>Lm r. Lm \<in> ?C \<and> strict_mono r \<and> weak_conv_on (\<sigma> \<circ> r) Lm sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      if "range \<sigma> \<subseteq> ?C" for \<sigma> :: "nat \<Rightarrow> ('n pairpath) measure"
+    proof -
+      have mem: "\<sigma> m \<in> ?C" for m using that by auto
+      have ex: "\<exists>a Q. strict_mono a \<and> Q \<in> ?C \<and> weak_conv_on (\<sigma> \<circ> a) Q sequentially
+          (mtopology_of (path_metric T :: ('n pairpath) metric))"
+        by (rule paper_pair_class_convergent_subsequence[OF T L mem])
+      obtain a where ea: "\<exists>Q. strict_mono a \<and> Q \<in> ?C
+          \<and> weak_conv_on (\<sigma> \<circ> a) Q sequentially
+              (mtopology_of (path_metric T :: ('n pairpath) metric))"
+        using ex by (rule exE)
+      obtain Q where h: "strict_mono a \<and> Q \<in> ?C
+          \<and> weak_conv_on (\<sigma> \<circ> a) Q sequentially
+              (mtopology_of (path_metric T :: ('n pairpath) metric))"
+        using ea by (rule exE)
+      show ?thesis
+        by (rule exI[of _ Q], rule exI[of _ a]) (use h in simp)
+    qed
+    show "?S x < c" by (rule c)
+  qed
+  obtain c :: real where cS: "?S x < c" and cb: "ennreal c \<le> b"
+  proof (cases "b = \<top>")
+    case True
+    show thesis by (rule that[of "?S x + 1"]) (simp_all add: True)
+  next
+    case False
+    then have blt: "b < \<top>" by (simp add: less_top)
+    have bb: "b = ennreal (enn2real b)" using blt by simp
+    have "ennreal (?S x) < b" using lt eqv by simp
+    then have "ennreal (?S x) < ennreal (enn2real b)" using bb by simp
+    \<comment> \<open>\<open>ennreal_less_iff\<close> carries its nonnegativity on the LEFT argument.\<close>
+    then have "?S x < enn2real b"
+      using S0[of x] by (simp add: ennreal_less_iff)
+    then show thesis by (rule that) (use bb in simp)
+  qed
+  from usc[OF cS] obtain U where U: "open U" and xU: "?e x \<in> U"
+    and UP: "\<And>z. z \<in> U \<Longrightarrow> Sup (vshift T ?A z ` ?C) < c"
+    unfolding eventually_nhds by blast
+  show ?thesis
+    unfolding eventually_nhds
+  proof (intro exI[of _ "?e -` U"] conjI ballI)
+    show "open (?e -` U)"
+      by (rule open_vimage[OF U]) (intro continuous_intros)
+    show "x \<in> ?e -` U" using xU by simp
+    fix y :: "real^'n" assume y: "y \<in> ?e -` U"
+    have "?S y < c" using UP[of "?e y"] y by simp
+    then have "ennreal (?S y) < ennreal c"
+      using S0[of y] by (simp add: ennreal_less_iff)
+    also have "\<dots> \<le> b" by (rule cb)
+    finally show "paper_v k L T K y < b" using eqv[of y] by simp
+  qed
+qed
+
 end
