@@ -5930,4 +5930,127 @@ lemma prob_space_bmpair_law:
   unfolding pair_law_of_def
   by (rule BMP.prob_space_distr[OF bmpair_measurable[OF T]])
 
+subsection \<open>The two almost-sure clauses for the witness\<close>
+
+lemma bmpair_law_start:
+  assumes T: "0 \<le> T"
+  shows "AE \<omega> in pair_law_of T (bmpair T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure).
+        fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have phim: "bmpair T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule bmpair_measurable[OF T])
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have mset: "{\<omega> \<in> space ?B. fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0}
+      \<in> sets ?B"
+  proof -
+    have "{\<omega> \<in> space ?B. fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0}
+        = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(0, 0)} \<inter> space ?B"
+      by (auto simp: prod_eq_iff)
+    then show ?thesis using measurable_sets[OF ev] by simp
+  qed
+  have iff: "(AE \<omega> in pair_law_of T (bmpair T) ?M.
+        fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0)
+      = (AE \<omega> in ?M. fst (bmpair T \<omega> 0) = (0 :: real^'n)
+          \<and> snd (bmpair T \<omega> 0) = 0)"
+    unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+  have z: "(0::real) \<in> {0..T}" using T by simp
+  have "AE \<omega> in ?M. cbmX (0 :: real^'n) 0 \<omega> = bmX 0 0 \<omega>"
+    by (intro cbmX_ae_eq) simp
+  moreover have "AE \<omega> in ?M. bmX (0 :: real^'n) 0 \<omega> = 0"
+    by (rule bmX_start)
+  ultimately have "AE \<omega> in ?M. fst (bmpair T \<omega> 0) = (0 :: real^'n)
+      \<and> snd (bmpair T \<omega> 0) = 0"
+    by eventually_elim (simp add: bmpair_apply[OF z])
+  then show ?thesis unfolding iff .
+qed
+
+lemma bmpair_law_diffquot:
+  assumes T: "0 \<le> T" and L: "1 \<le> L"
+  shows "AE \<omega> in pair_law_of T (bmpair T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure).
+        \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?Q = "pair_law_of T (bmpair T) ?M"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have phim: "bmpair T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule bmpair_measurable[OF T])
+  have spQ: "space ?Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_pair_law_of)
+  have one: "AE \<omega> in ?Q.
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    if pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" for p q :: real
+  proof -
+    have mm: "{\<omega> \<in> space ?B.
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L}
+        \<in> sets ?B"
+      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
+      by (simp add: space_borel_of)
+    have iff: "(AE \<omega> in ?Q.
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)
+        = (AE \<omega> in ?M. (1 / (q - p))
+            *\<^sub>R (snd (bmpair T \<omega> q) - snd (bmpair T \<omega> p)) \<in> sconstraint k L)"
+      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+    have "AE \<omega> in ?M. (1 / (q - p))
+        *\<^sub>R (snd (bmpair T \<omega> q) - snd (bmpair T \<omega> p)) \<in> sconstraint k L"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+      have "(1 / (q - p)) *\<^sub>R (snd (bmpair T \<omega> q) - snd (bmpair T \<omega> p))
+          = (1 / (q - p)) *\<^sub>R ((q - p) *\<^sub>R (mat 1 :: real^'n^'n))"
+        using pq by (simp add: bmpair_apply scaleR_left_diff_distrib)
+      also have "\<dots> = (mat 1 :: real^'n^'n)"
+        using pq(3) by simp
+      finally show "(1 / (q - p))
+          *\<^sub>R (snd (bmpair T \<omega> q) - snd (bmpair T \<omega> p)) \<in> sconstraint k L"
+        using mat_1_in_sconstraint[OF L] by simp
+    qed
+    then show ?thesis unfolding iff .
+  qed
+  \<comment> \<open>the rational reduction, exactly as in
+      \<open>Paper_Class.paper_pair_class_diffquot_limit\<close>\<close>
+  have rat: "AE \<omega> in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE \<omega> in ?Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE \<omega> in ?Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
+        case True
+        then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
+        from one[OF this] show ?thesis by (rule eventually_mono) simp
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  from rat AE_space show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      and W: "\<omega> \<in> space ?Q" by blast+
+    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W spQ by simp
+    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
+      using mspace_path_metricD[OF mw] by (intro continuous_intros)
+    show ?case
+    proof (intro allI impI)
+      fix u v :: real
+      assume uv: "0 \<le> u" "u < v" "v \<le> T"
+      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
+        by (rule diffquot_all_of_rational
+            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
+    qed
+  qed
+qed
+
 end
