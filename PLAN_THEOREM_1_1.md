@@ -1579,3 +1579,98 @@ returns the full LaTeXML HTML; strip tags and keep each `<math>`'s
 `alttext` attribute to recover the formulas. (`WebFetch` summarises and is
 useless for statements.) LR is at `https://arxiv.org/pdf/2003.13611` —
 note the versioned URL `…/2003.13611v3` 404s.
+
+---
+
+## SESSION 2026-08-06: NC-3 COMPLETE, NC-2 COMPLETE, CLASS SEQUENTIALLY COMPACT
+
+Two of the four remaining NC items are done and PIDE-verified (43 theories
+ok; `Paper_Bridge` 6792 commands, `Paper_Class` 3107).
+
+**Commit `d4cbf8b` — NC-3, the compensated clause; the class is weakly
+closed.** `paper_pair_class_weak_closed`: a weak limit of members of (1.7)
+is a member. New material, in dependency order:
+`prod_minus_sq_bound` ((ab−c)² ≤ a⁴+b⁴+2c²), `fourth_power_sum_bound`
+((a+b)⁴ ≤ 8(a⁴+b⁴)), `zero_le_fourth`, `comp_entry_eq`/`_cont`,
+`paper_pair_class_fourth_moment_abs` (the fourth moment of the coordinate
+ITSELF, from NC-1 plus the start clause), `paper_pair_class_comp_entry_sq_nn`
+(the uniform L² bound on `(outerp X − Y)$i$j` — the single input the generic
+weak-limit chain was missing), then `martingale_matI` and its three helpers
+`measurable_mat_entries` / `integrable_mat_entries` /
+`set_integral_mat_component`, then
+`paper_pair_class_comp_entry_martingale_limit`,
+`paper_pair_class_comp_martingale_limit`, `paper_pair_class_weak_closed`.
+
+  *Why `martingale_matI` had to be written:* `Ito_Market.martingale_vecI`
+  does NOT iterate to `real^'n^'n`. All three of its helpers
+  (`measurable_vec_components`, `integrable_vec_components`,
+  `set_integral_vec_component`) are stated for REAL entries only. The matrix
+  analogues are proved from the euclidean structure instead: `Basis` of a
+  matrix is `{axis i (axis j 1)}` and `A ∙ axis i (axis j 1) = A$i$j`, so
+  measurability comes from `borel_measurable_euclidean_space`, integrability
+  from `norm_le_l1` + `integrable_bound`, and the component identity from
+  `bounded_linear_compose` of two `bounded_linear_vec_nth`.
+
+**Commit `9870e98` — NC-2, tightness; and sequential compactness.**
+`paper_pair_class_convergent_subsequence`: every sequence of members has a
+subsequence converging weakly to a MEMBER. Chain:
+`paper_pair_class_fourth_moment_integrable` / `_bochner` (the NC-1 bound as
+a *Bochner* integral — integrability is free, a nonnegative function with a
+finite `nn_integral` is integrable), `path_coord_cont_on`,
+`paper_pair_class_pair_holder_charge`, `paper_pair_class_charge_small`,
+`tight_on_set_paper_pair_class`, `paper_pair_class_weak_limit_prob_space`.
+
+  *Why `path_law_holder_ball_bound_vec` could not be applied off the
+  shelf* (this is what the §3/NC WARNING was about, and the resolution):
+  its conclusion is about the push-forward `path_law M X T` of an abstract
+  process, whereas a class member IS already a law on paths; and it wants
+  the start condition `X₀ = x` POINTWISE, whereas a class member has it only
+  almost surely. So its ARGUMENT is re-run natively on the pair path space:
+  the dyadic bad events are built directly from `fst (ω ·) $ i`
+  (`pair_law_eval_measurable` is already all-`u`, because off the horizon
+  the evaluation is the constant `undefined`), and the failure of the
+  start-and-Lipschitz event is charged to a null set. That also removes the
+  need for the `Y`-event of `pair_holder_charge_split` to be measurable, so
+  the split lemma is not used at all.
+
+  *Why the limit still has mass one:* Prokhorov
+  (`tight_on_set_imp_convergent_subsequence`) only gives `≤ 1`. Tightness is
+  used a SECOND time: the compact charging set is closed, so
+  `weak_conv_closed_limsup` keeps at least `1 − e` of the mass in the limit,
+  for every `e`.
+
+### Traps recorded this session
+
+- **`ennreal_plus` is a DEFAULT simp rule in the SPLITTING direction.**
+  Adding `ennreal_plus[symmetric]` to a simpset LOOPS. To recombine
+  `ennreal a + ennreal b` into `ennreal (a+b)`, apply `ennreal_plus` as a
+  RULE (or state the equation the other way round and `rule sym`).
+- **On `ennreal`, `∞` and `⊤` are DIFFERENT terms** — `∞` is a definition,
+  only simp-identified with `⊤`. An Isar `show` must use whichever the rule
+  states (`integrableI_nonneg` states `< ∞`), or it "fails to refine any
+  pending goal" while printing identically.
+- **`linarith` again failed on a plainly LINEAR goal** ((a²+b²)² ≤ 2(a⁴+b⁴)
+  from two equations); `argo` closes it instantly. Same family as the
+  earlier notes.
+- **The MCP `edit` tool normalises `*` inside `text ‹…›` blocks to `\<sqdot>`.**
+  A later `edit` whose `old_text` spans such a block will not match. Anchor
+  replacements on code, not on prose.
+
+### What is left in NC
+
+0. **Nonemptiness of `paper_pair_class k L T 0`.** Still open, and now the
+   only thing standing between the compactness result and a non-vacuous
+   headline. Brownian pair law with `Y t = t · mat 1` (needs `L ≥ 1` via
+   `mat_1_in_sconstraint`); the work is the off-diagonal covariation
+   `X_i X_j` being a martingale.
+1. **The shift structure (LR Prop 2.2(ii))** — unchanged from the previous
+   session's scouting (see item 3 of the previous list).
+2. **The NC headline** — `paper_v` usc. The glue is now visible:
+   `paper_v k L T K x = Sup ((λQ. ess_inf_time Q (λω. pexit T K (λt. fst (ω t))))
+   ` paper_pair_class k L T x)`, and `pexit T K f = etime T (−K) (λr g. g r) f`,
+   while `vshift T A y Q = enn2real (ess_inf_time Q (etime T A (λs w. y + w s)))`.
+   So with `A = {p. fst p ∉ K}` (open for closed `K`) and `y = (x, 0)`,
+   `vshift T A (x,0)` on the 0-started class is exactly the `x`-started
+   value — PROVIDED the shift structure of item 1. Then
+   `Section_2_Usc.vshift_sup_usc_of_seq_compact` applies verbatim, its `seq`
+   hypothesis being `paper_pair_class_convergent_subsequence`.
