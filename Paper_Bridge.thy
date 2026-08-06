@@ -6522,6 +6522,122 @@ proof -
   then show ?thesis by simp
 qed
 
+text \<open>Example 3.1, inequality (3.10), for the paper's value function: if the
+  target set fits inside a ball of radius \<open>r\<close>, then
+
+    \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / (n - k)\<close>.
+
+  The bound does NOT mention the horizon \<open>T\<close>, so it is the quantitative
+  form of clause (0), and it is the reason the horizon cap of the capped
+  path space is eventually invisible.  \<open>paper_v_boundary_zero\<close> is the case
+  \<open>|x| = r\<close>.  The paper derives (3.10) from Ito's formula; here it comes
+  from \<open>paper_pair_class_sq_norm_mean_ge\<close>, which is Lemma 2.1's estimate at
+  a FIXED time and needs no stochastic calculus.\<close>
+
+theorem paper_v_le_ball_bound:
+  fixes r :: real and x :: "real^'n::finite" and K :: "(real^'n) set"
+  assumes k: "k < CARD('n)" and T: "0 \<le> T" and L: "0 \<le> L"
+    and KB: "K \<subseteq> cball 0 r"
+  shows "paper_v k L T K x
+      \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+proof -
+  define B where "B = (r * r - x \<bullet> x) / real (CARD('n) - k)"
+  have nk: "0 < real (CARD('n) - k)" using k by simp
+  have main: "paper_v k L T K x \<le> ennreal B"
+    unfolding paper_v_def
+  proof (rule Sup_least)
+    fix e :: ennreal
+    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+        ` paper_pair_class k L T x"
+    then obtain Q :: "('n pairpath) measure"
+      where Q: "Q \<in> paper_pair_class k L T x"
+        and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
+    interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+    show "e \<le> ennreal B"
+    proof (rule ccontr)
+      assume "\<not> e \<le> ennreal B"
+      then have gt: "ennreal B < e" by simp
+      have ele: "e \<le> ennreal T"
+        unfolding e
+        by (rule ess_inf_time_le_const[OF P.prob_space_axioms])
+          (simp add: pexit_def etime_le_T[OF T])
+      have efin: "e < \<top>"
+        using ele ennreal_less_top by (rule order_le_less_trans)
+      define c where "c = enn2real e"
+      have ec: "e = ennreal c" unfolding c_def using efin by simp
+      have c0: "0 \<le> c" unfolding c_def by simp
+      have cT: "c \<le> T" using ele T unfolding ec by simp
+      define m where "m = max B 0"
+      have m0: "0 \<le> m" and mB: "B \<le> m" unfolding m_def by auto
+      have mc: "m < c"
+      proof (cases "0 \<le> B")
+        case True
+        then have "B < c" using gt unfolding ec by (simp add: ennreal_less_iff)
+        then show ?thesis using True unfolding m_def by simp
+      next
+        case False
+        then have z: "ennreal B = 0" by (simp add: ennreal_neg)
+        have "0 < c"
+        proof (rule ccontr)
+          assume "\<not> 0 < c"
+          then have "ennreal c = 0" by (simp add: ennreal_neg)
+          with gt z show False unfolding ec by simp
+        qed
+        then show ?thesis using False unfolding m_def by simp
+      qed
+      define t where "t = (m + c) / 2"
+      have t0: "0 < t" unfolding t_def using m0 mc by simp
+      have tc: "t < c" unfolding t_def using mc by simp
+      have Bt: "B < t" unfolding t_def using mB mc by simp
+      have tT: "t \<le> T" using tc cT by simp
+      have tI: "t \<in> {0..T}" using t0 tT by simp
+      have ae1: "AE \<omega> in Q. e \<le> ennreal (pexit T K (\<lambda>s. fst (\<omega> s)))"
+        unfolding e by (rule ess_inf_time_AE)
+      have ae2: "AE \<omega> in Q. fst (\<omega> t) \<bullet> fst (\<omega> t) \<le> r * r"
+      proof (rule eventually_mono[OF ae1])
+        fix \<omega> :: "'n pairpath"
+        assume "e \<le> ennreal (pexit T K (\<lambda>s. fst (\<omega> s)))"
+        then have "ennreal c \<le> ennreal (pexit T K (\<lambda>s. fst (\<omega> s)))"
+          using ec by simp
+        moreover have nn: "0 \<le> pexit T K (\<lambda>s. fst (\<omega> s))"
+          unfolding pexit_def by (rule etime_nonneg[OF T])
+        ultimately have ct: "c \<le> pexit T K (\<lambda>s. fst (\<omega> s))" by simp
+        have inK: "fst (\<omega> t) \<in> K"
+        proof (rule ccontr)
+          assume notin: "fst (\<omega> t) \<notin> K"
+          have "pexit T K (\<lambda>s. fst (\<omega> s)) \<le> t"
+            unfolding pexit_def
+            by (rule etime_le_of_mem[OF T less_imp_le[OF t0] tT])
+              (use notin in simp)
+          with ct tc show False by simp
+        qed
+        have "norm (fst (\<omega> t)) \<le> r" using inK KB by (auto simp: dist_norm)
+        then have "(norm (fst (\<omega> t)))\<^sup>2 \<le> r\<^sup>2"
+          by (rule power_mono) simp
+        then show "fst (\<omega> t) \<bullet> fst (\<omega> t) \<le> r * r"
+          by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
+      qed
+      have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
+        by (rule paper_pair_class_norm_sq_integrable[OF T L Q tI])
+      have lo: "x \<bullet> x + real (CARD('n) - k) * t
+          \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
+        by (rule paper_pair_class_sq_norm_mean_ge[OF k T L Q tI])
+      have hi: "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q) \<le> r * r"
+      proof -
+        have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q) \<le> (\<integral>\<omega>. r * r \<partial>Q)"
+          by (rule integral_mono_AE) (use ni ae2 in auto)
+        also have "\<dots> = r * r" by (simp add: P.prob_space)
+        finally show ?thesis .
+      qed
+      from lo hi have "real (CARD('n) - k) * t \<le> r * r - x \<bullet> x" by simp
+      then have "t \<le> B" unfolding B_def
+        using nk by (simp add: pos_le_divide_eq mult.commute)
+      with Bt show False by simp
+    qed
+  qed
+  from main show ?thesis unfolding B_def .
+qed
+
 section \<open>Towards the DPP: the class is closed under shortening the horizon\<close>
 
 text \<open>The conditioning-free half of the closure the weak DPP needs.  A
