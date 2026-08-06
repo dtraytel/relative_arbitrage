@@ -1951,3 +1951,42 @@ for `1 ≤ k`, `k < CARD('n)`, `1 ≤ L`, `0 ≤ T`:
    process-side hypotheses are `martingale_stopped_const` applied to
    `martingale_cbmX` and to `martingale_cbm_outerp`. The `Zm` obligation is
    the `measurable_family_vimage_algebra` route used throughout NC-3.
+
+---
+
+## NC IS COMPLETE (2026-08-06, commit `7c783cb`)
+
+`isabelle build -d . Arbitrage` finishes green; zero `sorry` in the session.
+
+**`Paper_Bridge.paper_v_usc_unconditional`** — for `0 < T`, `1 ≤ L` (the
+paper's (1.5)) and `closed K`:
+
+```
+paper_v k L T K x < b  ==>  eventually (%y. paper_v k L T K y < b) (nhds x)
+```
+
+`paper_v` IS Eq. (1.6), so this is **clause (1) of Theorem 1.1 for the
+paper's own value function**, with no hypothesis left beyond the paper's
+standing ones. The five inputs:
+
+1. NC-3 `paper_pair_class_weak_closed`;
+2. NC-2 `tight_on_set_paper_pair_class` /
+   `paper_pair_class_convergent_subsequence`;
+3. `paper_pair_class_shift_image` (LR Prop. 2.2(ii));
+4. `paper_pair_class_nonempty` — the witness is
+   `bmpair T w = restrict (%t. (cbmX 0 t w, t *R mat 1)) {0..T}` on
+   `bm_paths`, whose four clauses are `bmpair_law_start`,
+   `bmpair_law_diffquot`, `bmpair_law_X_martingale`,
+   `bmpair_law_comp_martingale`;
+5. `paper_v_usc` (Berge, through `vshift_sup_usc_of_seq_compact`).
+
+The last of these rested on the off-diagonal covariation of Brownian motion
+(`bm_coordinates_indep` ... `martingale_cbm_outerp`), which the market
+locale never supplied -- it asserts only the diagonal `coord_Z_martingale`.
+
+### Remaining for Theorem 1.1
+
+- **N5, the weak DPP** (Prop. 2.4 / Eq. (2.9)) -- untouched; build order is
+  scripted in the N5 section. Unblocks clause (2) together with N4.
+- Clause (3) beyond the ball, and general `n - k >= 2` (spherical BM,
+  discrete route). N4 is complete for `n - k = 1`.
