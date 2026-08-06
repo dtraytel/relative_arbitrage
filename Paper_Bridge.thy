@@ -4367,4 +4367,458 @@ lemma natural_filtration_pshift_law:
   unfolding natural_filtration_def
   using space_of_path_sets[OF setsQ] space_pshift_law[of T x Q] by simp
 
+text \<open>The martingale property transports.  Everything is arranged so that
+  the FILTRATION does not move (\<open>natural_filtration_pshift_law\<close>): only the
+  measure and the process change, and they change by the same shift, so
+  the set-integral identity is the one \<open>Q\<close> already satisfies over the
+  shifted event.\<close>
+
+lemma martingale_pshift_law:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+    and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes T: "0 \<le> T" and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Zm: "\<And>u. 0 \<le> u \<Longrightarrow>
+        Z u \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u)"
+    and mg: "martingale Q (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)) 0
+        (\<lambda>u \<omega>. Z u (pshift T x \<omega>))"
+  shows "martingale (pshift_law T x Q)
+      (natural_filtration (pshift_law T x Q) 0 (\<lambda>v \<omega>. \<omega> v)) 0 Z"
+proof -
+  let ?Q' = "pshift_law T x Q"
+  let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  interpret MG: martingale Q ?F 0 "\<lambda>u \<omega>. Z u (pshift T x \<omega>)" by (rule mg)
+  have FF: "natural_filtration ?Q' 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) = ?F"
+    by (rule natural_filtration_pshift_law[OF setsQ])
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have spQ': "space ?Q' = space Q" using spQ by (simp add: space_pshift_law)
+  have setsQ': "sets ?Q' = sets ?B" by simp
+  have prob': "prob_space ?Q'" by (rule prob_space_pshift_law[OF T prob setsQ])
+  have fin': "finite_measure ?Q'" using prob' by (simp add: prob_space_def)
+  have shm: "pshift T x \<in> Q \<rightarrow>\<^sub>M ?B"
+    using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
+  have SP: "Stochastic_Process.stochastic_process ?Q' (0::real)
+      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+    by unfold_locales (rule pair_law_eval_measurable[OF sets_pshift_law])
+  interpret SF: finite_filtered_measure ?Q' ?F 0
+    using Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
+      [OF SP fin'] unfolding FF .
+  have ZB: "Z w \<in> borel_measurable ?B" if w: "0 \<le> w" for w
+  proof -
+    have "Z w \<in> borel_measurable ?Q'"
+      by (rule measurable_from_subalg[OF SF.subalgebras[OF w] Zm[OF w]])
+    then show ?thesis using measurable_cong_sets[OF setsQ' refl] by blast
+  qed
+  show ?thesis
+    unfolding FF
+  proof (rule SF.martingale_of_set_integral_eq)
+    show "adapted_process ?Q' ?F 0 Z"
+    proof (unfold_locales)
+      fix u :: real assume u: "0 \<le> u"
+      show "Z u \<in> borel_measurable (?F u)" by (rule Zm[OF u])
+    qed
+    show "integrable ?Q' (Z u)" if u: "0 \<le> u" for u
+    proof -
+      have "integrable ?Q' (Z u) \<longleftrightarrow> integrable Q (\<lambda>\<omega>. Z u (pshift T x \<omega>))"
+        unfolding pshift_law_def by (rule integrable_distr_eq[OF shm ZB[OF u]])
+      then show ?thesis using MG.integrable[OF u] by simp
+    qed
+    fix A and u v :: real
+    assume A: "A \<in> ?F u" and uv: "0 \<le> u" "u \<le> v"
+    have v0: "0 \<le> v" using uv by simp
+    have AB: "A \<in> sets ?B"
+      using A SF.subalgebras[OF uv(1)] setsQ' by (auto simp: subalgebra_def)
+    have pA: "pshift T x -` A \<inter> space Q \<in> ?F u"
+      using measurable_sets[OF pshift_filtration_measurable[OF setsQ] A] by simp
+    have key: "set_lebesgue_integral ?Q' A (Z w)
+        = set_lebesgue_integral Q (pshift T x -` A \<inter> space Q)
+            (\<lambda>\<omega>. Z w (pshift T x \<omega>))" if w: "0 \<le> w" for w
+    proof -
+      have gb: "(\<lambda>\<omega> :: 'n pairpath. indicat_real A \<omega> *\<^sub>R Z w \<omega>)
+          \<in> borel_measurable ?B"
+        using AB ZB[OF w] by measurable
+      have "set_lebesgue_integral ?Q' A (Z w)
+          = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R Z w \<omega> \<partial>?Q')"
+        unfolding set_lebesgue_integral_def ..
+      also have "\<dots> = (\<integral>\<omega>. indicat_real A (pshift T x \<omega>)
+              *\<^sub>R Z w (pshift T x \<omega>) \<partial>Q)"
+        unfolding pshift_law_def by (rule integral_distr[OF shm gb])
+      also have "\<dots> = (\<integral>\<omega>. indicat_real (pshift T x -` A \<inter> space Q) \<omega>
+              *\<^sub>R Z w (pshift T x \<omega>) \<partial>Q)"
+        by (rule Bochner_Integration.integral_cong) (auto simp: indicator_def)
+      finally show ?thesis unfolding set_lebesgue_integral_def .
+    qed
+    show "set_lebesgue_integral ?Q' A (Z u) = set_lebesgue_integral ?Q' A (Z v)"
+      unfolding key[OF uv(1)] key[OF v0]
+      by (rule MG.set_integral_eq[OF pA uv(1) uv(2)])
+  qed
+qed
+
+subsection \<open>Three pieces of martingale algebra the AFP does not have\<close>
+
+lemma martingale_add:
+  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
+  assumes mX: "martingale M F t0 X" and mY: "martingale M F t0 Y"
+  shows "martingale M F t0 (\<lambda>u \<omega>. X u \<omega> + Y u \<omega>)"
+proof -
+  interpret MX: martingale M F t0 X by (rule mX)
+  interpret MY: martingale M F t0 Y by (rule mY)
+  show ?thesis
+  proof (rule MX.martingale_of_set_integral_eq)
+    show "adapted_process M F t0 (\<lambda>u \<omega>. X u \<omega> + Y u \<omega>)"
+    proof (unfold_locales)
+      fix i :: real assume i: "t0 \<le> i"
+      show "(\<lambda>\<omega>. X i \<omega> + Y i \<omega>) \<in> borel_measurable (F i)"
+        using MX.adapted[OF i] MY.adapted[OF i] by simp
+    qed
+    show "\<And>i. t0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> + Y i \<omega>)"
+      by (intro Bochner_Integration.integrable_add MX.integrable MY.integrable)
+    fix A and i j :: real
+    assume A: "A \<in> F i" and ij: "t0 \<le> i" "i \<le> j"
+    have j: "t0 \<le> j" using ij by simp
+    have Ai: "A \<in> sets M"
+      using A MX.subalgebras[OF ij(1)] by (auto simp: subalgebra_def)
+    have siX: "set_integrable M A (X w)" if w: "t0 \<le> w" for w
+      unfolding set_integrable_def
+      by (rule integrable_mult_indicator[OF Ai MX.integrable[OF w]])
+    have siY: "set_integrable M A (Y w)" if w: "t0 \<le> w" for w
+      unfolding set_integrable_def
+      by (rule integrable_mult_indicator[OF Ai MY.integrable[OF w]])
+    have split: "set_lebesgue_integral M A (\<lambda>\<omega>. X w \<omega> + Y w \<omega>)
+        = set_lebesgue_integral M A (X w) + set_lebesgue_integral M A (Y w)"
+      if w: "t0 \<le> w" for w
+      by (rule set_integral_add(2)[OF siX[OF w] siY[OF w]])
+    show "set_lebesgue_integral M A (\<lambda>\<omega>. X i \<omega> + Y i \<omega>)
+        = set_lebesgue_integral M A (\<lambda>\<omega>. X j \<omega> + Y j \<omega>)"
+      unfolding split[OF ij(1)] split[OF j]
+      using MX.set_integral_eq[OF A ij] MY.set_integral_eq[OF A ij] by simp
+  qed
+qed
+
+lemma martingale_add_const:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
+  assumes ffm: "finite_filtered_measure M F t0" and mg: "martingale M F t0 X"
+  shows "martingale M F t0 (\<lambda>u \<omega>. c + X u \<omega>)"
+proof -
+  interpret FM: finite_filtered_measure M F t0 by (rule ffm)
+  have "martingale M F t0 (\<lambda>_ _. c)" by (rule FM.martingale_const)
+  from martingale_add[OF this mg] show ?thesis .
+qed
+
+text \<open>The processes below differ at NEGATIVE times --- the shifted
+  evaluation is \<open>undefined\<close> there, the shifted value is not --- and the
+  martingale locale never looks at those, so a congruence above \<open>t\<^sub>0\<close> is
+  what is needed.\<close>
+
+lemma martingale_cong_ge:
+  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
+  assumes mg: "martingale M F t0 X"
+    and eq: "\<And>u. t0 \<le> u \<Longrightarrow> X u = Y u"
+  shows "martingale M F t0 Y"
+proof -
+  interpret MX: martingale M F t0 X by (rule mg)
+  show ?thesis
+  proof (rule MX.martingale_of_set_integral_eq)
+    show "adapted_process M F t0 Y"
+    proof (unfold_locales)
+      fix i :: real assume i: "t0 \<le> i"
+      show "Y i \<in> borel_measurable (F i)"
+        using MX.adapted[OF i] eq[OF i] by simp
+    qed
+    show "\<And>i. t0 \<le> i \<Longrightarrow> integrable M (Y i)"
+      using MX.integrable eq by simp
+    fix A and i j :: real
+    assume A: "A \<in> F i" and ij: "t0 \<le> i" "i \<le> j"
+    have j: "t0 \<le> j" using ij by simp
+    show "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (Y j)"
+      using MX.set_integral_eq[OF A ij] eq[OF ij(1)] eq[OF j] by simp
+  qed
+qed
+
+subsection \<open>Almost-sure statements transport through the shift\<close>
+
+text \<open>The shift is a BIJECTION of the path space with measurable inverse,
+  so a null set for \<open>Q\<close> has a null image --- which is what lets the two
+  almost-sure clauses of (1.7) be transported without any measurability
+  hypothesis on the property itself.\<close>
+
+lemma AE_pshift_law:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and ae: "AE \<omega> in Q. P (pshift T x \<omega>)"
+  shows "AE \<omega> in pshift_law T x Q. P \<omega>"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have spQ': "space (pshift_law T x Q) = space Q"
+    using spQ by (simp add: space_pshift_law)
+  have shm: "pshift T x \<in> Q \<rightarrow>\<^sub>M ?B"
+    using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
+  have shmQ: "pshift T (- x) \<in> Q \<rightarrow>\<^sub>M Q"
+    using pshift_measurable[OF T] measurable_cong_sets[OF setsQ setsQ] by blast
+  obtain N1 where N1: "{\<omega> \<in> space Q. \<not> P (pshift T x \<omega>)} \<subseteq> N1"
+    and N1z: "emeasure Q N1 = 0" and N1s: "N1 \<in> sets Q"
+    by (rule AE_E[OF ae])
+  define B where "B = pshift T (- x) -` N1 \<inter> space Q"
+  have Bs: "B \<in> sets Q" unfolding B_def by (rule measurable_sets[OF shmQ N1s])
+  have pre: "pshift T x -` B \<inter> space Q = N1 \<inter> space Q"
+  proof
+    show "pshift T x -` B \<inter> space Q \<subseteq> N1 \<inter> space Q"
+    proof
+      fix \<omega> :: "'n pairpath"
+      assume "\<omega> \<in> pshift T x -` B \<inter> space Q"
+      then have w: "\<omega> \<in> space Q" and n: "pshift T (- x) (pshift T x \<omega>) \<in> N1"
+        unfolding B_def by auto
+      have "pshift T (- x) (pshift T x \<omega>) = \<omega>"
+        using w spQ by (simp add: pshift_inverse)
+      with n w show "\<omega> \<in> N1 \<inter> space Q" by simp
+    qed
+    show "N1 \<inter> space Q \<subseteq> pshift T x -` B \<inter> space Q"
+    proof
+      fix \<omega> :: "'n pairpath" assume "\<omega> \<in> N1 \<inter> space Q"
+      then have n: "\<omega> \<in> N1" and w: "\<omega> \<in> space Q" by auto
+      have e: "pshift T (- x) (pshift T x \<omega>) = \<omega>"
+        using w spQ by (simp add: pshift_inverse)
+      have "pshift T x \<omega> \<in> space Q" using w spQ by (simp add: pshift_in_mspace)
+      then show "\<omega> \<in> pshift T x -` B \<inter> space Q"
+        unfolding B_def using n w e by simp
+    qed
+  qed
+  have "emeasure (pshift_law T x Q) B = emeasure Q (pshift T x -` B \<inter> space Q)"
+    unfolding pshift_law_def
+    by (rule emeasure_distr[OF shm]) (use Bs setsQ in simp)
+  also have "\<dots> = emeasure Q (N1 \<inter> space Q)" using pre by simp
+  also have "\<dots> = 0"
+    using N1z sets.sets_into_space[OF N1s] by (simp add: Int_absorb2)
+  finally have Bnull: "emeasure (pshift_law T x Q) B = 0" .
+  have sub: "{\<omega> \<in> space (pshift_law T x Q). \<not> P \<omega>} \<subseteq> B"
+  proof
+    fix \<omega>' :: "'n pairpath"
+    assume "\<omega>' \<in> {\<omega> \<in> space (pshift_law T x Q). \<not> P \<omega>}"
+    then have w': "\<omega>' \<in> space Q" and nP: "\<not> P \<omega>'" using spQ' by auto
+    have wm: "\<omega>' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using w' spQ by simp
+    have e: "pshift T x (pshift T (- x) \<omega>') = \<omega>'"
+      using pshift_pshift[of T x "- x" \<omega>'] pshift_zero[OF wm] by simp
+    have "pshift T (- x) \<omega>' \<in> space Q"
+      using wm spQ by (simp add: pshift_in_mspace)
+    then have "pshift T (- x) \<omega>' \<in> N1" using N1 nP e by auto
+    then show "\<omega>' \<in> B" unfolding B_def using w' by simp
+  qed
+  have Bn: "B \<in> null_sets (pshift_law T x Q)"
+    using Bs Bnull setsQ by (simp add: null_sets_def)
+  show ?thesis
+    unfolding eventually_ae_filter using sub Bn by blast
+qed
+
+subsection \<open>The class is shift-equivariant\<close>
+
+text \<open>The one algebraic input: translating \<open>X\<close> splits the compensated
+  process into ITSELF, a term LINEAR in \<open>X\<close>, and a constant --- so it stays
+  a martingale.\<close>
+
+lemma comp_shift_split:
+  fixes x v :: "real^'n::finite" and w :: "real^'n^'n"
+  shows "outerp x + ((outerp v - w) + (\<chi> i j. x $ i * v $ j + v $ i * x $ j))
+       = outerp (x + v) - w"
+  by (simp add: outerp_def vec_eq_iff algebra_simps)
+
+lemma bounded_linear_cross:
+  fixes x :: "real^'n::finite"
+  shows "bounded_linear
+      (\<lambda>v :: real^'n. (\<chi> i j. x $ i * v $ j + v $ i * x $ j) :: real^'n^'n)"
+  unfolding linear_conv_bounded_linear[symmetric]
+  by (intro linearI) (simp_all add: vec_eq_iff algebra_simps)
+
+theorem paper_pair_class_pshift:
+  fixes Q :: "('n::finite pairpath) measure" and x x0 :: "real^'n"
+  assumes T: "0 \<le> T" and Q: "Q \<in> paper_pair_class k L T x0"
+  shows "pshift_law T x Q \<in> paper_pair_class k L T (x + x0)"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?cross = "\<lambda>v :: real^'n. (\<chi> i j. x $ i * v $ j + v $ i * x $ j) :: real^'n^'n"
+  have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
+  have SP: "Stochastic_Process.stochastic_process Q (0::real)
+      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+    by unfold_locales (rule pair_law_eval_measurable[OF setsQ])
+  have ffm: "finite_filtered_measure Q ?F 0"
+    by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
+        [OF SP finQ])
+  have minI: "min u T \<in> {0..T}" if "0 \<le> u" for u using that T by simp
+  have mX: "martingale Q ?F 0 (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+    by (rule paper_pair_class_X_martingale[OF Q])
+  interpret MX: martingale Q ?F 0 "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T))"
+    by (rule mX)
+  \<comment> \<open>the two almost-sure clauses\<close>
+  have st: "AE \<omega> in Q. fst (\<omega> 0) = x0 \<and> snd (\<omega> 0) = 0"
+    using Q unfolding paper_pair_class_def by blast
+  have st': "AE \<omega> in pshift_law T x Q. fst (\<omega> 0) = x + x0 \<and> snd (\<omega> 0) = 0"
+  proof (rule AE_pshift_law[OF T setsQ])
+    show "AE \<omega> in Q. fst (pshift T x \<omega> 0) = x + x0
+        \<and> snd (pshift T x \<omega> 0) = 0"
+    proof (rule eventually_mono[OF st])
+      fix \<omega> :: "'n pairpath"
+      assume "fst (\<omega> 0) = x0 \<and> snd (\<omega> 0) = 0"
+      then show "fst (pshift T x \<omega> 0) = x + x0 \<and> snd (pshift T x \<omega> 0) = 0"
+        using T by (simp add: pshift_fst pshift_snd)
+    qed
+  qed
+  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding paper_pair_class_def by blast
+  have dq': "AE \<omega> in pshift_law T x Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  proof (rule AE_pshift_law[OF T setsQ])
+    show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (pshift T x \<omega> t) - snd (pshift T x \<omega> s))
+          \<in> sconstraint k L"
+    proof (rule eventually_mono[OF dq])
+      fix \<omega> :: "'n pairpath"
+      assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (pshift T x \<omega> t) - snd (pshift T x \<omega> s))
+            \<in> sconstraint k L"
+      proof (intro allI impI)
+        fix s t :: real
+        assume s: "0 \<le> s" and stt: "s < t" and tT: "t \<le> T"
+        have sI: "s \<in> {0..T}" using s stt tT by simp
+        have tI: "t \<in> {0..T}" using s stt tT by simp
+        show "(1 / (t - s)) *\<^sub>R (snd (pshift T x \<omega> t) - snd (pshift T x \<omega> s))
+            \<in> sconstraint k L"
+          using q s stt tT by (simp add: pshift_snd[OF sI] pshift_snd[OF tI])
+      qed
+    qed
+  qed
+  \<comment> \<open>the two martingale clauses\<close>
+  have Zm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T))) \<in> borel_measurable (?F u)"
+    if u: "0 \<le> u" for u by (rule MX.adapted[OF u])
+  have mgX: "martingale Q ?F 0 (\<lambda>u \<omega>. fst (pshift T x \<omega> (min u T)))"
+  proof (rule martingale_cong_ge[OF martingale_add_const[OF ffm mX, of x]])
+    fix u :: real assume u: "0 \<le> u"
+    show "(\<lambda>\<omega> :: 'n pairpath. x + fst (\<omega> (min u T)))
+        = (\<lambda>\<omega>. fst (pshift T x \<omega> (min u T)))"
+      by (rule ext) (simp add: pshift_fst[OF minI[OF u]])
+  qed
+  have Xshift: "martingale (pshift_law T x Q)
+      (natural_filtration (pshift_law T x Q) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+    by (rule martingale_pshift_law[OF T prob setsQ Zm mgX])
+  have mC: "martingale Q ?F 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+    by (rule paper_pair_class_compensated_martingale[OF Q])
+  interpret MC: martingale Q ?F 0
+      "\<lambda>u \<omega> :: 'n pairpath. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
+    by (rule mC)
+  have mCross: "martingale Q ?F 0 (\<lambda>u \<omega>. ?cross (fst (\<omega> (min u T))))"
+    by (rule martingale_bounded_linear_image[OF bounded_linear_cross mX])
+  have sum2: "martingale Q ?F 0 (\<lambda>u \<omega>. outerp x
+      + ((outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
+         + ?cross (fst (\<omega> (min u T)))))"
+    by (rule martingale_add_const[OF ffm martingale_add[OF mC mCross]])
+  have ZmC: "(\<lambda>\<omega> :: 'n pairpath.
+      outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
+        \<in> borel_measurable (?F u)"
+    if u: "0 \<le> u" for u by (rule MC.adapted[OF u])
+  have mgC: "martingale Q ?F 0 (\<lambda>u \<omega>.
+      outerp (fst (pshift T x \<omega> (min u T))) - snd (pshift T x \<omega> (min u T)))"
+  proof (rule martingale_cong_ge[OF sum2])
+    fix u :: real assume u: "0 \<le> u"
+    show "(\<lambda>\<omega> :: 'n pairpath. outerp x
+        + ((outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
+           + ?cross (fst (\<omega> (min u T)))))
+        = (\<lambda>\<omega>. outerp (fst (pshift T x \<omega> (min u T)))
+           - snd (pshift T x \<omega> (min u T)))"
+      by (rule ext)
+        (simp add: pshift_fst[OF minI[OF u]] pshift_snd[OF minI[OF u]]
+          comp_shift_split)
+  qed
+  have Cshift: "martingale (pshift_law T x Q)
+      (natural_filtration (pshift_law T x Q) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+    by (rule martingale_pshift_law[OF T prob setsQ ZmC mgC])
+  show ?thesis
+    unfolding paper_pair_class_def
+  proof (intro CollectI conjI)
+    show "prob_space (pshift_law T x Q)"
+      by (rule prob_space_pshift_law[OF T prob setsQ])
+    show "sets (pshift_law T x Q) = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))" by simp
+    show "AE \<omega> in pshift_law T x Q. fst (\<omega> 0) = x + x0 \<and> snd (\<omega> 0) = 0"
+      by (rule st')
+    show "AE \<omega> in pshift_law T x Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      by (rule dq')
+    show "martingale (pshift_law T x Q)
+        (natural_filtration (pshift_law T x Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. fst (\<omega> (min t T)))" by (rule Xshift)
+    show "martingale (pshift_law T x Q)
+        (natural_filtration (pshift_law T x Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
+      by (rule Cshift)
+  qed
+qed
+
+text \<open>Larsson--Ruf Prop. 2.2(ii) for the paper's class, in the form the
+  value function needs: the class at \<open>x\<close> is the \<open>x\<close>-translate of the class
+  at \<open>0\<close>.  The reverse inclusion is the same theorem at \<open>-x\<close>, plus the fact
+  that the two push-forwards compose to the identity.\<close>
+
+corollary paper_pair_class_shift_image:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 \<le> T"
+  shows "paper_pair_class k L T x = pshift_law T x ` paper_pair_class k L T 0"
+proof
+  show "pshift_law T x ` paper_pair_class k L T 0 \<subseteq> paper_pair_class k L T x"
+  proof
+    fix R :: "('n pairpath) measure"
+    assume "R \<in> pshift_law T x ` paper_pair_class k L T 0"
+    then obtain Q0 where Q0: "Q0 \<in> paper_pair_class k L T 0"
+      and R: "R = pshift_law T x Q0" by blast
+    have "pshift_law T x Q0 \<in> paper_pair_class k L T (x + 0)"
+      by (rule paper_pair_class_pshift[OF T Q0])
+    then show "R \<in> paper_pair_class k L T x" using R by simp
+  qed
+  show "paper_pair_class k L T x \<subseteq> pshift_law T x ` paper_pair_class k L T 0"
+  proof
+    fix Q :: "('n pairpath) measure"
+    assume Q: "Q \<in> paper_pair_class k L T x"
+    let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    have setsQ: "sets Q = sets ?B" by (rule paper_pair_class_sets[OF Q])
+    have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+      by (rule space_of_path_sets[OF setsQ])
+    have mem0: "pshift_law T (- x) Q \<in> paper_pair_class k L T 0"
+      using paper_pair_class_pshift[OF T Q, of "- x"] by simp
+    have shm: "pshift T (- x) \<in> Q \<rightarrow>\<^sub>M ?B"
+      using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
+    have shm2: "pshift T x \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule pshift_measurable[OF T])
+    have "pshift_law T x (pshift_law T (- x) Q)
+        = distr Q ?B (pshift T x \<circ> pshift T (- x))"
+      unfolding pshift_law_def by (rule distr_distr[OF shm2 shm])
+    also have "\<dots> = distr Q ?B (\<lambda>\<omega>. \<omega>)"
+    proof (rule distr_cong)
+      show "Q = Q" ..
+      show "sets ?B = sets ?B" ..
+      fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space Q"
+      then have wm: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+        using spQ by simp
+      show "(pshift T x \<circ> pshift T (- x)) \<omega> = \<omega>"
+        using pshift_pshift[of T x "- x" \<omega>] pshift_zero[OF wm] by simp
+    qed
+    also have "\<dots> = Q" by (rule distr_id2[OF setsQ[symmetric]])
+    finally have "pshift_law T x (pshift_law T (- x) Q) = Q" .
+    with mem0 show "Q \<in> pshift_law T x ` paper_pair_class k L T 0" by force
+  qed
+qed
+
 end
