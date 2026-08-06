@@ -8521,4 +8521,142 @@ proof (rule order.antisym)
     by (rule paper_v_horizon_mono[OF S0 ST L K])
 qed
 
+section \<open>Towards Proposition 2.4: the pasting lower bound\<close>
+
+text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic programming principle
+  (2.9).  Pasting produces a member of the class, so the essential infimum of
+  ITS exit time is a lower bound for \<open>v(x)\<close>; and the exit time of a glued path
+  is at least \<open>r + c\<close> as soon as the first piece stays in \<open>K\<close> up to \<open>r\<close> and
+  the re-based continuation stays in \<open>K\<close> for a further \<open>c\<close>.  Note the
+  continuation is automatically re-based at the endpoint by \<open>pglue\<close>, so a
+  SINGLE law \<open>R\<close> started at \<open>0\<close> supplies a continuation from every endpoint;
+  what the full (2.9) needs on top is to choose that law depending on the
+  endpoint.\<close>
+
+lemma pexit_path_measurable:
+  fixes K :: "(real^'n::finite) set" and N :: "('n pairpath) measure"
+  assumes T: "0 \<le> T" and K: "closed K"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))) \<in> borel_measurable N"
+proof -
+  have "(\<lambda>\<omega> :: 'n pairpath. pexit T K (pfst T \<omega>)) \<in> borel_measurable N"
+    by (rule measurable_compose[OF pfst_measurable[OF T setsN]
+          pexit_measurable[OF T K]])
+  then show ?thesis by (simp add: pexit_pfst)
+qed
+
+theorem paper_v_paste_ge:
+  fixes Q R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and K: "closed K"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "R \<in> paper_pair_class k L (T - r) 0"
+    and stay: "AE p in Q \<Otimes>\<^sub>M R.
+        c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
+  shows "ennreal c \<le> paper_v k L T K x"
+proof -
+  have T0: "0 \<le> T" using r rT by simp
+  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have G: "pglue_law r T Q R \<in> paper_pair_class k L T x"
+    by (rule paper_pair_class_pglue_law[OF r rT Q R])
+  have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?BT"
+    by (rule pexit_path_measurable[OF T0 K refl])
+  have mset: "{\<omega> \<in> space ?BT.
+      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?BT"
+    using tauT by measurable
+  have iff: "(AE \<omega> in pglue_law r T Q R.
+        ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))
+      = (AE p in Q \<Otimes>\<^sub>M R. ennreal c
+          \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))))"
+    unfolding pglue_law_def pair_law_of_def
+    by (rule AE_distr_iff[OF pglue_measurable[OF r rT
+          paper_pair_class_sets[OF Q] paper_pair_class_sets[OF R]] mset])
+  have "AE p in Q \<Otimes>\<^sub>M R. ennreal c
+      \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t)))"
+    using stay by (auto intro: ennreal_leI elim: eventually_mono)
+  then have ae: "AE \<omega> in pglue_law r T Q R.
+      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+    unfolding iff .
+  have "ennreal c
+      \<le> ess_inf_time (pglue_law r T Q R) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+    unfolding ess_inf_time_def using ae by (intro Sup_upper) simp
+  also have "\<dots> \<le> paper_v k L T K x"
+    unfolding paper_v_def using G by (intro Sup_upper imageI)
+  finally show ?thesis .
+qed
+
+lemma pexit_pglue_split:
+  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
+    and stay: "\<And>t. t \<in> {0..r} \<Longrightarrow> fst (\<omega> t) \<in> K"
+    and cont: "\<And>s. s \<in> {0..c} \<Longrightarrow> fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
+  shows "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
+proof -
+  have lb: "r + c \<le> z"
+    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
+        \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue r T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
+      using z by blast
+    then show ?thesis
+    proof cases
+      case hit
+      then have zI: "z \<in> {0..T}" by simp
+      show ?thesis
+      proof (rule ccontr)
+        assume "\<not> r + c \<le> z"
+        then have zc: "z < r + c" by simp
+        show False
+        proof (cases "z \<le> r")
+          case True
+          have "fst (\<omega> z) \<in> K" using hit(1) True by (intro stay) simp
+          then show False using hit(3) by (simp add: pglue_le[OF zI True])
+        next
+          case False
+          then have rz: "r \<le> z" by simp
+          have "z - r \<in> {0..c}" using rz zc by simp
+          then have "fst (\<omega> r + (\<omega>' (z - r) - \<omega>' 0)) \<in> K" by (rule cont)
+          then show False using hit(3) by (simp add: pglue_ge[OF zI rz])
+        qed
+      qed
+    next
+      case cap
+      then show ?thesis using cT by simp
+    qed
+  qed
+  have "pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))
+      = Inf ({t. 0 \<le> t \<and> t \<le> T
+          \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
+    unfolding pexit_def etime_def ..
+  moreover have "r + c \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
+      \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show ?thesis by simp
+qed
+
+corollary paper_v_paste_lower:
+  fixes Q R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes r: "0 \<le> r" and c: "0 \<le> c" and cT: "r + c \<le> T" and K: "closed K"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "R \<in> paper_pair_class k L (T - r) 0"
+    and ae: "AE p in Q \<Otimes>\<^sub>M R. (\<forall>t\<in>{0..r}. fst (fst p t) \<in> K)
+        \<and> (\<forall>s\<in>{0..c}. fst (fst p r + (snd p s - snd p 0)) \<in> K)"
+  shows "ennreal (r + c) \<le> paper_v k L T K x"
+proof -
+  have rT: "r \<le> T" using c cT by simp
+  show ?thesis
+  proof (rule paper_v_paste_ge[OF r rT K Q R])
+    show "AE p in Q \<Otimes>\<^sub>M R.
+        r + c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
+    proof (rule eventually_mono[OF ae])
+      fix p :: "'n pairpath \<times> 'n pairpath"
+      assume "(\<forall>t\<in>{0..r}. fst (fst p t) \<in> K)
+          \<and> (\<forall>s\<in>{0..c}. fst (fst p r + (snd p s - snd p 0)) \<in> K)"
+      then show "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
+        by (intro pexit_pglue_split[OF r rT c cT]) auto
+    qed
+  qed
+qed
+
 end
