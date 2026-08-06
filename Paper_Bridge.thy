@@ -7618,4 +7618,223 @@ proof -
   qed
 qed
 
+text \<open>Two more pieces of martingale algebra the assembly needs: passing to an
+  almost-everywhere equal (still adapted) process --- which is how the
+  \<open>\<omega>' 0 = 0\<close> clause of the second factor gets used --- and reparametrising
+  time by a nondecreasing map, which is how the second factor's clock
+  \<open>u \<mapsto> (u - r)\<^sup>+\<close> is installed.\<close>
+
+lemma martingale_cong_AE:
+  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) X"
+    and adap: "adapted_process M F (0::real) Y"
+    and eq: "\<And>i. 0 \<le> i \<Longrightarrow> AE \<omega> in M. X i \<omega> = Y i \<omega>"
+  shows "martingale M F 0 Y"
+proof -
+  interpret MG: martingale M F "0::real" X by (rule mg)
+  interpret AY: adapted_process M F "0::real" Y by (rule adap)
+  have Xm: "X i \<in> borel_measurable M" if i: "0 \<le> i" for i
+    by (rule measurable_from_subalg[OF MG.subalgebras[OF i] MG.adapted[OF i]])
+  have Ym: "Y i \<in> borel_measurable M" if i: "0 \<le> i" for i
+    by (rule measurable_from_subalg[OF MG.subalgebras[OF i] AY.adapted[OF i]])
+  have iY: "integrable M (Y i)" if i: "0 \<le> i" for i
+    using MG.integrable[OF i] integrable_cong_AE[OF Xm[OF i] Ym[OF i] eq[OF i]]
+    by simp
+  show ?thesis
+  proof (rule MG.martingale_of_set_integral_eq[OF adap iY])
+    fix A and i j :: real
+    assume ij: "0 \<le> i" "i \<le> j" and A: "A \<in> sets (F i)"
+    then have j: "0 \<le> j" by simp
+    have AM: "A \<in> sets M" using A MG.sets_F_subset[OF ij(1)] by auto
+    have "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (X i)"
+      using eq[OF ij(1)]
+      by (intro set_lebesgue_integral_cong_AE[OF AM Ym[OF ij(1)] Xm[OF ij(1)]])
+        auto
+    also have "\<dots> = set_lebesgue_integral M A (X j)"
+      by (rule MG.set_integral_eq[OF A ij])
+    also have "\<dots> = set_lebesgue_integral M A (Y j)"
+      using eq[OF j]
+      by (intro set_lebesgue_integral_cong_AE[OF AM Xm[OF j] Ym[OF j]]) auto
+    finally show "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (Y j)" .
+  qed
+qed
+
+lemma martingale_time_change:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) X"
+    and s0: "\<And>u :: real. 0 \<le> u \<Longrightarrow> 0 \<le> s u"
+    and smono: "\<And>u v :: real. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> s u \<le> s v"
+  shows "martingale M (\<lambda>u. F (s u)) 0 (\<lambda>u. X (s u))"
+proof -
+  interpret MG: martingale M F "0::real" X by (rule mg)
+  have FMs: "filtered_measure M (\<lambda>u. F (s u)) (0::real)"
+  proof (unfold_locales)
+    show "subalgebra M (F (s i))" if "0 \<le> i" for i :: real
+      by (rule MG.subalgebras[OF s0[OF that]])
+    show "sets (F (s i)) \<le> sets (F (s j))" if "0 \<le> i" "i \<le> j" for i j :: real
+      by (rule MG.sets_F_mono[OF s0[OF that(1)] smono[OF that]])
+  qed
+  interpret SF: sigma_finite_filtered_measure M "\<lambda>u. F (s u)" "0::real"
+    unfolding sigma_finite_filtered_measure_def
+      sigma_finite_filtered_measure_axioms_def
+    using FMs MG.sigma_finite_subalgebra_F[OF s0[OF order_refl]] by blast
+  show ?thesis
+  proof (rule SF.martingale_of_set_integral_eq)
+    show "adapted_process M (\<lambda>u. F (s u)) 0 (\<lambda>u. X (s u))"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using FMs MG.adapted[OF s0] by blast
+    show "integrable M (X (s i))" if "0 \<le> i" for i :: real
+      by (rule MG.integrable[OF s0[OF that]])
+    show "set_lebesgue_integral M A (X (s i))
+        = set_lebesgue_integral M A (X (s j))"
+      if "0 \<le> i" "i \<le> j" "A \<in> sets (F (s i))" for A and i j :: real
+      by (rule MG.set_integral_eq[OF that(3) s0[OF that(1)] smono[OF that(1,2)]])
+  qed
+qed
+
+text \<open>The third transfer result, and the one the COMPENSATED clause needs: the
+  product of a first-factor martingale with a second-factor martingale is a
+  martingale for the product filtration.  This is where independence of the
+  two pieces is genuinely used --- it is what makes the cross term
+  \<open>X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r\<close> of \<open>outerp (X\<^sub>r + W)\<close> a martingale.  Again the proof is
+  Fubini twice: once in each variable, moving one factor's time index at a
+  time, using the OTHER factor's set-integral identity on the section.\<close>
+
+theorem martingale_pair_mult:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and Y :: "real \<Rightarrow> 'b \<Rightarrow> real"
+  assumes M: "prob_space M" and N: "prob_space N"
+    and mgX: "martingale M F (0::real) X"
+    and mgY: "martingale N G (0::real) Y"
+  shows "martingale (M \<Otimes>\<^sub>M N) (\<lambda>u. F u \<Otimes>\<^sub>M G u) 0
+      (\<lambda>u p. X u (fst p) * Y u (snd p))"
+proof -
+  interpret PM: prob_space M by (rule M)
+  interpret PN: prob_space N by (rule N)
+  interpret MX: martingale M F "0::real" X by (rule mgX)
+  interpret MY: martingale N G "0::real" Y by (rule mgY)
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PS: pair_sigma_finite M N by unfold_locales
+  have FMF: "filtered_measure M F (0::real)" by unfold_locales
+  have FMG: "filtered_measure N G (0::real)" by unfold_locales
+  interpret FP: finite_filtered_measure "M \<Otimes>\<^sub>M N" "\<lambda>u. F u \<Otimes>\<^sub>M G u" "0::real"
+    unfolding finite_filtered_measure_def
+    using filtered_measure_pair[OF FMF FMG] PP.finite_measure_axioms by blast
+  have Xm: "X u \<in> borel_measurable M" if u: "0 \<le> u" for u
+    by (rule measurable_from_subalg[OF MX.subalgebras[OF u] MX.adapted[OF u]])
+  have Ym: "Y u \<in> borel_measurable N" if u: "0 \<le> u" for u
+    by (rule measurable_from_subalg[OF MY.subalgebras[OF u] MY.adapted[OF u]])
+  have prodm: "(\<lambda>p. X w (fst p) * Y z (snd p)) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    if w: "0 \<le> w" and z: "0 \<le> z" for w z
+    by (rule borel_measurable_times
+        [OF measurable_compose[OF measurable_fst Xm[OF w]]
+            measurable_compose[OF measurable_snd Ym[OF z]]])
+  have pint: "integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. X w (fst p) * Y z (snd p))"
+    if w: "0 \<le> w" and z: "0 \<le> z" for w z
+  proof (rule PS.Fubini_integrable[OF prodm[OF w z]])
+    have "integrable M (\<lambda>\<omega>. \<bar>X w \<omega>\<bar> * (\<integral>\<omega>'. \<bar>Y z \<omega>'\<bar> \<partial>N))"
+      using MX.integrable[OF w] by simp
+    then show "integrable M
+        (\<lambda>\<omega>. \<integral>\<omega>'. norm (X w (fst (\<omega>, \<omega>')) * Y z (snd (\<omega>, \<omega>'))) \<partial>N)"
+      by (simp add: abs_mult)
+  next
+    show "AE \<omega> in M. integrable N
+        (\<lambda>\<omega>'. X w (fst (\<omega>, \<omega>')) * Y z (snd (\<omega>, \<omega>')))"
+      using MY.integrable[OF z] by simp
+  qed
+  have si: "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X u (fst p) * Y u (snd p))
+      = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X v (fst p) * Y v (snd p))"
+    if u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> sets (F u \<Otimes>\<^sub>M G u)" for A u v
+  proof -
+    have v: "0 \<le> v" using u uv by simp
+    have AM: "A \<in> sets (M \<Otimes>\<^sub>M N)" using A FP.sets_F_subset[OF u] by auto
+    have key1: "set_lebesgue_integral (M \<Otimes>\<^sub>M N)
+          A (\<lambda>p. X w (fst p) * Y z (snd p))
+        = (\<integral>\<omega>. X w \<omega> * set_lebesgue_integral N (Pair \<omega> -` A) (Y z) \<partial>M)"
+      if w: "0 \<le> w" and z: "0 \<le> z" for w z
+    proof -
+      have ii: "integrable (M \<Otimes>\<^sub>M N)
+          (case_prod (\<lambda>\<omega> \<omega>'. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>')))"
+        using integrable_mult_indicator[OF AM pint[OF w z]]
+        by (simp add: case_prod_unfold)
+      have inner: "(\<integral>\<omega>'. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>') \<partial>N)
+          = X w \<omega> * set_lebesgue_integral N (Pair \<omega> -` A) (Y z)" for \<omega>
+      proof -
+        have "(\<integral>\<omega>'. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>') \<partial>N)
+            = (\<integral>\<omega>'. X w \<omega> * (indicator (Pair \<omega> -` A) \<omega>' * Y z \<omega>') \<partial>N)"
+          by (rule Bochner_Integration.integral_cong) (auto simp: indicator_def)
+        also have "\<dots>
+            = X w \<omega> * (\<integral>\<omega>'. indicator (Pair \<omega> -` A) \<omega>' * Y z \<omega>' \<partial>N)"
+          by simp
+        finally show ?thesis by (simp add: set_lebesgue_integral_def)
+      qed
+      have "(\<integral>\<omega>. (\<integral>\<omega>'. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>') \<partial>N) \<partial>M)
+          = (\<integral>p. indicator A p * (X w (fst p) * Y z (snd p)) \<partial>(M \<Otimes>\<^sub>M N))"
+        using PS.integral_fst[OF ii] by (simp add: case_prod_unfold)
+      then show ?thesis
+        unfolding inner by (simp add: set_lebesgue_integral_def)
+    qed
+    have key2: "set_lebesgue_integral (M \<Otimes>\<^sub>M N)
+          A (\<lambda>p. X w (fst p) * Y z (snd p))
+        = (\<integral>\<omega>'. Y z \<omega>'
+            * set_lebesgue_integral M ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) (X w) \<partial>N)"
+      if w: "0 \<le> w" and z: "0 \<le> z" for w z
+    proof -
+      have ii: "integrable (M \<Otimes>\<^sub>M N)
+          (case_prod (\<lambda>\<omega> \<omega>'. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>')))"
+        using integrable_mult_indicator[OF AM pint[OF w z]]
+        by (simp add: case_prod_unfold)
+      have inner: "(\<integral>\<omega>. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>') \<partial>M)
+          = Y z \<omega>' * set_lebesgue_integral M ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) (X w)" for \<omega>'
+      proof -
+        have "(\<integral>\<omega>. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>') \<partial>M)
+            = (\<integral>\<omega>. Y z \<omega>'
+                * (indicator ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) \<omega> * X w \<omega>) \<partial>M)"
+          by (rule Bochner_Integration.integral_cong) (auto simp: indicator_def)
+        also have "\<dots> = Y z \<omega>'
+            * (\<integral>\<omega>. indicator ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) \<omega> * X w \<omega> \<partial>M)"
+          by simp
+        finally show ?thesis by (simp add: set_lebesgue_integral_def)
+      qed
+      have "(\<integral>\<omega>'. (\<integral>\<omega>. indicator A (\<omega>, \<omega>') * (X w \<omega> * Y z \<omega>') \<partial>M) \<partial>N)
+          = (\<integral>p. indicator A p * (X w (fst p) * Y z (snd p)) \<partial>(M \<Otimes>\<^sub>M N))"
+        using PS.integral_snd[OF ii] by (simp add: case_prod_unfold)
+      then show ?thesis
+        unfolding inner by (simp add: set_lebesgue_integral_def)
+    qed
+    have eqY: "set_lebesgue_integral N (Pair \<omega> -` A) (Y u)
+        = set_lebesgue_integral N (Pair \<omega> -` A) (Y v)" for \<omega>
+      by (rule MY.set_integral_eq[OF sets_Pair1[OF A] u uv])
+    have eqX: "set_lebesgue_integral M ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) (X u)
+        = set_lebesgue_integral M ((\<lambda>\<omega>. (\<omega>, \<omega>')) -` A) (X v)" for \<omega>'
+      by (rule MX.set_integral_eq[OF sets_Pair2[OF A] u uv])
+    have "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X u (fst p) * Y u (snd p))
+        = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X u (fst p) * Y v (snd p))"
+      unfolding key1[OF u u] key1[OF u v] using eqY by simp
+    also have "\<dots>
+        = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X v (fst p) * Y v (snd p))"
+      unfolding key2[OF u v] key2[OF v v] using eqX by simp
+    finally show ?thesis .
+  qed
+  show ?thesis
+  proof (rule FP.martingale_of_set_integral_eq)
+    show "adapted_process (M \<Otimes>\<^sub>M N) (\<lambda>u. F u \<Otimes>\<^sub>M G u) 0
+        (\<lambda>u p. X u (fst p) * Y u (snd p))"
+    proof (unfold_locales)
+      fix i :: real assume i: "0 \<le> i"
+      show "(\<lambda>p. X i (fst p) * Y i (snd p))
+          \<in> borel_measurable (F i \<Otimes>\<^sub>M G i)"
+        by (rule borel_measurable_times
+            [OF measurable_compose[OF measurable_fst MX.adapted[OF i]]
+                measurable_compose[OF measurable_snd MY.adapted[OF i]]])
+    qed
+    show "integrable (M \<Otimes>\<^sub>M N) (\<lambda>p. X i (fst p) * Y i (snd p))"
+      if "0 \<le> i" for i
+      by (rule pint[OF that that])
+    show "set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X i (fst p) * Y i (snd p))
+        = set_lebesgue_integral (M \<Otimes>\<^sub>M N) A (\<lambda>p. X j (fst p) * Y j (snd p))"
+      if "0 \<le> i" "i \<le> j" "A \<in> sets (F i \<Otimes>\<^sub>M G i)" for A i j
+      by (rule si[OF that])
+  qed
+qed
+
 end
