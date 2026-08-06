@@ -288,11 +288,56 @@ DPP.**
 
 
 
-  2. **ε-optimal selection.** For each `y` pick `R_y` with essinf `≈ v(y)`;
-     BT09's Lindelöf cover of `K` by balls on which `v` varies by `< ε` gives
-     the countable Borel partition. Formalizable, not the bottleneck.
-  3. **The `≥` half of (2.9)** from 1 + 2, first at a deterministic time, then
-     at a stopping time.
+  2. **The selection step — CORRECTED 2026-08-06 after reading Larsson–Ruf.**
+     My earlier entry here said to follow BT09's Lindelöf cover with an
+     ε-optimal countable partition. **That is not what LR do, and it is not
+     obviously constructible.** LR Prop. 2.2(ii) instead asserts an EXACTLY
+     optimal MEASURABLE SELECTOR:
+
+     > `v` is upper semicontinuous and there is a measurable map `x ↦ P_x`
+     > from `ℝᵈ` into `𝒫(Ω)` such that `P_x ∈ 𝒫_x` and is optimal for all `x`.
+
+     Their proof: `𝒫_x` is the set of pushforwards `(x+·)_*P` with `P ∈ 𝒫₀`,
+     so `v(x) = sup_{P∈𝒫₀} f(x,P)` with `f(x,P) = g((x+·)_*P)` and
+     `g(P) = P`-essinf `τ_K`. `g` is usc (LR Lemma 2.1 = our
+     `ess_inf_pexit_usc`), `(x,P) ↦ (x+·)_*P` is continuous, so `f` is usc;
+     `𝒫₀` is compact (our `paper_pair_class_convergent_subsequence` +
+     `paper_pair_class_weak_closed`). Then **Bertsekas–Shreve (1978),
+     Prop. 7.33** — a measurable-selection theorem for usc functions on
+     compact sets — gives both the usc of `v` and the selector.
+
+     Prop. 2.2(iii) then builds `P'(dω,dω̃) = P_{X(θ(ω),ω)}(dω̃) P(dω)` on
+     `Ω × Ω` — **exactly our kernel pasting**, but with a general measurable
+     kernel rather than a countably-valued one — glues with
+     `X'(t) = X(t)1_{t≤θ} + Y(t−θ)1_{t>θ}`, checks `θ' = θ` by Galmarino's
+     test, and concludes from `τ_K(X(θ+·)) ≥ v(X(θ))` Q-a.s.
+
+     **Consequences for this development.**
+
+     - A measurable selection theorem of Bertsekas–Shreve type is not in the
+       AFP as far as I know. Check `Standard_Borel_Spaces` and the
+       Jankov–von Neumann / Kuratowski–Ryll-Nardzewski literature before
+       assuming it must be rebuilt from scratch.
+     - `paper_pair_class_kglue_law` takes a COUNTABLY-valued index `N`. An
+       exactly-optimal selector is not countably valued, so either the
+       pasting must be redone with a Giry-monad kernel, or an ε-version of
+       the selection must be found. ε-optimality does suffice for the `≥`
+       half (the conclusion is an inequality between fixed quantities, so
+       `ε → 0` closes it) — but a countable ε-net does NOT come for free from
+       separability of `𝒫₀`, because the supremum of a usc function over a
+       dense subset can be strictly smaller than its supremum.
+     - **The next concrete step is `paper_v_attained`**: the supremum in
+       (1.6) is attained. That is the pointwise half of LR (ii), needs no
+       selection theorem — sequential compactness of the class plus usc of
+       `Q ↦ ess_inf_time Q (pexit T K ∘ fst)` along weak convergence — and it
+       is required by the paper's §3.1 independently of the DPP, since that
+       proof begins "fix an optimizer P ∈ 𝒫ₓ on the right-hand side of
+       (1.6)". Route: push forward along `pfst T` (needs `pfst T` shown
+       Lipschitz as a map of path spaces, cf. `Lipschitz_restrict_path_metric`),
+       transport the functional with `ess_inf_time_distr` and `pexit_pfst`,
+       transport weak convergence with `Path_Space.weak_conv_on_pushforward`,
+       then apply `Exit_Semicontinuity.ess_inf_pexit_usc`.
+
   4. **The `≤` half** — conditioning, i.e. regular conditional distributions on
      the Polish path space via AFP `Disintegration` (`measure_disintegration`,
      already a session dependency; `Path_Space.path_metric_polish`).
