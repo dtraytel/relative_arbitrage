@@ -6338,4 +6338,80 @@ proof -
   qed
 qed
 
+lemma paper_pair_class_norm_sq_integrable:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
+proof -
+  have "integrable Q (\<lambda>\<omega> :: 'n pairpath. \<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2)"
+    by (intro Bochner_Integration.integrable_sum
+        paper_pair_class_sq_integrable[OF T L Q t])
+  then show ?thesis by (simp add: inner_vec_def power2_eq_square)
+qed
+
+text \<open>The class-level form of Lemma 2.1's estimate: the expected squared
+  norm grows at rate at least \<open>n - k\<close>.  No stopping and no optional
+  sampling --- the compensated clause is used at the FIXED time \<open>t\<close>.\<close>
+
+theorem paper_pair_class_sq_norm_mean_ge:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes k: "k < CARD('n)" and T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "x \<bullet> x + real (CARD('n) - k) * t
+      \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have t0: "0 \<le> t" and tT: "t \<le> T" using t by auto
+  have ci: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+    by (rule paper_pair_class_compensated_integrable[OF Q t])
+  have ti: "integrable Q (\<lambda>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)))"
+    by (rule integrable_bounded_linear[OF bounded_linear_trace ci])
+  have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
+    by (rule paper_pair_class_norm_sq_integrable[OF T L Q t])
+  have mean: "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q) = x \<bullet> x"
+  proof -
+    have "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
+        = trace (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q)"
+      by (rule integral_of_bounded_linear[OF bounded_linear_trace ci])
+    also have "\<dots> = trace (outerp x)"
+      by (simp add: paper_pair_class_compensated_mean[OF Q t])
+    finally show ?thesis by (simp add: trace_outerp)
+  qed
+  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using Q unfolding paper_pair_class_def by blast
+  have tr: "AE \<omega> in Q. \<forall>s t'. 0 \<le> s \<longrightarrow> s < t' \<longrightarrow> t' \<le> T \<longrightarrow>
+      real (CARD('n) - k) * (t' - s)
+        \<le> trace (snd (\<omega> t')) - trace (snd (\<omega> s))"
+    by (rule paper_pair_class_trace_rate[OF k Q])
+  have rate: "AE \<omega> in Q. real (CARD('n) - k) * t \<le> trace (snd (\<omega> t))"
+    using st tr
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (cases "t = 0")
+      case True
+      then show ?thesis using elim by (simp add: trace_def)
+    next
+      case False
+      with t0 have pos: "0 < t" by simp
+      have "real (CARD('n) - k) * (t - 0)
+          \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> 0))"
+        using elim pos tT by blast
+      then show ?thesis using elim by (simp add: trace_def)
+    qed
+  qed
+  have ptw: "AE \<omega> in Q. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))
+      + real (CARD('n) - k) * t \<le> fst (\<omega> t) \<bullet> fst (\<omega> t)"
+    using rate by eventually_elim (simp add: trace_diff_matrix trace_outerp)
+  have "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
+      + real (CARD('n) - k) * t
+      = (\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))
+            + real (CARD('n) - k) * t \<partial>Q)"
+    using ti by (simp add: P.prob_space)
+  also have "\<dots> \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
+    by (rule integral_mono_AE) (use ti ni ptw in auto)
+  finally show ?thesis unfolding mean .
+qed
+
 end
