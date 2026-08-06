@@ -4109,4 +4109,262 @@ proof -
   with sm wcN show ?thesis by blast
 qed
 
+section \<open>The shift structure of the class (Larsson--Ruf Prop. 2.2(ii))\<close>
+
+text \<open>Every member started at \<open>x\<close> is the \<open>x\<close>-translate of a member started
+  at \<open>0\<close>.  This is what turns the value function into a supremum over a
+  FIXED family --- the shape Berge's theorem needs, and hence the last
+  structural input of the NC headline.  The translation must \<open>restrict\<close>,
+  because points of the capped path space are extensional on \<open>{0..T}\<close>.\<close>
+
+definition pshift :: "real \<Rightarrow> real^'n::finite \<Rightarrow> 'n pairpath \<Rightarrow> 'n pairpath"
+  where "pshift T x \<omega> = restrict (\<lambda>t. (x + fst (\<omega> t), snd (\<omega> t))) {0..T}"
+
+lemma pshift_apply: "t \<in> {0..T} \<Longrightarrow> pshift T x \<omega> t = (x + fst (\<omega> t), snd (\<omega> t))"
+  by (simp add: pshift_def)
+
+lemma pshift_fst: "t \<in> {0..T} \<Longrightarrow> fst (pshift T x \<omega> t) = x + fst (\<omega> t)"
+  by (simp add: pshift_def)
+
+lemma pshift_snd: "t \<in> {0..T} \<Longrightarrow> snd (pshift T x \<omega> t) = snd (\<omega> t)"
+  by (simp add: pshift_def)
+
+lemma pshift_outside: "t \<notin> {0..T} \<Longrightarrow> pshift T x \<omega> t = undefined"
+  by (auto simp: pshift_def)
+
+lemma mspace_path_restrict_self:
+  fixes \<omega> :: "real \<Rightarrow> 'b::polish_space"
+  assumes w: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+  shows "restrict \<omega> {0..T} = \<omega>"
+proof -
+  \<comment> \<open>unfolding \<open>path_metric_def\<close> INSIDE a simp call does not terminate here;
+      the extensionality has to be extracted by hand.\<close>
+  have "\<omega> \<in> mspace (cfunspace (top_of_set {0..T}) (euclidean_metric :: 'b metric))"
+    using w unfolding path_metric_def .
+  then have "\<omega> \<in> extensional (topspace (top_of_set ({0..T} :: real set)))"
+    unfolding mspace_cfunspace by blast
+  then have e: "\<omega> \<in> extensional {0..T}" by simp
+  show ?thesis
+  proof (rule ext)
+    fix t :: real
+    show "restrict \<omega> {0..T} t = \<omega> t"
+    proof (cases "t \<in> {0..T}")
+      case True then show ?thesis by simp
+    next
+      case False
+      then have "\<omega> t = undefined" using extensional_arb[OF e] by simp
+      with False show ?thesis by simp
+    qed
+  qed
+qed
+
+lemma pshift_in_mspace:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pshift T x \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+proof -
+  have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
+  have "continuous_on {0..T} (\<lambda>t. (x + fst (\<omega> t), snd (\<omega> t)))"
+    by (intro continuous_intros c)
+  then show ?thesis unfolding pshift_def by (rule mspace_path_metricI)
+qed
+
+lemma pshift_zero:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pshift T 0 \<omega> = \<omega>"
+proof -
+  have "pshift T 0 \<omega> = restrict \<omega> {0..T}"
+    unfolding pshift_def by simp
+  also have "\<dots> = \<omega>" by (rule mspace_path_restrict_self[OF w])
+  finally show ?thesis .
+qed
+
+lemma pshift_pshift:
+  fixes \<omega> :: "'n::finite pairpath"
+  shows "pshift T y (pshift T x \<omega>) = pshift T (y + x) \<omega>"
+  by (rule ext) (simp add: pshift_def add.assoc)
+
+lemma pshift_inverse:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pshift T (- x) (pshift T x \<omega>) = \<omega>"
+  using pshift_pshift[of T "- x" x \<omega>] pshift_zero[OF w] by simp
+
+lemma Lipschitz_pshift:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 \<le> T"
+  shows "Lipschitz_continuous_map (path_metric T :: ('n pairpath) metric)
+      (path_metric T :: ('n pairpath) metric) (pshift T x)"
+  unfolding Lipschitz_continuous_map_def
+proof (intro conjI)
+  show "pshift T x \<in> mspace (path_metric T :: ('n pairpath) metric)
+      \<rightarrow> mspace (path_metric T :: ('n pairpath) metric)"
+    by (intro funcsetI pshift_in_mspace)
+  have key: "mdist (path_metric T) (pshift T x f) (pshift T x g)
+      \<le> 1 * mdist (path_metric T) f g"
+    if f: "f \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      and g: "g \<in> mspace (path_metric T :: ('n pairpath) metric)" for f g
+  proof -
+    have sf: "pshift T x f \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      by (rule pshift_in_mspace[OF f])
+    have sg: "pshift T x g \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      by (rule pshift_in_mspace[OF g])
+    have pw: "\<forall>t\<in>{0..T}. dist (f t) (g t) \<le> mdist (path_metric T) f g"
+      using path_mdist_le_iff_all[OF T f g] by blast
+    have pws: "dist (pshift T x f t) (pshift T x g t)
+        \<le> mdist (path_metric T) f g" if t: "t \<in> {0..T}" for t
+    proof -
+      have "dist (pshift T x f t) (pshift T x g t)
+          = dist (x + fst (f t), snd (f t)) (x + fst (g t), snd (g t))"
+        using t by (simp add: pshift_def)
+      also have "\<dots> = dist (f t) (g t)"
+        by (simp add: dist_prod_def dist_norm)
+      finally show ?thesis using bspec[OF pw t] by simp
+    qed
+    have "mdist (path_metric T) (pshift T x f) (pshift T x g)
+        \<le> mdist (path_metric T) f g"
+      using path_mdist_le_iff_all[OF T sf sg] pws by blast
+    then show ?thesis by simp
+  qed
+  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ('n pairpath) metric).
+      \<forall>g\<in>mspace (path_metric T :: ('n pairpath) metric).
+        mdist (path_metric T) (pshift T x f) (pshift T x g)
+          \<le> B * mdist (path_metric T) f g"
+    by (intro exI[of _ 1] ballI key)
+qed
+
+lemma pshift_measurable:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 \<le> T"
+  shows "pshift T x
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  by (intro continuous_map_measurable Lipschitz_continuous_imp_continuous_map
+      Lipschitz_pshift[OF T])
+
+text \<open>The shift is measurable for the NATURAL FILTRATION too, at every
+  level: it changes values, not times.  This is what lets the martingale
+  clauses be transported --- the past of the shifted path is the shifted
+  past.\<close>
+
+lemma pshift_filtration_measurable:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  shows "pshift T x \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u
+      \<rightarrow>\<^sub>M natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) u"
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have spF: "space ?F = space Q" by simp
+  show ?thesis
+  proof (rule measurable_sigma_sets[OF sets_natural_filtration])
+    show "(\<Union>i\<in>{0..u}. {(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space Q | A. A \<in> sets borel})
+        \<subseteq> Pow (space Q)"
+      by auto
+    show "pshift T x \<in> space ?F \<rightarrow> space Q"
+      using spQ spF by (auto intro: pshift_in_mspace)
+    fix y
+    assume "y \<in> (\<Union>i\<in>{0..u}.
+        {(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space Q | A. A \<in> sets borel})"
+    then obtain i A where i: "i \<in> {0..u}" and A: "A \<in> sets borel"
+      and y: "y = (\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space Q" by blast
+    have shim: "pshift T x \<omega> \<in> space Q" if "\<omega> \<in> space Q" for \<omega>
+      using that spQ by (simp add: pshift_in_mspace)
+    show "pshift T x -` y \<inter> space ?F \<in> sets ?F"
+    proof (cases "i \<in> {0..T}")
+      case True
+      define g where "g = (\<lambda>p :: (real^'n) \<times> (real^'n^'n). (x + fst p, snd p))"
+      have gb: "g \<in> borel_measurable borel"
+        unfolding g_def
+        by (intro borel_measurable_continuous_onI continuous_intros)
+      have gA: "g -` A \<in> sets borel"
+        using measurable_sets[OF gb A] by simp
+      have "pshift T x -` y \<inter> space ?F
+          = (\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` (g -` A) \<inter> space Q"
+        using True y spF shim by (auto simp: pshift_apply g_def)
+      moreover have "(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` (g -` A) \<inter> space Q \<in> sets ?F"
+        unfolding sets_natural_filtration
+        by (rule sigma_sets.Basic)
+          (use i gA in \<open>auto intro!: bexI[of _ i] exI[of _ "g -` A"]\<close>)
+      ultimately show ?thesis by simp
+    next
+      case False
+      show ?thesis
+      proof (cases "undefined \<in> A")
+        case inA: True
+        have "pshift T x -` y \<inter> space ?F = space ?F"
+        proof
+          show "pshift T x -` y \<inter> space ?F \<subseteq> space ?F" by blast
+          show "space ?F \<subseteq> pshift T x -` y \<inter> space ?F"
+          proof
+            fix \<omega> :: "'n pairpath" assume w: "\<omega> \<in> space ?F"
+            then have wq: "\<omega> \<in> space Q" using spF by simp
+            have "pshift T x \<omega> i = undefined"
+              by (rule pshift_outside[OF False])
+            then show "\<omega> \<in> pshift T x -` y \<inter> space ?F"
+              using inA w shim[OF wq] spF y by auto
+          qed
+        qed
+        then show ?thesis using sets.top[of ?F] by simp
+      next
+        case notinA: False
+        have "pshift T x -` y \<inter> space ?F = {}"
+        proof (rule ccontr)
+          assume "pshift T x -` y \<inter> space ?F \<noteq> {}"
+          then obtain \<omega> :: "'n pairpath" where "pshift T x \<omega> \<in> y" by blast
+          then have "pshift T x \<omega> i \<in> A" using y by blast
+          moreover have "pshift T x \<omega> i = undefined"
+            by (rule pshift_outside[OF False])
+          ultimately show False using notinA by simp
+        qed
+        then show ?thesis by simp
+      qed
+    qed
+  qed
+qed
+
+subsection \<open>The shifted law\<close>
+
+definition pshift_law ::
+  "real \<Rightarrow> real^'n::finite \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
+  where "pshift_law T x Q = distr Q
+     (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))
+     (pshift T x)"
+
+lemma sets_pshift_law[simp]:
+  "sets (pshift_law T x Q)
+     = sets (borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric)))"
+  unfolding pshift_law_def by simp
+
+lemma space_pshift_law:
+  "space (pshift_law T x Q)
+     = mspace (path_metric T :: ('n::finite pairpath) metric)"
+  unfolding pshift_law_def by (simp add: space_borel_of)
+
+lemma prob_space_pshift_law:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 \<le> T" and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "prob_space (pshift_law T x Q)"
+proof -
+  interpret P: prob_space Q by (rule prob)
+  have m: "pshift T x \<in> Q \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric))"
+    using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
+  show ?thesis unfolding pshift_law_def by (rule P.prob_space_distr[OF m])
+qed
+
+lemma natural_filtration_pshift_law:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+  shows "natural_filtration (pshift_law T x Q) 0 (\<lambda>v \<omega>. \<omega> v)
+       = natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)"
+  unfolding natural_filtration_def
+  using space_of_path_sets[OF setsQ] space_pshift_law[of T x Q] by simp
+
 end
