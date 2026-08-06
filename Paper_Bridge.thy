@@ -10549,4 +10549,48 @@ proof -
   qed
 qed
 
+section \<open>What Theorem 1.1 currently asserts about the paper's own \<open>v\<close>\<close>
+
+text \<open>The clauses of Theorem 1.1 that are proved for \<open>paper_v\<close> --- the
+  faithful rendering of Eq. (1.6) --- collected in one place, so that the
+  state of the formalisation is a single citable fact.
+
+  Clause (2), the viscosity property, is NOT here: it needs the dynamic
+  programming principle of Proposition 2.4 and, on top of that, Section 3's
+  It\<open>\<^bold>o\<close>/SDE layer.  Clause (3) is here only for the ball; the interior value
+  for \<open>n - k \<ge> 2\<close> is open.  Clause (4), uniqueness, is
+  \<open>Theorem_1_1.theorem_1_1_uniqueness_general\<close> and is a statement about
+  viscosity solutions rather than about \<open>paper_v\<close>.\<close>
+
+theorem theorem_1_1_paper_v_fragment:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
+  assumes k: "k < CARD('n)" and T: "0 < T" and L: "1 \<le> L"
+    and K: "closed K" and KB: "K \<subseteq> cball 0 r"
+  shows
+    \<comment> \<open>clause (0), in Example 3.1's sharp horizon-free form (3.10)\<close>
+    "paper_v k L T K x \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+    \<comment> \<open>clause (1): upper semicontinuity in the starting point\<close>
+    and "paper_v k L T K x < b \<Longrightarrow>
+        eventually (\<lambda>y. paper_v k L T K y < b) (nhds x)"
+    \<comment> \<open>clause (3) on the ball: \<open>v\<close> vanishes on the boundary\<close>
+    and "K = cball 0 r \<Longrightarrow> norm x = r \<Longrightarrow> paper_v k L T K x = 0"
+    \<comment> \<open>and the horizon cap is invisible past the scale of (3.10), so this
+        IS the paper's uncapped \<open>v\<close>\<close>
+    and "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S \<Longrightarrow> 0 \<le> S \<Longrightarrow> S \<le> T
+        \<Longrightarrow> paper_v k L T K x = paper_v k L S K x"
+proof -
+  have T0: "0 \<le> T" using T by simp
+  have L0: "0 \<le> L" using L by simp
+  show "paper_v k L T K x \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+    by (rule paper_v_le_ball_bound[OF k T0 L0 KB])
+  show "paper_v k L T K x < b \<Longrightarrow>
+      eventually (\<lambda>y. paper_v k L T K y < b) (nhds x)"
+    by (rule paper_v_usc_unconditional[OF T L K])
+  show "K = cball 0 r \<Longrightarrow> norm x = r \<Longrightarrow> paper_v k L T K x = 0"
+    by (simp add: paper_v_boundary_zero[OF k T L0])
+  show "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S \<Longrightarrow> 0 \<le> S \<Longrightarrow> S \<le> T
+      \<Longrightarrow> paper_v k L T K x = paper_v k L S K x"
+    by (rule paper_v_horizon_eq[OF k L K KB])
+qed
+
 end
