@@ -1674,3 +1674,50 @@ finite `nn_integral` is integrable), `path_coord_cont_on`,
    value — PROVIDED the shift structure of item 1. Then
    `Section_2_Usc.vshift_sup_usc_of_seq_compact` applies verbatim, its `seq`
    hypothesis being `paper_pair_class_convergent_subsequence`.
+
+### Commit `73ecbe2` — the shift structure is DONE
+
+`paper_pair_class_shift_image`: for `0 ≤ T`,
+`paper_pair_class k L T x = pshift_law T x ` paper_pair_class k L T 0`.
+
+Ingredients, all in `Paper_Bridge`: `pshift` (the pathwise translation,
+which must `restrict`), `pshift_in_mspace` / `_zero` / `_pshift` /
+`_inverse` / `Lipschitz_pshift` / `pshift_measurable` /
+`pshift_filtration_measurable`; `pshift_law` with `sets`/`space`/
+`prob_space`/`natural_filtration_pshift_law`; `martingale_add`,
+`martingale_add_const`, `martingale_cong_ge` (none of them in the AFP);
+`AE_pshift_law`; `comp_shift_split`, `bounded_linear_cross`;
+`martingale_pshift_law`; `paper_pair_class_pshift`.
+
+Two design points worth keeping:
+- the FILTRATION does not move under the shift (`natural_filtration`
+  depends only on `space M` and the process), so the martingale transfer is
+  a statement about one filtration, not two;
+- `AE_pshift_law` needs NO measurability hypothesis on the property,
+  because the shift is a bijection with measurable inverse — the null set
+  can be pushed forward explicitly.
+
+### What is left in NC, after this session
+
+1. **Nonemptiness of `paper_pair_class k L T 0`.** The only thing between
+   the compactness/shift results and a non-vacuous headline. Brownian pair
+   law with `Y t = t · mat 1` (`mat_1_in_sconstraint` needs `L ≥ 1`); the
+   work is the off-diagonal covariation `X_i X_j` being a martingale.
+2. **The NC headline, `paper_v` usc.** All the structure is now present;
+   what remains is glue, and it is fully scouted:
+   - `ess_inf_time (pshift_law T x Q) g = ess_inf_time Q (λω. g (pshift T x ω))`
+     — both inclusions from `AE_pshift_law` (the reverse one by applying it
+     at `−x` to the shifted law).
+   - with `A = {p. fst p ∉ K}` (open for closed `K`) and `y = (x, 0)`,
+     `etime T A (λs w. y + w s) ω` and
+     `pexit T K (λt. fst (pshift T x ω t))` are the SAME infimum: for
+     `r ∈ {0..T}`, `fst ((x,0) + ω r) = x + fst (ω r) = fst (pshift T x ω r)`.
+   - hence `paper_v k L T K x
+       = Sup ((λQ. ennreal (vshift T A (x,0) Q)) ` paper_pair_class k L T 0)`
+     (`ennreal (enn2real ·)` is harmless because `pexit ≤ T`).
+   - then `Section_2_Usc.vshift_sup_usc_of_seq_compact` applies verbatim,
+     with `C = paper_pair_class k L T 0`, `seq` =
+     `paper_pair_class_convergent_subsequence`, `sC` =
+     `paper_pair_class_sets`, `pC` = `paper_pair_class_prob`, `neC` = item 1.
+   - finally, usc in `x ∈ real^'n` follows from usc at `(x,0)` because
+     `x ↦ (x,0)` is continuous.
