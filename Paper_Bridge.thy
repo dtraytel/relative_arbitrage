@@ -9326,4 +9326,342 @@ proof -
   finally show ?thesis by simp
 qed
 
+theorem kglue_law_X_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "\<And>j. RR j \<in> paper_pair_class k L (T - r) 0"
+    and Nm: "N \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M count_space UNIV"
+  shows "martingale (kglue_law r T N Q RR)
+      (natural_filtration (kglue_law r T N Q RR) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n)"
+proof -
+  let ?S = "Pi\<^sub>M UNIV RR"
+  let ?M = "Q \<Otimes>\<^sub>M ?S"
+  let ?FQ = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?GR = "\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?s = "\<lambda>u :: real. max (u - r) 0"
+  let ?t = "\<lambda>u :: real. min (max (u - r) 0) (T - r)"
+  let ?GS = "\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. ?GR j (?s u))"
+  let ?FF = "\<lambda>u. ?FQ (min u r) \<Otimes>\<^sub>M ?GS u"
+  let ?B = "\<lambda>u p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).
+      fst (snd p (N (fst p)) (?t u)) - fst (snd p (N (fst p)) 0) :: real^'n"
+  have T0: "0 \<le> T" using r rT by simp
+  have TR: "0 \<le> T - r" using rT by simp
+  have PQ: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have PRj: "prob_space (RR j)" for j by (rule paper_pair_class_prob[OF R])
+  have PS: "prob_space ?S" by (rule prob_space_PiM) (rule PRj)
+  interpret PQi: prob_space Q by (rule PQ)
+  interpret PS': pair_sigma_finite Q ?S
+    by (simp add: pair_sigma_finite_def PQ PS prob_space_imp_sigma_finite)
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric r :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have setsR: "sets (RR j) = sets (borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric)))" for j
+    by (rule paper_pair_class_sets[OF R])
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+
+  \<comment> \<open>the first factor's martingale, on the clock \<open>min u r\<close>\<close>
+  have mQ0: "martingale Q ?FQ 0 (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
+    by (rule paper_pair_class_X_martingale[OF Q])
+  have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
+  have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
+    using that by simp
+  have mQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
+  proof (rule martingale_cong_ge
+      [OF martingale_time_change[OF mQ0 s1_0 s1_mono]])
+    fix u :: real assume "0 \<le> u"
+    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min (min u r) r)) :: real^'n)
+        = (\<lambda>\<omega>. fst (\<omega> (min u r)))" by simp
+  qed
+  have FQf: "filtered_measure Q (\<lambda>u. ?FQ (min u r)) (0::real)"
+  proof -
+    interpret MQ: martingale Q "\<lambda>u. ?FQ (min u r)" "0::real"
+      "\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n" by (rule mQ)
+    show ?thesis by unfold_locales
+  qed
+  have NmQ: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
+  proof -
+    interpret MQ0: martingale Q ?FQ "0::real"
+      "\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n" by (rule mQ0)
+    show ?thesis
+      by (rule measurable_from_subalg[OF MQ0.subalgebras[OF r] Nm])
+  qed
+
+  \<comment> \<open>the second factor's martingale, per index, on the clock \<open>(u-r)\<^sup>+\<close>\<close>
+  have mZ: "martingale (RR j) (?GR j) 0
+      (\<lambda>v \<omega>'. fst (\<omega>' (min v (T - r))) - fst (\<omega>' 0) :: real^'n)" for j
+  proof -
+    have "martingale (RR j) (?GR j) 0 (\<lambda>v \<omega>'.
+        (fst (\<omega>' (min v (T - r))) :: real^'n)
+          - (\<lambda>w \<omega>'. fst (\<omega>' (min w (T - r))) :: real^'n) 0 \<omega>')"
+      by (rule martingale_sub_initial[OF paper_pair_class_X_martingale[OF R]])
+    then show ?thesis using TR by simp
+  qed
+  have mBj: "martingale ?S ?GS 0
+      (\<lambda>u f. fst (f i (?t u)) - fst (f i 0) :: real^'n)" for i
+    by (rule kglue_param_martingale[OF rT mZ PRj])
+  have FSf: "filtered_measure ?S ?GS (0::real)"
+  proof -
+    interpret MS: martingale ?S ?GS "0::real"
+      "\<lambda>u f. fst (f 0 (?t u)) - fst (f 0 0) :: real^'n" by (rule mBj)
+    show ?thesis by unfold_locales
+  qed
+
+  \<comment> \<open>evaluation measurability on the product filtration\<close>
+  have evQ: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). fst p b)
+      \<in> borel_measurable (?FF u)" if "0 \<le> b" "b \<le> min u r" for b u
+    by (rule measurable_compose[OF measurable_fst nat_filt_eval[OF that]])
+  have Nidx: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). N (fst p))
+      \<in> ?FF u \<rightarrow>\<^sub>M count_space UNIV" if u: "r \<le> u" for u
+  proof -
+    have "min u r = r" using u by simp
+    then show ?thesis using measurable_compose[OF measurable_fst Nm] by simp
+  qed
+  have evK: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p (N (fst p)) w)
+      \<in> borel_measurable (?FF u)" if u: "r \<le> u" and w: "0 \<le> w" "w \<le> ?s u"
+    for u w
+  proof (rule measurable_compose_countable[OF _ Nidx[OF u]])
+    fix j :: nat
+    have "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> ?GS u \<rightarrow>\<^sub>M ?GR j (?s u)"
+      by (rule measurable_component_singleton) simp
+    from measurable_compose[OF measurable_snd this]
+    have "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p j)
+        \<in> ?FF u \<rightarrow>\<^sub>M ?GR j (?s u)" .
+    from measurable_compose[OF this nat_filt_eval[OF w]]
+    show "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p j w)
+        \<in> borel_measurable (?FF u)" .
+  qed
+  have adapB: "?B u \<in> borel_measurable (?FF u)" if u: "0 \<le> u" for u
+  proof (cases "u \<le> r")
+    case True
+    then have "?t u = 0" using TR by simp
+    then have "?B u = (\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). 0)" by simp
+    then show ?thesis by simp
+  next
+    case False
+    then have ru: "r \<le> u" by simp
+    have m1: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).
+        snd p (N (fst p)) (?t u)) \<in> borel_measurable (?FF u)"
+      by (rule evK[OF ru]) (use TR in auto)
+    have m2: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).
+        snd p (N (fst p)) 0) \<in> borel_measurable (?FF u)"
+      by (rule evK[OF ru]) auto
+    show ?thesis
+      using measurable_compose[OF m1 fstB] measurable_compose[OF m2 fstB]
+      by (rule borel_measurable_diff)
+  qed
+  have BM: "?B u \<in> borel_measurable ?M" if u: "0 \<le> u" for u
+  proof -
+    interpret FP: filtered_measure ?M ?FF "0::real"
+      by (rule filtered_measure_pair[OF FQf FSf])
+    show ?thesis
+      by (rule measurable_from_subalg[OF FP.subalgebras[OF u] adapB[OF u]])
+  qed
+  \<comment> \<open>integrability, uniformly over the family of continuations\<close>
+  define C where "C = 1 + real CARD('n) * (real CARD('n) * L * (T - r))"
+  have mj: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> ?S \<rightarrow>\<^sub>M RR j" for j
+    by (rule measurable_component_singleton) simp
+  have dj: "distr ?S (RR j) (\<lambda>f. f j) = RR j" for j
+    by (rule distr_PiM_component) (rule PRj, simp)
+  have hX: "(\<lambda>\<omega>' :: 'n pairpath. fst (\<omega>' v) :: real^'n)
+      \<in> borel_measurable (RR j)" for j v
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsR] fstB])
+  have intRj: "integrable (RR j) (\<lambda>\<omega>' :: 'n pairpath. fst (\<omega>' v) :: real^'n)"
+    if v: "v \<in> {0..T - r}" for j v
+  proof -
+    interpret MJ: martingale "RR j" "?GR j" "0::real"
+      "\<lambda>w \<omega>'. fst (\<omega>' (min w (T - r))) :: real^'n"
+      by (rule paper_pair_class_X_martingale[OF R])
+    have "integrable (RR j) (\<lambda>\<omega>'. fst (\<omega>' (min v (T - r))) :: real^'n)"
+      using MJ.integrable[of v] v by simp
+    then show ?thesis using v by simp
+  qed
+  have intSj: "integrable ?S (\<lambda>f. fst (f j v) :: real^'n)"
+    if v: "v \<in> {0..T - r}" for j v
+  proof -
+    have "integrable (distr ?S (RR j) (\<lambda>f. f j))
+        (\<lambda>\<omega>'. fst (\<omega>' v) :: real^'n)"
+      unfolding dj by (rule intRj[OF v])
+    then show ?thesis using integrable_distr_eq[OF mj hX] by simp
+  qed
+  have bndSj: "(\<integral>f. norm (fst (f j v)) \<partial>?S) \<le> C"
+    if v: "v \<in> {0..T - r}" for j v
+  proof -
+    have hn: "(\<lambda>\<omega>' :: 'n pairpath. norm (fst (\<omega>' v)))
+        \<in> borel_measurable (RR j)" using hX by measurable
+    have "(\<integral>f. norm (fst (f j v)) \<partial>?S) = (\<integral>\<omega>'. norm (fst (\<omega>' v)) \<partial>(RR j))"
+      by (rule integral_distr[OF mj hn, unfolded dj, symmetric])
+    also have "\<dots> \<le> C" unfolding C_def
+      by (rule paper_pair_class_norm_mean_le[OF TR L0 R v])
+    finally show ?thesis .
+  qed
+  have tI: "?t u \<in> {0..T - r}" for u using TR by auto
+  have zI: "(0::real) \<in> {0..T - r}" using TR by simp
+  have secInt: "integrable ?S
+      (\<lambda>f. fst (f i (?t u)) - fst (f i 0) :: real^'n)" for i u
+    using intSj[OF tI] intSj[OF zI] by simp
+  have secBnd: "(\<integral>f. norm (fst (f i (?t u)) - fst (f i 0)) \<partial>?S) \<le> 2 * C"
+    for i u
+  proof -
+    have i1: "integrable ?S (\<lambda>f. norm (fst (f i (?t u))))"
+      by (rule integrable_norm[OF intSj[OF tI]])
+    have i2: "integrable ?S (\<lambda>f. norm (fst (f i 0)))"
+      by (rule integrable_norm[OF intSj[OF zI]])
+    have "(\<integral>f. norm (fst (f i (?t u)) - fst (f i 0)) \<partial>?S)
+        \<le> (\<integral>f. norm (fst (f i (?t u))) + norm (fst (f i 0)) \<partial>?S)"
+      using integrable_norm[OF secInt] i1 i2
+      by (intro integral_mono) (auto simp: norm_triangle_ineq4)
+    also have "\<dots> = (\<integral>f. norm (fst (f i (?t u))) \<partial>?S)
+        + (\<integral>f. norm (fst (f i 0)) \<partial>?S)"
+      using i1 i2 by simp
+    also have "\<dots> \<le> C + C"
+    proof -
+      have b1: "(\<integral>f. norm (fst (f i (?t u))) \<partial>?S) \<le> C" by (rule bndSj[OF tI])
+      have b2: "(\<integral>f. norm (fst (f i 0)) \<partial>?S) \<le> C" by (rule bndSj[OF zI])
+      show ?thesis using b1 b2 by simp
+    qed
+    finally show ?thesis by simp
+  qed
+  have intB: "integrable ?M (?B u)" if u: "0 \<le> u" for u
+  proof (rule PS'.Fubini_integrable[OF BM[OF u]])
+    have e: "(\<lambda>\<omega>. \<integral>f. norm (?B u (\<omega>, f)) \<partial>?S)
+        = (\<lambda>\<omega>. \<integral>f. norm (fst (f (N \<omega>) (?t u)) - fst (f (N \<omega>) 0)) \<partial>?S)"
+      by simp
+    have meas: "(\<lambda>\<omega> :: 'n pairpath.
+          (\<integral>f. norm (fst (f (N \<omega>) (?t u)) - fst (f (N \<omega>) 0)) \<partial>?S))
+        \<in> borel_measurable Q"
+    proof (rule measurable_compose_countable
+        [where f = "\<lambda>j (_ :: 'n pairpath).
+            (\<integral>f. norm (fst (f j (?t u)) - fst (f j 0)) \<partial>?S)"])
+      show "(\<lambda>_ :: 'n pairpath.
+          (\<integral>f. norm (fst (f j (?t u)) - fst (f j 0)) \<partial>?S))
+          \<in> borel_measurable Q" for j by simp
+      show "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV" by (rule NmQ)
+    qed
+    show "integrable Q (\<lambda>\<omega>. \<integral>f. norm (?B u (\<omega>, f)) \<partial>?S)"
+      unfolding e
+    proof (rule PQi.integrable_const_bound[where B = "2 * C"])
+      show "AE \<omega> in Q. norm (\<integral>f. norm (fst (f (N \<omega>) (?t u))
+          - fst (f (N \<omega>) 0)) \<partial>?S) \<le> 2 * C"
+      proof (intro AE_I2)
+        fix \<omega> :: "'n pairpath"
+        have nn: "0 \<le> (\<integral>f. norm (fst (f (N \<omega>) (?t u))
+            - fst (f (N \<omega>) 0)) \<partial>?S)"
+          by (rule integral_nonneg_AE) simp
+        show "norm (\<integral>f. norm (fst (f (N \<omega>) (?t u))
+            - fst (f (N \<omega>) 0)) \<partial>?S) \<le> 2 * C"
+          using nn secBnd[of "N \<omega>" u] by simp
+      qed
+    qed (rule meas)
+    show "AE \<omega> in Q. integrable ?S (\<lambda>f. ?B u (\<omega>, f))"
+      using secInt by simp
+  qed
+
+  \<comment> \<open>the two halves, added and matched to the glued process\<close>
+  have mB: "martingale ?M ?FF 0 ?B"
+  proof (rule martingale_pair_snd_param[OF PQ PS FQf FSf adapB intB])
+    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space Q"
+    show "martingale ?S ?GS 0 (\<lambda>u f. ?B u (\<omega>, f))"
+      using mBj[of "N \<omega>"] by simp
+  qed
+  have mA: "martingale ?M ?FF 0
+      (\<lambda>u p. fst (fst p (min u r)) :: real^'n)"
+    by (rule martingale_pair_fst[OF PQ PS mQ FSf])
+  have mgl: "martingale ?M ?FF 0
+      (\<lambda>u p. fst (kglue r T N p (min u T)) :: real^'n)"
+  proof (rule martingale_cong_ge[OF martingale_add[OF mA mB]])
+    fix u :: real assume u: "0 \<le> u"
+    have muI: "min u T \<in> {0..T}" using u T0 by simp
+    show "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).
+          fst (fst p (min u r)) + ?B u p)
+        = (\<lambda>p. fst (kglue r T N p (min u T)) :: real^'n)"
+    proof (rule ext)
+      fix p :: "'n pairpath \<times> (nat \<Rightarrow> 'n pairpath)"
+      show "fst (fst p (min u r)) + ?B u p
+          = fst (kglue r T N p (min u T))"
+      proof (cases "u \<le> r")
+        case True
+        then have uT: "u \<le> T" using rT by simp
+        then have le: "min u T \<le> r" using True by simp
+        have e1: "min u T = min u r" using True uT by simp
+        have e2: "?t u = 0" using True TR by simp
+        have g0: "kglue r T N p (min u T) = fst p (min u r)"
+          unfolding kglue_def e1[symmetric]
+          by (simp add: pglue_le[OF muI le])
+        show ?thesis by (simp add: g0 e2)
+      next
+        case False
+        then have ru: "r < u" by simp
+        have rv: "r \<le> min u T" using ru rT by simp
+        have e1: "min u r = r" using ru by simp
+        have e2: "?t u = min u T - r" using ru by (simp add: min_def)
+        have g0: "kglue r T N p (min u T)
+            = fst p r + (snd p (N (fst p)) (min u T - r)
+                - snd p (N (fst p)) 0)"
+          unfolding kglue_def by (simp add: pglue_ge[OF muI rv])
+        show ?thesis by (simp add: g0 e1 e2)
+      qed
+    qed
+  qed
+
+  \<comment> \<open>transport to the pasted law\<close>
+  have gadap: "(\<lambda>p. kglue r T N p v) \<in> borel_measurable (?FF u)"
+    if v: "0 \<le> v" and vu: "v \<le> u" for u v
+  proof (cases "v \<le> T")
+    case False
+    then have "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). kglue r T N p v)
+        = (\<lambda>p. undefined)" by (auto simp: kglue_def pglue_def)
+    then show ?thesis by simp
+  next
+    case True
+    then have vI: "v \<in> {0..T}" using v by simp
+    show ?thesis
+    proof (cases "v \<le> r")
+      case True
+      then have "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). kglue r T N p v)
+          = (\<lambda>p. fst p v)" by (simp add: kglue_def pglue_le[OF vI])
+      then show ?thesis using evQ[of v u] v vu True by simp
+    next
+      case False
+      then have rv: "r \<le> v" by simp
+      have ru: "r \<le> u" using rv vu by simp
+      have e: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). kglue r T N p v)
+          = (\<lambda>p. fst p r + (snd p (N (fst p)) (v - r)
+              - snd p (N (fst p)) 0))"
+        by (simp add: kglue_def pglue_ge[OF vI rv])
+      have m1: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). fst p r)
+          \<in> borel_measurable (?FF u)"
+        by (rule evQ) (use r ru in auto)
+      have m2: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).
+          snd p (N (fst p)) (v - r)) \<in> borel_measurable (?FF u)"
+        by (rule evK[OF ru]) (use rv vu in auto)
+      have m3: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).
+          snd p (N (fst p)) 0) \<in> borel_measurable (?FF u)"
+        by (rule evK[OF ru]) auto
+      show ?thesis unfolding e using m1 m2 m3 by simp
+    qed
+  qed
+  have Zm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) :: real^'n)
+      \<in> borel_measurable (natural_filtration (kglue_law r T N Q RR) 0
+          (\<lambda>v \<omega>. \<omega> v) u)" if u: "0 \<le> u" for u
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T))
+        \<in> natural_filtration (kglue_law r T N Q RR) 0 (\<lambda>v \<omega>. \<omega> v) u
+          \<rightarrow>\<^sub>M borel"
+      by (rule nat_filt_eval) (use u T0 in auto)
+    then show ?thesis by (rule measurable_compose[OF _ fstB])
+  qed
+  show ?thesis
+    unfolding kglue_law_def
+    by (rule martingale_pair_law[OF prob_space_pair_measure[OF PQ PS]
+        kglue_measurable[OF r rT setsQ setsR NmQ] gadap
+        Zm[unfolded kglue_law_def] mgl])
+qed
+
 end
