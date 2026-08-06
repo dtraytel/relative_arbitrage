@@ -2356,4 +2356,411 @@ proof -
   finally show ?thesis .
 qed
 
+section \<open>The weak-limit machinery, parametric in a state functional\<close>
+
+text \<open>Steps (i)--(iv) of NC-3 were written for the coordinate
+  \<open>\<omega> \<mapsto> fst (\<omega> t) $ i\<close>.  The COMPENSATED clause of (1.7) needs exactly the
+  same four steps for \<open>\<omega> \<mapsto> (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ j\<close>.
+  Both are of the form \<open>\<omega> \<mapsto> F (\<omega> t)\<close> for a CONTINUOUS \<open>F\<close> on the pair
+  state, so the whole chain is redone here once, parametric in \<open>F\<close>, and
+  instantiated twice.  Nothing is duplicated and nothing is lost: the
+  coordinate instance of each generic statement is the old one.
+
+  The hypotheses a caller must supply are exactly four: \<open>F\<close> continuous,
+  the process \<open>\<lambda>u \<omega>. F (\<omega> (min u T))\<close> a martingale under every
+  approximating law, a uniform \<open>L\<^sup>2\<close> bound on \<open>F (\<omega> u)\<close>, and the usual
+  weak-convergence data.\<close>
+
+subsection \<open>Continuity and measurability of the \<open>F\<close>-functionals\<close>
+
+lemma pair_eval_F_cont:
+  fixes F :: "(real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F" and t: "t \<in> {0..T}"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric))
+      euclideanreal (\<lambda>\<omega>. F (\<omega> t))"
+proof -
+  have ev: "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+      euclidean (\<lambda>\<omega>. \<omega> t)"
+    by (rule continuous_map_path_eval[OF t])
+  have Fm: "continuous_map (euclidean :: ((real^'n) \<times> (real^'n^'n)) topology)
+      euclideanreal F"
+    using Fc by (simp add: continuous_map_iff_continuous2)
+  show ?thesis
+    using continuous_map_compose[OF ev Fm] by (simp add: o_def)
+qed
+
+lemma pair_eval_F_sq_cont:
+  fixes F :: "(real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F" and t: "t \<in> {0..T}"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric))
+      euclideanreal (\<lambda>\<omega>. (F (\<omega> t))\<^sup>2)"
+proof -
+  have "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
+      (\<lambda>\<omega>. F (\<omega> t) * F (\<omega> t))"
+    by (rule continuous_map_real_mult[OF pair_eval_F_cont[OF Fc t]
+          pair_eval_F_cont[OF Fc t]])
+  then show ?thesis by (simp add: power2_eq_square)
+qed
+
+lemma pair_test_F_functional_cont:
+  fixes F :: "(real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real"
+    and h :: "('n pairpath) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F"
+    and st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
+      (\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  have sI: "s \<in> {0..T}" using st sT by simp
+  have part1: "continuous_map ?PT euclideanreal (\<lambda>\<omega>. F (\<omega> t) - F (\<omega> s))"
+    by (intro continuous_map_diff pair_eval_F_cont[OF Fc] tI sI)
+  have rc: "continuous_map ?PT
+      (mtopology_of (path_metric s :: ('n pairpath) metric))
+      (\<lambda>\<omega>. restrict \<omega> {0..s})"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have part2: "continuous_map ?PT euclideanreal (\<lambda>\<omega>. h (restrict \<omega> {0..s}))"
+    using continuous_map_compose[OF rc hc] by (simp add: o_def)
+  show ?thesis by (rule continuous_map_real_mult[OF part2 part1])
+qed
+
+lemma pair_law_F_measurable:
+  fixes N :: "('n::finite pairpath) measure"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and u: "u \<in> {0..T}"
+  shows "(\<lambda>\<omega>. F (\<omega> u)) \<in> borel_measurable N"
+proof -
+  have "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> u))
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel"
+    using continuous_map_measurable[OF pair_eval_F_cont[OF Fc u]]
+    by (simp add: borel_of_euclidean)
+  then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
+qed
+
+lemma pair_law_F_sq_measurable:
+  fixes N :: "('n::finite pairpath) measure"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and u: "u \<in> {0..T}"
+  shows "(\<lambda>\<omega>. (F (\<omega> u))\<^sup>2) \<in> borel_measurable N"
+proof -
+  have "(\<lambda>\<omega> :: 'n pairpath. (F (\<omega> u))\<^sup>2)
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel"
+    using continuous_map_measurable[OF pair_eval_F_sq_cont[OF Fc u]]
+    by (simp add: borel_of_euclidean)
+  then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
+qed
+
+lemma pair_law_F_sq_integrable_of_nn_bound:
+  fixes N :: "('n::finite pairpath) measure"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and u: "u \<in> {0..T}"
+    and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>N) \<le> ennreal C"
+  shows "integrable N (\<lambda>\<omega>. (F (\<omega> u))\<^sup>2)"
+proof -
+  have m: "(\<lambda>\<omega>. (F (\<omega> u))\<^sup>2) \<in> borel_measurable N"
+    by (rule pair_law_F_sq_measurable[OF Fc setsN u])
+  have lt: "(\<integral>\<^sup>+\<omega>. ennreal (norm ((F (\<omega> u))\<^sup>2)) \<partial>N) < \<infinity>"
+  proof -
+    have "(\<integral>\<^sup>+\<omega>. ennreal (norm ((F (\<omega> u))\<^sup>2)) \<partial>N) \<le> ennreal C"
+      using bnd by simp
+    also have "ennreal C < \<infinity>" by simp
+    finally show ?thesis .
+  qed
+  show ?thesis unfolding integrable_iff_bounded using m lt by blast
+qed
+
+lemma pair_law_F_sq_mean_of_nn_bound:
+  fixes N :: "('n::finite pairpath) measure"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes int: "integrable N (\<lambda>\<omega>. (F (\<omega> u))\<^sup>2)" and C0: "0 \<le> C"
+    and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>N) \<le> ennreal C"
+  shows "(\<integral>\<omega>. (F (\<omega> u))\<^sup>2 \<partial>N) \<le> C"
+proof -
+  have "ennreal (\<integral>\<omega>. (F (\<omega> u))\<^sup>2 \<partial>N) = (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>N)"
+    by (rule nn_integral_eq_integral[OF int, symmetric]) simp
+  also have "\<dots> \<le> ennreal C" by (rule bnd)
+  finally show ?thesis using C0 by simp
+qed
+
+lemma pair_test_F_measurable:
+  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+  shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))
+      \<in> borel_measurable N"
+proof -
+  have sT: "s \<le> T" using ts tT by simp
+  have tI: "t \<in> {0..T}" using st ts tT by simp
+  have "(\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M borel"
+    using continuous_map_measurable
+      [OF pair_test_F_functional_cont[OF Fc st sT tI hc]]
+    by (simp add: borel_of_euclidean)
+  then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
+qed
+
+lemma pair_test_F_sq_bound:
+  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes P: "prob_space N" and Fc: "continuous_on UNIV F"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
+    and C0: "0 \<le> C"
+    and Cs: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> s))\<^sup>2) \<partial>N) \<le> ennreal C"
+    and Ct: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> t))\<^sup>2) \<partial>N) \<le> ennreal C"
+  shows "integrable N (\<lambda>\<omega>. (h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))\<^sup>2)"
+    and "(\<integral>\<omega>. (h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))\<^sup>2 \<partial>N)
+        \<le> 4 * B\<^sup>2 * C"
+proof -
+  let ?f = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s))"
+  let ?D = "\<lambda>\<omega> :: 'n pairpath. 2 * B\<^sup>2 * ((F (\<omega> t))\<^sup>2 + (F (\<omega> s))\<^sup>2)"
+  have sI: "s \<in> {0..T}" using st ts tT by simp
+  have tI: "t \<in> {0..T}" using st ts tT by simp
+  have B0: "0 \<le> B" by (rule order_trans[OF abs_ge_zero hb])
+  have iss: "integrable N (\<lambda>\<omega>. (F (\<omega> s))\<^sup>2)"
+    by (rule pair_law_F_sq_integrable_of_nn_bound[OF Fc setsN sI Cs])
+  have itt: "integrable N (\<lambda>\<omega>. (F (\<omega> t))\<^sup>2)"
+    by (rule pair_law_F_sq_integrable_of_nn_bound[OF Fc setsN tI Ct])
+  have fm: "?f \<in> borel_measurable N"
+    by (rule pair_test_F_measurable[OF Fc setsN st ts tT hc])
+  have fsqm: "(\<lambda>\<omega>. (?f \<omega>)\<^sup>2) \<in> borel_measurable N" using fm by measurable
+  have dom_int: "integrable N ?D"
+    by (intro integrable_mult_right Bochner_Integration.integrable_add itt iss)
+  have ptwise: "(?f \<omega>)\<^sup>2 \<le> ?D \<omega>" for \<omega>
+  proof -
+    have hsq: "(h (restrict \<omega> {0..s}))\<^sup>2 \<le> B\<^sup>2"
+    proof -
+      have "\<bar>h (restrict \<omega> {0..s})\<bar>\<^sup>2 \<le> B\<^sup>2"
+        by (rule power_mono[OF hb abs_ge_zero])
+      then show ?thesis by simp
+    qed
+    have e1: "2 * ((F (\<omega> t))\<^sup>2 + (F (\<omega> s))\<^sup>2) - (F (\<omega> t) - F (\<omega> s))\<^sup>2
+        = (F (\<omega> t) + F (\<omega> s))\<^sup>2"
+      by (simp add: power2_diff power2_sum)
+    have sq_le: "(F (\<omega> t) - F (\<omega> s))\<^sup>2 \<le> 2 * ((F (\<omega> t))\<^sup>2 + (F (\<omega> s))\<^sup>2)"
+      using e1 zero_le_power2[of "F (\<omega> t) + F (\<omega> s)"] by linarith
+    have "(?f \<omega>)\<^sup>2 = (h (restrict \<omega> {0..s}))\<^sup>2 * (F (\<omega> t) - F (\<omega> s))\<^sup>2"
+      by (simp add: power_mult_distrib)
+    also have "\<dots> \<le> B\<^sup>2 * (F (\<omega> t) - F (\<omega> s))\<^sup>2"
+      by (rule mult_right_mono[OF hsq zero_le_power2])
+    also have "\<dots> \<le> B\<^sup>2 * (2 * ((F (\<omega> t))\<^sup>2 + (F (\<omega> s))\<^sup>2))"
+      by (rule mult_left_mono[OF sq_le zero_le_power2])
+    also have "\<dots> = ?D \<omega>" by simp
+    finally show ?thesis .
+  qed
+  show fsq_int: "integrable N (\<lambda>\<omega>. (?f \<omega>)\<^sup>2)"
+  proof (rule Bochner_Integration.integrable_bound[OF dom_int fsqm])
+    show "AE \<omega> in N. norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n pairpath"
+      have "0 \<le> ?D \<omega>" by simp
+      then show "norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)" using ptwise[of \<omega>] by simp
+    qed
+  qed
+  have Bs: "(\<integral>\<omega>. (F (\<omega> s))\<^sup>2 \<partial>N) \<le> C"
+    by (rule pair_law_F_sq_mean_of_nn_bound[OF iss C0 Cs])
+  have Bt: "(\<integral>\<omega>. (F (\<omega> t))\<^sup>2 \<partial>N) \<le> C"
+    by (rule pair_law_F_sq_mean_of_nn_bound[OF itt C0 Ct])
+  have "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> (\<integral>\<omega>. ?D \<omega> \<partial>N)"
+    by (rule integral_mono[OF fsq_int dom_int]) (rule ptwise)
+  also have "(\<integral>\<omega>. ?D \<omega> \<partial>N)
+      = 2 * B\<^sup>2 * ((\<integral>\<omega>. (F (\<omega> t))\<^sup>2 \<partial>N) + (\<integral>\<omega>. (F (\<omega> s))\<^sup>2 \<partial>N))"
+    by (simp add: Bochner_Integration.integral_add[OF itt iss])
+  also have "\<dots> \<le> 2 * B\<^sup>2 * (2 * C)"
+    by (rule mult_left_mono) (use Bs Bt zero_le_power2 in auto)
+  also have "\<dots> = 4 * B\<^sup>2 * C" by simp
+  finally show "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> 4 * B\<^sup>2 * C" .
+qed
+
+lemma pair_test_F_integrable:
+  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes P: "prob_space N" and Fc: "continuous_on UNIV F"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
+    and C0: "0 \<le> C"
+    and Cs: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> s))\<^sup>2) \<partial>N) \<le> ennreal C"
+    and Ct: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> t))\<^sup>2) \<partial>N) \<le> ennreal C"
+  shows "integrable N (\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))"
+proof -
+  have fmN: "finite_measure N" using P by (simp add: prob_space_def)
+  show ?thesis
+    by (rule integrable_of_sq_integrable[OF fmN
+          pair_test_F_measurable[OF Fc setsN st ts tT hc]
+          pair_test_F_sq_bound(1)[OF P Fc setsN st ts tT hc hb C0 Cs Ct]])
+qed
+
+subsection \<open>Steps (i) and (ii), generically\<close>
+
+theorem martingale_test_F:
+  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes P: "prob_space N"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and mgF: "martingale N (natural_filtration N 0 (\<lambda>u \<omega>. \<omega> u)) 0
+        (\<lambda>u \<omega>. F (\<omega> (min u T)))"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hm: "h \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric s :: ('n pairpath) metric)))"
+    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
+  shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)) \<partial>N) = 0"
+proof -
+  let ?FF = "natural_filtration N 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. F (\<omega> (min u T))"
+  let ?Z = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s})"
+  have sT: "s \<le> T" using ts tT by simp
+  have t0: "0 \<le> t" using st ts by simp
+  have mt: "min t T = t" using tT by simp
+  have ms: "min s T = s" using sT by simp
+  interpret P: prob_space N by (rule P)
+  interpret MY: martingale N ?FF 0 ?Y by (rule mgF)
+  have Zm: "?Z \<in> borel_measurable (?FF s)"
+    by (rule past_test_measurable_natural_filtration[OF setsN st sT hm])
+  have ZM: "?Z \<in> borel_measurable N"
+    by (rule measurable_from_subalg[OF MY.subalgebras[OF st] Zm])
+  have prod_int: "integrable N (\<lambda>\<omega>. ?Z \<omega> * ?Y u \<omega>)" if u: "0 \<le> u" for u
+  proof (rule Bochner_Integration.integrable_bound)
+    show "integrable N (\<lambda>\<omega>. \<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)"
+      by (intro integrable_mult_right Bochner_Integration.integrable_abs
+          MY.integrable[OF u])
+    show "(\<lambda>\<omega>. ?Z \<omega> * ?Y u \<omega>) \<in> borel_measurable N"
+      using ZM borel_measurable_integrable[OF MY.integrable[OF u]]
+      by measurable
+    show "AE \<omega> in N. norm (?Z \<omega> * ?Y u \<omega>) \<le> norm (\<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n pairpath"
+      have "\<bar>?Z \<omega>\<bar> \<le> \<bar>B\<bar>" using hb[of "restrict \<omega> {0..s}"] by simp
+      then have "\<bar>?Z \<omega> * ?Y u \<omega>\<bar> \<le> \<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>"
+        by (simp add: abs_mult mult_right_mono)
+      then show "norm (?Z \<omega> * ?Y u \<omega>) \<le> norm (\<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)" by simp
+    qed
+  qed
+  have int_t: "integrable N (\<lambda>\<omega>. ?Z \<omega> * ?Y t \<omega>)" by (rule prod_int[OF t0])
+  have int_s: "integrable N (\<lambda>\<omega>. ?Z \<omega> * ?Y s \<omega>)" by (rule prod_int[OF st])
+  have eqts: "(\<integral>\<omega>. ?Z \<omega> * ?Y t \<omega> \<partial>N) = (\<integral>\<omega>. ?Z \<omega> * ?Y s \<omega> \<partial>N)"
+    by (rule martingale_bounded_test[OF mgF st ts Zm int_t int_s])
+  have "(\<integral>\<omega>. ?Z \<omega> * (?Y t \<omega> - ?Y s \<omega>) \<partial>N)
+      = (\<integral>\<omega>. ?Z \<omega> * ?Y t \<omega> \<partial>N) - (\<integral>\<omega>. ?Z \<omega> * ?Y s \<omega> \<partial>N)"
+    using Bochner_Integration.integral_diff[OF int_t int_s]
+    by (simp add: right_diff_distrib)
+  then show ?thesis using eqts mt ms by simp
+qed
+
+theorem martingale_test_F_limit:
+  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes Fc: "continuous_on UNIV F"
+    and Pm: "\<And>m. prob_space (Qm m)"
+    and setsm: "\<And>m. sets (Qm m) = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
+        (\<lambda>u \<omega>. F (\<omega> (min u T)))"
+    and wc: "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and C0: "0 \<le> C"
+    and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
+        (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
+    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
+    and hc: "continuous_map
+        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
+  shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)) \<partial>Q) = 0"
+proof -
+  let ?f = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s))"
+  have sT: "s \<le> T" using ts tT by simp
+  have sI: "s \<in> {0..T}" using st sT by simp
+  have tI: "t \<in> {0..T}" using st ts tT by simp
+  have B0: "0 \<le> B" by (rule order_trans[OF abs_ge_zero hb])
+  have fmm: "finite_measure (Qm m)" for m
+    using Pm by (simp add: prob_space_def)
+  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
+  have nnQ: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>Q) \<le> ennreal C" if u: "u \<in> {0..T}"
+    for u
+    by (rule weak_conv_on_nn_integral_le
+        [OF wc pair_eval_F_sq_cont[OF Fc u] _ C0 nnm[OF u]]) simp
+  have intm: "integrable (Qm m) ?f" for m
+    by (rule pair_test_F_integrable[OF Pm Fc setsm st ts tT hc hb C0
+          nnm[OF sI] nnm[OF tI]])
+  have intQ: "integrable Q ?f"
+    by (rule pair_test_F_integrable[OF prob Fc setsQ st ts tT hc hb C0
+          nnQ[OF sI] nnQ[OF tI]])
+  have lim: "(\<lambda>m. \<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) \<longlonglongrightarrow> (\<integral>\<omega>. ?f \<omega> \<partial>Q)"
+  proof (rule weak_conv_integral_of_L2_bound)
+    show "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))" by (rule wc)
+    show "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+        euclideanreal ?f"
+      by (rule pair_test_F_functional_cont[OF Fc st sT tI hc])
+    show "\<And>m. finite_measure (Qm m)" by (rule fmm)
+    show "finite_measure Q" by (rule fmQ)
+    show "\<And>m. integrable (Qm m) ?f" by (rule intm)
+    show "integrable Q ?f" by (rule intQ)
+    show "\<And>m Rr. integrable (Qm m) (\<lambda>w. max (- Rr) (min Rr (?f w)))"
+      by (rule clamp_integrable[OF fmm borel_measurable_integrable[OF intm]])
+    show "\<And>Rr. integrable Q (\<lambda>w. max (- Rr) (min Rr (?f w)))"
+      by (rule clamp_integrable[OF fmQ borel_measurable_integrable[OF intQ]])
+    show "\<And>m Rr. integrable (Qm m)
+        (\<lambda>w. \<bar>?f w\<bar> * indicat_real {z. Rr < \<bar>z\<bar>} (?f w))"
+      by (rule tail_integrable[OF intm])
+    show "\<And>Rr. integrable Q (\<lambda>w. \<bar>?f w\<bar> * indicat_real {z. Rr < \<bar>z\<bar>} (?f w))"
+      by (rule tail_integrable[OF intQ])
+    show "0 \<le> 4 * B\<^sup>2 * C" using C0 by simp
+    show "\<And>m. (\<integral>w. (?f w)\<^sup>2 \<partial>(Qm m)) \<le> 4 * B\<^sup>2 * C"
+      by (rule pair_test_F_sq_bound(2)[OF Pm Fc setsm st ts tT hc hb C0
+            nnm[OF sI] nnm[OF tI]])
+    show "(\<integral>w. (?f w)\<^sup>2 \<partial>Q) \<le> 4 * B\<^sup>2 * C"
+      by (rule pair_test_F_sq_bound(2)[OF prob Fc setsQ st ts tT hc hb C0
+            nnQ[OF sI] nnQ[OF tI]])
+    show "\<And>m. integrable (Qm m) (\<lambda>w. (?f w)\<^sup>2)"
+      by (rule pair_test_F_sq_bound(1)[OF Pm Fc setsm st ts tT hc hb C0
+            nnm[OF sI] nnm[OF tI]])
+    show "integrable Q (\<lambda>w. (?f w)\<^sup>2)"
+      by (rule pair_test_F_sq_bound(1)[OF prob Fc setsQ st ts tT hc hb C0
+            nnQ[OF sI] nnQ[OF tI]])
+  qed
+  have hm: "h \<in> borel_measurable (borel_of (mtopology_of
+      (path_metric s :: ('n pairpath) metric)))"
+    using continuous_map_measurable[OF hc] by (simp add: borel_of_euclidean)
+  have zero: "(\<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) = 0" for m
+    by (rule martingale_test_F[OF Pm setsm mgm st ts tT hm hb])
+  have z: "(\<lambda>m. \<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) \<longlonglongrightarrow> 0" using zero by simp
+  show ?thesis by (rule tendsto_unique[OF _ lim z]) simp
+qed
+
 end
