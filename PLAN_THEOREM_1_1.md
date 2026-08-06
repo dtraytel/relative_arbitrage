@@ -177,29 +177,41 @@ DPP.**
   with `sets_pglue_law`, `space_pglue_law`, `prob_space_pglue_law`, the
   transfer principle `AE_pglue_law`, and clauses (i)–(ii) of (1.7):
   `pglue_law_start`, `pglue_law_diffquot`.
-- **(b′) THE NEXT STEP — the two martingale clauses of `pglue_law`,** giving
+- **(b′) the two martingale clauses of `pglue_law` — DONE.**
 
       paper_pair_class_pglue_law:
         Q ∈ paper_pair_class k L r x ⟹ R ∈ paper_pair_class k L (T−r) 0
           ⟹ 0 ≤ r ≤ T ⟹ pglue_law r T Q R ∈ paper_pair_class k L T x.
 
-  Route: `martingale_pair_law` with `φ = (λp. pglue r T (fst p) (snd p))` and
-  `FF` the natural filtration of the glued process on `Q ⊗⇩M R`. Decompose
-  `Z w p = A w (fst p) + B w (snd p)` with `A w ω = fst (ω (min w r))` (a
-  `Q`-martingale) and `B w ω' = fst (ω' (min (max (w−r) 0) (T−r))) − fst (ω' 0)`
-  (an `R`-martingale, time-shifted); then `martingale_add`. Missing plumbing,
-  in dependency order: `distr (Q ⊗⇩M R) Q fst = Q` and its `snd` twin (for prob
-  spaces); the integrability/set-integral transfer along `fst`/`snd`; and the
-  fact that every event of the glued natural filtration at `u` is
-  `{p : restrict (pglue …) {0..u} ∈ Bs}` — the product-space analogue of
-  `natural_filtration_eq_restrict_vimage`. The compensated clause additionally
-  needs the cross term `X_r ⊗ W_{t−r} + W_{t−r} ⊗ X_r`, which is where the
-  independence of the two factors is genuinely used.
-  **Immediate payoff once (b′) lands:** monotonicity of `paper_v` in the
-  horizon, by pasting the Brownian witness `bmpair_law_in_paper_pair_class`
-  onto the tail — which with `paper_v_le_ball_bound` (§2.3) closes horizon-cap
-  invisibility.
-- **(c) the essinf DPP itself**, from (b′) plus the shift
+  **The class is closed under independent concatenation.** New machinery,
+  all reusable and none of it in the AFP:
+
+  | result | content |
+  |---|---|
+  | `sets_pair_measure_mono`, `filtered_measure_pair` | the pointwise product of two filtrations is a filtration on the product measure |
+  | `martingale_pair_fst`, `martingale_pair_snd` | a martingale of one factor, read on the product, is a martingale for the product filtration |
+  | `martingale_pair_mult` | the PRODUCT of a first-factor martingale with a second-factor martingale is a martingale — where independence is genuinely used |
+  | `martingale_cong_AE`, `martingale_time_change` | pass to an a.e.-equal adapted process; reparametrise time by a nondecreasing map |
+  | `distr_pair_snd` | the `snd` twin of the library's `distr_pair_fst` |
+  | `pglue_law_X_martingale`, `pglue_law_comp_martingale` | clauses (iii), (iv) of (1.7) for the pasted law |
+  | `outerp_add`, `outerp_zero` | the algebra behind the cross term |
+
+  **The proof idea worth keeping.** The lifting theorems avoid conditional
+  expectations on the product AND any π-λ argument: Fubini turns the set
+  integral over `A ∈ F u ⊗ₘ G u` into an iterated integral, and the section
+  of `A` at a fixed coordinate is a set of `F u` (resp. `G u`) by
+  `sets_Pair2`/`sets_Pair1` — so the FACTOR's `set_integral_eq` applies to it
+  directly and the outer integrand is constant. For `martingale_pair_mult`,
+  Fubini runs once in each variable, moving one factor's time index at a
+  time.
+
+  The compensated clause expands `outerp (Xᵣ + W) − (Yᵣ + ⟨W⟩)` into one
+  compensated martingale from each factor plus the cross term
+  `Xᵣ ⊗ W + W ⊗ Xᵣ`, handled entrywise through `martingale_matI` and
+  `martingale_pair_mult`. The decomposition holds only a.e. — it uses
+  `X'(0) = 0` from the second factor — hence `martingale_cong_AE`.
+
+- **(c) THE NEXT STEP — the essinf DPP itself**, from (b′) plus the shift
   (`paper_pair_class_shift_image`, `ess_inf_time_pshift_law`): the `≥` half by
   pasting ε-optimal continuations along a countable Borel partition of `X(θ)`
   (BT09's Lindelöf cover — formalizable, not the bottleneck), the `≤` half by
@@ -250,19 +262,23 @@ Needed for the theorem to be about ONE object.
   Same fixed-time estimate as above, no Itô and no optional stopping (the
   paper uses both). `paper_v_boundary_zero` is the case `|x| = r`, and this
   is the sharp form of clause (0) — note the bound does NOT mention `T`.
-- **Horizon-cap invisibility, `≥` half** — **DONE**,
-  `paper_v_horizon_stable`: for `K ⊆ cball 0 r` closed, `0 ≤ S ≤ T` and
-  `(r²−x∙x)/(n−k) ≤ S`, `paper_v k L T K x ≤ paper_v k L S K x`. Cutting a
-  horizon-`T` member back with `paper_pair_class_pcut` shortens the exit
-  time only to `min τ S`, and `paper_v_le_ball_bound` says the value never
-  exceeds `S` anyway, so the `min` never bites. Supporting: `pfst`,
-  `pexit_pfst`, `pfst_measurable`, `ennreal_min_eq`, `pexit_pcut_ge`.
-- **Horizon-cap invisibility, `≤` half** — the converse
-  `paper_v k L S K x ≤ paper_v k L T K x` for `S ≤ T` needs a member at
-  horizon `S` to EXTEND to horizon `T`. That is exactly §2.1 (b′) with `R`
-  the Brownian witness — a corollary of the pasting theorem, not an
-  independent item. With both halves, `paper_v k L T K x` is constant for
-  `T ≥ (r²−x∙x)/(n−k)` and equals the paper's uncapped `v`.
+- **Horizon-cap invisibility** — **DONE, both halves.**
+  `paper_v_horizon_stable` (the `≥` half, no pasting needed): cutting a
+  horizon-`T` member back with `paper_pair_class_pcut` shortens the exit time
+  only to `min τ S`, and `paper_v_le_ball_bound` says the value never exceeds
+  `S` anyway. Supporting: `pfst`, `pexit_pfst`, `pfst_measurable`,
+  `ennreal_min_eq`, `pexit_pcut_ge`.
+  `paper_v_horizon_mono` (the `≤` half): paste the Brownian witness onto the
+  tail with `paper_pair_class_pglue_law`; the glued path agrees with the
+  original on `[0,S]`, so it cannot exit earlier (`pexit_pglue_ge`).
+  Together, `paper_v_horizon_eq`: for `K ⊆ cball 0 r` closed and
+  `(r²−x∙x)/(n−k) ≤ S ≤ T`,
+
+      paper_v k L T K x = paper_v k L S K x.
+
+  **So `paper_v`, defined on the CAPPED path space, computes the paper's
+  uncapped `v` of (1.6).** The last discrepancy between the formalised object
+  and the paper's is gone.
 - **`stopped_val_fn ≤ paper_v`**: the bridge from market witnesses to class
   members. NOTE the recorded obstruction — a `stopped_market` witness is
   NOT a class member, because the paper's class never stops; the bridge must
