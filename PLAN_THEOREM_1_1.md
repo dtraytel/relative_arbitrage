@@ -1721,3 +1721,89 @@ Two design points worth keeping:
      `paper_pair_class_sets`, `pC` = `paper_pair_class_prob`, `neC` = item 1.
    - finally, usc in `x ∈ real^'n` follows from usc at `(x,0)` because
      `x ↦ (x,0)` is continuous.
+
+---
+
+## SESSION 2026-08-06 (continued): THE NC HEADLINE IS PROVED
+
+**Commit `3f80e4d` — `paper_v_usc`.** For `0 < T`, `0 ≤ L`, `closed K` and a
+NONEMPTY class at `0`:
+
+```
+paper_v k L T K x < b  ⟹  eventually (λy. paper_v k L T K y < b) (nhds x)
+```
+
+`paper_v` IS Eq. (1.6), so this is clause (1) of Theorem 1.1 for the paper's
+own value function. New glue: `pshift_law_compose`, `pshift_law_zero`,
+`AE_pshift_law_iff`, `ess_inf_time_pshift_law`, `pexit_pshift_eq_etime`,
+`ennreal_Sup_image`, `paper_v_eq_vshift_sup`, `paper_v_usc`.
+
+Two things worth keeping:
+- going through `AE_pshift_law_iff` avoids ever needing `etime` to be Borel
+  measurable — the repo does not have that, `Section_2_Usc` only ever uses
+  its SUBLEVEL sets (`open_etime_shift_less`);
+- in `assumes ne: "paper_pair_class k L T 0 ≠ {}"` the `0` MUST be annotated
+  `(0 :: real^'n)`. Without it the class in the assumption elaborates at a
+  fresh type variable, silently and with no warning, and `rule ne` then
+  fails against a goal that prints identically.
+
+**Commit `9e9ef5b` — the reusable core of nonemptiness.** `pair_law_of`,
+`phi_filtration_measurable`, `martingale_pair_law`: a pair PROCESS pushes
+forward to a pair LAW, and a martingale for the process's own filtration is
+a martingale for the law's NATURAL filtration.
+
+## THE ONE REMAINING NC ITEM: nonemptiness of `paper_pair_class k L T 0`
+
+Everything else in NC is done. Target witness (needs `1 ≤ L`, `1 ≤ k`,
+`k < CARD('n)`):
+
+```
+φ ω = restrict (λt. (cbmX 0 t ω, t *⇩R mat 1)) {0..T}   on  bm_paths
+Q   = pair_law_of T φ bm_paths
+```
+
+**The Brownian layer IS reachable from `Paper_Bridge`** — the chain is
+`Paper_Bridge → Section_2_Usc → Value_Function → Brownian_Optimal_Boundary
+→ Brownian_Continuous` — so NO import change (and no ROOT edit) is needed.
+`cbmX`, `bm_paths`, `martingale_cbmX`,
+`Brownian_market_sufficiently_volatile` are all in scope.
+
+Checklist, in dependency order:
+
+1. `φ` measurable into the path Borel σ-algebra — `Path_Space.pathify_measurable`
+   (component measurability + path continuity; `cbmX` is exactly the
+   continuous modification, that is what `Brownian_Continuous` supplies).
+2. START clause: `AE ω. cbmX 0 0 ω = 0` (see `Brownian_market_sufficiently_volatile`'s
+   own `X_start` step, which chains `cbmX_ae_eq` with `bmX_start`), and
+   `0 *⇩R mat 1 = 0`.
+3. COVARIATION clause: `(1/(t−s)) *⇩R ((t *⇩R mat 1) − (s *⇩R mat 1)) = mat 1`,
+   then `Paper_Class.mat_1_in_sconstraint`. Deterministic, no probability.
+4. X-MARTINGALE clause: `martingale_pair_law` at `Z u ω = fst (ω (min u T))`,
+   whose hypothesis is `martingale bm_paths F 0 (λu ω. cbmX 0 (min u T) ω)`.
+   That is `martingale_cbmX` STOPPED AT A DETERMINISTIC TIME. The repo's
+   `Deterministic_Radius_Market.martingale_stopped_deterministic` is NOT
+   reachable from `Paper_Bridge`, so write a local `martingale_stopped_const`
+   (≈30 lines via `martingale_of_set_integral_eq`; the three cases are
+   `u ≤ v ≤ T`, `u ≤ T ≤ v`, `T ≤ u`, and adaptedness is `F_{min u T} ⊆ F_u`).
+5. COMPENSATED clause: `martingale_pair_law` at
+   `Z u ω = outerp (fst (ω (min u T))) − snd (ω (min u T))`, whose hypothesis
+   is that `outerp (cbmX 0 t) − t *⇩R mat 1` is a matrix-valued martingale.
+   Assemble it from entries with `martingale_matI` (this session's lemma).
+   - DIAGONAL entries: `(W_i)² − t` is `coord_Z X acov i` at `acov = mat 1`,
+     available from `Brownian_market_sufficiently_volatile`'s
+     `coord_Z_martingale`.
+   - **OFF-DIAGONAL entries `W_i W_j`, `i ≠ j`: THIS IS THE ONE GENUINELY
+     MISSING MATHEMATICAL INPUT.** The market locale only ever asserts the
+     diagonal (`coord_Z_martingale`), so it has to be proved for the
+     Brownian witness. Two routes:
+     (a) *polarization*: `4 W_i W_j = ((W_i+W_j)² − 2t) − ((W_i−W_j)² − 2t)`,
+         which needs "for a fixed unit direction `e`, `(e ∙ W)² − |e|² t` is a
+         martingale" — i.e. the `coord_Z` result in a ROTATED coordinate.
+         Cheapest if the repo can be made to give rotation invariance of
+         `bm_paths`;
+     (b) *direct*: expand `W_i(t)W_j(t) − W_i(s)W_j(s)` into
+         `W_i(s)ΔW_j + W_j(s)ΔW_i + ΔW_i ΔW_j` and kill each term with
+         independence of the increments from the past and of the coordinates
+         from each other (`bm_paths` is built as a product of independent
+         one-dimensional motions, so the second is structural).
+     Budget this as the real work; everything else on the list is plumbing.
