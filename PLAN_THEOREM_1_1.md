@@ -42,9 +42,11 @@ time from `K`.
 **The one structural gap that spans clauses.** Three value functions exist:
 `val_fn` (all `sufficiently_volatile_market` instances), `stopped_val_fn`
 (the locale plus the paper's stopped/killed side conditions) and `paper_v`
-(the class (1.7) as pair laws). Clause (1) and (4) are proved for the right
-object; clauses (0), (2), (3) currently live on the market-side functions.
-Consolidating them onto `paper_v` is §2.3 and is mostly mechanical.
+(the class (1.7) as pair laws). Clauses (0), (1), (3)-ball and (4) are now
+proved for `paper_v` itself. What still lives only on the market-side
+functions is the `n−k=1` realization inside clause (3)
+(`stopped_val_fn_ball_eq_2d`); transferring it, and the horizon-cap
+argument, is the rest of §2.3.
 
 ---
 
