@@ -228,15 +228,49 @@ DPP.**
   (2.9) needs on top is to CHOOSE that law per endpoint. Remaining, in
   dependency order:
 
-  1. **Kernel pasting at a deterministic time.** Route: take the second factor
-     to be `Pi⇩M UNIV R` (a `product_prob_space`, hence a probability space) and
-     the glue map `(ω, f) ↦ pglue r T ω (f (N ω))`, with `N` a Borel index map
-     on the `r`-path space. For FROZEN `ω` the index is constant, so the
-     second-factor process is the `N ω`-th coordinate process — a martingale —
-     and `martingale_pair_snd_param` applies verbatim. Still needed: the
-     component lift for `Pi⇩M` (same section argument, but Fubini over
-     `product_prob_space`), and a parametrized `martingale_pair_mult` for the
-     compensated clause's cross term.
+  1. **Kernel pasting at a deterministic time — PART DONE.**
+     `kglue r T N p = pglue r T (fst p) (snd p (N (fst p)))`: run the first
+     piece to `r`, then continue with the candidate the endpoint's index `N`
+     selects. The second factor is `Pi⇩M UNIV RR`, the product of ALL
+     candidates, so one probability space carries the family.
+
+     | result | content |
+     |---|---|
+     | `sets_PiM_mono`, `filtered_measure_PiM` | `Pi⇩M` is monotone in the factors' σ-algebras; a pointwise product of filtrations is a filtration |
+     | `martingale_distr` | transport of the martingale property along a pushforward — the general form of `martingale_pair_law` |
+     | `martingale_PiM_component` | the `i`-th coordinate process is a martingale for the product filtration (split `i` off with `distr_pair_PiM_eq_PiM`, use `martingale_pair_fst`, transport back) |
+     | `kglue`, `kglue_measurable`, `kglue_law`, `prob_space_kglue_law` | the construction; the index enters through `measurable_compose_countable` |
+     | `AE_kglue_law`, `kglue_law_start`, `kglue_law_diffquot` | clauses (i)–(ii) of (1.7) |
+
+     **What is left: clauses (iii) and (iv) for `kglue_law`.** The
+     decomposition is now POINTWISE (unlike `pglue_law`, which needed
+     `martingale_cong_AE`): with `σ u = (u−r)⁺` and `τ u = min (σ u) (T−r)`,
+
+         Z u p = fst (fst p (min u r))
+               + (fst (snd p (N (fst p)) (τ u)) − fst (snd p (N (fst p)) 0)),
+
+     and the second summand is LITERALLY `0` for `u ≤ r`, which is what makes
+     it adapted there — `N (fst p)` is only `ℱ^Q_r`-measurable, so nothing
+     index-dependent may survive before `r`. The two halves are
+     `martingale_pair_fst` and `martingale_pair_snd_param`; the frozen-`ω`
+     premise of the latter is `martingale_PiM_component` after
+     `martingale_time_change` by `σ`. Missing, in dependency order:
+
+     - `martingale_sub_initial` (`X u − X t₀` is a martingale) — over AFP's
+       `martingale_const_fun` and `scaleR_const` plus `martingale_add`;
+       AFP's `martingale_add_const` only adds a genuine CONSTANT;
+     - **integrability of the second summand on `Q ⊗⇩M Pi⇩M UNIV RR`.** This is
+       the one real obstacle: the bound must be UNIFORM over the family `RR`.
+       It is available — `Paper_Class.paper_pair_class_sq_mean_le` gives
+       `E[(X_t$i)²] ≤ (x$i)² + n·L·T` for EVERY class member — so the route is
+       `Fubini_integrable` with the inner integral computed by
+       `distr_PiM_component`, then Cauchy–Schwarz down to `L¹`;
+     - for clause (iv), a PARAMETRIZED `martingale_pair_mult` (the `snd_param`
+       analogue of the product lemma), because the cross term
+       `X_r ⊗ W + W ⊗ X_r` is index-dependent in its second factor.
+
+     Estimated 600 lines for clause (iii) and 700 for clause (iv).
+
   2. **ε-optimal selection.** For each `y` pick `R_y` with essinf `≈ v(y)`;
      BT09's Lindelöf cover of `K` by balls on which `v` varies by `< ε` gives
      the countable Borel partition. Formalizable, not the bottleneck.
