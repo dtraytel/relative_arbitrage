@@ -5650,4 +5650,116 @@ proof -
   finally show ?thesis .
 qed
 
+lemma bmX_coord_measurable_F:
+  fixes x0 :: "real^'n::finite"
+  assumes u: "0 \<le> u"
+  shows "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 u \<omega> $ k) \<in> borel_measurable
+      (natural_filtration (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (bmX x0) u)"
+proof -
+  have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. x0 $ k + \<omega> k u) \<in> borel_measurable
+      (natural_filtration (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (bmX x0) u)"
+    by (intro borel_measurable_add borel_measurable_const
+        bm_coordinate_measurable_F[OF u])
+  then show ?thesis by (simp add: bmX_def)
+qed
+
+lemma bmX_cross_integrable:
+  fixes x0 :: "real^'n::finite"
+  assumes u: "0 \<le> u"
+  shows "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  have sq: "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (bmX x0 u \<omega> $ k)\<^sup>2)"
+    for k
+    using bm_coordinate_sq_integrable[OF u, of "x0 $ k" k]
+    by (simp add: bmX_def)
+  \<comment> \<open>\<open>|ab| \<le> a\<^sup>2 + b\<^sup>2\<close>, from \<open>sum_squares_bound\<close> at \<open>|a|\<close>, \<open>|b|\<close>\<close>
+  have abs_le: "\<bar>a * b\<bar> \<le> a\<^sup>2 + b\<^sup>2" for a b :: real
+  proof -
+    have s: "2 * \<bar>a\<bar> * \<bar>b\<bar> \<le> \<bar>a\<bar>\<^sup>2 + \<bar>b\<bar>\<^sup>2" by (rule sum_squares_bound)
+    have s': "2 * (\<bar>a\<bar> * \<bar>b\<bar>) \<le> a\<^sup>2 + b\<^sup>2" using s by (simp add: mult.assoc)
+    have nn: "0 \<le> \<bar>a\<bar> * \<bar>b\<bar>" by simp
+    have "\<bar>a * b\<bar> = \<bar>a\<bar> * \<bar>b\<bar>" by (simp add: abs_mult)
+    also have "\<dots> \<le> a\<^sup>2 + b\<^sup>2" using s' nn by linarith
+    finally show ?thesis .
+  qed
+  show ?thesis
+  proof (rule Bochner_Integration.integrable_bound
+      [where f = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+          (bmX x0 u \<omega> $ i)\<^sup>2 + (bmX x0 u \<omega> $ j)\<^sup>2"])
+    show "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+        (bmX x0 u \<omega> $ i)\<^sup>2 + (bmX x0 u \<omega> $ j)\<^sup>2)"
+      by (intro Bochner_Integration.integrable_add sq)
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)
+        \<in> borel_measurable ?M"
+      using u by (intro borel_measurable_times measurable_bm_coordinate
+          borel_measurable_add borel_measurable_const) (auto simp: bmX_def)
+    show "AE \<omega> in ?M. norm (bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)
+        \<le> norm ((bmX x0 u \<omega> $ i)\<^sup>2 + (bmX x0 u \<omega> $ j)\<^sup>2)"
+      by (intro always_eventually allI) (simp add: abs_le)
+  qed
+qed
+
+theorem martingale_bm_cross:
+  fixes x0 :: "real^'n::finite" and i j :: 'n
+  assumes ij: "i \<noteq> j"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (bmX x0)) 0
+      (\<lambda>u \<omega>. bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0)"
+  interpret MX: martingale ?M ?F 0 "bmX x0" by (rule martingale_bmX)
+  show ?thesis
+  proof (rule MX.martingale_of_set_integral_eq)
+    show "adapted_process ?M ?F 0 (\<lambda>u \<omega>. bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)"
+    proof (unfold_locales)
+      fix u :: real assume u: "0 \<le> u"
+      show "(\<lambda>\<omega>. bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j) \<in> borel_measurable (?F u)"
+        by (intro borel_measurable_times bmX_coord_measurable_F[OF u])
+    qed
+    show "integrable ?M (\<lambda>\<omega>. bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)"
+      if u: "0 \<le> u" for u by (rule bmX_cross_integrable[OF u])
+    fix A and u v :: real
+    assume A: "A \<in> ?F u" and uv: "0 \<le> u" "u \<le> v"
+    have v0: "0 \<le> v" using uv by simp
+    have Ai: "A \<in> sets ?M"
+      using A MX.subalgebras[OF uv(1)] by (auto simp: subalgebra_def)
+    have ii: "integrable ?M
+        (\<lambda>\<omega>. indicat_real A \<omega> * (bmX x0 w \<omega> $ i * bmX x0 w \<omega> $ j))"
+      if w: "0 \<le> w" for w
+    proof -
+      have "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+          indicat_real A \<omega> *\<^sub>R (bmX x0 w \<omega> $ i * bmX x0 w \<omega> $ j))"
+        by (rule integrable_mult_indicator[OF Ai bmX_cross_integrable[OF w]])
+      then show ?thesis by simp
+    qed
+    have eqv: "set_lebesgue_integral ?M A
+          (\<lambda>\<omega>. bmX x0 w \<omega> $ i * bmX x0 w \<omega> $ j)
+        = (\<integral>\<omega>. indicat_real A \<omega> * (bmX x0 w \<omega> $ i * bmX x0 w \<omega> $ j) \<partial>?M)"
+      for w
+      unfolding set_lebesgue_integral_def by simp
+    have "(\<integral>\<omega>. indicat_real A \<omega> * (bmX x0 v \<omega> $ i * bmX x0 v \<omega> $ j) \<partial>?M)
+        - (\<integral>\<omega>. indicat_real A \<omega> * (bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j) \<partial>?M)
+        = (\<integral>\<omega>. indicat_real A \<omega> * (bmX x0 v \<omega> $ i * bmX x0 v \<omega> $ j)
+              - indicat_real A \<omega> * (bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j) \<partial>?M)"
+      by (rule Bochner_Integration.integral_diff[symmetric])
+        (rule ii[OF v0], rule ii[OF uv(1)])
+    also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega>
+            * (bmX x0 v \<omega> $ i * bmX x0 v \<omega> $ j
+               - bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j) \<partial>?M)"
+      by (rule Bochner_Integration.integral_cong) (auto simp: algebra_simps)
+    also have "\<dots> = 0"
+      by (rule bm_cross_increment_set_integral_zero[OF ij uv A])
+    finally show "set_lebesgue_integral ?M A
+          (\<lambda>\<omega>. bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)
+        = set_lebesgue_integral ?M A
+          (\<lambda>\<omega>. bmX x0 v \<omega> $ i * bmX x0 v \<omega> $ j)"
+      unfolding eqv by simp
+  qed
+qed
+
 end
