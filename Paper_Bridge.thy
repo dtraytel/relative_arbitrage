@@ -6053,4 +6053,178 @@ proof -
   qed
 qed
 
+subsection \<open>The two martingale clauses for the witness\<close>
+
+lemma bmpair_adapted:
+  fixes r u :: real
+  assumes r: "0 \<le> r" and ru: "r \<le> u"
+  shows "(\<lambda>\<omega> :: 'n::finite \<Rightarrow> real \<Rightarrow> real. bmpair T \<omega> r) \<in> borel_measurable
+      (natural_filtration (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^'n)) u)"
+proof (cases "r \<in> {0..T}")
+  case True
+  let ?F = "natural_filtration (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0
+      (cbmX (0 :: real^'n))"
+  interpret MC: martingale "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure" ?F 0
+      "cbmX (0 :: real^'n)"
+    by (rule martingale_cbmX)
+  have cr: "cbmX (0 :: real^'n) r \<in> borel_measurable (?F r)"
+    by (rule MC.adapted[OF r])
+  have cu: "cbmX (0 :: real^'n) r \<in> borel_measurable (?F u)"
+    using MC.borel_measurable_mono[OF r ru] cr by blast
+  have c: "(\<lambda>v :: real^'n. (v, r *\<^sub>R (mat 1 :: real^'n^'n)))
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+        (cbmX (0 :: real^'n) r \<omega>, r *\<^sub>R (mat 1 :: real^'n^'n)))
+      \<in> borel_measurable (?F u)"
+    by (rule measurable_compose[OF cu c])
+  then show ?thesis using True by (simp add: bmpair_apply)
+next
+  case False
+  then have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmpair T \<omega> r) = (\<lambda>\<omega>. undefined)"
+    by (auto simp: bmpair_def)
+  then show ?thesis by simp
+qed
+
+theorem bmpair_law_X_martingale:
+  assumes T: "0 \<le> T"
+  shows "martingale (pair_law_of T (bmpair T)
+        (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (bmpair T) bm_paths) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?Q = "pair_law_of T (bmpair T) ?M"
+  let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have Zm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T))) \<in> borel_measurable (?G u)"
+    if u: "0 \<le> u" for u
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u T in auto)
+    show ?thesis by (rule measurable_compose[OF ev fstB])
+  qed
+  have mg: "martingale ?M ?F 0 (\<lambda>u \<omega>. fst (bmpair T \<omega> (min u T)))"
+  proof (rule martingale_cong_ge
+      [OF martingale_stopped_const[OF T martingale_cbmX]])
+    fix u :: real assume u: "0 \<le> u"
+    have mI: "min u T \<in> {0..T}" using u T by simp
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cbmX (0 :: real^'n) (min u T) \<omega>)
+        = (\<lambda>\<omega>. fst (bmpair T \<omega> (min u T)))"
+      by (rule ext) (simp add: bmpair_apply[OF mI])
+  qed
+  show ?thesis
+    by (rule martingale_pair_law[OF prob_space_bm_paths
+        bmpair_measurable[OF T] bmpair_adapted Zm mg])
+qed
+
+theorem bmpair_law_comp_martingale:
+  assumes T: "0 \<le> T"
+  shows "martingale (pair_law_of T (bmpair T)
+        (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (bmpair T) bm_paths) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T)) :: real^'n) - snd (\<omega> (min u T)))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?Q = "pair_law_of T (bmpair T) ?M"
+  let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  \<comment> \<open>as in \<open>comp_entry_cont\<close>: rewrite to the ENTRYWISE form first, then
+      \<open>continuous_on_vec_lambda\<close> twice.\<close>
+  have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+      = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
+    by (rule ext) (simp add: outerp_def vec_eq_iff)
+  have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+      \<in> borel_measurable borel"
+    unfolding e
+    by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
+        continuous_intros)
+  have Zm: "(\<lambda>\<omega> :: 'n pairpath.
+        outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
+      \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u T in auto)
+    show ?thesis by (rule measurable_compose[OF ev cB])
+  qed
+  have mg: "martingale ?M ?F 0
+      (\<lambda>u \<omega>. outerp (fst (bmpair T \<omega> (min u T))) - snd (bmpair T \<omega> (min u T)))"
+  proof (rule martingale_cong_ge
+      [OF martingale_stopped_const[OF T martingale_cbm_outerp]])
+    fix u :: real assume u: "0 \<le> u"
+    have mI: "min u T \<in> {0..T}" using u T by simp
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+          outerp (cbmX (0 :: real^'n) (min u T) \<omega>) - (min u T) *\<^sub>R mat 1)
+        = (\<lambda>\<omega>. outerp (fst (bmpair T \<omega> (min u T)))
+             - snd (bmpair T \<omega> (min u T)))"
+      by (rule ext) (simp add: bmpair_apply[OF mI])
+  qed
+  show ?thesis
+    by (rule martingale_pair_law[OF prob_space_bm_paths
+        bmpair_measurable[OF T] bmpair_adapted Zm mg])
+qed
+
+subsection \<open>The witness is a member, so the class is nonempty\<close>
+
+theorem bmpair_law_in_paper_pair_class:
+  assumes T: "0 \<le> T" and L: "1 \<le> L"
+  shows "pair_law_of T (bmpair T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+    \<in> paper_pair_class k L T (0 :: real^'n)"
+  unfolding paper_pair_class_def
+proof (intro CollectI conjI)
+  show "prob_space (pair_law_of T (bmpair T)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))"
+    by (rule prob_space_bmpair_law[OF T])
+  show "sets (pair_law_of T (bmpair T)
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    by simp
+  show "AE \<omega> in pair_law_of T (bmpair T)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
+    by (rule bmpair_law_start[OF T])
+  show "AE \<omega> in pair_law_of T (bmpair T)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    by (rule bmpair_law_diffquot[OF T L])
+  show "martingale (pair_law_of T (bmpair T)
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (bmpair T) bm_paths) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. fst (\<omega> (min t T)) :: real^'n)"
+    by (rule bmpair_law_X_martingale[OF T])
+  show "martingale (pair_law_of T (bmpair T)
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (bmpair T) bm_paths) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T)) :: real^'n) - snd (\<omega> (min t T)))"
+    by (rule bmpair_law_comp_martingale[OF T])
+qed
+
+corollary paper_pair_class_nonempty:
+  assumes T: "0 \<le> T" and L: "1 \<le> L"
+  shows "paper_pair_class k L T (0 :: real^'n::finite) \<noteq> {}"
+  using bmpair_law_in_paper_pair_class[OF T L] by blast
+
+text \<open>Hence clause (1) of Theorem 1.1 for the paper's own value function,
+  with NO hypothesis left beyond the paper's own standing ones: \<open>0 < T\<close>,
+  \<open>1 \<le> L\<close> (which is (1.5)) and \<open>K\<close> closed.\<close>
+
+corollary paper_v_usc_unconditional:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and b :: ennreal
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+    and lt: "paper_v k L T K x < b"
+  shows "eventually (\<lambda>y. paper_v k L T K y < b) (nhds x)"
+proof (rule paper_v_usc[OF T _ K _ lt])
+  show "0 \<le> L" using L by simp
+  show "paper_pair_class k L T (0 :: real^'n) \<noteq> {}"
+    using T L by (intro paper_pair_class_nonempty) simp_all
+qed
+
 end
