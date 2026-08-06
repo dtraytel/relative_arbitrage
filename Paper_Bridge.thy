@@ -6941,4 +6941,189 @@ proof -
   qed
 qed
 
+subsection \<open>The pasted law\<close>
+
+definition pglue_law :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath) measure
+    \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
+  where "pglue_law r T Q R
+     = pair_law_of T (\<lambda>p. pglue r T (fst p) (snd p)) (Q \<Otimes>\<^sub>M R)"
+
+lemma sets_pglue_law[simp]:
+  "sets (pglue_law r T Q R)
+     = sets (borel_of (mtopology_of (path_metric T
+         :: ('n::finite pairpath) metric)))"
+  unfolding pglue_law_def by (rule sets_pair_law_of)
+
+lemma space_pglue_law:
+  "space (pglue_law r T Q R)
+     = mspace (path_metric T :: ('n::finite pairpath) metric)"
+  unfolding pglue_law_def by (rule space_pair_law_of)
+
+lemma prob_space_pair_measure:
+  assumes M: "prob_space M" and N: "prob_space N"
+  shows "prob_space (M \<Otimes>\<^sub>M N)"
+proof -
+  interpret M: prob_space M by (rule M)
+  interpret N: prob_space N by (rule N)
+  interpret PP: pair_prob_space M N by unfold_locales
+  show ?thesis by (rule PP.P.prob_space_axioms)
+qed
+
+lemma prob_space_pglue_law:
+  fixes Q R :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and PQ: "prob_space Q" and PR: "prob_space R"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and setsR: "sets R = sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+  shows "prob_space (pglue_law r T Q R)"
+proof -
+  interpret PP: prob_space "Q \<Otimes>\<^sub>M R"
+    by (rule prob_space_pair_measure[OF PQ PR])
+  show ?thesis
+    unfolding pglue_law_def pair_law_of_def
+    by (rule PP.prob_space_distr[OF pglue_measurable[OF r rT setsQ setsR]])
+qed
+
+text \<open>The transfer principle for almost-sure statements: a property of the
+  glued path holds \<open>pglue_law\<close>-a.s. as soon as it follows from one
+  \<open>Q\<close>-a.s. property of the first piece and one \<open>R\<close>-a.s. property of the
+  second.  Both \<open>AE\<close> clauses of (1.7) are of this shape.\<close>
+
+lemma AE_pglue_law:
+  fixes Q R :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and PQ: "prob_space Q" and PR: "prob_space R"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and setsR: "sets R = sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). P \<omega>}
+        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    and A: "AE \<omega> in Q. A \<omega>" and B: "AE \<omega>' in R. B \<omega>'"
+    and imp: "\<And>\<omega> \<omega>' :: 'n pairpath.
+        \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric) \<Longrightarrow>
+        \<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric) \<Longrightarrow>
+        A \<omega> \<Longrightarrow> B \<omega>' \<Longrightarrow> P (pglue r T \<omega> \<omega>')"
+  shows "AE \<omega> in pglue_law r T Q R. P \<omega>"
+proof -
+  let ?M = "Q \<Otimes>\<^sub>M R"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue r T (fst p) (snd p)"
+  interpret PQ: prob_space Q by (rule PQ)
+  interpret PR: prob_space R by (rule PR)
+  interpret PP: pair_prob_space Q R by unfold_locales
+  have phim: "?g \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule pglue_measurable[OF r rT setsQ setsR])
+  have mset': "{\<omega> \<in> space ?B. P \<omega>} \<in> sets ?B"
+    using mset by (simp add: space_borel_of)
+  have iff: "(AE \<omega> in pglue_law r T Q R. P \<omega>) = (AE p in ?M. P (?g p))"
+    unfolding pglue_law_def pair_law_of_def by (rule AE_distr_iff[OF phim mset'])
+  have evm: "{p \<in> space ?M. P (?g p)} \<in> sets ?M"
+  proof -
+    have "{p \<in> space ?M. P (?g p)} = ?g -` {\<omega> \<in> space ?B. P \<omega>} \<inter> space ?M"
+      using measurable_space[OF phim] by auto
+    then show ?thesis using measurable_sets[OF phim mset'] by simp
+  qed
+  have inner: "AE \<omega> in Q. AE \<omega>' in R. P (?g (\<omega>, \<omega>'))"
+  proof -
+    have RB: "AE \<omega>' in R. B \<omega>'
+        \<and> \<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+      using B AE_space[of R] space_of_path_sets[OF setsR]
+      by (auto intro: eventually_conj)
+    have QA: "AE \<omega> in Q. A \<omega>
+        \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      using A AE_space[of Q] space_of_path_sets[OF setsQ]
+      by (auto intro: eventually_conj)
+    show ?thesis
+    proof (rule eventually_mono[OF QA])
+      fix \<omega> :: "'n pairpath"
+      assume w: "A \<omega> \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      show "AE \<omega>' in R. P (?g (\<omega>, \<omega>'))"
+      proof (rule eventually_mono[OF RB])
+        fix \<omega>' :: "'n pairpath"
+        assume "B \<omega>'
+            \<and> \<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+        with w show "P (?g (\<omega>, \<omega>'))" by (simp add: imp)
+      qed
+    qed
+  qed
+  have "AE p in ?M. P (?g p)"
+    using PP.AE_pair_measure[OF evm] inner by simp
+  then show ?thesis unfolding iff .
+qed
+
+lemma pglue_law_start:
+  fixes Q R :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "R \<in> paper_pair_class k L (T - r) 0"
+  shows "AE \<omega> in pglue_law r T Q R. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
+  proof -
+    have "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+        fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
+        = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(x, 0)} \<inter> space ?B"
+      by (auto simp: prod_eq_iff space_borel_of)
+    then show ?thesis using measurable_sets[OF ev] by simp
+  qed
+  show ?thesis
+  proof (rule AE_pglue_law[OF r rT paper_pair_class_prob[OF Q]
+        paper_pair_class_prob[OF R] paper_pair_class_sets[OF Q]
+        paper_pair_class_sets[OF R] mset])
+    show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+      using Q unfolding paper_pair_class_def by blast
+    show "AE \<omega>' in R. True" by simp
+    fix \<omega> \<omega>' :: "'n pairpath"
+    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+      and st: "fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0" and "True"
+    from st show "fst (pglue r T \<omega> \<omega>' 0) = x \<and> snd (pglue r T \<omega> \<omega>' 0) = 0"
+      using r rT by (simp add: pglue_zero)
+  qed
+qed
+
+lemma pglue_law_diffquot:
+  fixes Q R :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "R \<in> paper_pair_class k L (T - r) 0"
+  shows "AE \<omega> in pglue_law r T Q R. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+proof (rule paper_pair_class_diffquot_of_pairs[OF sets_pglue_law])
+  fix p q :: real
+  assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
+    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
+  show "AE \<omega> in pglue_law r T Q R.
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  proof (rule AE_pglue_law[OF r rT paper_pair_class_prob[OF Q]
+        paper_pair_class_prob[OF R] paper_pair_class_sets[OF Q]
+        paper_pair_class_sets[OF R] mset])
+    show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      using Q unfolding paper_pair_class_def by blast
+    show "AE \<omega>' in R. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+      using R unfolding paper_pair_class_def by blast
+    fix \<omega> \<omega>' :: "'n pairpath"
+    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+      and A: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      and B: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+    show "(1 / (q - p)) *\<^sub>R
+        (snd (pglue r T \<omega> \<omega>' q) - snd (pglue r T \<omega> \<omega>' p)) \<in> sconstraint k L"
+      using pq A B by (intro pglue_diffquot[OF r rT]) auto
+  qed
+qed
+
 end
