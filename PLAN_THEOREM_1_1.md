@@ -1857,3 +1857,47 @@ With those two, the compensated clause assembles by `martingale_matI` from
 the nonemptiness checklist above is plumbing that is already written
 (`martingale_pair_law`, `martingale_stopped_const`, `pathify_measurable`,
 `mat_1_in_sconstraint`).
+
+### The off-diagonal covariation is DONE (2026-08-06, commits `01307e9`…`c9214eb`)
+
+Both facts identified in the previous section are proved, in
+`Paper_Bridge.thy`:
+
+- `bm_coordinates_indep` — the coordinates of `bm_paths` are independent.
+  `Kolmogorov_Chentsov_Extras.indep_vars_PiM_coordinate` is NOT in scope
+  from `Paper_Bridge`, so its six-line argument is repeated:
+  `distr (PiM I M) (PiM I M) id = PiM I (λi. distr (PiM I M) (M i) (λf. f i))`
+  by `BMC.PiM_component`, which is exactly
+  `indep_vars_iff_distr_eq_PiM'`.
+- `bm_increment_coord_indep`, `bm_increment_cross` — hence
+  `E[Δ_i Δ_j] = 0` for `i ≠ j`, plus integrability.
+- `bm_meas_increment_fun_indep_var` — the generalisation of
+  `Brownian_Market.bm_meas_increment_indep_var` from one COORDINATE of the
+  increment to any Borel function of the VECTOR increment.
+- `bm_cross_set_integral_zero` — `∫_A Δ_i Δ_j = 0` for a past event `A`.
+- `bm_cross_increment_set_integral_zero` — the martingale identity itself,
+  in set-integral form:
+  `∫_A (X_i(v)X_j(v) − X_i(u)X_j(u)) = 0` for `A ∈ F_u`, via the split
+  `X_i(u)Δ_j + X_j(u)Δ_i + Δ_iΔ_j`.
+
+**Next step, and it is now packaging only.** Turn that identity into
+`martingale bm_paths (natural_filtration bm_paths 0 (bmX x0)) 0
+(λu ω. bmX x0 u ω $ i * bmX x0 u ω $ j)` by
+`MX.martingale_of_set_integral_eq` (interpret `MX` from
+`Brownian_Market.martingale_bmX`). Three obligations:
+1. ADAPTED — `bm_coordinate_measurable_F` plus `borel_measurable_times`;
+   note `bmX x0 u ω $ k = x0$k + ω k u` (`bmX_def`), so a
+   `borel_measurable_add`/`_const` step is needed first.
+2. INTEGRABLE — `|ab| ≤ a² + b²` (from `sum_squares_bound` at `|a|`, `|b|`)
+   with `Bochner_Integration.integrable_bound`; each square is
+   `bm_coordinate_sq_integrable[of _ "x0$k"]` after `bmX_def`.
+3. SET-INTEGRAL EQUALITY — `bm_cross_increment_set_integral_zero`, plus
+   `set_lebesgue_integral M A f = ∫ indicat_real A ω * f ω` on reals.
+
+Then: transfer from `bmX` to the continuous modification `cbmX` (the class
+lives on the path space, so the witness must be the continuous version —
+`Brownian_Continuous` already does this for `martingale_cbmX`), assemble the
+matrix martingale with `martingale_matI` from the diagonal
+(`martingale_bm_coord_square`) and this off-diagonal, and feed the whole
+thing through `martingale_pair_law` with
+`φ ω = restrict (λt. (cbmX 0 t ω, t *⇩R mat 1)) {0..T}`.
