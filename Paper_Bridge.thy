@@ -3130,4 +3130,545 @@ proof -
   qed
 qed
 
+section \<open>The compensated clause of Lemma 2.3\<close>
+
+text \<open>The instantiation of the generic chain at
+  \<open>F\<^sub>2 p = (outerp (fst p) - snd p) $ i $ j\<close>.  The only new input is its
+  \<open>L\<^sup>2\<close> bound, which is where the fourth moment is spent:
+  \<open>(ab - c)\<^sup>2 \<le> a\<^sup>4 + b\<^sup>4 + 2c\<^sup>2\<close> pointwise, so a second moment of the
+  compensated functional costs a FOURTH moment of the coordinates --- the
+  reason this clause was blocked until now.\<close>
+
+lemma prod_minus_sq_bound:
+  fixes a b c :: real
+  shows "(a * b - c)\<^sup>2 \<le> a^4 + b^4 + 2 * c\<^sup>2"
+proof -
+  have e1: "2 * (a*b)\<^sup>2 + 2 * c\<^sup>2 - (a*b - c)\<^sup>2 = (a*b + c)\<^sup>2"
+    by (simp add: power2_diff power2_sum)
+  have s1: "(a*b - c)\<^sup>2 \<le> 2 * (a*b)\<^sup>2 + 2 * c\<^sup>2"
+    using e1 zero_le_power2[of "a*b + c"] by linarith
+  have e2: "a^4 + b^4 - 2 * (a*b)\<^sup>2 = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
+    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
+  have s2: "2 * (a*b)\<^sup>2 \<le> a^4 + b^4"
+    using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
+  from s1 s2 show ?thesis by linarith
+qed
+
+lemma fourth_power_sum_bound:
+  fixes a b :: real
+  shows "(a + b)^4 \<le> 8 * (a^4 + b^4)"
+proof -
+  have e1: "2 * (a\<^sup>2 + b\<^sup>2) - (a + b)\<^sup>2 = (a - b)\<^sup>2"
+    by (simp add: power2_diff power2_sum)
+  have s1: "(a + b)\<^sup>2 \<le> 2 * (a\<^sup>2 + b\<^sup>2)"
+    using e1 zero_le_power2[of "a - b"] by linarith
+  have nn: "0 \<le> (a + b)\<^sup>2" by simp
+  have s2: "((a + b)\<^sup>2)\<^sup>2 \<le> (2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2"
+    by (rule power_mono[OF s1 nn])
+  have e2: "a^4 + b^4 - 2 * (a\<^sup>2 * b\<^sup>2) = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
+    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
+  have s3: "(a\<^sup>2 + b\<^sup>2)\<^sup>2 \<le> 2 * (a^4 + b^4)"
+  proof -
+    have s0: "2 * (a\<^sup>2 * b\<^sup>2) \<le> a^4 + b^4"
+      using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
+    have "(a\<^sup>2 + b\<^sup>2)\<^sup>2 = a^4 + 2 * (a\<^sup>2 * b\<^sup>2) + b^4"
+      by (simp add: power2_sum power2_eq_square power4_eq_xxxx algebra_simps)
+    \<comment> \<open>\<open>linarith\<close> balks here although the problem is linear in the atoms
+        \<open>(a²+b²)²\<close>, \<open>a⁴\<close>, \<open>b⁴\<close>, \<open>a²b²\<close>; \<open>argo\<close> is the documented fix.\<close>
+    then show ?thesis using s0 by argo
+  qed
+  have e3: "((a + b)\<^sup>2)\<^sup>2 = (a + b)^4"
+    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
+  have e4: "(2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2 = 4 * (a\<^sup>2 + b\<^sup>2)\<^sup>2"
+    by (simp add: power2_eq_square algebra_simps)
+  from s2 s3 show ?thesis unfolding e3 e4 by linarith
+qed
+
+lemma zero_le_fourth:
+  fixes a :: real
+  shows "0 \<le> a^4"
+proof -
+  have "a^4 = (a\<^sup>2)\<^sup>2"
+    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
+  then show ?thesis by simp
+qed
+
+subsection \<open>The compensated functional\<close>
+
+lemma comp_entry_eq:
+  fixes p :: "(real^'n::finite) \<times> (real^'n^'n)"
+  shows "(outerp (fst p) - snd p) $ i $ j = fst p $ i * fst p $ j - snd p $ i $ j"
+  by (simp add: outerp_def)
+
+lemma comp_entry_cont:
+  shows "continuous_on UNIV
+      (\<lambda>p :: (real^'n::finite) \<times> (real^'n^'n). (outerp (fst p) - snd p) $ i $ j)"
+proof -
+  have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). (outerp (fst p) - snd p) $ i $ j)
+      = (\<lambda>p. fst p $ i * fst p $ j - snd p $ i $ j)"
+    by (rule ext) (rule comp_entry_eq)
+  show ?thesis unfolding e by (intro continuous_intros)
+qed
+
+text \<open>The fourth moment of the coordinate ITSELF, not of an increment: the
+  start clause pins \<open>X\<^sub>0 = x\<close>, so \<open>(a+b)\<^sup>4 \<le> 8(a\<^sup>4+b\<^sup>4)\<close> turns the increment
+  bound into an absolute one, uniform over the whole class.\<close>
+
+lemma paper_pair_class_fourth_moment_abs:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and u: "u \<in> {0..T}"
+  shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)^4) \<partial>Q)
+      \<le> ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4))"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have T0: "0 \<le> T" using T by simp
+  have z: "(0::real) \<in> {0..T}" using T0 by simp
+  define d :: "'n pairpath \<Rightarrow> real"
+    where "d = (\<lambda>\<omega>. (fst (\<omega> u) $ i - fst (\<omega> 0) $ i)^4)"
+  define c :: real where "c = 8 * (x $ i)^4"
+  have c0: "0 \<le> c" unfolding c_def using zero_le_fourth by simp
+  have d0: "0 \<le> d \<omega>" for \<omega> unfolding d_def by (rule zero_le_fourth)
+  have dm: "d \<in> borel_measurable Q"
+    unfolding d_def
+    by (intro borel_measurable_power borel_measurable_diff
+        pair_law_coord_measurable[OF setsQ u] pair_law_coord_measurable[OF setsQ z])
+  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using Q unfolding paper_pair_class_def by blast
+  have ae: "AE \<omega> in Q. ennreal ((fst (\<omega> u) $ i)^4)
+      \<le> ennreal (8 * d \<omega>) + ennreal c"
+  proof (rule eventually_mono[OF st])
+    fix \<omega> :: "'n pairpath"
+    assume "fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    then have zx: "fst (\<omega> 0) $ i = x $ i" by simp
+    have "(fst (\<omega> u) $ i)^4
+        = ((fst (\<omega> u) $ i - fst (\<omega> 0) $ i) + fst (\<omega> 0) $ i)^4" by simp
+    also have "\<dots> \<le> 8 * ((fst (\<omega> u) $ i - fst (\<omega> 0) $ i)^4 + (fst (\<omega> 0) $ i)^4)"
+      by (rule fourth_power_sum_bound)
+    finally have "(fst (\<omega> u) $ i)^4 \<le> 8 * d \<omega> + c"
+      using zx unfolding d_def c_def by (simp add: distrib_left)
+    then have "ennreal ((fst (\<omega> u) $ i)^4) \<le> ennreal (8 * d \<omega> + c)"
+      by (rule ennreal_leI)
+    also have "\<dots> = ennreal (8 * d \<omega>) + ennreal c"
+      by (rule ennreal_plus) (use c0 d0 in simp_all)
+    finally show "ennreal ((fst (\<omega> u) $ i)^4)
+        \<le> ennreal (8 * d \<omega>) + ennreal c" .
+  qed
+  have incr: "(\<integral>\<^sup>+\<omega>. ennreal (d \<omega>) \<partial>Q) \<le> ennreal (8 * L\<^sup>2 * T\<^sup>2)"
+  proof -
+    have "(\<integral>\<^sup>+\<omega>. ennreal (d \<omega>) \<partial>Q) \<le> ennreal (8 * L\<^sup>2 * (u - 0)\<^sup>2)"
+      unfolding d_def
+      by (rule paper_pair_class_fourth_moment[OF T L setsQ Q order_refl])
+        (use u in auto)
+    also have "\<dots> \<le> ennreal (8 * L\<^sup>2 * T\<^sup>2)"
+      using u by (intro ennreal_leI mult_left_mono power_mono) auto
+    finally show ?thesis .
+  qed
+  have scal: "(\<integral>\<^sup>+\<omega>. ennreal (8 * d \<omega>) \<partial>Q) \<le> ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2))"
+  proof -
+    have e: "(\<lambda>\<omega>. ennreal (8 * d \<omega>)) = (\<lambda>\<omega>. 8 * ennreal (d \<omega>))"
+      by (rule ext) (simp add: ennreal_mult d0)
+    have "(\<integral>\<^sup>+\<omega>. ennreal (8 * d \<omega>) \<partial>Q) = 8 * (\<integral>\<^sup>+\<omega>. ennreal (d \<omega>) \<partial>Q)"
+      unfolding e by (rule nn_integral_cmult) (use dm in measurable)
+    also have "\<dots> \<le> 8 * ennreal (8 * L\<^sup>2 * T\<^sup>2)"
+      using incr by (rule mult_left_mono) simp
+    also have "\<dots> = ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2))"
+      using L by (simp add: ennreal_mult ac_simps)
+    finally show ?thesis .
+  qed
+  have "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)^4) \<partial>Q)
+      \<le> (\<integral>\<^sup>+\<omega>. ennreal (8 * d \<omega>) + ennreal c \<partial>Q)"
+    by (rule nn_integral_mono_AE[OF ae])
+  also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal (8 * d \<omega>) \<partial>Q) + (\<integral>\<^sup>+\<omega>. ennreal c \<partial>Q)"
+    by (rule nn_integral_add) (use dm in measurable)
+  also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal (8 * d \<omega>) \<partial>Q) + ennreal c"
+    by (simp add: P.emeasure_space_1)
+  also have "\<dots> \<le> ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2)) + ennreal c"
+    using scal by (rule add_right_mono)
+  also have "\<dots> = ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2) + c)"
+    by (rule ennreal_plus[symmetric]) (use c0 L in simp_all)
+  also have "\<dots> = ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4))"
+    unfolding c_def by (simp add: distrib_left)
+  finally show ?thesis .
+qed
+
+text \<open>The \<open>L\<^sup>2\<close> bound the generic chain asks for, at the compensated
+  functional.  Pointwise \<open>(ab-c)\<^sup>2 \<le> a\<^sup>4 + b\<^sup>4 + 2c\<^sup>2\<close>: the two fourth
+  moments come from the localization theorem, and \<open>c = Y\<^sub>i\<^sub>j\<close> is bounded
+  outright because the covariation clause makes \<open>Y\<close> Lipschitz from \<open>0\<close>.
+  The bound depends only on \<open>k, L, T, x\<close>, hence is UNIFORM over the
+  class --- which is exactly what a weak-limit argument needs.\<close>
+
+lemma paper_pair_class_comp_entry_sq_nn:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and u: "u \<in> {0..T}"
+  shows "(\<integral>\<^sup>+\<omega>. ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2) \<partial>Q)
+      \<le> ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+               + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)
+               + 2 * (real CARD('n) * L * T)\<^sup>2)"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have T0: "0 \<le> T" using T by simp
+  have B0: "0 \<le> real CARD('n) * L * T" using L T0 by simp
+  have m1: "(\<lambda>\<omega> :: 'n pairpath. ennreal ((fst (\<omega> u) $ i)^4))
+      \<in> borel_measurable Q"
+    using pair_law_coord_measurable[OF setsQ u, of i] by measurable
+  have m2: "(\<lambda>\<omega> :: 'n pairpath. ennreal ((fst (\<omega> u) $ j)^4))
+      \<in> borel_measurable Q"
+    using pair_law_coord_measurable[OF setsQ u, of j] by measurable
+  have m12: "(\<lambda>\<omega> :: 'n pairpath. ennreal ((fst (\<omega> u) $ i)^4)
+        + ennreal ((fst (\<omega> u) $ j)^4)) \<in> borel_measurable Q"
+    using m1 m2 by measurable
+  have mc: "(\<lambda>\<omega> :: 'n pairpath. ennreal (2 * (real CARD('n) * L * T)\<^sup>2))
+      \<in> borel_measurable Q"
+    by simp
+  have LT0: "0 \<le> 8 * L\<^sup>2 * T\<^sup>2" by (intro mult_nonneg_nonneg) auto
+  have p0: "0 \<le> 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)"
+    using LT0 zero_le_fourth[of "x $ i"] by simp
+  have pj0: "0 \<le> 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)"
+    using LT0 zero_le_fourth[of "x $ j"] by simp
+  have Yb: "AE \<omega> in Q. norm (snd (\<omega> u) $ i $ j) \<le> real CARD('n) * L * T"
+    by (rule paper_pair_class_Y_entry_bound_ae[OF T0 L Q u])
+  have ae: "AE \<omega> in Q. ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
+      \<le> ennreal ((fst (\<omega> u) $ i)^4) + ennreal ((fst (\<omega> u) $ j)^4)
+        + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)"
+  proof (rule eventually_mono[OF Yb])
+    fix \<omega> :: "'n pairpath"
+    assume nb: "norm (snd (\<omega> u) $ i $ j) \<le> real CARD('n) * L * T"
+    have c2: "(snd (\<omega> u) $ i $ j)\<^sup>2 \<le> (real CARD('n) * L * T)\<^sup>2"
+    proof -
+      have "(snd (\<omega> u) $ i $ j)\<^sup>2 = \<bar>snd (\<omega> u) $ i $ j\<bar>\<^sup>2" by simp
+      also have "\<dots> \<le> (real CARD('n) * L * T)\<^sup>2"
+        by (rule power_mono) (use nb in auto)
+      finally show ?thesis .
+    qed
+    have "((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2
+        = (fst (\<omega> u) $ i * fst (\<omega> u) $ j - snd (\<omega> u) $ i $ j)\<^sup>2"
+      by (simp add: outerp_def)
+    also have "\<dots> \<le> (fst (\<omega> u) $ i)^4 + (fst (\<omega> u) $ j)^4
+        + 2 * (snd (\<omega> u) $ i $ j)\<^sup>2"
+      by (rule prod_minus_sq_bound)
+    also have "\<dots> \<le> (fst (\<omega> u) $ i)^4 + (fst (\<omega> u) $ j)^4
+        + 2 * (real CARD('n) * L * T)\<^sup>2"
+      using c2 by simp
+    finally have le: "((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2
+        \<le> (fst (\<omega> u) $ i)^4 + (fst (\<omega> u) $ j)^4
+          + 2 * (real CARD('n) * L * T)\<^sup>2" .
+    have "ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
+        \<le> ennreal ((fst (\<omega> u) $ i)^4 + (fst (\<omega> u) $ j)^4
+            + 2 * (real CARD('n) * L * T)\<^sup>2)"
+      using le by (rule ennreal_leI)
+    also have "\<dots> = ennreal ((fst (\<omega> u) $ i)^4) + ennreal ((fst (\<omega> u) $ j)^4)
+        + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)"
+      by (simp add: zero_le_fourth)
+    finally show "ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
+        \<le> ennreal ((fst (\<omega> u) $ i)^4) + ennreal ((fst (\<omega> u) $ j)^4)
+          + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)" .
+  qed
+  have "(\<integral>\<^sup>+\<omega>. ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2) \<partial>Q)
+      \<le> (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)^4) + ennreal ((fst (\<omega> u) $ j)^4)
+            + ennreal (2 * (real CARD('n) * L * T)\<^sup>2) \<partial>Q)"
+    by (rule nn_integral_mono_AE[OF ae])
+  also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)^4)
+                        + ennreal ((fst (\<omega> u) $ j)^4) \<partial>Q)
+                 + (\<integral>\<^sup>+\<omega>. ennreal (2 * (real CARD('n) * L * T)\<^sup>2) \<partial>Q)"
+    by (rule nn_integral_add[OF m12 mc])
+  also have "\<dots> = ((\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)^4) \<partial>Q)
+                  + (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ j)^4) \<partial>Q))
+                 + (\<integral>\<^sup>+\<omega>. ennreal (2 * (real CARD('n) * L * T)\<^sup>2) \<partial>Q)"
+    by (simp only: nn_integral_add[OF m1 m2])
+  also have "\<dots> = ((\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)^4) \<partial>Q)
+                  + (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ j)^4) \<partial>Q))
+                 + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)"
+    by (simp add: P.emeasure_space_1)
+  also have "\<dots> \<le> (ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4))
+                   + ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)))
+                 + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)"
+    by (intro add_mono order_refl paper_pair_class_fourth_moment_abs[OF T L Q u])
+  also have "\<dots> = ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+                         + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)
+                         + 2 * (real CARD('n) * L * T)\<^sup>2)"
+  proof -
+    \<comment> \<open>\<open>ennreal_plus\<close> is a DEFAULT simp rule in the SPLITTING direction, so
+        neither it nor its symmetric form gets \<open>simp\<close> across this step
+        (the latter loops); apply it as a rule, twice.\<close>
+    have sum0: "0 \<le> 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+                  + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)"
+      using p0 pj0 by simp
+    have c30: "0 \<le> 2 * (real CARD('n) * L * T)\<^sup>2" by simp
+    have "ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+                 + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)
+                 + 2 * (real CARD('n) * L * T)\<^sup>2)
+        = ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+                 + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4))
+          + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)"
+      by (rule ennreal_plus[OF sum0 c30])
+    also have "\<dots> = (ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4))
+                    + ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)))
+                   + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)"
+      by (simp only: ennreal_plus[OF p0 pj0])
+    finally show ?thesis by (rule sym)
+  qed
+  finally show ?thesis .
+qed
+
+subsection \<open>Assembling a matrix-valued martingale from its entries\<close>
+
+text \<open>\<open>Ito_Market.martingale_vecI\<close> is stated for \<open>real^'n\<close>, and its three
+  helpers (\<open>measurable_vec_components\<close>, \<open>integrable_vec_components\<close>,
+  \<open>set_integral_vec_component\<close>) are all specific to REAL entries, so it does
+  not iterate to \<open>real^'n^'n\<close>.  The three matrix analogues are proved here
+  directly from the euclidean structure: \<open>Basis\<close> of a matrix consists of the
+  \<open>axis i (axis j 1)\<close>, and \<open>A \<bullet> axis i (axis j 1) = A $ i $ j\<close>.\<close>
+
+lemma mat_inner_axis:
+  fixes A :: "real^'n::finite^'n"
+  shows "A \<bullet> axis i (axis j 1) = A $ i $ j"
+  by (simp add: inner_axis)
+
+lemma mat_Basis_cases:
+  fixes b :: "real^'n::finite^'n"
+  assumes "b \<in> Basis"
+  obtains i j where "b = axis i (axis j 1)"
+  using assms by (auto simp: Basis_vec_def)
+
+lemma measurable_mat_entries:
+  fixes X :: "'a \<Rightarrow> real^'n::finite^'n"
+  assumes ent: "\<And>i j. (\<lambda>\<omega>. X \<omega> $ i $ j) \<in> borel_measurable M"
+  shows "X \<in> borel_measurable M"
+proof (subst borel_measurable_euclidean_space, safe)
+  fix b :: "real^'n^'n" assume "b \<in> Basis"
+  then obtain i j where b: "b = axis i (axis j 1)" by (rule mat_Basis_cases)
+  show "(\<lambda>\<omega>. X \<omega> \<bullet> b) \<in> borel_measurable M"
+    unfolding b by (simp add: mat_inner_axis ent)
+qed
+
+lemma integrable_mat_entries:
+  fixes X :: "'a \<Rightarrow> real^'n::finite^'n"
+  assumes m: "X \<in> borel_measurable M"
+    and ent: "\<And>i j. integrable M (\<lambda>\<omega>. X \<omega> $ i $ j)"
+  shows "integrable M X"
+proof (rule Bochner_Integration.integrable_bound
+    [where f = "\<lambda>\<omega>. (\<Sum>b\<in>(Basis :: (real^'n^'n) set). \<bar>X \<omega> \<bullet> b\<bar>)"])
+  show "integrable M (\<lambda>\<omega>. (\<Sum>b\<in>(Basis :: (real^'n^'n) set). \<bar>X \<omega> \<bullet> b\<bar>))"
+  proof (intro Bochner_Integration.integrable_sum integrable_abs)
+    fix b :: "real^'n^'n" assume "b \<in> Basis"
+    then obtain i j where b: "b = axis i (axis j 1)" by (rule mat_Basis_cases)
+    show "integrable M (\<lambda>\<omega>. X \<omega> \<bullet> b)"
+      unfolding b by (simp add: mat_inner_axis ent)
+  qed
+  show "X \<in> borel_measurable M" by (rule m)
+  show "AE \<omega> in M. norm (X \<omega>)
+      \<le> norm (\<Sum>b\<in>(Basis :: (real^'n^'n) set). \<bar>X \<omega> \<bullet> b\<bar>)"
+  proof (intro always_eventually allI)
+    fix \<omega> :: 'a
+    have "norm (X \<omega>) \<le> (\<Sum>b\<in>(Basis :: (real^'n^'n) set). \<bar>X \<omega> \<bullet> b\<bar>)"
+      by (rule norm_le_l1)
+    also have "\<dots> \<le> norm (\<Sum>b\<in>(Basis :: (real^'n^'n) set). \<bar>X \<omega> \<bullet> b\<bar>)"
+      by simp
+    finally show "norm (X \<omega>)
+        \<le> norm (\<Sum>b\<in>(Basis :: (real^'n^'n) set). \<bar>X \<omega> \<bullet> b\<bar>)" .
+  qed
+qed
+
+lemma set_integral_mat_component:
+  fixes X :: "'a \<Rightarrow> real^'n::finite^'n"
+  assumes A: "A \<in> sets M" and int: "integrable M X"
+  shows "set_lebesgue_integral M A (\<lambda>\<omega>. X \<omega> $ i $ j)
+      = set_lebesgue_integral M A X $ i $ j"
+proof -
+  have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ i $ j)"
+    by (rule bounded_linear_compose[OF bounded_linear_vec_nth bounded_linear_vec_nth])
+  have si: "integrable M (\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R X \<omega>)"
+    by (intro integrable_mult_indicator A int)
+  have "set_lebesgue_integral M A (\<lambda>\<omega>. X \<omega> $ i $ j)
+      = (\<integral>\<omega>. (indicat_real A \<omega> *\<^sub>R X \<omega>) $ i $ j \<partial>M)"
+    unfolding set_lebesgue_integral_def by simp
+  also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R X \<omega> \<partial>M) $ i $ j"
+    by (rule has_bochner_integral_integral_eq
+        [OF has_bochner_integral_bounded_linear
+          [OF bl has_bochner_integral_integrable[OF si]]])
+  finally show ?thesis
+    unfolding set_lebesgue_integral_def .
+qed
+
+lemma martingale_matI:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite^'n"
+  assumes comp: "\<And>i j. martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ i $ j)"
+  shows "martingale M F 0 X"
+proof -
+  interpret M0: martingale M F 0
+      "\<lambda>t \<omega>. X t \<omega> $ (undefined :: 'n) $ (undefined :: 'n)"
+    by (rule comp)
+  have A_M: "A \<in> sets M" if u: "0 \<le> u" and A: "A \<in> sets (F u)" for A u
+  proof -
+    have "sets (F u) \<subseteq> sets M"
+      using M0.subalgebras[OF u] by (simp add: subalgebra_def)
+    then show ?thesis using A by blast
+  qed
+  have entmeas: "(\<lambda>\<omega>. X u \<omega> $ i $ j) \<in> borel_measurable (F u)"
+    if u: "0 \<le> u" for u i j
+  proof -
+    interpret Mij: martingale M F 0 "\<lambda>t \<omega>. X t \<omega> $ i $ j" by (rule comp)
+    show ?thesis by (rule Mij.adapted[OF u])
+  qed
+  have entint: "integrable M (\<lambda>\<omega>. X u \<omega> $ i $ j)" if u: "0 \<le> u" for u i j
+    by (rule martingale.integrable[OF comp u])
+  have Xm: "X u \<in> borel_measurable M" if u: "0 \<le> u" for u
+    by (rule measurable_mat_entries)
+      (rule borel_measurable_integrable[OF entint[OF u]])
+  have vint: "integrable M (X u)" if u: "0 \<le> u" for u
+    by (rule integrable_mat_entries[OF Xm[OF u]]) (rule entint[OF u])
+  show ?thesis
+  proof (rule M0.martingale_of_set_integral_eq)
+    show "adapted_process M F 0 X"
+    proof (intro adapted_process.intro adapted_process_axioms.intro)
+      show "filtered_measure M F 0" by unfold_locales
+      fix u :: real assume u: "0 \<le> u"
+      show "X u \<in> borel_measurable (F u)"
+        by (rule measurable_mat_entries) (rule entmeas[OF u])
+    qed
+    show "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (X u)" by (rule vint)
+    fix A and u v :: real
+    assume u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> sets (F u)"
+    have v: "0 \<le> v" using u uv by simp
+    have AM: "A \<in> sets M" by (rule A_M[OF u A])
+    have "set_lebesgue_integral M A (X u) $ i $ j
+        = set_lebesgue_integral M A (X v) $ i $ j" for i j
+    proof -
+      have "set_lebesgue_integral M A (X u) $ i $ j
+          = set_lebesgue_integral M A (\<lambda>\<omega>. X u \<omega> $ i $ j)"
+        by (rule set_integral_mat_component[OF AM vint[OF u], symmetric])
+      also have "\<dots> = set_lebesgue_integral M A (\<lambda>\<omega>. X v \<omega> $ i $ j)"
+        by (rule martingale.set_integral_eq[OF comp A u uv])
+      also have "\<dots> = set_lebesgue_integral M A (X v) $ i $ j"
+        by (rule set_integral_mat_component[OF AM vint[OF v]])
+      finally show ?thesis .
+    qed
+    then show "set_lebesgue_integral M A (X u) = set_lebesgue_integral M A (X v)"
+      by (simp add: vec_eq_iff)
+  qed
+qed
+
+subsection \<open>Lemma 2.3: the compensated clause, at the limit\<close>
+
+theorem paper_pair_class_comp_entry_martingale_limit:
+  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and mem: "\<And>m. Qm m \<in> paper_pair_class k L T x"
+    and wc: "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ i $ j)"
+proof -
+  let ?C = "8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+          + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)
+          + 2 * (real CARD('n) * L * T)\<^sup>2"
+  have T0: "0 \<le> T" using T by simp
+  have C0: "0 \<le> ?C"
+    by (intro add_nonneg_nonneg mult_nonneg_nonneg zero_le_fourth) auto
+  show ?thesis
+  proof (rule martingale_F_limit
+      [where F = "\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+            (outerp (fst p) - snd p) $ i $ j"
+         and C = "8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+                + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)
+                + 2 * (real CARD('n) * L * T)\<^sup>2"])
+    show "0 \<le> T" by (rule T0)
+    show "continuous_on UNIV
+        (\<lambda>p :: (real^'n) \<times> (real^'n^'n). (outerp (fst p) - snd p) $ i $ j)"
+      by (rule comp_entry_cont)
+    show "prob_space (Qm m)" for m by (rule paper_pair_class_prob[OF mem])
+    show "sets (Qm m) = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))" for m
+      by (rule paper_pair_class_sets[OF mem])
+    show "martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
+        (\<lambda>u \<omega>. (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ i $ j)"
+      for m
+      by (rule martingale_mat_nth
+          [OF paper_pair_class_compensated_martingale[OF mem]])
+    show "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))" by (rule wc)
+    show "prob_space Q" by (rule prob)
+    show "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))" by (rule setsQ)
+    show "0 \<le> ?C" by (rule C0)
+    show "(\<integral>\<^sup>+\<omega>. ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
+            \<partial>(Qm m)) \<le> ennreal ?C" if "u \<in> {0..T}" for m u
+      by (rule paper_pair_class_comp_entry_sq_nn[OF T L mem that])
+  qed
+qed
+
+corollary paper_pair_class_comp_martingale_limit:
+  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and mem: "\<And>m. Qm m \<in> paper_pair_class k L T x"
+    and wc: "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+  by (rule martingale_matI)
+    (rule paper_pair_class_comp_entry_martingale_limit
+      [OF T L mem wc prob setsQ])
+
+section \<open>Lemma 2.3: the class is closed under weak limits\<close>
+
+text \<open>All four clauses of (1.7) now survive a weak limit, so the paper's
+  class of pair laws is weakly closed.  The compensated clause was the last
+  one missing, and it is exactly the one that needed the uniform fourth
+  moment.\<close>
+
+theorem paper_pair_class_weak_closed:
+  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and mem: "\<And>m. Qm m \<in> paper_pair_class k L T x"
+    and wc: "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "Q \<in> paper_pair_class k L T x"
+proof -
+  have T0: "0 \<le> T" using T by simp
+  show ?thesis
+    unfolding paper_pair_class_def
+  proof (intro CollectI conjI)
+    show "prob_space Q" by (rule prob)
+    show "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))" by (rule setsQ)
+    show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+      by (rule paper_pair_class_limit_three_clauses(1)
+          [OF T0 L mem wc prob setsQ])
+    show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      by (rule paper_pair_class_limit_three_clauses(2)
+          [OF T0 L mem wc prob setsQ])
+    show "martingale Q (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
+      by (rule paper_pair_class_limit_three_clauses(3)
+          [OF T0 L mem wc prob setsQ])
+    show "martingale Q (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
+      by (rule paper_pair_class_comp_martingale_limit[OF T L mem wc prob setsQ])
+  qed
+qed
+
 end
