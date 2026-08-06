@@ -943,6 +943,42 @@ proof (intro ito_stopped_market.intro[OF martingale_cbmX_stopped[OF T]]
     then show "continuous_on {0..} (\<lambda>s. cbmX x0 (min s (?tau \<omega>)) \<omega>)"
       by (simp add: comp_def)
   qed
+next
+  \<comment> \<open>The volatility is an INDICATOR in time, so its time-measurability
+      is the same one-line \<open>measurable_If\<close> as
+      \<open>Paper_Class.acont_set_borel_measurable\<close>.  \<open>lborel\<close> has to be pinned
+      at \<open>real measure\<close> and every binder annotated: it is polymorphic, and
+      \<open>real^'n^'n\<close> has an \<open>ord\<close> instance, so an unannotated binder
+      elaborates at the MATRIX type.\<close>
+  show "AE \<omega> in bm_paths. set_borel_measurable lborel {0..}
+                        (\<lambda>s. cbmA T r x0 s \<omega>)"
+  proof (intro always_eventually allI)
+    fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    have e: "(\<lambda>u::real. indicat_real {0..} u *\<^sub>R cbmA T r x0 u \<omega>)
+        = (\<lambda>u::real. if u \<le> btau T r x0 \<omega>
+              then (if u < 0 then 0 else (mat 1 :: real^'n^'n)) else 0)"
+      by (rule ext) (simp add: cbmA_def)
+    have "(\<lambda>u::real. if u \<le> btau T r x0 \<omega>
+              then (if u < 0 then 0 else (mat 1 :: real^'n^'n)) else 0)
+        \<in> borel_measurable (lborel :: real measure)"
+    proof (rule measurable_If)
+      \<comment> \<open>the \<^verbatim>\<open>if u < 0\<close> form, not an indicator: the \<open>measurable\<close>
+          method reduces the branch condition to \<open>open {..<0}\<close>, whereas the
+          indicator form leaves the FALSE goal \<open>open {0..}\<close>.\<close>
+      show "(\<lambda>u::real. if u < 0 then 0 else (mat 1 :: real^'n^'n))
+          \<in> borel_measurable (lborel :: real measure)"
+        by measurable
+      show "(\<lambda>u::real. 0 :: real^'n^'n)
+          \<in> borel_measurable (lborel :: real measure)"
+        by measurable
+      show "{u \<in> space (lborel :: real measure). u \<le> btau T r x0 \<omega>}
+          \<in> sets (lborel :: real measure)"
+        by simp
+    qed
+    with e show "set_borel_measurable lborel {0..}
+        (\<lambda>s. cbmA T r x0 s \<omega>)"
+      unfolding set_borel_measurable_def by simp
+  qed
 qed
 
 
