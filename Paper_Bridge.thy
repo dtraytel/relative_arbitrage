@@ -5325,4 +5325,101 @@ proof -
   qed
 qed
 
+section \<open>The off-diagonal covariation of Brownian motion\<close>
+
+text \<open>The one input the nonemptiness witness needs that the market locale
+  does not supply: it asserts only the DIAGONAL compensator
+  (\<open>coord_Z_martingale\<close>), whereas the paper's class asks for the whole
+  matrix \<open>outerp X - Y\<close>.  Off the diagonal the compensator is \<open>0\<close>, so what
+  is needed is that \<open>W\<^sub>i W\<^sub>j\<close> is a martingale for \<open>i \<noteq> j\<close>.
+
+  \<open>bm_paths = Pi\<^sub>M UNIV (\<lambda>_. wiener_pre)\<close>, so the coordinates are
+  independent by construction --- that is
+  \<open>Kolmogorov_Chentsov_Extras.indep_vars_PiM_coordinate\<close>, and everything
+  else here is bookkeeping on top of it.\<close>
+
+lemma bm_coordinates_indep:
+  "prob_space.indep_vars (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>_. wiener_pre) (\<lambda>k \<omega>. \<omega> k) UNIV"
+proof -
+  \<comment> \<open>\<open>Kolmogorov_Chentsov_Extras.indep_vars_PiM_coordinate\<close> is NOT in scope
+      here, so its six-line argument is repeated: the identity distribution
+      of a product IS the product of its component distributions, which is
+      exactly the criterion \<open>indep_vars_iff_distr_eq_PiM'\<close>.  \<open>BMC\<close> is the
+      \<open>product_prob_space\<close> interpretation already present in
+      \<open>Brownian_Market\<close>.\<close>
+  let ?P = "Pi\<^sub>M (UNIV :: 'n set) (\<lambda>_ :: 'n. wiener_pre)"
+  have rv: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> k) \<in> measurable ?P wiener_pre" for k
+    by (rule measurable_component_singleton) simp
+  have "distr ?P ?P (\<lambda>x. restrict x UNIV) = distr ?P ?P (\<lambda>x. x)"
+    by (rule distr_cong) (simp_all add: space_PiM)
+  also have "\<dots> = ?P" by simp
+  also have "\<dots> = Pi\<^sub>M UNIV (\<lambda>i :: 'n. distr ?P wiener_pre (\<lambda>f. f i))"
+    by (intro PiM_cong) (auto simp: BMC.PiM_component)
+  finally have eq: "distr ?P (Pi\<^sub>M UNIV (\<lambda>_ :: 'n. wiener_pre))
+      (\<lambda>x. \<lambda>i\<in>UNIV. x i)
+      = Pi\<^sub>M UNIV (\<lambda>i :: 'n. distr ?P wiener_pre (\<lambda>f. f i))"
+    by (simp add: restrict_def)
+  have "prob_space.indep_vars ?P (\<lambda>_. wiener_pre) (\<lambda>k \<omega>. \<omega> k) UNIV"
+    by (subst BMC.P.indep_vars_iff_distr_eq_PiM'[OF _ rv]) (use eq in auto)
+  then show ?thesis unfolding bm_paths_def .
+qed
+
+lemma bm_increment_coord_indep:
+  fixes i j :: "'n::finite"
+  assumes ij: "i \<noteq> j" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "prob_space.indep_var (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      borel (\<lambda>\<omega>. \<omega> i t - \<omega> i s) borel (\<lambda>\<omega>. \<omega> j t - \<omega> j s)"
+proof -
+  \<comment> \<open>use the GLOBAL interpretation \<open>BMP\<close> of \<open>prob_space\<close> at \<open>bm_paths\<close>: an
+      \<open>interpret\<close> against a \<open>let\<close>-bound \<open>?M\<close> yields "Undefined constant".\<close>
+  have co: "BMP.indep_vars (\<lambda>_. wiener_pre) (\<lambda>k \<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> k) UNIV"
+    by (rule bm_coordinates_indep)
+  have f: "(\<lambda>w. w t - w s) \<in> borel_measurable wiener_pre"
+    using s st by (intro borel_measurable_diff measurable_coord) auto
+  have co2: "BMP.indep_vars (\<lambda>_. borel)
+      (\<lambda>k \<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> k t - \<omega> k s) UNIV"
+    by (rule BMP.indep_vars_compose2[OF co]) (use f in auto)
+  have r: "BMP.indep_var
+      (Pi\<^sub>M {i} (\<lambda>_. borel))
+      (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict (\<lambda>k. \<omega> k t - \<omega> k s) {i})
+      (Pi\<^sub>M {j} (\<lambda>_. borel))
+      (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict (\<lambda>k. \<omega> k t - \<omega> k s) {j})"
+    by (rule BMP.indep_var_restrict[OF co2]) (use ij in auto)
+  have p: "(\<lambda>f. f i) \<in> Pi\<^sub>M {i} (\<lambda>_. borel) \<rightarrow>\<^sub>M (borel :: real measure)"
+    by (rule measurable_component_singleton) simp
+  have q: "(\<lambda>f. f j) \<in> Pi\<^sub>M {j} (\<lambda>_. borel) \<rightarrow>\<^sub>M (borel :: real measure)"
+    by (rule measurable_component_singleton) simp
+  from BMP.indep_var_compose[OF r p q] show ?thesis by (simp add: o_def)
+qed
+
+lemma bm_increment_cross:
+  fixes i j :: "'n::finite"
+  assumes ij: "i \<noteq> j" and s: "0 \<le> s" and st: "s \<le> t"
+  shows bm_increment_cross_integrable:
+    "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+       (\<lambda>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s))"
+  and bm_increment_cross_integral:
+    "(\<integral>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s)
+       \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  have t0: "0 \<le> t" using s st by simp
+  have ind: "BMP.indep_var borel (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s)
+      borel (\<lambda>\<omega>. \<omega> j t - \<omega> j s)"
+    by (rule bm_increment_coord_indep[OF ij s st])
+  show "integrable ?M (\<lambda>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s))"
+    by (rule BMP.indep_var_integrable[OF ind
+        bm_increment_component_integrable[OF s t0]
+        bm_increment_component_integrable[OF s t0]])
+  have "(\<integral>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s) \<partial>?M)
+      = (\<integral>\<omega>. \<omega> i t - \<omega> i s \<partial>?M) * (\<integral>\<omega>. \<omega> j t - \<omega> j s \<partial>?M)"
+    by (rule BMP.indep_var_lebesgue_integral[OF ind
+        bm_increment_component_integrable[OF s t0]
+        bm_increment_component_integrable[OF s t0]])
+  also have "\<dots> = 0"
+    by (simp add: bm_increment_component_integral[OF s t0])
+  finally show "(\<integral>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s) \<partial>?M) = 0" .
+qed
+
 end
