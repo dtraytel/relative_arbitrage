@@ -242,34 +242,53 @@ DPP.**
      | `kglue`, `kglue_measurable`, `kglue_law`, `prob_space_kglue_law` | the construction; the index enters through `measurable_compose_countable` |
      | `AE_kglue_law`, `kglue_law_start`, `kglue_law_diffquot` | clauses (i)–(ii) of (1.7) |
 
-     **What is left: clauses (iii) and (iv) for `kglue_law`.** The
-     decomposition is now POINTWISE (unlike `pglue_law`, which needed
-     `martingale_cong_AE`): with `σ u = (u−r)⁺` and `τ u = min (σ u) (T−r)`,
+     **Clause (iii) — DONE**, `kglue_law_X_martingale`. The decomposition is
+     POINTWISE, unlike `pglue_law`'s: with `σ u = (u−r)⁺`, `τ u = min (σ u) (T−r)`,
 
-         Z u p = fst (fst p (min u r))
-               + (fst (snd p (N (fst p)) (τ u)) − fst (snd p (N (fst p)) 0)),
+         fst (kglue r T N p (min u T))
+           = fst (fst p (min u r))
+           + (fst (snd p (N (fst p)) (τ u)) − fst (snd p (N (fst p)) 0)),
 
-     and the second summand is LITERALLY `0` for `u ≤ r`, which is what makes
-     it adapted there — `N (fst p)` is only `ℱ^Q_r`-measurable, so nothing
-     index-dependent may survive before `r`. The two halves are
-     `martingale_pair_fst` and `martingale_pair_snd_param`; the frozen-`ω`
-     premise of the latter is `martingale_PiM_component` after
-     `martingale_time_change` by `σ`. Missing, in dependency order:
+     and subtracting the continuation's initial value makes the second
+     summand LITERALLY `0` for `u ≤ r` — which is what makes it adapted
+     there, since `N` is only `ℱ^Q_r`-measurable. First summand:
+     `martingale_pair_fst`. Second: `martingale_pair_snd_param`, whose
+     frozen-`ω` premise is `kglue_param_martingale` at the constant index
+     `N ω`. Integrability is `Fubini_integrable`, with the inner integral
+     computed by `distr_PiM_component` and bounded uniformly over the family
+     by the new `paper_pair_class_norm_mean_le`.
 
-     - `martingale_sub_initial` (`X u − X t₀` is a martingale) — over AFP's
-       `martingale_const_fun` and `scaleR_const` plus `martingale_add`;
-       AFP's `martingale_add_const` only adds a genuine CONSTANT;
-     - **integrability of the second summand on `Q ⊗⇩M Pi⇩M UNIV RR`.** This is
-       the one real obstacle: the bound must be UNIFORM over the family `RR`.
-       It is available — `Paper_Class.paper_pair_class_sq_mean_le` gives
-       `E[(X_t$i)²] ≤ (x$i)² + n·L·T` for EVERY class member — so the route is
-       `Fubini_integrable` with the inner integral computed by
-       `distr_PiM_component`, then Cauchy–Schwarz down to `L¹`;
-     - for clause (iv), a PARAMETRIZED `martingale_pair_mult` (the `snd_param`
-       analogue of the product lemma), because the cross term
-       `X_r ⊗ W + W ⊗ X_r` is index-dependent in its second factor.
+     **Clause (iv) — the last piece.** Design settled, not yet written. Take
 
-     Estimated 600 lines for clause (iii) and 700 for clause (iv).
+         D u p = (outerp b − Yb) + ((A p ⊗ b) + (b ⊗ A p)),
+         A p = fst (fst p r),
+         b  = fst (snd p i (τ u)) − fst (snd p i 0),
+         Yb = snd (snd p i (τ u)) − snd (snd p i 0),   i = N (fst p),
+
+     and `C u p = CQ u (fst p) + D u p` with `CQ` the first factor's
+     compensated martingale on the clock `min u r`. Two points make this work:
+
+     - use `fst (fst p r)` in the cross term, NOT `fst (fst p (min u r))`.
+       Both give the same value (for `u ≤ r` the factor `b` is `0`, so the
+       cross term vanishes whatever `A` is), but with `r` fixed the frozen
+       process has a CONSTANT `A`, so the cross term is a bounded-linear
+       image of the `b`-martingale (`martingale_bounded_linear_image`) rather
+       than a product of two martingales. **No parametrized
+       `martingale_pair_mult` is needed after all** — the earlier plan entry
+       saying otherwise was wrong.
+     - `outerp b − Yb` is only ALMOST everywhere the `i`-th coordinate's
+       compensated martingale (it uses `X'(0) = 0` and `Y'(0) = 0`), so
+       `martingale_cong_AE` on `Pi⇩M UNIV RR` is the last step there.
+
+     What clause (iv) still needs beyond clause (iii)'s machinery: three
+     integrability bounds on the product — for `outerp b` (quadratic, so
+     `paper_pair_class_sq_mean_le` summed over coordinates), for `Yb` (an
+     a.s. bound, `paper_pair_class_Y_bounded_ae`), and for `A ⊗ b` (a product
+     of a first-factor and a second-factor variable, so
+     `paper_pair_class_norm_mean_le` on each side — which must first be
+     generalised from start `0` to a general start `x` for the `Q` factor).
+     Estimated 600–800 lines.
+
 
   2. **ε-optimal selection.** For each `y` pick `R_y` with essinf `≈ v(y)`;
      BT09's Lindelöf cover of `K` by balls on which `v` varies by `< ε` gives
