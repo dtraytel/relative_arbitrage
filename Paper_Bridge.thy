@@ -8057,4 +8057,302 @@ proof -
         mgl])
 qed
 
+lemma outerp_add:
+  fixes a b :: "real^'n::finite"
+  shows "outerp (a + b) = outerp a + outerp b
+      + ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))"
+  by (simp add: outerp_def vec_eq_iff algebra_simps)
+
+lemma outerp_zero: "outerp (0 :: real^'n::finite) = 0"
+  by (simp add: outerp_def vec_eq_iff)
+
+text \<open>Clause (iv).  Beyond \<open>r\<close> the glued pair is
+  \<open>(X\<^sub>r + W, Y\<^sub>r + \<langle>W\<rangle>)\<close>, so its compensated process expands as
+
+    \<open>(outerp X\<^sub>r - Y\<^sub>r) + (outerp W - \<langle>W\<rangle>) + (X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r)\<close>:
+
+  one compensated martingale from each factor, plus the CROSS term, which is
+  a martingale only because the two factors are independent
+  (\<open>martingale_pair_mult\<close>, entrywise through \<open>martingale_matI\<close>).\<close>
+
+theorem pglue_law_comp_martingale:
+  fixes Q R :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "R \<in> paper_pair_class k L (T - r) 0"
+  shows "martingale (pglue_law r T Q R)
+      (natural_filtration (pglue_law r T Q R) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T)) :: real^'n) - snd (\<omega> (min u T)))"
+proof -
+  let ?M = "Q \<Otimes>\<^sub>M R"
+  let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue r T (fst p) (snd p)"
+  let ?FQ = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?FR = "natural_filtration R 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?s = "\<lambda>u :: real. max (u - r) 0"
+  let ?t = "\<lambda>u :: real. min (max (u - r) 0) (T - r)"
+  let ?FF = "\<lambda>u. ?FQ (min u r) \<Otimes>\<^sub>M ?FR (?s u)"
+  let ?A = "\<lambda>u p. fst (fst p (min u r)) :: real^'n"
+  let ?Bp = "\<lambda>u p. fst (snd p (?t u)) :: real^'n"
+  have T0: "0 \<le> T" using r rT by simp
+  have PQ: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  have PR: "prob_space R" by (rule paper_pair_class_prob[OF R])
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric r :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have setsR: "sets R = sets (borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF R])
+  have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
+  have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
+    using that by simp
+  have s2_0: "0 \<le> ?s u" if "0 \<le> u" for u :: real by simp
+  have s2_mono: "?s u \<le> ?s v" if "0 \<le> u" "u \<le> v" for u v :: real
+    using that by simp
+
+  \<comment> \<open>the four factor martingales, on the two clocks\<close>
+  have mQ1: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min (min u r) r)) :: real^'n)"
+    by (rule martingale_time_change
+        [OF paper_pair_class_X_martingale[OF Q] s1_0 s1_mono])
+  have mQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
+  proof (rule martingale_cong_ge[OF mQ1])
+    fix u :: real assume "0 \<le> u"
+    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min (min u r) r)) :: real^'n)
+        = (\<lambda>\<omega>. fst (\<omega> (min u r)))" by simp
+  qed
+  have mR: "martingale R (\<lambda>u. ?FR (?s u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (?t u)) :: real^'n)"
+    by (rule martingale_time_change
+        [OF paper_pair_class_X_martingale[OF R] s2_0 s2_mono])
+  have cQ1: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min (min u r) r)) :: real^'n)
+          - snd (\<omega> (min (min u r) r)))"
+    by (rule martingale_time_change
+        [OF paper_pair_class_compensated_martingale[OF Q] s1_0 s1_mono])
+  have cQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u r)) :: real^'n) - snd (\<omega> (min u r)))"
+  proof (rule martingale_cong_ge[OF cQ1])
+    fix u :: real assume "0 \<le> u"
+    show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min (min u r) r)) :: real^'n)
+          - snd (\<omega> (min (min u r) r)))
+        = (\<lambda>\<omega>. outerp (fst (\<omega> (min u r))) - snd (\<omega> (min u r)))" by simp
+  qed
+  have cR: "martingale R (\<lambda>u. ?FR (?s u)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (?t u)) :: real^'n) - snd (\<omega> (?t u)))"
+    by (rule martingale_time_change
+        [OF paper_pair_class_compensated_martingale[OF R] s2_0 s2_mono])
+  have FQ: "filtered_measure Q (\<lambda>u. ?FQ (min u r)) (0::real)"
+  proof -
+    interpret MQ: martingale Q "\<lambda>u. ?FQ (min u r)" "0::real"
+      "\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n" by (rule mQ)
+    show ?thesis by unfold_locales
+  qed
+  have FR: "filtered_measure R (\<lambda>u. ?FR (?s u)) (0::real)"
+  proof -
+    interpret MR: martingale R "\<lambda>u. ?FR (?s u)" "0::real"
+      "\<lambda>u \<omega>. fst (\<omega> (?t u)) :: real^'n" by (rule mR)
+    show ?thesis by unfold_locales
+  qed
+  have FFm: "filtered_measure ?M ?FF (0::real)"
+    by (rule filtered_measure_pair[OF FQ FR])
+
+  \<comment> \<open>the two cross terms\<close>
+  have mA: "martingale ?M ?FF 0 ?A" by (rule martingale_pair_fst[OF PQ PR mQ FR])
+  have mB: "martingale ?M ?FF 0 ?Bp" by (rule martingale_pair_snd[OF PQ PR FQ mR])
+  have cross1: "martingale ?M ?FF 0 (\<lambda>u p. (\<chi> i j. ?A u p $ i * ?Bp u p $ j))"
+  proof (rule martingale_matI)
+    fix i j :: 'n
+    have "martingale ?M ?FF 0 (\<lambda>u p. ?A u p $ i * ?Bp u p $ j)"
+      by (rule martingale_pair_mult[OF PQ PR martingale_vec_nth[OF mQ]
+            martingale_vec_nth[OF mR]])
+    then show "martingale ?M ?FF 0
+        (\<lambda>u p. (\<chi> i j. ?A u p $ i * ?Bp u p $ j) $ i $ j)" by simp
+  qed
+  have cross2: "martingale ?M ?FF 0 (\<lambda>u p. (\<chi> i j. ?Bp u p $ i * ?A u p $ j))"
+  proof (rule martingale_matI)
+    fix i j :: 'n
+    have "martingale ?M ?FF 0 (\<lambda>u p. ?A u p $ j * ?Bp u p $ i)"
+      by (rule martingale_pair_mult[OF PQ PR martingale_vec_nth[OF mQ]
+            martingale_vec_nth[OF mR]])
+    then show "martingale ?M ?FF 0
+        (\<lambda>u p. (\<chi> i j. ?Bp u p $ i * ?A u p $ j) $ i $ j)"
+      by (simp add: mult.commute)
+  qed
+  have csum: "martingale ?M ?FF 0
+      (\<lambda>u p. ((outerp (?A u p) - snd (fst p (min u r)))
+            + (outerp (?Bp u p) - snd (snd p (?t u))))
+          + ((\<chi> i j. ?A u p $ i * ?Bp u p $ j)
+            + (\<chi> i j. ?Bp u p $ i * ?A u p $ j)))"
+    by (rule martingale_add[OF martingale_add
+          [OF martingale_pair_fst[OF PQ PR cQ FR]
+              martingale_pair_snd[OF PQ PR FQ cR]]
+          martingale_add[OF cross1 cross2]])
+
+  \<comment> \<open>adaptedness of the glued compensated process\<close>
+  have cB: "(\<lambda>q :: (real^'n) \<times> (real^'n^'n). outerp (fst q) - snd q)
+      \<in> borel_measurable borel"
+  proof -
+    have e: "(\<lambda>q :: (real^'n) \<times> (real^'n^'n). outerp (fst q) - snd q)
+        = (\<lambda>q. \<chi> i j. fst q $ i * fst q $ j - snd q $ i $ j)"
+      by (rule ext) (simp add: outerp_def vec_eq_iff)
+    show ?thesis unfolding e
+      by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
+          continuous_intros)
+  qed
+  have evQ: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p b)
+      \<in> borel_measurable (?FF u)" if "0 \<le> b" "b \<le> min u r" for b u
+    by (rule measurable_compose[OF measurable_fst nat_filt_eval[OF that]])
+  have evR: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p b)
+      \<in> borel_measurable (?FF u)" if "0 \<le> b" "b \<le> ?s u" for b u
+    by (rule measurable_compose[OF measurable_snd nat_filt_eval[OF that]])
+  have gadap: "(\<lambda>p. ?g p v) \<in> borel_measurable (?FF u)"
+    if v: "0 \<le> v" and vu: "v \<le> u" for u v
+  proof (cases "v \<le> T")
+    case False
+    then have "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. ?g p v) = (\<lambda>p. undefined)"
+      by (auto simp: pglue_def)
+    then show ?thesis by simp
+  next
+    case True
+    then have vI: "v \<in> {0..T}" using v by simp
+    show ?thesis
+    proof (cases "v \<le> r")
+      case True
+      then have "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. ?g p v) = (\<lambda>p. fst p v)"
+        by (simp add: pglue_le[OF vI])
+      then show ?thesis using evQ[of v u] v vu True by simp
+    next
+      case False
+      then have rv: "r \<le> v" by simp
+      have mur: "min u r = r" using rv vu r False by simp
+      have e: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. ?g p v)
+          = (\<lambda>p. fst p r + (snd p (v - r) - snd p 0))"
+        by (simp add: pglue_ge[OF vI rv])
+      have m1: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p r)
+          \<in> borel_measurable (?FF u)" using evQ[of r u] r mur by simp
+      have m2: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p (v - r))
+          \<in> borel_measurable (?FF u)" using evR[of "v - r" u] rv vu by simp
+      have m3: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p 0)
+          \<in> borel_measurable (?FF u)" using evR[of 0 u] by simp
+      show ?thesis unfolding e using m1 m2 m3 by simp
+    qed
+  qed
+  have gcomp: "(\<lambda>p. outerp (fst (?g p (min i T)) :: real^'n)
+      - snd (?g p (min i T))) \<in> borel_measurable (?FF i)" if i: "0 \<le> i" for i
+  proof -
+    have a1: "0 \<le> min i T" using i T0 by simp
+    have a2: "min i T \<le> i" by simp
+    show ?thesis by (rule measurable_compose[OF gadap[OF a1 a2] cB])
+  qed
+
+  \<comment> \<open>the glued compensated process agrees with the sum almost everywhere\<close>
+  have start: "AE p in ?M. snd p 0 = ((0::real^'n), (0::real^'n^'n))"
+  proof -
+    interpret PP: pair_prob_space Q R
+      by (simp add: pair_prob_space_def pair_sigma_finite_def PQ PR
+          prob_space_imp_sigma_finite)
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable R"
+      by (rule pair_law_eval_measurable[OF setsR])
+    have sm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p 0) \<in> borel_measurable ?M"
+      by (rule measurable_compose[OF measurable_snd ev])
+    have "{p \<in> space ?M. snd p 0 = ((0::real^'n), (0::real^'n^'n))}
+        = (\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p 0) -` {(0, 0)} \<inter> space ?M"
+      by auto
+    then have mset: "{p \<in> space ?M. snd p 0 = ((0::real^'n), (0::real^'n^'n))}
+        \<in> sets ?M" using measurable_sets[OF sm] by simp
+    have "AE \<omega> in Q. AE \<omega>' in R.
+        snd (\<omega>, \<omega>') 0 = ((0::real^'n), (0::real^'n^'n))"
+      using R unfolding paper_pair_class_def by (auto simp: prod_eq_iff)
+    then show ?thesis by (rule PP.AE_pair_measure[OF mset])
+  qed
+  have mgl: "martingale ?M ?FF 0
+      (\<lambda>u p. outerp (fst (?g p (min u T)) :: real^'n) - snd (?g p (min u T)))"
+  proof (rule martingale_cong_AE[OF csum])
+    show "adapted_process ?M ?FF 0
+        (\<lambda>u p. outerp (fst (?g p (min u T)) :: real^'n) - snd (?g p (min u T)))"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using FFm gcomp by blast
+  next
+    fix u :: real assume u: "0 \<le> u"
+    have muI: "min u T \<in> {0..T}" using u T0 by simp
+    show "AE p in ?M. ((outerp (?A u p) - snd (fst p (min u r)))
+            + (outerp (?Bp u p) - snd (snd p (?t u))))
+          + ((\<chi> i j. ?A u p $ i * ?Bp u p $ j)
+            + (\<chi> i j. ?Bp u p $ i * ?A u p $ j))
+        = outerp (fst (?g p (min u T))) - snd (?g p (min u T))"
+    proof (rule eventually_mono[OF start])
+      fix p :: "'n pairpath \<times> 'n pairpath"
+      assume z: "snd p 0 = ((0::real^'n), (0::real^'n^'n))"
+      show "((outerp (?A u p) - snd (fst p (min u r)))
+              + (outerp (?Bp u p) - snd (snd p (?t u))))
+            + ((\<chi> i j. ?A u p $ i * ?Bp u p $ j)
+              + (\<chi> i j. ?Bp u p $ i * ?A u p $ j))
+          = outerp (fst (?g p (min u T))) - snd (?g p (min u T))"
+      proof (cases "u \<le> r")
+        case True
+        then have uT: "u \<le> T" using rT by simp
+        then have le: "min u T \<le> r" using True by simp
+        have e1: "min u T = min u r" using True uT by simp
+        have e2: "?t u = 0" using True rT by simp
+        have g0: "?g p (min u T) = fst p (min u r)"
+          unfolding e1[symmetric] by (simp add: pglue_le[OF muI le])
+        show ?thesis
+          using z by (simp add: g0 e2 outerp_zero vec_eq_iff)
+      next
+        case False
+        then have ru: "r < u" by simp
+        have rv: "r \<le> min u T" using ru rT by simp
+        have e1: "min u r = r" using ru by simp
+        have e2: "?t u = min u T - r" using ru by (simp add: min_def)
+        have g0: "?g p (min u T)
+            = fst p r + (snd p (min u T - r) - snd p 0)"
+          by (simp add: pglue_ge[OF muI rv])
+        have gX: "fst (?g p (min u T)) = ?A u p + ?Bp u p"
+          using z by (simp add: g0 e1 e2)
+        have gY: "snd (?g p (min u T)) = snd (fst p (min u r)) + snd (snd p (?t u))"
+          using z by (simp add: g0 e1 e2)
+        show ?thesis by (simp add: gX gY outerp_add)
+      qed
+    qed
+  qed
+
+  \<comment> \<open>transport to the pasted law\<close>
+  have Zm: "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u T)) :: real^'n)
+        - snd (\<omega> (min u T)))
+      \<in> borel_measurable (natural_filtration (pglue_law r T Q R) 0
+          (\<lambda>v \<omega>. \<omega> v) u)" if u: "0 \<le> u" for u
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T))
+        \<in> natural_filtration (pglue_law r T Q R) 0 (\<lambda>v \<omega>. \<omega> v) u \<rightarrow>\<^sub>M borel"
+      by (rule nat_filt_eval) (use u T0 in auto)
+    then show ?thesis by (rule measurable_compose[OF _ cB])
+  qed
+  show ?thesis
+    unfolding pglue_law_def
+    by (rule martingale_pair_law[OF prob_space_pair_measure[OF PQ PR]
+        pglue_measurable[OF r rT setsQ setsR] gadap Zm[unfolded pglue_law_def]
+        mgl])
+qed
+
+text \<open>Brick (b) of the DPP, complete: the class is closed under INDEPENDENT
+  CONCATENATION.  This is the constructive half of the pasting the weak
+  dynamic programming principle needs; with a countable Borel partition of
+  the endpoint it will give the \<open>\<ge>\<close> inequality of (2.9).\<close>
+
+theorem paper_pair_class_pglue_law:
+  fixes Q R :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and R: "R \<in> paper_pair_class k L (T - r) 0"
+  shows "pglue_law r T Q R \<in> paper_pair_class k L T x"
+  unfolding paper_pair_class_def mem_Collect_eq
+  using prob_space_pglue_law[OF r rT paper_pair_class_prob[OF Q]
+      paper_pair_class_prob[OF R] paper_pair_class_sets[OF Q]
+      paper_pair_class_sets[OF R]]
+    sets_pglue_law pglue_law_start[OF r rT Q R]
+    pglue_law_diffquot[OF r rT Q R] pglue_law_X_martingale[OF r rT Q R]
+    pglue_law_comp_martingale[OF r rT Q R]
+  by blast
+
 end
