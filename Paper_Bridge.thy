@@ -9256,4 +9256,74 @@ proof -
   from martingale_time_change[OF this s0 smono] show ?thesis .
 qed
 
+text \<open>The UNIFORM first-moment bound the kernel glue's integrability needs:
+  the bound depends only on \<open>k\<close>, \<open>L\<close> and the horizon, not on the member --- so
+  it holds simultaneously for every candidate continuation in the family.
+  \<open>a \<le> 1 + a\<^sup>2\<close> avoids a square root, so no Cauchy--Schwarz is needed.\<close>
+
+lemma paper_pair_class_norm_mean_le:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
+  shows "(\<integral>\<omega>. norm (fst (\<omega> t)) \<partial>Q)
+      \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have key: "a \<le> 1 + a * a" for a :: real
+  proof -
+    have "0 \<le> (a - 1/2) * (a - 1/2)" by simp
+    then have "0 \<le> a * a - a + 1/4" by (simp add: algebra_simps)
+    then show ?thesis by linarith
+  qed
+  have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
+    by (rule paper_pair_class_norm_sq_integrable[OF T L Q t])
+  have i1: "integrable Q (\<lambda>\<omega>. 1 + fst (\<omega> t) \<bullet> fst (\<omega> t))"
+    using ni by simp
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have nm: "(\<lambda>\<omega> :: 'n pairpath. norm (fst (\<omega> t))) \<in> borel_measurable Q"
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable Q"
+      by (rule measurable_compose
+          [OF paper_pair_class_eval_measurable[OF Q t] fstB])
+    then show ?thesis by measurable
+  qed
+  have le: "norm (fst (\<omega> t)) \<le> 1 + fst (\<omega> t) \<bullet> fst (\<omega> t)" for \<omega> :: "'n pairpath"
+    using key[of "norm (fst (\<omega> t))"]
+    by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
+  have i0: "integrable Q (\<lambda>\<omega> :: 'n pairpath. norm (fst (\<omega> t)))"
+  proof (rule Bochner_Integration.integrable_bound[OF i1 nm])
+    show "AE \<omega> in Q. norm (norm (fst (\<omega> t)))
+        \<le> norm (1 + fst (\<omega> t) \<bullet> fst (\<omega> t))"
+      using le by (intro AE_I2) auto
+  qed
+  have "(\<integral>\<omega>. norm (fst (\<omega> t)) \<partial>Q) \<le> (\<integral>\<omega>. 1 + fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
+    by (rule integral_mono[OF i0 i1]) (rule le)
+  also have "\<dots> = 1 + (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
+    using ni by (simp add: P.prob_space)
+  also have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+      = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
+  proof -
+    have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+        = (\<integral>\<omega>. (\<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2) \<partial>Q)"
+      by (rule Bochner_Integration.integral_cong)
+        (simp_all add: inner_vec_def power2_eq_square)
+    also have "\<dots> = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
+      by (rule Bochner_Integration.integral_sum)
+        (rule paper_pair_class_sq_integrable[OF T L Q t])
+    finally show ?thesis .
+  qed
+  also have "(\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))
+      \<le> (\<Sum>i\<in>(UNIV :: 'n set). real CARD('n) * L * T)"
+  proof (rule sum_mono)
+    fix i :: 'n
+    have "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q)
+        \<le> ((0 :: real^'n) $ i)\<^sup>2 + real CARD('n) * L * T"
+      by (rule paper_pair_class_sq_mean_le[OF T L Q t])
+    then show "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> real CARD('n) * L * T" by simp
+  qed
+  finally show ?thesis by simp
+qed
+
 end
