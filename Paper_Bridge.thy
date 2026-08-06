@@ -5865,4 +5865,69 @@ proof (rule martingale_matI)
   qed
 qed
 
+section \<open>NC: the paper's class is NONEMPTY\<close>
+
+text \<open>The witness: Brownian motion started at \<open>0\<close> paired with the
+  deterministic covariation \<open>Y\<^sub>t = t \<sqdot> I\<close>, capped at the horizon.\<close>
+
+definition bmpair :: "real \<Rightarrow> ('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath"
+  where "bmpair T \<omega> = restrict (\<lambda>t. (cbmX 0 t \<omega>, t *\<^sub>R mat 1)) {0..T}"
+
+lemma bmpair_apply:
+  "t \<in> {0..T} \<Longrightarrow> bmpair T \<omega> t = (cbmX 0 t \<omega>, t *\<^sub>R mat 1)"
+  by (simp add: bmpair_def)
+
+lemma continuous_on_bmpair_path:
+  fixes \<omega> :: "'n::finite \<Rightarrow> real \<Rightarrow> real"
+  shows "continuous_on {0..T}
+      (\<lambda>t. (cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (mat 1 :: real^'n^'n)))"
+proof (intro continuous_on_Pair)
+  show "continuous_on {0..T} (\<lambda>t. cbmX (0 :: real^'n) t \<omega>)"
+    by (rule continuous_on_subset[OF cbmX_cont]) auto
+  show "continuous_on {0..T} (\<lambda>t. t *\<^sub>R (mat 1 :: real^'n^'n))"
+    by (rule linear_continuous_on[OF bounded_linear_scaleR_left])
+qed
+
+lemma bmpair_measurable:
+  assumes T: "0 \<le> T"
+  shows "(bmpair T :: ('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath)
+      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))"
+proof -
+  \<comment> \<open>the intermediate statement carries FULL type annotations; without them
+      the obligations \<open>pathify_measurable\<close> generates elaborate at types the
+      component lemmas no longer match.\<close>
+  have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict
+          (\<lambda>t. (cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (mat 1 :: real^'n^'n))) {0..T})
+      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))"
+  proof (rule pathify_measurable[OF T])
+    fix t :: real assume "t \<in> {0..T}"
+    have c: "(\<lambda>v :: real^'n. (v, t *\<^sub>R (mat 1 :: real^'n^'n)))
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+          (cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (mat 1 :: real^'n^'n)))
+        \<in> borel_measurable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+      by (rule measurable_compose[OF measurable_cbmX c])
+  next
+    fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    show "continuous_on {0..T}
+        (\<lambda>t. (cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (mat 1 :: real^'n^'n)))"
+      by (rule continuous_on_bmpair_path)
+  qed
+  moreover have "(bmpair T :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath)
+      = (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict
+          (\<lambda>t. (cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (mat 1 :: real^'n^'n))) {0..T})"
+    by (rule ext) (simp add: bmpair_def)
+  ultimately show ?thesis by simp
+qed
+
+lemma prob_space_bmpair_law:
+  assumes T: "0 \<le> T"
+  shows "prob_space (pair_law_of T (bmpair T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))"
+  unfolding pair_law_of_def
+  by (rule BMP.prob_space_distr[OF bmpair_measurable[OF T]])
+
 end
