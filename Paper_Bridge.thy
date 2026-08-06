@@ -8696,4 +8696,247 @@ proof -
   qed
 qed
 
+section \<open>Lifting a martingale to an infinite product\<close>
+
+text \<open>Pasting with a KERNEL --- a continuation chosen per endpoint --- uses as
+  its second factor the product \<open>\<Pi>\<^sub>M i. R i\<close> of all the candidate
+  continuations, from which the glue map picks the one the endpoint selects.
+  For that, the \<open>i\<close>-th coordinate process must be a martingale for the
+  product filtration.  The route is: split the coordinate off with the
+  library's \<open>distr_pair_PiM_eq_PiM\<close>, use \<open>martingale_pair_fst\<close> on the
+  resulting pair, and transport back along the \<open>distr\<close>.\<close>
+
+lemma sets_PiM_mono:
+  assumes S: "\<And>i. i \<in> I \<Longrightarrow> sets (A i) \<subseteq> sets (B i)"
+    and SP: "\<And>i. i \<in> I \<Longrightarrow> space (A i) = space (B i)"
+  shows "sets (Pi\<^sub>M I A) \<subseteq> sets (Pi\<^sub>M I B)"
+proof -
+  have sp: "(\<Pi>\<^sub>E i\<in>I. space (A i)) = (\<Pi>\<^sub>E i\<in>I. space (B i))"
+    using SP by (intro PiE_cong) simp
+  have gen: "{{f \<in> \<Pi>\<^sub>E i\<in>I. space (A i). f i \<in> X} | i X. i \<in> I \<and> X \<in> sets (A i)}
+      \<subseteq> sets (Pi\<^sub>M I B)"
+  proof safe
+    fix i X assume iX: "i \<in> I" "X \<in> sets (A i)"
+    then have "X \<in> sets (B i)" using S by blast
+    then have "{f \<in> \<Pi>\<^sub>E i\<in>I. space (B i). f i \<in> X} \<in> sets (Pi\<^sub>M I B)"
+      using iX(1) unfolding sets_PiM_single by (intro sigma_sets.Basic) blast
+    then show "{f \<in> \<Pi>\<^sub>E i\<in>I. space (A i). f i \<in> X} \<in> sets (Pi\<^sub>M I B)"
+      unfolding sp .
+  qed
+  have "sigma_sets (space (Pi\<^sub>M I B))
+      {{f \<in> \<Pi>\<^sub>E i\<in>I. space (A i). f i \<in> X} | i X. i \<in> I \<and> X \<in> sets (A i)}
+      \<subseteq> sets (Pi\<^sub>M I B)"
+    by (rule sets.sigma_sets_subset[OF gen])
+  then show ?thesis
+    unfolding sets_PiM_single using sp by (simp add: space_PiM)
+qed
+
+lemma filtered_measure_PiM:
+  fixes G :: "'i \<Rightarrow> real \<Rightarrow> 'a measure"
+  assumes F: "\<And>i. i \<in> I \<Longrightarrow> filtered_measure (R i) (G i) (0::real)"
+  shows "filtered_measure (Pi\<^sub>M I R) (\<lambda>u. Pi\<^sub>M I (\<lambda>i. G i u)) (0::real)"
+proof (unfold_locales)
+  fix u :: real assume u: "0 \<le> u"
+  have spu: "space (G i u) = space (R i)" if "i \<in> I" for i
+    by (rule filtered_measure.space_F[OF F[OF that] u])
+  have "space (Pi\<^sub>M I (\<lambda>i. G i u)) = space (Pi\<^sub>M I R)"
+    using spu by (simp add: space_PiM cong: PiE_cong)
+  moreover have "sets (Pi\<^sub>M I (\<lambda>i. G i u)) \<subseteq> sets (Pi\<^sub>M I R)"
+  proof (rule sets_PiM_mono)
+    show "sets (G i u) \<subseteq> sets (R i)" if "i \<in> I" for i
+      by (rule filtered_measure.sets_F_subset[OF F[OF that] u])
+    show "space (G i u) = space (R i)" if "i \<in> I" for i by (rule spu[OF that])
+  qed
+  ultimately show "subalgebra (Pi\<^sub>M I R) (Pi\<^sub>M I (\<lambda>i. G i u))"
+    by (simp add: subalgebra_def)
+next
+  fix u v :: real assume uv: "0 \<le> u" "u \<le> v"
+  then have v: "0 \<le> v" by simp
+  have spu: "space (G i u) = space (R i)" if "i \<in> I" for i
+    by (rule filtered_measure.space_F[OF F[OF that] uv(1)])
+  have spv: "space (G i v) = space (R i)" if "i \<in> I" for i
+    by (rule filtered_measure.space_F[OF F[OF that] v])
+  show "sets (Pi\<^sub>M I (\<lambda>i. G i u)) \<le> sets (Pi\<^sub>M I (\<lambda>i. G i v))"
+  proof (rule sets_PiM_mono)
+    show "sets (G i u) \<subseteq> sets (G i v)" if "i \<in> I" for i
+      by (rule filtered_measure.sets_F_mono[OF F[OF that] uv(1) uv(2)])
+    show "space (G i u) = space (G i v)" if "i \<in> I" for i
+      using spu[OF that] spv[OF that] by simp
+  qed
+qed
+
+text \<open>Transport of the martingale property along a pushforward.  This is the
+  general form of what \<open>martingale_pair_law\<close> does for path spaces: if \<open>\<phi>\<close>
+  pulls the target filtration back into the source one, a source martingale
+  of the composed process is a target martingale.\<close>
+
+theorem martingale_distr:
+  fixes Z :: "real \<Rightarrow> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes prob: "prob_space M"
+    and phim: "\<phi> \<in> M \<rightarrow>\<^sub>M N"
+    and GG: "filtered_measure (distr M N \<phi>) GG (0::real)"
+    and pull: "\<And>u. 0 \<le> u \<Longrightarrow> \<phi> \<in> FF u \<rightarrow>\<^sub>M GG u"
+    and Zm: "\<And>u. 0 \<le> u \<Longrightarrow> Z u \<in> borel_measurable (GG u)"
+    and mg: "martingale M FF 0 (\<lambda>u \<omega>. Z u (\<phi> \<omega>))"
+  shows "martingale (distr M N \<phi>) GG 0 Z"
+proof -
+  interpret PM: prob_space M by (rule prob)
+  interpret MG: martingale M FF "0::real" "\<lambda>u \<omega>. Z u (\<phi> \<omega>)" by (rule mg)
+  interpret PD: prob_space "distr M N \<phi>" by (rule PM.prob_space_distr[OF phim])
+  interpret FD: finite_filtered_measure "distr M N \<phi>" GG "0::real"
+    unfolding finite_filtered_measure_def
+    using GG PD.finite_measure_axioms by blast
+  have ZM: "Z u \<in> borel_measurable N" if u: "0 \<le> u" for u
+  proof -
+    have "Z u \<in> borel_measurable (distr M N \<phi>)"
+      by (rule measurable_from_subalg[OF FD.subalgebras[OF u] Zm[OF u]])
+    then show ?thesis by simp
+  qed
+  have int: "integrable (distr M N \<phi>) (Z u)" if u: "0 \<le> u" for u
+  proof -
+    have e: "integrable (distr M N \<phi>) (Z u) = integrable M (\<lambda>\<omega>. Z u (\<phi> \<omega>))"
+      by (rule integrable_distr_eq[OF phim ZM[OF u]])
+    show ?thesis unfolding e by (rule MG.integrable[OF u])
+  qed
+  show ?thesis
+  proof (rule FD.martingale_of_set_integral_eq)
+    show "adapted_process (distr M N \<phi>) GG 0 Z"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using GG Zm by blast
+    show "integrable (distr M N \<phi>) (Z i)" if "0 \<le> i" for i by (rule int[OF that])
+    fix A and i j :: real
+    assume ij: "0 \<le> i" "i \<le> j" and A: "A \<in> sets (GG i)"
+    then have j: "0 \<le> j" by simp
+    have AN: "A \<in> sets N" using A FD.sets_F_subset[OF ij(1)] by auto
+    have pre: "\<phi> -` A \<inter> space M \<in> sets (FF i)"
+      using measurable_sets[OF pull[OF ij(1)] A] MG.space_F[OF ij(1)] by simp
+    have key: "set_lebesgue_integral (distr M N \<phi>) A (Z w)
+        = set_lebesgue_integral M (\<phi> -` A \<inter> space M) (\<lambda>\<omega>. Z w (\<phi> \<omega>))"
+      if w: "0 \<le> w" for w
+    proof -
+      have "set_lebesgue_integral (distr M N \<phi>) A (Z w)
+          = (\<integral>y. indicator A y *\<^sub>R Z w y \<partial>(distr M N \<phi>))"
+        by (simp add: set_lebesgue_integral_def)
+      also have "\<dots> = (\<integral>\<omega>. indicator A (\<phi> \<omega>) *\<^sub>R Z w (\<phi> \<omega>) \<partial>M)"
+      proof (rule integral_distr[OF phim])
+        show "(\<lambda>y. indicator A y *\<^sub>R Z w y) \<in> borel_measurable N"
+          using ZM[OF w] AN by measurable
+      qed
+      also have "\<dots> = (\<integral>\<omega>. indicator (\<phi> -` A \<inter> space M) \<omega> *\<^sub>R Z w (\<phi> \<omega>) \<partial>M)"
+        by (rule Bochner_Integration.integral_cong) (auto simp: indicator_def)
+      finally show ?thesis by (simp add: set_lebesgue_integral_def)
+    qed
+    show "set_lebesgue_integral (distr M N \<phi>) A (Z i)
+        = set_lebesgue_integral (distr M N \<phi>) A (Z j)"
+      unfolding key[OF ij(1)] key[OF j] by (rule MG.set_integral_eq[OF pre ij])
+  qed
+qed
+
+theorem martingale_PiM_component:
+  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+    and R :: "'i \<Rightarrow> 'a measure" and G :: "'i \<Rightarrow> real \<Rightarrow> 'a measure"
+  assumes R: "\<And>j. prob_space (R j)"
+    and F: "\<And>j. filtered_measure (R j) (G j) (0::real)"
+    and mg: "martingale (R i) (G i) 0 Y"
+  shows "martingale (Pi\<^sub>M UNIV R) (\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. G j u)) 0 (\<lambda>u f. Y u (f i))"
+proof -
+  let ?I = "UNIV - {i}"
+  let ?S = "Pi\<^sub>M ?I R"
+  let ?P = "R i \<Otimes>\<^sub>M ?S"
+  let ?\<phi> = "\<lambda>(x, X). X(i := x)"
+  let ?GG = "\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. G j u)"
+  let ?FF = "\<lambda>u. G i u \<Otimes>\<^sub>M Pi\<^sub>M ?I (\<lambda>j. G j u)"
+  interpret MG: martingale "R i" "G i" "0::real" Y by (rule mg)
+  have ins: "insert i ?I = (UNIV :: 'i set)" by auto
+  have PS: "prob_space ?S" by (rule prob_space_PiM) (rule R)
+  have PP: "prob_space ?P" by (rule prob_space_pair_measure[OF R PS])
+  have GI: "filtered_measure ?S (\<lambda>u. Pi\<^sub>M ?I (\<lambda>j. G j u)) (0::real)"
+    by (rule filtered_measure_PiM) (rule F)
+  have GU: "filtered_measure (Pi\<^sub>M UNIV R) ?GG (0::real)"
+    by (rule filtered_measure_PiM) (rule F)
+
+  \<comment> \<open>the coordinate-insertion map, uniformly in the family of factors\<close>
+  have phim: "(\<lambda>(x, X). X(i := x)) \<in> (H i \<Otimes>\<^sub>M Pi\<^sub>M ?I H) \<rightarrow>\<^sub>M Pi\<^sub>M UNIV H"
+    for H :: "'i \<Rightarrow> 'a measure"
+  proof -
+    have e: "(\<lambda>(x, X). X(i := x))
+        = (\<lambda>p :: 'a \<times> ('i \<Rightarrow> 'a). \<lambda>j. if j = i then fst p else snd p j)"
+      by (rule ext) (auto simp: fun_upd_def case_prod_unfold)
+    show ?thesis
+      unfolding e
+    proof (rule measurable_PiM_single')
+      fix j :: 'i assume "j \<in> (UNIV :: 'i set)"
+      show "(\<lambda>p. if j = i then fst p else snd p j)
+          \<in> (H i \<Otimes>\<^sub>M Pi\<^sub>M ?I H) \<rightarrow>\<^sub>M H j"
+      proof (cases "j = i")
+        case True
+        then show ?thesis using measurable_fst by simp
+      next
+        case False
+        then have jI: "j \<in> ?I" by simp
+        have "(\<lambda>p :: 'a \<times> ('i \<Rightarrow> 'a). snd p j) \<in> (H i \<Otimes>\<^sub>M Pi\<^sub>M ?I H) \<rightarrow>\<^sub>M H j"
+          by (rule measurable_compose[OF measurable_snd
+                measurable_component_singleton[OF jI]])
+        then show ?thesis using False by simp
+      qed
+    next
+      show "(\<lambda>p j. if j = i then fst p else snd p j)
+          \<in> space (H i \<Otimes>\<^sub>M Pi\<^sub>M ?I H) \<rightarrow> (\<Pi>\<^sub>E j\<in>UNIV. space (H j))"
+      proof (rule Pi_I)
+        fix p :: "'a \<times> ('i \<Rightarrow> 'a)"
+        assume p: "p \<in> space (H i \<Otimes>\<^sub>M Pi\<^sub>M ?I H)"
+        then have p1: "fst p \<in> space (H i)"
+          and p2: "snd p \<in> (\<Pi>\<^sub>E j\<in>?I. space (H j))"
+          by (simp_all add: space_pair_measure space_PiM mem_Times_iff)
+        have "(if j = i then fst p else snd p j) \<in> space (H j)" for j :: 'i
+        proof (cases "j = i")
+          case True
+          then show ?thesis using p1 by simp
+        next
+          case False
+          then have "j \<in> ?I" by simp
+          then show ?thesis using p2 False by (simp add: PiE_iff)
+        qed
+        then show "(\<lambda>j. if j = i then fst p else snd p j)
+            \<in> (\<Pi>\<^sub>E j\<in>UNIV. space (H j))" by (simp add: PiE_iff)
+      qed
+    qed
+  qed
+
+  \<comment> \<open>the product is the pushforward of the split product\<close>
+  have D: "distr ?P (Pi\<^sub>M UNIV R) ?\<phi> = Pi\<^sub>M UNIV R"
+  proof -
+    have "distr (R i \<Otimes>\<^sub>M Pi\<^sub>M ?I R) (Pi\<^sub>M (insert i ?I) R) (\<lambda>(x, X). X(i := x))
+        = Pi\<^sub>M (insert i ?I) R"
+      by (rule distr_pair_PiM_eq_PiM) (auto simp: R)
+    then show ?thesis unfolding ins .
+  qed
+
+  have Zm: "(\<lambda>f. Y u (f i)) \<in> borel_measurable (?GG u)" if u: "0 \<le> u" for u
+  proof -
+    have "(\<lambda>f :: 'i \<Rightarrow> 'a. f i) \<in> ?GG u \<rightarrow>\<^sub>M G i u"
+      by (rule measurable_component_singleton) simp
+    then show ?thesis by (rule measurable_compose[OF _ MG.adapted[OF u]])
+  qed
+  have mgP: "martingale ?P ?FF 0 (\<lambda>u p. Y u ((case p of (x, X) \<Rightarrow> X(i := x)) i))"
+  proof (rule martingale_cong_ge[OF martingale_pair_fst[OF R PS mg GI]])
+    fix u :: real assume "0 \<le> u"
+    show "(\<lambda>p :: 'a \<times> ('i \<Rightarrow> 'a). Y u (fst p))
+        = (\<lambda>p. Y u ((case p of (x, X) \<Rightarrow> X(i := x)) i))"
+      by (rule ext) (simp add: case_prod_unfold)
+  qed
+  have "martingale (distr ?P (Pi\<^sub>M UNIV R) ?\<phi>) ?GG 0 (\<lambda>u f. Y u (f i))"
+  proof (rule martingale_distr[OF PP phim[of R]])
+    show "filtered_measure (distr ?P (Pi\<^sub>M UNIV R) ?\<phi>) ?GG (0::real)"
+      unfolding D by (rule GU)
+    show "?\<phi> \<in> ?FF u \<rightarrow>\<^sub>M ?GG u" if "0 \<le> u" for u by (rule phim)
+    show "(\<lambda>f. Y u (f i)) \<in> borel_measurable (?GG u)" if "0 \<le> u" for u
+      by (rule Zm[OF that])
+    show "martingale ?P ?FF 0
+        (\<lambda>u \<omega>. Y u ((case \<omega> of (x, X) \<Rightarrow> X(i := x)) i))"
+      by (rule mgP)
+  qed
+  then show ?thesis unfolding D .
+qed
+
 end
