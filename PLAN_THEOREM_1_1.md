@@ -258,51 +258,33 @@ DPP.**
      computed by `distr_PiM_component` and bounded uniformly over the family
      by the new `paper_pair_class_norm_mean_le`.
 
-     **Clause (iv) — the last piece.** Design settled and the groundwork
-     committed; the theorem itself is not written. Take
+     **Clause (iv) — DONE**, `kglue_law_comp_martingale`, and with it
 
-         D u p = (outerp b − Yb) + ((A p ⊗ b) + (b ⊗ A p)),
-         A p = fst (fst p r),
-         b  = fst (snd p i (τ u)) − fst (snd p i 0),
-         Yb = snd (snd p i (τ u)) − snd (snd p i 0),   i = N (fst p),
+         paper_pair_class_kglue_law:
+           0 ≤ r ≤ T, Q ∈ paper_pair_class k L r x,
+           RR j ∈ paper_pair_class k L (T−r) 0 for every j,
+           N measurable for the natural filtration of Q at time r
+             ⟹ kglue_law r T N Q RR ∈ paper_pair_class k L T x.
 
-     and `C u p = CQ u (fst p) + D u p` with `CQ` the first factor's
-     compensated martingale on the clock `min u r`. Two points make it work:
+     **Kernel pasting is complete: the class is closed under concatenation
+     with a continuation chosen by the endpoint.** Two things made it work:
 
-     - use `fst (fst p r)` in the cross term, NOT `fst (fst p (min u r))`.
-       Both give the same value (for `u ≤ r` the factor `b` is `0`, so the
-       cross term vanishes whatever `A` is), but with `r` fixed the frozen
-       process has a CONSTANT `A`, so the cross term is a bounded-linear
-       image of the `b`-martingale. **No parametrized `martingale_pair_mult`
-       is needed** — an earlier plan entry saying otherwise was wrong.
-     - `outerp b − Yb` is only ALMOST everywhere the `i`-th coordinate's
-       compensated martingale (it uses `X'(0) = 0`, `Y'(0) = 0`).
+     - writing the cross term's first factor at the FIXED time `r` rather
+       than `min u r`. Both give the same value (for `u ≤ r` the factor `b`
+       is `0`, so the cross term vanishes whatever `A` is), but with `r`
+       fixed, freezing the first coordinate turns `A` into a CONSTANT, so
+       the cross term is a bounded-linear image of the second factor's
+       martingale — no product of two martingales, no parametrized
+       `martingale_pair_mult`;
+     - the integrability split. The compensated summand has a uniform inner
+       bound (`paper_pair_class_comp_norm_mean_le` transferred along
+       `distr_PiM_component`), so `integrable_const_bound` applies. The cross
+       term's inner integral depends on `ω` through BOTH `N ω` and
+       `fst (ω r)` and is not obviously measurable; dominate it by
+       `2‖fst (fst p r)‖·‖b‖`, whose inner integral is a product of a
+       measurable function with a countably-valued one, apply
+       `Fubini_integrable` to THAT, and finish with `integrable_bound`.
 
-     Already committed for it: `norm_outer_prod`/`norm_outerp`,
-     `bounded_linear_cross_pair`, `pair_fst_borel`, `pair_snd_borel`,
-     `outerp_borel`, `cross_borel`, `kglue_param_comp_martingale` (the frozen
-     martingale, with the `martingale_cong_AE` already done), and the two
-     uniform bounds `paper_pair_class_inner_mean_le` and
-     `paper_pair_class_comp_norm_mean_le`.
-
-     What remains is one theorem, structurally a copy of
-     `kglue_law_X_martingale`, differing only in its **integrability** step.
-     Split `D` in two and treat them separately, both by `Fubini_integrable`:
-
-     - `outerp b − Yb`: its inner integral is `G (N ω)`, a countably-valued
-       function of `ω`, bounded by `paper_pair_class_comp_norm_mean_le`
-       transferred along `distr_PiM_component` — so `integrable_const_bound`
-       applies exactly as in clause (iii).
-     - the cross term: its inner integral depends on `ω` through BOTH
-       `N ω` and `fst (ω r)`, so it is not obviously measurable. Do NOT
-       attack it directly — dominate it by
-       `g u p = 2 · ‖fst (fst p r)‖ · ‖b‖`, whose inner integral is
-       `2‖fst (ω r)‖ · G' (N ω)` (a product of a measurable function and a
-       countably-valued one), apply `Fubini_integrable` to `g`, and finish
-       with `integrable_bound`. `Q`-integrability of `‖fst (ω r)‖` comes from
-       the `X`-martingale's own integrability at time `r`.
-
-     Estimated 250–350 lines from here.
 
 
 
