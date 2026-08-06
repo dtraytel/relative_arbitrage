@@ -6227,4 +6227,51 @@ proof (rule paper_v_usc[OF T _ K _ lt])
     using T L by (intro paper_pair_class_nonempty) simp_all
 qed
 
+section \<open>Consolidating the clauses onto the paper's value function\<close>
+
+text \<open>Clause (0) for \<open>paper_v\<close>: the exit functional of Eq. (1.6) is capped
+  at the horizon, so the value is bounded by it outright.  (The SHARP bound
+  \<open>paper_v \<le> ball_v\<close>, which also gives clause (3), needs the class-level
+  expected-exit-time estimate; \<open>sconstraint_trace_ge\<close> below is its first
+  input.)\<close>
+
+theorem paper_v_le_T:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes T: "0 \<le> T"
+  shows "paper_v k L T K x \<le> ennreal T"
+  unfolding paper_v_def
+proof (rule Sup_least)
+  fix c :: ennreal
+  assume "c \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+      ` paper_pair_class k L T x"
+  then obtain Q :: "('n pairpath) measure"
+    where Q: "Q \<in> paper_pair_class k L T x"
+      and c: "c = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
+  show "c \<le> ennreal T"
+    unfolding c
+    by (rule ess_inf_time_le_const[OF paper_pair_class_prob[OF Q]])
+      (simp add: pexit_def etime_le_T[OF T])
+qed
+
+text \<open>The trace lower bound carried by the constraint set: the identity is a
+  rank-\<open>n\<close> projection, so \<open>Pi_proj a n \<le> trace a\<close>, and the constraint's
+  own bound at \<open>m = n\<close> is \<open>n - k\<close>.  This is what makes \<open>|X|\<^sup>2\<close> a
+  submartingale with rate at least \<open>n - k\<close>, hence the exit-time estimate
+  of Lemma 2.1 at the CLASS level.\<close>
+
+lemma sconstraint_trace_ge:
+  fixes a :: "real^'n::finite^'n"
+  assumes k: "k < CARD('n)" and a: "a \<in> sconstraint k L"
+  shows "real (CARD('n) - k) \<le> trace a"
+proof -
+  have p: "psd a"
+    and pi: "\<And>m. k < m \<Longrightarrow> m \<le> CARD('n) \<Longrightarrow> real (m - k) \<le> Pi_proj a m"
+    using a unfolding sconstraint_def Pi_constraint_def by auto
+  have "real (CARD('n) - k) \<le> Pi_proj a CARD('n)" using k by (intro pi) auto
+  also have "\<dots> \<le> trace (a ** mat 1)"
+    by (rule Pi_proj_le[OF p]) (simp_all add: is_proj_def trace_I)
+  also have "\<dots> = trace a" by simp
+  finally show ?thesis .
+qed
+
 end
