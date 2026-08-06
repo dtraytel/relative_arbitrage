@@ -5564,4 +5564,90 @@ next
   finally show ?thesis .
 qed
 
+text \<open>The martingale identity for the off-diagonal product, in
+  set-integral form.  Writing \<open>X\<^sub>i(v)X\<^sub>j(v) - X\<^sub>i(u)X\<^sub>j(u)
+  = X\<^sub>i(u)\<Delta>\<^sub>j + X\<^sub>j(u)\<Delta>\<^sub>i + \<Delta>\<^sub>i\<Delta>\<^sub>j\<close>, the first two terms die by
+  \<open>Brownian_Market.bm_meas_increment_product_zero\<close> (the multiplier is
+  past-measurable) and the third by \<open>bm_cross_set_integral_zero\<close>.\<close>
+
+lemma bm_cross_increment_set_integral_zero:
+  fixes x0 :: "real^'n::finite" and i j :: 'n
+  assumes ij: "i \<noteq> j" and u: "0 \<le> u" and uv: "u \<le> v"
+    and A: "A \<in> sets (natural_filtration
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0) u)"
+  shows "(\<integral>\<omega>. indicat_real A \<omega> * (bmX x0 v \<omega> $ i * bmX x0 v \<omega> $ j
+            - bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j)
+       \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (bmX x0) u"
+  have SP: "Stochastic_Process.stochastic_process ?M (0::real) (bmX x0)"
+    by unfold_locales (intro measurable_bmX, simp)
+  have subalg: "subalgebra ?M ?F"
+    by (rule Stochastic_Process.stochastic_process.subalgebra_natural_filtration[OF SP])
+  have AM: "A \<in> sets ?M" using A subalg by (auto simp: subalgebra_def)
+  \<comment> \<open>the two past-measurable multipliers\<close>
+  have cm: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 u \<omega> $ k) \<in> borel_measurable ?F"
+    for k
+  proof -
+    have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. x0 $ k + \<omega> k u) \<in> borel_measurable ?F"
+      by (intro borel_measurable_add borel_measurable_const
+          bm_coordinate_measurable_F[OF u])
+    then show ?thesis by (simp add: bmX_def)
+  qed
+  have gm: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. indicat_real A \<omega> * bmX x0 u \<omega> $ k)
+      \<in> borel_measurable ?F" for k
+    by (rule borel_measurable_times[OF borel_measurable_indicator[OF A] cm])
+  have gi: "integrable ?M
+      (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. indicat_real A \<omega> * bmX x0 u \<omega> $ k)" for k
+  proof -
+    have "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. bmX x0 u \<omega> $ k)"
+      using BMP.integrable_const bm_coordinate_mean_integrable[OF u, of k]
+      by (simp add: bmX_def)
+    then have "integrable ?M
+        (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. indicat_real A \<omega> *\<^sub>R bmX x0 u \<omega> $ k)"
+      by (rule integrable_mult_indicator[OF AM])
+    then show ?thesis by simp
+  qed
+  have z1: "(\<integral>\<omega>. (indicat_real A \<omega> * bmX x0 u \<omega> $ i) * (\<omega> j v - \<omega> j u) \<partial>?M) = 0"
+    by (rule bm_meas_increment_product_zero[OF u uv gm gi])
+  have z2: "(\<integral>\<omega>. (indicat_real A \<omega> * bmX x0 u \<omega> $ j) * (\<omega> i v - \<omega> i u) \<partial>?M) = 0"
+    by (rule bm_meas_increment_product_zero[OF u uv gm gi])
+  have z3: "(\<integral>\<omega>. indicat_real A \<omega> * ((\<omega> i v - \<omega> i u) * (\<omega> j v - \<omega> j u)) \<partial>?M) = 0"
+    by (rule bm_cross_set_integral_zero[OF ij u uv A])
+  have i1: "integrable ?M
+      (\<lambda>\<omega>. (indicat_real A \<omega> * bmX x0 u \<omega> $ i) * (\<omega> j v - \<omega> j u))"
+    by (rule bm_meas_increment_product_integrable[OF u uv gm gi])
+  have i2: "integrable ?M
+      (\<lambda>\<omega>. (indicat_real A \<omega> * bmX x0 u \<omega> $ j) * (\<omega> i v - \<omega> i u))"
+    by (rule bm_meas_increment_product_integrable[OF u uv gm gi])
+  have i3: "integrable ?M
+      (\<lambda>\<omega>. indicat_real A \<omega> * ((\<omega> i v - \<omega> i u) * (\<omega> j v - \<omega> j u)))"
+  proof -
+    have "integrable ?M
+        (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+           indicat_real A \<omega> *\<^sub>R ((\<omega> i v - \<omega> i u) * (\<omega> j v - \<omega> j u)))"
+      by (rule integrable_mult_indicator[OF AM
+          bm_increment_cross_integrable[OF ij u uv]])
+    then show ?thesis by simp
+  qed
+  have decomp: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. indicat_real A \<omega>
+        * (bmX x0 v \<omega> $ i * bmX x0 v \<omega> $ j - bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j))
+      = (\<lambda>\<omega>. (indicat_real A \<omega> * bmX x0 u \<omega> $ i) * (\<omega> j v - \<omega> j u)
+          + (indicat_real A \<omega> * bmX x0 u \<omega> $ j) * (\<omega> i v - \<omega> i u)
+          + indicat_real A \<omega> * ((\<omega> i v - \<omega> i u) * (\<omega> j v - \<omega> j u)))"
+    by (simp add: fun_eq_iff bmX_def algebra_simps)
+  have "(\<integral>\<omega>. indicat_real A \<omega>
+          * (bmX x0 v \<omega> $ i * bmX x0 v \<omega> $ j
+             - bmX x0 u \<omega> $ i * bmX x0 u \<omega> $ j) \<partial>?M)
+      = (\<integral>\<omega>. (indicat_real A \<omega> * bmX x0 u \<omega> $ i) * (\<omega> j v - \<omega> j u)
+            + (indicat_real A \<omega> * bmX x0 u \<omega> $ j) * (\<omega> i v - \<omega> i u) \<partial>?M)
+        + (\<integral>\<omega>. indicat_real A \<omega> * ((\<omega> i v - \<omega> i u) * (\<omega> j v - \<omega> j u)) \<partial>?M)"
+    unfolding decomp
+    by (rule Bochner_Integration.integral_add) (auto intro: i1 i2 i3)
+  also have "\<dots> = 0"
+    using z3 z1 z2 i1 i2 by simp
+  finally show ?thesis .
+qed
+
 end
