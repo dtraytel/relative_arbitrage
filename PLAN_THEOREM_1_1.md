@@ -258,7 +258,8 @@ DPP.**
      computed by `distr_PiM_component` and bounded uniformly over the family
      by the new `paper_pair_class_norm_mean_le`.
 
-     **Clause (iv) — the last piece.** Design settled, not yet written. Take
+     **Clause (iv) — the last piece.** Design settled and the groundwork
+     committed; the theorem itself is not written. Take
 
          D u p = (outerp b − Yb) + ((A p ⊗ b) + (b ⊗ A p)),
          A p = fst (fst p r),
@@ -266,28 +267,43 @@ DPP.**
          Yb = snd (snd p i (τ u)) − snd (snd p i 0),   i = N (fst p),
 
      and `C u p = CQ u (fst p) + D u p` with `CQ` the first factor's
-     compensated martingale on the clock `min u r`. Two points make this work:
+     compensated martingale on the clock `min u r`. Two points make it work:
 
      - use `fst (fst p r)` in the cross term, NOT `fst (fst p (min u r))`.
        Both give the same value (for `u ≤ r` the factor `b` is `0`, so the
        cross term vanishes whatever `A` is), but with `r` fixed the frozen
        process has a CONSTANT `A`, so the cross term is a bounded-linear
-       image of the `b`-martingale (`martingale_bounded_linear_image`) rather
-       than a product of two martingales. **No parametrized
-       `martingale_pair_mult` is needed after all** — the earlier plan entry
-       saying otherwise was wrong.
+       image of the `b`-martingale. **No parametrized `martingale_pair_mult`
+       is needed** — an earlier plan entry saying otherwise was wrong.
      - `outerp b − Yb` is only ALMOST everywhere the `i`-th coordinate's
-       compensated martingale (it uses `X'(0) = 0` and `Y'(0) = 0`), so
-       `martingale_cong_AE` on `Pi⇩M UNIV RR` is the last step there.
+       compensated martingale (it uses `X'(0) = 0`, `Y'(0) = 0`).
 
-     What clause (iv) still needs beyond clause (iii)'s machinery: three
-     integrability bounds on the product — for `outerp b` (quadratic, so
-     `paper_pair_class_sq_mean_le` summed over coordinates), for `Yb` (an
-     a.s. bound, `paper_pair_class_Y_bounded_ae`), and for `A ⊗ b` (a product
-     of a first-factor and a second-factor variable, so
-     `paper_pair_class_norm_mean_le` on each side — which must first be
-     generalised from start `0` to a general start `x` for the `Q` factor).
-     Estimated 600–800 lines.
+     Already committed for it: `norm_outer_prod`/`norm_outerp`,
+     `bounded_linear_cross_pair`, `pair_fst_borel`, `pair_snd_borel`,
+     `outerp_borel`, `cross_borel`, `kglue_param_comp_martingale` (the frozen
+     martingale, with the `martingale_cong_AE` already done), and the two
+     uniform bounds `paper_pair_class_inner_mean_le` and
+     `paper_pair_class_comp_norm_mean_le`.
+
+     What remains is one theorem, structurally a copy of
+     `kglue_law_X_martingale`, differing only in its **integrability** step.
+     Split `D` in two and treat them separately, both by `Fubini_integrable`:
+
+     - `outerp b − Yb`: its inner integral is `G (N ω)`, a countably-valued
+       function of `ω`, bounded by `paper_pair_class_comp_norm_mean_le`
+       transferred along `distr_PiM_component` — so `integrable_const_bound`
+       applies exactly as in clause (iii).
+     - the cross term: its inner integral depends on `ω` through BOTH
+       `N ω` and `fst (ω r)`, so it is not obviously measurable. Do NOT
+       attack it directly — dominate it by
+       `g u p = 2 · ‖fst (fst p r)‖ · ‖b‖`, whose inner integral is
+       `2‖fst (ω r)‖ · G' (N ω)` (a product of a measurable function and a
+       countably-valued one), apply `Fubini_integrable` to `g`, and finish
+       with `integrable_bound`. `Q`-integrability of `‖fst (ω r)‖` comes from
+       the `X`-martingale's own integrability at time `r`.
+
+     Estimated 250–350 lines from here.
+
 
 
   2. **ε-optimal selection.** For each `y` pick `R_y` with essinf `≈ v(y)`;
