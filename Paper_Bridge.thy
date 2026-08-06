@@ -7242,4 +7242,166 @@ proof (rule paper_pair_class_diffquot_of_pairs[OF sets_pglue_law])
   qed
 qed
 
+section \<open>The horizon cap does not bind\<close>
+
+text \<open>\<open>paper_v\<close> caps the exit time at \<open>T\<close>, the paper's \<open>v\<close> does not.  Cutting
+  a member back to \<open>[0,S]\<close> (\<open>paper_pair_class_pcut\<close>) can only shorten its exit
+  time to \<open>min \<tau> S\<close>, so the value at horizon \<open>T\<close> is already visible at the
+  shorter horizon \<open>S\<close> --- PROVIDED \<open>S\<close> is beyond the scale
+  \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> of \<open>paper_v_le_ball_bound\<close>, so that the cut does not
+  truncate anything.  No pasting is needed for this direction.\<close>
+
+definition pfst :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> (real \<Rightarrow> real^'n)"
+  where "pfst S \<omega> = restrict (\<lambda>t. fst (\<omega> t)) {0..S}"
+
+lemma pexit_pfst: "pexit S K (pfst S \<omega>) = pexit S K (\<lambda>t. fst (\<omega> t))"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> S \<and> pfst S \<omega> r \<in> - K}
+      = {r. 0 \<le> r \<and> r \<le> S \<and> fst (\<omega> r) \<in> - K}"
+    by (auto simp: pfst_def)
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+lemma pfst_measurable:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes S: "0 \<le> S"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric S :: ('n pairpath) metric)))"
+  shows "pfst S \<in> N \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric S :: ((real \<Rightarrow> real^'n)) metric))"
+  unfolding pfst_def
+proof (rule pathify_measurable[OF S])
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  fix t :: real assume "t \<in> {0..S}"
+  show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable N"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsN] fstB])
+next
+  fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space N"
+  then have "\<omega> \<in> mspace (path_metric S :: ('n pairpath) metric)"
+    using space_of_path_sets[OF setsN] by simp
+  then have "continuous_on {0..S} \<omega>" by (rule mspace_path_metricD)
+  then show "continuous_on {0..S} (\<lambda>t. fst (\<omega> t))"
+    by (intro continuous_intros)
+qed
+
+lemma ennreal_min_eq: "ennreal (min a b) = min (ennreal a) (ennreal b)"
+proof (cases "a \<le> b")
+  case True
+  then have "ennreal a \<le> ennreal b" by (rule ennreal_leI)
+  with True show ?thesis by (simp add: min_def)
+next
+  case False
+  then have "ennreal b \<le> ennreal a" by (simp add: ennreal_leI)
+  with False show ?thesis by (simp add: min_def)
+qed
+
+lemma pexit_pcut_ge:
+  fixes K :: "(real^'n::finite) set" and \<omega> :: "'n pairpath"
+  assumes S: "0 \<le> S" and ST: "S \<le> T"
+  shows "min (pexit T K (\<lambda>t. fst (\<omega> t))) S
+      \<le> pexit S K (\<lambda>t. fst (pcut S \<omega> t))"
+proof -
+  have T0: "0 \<le> T" using S ST by simp
+  have lb: "min (pexit T K (\<lambda>t. fst (\<omega> t))) S \<le> z"
+    if z: "z \<in> {r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S}"
+    for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> S" "fst (pcut S \<omega> z) \<in> - K" | (cap) "z = S"
+      using z by blast
+    then show ?thesis
+    proof cases
+      case hit
+      then have zT: "z \<le> T" using ST by simp
+      have notin: "fst (\<omega> z) \<in> - K"
+        using hit by (simp add: pcut_apply)
+      have "pexit T K (\<lambda>t. fst (\<omega> t)) \<le> z"
+        unfolding pexit_def
+        by (rule etime_le_of_mem[OF T0 hit(1) zT]) (use notin in simp)
+      then show ?thesis using hit(2) by simp
+    next
+      case cap
+      then show ?thesis by simp
+    qed
+  qed
+  have "pexit S K (\<lambda>t. fst (pcut S \<omega> t))
+      = Inf ({r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S})"
+    unfolding pexit_def etime_def ..
+  moreover have "min (pexit T K (\<lambda>t. fst (\<omega> t)))  S
+      \<le> Inf ({r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show ?thesis by simp
+qed
+
+theorem paper_v_horizon_stable:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
+  assumes k: "k < CARD('n)" and L: "0 \<le> L" and S: "0 \<le> S" and ST: "S \<le> T"
+    and K: "closed K" and KB: "K \<subseteq> cball 0 r"
+    and big: "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S"
+  shows "paper_v k L T K x \<le> paper_v k L S K x"
+proof -
+  have T0: "0 \<le> T" using S ST by simp
+  let ?B = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?tau = "\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t))"
+  have taum: "?tau \<in> borel_measurable ?B"
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. pexit S K (pfst S \<omega>)) \<in> borel_measurable ?B"
+      by (rule measurable_compose[OF pfst_measurable[OF S refl]
+            pexit_measurable[OF S K]])
+    then show ?thesis by (simp add: pexit_pfst)
+  qed
+  have "paper_v k L T K x
+      = Sup ((\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+          ` paper_pair_class k L T x)"
+    unfolding paper_v_def ..
+  also have "\<dots> \<le> paper_v k L S K x"
+  proof (rule Sup_least)
+    fix e :: ennreal
+    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+        ` paper_pair_class k L T x"
+    then obtain Q :: "('n pairpath) measure"
+      where Q: "Q \<in> paper_pair_class k L T x"
+        and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
+    have eS: "e \<le> ennreal S"
+    proof -
+      have "e \<le> paper_v k L T K x"
+        unfolding paper_v_def e using Q by (intro Sup_upper imageI)
+      also have "\<dots> \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+        by (rule paper_v_le_ball_bound[OF k T0 L KB])
+      also have "\<dots> \<le> ennreal S" using big by (rule ennreal_leI)
+      finally show ?thesis .
+    qed
+    have Q': "pair_law_of S (pcut S) Q \<in> paper_pair_class k L S x"
+      by (rule paper_pair_class_pcut[OF S ST Q])
+    have m1: "pcut S \<in> Q \<rightarrow>\<^sub>M ?B"
+      by (rule pcut_measurable[OF S ST paper_pair_class_sets[OF Q]])
+    have mset: "{\<omega> \<in> space ?B. e \<le> ennreal (?tau \<omega>)} \<in> sets ?B"
+      using taum by measurable
+    have iff: "(AE \<omega> in pair_law_of S (pcut S) Q. e \<le> ennreal (?tau \<omega>))
+        = (AE \<omega> in Q. e \<le> ennreal (?tau (pcut S \<omega>)))"
+      unfolding pair_law_of_def by (rule AE_distr_iff[OF m1 mset])
+    have ae1: "AE \<omega> in Q. e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+      unfolding e by (rule ess_inf_time_AE)
+    have "AE \<omega> in Q. e \<le> ennreal (?tau (pcut S \<omega>))"
+    proof (rule eventually_mono[OF ae1])
+      fix \<omega> :: "'n pairpath"
+      assume "e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+      with eS have "e \<le> ennreal (min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
+        unfolding ennreal_min_eq by simp
+      also have "\<dots> \<le> ennreal (pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
+        by (intro ennreal_leI pexit_pcut_ge[OF S ST])
+      finally show "e \<le> ennreal (?tau (pcut S \<omega>))" by simp
+    qed
+    then have ae: "AE \<omega> in pair_law_of S (pcut S) Q. e \<le> ennreal (?tau \<omega>)"
+      unfolding iff .
+    have "e \<le> ess_inf_time (pair_law_of S (pcut S) Q) ?tau"
+      unfolding ess_inf_time_def using ae by (intro Sup_upper) simp
+    also have "\<dots> \<le> paper_v k L S K x"
+      unfolding paper_v_def using Q' by (intro Sup_upper imageI)
+    finally show "e \<le> paper_v k L S K x" .
+  qed
+  finally show ?thesis .
+qed
+
 end
