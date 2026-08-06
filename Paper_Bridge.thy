@@ -9205,4 +9205,55 @@ proof (rule paper_pair_class_diffquot_of_pairs[OF sets_kglue_law])
   qed
 qed
 
+text \<open>Clauses (iii) and (iv) for the kernel glue.  The decomposition is now
+  POINTWISE, because the second summand explicitly subtracts the
+  continuation's initial value and is therefore literally \<open>0\<close> before \<open>r\<close> ---
+  which is what makes it adapted there, since the index \<open>N\<close> is only
+  \<open>\<FF>\<^sub>r\<close>-measurable.  Freezing the first coordinate turns \<open>X\<^sub>r\<close> into a CONSTANT,
+  so even the cross term of clause (iv) is a second-factor martingale (a
+  bounded-linear image of one), and \<open>martingale_pair_snd_param\<close> carries
+  everything.\<close>
+
+lemma martingale_sub_initial:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) X"
+  shows "martingale M F 0 (\<lambda>u \<omega>. X u \<omega> - X 0 \<omega>)"
+proof -
+  interpret MG: martingale M F "0::real" X by (rule mg)
+  have c: "martingale M F 0 (\<lambda>_ \<omega>. - X 0 \<omega>)"
+  proof (rule MG.martingale_const_fun)
+    show "integrable M (\<lambda>\<omega>. - X 0 \<omega>)" using MG.integrable[of 0] by simp
+    show "(\<lambda>\<omega>. - X 0 \<omega>) \<in> borel_measurable (F 0)" using MG.adapted[of 0] by simp
+  qed
+  have "martingale M F 0 (\<lambda>u \<omega>. X u \<omega> + (- X 0 \<omega>))"
+    by (rule martingale_add[OF mg c])
+  then show ?thesis by simp
+qed
+
+lemma kglue_param_martingale:
+  fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Z :: "nat \<Rightarrow> real \<Rightarrow> ('n pairpath)
+        \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes rT: "r \<le> T"
+    and mg: "\<And>j. martingale (RR j) (natural_filtration (RR j) 0 (\<lambda>v \<omega>. \<omega> v)) 0 (Z j)"
+    and PR: "\<And>j. prob_space (RR j)"
+  shows "martingale (Pi\<^sub>M UNIV RR)
+      (\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega>. \<omega> v) (max (u - r) 0)))
+      0 (\<lambda>u f. Z i (max (u - r) 0) (f i))"
+proof -
+  let ?GR = "\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have FR: "filtered_measure (RR j) (?GR j) (0::real)" for j
+  proof -
+    interpret MJ: martingale "RR j" "?GR j" "0::real" "Z j" by (rule mg)
+    show ?thesis by unfold_locales
+  qed
+  have s0: "0 \<le> max (u - r) 0" for u :: real by simp
+  have smono: "max (u - r) 0 \<le> max (v - r) 0" if "0 \<le> u" "u \<le> v" for u v :: real
+    using that by simp
+  have "martingale (Pi\<^sub>M UNIV RR) (\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. ?GR j u)) 0
+      (\<lambda>u f. Z i u (f i))"
+    by (rule martingale_PiM_component[OF PR FR mg])
+  from martingale_time_change[OF this s0 smono] show ?thesis .
+qed
+
 end
