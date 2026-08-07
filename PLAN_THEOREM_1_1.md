@@ -579,12 +579,48 @@ Steps, in order:
 | step | content | status |
 |---|---|---|
 | (b0) | `AE_zero_of_set_integral_zero` — a `𝒢`-measurable function whose `𝒢`-set integrals all vanish is a.e. `0`. THE workhorse: it is what converts each linear condition from "for every `A`" to "at a.e. `ω`" | **DONE** |
-| (b1) | the kernel itself: push `P` forward along `ω ↦ (pcut r ω, pfut r T ω)` and disintegrate with AFP `Disintegration.measure_disintegration` (locale `projection_sigma_finite_standard`; the future path space is standard Borel by `Polish_space_path_metric`). **NOTE: `Disintegration` is NOT yet a session dependency** — an earlier version of this plan said it was, and that was wrong. It needs a `sessions` entry in `ROOT` (hence a PIDE restart, cf. §2.1's file-layout note) and the AFP entry built first (`isabelle build -d ~/afp/thys -b Disintegration`; it pulls in `S_Finite_Measure_Monad`). Do NOT add the `sessions` line before the build succeeds — an unbuilt session breaks everything | open |
+| (b1) | the kernel itself — **the AFP API is mapped, see below**. `Disintegration` is now built and registered in `ROOT` (it was NOT a dependency before 2026-08-07, despite an earlier claim in this plan) | open |
 | (b2) | clauses (i)/(ii) for `κ ω` a.s. — one application of (b0) each, to `ω ↦ κ ω C - 1` | open |
 | (b3) | clauses (iii)/(iv) for `κ ω` a.s. — (b0) for each `(s,t,A')` in a countable determining family, then ONE Dynkin step at fixed `ω` (`measure_eqI_generator_eq` on the positive and negative parts), then rational-to-real by path continuity | open |
 | (b4) | assembly of `cond`: under `κ ω` the starting point `X_r ω` is a CONSTANT, so `pshift_law (T-r) (X_r ω) (κ ω) ∈ 𝒞_{X_r ω}` and its essinf is `≤ paper_v` by definition — no localization, no `K_ε` | open |
 
 Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
+
+**The AFP `Disintegration` API, mapped 2026-08-07 — do not re-explore it.**
+
+- `locale projection_sigma_finite X Y ν` assumes only `sets ν = sets (X ⨂⇩M Y)`
+  and `sigma_finite_measure (marginal_measure X Y ν)`;
+  `projection_sigma_finite_standard = projection_sigma_finite + standard_borel_ne Y`.
+- `standard_borel M ⟺ ∃S. Polish_space S ∧ sets M = sets (borel_of S)` — so
+  for `Y = borel_of (mtopology_of (path_metric (T-r)))` it is **immediate**
+  from `Polish_space_path_metric` with `S` the topology itself; `space_ne`
+  needs only one path (the constant `0`, via `mspace_path_metricI`).
+- `measure_disintegration` yields `κ` with `prob_kernel X Y κ` and
+  `measure_kernel.disintegration X Y κ ν νx`, where
+  `νx = marginal_measure X Y ν` and `disintegration` constrains **RECTANGLES
+  ONLY**: `ν (A × B) = ∫⁺x∈A. κ x B ∂νx`. The all-sets version is a separate
+  predicate `mixture_of`, and the AFP proves only `mixture_of ⟹
+  disintegration`, not the converse.
+
+**Therefore the concrete shape of (b1):**
+
+1. `ν := distr P (?BR ⨂⇩M ?MR) (λω. (pcut r ω, pfut r T ω))`, with
+   `?BR = borel_of (mtopology_of (path_metric r))` as `X` and `?MR` (horizon
+   `T-r`) as `Y`. Then `sets ν = sets (X ⨂⇩M Y)` holds by construction and
+   `marginal_measure X Y ν = pair_law_of r (pcut r) P`, a probability
+   measure, hence σ-finite.
+2. Interpret `projection_sigma_finite_standard` and obtain `κ`.
+3. **Then convert to OUR `ksemi`**, rather than fighting the
+   rectangles-only form: two probability measures on `X ⨂⇩M Y` agreeing on
+   the rectangle π-system are equal (`measure_eqI_generator_eq`), so
+   `ν = ksemi νx ?MR κ`. From there `AE_ksemi` and `nn_integral_ksemi` —
+   both already proved in `Paper_Bridge` for the kernel-pasting work — give
+   the almost-sure and integral forms for free, and no measure-theoretic
+   induction from indicators to general integrands is needed.
+
+That reuse of `ksemi` is the point: it is why (b2)/(b3) reduce to
+`AE_zero_of_set_integral_zero` plus one Dynkin step, with no bespoke
+disintegration calculus.
 
 ### 2.2 The DPP at a STOPPING time
 
