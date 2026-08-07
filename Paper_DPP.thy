@@ -7345,4 +7345,133 @@ proof -
   show thesis by (rule that[OF RC all])
 qed
 
+subsection \<open>The chain of a simple stopping time\<close>
+
+text \<open>A simple stopping time is a list of (time, \<open>\<F>\<^sub>t\<close>-event) pairs read in
+  order: at the first \<open>t\<close> whose event fires, \<open>\<theta> = t\<close>.  \<open>dpp_chain\<close> is the
+  hypothesis \<open>c \<le> integrand\<^sub>\<theta>\<close> written out along that list, and it is exactly
+  the shape @{thm [source] paper_v_dpp_ge_step} consumes: its head is the
+  step's hypothesis and its tail is the step's \<open>\<Psi>\<close>.\<close>
+
+primrec dpp_chain :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> real
+    \<Rightarrow> (real \<times> ('n pairpath) set) list \<Rightarrow> 'n pairpath \<Rightarrow> bool"
+  where
+    "dpp_chain k L T K c [] \<omega> = (c \<le> pexit T K (\<lambda>s. fst (\<omega> s)))"
+  | "dpp_chain k L T K c (p # rs) \<omega> =
+      ((pcut (fst p) \<omega> \<in> snd p \<longrightarrow> c \<le> pexit (fst p) K (\<lambda>s. fst (\<omega> s))
+          + (if pexit (fst p) K (\<lambda>s. fst (\<omega> s)) = fst p \<and> fst (\<omega> (fst p)) \<in> K
+             then enn2real (paper_v k L (T - fst p) K (fst (\<omega> (fst p)))) else 0))
+       \<and> (pcut (fst p) \<omega> \<notin> snd p \<longrightarrow> dpp_chain k L T K c rs \<omega>))"
+
+text \<open>The integrand at a fixed time is a random variable on the \<open>t\<close>-path
+  space, and it only reads \<open>[0,t]\<close> --- the two facts the \<open>gm\<close>/\<open>gcut\<close> pair of
+  @{thm [source] paper_v_dpp_ge_step} needs, pulled out so the chain's
+  measurability induction can reuse them.\<close>
+
+lemma dpp_integrand_measurable:
+  fixes K :: "(real^'n::finite) set"
+  assumes t: "0 \<le> t" and tT: "t < T" and L1: "1 \<le> L" and K: "closed K"
+  shows "(\<lambda>\<omega> :: 'n pairpath. pexit t K (\<lambda>s. fst (\<omega> s))
+      + (if pexit t K (\<lambda>s. fst (\<omega> s)) = t \<and> fst (\<omega> t) \<in> K
+         then enn2real (paper_v k L (T - t) K (fst (\<omega> t))) else 0))
+    \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric t :: ('n pairpath) metric)))"
+proof -
+  let ?Bt = "borel_of (mtopology_of (path_metric t :: ('n pairpath) metric))"
+  have Tt: "0 < T - t" using tT by simp
+  have Kbor: "K \<in> sets borel" by (rule borel_closed[OF K])
+  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+    using measurable_fst[of "borel :: (real^'n) measure"
+        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit t K (\<lambda>s. fst (\<omega> s)))
+      \<in> borel_measurable ?Bt"
+    by (rule pexit_path_measurable[OF t K refl])
+  have endm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable ?Bt"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] mfst])
+  have vm: "(\<lambda>\<omega> :: 'n pairpath. enn2real (paper_v k L (T - t) K (fst (\<omega> t))))
+      \<in> borel_measurable ?Bt"
+    by (rule measurable_compose[OF endm paper_v_borel_measurable[OF Tt L1 K]])
+  have predm: "Measurable.pred ?Bt (\<lambda>\<omega> :: 'n pairpath.
+      pexit t K (\<lambda>s. fst (\<omega> s)) = t \<and> fst (\<omega> t) \<in> K)"
+    using taum endm Kbor by measurable
+  show ?thesis using taum vm predm by measurable
+qed
+
+lemma dpp_integrand_pcut:
+  fixes K :: "(real^'n::finite) set" and \<omega> :: "'n pairpath"
+  assumes t: "0 \<le> t"
+  shows "pexit t K (\<lambda>s. fst (pcut t \<omega> s))
+      + (if pexit t K (\<lambda>s. fst (pcut t \<omega> s)) = t \<and> fst (pcut t \<omega> t) \<in> K
+         then enn2real (paper_v k L (T - t) K (fst (pcut t \<omega> t))) else 0)
+    = pexit t K (\<lambda>s. fst (\<omega> s))
+      + (if pexit t K (\<lambda>s. fst (\<omega> s)) = t \<and> fst (\<omega> t) \<in> K
+         then enn2real (paper_v k L (T - t) K (fst (\<omega> t))) else 0)"
+  using t by (simp add: pexit_pcut pcut_apply)
+
+lemma dpp_chain_measurable:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 \<le> T" and L1: "1 \<le> L" and K: "closed K"
+    and rs: "\<And>t A. (t, A) \<in> set rs \<Longrightarrow> 0 \<le> t \<and> t < T
+        \<and> A \<in> sets (borel_of (mtopology_of
+            (path_metric t :: ('n pairpath) metric)))"
+  shows "{\<omega> \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))). dpp_chain k L T K c rs \<omega>}
+    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+  using rs
+proof (induction rs)
+  case Nil
+  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>s. fst (\<omega> s))) \<in> borel_measurable ?BT"
+    by (rule pexit_path_measurable[OF T0 K refl])
+  then have "{\<omega> \<in> space ?BT. c \<le> pexit T K (\<lambda>s. fst (\<omega> s))} \<in> sets ?BT"
+    by measurable
+  then show ?case by simp
+next
+  case (Cons p rs)
+  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?t = "fst p" and ?A = "snd p"
+  let ?Bt = "borel_of (mtopology_of (path_metric (fst p) :: ('n pairpath) metric))"
+  have mem: "(?t, ?A) \<in> set (p # rs)" by simp
+  have t0: "0 \<le> ?t" and tT: "?t < T" and As: "?A \<in> sets ?Bt"
+    using Cons.prems[OF mem] by auto
+  have pcm: "pcut ?t \<in> ?BT \<rightarrow>\<^sub>M ?Bt"
+    by (rule pcut_measurable[OF t0 less_imp_le[OF tT] refl])
+  have V: "pcut ?t -` ?A \<inter> space ?BT \<in> sets ?BT"
+    by (rule measurable_sets[OF pcm As])
+  have gm: "(\<lambda>q :: 'n pairpath. pexit ?t K (\<lambda>s. fst (q s))
+      + (if pexit ?t K (\<lambda>s. fst (q s)) = ?t \<and> fst (q ?t) \<in> K
+         then enn2real (paper_v k L (T - ?t) K (fst (q ?t))) else 0))
+      \<in> borel_measurable ?Bt"
+    by (rule dpp_integrand_measurable[OF t0 tT L1 K])
+  have inner: "{q \<in> space ?Bt. c \<le> pexit ?t K (\<lambda>s. fst (q s))
+      + (if pexit ?t K (\<lambda>s. fst (q s)) = ?t \<and> fst (q ?t) \<in> K
+         then enn2real (paper_v k L (T - ?t) K (fst (q ?t))) else 0)} \<in> sets ?Bt"
+    using gm by measurable
+  have Gs: "{\<omega> \<in> space ?BT. c \<le> pexit ?t K (\<lambda>s. fst (\<omega> s))
+      + (if pexit ?t K (\<lambda>s. fst (\<omega> s)) = ?t \<and> fst (\<omega> ?t) \<in> K
+         then enn2real (paper_v k L (T - ?t) K (fst (\<omega> ?t))) else 0)} \<in> sets ?BT"
+  proof -
+    have "{\<omega> \<in> space ?BT. c \<le> pexit ?t K (\<lambda>s. fst (\<omega> s))
+        + (if pexit ?t K (\<lambda>s. fst (\<omega> s)) = ?t \<and> fst (\<omega> ?t) \<in> K
+           then enn2real (paper_v k L (T - ?t) K (fst (\<omega> ?t))) else 0)}
+        = pcut ?t -` {q \<in> space ?Bt. c \<le> pexit ?t K (\<lambda>s. fst (q s))
+            + (if pexit ?t K (\<lambda>s. fst (q s)) = ?t \<and> fst (q ?t) \<in> K
+               then enn2real (paper_v k L (T - ?t) K (fst (q ?t))) else 0)}
+          \<inter> space ?BT"
+      using measurable_space[OF pcm]
+      by (auto simp: dpp_integrand_pcut[OF t0])
+    then show ?thesis using measurable_sets[OF pcm inner] by simp  qed
+  have IH: "{\<omega> \<in> space ?BT. dpp_chain k L T K c rs \<omega>} \<in> sets ?BT"
+    by (rule Cons.IH) (use Cons.prems in auto)
+  have "{\<omega> \<in> space ?BT. dpp_chain k L T K c (p # rs) \<omega>}
+      = ((space ?BT - (pcut ?t -` ?A \<inter> space ?BT))
+            \<union> {\<omega> \<in> space ?BT. c \<le> pexit ?t K (\<lambda>s. fst (\<omega> s))
+              + (if pexit ?t K (\<lambda>s. fst (\<omega> s)) = ?t \<and> fst (\<omega> ?t) \<in> K
+                 then enn2real (paper_v k L (T - ?t) K (fst (\<omega> ?t))) else 0)})
+        \<inter> ((pcut ?t -` ?A \<inter> space ?BT)
+            \<union> {\<omega> \<in> space ?BT. dpp_chain k L T K c rs \<omega>})"
+    by auto
+  then show ?case using V Gs IH by simp
+qed
+
 end
