@@ -609,12 +609,52 @@ of the cut law, while the per-`(i,j,A')` statement quantifies `A` over ALL of
 Restating that with a genuine sub-σ-algebra does NOT dodge it — the kernel
 would then have to be `𝒢`-measurable, which is the same question.
 
-It is true and standard: `⊆` because evaluations are continuous;
-`⊇` because the path space is second countable
-(`second_countable_path_metric`), so every open set is a countable union of
-balls, and `path_mdist_le_iff` makes `g ↦ mdist (path_metric U) f g` a
-supremum over RATIONAL times, hence measurable for the evaluations. Budget
-80–120 lines of topology plumbing.
+It is true and standard. **A full proof skeleton was written and tried on
+2026-08-07; it got to 176 of 182 commands, with five MECHANICAL failures and
+no mathematical gap. It was reverted rather than left broken.** Redo it from
+this skeleton, fixing the five noted points:
+
+    lemma sets_natural_filtration_path:
+      fixes U :: real
+      assumes U: "0 ≤ U"
+      shows "sets (natural_filtration
+            (borel_of (mtopology_of (path_metric U :: ('n::finite pairpath) metric)))
+            0 (λv ω. ω v) U)
+          = sets (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))"
+
+with `interpret MS: Metric_space "mspace ?m" "mdist ?m"` by
+`Metric_space_mspace_mdist`, `spB: space ?B = mspace ?m` by `space_borel_of`,
+and `evF` the coordinate measurability in the filtration
+(`measurable_family_vimage_algebra`). Then
+
+- `⊆`: the generators `(λω. ω i) -` A ∩ space ?B` are in `sets ?B` by
+  `measurable_sets[OF pair_law_eval_measurable[OF refl]]`, then
+  `unfolding sets_natural_filtration` and a σ-algebra subset step.
+- `⊇`: `dm` — `(λω. mdist ?m f ω) ∈ borel_measurable ?F` for `f ∈ mspace ?m`,
+  via `borel_measurable_iff_le` and
+  `{ω ∈ space ?F. mdist ?m f ω ≤ q} = (⋂t ∈ {0..U} ∩ ℚ. {ω ∈ space ?F. dist (f t) (ω t) ≤ q})`
+  (`path_mdist_le_iff`, `sets.countable_INT'`); then `ball` —
+  `MS.mball f e = {ω ∈ space ?F. mdist ?m f ω < e}`; then
+  `MS.mtopology_base_in_balls` + `base_is_subbase` +
+  `borel_of_second_countable'[OF second_countable_path_metric …]`.
+
+**The five things that failed, all fixable:**
+
+1. `sigma_sets_subset` is NOT a bare name — it is `sets.sigma_sets_subset`
+   (the `sigma_algebra` locale fact). Two occurrences.
+2. The set equality in `dm` needs `x ∈ mspace ?m` on the `⊇` side, which
+   only follows because the index set is NONEMPTY. Supply `0 ∈ {0..U} ∩ ℚ`
+   as a named fact and use it; `auto` will not find it.
+3. `ball`'s final step mixes `space ?B` and `space ?F`. Phrase the ball with
+   `space ?F` throughout and close with `dm` plus `borel_measurable_less`,
+   not `simp`.
+4. `sets (sigma Ω A) = sigma_sets Ω A` needs `A ⊆ Pow Ω` (`sets_measure_of`);
+   supply it for the ball family.
+5. `MS.mball_def` unfolding left a `still_running_possibly_nonterminating`
+   marker — use `MS.mball` characterisation lemmas rather than the raw
+   definition.
+
+Budget 80–120 lines; expect two or three iterations.
 
 So (b3) is really:
 
