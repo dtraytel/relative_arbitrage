@@ -37,8 +37,8 @@ time from `K`.
 |---|---|---|
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
-| (2) | `visc_sol k L (interior K) v` | **OPEN** — needs the DPP (Prop. 2.4) *and* §3's Itô/SDE layer; §2.1–§2.4 |
-| (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.5; transfer to `paper_v` §2.6 |
+| (2) | `visc_sol k L (interior K) v` | **OPEN** — needs the DPP (Prop. 2.4) *and* §3's Itô/SDE layer; §2.1–§2.3 |
+| (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.4; transfer to `paper_v` §2.5 |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
 
 **Three value functions exist**, and the theorem must end up about ONE.
@@ -47,28 +47,26 @@ time from `K`.
 (the class (1.7) as pair laws). Clauses (0), (1), (3)-ball and (4) are
 proved for `paper_v` itself. What still lives only on the market-side
 functions is the `n−k=1` realization inside clause (3)
-(`stopped_val_fn_ball_eq_2d`); transferring it is §2.6, and it is needed
-only if §2.5 turns out to want it.
+(`stopped_val_fn_ball_eq_2d`); transferring it is §2.5, and it is needed
+only if §2.4 turns out to want it.
 
 **Where the DPP stands.** Proposition 2.4's two ingredients are the
 MEASURABLE SELECTOR and the KERNEL PASTING that consumes it. The selector is
 **done** (`paper_v_measurable_selector`, §1.7) — that is LR Prop. 2.2(ii) in
 full, including the abstract selection theorem it needs, which is in neither
-the AFP nor the distribution. Kernel pasting is nearly done: the Giry
-semidirect product, the glued law and the two almost-sure clauses of (1.7)
-are proved (§1.8), and §2.1 records the change of route that replaced the
-blocked martingale argument — four of its five pieces are proved, and only
-the assembly is left.
+the AFP nor the distribution. Kernel pasting is **done** too
+(`paper_pair_class_kglue_law'`, §1.8) — all four clauses of (1.7), by a
+change of route that never proves the martingale clauses for the
+semidirect product at all. So the `≥` half of (2.9) is now pure assembly.
 
 **Remaining budget, roughly.**
 
 | item | § | lines | risk |
 |---|---|---|---|
-| clauses (iii),(iv) for the kernel glue | 2.1 | 400 | low — 4 of 5 pieces done; only the assembly is left |
-| assemble the `≥` half of (2.9) | 2.2 | 300–600 | medium |
-| the `≤` half (conditioning) | 2.3 | 800–1,500 | high — stopping times break the product structure |
-| §3, the two viscosity inequalities | 2.4 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
-| clause (3) for `n−k ≥ 2` | 2.5 | 1,500–3,000 | high |
+| assemble the `≥` half of (2.9) | 2.1 | 300–600 | medium — pure assembly now |
+| the `≤` half (conditioning) | 2.2 | 800–1,500 | high — stopping times break the product structure |
+| §3, the two viscosity inequalities | 2.3 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
+| clause (3) for `n−k ≥ 2` | 2.4 | 1,500–3,000 | high |
 
 ---
 
@@ -363,7 +361,7 @@ step. The BT09-style ε-cover of the STATE space fails for the mirror reason:
 it needs `y ↦ g(y,R)` LOWER semicontinuous, and exit times from a closed set
 are upper.
 
-### 1.8 Kernel pasting with a genuine kernel — the half that exists
+### 1.8 Kernel pasting with a genuine kernel — CLOSED
 
 `ksemi M N Kr = M ⤜ (λω. distr (Kr ω) (M ⨂⇩M N) (Pair ω))`, the Giry
 semidirect product: run `M`, then continue with the law the kernel picks.
@@ -379,6 +377,38 @@ semidirect product: run `M`, then continue with the law the kernel picks.
 | `AE_kglue_law'` | the almost-sure transfer; its only difference from `AE_kglue_law` is that the second-coordinate property may depend on the FIRST — it has to, since the kernel does |
 | `kglue_law'_start` | **clause (i)** of (1.7) |
 | `kglue_law'_diffquot` | **clause (ii)** — the first place the kernel's values are required to lie in the class at the origin |
+| `kglue_law'_start` … and then, by a CHANGE OF ROUTE, clauses (iii) and (iv) too: | |
+
+**`paper_pair_class_kglue_law'` — the class is closed under concatenation
+with a continuation chosen by an ARBITRARY measurable kernel.** The two
+martingale clauses were never proved for the semidirect product, because
+they never had to be. The martingale route has two real obstructions —
+`integral_bind` in the distribution is only for BOUNDED REAL integrands,
+and the FIRST-factor martingale property is FALSE for a semidirect product
+(the weight `(Kr ω)(A_ω)` in the disintegrated set integral is only
+`ℱ_r`-measurable). **Neither has to be faced.**
+
+Instead: the class is weakly closed, the glue with a COUNTABLY valued
+index is already in it (§1.6(c)), and the class at the origin is a COMPACT
+metric space — hence separable, so any kernel into it is a pointwise limit
+of countably valued ones. Round the kernel; each rounded glue is a
+legitimate pasting and IS the kernel glue at the rounded kernel; the
+semidirect products converge weakly; the glue is continuous; weak
+closedness finishes.
+
+| result | content |
+|---|---|
+| `second_countable_path_metric`, `borel_of_path_prod` | separable + metrizable ⟹ second countable, hence `borel_of X ⨂⇩M borel_of Y = borel_of (prod_topology X Y)` |
+| `mdist_pglue_le`, `Lipschitz_pglue` | the glue is 3-Lipschitz from the product metric — the second piece counts twice because it is re-based at its own initial value |
+| `integral_ksemi_bounded`, `integral_ksemi_measurable` | the disintegration for BOUNDED REAL integrands — exactly what `integral_bind` covers, and exactly what weak-convergence test functions are |
+| `ksemi_weak_conv` | pointwise weak convergence of the KERNELS gives weak convergence of the semidirect products, by dominated convergence over the first coordinate |
+| `Metric_space.countably_valued_approx`, `limitin_of_dist_half` | a measurable map into a compact metric space is a uniform limit of countably valued measurable ones; rounding is measurable because `{y. d a y < c}` is an OPEN BALL |
+| `kglue_law_eq_kglue_law'` | with a countably valued index the product-of-all-candidates and the semidirect product give the SAME law; both reduce to `∫⁺ω. (RR (N ω)) {ω'. pglue r T ω ω' ∈ A} ∂Q` |
+| `paper_pair_class_kglue_law'` | **the headline** |
+
+**Do not restart the martingale route.** Both obstructions are real — in
+particular `martingale_pair_fst` has no `ksemi` analogue, and that is a
+theorem, not a proof-technique inconvenience.
 
 ### 1.9 Supporting layers
 
@@ -395,75 +425,12 @@ Brownian layer (`Brownian_Motion`, `Brownian_Market`, `Brownian_Continuous`,
 
 ## 2. What is LEFT
 
-In dependency order. §2.5 and §2.6 are independent of §2.1–§2.4 and can be
+In dependency order. §2.4 and §2.5 are independent of §2.1–§2.3 and can be
 interleaved.
 
-### 2.1 Clauses (iii) and (iv) for the kernel glue
+### 2.1 The `≥` half of (2.9)
 
-**ROUTE CHANGED 2026-08-07, and it is the important entry in this file.**
-The martingale route runs into two obstructions — `integral_bind` in the
-distribution is only for BOUNDED REAL integrands, and the FIRST-factor
-martingale property is FALSE for a semidirect product (the weight
-`(Kr ω)(A_ω)` in the disintegrated set integral is only `ℱ_r`-measurable).
-**Neither has to be faced.**
-
-The class is WEAKLY CLOSED (`paper_pair_class_weak_closed`), the glue with
-a COUNTABLY valued index is already in it (`paper_pair_class_kglue_law`,
-§1.6(c)), and the class at the origin is a COMPACT metric space
-(`paper_pair_class_compact_metric_space`) — hence separable, so any kernel
-into it is a pointwise limit of countably valued ones. If the semidirect
-products converge weakly then so do the glued laws, and weak closedness
-finishes. The approximants are legitimate pastings; the limit is the
-kernel pasting.
-
-**Done (2026-08-07).** Four of the five pieces:
-
-| result | content |
-|---|---|
-| `second_countable_path_metric`, `borel_of_path_prod` | separable + metrizable ⟹ second countable, hence `borel_of X ⨂⇩M borel_of Y = borel_of (prod_topology X Y)` |
-| `mdist_pglue_le`, `Lipschitz_pglue` | the glue is 3-Lipschitz from the product metric — the second piece counts twice because it is re-based at its own initial value — hence continuous, hence pushes weak convergence forward |
-| `integral_ksemi_bounded`, `integral_ksemi_measurable` | the disintegration for BOUNDED REAL integrands (exactly what `integral_bind` covers, and exactly what weak-convergence test functions are), and measurability of the inner integral |
-| `ksemi_weak_conv` | pointwise weak convergence of the KERNELS gives weak convergence of the semidirect products — dominated convergence over the first coordinate |
-| `Metric_space.countably_valued_approx`, `limitin_of_dist_half` | a measurable map into a compact metric space is a uniform limit of countably valued measurable ones; rounding is measurable because `{y. d a y < c}` is an OPEN BALL |
-
-**Left: the assembly (W5).** One measure identity and one limit.
-
-*W5a* — identify the two constructions:
-
-      kglue_law r T N Q RR = kglue_law' r T (λω. RR (N ω)) Q
-
-  Both sides have the same `sets`; compare `emeasure` on a Borel `A`. On
-  the left, Fubini plus `distr_PiM_component` turns
-  `(Q ⨂⇩M Pi⇩M UNIV RR){p. kglue r T N p ∈ A}` into
-  `∫ω (RR (N ω)){ω'. pglue r T ω ω' ∈ A} dQ`; on the right,
-  `emeasure_bind` plus `emeasure_distr` gives the same. Budget ≈200 lines;
-  the fiddly part is the measurability bookkeeping for the sections.
-
-*W5b* — assemble:
-
-      paper_pair_class_kglue_law':
-        0 ≤ r ≤ T, Q ∈ paper_pair_class k L r x,
-        Kr measurable into the class at the origin (for ℱ_r),
-        Kr ω ∈ paper_pair_class k L (T−r) 0
-          ⟹ kglue_law' r T Kr Q ∈ paper_pair_class k L T x
-
-  `countably_valued_approx` on the compact `𝒞₀` gives `z` and `Nm` with
-  `z (Nm m ω) → Kr ω`; each `kglue_law r T (Nm m) Q z` is in the class by
-  `paper_pair_class_kglue_law` (note `Nm m` must be measurable for the
-  NATURAL FILTRATION at `r` — it is, because the kernel factors through
-  `ω ↦ fst (ω r)`); `ksemi_weak_conv` plus `Lipschitz_pglue` and
-  `weak_conv_on_pushforward` give `kglue_law r T (Nm m) Q z ⇒
-  kglue_law' r T Kr Q`; and `paper_pair_class_weak_closed` closes it.
-  Budget ≈200 lines.
-
-**Do not restart the martingale route.** Both obstructions are real — in
-particular `martingale_pair_fst` has no `ksemi` analogue, and that is a
-theorem, not a proof-technique inconvenience.
-
-
-### 2.2 The `≥` half of (2.9)
-
-With §2.1 done and the selector of §1.7 in hand, the `≥` inequality of the
+With kernel pasting done (§1.8) and the selector of §1.7 in hand, the `≥` inequality of the
 DPP at a DETERMINISTIC time is assembly:
 
 - take `P ∈ 𝒫ₓ`, restrict it to `[0,r]` with `paper_pair_class_pcut`;
@@ -486,7 +453,7 @@ actually needs the stopping-time form or only deterministic times plus
 `τ_{B_ε}` (§3.2 uses the exit time of a small ball, which is not
 deterministic — so probably yes, it is needed).
 
-### 2.3 The `≤` half of (2.9)
+### 2.2 The `≤` half of (2.9)
 
 Conditioning: regular conditional distributions on the Polish path space via
 AFP `Disintegration` (`measure_disintegration`, already a session
@@ -496,7 +463,7 @@ This is the half §3.1 consumes (the DPP AT THE OPTIMIZER —
 `v(x) ≤ t∧θ + v(X(t∧θ))` a.s. for the fixed optimizer `P`), so it cannot be
 skipped; see the table in §2.4.
 
-### 2.4 §3 — the two viscosity inequalities → clause (2)
+### 2.3 §3 — the two viscosity inequalities → clause (2)
 
 **Which half of the DPP feeds which inequality** (read out of §3.1 and §3.2
 of the paper on 2026-08-06; do not redo this):
@@ -511,7 +478,7 @@ Itô's formula for class members, an exponential local martingale plus
 optional sampling ((3.18)–(3.19)), and weak solutions of the SDEs (3.11) and
 (3.24). **Budget §3 separately from the DPP.**
 
-### 2.5 Clause (3) for general `n − k ≥ 2`
+### 2.4 Clause (3) for general `n − k ≥ 2`
 
 `n − k = 1` is done (§1.4). The general case needs spherical Brownian
 motion — embed the deterministic-radius construction in an `(n−k+1)`-
@@ -519,7 +486,7 @@ dimensional coordinate subspace. Planned on the discrete route:
 `Random_Walk_Market.thy`, `Relative_Arbitrage_Discrete.thy`,
 `Path_Tightness.projective_limit_of_consistent_path_laws`.
 
-### 2.6 `stopped_val_fn ≤ paper_v` (only if §2.5 needs it)
+### 2.5 `stopped_val_fn ≤ paper_v` (only if §2.4 needs it)
 
 The bridge from market witnesses to class members. NOTE the recorded
 obstruction — a `stopped_market` witness is NOT a class member, because the
@@ -530,7 +497,7 @@ clause (3)/(2) actually need the market-side results transported.
 
 ### Fallback
 
-If §2.1–§2.4 and §2.5 both stall, the bounded alternative is the rest of
+If §2.1–§2.3 and §2.4 both stall, the bounded alternative is the rest of
 Section 4 (Theorem 4.2(b), 4.3, Prop 4.1 — 3,000–7,000 lines, reusing the
 Crandall–Ishii investment).
 
