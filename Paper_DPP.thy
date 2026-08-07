@@ -7474,4 +7474,149 @@ next
   then show ?case using V Gs IH by simp
 qed
 
+text \<open>The events of a stopping time are pairwise exclusive along the list:
+  once one fires, none of the later ones does.  That is what stops a glue at
+  \<open>t\<^sub>j\<close> from undoing an earlier glue.\<close>
+
+primrec dpp_disj :: "(real \<times> ('n::finite pairpath) set) list \<Rightarrow> 'n pairpath \<Rightarrow> bool"
+  where
+    "dpp_disj [] \<omega> = True"
+  | "dpp_disj (p # rs) \<omega> =
+      ((pcut (fst p) \<omega> \<in> snd p \<longrightarrow> (\<forall>q \<in> set rs. pcut (fst q) \<omega> \<notin> snd q))
+       \<and> dpp_disj rs \<omega>)"
+
+text \<open>And the induction: iterate @{thm [source] paper_v_dpp_ge_step} down the
+  list, carrying \<open>D\<close> --- the paths already glued and already good.  The
+  invariant is \<open>D \<omega> \<or> dpp_chain rs \<omega>\<close>, and the two side conditions on \<open>D\<close>
+  are what make it go through: \<open>D\<close> implies the bound, and \<open>D\<close> implies that
+  none of the REMAINING events fires, so no later glue touches those paths.\<close>
+
+theorem paper_v_dpp_ge_const_list:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and rs :: "(real \<times> ('n pairpath) set) list"
+  assumes L1: "1 \<le> L" and K: "closed K" and T0: "0 \<le> T"
+  shows "\<And>P D. (\<And>t A. (t, A) \<in> set rs \<Longrightarrow> 0 \<le> t \<and> t < T
+          \<and> A \<in> sets (borel_of (mtopology_of
+              (path_metric t :: ('n pairpath) metric))))
+      \<Longrightarrow> P \<in> paper_pair_class k L T x
+      \<Longrightarrow> (\<And>\<omega>. D \<omega> \<Longrightarrow> c \<le> pexit T K (\<lambda>s. fst (\<omega> s)))
+      \<Longrightarrow> (\<And>\<omega> t A. D \<omega> \<Longrightarrow> (t, A) \<in> set rs \<Longrightarrow> pcut t \<omega> \<notin> A)
+      \<Longrightarrow> {\<omega> \<in> space (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric))). D \<omega>}
+          \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      \<Longrightarrow> (\<And>\<omega>. dpp_disj rs \<omega>)
+      \<Longrightarrow> (AE \<omega> in P. D \<omega> \<or> dpp_chain k L T K c rs \<omega>)
+      \<Longrightarrow> ennreal c \<le> paper_v k L T K x"
+proof (induction rs)
+  case (Nil P D)
+  have all: "AE \<omega> in P. c \<le> pexit T K (\<lambda>s. fst (\<omega> s))"
+  proof (rule eventually_mono[OF Nil.prems(7)])
+    fix \<omega> :: "'n pairpath"
+    assume "D \<omega> \<or> dpp_chain k L T K c [] \<omega>"
+    then show "c \<le> pexit T K (\<lambda>s. fst (\<omega> s))"
+      using Nil.prems(3) by auto
+  qed
+  have "ennreal c \<le> ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>s. fst (\<omega> s)))"
+    unfolding ess_inf_time_ge_iff using all
+    by (auto elim: eventually_mono intro: ennreal_leI)
+  also have "\<dots> \<le> paper_v k L T K x"
+    unfolding paper_v_def by (rule SUP_upper[OF Nil.prems(2)])
+  finally show ?case .
+next
+  case (Cons p rs P D)
+  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?t = "fst p" and ?A = "snd p"
+  have mem: "(?t, ?A) \<in> set (p # rs)" by simp
+  have t0: "0 \<le> ?t" and tT: "?t < T"
+    and As: "?A \<in> sets (borel_of (mtopology_of
+        (path_metric (fst p) :: ('n pairpath) metric)))"
+    using Cons.prems(1)[OF mem] by auto
+  define \<Psi> where "\<Psi> \<omega> = (D \<omega> \<or> dpp_chain k L T K c rs \<omega>)" for \<omega> :: "'n pairpath"
+  have rsv: "0 \<le> t \<and> t < T
+      \<and> A \<in> sets (borel_of (mtopology_of
+          (path_metric t :: ('n pairpath) metric)))"
+    if "(t, A) \<in> set rs" for t A
+  proof -
+    have "(t, A) \<in> set (p # rs)" using that by simp
+    then show ?thesis by (rule Cons.prems(1))
+  qed  have chm: "{\<omega> \<in> space ?BT. dpp_chain k L T K c rs \<omega>} \<in> sets ?BT"
+    by (rule dpp_chain_measurable[OF T0 L1 K rsv])
+  have Psm: "{\<omega> \<in> space ?BT. \<Psi> \<omega>} \<in> sets ?BT"
+  proof -
+    have "{\<omega> \<in> space ?BT. \<Psi> \<omega>}
+        = {\<omega> \<in> space ?BT. D \<omega>} \<union> {\<omega> \<in> space ?BT. dpp_chain k L T K c rs \<omega>}"
+      unfolding \<Psi>_def by blast
+    then show ?thesis using Cons.prems(5) chm by simp
+  qed
+  have hyp: "AE \<omega> in P.
+      (pcut ?t \<omega> \<in> ?A \<longrightarrow> c \<le> pexit ?t K (\<lambda>s. fst (\<omega> s))
+          + (if pexit ?t K (\<lambda>s. fst (\<omega> s)) = ?t \<and> fst (\<omega> ?t) \<in> K
+             then enn2real (paper_v k L (T - ?t) K (fst (\<omega> ?t))) else 0))
+      \<and> (pcut ?t \<omega> \<notin> ?A \<longrightarrow> \<Psi> \<omega>)"
+  proof (rule eventually_mono[OF Cons.prems(7)])
+    fix \<omega> :: "'n pairpath"
+    assume h: "D \<omega> \<or> dpp_chain k L T K c (p # rs) \<omega>"
+    show "(pcut ?t \<omega> \<in> ?A \<longrightarrow> c \<le> pexit ?t K (\<lambda>s. fst (\<omega> s))
+          + (if pexit ?t K (\<lambda>s. fst (\<omega> s)) = ?t \<and> fst (\<omega> ?t) \<in> K
+             then enn2real (paper_v k L (T - ?t) K (fst (\<omega> ?t))) else 0))
+        \<and> (pcut ?t \<omega> \<notin> ?A \<longrightarrow> \<Psi> \<omega>)"
+    proof (cases "D \<omega>")
+      case True
+      then have "pcut ?t \<omega> \<notin> ?A" using mem by (rule Cons.prems(4))
+      then show ?thesis unfolding \<Psi>_def using True by simp
+    next
+      case False
+      then have "dpp_chain k L T K c (p # rs) \<omega>" using h by simp
+      then show ?thesis unfolding \<Psi>_def by simp
+    qed
+  qed
+  obtain R where RC: "R \<in> paper_pair_class k L T x"
+    and Rae: "AE \<omega> in R.
+        (pcut ?t \<omega> \<in> ?A \<and> c \<le> pexit T K (\<lambda>s. fst (\<omega> s))) \<or> \<Psi> \<omega>"
+    by (rule paper_v_dpp_ge_step[OF t0 tT L1 K Cons.prems(2) As Psm hyp])
+  define D' where "D' \<omega> =
+      ((pcut ?t \<omega> \<in> ?A \<and> c \<le> pexit T K (\<lambda>s. fst (\<omega> s))) \<or> D \<omega>)"
+    for \<omega> :: "'n pairpath"
+  have D'0: "c \<le> pexit T K (\<lambda>s. fst (\<omega> s))" if "D' \<omega>" for \<omega> :: "'n pairpath"
+    using that Cons.prems(3) unfolding D'_def by auto
+  have D'1: "pcut t \<omega> \<notin> A" if dw: "D' \<omega>" and mm: "(t, A) \<in> set rs" for \<omega> t A
+  proof (cases "D \<omega>")
+    case True
+    have "(t, A) \<in> set (p # rs)" using mm by simp
+    then show ?thesis using True by (rule Cons.prems(4)[rotated])
+  next
+    case False
+    then have "pcut ?t \<omega> \<in> ?A" using dw unfolding D'_def by simp
+    then have "\<forall>q \<in> set rs. pcut (fst q) \<omega> \<notin> snd q"
+      using Cons.prems(6)[of \<omega>] by simp
+    then show ?thesis using mm by auto
+  qed
+  have D'm: "{\<omega> \<in> space ?BT. D' \<omega>} \<in> sets ?BT"
+  proof -
+    have pcm: "pcut ?t \<in> ?BT \<rightarrow>\<^sub>M borel_of (mtopology_of
+        (path_metric (fst p) :: ('n pairpath) metric))"
+      by (rule pcut_measurable[OF t0 less_imp_le[OF tT] refl])
+    have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>s. fst (\<omega> s)))
+        \<in> borel_measurable ?BT"
+      by (rule pexit_path_measurable[OF T0 K refl])
+    have "{\<omega> \<in> space ?BT. D' \<omega>}
+        = ((pcut ?t -` ?A \<inter> space ?BT)
+              \<inter> {\<omega> \<in> space ?BT. c \<le> pexit T K (\<lambda>s. fst (\<omega> s))})
+          \<union> {\<omega> \<in> space ?BT. D \<omega>}"
+      unfolding D'_def by blast
+    moreover have "pcut ?t -` ?A \<inter> space ?BT \<in> sets ?BT"
+      by (rule measurable_sets[OF pcm As])
+    moreover have "{\<omega> \<in> space ?BT. c \<le> pexit T K (\<lambda>s. fst (\<omega> s))} \<in> sets ?BT"
+      using tauT by measurable
+    ultimately show ?thesis using Cons.prems(5) by simp
+  qed
+  have Rae': "AE \<omega> in R. D' \<omega> \<or> dpp_chain k L T K c rs \<omega>"
+    using Rae unfolding D'_def \<Psi>_def by (auto elim: eventually_mono)
+  have dj: "dpp_disj rs \<omega>" for \<omega> :: "'n pairpath"
+    using Cons.prems(6)[of \<omega>] by simp
+  show ?case
+    by (rule Cons.IH[of R D'])
+       (use rsv RC D'0 D'1 D'm dj Rae' in blast)+
+qed
+
 end
