@@ -6379,6 +6379,66 @@ text \<open>**The one-step engine of the stopping-time construction.**  Glue \<o
   @{thm [source] sets_natural_filtration_path} --- the (b3) lemma paying for
   itself a second time.\<close>
 
+text \<open>Gluing does not touch the past: the \<open>r\<close>-cut of a glued path is the
+  \<open>r\<close>-cut of its first factor, and if that factor already lives in the
+  \<open>r\<close>-path space it IS the factor.  This is what makes an \<open>\<F>\<^sub>r\<close>-event survive a
+  glue at \<open>r\<close> --- the bookkeeping the stopping-time induction runs on.\<close>
+
+lemma pcut_pglue:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+  shows "pcut r (pglue r T \<omega> \<omega>') = pcut r \<omega>"
+proof (rule ext)
+  fix t :: real
+  show "pcut r (pglue r T \<omega> \<omega>') t = pcut r \<omega> t"
+  proof (cases "t \<in> {0..r}")
+    case True
+    then have tT: "t \<in> {0..T}" using rT by auto
+    have "pglue r T \<omega> \<omega>' t = \<omega> t" using True by (intro pglue_le[OF tT]) simp
+    then show ?thesis using True by (simp add: pcut_def)
+  next
+    case False
+    have "pcut r (pglue r T \<omega> \<omega>') t = undefined"
+      unfolding pcut_def restrict_def by (rule if_not_P[OF False])
+    moreover have "pcut r \<omega> t = undefined"
+      unfolding pcut_def restrict_def by (rule if_not_P[OF False])
+    ultimately show ?thesis by simp
+  qed
+qed
+
+lemma pcut_pglue_self:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+  shows "pcut r (pglue r T \<omega> \<omega>') = \<omega>"
+proof -
+  have "pcut r (pglue r T \<omega> \<omega>') = pcut r \<omega>" by (rule pcut_pglue[OF r rT])
+  also have "\<dots> = \<omega>" unfolding pcut_def by (rule mspace_path_restrict_self[OF w])
+  finally show ?thesis .
+qed
+
+text \<open>The almost-sure transfer through a glue, with the underlying measure
+  \<open>Q\<close> left FREE --- so that unfolding @{thm [source] pair_law_of_def} cannot
+  also unfold a \<open>pair_law_of\<close> hiding inside \<open>Q\<close> itself.\<close>
+
+lemma AE_kglue_law':
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and ne: "space Q \<noteq> {}"
+    and mset: "{\<omega> \<in> space (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))). \<Phi> \<omega>}
+        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+  shows "(AE \<omega> in kglue_law' r T Kr Q. \<Phi> \<omega>)
+      = (AE p in ksemi Q (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric))) Kr.
+          \<Phi> (pglue r T (fst p) (snd p)))"
+  unfolding kglue_law'_def pair_law_of_def
+  by (rule AE_distr_iff[OF kglue_law'_measurable[OF r rT setsQ Kp ne] mset])
+
 theorem paper_pair_class_kglue_mixed:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L"
