@@ -4350,4 +4350,85 @@ proof -
   show thesis by (rule that[OF cE EInt Epow Etop Egen])
 qed
 
+subsection \<open>The martingale property at a fixed law\<close>
+
+text \<open>Everything (b3) needs at a FIXED \<open>p'\<close>, packaged: adaptedness,
+  integrability, continuity in time and the set-integral identity against the
+  terminal value AT RATIONAL TIMES ONLY give the martingale property.  The
+  two upgrades are @{thm [source] set_integral_eq_of_rational_times}
+  (rational to real) and, inside its \<open>rat\<close> hypothesis at the call site,
+  @{thm [source] set_integral_zero_of_generator} (\<pi>-system to \<open>\<F>\<^sub>q\<close>).
+
+  The process is required to be CONSTANT past \<open>S\<close> --- which the capped
+  \<open>\<lambda>u w. w (min u S)\<close> is --- because the filtration is indexed by all of
+  \<open>[0,\<infinity>)\<close> while the path space only knows about \<open>[0,S]\<close>.\<close>
+
+lemma martingale_of_rational_set_integral_eq:
+  fixes Q :: "('n::finite pairpath) measure"
+    and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real"
+  assumes S: "0 \<le> S"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric S :: ('n pairpath) metric)))"
+    and PS: "prob_space Q"
+    and Zm: "\<And>u. 0 \<le> u \<Longrightarrow>
+        Z u \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
+    and Zint: "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q (Z u)"
+    and Zcont: "\<And>w. w \<in> space Q \<Longrightarrow> continuous_on {0..S} (\<lambda>u. Z u w)"
+    and Zcap: "\<And>u. S \<le> u \<Longrightarrow> Z u = Z S"
+    and rat: "\<And>q A. q \<in> \<rat> \<Longrightarrow> q \<in> {0..S} \<Longrightarrow>
+        A \<in> sets (natural_filtration Q 0 (\<lambda>v w. w v) q) \<Longrightarrow>
+        set_lebesgue_integral Q A (Z q) = set_lebesgue_integral Q A (Z S)"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>v w. w v)) 0 Z"
+proof -
+  let ?F = "\<lambda>u. natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
+  have fm: "filtered_measure Q ?F 0"
+  proof (intro filtered_measure.intro)
+    show "subalgebra Q (?F u)" if "(0::real) \<le> u" for u
+      by (rule subalgebra_natural_filtration_path[OF setsQ])
+    show "sets (?F u) \<subseteq> sets (?F v)" if "(0::real) \<le> u" "u \<le> v" for u v
+      by (rule sets_natural_filtration_mono[OF that(2)])
+  qed
+  interpret SFF: sigma_finite_filtered_measure Q ?F 0
+    by (intro sigma_finite_filtered_measure.intro
+        sigma_finite_filtered_measure_axioms.intro fm
+        sigma_finite_subalgebra_natural_filtration_path[OF PS setsQ])
+
+  \<comment> \<open>the identity against the terminal value, at EVERY time\<close>
+  have term_eq: "set_lebesgue_integral Q A (Z u) = set_lebesgue_integral Q A (Z S)"
+    if u: "0 \<le> u" and A: "A \<in> sets (?F u)" for u A
+  proof (cases "u \<le> S")
+    case True
+    show ?thesis
+      by (rule set_integral_eq_of_rational_times
+          [OF S setsQ PS _ _ Zcont rat _ A]) (use u True Zm Zint in auto)
+  next
+    case False
+    have "S \<le> u" using False by simp
+    then have "Z u = Z S" by (rule Zcap)
+    then show ?thesis by (rule arg_cong)
+  qed
+
+  show ?thesis
+  proof (rule SFF.martingale_of_set_integral_eq)
+    show "adapted_process Q ?F 0 Z"
+    proof (intro adapted_process.intro adapted_process_axioms.intro)
+      show "filtered_measure Q ?F 0" by (rule fm)
+      show "Z u \<in> borel_measurable (?F u)" if "(0::real) \<le> u" for u
+        by (rule Zm[OF that])
+    qed
+    show "integrable Q (Z u)" if "(0::real) \<le> u" for u by (rule Zint[OF that])
+    fix A and u v :: real
+    assume u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> ?F u"
+    have AF: "A \<in> sets (?F u)" using A by simp
+    have AFv: "A \<in> sets (?F v)"
+      using AF sets_natural_filtration_mono[OF uv] by blast
+    have "set_lebesgue_integral Q A (Z u) = set_lebesgue_integral Q A (Z S)"
+      by (rule term_eq[OF u AF])
+    also have "\<dots> = set_lebesgue_integral Q A (Z v)"
+      by (rule term_eq[OF _ AFv, symmetric]) (use u uv in simp)
+    finally show "set_lebesgue_integral Q A (Z u)
+        = set_lebesgue_integral Q A (Z v)" .
+  qed
+qed
+
 end
