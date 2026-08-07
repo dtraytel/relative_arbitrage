@@ -2437,4 +2437,51 @@ proof -
   show ?thesis by (rule that[OF Km eq])
 qed
 
+subsection \<open>Step (b2): the almost-sure clauses pass to the kernel\<close>
+
+text \<open>Clauses (i) and (ii) of (1.7) both say "\<open>\<mu> C = 1\<close> for a fixed
+  measurable \<open>C\<close>", and that is LINEAR in \<open>\<mu>\<close>.  So each transfers to the
+  kernel by a single nonnegative-integral argument: the complement has
+  integral \<open>0\<close>, hence vanishes almost everywhere.\<close>
+
+lemma AE_kernel_full:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+    and C: "C \<in> sets N"
+    and null: "emeasure (ksemi M N Kr) (space M \<times> (space N - C)) = 0"
+  shows "AE \<omega> in M. emeasure (Kr \<omega>) C = 1"
+proof -
+  have C': "space N - C \<in> sets N" using C by (rule sets.compl_sets)
+  have spM: "space M \<in> sets M" by simp
+  have mE: "(\<lambda>\<omega>. emeasure (Kr \<omega>) (space N - C)) \<in> borel_measurable M"
+    by (rule measurable_compose[OF measurable_prob_algebraD[OF K]
+          measurable_emeasure_subprob_algebra[OF C']])
+  have "(\<integral>\<^sup>+\<omega>. emeasure (Kr \<omega>) (space N - C) \<partial>M)
+      = (\<integral>\<^sup>+\<omega>\<in>space M. emeasure (Kr \<omega>) (space N - C) \<partial>M)"
+    by (intro nn_integral_cong) simp
+  also have "\<dots> = emeasure (ksemi M N Kr) (space M \<times> (space N - C))"
+    by (rule emeasure_ksemi_rect[OF K ne spM C', symmetric])
+  also have "\<dots> = 0" by (rule null)
+  finally have "(\<integral>\<^sup>+\<omega>. emeasure (Kr \<omega>) (space N - C) \<partial>M) = 0" .
+  then have ae: "AE \<omega> in M. emeasure (Kr \<omega>) (space N - C) = 0"
+    using mE by (simp add: nn_integral_0_iff_AE)
+  have "AE \<omega> in M. \<omega> \<in> space M" by (rule AE_I2) simp
+  with ae show ?thesis
+  proof eventually_elim
+    fix \<omega> assume z: "emeasure (Kr \<omega>) (space N - C) = 0" and w: "\<omega> \<in> space M"
+    interpret PK: prob_space "Kr \<omega>" by (rule ksemi_sets_kernel(2)[OF K w])
+    have sK: "sets (Kr \<omega>) = sets N" by (rule ksemi_sets_kernel(1)[OF K w])
+    have spK: "space (Kr \<omega>) = space N" by (rule sets_eq_imp_space_eq[OF sK])
+    have CK: "C \<in> sets (Kr \<omega>)" using C sK by simp
+    have C'K: "space N - C \<in> sets (Kr \<omega>)" using C' sK by simp
+    have "emeasure (Kr \<omega>) (C \<union> (space N - C))
+        = emeasure (Kr \<omega>) C + emeasure (Kr \<omega>) (space N - C)"
+      by (rule plus_emeasure[OF CK C'K, symmetric]) auto
+    moreover have "C \<union> (space N - C) = space (Kr \<omega>)"
+      using sets.sets_into_space[OF C] by (auto simp: spK)
+    ultimately have "emeasure (Kr \<omega>) C = 1"
+      using z PK.emeasure_space_1 by simp
+    then show "emeasure (Kr \<omega>) C = 1" .
+  qed
+qed
+
 end
