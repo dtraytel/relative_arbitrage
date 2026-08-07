@@ -1579,4 +1579,68 @@ proof -
   qed
 qed
 
+text \<open>The two ingredients @{thm [source] martingale_mult_measurable} needs on
+  the way to clause (iv): a product is integrable as soon as both squares
+  are, and the cross term of @{thm [source] outerp_diff_compensated} is a
+  matrix martingale, entry by entry.\<close>
+
+lemma integrable_mult_of_sq:
+  fixes f g :: "'a \<Rightarrow> real"
+  assumes fm: "f \<in> borel_measurable M" and gm: "g \<in> borel_measurable M"
+    and f2: "integrable M (\<lambda>\<omega>. (f \<omega>)\<^sup>2)" and g2: "integrable M (\<lambda>\<omega>. (g \<omega>)\<^sup>2)"
+  shows "integrable M (\<lambda>\<omega>. f \<omega> * g \<omega>)"
+proof -
+  have b: "integrable M (\<lambda>\<omega>. ((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)" using f2 g2 by simp
+  have pm: "(\<lambda>\<omega>. f \<omega> * g \<omega>) \<in> borel_measurable M" using fm gm by simp
+  have ae: "AE \<omega> in M. norm (f \<omega> * g \<omega>) \<le> norm (((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)"
+  proof (rule AE_I2)
+    fix \<omega>
+    have "(0::real) \<le> (\<bar>f \<omega>\<bar> - \<bar>g \<omega>\<bar>)\<^sup>2" by simp
+    also have "(\<bar>f \<omega>\<bar> - \<bar>g \<omega>\<bar>)\<^sup>2 = (f \<omega>)\<^sup>2 - 2 * (\<bar>f \<omega>\<bar> * \<bar>g \<omega>\<bar>) + (g \<omega>)\<^sup>2"
+      by (simp add: power2_diff)
+    finally have le: "2 * (\<bar>f \<omega>\<bar> * \<bar>g \<omega>\<bar>) \<le> (f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2" by simp
+    have nn: "(0::real) \<le> ((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2" by simp
+    show "norm (f \<omega> * g \<omega>) \<le> norm (((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)"
+      using le nn by (simp add: abs_mult)
+  qed
+  show ?thesis by (rule Bochner_Integration.integrable_bound[OF b pm ae])
+qed
+
+lemma martingale_cross_measurable:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and v :: "'a \<Rightarrow> real^'n"
+  assumes mg: "\<And>i. martingale M F (0::real) (\<lambda>t \<omega>. X t \<omega> $ i)"
+    and vm: "\<And>j. (\<lambda>\<omega>. v \<omega> $ j) \<in> borel_measurable (F 0)"
+    and int: "\<And>u i j. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. v \<omega> $ j * X u \<omega> $ i)"
+  shows "martingale M F 0
+      (\<lambda>t \<omega>. (\<chi> i j. X t \<omega> $ i * v \<omega> $ j) + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j))"
+proof (rule martingale_matI)
+  fix p q :: 'n
+  have mgp: "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ p)" by (rule mg)
+  have mgq: "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ q)" by (rule mg)
+  have vmp: "(\<lambda>\<omega>. v \<omega> $ p) \<in> borel_measurable (F 0)" by (rule vm)
+  have vmq: "(\<lambda>\<omega>. v \<omega> $ q) \<in> borel_measurable (F 0)" by (rule vm)
+  have intqp: "integrable M (\<lambda>\<omega>. v \<omega> $ q * X u \<omega> $ p)" if "0 \<le> u" for u
+    by (rule int[OF that])
+  have intpq: "integrable M (\<lambda>\<omega>. v \<omega> $ p * X u \<omega> $ q)" if "0 \<le> u" for u
+    by (rule int[OF that])
+  have m1: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p)"
+    by (rule martingale_mult_measurable[OF mgp vmq intqp])
+  have m2: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ p * X t \<omega> $ q)"
+    by (rule martingale_mult_measurable[OF mgq vmp intpq])
+  have m: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q)"
+    by (rule martingale_add[OF m1 m2])
+  have eq: "(\<lambda>t \<omega>. ((\<chi> i j. X t \<omega> $ i * v \<omega> $ j)
+        + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j)) $ p $ q)
+      = (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q)"
+  proof (intro ext)
+    fix t :: real and \<omega>
+    show "((\<chi> i j. X t \<omega> $ i * v \<omega> $ j) + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j)) $ p $ q
+        = v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q"
+      by (simp add: mult.commute)
+  qed
+  show "martingale M F 0 (\<lambda>t \<omega>.
+      ((\<chi> i j. X t \<omega> $ i * v \<omega> $ j) + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j)) $ p $ q)"
+    unfolding eq by (rule m)
+qed
+
 end
