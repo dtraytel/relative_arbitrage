@@ -3154,4 +3154,59 @@ proof -
   then show ?thesis unfolding eq .
 qed
 
+text \<open>The \<open>fi\<close> hypothesis: the outer integral of the kernel integral is
+  dominated by the \<open>ksemi\<close> integral of \<open>|h|\<close>, because the section integral is
+  bounded in norm by the section's own nonnegative integral --- almost
+  everywhere, which is where @{thm [source] AE_integrable_ksemi_section}
+  earns its keep.\<close>
+
+lemma integrable_kernel_integral:
+  fixes h :: "'b \<Rightarrow> real"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+    and hm: "h \<in> borel_measurable N"
+    and A': "A' \<in> sets N"
+    and hi: "integrable (ksemi M N Kr) (\<lambda>p. h (snd p))"
+  shows "integrable M (\<lambda>\<omega>. \<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>))"
+proof -
+  have hm2: "(\<lambda>p :: 'a \<times> 'b. h (snd p)) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    using hm by measurable
+  have hm': "(\<lambda>\<omega>'. indicator A' \<omega>' * h \<omega>') \<in> borel_measurable N"
+    using hm A' by measurable
+  have fmeas: "(\<lambda>\<omega>. \<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+    by (rule measurable_integral_kernel[OF K hm'])
+  have aei: "AE \<omega> in M. integrable (Kr \<omega>) h"
+    using AE_integrable_ksemi_section[OF K hm2 hi ne] by simp
+  have "AE \<omega> in M. \<omega> \<in> space M" by (rule AE_I2) simp
+  with aei have bnd: "AE \<omega> in M.
+      ennreal (norm (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)))
+        \<le> (\<integral>\<^sup>+\<omega>'. ennreal (norm (h \<omega>')) \<partial>(Kr \<omega>))"
+  proof eventually_elim
+    fix \<omega> assume i: "integrable (Kr \<omega>) h" and w: "\<omega> \<in> space M"
+    have sK: "sets (Kr \<omega>) = sets N" by (rule ksemi_sets_kernel(1)[OF K w])
+    have AK: "A' \<in> sets (Kr \<omega>)" using A' sK by simp
+    have i2: "integrable (Kr \<omega>) (\<lambda>\<omega>'. indicator A' \<omega>' * h \<omega>')"
+      using integrable_mult_indicator[OF AK i] by simp
+    have "ennreal (norm (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)))
+        \<le> (\<integral>\<^sup>+\<omega>'. ennreal (norm (indicator A' \<omega>' * h \<omega>')) \<partial>(Kr \<omega>))"
+      by (rule integral_norm_bound_ennreal[OF i2])
+    also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>'. ennreal (norm (h \<omega>')) \<partial>(Kr \<omega>))"
+      by (intro nn_integral_mono ennreal_leI) (simp add: indicator_def abs_mult)
+    finally show "ennreal (norm (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)))
+        \<le> (\<integral>\<^sup>+\<omega>'. ennreal (norm (h \<omega>')) \<partial>(Kr \<omega>))" .
+  qed
+  have "(\<integral>\<^sup>+\<omega>. ennreal (norm (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>))) \<partial>M)
+      \<le> (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (h \<omega>')) \<partial>(Kr \<omega>)) \<partial>M)"
+    by (rule nn_integral_mono_AE[OF bnd])
+  also have "\<dots> = (\<integral>\<^sup>+p. ennreal (norm (h (snd p))) \<partial>(ksemi M N Kr))"
+  proof -
+    have gmm: "(\<lambda>p :: 'a \<times> 'b. ennreal (norm (h (snd p))))
+        \<in> borel_measurable (M \<Otimes>\<^sub>M N)" using hm2 by measurable
+    show "(\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (h \<omega>')) \<partial>(Kr \<omega>)) \<partial>M)
+        = (\<integral>\<^sup>+p. ennreal (norm (h (snd p))) \<partial>(ksemi M N Kr))"
+      using nn_integral_ksemi[OF K gmm] by simp
+  qed
+  also have "\<dots> < \<top>" using hi by (simp add: integrable_iff_bounded)
+  finally show ?thesis using fmeas by (simp add: integrable_iff_bounded)
+qed
+
 end
