@@ -6205,4 +6205,54 @@ proof -
   show ?thesis unfolding top using r2 by (simp add: borel_of_subtopology)
 qed
 
+text \<open>The "do nothing" branch of the mixed kernel: gluing a law onto its own
+  regular conditional distribution GIVES THE LAW BACK.  This is the law-level
+  counterpart of @{thm [source] pglue_pcut_pfut}, and it is what lets a
+  single fixed-time gluing change the law only on a chosen \<open>\<F>\<^sub>r\<close>-event and
+  leave it alone elsewhere.\<close>
+
+theorem kglue_law'_rcd_eq:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+  shows "kglue_law' r T \<kappa> (pair_law_of r (pcut r) P) = P"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?Y = "borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  let ?g = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). pglue r T (fst p) (snd p)"
+  have spP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsP])
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  have gm: "?g \<in> ?X \<Otimes>\<^sub>M ?Y \<rightarrow>\<^sub>M ?B"
+    by (rule pglue_measurable[OF r rT refl refl])
+  have "kglue_law' r T \<kappa> ?Q = distr (ksemi ?Q ?Y \<kappa>) ?B ?g"
+    unfolding kglue_law'_def pair_law_of_def ..
+  also have "\<dots> = distr (distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>) ?B ?g" unfolding eq ..
+  also have "\<dots> = distr P ?B (?g \<circ> ?\<phi>)" by (rule distr_distr[OF gm mphi])
+  also have "\<dots> = distr P ?B (\<lambda>\<omega>. \<omega>)"
+  proof (rule distr_cong[OF refl refl])
+    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"
+    then have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using spP by simp
+    show "(?g \<circ> ?\<phi>) \<omega> = \<omega>" by (simp add: pglue_pcut_pfut[OF r rT mw])
+  qed
+  also have "\<dots> = P" by (rule distr_id2[OF setsP[symmetric]])
+  finally show ?thesis .
+qed
+
 end
