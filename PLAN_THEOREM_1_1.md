@@ -565,17 +565,26 @@ be loaded — develop-and-verify in `Paper_Bridge`'s tail and move, or restart.
    fast a class member can leave `K⇩ε` but not `K`, e.g. off the
    ball estimates of §1.5).
 
-**Consequence for route choice.** With item 3 open, route (b) is no longer
-clearly the more expensive one. And route (b) got cheaper too: the
-conditions defining the class are all LINEAR in the measure — `μ C = 1` for
-the start and covariation clauses, `∫ (X_t - X_s) 1_A dμ = 0` for the
-martingale clauses — so passing from "`μ_A ∈ 𝒞₀` for every `A ∈ ℱ_r`" to
-"`κ ω ∈ 𝒞₀` a.s." needs **no separation theorem**, only a COUNTABLE
-determining family (rational times, rational-corner cylinder sets) plus one
-Dynkin step at fixed `ω`. Given `paper_pair_class_future_of_past` is
-already proved for every positive-measure `A ∈ ℱ_r`, route (b) is now:
-AFP `Disintegration` for the kernel, then that countable-family argument.
-Budget 400–800 lines, and it has no open sub-statement.
+**ROUTE (b) IS THE CHOSEN PATH (user decision, 2026-08-07).** With item 3
+open, route (a) is blocked on a statement nobody has proved. Route (b) got
+cheaper at the same time: the conditions defining the class are all LINEAR
+in the measure — `μ C = 1` for the start and covariation clauses,
+`∫ (X_t - X_s) 1_A dμ = 0` for the martingale clauses — so passing from
+"`μ_A ∈ 𝒞₀` for every `A ∈ ℱ_r`" to "`κ ω ∈ 𝒞₀` a.s." needs **no separation
+theorem**, only a COUNTABLE determining family (rational times,
+rational-corner cylinder sets) plus one Dynkin step at fixed `ω`.
+
+Steps, in order:
+
+| step | content | status |
+|---|---|---|
+| (b0) | `AE_zero_of_set_integral_zero` — a `𝒢`-measurable function whose `𝒢`-set integrals all vanish is a.e. `0`. THE workhorse: it is what converts each linear condition from "for every `A`" to "at a.e. `ω`" | **DONE** |
+| (b1) | the kernel itself: push `P` forward along `ω ↦ (pcut r ω, pfut r T ω)` and disintegrate with AFP `Disintegration.measure_disintegration` (locale `projection_sigma_finite_standard`; the future path space is standard Borel by `Polish_space_path_metric`) | open |
+| (b2) | clauses (i)/(ii) for `κ ω` a.s. — one application of (b0) each, to `ω ↦ κ ω C - 1` | open |
+| (b3) | clauses (iii)/(iv) for `κ ω` a.s. — (b0) for each `(s,t,A')` in a countable determining family, then ONE Dynkin step at fixed `ω` (`measure_eqI_generator_eq` on the positive and negative parts), then rational-to-real by path continuity | open |
+| (b4) | assembly of `cond`: under `κ ω` the starting point `X_r ω` is a CONSTANT, so `pshift_law (T-r) (X_r ω) (κ ω) ∈ 𝒞_{X_r ω}` and its essinf is `≤ paper_v` by definition — no localization, no `K_ε` | open |
+
+Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
 
 ### 2.2 The DPP at a STOPPING time
 
