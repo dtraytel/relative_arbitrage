@@ -1643,4 +1643,56 @@ proof (rule martingale_matI)
     unfolding eq by (rule m)
 qed
 
+text \<open>Differences of martingales.  @{thm [source] martingale_add} is in the
+  development but its subtractive companion is in neither the development nor
+  the AFP, and the decomposition of
+  @{thm [source] outerp_diff_compensated} needs it.\<close>
+
+lemma martingale_diff:
+  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes mX: "martingale M F (0::real) X" and mY: "martingale M F 0 Y"
+  shows "martingale M F 0 (\<lambda>u \<omega>. X u \<omega> - Y u \<omega>)"
+proof -
+  interpret MX: martingale M F "0::real" X by (rule mX)
+  interpret MY: martingale M F "0::real" Y by (rule mY)
+  have FM: "filtered_measure M F (0::real)" by unfold_locales
+  show ?thesis
+  proof (rule MX.martingale_of_set_integral_eq)
+    have dm: "(\<lambda>\<omega>. X u \<omega> - Y u \<omega>) \<in> borel_measurable (F u)" if u: "0 \<le> u" for u
+      using MX.adapted[OF u] MY.adapted[OF u] by simp
+    show "adapted_process M F 0 (\<lambda>u \<omega>. X u \<omega> - Y u \<omega>)"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using FM dm by blast
+    show "integrable M (\<lambda>\<omega>. X i \<omega> - Y i \<omega>)" if "0 \<le> i" for i
+      using MX.integrable[OF that] MY.integrable[OF that] by simp
+    fix C and i j :: real
+    assume ij: "0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
+    have j0: "0 \<le> j" using ij by simp
+    have CM: "C \<in> sets M" using C MX.sets_F_subset[OF ij(1)] by blast
+    have split: "set_lebesgue_integral M C (\<lambda>\<omega>. X u \<omega> - Y u \<omega>)
+        = set_lebesgue_integral M C (X u) - set_lebesgue_integral M C (Y u)"
+      if u: "0 \<le> u" for u
+    proof -
+      have iX: "integrable M (\<lambda>\<omega>. indicator C \<omega> *\<^sub>R X u \<omega>)"
+        by (rule integrable_mult_indicator[OF CM MX.integrable[OF u]])
+      have iY: "integrable M (\<lambda>\<omega>. indicator C \<omega> *\<^sub>R Y u \<omega>)"
+        by (rule integrable_mult_indicator[OF CM MY.integrable[OF u]])
+      have "(\<integral>\<omega>. indicator C \<omega> *\<^sub>R (X u \<omega> - Y u \<omega>) \<partial>M)
+          = (\<integral>\<omega>. indicator C \<omega> *\<^sub>R X u \<omega> - indicator C \<omega> *\<^sub>R Y u \<omega> \<partial>M)"
+        by (simp add: scaleR_diff_right)
+      also have "\<dots> = (\<integral>\<omega>. indicator C \<omega> *\<^sub>R X u \<omega> \<partial>M)
+          - (\<integral>\<omega>. indicator C \<omega> *\<^sub>R Y u \<omega> \<partial>M)"
+        by (rule Bochner_Integration.integral_diff[OF iX iY])
+      finally show ?thesis unfolding set_lebesgue_integral_def .
+    qed
+    have sX: "set_lebesgue_integral M C (X i) = set_lebesgue_integral M C (X j)"
+      by (rule MX.set_integral_eq[OF C ij(1) ij(2)])
+    have sY: "set_lebesgue_integral M C (Y i) = set_lebesgue_integral M C (Y j)"
+      by (rule MY.set_integral_eq[OF C ij(1) ij(2)])
+    show "set_lebesgue_integral M C (\<lambda>\<omega>. X i \<omega> - Y i \<omega>)
+        = set_lebesgue_integral M C (\<lambda>\<omega>. X j \<omega> - Y j \<omega>)"
+      using split[OF ij(1)] split[OF j0] sX sY by simp
+  qed
+qed
+
 end
