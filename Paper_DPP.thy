@@ -2697,4 +2697,129 @@ proof -
   then show ?thesis by (rule PM.AE_prob_1)
 qed
 
+text \<open>Clause (ii) for the conditional law.  Only RATIONAL pairs can be
+  handled --- an almost-sure statement survives only countably many
+  conditions --- which is exactly what
+  @{thm [source] paper_pair_class_diffquot_of_rational_pairs} was made for.\<close>
+
+lemma pfut_rcd_diffquot:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+    and K: "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+    and cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  shows "AE p' in pair_law_of r (pcut r) P.
+      AE w in \<kappa> p'. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> sconstraint k L"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?S = "T - r"
+  let ?Y = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  have Tr: "0 \<le> ?S" using rT by simp
+  interpret PP: prob_space P by (rule PS)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have spQ: "space ?Q = space ?X" by (rule sets_eq_imp_space_eq[OF setsQ])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using K measurable_cong_sets[OF setsQ refl] by blast
+  define C where "C p q = {w :: 'n pairpath \<in> space ?Y.
+      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L}"
+    for p q :: real
+  have CY: "C p q \<in> sets ?Y" if "p \<in> {0..?S}" "q \<in> {0..?S}" for p q
+    unfolding C_def
+    using borel_of_closed[OF closedin_diffquot_constraint[OF that]]
+    by (simp add: space_borel_of)
+  have aeC: "AE \<omega> in P. pfut r T \<omega> \<in> C p q"
+    if pq: "p \<in> {0..?S}" "q \<in> {0..?S}" "p < q" for p q
+  proof -
+    have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+    with cov show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      have rp: "0 \<le> r + p" using r pq by simp
+      have rpq: "r + p < r + q" using pq by simp
+      have rqT: "r + q \<le> T" using pq by simp
+      have "(1 / ((r + q) - (r + p))) *\<^sub>R (snd (\<omega> (r + q)) - snd (\<omega> (r + p)))
+          \<in> sconstraint k L" using elim rp rpq rqT by blast
+      moreover have "snd (pfut r T \<omega> q) - snd (pfut r T \<omega> p)
+          = snd (\<omega> (r + q)) - snd (\<omega> (r + p))"
+        using pq by (simp add: pfut_apply)
+      ultimately have inC: "(1 / (q - p))
+          *\<^sub>R (snd (pfut r T \<omega> q) - snd (pfut r T \<omega> p)) \<in> sconstraint k L"
+        by simp
+      have spw: "pfut r T \<omega> \<in> space ?Y"
+        using measurable_space[OF mfut] elim by simp
+      show ?case unfolding C_def using inC spw by simp
+    qed
+  qed
+  have one: "AE p' in ?Q. emeasure (\<kappa> p') (C p q) = 1"
+    if pq: "p \<in> {0..?S}" "q \<in> {0..?S}" "p < q" for p q
+  proof -
+    have null: "emeasure (ksemi ?Q ?Y \<kappa>)
+        (space ?X \<times> (space ?Y - C p q)) = 0"
+      by (rule ksemi_rect_null_of_AE
+          [OF r rT setsP PS eq CY[OF pq(1) pq(2)] aeC[OF pq]])
+    have "emeasure (ksemi ?Q ?Y \<kappa>) (space ?Q \<times> (space ?Y - C p q)) = 0"
+      using null spQ by simp
+    then show ?thesis by (rule AE_kernel_full[OF KQ neQ CY[OF pq(1) pq(2)]])
+  qed
+  have rat: "AE p' in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      p \<in> {0..?S} \<longrightarrow> q \<in> {0..?S} \<longrightarrow> p < q \<longrightarrow> emeasure (\<kappa> p') (C p q) = 1"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE p' in ?Q. \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..?S} \<longrightarrow> q \<in> {0..?S} \<longrightarrow> p < q \<longrightarrow> emeasure (\<kappa> p') (C p q) = 1"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE p' in ?Q. p \<in> {0..?S} \<longrightarrow> q \<in> {0..?S} \<longrightarrow> p < q
+          \<longrightarrow> emeasure (\<kappa> p') (C p q) = 1"
+      proof (cases "p \<in> {0..?S} \<and> q \<in> {0..?S} \<and> p < q")
+        case True
+        then show ?thesis using one[of p q] by auto
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  have "AE p' in ?Q. p' \<in> space ?Q" by (rule AE_space)
+  with rat show ?thesis
+  proof eventually_elim
+    case (elim p')
+    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> p \<in> {0..?S} \<Longrightarrow> q \<in> {0..?S}
+        \<Longrightarrow> p < q \<Longrightarrow> emeasure (\<kappa> p') (C p q) = 1"
+      and W: "p' \<in> space ?Q" by blast+
+    have PK: "prob_space (\<kappa> p')" by (rule ksemi_sets_kernel(2)[OF KQ W])
+    have sK: "sets (\<kappa> p') = sets ?Y" by (rule ksemi_sets_kernel(1)[OF KQ W])
+    show ?case
+    proof (rule paper_pair_class_diffquot_of_rational_pairs[OF sK])
+      fix p q :: real
+      assume pq: "p \<in> \<rat>" "q \<in> \<rat>" "p \<in> {0..?S}" "q \<in> {0..?S}" "p < q"
+      have "AE w in \<kappa> p'. w \<in> C p q"
+        by (rule AE_mem_of_emeasure_1[OF PK R[OF pq]])
+      then show "AE w in \<kappa> p'.
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+        unfolding C_def by (auto elim: eventually_mono)
+    qed
+  qed
+qed
+
 end
