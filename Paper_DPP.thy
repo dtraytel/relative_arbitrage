@@ -3886,7 +3886,9 @@ text \<open>The structural step (b3) still needs, and the one an earlier plan no
   @{thm [source] finite_measure.vitali_convergence} finishes.  Both were
   written for exactly this pattern (the domination-free optional-stopping
   rework) and are reused unchanged; this is why \<open>Paper_DPP\<close> imports
-  \<^theory>\<open>Arbitrage.Conditional_UI\<close>.
+  \<open>Conditional_UI\<close>.  (Do NOT write that as a \<^verbatim>\<open>\<^theory>\<close>
+  antiquotation: a session-qualified one hard-codes the session name and makes
+  the file unbuildable from any other session.)
 
   Note the terminal time \<open>S\<close> is a FIXED real, so the pairs \<open>(q, S)\<close> with \<open>q\<close>
   rational are still countably many --- which is what puts the averaging form
