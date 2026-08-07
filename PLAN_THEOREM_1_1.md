@@ -508,7 +508,7 @@ hard step for another:
 | route | remaining obligation |
 |---|---|
 | **(a) positive-measure conditioning** (`paper_pair_class_future_of_past` — elementary, no AFP `Disintegration`) | usc of `paper_v` in the TARGET SET: `paper_v k L U K⇩ε y → paper_v k L U K y` as `ε ↓ 0`. Provable by the existing compactness/usc machinery generalized to a decreasing sequence `K_n ↓ K` — the witness step is: `ω⇩n → ω` and `ω s ∉ K` give `dist (ω s) K = d > 0`, so `ω⇩n s ∉ K_ε⇩n` once `ε⇩n < d/2`. |
-| **(b) regular conditional distributions** (AFP `Disintegration.measure_disintegration`, locale `projection_sigma_finite_standard`; the path spaces are standard Borel by `Path_Space.path_metric_polish`) | the CONDITIONAL martingale property at a.e. `ω`: a countable determining family of test functions plus a monotone-class step to get "a.s., for all `A ∈ ℱ⁰_s`" out of "for each `A`, a.s.". |
+| **(b) regular conditional distributions** (AFP `Disintegration.measure_disintegration`, locale `projection_sigma_finite_standard`; the path spaces are standard Borel by `Path_Space.path_metric_polish`; the entry is NOT yet a session dependency — see (b1)) | the CONDITIONAL martingale property at a.e. `ω`: a countable determining family of test functions plus a monotone-class step to get "a.s., for all `A ∈ ℱ⁰_s`" out of "for each `A`, a.s.". |
 
 Route (a) is preferred: every step is elementary and the K-usc lemma is a
 variant of machinery that already exists (`ess_inf_pexit_usc`,
@@ -579,7 +579,7 @@ Steps, in order:
 | step | content | status |
 |---|---|---|
 | (b0) | `AE_zero_of_set_integral_zero` — a `𝒢`-measurable function whose `𝒢`-set integrals all vanish is a.e. `0`. THE workhorse: it is what converts each linear condition from "for every `A`" to "at a.e. `ω`" | **DONE** |
-| (b1) | the kernel itself: push `P` forward along `ω ↦ (pcut r ω, pfut r T ω)` and disintegrate with AFP `Disintegration.measure_disintegration` (locale `projection_sigma_finite_standard`; the future path space is standard Borel by `Polish_space_path_metric`) | open |
+| (b1) | the kernel itself: push `P` forward along `ω ↦ (pcut r ω, pfut r T ω)` and disintegrate with AFP `Disintegration.measure_disintegration` (locale `projection_sigma_finite_standard`; the future path space is standard Borel by `Polish_space_path_metric`). **NOTE: `Disintegration` is NOT yet a session dependency** — an earlier version of this plan said it was, and that was wrong. It needs a `sessions` entry in `ROOT` (hence a PIDE restart, cf. §2.1's file-layout note) and the AFP entry built first (`isabelle build -d ~/afp/thys -b Disintegration`; it pulls in `S_Finite_Measure_Monad`). Do NOT add the `sessions` line before the build succeeds — an unbuilt session breaks everything | open |
 | (b2) | clauses (i)/(ii) for `κ ω` a.s. — one application of (b0) each, to `ω ↦ κ ω C - 1` | open |
 | (b3) | clauses (iii)/(iv) for `κ ω` a.s. — (b0) for each `(s,t,A')` in a countable determining family, then ONE Dynkin step at fixed `ω` (`measure_eqI_generator_eq` on the positive and negative parts), then rational-to-real by path continuity | open |
 | (b4) | assembly of `cond`: under `κ ω` the starting point `X_r ω` is a CONSTANT, so `pshift_law (T-r) (X_r ω) (κ ω) ∈ 𝒞_{X_r ω}` and its essinf is `≤ paper_v` by definition — no localization, no `K_ε` | open |
