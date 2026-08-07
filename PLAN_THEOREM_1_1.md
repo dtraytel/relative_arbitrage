@@ -581,23 +581,52 @@ Steps, in order:
 | (b0) | `AE_zero_of_set_integral_zero` — a `𝒢`-measurable function whose `𝒢`-set integrals all vanish is a.e. `0`. THE workhorse: it is what converts each linear condition from "for every `A`" to "at a.e. `ω`" | **DONE** |
 | (b1) | the kernel itself: `paper_pair_class_rcd` (the AFP disintegration) and `paper_pair_class_rcd_ksemi` (its conversion to our `ksemi`, via `emeasure_ksemi_rect` and agreement on the rectangle π-system) | **DONE** |
 | (b2) | clauses (i)/(ii) for `κ ω` a.s. | general lemma `AE_kernel_full` **DONE**; clause (i) `pfut_rcd_start` **DONE**; clause (ii) is now pure assembly of `ksemi_rect_null_of_AE` → `AE_kernel_full` → `AE_mem_of_emeasure_1` → `AE_ball_countable'` over rational pairs → `paper_pair_class_diffquot_of_rational_pairs`, all four of which are proved |
-| (b3) | clauses (iii)/(iv) for `κ ω` a.s. | open — **and it has a prerequisite that (b2) did not**, see below |
+| (b3) | clauses (iii)/(iv) for `κ ω` a.s. | **in progress**, see the breakdown below |
 | (b4) | assembly of `cond`: under `κ ω` the starting point `X_r ω` is a CONSTANT, so `pshift_law (T-r) (X_r ω) (κ ω) ∈ 𝒞_{X_r ω}` and its essinf is `≤ paper_v` by definition — no localization, no `K_ε` | open |
 
 Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
 
-**(b3) needs an UNBOUNDED disintegration of Bochner integrals, which does
-not exist yet.** Clauses (i)/(ii) only ever needed `emeasure`, so
-`nn_integral_ksemi` (unconditional) sufficed. The martingale clauses need
-`∫_{A'} X_i dκ p'`, and `X` is NOT bounded on the path space, while
-`integral_ksemi_bounded` — the only Bochner-level disintegration in the
-development — assumes a uniform bound `B`. This is the same wall the kernel
-pasting hit (`integral_bind` in the distribution is bounded-real only), and
-this time it cannot be side-stepped by weak closedness.
+**(b3), broken down — status 2026-08-07 evening.** All of these live in
+`Paper_DPP.thy`; everything marked DONE is green with no `sorry`.
 
-**(b3) has ANOTHER prerequisite, found 2026-08-07 while chaining the pieces:
-the coordinate evaluations must GENERATE the Borel σ-algebra of the path
-space**, i.e.
+| piece | content | status |
+|---|---|---|
+| unbounded Bochner disintegration | `AE_integrable_ksemi_section` (now BANACH-valued, not just real — its proof went through `norm` all along) and `integral_ksemi_real`, built from `nn_integral_ksemi` on the positive and negative parts. `integral_ksemi_bounded`, the only pre-existing Bochner-level disintegration, assumes a uniform bound and `X` has none | **DONE** |
+| the rectangle form | `integral_ksemi_rect_real`, `AE_kernel_integral_zero` (vanishing rectangle integrals ⟹ a.e. vanishing kernel integral), `integrable_ksemi_of_distr_rect`, `integrable_kernel_integral`, `integral_ksemi_rect_of_set_integral` | **DONE** |
+| the evaluations generate the Borel sets | `sets_natural_filtration_path` — see below, it was the prerequisite (b2) did not have | **DONE** |
+| the conditioning rectangle is a past-plus-`i` event | `pcut_vimage_natural_filtration`, `pfut_vimage_natural_filtration`, `rect_vimage_natural_filtration`, plus `sets_natural_filtration_mono` and `natural_filtration_cong_space` | **DONE** |
+| **the per-`(i,j,A')` statement** | `pfut_rcd_X_increment_zero`: for `0 ≤ i ≤ j ≤ T−r` and `A' ∈ ℱ⁰_i` of the future path space, `AE p'. ∫ 1_{A'} (X_j − X_i)$c dκ p' = 0`. This is the whole chain, from `AE_kernel_integral_zero` down to `martingale.set_integral_eq` under `P` | **DONE** |
+| a.s. integrability | `pfut_rcd_X_integrable`: `AE p'. integrable (κ p') (λw. fst (w u))` | **DONE** |
+| clause (iv)'s analogue | the same lemma with `mg` instantiated at the SHIFTED compensated process (`paper_pair_class_shifted_comp_martingale`) instead of the shifted coordinate, and a matrix index `(c,d)` instead of `c`. `outerp` being quadratic is already dealt with there, so this is a transcription, not a new argument | open |
+| the countable determining family | a countable π-system generating `natural_filtration ?Y 0 (λv w. w v) i`: cylinders at times in `(ℚ ∩ [0,i]) ∪ {i}` with rational-corner boxes. Rationals suffice because paths are continuous | open |
+| the Dynkin step | at fixed `p'`, from the π-system to all of `ℱ⁰_i`, by `measure_eqI_generator_eq` on the positive and negative parts of `1_{A'}(X_j−X_i)` | open |
+| **rational-to-real in `i, j`** | see the warning below — this is NOT free | open |
+| assembly | `martingale_of_set_integral_eq` at fixed `p'`, then `martingale_vecI` (and a matrix analogue) to put the components back together | open |
+
+**The rational-to-real step needs DOMINATION, and the plan previously said
+"by path continuity" as if it were free. It is not.** Only countably many
+conditions survive the passage from "for each, almost surely" to "almost
+surely, for all", so the `(i,j)` pairs have to be rational; going back to
+real `i` means passing `∫_A X_{i_n} → ∫_A X_i` along `i_n ↓ i`, and pointwise
+convergence of continuous paths does not give that on its own.
+
+The fix is available and cheap, and it should be taken through `P` rather
+than through `κ p'`: put
+
+    G ω = (SUP u ∈ ({0..T−r} ∩ ℚ) ∪ {T−r}. norm (fst (ω u)))
+
+(the sup over a countable set, hence measurable, and equal to the sup over
+`[0,T−r]` by continuity). If `integrable P (λω. G (pfut r T ω))` then
+`nn_integral_ksemi` gives `AE p'. integrable (κ p') G` for free — exactly the
+route `pfut_rcd_X_integrable` already takes — and at each such `p'` dominated
+convergence closes rational-to-real in one step. What `integrable P (λω. G …)`
+costs is a Doob `L²` bound for a class member: the covariation clause bounds
+`E‖X_t‖²` (`sconstraint k L` is bounded, so `⟨X⟩_t ≤ C t`), and
+`Doob_Inequality.thy` is already in the session. Budget that sub-step
+separately; it is the only genuinely new mathematics left in (b3).
+
+**The prerequisite (b2) did not have, now proved.** The coordinate
+evaluations GENERATE the Borel σ-algebra of the path space:
 
     sets (natural_filtration (borel_of (mtopology_of (path_metric U)))
               0 (λv ω. ω v) U)
@@ -609,71 +638,51 @@ of the cut law, while the per-`(i,j,A')` statement quantifies `A` over ALL of
 Restating that with a genuine sub-σ-algebra does NOT dodge it — the kernel
 would then have to be `𝒢`-measurable, which is the same question.
 
-It is true and standard. **A full proof skeleton was written and tried on
-2026-08-07; it got to 176 of 182 commands, with five MECHANICAL failures and
-no mathematical gap. It was reverted rather than left broken.** Redo it from
-this skeleton, fixing the five noted points:
+It is now five lemmas — `path_eval_measurable_natural_filtration`,
+`sets_natural_filtration_path_subset` (stated at a FREE filtration index, so
+it also serves `i < T−r`), `mdist_measurable_natural_filtration`,
+`mball_in_natural_filtration`, `sets_natural_filtration_path` — and the whole
+group checks in under a second. `⊆` is the measurability of the coordinates;
+`⊇` is metric: the sup distance to a fixed path is decided by the RATIONAL
+times (`path_mdist_le_iff`), so it is a countable intersection of filtration
+events, hence measurable; every ball is a sublevel set of it; and the balls
+generate, the path space being second countable
+(`borel_of_second_countable'` + `MS.mtopology_base_in_balls`).
 
-    lemma sets_natural_filtration_path:
-      fixes U :: real
-      assumes U: "0 ≤ U"
-      shows "sets (natural_filtration
-            (borel_of (mtopology_of (path_metric U :: ('n::finite pairpath) metric)))
-            0 (λv ω. ω v) U)
-          = sets (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))"
+**The one trap in it, and it cost ten minutes of prover time per run.**
+Identifying the ball with the sublevel set of the distance,
 
-with `interpret MS: Metric_space "mspace ?m" "mdist ?m"` by
-`Metric_space_mspace_mdist`, `spB: space ?B = mspace ?m` by `space_borel_of`,
-and `evF` the coordinate measurability in the filtration
-(`measurable_family_vimage_algebra`). Then
+    MS.mball f e = {ω ∈ space ?F. mdist ?m f ω < e},
 
-- `⊆`: the generators `(λω. ω i) -` A ∩ space ?B` are in `sets ?B` by
-  `measurable_sets[OF pair_law_eval_measurable[OF refl]]`, then
-  `unfolding sets_natural_filtration` and a σ-algebra subset step.
-- `⊇`: `dm` — `(λω. mdist ?m f ω) ∈ borel_measurable ?F` for `f ∈ mspace ?m`,
-  via `borel_measurable_iff_le` and
-  `{ω ∈ space ?F. mdist ?m f ω ≤ q} = (⋂t ∈ {0..U} ∩ ℚ. {ω ∈ space ?F. dist (f t) (ω t) ≤ q})`
-  (`path_mdist_le_iff`, `sets.countable_INT'`); then `ball` —
-  `MS.mball f e = {ω ∈ space ?F. mdist ?m f ω < e}`; then
-  `MS.mtopology_base_in_balls` + `base_is_subbase` +
-  `borel_of_second_countable'[OF second_countable_path_metric …]`.
+must NOT be left to `auto` or `simp`: with the `Metric_space` interpretation
+in scope that two-line goal runs for TEN MINUTES and then succeeds. A
+calculation through `MS.in_mball` closed with `simp only` is instant. (The
+2026-08-07 morning attempt hit the same wall through `MS.mball_def` and
+blamed the unfolding; the unfolding was innocent, the classical search was
+not.)
 
-**The five things that failed, all fixable:**
+**Three more mechanical points from the same work, worth not rediscovering:**
 
-1. `sigma_sets_subset` is NOT a bare name — it is `sets.sigma_sets_subset`
-   (the `sigma_algebra` locale fact). Two occurrences.
-2. The set equality in `dm` needs `x ∈ mspace ?m` on the `⊇` side, which
+1. `sigma_sets_subset` is NOT a bare name — it is `sets.sigma_sets_subset`.
+2. The `⊇` side of the distance set equality needs `ω ∈ mspace ?m`, which
    only follows because the index set is NONEMPTY. Supply `0 ∈ {0..U} ∩ ℚ`
-   as a named fact and use it; `auto` will not find it.
-3. `ball`'s final step mixes `space ?B` and `space ?F`. Phrase the ball with
-   `space ?F` throughout and close with `dm` plus `borel_measurable_less`,
-   not `simp`.
-4. `sets (sigma Ω A) = sigma_sets Ω A` needs `A ⊆ Pow Ω` (`sets_measure_of`);
-   supply it for the ball family.
-5. `MS.mball_def` unfolding left a `still_running_possibly_nonterminating`
-   marker — use `MS.mball` characterisation lemmas rather than the raw
-   definition.
+   as a named fact; `auto` will not find it. (Over an empty index set the
+   intersection would be the universe and the statement false.)
+3. `sets (sigma Ω A) = sigma_sets Ω A` needs `A ⊆ Pow Ω` (`sets_measure_of`).
 
-Budget 80–120 lines; expect two or three iterations.
+**And two from the per-`(i,j,A')` lemma:**
 
-So (b3) is really:
-
-1. `integral_ksemi_real`: for `g` integrable w.r.t. `ksemi M N Kr`,
-   `AE ω in M. integrable (Kr ω) (λω'. g (ω,ω'))` and
-   `∫ g d(ksemi) = ∫ω. (∫ω'. g (ω,ω') d(Kr ω)) dM`. Build it from
-   `nn_integral_ksemi` applied to the positive and negative parts of `g`
-   (and to `|g|` for the integrability half). ~100 lines, no obstruction.
-2. Then `AE_zero_of_set_integral_zero` for each `(i,j,A')` in a COUNTABLE
-   determining family — rational `i < j`, and `A'` a finite-dimensional
-   cylinder at rational times. Note `ℱ⁰_i` is generated by the rational
-   times strictly below `i` together with the coordinate at `i`, and for
-   continuous paths the latter is their limit, so rationals suffice for
-   `i > 0`; at `i = 0` the single coordinate is itself rational.
-3. One Dynkin step at fixed `p'` (`measure_eqI_generator_eq` on the
-   positive and negative parts) to reach all `A' ∈ ℱ⁰_i`.
-4. Rational-to-real in `i, j` by path continuity.
-5. Integrability of `X_i` under `κ p'` a.s. — again through (1).
-
+4. `pair_law_of r (pcut r) P` and the Borel algebra of the `r`-path space
+   have the same SETS but are different TERMS, so the `ksemi` hypothesis
+   `eq` has to be transported with `distr_cong` + `sets_pair_measure_cong`
+   before any of the `ksemi` lemmas apply. Every future (b3)/(b4) lemma
+   taking `eq` will need the same three lines.
+5. `simp` DISTRIBUTES `$ c` over a difference, and thereby destroys the
+   left-hand side of the very rewrite you are feeding it. State such a step
+   as an equation of FUNCTIONS and consume it with `unfolding`. Relatedly,
+   `integrable_ksemi_of_distr_rect` by `OF` alone reports "no unifiers": the
+   `h` in `integrable P (λω. h (snd (φ ω)))` is a flex-rigid pair. Let the
+   CONCLUSION drive unification with a structured `proof (rule …)`.
 
 **The AFP `Disintegration` API, mapped 2026-08-07 — do not re-explore it.**
 
