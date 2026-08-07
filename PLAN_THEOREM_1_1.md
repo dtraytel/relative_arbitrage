@@ -4,10 +4,10 @@ Single source of truth for **what is proved, what is left, and in what
 order**. Everything named here is machine-checked: `isabelle build -d .
 Arbitrage` is green and there is no `sorry` anywhere in the session.
 
-Last restructured 2026-08-07 (after Larsson–Ruf Prop. 2.2(ii) was proved and
-kernel pasting was half built). Superseded scoping, session logs and dead
-ends live in `PLAN_HISTORY.md` and in `git log -p`. Do not resurrect them;
-do not re-derive anything in §1.
+Last restructured 2026-08-07 (after the `≥` half of the DPP (2.9) was
+assembled and the `≤` half was reduced to a single conditioning statement).
+Superseded scoping, session logs and dead ends live in `PLAN_HISTORY.md` and
+in `git log -p`. Do not resurrect them; do not re-derive anything in §1.
 
 **Sources.** The paper (Lai/Shkolnikov/Soner, arXiv:2512.17702); its Section-2
 reference Larsson–Ruf, *Minimum curvature flow and martingale exit times*,
@@ -51,20 +51,20 @@ functions is the `n−k=1` realization inside clause (3)
 only if §2.4 turns out to want it.
 
 **Where the DPP stands.** Proposition 2.4's two ingredients are the
-MEASURABLE SELECTOR and the KERNEL PASTING that consumes it. The selector is
-**done** (`paper_v_measurable_selector`, §1.7) — that is LR Prop. 2.2(ii) in
-full, including the abstract selection theorem it needs, which is in neither
-the AFP nor the distribution. Kernel pasting is **done** too
-(`paper_pair_class_kglue_law'`, §1.8) — all four clauses of (1.7), by a
-change of route that never proves the martingale clauses for the
-semidirect product at all. So the `≥` half of (2.9) is now pure assembly.
+MEASURABLE SELECTOR and the KERNEL PASTING that consumes it. Both are
+**done** (§1.7, §1.8), and so is the assembly: the **`≥` half of (2.9) at a
+deterministic time is proved** (`paper_v_dpp_sup_ge`, §1.10). The `≤` half
+is **reduced to exactly one statement about conditioning**
+(`paper_v_dpp_le_of_cond`, §2.1) — everything off the survival event is
+unconditional. That one statement, and the extension from deterministic
+times to stopping times, is all that is left of the DPP.
 
 **Remaining budget, roughly.**
 
 | item | § | lines | risk |
 |---|---|---|---|
-| assemble the `≥` half of (2.9) | 2.1 | 300–600 | medium — pure assembly now |
-| the `≤` half (conditioning) | 2.2 | 800–1,500 | high — stopping times break the product structure |
+| the conditioning statement (`cond`) | 2.1 | 700–1,400 | high — r.c.d. + conditional martingale property |
+| the DPP at a STOPPING time | 2.2 | 500–1,200 | high — both clocks random |
 | §3, the two viscosity inequalities | 2.3 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
 | clause (3) for `n−k ≥ 2` | 2.4 | 1,500–3,000 | high |
 
@@ -410,7 +410,39 @@ closedness finishes.
 particular `martingale_pair_fst` has no `ksemi` analogue, and that is a
 theorem, not a proof-technique inconvenience.
 
-### 1.9 Supporting layers
+### 1.9 The `≥` half of (2.9) at a deterministic time — CLOSED
+
+The DPP of Prop. 2.4 is
+
+    v(x) = sup_{P ∈ 𝒫ₓ} P-essinf( θ ∧ τ_K + v(X_θ) · 1_{θ ≤ τ_K} ).
+
+At a DETERMINISTIC `θ = r` both summands are read off the first piece:
+`θ ∧ τ_K` is the exit time capped at `r`, i.e. `pexit r K`, and the
+indicator `1_{θ ≤ τ_K}` is **`pexit r K … = r ∧ fst (ω r) ∈ K`** — that
+equivalence is exact for the capped exit time and needs NO path continuity
+(the exit set on `[0,r]` is empty iff the infimum is `r` and the endpoint is
+still in `K`). Use that form; it is measurable straight off
+`pexit_path_measurable` and the coordinate map.
+
+| result | content |
+|---|---|
+| `paper_v_kpaste_ge` | the kernel analogue of `paper_v_paste_ge`: an a.s. lower bound on the exit time of the SEMIDIRECT-product glue bounds `paper_v` |
+| `pexit_pglue_split'` | `pexit_pglue_split` with the continuation only required to stay in `K` on the HALF-OPEN `{0..<c}` — the same proof, and the strict form is what an essential infimum supplies |
+| `pexit_pglue_dpp` | **the pathwise DPP bound**: `pexit r K ω + (if survived then c else 0) ≤ pexit T K (pglue r T ω ω')`; off the survival event it degenerates to `pexit_pglue_ge` |
+| `paper_v_measurable_selector_kernel'` | the selector packaged with BOTH measurability facts `paper_pair_class_kglue_law'` wants — into `prob_algebra` (its `Kp`) and into the CLASS with its Lévy–Prokhorov metric (its `Kb`). The second is free: the selector lands in the subspace, and `paper_pair_class_compact_metric_space(2)` identifies the class's metric topology with the subspace topology of weak convergence |
+| `paper_v_open_less`, `paper_v_neq_top`, `paper_v_borel_measurable` | usc + the horizon bound make `enn2real ∘ paper_v` a random variable — needed to even STATE the integrand |
+| `paper_v_dpp_ge_const` | the construction: restrict `P` to `[0,r]` (`paper_pair_class_pcut`), feed the kernel `ω ↦ S (fst (ω r))`, paste, and read off `paper_v_kpaste_ge` |
+| `paper_v_dpp_ge` | the same with `ess_inf_time` in place of the constant |
+| `paper_v_dpp_sup_ge` | **the headline**: `(SUP P ∈ 𝒫ₓ. essinf(…)) ≤ paper_v k L T K x` |
+
+Two things worth not rediscovering. The `pcut`-invariance of the integrand
+is what lets the AE hypothesis be stated on `P` and used on the restricted
+law — but `AE_distr_iff` only transfers it because the integrand is
+MEASURABLE, which is why `paper_v_borel_measurable` had to be proved first.
+And `simp` splits `¬ (A ∧ B)` into an implication and then cannot discharge
+an `if` guarded by `A ∧ B`; use `if_not_P` by `rule`.
+
+### 1.10 Supporting layers
 
 Berge/usc (`usc_sup_over_compactin`, `vshift_sup_usc_of_seq_compact`,
 `Exit_Semicontinuity.ess_inf_pexit_usc`), the path space and its metric
@@ -428,40 +460,63 @@ Brownian layer (`Brownian_Motion`, `Brownian_Market`, `Brownian_Continuous`,
 In dependency order. §2.4 and §2.5 are independent of §2.1–§2.3 and can be
 interleaved.
 
-### 2.1 The `≥` half of (2.9)
+### 2.1 The conditioning statement — all that is left of the DPP at a deterministic time
 
-With kernel pasting done (§1.8) and the selector of §1.7 in hand, the `≥` inequality of the
-DPP at a DETERMINISTIC time is assembly:
+`paper_v_dpp_le_of_cond` (§1.9's companion, proved) reduces the `≤` half of
+(2.9), hence (2.9) itself at a deterministic time, to ONE hypothesis:
 
-- take `P ∈ 𝒫ₓ`, restrict it to `[0,r]` with `paper_pair_class_pcut`;
-- feed the kernel `ω ↦ S (fst (ω r))` — measurable because `S` is
-  (`paper_v_measurable_selector_kernel`) and `ω ↦ fst (ω r)` is;
-- `paper_pair_class_kglue_law'` puts the glued law back in the class;
-- `pexit_pglue_split` and `paper_v_paste_ge` (both already proved) turn the
-  exit time of the glued path into `r + (continuation's exit time)`;
-- the continuation's essinf IS `paper_v` at the endpoint, by the selector's
-  optimality — this is where the selector earns its keep, and where an
-  ε-argument would have sufficed had a countable selector existed (it does
-  not; §1.7).
+    cond: P ∈ paper_pair_class k L T x ⟹
+          (AE ω in P. c ≤ pexit T K (λt. fst (ω t))) ⟹
+          (AE ω in P. pexit r K (λt. fst (ω t)) = r ∧ fst (ω r) ∈ K
+              ⟶ c ≤ r + enn2real (paper_v k L (T - r) K (fst (ω r))))
 
-**Warning about stopping times.** At a stopping time `θ` BOTH clocks `u ∧ θ`
-and `(u − θ)⁺` are random, so the product-filtration structure that carries
-§1.6(b′) and §2.1 breaks down. The literature does the stopping-time version
-via regular conditional distributions rather than product measures; expect a
-different construction. Decide, when §2.2 is done, whether §3 of the paper
-actually needs the stopping-time form or only deterministic times plus
-`τ_{B_ε}` (§3.2 uses the exit time of a small ball, which is not
-deterministic — so probably yes, it is needed).
+*"If `P` survives to time `c`, then on the survival event the value at the
+position reached is at least the time still to run."* Everything OFF the
+survival event is already unconditional, by `pexit_cap_eq` — a path that has
+left `K` by time `r` has the same exit time at either horizon, including the
+boundary case of a path that exits exactly AT `r` (`pexit_stable_above_T`
+does NOT cover that; it wants `pexit r K f < r`).
 
-### 2.2 The `≤` half of (2.9)
+`cond` IS the statement that the conditional law of the future given `ℱ_r`
+is, almost surely, a member of the class started at `X_r`; then its own
+essential infimum is `≤ v(X_r)` by the definition of `paper_v`, and the
+surviving `P` would contradict it. Route:
 
-Conditioning: regular conditional distributions on the Polish path space via
-AFP `Disintegration` (`measure_disintegration`, already a session
-dependency; `Path_Space.path_metric_polish`). Untouched.
+1. push `P` forward along `ω ↦ (pcut r ω, λs. ω (r+s) - ω r)` into
+   `?BR ⊗ ?MR` (both standard Borel — `Path_Space.path_metric_polish`,
+   `Polish_space_path_metric`);
+2. disintegrate with AFP `Disintegration.measure_disintegration` (already a
+   session dependency; the locale is `projection_sigma_finite_standard`, and
+   it yields a `prob_kernel` κ with
+   `ν (A × B) = ∫⁺ x∈A. κ x B ∂ν_x` — that is `disintegration`, NOT the
+   Giry `bind`, so expect to bridge to `ksemi`);
+3. verify the four clauses of (1.7) for `κ ω` for a.e. `ω`. **This is the
+   real work.** Clauses (i)/(ii) are a.s. inheritance and go through
+   `AE`-transfer; the two MARTINGALE clauses are the conditional-martingale
+   statement: for `s < t` and bounded `ℱ^0_s`-measurable `h`,
+   `∫ (X_{r+t} - X_{r+s}) h dκω = 0` a.s., which follows from the
+   martingale property of `X` under `P` at level `ℱ_{r+s}` because
+   `h(future) · 1_G(past)` is `ℱ_{r+s}`-measurable. Then a COUNTABLE
+   determining family of `h` plus a monotone-class step upgrades "for each
+   `(s,t,h)`, a.s." to "a.s., for all `(s,t,h)`".
 
-This is the half §3.1 consumes (the DPP AT THE OPTIMIZER —
-`v(x) ≤ t∧θ + v(X(t∧θ))` a.s. for the fixed optimizer `P`), so it cannot be
-skipped; see the table in §2.4.
+Step 3 is the same shape as `paper_pair_class_diffquot_of_pairs` (countably
+many rational pairs, then `AE_ball_countable'`), which is the template to
+copy.
+
+### 2.2 The DPP at a STOPPING time
+
+At a stopping time `θ` BOTH clocks `u ∧ θ` and `(u − θ)⁺` are random, so the
+product-filtration structure that carries §1.6(b′) and §1.9 breaks down. The
+literature does the stopping-time version via regular conditional
+distributions rather than product measures; expect a different construction.
+§3.2 uses the exit time of a small ball, which is not deterministic, so this
+IS needed — but it should be attempted only after §2.1, which builds the
+r.c.d. layer it will reuse.
+
+Note `paper_v_dpp_ge_const` is already stated for an arbitrary real constant
+`c` and an arbitrary a.s. bound, so the deterministic-time machinery
+generalizes without restatement once the glue at a random time exists.
 
 ### 2.3 §3 — the two viscosity inequalities → clause (2)
 
@@ -470,8 +525,8 @@ of the paper on 2026-08-06; do not redo this):
 
 | viscosity inequality | DPP half it consumes |
 |---|---|
-| **subsolution** (§3.1, display (3.17)) | the DPP **at the optimizer**: `v(x) ≤ t∧θ + v(X(t∧θ))` P-a.s. for the fixed optimizer P. This is the CONDITIONING half, §2.3. |
-| **supersolution** (§3.2, after (3.25), and again in Case 2 after (3.30)) | `v(y) ≥ P_y-essinf (τ_{B_ε(x)} + v(X(τ_{B_ε(x)})))` for a SPECIFIC constructed `P_y`. This is the `≥` half, i.e. PASTING, §2.2. |
+| **subsolution** (§3.1, display (3.17)) | the DPP **at the optimizer**: `v(x) ≤ t∧θ + v(X(t∧θ))` P-a.s. for the fixed optimizer P. This is the CONDITIONING half, §2.1. |
+| **supersolution** (§3.2, after (3.25), and again in Case 2 after (3.30)) | `v(y) ≥ P_y-essinf (τ_{B_ε(x)} + v(X(τ_{B_ε(x)})))` for a SPECIFIC constructed `P_y`. This is the `≥` half, i.e. PASTING — **PROVED at a deterministic time**, §1.9; at `τ_{B_ε}` it needs §2.2. |
 
 Beyond the DPP, §3 consumes machinery this development does not have:
 Itô's formula for class members, an exponential local martingale plus
@@ -578,6 +633,21 @@ The full list lives in the agent memory file
   carries a schematic index, so a subsequence must be written `(Rm ∘ a)`
   rather than `(λm. Rm (a m))`. And `measurable_sets` wants the measurability
   fact FIRST, so give it by `OF`, not by chaining.
+- **`unfolding paper_v_def` unfolds `paper_v` on BOTH sides.** A DPP goal has
+  `paper_v k L T K x` on the left and `paper_v k L (T-r) K (fst (ω r))`
+  inside the right, so unfolding the definition silently changes the target
+  and every later `show` reports "Failed to refine any pending goal" with an
+  exported rule that looks identical. Prove a ground equation
+  `pv: "paper_v k L T K x = (SUP Q∈…. …)"` by `unfolding paper_v_def ..` and
+  `unfold pv` instead.
+- **`simp` cannot discharge an `if` guarded by `A ∧ B` from `¬ (A ∧ B)`** —
+  it first rewrites the hypothesis to `A ⟶ ¬ B` and then the guard no longer
+  matches. Produce the `= 0` equation explicitly with `by (rule if_not_P)`.
+  Cost: three separate failures in one session.
+- **`ennreal_enn2real` wants `x < ⊤`, not `x ≠ ⊤`** (`OF: no unifiers`), and
+  a chained fact carrying schematic variables (`pexit_nonneg[OF T0]` with
+  `?K ?f` still open) makes `simp` fail outright rather than ignore it —
+  instantiate with `of` first.
 - **`ess_inf_time_distr` is AMBIGUOUS.** `Section_2_Usc.ess_inf_time_distr`
   takes a set-measurability premise, `Value_Function.ess_inf_time_distr`
   takes `tau ∈ borel_measurable N`. `rule` picks the former and reports
