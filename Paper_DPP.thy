@@ -6255,4 +6255,113 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>The other branch needs a repair, and the repair needs the class to be
+  a MEASURABLE set of laws.  It is: the class is compact in the weak topology
+  (@{thm [source] paper_pair_class_compactin_weak}), that topology is the
+  L\'evy--Prokhorov METRIC topology hence Hausdorff, so the class is closed,
+  hence Borel; and \<^const>\<open>prob_algebra\<close> is that Borel algebra restricted to
+  the probability measures, which the class already consists of.\<close>
+
+lemma paper_pair_class_sets_prob_algebra:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 < T" and L: "0 \<le> L"
+  shows "paper_pair_class k L T x
+      \<in> sets (prob_algebra (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))))"
+proof -
+  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  let ?W = "weak_conv_topology (mtopology_of
+      (path_metric T :: ('n pairpath) metric))"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?P = "{N :: ('n pairpath) measure. prob_space N \<and> sets N = sets ?B}"
+  let ?C = "paper_pair_class k L T x"
+  interpret LP: Levy_Prokhorov "mspace (path_metric T :: ('n pairpath) metric)"
+      "mdist (path_metric T :: ('n pairpath) metric)"
+    by (simp add: Levy_Prokhorov_def)
+  have Xeq: "LP.mtopology = ?X" by (simp add: mtopology_of_def)
+  have sepLP: "separable_space LP.mtopology"
+    using separable_path_metric Xeq by simp
+  have LPtop: "LP.LPm.mtopology = ?W"
+    using LP.LPmtopology_eq_weak_conv_topology[OF sepLP] Xeq by simp
+  have haus: "Hausdorff_space ?W"
+    using LP.LPm.Hausdorff_space_mtopology LPtop by simp
+  have clo: "closedin ?W ?C"
+    by (rule compactin_imp_closedin[OF haus
+        paper_pair_class_compactin_weak[OF T L]])
+  have CW: "?C \<in> sets (borel_of ?W)" by (rule borel_of_closed[OF clo])
+  have polish: "Polish_space ?X" by (rule Polish_space_path_metric)
+  have setsPA: "sets (borel_of (subtopology ?W ?P)) = sets (prob_algebra ?B)"
+    by (rule weak_conv_topology_eq_prob_algebra[OF polish])
+  have sub: "?C \<subseteq> ?P"
+  proof
+    fix N :: "('n pairpath) measure" assume N: "N \<in> ?C"
+    show "N \<in> ?P"
+      using paper_pair_class_prob[OF N] paper_pair_class_sets[OF N] by simp
+  qed
+  have "?C = ?P \<inter> ?C" using sub by auto
+  moreover have "?P \<inter> ?C \<in> sets (restrict_space (borel_of ?W) ?P)"
+    using CW by (auto simp: sets_restrict_space)
+  ultimately have "?C \<in> sets (borel_of (subtopology ?W ?P))"
+    by (simp add: borel_of_subtopology)
+  then show ?thesis using setsPA by simp
+qed
+
+text \<open>The repair.  A regular conditional distribution lands in the class only
+  ALMOST surely, while @{thm [source] paper_pair_class_kglue_law'} asks for
+  it at EVERY point.  Since the class is a measurable set of laws, the kernel
+  can be redirected to a fixed member off the good set --- and the good set
+  carries full measure, so nothing is lost.\<close>
+
+lemma kernel_repair_into_class:
+  fixes \<kappa> :: "'a \<Rightarrow> ('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "1 \<le> L"
+    and Km: "\<kappa> \<in> G \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  obtains \<kappa>' where
+    "\<kappa>' \<in> G \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and "\<And>p. \<kappa>' p \<in> paper_pair_class k L T (0::real^'n)"
+    and "\<And>p. \<kappa> p \<in> paper_pair_class k L T (0::real^'n) \<Longrightarrow> \<kappa>' p = \<kappa> p"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?C = "paper_pair_class k L T (0::real^'n)"
+  have T0: "0 \<le> T" using T by simp
+  have L0: "0 \<le> L" using L by simp
+  obtain W where W: "W \<in> ?C"
+    using paper_pair_class_nonempty[OF T0 L] by blast
+  have CS: "?C \<in> sets (prob_algebra ?B)"
+    by (rule paper_pair_class_sets_prob_algebra[OF T L0])
+  have Wsp: "W \<in> space (prob_algebra ?B)"
+    using paper_pair_class_prob[OF W] paper_pair_class_sets[OF W]
+    by (simp add: space_prob_algebra)
+  define \<kappa>' where "\<kappa>' = (\<lambda>p. if \<kappa> p \<in> ?C then \<kappa> p else W)"
+  have good: "{p \<in> space G. \<kappa> p \<in> ?C} \<in> sets G"
+  proof -
+    have "\<kappa> -` ?C \<inter> space G \<in> sets G" by (rule measurable_sets[OF Km CS])
+    moreover have "{p \<in> space G. \<kappa> p \<in> ?C} = \<kappa> -` ?C \<inter> space G" by auto
+    ultimately show ?thesis by simp
+  qed
+  have m: "\<kappa>' \<in> G \<rightarrow>\<^sub>M prob_algebra ?B"
+    unfolding \<kappa>'_def
+    by (rule measurable_If[OF Km _ good]) (use Wsp in simp)
+  have inC: "\<kappa>' p \<in> ?C" for p unfolding \<kappa>'_def using W by simp
+  have agree: "\<kappa>' p = \<kappa> p" if "\<kappa> p \<in> ?C" for p unfolding \<kappa>'_def using that by simp
+  show thesis by (rule that[OF m inC agree])
+qed
+
+text \<open>And the mixed kernel itself: OPTIMAL on a chosen event of the past, the
+  law's own conditional distribution elsewhere.  Measurability is
+  @{thm [source] measurable_If}; the point is that the event has to be one
+  the PAST can see, which for \<open>{\<theta> = t}\<close> is exactly the stopping-time
+  property.\<close>
+
+lemma kernel_mix_measurable:
+  assumes A: "A \<in> sets G"
+    and K1: "\<kappa>1 \<in> G \<rightarrow>\<^sub>M prob_algebra N" and K2: "\<kappa>2 \<in> G \<rightarrow>\<^sub>M prob_algebra N"
+  shows "(\<lambda>p. if p \<in> A then \<kappa>1 p else \<kappa>2 p) \<in> G \<rightarrow>\<^sub>M prob_algebra N"
+proof (rule measurable_If[OF K1 K2])
+  have "{p \<in> space G. p \<in> A} = A" using A sets.sets_into_space by auto
+  then show "{p \<in> space G. p \<in> A} \<in> sets G" using A by simp
+qed
+
 end
