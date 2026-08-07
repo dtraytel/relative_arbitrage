@@ -5551,4 +5551,93 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>The identity that lets the disintegration see the hypothesis at all:
+  gluing the past back onto the rebased future RECOVERS the path.  So the
+  hypothesis \<open>c \<le> \<tau>\<^sub>K(\<omega>)\<close> IS a statement about \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, and
+  it is a MEASURABLE one, because @{thm [source] pglue_measurable} and
+  @{thm [source] pexit_path_measurable} compose.  Expressing the coupling
+  through \<^const>\<open>pglue\<close> rather than through \<^const>\<open>pshift\<close> is what keeps that
+  measurability off the shelf --- \<^const>\<open>pshift\<close> is Lipschitz in the path for
+  a FIXED shift, and the joint statement would have to be built.\<close>
+
+lemma pglue_pcut_pfut:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pglue r T (pcut r \<omega>) (pfut r T \<omega>) = \<omega>"
+proof (rule ext)
+  fix t :: real
+  show "pglue r T (pcut r \<omega>) (pfut r T \<omega>) t = \<omega> t"
+  proof (cases "t \<in> {0..T}")
+    case True
+    show ?thesis
+    proof (cases "t \<le> r")
+      case True
+      then have tr: "t \<in> {0..r}" using \<open>t \<in> {0..T}\<close> by simp
+      have "pglue r T (pcut r \<omega>) (pfut r T \<omega>) t = pcut r \<omega> t"
+        by (rule pglue_le[OF \<open>t \<in> {0..T}\<close> True])
+      also have "\<dots> = \<omega> t" by (rule pcut_apply[OF tr])
+      finally show ?thesis .
+    next
+      case False
+      then have tr: "r \<le> t" by simp
+      have m: "t - r \<in> {0..T - r}" using tr \<open>t \<in> {0..T}\<close> by simp
+      have "pglue r T (pcut r \<omega>) (pfut r T \<omega>) t
+          = pcut r \<omega> r + (pfut r T \<omega> (t - r) - pfut r T \<omega> 0)"
+        by (rule pglue_ge[OF \<open>t \<in> {0..T}\<close> tr])
+      also have "\<dots> = \<omega> r + (\<omega> (r + (t - r)) - \<omega> r - 0)"
+        using r rT by (simp add: pcut_apply pfut_apply[OF m] pfut_zero)
+      also have "\<dots> = \<omega> t" by simp
+      finally show ?thesis .
+    qed
+  next
+    case False
+    then have "pglue r T (pcut r \<omega>) (pfut r T \<omega>) t = undefined"
+      unfolding pglue_def restrict_def by (rule if_not_P)
+    moreover have "\<omega> t = undefined"
+      using w False by (auto simp: path_metric_def extensional_def)
+    ultimately show ?thesis by simp
+  qed
+qed
+
+lemma pexit_pglue_measurable:
+  fixes K :: "(real^'n::finite) set"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and Kc: "closed K"
+  shows "(\<lambda>p. pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t)))
+      \<in> borel_measurable
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))"
+proof -
+  have T0: "0 \<le> T" using r rT by simp
+  show ?thesis
+    by (rule measurable_compose[OF pglue_measurable[OF r rT refl refl]
+        pexit_path_measurable[OF T0 Kc refl]])
+qed
+
+lemma survival_set_measurable:
+  fixes K :: "(real^'n::finite) set"
+  assumes r: "0 \<le> r" and Kc: "closed K"
+  shows "{p' \<in> space (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric))).
+      pexit r K (\<lambda>t. fst (p' t)) = r \<and> fst (p' r) \<in> K}
+    \<in> sets (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric)))"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  have pm: "(\<lambda>p' :: 'n pairpath. pexit r K (\<lambda>t. fst (p' t)))
+      \<in> borel_measurable ?X"
+    by (rule pexit_path_measurable[OF r Kc refl])
+  have em: "(\<lambda>p' :: 'n pairpath. fst (p' r)) \<in> borel_measurable ?X"
+    by (rule measurable_compose
+        [OF pair_law_eval_measurable[OF refl] measurable_fst_borel])
+  have s1: "{p' \<in> space ?X. pexit r K (\<lambda>t. fst (p' t)) = r} \<in> sets ?X"
+    using pm by measurable
+  have s2: "{p' \<in> space ?X. fst (p' r) \<in> K} \<in> sets ?X"
+    using em borel_closed[OF Kc] by (simp add: measurable_sets_Collect)
+  have "{p' \<in> space ?X. pexit r K (\<lambda>t. fst (p' t)) = r \<and> fst (p' r) \<in> K}
+      = {p' \<in> space ?X. pexit r K (\<lambda>t. fst (p' t)) = r}
+        \<inter> {p' \<in> space ?X. fst (p' r) \<in> K}" by auto
+  then show ?thesis using sets.Int[OF s1 s2] by simp
+qed
+
 end
