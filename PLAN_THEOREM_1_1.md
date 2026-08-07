@@ -397,6 +397,33 @@ there does θ have to be a genuine stopping time (the integrand must be
 measurable for `ess_inf_time`, and the construction glues at θ). The paper's
 §3.2 (supersolution) needs it at `τ_{B_ε}`.
 
+**The construction to build, concretely.** It does NOT need a new pasting
+theorem at a random time. A stopping time with FINITELY many values
+`t_1 < … < t_m` reduces to `m` applications of the FIXED-time
+`paper_pair_class_kglue_law'`, because the regular conditional distribution
+— now available as `paper_pair_class_rcd_member` — supplies a "do nothing"
+branch:
+
+    glue at t_j with   κ_j p' = if p' ∈ {θ = t_j} then S (X_{t_j} p')
+                                else  (the r.c.d. of the current law at t_j)
+
+`{θ = t_j}` is an `ℱ_{t_j}`-event exactly because θ is a stopping time, so
+the kernel is a legitimate function of the past; gluing with a law's OWN
+r.c.d. reproduces that law (`pglue_pcut_pfut` is the pathwise half of this);
+and both branches take values in `𝒞₀`, which is what `paper_pair_class_kglue_law'`
+demands. So the step is: optimal continuation on `{θ = t_j}`, unchanged
+elsewhere. Induct on `m`.
+
+Pieces already in place, and what each still needs:
+
+| piece | status |
+|---|---|
+| `kernel_class_LP_measurable` — a kernel measurable into `prob_algebra` with values in the class is measurable into the LP-metric class space (`paper_pair_class_kglue_law'`'s `Kb`) | **DONE** |
+| the mixed kernel is measurable and lands in `𝒞₀` | open — the r.c.d. lands in `𝒞₀` only ALMOST surely, and `Kc` is a for-all hypothesis, so the kernel must be repaired on the null set. `𝒞₀` is compact hence CLOSED in the weak topology, so `{p'. κ p' ∈ 𝒞₀}` is measurable and the repair (fall back to the Brownian witness of `paper_pair_class_nonempty`) is legitimate |
+| gluing a law with its own r.c.d. returns the law | open — the law-level counterpart of `pglue_pcut_pfut`, i.e. `kglue_law' r T κ (pair_law_of r (pcut r) P) = P` |
+| the induction over the values of a simple stopping time | open |
+| general θ by approximation | open, and NOT obviously monotone: `θ_n ≥ θ` does not give `integrand_θ ≤ integrand_{θ_n}` pathwise. Expect this to be the genuinely hard step, and consider whether §3.2 needs only `τ_{B_ε}`, where more structure is available |
+
 **What carries over from §1.7, and what does not.**
 
 - `paper_pair_class_rcd_member` — the r.c.d. of the rebased future given the
