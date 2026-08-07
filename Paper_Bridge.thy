@@ -13213,4 +13213,298 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>The pathwise form of the dynamic programming bound\<close>
+
+text \<open>A strict variant of @{thm [source] pexit_pglue_split}: the continuation
+  only has to stay in \<open>K\<close> on the HALF-OPEN interval \<open>{0..<c}\<close>.  The proof is
+  the same --- the case analysis already produces a strict inequality --- and
+  the strict form is what the essential infimum supplies, since
+  \<open>c \<le> pexit\<close> says nothing about the path AT time \<open>c\<close>.\<close>
+
+lemma pexit_pglue_split':
+  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
+    and stay: "\<And>t. t \<in> {0..r} \<Longrightarrow> fst (\<omega> t) \<in> K"
+    and cont: "\<And>s. 0 \<le> s \<Longrightarrow> s < c \<Longrightarrow> fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
+  shows "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
+proof -
+  have lb: "r + c \<le> z"
+    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
+        \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue r T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
+      using z by blast
+    then show ?thesis
+    proof cases
+      case hit
+      then have zI: "z \<in> {0..T}" by simp
+      show ?thesis
+      proof (rule ccontr)
+        assume "\<not> r + c \<le> z"
+        then have zc: "z < r + c" by simp
+        show False
+        proof (cases "z \<le> r")
+          case True
+          have "fst (\<omega> z) \<in> K" using hit(1) True by (intro stay) simp
+          then show False using hit(3) by (simp add: pglue_le[OF zI True])
+        next
+          case False
+          then have rz: "r \<le> z" by simp
+          have "fst (\<omega> r + (\<omega>' (z - r) - \<omega>' 0)) \<in> K"
+            using rz zc by (intro cont) simp_all
+          then show False using hit(3) by (simp add: pglue_ge[OF zI rz])
+        qed
+      qed
+    next
+      case cap
+      then show ?thesis using cT by simp
+    qed
+  qed
+  have "pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))
+      = Inf ({t. 0 \<le> t \<and> t \<le> T
+          \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
+    unfolding pexit_def etime_def ..
+  moreover have "r + c \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
+      \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show ?thesis by simp
+qed
+
+text \<open>The pathwise dynamic programming bound at the DETERMINISTIC time \<open>r\<close>.
+  The two summands are the paper's \<open>r \<and> \<tau>\<^sub>K\<close> and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>: the
+  first piece's own exit time is a lower bound in all cases
+  (@{thm [source] pexit_pglue_ge}), and when the first piece has NOT exited by
+  \<open>r\<close> --- which for the capped exit time is exactly
+  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>, with no path continuity needed --- the
+  continuation adds its own survival time on top.\<close>
+
+lemma pexit_pglue_dpp:
+  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
+    and z0: "fst (\<omega>' 0) = 0"
+    and cont: "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<Longrightarrow> fst (\<omega> r) \<in> K
+        \<Longrightarrow> c \<le> pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
+  shows "pexit r K (\<lambda>t. fst (\<omega> t))
+        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0)
+      \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
+proof (cases "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K")
+  case True
+  then have full: "pexit r K (\<lambda>t. fst (\<omega> t)) = r" and endK: "fst (\<omega> r) \<in> K"
+    by simp_all
+  have cnt: "c \<le> pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
+    by (rule cont[OF full endK])
+  have "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
+  proof (rule pexit_pglue_split'[OF r rT c cT])
+    fix t assume t: "t \<in> {0..r}"
+    show "fst (\<omega> t) \<in> K"
+    proof (rule ccontr)
+      assume nk: "fst (\<omega> t) \<notin> K"
+      have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> t"
+        unfolding pexit_def using r t nk by (intro etime_le_of_mem) auto
+      with full t have "t = r" by simp
+      then show False using nk endK by simp
+    qed
+  next
+    fix s :: real assume s: "0 \<le> s" and sc: "s < c"
+    have sTr: "s \<le> T - r" using sc c cT by simp
+    show "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
+    proof (rule ccontr)
+      assume nk: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<notin> K"
+      have eq: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) = fst (\<omega> r) + fst (\<omega>' s)"
+        using z0 by simp
+      have "pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s)) \<le> s"
+        unfolding pexit_def using s sTr rT nk eq by (intro etime_le_of_mem) auto
+      with cnt sc show False by simp
+    qed
+  qed
+  then show ?thesis using True by simp
+next
+  case False
+  have le: "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
+    by (rule pexit_pglue_ge[OF r rT])
+  have "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0) = 0"
+    using False by (rule if_not_P)
+  with le show ?thesis by simp
+qed
+
+subsection \<open>The selector as a kernel into the CLASS\<close>
+
+text \<open>@{thm [source] paper_v_measurable_selector_kernel} makes the selector a
+  Giry-monad kernel, which is hypothesis \<^emph>\<open>Kp\<close> of
+  @{thm [source] paper_pair_class_kglue_law'}.  That theorem also needs
+  hypothesis \<^emph>\<open>Kb\<close>: measurability into the CLASS with its Lévy--Prokhorov
+  metric, for the natural filtration.  Both come from the same selector, so we
+  package them together --- measurability into the subspace is free, because
+  the selector lands in the subspace and
+  @{thm [source] paper_pair_class_compact_metric_space} identifies the metric
+  topology of the class with the subspace topology of weak convergence.\<close>
+
+theorem paper_v_measurable_selector_kernel':
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+  obtains S where
+    "S \<in> borel \<rightarrow>\<^sub>M prob_algebra (borel_of
+        (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    and "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+        (paper_pair_class k L T (0::real^'n))
+        (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+          (mdist (path_metric T :: ('n pairpath) metric))))"
+    and "\<And>y. S y \<in> paper_pair_class k L T 0"
+    and "\<And>y. ess_inf_time (pshift_law T y (S y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = paper_v k L T K y"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?P = "{N :: ('n pairpath) measure. prob_space N
+      \<and> sets N = sets (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric)))}"
+  let ?C = "paper_pair_class k L T (0::real^'n)"
+  obtain S where Sm: "S \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
+    and SC: "\<And>y. S y \<in> paper_pair_class k L T 0"
+    and Sval: "\<And>y. ess_inf_time (pshift_law T y (S y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = paper_v k L T K y"
+    by (rule paper_v_measurable_selector[where k = k, OF T L K]) blast
+  have SP: "S y \<in> ?P" for y
+    using paper_pair_class_prob[OF SC] paper_pair_class_sets[OF SC] by simp
+  have polish: "Polish_space (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    by (rule Polish_space_path_metric)
+  have setsPA: "sets (borel_of (subtopology ?W ?P)) = sets (prob_algebra ?B)"
+    by (rule weak_conv_topology_eq_prob_algebra[OF polish])
+  have Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
+  proof -
+    have r1: "S \<in> borel \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?P"
+      by (rule measurable_restrict_space2[OF _ Sm]) (use SP in auto)
+    have r2: "S \<in> borel \<rightarrow>\<^sub>M borel_of (subtopology ?W ?P)"
+      using r1 by (simp add: borel_of_subtopology)
+    show ?thesis using r2 measurable_cong_sets[OF refl setsPA] by blast
+  qed
+  have Ssub: "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology ?C
+      (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+        (mdist (path_metric T :: ('n pairpath) metric))))"
+  proof -
+    have top: "Metric_space.mtopology ?C
+        (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+          (mdist (path_metric T :: ('n pairpath) metric)))
+        = subtopology ?W ?C"
+      using L by (intro paper_pair_class_compact_metric_space(2)[OF T]) simp
+    have r1: "S \<in> borel \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?C"
+      by (rule measurable_restrict_space2[OF _ Sm]) (use SC in auto)
+    show ?thesis unfolding top using r1 by (simp add: borel_of_subtopology)
+  qed
+  show ?thesis
+  proof (rule that)
+    show "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B" by (rule Sk)
+    show "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology ?C
+        (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+          (mdist (path_metric T :: ('n pairpath) metric))))" by (rule Ssub)
+    show "S y \<in> paper_pair_class k L T 0" for y by (rule SC)
+    show "ess_inf_time (pshift_law T y (S y)) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        = paper_v k L T K y" for y by (rule Sval)
+  qed
+qed
+
+subsection \<open>Small transfer lemmas for the exit time\<close>
+
+text \<open>The capped exit time reads the path only on \<open>{0..U}\<close>, so cutting and
+  shifting are transparent to it.\<close>
+
+lemma pexit_cong_on:
+  assumes "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> U \<Longrightarrow> f t = g t"
+  shows "pexit U K f = pexit U K g"
+proof -
+  have "{t. 0 \<le> t \<and> t \<le> U \<and> f t \<in> - K} = {t. 0 \<le> t \<and> t \<le> U \<and> g t \<in> - K}"
+    using assms by auto
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+lemma pexit_pcut:
+  fixes \<omega> :: "'n::finite pairpath"
+  shows "pexit U K (\<lambda>t. fst (pcut U \<omega> t)) = pexit U K (\<lambda>t. fst (\<omega> t))"
+  by (rule pexit_cong_on) (simp add: pcut_apply)
+
+lemma pexit_pshift:
+  fixes y :: "real^'n::finite" and \<omega> :: "'n pairpath"
+  shows "pexit U K (\<lambda>t. fst (pshift U y \<omega> t)) = pexit U K (\<lambda>t. y + fst (\<omega> t))"
+  by (rule pexit_cong_on) (simp add: pshift_fst)
+
+lemma paper_pair_class_start:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x"
+  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+  using Q unfolding paper_pair_class_def by blast
+
+subsection \<open>The value function is Borel measurable\<close>
+
+text \<open>Clause (1) --- upper semicontinuity --- makes every sublevel set
+  \<open>{y. v y < b}\<close> open, and the horizon bound makes \<open>v\<close> finite, so the real
+  version \<open>enn2real \<circ> v\<close> is Borel measurable.  The dynamic programming
+  principle needs this in order to even STATE its integrand as a random
+  variable.\<close>
+
+lemma paper_v_open_less:
+  fixes K :: "(real^'n::finite) set" and b :: ennreal
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+  shows "open {y :: real^'n. paper_v k L T K y < b}"
+proof (subst open_subopen, safe)
+  fix y :: "real^'n" assume "paper_v k L T K y < b"
+  then have "eventually (\<lambda>z. paper_v k L T K z < b) (nhds y)"
+    by (rule paper_v_usc_unconditional[OF T L K])
+  then obtain U where "open U" "y \<in> U" "\<forall>z\<in>U. paper_v k L T K z < b"
+    unfolding eventually_nhds by blast
+  then show "\<exists>U. open U \<and> y \<in> U \<and> U \<subseteq> {y. paper_v k L T K y < b}" by blast
+qed
+
+lemma paper_v_neq_top:
+  fixes K :: "(real^'n::finite) set" and y :: "real^'n"
+  assumes T: "0 \<le> T"
+  shows "paper_v k L T K y \<noteq> \<top>"
+proof -
+  have "paper_v k L T K y \<le> ennreal T" by (rule paper_v_le_T[OF T])
+  moreover have "(ennreal T :: ennreal) \<noteq> \<top>" by simp
+  ultimately show ?thesis by (auto simp: top_unique)
+qed
+
+lemma paper_v_borel_measurable:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+  shows "(\<lambda>y :: real^'n. enn2real (paper_v k L T K y)) \<in> borel_measurable borel"
+proof (subst borel_measurable_iff_less, intro allI)
+  fix a :: real
+  show "{w \<in> space (borel :: (real^'n) measure).
+      enn2real (paper_v k L T K w) < a} \<in> sets (borel :: (real^'n) measure)"
+  proof (cases "0 < a")
+    case True
+    have key: "(enn2real (paper_v k L T K y) < a)
+        = (paper_v k L T K y < ennreal a)" for y :: "real^'n"
+    proof -
+      have fin: "paper_v k L T K y < \<top>"
+        using paper_v_neq_top[of T k L K y] T by (simp add: less_top)
+      have "(paper_v k L T K y < ennreal a)
+          = (ennreal (enn2real (paper_v k L T K y)) < ennreal a)"
+        by (simp add: ennreal_enn2real[OF fin])
+      also have "\<dots> = (enn2real (paper_v k L T K y) < a)"
+        using True by (simp add: ennreal_less_iff)
+      finally show ?thesis ..
+    qed
+    have "{w \<in> space (borel :: (real^'n) measure).
+        enn2real (paper_v k L T K w) < a}
+        = {y :: real^'n. paper_v k L T K y < ennreal a}"
+      by (simp add: key)
+    then show ?thesis
+      using paper_v_open_less[OF T L K, of k "ennreal a"] by simp
+  next
+    case False
+    have "{w \<in> space (borel :: (real^'n) measure).
+        enn2real (paper_v k L T K w) < a} = {}"
+    proof (rule equals0I)
+      fix w assume "w \<in> {w \<in> space (borel :: (real^'n) measure).
+          enn2real (paper_v k L T K w) < a}"
+      then have "enn2real (paper_v k L T K w) < a" by simp
+      moreover have "0 \<le> enn2real (paper_v k L T K w)" by simp
+      ultimately show False using False by simp
+    qed
+    then show ?thesis by simp
+  qed
+qed
+
 end
