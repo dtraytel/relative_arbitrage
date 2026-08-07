@@ -12890,4 +12890,136 @@ proof (intro conjI y allI impI)
   qed
 qed
 
+subsection \<open>The two constructions agree at a countably valued kernel\<close>
+
+text \<open>The last structural step.  With a countably valued index the
+  product-of-all-candidates construction and the Giry semidirect product
+  give the SAME law, because the second coordinate of the product,
+  evaluated at a first-coordinate-measurable index, has exactly the
+  kernel's law.  Both sides reduce to
+  \<open>\<integral>\<^sup>+\<omega>. (RR (N \<omega>)) {\<omega>'. pglue r T \<omega> \<omega>' \<in> A} \<partial>Q\<close>: on the left by Fubini and
+  @{thm [source] distr_PiM_component}, on the right by @{thm [source]
+  emeasure_bind} and @{thm [source] emeasure_distr}.\<close>
+
+lemma kglue_law_eq_kglue_law':
+  fixes Q :: "('n::finite pairpath) measure"
+    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
+    and K: "(\<lambda>\<omega>. RR (N \<omega>)) \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+  shows "kglue_law r T N Q RR = kglue_law' r T (\<lambda>\<omega>. RR (N \<omega>)) Q"
+proof (rule measure_eqI)
+  let ?MR = "borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?S = "Pi\<^sub>M UNIV RR"
+  let ?P = "Q \<Otimes>\<^sub>M ?S"
+  interpret PQ: prob_space Q by (rule PQ)
+  interpret PS: prob_space ?S by (rule prob_space_PiM) (rule PR)
+  have ne: "space Q \<noteq> {}" by (rule PQ.not_empty)
+  have gm: "kglue r T N \<in> ?P \<rightarrow>\<^sub>M ?B"
+    by (rule kglue_measurable[OF r rT setsQ setsR Nm])
+  have pm: "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> ksemi Q ?MR (\<lambda>\<omega>. RR (N \<omega>)) \<rightarrow>\<^sub>M ?B"
+    by (rule kglue_law'_measurable[OF r rT setsQ K ne])
+  show "sets (kglue_law r T N Q RR) = sets (kglue_law' r T (\<lambda>\<omega>. RR (N \<omega>)) Q)"
+    by simp
+  fix A :: "('n pairpath) set"
+  assume A: "A \<in> sets (kglue_law r T N Q RR)"
+  then have AB: "A \<in> sets ?B" by simp
+  \<comment> \<open>the section of the pulled-back set, one \<omega> at a time\<close>
+  have sec: "emeasure (RR (N \<omega>)) {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}
+      = emeasure ?S (Pair \<omega> -` (kglue r T N -` A \<inter> space ?P))"
+    if w: "\<omega> \<in> space Q" for \<omega>
+  proof -
+    have Pj: "prob_space (RR i)" if "i \<in> (UNIV :: nat set)" for i by (rule PR)
+    have mj: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f (N \<omega>)) \<in> ?S \<rightarrow>\<^sub>M RR (N \<omega>)"
+      by (rule measurable_component_singleton) simp
+    have dj: "distr ?S (RR (N \<omega>)) (\<lambda>f. f (N \<omega>)) = RR (N \<omega>)"
+      by (rule distr_PiM_component[OF Pj UNIV_I])
+    have pglm: "pglue r T \<omega> \<in> RR (N \<omega>) \<rightarrow>\<^sub>M ?B"
+    proof -
+      have p1: "Pair \<omega> \<in> RR (N \<omega>) \<rightarrow>\<^sub>M Q \<Otimes>\<^sub>M ?MR"
+        using measurable_Pair1'[OF w, of ?MR]
+          measurable_cong_sets[OF setsR refl] by blast
+      have p2: "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M ?MR \<rightarrow>\<^sub>M ?B"
+        by (rule pglue_measurable[OF r rT setsQ refl])
+      from measurable_compose[OF p1 p2] show ?thesis by (simp add: comp_def)
+    qed
+    have Am: "{\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A} \<in> sets (RR (N \<omega>))"
+    proof -
+      have "{\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}
+          = pglue r T \<omega> -` A \<inter> space (RR (N \<omega>))" by auto
+      then show ?thesis using measurable_sets[OF pglm AB] by simp
+    qed
+    have "emeasure (RR (N \<omega>)) {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}
+        = emeasure (distr ?S (RR (N \<omega>)) (\<lambda>f. f (N \<omega>)))
+            {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}"
+      unfolding dj ..
+    also have "\<dots> = emeasure ?S
+        ((\<lambda>f. f (N \<omega>)) -` {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A} \<inter> space ?S)"
+      by (rule emeasure_distr[OF mj Am])
+    also have "(\<lambda>f. f (N \<omega>)) -` {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}
+          \<inter> space ?S
+        = Pair \<omega> -` (kglue r T N -` A \<inter> space ?P)"
+      using w measurable_space[OF mj] by (auto simp: space_pair_measure kglue_def)
+    finally show ?thesis .
+  qed
+  \<comment> \<open>the left-hand side by Fubini\<close>
+  have lhs: "emeasure (kglue_law r T N Q RR) A
+      = (\<integral>\<^sup>+\<omega>. emeasure (RR (N \<omega>)) {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A} \<partial>Q)"
+  proof -
+    have "emeasure (kglue_law r T N Q RR) A
+        = emeasure ?P (kglue r T N -` A \<inter> space ?P)"
+      unfolding kglue_law_def pair_law_of_def by (rule emeasure_distr[OF gm AB])
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. emeasure ?S (Pair \<omega> -` (kglue r T N -` A \<inter> space ?P)) \<partial>Q)"
+      by (rule PS.emeasure_pair_measure_alt) (rule measurable_sets[OF gm AB])
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. emeasure (RR (N \<omega>))
+        {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A} \<partial>Q)"
+      by (rule nn_integral_cong) (simp add: sec)
+    finally show ?thesis .
+  qed
+  \<comment> \<open>the right-hand side by the semidirect product's disintegration\<close>
+  have rhs: "emeasure (kglue_law' r T (\<lambda>\<omega>. RR (N \<omega>)) Q) A
+      = (\<integral>\<^sup>+\<omega>. emeasure (RR (N \<omega>)) {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A} \<partial>Q)"
+  proof -
+    define C where "C = (\<lambda>p. pglue r T (fst p) (snd p)) -` A
+        \<inter> space (ksemi Q ?MR (\<lambda>\<omega>. RR (N \<omega>)))"
+    have Cs: "C \<in> sets (ksemi Q ?MR (\<lambda>\<omega>. RR (N \<omega>)))"
+      unfolding C_def by (rule measurable_sets[OF pm AB])
+    have Csp: "C \<in> sets (Q \<Otimes>\<^sub>M ?MR)" using Cs sets_ksemi[OF K ne] by simp
+    have "emeasure (kglue_law' r T (\<lambda>\<omega>. RR (N \<omega>)) Q) A
+        = emeasure (ksemi Q ?MR (\<lambda>\<omega>. RR (N \<omega>))) C"
+      unfolding kglue_law'_def pair_law_of_def C_def
+      by (rule emeasure_distr[OF pm AB])
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. emeasure (distr (RR (N \<omega>)) (Q \<Otimes>\<^sub>M ?MR) (Pair \<omega>)) C \<partial>Q)"
+      unfolding ksemi_def
+      by (rule emeasure_bind[OF ne ksemi_kernel_measurable[OF K] Csp])
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. emeasure (RR (N \<omega>))
+        {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A} \<partial>Q)"
+    proof (rule nn_integral_cong)
+      fix \<omega> assume w: "\<omega> \<in> space Q"
+      have spR: "space (RR (N \<omega>)) = space ?MR"
+        by (rule sets_eq_imp_space_eq[OF setsR])
+      have "emeasure (distr (RR (N \<omega>)) (Q \<Otimes>\<^sub>M ?MR) (Pair \<omega>)) C
+          = emeasure (RR (N \<omega>)) (Pair \<omega> -` C \<inter> space (RR (N \<omega>)))"
+        by (rule emeasure_distr[OF ksemi_Pair_measurable[OF K w] Csp])
+      also have "Pair \<omega> -` C \<inter> space (RR (N \<omega>))
+          = {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}"
+        unfolding C_def
+        using w spR space_ksemi[OF K ne] by (auto simp: space_pair_measure)
+      finally show "emeasure (distr (RR (N \<omega>)) (Q \<Otimes>\<^sub>M ?MR) (Pair \<omega>)) C
+          = emeasure (RR (N \<omega>)) {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}" .
+    qed
+    finally show ?thesis .
+  qed
+  show "emeasure (kglue_law r T N Q RR) A
+      = emeasure (kglue_law' r T (\<lambda>\<omega>. RR (N \<omega>)) Q) A"
+    using lhs rhs by simp
+qed
+
 end
