@@ -563,12 +563,22 @@ be loaded — develop-and-verify in `Paper_Bridge`'s tail and move, or restart.
    factor is again a martingale. The AFP has only the
    conditional-expectation half, `Conditional_Expectation_Banach.
    cond_exp_measurable_mult`, and only for REAL-valued factors. So this item
-   is three lemmas: (α) that martingale-level statement, via
-   `martingale_of_set_integral_eq` + `cond_exp_set_integral` +
-   `cond_exp_measurable_mult`; (β) the entrywise lift to `real^'n^'n` through
-   `martingale_matI`; (γ) integrability of `X_t $ i * X_r $ j`, which
-   `paper_pair_class_fourth_moment` supplies by Cauchy–Schwarz. Budget
-   300–500 lines.
+   was three lemmas, and **all three are now proved**:
+
+   | result | content |
+   |---|---|
+   | `martingale_mult_measurable` | (α) the martingale-level statement: `v ∈ borel_measurable (F 0)` and integrability of the products ⟹ `λu ω. v ω * X u ω` is a martingale. Via `martingale_of_set_integral_eq` + `cond_exp_set_integral` + `cond_exp_measurable_mult`. The factor must be measurable at the INITIAL time, not merely somewhere along the filtration |
+   | `martingale_cross_measurable` | (β) the entrywise lift: the cross term `X_t ⊗ v + v ⊗ X_t` is a matrix martingale, through `martingale_matI` |
+   | `integrable_mult_of_sq` | (γ) a product is integrable as soon as both squares are, by `|ab| ≤ (a²+b²)/2` — feed it `paper_pair_class_sq_integrable` |
+   | `martingale_diff` | the subtractive companion of `martingale_add`, in neither the development nor the AFP, and needed to combine the three summands |
+
+   **What is left of clause (iv) is the assembly only** — a
+   `pfut_law_comp_martingale` mirroring `pfut_law_X_martingale`, supplying
+   `martingale_future_of_past` with (A) the class's clause (iv) time-changed,
+   minus (B) `martingale_cross_measurable` at `X u ω = fst (ω (r + min u
+   (T-r)))`, `v ω = fst (ω r)`, plus (C) the `ℱ_r`-measurable constant
+   `outerp (fst (ω r)) + snd (ω r)`; then `paper_pair_class_future_of_past`
+   packaging all four clauses. Budget 150–250 lines.
 2. `ℱ_r`-measurability of the survival event
    `{ω. pexit r K (λt. fst (ω t)) = r ∧ fst (ω r) ∈ K}` — the second
    conjunct is a coordinate, the first needs the rational reduction
