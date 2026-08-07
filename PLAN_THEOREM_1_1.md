@@ -90,6 +90,9 @@ All in `Paper_Bridge.thy` unless noted. `paper_pair_class k L T x`
 | `bmpair_law_in_paper_pair_class` | the class is NONEMPTY: Brownian motion paired with `Y_t = t·I`, capped at `T` |
 | `paper_v_usc_unconditional` | **clause (1) for `paper_v`** |
 | `paper_v_attained` | the supremum in (1.6) is a MAXIMUM — an optimizer exists in the class (pointwise half of LR Prop. 2.2(ii)); via `Lipschitz_pfst`, `ess_inf_time_pfst`, `ess_inf_pexit_usc` |
+| `paper_pair_class_compactin_weak`, `paper_pair_class_compact_metric_space` | the class is a COMPACT METRIC SPACE of measures (Lévy–Prokhorov, AFP) |
+| `pshift_law_weak_conv_joint`, `ess_inf_pexit_pshift_usc` | the shift is jointly continuous and the payoff jointly usc |
+| `paper_v_measurable_selector` | **LR Prop. 2.2(ii) in full**: a MEASURABLE optimizer `y ↦ S y`; `…_kernel` restates it into `prob_algebra` |
 
 Reusable machinery built for the above, none of it in the AFP — use it, do
 not rebuild it:
@@ -372,9 +375,17 @@ DPP.**
        a MEASURABLE `x ↦ Q_x` picking an optimizer. Attainment gives the
        optimizer pointwise; the selector is what §2.1(c)(2) above is about.
 
-  3. **Applying the selection theorem.** Three things stand between
-     `usc_measurable_selection` and LR (ii). **(i) is DONE, (ii) is done
-     mathematically, (iii) is a redesign and is untouched.**
+  3. **Applying the selection theorem — (i) and (ii) are DONE.**
+     **`paper_v_measurable_selector` (2026-08-07) IS Larsson–Ruf
+     Proposition 2.2(ii)**: for `0 < T`, `1 ≤ L`, `closed K` there is
+     `S ∈ borel →⇩M borel_of (weak_conv_topology (mtopology_of (path_metric T)))`
+     with `S y ∈ 𝒞₀`, `pshift_law T y (S y) ∈ paper_pair_class k L T y` and
+     `ess_inf_time (pshift_law T y (S y)) (τ_K∘fst) = paper_v k L T K y`.
+     `paper_v_measurable_selector_kernel` restates it with the selector
+     measurable into `prob_algebra` — a Giry-monad kernel, which is the
+     interface kernel pasting needs.
+
+     The three steps, for the record:
 
      - **(i) the class IS a COMPACT METRIC SPACE — DONE 2026-08-07.**
        `paper_pair_class_compactin_weak`: the class is `compactin` the
@@ -414,26 +425,36 @@ DPP.**
        `|∫f(y_m+·)dR_m − ∫f(y+·)dR_m| + |∫f(y+·)dR_m − ∫f(y+·)dR|` closes
        with no tightness at all.
 
-       **What is left in (ii)** is only bookkeeping, but it is real: turn
-       the sequential statements into the two hypotheses of
-       `usc_measurable_selection` at `M := 𝒞₀`, `P := borel`,
-       `f y R := ess_inf_time (pshift_law T y R) (pexit T K ∘ fst)`.
-       (a) `openin` of `{R ∈ 𝒞₀. f y R < c}` — sequential closedness of the
-       complement plus `Metric_space.closure_of_sequentially`.
-       (b) `(λy. Sup (f y ` C))` Borel for closed `C ⊆ 𝒞₀` — prove
-       `closed {y. c ≤ Sup (f y ` C)}` by `closed_sequential_limits`,
-       extracting a convergent subsequence in the compact `C`, then
-       `borel_measurableI_ge`. Then `paper_pair_class_shift_image` turns
-       `Sup (f y ` 𝒞₀)` into `paper_v k L T K y` and the selector is LR (ii).
-     - **(iii) Kernel pasting — NOT STARTED.** Replace `Q ⊗⇩M Pi⇩M UNIV RR`
-       in `kglue_law` by the semidirect product
-       `Q ⤜ (λω. distr (K ω) _ (Pair ω))` for a kernel
-       `K ∈ (path space) →⇩M prob_algebra (path space)`. The four clauses of
-       (1.7) then have to be re-proved for it; the product martingale
-       machinery (`martingale_pair_fst/snd/mult`, Fubini sectionwise) is the
-       part that will need rebuilding, since `bind` is not a product
-       measure. Budget this as its own session — it is comparable in size to
-       the whole `kglue_law` development (≈1,500 lines).
+       The bookkeeping is DONE too, inside `paper_v_measurable_selector`:
+       (a) `openin {R ∈ 𝒞₀. f y R < c}` is the joint statement along a
+       CONSTANT parameter sequence plus `closure_of_sequentially`;
+       (b) `(λy. Sup (f y ` C))` Borel for closed `C ⊆ 𝒞₀` comes from
+       `closed {y. c ≤ Sup (f y ` C)}` via `closed_sequential_limits`,
+       `compactin_sequentially` for the subsequence, and
+       `borel_measurableI_ge`. Attainment of the supremum is NOT needed —
+       only `b < c` for every `b` below `c`, i.e. `ennreal_strict_between`.
+     - **(iii) Kernel pasting — the INTERFACE is done, the construction is
+       not.** `paper_v_measurable_selector_kernel` gives the continuation as
+       a genuine kernel `S ∈ borel →⇩M prob_algebra (borel_of …)`, using
+       `Space_of_Finite_Measures.weak_conv_topology_eq_prob_algebra` (this
+       is why `Paper_Bridge` now imports that theory) and
+       `Polish_space_path_metric`.
+
+       What remains is the construction itself: replace
+       `Q ⊗⇩M Pi⇩M UNIV RR` in `kglue_law` by the semidirect product
+       `Q ⤜ (λω. distr (K ω) _ (Pair ω))` and re-prove the four clauses of
+       (1.7). Expect the split to be:
+       * `sets`/`space`/`prob_space` of the glued law, and clauses (i)
+         (start) and (ii) (the covariation difference quotient) — these are
+         almost-sure statements and go through `AE_bind`;
+       * clauses (iii) and (iv), the two martingale statements — these are
+         the real work, because the product-martingale machinery
+         (`martingale_pair_fst/snd/mult`, Fubini plus sectionwise use of the
+         factor's `set_integral_eq`) does NOT apply: `bind` is not a product
+         measure. Expect to rebuild it from `emeasure_bind`,
+         `nn_integral_bind` and `integral_bind`.
+       Budget this as its own session — it is comparable in size to the
+       whole `kglue_law` development (≈1,500 lines).
 
   4. **The `≤` half** — conditioning, i.e. regular conditional distributions on
      the Polish path space via AFP `Disintegration` (`measure_disintegration`,
