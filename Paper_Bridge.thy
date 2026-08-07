@@ -14234,4 +14234,147 @@ lemma pexit_pfut:
       = pexit (T - r) K (\<lambda>s. fst (\<omega> (r + s)))"
   by (rule pexit_cong_on) (simp add: pfut_fst)
 
+subsection \<open>Conditioning on an event of the past keeps martingales martingales\<close>
+
+text \<open>The structural fact the \<open>\<le>\<close> half turns on.  Conditioning on an event
+  \<open>A\<close> of the PAST rescales the measure by a density that is measurable for
+  the filtration at time \<open>0\<close>; a set integral over \<open>C \<in> \<F>\<^sub>i\<close> then becomes one
+  over \<open>C \<inter> A \<in> \<F>\<^sub>i\<close>, and the martingale property applies unchanged.  There
+  is no approximation and no monotone-class step --- that is what makes this
+  route to the conditional law elementary.\<close>
+
+lemma uniform_measure_density_real:
+  assumes M: "prob_space M" and pos: "0 < measure M A"
+  shows "uniform_measure M A = density M (\<lambda>x. ennreal (indicator A x / measure M A))"
+proof -
+  interpret PM: prob_space M by (rule M)
+  have "(\<lambda>x. indicator A x / emeasure M A)
+      = (\<lambda>x. ennreal (indicator A x / measure M A))"
+  proof
+    fix x show "indicator A x / emeasure M A = ennreal (indicator A x / measure M A)"
+    proof (cases "x \<in> A")
+      case True
+      have "indicator A x / emeasure M A = ennreal 1 / ennreal (measure M A)"
+        using True by (simp add: PM.emeasure_eq_measure)
+      also have "\<dots> = ennreal (1 / measure M A)"
+        by (rule divide_ennreal[OF _ pos]) simp
+      finally show ?thesis using True by simp
+    next
+      case False
+      then show ?thesis by simp
+    qed
+  qed
+  then show ?thesis unfolding uniform_measure_def by simp
+qed
+
+lemma integral_uniform_measure_eq:
+  fixes f :: "'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes M: "prob_space M" and A: "A \<in> sets M" and pos: "0 < measure M A"
+    and f: "f \<in> borel_measurable M"
+  shows "(\<integral>x. f x \<partial>uniform_measure M A)
+      = (\<integral>x. (indicator A x / measure M A) *\<^sub>R f x \<partial>M)"
+proof -
+  have gm: "(\<lambda>x. indicator A x / measure M A) \<in> borel_measurable M"
+    using A by measurable
+  show ?thesis
+    unfolding uniform_measure_density_real[OF M pos]
+    by (rule integral_density[OF f gm]) (use pos in auto)
+qed
+
+lemma integrable_uniform_measureI:
+  fixes f :: "'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes M: "prob_space M" and A: "A \<in> sets M" and pos: "0 < measure M A"
+    and f: "integrable M f"
+  shows "integrable (uniform_measure M A) f"
+proof -
+  have fm: "f \<in> borel_measurable M" using f by simp
+  have gm: "(\<lambda>x. indicator A x / measure M A) \<in> borel_measurable M"
+    using A by measurable
+  have i1: "integrable M (\<lambda>x. indicator A x *\<^sub>R f x)"
+    by (rule integrable_mult_indicator[OF A f])
+  have i2: "integrable M (\<lambda>x. (1 / measure M A) *\<^sub>R (indicator A x *\<^sub>R f x))"
+    by (rule integrable_scaleR_right[OF i1])
+  have eq: "(\<lambda>x. (1 / measure M A) *\<^sub>R (indicator A x *\<^sub>R f x))
+      = (\<lambda>x. (indicator A x / measure M A) *\<^sub>R f x)"
+    by (rule ext) (simp add: field_simps)
+  have "integrable (uniform_measure M A) f
+      \<longleftrightarrow> integrable M (\<lambda>x. (indicator A x / measure M A) *\<^sub>R f x)"
+    unfolding uniform_measure_density_real[OF M pos]
+    by (rule integrable_density[OF fm gm]) (use pos in auto)
+  then show ?thesis using i2 eq by simp
+qed
+
+lemma set_integral_uniform_measure_eq:
+  fixes f :: "'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes M: "prob_space M" and A: "A \<in> sets M" and pos: "0 < measure M A"
+    and f: "f \<in> borel_measurable M" and C: "C \<in> sets M"
+  shows "set_lebesgue_integral (uniform_measure M A) C f
+      = (1 / measure M A) *\<^sub>R set_lebesgue_integral M (C \<inter> A) f"
+proof -
+  have cm: "(\<lambda>x. indicator C x *\<^sub>R f x) \<in> borel_measurable M" using f C by measurable
+  have "set_lebesgue_integral (uniform_measure M A) C f
+      = (\<integral>x. indicator C x *\<^sub>R f x \<partial>uniform_measure M A)"
+    unfolding set_lebesgue_integral_def ..
+  also have "\<dots> = (\<integral>x. (indicator A x / measure M A) *\<^sub>R (indicator C x *\<^sub>R f x) \<partial>M)"
+    by (rule integral_uniform_measure_eq[OF M A pos cm])
+  also have "\<dots> = (\<integral>x. (1 / measure M A) *\<^sub>R (indicator (C \<inter> A) x *\<^sub>R f x) \<partial>M)"
+    by (intro Bochner_Integration.integral_cong) (auto simp: indicator_def)
+  also have "\<dots> = (1 / measure M A) *\<^sub>R (\<integral>x. indicator (C \<inter> A) x *\<^sub>R f x \<partial>M)"
+    by (rule integral_scaleR_right)
+  finally show ?thesis unfolding set_lebesgue_integral_def .
+qed
+
+theorem martingale_uniform_measure:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes M: "prob_space M" and mg: "martingale M F (0::real) X"
+    and A: "A \<in> sets (F 0)" and pos: "0 < measure M A"
+  shows "martingale (uniform_measure M A) F 0 X"
+proof -
+  interpret PM: prob_space M by (rule M)
+  interpret MG: martingale M F "0::real" X by (rule mg)
+  have F0M: "sets (F 0) \<subseteq> sets M" by (rule MG.sets_F_subset[OF order_refl])
+  have AM: "A \<in> sets M" using A F0M by blast
+  have ea0: "emeasure M A \<noteq> 0" using pos by (simp add: PM.emeasure_eq_measure)
+  have eafin: "emeasure M A \<noteq> \<infinity>" by (simp add: PM.emeasure_eq_measure)
+  interpret PU: prob_space "uniform_measure M A"
+    by (rule prob_space_uniform_measure[OF ea0 eafin])
+  have FU: "filtered_measure (uniform_measure M A) F 0"
+  proof (unfold_locales)
+    show "subalgebra (uniform_measure M A) (F i)" if "0 \<le> i" for i :: real
+      using MG.subalgebras[OF that] by (simp add: subalgebra_def)
+    show "sets (F i) \<le> sets (F j)" if "0 \<le> i" "i \<le> j" for i j :: real
+      by (rule MG.sets_F_mono[OF that])
+  qed
+  interpret FU: finite_filtered_measure "uniform_measure M A" F "0::real"
+    unfolding finite_filtered_measure_def
+    using FU PU.finite_measure_axioms by blast
+  show ?thesis
+  proof (rule FU.martingale_of_set_integral_eq)
+    show "adapted_process (uniform_measure M A) F 0 X"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using FU MG.adapted by blast
+    show "integrable (uniform_measure M A) (X i)" if "0 \<le> i" for i
+      by (rule integrable_uniform_measureI[OF M AM pos MG.integrable[OF that]])
+    fix C and i j :: real
+    assume ij: "0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
+    have CM: "C \<in> sets M" using C MG.sets_F_subset[OF ij(1)] by auto
+    have AFi: "A \<in> sets (F i)" using A MG.sets_F_mono[OF order_refl ij(1)] by auto
+    have CA: "C \<inter> A \<in> sets (F i)" using C AFi by (rule sets.Int)
+    have Xm: "X i \<in> borel_measurable M"
+      by (rule measurable_from_subalg[OF MG.subalgebras[OF ij(1)] MG.adapted[OF ij(1)]])
+    have j0: "0 \<le> j" using ij by simp
+    have Xmj: "X j \<in> borel_measurable M"
+      by (rule measurable_from_subalg[OF MG.subalgebras[OF j0] MG.adapted[OF j0]])
+    have "set_lebesgue_integral (uniform_measure M A) C (X i)
+        = (1 / measure M A) *\<^sub>R set_lebesgue_integral M (C \<inter> A) (X i)"
+      by (rule set_integral_uniform_measure_eq[OF M AM pos Xm CM])
+    also have "\<dots> = (1 / measure M A) *\<^sub>R set_lebesgue_integral M (C \<inter> A) (X j)"
+      using MG.set_integral_eq[OF CA ij(1) ij(2)] by simp
+    also have "\<dots> = set_lebesgue_integral (uniform_measure M A) C (X j)"
+      by (rule set_integral_uniform_measure_eq[OF M AM pos Xmj CM, symmetric])
+    finally show "set_lebesgue_integral (uniform_measure M A) C (X i)
+        = set_lebesgue_integral (uniform_measure M A) C (X j)" .
+  qed
+qed
+
 end
