@@ -4117,4 +4117,47 @@ proof -
   qed
 qed
 
+text \<open>And the \<pi>-system the previous lemma is going to be handed.  The key
+  identification is that \<open>\<F>\<^sub>s\<close> IS the pullback of the \<open>s\<close>-path space's Borel
+  sets along \<^const>\<open>pcut\<close> --- one inclusion is
+  @{thm [source] natural_filtration_eq_restrict_vimage} (already in
+  \<open>Paper_Bridge\<close>), the other is
+  @{thm [source] pcut_vimage_natural_filtration}.
+
+  That identification is what makes the countable \<pi>-system cheap.  Going
+  through the coordinate evaluations directly would force a restriction of
+  the TIME index to the rationals, and hence a limit-of-measurable-functions
+  argument to recover the irrational times.  Going through \<^const>\<open>pcut\<close>
+  instead, the continuity of the paths is already encoded in the topology of
+  the \<open>s\<close>-path space, and SECOND COUNTABILITY of that space
+  (@{thm [source] second_countable_path_metric}) hands over a countable base
+  with no limit argument at all.\<close>
+
+lemma sets_natural_filtration_eq_pcut_vimage:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and s: "0 \<le> s" and sT: "s \<le> T"
+  shows "sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s)
+      = {pcut s -` B \<inter> space Q | B. B \<in> sets (borel_of (mtopology_of
+          (path_metric s :: ('n pairpath) metric)))}"
+proof (rule set_eqI, rule iffI)
+  let ?Bs = "borel_of (mtopology_of (path_metric s :: ('n pairpath) metric))"
+  fix A :: "('n pairpath) set"
+  assume "A \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u) s)"
+  then obtain Bs where Bs: "Bs \<in> sets ?Bs"
+    and Aeq: "A = (\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..s}) -` Bs \<inter> space Q"
+    by (rule natural_filtration_eq_restrict_vimage[OF setsQ s sT]) blast
+  have "A = pcut s -` Bs \<inter> space Q" unfolding Aeq pcut_def ..
+  with Bs show "A \<in> {pcut s -` B \<inter> space Q | B. B \<in> sets ?Bs}" by blast
+next
+  let ?Bs = "borel_of (mtopology_of (path_metric s :: ('n pairpath) metric))"
+  fix A :: "('n pairpath) set"
+  assume "A \<in> {pcut s -` B \<inter> space Q | B. B \<in> sets ?Bs}"
+  then obtain B where B: "B \<in> sets ?Bs" and Aeq: "A = pcut s -` B \<inter> space Q"
+    by blast
+  show "A \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u) s)"
+    unfolding Aeq by (rule pcut_vimage_natural_filtration[OF s sT setsQ B])
+qed
+
 end
