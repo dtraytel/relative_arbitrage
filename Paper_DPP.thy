@@ -2872,4 +2872,99 @@ proof -
   qed
 qed
 
+text \<open>The unbounded disintegration of Bochner integrals, through the
+  positive and negative parts.  @{thm [source] real_lebesgue_integral_def}
+  splits both sides into \<open>enn2real\<close> of nonnegative integrals, and on those
+  @{thm [source] nn_integral_ksemi} applies with no boundedness hypothesis at
+  all.\<close>
+
+lemma integral_ksemi_real:
+  fixes g :: "'a \<times> 'b \<Rightarrow> real"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    and gi: "integrable (ksemi M N Kr) g"
+    and ne: "space M \<noteq> {}"
+    and msec: "(\<lambda>\<omega>. \<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+  shows "(\<integral>p. g p \<partial>(ksemi M N Kr)) = (\<integral>\<omega>. (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+proof -
+  define A where "A \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (g (\<omega>, \<omega>')) \<partial>(Kr \<omega>))" for \<omega>
+  define B where "B \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (- g (\<omega>, \<omega>')) \<partial>(Kr \<omega>))" for \<omega>
+  have Ksub: "Kr \<in> M \<rightarrow>\<^sub>M subprob_algebra N"
+    by (rule measurable_prob_algebraD[OF K])
+  have mA: "A \<in> borel_measurable M"
+    unfolding A_def
+    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
+       (use gm in \<open>simp add: case_prod_unfold\<close>)
+  have mB: "B \<in> borel_measurable M"
+    unfolding B_def
+    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
+       (use gm in \<open>simp add: case_prod_unfold\<close>)
+  have nnA: "(\<integral>\<^sup>+p. ennreal (g p) \<partial>(ksemi M N Kr)) = (\<integral>\<^sup>+\<omega>. A \<omega> \<partial>M)"
+    unfolding A_def by (rule nn_integral_ksemi[OF K]) (use gm in measurable)
+  have nnB: "(\<integral>\<^sup>+p. ennreal (- g p) \<partial>(ksemi M N Kr)) = (\<integral>\<^sup>+\<omega>. B \<omega> \<partial>M)"
+    unfolding B_def by (rule nn_integral_ksemi[OF K]) (use gm in measurable)
+  have absfin: "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr)) < \<top>"
+    using gi by (simp add: integrable_iff_bounded)
+  have leA: "(\<integral>\<^sup>+p. ennreal (g p) \<partial>(ksemi M N Kr))
+      \<le> (\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr))"
+    by (intro nn_integral_mono ennreal_leI) simp
+  have leB: "(\<integral>\<^sup>+p. ennreal (- g p) \<partial>(ksemi M N Kr))
+      \<le> (\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr))"
+    by (intro nn_integral_mono ennreal_leI) simp
+  have finA: "(\<integral>\<^sup>+\<omega>. A \<omega> \<partial>M) < \<top>"
+    using leA absfin unfolding nnA[symmetric] by simp
+  have finB: "(\<integral>\<^sup>+\<omega>. B \<omega> \<partial>M) < \<top>"
+    using leB absfin unfolding nnB[symmetric] by simp
+  have aeA: "AE \<omega> in M. A \<omega> \<noteq> \<infinity>"
+    by (rule nn_integral_PInf_AE[OF mA]) (use finA in \<open>simp add: less_top\<close>)
+  have aeB: "AE \<omega> in M. B \<omega> \<noteq> \<infinity>"
+    by (rule nn_integral_PInf_AE[OF mB]) (use finB in \<open>simp add: less_top\<close>)
+  have eqA: "(\<integral>\<^sup>+\<omega>. ennreal (enn2real (A \<omega>)) \<partial>M) = (\<integral>\<^sup>+\<omega>. A \<omega> \<partial>M)"
+    using aeA by (intro nn_integral_cong_AE) (auto simp: less_top)
+  have eqB: "(\<integral>\<^sup>+\<omega>. ennreal (enn2real (B \<omega>)) \<partial>M) = (\<integral>\<^sup>+\<omega>. B \<omega> \<partial>M)"
+    using aeB by (intro nn_integral_cong_AE) (auto simp: less_top)
+  have iA: "integrable M (\<lambda>\<omega>. enn2real (A \<omega>))"
+    using mA eqA finA by (simp add: integrable_iff_bounded)
+  have iB: "integrable M (\<lambda>\<omega>. enn2real (B \<omega>))"
+    using mB eqB finB by (simp add: integrable_iff_bounded)
+  have intA: "(\<integral>\<omega>. enn2real (A \<omega>) \<partial>M) = enn2real (\<integral>\<^sup>+\<omega>. A \<omega> \<partial>M)"
+  proof -
+    have "(\<integral>\<^sup>+\<omega>. ennreal (enn2real (A \<omega>)) \<partial>M) = (\<integral>\<omega>. enn2real (A \<omega>) \<partial>M)"
+      by (rule nn_integral_eq_integral[OF iA]) simp
+    then show ?thesis using eqA by simp
+  qed
+  have intB: "(\<integral>\<omega>. enn2real (B \<omega>) \<partial>M) = enn2real (\<integral>\<^sup>+\<omega>. B \<omega> \<partial>M)"
+  proof -
+    have "(\<integral>\<^sup>+\<omega>. ennreal (enn2real (B \<omega>)) \<partial>M) = (\<integral>\<omega>. enn2real (B \<omega>) \<partial>M)"
+      by (rule nn_integral_eq_integral[OF iB]) simp
+    then show ?thesis using eqB by simp
+  qed
+  have aesec: "AE \<omega> in M. (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>))
+      = enn2real (A \<omega>) - enn2real (B \<omega>)"
+  proof -
+    have "AE \<omega> in M. integrable (Kr \<omega>) (\<lambda>\<omega>'. g (\<omega>, \<omega>'))"
+      by (rule AE_integrable_ksemi_section[OF K gm gi ne])
+    then show ?thesis
+    proof eventually_elim
+      fix \<omega> assume "integrable (Kr \<omega>) (\<lambda>\<omega>'. g (\<omega>, \<omega>'))"
+      then show "(\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) = enn2real (A \<omega>) - enn2real (B \<omega>)"
+        unfolding A_def B_def by (rule real_lebesgue_integral_def)
+    qed
+  qed
+  have "(\<integral>p. g p \<partial>(ksemi M N Kr))
+      = enn2real (\<integral>\<^sup>+p. ennreal (g p) \<partial>(ksemi M N Kr))
+        - enn2real (\<integral>\<^sup>+p. ennreal (- g p) \<partial>(ksemi M N Kr))"
+    by (rule real_lebesgue_integral_def[OF gi])
+  also have "\<dots> = enn2real (\<integral>\<^sup>+\<omega>. A \<omega> \<partial>M) - enn2real (\<integral>\<^sup>+\<omega>. B \<omega> \<partial>M)"
+    unfolding nnA nnB ..
+  also have "\<dots> = (\<integral>\<omega>. enn2real (A \<omega>) \<partial>M) - (\<integral>\<omega>. enn2real (B \<omega>) \<partial>M)"
+    unfolding intA intB ..
+  also have "\<dots> = (\<integral>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>) \<partial>M)"
+    by (rule Bochner_Integration.integral_diff[OF iA iB, symmetric])
+  also have "\<dots> = (\<integral>\<omega>. (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+    using aesec msec iA iB
+    by (intro Bochner_Integration.integral_cong_AE) auto
+  finally show ?thesis .
+qed
+
 end
