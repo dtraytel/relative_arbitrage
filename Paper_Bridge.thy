@@ -13022,4 +13022,128 @@ proof (rule measure_eqI)
     using lhs rhs by simp
 qed
 
+subsection \<open>Kernel pasting: clauses (iii) and (iv), by weak closedness\<close>
+
+text \<open>The headline of the new route.  The class is closed under
+  concatenation with a continuation chosen by an ARBITRARY measurable
+  kernel, not just a countably valued index --- and the two martingale
+  clauses never have to be proved for the semidirect product.
+
+  Round the kernel to the dense sequence of the compact class
+  (@{thm [source] Metric_space.countably_valued_approx}); each rounded
+  glue is a legitimate pasting
+  (@{thm [source] paper_pair_class_kglue_law}) and, by
+  @{thm [source] kglue_law_eq_kglue_law'}, is the kernel glue at the
+  rounded kernel; the semidirect products converge weakly
+  (@{thm [source] ksemi_weak_conv}), the glue is continuous
+  (@{thm [source] Lipschitz_pglue}), so the glued laws converge; and the
+  class is weakly closed
+  (@{thm [source] paper_pair_class_weak_closed}).\<close>
+
+theorem paper_pair_class_kglue_law':
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L"
+    and T0: "0 < T"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
+        \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+            (paper_pair_class k L (T - r) (0::real^'n))
+            (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
+              (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
+    and Kc: "\<And>\<omega>. Kr \<omega> \<in> paper_pair_class k L (T - r) 0"
+  shows "kglue_law' r T Kr Q \<in> paper_pair_class k L T x"
+proof -
+  let ?s = "T - r"
+  let ?C0 = "paper_pair_class k L ?s (0::real^'n)"
+  let ?dd = "Levy_Prokhorov.LPm (mspace (path_metric ?s :: ('n pairpath) metric))
+      (mdist (path_metric ?s :: ('n pairpath) metric))"
+  let ?MR = "borel_of (mtopology_of (path_metric ?s :: ('n pairpath) metric))"
+  let ?X = "mtopology_of (path_metric r :: ('n pairpath) metric)"
+  let ?Y = "mtopology_of (path_metric ?s :: ('n pairpath) metric)"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have s0: "0 < ?s" using rT by simp
+  have s0': "0 \<le> ?s" using s0 by simp
+  have L0: "0 \<le> L" using L1 by simp
+  have rT': "r \<le> T" using rT by simp
+  have setsQ: "sets Q = sets (borel_of ?X)" by (rule paper_pair_class_sets[OF Q])
+  have PQ: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  interpret MC: Metric_space "paper_pair_class k L ?s (0::real^'n)" ?dd
+    by (rule paper_pair_class_compact_metric_space(1)[OF s0 L0])
+  have Ctop: "MC.mtopology = subtopology (weak_conv_topology ?Y) ?C0"
+    by (rule paper_pair_class_compact_metric_space(2)[OF s0 L0])
+  have Ccpt: "compact_space MC.mtopology"
+    by (rule paper_pair_class_compact_metric_space(3)[OF s0 L0])
+  have Cne: "?C0 \<noteq> {}" by (rule paper_pair_class_nonempty[OF s0' L1])
+  \<comment> \<open>round the kernel to a dense sequence of the compact class\<close>
+  obtain z :: "nat \<Rightarrow> ('n pairpath) measure"
+    and Nm :: "nat \<Rightarrow> 'n pairpath \<Rightarrow> nat"
+    where zC: "\<And>j. z j \<in> ?C0"
+    and Nmeas: "\<And>m. Nm m \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
+        \<rightarrow>\<^sub>M count_space UNIV"
+    and zclose: "\<And>m \<omega>. ?dd (z (Nm m \<omega>)) (Kr \<omega>) < (1/2)^m"
+    by (rule MC.countably_valued_approx[OF Ccpt Cne Kb Kc]) blast
+  have NmQ: "Nm m \<in> Q \<rightarrow>\<^sub>M count_space UNIV" for m
+  proof -
+    interpret MQ0: martingale Q "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+      "0::real" "\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n"
+      by (rule paper_pair_class_X_martingale[OF Q])
+    show ?thesis by (rule measurable_from_subalg[OF MQ0.subalgebras[OF r] Nmeas])
+  qed
+  \<comment> \<open>each rounded glue is in the class, and IS the kernel glue at the rounding\<close>
+  have memm: "kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q \<in> paper_pair_class k L T x" for m
+  proof -
+    have "kglue_law r T (Nm m) Q z \<in> paper_pair_class k L T x"
+      by (rule paper_pair_class_kglue_law[OF r rT' L0 Q zC Nmeas])
+    moreover have "kglue_law r T (Nm m) Q z = kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q"
+    proof (rule kglue_law_eq_kglue_law'[OF r rT' PQ _ setsQ _ NmQ])
+      show "prob_space (z j)" for j by (rule paper_pair_class_prob[OF zC])
+      show "sets (z j) = sets ?MR" for j by (rule paper_pair_class_sets[OF zC])
+      show "(\<lambda>\<omega>. z (Nm m \<omega>)) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR"
+      proof (rule measurable_compose_countable[where f = "\<lambda>j (_ :: 'n pairpath). z j"])
+        show "(\<lambda>\<omega>. z j) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR" for j
+          using paper_pair_class_prob[OF zC] paper_pair_class_sets[OF zC]
+          by (simp add: measurable_const space_prob_algebra)
+        show "Nm m \<in> Q \<rightarrow>\<^sub>M count_space UNIV" by (rule NmQ)
+      qed
+    qed
+    ultimately show ?thesis by simp
+  qed
+  \<comment> \<open>the kernels converge pointwise, hence the semidirect products do\<close>
+  have Kpm: "(\<lambda>\<omega>. z (Nm m \<omega>)) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR" for m
+  proof (rule measurable_compose_countable[where f = "\<lambda>j (_ :: 'n pairpath). z j"])
+    show "(\<lambda>\<omega>. z j) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR" for j
+      using paper_pair_class_prob[OF zC] paper_pair_class_sets[OF zC]
+      by (simp add: measurable_const space_prob_algebra)
+    show "Nm m \<in> Q \<rightarrow>\<^sub>M count_space UNIV" by (rule NmQ)
+  qed
+  have kconv: "weak_conv_on (\<lambda>m. z (Nm m \<omega>)) (Kr \<omega>) sequentially ?Y" for \<omega>
+  proof -
+    have "limitin MC.mtopology (\<lambda>m. z (Nm m \<omega>)) (Kr \<omega>) sequentially"
+      by (rule MC.limitin_of_dist_half[OF zC Kc zclose])
+    then show ?thesis unfolding Ctop by (simp add: limitin_subtopology)
+  qed
+  have swc: "weak_conv_on (\<lambda>m. ksemi Q ?MR (\<lambda>\<omega>. z (Nm m \<omega>)))
+      (ksemi Q ?MR Kr) sequentially (prod_topology ?X ?Y)"
+    by (rule ksemi_weak_conv[OF PQ setsQ second_countable_path_metric
+          second_countable_path_metric Kpm Kp]) (rule kconv)
+  \<comment> \<open>push forward along the continuous glue\<close>
+  have cglue: "continuous_map (prod_topology ?X ?Y)
+      (mtopology_of (path_metric T :: ('n pairpath) metric))
+      (\<lambda>p. pglue r T (fst p) (snd p))"
+    using Lipschitz_continuous_imp_continuous_map[OF Lipschitz_pglue[OF r rT']]
+    by simp
+  have gconv: "weak_conv_on (\<lambda>m. kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q)
+      (kglue_law' r T Kr Q) sequentially
+      (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    using weak_conv_on_pushforward[OF cglue swc]
+    unfolding kglue_law'_def pair_law_of_def by simp
+  \<comment> \<open>weak closedness finishes\<close>
+  have pl: "prob_space (kglue_law' r T Kr Q)"
+    by (rule prob_space_kglue_law'[OF r rT' PQ setsQ Kp])
+  show ?thesis
+    by (rule paper_pair_class_weak_closed[OF T0 L0 memm gconv pl]) simp
+qed
+
 end
