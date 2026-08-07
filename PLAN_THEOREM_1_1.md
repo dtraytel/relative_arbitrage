@@ -538,19 +538,37 @@ be loaded — develop-and-verify in `Paper_Bridge`'s tail and move, or restart.
 
 1. `paper_pair_class_future_of_past`: `pair_law_of (T-r) (pfut r T)
    (uniform_measure P A) ∈ paper_pair_class k L (T-r) 0` for
-   `A ∈ ℱ_r`, `P A > 0`. Clauses (i)/(ii) are `AE`-inheritance through
-   `AE_density`; clause (i) is in fact automatic, since `pfut r T ω 0 = 0`
-   identically (`pfut_zero`). Clauses (iii)/(iv) are now an assembly of
-   FOUR existing lemmas and nothing else:
-   `martingale_time_change` (shift the clock by `r`, filtration
-   `ℱ_{r + min u (T-r)}`) → `martingale_sub_initial` (subtract `X_r`) →
-   `martingale_uniform_measure` (condition on `A`) → `martingale_pair_law`
-   (push along `pfut`). **The last two steps are now packaged as
-   `martingale_future_of_past` (proved)**, whose `adap` side condition holds
-   because `pfut r T ω v = ω (r+v) - ω r` reads the path only up to `r+v`.
-   What is left of this item is supplying its `mg` hypothesis for the two
-   concrete processes, i.e. `martingale_time_change` at `s u = r + min u
-   (T-r)` followed by `martingale_sub_initial`, plus clauses (i)/(ii).
+   `A ∈ ℱ_r`, `P A > 0`. **Clauses (i), (ii) and (iii) are DONE** —
+   `pfut_law_start` (in fact identical, not merely a.s., by `pfut_zero`),
+   `pfut_law_diffquot` (inheritance; the base point cancels out of the
+   increment and the two time spans agree), `pfut_law_X_martingale`
+   (`martingale_time_change` at `s u = r + min u (T-r)` →
+   `martingale_sub_initial` → `martingale_future_of_past`, the last packaging
+   `martingale_uniform_measure` + `martingale_pair_law`).
+
+   **Clause (iv) does NOT follow the same way, and this is the one real
+   surprise of the section.** `outerp` is QUADRATIC, so the compensated
+   process of the rebased future is not the increment of the compensated
+   process. `outerp_diff_compensated` (proved) gives the exact
+   decomposition:
+
+       outerp (X_t - X_r) - (Y_t - Y_r)
+         = (outerp X_t - Y_t)            -- clause (iv) for P
+           - (X_t ⊗ X_r + X_r ⊗ X_t)     -- the work
+           + (outerp X_r + Y_r)          -- constant in t, ℱ_r-measurable
+
+   The middle term is a martingale only because `X_r` is `ℱ_r`-measurable,
+   so what is needed is **"pulling out what is known" at the MARTINGALE
+   level**: a martingale multiplied entrywise by a fixed `F 0`-measurable
+   factor is again a martingale. The AFP has only the
+   conditional-expectation half, `Conditional_Expectation_Banach.
+   cond_exp_measurable_mult`, and only for REAL-valued factors. So this item
+   is three lemmas: (α) that martingale-level statement, via
+   `martingale_of_set_integral_eq` + `cond_exp_set_integral` +
+   `cond_exp_measurable_mult`; (β) the entrywise lift to `real^'n^'n` through
+   `martingale_matI`; (γ) integrability of `X_t $ i * X_r $ j`, which
+   `paper_pair_class_fourth_moment` supplies by Cauchy–Schwarz. Budget
+   300–500 lines.
 2. `ℱ_r`-measurability of the survival event
    `{ω. pexit r K (λt. fst (ω t)) = r ∧ fst (ω r) ∈ K}` — the second
    conjunct is a coordinate, the first needs the rational reduction
