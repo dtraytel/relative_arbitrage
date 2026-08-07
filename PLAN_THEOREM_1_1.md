@@ -315,18 +315,41 @@ DPP.**
 
      **Consequences for this development.**
 
-     - A measurable selection theorem of Bertsekas–Shreve type is not in the
-       AFP as far as I know. Check `Standard_Borel_Spaces` and the
-       Jankov–von Neumann / Kuratowski–Ryll-Nardzewski literature before
-       assuming it must be rebuilt from scratch.
-     - `paper_pair_class_kglue_law` takes a COUNTABLY-valued index `N`. An
-       exactly-optimal selector is not countably valued, so either the
-       pasting must be redone with a Giry-monad kernel, or an ε-version of
-       the selection must be found. ε-optimality does suffice for the `≥`
-       half (the conclusion is an inequality between fixed quantities, so
-       `ε → 0` closes it) — but a countable ε-net does NOT come for free from
-       separability of `𝒫₀`, because the supremum of a usc function over a
-       dense subset can be strictly smaller than its supremum.
+     - **The abstract selection theorem — DONE 2026-08-07.**
+       `Paper_Bridge.usc_measurable_selection`, in the `Metric_space`
+       locale: for a nonempty COMPACT metric space `M`, a payoff
+       `f :: 'b ⇒ 'a ⇒ ennreal` that is usc in the second argument for every
+       parameter in `space P`, and whose supremum over every CLOSED set is
+       `P`-measurable in the parameter, there is
+       `s ∈ P →⇩M borel_of mtopology` with `s x ∈ M` and
+       `f x (s x) = Sup (f x ` M)` on `space P`. Nothing of this kind is in
+       the AFP or the distribution — grepped for Kuratowski–Ryll-Nardzewski,
+       Jankov–von Neumann and `measurable_selection`; there are no hits.
+
+       The construction is a GREEDY NESTED BISECTION, not Bertsekas–Shreve's
+       analytic-set machinery. `usc_sel_set` is the set reached by an index
+       sequence into a dense sequence `z` (`compact_space_dense_seq`, also
+       new); each step intersects with the closed ball of radius `2⁻ⁿ⁻¹`
+       around `z j` for the LEAST `j` that keeps the set nonempty and does
+       not lower the supremum. `usc_sel_good_ex` — such a `j` exists because
+       the balls cover the current compact set, so finitely many do, and a
+       supremum over a finite union is the maximum of the pieces'. That step
+       uses NO semicontinuity, so `usc_sel` is total in the payoff.
+       Semicontinuity enters only in `usc_sel_optimal`.
+
+       **Why the greedy recipe and not something slicker**: the chosen index
+       sequence — the CODE — is a countably valued function of the
+       parameter, so on each cell of a countable measurable partition the
+       whole nested family is a FIXED compact set, and for open `U` the
+       preimage `{x. s x ∈ U}` is the countable union of the cells whose set
+       lies in `U`. No limits and no analytic sets.
+     - **`paper_pair_class_kglue_law` cannot be the final form of the pasting
+       step.** It takes a COUNTABLY-valued index `N`, and an ε-version with a
+       countably valued selector DOES NOT EXIST: the supremum of a usc
+       function over a countable dense subset can be strictly smaller than
+       its supremum, so no fixed countable family of candidates is ε-optimal
+       at every parameter. The pasting must be redone with a genuine kernel
+       (`Giry_Monad`: `bind`, `prob_algebra`, `subprob_algebra`).
      - **`paper_v_attained` — DONE 2026-08-06.** The supremum in (1.6) is a
        maximum: for `0 < T`, `1 ≤ L`, `closed K`, some `Q ∈ paper_pair_class
        k L T x` has `ess_inf_time Q (λω. pexit T K (λt. fst (ω t)))
@@ -347,7 +370,42 @@ DPP.**
 
        What is STILL missing for LR (ii) is the *uniform in `x`* statement:
        a MEASURABLE `x ↦ Q_x` picking an optimizer. Attainment gives the
-       optimizer pointwise; the selector is what §2.1(c)(2) below is about.
+       optimizer pointwise; the selector is what §2.1(c)(2) above is about.
+
+  3. **Applying the selection theorem — the next concrete step.** Three
+     things stand between `usc_measurable_selection` and LR (ii). The first
+     is nearly free, the second is real work, the third is a redesign.
+
+     - **(i) `𝒞₀ = paper_pair_class k L T 0` is a COMPACT METRIC SPACE.**
+       AFP `Levy_Prokhorov_Metric` is ALREADY a session dependency and has
+       everything: the `Levy_Prokhorov` locale is a `Metric_space` with the
+       Lévy–Prokhorov distance `LPm` and a sublocale `LPm: Metric_space 𝒫 LPm`;
+       `LPmtopology_eq_weak_conv_topology` identifies its topology with
+       `General_Weak_Convergence.weak_conv_topology` (which is what our
+       `weak_conv_on` is a `limitin` of); `Polish_space_weak_conv_topology`,
+       `separable_LPm`, `closedin_probs`; `Prokhorov_Theorem.
+       tight_imp_relatively_compact` turns our `tight_on_set_paper_pair_class`
+       into `compactin (weak_conv_topology X) (closure_of 𝒞₀)`, and
+       `paper_pair_class_weak_closed` collapses the closure. Restrict `LPm`
+       to `𝒞₀` (`Submetric`) to instantiate the theorem's `M`.
+       `Space_of_Finite_Measures.weak_conv_topology_eq_prob_algebra` then
+       says the Borel σ-algebra of that topology is `prob_algebra`, so
+       "measurable selector" means exactly what the Giry monad expects.
+     - **(ii) JOINT usc of `(y, R) ↦ ess_inf_time (y + R) (pexit T' K)`** on
+       `ℝⁿ × 𝒞₀`. This is what discharges the theorem's second hypothesis:
+       a jointly usc function has a usc — hence Borel — supremum over a
+       fixed compact set. `Exit_Semicontinuity.ess_inf_pexit_usc` gives usc
+       in the measure alone; what has to be added is joint continuity of
+       `(y, R) ↦ pshift_law y R` in the product topology. Both factors are
+       metrizable, so sequences suffice, but the estimate needs tightness of
+       `𝒞₀` to control `∫ f(y_n + ·) dR_n − ∫ f(y + ·) dR_n` uniformly.
+     - **(iii) Kernel pasting.** Replace `Q ⊗⇩M Pi⇩M UNIV RR` in `kglue_law`
+       by the semidirect product `Q ⤜ (λω. distr (K ω) _ (Pair ω))` for a
+       kernel `K ∈ (path space) →⇩M prob_algebra (path space)`. The four
+       clauses of (1.7) then have to be re-proved for it; the product
+       martingale machinery (`martingale_pair_fst/snd/mult`, Fubini
+       sectionwise) is the part that will need rebuilding, since `bind` is
+       not a product measure.
 
   4. **The `≤` half** — conditioning, i.e. regular conditional distributions on
      the Polish path space via AFP `Disintegration` (`measure_disintegration`,
