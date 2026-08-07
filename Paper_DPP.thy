@@ -4160,4 +4160,194 @@ next
     unfolding Aeq by (rule pcut_vimage_natural_filtration[OF s sT setsQ B])
 qed
 
+text \<open>A COUNTABLE \<pi>-system generating the path space's Borel sets.  A base is
+  not \<pi>-stable, so close it under FINITE intersections --- still countable,
+  and it generates the same \<sigma>-algebra because a \<sigma>-algebra is closed under
+  finite intersections.  The whole space is thrown in so that the complement
+  case of @{thm [source] set_integral_zero_of_generator} has something to
+  work with.\<close>
+
+lemma countable_Int_stable_generator_path:
+  fixes s :: real
+  obtains D where
+    "countable D"
+    and "Int_stable D"
+    and "D \<subseteq> Pow (mspace (path_metric s :: ('n::finite pairpath) metric))"
+    and "mspace (path_metric s :: ('n pairpath) metric) \<in> D"
+    and "sets (borel_of (mtopology_of (path_metric s :: ('n pairpath) metric)))
+        = sigma_sets (mspace (path_metric s :: ('n pairpath) metric)) D"
+proof -
+  let ?m = "path_metric s :: ('n pairpath) metric"
+  let ?X = "mtopology_of ?m"
+  have sc: "second_countable ?X" by (rule second_countable_path_metric)
+  \<comment> \<open>NB the base must not be called \<open>OO\<close>: that name is the relation-composition
+      operator and the statement then fails to parse\<close>
+  then obtain BB where cB: "countable BB" and bB: "base_in ?X BB"
+    using second_countable_base_in by blast
+  have Bsub: "U \<subseteq> mspace ?m" if "U \<in> BB" for U
+    using base_in_subset[OF bB that] by simp
+  define B1 where "B1 = insert (mspace ?m) BB"
+  have cB1: "countable B1" unfolding B1_def using cB by simp
+  have B1sub: "U \<subseteq> mspace ?m" if "U \<in> B1" for U
+    using that Bsub unfolding B1_def by auto
+  define FF where "FF = {F. finite F \<and> F \<noteq> {} \<and> F \<subseteq> B1}"
+  define D where "D = (\<lambda>F. \<Inter> F) ` FF"
+
+  \<comment> \<open>membership in \<open>D\<close>, introduced and eliminated WITHOUT search: \<open>blast\<close> on
+      the existential behind an image diverges (it has to invent the witness)\<close>
+  have DE: "\<And>A. A \<in> D \<Longrightarrow> (\<And>F. A = \<Inter> F \<Longrightarrow> finite F \<Longrightarrow> F \<noteq> {} \<Longrightarrow> F \<subseteq> B1 \<Longrightarrow> thesis')
+      \<Longrightarrow> thesis'" for thesis'
+  proof -
+    fix A assume AD: "A \<in> D"
+      and W: "\<And>F. A = \<Inter> F \<Longrightarrow> finite F \<Longrightarrow> F \<noteq> {} \<Longrightarrow> F \<subseteq> B1 \<Longrightarrow> thesis'"
+    from AD obtain F where Aeq: "A = \<Inter> F" and FF: "F \<in> FF"
+      unfolding D_def by (rule imageE)
+    from FF have "finite F" "F \<noteq> {}" "F \<subseteq> B1" unfolding FF_def by simp_all
+    with Aeq show thesis' by (rule W)
+  qed
+  have DI: "\<Inter> F \<in> D" if "finite F" "F \<noteq> {}" "F \<subseteq> B1" for F
+  proof -
+    have "F \<in> FF" unfolding FF_def using that by simp
+    then show ?thesis unfolding D_def by (rule image_eqI[OF refl])
+  qed
+
+  have cD: "countable D"
+    unfolding D_def FF_def
+    by (intro countable_image
+        countable_subset[OF _ countable_Collect_finite_subset[OF cB1]]) auto
+  have Dpow: "D \<subseteq> Pow (mspace ?m)"
+  proof
+    fix A assume "A \<in> D"
+    then show "A \<in> Pow (mspace ?m)"
+    proof (rule DE)
+      fix F assume Aeq: "A = \<Inter> F" and F: "finite F" "F \<noteq> {}" "F \<subseteq> B1"
+      from F(2) obtain U where U: "U \<in> F" by blast
+      have "A \<subseteq> U" unfolding Aeq using U by blast
+      moreover have "U \<subseteq> mspace ?m" using U F(3) B1sub by blast
+      ultimately show "A \<in> Pow (mspace ?m)" by auto
+    qed
+  qed
+  have Dtop: "mspace ?m \<in> D"
+  proof -
+    have "\<Inter> {mspace ?m} \<in> D"
+      by (rule DI) (simp_all add: B1_def)
+    then show ?thesis by simp
+  qed
+  have DInt: "Int_stable D"
+    unfolding Int_stable_def
+  proof (intro ballI)
+    fix A B assume A: "A \<in> D" and B: "B \<in> D"
+    from A show "A \<inter> B \<in> D"
+    proof (rule DE)
+      fix F assume Aeq: "A = \<Inter> F" and F: "finite F" "F \<noteq> {}" "F \<subseteq> B1"
+      from B show "A \<inter> B \<in> D"
+      proof (rule DE)
+        fix G assume Beq: "B = \<Inter> G" and G: "finite G" "G \<noteq> {}" "G \<subseteq> B1"
+        have "A \<inter> B = \<Inter> (F \<union> G)"
+          unfolding Aeq Beq by (simp add: Inter_Un_distrib)
+        moreover have "\<Inter> (F \<union> G) \<in> D"
+          by (rule DI) (use F G in auto)
+        ultimately show "A \<inter> B \<in> D" by simp
+      qed
+    qed
+  qed
+
+  \<comment> \<open>the base already generates, and closing under finite intersections
+      changes nothing\<close>
+  have Bpow: "BB \<subseteq> Pow (mspace ?m)" using Bsub by auto
+  have bsets: "sets (borel_of ?X) = sigma_sets (mspace ?m) BB"
+  proof -
+    have "borel_of ?X = sigma (topspace ?X) BB"
+      by (rule borel_of_second_countable'[OF sc base_is_subbase[OF bB]])
+    then have "borel_of ?X = sigma (mspace ?m) BB" by simp
+    then show ?thesis using sets_measure_of[OF Bpow] by simp
+  qed
+  have Deq: "sigma_sets (mspace ?m) D = sigma_sets (mspace ?m) BB"
+  proof (rule sigma_sets_eqI)
+    fix A assume A: "A \<in> D"
+    interpret SA: sigma_algebra "mspace ?m" "sigma_sets (mspace ?m) BB"
+      by (rule sigma_algebra_sigma_sets[OF Bpow])
+    from A show "A \<in> sigma_sets (mspace ?m) BB"
+    proof (rule DE)
+      fix F assume Aeq: "A = \<Inter> F" and F: "finite F" "F \<noteq> {}" "F \<subseteq> B1"
+      have "U \<in> sigma_sets (mspace ?m) BB" if "U \<in> F" for U
+        using that F(3) unfolding B1_def by (auto simp: sigma_sets_top)
+      then have "(\<Inter>U\<in>F. U) \<in> sigma_sets (mspace ?m) BB"
+        by (rule SA.finite_INT[OF F(1) F(2)])
+      then show "A \<in> sigma_sets (mspace ?m) BB" unfolding Aeq by simp
+    qed
+  next
+    fix U assume U: "U \<in> BB"
+    have "\<Inter> {U} \<in> D" by (rule DI) (use U in \<open>simp_all add: B1_def\<close>)
+    then have "U \<in> D" by simp
+    then show "U \<in> sigma_sets (mspace ?m) D" by (rule sigma_sets.Basic)
+  qed
+  have Dsets: "sets (borel_of ?X) = sigma_sets (mspace ?m) D"
+    unfolding bsets Deq ..
+  show thesis by (rule that[OF cD DInt Dpow Dtop Dsets])
+qed
+
+text \<open>And its pullback: the countable \<pi>-system for \<open>\<F>\<^sub>s\<close> that (b3)'s
+  conditioning sets are going to range over.\<close>
+
+lemma countable_pi_system_natural_filtration_path:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and s: "0 \<le> s" and sT: "s \<le> T"
+  obtains E where
+    "countable E"
+    and "Int_stable E"
+    and "E \<subseteq> Pow (space Q)"
+    and "space Q \<in> E"
+    and "sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s) = sigma_sets (space Q) E"
+proof -
+  let ?ms = "path_metric s :: ('n pairpath) metric"
+  let ?Bs = "borel_of (mtopology_of ?ms)"
+  let ?pb = "\<lambda>U. pcut s -` U \<inter> space Q"
+  obtain D where cD: "countable D" and DInt: "Int_stable D"
+    and Dpow: "D \<subseteq> Pow (mspace ?ms)" and Dtop: "mspace ?ms \<in> D"
+    and Dsets: "sets ?Bs = sigma_sets (mspace ?ms) D"
+    by (rule countable_Int_stable_generator_path)
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have pin: "pcut s \<in> space Q \<rightarrow> mspace ?ms"
+    using restrict_in_mspace[OF s sT] spQ unfolding pcut_def by auto
+  define E where "E = ?pb ` D"
+
+  have cE: "countable E" unfolding E_def by (rule countable_image[OF cD])
+  have Epow: "E \<subseteq> Pow (space Q)" unfolding E_def by auto
+  have Etop: "space Q \<in> E"
+  proof -
+    have "space Q = ?pb (mspace ?ms)" using pin by auto
+    then show ?thesis unfolding E_def by (rule image_eqI[OF _ Dtop])
+  qed
+  have EInt: "Int_stable E"
+    unfolding Int_stable_def
+  proof (intro ballI)
+    fix A B assume "A \<in> E" "B \<in> E"
+    then obtain U V where Aeq: "A = ?pb U" and U: "U \<in> D"
+      and Beq: "B = ?pb V" and V: "V \<in> D"
+      unfolding E_def by blast
+    have "A \<inter> B = ?pb (U \<inter> V)" unfolding Aeq Beq by auto
+    moreover have "U \<inter> V \<in> D" using U V DInt by (simp add: Int_stable_def)
+    ultimately show "A \<inter> B \<in> E" unfolding E_def by (rule image_eqI)
+  qed
+  have Egen: "sets (natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u) s)
+      = sigma_sets (space Q) E"
+  proof -
+    have "sets (natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u) s)
+        = {pcut s -` B \<inter> space Q | B. B \<in> sets ?Bs}"
+      by (rule sets_natural_filtration_eq_pcut_vimage[OF setsQ s sT])
+    also have "\<dots> = {pcut s -` B \<inter> space Q | B. B \<in> sigma_sets (mspace ?ms) D}"
+      unfolding Dsets ..
+    also have "\<dots> = sigma_sets (space Q) {pcut s -` U \<inter> space Q | U. U \<in> D}"
+      by (rule sigma_sets_vimage_commute[OF pin])
+    also have "\<dots> = sigma_sets (space Q) E"
+      unfolding E_def by (simp add: Setcompr_eq_image)
+    finally show ?thesis .
+  qed
+  show thesis by (rule that[OF cE EInt Epow Etop Egen])
+qed
+
 end
