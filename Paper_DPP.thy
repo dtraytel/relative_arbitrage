@@ -6128,4 +6128,81 @@ proof -
   qed
 qed
 
+section \<open>Towards the \<open>\<ge>\<close> half at a random time\<close>
+
+text \<open>@{thm [source] paper_pair_class_kglue_law'} asks a kernel for TWO
+  measurability facts: into \<^const>\<open>prob_algebra\<close> (its \<open>Kp\<close>) and into the CLASS
+  carrying its L\'evy--Prokhorov metric (its \<open>Kb\<close>).  Until now the second was
+  available only for the measurable selector, where
+  @{thm [source] paper_v_measurable_selector_kernel'} produces it as part of
+  the packaging.  Every further kernel construction needs it too, so here it
+  is as a factory: \<open>Kb\<close> is FREE once the kernel is measurable into
+  \<^const>\<open>prob_algebra\<close> and lands in the class.
+
+  The chain is: \<^const>\<open>prob_algebra\<close> is the Borel algebra of the weak
+  topology restricted to the probability measures
+  (@{thm [source] weak_conv_topology_eq_prob_algebra}); a map into a
+  restricted space that lands in the restricting set is measurable into the
+  ambient space; and the class's own metric topology IS the subspace topology
+  of weak convergence (@{thm [source] paper_pair_class_compact_metric_space}).\<close>
+
+lemma kernel_class_LP_measurable:
+  fixes Kr :: "'a \<Rightarrow> ('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "1 \<le> L"
+    and Kp: "Kr \<in> G \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kc: "\<And>\<omega>. Kr \<omega> \<in> paper_pair_class k L T (0 :: real^'n)"
+  shows "Kr \<in> G \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+      (paper_pair_class k L T (0::real^'n))
+      (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+        (mdist (path_metric T :: ('n pairpath) metric))))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?W = "weak_conv_topology (mtopology_of
+      (path_metric T :: ('n pairpath) metric))"
+  let ?P = "{N :: ('n pairpath) measure. prob_space N \<and> sets N = sets ?B}"
+  let ?C = "paper_pair_class k L T (0::real^'n)"
+  have inP: "Kr \<omega> \<in> ?P" for \<omega>
+    using paper_pair_class_prob[OF Kc] paper_pair_class_sets[OF Kc] by simp
+  have polish: "Polish_space (mtopology_of
+      (path_metric T :: ('n pairpath) metric))"
+    by (rule Polish_space_path_metric)
+  have setsPA: "sets (borel_of (subtopology ?W ?P)) = sets (prob_algebra ?B)"
+    by (rule weak_conv_topology_eq_prob_algebra[OF polish])
+  have r1: "Kr \<in> G \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?P"
+  proof -
+    have "Kr \<in> G \<rightarrow>\<^sub>M borel_of (subtopology ?W ?P)"
+      using Kp measurable_cong_sets[OF refl setsPA[symmetric]] by blast
+    then show ?thesis by (simp add: borel_of_subtopology)
+  qed
+
+  \<comment> \<open>a map into a restricted space that LANDS in the restricting set is
+      measurable into the ambient space\<close>
+  have amb: "Kr \<in> G \<rightarrow>\<^sub>M borel_of ?W"
+  proof (rule measurableI)
+    fix \<omega> assume w: "\<omega> \<in> space G"
+    have "Kr \<omega> \<in> space (restrict_space (borel_of ?W) ?P)"
+      by (rule measurable_space[OF r1 w])
+    then show "Kr \<omega> \<in> space (borel_of ?W)" by (simp add: space_restrict_space)
+  next
+    fix A assume A: "A \<in> sets (borel_of ?W)"
+    have "?P \<inter> A \<in> sets (restrict_space (borel_of ?W) ?P)"
+      using A by (auto simp: sets_restrict_space)
+    from measurable_sets[OF r1 this]
+    have "Kr -` (?P \<inter> A) \<inter> space G \<in> sets G" .
+    moreover have "Kr -` (?P \<inter> A) \<inter> space G = Kr -` A \<inter> space G"
+      using inP by auto
+    ultimately show "Kr -` A \<inter> space G \<in> sets G" by simp
+  qed
+
+  have top: "Metric_space.mtopology ?C
+      (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+        (mdist (path_metric T :: ('n pairpath) metric)))
+      = subtopology ?W ?C"
+    using L by (intro paper_pair_class_compact_metric_space(2)[OF T]) simp
+  have r2: "Kr \<in> G \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?C"
+    by (rule measurable_restrict_space2[OF _ amb]) (use Kc in auto)
+  show ?thesis unfolding top using r2 by (simp add: borel_of_subtopology)
+qed
+
 end
