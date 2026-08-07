@@ -11432,4 +11432,83 @@ qed
 
 end
 
+section \<open>The paper's class is a compact metric space of measures\<close>
+
+text \<open>Step (i) of applying the selection theorem.  The AFP entry
+  \<open>Levy_Prokhorov_Metric\<close> --- already a session dependency --- makes the
+  space of finite Borel measures on a separable metric space a metric
+  space for the L\'evy--Prokhorov distance, whose topology IS
+  \<open>weak_conv_topology\<close>, the topology our \<open>weak_conv_on\<close> is a \<open>limitin\<close> of.
+  Prokhorov's theorem turns tightness (NC-2) into relative compactness,
+  and weak closedness (NC-3) collapses the closure.  The result is that
+  the paper's class is a COMPACT subset of a metric space --- exactly the
+  input @{thm [source] Metric_space.usc_measurable_selection} wants.\<close>
+
+theorem paper_pair_class_compactin_weak:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 < T" and L: "0 \<le> L"
+  shows "compactin (weak_conv_topology
+        (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (paper_pair_class k L T x)"
+proof -
+  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?C = "paper_pair_class k L T x"
+  interpret LP: Levy_Prokhorov "mspace (path_metric T :: ('n pairpath) metric)"
+      "mdist (path_metric T :: ('n pairpath) metric)"
+    by (simp add: Levy_Prokhorov_def)
+  have Xeq: "LP.mtopology = ?X" by (simp add: mtopology_of_def)
+  have sep: "separable_space ?X" by (rule separable_path_metric)
+  have met: "metrizable_space ?X"
+    unfolding mtopology_of_def
+    by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
+  have sepLP: "separable_space LP.mtopology" using sep Xeq by simp
+  have LPtop: "LP.LPm.mtopology = ?W"
+    using LP.LPmtopology_eq_weak_conv_topology[OF sepLP] Xeq by simp
+  have bound: "?C \<subseteq> {N. N (space N) \<le> ennreal 1 \<and> sets N = sets (borel_of ?X)}"
+  proof
+    fix N :: "('n pairpath) measure"
+    assume N: "N \<in> ?C"
+    have "prob_space N" by (rule paper_pair_class_prob[OF N])
+    then have "N (space N) \<le> ennreal 1" by (simp add: prob_space.emeasure_space_1)
+    moreover have "sets N = sets (borel_of ?X)" by (rule paper_pair_class_sets[OF N])
+    ultimately show "N \<in> {N. N (space N) \<le> ennreal 1 \<and> sets N = sets (borel_of ?X)}"
+      by simp
+  qed
+  have topC: "?C \<subseteq> topspace ?W"
+  proof
+    fix N :: "('n pairpath) measure"
+    assume N: "N \<in> ?C"
+    have p: "prob_space N" by (rule paper_pair_class_prob[OF N])
+    then have "finite_measure N"
+      by (simp add: prob_space.emeasure_space_1 finite_measureI)
+    with paper_pair_class_sets[OF N] show "N \<in> topspace ?W" by simp
+  qed
+  have tight: "tight_on_set ?X ?C"
+    by (rule tight_on_set_paper_pair_class[OF T L]) simp
+  have rc: "compactin ?W (?W closure_of ?C)"
+    by (rule tight_imp_relatively_compact[OF met sep bound tight])
+  have cl: "?W closure_of ?C \<subseteq> ?C"
+  proof
+    fix Q :: "('n pairpath) measure"
+    assume Qc: "Q \<in> ?W closure_of ?C"
+    then have QL: "Q \<in> LP.LPm.mtopology closure_of ?C" using LPtop by simp
+    then obtain sq :: "nat \<Rightarrow> ('n pairpath) measure"
+      where sq: "range sq \<subseteq> ?C \<inter> LP.\<P>"
+        and lim: "limitin LP.LPm.mtopology sq Q sequentially"
+      by (auto simp: LP.LPm.closure_of_sequentially)
+    have QP: "Q \<in> LP.\<P>" using QL by (auto simp: LP.LPm.closure_of_sequentially)
+    have mem: "sq i \<in> ?C" for i using sq by blast
+    have wc: "weak_conv_on sq Q sequentially ?X" using lim LPtop by simp
+    have prob: "prob_space Q"
+      by (rule weak_conv_on_prob_space[OF wc]) (rule paper_pair_class_prob[OF mem])
+    have setsQ: "sets Q = sets (borel_of ?X)"
+      using QP Xeq by (simp add: LP.inP_iff)
+    show "Q \<in> ?C" by (rule paper_pair_class_weak_closed[OF T L mem wc prob setsQ])
+  qed
+  have sub: "?C \<subseteq> ?W closure_of ?C" by (rule closure_of_subset[OF topC])
+  from cl sub have "?W closure_of ?C = ?C" by blast
+  with rc show ?thesis by simp
+qed
+
 end
