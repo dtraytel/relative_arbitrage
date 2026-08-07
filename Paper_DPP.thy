@@ -2967,4 +2967,42 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>The shape (b3) actually consumes: the integrand is an indicator of a
+  RECTANGLE times a function of the future only.  Then the \<open>msec\<close> hypothesis
+  of @{thm [source] integral_ksemi_real} is discharged by the AFP's
+  fixed-integrand @{thm [source] integral_measurable_subprob_algebra}, and
+  the section integral factors as a constant times an integral over the
+  kernel.\<close>
+
+lemma integral_ksemi_rect_real:
+  fixes h :: "'b \<Rightarrow> real"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+    and hm: "h \<in> borel_measurable N"
+    and A: "A \<in> sets M" and A': "A' \<in> sets N"
+    and gi: "integrable (ksemi M N Kr)
+        (\<lambda>p. indicator A (fst p) * (indicator A' (snd p) * h (snd p)))"
+  shows "(\<integral>p. indicator A (fst p) * (indicator A' (snd p) * h (snd p))
+        \<partial>(ksemi M N Kr))
+      = (\<integral>\<omega>. indicator A \<omega> * (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)) \<partial>M)"
+proof -
+  let ?g = "\<lambda>p :: 'a \<times> 'b.
+      indicator A (fst p) * (indicator A' (snd p) * h (snd p))"
+  have hm': "(\<lambda>\<omega>'. indicator A' \<omega>' * h \<omega>') \<in> borel_measurable N"
+    using hm A' by measurable
+  have gm: "?g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    using A A' hm by measurable
+  have inner: "(\<integral>\<omega>'. ?g (\<omega>, \<omega>') \<partial>(Kr \<omega>))
+      = indicator A \<omega> * (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>))" for \<omega>
+    by simp
+  have msec: "(\<lambda>\<omega>. \<integral>\<omega>'. ?g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+  proof -
+    have "(\<lambda>\<omega>. \<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+      by (rule measurable_compose[OF measurable_prob_algebraD[OF K]
+            integral_measurable_subprob_algebra[OF hm']])
+    then show ?thesis using A by (simp add: inner)
+  qed
+  show ?thesis
+    using integral_ksemi_real[OF K gm gi ne msec] by (simp add: inner)
+qed
+
 end
