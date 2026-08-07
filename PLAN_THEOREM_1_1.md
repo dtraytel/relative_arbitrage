@@ -595,6 +595,27 @@ development — assumes a uniform bound `B`. This is the same wall the kernel
 pasting hit (`integral_bind` in the distribution is bounded-real only), and
 this time it cannot be side-stepped by weak closedness.
 
+**(b3) has ANOTHER prerequisite, found 2026-08-07 while chaining the pieces:
+the coordinate evaluations must GENERATE the Borel σ-algebra of the path
+space**, i.e.
+
+    sets (natural_filtration (borel_of (mtopology_of (path_metric U)))
+              0 (λv ω. ω v) U)
+      = sets (borel_of (mtopology_of (path_metric U)))
+
+Without it, `pcut_filtration_measurable` lands only in the natural filtration
+of the cut law, while the per-`(i,j,A')` statement quantifies `A` over ALL of
+`sets ?Q` (because `AE_zero_of_set_integral_zero` is applied with `𝒢 = ?Q`).
+Restating that with a genuine sub-σ-algebra does NOT dodge it — the kernel
+would then have to be `𝒢`-measurable, which is the same question.
+
+It is true and standard: `⊆` because evaluations are continuous;
+`⊇` because the path space is second countable
+(`second_countable_path_metric`), so every open set is a countable union of
+balls, and `path_mdist_le_iff` makes `g ↦ mdist (path_metric U) f g` a
+supremum over RATIONAL times, hence measurable for the evaluations. Budget
+80–120 lines of topology plumbing.
+
 So (b3) is really:
 
 1. `integral_ksemi_real`: for `g` integrable w.r.t. `ksemi M N Kr`,
