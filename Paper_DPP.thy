@@ -3301,15 +3301,15 @@ lemma path_eval_measurable_natural_filtration:
   by (rule measurable_family_vimage_algebra) (use v in auto)
 
 lemma sets_natural_filtration_path_subset:
-  fixes U :: real
+  fixes U u :: real
   shows "sets (natural_filtration
         (borel_of (mtopology_of (path_metric U :: ('n::finite pairpath) metric)))
-        0 (\<lambda>v \<omega>. \<omega> v) U)
+        0 (\<lambda>v \<omega>. \<omega> v) u)
       \<subseteq> sets (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))"
 proof -
   let ?m = "path_metric U :: ('n pairpath) metric"
   let ?B = "borel_of (mtopology_of ?m)"
-  have "(\<Union>i\<in>{0..U}.
+  have "(\<Union>i\<in>{0..u}.
       {(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space ?B | A. A \<in> sets borel})
       \<subseteq> sets ?B"
   proof clarsimp
@@ -3461,7 +3461,121 @@ proof -
     then show ?thesis using spF by simp
   qed
   finally show ?thesis
-    using sets_natural_filtration_path_subset[of U] by blast
+    using sets_natural_filtration_path_subset[of U U] by blast
+qed
+
+subsection \<open>The conditioning rectangle lives in the past-plus-\<open>i\<close> filtration\<close>
+
+text \<open>What @{thm [source] integral_ksemi_rect_of_set_integral} hands to the
+  martingale property of \<open>P\<close> is the set \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close>.  For the martingale
+  property to apply at time \<open>r + i\<close> that set must lie in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, and it
+  does: the past factor is in \<open>\<F>\<^sub>r\<close> --- this is where
+  @{thm [source] sets_natural_filtration_path} is consumed, because \<open>A\<close>
+  ranges over ALL Borel sets of the \<open>r\<close>-path space, not merely over the cut
+  law's natural filtration --- and the future factor is in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> by
+  @{thm [source] pfut_filtration_measurable}.\<close>
+
+lemma sets_natural_filtration_mono:
+  fixes i j :: "'b :: {second_countable_topology, order_topology}"
+  assumes ij: "i \<le> j"
+  shows "sets (natural_filtration M t\<^sub>0 X i) \<subseteq> sets (natural_filtration M t\<^sub>0 X j)"
+  unfolding sets_natural_filtration using ij by (intro sigma_sets_subseteq) force
+
+lemma natural_filtration_cong_space:
+  assumes "space M = space N"
+  shows "natural_filtration M t\<^sub>0 X t = natural_filtration N t\<^sub>0 X t"
+  unfolding natural_filtration_def using assms by simp
+
+lemma pcut_vimage_natural_filtration:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and A: "A \<in> sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+  shows "pcut r -` A \<inter> space P
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  have sp: "space (pair_law_of r (pcut r) P) = space ?X"
+    by (simp add: space_pair_law_of space_borel_of)
+  have nfeq: "natural_filtration (pair_law_of r (pcut r) P) 0
+        (\<lambda>v w :: 'n pairpath. w v) r
+      = natural_filtration ?X 0 (\<lambda>v w. w v) r"
+    by (rule natural_filtration_cong_space[OF sp])
+  have AQ: "A \<in> sets (natural_filtration (pair_law_of r (pcut r) P) 0
+      (\<lambda>v w :: 'n pairpath. w v) r)"
+    unfolding nfeq sets_natural_filtration_path[OF r] using A .
+  have m: "pcut r \<in> natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r
+      \<rightarrow>\<^sub>M natural_filtration (pair_law_of r (pcut r) P) 0 (\<lambda>v w. w v) r"
+    by (rule pcut_filtration_measurable[OF r rT setsP])
+  have "pcut r -` A \<inter> space (natural_filtration P 0
+      (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r)
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
+    by (rule measurable_sets[OF m AQ])
+  then show ?thesis by simp
+qed
+
+lemma pfut_vimage_natural_filtration:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and i: "0 \<le> i" and iS: "i \<le> T - r"
+    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) i)"
+  shows "pfut r T -` A' \<inter> space P
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
+proof -
+  let ?Y = "borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  have sp: "space (pair_law_of (T - r) (pfut r T) P) = space ?Y"
+    by (simp add: space_pair_law_of space_borel_of)
+  have nfeq: "natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
+        (\<lambda>v w :: 'n pairpath. w v) i
+      = natural_filtration ?Y 0 (\<lambda>v w. w v) i"
+    by (rule natural_filtration_cong_space[OF sp])
+  have AQ: "A' \<in> sets (natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
+      (\<lambda>v w :: 'n pairpath. w v) i)"
+    unfolding nfeq using A' .
+  have m: "pfut r T
+      \<in> natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min i (T - r))
+        \<rightarrow>\<^sub>M natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
+            (\<lambda>v w. w v) i"
+    by (rule pfut_filtration_measurable[OF r rT setsP])
+  have mm: "min i (T - r) = i" using iS by simp
+  have "pfut r T -` A' \<inter> space (natural_filtration P 0
+      (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
+    using measurable_sets[OF m AQ] unfolding mm .
+  then show ?thesis by simp
+qed
+
+lemma rect_vimage_natural_filtration:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and i: "0 \<le> i" and iS: "i \<le> T - r"
+    and A: "A \<in> sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) i)"
+  shows "(\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
+proof -
+  have c1: "pcut r -` A \<inter> space P
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r)"
+    by (rule pcut_vimage_natural_filtration[OF r rT setsP A])
+  have c1': "pcut r -` A \<inter> space P
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))"
+    using c1 sets_natural_filtration_mono[of r "r + i"] i by auto
+  have c2: "pfut r T -` A' \<inter> space P
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))"
+    by (rule pfut_vimage_natural_filtration[OF r rT setsP i iS A'])
+  have "(\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
+      = (pcut r -` A \<inter> space P) \<inter> (pfut r T -` A' \<inter> space P)" by auto
+  then show ?thesis using sets.Int[OF c1' c2] by simp
 qed
 
 end
