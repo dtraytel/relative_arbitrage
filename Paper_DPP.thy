@@ -4049,4 +4049,72 @@ next
   then show ?thesis by simp
 qed
 
+subsection \<open>From a generating \<pi>-system to the whole sub-\<sigma>-algebra\<close>
+
+text \<open>The other half of the countability bookkeeping.  The conditioning set
+  \<open>A'\<close> of @{thm [source] pfut_rcd_X_increment_zero} also has to range over a
+  COUNTABLE family, so what arrives at almost every \<open>p'\<close> is the vanishing of
+  the set integral on a \<pi>-system only.  Upgrading that to the generated
+  \<sigma>-algebra is a Dynkin argument, and both halves of it are in the
+  distribution: @{thm [source] sigma_sets_induct_disjoint} does the induction
+  and @{thm [source] lebesgue_integral_countable_add} discharges its
+  disjoint-union case.  The complement case is where \<open>space M \<in> E\<close> is used,
+  so the \<pi>-system must be given WITH the whole space in it.
+
+  Stated for a general measure and a general generating \<pi>-system: nothing
+  here is about paths, and the same lemma serves clause (iv).\<close>
+
+lemma set_integral_zero_of_generator:
+  fixes g :: "'a \<Rightarrow> real"
+  assumes G: "subalgebra M G"
+    and gi: "integrable M g"
+    and Est: "Int_stable E"
+    and Epow: "E \<subseteq> Pow (space M)"
+    and Egen: "sets G = sigma_sets (space M) E"
+    and Esp: "space M \<in> E"
+    and z: "\<And>B. B \<in> E \<Longrightarrow> set_lebesgue_integral M B g = 0"
+    and A: "A \<in> sets G"
+  shows "set_lebesgue_integral M A g = 0"
+proof -
+  have GM: "sets G \<subseteq> sets M" using G by (simp add: subalgebra_def)
+  have inM: "B \<in> sets M" if "B \<in> sigma_sets (space M) E" for B
+    using that GM Egen by auto
+  have si: "set_integrable M B g" if "B \<in> sets M" for B
+    unfolding set_integrable_def by (rule integrable_mult_indicator[OF that gi])
+  have Asig: "A \<in> sigma_sets (space M) E" using A Egen by simp
+  from Est Epow Asig show ?thesis
+  proof (induction rule: sigma_sets_induct_disjoint)
+    case (basic B)
+    then show ?case by (rule z)
+  next
+    case empty
+    show ?case by (simp add: set_lebesgue_integral_def)
+  next
+    case (compl B)
+    have BM: "B \<in> sets M" by (rule inM[OF compl.hyps])
+    have CM: "space M - B \<in> sets M" using BM by (rule sets.compl_sets)
+    have "set_lebesgue_integral M ((space M - B) \<union> B) g
+        = set_lebesgue_integral M (space M - B) g
+          + set_lebesgue_integral M B g"
+      by (rule set_integral_Un[OF _ si[OF CM] si[OF BM]]) auto
+    moreover have "(space M - B) \<union> B = space M"
+      using sets.sets_into_space[OF BM] by auto
+    ultimately have "set_lebesgue_integral M (space M) g
+        = set_lebesgue_integral M (space M - B) g
+          + set_lebesgue_integral M B g" by simp
+    then show ?case using z[OF Esp] compl.IH by simp
+  next
+    case (union F)
+    have FM: "F i \<in> sets M" for i using union.hyps(2) inM by blast
+    have UM: "(\<Union>i. F i) \<in> sets M"
+      by (rule sets.countable_nat_UN) (use FM in auto)
+    have "set_lebesgue_integral M (\<Union>i. F i) g
+        = (\<Sum>i. set_lebesgue_integral M (F i) g)"
+      by (rule lebesgue_integral_countable_add[OF FM _ si[OF UM]])
+         (use union.hyps(1) in \<open>auto simp: disjoint_family_on_def\<close>)
+    also have "\<dots> = 0" using union.IH by simp
+    finally show ?case .
+  qed
+qed
+
 end
