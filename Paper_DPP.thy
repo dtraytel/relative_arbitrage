@@ -2484,4 +2484,81 @@ proof -
   qed
 qed
 
+text \<open>Clause (i) for the kernel.  It is the easiest of the four, because
+  @{thm [source] pfut_zero} makes the initial condition hold IDENTICALLY:
+  the offending set has EMPTY preimage, not merely a null one.\<close>
+
+lemma pfut_rcd_start:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+    and K: "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+  shows "AE p in pair_law_of r (pcut r) P.
+      emeasure (\<kappa> p) {w \<in> space (borel_of (mtopology_of
+          (path_metric (T - r) :: ('n pairpath) metric))).
+        fst (w 0) = 0 \<and> snd (w 0) = 0} = 1"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?Y = "borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  let ?Q = "pair_law_of r (pcut r) P"
+  let ?C = "{w :: 'n pairpath \<in> space ?Y. fst (w 0) = 0 \<and> snd (w 0) = 0}"
+  have Tr: "0 \<le> T - r" using rT by simp
+  interpret PP: prob_space P by (rule PS)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using K measurable_cong_sets[OF setsQ refl] by blast
+  have ev: "(\<lambda>w :: 'n pairpath. w 0) \<in> borel_measurable ?Y"
+    by (rule pair_law_eval_measurable[OF refl])
+  have CY: "?C \<in> sets ?Y"
+  proof -
+    have "?C = (\<lambda>w :: 'n pairpath. w 0) -` {(0, 0)} \<inter> space ?Y"
+      by (auto simp: prod_eq_iff)
+    then show ?thesis using measurable_sets[OF ev] by simp
+  qed
+  have C': "space ?Y - ?C \<in> sets ?Y" using CY by (rule sets.compl_sets)
+  have rect: "space ?X \<times> (space ?Y - ?C) \<in> sets (?X \<Otimes>\<^sub>M ?Y)" using C' by simp
+  have empty: "?\<phi> -` (space ?X \<times> (space ?Y - ?C)) \<inter> space P = {}"
+  proof -
+    have "pfut r T \<omega> \<notin> space ?Y - ?C" for \<omega> :: "'n pairpath"
+    proof -
+      have z: "pfut r T \<omega> 0 = 0" by (rule pfut_zero[OF Tr])
+      have "fst (pfut r T \<omega> 0) = 0 \<and> snd (pfut r T \<omega> 0) = 0" by (simp add: z)
+      then show ?thesis by simp
+    qed
+    then show ?thesis by auto
+  qed
+  have "emeasure (ksemi ?Q ?Y \<kappa>) (space ?X \<times> (space ?Y - ?C))
+      = emeasure (distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>) (space ?X \<times> (space ?Y - ?C))"
+    unfolding eq ..
+  also have "\<dots> = emeasure P (?\<phi> -` (space ?X \<times> (space ?Y - ?C)) \<inter> space P)"
+    by (rule emeasure_distr[OF mphi rect])
+  also have "\<dots> = 0" unfolding empty by simp
+  finally have null: "emeasure (ksemi ?Q ?Y \<kappa>)
+      (space ?X \<times> (space ?Y - ?C)) = 0" .
+  have spQ: "space ?Q = space ?X" by (rule sets_eq_imp_space_eq[OF setsQ])
+  have null': "emeasure (ksemi ?Q ?Y \<kappa>) (space ?Q \<times> (space ?Y - ?C)) = 0"
+    using null spQ by simp
+  show ?thesis by (rule AE_kernel_full[OF KQ neQ CY null'])
+qed
+
 end
