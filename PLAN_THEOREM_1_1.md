@@ -579,8 +579,8 @@ Steps, in order:
 | step | content | status |
 |---|---|---|
 | (b0) | `AE_zero_of_set_integral_zero` — a `𝒢`-measurable function whose `𝒢`-set integrals all vanish is a.e. `0`. THE workhorse: it is what converts each linear condition from "for every `A`" to "at a.e. `ω`" | **DONE** |
-| (b1) | the kernel itself — **the AFP API is mapped, see below**. `Disintegration` is now built and registered in `ROOT` (it was NOT a dependency before 2026-08-07, despite an earlier claim in this plan) | open |
-| (b2) | clauses (i)/(ii) for `κ ω` a.s. — one application of (b0) each, to `ω ↦ κ ω C - 1` | open |
+| (b1) | the kernel itself: `paper_pair_class_rcd` (the AFP disintegration) and `paper_pair_class_rcd_ksemi` (its conversion to our `ksemi`, via `emeasure_ksemi_rect` and agreement on the rectangle π-system) | **DONE** |
+| (b2) | clauses (i)/(ii) for `κ ω` a.s. — `AE_kernel_full`: each clause says `μ C = 1` for fixed measurable `C`, so the complement integrates to `0` and vanishes a.e. | **DONE** (the general lemma; the two applications remain) |
 | (b3) | clauses (iii)/(iv) for `κ ω` a.s. — (b0) for each `(s,t,A')` in a countable determining family, then ONE Dynkin step at fixed `ω` (`measure_eqI_generator_eq` on the positive and negative parts), then rational-to-real by path continuity | open |
 | (b4) | assembly of `cond`: under `κ ω` the starting point `X_r ω` is a CONSTANT, so `pshift_law (T-r) (X_r ω) (κ ω) ∈ 𝒞_{X_r ω}` and its essinf is `≤ paper_v` by definition — no localization, no `K_ε` | open |
 
