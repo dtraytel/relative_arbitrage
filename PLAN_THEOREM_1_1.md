@@ -54,16 +54,17 @@ only if §2.5 turns out to want it.
 MEASURABLE SELECTOR and the KERNEL PASTING that consumes it. The selector is
 **done** (`paper_v_measurable_selector`, §1.7) — that is LR Prop. 2.2(ii) in
 full, including the abstract selection theorem it needs, which is in neither
-the AFP nor the distribution. Kernel pasting is **half done** (§1.8): the
-Giry semidirect product, the glued law, and the two almost-sure clauses of
-(1.7) are proved; the two martingale clauses are not, and §2.1 says exactly
-what stands in the way.
+the AFP nor the distribution. Kernel pasting is nearly done: the Giry
+semidirect product, the glued law and the two almost-sure clauses of (1.7)
+are proved (§1.8), and §2.1 records the change of route that replaced the
+blocked martingale argument — four of its five pieces are proved, and only
+the assembly is left.
 
 **Remaining budget, roughly.**
 
 | item | § | lines | risk |
 |---|---|---|---|
-| clauses (iii),(iv) for the kernel glue | 2.1 | 800–1,200 | medium — two known obstructions, both analysed |
+| clauses (iii),(iv) for the kernel glue | 2.1 | 400 | low — 4 of 5 pieces done; only the assembly is left |
 | assemble the `≥` half of (2.9) | 2.2 | 300–600 | medium |
 | the `≤` half (conditioning) | 2.3 | 800–1,500 | high — stopping times break the product structure |
 | §3, the two viscosity inequalities | 2.4 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
@@ -399,82 +400,66 @@ interleaved.
 
 ### 2.1 Clauses (iii) and (iv) for the kernel glue
 
-**The immediate next task.** Goal:
+**ROUTE CHANGED 2026-08-07, and it is the important entry in this file.**
+The martingale route runs into two obstructions — `integral_bind` in the
+distribution is only for BOUNDED REAL integrands, and the FIRST-factor
+martingale property is FALSE for a semidirect product (the weight
+`(Kr ω)(A_ω)` in the disintegrated set integral is only `ℱ_r`-measurable).
+**Neither has to be faced.**
 
-    paper_pair_class_kglue_law':
-      0 ≤ r ≤ T, Q ∈ paper_pair_class k L r x,
-      Kr ∈ Q →⇩M prob_algebra (borel_of (mtopology_of (path_metric (T−r)))),
-      Kr ω ∈ paper_pair_class k L (T−r) 0 for ω ∈ space Q
-        ⟹ kglue_law' r T Kr Q ∈ paper_pair_class k L T x
+The class is WEAKLY CLOSED (`paper_pair_class_weak_closed`), the glue with
+a COUNTABLY valued index is already in it (`paper_pair_class_kglue_law`,
+§1.6(c)), and the class at the origin is a COMPACT metric space
+(`paper_pair_class_compact_metric_space`) — hence separable, so any kernel
+into it is a pointwise limit of countably valued ones. If the semidirect
+products converge weakly then so do the glued laws, and weak closedness
+finishes. The approximants are legitimate pastings; the limit is the
+kernel pasting.
 
-Clauses (i) and (ii) are already in place (§1.8). **Do not start the
-remaining two expecting a port of §1.6(b′)** — there are two separate
-obstructions, both analysed.
+**Done (2026-08-07).** Four of the five pieces:
 
-**Obstruction 1: no Bochner disintegration for `bind`.** `integral_bind` in
-`Giry_Monad.thy` requires the integrand to be REAL and BOUNDED
-(`f ∈ borel_measurable K`, `¦f x¦ ≤ B`). Our processes are `real^'n`- and
-`real^'n^'n`-valued and unbounded.
+| result | content |
+|---|---|
+| `second_countable_path_metric`, `borel_of_path_prod` | separable + metrizable ⟹ second countable, hence `borel_of X ⨂⇩M borel_of Y = borel_of (prod_topology X Y)` |
+| `mdist_pglue_le`, `Lipschitz_pglue` | the glue is 3-Lipschitz from the product metric — the second piece counts twice because it is re-based at its own initial value — hence continuous, hence pushes weak convergence forward |
+| `integral_ksemi_bounded`, `integral_ksemi_measurable` | the disintegration for BOUNDED REAL integrands (exactly what `integral_bind` covers, and exactly what weak-convergence test functions are), and measurability of the inner integral |
+| `ksemi_weak_conv` | pointwise weak convergence of the KERNELS gives weak convergence of the semidirect products — dominated convergence over the first coordinate |
+| `Metric_space.countably_valued_approx`, `limitin_of_dist_half` | a measurable map into a compact metric space is a uniform limit of countably valued measurable ones; rounding is measurable because `{y. d a y < c}` is an OPEN BALL |
 
-*Work item 1a* — `integral_ksemi` for INTEGRABLE integrands. Route: reduce
-`real^'n` to components (finite dimension, so `set_integral_mat_component`
-and friends already establish the idiom), then split a real integrand into
-positive and negative parts and apply `nn_integral_ksemi` to each; the
-finiteness of `∫ω (∫ω' f⁺ d(Kr ω)) dM` is what makes the recombination
-legal. Also needed: `integrable_ksemi`, and a `set_lebesgue_integral`
-version, since the martingale criterion is stated with set integrals.
-Budget ≈150 lines.
+**Left: the assembly (W5).** One measure identity and one limit.
 
-**Obstruction 2: the FIRST-factor martingale property is FALSE for a
-semidirect product.** `martingale_pair_fst` has no `ksemi` analogue. For
-`A ∈ F u ⨂⇩M G u`,
+*W5a* — identify the two constructions:
 
-    ∫_A Z₁ d(ksemi) = ∫ω Z₁(ω)·(Kr ω)(A_ω) dQ
+      kglue_law r T N Q RR = kglue_law' r T (λω. RR (N ω)) Q
 
-and the weight `(Kr ω)(A_ω)` is only `ℱ_r`-measurable, not
-`ℱ_u`-measurable, so `Q`'s martingale property does not apply. Concretely,
-`E[X_r·W] ≠ E[X_0·W]` for an `ℱ_r`-measurable `W`. **This is not an
-inconvenience of the proof technique; the general statement is false.**
+  Both sides have the same `sets`; compare `emeasure` on a Borel `A`. On
+  the left, Fubini plus `distr_PiM_component` turns
+  `(Q ⨂⇩M Pi⇩M UNIV RR){p. kglue r T N p ∈ A}` into
+  `∫ω (RR (N ω)){ω'. pglue r T ω ω' ∈ A} dQ`; on the right,
+  `emeasure_bind` plus `emeasure_distr` gives the same. Budget ≈200 lines;
+  the fiddly part is the measurability bookkeeping for the sections.
 
-It IS recoverable here, using the structure of the glue. The filtration that
-matters is `H u = ℱ_(min u r) ⨂⇩M 𝒢_((u−r)⁺)` — what `martingale_time_change`
-builds — and:
+*W5b* — assemble:
 
-- for `u ≥ r`, `Z₁` is constant in `u` (`min u r = r`), so there is nothing
-  to prove;
-- for `u < r`, the second component is `𝒢_0 = σ(ev_0)`, and every value of
-  the kernel lies in the class at the ORIGIN, so `Kr ω`-a.s. `ω'(0) = 0` and
-  therefore `(Kr ω)(A_ω) = 1_A(ω, z)` for ANY base path `z` with `z 0 = 0`.
-  That is `ℱ_u`-measurable, and `Q`'s martingale property closes it.
+      paper_pair_class_kglue_law':
+        0 ≤ r ≤ T, Q ∈ paper_pair_class k L r x,
+        Kr measurable into the class at the origin (for ℱ_r),
+        Kr ω ∈ paper_pair_class k L (T−r) 0
+          ⟹ kglue_law' r T Kr Q ∈ paper_pair_class k L T x
 
-*Work item 2a* — the `𝒢_0` triviality lemma: for `A ∈ F ⨂⇩M 𝒢_0` and a
-measure `μ` on the continuation space with `μ{ω'. ω' 0 = 0} = 1`,
-`μ(A_ω) = 1_A(ω, z)` whenever `z 0 = 0`. Needs `natural_filtration … 0 … 0
-= σ(ev_0)` explicitly. Budget ≈120 lines.
+  `countably_valued_approx` on the compact `𝒞₀` gives `z` and `Nm` with
+  `z (Nm m ω) → Kr ω`; each `kglue_law r T (Nm m) Q z` is in the class by
+  `paper_pair_class_kglue_law` (note `Nm m` must be measurable for the
+  NATURAL FILTRATION at `r` — it is, because the kernel factors through
+  `ω ↦ fst (ω r)`); `ksemi_weak_conv` plus `Lipschitz_pglue` and
+  `weak_conv_on_pushforward` give `kglue_law r T (Nm m) Q z ⇒
+  kglue_law' r T Kr Q`; and `paper_pair_class_weak_closed` closes it.
+  Budget ≈200 lines.
 
-*Work item 2b* — `martingale_ksemi_fst` for the time-changed filtration,
-i.e. the first summand of the decomposition. Budget ≈200 lines.
+**Do not restart the martingale route.** Both obstructions are real — in
+particular `martingale_pair_fst` has no `ksemi` analogue, and that is a
+theorem, not a proof-technique inconvenience.
 
-**The good news: the SECOND factor gets EASIER.** `ksemi`'s disintegration
-is already in the order `∫ω ∫ω' … d(Kr ω) dQ`, so the analogue of
-`martingale_pair_snd_param` needs no Fubini at all — the section
-`A_ω ∈ 𝒢_u` (`sets_Pair1`) and the kernel's own `set_integral_eq` close it
-directly, once work item 1a supplies the Bochner disintegration.
-
-*Work item 3* — `martingale_ksemi_snd_param`, then clauses (iii) and (iv)
-following `kglue_law_X_martingale` / `kglue_law_comp_martingale`
-structurally: the same POINTWISE decomposition, the same fixed-`r` cross
-term, the same integrability split. Budget ≈400–600 lines.
-
-*Work item 4* — `filtered_measure` for `ksemi` with the product filtration.
-`filtered_measure` depends on the measure only through `sets` and `space`,
-so `filtered_measure_pair` should transfer through `sets_ksemi` and
-`space_ksemi`; check whether a `sets`-congruence lemma for
-`filtered_measure` already exists before writing one. Budget ≈50 lines.
-
-**Suggested order: 4, 1a, 3 (the second factor), 2a, 2b, then the two
-clauses.** Item 4 is cheap and everything else needs it; item 3 is where the
-new construction actually pays off, so do it before the awkward item 2.
 
 ### 2.2 The `≥` half of (2.9)
 
