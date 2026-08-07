@@ -2020,4 +2020,102 @@ proof -
   qed
 qed
 
+subsection \<open>The survival event belongs to the past\<close>
+
+text \<open>\<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close> says exactly that the path never
+  leaves \<open>K\<close> on \<open>{0..r}\<close>, and for a CONTINUOUS path against a CLOSED \<open>K\<close>
+  that is decided by the rational times alone.  So the survival event is
+  \<open>\<F>\<^sub>r\<close>-measurable --- which is what lets it be used as the conditioning
+  event \<open>A\<close> of @{thm [source] paper_pair_class_future_of_past}.\<close>
+
+lemma survival_event_filtration:
+  fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and K: "closed K"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "{\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
+proof -
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r"
+  let ?Qs = "{0..r} \<inter> (\<rat> :: real set)"
+  have spP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsP])
+  have clo: "closure ?Qs = {0..r}"
+  proof (rule antisym)
+    show "closure ?Qs \<subseteq> {0..r}" by (intro closure_minimal) auto
+    show "{0..r} \<subseteq> closure ?Qs" using r by (auto intro: Icc_rats_dense)
+  qed
+  have key: "(pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K)
+      \<longleftrightarrow> (\<forall>q \<in> ?Qs. fst (\<omega> q) \<in> K)" if w: "\<omega> \<in> space P" for \<omega>
+  proof
+    assume h: "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K"
+    show "\<forall>q \<in> ?Qs. fst (\<omega> q) \<in> K"
+    proof
+      fix q assume q: "q \<in> ?Qs"
+      show "fst (\<omega> q) \<in> K"
+      proof (rule ccontr)
+        assume nk: "fst (\<omega> q) \<notin> K"
+        have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> q"
+          unfolding pexit_def using r q nk by (intro etime_le_of_mem) auto
+        with h q have "q = r" by simp
+        then show False using nk h by simp
+      qed
+    qed
+  next
+    assume h: "\<forall>q \<in> ?Qs. fst (\<omega> q) \<in> K"
+    have cw: "continuous_on {0..T} \<omega>"
+      using w spP by (simp add: mspace_path_metric_continuous)
+    have c0: "continuous_on {0..r} \<omega>"
+      by (rule continuous_on_subset[OF cw]) (use r rT in auto)
+    have c1: "continuous_on (closure ?Qs) (\<lambda>t. fst (\<omega> t))"
+      unfolding clo by (rule continuous_on_fst[OF c0])
+    have sub: "(\<lambda>t. fst (\<omega> t)) ` ?Qs \<subseteq> K" using h by auto
+    have "(\<lambda>t. fst (\<omega> t)) ` closure ?Qs \<subseteq> K"
+      by (rule image_closure_subset[OF c1 K sub])
+    then have all: "fst (\<omega> t) \<in> K" if "t \<in> {0..r}" for t
+      using that clo by auto
+    have "pexit r K (\<lambda>t. fst (\<omega> t)) = r"
+    proof -
+      have emp: "{t. 0 \<le> t \<and> t \<le> r \<and> fst (\<omega> t) \<in> - K} = {}" using all by auto
+      have "pexit r K (\<lambda>t. fst (\<omega> t))
+          = Inf ({t. 0 \<le> t \<and> t \<le> r \<and> fst (\<omega> t) \<in> - K} \<union> {r})"
+        unfolding pexit_def etime_def ..
+      also have "\<dots> = r" unfolding emp by simp
+      finally show ?thesis .
+    qed
+    moreover have "fst (\<omega> r) \<in> K" using all r by simp
+    ultimately show "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K" by simp
+  qed
+  have coord: "{\<omega> \<in> space P. fst (\<omega> q) \<in> K} \<in> sets ?F" if q: "q \<in> ?Qs" for q
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> q) \<in> ?F \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use q in auto)
+    have m: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> q)) \<in> borel_measurable ?F"
+      by (rule measurable_compose[OF ev measurable_fst_borel])
+    have "{\<omega> \<in> space ?F. fst (\<omega> q) \<in> K} \<in> sets ?F"
+      using m borel_closed[OF K] by measurable
+    then show ?thesis by simp
+  qed
+  have zero: "(0::real) \<in> ?Qs" using r Rats_0 by simp
+  have ne: "?Qs \<noteq> {}" using zero by blast
+  have eq: "{\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}
+      = (\<Inter>q \<in> ?Qs. {\<omega> \<in> space P. fst (\<omega> q) \<in> K})"
+  proof (rule set_eqI, rule iffI)
+    fix \<omega> :: "'n pairpath"
+    assume "\<omega> \<in> {\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}"
+    then show "\<omega> \<in> (\<Inter>q \<in> ?Qs. {\<omega> \<in> space P. fst (\<omega> q) \<in> K})"
+      using key by auto
+  next
+    fix \<omega> :: "'n pairpath"
+    assume h: "\<omega> \<in> (\<Inter>q \<in> ?Qs. {\<omega> \<in> space P. fst (\<omega> q) \<in> K})"
+    have w: "\<omega> \<in> space P" using h zero by blast
+    show "\<omega> \<in> {\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}"
+      using w h key[OF w] by blast
+  qed
+  have cnt: "countable ?Qs" using countable_rat by blast
+  show ?thesis
+    unfolding eq using cnt ne coord by (intro sets.countable_INT') auto
+qed
+
 end
