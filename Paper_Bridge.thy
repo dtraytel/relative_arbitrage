@@ -11727,4 +11727,118 @@ proof -
       by (simp add: distr_int[OF setsR] distr_int[OF setsR'])
   qed
 qed
+
+text \<open>Joint upper semicontinuity of the payoff, in sequential form.  The
+  parameter and the law move TOGETHER; joint continuity of the shift
+  carries the pair to a weakly convergent sequence of laws, and
+  @{thm [source] ess_inf_pexit_usc} --- which lives on the VECTOR path
+  space --- is reached through @{thm [source] Lipschitz_pfst} exactly as
+  in @{thm [source] paper_v_attained}.\<close>
+
+lemma ess_inf_pexit_pshift_usc:
+  fixes ym :: "nat \<Rightarrow> real^'n::finite" and Rm :: "nat \<Rightarrow> ('n pairpath) measure"
+    and K :: "(real^'n) set"
+  assumes T: "0 < T" and K: "closed K"
+    and yc: "ym \<longlonglongrightarrow> y"
+    and prR: "\<And>m. prob_space (Rm m)"
+    and setsR: "\<And>m. sets (Rm m) = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and prR': "prob_space R"
+    and setsR': "sets R = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and wc: "weak_conv_on Rm R sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  shows "Limsup sequentially (\<lambda>m. ess_inf_time (pshift_law T (ym m) (Rm m))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+      \<le> ess_inf_time (pshift_law T y R) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+proof -
+  let ?Y = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'n) metric)"
+  let ?p = "\<lambda>Q :: ('n pairpath) measure. distr Q (borel_of ?Y) (pfst T)"
+  have T0: "0 \<le> T" using T by simp
+  have wcs: "weak_conv_on (\<lambda>m. pshift_law T (ym m) (Rm m)) (pshift_law T y R)
+      sequentially (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    by (rule pshift_law_weak_conv_joint[OF T0 yc prR setsR prR' setsR' wc])
+  have prS: "prob_space (pshift_law T (ym m) (Rm m))" for m
+    by (rule prob_space_pshift_law[OF T0 prR setsR])
+  have prS': "prob_space (pshift_law T y R)"
+    by (rule prob_space_pshift_law[OF T0 prR' setsR'])
+  have wcY: "weak_conv_on (\<lambda>m. ?p (pshift_law T (ym m) (Rm m)))
+      (?p (pshift_law T y R)) sequentially ?Y"
+    by (rule weak_conv_on_pushforward
+        [OF Lipschitz_continuous_imp_continuous_map[OF Lipschitz_pfst[OF T0]] wcs])
+  have lim: "Limsup sequentially
+        (\<lambda>m. ess_inf_time (?p (pshift_law T (ym m) (Rm m))) (pexit T K))
+      \<le> ess_inf_time (?p (pshift_law T y R)) (pexit T K)"
+  proof (rule ess_inf_pexit_usc[OF T K wcY])
+    show "prob_space (?p (pshift_law T (ym m) (Rm m)))" for m
+      by (rule prob_space.prob_space_distr[OF prS pfst_measurable[OF T0]]) simp
+    show "prob_space (?p (pshift_law T y R))"
+      by (rule prob_space.prob_space_distr[OF prS' pfst_measurable[OF T0]]) simp
+  qed
+  have eqS: "ess_inf_time (?p S) (pexit T K)
+      = ess_inf_time S (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+    if "sets S = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    for S :: "('n pairpath) measure"
+    by (rule ess_inf_time_pfst[OF T0 K that])
+  show ?thesis using lim by (simp add: eqS)
+qed
+
+text \<open>The class packaged exactly as @{thm [source]
+  Metric_space.usc_measurable_selection} consumes it: a compact metric
+  space, the metric being L\'evy--Prokhorov restricted to the class, and
+  its topology the subspace topology of weak convergence.\<close>
+
+theorem paper_pair_class_compact_metric_space:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 < T" and L: "0 \<le> L"
+  shows "Metric_space (paper_pair_class k L T x)
+      (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+        (mdist (path_metric T :: ('n pairpath) metric)))"
+    and "Metric_space.mtopology (paper_pair_class k L T x)
+      (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+        (mdist (path_metric T :: ('n pairpath) metric)))
+      = subtopology (weak_conv_topology
+          (mtopology_of (path_metric T :: ('n pairpath) metric)))
+          (paper_pair_class k L T x)"
+    and "compact_space (Metric_space.mtopology (paper_pair_class k L T x)
+      (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
+        (mdist (path_metric T :: ('n pairpath) metric))))"
+proof -
+  interpret LP: Levy_Prokhorov "mspace (path_metric T :: ('n pairpath) metric)"
+      "mdist (path_metric T :: ('n pairpath) metric)"
+    by (simp add: Levy_Prokhorov_def)
+  have Xeq: "LP.mtopology = mtopology_of (path_metric T :: ('n pairpath) metric)"
+    by (simp add: mtopology_of_def)
+  have sepLP: "separable_space LP.mtopology"
+    using separable_path_metric Xeq by simp
+  have LPtop: "LP.LPm.mtopology
+      = weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    using LP.LPmtopology_eq_weak_conv_topology[OF sepLP] Xeq by simp
+  have subC: "paper_pair_class k L T x \<subseteq> LP.\<P>"
+  proof
+    fix N :: "('n pairpath) measure"
+    assume N: "N \<in> paper_pair_class k L T x"
+    have p: "prob_space N" by (rule paper_pair_class_prob[OF N])
+    then have "finite_measure N"
+      by (simp add: prob_space.emeasure_space_1 finite_measureI)
+    with paper_pair_class_sets[OF N] Xeq show "N \<in> LP.\<P>" by (simp add: LP.inP_iff)
+  qed
+  have SMloc: "Submetric LP.\<P> LP.LPm (paper_pair_class k L T x)"
+    unfolding Submetric_def Submetric_axioms_def
+    using LP.LPm.Metric_space_axioms subC by blast
+  interpret SM: Submetric "LP.\<P>" "LP.LPm" "paper_pair_class k L T x"
+    by (rule SMloc)
+  show ms: "Metric_space (paper_pair_class k L T x) LP.LPm"
+    by (rule SM.sub.Metric_space_axioms)
+  show top: "SM.sub.mtopology
+      = subtopology (weak_conv_topology
+          (mtopology_of (path_metric T :: ('n pairpath) metric)))
+          (paper_pair_class k L T x)"
+    using SM.mtopology_submetric LPtop by simp
+  show "compact_space SM.sub.mtopology"
+    unfolding top
+    by (rule compact_space_subtopology[OF paper_pair_class_compactin_weak[OF T L]])
+qed
+
 end
