@@ -372,40 +372,68 @@ DPP.**
        a MEASURABLE `x ↦ Q_x` picking an optimizer. Attainment gives the
        optimizer pointwise; the selector is what §2.1(c)(2) above is about.
 
-  3. **Applying the selection theorem — the next concrete step.** Three
-     things stand between `usc_measurable_selection` and LR (ii). The first
-     is nearly free, the second is real work, the third is a redesign.
+  3. **Applying the selection theorem.** Three things stand between
+     `usc_measurable_selection` and LR (ii). **(i) is DONE, (ii) is done
+     mathematically, (iii) is a redesign and is untouched.**
 
-     - **(i) `𝒞₀ = paper_pair_class k L T 0` is a COMPACT METRIC SPACE.**
-       AFP `Levy_Prokhorov_Metric` is ALREADY a session dependency and has
-       everything: the `Levy_Prokhorov` locale is a `Metric_space` with the
-       Lévy–Prokhorov distance `LPm` and a sublocale `LPm: Metric_space 𝒫 LPm`;
-       `LPmtopology_eq_weak_conv_topology` identifies its topology with
-       `General_Weak_Convergence.weak_conv_topology` (which is what our
-       `weak_conv_on` is a `limitin` of); `Polish_space_weak_conv_topology`,
-       `separable_LPm`, `closedin_probs`; `Prokhorov_Theorem.
-       tight_imp_relatively_compact` turns our `tight_on_set_paper_pair_class`
-       into `compactin (weak_conv_topology X) (closure_of 𝒞₀)`, and
-       `paper_pair_class_weak_closed` collapses the closure. Restrict `LPm`
-       to `𝒞₀` (`Submetric`) to instantiate the theorem's `M`.
-       `Space_of_Finite_Measures.weak_conv_topology_eq_prob_algebra` then
-       says the Borel σ-algebra of that topology is `prob_algebra`, so
-       "measurable selector" means exactly what the Giry monad expects.
-     - **(ii) JOINT usc of `(y, R) ↦ ess_inf_time (y + R) (pexit T' K)`** on
-       `ℝⁿ × 𝒞₀`. This is what discharges the theorem's second hypothesis:
-       a jointly usc function has a usc — hence Borel — supremum over a
-       fixed compact set. `Exit_Semicontinuity.ess_inf_pexit_usc` gives usc
-       in the measure alone; what has to be added is joint continuity of
-       `(y, R) ↦ pshift_law y R` in the product topology. Both factors are
-       metrizable, so sequences suffice, but the estimate needs tightness of
-       `𝒞₀` to control `∫ f(y_n + ·) dR_n − ∫ f(y + ·) dR_n` uniformly.
-     - **(iii) Kernel pasting.** Replace `Q ⊗⇩M Pi⇩M UNIV RR` in `kglue_law`
-       by the semidirect product `Q ⤜ (λω. distr (K ω) _ (Pair ω))` for a
-       kernel `K ∈ (path space) →⇩M prob_algebra (path space)`. The four
-       clauses of (1.7) then have to be re-proved for it; the product
-       martingale machinery (`martingale_pair_fst/snd/mult`, Fubini
-       sectionwise) is the part that will need rebuilding, since `bind` is
-       not a product measure.
+     - **(i) the class IS a COMPACT METRIC SPACE — DONE 2026-08-07.**
+       `paper_pair_class_compactin_weak`: the class is `compactin` the
+       weak-convergence topology. `paper_pair_class_compact_metric_space`
+       repackages that as the three facts the selection theorem consumes —
+       `Metric_space (paper_pair_class k L T x) (Levy_Prokhorov.LPm …)`,
+       its `mtopology` being the subspace topology of weak convergence, and
+       `compact_space` of it.
+
+       AFP `Levy_Prokhorov_Metric` did the work and is ALREADY a session
+       dependency: interpret the `Levy_Prokhorov` locale (which is just
+       `Metric_space`) at `(mspace, mdist)` of `path_metric T`, and
+       `LPmtopology_eq_weak_conv_topology` identifies `LPm.mtopology` with
+       `General_Weak_Convergence.weak_conv_topology` — the topology our
+       `weak_conv_on` is a `limitin` of. `Prokhorov_Theorem.
+       tight_imp_relatively_compact` turns `tight_on_set_paper_pair_class`
+       (NC-2) into compactness of the closure, `LPm.closure_of_sequentially`
+       reduces the closure to sequences, and `paper_pair_class_weak_closed`
+       (NC-3) collapses it. `Submetric` restricts `LPm` to the class.
+
+       Still unused, for later: `Space_of_Finite_Measures.
+       weak_conv_topology_eq_prob_algebra` says the Borel σ-algebra of that
+       topology is `prob_algebra`, so a selector measurable into
+       `borel_of (weak_conv_topology …)` is a Giry-monad kernel.
+     - **(ii) JOINT usc — the analytic content is DONE 2026-08-07.**
+       `pshift_law_weak_conv_joint`: `y_m → y` and `R_m ⇒ R` imply
+       `(y_m)_*R_m ⇒ y_*R`. `ess_inf_pexit_pshift_usc`: hence
+       `Limsup_m ess_inf_time ((y_m)_*R_m) (τ_K∘fst)
+        ≤ ess_inf_time (y_*R) (τ_K∘fst)`.
+
+       **The tightness worry in the previous version of this entry was
+       wrong.** Weak convergence may be tested against bounded UNIFORMLY
+       continuous functions (`mweak_conv_fin.mweak_conv_eq1`), and shifting
+       a path by a constant vector moves it by exactly that vector in the
+       sup metric (`mdist_pshift_pshift`), so the test function is displaced
+       uniformly over the whole path space and the split
+       `|∫f(y_m+·)dR_m − ∫f(y+·)dR_m| + |∫f(y+·)dR_m − ∫f(y+·)dR|` closes
+       with no tightness at all.
+
+       **What is left in (ii)** is only bookkeeping, but it is real: turn
+       the sequential statements into the two hypotheses of
+       `usc_measurable_selection` at `M := 𝒞₀`, `P := borel`,
+       `f y R := ess_inf_time (pshift_law T y R) (pexit T K ∘ fst)`.
+       (a) `openin` of `{R ∈ 𝒞₀. f y R < c}` — sequential closedness of the
+       complement plus `Metric_space.closure_of_sequentially`.
+       (b) `(λy. Sup (f y ` C))` Borel for closed `C ⊆ 𝒞₀` — prove
+       `closed {y. c ≤ Sup (f y ` C)}` by `closed_sequential_limits`,
+       extracting a convergent subsequence in the compact `C`, then
+       `borel_measurableI_ge`. Then `paper_pair_class_shift_image` turns
+       `Sup (f y ` 𝒞₀)` into `paper_v k L T K y` and the selector is LR (ii).
+     - **(iii) Kernel pasting — NOT STARTED.** Replace `Q ⊗⇩M Pi⇩M UNIV RR`
+       in `kglue_law` by the semidirect product
+       `Q ⤜ (λω. distr (K ω) _ (Pair ω))` for a kernel
+       `K ∈ (path space) →⇩M prob_algebra (path space)`. The four clauses of
+       (1.7) then have to be re-proved for it; the product martingale
+       machinery (`martingale_pair_fst/snd/mult`, Fubini sectionwise) is the
+       part that will need rebuilding, since `bind` is not a product
+       measure. Budget this as its own session — it is comparable in size to
+       the whole `kglue_law` development (≈1,500 lines).
 
   4. **The `≤` half** — conditioning, i.e. regular conditional distributions on
      the Polish path space via AFP `Disintegration` (`measure_disintegration`,
