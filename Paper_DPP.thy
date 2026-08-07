@@ -1481,4 +1481,42 @@ proof -
     by (rule martingale_future_of_past[OF r rT setsP PS A pos Zm mg])
 qed
 
+text \<open>Clause (iv) does NOT follow the same way, and the obstruction is
+  algebraic rather than probabilistic: \<^const>\<open>outerp\<close> is QUADRATIC, so the
+  compensated process of the rebased future is not the increment of the
+  compensated process.  Expanding,
+
+  \<^item> \<open>outerp (a - b) = outerp a - (a \<otimes> b + b \<otimes> a) + outerp b\<close>,
+
+  so with \<open>a = X\<^sub>t\<close>, \<open>b = X\<^sub>r\<close>,
+
+  \<^item> \<open>outerp (X\<^sub>t - X\<^sub>r) - (Y\<^sub>t - Y\<^sub>r)
+       = (outerp X\<^sub>t - Y\<^sub>t) - (X\<^sub>t \<otimes> X\<^sub>r + X\<^sub>r \<otimes> X\<^sub>t) + (outerp X\<^sub>r + Y\<^sub>r)\<close>.
+
+  The first bracket is clause (iv) for \<open>P\<close>; the third is constant in \<open>t\<close> and
+  \<open>\<F>\<^sub>r\<close>-measurable.  The middle term is the real work: it is a martingale
+  only because \<open>X\<^sub>r\<close> is \<open>\<F>\<^sub>r\<close>-measurable, so what is needed is "pulling out
+  what is known" --- a martingale multiplied entrywise by a fixed
+  \<open>F 0\<close>-measurable factor is again a martingale.  The AFP has the
+  conditional-expectation half of that (\<open>cond_exp_measurable_mult\<close> in
+  \<open>Conditional_Expectation_Banach\<close>, for REAL-valued factors); what is
+  missing here is the martingale-level statement, the entrywise lift to
+  \<open>real^'n^'n\<close> through @{thm [source] martingale_matI}, and the
+  integrability of \<open>X\<^sub>t $ i * X\<^sub>r $ j\<close>, which the class's fourth moments
+  (@{thm [source] paper_pair_class_fourth_moment}) supply by
+  Cauchy--Schwarz.\<close>
+
+lemma outerp_diff:
+  fixes a b :: "real^'n::finite"
+  shows "outerp (a - b) = outerp a - ((\<chi> i j. a $ i * b $ j)
+      + (\<chi> i j. b $ i * a $ j)) + outerp b"
+  by (simp add: outerp_def vec_eq_iff algebra_simps)
+
+lemma outerp_diff_compensated:
+  fixes a b :: "real^'n::finite" and Ya Yb :: "real^'n^'n"
+  shows "outerp (a - b) - (Ya - Yb)
+      = (outerp a - Ya) - ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))
+        + (outerp b + Yb)"
+  by (simp add: outerp_diff)
+
 end
