@@ -2118,4 +2118,63 @@ proof -
     unfolding eq using cnt ne coord by (intro sets.countable_INT') auto
 qed
 
+subsection \<open>Towards the regular conditional distribution\<close>
+
+text \<open>The workhorse of the disintegration argument.  Every condition
+  defining the class is LINEAR in the measure --- \<open>\<mu> C = 1\<close> for the initial
+  and covariation clauses, \<open>\<integral> (X\<^sub>t - X\<^sub>s) 1\<^sub>A d\<mu> = 0\<close> for the martingale
+  clauses --- so passing from "it holds for \<open>P(\<sqdot> | A)\<close>, every \<open>A \<in> \<F>\<^sub>r\<close>" to
+  "it holds for the conditional law at almost every \<open>\<omega>\<close>" never needs a
+  separation theorem.  It only needs THIS: a \<open>\<G>\<close>-measurable function all of
+  whose \<open>\<G>\<close>-set integrals vanish is almost everywhere zero.\<close>
+
+lemma AE_nonpos_of_set_integral_zero:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes G: "subalgebra M G" and int: "integrable M f"
+    and fm: "f \<in> borel_measurable G"
+    and z: "\<And>A. A \<in> sets G \<Longrightarrow> set_lebesgue_integral M A f = 0"
+  shows "AE \<omega> in M. f \<omega> \<le> 0"
+proof -
+  have spG: "space G = space M" using G by (simp add: subalgebra_def)
+  let ?A = "{\<omega> \<in> space G. 0 < f \<omega>}"
+  have A: "?A \<in> sets G" using fm by measurable
+  have AM: "?A \<in> sets M" using A G by (auto simp: subalgebra_def)
+  have ii: "integrable M (\<lambda>\<omega>. indicator ?A \<omega> *\<^sub>R f \<omega>)"
+    by (rule integrable_mult_indicator[OF AM int])
+  have inn: "AE \<omega> in M. 0 \<le> indicator ?A \<omega> *\<^sub>R f \<omega>"
+    by (rule AE_I2) (auto simp: indicator_def)
+  have zi: "(\<integral>\<omega>. indicator ?A \<omega> *\<^sub>R f \<omega> \<partial>M) = 0"
+    using z[OF A] unfolding set_lebesgue_integral_def .
+  have "AE \<omega> in M. indicator ?A \<omega> *\<^sub>R f \<omega> = 0"
+    using ii inn zi by (simp add: integral_nonneg_eq_0_iff_AE)
+  moreover have "AE \<omega> in M. \<omega> \<in> space M" by (rule AE_I2) simp
+  ultimately show ?thesis
+    by eventually_elim (auto simp: indicator_def spG split: if_split_asm)
+qed
+
+lemma AE_zero_of_set_integral_zero:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes G: "subalgebra M G" and int: "integrable M f"
+    and fm: "f \<in> borel_measurable G"
+    and z: "\<And>A. A \<in> sets G \<Longrightarrow> set_lebesgue_integral M A f = 0"
+  shows "AE \<omega> in M. f \<omega> = 0"
+proof -
+  have up: "AE \<omega> in M. f \<omega> \<le> 0"
+    by (rule AE_nonpos_of_set_integral_zero[OF G int fm z])
+  have zn: "set_lebesgue_integral M A (\<lambda>\<omega>. - f \<omega>) = 0" if A: "A \<in> sets G" for A
+  proof -
+    have AM: "A \<in> sets M" using A G by (auto simp: subalgebra_def)
+    have "(\<integral>\<omega>. indicator A \<omega> *\<^sub>R (- f \<omega>) \<partial>M)
+        = (\<integral>\<omega>. - (indicator A \<omega> *\<^sub>R f \<omega>) \<partial>M)" by simp
+    also have "\<dots> = - (\<integral>\<omega>. indicator A \<omega> *\<^sub>R f \<omega> \<partial>M)"
+      by (rule Bochner_Integration.integral_minus)
+    also have "\<dots> = 0" using z[OF A] unfolding set_lebesgue_integral_def by simp
+    finally show ?thesis unfolding set_lebesgue_integral_def .
+  qed
+  have dn: "AE \<omega> in M. - f \<omega> \<le> 0"
+    by (rule AE_nonpos_of_set_integral_zero[OF G integrable_minus[OF int] _ zn])
+       (use fm in simp)
+  show ?thesis using up dn by eventually_elim simp
+qed
+
 end
