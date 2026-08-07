@@ -2621,4 +2621,65 @@ proof -
   qed
 qed
 
+text \<open>The transfer that every full-measure clause needs: an almost-sure
+  property of the future under \<open>P\<close> makes the corresponding rectangle
+  \<open>ksemi\<close>-null, which is the hypothesis of @{thm [source] AE_kernel_full}.\<close>
+
+lemma ksemi_rect_null_of_AE:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+    and C: "C \<in> sets (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and ae: "AE \<omega> in P. pfut r T \<omega> \<in> C"
+  shows "emeasure (ksemi (pair_law_of r (pcut r) P)
+        (borel_of (mtopology_of
+          (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>)
+      (space (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric)))
+        \<times> (space (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric))) - C)) = 0"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?Y = "borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  interpret PP: prob_space P by (rule PS)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  have C': "space ?Y - C \<in> sets ?Y" using C by (rule sets.compl_sets)
+  have rect: "space ?X \<times> (space ?Y - C) \<in> sets (?X \<Otimes>\<^sub>M ?Y)" using C' by simp
+  have preim: "?\<phi> -` (space ?X \<times> (space ?Y - C)) \<inter> space P
+      = pfut r T -` (space ?Y - C) \<inter> space P"
+    using measurable_space[OF mcut] by auto
+  have mset: "pfut r T -` (space ?Y - C) \<inter> space P \<in> sets P"
+    by (rule measurable_sets[OF mfut C'])
+  have null: "emeasure P (pfut r T -` (space ?Y - C) \<inter> space P) = 0"
+  proof -
+    have aeS: "AE \<omega> in P. \<omega> \<notin> pfut r T -` (space ?Y - C) \<inter> space P"
+      using ae by (auto elim: eventually_mono)
+    have setseq: "{\<omega> \<in> space P. \<not> (\<omega> \<notin> pfut r T -` (space ?Y - C) \<inter> space P)}
+        = pfut r T -` (space ?Y - C) \<inter> space P" by auto
+    show ?thesis using aeS AE_iff_measurable[OF mset setseq] by blast
+  qed
+  have "emeasure (ksemi (pair_law_of r (pcut r) P) ?Y \<kappa>)
+        (space ?X \<times> (space ?Y - C))
+      = emeasure (distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>) (space ?X \<times> (space ?Y - C))"
+    unfolding eq ..
+  also have "\<dots> = emeasure P (?\<phi> -` (space ?X \<times> (space ?Y - C)) \<inter> space P)"
+    by (rule emeasure_distr[OF mphi rect])
+  also have "\<dots> = 0" unfolding preim by (rule null)
+  finally show ?thesis .
+qed
+
 end
