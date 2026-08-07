@@ -3124,4 +3124,34 @@ proof -
          OF phim adap spF])
 qed
 
+text \<open>The \<open>gi\<close> hypothesis of @{thm [source] AE_kernel_integral_zero}: since
+  the semidirect product IS a pushforward of \<open>P\<close>, integrability of the
+  rectangle integrand reduces to integrability of the future part under \<open>P\<close>,
+  the two indicators only shrinking the norm.\<close>
+
+lemma integrable_ksemi_of_distr_rect:
+  fixes h :: "'b \<Rightarrow> real"
+  assumes eq: "ksemi M N Kr = distr P (M \<Otimes>\<^sub>M N) \<phi>"
+    and phim: "\<phi> \<in> P \<rightarrow>\<^sub>M M \<Otimes>\<^sub>M N"
+    and hm: "h \<in> borel_measurable N"
+    and A: "A \<in> sets M" and A': "A' \<in> sets N"
+    and hi: "integrable P (\<lambda>\<omega>. h (snd (\<phi> \<omega>)))"
+  shows "integrable (ksemi M N Kr)
+      (\<lambda>p. indicator A (fst p) * (indicator A' (snd p) * h (snd p)))"
+proof -
+  let ?g = "\<lambda>p :: 'a \<times> 'b.
+      indicator A (fst p) * (indicator A' (snd p) * h (snd p))"
+  have gm: "?g \<in> borel_measurable (M \<Otimes>\<^sub>M N)" using A A' hm by measurable
+  have comp: "integrable P (\<lambda>\<omega>. ?g (\<phi> \<omega>))"
+  proof (rule Bochner_Integration.integrable_bound[OF hi])
+    show "(\<lambda>\<omega>. ?g (\<phi> \<omega>)) \<in> borel_measurable P"
+      by (rule measurable_compose[OF phim gm])
+    show "AE \<omega> in P. norm (?g (\<phi> \<omega>)) \<le> norm (h (snd (\<phi> \<omega>)))"
+      by (rule AE_I2) (auto simp: indicator_def abs_mult)
+  qed
+  have "integrable (distr P (M \<Otimes>\<^sub>M N) \<phi>) ?g"
+    using comp by (simp add: integrable_distr_eq[OF phim gm])
+  then show ?thesis unfolding eq .
+qed
+
 end
