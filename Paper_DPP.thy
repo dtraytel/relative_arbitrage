@@ -1519,4 +1519,64 @@ lemma outerp_diff_compensated:
         + (outerp b + Yb)"
   by (simp add: outerp_diff)
 
+text \<open>"Pulling out what is known", at the MARTINGALE level.  The AFP has the
+  conditional-expectation half (\<open>cond_exp_measurable_mult\<close>); this is what
+  the cross term of @{thm [source] outerp_diff_compensated} actually needs.
+  Note the factor must be measurable for the filtration at the INITIAL time,
+  not merely somewhere along it --- otherwise it is not adapted.\<close>
+
+lemma martingale_mult_measurable:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and v :: "'a \<Rightarrow> real"
+  assumes mg: "martingale M F (0::real) X"
+    and vm: "v \<in> borel_measurable (F 0)"
+    and int: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. v \<omega> * X u \<omega>)"
+  shows "martingale M F 0 (\<lambda>u \<omega>. v \<omega> * X u \<omega>)"
+proof -
+  interpret MG: martingale M F "0::real" X by (rule mg)
+  have FM: "filtered_measure M F (0::real)" by unfold_locales
+  have vFu: "v \<in> borel_measurable (F u)" if u: "0 \<le> u" for u
+  proof -
+    have "subalgebra (F u) (F 0)"
+      using MG.subalgebras[OF u] MG.subalgebras[OF order_refl]
+        MG.sets_F_mono[OF order_refl u]
+      by (simp add: subalgebra_def)
+    then show ?thesis by (rule measurable_from_subalg[OF _ vm])
+  qed
+  have pm: "(\<lambda>\<omega>. v \<omega> * X u \<omega>) \<in> borel_measurable (F u)" if u: "0 \<le> u" for u
+    using vFu[OF u] MG.adapted[OF u] by simp
+  show ?thesis
+  proof (rule MG.martingale_of_set_integral_eq)
+    show "adapted_process M F 0 (\<lambda>u \<omega>. v \<omega> * X u \<omega>)"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using FM pm by blast
+    show "integrable M (\<lambda>\<omega>. v \<omega> * X i \<omega>)" if "0 \<le> i" for i by (rule int[OF that])
+    fix C and i j :: real
+    assume ij: "0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
+    have j0: "0 \<le> j" using ij by simp
+    interpret SF: sigma_finite_subalgebra M "F i" using ij(1) by blast
+    have CM: "C \<in> sets M" using C MG.sets_F_subset[OF ij(1)] by blast
+    have ae1: "AE \<omega> in M. cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<omega>
+        = v \<omega> * cond_exp M (F i) (X j) \<omega>"
+      by (rule SF.cond_exp_measurable_mult(2)
+          [OF int[OF j0] MG.integrable[OF j0] vFu[OF ij(1)]])
+    have ae2: "AE \<omega> in M. X i \<omega> = cond_exp M (F i) (X j) \<omega>"
+      by (rule MG.martingale_property[OF ij(1) ij(2)])
+    have ae: "AE \<omega> in M. cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<omega> = v \<omega> * X i \<omega>"
+      using ae1 ae2 by eventually_elim simp
+    have aeC: "AE \<omega>\<in>C in M. cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<omega> = v \<omega> * X i \<omega>"
+      using ae by (auto elim: eventually_mono)
+    have m1: "cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<in> borel_measurable M"
+      by (rule SF.borel_measurable_cond_exp')
+    have m2: "(\<lambda>\<omega>. v \<omega> * X i \<omega>) \<in> borel_measurable M"
+      using int[OF ij(1)] by simp
+    have "set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X j \<omega>)
+        = set_lebesgue_integral M C (cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>))"
+      by (rule SF.cond_exp_set_integral[OF int[OF j0] C])
+    also have "\<dots> = set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X i \<omega>)"
+      by (rule set_lebesgue_integral_cong_AE[OF CM m1 m2 aeC])
+    finally show "set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X i \<omega>)
+        = set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X j \<omega>)" ..
+  qed
+qed
+
 end
