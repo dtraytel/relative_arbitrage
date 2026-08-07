@@ -3209,4 +3209,40 @@ proof -
   finally show ?thesis using fmeas by (simp add: integrable_iff_bounded)
 qed
 
+text \<open>The \<open>z\<close> hypothesis: the rectangle integral over the semidirect product
+  IS a single SET integral over \<open>P\<close>, the two indicators combining into the
+  indicator of \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close>.  That set is where the martingale property
+  of \<open>P\<close> gets applied, so this lemma is the whole bridge from the kernel back
+  to the original law.\<close>
+
+lemma integral_ksemi_rect_of_set_integral:
+  fixes h :: "'b \<Rightarrow> real"
+  assumes eq: "ksemi M N Kr = distr P (M \<Otimes>\<^sub>M N) \<phi>"
+    and phim: "\<phi> \<in> P \<rightarrow>\<^sub>M M \<Otimes>\<^sub>M N"
+    and hm: "h \<in> borel_measurable N"
+    and A: "A \<in> sets M" and A': "A' \<in> sets N"
+  shows "(\<integral>p. indicator A (fst p) * (indicator A' (snd p) * h (snd p))
+        \<partial>(ksemi M N Kr))
+      = set_lebesgue_integral P (\<phi> -` (A \<times> A') \<inter> space P)
+          (\<lambda>\<omega>. h (snd (\<phi> \<omega>)))"
+proof -
+  let ?g = "\<lambda>p :: 'a \<times> 'b.
+      indicator A (fst p) * (indicator A' (snd p) * h (snd p))"
+  have gm: "?g \<in> borel_measurable (M \<Otimes>\<^sub>M N)" using A A' hm by measurable
+  have "(\<integral>p. ?g p \<partial>(ksemi M N Kr)) = (\<integral>p. ?g p \<partial>(distr P (M \<Otimes>\<^sub>M N) \<phi>))"
+    unfolding eq ..
+  also have "\<dots> = (\<integral>\<omega>. ?g (\<phi> \<omega>) \<partial>P)" by (rule integral_distr[OF phim gm])
+  also have "\<dots> = (\<integral>\<omega>. indicator (\<phi> -` (A \<times> A') \<inter> space P) \<omega> * h (snd (\<phi> \<omega>)) \<partial>P)"
+  proof (rule Bochner_Integration.integral_cong[OF refl])
+    fix \<omega> assume "\<omega> \<in> space P"
+    then show "?g (\<phi> \<omega>)
+        = indicator (\<phi> -` (A \<times> A') \<inter> space P) \<omega> * h (snd (\<phi> \<omega>))"
+      by (auto simp: indicator_def mem_Times_iff)
+  qed
+  also have "\<dots> = set_lebesgue_integral P (\<phi> -` (A \<times> A') \<inter> space P)
+      (\<lambda>\<omega>. h (snd (\<phi> \<omega>)))"
+    unfolding set_lebesgue_integral_def by simp
+  finally show ?thesis .
+qed
+
 end
