@@ -5400,4 +5400,93 @@ proof -
   qed
 qed
 
+subsection \<open>Steps (b1)--(b3) together: the conditional law is in the class\<close>
+
+text \<open>The deliverable of route (b).  The regular conditional distribution of
+  the REBASED FUTURE given the PAST lies, at almost every \<open>p'\<close>, in the
+  paper's class (1.7) at the ORIGIN.  All four clauses are now available:
+  (i) @{thm [source] pfut_rcd_start}, (ii) @{thm [source] pfut_rcd_diffquot},
+  (iii) @{thm [source] pfut_rcd_X_martingale}, (iv)
+  @{thm [source] pfut_rcd_comp_martingale}.
+
+  This is what (b4) consumes: under \<open>\<kappa> p'\<close> the starting point is a CONSTANT,
+  so the shifted law lies in the class at that point and its essential
+  infimum is bounded by \<^const>\<open>paper_v\<close> by definition --- no localization and
+  no \<open>K\<^sub>\<epsilon>\<close>.\<close>
+
+theorem paper_pair_class_rcd_member:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L"
+    and P: "P \<in> paper_pair_class k L T x"
+    and K: "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+  shows "AE p' in pair_law_of r (pcut r) P.
+      \<kappa> p' \<in> paper_pair_class k L (T - r) 0"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?S = "T - r"
+  let ?Y = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have setsP: "sets P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  interpret PP: prob_space P by (rule PS)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using K measurable_cong_sets[OF setsQ refl] by blast
+  have cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using P unfolding paper_pair_class_def by blast
+  have mgX: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+    by (rule paper_pair_class_X_martingale[OF P])
+  have mgC: "martingale P
+      (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)) 0
+      (\<lambda>u \<omega>. outerp (fst (pfut r T \<omega> (min u ?S)))
+          - snd (pfut r T \<omega> (min u ?S)))"
+    by (rule paper_pair_class_pfut_comp_martingale[OF r rT L0 P])
+
+  from AE_space
+    pfut_rcd_start[OF r rT setsP PS K eq]
+    pfut_rcd_diffquot[OF r rT setsP PS K eq cov]
+    pfut_rcd_X_martingale[OF r rT setsP PS K eq mgX]
+    pfut_rcd_comp_martingale[OF r rT setsP PS K eq mgC]
+  show ?thesis
+  proof eventually_elim
+    case (elim p')
+    then have W: "p' \<in> space ?Q"
+      and C1: "emeasure (\<kappa> p') {w \<in> space ?Y. fst (w 0) = 0 \<and> snd (w 0) = 0} = 1"
+      and C2: "AE w in \<kappa> p'. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> ?S \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> sconstraint k L"
+      and C3: "martingale (\<kappa> p')
+          (natural_filtration (\<kappa> p') 0 (\<lambda>v w :: 'n pairpath. w v)) 0
+          (\<lambda>u w. fst (w (min u ?S)))"
+      and C4: "martingale (\<kappa> p')
+          (natural_filtration (\<kappa> p') 0 (\<lambda>v w :: 'n pairpath. w v)) 0
+          (\<lambda>u w. outerp (fst (w (min u ?S))) - snd (w (min u ?S)))"
+      by blast+
+    have PK: "prob_space (\<kappa> p')" by (rule ksemi_sets_kernel(2)[OF KQ W])
+    have sK: "sets (\<kappa> p') = sets ?Y" by (rule ksemi_sets_kernel(1)[OF KQ W])
+    have C1': "AE w in \<kappa> p'. fst (w 0) = (0 :: real^'n) \<and> snd (w 0) = 0"
+      using AE_mem_of_emeasure_1[OF PK C1] by (rule eventually_mono) simp
+    show ?case
+      unfolding paper_pair_class_def
+      by (intro CollectI conjI PK sK C1' C2 C3 C4)
+  qed
+qed
+
 end
