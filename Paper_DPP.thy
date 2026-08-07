@@ -3275,4 +3275,193 @@ proof -
          OF phim adap spF])
 qed
 
+subsection \<open>The evaluations generate the path space's Borel sets\<close>
+
+text \<open>@{thm [source] pcut_filtration_measurable} lands in the natural
+  filtration of the CUT LAW, while the per-\<open>(i,j,A')\<close> statement of (b3)
+  quantifies the conditioning set over ALL of \<open>sets ?Q\<close> --- because
+  @{thm [source] AE_zero_of_set_integral_zero} is applied with \<open>\<G> = ?Q\<close>, and
+  restating it with a genuine sub-\<sigma>-algebra would only move the question to
+  the kernel's measurability.  So the two must be the SAME \<sigma>-algebra, i.e.
+  the coordinate evaluations have to generate the Borel sets of the path
+  space.  They do, and the proof is metric: the distance to a fixed path is
+  decided by the RATIONAL times alone, so it is measurable in the filtration,
+  hence so is every ball --- and the balls generate, the path space being
+  second countable.
+
+  First the coordinates themselves, which is all the easy inclusion needs.\<close>
+
+lemma path_eval_measurable_natural_filtration:
+  fixes U v :: real
+  assumes v: "v \<in> {0..U}"
+  shows "(\<lambda>\<omega> :: 'n::finite pairpath. \<omega> v) \<in> borel_measurable (natural_filtration
+      (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))
+      0 (\<lambda>v \<omega>. \<omega> v) U)"
+  unfolding natural_filtration_def
+  by (rule measurable_family_vimage_algebra) (use v in auto)
+
+lemma sets_natural_filtration_path_subset:
+  fixes U :: real
+  shows "sets (natural_filtration
+        (borel_of (mtopology_of (path_metric U :: ('n::finite pairpath) metric)))
+        0 (\<lambda>v \<omega>. \<omega> v) U)
+      \<subseteq> sets (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))"
+proof -
+  let ?m = "path_metric U :: ('n pairpath) metric"
+  let ?B = "borel_of (mtopology_of ?m)"
+  have "(\<Union>i\<in>{0..U}.
+      {(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space ?B | A. A \<in> sets borel})
+      \<subseteq> sets ?B"
+  proof clarsimp
+    fix i :: real and A :: "((real^'n) \<times> (real^'n^'n)) set"
+    assume "A \<in> sets borel"
+    then show "(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space ?B \<in> sets ?B"
+      by (rule measurable_sets[OF pair_law_eval_measurable[OF refl]])
+  qed
+  then show ?thesis
+    unfolding sets_natural_filtration by (rule sets.sigma_sets_subset)
+qed
+
+text \<open>The metric half.  @{thm [source] path_mdist_le_iff} turns the sup
+  distance into a condition at the rational times only --- countably many,
+  so @{thm [source] sets.countable_INT'} applies.  Note the intersection is
+  over a NONEMPTY index set, which is what keeps \<open>\<omega> \<in> space \<FF>\<close> on the
+  \<open>\<supseteq>\<close> side; over an empty one it would be the universe.\<close>
+
+lemma mdist_measurable_natural_filtration:
+  fixes U :: real and f :: "'n::finite pairpath"
+  assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ('n pairpath) metric)"
+  shows "(\<lambda>\<omega>. mdist (path_metric U :: ('n pairpath) metric) f \<omega>)
+      \<in> borel_measurable (natural_filtration
+          (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))
+          0 (\<lambda>v \<omega>. \<omega> v) U)"
+proof -
+  let ?m = "path_metric U :: ('n pairpath) metric"
+  let ?B = "borel_of (mtopology_of ?m)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) U"
+  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
+  have Q0: "(0::real) \<in> {0..U} \<inter> \<rat>" using U by simp
+  have neQ: "{0..U} \<inter> (\<rat> :: real set) \<noteq> {}" using Q0 by blast
+  have cQ: "countable ({0..U} \<inter> (\<rat> :: real set))"
+    by (rule countable_subset[OF _ countable_rat]) simp
+  show ?thesis
+  proof (subst borel_measurable_iff_le, intro allI)
+    fix q :: real
+    have iff: "mdist ?m f \<omega> \<le> q \<longleftrightarrow> (\<forall>t\<in>{0..U} \<inter> \<rat>. dist (f t) (\<omega> t) \<le> q)"
+      if w: "\<omega> \<in> mspace ?m" for \<omega> :: "'n pairpath"
+      by (rule path_mdist_le_iff[OF U f w])
+    have mem: "{\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q} \<in> sets ?F"
+      if t: "t \<in> {0..U} \<inter> \<rat>" for t
+    proof -
+      have m: "(\<lambda>\<omega> :: 'n pairpath. dist (f t) (\<omega> t)) \<in> borel_measurable ?F"
+        using path_eval_measurable_natural_filtration[of t U] t
+        by (intro borel_measurable_dist) auto
+      show ?thesis using iffD1[OF borel_measurable_iff_le m] by blast
+    qed
+    have seteq: "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}
+        = (\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
+    proof
+      show "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}
+          \<subseteq> (\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
+        using iff spF by auto
+    next
+      show "(\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})
+          \<subseteq> {\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}"
+      proof
+        fix \<omega> :: "'n pairpath"
+        assume w: "\<omega> \<in> (\<Inter>t \<in> {0..U} \<inter> \<rat>.
+            {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
+        have sp: "\<omega> \<in> space ?F" using w Q0 by blast
+        then have mw: "\<omega> \<in> mspace ?m" using spF by simp
+        have "\<forall>t\<in>{0..U} \<inter> \<rat>. dist (f t) (\<omega> t) \<le> q" using w by blast
+        then have "mdist ?m f \<omega> \<le> q" using iff[OF mw] by blast
+        then show "\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}" using sp by simp
+      qed
+    qed
+    have "(\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})
+        \<in> sets ?F"
+      by (rule sets.countable_INT'[OF cQ neQ]) (use mem in auto)
+    then show "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q} \<in> sets ?F"
+      unfolding seteq .
+  qed
+qed
+
+text \<open>Hence every metric ball is a filtration event.  The identification of
+  the ball with the sublevel set of the distance must NOT be left to
+  \<open>auto\<close> or \<open>simp\<close>: with the \<^locale>\<open>Metric_space\<close> interpretation in scope
+  the search takes ten minutes on this two-line goal.  A calculation with
+  \<open>simp only\<close> closes it instantly.\<close>
+
+lemma mball_in_natural_filtration:
+  fixes U :: real and f :: "'n::finite pairpath"
+  assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ('n pairpath) metric)"
+  shows "Metric_space.mball (mspace (path_metric U :: ('n pairpath) metric))
+        (mdist (path_metric U :: ('n pairpath) metric)) f e
+      \<in> sets (natural_filtration
+          (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))
+          0 (\<lambda>v \<omega>. \<omega> v) U)"
+proof -
+  let ?m = "path_metric U :: ('n pairpath) metric"
+  let ?B = "borel_of (mtopology_of ?m)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) U"
+  interpret MS: Metric_space "mspace ?m" "mdist ?m"
+    by (rule Metric_space_mspace_mdist)
+  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
+  have mb: "MS.mball f e = {\<omega> \<in> space ?F. mdist ?m f \<omega> < e}"
+  proof (rule set_eqI)
+    fix \<omega> :: "'n pairpath"
+    have "(\<omega> \<in> MS.mball f e)
+        = (f \<in> mspace ?m \<and> \<omega> \<in> mspace ?m \<and> mdist ?m f \<omega> < e)"
+      by (rule MS.in_mball)
+    also have "\<dots> = (\<omega> \<in> mspace ?m \<and> mdist ?m f \<omega> < e)"
+      by (simp only: eqTrueI[OF f] simp_thms)
+    also have "\<dots> = (\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> < e})"
+      by (simp only: spF mem_Collect_eq)
+    finally show "(\<omega> \<in> MS.mball f e)
+        = (\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> < e})" .
+  qed
+  have "{\<omega> \<in> space ?F. mdist ?m f \<omega> < e} \<in> sets ?F"
+    by (rule borel_measurable_less[OF mdist_measurable_natural_filtration[OF U f]
+        borel_measurable_const])
+  then show ?thesis unfolding mb[symmetric] .
+qed
+
+text \<open>And the balls generate: the path space is second countable, so its
+  Borel \<sigma>-algebra is generated by ANY base
+  (@{thm [source] borel_of_second_countable'}), and the balls are one.\<close>
+
+theorem sets_natural_filtration_path:
+  fixes U :: real
+  assumes U: "0 \<le> U"
+  shows "sets (natural_filtration
+        (borel_of (mtopology_of (path_metric U :: ('n::finite pairpath) metric)))
+        0 (\<lambda>v \<omega>. \<omega> v) U)
+      = sets (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))"
+proof -
+  let ?m = "path_metric U :: ('n pairpath) metric"
+  let ?B = "borel_of (mtopology_of ?m)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) U"
+  interpret MS: Metric_space "mspace ?m" "mdist ?m"
+    by (rule Metric_space_mspace_mdist)
+  let ?balls = "{MS.mball a \<epsilon> | a \<epsilon>. a \<in> mspace ?m \<and> \<epsilon> > 0}"
+  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
+  have sub: "?balls \<subseteq> Pow (mspace ?m)" using MS.mball_subset_mspace by auto
+  have base: "base_in (mtopology_of ?m) ?balls"
+    using MS.mtopology_base_in_balls by (simp add: mtopology_of_def)
+  have "?B = sigma (topspace (mtopology_of ?m)) ?balls"
+    by (rule borel_of_second_countable'
+        [OF second_countable_path_metric base_is_subbase[OF base]])
+  then have "sets ?B = sigma_sets (mspace ?m) ?balls"
+    using sets_measure_of[OF sub] by simp
+  also have "\<dots> \<subseteq> sets ?F"
+  proof -
+    have "?balls \<subseteq> sets ?F" using mball_in_natural_filtration[OF U] by blast
+    then have "sigma_sets (space ?F) ?balls \<subseteq> sets ?F"
+      by (rule sets.sigma_sets_subset)
+    then show ?thesis using spF by simp
+  qed
+  finally show ?thesis
+    using sets_natural_filtration_path_subset[of U] by blast
+qed
+
 end
