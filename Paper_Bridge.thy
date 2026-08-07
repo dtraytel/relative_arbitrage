@@ -12432,4 +12432,159 @@ proof (rule paper_pair_class_diffquot_of_pairs[OF sets_kglue_law'])
   qed
 qed
 
+subsection \<open>The glue is continuous, and the product is a Polish product\<close>
+
+text \<open>A change of route for clauses (iii) and (iv), decided 2026-08-07.
+  Proving them directly for @{const ksemi} runs into two obstructions: the
+  distribution's \<open>integral_bind\<close> is only for BOUNDED REAL integrands, and
+  the FIRST-factor martingale property is FALSE for a semidirect product
+  (the weight \<open>(Kr \<omega>)(A\<^sub>\<omega>)\<close> in the disintegrated set integral is only
+  \<open>\<F>\<^sub>r\<close>-measurable).
+
+  Neither has to be faced.  The class is WEAKLY CLOSED
+  (@{thm [source] paper_pair_class_weak_closed}), the glue with a COUNTABLY
+  valued index is already in it
+  (@{thm [source] paper_pair_class_kglue_law}), and the class at the origin
+  is a COMPACT metric space
+  (@{thm [source] paper_pair_class_compact_metric_space}) --- so it is
+  separable, and any kernel into it is a pointwise limit of countably
+  valued ones.  If the semidirect products converge weakly, the glued laws
+  do too, and weak closedness finishes.  What that needs is exactly what
+  the martingale route did not: continuity of the glue, and the identity
+  of the two \<sigma>-algebras on the product.\<close>
+
+lemma second_countable_path_metric:
+  "second_countable (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
+  unfolding mtopology_of_def
+  by (rule Metric_space.separable_space_imp_second_countable
+      [OF Metric_space_mspace_mdist path_metric_polish(2)])
+
+lemma borel_of_path_prod:
+  "borel_of (mtopology_of (path_metric r :: ('n::finite pairpath) metric))
+     \<Otimes>\<^sub>M borel_of (mtopology_of (path_metric s :: ('n pairpath) metric))
+   = borel_of (mtopology_of (prod_metric (path_metric r :: ('n pairpath) metric)
+        (path_metric s :: ('n pairpath) metric)))"
+  by (simp add: borel_of_prod second_countable_path_metric)
+
+lemma mdist_pglue_le:
+  fixes w wt w' wt' :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and w: "w \<in> mspace (path_metric r :: ('n pairpath) metric)"
+    and wt: "wt \<in> mspace (path_metric r :: ('n pairpath) metric)"
+    and w': "w' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    and wt': "wt' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+  shows "mdist (path_metric T :: ('n pairpath) metric)
+        (pglue r T w w') (pglue r T wt wt')
+      \<le> mdist (path_metric r :: ('n pairpath) metric) w wt
+        + 2 * mdist (path_metric (T - r) :: ('n pairpath) metric) w' wt'"
+proof -
+  let ?d1 = "mdist (path_metric r :: ('n pairpath) metric) w wt"
+  let ?d2 = "mdist (path_metric (T - r) :: ('n pairpath) metric) w' wt'"
+  have T0: "0 \<le> T" using r rT by simp
+  have Tr0: "0 \<le> T - r" using rT by simp
+  have g1: "pglue r T w w' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule pglue_in_mspace[OF r rT w w'])
+  have g2: "pglue r T wt wt' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule pglue_in_mspace[OF r rT wt wt'])
+  have pw1: "dist (w t) (wt t) \<le> ?d1" if "t \<in> {0..r}" for t
+    using path_mdist_le_iff_all[OF r w wt] that by blast
+  have pw2: "dist (w' t) (wt' t) \<le> ?d2" if "t \<in> {0..T - r}" for t
+    using path_mdist_le_iff_all[OF Tr0 w' wt'] that by blast
+  have pw: "dist (pglue r T w w' t) (pglue r T wt wt' t) \<le> ?d1 + 2 * ?d2"
+    if t: "t \<in> {0..T}" for t
+  proof (cases "t \<le> r")
+    case True
+    then have tr: "t \<in> {0..r}" using t by simp
+    have "dist (pglue r T w w' t) (pglue r T wt wt' t) = dist (w t) (wt t)"
+      using t True by (simp add: pglue_le)
+    also have "\<dots> \<le> ?d1" by (rule pw1[OF tr])
+    also have "\<dots> \<le> ?d1 + 2 * ?d2" by simp
+    finally show ?thesis .
+  next
+    case False
+    then have tr: "r \<le> t" by simp
+    have t1: "t - r \<in> {0..T - r}" using t tr by simp
+    have t2: "(0::real) \<in> {0..T - r}" using Tr0 by simp
+    have alg: "(w r + (w' (t - r) - w' 0)) - (wt r + (wt' (t - r) - wt' 0))
+        = (w r - wt r) + ((w' (t - r) - wt' (t - r)) - (w' 0 - wt' 0))"
+      by (simp add: algebra_simps)
+    have "dist (pglue r T w w' t) (pglue r T wt wt' t)
+        = norm ((w r - wt r) + ((w' (t - r) - wt' (t - r)) - (w' 0 - wt' 0)))"
+      using t tr by (simp add: pglue_ge dist_norm alg)
+    also have "\<dots> \<le> norm (w r - wt r)
+        + norm ((w' (t - r) - wt' (t - r)) - (w' 0 - wt' 0))"
+      by (rule norm_triangle_ineq)
+    also have "\<dots> \<le> norm (w r - wt r)
+        + (norm (w' (t - r) - wt' (t - r)) + norm (w' 0 - wt' 0))"
+      by (simp add: norm_triangle_ineq4)
+    also have "\<dots> \<le> ?d1 + (?d2 + ?d2)"
+      using pw1[of r] pw2[OF t1] pw2[OF t2] r by (simp add: dist_norm)
+    finally show ?thesis by simp
+  qed
+  show ?thesis using path_mdist_le_iff_all[OF T0 g1 g2] pw by blast
+qed
+
+lemma Lipschitz_pglue:
+  fixes r T :: real
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+  shows "Lipschitz_continuous_map
+      (prod_metric (path_metric r :: ('n::finite pairpath) metric)
+        (path_metric (T - r) :: ('n pairpath) metric))
+      (path_metric T :: ('n pairpath) metric)
+      (\<lambda>p. pglue r T (fst p) (snd p))"
+  unfolding Lipschitz_continuous_map_def
+proof (intro conjI)
+  show "(\<lambda>p. pglue r T (fst p) (snd p))
+      \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
+          (path_metric (T - r) :: ('n pairpath) metric))
+        \<rightarrow> mspace (path_metric T :: ('n pairpath) metric)"
+    using pglue_in_mspace[OF r rT] by (intro funcsetI) auto
+  show "\<exists>B. \<forall>p \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
+          (path_metric (T - r) :: ('n pairpath) metric)).
+      \<forall>q \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
+          (path_metric (T - r) :: ('n pairpath) metric)).
+        mdist (path_metric T :: ('n pairpath) metric)
+            ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
+          \<le> B * mdist (prod_metric (path_metric r :: ('n pairpath) metric)
+              (path_metric (T - r) :: ('n pairpath) metric)) p q"
+  proof (intro exI[of _ 3] ballI)
+    fix p q :: "'n pairpath \<times> 'n pairpath"
+    assume p: "p \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
+        (path_metric (T - r) :: ('n pairpath) metric))"
+      and q: "q \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
+        (path_metric (T - r) :: ('n pairpath) metric))"
+    from p have p1: "fst p \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and p2: "snd p \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+      by auto
+    from q have q1: "fst q \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and q2: "snd q \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+      by auto
+    let ?a = "mdist (path_metric r :: ('n pairpath) metric) (fst p) (fst q)"
+    let ?b = "mdist (path_metric (T - r) :: ('n pairpath) metric) (snd p) (snd q)"
+    let ?pd = "mdist (prod_metric (path_metric r :: ('n pairpath) metric)
+        (path_metric (T - r) :: ('n pairpath) metric)) p q"
+    have pdeq: "?pd = sqrt (?a\<^sup>2 + ?b\<^sup>2)"
+      by (simp add: prod_dist_def case_prod_unfold)
+    have c1: "?a \<le> ?pd"
+    proof -
+      have "?a = sqrt (?a\<^sup>2)" by simp
+      also have "\<dots> \<le> sqrt (?a\<^sup>2 + ?b\<^sup>2)" by (simp add: real_sqrt_le_mono)
+      finally show ?thesis using pdeq by simp
+    qed
+    have c2: "?b \<le> ?pd"
+    proof -
+      have "?b = sqrt (?b\<^sup>2)" by simp
+      also have "\<dots> \<le> sqrt (?a\<^sup>2 + ?b\<^sup>2)" by (simp add: real_sqrt_le_mono)
+      finally show ?thesis using pdeq by simp
+    qed
+    have "mdist (path_metric T :: ('n pairpath) metric)
+        (pglue r T (fst p) (snd p)) (pglue r T (fst q) (snd q)) \<le> ?a + 2 * ?b"
+      by (rule mdist_pglue_le[OF r rT p1 q1 p2 q2])
+    also have "\<dots> \<le> 3 * ?pd" using c1 c2 by simp
+    finally show "mdist (path_metric T :: ('n pairpath) metric)
+        ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
+        \<le> 3 * ?pd" by simp
+  qed
+qed
+
 end
