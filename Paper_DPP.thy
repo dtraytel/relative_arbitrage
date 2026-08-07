@@ -5489,4 +5489,66 @@ proof -
   qed
 qed
 
+section \<open>Step (b4): the conditioning statement\<close>
+
+text \<open>The last obligation of the DPP at a deterministic time.  Two pathwise
+  facts first.  On the survival event the exit time splits at \<open>r\<close>
+  (@{thm [source] pexit_split_at_r}) and the second piece is the exit time of
+  the rebased future SHIFTED BACK to where the path actually was --- which is
+  exactly the object \<^const>\<open>pshift_law\<close> pushes into the class at that point.\<close>
+
+lemma pexit_split_pshift_pfut:
+  fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and surv: "pexit r K (\<lambda>t. fst (\<omega> t)) = r" and endK: "fst (\<omega> r) \<in> K"
+  shows "pexit T K (\<lambda>t. fst (\<omega> t))
+      = r + pexit (T - r) K
+          (\<lambda>s. fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s))"
+proof -
+  have "pexit (T - r) K
+        (\<lambda>s. fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s))
+      = pexit (T - r) K (\<lambda>s. fst (\<omega> (r + s)))"
+  proof (rule pexit_cong_on)
+    fix s :: real assume s: "0 \<le> s" "s \<le> T - r"
+    then have m: "s \<in> {0..T - r}" by simp
+    have "fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s)
+        = fst (\<omega> r) + fst (pfut r T \<omega> s)" using m by (simp add: pshift_apply)
+    also have "\<dots> = fst (\<omega> (r + s))" by (simp add: pfut_fst[OF m])
+    finally show "fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s)
+        = fst (\<omega> (r + s))" .
+  qed
+  then show ?thesis using pexit_split_at_r[OF r rT surv endK] by simp
+qed
+
+text \<open>And the class-level step: an almost-sure lower bound on the exit time
+  of the SHIFTED law is a lower bound for \<^const>\<open>paper_v\<close> at the shift.  This
+  is where "no localization and no \<open>K\<^sub>\<epsilon>\<close>" is cashed in --- the starting point
+  is a single vector \<open>y\<close>, not a small ball, so the bound lands on
+  \<open>paper_v \<dots> y\<close> itself.\<close>
+
+lemma paper_v_ge_of_AE_pshift:
+  fixes R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+    and y :: "real^'n"
+  assumes S: "0 \<le> S"
+    and R: "R \<in> paper_pair_class k L S 0"
+    and ae: "AE w in R. b \<le> pexit S K (\<lambda>s. fst (pshift S y w s))"
+  shows "ennreal b \<le> paper_v k L S K y"
+proof -
+  have setsR: "sets R = sets (borel_of (mtopology_of
+      (path_metric S :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF R])
+  have mem: "pshift_law S y R \<in> paper_pair_class k L S y"
+    using paper_pair_class_pshift[OF S R] by simp
+  have "AE w in R. ennreal b \<le> ennreal (pexit S K (\<lambda>s. fst (pshift S y w s)))"
+    using ae by (rule eventually_mono) (rule ennreal_leI)
+  then have "ennreal b
+      \<le> ess_inf_time R (\<lambda>w. pexit S K (\<lambda>s. fst (pshift S y w s)))"
+    unfolding ess_inf_time_def by (rule Sup_upper[OF CollectI])
+  also have "\<dots> = ess_inf_time (pshift_law S y R) (\<lambda>w. pexit S K (\<lambda>t. fst (w t)))"
+    by (rule ess_inf_time_pshift_law[OF S setsR, symmetric])
+  also have "\<dots> \<le> paper_v k L S K y"
+    unfolding paper_v_def by (rule SUP_upper) (rule mem)
+  finally show ?thesis .
+qed
+
 end
