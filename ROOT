@@ -48,6 +48,7 @@ session Arbitrage = "HOL-Probability" +
     Exit_Semicontinuity
     Paper_Class
     Paper_Bridge
+    Paper_DPP
     Deterministic_Radius_Market
     Theorem_1_1
     Sup_Convolution
