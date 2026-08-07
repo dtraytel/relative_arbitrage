@@ -5841,4 +5841,37 @@ proof -
   qed
 qed
 
+section \<open>The dynamic programming principle at a deterministic time\<close>
+
+text \<open>Proposition 2.4 of arXiv:2512.17702 at a DETERMINISTIC \<open>\<theta> = r\<close>,
+  unconditionally.  The \<open>\<ge>\<close> half is @{thm [source] paper_v_dpp_sup_ge} (kernel
+  pasting, \<S>1.9); the \<open>\<le>\<close> half is
+  @{thm [source] paper_v_dpp_le_of_cond} with its one hypothesis now
+  discharged by @{thm [source] paper_v_cond}, which is route (b) --- the
+  regular conditional distribution --- end to end.
+
+  Both summands are read off the FIRST piece: \<open>\<theta> \<and> \<tau>\<^sub>K\<close> is the exit time
+  capped at \<open>r\<close>, and the indicator \<open>1\<^bsub>{\<theta> \<le> \<tau>\<^sub>K}\<^esub>\<close> is
+  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>, which is exact for the capped exit time
+  and needs no path continuity.\<close>
+
+theorem paper_v_dpp:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and Kc: "closed K"
+  shows "paper_v k L T K x
+      = (SUP P \<in> paper_pair_class k L T x. ess_inf_time P
+          (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)))"
+proof (rule paper_v_dpp_eq_of_cond[OF r rT L1 Kc])
+  fix P :: "('n pairpath) measure" and c :: real
+  assume P: "P \<in> paper_pair_class k L T x"
+    and c: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+  have rT': "r \<le> T" using rT by simp
+  have L0: "0 \<le> L" using L1 by simp
+  show "AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+      \<longrightarrow> c \<le> r + enn2real (paper_v k L (T - r) K (fst (\<omega> r)))"
+    by (rule paper_v_cond[OF r rT' L0 Kc P c])
+qed
+
 end
