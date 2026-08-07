@@ -2561,4 +2561,64 @@ proof -
   show ?thesis by (rule AE_kernel_full[OF KQ neQ CY null'])
 qed
 
+text \<open>A rational-hypothesis variant of
+  @{thm [source] paper_pair_class_diffquot_of_pairs}.  The original demands
+  the pairwise bound at ALL real pairs, which an almost-sure argument cannot
+  supply --- only COUNTABLY many conditions survive the passage from "for
+  each, almost surely" to "almost surely, for all".  Its proof already uses
+  the hypothesis at rational pairs only, so the weakening is free.\<close>
+
+lemma paper_pair_class_diffquot_of_rational_pairs:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and one: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
+      AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+proof -
+  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume p: "p \<in> \<rat>"
+    show "AE \<omega> in Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume q: "q \<in> \<rat>"
+      show "AE \<omega> in Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
+        case True
+        then have pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
+        from one[OF p q pq] show ?thesis by (rule eventually_mono) simp
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  from rat AE_space show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      and W: "\<omega> \<in> space Q" by blast+
+    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W spQ by simp
+    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
+      using mspace_path_metricD[OF mw] by (intro continuous_intros)
+    show ?case
+    proof (intro allI impI)
+      fix u v :: real
+      assume uv: "0 \<le> u" "u < v" "v \<le> T"
+      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
+        by (rule diffquot_all_of_rational
+            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
+    qed
+  qed
+qed
+
 end
