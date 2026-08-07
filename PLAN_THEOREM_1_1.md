@@ -462,7 +462,10 @@ interleaved.
 
 ### 2.1 The conditioning statement — all that is left of the DPP at a deterministic time
 
-`paper_v_dpp_le_of_cond` (§1.9's companion, proved) reduces the `≤` half of
+*(This was §2.2 in the numbering used before the 2026-08-07 restructure: it
+is the `≤` half of (2.9).)*
+
+`paper_v_dpp_le_of_cond` (proved, §1.9's companion) reduces the `≤` half of
 (2.9), hence (2.9) itself at a deterministic time, to ONE hypothesis:
 
     cond: P ∈ paper_pair_class k L T x ⟹
@@ -477,32 +480,41 @@ left `K` by time `r` has the same exit time at either horizon, including the
 boundary case of a path that exits exactly AT `r` (`pexit_stable_above_T`
 does NOT cover that; it wants `pexit r K f < r`).
 
-`cond` IS the statement that the conditional law of the future given `ℱ_r`
-is, almost surely, a member of the class started at `X_r`; then its own
-essential infimum is `≤ v(X_r)` by the definition of `paper_v`, and the
-surviving `P` would contradict it. Route:
+**The key structural fact (established 2026-08-07, and it changes the
+route).** Conditioning on an event of the PAST does not disturb the FUTURE's
+membership in the class:
 
-1. push `P` forward along `ω ↦ (pcut r ω, λs. ω (r+s) - ω r)` into
-   `?BR ⊗ ?MR` (both standard Borel — `Path_Space.path_metric_polish`,
-   `Polish_space_path_metric`);
-2. disintegrate with AFP `Disintegration.measure_disintegration` (already a
-   session dependency; the locale is `projection_sigma_finite_standard`, and
-   it yields a `prob_kernel` κ with
-   `ν (A × B) = ∫⁺ x∈A. κ x B ∂ν_x` — that is `disintegration`, NOT the
-   Giry `bind`, so expect to bridge to `ksemi`);
-3. verify the four clauses of (1.7) for `κ ω` for a.e. `ω`. **This is the
-   real work.** Clauses (i)/(ii) are a.s. inheritance and go through
-   `AE`-transfer; the two MARTINGALE clauses are the conditional-martingale
-   statement: for `s < t` and bounded `ℱ^0_s`-measurable `h`,
-   `∫ (X_{r+t} - X_{r+s}) h dκω = 0` a.s., which follows from the
-   martingale property of `X` under `P` at level `ℱ_{r+s}` because
-   `h(future) · 1_G(past)` is `ℱ_{r+s}`-measurable. Then a COUNTABLE
-   determining family of `h` plus a monotone-class step upgrades "for each
-   `(s,t,h)`, a.s." to "a.s., for all `(s,t,h)`".
+> for `A ∈ ℱ_r` with `P A > 0`, the law of the rebased future
+> `pfut r T ω = (λs. ω (r+s) - ω r)` under `P(· | A)` lies in
+> `paper_pair_class k L (T-r) 0`.
 
-Step 3 is the same shape as `paper_pair_class_diffquot_of_pairs` (countably
-many rational pairs, then `AE_ball_countable'`), which is the template to
-copy.
+The martingale clauses survive because the conditioning density `1_A / P A`
+is `ℱ_r`-measurable, hence `ℱ_{r+s}`-measurable for every `s`, so the set
+integral over `C ∈ ℱ_{r+s}` simply becomes one over `C ∩ A ∈ ℱ_{r+s}` — no
+approximation, no monotone class. That is `paper_pair_class_future_of_past`
+(§2.1(a) below). **No regular conditional distribution is needed for class
+membership.**
+
+What r.c.d. would still buy is the *localization*: under the conditional law
+given `ℱ_r`, the starting point `X_r` is a CONSTANT, so `paper_v(X_r)` can be
+compared directly. Conditioning on a positive-measure `A` only makes `X_r`
+lie in a small ball, and the comparison then leaks into an ε-enlargement
+`K_ε` of the target set. So there are two ways to finish, and they trade one
+hard step for another:
+
+| route | remaining obligation |
+|---|---|
+| **(a) positive-measure conditioning** (`paper_pair_class_future_of_past` — elementary, no AFP `Disintegration`) | usc of `paper_v` in the TARGET SET: `paper_v k L U K⇩ε y → paper_v k L U K y` as `ε ↓ 0`. Provable by the existing compactness/usc machinery generalized to a decreasing sequence `K_n ↓ K` — the witness step is: `ω⇩n → ω` and `ω s ∉ K` give `dist (ω s) K = d > 0`, so `ω⇩n s ∉ K_ε⇩n` once `ε⇩n < d/2`. |
+| **(b) regular conditional distributions** (AFP `Disintegration.measure_disintegration`, locale `projection_sigma_finite_standard`; the path spaces are standard Borel by `Path_Space.path_metric_polish`) | the CONDITIONAL martingale property at a.e. `ω`: a countable determining family of test functions plus a monotone-class step to get "a.s., for all `A ∈ ℱ⁰_s`" out of "for each `A`, a.s.". |
+
+Route (a) is preferred: every step is elementary and the K-usc lemma is a
+variant of machinery that already exists (`ess_inf_pexit_usc`,
+`paper_v_usc`), whereas route (b)'s monotone-class step has no analogue in
+the development. A hybrid is also possible — (a) for class membership, (b)
+only to make `X_r` constant.
+
+Supporting results already proved for this section: `pfut`,
+`pfut_measurable`, `pexit_split_at_r`.
 
 ### 2.2 The DPP at a STOPPING time
 

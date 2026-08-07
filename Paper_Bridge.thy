@@ -14017,4 +14017,221 @@ proof (rule order.antisym)
     by (rule paper_v_dpp_sup_ge[OF r rT L1 K])
 qed
 
+section \<open>Conditioning on the past: towards the \<open>\<le>\<close> half\<close>
+
+text \<open>The remaining obligation of the dynamic programming principle at a
+  deterministic time is the conditioning statement isolated in
+  @{thm [source] paper_v_dpp_le_of_cond}.  This section builds its
+  ingredients: the exit time SPLITS at \<open>r\<close> on the survival event, and the
+  rebased future \<open>pfut\<close> is a measurable map of path spaces.\<close>
+
+lemma cInf_shift_real:
+  fixes S :: "real set"
+  assumes ne: "S \<noteq> {}" and bdd: "bdd_below S"
+  shows "Inf ((\<lambda>s. r + s) ` S) = r + Inf S"
+proof -
+  obtain m where m: "\<And>s. s \<in> S \<Longrightarrow> m \<le> s" using bdd by (auto simp: bdd_below_def)
+  have neI: "(\<lambda>s. r + s) ` S \<noteq> {}" using ne by blast
+  have bddI: "bdd_below ((\<lambda>s. r + s) ` S)"
+    by (rule bdd_belowI[of _ "r + m"]) (use m in auto)
+  show ?thesis
+  proof (rule antisym)
+    have "Inf ((\<lambda>s. r + s) ` S) - r \<le> s" if s: "s \<in> S" for s
+    proof -
+      have "Inf ((\<lambda>s. r + s) ` S) \<le> r + s"
+        using s by (intro cInf_lower[OF _ bddI]) blast
+      then show ?thesis by simp
+    qed
+    then have "Inf ((\<lambda>s. r + s) ` S) - r \<le> Inf S" by (intro cInf_greatest[OF ne])
+    then show "Inf ((\<lambda>s. r + s) ` S) \<le> r + Inf S" by simp
+    show "r + Inf S \<le> Inf ((\<lambda>s. r + s) ` S)"
+    proof (rule cInf_greatest[OF neI])
+      fix z assume "z \<in> (\<lambda>s. r + s) ` S"
+      then obtain s where s: "s \<in> S" "z = r + s" by blast
+      then show "r + Inf S \<le> z" using cInf_lower[OF s(1) bdd] by simp
+    qed
+  qed
+qed
+
+text \<open>On the survival event the exit time splits exactly: the first piece
+  contributes \<open>r\<close> and the rest is the exit time of the TIME-SHIFTED path
+  measured against the shortened horizon.  This is the identity that turns
+  the almost-sure bound \<open>\<tau>\<^sub>K \<ge> c\<close> into a bound on the future.\<close>
+
+lemma pexit_split_at_r:
+  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and surv: "pexit r K f = r" and endK: "f r \<in> K"
+  shows "pexit T K f = r + pexit (T - r) K (\<lambda>s. f (r + s))"
+proof -
+  have stay: "f t \<in> K" if t: "t \<in> {0..r}" for t
+  proof (rule ccontr)
+    assume nk: "f t \<notin> K"
+    have "pexit r K f \<le> t"
+      unfolding pexit_def using r t nk by (intro etime_le_of_mem) auto
+    with surv t have "t = r" by simp
+    then show False using nk endK by simp
+  qed
+  define B where "B = {s. 0 \<le> s \<and> s \<le> T - r \<and> f (r + s) \<in> - K} \<union> {T - r}"
+  have Beq: "{t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T} = (\<lambda>s. r + s) ` B"
+  proof (rule set_eqI, rule iffI)
+    fix t assume "t \<in> {t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T}"
+    then consider (hit) "0 \<le> t" "t \<le> T" "f t \<in> - K" | (cap) "t = T" by blast
+    then show "t \<in> (\<lambda>s. r + s) ` B"
+    proof cases
+      case hit
+      have rt: "r < t"
+      proof (rule ccontr)
+        assume "\<not> r < t"
+        then have "t \<in> {0..r}" using hit(1) by simp
+        then show False using stay hit(3) by simp
+      qed
+      show ?thesis
+      proof (rule image_eqI[where x = "t - r"])
+        show "t = r + (t - r)" by simp
+        show "t - r \<in> B" unfolding B_def using hit rt by simp
+      qed
+    next
+      case cap
+      show ?thesis
+      proof (rule image_eqI[where x = "T - r"])
+        show "t = r + (T - r)" using cap by simp
+        show "T - r \<in> B" unfolding B_def by simp
+      qed
+    qed
+  next
+    fix t assume "t \<in> (\<lambda>s. r + s) ` B"
+    then obtain s where s: "s \<in> B" "t = r + s" by blast
+    from s(1) consider (hit) "0 \<le> s" "s \<le> T - r" "f (r + s) \<in> - K" | (cap) "s = T - r"
+      unfolding B_def by blast
+    then show "t \<in> {t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T}"
+    proof cases
+      case hit
+      then show ?thesis using s(2) r by simp
+    next
+      case cap
+      then show ?thesis using s(2) by simp
+    qed
+  qed
+  have ne: "B \<noteq> {}" unfolding B_def by blast
+  have bdd: "bdd_below B"
+    unfolding B_def by (rule bdd_belowI[of _ 0]) (use rT in auto)
+  have "pexit T K f = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T})"
+    unfolding pexit_def etime_def ..
+  also have "\<dots> = Inf ((\<lambda>s. r + s) ` B)" unfolding Beq ..
+  also have "\<dots> = r + Inf B" by (rule cInf_shift_real[OF ne bdd])
+  also have "\<dots> = r + pexit (T - r) K (\<lambda>s. f (r + s))"
+    unfolding pexit_def etime_def B_def ..
+  finally show ?thesis .
+qed
+
+subsection \<open>The rebased future as a map of path spaces\<close>
+
+text \<open>\<open>pfut r T \<omega>\<close> is the path after \<open>r\<close>, re-based at its own starting point,
+  so that it starts at \<open>0\<close> no matter where \<open>\<omega>\<close> was at time \<open>r\<close>.  It is the
+  map along which the conditional law of the future is taken.  Like the glue,
+  it is Lipschitz --- with constant \<open>2\<close>, because the base point is subtracted
+  and so counts once more.\<close>
+
+definition pfut :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+  where "pfut r T \<omega> = restrict (\<lambda>s. \<omega> (r + s) - \<omega> r) {0..T - r}"
+
+lemma pfut_apply: "s \<in> {0..T - r} \<Longrightarrow> pfut r T \<omega> s = \<omega> (r + s) - \<omega> r"
+  by (simp add: pfut_def)
+
+lemma pfut_zero: "0 \<le> T - r \<Longrightarrow> pfut r T \<omega> 0 = 0"
+  by (simp add: pfut_def)
+
+lemma pfut_fst:
+  "s \<in> {0..T - r} \<Longrightarrow> fst (pfut r T \<omega> s) = fst (\<omega> (r + s)) - fst (\<omega> r)"
+  by (simp add: pfut_def)
+
+lemma pfut_in_mspace:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pfut r T \<omega> \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+proof -
+  have cw: "continuous_on {0..T} \<omega>" by (rule mspace_path_metric_continuous[OF w])
+  have sub: "(\<lambda>s. r + s) ` {0..T - r} \<subseteq> {0..T}" using r rT by auto
+  have c1: "continuous_on {0..T - r} (\<lambda>s. \<omega> (r + s))"
+    by (rule continuous_on_compose2[OF cw _ sub]) (intro continuous_intros)
+  have "continuous_on {0..T - r} (\<lambda>s. \<omega> (r + s) - \<omega> r)"
+    by (intro continuous_on_diff c1 continuous_on_const)
+  then show ?thesis unfolding pfut_def by (rule mspace_path_metricI)
+qed
+
+lemma Lipschitz_pfut:
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+  shows "Lipschitz_continuous_map (path_metric T :: ('n::finite pairpath) metric)
+      (path_metric (T - r) :: ('n pairpath) metric) (pfut r T)"
+  unfolding Lipschitz_continuous_map_def
+proof (intro conjI)
+  show "pfut r T \<in> mspace (path_metric T :: ('n pairpath) metric)
+      \<rightarrow> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    by (intro funcsetI pfut_in_mspace[OF r rT])
+  have T0: "0 \<le> T" using r rT by simp
+  have Tr: "0 \<le> T - r" using rT by simp
+  have key: "mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
+      \<le> 2 * mdist (path_metric T) f g"
+    if f: "f \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      and g: "g \<in> mspace (path_metric T :: ('n pairpath) metric)" for f g
+  proof -
+    have sf: "pfut r T f \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+      by (rule pfut_in_mspace[OF r rT f])
+    have sg: "pfut r T g \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+      by (rule pfut_in_mspace[OF r rT g])
+    have pw: "\<forall>t\<in>{0..T}. dist (f t) (g t) \<le> mdist (path_metric T) f g"
+      using path_mdist_le_iff_all[OF T0 f g] by blast
+    have pws: "dist (pfut r T f s) (pfut r T g s) \<le> 2 * mdist (path_metric T) f g"
+      if s: "s \<in> {0..T - r}" for s
+    proof -
+      have rs: "r + s \<in> {0..T}" using s r rT by simp
+      have r0: "r \<in> {0..T}" using r rT by simp
+      have "dist (pfut r T f s) (pfut r T g s)
+          = dist (f (r + s) - f r) (g (r + s) - g r)"
+        using s by (simp add: pfut_apply)
+      also have "\<dots> = norm ((f (r + s) - g (r + s)) - (f r - g r))"
+        by (simp add: dist_norm algebra_simps)
+      also have "\<dots> \<le> norm (f (r + s) - g (r + s)) + norm (f r - g r)"
+        by (rule norm_triangle_ineq4)
+      also have "\<dots> = dist (f (r + s)) (g (r + s)) + dist (f r) (g r)"
+        by (simp add: dist_norm)
+      finally show ?thesis using bspec[OF pw rs] bspec[OF pw r0] by simp
+    qed
+    show ?thesis using path_mdist_le_iff_all[OF Tr sf sg] pws by blast
+  qed
+  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ('n pairpath) metric).
+      \<forall>g\<in>mspace (path_metric T :: ('n pairpath) metric).
+        mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
+          \<le> B * mdist (path_metric T) f g"
+    by (intro exI[of _ 2] ballI key)
+qed
+
+lemma pfut_measurable:
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+  shows "pfut r T
+      \<in> borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))"
+  by (intro continuous_map_measurable Lipschitz_continuous_imp_continuous_map
+      Lipschitz_pfut[OF r rT])
+
+lemma pfut_measurable_law:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "pfut r T \<in> Q \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  using pfut_measurable[OF r rT] measurable_cong_sets[OF setsQ refl] by blast
+
+text \<open>The exit time of the future, expressed through \<open>pfut\<close>: re-basing at the
+  endpoint and adding the endpoint back is the identity on the exit time.\<close>
+
+lemma pexit_pfut:
+  fixes K :: "(real^'n::finite) set" and \<omega> :: "'n pairpath"
+  shows "pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (pfut r T \<omega> s))
+      = pexit (T - r) K (\<lambda>s. fst (\<omega> (r + s)))"
+  by (rule pexit_cong_on) (simp add: pfut_fst)
+
 end
