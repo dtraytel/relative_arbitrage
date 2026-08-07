@@ -4466,4 +4466,294 @@ proof -
   qed
 qed
 
+subsection \<open>Clause (iii) for the conditional law\<close>
+
+text \<open>The two pointwise facts about the capped coordinate that the fixed-law
+  lemma asks for.  Neither depends on the measure: the natural filtration
+  only sees \<open>space Q\<close>, and continuity in time is a property of the path.\<close>
+
+lemma eval_component_measurable_nf:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes S: "0 \<le> S" and u: "0 \<le> u"
+  shows "(\<lambda>w :: 'n pairpath. fst (w (min u S)) $ c)
+      \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
+proof -
+  let ?F = "natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
+  have ev: "(\<lambda>w :: 'n pairpath. w (min u S)) \<in> borel_measurable ?F"
+    unfolding natural_filtration_def
+    by (rule measurable_family_vimage_algebra) (use S u in auto)
+  have f1: "(\<lambda>w :: 'n pairpath. fst (w (min u S))) \<in> borel_measurable ?F"
+    by (rule measurable_compose[OF ev measurable_fst_borel])
+  have "(\<lambda>w :: 'n pairpath. fst (w (min u S)) \<bullet> (axis c 1 :: real^'n))
+      \<in> borel_measurable ?F"
+    by (intro borel_measurable_inner f1 borel_measurable_const)
+  then show ?thesis by (simp add: inner_axis)
+qed
+
+lemma eval_component_continuous:
+  fixes w :: "'n::finite pairpath"
+  assumes w: "w \<in> mspace (path_metric S :: ('n pairpath) metric)"
+  shows "continuous_on {0..S} (\<lambda>u. fst (w (min u S)) $ c)"
+proof -
+  have "continuous_on {0..S} w" by (rule mspace_path_metricD[OF w])
+  then have "continuous_on {0..S} (\<lambda>u. fst (w u))" by (rule continuous_on_fst)
+  then have c1: "continuous_on {0..S} (\<lambda>u. fst (w u) $ c)"
+    by (rule bounded_linear.continuous_on[OF bounded_linear_vec_nth])
+  have "continuous_on {0..S} (\<lambda>u. fst (w (min u S)) $ c)
+      = continuous_on {0..S} (\<lambda>u. fst (w u) $ c)"
+    by (rule continuous_on_cong[OF refl]) simp
+  then show ?thesis using c1 by simp
+qed
+
+text \<open>Clause (iii) of (1.7) for the conditional law.  Everything (b3) built
+  meets here:
+
+  \<^item> @{thm [source] pfut_rcd_X_increment_zero} supplies one almost-sure
+    condition per \<open>(q, A', c)\<close>, and there are only countably many of those
+    --- rational \<open>q\<close>, \<open>A'\<close> in the \<pi>-system of
+    @{thm [source] countable_pi_system_natural_filtration_path}, and \<open>c\<close> in
+    the finite index type;
+  \<^item> @{thm [source] AE_ball_countable'} turns "for each, almost surely" into
+    "almost surely, for all";
+  \<^item> at a fixed good \<open>p'\<close>, @{thm [source] set_integral_zero_of_generator}
+    widens the \<pi>-system to \<open>\<F>\<^sub>q\<close> and
+    @{thm [source] martingale_of_rational_set_integral_eq} widens the
+    rational times to all times;
+  \<^item> @{thm [source] martingale_vecI} puts the finitely many components back
+    together.\<close>
+
+theorem pfut_rcd_X_martingale:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+    and K: "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+    and mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
+        (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+  shows "AE p' in pair_law_of r (pcut r) P.
+      martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
+        (\<lambda>u w. fst (w (min u (T - r))))"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?S = "T - r"
+  let ?Y = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  let ?G = "\<lambda>q. natural_filtration ?Y 0 (\<lambda>v w :: 'n pairpath. w v) q"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have SS: "?S \<in> {0..?S}" using Tr by simp
+  interpret PP: prob_space P by (rule PS)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using K measurable_cong_sets[OF setsQ refl] by blast
+
+  \<comment> \<open>the countable \<pi>-system, one per time\<close>
+  have exPi: "\<exists>E. countable E \<and> Int_stable E \<and> E \<subseteq> Pow (space ?Y)
+      \<and> space ?Y \<in> E \<and> sets (?G q) = sigma_sets (space ?Y) E"
+    if q: "q \<in> {0..?S}" for q
+  proof (rule countable_pi_system_natural_filtration_path
+      [where Q = ?Y and T = ?S and s = q])
+    show "sets ?Y = sets (borel_of (mtopology_of
+        (path_metric ?S :: ('n pairpath) metric)))" ..
+    show "0 \<le> q" using q by simp
+    show "q \<le> ?S" using q by simp
+    fix E assume "countable E" "Int_stable E" "E \<subseteq> Pow (space ?Y)"
+      "space ?Y \<in> E" "sets (?G q) = sigma_sets (space ?Y) E"
+    then show "\<exists>E. countable E \<and> Int_stable E \<and> E \<subseteq> Pow (space ?Y)
+        \<and> space ?Y \<in> E \<and> sets (?G q) = sigma_sets (space ?Y) E"
+      by (intro exI[of _ E] conjI)
+  qed
+  have "\<forall>q \<in> {0..?S}. \<exists>E. countable E \<and> Int_stable E \<and> E \<subseteq> Pow (space ?Y)
+      \<and> space ?Y \<in> E \<and> sets (?G q) = sigma_sets (space ?Y) E"
+    using exPi by blast
+  from bchoice[OF this] obtain Eg where
+    Espec0: "\<forall>q \<in> {0..?S}. countable (Eg q) \<and> Int_stable (Eg q)
+        \<and> Eg q \<subseteq> Pow (space ?Y) \<and> space ?Y \<in> Eg q
+        \<and> sets (?G q) = sigma_sets (space ?Y) (Eg q)"
+    by (rule exE)
+  have Espec: "countable (Eg q) \<and> Int_stable (Eg q)
+      \<and> Eg q \<subseteq> Pow (space ?Y) \<and> space ?Y \<in> Eg q
+      \<and> sets (?G q) = sigma_sets (space ?Y) (Eg q)"
+    if q: "q \<in> {0..?S}" for q by (rule bspec[OF Espec0 q])
+
+  \<comment> \<open>the countably many almost-sure conditions\<close>
+  have step: "AE p' in ?Q.
+      (\<integral>w. indicator A' w * ((fst (w ?S) - fst (w q)) $ c) \<partial>(\<kappa> p')) = 0"
+    if q: "q \<in> {0..?S}" and A': "A' \<in> sets (?G q)" for q A' and c :: 'n
+    by (rule pfut_rcd_X_increment_zero[OF r rT setsP PS K eq mg _ _ _ A'])
+       (use q in auto)
+  have zero_all: "AE p' in ?Q. \<forall>q \<in> (\<rat> :: real set). q \<in> {0..?S} \<longrightarrow>
+      (\<forall>A' \<in> Eg q. \<forall>c \<in> (UNIV :: 'n set).
+        (\<integral>w. indicator A' w * ((fst (w ?S) - fst (w q)) $ c) \<partial>(\<kappa> p')) = 0)"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix q :: real assume qrat: "q \<in> \<rat>"
+    show "AE p' in ?Q. q \<in> {0..?S} \<longrightarrow> (\<forall>A' \<in> Eg q. \<forall>c \<in> (UNIV :: 'n set).
+        (\<integral>w. indicator A' w * ((fst (w ?S) - fst (w q)) $ c) \<partial>(\<kappa> p')) = 0)"
+    proof (cases "q \<in> {0..?S}")
+      case True
+      have cEg: "countable (Eg q)" using Espec[OF True] by blast
+      have "AE p' in ?Q. \<forall>A' \<in> Eg q. \<forall>c \<in> (UNIV :: 'n set).
+          (\<integral>w. indicator A' w * ((fst (w ?S) - fst (w q)) $ c) \<partial>(\<kappa> p')) = 0"
+      proof (rule AE_ball_countable'[OF _ cEg])
+        fix A' assume A': "A' \<in> Eg q"
+        have AG: "A' \<in> sets (?G q)"
+          using A' Espec[OF True] by auto
+        show "AE p' in ?Q. \<forall>c \<in> (UNIV :: 'n set).
+            (\<integral>w. indicator A' w * ((fst (w ?S) - fst (w q)) $ c) \<partial>(\<kappa> p')) = 0"
+          by (rule AE_ball_countable'[OF _ countable_finite[OF finite]])
+             (use step[OF True AG] in blast)
+      qed
+      then show ?thesis by (rule eventually_mono) simp
+    next
+      case False
+      then show ?thesis by auto
+    qed
+  qed
+  have rat_int: "AE p' in ?Q. \<forall>q \<in> (\<rat> :: real set). q \<in> {0..?S} \<longrightarrow>
+      integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w q))"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix q :: real assume "q \<in> \<rat>"
+    show "AE p' in ?Q. q \<in> {0..?S} \<longrightarrow>
+        integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w q))"
+    proof (cases "q \<in> {0..?S}")
+      case True
+      show ?thesis
+        using pfut_rcd_X_integrable[OF r rT setsP PS K eq mg True]
+        by (rule eventually_mono) simp
+    next
+      case False
+      then show ?thesis by auto
+    qed
+  qed
+  have S_int: "AE p' in ?Q. integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w ?S))"
+    by (rule pfut_rcd_X_integrable[OF r rT setsP PS K eq mg SS])
+
+  \<comment> \<open>and the assembly at each good \<open>p'\<close>\<close>
+  from AE_space zero_all rat_int S_int show ?thesis
+  proof eventually_elim
+    case (elim p')
+    then have W: "p' \<in> space ?Q"
+      and Z0: "\<And>q A' c. q \<in> \<rat> \<Longrightarrow> q \<in> {0..?S} \<Longrightarrow> A' \<in> Eg q \<Longrightarrow>
+          (\<integral>w. indicator A' w * ((fst (w ?S) - fst (w q)) $ c) \<partial>(\<kappa> p')) = 0"
+      and RI: "\<And>q. q \<in> \<rat> \<Longrightarrow> q \<in> {0..?S} \<Longrightarrow>
+          integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w q))"
+      and SI: "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w ?S))" by blast+
+    have PK: "prob_space (\<kappa> p')" by (rule ksemi_sets_kernel(2)[OF KQ W])
+    have sK: "sets (\<kappa> p') = sets ?Y" by (rule ksemi_sets_kernel(1)[OF KQ W])
+    have spK: "space (\<kappa> p') = space ?Y" by (rule sets_eq_imp_space_eq[OF sK])
+    have nfK: "natural_filtration (\<kappa> p') 0 (\<lambda>v w :: 'n pairpath. w v) u = ?G u"
+      for u by (rule natural_filtration_cong_space[OF spK])
+    have spY: "space ?Y = mspace (path_metric ?S :: ('n pairpath) metric)"
+      by (simp add: space_borel_of)
+
+    show ?case
+    proof (rule martingale_vecI)
+      fix c :: 'n
+      have Zint: "integrable (\<kappa> p')
+          (\<lambda>w :: 'n pairpath. fst (w (min q ?S)) $ c)"
+        if qrat: "q \<in> \<rat>" and q: "q \<in> {0..?S}" for q
+      proof -
+        have "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w q) $ c)"
+          by (rule integrable_bounded_linear
+              [OF bounded_linear_vec_nth RI[OF qrat q]])
+        moreover have "min q ?S = q" using q by simp
+        ultimately show ?thesis by simp
+      qed
+      have ZintS: "integrable (\<kappa> p')
+          (\<lambda>w :: 'n pairpath. fst (w (min ?S ?S)) $ c)"
+      proof -
+        have "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w ?S) $ c)"
+          by (rule integrable_bounded_linear[OF bounded_linear_vec_nth SI])
+        then show ?thesis by simp
+      qed
+      show "martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
+          (\<lambda>u w. fst (w (min u ?S)) $ c)"
+      proof (rule martingale_of_rational_set_integral_eq[OF Tr sK PK])
+        show "(\<lambda>w :: 'n pairpath. fst (w (min u ?S)) $ c)
+            \<in> borel_measurable (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v) u)"
+          if "u \<in> {0..?S}" for u
+          by (rule eval_component_measurable_nf[OF Tr]) (use that in simp)
+        show "(\<lambda>w :: 'n pairpath. fst (w (min u ?S)) $ c)
+            \<in> borel_measurable (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v) u)"
+          if "0 \<le> u" for u
+          by (rule eval_component_measurable_nf[OF Tr that])
+        show "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w (min q ?S)) $ c)"
+          if "q \<in> \<rat>" "q \<in> {0..?S}" for q by (rule Zint[OF that])
+        show "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w (min ?S ?S)) $ c)"
+          by (rule ZintS)
+        show "continuous_on {0..?S} (\<lambda>u. fst (w (min u ?S)) $ c)"
+          if "w \<in> space (\<kappa> p')" for w :: "'n pairpath"
+          using that spK spY by (intro eval_component_continuous) simp
+        show "(\<lambda>w :: 'n pairpath. fst (w (min u ?S)) $ c)
+            = (\<lambda>w. fst (w (min ?S ?S)) $ c)" if "?S \<le> u" for u
+          using that by simp
+        \<comment> \<open>the \<pi>-system widens to \<open>\<F>\<^sub>q\<close> at this fixed \<open>p'\<close>\<close>
+        fix q :: real and A
+        assume qrat: "q \<in> \<rat>" and q: "q \<in> {0..?S}"
+          and A: "A \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>v w :: 'n pairpath. w v) q)"
+        have AG: "A \<in> sets (?G q)" using A nfK by simp
+        have EgS: "countable (Eg q)" "Int_stable (Eg q)"
+          "Eg q \<subseteq> Pow (space ?Y)" "space ?Y \<in> Eg q"
+          "sets (?G q) = sigma_sets (space ?Y) (Eg q)"
+          using Espec[OF q] by blast+
+        have subG: "subalgebra (\<kappa> p') (?G q)"
+          using subalgebra_natural_filtration_path[OF sK, of q] nfK by simp
+        have iq: "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w q) $ c)"
+          by (rule integrable_bounded_linear
+              [OF bounded_linear_vec_nth RI[OF qrat q]])
+        have iS: "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. fst (w ?S) $ c)"
+          by (rule integrable_bounded_linear[OF bounded_linear_vec_nth SI])
+        have gi: "integrable (\<kappa> p')
+            (\<lambda>w :: 'n pairpath. fst (w ?S) $ c - fst (w q) $ c)"
+          by (rule Bochner_Integration.integrable_diff[OF iS iq])
+        have gz: "set_lebesgue_integral (\<kappa> p') B
+            (\<lambda>w :: 'n pairpath. fst (w ?S) $ c - fst (w q) $ c) = 0"
+          if B: "B \<in> Eg q" for B
+        proof -
+          have "set_lebesgue_integral (\<kappa> p') B
+                (\<lambda>w :: 'n pairpath. fst (w ?S) $ c - fst (w q) $ c)
+              = (\<integral>w. indicator B w * ((fst (w ?S) - fst (w q)) $ c) \<partial>(\<kappa> p'))"
+            unfolding set_lebesgue_integral_def by simp
+          also have "\<dots> = 0" by (rule Z0[OF qrat q B])
+          finally show ?thesis .
+        qed
+        have zA: "set_lebesgue_integral (\<kappa> p') A
+            (\<lambda>w :: 'n pairpath. fst (w ?S) $ c - fst (w q) $ c) = 0"
+          by (rule set_integral_zero_of_generator
+              [OF subG gi EgS(2) _ _ _ gz AG])
+             (use EgS(3) EgS(4) EgS(5) spK in simp_all)
+        have AQ: "A \<in> sets (\<kappa> p')"
+          using AG subG by (auto simp: subalgebra_def)
+        have s1: "set_integrable (\<kappa> p') A (\<lambda>w :: 'n pairpath. fst (w ?S) $ c)"
+          unfolding set_integrable_def
+          by (rule integrable_mult_indicator[OF AQ iS])
+        have s2: "set_integrable (\<kappa> p') A (\<lambda>w :: 'n pairpath. fst (w q) $ c)"
+          unfolding set_integrable_def
+          by (rule integrable_mult_indicator[OF AQ iq])
+        have "set_lebesgue_integral (\<kappa> p') A
+              (\<lambda>w :: 'n pairpath. fst (w ?S) $ c)
+            - set_lebesgue_integral (\<kappa> p') A (\<lambda>w. fst (w q) $ c) = 0"
+          using set_integral_diff(2)[OF s1 s2] zA by simp
+        then show "set_lebesgue_integral (\<kappa> p') A
+              (\<lambda>w :: 'n pairpath. fst (w (min q ?S)) $ c)
+            = set_lebesgue_integral (\<kappa> p') A (\<lambda>w. fst (w (min ?S ?S)) $ c)"
+          using q by simp
+      qed
+    qed
+  qed
+qed
+
 end
