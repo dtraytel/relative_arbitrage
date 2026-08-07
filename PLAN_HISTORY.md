@@ -2001,3 +2001,512 @@ locale never supplied -- it asserts only the diagonal `coord_Z_martingale`.
   scripted in the N5 section. Unblocks clause (2) together with N4.
 - Clause (3) beyond the ball, and general `n - k >= 2` (spherical BM,
   discrete route). N4 is complete for `n - k = 1`.
+
+
+---
+
+## Archived 2026-08-07 (late): the whole of PLAN_THEOREM_1_1 §2.1, "the
+## conditioning statement"
+
+The DPP at a deterministic time is now PROVED (`Paper_DPP.paper_v_dpp`), so
+this 248-line section is history. Kept verbatim because it contains three
+things that are still worth being able to look up:
+
+* the ROUTE (a) analysis and the reason it is a dead end (usc of `paper_v` in
+  the TARGET SET, with the failed portmanteau argument spelled out);
+* the map of the AFP `Disintegration` API, which §2.2 will want again when it
+  needs a regular conditional distribution at a STOPPING time;
+* the blow-by-blow of route (b), (b0)–(b4), including the mechanical traps.
+
+The short version that replaced it lives in PLAN_THEOREM_1_1 §1.10.
+
+### 2.1 The conditioning statement — all that is left of the DPP at a deterministic time
+
+*(This was §2.2 in the numbering used before the 2026-08-07 restructure: it
+is the `≤` half of (2.9).)*
+
+`paper_v_dpp_le_of_cond` (proved, §1.9's companion) reduces the `≤` half of
+(2.9), hence (2.9) itself at a deterministic time, to ONE hypothesis:
+
+    cond: P ∈ paper_pair_class k L T x ⟹
+          (AE ω in P. c ≤ pexit T K (λt. fst (ω t))) ⟹
+          (AE ω in P. pexit r K (λt. fst (ω t)) = r ∧ fst (ω r) ∈ K
+              ⟶ c ≤ r + enn2real (paper_v k L (T - r) K (fst (ω r))))
+
+*"If `P` survives to time `c`, then on the survival event the value at the
+position reached is at least the time still to run."* Everything OFF the
+survival event is already unconditional, by `pexit_cap_eq` — a path that has
+left `K` by time `r` has the same exit time at either horizon, including the
+boundary case of a path that exits exactly AT `r` (`pexit_stable_above_T`
+does NOT cover that; it wants `pexit r K f < r`).
+
+**The key structural fact (established 2026-08-07, and it changes the
+route).** Conditioning on an event of the PAST does not disturb the FUTURE's
+membership in the class:
+
+> for `A ∈ ℱ_r` with `P A > 0`, the law of the rebased future
+> `pfut r T ω = (λs. ω (r+s) - ω r)` under `P(· | A)` lies in
+> `paper_pair_class k L (T-r) 0`.
+
+The martingale clauses survive because the conditioning density `1_A / P A`
+is `ℱ_r`-measurable, hence `ℱ_{r+s}`-measurable for every `s`, so the set
+integral over `C ∈ ℱ_{r+s}` simply becomes one over `C ∩ A ∈ ℱ_{r+s}` — no
+approximation, no monotone class. That is `paper_pair_class_future_of_past`
+(§2.1(a) below). **No regular conditional distribution is needed for class
+membership.**
+
+What r.c.d. would still buy is the *localization*: under the conditional law
+given `ℱ_r`, the starting point `X_r` is a CONSTANT, so `paper_v(X_r)` can be
+compared directly. Conditioning on a positive-measure `A` only makes `X_r`
+lie in a small ball, and the comparison then leaks into an ε-enlargement
+`K_ε` of the target set. So there are two ways to finish, and they trade one
+hard step for another:
+
+| route | remaining obligation |
+|---|---|
+| **(a) positive-measure conditioning** (`paper_pair_class_future_of_past` — elementary, no AFP `Disintegration`) | usc of `paper_v` in the TARGET SET: `paper_v k L U K⇩ε y → paper_v k L U K y` as `ε ↓ 0`. Provable by the existing compactness/usc machinery generalized to a decreasing sequence `K_n ↓ K` — the witness step is: `ω⇩n → ω` and `ω s ∉ K` give `dist (ω s) K = d > 0`, so `ω⇩n s ∉ K_ε⇩n` once `ε⇩n < d/2`. |
+| **(b) regular conditional distributions** (AFP `Disintegration.measure_disintegration`, locale `projection_sigma_finite_standard`; the path spaces are standard Borel by `Path_Space.path_metric_polish`; the entry is NOT yet a session dependency — see (b1)) | the CONDITIONAL martingale property at a.e. `ω`: a countable determining family of test functions plus a monotone-class step to get "a.s., for all `A ∈ ℱ⁰_s`" out of "for each `A`, a.s.". |
+
+Route (a) is preferred: every step is elementary and the K-usc lemma is a
+variant of machinery that already exists (`ess_inf_pexit_usc`,
+`paper_v_usc`), whereas route (b)'s monotone-class step has no analogue in
+the development. A hybrid is also possible — (a) for class membership, (b)
+only to make `X_r` constant.
+
+**Already proved for this section** (2026-08-07, all green, no `sorry`):
+
+| result | content |
+|---|---|
+| `cInf_shift_real` | `Inf ((+) r ` S) = r + Inf S` |
+| `pexit_split_at_r` | on the survival event the exit time SPLITS: `pexit T K f = r + pexit (T-r) K (λs. f (r+s))`. The two exit sets are exact translates of one another, so this is an identity, not an inequality |
+| `pfut`, `pfut_apply/_zero/_fst`, `pfut_in_mspace`, `Lipschitz_pfut`, `pfut_measurable(_law)`, `pexit_pfut` | the rebased future `ω ↦ (λs. ω (r+s) - ω r)` as a **2-Lipschitz** map of path spaces (the base point is subtracted, so it counts once more) |
+| `uniform_measure_density_real`, `integral_uniform_measure_eq`, `integrable_uniform_measureI`, `set_integral_uniform_measure_eq` | the change-of-measure layer for `M(· | A)`, taking `uniform_measure` to a REAL density so `integral_density` / `integrable_density` apply |
+| **`martingale_uniform_measure`** | **the structural fact**: `A ∈ sets (F 0)` and `0 < measure M A` ⟹ every `F`-martingale under `M` is an `F`-martingale under `M(· | A)` |
+
+**File layout (2026-08-07).** The value-function layer now lives in
+**`Paper_DPP.thy`** (imports `Paper_Bridge`): the pasting bound, the `≥`
+half of (2.9), the reduction of the `≤` half, and the conditioning layer.
+`Paper_Bridge.thy` keeps the CLASS layer and is back to ~13,100 lines. New
+DPP work goes in `Paper_DPP`. Note the PIDE session snapshots `ROOT` at
+startup, so a newly registered theory needs a server restart before it can
+be loaded — develop-and-verify in `Paper_Bridge`'s tail and move, or restart.
+
+**What is left in route (a), concretely.**
+
+1. ~~`paper_pair_class_future_of_past`~~ — **DONE** (2026-08-07). All four
+   clauses of (1.7) for `pair_law_of (T-r) (pfut r T) (P | A)`,
+   `A ∈ ℱ_r`, `P A > 0`, via `pfut_law_start` / `pfut_law_diffquot` /
+   `pfut_law_X_martingale` / `pfut_law_comp_martingale`. Clause (iv) needed
+   four lemmas that existed nowhere: `martingale_mult_measurable`,
+   `martingale_cross_measurable`, `integrable_mult_of_sq`, `martingale_diff`.
+2. ~~`ℱ_r`-measurability of the survival event~~ — **DONE**,
+   `survival_event_filtration`: for continuous paths against a closed `K`,
+   "never leaves `K` on `[0,r]`" is decided by the rational times alone.
+3. **The usc-in-`K` lemma — this is the whole of what is left, and it is
+   HARDER than it looked.** Route (a) localizes by conditioning on
+   `A = Surv ∩ {X_r ∈ cball (y⇩i, ε⇩i)}`, which only pins `X_r` to a small
+   ball, so the surviving paths are known to stay in `K` around a MOVING
+   centre and the comparison lands on the ε-enlargement:
+
+       paper_v (K⇩ε, y⇩i) ≥ c - r   while   paper_v (K, y⇩i) < c - r,
+
+   and closing that gap needs `paper_v k L U K⇩ε y → paper_v k L U K y`.
+   **The obvious proof does not work.** Take optimizers `Q⇩n` for `K_{1/n}`,
+   extract a weak limit `Q` by compactness, and try Portmanteau on the OPEN
+   set `V = {ω. pexit U K ω < c'}`: one needs `Q⇩n V` small, but all that is
+   known is `Q⇩n {pexit K_{1/n} < c'} = 0`, and since `pexit K ≤ pexit
+   K_{1/n}` the inclusion runs `{pexit K_{1/n} < c'} ⊆ V` — the WRONG way.
+   A `Q⇩n` may survive in `K_{1/n}` while leaving `K` at once. No
+   counterexample is known either, so the statement is open, not false;
+   expect a genuinely different argument (some quantitative control of how
+   fast a class member can leave `K⇩ε` but not `K`, e.g. off the
+   ball estimates of §1.5).
+
+**ROUTE (b) IS THE CHOSEN PATH (user decision, 2026-08-07).** With item 3
+open, route (a) is blocked on a statement nobody has proved. Route (b) got
+cheaper at the same time: the conditions defining the class are all LINEAR
+in the measure — `μ C = 1` for the start and covariation clauses,
+`∫ (X_t - X_s) 1_A dμ = 0` for the martingale clauses — so passing from
+"`μ_A ∈ 𝒞₀` for every `A ∈ ℱ_r`" to "`κ ω ∈ 𝒞₀` a.s." needs **no separation
+theorem**, only a COUNTABLE determining family (rational times,
+rational-corner cylinder sets) plus one Dynkin step at fixed `ω`.
+
+Steps, in order:
+
+| step | content | status |
+|---|---|---|
+| (b0) | `AE_zero_of_set_integral_zero` — a `𝒢`-measurable function whose `𝒢`-set integrals all vanish is a.e. `0`. THE workhorse: it is what converts each linear condition from "for every `A`" to "at a.e. `ω`" | **DONE** |
+| (b1) | the kernel itself: `paper_pair_class_rcd` (the AFP disintegration) and `paper_pair_class_rcd_ksemi` (its conversion to our `ksemi`, via `emeasure_ksemi_rect` and agreement on the rectangle π-system) | **DONE** |
+| (b2) | clauses (i)/(ii) for `κ ω` a.s. | general lemma `AE_kernel_full` **DONE**; clause (i) `pfut_rcd_start` **DONE**; clause (ii) is now pure assembly of `ksemi_rect_null_of_AE` → `AE_kernel_full` → `AE_mem_of_emeasure_1` → `AE_ball_countable'` over rational pairs → `paper_pair_class_diffquot_of_rational_pairs`, all four of which are proved |
+| (b3) | clauses (iii)/(iv) for `κ ω` a.s. | **DONE** — and with (b0)–(b2) it packages as `paper_pair_class_rcd_member`: `AE p'. κ p' ∈ paper_pair_class k L (T−r) 0`. See the breakdown below |
+| (b4) | `paper_v_cond` — the conditioning statement. Under `κ p'` the starting point is a CONSTANT, so the shifted law lies in `𝒞_{X_r}` and its essinf is `≤ paper_v` by definition. No localization, no `K_ε` | **DONE** |
+
+Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
+
+**(b3), DONE 2026-08-07 (late).** Everything below is green in `Paper_DPP.thy`
+with no `sorry`. The headline is
+
+    paper_pair_class_rcd_member:
+      0 ≤ r ≤ T, 0 ≤ L, P ∈ paper_pair_class k L T x, κ and eq as in (b1)
+        ⟹ AE p' in pair_law_of r (pcut r) P. κ p' ∈ paper_pair_class k L (T−r) 0
+
+| piece | content |
+|---|---|
+| unbounded Bochner disintegration | `AE_integrable_ksemi_section` (BANACH-valued) and `integral_ksemi_real`, from `nn_integral_ksemi` on the positive and negative parts |
+| the rectangle form | `integral_ksemi_rect_real`, `AE_kernel_integral_zero`, `integrable_ksemi_of_distr_rect`, `integrable_kernel_integral`, `integral_ksemi_rect_of_set_integral` |
+| the evaluations generate the Borel sets | `path_eval_measurable_natural_filtration`, `sets_natural_filtration_path_subset` (free filtration index), `mdist_measurable_natural_filtration`, `mball_in_natural_filtration`, `sets_natural_filtration_path` |
+| the conditioning rectangle is a past-plus-`i` event | `sets_natural_filtration_mono`, `natural_filtration_cong_space`, `pcut_/pfut_/rect_vimage_natural_filtration` |
+| the per-`(i,j,A')` statements | `pfut_rcd_X_increment_zero` (clause iii), `pfut_rcd_comp_increment_zero` (clause iv) |
+| a.s. integrability | `pfut_rcd_X_integrable`, `pfut_rcd_comp_integrable` |
+| rational to real, and integrability at the irrational times | `integrable_and_set_integral_eq_of_rational_times` — uniform integrability via `Conditional_UI.unif_integrable_of_averaging` + `Vitali_Convergence.vitali_convergence` / `unif_integrable_limit_integrable` |
+| the Dynkin step | `set_integral_zero_of_generator` (general: `sigma_sets_induct_disjoint` + `lebesgue_integral_countable_add`) |
+| the countable π-system | `sets_natural_filtration_eq_pcut_vimage`, `countable_Int_stable_generator_path`, `countable_pi_system_natural_filtration_path` |
+| the martingale property at a fixed law | `subalgebra_/sigma_finite_subalgebra_natural_filtration_path`, `martingale_of_rational_set_integral_eq` |
+| the two clauses | `pfut_rcd_X_martingale`, `pfut_rcd_comp_martingale` |
+| supporting | `eval_component_measurable_nf`, `eval_component_continuous`, `comp_entry_measurable_nf`, `comp_entry_continuous`, and `paper_pair_class_pfut_comp_martingale` (extracted out of `pfut_law_comp_martingale`, which both routes now share) |
+
+**How the countability bookkeeping fits together**, since it is the shape of
+the whole step and worth not re-deriving. Two quantifiers have to be made
+countable, and they are made countable by different means:
+
+- the CONDITIONING SET `A'`: a countable π-system, obtained by
+  `sets_natural_filtration_eq_pcut_vimage` (`ℱ_s` IS the pullback of the
+  `s`-path space's Borel sets along `pcut s`) plus a countable base of that
+  space closed under finite intersections. **Do not build it from the
+  coordinate evaluations** — that forces the time index down to the rationals
+  and then needs a limit-of-measurable-functions argument. Through `pcut`,
+  path continuity sits in the TOPOLOGY and second countability does the rest.
+  Widened back to all of `ℱ_q` at fixed `p'` by `set_integral_zero_of_generator`.
+- the TIME `i`: rationals, widened back by uniform integrability. The
+  machinery was already in the repo and written for exactly this
+  (`Conditional_UI`'s docstring says so); `Paper_DPP` now imports it. **A Doob
+  `L²` bound and an integrable running supremum are NOT needed** — an earlier
+  version of this plan budgeted them, wrongly. The same UI argument also
+  supplies integrability at the irrational times, which is not otherwise
+  available (it is an a.s. statement in `p'`, so only countably many `i`).
+
+**Why the authors need none of this.** LR's Prop. 2.2(iii) conditions with a
+regular conditional distribution citing Stroock–Varadhan Thm 1.3.4, so route
+(b) IS their route. But the classical S–V conditioning theorem states the
+martingale problem with test functions in `C_c^∞`, whose martingales are
+BOUNDED, and then rational-to-real is plain bounded convergence. The paper's
+class (1.7) makes `X` itself and `outerp X − Y` the martingales, and those
+are unbounded. That gap is the entire reason UI is needed here.
+
+**`Doob_Inequality.thy` was not needed**, but note what it has if a
+domination route is ever wanted: `doob_maximal_inequality`,
+`doob_L2_inequality`, `sampled_martingale.grid_doob_L2`, and an integrable
+bound for the running maximum up to a horizon (`dy`, `gsup`, `gsup_L2`,
+`gsup_integrable`). **AFP `Doob_Convergence` is NOT what this needs** —
+`nat`-indexed a.s. convergence via upcrossings, no maximal inequality, no
+uniform integrability. Its companion `Stopping_Time.thy` (`pre_sigma`,
+`sets_pre_sigmaI`, `mono_pre_sigma`, `stopping_time_measurable_le/less/ge/gr`,
+`borel_measurable_stopping_time_pre_sigma`) IS worth a look for §2.2. Do not
+add the entry as a dependency before then.
+
+**Mechanical traps paid for in (b3); do not rediscover them.**
+
+1. `MS.mball f e = {ω ∈ space ℱ. mdist m f ω < e}` by `auto`, with a
+   `Metric_space` interpretation in scope, runs for **10 min 47 s and then
+   SUCCEEDS**. A calculation through `MS.in_mball` closed by `simp only` is
+   instant. (An earlier attempt blamed `mball_def`; the unfolding was
+   innocent, the classical search was not.)
+2. `simp` DISTRIBUTES `$ c` over a difference and thereby destroys the
+   left-hand side of the very rewrite you handed it. State such steps as
+   equations of FUNCTIONS and consume them with `unfolding`.
+3. `pair_law_of r (pcut r) P` and the `r`-path space's Borel algebra have
+   equal SETS but are different TERMS, so every lemma taking the `ksemi`
+   hypothesis `eq` must transport it first (`distr_cong` +
+   `sets_pair_measure_cong`). Three lines, needed six times.
+4. `integrable_ksemi_of_distr_rect` by `OF` alone reports "no unifiers": the
+   `h` in `integrable P (λω. h (snd (φ ω)))` is a flex-rigid pair. Let the
+   CONCLUSION drive unification with a structured `proof (rule …)`.
+5. Do not name a countable base `OO` — that is the relation-composition
+   operator; the `obtain` fails to parse and the 119 cascade errors are all
+   type-unification noise pointing everywhere except the cause.
+6. Do not name a local fact `exE` — it shadows `HOL.exE`, and a later
+   `by (rule exE)` then resolves against the local one and reports "Failed to
+   apply initial proof method" on a goal that is exactly `exE`'s shape.
+7. `blast` on the existential behind an image membership sets the
+   `still_running_possibly_nonterminating` flag (it has to invent the
+   witness). Introduce with `image_eqI`, eliminate with a named `imageE`
+   wrapper.
+
+**The AFP `Disintegration` API, mapped 2026-08-07 — do not re-explore it.**
+
+- `locale projection_sigma_finite X Y ν` assumes only `sets ν = sets (X ⨂⇩M Y)`
+  and `sigma_finite_measure (marginal_measure X Y ν)`;
+  `projection_sigma_finite_standard = projection_sigma_finite + standard_borel_ne Y`.
+- `standard_borel M ⟺ ∃S. Polish_space S ∧ sets M = sets (borel_of S)` — so
+  for `Y = borel_of (mtopology_of (path_metric (T-r)))` it is **immediate**
+  from `Polish_space_path_metric` with `S` the topology itself; `space_ne`
+  needs only one path (the constant `0`, via `mspace_path_metricI`).
+- `measure_disintegration` yields `κ` with `prob_kernel X Y κ` and
+  `measure_kernel.disintegration X Y κ ν νx`, where
+  `νx = marginal_measure X Y ν` and `disintegration` constrains **RECTANGLES
+  ONLY**: `ν (A × B) = ∫⁺x∈A. κ x B ∂νx`. The all-sets version is a separate
+  predicate `mixture_of`, and the AFP proves only `mixture_of ⟹
+  disintegration`, not the converse.
+
+**Therefore the concrete shape of (b1):**
+
+1. `ν := distr P (?BR ⨂⇩M ?MR) (λω. (pcut r ω, pfut r T ω))`, with
+   `?BR = borel_of (mtopology_of (path_metric r))` as `X` and `?MR` (horizon
+   `T-r`) as `Y`. Then `sets ν = sets (X ⨂⇩M Y)` holds by construction and
+   `marginal_measure X Y ν = pair_law_of r (pcut r) P`, a probability
+   measure, hence σ-finite.
+2. Interpret `projection_sigma_finite_standard` and obtain `κ`.
+3. **Then convert to OUR `ksemi`**, rather than fighting the
+   rectangles-only form: two probability measures on `X ⨂⇩M Y` agreeing on
+   the rectangle π-system are equal (`measure_eqI_generator_eq`), so
+   `ν = ksemi νx ?MR κ`. From there `AE_ksemi` and `nn_integral_ksemi` —
+   both already proved in `Paper_Bridge` for the kernel-pasting work — give
+   the almost-sure and integral forms for free, and no measure-theoretic
+   induction from indicators to general integrands is needed.
+
+That reuse of `ksemi` is the point: it is why (b2)/(b3) reduce to
+`AE_zero_of_set_integral_zero` plus one Dynkin step, with no bespoke
+disintegration calculus.
+
+
+
+---
+
+## Archived 2026-08-07 (late): PLAN_THEOREM_1_1 §1.6–§1.8, the construction
+## narratives for pasting, the measurable selector, and kernel pasting
+
+All three are CLOSED and are now indexed compactly in PLAN_THEOREM_1_1 §1.6.
+Kept verbatim because the *constructions* are unusual and would be expensive
+to reinvent: the greedy nested bisection behind
+`Metric_space.usc_measurable_selection` (there is no Kuratowski--Ryll-Nardzewski
+or Jankov--von Neumann in the AFP), the rounding argument that gets the
+martingale clauses for the semidirect product without ever proving them, and
+the Fubini recipe for lifting martingales to a product filtration.
+
+### 1.6 Pasting with a FIXED or COUNTABLY-CHOSEN continuation
+
+- **(a) closure under shortening the horizon.** `paper_pair_class_pcut`:
+  `Q ∈ paper_pair_class k L T x`, `0 ≤ S ≤ T` ⟹
+  `pair_law_of S (pcut S) Q ∈ paper_pair_class k L S x`, over `pcut`,
+  `pcut_measurable`, `pcut_adapted`, plus the factored-out rational reduction
+  `paper_pair_class_diffquot_of_pairs`.
+- **(b) concatenation at the path level.** `pglue r T ω ω'` runs `ω` to `r`,
+  then `ω'` re-based at `ω r` (`pglue_le/_ge/_zero`, `continuous_on_pglue`,
+  `pglue_in_mspace`, `pglue_measurable` via `pathify_measurable`, and
+  `pglue_diffquot` — where the `s < r < t` case is a CONVEX COMBINATION of
+  the two pieces' quotients, so `sconstraint_convex` is exactly what makes
+  pasting legal).
+- **(b′) independent concatenation at the law level.**
+
+      paper_pair_class_pglue_law:
+        Q ∈ paper_pair_class k L r x ⟹ R ∈ paper_pair_class k L (T−r) 0
+          ⟹ 0 ≤ r ≤ T ⟹ pglue_law r T Q R ∈ paper_pair_class k L T x.
+
+  `pglue_law r T Q R = pair_law_of T (λp. pglue r T (fst p) (snd p)) (Q ⨂⇩M R)`
+  with `sets_pglue_law`, `space_pglue_law`, `prob_space_pglue_law`, the
+  transfer principle `AE_pglue_law`, and clauses (i)–(ii) `pglue_law_start`,
+  `pglue_law_diffquot`. New machinery, all reusable and none of it in the AFP:
+
+  | result | content |
+  |---|---|
+  | `sets_pair_measure_mono`, `filtered_measure_pair` | the pointwise product of two filtrations is a filtration on the product measure |
+  | `martingale_pair_fst`, `martingale_pair_snd`, `martingale_pair_snd_param` | a martingale of one factor, read on the product, is a martingale for the product filtration; the `_param` form allows dependence on the other coordinate |
+  | `martingale_pair_mult` | the PRODUCT of a first-factor martingale with a second-factor martingale is a martingale — where independence is genuinely used |
+  | `distr_pair_snd` | the `snd` twin of the library's `distr_pair_fst` |
+  | `pglue_law_X_martingale`, `pglue_law_comp_martingale` | clauses (iii), (iv) of (1.7) for the pasted law |
+
+  **The proof idea worth keeping.** The lifting theorems avoid conditional
+  expectations on the product AND any π-λ argument: Fubini turns the set
+  integral over `A ∈ F u ⊗ₘ G u` into an iterated integral, and the section
+  of `A` at a fixed coordinate is a set of `F u` (resp. `G u`) by
+  `sets_Pair2`/`sets_Pair1` — so the FACTOR's `set_integral_eq` applies to it
+  directly and the outer integrand is constant. **This recipe does NOT carry
+  over to the semidirect product — see §1.10.**
+
+  The compensated clause expands `outerp (Xᵣ + W) − (Yᵣ + ⟨W⟩)` into one
+  compensated martingale from each factor plus the cross term
+  `Xᵣ ⊗ W + W ⊗ Xᵣ`, handled entrywise through `martingale_matI` and
+  `martingale_pair_mult`. The decomposition holds only a.e. — it uses
+  `X'(0) = 0` from the second factor — hence `martingale_cong_AE`.
+- **(c) a continuation chosen by the endpoint, COUNTABLY.**
+
+      paper_pair_class_kglue_law:
+        0 ≤ r ≤ T, Q ∈ paper_pair_class k L r x,
+        RR j ∈ paper_pair_class k L (T−r) 0 for every j,
+        N measurable for the natural filtration of Q at time r
+          ⟹ kglue_law r T N Q RR ∈ paper_pair_class k L T x
+
+  where `kglue r T N p = pglue r T (fst p) (snd p (N (fst p)))` and the
+  second factor is `Pi⇩M UNIV RR`, one probability space carrying the whole
+  family, and the index enters through `measurable_compose_countable`.
+  Supporting: `sets_PiM_mono`, `filtered_measure_PiM`,
+  `martingale_PiM_component` (split the coordinate off with
+  `distr_pair_PiM_eq_PiM`, use `martingale_pair_fst`, transport back),
+  `distr_PiM_component`, `kglue_measurable`, `kglue_law`,
+  `prob_space_kglue_law`, `AE_kglue_law`, `kglue_law_start`,
+  `kglue_law_diffquot`, `kglue_param_martingale`, `kglue_law_X_martingale`,
+  `kglue_law_comp_martingale`.
+
+  Two design points worth keeping:
+
+  - write the cross term's first factor at the FIXED time `r`, not `min u r`.
+    Both give the same value, but with `r` fixed, freezing the first
+    coordinate turns it into a CONSTANT, so the cross term is a
+    bounded-linear image of the second factor's martingale — no product of
+    two martingales needed;
+  - the integrability split. A summand whose inner integral depends on `ω`
+    only through the countably-valued `N ω` is handled by
+    `integrable_const_bound` against a class-uniform bound. A summand whose
+    inner integral ALSO depends on `ω` continuously is not obviously
+    measurable — dominate it by `2‖fst (fst p r)‖·‖b‖`, apply
+    `Fubini_integrable` to THAT, and finish with `integrable_bound`.
+
+  **This is a stepping stone, not the final pasting step**: see §1.7's
+  negative result about countably-valued selectors.
+
+### 1.7 The measurable selector — Larsson–Ruf Proposition 2.2(ii)
+
+**Headline.** `paper_v_measurable_selector`: for `0 < T`, `1 ≤ L`,
+`closed K` there is
+
+    S ∈ borel →⇩M borel_of (weak_conv_topology (mtopology_of (path_metric T)))
+
+with `S y ∈ paper_pair_class k L T 0`,
+`pshift_law T y (S y) ∈ paper_pair_class k L T y`, and
+`ess_inf_time (pshift_law T y (S y)) (τ_K ∘ fst) = paper_v k L T K y`.
+`paper_v_measurable_selector_kernel` restates it with `S` measurable into
+`prob_algebra` — a genuine Giry-monad kernel, which is the interface kernel
+pasting consumes.
+
+Four layers, all new:
+
+1. **The abstract selection theorem.** `Metric_space.usc_measurable_selection`:
+   for a nonempty COMPACT metric space `M`, a payoff
+   `f :: 'b ⇒ 'a ⇒ ennreal` usc in the second argument for each parameter in
+   `space P`, whose supremum over every CLOSED set is `P`-measurable in the
+   parameter, there is `s ∈ P →⇩M borel_of mtopology` with `s x ∈ M` and
+   `f x (s x) = Sup (f x ` M)`. **Nothing of this kind is in the AFP or the
+   distribution** — grepped for Kuratowski–Ryll-Nardzewski, Jankov–von
+   Neumann, `measurable_selection`, `analytic_set`; no hits. Do not look
+   again.
+
+   The construction is a GREEDY NESTED BISECTION, not Bertsekas–Shreve's
+   analytic-set machinery. `usc_sel_set` is the set reached by an index
+   sequence into a dense sequence `z` (`compact_space_dense_seq`, also new);
+   each step intersects with the closed ball of radius `2⁻ⁿ⁻¹` around `z j`
+   for the LEAST `j` that keeps the set nonempty and does not lower the
+   supremum. `usc_sel_good_ex` — such a `j` exists because the balls cover
+   the current compact set, so finitely many do, and a supremum over a finite
+   union is the maximum of the pieces'. **That step uses NO semicontinuity**,
+   so `usc_sel` is total in the payoff and the measurability argument never
+   case-splits on it; semicontinuity enters only in `usc_sel_optimal`.
+
+   **Why the greedy recipe.** The chosen index sequence — the CODE — is a
+   countably valued function of the parameter, so on each cell of a countable
+   measurable partition the whole nested family is a FIXED compact set, and
+   for open `U` the preimage `{x. s x ∈ U}` is the countable union of the
+   cells whose set lies in `U`. No limits and no analytic sets. Supporting:
+   `ennreal_strict_between`, `Least_nat_eq_iff`.
+2. **The class is a COMPACT METRIC SPACE.**
+   `paper_pair_class_compactin_weak` (the class is `compactin` the
+   weak-convergence topology) and `paper_pair_class_compact_metric_space`
+   (the three facts the selection theorem consumes:
+   `Metric_space (paper_pair_class k L T x) (Levy_Prokhorov.LPm …)`, its
+   `mtopology` being the subspace topology of weak convergence, and
+   `compact_space` of it).
+
+   AFP `Levy_Prokhorov_Metric` did the work and was ALREADY a session
+   dependency — do not rebuild any of it. The `Levy_Prokhorov` locale IS
+   `Metric_space`, so `interpret LP: Levy_Prokhorov "mspace m" "mdist m"` is
+   one line. `LPmtopology_eq_weak_conv_topology` identifies `LPm.mtopology`
+   with `General_Weak_Convergence.weak_conv_topology`, the topology our
+   `weak_conv_on` is a `limitin` of; `Prokhorov_Theorem.
+   tight_imp_relatively_compact` converts tightness (NC-2);
+   `LPm.closure_of_sequentially` reduces the closure to sequences so the
+   sequential `paper_pair_class_weak_closed` (NC-3) collapses it; `Submetric`
+   restricts the metric.
+3. **Joint continuity and joint usc.** `pshift_law_weak_conv_joint`:
+   `y_m → y` and `R_m ⇒ R` imply `(y_m)_*R_m ⇒ y_*R`.
+   `ess_inf_pexit_pshift_usc`: hence
+   `Limsup_m ess_inf_time ((y_m)_*R_m) (τ_K∘fst) ≤ ess_inf_time (y_*R) (τ_K∘fst)`.
+
+   **No tightness is needed**, contrary to the obvious worry. Weak
+   convergence may be tested against bounded UNIFORMLY continuous functions
+   (`mweak_conv_fin.mweak_conv_eq1`), and shifting a path by a constant
+   vector moves it by exactly that vector in the sup metric
+   (`mdist_pshift_pshift`), so the test function is displaced uniformly over
+   the whole path space and the split
+   `|∫f(y_m+·)dR_m − ∫f(y+·)dR_m| + |∫f(y+·)dR_m − ∫f(y+·)dR|` closes.
+4. **The assembly.** Two steps of bookkeeping inside
+   `paper_v_measurable_selector`: (a) usc IN THE LAW is the joint statement
+   along a CONSTANT parameter sequence plus `closure_of_sequentially`;
+   (b) `(λy. Sup (f y ` C))` is Borel for closed `C ⊆ 𝒞₀` because
+   `{y. c ≤ Sup (f y ` C)}` is closed — `closed_sequential_limits`,
+   `compactin_sequentially` for the subsequence, `borel_measurableI_ge`.
+   **Attainment of the supremum is NOT needed** for (b), only `b < c` for
+   every `b` below `c`. Measurability into the subspace lifts to the ambient
+   space for free because the selector lands in the class:
+   `s -` (U ∩ 𝒞₀) = s -` U`. `paper_pair_class_shift_image` then turns
+   `Sup (f y ` 𝒞₀)` into `paper_v k L T K y`.
+   The `prob_algebra` restatement uses
+   `Space_of_Finite_Measures.weak_conv_topology_eq_prob_algebra` (which is
+   why `Paper_Bridge` now imports that theory) and `Polish_space_path_metric`.
+
+**The negative result that forced all of this.** An ε-version with a
+COUNTABLY VALUED selector DOES NOT EXIST: the supremum of a usc function
+over a countable dense subset can be strictly smaller than its supremum, so
+no fixed countable family of candidates is ε-optimal at every parameter.
+Hence §1.6(c)'s `paper_pair_class_kglue_law` cannot be the final pasting
+step. The BT09-style ε-cover of the STATE space fails for the mirror reason:
+it needs `y ↦ g(y,R)` LOWER semicontinuous, and exit times from a closed set
+are upper.
+
+### 1.8 Kernel pasting with a genuine kernel — CLOSED
+
+`ksemi M N Kr = M ⤜ (λω. distr (Kr ω) (M ⨂⇩M N) (Pair ω))`, the Giry
+semidirect product: run `M`, then continue with the law the kernel picks.
+
+| result | content |
+|---|---|
+| `ksemi_sets_kernel`, `ksemi_Pair_measurable`, `ksemi_kernel_measurable` | the plumbing; `measurable_distr2` is exactly the right tool |
+| `sets_ksemi` | **its `sets` are the ORDINARY product's**, so every measurability fact already proved for `Q ⨂⇩M R` transfers verbatim by `measurable_cong_sets` |
+| `space_ksemi`, `prob_space_ksemi` | |
+| `AE_ksemi` | `(AE p in ksemi. P p) = (AE ω in M. AE ω' in Kr ω. P (ω,ω'))` |
+| `nn_integral_ksemi` | the same disintegration for nonnegative integrals |
+| `kglue_law' r T Kr Q`, `kglue_law'_measurable`, `prob_space_kglue_law'` | the glued law; `pglue_measurable` is REUSED unchanged |
+| `AE_kglue_law'` | the almost-sure transfer; its only difference from `AE_kglue_law` is that the second-coordinate property may depend on the FIRST — it has to, since the kernel does |
+| `kglue_law'_start` | **clause (i)** of (1.7) |
+| `kglue_law'_diffquot` | **clause (ii)** — the first place the kernel's values are required to lie in the class at the origin |
+| `kglue_law'_start` … and then, by a CHANGE OF ROUTE, clauses (iii) and (iv) too: | |
+
+**`paper_pair_class_kglue_law'` — the class is closed under concatenation
+with a continuation chosen by an ARBITRARY measurable kernel.** The two
+martingale clauses were never proved for the semidirect product, because
+they never had to be. The martingale route has two real obstructions —
+`integral_bind` in the distribution is only for BOUNDED REAL integrands,
+and the FIRST-factor martingale property is FALSE for a semidirect product
+(the weight `(Kr ω)(A_ω)` in the disintegrated set integral is only
+`ℱ_r`-measurable). **Neither has to be faced.**
+
+Instead: the class is weakly closed, the glue with a COUNTABLY valued
+index is already in it (§1.6(c)), and the class at the origin is a COMPACT
+metric space — hence separable, so any kernel into it is a pointwise limit
+of countably valued ones. Round the kernel; each rounded glue is a
+legitimate pasting and IS the kernel glue at the rounded kernel; the
+semidirect products converge weakly; the glue is continuous; weak
+closedness finishes.
+
+| result | content |
+|---|---|
+| `second_countable_path_metric`, `borel_of_path_prod` | separable + metrizable ⟹ second countable, hence `borel_of X ⨂⇩M borel_of Y = borel_of (prod_topology X Y)` |
+| `mdist_pglue_le`, `Lipschitz_pglue` | the glue is 3-Lipschitz from the product metric — the second piece counts twice because it is re-based at its own initial value |
+| `integral_ksemi_bounded`, `integral_ksemi_measurable` | the disintegration for BOUNDED REAL integrands — exactly what `integral_bind` covers, and exactly what weak-convergence test functions are |
+| `ksemi_weak_conv` | pointwise weak convergence of the KERNELS gives weak convergence of the semidirect products, by dominated convergence over the first coordinate |
+| `Metric_space.countably_valued_approx`, `limitin_of_dist_half` | a measurable map into a compact metric space is a uniform limit of countably valued measurable ones; rounding is measurable because `{y. d a y < c}` is an OPEN BALL |
+| `kglue_law_eq_kglue_law'` | with a countably valued index the product-of-all-candidates and the semidirect product give the SAME law; both reduce to `∫⁺ω. (RR (N ω)) {ω'. pglue r T ω ω' ∈ A} ∂Q` |
+| `paper_pair_class_kglue_law'` | **the headline** |
+
+**Do not restart the martingale route.** Both obstructions are real — in
+particular `martingale_pair_fst` has no `ksemi` analogue, and that is a
+theorem, not a proof-technique inconvenience.
+
