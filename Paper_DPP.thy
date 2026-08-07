@@ -3061,4 +3061,67 @@ proof -
     by (rule AE_zero_of_set_integral_zero[OF subalgebra_self fi fmeas zz])
 qed
 
+text \<open>Two path-specific facts the instantiation needs.  First: an INCREMENT
+  of the rebased future is an increment of the original path --- the base
+  point cancels, which is why the martingale property of \<open>P\<close> applies to it
+  unchanged.\<close>
+
+lemma pfut_increment:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes u: "u \<in> {0..T - r}" and v: "v \<in> {0..T - r}"
+  shows "fst (pfut r T \<omega> v) - fst (pfut r T \<omega> u)
+      = fst (\<omega> (r + v)) - fst (\<omega> (r + u))"
+  using u v by (simp add: pfut_fst)
+
+text \<open>Second: \<open>pfut\<close> pulls the FUTURE's natural filtration back into \<open>P\<close>'s,
+  with the clock shifted by \<open>r\<close>.  This is what puts the conditioning set
+  \<open>(pcut r) -` A \<inter> (pfut r T) -` A'\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, where the martingale
+  property of \<open>P\<close> applies to it.\<close>
+
+lemma pfut_filtration_measurable:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "pfut r T
+      \<in> natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))
+        \<rightarrow>\<^sub>M natural_filtration
+            (pair_law_of (T - r) (pfut r T) P) 0 (\<lambda>v w. w v) u"
+proof -
+  let ?S = "T - r"
+  let ?FF = "\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)
+      (r + min u ?S)"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have phim: "pfut r T \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric ?S :: ('n pairpath) metric))"
+    by (rule pfut_measurable_law[OF r rT setsP])
+  have adap: "(\<lambda>\<omega> :: 'n pairpath. pfut r T \<omega> v) \<in> borel_measurable (?FF u)"
+    if v: "0 \<le> v" and vu: "v \<le> u" for v
+  proof (cases "v \<le> ?S")
+    case True
+    have m1: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (r + v)) \<in> borel_measurable (?FF u)"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use r v vu True in auto)
+    have m2: "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> borel_measurable (?FF u)"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use r v vu True Tr in auto)
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (r + v) - \<omega> r) \<in> borel_measurable (?FF u)"
+      by (rule borel_measurable_diff[OF m1 m2])
+    moreover have "(\<lambda>\<omega> :: 'n pairpath. pfut r T \<omega> v) = (\<lambda>\<omega>. \<omega> (r + v) - \<omega> r)"
+      using v True by (auto simp: pfut_apply)
+    ultimately show ?thesis by simp
+  next
+    case False
+    then have "(\<lambda>\<omega> :: 'n pairpath. pfut r T \<omega> v) = (\<lambda>\<omega>. undefined)"
+      by (auto simp: pfut_def)
+    then show ?thesis by simp
+  qed
+  have spF: "space (?FF u) = space P" by simp
+  show ?thesis
+    by (rule phi_filtration_measurable
+        [where FF = "\<lambda>u. natural_filtration P 0
+            (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)" and u = u,
+         OF phim adap spF])
+qed
+
 end
