@@ -3933,7 +3933,7 @@ proof (rule finite_measure_subalgebra_is_sigma_finite)
         subalgebra_natural_filtration_path[OF setsQ])
 qed
 
-theorem set_integral_eq_of_rational_times:
+theorem integrable_and_set_integral_eq_of_rational_times:
   fixes Q :: "('n::finite pairpath) measure"
     and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real"
   assumes S: "0 \<le> S"
@@ -3942,17 +3942,19 @@ theorem set_integral_eq_of_rational_times:
     and PS: "prob_space Q"
     and Zm: "\<And>u. u \<in> {0..S} \<Longrightarrow>
         Z u \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
-    and Zint: "\<And>u. u \<in> {0..S} \<Longrightarrow> integrable Q (Z u)"
+    and Zint: "\<And>q. q \<in> \<rat> \<Longrightarrow> q \<in> {0..S} \<Longrightarrow> integrable Q (Z q)"
+    and ZintS: "integrable Q (Z S)"
     and Zcont: "\<And>w. w \<in> space Q \<Longrightarrow> continuous_on {0..S} (\<lambda>u. Z u w)"
     and rat: "\<And>q A. q \<in> \<rat> \<Longrightarrow> q \<in> {0..S} \<Longrightarrow>
         A \<in> sets (natural_filtration Q 0 (\<lambda>v w. w v) q) \<Longrightarrow>
         set_lebesgue_integral Q A (Z q) = set_lebesgue_integral Q A (Z S)"
     and i: "i \<in> {0..S}"
-    and A: "A \<in> sets (natural_filtration Q 0 (\<lambda>v w. w v) i)"
-  shows "set_lebesgue_integral Q A (Z i) = set_lebesgue_integral Q A (Z S)"
+  shows "integrable Q (Z i)
+      \<and> (\<forall>A \<in> sets (natural_filtration Q 0 (\<lambda>v w. w v) i).
+          set_lebesgue_integral Q A (Z i) = set_lebesgue_integral Q A (Z S))"
 proof (cases "i = S")
   case True
-  then show ?thesis by simp
+  then show ?thesis using ZintS by simp
 next
   case False
   let ?F = "\<lambda>u. natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
@@ -3981,9 +3983,6 @@ next
   \<comment> \<open>the filtration facts\<close>
   have subA: "subalgebra Q (?F u)" for u
     by (rule subalgebra_natural_filtration_path[OF setsQ])
-  have AQ: "A \<in> sets Q" using A subA[of i] by (auto simp: subalgebra_def)
-  have AF: "A \<in> sets (?F (q n))" for n
-    using A sets_natural_filtration_mono[of i "q n"] qgt[of n] by auto
   have sfs: "sigma_finite_subalgebra Q (?F u)" for u
     by (rule sigma_finite_subalgebra_natural_filtration_path[OF PS setsQ])
   have ZmQ: "Z u \<in> borel_measurable Q" if u: "u \<in> {0..S}" for u
@@ -3992,9 +3991,9 @@ next
   \<comment> \<open>uniform integrability, straight off the averaging form\<close>
   have ui: "unif_integrable Q (\<lambda>n. Z (q n))"
   proof (rule prob_space.unif_integrable_of_averaging[OF PS])
-    show "integrable Q (Z S)" by (rule Zint[OF SS])
+    show "integrable Q (Z S)" by (rule ZintS)
     show "sigma_finite_subalgebra Q (?F (q n))" for n by (rule sfs)
-    show "integrable Q (Z (q n))" for n by (rule Zint[OF q0S])
+    show "integrable Q (Z (q n))" for n by (rule Zint[OF qrat q0S])
     show "Z (q n) \<in> borel_measurable (?F (q n))" for n by (rule Zm[OF q0S])
     show "set_lebesgue_integral Q B (Z S) = set_lebesgue_integral Q B (Z (q n))"
       if "B \<in> sets (?F (q n))" for n B
@@ -4006,47 +4005,61 @@ next
   proof (rule AE_I2)
     fix w :: "'n pairpath" assume w: "w \<in> space Q"
     have "((\<lambda>u. Z u w) \<circ> q) \<longlonglongrightarrow> Z i w"
-      using Zcont[OF w] q0S i qconv
-      by (simp add: continuous_on_sequentially)
+      using Zcont[OF w] q0S i qconv by (simp add: continuous_on_sequentially)
     then show "(\<lambda>n. Z (q n) w) \<longlonglongrightarrow> Z i w" by (simp add: o_def)
   qed
+
+  \<comment> \<open>integrability at the IRRATIONAL time comes free from the same argument\<close>
+  have Zi: "integrable Q (Z i)"
+    by (rule finite_measure.unif_integrable_limit_integrable
+        [OF PQ.finite_measure_axioms ui ZmQ[OF i] conv])
   have vit: "(\<lambda>n. \<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q) \<longlonglongrightarrow> 0"
     by (rule finite_measure.vitali_convergence
         [OF PQ.finite_measure_axioms ui ZmQ[OF i] conv])
 
   \<comment> \<open>and the set integrals follow the \<open>L\<^sup>1\<close> limit\<close>
-  have bnd: "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar>
-      \<le> (\<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q)" for n
+  have main: "set_lebesgue_integral Q A (Z i) = set_lebesgue_integral Q A (Z S)"
+    if A: "A \<in> sets (?F i)" for A
   proof -
-    have s1: "set_integrable Q A (Z (q n))"
-      unfolding set_integrable_def
-      by (rule integrable_mult_indicator[OF AQ Zint[OF q0S]])
-    have s2: "set_integrable Q A (Z i)"
-      unfolding set_integrable_def
-      by (rule integrable_mult_indicator[OF AQ Zint[OF i]])
-    have dd: "integrable Q (\<lambda>w. indicat_real A w *\<^sub>R (Z (q n) w - Z i w))"
-      by (rule integrable_mult_indicator[OF AQ
-          Bochner_Integration.integrable_diff[OF Zint[OF q0S] Zint[OF i]]])
-    have d1: "integrable Q (\<lambda>w. \<bar>indicat_real A w *\<^sub>R (Z (q n) w - Z i w)\<bar>)"
-      by (rule integrable_abs[OF dd])
-    have d2: "integrable Q (\<lambda>w. \<bar>Z (q n) w - Z i w\<bar>)"
-      by (intro integrable_abs Bochner_Integration.integrable_diff
-          Zint[OF q0S] Zint[OF i])
-    have "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar>
-        = \<bar>set_lebesgue_integral Q A (Z (q n)) - set_lebesgue_integral Q A (Z i)\<bar>"
-      using rat[OF qrat q0S AF] by simp
-    also have "\<dots> = \<bar>\<integral>w. indicat_real A w *\<^sub>R (Z (q n) w - Z i w) \<partial>Q\<bar>"
-      using set_integral_diff(2)[OF s1 s2]
-      unfolding set_lebesgue_integral_def by (simp add: scaleR_diff_right)
-    also have "\<dots> \<le> (\<integral>w. \<bar>indicat_real A w *\<^sub>R (Z (q n) w - Z i w)\<bar> \<partial>Q)"
-      by (rule integral_abs_bound)
-    also have "\<dots> \<le> (\<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q)"
-      by (rule integral_mono[OF d1 d2]) (simp add: indicator_def)
-    finally show ?thesis .
+    have AQ: "A \<in> sets Q" using A subA[of i] by (auto simp: subalgebra_def)
+    have AF: "A \<in> sets (?F (q n))" for n
+      using A sets_natural_filtration_mono[of i "q n"] qgt[of n] by auto
+    have bnd: "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar>
+        \<le> (\<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q)" for n
+    proof -
+      have s1: "set_integrable Q A (Z (q n))"
+        unfolding set_integrable_def
+        by (rule integrable_mult_indicator[OF AQ Zint[OF qrat q0S]])
+      have s2: "set_integrable Q A (Z i)"
+        unfolding set_integrable_def
+        by (rule integrable_mult_indicator[OF AQ Zi])
+      have dd: "integrable Q (\<lambda>w. indicat_real A w *\<^sub>R (Z (q n) w - Z i w))"
+        by (rule integrable_mult_indicator[OF AQ
+            Bochner_Integration.integrable_diff[OF Zint[OF qrat q0S] Zi]])
+      have d1: "integrable Q (\<lambda>w. \<bar>indicat_real A w *\<^sub>R (Z (q n) w - Z i w)\<bar>)"
+        by (rule integrable_abs[OF dd])
+      have d2: "integrable Q (\<lambda>w. \<bar>Z (q n) w - Z i w\<bar>)"
+        by (intro integrable_abs Bochner_Integration.integrable_diff
+            Zint[OF qrat q0S] Zi)
+      have "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar>
+          = \<bar>set_lebesgue_integral Q A (Z (q n))
+              - set_lebesgue_integral Q A (Z i)\<bar>"
+        using rat[OF qrat q0S AF] by simp
+      also have "\<dots> = \<bar>\<integral>w. indicat_real A w *\<^sub>R (Z (q n) w - Z i w) \<partial>Q\<bar>"
+        using set_integral_diff(2)[OF s1 s2]
+        unfolding set_lebesgue_integral_def by (simp add: scaleR_diff_right)
+      also have "\<dots> \<le> (\<integral>w. \<bar>indicat_real A w *\<^sub>R (Z (q n) w - Z i w)\<bar> \<partial>Q)"
+        by (rule integral_abs_bound)
+      also have "\<dots> \<le> (\<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q)"
+        by (rule integral_mono[OF d1 d2]) (simp add: indicator_def)
+      finally show ?thesis .
+    qed
+    have "\<bar>set_lebesgue_integral Q A (Z S)
+        - set_lebesgue_integral Q A (Z i)\<bar> \<le> 0"
+      by (rule LIMSEQ_le_const[OF vit]) (use bnd in blast)
+    then show ?thesis by simp
   qed
-  have "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar> \<le> 0"
-    by (rule LIMSEQ_le_const[OF vit]) (use bnd in blast)
-  then show ?thesis by simp
+  show ?thesis using Zi main by blast
 qed
 
 subsection \<open>From a generating \<pi>-system to the whole sub-\<sigma>-algebra\<close>
@@ -4355,8 +4368,10 @@ subsection \<open>The martingale property at a fixed law\<close>
 text \<open>Everything (b3) needs at a FIXED \<open>p'\<close>, packaged: adaptedness,
   integrability, continuity in time and the set-integral identity against the
   terminal value AT RATIONAL TIMES ONLY give the martingale property.  The
-  two upgrades are @{thm [source] set_integral_eq_of_rational_times}
-  (rational to real) and, inside its \<open>rat\<close> hypothesis at the call site,
+  two upgrades are
+  @{thm [source] integrable_and_set_integral_eq_of_rational_times}
+  (rational to real, and it supplies the integrability at the irrational
+  times too) and, inside its \<open>rat\<close> hypothesis at the call site,
   @{thm [source] set_integral_zero_of_generator} (\<pi>-system to \<open>\<F>\<^sub>q\<close>).
 
   The process is required to be CONSTANT past \<open>S\<close> --- which the capped
@@ -4370,9 +4385,12 @@ lemma martingale_of_rational_set_integral_eq:
     and setsQ: "sets Q = sets (borel_of (mtopology_of
         (path_metric S :: ('n pairpath) metric)))"
     and PS: "prob_space Q"
-    and Zm: "\<And>u. 0 \<le> u \<Longrightarrow>
+    and Zm: "\<And>u. u \<in> {0..S} \<Longrightarrow>
         Z u \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
-    and Zint: "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q (Z u)"
+    and Zm': "\<And>u. 0 \<le> u \<Longrightarrow>
+        Z u \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
+    and Zint: "\<And>q. q \<in> \<rat> \<Longrightarrow> q \<in> {0..S} \<Longrightarrow> integrable Q (Z q)"
+    and ZintS: "integrable Q (Z S)"
     and Zcont: "\<And>w. w \<in> space Q \<Longrightarrow> continuous_on {0..S} (\<lambda>u. Z u w)"
     and Zcap: "\<And>u. S \<le> u \<Longrightarrow> Z u = Z S"
     and rat: "\<And>q A. q \<in> \<rat> \<Longrightarrow> q \<in> {0..S} \<Longrightarrow>
@@ -4393,14 +4411,31 @@ proof -
         sigma_finite_filtered_measure_axioms.intro fm
         sigma_finite_subalgebra_natural_filtration_path[OF PS setsQ])
 
-  \<comment> \<open>the identity against the terminal value, at EVERY time\<close>
+  \<comment> \<open>integrability AND the identity against the terminal value, both at
+      every time in the horizon and both out of the rational data\<close>
+  have both: "integrable Q (Z u)
+      \<and> (\<forall>A \<in> sets (?F u). set_lebesgue_integral Q A (Z u)
+          = set_lebesgue_integral Q A (Z S))"
+    if u: "u \<in> {0..S}" for u
+    by (rule integrable_and_set_integral_eq_of_rational_times
+        [OF S setsQ PS Zm Zint ZintS Zcont rat u])
+  have Zall: "integrable Q (Z u)" if u: "0 \<le> u" for u
+  proof (cases "u \<le> S")
+    case True
+    have "u \<in> {0..S}" using u True by simp
+    from both[OF this] show ?thesis by blast
+  next
+    case False
+    have "S \<le> u" using False by simp
+    then have "Z u = Z S" by (rule Zcap)
+    then show ?thesis using ZintS by simp
+  qed
   have term_eq: "set_lebesgue_integral Q A (Z u) = set_lebesgue_integral Q A (Z S)"
     if u: "0 \<le> u" and A: "A \<in> sets (?F u)" for u A
   proof (cases "u \<le> S")
     case True
-    show ?thesis
-      by (rule set_integral_eq_of_rational_times
-          [OF S setsQ PS _ _ Zcont rat _ A]) (use u True Zm Zint in auto)
+    have "u \<in> {0..S}" using u True by simp
+    from both[OF this] show ?thesis using A by blast
   next
     case False
     have "S \<le> u" using False by simp
@@ -4414,9 +4449,9 @@ proof -
     proof (intro adapted_process.intro adapted_process_axioms.intro)
       show "filtered_measure Q ?F 0" by (rule fm)
       show "Z u \<in> borel_measurable (?F u)" if "(0::real) \<le> u" for u
-        by (rule Zm[OF that])
+        by (rule Zm'[OF that])
     qed
-    show "integrable Q (Z u)" if "(0::real) \<le> u" for u by (rule Zint[OF that])
+    show "integrable Q (Z u)" if "(0::real) \<le> u" for u by (rule Zall[OF that])
     fix A and u v :: real
     assume u: "0 \<le> u" and uv: "u \<le> v" and A: "A \<in> ?F u"
     have AF: "A \<in> sets (?F u)" using A by simp
