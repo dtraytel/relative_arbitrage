@@ -2822,4 +2822,54 @@ proof -
   qed
 qed
 
+subsection \<open>Step (b3): towards the martingale clauses\<close>
+
+text \<open>Clauses (i) and (ii) needed only \<open>emeasure\<close>, so the unconditional
+  @{thm [source] nn_integral_ksemi} sufficed.  The martingale clauses need
+  \<open>\<integral>\<^sub>A\<^sub>' X\<^sub>i d\<kappa> p'\<close>, and the coordinate process is NOT bounded on the path
+  space, while @{thm [source] integral_ksemi_bounded} --- the only
+  Bochner-level disintegration in the development --- assumes a uniform
+  bound.  So the unbounded version has to be built, and it is built the
+  standard way: through the positive and negative parts, where
+  @{thm [source] nn_integral_ksemi} does apply.  First the integrability of
+  the sections.\<close>
+
+lemma AE_integrable_ksemi_section:
+  fixes g :: "'a \<times> 'b \<Rightarrow> real"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    and gi: "integrable (ksemi M N Kr) g"
+    and ne: "space M \<noteq> {}"
+  shows "AE \<omega> in M. integrable (Kr \<omega>) (\<lambda>\<omega>'. g (\<omega>, \<omega>'))"
+proof -
+  have gabs: "(\<lambda>p. ennreal (norm (g p))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    using gm by measurable
+  have fin: "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr)) < \<top>"
+    using gi by (simp add: integrable_iff_bounded)
+  have split: "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr))
+      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<partial>M)"
+    by (rule nn_integral_ksemi[OF K gabs])
+  have minner: "(\<lambda>\<omega>. \<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>))
+      \<in> borel_measurable M"
+  proof (rule nn_integral_measurable_subprob_algebra2)
+    show "(\<lambda>(x, y). ennreal (norm (g (x, y)))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+      using gabs by (simp add: case_prod_unfold)
+    show "Kr \<in> M \<rightarrow>\<^sub>M subprob_algebra N" by (rule measurable_prob_algebraD[OF K])
+  qed
+  have fin': "(\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<partial>M) \<noteq> \<infinity>"
+    using fin split by (simp add: less_top)
+  have aefin: "AE \<omega> in M. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<noteq> \<infinity>"
+    by (rule nn_integral_PInf_AE[OF minner fin'])
+  have "AE \<omega> in M. \<omega> \<in> space M" by (rule AE_I2) simp
+  with aefin show ?thesis
+  proof eventually_elim
+    fix \<omega> assume z: "(\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<noteq> \<infinity>"
+      and w: "\<omega> \<in> space M"
+    have sec: "(\<lambda>\<omega>'. g (\<omega>, \<omega>')) \<in> borel_measurable (Kr \<omega>)"
+      by (rule measurable_compose[OF ksemi_Pair_measurable[OF K w] gm])
+    show "integrable (Kr \<omega>) (\<lambda>\<omega>'. g (\<omega>, \<omega>'))"
+      using sec z by (simp add: integrable_iff_bounded less_top)
+  qed
+qed
+
 end
