@@ -418,11 +418,14 @@ Pieces already in place, and what each still needs:
 
 | piece | status |
 |---|---|
-| `kernel_class_LP_measurable` — a kernel measurable into `prob_algebra` with values in the class is measurable into the LP-metric class space (`paper_pair_class_kglue_law'`'s `Kb`) | **DONE** |
-| the mixed kernel is measurable and lands in `𝒞₀` | open — the r.c.d. lands in `𝒞₀` only ALMOST surely, and `Kc` is a for-all hypothesis, so the kernel must be repaired on the null set. `𝒞₀` is compact hence CLOSED in the weak topology, so `{p'. κ p' ∈ 𝒞₀}` is measurable and the repair (fall back to the Brownian witness of `paper_pair_class_nonempty`) is legitimate |
-| gluing a law with its own r.c.d. returns the law | open — the law-level counterpart of `pglue_pcut_pfut`, i.e. `kglue_law' r T κ (pair_law_of r (pcut r) P) = P` |
-| the induction over the values of a simple stopping time | open |
-| general θ by approximation | open, and NOT obviously monotone: `θ_n ≥ θ` does not give `integrand_θ ≤ integrand_{θ_n}` pathwise. Expect this to be the genuinely hard step, and consider whether §3.2 needs only `τ_{B_ε}`, where more structure is available |
+| `kernel_class_LP_measurable` — `prob_algebra`-measurable + values in the class ⟹ measurable into the LP-metric class space (`paper_pair_class_kglue_law'`'s `Kb`) | **DONE** |
+| `paper_pair_class_sets_prob_algebra` — the class is a MEASURABLE set of laws (compact ⟹ closed, since the weak topology is the LP metric topology hence Hausdorff) | **DONE** |
+| `kernel_repair_into_class` — hence an a.e.-into-the-class kernel can be redirected to the Brownian witness off the good set, which `Kc`'s for-all demands | **DONE** |
+| `kernel_mix_measurable` — optimal on `A`, conditional law off it | **DONE** |
+| `kglue_law'_rcd_eq` — gluing a law onto its OWN r.c.d. returns the law | **DONE** |
+| **`paper_pair_class_kglue_mixed`** — the one-step engine: the mixed glue at a fixed `r` is again a class member | **DONE** |
+| the induction over the values of a simple stopping time | **open — this is the next thing to build.** The engine is in place; what it needs is the bookkeeping. Glue at `t_1, …, t_m` in turn with `A_j = {θ = t_j}`; `θ` is PRESERVED by each step, because gluing at `t_j` changes only the future of paths in `{θ = t_j}` and that event is decided by the path up to `t_j`. The verification at the end is `pexit_pglue_dpp` (the pathwise DPP bound, §1.7) plus the selector's optimality. The delicate part is tracking "the law is unchanged off `A_j`" through the `m` steps, for which `kglue_law'_rcd_eq` is the pointwise input |
+| general θ by approximation | open, and NOT monotone: `θ_n ≥ θ` does not give `integrand_θ ≤ integrand_{θ_n}` pathwise — that inequality is essentially the DPP itself. The trick that made the `≤` half cheap does NOT transfer. Before building the general case, check whether the paper's §3.2 needs only `τ_{B_ε}`, where the ball gives more structure |
 
 **What carries over from §1.7, and what does not.**
 
