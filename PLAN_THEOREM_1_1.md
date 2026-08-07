@@ -536,57 +536,46 @@ be loaded — develop-and-verify in `Paper_Bridge`'s tail and move, or restart.
 
 **What is left in route (a), concretely.**
 
-1. `paper_pair_class_future_of_past`: `pair_law_of (T-r) (pfut r T)
-   (uniform_measure P A) ∈ paper_pair_class k L (T-r) 0` for
-   `A ∈ ℱ_r`, `P A > 0`. **Clauses (i), (ii) and (iii) are DONE** —
-   `pfut_law_start` (in fact identical, not merely a.s., by `pfut_zero`),
-   `pfut_law_diffquot` (inheritance; the base point cancels out of the
-   increment and the two time spans agree), `pfut_law_X_martingale`
-   (`martingale_time_change` at `s u = r + min u (T-r)` →
-   `martingale_sub_initial` → `martingale_future_of_past`, the last packaging
-   `martingale_uniform_measure` + `martingale_pair_law`).
+1. ~~`paper_pair_class_future_of_past`~~ — **DONE** (2026-08-07). All four
+   clauses of (1.7) for `pair_law_of (T-r) (pfut r T) (P | A)`,
+   `A ∈ ℱ_r`, `P A > 0`, via `pfut_law_start` / `pfut_law_diffquot` /
+   `pfut_law_X_martingale` / `pfut_law_comp_martingale`. Clause (iv) needed
+   four lemmas that existed nowhere: `martingale_mult_measurable`,
+   `martingale_cross_measurable`, `integrable_mult_of_sq`, `martingale_diff`.
+2. ~~`ℱ_r`-measurability of the survival event~~ — **DONE**,
+   `survival_event_filtration`: for continuous paths against a closed `K`,
+   "never leaves `K` on `[0,r]`" is decided by the rational times alone.
+3. **The usc-in-`K` lemma — this is the whole of what is left, and it is
+   HARDER than it looked.** Route (a) localizes by conditioning on
+   `A = Surv ∩ {X_r ∈ cball (y⇩i, ε⇩i)}`, which only pins `X_r` to a small
+   ball, so the surviving paths are known to stay in `K` around a MOVING
+   centre and the comparison lands on the ε-enlargement:
 
-   **Clause (iv) does NOT follow the same way, and this is the one real
-   surprise of the section.** `outerp` is QUADRATIC, so the compensated
-   process of the rebased future is not the increment of the compensated
-   process. `outerp_diff_compensated` (proved) gives the exact
-   decomposition:
+       paper_v (K⇩ε, y⇩i) ≥ c - r   while   paper_v (K, y⇩i) < c - r,
 
-       outerp (X_t - X_r) - (Y_t - Y_r)
-         = (outerp X_t - Y_t)            -- clause (iv) for P
-           - (X_t ⊗ X_r + X_r ⊗ X_t)     -- the work
-           + (outerp X_r + Y_r)          -- constant in t, ℱ_r-measurable
+   and closing that gap needs `paper_v k L U K⇩ε y → paper_v k L U K y`.
+   **The obvious proof does not work.** Take optimizers `Q⇩n` for `K_{1/n}`,
+   extract a weak limit `Q` by compactness, and try Portmanteau on the OPEN
+   set `V = {ω. pexit U K ω < c'}`: one needs `Q⇩n V` small, but all that is
+   known is `Q⇩n {pexit K_{1/n} < c'} = 0`, and since `pexit K ≤ pexit
+   K_{1/n}` the inclusion runs `{pexit K_{1/n} < c'} ⊆ V` — the WRONG way.
+   A `Q⇩n` may survive in `K_{1/n}` while leaving `K` at once. No
+   counterexample is known either, so the statement is open, not false;
+   expect a genuinely different argument (some quantitative control of how
+   fast a class member can leave `K⇩ε` but not `K`, e.g. off the
+   ball estimates of §1.5).
 
-   The middle term is a martingale only because `X_r` is `ℱ_r`-measurable,
-   so what is needed is **"pulling out what is known" at the MARTINGALE
-   level**: a martingale multiplied entrywise by a fixed `F 0`-measurable
-   factor is again a martingale. The AFP has only the
-   conditional-expectation half, `Conditional_Expectation_Banach.
-   cond_exp_measurable_mult`, and only for REAL-valued factors. So this item
-   was three lemmas, and **all three are now proved**:
-
-   | result | content |
-   |---|---|
-   | `martingale_mult_measurable` | (α) the martingale-level statement: `v ∈ borel_measurable (F 0)` and integrability of the products ⟹ `λu ω. v ω * X u ω` is a martingale. Via `martingale_of_set_integral_eq` + `cond_exp_set_integral` + `cond_exp_measurable_mult`. The factor must be measurable at the INITIAL time, not merely somewhere along the filtration |
-   | `martingale_cross_measurable` | (β) the entrywise lift: the cross term `X_t ⊗ v + v ⊗ X_t` is a matrix martingale, through `martingale_matI` |
-   | `integrable_mult_of_sq` | (γ) a product is integrable as soon as both squares are, by `|ab| ≤ (a²+b²)/2` — feed it `paper_pair_class_sq_integrable` |
-   | `martingale_diff` | the subtractive companion of `martingale_add`, in neither the development nor the AFP, and needed to combine the three summands |
-
-   **What is left of clause (iv) is the assembly only** — a
-   `pfut_law_comp_martingale` mirroring `pfut_law_X_martingale`, supplying
-   `martingale_future_of_past` with (A) the class's clause (iv) time-changed,
-   minus (B) `martingale_cross_measurable` at `X u ω = fst (ω (r + min u
-   (T-r)))`, `v ω = fst (ω r)`, plus (C) the `ℱ_r`-measurable constant
-   `outerp (fst (ω r)) + snd (ω r)`; then `paper_pair_class_future_of_past`
-   packaging all four clauses. Budget 150–250 lines.
-2. `ℱ_r`-measurability of the survival event
-   `{ω. pexit r K (λt. fst (ω t)) = r ∧ fst (ω r) ∈ K}` — the second
-   conjunct is a coordinate, the first needs the rational reduction
-   (`Exit_Time.etime_less_iff_qtimes_open`) against path continuity.
-3. The usc-in-`K` lemma of the table above.
-4. Assembly: `pexit_split_at_r` turns `AE τ_K ≥ c` into a bound on the
-   future's exit time; `pexit_pfut` rebases it; `paper_v` at the endpoint
-   dominates by definition.
+**Consequence for route choice.** With item 3 open, route (b) is no longer
+clearly the more expensive one. And route (b) got cheaper too: the
+conditions defining the class are all LINEAR in the measure — `μ C = 1` for
+the start and covariation clauses, `∫ (X_t - X_s) 1_A dμ = 0` for the
+martingale clauses — so passing from "`μ_A ∈ 𝒞₀` for every `A ∈ ℱ_r`" to
+"`κ ω ∈ 𝒞₀` a.s." needs **no separation theorem**, only a COUNTABLE
+determining family (rational times, rational-corner cylinder sets) plus one
+Dynkin step at fixed `ω`. Given `paper_pair_class_future_of_past` is
+already proved for every positive-measure `A ∈ ℱ_r`, route (b) is now:
+AFP `Disintegration` for the kernel, then that countable-family argument.
+Budget 400–800 lines, and it has no open sub-statement.
 
 ### 2.2 The DPP at a STOPPING time
 
