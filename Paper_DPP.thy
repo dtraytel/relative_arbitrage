@@ -6060,4 +6060,72 @@ proof -
   qed
 qed
 
+text \<open>The conditioning statement at a RANDOM time, and the headline of
+  \<S>2.1's first half.  The time \<open>\<theta>\<close> is an ARBITRARY function of the path: no
+  stopping-time property, no measurability, no adaptedness.  Note also that
+  the survival hypothesis of @{thm [source] paper_v_cond} is gone --- below
+  \<open>c\<close> it is automatic, and above \<open>c\<close> the conclusion is trivial.\<close>
+
+theorem paper_v_cond_time:
+  fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+    and x :: "real^'n" and \<theta> :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
+    and P: "P \<in> paper_pair_class k L T x"
+    and c: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+    and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
+  shows "AE \<omega> in P. c \<le> \<theta> \<omega>
+      + enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have setsP: "sets P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF P])
+  have spP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsP])
+
+  \<comment> \<open>the deterministic statement at every rational time, for every rational
+      threshold below \<open>c\<close> --- countably many instances\<close>
+  have ratbound: "AE \<omega> in P. \<forall>c'\<in>(\<rat> :: real set). \<forall>v\<in>(\<rat> :: real set).
+      c' < c \<longrightarrow> 0 \<le> v \<longrightarrow> v \<le> T \<longrightarrow>
+      (pexit v K (\<lambda>t. fst (\<omega> t)) = v \<and> fst (\<omega> v) \<in> K
+        \<longrightarrow> c' \<le> v + enn2real (paper_v k L (T - v) K (fst (\<omega> v))))"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix c' :: real assume "c' \<in> \<rat>"
+    show "AE \<omega> in P. \<forall>v\<in>(\<rat> :: real set). c' < c \<longrightarrow> 0 \<le> v \<longrightarrow> v \<le> T \<longrightarrow>
+        (pexit v K (\<lambda>t. fst (\<omega> t)) = v \<and> fst (\<omega> v) \<in> K
+          \<longrightarrow> c' \<le> v + enn2real (paper_v k L (T - v) K (fst (\<omega> v))))"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix v :: real assume "v \<in> \<rat>"
+      show "AE \<omega> in P. c' < c \<longrightarrow> 0 \<le> v \<longrightarrow> v \<le> T \<longrightarrow>
+          (pexit v K (\<lambda>t. fst (\<omega> t)) = v \<and> fst (\<omega> v) \<in> K
+            \<longrightarrow> c' \<le> v + enn2real (paper_v k L (T - v) K (fst (\<omega> v))))"
+      proof (cases "c' < c \<and> 0 \<le> v \<and> v \<le> T")
+        case True
+        then have v0: "0 \<le> v" and vT: "v \<le> T" and cc: "c' < c" by auto
+        have c'ae: "AE \<omega> in P. c' \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+          using c by (rule eventually_mono) (use cc in simp)
+        show ?thesis
+          using paper_v_cond[OF v0 vT L0 Kc P c'ae] by (rule eventually_mono) simp
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+
+  from AE_space c ratbound show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have W: "\<omega> \<in> space P"
+      and pex: "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+      and R: "\<And>c' v. c' \<in> \<rat> \<Longrightarrow> v \<in> \<rat> \<Longrightarrow> c' < c \<Longrightarrow> 0 \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+          pexit v K (\<lambda>t. fst (\<omega> t)) = v \<and> fst (\<omega> v) \<in> K \<Longrightarrow>
+          c' \<le> v + enn2real (paper_v k L (T - v) K (fst (\<omega> v)))" by blast+
+    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W spP by simp
+    show ?case
+      by (rule paper_v_cond_pointwise[OF T0 L1 Kc mw pex R th0 thT])
+  qed
+qed
+
 end
