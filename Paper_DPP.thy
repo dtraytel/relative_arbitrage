@@ -7168,4 +7168,181 @@ next
   qed
 qed
 
+subsection \<open>The induction step: one glue, with the rest left as a predicate\<close>
+
+text \<open>@{thm [source] paper_v_dpp_ge_const_two} is this lemma with
+  \<open>\<Psi> \<omega> = (c \<le> \<tau>\<^sub>K \<omega>)\<close>.  Leaving \<open>\<Psi>\<close> FREE turns it into the step of the
+  induction over the values of a simple stopping time: glue at \<open>r\<close> on the
+  \<open>\<F>\<^sub>r\<close>-event \<open>A\<close>, keep whatever \<open>\<Psi>\<close> says off it, and hand the result to the
+  next value.  The conclusion records \<open>pcut r \<omega> \<in> A\<close> alongside the bound
+  precisely so that the next step can see that those paths have \<open>\<theta> \<omega> = r\<close>
+  and therefore are NOT in the next gluing event --- which is what keeps the
+  earlier glues from being undone.\<close>
+
+theorem paper_v_dpp_ge_step:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and P :: "('n pairpath) measure" and \<Psi> :: "'n pairpath \<Rightarrow> bool"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
+    and P: "P \<in> paper_pair_class k L T x"
+    and A: "A \<in> sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and Psm: "{\<omega> \<in> space (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))). \<Psi> \<omega>}
+        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    and c: "AE \<omega> in P.
+        (pcut r \<omega> \<in> A \<longrightarrow> c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0))
+        \<and> (pcut r \<omega> \<notin> A \<longrightarrow> \<Psi> \<omega>)"
+  obtains R where "R \<in> paper_pair_class k L T x"
+    and "AE \<omega> in R.
+        (pcut r \<omega> \<in> A \<and> c \<le> pexit T K (\<lambda>t. fst (\<omega> t))) \<or> \<Psi> \<omega>"
+proof -
+  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?BR = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?MR = "borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  have rT': "r \<le> T" using rT by simp
+  have T0': "0 \<le> T" using r rT by simp
+  have Tr: "0 < T - r" using rT by simp
+  have Kbor: "K \<in> sets borel" by (rule borel_closed[OF K])
+  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+    using measurable_fst[of "borel :: (real^'n) measure"
+        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+
+  obtain S where Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?MR"
+    and Ssub: "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+        (paper_pair_class k L (T - r) (0::real^'n))
+        (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
+          (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
+    and SC: "\<And>y. S y \<in> paper_pair_class k L (T - r) 0"
+    and Sval: "\<And>y. ess_inf_time (pshift_law (T - r) y (S y))
+        (\<lambda>\<omega>. pexit (T - r) K (\<lambda>t. fst (\<omega> t))) = paper_v k L (T - r) K y"
+    by (rule paper_v_measurable_selector_kernel'[where k = k, OF Tr L1 K]) blast
+
+  define g :: "'n pairpath \<Rightarrow> real" where
+    "g \<omega> = pexit r K (\<lambda>t. fst (\<omega> t))
+        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+           then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)" for \<omega>
+  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit r K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?BR"
+    by (rule pexit_path_measurable[OF r K refl])
+  have endm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?BR"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] mfst])
+  have vm: "(\<lambda>\<omega> :: 'n pairpath. enn2real (paper_v k L (T - r) K (fst (\<omega> r))))
+      \<in> borel_measurable ?BR"
+    by (rule measurable_compose[OF endm paper_v_borel_measurable[OF Tr L1 K]])
+  have predm: "Measurable.pred ?BR (\<lambda>\<omega> :: 'n pairpath.
+      pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K)"
+    using taum endm Kbor by measurable
+  have gm: "g \<in> borel_measurable ?BR"
+    unfolding g_def using taum vm predm by measurable
+  have gset: "{\<omega> \<in> space ?BR. c \<le> g \<omega>} \<in> sets ?BR" using gm by measurable
+  have gcut: "g (pcut r \<omega>) = g \<omega>" for \<omega> :: "'n pairpath"
+    using r by (simp add: g_def pexit_pcut pcut_apply)
+  define A' where "A' = A \<inter> {\<omega> \<in> space ?BR. c \<le> g \<omega>}"
+  have A's: "A' \<in> sets ?BR" unfolding A'_def using A gset by simp
+  have A'A: "A' \<subseteq> A" unfolding A'_def by simp
+
+  obtain \<kappa>' where glue: "kglue_law' r T \<kappa>' (pair_law_of r (pcut r) P)
+        \<in> paper_pair_class k L T x"
+    and onA: "\<And>p'. p' \<in> A' \<Longrightarrow> \<kappa>' p' = S (fst (p' r))"
+    and Kc: "\<And>p'. \<kappa>' p' \<in> paper_pair_class k L (T - r) (0::real^'n)"
+    and offA: "\<And>\<Phi>. {\<omega> \<in> space ?BT. \<Phi> \<omega>} \<in> sets ?BT \<Longrightarrow> (AE \<omega> in P. \<Phi> \<omega>)
+        \<Longrightarrow> AE \<omega> in kglue_law' r T \<kappa>' (pair_law_of r (pcut r) P).
+              pcut r \<omega> \<in> A' \<or> \<Phi> \<omega>"
+    and onAae: "\<And>\<Phi>. {\<omega> \<in> space ?BT. \<Phi> \<omega>} \<in> sets ?BT
+        \<Longrightarrow> (\<And>p'. p' \<in> A'
+              \<Longrightarrow> p' \<in> mspace (path_metric r :: ('n pairpath) metric)
+              \<Longrightarrow> AE \<omega>' in S (fst (p' r)). \<Phi> (pglue r T p' \<omega>'))
+        \<Longrightarrow> AE \<omega> in kglue_law' r T \<kappa>' (pair_law_of r (pcut r) P).
+              pcut r \<omega> \<notin> A' \<or> \<Phi> \<omega>"
+    by (rule paper_pair_class_kglue_mixed[OF r rT L1 P A's Sk SC]) blast
+  define R where "R = kglue_law' r T \<kappa>' (pair_law_of r (pcut r) P)"
+  have RC: "R \<in> paper_pair_class k L T x" unfolding R_def by (rule glue)
+
+  have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?BT"
+    by (rule pexit_path_measurable[OF T0' K refl])
+  have pcm: "pcut r \<in> ?BT \<rightarrow>\<^sub>M ?BR" by (rule pcut_measurable[OF r rT' refl])
+  have m2: "{\<omega> \<in> space ?BT. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))} \<in> sets ?BT"
+    using tauT by measurable
+  have m1: "{\<omega> \<in> space ?BT. pcut r \<omega> \<in> A' \<or> \<Psi> \<omega>} \<in> sets ?BT"
+  proof -
+    have "{\<omega> \<in> space ?BT. pcut r \<omega> \<in> A' \<or> \<Psi> \<omega>}
+        = (pcut r -` A' \<inter> space ?BT) \<union> {\<omega> \<in> space ?BT. \<Psi> \<omega>}" by blast
+    moreover have "pcut r -` A' \<inter> space ?BT \<in> sets ?BT"
+      by (rule measurable_sets[OF pcm A's])
+    ultimately show ?thesis using Psm by simp
+  qed
+
+  have aeP1: "AE \<omega> in P. pcut r \<omega> \<in> A' \<or> \<Psi> \<omega>"
+    using c AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (cases "pcut r \<omega> \<in> A")
+      case True
+      have "pcut r \<omega> \<in> space ?BR"
+        using measurable_space[OF pcut_measurable[OF r rT'
+            paper_pair_class_sets[OF P]] elim(2)] .
+      moreover have "c \<le> g (pcut r \<omega>)"
+      proof -
+        have "c \<le> g \<omega>" using elim(1) True unfolding g_def by simp
+        then show ?thesis unfolding gcut .
+      qed
+      ultimately show ?thesis unfolding A'_def using True by simp
+    next
+      case False
+      then show ?thesis using elim(1) by simp
+    qed
+  qed
+  have off: "AE \<omega> in R. pcut r \<omega> \<in> A' \<or> \<Psi> \<omega>"
+  proof -
+    have "AE \<omega> in R. pcut r \<omega> \<in> A' \<or> (pcut r \<omega> \<in> A' \<or> \<Psi> \<omega>)"
+      unfolding R_def by (rule offA[OF m1 aeP1])
+    then show ?thesis by (auto elim: eventually_mono)
+  qed
+
+  have on: "AE \<omega> in R. pcut r \<omega> \<notin> A' \<or> c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+    unfolding R_def
+  proof (rule onAae[OF m2])
+    fix p' :: "'n pairpath"
+    assume pA: "p' \<in> A'"
+    have cg: "c \<le> g p'" using pA unfolding A'_def by simp
+    show "AE \<omega>' in S (fst (p' r)).
+        c \<le> pexit T K (\<lambda>t. fst (pglue r T p' \<omega>' t))"
+    proof (rule pexit_pglue_selector_ge[OF r rT K])
+      show "S (fst (p' r)) \<in> paper_pair_class k L (T - r) (0::real^'n)"
+        by (rule SC)
+      show "ess_inf_time (pshift_law (T - r) (fst (p' r)) (S (fst (p' r))))
+          (\<lambda>w. pexit (T - r) K (\<lambda>t. fst (w t)))
+        = paper_v k L (T - r) K (fst (p' r))" by (rule Sval)
+      show "c \<le> pexit r K (\<lambda>t. fst (p' t))
+          + (if pexit r K (\<lambda>t. fst (p' t)) = r \<and> fst (p' r) \<in> K
+             then enn2real (paper_v k L (T - r) K (fst (p' r))) else 0)"
+        using cg unfolding g_def .
+    qed
+  qed
+
+  have all: "AE \<omega> in R.
+      (pcut r \<omega> \<in> A \<and> c \<le> pexit T K (\<lambda>t. fst (\<omega> t))) \<or> \<Psi> \<omega>"
+  proof (rule eventually_mono[OF eventually_conj[OF off on]])
+    fix \<omega> :: "'n pairpath"
+    assume hh: "(pcut r \<omega> \<in> A' \<or> \<Psi> \<omega>)
+        \<and> (pcut r \<omega> \<notin> A' \<or> c \<le> pexit T K (\<lambda>t. fst (\<omega> t)))"
+    show "(pcut r \<omega> \<in> A \<and> c \<le> pexit T K (\<lambda>t. fst (\<omega> t))) \<or> \<Psi> \<omega>"
+    proof (cases "pcut r \<omega> \<in> A'")
+      case True
+      then have "pcut r \<omega> \<in> A" using A'A by blast
+      moreover have "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))" using hh True by simp
+      ultimately show ?thesis by simp
+    next
+      case False
+      then show ?thesis using hh by simp
+    qed
+  qed
+  show thesis by (rule that[OF RC all])
+qed
+
 end
