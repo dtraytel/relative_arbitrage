@@ -603,27 +603,70 @@ Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
 | **rational-to-real in `i, j`** | see the warning below — this is NOT free | open |
 | assembly | `martingale_of_set_integral_eq` at fixed `p'`, then `martingale_vecI` (and a matrix analogue) to put the components back together | open |
 
-**The rational-to-real step needs DOMINATION, and the plan previously said
-"by path continuity" as if it were free. It is not.** Only countably many
-conditions survive the passage from "for each, almost surely" to "almost
-surely, for all", so the `(i,j)` pairs have to be rational; going back to
-real `i` means passing `∫_A X_{i_n} → ∫_A X_i` along `i_n ↓ i`, and pointwise
-convergence of continuous paths does not give that on its own.
+**The rational-to-real step: CORRECTED 2026-08-07 (late), after reading the
+sources and the repo.** An earlier note here said it needs a Doob `L²` bound
+and an integrable running supremum. That is overkill and should not be built.
+It needs UNIFORM INTEGRABILITY, and the exact machinery is already in this
+repository, written for precisely this pattern:
 
-The fix is available and cheap, and it should be taken through `P` rather
-than through `κ p'`: put
+| result | where | content |
+|---|---|---|
+| `unif_integrable` | `Vitali_Convergence.thy` | the definition (a `nat`-indexed family, tail-truncation form) |
+| `finite_measure.vitali_convergence` | `Vitali_Convergence.thy` | uniformly integrable + a.e. convergent ⟹ `L¹` convergent |
+| `prob_space.cond_exp_family_unif_integrable` | `Conditional_UI.thy` | the conditional expectations of a FIXED integrable `Y` over ANY family of sub-σ-algebras are uniformly integrable, with a truncation level uniform in the σ-algebra |
+| **`prob_space.unif_integrable_of_averaging`** | `Conditional_UI.thy` | the form consumed directly: `f n` `G n`-measurable, integrable, with `∫_A Y = ∫_A f n` for every `A ∈ G n` ⟹ `unif_integrable M f` |
 
-    G ω = (SUP u ∈ ({0..T−r} ∩ ℚ) ∪ {T−r}. norm (fst (ω u)))
+`unif_integrable_of_averaging` IS the rational-to-real step's hypothesis
+list, verbatim. Take `Y := X_S` (the terminal value — `S = T−r` is a fixed
+real, so the pairs `(q, S)` for rational `q` are among the countably many
+allowed), `G n := ℱ_{q_n}` for rationals `q_n ↓ i`, `f n := X_{q_n}`. Its
+`ident` hypothesis is exactly what `pfut_rcd_X_increment_zero` plus the
+Dynkin step delivers. Then `vitali_convergence` gives `L¹` convergence,
+path continuity gives the a.e. convergence it needs (in fact POINTWISE on
+`space (κ p')`, since every point of the path space IS a continuous path),
+and `∫_A X_{q_n} = ∫_A X_S` holds for every `n` because `A ∈ ℱ_i ⊆ ℱ_{q_n}`.
+Passing to the limit gives `∫_A X_i = ∫_A X_S` for every REAL `i` and every
+`A ∈ ℱ_i` — which is the martingale property for all pairs at once, since
+`∫_A X_i = ∫_A X_S = ∫_A X_j` whenever `A ∈ ℱ_i ⊆ ℱ_j`.
 
-(the sup over a countable set, hence measurable, and equal to the sup over
-`[0,T−r]` by continuity). If `integrable P (λω. G (pfut r T ω))` then
-`nn_integral_ksemi` gives `AE p'. integrable (κ p') G` for free — exactly the
-route `pfut_rcd_X_integrable` already takes — and at each such `p'` dominated
-convergence closes rational-to-real in one step. What `integrable P (λω. G …)`
-costs is a Doob `L²` bound for a class member: the covariation clause bounds
-`E‖X_t‖²` (`sconstraint k L` is bounded, so `⟨X⟩_t ≤ C t`), and
-`Doob_Inequality.thy` is already in the session. Budget that sub-step
-separately; it is the only genuinely new mathematics left in (b3).
+`Paper_DPP` now imports `Conditional_UI` for this (it was already a session
+theory, just not in the import chain).
+
+**Why the authors do not need any of this, and we do.** LR's proof of
+Prop. 2.2(iii) conditions with a regular conditional distribution of
+`X(θ+·)` given `ℱ_θ^X`, citing Stroock–Varadhan Thm 1.3.4 — so route (b) IS
+the authors' route, not a detour. But the classical Stroock–Varadhan
+conditioning theorem (their Thm 6.1.3) states the martingale problem with
+test functions `f ∈ C_c^∞`, so its martingales `f(X_t) − ∫₀ᵗ Lf(X_u)du` are
+BOUNDED and the rational-to-real step is plain bounded convergence. The
+paper's class (1.7) makes `X` itself and `outerp X − Y` the martingales, and
+those are unbounded. That gap is the whole reason a uniform-integrability
+argument is needed here at all.
+
+**`Doob_Inequality.thy` is NOT needed for this** — but note what it has, in
+case a domination route is ever wanted for something else: `doob_maximal_inequality`,
+`doob_L2_inequality`, `sampled_martingale.grid_doob_L2`, and a whole section
+"An integrable bound for the running maximum up to a horizon" (dyadic grids
+`dy`, grid maxima `gsup`, `gsup_L2`, `gsup_integrable`). **AFP
+`Doob_Convergence` is NOT what we need** — it is Doob's a.s. convergence
+theorem for `nat`-indexed submartingales via upcrossings, with no maximal
+inequality and no uniform integrability. Its companion `Stopping_Time.thy`
+(`pre_sigma`, `sets_pre_sigmaI`, `mono_pre_sigma`,
+`stopping_time_measurable_le/less/ge/gr`, `borel_measurable_stopping_time_pre_sigma`)
+IS worth a look for §2.2, the DPP at a stopping time. Do not add the entry as
+a dependency before then.
+
+**The Dynkin step, and the countable π-system it needs.** `ℱ_i` on the
+future path space is countably generated, and the cheapest route reuses what
+(b3) already built: the `i`-path space is SECOND COUNTABLE
+(`second_countable_path_metric`), so `second_countable_base_in` yields a
+COUNTABLE base `𝒪`, and `sets_natural_filtration_path` identifies `ℱ_i`
+with the pullback along `pcut i` of that space's Borel sets. Finite
+intersections of `{pcut i ⁻¹ U ∩ Ω : U ∈ 𝒪}` are then a countable π-system
+generating `ℱ_i`. For the induction itself, `sigma_sets_induct_disjoint`
+(Int_stable + basic/empty/compl/union) is the distribution's tool; the
+`union` case is countable additivity of the set integral, i.e. dominated
+convergence over partial unions.
 
 **The prerequisite (b2) did not have, now proved.** The coordinate
 evaluations GENERATE the Borel σ-algebra of the path space:

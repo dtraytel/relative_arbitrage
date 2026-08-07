@@ -1,5 +1,5 @@
 theory Paper_DPP
-  imports Paper_Bridge "Disintegration.Disintegration"
+  imports Paper_Bridge Conditional_UI "Disintegration.Disintegration"
 begin
 
 text \<open>The dynamic programming principle of Proposition 2.4 of
@@ -3868,6 +3868,182 @@ proof -
   qed
   have "AE p' in ?Q. integrable (\<kappa> p') (\<lambda>w. ?g (p', w))"
     by (rule AE_integrable_ksemi_section[OF KQ gm gi neQ])
+  then show ?thesis by simp
+qed
+
+subsection \<open>From rational times to all times\<close>
+
+text \<open>The structural step (b3) still needs, and the one an earlier plan note
+  had wrong.  Only COUNTABLY many conditions survive the passage from "for
+  each, almost surely" to "almost surely, for all", so the martingale
+  identity arrives at RATIONAL times only, and extending it to every real
+  time is NOT a matter of path continuity alone: pointwise convergence does
+  not move a set integral.  It needs UNIFORM INTEGRABILITY.
+
+  And the family in question is a family of conditional expectations of the
+  single TERMINAL value, so @{thm [source] prob_space.unif_integrable_of_averaging}
+  applies with its hypothesis list verbatim and
+  @{thm [source] finite_measure.vitali_convergence} finishes.  Both were
+  written for exactly this pattern (the domination-free optional-stopping
+  rework) and are reused unchanged; this is why \<open>Paper_DPP\<close> imports
+  \<^theory>\<open>Arbitrage.Conditional_UI\<close>.
+
+  Note the terminal time \<open>S\<close> is a FIXED real, so the pairs \<open>(q, S)\<close> with \<open>q\<close>
+  rational are still countably many --- which is what puts the averaging form
+  within reach.  Note also that the a.e. convergence Vitali wants is here
+  POINTWISE on \<open>space Q\<close>: every point of the path space IS a continuous path.
+
+  (Larsson--Ruf condition with a regular conditional distribution citing
+  Stroock--Varadhan Thm 1.3.4, so this route is the authors' own.  Their
+  classical conditioning theorem needs none of this because the martingale
+  problem is stated with test functions in \<open>C\<^sub>c\<^sup>\<infinity>\<close>, whose martingales are
+  BOUNDED; the paper's class (1.7) makes \<open>X\<close> itself and \<open>outerp X - Y\<close> the
+  martingales, and those are not.)\<close>
+
+lemma subalgebra_natural_filtration_path:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric S :: ('n pairpath) metric)))"
+  shows "subalgebra Q (natural_filtration Q 0 (\<lambda>v w. w v) u)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  have "natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u
+      = natural_filtration ?B 0 (\<lambda>v w. w v) u"
+    by (rule natural_filtration_cong_space)
+       (simp add: sets_eq_imp_space_eq[OF setsQ])
+  then have "sets (natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u)
+      \<subseteq> sets Q"
+    using sets_natural_filtration_path_subset[of S u] setsQ by simp
+  then show ?thesis unfolding subalgebra_def by simp
+qed
+
+lemma sigma_finite_subalgebra_natural_filtration_path:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes PS: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric S :: ('n pairpath) metric)))"
+  shows "sigma_finite_subalgebra Q (natural_filtration Q 0 (\<lambda>v w. w v) u)"
+proof (rule finite_measure_subalgebra_is_sigma_finite)
+  show "finite_measure_subalgebra Q
+      (natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u)"
+    by (simp add: finite_measure_subalgebra_def
+        finite_measure_subalgebra_axioms_def prob_space.finite_measure[OF PS]
+        subalgebra_natural_filtration_path[OF setsQ])
+qed
+
+theorem set_integral_eq_of_rational_times:
+  fixes Q :: "('n::finite pairpath) measure"
+    and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real"
+  assumes S: "0 \<le> S"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric S :: ('n pairpath) metric)))"
+    and PS: "prob_space Q"
+    and Zm: "\<And>u. u \<in> {0..S} \<Longrightarrow>
+        Z u \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
+    and Zint: "\<And>u. u \<in> {0..S} \<Longrightarrow> integrable Q (Z u)"
+    and Zcont: "\<And>w. w \<in> space Q \<Longrightarrow> continuous_on {0..S} (\<lambda>u. Z u w)"
+    and rat: "\<And>q A. q \<in> \<rat> \<Longrightarrow> q \<in> {0..S} \<Longrightarrow>
+        A \<in> sets (natural_filtration Q 0 (\<lambda>v w. w v) q) \<Longrightarrow>
+        set_lebesgue_integral Q A (Z q) = set_lebesgue_integral Q A (Z S)"
+    and i: "i \<in> {0..S}"
+    and A: "A \<in> sets (natural_filtration Q 0 (\<lambda>v w. w v) i)"
+  shows "set_lebesgue_integral Q A (Z i) = set_lebesgue_integral Q A (Z S)"
+proof (cases "i = S")
+  case True
+  then show ?thesis by simp
+next
+  case False
+  let ?F = "\<lambda>u. natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
+  interpret PQ: prob_space Q by (rule PS)
+  have iS: "i < S" using i False by simp
+  have SS: "S \<in> {0..S}" using S by simp
+
+  \<comment> \<open>rationals decreasing to \<open>i\<close> from above, inside the horizon\<close>
+  have ex: "\<exists>q\<in>(\<rat> :: real set). i < q \<and> q < min S (i + inverse (real (Suc n)))"
+    for n
+  proof (rule Rats_dense_in_real)
+    show "i < min S (i + inverse (real (Suc n)))" using iS by simp
+  qed
+  then obtain q :: "nat \<Rightarrow> real" where qrat: "\<And>n. q n \<in> \<rat>"
+    and qgt: "\<And>n. i < q n"
+    and qlt: "\<And>n. q n < min S (i + inverse (real (Suc n)))" by metis
+  have qle: "q n \<le> S" for n using qlt[of n] by simp
+  have q0S: "q n \<in> {0..S}" for n using i qgt[of n] qle[of n] by simp
+  have qconv: "q \<longlonglongrightarrow> i"
+  proof (rule tendsto_sandwich[of "\<lambda>_. i" _ _ "\<lambda>n. i + inverse (real (Suc n))"])
+    show "\<forall>\<^sub>F n in sequentially. i \<le> q n" using qgt by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. q n \<le> i + inverse (real (Suc n))"
+      using qlt by (simp add: less_imp_le)
+  qed (use LIMSEQ_inverse_real_of_nat_add in auto)
+
+  \<comment> \<open>the filtration facts\<close>
+  have subA: "subalgebra Q (?F u)" for u
+    by (rule subalgebra_natural_filtration_path[OF setsQ])
+  have AQ: "A \<in> sets Q" using A subA[of i] by (auto simp: subalgebra_def)
+  have AF: "A \<in> sets (?F (q n))" for n
+    using A sets_natural_filtration_mono[of i "q n"] qgt[of n] by auto
+  have sfs: "sigma_finite_subalgebra Q (?F u)" for u
+    by (rule sigma_finite_subalgebra_natural_filtration_path[OF PS setsQ])
+  have ZmQ: "Z u \<in> borel_measurable Q" if u: "u \<in> {0..S}" for u
+    by (rule measurable_from_subalg[OF subA Zm[OF u]])
+
+  \<comment> \<open>uniform integrability, straight off the averaging form\<close>
+  have ui: "unif_integrable Q (\<lambda>n. Z (q n))"
+  proof (rule prob_space.unif_integrable_of_averaging[OF PS])
+    show "integrable Q (Z S)" by (rule Zint[OF SS])
+    show "sigma_finite_subalgebra Q (?F (q n))" for n by (rule sfs)
+    show "integrable Q (Z (q n))" for n by (rule Zint[OF q0S])
+    show "Z (q n) \<in> borel_measurable (?F (q n))" for n by (rule Zm[OF q0S])
+    show "set_lebesgue_integral Q B (Z S) = set_lebesgue_integral Q B (Z (q n))"
+      if "B \<in> sets (?F (q n))" for n B
+      by (rule rat[OF qrat q0S that, symmetric])
+  qed
+
+  \<comment> \<open>pointwise convergence, from path continuity\<close>
+  have conv: "AE w in Q. (\<lambda>n. Z (q n) w) \<longlonglongrightarrow> Z i w"
+  proof (rule AE_I2)
+    fix w :: "'n pairpath" assume w: "w \<in> space Q"
+    have "((\<lambda>u. Z u w) \<circ> q) \<longlonglongrightarrow> Z i w"
+      using Zcont[OF w] q0S i qconv
+      by (simp add: continuous_on_sequentially)
+    then show "(\<lambda>n. Z (q n) w) \<longlonglongrightarrow> Z i w" by (simp add: o_def)
+  qed
+  have vit: "(\<lambda>n. \<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q) \<longlonglongrightarrow> 0"
+    by (rule finite_measure.vitali_convergence
+        [OF PQ.finite_measure_axioms ui ZmQ[OF i] conv])
+
+  \<comment> \<open>and the set integrals follow the \<open>L\<^sup>1\<close> limit\<close>
+  have bnd: "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar>
+      \<le> (\<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q)" for n
+  proof -
+    have s1: "set_integrable Q A (Z (q n))"
+      unfolding set_integrable_def
+      by (rule integrable_mult_indicator[OF AQ Zint[OF q0S]])
+    have s2: "set_integrable Q A (Z i)"
+      unfolding set_integrable_def
+      by (rule integrable_mult_indicator[OF AQ Zint[OF i]])
+    have dd: "integrable Q (\<lambda>w. indicat_real A w *\<^sub>R (Z (q n) w - Z i w))"
+      by (rule integrable_mult_indicator[OF AQ
+          Bochner_Integration.integrable_diff[OF Zint[OF q0S] Zint[OF i]]])
+    have d1: "integrable Q (\<lambda>w. \<bar>indicat_real A w *\<^sub>R (Z (q n) w - Z i w)\<bar>)"
+      by (rule integrable_abs[OF dd])
+    have d2: "integrable Q (\<lambda>w. \<bar>Z (q n) w - Z i w\<bar>)"
+      by (intro integrable_abs Bochner_Integration.integrable_diff
+          Zint[OF q0S] Zint[OF i])
+    have "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar>
+        = \<bar>set_lebesgue_integral Q A (Z (q n)) - set_lebesgue_integral Q A (Z i)\<bar>"
+      using rat[OF qrat q0S AF] by simp
+    also have "\<dots> = \<bar>\<integral>w. indicat_real A w *\<^sub>R (Z (q n) w - Z i w) \<partial>Q\<bar>"
+      using set_integral_diff(2)[OF s1 s2]
+      unfolding set_lebesgue_integral_def by (simp add: scaleR_diff_right)
+    also have "\<dots> \<le> (\<integral>w. \<bar>indicat_real A w *\<^sub>R (Z (q n) w - Z i w)\<bar> \<partial>Q)"
+      by (rule integral_abs_bound)
+    also have "\<dots> \<le> (\<integral>w. \<bar>Z (q n) w - Z i w\<bar> \<partial>Q)"
+      by (rule integral_mono[OF d1 d2]) (simp add: indicator_def)
+    finally show ?thesis .
+  qed
+  have "\<bar>set_lebesgue_integral Q A (Z S) - set_lebesgue_integral Q A (Z i)\<bar> \<le> 0"
+    by (rule LIMSEQ_le_const[OF vit]) (use bnd in blast)
   then show ?thesis by simp
 qed
 
