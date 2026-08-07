@@ -581,168 +581,99 @@ Steps, in order:
 | (b0) | `AE_zero_of_set_integral_zero` — a `𝒢`-measurable function whose `𝒢`-set integrals all vanish is a.e. `0`. THE workhorse: it is what converts each linear condition from "for every `A`" to "at a.e. `ω`" | **DONE** |
 | (b1) | the kernel itself: `paper_pair_class_rcd` (the AFP disintegration) and `paper_pair_class_rcd_ksemi` (its conversion to our `ksemi`, via `emeasure_ksemi_rect` and agreement on the rectangle π-system) | **DONE** |
 | (b2) | clauses (i)/(ii) for `κ ω` a.s. | general lemma `AE_kernel_full` **DONE**; clause (i) `pfut_rcd_start` **DONE**; clause (ii) is now pure assembly of `ksemi_rect_null_of_AE` → `AE_kernel_full` → `AE_mem_of_emeasure_1` → `AE_ball_countable'` over rational pairs → `paper_pair_class_diffquot_of_rational_pairs`, all four of which are proved |
-| (b3) | clauses (iii)/(iv) for `κ ω` a.s. | **in progress**, see the breakdown below |
+| (b3) | clauses (iii)/(iv) for `κ ω` a.s. | **DONE** — and with (b0)–(b2) it packages as `paper_pair_class_rcd_member`: `AE p'. κ p' ∈ paper_pair_class k L (T−r) 0`. See the breakdown below |
 | (b4) | assembly of `cond`: under `κ ω` the starting point `X_r ω` is a CONSTANT, so `pshift_law (T-r) (X_r ω) (κ ω) ∈ 𝒞_{X_r ω}` and its essinf is `≤ paper_v` by definition — no localization, no `K_ε` | open |
 
 Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
 
-**(b3), broken down — status 2026-08-07 evening.** All of these live in
-`Paper_DPP.thy`; everything marked DONE is green with no `sorry`.
+**(b3), DONE 2026-08-07 (late).** Everything below is green in `Paper_DPP.thy`
+with no `sorry`. The headline is
 
-| piece | content | status |
-|---|---|---|
-| unbounded Bochner disintegration | `AE_integrable_ksemi_section` (now BANACH-valued, not just real — its proof went through `norm` all along) and `integral_ksemi_real`, built from `nn_integral_ksemi` on the positive and negative parts. `integral_ksemi_bounded`, the only pre-existing Bochner-level disintegration, assumes a uniform bound and `X` has none | **DONE** |
-| the rectangle form | `integral_ksemi_rect_real`, `AE_kernel_integral_zero` (vanishing rectangle integrals ⟹ a.e. vanishing kernel integral), `integrable_ksemi_of_distr_rect`, `integrable_kernel_integral`, `integral_ksemi_rect_of_set_integral` | **DONE** |
-| the evaluations generate the Borel sets | `sets_natural_filtration_path` — see below, it was the prerequisite (b2) did not have | **DONE** |
-| the conditioning rectangle is a past-plus-`i` event | `pcut_vimage_natural_filtration`, `pfut_vimage_natural_filtration`, `rect_vimage_natural_filtration`, plus `sets_natural_filtration_mono` and `natural_filtration_cong_space` | **DONE** |
-| **the per-`(i,j,A')` statement** | `pfut_rcd_X_increment_zero`: for `0 ≤ i ≤ j ≤ T−r` and `A' ∈ ℱ⁰_i` of the future path space, `AE p'. ∫ 1_{A'} (X_j − X_i)$c dκ p' = 0`. This is the whole chain, from `AE_kernel_integral_zero` down to `martingale.set_integral_eq` under `P` | **DONE** |
-| a.s. integrability | `pfut_rcd_X_integrable`: `AE p'. integrable (κ p') (λw. fst (w u))` | **DONE** |
-| clause (iv)'s analogue | the same lemma with `mg` instantiated at the SHIFTED compensated process (`paper_pair_class_shifted_comp_martingale`) instead of the shifted coordinate, and a matrix index `(c,d)` instead of `c`. `outerp` being quadratic is already dealt with there, so this is a transcription, not a new argument | open |
-| the Dynkin step | `set_integral_zero_of_generator`: vanishing on an `Int_stable E` that CONTAINS THE WHOLE SPACE gives vanishing on `sigma_sets (space M) E`. `sigma_sets_induct_disjoint` does the induction, `lebesgue_integral_countable_add` the disjoint-union case. General — nothing about paths, and it serves clause (iv) too | **DONE** |
-| the `pcut` identification | `sets_natural_filtration_eq_pcut_vimage`: `ℱ_s` IS `{pcut s ⁻¹ B ∩ Ω : B Borel in the s-path space}` | **DONE** |
-| the countable π-system | the one piece of (b3) still open besides clause (iv) and the assembly — see below | open |
-| **rational-to-real in `i, j`** | `set_integral_eq_of_rational_times`: the identity against the terminal value at every RATIONAL time, plus continuity in time, gives it at every real time. By `unif_integrable_of_averaging` + `vitali_convergence`, both already in the repo — see below | **DONE** |
-| supporting | `subalgebra_natural_filtration_path`, `sigma_finite_subalgebra_natural_filtration_path` | **DONE** |
-| assembly | `martingale_of_set_integral_eq` at fixed `p'`, then `martingale_vecI` (and a matrix analogue) to put the components back together | open |
+    paper_pair_class_rcd_member:
+      0 ≤ r ≤ T, 0 ≤ L, P ∈ paper_pair_class k L T x, κ and eq as in (b1)
+        ⟹ AE p' in pair_law_of r (pcut r) P. κ p' ∈ paper_pair_class k L (T−r) 0
 
-**The rational-to-real step — DONE, and the earlier note here was wrong.**
-It said this needs a Doob `L²` bound and an integrable running supremum.
-That is overkill and must not be built. It needs UNIFORM INTEGRABILITY, and
-the exact machinery was already in this repository, written for precisely
-this pattern:
+| piece | content |
+|---|---|
+| unbounded Bochner disintegration | `AE_integrable_ksemi_section` (BANACH-valued) and `integral_ksemi_real`, from `nn_integral_ksemi` on the positive and negative parts |
+| the rectangle form | `integral_ksemi_rect_real`, `AE_kernel_integral_zero`, `integrable_ksemi_of_distr_rect`, `integrable_kernel_integral`, `integral_ksemi_rect_of_set_integral` |
+| the evaluations generate the Borel sets | `path_eval_measurable_natural_filtration`, `sets_natural_filtration_path_subset` (free filtration index), `mdist_measurable_natural_filtration`, `mball_in_natural_filtration`, `sets_natural_filtration_path` |
+| the conditioning rectangle is a past-plus-`i` event | `sets_natural_filtration_mono`, `natural_filtration_cong_space`, `pcut_/pfut_/rect_vimage_natural_filtration` |
+| the per-`(i,j,A')` statements | `pfut_rcd_X_increment_zero` (clause iii), `pfut_rcd_comp_increment_zero` (clause iv) |
+| a.s. integrability | `pfut_rcd_X_integrable`, `pfut_rcd_comp_integrable` |
+| rational to real, and integrability at the irrational times | `integrable_and_set_integral_eq_of_rational_times` — uniform integrability via `Conditional_UI.unif_integrable_of_averaging` + `Vitali_Convergence.vitali_convergence` / `unif_integrable_limit_integrable` |
+| the Dynkin step | `set_integral_zero_of_generator` (general: `sigma_sets_induct_disjoint` + `lebesgue_integral_countable_add`) |
+| the countable π-system | `sets_natural_filtration_eq_pcut_vimage`, `countable_Int_stable_generator_path`, `countable_pi_system_natural_filtration_path` |
+| the martingale property at a fixed law | `subalgebra_/sigma_finite_subalgebra_natural_filtration_path`, `martingale_of_rational_set_integral_eq` |
+| the two clauses | `pfut_rcd_X_martingale`, `pfut_rcd_comp_martingale` |
+| supporting | `eval_component_measurable_nf`, `eval_component_continuous`, `comp_entry_measurable_nf`, `comp_entry_continuous`, and `paper_pair_class_pfut_comp_martingale` (extracted out of `pfut_law_comp_martingale`, which both routes now share) |
 
-| result | where | content |
-|---|---|---|
-| `unif_integrable` | `Vitali_Convergence.thy` | the definition (a `nat`-indexed family, tail-truncation form) |
-| `finite_measure.vitali_convergence` | `Vitali_Convergence.thy` | uniformly integrable + a.e. convergent ⟹ `L¹` convergent |
-| `prob_space.cond_exp_family_unif_integrable` | `Conditional_UI.thy` | the conditional expectations of a FIXED integrable `Y` over ANY family of sub-σ-algebras are uniformly integrable, with a truncation level uniform in the σ-algebra |
-| **`prob_space.unif_integrable_of_averaging`** | `Conditional_UI.thy` | the form consumed directly: `f n` `G n`-measurable, integrable, with `∫_A Y = ∫_A f n` for every `A ∈ G n` ⟹ `unif_integrable M f` |
+**How the countability bookkeeping fits together**, since it is the shape of
+the whole step and worth not re-deriving. Two quantifiers have to be made
+countable, and they are made countable by different means:
 
-`unif_integrable_of_averaging` IS the rational-to-real step's hypothesis
-list, verbatim. Take `Y := X_S` (the terminal value — `S = T−r` is a fixed
-real, so the pairs `(q, S)` for rational `q` are among the countably many
-allowed), `G n := ℱ_{q_n}` for rationals `q_n ↓ i`, `f n := X_{q_n}`. Its
-`ident` hypothesis is exactly what `pfut_rcd_X_increment_zero` plus the
-Dynkin step delivers. Then `vitali_convergence` gives `L¹` convergence,
-path continuity gives the a.e. convergence it needs (in fact POINTWISE on
-`space (κ p')`, since every point of the path space IS a continuous path),
-and `∫_A X_{q_n} = ∫_A X_S` holds for every `n` because `A ∈ ℱ_i ⊆ ℱ_{q_n}`.
-Passing to the limit gives `∫_A X_i = ∫_A X_S` for every REAL `i` and every
-`A ∈ ℱ_i` — which is the martingale property for all pairs at once, since
-`∫_A X_i = ∫_A X_S = ∫_A X_j` whenever `A ∈ ℱ_i ⊆ ℱ_j`.
+- the CONDITIONING SET `A'`: a countable π-system, obtained by
+  `sets_natural_filtration_eq_pcut_vimage` (`ℱ_s` IS the pullback of the
+  `s`-path space's Borel sets along `pcut s`) plus a countable base of that
+  space closed under finite intersections. **Do not build it from the
+  coordinate evaluations** — that forces the time index down to the rationals
+  and then needs a limit-of-measurable-functions argument. Through `pcut`,
+  path continuity sits in the TOPOLOGY and second countability does the rest.
+  Widened back to all of `ℱ_q` at fixed `p'` by `set_integral_zero_of_generator`.
+- the TIME `i`: rationals, widened back by uniform integrability. The
+  machinery was already in the repo and written for exactly this
+  (`Conditional_UI`'s docstring says so); `Paper_DPP` now imports it. **A Doob
+  `L²` bound and an integrable running supremum are NOT needed** — an earlier
+  version of this plan budgeted them, wrongly. The same UI argument also
+  supplies integrability at the irrational times, which is not otherwise
+  available (it is an a.s. statement in `p'`, so only countably many `i`).
 
-`Paper_DPP` now imports `Conditional_UI` for this (it was already a session
-theory, just not in the import chain).
+**Why the authors need none of this.** LR's Prop. 2.2(iii) conditions with a
+regular conditional distribution citing Stroock–Varadhan Thm 1.3.4, so route
+(b) IS their route. But the classical S–V conditioning theorem states the
+martingale problem with test functions in `C_c^∞`, whose martingales are
+BOUNDED, and then rational-to-real is plain bounded convergence. The paper's
+class (1.7) makes `X` itself and `outerp X − Y` the martingales, and those
+are unbounded. That gap is the entire reason UI is needed here.
 
-**Why the authors do not need any of this, and we do.** LR's proof of
-Prop. 2.2(iii) conditions with a regular conditional distribution of
-`X(θ+·)` given `ℱ_θ^X`, citing Stroock–Varadhan Thm 1.3.4 — so route (b) IS
-the authors' route, not a detour. But the classical Stroock–Varadhan
-conditioning theorem (their Thm 6.1.3) states the martingale problem with
-test functions `f ∈ C_c^∞`, so its martingales `f(X_t) − ∫₀ᵗ Lf(X_u)du` are
-BOUNDED and the rational-to-real step is plain bounded convergence. The
-paper's class (1.7) makes `X` itself and `outerp X − Y` the martingales, and
-those are unbounded. That gap is the whole reason a uniform-integrability
-argument is needed here at all.
+**`Doob_Inequality.thy` was not needed**, but note what it has if a
+domination route is ever wanted: `doob_maximal_inequality`,
+`doob_L2_inequality`, `sampled_martingale.grid_doob_L2`, and an integrable
+bound for the running maximum up to a horizon (`dy`, `gsup`, `gsup_L2`,
+`gsup_integrable`). **AFP `Doob_Convergence` is NOT what this needs** —
+`nat`-indexed a.s. convergence via upcrossings, no maximal inequality, no
+uniform integrability. Its companion `Stopping_Time.thy` (`pre_sigma`,
+`sets_pre_sigmaI`, `mono_pre_sigma`, `stopping_time_measurable_le/less/ge/gr`,
+`borel_measurable_stopping_time_pre_sigma`) IS worth a look for §2.2. Do not
+add the entry as a dependency before then.
 
-**`Doob_Inequality.thy` is NOT needed for this** — but note what it has, in
-case a domination route is ever wanted for something else: `doob_maximal_inequality`,
-`doob_L2_inequality`, `sampled_martingale.grid_doob_L2`, and a whole section
-"An integrable bound for the running maximum up to a horizon" (dyadic grids
-`dy`, grid maxima `gsup`, `gsup_L2`, `gsup_integrable`). **AFP
-`Doob_Convergence` is NOT what we need** — it is Doob's a.s. convergence
-theorem for `nat`-indexed submartingales via upcrossings, with no maximal
-inequality and no uniform integrability. Its companion `Stopping_Time.thy`
-(`pre_sigma`, `sets_pre_sigmaI`, `mono_pre_sigma`,
-`stopping_time_measurable_le/less/ge/gr`, `borel_measurable_stopping_time_pre_sigma`)
-IS worth a look for §2.2, the DPP at a stopping time. Do not add the entry as
-a dependency before then.
+**Mechanical traps paid for in (b3); do not rediscover them.**
 
-**The countable π-system — the last open piece of the plumbing, and the
-route is now short.** `sets_natural_filtration_eq_pcut_vimage` (DONE) says
-`ℱ_s = {pcut s ⁻¹ B ∩ Ω : B ∈ Borel(s-path space)}`. Build `E` from a
-COUNTABLE BASE of the `s`-path space:
-
-1. `second_countable_path_metric` + `second_countable_base_in` give
-   `countable 𝒪` with `base_in (mtopology_of (path_metric s)) 𝒪`;
-2. `borel_of_second_countable'` + `base_is_subbase` give
-   `Borel(s-path space) = sigma (mspace_s) 𝒪` — this is exactly the step
-   `sets_natural_filtration_path` already uses, so reuse its shape;
-3. let `𝒪'` be the finite intersections of `𝒪` together with `mspace_s`
-   (countable by `countable_Collect_finite_subset` + `countable_image`,
-   `Int_stable` by construction, and it generates the same σ-algebra);
-4. `E = {pcut s ⁻¹ U ∩ Ω : U ∈ 𝒪'}` is then countable, `Int_stable`
-   (preimage commutes with `∩`), contains `Ω` (take `U = mspace_s`), and
-   `sigma_sets Ω E = ℱ_s` by step 2 plus `sets_vimage_algebra` /
-   `vimage_algebra_sigma`.
-
-Then hand `E` to `set_integral_zero_of_generator` (DONE).
-
-**Do NOT build the π-system out of the coordinate EVALUATIONS.** That forces
-the time index down to the rationals and then needs a
-limit-of-measurable-functions argument to recover the irrational times.
-Through `pcut`, path continuity is already encoded in the TOPOLOGY of the
-`s`-path space and second countability does the rest, with no limit argument
-anywhere.
-
-**The prerequisite (b2) did not have, now proved.** The coordinate
-evaluations GENERATE the Borel σ-algebra of the path space:
-
-    sets (natural_filtration (borel_of (mtopology_of (path_metric U)))
-              0 (λv ω. ω v) U)
-      = sets (borel_of (mtopology_of (path_metric U)))
-
-Without it, `pcut_filtration_measurable` lands only in the natural filtration
-of the cut law, while the per-`(i,j,A')` statement quantifies `A` over ALL of
-`sets ?Q` (because `AE_zero_of_set_integral_zero` is applied with `𝒢 = ?Q`).
-Restating that with a genuine sub-σ-algebra does NOT dodge it — the kernel
-would then have to be `𝒢`-measurable, which is the same question.
-
-It is now five lemmas — `path_eval_measurable_natural_filtration`,
-`sets_natural_filtration_path_subset` (stated at a FREE filtration index, so
-it also serves `i < T−r`), `mdist_measurable_natural_filtration`,
-`mball_in_natural_filtration`, `sets_natural_filtration_path` — and the whole
-group checks in under a second. `⊆` is the measurability of the coordinates;
-`⊇` is metric: the sup distance to a fixed path is decided by the RATIONAL
-times (`path_mdist_le_iff`), so it is a countable intersection of filtration
-events, hence measurable; every ball is a sublevel set of it; and the balls
-generate, the path space being second countable
-(`borel_of_second_countable'` + `MS.mtopology_base_in_balls`).
-
-**The one trap in it, and it cost ten minutes of prover time per run.**
-Identifying the ball with the sublevel set of the distance,
-
-    MS.mball f e = {ω ∈ space ?F. mdist ?m f ω < e},
-
-must NOT be left to `auto` or `simp`: with the `Metric_space` interpretation
-in scope that two-line goal runs for TEN MINUTES and then succeeds. A
-calculation through `MS.in_mball` closed with `simp only` is instant. (The
-2026-08-07 morning attempt hit the same wall through `MS.mball_def` and
-blamed the unfolding; the unfolding was innocent, the classical search was
-not.)
-
-**Three more mechanical points from the same work, worth not rediscovering:**
-
-1. `sigma_sets_subset` is NOT a bare name — it is `sets.sigma_sets_subset`.
-2. The `⊇` side of the distance set equality needs `ω ∈ mspace ?m`, which
-   only follows because the index set is NONEMPTY. Supply `0 ∈ {0..U} ∩ ℚ`
-   as a named fact; `auto` will not find it. (Over an empty index set the
-   intersection would be the universe and the statement false.)
-3. `sets (sigma Ω A) = sigma_sets Ω A` needs `A ⊆ Pow Ω` (`sets_measure_of`).
-
-**And two from the per-`(i,j,A')` lemma:**
-
-4. `pair_law_of r (pcut r) P` and the Borel algebra of the `r`-path space
-   have the same SETS but are different TERMS, so the `ksemi` hypothesis
-   `eq` has to be transported with `distr_cong` + `sets_pair_measure_cong`
-   before any of the `ksemi` lemmas apply. Every future (b3)/(b4) lemma
-   taking `eq` will need the same three lines.
-5. `simp` DISTRIBUTES `$ c` over a difference, and thereby destroys the
-   left-hand side of the very rewrite you are feeding it. State such a step
-   as an equation of FUNCTIONS and consume it with `unfolding`. Relatedly,
-   `integrable_ksemi_of_distr_rect` by `OF` alone reports "no unifiers": the
+1. `MS.mball f e = {ω ∈ space ℱ. mdist m f ω < e}` by `auto`, with a
+   `Metric_space` interpretation in scope, runs for **10 min 47 s and then
+   SUCCEEDS**. A calculation through `MS.in_mball` closed by `simp only` is
+   instant. (An earlier attempt blamed `mball_def`; the unfolding was
+   innocent, the classical search was not.)
+2. `simp` DISTRIBUTES `$ c` over a difference and thereby destroys the
+   left-hand side of the very rewrite you handed it. State such steps as
+   equations of FUNCTIONS and consume them with `unfolding`.
+3. `pair_law_of r (pcut r) P` and the `r`-path space's Borel algebra have
+   equal SETS but are different TERMS, so every lemma taking the `ksemi`
+   hypothesis `eq` must transport it first (`distr_cong` +
+   `sets_pair_measure_cong`). Three lines, needed six times.
+4. `integrable_ksemi_of_distr_rect` by `OF` alone reports "no unifiers": the
    `h` in `integrable P (λω. h (snd (φ ω)))` is a flex-rigid pair. Let the
    CONCLUSION drive unification with a structured `proof (rule …)`.
+5. Do not name a countable base `OO` — that is the relation-composition
+   operator; the `obtain` fails to parse and the 119 cascade errors are all
+   type-unification noise pointing everywhere except the cause.
+6. Do not name a local fact `exE` — it shadows `HOL.exE`, and a later
+   `by (rule exE)` then resolves against the local one and reports "Failed to
+   apply initial proof method" on a goal that is exactly `exE`'s shape.
+7. `blast` on the existential behind an image membership sets the
+   `still_running_possibly_nonterminating` flag (it has to invent the
+   witness). Introduce with `image_eqI`, eliminate with a named `imageE`
+   wrapper.
 
 **The AFP `Disintegration` API, mapped 2026-08-07 — do not re-explore it.**
 
