@@ -6460,6 +6460,15 @@ theorem paper_pair_class_kglue_mixed:
         \<Longrightarrow> (AE \<omega> in P. \<Phi> \<omega>)
         \<Longrightarrow> AE \<omega> in kglue_law' r T \<kappa>' (pair_law_of r (pcut r) P).
               pcut r \<omega> \<in> A \<or> \<Phi> \<omega>"
+    and "\<And>\<Phi>. {\<omega> \<in> space (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric))). \<Phi> \<omega>}
+          \<in> sets (borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric)))
+        \<Longrightarrow> (\<And>p'. p' \<in> A
+              \<Longrightarrow> p' \<in> mspace (path_metric r :: ('n pairpath) metric)
+              \<Longrightarrow> AE \<omega>' in S (fst (p' r)). \<Phi> (pglue r T p' \<omega>'))
+        \<Longrightarrow> AE \<omega> in kglue_law' r T \<kappa>' (pair_law_of r (pcut r) P).
+              pcut r \<omega> \<notin> A \<or> \<Phi> \<omega>"
 proof -
   let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
   let ?s = "T - r"
@@ -6651,7 +6660,68 @@ proof -
     qed
     show ?thesis unfolding iff AE_ksemi[OF Kp mset3] using inner by simp
   qed
-  show thesis by (rule that[OF glue onA Kc offA])
+
+  \<comment> \<open>and ON \<open>A\<close> the mixed kernel IS the optimal continuation, so the glued
+      law inherits every almost-sure property of \<open>S\<close> there\<close>
+  have onAae: "AE \<omega> in kglue_law' r T \<kappa>' ?Q. pcut r \<omega> \<notin> A \<or> \<Phi> \<omega>"
+    if Pm: "{\<omega> \<in> space ?B. \<Phi> \<omega>} \<in> sets ?B"
+      and aeS: "\<And>p'. p' \<in> A
+        \<Longrightarrow> p' \<in> mspace (path_metric r :: ('n pairpath) metric)
+        \<Longrightarrow> AE \<omega>' in S (fst (p' r)). \<Phi> (pglue r T p' \<omega>')"
+    for \<Phi> :: "'n pairpath \<Rightarrow> bool"
+  proof -
+    have mset2: "{\<omega> \<in> space ?B. pcut r \<omega> \<notin> A \<or> \<Phi> \<omega>} \<in> sets ?B"
+    proof -
+      have "{\<omega> \<in> space ?B. pcut r \<omega> \<notin> A \<or> \<Phi> \<omega>}
+          = (space ?B - (pcut r -` A \<inter> space ?B)) \<union> {\<omega> \<in> space ?B. \<Phi> \<omega>}"
+        by blast
+      moreover have "pcut r -` A \<inter> space ?B \<in> sets ?B"
+        by (rule measurable_sets[OF pcm A])
+      ultimately show ?thesis using Pm by simp
+    qed
+    have mset3: "{p \<in> space (?Q \<Otimes>\<^sub>M ?Y).
+          pcut r (pglue r T (fst p) (snd p)) \<notin> A
+            \<or> \<Phi> (pglue r T (fst p) (snd p))} \<in> sets (?Q \<Otimes>\<^sub>M ?Y)"
+    proof -
+      have "{p \<in> space (?Q \<Otimes>\<^sub>M ?Y). pcut r (pglue r T (fst p) (snd p)) \<notin> A
+            \<or> \<Phi> (pglue r T (fst p) (snd p))}
+          = (\<lambda>p. pglue r T (fst p) (snd p))
+              -` {\<omega> \<in> space ?B. pcut r \<omega> \<notin> A \<or> \<Phi> \<omega>} \<inter> space (?Q \<Otimes>\<^sub>M ?Y)"
+        by (auto dest: measurable_space[OF glmQ])
+      then show ?thesis using measurable_sets[OF glmQ mset2] by simp
+    qed
+    have iff: "(AE \<omega> in kglue_law' r T \<kappa>' ?Q. pcut r \<omega> \<notin> A \<or> \<Phi> \<omega>)
+        = (AE p in ksemi ?Q ?Y \<kappa>'. pcut r (pglue r T (fst p) (snd p)) \<notin> A
+              \<or> \<Phi> (pglue r T (fst p) (snd p)))"
+      by (rule AE_kglue_law'[OF r rT' setsQ Kp ne mset2])
+    have inner: "AE p' in ?Q. AE \<omega>' in \<kappa>' p'.
+        pcut r (pglue r T p' \<omega>') \<notin> A \<or> \<Phi> (pglue r T p' \<omega>')"
+    proof (rule eventually_mono[OF AE_space])
+      fix p' :: "'n pairpath"
+      assume hs: "p' \<in> space ?Q"
+      have w: "p' \<in> mspace (path_metric r :: ('n pairpath) metric)"
+        using hs spQ by (simp add: space_borel_of)
+      show "AE \<omega>' in \<kappa>' p'. pcut r (pglue r T p' \<omega>') \<notin> A
+          \<or> \<Phi> (pglue r T p' \<omega>')"
+      proof (cases "p' \<in> A")
+        case True
+        then have kk: "\<kappa>' p' = S (fst (p' r))" by (rule onA)
+        have "AE \<omega>' in S (fst (p' r)). \<Phi> (pglue r T p' \<omega>')"
+          by (rule aeS[OF True w])
+        then have "AE \<omega>' in S (fst (p' r)).
+            pcut r (pglue r T p' \<omega>') \<notin> A \<or> \<Phi> (pglue r T p' \<omega>')"
+          by (auto elim: eventually_mono)
+        then show ?thesis unfolding kk .
+      next
+        case False
+        have "pcut r (pglue r T p' \<omega>') \<notin> A" for \<omega>' :: "'n pairpath"
+          using pcut_pglue_self[OF r rT' w] False by simp
+        then show ?thesis by simp
+      qed
+    qed
+    show ?thesis unfolding iff AE_ksemi[OF Kp mset3] using inner by simp
+  qed
+  show thesis by (rule that[OF glue onA Kc offA onAae])
 qed
 
 subsection \<open>The \<open>\<ge>\<close> half at a RANDOM time, reduced to a constant\<close>
