@@ -12107,4 +12107,110 @@ proof -
   qed
 qed
 
+section \<open>Kernel pasting: the semidirect product\<close>
+
+text \<open>Step (iii) proper.  @{thm [source] paper_pair_class_kglue_law} glues
+  with a COUNTABLY valued index, which
+  @{thm [source] Metric_space.usc_measurable_selection} cannot supply ---
+  see the note there.  The replacement is the Giry monad's semidirect
+  product: run \<open>Q\<close>, then continue with the law the kernel picks at the
+  endpoint reached.
+
+  \<open>ksemi M N Kr\<close> is that product on \<open>'a \<times> 'b\<close>.  Everything the pasting
+  argument needs about it is here: its \<open>sets\<close> agree with the ordinary
+  product (so all the measurability already proved for \<open>Q \<Otimes>\<^sub>M R\<close>
+  transfers verbatim by @{thm [source] measurable_cong_sets}), it is a
+  probability space, and its almost-sure and nonnegative integrals
+  disintegrate.  What it does NOT satisfy is Fubini --- the order of
+  integration cannot be swapped --- which is exactly why the product
+  martingale machinery has to be redone rather than reused.\<close>
+
+definition ksemi :: "'a measure \<Rightarrow> 'b measure \<Rightarrow> ('a \<Rightarrow> 'b measure) \<Rightarrow> ('a \<times> 'b) measure"
+  where "ksemi M N Kr = M \<bind> (\<lambda>\<omega>. distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>))"
+
+lemma ksemi_sets_kernel:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and w: "\<omega> \<in> space M"
+  shows "sets (Kr \<omega>) = sets N" and "prob_space (Kr \<omega>)"
+  using measurable_space[OF K w] by (auto simp: space_prob_algebra)
+
+lemma ksemi_Pair_measurable:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and w: "\<omega> \<in> space M"
+  shows "Pair \<omega> \<in> Kr \<omega> \<rightarrow>\<^sub>M M \<Otimes>\<^sub>M N"
+  using measurable_Pair1'[OF w, of N]
+    measurable_cong_sets[OF ksemi_sets_kernel(1)[OF K w] refl] by blast
+
+lemma ksemi_kernel_measurable:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+  shows "(\<lambda>\<omega>. distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>)) \<in> M \<rightarrow>\<^sub>M subprob_algebra (M \<Otimes>\<^sub>M N)"
+proof (rule measurable_distr2[where M = N])
+  show "case_prod Pair \<in> M \<Otimes>\<^sub>M N \<rightarrow>\<^sub>M M \<Otimes>\<^sub>M N" by simp
+  show "Kr \<in> M \<rightarrow>\<^sub>M subprob_algebra N" by (rule measurable_prob_algebraD[OF K])
+qed
+
+lemma sets_ksemi[measurable_cong]:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+  shows "sets (ksemi M N Kr) = sets (M \<Otimes>\<^sub>M N)"
+  unfolding ksemi_def
+  by (rule sets_bind[OF _ ne]) (simp add: ksemi_sets_kernel(1)[OF K])
+
+lemma space_ksemi:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+  shows "space (ksemi M N Kr) = space (M \<Otimes>\<^sub>M N)"
+  by (rule sets_eq_imp_space_eq[OF sets_ksemi[OF K ne]])
+
+lemma prob_space_ksemi:
+  assumes P: "prob_space M" and K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+  shows "prob_space (ksemi M N Kr)"
+proof -
+  interpret PM: prob_space M by (rule P)
+  have "AE \<omega> in M. prob_space (distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>))"
+  proof (rule AE_I2)
+    fix \<omega> assume w: "\<omega> \<in> space M"
+    show "prob_space (distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>))"
+      by (rule prob_space.prob_space_distr
+          [OF ksemi_sets_kernel(2)[OF K w] ksemi_Pair_measurable[OF K w]])
+  qed
+  from PM.prob_space_bind[OF this ksemi_kernel_measurable[OF K]]
+  show ?thesis unfolding ksemi_def .
+qed
+
+lemma AE_ksemi:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+    and P: "{p \<in> space (M \<Otimes>\<^sub>M N). P p} \<in> sets (M \<Otimes>\<^sub>M N)"
+  shows "(AE p in ksemi M N Kr. P p) \<longleftrightarrow> (AE \<omega> in M. AE \<omega>' in Kr \<omega>. P (\<omega>, \<omega>'))"
+proof -
+  have Pp: "Measurable.pred (M \<Otimes>\<^sub>M N) P" using P by (simp add: pred_def)
+  have inner: "(AE p in distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>). P p)
+      \<longleftrightarrow> (AE \<omega>' in Kr \<omega>. P (\<omega>, \<omega>'))" if w: "\<omega> \<in> space M" for \<omega>
+    using AE_distr_iff[OF ksemi_Pair_measurable[OF K w] P] by simp
+  have "(AE p in ksemi M N Kr. P p)
+      \<longleftrightarrow> (AE \<omega> in M. AE p in distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>). P p)"
+    unfolding ksemi_def by (rule AE_bind[OF ksemi_kernel_measurable[OF K] Pp])
+  also have "\<dots> \<longleftrightarrow> (AE \<omega> in M. AE \<omega>' in Kr \<omega>. P (\<omega>, \<omega>'))"
+    by (rule AE_cong) (simp add: inner)
+  finally show ?thesis .
+qed
+
+lemma nn_integral_ksemi:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+    and g: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+  shows "(\<integral>\<^sup>+p. g p \<partial>(ksemi M N Kr)) = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+proof -
+  have inner: "(\<integral>\<^sup>+p. g p \<partial>(distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>)))
+      = (\<integral>\<^sup>+\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>))" if w: "\<omega> \<in> space M" for \<omega>
+  proof -
+    have gm: "g \<in> borel_measurable (distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>))"
+      using g by simp
+    show ?thesis
+      by (rule nn_integral_distr[OF ksemi_Pair_measurable[OF K w] gm])
+  qed
+  have "(\<integral>\<^sup>+p. g p \<partial>(ksemi M N Kr))
+      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+p. g p \<partial>(distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>))) \<partial>M)"
+    unfolding ksemi_def
+    by (rule nn_integral_bind[OF g ksemi_kernel_measurable[OF K]])
+  also have "\<dots> = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+    by (rule nn_integral_cong) (simp add: inner)
+  finally show ?thesis .
+qed
+
 end
