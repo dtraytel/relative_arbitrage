@@ -2314,4 +2314,127 @@ proof -
   qed
 qed
 
+text \<open>The semidirect product on a RECTANGLE --- the shape in which the AFP's
+  disintegration arrives.\<close>
+
+lemma emeasure_ksemi_rect:
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+    and A: "A \<in> sets M" and B: "B \<in> sets N"
+  shows "emeasure (ksemi M N Kr) (A \<times> B) = (\<integral>\<^sup>+\<omega>\<in>A. emeasure (Kr \<omega>) B \<partial>M)"
+proof -
+  have rect: "A \<times> B \<in> sets (M \<Otimes>\<^sub>M N)" using A B by simp
+  have "emeasure (ksemi M N Kr) (A \<times> B)
+      = (\<integral>\<^sup>+\<omega>. emeasure (distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>)) (A \<times> B) \<partial>M)"
+    unfolding ksemi_def
+    by (rule emeasure_bind[OF ne ksemi_kernel_measurable[OF K] rect])
+  also have "\<dots> = (\<integral>\<^sup>+\<omega>. indicator A \<omega> * emeasure (Kr \<omega>) B \<partial>M)"
+  proof (rule nn_integral_cong)
+    fix \<omega> assume w: "\<omega> \<in> space M"
+    have sK: "sets (Kr \<omega>) = sets N" by (rule ksemi_sets_kernel(1)[OF K w])
+    have spK: "space (Kr \<omega>) = space N" by (rule sets_eq_imp_space_eq[OF sK])
+    have "emeasure (distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>)) (A \<times> B)
+        = emeasure (Kr \<omega>) (Pair \<omega> -` (A \<times> B) \<inter> space (Kr \<omega>))"
+      by (rule emeasure_distr[OF ksemi_Pair_measurable[OF K w] rect])
+    also have "\<dots> = indicator A \<omega> * emeasure (Kr \<omega>) B"
+    proof (cases "\<omega> \<in> A")
+      case True
+      have "Pair \<omega> -` (A \<times> B) \<inter> space (Kr \<omega>) = B"
+        using True B sets.sets_into_space[OF B] by (auto simp: spK)
+      then show ?thesis using True by simp
+    next
+      case False
+      have "Pair \<omega> -` (A \<times> B) \<inter> space (Kr \<omega>) = {}" using False by auto
+      then show ?thesis using False by simp
+    qed
+    finally show "emeasure (distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>)) (A \<times> B)
+        = indicator A \<omega> * emeasure (Kr \<omega>) B" .
+  qed
+  finally show ?thesis by (simp add: nn_integral_set_ennreal mult.commute)
+qed
+
+text \<open>And the conversion.  Two probability measures on \<open>?X \<Otimes>\<^sub>M ?Y\<close> that agree
+  on the rectangle \<pi>-system are equal, so the AFP's rectangle-level
+  disintegration IS our semidirect product --- after which
+  @{thm [source] AE_ksemi} and @{thm [source] nn_integral_ksemi}, proved for
+  the kernel-pasting work, give the almost-sure and integral forms with no
+  further measure-theoretic induction.\<close>
+
+theorem paper_pair_class_rcd_ksemi:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+  obtains \<kappa> where
+    "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?Y = "borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  let ?\<nu> = "distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>"
+  let ?Q = "pair_law_of r (pcut r) P"
+  let ?E = "{a \<times> b | a b. a \<in> sets ?X \<and> b \<in> sets ?Y}"
+  interpret PP: prob_space P by (rule PS)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  interpret Pnu: prob_space ?\<nu> by (rule PP.prob_space_distr[OF mphi])
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  obtain \<kappa> where Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
+    and REC: "\<And>A B. A \<in> sets ?X \<Longrightarrow> B \<in> sets ?Y \<Longrightarrow>
+        emeasure ?\<nu> (A \<times> B) = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>?Q)"
+    by (rule paper_pair_class_rcd[OF r rT setsP PS]) blast
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using Km measurable_cong_sets[OF setsQ refl] by blast
+  have setsS: "sets (ksemi ?Q ?Y \<kappa>) = sets (?X \<Otimes>\<^sub>M ?Y)"
+  proof -
+    have "sets (ksemi ?Q ?Y \<kappa>) = sets (?Q \<Otimes>\<^sub>M ?Y)" by (rule sets_ksemi[OF KQ neQ])
+    also have "\<dots> = sets (?X \<Otimes>\<^sub>M ?Y)"
+      by (rule sets_pair_measure_cong[OF setsQ refl])
+    finally show ?thesis .
+  qed
+  have eq: "?\<nu> = ksemi ?Q ?Y \<kappa>"
+  proof (rule measure_eqI_generator_eq
+      [where E = ?E and \<Omega> = "space ?X \<times> space ?Y"
+         and A = "\<lambda>_. space ?X \<times> space ?Y"])
+    show "Int_stable ?E" by (rule Int_stable_pair_measure_generator)
+    show "?E \<subseteq> Pow (space ?X \<times> space ?Y)" using sets.sets_into_space by auto
+    show "emeasure ?\<nu> C = emeasure (ksemi ?Q ?Y \<kappa>) C" if C: "C \<in> ?E" for C
+    proof -
+      from C obtain A B where AB: "A \<in> sets ?X" "B \<in> sets ?Y" "C = A \<times> B"
+        by blast
+      have AQ: "A \<in> sets ?Q" using AB(1) setsQ by simp
+      have "emeasure ?\<nu> C = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>?Q)"
+        unfolding AB(3) by (rule REC[OF AB(1) AB(2)])
+      also have "\<dots> = emeasure (ksemi ?Q ?Y \<kappa>) C"
+        unfolding AB(3)
+        by (rule emeasure_ksemi_rect[OF KQ neQ AQ AB(2), symmetric])
+      finally show ?thesis .
+    qed
+    show "sets ?\<nu> = sigma_sets (space ?X \<times> space ?Y) ?E"
+      by (simp add: sets_pair_measure)
+    show "sets (ksemi ?Q ?Y \<kappa>) = sigma_sets (space ?X \<times> space ?Y) ?E"
+      unfolding setsS by (simp add: sets_pair_measure)
+    show "range (\<lambda>_. space ?X \<times> space ?Y) \<subseteq> ?E" by auto
+    show "(\<Union>i :: nat. space ?X \<times> space ?Y) = space ?X \<times> space ?Y" by simp
+    show "emeasure ?\<nu> (space ?X \<times> space ?Y) \<noteq> \<infinity>" for i :: nat
+      by (simp add: Pnu.emeasure_eq_measure)
+  qed
+  show ?thesis by (rule that[OF Km eq])
+qed
+
 end
