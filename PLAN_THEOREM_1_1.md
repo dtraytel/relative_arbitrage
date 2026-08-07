@@ -598,8 +598,9 @@ Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
 | **the per-`(i,j,A')` statement** | `pfut_rcd_X_increment_zero`: for `0 ≤ i ≤ j ≤ T−r` and `A' ∈ ℱ⁰_i` of the future path space, `AE p'. ∫ 1_{A'} (X_j − X_i)$c dκ p' = 0`. This is the whole chain, from `AE_kernel_integral_zero` down to `martingale.set_integral_eq` under `P` | **DONE** |
 | a.s. integrability | `pfut_rcd_X_integrable`: `AE p'. integrable (κ p') (λw. fst (w u))` | **DONE** |
 | clause (iv)'s analogue | the same lemma with `mg` instantiated at the SHIFTED compensated process (`paper_pair_class_shifted_comp_martingale`) instead of the shifted coordinate, and a matrix index `(c,d)` instead of `c`. `outerp` being quadratic is already dealt with there, so this is a transcription, not a new argument | open |
-| the countable determining family | a countable π-system generating `natural_filtration ?Y 0 (λv w. w v) i`: cylinders at times in `(ℚ ∩ [0,i]) ∪ {i}` with rational-corner boxes. Rationals suffice because paths are continuous | open |
-| the Dynkin step | at fixed `p'`, from the π-system to all of `ℱ⁰_i`, by `measure_eqI_generator_eq` on the positive and negative parts of `1_{A'}(X_j−X_i)` | open |
+| the Dynkin step | `set_integral_zero_of_generator`: vanishing on an `Int_stable E` that CONTAINS THE WHOLE SPACE gives vanishing on `sigma_sets (space M) E`. `sigma_sets_induct_disjoint` does the induction, `lebesgue_integral_countable_add` the disjoint-union case. General — nothing about paths, and it serves clause (iv) too | **DONE** |
+| the `pcut` identification | `sets_natural_filtration_eq_pcut_vimage`: `ℱ_s` IS `{pcut s ⁻¹ B ∩ Ω : B Borel in the s-path space}` | **DONE** |
+| the countable π-system | the one piece of (b3) still open besides clause (iv) and the assembly — see below | open |
 | **rational-to-real in `i, j`** | `set_integral_eq_of_rational_times`: the identity against the terminal value at every RATIONAL time, plus continuity in time, gives it at every real time. By `unif_integrable_of_averaging` + `vitali_convergence`, both already in the repo — see below | **DONE** |
 | supporting | `subalgebra_natural_filtration_path`, `sigma_finite_subalgebra_natural_filtration_path` | **DONE** |
 | assembly | `martingale_of_set_integral_eq` at fixed `p'`, then `martingale_vecI` (and a matrix analogue) to put the components back together | open |
@@ -657,17 +658,32 @@ inequality and no uniform integrability. Its companion `Stopping_Time.thy`
 IS worth a look for §2.2, the DPP at a stopping time. Do not add the entry as
 a dependency before then.
 
-**The Dynkin step, and the countable π-system it needs.** `ℱ_i` on the
-future path space is countably generated, and the cheapest route reuses what
-(b3) already built: the `i`-path space is SECOND COUNTABLE
-(`second_countable_path_metric`), so `second_countable_base_in` yields a
-COUNTABLE base `𝒪`, and `sets_natural_filtration_path` identifies `ℱ_i`
-with the pullback along `pcut i` of that space's Borel sets. Finite
-intersections of `{pcut i ⁻¹ U ∩ Ω : U ∈ 𝒪}` are then a countable π-system
-generating `ℱ_i`. For the induction itself, `sigma_sets_induct_disjoint`
-(Int_stable + basic/empty/compl/union) is the distribution's tool; the
-`union` case is countable additivity of the set integral, i.e. dominated
-convergence over partial unions.
+**The countable π-system — the last open piece of the plumbing, and the
+route is now short.** `sets_natural_filtration_eq_pcut_vimage` (DONE) says
+`ℱ_s = {pcut s ⁻¹ B ∩ Ω : B ∈ Borel(s-path space)}`. Build `E` from a
+COUNTABLE BASE of the `s`-path space:
+
+1. `second_countable_path_metric` + `second_countable_base_in` give
+   `countable 𝒪` with `base_in (mtopology_of (path_metric s)) 𝒪`;
+2. `borel_of_second_countable'` + `base_is_subbase` give
+   `Borel(s-path space) = sigma (mspace_s) 𝒪` — this is exactly the step
+   `sets_natural_filtration_path` already uses, so reuse its shape;
+3. let `𝒪'` be the finite intersections of `𝒪` together with `mspace_s`
+   (countable by `countable_Collect_finite_subset` + `countable_image`,
+   `Int_stable` by construction, and it generates the same σ-algebra);
+4. `E = {pcut s ⁻¹ U ∩ Ω : U ∈ 𝒪'}` is then countable, `Int_stable`
+   (preimage commutes with `∩`), contains `Ω` (take `U = mspace_s`), and
+   `sigma_sets Ω E = ℱ_s` by step 2 plus `sets_vimage_algebra` /
+   `vimage_algebra_sigma`.
+
+Then hand `E` to `set_integral_zero_of_generator` (DONE).
+
+**Do NOT build the π-system out of the coordinate EVALUATIONS.** That forces
+the time index down to the rationals and then needs a
+limit-of-measurable-functions argument to recover the irrational times.
+Through `pcut`, path continuity is already encoded in the TOPOLOGY of the
+`s`-path space and second countability does the rest, with no limit argument
+anywhere.
 
 **The prerequisite (b2) did not have, now proved.** The coordinate
 evaluations GENERATE the Borel σ-algebra of the path space:
