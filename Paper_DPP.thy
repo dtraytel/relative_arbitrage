@@ -5874,4 +5874,190 @@ proof (rule paper_v_dpp_eq_of_cond[OF r rT L1 Kc])
     by (rule paper_v_cond[OF r rT' L0 Kc P c])
 qed
 
+section \<open>The conditioning statement at a RANDOM time\<close>
+
+text \<open>The conditioning half of the DPP holds at an arbitrary time function
+  \<open>s(\<omega>)\<close>, with NO stopping-time hypothesis and no measurability of \<open>s\<close>
+  whatever.  That is not an accident: the statement is an almost-sure
+  PATHWISE one, so all that is needed is the deterministic
+  @{thm [source] paper_v_cond} at COUNTABLY many deterministic times, and a
+  pointwise limit at each path.  Measurability of \<open>s\<close> only becomes relevant
+  when the result is fed back into an \<open>ess_inf_time\<close>.
+
+  Two observations make it work.
+
+  \<^item> Below \<open>c\<close> the survival event is FREE: if the path has not left \<open>K\<close> before
+    \<open>c\<close> and \<open>r < c\<close>, it certainly has not left before \<open>r\<close>
+    (\<open>pexit_surv_of_less\<close> below).  So the conditional conclusion of
+    @{thm [source] paper_v_cond} becomes an unconditional one at every
+    deterministic time below \<open>c\<close>, and the survival hypothesis disappears from
+    the random-time statement too.
+  \<^item> Approaching \<open>s(\<omega>)\<close> from ABOVE through rationals keeps the residual
+    horizon SMALLER, and \<^const>\<open>paper_v\<close> is monotone in the horizon
+    (@{thm [source] paper_v_horizon_mono}), so the bound survives the
+    replacement of \<open>T - t\<^sub>n\<close> by \<open>T - s(\<omega>)\<close>.  What is then left is a limit in
+    the SPACE variable, and that is clause (1), upper semicontinuity
+    (@{thm [source] paper_v_usc_unconditional}).
+
+  Approaching from BELOW would not work: the horizon would grow, and
+  monotonicity would point the wrong way.\<close>
+
+lemma pexit_surv_of_less:
+  fixes f :: "real \<Rightarrow> 'a::polish_space" and K :: "'a set"
+  assumes T0: "0 \<le> T" and r: "0 \<le> r" and rT: "r \<le> T" and lt: "r < c"
+    and ge: "c \<le> pexit T K f"
+  shows "pexit r K f = r \<and> f r \<in> K"
+proof -
+  have stay: "f t \<in> K" if t: "t \<in> {0..r}" for t
+  proof (rule ccontr)
+    assume nk: "f t \<notin> K"
+    have "pexit T K f \<le> t"
+      unfolding pexit_def using T0 t rT nk by (intro etime_le_of_mem) auto
+    moreover have "t \<le> r" using t by simp
+    ultimately show False using ge lt by simp
+  qed
+  have empt: "{t. 0 \<le> t \<and> t \<le> r \<and> f t \<in> - K} \<union> {r} = {r}" using stay by auto
+  have "pexit r K f = r" unfolding pexit_def etime_def empt by simp
+  moreover have "f r \<in> K" using stay r by simp
+  ultimately show ?thesis by simp
+qed
+
+text \<open>The pointwise core: at a SINGLE path, the deterministic bound at
+  countably many rational times below \<open>c\<close> gives the bound at an arbitrary
+  time \<open>s\<close>.  No measure theory here at all.\<close>
+
+lemma paper_v_cond_pointwise:
+  fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"
+  assumes T0: "0 \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and pex: "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+    and rat: "\<And>c' v. c' \<in> \<rat> \<Longrightarrow> v \<in> \<rat> \<Longrightarrow> c' < c \<Longrightarrow> 0 \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        pexit v K (\<lambda>t. fst (\<omega> t)) = v \<and> fst (\<omega> v) \<in> K \<Longrightarrow>
+        c' \<le> v + enn2real (paper_v k L (T - v) K (fst (\<omega> v)))"
+    and s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "c \<le> s + enn2real (paper_v k L (T - s) K (fst (\<omega> s)))"
+proof -
+  let ?X = "\<lambda>t. fst (\<omega> t)"
+  let ?e = "\<lambda>y. enn2real (paper_v k L (T - s) K y)"
+  have cT: "c \<le> T" using pex pexit_le_T[OF T0, of K ?X] by simp
+  have e0: "0 \<le> ?e y" for y by simp
+
+  have main: "c' \<le> s + ?e (?X s)" if crat: "c' \<in> \<rat>" and clt: "c' < c" for c'
+  proof (cases "c' \<le> s")
+    case True
+    have "0 \<le> ?e (?X s)" by simp
+    with True show ?thesis by argo
+  next
+    case False
+    then have sc: "s < c'" by simp
+    have sT': "s < T" using sc clt cT by simp
+    have Ts: "0 < T - s" using sT' by simp
+    have Tsn: "paper_v k L (T - s) K y \<noteq> \<top>" for y
+      by (rule paper_v_neq_top) (use Ts in simp)
+
+    \<comment> \<open>rationals decreasing to \<open>s\<close> from above, all below \<open>c'\<close>\<close>
+    have ex: "\<exists>q\<in>(\<rat> :: real set). s < q \<and> q < min c' (s + inverse (real (Suc n)))"
+      for n
+    proof (rule Rats_dense_in_real)
+      show "s < min c' (s + inverse (real (Suc n)))" using sc by simp
+    qed
+    then obtain t :: "nat \<Rightarrow> real" where trat: "\<And>n. t n \<in> \<rat>"
+      and tgt: "\<And>n. s < t n"
+      and tlt: "\<And>n. t n < min c' (s + inverse (real (Suc n)))" by metis
+    have tc: "t n < c'" for n using tlt[of n] by simp
+    have t0: "0 \<le> t n" for n using s0 tgt[of n] by simp
+    have tT: "t n \<le> T" for n using tc[of n] clt cT by simp
+    have tconv: "t \<longlonglongrightarrow> s"
+    proof (rule tendsto_sandwich[of "\<lambda>_. s" _ _ "\<lambda>n. s + inverse (real (Suc n))"])
+      show "\<forall>\<^sub>F n in sequentially. s \<le> t n" using tgt by (simp add: less_imp_le)
+      show "\<forall>\<^sub>F n in sequentially. t n \<le> s + inverse (real (Suc n))"
+        using tlt by (simp add: less_imp_le)
+    qed (use LIMSEQ_inverse_real_of_nat_add in auto)
+
+    \<comment> \<open>the deterministic bound at each \<open>t n\<close>, with the horizon enlarged\<close>
+    have bound: "c' \<le> t n + ?e (?X (t n))" for n
+    proof -
+      have surv: "pexit (t n) K ?X = t n \<and> ?X (t n) \<in> K"
+        by (rule pexit_surv_of_less[OF T0 t0 tT _ pex]) (use tc[of n] clt in simp)
+      have "c' \<le> t n + enn2real (paper_v k L (T - t n) K (?X (t n)))"
+        by (rule rat[OF crat trat clt t0 tT surv])
+      moreover have "enn2real (paper_v k L (T - t n) K (?X (t n))) \<le> ?e (?X (t n))"
+      proof (rule enn2real_mono)
+        show "paper_v k L (T - t n) K (?X (t n))
+            \<le> paper_v k L (T - s) K (?X (t n))"
+          by (rule paper_v_horizon_mono[OF _ _ L1 Kc]) (use tT tgt[of n] in simp_all)
+        show "paper_v k L (T - s) K (?X (t n)) < \<top>"
+          using Tsn by (simp add: less_top)
+      qed
+      ultimately show ?thesis by simp
+    qed
+
+    \<comment> \<open>and the limit, where clause (1) enters\<close>
+    show ?thesis
+    proof (rule ccontr)
+      assume ng: "\<not> c' \<le> s + ?e (?X s)"
+      define d where "d = c' - s - ?e (?X s)"
+      have d0: "0 < d" unfolding d_def using ng by simp
+      have lt: "paper_v k L (T - s) K (?X s) < ennreal (?e (?X s) + d / 2)"
+      proof -
+        have "paper_v k L (T - s) K (?X s) = ennreal (?e (?X s))"
+          using Tsn by (simp add: less_top)
+        also have "\<dots> < ennreal (?e (?X s) + d / 2)"
+          using d0 by (simp add: ennreal_lessI)
+        finally show ?thesis .
+      qed
+      have nb: "eventually (\<lambda>y. paper_v k L (T - s) K y
+          < ennreal (?e (?X s) + d / 2)) (nhds (?X s))"
+        by (rule paper_v_usc_unconditional[OF Ts L1 Kc lt])
+      have cw: "continuous_on {0..T} ?X"
+        using mspace_path_metricD[OF w] by (rule continuous_on_fst)
+      have conv: "(\<lambda>n. ?X (t n)) \<longlonglongrightarrow> ?X s"
+      proof -
+        have "(?X \<circ> t) \<longlonglongrightarrow> ?X s"
+          using cw t0 tT s0 sT tconv by (simp add: continuous_on_sequentially)
+        then show ?thesis by (simp add: o_def)
+      qed
+      have ev1: "\<forall>\<^sub>F n in sequentially. ?e (?X (t n)) \<le> ?e (?X s) + d / 2"
+      proof -
+        have nn: "0 \<le> ?e (?X s) + d / 2" using d0 e0[of "?X s"] by simp
+        have "\<forall>\<^sub>F n in sequentially. paper_v k L (T - s) K (?X (t n))
+            < ennreal (?e (?X s) + d / 2)"
+          by (rule eventually_compose_filterlim[OF nb conv])
+        then show ?thesis
+        proof (rule eventually_mono)
+          fix n assume lt': "paper_v k L (T - s) K (?X (t n))
+              < ennreal (?e (?X s) + d / 2)"
+          have "enn2real (paper_v k L (T - s) K (?X (t n)))
+              \<le> enn2real (ennreal (?e (?X s) + d / 2))"
+            by (rule enn2real_mono[OF less_imp_le[OF lt']]) simp
+          then show "?e (?X (t n)) \<le> ?e (?X s) + d / 2"
+            unfolding enn2real_ennreal[OF nn] .
+        qed
+      qed
+      have ev2: "\<forall>\<^sub>F n in sequentially. t n < s + d / 2"
+        using tconv d0 by (simp add: order_tendsto_iff)
+      have "\<forall>\<^sub>F n in sequentially. False"
+        using ev1 ev2
+      proof eventually_elim
+        case (elim n)
+        have "c' \<le> t n + ?e (?X (t n))" by (rule bound)
+        also have "\<dots> < (s + d / 2) + (?e (?X s) + d / 2)"
+          using elim by simp
+        also have "\<dots> = c'" unfolding d_def by simp
+        finally show ?case by simp
+      qed
+      then show False by simp
+    qed
+  qed
+
+  show ?thesis
+  proof (rule ccontr)
+    assume "\<not> c \<le> s + ?e (?X s)"
+    then have "s + ?e (?X s) < c" by simp
+    then obtain q :: real where q: "q \<in> \<rat>" "s + ?e (?X s) < q" "q < c"
+      using Rats_dense_in_real by blast
+    from main[OF q(1) q(3)] q(2) show False by simp
+  qed
+qed
+
 end
