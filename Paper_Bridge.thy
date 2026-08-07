@@ -11511,4 +11511,220 @@ proof -
   with rc show ?thesis by simp
 qed
 
+section \<open>Joint continuity of the shift\<close>
+
+text \<open>Step (ii) of applying the selection theorem.  After @{thm [source]
+  paper_pair_class_shift_image} the functional whose supremum is
+  @{term paper_v} is a function of the STARTING POINT and of a member of
+  the FIXED class at the origin.  The selection theorem's measurability
+  hypothesis --- that the supremum over each closed set be measurable in
+  the parameter --- comes from JOINT upper semicontinuity, and that in
+  turn from joint continuity of the shift.
+
+  The estimate is uniform: shifting a path by a constant vector moves it
+  by exactly that vector in the sup metric, so a UNIFORMLY continuous
+  test function is displaced uniformly over the whole path space.  Weak
+  convergence may be tested against bounded uniformly continuous
+  functions (@{thm [source] mweak_conv_fin.mweak_conv_eq1}), so no
+  tightness is needed here.\<close>
+
+lemma mdist_pshift_pshift:
+  fixes z y :: "real^'n::finite"
+  assumes T: "0 \<le> T" and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "mdist (path_metric T :: ('n pairpath) metric)
+      (pshift T z \<omega>) (pshift T y \<omega>) \<le> dist z y"
+proof -
+  have sz: "pshift T z \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule pshift_in_mspace[OF w])
+  have sy: "pshift T y \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule pshift_in_mspace[OF w])
+  have pw: "dist (pshift T z \<omega> t) (pshift T y \<omega> t) \<le> dist z y" if t: "t \<in> {0..T}" for t
+  proof -
+    have "dist (pshift T z \<omega> t) (pshift T y \<omega> t)
+        = dist (z + fst (\<omega> t), snd (\<omega> t)) (y + fst (\<omega> t), snd (\<omega> t))"
+      using t by (simp add: pshift_apply)
+    also have "\<dots> = dist (z + fst (\<omega> t)) (y + fst (\<omega> t))"
+      by (simp add: dist_Pair_Pair)
+    also have "\<dots> = dist z y" by (simp add: dist_norm)
+    finally show ?thesis by simp
+  qed
+  show ?thesis using path_mdist_le_iff_all[OF T sz sy] pw by blast
+qed
+
+lemma pshift_law_weak_conv_joint:
+  fixes ym :: "nat \<Rightarrow> real^'n::finite" and Rm :: "nat \<Rightarrow> ('n pairpath) measure"
+  assumes T: "0 \<le> T"
+    and yc: "ym \<longlonglongrightarrow> y"
+    and prR: "\<And>m. prob_space (Rm m)"
+    and setsR: "\<And>m. sets (Rm m) = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and prR': "prob_space R"
+    and setsR': "sets R = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and wc: "weak_conv_on Rm R sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  shows "weak_conv_on (\<lambda>m. pshift_law T (ym m) (Rm m)) (pshift_law T y R)
+      sequentially (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?S = "mspace (path_metric T :: ('n pairpath) metric)"
+  have prS: "prob_space (pshift_law T z (Rm m))" for z m
+    by (rule prob_space_pshift_law[OF T prR setsR])
+  have fmS: "finite_measure (pshift_law T z (Rm m))" for z m
+    using prS[of z m] by (simp add: prob_space.emeasure_space_1 finite_measureI)
+  have fmS': "finite_measure (pshift_law T y R)"
+    using prob_space_pshift_law[OF T prR' setsR']
+    by (simp add: prob_space.emeasure_space_1 finite_measureI)
+  have MWfin: "mweak_conv_fin ?S (mdist (path_metric T :: ('n pairpath) metric))
+      (\<lambda>m. pshift_law T (ym m) (Rm m)) (pshift_law T y R) sequentially"
+    unfolding mweak_conv_fin_def mweak_conv_fin_axioms_def
+    using fmS fmS' by (simp add: mtopology_of_def)
+  interpret MW: mweak_conv_fin ?S "mdist (path_metric T :: ('n pairpath) metric)"
+      "\<lambda>m. pshift_law T (ym m) (Rm m)" "pshift_law T y R" sequentially
+    by (rule MWfin)
+  show ?thesis
+    unfolding mtopology_of_def
+  proof (rule MW.mweak_conv_eq1[THEN iffD2], intro allI impI)
+    fix f :: "'n pairpath \<Rightarrow> real"
+    assume uc: "uniformly_continuous_map MW.Self euclidean_metric f"
+    assume bnd: "\<exists>B. \<forall>x \<in> ?S. \<bar>f x\<bar> \<le> B"
+    from bnd obtain B where B: "\<And>x. x \<in> ?S \<Longrightarrow> \<bar>f x\<bar> \<le> B" by blast
+    have cf: "continuous_map ?X euclideanreal f"
+      using uniformly_continuous_imp_continuous_map[OF uc]
+      by (simp add: mtopology_of_def)
+    have fm: "f \<in> borel_measurable ?B"
+      using continuous_map_measurable[OF cf] by (simp add: borel_of_euclidean)
+    have shiftm: "pshift T z \<in> Rm m \<rightarrow>\<^sub>M ?B" for z m
+      using pshift_measurable[OF T] measurable_cong_sets[OF setsR refl] by blast
+    have spRm: "space (Rm m) = ?S" for m by (rule space_of_path_sets[OF setsR])
+    have hmeas: "(\<lambda>\<omega>. f (pshift T z \<omega>)) \<in> borel_measurable (Rm m)" for z m
+      using fm shiftm by simp
+    have hbnd: "\<bar>f (pshift T z \<omega>)\<bar> \<le> B" if "\<omega> \<in> space (Rm m)" for z m \<omega>
+    proof -
+      have "\<omega> \<in> ?S" using that spRm by simp
+      then have "pshift T z \<omega> \<in> ?S" by (rule pshift_in_mspace)
+      then show ?thesis by (rule B)
+    qed
+    have intg: "integrable (Rm m) (\<lambda>\<omega>. f (pshift T z \<omega>))" for z m
+    proof -
+      interpret PR: prob_space "Rm m" by (rule prR)
+      have ae: "AE \<omega> in Rm m. norm (f (pshift T z \<omega>)) \<le> \<bar>B\<bar>"
+      proof (intro AE_I2)
+        fix \<omega> assume "\<omega> \<in> space (Rm m)"
+        then have "\<bar>f (pshift T z \<omega>)\<bar> \<le> B" by (rule hbnd)
+        then show "norm (f (pshift T z \<omega>)) \<le> \<bar>B\<bar>" by simp
+      qed
+      from PR.integrable_const_bound[OF ae hmeas] show ?thesis .
+    qed
+    have distr_int: "(\<integral>\<omega>. f \<omega> \<partial>(pshift_law T z S)) = (\<integral>\<omega>. f (pshift T z \<omega>) \<partial>S)"
+      if "sets S = sets ?B" for z and S :: "('n pairpath) measure"
+    proof -
+      have m: "pshift T z \<in> S \<rightarrow>\<^sub>M ?B"
+        using pshift_measurable[OF T] measurable_cong_sets[OF that refl] by blast
+      show ?thesis unfolding pshift_law_def by (rule integral_distr[OF m fm])
+    qed
+    have lim2: "(\<lambda>m. \<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m)) \<longlonglongrightarrow> (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>R)"
+    proof -
+      have cshift: "continuous_map ?X ?X (pshift T y)"
+        by (rule Lipschitz_continuous_imp_continuous_map[OF Lipschitz_pshift[OF T]])
+      have cg: "continuous_map ?X euclideanreal (\<lambda>\<omega>. f (pshift T y \<omega>))"
+        using continuous_map_compose[OF cshift cf] by (simp add: comp_def)
+      have bg: "\<exists>B'. \<forall>x \<in> topspace ?X. \<bar>f (pshift T y x)\<bar> \<le> B'"
+      proof (intro exI[of _ B] ballI)
+        fix x assume "x \<in> topspace ?X"
+        then have "x \<in> ?S" by simp
+        then show "\<bar>f (pshift T y x)\<bar> \<le> B" using B pshift_in_mspace by blast
+      qed
+      show ?thesis using wc[unfolded weak_conv_on_def] cg bg by blast
+    qed
+    have lim1: "(\<lambda>m. (\<integral>\<omega>. f (pshift T (ym m) \<omega>) \<partial>(Rm m))
+        - (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m))) \<longlonglongrightarrow> 0"
+    proof (rule LIMSEQ_I)
+      fix e :: real assume e: "0 < e"
+      then have e2: "0 < e/2" by simp
+      have ucd: "\<forall>ep>0. \<exists>dl>0. \<forall>u\<in>?S. \<forall>v\<in>?S.
+          mdist (path_metric T :: ('n pairpath) metric) v u < dl \<longrightarrow> \<bar>f v - f u\<bar> < ep"
+        using uc unfolding uniformly_continuous_map_def by (simp add: dist_real_def)
+      from ucd e2 obtain del where d0: "0 < del"
+        and dd0: "\<forall>u\<in>?S. \<forall>v\<in>?S.
+            mdist (path_metric T :: ('n pairpath) metric) v u < del
+              \<longrightarrow> \<bar>f v - f u\<bar> < e/2"
+        by blast
+      have dd: "\<bar>f v - f u\<bar> < e/2" if "u \<in> ?S" and "v \<in> ?S"
+        and "mdist (path_metric T :: ('n pairpath) metric) v u < del" for u v
+        using dd0 that by blast
+      from LIMSEQ_D[OF yc d0] obtain M0
+        where M0: "\<And>m. M0 \<le> m \<Longrightarrow> norm (ym m - y) < del" by blast
+      have main: "norm ((\<integral>\<omega>. f (pshift T (ym m) \<omega>) \<partial>(Rm m))
+          - (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m)) - 0) < e" if mM: "M0 \<le> m" for m
+      proof -
+        interpret PRm: prob_space "Rm m" by (rule prR)
+        have cint: "(\<integral>\<omega>. (c::real) \<partial>(Rm m)) = c" for c
+          by (simp add: PRm.prob_space)
+        have i1: "integrable (Rm m) (\<lambda>\<omega>. f (pshift T (ym m) \<omega>))" by (rule intg)
+        have i2: "integrable (Rm m) (\<lambda>\<omega>. f (pshift T y \<omega>))" by (rule intg)
+        have idiff: "integrable (Rm m)
+            (\<lambda>\<omega>. f (pshift T (ym m) \<omega>) - f (pshift T y \<omega>))"
+          using i1 i2 by (rule Bochner_Integration.integrable_diff)
+        have icu: "integrable (Rm m) (\<lambda>\<omega>. e/2 :: real)" by (rule PRm.integrable_const)
+        have icl: "integrable (Rm m) (\<lambda>\<omega>. - (e/2) :: real)"
+          by (rule PRm.integrable_const)
+        have key: "\<bar>f (pshift T (ym m) \<omega>) - f (pshift T y \<omega>)\<bar> \<le> e/2"
+          if w: "\<omega> \<in> space (Rm m)" for \<omega>
+        proof -
+          have wm: "\<omega> \<in> ?S" using w spRm by simp
+          have m1: "pshift T (ym m) \<omega> \<in> ?S" by (rule pshift_in_mspace[OF wm])
+          have m2: "pshift T y \<omega> \<in> ?S" by (rule pshift_in_mspace[OF wm])
+          have "mdist (path_metric T :: ('n pairpath) metric)
+              (pshift T (ym m) \<omega>) (pshift T y \<omega>) \<le> dist (ym m) y"
+            by (rule mdist_pshift_pshift[OF T wm])
+          also have "\<dots> < del" using M0[OF mM] by (simp add: dist_norm)
+          finally have "mdist (path_metric T :: ('n pairpath) metric)
+              (pshift T (ym m) \<omega>) (pshift T y \<omega>) < del" .
+          from dd[OF m2 m1 this] show ?thesis by simp
+        qed
+        have ptu: "f (pshift T (ym m) x) - f (pshift T y x) \<le> e/2"
+          if "x \<in> space (Rm m)" for x using key[OF that] by linarith
+        have ptl: "- (e/2) \<le> f (pshift T (ym m) x) - f (pshift T y x)"
+          if "x \<in> space (Rm m)" for x using key[OF that] by linarith
+        have eq: "(\<integral>\<omega>. f (pshift T (ym m) \<omega>) \<partial>(Rm m))
+            - (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m))
+            = (\<integral>\<omega>. (f (pshift T (ym m) \<omega>) - f (pshift T y \<omega>)) \<partial>(Rm m))"
+          by (rule Bochner_Integration.integral_diff[OF i1 i2, symmetric])
+        have up: "(\<integral>\<omega>. (f (pshift T (ym m) \<omega>) - f (pshift T y \<omega>)) \<partial>(Rm m)) \<le> e/2"
+        proof -
+          have "(\<integral>\<omega>. (f (pshift T (ym m) \<omega>) - f (pshift T y \<omega>)) \<partial>(Rm m))
+              \<le> (\<integral>\<omega>. e/2 \<partial>(Rm m))"
+            by (rule integral_mono[OF idiff icu ptu])
+          also have "\<dots> = e/2" by (rule cint)
+          finally show ?thesis .
+        qed
+        have lo: "- (e/2) \<le> (\<integral>\<omega>. (f (pshift T (ym m) \<omega>) - f (pshift T y \<omega>)) \<partial>(Rm m))"
+        proof -
+          have "- (e/2) = (\<integral>\<omega>. - (e/2) \<partial>(Rm m))" by (rule cint[symmetric])
+          also have "\<dots> \<le> (\<integral>\<omega>. (f (pshift T (ym m) \<omega>) - f (pshift T y \<omega>)) \<partial>(Rm m))"
+            by (rule integral_mono[OF icl idiff ptl])
+          finally show ?thesis .
+        qed
+        from up lo have "\<bar>(\<integral>\<omega>. f (pshift T (ym m) \<omega>) \<partial>(Rm m))
+            - (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m))\<bar> \<le> e/2"
+          unfolding eq by simp
+        then show ?thesis using e by simp
+      qed
+      then show "\<exists>no. \<forall>m\<ge>no. norm ((\<integral>\<omega>. f (pshift T (ym m) \<omega>) \<partial>(Rm m))
+          - (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m)) - 0) < e" by blast
+    qed
+    have "(\<lambda>m. ((\<integral>\<omega>. f (pshift T (ym m) \<omega>) \<partial>(Rm m))
+        - (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m)))
+        + (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>(Rm m)))
+        \<longlonglongrightarrow> 0 + (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>R)"
+      by (rule tendsto_add[OF lim1 lim2])
+    then have "(\<lambda>m. \<integral>\<omega>. f (pshift T (ym m) \<omega>) \<partial>(Rm m))
+        \<longlonglongrightarrow> (\<integral>\<omega>. f (pshift T y \<omega>) \<partial>R)" by simp
+    then show "(\<lambda>m. \<integral>\<omega>. f \<omega> \<partial>(pshift_law T (ym m) (Rm m)))
+        \<longlonglongrightarrow> (\<integral>\<omega>. f \<omega> \<partial>(pshift_law T y R))"
+      by (simp add: distr_int[OF setsR] distr_int[OF setsR'])
+  qed
+qed
 end
