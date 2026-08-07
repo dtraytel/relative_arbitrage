@@ -440,21 +440,53 @@ DPP.**
        is why `Paper_Bridge` now imports that theory) and
        `Polish_space_path_metric`.
 
-       What remains is the construction itself: replace
-       `Q ⊗⇩M Pi⇩M UNIV RR` in `kglue_law` by the semidirect product
-       `Q ⤜ (λω. distr (K ω) _ (Pair ω))` and re-prove the four clauses of
-       (1.7). Expect the split to be:
-       * `sets`/`space`/`prob_space` of the glued law, and clauses (i)
-         (start) and (ii) (the covariation difference quotient) — these are
-         almost-sure statements and go through `AE_bind`;
-       * clauses (iii) and (iv), the two martingale statements — these are
-         the real work, because the product-martingale machinery
-         (`martingale_pair_fst/snd/mult`, Fubini plus sectionwise use of the
-         factor's `set_integral_eq`) does NOT apply: `bind` is not a product
-         measure. Expect to rebuild it from `emeasure_bind`,
-         `nn_integral_bind` and `integral_bind`.
-       Budget this as its own session — it is comparable in size to the
-       whole `kglue_law` development (≈1,500 lines).
+       **The construction is HALF DONE (2026-08-07).**
+
+       *Done.* `ksemi M N Kr = M ⤜ (λω. distr (Kr ω) (M ⨂⇩M N) (Pair ω))`,
+       the Giry semidirect product, with `sets_ksemi` (its `sets` are the
+       ORDINARY product's, so every measurability fact already proved for
+       `Q ⨂⇩M R` transfers verbatim by `measurable_cong_sets`),
+       `space_ksemi`, `prob_space_ksemi`, `AE_ksemi`, `nn_integral_ksemi`;
+       then `kglue_law' r T Kr Q`, `kglue_law'_measurable`,
+       `prob_space_kglue_law'`, `AE_kglue_law'` (whose only difference from
+       `AE_kglue_law` is that the second-coordinate property may depend on
+       the first — it has to, since the kernel does), and clauses (i)
+       `kglue_law'_start` and (ii) `kglue_law'_diffquot`.
+
+       *Not done: clauses (iii) and (iv).* Two SEPARATE obstructions, both
+       identified concretely; do not start them expecting a port.
+
+       1. **`integral_bind` in the distribution is only for BOUNDED REAL
+          test functions** (`Giry_Monad.thy`: `f ∈ borel_measurable K`,
+          `¦f x¦ ≤ B`). Our processes are `real^'n`- and `real^'n^'n`-valued
+          and unbounded. So an `integral_ksemi` for INTEGRABLE functions has
+          to be built first: reduce `real^'n` to components (finite
+          dimension), then split a real integrand into positive and negative
+          parts and apply `nn_integral_ksemi` to each. Budget ≈150 lines.
+       2. **The FIRST-factor martingale property genuinely FAILS for a
+          semidirect product.** `martingale_pair_fst` has no `ksemi`
+          analogue: for `A ∈ F u ⨂⇩M G u`,
+          `∫_A Z₁ d(ksemi) = ∫ω Z₁(ω)·(Kr ω)(A_ω) dQ`, and the weight
+          `(Kr ω)(A_ω)` is only `ℱ_r`-measurable, not `ℱ_u`-measurable, so
+          `Q`'s martingale property does not apply.
+
+          It IS recoverable here, but only by using the structure of the
+          glue: the filtration that matters is
+          `H u = ℱ_(min u r) ⨂⇩M 𝒢_((u−r)⁺)` (what `martingale_time_change`
+          builds), whose second component for `u ≤ r` is
+          `𝒢_0 = σ(ev_0)`; and every value of the kernel lies in the class
+          at the ORIGIN, so `(Kr ω)(A_ω) = 1_A(ω, z)` for any base path `z`
+          with `z 0 = 0`, which IS `ℱ_u`-measurable. That is a new lemma
+          about `𝒢_0`, not a port of `martingale_pair_fst`.
+
+          By contrast the SECOND-factor statement gets EASIER:
+          `ksemi`'s disintegration is already in the order
+          `∫ω ∫ω' … d(Kr ω) dQ`, so the analogue of
+          `martingale_pair_snd_param` needs no Fubini at all — the section
+          `A_ω ∈ 𝒢_u` and the kernel's own `set_integral_eq` close it
+          directly.
+
+       Budget the remainder as its own session (≈800–1,200 lines).
 
   4. **The `≤` half** — conditioning, i.e. regular conditional distributions on
      the Polish path space via AFP `Disintegration` (`measure_disintegration`,
