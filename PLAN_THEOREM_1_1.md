@@ -53,7 +53,7 @@ only if §2.4 turns out to want it.
 **Where the DPP stands.** Proposition 2.4's two ingredients are the
 MEASURABLE SELECTOR and the KERNEL PASTING that consumes it. Both are
 **done** (§1.7, §1.8), and so is the assembly: the **`≥` half of (2.9) at a
-deterministic time is proved** (`paper_v_dpp_sup_ge`, §1.10). The `≤` half
+deterministic time is proved** (`paper_v_dpp_sup_ge`, §1.9). The `≤` half
 is **reduced to exactly one statement about conditioning**
 (`paper_v_dpp_le_of_cond`, §2.1) — everything off the survival event is
 unconditional. That one statement, and the extension from deterministic
@@ -411,6 +411,9 @@ particular `martingale_pair_fst` has no `ksemi` analogue, and that is a
 theorem, not a proof-technique inconvenience.
 
 ### 1.9 The `≥` half of (2.9) at a deterministic time — CLOSED
+
+*(Everything in this subsection now lives in `Paper_DPP.thy`, not
+`Paper_Bridge.thy` — see the file-layout note in §2.1.)*
 
 The DPP of Prop. 2.4 is
 
