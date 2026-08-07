@@ -37,7 +37,7 @@ time from `K`.
 |---|---|---|
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
-| (2) | `visc_sol k L (interior K) v` | **OPEN** — needs the DPP (Prop. 2.4) *and* §3's Itô/SDE layer; §2.1–§2.3 |
+| (2) | `visc_sol k L (interior K) v` | **OPEN** — but the DPP (Prop. 2.4) is now **DONE at a deterministic time** (`paper_v_dpp`); what is left is §2.2 (a STOPPING time) and §3's Itô/SDE layer |
 | (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.4; transfer to `paper_v` §2.5 |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
 
@@ -50,20 +50,24 @@ functions is the `n−k=1` realization inside clause (3)
 (`stopped_val_fn_ball_eq_2d`); transferring it is §2.5, and it is needed
 only if §2.4 turns out to want it.
 
-**Where the DPP stands.** Proposition 2.4's two ingredients are the
-MEASURABLE SELECTOR and the KERNEL PASTING that consumes it. Both are
-**done** (§1.7, §1.8), and so is the assembly: the **`≥` half of (2.9) at a
-deterministic time is proved** (`paper_v_dpp_sup_ge`, §1.9). The `≤` half
-is **reduced to exactly one statement about conditioning**
-(`paper_v_dpp_le_of_cond`, §2.1) — everything off the survival event is
-unconditional. That one statement, and the extension from deterministic
-times to stopping times, is all that is left of the DPP.
+**Where the DPP stands — Prop. 2.4 IS PROVED AT A DETERMINISTIC TIME**
+(`paper_v_dpp`, 2026-08-07). The `≥` half is `paper_v_dpp_sup_ge` (measurable
+selector §1.7 + kernel pasting §1.8, assembled in §1.9); the `≤` half was
+reduced to one conditioning statement, and that statement is now
+`paper_v_cond`, proved by route (b) — the regular conditional distribution —
+end to end. **The only thing left of the DPP is the extension from
+deterministic times to STOPPING times, §2.2.**
+
+**Route (a) is moot.** It was blocked on usc of `paper_v` in the TARGET SET,
+which nobody has proved and which may be false-looking (see the analysis
+kept in §2.1 below for the record). Route (b) never needs it: under `κ p'`
+the starting point is a single vector, not a small ball.
 
 **Remaining budget, roughly.**
 
 | item | § | lines | risk |
 |---|---|---|---|
-| the conditioning statement (`cond`) | 2.1 | 700–1,400 | high — r.c.d. + conditional martingale property |
+| ~~the conditioning statement (`cond`)~~ | 2.1 | ~~700–1,400~~ | **DONE** — `paper_v_cond`, and with it `paper_v_dpp` |
 | the DPP at a STOPPING time | 2.2 | 500–1,200 | high — both clocks random |
 | §3, the two viscosity inequalities | 2.3 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
 | clause (3) for `n−k ≥ 2` | 2.4 | 1,500–3,000 | high |
@@ -582,7 +586,7 @@ Steps, in order:
 | (b1) | the kernel itself: `paper_pair_class_rcd` (the AFP disintegration) and `paper_pair_class_rcd_ksemi` (its conversion to our `ksemi`, via `emeasure_ksemi_rect` and agreement on the rectangle π-system) | **DONE** |
 | (b2) | clauses (i)/(ii) for `κ ω` a.s. | general lemma `AE_kernel_full` **DONE**; clause (i) `pfut_rcd_start` **DONE**; clause (ii) is now pure assembly of `ksemi_rect_null_of_AE` → `AE_kernel_full` → `AE_mem_of_emeasure_1` → `AE_ball_countable'` over rational pairs → `paper_pair_class_diffquot_of_rational_pairs`, all four of which are proved |
 | (b3) | clauses (iii)/(iv) for `κ ω` a.s. | **DONE** — and with (b0)–(b2) it packages as `paper_pair_class_rcd_member`: `AE p'. κ p' ∈ paper_pair_class k L (T−r) 0`. See the breakdown below |
-| (b4) | assembly of `cond`: under `κ ω` the starting point `X_r ω` is a CONSTANT, so `pshift_law (T-r) (X_r ω) (κ ω) ∈ 𝒞_{X_r ω}` and its essinf is `≤ paper_v` by definition — no localization, no `K_ε` | open |
+| (b4) | `paper_v_cond` — the conditioning statement. Under `κ p'` the starting point is a CONSTANT, so the shifted law lies in `𝒞_{X_r}` and its essinf is `≤ paper_v` by definition. No localization, no `K_ε` | **DONE** |
 
 Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
 
