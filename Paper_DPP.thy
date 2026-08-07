@@ -2682,4 +2682,19 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>The last piece of plumbing: @{thm [source] AE_kernel_full} delivers
+  \<open>emeasure (\<kappa> p) C = 1\<close>, while the class's clauses are stated as \<open>AE\<close>
+  properties.  The library's @{thm [source] prob_space.AE_prob_1} is phrased
+  with the REAL measure, so the bridge goes through
+  @{thm [source] finite_measure.emeasure_eq_measure}.\<close>
+
+lemma AE_mem_of_emeasure_1:
+  assumes PS: "prob_space M" and one: "emeasure M C = 1"
+  shows "AE w in M. w \<in> C"
+proof -
+  interpret PM: prob_space M by (rule PS)
+  have "measure M C = 1" using one by (simp add: PM.emeasure_eq_measure)
+  then show ?thesis by (rule PM.AE_prob_1)
+qed
+
 end
