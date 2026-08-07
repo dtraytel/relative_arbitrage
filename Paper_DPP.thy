@@ -1311,4 +1311,174 @@ proof -
   qed
 qed
 
+subsection \<open>The four clauses of (1.7) for the conditioned future law\<close>
+
+text \<open>Clause (i) is free: @{thm [source] pfut_zero} says the rebased future
+  starts at \<open>0\<close> no matter where the path was at time \<open>r\<close>, so the initial
+  condition holds identically rather than almost surely.\<close>
+
+lemma pfut_law_start:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "AE w in pair_law_of (T - r) (pfut r T) (uniform_measure P A).
+      fst (w 0) = 0 \<and> snd (w 0) = 0"
+proof -
+  let ?S = "T - r"
+  let ?M = "uniform_measure P A"
+  let ?B = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have setsM: "sets ?M = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))" using setsP by simp
+  have phim: "pfut r T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule pfut_measurable_law[OF r rT setsM])
+  have ev: "(\<lambda>w :: 'n pairpath. w 0) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have mset: "{w \<in> space ?B. fst (w 0) = 0 \<and> snd (w 0) = 0} \<in> sets ?B"
+  proof -
+    have "{w \<in> space ?B. fst (w 0) = 0 \<and> snd (w 0) = 0}
+        = (\<lambda>w :: 'n pairpath. w 0) -` {(0, 0)} \<inter> space ?B"
+      by (auto simp: prod_eq_iff)
+    then show ?thesis using measurable_sets[OF ev] by simp
+  qed
+  have iff: "(AE w in pair_law_of ?S (pfut r T) ?M. fst (w 0) = 0 \<and> snd (w 0) = 0)
+      = (AE \<omega> in ?M. fst (pfut r T \<omega> 0) = 0 \<and> snd (pfut r T \<omega> 0) = 0)"
+    unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+  have "AE \<omega> in ?M. fst (pfut r T \<omega> 0) = 0 \<and> snd (pfut r T \<omega> 0) = 0"
+    by (rule AE_I2) (simp add: pfut_zero[OF Tr])
+  then show ?thesis unfolding iff .
+qed
+
+text \<open>Clause (ii) is inheritance: the future's increment over \<open>[p,q]\<close> IS the
+  path's increment over \<open>[r+p, r+q]\<close>, the base point cancelling, and the two
+  time spans agree.\<close>
+
+lemma pfut_law_diffquot:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and AM: "A \<in> sets P"
+    and cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  shows "AE w in pair_law_of (T - r) (pfut r T) (uniform_measure P A).
+      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> sconstraint k L"
+proof (rule paper_pair_class_diffquot_of_pairs[OF sets_pair_law_of])
+  let ?S = "T - r"
+  let ?M = "uniform_measure P A"
+  let ?B = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  fix p q :: real
+  assume pq: "p \<in> {0..?S}" "q \<in> {0..?S}" "p < q"
+  have setsM: "sets ?M = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))" using setsP by simp
+  have phim: "pfut r T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule pfut_measurable_law[OF r rT setsM])
+  have mm: "{w \<in> space ?B.
+      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L} \<in> sets ?B"
+    using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
+    by (simp add: space_borel_of)
+  have iff: "(AE w in pair_law_of ?S (pfut r T) ?M.
+        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L)
+      = (AE \<omega> in ?M. (1 / (q - p))
+          *\<^sub>R (snd (pfut r T \<omega> q) - snd (pfut r T \<omega> p)) \<in> sconstraint k L)"
+    unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+  have covM: "AE \<omega> in ?M. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    by (rule AE_uniform_measureI[OF AM]) (use cov in \<open>auto elim: eventually_mono\<close>)
+  have "AE \<omega> in ?M. (1 / (q - p))
+      *\<^sub>R (snd (pfut r T \<omega> q) - snd (pfut r T \<omega> p)) \<in> sconstraint k L"
+  proof (rule eventually_mono[OF covM])
+    fix \<omega> :: "'n pairpath"
+    assume h: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    have rp: "0 \<le> r + p" using r pq by simp
+    have rpq: "r + p < r + q" using pq by simp
+    have rqT: "r + q \<le> T" using pq by simp
+    have "(1 / ((r + q) - (r + p)))
+        *\<^sub>R (snd (\<omega> (r + q)) - snd (\<omega> (r + p))) \<in> sconstraint k L"
+      using h rp rpq rqT by blast
+    then have "(1 / (q - p))
+        *\<^sub>R (snd (\<omega> (r + q)) - snd (\<omega> (r + p))) \<in> sconstraint k L" by simp
+    moreover have "snd (pfut r T \<omega> q) - snd (pfut r T \<omega> p)
+        = snd (\<omega> (r + q)) - snd (\<omega> (r + p))"
+      using pq by (simp add: pfut_apply)
+    ultimately show "(1 / (q - p))
+        *\<^sub>R (snd (pfut r T \<omega> q) - snd (pfut r T \<omega> p)) \<in> sconstraint k L" by simp
+  qed
+  then show "AE w in pair_law_of ?S (pfut r T) ?M.
+      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+    unfolding iff .
+qed
+
+text \<open>Clause (iii): the coordinate martingale.  Shift the clock by \<open>r\<close>
+  (@{thm [source] martingale_time_change}), subtract the value at \<open>r\<close>
+  (@{thm [source] martingale_sub_initial}), and hand the result to
+  @{thm [source] martingale_future_of_past}, which conditions on the past
+  event and pushes along \<open>pfut\<close>.\<close>
+
+lemma pfut_law_X_martingale:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and P: "P \<in> paper_pair_class k L T x"
+    and A: "A \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
+    and pos: "0 < measure P A"
+  shows "martingale (pair_law_of (T - r) (pfut r T) (uniform_measure P A))
+      (natural_filtration (pair_law_of (T - r) (pfut r T) (uniform_measure P A))
+        0 (\<lambda>v w. w v)) 0 (\<lambda>u w. fst (w (min u (T - r))))"
+proof -
+  let ?S = "T - r"
+  let ?M = "uniform_measure P A"
+  let ?Q = "pair_law_of ?S (pfut r T) ?M"
+  let ?FP = "\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have setsP: "sets P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  have Zm: "(\<lambda>w :: 'n pairpath. fst (w (min u ?S)))
+      \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
+    if u: "0 \<le> u" for u
+  proof (rule measurable_compose[OF _ measurable_fst_borel])
+    show "(\<lambda>w :: 'n pairpath. w (min u ?S))
+        \<in> natural_filtration ?Q 0 (\<lambda>v w. w v) u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u Tr in auto)
+  qed
+  have MGX: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+    by (rule paper_pair_class_X_martingale[OF P])
+  have s0: "0 \<le> r + min u ?S" if "0 \<le> u" for u :: real using r Tr that by simp
+  have smono: "r + min u ?S \<le> r + min v ?S" if "0 \<le> u" "u \<le> v" for u v :: real
+    using that by simp
+  have mg1: "martingale P ?FP 0 (\<lambda>u \<omega>. fst (\<omega> (min (r + min u ?S) T)))"
+    by (rule martingale_time_change[OF MGX s0 smono])
+  have eqmin: "min (r + min u ?S) T = r + min u ?S" for u :: real
+  proof -
+    have "min u ?S \<le> ?S" by simp
+    then have "r + min u ?S \<le> T" by simp
+    then show ?thesis by simp
+  qed
+  have mg2: "martingale P ?FP 0 (\<lambda>u \<omega>. fst (\<omega> (r + min u ?S)))"
+    using mg1 by (simp add: eqmin)
+  have mg3: "martingale P ?FP 0
+      (\<lambda>u \<omega>. fst (\<omega> (r + min u ?S)) - fst (\<omega> (r + min 0 ?S)))"
+    by (rule martingale_sub_initial[OF mg2])
+  have mg: "martingale P ?FP 0 (\<lambda>u \<omega>. fst (pfut r T \<omega> (min u ?S)))"
+  proof (rule martingale_cong_ge[OF mg3])
+    fix u :: real assume u: "0 \<le> u"
+    have m: "min u ?S \<in> {0..?S}" using u Tr by simp
+    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (r + min u ?S)) - fst (\<omega> (r + min 0 ?S)))
+        = (\<lambda>\<omega>. fst (pfut r T \<omega> (min u ?S)))"
+    proof (rule ext)
+      fix \<omega> :: "'n pairpath"
+      have "fst (pfut r T \<omega> (min u ?S)) = fst (\<omega> (r + min u ?S)) - fst (\<omega> r)"
+        by (rule pfut_fst[OF m])
+      then show "fst (\<omega> (r + min u ?S)) - fst (\<omega> (r + min 0 ?S))
+          = fst (pfut r T \<omega> (min u ?S))" using Tr by simp
+    qed
+  qed
+  show ?thesis
+    by (rule martingale_future_of_past[OF r rT setsP PS A pos Zm mg])
+qed
+
 end
