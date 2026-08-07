@@ -34,6 +34,7 @@
 
 theory Paper_Bridge
   imports Paper_Class Section_2_Usc
+    "Levy_Prokhorov_Metric.Space_of_Finite_Measures"
 begin
 
 section \<open>Extracting the pointwise constraint from a market witness\<close>
@@ -12043,6 +12044,67 @@ proof -
       = paper_v k L T K y" for y
     using sopt[of y] supeq[of y] by simp
   show ?thesis by (rule that[OF smW sC shiftmem sval])
+qed
+
+section \<open>The optimizer as a Giry-monad kernel\<close>
+
+text \<open>Step (iii)'s prerequisite.  Kernel pasting glues with the Giry
+  monad's @{term bind}, which wants the continuation as a measurable map
+  into @{term prob_algebra} --- the measurable space of probability
+  measures --- not merely into the Borel algebra of the weak topology.
+  The AFP supplies the bridge: on a POLISH space the two agree once one
+  restricts to probability measures with the right \<open>sets\<close>
+  (@{thm [source] weak_conv_topology_eq_prob_algebra}), and that is where
+  the selector lands anyway.\<close>
+
+lemma Polish_space_path_metric:
+  "Polish_space (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
+  unfolding mtopology_of_def
+  by (rule Metric_space.Polish_space_mtopology
+      [OF Metric_space_mspace_mdist path_metric_polish(1) path_metric_polish(2)])
+
+theorem paper_v_measurable_selector_kernel:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+  obtains S where
+    "S \<in> borel \<rightarrow>\<^sub>M prob_algebra (borel_of
+        (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    and "\<And>y. S y \<in> paper_pair_class k L T 0"
+    and "\<And>y. pshift_law T y (S y) \<in> paper_pair_class k L T y"
+    and "\<And>y. ess_inf_time (pshift_law T y (S y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = paper_v k L T K y"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?P = "{N :: ('n pairpath) measure. prob_space N
+      \<and> sets N = sets (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric)))}"
+  obtain S where Sm: "S \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
+    and SC: "\<And>y. S y \<in> paper_pair_class k L T 0"
+    and Sshift: "\<And>y. pshift_law T y (S y) \<in> paper_pair_class k L T y"
+    and Sval: "\<And>y. ess_inf_time (pshift_law T y (S y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = paper_v k L T K y"
+    by (rule paper_v_measurable_selector[where k = k, OF T L K]) blast
+  have SP: "S y \<in> ?P" for y
+    using paper_pair_class_prob[OF SC] paper_pair_class_sets[OF SC] by simp
+  have polish: "Polish_space (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    by (rule Polish_space_path_metric)
+  have setsPA: "sets (borel_of (subtopology ?W ?P)) = sets (prob_algebra ?B)"
+    by (rule weak_conv_topology_eq_prob_algebra[OF polish])
+  have r1: "S \<in> borel \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?P"
+    by (rule measurable_restrict_space2[OF _ Sm]) (use SP in auto)
+  have r2: "S \<in> borel \<rightarrow>\<^sub>M borel_of (subtopology ?W ?P)"
+    using r1 by (simp add: borel_of_subtopology)
+  have Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
+    using r2 measurable_cong_sets[OF refl setsPA] by blast
+  show ?thesis
+  proof (rule that)
+    show "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B" by (rule Sk)
+    show "S y \<in> paper_pair_class k L T 0" for y by (rule SC)
+    show "pshift_law T y (S y) \<in> paper_pair_class k L T y" for y by (rule Sshift)
+    show "ess_inf_time (pshift_law T y (S y)) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        = paper_v k L T K y" for y by (rule Sval)
+  qed
 qed
 
 end
