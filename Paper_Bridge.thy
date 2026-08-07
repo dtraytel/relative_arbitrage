@@ -13822,4 +13822,199 @@ proof (rule SUP_least)
     by (rule paper_v_dpp_ge[OF r rT L1 K])
 qed
 
+subsection \<open>The \<open>\<le>\<close> half of (2.9), reduced to conditioning\<close>
+
+text \<open>Off the survival event the horizon cap at \<open>r\<close> is invisible: a path that
+  has already left \<open>K\<close> by time \<open>r\<close> has the same exit time whichever horizon it
+  is measured against.  Note the event is \<open>\<not> (pexit r K f = r \<and> f r \<in> K)\<close>,
+  which is genuinely weaker than \<open>pexit r K f < r\<close> --- a path may exit exactly
+  AT \<open>r\<close>, and @{thm [source] pexit_stable_above_T} does not cover that case.\<close>
+
+lemma pexit_cap_eq:
+  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and ex: "\<not> (pexit r K f = r \<and> f r \<in> K)"
+  shows "pexit T K f = pexit r K f"
+proof (cases "pexit r K f < r")
+  case True
+  then show ?thesis by (rule pexit_stable_above_T[OF r rT])
+next
+  case False
+  then have eqr: "pexit r K f = r" using pexit_le_T[OF r, of K f] by simp
+  with ex have nk: "f r \<in> - K" by simp
+  show ?thesis
+  proof (rule antisym)
+    have "pexit T K f \<le> r"
+      unfolding pexit_def using r rT nk by (intro etime_le_of_mem) auto
+    then show "pexit T K f \<le> pexit r K f" using eqr by simp
+    show "pexit r K f \<le> pexit T K f" by (rule pexit_mono_T[OF r rT])
+  qed
+qed
+
+text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a SINGLE statement about
+  conditioning, and no other property of the class is needed:
+
+  \begin{quote}
+  if the exit time of \<open>P \<in> \<P>\<^sub>x\<close> is almost surely at least \<open>c\<close>, then almost
+  surely ON THE SURVIVAL EVENT \<open>{r \<le> \<tau>\<^sub>K}\<close> the value at the position reached
+  is at least the time still to run, \<open>c - r\<close>.
+  \end{quote}
+
+  That is exactly the statement that the conditional law of the future given
+  \<open>\<F>\<^sub>r\<close> is, almost surely, a member of the class started at \<open>X\<^sub>r\<close>, so that its
+  own essential infimum is bounded by \<open>v(X\<^sub>r)\<close>; it is the regular conditional
+  distribution argument, and it is the only thing still missing from the
+  dynamic programming principle at a deterministic time.  Everything OFF the
+  survival event is unconditional, by @{thm [source] pexit_cap_eq}.\<close>
+
+theorem paper_v_dpp_le_of_cond:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
+    and cond: "\<And>P c. P \<in> paper_pair_class k L T x \<Longrightarrow>
+        (AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))) \<Longrightarrow>
+        (AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+            \<longrightarrow> c \<le> r + enn2real (paper_v k L (T - r) K (fst (\<omega> r))))"
+  shows "paper_v k L T K x
+      \<le> (SUP P \<in> paper_pair_class k L T x. ess_inf_time P
+          (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)))"
+proof -
+  have rT': "r \<le> T" using rT by simp
+  have T0': "0 \<le> T" using r rT by simp
+  have key: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+      \<le> ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+             then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0))"
+    if P: "P \<in> paper_pair_class k L T x" for P :: "('n pairpath) measure"
+  proof -
+    have PP: "prob_space P" by (rule paper_pair_class_prob[OF P])
+    have taule: "pexit T K (\<lambda>t. fst (\<omega> t)) \<le> T" for \<omega> :: "'n pairpath"
+      by (rule pexit_le_T[OF T0'])
+    have fin: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) < \<top>"
+    proof -
+      have "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) \<le> ennreal T"
+        by (rule ess_inf_time_le_const[OF PP taule])
+      moreover have "(ennreal T :: ennreal) < \<top>" by simp
+      ultimately show ?thesis by (rule order.strict_trans1)
+    qed
+    define c where
+      "c = enn2real (ess_inf_time P (\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))))"
+    have ceq: "ennreal c = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+      unfolding c_def by (rule ennreal_enn2real[OF fin])
+    have aeT: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+    proof (rule eventually_mono[OF ess_inf_time_AE
+        [of P "\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))"]])
+      fix \<omega> :: "'n pairpath"
+      assume "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+          \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+      then have "ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))" using ceq by simp
+      then show "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+        using pexit_nonneg[OF T0', of K "\<lambda>t. fst (\<omega> t)"] by simp
+    qed
+    have aeS: "AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+        \<longrightarrow> c \<le> r + enn2real (paper_v k L (T - r) K (fst (\<omega> r)))"
+      by (rule cond[OF P aeT])
+    have aeg: "AE \<omega> in P. c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
+        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+           then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)"
+    proof (rule eventually_mono[OF eventually_conj[OF aeT aeS]])
+      fix \<omega> :: "'n pairpath"
+      assume h: "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))
+          \<and> (pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+             \<longrightarrow> c \<le> r + enn2real (paper_v k L (T - r) K (fst (\<omega> r))))"
+      show "c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
+          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+             then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)"
+      proof (cases "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K")
+        case True
+        then have "pexit r K (\<lambda>t. fst (\<omega> t)) = r" by simp
+        moreover have "c \<le> r + enn2real (paper_v k L (T - r) K (fst (\<omega> r)))"
+          using h True by simp
+        ultimately show ?thesis using True by simp
+      next
+        case False
+        have eq: "pexit T K (\<lambda>t. fst (\<omega> t)) = pexit r K (\<lambda>t. fst (\<omega> t))"
+          by (rule pexit_cap_eq[OF r rT' False])
+        have z: "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+            then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0) = 0"
+          using False by (rule if_not_P)
+        show ?thesis using h eq z by simp
+      qed
+    qed
+    have aeE: "AE \<omega> in P. ennreal c \<le> ennreal (pexit r K (\<lambda>t. fst (\<omega> t))
+        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+           then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0))"
+    proof (rule eventually_mono[OF aeg])
+      fix \<omega> :: "'n pairpath"
+      assume "c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
+          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+             then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)"
+      then show "ennreal c \<le> ennreal (pexit r K (\<lambda>t. fst (\<omega> t))
+          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+             then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0))"
+        by (rule ennreal_leI)
+    qed
+    have "ennreal c \<le> ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+           then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0))"
+      by (rule ess_inf_timeI[OF aeE])
+    then show ?thesis unfolding ceq .
+  qed
+  have pv: "paper_v k L T K x = (SUP Q \<in> paper_pair_class k L T x.
+      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))"
+    unfolding paper_v_def ..
+  show ?thesis
+    unfolding pv
+  proof (rule SUP_least)
+    fix P :: "('n pairpath) measure"
+    assume P: "P \<in> paper_pair_class k L T x"
+    have "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        \<le> ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0))"
+      by (rule key[OF P])
+    also have "\<dots> \<le> (SUP Q \<in> paper_pair_class k L T x. ess_inf_time Q
+        (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+             then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)))"
+      using P by (rule SUP_upper)
+    finally show "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        \<le> (SUP Q \<in> paper_pair_class k L T x. ess_inf_time Q
+            (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+              + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+                 then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)))" .
+  qed
+qed
+
+text \<open>Both halves together: Eq. (2.9) at a deterministic time, modulo the
+  conditioning statement isolated above.\<close>
+
+corollary paper_v_dpp_eq_of_cond:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
+    and cond: "\<And>P c. P \<in> paper_pair_class k L T x \<Longrightarrow>
+        (AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))) \<Longrightarrow>
+        (AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+            \<longrightarrow> c \<le> r + enn2real (paper_v k L (T - r) K (fst (\<omega> r))))"
+  shows "paper_v k L T K x
+      = (SUP P \<in> paper_pair_class k L T x. ess_inf_time P
+          (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)))"
+proof (rule order.antisym)
+  show "paper_v k L T K x
+      \<le> (SUP P \<in> paper_pair_class k L T x. ess_inf_time P
+          (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)))"
+    by (rule paper_v_dpp_le_of_cond[OF r rT L1 K cond])
+  show "(SUP P \<in> paper_pair_class k L T x. ess_inf_time P
+          (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (paper_v k L (T - r) K (fst (\<omega> r))) else 0)))
+      \<le> paper_v k L T K x"
+    by (rule paper_v_dpp_sup_ge[OF r rT L1 K])
+qed
+
 end
