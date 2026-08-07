@@ -1,5 +1,5 @@
 theory Paper_DPP
-  imports Paper_Bridge
+  imports Paper_Bridge "Disintegration.Disintegration"
 begin
 
 text \<open>The dynamic programming principle of Proposition 2.4 of
@@ -2175,6 +2175,143 @@ proof -
     by (rule AE_nonpos_of_set_integral_zero[OF G integrable_minus[OF int] _ zn])
        (use fm in simp)
   show ?thesis using up dn by eventually_elim simp
+qed
+
+subsection \<open>Step (b1): the conditional law of the future given the past\<close>
+
+text \<open>The only hypothesis of AFP \<^theory>\<open>Disintegration.Disintegration\<close> that
+  is not automatic here is that the future path space is standard Borel, and
+  that is immediate: \<open>standard_borel\<close> asks for SOME Polish topology whose
+  Borel sets agree, and the path space already IS the Borel algebra of one.\<close>
+
+lemma standard_borel_path_metric:
+  "standard_borel (borel_of (mtopology_of
+      (path_metric U :: ('n::finite pairpath) metric)))"
+  unfolding standard_borel_def
+  by (intro exI[of _ "mtopology_of (path_metric U :: ('n pairpath) metric)"]
+      conjI Polish_space_path_metric refl)
+
+lemma mspace_path_metric_ne:
+  assumes U: "0 \<le> U"
+  shows "mspace (path_metric U :: ('n::finite pairpath) metric) \<noteq> {}"
+proof -
+  have "continuous_on {0..U} (\<lambda>t. (0 :: (real^'n) \<times> (real^'n^'n)))"
+    by (rule continuous_on_const)
+  then have "restrict (\<lambda>t. (0 :: (real^'n) \<times> (real^'n^'n))) {0..U}
+      \<in> mspace (path_metric U :: ('n pairpath) metric)"
+    by (rule mspace_path_metricI)
+  then show ?thesis by blast
+qed
+
+lemma standard_borel_ne_path_metric:
+  assumes U: "0 \<le> U"
+  shows "standard_borel_ne (borel_of (mtopology_of
+      (path_metric U :: ('n::finite pairpath) metric)))"
+proof -
+  have "space (borel_of (mtopology_of
+      (path_metric U :: ('n pairpath) metric))) \<noteq> {}"
+    using mspace_path_metric_ne[OF U] by (simp add: space_borel_of)
+  then show ?thesis
+    unfolding standard_borel_ne_def standard_borel_ne_axioms_def
+    using standard_borel_path_metric by blast
+qed
+
+text \<open>The regular conditional distribution itself.  Note what the AFP
+  actually delivers: \<open>disintegration\<close> constrains RECTANGLES only.  That is
+  enough, because the next step converts it to our own \<open>ksemi\<close>, for which the
+  almost-sure and integral forms are already proved.\<close>
+
+theorem paper_pair_class_rcd:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+  obtains \<kappa> where
+    "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and "\<And>A B. A \<in> sets (borel_of (mtopology_of
+            (path_metric r :: ('n pairpath) metric)))
+        \<Longrightarrow> B \<in> sets (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))
+        \<Longrightarrow> emeasure (distr P
+              (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+                \<Otimes>\<^sub>M borel_of (mtopology_of
+                  (path_metric (T - r) :: ('n pairpath) metric)))
+              (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))) (A \<times> B)
+          = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(pair_law_of r (pcut r) P))"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?Y = "borel_of (mtopology_of
+      (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  let ?\<nu> = "distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>"
+  have Tr: "0 \<le> T - r" using rT by simp
+  interpret PP: prob_space P by (rule PS)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  have setsnu: "sets ?\<nu> = sets (?X \<Otimes>\<^sub>M ?Y)" by simp
+
+  \<comment> \<open>the marginal on the past is the law of \<open>pcut r\<close>\<close>
+  have marg: "marginal_measure ?X ?Y ?\<nu> = pair_law_of r (pcut r) P"
+  proof (rule measure_eqI)
+    show "sets (marginal_measure ?X ?Y ?\<nu>) = sets (pair_law_of r (pcut r) P)"
+      by (simp add: sets_marginal_measure)
+    fix A assume "A \<in> sets (marginal_measure ?X ?Y ?\<nu>)"
+    then have AX: "A \<in> sets ?X" by (simp add: sets_marginal_measure)
+    have rect: "A \<times> space ?Y \<in> sets (?X \<Otimes>\<^sub>M ?Y)" using AX by simp
+    have "emeasure (marginal_measure ?X ?Y ?\<nu>) A = emeasure ?\<nu> (A \<times> space ?Y)"
+      by (rule emeasure_marginal_measure[OF setsnu AX])
+    also have "\<dots> = emeasure P (?\<phi> -` (A \<times> space ?Y) \<inter> space P)"
+      by (rule emeasure_distr[OF mphi rect])
+    also have "\<dots> = emeasure P (pcut r -` A \<inter> space P)"
+    proof -
+      have "?\<phi> -` (A \<times> space ?Y) \<inter> space P = pcut r -` A \<inter> space P"
+        using measurable_space[OF mfut] by auto
+      then show ?thesis by simp
+    qed
+    also have "\<dots> = emeasure (pair_law_of r (pcut r) P) A"
+      unfolding pair_law_of_def by (rule emeasure_distr[OF mcut AX, symmetric])
+    finally show "emeasure (marginal_measure ?X ?Y ?\<nu>) A
+        = emeasure (pair_law_of r (pcut r) P) A" .
+  qed
+
+  \<comment> \<open>the two locale obligations\<close>
+  have PSF: "projection_sigma_finite ?X ?Y ?\<nu>"
+    unfolding projection_sigma_finite_def
+  proof (intro conjI)
+    show "sets ?\<nu> = sets (?X \<Otimes>\<^sub>M ?Y)" by (rule setsnu)
+    have "prob_space (pair_law_of r (pcut r) P)"
+      unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+    then show "sigma_finite_measure (marginal_measure ?X ?Y ?\<nu>)"
+      unfolding marg by (rule prob_space_imp_sigma_finite)
+  qed
+  have SB: "standard_borel_ne ?Y" by (rule standard_borel_ne_path_metric[OF Tr])
+  interpret D: projection_sigma_finite_standard ?X ?Y ?\<nu>
+    unfolding projection_sigma_finite_standard_def using PSF SB by blast
+
+  obtain \<kappa> where K: "prob_kernel ?X ?Y \<kappa>"
+    and DIS: "measure_kernel.disintegration ?X ?Y \<kappa> ?\<nu>
+        (marginal_measure ?X ?Y ?\<nu>)"
+    using D.measure_disintegration by blast
+  interpret MK: measure_kernel ?X ?Y \<kappa> using K by (simp add: prob_kernel_def)
+  have Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y" using K by (simp add: prob_kernel_def')
+
+  show ?thesis
+  proof (rule that)
+    show "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y" by (rule Km)
+    show "emeasure ?\<nu> (A \<times> B)
+        = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(pair_law_of r (pcut r) P))"
+      if A: "A \<in> sets ?X" and B: "B \<in> sets ?Y" for A B
+    proof -
+      have "emeasure ?\<nu> (A \<times> B)
+          = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(marginal_measure ?X ?Y ?\<nu>))"
+        using DIS A B unfolding MK.disintegration_def by blast
+      then show ?thesis unfolding marg .
+    qed
+  qed
 qed
 
 end
