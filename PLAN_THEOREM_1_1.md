@@ -513,8 +513,37 @@ variant of machinery that already exists (`ess_inf_pexit_usc`,
 the development. A hybrid is also possible — (a) for class membership, (b)
 only to make `X_r` constant.
 
-Supporting results already proved for this section: `pfut`,
-`pfut_measurable`, `pexit_split_at_r`.
+**Already proved for this section** (2026-08-07, all green, no `sorry`):
+
+| result | content |
+|---|---|
+| `cInf_shift_real` | `Inf ((+) r ` S) = r + Inf S` |
+| `pexit_split_at_r` | on the survival event the exit time SPLITS: `pexit T K f = r + pexit (T-r) K (λs. f (r+s))`. The two exit sets are exact translates of one another, so this is an identity, not an inequality |
+| `pfut`, `pfut_apply/_zero/_fst`, `pfut_in_mspace`, `Lipschitz_pfut`, `pfut_measurable(_law)`, `pexit_pfut` | the rebased future `ω ↦ (λs. ω (r+s) - ω r)` as a **2-Lipschitz** map of path spaces (the base point is subtracted, so it counts once more) |
+| `uniform_measure_density_real`, `integral_uniform_measure_eq`, `integrable_uniform_measureI`, `set_integral_uniform_measure_eq` | the change-of-measure layer for `M(· | A)`, taking `uniform_measure` to a REAL density so `integral_density` / `integrable_density` apply |
+| **`martingale_uniform_measure`** | **the structural fact**: `A ∈ sets (F 0)` and `0 < measure M A` ⟹ every `F`-martingale under `M` is an `F`-martingale under `M(· | A)` |
+
+**What is left in route (a), concretely.**
+
+1. `paper_pair_class_future_of_past`: `pair_law_of (T-r) (pfut r T)
+   (uniform_measure P A) ∈ paper_pair_class k L (T-r) 0` for
+   `A ∈ ℱ_r`, `P A > 0`. Clauses (i)/(ii) are `AE`-inheritance through
+   `AE_density`; clause (i) is in fact automatic, since `pfut r T ω 0 = 0`
+   identically (`pfut_zero`). Clauses (iii)/(iv) are now an assembly of
+   FOUR existing lemmas and nothing else:
+   `martingale_time_change` (shift the clock by `r`, filtration
+   `ℱ_{r + min u (T-r)}`) → `martingale_sub_initial` (subtract `X_r`) →
+   `martingale_uniform_measure` (condition on `A`) → `martingale_pair_law`
+   (push along `pfut`; its `adap` hypothesis holds because
+   `pfut r T ω v = ω (r+v) - ω r` reads the path only up to `r+v`).
+2. `ℱ_r`-measurability of the survival event
+   `{ω. pexit r K (λt. fst (ω t)) = r ∧ fst (ω r) ∈ K}` — the second
+   conjunct is a coordinate, the first needs the rational reduction
+   (`Exit_Time.etime_less_iff_qtimes_open`) against path continuity.
+3. The usc-in-`K` lemma of the table above.
+4. Assembly: `pexit_split_at_r` turns `AE τ_K ≥ c` into a bound on the
+   future's exit time; `pexit_pfut` rebases it; `paper_v` at the endpoint
+   dominates by definition.
 
 ### 2.2 The DPP at a STOPPING time
 
@@ -660,6 +689,15 @@ The full list lives in the agent memory file
   a chained fact carrying schematic variables (`pexit_nonneg[OF T0]` with
   `?K ?f` still open) makes `simp` fail outright rather than ignore it —
   instantiate with `of` first.
+- **In the AFP `martingale` locale, use `sets_F_subset`, not `subalgebras`,
+  to get `A ∈ sets M` from `A ∈ sets (F i)`.** `subalgebras` plus
+  `subalgebra_def` leaves `auto` stuck on a goal that prints as if it were
+  one step away. And `prob_space_uniform_measure` has only TWO premises
+  (`emeasure M A ≠ 0`, `≠ ∞`) — supplying `A ∈ sets M` first gives
+  "OF: no unifiers".
+- **`divide_ennreal` will not fire on `1 / ennreal c`** because the literal
+  `1 :: ennreal` is not syntactically `ennreal 1`. Insert the step
+  `… = ennreal 1 / ennreal c` by hand first.
 - **`ess_inf_time_distr` is AMBIGUOUS.** `Section_2_Usc.ess_inf_time_distr`
   takes a set-measurability premise, `Value_Function.ess_inf_time_distr`
   takes `tau ∈ borel_measurable N`. `rule` picks the former and reports
