@@ -13146,4 +13146,71 @@ proof -
     by (rule paper_pair_class_weak_closed[OF T0 L0 memm gconv pl]) simp
 qed
 
+section \<open>Towards the dynamic programming principle: the pasting bound\<close>
+
+text \<open>The kernel analogue of @{thm [source] paper_v_paste_ge}: an
+  almost-sure lower bound on the exit time of the KERNEL glue is a lower
+  bound for @{term paper_v}.  This is what turns
+  @{thm [source] paper_pair_class_kglue_law'} into an inequality about the
+  value function, and it is the step the \<open>\<ge>\<close> half of (2.9) is built on.\<close>
+
+theorem paper_v_kpaste_ge:
+  fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+    and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and T0: "0 < T" and L1: "1 \<le> L"
+    and K: "closed K"
+    and Q: "Q \<in> paper_pair_class k L r x"
+    and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
+        \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+            (paper_pair_class k L (T - r) (0::real^'n))
+            (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
+              (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
+    and Kc: "\<And>\<omega>. Kr \<omega> \<in> paper_pair_class k L (T - r) 0"
+    and stay: "AE p in ksemi Q (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric))) Kr.
+        c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
+  shows "ennreal c \<le> paper_v k L T K x"
+proof -
+  let ?MR = "borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?S = "ksemi Q ?MR Kr"
+  have T0': "0 \<le> T" using T0 by simp
+  have rT': "r \<le> T" using rT by simp
+  have PQ: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+  interpret PQ: prob_space Q by (rule PQ)
+  have ne: "space Q \<noteq> {}" by (rule PQ.not_empty)
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric r :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have G: "kglue_law' r T Kr Q \<in> paper_pair_class k L T x"
+    by (rule paper_pair_class_kglue_law'[OF r rT L1 T0 Q Kp Kb Kc])
+  have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?BT"
+    by (rule pexit_path_measurable[OF T0' K refl])
+  have mset: "{\<omega> \<in> space ?BT.
+      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?BT"
+    using tauT by measurable
+  have pm: "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> ?S \<rightarrow>\<^sub>M ?BT"
+    by (rule kglue_law'_measurable[OF r rT' setsQ Kp ne])
+  have iff: "(AE \<omega> in kglue_law' r T Kr Q.
+        ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))
+      = (AE p in ?S. ennreal c
+          \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))))"
+    unfolding kglue_law'_def pair_law_of_def by (rule AE_distr_iff[OF pm mset])
+  have "AE p in ?S. ennreal c
+      \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t)))"
+    using stay by (auto intro: ennreal_leI elim: eventually_mono)
+  then have ae: "AE \<omega> in kglue_law' r T Kr Q.
+      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+    unfolding iff .
+  have "ennreal c
+      \<le> ess_inf_time (kglue_law' r T Kr Q) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+    unfolding ess_inf_time_def using ae by (intro Sup_upper) simp
+  also have "\<dots> \<le> paper_v k L T K x"
+    unfolding paper_v_def using G by (intro Sup_upper imageI)
+  finally show ?thesis .
+qed
+
 end
