@@ -3022,4 +3022,43 @@ lemma measurable_integral_kernel:
 lemma subalgebra_self: "subalgebra M M"
   by (simp add: subalgebra_def)
 
+text \<open>The workhorse of (b3), at the \<open>ksemi\<close> level.  If every RECTANGLE
+  integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes, then the kernel's own integral of
+  \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes almost everywhere.  It isolates exactly the two things
+  the path-specific part has to supply: integrability, and the vanishing of
+  the rectangle integrals --- which for the martingale clauses is precisely
+  @{thm [source] martingale.set_integral_eq} applied to \<open>P\<close>.\<close>
+
+lemma AE_kernel_integral_zero:
+  fixes h :: "'b \<Rightarrow> real"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+    and hm: "h \<in> borel_measurable N"
+    and A': "A' \<in> sets N"
+    and gi: "\<And>A. A \<in> sets M \<Longrightarrow> integrable (ksemi M N Kr)
+        (\<lambda>p. indicator A (fst p) * (indicator A' (snd p) * h (snd p)))"
+    and fi: "integrable M (\<lambda>\<omega>. \<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>))"
+    and z: "\<And>A. A \<in> sets M \<Longrightarrow> (\<integral>p. indicator A (fst p)
+        * (indicator A' (snd p) * h (snd p)) \<partial>(ksemi M N Kr)) = 0"
+  shows "AE \<omega> in M. (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)) = 0"
+proof -
+  have hm': "(\<lambda>\<omega>'. indicator A' \<omega>' * h \<omega>') \<in> borel_measurable N"
+    using hm A' by measurable
+  have fmeas: "(\<lambda>\<omega>. \<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+    by (rule measurable_integral_kernel[OF K hm'])
+  have zz: "set_lebesgue_integral M A
+      (\<lambda>\<omega>. \<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)) = 0" if A: "A \<in> sets M" for A
+  proof -
+    have "set_lebesgue_integral M A (\<lambda>\<omega>. \<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>))
+        = (\<integral>\<omega>. indicator A \<omega> * (\<integral>\<omega>'. indicator A' \<omega>' * h \<omega>' \<partial>(Kr \<omega>)) \<partial>M)"
+      unfolding set_lebesgue_integral_def by simp
+    also have "\<dots> = (\<integral>p. indicator A (fst p)
+        * (indicator A' (snd p) * h (snd p)) \<partial>(ksemi M N Kr))"
+      by (rule integral_ksemi_rect_real[OF K ne hm A A' gi[OF A], symmetric])
+    also have "\<dots> = 0" by (rule z[OF A])
+    finally show ?thesis .
+  qed
+  show ?thesis
+    by (rule AE_zero_of_set_integral_zero[OF subalgebra_self fi fmeas zz])
+qed
+
 end
