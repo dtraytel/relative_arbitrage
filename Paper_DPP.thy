@@ -3005,4 +3005,21 @@ proof -
     using integral_ksemi_real[OF K gm gi ne msec] by (simp add: inner)
 qed
 
+text \<open>Two small facts used repeatedly in what follows: the map
+  \<open>\<omega> \<mapsto> \<integral> h d(Kr \<omega>)\<close> is measurable when the integrand does not depend on \<open>\<omega>\<close>,
+  and every measure is a subalgebra of itself --- which is the form
+  @{thm [source] AE_zero_of_set_integral_zero} gets applied in, the
+  \<open>\<G>\<close>-measurability being supplied by the kernel rather than by a genuine
+  sub-\<sigma>-algebra.\<close>
+
+lemma measurable_integral_kernel:
+  fixes h :: "'b \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and hm: "h \<in> borel_measurable N"
+  shows "(\<lambda>\<omega>. \<integral>\<omega>'. h \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+  by (rule measurable_compose[OF measurable_prob_algebraD[OF K]
+      integral_measurable_subprob_algebra[OF hm]])
+
+lemma subalgebra_self: "subalgebra M M"
+  by (simp add: subalgebra_def)
+
 end
