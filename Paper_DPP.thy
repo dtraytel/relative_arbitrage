@@ -4798,4 +4798,277 @@ proof -
   qed
 qed
 
+subsection \<open>Clause (iv) for the conditional law\<close>
+
+text \<open>The clause-(iv) twin of
+  @{thm [source] pfut_rcd_X_increment_zero}.  Two differences, both
+  bookkeeping: the \<open>P\<close>-side martingale is
+  @{thm [source] paper_pair_class_pfut_comp_martingale}, which lives in the
+  SHIFTED filtration and is therefore read at times \<open>i, j\<close> rather than
+  \<open>r+i, r+j\<close> (the two agree, since \<open>?FP i = \<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> for \<open>i \<le> T-r\<close>); and the
+  component is a MATRIX entry, so the bounded-linear map is
+  @{thm [source] bounded_linear_vec_nth} composed with itself.\<close>
+
+lemma pfut_rcd_comp_increment_zero:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+    and K: "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+    and mg: "martingale P
+        (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
+        (\<lambda>u \<omega>. outerp (fst (pfut r T \<omega> (min u (T - r))))
+            - snd (pfut r T \<omega> (min u (T - r))))"
+    and i0: "0 \<le> i" and ij: "i \<le> j" and jS: "j \<le> T - r"
+    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) i)"
+  shows "AE p' in pair_law_of r (pcut r) P.
+      (\<integral>w. indicator A' w
+        * ((outerp (fst (w j)) - snd (w j)
+            - (outerp (fst (w i)) - snd (w i))) $ c $ d) \<partial>(\<kappa> p')) = 0"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?S = "T - r"
+  let ?Y = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  let ?FP = "\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)"
+  let ?Zf = "\<lambda>u \<omega> :: 'n pairpath. outerp (fst (pfut r T \<omega> (min u ?S)))
+      - snd (pfut r T \<omega> (min u ?S))"
+  let ?h = "\<lambda>w :: 'n pairpath. (outerp (fst (w j)) - snd (w j)
+      - (outerp (fst (w i)) - snd (w i))) $ c $ d"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have iS: "i \<le> ?S" using ij jS by simp
+  have i0S: "i \<in> {0..?S}" using i0 iS by simp
+  have j0S: "j \<in> {0..?S}" using i0 ij jS by simp
+  have mi: "min i ?S = i" using iS by simp
+  have mj: "min j ?S = j" using jS by simp
+  interpret PP: prob_space P by (rule PS)
+  interpret Mg: martingale P ?FP 0 ?Zf by (rule mg)
+  have bl: "bounded_linear (\<lambda>M :: real^'n^'n. M $ c $ d)"
+    by (rule bounded_linear_compose[OF bounded_linear_vec_nth
+        bounded_linear_vec_nth])
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using K measurable_cong_sets[OF setsQ refl] by blast
+  have A'Y: "A' \<in> sets ?Y"
+    using A' sets_natural_filtration_path_subset[of ?S i] by blast
+
+  have SQY: "sets (?Q \<Otimes>\<^sub>M ?Y) = sets (?X \<Otimes>\<^sub>M ?Y)"
+    by (rule sets_pair_measure_cong[OF setsQ refl])
+  have eq': "distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi> = ksemi ?Q ?Y \<kappa>"
+  proof -
+    have "distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi> = distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>"
+      by (rule distr_cong[OF refl SQY]) simp
+    then show ?thesis unfolding eq .
+  qed
+  have mphi': "?\<phi> \<in> P \<rightarrow>\<^sub>M ?Q \<Otimes>\<^sub>M ?Y"
+    using mphi measurable_cong_sets[OF refl SQY[symmetric]] by blast
+
+  \<comment> \<open>the integrand\<close>
+  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?Y" for u
+    by (rule pair_law_eval_measurable[OF refl])
+  have compm: "(\<lambda>w :: 'n pairpath. outerp (fst (w u)) - snd (w u))
+      \<in> borel_measurable ?Y" for u
+  proof -
+    have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w u))) \<in> borel_measurable ?Y"
+      by (rule measurable_compose
+          [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
+    have m2: "(\<lambda>w :: 'n pairpath. snd (w u)) \<in> borel_measurable ?Y"
+      by (rule measurable_compose[OF ev measurable_snd_borel])
+    show ?thesis by (rule borel_measurable_diff[OF m1 m2])
+  qed
+  have entm: "(\<lambda>M :: real^'n^'n. M $ c $ d) \<in> borel_measurable borel"
+    by (rule borel_measurable_continuous_onI) (rule linear_continuous_on[OF bl])
+  have hm: "?h \<in> borel_measurable ?Y"
+  proof -
+    have "(\<lambda>w :: 'n pairpath. (outerp (fst (w j)) - snd (w j))
+        - (outerp (fst (w i)) - snd (w i))) \<in> borel_measurable ?Y"
+      by (rule borel_measurable_diff[OF compm compm])
+    from measurable_compose[OF this entm] show ?thesis by simp
+  qed
+
+  \<comment> \<open>the shifted compensated process, and its integrability under \<open>P\<close>\<close>
+  have hP: "(\<lambda>\<omega> :: 'n pairpath. ?h (snd (?\<phi> \<omega>)))
+      = (\<lambda>\<omega>. (?Zf j \<omega> - ?Zf i \<omega>) $ c $ d)"
+    by (rule ext) (simp add: mi mj)
+  have hi: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?h (snd (?\<phi> \<omega>)))"
+    unfolding hP
+    by (rule integrable_bounded_linear[OF bl
+        Bochner_Integration.integrable_diff[OF Mg.integrable Mg.integrable]])
+       (use i0 ij jS in simp_all)
+  have hsnd: "integrable (ksemi ?Q ?Y \<kappa>) (\<lambda>p. ?h (snd p))"
+  proof -
+    have hm2: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?h (snd p))
+        \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?Y)"
+      by (rule measurable_compose[OF measurable_snd hm])
+    have "integrable (distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi>) (\<lambda>p. ?h (snd p))"
+      unfolding integrable_distr_eq[OF mphi' hm2] by (rule hi)
+    then show ?thesis unfolding eq' .
+  qed
+
+  \<comment> \<open>the three hypotheses of @{thm [source] AE_kernel_integral_zero}\<close>
+  have gi: "integrable (ksemi ?Q ?Y \<kappa>)
+      (\<lambda>p. indicator A (fst p) * (indicator A' (snd p) * ?h (snd p)))"
+    if A: "A \<in> sets ?Q" for A
+  proof (rule integrable_ksemi_of_distr_rect)
+    show "ksemi ?Q ?Y \<kappa> = distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi>" by (rule eq'[symmetric])
+    show "?\<phi> \<in> P \<rightarrow>\<^sub>M ?Q \<Otimes>\<^sub>M ?Y" by (rule mphi')
+    show "?h \<in> borel_measurable ?Y" by (rule hm)
+    show "A \<in> sets ?Q" by (rule A)
+    show "A' \<in> sets ?Y" by (rule A'Y)
+    show "integrable P (\<lambda>\<omega> :: 'n pairpath. ?h (snd (?\<phi> \<omega>)))" by (rule hi)
+  qed
+  have fi: "integrable ?Q (\<lambda>p'. \<integral>w. indicator A' w * ?h w \<partial>(\<kappa> p'))"
+    by (rule integrable_kernel_integral[OF KQ neQ hm A'Y hsnd])
+  have z: "(\<integral>p. indicator A (fst p) * (indicator A' (snd p) * ?h (snd p))
+        \<partial>(ksemi ?Q ?Y \<kappa>)) = 0"
+    if A: "A \<in> sets ?Q" for A
+  proof -
+    have AX: "A \<in> sets ?X" using A setsQ by simp
+    have Sfilt: "?\<phi> -` (A \<times> A') \<inter> space P \<in> sets (?FP i)"
+      using rect_vimage_natural_filtration[OF r rT setsP i0 iS AX A'] mi by simp
+    have SP: "?\<phi> -` (A \<times> A') \<inter> space P \<in> sets P"
+      using Mg.sets_F_subset[OF i0] Sfilt by blast
+    have veq: "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P) (?Zf i)
+        = set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P) (?Zf j)"
+      by (rule Mg.set_integral_eq[OF Sfilt i0 ij])
+    have comp: "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
+          (\<lambda>\<omega> :: 'n pairpath. ?Zf i \<omega> $ c $ d)
+        = set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
+          (\<lambda>\<omega>. ?Zf j \<omega> $ c $ d)"
+      unfolding set_integral_mat_component[OF SP Mg.integrable[OF i0]]
+        set_integral_mat_component[OF SP Mg.integrable[OF order_trans[OF i0 ij]]]
+      using veq by simp
+    have si: "set_integrable P (?\<phi> -` (A \<times> A') \<inter> space P)
+        (\<lambda>\<omega> :: 'n pairpath. ?Zf u \<omega> $ c $ d)" if u: "0 \<le> u" for u
+    proof -
+      have "integrable P (\<lambda>\<omega> :: 'n pairpath. ?Zf u \<omega> $ c $ d)"
+        by (rule integrable_bounded_linear[OF bl Mg.integrable[OF u]])
+      then show ?thesis
+        unfolding set_integrable_def by (rule integrable_mult_indicator[OF SP])
+    qed
+    have "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
+          (\<lambda>\<omega> :: 'n pairpath. ?Zf j \<omega> $ c $ d - ?Zf i \<omega> $ c $ d)
+        = set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
+            (\<lambda>\<omega>. ?Zf j \<omega> $ c $ d)
+          - set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
+            (\<lambda>\<omega>. ?Zf i \<omega> $ c $ d)"
+      by (rule set_integral_diff(2)[OF si[OF order_trans[OF i0 ij]] si[OF i0]])
+    also have "\<dots> = 0" using comp by simp
+    finally have zero: "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
+        (\<lambda>\<omega> :: 'n pairpath. ?h (snd (?\<phi> \<omega>))) = 0"
+      unfolding hP by simp
+    show ?thesis
+      unfolding integral_ksemi_rect_of_set_integral
+        [OF eq'[symmetric] mphi' hm A A'Y]
+      using zero .
+  qed
+  show ?thesis by (rule AE_kernel_integral_zero[OF KQ neQ hm A'Y gi fi z])
+qed
+
+lemma pfut_rcd_comp_integrable:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and PS: "prob_space P"
+    and K: "\<kappa> \<in> borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric (T - r) :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi (pair_law_of r (pcut r) P)
+            (borel_of (mtopology_of
+              (path_metric (T - r) :: ('n pairpath) metric))) \<kappa>"
+    and mg: "martingale P
+        (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
+        (\<lambda>u \<omega>. outerp (fst (pfut r T \<omega> (min u (T - r))))
+            - snd (pfut r T \<omega> (min u (T - r))))"
+    and u: "u \<in> {0..T - r}"
+  shows "AE p' in pair_law_of r (pcut r) P.
+      integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. outerp (fst (w u)) - snd (w u))"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?S = "T - r"
+  let ?Y = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  let ?FP = "\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)"
+  let ?Zf = "\<lambda>u \<omega> :: 'n pairpath. outerp (fst (pfut r T \<omega> (min u ?S)))
+      - snd (pfut r T \<omega> (min u ?S))"
+  let ?g = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath).
+      outerp (fst (snd p u)) - snd (snd p u)"
+  have u0: "0 \<le> u" using u by simp
+  have mu: "min u ?S = u" using u by simp
+  interpret PP: prob_space P by (rule PS)
+  interpret Mg: martingale P ?FP 0 ?Zf by (rule mg)
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using K measurable_cong_sets[OF setsQ refl] by blast
+  have SQY: "sets (?Q \<Otimes>\<^sub>M ?Y) = sets (?X \<Otimes>\<^sub>M ?Y)"
+    by (rule sets_pair_measure_cong[OF setsQ refl])
+  have eq': "distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi> = ksemi ?Q ?Y \<kappa>"
+  proof -
+    have "distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi> = distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>"
+      by (rule distr_cong[OF refl SQY]) simp
+    then show ?thesis unfolding eq .
+  qed
+  have mphi': "?\<phi> \<in> P \<rightarrow>\<^sub>M ?Q \<Otimes>\<^sub>M ?Y"
+    using mphi measurable_cong_sets[OF refl SQY[symmetric]] by blast
+  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?Y"
+    by (rule pair_law_eval_measurable[OF refl])
+  have compm: "(\<lambda>w :: 'n pairpath. outerp (fst (w u)) - snd (w u))
+      \<in> borel_measurable ?Y"
+  proof -
+    have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w u))) \<in> borel_measurable ?Y"
+      by (rule measurable_compose
+          [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
+    have m2: "(\<lambda>w :: 'n pairpath. snd (w u)) \<in> borel_measurable ?Y"
+      by (rule measurable_compose[OF ev measurable_snd_borel])
+    show ?thesis by (rule borel_measurable_diff[OF m1 m2])
+  qed
+  have gm: "?g \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?Y)"
+    by (rule measurable_compose[OF measurable_snd compm])
+  have gP: "(\<lambda>\<omega> :: 'n pairpath. ?g (?\<phi> \<omega>)) = ?Zf u"
+    by (rule ext) (simp add: mu)
+  have gi: "integrable (ksemi ?Q ?Y \<kappa>) ?g"
+  proof -
+    have "integrable P (\<lambda>\<omega> :: 'n pairpath. ?g (?\<phi> \<omega>))"
+      unfolding gP by (rule Mg.integrable[OF u0])
+    then have "integrable (distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi>) ?g"
+      unfolding integrable_distr_eq[OF mphi' gm] .
+    then show ?thesis unfolding eq' .
+  qed
+  have "AE p' in ?Q. integrable (\<kappa> p') (\<lambda>w. ?g (p', w))"
+    by (rule AE_integrable_ksemi_section[OF KQ gm gi neQ])
+  then show ?thesis by simp
+qed
+
 end
