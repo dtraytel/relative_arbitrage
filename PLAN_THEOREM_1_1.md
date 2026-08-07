@@ -397,6 +397,19 @@ there does θ have to be a genuine stopping time (the integrand must be
 measurable for `ess_inf_time`, and the construction glues at θ). The paper's
 §3.2 (supersolution) needs it at `τ_{B_ε}`.
 
+**The `≥` half is now down to ONE statement — `paper_v_dpp_sup_ge_time_of_const`**
+(2026-08-08). The passage from a constant lower bound to the essential
+infimum never used determinism of the time: it needs only that the integrand
+lies in `[0, T]`, which holds for ANY `θ` with `0 ≤ θ ω ≤ T` — no
+measurability, no stopping-time property. So
+
+    (⋀P c. P ∈ 𝒫ₓ ⟹ (AE ω in P. c ≤ integrand_θ ω) ⟹ ennreal c ≤ paper_v k L T K x)
+      ⟹ (SUP P ∈ 𝒫ₓ. ess_inf_time P integrand_θ) ≤ paper_v k L T K x
+
+is proved, mirroring how `paper_v_dpp_le_of_cond` isolated the `≤` half.
+**Discharge that hypothesis and §2.1 is closed.** Do not restate the SUP
+form; state and prove the constant form and feed it in.
+
 **The construction to build, concretely.** It does NOT need a new pasting
 theorem at a random time. A stopping time with FINITELY many values
 `t_1 < … < t_m` reduces to `m` applications of the FIXED-time
@@ -424,6 +437,7 @@ Pieces already in place, and what each still needs:
 | `kernel_mix_measurable` — optimal on `A`, conditional law off it | **DONE** |
 | `kglue_law'_rcd_eq` — gluing a law onto its OWN r.c.d. returns the law | **DONE** |
 | **`paper_pair_class_kglue_mixed`** — the one-step engine: the mixed glue at a fixed `r` is again a class member | **DONE** |
+| **`paper_v_dpp_sup_ge_time_of_const`** — SUP form at a random time ⟸ constant form; the whole remaining obligation is now that one hypothesis | **DONE** |
 | the induction over the values of a simple stopping time | **open — this is the next thing to build.** The engine is in place; what it needs is the bookkeeping. Glue at `t_1, …, t_m` in turn with `A_j = {θ = t_j}`; `θ` is PRESERVED by each step, because gluing at `t_j` changes only the future of paths in `{θ = t_j}` and that event is decided by the path up to `t_j`. The verification at the end is `pexit_pglue_dpp` (the pathwise DPP bound, §1.7) plus the selector's optimality. The delicate part is tracking "the law is unchanged off `A_j`" through the `m` steps, for which `kglue_law'_rcd_eq` is the pointwise input |
 | general θ by approximation | open, and NOT monotone: `θ_n ≥ θ` does not give `integrand_θ ≤ integrand_{θ_n}` pathwise — that inequality is essentially the DPP itself. The trick that made the `≤` half cheap does NOT transfer. Before building the general case, check whether the paper's §3.2 needs only `τ_{B_ε}`, where the ball gives more structure |
 
