@@ -523,6 +523,14 @@ only to make `X_r` constant.
 | `uniform_measure_density_real`, `integral_uniform_measure_eq`, `integrable_uniform_measureI`, `set_integral_uniform_measure_eq` | the change-of-measure layer for `M(· | A)`, taking `uniform_measure` to a REAL density so `integral_density` / `integrable_density` apply |
 | **`martingale_uniform_measure`** | **the structural fact**: `A ∈ sets (F 0)` and `0 < measure M A` ⟹ every `F`-martingale under `M` is an `F`-martingale under `M(· | A)` |
 
+**File layout (2026-08-07).** The value-function layer now lives in
+**`Paper_DPP.thy`** (imports `Paper_Bridge`): the pasting bound, the `≥`
+half of (2.9), the reduction of the `≤` half, and the conditioning layer.
+`Paper_Bridge.thy` keeps the CLASS layer and is back to ~13,100 lines. New
+DPP work goes in `Paper_DPP`. Note the PIDE session snapshots `ROOT` at
+startup, so a newly registered theory needs a server restart before it can
+be loaded — develop-and-verify in `Paper_Bridge`'s tail and move, or restart.
+
 **What is left in route (a), concretely.**
 
 1. `paper_pair_class_future_of_past`: `pair_law_of (T-r) (pfut r T)
@@ -534,8 +542,12 @@ only to make `X_r` constant.
    `martingale_time_change` (shift the clock by `r`, filtration
    `ℱ_{r + min u (T-r)}`) → `martingale_sub_initial` (subtract `X_r`) →
    `martingale_uniform_measure` (condition on `A`) → `martingale_pair_law`
-   (push along `pfut`; its `adap` hypothesis holds because
-   `pfut r T ω v = ω (r+v) - ω r` reads the path only up to `r+v`).
+   (push along `pfut`). **The last two steps are now packaged as
+   `martingale_future_of_past` (proved)**, whose `adap` side condition holds
+   because `pfut r T ω v = ω (r+v) - ω r` reads the path only up to `r+v`.
+   What is left of this item is supplying its `mg` hypothesis for the two
+   concrete processes, i.e. `martingale_time_change` at `s u = r + min u
+   (T-r)` followed by `martingale_sub_initial`, plus clauses (i)/(ii).
 2. `ℱ_r`-measurability of the survival event
    `{ω. pexit r K (λt. fst (ω t)) = r ∧ fst (ω r) ∈ K}` — the second
    conjunct is a coordinate, the first needs the rational reduction
