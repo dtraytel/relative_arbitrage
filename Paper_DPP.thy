@@ -3245,4 +3245,34 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>The companion of @{thm [source] pfut_filtration_measurable} for the
+  PAST.  Together they put \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> for
+  \<open>A\<close> in the past law's filtration and \<open>A'\<close> in the future law's at level
+  \<open>i\<close>, which is what @{thm [source] integral_ksemi_rect_of_set_integral}
+  hands to the martingale property of \<open>P\<close>.\<close>
+
+lemma pcut_filtration_measurable:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "pcut r \<in> natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u
+      \<rightarrow>\<^sub>M natural_filtration (pair_law_of r (pcut r) P) 0 (\<lambda>v w. w v) u"
+proof -
+  have phim: "pcut r \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric r :: ('n pairpath) metric))"
+    by (rule pcut_measurable[OF r rT setsP])
+  have adap: "(\<lambda>\<omega> :: 'n pairpath. pcut r \<omega> v)
+      \<in> borel_measurable (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
+    if "0 \<le> v" and "v \<le> u" for v
+    by (rule pcut_adapted[OF r setsP that])
+  have spF: "space (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) u)
+      = space P" by simp
+  show ?thesis
+    by (rule phi_filtration_measurable
+        [where FF = "\<lambda>u. natural_filtration P 0
+            (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) u" and u = u,
+         OF phim adap spF])
+qed
+
 end
