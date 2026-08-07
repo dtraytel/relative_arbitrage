@@ -1771,26 +1771,30 @@ proof -
   show ?thesis using mg1 by (simp add: eqmin)
 qed
 
-text \<open>Clause (iv) for the conditioned future law.  The decomposition is
-  @{thm [source] outerp_diff_compensated}; the three summands are the class's
-  own clause (iv) restarted at \<open>r\<close>, the cross term
-  (@{thm [source] martingale_cross_measurable}, which is where \<open>\<F>\<^sub>r\<close>-
-  measurability of \<open>X\<^sub>r\<close> is used), and an \<open>\<F>\<^sub>r\<close>-measurable constant.\<close>
+text \<open>The compensated process OF THE REBASED FUTURE, as a martingale under
+  \<open>P\<close> itself in the shifted filtration.  This is the clause-(iv) counterpart
+  of @{thm [source] paper_pair_class_shifted_X_martingale}, and it is NOT the
+  same statement: \<^const>\<open>outerp\<close> is quadratic, so the compensated process of
+  the rebased future is not the increment of the compensated process.  The
+  decomposition is @{thm [source] outerp_diff_compensated} --- the class's own
+  clause (iv) restarted at \<open>r\<close>, minus the cross term
+  (@{thm [source] martingale_cross_measurable}, which is where
+  \<open>\<F>\<^sub>r\<close>-measurability of \<open>X\<^sub>r\<close> is used), plus an \<open>\<F>\<^sub>r\<close>-measurable constant.
 
-lemma pfut_law_comp_martingale:
+  Both the positive-measure conditioning route (\<open>pfut_law_comp_martingale\<close>)
+  and the kernel route of (b3) consume it, which is why it is stated
+  separately rather than inlined.\<close>
+
+lemma paper_pair_class_pfut_comp_martingale:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L"
     and P: "P \<in> paper_pair_class k L T x"
-    and A: "A \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
-    and pos: "0 < measure P A"
-  shows "martingale (pair_law_of (T - r) (pfut r T) (uniform_measure P A))
-      (natural_filtration (pair_law_of (T - r) (pfut r T) (uniform_measure P A))
-        0 (\<lambda>v w. w v)) 0
-      (\<lambda>u w. outerp (fst (w (min u (T - r)))) - snd (w (min u (T - r))))"
+  shows "martingale P
+      (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
+      (\<lambda>u \<omega>. outerp (fst (pfut r T \<omega> (min u (T - r))))
+          - snd (pfut r T \<omega> (min u (T - r))))"
 proof -
   let ?S = "T - r"
-  let ?M = "uniform_measure P A"
-  let ?Q = "pair_law_of ?S (pfut r T) ?M"
   let ?FP = "\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)"
   have Tr: "0 \<le> ?S" using rT by simp
   have T0: "0 \<le> T" using r rT by simp
@@ -1798,32 +1802,10 @@ proof -
       (path_metric T :: ('n pairpath) metric)))"
     by (rule paper_pair_class_sets[OF P])
   have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
-  have FP0: "?FP 0 = natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r"
-    using Tr by simp
   have mem: "r + min u ?S \<in> {0..T}" if "0 \<le> u" for u :: real
   proof -
     have "min u ?S \<le> ?S" by simp
     then show ?thesis using r that Tr by simp
-  qed
-
-  \<comment> \<open>the integrand is a random variable for the natural filtration of \<open>?Q\<close>\<close>
-  have Zm: "(\<lambda>w :: 'n pairpath.
-        outerp (fst (w (min u ?S))) - snd (w (min u ?S)))
-      \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
-    if u: "0 \<le> u" for u
-  proof -
-    have ev: "(\<lambda>w :: 'n pairpath. w (min u ?S))
-        \<in> natural_filtration ?Q 0 (\<lambda>v w. w v) u \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use u Tr in auto)
-    have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u ?S))))
-        \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
-      by (rule measurable_compose
-          [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
-    have m2: "(\<lambda>w :: 'n pairpath. snd (w (min u ?S)))
-        \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
-      by (rule measurable_compose[OF ev measurable_snd_borel])
-    show ?thesis by (rule borel_measurable_diff[OF m1 m2])
   qed
 
   \<comment> \<open>(A) the class's own clause (iv), restarted at \<open>r\<close>\<close>
@@ -1927,8 +1909,7 @@ proof -
          + (\<chi> i j. fst (\<omega> r) $ i * fst (\<omega> (r + min u ?S)) $ j))
       + (outerp (fst (\<omega> r)) + snd (\<omega> r)))"
     by (rule martingale_add[OF martingale_diff[OF mgA mgB] mgC])
-  have mg: "martingale P ?FP 0 (\<lambda>u \<omega>.
-      outerp (fst (pfut r T \<omega> (min u ?S))) - snd (pfut r T \<omega> (min u ?S)))"
+  show ?thesis
   proof (rule martingale_cong_ge[OF mgABC])
     fix u :: real assume u: "0 \<le> u"
     have m: "min u ?S \<in> {0..?S}" using u Tr by simp
@@ -1954,6 +1935,67 @@ proof -
         unfolding f1 f2 by (rule outerp_diff_compensated[symmetric])
     qed
   qed
+qed
+
+text \<open>Clause (iv) for the conditioned future law.  The decomposition is
+  @{thm [source] outerp_diff_compensated}; the three summands are the class's
+  own clause (iv) restarted at \<open>r\<close>, the cross term
+  (@{thm [source] martingale_cross_measurable}, which is where \<open>\<F>\<^sub>r\<close>-
+  measurability of \<open>X\<^sub>r\<close> is used), and an \<open>\<F>\<^sub>r\<close>-measurable constant.\<close>
+
+lemma pfut_law_comp_martingale:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L"
+    and P: "P \<in> paper_pair_class k L T x"
+    and A: "A \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
+    and pos: "0 < measure P A"
+  shows "martingale (pair_law_of (T - r) (pfut r T) (uniform_measure P A))
+      (natural_filtration (pair_law_of (T - r) (pfut r T) (uniform_measure P A))
+        0 (\<lambda>v w. w v)) 0
+      (\<lambda>u w. outerp (fst (w (min u (T - r)))) - snd (w (min u (T - r))))"
+proof -
+  let ?S = "T - r"
+  let ?M = "uniform_measure P A"
+  let ?Q = "pair_law_of ?S (pfut r T) ?M"
+  let ?FP = "\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have T0: "0 \<le> T" using r rT by simp
+  have setsP: "sets P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  have FP0: "?FP 0 = natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r"
+    using Tr by simp
+  have mem: "r + min u ?S \<in> {0..T}" if "0 \<le> u" for u :: real
+  proof -
+    have "min u ?S \<le> ?S" by simp
+    then show ?thesis using r that Tr by simp
+  qed
+
+  \<comment> \<open>the integrand is a random variable for the natural filtration of \<open>?Q\<close>\<close>
+  have Zm: "(\<lambda>w :: 'n pairpath.
+        outerp (fst (w (min u ?S))) - snd (w (min u ?S)))
+      \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
+    if u: "0 \<le> u" for u
+  proof -
+    have ev: "(\<lambda>w :: 'n pairpath. w (min u ?S))
+        \<in> natural_filtration ?Q 0 (\<lambda>v w. w v) u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u Tr in auto)
+    have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u ?S))))
+        \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
+      by (rule measurable_compose
+          [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
+    have m2: "(\<lambda>w :: 'n pairpath. snd (w (min u ?S)))
+        \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
+      by (rule measurable_compose[OF ev measurable_snd_borel])
+    show ?thesis by (rule borel_measurable_diff[OF m1 m2])
+  qed
+
+  \<comment> \<open>the whole decomposition is now a lemma of its own\<close>
+  have mg: "martingale P ?FP 0 (\<lambda>u \<omega>.
+      outerp (fst (pfut r T \<omega> (min u ?S))) - snd (pfut r T \<omega> (min u ?S)))"
+    by (rule paper_pair_class_pfut_comp_martingale[OF r rT L0 P])
   show ?thesis
     by (rule martingale_future_of_past[OF r rT setsP PS A pos Zm mg])
 qed
