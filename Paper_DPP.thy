@@ -5640,4 +5640,205 @@ proof -
   then show ?thesis using sets.Int[OF s1 s2] by simp
 qed
 
+text \<open>And the conditioning statement itself --- the last obligation of
+  @{thm [source] paper_v_dpp_le_of_cond}, hence of the DPP at a deterministic
+  time.  The chain is:
+
+  \<^item> the hypothesis becomes a MEASURABLE property of the pair
+    \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, by @{thm [source] pglue_pcut_pfut};
+  \<^item> @{thm [source] AE_ksemi} disintegrates it along the r.c.d.;
+  \<^item> @{thm [source] paper_pair_class_rcd_member} says the r.c.d. lands in the
+    class at the ORIGIN, so at a fixed good \<open>p'\<close> the surviving future is a
+    class member started at \<open>0\<close> and shifted by the CONSTANT \<open>fst (p' r)\<close>;
+  \<^item> @{thm [source] paper_v_ge_of_AE_pshift} turns the almost-sure lower bound
+    on its exit time into a lower bound for \<^const>\<open>paper_v\<close> at that point.
+
+  No localization and no \<open>K\<^sub>\<epsilon>\<close>: the starting point is a single vector, which
+  is exactly what route (a) could not arrange.\<close>
+
+theorem paper_v_cond:
+  fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+    and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L" and Kc: "closed K"
+    and P: "P \<in> paper_pair_class k L T x"
+    and c: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+  shows "AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+      \<longrightarrow> c \<le> r + enn2real (paper_v k L (T - r) K (fst (\<omega> r)))"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?S = "T - r"
+  let ?Y = "borel_of (mtopology_of (path_metric ?S :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
+  let ?Surv = "\<lambda>p' :: 'n pairpath. pexit r K (\<lambda>t. fst (p' t)) = r \<and> fst (p' r) \<in> K"
+  let ?\<Phi> = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?Surv (fst p)
+      \<longrightarrow> c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
+  have Tr: "0 \<le> ?S" using rT by simp
+  have setsP: "sets P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  interpret PP: prob_space P by (rule PS)
+  have spP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsP])
+  have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
+  have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have spQ: "space ?Q = space ?X" by (rule sets_eq_imp_space_eq[OF setsQ])
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  obtain \<kappa> where Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
+    and eq: "distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi> = ksemi ?Q ?Y \<kappa>"
+    by (rule paper_pair_class_rcd_ksemi[OF r rT setsP PS])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using Km measurable_cong_sets[OF setsQ refl] by blast
+  have member: "AE p' in ?Q. \<kappa> p' \<in> paper_pair_class k L ?S 0"
+    by (rule paper_pair_class_rcd_member[OF r rT L0 P Km eq])
+
+  \<comment> \<open>the hypothesis IS a property of the pair, and a measurable one\<close>
+  have aeP: "AE \<omega> in P. ?\<Phi> (?\<phi> \<omega>)"
+  proof -
+    have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+    with c show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+        using elim spP by simp
+      have "pglue r T (pcut r \<omega>) (pfut r T \<omega>) = \<omega>"
+        by (rule pglue_pcut_pfut[OF r rT mw])
+      then show ?case using elim by simp
+    qed
+  qed
+  have Pm: "{p \<in> space (?X \<Otimes>\<^sub>M ?Y). ?\<Phi> p} \<in> sets (?X \<Otimes>\<^sub>M ?Y)"
+  proof -
+    have m1: "(\<lambda>p. pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t)))
+        \<in> borel_measurable (?X \<Otimes>\<^sub>M ?Y)"
+      by (rule pexit_pglue_measurable[OF r rT Kc])
+    have m2: "{p' \<in> space ?X. ?Surv p'} \<in> sets ?X"
+      by (rule survival_set_measurable[OF r Kc])
+    have "{p \<in> space (?X \<Otimes>\<^sub>M ?Y). ?Surv (fst p)}
+        = fst -` {p' \<in> space ?X. ?Surv p'} \<inter> space (?X \<Otimes>\<^sub>M ?Y)"
+      by (auto simp: space_pair_measure)
+    then have s1: "{p \<in> space (?X \<Otimes>\<^sub>M ?Y). ?Surv (fst p)} \<in> sets (?X \<Otimes>\<^sub>M ?Y)"
+      using measurable_sets[OF measurable_fst m2] by simp
+    have s2: "{p \<in> space (?X \<Otimes>\<^sub>M ?Y).
+        c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))}
+      \<in> sets (?X \<Otimes>\<^sub>M ?Y)" using m1 by measurable
+    have "{p \<in> space (?X \<Otimes>\<^sub>M ?Y). ?\<Phi> p}
+        = (space (?X \<Otimes>\<^sub>M ?Y) - {p \<in> space (?X \<Otimes>\<^sub>M ?Y). ?Surv (fst p)})
+          \<union> {p \<in> space (?X \<Otimes>\<^sub>M ?Y).
+              c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))}"
+      by auto
+    then show ?thesis using sets.Un[OF sets.compl_sets[OF s1] s2] by simp
+  qed
+  have aeK: "AE p' in ?Q. AE w in \<kappa> p'. ?\<Phi> (p', w)"
+  proof -
+    have "AE p in distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>. ?\<Phi> p"
+      using aeP AE_distr_iff[OF mphi Pm] by blast
+    then have ks: "AE p in ksemi ?Q ?Y \<kappa>. ?\<Phi> p" unfolding eq .
+    have Pm': "{p \<in> space (?Q \<Otimes>\<^sub>M ?Y). ?\<Phi> p} \<in> sets (?Q \<Otimes>\<^sub>M ?Y)"
+    proof -
+      have se: "sets (?Q \<Otimes>\<^sub>M ?Y) = sets (?X \<Otimes>\<^sub>M ?Y)"
+        by (rule sets_pair_measure_cong[OF setsQ refl])
+      have sp: "space (?Q \<Otimes>\<^sub>M ?Y) = space (?X \<Otimes>\<^sub>M ?Y)"
+        by (rule sets_eq_imp_space_eq[OF se])
+      show ?thesis using Pm unfolding se sp .
+    qed
+    show ?thesis using ks AE_ksemi[OF KQ Pm'] by blast
+  qed
+
+  \<comment> \<open>at a fixed good \<open>p'\<close>\<close>
+  have main: "AE p' in ?Q. ?Surv p'
+      \<longrightarrow> c \<le> r + enn2real (paper_v k L ?S K (fst (p' r)))"
+    using member aeK
+  proof eventually_elim
+    case (elim p')
+    then have RC: "\<kappa> p' \<in> paper_pair_class k L ?S 0"
+      and AK: "AE w in \<kappa> p'. ?\<Phi> (p', w)" by blast+
+    have z0: "AE w in \<kappa> p'. fst (w 0) = (0 :: real^'n) \<and> snd (w 0) = 0"
+      using RC unfolding paper_pair_class_def by blast
+    show ?case
+    proof (intro impI)
+      assume S: "?Surv p'"
+      have step: "AE w in \<kappa> p'.
+          c - r \<le> pexit ?S K (\<lambda>s. fst (pshift ?S (fst (p' r)) w s))"
+        using AK z0
+      proof eventually_elim
+        case (elim w)
+        then have Fw: "?\<Phi> (p', w)" and w0: "w 0 = 0"
+          by (auto simp: prod_eq_iff)
+        let ?g = "pglue r T p' w"
+        have gle: "?g t = p' t" if "t \<in> {0..r}" for t
+          using that r rT by (intro pglue_le) auto
+        have gsurv: "pexit r K (\<lambda>t. fst (?g t)) = r"
+        proof -
+          have "pexit r K (\<lambda>t. fst (?g t)) = pexit r K (\<lambda>t. fst (p' t))"
+            by (rule pexit_cong_on) (use gle in simp)
+          then show ?thesis using S by simp
+        qed
+        have gend: "fst (?g r) \<in> K" using gle[of r] r S by simp
+        have "pexit T K (\<lambda>t. fst (?g t)) = r + pexit ?S K (\<lambda>s. fst (?g (r + s)))"
+          by (rule pexit_split_at_r[OF r rT gsurv gend])
+        moreover have "pexit ?S K (\<lambda>s. fst (?g (r + s)))
+            = pexit ?S K (\<lambda>s. fst (pshift ?S (fst (p' r)) w s))"
+        proof (rule pexit_cong_on)
+          fix s :: real assume s: "0 \<le> s" "s \<le> ?S"
+          then have m: "s \<in> {0..?S}" by simp
+          have rt: "r + s \<in> {0..T}" using r s by simp
+          have "?g (r + s) = p' r + (w (r + s - r) - w 0)"
+            by (rule pglue_ge[OF rt]) (use r s in simp)
+          also have "\<dots> = p' r + w s" using w0 by simp
+          finally have "?g (r + s) = p' r + w s" .
+          moreover have "pshift ?S (fst (p' r)) w s
+              = (fst (p' r) + fst (w s), snd (w s))"
+            by (rule pshift_apply[OF m])
+          ultimately show "fst (?g (r + s))
+              = fst (pshift ?S (fst (p' r)) w s)" by simp
+        qed
+        ultimately have "c \<le> r + pexit ?S K (\<lambda>s. fst (pshift ?S (fst (p' r)) w s))"
+          using Fw S by simp
+        then show ?case by simp
+      qed
+      have vge: "ennreal (c - r) \<le> paper_v k L ?S K (fst (p' r))"
+        by (rule paper_v_ge_of_AE_pshift[OF Tr RC step])
+      have vfin: "paper_v k L ?S K (fst (p' r)) < \<top>"
+        using paper_v_neq_top[OF Tr] by (simp add: less_top)
+      have "c - r \<le> enn2real (paper_v k L ?S K (fst (p' r)))"
+      proof (cases "0 \<le> c - r")
+        case True
+        have "enn2real (ennreal (c - r))
+            \<le> enn2real (paper_v k L ?S K (fst (p' r)))"
+          by (rule enn2real_mono[OF vge vfin])
+        then show ?thesis using True by simp
+      next
+        case False
+        have "c - r \<le> 0" using False by simp
+        also have "(0 :: real) \<le> enn2real (paper_v k L ?S K (fst (p' r)))"
+          by simp
+        finally show ?thesis .
+      qed
+      then show "c \<le> r + enn2real (paper_v k L ?S K (fst (p' r)))" by simp
+    qed
+  qed
+
+  \<comment> \<open>and back to \<open>P\<close>, where the statement only ever mentioned the past\<close>
+  have "AE \<omega> in P. ?Surv (pcut r \<omega>)
+      \<longrightarrow> c \<le> r + enn2real (paper_v k L ?S K (fst (pcut r \<omega> r)))"
+    using main unfolding pair_law_of_def by (rule AE_distrD[OF mcut])
+  then show ?thesis
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume H: "?Surv (pcut r \<omega>)
+        \<longrightarrow> c \<le> r + enn2real (paper_v k L ?S K (fst (pcut r \<omega> r)))"
+    have e1: "pexit r K (\<lambda>t. fst (pcut r \<omega> t)) = pexit r K (\<lambda>t. fst (\<omega> t))"
+      by (rule pexit_cong_on) (simp add: pcut_apply)
+    have e2: "pcut r \<omega> r = \<omega> r" using r by (simp add: pcut_apply)
+    show "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+        \<longrightarrow> c \<le> r + enn2real (paper_v k L ?S K (fst (\<omega> r)))"
+      using H unfolding e1 e2 .
+  qed
+qed
+
 end
