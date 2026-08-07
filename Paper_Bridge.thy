@@ -12587,4 +12587,231 @@ proof (intro conjI)
   qed
 qed
 
+subsection \<open>Weak convergence of the semidirect products\<close>
+
+text \<open>The bounded disintegration.  This is the case the distribution's
+  \<open>integral_bind\<close> does cover, and it is all the weak-convergence route
+  needs --- test functions for weak convergence are bounded and real by
+  definition.\<close>
+
+lemma integral_ksemi_bounded:
+  fixes g :: "'a \<times> 'b \<Rightarrow> real"
+  assumes PM: "prob_space M"
+    and K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    and gb: "\<And>p. p \<in> space (M \<Otimes>\<^sub>M N) \<Longrightarrow> \<bar>g p\<bar> \<le> B"
+  shows "(\<integral>p. g p \<partial>(ksemi M N Kr)) = (\<integral>\<omega>. (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+proof -
+  interpret PM: prob_space M by (rule PM)
+  let ?f = "\<lambda>\<omega>. distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>)"
+  have fm: "?f \<in> M \<rightarrow>\<^sub>M subprob_algebra (M \<Otimes>\<^sub>M N)"
+    by (rule ksemi_kernel_measurable[OF K])
+  have gb': "\<bar>g p\<bar> \<le> B" if "p \<in> space (M \<Otimes>\<^sub>M N)" for p by (rule gb[OF that])
+  have ae: "AE \<omega> in M. emeasure (?f \<omega>) (space (?f \<omega>)) \<le> ennreal 1"
+  proof (rule AE_I2)
+    fix \<omega> assume w: "\<omega> \<in> space M"
+    have "prob_space (?f \<omega>)"
+      by (rule prob_space.prob_space_distr
+          [OF ksemi_sets_kernel(2)[OF K w] ksemi_Pair_measurable[OF K w]])
+    then have "emeasure (?f \<omega>) (space (?f \<omega>)) = 1"
+      by (rule prob_space.emeasure_space_1)
+    then show "emeasure (?f \<omega>) (space (?f \<omega>)) \<le> ennreal 1" by simp
+  qed
+  have "(\<integral>p. g p \<partial>(ksemi M N Kr)) = (\<integral>\<omega>. (\<integral>p. g p \<partial>(?f \<omega>)) \<partial>M)"
+    unfolding ksemi_def
+    by (rule integral_bind[OF gm gb' fm PM.finite_measure_axioms ae])
+  also have "\<dots> = (\<integral>\<omega>. (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+  proof (rule Bochner_Integration.integral_cong[OF refl])
+    fix \<omega> assume w: "\<omega> \<in> space M"
+    show "(\<integral>p. g p \<partial>(?f \<omega>)) = (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>))"
+      by (rule integral_distr[OF ksemi_Pair_measurable[OF K w] gm])
+  qed
+  finally show ?thesis .
+qed
+
+lemma integral_ksemi_measurable:
+  fixes g :: "'a \<times> 'b \<Rightarrow> real"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+  shows "(\<lambda>\<omega>. (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>))) \<in> borel_measurable M"
+proof -
+  let ?f = "\<lambda>\<omega>. distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>)"
+  have "(\<lambda>\<omega>. (\<integral>p. g p \<partial>(?f \<omega>))) \<in> borel_measurable M"
+    using measurable_compose[OF ksemi_kernel_measurable[OF K]
+        integral_measurable_subprob_algebra[OF gm]] .
+  moreover have "(\<integral>p. g p \<partial>(?f \<omega>)) = (\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>))"
+    if w: "\<omega> \<in> space M" for \<omega>
+  proof -
+    show ?thesis by (rule integral_distr[OF ksemi_Pair_measurable[OF K w] gm])
+  qed
+  ultimately show ?thesis by (simp cong: measurable_cong)
+qed
+
+text \<open>Pointwise weak convergence of the KERNELS gives weak convergence of
+  the semidirect products.  The proof is dominated convergence over the
+  first coordinate: a bounded continuous test function on the product is,
+  at each fixed first coordinate, a bounded continuous test function on
+  the second, so the inner integrals converge pointwise, and they are all
+  bounded by the same constant.\<close>
+
+lemma ksemi_weak_conv:
+  fixes Krm :: "nat \<Rightarrow> 'a \<Rightarrow> 'b measure" and X :: "'a topology" and Y :: "'b topology"
+  assumes PM: "prob_space M"
+    and setsM: "sets M = sets (borel_of X)"
+    and scX: "second_countable X" and scY: "second_countable Y"
+    and Km: "\<And>m. Krm m \<in> M \<rightarrow>\<^sub>M prob_algebra (borel_of Y)"
+    and K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra (borel_of Y)"
+    and conv: "\<And>\<omega>. \<omega> \<in> space M
+        \<Longrightarrow> weak_conv_on (\<lambda>m. Krm m \<omega>) (Kr \<omega>) sequentially Y"
+  shows "weak_conv_on (\<lambda>m. ksemi M (borel_of Y) (Krm m))
+      (ksemi M (borel_of Y) Kr) sequentially (prod_topology X Y)"
+proof -
+  let ?N = "borel_of Y"
+  let ?Z = "prod_topology X Y"
+  interpret PM: prob_space M by (rule PM)
+  have ne: "space M \<noteq> {}" by (rule PM.not_empty)
+  have spX: "space M = topspace X"
+    using setsM by (simp add: sets_eq_imp_space_eq space_borel_of)
+  have bprod: "sets (M \<Otimes>\<^sub>M ?N) = sets (borel_of ?Z)"
+  proof -
+    have "sets (M \<Otimes>\<^sub>M ?N) = sets (borel_of X \<Otimes>\<^sub>M borel_of Y)"
+      by (rule sets_pair_measure_cong[OF setsM refl])
+    also have "\<dots> = sets (borel_of ?Z)"
+      by (rule arg_cong[where f = sets, OF borel_of_prod[OF scX scY]])
+    finally show ?thesis .
+  qed
+  have setsK: "sets (ksemi M ?N Kr) = sets (borel_of ?Z)"
+    using sets_ksemi[OF K ne] bprod by simp
+  have setsKm: "sets (ksemi M ?N (Krm m)) = sets (borel_of ?Z)" for m
+  proof -
+    have Kmm: "Krm m \<in> M \<rightarrow>\<^sub>M prob_algebra ?N" by (rule Km)
+    show ?thesis using sets_ksemi[OF Kmm ne] bprod by simp
+  qed
+  have fmK: "finite_measure (ksemi M ?N Kr)"
+    using prob_space_ksemi[OF PM K]
+    by (simp add: prob_space.emeasure_space_1 finite_measureI)
+  have fmKm: "finite_measure (ksemi M ?N (Krm m))" for m
+  proof -
+    have Kmm: "Krm m \<in> M \<rightarrow>\<^sub>M prob_algebra ?N" by (rule Km)
+    show ?thesis using prob_space_ksemi[OF PM Kmm]
+      by (simp add: prob_space.emeasure_space_1 finite_measureI)
+  qed
+  show ?thesis
+    unfolding weak_conv_on_def
+  proof (intro conjI allI impI)
+    show "\<forall>\<^sub>F m in sequentially. sets (ksemi M ?N (Krm m)) = sets (borel_of ?Z)
+        \<and> finite_measure (ksemi M ?N (Krm m))"
+      by (intro always_eventually allI conjI setsKm fmKm)
+    show "sets (ksemi M ?N Kr) = sets (borel_of ?Z)" by (rule setsK)
+    show "finite_measure (ksemi M ?N Kr)" by (rule fmK)
+    fix f :: "'a \<times> 'b \<Rightarrow> real"
+    assume cf: "continuous_map ?Z euclideanreal f"
+    assume bf: "\<exists>B. \<forall>p \<in> topspace ?Z. \<bar>f p\<bar> \<le> B"
+    from bf obtain B where B: "\<And>p. p \<in> topspace ?Z \<Longrightarrow> \<bar>f p\<bar> \<le> B" by blast
+    have fm: "f \<in> borel_measurable (M \<Otimes>\<^sub>M ?N)"
+    proof -
+      have "f \<in> borel_of ?Z \<rightarrow>\<^sub>M borel_of euclideanreal"
+        by (rule continuous_map_measurable[OF cf])
+      then have "f \<in> borel_measurable (borel_of ?Z)"
+        by (simp add: borel_of_euclidean)
+      then show ?thesis unfolding measurable_cong_sets[OF bprod refl] .
+    qed
+    have spZ: "space (M \<Otimes>\<^sub>M ?N) = topspace ?Z"
+    proof -
+      have "space (M \<Otimes>\<^sub>M ?N) = space (borel_of ?Z)"
+        by (rule sets_eq_imp_space_eq[OF bprod])
+      then show ?thesis by (simp add: space_borel_of)
+    qed
+    have fb: "\<bar>f p\<bar> \<le> B" if "p \<in> space (M \<Otimes>\<^sub>M ?N)" for p
+      using that spZ by (simp add: B)
+    \<comment> \<open>the two disintegrations\<close>
+    have dK: "(\<integral>p. f p \<partial>(ksemi M ?N Kr)) = (\<integral>\<omega>. (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+      by (rule integral_ksemi_bounded[OF PM K fm fb])
+    have dKm: "(\<integral>p. f p \<partial>(ksemi M ?N (Krm m)))
+        = (\<integral>\<omega>. (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)) \<partial>M)" for m
+    proof -
+      have Kmm: "Krm m \<in> M \<rightarrow>\<^sub>M prob_algebra ?N" by (rule Km)
+      show ?thesis by (rule integral_ksemi_bounded[OF PM Kmm fm fb])
+    qed
+    \<comment> \<open>the inner integrals converge pointwise and are uniformly bounded\<close>
+    have inner_lim: "(\<lambda>m. \<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)) \<longlonglongrightarrow> (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Kr \<omega>))"
+      if w: "\<omega> \<in> space M" for \<omega>
+    proof -
+      have wX: "\<omega> \<in> topspace X" using w spX by simp
+      have cpair: "continuous_map Y ?Z (Pair \<omega>)"
+        unfolding continuous_map_pairwise using wX by (simp add: o_def)
+      have cg: "continuous_map Y euclideanreal (\<lambda>\<omega>'. f (\<omega>, \<omega>'))"
+        using continuous_map_compose[OF cpair cf] by (simp add: comp_def)
+      have bg: "\<exists>B'. \<forall>y \<in> topspace Y. \<bar>f (\<omega>, y)\<bar> \<le> B'"
+        using B wX by (intro exI[of _ B]) auto
+      show ?thesis using conv[OF w, unfolded weak_conv_on_def] cg bg by blast
+    qed
+    have inner_meas: "(\<lambda>\<omega>. \<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)) \<in> borel_measurable M" for m
+    proof -
+      have Kmm: "Krm m \<in> M \<rightarrow>\<^sub>M prob_algebra ?N" by (rule Km)
+      show ?thesis by (rule integral_ksemi_measurable[OF Kmm fm])
+    qed
+    have inner_meas': "(\<lambda>\<omega>. \<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+      by (rule integral_ksemi_measurable[OF K fm])
+    have inner_bnd: "\<bar>\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)\<bar> \<le> \<bar>B\<bar>" if w: "\<omega> \<in> space M" for \<omega> m
+    proof -
+      have Kmm: "Krm m \<in> M \<rightarrow>\<^sub>M prob_algebra ?N" by (rule Km)
+      interpret PK: prob_space "Krm m \<omega>" by (rule ksemi_sets_kernel(2)[OF Kmm w])
+      have sk: "sets (Krm m \<omega>) = sets ?N" by (rule ksemi_sets_kernel(1)[OF Kmm w])
+      have gm: "(\<lambda>\<omega>'. f (\<omega>, \<omega>')) \<in> borel_measurable (Krm m \<omega>)"
+      proof -
+        have "Pair \<omega> \<in> Krm m \<omega> \<rightarrow>\<^sub>M M \<Otimes>\<^sub>M ?N"
+          by (rule ksemi_Pair_measurable[OF Kmm w])
+        from measurable_compose[OF this fm] show ?thesis by simp
+      qed
+      have spk: "space (Krm m \<omega>) = space ?N" by (rule sets_eq_imp_space_eq[OF sk])
+      have gb: "\<bar>f (\<omega>, \<omega>')\<bar> \<le> \<bar>B\<bar>" if "\<omega>' \<in> space (Krm m \<omega>)" for \<omega>'
+      proof -
+        have "\<omega>' \<in> space ?N" using that spk by simp
+        then have "(\<omega>, \<omega>') \<in> space (M \<Otimes>\<^sub>M ?N)"
+          using w by (simp add: space_pair_measure)
+        then show ?thesis using fb[of "(\<omega>, \<omega>')"] by simp
+      qed
+      have gbu: "f (\<omega>, \<omega>') \<le> \<bar>B\<bar>" if "\<omega>' \<in> space (Krm m \<omega>)" for \<omega>'
+        using gb[OF that] by (simp add: abs_le_iff)
+      have gbl: "- \<bar>B\<bar> \<le> f (\<omega>, \<omega>')" if "\<omega>' \<in> space (Krm m \<omega>)" for \<omega>'
+        using gb[OF that] by (simp add: abs_le_iff)
+      have cint: "(\<integral>\<omega>'. (c::real) \<partial>(Krm m \<omega>)) = c" for c
+        by (simp add: PK.prob_space)
+      have ig: "integrable (Krm m \<omega>) (\<lambda>\<omega>'. f (\<omega>, \<omega>'))"
+        by (rule PK.integrable_const_bound[of _ "\<bar>B\<bar>"])
+          (use gb gm in \<open>auto intro: AE_I2\<close>)
+      have ic: "integrable (Krm m \<omega>) (\<lambda>\<omega>'. \<bar>B\<bar>)" by (rule PK.integrable_const)
+      have ic': "integrable (Krm m \<omega>) (\<lambda>\<omega>'. - \<bar>B\<bar>)" by (rule PK.integrable_const)
+      have up: "(\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)) \<le> \<bar>B\<bar>"
+      proof -
+        have "(\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)) \<le> (\<integral>\<omega>'. \<bar>B\<bar> \<partial>(Krm m \<omega>))"
+          by (rule integral_mono[OF ig ic gbu])
+        also have "\<dots> = \<bar>B\<bar>" by (rule cint)
+        finally show ?thesis .
+      qed
+      have lo: "- \<bar>B\<bar> \<le> (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>))"
+      proof -
+        have "- \<bar>B\<bar> = (\<integral>\<omega>'. - \<bar>B\<bar> \<partial>(Krm m \<omega>))" by (rule cint[symmetric])
+        also have "\<dots> \<le> (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>))"
+          by (rule integral_mono[OF ic' ig gbl])
+        finally show ?thesis .
+      qed
+      from up lo show ?thesis by simp
+    qed
+    have "(\<lambda>m. \<integral>\<omega>. (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)) \<partial>M)
+        \<longlonglongrightarrow> (\<integral>\<omega>. (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<partial>M)"
+    proof (rule integral_dominated_convergence
+        [where w = "\<lambda>_. \<bar>B\<bar>", OF inner_meas' inner_meas])
+      show "integrable M (\<lambda>_. \<bar>B\<bar>)" by simp
+      show "AE \<omega> in M. (\<lambda>m. \<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>))
+          \<longlonglongrightarrow> (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Kr \<omega>))"
+        using inner_lim by (intro AE_I2) blast
+      show "AE \<omega> in M. norm (\<integral>\<omega>'. f (\<omega>, \<omega>') \<partial>(Krm m \<omega>)) \<le> \<bar>B\<bar>" for m
+        using inner_bnd by (intro AE_I2) simp
+    qed
+    then show "(\<lambda>m. \<integral>p. f p \<partial>(ksemi M ?N (Krm m)))
+        \<longlonglongrightarrow> (\<integral>p. f p \<partial>(ksemi M ?N Kr))"
+      by (simp add: dK dKm)
+  qed
+qed
 end
