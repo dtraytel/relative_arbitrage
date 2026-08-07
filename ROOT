@@ -4,6 +4,7 @@ session Arbitrage = "HOL-Probability" +
     Kolmogorov_Chentsov
     Levy_Prokhorov_Metric
     Standard_Borel_Spaces
+    Disintegration
     "HOL-Complex_Analysis"
   theories
     Stopped_Adaptedness
