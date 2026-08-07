@@ -600,14 +600,15 @@ Budget 400–800 lines. Unlike route (a) it has no open sub-statement.
 | clause (iv)'s analogue | the same lemma with `mg` instantiated at the SHIFTED compensated process (`paper_pair_class_shifted_comp_martingale`) instead of the shifted coordinate, and a matrix index `(c,d)` instead of `c`. `outerp` being quadratic is already dealt with there, so this is a transcription, not a new argument | open |
 | the countable determining family | a countable π-system generating `natural_filtration ?Y 0 (λv w. w v) i`: cylinders at times in `(ℚ ∩ [0,i]) ∪ {i}` with rational-corner boxes. Rationals suffice because paths are continuous | open |
 | the Dynkin step | at fixed `p'`, from the π-system to all of `ℱ⁰_i`, by `measure_eqI_generator_eq` on the positive and negative parts of `1_{A'}(X_j−X_i)` | open |
-| **rational-to-real in `i, j`** | see the warning below — this is NOT free | open |
+| **rational-to-real in `i, j`** | `set_integral_eq_of_rational_times`: the identity against the terminal value at every RATIONAL time, plus continuity in time, gives it at every real time. By `unif_integrable_of_averaging` + `vitali_convergence`, both already in the repo — see below | **DONE** |
+| supporting | `subalgebra_natural_filtration_path`, `sigma_finite_subalgebra_natural_filtration_path` | **DONE** |
 | assembly | `martingale_of_set_integral_eq` at fixed `p'`, then `martingale_vecI` (and a matrix analogue) to put the components back together | open |
 
-**The rational-to-real step: CORRECTED 2026-08-07 (late), after reading the
-sources and the repo.** An earlier note here said it needs a Doob `L²` bound
-and an integrable running supremum. That is overkill and should not be built.
-It needs UNIFORM INTEGRABILITY, and the exact machinery is already in this
-repository, written for precisely this pattern:
+**The rational-to-real step — DONE, and the earlier note here was wrong.**
+It said this needs a Doob `L²` bound and an integrable running supremum.
+That is overkill and must not be built. It needs UNIFORM INTEGRABILITY, and
+the exact machinery was already in this repository, written for precisely
+this pattern:
 
 | result | where | content |
 |---|---|---|
