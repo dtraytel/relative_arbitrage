@@ -6364,4 +6364,104 @@ proof (rule measurable_If[OF K1 K2])
   then show "{p \<in> space G. p \<in> A} \<in> sets G" using A by simp
 qed
 
+text \<open>**The one-step engine of the stopping-time construction.**  Glue \<open>P\<close> at
+  a FIXED time \<open>r\<close> with a kernel that plays the optimal continuation on a
+  chosen event \<open>A\<close> of the past and \<open>P\<close>'s own conditional law elsewhere.  The
+  result is again a class member, and off \<open>A\<close> nothing has changed
+  (@{thm [source] kglue_law'_rcd_eq} is the reason).
+
+  Iterating this over the finitely many values of a simple stopping time,
+  with \<open>A = {\<theta> = t_j}\<close> --- an \<open>\<F>\<^sub>t\<^sub>j\<close>-event exactly because \<open>\<theta>\<close> is a stopping
+  time --- is the construction the \<open>\<ge>\<close> half needs.  Note that
+  @{thm [source] paper_pair_class_kglue_law'} asks for the kernel's
+  measurability with respect to the natural filtration AT \<open>r\<close>, and that
+  \<sigma>-algebra is the whole of \<open>sets Q\<close> by
+  @{thm [source] sets_natural_filtration_path} --- the (b3) lemma paying for
+  itself a second time.\<close>
+
+theorem paper_pair_class_kglue_mixed:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L"
+    and P: "P \<in> paper_pair_class k L T x"
+    and A: "A \<in> sets (borel_of (mtopology_of
+        (path_metric r :: ('n pairpath) metric)))"
+    and Sp: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Sc: "\<And>y. S y \<in> paper_pair_class k L (T - r) (0::real^'n)"
+  obtains \<kappa>' where
+    "kglue_law' r T \<kappa>' (pair_law_of r (pcut r) P)
+        \<in> paper_pair_class k L T x"
+    and "\<And>p'. p' \<in> A \<Longrightarrow> \<kappa>' p' = S (fst (p' r))"
+    and "\<And>p'. \<kappa>' p' \<in> paper_pair_class k L (T - r) (0::real^'n)"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?s = "T - r"
+  let ?Y = "borel_of (mtopology_of (path_metric ?s :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of r (pcut r) P"
+  have rT': "r \<le> T" using rT by simp
+  have s0: "0 < ?s" using rT by simp
+  have T0: "0 < T" using r rT by simp
+  have setsP: "sets P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  have QC: "?Q \<in> paper_pair_class k L r x"
+    by (rule paper_pair_class_pcut[OF r rT' P])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have spQ: "space ?Q = space ?X" by (rule sets_eq_imp_space_eq[OF setsQ])
+
+  \<comment> \<open>the natural filtration at \<open>r\<close> IS all of \<open>sets ?Q\<close>\<close>
+  have nfQ: "sets (natural_filtration ?Q 0 (\<lambda>v w :: 'n pairpath. w v) r)
+      = sets ?Q"
+  proof -
+    have "natural_filtration ?Q 0 (\<lambda>v w :: 'n pairpath. w v) r
+        = natural_filtration ?X 0 (\<lambda>v w. w v) r"
+      by (rule natural_filtration_cong_space[OF spQ])
+    then show ?thesis
+      using sets_natural_filtration_path[OF r] setsQ by simp
+  qed
+
+  \<comment> \<open>the conditional law of \<open>P\<close>'s future, repaired to land in the class
+      everywhere\<close>
+  obtain \<kappa> where Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
+    and eq: "distr P (?X \<Otimes>\<^sub>M ?Y) (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
+        = ksemi ?Q ?Y \<kappa>"
+    by (rule paper_pair_class_rcd_ksemi[OF r rT' setsP PS])
+  obtain \<kappa>0 where K0m: "\<kappa>0 \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
+    and K0c: "\<And>p'. \<kappa>0 p' \<in> paper_pair_class k L ?s (0::real^'n)"
+    and K0a: "\<And>p'. \<kappa> p' \<in> paper_pair_class k L ?s (0::real^'n)
+        \<Longrightarrow> \<kappa>0 p' = \<kappa> p'"
+    by (rule kernel_repair_into_class[where k = k, OF s0 L1 Km]) blast
+
+  \<comment> \<open>the mixed kernel\<close>
+  define \<kappa>' where "\<kappa>' = (\<lambda>p'. if p' \<in> A then S (fst (p' r)) else \<kappa>0 p')"
+  have evm: "(\<lambda>p' :: 'n pairpath. fst (p' r)) \<in> ?Q \<rightarrow>\<^sub>M borel"
+    by (rule measurable_compose
+        [OF pair_law_eval_measurable[OF setsQ] measurable_fst_borel])
+  have Smq: "(\<lambda>p' :: 'n pairpath. S (fst (p' r))) \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    by (rule measurable_compose[OF evm Sp])
+  have K0q: "\<kappa>0 \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using K0m measurable_cong_sets[OF setsQ refl] by blast
+  have AQ: "A \<in> sets ?Q" using A setsQ by simp
+  have Kp: "\<kappa>' \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    unfolding \<kappa>'_def by (rule kernel_mix_measurable[OF AQ Smq K0q])
+  have Kc: "\<kappa>' p' \<in> paper_pair_class k L ?s (0::real^'n)" for p'
+    unfolding \<kappa>'_def using Sc K0c by simp
+  have KpF: "\<kappa>' \<in> natural_filtration ?Q 0 (\<lambda>v w :: 'n pairpath. w v) r
+      \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using Kp measurable_cong_sets[OF nfQ[symmetric] refl] by blast
+  have Kb: "\<kappa>' \<in> natural_filtration ?Q 0 (\<lambda>v w :: 'n pairpath. w v) r
+      \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+          (paper_pair_class k L ?s (0::real^'n))
+          (Levy_Prokhorov.LPm (mspace (path_metric ?s :: ('n pairpath) metric))
+            (mdist (path_metric ?s :: ('n pairpath) metric))))"
+    by (rule kernel_class_LP_measurable[OF s0 L1 KpF Kc])
+
+  have glue: "kglue_law' r T \<kappa>' ?Q \<in> paper_pair_class k L T x"
+    by (rule paper_pair_class_kglue_law'[OF r rT L1 T0 QC Kp Kb Kc])
+  have onA: "\<kappa>' p' = S (fst (p' r))" if "p' \<in> A" for p'
+    unfolding \<kappa>'_def using that by simp
+  show thesis by (rule that[OF glue onA Kc])
+qed
+
 end
