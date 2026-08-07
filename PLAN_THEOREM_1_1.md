@@ -63,7 +63,7 @@ see §1.7.
 
 | item | § | lines | risk |
 |---|---|---|---|
-| the DPP at a STOPPING time | 2.1 | 500–1,200 | high — both clocks random; no `ℱ_θ` layer in the session yet |
+| the DPP at a stopping time, `≥` half | 2.1 | 400–1,000 | high — pasting at a random time; the `≤` half is **DONE** (`paper_v_cond_time`) |
 | §3, the two viscosity inequalities | 2.2 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
 | clause (3) for `n−k ≥ 2` | 2.3 | 1,500–3,000 | high — needs spherical Brownian motion |
 | `stopped_val_fn ≤ paper_v` | 2.4 | ? | only if §2.3 wants it |
@@ -370,6 +370,32 @@ At a stopping time `θ` BOTH clocks `u ∧ θ` and `(u − θ)⁺` are random, s
 product-filtration structure that carries §1.6(b′) breaks down. The paper's
 §3.2 uses the exit time of a small ball, which is not deterministic, so this
 IS needed for clause (2).
+
+**The CONDITIONING half is DONE — `paper_v_cond_time`** (2026-08-07):
+
+    P ∈ 𝒫ₓ, AE ω in P. c ≤ τ_K(ω)
+      ⟹ AE ω in P. c ≤ θ ω + enn2real (paper_v k L (T − θ ω) K (X_{θ ω} ω))
+
+for an ARBITRARY function `θ` of the path — no stopping-time property, no
+measurability, no adaptedness, and no survival hypothesis. This is what the
+paper's §3.1 (subsolution) consumes. It cost far less than the estimate
+below because it is an almost-sure PATHWISE statement, so it reduces to the
+deterministic `paper_v_cond` at countably many RATIONAL times plus a limit
+at each path. Two facts make that work, and both are worth keeping:
+
+- below `c` the survival event is FREE (`pexit_surv_of_less`), so
+  `paper_v_cond`'s conditional conclusion becomes unconditional there;
+- approach `θ ω` from ABOVE through rationals: that keeps the residual
+  horizon SMALLER, and `paper_v` is monotone in the horizon
+  (`paper_v_horizon_mono`), so the bound survives replacing `T − t_n` by
+  `T − θ ω`. What is left is a limit in the SPACE variable — clause (1),
+  `paper_v_usc_unconditional`. Approaching from BELOW grows the horizon and
+  monotonicity points the wrong way.
+
+**What is LEFT: the `≥` half**, i.e. pasting at a random time, and only
+there does θ have to be a genuine stopping time (the integrand must be
+measurable for `ess_inf_time`, and the construction glues at θ). The paper's
+§3.2 (supersolution) needs it at `τ_{B_ε}`.
 
 **What carries over from §1.7, and what does not.**
 
