@@ -9824,4 +9824,44 @@ proof -
   ultimately show ?thesis by simp
 qed
 
+text \<open>Comparing TWO stopping times: apply
+  @{thm [source] set_martingale_sampling} at each of them against the common
+  horizon.  The conditioning set is legal for the later one because
+  @{thm [source] pre_sigma_of_mono} carries it up.  This is the form clause
+  (iv) uses, at \<open>\<sigma> = (\<theta>+i) \<and> T\<close> and \<open>\<rho> = (\<theta>+j) \<and> T\<close>.\<close>
+
+theorem set_martingale_sampling_two:
+  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
+    and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> \<rho> :: "'a \<Rightarrow> real"
+  assumes mg: "martingale M F 0 Y"
+    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and sub: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
+    and A: "A \<in> pre_sigma_of M F \<sigma>"
+    and stops: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+    and stopr: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<rho> \<omega> \<le> t} \<in> sets (F t)"
+    and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U"
+    and rho0: "\<And>\<omega>. 0 \<le> \<rho> \<omega>" and rhoU: "\<And>\<omega>. \<rho> \<omega> \<le> U" and U0: "0 \<le> U"
+    and le: "\<And>\<omega>. \<sigma> \<omega> \<le> \<rho> \<omega>"
+    and conts: "\<And>\<omega>. \<omega> \<in> space M
+      \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
+    and contr: "\<And>\<omega>. \<omega> \<in> space M
+      \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<rho> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<rho> \<omega>) \<omega>"
+    and Dbd: "\<And>\<omega> s. \<omega> \<in> space M \<Longrightarrow> 0 \<le> s \<Longrightarrow> s \<le> U \<Longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
+    and Dint: "integrable M D"
+  shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
+       = set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)"
+proof -
+  have s: "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
+      = set_lebesgue_integral M A (Y U)"
+    by (rule set_martingale_sampling
+        [OF mg mono sub A stops sig0 sigU U0 conts Dbd Dint])
+  have Ar: "A \<in> pre_sigma_of M F \<rho>"
+    using pre_sigma_of_mono[OF le stopr] A by blast
+  have r: "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)
+      = set_lebesgue_integral M A (Y U)"
+    by (rule set_martingale_sampling
+        [OF mg mono sub Ar stopr rho0 rhoU U0 contr Dbd Dint])
+  show ?thesis using s r by simp
+qed
+
 end
