@@ -17442,4 +17442,100 @@ proof -
         [OF T0 setsQ Kp hb cb c1 Kint HBi Kbnd])
 qed
 
+section \<open>The pathwise DPP bound for the ADDITIVE glue\<close>
+
+text \<open>The stopping-time analogue of @{thm [source] pexit_pglue_dpp}.  Because
+  \<^const>\<open>padd\<close> keeps both factors on the ORIGINAL clock, the continuation's
+  contribution is stated as a bound on \<open>pexit T K\<close> of the DELAYED path
+  \<open>s \<mapsto> fst (p' r) + fst (w s)\<close> --- already including the \<open>r\<close> it stands still
+  for --- rather than on a rebased horizon.  That is exactly the form
+  \<^const>\<open>pdelclass\<close> produces.\<close>
+
+lemma pexit_padd_dpp:
+  fixes K :: "(real^'n::finite) set" and p' w :: "'n pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
+    and stop: "\<And>t. t \<in> {0..T} \<Longrightarrow> r \<le> t \<Longrightarrow> p' t = p' r"
+    and frz: "\<And>t. t \<in> {0..T} \<Longrightarrow> t \<le> r \<Longrightarrow> w t = 0"
+    and cont: "pexit r K (\<lambda>t. fst (p' t)) = r \<Longrightarrow> fst (p' r) \<in> K
+        \<Longrightarrow> r + c \<le> pexit T K (\<lambda>s. fst (p' r) + fst (w s))"
+  shows "pexit r K (\<lambda>t. fst (p' t))
+        + (if pexit r K (\<lambda>t. fst (p' t)) = r \<and> fst (p' r) \<in> K then c else 0)
+      \<le> pexit T K (\<lambda>t. fst (padd T p' w t))"
+proof -
+  let ?A = "pexit r K (\<lambda>t. fst (p' t))"
+  let ?f = "\<lambda>t. fst (padd T p' w t)"
+  let ?b = "?A + (if ?A = r \<and> fst (p' r) \<in> K then c else 0)"
+  have T0: "0 \<le> T" using r rT by simp
+  have Ar: "?A \<le> r" by (rule pexit_le_T[OF r])
+  have ev: "?f t = fst (p' t) + fst (w t)" if t: "t \<in> {0..T}" for t
+    unfolding padd_eval_split(1)[OF t] ..
+  have lb: "?b \<le> z"
+    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T}" for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> T" "?f z \<in> - K" | (cap) "z = T" using z by blast
+    then show ?thesis
+    proof cases
+      case cap
+      have "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) \<le> c" using c by simp
+      with Ar cT show ?thesis unfolding cap by linarith
+    next
+      case hit
+      then have zm: "z \<in> {0..T}" by simp
+      show ?thesis
+      proof (cases "?A = r \<and> fst (p' r) \<in> K")
+        case False
+        then have e0: "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = 0"
+          by (rule if_not_P)
+        have "?A \<le> z"
+        proof (cases "z \<le> r")
+          case True
+          have fz: "?f z = fst (p' z)"
+            unfolding ev[OF zm] using frz[OF zm True] by simp
+          have mem: "fst (p' z) \<in> - K" using hit(3) fz by simp
+          show ?thesis
+            unfolding pexit_def
+            by (rule etime_le_of_mem[OF r hit(1) True]) (use mem in simp)
+        next
+          case False
+          then show ?thesis using Ar by simp
+        qed
+        then show ?thesis unfolding e0 by simp
+      next
+        case True
+        then have Aeq: "?A = r" and inK: "fst (p' r) \<in> K" by blast+
+        have e1: "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = c"
+          using True by (rule if_P)
+        have zr: "r < z"
+        proof (rule ccontr)
+          assume "\<not> r < z"
+          then have zle: "z \<le> r" by simp
+          have fz: "?f z = fst (p' z)"
+            unfolding ev[OF zm] using frz[OF zm zle] by simp
+          have mem: "fst (p' z) \<in> - K" using hit(3) fz by simp
+          have "?A \<le> z"
+            unfolding pexit_def
+            by (rule etime_le_of_mem[OF r hit(1) zle]) (use mem in simp)
+          then have "z = r" using zle Aeq by simp
+          then show False using hit(3) fz inK by simp
+        qed
+        have fz: "?f z = fst (p' r) + fst (w z)"
+          unfolding ev[OF zm] using stop[OF zm] zr by simp
+        have "r + c \<le> pexit T K (\<lambda>s. fst (p' r) + fst (w s))"
+          by (rule cont[OF Aeq inK])
+        also have "\<dots> \<le> z"
+          unfolding pexit_def
+          by (rule etime_le_of_mem[OF T0 hit(1) hit(2)])
+             (use hit(3) fz in simp)
+        finally have "r + c \<le> z" .
+        then show ?thesis using e1 Aeq by simp
+      qed
+    qed
+  qed
+  have "pexit T K ?f = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T})"
+    unfolding pexit_def etime_def ..
+  moreover have "?b \<le> Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show ?thesis by simp
+qed
+
 end
