@@ -17855,4 +17855,320 @@ proof -
     unfolding selker_def by (rule measurable_compose[OF pm Sm])
 qed
 
+section \<open>Step (4) with the selector kernel\<close>
+
+text \<open>Every kernel hypothesis of @{thm [source] paper_pair_class_aglue} is now
+  a one-line application of a \<open>pdelclass_\<close> lemma, and every side condition an
+  application of the \<open>aglue_\<close> family, with the uniform constants supplied by
+  @{thm [source] pdelclass_norm_mean_le} and
+  @{thm [source] pdelclass_comp_norm_mean_le}.  What is left as hypotheses here
+  concerns the PAST factor alone.\<close>
+
+theorem paper_pair_class_aglue_selector:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
+    and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+    and QH: "\<And>e. horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. fst (p' (min u T)) $ e) T"
+    and QHC: "\<And>c d. horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
+    and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
+    and QXint: "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q (\<lambda>p'. fst (p' (min u T)))"
+    and QCint: "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q
+        (\<lambda>p'. outerp (fst (p' (min u T))) - snd (p' (min u T)))"
+    and Sc: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
+    and Sm: "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric)))"
+  shows "aglue_law T (selker Sel \<theta>) Q \<in> paper_pair_class k L T x"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?\<kappa> = "selker Sel \<theta>"
+  let ?CX = "1 + real CARD('n) * (real CARD('n) * L * T)"
+  let ?CC = "real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
+  have T0': "0 \<le> T" using T0 by simp
+  have L0: "0 \<le> L" using L1 by simp
+  have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have Kp: "?\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra ?B"
+    by (rule selker_measurable[OF T0' setsQ st thM Sm])
+  have Kmem: "?\<kappa> p' \<in> pdelclass k L T (\<theta> p')" for p'
+    unfolding selker_def by (rule Sc[OF th0 thT])
+  have tm: "min u T \<in> {0..T}" if "0 \<le> u" for u using that T0' by simp
+  interpret PQ': prob_space Q by (rule PQ)
+
+  \<comment> \<open>the nine kernel clauses\<close>
+  have Kfr: "AE w in ?\<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0" for p'
+    by (rule pdelclass_frozen[OF th0 thT Kmem])
+  have Kcov: "AE w in ?\<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
+      \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L" for p'
+    by (rule pdelclass_diffquot[OF th0 thT Kmem])
+  have KmgX: "martingale (?\<kappa> p') (natural_filtration (?\<kappa> p') 0 (\<lambda>v w. w v)) 0
+      (\<lambda>u w. fst (w (min u T)))" for p'
+    by (rule pdelclass_X_martingale[OF th0 thT Kmem])
+  have KmgC: "martingale (?\<kappa> p') (natural_filtration (?\<kappa> p') 0 (\<lambda>v w. w v)) 0
+      (\<lambda>u w. outerp (fst (w (min u T))) - snd (w (min u T)))" for p'
+    by (rule pdelclass_comp_martingale[OF th0 thT Kmem])
+  have KXvec: "integrable (?\<kappa> p') (\<lambda>w. fst (w (min u T)))"
+    if u: "0 \<le> u" for p' u by (rule martingale.integrable[OF KmgX u])
+  have KCmat: "integrable (?\<kappa> p')
+      (\<lambda>w. outerp (fst (w (min u T))) - snd (w (min u T)))"
+    if u: "0 \<le> u" for p' u by (rule martingale.integrable[OF KmgC u])
+  have KXbnd: "(\<integral>w. norm (fst (w (min u T))) \<partial>(?\<kappa> p')) \<le> ?CX"
+    if u: "0 \<le> u" for p' u
+    by (rule pdelclass_norm_mean_le[OF L0 th0 thT Kmem tm[OF u]])
+  have KCbnd: "(\<integral>w. norm (outerp (fst (w (min u T))) - snd (w (min u T)))
+      \<partial>(?\<kappa> p')) \<le> ?CC" if u: "0 \<le> u" for p' u
+    by (rule pdelclass_comp_norm_mean_le[OF L0 th0 thT Kmem tm[OF u]])
+
+  \<comment> \<open>\<open>RXint\<close> and \<open>RCint\<close>\<close>
+  have RXint: "integrable (aglue_law T ?\<kappa> Q) (\<lambda>\<omega>. fst (\<omega> (min u T)))"
+    if u: "0 \<le> u" for u
+    by (rule aglue_law_X_integrable
+        [OF T0' PQ setsQ Kp u QXint[OF u] KXvec[OF u] KXbnd[OF u]])
+  have RCint: "integrable (aglue_law T ?\<kappa> Q)
+      (\<lambda>\<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+    if u: "0 \<le> u" for u
+    by (rule aglue_law_comp_integrable
+        [OF T0' PQ setsQ Kp u QXint[OF u] QCint[OF u] KXvec[OF u]
+          KCmat[OF u] KXbnd[OF u] KCbnd[OF u]])
+  \<comment> \<open>the glued integrands, split by @{thm [source] padd_eval_split}\<close>
+  have KXpadd: "integrable (?\<kappa> p') (\<lambda>w. fst (padd T p' w (min u T)) $ e)"
+    if sp: "p' \<in> space Q" and u: "0 \<le> u" for p' u e
+  proof -
+    interpret PK: prob_space "?\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    have i: "integrable (?\<kappa> p')
+        (\<lambda>w. fst (p' (min u T)) $ e + fst (w (min u T)) $ e)"
+      by (intro Bochner_Integration.integrable_add PK.integrable_const
+          pdelclass_X_int[OF th0 thT Kmem u])
+    have e: "(\<lambda>w :: 'n pairpath. fst (padd T p' w (min u T)) $ e)
+        = (\<lambda>w. fst (p' (min u T)) $ e + fst (w (min u T)) $ e)"
+      by (rule ext) (simp add: padd_eval_split(1)[OF tm[OF u]])
+    show ?thesis unfolding e by (rule i)
+  qed
+  have KCpadd: "integrable (?\<kappa> p') (\<lambda>w. (outerp (fst (padd T p' w (min u T)))
+      - snd (padd T p' w (min u T))) $ c $ d)"
+    if sp: "p' \<in> space Q" and u: "0 \<le> u" for p' u c d
+  proof -
+    interpret PK: prob_space "?\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    let ?t = "min u T"
+    have iC: "integrable (?\<kappa> p') (\<lambda>w. (outerp (fst (w ?t)) - snd (w ?t)) $ c $ d)"
+      by (rule pdelclass_comp_int[OF th0 thT Kmem u])
+    have iX: "integrable (?\<kappa> p') (\<lambda>w. fst (w ?t) $ c)"
+      by (rule pdelclass_X_int[OF th0 thT Kmem u])
+    have iY: "integrable (?\<kappa> p') (\<lambda>w. fst (w ?t) $ d)"
+      by (rule pdelclass_X_int[OF th0 thT Kmem u])
+    have i: "integrable (?\<kappa> p')
+        (\<lambda>w. ((outerp (fst (p' ?t)) - snd (p' ?t)) $ c $ d
+              + (outerp (fst (w ?t)) - snd (w ?t)) $ c $ d)
+            + (fst (p' ?t) $ c * fst (w ?t) $ d
+              + fst (w ?t) $ c * fst (p' ?t) $ d))"
+      by (intro Bochner_Integration.integrable_add PK.integrable_const iC
+          integrable_mult_left iY integrable_mult_right iX)
+    have e: "(\<lambda>w :: 'n pairpath. (outerp (fst (padd T p' w ?t))
+          - snd (padd T p' w ?t)) $ c $ d)
+        = (\<lambda>w. ((outerp (fst (p' ?t)) - snd (p' ?t)) $ c $ d
+              + (outerp (fst (w ?t)) - snd (w ?t)) $ c $ d)
+            + (fst (p' ?t) $ c * fst (w ?t) $ d
+              + fst (w ?t) $ c * fst (p' ?t) $ d))"
+      by (rule ext)
+         (simp add: padd_eval_split(1)[OF tm[OF u]]
+            padd_eval_split(2)[OF tm[OF u]] outerp_add algebra_simps)
+    show ?thesis unfolding e by (rule i)
+  qed
+  have KXabnd: "(\<integral>w. \<bar>fst (padd T p' w (min u T)) $ e\<bar> \<partial>(?\<kappa> p'))
+      \<le> \<bar>fst (p' (min u T)) $ e\<bar> + ?CX"
+    if sp: "p' \<in> space Q" and u: "0 \<le> u" for p' u e
+  proof -
+    interpret PK: prob_space "?\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    let ?t = "min u T"
+    have iN: "integrable (?\<kappa> p') (\<lambda>w. norm (fst (w ?t)))"
+      by (rule integrable_norm[OF KXvec[OF u]])
+    have iS: "integrable (?\<kappa> p')
+        (\<lambda>w. \<bar>fst (p' ?t) $ e\<bar> + norm (fst (w ?t)))"
+      by (intro Bochner_Integration.integrable_add PK.integrable_const iN)
+    have iP: "integrable (?\<kappa> p') (\<lambda>w. \<bar>fst (padd T p' w ?t) $ e\<bar>)"
+      using KXpadd[OF sp u] by simp
+    have dom: "\<bar>fst (padd T p' w ?t) $ e\<bar>
+        \<le> \<bar>fst (p' ?t) $ e\<bar> + norm (fst (w ?t))" for w :: "'n pairpath"
+    proof -
+      have "\<bar>fst (padd T p' w ?t) $ e\<bar>
+          = \<bar>fst (p' ?t) $ e + fst (w ?t) $ e\<bar>"
+        by (simp add: padd_eval_split(1)[OF tm[OF u]])
+      also have "\<dots> \<le> \<bar>fst (p' ?t) $ e\<bar> + \<bar>fst (w ?t) $ e\<bar>" by simp
+      moreover have "\<bar>fst (w ?t) $ e\<bar> \<le> norm (fst (w ?t))"
+        using Finite_Cartesian_Product.norm_nth_le[of "fst (w ?t)" e] by simp
+      ultimately show ?thesis by linarith
+    qed
+    have "(\<integral>w. \<bar>fst (padd T p' w ?t) $ e\<bar> \<partial>(?\<kappa> p'))
+        \<le> (\<integral>w. \<bar>fst (p' ?t) $ e\<bar> + norm (fst (w ?t)) \<partial>(?\<kappa> p'))"
+      by (rule Bochner_Integration.integral_mono[OF iP iS]) (use dom in simp)
+    also have "\<dots> = \<bar>fst (p' ?t) $ e\<bar> + (\<integral>w. norm (fst (w ?t)) \<partial>(?\<kappa> p'))"
+      using Bochner_Integration.integral_add[OF PK.integrable_const iN]
+      by (simp add: PK.prob_space)
+    also have "\<dots> \<le> \<bar>fst (p' ?t) $ e\<bar> + ?CX" using KXbnd[OF u] by simp
+    finally show ?thesis .
+  qed
+  have KCabnd: "(\<integral>w. \<bar>(outerp (fst (padd T p' w (min u T)))
+        - snd (padd T p' w (min u T))) $ c $ d\<bar> \<partial>(?\<kappa> p'))
+      \<le> norm (outerp (fst (p' (min u T))) - snd (p' (min u T)))
+        + (?CC + 2 * (norm (fst (p' (min u T))) * ?CX))"
+    if sp: "p' \<in> space Q" and u: "0 \<le> u" for p' u c d
+  proof -
+    interpret PK: prob_space "?\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    let ?t = "min u T"
+    let ?C = "\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> ?t)) - snd (\<omega> ?t)"
+    have iNC: "integrable (?\<kappa> p') (\<lambda>w. norm (?C w))"
+      by (rule integrable_norm[OF KCmat[OF u]])
+    have iNX: "integrable (?\<kappa> p') (\<lambda>w. norm (fst (w ?t)))"
+      by (rule integrable_norm[OF KXvec[OF u]])
+    have iS: "integrable (?\<kappa> p') (\<lambda>w. norm (?C p') + norm (?C w)
+        + 2 * (norm (fst (p' ?t)) * norm (fst (w ?t))))"
+      by (intro Bochner_Integration.integrable_add PK.integrable_const iNC
+          Bochner_Integration.integrable_mult_right integrable_mult_left iNX)
+    have iP: "integrable (?\<kappa> p') (\<lambda>w. \<bar>?C (padd T p' w) $ c $ d\<bar>)"
+      using KCpadd[OF sp u] by simp
+    have dom: "\<bar>?C (padd T p' w) $ c $ d\<bar> \<le> norm (?C p') + norm (?C w)
+        + 2 * (norm (fst (p' ?t)) * norm (fst (w ?t)))" for w :: "'n pairpath"
+    proof -
+      have "\<bar>?C (padd T p' w) $ c $ d\<bar> \<le> norm (?C (padd T p' w) $ c)"
+        using Finite_Cartesian_Product.norm_nth_le
+          [of "?C (padd T p' w) $ c" d] by simp
+      also have "\<dots> \<le> norm (?C (padd T p' w))"
+        by (rule Finite_Cartesian_Product.norm_nth_le)
+      also have "\<dots> \<le> norm (?C p') + norm (?C w)
+          + 2 * (norm (fst (p' ?t)) * norm (fst (w ?t)))"
+        by (rule padd_comp_norm_le[OF tm[OF u]])
+      finally show ?thesis .
+    qed
+    have "(\<integral>w. \<bar>?C (padd T p' w) $ c $ d\<bar> \<partial>(?\<kappa> p'))
+        \<le> (\<integral>w. norm (?C p') + norm (?C w)
+            + 2 * (norm (fst (p' ?t)) * norm (fst (w ?t))) \<partial>(?\<kappa> p'))"
+      by (rule Bochner_Integration.integral_mono[OF iP iS]) (use dom in simp)
+    also have "\<dots> = norm (?C p') + (\<integral>w. norm (?C w) \<partial>(?\<kappa> p'))
+        + 2 * (norm (fst (p' ?t)) * (\<integral>w. norm (fst (w ?t)) \<partial>(?\<kappa> p')))"
+      using iNC iNX PK.integrable_const
+      by (simp add: PK.prob_space algebra_simps)
+    also have "\<dots> \<le> norm (?C p') + (?CC + 2 * (norm (fst (p' ?t)) * ?CX))"
+    proof -
+      have b1: "(\<integral>w. norm (?C w) \<partial>(?\<kappa> p')) \<le> ?CC" by (rule KCbnd[OF u])
+      have b2: "norm (fst (p' ?t)) * (\<integral>w. norm (fst (w ?t)) \<partial>(?\<kappa> p'))
+          \<le> norm (fst (p' ?t)) * ?CX"
+        by (rule mult_left_mono[OF KXbnd[OF u] norm_ge_zero])
+      from b1 b2 show ?thesis by linarith
+    qed
+    finally show ?thesis .
+  qed
+
+  \<comment> \<open>the four indicator-carrying side conditions\<close>
+  have QXabs: "integrable Q (\<lambda>p'. \<bar>fst (p' (min u T)) $ e\<bar> + ?CX)"
+    if u: "0 \<le> u" for u e
+  proof -
+    have "integrable Q (\<lambda>p'. fst (p' (min u T)) $ e)"
+      by (rule integrable_bounded_linear
+          [OF bounded_linear_vec_nth QXint[OF u]])
+    then show ?thesis
+      by (intro Bochner_Integration.integrable_add PQ'.integrable_const) simp
+  qed
+  have QCabs: "integrable Q (\<lambda>p'.
+      norm (outerp (fst (p' (min u T))) - snd (p' (min u T)))
+        + (?CC + 2 * (norm (fst (p' (min u T))) * ?CX)))"
+    if u: "0 \<le> u" for u
+  proof -
+    have b: "integrable Q (\<lambda>p'. norm (fst (p' (min u T))))"
+      by (rule integrable_norm[OF QXint[OF u]])
+    show ?thesis
+      by (intro Bochner_Integration.integrable_add PQ'.integrable_const
+          integrable_norm[OF QCint[OF u]]
+          integrable_mult_left Bochner_Integration.integrable_mult_right b)
+  qed
+  have msecX: "(\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+        * (fst (padd T p' w (min u T)) $ e) \<partial>(?\<kappa> p')) \<in> borel_measurable Q"
+    if A: "A \<in> sets (aglue_law T ?\<kappa> Q)" and u: "0 \<le> u" and uT: "u \<le> T"
+    for A u e
+    by (rule aglue_msec_X[OF T0' setsQ Kp A]) (rule KXpadd[OF _ u])
+  have msecC: "(\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+        * ((outerp (fst (padd T p' w (min u T)))
+            - snd (padd T p' w (min u T))) $ c $ d) \<partial>(?\<kappa> p'))
+      \<in> borel_measurable Q"
+    if A: "A \<in> sets (aglue_law T ?\<kappa> Q)" and u: "0 \<le> u" and uT: "u \<le> T"
+    for A u c d
+    by (rule aglue_msec_C[OF T0' setsQ Kp A]) (rule KCpadd[OF _ u])
+  have gintX: "integrable Q (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+        * (fst (padd T p' w (min u T)) $ e) \<partial>(?\<kappa> p'))"
+    if u: "0 \<le> u" and uT: "u \<le> T"
+      and BB: "BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))"
+      and i0: "0 \<le> i" and iT: "i \<le> T" for u BB e i
+  proof (rule aglue_gint_X[OF T0' setsQ Kp i0 iT BB _ QXabs[of u e, OF u]])
+    show "integrable (?\<kappa> p') (\<lambda>w. fst (padd T p' w (min u T)) $ e)"
+      if "p' \<in> space Q" for p' by (rule KXpadd[OF that u])
+    show "(\<integral>w. \<bar>fst (padd T p' w (min u T)) $ e\<bar> \<partial>(?\<kappa> p'))
+        \<le> \<bar>fst (p' (min u T)) $ e\<bar> + ?CX" if "p' \<in> space Q" for p'
+      by (rule KXabnd[OF that u])
+  qed
+  have gintC: "integrable Q (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+        * ((outerp (fst (padd T p' w (min u T)))
+            - snd (padd T p' w (min u T))) $ c $ d) \<partial>(?\<kappa> p'))"
+    if u: "0 \<le> u" and uT: "u \<le> T"
+      and BB: "BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))"
+      and i0: "0 \<le> i" and iT: "i \<le> T" for u BB c d i
+  proof (rule aglue_gint_C[OF T0' setsQ Kp i0 iT BB _ QCabs[of u, OF u]])
+    show "integrable (?\<kappa> p') (\<lambda>w. (outerp (fst (padd T p' w (min u T)))
+        - snd (padd T p' w (min u T))) $ c $ d)"
+      if "p' \<in> space Q" for p' by (rule KCpadd[OF that u])
+    show "(\<integral>w. \<bar>(outerp (fst (padd T p' w (min u T)))
+          - snd (padd T p' w (min u T))) $ c $ d\<bar> \<partial>(?\<kappa> p'))
+        \<le> norm (outerp (fst (p' (min u T))) - snd (p' (min u T)))
+          + (?CC + 2 * (norm (fst (p' (min u T))) * ?CX))"
+      if "p' \<in> space Q" for p' by (rule KCabnd[OF that u])
+  qed
+
+  have Kmean: "(\<integral>w. fst (w (min u T)) $ e \<partial>(?\<kappa> p')) = 0"
+    if "p' \<in> space Q" and u: "0 \<le> u" and "u \<le> T" for p' u e
+    by (rule pdelclass_X_mean[OF th0 thT Kmem u])
+  have KmeanC: "(\<integral>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d
+      \<partial>(?\<kappa> p')) = 0" if "p' \<in> space Q" and u: "0 \<le> u" and "u \<le> T" for p' u c d
+    by (rule pdelclass_comp_mean[OF th0 thT Kmem u])
+  have Kint: "integrable (?\<kappa> p') (\<lambda>w. fst (w (min u T)) $ e)"
+    if "p' \<in> space Q" and u: "0 \<le> u" and "u \<le> T" for p' u e
+    by (rule pdelclass_X_int[OF th0 thT Kmem u])
+  have KintC: "integrable (?\<kappa> p')
+      (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)"
+    if "p' \<in> space Q" and u: "0 \<le> u" and "u \<le> T" for p' u c d
+    by (rule pdelclass_comp_int[OF th0 thT Kmem u])
+  have Kinc: "set_lebesgue_integral (?\<kappa> p') C (\<lambda>w. fst (w (min u T)) $ e)
+      = set_lebesgue_integral (?\<kappa> p') C (\<lambda>w. fst (w (min v T)) $ e)"
+    if "p' \<in> space Q"
+      and C: "C \<in> sets (natural_filtration (?\<kappa> p') 0 (\<lambda>s w. w s) u)"
+      and u: "0 \<le> u" and uv: "u \<le> v" and "v \<le> T" for p' C u v e
+    by (rule pdelclass_X_increment[OF th0 thT Kmem C u uv])
+  have KincC: "set_lebesgue_integral (?\<kappa> p') C
+        (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)
+      = set_lebesgue_integral (?\<kappa> p') C
+        (\<lambda>w. (outerp (fst (w (min v T))) - snd (w (min v T))) $ c $ d)"
+    if "p' \<in> space Q"
+      and C: "C \<in> sets (natural_filtration (?\<kappa> p') 0 (\<lambda>s w. w s) u)"
+      and u: "0 \<le> u" and uv: "u \<le> v" and "v \<le> T" for p' C u v c d
+    by (rule pdelclass_comp_increment[OF th0 thT Kmem C u uv])
+  show ?thesis
+    by (rule paper_pair_class_aglue
+        [OF T0 PQ setsQ Kp st thM Q0 Qst Qcov QH QHC Qcont Kfr Kcov
+          Kmean KmeanC Kint KintC Kinc KincC RXint RCint
+          msecX msecC gintX gintC])
+qed
+
 end
