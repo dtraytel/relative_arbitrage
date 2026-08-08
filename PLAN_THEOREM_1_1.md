@@ -919,3 +919,38 @@ not used.
 `paper_pair_class_aglue` (with the optimal-continuation kernel) into
 `paper_v_dpp_sup_ge_time_of_const`, which is already stated for an arbitrary
 `θ`. Steps (1)–(4) are all closed.
+
+## §2.1: what is left after steps (1)–(4) — the HORIZON-PARAMETRISED SELECTOR
+
+Steps (1)–(4) are closed. The `≥` half reduces, via
+`paper_v_dpp_sup_ge_time_of_const` (already stated for an arbitrary `θ`), to the
+CONSTANT form: given `P` in the class with
+
+  `AE ω. c ≤ pexit (θ ω) K X + (if survived then v(T − θ ω, X_(θ ω)) else 0)`
+
+build a competitor in the class whose exit value is `≥ c`. Step (4)
+(`paper_pair_class_aglue`) supplies "the glue is in the class", so the only
+missing ingredient is the CONTINUATION KERNEL itself.
+
+**The blocker, identified 2026-08-08.** `paper_v_measurable_selector_kernel'`
+selects an optimal continuation measurably in the START POINT `y`, but for a
+FIXED horizon `T`. At a stopping time the continuation is needed at horizon
+`T − θ p'`, which varies with `p'`. So what is required is a selector jointly
+measurable in the PAIR `(s, y)`:
+
+  `S ∈ (borel ⊗⇩M borel) →⇩M prob_algebra ?B_T`, with `S (s, y)` the
+  `pembed s T`-image of a law in `paper_pair_class k L (T − s) 0` attaining
+  `paper_v k L (T − s) K y`.
+
+Note the statement is only well-formed because `pembed` puts every horizon's
+class into the COMMON `T`-space — the same device step (3) used. This is a
+genuine new theorem (a measurable selection with the horizon as a parameter),
+not assembly of existing parts.
+
+**Do NOT try to avoid it by discretising `θ`.** Rounding `θ` to a simple `θ_n`
+would let the existing fixed-horizon selector apply on each value slice, but
+the resulting competitor is glued at `θ_n`, and recovering the `θ` statement
+needs `integrand_θ ≤ integrand_(θ_n) + o(1)`, which is exactly the inequality
+recorded as FALSE in [[dpp-stopping-time-no-approximation]]. Horizon-Lipschitz
+continuity of `paper_v` does not repair it. The `θ_n` route is blocked for the
+INEQUALITY even though it is fine for CLASS MEMBERSHIP.
