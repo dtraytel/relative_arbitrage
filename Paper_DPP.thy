@@ -11091,4 +11091,178 @@ proof -
 qed
 
 
+section \<open>The cross term: an increment against a known factor\<close>
+
+text \<open>The compensated clause does NOT ride along on the additive split,
+  because \<^const>\<open>outerp\<close> is QUADRATIC.  Writing \<open>b = fst (\<omega> (\<theta> \<omega>))\<close>,
+
+  \<open>outerp (X\<^sub>u − b) − (\<langle>X\<rangle>\<^sub>u − \<langle>X\<rangle>\<^sub>\<theta>)
+     = (outerp X\<^sub>u − \<langle>X\<rangle>\<^sub>u) − X\<^sub>u bᵀ − b X\<^sub>uᵀ + outerp b + \<langle>X\<rangle>\<^sub>\<theta>\<close>
+
+  and between two times the last two summands cancel, leaving a compensated
+  increment plus TWO CROSS TERMS \<open>(\<Delta>X) bᵀ\<close> and \<open>b (\<Delta>X)ᵀ\<close>.  The factor \<open>b\<close> is
+  \<open>\<F>\<^sub>\<theta>\<close>-measurable but is NOT constant, so those terms need
+  \<open>E[\<Delta>Y \<sqdot> Z] = 0\<close> for a square-integrable \<open>\<F>\<^sub>\<sigma>\<close>-measurable \<open>Z\<close>.
+
+  With \<open>\<F>\<^sub>\<sigma>\<close> in hand as a genuine \<^const>\<open>sigma\<close> algebra the argument is the
+  textbook one and needs no approximation by simple functions: the
+  conditional expectation of the increment vanishes
+  (@{thm [source] AE_zero_of_set_integral_zero} against
+  @{thm [source] stopped_increment_of_horizon_gen}), and \<open>Z\<close> pulls out of it
+  (\<open>cond_exp_measurable_mult\<close>).  The one quantitative input is that the
+  increment is square integrable, which is Doob's
+  \<open>Dsup_sq_integrable\<close>.\<close>
+
+lemma set_integral_increment_times_known:
+  fixes P :: "('n::finite pairpath) measure"
+    and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and Z :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 < T" and PS: "prob_space P"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and H: "horizon_sq_int_martingale P
+        (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
+    and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    and sts: "path_stopping_time T \<sigma>"
+    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and str: "path_stopping_time T \<rho>"
+    and rM: "\<rho> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and le: "\<And>\<omega> :: 'n pairpath. \<sigma> \<omega> \<le> \<rho> \<omega>"
+    and Zpre: "\<And>B. B \<in> sets borel \<Longrightarrow> Z -` B \<inter> space P
+        \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
+    and Zsq: "integrable P (\<lambda>\<omega> :: 'n pairpath. (Z \<omega>)\<^sup>2)"
+    and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
+  shows "integrable P (\<lambda>\<omega> :: 'n pairpath. (Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>) * Z \<omega>)"
+    and "set_lebesgue_integral P A
+        (\<lambda>\<omega> :: 'n pairpath. (Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>) * Z \<omega>) = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?D = "\<lambda>\<omega> :: 'n pairpath. Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>"
+  let ?G = "sigma (space P) (pre_sigma_of P ?F \<sigma>)"
+  have T0': "0 \<le> T" using T0 by simp
+  interpret PP: prob_space P by (rule PS)
+  interpret H: horizon_sq_int_martingale P ?F Y T by (rule H)
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  have subF: "subalgebra P (?F t)" if "0 \<le> t" for t
+    by (rule H.subalgebras[OF that])
+  have stops: "{\<omega> \<in> space P. \<sigma> \<omega> \<le> t} \<in> sets (?F t)" if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_event_filtration_all[OF T0' sts sM t])
+
+  \<comment> \<open>\<open>\<F>\<^sub>\<sigma>\<close> as a genuine sub-\<open>\<sigma>\<close>-algebra of \<open>P\<close>\<close>
+  have sa: "sigma_algebra (space P) (pre_sigma_of P ?F \<sigma>)"
+    by (rule sigma_algebra_pre_sigma_of[OF subF stops])
+  have setsG: "sets ?G = pre_sigma_of P ?F \<sigma>"
+    by (rule sigma_algebra.sets_measure_of_eq[OF sa])
+  have spG: "space ?G = space P" by (simp add: space_measure_of_conv)
+  have subG: "subalgebra P ?G"
+    unfolding subalgebra_def using spG setsG pre_sigma_of_sets by auto
+  have fm: "finite_measure P"
+    by (rule finite_measureI) (simp add: PP.emeasure_space_1)
+  interpret SF: sigma_finite_subalgebra P ?G
+    by (intro finite_measure_subalgebra_is_sigma_finite
+        finite_measure_subalgebra.intro
+        finite_measure_subalgebra_axioms.intro fm subG)
+
+  \<comment> \<open>the increment: integrable, and square integrable by Doob\<close>
+  have intr: "integrable P (\<lambda>\<omega> :: 'n pairpath. Y (\<rho> \<omega>) \<omega>)"
+    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont str rM])
+  have ints: "integrable P (\<lambda>\<omega> :: 'n pairpath. Y (\<sigma> \<omega>) \<omega>)"
+    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont sts sM])
+  have intD: "integrable P ?D"
+    by (rule Bochner_Integration.integrable_diff[OF intr ints])
+  have pathcont: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    by (rule AE_I2) (rule Ycont)
+  have Dbd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> H.Dsup \<omega>"
+    by (rule H.Dsup_dominates[OF pathcont])
+  have Dsq: "integrable P (\<lambda>\<omega> :: 'n pairpath. (?D \<omega>)\<^sup>2)"
+  proof (rule Bochner_Integration.integrable_bound
+      [where f = "\<lambda>\<omega> :: 'n pairpath. 4 * (H.Dsup \<omega>)\<^sup>2"])
+    show "integrable P (\<lambda>\<omega> :: 'n pairpath. 4 * (H.Dsup \<omega>)\<^sup>2)"
+      using H.Dsup_sq_integrable by simp
+    show "(\<lambda>\<omega> :: 'n pairpath. (?D \<omega>)\<^sup>2) \<in> borel_measurable P"
+      using intD by simp
+    show "AE \<omega> in P. norm ((?D \<omega>)\<^sup>2) \<le> norm (4 * (H.Dsup \<omega>)\<^sup>2)"
+      using Dbd
+    proof eventually_elim
+      case (elim \<omega>)
+      have bs: "\<bar>Y (\<sigma> \<omega>) \<omega>\<bar> \<le> H.Dsup \<omega>"
+        using elim path_stopping_time_nonneg[OF sts, of \<omega>]
+          path_stopping_time_le[OF sts, of \<omega>] by simp
+      have br: "\<bar>Y (\<rho> \<omega>) \<omega>\<bar> \<le> H.Dsup \<omega>"
+        using elim path_stopping_time_nonneg[OF str, of \<omega>]
+          path_stopping_time_le[OF str, of \<omega>] by simp
+      have le2: "\<bar>?D \<omega>\<bar> \<le> 2 * H.Dsup \<omega>" using bs br by simp
+      have "(?D \<omega>)\<^sup>2 = \<bar>?D \<omega>\<bar>\<^sup>2" by simp
+      also have "\<dots> \<le> (2 * H.Dsup \<omega>)\<^sup>2"
+        by (rule power_mono[OF le2 abs_ge_zero])
+      finally show ?case by (simp add: power_mult_distrib)
+    qed
+  qed
+
+  \<comment> \<open>the known factor\<close>
+  have ZG: "Z \<in> borel_measurable ?G"
+  proof (rule measurableI)
+    show "Z \<omega> \<in> space borel" for \<omega> :: "'n pairpath" by simp
+    fix B :: "real set" assume B: "B \<in> sets borel"
+    show "Z -` B \<inter> space ?G \<in> sets ?G" using Zpre[OF B] setsG spG by simp
+  qed
+  have ZP: "Z \<in> borel_measurable P"
+    using ZG measurable_from_subalg[OF subG] by blast
+  have Dm: "?D \<in> borel_measurable P" using intD by simp
+  have intZD: "integrable P (\<lambda>\<omega> :: 'n pairpath. Z \<omega> * ?D \<omega>)"
+    by (rule integrable_mult_of_sq[OF ZP Dm Zsq Dsq])
+  show int1: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?D \<omega> * Z \<omega>)"
+    using intZD by (simp add: mult.commute)
+
+  \<comment> \<open>the increment conditions to zero\<close>
+  have ceD: "AE \<omega> in P. cond_exp P ?G ?D \<omega> = 0"
+  proof (rule AE_zero_of_set_integral_zero[OF subG])
+    show "integrable P (cond_exp P ?G ?D)" by (rule integrable_cond_exp)
+    show "cond_exp P ?G ?D \<in> borel_measurable ?G"
+      by (rule borel_measurable_cond_exp)
+    fix C assume C: "C \<in> sets ?G"
+    then have C': "C \<in> pre_sigma_of P ?F \<sigma>" using setsG by simp
+    have CP: "C \<in> sets P" by (rule pre_sigma_of_sets[OF C'])
+    have sii: "set_integrable P C (\<lambda>\<omega> :: 'n pairpath. Y (\<sigma> \<omega>) \<omega>)"
+      unfolding set_integrable_def by (rule integrable_mult_indicator[OF CP ints])
+    have sij: "set_integrable P C (\<lambda>\<omega> :: 'n pairpath. Y (\<rho> \<omega>) \<omega>)"
+      unfolding set_integrable_def by (rule integrable_mult_indicator[OF CP intr])
+    have "set_lebesgue_integral P C (cond_exp P ?G ?D)
+        = set_lebesgue_integral P C ?D"
+      by (rule SF.cond_exp_set_integral[OF intD C, symmetric])
+    also have "\<dots> = set_lebesgue_integral P C (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)
+        - set_lebesgue_integral P C (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)"
+      using set_integral_diff(2)[OF sij sii] by simp
+    also have "\<dots> = 0"
+      using stopped_increment_of_horizon_gen
+        [OF T0 setsP H Ycont sts sM str rM le C'] by simp
+    finally show "set_lebesgue_integral P C (cond_exp P ?G ?D) = 0" .
+  qed
+  have ceZD: "AE \<omega> in P. cond_exp P ?G (\<lambda>\<omega>. Z \<omega> * ?D \<omega>) \<omega>
+      = Z \<omega> * cond_exp P ?G ?D \<omega>"
+    by (rule SF.cond_exp_measurable_mult(2)[OF intZD intD ZG])
+  have ae0: "AE \<omega> in P. cond_exp P ?G (\<lambda>\<omega>. Z \<omega> * ?D \<omega>) \<omega> = 0"
+    using ceZD ceD by eventually_elim simp
+
+  have AP: "A \<in> sets P" by (rule pre_sigma_of_sets[OF A])
+  have AG: "A \<in> sets ?G" using A setsG by simp
+  have aeA: "AE \<omega>\<in>A in P. cond_exp P ?G (\<lambda>\<omega>. Z \<omega> * ?D \<omega>) \<omega> = 0"
+    using ae0 by (auto elim: eventually_mono)
+  have "set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. Z \<omega> * ?D \<omega>)
+      = set_lebesgue_integral P A (cond_exp P ?G (\<lambda>\<omega>. Z \<omega> * ?D \<omega>))"
+    by (rule SF.cond_exp_set_integral[OF intZD AG])
+  also have "\<dots> = set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. 0)"
+    by (rule set_lebesgue_integral_cong_AE
+        [OF AP SF.borel_measurable_cond_exp' borel_measurable_const aeA])
+  also have "\<dots> = 0" by (simp add: set_lebesgue_integral_def)
+  finally show "set_lebesgue_integral P A
+      (\<lambda>\<omega> :: 'n pairpath. ?D \<omega> * Z \<omega>) = 0"
+    by (simp add: mult.commute)
+qed
+
 end
