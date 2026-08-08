@@ -17804,4 +17804,55 @@ proof -
   qed
 qed
 
+text \<open>The continuation kernel itself: read the freezing time and the starting
+  point off the STOPPED path and hand both to the selector.  Its measurability
+  is the only place the horizon-parametrised selector's \<^emph>\<open>joint\<close>
+  measurability is used --- the pair \<open>(\<theta> p', X_(\<theta> p'))\<close> is a single measurable
+  function of the past, the second component by
+  @{thm [source] path_eval_at_measurable_time}.\<close>
+
+definition selker ::
+  "(real \<times> (real^'n::finite) \<Rightarrow> ('n pairpath) measure)
+     \<Rightarrow> (('n pairpath) \<Rightarrow> real) \<Rightarrow> ('n pairpath) \<Rightarrow> ('n pairpath) measure"
+  where "selker Sel \<theta> p' = Sel (\<theta> p', fst (p' (\<theta> p')))"
+
+lemma selker_measurable:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Sm: "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric)))"
+  shows "selker Sel \<theta> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have thQ: "\<theta> \<in> borel_measurable Q"
+    using thM measurable_cong_sets[OF setsQ refl] by blast
+  have idm: "(\<lambda>p' :: 'n pairpath. p') \<in> Q \<rightarrow>\<^sub>M ?B"
+    by (rule measurable_ident_sets[OF setsQ])
+  have ev: "(\<lambda>p' :: 'n pairpath. p' (\<theta> p')) \<in> borel_measurable Q"
+    by (rule path_eval_at_measurable_time
+        [where X = "\<lambda>p' :: 'n pairpath. p'" and g = \<theta>, OF T0 idm thQ])
+       (use th0 thT in auto)
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have xm: "(\<lambda>p' :: 'n pairpath. fst (p' (\<theta> p'))) \<in> borel_measurable Q"
+    by (rule measurable_compose[OF ev fstB])
+  have pm: "(\<lambda>p' :: 'n pairpath. (\<theta> p', fst (p' (\<theta> p'))))
+      \<in> Q \<rightarrow>\<^sub>M (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)"
+    by (rule measurable_Pair[OF thQ xm])
+  show ?thesis
+    unfolding selker_def by (rule measurable_compose[OF pm Sm])
+qed
+
 end
