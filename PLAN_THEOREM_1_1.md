@@ -1199,3 +1199,42 @@ it into the `≥` half. The continuation kernel is
 kernel clauses are the `pdelclass_*` family. The optimality input on the glued
 path is `pexit_pglue_dpp` transported through `padd`, exactly as
 `paper_v_dpp_ge_const` does at a deterministic time.
+
+## §2.1 — the Fubini tools are in; what is left is bounded and explicit
+
+**`integrable_ksemi_fst`, `integrable_ksemi_of_bound`, `integral_kernel_measurable`**
+(Paper_DPP, all green) are the three generic facts every one of step (4)'s six
+side conditions reduces to. Two traps recorded in passing: `rule` will not
+beta-reduce `g (fst (ω,ω'))` to `g ω`, so a `nn_integral_ksemi` split has to be
+closed with `simp`; and `integrable_iff_bounded` wants measurability w.r.t.
+`ksemi M N Kr` itself, not `M ⨂⇩M N` — `sets_ksemi` bridges them, which is why
+`space M ≠ {}` is a hypothesis.
+
+### The six side conditions — the exact recipe
+
+Write `g1 p = <past part>`, `g2 p = <continuation part>`; `padd_apply` splits
+`fst (padd T p' w (min u T))` into `fst (p' (min u T)) + fst (w (min u T))`.
+
+* **`RXint` / `RCint`.** `integrable_distr_eq` moves the statement from
+  `aglue_law` to `ksemi Q ?B κ`. Then `g1` is `integrable_ksemi_fst` applied to
+  `integrable Q (λp'. fst (p' (min u T)))` (from `QH` componentwise plus
+  `integrable_vec_components`), and `g2` is `integrable_ksemi_of_bound` with the
+  constant of `pdelclass_norm_mean_le`. Add with
+  `Bochner_Integration.integrable_add`. NOTE the nn/Bochner mismatch: the
+  uniform bound is on `∫ norm …`, so convert with `nn_integral_eq_integral`
+  (legitimate because `Kint`/`KintC` make `norm …` integrable).
+* **`msecX` / `msecC`.** `integral_kernel_measurable`, with joint measurability
+  of `(p',w) ↦ indicator A (padd T p' w) * …` from `padd_measurable_ksemi` and
+  `A ∈ sets ?B`, and the per-`p'` integrability from `Kint`/`KintC` times a
+  bounded indicator (`integrable_mult_indicator`).
+* **`gintX` / `gintC`.** `Bochner_Integration.integrable_bound` against
+  `λp'. norm (fst (p' (min u T))) + CX`: the inner integral is bounded by
+  `∫ (|past| + |continuation|) dκ p' ≤ |past| + CX`, the first summand is
+  `Q`-integrable and the second constant. Measurability of the outer function
+  is `msecX`/`msecC` again.
+
+### Then assembly
+
+`paper_pair_class_aglue` yields the competitor and
+`paper_v_dpp_sup_ge_time_of_const` (already stated for arbitrary `θ`) converts
+it into the `≥` half. Kernel: `λp'. Sel (θ p', fst (p' (θ p')))`.
