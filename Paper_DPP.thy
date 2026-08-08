@@ -17337,4 +17337,109 @@ proof -
     by (rule aglue_section_measurable[OF T0 setsQ Kp hb cb c1 Kint])
 qed
 
+subsection \<open>\<open>gintX\<close> and \<open>gintC\<close>\<close>
+
+corollary aglue_gint_X:
+  fixes Q :: "('n::finite pairpath) measure" and HB :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and i0: "0 \<le> i" and iT: "i \<le> T"
+    and BB: "BB \<in> sets (borel_of (mtopology_of
+        (path_metric i :: ('n pairpath) metric)))"
+    and Kint: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (padd T p' w (min u T)) $ e)"
+    and HBi: "integrable Q HB"
+    and Kbnd: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> (\<integral>w. \<bar>fst (padd T p' w (min u T)) $ e\<bar> \<partial>(\<kappa> p')) \<le> HB p'"
+  shows "integrable Q (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+      * (fst (padd T p' w (min u T)) $ e) \<partial>(\<kappa> p'))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bi = "borel_of (mtopology_of (path_metric i :: ('n pairpath) metric))"
+  have cb: "(\<lambda>x :: 'n pairpath. indicator BB (pcut i x) :: real)
+      \<in> borel_measurable ?B"
+  proof -
+    have pc: "pcut i \<in> ?B \<rightarrow>\<^sub>M ?Bi" by (rule pcut_measurable[OF i0 iT refl])
+    have ib: "(\<lambda>x :: 'n pairpath. indicator BB x :: real)
+        \<in> borel_measurable ?Bi" using BB by (rule borel_measurable_indicator)
+    show ?thesis by (rule measurable_compose[OF pc ib])
+  qed
+  have c1: "\<bar>(indicator BB (pcut i x) :: real)\<bar> \<le> 1" for x :: "'n pairpath"
+    by (simp add: indicator_def)
+  have hb: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ e) \<in> borel_measurable ?B"
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    show ?thesis
+      by (rule measurable_compose
+          [OF measurable_compose[OF ev f] borel_measurable_nth])
+  qed
+  show ?thesis
+    by (rule aglue_section_integrable
+        [OF T0 setsQ Kp hb cb c1 Kint HBi Kbnd])
+qed
+
+corollary aglue_gint_C:
+  fixes Q :: "('n::finite pairpath) measure" and HB :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and i0: "0 \<le> i" and iT: "i \<le> T"
+    and BB: "BB \<in> sets (borel_of (mtopology_of
+        (path_metric i :: ('n pairpath) metric)))"
+    and Kint: "\<And>p'. p' \<in> space Q \<Longrightarrow> integrable (\<kappa> p')
+      (\<lambda>w. (outerp (fst (padd T p' w (min u T)))
+        - snd (padd T p' w (min u T))) $ c $ d)"
+    and HBi: "integrable Q HB"
+    and Kbnd: "\<And>p'. p' \<in> space Q \<Longrightarrow> (\<integral>w.
+        \<bar>(outerp (fst (padd T p' w (min u T)))
+          - snd (padd T p' w (min u T))) $ c $ d\<bar> \<partial>(\<kappa> p')) \<le> HB p'"
+  shows "integrable Q (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+      * ((outerp (fst (padd T p' w (min u T)))
+          - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bi = "borel_of (mtopology_of (path_metric i :: ('n pairpath) metric))"
+  have cb: "(\<lambda>x :: 'n pairpath. indicator BB (pcut i x) :: real)
+      \<in> borel_measurable ?B"
+  proof -
+    have pc: "pcut i \<in> ?B \<rightarrow>\<^sub>M ?Bi" by (rule pcut_measurable[OF i0 iT refl])
+    have ib: "(\<lambda>x :: 'n pairpath. indicator BB x :: real)
+        \<in> borel_measurable ?Bi" using BB by (rule borel_measurable_indicator)
+    show ?thesis by (rule measurable_compose[OF pc ib])
+  qed
+  have c1: "\<bar>(indicator BB (pcut i x) :: real)\<bar> \<le> 1" for x :: "'n pairpath"
+    by (simp add: indicator_def)
+  have hb: "(\<lambda>\<omega> :: 'n pairpath.
+      (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ c $ d)
+      \<in> borel_measurable ?B"
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have s: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
+        \<in> borel_measurable borel"
+      unfolding outerp_def
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    have bl: "bounded_linear (\<lambda>M :: real^'n^'n. M $ c $ d)"
+      by (rule bounded_linear_compose[OF bounded_linear_vec_nth
+          bounded_linear_vec_nth])
+    have n: "(\<lambda>M :: real^'n^'n. M $ c $ d) \<in> borel_measurable borel"
+      by (rule borel_measurable_continuous_onI)
+         (rule linear_continuous_on[OF bl])
+    show ?thesis
+      by (rule measurable_compose[OF measurable_compose[OF ev s] n])
+  qed
+  show ?thesis
+    by (rule aglue_section_integrable
+        [OF T0 setsQ Kp hb cb c1 Kint HBi Kbnd])
+qed
+
 end
