@@ -159,6 +159,184 @@ proof (intro ballI allI impI)
   show "ell_op k L (g x) H \<le> 1" by (rule ell_op_le_one_of_witness[OF a le])
 qed
 
+section \<open>The ball exit time along a continuous path\<close>
+
+text \<open>Three pathwise facts about \<^const>\<open>pball_exit\<close>.  All three are what an
+  Ito-side supplier will consume, and none of them needs a law: they are
+  statements about a single continuous path.
+
+  The first is ATTAINMENT.  With \<open>K\<close> open the target \<open>-K\<close> is closed, so along
+  a continuous path the infimum defining \<^const>\<open>pexit\<close> is a minimum whenever
+  it is below the horizon --- the path really is outside \<open>K\<close> at the exit time.
+  This is the single fact that fails for a general (discontinuous) function,
+  and every other clause below is a consequence of it.\<close>
+
+lemma pexit_le_of_mem:
+  fixes f :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T" and r: "0 \<le> r" "r \<le> T" and mem: "f r \<notin> K"
+  shows "pexit T K f \<le> r"
+  unfolding pexit_def using T0 r mem by (intro etime_le_of_mem) auto
+
+lemma pexit_mem_of_less_T:
+  fixes f :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T" and Kop: "open K"
+    and cont: "continuous_on {0..T} f"
+    and lt: "pexit T K f < T"
+  shows "f (pexit T K f) \<notin> K"
+proof -
+  let ?S = "{r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K}"
+  have cK: "closed (- K)" unfolding closed_def using Kop by simp
+  have Sclosed: "closed ?S"
+  proof -
+    have "?S = f -` (- K) \<inter> {0..T}" by auto
+    then show ?thesis using cont cK by (simp add: continuous_on_closed_vimage)
+  qed
+  have Sbdd: "bdd_below ?S" by (intro bdd_belowI[of _ 0]) auto
+  have pe: "pexit T K f = Inf (?S \<union> {T})"
+    unfolding pexit_def etime_def by simp
+  have Sne: "?S \<noteq> {}"
+  proof (rule ccontr)
+    assume "\<not> ?S \<noteq> {}"
+    then have e: "?S = {}" by simp
+    have "pexit T K f = Inf ({} \<union> {T})" unfolding pe e ..
+    then have "pexit T K f = T" by simp
+    with lt show False by simp
+  qed
+  have SleT: "Inf ?S \<le> T"
+  proof -
+    from Sne obtain s where s: "s \<in> ?S" by blast
+    then have "Inf ?S \<le> s" using Sbdd by (intro cInf_lower)
+    also have "s \<le> T" using s by simp
+    finally show ?thesis .
+  qed
+  have "Inf (?S \<union> {T}) = inf (Inf ?S) (Inf {T})"
+    by (rule cInf_union_distrib[OF Sne Sbdd]) auto
+  then have "pexit T K f = Inf ?S" using pe SleT by (simp add: inf_min)
+  moreover have "Inf ?S \<in> ?S"
+    using Sne Sbdd Sclosed by (intro closed_contains_Inf) auto
+  ultimately show ?thesis by simp
+qed
+
+text \<open>The second is the CONGRUENCE clause of a stopping time, restricted to
+  continuous paths.  Note the asymmetry: the \<open>\<ge>\<close> direction is unconditional
+  (a witness for \<open>g\<close> strictly below the exit time of \<open>f\<close> is a witness for \<open>f\<close>
+  too), and only the \<open>\<le>\<close> direction needs attainment.\<close>
+
+lemma pexit_cong_stopping:
+  fixes f g :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T" and Kop: "open K"
+    and cont: "continuous_on {0..T} f"
+    and eq: "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> pexit T K f \<Longrightarrow> f t = g t"
+  shows "pexit T K g = pexit T K f"
+proof -
+  have th0: "0 \<le> pexit T K f" by (rule pexit_nonneg[OF T0])
+  have thT: "pexit T K f \<le> T" by (rule pexit_le_T[OF T0])
+  have le: "pexit T K g \<le> pexit T K f"
+  proof (cases "pexit T K f < T")
+    case True
+    have "f (pexit T K f) \<notin> K"
+      by (rule pexit_mem_of_less_T[OF T0 Kop cont True])
+    then have m: "g (pexit T K f) \<notin> K"
+      using eq[OF th0 order_refl] by simp
+    show ?thesis
+      by (rule pexit_le_of_mem[of T "pexit T K f" g K, OF T0 th0 thT m])
+  next
+    case False
+    with thT have "pexit T K f = T" by simp
+    then show ?thesis using pexit_le_T[OF T0, of K g] by simp
+  qed
+  have ge: "pexit T K f \<le> pexit T K g"
+  proof (rule ccontr)
+    assume "\<not> pexit T K f \<le> pexit T K g"
+    then have lt: "pexit T K g < pexit T K f" by simp
+    have "(\<exists>r. 0 \<le> r \<and> r \<le> T \<and> g r \<in> - K \<and> r < pexit T K f)
+        \<or> T < pexit T K f"
+      using lt pexit_less_iff[OF T0] by blast
+    with thT obtain r where r: "0 \<le> r" "r \<le> T" "g r \<notin> K"
+      "r < pexit T K f" by auto
+    have "f r \<notin> K" using eq[OF r(1)] r(4) r(3) by simp
+    then have "pexit T K f \<le> r"
+      by (rule pexit_le_of_mem[OF T0 r(1) r(2)])
+    with r(4) show False by simp
+  qed
+  from le ge show ?thesis by simp
+qed
+
+lemma pball_exit_cong:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+    and eq: "\<And>t. t \<in> {0..pball_exit T x \<epsilon> \<omega>} \<Longrightarrow> \<omega> t = \<omega>' t"
+  shows "pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
+  unfolding pball_exit_def
+proof (rule pexit_cong_stopping[OF T0 open_ball cont])
+  fix t :: real
+  assume t: "0 \<le> t" "t \<le> pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t))"
+  then have "t \<in> {0..pball_exit T x \<epsilon> \<omega>}" by (simp add: pball_exit_def)
+  from eq[OF this] show "fst (\<omega> t) = fst (\<omega>' t)" by simp
+qed
+
+text \<open>The third is what makes the exit time USEFUL to the expansion: below the
+  horizon the path has actually travelled the full distance \<open>\<epsilon>\<close>.\<close>
+
+lemma pball_exit_outside:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+    and lt: "pball_exit T x \<epsilon> \<omega> < T"
+  shows "\<epsilon> \<le> dist (fst (\<omega> (pball_exit T x \<epsilon> \<omega>))) x"
+proof -
+  have "fst (\<omega> (pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t)))) \<notin> ball x \<epsilon>"
+    using lt unfolding pball_exit_def
+    by (intro pexit_mem_of_less_T[OF T0 open_ball cont]) simp
+  then show ?thesis
+    unfolding pball_exit_def by (simp add: dist_commute)
+qed
+
+text \<open>And it is strictly positive when the path starts strictly inside the
+  ball --- which is exactly the situation of the subsolution argument, where
+  the starting point is the touching point \<open>x\<close> itself.  Without this the DPP
+  bound of @{thm [source] paper_v_cond_ball} would be vacuous.\<close>
+
+lemma pball_exit_pos:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 < T"
+    and start: "dist (fst (\<omega> 0)) x < \<epsilon>"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+  shows "0 < pball_exit T x \<epsilon> \<omega>"
+proof -
+  have T0': "0 \<le> T" using T0 by simp
+  have z: "(0::real) \<in> {0..T}" using T0 by simp
+  have e0: "0 < \<epsilon> - dist (fst (\<omega> 0)) x" using start by simp
+  from cont[unfolded continuous_on_iff] z e0
+  obtain \<delta> where d0: "0 < \<delta>"
+    and dd: "\<And>t. t \<in> {0..T} \<Longrightarrow> dist t 0 < \<delta>
+        \<Longrightarrow> dist (fst (\<omega> t)) (fst (\<omega> 0)) < \<epsilon> - dist (fst (\<omega> 0)) x"
+    by blast
+  have mle: "min \<delta> T \<le> pball_exit T x \<epsilon> \<omega>"
+  proof (rule ccontr)
+    assume "\<not> min \<delta> T \<le> pball_exit T x \<epsilon> \<omega>"
+    then have lt0: "pball_exit T x \<epsilon> \<omega> < min \<delta> T" by (rule not_le_imp_less)
+    then have lt: "pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t)) < min \<delta> T"
+      by (simp add: pball_exit_def)
+    have "(\<exists>r. 0 \<le> r \<and> r \<le> T \<and> fst (\<omega> r) \<in> - ball x \<epsilon> \<and> r < min \<delta> T)
+        \<or> T < min \<delta> T"
+      using lt[unfolded pexit_less_iff[OF T0']] .
+    then obtain r where r: "0 \<le> r" "r \<le> T" "fst (\<omega> r) \<notin> ball x \<epsilon>"
+      "r < min \<delta> T" by auto
+    have dr: "dist (fst (\<omega> r)) (fst (\<omega> 0)) < \<epsilon> - dist (fst (\<omega> 0)) x"
+      using r by (intro dd) (auto simp: dist_real_def)
+    have "dist (fst (\<omega> r)) x
+        \<le> dist (fst (\<omega> r)) (fst (\<omega> 0)) + dist (fst (\<omega> 0)) x"
+      by (rule dist_triangle)
+    also have "\<dots> < \<epsilon>" using dr by simp
+    finally have "fst (\<omega> r) \<in> ball x \<epsilon>" by (simp add: dist_commute)
+    with r(3) show False by simp
+  qed
+  have m0: "0 < min \<delta> T" using d0 T0 by simp
+  show ?thesis by (rule order_less_le_trans[OF m0 mle])
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Two suppliers, in this order.
@@ -170,12 +348,20 @@ text \<open>Two suppliers, in this order.
     constraint (iii).  \<open>Stochastic_Integral\<close> and \<open>Ito_Covariation\<close> are the
     intended sources; \<open>Relative_Arbitrage_Ito.ito_formula_quadratic\<close> is the
     market-side analogue to imitate.  Feasibility of the limiting \<open>a\<close> is
-    \<^const>\<open>sconstraint\<close> (clause (iii)) plus orthogonality to \<open>g x\<close>.
+    \<^const>\<open>sconstraint\<close> (clause (iii)) plus orthogonality to \<open>g x\<close>, and
+    @{thm [source] pball_exit_outside} is what supplies the SCALE \<open>\<epsilon>\<close> against
+    which the second-order term is measured.
 
   \<^item> the SUPERSOLUTION half --- @{thm [source] paper_v_dpp_sup_ge_time} plus
     a weak solution of the SDE (3.24).  Note the caveat recorded above: its
-    \<open>\<theta>\<close> must be a \<^const>\<open>path_stopping_time\<close>, and a ball exit time satisfies
-    the congruence clause only along CONTINUOUS paths, so
-    \<^const>\<open>path_stopping_time\<close> needs a path-space-restricted variant first.\<close>
+    \<open>\<theta>\<close> must be a \<^const>\<open>path_stopping_time\<close>, whose congruence clause
+    quantifies over ALL functions, while @{thm [source] pball_exit_cong}
+    delivers it only along continuous paths --- and that restriction is not a
+    weakness of the proof but of the notion, since attainment of the infimum
+    genuinely fails off the path space.  Closing it means weakening
+    \<^const>\<open>path_stopping_time\<close> itself inside \<open>Paper_DPP\<close> (252 occurrences), a
+    mechanical but not small refactor; the derived paths it gets applied to
+    (\<open>pcut\<close>, \<open>pstopped\<close>, and the shifted time) all stay continuous, so nothing
+    in the argument obstructs it.\<close>
 
 end
