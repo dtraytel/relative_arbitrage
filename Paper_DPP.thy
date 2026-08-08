@@ -17707,4 +17707,101 @@ proof -
     unfolding AE_aglue_law[OF T0 PQ setsQ Kp mset] .
 qed
 
+text \<open>What the selector delivers, in the form @{thm [source] aglue_law_pexit_ge}
+  consumes: its optimality is an \<^const>\<open>ess_inf_time\<close> EQUALITY, and
+  @{thm [source] ess_inf_time_AE} turns the \<open>\<ge>\<close> direction of that into the
+  almost-sure bound, once the \<^const>\<open>pshift_law\<close> and \<^const>\<open>prebase\<close> layers
+  are peeled off.\<close>
+
+lemma selector_value_AE:
+  fixes \<nu> :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and Kc: "closed K"
+    and Pnu: "prob_space \<nu>"
+    and setsnu: "sets \<nu> = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and val: "ess_inf_time (pshift_law (T - s) y
+          (distr \<nu> (borel_of (mtopology_of
+            (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)))
+          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t)))
+        = paper_v k L (T - s) K y"
+  shows "AE w in \<nu>. enn2real (paper_v k L (T - s) K y)
+      \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))"
+proof -
+  let ?Bs = "borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+  let ?\<mu> = "distr \<nu> ?Bs (prebase s T)"
+  let ?v = "paper_v k L (T - s) K y"
+  have Ts: "0 \<le> T - s" using sT by simp
+  have reb: "prebase s T \<in> \<nu> \<rightarrow>\<^sub>M ?Bs"
+    unfolding measurable_cong_sets[OF setsnu refl]
+    by (rule prebase_measurable[OF s0 sT])
+  have setsmu: "sets ?\<mu> = sets ?Bs" by simp
+  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit (T - s) K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?Bs"
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. pexit (T - s) K (pfst (T - s) \<omega>))
+        \<in> borel_measurable ?Bs"
+      by (rule measurable_compose[OF pfst_measurable[OF Ts refl]
+            pexit_measurable[OF Ts Kc]])
+    then show ?thesis by (simp add: pexit_pfst)
+  qed
+  have mset: "{\<omega> \<in> space ?Bs.
+      ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))} \<in> sets ?Bs"
+  proof -
+    have sh: "(\<lambda>\<omega> :: 'n pairpath. pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))
+        \<in> borel_measurable ?Bs"
+    proof -
+      have shm: "pshift (T - s) y \<in> ?Bs \<rightarrow>\<^sub>M ?Bs"
+        by (rule pshift_measurable[OF Ts])
+      have "(\<lambda>\<omega> :: 'n pairpath.
+          pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t)))
+          \<in> borel_measurable ?Bs"
+        by (rule measurable_compose[OF shm taum])
+      moreover have "pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t))
+          = pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))" for \<omega> :: "'n pairpath"
+        by (rule pexit_cong_on) (simp add: pshift_fst)
+      ultimately show ?thesis by simp
+    qed
+    show ?thesis using sh by measurable
+  qed
+  \<comment> \<open>the optimality, as an almost-sure bound on the SHIFTED law\<close>
+  have ae1: "AE \<omega> in pshift_law (T - s) y ?\<mu>.
+      ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. fst (\<omega> t)))"
+    unfolding val[symmetric] by (rule ess_inf_time_AE)
+  have ae2: "AE \<omega> in ?\<mu>.
+      ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))"
+  proof -
+    have "AE \<omega> in ?\<mu>.
+        ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t)))"
+      using ae1 unfolding AE_pshift_law_iff[OF Ts setsmu] .
+    then show ?thesis
+    proof (rule eventually_mono)
+      fix \<omega> :: "'n pairpath"
+      assume h: "?v \<le> ennreal (pexit (T - s) K
+          (\<lambda>t. fst (pshift (T - s) y \<omega> t)))"
+      have "pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t))
+          = pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))"
+        by (rule pexit_cong_on) (simp add: pshift_fst)
+      with h show "?v \<le> ennreal (pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))"
+        by simp
+    qed
+  qed
+  have ae3: "AE w in \<nu>. ?v
+      \<le> ennreal (pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u)))"
+    using ae2 unfolding AE_distr_iff[OF reb mset] .
+  show ?thesis using ae3
+  proof (rule eventually_mono)
+    fix w :: "'n pairpath"
+    assume h: "?v \<le> ennreal (pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u)))"
+    have fin: "?v \<noteq> \<top>" by (rule paper_v_neq_top[OF Ts])
+    have nn: "0 \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))"
+      by (rule pexit_nonneg[OF Ts])
+    have "enn2real ?v
+        \<le> enn2real (ennreal (pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))))"
+      by (rule enn2real_mono[OF h]) simp
+    then show "enn2real ?v
+        \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))" using nn by simp
+  qed
+qed
+
 end
