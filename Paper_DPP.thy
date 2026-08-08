@@ -8385,4 +8385,90 @@ proof -
   finally show ?thesis by simp
 qed
 
+text \<open>The re-basing map at a FIXED time is an ordinary path-space map --- and
+  that is all clause (i) of the kernel statement needs, since \<open>\<theta> \<omega>\<close> is a
+  fixed number inside an almost-sure statement.\<close>
+
+lemma prebase_mspace:
+  fixes w :: "'n::finite pairpath"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+    and w: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "prebase s T w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+proof -
+  have c: "continuous_on {0..T} w" by (rule mspace_path_metricD[OF w])
+  have "continuous_on {0..T - s} (\<lambda>u. w (s + u))"
+  proof (rule continuous_on_compose2[OF c])
+    show "continuous_on {0..T - s} (\<lambda>u :: real. s + u)" by (intro continuous_intros)
+    show "(\<lambda>u :: real. s + u) ` {0..T - s} \<subseteq> {0..T}" using s0 by auto
+  qed
+  then show ?thesis unfolding prebase_def by (rule mspace_path_metricI)
+qed
+
+lemma prebase_measurable:
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "prebase s T \<in> borel_of (mtopology_of
+      (path_metric T :: ('n::finite pairpath) metric))
+    \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric (T - s) :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have sp: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have Ts: "0 \<le> T - s" using sT by simp
+  have into: "prebase s T w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+    if "w \<in> space ?B" for w :: "'n pairpath"
+  proof -
+    have m: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using that sp by simp
+    show ?thesis by (rule prebase_mspace[OF s0 sT m])
+  qed
+  have ev: "(\<lambda>w :: 'n pairpath. prebase s T w u) \<in> borel_measurable ?B" for u
+  proof (cases "u \<in> {0..T - s}")
+    case True
+    have "(\<lambda>w :: 'n pairpath. w (s + u)) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    then show ?thesis by (simp add: prebase_apply[OF True])
+  next
+    case False
+    have "(\<lambda>w :: 'n pairpath. prebase s T w u) = (\<lambda>w :: 'n pairpath. undefined)"
+      by (rule ext) (rule prebase_outside[OF False])
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+    show "(\<lambda>w. mdist (path_metric (T - s) :: ('n pairpath) metric)
+        (prebase s T w) a) \<in> borel_measurable ?B"
+      by (rule mdist_measurable_of_eval[OF Ts into am ev])
+  qed
+qed
+text \<open>Hence clause (i) for the kernel: re-based, the conditional law is a
+  probability measure on the \<open>(T - \<theta>)\<close>-path space.\<close>
+
+lemma prob_space_distr_prebase:
+  fixes \<mu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+    and P: "prob_space \<mu>"
+    and sets\<mu>: "sets \<mu> = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "prob_space (distr \<mu> (borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))
+    \<and> sets (distr \<mu> (borel_of (mtopology_of
+        (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))
+      = sets (borel_of (mtopology_of
+          (path_metric (T - s) :: ('n pairpath) metric)))"
+proof
+  have m: "prebase s T \<in> \<mu> \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+    unfolding measurable_cong_sets[OF sets\<mu> refl]
+    by (rule prebase_measurable[OF s0 sT])
+  show "prob_space (distr \<mu> (borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))"
+    by (rule prob_space.prob_space_distr[OF P m])
+  show "sets (distr \<mu> (borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))
+    = sets (borel_of (mtopology_of
+        (path_metric (T - s) :: ('n pairpath) metric)))" by simp
+qed
+
 end
