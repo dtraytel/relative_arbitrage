@@ -12162,4 +12162,116 @@ proof (rule paper_pair_class_diffquot_of_pairs[OF sets_aglue_law])
   qed
 qed
 
+section \<open>Clause (iv) for the glue: the two collapses\<close>
+
+text \<open>The martingale clauses do NOT need the weak-closedness detour that the
+  deterministic pasting theorem takes, because the additive split is
+  INVERTIBLE (@{thm [source] pstopped_padd}, @{thm [source] pafter_padd}) and
+  the conditioning set collapses on each half of \<open>{\<theta> \<le> i}\<close>.
+
+  \<^item> On \<open>{\<theta> > i}\<close> the continuation has not started, so the glued path agrees
+    with the PAST on \<open>[0,i]\<close> and an \<open>\<F>\<^sub>i\<close>-set of the glue is a set of the past
+    alone --- it does not constrain \<open>w\<close> at all.
+  \<^item> On \<open>{\<theta> \<le> i}\<close> the past has stopped, so the increment of the glue is the
+    increment of the CONTINUATION, and for a fixed past the set's \<open>w\<close>-section
+    is an \<open>\<F>\<^sub>i\<close>-set of the continuation.
+
+  Both statements are about \<^const>\<open>pcut\<close>, since
+  @{thm [source] sets_natural_filtration_eq_pcut_vimage} presents an
+  \<open>\<F>\<^sub>i\<close>-set as a \<^const>\<open>pcut\<close>-preimage.  These are the two pathwise facts.\<close>
+
+lemma pcut_padd_before:
+  fixes p' w :: "'n::finite pairpath"
+  assumes i0: "0 \<le> i" and iT: "i \<le> T"
+    and w0: "\<And>u. u \<in> {0..T} \<Longrightarrow> u \<le> r \<Longrightarrow> w u = 0"
+    and lt: "i < r"
+  shows "pcut i (padd T p' w) = pcut i p'"
+proof (rule ext)
+  fix s :: real
+  show "pcut i (padd T p' w) s = pcut i p' s"
+  proof (cases "s \<in> {0..i}")
+    case True
+    then have sT: "s \<in> {0..T}" using iT by auto
+    have "w s = 0" by (rule w0[OF sT]) (use True lt in simp)
+    then show ?thesis
+      unfolding pcut_apply[OF True] padd_apply[OF sT] by simp
+  next
+    case False
+    have out: "pcut i v s = undefined" for v :: "'n pairpath"
+      unfolding pcut_def restrict_def by (rule if_not_P[OF False])
+    show ?thesis unfolding out ..
+  qed
+qed
+
+lemma pcut_padd_section:
+  fixes p' w :: "'n::finite pairpath"
+  assumes i0: "0 \<le> i" and iT: "i \<le> T"
+  shows "pcut i (padd T p' w) = padd i (pcut i p') (pcut i w)"
+proof (rule ext)
+  fix s :: real
+  show "pcut i (padd T p' w) s = padd i (pcut i p') (pcut i w) s"
+  proof (cases "s \<in> {0..i}")
+    case True
+    then have sT: "s \<in> {0..T}" using iT by auto
+    show ?thesis
+      unfolding pcut_apply[OF True] padd_apply[OF sT] padd_apply[OF True]
+        pcut_apply[OF True] ..
+  next
+    case False
+    have out1: "pcut i v s = undefined" for v :: "'n pairpath"
+      unfolding pcut_def restrict_def by (rule if_not_P[OF False])
+    have out2: "padd i a b s = undefined" for a b :: "'n pairpath"
+      unfolding padd_def restrict_def by (rule if_not_P[OF False])
+    show ?thesis unfolding out1 out2 ..
+  qed
+qed
+
+text \<open>Step (4), assembled.  Clauses (i)--(iii) are discharged from the lemmas
+  above; the two martingale clauses are the remaining input, and the two
+  collapses are what a proof of them rests on.\<close>
+
+theorem paper_pair_class_aglue_law:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
+    and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+    and K0: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. w 0 = 0"
+    and Kfr: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    and Kcov: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+    and mgX: "martingale (aglue_law T \<kappa> Q)
+        (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
+    and mgC: "martingale (aglue_law T \<kappa> Q)
+        (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
+  shows "aglue_law T \<kappa> Q \<in> paper_pair_class k L T x"
+  unfolding paper_pair_class_def
+proof (intro CollectI conjI)
+  show "prob_space (aglue_law T \<kappa> Q)"
+    by (rule prob_space_aglue_law[OF T0 PQ setsQ Kp])
+  show "sets (aglue_law T \<kappa> Q) = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule sets_aglue_law)
+  show "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    by (rule aglue_law_start[OF T0 PQ setsQ Kp Q0 K0])
+  show "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T
+      \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    by (rule aglue_law_diffquot[OF T0 PQ setsQ Kp st Qst Qcov Kfr Kcov])
+  show "martingale (aglue_law T \<kappa> Q)
+      (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. fst (\<omega> (min t T)))" by (rule mgX)
+  show "martingale (aglue_law T \<kappa> Q)
+      (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))" by (rule mgC)
+qed
+
 end
