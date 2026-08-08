@@ -16551,4 +16551,105 @@ proof -
         horizon_sq_int_martingale_axioms.intro mgQ T0 PQ sqQ)
 qed
 
+subsection \<open>Uniform first moments for the delayed class\<close>
+
+text \<open>The six remaining side conditions of step (4) are Fubini statements
+  about \<^const>\<open>ksemi\<close>, and what they need beyond the per-\<open>p'\<close> integrability
+  \<open>Kint\<close>/\<open>KintC\<close> already supply is an OUTER bound: a bound on the inner
+  integral that does not depend on \<open>p'\<close>.  The class has one
+  (@{thm [source] paper_pair_class_norm_mean_le},
+  @{thm [source] paper_pair_class_comp_norm_mean_le}) --- it depends only on
+  \<open>CARD('n)\<close>, \<open>L\<close> and the horizon --- and it survives the delay, because the
+  delayed law reads the base law at an earlier time and the bound is monotone
+  in the horizon.  So the SAME constant works for every freezing time \<open>s\<close>,
+  which is what makes the outer integral finite.\<close>
+
+lemma pdelclass_norm_mean_le:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes L0: "0 \<le> L" and s0: "0 \<le> s" and sT: "s \<le> T"
+    and m: "\<nu> \<in> pdelclass k L T s" and u: "u \<in> {0..T}"
+  shows "(\<integral>w. norm (fst (w u)) \<partial>\<nu>)
+      \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bs = "borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+  have T0: "0 \<le> T" using s0 sT by simp
+  have Ts: "0 \<le> T - s" using sT by simp
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets ?Bs" by (rule paper_pair_class_sets[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  have nb: "(\<lambda>w :: 'n pairpath. norm (fst (w u))) \<in> borel_measurable ?B"
+  proof -
+    have e: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have f: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). norm (fst z))
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    show ?thesis by (rule measurable_compose[OF e f])
+  qed
+  have tmem: "max (u - s) 0 \<in> {0..T - s}" using u s0 sT by auto
+  have "(\<integral>w. norm (fst (w u)) \<partial>\<nu>)
+      = (\<integral>w'. norm (fst (pembed s T w' u)) \<partial>\<mu>)"
+    unfolding nu by (rule integral_distr[OF pm nb])
+  also have "\<dots> = (\<integral>w'. norm (fst (w' (max (u - s) 0))) \<partial>\<mu>)"
+    by (rule Bochner_Integration.integral_cong[OF refl])
+       (simp add: pembed_apply[OF u])
+  also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * (T - s))"
+    by (rule paper_pair_class_norm_mean_le[OF Ts L0 mu tmem])
+  also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
+    using L0 s0 by (intro add_left_mono mult_left_mono mult_left_mono) auto
+  finally show ?thesis .
+qed
+
+lemma pdelclass_comp_norm_mean_le:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes L0: "0 \<le> L" and s0: "0 \<le> s" and sT: "s \<le> T"
+    and m: "\<nu> \<in> pdelclass k L T s" and u: "u \<in> {0..T}"
+  shows "(\<integral>w. norm (outerp (fst (w u)) - snd (w u)) \<partial>\<nu>)
+      \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bs = "borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+  have T0: "0 \<le> T" using s0 sT by simp
+  have Ts: "0 \<le> T - s" using sT by simp
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets ?Bs" by (rule paper_pair_class_sets[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  have nb: "(\<lambda>w :: 'n pairpath. norm (outerp (fst (w u)) - snd (w u)))
+      \<in> borel_measurable ?B"
+  proof -
+    have e: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have f: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). norm (outerp (fst z) - snd z))
+        \<in> borel_measurable borel"
+      unfolding outerp_def
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    show ?thesis by (rule measurable_compose[OF e f])
+  qed
+  have tmem: "max (u - s) 0 \<in> {0..T - s}" using u s0 sT by auto
+  have "(\<integral>w. norm (outerp (fst (w u)) - snd (w u)) \<partial>\<nu>)
+      = (\<integral>w'. norm (outerp (fst (pembed s T w' u))
+            - snd (pembed s T w' u)) \<partial>\<mu>)"
+    unfolding nu by (rule integral_distr[OF pm nb])
+  also have "\<dots> = (\<integral>w'. norm (outerp (fst (w' (max (u - s) 0)))
+        - snd (w' (max (u - s) 0))) \<partial>\<mu>)"
+    by (rule Bochner_Integration.integral_cong[OF refl])
+       (simp add: pembed_apply[OF u])
+  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * (T - s))
+      + real CARD('n) * L * (T - s)"
+    by (rule paper_pair_class_comp_norm_mean_le[OF Ts L0 mu tmem])
+  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * T)
+      + real CARD('n) * L * T"
+    using L0 s0 by (intro add_mono mult_left_mono mult_left_mono) auto
+  finally show ?thesis .
+qed
+
 end
