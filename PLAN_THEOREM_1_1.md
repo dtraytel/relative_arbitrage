@@ -736,3 +736,36 @@ Also new: `pafter_rcd_increment_zero` now takes the set-integral hypothesis
 `inc` directly rather than a martingale plus a pullback identity, so both
 clauses instantiate it; and `pstopped_comp_vimage_pre_sigma` (a function of
 the stopped path is `ℱ_θ`- and a fortiori `ℱ_(u ∨ θ)`-measurable).
+
+## §2.1 step (4) — foundation laid 2026-08-08
+
+The glue map is **`padd T p' w = restrict (λt. p' t + w t) {0..T}`**, defined on
+the SAME pair of `T`-path spaces the r.c.d. of step (2) lives on, and carrying
+no `θ` — that is the point of having chosen the additive split.
+
+Done and green: `padd_apply`, `padd_outside`, `padd_mspace` (the glue lands in
+the path space), **`padd_measurable`** (as a map out of `?B_T ⨂⇩M ?B_T`, via
+`measurable_into_path_metric` + `mdist_measurable_of_eval`, exactly as
+`pstopped_measurable`/`pafter_measurable` were built), and the two inversion
+lemmas: **`padd_pstopped_pafter`** (the glue inverts the split — no membership
+hypothesis beyond being a path) and, given that the continuation stands still
+up to `θ`, **`padd_stopping_time`** / **`pstopped_padd`** / **`pafter_padd`**
+(the split inverts the glue). So nothing is lost in either direction, and the
+stopping time reads only the stopped factor.
+
+**What remains of (4)** is the glued-law theorem itself:
+
+  `distr (ksemi Q ?B_T κ') ?B_T (λp. padd T (fst p) (snd p)) ∈ paper_pair_class k L T x`
+
+for `Q` the law of `pstopped T θ` under a class member and `κ'` a kernel whose
+values are continuations frozen on `[0, θ p']` and in the class after. Clauses
+(i)/(ii) are cheap; (iii) is the concatenation of two covariation constraints
+with a crossing pair `s < θ < t`, as in `paper_pair_class_kglue_law`'s (iii);
+(iv) is the one that needs the weak-closedness route of
+`paper_pair_class_kglue_law'` (round `κ'` to a countably valued kernel by
+`Metric_space.countably_valued_approx`, glue each, pass to the weak limit),
+transposed from `pglue` to `padd`. `Lipschitz_pglue` has to become a
+Lipschitz/continuity statement for `padd`, which should be easier — addition
+is 1-Lipschitz in each argument — but the DELAYED class (`κ' p'` frozen until
+`θ p'`) must be shown compact metric first, since that is what
+`countably_valued_approx` rounds inside.
