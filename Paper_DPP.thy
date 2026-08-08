@@ -9194,4 +9194,140 @@ next
   ultimately show ?thesis by simp
 qed
 
+text \<open>The value-set form of the slice, which is what the sampling theorem
+  wants: the pieces indexed by the VALUES of \<open>\<sigma>\<close> are genuinely disjoint,
+  whereas pieces indexed by positions in a list need not be.\<close>
+
+lemma pre_sigma_of_value_slice:
+  assumes mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and A: "A \<in> pre_sigma_of M F \<sigma>"
+    and V: "finite V" and Vnn: "\<And>u. u \<in> V \<Longrightarrow> 0 \<le> u"
+    and vals: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<sigma> \<omega> \<in> V"
+    and v: "v \<in> V"
+  shows "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = v} \<in> sets (F v)"
+proof (cases "{u \<in> V. u < v} = {}")
+  case False
+  define b where "b = Max {u \<in> V. u < v}"
+  have fin: "finite {u \<in> V. u < v}" using V by simp
+  have bmem: "b \<in> {u \<in> V. u < v}" unfolding b_def by (rule Max_in[OF fin False])
+  then have b0: "0 \<le> b" and bv: "b < v" using Vnn by auto
+  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = v}
+      = A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v}"
+  proof -
+    have "(\<sigma> \<omega> = v) = (b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v)" if w: "\<omega> \<in> space M" for \<omega>
+    proof
+      assume "\<sigma> \<omega> = v" then show "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v" using bv by simp
+    next
+      assume h: "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v"
+      show "\<sigma> \<omega> = v"
+      proof (rule ccontr)
+        assume "\<sigma> \<omega> \<noteq> v"
+        then have "\<sigma> \<omega> \<in> {u \<in> V. u < v}" using vals[OF w] h by auto
+        then have "\<sigma> \<omega> \<le> b" unfolding b_def by (rule Max_ge[OF fin])
+        then show False using h by simp
+      qed
+    qed
+    then show ?thesis by auto
+  qed
+  moreover have "A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v} \<in> sets (F v)"
+    by (rule pre_sigma_of_band[OF mono A b0 less_imp_le[OF bv]])
+  ultimately show ?thesis by simp
+next
+  case True
+  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = v} = A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> v}"
+  proof -
+    have "(\<sigma> \<omega> = v) = (\<sigma> \<omega> \<le> v)" if w: "\<omega> \<in> space M" for \<omega>
+      using vals[OF w] True by force
+    then show ?thesis by auto
+  qed
+  moreover have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> v} \<in> sets (F v)"
+    by (rule pre_sigma_of_cut[OF A Vnn[OF v]])
+  ultimately show ?thesis by simp
+qed
+
+section \<open>Optional sampling at TWO stopping times, simple case\<close>
+
+text \<open>With the \<open>\<F>\<^sub>\<sigma>\<close> layer in place the simple case is exactly the classical
+  argument: split the conditioning set along the finitely many values of
+  \<open>\<sigma>\<close>, note each piece lies in the filtration AT ITS OWN VALUE by
+  @{thm [source] pre_sigma_of_value_slice}, and apply the ordinary
+  DETERMINISTIC-time martingale identity on each piece.  No optional
+  sampling machinery is needed at all --- that is the point of the layer.\<close>
+
+theorem set_martingale_sampling_simple:
+  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
+    and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> :: "'a \<Rightarrow> real"
+  assumes mg: "martingale M F 0 Y"
+    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and A: "A \<in> pre_sigma_of M F \<sigma>"
+    and V: "finite V" and Vnn: "\<And>u. u \<in> V \<Longrightarrow> 0 \<le> u"
+    and VU: "\<And>u. u \<in> V \<Longrightarrow> u \<le> U"
+    and vals: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<sigma> \<omega> \<in> V"
+  shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
+       = set_lebesgue_integral M A (Y U)"
+proof -
+  interpret Mg: martingale M F 0 Y by (rule mg)
+  define Av where "Av u = A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = u}" for u :: real
+  have AM: "A \<in> sets M" by (rule pre_sigma_of_sets[OF A])
+  have Asp: "A \<subseteq> space M" using AM by (rule sets.sets_into_space)
+  have AvF: "Av u \<in> sets (F u)" if u: "u \<in> V" for u
+    unfolding Av_def by (rule pre_sigma_of_value_slice[OF mono A V Vnn vals u])
+  have AvM: "Av u \<in> sets M" if u: "u \<in> V" for u
+  proof -
+    have "sets (F u) \<subseteq> sets M"
+      using Mg.subalgebras[OF Vnn[OF u]] by (simp add: subalgebra_def)
+    then show ?thesis using AvF[OF u] by blast
+  qed  have disj: "disjoint_family_on Av V"
+    unfolding disjoint_family_on_def Av_def by auto
+  have un: "(\<Union>u\<in>V. Av u) = A"
+  proof
+    show "(\<Union>u\<in>V. Av u) \<subseteq> A" unfolding Av_def by blast
+    show "A \<subseteq> (\<Union>u\<in>V. Av u)"
+    proof
+      fix \<omega> assume w: "\<omega> \<in> A"
+      then have sp: "\<omega> \<in> space M" using Asp by blast
+      then have "\<sigma> \<omega> \<in> V" by (rule vals)
+      moreover have "\<omega> \<in> Av (\<sigma> \<omega>)" unfolding Av_def using w sp by simp
+      ultimately show "\<omega> \<in> (\<Union>u\<in>V. Av u)" by blast
+    qed
+  qed
+
+  \<comment> \<open>on each piece the two integrands agree with a DETERMINISTIC-time one\<close>
+  have congL: "set_lebesgue_integral M (Av u) (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
+      = set_lebesgue_integral M (Av u) (Y u)" if u: "u \<in> V" for u
+    unfolding set_lebesgue_integral_def
+    by (rule Bochner_Integration.integral_cong)
+       (auto simp: Av_def indicator_def)
+  have intU: "set_integrable M (Av u) (Y U)" if u: "u \<in> V" for u
+  proof -
+    have U0: "0 \<le> U" using Vnn[OF u] VU[OF u] by simp
+    show ?thesis
+      unfolding set_integrable_def
+      by (rule integrable_mult_indicator[OF AvM[OF u] Mg.integrable[OF U0]])
+  qed
+  have intu: "set_integrable M (Av u) (Y u)" if u: "u \<in> V" for u
+    unfolding set_integrable_def
+    by (rule integrable_mult_indicator[OF AvM[OF u] Mg.integrable[OF Vnn[OF u]]])  have intL: "set_integrable M (Av u) (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)" if u: "u \<in> V" for u
+  proof -
+    have "(\<lambda>\<omega>. indicat_real (Av u) \<omega> *\<^sub>R Y (\<sigma> \<omega>) \<omega>)
+        = (\<lambda>\<omega>. indicat_real (Av u) \<omega> *\<^sub>R Y u \<omega>)"
+      by (rule ext) (auto simp: Av_def indicator_def)
+    then show ?thesis using intu[OF u] unfolding set_integrable_def by simp
+  qed
+  have step: "set_lebesgue_integral M (Av u) (Y u)
+      = set_lebesgue_integral M (Av u) (Y U)" if u: "u \<in> V" for u
+    by (rule Mg.set_integral_eq[OF AvF[OF u] Vnn[OF u] VU[OF u]])
+
+  have "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
+      = (\<Sum>u\<in>V. set_lebesgue_integral M (Av u) (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>))"
+    unfolding un[symmetric]
+    by (rule set_integral_finite_Union[OF V disj intL AvM])
+  also have "\<dots> = (\<Sum>u\<in>V. set_lebesgue_integral M (Av u) (Y U))"
+    using congL step by simp
+  also have "\<dots> = set_lebesgue_integral M A (Y U)"
+    unfolding un[symmetric]
+    by (rule set_integral_finite_Union[OF V disj intU AvM, symmetric])
+  finally show ?thesis .
+qed
+
 end
