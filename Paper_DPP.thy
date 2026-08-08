@@ -7619,4 +7619,80 @@ next
        (use rsv RC D'0 D'1 D'm dj Rae' in blast)+
 qed
 
+subsection \<open>Splitting at a stopping time WITHOUT re-clocking\<close>
+
+text \<open>Stroock--Varadhan concatenate at a stopping time on \<open>C([0,\<infinity>))\<close>, and
+  never rebase the time axis: the continuation lives on the SAME path space
+  and is spliced in place.  Transplanted to the capped space that makes the
+  past/future split ADDITIVE --- freeze the path after \<open>\<theta>\<close>, and keep the
+  increments after \<open>\<theta>\<close> as a second path that is \<open>0\<close> before \<open>\<theta>\<close>.  Both live
+  on the SAME \<open>T\<close>-path space, so the random horizon \<open>T - \<theta>\<close> never appears,
+  and reassembly is addition --- in particular it does NOT need \<open>\<theta>\<close> back,
+  which is what killed the freeze-and-rebase design.\<close>
+
+definition pstopped :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> 'n pairpath
+    \<Rightarrow> 'n pairpath"
+  where "pstopped T \<theta> \<omega> = restrict (\<lambda>t. \<omega> (min t (\<theta> \<omega>))) {0..T}"
+
+definition pafter :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> 'n pairpath
+    \<Rightarrow> 'n pairpath"
+  where "pafter T \<theta> \<omega> = restrict (\<lambda>t. \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)) {0..T}"
+
+lemma pstopped_apply: "t \<in> {0..T} \<Longrightarrow> pstopped T \<theta> \<omega> t = \<omega> (min t (\<theta> \<omega>))"
+  by (simp add: pstopped_def)
+
+lemma pafter_apply:
+  "t \<in> {0..T} \<Longrightarrow> pafter T \<theta> \<omega> t = \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)"
+  by (simp add: pafter_def)
+
+lemma pstopped_outside: "t \<notin> {0..T} \<Longrightarrow> pstopped T \<theta> \<omega> t = undefined"
+  by (simp add: pstopped_def)
+
+lemma pafter_outside: "t \<notin> {0..T} \<Longrightarrow> pafter T \<theta> \<omega> t = undefined"
+  by (simp add: pafter_def)
+
+text \<open>The reassembly law.  This is the analogue of
+  @{thm [source] pglue_pcut_pfut} at a RANDOM time, and unlike that one it
+  costs nothing: no membership hypothesis on \<open>\<omega>\<close>, and no \<open>\<theta>\<close> on the
+  right-hand side.\<close>
+
+lemma pstopped_add_pafter:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T" and t: "t \<in> {0..T}"
+  shows "pstopped T \<theta> \<omega> t + pafter T \<theta> \<omega> t = \<omega> t"
+proof (cases "t \<le> \<theta> \<omega>")
+  case True
+  then have m1: "min t (\<theta> \<omega>) = t" and m2: "max t (\<theta> \<omega>) = \<theta> \<omega>" by simp_all
+  show ?thesis using t by (simp add: pstopped_apply pafter_apply m1 m2)
+next
+  case False
+  then have m1: "min t (\<theta> \<omega>) = \<theta> \<omega>" and m2: "max t (\<theta> \<omega>) = t" by simp_all
+  show ?thesis using t by (simp add: pstopped_apply pafter_apply m1 m2)
+qed
+
+text \<open>The future factor starts at \<open>0\<close> --- exactly the normalisation the class
+  asks of a continuation --- and the two halves live on disjoint stretches of
+  time.\<close>
+
+lemma pafter_zero:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes th0: "0 \<le> \<theta> \<omega>" and T0: "0 \<le> T"
+  shows "pafter T \<theta> \<omega> 0 = 0"
+proof -
+  have "max (0 :: real) (\<theta> \<omega>) = \<theta> \<omega>" using th0 by simp
+  then show ?thesis using T0 by (simp add: pafter_apply)
+qed
+
+lemma pafter_before:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes t: "t \<in> {0..T}" and le: "t \<le> \<theta> \<omega>"
+  shows "pafter T \<theta> \<omega> t = 0"
+  using t le by (simp add: pafter_apply max_absorb2)
+
+lemma pstopped_after:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes t: "t \<in> {0..T}" and ge: "\<theta> \<omega> \<le> t"
+  shows "pstopped T \<theta> \<omega> t = \<omega> (\<theta> \<omega>)"
+  using t ge by (simp add: pstopped_apply min_absorb2)
+
 end
