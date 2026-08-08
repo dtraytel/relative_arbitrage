@@ -9101,4 +9101,97 @@ proof
   qed
 qed
 
+text \<open>The slice lemma: an \<open>\<F>\<^sub>\<sigma>\<close>-set, cut down to a half-open band of values of
+  \<open>\<sigma>\<close>, lands in the filtration at the TOP of the band.  This is the brick the
+  two-stopping-time sampling theorem runs on: for a SIMPLE \<open>\<sigma>\<close> with values
+  \<open>t\<^sub>1 < \<dots> < t\<^sub>m\<close> the sets \<open>A \<inter> {\<sigma> = t\<^sub>j}\<close> are exactly such bands, so the
+  conditioning set decomposes into finitely many pieces that the ordinary
+  deterministic-time sampling can already handle.\<close>
+
+lemma pre_sigma_of_band:
+  assumes mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and A: "A \<in> pre_sigma_of M F \<sigma>"
+    and s: "0 \<le> s" and st: "s \<le> t"
+  shows "A \<inter> {\<omega> \<in> space M. s < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+proof -
+  have t: "0 \<le> t" using s st by simp
+  have "A \<inter> {\<omega> \<in> space M. s < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> t}
+      = (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) - (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> s})"
+    by auto
+  moreover have "(A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) \<in> sets (F t)"
+    by (rule pre_sigma_of_cut[OF A t])
+  moreover have "(A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> s}) \<in> sets (F t)"
+    using pre_sigma_of_cut[OF A s] mono[OF s st] by blast
+  ultimately show ?thesis by (simp add: sets.Diff)
+qed
+
+text \<open>And the bottom band, \<open>\<sigma> \<le> t\<^sub>1\<close>, is @{thm [source] pre_sigma_of_cut}
+  itself --- so a simple \<open>\<sigma>\<close> gives a FINITE partition of \<open>A\<close> into pieces each
+  living in the filtration at its own value.  Stated as the partition it will
+  be used as.\<close>
+
+lemma pre_sigma_of_simple_partition:
+  fixes n :: nat and ts :: "nat \<Rightarrow> real"
+  assumes mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and A: "A \<in> pre_sigma_of M F \<sigma>"
+    and ts: "\<And>i. i \<in> {..<n} \<Longrightarrow> 0 \<le> ts i"
+    and inc: "\<And>i j. i \<in> {..<n} \<Longrightarrow> j \<in> {..<n} \<Longrightarrow> i \<le> j \<Longrightarrow> ts i \<le> ts j"
+    and vals: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<exists>i \<in> {..<n}. \<sigma> \<omega> = ts i"
+    and i: "i \<in> {..<n}"
+  shows "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = ts i} \<in> sets (F (ts i))"
+proof (cases "\<exists>j \<in> {..<n}. ts j < ts i")
+  case True
+  define b where "b = Max (ts ` {j \<in> {..<n}. ts j < ts i})"
+  have fin: "finite (ts ` {j \<in> {..<n}. ts j < ts i})" by (rule finite_imageI, rule finite_subset[of _ "{..<n}"]) auto
+  have ne: "ts ` {j \<in> {..<n}. ts j < ts i} \<noteq> {}" using True by blast
+  have bmem: "b \<in> ts ` {j \<in> {..<n}. ts j < ts i}"
+    unfolding b_def by (rule Max_in[OF fin ne])
+  then obtain j where j: "j \<in> {..<n}" "ts j < ts i" "b = ts j" by blast
+  have b0: "0 \<le> b" using j ts by simp
+  have bi: "b \<le> ts i" using j by simp
+  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = ts i}
+      = A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i}"
+  proof -
+    have "\<sigma> \<omega> = ts i \<longleftrightarrow> (b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i)" if w: "\<omega> \<in> space M" for \<omega>
+    proof
+      assume "\<sigma> \<omega> = ts i"
+      then show "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i" using j by simp
+    next
+      assume h: "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i"
+      from vals[OF w] obtain l where l: "l \<in> {..<n}" "\<sigma> \<omega> = ts l" by blast
+      show "\<sigma> \<omega> = ts i"
+      proof (rule ccontr)
+        assume "\<sigma> \<omega> \<noteq> ts i"
+        then have "ts l < ts i" using l h by simp
+        then have "ts l \<in> ts ` {j \<in> {..<n}. ts j < ts i}" using l by blast
+        then have "ts l \<le> b" unfolding b_def by (rule Max_ge[OF fin])
+        then show False using h l by simp
+      qed
+    qed
+    then show ?thesis by auto
+  qed
+  moreover have "A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i} \<in> sets (F (ts i))"
+    by (rule pre_sigma_of_band[OF mono A b0 bi])
+  ultimately show ?thesis by simp
+next
+  case False
+  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = ts i}
+      = A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> ts i}"
+  proof -
+    have "\<sigma> \<omega> = ts i \<longleftrightarrow> \<sigma> \<omega> \<le> ts i" if w: "\<omega> \<in> space M" for \<omega>
+    proof
+      assume "\<sigma> \<omega> = ts i" then show "\<sigma> \<omega> \<le> ts i" by simp
+    next
+      assume h: "\<sigma> \<omega> \<le> ts i"
+      from vals[OF w] obtain l where l: "l \<in> {..<n}" "\<sigma> \<omega> = ts l" by blast
+      have "\<not> ts l < ts i" using False l by blast
+      then show "\<sigma> \<omega> = ts i" using h l by simp
+    qed
+    then show ?thesis by auto
+  qed
+  moreover have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> ts i} \<in> sets (F (ts i))"
+    by (rule pre_sigma_of_cut[OF A ts[OF i]])
+  ultimately show ?thesis by simp
+qed
+
 end
