@@ -11677,6 +11677,47 @@ proof -
   then show ?thesis unfolding padd_def by (rule mspace_path_metricI)
 qed
 
+text \<open>The glue with the PAST fixed.  This is the form the four-cell argument
+  needs, because there the continuation is only frozen ALMOST surely, so the
+  integrand identities have to be transported by
+  @{thm [source] Bochner_Integration.integral_cong_AE} rather than pointwise
+  --- and that wants both sides measurable in \<open>w\<close> alone.\<close>
+
+lemma padd_measurable_left:
+  fixes p' :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and p: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "(\<lambda>w. padd T p' w)
+      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have into: "padd T p' w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    if "w \<in> space ?B" for w
+    using that p by (auto simp: space_borel_of intro: padd_mspace)
+  have ev: "(\<lambda>w :: 'n pairpath. padd T p' w t) \<in> borel_measurable ?B" for t
+  proof (cases "t \<in> {0..T}")
+    case True
+    have "(\<lambda>w :: 'n pairpath. p' t + w t) \<in> borel_measurable ?B"
+      by (intro borel_measurable_add borel_measurable_const
+          pair_law_eval_measurable[OF refl])
+    then show ?thesis by (simp add: padd_apply[OF True])
+  next
+    case False
+    have "(\<lambda>w :: 'n pairpath. padd T p' w t) = (\<lambda>w. undefined)"
+      by (rule ext) (rule padd_outside[OF False])
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    show "(\<lambda>w. mdist (path_metric T :: ('n pairpath) metric)
+        (padd T p' w) a) \<in> borel_measurable ?B"
+      by (rule mdist_measurable_of_eval[OF T0 into am ev])
+  qed
+qed
+
 lemma padd_measurable:
   fixes T :: real
   assumes T0: "0 \<le> T"
@@ -12564,7 +12605,7 @@ theorem aglue_inner_increment:
         (\<lambda>u p'. fst (p' (min u T)) $ c) T"
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and Kfr: "\<And>p'. p' \<in> space Q
-      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kmean: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ c \<partial>(\<kappa> p')) = 0"
     and Kint: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -12612,12 +12653,49 @@ proof -
   proof -
     interpret PKi: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
     have m: "min u T \<in> {0..T}" using u0 uT by simp
-    have cut: "pcut i (padd T p' w) = pcut i p'" if "w \<in> space (\<kappa> p')" for w
-      by (rule pcut_padd_before[OF i0 iT _ lt]) (use Kfr[OF sp] that in blast)
+    have setsK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+    have pmem: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using sp spQ by (simp add: space_borel_of)
+    have pdm: "(\<lambda>w :: 'n pairpath. padd T p' w) \<in> \<kappa> p' \<rightarrow>\<^sub>M ?B"
+      unfolding measurable_cong_sets[OF setsK refl]
+      by (rule padd_measurable_left[OF T0' pmem])
+    have Xm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ c) \<in> borel_measurable ?B"
+    proof -
+      have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) \<bullet> (axis c 1 :: real^'n))
+          \<in> borel_measurable ?B"
+        by (intro borel_measurable_inner borel_measurable_const
+            measurable_compose[OF pair_law_eval_measurable[OF refl]
+              measurable_fst_borel])
+      then show ?thesis by (simp add: inner_axis)
+    qed
+    have icm: "(\<lambda>w :: 'n pairpath. indicator B (pcut i (padd T p' w)) :: real)
+        \<in> borel_measurable (\<kappa> p')"
+      by (rule measurable_compose[OF measurable_compose[OF pdm
+          pcut_measurable[OF i0 iT refl]] borel_measurable_indicator[OF B]])
+    have mL: "(\<lambda>w :: 'n pairpath. indicator B (pcut i (padd T p' w))
+        * (fst (padd T p' w (min u T)) $ c)) \<in> borel_measurable (\<kappa> p')"
+      using icm measurable_compose[OF pdm Xm] by simp
+    have mR: "(\<lambda>w :: 'n pairpath. indicator B (pcut i p')
+        * (?Y u p' + fst (w (min u T)) $ c)) \<in> borel_measurable (\<kappa> p')"
+      using Xm unfolding measurable_cong_sets[OF setsK refl] by simp
+    have cutAE: "AE w in \<kappa> p'. pcut i (padd T p' w) = pcut i p'"
+      using Kfr[OF sp]
+    proof eventually_elim
+      case (elim w)
+      show ?case by (rule pcut_padd_before[OF i0 iT _ lt]) (use elim in blast)
+    qed
     have "?g u p' = (\<integral>w. indicator B (pcut i p')
         * (?Y u p' + fst (w (min u T)) $ c) \<partial>(\<kappa> p'))"
-      by (rule Bochner_Integration.integral_cong[OF refl])
-         (simp add: cut padd_apply[OF m])
+    proof (rule Bochner_Integration.integral_cong_AE[OF mL mR])
+      show "AE w in \<kappa> p'. indicator B (pcut i (padd T p' w))
+            * (fst (padd T p' w (min u T)) $ c)
+          = indicator B (pcut i p') * (?Y u p' + fst (w (min u T)) $ c)"
+        using cutAE
+      proof eventually_elim
+        case (elim w)
+        show ?case unfolding elim padd_apply[OF m] by simp
+      qed
+    qed
     also have "\<dots> = indicator B (pcut i p')
         * (\<integral>w. ?Y u p' + fst (w (min u T)) $ c \<partial>(\<kappa> p'))" by simp
     also have "(\<integral>w. ?Y u p' + fst (w (min u T)) $ c \<partial>(\<kappa> p'))
@@ -12826,7 +12904,7 @@ theorem aglue_law_X_increment:
         (\<lambda>u p'. fst (p' (min u T)) $ c) T"
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and Kfr: "\<And>p'. p' \<in> space Q
-      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kmean: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ c \<partial>(\<kappa> p')) = 0"
     and Kint: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -12960,7 +13038,7 @@ theorem aglue_law_X_martingale:
         (\<lambda>u p'. fst (p' (min u T)) $ c) T"
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and Kfr: "\<And>p'. p' \<in> space Q
-      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kmean: "\<And>p' u c. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ c \<partial>(\<kappa> p')) = 0"
     and Kint: "\<And>p' u c. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -13086,7 +13164,7 @@ theorem aglue_inner_increment_comp:
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and Kfr: "\<And>p'. p' \<in> space Q
-      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kmean: "\<And>p' u e. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ e \<partial>(\<kappa> p')) = 0"
     and KmeanC: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -13161,8 +13239,60 @@ proof -
     for p' u
   proof -
     interpret PKi: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
-    have cut: "pcut i (padd T p' w) = pcut i p'" if "w \<in> space (\<kappa> p')" for w
-      by (rule pcut_padd_before[OF i0 iT _ lt]) (use Kfr[OF sp] that in blast)
+    have setsK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+    have pmem: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using sp spQ by (simp add: space_borel_of)
+    have pdm: "(\<lambda>w :: 'n pairpath. padd T p' w) \<in> \<kappa> p' \<rightarrow>\<^sub>M ?B"
+      unfolding measurable_cong_sets[OF setsK refl]
+      by (rule padd_measurable_left[OF T0' pmem])
+    have cut: "AE w in \<kappa> p'. pcut i (padd T p' w) = pcut i p'"
+      using Kfr[OF sp]
+    proof eventually_elim
+      case (elim w)
+      show ?case by (rule pcut_padd_before[OF i0 iT _ lt]) (use elim in blast)
+    qed
+    have evB: "(\<lambda>w :: 'n pairpath. w s) \<in> borel_measurable ?B" for s
+      by (rule pair_law_eval_measurable[OF refl])
+    have femB: "(\<lambda>w :: 'n pairpath. fst (w s) $ e) \<in> borel_measurable ?B"
+      for s e
+    proof -
+      have "(\<lambda>w :: 'n pairpath. fst (w s) \<bullet> (axis e 1 :: real^'n))
+          \<in> borel_measurable ?B"
+        by (intro borel_measurable_inner borel_measurable_const
+            measurable_compose[OF evB measurable_fst_borel])
+      then show ?thesis by (simp add: inner_axis)
+    qed
+    have semB: "(\<lambda>w :: 'n pairpath. snd (w s) $ e $ f) \<in> borel_measurable ?B"
+      for s e f
+    proof -
+      have "(\<lambda>w :: 'n pairpath. snd (w s) \<bullet> (axis e (axis f 1) :: real^'n^'n))
+          \<in> borel_measurable ?B"
+        by (intro borel_measurable_inner borel_measurable_const
+            measurable_compose[OF evB measurable_snd_borel])
+      then show ?thesis by (simp add: inner_axis)
+    qed
+    have ZmB: "?Z v \<in> borel_measurable ?B" for v
+    proof -
+      have e: "?Z v = (\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min v T)) $ c
+          * fst (\<omega> (min v T)) $ d - snd (\<omega> (min v T)) $ c $ d)"
+        by (rule ext) (rule comp_entry_eq)
+      show ?thesis unfolding e
+        by (intro borel_measurable_diff borel_measurable_times femB semB)
+    qed
+    have icmc: "(\<lambda>w :: 'n pairpath. indicator B (pcut i (padd T p' w)) :: real)
+        \<in> borel_measurable (\<kappa> p')"
+      by (rule measurable_compose[OF measurable_compose[OF pdm
+          pcut_measurable[OF i0 iT refl]] borel_measurable_indicator[OF B]])
+    have mLc: "(\<lambda>w :: 'n pairpath. indicator B (pcut i (padd T p' w))
+        * ?Z u (padd T p' w)) \<in> borel_measurable (\<kappa> p')"
+      using icmc measurable_compose[OF pdm ZmB] by simp
+    have mRc: "(\<lambda>w :: 'n pairpath. indicator B (pcut i p')
+        * (?Z u p' + (?Z u w
+          + (fst (p' (min u T)) $ c * fst (w (min u T)) $ d
+             + fst (w (min u T)) $ c * fst (p' (min u T)) $ d))))
+        \<in> borel_measurable (\<kappa> p')"
+      using ZmB[of u] femB
+      unfolding measurable_cong_sets[OF setsK refl] by simp
     have i1: "integrable (\<kappa> p') (\<lambda>w. ?Z u w)" by (rule KintC[OF sp u0 uT])
     have i2: "integrable (\<kappa> p')
         (\<lambda>w. fst (p' (min u T)) $ c * fst (w (min u T)) $ d)"
@@ -13201,14 +13331,18 @@ proof -
         * (?Z u p' + (?Z u w
           + (fst (p' (min u T)) $ c * fst (w (min u T)) $ d
              + fst (w (min u T)) $ c * fst (p' (min u T)) $ d))) \<partial>(\<kappa> p'))"
-    proof (rule Bochner_Integration.integral_cong[OF refl])
-      fix w assume sw: "w \<in> space (\<kappa> p')"
-      show "indicator B (pcut i (padd T p' w)) * ?Z u (padd T p' w)
+    proof (rule Bochner_Integration.integral_cong_AE[OF mLc mRc])
+      show "AE w in \<kappa> p'. indicator B (pcut i (padd T p' w))
+            * ?Z u (padd T p' w)
           = indicator B (pcut i p')
             * (?Z u p' + (?Z u w
               + (fst (p' (min u T)) $ c * fst (w (min u T)) $ d
                  + fst (w (min u T)) $ c * fst (p' (min u T)) $ d)))"
-        unfolding cut[OF sw] expand[OF u0 uT] ..
+        using cut
+      proof eventually_elim
+        case (elim w)
+        show ?case unfolding elim expand[OF u0 uT] ..
+      qed
     qed
     also have "\<dots> = indicator B (pcut i p')
         * (\<integral>w. ?Z u p' + (?Z u w
@@ -13520,7 +13654,7 @@ theorem aglue_law_comp_increment:
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and Kfr: "\<And>p'. p' \<in> space Q
-      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kmean: "\<And>p' u e. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ e \<partial>(\<kappa> p')) = 0"
     and KmeanC: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -13677,7 +13811,7 @@ theorem aglue_law_comp_martingale:
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and Kfr: "\<And>p'. p' \<in> space Q
-      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kmean: "\<And>p' u e. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ e \<partial>(\<kappa> p')) = 0"
     and KmeanC: "\<And>p' u c d. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -13832,7 +13966,7 @@ theorem paper_pair_class_aglue:
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and K0: "\<And>p'. p' \<in> space Q \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). w 0 = 0"
     and Kfr: "\<And>p'. p' \<in> space Q
-      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kcov: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
         \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
     and Kmean: "\<And>p' u e. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -13884,8 +14018,7 @@ proof -
   have K0AE: "AE w in \<kappa> p'. w 0 = 0" if sp: "p' \<in> space Q" for p'
     by (rule eventually_mono[OF AE_space]) (use K0[OF sp] in blast)
   have KfrAE: "AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
-    if sp: "p' \<in> space Q" for p'
-    by (rule eventually_mono[OF AE_space]) (use Kfr[OF sp] in blast)
+    if sp: "p' \<in> space Q" for p' by (rule Kfr[OF sp])
   show ?thesis
   proof (rule paper_pair_class_aglue_law
       [OF T0' PQ setsQ Kp st Q0 QstAE Qcov K0AE KfrAE Kcov])
