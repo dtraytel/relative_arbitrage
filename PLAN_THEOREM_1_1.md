@@ -4,11 +4,11 @@ Single source of truth for **what is proved, what is left, and in what
 order**. Everything named here is machine-checked in PIDE with
 `commands_failed = 0`, and there is no `sorry` anywhere in the session.
 
-Last restructured 2026-08-07 (late), after **the DPP of Prop. 2.4 was proved
-at a deterministic time**. §1 is an INDEX of closed work — do not re-derive
-any of it, and do not expand it; construction narratives, dead ends and
-session logs live in `PLAN_HISTORY.md` and in `git log -p`. §2 is the
-queue.
+Last restructured 2026-08-08, after **the DPP of Prop. 2.4 was proved at a
+STOPPING time** (§1.9), which emptied the old §2.1 and renumbered the queue.
+§1 is an INDEX of closed work — do not re-derive any of it, and do not expand
+it; construction narratives, dead ends and session logs live in
+`PLAN_HISTORY.md` and in `git log -p`. §2 is the queue.
 
 **Sources.** The paper (Lai/Shkolnikov/Soner, arXiv:2512.17702); its Section-2
 reference Larsson–Ruf, *Minimum curvature flow and martingale exit times*,
@@ -39,7 +39,7 @@ time from `K`.
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
 | (2) | `visc_sol k L (interior K) v` | **OPEN** — but the DPP (Prop. 2.4) is now **DONE, at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`); all that is left is §3's Itô/SDE layer |
-| (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.3; transfer to `paper_v` §2.4 |
+| (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.2; transfer to `paper_v` §2.3 |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
 
 **Three value functions exist**, and the theorem must end up about ONE.
@@ -48,8 +48,8 @@ time from `K`.
 (the class (1.7) as pair laws). Clauses (0), (1), (3)-ball and (4) are
 proved for `paper_v` itself. What still lives only on the market-side
 functions is the `n−k=1` realization inside clause (3)
-(`stopped_val_fn_ball_eq_2d`); transferring it is §2.4, and it is needed
-only if §2.3 turns out to want it.
+(`stopped_val_fn_ball_eq_2d`); transferring it is §2.3, and it is needed
+only if §2.2 turns out to want it.
 
 **Where the DPP stands — Prop. 2.4 IS PROVED, INCLUDING AT A STOPPING TIME.**
 At a deterministic time: `paper_v_dpp` (2026-08-07, §1.7), `≥` from the
@@ -63,10 +63,9 @@ one — see §1.7.
 
 | item | § | lines | risk |
 |---|---|---|---|
-| ~~the DPP at a stopping time~~ | 2.1 | ~3,700 spent | **DONE 2026-08-08** — §1.9 |
-| §3, the two viscosity inequalities | 2.2 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
-| clause (3) for `n−k ≥ 2` | 2.3 | 1,500–3,000 | high — needs spherical Brownian motion |
-| `stopped_val_fn ≤ paper_v` | 2.4 | ? | only if §2.3 wants it |
+| §3, the two viscosity inequalities | 2.1 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
+| clause (3) for `n−k ≥ 2` | 2.2 | 1,500–3,000 | high — needs spherical Brownian motion |
+| `stopped_val_fn ≤ paper_v` | 2.3 | ? | only if §2.2 wants it |
 
 ---
 
@@ -358,7 +357,7 @@ Brownian layer (`Brownian_Motion`, `Brownian_Market`, `Brownian_Continuous`,
 `paper_v_paste_lower`.
 
 ---
-### 1.9 The DPP at a STOPPING time (§2.1) — CLOSED 2026-08-08
+### 1.9 The DPP at a STOPPING time — CLOSED 2026-08-08
 
 **`paper_v_dpp_sup_ge_time`** (Paper_DPP): for any path stopping time `θ`,
 `closed K`, `1 ≤ L`, `0 < T`,
@@ -368,7 +367,8 @@ Brownian layer (`Brownian_Motion`, `Brownian_Market`, `Brownian_Continuous`,
       ≤ paper_v k L T K x
 
 With `paper_v_cond_time` (the `≤` half, 2026-08-07) this closes **Prop. 2.4 at
-a stopping time**. Nothing in §2.1 is open.
+a stopping time**. This was §2.1 of the queue until 2026-08-08; nothing in it
+is open, and §2 has been renumbered accordingly.
 
 **The architecture.** The split at `θ` is ADDITIVE and stays on ONE clock:
 
@@ -483,16 +483,11 @@ it off the `u`-cut; no componentwise decomposition),
 
 ## 2. What is LEFT
 
-In dependency order. §2.3 and §2.4 are independent of §2.2 and can be
-interleaved. **§2.2 is now the top of the queue** — §2.1 closed 2026-08-08.
+In dependency order. §2.2 and §2.3 are independent of §2.1 and can be
+interleaved. **§2.1 is the top of the queue.** (The DPP at a stopping time,
+which was §2.1 until 2026-08-08, is now §1.9.)
 
-### 2.1 The DPP at a STOPPING time — **DONE**, see §1.9
-
-Closed 2026-08-08 (`paper_v_dpp_sup_ge_time`). Read §1.9 before touching
-anything nearby: it records five findings that each cost a session to discover,
-and two hypothesis-shape rules that apply to any future kernel argument.
-
-### 2.2 §3 — the two viscosity inequalities → clause (2)
+### 2.1 §3 — the two viscosity inequalities → clause (2)
 
 **Which half of the DPP feeds which inequality** (read out of §3.1 and §3.2
 of the paper on 2026-08-06; do not redo this):
@@ -500,14 +495,14 @@ of the paper on 2026-08-06; do not redo this):
 | viscosity inequality | DPP half it consumes |
 |---|---|
 | **subsolution** (§3.1, display (3.17)) | the DPP **at the optimizer**: `v(x) ≤ t∧θ + v(X(t∧θ))` P-a.s. for the fixed optimizer P. This is the CONDITIONING half — **PROVED at a deterministic time**, §1.7. |
-| **supersolution** (§3.2, after (3.25), and again in Case 2 after (3.30)) | `v(y) ≥ P_y-essinf (τ_{B_ε(x)} + v(X(τ_{B_ε(x)})))` for a SPECIFIC constructed `P_y`. This is the `≥` half, i.e. PASTING — **PROVED at a deterministic time**, §1.7; at `τ_{B_ε}` it needs §2.1. |
+| **supersolution** (§3.2, after (3.25), and again in Case 2 after (3.30)) | `v(y) ≥ P_y-essinf (τ_{B_ε(x)} + v(X(τ_{B_ε(x)})))` for a SPECIFIC constructed `P_y`. This is the `≥` half, i.e. PASTING — **PROVED at a deterministic time**, §1.7, and **at a STOPPING time**, §1.9 — so `τ_{B_ε}` is covered. |
 
 Beyond the DPP, §3 consumes machinery this development does not have:
 Itô's formula for class members, an exponential local martingale plus
 optional sampling ((3.18)–(3.19)), and weak solutions of the SDEs (3.11) and
 (3.24). **Budget §3 separately from the DPP.**
 
-### 2.3 Clause (3) for general `n − k ≥ 2`
+### 2.2 Clause (3) for general `n − k ≥ 2`
 
 `n − k = 1` is done (§1.4). The general case needs spherical Brownian
 motion — embed the deterministic-radius construction in an `(n−k+1)`-
@@ -515,7 +510,7 @@ dimensional coordinate subspace. Planned on the discrete route:
 `Random_Walk_Market.thy`, `Relative_Arbitrage_Discrete.thy`,
 `Path_Tightness.projective_limit_of_consistent_path_laws`.
 
-### 2.4 `stopped_val_fn ≤ paper_v` (only if §2.3 needs it)
+### 2.3 `stopped_val_fn ≤ paper_v` (only if §2.2 needs it)
 
 The bridge from market witnesses to class members. NOTE the recorded
 obstruction — a `stopped_market` witness is NOT a class member, because the
@@ -526,7 +521,7 @@ clause (3)/(2) actually need the market-side results transported.
 
 ### Fallback
 
-If §2.1–§2.2 and §2.3 both stall, the bounded alternative is the rest of
+If §2.1 and §2.2 both stall, the bounded alternative is the rest of
 Section 4 (Theorem 4.2(b), 4.3, Prop 4.1 — 3,000–7,000 lines, reusing the
 Crandall–Ishii investment).
 
@@ -676,7 +671,7 @@ The full list lives in the agent memory file
   `using pfut_fst[OF m] by simp` does nothing; `by (simp add: pfut_fst[OF m])`
   works, because a simp RULE may have schematics while a chained fact may not.
 
-### 3.5 Traps found while closing §2.1 (2026-08-08)
+### 3.5 Traps found while closing the stopping-time DPP (§1.9, 2026-08-08)
 
 - **`\<^const>` is for CONSTANTS.** Writing `\<^const>‹some_lemma›` in a `text`
   block gives "Undefined constant"; theorem names need
