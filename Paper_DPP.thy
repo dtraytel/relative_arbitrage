@@ -9969,4 +9969,99 @@ next
   ultimately show ?thesis by simp
 qed
 
+section \<open>Clause (iv) at a stopping time: the increment identity\<close>
+
+text \<open>The assembly.  Every hypothesis of
+  @{thm [source] set_martingale_sampling_two} now has a supplier: the
+  martingale from the class via @{thm [source] martingale_vec_component},
+  the filtration facts from @{thm [source] sets_natural_filtration_mono} and
+  the martingale locale, the stopping-time events from
+  @{thm [source] path_stopping_time_shift_event}, the convergence from
+  @{thm [source] paper_component_dyceil_tendsto}, and the domination from
+  \<open>Doob_Inequality\<close>'s \<open>Dsup\<close> through
+  @{thm [source] paper_pair_class_horizon_component}.\<close>
+
+theorem paper_pair_class_stopped_increment:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and i: "0 \<le> i" and ij: "i \<le> j"
+    and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>\<omega>. min (\<theta> \<omega> + i) T)"
+  shows "set_lebesgue_integral P A
+        (\<lambda>\<omega>. fst (\<omega> (min (min (\<theta> \<omega> + i) T) T)) $ c)
+      = set_lebesgue_integral P A
+        (\<lambda>\<omega>. fst (\<omega> (min (min (\<theta> \<omega> + j) T) T)) $ c)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?Y = "\<lambda>t \<omega> :: 'n pairpath. fst (\<omega> (min t T)) $ c"
+  have T0': "0 \<le> T" using T0 by simp
+  have j0: "0 \<le> j" using i ij by simp
+  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  interpret H: horizon_sq_int_martingale P ?F ?Y T
+    by (rule paper_pair_class_horizon_component[OF T0 L0 P])
+
+  have mg: "martingale P ?F 0 ?Y" by (rule H.martingale_axioms)
+  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
+    by (rule sets_natural_filtration_mono[OF that(2)])
+  have sub: "subalgebra P (?F t)" if "0 \<le> t" for t
+    by (rule H.subalgebras[OF that])
+
+  \<comment> \<open>the two sampling times\<close>
+  have sig0: "0 \<le> min (\<theta> \<omega> + i) T" for \<omega> :: "'n pairpath"
+    using path_stopping_time_nonneg[OF st, of \<omega>] i T0' by simp
+  have sigU: "min (\<theta> \<omega> + i) T \<le> T" for \<omega> :: "'n pairpath" by simp
+  have rho0: "0 \<le> min (\<theta> \<omega> + j) T" for \<omega> :: "'n pairpath"
+    using path_stopping_time_nonneg[OF st, of \<omega>] j0 T0' by simp
+  have rhoU: "min (\<theta> \<omega> + j) T \<le> T" for \<omega> :: "'n pairpath" by simp
+  have le: "min (\<theta> \<omega> + i) T \<le> min (\<theta> \<omega> + j) T" for \<omega> :: "'n pairpath"
+    using ij by simp
+  have stops: "{\<omega> \<in> space P. min (\<theta> \<omega> + i) T \<le> t} \<in> sets (?F t)"
+    if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_shift_event[OF T0' st thM i t])
+  have stopr: "{\<omega> \<in> space P. min (\<theta> \<omega> + j) T \<le> t} \<in> sets (?F t)"
+    if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_shift_event[OF T0' st thM j0 t])
+
+  \<comment> \<open>convergence along the dyadic times\<close>
+  have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    if "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    using that spP by (simp add: space_borel_of)
+  have conts: "(\<lambda>n. ?Y (dyceil n T (min (\<theta> \<omega> + i) T)) \<omega>)
+      \<longlonglongrightarrow> ?Y (min (\<theta> \<omega> + i) T) \<omega>" if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    by (rule paper_component_dyceil_tendsto[OF T0' mw[OF w] sig0 sigU])
+  have contr: "(\<lambda>n. ?Y (dyceil n T (min (\<theta> \<omega> + j) T)) \<omega>)
+      \<longlonglongrightarrow> ?Y (min (\<theta> \<omega> + j) T) \<omega>" if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    by (rule paper_component_dyceil_tendsto[OF T0' mw[OF w] rho0 rhoU])
+
+  \<comment> \<open>the dominating function is Doob's running supremum\<close>
+  have pathcont: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. ?Y s \<omega>)"
+  proof (rule AE_I2)
+    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"
+    then have m: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      by (rule mw)
+    have "continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
+      using mspace_path_metricD[OF m] by (intro continuous_intros)
+    moreover have "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ c)
+        = continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
+      by (rule continuous_on_cong[OF refl]) simp
+    ultimately show "continuous_on {0..T} (\<lambda>s. ?Y s \<omega>)" by simp  qed
+  have Dbd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>?Y s \<omega>\<bar> \<le> H.Dsup \<omega>"
+    by (rule H.Dsup_dominates[OF pathcont])
+  have Dint: "integrable P H.Dsup" by (rule H.Dsup_integrable)
+
+  show ?thesis
+    by (rule set_martingale_sampling_two
+        [OF mg mono sub A stops stopr sig0 sigU rho0 rhoU T0' le
+          conts contr Dbd Dint])
+qed
+
 end
