@@ -9932,4 +9932,41 @@ proof -
   ultimately show ?thesis by simp
 qed
 
+text \<open>And the \<open>stops\<close> hypothesis at the shifted time.  Above the horizon the
+  event is everything, since \<open>(\<theta>+i) \<and> T \<le> T\<close>; below it,
+  @{thm [source] path_stopping_time_event_filtration} applies to the shifted
+  stopping time.\<close>
+
+lemma path_stopping_time_shift_event:
+  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric)))"
+    and i: "0 \<le> i" and t: "0 \<le> t"
+  shows "{\<omega> \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))). min (\<theta> \<omega> + i) T \<le> t}
+      \<in> sets (natural_filtration (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+proof (cases "t \<le> T")
+  case True
+  have st': "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. min (\<theta> \<omega> + i) T)"
+    by (rule path_stopping_time_shift[OF st i])
+  have m': "(\<lambda>\<omega> :: 'n pairpath. min (\<theta> \<omega> + i) T) \<in> borel_measurable
+      (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    using thM by measurable
+  show ?thesis
+    by (rule path_stopping_time_event_filtration[OF T0 st' m' t True])
+next
+  case False
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
+  have "{\<omega> \<in> space ?B. min (\<theta> \<omega> + i) T \<le> t} = space ?B"
+    using False by auto
+  moreover have "space ?B \<in> sets ?F"
+  proof -
+    have "space ?F = space ?B" by simp
+    then show ?thesis using sets.top[of ?F] by simp
+  qed
+  ultimately show ?thesis by simp
+qed
+
 end
