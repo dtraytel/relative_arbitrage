@@ -1278,6 +1278,16 @@ text \<open>What is PROVED here, unconditionally:
   \<^const>\<open>class_expansion_witness\<close> is the interface for it: a supplier
   has only to produce the feasible witness.
 
+  What the constraint DOES is now precise, and proved:
+  @{thm [source] paper_pair_class_frozen_direction} says a direction
+  annihilated by the averaged covariation is frozen almost surely.  So for a
+  quadratic test function with gradient \<open>q\<close> at \<open>x\<close>, feasibility of the
+  covariation direction makes the first-order term \<open>q \<bullet> (X\<^sub>t - x)\<close> vanish
+  IDENTICALLY, leaving a purely second-order increment.  That is the device
+  that makes an essential infimum and a mean agree to first order --- which is
+  exactly what the supersolution half is short of, and exactly why the
+  constraint sits in Eq. (1.9) rather than in (1.7).
+
   \<^bold>\<open>The supersolution half.\<close>  Unchanged, and structurally harder.  It consumes
   @{thm [source] paper_v_dpp_sup_ge_time} plus a weak solution of the SDE
   (3.24), and the DPP bound it needs is a LOWER bound on an essential infimum.

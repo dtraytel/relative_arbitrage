@@ -4,7 +4,8 @@ Single source of truth for **what is proved, what is left, and in what
 order**. Everything named here is machine-checked in PIDE with
 `commands_failed = 0`, and there is no `sorry` anywhere in the session.
 
-Last restructured 2026-08-08, after **the DPP of Prop. 2.4 was proved at a
+Last updated 2026-08-09 with §2.1's first results (`Paper_Viscosity.thy`).
+Restructured 2026-08-08, after **the DPP of Prop. 2.4 was proved at a
 STOPPING time** (§1.9), which emptied the old §2.1 and renumbered the queue.
 §1 is an INDEX of closed work — do not re-derive any of it, and do not expand
 it; construction narratives, dead ends and session logs live in
@@ -38,7 +39,7 @@ time from `K`.
 |---|---|---|
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
-| (2) | `visc_sol k L (interior K) v` | **OPEN** — but the DPP (Prop. 2.4) is now **DONE, at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`); all that is left is §3's Itô/SDE layer |
+| (2) | `visc_sol k L (interior K) v` | **OPEN, but advanced** — the DPP (Prop. 2.4) is **DONE at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`), and Itô turns out to be UNNECESSARY for quadratic test functions (`Paper_Viscosity.paper_pair_class_quadratic_mean`). The SUBSOLUTION inequality is proved for a globally touching quadratic (`paper_v_subsol_quadratic_global`). Two named gaps remain — localisation and orthogonality — plus the supersolution half; see §2.1 |
 | (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.2; transfer to `paper_v` §2.3 |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
 
@@ -501,6 +502,73 @@ Beyond the DPP, §3 consumes machinery this development does not have:
 Itô's formula for class members, an exponential local martingale plus
 optional sampling ((3.18)–(3.19)), and weak solutions of the SDEs (3.11) and
 (3.24). **Budget §3 separately from the DPP.**
+
+#### Progress 2026-08-09 — `Paper_Viscosity.thy` (1,300 lines, green, 0 `sorry`)
+
+**Itô is NOT needed for quadratic test functions**, and that removes the
+first blocker outright. `z ∙ (M *v z) = trace (M ** outerp z)` is a LINEAR
+functional of clause (iv) of (1.7), so the expansion is exact:
+
+    paper_pair_class_quadform_mean:
+      E[X_t ∙ (M *v X_t)] = x ∙ (M *v x) + trace (M ** E[Y_t])
+    paper_pair_class_Y_mean_sconstraint:
+      (1/t) ⋅ E[Y_t] ∈ sconstraint k L
+    paper_pair_class_quadratic_mean:
+      E[φ(X_t)] − φ(x) = (t/2) ⋅ trace (M ** b),  b ∈ sconstraint k L
+
+The second holds because EVERY condition defining `sconstraint` is a linear
+(in)equality in the matrix — `psd`/`eigen_ub` constrain `z ∙ (a *v z)`, and
+`Pi_proj_ge` turns the projection bound into an intersection of half-spaces
+`m−k ≤ trace (a ** P)` — so the set passes through the Bochner integral.
+
+**Proved:** `paper_v_subsol_quadratic_global` — for a quadratic touching
+`enn2real ∘ paper_v` from above GLOBALLY at `x`, `ell_op_s k L M ≤ 1`. Route:
+`paper_v_attained` → a.s. exit bound → `paper_v_cond_time` at the CONSTANT
+time `T/2` → `enn2real_paper_v_horizon_cap` → touching → integrate. **No
+stopping time anywhere.**
+
+**Why the subsolution and not the supersolution:** the `≤` half of the DPP is
+an ALMOST SURE bound and a.s. bounds survive integration; the `≥` half needs
+a LOWER bound on an essential infimum, which no mean gives.
+
+**Two gaps remain, both named in the theory, neither hidden.**
+
+1. **Localisation** (local touching → global). Two routes were checked and
+   PROVABLY FAIL; do not retry: (a) penalising by `A|·−x|²` does globalise
+   (since `paper_v ≤ T`) but shifts the Hessian to `M + 2A·1`, and
+   `trace b ≥ n−k > 0` makes the conclusion `−trace(M**b)/2 ≤ 1 + A·trace b`
+   strictly weaker; (b) splitting the integral off the ball leaves a LINEAR
+   error term `p ∙ (X_h − x)` of order `O(h)/ε` — the same order as the term
+   it is compared against — even though a fourth moment handles the quadratic
+   part at `O(h^{3/2})`. What works is STOCHASTIC localisation at `τ_ball ∧ h`,
+   which needs optional sampling, which needs `path_stopping_time` weakened to
+   the path space (see §3.5 and below).
+
+2. **Orthogonality.** (1.9) infimises over `feasible` (`a *v p = 0`); the class
+   only constrains covariation to `sconstraint`. `feasible ⊆ sconstraint`
+   (`feasible_subset_sconstraint`), hence `ell_op_s ≤ ell_op`: the relaxed
+   statement is WEAKER for a subsolution and STRONGER for a supersolution
+   (`visc_supersol_s_imp_visc_supersol`). **So attack the supersolution half
+   entirely in `ell_op_s` — Gap 2 does not arise there at all.**
+
+**What the constraint `a *v p = 0` is FOR** (`paper_pair_class_frozen_direction`,
+proved): a direction annihilated by the averaged covariation is FROZEN a.s.
+For a quadratic with gradient `q` at `x`, feasibility kills the first-order
+term `q ∙ (X_t − x)` identically, leaving a purely second-order increment —
+which is the device that makes an essential infimum and a mean agree to first
+order. That is why the constraint sits in (1.9) and not in (1.7), and why the
+supersolution half is the one that needs it.
+
+**The one structural item that unlocks the rest:** weaken
+`path_stopping_time`'s congruence clause to the path space. `pball_exit_cong`
+gives it along continuous paths and `pexit_mem_of_less_T` shows the
+restriction is FORCED (attainment of the infimum genuinely fails off the path
+space). 252 occurrences in `Paper_DPP`; the congruence itself is consumed only
+through `path_stopping_time_cong`, at four sites, but each is stated for all
+`ω`, so continuity must be threaded through the `pstopped_law_*` and
+`path_stopping_time_*` layer. Note `space Q = mspace (path_metric T)` is
+exactly the continuous paths, so "pointwise on the space" already means
+"along continuous paths" — the refactor should be routine, just not small.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
 
