@@ -1147,3 +1147,55 @@ into the `≥` half. The continuation kernel is
 `λp'. Sel (θ p', fst (p' (θ p')))` with `Sel` the horizon-parametrised
 selector; its `Kp` is `Selm`, and the nine kernel clauses are the `pdelclass_*`
 family.
+
+## §2.1 — status after the past factor (2026-08-08, later)
+
+**The past factor is COMPLETE.** All eight `Q`-clauses of
+`paper_pair_class_aglue` hold for `Q = pair_law_of T (pstopped T θ) P`:
+
+| clause | lemma |
+|---|---|
+| `PQ` | `pstopped_law_prob` |
+| `setsQ` | `sets_pair_law_of` |
+| `Q0` | `pstopped_law_start` |
+| `Qst` | `pstopped_law_idem` |
+| `Qcov` | `pstopped_law_diffquot` |
+| `Qcont` | `pstopped_law_cont` |
+| `QH` | `pstopped_law_horizon_component` |
+| `QHC` | `pstopped_law_horizon_compensated` |
+
+**The engine for QH/QHC** is `horizon_sq_int_martingale_stopped`, abstracted
+out of `paper_pair_class_stopped_coord_martingale` — whose proof uses the
+localisation time ONLY through nonnegativity and the stopping property, so it
+generalises to any stopping time verbatim. Doob's envelope `Dsup` supplies
+both the dominating function `optional_stopping` wants AND the
+square-integrability of the STOPPED process, which is what promotes the
+conclusion back to a `horizon_sq_int_martingale`. Then `martingale_pair_law`
+pushes it forward along `pstopped`, with `pstopped_eval_filtration` as the
+adaptedness input and **`P`'s own filtration** — a stopped path carries no more
+information than the past, so, unlike the delayed class, there is NO time
+change here. `martingale_cong_ge` bridges the terms, which agree only for
+`u ≥ 0`.
+
+### What is left of §2.1: the six side conditions, then assembly
+
+**(B) `RXint`, `RCint`, `msecX`, `msecC`, `gintX`, `gintC`.** These are Fubini
+statements about `ksemi Q ?B_T κ`. Beyond the per-`p'` integrability that
+`Kint`/`KintC` already give, each needs an OUTER bound — one that does not
+depend on `p'`. **That input is now in hand**: `pdelclass_norm_mean_le` and
+`pdelclass_comp_norm_mean_le` bound the inner first moments by constants in
+`CARD('n)`, `L`, `T` alone, uniformly over the freezing time `s`, because a
+delayed law reads the base law at an earlier time and the class's own bound
+(`paper_pair_class_norm_mean_le`, `paper_pair_class_comp_norm_mean_le`) is
+monotone in the horizon. The remaining work is the Fubini bookkeeping:
+`AE_integrable_ksemi_section` and the unbounded `integral_ksemi` (both already
+used in step (3)) plus `integrable_bound` against the constant.
+
+**(C) Assembly.** `paper_pair_class_aglue` then yields the competitor, and
+`paper_v_dpp_sup_ge_time_of_const` (already stated for arbitrary `θ`) converts
+it into the `≥` half. The continuation kernel is
+`λp'. Sel (θ p', fst (p' (θ p')))` with `Sel` from
+`paper_v_measurable_selector_horizon`; `Kp` is its measurability, and the nine
+kernel clauses are the `pdelclass_*` family. The optimality input on the glued
+path is `pexit_pglue_dpp` transported through `padd`, exactly as
+`paper_v_dpp_ge_const` does at a deterministic time.
