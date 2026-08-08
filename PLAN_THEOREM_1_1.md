@@ -656,3 +656,49 @@ The full list lives in the agent memory file
 - **A chained fact carrying schematics is IGNORED by `simp`** (not an error).
   `using pfut_fst[OF m] by simp` does nothing; `by (simp add: pfut_fst[OF m])`
   works, because a simp RULE may have schematics while a chained fact may not.
+
+## §2.1 step (3), clause (iv), step (c) — status 2026-08-08 (later)
+
+**(c) is DONE for the `X` martingale clause; the compensated clause needs one
+more P-side result first.**
+
+New material in `Paper_DPP.thy` (all green, zero `sorry`):
+
+* The **rectangle** at a stopping time. `pafter T θ ω t = ω (max t (θ ω)) − ω (θ ω)`
+  is the DELAYED future, so the time on the second factor is an ABSOLUTE `u`,
+  not an offset, and the sampling time attached to it is **`u ∨ θ`**, not
+  `(θ+i) ∧ T`. Built: `path_stopping_time_cut_eq`, `pstopped_cut_compose`,
+  `pcut_pafter_cut_compose` (below a deterministic `t` both factors are read
+  off the path stopped at `t`), `path_stopping_time_max`,
+  `path_stopping_time_event_filtration_all` (the horizon restriction removed),
+  `pre_sigma_ofI_le`, `pre_sigma_of_Int`, `pstopped_vimage_pre_sigma`,
+  `pafter_vimage_pre_sigma` (an `ℱ_u`-set of the path space is a `pcut u`-preimage,
+  by `sets_natural_filtration_eq_pcut_vimage`, so only the delayed future ON
+  `[0,u]` matters), and **`rect_vimage_pre_sigma_stopping`** — the analogue of
+  `rect_vimage_natural_filtration`.
+* The **`u ∨ θ` sampling family**: `stopped_increment_of_horizon_gen` (the
+  increment identity for an ARBITRARY ordered pair of bounded path stopping
+  times — `set_martingale_sampling_two` was already abstract in them) and
+  `integrable_at_bounded_stopping_time` / `integrable_at_path_stopping_time`
+  (integrability of the SAMPLED process, which the deterministic development
+  got for free from the martingale locale).
+* The **disintegration**: `pafter_rcd_increment_zero`, stated once for an
+  arbitrary real integrand `h` on the future factor together with the pullback
+  identity `h (pafter T θ ω) = Y (max j (θ ω)) ω − Y (max i (θ ω)) ω`, and its
+  instance **`paper_pair_class_rcd_X_increment_zero`**.
+
+**What remains of (iv).** The compensated clause is NOT an instance of
+`pafter_rcd_increment_zero` as it stands, and the reason is mathematical, not
+bookkeeping: `outerp` is QUADRATIC, so `outerp(fst (pafter T θ ω u))` is not
+`outerp(fst (ω u))` up to a cancelling constant. Writing `b = fst (ω (θ ω))`,
+
+  `outerp(X_u − b) − (⟨X⟩_u − ⟨X⟩_θ) = (outerp X_u − ⟨X⟩_u) − X_u bᵀ − b X_uᵀ + outerp b + ⟨X⟩_θ`
+
+so the pullback `Y` that `pafter_rcd_increment_zero` needs is the DELAYED-FUTURE
+compensated process, and the missing input is that **it is a
+`horizon_sq_int_martingale` of `P`**. That is the stopping-time analogue of
+`paper_pair_class_pfut_comp_martingale`: `b` is `ℱ_θ`-measurable (not constant),
+so the cross terms need a martingale-times-known-square-integrable-factor
+identity at a stopping time, on top of the class's own compensated clause.
+Once that single interpretation exists, `pafter_rcd_increment_zero` applies to
+it verbatim, exactly as `paper_pair_class_rcd_X_increment_zero` does.
