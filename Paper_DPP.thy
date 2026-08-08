@@ -9638,4 +9638,67 @@ proof -
     by (simp add: LIMSEQ_const_iff)
   then show ?thesis unfolding set_lebesgue_integral_def by simp
 qed
+section \<open>From the pathwise stopping time to the filtration one\<close>
+
+text \<open>\<open>path_stopping_time\<close> is the PATHWISE notion: \<open>\<theta>\<close> is
+  decided by the path up to \<open>\<theta>\<close>.  What the sampling theorem consumes is the
+  FILTRATION notion, \<open>{\<theta> \<le> t} \<in> \<F>\<^sub>t\<close>.  The bridge is that below \<open>t\<close> the
+  event only sees the path stopped at \<open>t\<close>: \<open>\<theta> \<omega> \<le> t\<close> exactly when
+  \<open>\<theta> (\<omega> stopped at t) \<le> t\<close>, and the stopped path is an \<open>\<F>\<^sub>t\<close>-measurable
+  function of \<open>\<omega>\<close>.\<close>
+
+lemma path_stopping_time_cut:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>" and t: "0 \<le> t" and tT: "t \<le> T"
+  shows "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
+proof
+  assume h: "\<theta> \<omega> \<le> t"
+  have "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
+  proof (rule path_stopping_time_cong[OF st])
+    fix s assume s: "s \<in> {0..\<theta> \<omega>}"
+    then have sT: "s \<in> {0..T}" using h tT by auto
+    have "min s t = s" using s h by simp
+    then show "\<omega> s = pstopped T (\<lambda>_. t) \<omega> s"
+      by (simp add: pstopped_apply[OF sT])
+  qed
+  then show "\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t" using h by simp
+next
+  assume h: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t"
+  have "\<theta> \<omega> = \<theta> (pstopped T (\<lambda>_. t) \<omega>)"
+  proof (rule path_stopping_time_cong[OF st])
+    fix s assume s: "s \<in> {0..\<theta> (pstopped T (\<lambda>_. t) \<omega>)}"
+    then have sT: "s \<in> {0..T}" using h tT by auto
+    have "min s t = s" using s h by simp
+    then show "pstopped T (\<lambda>_. t) \<omega> s = \<omega> s"
+      by (simp add: pstopped_apply[OF sT])
+  qed
+  then show "\<theta> \<omega> \<le> t" using h by simp
+qed
+
+text \<open>Hence the event is measurable with respect to the natural filtration at
+  \<open>t\<close> --- the stopped path is, and \<open>\<theta>\<close> is Borel.\<close>
+
+lemma path_stopping_time_event:
+  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric)))"
+    and t: "0 \<le> t" and tT: "t \<le> T"
+  shows "{\<omega> \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))). \<theta> \<omega> \<le> t}
+      \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have cm: "pstopped T (\<lambda>_. t) \<in> ?B \<rightarrow>\<^sub>M ?B"
+    by (rule pstopped_measurable[OF T0 borel_measurable_const]) (use t tT in auto)
+  have thc: "(\<lambda>\<omega> :: 'n pairpath. \<theta> (pstopped T (\<lambda>_. t) \<omega>))
+      \<in> borel_measurable ?B"
+    using cm by (rule measurable_compose) (rule thM)
+  have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
+      = {\<omega> \<in> space ?B. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t}"
+    using path_stopping_time_cut[OF st t tT] by simp
+  moreover have "{\<omega> \<in> space ?B. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t} \<in> sets ?B"
+    using thc by measurable
+  ultimately show ?thesis by simp
+qed
+
 end
