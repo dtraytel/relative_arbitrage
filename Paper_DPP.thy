@@ -8188,7 +8188,8 @@ corollary paper_pair_class_rcd_stopping:
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
     and th0: "\<And>\<omega> :: 'n pairpath. 0 \<le> \<theta> \<omega>"
-    and thT: "\<And>\<omega> :: 'n pairpath. \<theta> \<omega> \<le> T"  obtains \<kappa> where
+    and thT: "\<And>\<omega> :: 'n pairpath. \<theta> \<omega> \<le> T"
+  obtains \<kappa> where
     "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
         \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
             (path_metric T :: ('n pairpath) metric)))"
@@ -8209,13 +8210,7 @@ proof -
     unfolding measurable_cong_sets[OF setsP refl]
     by (rule pafter_measurable[OF T0 thM th0 thT])
   show ?thesis
-  proof (rule path_rcd_ksemi[OF T0 PS m1 m2])
-    fix \<kappa> :: "'n pairpath \<Rightarrow> ('n pairpath) measure"
-    assume "\<kappa> \<in> ?B \<rightarrow>\<^sub>M prob_algebra ?B"
-      and "distr P (?B \<Otimes>\<^sub>M ?B) (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
-          = ksemi (pair_law_of T (pstopped T \<theta>) P) ?B \<kappa>"
-    then show thesis by (rule that)
-  qed
+    by (rule path_rcd_ksemi[OF T0 PS m1 m2 that])
 qed
 
 end
