@@ -10860,8 +10860,7 @@ text \<open>The stopping-time twin of @{thm [source] pfut_rcd_X_increment_zero},
   @{thm [source] martingale.set_integral_eq}.\<close>
 
 lemma pafter_rcd_increment_zero:
-  fixes P :: "('n::finite pairpath) measure"
-    and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and h :: "'n pairpath \<Rightarrow> real"
+  fixes P :: "('n::finite pairpath) measure" and h :: "'n pairpath \<Rightarrow> real"
   assumes T0: "0 < T" and PS: "prob_space P"
     and setsP: "sets P = sets (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
@@ -10879,14 +10878,13 @@ lemma pafter_rcd_increment_zero:
         = ksemi (pair_law_of T (pstopped T \<theta>) P)
             (borel_of (mtopology_of
               (path_metric T :: ('n pairpath) metric))) \<kappa>"
-    and H: "horizon_sq_int_martingale P
-        (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
-    and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
     and hm: "h \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
-    and hP: "\<And>\<omega> :: 'n pairpath. h (pafter T \<theta> \<omega>)
-        = Y (max j (\<theta> \<omega>)) \<omega> - Y (max i (\<theta> \<omega>)) \<omega>"
-    and i0: "0 \<le> i" and ij: "i \<le> j" and jT: "j \<le> T"
+    and hi: "integrable P (\<lambda>\<omega> :: 'n pairpath. h (pafter T \<theta> \<omega>))"
+    and inc: "\<And>A. A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+          (\<lambda>\<omega>. max i (\<theta> \<omega>))
+        \<Longrightarrow> set_lebesgue_integral P A (\<lambda>\<omega>. h (pafter T \<theta> \<omega>)) = 0"
+    and i0: "0 \<le> i" and iT: "i \<le> T"
     and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) i)"
   shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
@@ -10897,7 +10895,6 @@ proof -
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)"
   have T0': "0 \<le> T" using T0 by simp
-  have iT: "i \<le> T" using ij jT by simp
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
@@ -10929,32 +10926,15 @@ proof -
   have mphi': "?\<phi> \<in> P \<rightarrow>\<^sub>M ?Q \<Otimes>\<^sub>M ?B"
     using mphi measurable_cong_sets[OF refl SQY[symmetric]] by blast
 
-  \<comment> \<open>the two sampling times and the integrability they carry\<close>
-  have sti: "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. max i (\<theta> \<omega>))"
-    by (rule path_stopping_time_max[OF st i0 iT])
-  have j0: "0 \<le> j" using i0 ij by simp
-  have stj: "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. max j (\<theta> \<omega>))"
-    by (rule path_stopping_time_max[OF st j0 jT])
-  have sMi: "(\<lambda>\<omega> :: 'n pairpath. max i (\<theta> \<omega>)) \<in> borel_measurable ?B"
-    using thM by measurable
-  have sMj: "(\<lambda>\<omega> :: 'n pairpath. max j (\<theta> \<omega>)) \<in> borel_measurable ?B"
-    using thM by measurable
-  have inti: "integrable P (\<lambda>\<omega> :: 'n pairpath. Y (max i (\<theta> \<omega>)) \<omega>)"
-    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont sti sMi])
-  have intj: "integrable P (\<lambda>\<omega> :: 'n pairpath. Y (max j (\<theta> \<omega>)) \<omega>)"
-    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont stj sMj])
-  have hPfun: "(\<lambda>\<omega> :: 'n pairpath. h (snd (?\<phi> \<omega>)))
-      = (\<lambda>\<omega>. Y (max j (\<theta> \<omega>)) \<omega> - Y (max i (\<theta> \<omega>)) \<omega>)"
-    by (rule ext) (simp add: hP)
-  have hi: "integrable P (\<lambda>\<omega> :: 'n pairpath. h (snd (?\<phi> \<omega>)))"
-    unfolding hPfun by (rule Bochner_Integration.integrable_diff[OF intj inti])
+  have hi2: "integrable P (\<lambda>\<omega> :: 'n pairpath. h (snd (?\<phi> \<omega>)))"
+    using hi by simp
   have hsnd: "integrable (ksemi ?Q ?B \<kappa>) (\<lambda>p. h (snd p))"
   proof -
     have hm2: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). h (snd p))
         \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?B)"
       by (rule measurable_compose[OF measurable_snd hm])
     have "integrable (distr P (?Q \<Otimes>\<^sub>M ?B) ?\<phi>) (\<lambda>p. h (snd p))"
-      unfolding integrable_distr_eq[OF mphi' hm2] by (rule hi)
+      unfolding integrable_distr_eq[OF mphi' hm2] by (rule hi2)
     then show ?thesis unfolding eq' .
   qed
 
@@ -10968,7 +10948,7 @@ proof -
     show "h \<in> borel_measurable ?B" by (rule hm)
     show "A \<in> sets ?Q" by (rule A)
     show "A' \<in> sets ?B" by (rule A'Y)
-    show "integrable P (\<lambda>\<omega> :: 'n pairpath. h (snd (?\<phi> \<omega>)))" by (rule hi)
+    show "integrable P (\<lambda>\<omega> :: 'n pairpath. h (snd (?\<phi> \<omega>)))" by (rule hi2)
   qed
   have fi: "integrable ?Q (\<lambda>p'. \<integral>w. indicator A' w * h w \<partial>(\<kappa> p'))"
     by (rule integrable_kernel_integral[OF KQ neQ hm A'Y hsnd])
@@ -10980,32 +10960,9 @@ proof -
     have S: "?\<phi> -` (A \<times> A') \<inter> space P
         \<in> pre_sigma_of P ?F (\<lambda>\<omega>. max i (\<theta> \<omega>))"
       by (rule rect_vimage_pre_sigma_stopping[OF T0' setsP st thM i0 iT AX A'])
-    have SP: "?\<phi> -` (A \<times> A') \<inter> space P \<in> sets P" by (rule pre_sigma_of_sets[OF S])
-    have lemax: "max i (\<theta> \<omega>) \<le> max j (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
-      using ij by simp
-    have inc: "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
-          (\<lambda>\<omega> :: 'n pairpath. Y (max i (\<theta> \<omega>)) \<omega>)
-        = set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
-          (\<lambda>\<omega>. Y (max j (\<theta> \<omega>)) \<omega>)"
-      by (rule stopped_increment_of_horizon_gen
-          [OF T0 setsP H Ycont sti sMi stj sMj lemax S])
-    have sii: "set_integrable P (?\<phi> -` (A \<times> A') \<inter> space P)
-        (\<lambda>\<omega> :: 'n pairpath. Y (max i (\<theta> \<omega>)) \<omega>)"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF SP inti])
-    have sij: "set_integrable P (?\<phi> -` (A \<times> A') \<inter> space P)
-        (\<lambda>\<omega> :: 'n pairpath. Y (max j (\<theta> \<omega>)) \<omega>)"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF SP intj])
-    have "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
-          (\<lambda>\<omega> :: 'n pairpath. Y (max j (\<theta> \<omega>)) \<omega> - Y (max i (\<theta> \<omega>)) \<omega>)
-        = set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
-            (\<lambda>\<omega>. Y (max j (\<theta> \<omega>)) \<omega>)
-          - set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
-            (\<lambda>\<omega>. Y (max i (\<theta> \<omega>)) \<omega>)"
-      using set_integral_diff(2)[OF sij sii] by simp
-    also have "\<dots> = 0" using inc by simp
-    finally have zero: "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
+    have zero: "set_lebesgue_integral P (?\<phi> -` (A \<times> A') \<inter> space P)
         (\<lambda>\<omega> :: 'n pairpath. h (snd (?\<phi> \<omega>))) = 0"
-      unfolding hPfun .
+      using inc[OF S] by simp
     show ?thesis
       unfolding integral_ksemi_rect_of_set_integral
         [OF eq'[symmetric] mphi' hm A A'Y]
@@ -11013,6 +10970,7 @@ proof -
   qed
   show ?thesis by (rule AE_kernel_integral_zero[OF KQ neQ hm A'Y gi fi z])
 qed
+
 
 text \<open>The first clause-(iv) instance: the \<open>X\<close> martingale.  It is the one
   the additive split carries across unchanged, since
@@ -11043,6 +11001,7 @@ corollary paper_pair_class_rcd_X_increment_zero:
       (\<integral>w. indicator A' w * ((fst (w j) - fst (w i)) $ c) \<partial>(\<kappa> p')) = 0"
 proof -
   let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ c"
   let ?h = "\<lambda>w :: 'n pairpath. (fst (w j) - fst (w i)) $ c"
   have T0': "0 \<le> T" using T0 by simp
@@ -11089,9 +11048,47 @@ proof -
     show ?thesis
       unfolding pafter_apply[OF i0T] pafter_apply[OF j0T] mi mj by simp
   qed
+  have hPfun: "(\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>))
+      = (\<lambda>\<omega>. ?Y (max j (\<theta> \<omega>)) \<omega> - ?Y (max i (\<theta> \<omega>)) \<omega>)"
+    by (rule ext) (rule hP)
+  have sti: "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. max i (\<theta> \<omega>))"
+    by (rule path_stopping_time_max[OF st i0 iT])
+  have stj: "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. max j (\<theta> \<omega>))"
+    by (rule path_stopping_time_max[OF st j0 jT])
+  have sMi: "(\<lambda>\<omega> :: 'n pairpath. max i (\<theta> \<omega>)) \<in> borel_measurable ?B"
+    using thM by measurable
+  have sMj: "(\<lambda>\<omega> :: 'n pairpath. max j (\<theta> \<omega>)) \<in> borel_measurable ?B"
+    using thM by measurable
+  have inti: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?Y (max i (\<theta> \<omega>)) \<omega>)"
+    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont sti sMi])
+  have intj: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?Y (max j (\<theta> \<omega>)) \<omega>)"
+    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont stj sMj])
+  have hi: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>))"
+    unfolding hPfun by (rule Bochner_Integration.integrable_diff[OF intj inti])
+  have lemax: "max i (\<theta> \<omega>) \<le> max j (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
+    using ij by simp
+  have inc: "set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>)) = 0"
+    if A: "A \<in> pre_sigma_of P ?F (\<lambda>\<omega>. max i (\<theta> \<omega>))" for A
+  proof -
+    have AP: "A \<in> sets P" by (rule pre_sigma_of_sets[OF A])
+    have sii: "set_integrable P A (\<lambda>\<omega> :: 'n pairpath. ?Y (max i (\<theta> \<omega>)) \<omega>)"
+      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP inti])
+    have sij: "set_integrable P A (\<lambda>\<omega> :: 'n pairpath. ?Y (max j (\<theta> \<omega>)) \<omega>)"
+      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP intj])
+    have "set_lebesgue_integral P A
+          (\<lambda>\<omega> :: 'n pairpath. ?Y (max j (\<theta> \<omega>)) \<omega> - ?Y (max i (\<theta> \<omega>)) \<omega>)
+        = set_lebesgue_integral P A (\<lambda>\<omega>. ?Y (max j (\<theta> \<omega>)) \<omega>)
+          - set_lebesgue_integral P A (\<lambda>\<omega>. ?Y (max i (\<theta> \<omega>)) \<omega>)"
+      using set_integral_diff(2)[OF sij sii] by simp
+    also have "\<dots> = 0"
+      using stopped_increment_of_horizon_gen
+        [OF T0 setsP H Ycont sti sMi stj sMj lemax A] by simp
+    finally show ?thesis unfolding hPfun .
+  qed
   show ?thesis
     by (rule pafter_rcd_increment_zero
-        [OF T0 PS setsP st thM Km eq H Ycont hm hP i0 ij jT A'])
+        [OF T0 PS setsP st thM Km eq hm hi inc i0 iT A'])
 qed
+
 
 end
