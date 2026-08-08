@@ -18297,4 +18297,134 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>Transporting the bound from the law to its stopped version\<close>
+
+text \<open>The DPP integrand reads the path only up to \<open>\<theta>\<close>, so it is unchanged by
+  stopping there; transporting it along @{thm [source] AE_distr_iff} therefore
+  needs only that it is MEASURABLE.  Both of its awkward pieces are handled by
+  the same device: a quantity at the random horizon \<open>\<theta>\<close> is the quantity at the
+  FIXED horizon \<open>T\<close>, capped.  For the exit time that is
+  @{thm [source] pexit_min_horizon}; for the value function it is
+  @{thm [source] paper_v_horizon_cap}, which is what makes \<open>paper_v\<close> at a
+  varying horizon measurable without any joint-measurability theorem.\<close>
+
+lemma enn2real_paper_v_horizon_cap:
+  fixes K :: "(real^'n::finite) set" and y :: "real^'n"
+  assumes S0: "0 \<le> S" and ST: "S \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
+  shows "enn2real (paper_v k L S K y) = min (enn2real (paper_v k L T K y)) S"
+proof -
+  have T0: "0 \<le> T" using S0 ST by simp
+  have a: "ennreal (enn2real (paper_v k L S K y)) = paper_v k L S K y"
+    using paper_v_neq_top[OF S0, of k L K y]
+    by (simp add: ennreal_enn2real less_top)
+  have b: "ennreal (min (enn2real (paper_v k L T K y)) S)
+      = min (paper_v k L T K y) (ennreal S)"
+  proof -
+    have "ennreal (min (enn2real (paper_v k L T K y)) S)
+        = min (ennreal (enn2real (paper_v k L T K y))) (ennreal S)"
+      by (rule ennreal_min_eq)
+    also have "\<dots> = min (paper_v k L T K y) (ennreal S)"
+      using paper_v_neq_top[OF T0, of k L K y]
+      by (simp add: ennreal_enn2real less_top)
+    finally show ?thesis .
+  qed
+  have "ennreal (enn2real (paper_v k L S K y))
+      = ennreal (min (enn2real (paper_v k L T K y)) S)"
+    unfolding a b by (rule paper_v_horizon_cap[OF S0 ST L1 Kc])
+  then show ?thesis by (subst (asm) ennreal_inj) (use S0 in auto)
+qed
+
+lemma dpp_integrand_measurable_stopping:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "{p' \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))).
+      c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+        + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+           then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)}
+    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have T0': "0 \<le> T" using T0 by simp
+  have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have idm: "(\<lambda>p' :: 'n pairpath. p') \<in> ?B \<rightarrow>\<^sub>M ?B"
+    by (rule measurable_ident_sets[OF refl])
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have xm: "(\<lambda>p' :: 'n pairpath. fst (p' (\<theta> p'))) \<in> borel_measurable ?B"
+  proof -
+    have "(\<lambda>p' :: 'n pairpath. p' (\<theta> p')) \<in> borel_measurable ?B"
+      by (rule path_eval_at_measurable_time
+          [where X = "\<lambda>p' :: 'n pairpath. p'" and g = \<theta>, OF T0' idm thM])
+         (use th0 thT in auto)
+    then show ?thesis by (rule measurable_compose[OF _ fstB])
+  qed
+  have taum: "(\<lambda>p' :: 'n pairpath. pexit T K (\<lambda>t. fst (p' t)))
+      \<in> borel_measurable ?B"
+  proof -
+    have "(\<lambda>p' :: 'n pairpath. pexit T K (pfst T p')) \<in> borel_measurable ?B"
+      by (rule measurable_compose[OF pfst_measurable[OF T0' refl]
+            pexit_measurable[OF T0' Kc]])
+    then show ?thesis by (simp add: pexit_pfst)
+  qed
+  \<comment> \<open>the exit time at the RANDOM horizon is the fixed-horizon one, capped\<close>
+  have pe: "(\<lambda>p' :: 'n pairpath. pexit (\<theta> p') K (\<lambda>t. fst (p' t)))
+      = (\<lambda>p'. min (pexit T K (\<lambda>t. fst (p' t))) (\<theta> p'))"
+    by (rule ext) (rule pexit_min_horizon[OF th0 thT])
+  have pem: "(\<lambda>p' :: 'n pairpath. pexit (\<theta> p') K (\<lambda>t. fst (p' t)))
+      \<in> borel_measurable ?B" unfolding pe using taum thM by measurable
+  \<comment> \<open>and so is the value function\<close>
+  have vv: "(\<lambda>p' :: 'n pairpath.
+      enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))))
+      = (\<lambda>p'. min (enn2real (paper_v k L T K (fst (p' (\<theta> p'))))) (T - \<theta> p'))"
+  proof (rule ext)
+    fix p' :: "'n pairpath"
+    have a: "0 \<le> T - \<theta> p'" using thT[of p'] by simp
+    have b: "T - \<theta> p' \<le> T" using th0[of p'] by simp
+    show "enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p'))))
+        = min (enn2real (paper_v k L T K (fst (p' (\<theta> p'))))) (T - \<theta> p')"
+      by (rule enn2real_paper_v_horizon_cap[OF a b L1 Kc])
+  qed
+  have vm: "(\<lambda>p' :: 'n pairpath.
+      enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p'))))) \<in> borel_measurable ?B"
+  proof -
+    have pv: "(\<lambda>y :: real^'n. enn2real (paper_v k L T K y))
+        \<in> borel_measurable borel"
+      by (rule paper_v_borel_measurable[OF T0 L1 Kc])
+    have c1: "(\<lambda>p' :: 'n pairpath. enn2real (paper_v k L T K (fst (p' (\<theta> p')))))
+        \<in> borel_measurable ?B" by (rule measurable_compose[OF xm pv])
+    show ?thesis unfolding vv using c1 thM by measurable
+  qed
+  have Km: "K \<in> sets (borel :: (real^'n) measure)"
+    using Kc by (simp add: borel_closed)
+  have c1: "Measurable.pred ?B
+      (\<lambda>p'. pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p')"
+  proof -
+    have d: "(\<lambda>p'. pexit (\<theta> p') K (\<lambda>t. fst (p' t)) - \<theta> p') \<in> borel_measurable ?B"
+      using pem thM by measurable
+    have "Measurable.pred ?B
+        (\<lambda>p'. pexit (\<theta> p') K (\<lambda>t. fst (p' t)) - \<theta> p' = 0)"
+      using d by measurable
+    then show ?thesis by simp
+  qed
+  have c2: "Measurable.pred ?B (\<lambda>p'. fst (p' (\<theta> p')) \<in> K)"
+    using xm Km by measurable
+  have condm: "Measurable.pred ?B (\<lambda>p'.
+      pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K)"
+    using c1 c2 by measurable
+  have gm: "(\<lambda>p' :: 'n pairpath. pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+      + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+         then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0))
+      \<in> borel_measurable ?B"
+    using pem vm condm by measurable
+  show ?thesis using gm by measurable
+qed
+
 end
