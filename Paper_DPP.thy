@@ -11014,4 +11014,84 @@ proof -
   show ?thesis by (rule AE_kernel_integral_zero[OF KQ neQ hm A'Y gi fi z])
 qed
 
+text \<open>The first clause-(iv) instance: the \<open>X\<close> martingale.  It is the one
+  the additive split carries across unchanged, since
+  \<^term>\<open>pafter T \<theta> \<omega>\<close> is a DIFFERENCE of values of \<open>\<omega>\<close> and the constant
+  \<^term>\<open>\<omega> (\<theta> \<omega>)\<close> cancels between the two times.\<close>
+
+corollary paper_pair_class_rcd_X_increment_zero:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+        = ksemi (pair_law_of T (pstopped T \<theta>) P)
+            (borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric))) \<kappa>"
+    and i0: "0 \<le> i" and ij: "i \<le> j" and jT: "j \<le> T"
+    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) i)"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
+      (\<integral>w. indicator A' w * ((fst (w j) - fst (w i)) $ c) \<partial>(\<kappa> p')) = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ c"
+  let ?h = "\<lambda>w :: 'n pairpath. (fst (w j) - fst (w i)) $ c"
+  have T0': "0 \<le> T" using T0 by simp
+  have j0: "0 \<le> j" using i0 ij by simp
+  have iT: "i \<le> T" using ij jT by simp
+  have i0T: "i \<in> {0..T}" using i0 iT by simp
+  have j0T: "j \<in> {0..T}" using j0 jT by simp
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have H: "horizon_sq_int_martingale P
+      (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) ?Y T"
+    by (rule paper_pair_class_horizon_component[OF T0 L0 P])
+  have Ycont: "continuous_on {0..T} (\<lambda>s. ?Y s \<omega>)"
+    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+  proof -
+    have m: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using w spP by (simp add: space_borel_of)
+    have "continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
+      using mspace_path_metricD[OF m] by (intro continuous_intros)
+    moreover have "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ c)
+        = continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
+      by (rule continuous_on_cong[OF refl]) simp
+    ultimately show ?thesis by simp
+  qed
+  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B" for u
+    by (rule pair_law_eval_measurable[OF refl])
+  have hvec: "(\<lambda>w :: 'n pairpath. fst (w j) - fst (w i)) \<in> borel_measurable ?B"
+    by (intro borel_measurable_diff measurable_compose[OF ev measurable_fst_borel])
+  have hm: "?h \<in> borel_measurable ?B"
+  proof -
+    have "(\<lambda>w :: 'n pairpath. (fst (w j) - fst (w i)) \<bullet> (axis c 1 :: real^'n))
+        \<in> borel_measurable ?B"
+      by (intro borel_measurable_inner hvec borel_measurable_const)
+    then show ?thesis by (simp add: inner_axis)
+  qed
+  have hP: "?h (pafter T \<theta> \<omega>) = ?Y (max j (\<theta> \<omega>)) \<omega> - ?Y (max i (\<theta> \<omega>)) \<omega>"
+    for \<omega> :: "'n pairpath"
+  proof -
+    have mi: "min (max i (\<theta> \<omega>)) T = max i (\<theta> \<omega>)" using iT thT[of \<omega>] by simp
+    have mj: "min (max j (\<theta> \<omega>)) T = max j (\<theta> \<omega>)" using jT thT[of \<omega>] by simp
+    show ?thesis
+      unfolding pafter_apply[OF i0T] pafter_apply[OF j0T] mi mj by simp
+  qed
+  show ?thesis
+    by (rule pafter_rcd_increment_zero
+        [OF T0 PS setsP st thM Km eq H Ycont hm hP i0 ij jT A'])
+qed
+
 end
