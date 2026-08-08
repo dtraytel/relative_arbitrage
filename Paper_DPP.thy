@@ -12318,4 +12318,139 @@ proof -
   finally show ?thesis by simp
 qed
 
+subsection \<open>Auxiliaries for clause (iv)\<close>
+
+text \<open>\<open>i \<and> \<theta>\<close> is a stopping time.  Unlike \<open>i \<or> \<theta>\<close> this needs BOTH directions of
+  the cut: on \<open>{\<theta> \<le> i}\<close> the value is \<open>\<theta>\<close> and agreement up to \<open>\<theta>\<close> fixes it; on
+  \<open>{\<theta> > i}\<close> the value is \<open>i\<close>, and agreement up to \<open>i\<close> still fixes it, because a
+  path with \<open>\<theta> < i\<close> would already have been detected by then.\<close>
+
+lemma path_stopping_time_min:
+  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  assumes st: "path_stopping_time T \<theta>" and i: "0 \<le> i" and iT: "i \<le> T"
+  shows "path_stopping_time T (\<lambda>\<omega>. min i (\<theta> \<omega>))"
+proof -
+  have c1: "0 \<le> min i (\<theta> \<omega>) \<and> min i (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+    using i iT path_stopping_time_nonneg[OF st, of \<omega>]
+      path_stopping_time_le[OF st, of \<omega>] by simp
+  have c2: "min i (\<theta> \<omega>') = min i (\<theta> \<omega>)"
+    if ag: "\<forall>s \<in> {0..min i (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
+  proof (cases "\<theta> \<omega> \<le> i")
+    case True
+    then have "min i (\<theta> \<omega>) = \<theta> \<omega>" by simp
+    then have "\<forall>s \<in> {0..\<theta> \<omega>}. \<omega> s = \<omega>' s" using ag by simp
+    then have "\<theta> \<omega>' = \<theta> \<omega>"
+      by (intro path_stopping_time_cong[OF st]) blast
+    then show ?thesis by simp
+  next
+    case False
+    then have mi: "min i (\<theta> \<omega>) = i" by simp
+    have "\<not> \<theta> \<omega>' < i"
+    proof
+      assume lt: "\<theta> \<omega>' < i"
+      have "\<theta> \<omega> = \<theta> \<omega>'"
+      proof (rule path_stopping_time_cong[OF st])
+        fix s assume "s \<in> {0..\<theta> \<omega>'}"
+        then have "s \<in> {0..min i (\<theta> \<omega>)}" using lt mi by auto
+        then show "\<omega>' s = \<omega> s" using ag by auto
+      qed
+      then show False using lt False by simp
+    qed
+    then show ?thesis using mi by simp
+  qed
+  show ?thesis unfolding path_stopping_time_def using c1 c2 by blast
+qed
+
+text \<open>The stopped past, read at \<open>u \<and> T\<close>, IS the past read at \<open>u \<and> \<theta>\<close>: this is
+  what turns the glue's own clock into the stopping-time family that
+  @{thm [source] stopped_increment_of_horizon_gen} samples at.\<close>
+
+lemma pstopped_eval_min:
+  fixes p' :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>" and idem: "pstopped T \<theta> p' = p'"
+    and T0: "0 \<le> T" and u: "0 \<le> u"
+  shows "p' (min u T) = p' (min (min u T) (\<theta> p'))"
+proof -
+  have m: "min u T \<in> {0..T}" using T0 u by simp
+  have "p' (min u T) = pstopped T \<theta> p' (min u T)" unfolding idem ..
+  also have "\<dots> = p' (min (min u T) (\<theta> p'))" by (rule pstopped_apply[OF m])
+  finally show ?thesis .
+qed
+
+text \<open>On \<open>{\<theta> > i}\<close> an \<open>\<F>\<^sub>i\<close>-set of the glue is a set of the PAST alone ---
+  @{thm [source] pcut_padd_before} --- so its indicator does not depend on \<open>w\<close>
+  at all.  On \<open>{\<theta> \<le> i}\<close>, for a FIXED past, the \<open>w\<close>-section of an \<open>\<F>\<^sub>i\<close>-set of
+  the glue is an \<open>\<F>\<^sub>i\<close>-set of the continuation, because
+  @{thm [source] pcut_padd_section} presents it as a function of
+  \<^term>\<open>pcut i w\<close>.\<close>
+lemma section_padd_in_filtration:
+  fixes p' :: "'n::finite pairpath" and N :: "('n pairpath) measure"
+  assumes i0: "0 \<le> i" and iT: "i \<le> T"
+    and setsN: "sets N = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and pm: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and B: "B \<in> sets (borel_of (mtopology_of
+        (path_metric i :: ('n pairpath) metric)))"
+  shows "{w \<in> space N. pcut i (padd T p' w) \<in> B}
+      \<in> sets (natural_filtration N 0 (\<lambda>v w. w v) i)"
+proof -
+  let ?Bi = "borel_of (mtopology_of (path_metric i :: ('n pairpath) metric))"
+  have pc: "pcut i p' \<in> mspace (path_metric i :: ('n pairpath) metric)"
+  proof -
+    have "continuous_on {0..i} p'"
+      by (rule continuous_on_subset[OF mspace_path_metricD[OF pm]])
+         (use i0 iT in auto)
+    then show ?thesis unfolding pcut_def by (rule mspace_path_metricI)
+  qed
+  have m1: "(\<lambda>q :: 'n pairpath. padd i (pcut i p') q) \<in> ?Bi \<rightarrow>\<^sub>M ?Bi"
+  proof (rule measurable_into_path_metric)
+    show "padd i (pcut i p') q \<in> mspace (path_metric i :: ('n pairpath) metric)"
+      if "q \<in> space ?Bi" for q
+      using that pc by (auto simp: space_borel_of intro: padd_mspace)
+  next
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric i :: ('n pairpath) metric)"
+    show "(\<lambda>q. mdist (path_metric i :: ('n pairpath) metric)
+        (padd i (pcut i p') q) a) \<in> borel_measurable ?Bi"
+    proof (rule mdist_measurable_of_eval[OF i0 _ am])
+      show "padd i (pcut i p') q \<in> mspace (path_metric i :: ('n pairpath) metric)"
+        if "q \<in> space ?Bi" for q
+        using that pc by (auto simp: space_borel_of intro: padd_mspace)
+      fix s :: real
+      show "(\<lambda>q :: 'n pairpath. padd i (pcut i p') q s) \<in> borel_measurable ?Bi"
+      proof (cases "s \<in> {0..i}")
+        case True
+        have "(\<lambda>q :: 'n pairpath. pcut i p' s + q s) \<in> borel_measurable ?Bi"
+          by (intro borel_measurable_add borel_measurable_const
+              pair_law_eval_measurable[OF refl])
+        then show ?thesis by (simp add: padd_apply[OF True])
+      next
+        case False
+        have "(\<lambda>q :: 'n pairpath. padd i (pcut i p') q s) = (\<lambda>q. undefined)"
+          by (rule ext) (rule padd_outside[OF False])
+        then show ?thesis by simp
+      qed
+    qed
+  qed
+  have m2: "(\<lambda>w :: 'n pairpath. pcut i w) \<in> N \<rightarrow>\<^sub>M ?Bi"
+    by (rule pcut_measurable[OF i0 iT setsN])
+  have eq: "{w \<in> space N. pcut i (padd T p' w) \<in> B}
+      = (\<lambda>w :: 'n pairpath. pcut i w) -`
+          ((\<lambda>q. padd i (pcut i p') q) -` B \<inter> space ?Bi) \<inter> space N"
+  proof -
+    have "pcut i (padd T p' w) = padd i (pcut i p') (pcut i w)" for w
+      by (rule pcut_padd_section[OF i0 iT])
+    moreover have "pcut i w \<in> space ?Bi" if "w \<in> space N" for w
+      using measurable_space[OF m2 that] .
+    ultimately show ?thesis by auto
+  qed
+  have inner: "(\<lambda>q. padd i (pcut i p') q) -` B \<inter> space ?Bi \<in> sets ?Bi"
+    by (rule measurable_sets[OF m1 B])
+  have "(\<lambda>w :: 'n pairpath. pcut i w) -`
+      ((\<lambda>q. padd i (pcut i p') q) -` B \<inter> space ?Bi) \<inter> space N
+      \<in> sets (natural_filtration N 0 (\<lambda>v w. w v) i)"
+    by (rule pcut_vimage_natural_filtration[OF i0 iT setsN inner])
+  then show ?thesis unfolding eq .
+qed
+
 end
