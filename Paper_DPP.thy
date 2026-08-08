@@ -17597,4 +17597,114 @@ proof -
   ultimately show ?thesis by simp
 qed
 
+section \<open>The exit bound for the glued law\<close>
+
+text \<open>The two pathwise lemmas compose into the law-level statement the \<open>\<ge>\<close>
+  half needs: if the PAST already satisfies the DPP integrand bound and the
+  CONTINUATION attains the value function after \<open>\<theta>\<close>, then the glue's exit time
+  is at least \<open>c\<close> almost surely.\<close>
+
+theorem aglue_law_pexit_ge:
+  fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kc: "closed K" and L1: "1 \<le> L"
+    and st: "path_stopping_time T \<theta>"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
+    and Qbnd: "AE p' in Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+        + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+           then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+    and Kfr: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    and Kval: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'.
+        enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p'))))
+          \<le> pexit (T - \<theta> p') K
+              (\<lambda>u. fst (p' (\<theta> p')) + fst (prebase (\<theta> p') T w u))"
+  shows "AE \<omega> in aglue_law T \<kappa> Q. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?B"
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. pexit T K (pfst T \<omega>)) \<in> borel_measurable ?B"
+      by (rule measurable_compose[OF pfst_measurable[OF T0 refl]
+            pexit_measurable[OF T0 Kc]])
+    then show ?thesis by (simp add: pexit_pfst)
+  qed
+  have mset: "{\<omega> \<in> space ?B. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))} \<in> sets ?B"
+    using taum by measurable
+  have inner: "AE w in \<kappa> p'. c \<le> pexit T K (\<lambda>t. fst (padd T p' w t))"
+    if sp: "p' \<in> space Q" and idem: "pstopped T \<theta> p' = p'"
+      and bnd: "c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+        + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+           then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+    for p'
+  proof -
+    let ?r = "\<theta> p'"
+    let ?y = "fst (p' ?r)"
+    let ?c = "enn2real (paper_v k L (T - ?r) K ?y)"
+    have r0: "0 \<le> ?r" by (rule th0)
+    have rT: "?r \<le> T" by (rule thT)
+    have Tr: "0 \<le> T - ?r" using rT by simp
+    have c0: "0 \<le> ?c" by simp
+    have cle: "?c \<le> T - ?r"
+    proof -
+      have "ennreal ?c = paper_v k L (T - ?r) K ?y"
+        using paper_v_neq_top[of "T - ?r" k L K ?y] Tr by (simp add: less_top)
+      also have "\<dots> \<le> ennreal (T - ?r)" by (rule paper_v_le_T[OF Tr])
+      finally show ?thesis using Tr by simp
+    qed
+    have stop: "p' t = p' ?r" if t: "t \<in> {0..T}" and rt: "?r \<le> t" for t
+    proof -
+      have "p' t = pstopped T \<theta> p' t" unfolding idem ..
+      also have "\<dots> = p' (min t ?r)" by (rule pstopped_apply[OF t])
+      also have "min t ?r = ?r" using rt by simp
+      finally show ?thesis .
+    qed
+    show ?thesis using Kfr[OF sp] Kval[OF sp]
+    proof eventually_elim
+      case (elim w)
+      then have frz: "\<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> ?r \<longrightarrow> w u = 0"
+        and val: "?c \<le> pexit (T - ?r) K (\<lambda>u. ?y + fst (prebase ?r T w u))"
+        by blast+
+      have cont: "?r + ?c \<le> pexit T K (\<lambda>s. ?y + fst (w s))"
+        if "pexit ?r K (\<lambda>t. fst (p' t)) = ?r" and inK: "?y \<in> K"
+      proof -
+        have "?r + ?c \<le> ?r + pexit (T - ?r) K (\<lambda>u. ?y + fst (prebase ?r T w u))"
+          using val by simp
+        also have "\<dots> \<le> pexit T K (\<lambda>s. ?y + fst (w s))"
+          by (rule pexit_delayed_rebase[OF r0 rT _ inK]) (use frz in blast)
+        finally show ?thesis .
+      qed
+      have "pexit ?r K (\<lambda>t. fst (p' t))
+            + (if pexit ?r K (\<lambda>t. fst (p' t)) = ?r \<and> ?y \<in> K then ?c else 0)
+          \<le> pexit T K (\<lambda>t. fst (padd T p' w t))"
+      proof (rule pexit_padd_dpp[OF r0 rT c0])
+        show "?r + ?c \<le> T" using cle by simp
+        show "p' t = p' ?r" if "t \<in> {0..T}" "?r \<le> t" for t
+          by (rule stop[OF that])
+        show "w t = 0" if "t \<in> {0..T}" "t \<le> ?r" for t using frz that by blast
+        show "pexit ?r K (\<lambda>t. fst (p' t)) = ?r \<Longrightarrow> ?y \<in> K
+            \<Longrightarrow> ?r + ?c \<le> pexit T K (\<lambda>s. ?y + fst (w s))" by (rule cont)
+      qed
+      with bnd show ?case by linarith
+    qed
+  qed
+  have "AE p' in Q. AE w in \<kappa> p'. c \<le> pexit T K (\<lambda>t. fst (padd T p' w t))"
+    using AE_space Qst Qbnd
+  proof eventually_elim
+    case (elim p')
+    then show ?case using inner by blast
+  qed
+  then show ?thesis
+    unfolding AE_aglue_law[OF T0 PQ setsQ Kp mset] .
+qed
+
 end
