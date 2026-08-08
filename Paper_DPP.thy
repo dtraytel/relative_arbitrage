@@ -12599,7 +12599,7 @@ theorem aglue_inner_increment:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
-    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QH: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. fst (p' (min u T)) $ c) T"
@@ -12706,7 +12706,8 @@ proof -
   qed
 
   have before: "?g j p' = ?g i p'"
-    if sp: "p' \<in> space Q" and le: "\<theta> p' \<le> i" for p'
+    if sp: "p' \<in> space Q" and idem: "pstopped T \<theta> p' = p'" and le: "\<theta> p' \<le> i"
+    for p'
   proof -
     interpret PKi: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
     have setsK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
@@ -12727,9 +12728,9 @@ proof -
     have same: "?Y j p' = ?Y i p'"
     proof -
       have e1: "p' (min i T) = p' (min (min i T) (\<theta> p'))"
-        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' i0])
+        by (rule pstopped_eval_min[OF st idem T0' i0])
       have e2: "p' (min j T) = p' (min (min j T) (\<theta> p'))"
-        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' j0])
+        by (rule pstopped_eval_min[OF st idem T0' j0])
       have m1: "min (min i T) (\<theta> p') = \<theta> p'" using le iT th0[of p'] by simp
       have m2: "min (min j T) (\<theta> p') = \<theta> p'"
         using le ij jT th0[of p'] by simp
@@ -12784,20 +12785,25 @@ proof -
       by (rule set_integral_Un[OF dis si[OF Emeas u0 uT] si[OF cm u0 uT]])
     then show ?thesis unfolding un spint[OF u0 uT] .
   qed
+  have cmQ: "space Q - ?E \<in> sets Q" by (rule sets.compl_sets[OF Emeas])
   have compl: "set_lebesgue_integral Q (space Q - ?E) (?g j)
       = set_lebesgue_integral Q (space Q - ?E) (?g i)"
-    unfolding set_lebesgue_integral_def
-  proof (rule Bochner_Integration.integral_cong[OF refl])
-    fix x assume x: "x \<in> space Q"
-    show "indicator (space Q - ?E) x *\<^sub>R ?g j x
-        = indicator (space Q - ?E) x *\<^sub>R ?g i x"
-    proof (cases "x \<in> space Q - ?E")
-      case True
-      then have "\<theta> x \<le> i" using x by simp
-      then show ?thesis using before[OF x] by simp
-    next
-      case False
-      then show ?thesis by simp
+  proof (rule set_lebesgue_integral_cong_AE[OF cmQ])
+    show "?g j \<in> borel_measurable Q"
+      using gint[OF j0 jT] by (simp add: borel_measurable_integrable)
+    show "?g i \<in> borel_measurable Q"
+      using gint[OF i0 iT] by (simp add: borel_measurable_integrable)
+    show "AE x \<in> (space Q - ?E) in Q. ?g j x = ?g i x"
+      using Qst AE_space
+    proof eventually_elim
+      case (elim x)
+      then have idem: "pstopped T \<theta> x = x" and sp: "x \<in> space Q" by blast+
+      show "x \<in> space Q - ?E \<longrightarrow> ?g j x = ?g i x"
+      proof
+        assume "x \<in> space Q - ?E"
+        then have le: "\<theta> x \<le> i" using sp by simp
+        show "?g j x = ?g i x" by (rule before[OF sp idem le])
+      qed
     qed
   qed
   have Epart: "set_lebesgue_integral Q ?E (?g j)
@@ -12853,25 +12859,89 @@ proof -
       by (rule stopped_increment_of_horizon_gen
           [OF T0 setsQ QH Ycont sti sMi stj sMj lemin Cpre])
     have valE: "?Y (min u (\<theta> p')) p' = ?Y u p'"
-      if sp: "p' \<in> space Q" and lt: "i < \<theta> p'" and u0: "0 \<le> u" and uT: "u \<le> T"
+      if sp: "p' \<in> space Q" and idem: "pstopped T \<theta> p' = p'"
+        and lt: "i < \<theta> p'" and u0: "0 \<le> u" and uT: "u \<le> T"
         and ui: "i \<le> u" for p' u
     proof -
       have "p' (min u T) = p' (min (min u T) (\<theta> p'))"
-        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' u0])
+        by (rule pstopped_eval_min[OF st idem T0' u0])
       moreover have "min (min u (\<theta> p')) T = min (min u T) (\<theta> p')"
         using u0 uT th0[of p'] by simp
       ultimately show ?thesis by simp
     qed
+    have Dmeas: "?D \<in> sets Q"
+      by (rule measurable_sets[OF pcut_measurable[OF i0 iT setsQ] B])
+    have DE: "?D \<inter> ?E \<in> sets Q" using Dmeas Emeas by simp
+    have fcB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z $ c)
+        \<in> borel_measurable borel"
+    proof -
+      have s: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+          \<in> borel_measurable borel"
+        by (intro borel_measurable_continuous_onI continuous_intros)
+      show ?thesis by (rule measurable_compose[OF s borel_measurable_nth])
+    qed
+    have Yfix: "?Y v \<in> borel_measurable Q" for v
+    proof -
+      have "(\<lambda>p' :: 'n pairpath. p' (min v T)) \<in> borel_measurable Q"
+        by (rule pair_law_eval_measurable[OF setsQ])
+      then show ?thesis by (rule measurable_compose[OF _ fcB])
+    qed
+    have Ym: "(\<lambda>p' :: 'n pairpath. ?Y (min v (\<theta> p')) p') \<in> borel_measurable Q"
+      if v0: "0 \<le> v" for v
+    proof -
+      have idm: "(\<lambda>p' :: 'n pairpath. p') \<in> Q \<rightarrow>\<^sub>M ?B"
+        by (rule measurable_ident_sets[OF setsQ])
+      have thQ: "\<theta> \<in> borel_measurable Q"
+        using thM measurable_cong_sets[OF setsQ refl] by blast
+      have gm: "(\<lambda>p' :: 'n pairpath. min (min v (\<theta> p')) T) \<in> borel_measurable Q"
+        using thQ by measurable
+      have g0: "0 \<le> min (min v (\<theta> p')) T"
+        if "p' \<in> space Q" for p' :: "'n pairpath"
+        using v0 th0[of p'] T0' by simp
+      have gT: "min (min v (\<theta> p')) T \<le> T"
+        if "p' \<in> space Q" for p' :: "'n pairpath" by simp
+      have ev: "(\<lambda>p' :: 'n pairpath. p' (min (min v (\<theta> p')) T))
+          \<in> borel_measurable Q"
+        by (rule path_eval_at_measurable_time
+            [where X = "\<lambda>p' :: 'n pairpath. p'"
+              and g = "\<lambda>p' :: 'n pairpath. min (min v (\<theta> p')) T",
+              OF T0' idm gm g0 gT])
+      show ?thesis by (rule measurable_compose[OF ev fcB])
+    qed
     have e1: "set_lebesgue_integral Q (?D \<inter> ?E) (\<lambda>p'. ?Y (min i (\<theta> p')) p')
         = set_lebesgue_integral Q (?D \<inter> ?E) (?Y i)"
-      unfolding set_lebesgue_integral_def
-      by (rule Bochner_Integration.integral_cong[OF refl])
-         (use valE i0 iT in \<open>auto simp: indicator_def\<close>)
+    proof (rule set_lebesgue_integral_cong_AE[OF DE Ym[OF i0] Yfix])
+      show "AE x \<in> (?D \<inter> ?E) in Q. ?Y (min i (\<theta> x)) x = ?Y i x"
+        using Qst AE_space
+      proof eventually_elim
+        case (elim x)
+        then have idem: "pstopped T \<theta> x = x" and sp: "x \<in> space Q" by blast+
+        show "x \<in> ?D \<inter> ?E \<longrightarrow> ?Y (min i (\<theta> x)) x = ?Y i x"
+        proof
+          assume "x \<in> ?D \<inter> ?E"
+          then have lt: "i < \<theta> x" by simp
+          show "?Y (min i (\<theta> x)) x = ?Y i x"
+            by (rule valE[OF sp idem lt i0 iT order.refl])
+        qed
+      qed
+    qed
     have e2: "set_lebesgue_integral Q (?D \<inter> ?E) (\<lambda>p'. ?Y (min j (\<theta> p')) p')
         = set_lebesgue_integral Q (?D \<inter> ?E) (?Y j)"
-      unfolding set_lebesgue_integral_def
-      by (rule Bochner_Integration.integral_cong[OF refl])
-         (use valE j0 jT ij in \<open>auto simp: indicator_def\<close>)
+    proof (rule set_lebesgue_integral_cong_AE[OF DE Ym[OF j0] Yfix])
+      show "AE x \<in> (?D \<inter> ?E) in Q. ?Y (min j (\<theta> x)) x = ?Y j x"
+        using Qst AE_space
+      proof eventually_elim
+        case (elim x)
+        then have idem: "pstopped T \<theta> x = x" and sp: "x \<in> space Q" by blast+
+        show "x \<in> ?D \<inter> ?E \<longrightarrow> ?Y (min j (\<theta> x)) x = ?Y j x"
+        proof
+          assume "x \<in> ?D \<inter> ?E"
+          then have lt: "i < \<theta> x" by simp
+          show "?Y (min j (\<theta> x)) x = ?Y j x"
+            by (rule valE[OF sp idem lt j0 jT ij])
+        qed
+      qed
+    qed
     show ?thesis
       unfolding rew[OF i0 iT] rew[OF j0 jT]
       using samp e1 e2 by simp
@@ -12898,7 +12968,7 @@ theorem aglue_law_X_increment:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
-    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QH: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. fst (p' (min u T)) $ c) T"
@@ -13032,7 +13102,7 @@ theorem aglue_law_X_martingale:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
-    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QH: "\<And>c. horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. fst (p' (min u T)) $ c) T"
@@ -13158,7 +13228,7 @@ theorem aglue_inner_increment_comp:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
-    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QHC: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
@@ -13353,7 +13423,8 @@ proof -
   qed
 
   have before: "?g j p' = ?g i p'"
-    if sp: "p' \<in> space Q" and le: "\<theta> p' \<le> i" for p'
+    if sp: "p' \<in> space Q" and idem: "pstopped T \<theta> p' = p'" and le: "\<theta> p' \<le> i"
+    for p'
   proof -
     interpret PKi: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
     have setsK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
@@ -13375,7 +13446,7 @@ proof -
     have samev: "p' (min u T) = p' (\<theta> p')" if u: "0 \<le> u" and ui: "i \<le> u" for u
     proof -
       have "p' (min u T) = p' (min (min u T) (\<theta> p'))"
-        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' u])
+        by (rule pstopped_eval_min[OF st idem T0' u])
       moreover have "min (min u T) (\<theta> p') = \<theta> p'"
         using le ui th0[of p'] thT[of p'] by simp
       ultimately show ?thesis by simp
@@ -13514,20 +13585,25 @@ proof -
       by (rule set_integral_Un[OF dis si[OF Emeas u0 uT] si[OF cm u0 uT]])
     then show ?thesis unfolding un spint[OF u0 uT] .
   qed
+  have cmQ: "space Q - ?E \<in> sets Q" by (rule sets.compl_sets[OF Emeas])
   have compl: "set_lebesgue_integral Q (space Q - ?E) (?g j)
       = set_lebesgue_integral Q (space Q - ?E) (?g i)"
-    unfolding set_lebesgue_integral_def
-  proof (rule Bochner_Integration.integral_cong[OF refl])
-    fix x assume x: "x \<in> space Q"
-    show "indicator (space Q - ?E) x *\<^sub>R ?g j x
-        = indicator (space Q - ?E) x *\<^sub>R ?g i x"
-    proof (cases "x \<in> space Q - ?E")
-      case True
-      then have "\<theta> x \<le> i" using x by simp
-      then show ?thesis using before[OF x] by simp
-    next
-      case False
-      then show ?thesis by simp
+  proof (rule set_lebesgue_integral_cong_AE[OF cmQ])
+    show "?g j \<in> borel_measurable Q"
+      using gint[OF j0 jT] by (simp add: borel_measurable_integrable)
+    show "?g i \<in> borel_measurable Q"
+      using gint[OF i0 iT] by (simp add: borel_measurable_integrable)
+    show "AE x \<in> (space Q - ?E) in Q. ?g j x = ?g i x"
+      using Qst AE_space
+    proof eventually_elim
+      case (elim x)
+      then have idem: "pstopped T \<theta> x = x" and sp: "x \<in> space Q" by blast+
+      show "x \<in> space Q - ?E \<longrightarrow> ?g j x = ?g i x"
+      proof
+        assume "x \<in> space Q - ?E"
+        then have le: "\<theta> x \<le> i" using sp by simp
+        show "?g j x = ?g i x" by (rule before[OF sp idem le])
+      qed
     qed
   qed
   have Epart: "set_lebesgue_integral Q ?E (?g j)
@@ -13586,45 +13662,94 @@ proof -
       by (rule stopped_increment_of_horizon_gen
           [OF T0 setsQ QHC Zcont sti sMi stj sMj lemin Cpre])
     have valE: "?Z (min u (\<theta> p')) p' = ?Z u p'"
-      if sp: "p' \<in> space Q" and lt: "i < \<theta> p'" and u0: "0 \<le> u" and uT: "u \<le> T"
+      if sp: "p' \<in> space Q" and idem: "pstopped T \<theta> p' = p'"
+        and lt: "i < \<theta> p'" and u0: "0 \<le> u" and uT: "u \<le> T"
       for p' u
     proof -
       have "p' (min u T) = p' (min (min u T) (\<theta> p'))"
-        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' u0])
+        by (rule pstopped_eval_min[OF st idem T0' u0])
       moreover have "min (min u (\<theta> p')) T = min (min u T) (\<theta> p')"
         using u0 uT th0[of p'] by simp
       ultimately show ?thesis by simp
     qed
+    have Dmeas: "?D \<in> sets Q"
+      by (rule measurable_sets[OF pcut_measurable[OF i0 iT setsQ] B])
+    have DE: "?D \<inter> ?E \<in> sets Q" using Dmeas Emeas by simp
+    have fcB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n).
+        (outerp (fst z) - snd z) $ c $ d) \<in> borel_measurable borel"
+    proof -
+      have s: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
+          \<in> borel_measurable borel"
+        unfolding outerp_def
+        by (intro borel_measurable_continuous_onI continuous_intros)
+      have n1: "(\<lambda>v :: real^'n^'n. v $ c) \<in> borel_measurable borel"
+        by (rule borel_measurable_continuous_onI)
+          (rule linear_continuous_on[OF bounded_linear_vec_nth])
+      have n2: "(\<lambda>v :: real^'n. v $ d) \<in> borel_measurable borel"
+        by (rule borel_measurable_nth)
+      show ?thesis
+        by (rule measurable_compose[OF measurable_compose[OF s n1] n2])
+    qed
+    have Zfix: "?Z v \<in> borel_measurable Q" for v
+    proof -
+      have "(\<lambda>p' :: 'n pairpath. p' (min v T)) \<in> borel_measurable Q"
+        by (rule pair_law_eval_measurable[OF setsQ])
+      then show ?thesis by (rule measurable_compose[OF _ fcB])
+    qed
+    have Zm: "(\<lambda>p' :: 'n pairpath. ?Z (min v (\<theta> p')) p') \<in> borel_measurable Q"
+      if v0: "0 \<le> v" for v
+    proof -
+      have idm: "(\<lambda>p' :: 'n pairpath. p') \<in> Q \<rightarrow>\<^sub>M ?B"
+        by (rule measurable_ident_sets[OF setsQ])
+      have thQ: "\<theta> \<in> borel_measurable Q"
+        using thM measurable_cong_sets[OF setsQ refl] by blast
+      have gm: "(\<lambda>p' :: 'n pairpath. min (min v (\<theta> p')) T) \<in> borel_measurable Q"
+        using thQ by measurable
+      have g0: "0 \<le> min (min v (\<theta> p')) T"
+        if "p' \<in> space Q" for p' :: "'n pairpath"
+        using v0 th0[of p'] T0' by simp
+      have gT: "min (min v (\<theta> p')) T \<le> T"
+        if "p' \<in> space Q" for p' :: "'n pairpath" by simp
+      have ev: "(\<lambda>p' :: 'n pairpath. p' (min (min v (\<theta> p')) T))
+          \<in> borel_measurable Q"
+        by (rule path_eval_at_measurable_time
+            [where X = "\<lambda>p' :: 'n pairpath. p'"
+              and g = "\<lambda>p' :: 'n pairpath. min (min v (\<theta> p')) T",
+              OF T0' idm gm g0 gT])
+      show ?thesis by (rule measurable_compose[OF ev fcB])
+    qed
     have e1: "set_lebesgue_integral Q (?D \<inter> ?E) (\<lambda>p'. ?Z (min i (\<theta> p')) p')
         = set_lebesgue_integral Q (?D \<inter> ?E) (?Z i)"
-      unfolding set_lebesgue_integral_def
-    proof (rule Bochner_Integration.integral_cong[OF refl])
-      fix x assume x: "x \<in> space Q"
-      show "indicator (?D \<inter> ?E) x *\<^sub>R ?Z (min i (\<theta> x)) x
-          = indicator (?D \<inter> ?E) x *\<^sub>R ?Z i x"
-      proof (cases "x \<in> ?D \<inter> ?E")
-        case True
-        then have "i < \<theta> x" by simp
-        then show ?thesis using valE[OF x _ i0 iT] by simp
-      next
-        case False
-        then show ?thesis by simp
+    proof (rule set_lebesgue_integral_cong_AE[OF DE Zm[OF i0] Zfix])
+      show "AE x \<in> (?D \<inter> ?E) in Q. ?Z (min i (\<theta> x)) x = ?Z i x"
+        using Qst AE_space
+      proof eventually_elim
+        case (elim x)
+        then have idem: "pstopped T \<theta> x = x" and sp: "x \<in> space Q" by blast+
+        show "x \<in> ?D \<inter> ?E \<longrightarrow> ?Z (min i (\<theta> x)) x = ?Z i x"
+        proof
+          assume "x \<in> ?D \<inter> ?E"
+          then have lt: "i < \<theta> x" by simp
+          show "?Z (min i (\<theta> x)) x = ?Z i x"
+            by (rule valE[OF sp idem lt i0 iT])
+        qed
       qed
     qed
     have e2: "set_lebesgue_integral Q (?D \<inter> ?E) (\<lambda>p'. ?Z (min j (\<theta> p')) p')
         = set_lebesgue_integral Q (?D \<inter> ?E) (?Z j)"
-      unfolding set_lebesgue_integral_def
-    proof (rule Bochner_Integration.integral_cong[OF refl])
-      fix x assume x: "x \<in> space Q"
-      show "indicator (?D \<inter> ?E) x *\<^sub>R ?Z (min j (\<theta> x)) x
-          = indicator (?D \<inter> ?E) x *\<^sub>R ?Z j x"
-      proof (cases "x \<in> ?D \<inter> ?E")
-        case True
-        then have "i < \<theta> x" by simp
-        then show ?thesis using valE[OF x _ j0 jT] by simp
-      next
-        case False
-        then show ?thesis by simp
+    proof (rule set_lebesgue_integral_cong_AE[OF DE Zm[OF j0] Zfix])
+      show "AE x \<in> (?D \<inter> ?E) in Q. ?Z (min j (\<theta> x)) x = ?Z j x"
+        using Qst AE_space
+      proof eventually_elim
+        case (elim x)
+        then have idem: "pstopped T \<theta> x = x" and sp: "x \<in> space Q" by blast+
+        show "x \<in> ?D \<inter> ?E \<longrightarrow> ?Z (min j (\<theta> x)) x = ?Z j x"
+        proof
+          assume "x \<in> ?D \<inter> ?E"
+          then have lt: "i < \<theta> x" by simp
+          show "?Z (min j (\<theta> x)) x = ?Z j x"
+            by (rule valE[OF sp idem lt j0 jT])
+        qed
       qed
     qed
     show ?thesis
@@ -13648,7 +13773,7 @@ theorem aglue_law_comp_increment:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
-    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QHC: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
@@ -13805,7 +13930,7 @@ theorem aglue_law_comp_martingale:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
-    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QHC: "\<And>c d. horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
@@ -13954,7 +14079,7 @@ theorem paper_pair_class_aglue:
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
-    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
         \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
     and QH: "\<And>e. horizon_sq_int_martingale Q
@@ -14012,8 +14137,7 @@ theorem paper_pair_class_aglue:
   shows "aglue_law T \<kappa> Q \<in> paper_pair_class k L T x"
 proof -
   have T0': "0 \<le> T" using T0 by simp
-  have QstAE: "AE p' in Q. pstopped T \<theta> p' = p'"
-    by (rule eventually_mono[OF AE_space]) (rule Qst)
+  have QstAE: "AE p' in Q. pstopped T \<theta> p' = p'" by (rule Qst)
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   \<comment> \<open>\<open>K0\<close> is redundant: it is \<open>Kfr\<close> at \<open>u = 0\<close>.  Asking for it POINTWISE on
