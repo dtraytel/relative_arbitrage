@@ -8975,4 +8975,130 @@ proof -
   qed
 qed
 
+section \<open>The \<open>\<F>\<^sub>\<sigma>\<close> layer\<close>
+
+text \<open>Clause (iv) needs optional sampling at TWO stopping times, and
+  \<open>Optional_Sampling\<close>'s \<open>set_optional_sampling\<close> (a locale fact) only samples ONE stopping time at
+  DETERMINISTIC times.  The missing ingredient is the \<open>\<sigma>\<close>-algebra of the past
+  at a stopping time.  It is not in the session --- the AFP has it in
+  \<open>Doob_Convergence/Stopping_Time.thy\<close>, which is not a dependency --- so here
+  it is, built directly.\<close>
+
+definition pre_sigma_of :: "'a measure \<Rightarrow> (real \<Rightarrow> 'a measure) \<Rightarrow> ('a \<Rightarrow> real)
+    \<Rightarrow> 'a set set"
+  where "pre_sigma_of M F \<sigma> =
+     {A. A \<in> sets M
+       \<and> (\<forall>t. 0 \<le> t \<longrightarrow> A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t))}"
+
+lemma pre_sigma_ofI:
+  "A \<in> sets M \<Longrightarrow> (\<And>t. 0 \<le> t \<Longrightarrow> A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t))
+    \<Longrightarrow> A \<in> pre_sigma_of M F \<sigma>"
+  unfolding pre_sigma_of_def by blast
+
+lemma pre_sigma_of_sets: "A \<in> pre_sigma_of M F \<sigma> \<Longrightarrow> A \<in> sets M"
+  unfolding pre_sigma_of_def by blast
+
+lemma pre_sigma_of_cut:
+  "A \<in> pre_sigma_of M F \<sigma> \<Longrightarrow> 0 \<le> t
+    \<Longrightarrow> A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+  unfolding pre_sigma_of_def by blast
+
+text \<open>It IS a \<open>\<sigma>\<close>-algebra --- the complement step is where the stopping-time
+  property of \<open>\<sigma>\<close> is spent, since \<open>{\<sigma> \<le> t}\<close> itself has to be in \<open>F t\<close> for
+  the relative complement to stay there.\<close>
+
+lemma sigma_algebra_pre_sigma_of:
+  assumes filt: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
+    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+  shows "sigma_algebra (space M) (pre_sigma_of M F \<sigma>)"
+proof (rule sigma_algebra_iff2[THEN iffD2], intro conjI ballI allI impI)
+  show "pre_sigma_of M F \<sigma> \<subseteq> Pow (space M)"
+    using pre_sigma_of_sets sets.sets_into_space by blast
+  show "{} \<in> pre_sigma_of M F \<sigma>"
+    by (rule pre_sigma_ofI) (simp_all add: stop)
+next
+  fix A assume A: "A \<in> pre_sigma_of M F \<sigma>"
+  show "space M - A \<in> pre_sigma_of M F \<sigma>"
+  proof (rule pre_sigma_ofI)
+    show "space M - A \<in> sets M" using pre_sigma_of_sets[OF A] by simp
+    fix t :: real assume t: "0 \<le> t"
+    have spF: "space (F t) = space M"
+      using filt[OF t] by (simp add: subalgebra_def)
+    have "(space M - A) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}
+        = {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} - (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t})" by blast
+    moreover have "\<dots> \<in> sets (F t)"
+      using stop[OF t] pre_sigma_of_cut[OF A t] by (rule sets.Diff)
+    ultimately show "(space M - A) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+      by simp
+  qed
+next
+  fix AA :: "nat \<Rightarrow> 'a set"
+  assume AA: "range AA \<subseteq> pre_sigma_of M F \<sigma>"
+  show "(\<Union>i. AA i) \<in> pre_sigma_of M F \<sigma>"
+  proof (rule pre_sigma_ofI)
+    show "(\<Union>i. AA i) \<in> sets M"
+      using AA pre_sigma_of_sets by (intro sets.countable_UN) blast
+    fix t :: real assume t: "0 \<le> t"
+    have "(\<Union>i. AA i) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}
+        = (\<Union>i. AA i \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t})" by blast
+    moreover have "\<dots> \<in> sets (F t)"
+      using AA t by (intro sets.countable_UN) (auto intro: pre_sigma_of_cut)
+    ultimately show "(\<Union>i. AA i) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+      by simp
+  qed
+qed
+
+text \<open>Monotone in the stopping time, and it sits below \<open>M\<close>.  Monotonicity is
+  the step the two-stopping-time sampling theorem will consume: the
+  conditioning set for the EARLIER time is legal for the later one.\<close>
+
+lemma pre_sigma_of_mono:
+  assumes le: "\<And>\<omega>. \<sigma> \<omega> \<le> \<rho> \<omega>"
+    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<rho> \<omega> \<le> t} \<in> sets (F t)"
+  shows "pre_sigma_of M F \<sigma> \<subseteq> pre_sigma_of M F \<rho>"
+proof
+  fix A assume A: "A \<in> pre_sigma_of M F \<sigma>"
+  show "A \<in> pre_sigma_of M F \<rho>"
+  proof (rule pre_sigma_ofI)
+    show "A \<in> sets M" by (rule pre_sigma_of_sets[OF A])
+    fix t :: real assume t: "0 \<le> t"
+    have "A \<inter> {\<omega> \<in> space M. \<rho> \<omega> \<le> t}
+        = (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) \<inter> {\<omega> \<in> space M. \<rho> \<omega> \<le> t}"
+      by (auto intro: order_trans[OF le])
+    moreover have "\<dots> \<in> sets (F t)"
+      using pre_sigma_of_cut[OF A t] stop[OF t] by (rule sets.Int)
+    ultimately show "A \<inter> {\<omega> \<in> space M. \<rho> \<omega> \<le> t} \<in> sets (F t)" by simp
+  qed
+qed
+
+text \<open>And a deterministic time gives back the filtration itself, which is how
+  the new layer connects to everything already proved.\<close>
+
+lemma pre_sigma_of_const:
+  assumes filt: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
+    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and v: "0 \<le> v"
+  shows "sets (F v) \<subseteq> pre_sigma_of M F (\<lambda>_. v)"
+proof
+  fix A assume A: "A \<in> sets (F v)"
+  show "A \<in> pre_sigma_of M F (\<lambda>_. v)"
+  proof (rule pre_sigma_ofI)
+    show "A \<in> sets M" using filt[OF v] A by (auto simp: subalgebra_def)
+    fix t :: real assume t: "0 \<le> t"
+    show "A \<inter> {\<omega> \<in> space M. v \<le> t} \<in> sets (F t)"
+    proof (cases "v \<le> t")
+      case True
+      have spF: "space (F t) = space M"
+        using filt[OF t] by (simp add: subalgebra_def)
+      have "A \<in> sets (F t)" using mono[OF v True] A by blast
+      then have "A \<inter> space (F t) \<in> sets (F t)" by simp
+      then show ?thesis using True spF by simp
+    next
+      case False
+      then have "A \<inter> {\<omega> \<in> space M. v \<le> t} = {}" by simp
+      then show ?thesis by simp
+    qed
+  qed
+qed
+
 end
