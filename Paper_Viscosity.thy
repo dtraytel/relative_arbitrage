@@ -542,6 +542,207 @@ proof -
   finally show ?thesis using that[OF bmem] by blast
 qed
 
+section \<open>The relaxed operator, and the inequality the class really gives\<close>
+
+text \<open>Eq. (1.9) takes its infimum over \<^const>\<open>feasible\<close>, which carries the
+  ORTHOGONALITY constraint \<open>a *v p = 0\<close> on top of the spectral bounds.  The
+  class of (1.7) carries no such constraint: its covariation directions live in
+  \<^const>\<open>sconstraint\<close>.  The two are related in one direction only,
+
+    \<^const>\<open>feasible\<close> \<open>k L p\<close> \<open>\<subseteq>\<close> \<^const>\<open>sconstraint\<close> \<open>k L\<close>
+
+  (@{thm [source] suff_volatile_cap_in_sconstraint}), so the infimum over the
+  larger set is SMALLER: \<open>ell_op_s \<le> ell_op\<close>.  Naming the relaxed operator is
+  not a weakening for its own sake --- it is the exact record of what a
+  probabilistic argument over the class can and cannot deliver, and it keeps
+  the missing ingredient (the orthogonality of the OPTIMAL direction to the
+  gradient) visible instead of buried.\<close>
+
+definition ell_op_s :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
+  "ell_op_s k L M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L)"
+
+lemma ell_op_s_bdd_below:
+  fixes M :: "real^'n::finite^'n"
+  assumes L: "0 \<le> L"
+  shows "bdd_below ((\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L)"
+proof (rule bdd_belowI[of _
+      "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (real CARD('n) * L)) / 2"])
+  fix v assume "v \<in> (\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L"
+  then obtain a where a: "a \<in> sconstraint k L"
+    and v: "v = - trace (M ** a) / 2" by auto
+  have eb: "\<bar>a $ j $ i\<bar> \<le> real CARD('n) * L" for i j
+  proof -
+    have "\<bar>a $ j $ i\<bar> = norm (a $ j $ i)" by simp
+    also have "\<dots> \<le> norm (a $ j)" by (rule Finite_Cartesian_Product.norm_nth_le)
+    also have "\<dots> \<le> norm a" by (rule Finite_Cartesian_Product.norm_nth_le)
+    also have "\<dots> \<le> real CARD('n) * L" by (rule sconstraint_norm_le[OF L a])
+    finally show ?thesis .
+  qed
+  have "trace (M ** a) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j * a $ j $ i\<bar>)"
+    unfolding trace_mult_sum by (intro sum_mono order_trans[OF _ sum_abs]) auto
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * (real CARD('n) * L))"
+    by (intro sum_mono) (simp add: abs_mult mult_left_mono eb)
+  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (real CARD('n) * L)"
+    by (simp add: sum_distrib_right)
+  finally show
+    "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (real CARD('n) * L)) / 2 \<le> v"
+    by (simp add: v)
+qed
+
+lemma ell_op_s_le_of_witness:
+  fixes M :: "real^'n::finite^'n"
+  assumes L: "0 \<le> L" and a: "a \<in> sconstraint k L"
+    and le: "- trace (M ** a) / 2 \<le> c"
+  shows "ell_op_s k L M \<le> c"
+proof -
+  have mem: "- trace (M ** a) / 2
+      \<in> (\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L"
+    using a by blast
+  have "ell_op_s k L M \<le> - trace (M ** a) / 2"
+    unfolding ell_op_s_def by (rule cInf_lower[OF mem ell_op_s_bdd_below[OF L]])
+  also have "\<dots> \<le> c" by (rule le)
+  finally show ?thesis .
+qed
+
+lemma feasible_subset_sconstraint:
+  fixes p :: "real^'n::finite"
+  shows "feasible k L p \<subseteq> sconstraint k L"
+proof
+  fix a :: "real^'n^'n"
+  assume a: "a \<in> feasible k L p"
+  have sv: "a \<in> suff_volatile k"
+    using a unfolding feasible_def suff_volatile_def by blast
+  have ub: "eigen_ub a L" using a unfolding feasible_def by blast
+  show "a \<in> sconstraint k L"
+    by (rule suff_volatile_cap_in_sconstraint[OF sv ub])
+qed
+
+lemma ell_op_s_le_ell_op:
+  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+  shows "ell_op_s k L M \<le> ell_op k L p M"
+proof -
+  have L0: "0 \<le> L" using L by simp
+  have ne: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p \<noteq> {}"
+    using feasible_nonempty[OF k L] by blast
+  have sub: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p
+      \<subseteq> (\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L"
+    by (rule image_mono[OF feasible_subset_sconstraint])
+  show ?thesis
+    unfolding ell_op_s_def ell_op_def
+    by (rule cInf_superset_mono[OF ne ell_op_s_bdd_below[OF L0] sub])
+qed
+
+text \<open>Now the inequality itself.  Everything the argument needs is in place:
+  @{thm [source] paper_v_attained} supplies the optimizer, at which the exit
+  time dominates the value ALMOST SURELY --- and that is the whole reason the
+  SUBSOLUTION half is the one reachable by expectations, since the DPP bound it
+  consumes is an a.s. bound and a.s. bounds survive integration, whereas the
+  supersolution half needs a lower bound on an essential infimum, which a mean
+  cannot give.
+
+  The test function is quadratic and touches GLOBALLY.  Localisation ---
+  turning a local touching into a global one --- is the Crandall--Ishii step and
+  is not attempted here; and \<open>ell_op_s\<close> rather than \<^const>\<open>ell_op\<close> is what
+  comes out, for the reason recorded above.  Both gaps are named, neither is
+  hidden.\<close>
+
+theorem paper_v_subsol_quadratic_global:
+  fixes K :: "(real^'n::finite) set" and M :: "real^'n^'n"
+    and p :: "real^'n" and x :: "real^'n" and c :: real
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and touch: "\<And>z. enn2real (paper_v k L T K z)
+          - (c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
+        \<le> enn2real (paper_v k L T K x)
+          - (c + p \<bullet> x + (x \<bullet> (M *v x)) / 2)"
+  shows "ell_op_s k L M \<le> 1"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have T0: "0 \<le> T" using T by simp
+  define u where "u = (\<lambda>z :: real^'n. enn2real (paper_v k L T K z))"
+  define \<phi> where "\<phi> = (\<lambda>z :: real^'n. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)"
+  define h where "h = T / 2"
+  have h0: "0 < h" and hT: "h \<le> T" using T by (simp_all add: h_def)
+  have hI: "h \<in> {0..T}" using h0 hT by simp
+  obtain P where P: "P \<in> paper_pair_class k L T x"
+    and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        = paper_v k L T K x"
+    using paper_v_attained[OF T L1 Kc] by blast
+  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
+  text \<open>at the optimizer the exit time dominates the value almost surely\<close>
+  have cAE: "AE \<omega> in P. u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+  proof (rule eventually_mono
+      [OF ess_inf_time_AE[of P "\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))"]])
+    fix \<omega> :: "'n pairpath"
+    assume "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+    then have le: "paper_v k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+      using Pv by simp
+    have "enn2real (paper_v k L T K x)
+        \<le> enn2real (ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
+      by (rule enn2real_mono[OF le ennreal_less_top])
+    then show "u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+      unfolding u_def
+      using pexit_nonneg[OF T0, of K "\<lambda>t. fst (\<omega> t)"] by simp
+  qed
+  text \<open>the DPP at the CONSTANT time \<open>h\<close>, then the horizon cap\<close>
+  have dpp: "AE \<omega> in P. u x \<le> h + enn2real (paper_v k L (T - h) K (fst (\<omega> h)))"
+    by (rule paper_v_cond_time[OF T0 L1 Kc P cAE]) (use h0 hT in auto)
+  have low: "AE \<omega> in P. u x - h \<le> u (fst (\<omega> h))"
+  proof (rule eventually_mono[OF dpp])
+    fix \<omega> :: "'n pairpath"
+    assume d: "u x \<le> h + enn2real (paper_v k L (T - h) K (fst (\<omega> h)))"
+    have a: "0 \<le> T - h" using hT by simp
+    have b: "T - h \<le> T" using h0 by simp
+    have "enn2real (paper_v k L (T - h) K (fst (\<omega> h)))
+        = min (u (fst (\<omega> h))) (T - h)"
+      unfolding u_def by (rule enn2real_paper_v_horizon_cap[OF a b L1 Kc])
+    with d show "u x - h \<le> u (fst (\<omega> h))" by simp
+  qed
+  text \<open>the touching hypothesis transports it to the test function\<close>
+  have phiAE: "AE \<omega> in P. \<phi> x - h \<le> \<phi> (fst (\<omega> h))"
+  proof (rule eventually_mono[OF low])
+    fix \<omega> :: "'n pairpath"
+    assume lo: "u x - h \<le> u (fst (\<omega> h))"
+    have "u (fst (\<omega> h)) - \<phi> (fst (\<omega> h)) \<le> u x - \<phi> x"
+      unfolding u_def \<phi>_def by (rule touch)
+    with lo show "\<phi> x - h \<le> \<phi> (fst (\<omega> h))" by simp
+  qed
+  text \<open>integrate, and read off the exact expansion\<close>
+  obtain b where b: "b \<in> sconstraint k L"
+    and mean: "(\<integral>\<omega>. c + p \<bullet> fst (\<omega> h)
+          + (fst (\<omega> h) \<bullet> (M *v fst (\<omega> h))) / 2 \<partial>P)
+        = c + p \<bullet> x + (x \<bullet> (M *v x)) / 2 + (h / 2) * trace (M ** b)"
+    by (rule paper_pair_class_quadratic_mean[OF T0 L0 P h0 hT])
+  have i1: "integrable P (\<lambda>\<omega>. p \<bullet> fst (\<omega> h))"
+    by (rule integrable_bounded_linear[OF bounded_linear_inner_right
+        paper_pair_class_X_integrable[OF P hI]])
+  have i2: "integrable P (\<lambda>\<omega>. fst (\<omega> h) \<bullet> (M *v fst (\<omega> h)))"
+    by (rule paper_pair_class_quadform_integrable[OF T0 L0 P hI])
+  have bl2: "bounded_linear (\<lambda>r :: real. r / 2)"
+    unfolding linear_conv_bounded_linear[symmetric]
+    by (intro linearI) (simp_all add: field_simps)
+  have i3: "integrable P (\<lambda>\<omega>. (fst (\<omega> h) \<bullet> (M *v fst (\<omega> h))) / 2)"
+    by (rule integrable_bounded_linear[OF bl2 i2])
+  have iphi: "integrable P (\<lambda>\<omega>. \<phi> (fst (\<omega> h)))"
+    unfolding \<phi>_def
+    by (intro Bochner_Integration.integrable_add i1 i3 PP.integrable_const)
+  have mean': "(\<integral>\<omega>. \<phi> (fst (\<omega> h)) \<partial>P) = \<phi> x + (h / 2) * trace (M ** b)"
+    unfolding \<phi>_def using mean by simp
+  have "\<phi> x - h = (\<integral>\<omega>. \<phi> x - h \<partial>P)" by (simp add: PP.prob_space)
+  also have "\<dots> \<le> (\<integral>\<omega>. \<phi> (fst (\<omega> h)) \<partial>P)"
+    by (rule integral_mono_AE) (use iphi phiAE in auto)
+  finally have "\<phi> x - h \<le> \<phi> x + (h / 2) * trace (M ** b)"
+    unfolding mean' .
+  then have "- h \<le> (h / 2) * trace (M ** b)" by simp
+  then have le2: "(- 2) * (h / 2) \<le> trace (M ** b) * (h / 2)"
+    by (simp add: field_simps)
+  have hp: "0 < h / 2" using h0 by simp
+  have "- 2 \<le> trace (M ** b)" by (rule mult_right_le_imp_le[OF le2 hp])
+  then have w: "- trace (M ** b) / 2 \<le> 1" by simp
+  show ?thesis by (rule ell_op_s_le_of_witness[OF L0 b w])
+qed
+
 section \<open>The analytic input, isolated\<close>
 
 text \<open>Everything above is unconditional.  What the subsolution proof still
