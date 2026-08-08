@@ -7864,4 +7864,142 @@ proof -
   qed
 qed
 
+text \<open>Hypothesis (ii) of the criterion, discharged once and for all: the
+  distance to a fixed path is a sup of evaluations over the RATIONALS ---
+  @{thm [source] path_mdist_le_iff} --- hence a countable intersection.\<close>
+
+lemma mdist_measurable_of_eval:
+  fixes f :: "'a \<Rightarrow> 'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and into: "\<And>w. w \<in> space M
+      \<Longrightarrow> f w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and ev: "\<And>t. (\<lambda>w. f w t) \<in> borel_measurable M"
+  shows "(\<lambda>w. mdist (path_metric T :: ('n pairpath) metric) (f w) a)
+      \<in> borel_measurable M"
+proof (rule borel_measurable_iff_le[THEN iffD2], intro allI)
+  fix q :: real
+  have cnt: "countable ({0..T} \<inter> \<rat>)" by (simp add: countable_rat)
+  have ne: "{0..T} \<inter> \<rat> \<noteq> {}" using T0 by auto
+  have eq: "{w \<in> space M. mdist (path_metric T :: ('n pairpath) metric) (f w) a \<le> q}
+      = (\<Inter>t \<in> {0..T} \<inter> \<rat>. {w \<in> space M. dist (f w t) (a t) \<le> q})"
+    using ne by (auto simp: path_mdist_le_iff[OF T0 into am])
+  have inner: "{w \<in> space M. dist (f w t) (a t) \<le> q} \<in> sets M" for t
+    using ev[of t] by measurable
+  show "{w \<in> space M. mdist (path_metric T :: ('n pairpath) metric) (f w) a \<le> q}
+      \<in> sets M"
+    unfolding eq by (intro sets.countable_INT'[OF cnt ne]) (auto simp: inner)qed
+
+text \<open>Hence both halves of the split are measurable maps of the path.  Only
+  Borel measurability of \<open>\<theta>\<close> is used here; the stopping-time property is what
+  will make the kernel a function of the PAST, and enters later through
+  @{thm [source] stopped_adapted_of_cont}.\<close>
+
+lemma pstopped_measurable:
+  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T"
+    and thm': "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
+  shows "pstopped T \<theta> \<in> borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have sp: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have into: "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    if "\<omega> \<in> space ?B" for \<omega>
+    using that sp by (intro pstopped_mspace[OF th0 thT]) simp
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
+  proof (cases "t \<in> {0..T}")
+    case True
+    have base: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min t (\<theta> \<omega>))) \<in> borel_measurable ?B"
+    proof (rule path_eval_at_measurable_time
+        [where X = "\<lambda>\<omega> :: 'n pairpath. \<omega>" and g = "\<lambda>\<omega>. min t (\<theta> \<omega>)", OF T0])
+      show "(\<lambda>\<omega> :: 'n pairpath. \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
+      show "(\<lambda>\<omega> :: 'n pairpath. min t (\<theta> \<omega>)) \<in> borel_measurable ?B"
+        using thm' by measurable
+      show "0 \<le> min t (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
+        using True th0[of \<omega>] by simp
+      show "min t (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+        using thT[of \<omega>] by simp
+    qed
+    have "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> t)
+        = (\<lambda>\<omega> :: 'n pairpath. \<omega> (min t (\<theta> \<omega>)))"
+      by (rule ext) (rule pstopped_apply[OF True])
+    then show ?thesis using base by simp
+  next
+    case False
+    have "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
+      by (rule ext) (rule pstopped_outside[OF False])
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    show "(\<lambda>\<omega>. mdist (path_metric T :: ('n pairpath) metric)
+        (pstopped T \<theta> \<omega>) a) \<in> borel_measurable ?B"
+      by (rule mdist_measurable_of_eval[OF T0 into am ev])
+  qed
+qed
+
+lemma pafter_measurable:
+  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T"
+    and thm': "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
+  shows "pafter T \<theta> \<in> borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have sp: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have into: "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    if "\<omega> \<in> space ?B" for \<omega>
+    using that sp by (intro pafter_mspace[OF th0 thT]) simp
+  have base0: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (\<theta> \<omega>)) \<in> borel_measurable ?B"
+  proof (rule path_eval_at_measurable_time
+      [where X = "\<lambda>\<omega> :: 'n pairpath. \<omega>" and g = \<theta>, OF T0])
+    show "(\<lambda>\<omega> :: 'n pairpath. \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
+    show "\<theta> \<in> borel_measurable ?B" by (rule thm')
+    show "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath" by (rule th0)
+    show "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath" by (rule thT)
+  qed
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. pafter T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
+  proof (cases "t \<in> {0..T}")
+    case True
+    have base: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (max t (\<theta> \<omega>))) \<in> borel_measurable ?B"
+    proof (rule path_eval_at_measurable_time
+        [where X = "\<lambda>\<omega> :: 'n pairpath. \<omega>" and g = "\<lambda>\<omega>. max t (\<theta> \<omega>)", OF T0])
+      show "(\<lambda>\<omega> :: 'n pairpath. \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
+      show "(\<lambda>\<omega> :: 'n pairpath. max t (\<theta> \<omega>)) \<in> borel_measurable ?B"
+        using thm' by measurable
+      show "0 \<le> max t (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
+        using th0[of \<omega>] by simp
+      show "max t (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+        using True thT[of \<omega>] by simp
+    qed
+    have "(\<lambda>\<omega> :: 'n pairpath. pafter T \<theta> \<omega> t)
+        = (\<lambda>\<omega> :: 'n pairpath. \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>))"
+      by (rule ext) (rule pafter_apply[OF True])
+    then show ?thesis using base base0 by simp
+  next
+    case False
+    have "(\<lambda>\<omega> :: 'n pairpath. pafter T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
+      by (rule ext) (rule pafter_outside[OF False])
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    show "(\<lambda>\<omega>. mdist (path_metric T :: ('n pairpath) metric)
+        (pafter T \<theta> \<omega>) a) \<in> borel_measurable ?B"
+      by (rule mdist_measurable_of_eval[OF T0 into am ev])
+  qed
+qed
 end
