@@ -16902,4 +16902,172 @@ proof -
   then show ?thesis using gi by simp
 qed
 
+text \<open>\<open>RCint\<close>.  \<^const>\<open>outerp\<close> is quadratic, so the glued compensated entry is
+  NOT the sum of the two factors': @{thm [source] outerp_add} produces two
+  CROSS terms, whose norms @{thm [source] norm_outer_prod} evaluates exactly.
+  The inner bound therefore has the third shape
+  @{thm [source] integrable_ksemi_of_past_bound} was written for.\<close>
+
+lemma padd_comp_norm_le:
+  fixes p' w :: "'n::finite pairpath"
+  assumes t: "t \<in> {0..T}"
+  shows "norm (outerp (fst (padd T p' w t)) - snd (padd T p' w t))
+      \<le> norm (outerp (fst (p' t)) - snd (p' t))
+        + norm (outerp (fst (w t)) - snd (w t))
+        + 2 * (norm (fst (p' t)) * norm (fst (w t)))"
+proof -
+  define a where "a = fst (p' t)"
+  define A where "A = snd (p' t)"
+  define b where "b = fst (w t)"
+  define B where "B = snd (w t)"
+  have e: "outerp (fst (padd T p' w t)) - snd (padd T p' w t)
+      = ((outerp a - A) + (outerp b - B))
+        + ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))"
+    unfolding a_def A_def b_def B_def
+      padd_eval_split(1)[OF t] padd_eval_split(2)[OF t] outerp_add
+    by simp
+  have t1: "norm (((outerp a - A) + (outerp b - B))
+        + ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j)))
+      \<le> norm ((outerp a - A) + (outerp b - B))
+        + norm ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))"
+    by (rule norm_triangle_ineq)
+  have t2: "norm ((outerp a - A) + (outerp b - B))
+      \<le> norm (outerp a - A) + norm (outerp b - B)"
+    by (rule norm_triangle_ineq)
+  have t3: "norm ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))
+      \<le> 2 * (norm a * norm b)"
+  proof -
+    have "norm ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))
+        \<le> norm (\<chi> i j. a $ i * b $ j) + norm (\<chi> i j. b $ i * a $ j)"
+      by (rule norm_triangle_ineq)
+    also have "\<dots> = norm a * norm b + norm b * norm a"
+      by (simp add: norm_outer_prod)
+    finally show ?thesis by (simp add: algebra_simps)
+  qed
+  show ?thesis unfolding e a_def[symmetric] A_def[symmetric]
+      b_def[symmetric] B_def[symmetric]
+    using t1 t2 t3 by linarith
+qed
+
+lemma aglue_law_comp_integrable:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and u: "0 \<le> u"
+    and QXint: "integrable Q (\<lambda>p'. fst (p' (min u T)))"
+    and QCint: "integrable Q
+      (\<lambda>p'. outerp (fst (p' (min u T))) - snd (p' (min u T)))"
+    and KXint: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (w (min u T)))"
+    and KCint: "\<And>p'. p' \<in> space Q \<Longrightarrow> integrable (\<kappa> p')
+      (\<lambda>w. outerp (fst (w (min u T))) - snd (w (min u T)))"
+    and KXbnd: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> (\<integral>w. norm (fst (w (min u T))) \<partial>(\<kappa> p')) \<le> CX"
+    and KCbnd: "\<And>p'. p' \<in> space Q \<Longrightarrow> (\<integral>w.
+      norm (outerp (fst (w (min u T))) - snd (w (min u T))) \<partial>(\<kappa> p')) \<le> CC"
+  shows "integrable (aglue_law T \<kappa> Q)
+      (\<lambda>\<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?S = "ksemi Q ?B \<kappa>"
+  let ?t = "min u T"
+  let ?C = "\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> ?t)) - snd (\<omega> ?t)"
+  have tm: "?t \<in> {0..T}" using u T0 by simp
+  have ne: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  interpret PQ': prob_space Q by (rule PQ)
+  have setsS: "sets ?S = sets (Q \<Otimes>\<^sub>M ?B)" by (rule sets_ksemi[OF Kp ne])
+  have pm: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
+      \<in> ?S \<rightarrow>\<^sub>M ?B"
+    using padd_measurable_ksemi[OF T0 setsQ] measurable_cong_sets[OF setsS refl]
+    by blast
+  have pmP: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
+      \<in> Q \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B" by (rule padd_measurable_ksemi[OF T0 setsQ])
+  have hb: "?C \<in> borel_measurable ?B"
+  proof -
+    have e: "(\<lambda>\<omega> :: 'n pairpath. \<omega> ?t) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have f: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
+        \<in> borel_measurable borel"
+      unfolding outerp_def
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    show ?thesis by (rule measurable_compose[OF e f])
+  qed
+  have gm: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath).
+      ?C (padd T (fst p) (snd p))) \<in> borel_measurable (Q \<Otimes>\<^sub>M ?B)"
+    by (rule measurable_compose[OF pmP hb])
+  have hint: "integrable Q
+      (\<lambda>p'. norm (?C p') + (CC + 2 * (norm (fst (p' ?t)) * CX)))"
+    by (intro Bochner_Integration.integrable_add integrable_norm[OF QCint]
+        PQ'.integrable_const Bochner_Integration.integrable_mult_right
+        integrable_mult_left integrable_norm[OF QXint])
+  have bnd: "(\<integral>\<^sup>+w. ennreal (norm (?C (padd T (fst (p', w)) (snd (p', w)))))
+        \<partial>(\<kappa> p'))
+      \<le> ennreal (norm (?C p') + (CC + 2 * (norm (fst (p' ?t)) * CX)))"
+    if sp: "p' \<in> space Q" for p'
+  proof -
+    interpret PK: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    have sK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+    have iNC: "integrable (\<kappa> p') (\<lambda>w. norm (?C w))"
+      by (rule integrable_norm[OF KCint[OF sp]])
+    have iNX: "integrable (\<kappa> p') (\<lambda>w. norm (fst (w ?t)))"
+      by (rule integrable_norm[OF KXint[OF sp]])
+    have iB: "integrable (\<kappa> p') (\<lambda>w. norm (?C p') + norm (?C w)
+        + 2 * (norm (fst (p' ?t)) * norm (fst (w ?t))))"
+      by (intro Bochner_Integration.integrable_add PK.integrable_const iNC
+          Bochner_Integration.integrable_mult_right integrable_mult_left iNX)
+    have dom: "norm (?C (padd T p' w))
+        \<le> norm (?C p') + norm (?C w) + 2 * (norm (fst (p' ?t)) * norm (fst (w ?t)))"
+      for w :: "'n pairpath" by (rule padd_comp_norm_le[OF tm])
+    have mP: "(\<lambda>w :: 'n pairpath. norm (?C (padd T p' w)))
+        \<in> borel_measurable (\<kappa> p')"
+    proof -
+      have "(\<lambda>w :: 'n pairpath. padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
+        by (rule padd_measurable_left[OF T0])
+           (use sp space_of_path_sets[OF setsQ] in simp)
+      from measurable_compose[OF this hb]
+      have "(\<lambda>w :: 'n pairpath. ?C (padd T p' w)) \<in> borel_measurable ?B" .
+      then have "(\<lambda>w :: 'n pairpath. ?C (padd T p' w))
+          \<in> borel_measurable (\<kappa> p')"
+        using measurable_cong_sets[OF sK refl] by blast
+      then show ?thesis by measurable
+    qed
+    have iP: "integrable (\<kappa> p') (\<lambda>w. norm (?C (padd T p' w)))"
+      by (rule Bochner_Integration.integrable_bound[OF iB mP])
+         (use dom in \<open>intro AE_I2, simp\<close>)
+    have "(\<integral>w. norm (?C (padd T p' w)) \<partial>(\<kappa> p'))
+        \<le> (\<integral>w. norm (?C p') + norm (?C w)
+            + 2 * (norm (fst (p' ?t)) * norm (fst (w ?t))) \<partial>(\<kappa> p'))"
+      by (rule Bochner_Integration.integral_mono[OF iP iB]) (use dom in simp)
+    also have "\<dots> = norm (?C p') + (\<integral>w. norm (?C w) \<partial>(\<kappa> p'))
+        + 2 * (norm (fst (p' ?t)) * (\<integral>w. norm (fst (w ?t)) \<partial>(\<kappa> p')))"
+      using iNC iNX PK.integrable_const
+      by (simp add: PK.prob_space algebra_simps)
+    also have "\<dots> \<le> norm (?C p') + (CC + 2 * (norm (fst (p' ?t)) * CX))"
+    proof -
+      have b1: "(\<integral>w. norm (?C w) \<partial>(\<kappa> p')) \<le> CC" by (rule KCbnd[OF sp])
+      have b2: "norm (fst (p' ?t)) * (\<integral>w. norm (fst (w ?t)) \<partial>(\<kappa> p'))
+          \<le> norm (fst (p' ?t)) * CX"
+        by (rule mult_left_mono[OF KXbnd[OF sp] norm_ge_zero])
+      from b1 b2 show ?thesis by linarith
+    qed
+    finally have le: "(\<integral>w. norm (?C (padd T p' w)) \<partial>(\<kappa> p'))
+        \<le> norm (?C p') + (CC + 2 * (norm (fst (p' ?t)) * CX))" .
+    have "(\<integral>\<^sup>+w. ennreal (norm (?C (padd T p' w))) \<partial>(\<kappa> p'))
+        = ennreal (\<integral>w. norm (?C (padd T p' w)) \<partial>(\<kappa> p'))"
+      by (rule nn_integral_eq_integral[OF iP]) simp
+    also have "\<dots> \<le> ennreal (norm (?C p') + (CC + 2 * (norm (fst (p' ?t)) * CX)))"
+      using le by (rule ennreal_leI)
+    finally show ?thesis by simp
+  qed
+  have gi: "integrable ?S (\<lambda>p. ?C (padd T (fst p) (snd p)))"
+    by (rule integrable_ksemi_of_past_bound[OF Kp ne gm hint]) (use bnd in simp)
+  have "integrable (aglue_law T \<kappa> Q) ?C
+      = integrable ?S (\<lambda>p. ?C (padd T (fst p) (snd p)))"
+    unfolding aglue_law_def by (rule integrable_distr_eq[OF pm hb])
+  then show ?thesis using gi by simp
+qed
+
 end
