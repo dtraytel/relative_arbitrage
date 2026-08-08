@@ -10646,4 +10646,200 @@ proof -
   then show ?thesis using pre_sigma_of_Int[OF c1' c2] by simp
 qed
 
+section \<open>Sampling at \<open>u \<or> \<theta>\<close>: the increment identity and its integrand\<close>
+
+text \<open>@{thm [source] stopped_increment_of_horizon} is stated for the OFFSET
+  family \<open>(\<theta>+i) \<and> T\<close>, which is what a REBASED future would need.  The
+  additive split uses the DELAYED future, so the family is \<open>u \<or> \<theta>\<close> instead.
+  Both are instances of the same statement about an arbitrary pair of
+  ordered bounded path stopping times, which is what this section proves;
+  @{thm [source] set_martingale_sampling_two} was already abstract in them.
+
+  Its companion is integrability of the sampled process, which the
+  deterministic development got for free from the martingale locale and
+  which here has to be reconstructed from the dyadic approximation and the
+  same dominating function.\<close>
+
+lemma integrable_at_bounded_stopping_time:
+  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
+    and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> :: "'a \<Rightarrow> real"
+  assumes mg: "martingale M F 0 Y"
+    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and sub: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
+    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+    and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U" and U0: "0 \<le> U"
+    and cont: "\<And>\<omega>. \<omega> \<in> space M
+      \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
+    and Dbd: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> U \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
+    and Dint: "integrable M D"
+  shows "integrable M (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)"
+proof -
+  interpret Mg: martingale M F 0 Y by (rule mg)
+  define \<sigma>n where "\<sigma>n n \<omega> = dyceil n U (\<sigma> \<omega>)" for n :: nat and \<omega> :: 'a
+  define Vn where "Vn n = (\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>}"
+    for n :: nat
+  have Vfin: "finite (Vn n)" for n
+    unfolding Vn_def by (rule finite_dyceil_range)
+  have Vnn: "0 \<le> u" if "u \<in> Vn n" for u n
+  proof -
+    from that obtain j where j: "j \<in> {0..\<lceil>2^n * U\<rceil>}"
+      and u: "u = min U (real_of_int j / 2^n)" unfolding Vn_def by blast
+    show ?thesis using j u U0 by simp
+  qed
+  have vals: "\<sigma>n n \<omega> \<in> Vn n" for n \<omega>
+    unfolding \<sigma>n_def Vn_def by (rule dyceil_range[OF U0 sig0 sigU])
+  have stopn: "{\<omega> \<in> space M. \<sigma>n n \<omega> \<le> t} \<in> sets (F t)" if t: "0 \<le> t" for n t
+    unfolding \<sigma>n_def by (rule dyceil_stopping[OF mono stop sub sig0 sigU t])
+  have Ym: "Y u \<in> borel_measurable M" if "0 \<le> u" for u
+    using Mg.integrable[OF that] by (rule borel_measurable_integrable)
+  have gm: "(\<lambda>\<omega>. Y (\<sigma>n n \<omega>) \<omega>) \<in> borel_measurable M" for n
+    by (rule borel_measurable_at_simple_time
+        [OF sub mono stopn Vfin Vnn vals Ym])
+  have lim: "(\<lambda>n. Y (\<sigma>n n \<omega>) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>" if w: "\<omega> \<in> space M" for \<omega>
+    unfolding \<sigma>n_def by (rule cont[OF w])
+  have glim: "(\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M"
+    by (rule borel_measurable_LIMSEQ_metric[OF gm lim])
+  have bd: "AE \<omega> in M. norm (Y (\<sigma> \<omega>) \<omega>) \<le> norm \<bar>D \<omega>\<bar>"
+    using Dbd
+  proof eventually_elim
+    case (elim \<omega>)
+    have "\<bar>Y (\<sigma> \<omega>) \<omega>\<bar> \<le> D \<omega>" using elim sig0[of \<omega>] sigU[of \<omega>] by simp
+    then show ?case by simp
+  qed
+  show ?thesis
+  proof (rule Bochner_Integration.integrable_bound[where f = "\<lambda>\<omega>. \<bar>D \<omega>\<bar>"])
+    show "integrable M (\<lambda>\<omega>. \<bar>D \<omega>\<bar>)" using Dint by simp
+    show "(\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M" by (rule glim)
+    show "AE \<omega> in M. norm (Y (\<sigma> \<omega>) \<omega>) \<le> norm \<bar>D \<omega>\<bar>" by (rule bd)
+  qed
+qed
+
+theorem stopped_increment_of_horizon_gen:
+  fixes P :: "('n::finite pairpath) measure"
+    and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and \<sigma> \<rho> :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 < T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and H: "horizon_sq_int_martingale P
+        (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
+    and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    and sts: "path_stopping_time T \<sigma>"
+    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and str: "path_stopping_time T \<rho>"
+    and rM: "\<rho> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and le: "\<And>\<omega> :: 'n pairpath. \<sigma> \<omega> \<le> \<rho> \<omega>"
+    and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
+  shows "set_lebesgue_integral P A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
+       = set_lebesgue_integral P A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have T0': "0 \<le> T" using T0 by simp
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  interpret H: horizon_sq_int_martingale P ?F Y T by (rule H)
+
+  have mg: "martingale P ?F 0 Y" by (rule H.martingale_axioms)
+  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
+    by (rule sets_natural_filtration_mono[OF that(2)])
+  have sub: "subalgebra P (?F t)" if "0 \<le> t" for t
+    by (rule H.subalgebras[OF that])
+  have sig0: "0 \<le> \<sigma> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF sts])
+  have sigU: "\<sigma> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF sts])
+  have rho0: "0 \<le> \<rho> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF str])
+  have rhoU: "\<rho> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF str])
+  have stops: "{\<omega> \<in> space P. \<sigma> \<omega> \<le> t} \<in> sets (?F t)" if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_event_filtration_all[OF T0' sts sM t])
+  have stopr: "{\<omega> \<in> space P. \<rho> \<omega> \<le> t} \<in> sets (?F t)" if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_event_filtration_all[OF T0' str rM t])
+
+  have conv: "(\<lambda>n. Y (dyceil n T s) \<omega>) \<longlonglongrightarrow> Y s \<omega>"
+    if w: "\<omega> \<in> space P" and s0: "0 \<le> s" and sT: "s \<le> T" for \<omega> s
+  proof (rule continuous_on_tendsto_compose
+      [OF Ycont[OF w] dyceil_tendsto[OF s0 sT]])
+    show "\<forall>\<^sub>F n in sequentially. dyceil n T s \<in> {0..T}"
+      using dyceil_nonneg[OF s0 sT] dyceil_le_U[of _ T s] by simp
+    show "s \<in> {0..T}" using s0 sT by simp
+  qed
+  have conts: "(\<lambda>n. Y (dyceil n T (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
+    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    by (rule conv[OF w sig0 sigU])
+  have contr: "(\<lambda>n. Y (dyceil n T (\<rho> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<rho> \<omega>) \<omega>"
+    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    by (rule conv[OF w rho0 rhoU])
+
+  have pathcont: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    by (rule AE_I2) (rule Ycont)
+  have Dbd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> H.Dsup \<omega>"
+    by (rule H.Dsup_dominates[OF pathcont])
+  have Dint: "integrable P H.Dsup" by (rule H.Dsup_integrable)
+
+  show ?thesis
+    by (rule set_martingale_sampling_two
+        [OF mg mono sub A stops stopr sig0 sigU rho0 rhoU T0' le
+          conts contr Dbd Dint])
+qed
+
+lemma integrable_at_path_stopping_time:
+  fixes P :: "('n::finite pairpath) measure"
+    and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and \<sigma> :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 < T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and H: "horizon_sq_int_martingale P
+        (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
+    and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    and sts: "path_stopping_time T \<sigma>"
+    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "integrable P (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have T0': "0 \<le> T" using T0 by simp
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  interpret H: horizon_sq_int_martingale P ?F Y T by (rule H)
+
+  have mg: "martingale P ?F 0 Y" by (rule H.martingale_axioms)
+  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
+    by (rule sets_natural_filtration_mono[OF that(2)])
+  have sub: "subalgebra P (?F t)" if "0 \<le> t" for t
+    by (rule H.subalgebras[OF that])
+  have sig0: "0 \<le> \<sigma> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF sts])
+  have sigU: "\<sigma> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF sts])
+  have stops: "{\<omega> \<in> space P. \<sigma> \<omega> \<le> t} \<in> sets (?F t)" if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_event_filtration_all[OF T0' sts sM t])
+  have conts: "(\<lambda>n. Y (dyceil n T (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
+    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+  proof (rule continuous_on_tendsto_compose
+      [OF Ycont[OF w] dyceil_tendsto[OF sig0 sigU]])
+    show "\<forall>\<^sub>F n in sequentially. dyceil n T (\<sigma> \<omega>) \<in> {0..T}"
+      using dyceil_nonneg[OF sig0 sigU] dyceil_le_U[of _ T "\<sigma> \<omega>"] by simp
+    show "\<sigma> \<omega> \<in> {0..T}" using sig0 sigU by simp
+  qed
+  have pathcont: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    by (rule AE_I2) (rule Ycont)
+  have Dbd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> H.Dsup \<omega>"
+    by (rule H.Dsup_dominates[OF pathcont])
+  have Dint: "integrable P H.Dsup" by (rule H.Dsup_integrable)
+
+  show ?thesis
+    by (rule integrable_at_bounded_stopping_time
+        [OF mg mono sub stops sig0 sigU T0' conts Dbd Dint])
+qed
+
 end
