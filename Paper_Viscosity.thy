@@ -111,6 +111,437 @@ proof -
   qed
 qed
 
+section \<open>Ito for quadratic test functions, from the martingale clauses\<close>
+
+text \<open>The class of (1.7) is defined by MARTINGALE properties, not by an SDE,
+  so Ito's formula is not available and cannot be cheaply built.  But for a
+  QUADRATIC test function the expansion is EXACT and needs no stochastic
+  integration at all:
+
+    \<open>\<phi> z = c + p \<bullet> z + (z \<bullet> (M *v z))/2\<close>,
+
+  and \<open>z \<bullet> (M *v z) = trace (M ** outerp z)\<close>, so the second-order term is a
+  LINEAR functional of the compensated clause (iv) of (1.7).  Its mean is
+  therefore pinned by that clause alone, and the first-order term by the
+  martingale clause (iii).  What comes out is
+
+    \<open>E[\<phi>(X\<^sub>t)] - \<phi>(x) = (t/2) \<sqdot> trace (M ** b)\<close>,  \<open>b \<in> sconstraint k L\<close>,
+
+  which is exactly the shape the viscosity argument consumes, with \<open>b\<close> the
+  averaged covariation direction.  The whole section is elementary.\<close>
+
+subsection \<open>Matrix functionals that are bounded linear\<close>
+
+lemma outerp_eq_outer_prod:
+  fixes v :: "real^'n::finite"
+  shows "outerp v = outer_prod v v"
+  by (simp add: outerp_def outer_prod_def)
+
+lemma trace_mult_outerp:
+  fixes M :: "real^'n::finite^'n" and v :: "real^'n"
+  shows "trace (M ** outerp v) = v \<bullet> (M *v v)"
+  by (simp add: outerp_eq_outer_prod mult_outer_prod inner_commute)
+
+lemma trace_mult_sum:
+  fixes M a :: "real^'n::finite^'n"
+  shows "trace (M ** a) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * a $ j $ i)"
+  by (simp add: trace_def matrix_matrix_mult_def)
+
+lemma bounded_linear_trace_mult_left:
+  fixes M :: "real^'n::finite^'n"
+  shows "bounded_linear (\<lambda>a :: real^'n^'n. trace (M ** a))"
+  unfolding linear_conv_bounded_linear[symmetric]
+proof (rule linearI)
+  fix a b :: "real^'n^'n"
+  show "trace (M ** (a + b)) = trace (M ** a) + trace (M ** b)"
+    by (simp add: trace_mult_sum sum.distrib algebra_simps)
+next
+  fix r :: real and a :: "real^'n^'n"
+  show "trace (M ** (r *\<^sub>R a)) = r *\<^sub>R trace (M ** a)"
+    by (simp add: trace_mult_sum sum_distrib_left algebra_simps)
+qed
+
+lemma bounded_linear_trace_mult_right:
+  fixes P :: "real^'n::finite^'n"
+  shows "bounded_linear (\<lambda>a :: real^'n^'n. trace (a ** P))"
+  unfolding linear_conv_bounded_linear[symmetric]
+proof (rule linearI)
+  fix a b :: "real^'n^'n"
+  show "trace ((a + b) ** P) = trace (a ** P) + trace (b ** P)"
+    by (simp add: trace_mult_sum sum.distrib algebra_simps)
+next
+  fix r :: real and a :: "real^'n^'n"
+  show "trace ((r *\<^sub>R a) ** P) = r *\<^sub>R trace (a ** P)"
+    by (simp add: trace_mult_sum sum_distrib_left algebra_simps)
+qed
+
+lemma bounded_linear_quadform:
+  fixes z :: "real^'n::finite"
+  shows "bounded_linear (\<lambda>a :: real^'n^'n. z \<bullet> (a *v z))"
+  unfolding linear_conv_bounded_linear[symmetric]
+proof (rule linearI)
+  fix a b :: "real^'n^'n"
+  show "z \<bullet> ((a + b) *v z) = z \<bullet> (a *v z) + z \<bullet> (b *v z)"
+    by (simp add: matrix_vector_mult_def inner_vec_def sum.distrib
+        algebra_simps)
+next
+  fix r :: real and a :: "real^'n^'n"
+  show "z \<bullet> ((r *\<^sub>R a) *v z) = r *\<^sub>R (z \<bullet> (a *v z))"
+    by (simp add: matrix_vector_mult_def inner_vec_def sum_distrib_left
+        algebra_simps)
+qed
+
+lemma trace_mult_diff:
+  fixes M A B :: "real^'n::finite^'n"
+  shows "trace (M ** (A - B)) = trace (M ** A) - trace (M ** B)"
+  by (simp add: trace_mult_sum sum_subtractf right_diff_distrib)
+
+lemma trace_mult_scaleR:
+  fixes M A :: "real^'n::finite^'n"
+  shows "trace (M ** (r *\<^sub>R A)) = r * trace (M ** A)"
+  by (simp add: trace_mult_sum sum_distrib_left algebra_simps)
+
+lemma bounded_linear_transpose:
+  "bounded_linear (transpose :: real^'n::finite^'n \<Rightarrow> real^'n^'n)"
+  unfolding linear_conv_bounded_linear[symmetric]
+  by (intro linearI) (simp_all add: transpose_def vec_eq_iff)
+
+subsection \<open>The averaged covariation stays in the constraint set\<close>
+
+text \<open>Every condition defining \<^const>\<open>sconstraint\<close> is a LINEAR (in)equality in
+  the matrix: \<^const>\<open>psd\<close> and \<^const>\<open>eigen_ub\<close> are conditions on the quadratic
+  form \<open>z \<bullet> (a *v z)\<close>, which is linear in \<open>a\<close>, and \<open>c \<le> Pi_proj a m\<close> is by
+  @{thm [source] Pi_proj_ge} an intersection of the half-spaces
+  \<open>c \<le> trace (a ** P)\<close>, again linear in \<open>a\<close>.  So the set is an intersection of
+  closed half-spaces and passes through the integral.\<close>
+
+lemma paper_pair_class_Y_integrable:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have meas: "(\<lambda>\<omega>. snd (\<omega> t)) \<in> borel_measurable Q"
+  proof (rule measurable_compose[OF paper_pair_class_eval_measurable[OF Q t]])
+    show "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+  qed
+  have bd: "AE \<omega> in Q. norm (snd (\<omega> t)) \<le> real CARD('n) * L * T"
+    using paper_pair_class_Y_bounded_ae[OF T L Q]
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
+    then show "norm (snd (\<omega> t)) \<le> real CARD('n) * L * T" using t by blast
+  qed
+  show ?thesis by (rule P.integrable_const_bound[OF bd meas])
+qed
+
+theorem paper_pair_class_Y_mean_sconstraint:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and t: "0 < t" and tT: "t \<le> T"
+  shows "(1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q) \<in> sconstraint k L"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have tI: "t \<in> {0..T}" using t tT by simp
+  have iY: "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
+    by (rule paper_pair_class_Y_integrable[OF T L Q tI])
+  have i1: "integrable Q (\<lambda>\<omega>. (1 / t) *\<^sub>R snd (\<omega> t))"
+    using iY by simp
+  define b where "b = (1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)"
+  have bint: "b = (\<integral>\<omega>. (1 / t) *\<^sub>R snd (\<omega> t) \<partial>Q)"
+    unfolding b_def by simp
+  text \<open>the constraint of clause (iii), read between \<open>0\<close> and \<open>t\<close>\<close>
+  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using Q unfolding paper_pair_class_def by blast
+  have dq: "AE \<omega> in Q. \<forall>s u. 0 \<le> s \<longrightarrow> s < u \<longrightarrow> u \<le> T \<longrightarrow>
+      (1 / (u - s)) *\<^sub>R (snd (\<omega> u) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding paper_pair_class_def by blast
+  have mem: "AE \<omega> in Q. (1 / t) *\<^sub>R snd (\<omega> t) \<in> sconstraint k L"
+    using st dq
+  proof eventually_elim
+    case (elim \<omega>)
+    have "(1 / (t - 0)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> 0)) \<in> sconstraint k L"
+      using elim t tT by blast
+    then show ?case using elim by simp
+  qed
+  have memP: "AE \<omega> in Q. psd ((1 / t) *\<^sub>R snd (\<omega> t))"
+    using mem by eventually_elim (simp add: sconstraint_def Pi_constraint_def)
+  have memU: "AE \<omega> in Q. eigen_ub ((1 / t) *\<^sub>R snd (\<omega> t)) L"
+    using mem by eventually_elim (simp add: sconstraint_def)
+  have memI: "AE \<omega> in Q. \<forall>m. k < m \<longrightarrow> m \<le> CARD('n) \<longrightarrow>
+      real (m - k) \<le> Pi_proj ((1 / t) *\<^sub>R snd (\<omega> t)) m"
+    using mem by eventually_elim (simp add: sconstraint_def Pi_constraint_def)
+  text \<open>a real-valued bounded linear functional passes through the integral\<close>
+  have lin: "(\<integral>\<omega>. F ((1 / t) *\<^sub>R snd (\<omega> t)) \<partial>Q) = F b"
+    if F: "bounded_linear (F :: real^'n^'n \<Rightarrow> real)" for F
+    unfolding bint by (rule integral_of_bounded_linear[OF F i1])
+  have linI: "integrable Q (\<lambda>\<omega>. F ((1 / t) *\<^sub>R snd (\<omega> t)))"
+    if F: "bounded_linear (F :: real^'n^'n \<Rightarrow> real)" for F
+    by (rule integrable_bounded_linear[OF F i1])
+  text \<open>symmetry\<close>
+  have trb: "transpose b = b"
+  proof -
+    have "transpose b = (\<integral>\<omega>. transpose ((1 / t) *\<^sub>R snd (\<omega> t)) \<partial>Q)"
+      unfolding bint
+      by (rule integral_of_bounded_linear
+          [OF bounded_linear_transpose i1, symmetric])
+    also have "\<dots> = (\<integral>\<omega>. (1 / t) *\<^sub>R snd (\<omega> t) \<partial>Q)"
+    proof (rule integral_cong_AE)
+      show "(\<lambda>\<omega>. transpose ((1 / t) *\<^sub>R snd (\<omega> t))) \<in> borel_measurable Q"
+        by (rule borel_measurable_integrable
+            [OF integrable_bounded_linear[OF bounded_linear_transpose i1]])
+      show "(\<lambda>\<omega>. (1 / t) *\<^sub>R snd (\<omega> t)) \<in> borel_measurable Q"
+        by (rule borel_measurable_integrable[OF i1])
+      show "AE \<omega> in Q. transpose ((1 / t) *\<^sub>R snd (\<omega> t))
+          = (1 / t) *\<^sub>R snd (\<omega> t)"
+        using memP by eventually_elim (simp add: psd_def)
+    qed
+    finally show ?thesis unfolding bint .
+  qed
+  text \<open>the quadratic form, both bounds\<close>
+  have quad_lo: "0 \<le> z \<bullet> (b *v z)" for z :: "real^'n"
+  proof -
+    have "0 \<le> (\<integral>\<omega>. z \<bullet> (((1 / t) *\<^sub>R snd (\<omega> t)) *v z) \<partial>Q)"
+      by (rule integral_nonneg_AE)
+        (use memP in \<open>eventually_elim, simp add: psd_def\<close>)
+    then show ?thesis using lin[OF bounded_linear_quadform] by simp
+  qed
+  have quad_hi: "z \<bullet> (b *v z) \<le> L * (z \<bullet> z)" for z :: "real^'n"
+  proof -
+    have "(\<integral>\<omega>. z \<bullet> (((1 / t) *\<^sub>R snd (\<omega> t)) *v z) \<partial>Q)
+        \<le> (\<integral>\<omega>. L * (z \<bullet> z) \<partial>Q)"
+      by (rule integral_mono_AE)
+        (use linI[OF bounded_linear_quadform] memU
+          in \<open>auto elim!: eventually_mono simp: eigen_ub_def\<close>)
+    then show ?thesis
+      using lin[OF bounded_linear_quadform] by (simp add: P.prob_space)
+  qed
+  have psdb: "psd b" unfolding psd_def using trb quad_lo by blast
+  text \<open>the projection bounds\<close>
+  have proj: "real (m - k) \<le> Pi_proj b m"
+    if m: "k < m" "m \<le> CARD('n)" for m
+  proof (rule Pi_proj_ge[OF m(2)])
+    fix P :: "real^'n^'n"
+    assume P: "is_proj P" and trP: "trace P = real m"
+    have ae: "AE \<omega> in Q.
+        real (m - k) \<le> trace (((1 / t) *\<^sub>R snd (\<omega> t)) ** P)"
+      using memP memI
+    proof eventually_elim
+      case (elim \<omega>)
+      have "real (m - k) \<le> Pi_proj ((1 / t) *\<^sub>R snd (\<omega> t)) m"
+        using elim(2) m by blast
+      also have "\<dots> \<le> trace (((1 / t) *\<^sub>R snd (\<omega> t)) ** P)"
+        by (rule Pi_proj_le[OF elim(1) P trP])
+      finally show ?case .
+    qed
+    have "real (m - k) = (\<integral>\<omega>. real (m - k) \<partial>Q)"
+      by (simp add: P.prob_space)
+    also have "\<dots> \<le> (\<integral>\<omega>. trace (((1 / t) *\<^sub>R snd (\<omega> t)) ** P) \<partial>Q)"
+      by (rule integral_mono_AE)
+        (use linI[OF bounded_linear_trace_mult_right] ae in auto)
+    also have "\<dots> = trace (b ** P)"
+      by (rule lin[OF bounded_linear_trace_mult_right])
+    finally show "real (m - k) \<le> trace (b ** P)" .
+  qed
+  have pic: "b \<in> Pi_constraint k"
+    unfolding Pi_constraint_def
+  proof (intro CollectI conjI allI impI)
+    show "psd b" by (rule psdb)
+  next
+    fix m assume "k < m" and "m \<le> CARD('n)"
+    then show "real (m - k) \<le> Pi_proj b m" by (rule proj)
+  qed
+  have eub: "b \<in> {a :: real^'n^'n. eigen_ub a L}"
+    using quad_hi by (simp add: eigen_ub_def)
+  have "b \<in> sconstraint k L"
+    unfolding sconstraint_def using pic eub by blast
+  then show ?thesis unfolding b_def[symmetric] .
+qed
+
+subsection \<open>The exact expansion of a quadratic test function\<close>
+
+lemma paper_pair_class_X_integrable:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
+proof -
+  interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
+      "\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n"
+    by (rule paper_pair_class_X_martingale[OF Q])
+  have "integrable Q (\<lambda>\<omega>. fst (\<omega> (min t T)) :: real^'n)"
+    using t by (intro MG.integrable) simp
+  then show ?thesis using t by simp
+qed
+
+theorem paper_pair_class_X_mean:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "(\<integral>\<omega>. fst (\<omega> t) \<partial>Q) = x"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
+      "\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n"
+    by (rule paper_pair_class_X_martingale[OF Q])
+  have t0: "0 \<le> t" and tT: "t \<le> T" using t by simp_all
+  have z: "(0::real) \<in> {0..T}" using t by simp
+  have i0: "integrable Q (\<lambda>\<omega>. fst (\<omega> 0) :: real^'n)"
+    by (rule paper_pair_class_X_integrable[OF Q z])
+  have it: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
+    by (rule paper_pair_class_X_integrable[OF Q t])
+  have top: "space Q \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0)"
+    using sets.top[of "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0"] by simp
+  have const: "(\<integral>\<omega>. fst (\<omega> 0) \<partial>Q) = (\<integral>\<omega>. fst (\<omega> t) \<partial>Q)"
+    using MG.set_integral_eq[OF top order.refl t0] t0 tT
+    by (simp add: set_integral_space[OF i0] set_integral_space[OF it])
+  have start: "(\<integral>\<omega>. fst (\<omega> 0) \<partial>Q) = x"
+  proof -
+    have ae: "AE \<omega> in Q. fst (\<omega> 0) = x"
+    proof -
+      have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+        using Q unfolding paper_pair_class_def by blast
+      then show ?thesis by (rule eventually_mono) simp
+    qed
+    have "(\<integral>\<omega>. fst (\<omega> 0) \<partial>Q) = (\<integral>\<omega>. x \<partial>Q)"
+      by (rule integral_cong_AE[OF borel_measurable_integrable[OF i0] _ ae])
+        measurable
+    then show ?thesis by (simp add: P.prob_space)
+  qed
+  from const start show ?thesis by simp
+qed
+
+text \<open>The second-order identity.  Note there is no symmetry hypothesis on
+  \<open>M\<close> and no stopping: clause (iv) is used at the FIXED time \<open>t\<close>, exactly as
+  in @{thm [source] paper_pair_class_sq_norm_mean_ge}, of which this is the
+  \<open>M = 1\<close> case with the inequality replaced by an identity.\<close>
+
+theorem paper_pair_class_quadform_mean:
+  fixes Q :: "('n::finite pairpath) measure" and M :: "real^'n^'n"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "(\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q)
+       = x \<bullet> (M *v x) + trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
+proof -
+  have ci: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+    by (rule paper_pair_class_compensated_integrable[OF Q t])
+  have iY: "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
+    by (rule paper_pair_class_Y_integrable[OF T L Q t])
+  have iA: "integrable Q
+      (\<lambda>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t))))"
+    by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left ci])
+  have iB: "integrable Q (\<lambda>\<omega>. trace (M ** snd (\<omega> t)))"
+    by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left iY])
+  have tdiff: "trace (M ** (A - B)) = trace (M ** A) - trace (M ** B)"
+    for A B :: "real^'n^'n"
+    by (rule trace_mult_diff)
+  have eqf: "(\<lambda>\<omega>. trace (M ** outerp (fst (\<omega> t))))
+      = (\<lambda>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t)))
+             + trace (M ** snd (\<omega> t)))"
+    by (rule ext) (simp add: tdiff)
+  have e1: "(\<integral>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t))) \<partial>Q)
+      = trace (M ** outerp x)"
+  proof -
+    have "(\<integral>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t))) \<partial>Q)
+        = trace (M ** (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q))"
+      by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left ci])
+    also have "\<dots> = trace (M ** outerp x)"
+      by (simp add: paper_pair_class_compensated_mean[OF Q t])
+    finally show ?thesis .
+  qed
+  have e2: "(\<integral>\<omega>. trace (M ** snd (\<omega> t)) \<partial>Q)
+      = trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
+    by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left iY])
+  have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q)
+      = (\<integral>\<omega>. trace (M ** outerp (fst (\<omega> t))) \<partial>Q)"
+    by (simp add: trace_mult_outerp)
+  also have "\<dots> = (\<integral>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t))) \<partial>Q)
+      + (\<integral>\<omega>. trace (M ** snd (\<omega> t)) \<partial>Q)"
+    unfolding eqf by (rule Bochner_Integration.integral_add[OF iA iB])
+  also have "\<dots> = x \<bullet> (M *v x) + trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
+    unfolding e1 e2 by (simp add: trace_mult_outerp)
+  finally show ?thesis .
+qed
+
+lemma paper_pair_class_quadform_integrable:
+  fixes Q :: "('n::finite pairpath) measure" and M :: "real^'n^'n"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)))"
+proof -
+  have ci: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+    by (rule paper_pair_class_compensated_integrable[OF Q t])
+  have iY: "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
+    by (rule paper_pair_class_Y_integrable[OF T L Q t])
+  have iA: "integrable Q
+      (\<lambda>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t))))"
+    by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left ci])
+  have iB: "integrable Q (\<lambda>\<omega>. trace (M ** snd (\<omega> t)))"
+    by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left iY])
+  have tdiff: "trace (M ** (A - B)) = trace (M ** A) - trace (M ** B)"
+    for A B :: "real^'n^'n"
+    by (rule trace_mult_diff)
+  have eqf: "(\<lambda>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)))
+      = (\<lambda>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t)))
+             + trace (M ** snd (\<omega> t)))"
+    by (rule ext) (simp add: tdiff trace_mult_outerp[symmetric])
+  show ?thesis
+    unfolding eqf by (rule Bochner_Integration.integrable_add[OF iA iB])
+qed
+
+text \<open>The packaged form: the mean increment of a quadratic test function
+  along ANY class member is \<open>(t/2) \<sqdot> trace (M ** b)\<close> for a single averaged
+  direction \<open>b\<close> of the constraint set.  This is the substitute for Ito's
+  formula that the viscosity argument actually needs.\<close>
+
+theorem paper_pair_class_quadratic_mean:
+  fixes Q :: "('n::finite pairpath) measure" and M :: "real^'n^'n"
+    and p :: "real^'n" and c :: real
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and t: "0 < t" and tT: "t \<le> T"
+  obtains b where "b \<in> sconstraint k L"
+    and "(\<integral>\<omega>. c + p \<bullet> fst (\<omega> t) + (fst (\<omega> t) \<bullet> (M *v fst (\<omega> t))) / 2 \<partial>Q)
+       = c + p \<bullet> x + (x \<bullet> (M *v x)) / 2 + (t / 2) * trace (M ** b)"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have tI: "t \<in> {0..T}" using t tT by simp
+  define b where "b = (1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)"
+  have bmem: "b \<in> sconstraint k L"
+    unfolding b_def by (rule paper_pair_class_Y_mean_sconstraint[OF T L Q t tT])
+  have bY: "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) = t *\<^sub>R b"
+    unfolding b_def using t by simp
+  have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
+    by (rule paper_pair_class_X_integrable[OF Q tI])
+  have iP: "integrable Q (\<lambda>\<omega>. p \<bullet> fst (\<omega> t))"
+    by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
+  have iM: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)))"
+    by (rule paper_pair_class_quadform_integrable[OF T L Q tI])
+  have mP: "(\<integral>\<omega>. p \<bullet> fst (\<omega> t) \<partial>Q) = p \<bullet> x"
+    using integral_of_bounded_linear[OF bounded_linear_inner_right iX]
+      paper_pair_class_X_mean[OF Q tI] by simp
+  have mM: "(\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q)
+      = x \<bullet> (M *v x) + t * trace (M ** b)"
+  proof -
+    have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q)
+        = x \<bullet> (M *v x) + trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
+      by (rule paper_pair_class_quadform_mean[OF T L Q tI])
+    also have "trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)) = t * trace (M ** b)"
+      unfolding bY by (rule trace_mult_scaleR)
+    finally show ?thesis .
+  qed
+  have "(\<integral>\<omega>. c + p \<bullet> fst (\<omega> t)
+        + (fst (\<omega> t) \<bullet> (M *v fst (\<omega> t))) / 2 \<partial>Q)
+      = c + (\<integral>\<omega>. p \<bullet> fst (\<omega> t) \<partial>Q)
+        + (\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q) / 2"
+    using iP iM by (simp add: P.prob_space)
+  also have "\<dots> = c + p \<bullet> x + (x \<bullet> (M *v x)) / 2 + (t / 2) * trace (M ** b)"
+    unfolding mP mM by (simp add: field_simps)
+  finally show ?thesis using that[OF bmem] by blast
+qed
+
 section \<open>The analytic input, isolated\<close>
 
 text \<open>Everything above is unconditional.  What the subsolution proof still
