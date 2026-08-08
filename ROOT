@@ -50,6 +50,7 @@ session Arbitrage = "HOL-Probability" +
     Paper_Class
     Paper_Bridge
     Paper_DPP
+    Paper_Viscosity
     Deterministic_Radius_Market
     Theorem_1_1
     Sup_Convolution
