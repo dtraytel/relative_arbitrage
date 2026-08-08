@@ -16172,4 +16172,383 @@ next
     by (rule measurable_from_subalg[OF sub]) (use ev same in simp)
 qed
 
+subsection \<open>Stopping a horizon-capped square-integrable martingale\<close>
+
+text \<open>The engine behind \<open>QH\<close> and \<open>QHC\<close>, abstracted out of
+  @{thm [source] paper_pair_class_stopped_coord_martingale}: its proof uses the
+  localisation time only through nonnegativity and the stopping property, so it
+  generalises to any stopping time verbatim.  Doob's envelope \<^term>\<open>Dsup\<close>
+  supplies both the dominating function \<open>optional_stopping\<close> needs and the
+  square-integrability of the STOPPED process, which is what promotes the
+  conclusion back to a \<^const>\<open>horizon_sq_int_martingale\<close>.\<close>
+
+lemma horizon_sq_int_martingale_stopped:
+  fixes Q :: "'a measure" and Z :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<tau> :: "'a \<Rightarrow> real"
+  assumes T0: "0 < T"
+    and HZ: "horizon_sq_int_martingale Q F Z T"
+    and cap: "\<And>s \<omega>. Z s \<omega> = Z (min s T) \<omega>"
+    and contT: "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Z s \<omega>)"
+    and tnn: "\<And>\<omega>. 0 \<le> \<tau> \<omega>"
+    and tstop: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space Q. \<tau> \<omega> \<le> s} \<in> sets (F s)"
+  shows "martingale Q F 0 (\<lambda>v \<omega>. Z (min v (\<tau> \<omega>)) \<omega>)"
+    and "\<And>s. 0 \<le> s \<Longrightarrow> integrable Q (\<lambda>\<omega>. (Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2)"
+proof -
+  interpret HM: horizon_sq_int_martingale Q F Z T by (rule HZ)
+  have T0': "0 \<le> T" using T0 by simp
+  have mgZ: "martingale Q F 0 Z" by (rule HM.martingale_axioms)
+  have adp: "adapted_process Q F 0 Z" by unfold_locales
+  have cont0: "continuous_on {0..} (\<lambda>s. Z s \<omega>)" if w: "\<omega> \<in> space Q" for \<omega>
+  proof -
+    have m: "continuous_on {0..} (\<lambda>s :: real. min s T)"
+      by (intro continuous_intros)
+    have im: "(\<lambda>s :: real. min s T) ` {0..} \<subseteq> {0..T}" using T0' by auto
+    have "continuous_on {0..} (\<lambda>s. Z (min s T) \<omega>)"
+      by (rule continuous_on_compose2[OF contT[OF w] m im])
+    then show ?thesis using cap by simp
+  qed
+  have contu: "continuous_on {0..u} (\<lambda>s. Z s \<omega>)"
+    if w: "\<omega> \<in> space Q" for \<omega> u
+    by (rule continuous_on_subset[OF cont0[OF w]]) auto
+  have domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    by (rule HM.Dsup_dominates) (intro AE_I2 contu)
+  have domA: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>" for u
+    using domT
+  proof (rule eventually_mono)
+    fix \<omega> :: 'a
+    assume h: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    show "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    proof (intro allI impI)
+      fix s :: real assume s: "0 \<le> s"
+      have "\<bar>Z (min s T) \<omega>\<bar> \<le> HM.Dsup \<omega>" using h s T0' by simp
+      then show "\<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>" using cap[of s \<omega>] by simp
+    qed
+  qed
+  have tnn': "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> \<tau> \<omega>" by (rule tnn)
+  have stad: "(\<lambda>\<omega>. Z (min v (\<tau> \<omega>)) \<omega>) \<in> borel_measurable (F v)"
+    if v: "0 \<le> v" for v
+    by (rule stopped_adapted_of_cont[OF adp tnn' tstop cont0 v])
+  show mgs: "martingale Q F 0 (\<lambda>v \<omega>. Z (min v (\<tau> \<omega>)) \<omega>)"
+  proof (rule optional_stopping[where D = "\<lambda>_. HM.Dsup"])
+    show "martingale Q F 0 Z" by (rule mgZ)
+    show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> \<tau> \<omega>" by (rule tnn')
+    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space Q. \<tau> \<omega> \<le> s} \<in> sets (F s)" by (rule tstop)
+    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. continuous_on {0..u} (\<lambda>s. Z s \<omega>)"
+      by (intro AE_I2 contu)
+    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q.
+        \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>" by (rule domA)
+    show "\<And>u. 0 < u \<Longrightarrow> integrable Q HM.Dsup" by (rule HM.Dsup_integrable)
+    show "\<And>v. 0 \<le> v \<Longrightarrow> (\<lambda>\<omega>. Z (min v (\<tau> \<omega>)) \<omega>) \<in> borel_measurable (F v)"
+      by (rule stad)
+  qed
+  show "integrable Q (\<lambda>\<omega>. (Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
+  proof -
+    have m: "(\<lambda>\<omega>. Z (min s (\<tau> \<omega>)) \<omega>) \<in> borel_measurable Q"
+      by (rule measurable_from_subalg[OF HM.subalgebras[OF s] stad[OF s]])
+    then have m2: "(\<lambda>\<omega>. (Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2) \<in> borel_measurable Q" by simp
+    have ae: "AE \<omega> in Q. norm ((Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2) \<le> norm ((HM.Dsup \<omega>)\<^sup>2)"
+      using domA[of s]
+    proof (rule eventually_mono)
+      fix \<omega> :: 'a
+      assume h: "\<forall>v. 0 \<le> v \<longrightarrow> v \<le> s \<longrightarrow> \<bar>Z v \<omega>\<bar> \<le> HM.Dsup \<omega>"
+      have a: "0 \<le> min s (\<tau> \<omega>)" using s tnn[of \<omega>] by simp
+      have b: "min s (\<tau> \<omega>) \<le> s" by simp
+      have le: "\<bar>Z (min s (\<tau> \<omega>)) \<omega>\<bar> \<le> HM.Dsup \<omega>" using h a b by blast
+      have "(Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2 = \<bar>Z (min s (\<tau> \<omega>)) \<omega>\<bar>\<^sup>2" by simp
+      also have "\<dots> \<le> (HM.Dsup \<omega>)\<^sup>2" by (rule power_mono[OF le abs_ge_zero])
+      finally show "norm ((Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2) \<le> norm ((HM.Dsup \<omega>)\<^sup>2)"
+        by simp
+    qed
+    show ?thesis
+      by (rule Bochner_Integration.integrable_bound
+          [OF HM.Dsup_sq_integrable m2 ae])
+  qed
+qed
+
+lemma martingale_cong_ge:
+  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) X"
+    and eq: "\<And>u :: real. 0 \<le> u \<Longrightarrow> Y u = X u"
+  shows "martingale M F 0 Y"
+proof -
+  have "martingale M (\<lambda>u. F ((\<lambda>u :: real. u) u)) 0 Y"
+    by (rule martingale_time_change_cong[OF mg]) (use eq in auto)
+  then show ?thesis by simp
+qed
+
+subsection \<open>\<open>QH\<close> and \<open>QHC\<close> for the stopped past law\<close>
+
+text \<open>Both clauses by the same three steps: stop the class's horizon
+  martingale at \<open>\<theta>\<close> (@{thm [source] horizon_sq_int_martingale_stopped}), push
+  the result forward along \<^const>\<open>pstopped\<close>
+  (@{thm [source] martingale_pair_law}, with
+  @{thm [source] pstopped_eval_filtration} as its adaptedness input and
+  \<open>P\<close>'s OWN filtration --- a stopped path carries no more information than the
+  past, so unlike the delayed class there is no time change here), and carry
+  the square-integrability across with @{thm [source] integrable_distr_eq}.\<close>
+
+lemma pstopped_eval_min_T:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T" and u: "0 \<le> u"
+  shows "pstopped T \<theta> \<omega> (min u T) = \<omega> (min (min u (\<theta> \<omega>)) T)"
+proof -
+  have m: "min u T \<in> {0..T}" using T0 u by simp
+  have "pstopped T \<theta> \<omega> (min u T) = \<omega> (min (min u T) (\<theta> \<omega>))"
+    by (rule pstopped_apply[OF m])
+  moreover have "min (min u T) (\<theta> \<omega>) = min (min u (\<theta> \<omega>)) T" by simp
+  ultimately show ?thesis by simp
+qed
+
+theorem pstopped_law_horizon_component:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
+      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
+      (\<lambda>u p'. fst (p' (min u T)) $ c) T"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?Z = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ c"
+  have T0': "0 \<le> T" using T0 by simp
+  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0' thM th0 thT])
+  have PQ: "prob_space ?Q" by (rule pstopped_law_prob[OF T0' PS setsP st thM])
+  have sp: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have nf: "?F v = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) v" for v
+    by (rule natural_filtration_cong_space[OF sp])
+  have spF: "space (?F v) = space P" for v
+    unfolding natural_filtration_def by simp
+  have tstop: "{\<omega> \<in> space P. \<theta> \<omega> \<le> s} \<in> sets (?F s)" if s: "0 \<le> s" for s
+  proof -
+    have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> s}
+        \<in> sets (natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) s)"
+      by (rule path_stopping_time_event_filtration_all[OF T0' st thM s])
+    then show ?thesis unfolding nf using sp by simp
+  qed
+  have HZ: "horizon_sq_int_martingale P ?F ?Z T"
+    by (rule paper_pair_class_horizon_component[OF T0 L0 P])
+  have contT: "continuous_on {0..T} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space P" for \<omega>
+  proof -
+    have "continuous_on {0..} (\<lambda>s. ?Z s \<omega>)"
+      by (rule paper_pair_class_coord_paths_cont[OF T0' setsP w])
+    then show ?thesis by (rule continuous_on_subset) auto
+  qed
+  have cap: "?Z s \<omega> = ?Z (min s T) \<omega>" for s and \<omega> :: "'n pairpath" by simp
+  have mgs: "martingale P ?F 0 (\<lambda>v \<omega>. ?Z (min v (\<theta> \<omega>)) \<omega>)"
+    by (rule horizon_sq_int_martingale_stopped(1)
+        [OF T0 HZ cap contT th0 tstop])
+  have sqs: "integrable P (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
+    by (rule horizon_sq_int_martingale_stopped(2)
+        [OF T0 HZ cap contT th0 tstop s])
+
+  \<comment> \<open>step two: push the stopped martingale forward\<close>
+  have mgp: "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
+  proof (rule martingale_cong_ge[OF mgs])
+    fix u :: real assume u: "0 \<le> u"
+    show "(\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))
+        = (\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)"
+    proof (rule ext)
+      fix \<omega> :: "'n pairpath"
+      show "?Z u (pstopped T \<theta> \<omega>) = ?Z (min u (\<theta> \<omega>)) \<omega>"
+        using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
+    qed
+  qed
+  have Zm: "?Z u \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
+  proof -
+    have a: "0 \<le> min u T" using u T0' by simp
+    have b: "min u T \<le> u" by simp
+    have fcB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z $ c)
+        \<in> borel_measurable borel"
+    proof -
+      have s: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+          \<in> borel_measurable borel"
+        by (intro borel_measurable_continuous_onI continuous_intros)
+      show ?thesis by (rule measurable_compose[OF s borel_measurable_nth])
+    qed
+    show ?thesis
+      by (rule measurable_compose[OF path_eval_natural_filtration[OF a b] fcB])
+  qed
+  have mgQ: "martingale ?Q ?G 0 ?Z"
+  proof (rule martingale_pair_law[where T = T and FF = ?F])
+    show "prob_space P" by (rule PS)
+    show "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B" by (rule m1)
+    show "(\<lambda>\<omega>. pstopped T \<theta> \<omega> r) \<in> borel_measurable (?F u)"
+      if "0 \<le> r" "r \<le> u" for u r :: real
+      by (rule pstopped_eval_filtration[OF T0' setsP st thM that])
+    show "?Z u \<in> borel_measurable
+        (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+      if "0 \<le> u" for u by (rule Zm[OF that])
+    show "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))" by (rule mgp)
+  qed
+
+  \<comment> \<open>step three: square integrability travels with the pushforward\<close>
+  have sqQ: "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)" if s: "0 \<le> s" for s
+  proof -
+    have zb: "(\<lambda>p' :: 'n pairpath. (?Z s p')\<^sup>2) \<in> borel_measurable ?B"
+    proof -
+      have "(\<lambda>p' :: 'n pairpath. p' (min s T)) \<in> borel_measurable ?B"
+        by (rule pair_law_eval_measurable[OF refl])
+      moreover have "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z $ c)
+          \<in> borel_measurable borel"
+      proof -
+        have s': "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+            \<in> borel_measurable borel"
+          by (intro borel_measurable_continuous_onI continuous_intros)
+        show ?thesis by (rule measurable_compose[OF s' borel_measurable_nth])
+      qed
+      ultimately have "(\<lambda>p' :: 'n pairpath. ?Z s p') \<in> borel_measurable ?B"
+        by (rule measurable_compose)
+      then show ?thesis by simp
+    qed
+    have "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)
+        = integrable P (\<lambda>\<omega>. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)"
+      unfolding pair_law_of_def by (rule integrable_distr_eq[OF m1 zb])
+    moreover have "(\<lambda>\<omega> :: 'n pairpath. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)
+        = (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)"
+    proof (rule ext)
+      fix \<omega> :: "'n pairpath"
+      show "(?Z s (pstopped T \<theta> \<omega>))\<^sup>2 = (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2"
+        using pstopped_eval_min_T[OF T0' s, of \<theta> \<omega>] by simp
+    qed
+    ultimately show ?thesis using sqs[OF s] by simp
+  qed
+  show ?thesis
+    by (intro horizon_sq_int_martingale.intro
+        horizon_sq_int_martingale_axioms.intro mgQ T0 PQ sqQ)
+qed
+
+theorem pstopped_law_horizon_compensated:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
+      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
+      (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?Z = "\<lambda>u \<omega> :: 'n pairpath.
+      (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ c $ d"
+  have T0': "0 \<le> T" using T0 by simp
+  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0' thM th0 thT])
+  have PQ: "prob_space ?Q" by (rule pstopped_law_prob[OF T0' PS setsP st thM])
+  have sp: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have nf: "?F v = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) v" for v
+    by (rule natural_filtration_cong_space[OF sp])
+  have tstop: "{\<omega> \<in> space P. \<theta> \<omega> \<le> s} \<in> sets (?F s)" if s: "0 \<le> s" for s
+  proof -
+    have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> s}
+        \<in> sets (natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) s)"
+      by (rule path_stopping_time_event_filtration_all[OF T0' st thM s])
+    then show ?thesis unfolding nf using sp by simp
+  qed
+  have HZ: "horizon_sq_int_martingale P ?F ?Z T"
+    by (rule paper_pair_class_horizon_compensated[OF T0 L0 P])
+  have contT: "continuous_on {0..T} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space P" for \<omega>
+  proof -
+    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using w sp by (simp add: space_borel_of)
+    show ?thesis by (rule comp_entry_continuous[OF mw])
+  qed
+  have cap: "?Z s \<omega> = ?Z (min s T) \<omega>" for s and \<omega> :: "'n pairpath" by simp
+  have mgs: "martingale P ?F 0 (\<lambda>v \<omega>. ?Z (min v (\<theta> \<omega>)) \<omega>)"
+    by (rule horizon_sq_int_martingale_stopped(1)
+        [OF T0 HZ cap contT th0 tstop])
+  have sqs: "integrable P (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
+    by (rule horizon_sq_int_martingale_stopped(2)
+        [OF T0 HZ cap contT th0 tstop s])
+  have entB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n).
+      (outerp (fst z) - snd z) $ c $ d) \<in> borel_measurable borel"
+  proof -
+    have s: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
+        \<in> borel_measurable borel"
+      unfolding outerp_def
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    have bl: "bounded_linear (\<lambda>M :: real^'n^'n. M $ c $ d)"
+      by (rule bounded_linear_compose[OF bounded_linear_vec_nth
+          bounded_linear_vec_nth])
+    have n: "(\<lambda>M :: real^'n^'n. M $ c $ d) \<in> borel_measurable borel"
+      by (rule borel_measurable_continuous_onI) (rule linear_continuous_on[OF bl])
+    show ?thesis by (rule measurable_compose[OF s n])
+  qed
+  have mgp: "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
+  proof (rule martingale_cong_ge[OF mgs])
+    fix u :: real assume u: "0 \<le> u"
+    show "(\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))
+        = (\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)"
+    proof (rule ext)
+      fix \<omega> :: "'n pairpath"
+      show "?Z u (pstopped T \<theta> \<omega>) = ?Z (min u (\<theta> \<omega>)) \<omega>"
+        using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
+    qed
+  qed
+  have Zm: "?Z u \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
+  proof -
+    have a: "0 \<le> min u T" using u T0' by simp
+    have b: "min u T \<le> u" by simp
+    show ?thesis
+      by (rule measurable_compose[OF path_eval_natural_filtration[OF a b] entB])
+  qed
+  have mgQ: "martingale ?Q ?G 0 ?Z"
+  proof (rule martingale_pair_law[where T = T and FF = ?F])
+    show "prob_space P" by (rule PS)
+    show "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B" by (rule m1)
+    show "(\<lambda>\<omega>. pstopped T \<theta> \<omega> r) \<in> borel_measurable (?F u)"
+      if "0 \<le> r" "r \<le> u" for u r :: real
+      by (rule pstopped_eval_filtration[OF T0' setsP st thM that])
+    show "?Z u \<in> borel_measurable
+        (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+      if "0 \<le> u" for u by (rule Zm[OF that])
+    show "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))" by (rule mgp)
+  qed
+  have sqQ: "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)" if s: "0 \<le> s" for s
+  proof -
+    have zb: "(\<lambda>p' :: 'n pairpath. (?Z s p')\<^sup>2) \<in> borel_measurable ?B"
+    proof -
+      have "(\<lambda>p' :: 'n pairpath. p' (min s T)) \<in> borel_measurable ?B"
+        by (rule pair_law_eval_measurable[OF refl])
+      from measurable_compose[OF this entB]
+      have "(\<lambda>p' :: 'n pairpath. ?Z s p') \<in> borel_measurable ?B" by simp
+      then show ?thesis by simp
+    qed
+    have "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)
+        = integrable P (\<lambda>\<omega>. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)"
+      unfolding pair_law_of_def by (rule integrable_distr_eq[OF m1 zb])
+    moreover have "(\<lambda>\<omega> :: 'n pairpath. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)
+        = (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)"
+    proof (rule ext)
+      fix \<omega> :: "'n pairpath"
+      show "(?Z s (pstopped T \<theta> \<omega>))\<^sup>2 = (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2"
+        using pstopped_eval_min_T[OF T0' s, of \<theta> \<omega>] by simp
+    qed
+    ultimately show ?thesis using sqs[OF s] by simp
+  qed
+  show ?thesis
+    by (intro horizon_sq_int_martingale.intro
+        horizon_sq_int_martingale_axioms.intro mgQ T0 PQ sqQ)
+qed
+
 end
