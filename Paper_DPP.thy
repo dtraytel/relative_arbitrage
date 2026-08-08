@@ -14008,4 +14008,137 @@ proof (rule ext)
   qed
 qed
 
+subsection \<open>The delayed class at a FIXED freezing time\<close>
+
+text \<open>\<^const>\<open>pembed\<close> is 1-Lipschitz --- it only reindexes time --- hence a
+  continuous map of path spaces, so by
+  @{thm [source] weak_conv_on_pushforward} it carries weak convergence, and
+  the delayed class at a fixed \<open>s\<close> is a CONTINUOUS IMAGE of the compact class
+  at horizon \<open>T − s\<close>.\<close>
+
+lemma pembed_lipschitz:
+  fixes w w' :: "'n::finite pairpath"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+    and w: "w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+    and w': "w' \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+  shows "mdist (path_metric T :: ('n pairpath) metric)
+      (pembed s T w) (pembed s T w')
+    \<le> mdist (path_metric (T - s) :: ('n pairpath) metric) w w'"
+proof -
+  let ?q = "mdist (path_metric (T - s) :: ('n pairpath) metric) w w'"
+  have T0: "0 \<le> T" using s0 sT by simp
+  have Ts: "0 \<le> T - s" using sT by simp
+  have ew: "pembed s T w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule pembed_mspace[OF s0 sT w])
+  have ew': "pembed s T w' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule pembed_mspace[OF s0 sT w'])
+  show ?thesis
+  proof (subst path_mdist_le_iff_all[OF T0 ew ew'], intro ballI)
+    fix t assume t: "t \<in> {0..T}"
+    have m: "max (t - s) 0 \<in> {0..T - s}" using t s0 sT by auto
+    have "dist (pembed s T w t) (pembed s T w' t)
+        = dist (w (max (t - s) 0)) (w' (max (t - s) 0))"
+      unfolding pembed_apply[OF t] ..
+    also have "\<dots> \<le> ?q"
+      using path_mdist_le_iff_all[OF Ts w w', of ?q] m by simp
+    finally show "dist (pembed s T w t) (pembed s T w' t) \<le> ?q" .
+  qed
+qed
+
+lemma pembed_continuous_map:
+  fixes s T :: real
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "continuous_map
+      (mtopology_of (path_metric (T - s) :: ('n::finite pairpath) metric))
+      (mtopology_of (path_metric T :: ('n pairpath) metric)) (pembed s T)"
+proof -
+  have "Lipschitz_continuous_map (path_metric (T - s) :: ('n pairpath) metric)
+      (path_metric T :: ('n pairpath) metric) (pembed s T)"
+    unfolding Lipschitz_continuous_map_def
+  proof (intro conjI)
+    show "pembed s T \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)
+        \<rightarrow> mspace (path_metric T :: ('n pairpath) metric)"
+      using pembed_mspace[OF s0 sT] by blast
+    show "\<exists>B. \<forall>x\<in>mspace (path_metric (T - s) :: ('n pairpath) metric).
+        \<forall>y\<in>mspace (path_metric (T - s) :: ('n pairpath) metric).
+          mdist (path_metric T :: ('n pairpath) metric)
+            (pembed s T x) (pembed s T y)
+          \<le> B * mdist (path_metric (T - s) :: ('n pairpath) metric) x y"
+      using pembed_lipschitz[OF s0 sT] by (intro exI[of _ 1]) auto
+  qed
+  then show ?thesis by (rule Lipschitz_continuous_imp_continuous_map)
+qed
+definition pdelclass :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real
+    \<Rightarrow> (('n::finite pairpath) measure) set"
+  where "pdelclass k L T s =
+     (\<lambda>\<nu>. distr \<nu> (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))) (pembed s T))
+       ` paper_pair_class k L (T - s) (0::real^'n)"
+
+text \<open>A delayed law is a probability law on the \<open>T\<close>-space, it stands still on
+  \<open>[0,s]\<close>, and re-basing recovers the original --- which is what makes
+  \<^const>\<open>pdelclass\<close> the right object for step (4) to consume.\<close>
+
+lemma pdelclass_prob:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  shows "prob_space \<nu>"
+    and "sets \<nu> = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+proof -
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))) (pembed s T)"
+    unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets (borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric))"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  show "prob_space \<nu>"
+    unfolding nu
+    by (rule prob_space.prob_space_distr[OF paper_pair_class_prob[OF mu] pm])
+  show "sets \<nu> = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))" unfolding nu by simp
+qed
+
+lemma pdelclass_frozen_at:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and u: "u \<in> {0..T}" and us: "u \<le> s"
+  shows "AE w in \<nu>. w u = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets (borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have Phi: "{w \<in> space ?B. w u = 0} \<in> sets ?B"
+  proof -
+    have "{w \<in> space ?B. w u = 0}
+        = (\<lambda>w :: 'n pairpath. w u) -` {0} \<inter> space ?B" by auto
+    then show ?thesis
+      using measurable_sets[OF ev borel_closed[OF closed_singleton]] by simp
+  qed
+  have start: "AE v in \<mu>. fst (v 0) = 0 \<and> snd (v 0) = 0"
+    by (rule paper_pair_class_start[OF mu])
+  have "AE v in \<mu>. pembed s T v u = 0"
+    using start
+  proof eventually_elim
+    case (elim v)
+    have "max (u - s) 0 = 0" using us by simp
+    then have "pembed s T v u = v 0" unfolding pembed_apply[OF u] by simp
+    then show ?case using elim by (simp add: prod_eq_iff)
+  qed
+  then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
+qed
 end
