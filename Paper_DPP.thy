@@ -7694,4 +7694,93 @@ lemma pstopped_after:
   shows "pstopped T \<theta> \<omega> t = \<omega> (\<theta> \<omega>)"
   using t ge by (simp add: pstopped_apply min_absorb2)
 
+text \<open>Evaluating a path at a RANDOM time.  This is the one new measurability
+  fact the additive split needs, and it is where the paths' continuity is
+  spent: approximate the time from above by dyadic rationals --- for each
+  fixed dyadic the evaluation is measurable and there are only countably many
+  of them --- and pass to the limit inside each path.  Only POINTWISE
+  continuity of each path is used, so no uniform-continuity machinery.
+  Compare @{thm [source] stopped_adapted_of_cont}, which runs the same dyadic
+  argument for a REAL-valued adapted process and delivers the sharper
+  \<open>\<F>\<^sub>v\<close>-measurability; that is the version to reuse once the kernel has to be a
+  function of the past, and it needs the paths capped as \<open>\<omega> (min s T)\<close>
+  because it asks for continuity on all of \<open>{0..}\<close>.\<close>
+
+lemma path_eval_at_measurable_time:
+  fixes M :: "'a measure" and g :: "'a \<Rightarrow> real"
+    and X :: "'a \<Rightarrow> 'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and Xm: "X \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))"
+    and gm: "g \<in> borel_measurable M"
+    and g0: "\<And>w. w \<in> space M \<Longrightarrow> 0 \<le> g w"
+    and gT: "\<And>w. w \<in> space M \<Longrightarrow> g w \<le> T"
+  shows "(\<lambda>w. X w (g w)) \<in> borel_measurable M"
+proof -
+  define gn where "gn n w = max 0 (min T (real_of_int \<lceil>2^n * g w\<rceil> / 2^n))"
+    for n :: nat and w :: 'a
+  have gnrange: "gn n w \<in> {0..T}" for n w using T0 by (simp add: gn_def)
+
+  \<comment> \<open>each approximant is measurable: countably many dyadic values\<close>
+  have stepm: "(\<lambda>w. X w (gn n w)) \<in> borel_measurable M" for n
+  proof -
+    have fj: "(\<lambda>w. X w (max 0 (min T (real_of_int j / 2^n)))) \<in> borel_measurable M"
+      for j :: int
+      by (rule measurable_compose[OF Xm pair_law_eval_measurable[OF refl]])
+    have cj: "(\<lambda>w. \<lceil>2^n * g w\<rceil>) \<in> M \<rightarrow>\<^sub>M count_space UNIV"
+      using gm by measurable
+    have "(\<lambda>w. X w (max 0 (min T (real_of_int \<lceil>2^n * g w\<rceil> / 2^n))))
+        \<in> borel_measurable M"
+      by (rule measurable_compose_countable[OF fj cj])
+    then show ?thesis unfolding gn_def .
+  qed
+
+  \<comment> \<open>and they converge, inside each path, by continuity of that path\<close>
+  have conv: "(\<lambda>n. X w (gn n w)) \<longlonglongrightarrow> X w (g w)" if w: "w \<in> space M" for w
+  proof -
+    have cont: "continuous_on {0..T} (X w)"
+    proof (rule mspace_path_metricD)
+      show "X w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+        using measurable_space[OF Xm w] by (simp add: space_borel_of)
+    qed
+    have bnd: "\<bar>real_of_int \<lceil>2^n * g w\<rceil> / 2^n - g w\<bar> \<le> (1/2)^n" for n
+    proof -
+      have p: "(0 :: real) < 2^n" by simp
+      have lo: "2^n * g w \<le> real_of_int \<lceil>2^n * g w\<rceil>" by (rule le_of_int_ceiling)
+      have hi: "real_of_int \<lceil>2^n * g w\<rceil> < 2^n * g w + 1"
+        using ceiling_correct[of "2^n * g w"] by simp
+      have "0 \<le> real_of_int \<lceil>2^n * g w\<rceil> / 2^n - g w"
+        using lo p by (simp add: field_simps)
+      moreover have "real_of_int \<lceil>2^n * g w\<rceil> / 2^n - g w \<le> 1 / 2^n"
+      proof -
+        have "real_of_int \<lceil>2^n * g w\<rceil> \<le> 2^n * g w + 1" using hi by simp
+        then have "real_of_int \<lceil>2^n * g w\<rceil> / 2^n \<le> (2^n * g w + 1) / 2^n"
+          by (rule divide_right_mono) simp
+        also have "\<dots> = g w + 1 / 2^n" using p by (simp add: field_simps)
+        finally show ?thesis by simp
+      qed      ultimately show ?thesis by (simp add: power_one_over)
+    qed
+    have "(\<lambda>n. real_of_int \<lceil>2^n * g w\<rceil> / 2^n - g w) \<longlonglongrightarrow> 0"
+    proof (rule Lim_null_comparison)
+      show "\<forall>\<^sub>F n in sequentially.
+          norm (real_of_int \<lceil>2^n * g w\<rceil> / 2^n - g w) \<le> (1/2)^n"
+        using bnd by simp
+      show "(\<lambda>n. ((1 :: real)/2)^n) \<longlonglongrightarrow> 0"
+        by (rule LIMSEQ_realpow_zero) simp_all
+    qed
+    then have "(\<lambda>n. real_of_int \<lceil>2^n * g w\<rceil> / 2^n) \<longlonglongrightarrow> g w"
+      by (rule Lim_transform[OF tendsto_const])
+    then have "(\<lambda>n. gn n w) \<longlonglongrightarrow> max 0 (min T (g w))"
+      unfolding gn_def by (intro tendsto_max tendsto_min tendsto_const)
+    then have gconv: "(\<lambda>n. gn n w) \<longlonglongrightarrow> g w"
+      using g0[OF w] gT[OF w] by simp
+    show ?thesis
+    proof (rule continuous_on_tendsto_compose[OF cont gconv])
+      show "\<forall>\<^sub>F n in sequentially. gn n w \<in> {0..T}" using gnrange by simp
+      show "g w \<in> {0..T}" using g0[OF w] gT[OF w] by simp
+    qed
+  qed
+  show ?thesis by (rule borel_measurable_LIMSEQ_metric[OF stepm conv])
+qed
+
 end
