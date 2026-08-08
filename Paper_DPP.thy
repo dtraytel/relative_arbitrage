@@ -9869,4 +9869,39 @@ proof -
   show ?thesis using s r by simp
 qed
 
+section \<open>The class's component martingale has a dominating function\<close>
+
+text \<open>\<open>Doob_Inequality\<close>'s \<open>horizon_sq_int_martingale\<close> locale already builds
+  the running supremum \<open>Dsup\<close>, proves it integrable, and proves it dominates
+  the path (\<open>Dsup_dominates\<close>).  So the last hypothesis of
+  @{thm [source] set_martingale_sampling} costs nothing more than an
+  interpretation: the class supplies the martingale
+  (@{thm [source] martingale_vec_component} for the component) and the
+  square-integrability (@{thm [source] paper_pair_class_sq_integrable}).\<close>
+
+lemma paper_pair_class_horizon_component:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  shows "horizon_sq_int_martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+      (\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c) T"
+proof -
+  have mgv: "martingale P (natural_filtration P 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+    using P unfolding paper_pair_class_def by blast
+  have mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
+      (\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c)"
+    by (rule martingale_vec_component[OF mgv])
+  interpret Mg: martingale P "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" 0
+    "\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c" by (rule mg)
+  interpret PS: prob_space P by (rule paper_pair_class_prob[OF P])
+  show ?thesis
+  proof unfold_locales
+    show "0 < T" by (rule T0)    fix s :: real assume s: "0 \<le> s"
+    have m: "min s T \<in> {0..T}" using s T0 by simp
+    show "integrable P (\<lambda>\<omega>. (fst (\<omega> (min s T)) $ c)\<^sup>2)"
+      by (rule paper_pair_class_sq_integrable
+          [OF less_imp_le[OF T0] L0 P m])
+  qed
+qed
+
 end
