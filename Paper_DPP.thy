@@ -10064,4 +10064,84 @@ proof -
           conts contr Dbd Dint])
 qed
 
+text \<open>The same identity for an ARBITRARY real process that is a
+  \<open>horizon_sq_int_martingale\<close> with continuous paths.  Both of the class's
+  martingale clauses are of that shape --- the \<open>X\<close> one componentwise, the
+  compensated one entrywise --- so this is the form clause (iv) uses twice.\<close>
+
+theorem stopped_increment_of_horizon:
+  fixes P :: "('n::finite pairpath) measure" and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real"
+  assumes T0: "0 < T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and H: "horizon_sq_int_martingale P
+        (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
+    and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and i: "0 \<le> i" and ij: "i \<le> j"
+    and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>\<omega>. min (\<theta> \<omega> + i) T)"
+  shows "set_lebesgue_integral P A (\<lambda>\<omega>. Y (min (\<theta> \<omega> + i) T) \<omega>)
+       = set_lebesgue_integral P A (\<lambda>\<omega>. Y (min (\<theta> \<omega> + j) T) \<omega>)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have T0': "0 \<le> T" using T0 by simp
+  have j0: "0 \<le> j" using i ij by simp
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  interpret H: horizon_sq_int_martingale P ?F Y T by (rule H)
+
+  have mg: "martingale P ?F 0 Y" by (rule H.martingale_axioms)
+  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
+    by (rule sets_natural_filtration_mono[OF that(2)])
+  have sub: "subalgebra P (?F t)" if "0 \<le> t" for t
+    by (rule H.subalgebras[OF that])
+  have sig0: "0 \<le> min (\<theta> \<omega> + i) T" for \<omega> :: "'n pairpath"
+    using path_stopping_time_nonneg[OF st, of \<omega>] i T0' by simp
+  have sigU: "min (\<theta> \<omega> + i) T \<le> T" for \<omega> :: "'n pairpath" by simp
+  have rho0: "0 \<le> min (\<theta> \<omega> + j) T" for \<omega> :: "'n pairpath"
+    using path_stopping_time_nonneg[OF st, of \<omega>] j0 T0' by simp
+  have rhoU: "min (\<theta> \<omega> + j) T \<le> T" for \<omega> :: "'n pairpath" by simp
+  have le: "min (\<theta> \<omega> + i) T \<le> min (\<theta> \<omega> + j) T" for \<omega> :: "'n pairpath"
+    using ij by simp
+  have stops: "{\<omega> \<in> space P. min (\<theta> \<omega> + i) T \<le> t} \<in> sets (?F t)"
+    if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_shift_event[OF T0' st thM i t])
+  have stopr: "{\<omega> \<in> space P. min (\<theta> \<omega> + j) T \<le> t} \<in> sets (?F t)"
+    if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_shift_event[OF T0' st thM j0 t])
+
+  have conv: "(\<lambda>n. Y (dyceil n T s) \<omega>) \<longlonglongrightarrow> Y s \<omega>"
+    if w: "\<omega> \<in> space P" and s0: "0 \<le> s" and sT: "s \<le> T" for \<omega> s
+  proof (rule continuous_on_tendsto_compose
+      [OF Ycont[OF w] dyceil_tendsto[OF s0 sT]])
+    show "\<forall>\<^sub>F n in sequentially. dyceil n T s \<in> {0..T}"
+      using dyceil_nonneg[OF s0 sT] dyceil_le_U[of _ T s] by simp
+    show "s \<in> {0..T}" using s0 sT by simp
+  qed
+  have conts: "(\<lambda>n. Y (dyceil n T (min (\<theta> \<omega> + i) T)) \<omega>)
+      \<longlonglongrightarrow> Y (min (\<theta> \<omega> + i) T) \<omega>" if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    by (rule conv[OF w sig0 sigU])
+  have contr: "(\<lambda>n. Y (dyceil n T (min (\<theta> \<omega> + j) T)) \<omega>)
+      \<longlonglongrightarrow> Y (min (\<theta> \<omega> + j) T) \<omega>" if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    by (rule conv[OF w rho0 rhoU])
+
+  have pathcont: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
+    by (rule AE_I2) (rule Ycont)
+  have Dbd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> H.Dsup \<omega>"
+    by (rule H.Dsup_dominates[OF pathcont])
+  have Dint: "integrable P H.Dsup" by (rule H.Dsup_integrable)
+
+  show ?thesis
+    by (rule set_martingale_sampling_two
+        [OF mg mono sub A stops stopr sig0 sigU rho0 rhoU T0' le
+          conts contr Dbd Dint])
+qed
+
 end
