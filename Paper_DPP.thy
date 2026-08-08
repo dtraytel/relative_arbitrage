@@ -12453,4 +12453,97 @@ proof -
   then show ?thesis unfolding eq .
 qed
 
+subsection \<open>The conditioning set on \<open>{\<theta> > i}\<close> lives in \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<and>\<^sub> \<^sub>\<theta>\<^sub>)\<close>\<close>
+
+text \<open>The one set-theoretic step of the four-cell argument.  A \<open>pcut i\<close>-set
+  intersected with \<open>{\<theta> > i}\<close> is an \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<and>\<^sub> \<^sub>\<theta>\<^sub>)\<close>-set: below \<open>i\<close> the cut
+  \<open>{i \<and> \<theta> \<le> t}\<close> forces \<open>\<theta> \<le> t < i\<close> and so meets \<open>{\<theta> > i}\<close> in nothing, while
+  from \<open>i\<close> on the cut is everything and the set is already \<open>\<F>\<^sub>i\<close>-measurable.\<close>
+
+lemma pcut_after_in_pre_sigma:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and i0: "0 \<le> i" and iT: "i \<le> T"
+    and B: "B \<in> sets (borel_of (mtopology_of
+        (path_metric i :: ('n pairpath) metric)))"
+  shows "(pcut i -` B \<inter> space Q) \<inter> {p' \<in> space Q. i < \<theta> p'}
+      \<in> pre_sigma_of Q (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)) (\<lambda>p'. min i (\<theta> p'))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?C = "(pcut i -` B \<inter> space Q) \<inter> {p' \<in> space Q. i < \<theta> p'}"
+  have spQ: "space Q = space ?B" by (rule sets_eq_imp_space_eq[OF setsQ])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spQ])
+  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "s \<le> t" for s t
+    by (rule sets_natural_filtration_mono[OF that])
+  have cutB: "pcut i -` B \<inter> space Q \<in> sets (?F i)"
+    by (rule pcut_vimage_natural_filtration[OF i0 iT setsQ B])
+  have evi: "{p' \<in> space Q. \<theta> p' \<le> i} \<in> sets (?F i)"
+    unfolding FB spQ
+    by (rule path_stopping_time_event_filtration[OF T0 st thM i0 iT])
+  have QP: "?C \<in> sets Q"
+  proof -
+    have "sets (?F i) \<subseteq> sets Q"
+      by (rule sets_natural_filtration_subset)
+         (rule pair_law_eval_measurable[OF setsQ])
+    moreover have "?C = (pcut i -` B \<inter> space Q)
+        - ((pcut i -` B \<inter> space Q) \<inter> {p' \<in> space Q. \<theta> p' \<le> i})" by auto
+    ultimately show ?thesis
+      using cutB evi sets.Diff sets.Int by (metis (no_types, lifting) subsetD)
+  qed
+  show ?thesis
+  proof (rule pre_sigma_ofI[OF QP])
+    fix t :: real assume t: "0 \<le> t"
+    show "?C \<inter> {p' \<in> space Q. min i (\<theta> p') \<le> t} \<in> sets (?F t)"
+    proof (cases "i \<le> t")
+      case True
+      have "?C \<inter> {p' \<in> space Q. min i (\<theta> p') \<le> t} = ?C"
+        using True by auto
+      moreover have "?C \<in> sets (?F i)"
+      proof -
+        have "?C = (pcut i -` B \<inter> space Q)
+            - ((pcut i -` B \<inter> space Q) \<inter> {p' \<in> space Q. \<theta> p' \<le> i})" by auto
+        then show ?thesis using cutB evi by (simp add: sets.Diff sets.Int)
+      qed
+      ultimately show ?thesis using mono[OF True] by auto
+    next
+      case False
+      have "?C \<inter> {p' \<in> space Q. min i (\<theta> p') \<le> t} = {}"
+        using False by auto
+      then show ?thesis by simp
+    qed
+  qed
+qed
+
+text \<open>NEXT: the inner-integral identity, i.e. the four-cell argument itself.
+  Attempted 2026-08-08 and NOT landed; the design is right but the integrand
+  bookkeeping under \<^term>\<open>\<kappa> p'\<close> is heavier than it looks.  What the attempt
+  established, so the next pass does not rediscover it:
+
+  \<^item> The two pointwise halves are as designed.  On \<open>{\<theta> > i}\<close>
+    @{thm [source] pcut_padd_before} collapses the indicator to
+    \<open>indicator B (pcut i p')\<close> and the inner integral becomes
+    \<open>indicator B (pcut i p') * (Y u p' + \<integral> w-part)\<close>; on \<open>{\<theta> \<le> i}\<close> the past term
+    is the SAME at \<open>i\<close> and \<open>j\<close> by @{thm [source] pstopped_eval_min}, so it
+    cancels and only the continuation's increment survives, against a section
+    that @{thm [source] section_padd_in_filtration} places in \<open>\<F>\<^sub>i\<close>.
+  \<^item> Each of those steps needs integrability under \<^term>\<open>\<kappa> p'\<close> of BOTH
+    \<open>\<lambda>w. fst (w (min u T)) $ c\<close> and its product with the indicator, and the
+    constant term needs \<^term>\<open>prob_space (\<kappa> p')\<close> to integrate to itself.  Take
+    all three as hypotheses --- deriving them inline doubled the length and was
+    where the attempt came apart.
+  \<^item> The outer step is NOT pointwise: on \<open>{\<theta> > i}\<close> the two inner integrals
+    differ, and only their \<open>Q\<close>-integral over that event vanishes.  So the last
+    step is a set-integral split of \<^term>\<open>Q\<close> along
+    \<open>?E = {p' \<in> space Q. i < \<theta> p'}\<close>, with
+    @{thm [source] stopped_increment_of_horizon_gen} applied at
+    \<open>\<sigma> = i \<and> \<theta> \<le> \<rho> = j \<and> \<theta>\<close> to the conditioning set
+    @{thm [source] pcut_after_in_pre_sigma} supplies.  Do not try to finish it
+    with a pointwise argument.\<close>
 end
