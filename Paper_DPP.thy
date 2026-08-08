@@ -13904,4 +13904,108 @@ proof -
   qed
 qed
 
+section \<open>Towards the selector: the DELAYED class on a FIXED space\<close>
+
+text \<open>The paper does not meet this problem: Stroock--Varadhan splice the
+  continuation into the SAME \<open>C([0,\<infinity>))\<close>, so no horizon ever varies.  Here the
+  path space is capped at \<open>T\<close>, so \<^term>\<open>paper_pair_class k L (T - s) 0\<close> lives
+  on a different space for each \<open>s\<close>, and a continuation kernel indexed by the
+  past would have to be measurable into a moving target.
+
+  Step (4) already shows the way out: a continuation enters the glue only as a
+  DELAYED law on the FIXED \<open>T\<close>-path space.  So the object to select is the
+  \<^const>\<open>pembed\<close>-image of a rebased law --- \<open>s\<close> is then a mere parameter,
+  exactly as the time argument of the paper's value function is, and the
+  candidate space no longer moves.
+
+  These are the two facts that make \<^const>\<open>pembed\<close> a map of path spaces, and
+  the observation that \<^const>\<open>prebase\<close> inverts it on the left --- so nothing
+  is lost by working with the delayed law instead of the rebased one.\<close>
+
+lemma pembed_mspace:
+  fixes w :: "'n::finite pairpath"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+    and w: "w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+  shows "pembed s T w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+proof -
+  have c: "continuous_on {0..T - s} w" by (rule mspace_path_metricD[OF w])
+  have m: "continuous_on {0..T} (\<lambda>t. max (t - s) 0)"
+    by (intro continuous_intros)
+  have im: "(\<lambda>t. max (t - s) 0) ` {0..T} \<subseteq> {0..T - s}" using s0 sT by auto
+  have "continuous_on {0..T} (\<lambda>t. w (max (t - s) 0))"
+    by (rule continuous_on_compose2[OF c m im])
+  then show ?thesis unfolding pembed_def by (rule mspace_path_metricI)
+qed
+
+lemma pembed_measurable:
+  fixes s T :: real
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "pembed s T \<in> borel_of (mtopology_of
+        (path_metric (T - s) :: ('n::finite pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?Bs = "borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+  have T0: "0 \<le> T" using s0 sT by simp
+  have into: "pembed s T w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    if "w \<in> space ?Bs" for w
+    using that by (auto simp: space_borel_of intro: pembed_mspace[OF s0 sT])
+  have ev: "(\<lambda>w :: 'n pairpath. pembed s T w t) \<in> borel_measurable ?Bs" for t
+  proof (cases "t \<in> {0..T}")
+    case True
+    have "(\<lambda>w :: 'n pairpath. w (max (t - s) 0)) \<in> borel_measurable ?Bs"
+      by (rule pair_law_eval_measurable[OF refl])
+    then show ?thesis by (simp add: pembed_apply[OF True])
+  next
+    case False
+    have "(\<lambda>w :: 'n pairpath. pembed s T w t) = (\<lambda>w. undefined)"
+      by (rule ext) (rule pembed_outside[OF False])
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    show "(\<lambda>w. mdist (path_metric T :: ('n pairpath) metric)
+        (pembed s T w) a) \<in> borel_measurable ?Bs"
+      by (rule mdist_measurable_of_eval[OF T0 into am ev])
+  qed
+qed
+
+text \<open>\<^const>\<open>prebase\<close> inverts \<^const>\<open>pembed\<close>: the delayed law carries exactly
+  the same information as the rebased one, so selecting the delayed law is no
+  weaker than selecting the rebased one.\<close>
+
+lemma prebase_pembed:
+  fixes w :: "'n::finite pairpath"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+    and w: "w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+  shows "prebase s T (pembed s T w) = w"
+proof (rule ext)
+  fix u :: real
+  show "prebase s T (pembed s T w) u = w u"
+  proof (cases "u \<in> {0..T - s}")
+    case True
+    then have m: "s + u \<in> {0..T}" using s0 by simp
+    have "prebase s T (pembed s T w) u = pembed s T w (s + u)"
+      by (rule prebase_apply[OF True])
+    also have "\<dots> = w (max (s + u - s) 0)" by (rule pembed_apply[OF m])
+    also have "max (s + u - s) 0 = u" using True by simp
+    finally show ?thesis .
+  next
+    case False
+    have "prebase s T (pembed s T w) u = undefined"
+      by (rule prebase_outside[OF False])
+    moreover have "w u = undefined"
+    proof -
+      have "w u = restrict w {0..T - s} u"
+        unfolding mspace_path_restrict_self[OF w] ..
+      also have "\<dots> = undefined"
+        unfolding restrict_def by (rule if_not_P[OF False])
+      finally show ?thesis .
+    qed
+    ultimately show ?thesis by simp
+  qed
+qed
+
 end
