@@ -8176,4 +8176,46 @@ proof -
   show ?thesis by (rule that[OF Km eq])
 qed
 
+text \<open>Step (2) itself: the conditional law of the increments AFTER \<open>\<theta>\<close> given
+  the path STOPPED at \<open>\<theta>\<close>.  Both factors live on the same \<open>T\<close>-path space, so
+  this is literally @{thm [source] path_rcd_ksemi} at \<open>u = v = T\<close>.\<close>
+
+corollary paper_pair_class_rcd_stopping:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PS: "prob_space P"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and th0: "\<And>\<omega> :: 'n pairpath. 0 \<le> \<theta> \<omega>"
+    and thT: "\<And>\<omega> :: 'n pairpath. \<theta> \<omega> \<le> T"  obtains \<kappa> where
+    "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric)))"
+    and "distr P
+          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+        = ksemi (pair_law_of T (pstopped T \<theta>) P)
+            (borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric))) \<kappa>"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have m2: "pafter T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pafter_measurable[OF T0 thM th0 thT])
+  show ?thesis
+  proof (rule path_rcd_ksemi[OF T0 PS m1 m2])
+    fix \<kappa> :: "'n pairpath \<Rightarrow> ('n pairpath) measure"
+    assume "\<kappa> \<in> ?B \<rightarrow>\<^sub>M prob_algebra ?B"
+      and "distr P (?B \<Otimes>\<^sub>M ?B) (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+          = ksemi (pair_law_of T (pstopped T \<theta>) P) ?B \<kappa>"
+    then show thesis by (rule that)
+  qed
+qed
+
 end
