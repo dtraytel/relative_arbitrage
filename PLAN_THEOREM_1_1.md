@@ -954,3 +954,80 @@ needs `integrand_θ ≤ integrand_(θ_n) + o(1)`, which is exactly the inequalit
 recorded as FALSE in [[dpp-stopping-time-no-approximation]]. Horizon-Lipschitz
 continuity of `paper_v` does not repair it. The `θ_n` route is blocked for the
 INEQUALITY even though it is fine for CLASS MEMBERSHIP.
+
+## §2.1: the horizon-parametrised selector is DONE — and it was not a new selection theorem
+
+**`paper_v_measurable_selector_horizon` (Paper_DPP, 2026-08-08).** For `0 < T`,
+`1 ≤ L`, `closed K` there is
+
+  `Sel ∈ (borel ⨂⇩M borel) →⇩M prob_algebra ?B_T`
+
+with, for every `0 ≤ s ≤ T`: `Sel (s,y) ∈ pdelclass k L T s`; its `prebase s T`
+image lies in `paper_pair_class k L (T−s) 0`; and that image attains
+`paper_v k L (T−s) K y`.
+
+**The blocker recorded above was wrong, and here is why.** The note said a
+selector jointly measurable in `(s,y)` is "a genuine new theorem (a measurable
+selection with the horizon as a parameter)". It is not, because of ONE identity:
+
+  `pexit_min_horizon`: `0 ≤ S ≤ T ⟹ pexit S K f = min (pexit T K f) S`.
+
+The horizon enters the payoff only as an OUTER CAP. Capping by a constant
+commutes with the essential infimum (`ess_inf_time_min_const`) and with the
+supremum over the class, so
+
+  **`paper_v_horizon_cap`**: `paper_v k L S K x = min (paper_v k L T K x) (ennreal S)`
+  for `0 ≤ S ≤ T`, `1 ≤ L`, `closed K`.
+
+(`≤` is `paper_v_horizon_mono` + `paper_v_le_T`; `≥` cuts a competitor back with
+`paper_pair_class_pcut` and applies the two lemmas above.) Since `min c ·` is
+monotone, **the maximiser does not depend on the horizon**: the fixed-horizon
+optimizer, CUT to `T−s`, is optimal at `T−s`. So there is nothing to select
+again — only a pushforward to carry `s` through.
+
+**Do NOT build the compactness of `pdelclass k L T s`, nor the closedness of
+`⋃_{s∈[0,T]} pdelclass k L T s`, nor a graph-space selection.** Those were the
+prerequisites of the abandoned route; none of them is needed. (Nor is the
+Lévy–Prokhorov machinery: this proof touches no topology at all.)
+
+**What the construction actually needs.** `Sel (s,y) = distr (S0 y) ?B_T (pdel s T)`
+for `S0` the existing `paper_v_measurable_selector_kernel'`, where
+`pdel s T = pembed (max 0 (min s T)) T` — the CLAMP is what makes the map total,
+so the parameter can live in plain `borel` rather than a restricted space.
+Supporting lemmas, all green:
+
+* `pembed_pcut` — `pembed s T (pcut (T−s) ω) = pembed s T ω` for ALL `ω`
+  (no membership hypothesis). This is what identifies the pushforward of a
+  `T`-law with the pushforward of its cut, i.e. with a member of `pdelclass`.
+* `pembed_mspace_full` / `pembed_measurable_full` — `pembed s T` maps the
+  `T`-space to itself, so no horizon bookkeeping.
+* `pdel_measurable_pair` — JOINT measurability in `(s,ω)`, via
+  `measurable_into_path_metric` + `mdist_measurable_of_eval` +
+  `path_eval_at_measurable_time` (each evaluation of `pembed s T ω` is an
+  evaluation of `ω` at a time depending measurably on `s`).
+* `measurable_distr2` (HOL-Probability) lifts that to the kernel; then
+  `measurable_prob_algebraI`. There is no Giry `bind` anywhere.
+* `pshift_pcut_comm` / `pshift_law_pcut` / `ess_inf_pexit_pcut_law` — the value
+  of a cut law is the value of the original, capped.
+
+### What is left of §2.1
+
+Steps (1)–(4) and the selector are all closed. The `≥` half now reduces to
+plumbing `Sel` into `paper_pair_class_aglue` and then into
+`paper_v_dpp_sup_ge_time_of_const`. Concretely, TWO packages remain:
+
+1. **`pdelclass` ⟹ the kernel hypotheses of `paper_pair_class_aglue`.** Already
+   supplied: `Kp` (`Selm`), prob/sets (`pdelclass_prob`), `K0`
+   (`pdelclass_frozen_at` at `u = 0`), `Kfr` (`pdelclass_frozen`). Still to
+   prove, for `ν ∈ pdelclass k L T s` with `θ p' = s`: `Kcov`, `Kmean`,
+   `KmeanC`, `Kint`, `KintC`, `Kinc`, `KincC`. All seven are the corresponding
+   class facts at horizon `T−s` transported through `pembed s T`; the time
+   reindexing is `u ↦ max (u−s) 0`, and the frozen stretch contributes `0`,
+   which is exactly why the martingale clauses survive the delay.
+2. **The `aglue` side conditions** `RXint`, `RCint`, `msecX`, `msecC`, `gintX`,
+   `gintC` — integrability and measurability of the `w`-sections. These are
+   Fubini-type statements about `ksemi Q ?B_T κ`, not new probability.
+
+Then `paper_v_dpp_sup_ge_time_of_const` (already stated for arbitrary `θ`)
+closes the `≥` half, and with `paper_v_cond_time` (the `≤` half, done) §2.1 is
+finished.
