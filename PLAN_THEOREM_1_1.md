@@ -870,3 +870,52 @@ Expect the compensated clause to need the `outerp` expansion AGAIN — on the
 product, `outerp (p' + w) = outerp p' + p' wᵀ + w p'ᵀ + outerp w` — so
 `set_integral_increment_times_known` (built for step (3)) is the tool to reuse
 for its cross terms rather than anything new.
+
+## §2.1 step (4) — CLOSED 2026-08-08
+
+**`paper_pair_class_aglue`**: the additive glue of a stopped past `Q` and a
+continuation kernel `κ` lands in `paper_pair_class k L T x`. No martingale
+hypothesis remains; the surviving hypotheses are all about the two FACTORS.
+
+The chain, per martingale clause:
+
+  `aglue_inner_increment(_comp)` → `aglue_law_X_increment` / `aglue_law_comp_increment`
+    → `aglue_law_X_martingale` / `aglue_law_comp_martingale`
+
+**The argument, and why no weak-closedness detour was needed.** The
+deterministic `paper_pair_class_kglue_law'` does not prove clause (iv)
+directly — it rounds the kernel and appeals to `paper_pair_class_weak_closed`.
+The additive split does not need that, because it is INVERTIBLE
+(`pstopped_padd`, `pafter_padd`) and the conditioning set collapses on each
+half of `{θ ≤ i}`. Writing an `ℱ_i`-set of the glue as `pcut i -` B`
+(`sets_natural_filtration_eq_pcut_vimage`), the four cells are:
+
+| | past increment | continuation increment |
+|---|---|---|
+| `θ > i` | `pcut_padd_before` ⟹ set is w-free ⟹ 0 by `stopped_increment_of_horizon_gen` at `σ = i∧θ ≤ ρ = j∧θ`, conditioning set from `pcut_after_in_pre_sigma` | `w(i∧T)=0` and `E[W_j]=W_0=0` |
+| `θ ≤ i` | `P_{j∧θ} = P_{i∧θ}` by `pstopped_eval_min` ⟹ cancels | w-section is an `ℱ_i`-set of `κ p'` by `section_padd_in_filtration` |
+
+The outer step is NOT pointwise: on `{θ > i}` the two inner integrals differ
+and only their `Q`-integral over that event vanishes, so it is a set-integral
+split of `Q` along `{i < θ}`.
+
+**The compensated clause needed NO cross-term machinery.** `outerp` is
+quadratic, so on the product
+`(outerp (fst (padd p' w s)) − snd (padd p' w s)) $ c $ d = Zp + Zw + (p'$c·w$d + w$c·p'$d)`.
+But inside the inner `κ p'` integral the past factor is a CONSTANT, so the two
+cross terms pull straight out and die by `Kmean` (on `{θ > i}`) and `Kinc`
+(on `{θ ≤ i}`). `set_integral_increment_times_known`, earmarked for this, is
+not used.
+
+**Supporting lemmas built for (4):** `padd` + `padd_mspace`/`padd_measurable`/
+`padd_pstopped_pafter`/`padd_stopping_time`/`pstopped_padd`/`pafter_padd`;
+`aglue_law` + `sets_aglue_law`/`prob_space_aglue_law`/`AE_aglue_law`/
+`integral_aglue_law`; `aglue_law_start` (ii); `padd_diffquot` +
+`aglue_law_diffquot` (iii); `path_stopping_time_min`, `pstopped_eval_min`,
+`pcut_padd_before`, `pcut_padd_section`, `section_padd_in_filtration`,
+`pcut_after_in_pre_sigma`.
+
+**What remains of §2.1** is the `≥` half itself: feed
+`paper_pair_class_aglue` (with the optimal-continuation kernel) into
+`paper_v_dpp_sup_ge_time_of_const`, which is already stated for an arbitrary
+`θ`. Steps (1)–(4) are all closed.
