@@ -15087,4 +15087,491 @@ proof -
   qed
 qed
 
+section \<open>The delayed class supplies step (4)'s kernel clauses\<close>
+
+text \<open>@{thm [source] paper_pair_class_aglue} asks its continuation kernel for nine
+  facts.  Four are already in hand for \<^const>\<open>pdelclass\<close> --- \<open>Kp\<close> (the
+  selector's own measurability), \<open>prob_space\<close>/\<open>sets\<close>
+  (@{thm [source] pdelclass_prob}), \<open>K0\<close>
+  (@{thm [source] pdelclass_frozen_at} at \<open>u = 0\<close>) and \<open>Kfr\<close>
+  (@{thm [source] pdelclass_frozen}).  The remaining ones all follow from a
+  SINGLE structural statement: a delayed law's two class processes are still
+  MARTINGALES on the fixed \<open>T\<close>-space, in the delayed law's own natural
+  filtration.
+
+  The reason is that delaying is a TIME CHANGE.  A delayed path evaluated at
+  \<open>u\<close> is the base path evaluated at \<open>\<rho> u = (u − s) \<or> 0 \<and> (T − s)\<close>, which is
+  nondecreasing, so @{thm [source] martingale_time_change} turns the base
+  martingale into a martingale for the time-changed filtration
+  \<open>\<F>\<^sup>\<mu>\<^sub>(\<rho> u)\<close> --- and that filtration is exactly what
+  @{thm [source] martingale_pair_law} needs in order to push the martingale
+  forward along \<^const>\<open>pembed\<close>.  The extra information a delayed path carries
+  at time \<open>u\<close> is nothing, which is why the martingale property survives the
+  delay; taking the base's OWN filtration instead would make the statement
+  false.\<close>
+
+lemma martingale_time_change_cong:
+  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) X"
+    and s0: "\<And>u :: real. 0 \<le> u \<Longrightarrow> 0 \<le> \<sigma> u"
+    and smono: "\<And>u v :: real. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> \<sigma> u \<le> \<sigma> v"
+    and eq: "\<And>u :: real. 0 \<le> u \<Longrightarrow> Y u = X (\<sigma> u)"
+  shows "martingale M (\<lambda>u. F (\<sigma> u)) 0 Y"
+proof -
+  interpret MG: martingale M F "0::real" X by (rule mg)
+  have FMs: "filtered_measure M (\<lambda>u. F (\<sigma> u)) (0::real)"
+  proof (unfold_locales)
+    show "subalgebra M (F (\<sigma> i))" if "0 \<le> i" for i :: real
+      by (rule MG.subalgebras[OF s0[OF that]])
+    show "sets (F (\<sigma> i)) \<le> sets (F (\<sigma> j))" if "0 \<le> i" "i \<le> j" for i j :: real
+      by (rule MG.sets_F_mono[OF s0[OF that(1)] smono[OF that]])
+  qed
+  interpret SF: sigma_finite_filtered_measure M "\<lambda>u. F (\<sigma> u)" "0::real"
+    unfolding sigma_finite_filtered_measure_def
+      sigma_finite_filtered_measure_axioms_def
+    using FMs MG.sigma_finite_subalgebra_F[OF s0[OF order_refl]] by blast
+  have adY: "Y i \<in> borel_measurable (F (\<sigma> i))" if i: "0 \<le> i" for i :: real
+    unfolding eq[OF i] by (rule MG.adapted[OF s0[OF i]])
+  show ?thesis
+  proof (rule SF.martingale_of_set_integral_eq)
+    show "adapted_process M (\<lambda>u. F (\<sigma> u)) 0 Y"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using FMs adY by blast
+    show "integrable M (Y i)" if i: "0 \<le> i" for i :: real
+      unfolding eq[OF i] by (rule MG.integrable[OF s0[OF i]])
+    show "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (Y j)"
+      if ij: "0 \<le> i" "i \<le> j" and A: "A \<in> sets (F (\<sigma> i))" for A and i j :: real
+    proof -
+      have j0: "0 \<le> j" using ij by simp
+      show ?thesis
+        unfolding eq[OF ij(1)] eq[OF j0]
+        by (rule MG.set_integral_eq[OF A s0[OF ij(1)] smono[OF ij]])
+    qed
+  qed
+qed
+
+lemma path_eval_natural_filtration:
+  fixes M :: "('n::finite pairpath) measure"
+  assumes t0: "0 \<le> t" and tu: "t \<le> u"
+  shows "(\<lambda>w :: 'n pairpath. w t)
+      \<in> natural_filtration M 0 (\<lambda>v w. w v) u \<rightarrow>\<^sub>M borel"
+  unfolding natural_filtration_def
+  by (rule measurable_family_vimage_algebra) (use t0 tu in auto)
+
+text \<open>The time change itself: reading a delayed path at \<open>u\<close> is reading the
+  base path at \<open>\<rho> u\<close>.  Pure arithmetic, no membership.\<close>
+
+lemma pembed_eval_min:
+  fixes w :: "'n::finite pairpath"
+  assumes u: "0 \<le> u" and s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "pembed s T w (min u T) = w (min (max (u - s) 0) (T - s))"
+proof -
+  have mem: "min u T \<in> {0..T}" using u s0 sT by simp
+  have "pembed s T w (min u T) = w (max (min u T - s) 0)"
+    by (rule pembed_apply[OF mem])
+  moreover have "max (min u T - s) 0 = min (max (u - s) 0) (T - s)"
+    using u s0 sT by (auto simp: min_def max_def)
+  ultimately show ?thesis by simp
+qed
+
+lemma pembed_eval_le:
+  fixes w :: "'n::finite pairpath"
+  assumes r0: "0 \<le> r" and ru: "r \<le> u" and s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "(\<lambda>w :: 'n pairpath. pembed s T w r) \<in> borel_measurable
+      (natural_filtration M 0 (\<lambda>v w. w v) (min (max (u - s) 0) (T - s)))"
+proof (cases "r \<le> T")
+  case True
+  have e1: "0 \<le> max (r - s) 0" by simp
+  have e2: "max (r - s) 0 \<le> min (max (u - s) 0) (T - s)"
+    using r0 ru s0 sT True by (auto simp: min_def max_def)
+  have mem: "r \<in> {0..T}" using r0 True by simp
+  have "(\<lambda>w :: 'n pairpath. w (max (r - s) 0)) \<in> borel_measurable
+      (natural_filtration M 0 (\<lambda>v w. w v) (min (max (u - s) 0) (T - s)))"
+    by (rule path_eval_natural_filtration[OF e1 e2])
+  then show ?thesis by (simp add: pembed_apply[OF mem])
+next
+  case False
+  then have "r \<notin> {0..T}" by simp
+  then have "(\<lambda>w :: 'n pairpath. pembed s T w r) = (\<lambda>w. undefined)"
+    by (simp add: pembed_outside)
+  then show ?thesis by simp
+qed
+
+theorem pdelclass_X_martingale:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0
+      (\<lambda>u w. fst (w (min u T)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bs = "borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+  let ?rho = "\<lambda>u :: real. min (max (u - s) 0) (T - s)"
+  have T0: "0 \<le> T" using s0 sT by simp
+  have Ts: "0 \<le> T - s" using sT by simp
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets ?Bs" by (rule paper_pair_class_sets[OF mu])
+  have Pmu: "prob_space \<mu>" by (rule paper_pair_class_prob[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
+    unfolding nu pair_law_of_def ..
+  let ?F = "natural_filtration \<mu> 0 (\<lambda>v w :: 'n pairpath. w v)"
+  have mgb: "martingale \<mu> ?F 0 (\<lambda>t w. fst (w (min t (T - s))))"
+    by (rule paper_pair_class_X_martingale[OF mu])
+  have tc: "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
+      (\<lambda>u w. fst (pembed s T w (min u T)))"
+  proof (rule martingale_time_change_cong[OF mgb])
+    show "0 \<le> ?rho u" if "0 \<le> u" for u :: real using Ts that by simp
+    show "?rho u \<le> ?rho v" if "0 \<le> u" "u \<le> v" for u v :: real
+      using that by simp
+    show "(\<lambda>w :: 'n pairpath. fst (pembed s T w (min u T)))
+        = (\<lambda>w. fst (w (min (?rho u) (T - s))))" if u: "0 \<le> u" for u :: real
+    proof (rule ext)
+      fix w :: "'n pairpath"
+      have "pembed s T w (min u T) = w (?rho u)"
+        by (rule pembed_eval_min[OF u s0 sT])
+      moreover have "min (?rho u) (T - s) = ?rho u" by simp
+      ultimately show "fst (pembed s T w (min u T))
+          = fst (w (min (?rho u) (T - s)))" by simp
+    qed
+  qed
+  show ?thesis
+    unfolding nu'
+  proof (rule martingale_pair_law[where T = T and FF = "\<lambda>u. ?F (?rho u)"])
+    show "prob_space \<mu>" by (rule Pmu)
+    show "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B" by (rule pm)
+    show "(\<lambda>w. pembed s T w r) \<in> borel_measurable (?F (?rho u))"
+      if "0 \<le> r" "r \<le> u" for u r :: real
+      by (rule pembed_eval_le[OF that s0 sT])
+    show "(\<lambda>w :: 'n pairpath. fst (w (min u T))) \<in> borel_measurable
+        (natural_filtration (pair_law_of T (pembed s T) \<mu>)
+          0 (\<lambda>v w. w v) u)" if u: "0 \<le> u" for u :: real
+    proof -
+      have a: "0 \<le> min u T" using u T0 by simp
+      have b: "min u T \<le> u" by simp
+      have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+          \<in> borel_measurable borel"
+        by (intro borel_measurable_continuous_onI continuous_intros)
+      show ?thesis
+        by (rule measurable_compose
+            [OF path_eval_natural_filtration[OF a b] fstB])
+    qed
+    show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
+        (\<lambda>u w. fst (pembed s T w (min u T)))" by (rule tc)
+  qed
+qed
+
+theorem pdelclass_comp_martingale:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0
+      (\<lambda>u w. outerp (fst (w (min u T))) - snd (w (min u T)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bs = "borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+  let ?rho = "\<lambda>u :: real. min (max (u - s) 0) (T - s)"
+  have T0: "0 \<le> T" using s0 sT by simp
+  have Ts: "0 \<le> T - s" using sT by simp
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets ?Bs" by (rule paper_pair_class_sets[OF mu])
+  have Pmu: "prob_space \<mu>" by (rule paper_pair_class_prob[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
+    unfolding nu pair_law_of_def ..
+  let ?F = "natural_filtration \<mu> 0 (\<lambda>v w :: 'n pairpath. w v)"
+  have mgb: "martingale \<mu> ?F 0
+      (\<lambda>t w. outerp (fst (w (min t (T - s)))) - snd (w (min t (T - s))))"
+    by (rule paper_pair_class_comp_martingale[OF mu])
+  have tc: "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
+      (\<lambda>u w. outerp (fst (pembed s T w (min u T)))
+          - snd (pembed s T w (min u T)))"
+  proof (rule martingale_time_change_cong[OF mgb])
+    show "0 \<le> ?rho u" if "0 \<le> u" for u :: real using Ts that by simp
+    show "?rho u \<le> ?rho v" if "0 \<le> u" "u \<le> v" for u v :: real
+      using that by simp
+    show "(\<lambda>w :: 'n pairpath. outerp (fst (pembed s T w (min u T)))
+          - snd (pembed s T w (min u T)))
+        = (\<lambda>w. outerp (fst (w (min (?rho u) (T - s))))
+          - snd (w (min (?rho u) (T - s))))" if u: "0 \<le> u" for u :: real
+    proof (rule ext)
+      fix w :: "'n pairpath"
+      have "pembed s T w (min u T) = w (?rho u)"
+        by (rule pembed_eval_min[OF u s0 sT])
+      moreover have "min (?rho u) (T - s) = ?rho u" by simp
+      ultimately show "outerp (fst (pembed s T w (min u T)))
+            - snd (pembed s T w (min u T))
+          = outerp (fst (w (min (?rho u) (T - s))))
+            - snd (w (min (?rho u) (T - s)))" by simp
+    qed
+  qed
+  show ?thesis
+    unfolding nu'
+  proof (rule martingale_pair_law[where T = T and FF = "\<lambda>u. ?F (?rho u)"])
+    show "prob_space \<mu>" by (rule Pmu)
+    show "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B" by (rule pm)
+    show "(\<lambda>w. pembed s T w r) \<in> borel_measurable (?F (?rho u))"
+      if "0 \<le> r" "r \<le> u" for u r :: real
+      by (rule pembed_eval_le[OF that s0 sT])
+    show "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u T))) - snd (w (min u T)))
+        \<in> borel_measurable (natural_filtration
+          (pair_law_of T (pembed s T) \<mu>) 0 (\<lambda>v w. w v) u)"
+      if u: "0 \<le> u" for u :: real
+    proof -
+      have a: "0 \<le> min u T" using u T0 by simp
+      have b: "min u T \<le> u" by simp
+      have cm: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
+          \<in> borel_measurable borel"
+        unfolding outerp_def
+        by (intro borel_measurable_continuous_onI continuous_intros)
+      show ?thesis
+        by (rule measurable_compose
+            [OF path_eval_natural_filtration[OF a b] cm])
+    qed
+    show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
+        (\<lambda>u w. outerp (fst (pembed s T w (min u T)))
+            - snd (pembed s T w (min u T)))" by (rule tc)
+  qed
+qed
+
+subsection \<open>The covariation clause of the continuation\<close>
+
+text \<open>The guard \<open>s \<le> a\<close> is what makes this the DELAYED constraint: below \<open>s\<close>
+  the path stands still, so no difference quotient there can lie in
+  \<^const>\<open>sconstraint\<close>, and the kernel is only ever asked about the stretch
+  after the freeze.  One rational pair at a time
+  (@{thm [source] closedin_diffquot_constraint} for measurability, so that
+  @{thm [source] AE_distr_iff} applies), then two countable passes, then
+  @{thm [source] diffquot_all_of_rational_ge} for the real pairs.\<close>
+
+theorem pdelclass_diffquot:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  shows "AE w in \<nu>. \<forall>a b. s \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T \<longrightarrow>
+      (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bs = "borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric))"
+  have T0: "0 \<le> T" using s0 sT by simp
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets ?Bs" by (rule paper_pair_class_sets[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  have setsnu: "sets \<nu> = sets ?B" unfolding nu by simp
+  have cov: "AE w in \<mu>. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T - s \<longrightarrow>
+      (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+    using mu unfolding paper_pair_class_def by blast
+  have one: "AE w in \<nu>.
+      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+    if p: "p \<in> {0..T}" and q: "q \<in> {0..T}" and pq: "p < q" and sp: "s \<le> p"
+    for p q :: real
+  proof -
+    have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+      by (simp add: space_borel_of)
+    have mset: "{w \<in> space ?B.
+        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L}
+        \<in> sets ?B"
+      unfolding spB
+      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q]])
+    have "AE w in \<mu>. (1 / (q - p)) *\<^sub>R
+        (snd (pembed s T w q) - snd (pembed s T w p)) \<in> sconstraint k L"
+      using cov
+    proof eventually_elim
+      case (elim w)
+      have ep: "pembed s T w p = w (p - s)"
+      proof -
+        have "pembed s T w p = w (max (p - s) 0)" by (rule pembed_apply[OF p])
+        moreover have "max (p - s) 0 = p - s" using sp by simp
+        ultimately show ?thesis by simp
+      qed
+      have eqq: "pembed s T w q = w (q - s)"
+      proof -
+        have "pembed s T w q = w (max (q - s) 0)" by (rule pembed_apply[OF q])
+        moreover have "max (q - s) 0 = q - s" using sp pq by simp
+        ultimately show ?thesis by simp
+      qed
+      have a0: "0 \<le> p - s" using sp by simp
+      have ab: "p - s < q - s" using pq by simp
+      have bT: "q - s \<le> T - s" using q by simp
+      from elim have "(1 / ((q - s) - (p - s))) *\<^sub>R
+          (snd (w (q - s)) - snd (w (p - s))) \<in> sconstraint k L"
+        using a0 ab bT by blast
+      then show ?case unfolding ep eqq by simp
+    qed
+    then show ?thesis unfolding nu AE_distr_iff[OF pm mset] .
+  qed
+  have rat: "AE w in \<nu>. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE w in \<nu>. \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE w in \<nu>. p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+      proof (cases "p \<in> {0..T} \<and> q \<in> {0..T} \<and> p < q \<and> s \<le> p")
+        case True
+        then show ?thesis using one[of p q] by auto
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  have spn: "AE w in \<nu>. w \<in> space \<nu>" by (rule AE_space)
+  from rat spn show ?thesis
+  proof eventually_elim
+    case (elim w)
+    then have R: "\<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+      and W: "w \<in> space \<nu>" by blast+
+    have mw: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W sets_eq_imp_space_eq[OF setsnu] by (simp add: space_borel_of)
+    have cont: "continuous_on {0..T} (\<lambda>u. snd (w u))"
+      using mspace_path_metricD[OF mw] by (intro continuous_intros)
+    show ?case
+    proof (intro allI impI)
+      fix a b :: real
+      assume sa: "s \<le> a" and ab: "a < b" and bT: "b \<le> T"
+      have a0: "0 \<le> a" using sa s0 by simp
+      show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+      proof (rule diffquot_all_of_rational_ge
+          [OF closed_sconstraint cont _ sa a0 ab bT])
+        fix p q :: real
+        assume "p \<in> \<rat>" "q \<in> \<rat>" "0 \<le> p" "p < q" "q \<le> T" "s \<le> p"
+        then show "(1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p))
+            \<in> sconstraint k L" using R bT by auto
+      qed
+    qed
+  qed
+qed
+
+subsection \<open>Mean, integrability and the increment identity\<close>
+
+text \<open>A martingale that starts at \<open>0\<close> has mean \<open>0\<close> at every later time; the
+  set-integral identity over the whole space is the case \<open>i = 0\<close> of the
+  martingale property, and @{thm [source] pdelclass_frozen_at} supplies the start.\<close>
+
+lemma martingale_mean_zero_of_start:
+  fixes M :: "'a measure"
+    and Z :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) Z"
+    and z0: "AE \<omega> in M. Z 0 \<omega> = 0" and u: "0 \<le> u"
+  shows "(\<integral>\<omega>. Z u \<omega> \<partial>M) = 0"
+proof -
+  interpret MG: martingale M F "0::real" Z by (rule mg)
+  have sub: "subalgebra M (F 0)" by (rule MG.subalgebras[OF order.refl])
+  have spF: "space (F 0) = space M" using sub by (simp add: subalgebra_def)
+  have top: "space M \<in> sets (F 0)" using sets.top[of "F 0"] spF by simp
+  have i0: "integrable M (Z 0)" by (rule MG.integrable[OF order.refl])
+  have iu: "integrable M (Z u)" by (rule MG.integrable[OF u])
+  have m0: "Z 0 \<in> borel_measurable M"
+    using i0 by (simp add: borel_measurable_integrable)
+  have "(\<integral>\<omega>. Z u \<omega> \<partial>M) = set_lebesgue_integral M (space M) (Z u)"
+    by (rule set_integral_space[OF iu, symmetric])
+  also have "\<dots> = set_lebesgue_integral M (space M) (Z 0)"
+    by (rule MG.set_integral_eq[OF top order.refl u, symmetric])
+  also have "\<dots> = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)" by (rule set_integral_space[OF i0])
+  also have "\<dots> = (\<integral>\<omega>. 0 \<partial>M)"
+    by (rule integral_cong_AE[OF m0 borel_measurable_const z0])
+  finally show ?thesis by simp
+qed
+
+lemma pdelclass_start_zero:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  shows "AE w in \<nu>. w (min (0::real) T) = 0"
+proof -
+  have T0: "0 \<le> T" using s0 sT by simp
+  have z: "(0::real) \<in> {0..T}" using T0 by simp
+  have "AE w in \<nu>. w (0::real) = 0"
+    by (rule pdelclass_frozen_at[OF s0 sT m z s0])
+  then show ?thesis using T0 by simp
+qed
+
+corollary pdelclass_X_int:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and u: "0 \<le> u"
+  shows "integrable \<nu> (\<lambda>w. fst (w (min u T)) $ e)"
+  by (rule martingale.integrable
+      [OF martingale_vec_component[OF pdelclass_X_martingale[OF s0 sT m]] u])
+
+corollary pdelclass_comp_int:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and u: "0 \<le> u"
+  shows "integrable \<nu>
+      (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)"
+  by (rule martingale.integrable
+      [OF martingale_mat_component[OF pdelclass_comp_martingale[OF s0 sT m]] u])
+
+corollary pdelclass_X_increment:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and C: "C \<in> sets (natural_filtration \<nu> 0 (\<lambda>t w. w t) u)"
+    and u: "0 \<le> u" and uv: "u \<le> v"
+  shows "set_lebesgue_integral \<nu> C (\<lambda>w. fst (w (min u T)) $ e)
+      = set_lebesgue_integral \<nu> C (\<lambda>w. fst (w (min v T)) $ e)"
+  by (rule martingale.set_integral_eq
+      [OF martingale_vec_component[OF pdelclass_X_martingale[OF s0 sT m]]
+        C u uv])
+
+corollary pdelclass_comp_increment:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and C: "C \<in> sets (natural_filtration \<nu> 0 (\<lambda>t w. w t) u)"
+    and u: "0 \<le> u" and uv: "u \<le> v"
+  shows "set_lebesgue_integral \<nu> C
+        (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)
+      = set_lebesgue_integral \<nu> C
+        (\<lambda>w. (outerp (fst (w (min v T))) - snd (w (min v T))) $ c $ d)"
+  by (rule martingale.set_integral_eq
+      [OF martingale_mat_component[OF pdelclass_comp_martingale[OF s0 sT m]]
+        C u uv])
+
+corollary pdelclass_X_mean:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and u: "0 \<le> u"
+  shows "(\<integral>w. fst (w (min u T)) $ e \<partial>\<nu>) = 0"
+proof (rule martingale_mean_zero_of_start
+    [OF martingale_vec_component[OF pdelclass_X_martingale[OF s0 sT m]] _ u])
+  show "AE w in \<nu>. fst (w (min (0::real) T)) $ e = 0"
+    using pdelclass_start_zero[OF s0 sT m] by (rule eventually_mono) simp
+qed
+
+corollary pdelclass_comp_mean:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and u: "0 \<le> u"
+  shows "(\<integral>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d \<partial>\<nu>)
+      = 0"
+proof (rule martingale_mean_zero_of_start
+    [OF martingale_mat_component[OF pdelclass_comp_martingale[OF s0 sT m]] _ u])
+  show "AE w in \<nu>. (outerp (fst (w (min (0::real) T)))
+      - snd (w (min (0::real) T))) $ c $ d = 0"
+    using pdelclass_start_zero[OF s0 sT m]
+  proof (rule eventually_mono)
+    fix w :: "'n pairpath" assume z: "w (min (0::real) T) = 0"
+    have "outerp (fst (w (min (0::real) T))) = 0"
+      unfolding z by (simp add: outerp_def zero_vec_def vec_eq_iff)
+    then show "(outerp (fst (w (min (0::real) T)))
+        - snd (w (min (0::real) T))) $ c $ d = 0" unfolding z by simp
+  qed
+qed
+
 end
