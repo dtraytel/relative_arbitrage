@@ -16722,14 +16722,14 @@ proof -
 qed
 
 lemma integral_kernel_measurable:
-  fixes g :: "'a \<times> 'b \<Rightarrow> real"
+  fixes g :: "'a \<Rightarrow> 'b \<Rightarrow> real"
   assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
-    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
-    and gi: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> integrable (Kr \<omega>) (\<lambda>\<omega>'. g (\<omega>, \<omega>'))"
-  shows "(\<lambda>\<omega>. \<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+    and gm: "(\<lambda>p. g (fst p) (snd p)) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    and gi: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> integrable (Kr \<omega>) (g \<omega>)"
+  shows "(\<lambda>\<omega>. \<integral>\<omega>'. g \<omega> \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
 proof -
-  define A where "A \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (g (\<omega>, \<omega>')) \<partial>(Kr \<omega>))" for \<omega>
-  define B where "B \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (- g (\<omega>, \<omega>')) \<partial>(Kr \<omega>))" for \<omega>
+  define A where "A \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (g \<omega> \<omega>') \<partial>(Kr \<omega>))" for \<omega>
+  define B where "B \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (- g \<omega> \<omega>') \<partial>(Kr \<omega>))" for \<omega>
   have Ksub: "Kr \<in> M \<rightarrow>\<^sub>M subprob_algebra N"
     by (rule measurable_prob_algebraD[OF K])
   have mA: "A \<in> borel_measurable M"
@@ -16745,7 +16745,7 @@ proof -
   show ?thesis
   proof (subst measurable_cong)
     fix \<omega> assume w: "\<omega> \<in> space M"
-    show "(\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) = enn2real (A \<omega>) - enn2real (B \<omega>)"
+    show "(\<integral>\<omega>'. g \<omega> \<omega>' \<partial>(Kr \<omega>)) = enn2real (A \<omega>) - enn2real (B \<omega>)"
       unfolding A_def B_def by (rule real_lebesgue_integral_def[OF gi[OF w]])
   next
     show "(\<lambda>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>)) \<in> borel_measurable M"
@@ -17068,6 +17068,149 @@ proof -
       = integrable ?S (\<lambda>p. ?C (padd T (fst p) (snd p)))"
     unfolding aglue_law_def by (rule integrable_distr_eq[OF pm hb])
   then show ?thesis using gi by simp
+qed
+
+subsection \<open>\<open>msecX\<close> and \<open>msecC\<close>\<close>
+
+text \<open>One generic lemma covers both, and \<open>gintX\<close>/\<open>gintC\<close> too: the conditioning
+  factor enters only through being measurable and bounded by \<open>1\<close> --- an
+  \<^const>\<open>indicator\<close> for \<open>msec\<close>, an indicator composed with \<^const>\<open>pcut\<close> for
+  \<open>gint\<close>.\<close>
+
+lemma aglue_section_measurable:
+  fixes Q :: "('n::finite pairpath) measure"
+    and h cc :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and hb: "h \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and cb: "cc \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and c1: "\<And>\<omega>. \<bar>cc \<omega>\<bar> \<le> 1"
+    and Kint: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))"
+  shows "(\<lambda>p'. \<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p'))
+      \<in> borel_measurable Q"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have pmP: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
+      \<in> Q \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B" by (rule padd_measurable_ksemi[OF T0 setsQ])
+  have gm: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath).
+      cc (padd T (fst p) (snd p)) * h (padd T (fst p) (snd p)))
+      \<in> borel_measurable (Q \<Otimes>\<^sub>M ?B)"
+    using measurable_compose[OF pmP cb] measurable_compose[OF pmP hb] by simp
+  have gi: "integrable (\<kappa> p') (\<lambda>w. cc (padd T p' w) * h (padd T p' w))"
+    if sp: "p' \<in> space Q" for p'
+  proof (rule Bochner_Integration.integrable_bound[OF Kint[OF sp]])
+    have sK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+    have pl: "(\<lambda>w :: 'n pairpath. padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
+      by (rule padd_measurable_left[OF T0])
+         (use sp space_of_path_sets[OF setsQ] in simp)
+    have "(\<lambda>w :: 'n pairpath. cc (padd T p' w) * h (padd T p' w))
+        \<in> borel_measurable ?B"
+      using measurable_compose[OF pl cb] measurable_compose[OF pl hb] by simp
+    then show "(\<lambda>w. cc (padd T p' w) * h (padd T p' w))
+        \<in> borel_measurable (\<kappa> p')"
+      using measurable_cong_sets[OF sK refl] by blast
+  next
+    show "AE w in \<kappa> p'. norm (cc (padd T p' w) * h (padd T p' w))
+        \<le> norm (h (padd T p' w))"
+    proof (intro AE_I2)
+      fix w :: "'n pairpath"
+      have "norm (cc (padd T p' w) * h (padd T p' w))
+          = \<bar>cc (padd T p' w)\<bar> * \<bar>h (padd T p' w)\<bar>" by (simp add: abs_mult)
+      also have "\<dots> \<le> 1 * \<bar>h (padd T p' w)\<bar>"
+        by (rule mult_right_mono[OF c1]) simp
+      finally show "norm (cc (padd T p' w) * h (padd T p' w))
+          \<le> norm (h (padd T p' w))" by simp
+    qed
+  qed
+  show ?thesis
+    by (rule integral_kernel_measurable
+        [where g = "\<lambda>p' w. cc (padd T p' w) * h (padd T p' w)", OF Kp gm gi])
+qed
+
+corollary aglue_msec_X:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and A: "A \<in> sets (aglue_law T \<kappa> Q)"
+    and Kint: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (padd T p' w (min u T)) $ e)"
+  shows "(\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+      * (fst (padd T p' w (min u T)) $ e) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have AB: "A \<in> sets ?B" using A by (simp add: sets_aglue_law)
+  have cb: "(\<lambda>\<omega> :: 'n pairpath. indicator A \<omega> :: real) \<in> borel_measurable ?B"
+    using AB by (rule borel_measurable_indicator)
+  have c1: "\<bar>(indicator A \<omega> :: real)\<bar> \<le> 1" for \<omega> :: "'n pairpath"
+    by (simp add: indicator_def)
+  have hb: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ e)
+      \<in> borel_measurable ?B"
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    show ?thesis
+      by (rule measurable_compose
+          [OF measurable_compose[OF ev f] borel_measurable_nth])
+  qed
+  show ?thesis
+    by (rule aglue_section_measurable[OF T0 setsQ Kp hb cb c1 Kint])
+qed
+
+corollary aglue_msec_C:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and A: "A \<in> sets (aglue_law T \<kappa> Q)"
+    and Kint: "\<And>p'. p' \<in> space Q \<Longrightarrow> integrable (\<kappa> p')
+      (\<lambda>w. (outerp (fst (padd T p' w (min u T)))
+        - snd (padd T p' w (min u T))) $ c $ d)"
+  shows "(\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+      * ((outerp (fst (padd T p' w (min u T)))
+          - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
+      \<in> borel_measurable Q"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have AB: "A \<in> sets ?B" using A by (simp add: sets_aglue_law)
+  have cb: "(\<lambda>\<omega> :: 'n pairpath. indicator A \<omega> :: real) \<in> borel_measurable ?B"
+    using AB by (rule borel_measurable_indicator)
+  have c1: "\<bar>(indicator A \<omega> :: real)\<bar> \<le> 1" for \<omega> :: "'n pairpath"
+    by (simp add: indicator_def)
+  have hb: "(\<lambda>\<omega> :: 'n pairpath.
+      (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ c $ d)
+      \<in> borel_measurable ?B"
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have s: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
+        \<in> borel_measurable borel"
+      unfolding outerp_def
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    have bl: "bounded_linear (\<lambda>M :: real^'n^'n. M $ c $ d)"
+      by (rule bounded_linear_compose[OF bounded_linear_vec_nth
+          bounded_linear_vec_nth])
+    have n: "(\<lambda>M :: real^'n^'n. M $ c $ d) \<in> borel_measurable borel"
+      by (rule borel_measurable_continuous_onI)
+         (rule linear_continuous_on[OF bl])
+    show ?thesis
+      by (rule measurable_compose[OF measurable_compose[OF ev s] n])
+  qed
+  show ?thesis
+    by (rule aglue_section_measurable[OF T0 setsQ Kp hb cb c1 Kint])
 qed
 
 end
