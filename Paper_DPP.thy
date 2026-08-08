@@ -14431,4 +14431,660 @@ proof -
   then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
 qed
 
+section \<open>The horizon enters the value only as a CAP\<close>
+
+text \<open>The plan recorded the horizon-parametrised selector as a genuinely new
+  measurable-selection theorem.  It is not, and the reason is a single
+  identity: the capped exit time at a SHORTER horizon is the capped exit time
+  at the longer one, capped again --- \<^term>\<open>pexit S K f = min (pexit T K f) S\<close>.
+  Capping by a constant commutes with the essential infimum and with the
+  supremum over the class, so the horizon acts on the value function as an
+  outer \<open>min\<close> and NOT on which law is optimal.  Consequently ONE selector,
+  built once at the full horizon \<open>T\<close>, is optimal at EVERY shorter horizon,
+  and the parameter \<open>s\<close> only has to be carried through a pushforward.\<close>
+
+lemma pexit_min_horizon:
+  fixes K :: "'b::polish_space set"
+  assumes S: "0 \<le> S" and ST: "S \<le> T"
+  shows "pexit S K f = min (pexit T K f) S"
+proof (rule order.antisym)
+  have T0: "0 \<le> T" using S ST by simp
+  show "pexit S K f \<le> min (pexit T K f) S"
+    using pexit_mono_T[OF S ST, of K f] pexit_le_T[OF S, of K f] by simp
+  have lb: "min (pexit T K f) S \<le> z"
+    if z: "z \<in> {r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S}" for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> S" "f z \<in> - K" | (cap) "z = S" using z by blast
+    then show ?thesis
+    proof cases
+      case hit
+      then have zT: "z \<le> T" using ST by simp
+      have "pexit T K f \<le> z"
+        unfolding pexit_def
+        by (rule etime_le_of_mem[OF T0 hit(1) zT]) (use hit(3) in simp)
+      then show ?thesis by simp
+    next
+      case cap
+      then show ?thesis by simp
+    qed
+  qed
+  have "pexit S K f = Inf ({r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S})"
+    unfolding pexit_def etime_def ..
+  moreover have "min (pexit T K f) S
+      \<le> Inf ({r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show "min (pexit T K f) S \<le> pexit S K f" by simp
+qed
+
+lemma ess_inf_time_mono:
+  assumes le: "\<And>\<omega>. g \<omega> \<le> h \<omega>"
+  shows "ess_inf_time M g \<le> ess_inf_time M h"
+  unfolding ess_inf_time_def
+proof (rule Sup_subset_mono, rule subsetI)
+  fix e :: ennreal
+  assume e: "e \<in> {c. AE \<omega> in M. c \<le> ennreal (g \<omega>)}"
+  then have "AE \<omega> in M. e \<le> ennreal (g \<omega>)" by simp
+  then have "AE \<omega> in M. e \<le> ennreal (h \<omega>)"
+  proof (rule eventually_mono)
+    fix \<omega> assume "e \<le> ennreal (g \<omega>)"
+    also have "ennreal (g \<omega>) \<le> ennreal (h \<omega>)" by (intro ennreal_leI le)
+    finally show "e \<le> ennreal (h \<omega>)" .
+  qed
+  then show "e \<in> {c. AE \<omega> in M. c \<le> ennreal (h \<omega>)}" by simp
+qed
+
+text \<open>Capping the integrand by a constant caps the essential infimum by the
+  same constant.  Both halves are elementary, but the \<open>\<ge>\<close> half has to be run
+  through @{thm [source] ennreal_strict_between}: the defining supremum need
+  not be attained.\<close>
+
+lemma ess_inf_time_min_const:
+  fixes c :: real
+  assumes M: "prob_space M"
+  shows "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) = min (ess_inf_time M g) (ennreal c)"
+proof (rule order.antisym)
+  show "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) \<le> min (ess_inf_time M g) (ennreal c)"
+  proof (intro min.boundedI)
+    show "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) \<le> ess_inf_time M g"
+      by (rule ess_inf_time_mono) simp
+    show "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) \<le> ennreal c"
+      by (rule ess_inf_time_le_const[OF M]) simp
+  qed
+  show "min (ess_inf_time M g) (ennreal c) \<le> ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)"
+  proof (rule ccontr)
+    assume "\<not> min (ess_inf_time M g) (ennreal c)
+        \<le> ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)"
+    then have "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)
+        < min (ess_inf_time M g) (ennreal c)" by (rule not_le_imp_less)
+    then obtain b where b1: "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) < b"
+      and b2: "b < min (ess_inf_time M g) (ennreal c)"
+      using ennreal_strict_between by blast
+    from b2 have bg: "b < ess_inf_time M g"
+      by (rule order.strict_trans2[OF _ min.cobounded1])
+    from b2 have bc: "b < ennreal c"
+      by (rule order.strict_trans2[OF _ min.cobounded2])
+    from bg have "b < Sup {e. AE \<omega> in M. e \<le> ennreal (g \<omega>)}"
+      unfolding ess_inf_time_def .
+    then obtain e where eA: "e \<in> {e. AE \<omega> in M. e \<le> ennreal (g \<omega>)}"
+      and be: "b < e" by (auto simp: less_Sup_iff)
+    from eA have e: "AE \<omega> in M. e \<le> ennreal (g \<omega>)" by simp
+    then have "AE \<omega> in M. b \<le> ennreal (min (g \<omega>) c)"
+    proof (rule eventually_mono)
+      fix \<omega> assume "e \<le> ennreal (g \<omega>)"
+      with be have "b \<le> ennreal (g \<omega>)" by simp
+      with bc have "b \<le> min (ennreal (g \<omega>)) (ennreal c)" by simp
+      then show "b \<le> ennreal (min (g \<omega>) c)" by (simp add: ennreal_min_eq)
+    qed
+    then have "b \<le> ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)"
+      unfolding ess_inf_time_def by (intro Sup_upper) simp
+    with b1 show False by simp
+  qed
+qed
+
+text \<open>The value function at a shorter horizon is the value function at the
+  longer one, capped.  The \<open>\<le>\<close> half is @{thm [source] paper_v_horizon_mono}
+  together with @{thm [source] paper_v_le_T}; the \<open>\<ge>\<close> half CUTS a competitor
+  at the longer horizon back to the shorter one
+  (@{thm [source] paper_pair_class_pcut}), where the two lemmas above turn its
+  value into the capped value.  No pasting is needed in either direction ---
+  the pasting is already inside @{thm [source] paper_v_horizon_mono}.\<close>
+
+theorem paper_v_horizon_cap:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes S0: "0 \<le> S" and ST: "S \<le> T" and L: "1 \<le> L" and K: "closed K"
+  shows "paper_v k L S K x = min (paper_v k L T K x) (ennreal S)"
+proof (rule order.antisym)
+  show "paper_v k L S K x \<le> min (paper_v k L T K x) (ennreal S)"
+    by (intro min.boundedI paper_v_horizon_mono[OF S0 ST L K] paper_v_le_T[OF S0])
+  show "min (paper_v k L T K x) (ennreal S) \<le> paper_v k L S K x"
+  proof (rule ccontr)
+    let ?BS = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+    assume "\<not> min (paper_v k L T K x) (ennreal S) \<le> paper_v k L S K x"
+    then have "paper_v k L S K x < min (paper_v k L T K x) (ennreal S)"
+      by (rule not_le_imp_less)
+    then obtain b where b1: "paper_v k L S K x < b"
+      and b2: "b < min (paper_v k L T K x) (ennreal S)"
+      using ennreal_strict_between by blast
+    from b2 have bT: "b < paper_v k L T K x"
+      by (rule order.strict_trans2[OF _ min.cobounded1])
+    from b2 have bS: "b < ennreal S"
+      by (rule order.strict_trans2[OF _ min.cobounded2])
+    from bT have "b < Sup ((\<lambda>Q. ess_inf_time Q
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) ` paper_pair_class k L T x)"
+      unfolding paper_v_def .
+    then obtain Q :: "('n pairpath) measure"
+      where Q: "Q \<in> paper_pair_class k L T x"
+        and bQ: "b < ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+      by (auto simp: less_Sup_iff)
+    have setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+      by (rule paper_pair_class_sets[OF Q])
+    have PQ: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+    have cutm: "pcut S \<in> Q \<rightarrow>\<^sub>M ?BS" by (rule pcut_measurable[OF S0 ST setsQ])
+    have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t)))
+        \<in> borel_measurable ?BS"
+    proof -
+      have "(\<lambda>\<omega> :: 'n pairpath. pexit S K (pfst S \<omega>)) \<in> borel_measurable ?BS"
+        by (rule measurable_compose[OF pfst_measurable[OF S0 refl]
+              pexit_measurable[OF S0 K]])
+      then show ?thesis by (simp add: pexit_pfst)
+    qed
+    have mset: "{\<omega> \<in> space ?BS. c \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))}
+        \<in> sets ?BS" for c :: ennreal using taum by measurable
+    have "ess_inf_time (pair_law_of S (pcut S) Q)
+          (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+        = ess_inf_time Q (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
+      unfolding pair_law_of_def by (rule ess_inf_time_distr[OF cutm mset])
+    also have "\<dots> = ess_inf_time Q (\<lambda>\<omega>. min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
+    proof (rule arg_cong[where f = "ess_inf_time Q"], rule ext)
+      fix \<omega> :: "'n pairpath"
+      have "pexit S K (\<lambda>t. fst (pcut S \<omega> t)) = pexit S K (\<lambda>t. fst (\<omega> t))"
+        by (rule pexit_cong_on) (auto simp: pcut_apply)
+      then show "pexit S K (\<lambda>t. fst (pcut S \<omega> t))
+          = min (pexit T K (\<lambda>t. fst (\<omega> t))) S"
+        using pexit_min_horizon[OF S0 ST, of K "\<lambda>t. fst (\<omega> t)"] by simp
+    qed
+    also have "\<dots> = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+        (ennreal S)"
+      by (rule ess_inf_time_min_const[OF PQ])
+    finally have val: "ess_inf_time (pair_law_of S (pcut S) Q)
+          (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+        = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)" .
+    have inS: "pair_law_of S (pcut S) Q \<in> paper_pair_class k L S x"
+      by (rule paper_pair_class_pcut[OF S0 ST Q])
+    have "b < min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
+      using bQ bS by simp
+    also have "\<dots> = ess_inf_time (pair_law_of S (pcut S) Q)
+        (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))" using val ..
+    also have "\<dots> \<le> paper_v k L S K x"
+      unfolding paper_v_def using inS by (intro Sup_upper imageI)
+    finally show False using b1 by simp
+  qed
+qed
+
+section \<open>The horizon-parametrised measurable selector\<close>
+
+text \<open>@{thm [source] paper_v_horizon_cap} turns the selection problem into a
+  pushforward problem.  The optimizer of the CAPPED value is the optimizer of
+  the uncapped one --- capping is an outer \<open>min\<close>, which is monotone --- so the
+  selector \<^emph>\<open>at the full horizon\<close> already selects optimally at every shorter
+  horizon, once it is CUT there.  The parameter \<open>s\<close> therefore enters only
+  through the map \<^const>\<open>pembed\<close>, and what has to be proved is joint
+  measurability of a pushforward, not a new selection theorem.
+
+  Three small facts make the composite work.  First, \<^const>\<open>pembed\<close> reads a
+  path only on \<open>[0,T−s]\<close>, so pre-cutting is invisible to it
+  (\<open>pembed_pcut\<close>) --- which is what identifies the pushforward of a
+  \<open>T\<close>-law with the pushforward of its cut, i.e. with a member of
+  \<^const>\<open>pdelclass\<close>.  Second, \<^const>\<open>pembed\<close> maps the \<open>T\<close>-space to itself
+  (\<open>pembed_mspace_full\<close>), so no horizon bookkeeping is needed.  Third,
+  clamping \<open>s\<close> to \<open>[0,T]\<close> makes the map total, and then
+  @{thm [source] path_eval_at_measurable_time} gives JOINT measurability in
+  the pair \<open>(s,\<omega>)\<close>: each evaluation of \<open>pembed s T \<omega>\<close> is the evaluation of
+  \<open>\<omega>\<close> at a time that depends measurably on \<open>s\<close>.\<close>
+
+lemma pembed_pcut:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "pembed s T (pcut (T - s) \<omega>) = pembed s T \<omega>"
+proof (rule ext)
+  fix t :: real
+  show "pembed s T (pcut (T - s) \<omega>) t = pembed s T \<omega> t"
+  proof (cases "t \<in> {0..T}")
+    case True
+    then have m: "max (t - s) 0 \<in> {0..T - s}" using s0 sT by auto
+    have "pembed s T (pcut (T - s) \<omega>) t = pcut (T - s) \<omega> (max (t - s) 0)"
+      by (rule pembed_apply[OF True])
+    also have "\<dots> = \<omega> (max (t - s) 0)" by (rule pcut_apply[OF m])
+    also have "\<dots> = pembed s T \<omega> t" by (rule pembed_apply[OF True, symmetric])
+    finally show ?thesis .
+  next
+    case False
+    then show ?thesis by (simp add: pembed_outside)
+  qed
+qed
+
+lemma pembed_mspace_full:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pembed s T \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+proof -
+  have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
+  have m: "continuous_on {0..T} (\<lambda>t. max (t - s) 0)"
+    by (intro continuous_intros)
+  have im: "(\<lambda>t. max (t - s) 0) ` {0..T} \<subseteq> {0..T}" using s0 sT by auto
+  have "continuous_on {0..T} (\<lambda>t. \<omega> (max (t - s) 0))"
+    by (rule continuous_on_compose2[OF c m im])
+  then show ?thesis unfolding pembed_def by (rule mspace_path_metricI)
+qed
+
+lemma pembed_measurable_full:
+  fixes s T :: real
+  assumes s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "pembed s T \<in> borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have a: "0 \<le> T - s" using sT by simp
+  have b: "T - s \<le> T" using s0 by simp
+  have eq: "(\<lambda>\<omega> :: 'n pairpath. pembed s T (pcut (T - s) \<omega>)) = pembed s T"
+    by (rule ext) (rule pembed_pcut[OF s0 sT])
+  have "(\<lambda>\<omega>. pembed s T (pcut (T - s) \<omega>)) \<in> ?B \<rightarrow>\<^sub>M ?B"
+    by (rule measurable_compose[OF pcut_measurable[OF a b refl]
+          pembed_measurable[OF s0 sT]])
+  then show ?thesis unfolding eq .
+qed
+
+text \<open>The CLAMPED delayed embedding: total in \<open>s\<close>, and equal to
+  \<^const>\<open>pembed\<close> on the range that matters.  Totality is what lets the
+  parameter live in \<^term>\<open>borel :: real measure\<close> rather than in a restricted
+  space.\<close>
+
+definition pdel :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+  where "pdel s T = pembed (max 0 (min s T)) T"
+
+lemma pdel_eq_pembed: "0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> pdel s T = pembed s T"
+  unfolding pdel_def by simp
+
+lemma pdel_clamp_lo: "0 \<le> max 0 (min (s::real) (T::real))"
+  by (rule max.cobounded1)
+
+lemma pdel_clamp_hi:
+  fixes s T :: real
+  assumes "0 \<le> T" shows "max 0 (min s T) \<le> T"
+  using assms by (intro max.boundedI) auto
+
+lemma pdel_mspace:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T" and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pdel s T \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  unfolding pdel_def
+  by (rule pembed_mspace_full[OF pdel_clamp_lo pdel_clamp_hi[OF T0] w])
+
+lemma pdel_measurable:
+  assumes T0: "0 \<le> T"
+  shows "pdel s T \<in> borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  unfolding pdel_def
+  by (rule pembed_measurable_full[OF pdel_clamp_lo pdel_clamp_hi[OF T0]])
+
+lemma pdel_eval: "t \<in> {0..T} \<Longrightarrow> pdel s T \<omega> t = \<omega> (max (t - max 0 (min s T)) 0)"
+  unfolding pdel_def by (rule pembed_apply)
+
+lemma pdel_measurable_pair:
+  assumes T0: "0 \<le> T"
+  shows "(\<lambda>p. pdel (fst p) T (snd p))
+      \<in> (borel :: real measure) \<Otimes>\<^sub>M borel_of (mtopology_of
+          (path_metric T :: ('n::finite pairpath) metric))
+        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?M = "(borel :: real measure) \<Otimes>\<^sub>M ?B"
+  have spM: "space ?M = UNIV \<times> mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_pair_measure space_borel_of)
+  have into: "pdel (fst p) T (snd p)
+      \<in> mspace (path_metric T :: ('n pairpath) metric)" if p: "p \<in> space ?M" for p
+  proof -
+    have "p \<in> UNIV \<times> mspace (path_metric T :: ('n pairpath) metric)"
+      using p unfolding spM .
+    then have "snd p \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      by (simp add: mem_Times_iff)
+    then show ?thesis by (rule pdel_mspace[OF T0])
+  qed
+  have sndm: "(\<lambda>p :: real \<times> ('n pairpath). snd p) \<in> ?M \<rightarrow>\<^sub>M ?B"
+    by (rule measurable_snd)
+  have ev: "(\<lambda>p. pdel (fst p) T (snd p) t) \<in> borel_measurable ?M" for t
+  proof (cases "t \<in> {0..T}")
+    case True
+    have gm: "(\<lambda>p :: real \<times> ('n pairpath). max (t - max 0 (min (fst p) T)) 0)
+        \<in> borel_measurable ?M" by measurable
+    have g0: "0 \<le> max (t - max 0 (min (fst p) T)) 0"
+      for p :: "real \<times> ('n pairpath)" by simp
+    have gT: "max (t - max 0 (min (fst p) T)) 0 \<le> T"
+      for p :: "real \<times> ('n pairpath)" using True by auto
+    have "(\<lambda>p :: real \<times> ('n pairpath).
+        snd p (max (t - max 0 (min (fst p) T)) 0)) \<in> borel_measurable ?M"
+      by (rule path_eval_at_measurable_time
+          [where X = "\<lambda>p :: real \<times> ('n pairpath). snd p"
+            and g = "\<lambda>p :: real \<times> ('n pairpath). max (t - max 0 (min (fst p) T)) 0",
+            OF T0 sndm gm g0 gT])
+    then show ?thesis using True by (simp add: pdel_eval)
+  next
+    case False
+    then have "(\<lambda>p :: real \<times> ('n pairpath). pdel (fst p) T (snd p) t)
+        = (\<lambda>p. undefined)"
+      unfolding pdel_def by (simp add: pembed_outside)
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    show "(\<lambda>p. mdist (path_metric T :: ('n pairpath) metric)
+        (pdel (fst p) T (snd p)) a) \<in> borel_measurable ?M"
+      by (rule mdist_measurable_of_eval[OF T0 into am ev])
+  qed
+qed
+
+subsection \<open>Cutting a law commutes with shifting, and caps its value\<close>
+
+lemma pshift_pcut_comm:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes S0: "0 \<le> S" and ST: "S \<le> T"
+  shows "pshift S y (pcut S \<omega>) = pcut S (pshift T y \<omega>)"
+proof (rule ext)
+  fix t :: real
+  show "pshift S y (pcut S \<omega>) t = pcut S (pshift T y \<omega>) t"
+  proof (cases "t \<in> {0..S}")
+    case True
+    then have tT: "t \<in> {0..T}" using ST by auto
+    have "pshift S y (pcut S \<omega>) t = (y + fst (pcut S \<omega> t), snd (pcut S \<omega> t))"
+      by (rule pshift_apply[OF True])
+    also have "\<dots> = (y + fst (\<omega> t), snd (\<omega> t))" by (simp add: pcut_apply[OF True])
+    also have "\<dots> = pshift T y \<omega> t" by (rule pshift_apply[OF tT, symmetric])
+    also have "\<dots> = pcut S (pshift T y \<omega>) t" by (rule pcut_apply[OF True, symmetric])
+    finally show ?thesis .
+  next
+    case False
+    have "pshift S y (pcut S \<omega>) t = undefined" by (rule pshift_outside[OF False])
+    moreover have "pcut S (pshift T y \<omega>) t = undefined"
+      unfolding pcut_def restrict_def by (rule if_not_P[OF False])
+    ultimately show ?thesis by simp
+  qed
+qed
+
+lemma pshift_law_pcut:
+  fixes R :: "('n::finite pairpath) measure"
+  assumes S0: "0 \<le> S" and ST: "S \<le> T"
+    and setsR: "sets R = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "pshift_law S y (pair_law_of S (pcut S) R)
+       = pair_law_of S (pcut S) (pshift_law T y R)"
+proof -
+  let ?BS = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have T0: "0 \<le> T" using S0 ST by simp
+  have cutR: "pcut S \<in> R \<rightarrow>\<^sub>M ?BS" by (rule pcut_measurable[OF S0 ST setsR])
+  have cutT: "pcut S \<in> ?BT \<rightarrow>\<^sub>M ?BS" by (rule pcut_measurable[OF S0 ST refl])
+  have shS: "pshift S y \<in> ?BS \<rightarrow>\<^sub>M ?BS" by (rule pshift_measurable[OF S0])
+  have shR: "pshift T y \<in> R \<rightarrow>\<^sub>M ?BT"
+    unfolding measurable_cong_sets[OF setsR refl] by (rule pshift_measurable[OF T0])
+  have "pshift_law S y (pair_law_of S (pcut S) R)
+      = distr (distr R ?BS (pcut S)) ?BS (pshift S y)"
+    unfolding pshift_law_def pair_law_of_def ..
+  also have "\<dots> = distr R ?BS (pshift S y \<circ> pcut S)"
+    by (rule distr_distr[OF shS cutR])
+  also have "pshift S y \<circ> pcut S = pcut S \<circ> pshift T y"
+    by (rule ext) (simp add: pshift_pcut_comm[OF S0 ST])
+  also have "distr R ?BS (pcut S \<circ> pshift T y)
+      = distr (distr R ?BT (pshift T y)) ?BS (pcut S)"
+    by (rule distr_distr[OF cutT shR, symmetric])
+  also have "\<dots> = pair_law_of S (pcut S) (pshift_law T y R)"
+    unfolding pshift_law_def pair_law_of_def ..
+  finally show ?thesis .
+qed
+
+text \<open>The value of a CUT law is the value of the original, capped.  This is
+  the law-level form of @{thm [source] pexit_min_horizon}, and it is what
+  makes one selector serve every horizon.\<close>
+
+lemma ess_inf_pexit_pcut_law:
+  fixes R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes S0: "0 \<le> S" and ST: "S \<le> T" and PR: "prob_space R"
+    and setsR: "sets R = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and K: "closed K"
+  shows "ess_inf_time (pshift_law S y (pair_law_of S (pcut S) R))
+        (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+      = min (ess_inf_time (pshift_law T y R)
+          (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
+proof -
+  let ?BS = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?P = "pshift_law T y R"
+  have T0: "0 \<le> T" using S0 ST by simp
+  have setsP: "sets ?P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))" by simp
+  have PP: "prob_space ?P" by (rule prob_space_pshift_law[OF T0 PR setsR])
+  have cutm: "pcut S \<in> ?P \<rightarrow>\<^sub>M ?BS" by (rule pcut_measurable[OF S0 ST setsP])
+  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?BS"
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. pexit S K (pfst S \<omega>)) \<in> borel_measurable ?BS"
+      by (rule measurable_compose[OF pfst_measurable[OF S0 refl]
+            pexit_measurable[OF S0 K]])
+    then show ?thesis by (simp add: pexit_pfst)
+  qed
+  have mset: "{\<omega> \<in> space ?BS. c \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))}
+      \<in> sets ?BS" for c :: ennreal using taum by measurable
+  have "ess_inf_time (pshift_law S y (pair_law_of S (pcut S) R))
+        (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+      = ess_inf_time (pair_law_of S (pcut S) ?P)
+        (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))"
+    unfolding pshift_law_pcut[OF S0 ST setsR] ..
+  also have "\<dots> = ess_inf_time ?P (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
+    unfolding pair_law_of_def by (rule ess_inf_time_distr[OF cutm mset])
+  also have "\<dots> = ess_inf_time ?P (\<lambda>\<omega>. min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
+  proof (rule arg_cong[where f = "ess_inf_time ?P"], rule ext)
+    fix \<omega> :: "'n pairpath"
+    have "pexit S K (\<lambda>t. fst (pcut S \<omega> t)) = pexit S K (\<lambda>t. fst (\<omega> t))"
+      by (rule pexit_cong_on) (auto simp: pcut_apply)
+    then show "pexit S K (\<lambda>t. fst (pcut S \<omega> t))
+        = min (pexit T K (\<lambda>t. fst (\<omega> t))) S"
+      using pexit_min_horizon[OF S0 ST, of K "\<lambda>t. fst (\<omega> t)"] by simp
+  qed
+  also have "\<dots> = min (ess_inf_time ?P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+      (ennreal S)" by (rule ess_inf_time_min_const[OF PP])
+  finally show ?thesis .
+qed
+
+subsection \<open>The selector\<close>
+
+text \<open>One selector, every horizon.  \<open>Sel (s,y)\<close> is the \<^const>\<open>pembed\<close>-image
+  of the horizon-\<open>T\<close> optimizer started at \<open>y\<close>, cut back to \<open>T−s\<close>; it lands
+  in \<^const>\<open>pdelclass\<close>, it is jointly measurable in \<open>(s,y)\<close> as a Giry kernel,
+  and re-basing it attains \<^term>\<open>paper_v k L (T - s) K y\<close>.  This is the
+  object step (4) --- @{thm [source] paper_pair_class_aglue} --- consumes as
+  its continuation.\<close>
+
+theorem paper_v_measurable_selector_horizon:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+  obtains Sel where
+    "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric)))"
+    and "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
+    and "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
+        distr (Sel (s, y)) (borel_of (mtopology_of
+            (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)
+          \<in> paper_pair_class k L (T - s) (0 :: real^'n)"
+    and "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
+        ess_inf_time (pshift_law (T - s) y
+            (distr (Sel (s, y)) (borel_of (mtopology_of
+              (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)))
+          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = paper_v k L (T - s) K y"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?P = "(borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)"
+  have T0: "0 \<le> T" using T by simp
+  obtain S0 where S0k: "S0 \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
+    and S0C: "\<And>y. S0 y \<in> paper_pair_class k L T (0 :: real^'n)"
+    and S0val: "\<And>y. ess_inf_time (pshift_law T y (S0 y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = paper_v k L T K y"
+    by (rule paper_v_measurable_selector_kernel'[where k = k, OF T L K]) blast
+  have setsS0: "sets (S0 y) = sets ?B" for y by (rule paper_pair_class_sets[OF S0C])
+  have PS0: "prob_space (S0 y)" for y by (rule paper_pair_class_prob[OF S0C])
+  define Sel where "Sel = (\<lambda>p :: real \<times> (real^'n).
+      distr (S0 (snd p)) ?B (pdel (fst p) T))"
+
+  \<comment> \<open>joint measurability: a pushforward along a jointly measurable map\<close>
+  have fm: "case_prod (\<lambda>p :: real \<times> (real^'n). pdel (fst p) T)
+      \<in> ?P \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
+  proof -
+    have m1: "(\<lambda>q :: (real \<times> (real^'n)) \<times> ('n pairpath). (fst (fst q), snd q))
+        \<in> ?P \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M (borel :: real measure) \<Otimes>\<^sub>M ?B" by measurable
+    have "(\<lambda>q :: (real \<times> (real^'n)) \<times> ('n pairpath).
+        pdel (fst (fst q)) T (snd q)) \<in> ?P \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
+      using measurable_compose[OF m1 pdel_measurable_pair[OF T0]] by simp
+    then show ?thesis by (simp add: case_prod_beta)
+  qed
+  have gm: "(\<lambda>p :: real \<times> (real^'n). S0 (snd p)) \<in> ?P \<rightarrow>\<^sub>M subprob_algebra ?B"
+    by (rule measurable_prob_algebraD[OF measurable_compose[OF measurable_snd S0k]])
+  have Selm: "Sel \<in> ?P \<rightarrow>\<^sub>M prob_algebra ?B"
+    unfolding Sel_def
+  proof (rule measurable_prob_algebraI)
+    fix p :: "real \<times> (real^'n)" assume "p \<in> space ?P"
+    show "prob_space (distr (S0 (snd p)) ?B (pdel (fst p) T))"
+    proof (rule prob_space.prob_space_distr[OF PS0])
+      show "pdel (fst p) T \<in> S0 (snd p) \<rightarrow>\<^sub>M ?B"
+        unfolding measurable_cong_sets[OF setsS0 refl]
+        by (rule pdel_measurable[OF T0])
+    qed
+  next
+    show "(\<lambda>p :: real \<times> (real^'n). distr (S0 (snd p)) ?B (pdel (fst p) T))
+        \<in> ?P \<rightarrow>\<^sub>M subprob_algebra ?B"
+      by (rule measurable_distr2[OF fm gm])
+  qed
+
+  \<comment> \<open>the cut law, and the two identifications it produces\<close>
+  have main: "Sel (s, y) = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y))
+        ?B (pembed s T)
+      \<and> distr (Sel (s, y)) (borel_of (mtopology_of
+          (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)
+        = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+    if s0: "0 \<le> s" and sT: "s \<le> T" for s y
+  proof -
+    let ?Bs = "borel_of (mtopology_of
+        (path_metric (T - s) :: ('n pairpath) metric))"
+    have a: "0 \<le> T - s" using sT by simp
+    have b: "T - s \<le> T" using s0 by simp
+    have cutm: "pcut (T - s) \<in> S0 y \<rightarrow>\<^sub>M ?Bs"
+      by (rule pcut_measurable[OF a b setsS0])
+    have cutB: "pcut (T - s) \<in> ?B \<rightarrow>\<^sub>M ?Bs" by (rule pcut_measurable[OF a b refl])
+    have emb: "pembed s T \<in> ?Bs \<rightarrow>\<^sub>M ?B" by (rule pembed_measurable[OF s0 sT])
+    have embB: "pembed s T \<in> S0 y \<rightarrow>\<^sub>M ?B"
+      unfolding measurable_cong_sets[OF setsS0 refl]
+      by (rule pembed_measurable_full[OF s0 sT])
+    have reb: "prebase s T \<in> ?B \<rightarrow>\<^sub>M ?Bs" by (rule prebase_measurable[OF s0 sT])
+    have comp: "pembed s T \<circ> pcut (T - s) = pembed s T"
+      by (rule ext) (simp add: pembed_pcut[OF s0 sT])
+    have first: "Sel (s, y)
+        = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
+    proof -
+      have "distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)
+          = distr (S0 y) ?B (pembed s T \<circ> pcut (T - s))"
+        unfolding pair_law_of_def by (rule distr_distr[OF emb cutm])
+      also have "\<dots> = distr (S0 y) ?B (pembed s T)" unfolding comp ..
+      finally show ?thesis
+        unfolding Sel_def fst_conv snd_conv pdel_eq_pembed[OF s0 sT] ..
+    qed
+    have second: "distr (Sel (s, y)) ?Bs (prebase s T)
+        = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+    proof -
+      have "distr (Sel (s, y)) ?Bs (prebase s T)
+          = distr (distr (S0 y) ?B (pembed s T)) ?Bs (prebase s T)"
+        unfolding Sel_def fst_conv snd_conv pdel_eq_pembed[OF s0 sT] ..
+      also have "\<dots> = distr (S0 y) ?Bs (prebase s T \<circ> pembed s T)"
+        by (rule distr_distr[OF reb embB])
+      also have "\<dots> = distr (S0 y) ?Bs (pcut (T - s))"
+      proof (rule distr_cong[OF refl refl])
+        fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space (S0 y)"
+        then have wm: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+          using space_of_path_sets[OF setsS0] by simp
+        then have cm: "pcut (T - s) \<omega>
+            \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+          using measurable_space[OF cutB] by (simp add: space_borel_of)
+        have "(prebase s T \<circ> pembed s T) \<omega> = prebase s T (pembed s T \<omega>)" by simp
+        also have "\<dots> = prebase s T (pembed s T (pcut (T - s) \<omega>))"
+          unfolding pembed_pcut[OF s0 sT] ..
+        also have "\<dots> = pcut (T - s) \<omega>" by (rule prebase_pembed[OF s0 sT cm])
+        finally show "(prebase s T \<circ> pembed s T) \<omega> = pcut (T - s) \<omega>" .
+      qed
+      finally show ?thesis unfolding pair_law_of_def .
+    qed
+    show ?thesis using first second by blast
+  qed
+
+  show ?thesis
+  proof (rule that)
+    show "Sel \<in> ?P \<rightarrow>\<^sub>M prob_algebra ?B" by (rule Selm)
+  next
+    show "Sel (s, y) \<in> pdelclass k L T s" if s0: "0 \<le> s" and sT: "s \<le> T"
+      for s :: real and y :: "real^'n"
+    proof -
+      have a: "0 \<le> T - s" using sT by simp
+      have b: "T - s \<le> T" using s0 by simp
+      have cutC: "pair_law_of (T - s) (pcut (T - s)) (S0 y)
+          \<in> paper_pair_class k L (T - s) (0 :: real^'n)"
+        by (rule paper_pair_class_pcut[OF a b S0C])
+      have m1: "Sel (s, y)
+          = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
+        using main[OF s0 sT, of y] by blast
+      show ?thesis unfolding pdelclass_def m1 using cutC by (rule imageI)
+    qed
+  next
+    show "distr (Sel (s, y)) (borel_of (mtopology_of
+          (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)
+        \<in> paper_pair_class k L (T - s) (0 :: real^'n)"
+      if s0: "0 \<le> s" and sT: "s \<le> T" for s :: real and y :: "real^'n"
+    proof -
+      have a: "0 \<le> T - s" using sT by simp
+      have b: "T - s \<le> T" using s0 by simp
+      have m2: "distr (Sel (s, y)) (borel_of (mtopology_of
+            (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)
+          = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+        using main[OF s0 sT, of y] by blast
+      show ?thesis unfolding m2 by (rule paper_pair_class_pcut[OF a b S0C])
+    qed
+  next
+    show "ess_inf_time (pshift_law (T - s) y
+          (distr (Sel (s, y)) (borel_of (mtopology_of
+            (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)))
+        (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = paper_v k L (T - s) K y"
+      if s0: "0 \<le> s" and sT: "s \<le> T" for s :: real and y :: "real^'n"
+    proof -
+      have a: "0 \<le> T - s" using sT by simp
+      have b: "T - s \<le> T" using s0 by simp
+      have m2: "distr (Sel (s, y)) (borel_of (mtopology_of
+            (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)
+          = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+        using main[OF s0 sT, of y] by blast
+      have "ess_inf_time (pshift_law (T - s) y
+            (pair_law_of (T - s) (pcut (T - s)) (S0 y)))
+          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t)))
+          = min (ess_inf_time (pshift_law T y (S0 y))
+              (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal (T - s))"
+        by (rule ess_inf_pexit_pcut_law[OF a b PS0 setsS0 K])
+      also have "\<dots> = min (paper_v k L T K y) (ennreal (T - s))"
+        unfolding S0val ..
+      also have "\<dots> = paper_v k L (T - s) K y"
+        by (rule paper_v_horizon_cap[OF a b L K, symmetric])
+      finally show ?thesis unfolding m2 .
+    qed
+  qed
+qed
+
 end
