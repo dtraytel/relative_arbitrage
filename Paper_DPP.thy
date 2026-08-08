@@ -12803,4 +12803,136 @@ proof -
     using compl Epart by simp
 qed
 
+subsection \<open>Clause (iv): the increment identity for the glued law\<close>
+
+text \<open>The wrapper.  @{thm [source] sets_natural_filtration_eq_pcut_vimage}
+  presents the conditioning set as a \<^const>\<open>pcut\<close>-preimage,
+  @{thm [source] integral_aglue_law} carries the set integral to the past and
+  the continuation, and there @{thm [source] aglue_inner_increment} closes it.\<close>
+
+theorem aglue_law_X_increment:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 < T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and QH: "horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. fst (p' (min u T)) $ c) T"
+    and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
+    and Kfr: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    and Kmean: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ c \<partial>(\<kappa> p')) = 0"
+    and Kint: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (w (min u T)) $ c)"
+    and Kinc: "\<And>p' C u v. p' \<in> space Q
+      \<Longrightarrow> C \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w. w s) u)
+      \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T
+      \<Longrightarrow> set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min u T)) $ c)
+        = set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min v T)) $ c)"
+    and i0: "0 \<le> i" and ij: "i \<le> j" and iT: "i \<le> T" and jT: "j \<le> T"
+    and A: "A \<in> sets (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>v \<omega>. \<omega> v) i)"
+    and hi: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable (aglue_law T \<kappa> Q)
+        (\<lambda>\<omega>. indicator A \<omega> * (fst (\<omega> (min u T)) $ c))"
+    and msec: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+            * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
+    and gint: "\<And>u BB. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+        (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+            * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
+  shows "set_lebesgue_integral (aglue_law T \<kappa> Q) A (\<lambda>\<omega>. fst (\<omega> (min i T)) $ c)
+       = set_lebesgue_integral (aglue_law T \<kappa> Q) A (\<lambda>\<omega>. fst (\<omega> (min j T)) $ c)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bi = "borel_of (mtopology_of (path_metric i :: ('n pairpath) metric))"
+  let ?R = "aglue_law T \<kappa> Q"
+  have T0': "0 \<le> T" using T0 by simp
+  have j0: "0 \<le> j" using i0 ij by simp
+  have spQ: "space Q = space ?B" by (rule sets_eq_imp_space_eq[OF setsQ])
+  have setsR: "sets ?R = sets ?B" by (rule sets_aglue_law)
+  have spR: "space ?R = space ?B" by (rule sets_eq_imp_space_eq[OF setsR])
+  obtain B where B: "B \<in> sets ?Bi" and Aeq: "A = pcut i -` B \<inter> space ?R"
+    using A
+    unfolding sets_natural_filtration_eq_pcut_vimage[OF setsR i0 iT] by blast
+  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B" for u
+    by (rule pair_law_eval_measurable[OF refl])
+  have Xm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ c) \<in> borel_measurable ?B"
+    for u
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) \<bullet> (axis c 1 :: real^'n))
+        \<in> borel_measurable ?B"
+      by (intro borel_measurable_inner borel_measurable_const
+          measurable_compose[OF ev measurable_fst_borel])
+    then show ?thesis by (simp add: inner_axis)
+  qed
+  have AR: "A \<in> sets ?R"
+  proof -
+    have "sets (natural_filtration ?R 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) i)
+        \<subseteq> sets ?R"
+      by (rule sets_natural_filtration_subset)
+         (rule pair_law_eval_measurable[OF setsR])
+    then show ?thesis using A by blast
+  qed
+  have AB: "A \<in> sets ?B" using AR setsR by simp
+  have hm: "(\<lambda>\<omega> :: 'n pairpath. indicator A \<omega> * (fst (\<omega> (min u T)) $ c))
+      \<in> borel_measurable ?B" for u
+    using AB Xm[of u] by measurable
+
+  \<comment> \<open>transport one side\<close>
+  have tr: "set_lebesgue_integral ?R A (\<lambda>\<omega>. fst (\<omega> (min u T)) $ c)
+      = (\<integral>p'. (\<integral>w. indicator B (pcut i (padd T p' w))
+          * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<partial>Q)"
+    if u0: "0 \<le> u" and uT: "u \<le> T" for u
+  proof -
+    have "set_lebesgue_integral ?R A (\<lambda>\<omega>. fst (\<omega> (min u T)) $ c)
+        = (\<integral>\<omega>. indicator A \<omega> * (fst (\<omega> (min u T)) $ c) \<partial>?R)"
+      unfolding set_lebesgue_integral_def by simp
+    also have "\<dots> = (\<integral>p'. (\<integral>w. indicator A (padd T p' w)
+        * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<partial>Q)"
+      by (rule integral_aglue_law
+          [OF T0' PQ setsQ Kp hm hi[OF u0 uT] msec[OF u0 uT]])
+    also have "\<dots> = (\<integral>p'. (\<integral>w. indicator B (pcut i (padd T p' w))
+        * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<partial>Q)"
+    proof (rule Bochner_Integration.integral_cong[OF refl])
+      fix p' assume sp: "p' \<in> space Q"
+      have pmem: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+        using sp spQ by (simp add: space_borel_of)
+      have setsK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+      have spK: "space (\<kappa> p') = space ?B"
+        by (rule sets_eq_imp_space_eq[OF setsK])
+      show "(\<integral>w. indicator A (padd T p' w)
+            * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))
+          = (\<integral>w. indicator B (pcut i (padd T p' w))
+            * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
+      proof (rule Bochner_Integration.integral_cong[OF refl])
+        fix w assume sw: "w \<in> space (\<kappa> p')"
+        have wmem: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+          using sw spK by (simp add: space_borel_of)
+        have inR: "padd T p' w \<in> space ?R"
+          unfolding spR using padd_mspace[OF pmem wmem]
+          by (simp add: space_borel_of)
+        have "indicator A (padd T p' w)
+            = (indicator B (pcut i (padd T p' w)) :: real)"
+          unfolding Aeq using inR by (simp add: indicator_def)
+        then show "indicator A (padd T p' w)
+              * (fst (padd T p' w (min u T)) $ c)
+            = indicator B (pcut i (padd T p' w))
+              * (fst (padd T p' w (min u T)) $ c)" by simp
+      qed
+    qed
+    finally show ?thesis .
+  qed
+  show ?thesis
+    unfolding tr[OF i0 iT] tr[OF j0 jT]
+    by (rule aglue_inner_increment
+        [OF T0 PQ setsQ Kp st thM Qst QH Qcont Kfr Kmean Kint Kinc
+          i0 ij iT jT B gint])
+qed
+
 end
