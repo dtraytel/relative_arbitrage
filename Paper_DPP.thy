@@ -8002,4 +8002,178 @@ proof -
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
 qed
+subsection \<open>Step (2): the r.c.d., with both maps and both horizons free\<close>
+
+text \<open>@{thm [source] paper_pair_class_rcd} and
+  @{thm [source] paper_pair_class_rcd_ksemi} use \<open>pcut r\<close> and \<open>pfut r T\<close> only
+  through their measurability, so nothing in either proof is specific to the
+  deterministic split.  Here they are with the two maps and the two horizons
+  free; the deterministic case is the instance \<open>u := r\<close>, \<open>v := T - r\<close>, and
+  the stopping-time case is \<open>u := v := T\<close>, \<open>\<phi>\<^sub>1 := pstopped T \<theta>\<close>,
+  \<open>\<phi>\<^sub>2 := pafter T \<theta>\<close>.\<close>
+
+theorem path_rcd:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes v: "0 \<le> v" and PS: "prob_space P"
+    and m1: "\<phi>1 \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+        (path_metric u :: ('n pairpath) metric))"
+    and m2: "\<phi>2 \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+        (path_metric v :: ('n pairpath) metric))"
+  obtains \<kappa> where
+    "\<kappa> \<in> borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric v :: ('n pairpath) metric)))"
+    and "\<And>A B. A \<in> sets (borel_of (mtopology_of
+            (path_metric u :: ('n pairpath) metric)))
+        \<Longrightarrow> B \<in> sets (borel_of (mtopology_of
+            (path_metric v :: ('n pairpath) metric)))
+        \<Longrightarrow> emeasure (distr P
+              (borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))
+                \<Otimes>\<^sub>M borel_of (mtopology_of
+                  (path_metric v :: ('n pairpath) metric)))
+              (\<lambda>\<omega>. (\<phi>1 \<omega>, \<phi>2 \<omega>))) (A \<times> B)
+          = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(pair_law_of u \<phi>1 P))"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))"
+  let ?Y = "borel_of (mtopology_of (path_metric v :: ('n pairpath) metric))"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (\<phi>1 \<omega>, \<phi>2 \<omega>)"
+  let ?\<nu> = "distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>"
+  interpret PP: prob_space P by (rule PS)
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using m1 m2 by simp
+  have setsnu: "sets ?\<nu> = sets (?X \<Otimes>\<^sub>M ?Y)" by simp
+
+  have marg: "marginal_measure ?X ?Y ?\<nu> = pair_law_of u \<phi>1 P"
+  proof (rule measure_eqI)
+    show "sets (marginal_measure ?X ?Y ?\<nu>) = sets (pair_law_of u \<phi>1 P)"
+      by (simp add: sets_marginal_measure)
+    fix A assume "A \<in> sets (marginal_measure ?X ?Y ?\<nu>)"
+    then have AX: "A \<in> sets ?X" by (simp add: sets_marginal_measure)
+    have rect: "A \<times> space ?Y \<in> sets (?X \<Otimes>\<^sub>M ?Y)" using AX by simp
+    have "emeasure (marginal_measure ?X ?Y ?\<nu>) A = emeasure ?\<nu> (A \<times> space ?Y)"
+      by (rule emeasure_marginal_measure[OF setsnu AX])
+    also have "\<dots> = emeasure P (?\<phi> -` (A \<times> space ?Y) \<inter> space P)"
+      by (rule emeasure_distr[OF mphi rect])
+    also have "\<dots> = emeasure P (\<phi>1 -` A \<inter> space P)"
+    proof -
+      have "?\<phi> -` (A \<times> space ?Y) \<inter> space P = \<phi>1 -` A \<inter> space P"
+        using measurable_space[OF m2] by auto
+      then show ?thesis by simp
+    qed
+    also have "\<dots> = emeasure (pair_law_of u \<phi>1 P) A"
+      unfolding pair_law_of_def by (rule emeasure_distr[OF m1 AX, symmetric])
+    finally show "emeasure (marginal_measure ?X ?Y ?\<nu>) A
+        = emeasure (pair_law_of u \<phi>1 P) A" .
+  qed
+
+  have PSF: "projection_sigma_finite ?X ?Y ?\<nu>"
+    unfolding projection_sigma_finite_def
+  proof (intro conjI)
+    show "sets ?\<nu> = sets (?X \<Otimes>\<^sub>M ?Y)" by (rule setsnu)
+    have "prob_space (pair_law_of u \<phi>1 P)"
+      unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+    then show "sigma_finite_measure (marginal_measure ?X ?Y ?\<nu>)"
+      unfolding marg by (rule prob_space_imp_sigma_finite)
+  qed
+  have SB: "standard_borel_ne ?Y" by (rule standard_borel_ne_path_metric[OF v])
+  interpret D: projection_sigma_finite_standard ?X ?Y ?\<nu>
+    unfolding projection_sigma_finite_standard_def using PSF SB by blast
+
+  obtain \<kappa> where K: "prob_kernel ?X ?Y \<kappa>"
+    and DIS: "measure_kernel.disintegration ?X ?Y \<kappa> ?\<nu>
+        (marginal_measure ?X ?Y ?\<nu>)"
+    using D.measure_disintegration by blast
+  interpret MK: measure_kernel ?X ?Y \<kappa> using K by (simp add: prob_kernel_def)
+  have Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y" using K by (simp add: prob_kernel_def')
+
+  show ?thesis
+  proof (rule that)
+    show "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y" by (rule Km)
+    show "emeasure ?\<nu> (A \<times> B)
+        = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(pair_law_of u \<phi>1 P))"
+      if A: "A \<in> sets ?X" and B: "B \<in> sets ?Y" for A B
+    proof -
+      have "emeasure ?\<nu> (A \<times> B)
+          = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(marginal_measure ?X ?Y ?\<nu>))"
+        using DIS A B unfolding MK.disintegration_def by blast
+      then show ?thesis unfolding marg .
+    qed
+  qed
+qed
+
+theorem path_rcd_ksemi:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes v: "0 \<le> v" and PS: "prob_space P"
+    and m1: "\<phi>1 \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+        (path_metric u :: ('n pairpath) metric))"
+    and m2: "\<phi>2 \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+        (path_metric v :: ('n pairpath) metric))"
+  obtains \<kappa> where
+    "\<kappa> \<in> borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric v :: ('n pairpath) metric)))"
+    and "distr P
+          (borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric v :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (\<phi>1 \<omega>, \<phi>2 \<omega>))
+        = ksemi (pair_law_of u \<phi>1 P)
+            (borel_of (mtopology_of
+              (path_metric v :: ('n pairpath) metric))) \<kappa>"
+proof -
+  let ?X = "borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))"
+  let ?Y = "borel_of (mtopology_of (path_metric v :: ('n pairpath) metric))"
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (\<phi>1 \<omega>, \<phi>2 \<omega>)"
+  let ?\<nu> = "distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>"
+  let ?Q = "pair_law_of u \<phi>1 P"
+  let ?E = "{a \<times> b | a b. a \<in> sets ?X \<and> b \<in> sets ?Y}"
+  interpret PP: prob_space P by (rule PS)
+  have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using m1 m2 by simp
+  interpret Pnu: prob_space ?\<nu> by (rule PP.prob_space_distr[OF mphi])
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  obtain \<kappa> where Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
+    and REC: "\<And>A B. A \<in> sets ?X \<Longrightarrow> B \<in> sets ?Y \<Longrightarrow>
+        emeasure ?\<nu> (A \<times> B) = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>?Q)"
+    by (rule path_rcd[OF v PS m1 m2]) blast
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
+    using Km measurable_cong_sets[OF setsQ refl] by blast
+  have setsS: "sets (ksemi ?Q ?Y \<kappa>) = sets (?X \<Otimes>\<^sub>M ?Y)"
+  proof -
+    have "sets (ksemi ?Q ?Y \<kappa>) = sets (?Q \<Otimes>\<^sub>M ?Y)" by (rule sets_ksemi[OF KQ neQ])
+    also have "\<dots> = sets (?X \<Otimes>\<^sub>M ?Y)"
+      by (rule sets_pair_measure_cong[OF setsQ refl])
+    finally show ?thesis .
+  qed
+  have eq: "?\<nu> = ksemi ?Q ?Y \<kappa>"
+  proof (rule measure_eqI_generator_eq
+      [where E = ?E and \<Omega> = "space ?X \<times> space ?Y"
+         and A = "\<lambda>_. space ?X \<times> space ?Y"])
+    show "Int_stable ?E" by (rule Int_stable_pair_measure_generator)
+    show "?E \<subseteq> Pow (space ?X \<times> space ?Y)" using sets.sets_into_space by auto
+    show "emeasure ?\<nu> C = emeasure (ksemi ?Q ?Y \<kappa>) C" if C: "C \<in> ?E" for C
+    proof -
+      from C obtain A B where AB: "A \<in> sets ?X" "B \<in> sets ?Y" "C = A \<times> B"
+        by blast
+      have AQ: "A \<in> sets ?Q" using AB(1) setsQ by simp
+      have "emeasure ?\<nu> C = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>?Q)"
+        unfolding AB(3) by (rule REC[OF AB(1) AB(2)])
+      also have "\<dots> = emeasure (ksemi ?Q ?Y \<kappa>) C"
+        unfolding AB(3)
+        by (rule emeasure_ksemi_rect[OF KQ neQ AQ AB(2), symmetric])
+      finally show ?thesis .
+    qed
+    show "sets ?\<nu> = sigma_sets (space ?X \<times> space ?Y) ?E"
+      by (simp add: sets_pair_measure)
+    show "sets (ksemi ?Q ?Y \<kappa>) = sigma_sets (space ?X \<times> space ?Y) ?E"
+      unfolding setsS by (simp add: sets_pair_measure)
+    show "range (\<lambda>_. space ?X \<times> space ?Y) \<subseteq> ?E" by auto
+    show "(\<Union>i :: nat. space ?X \<times> space ?Y) = space ?X \<times> space ?Y" by simp
+    show "emeasure ?\<nu> (space ?X \<times> space ?Y) \<noteq> \<infinity>" for i :: nat
+      by (simp add: Pnu.emeasure_eq_measure)
+  qed
+  show ?thesis by (rule that[OF Km eq])
+qed
+
 end
