@@ -7646,11 +7646,10 @@ lemma pafter_apply:
   by (simp add: pafter_def)
 
 lemma pstopped_outside: "t \<notin> {0..T} \<Longrightarrow> pstopped T \<theta> \<omega> t = undefined"
-  by (simp add: pstopped_def)
+  unfolding pstopped_def restrict_def by (rule if_not_P)
 
 lemma pafter_outside: "t \<notin> {0..T} \<Longrightarrow> pafter T \<theta> \<omega> t = undefined"
-  by (simp add: pafter_def)
-
+  unfolding pafter_def restrict_def by (rule if_not_P)
 text \<open>The reassembly law.  This is the analogue of
   @{thm [source] pglue_pcut_pfut} at a RANDOM time, and unlike that one it
   costs nothing: no membership hypothesis on \<open>\<omega>\<close>, and no \<open>\<theta>\<close> on the
