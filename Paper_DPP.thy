@@ -7817,4 +7817,51 @@ proof -
   then show ?thesis unfolding pafter_def by (rule mspace_path_metricI)
 qed
 
+text \<open>A criterion for landing IN the path space.  The balls are a base, so
+  Borel measurability into \<open>?B\<^sub>T\<close> reduces to measurability of the distance to
+  each point --- and that is the form the additive split can actually supply,
+  since the distance is a sup over time of evaluations and
+  @{thm [source] path_eval_at_measurable_time} makes each evaluation
+  measurable.  The generator route through
+  @{thm [source] sets_natural_filtration_path} would work too, but this one
+  needs no handle on \<open>natural_filtration\<close>'s generators.\<close>
+
+lemma measurable_into_path_metric:
+  fixes f :: "'a \<Rightarrow> 'n::finite pairpath"
+  assumes into: "\<And>w. w \<in> space M
+      \<Longrightarrow> f w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and dm: "\<And>a. a \<in> mspace (path_metric T :: ('n pairpath) metric)
+      \<Longrightarrow> (\<lambda>w. mdist (path_metric T :: ('n pairpath) metric) (f w) a)
+          \<in> borel_measurable M"
+  shows "f \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?m = "path_metric T :: ('n pairpath) metric"
+  let ?B = "borel_of (mtopology_of ?m)"
+  interpret MS: Metric_space "mspace ?m" "mdist ?m"
+    by (rule Metric_space_mspace_mdist)
+  let ?balls = "{MS.mball a \<epsilon> | a \<epsilon>. a \<in> mspace ?m \<and> \<epsilon> > 0}"
+  have sub: "?balls \<subseteq> Pow (mspace ?m)" using MS.mball_subset_mspace by auto
+  have base: "base_in (mtopology_of ?m) ?balls"
+    using MS.mtopology_base_in_balls by (simp add: mtopology_of_def)
+  have "?B = sigma (topspace (mtopology_of ?m)) ?balls"
+    by (rule borel_of_second_countable'
+        [OF second_countable_path_metric base_is_subbase[OF base]])
+  then have setsB: "sets ?B = sigma_sets (mspace ?m) ?balls"
+    using sets_measure_of[OF sub] by simp
+  show ?thesis
+  proof (rule measurable_sigma_sets[OF setsB sub])
+    show "f \<in> space M \<rightarrow> mspace ?m" using into by blast
+  next
+    fix A assume "A \<in> ?balls"
+    then obtain a e where A: "A = MS.mball a e" and am: "a \<in> mspace ?m"
+      and epos: "e > 0" by blast
+    have ball: "(\<omega> \<in> MS.mball a e) = (\<omega> \<in> mspace ?m \<and> mdist ?m \<omega> a < e)"
+      for \<omega> :: "'n pairpath"
+      using am by (simp only: MS.in_mball MS.commute conj_commute simp_thms)
+    have "f -` A \<inter> space M = {w \<in> space M. mdist ?m (f w) a < e}"
+      unfolding A using into by (auto simp only: ball vimage_eq Int_iff)    then show "f -` A \<inter> space M \<in> sets M" using dm[OF am] by simp
+  qed
+qed
+
 end
