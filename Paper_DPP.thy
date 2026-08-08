@@ -16753,4 +16753,153 @@ proof -
   qed
 qed
 
+text \<open>The workhorse: the inner bound may itself be a function of the past, as
+  long as that function is integrable.  This covers all three shapes the glue
+  produces --- a constant (the continuation's own moment), \<open>norm (f \<omega>)\<close> (the
+  past's), and \<open>norm (f \<omega>) * C\<close> (the CROSS term that \<^const>\<open>outerp\<close> being
+  quadratic creates).\<close>
+
+lemma integrable_ksemi_of_past_bound:
+  fixes g :: "'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    and hi: "integrable M h"
+    and bnd: "\<And>\<omega>. \<omega> \<in> space M
+      \<Longrightarrow> (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal (h \<omega>)"
+  shows "integrable (ksemi M N Kr) g"
+proof -
+  have setsS: "sets (ksemi M N Kr) = sets (M \<Otimes>\<^sub>M N)"
+    by (rule sets_ksemi[OF K ne])
+  have gmS: "g \<in> borel_measurable (ksemi M N Kr)"
+    using gm measurable_cong_sets[OF setsS refl] by blast
+  have gabs: "(\<lambda>p. ennreal (norm (g p))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    using gm by measurable
+  have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr))
+      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<partial>M)"
+    using nn_integral_ksemi[OF K gabs] by simp
+  also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>. ennreal (norm (h \<omega>)) \<partial>M)"
+  proof (rule nn_integral_mono_AE)
+    show "AE \<omega> in M.
+        (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal (norm (h \<omega>))"
+    proof (rule eventually_mono[OF AE_space])
+      fix \<omega> assume w: "\<omega> \<in> space M"
+      have "(\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal (h \<omega>)"
+        by (rule bnd[OF w])
+      also have "\<dots> \<le> ennreal (norm (h \<omega>))" by (intro ennreal_leI) simp
+      finally show "(\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>))
+          \<le> ennreal (norm (h \<omega>))" .
+    qed
+  qed
+  also have "\<dots> < \<top>" using hi by (simp add: integrable_iff_bounded)
+  finally show ?thesis using gmS by (simp add: integrable_iff_bounded)
+qed
+
+subsection \<open>\<open>RXint\<close> and \<open>RCint\<close>\<close>
+
+lemma padd_eval_split:
+  fixes p' w :: "'n::finite pairpath"
+  assumes t: "t \<in> {0..T}"
+  shows "fst (padd T p' w t) = fst (p' t) + fst (w t)"
+    and "snd (padd T p' w t) = snd (p' t) + snd (w t)"
+  by (simp_all add: padd_apply[OF t])
+
+lemma aglue_law_X_integrable:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and u: "0 \<le> u"
+    and QXint: "integrable Q (\<lambda>p'. fst (p' (min u T)))"
+    and KXint: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (w (min u T)))"
+    and KXbnd: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> (\<integral>w. norm (fst (w (min u T))) \<partial>(\<kappa> p')) \<le> CX"
+  shows "integrable (aglue_law T \<kappa> Q) (\<lambda>\<omega>. fst (\<omega> (min u T)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?S = "ksemi Q ?B \<kappa>"
+  let ?t = "min u T"
+  have tm: "?t \<in> {0..T}" using u T0 by simp
+  have ne: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have setsS: "sets ?S = sets (Q \<Otimes>\<^sub>M ?B)" by (rule sets_ksemi[OF Kp ne])
+  have pm: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
+      \<in> ?S \<rightarrow>\<^sub>M ?B"
+    using padd_measurable_ksemi[OF T0 setsQ] measurable_cong_sets[OF setsS refl]
+    by blast
+  have pmP: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
+      \<in> Q \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B" by (rule padd_measurable_ksemi[OF T0 setsQ])
+  have hb: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> ?t)) \<in> borel_measurable ?B"
+  proof -
+    have e: "(\<lambda>\<omega> :: 'n pairpath. \<omega> ?t) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    show ?thesis by (rule measurable_compose[OF e f])
+  qed
+  have gm: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath).
+      fst (padd T (fst p) (snd p) ?t)) \<in> borel_measurable (Q \<Otimes>\<^sub>M ?B)"
+    by (rule measurable_compose[OF pmP hb])
+  interpret PQ': prob_space Q by (rule PQ)
+  have hint: "integrable Q (\<lambda>p'. norm (fst (p' ?t)) + CX)"
+    by (intro Bochner_Integration.integrable_add integrable_norm[OF QXint]
+        PQ'.integrable_const)
+  have bnd: "(\<integral>\<^sup>+w. ennreal (norm (fst (padd T (fst (p', w)) (snd (p', w)) ?t)))
+        \<partial>(\<kappa> p')) \<le> ennreal (norm (fst (p' ?t)) + CX)"
+    if sp: "p' \<in> space Q" for p'
+  proof -
+    interpret PK: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    have iN: "integrable (\<kappa> p') (\<lambda>w. norm (fst (w ?t)))"
+      by (rule integrable_norm[OF KXint[OF sp]])
+    have dom: "norm (fst (padd T p' w ?t)) \<le> norm (fst (p' ?t)) + norm (fst (w ?t))"
+      for w :: "'n pairpath"
+      unfolding padd_eval_split(1)[OF tm] by (rule norm_triangle_ineq)
+    have iP: "integrable (\<kappa> p') (\<lambda>w. norm (fst (padd T p' w ?t)))"
+    proof (rule Bochner_Integration.integrable_bound
+        [OF Bochner_Integration.integrable_add[OF PK.integrable_const iN]])
+      show "(\<lambda>w. norm (fst (padd T p' w ?t))) \<in> borel_measurable (\<kappa> p')"
+      proof -
+        have sK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+        have "(\<lambda>w :: 'n pairpath. padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
+          by (rule padd_measurable_left[OF T0])
+             (use sp space_of_path_sets[OF setsQ] in simp)
+        from measurable_compose[OF this hb]
+        have mm: "(\<lambda>w :: 'n pairpath. fst (padd T p' w ?t)) \<in> borel_measurable ?B" .
+        then have "(\<lambda>w :: 'n pairpath. fst (padd T p' w ?t))
+            \<in> borel_measurable (\<kappa> p')"
+          using measurable_cong_sets[OF sK refl] by blast
+        then show ?thesis by measurable
+      qed
+      show "AE w in \<kappa> p'. norm (norm (fst (padd T p' w ?t)))
+          \<le> norm (norm (fst (p' ?t)) + norm (fst (w ?t)))"
+        using dom by (intro AE_I2) simp
+    qed
+    have "(\<integral>w. norm (fst (padd T p' w ?t)) \<partial>(\<kappa> p'))
+        \<le> (\<integral>w. norm (fst (p' ?t)) + norm (fst (w ?t)) \<partial>(\<kappa> p'))"
+      by (rule Bochner_Integration.integral_mono
+          [OF iP Bochner_Integration.integrable_add[OF PK.integrable_const iN]])
+         (use dom in simp)
+    also have "\<dots> = norm (fst (p' ?t)) + (\<integral>w. norm (fst (w ?t)) \<partial>(\<kappa> p'))"
+      using Bochner_Integration.integral_add[OF PK.integrable_const iN]
+      by (simp add: PK.prob_space)
+    also have "\<dots> \<le> norm (fst (p' ?t)) + CX" using KXbnd[OF sp] by simp
+    finally have le: "(\<integral>w. norm (fst (padd T p' w ?t)) \<partial>(\<kappa> p'))
+        \<le> norm (fst (p' ?t)) + CX" .
+    have "(\<integral>\<^sup>+w. ennreal (norm (fst (padd T p' w ?t))) \<partial>(\<kappa> p'))
+        = ennreal (\<integral>w. norm (fst (padd T p' w ?t)) \<partial>(\<kappa> p'))"
+      by (rule nn_integral_eq_integral[OF iP]) simp
+    also have "\<dots> \<le> ennreal (norm (fst (p' ?t)) + CX)"
+      using le by (rule ennreal_leI)
+    finally show ?thesis by simp
+  qed
+  have gi: "integrable ?S (\<lambda>p. fst (padd T (fst p) (snd p) ?t))"
+    by (rule integrable_ksemi_of_past_bound[OF Kp ne gm hint]) (use bnd in simp)
+  have "integrable (aglue_law T \<kappa> Q) (\<lambda>\<omega>. fst (\<omega> ?t))
+      = integrable ?S (\<lambda>p. fst (padd T (fst p) (snd p) ?t))"
+    unfolding aglue_law_def by (rule integrable_distr_eq[OF pm hb])
+  then show ?thesis using gi by simp
+qed
+
 end
