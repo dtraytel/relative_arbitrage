@@ -13800,4 +13800,108 @@ proof -
   qed
 qed
 
+section \<open>Step (4), CLOSED: the additive glue lands in the class\<close>
+
+text \<open>All four clauses, with no martingale hypothesis left over.  Clauses
+  (i)--(iii) come from @{thm [source] paper_pair_class_aglue_law}; the two
+  martingale clauses are now @{thm [source] aglue_law_X_martingale} and
+  @{thm [source] aglue_law_comp_martingale}.  The remaining hypotheses are all
+  about the two FACTORS --- the stopped past \<open>Q\<close> and the continuation kernel
+  \<open>\<kappa>\<close> --- and are what a caller reads off the class and the r.c.d.\<close>
+
+theorem paper_pair_class_aglue:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
+    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+    and QH: "\<And>e. horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. fst (p' (min u T)) $ e) T"
+    and QHC: "\<And>c d. horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
+    and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
+    and K0: "\<And>p'. p' \<in> space Q \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). w 0 = 0"
+    and Kfr: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    and Kcov: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+    and Kmean: "\<And>p' u e. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ e \<partial>(\<kappa> p')) = 0"
+    and KmeanC: "\<And>p' u c d. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<integral>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d
+            \<partial>(\<kappa> p')) = 0"
+    and Kint: "\<And>p' u e. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (w (min u T)) $ e)"
+    and KintC: "\<And>p' u c d. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> integrable (\<kappa> p')
+          (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)"
+    and Kinc: "\<And>p' C u v e. p' \<in> space Q
+      \<Longrightarrow> C \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w. w s) u)
+      \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T
+      \<Longrightarrow> set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min u T)) $ e)
+        = set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min v T)) $ e)"
+    and KincC: "\<And>p' C u v c d. p' \<in> space Q
+      \<Longrightarrow> C \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w. w s) u)
+      \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T
+      \<Longrightarrow> set_lebesgue_integral (\<kappa> p') C
+            (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)
+        = set_lebesgue_integral (\<kappa> p') C
+            (\<lambda>w. (outerp (fst (w (min v T))) - snd (w (min v T))) $ c $ d)"
+    and RXint: "\<And>u. 0 \<le> u
+      \<Longrightarrow> integrable (aglue_law T \<kappa> Q) (\<lambda>\<omega>. fst (\<omega> (min u T)))"
+    and RCint: "\<And>u. 0 \<le> u \<Longrightarrow> integrable (aglue_law T \<kappa> Q)
+        (\<lambda>\<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+    and msecX: "\<And>A u e. A \<in> sets (aglue_law T \<kappa> Q) \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+            * (fst (padd T p' w (min u T)) $ e) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
+    and msecC: "\<And>A u c d. A \<in> sets (aglue_law T \<kappa> Q) \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+            * ((outerp (fst (padd T p' w (min u T)))
+                - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
+          \<in> borel_measurable Q"
+    and gintX: "\<And>u BB e i. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+        (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+            * (fst (padd T p' w (min u T)) $ e) \<partial>(\<kappa> p'))"
+    and gintC: "\<And>u BB c d i. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+        (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+            * ((outerp (fst (padd T p' w (min u T)))
+                - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))"
+  shows "aglue_law T \<kappa> Q \<in> paper_pair_class k L T x"
+proof -
+  have T0': "0 \<le> T" using T0 by simp
+  have QstAE: "AE p' in Q. pstopped T \<theta> p' = p'"
+    by (rule eventually_mono[OF AE_space]) (rule Qst)
+  have K0AE: "AE w in \<kappa> p'. w 0 = 0" if sp: "p' \<in> space Q" for p'
+    by (rule eventually_mono[OF AE_space]) (use K0[OF sp] in blast)
+  have KfrAE: "AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    if sp: "p' \<in> space Q" for p'
+    by (rule eventually_mono[OF AE_space]) (use Kfr[OF sp] in blast)
+  show ?thesis
+  proof (rule paper_pair_class_aglue_law
+      [OF T0' PQ setsQ Kp st Q0 QstAE Qcov K0AE KfrAE Kcov])
+    show "martingale (aglue_law T \<kappa> Q)
+        (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
+      by (rule aglue_law_X_martingale
+          [OF T0 PQ setsQ Kp st thM Qst QH Qcont Kfr Kmean Kint Kinc
+            RXint msecX gintX])
+    show "martingale (aglue_law T \<kappa> Q)
+        (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
+      by (rule aglue_law_comp_martingale
+          [OF T0 PQ setsQ Kp st thM Qst QHC Qcont Kfr Kmean KmeanC Kint KintC
+            Kinc KincC RCint msecC gintC])
+  qed
+qed
+
 end
