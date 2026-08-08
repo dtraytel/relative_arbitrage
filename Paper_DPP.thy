@@ -12274,4 +12274,48 @@ proof (intro CollectI conjI)
       (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))" by (rule mgC)
 qed
 
+text \<open>The set-integral transfer for the glue --- what a martingale identity
+  for \<^const>\<open>aglue_law\<close> has to be pushed through.  Same two steps as
+  @{thm [source] AE_aglue_law}: @{thm [source] integral_distr} to the
+  semidirect product, then @{thm [source] integral_ksemi_real} to the past and
+  the continuation.\<close>
+
+lemma integral_aglue_law:
+  fixes Q :: "('n::finite pairpath) measure" and h :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and hm: "h \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and hi: "integrable (aglue_law T \<kappa> Q) h"
+    and msec: "(\<lambda>p'. \<integral>w. h (padd T p' w) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
+  shows "(\<integral>\<omega>. h \<omega> \<partial>(aglue_law T \<kappa> Q))
+      = (\<integral>p'. (\<integral>w. h (padd T p' w) \<partial>(\<kappa> p')) \<partial>Q)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?g = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p)"
+  have neQ: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have setsS: "sets (ksemi Q ?B \<kappa>) = sets (Q \<Otimes>\<^sub>M ?B)"
+    by (rule sets_ksemi[OF Kp neQ])
+  have pm2: "?g \<in> Q \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B" by (rule padd_measurable_ksemi[OF T0 setsQ])
+  have pm: "?g \<in> ksemi Q ?B \<kappa> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsS refl] by (rule pm2)
+  have hgm: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). h (?g p))
+      \<in> borel_measurable (Q \<Otimes>\<^sub>M ?B)"
+    by (rule measurable_compose[OF pm2 hm])
+  have hgi: "integrable (ksemi Q ?B \<kappa>) (\<lambda>p. h (?g p))"
+  proof -
+    have "integrable (distr (ksemi Q ?B \<kappa>) ?B ?g) h" using hi
+      unfolding aglue_law_def .
+    then show ?thesis unfolding integrable_distr_eq[OF pm hm] .
+  qed
+  have "(\<integral>\<omega>. h \<omega> \<partial>(aglue_law T \<kappa> Q)) = (\<integral>p. h (?g p) \<partial>(ksemi Q ?B \<kappa>))"
+    unfolding aglue_law_def by (rule integral_distr[OF pm hm])
+  also have "\<dots> = (\<integral>p'. (\<integral>w. h (?g (p', w)) \<partial>(\<kappa> p')) \<partial>Q)"
+    by (rule integral_ksemi_real[OF Kp hgm hgi neQ]) (use msec in simp)
+  finally show ?thesis by simp
+qed
+
 end
