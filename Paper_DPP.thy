@@ -9904,4 +9904,32 @@ proof -
   qed
 qed
 
+text \<open>The \<open>cont\<close> hypothesis of @{thm [source] set_martingale_sampling} for
+  the class's component process: the dyadic times converge and the path is
+  continuous, so the values do.\<close>
+
+lemma paper_component_dyceil_tendsto:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and s0: "0 \<le> s" and sT: "s \<le> T"
+  shows "(\<lambda>n. fst (\<omega> (min (dyceil n T s) T)) $ c)
+      \<longlonglongrightarrow> fst (\<omega> (min s T)) $ c"
+proof -
+  have cont: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u) $ c)"
+    using mspace_path_metricD[OF w] by (intro continuous_intros)
+  have conv: "(\<lambda>n. dyceil n T s) \<longlonglongrightarrow> s" by (rule dyceil_tendsto[OF s0 sT])
+  have mem: "dyceil n T s \<in> {0..T}" for n
+    using dyceil_nonneg[OF s0 sT] dyceil_le_U[of n T s] by simp
+  have "(\<lambda>n. fst (\<omega> (dyceil n T s)) $ c) \<longlonglongrightarrow> fst (\<omega> s) $ c"
+  proof (rule continuous_on_tendsto_compose[OF cont conv])
+    show "\<forall>\<^sub>F n in sequentially. dyceil n T s \<in> {0..T}" using mem by simp
+    show "s \<in> {0..T}" using s0 sT by simp
+  qed
+  moreover have "min (dyceil n T s) T = dyceil n T s" for n
+    using dyceil_le_U[of n T s] by simp
+  moreover have "min s T = s" using sT by simp
+  ultimately show ?thesis by simp
+qed
+
 end
