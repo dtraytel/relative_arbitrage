@@ -556,6 +556,129 @@ proof -
   finally show ?thesis using that[OF bmem] by blast
 qed
 
+subsection \<open>What the orthogonality constraint of Eq. (1.9) actually does\<close>
+
+text \<open>A direction annihilated by the averaged covariation is FROZEN: the
+  process does not move along it at all, almost surely.  The proof is the
+  quadratic identity at \<open>M = outerp q\<close>, which turns the second moment of
+  \<open>q \<bullet> X\<^sub>t\<close> into \<open>q \<bullet> (E[Y\<^sub>t] *v q)\<close> --- so the variance vanishes exactly when
+  that number does.
+
+  This is the mechanism behind the constraint \<open>a *v p = 0\<close> of Eq. (1.9).  For a
+  quadratic test function with gradient \<open>q = p + M *v x\<close> at \<open>x\<close>,
+
+    \<open>\<phi>(X\<^sub>t) - \<phi>(x) = q \<bullet> (X\<^sub>t - x) + (X\<^sub>t - x) \<bullet> (M *v (X\<^sub>t - x)) / 2\<close>
+
+  when \<open>M\<close> is symmetric, and feasibility of the covariation direction kills the
+  FIRST-ORDER term identically --- not just in mean.  That is what a
+  supersolution argument needs and a subsolution argument does not: an a.s.
+  statement, obtained from a mean-zero variance.\<close>
+
+lemma trace_mult_commute:
+  fixes A B :: "real^'n::finite^'n"
+  shows "trace (A ** B) = trace (B ** A)"
+  unfolding trace_mult_sum by (subst sum.swap) (simp add: mult.commute)
+
+lemma trace_outerp_mult:
+  fixes B :: "real^'n::finite^'n" and v :: "real^'n"
+  shows "trace (outerp v ** B) = v \<bullet> (B *v v)"
+  by (subst trace_mult_commute) (rule trace_mult_outerp)
+
+lemma quadform_outerp:
+  fixes q z :: "real^'n::finite"
+  shows "z \<bullet> (outerp q *v z) = (q \<bullet> z)\<^sup>2"
+  by (simp add: outerp_eq_outer_prod power2_eq_square inner_commute)
+
+theorem paper_pair_class_frozen_direction:
+  fixes Q :: "('n::finite pairpath) measure" and q :: "real^'n"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and orth: "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q = 0"
+  shows "AE \<omega> in Q. q \<bullet> fst (\<omega> t) = q \<bullet> x"
+proof -
+  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
+    by (rule paper_pair_class_X_integrable[OF Q t])
+  have i1: "integrable Q (\<lambda>\<omega>. q \<bullet> fst (\<omega> t))"
+    by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
+  have i2': "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> (outerp q *v fst (\<omega> t)))"
+    by (rule paper_pair_class_quadform_integrable[OF T L Q t])
+  have i2: "integrable Q (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2)"
+    using i2' by (simp add: quadform_outerp)
+  have m1: "(\<integral>\<omega>. q \<bullet> fst (\<omega> t) \<partial>Q) = q \<bullet> x"
+    using integral_of_bounded_linear[OF bounded_linear_inner_right iX]
+      paper_pair_class_X_mean[OF Q t] by simp
+  have m2: "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q) = (q \<bullet> x)\<^sup>2"
+  proof -
+    have "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q)
+        = (\<integral>\<omega>. fst (\<omega> t) \<bullet> (outerp q *v fst (\<omega> t)) \<partial>Q)"
+      by (simp add: quadform_outerp)
+    also have "\<dots> = x \<bullet> (outerp q *v x)
+        + trace (outerp q ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
+      by (rule paper_pair_class_quadform_mean[OF T L Q t])
+    also have "trace (outerp q ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))
+        = q \<bullet> ((\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q)"
+      by (rule trace_outerp_mult)
+    finally show ?thesis by (simp add: orth quadform_outerp)
+  qed
+  \<comment> \<open>the second moment equals the square of the mean, so the variance is zero\<close>
+  have iv: "integrable Q (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)"
+  proof -
+    have "(\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)
+        = (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 - 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t))
+              + (q \<bullet> x)\<^sup>2)"
+      by (rule ext) (simp add: power2_eq_square algebra_simps)
+    have bl: "bounded_linear (\<lambda>r :: real. 2 * (q \<bullet> x) * r)"
+      unfolding linear_conv_bounded_linear[symmetric]
+      by (intro linearI) (simp_all add: algebra_simps)
+    have i4: "integrable Q (\<lambda>\<omega>. 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t)))"
+      by (rule integrable_bounded_linear[OF bl i1])
+    show ?thesis
+      unfolding \<open>(\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)
+        = (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 - 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t))
+              + (q \<bullet> x)\<^sup>2)\<close>
+      by (intro Bochner_Integration.integrable_add
+          Bochner_Integration.integrable_diff i2 i4 P.integrable_const)
+  qed
+  have var: "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2 \<partial>Q) = 0"
+  proof -
+    have e: "(\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)
+        = (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 - 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t))
+              + (q \<bullet> x)\<^sup>2)"
+      by (rule ext) (simp add: power2_eq_square algebra_simps)
+    have "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2 \<partial>Q)
+        = (\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q)
+          - 2 * (q \<bullet> x) * (\<integral>\<omega>. q \<bullet> fst (\<omega> t) \<partial>Q) + (q \<bullet> x)\<^sup>2"
+      unfolding e using i1 i2 by (simp add: P.prob_space)
+    also have "\<dots> = 0" unfolding m1 m2 by (simp add: power2_eq_square)
+    finally show ?thesis .
+  qed
+  have nn: "AE \<omega> in Q. 0 \<le> (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2" by simp
+  have "AE \<omega> in Q. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2 = 0"
+    using integral_nonneg_eq_0_iff_AE[OF iv nn] var by simp
+  then show ?thesis by eventually_elim simp
+qed
+
+corollary paper_pair_class_feasible_freezes_gradient:
+  fixes Q :: "('n::finite pairpath) measure" and q :: "real^'n"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and t: "0 < t" and tT: "t \<le> T"
+    and a: "(1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q) \<in> feasible k L q"
+  shows "AE \<omega> in Q. q \<bullet> fst (\<omega> t) = q \<bullet> x"
+proof (rule paper_pair_class_frozen_direction[OF T L Q _ ])
+  show "t \<in> {0..T}" using t tT by simp
+  have z: "((1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)) *v q = 0"
+    using a unfolding feasible_def by blast
+  have "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q
+      = (t *\<^sub>R ((1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))) *v q"
+    using t by simp
+  also have "\<dots> = t *\<^sub>R (((1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)) *v q)"
+    by (rule scaleR_matrix_vector)
+  also have "\<dots> = 0" unfolding z by simp
+  finally show "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q = 0" .
+qed
+
 section \<open>The relaxed operator, and the inequality the class really gives\<close>
 
 text \<open>Eq. (1.9) takes its infimum over \<^const>\<open>feasible\<close>, which carries the
