@@ -8213,4 +8213,88 @@ proof -
     by (rule path_rcd_ksemi[OF T0 PS m1 m2 that])
 qed
 
+subsection \<open>Step (3): what class does the conditional law live in?\<close>
+
+text \<open>\<open>pafter T \<theta> \<omega>\<close> is frozen on \<open>[0,\<theta>]\<close>, so it is NOT a member of
+  \<open>paper_pair_class k L T 0\<close> --- the covariation constraint fails while the
+  path stands still.  What it IS, is the DELAYED EMBEDDING of the ordinary
+  rebased future \<open>pfut \<theta> T \<omega>\<close>: pad with \<open>0\<close> on \<open>[0,\<theta>]\<close> and run the future
+  after that.  So the class statement for the kernel is a statement about
+  \<open>prebase \<theta> T \<circ> pafter T \<theta>\<close>, and THAT is the map the deterministic (b3)
+  machinery already knows --- @{thm [source] paper_pair_class_rcd_member} is
+  exactly about the law of \<open>pfut r T\<close>.  The randomness of the horizon
+  \<open>T - \<theta>\<close> is harmless here: inside an almost-sure statement over the past,
+  \<open>\<theta>\<close> is a fixed number, and the only place a FIXED space was needed --- the
+  kernel's codomain --- is already handled by keeping \<open>pafter\<close> on the
+  \<open>T\<close>-space.\<close>
+
+definition pembed :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+  where "pembed s T w = restrict (\<lambda>t. w (max (t - s) 0)) {0..T}"
+
+definition prebase :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+  where "prebase s T w = restrict (\<lambda>u. w (s + u)) {0..T - s}"
+
+lemma pembed_apply: "t \<in> {0..T} \<Longrightarrow> pembed s T w t = w (max (t - s) 0)"
+  by (simp add: pembed_def)
+
+lemma prebase_apply: "u \<in> {0..T - s} \<Longrightarrow> prebase s T w u = w (s + u)"
+  by (simp add: prebase_def)
+
+lemma pembed_outside: "t \<notin> {0..T} \<Longrightarrow> pembed s T w t = undefined"
+  unfolding pembed_def restrict_def by (rule if_not_P)
+
+lemma prebase_outside: "u \<notin> {0..T - s} \<Longrightarrow> prebase s T w u = undefined"
+  unfolding prebase_def restrict_def by (rule if_not_P)
+
+text \<open>The two bridges.  \<open>pafter\<close> IS the delayed future, and the future is
+  recovered from it by re-basing --- so nothing is lost either way.\<close>
+
+lemma pafter_eq_pembed:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
+  shows "pafter T \<theta> \<omega> = pembed (\<theta> \<omega>) T (pfut (\<theta> \<omega>) T \<omega>)"
+proof (rule ext)
+  fix t :: real
+  show "pafter T \<theta> \<omega> t = pembed (\<theta> \<omega>) T (pfut (\<theta> \<omega>) T \<omega>) t"
+  proof (cases "t \<in> {0..T}")
+    case True
+    have mem: "max (t - \<theta> \<omega>) 0 \<in> {0..T - \<theta> \<omega>}" using True thT by simp
+    have "pembed (\<theta> \<omega>) T (pfut (\<theta> \<omega>) T \<omega>) t
+        = pfut (\<theta> \<omega>) T \<omega> (max (t - \<theta> \<omega>) 0)" by (rule pembed_apply[OF True])
+    also have "\<dots> = \<omega> (\<theta> \<omega> + max (t - \<theta> \<omega>) 0) - \<omega> (\<theta> \<omega>)"
+      by (rule pfut_apply[OF mem])
+    also have "\<theta> \<omega> + max (t - \<theta> \<omega>) 0 = max t (\<theta> \<omega>)" by simp
+    finally show ?thesis using True by (simp add: pafter_apply)
+  next
+    case False
+    then show ?thesis by (simp add: pafter_outside pembed_outside)
+  qed
+qed
+
+lemma prebase_pafter:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
+  shows "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) = pfut (\<theta> \<omega>) T \<omega>"
+proof (rule ext)
+  fix u :: real
+  show "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) u = pfut (\<theta> \<omega>) T \<omega> u"
+  proof (cases "u \<in> {0..T - \<theta> \<omega>}")
+    case True
+    then have mem: "\<theta> \<omega> + u \<in> {0..T}" using th0 by simp
+    have "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) u = pafter T \<theta> \<omega> (\<theta> \<omega> + u)"
+      by (rule prebase_apply[OF True])
+    also have "\<dots> = \<omega> (max (\<theta> \<omega> + u) (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)"
+      by (rule pafter_apply[OF mem])
+    also have "max (\<theta> \<omega> + u) (\<theta> \<omega>) = \<theta> \<omega> + u" using True by simp
+    finally show ?thesis using True by (simp add: pfut_apply)
+  next
+    case False
+    have "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) u = undefined"
+      by (rule prebase_outside[OF False])
+    moreover have "pfut (\<theta> \<omega>) T \<omega> u = undefined"
+      unfolding pfut_def restrict_def by (rule if_not_P[OF False])
+    ultimately show ?thesis by simp
+  qed
+qed
+
 end
