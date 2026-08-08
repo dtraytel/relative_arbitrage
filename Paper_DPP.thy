@@ -17538,4 +17538,63 @@ proof -
   ultimately show ?thesis by simp
 qed
 
+text \<open>The bridge between the two clocks.  The selector's optimality is a
+  statement at horizon \<open>T − r\<close> about the REBASED continuation; the glue wants
+  it at horizon \<open>T\<close> about the DELAYED one.  Since the delayed path stands at
+  \<open>y \<in> K\<close> throughout \<open>[0,r]\<close> it cannot exit there, so its exit time is exactly
+  \<open>r\<close> later --- and that \<open>r\<close> is the term @{thm [source] pexit_padd_dpp} asks for.\<close>
+
+lemma pexit_delayed_rebase:
+  fixes w :: "'n::finite pairpath" and y :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and frz: "\<And>t. t \<in> {0..T} \<Longrightarrow> t \<le> r \<Longrightarrow> w t = 0"
+    and inK: "y \<in> K"
+  shows "r + pexit (T - r) K (\<lambda>u. y + fst (prebase r T w u))
+      \<le> pexit T K (\<lambda>s. y + fst (w s))"
+proof -
+  let ?g = "\<lambda>s. y + fst (w s)"
+  let ?h = "\<lambda>u. y + fst (prebase r T w u)"
+  have T0: "0 \<le> T" using r rT by simp
+  have Tr: "0 \<le> T - r" using rT by simp
+  have lb: "r + pexit (T - r) K ?h \<le> z"
+    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T}" for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> T" "?g z \<in> - K" | (cap) "z = T" using z by blast
+    then show ?thesis
+    proof cases
+      case cap
+      have "pexit (T - r) K ?h \<le> T - r" by (rule pexit_le_T[OF Tr])
+      then show ?thesis unfolding cap by simp
+    next
+      case hit
+      then have zm: "z \<in> {0..T}" by simp
+      have zr: "r < z"
+      proof (rule ccontr)
+        assume "\<not> r < z"
+        then have "z \<le> r" by simp
+        then have "w z = 0" by (rule frz[OF zm])
+        then have "?g z = y" by simp
+        then show False using hit(3) inK by simp
+      qed
+      have um: "z - r \<in> {0..T - r}" using zr hit(2) by simp
+      have pe: "prebase r T w (z - r) = w z"
+      proof -
+        have "prebase r T w (z - r) = w (r + (z - r))" by (rule prebase_apply[OF um])
+        then show ?thesis by simp
+      qed
+      have mem: "?h (z - r) \<in> - K" using hit(3) pe by simp
+      have "pexit (T - r) K ?h \<le> z - r"
+        unfolding pexit_def
+        by (rule etime_le_of_mem[OF Tr _ _]) (use um mem in auto)
+      then show ?thesis by simp
+    qed
+  qed
+  have "pexit T K ?g = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T})"
+    unfolding pexit_def etime_def ..
+  moreover have "r + pexit (T - r) K ?h
+      \<le> Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show ?thesis by simp
+qed
+
 end
