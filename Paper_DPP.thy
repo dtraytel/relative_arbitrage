@@ -18171,4 +18171,130 @@ proof -
           msecX msecC gintX gintC])
 qed
 
+section \<open>The \<open>\<ge>\<close> half at a stopping time\<close>
+
+text \<open>Assembly.  The competitor is the additive glue of the stopped past and
+  the selector's continuation; it lies in the class by
+  @{thm [source] paper_pair_class_aglue_selector}, its exit time dominates \<open>c\<close>
+  by @{thm [source] aglue_law_pexit_ge}, and the value function dominates the
+  essential infimum of any class member's exit time by definition.\<close>
+
+theorem paper_v_ge_of_stopped_bound:
+  fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+    and x :: "real^'n"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
+    and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
+    and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+    and QH: "\<And>e. horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. fst (p' (min u T)) $ e) T"
+    and QHC: "\<And>c d. horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
+    and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
+    and Qbnd: "AE p' in Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+        + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+           then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+  shows "ennreal c \<le> paper_v k L T K x"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have T0': "0 \<le> T" using T0 by simp
+  have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  obtain Sel where
+    Sm: "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
+        \<rightarrow>\<^sub>M prob_algebra ?B"
+    and Sc: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
+    and Sv: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
+        ess_inf_time (pshift_law (T - s) y
+            (distr (Sel (s, y)) (borel_of (mtopology_of
+              (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)))
+          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = paper_v k L (T - s) K y"
+    by (rule paper_v_measurable_selector_horizon[where k = k, OF T0 L1 Kc]) blast
+  let ?\<kappa> = "selker Sel \<theta>"
+  let ?R = "aglue_law T ?\<kappa> Q"
+  interpret PQ': prob_space Q by (rule PQ)
+
+  \<comment> \<open>the two vector/matrix integrability facts the glue needs\<close>
+  have QXint: "integrable Q (\<lambda>p'. fst (p' (min u T)))" if u: "0 \<le> u" for u
+  proof -
+    have comp: "integrable Q (\<lambda>p'. fst (p' (min u T)) $ e)" for e
+    proof -
+      interpret HM: horizon_sq_int_martingale Q
+          "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+          "\<lambda>u p'. fst (p' (min u T)) $ e" T by (rule QH)
+      show ?thesis by (rule martingale.integrable[OF HM.martingale_axioms u])
+    qed
+    have "integrable Q (\<lambda>p'. (\<chi> e. fst (p' (min u T)) $ e) :: real^'n)"
+      by (rule integrable_vec_components) (rule comp)
+    then show ?thesis by simp
+  qed
+  have QCint: "integrable Q
+      (\<lambda>p'. outerp (fst (p' (min u T))) - snd (p' (min u T)))"
+    if u: "0 \<le> u" for u
+  proof -
+    have mg: "martingale Q (natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
+        (\<lambda>u p'. outerp (fst (p' (min u T))) - snd (p' (min u T)))"
+    proof (rule martingale_matI)
+      fix i j
+      interpret HM: horizon_sq_int_martingale Q
+          "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+          "\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ i $ j" T
+        by (rule QHC)
+      show "martingale Q (natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
+          (\<lambda>t p'. (outerp (fst (p' (min t T))) - snd (p' (min t T))) $ i $ j)"
+        by (rule HM.martingale_axioms)
+    qed
+    show ?thesis by (rule martingale.integrable[OF mg u])
+  qed
+
+  \<comment> \<open>the competitor is in the class\<close>
+  have Rmem: "?R \<in> paper_pair_class k L T x"
+    by (rule paper_pair_class_aglue_selector
+        [OF T0 L1 PQ setsQ st thM Q0 Qst Qcov QH QHC Qcont QXint QCint Sc Sm])
+
+  \<comment> \<open>and its exit time dominates \<open>c\<close>\<close>
+  have Kp: "?\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra ?B"
+    by (rule selker_measurable[OF T0' setsQ st thM Sm])
+  have Kfr: "AE w in ?\<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0" for p'
+    unfolding selker_def
+    by (rule pdelclass_frozen[OF th0 thT Sc[OF th0 thT]])
+  have Kval: "AE w in ?\<kappa> p'.
+      enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p'))))
+        \<le> pexit (T - \<theta> p') K
+            (\<lambda>u. fst (p' (\<theta> p')) + fst (prebase (\<theta> p') T w u))" for p'
+  proof -
+    let ?s = "\<theta> p'"  let ?y = "fst (p' ?s)"
+    have m: "Sel (?s, ?y) \<in> pdelclass k L T ?s" by (rule Sc[OF th0 thT])
+    show ?thesis
+      unfolding selker_def
+      by (rule selector_value_AE[OF th0 thT Kc
+            pdelclass_prob(1)[OF th0 thT m] pdelclass_prob(2)[OF th0 thT m]
+            Sv[OF th0 thT]])
+  qed
+  have Rbnd: "AE \<omega> in ?R. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+    by (rule aglue_law_pexit_ge
+        [OF T0' PQ setsQ Kp Kc L1 st Qst Qbnd Kfr Kval])
+
+  \<comment> \<open>hence \<open>c\<close> is below the value function\<close>
+  have "ennreal c \<le> ess_inf_time ?R (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+    unfolding ess_inf_time_def
+  proof (intro Sup_upper CollectI)
+    show "AE \<omega> in ?R. ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+      using Rbnd by (rule eventually_mono) (simp add: ennreal_leI)
+  qed
+  also have "\<dots> \<le> paper_v k L T K x"
+    unfolding paper_v_def using Rmem by (intro Sup_upper imageI)
+  finally show ?thesis .
+qed
+
 end
