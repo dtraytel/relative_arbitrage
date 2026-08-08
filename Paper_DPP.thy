@@ -8297,4 +8297,92 @@ proof (rule ext)
   qed
 qed
 
+subsection \<open>Where the STOPPING-TIME property enters\<close>
+
+text \<open>Everything so far used only Borel measurability of \<open>\<theta>\<close>.  From here on
+  \<open>\<theta>\<close> must be a genuine stopping time, and on path space that says exactly
+  one thing: \<open>\<theta>\<close> is decided by the path up to \<open>\<theta>\<close>.  Two paths agreeing on
+  \<open>[0, \<theta> \<omega>]\<close> get the same value --- which is what makes \<open>\<theta>\<close> a function of
+  the STOPPED path, and hence makes the kernel a function of the past.\<close>
+
+definition path_stopping_time :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> bool"
+  where "path_stopping_time T \<theta> \<longleftrightarrow>
+     (\<forall>\<omega>. 0 \<le> \<theta> \<omega> \<and> \<theta> \<omega> \<le> T)
+     \<and> (\<forall>\<omega> \<omega>'. (\<forall>t \<in> {0..\<theta> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow> \<theta> \<omega>' = \<theta> \<omega>)"
+
+lemma path_stopping_time_nonneg:
+  "path_stopping_time T \<theta> \<Longrightarrow> 0 \<le> \<theta> \<omega>"
+  unfolding path_stopping_time_def by blast
+
+lemma path_stopping_time_le:
+  "path_stopping_time T \<theta> \<Longrightarrow> \<theta> \<omega> \<le> T"
+  unfolding path_stopping_time_def by blast
+
+lemma path_stopping_time_cong:
+  "path_stopping_time T \<theta> \<Longrightarrow> (\<And>t. t \<in> {0..\<theta> \<omega>} \<Longrightarrow> \<omega> t = \<omega>' t)
+    \<Longrightarrow> \<theta> \<omega>' = \<theta> \<omega>"
+  unfolding path_stopping_time_def by blast
+
+text \<open>Hence \<open>\<theta>\<close> reads only the stopped path --- the fact every later step
+  needs, and the reason the kernel can be indexed by \<open>pstopped T \<theta> \<omega>\<close>
+  alone.\<close>
+
+lemma path_stopping_time_stopped:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>"
+  shows "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
+proof (rule path_stopping_time_cong[OF st])
+  fix t assume t: "t \<in> {0..\<theta> \<omega>}"
+  then have tT: "t \<in> {0..T}" using path_stopping_time_le[OF st, of \<omega>] by auto
+  have "min t (\<theta> \<omega>) = t" using t by simp
+  then show "\<omega> t = pstopped T \<theta> \<omega> t" by (simp add: pstopped_apply[OF tT])
+qed
+
+lemma pstopped_idem:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>"
+  shows "pstopped T \<theta> (pstopped T \<theta> \<omega>) = pstopped T \<theta> \<omega>"
+proof (rule ext)
+  fix t :: real
+  show "pstopped T \<theta> (pstopped T \<theta> \<omega>) t = pstopped T \<theta> \<omega> t"
+  proof (cases "t \<in> {0..T}")
+    case True
+    have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
+    have m: "min t (\<theta> \<omega>) \<in> {0..T}"
+      using True path_stopping_time_nonneg[OF st, of \<omega>] by auto
+    have "pstopped T \<theta> (pstopped T \<theta> \<omega>) t
+        = pstopped T \<theta> \<omega> (min t (\<theta> \<omega>))"
+      unfolding pstopped_apply[OF True] th ..
+    also have "\<dots> = \<omega> (min (min t (\<theta> \<omega>)) (\<theta> \<omega>))" by (rule pstopped_apply[OF m])
+    also have "min (min t (\<theta> \<omega>)) (\<theta> \<omega>) = min t (\<theta> \<omega>)" by simp
+    finally show ?thesis by (simp add: pstopped_apply[OF True])
+  next
+    case False
+    then show ?thesis by (simp add: pstopped_outside)
+  qed
+qed
+
+text \<open>And the future factor of a STOPPED path is trivial: stopping twice
+  leaves nothing after \<open>\<theta>\<close>.  This is the pathwise seed of clause (ii) for
+  the kernel --- the continuation starts at \<open>0\<close>.\<close>
+
+lemma pafter_pstopped:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>" and t: "t \<in> {0..T}"
+  shows "pafter T \<theta> (pstopped T \<theta> \<omega>) t = 0"
+proof -
+  have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
+  have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
+  have m: "max t (\<theta> \<omega>) \<in> {0..T}" using t th0 thT by simp
+  have m2: "\<theta> \<omega> \<in> {0..T}" using th0 thT by simp
+  have "pafter T \<theta> (pstopped T \<theta> \<omega>) t
+      = pstopped T \<theta> \<omega> (max t (\<theta> \<omega>)) - pstopped T \<theta> \<omega> (\<theta> \<omega>)"
+    unfolding pafter_apply[OF t] th ..
+  also have "\<dots> = \<omega> (min (max t (\<theta> \<omega>)) (\<theta> \<omega>)) - \<omega> (min (\<theta> \<omega>) (\<theta> \<omega>))"
+    by (simp only: pstopped_apply[OF m] pstopped_apply[OF m2])
+  also have "min (max t (\<theta> \<omega>)) (\<theta> \<omega>) = \<theta> \<omega>" by simp
+  finally show ?thesis by simp
+qed
+
 end
