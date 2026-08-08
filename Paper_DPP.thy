@@ -15707,4 +15707,207 @@ proof (rule martingale_mean_zero_of_start
   qed
 qed
 
+section \<open>The past factor: the stopped law satisfies step (4)'s \<open>Q\<close>-clauses\<close>
+
+text \<open>\<open>Qst\<close> --- that the past law is carried by paths which are their own
+  stopped versions --- is where the AE form is unavoidable, so its transfer
+  needs the fixed-point set to be MEASURABLE.  It is: two paths that agree at
+  every rational of \<open>[0,T]\<close> and are both continuous there agree everywhere
+  (@{thm [source] vanishes_of_rational} on their difference), so the fixed-point
+  set is a countable intersection of evaluation conditions --- the same shape
+  as @{thm [source] frozen_set_measurable}.\<close>
+
+lemma pstopped_fixed_set_measurable:
+  fixes T :: real
+  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric)))"
+  shows "{p' \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))). pstopped T \<theta> p' = p'}
+      \<in> sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?D = "{0..T} \<inter> \<rat>"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have pm: "pstopped T \<theta> \<in> ?B \<rightarrow>\<^sub>M ?B"
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have single: "{p' \<in> space ?B. pstopped T \<theta> p' q = p' q} \<in> sets ?B" for q
+  proof -
+    have m1: "(\<lambda>p' :: 'n pairpath. pstopped T \<theta> p' q) \<in> borel_measurable ?B"
+      by (rule measurable_compose[OF pm pair_law_eval_measurable[OF refl]])
+    have m2: "(\<lambda>p' :: 'n pairpath. p' q) \<in> borel_measurable ?B"
+      by (rule pair_law_eval_measurable[OF refl])
+    show ?thesis using m1 m2 by measurable
+  qed
+  have cnt: "countable ?D" by (simp add: countable_rat)
+  have ne: "?D \<noteq> {}" using T0 by auto
+  have eq: "{p' \<in> space ?B. pstopped T \<theta> p' = p'}
+      = (\<Inter>q \<in> ?D. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q})"
+  proof
+    show "{p' \<in> space ?B. pstopped T \<theta> p' = p'}
+        \<subseteq> (\<Inter>q \<in> ?D. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q})" by auto
+    show "(\<Inter>q \<in> ?D. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q})
+        \<subseteq> {p' \<in> space ?B. pstopped T \<theta> p' = p'}"
+    proof
+      fix p' :: "'n pairpath"
+      assume h: "p' \<in> (\<Inter>q \<in> ?D. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q})"
+      from h ne have sp: "p' \<in> space ?B" by blast
+      then have mw: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+        using spB by simp
+      \<comment> \<open>\<open>OF\<close> against \<open>0 \<le> ?\<theta> ?\<omega>\<close> is not a higher-order PATTERN, so it has
+          no unifiers; let the conclusion fix \<open>\<theta>\<close> and \<open>\<omega>\<close> first.\<close>
+      have ms: "pstopped T \<theta> p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      proof (rule pstopped_mspace)
+        show "0 \<le> \<theta> p'" by (rule th0)
+        show "\<theta> p' \<le> T" by (rule thT)
+        show "p' \<in> mspace (path_metric T :: ('n pairpath) metric)" by (rule mw)
+      qed
+      have c1: "continuous_on {0..T} (pstopped T \<theta> p')"
+        by (rule mspace_path_metricD[OF ms])
+      have c2: "continuous_on {0..T} p'" by (rule mspace_path_metricD[OF mw])
+      have cd: "continuous_on {0..T} (\<lambda>u. pstopped T \<theta> p' u - p' u)"
+        using c1 c2 by (intro continuous_intros)
+      have rq: "pstopped T \<theta> p' q - p' q = 0"
+        if "q \<in> (\<rat> :: real set)" "q \<in> {0..T}" for q using h that by auto
+      have "pstopped T \<theta> p' t = p' t" for t
+      proof (cases "t \<in> {0..T}")
+        case True
+        have "pstopped T \<theta> p' t - p' t = 0"
+          by (rule vanishes_of_rational[OF T0 cd rq True])
+        then show ?thesis by simp
+      next
+        case False
+        have "pstopped T \<theta> p' t = undefined" by (rule pstopped_outside[OF False])
+        moreover have "p' t = undefined"
+        proof -
+          have "p' t = restrict p' {0..T} t"
+            unfolding mspace_path_restrict_self[OF mw] ..
+          also have "\<dots> = undefined"
+            unfolding restrict_def by (rule if_not_P[OF False])
+          finally show ?thesis .
+        qed
+        ultimately show ?thesis by simp
+      qed
+      then have "pstopped T \<theta> p' = p'" by (rule ext)
+      with sp show "p' \<in> {p' \<in> space ?B. pstopped T \<theta> p' = p'}" by blast
+    qed
+  qed
+  have sub: "(\<lambda>q. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q}) ` ?D \<subseteq> sets ?B"
+    using single by blast
+  have "(\<Inter>q \<in> ?D. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q}) \<in> sets ?B"
+    by (rule sets.countable_INT'[OF cnt ne sub])
+  then show ?thesis unfolding eq .
+qed
+
+text \<open>The four cheap \<open>Q\<close>-clauses of step (4) for the stopped past law.
+  \<open>Qst\<close> is @{thm [source] pstopped_idem} transported through
+  @{thm [source] AE_distr_iff}; \<open>Q0\<close> is the start clause of \<open>P\<close>, which the
+  stopping does not touch because \<open>\<theta> \<ge> 0\<close>; \<open>Qcont\<close> is membership in the path
+  space, which is the one thing that IS pointwise on the space.\<close>
+
+lemma pstopped_law_prob:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PS: "prob_space P"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "prob_space (pair_law_of T (pstopped T \<theta>) P)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  interpret PP: prob_space P by (rule PS)
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  show ?thesis unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+qed
+
+lemma pstopped_law_idem:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. pstopped T \<theta> p' = p'"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have mset: "{p' \<in> space ?B. pstopped T \<theta> p' = p'} \<in> sets ?B"
+    by (rule pstopped_fixed_set_measurable[OF T0 st thM])
+  have "AE \<omega> in P. pstopped T \<theta> (pstopped T \<theta> \<omega>) = pstopped T \<theta> \<omega>"
+    by (simp add: pstopped_idem[OF st])
+  then show ?thesis
+    unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+qed
+
+lemma pstopped_law_start:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
+      fst (p' 0) = x \<and> snd (p' 0) = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have ev: "(\<lambda>p' :: 'n pairpath. p' 0) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have mset: "{p' \<in> space ?B. fst (p' 0) = x \<and> snd (p' 0) = 0} \<in> sets ?B"
+  proof -
+    have "{p' \<in> space ?B. fst (p' 0) = x \<and> snd (p' 0) = 0}
+        = (\<lambda>p' :: 'n pairpath. p' 0) -` {(x, 0)} \<inter> space ?B"
+      by (auto simp: prod_eq_iff)
+    then show ?thesis using measurable_sets[OF ev] by simp
+  qed
+  have z: "(0::real) \<in> {0..T}" using T0 by simp
+  have "AE \<omega> in P. fst (pstopped T \<theta> \<omega> 0) = x \<and> snd (pstopped T \<theta> \<omega> 0) = 0"
+    using P0
+  proof eventually_elim
+    case (elim \<omega>)
+    have "pstopped T \<theta> \<omega> 0 = \<omega> (min 0 (\<theta> \<omega>))" by (rule pstopped_apply[OF z])
+    also have "min 0 (\<theta> \<omega>) = 0" using th0[of \<omega>] by simp
+    finally show ?case using elim by simp
+  qed
+  then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+qed
+
+lemma pstopped_law_cont:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes p: "p' \<in> space (pair_law_of T (pstopped T \<theta>) P)"
+  shows "continuous_on {0..T} p'"
+proof -
+  have "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    using p by (simp add: space_pair_law_of)
+  then show ?thesis by (rule mspace_path_metricD)
+qed
+
 end
