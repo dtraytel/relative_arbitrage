@@ -7783,4 +7783,38 @@ proof -
   show ?thesis by (rule borel_measurable_LIMSEQ_metric[OF stepm conv])
 qed
 
+text \<open>Both halves of the split are again capped paths.  Freezing and
+  rebasing preserve continuity, and @{thm [source] mspace_path_metricI} does
+  the extensionality --- both maps are \<open>restrict\<close>ed by construction.\<close>
+
+lemma pstopped_mspace:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+proof -
+  have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
+  have m: "continuous_on {0..T} (\<lambda>t. min t (\<theta> \<omega>))" by (intro continuous_intros)
+  have im: "(\<lambda>t. min t (\<theta> \<omega>)) ` {0..T} \<subseteq> {0..T}" using th0 thT by auto
+  have "continuous_on {0..T} (\<lambda>t. \<omega> (min t (\<theta> \<omega>)))"
+    by (rule continuous_on_compose2[OF c m im])
+  then show ?thesis unfolding pstopped_def by (rule mspace_path_metricI)
+qed
+
+lemma pafter_mspace:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+proof -
+  have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
+  have m: "continuous_on {0..T} (\<lambda>t. max t (\<theta> \<omega>))" by (intro continuous_intros)
+  have im: "(\<lambda>t. max t (\<theta> \<omega>)) ` {0..T} \<subseteq> {0..T}" using th0 thT by auto
+  have "continuous_on {0..T} (\<lambda>t. \<omega> (max t (\<theta> \<omega>)))"
+    by (rule continuous_on_compose2[OF c m im])
+  then have "continuous_on {0..T} (\<lambda>t. \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>))"
+    by (intro continuous_intros)
+  then show ?thesis unfolding pafter_def by (rule mspace_path_metricI)
+qed
+
 end
