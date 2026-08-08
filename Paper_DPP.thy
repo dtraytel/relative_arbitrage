@@ -8560,4 +8560,143 @@ proof -
   then show ?thesis unfolding AE_ksemi[OF KQ msetN[OF setsQ]] by simp
 qed
 
+text \<open>Clause (iii) at ONE pair of times.  This is the analogue of the \<open>one\<close>
+  step inside @{thm [source] pfut_rcd_diffquot}, and the pathwise content is
+  free: after \<open>\<theta>\<close> the future factor's increments ARE \<open>\<omega>\<close>'s increments,
+  because the \<open>- \<omega> (\<theta> \<omega>)\<close> cancels in the difference.  Note the guard
+  \<open>\<theta> p' \<le> p\<close> lives INSIDE the predicate, which makes the conditioning set a
+  PAIR-set --- so the transfer is the @{thm [source] AE_ksemi} chain of
+  clause (ii) rather than @{thm [source] AE_kernel_full}.  That is also why
+  the rational grid has to stay in the ORIGINAL time scale.\<close>
+
+lemma AE_rcd_stopping_diffquot_at:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PS: "prob_space P"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+        = ksemi (pair_law_of T (pstopped T \<theta>) P)
+            (borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric))) \<kappa>"
+    and cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    and p: "p \<in> {0..T}" and q: "q \<in> {0..T}" and pq: "p < q"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. AE w in \<kappa> p'.
+      \<theta> p' \<le> p \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  interpret PP: prob_space P by (rule PS)
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have m2: "pafter T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pafter_measurable[OF T0 thM th0 thT])
+  have mphi: "(\<lambda>\<omega> :: 'n pairpath. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+      \<in> P \<rightarrow>\<^sub>M ?B \<Otimes>\<^sub>M ?B" using m1 m2 by simp
+  have setsQ: "sets ?Q = sets ?B" by (rule sets_pair_law_of)
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?B"
+    using Km measurable_cong_sets[OF setsQ refl] by blast
+
+  \<comment> \<open>the constraint set at this pair of times is closed, hence measurable\<close>
+  define C where "C = {w :: 'n pairpath \<in> space ?B.
+      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L}"
+  have CB: "C \<in> sets ?B"
+    unfolding C_def
+    using borel_of_closed[OF closedin_diffquot_constraint[OF p q]]
+    by (simp add: space_borel_of)
+
+  \<comment> \<open>the conditioning set is a measurable PAIR-set\<close>
+  have msetN: "{pp \<in> space (N \<Otimes>\<^sub>M ?B). \<theta> (fst pp) \<le> p \<longrightarrow> snd pp \<in> C}
+      \<in> sets (N \<Otimes>\<^sub>M ?B)" if setsN: "sets N = sets ?B"
+    for N :: "('n pairpath) measure"
+  proof -
+    have mf: "(\<lambda>pp :: 'n pairpath \<times> 'n pairpath. fst pp) \<in> N \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
+      unfolding measurable_cong_sets[OF refl setsN, symmetric]
+      by (rule measurable_fst)
+    have mth: "(\<lambda>pp :: 'n pairpath \<times> 'n pairpath. \<theta> (fst pp))
+        \<in> borel_measurable (N \<Otimes>\<^sub>M ?B)"
+      using mf by (rule measurable_compose) (rule thM)
+    have ms: "(\<lambda>pp :: 'n pairpath \<times> 'n pairpath. snd pp) \<in> N \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
+      by (rule measurable_snd)
+    have "{pp \<in> space (N \<Otimes>\<^sub>M ?B). \<theta> (fst pp) \<le> p \<longrightarrow> snd pp \<in> C}
+        = (space (N \<Otimes>\<^sub>M ?B) - {pp \<in> space (N \<Otimes>\<^sub>M ?B). \<theta> (fst pp) \<le> p})
+          \<union> (snd -` C \<inter> space (N \<Otimes>\<^sub>M ?B))" by blast
+    moreover have "{pp \<in> space (N \<Otimes>\<^sub>M ?B). \<theta> (fst pp) \<le> p} \<in> sets (N \<Otimes>\<^sub>M ?B)"
+      using mth by measurable
+    moreover have "snd -` C \<inter> space (N \<Otimes>\<^sub>M ?B) \<in> sets (N \<Otimes>\<^sub>M ?B)"
+      by (rule measurable_sets[OF ms CB])
+    ultimately show ?thesis by simp
+  qed
+
+  \<comment> \<open>pathwise: after \<open>\<theta>\<close> the future factor's increments ARE \<open>\<omega>\<close>'s\<close>
+  have path: "AE \<omega> in P.
+      \<theta> (pstopped T \<theta> \<omega>) \<le> p \<longrightarrow> pafter T \<theta> \<omega> \<in> C"
+  proof -
+    have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+    with cov show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      show ?case
+      proof
+        assume le: "\<theta> (pstopped T \<theta> \<omega>) \<le> p"
+        then have thp: "\<theta> \<omega> \<le> p"
+          using path_stopping_time_stopped[OF st, of \<omega>] by simp
+        have wq: "pafter T \<theta> \<omega> q = \<omega> q - \<omega> (\<theta> \<omega>)"
+        proof -
+          have "max q (\<theta> \<omega>) = q" using thp pq by simp
+          then show ?thesis by (simp add: pafter_apply[OF q])
+        qed
+        have wp: "pafter T \<theta> \<omega> p = \<omega> p - \<omega> (\<theta> \<omega>)"
+        proof -
+          have "max p (\<theta> \<omega>) = p" using thp by simp
+          then show ?thesis by (simp add: pafter_apply[OF p])
+        qed
+        have sp: "pafter T \<theta> \<omega> \<in> space ?B"
+        proof -
+          have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+            using elim(2) sets_eq_imp_space_eq[OF setsP] by (simp add: space_borel_of)
+          then have "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+            by (rule pafter_mspace[OF th0 thT])
+          then show ?thesis by (simp add: space_borel_of)
+        qed
+        have "(1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+          using elim(1) p q pq by auto
+        then show "pafter T \<theta> \<omega> \<in> C"
+          unfolding C_def using sp by (simp add: wq wp)
+      qed
+    qed
+  qed
+
+  \<comment> \<open>and the transfer\<close>
+  have joint: "AE pp in distr P (?B \<Otimes>\<^sub>M ?B)
+      (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)).
+        \<theta> (fst pp) \<le> p \<longrightarrow> snd pp \<in> C"
+    unfolding AE_distr_iff[OF mphi msetN[OF refl]] using path by simp
+  then have "AE pp in ksemi ?Q ?B \<kappa>. \<theta> (fst pp) \<le> p \<longrightarrow> snd pp \<in> C"
+    unfolding eq .
+  then have "AE p' in ?Q. AE w in \<kappa> p'. \<theta> p' \<le> p \<longrightarrow> w \<in> C"
+    unfolding AE_ksemi[OF KQ msetN[OF setsQ]] by simp
+  then show ?thesis unfolding C_def by (auto elim: eventually_mono)
+qed
+
 end
