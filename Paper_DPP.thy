@@ -12991,7 +12991,10 @@ theorem aglue_law_X_increment:
     and msec: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
-    and gint: "\<And>u BB. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+    and gint: "\<And>u BB. 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
   shows "set_lebesgue_integral (aglue_law T \<kappa> Q) A (\<lambda>\<omega>. fst (\<omega> (min i T)) $ c)
@@ -13080,7 +13083,7 @@ proof -
     unfolding tr[OF i0 iT] tr[OF j0 jT]
     by (rule aglue_inner_increment
         [OF T0 PQ setsQ Kp st thM Qst QH Qcont Kfr Kmean Kint Kinc
-          i0 ij iT jT B gint])
+          i0 ij iT jT B gint[OF _ _ B]])
 qed
 
 subsection \<open>Clause (iv) for the glue: the \<open>X\<close> martingale\<close>
@@ -13123,7 +13126,10 @@ theorem aglue_law_X_martingale:
     and msec: "\<And>A u c. A \<in> sets (aglue_law T \<kappa> Q) \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
-    and gint: "\<And>u BB c i. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+    and gint: "\<And>u BB c i. 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
   shows "martingale (aglue_law T \<kappa> Q)
@@ -13186,7 +13192,7 @@ proof -
           = set_lebesgue_integral ?R C (\<lambda>\<omega>. fst (\<omega> (min (min v T) T)) $ c)"
         by (rule aglue_law_X_increment
             [OF T0 PQ setsQ Kp st thM Qst QH Qcont Kfr Kmean Kint Kinc
-              uv(1) uvT uT vT C hiA msec[OF CR] gint])
+              uv(1) uvT uT vT C hiA msec[OF CR] gint[OF _ _ _ uv(1) uT]])
       then show ?thesis by simp
     qed
     show "set_lebesgue_integral ?R C (?X u) = set_lebesgue_integral ?R C (?X v)"
@@ -13812,7 +13818,10 @@ theorem aglue_law_comp_increment:
             * ((outerp (fst (padd T p' w (min u T)))
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
           \<in> borel_measurable Q"
-    and gint: "\<And>u BB. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+    and gint: "\<And>u BB. 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))"
@@ -13917,7 +13926,7 @@ proof -
     unfolding tr[OF i0 iT] tr[OF j0 jT]
     by (rule aglue_inner_increment_comp
         [OF T0 PQ setsQ Kp st thM Qst QHC Qcont Kfr Kmean KmeanC Kint KintC
-          Kinc KincC i0 ij iT jT B gint])
+          Kinc KincC i0 ij iT jT B gint[OF _ _ B]])
 qed
 
 theorem aglue_law_comp_martingale:
@@ -13966,7 +13975,10 @@ theorem aglue_law_comp_martingale:
             * ((outerp (fst (padd T p' w (min u T)))
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
           \<in> borel_measurable Q"
-    and gint: "\<And>u BB c d i. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+    and gint: "\<And>u BB c d i. 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))"
@@ -14044,7 +14056,8 @@ proof -
                   - snd (\<omega> (min (min v T) T))) $ c $ d)"
         by (rule aglue_law_comp_increment
             [OF T0 PQ setsQ Kp st thM Qst QHC Qcont Kfr Kmean KmeanC Kint
-              KintC Kinc KincC uv(1) uvT uT vT C hiA msec[OF CR] gint])
+              KintC Kinc KincC uv(1) uvT uT vT C hiA msec[OF CR]
+              gint[OF _ _ _ uv(1) uT]])
       then show ?thesis by simp
     qed
     show "set_lebesgue_integral ?R C (?X u) = set_lebesgue_integral ?R C (?X v)"
@@ -14127,10 +14140,16 @@ theorem paper_pair_class_aglue:
             * ((outerp (fst (padd T p' w (min u T)))
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
           \<in> borel_measurable Q"
-    and gintX: "\<And>u BB e i. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+    and gintX: "\<And>u BB e i. 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * (fst (padd T p' w (min u T)) $ e) \<partial>(\<kappa> p'))"
-    and gintC: "\<And>u BB c d i. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+    and gintC: "\<And>u BB c d i. 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
+          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))"
