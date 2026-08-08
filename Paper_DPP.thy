@@ -17187,6 +17187,111 @@ proof -
     by (rule aglue_section_measurable[OF T0 setsQ Kp hb cb c1 Kint])
 qed
 
+text \<open>\<open>gintX\<close>/\<open>gintC\<close>: the same section integral, now INTEGRABLE in the past.
+  Bounded by \<open>1\<close>, the conditioning factor cannot enlarge the inner integral, so
+  the past bound that already served \<open>RXint\<close>/\<open>RCint\<close> serves here too.\<close>
+
+lemma aglue_section_int_at:
+  fixes Q :: "('n::finite pairpath) measure"
+    and h cc :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and hb: "h \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and cb: "cc \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and c1: "\<And>\<omega>. \<bar>cc \<omega>\<bar> \<le> 1"
+    and Kint: "integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))"
+    and sp: "p' \<in> space Q"
+  shows "integrable (\<kappa> p') (\<lambda>w. cc (padd T p' w) * h (padd T p' w))"
+proof (rule Bochner_Integration.integrable_bound[OF Kint])
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have sK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+  have pl: "(\<lambda>w :: 'n pairpath. padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
+    by (rule padd_measurable_left[OF T0])
+       (use sp space_of_path_sets[OF setsQ] in simp)
+  have "(\<lambda>w :: 'n pairpath. cc (padd T p' w) * h (padd T p' w))
+      \<in> borel_measurable ?B"
+    using measurable_compose[OF pl cb] measurable_compose[OF pl hb] by simp
+  then show "(\<lambda>w. cc (padd T p' w) * h (padd T p' w))
+      \<in> borel_measurable (\<kappa> p')"
+    using measurable_cong_sets[OF sK refl] by blast
+next
+  show "AE w in \<kappa> p'. norm (cc (padd T p' w) * h (padd T p' w))
+      \<le> norm (h (padd T p' w))"
+  proof (intro AE_I2)
+    fix w :: "'n pairpath"
+    have "norm (cc (padd T p' w) * h (padd T p' w))
+        = \<bar>cc (padd T p' w)\<bar> * \<bar>h (padd T p' w)\<bar>" by (simp add: abs_mult)
+    also have "\<dots> \<le> 1 * \<bar>h (padd T p' w)\<bar>"
+      by (rule mult_right_mono[OF c1]) simp
+    finally show "norm (cc (padd T p' w) * h (padd T p' w))
+        \<le> norm (h (padd T p' w))" by simp
+  qed
+qed
+
+lemma aglue_section_integrable:
+  fixes Q :: "('n::finite pairpath) measure"
+    and h cc HB :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and hb: "h \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and cb: "cc \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and c1: "\<And>\<omega>. \<bar>cc \<omega>\<bar> \<le> 1"
+    and Kint: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))"
+    and HBi: "integrable Q HB"
+    and Kbnd: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> (\<integral>w. \<bar>h (padd T p' w)\<bar> \<partial>(\<kappa> p')) \<le> HB p'"
+  shows "integrable Q (\<lambda>p'. \<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p'))"
+proof -
+  have m: "(\<lambda>p'. \<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p'))
+      \<in> borel_measurable Q"
+    by (rule aglue_section_measurable[OF T0 setsQ Kp hb cb c1 Kint])
+  show ?thesis
+  proof (rule Bochner_Integration.integrable_bound[OF HBi m])
+    show "AE p' in Q. norm (\<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p'))
+        \<le> norm (HB p')"
+    proof (rule eventually_mono[OF AE_space])
+      fix p' :: "'n pairpath" assume sp: "p' \<in> space Q"
+      have iH: "integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))" by (rule Kint[OF sp])
+      have iA: "integrable (\<kappa> p') (\<lambda>w. \<bar>h (padd T p' w)\<bar>)"
+        using iH by simp
+      have iCH: "integrable (\<kappa> p') (\<lambda>w. cc (padd T p' w) * h (padd T p' w))"
+        by (rule aglue_section_int_at[OF T0 setsQ Kp hb cb c1 iH sp])
+      have "\<bar>\<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p')\<bar>
+          \<le> (\<integral>w. \<bar>cc (padd T p' w) * h (padd T p' w)\<bar> \<partial>(\<kappa> p'))"
+        by (rule integral_abs_bound)
+      also have "\<dots> \<le> (\<integral>w. \<bar>h (padd T p' w)\<bar> \<partial>(\<kappa> p'))"
+      proof (rule Bochner_Integration.integral_mono[OF _ iA])
+        show "integrable (\<kappa> p') (\<lambda>w. \<bar>cc (padd T p' w) * h (padd T p' w)\<bar>)"
+          using iCH by simp
+        show "\<bar>cc (padd T p' w) * h (padd T p' w)\<bar>
+            \<le> \<bar>h (padd T p' w)\<bar>" for w :: "'n pairpath"
+        proof -
+          have "\<bar>cc (padd T p' w) * h (padd T p' w)\<bar>
+              = \<bar>cc (padd T p' w)\<bar> * \<bar>h (padd T p' w)\<bar>"
+            by (simp add: abs_mult)
+          also have "\<dots> \<le> 1 * \<bar>h (padd T p' w)\<bar>"
+            by (rule mult_right_mono[OF c1]) simp
+          finally show ?thesis by simp
+        qed
+      qed
+      also have "\<dots> \<le> HB p'" by (rule Kbnd[OF sp])
+      finally show "norm (\<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p'))
+          \<le> norm (HB p')" by simp
+    qed
+  qed
+qed
+
 corollary aglue_msec_C:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T"
