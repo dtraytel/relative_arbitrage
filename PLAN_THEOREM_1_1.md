@@ -1087,3 +1087,63 @@ See [[pointwise-on-space-is-unsatisfiable]].
    `gintC` — integrability and measurability of the `w`-sections of
    `ksemi Q ?B_T κ`. Fubini, not new probability.
 3. **Assembly**: feed the result into `paper_v_dpp_sup_ge_time_of_const`.
+
+## §2.1 past factor — status 2026-08-08 (end of session)
+
+**Done, all green:** `pstopped_fixed_set_measurable`, `pstopped_law_prob` (PQ),
+`pstopped_law_idem` (Qst), `pstopped_law_start` (Q0), `pstopped_law_cont`
+(Qcont), **`pstopped_law_diffquot` (Qcov)**, and the adaptedness input
+**`pstopped_eval_filtration`**.
+
+Two things worth not re-deriving:
+
+* **Qcov needs no guarded rational lemma.** Instantiate
+  `diffquot_all_of_rational`'s HORIZON parameter with `θ p'` instead of `T`;
+  the rationals it picks then satisfy `q < t ≤ θ p'` automatically. (This is
+  different from step (3)'s clause (iii), which needed
+  `diffquot_all_of_rational_ge` because there the guard was a LOWER bound.)
+* **`pstopped_eval_filtration` avoids the componentwise route.** `(λω. pstopped
+  T θ ω r)` is `ℱ_u`-measurable for `r ≤ u` AS A PAIR-PATH POINT. Read it off
+  the `u'`-cut (`u' = u ∧ T`) rather than the whole path: `pcut u'` is
+  measurable into the `u'`-horizon space by the very description of the natural
+  filtration (`sets_natural_filtration_eq_pcut_vimage`), `r ∧ θ` is
+  `ℱ_u'`-measurable (`{r ∧ θ ≤ t}` is everything, or `{θ ≤ t}` with `t < r`, or
+  empty), and `path_eval_at_measurable_time` joins them. Do NOT decompose into
+  `fst … $ i` and `snd … $ i $ j` and reassemble — that was the expected route
+  and it is not needed.
+
+### The three remaining pieces of §2.1, in order
+
+**(A) `QH` / `QHC` — the stopped law's two square-integrable martingales.**
+Everything needed is now in place; the shape is:
+
+1. Under `P`, the class's coordinate process STOPPED at `θ` is a martingale.
+   Template: `paper_pair_class_stopped_coord_martingale` (Paper_Bridge:1672)
+   and `paper_pair_class_stopped_comp_martingale` (1746) — they do exactly this
+   for the localisation time `ploc T i R`; substitute `θ`, whose stopping-time
+   property is `path_stopping_time_event_filtration_all` in place of
+   `paper_pair_class_ploc_stopping`. The engine is `optional_stopping[where
+   D = HM.Dsup]` with `HM : horizon_sq_int_martingale`, and the adaptedness
+   side condition is `stopped_adapted_of_cont`.
+2. Push that forward along `pstopped T θ` with `martingale_pair_law`, whose
+   `adap` is `pstopped_eval_filtration` and whose `FF` is `P`'s OWN natural
+   filtration (no time change here — unlike the delayed class, the stopped path
+   carries no more information than the past).
+   Note `pstopped T θ ω (min u T) = ω (min (min u T) (θ ω))`, which is the
+   template's `X (min u (θ ω)) ω` after `min`-associativity.
+3. Square integrability of the stopped process transfers by
+   `integrable_distr_eq`; the base bound is `paper_pair_class_sq_integrable`
+   (and `paper_pair_class_comp_entry_sq_integrable` for the compensated entry).
+
+**(B) The six glue side conditions** `RXint`, `RCint`, `msecX`, `msecC`,
+`gintX`, `gintC` — integrability and measurability of the `w`-sections of
+`ksemi Q ?B_T κ`. Fubini over the semidirect product; the tools are
+`AE_integrable_ksemi_section` and the unbounded `integral_ksemi`, already used
+in step (3).
+
+**(C) Assembly.** `paper_pair_class_aglue` then gives the competitor, and
+`paper_v_dpp_sup_ge_time_of_const` (already stated for arbitrary `θ`) turns it
+into the `≥` half. The continuation kernel is
+`λp'. Sel (θ p', fst (p' (θ p')))` with `Sel` the horizon-parametrised
+selector; its `Kp` is `Selm`, and the nine kernel clauses are the `pdelclass_*`
+family.
