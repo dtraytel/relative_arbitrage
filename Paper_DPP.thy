@@ -14274,4 +14274,161 @@ proof -
   qed
   then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
 qed
+text \<open>The \<forall>-form of the freezing, which is what step (4)'s \<open>Kfr\<close> consumes.
+  The measurability of the frozen set is the only real content: a continuous
+  path vanishing at every RATIONAL point of \<open>[0,d]\<close> vanishes there, so the set
+  is a countable intersection of evaluation conditions.\<close>
+
+lemma vanishes_of_rational:
+  fixes w :: "real \<Rightarrow> 'b::real_normed_vector"
+  assumes d0: "0 \<le> d" and cont: "continuous_on {0..d} w"
+    and rat: "\<And>q. q \<in> (\<rat> :: real set) \<Longrightarrow> q \<in> {0..d} \<Longrightarrow> w q = 0"
+    and u: "u \<in> {0..d}"
+  shows "w u = 0"
+proof (cases "u = 0")
+  case True
+  show ?thesis unfolding True by (rule rat) (use d0 in auto)
+next
+  case False
+  then have u0: "0 < u" and ud: "u \<le> d" using u by auto
+  have "\<exists>q. q \<in> (\<rat> :: real set) \<and> max 0 (u - 1 / real (Suc n)) < q \<and> q < u"
+    for n
+  proof -
+    have "max 0 (u - 1 / real (Suc n)) < u" using u0 by simp
+    then show ?thesis using Rats_dense_in_real by blast
+  qed
+  then obtain q where q: "\<And>n. q n \<in> (\<rat> :: real set)"
+    and ql: "\<And>n. max 0 (u - 1 / real (Suc n)) < q n"
+    and qu: "\<And>n. q n < u" by metis
+  have qin: "q n \<in> {0..d}" for n using ql[of n] qu[of n] ud by auto
+  have qlim: "q \<longlonglongrightarrow> u"
+  proof (rule tendsto_sandwich[of "\<lambda>n. max 0 (u - 1 / real (Suc n))" q
+      sequentially "\<lambda>_. u"])
+    show "\<forall>\<^sub>F n in sequentially. max 0 (u - 1 / real (Suc n)) \<le> q n"
+    proof (intro always_eventually allI)
+      fix n show "max 0 (u - 1 / real (Suc n)) \<le> q n" using ql[of n] by simp
+    qed
+    show "\<forall>\<^sub>F n in sequentially. q n \<le> u"
+    proof (intro always_eventually allI)
+      fix n show "q n \<le> u" using qu[of n] by simp
+    qed
+    show "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> u"
+    proof -
+      have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u - 0"
+        by (intro tendsto_intros LIMSEQ_Suc[OF lim_1_over_n])
+      then have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u" by simp
+      then have "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> max 0 u"
+        by (intro tendsto_intros)
+      then show ?thesis using u0 by simp
+    qed
+    show "(\<lambda>_. u) \<longlonglongrightarrow> u" by simp
+  qed
+  have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> w u"
+    using cont qin qlim u unfolding continuous_on_sequentially
+    by (simp add: o_def)
+  moreover have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> 0"
+    using rat[OF q qin] by simp
+  ultimately show ?thesis by (rule LIMSEQ_unique)
+qed
+
+lemma frozen_set_measurable:
+  fixes c T :: real
+  assumes T0: "0 \<le> T"
+  shows "{w \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric))).
+      \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> c \<longrightarrow> w u = 0}
+    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?D = "{0..min c T} \<inter> (\<rat> :: real set)"
+  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have cnt: "countable ?D" by (simp add: countable_rat)
+  have ev: "(\<lambda>w :: 'n pairpath. w q) \<in> borel_measurable ?B" for q
+    by (rule pair_law_eval_measurable[OF refl])
+  have single: "{w \<in> space ?B. w q = 0} \<in> sets ?B" for q
+  proof -
+    have "{w \<in> space ?B. w q = 0} = (\<lambda>w :: 'n pairpath. w q) -` {0} \<inter> space ?B"
+      by auto
+    then show ?thesis
+      using measurable_sets[OF ev borel_closed[OF closed_singleton]] by simp
+  qed
+  have eq: "{w \<in> space ?B. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> c \<longrightarrow> w u = 0}
+      = {w \<in> space ?B. \<forall>q \<in> ?D. w q = 0}"
+  proof (rule set_eqI, rule iffI)
+    fix w assume "w \<in> {w \<in> space ?B. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> c \<longrightarrow> w u = 0}"
+    then show "w \<in> {w \<in> space ?B. \<forall>q \<in> ?D. w q = 0}" using T0 by auto
+  next
+    fix w assume h: "w \<in> {w \<in> space ?B. \<forall>q \<in> ?D. w q = 0}"
+    then have wm: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using spB by simp
+    have cw: "continuous_on {0..T} w" by (rule mspace_path_metricD[OF wm])
+    show "w \<in> {w \<in> space ?B. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> c \<longrightarrow> w u = 0}"
+    proof (intro CollectI conjI allI impI)
+      show "w \<in> space ?B" using h by blast
+      fix u assume uT: "u \<in> {0..T}" and uc: "u \<le> c"
+      have d0: "0 \<le> min c T" using uT uc by auto
+      have sub: "{0..min c T} \<subseteq> {0..T}" by auto
+      show "w u = 0"
+      proof (rule vanishes_of_rational[OF d0 continuous_on_subset[OF cw sub]])
+        fix q :: real assume "q \<in> \<rat>" and "q \<in> {0..min c T}"
+        then show "w q = 0" using h by auto
+      next
+        show "u \<in> {0..min c T}" using uT uc by auto
+      qed
+    qed
+  qed
+  have "{w \<in> space ?B. \<forall>q \<in> ?D. w q = 0} \<in> sets ?B"
+  proof (cases "?D = {}")
+    case True
+    then have "{w \<in> space ?B. \<forall>q \<in> ?D. w q = 0} = space ?B" by simp
+    then show ?thesis by simp
+  next
+    case False
+    have sub: "(\<lambda>q. {w \<in> space ?B. w q = 0}) ` ?D \<subseteq> sets ?B"
+      using single by blast
+    have "(\<Inter>q \<in> ?D. {w \<in> space ?B. w q = 0}) \<in> sets ?B"
+      by (rule sets.countable_INT'[OF cnt False sub])
+    moreover have "{w \<in> space ?B. \<forall>q \<in> ?D. w q = 0}
+        = (\<Inter>q \<in> ?D. {w \<in> space ?B. w q = 0})" using False by auto
+    ultimately show ?thesis by simp
+  qed
+  then show ?thesis unfolding eq .
+qed
+
+lemma pdelclass_frozen:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  shows "AE w in \<nu>. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> w u = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have T0: "0 \<le> T" using s0 sT by simp
+  from m obtain \<mu> where mu: "\<mu> \<in> paper_pair_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets (borel_of (mtopology_of
+      (path_metric (T - s) :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF mu])
+  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsmu refl]
+    by (rule pembed_measurable[OF s0 sT])
+  have Phi: "{w \<in> space ?B. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> w u = 0} \<in> sets ?B"
+    by (rule frozen_set_measurable[OF T0])
+  have start: "AE v in \<mu>. fst (v 0) = 0 \<and> snd (v 0) = 0"
+    by (rule paper_pair_class_start[OF mu])
+  have "AE v in \<mu>. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> pembed s T v u = 0"
+    using start
+  proof eventually_elim
+    case (elim v)
+    show ?case
+    proof (intro allI impI)
+      fix u assume uT: "u \<in> {0..T}" and us: "u \<le> s"
+      have "max (u - s) 0 = 0" using us by simp
+      then have "pembed s T v u = v 0" unfolding pembed_apply[OF uT] by simp
+      then show "pembed s T v u = 0" using elim by (simp add: prod_eq_iff)
+    qed
+  qed
+  then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
+qed
+
 end
