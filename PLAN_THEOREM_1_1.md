@@ -834,3 +834,39 @@ So (iv) needs the route recorded above: glue at a SIMPLE `θ` slice by slice
 pattern), then `dyceil` for `θ_n ↓ θ` and `paper_pair_class_weak_closed` for the
 limit. The remaining analytic input is weak convergence of the glued laws,
 for which `padd` being 1-Lipschitz in each argument is the handle.
+
+### (4) clause (iv): the shape of the remaining work (2026-08-08)
+
+Everything except clause (iv) is proved. For (iv), two findings change its shape:
+
+**1. `martingale_pair_law` (Paper_Bridge:5188) removes the transport layer.**
+It lifts a martingale from a base measure `M` along a path map `φ` to
+`pair_law_of T φ M`. Since `aglue_law T κ Q` is exactly the pushforward of
+`ksemi Q ?B_T κ` along `λp. padd T (fst p) (snd p)`, clause (iv) reduces to the
+martingale property ON THE SEMIDIRECT PRODUCT, plus two cheap side conditions
+(`adap`, and `Zm` from `path_eval_measurable_natural_filtration'`). Do NOT
+rebuild the transport by hand — and do not reach for `kglue_law_X_martingale`'s
+route, which carries a countably-valued index `N` that the additive split does
+not need.
+
+**2. On the product the two components separate, and the filtration is
+`ℱ^Q_{u ∧ θ} ⊗ G_u`.** Because `fst (padd p' w (min u T)) = fst (p' (min u T))
++ fst (w (min u T))`, and
+* the past summand is a STOPPED martingale under `Q` — its filtration index is
+  the stopping time `min u θ`, so this is the `pre_sigma_of` layer built for
+  clause (iv) of step (3) (`set_martingale_sampling_two`,
+  `stopped_increment_of_horizon_gen`), not new analysis;
+* the continuation summand is a martingale under `κ p'` for each `p'`.
+
+The two collapses that make the cross-conditioning work are now proved:
+**`pcut_padd_before`** (on `{θ > i}` the glued path agrees with the past on
+`[0,i]`, so an `ℱ_i`-set of the glue does not constrain `w` at all) and
+**`pcut_padd_section`** (`pcut i (padd T p' w) = padd i (pcut i p') (pcut i w)`,
+so for fixed past the `w`-section of an `ℱ_i`-set is an `ℱ_i`-set of the
+continuation). Together with `AE_aglue_law` and `integral_aglue_law` these are
+all the plumbing (iv) needs.
+
+Expect the compensated clause to need the `outerp` expansion AGAIN — on the
+product, `outerp (p' + w) = outerp p' + p' wᵀ + w p'ᵀ + outerp w` — so
+`set_integral_increment_times_known` (built for step (3)) is the tool to reuse
+for its cross terms rather than anything new.
