@@ -8471,4 +8471,93 @@ proof
         (path_metric (T - s) :: ('n pairpath) metric)))" by simp
 qed
 
+text \<open>Clause (ii) for the kernel.  The pathwise content is already there ---
+  @{thm [source] pafter_before} at \<open>t = \<theta> \<omega>\<close> says the future factor is still
+  \<open>0\<close> when the clock starts --- so all that is needed is to push it through
+  the r.c.d., which is the same chain as the mixed glue's transfer:
+  @{thm [source] AE_distr_iff} into the joint law, the r.c.d. equation, and
+  @{thm [source] AE_ksemi} back out.  Note where the stopping-time property
+  is spent: the kernel is indexed by the STOPPED path, so the clock has to be
+  read off that, and @{thm [source] path_stopping_time_stopped} is what says
+  it is the same number.\<close>
+
+lemma AE_rcd_stopping_start_zero:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PS: "prob_space P"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+        = ksemi (pair_law_of T (pstopped T \<theta>) P)
+            (borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric))) \<kappa>"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. AE w in \<kappa> p'. w (\<theta> p') = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  interpret PP: prob_space P by (rule PS)
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have m2: "pafter T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pafter_measurable[OF T0 thM th0 thT])
+  have mphi: "(\<lambda>\<omega> :: 'n pairpath. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+      \<in> P \<rightarrow>\<^sub>M ?B \<Otimes>\<^sub>M ?B" using m1 m2 by simp
+  have setsQ: "sets ?Q = sets ?B" by (rule sets_pair_law_of)
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?B"
+    using Km measurable_cong_sets[OF setsQ refl] by blast
+
+  \<comment> \<open>the predicate is measurable on either product\<close>
+  have evm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p (\<theta> (fst p)))
+      \<in> borel_measurable (N \<Otimes>\<^sub>M ?B)"
+    if setsN: "sets N = sets ?B" for N :: "('n pairpath) measure"
+  proof (rule path_eval_at_measurable_time[OF T0])
+    show "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p) \<in> N \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
+      by (rule measurable_snd)
+  next
+    have "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p) \<in> N \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
+      unfolding measurable_cong_sets[OF refl setsN, symmetric]
+      by (rule measurable_fst)
+    then show "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. \<theta> (fst p))        \<in> borel_measurable (N \<Otimes>\<^sub>M ?B)"
+      by (rule measurable_compose) (rule thM)
+    show "0 \<le> \<theta> (fst p)" for p :: "'n pairpath \<times> 'n pairpath" by (rule th0)
+    show "\<theta> (fst p) \<le> T" for p :: "'n pairpath \<times> 'n pairpath" by (rule thT)
+  qed
+  have msetN: "{p \<in> space (N \<Otimes>\<^sub>M ?B). snd p (\<theta> (fst p)) = 0}
+      \<in> sets (N \<Otimes>\<^sub>M ?B)" if "sets N = sets ?B" for N :: "('n pairpath) measure"
+    using evm[OF that] by measurable
+
+  \<comment> \<open>pathwise: the future factor is still \<open>0\<close> when its clock starts\<close>
+  have path: "AE \<omega> in P. pafter T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>)) = 0"
+  proof (rule AE_I2)
+    fix \<omega> :: "'n pairpath"
+    have "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
+    moreover have "pafter T \<theta> \<omega> (\<theta> \<omega>) = 0"
+      by (rule pafter_before) (use th0[of \<omega>] thT[of \<omega>] in auto)
+    ultimately show "pafter T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>)) = 0" by simp
+  qed
+  have joint: "AE p in distr P (?B \<Otimes>\<^sub>M ?B)
+      (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)). snd p (\<theta> (fst p)) = 0"
+    unfolding AE_distr_iff[OF mphi msetN[OF refl]] using path by simp
+  then have "AE p in ksemi ?Q ?B \<kappa>. snd p (\<theta> (fst p)) = 0" unfolding eq .
+  then show ?thesis unfolding AE_ksemi[OF KQ msetN[OF setsQ]] by simp
+qed
+
 end
