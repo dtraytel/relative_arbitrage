@@ -10434,4 +10434,216 @@ proof (rule pre_sigma_ofI[OF S])
   qed
 qed
 
+lemma pre_sigma_of_Int:
+  assumes A: "A \<in> pre_sigma_of M F \<sigma>" and B: "B \<in> pre_sigma_of M F \<sigma>"
+  shows "A \<inter> B \<in> pre_sigma_of M F \<sigma>"
+proof (rule pre_sigma_ofI)
+  show "A \<inter> B \<in> sets M"
+    using pre_sigma_of_sets[OF A] pre_sigma_of_sets[OF B] by (rule sets.Int)
+  fix t :: real assume t: "0 \<le> t"
+  have "(A \<inter> B) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}
+      = (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) \<inter> (B \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t})" by auto
+  moreover have "\<dots> \<in> sets (F t)"
+    using pre_sigma_of_cut[OF A t] pre_sigma_of_cut[OF B t] by (rule sets.Int)
+  ultimately show "(A \<inter> B) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)" by simp
+qed
+
+text \<open>The first factor.  Below \<open>t\<close> the stopped path is read off the path
+  stopped at \<open>t\<close> --- \<open>pstopped_cut_compose\<close> --- and that composite is
+  \<open>\<F>\<^sub>t\<close>-measurable by \<open>pstopped_const_measurable_filtration\<close>.\<close>
+
+lemma pstopped_vimage_pre_sigma:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and A: "A \<in> sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "pstopped T \<theta> -` A \<inter> space P
+      \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<theta>"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
+    by (rule sets_natural_filtration_mono[OF that(2)])
+  have mst: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have S: "pstopped T \<theta> -` A \<inter> space P \<in> sets P"
+    by (rule measurable_sets[OF mst A])
+  show ?thesis
+  proof (rule pre_sigma_ofI_le[OF T0 mono thT S])
+    fix t :: real assume t: "0 \<le> t" and tT: "t \<le> T"
+    let ?g = "\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>)"
+    have mg: "?g \<in> ?F t \<rightarrow>\<^sub>M ?B"
+      unfolding FB
+      by (rule measurable_compose
+          [OF pstopped_const_measurable_filtration[OF T0 t tT]
+             pstopped_measurable[OF T0 thM th0 thT]])
+    have gm: "?g -` A \<inter> space P \<in> sets (?F t)"
+      using measurable_sets[OF mg A] by simp
+    have ev: "{\<omega> \<in> space P. \<theta> \<omega> \<le> t} \<in> sets (?F t)"
+      unfolding FB spP
+      by (rule path_stopping_time_event_filtration[OF T0 st thM t tT])
+    have eqset: "(pstopped T \<theta> -` A \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}
+        = (?g -` A \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}"
+    proof -
+      have "pstopped T \<theta> \<omega> = ?g \<omega>" if "\<theta> \<omega> \<le> t" for \<omega> :: "'n pairpath"
+        using pstopped_cut_compose[OF st tT that] by simp
+      then show ?thesis by auto
+    qed
+    show "(pstopped T \<theta> -` A \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}
+        \<in> sets (?F t)"
+      unfolding eqset using gm ev by (rule sets.Int)
+  qed
+qed
+
+text \<open>The second factor.  An \<open>\<F>\<^sub>u\<close>-set of the path space is a
+  \<open>pcut u\<close>-preimage --- @{thm [source] sets_natural_filtration_eq_pcut_vimage}
+  --- so only the delayed future ON \<open>[0,u]\<close> matters, and that is decided by
+  the path stopped at \<open>t\<close> as soon as \<open>u \<or> \<theta> \<le> t\<close>.\<close>
+
+lemma pafter_vimage_pre_sigma:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and u: "0 \<le> u" and uT: "u \<le> T"
+    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) u)"
+  shows "pafter T \<theta> -` A' \<inter> space P
+      \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+          (\<lambda>\<omega>. max u (\<theta> \<omega>))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Bu = "borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have maxT: "max u (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath" using uT thT by simp
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
+    by (rule sets_natural_filtration_mono[OF that(2)])
+  have mafter: "pafter T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pafter_measurable[OF T0 thM th0 thT])
+  obtain B where B: "B \<in> sets ?Bu" and A'eq: "A' = pcut u -` B \<inter> space ?B"
+    using A' unfolding sets_natural_filtration_eq_pcut_vimage[OF refl u uT]
+    by blast
+  have h: "(\<lambda>\<omega> :: 'n pairpath. pcut u (pafter T \<theta> \<omega>)) \<in> P \<rightarrow>\<^sub>M ?Bu"
+    by (rule measurable_compose[OF mafter pcut_measurable[OF u uT refl]])
+  have vim: "pafter T \<theta> -` A' \<inter> space P
+      = (\<lambda>\<omega> :: 'n pairpath. pcut u (pafter T \<theta> \<omega>)) -` B \<inter> space P"
+    unfolding A'eq using measurable_space[OF mafter] by auto
+  have S: "pafter T \<theta> -` A' \<inter> space P \<in> sets P"
+    unfolding vim by (rule measurable_sets[OF h B])
+  show ?thesis
+  proof (rule pre_sigma_ofI_le[OF T0 mono maxT S])
+    fix t :: real assume t: "0 \<le> t" and tT: "t \<le> T"
+    show "(pafter T \<theta> -` A' \<inter> space P) \<inter> {\<omega> \<in> space P. max u (\<theta> \<omega>) \<le> t}
+        \<in> sets (?F t)"
+    proof (cases "u \<le> t")
+      case False
+      have e: "(pafter T \<theta> -` A' \<inter> space P)
+          \<inter> {\<omega> \<in> space P. max u (\<theta> \<omega>) \<le> t} = {}"
+        using False by auto
+      show ?thesis unfolding e by simp
+    next
+      case True
+      let ?g = "\<lambda>\<omega> :: 'n pairpath. pcut u (pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>))"
+      have mg: "?g \<in> ?F t \<rightarrow>\<^sub>M ?Bu"
+        unfolding FB
+        by (rule measurable_compose
+            [OF pstopped_const_measurable_filtration[OF T0 t tT]
+               measurable_compose[OF pafter_measurable[OF T0 thM th0 thT]
+                 pcut_measurable[OF u uT refl]]])
+      have gm: "?g -` B \<inter> space P \<in> sets (?F t)"
+        using measurable_sets[OF mg B] by simp
+      have ev: "{\<omega> \<in> space P. \<theta> \<omega> \<le> t} \<in> sets (?F t)"
+        unfolding FB spP
+        by (rule path_stopping_time_event_filtration[OF T0 st thM t tT])
+      have eqset: "(pafter T \<theta> -` A' \<inter> space P)
+            \<inter> {\<omega> \<in> space P. max u (\<theta> \<omega>) \<le> t}
+          = (?g -` B \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}"
+      proof -
+        have pt: "pcut u (pafter T \<theta> \<omega>) = ?g \<omega>"
+          if mx: "max u (\<theta> \<omega>) \<le> t" for \<omega> :: "'n pairpath"
+        proof -
+          have "\<theta> \<omega> \<le> t" using mx by simp
+          from pcut_pafter_cut_compose[OF st tT u True this] show ?thesis
+            by simp
+        qed
+        show ?thesis unfolding vim using pt True by auto
+      qed
+      show ?thesis unfolding eqset using gm ev by (rule sets.Int)
+    qed
+  qed
+qed
+
+text \<open>The rectangle itself --- the stopping-time analogue of
+  @{thm [source] rect_vimage_natural_filtration}.\<close>
+
+lemma rect_vimage_pre_sigma_stopping:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and u: "0 \<le> u" and uT: "u \<le> T"
+    and A: "A \<in> sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) u)"
+  shows "(\<lambda>\<omega> :: 'n pairpath. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)) -` (A \<times> A')
+        \<inter> space P
+      \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+          (\<lambda>\<omega>. max u (\<theta> \<omega>))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+    by (rule natural_filtration_cong_space[OF spP])
+  have maxM: "(\<lambda>\<omega> :: 'n pairpath. max u (\<theta> \<omega>)) \<in> borel_measurable ?B"
+    using thM by measurable
+  have stmax: "{\<omega> \<in> space P. max u (\<theta> \<omega>) \<le> t} \<in> sets (?F t)"
+    if t: "0 \<le> t" for t
+    unfolding FB spP
+    by (rule path_stopping_time_event_filtration_all
+        [OF T0 path_stopping_time_max[OF st u uT] maxM t])
+  have le: "\<theta> \<omega> \<le> max u (\<theta> \<omega>)" for \<omega> :: "'n pairpath" by simp
+  have c1: "pstopped T \<theta> -` A \<inter> space P \<in> pre_sigma_of P ?F \<theta>"
+    by (rule pstopped_vimage_pre_sigma[OF T0 setsP st thM A])
+  have c1': "pstopped T \<theta> -` A \<inter> space P
+      \<in> pre_sigma_of P ?F (\<lambda>\<omega>. max u (\<theta> \<omega>))"
+    using pre_sigma_of_mono[OF le stmax] c1 by blast
+  have c2: "pafter T \<theta> -` A' \<inter> space P
+      \<in> pre_sigma_of P ?F (\<lambda>\<omega>. max u (\<theta> \<omega>))"
+    by (rule pafter_vimage_pre_sigma[OF T0 setsP st thM u uT A'])
+  have "(\<lambda>\<omega> :: 'n pairpath. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)) -` (A \<times> A')
+        \<inter> space P
+      = (pstopped T \<theta> -` A \<inter> space P) \<inter> (pafter T \<theta> -` A' \<inter> space P)"
+    by auto
+  then show ?thesis using pre_sigma_of_Int[OF c1' c2] by simp
+qed
+
 end
