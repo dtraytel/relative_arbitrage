@@ -769,3 +769,33 @@ Lipschitz/continuity statement for `padd`, which should be easier — addition
 is 1-Lipschitz in each argument — but the DELAYED class (`κ' p'` frozen until
 `θ p'`) must be shown compact metric first, since that is what
 `countably_valued_approx` rounds inside.
+
+### (4): do NOT prove compactness of the delayed class — round θ instead
+
+The note above suggested rounding `κ'` inside a "delayed class". That route has
+a defect worth recording before anyone spends time on it. `countably_valued_approx`
+returns `z_j` close to `κ' p'` in Lévy–Prokhorov, but nothing forces `z_j` to be
+frozen on `[0, θ p']` — it is only frozen on `[0, s_j]` for some nearby `s_j`. A
+continuation whose freezing time differs from the past's stopping time is NOT a
+legitimate pasting, so the rounded glues are not in the class and the weak-limit
+argument has nothing to stand on. Compactness of the delayed class, even if
+proved, does not repair this.
+
+**Round `θ`, not `κ'`.** `dyceil` and `dyceil_stopping` are already built (they
+were made for clause (iv)). For a SIMPLE stopping time every value slice is a
+deterministic time, so on each slice `paper_pair_class_kglue_law'` applies
+verbatim and `paper_pair_class_kglue_mixed` assembles the slices — that is
+exactly the `paper_v_dpp_ge_const_list` pattern, which is already done. Then let
+`θ_n ↓ θ` and pass to the weak limit with `paper_pair_class_weak_closed`.
+
+Note this does NOT contradict [[dpp-stopping-time-no-approximation]]. That result
+says the DPP *inequality* cannot be obtained by discretising `θ`, because the
+dominating inequality between the integrands is false. Here the object being
+approximated is a *law*, the target property (class membership) is weakly closed,
+and no inequality between integrands is involved. The two uses of "approximate
+`θ`" are unrelated.
+
+The one analytic input still needed is that the glue is continuous in the pair,
+so that `padd (pstopped T θ_n ω) w_n → padd (pstopped T θ ω) w`; addition is
+1-Lipschitz in each argument, and `padd_measurable`'s evaluation lemmas already
+supply the pointwise handle.
