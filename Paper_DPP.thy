@@ -11642,4 +11642,230 @@ proof -
         [OF T0 PS setsP st thM Km eq hm hi inc i0 iT A'])
 qed
 
+section \<open>Step (4): the additive glue\<close>
+
+text \<open>Reassembly of the split is ADDITION --- @{thm [source] pstopped_add_pafter}
+  --- so the glue map that step (4) has to push a kernel through is
+  \<^term>\<open>padd T p' w\<close>, not \<^const>\<open>pglue\<close>.  It is defined on the SAME pair of
+  \<open>T\<close>-path spaces the r.c.d. of step (2) lives on, and it needs no \<open>\<theta>\<close>: that is
+  the whole reason the additive split was chosen over freeze-and-rebase.
+
+  The facts below are the foundation layer, in the same order step (1) built
+  its own: the glue lands in the path space, it is measurable as a map out of
+  the product, it inverts the split, and --- given that the continuation
+  stands still until \<open>\<theta>\<close> --- the split inverts IT, so no information is lost
+  in either direction.\<close>
+
+definition padd :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath \<Rightarrow> 'n pairpath"
+  where "padd T p' w = restrict (\<lambda>t. p' t + w t) {0..T}"
+
+lemma padd_apply: "t \<in> {0..T} \<Longrightarrow> padd T p' w t = p' t + w t"
+  by (simp add: padd_def)
+
+lemma padd_outside: "t \<notin> {0..T} \<Longrightarrow> padd T p' w t = undefined"
+  unfolding padd_def restrict_def by (rule if_not_P)
+
+lemma padd_mspace:
+  fixes p' w :: "'n::finite pairpath"
+  assumes p: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and w: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "padd T p' w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+proof -
+  have "continuous_on {0..T} (\<lambda>t. p' t + w t)"
+    using mspace_path_metricD[OF p] mspace_path_metricD[OF w]
+    by (intro continuous_intros)
+  then show ?thesis unfolding padd_def by (rule mspace_path_metricI)
+qed
+
+lemma padd_measurable:
+  fixes T :: real
+  assumes T0: "0 \<le> T"
+  shows "(\<lambda>p. padd T (fst p) (snd p))
+      \<in> borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+        \<Otimes>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?M = "?B \<Otimes>\<^sub>M ?B"
+  let ?f = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p)"
+  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have into: "?f p \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    if p: "p \<in> space ?M" for p
+  proof -
+    have "fst p \<in> space ?B" and "snd p \<in> space ?B"
+      using p by (auto simp: space_pair_measure)
+    then show ?thesis using spB by (auto intro: padd_mspace)
+  qed
+  have ev: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?f p t) \<in> borel_measurable ?M"
+    for t
+  proof (cases "t \<in> {0..T}")
+    case True
+    have e1: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). fst p t) \<in> borel_measurable ?M"
+      by (rule measurable_compose[OF measurable_fst
+            pair_law_eval_measurable[OF refl]])
+    have e2: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). snd p t) \<in> borel_measurable ?M"
+      by (rule measurable_compose[OF measurable_snd
+            pair_law_eval_measurable[OF refl]])
+    have "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). fst p t + snd p t)
+        \<in> borel_measurable ?M"
+      using e1 e2 by simp
+    then show ?thesis by (simp add: padd_apply[OF True])
+  next
+    case False
+    have "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?f p t)
+        = (\<lambda>p. undefined)"
+      by (rule ext) (rule padd_outside[OF False])
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    show "(\<lambda>p. mdist (path_metric T :: ('n pairpath) metric) (?f p) a)
+        \<in> borel_measurable ?M"
+      by (rule mdist_measurable_of_eval[OF T0 into am ev])
+  qed
+qed
+
+text \<open>The glue inverts the split.  Note there is no membership hypothesis on
+  \<open>\<omega>\<close> beyond being a path: @{thm [source] pstopped_add_pafter} is unconditional
+  and \<^const>\<open>padd\<close> restricts to \<open>{0..T}\<close>, which is where a member of the
+  path space already lives.\<close>
+
+lemma padd_pstopped_pafter:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>"
+    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  shows "padd T (pstopped T \<theta> \<omega>) (pafter T \<theta> \<omega>) = \<omega>"
+proof -
+  have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
+  have "padd T (pstopped T \<theta> \<omega>) (pafter T \<theta> \<omega>) = restrict \<omega> {0..T}"
+  proof (rule ext)
+    fix t :: real
+    show "padd T (pstopped T \<theta> \<omega>) (pafter T \<theta> \<omega>) t = restrict \<omega> {0..T} t"
+    proof (cases "t \<in> {0..T}")
+      case True
+      have s: "pstopped T \<theta> \<omega> t + pafter T \<theta> \<omega> t = \<omega> t"
+      proof (rule pstopped_add_pafter)
+        show "0 \<le> \<theta> \<omega>" by (rule th0)
+        show "\<theta> \<omega> \<le> T" by (rule thT)
+        show "t \<in> {0..T}" by (rule True)
+      qed
+      show ?thesis
+        unfolding padd_apply[OF True] restrict_apply'[OF True] using s .
+    next
+      case False
+      have r: "restrict \<omega> {0..T} t = undefined"
+        unfolding restrict_def by (rule if_not_P[OF False])
+      show ?thesis unfolding padd_outside[OF False] r ..
+    qed
+  qed
+  also have "restrict \<omega> {0..T} = \<omega>"
+    using w by (rule mspace_path_restrict_self)
+  finally show ?thesis .
+qed
+
+text \<open>And the split inverts the glue, PROVIDED the continuation stands still
+  up to \<open>\<theta>\<close> --- which is exactly what step (3)'s clause (ii) delivers for the
+  kernel.  The stopping time reads only the stopped factor, because on
+  \<open>[0, \<theta> p']\<close> the glue agrees with it.\<close>
+
+lemma padd_stopping_time:
+  fixes p' w :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>"
+    and idem: "pstopped T \<theta> p' = p'"
+    and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
+  shows "\<theta> (padd T p' w) = \<theta> p'"
+proof (rule path_stopping_time_cong[OF st])
+  fix t assume t: "t \<in> {0..\<theta> p'}"
+  then have tT: "t \<in> {0..T}"
+    using path_stopping_time_nonneg[OF st, of p'] path_stopping_time_le[OF st, of p']
+    by auto
+  show "p' t = padd T p' w t"
+    unfolding padd_apply[OF tT] using w0[OF t] by simp
+qed
+
+lemma pstopped_padd:
+  fixes p' w :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>"
+    and idem: "pstopped T \<theta> p' = p'"
+    and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
+  shows "pstopped T \<theta> (padd T p' w) = p'"
+proof (rule ext)
+  fix t :: real
+  have th: "\<theta> (padd T p' w) = \<theta> p'"
+    by (rule padd_stopping_time[OF st idem w0])
+  have th0: "0 \<le> \<theta> p'" by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" by (rule path_stopping_time_le[OF st])
+  show "pstopped T \<theta> (padd T p' w) t = p' t"
+  proof (cases "t \<in> {0..T}")
+    case True
+    have m: "min t (\<theta> p') \<in> {0..T}" using True th0 thT by auto
+    have m0: "min t (\<theta> p') \<in> {0..\<theta> p'}" using True th0 by auto
+    have "pstopped T \<theta> (padd T p' w) t = padd T p' w (min t (\<theta> p'))"
+      unfolding pstopped_apply[OF True] th ..
+    also have "\<dots> = p' (min t (\<theta> p')) + w (min t (\<theta> p'))"
+      by (rule padd_apply[OF m])
+    also have "\<dots> = p' (min t (\<theta> p'))" using w0[OF m0] by simp
+    also have "\<dots> = pstopped T \<theta> p' t"
+      unfolding pstopped_apply[OF True] ..
+    finally show ?thesis unfolding idem .
+  next
+    case False
+    have "pstopped T \<theta> (padd T p' w) t = undefined"
+      by (rule pstopped_outside[OF False])
+    moreover have "p' t = undefined"
+      using idem pstopped_outside[OF False] by metis
+    ultimately show ?thesis by simp
+  qed
+qed
+
+lemma pafter_padd:
+  fixes p' w :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>"
+    and idem: "pstopped T \<theta> p' = p'"
+    and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
+    and wfr: "\<And>t. t \<in> {0..T} \<Longrightarrow> w t = w (max t (\<theta> p'))"
+    and wout: "\<And>t. t \<notin> {0..T} \<Longrightarrow> w t = undefined"
+  shows "pafter T \<theta> (padd T p' w) = w"
+proof (rule ext)
+  fix t :: real
+  have th: "\<theta> (padd T p' w) = \<theta> p'"
+    by (rule padd_stopping_time[OF st idem w0])
+  have th0: "0 \<le> \<theta> p'" by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" by (rule path_stopping_time_le[OF st])
+  show "pafter T \<theta> (padd T p' w) t = w t"
+  proof (cases "t \<in> {0..T}")
+    case True
+    have m1: "max t (\<theta> p') \<in> {0..T}" using True th0 thT by auto
+    have m2: "\<theta> p' \<in> {0..T}" using th0 thT by simp
+    have m2': "\<theta> p' \<in> {0..\<theta> p'}" using th0 by simp
+    have "pafter T \<theta> (padd T p' w) t
+        = padd T p' w (max t (\<theta> p')) - padd T p' w (\<theta> p')"
+      unfolding pafter_apply[OF True] th ..
+    also have "\<dots> = (p' (max t (\<theta> p')) + w (max t (\<theta> p')))
+        - (p' (\<theta> p') + w (\<theta> p'))"
+      by (simp only: padd_apply[OF m1] padd_apply[OF m2])
+    also have "\<dots> = p' (max t (\<theta> p')) - p' (\<theta> p') + w (max t (\<theta> p'))"
+      using w0[OF m2'] by simp
+    also have "p' (max t (\<theta> p')) = p' (\<theta> p')"
+    proof -
+      have "p' (max t (\<theta> p')) = pstopped T \<theta> p' (max t (\<theta> p'))"
+        unfolding idem ..
+      also have "\<dots> = p' (min (max t (\<theta> p')) (\<theta> p'))"
+        by (rule pstopped_apply[OF m1])
+      also have "min (max t (\<theta> p')) (\<theta> p') = \<theta> p'" by simp
+      finally show ?thesis .
+    qed
+    finally show ?thesis using wfr[OF True] by simp
+  next
+    case False
+    have "pafter T \<theta> (padd T p' w) t = undefined"
+      by (rule pafter_outside[OF False])
+    then show ?thesis using wout[OF False] by simp
+  qed
+qed
+
 end
