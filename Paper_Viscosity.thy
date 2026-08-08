@@ -1,18 +1,32 @@
 (*
   Title:   Paper_Viscosity.thy
-  Content: Towards clause (2) of Theorem 1.1 of arXiv:2512.17702 --- the
-           viscosity subsolution property of `paper_v`.  This is the first
-           batch of PLAN section 2.1.
+  Content: Towards clause (2) of Theorem 1.1 of arXiv:2512.17702 --- the two
+           viscosity inequalities for `paper_v`.  PLAN section 2.1.
 
-  The operator of Eq. (1.9) is an INFIMUM,
+  Two facts shape everything here.
 
-      ell_op k L p M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p),
+  (a) The operator of Eq. (1.9) is an INFIMUM,
 
-  so the subsolution inequality `ell_op k L (g x) H \<le> 1` needs only ONE
-  feasible witness `a` with `- trace (H ** a) / 2 \<le> 1`.  That is what makes
-  the reduction below short: everything except the production of the witness
-  is bookkeeping, and the witness is exactly what Ito's formula for class
-  members delivers.
+        ell_op k L p M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p),
+
+      so a subsolution inequality needs only ONE witness, while a
+      supersolution inequality needs the whole family.
+
+  (b) The two halves of the DPP are not interchangeable.  The `<=` half is an
+      ALMOST SURE bound, and a.s. bounds survive integration; the `>=` half
+      bounds an essential infimum from below, which no mean can do.  So the
+      SUBSOLUTION half is the one an expectation argument reaches.
+
+  The class of (1.7) is a martingale-problem class, not an SDE class, so Ito's
+  formula is unavailable.  For QUADRATIC test functions it is also unnecessary:
+  z . (M *v z) = trace (M ** outerp z) is a linear functional of the
+  compensated clause, so the expansion is exact and elementary.  That is
+  paper_pair_class_quadratic_mean, and paper_v_subsol_quadratic_global is the
+  subsolution inequality it yields, for the relaxed operator ell_op_s and a
+  globally touching quadratic.
+
+  The final section states precisely what separates that from visc_subsol,
+  including two localisation routes that were checked and provably do not work.
 *)
 
 theory Paper_Viscosity
@@ -743,6 +757,112 @@ proof -
   show ?thesis by (rule ell_op_s_le_of_witness[OF L0 b w])
 qed
 
+subsection \<open>Quadratics are test functions, and the relaxed predicates\<close>
+
+lemma test_fun_at_quadratic:
+  fixes M :: "real^'n::finite^'n" and p x :: "real^'n" and c :: real
+  assumes sym: "transpose M = M"
+  shows "test_fun_at (\<lambda>z. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
+      (\<lambda>z. p + M *v z) M x"
+  unfolding test_fun_at_def
+proof (intro conjI)
+  show "transpose M = M" by (rule sym)
+next
+  have bl: "bounded_linear (\<lambda>z :: real^'n. M *v z)"
+    unfolding linear_conv_bounded_linear[symmetric]
+    by (rule matrix_vector_mul_linear)
+  have dM: "((\<lambda>z :: real^'n. M *v z) has_derivative (\<lambda>h. M *v h)) (at y)"
+    for y :: "real^'n"
+    by (rule bounded_linear.has_derivative[OF bl has_derivative_ident])
+  have d: "((\<lambda>z :: real^'n. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
+      has_derivative (\<lambda>h. (p + M *v y) \<bullet> h)) (at y)" for y :: "real^'n"
+  proof -
+    have "((\<lambda>z :: real^'n. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
+        has_derivative (\<lambda>h. p \<bullet> h + (h \<bullet> (M *v y) + y \<bullet> (M *v h)) / 2))
+        (at y)"
+      by (auto intro!: derivative_eq_intros dM)
+    moreover have "(\<lambda>h :: real^'n. p \<bullet> h + (h \<bullet> (M *v y) + y \<bullet> (M *v h)) / 2)
+        = (\<lambda>h. (p + M *v y) \<bullet> h)"
+    proof (rule ext)
+      fix h :: "real^'n"
+      have "y \<bullet> (M *v h) = (transpose M *v y) \<bullet> h"
+        by (rule inner_transpose_matrix)
+      then have "y \<bullet> (M *v h) = (M *v y) \<bullet> h" using sym by simp
+      then show "p \<bullet> h + (h \<bullet> (M *v y) + y \<bullet> (M *v h)) / 2
+          = (p + M *v y) \<bullet> h"
+        by (simp add: inner_commute inner_add_right)
+    qed
+    ultimately show ?thesis by simp
+  qed
+  show "\<exists>e>0. \<forall>y \<in> ball x e.
+      ((\<lambda>z. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2) has_derivative
+        (\<lambda>h. (p + M *v y) \<bullet> h)) (at y)"
+    using d by (intro exI[of _ 1]) auto
+next
+  have bl: "bounded_linear (\<lambda>z :: real^'n. M *v z)"
+    unfolding linear_conv_bounded_linear[symmetric]
+    by (rule matrix_vector_mul_linear)
+  show "((\<lambda>z. p + M *v z) has_derivative (\<lambda>h. M *v h)) (at x)"
+    using bounded_linear.has_derivative[OF bl has_derivative_ident]
+    by (auto intro!: derivative_eq_intros)
+qed
+
+text \<open>The relaxed viscosity predicates.  Because \<open>ell_op_s \<le> ell_op\<close>, the
+  relaxed SUBsolution property is implied by the true one and the relaxed
+  SUPERsolution property IMPLIES the true one --- so the half this development
+  can reach probabilistically (the subsolution) is the half where the relaxed
+  form is the weaker statement.  That asymmetry is the honest summary of where
+  \<open>\<section>3\<close> stands here.\<close>
+
+definition visc_subsol_s ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "visc_subsol_s k L \<Omega> u \<longleftrightarrow>
+     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
+        (\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x) \<longrightarrow>
+        ell_op_s k L H \<le> 1)"
+
+definition visc_supersol_s ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "visc_supersol_s k L \<Omega> u \<longleftrightarrow>
+     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
+        (\<exists>e>0. \<forall>y \<in> ball x e. u x - \<phi> x \<le> u y - \<phi> y) \<longrightarrow>
+        1 \<le> ell_op_s k L H)"
+
+lemma visc_supersol_s_imp_visc_supersol:
+  fixes \<Omega> :: "(real^'n::finite) set"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+    and S: "visc_supersol_s k L \<Omega> u"
+  shows "visc_supersol k L \<Omega> u"
+  unfolding visc_supersol_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. u x - \<phi> x \<le> u y - \<phi> y"
+  have "1 \<le> ell_op_s k L H"
+    using S[unfolded visc_supersol_s_def] x tf lm by blast
+  also have "\<dots> \<le> ell_op k L (g x) H" by (rule ell_op_s_le_ell_op[OF k L])
+  finally show "1 \<le> ell_op k L (g x) H" .
+qed
+
+lemma visc_subsol_imp_visc_subsol_s:
+  fixes \<Omega> :: "(real^'n::finite) set"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+    and S: "visc_subsol k L \<Omega> u"
+  shows "visc_subsol_s k L \<Omega> u"
+  unfolding visc_subsol_s_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x"
+  have "ell_op_s k L H \<le> ell_op k L (g x) H" by (rule ell_op_s_le_ell_op[OF k L])
+  also have "\<dots> \<le> 1" using S[unfolded visc_subsol_def] x tf lm by blast
+  finally show "ell_op_s k L H \<le> 1" .
+qed
+
 section \<open>The analytic input, isolated\<close>
 
 text \<open>Everything above is unconditional.  What the subsolution proof still
@@ -971,29 +1091,80 @@ qed
 
 section \<open>What remains for clause (2)\<close>
 
-text \<open>Two suppliers, in this order.
+text \<open>What is PROVED here, unconditionally:
 
-  \<^item> \<open>class_expansion_witness\<close> --- Ito's formula for class members.  The
-    class is defined by MARTINGALE properties, not by an SDE, so this is the
-    statement that the compensated second-order expansion of a \<open>C\<^sup>2\<close> test function
-    along the member is a martingale, proved from clause (iv) of (1.7) plus the covariation
-    constraint (iii).  \<open>Stochastic_Integral\<close> and \<open>Ito_Covariation\<close> are the
-    intended sources; \<open>Relative_Arbitrage_Ito.ito_formula_quadratic\<close> is the
-    market-side analogue to imitate.  Feasibility of the limiting \<open>a\<close> is
-    \<^const>\<open>sconstraint\<close> (clause (iii)) plus orthogonality to \<open>g x\<close>, and
-    @{thm [source] pball_exit_outside} is what supplies the SCALE \<open>\<epsilon>\<close> against
-    which the second-order term is measured.
+  \<^item> @{thm [source] paper_pair_class_quadratic_mean} --- the exact expansion of
+    a quadratic test function along any class member, from the two martingale
+    clauses alone.  This is the substitute for Ito's formula, and it is not an
+    approximation: for a quadratic the expansion has no remainder.
 
-  \<^item> the SUPERSOLUTION half --- @{thm [source] paper_v_dpp_sup_ge_time} plus
-    a weak solution of the SDE (3.24).  Note the caveat recorded above: its
-    \<open>\<theta>\<close> must be a \<^const>\<open>path_stopping_time\<close>, whose congruence clause
-    quantifies over ALL functions, while @{thm [source] pball_exit_cong}
-    delivers it only along continuous paths --- and that restriction is not a
-    weakness of the proof but of the notion, since attainment of the infimum
-    genuinely fails off the path space.  Closing it means weakening
-    \<^const>\<open>path_stopping_time\<close> itself inside \<open>Paper_DPP\<close> (252 occurrences), a
-    mechanical but not small refactor; the derived paths it gets applied to
-    (\<open>pcut\<close>, \<open>pstopped\<close>, and the shifted time) all stay continuous, so nothing
-    in the argument obstructs it.\<close>
+  \<^item> @{thm [source] paper_v_subsol_quadratic_global} --- the subsolution
+    inequality \<open>ell_op_s k L M \<le> 1\<close> at a GLOBALLY touching quadratic.
+
+  Two gaps separate that from \<open>visc_subsol\<close>, and both are named rather than
+  hidden.  Neither is a gap in the argument; each is a gap in what the class,
+  used through expectations, can say.
+
+  \<^bold>\<open>Gap 1: localisation.\<close>  \<^const>\<open>visc_subsol\<close> gives a LOCAL touching, on some
+  \<open>ball x e\<close>.  Two routes were checked and BOTH FAIL; do not retry them.
+
+  \<^item> \<^emph>\<open>Penalisation.\<close>  Replacing \<open>\<phi>\<close> by \<open>\<phi> + A\<sqdot>\<bar>\<sqdot>-x\<bar>\<^sup>2\<close> does turn a local
+    touching into a global one for \<open>A\<close> large, because \<^const>\<open>paper_v\<close> is
+    bounded by \<open>T\<close> (@{thm [source] paper_v_le_T}) and the penalty dominates the
+    quadratic off the ball.  But the Hessian becomes \<open>M + 2A\<sqdot>1\<close>, and
+    \<open>- trace ((M + 2A\<sqdot>1) ** b) / 2 = - trace (M ** b)/2 - A \<sqdot> trace b\<close> with
+    \<open>trace b \<ge> n - k > 0\<close> (@{thm [source] sconstraint_trace_ge}).  So the
+    conclusion is \<open>- trace (M ** b)/2 \<le> 1 + A \<sqdot> trace b\<close>: strictly WEAKER, and
+    worse the larger \<open>A\<close> gets.  Quadratic test functions cannot be localised by
+    penalisation.
+
+  \<^item> \<^emph>\<open>An error estimate.\<close>  Split the integral at \<open>{X\<^sub>h \<in> ball x e}\<close>.  The bad
+    event has \<open>P \<le> E\<bar>X\<^sub>h-x\<bar>\<^sup>2/e\<^sup>2 = trace (E Y\<^sub>h)/e\<^sup>2 \<le> n L h/e\<^sup>2\<close>, and
+    Cauchy--Schwarz against a fourth moment controls the QUADRATIC part of the
+    error by \<open>O(h\<^sup>3\<^sup>/\<^sup>2) = o(h)\<close>, which would be fine.  The LINEAR part
+    \<open>p \<bullet> (X\<^sub>h - x)\<close> does not: it is bounded only by
+    \<open>\<bar>p\<bar>\<sqdot>\<surd>P(bad)\<sqdot>\<surd>(E\<bar>X\<^sub>h-x\<bar>\<^sup>2) = O(h)/e\<close> --- the SAME order as the term it is
+    compared against.  The estimate yields \<open>trace (M ** b) \<ge> - 2 - C\<bar>p\<bar>nL/e\<close>
+    and does not close as \<open>h \<rightarrow> 0\<close>.
+
+  What WOULD work is STOCHASTIC localisation: stop at \<open>\<tau>\<^bsub>B\<^sub>e\<^bsub>(x)\<^esub>\<^esub> \<and> h\<close> and apply
+  optional sampling to clauses (iii) and (iv), so that the path never leaves
+  the ball and the touching hypothesis applies unconditionally.
+  \<open>Optional_Sampling\<close> and @{thm [source] path_stopping_time_event_filtration}
+  are the tools.  The blocker is the recorded one:
+  \<^const>\<open>path_stopping_time\<close>'s congruence clause quantifies over ALL functions,
+  while @{thm [source] pball_exit_cong} delivers it only along CONTINUOUS
+  paths, and @{thm [source] pexit_mem_of_less_T} shows that restriction is
+  forced --- attainment of the infimum genuinely fails off the path space.
+  Weakening \<^const>\<open>path_stopping_time\<close> inside \<open>Paper_DPP\<close> is mechanical but not
+  small: the congruence is consumed only through
+  @{thm [source] path_stopping_time_cong}, at four sites, but each is stated
+  for all \<open>\<omega>\<close> and the continuity hypothesis would have to be threaded through
+  the downstream \<open>pstopped_law_*\<close> and \<open>path_stopping_time_*\<close> layer.
+
+  \<^bold>\<open>Gap 2: orthogonality.\<close>  Eq. (1.9) takes its infimum over
+  \<^const>\<open>feasible\<close>, which requires \<open>a *v p = 0\<close>; the class of (1.7) constrains
+  its covariation to \<^const>\<open>sconstraint\<close>, which says nothing of the kind.  So a
+  probabilistic argument over the class produces a witness in
+  \<^const>\<open>sconstraint\<close> and \<^const>\<open>ell_op_s\<close>, never \<^const>\<open>ell_op\<close>.  In the
+  paper the orthogonality comes from OPTIMALITY of the direction --- along an
+  optimizer of a minimal-time problem \<open>v(X\<^sub>t) + t\<close> cannot carry a nonzero
+  martingale part, which forces \<open>a Dv = 0\<close>.  That is an almost-sure RIGIDITY
+  statement about the optimizer, not a statement about means, so it is not
+  reachable by the route of this section.
+  \<^const>\<open>class_expansion_witness\<close> is the interface for it: a supplier
+  has only to produce the feasible witness.
+
+  \<^bold>\<open>The supersolution half.\<close>  Unchanged, and structurally harder.  It consumes
+  @{thm [source] paper_v_dpp_sup_ge_time} plus a weak solution of the SDE
+  (3.24), and the DPP bound it needs is a LOWER bound on an essential infimum.
+  No mean gives one --- that is exactly why the expectation route of this
+  section proves the subsolution half and cannot touch the supersolution half.
+  The paper's device is the exponential local martingale with optional sampling
+  ((3.18)--(3.19)).  One simplification is available here and is worth using:
+  by @{thm [source] visc_supersol_s_imp_visc_supersol} the RELAXED supersolution
+  property already implies the true one, so that half may be attacked entirely
+  in \<^const>\<open>ell_op_s\<close>, where the class's own \<^const>\<open>sconstraint\<close> is the right
+  index set and Gap 2 does not arise at all.\<close>
 
 end
