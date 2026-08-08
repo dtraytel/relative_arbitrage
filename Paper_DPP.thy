@@ -9550,7 +9550,7 @@ theorem set_martingale_sampling:
     and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U" and U0: "0 \<le> U"
     and cont: "\<And>\<omega>. \<omega> \<in> space M
       \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
-    and Dbd: "\<And>\<omega> s. \<omega> \<in> space M \<Longrightarrow> 0 \<le> s \<Longrightarrow> s \<le> U \<Longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
+    and Dbd: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> U \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
     and Dint: "integrable M D"
   shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
        = set_lebesgue_integral M A (Y U)"
@@ -9602,16 +9602,22 @@ proof -
   have lim: "(\<lambda>n. indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>)
       \<longlonglongrightarrow> indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega>" if w: "\<omega> \<in> space M" for \<omega>
     unfolding \<sigma>n_def using cont[OF w] by (intro tendsto_intros)
-  have bd: "norm (indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>) \<le> \<bar>D \<omega>\<bar>"
-    if w: "\<omega> \<in> space M" for \<omega> n
-  proof -
-    have "0 \<le> \<sigma>n n \<omega>" unfolding \<sigma>n_def by (rule dyceil_nonneg[OF sig0 sigU])
-    moreover have "\<sigma>n n \<omega> \<le> U" unfolding \<sigma>n_def by (rule dyceil_le_U)
-    ultimately have b: "\<bar>Y (\<sigma>n n \<omega>) \<omega>\<bar> \<le> D \<omega>" by (rule Dbd[OF w])
-    then have D0: "0 \<le> D \<omega>" by simp
-    show ?thesis using b D0 by (simp add: indicator_def abs_mult)
-  qed
-  have glim: "(\<lambda>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M"
+  have bd: "AE \<omega> in M.
+      \<forall>n. norm (indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>) \<le> \<bar>D \<omega>\<bar>"
+    using Dbd
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof
+      fix n
+      have "0 \<le> \<sigma>n n \<omega>" unfolding \<sigma>n_def by (rule dyceil_nonneg[OF sig0 sigU])
+      moreover have "\<sigma>n n \<omega> \<le> U" unfolding \<sigma>n_def by (rule dyceil_le_U)
+      ultimately have b: "\<bar>Y (\<sigma>n n \<omega>) \<omega>\<bar> \<le> D \<omega>" using elim by simp
+      then have D0: "0 \<le> D \<omega>" by simp
+      show "norm (indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>) \<le> \<bar>D \<omega>\<bar>"
+        using b D0 by (simp add: indicator_def abs_mult)
+    qed
+  qed  have glim: "(\<lambda>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M"
     by (rule borel_measurable_LIMSEQ_metric[OF gm lim])
   have conv: "(\<lambda>n. \<integral>\<omega>. indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega> \<partial>M)
       \<longlonglongrightarrow> (\<integral>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega> \<partial>M)"
@@ -9622,7 +9628,7 @@ proof -
       by (rule gm)
     show "integrable M (\<lambda>\<omega>. \<bar>D \<omega>\<bar>)" using Dint by simp
     show "AE x in M. norm (indicat_real A x * Y (\<sigma>n n x) x) \<le> \<bar>D x\<bar>" for n
-      by (rule eventually_mono[OF AE_space]) (rule bd)
+      using bd by (auto elim: eventually_mono)
     show "AE x in M. (\<lambda>n. indicat_real A x * Y (\<sigma>n n x) x)
         \<longlonglongrightarrow> indicat_real A x * Y (\<sigma> x) x"
       by (rule eventually_mono[OF AE_space]) (rule lim)
@@ -9846,10 +9852,9 @@ theorem set_martingale_sampling_two:
       \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
     and contr: "\<And>\<omega>. \<omega> \<in> space M
       \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<rho> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<rho> \<omega>) \<omega>"
-    and Dbd: "\<And>\<omega> s. \<omega> \<in> space M \<Longrightarrow> 0 \<le> s \<Longrightarrow> s \<le> U \<Longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
+    and Dbd: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> U \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
     and Dint: "integrable M D"
-  shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
-       = set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)"
+  shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)       = set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)"
 proof -
   have s: "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
       = set_lebesgue_integral M A (Y U)"
