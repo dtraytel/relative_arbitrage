@@ -8887,4 +8887,92 @@ proof -
   then show ?thesis by (rule closed_sequentially[OF S inS])
 qed
 
+text \<open>Clause (iii) for the kernel, closed: the rational pairs collected by
+  @{thm [source] AE_rcd_stopping_diffquot_rat}, extended to all real times by
+  @{thm [source] diffquot_all_of_rational_ge} inside the almost-sure
+  quantifier.  The continuity that the extension needs comes from the paths
+  themselves --- every point of the path space is continuous --- via
+  @{thm [source] AE_space} on \<open>\<kappa> p'\<close>.\<close>
+
+theorem AE_rcd_stopping_diffquot:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PS: "prob_space P"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+        = ksemi (pair_law_of T (pstopped T \<theta>) P)
+            (borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric))) \<kappa>"
+    and cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. AE w in \<kappa> p'.
+      \<forall>s t. \<theta> p' \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> sconstraint k L"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  interpret PP: prob_space P by (rule PS)
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have setsQ: "sets ?Q = sets ?B" by (rule sets_pair_law_of)
+  have PQ: "prob_space ?Q"
+    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?B"
+    using Km measurable_cong_sets[OF setsQ refl] by blast
+  have rat: "AE p' in ?Q. AE w in \<kappa> p'.
+      \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> \<theta> p' \<le> p \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+    by (rule AE_rcd_stopping_diffquot_rat
+        [OF T0 PS setsP st thM Km eq cov])
+  have spQ: "AE p' in ?Q. p' \<in> space ?Q" by (rule AE_space)
+  from rat spQ show ?thesis
+  proof eventually_elim
+    case (elim p')
+    then have R: "AE w in \<kappa> p'. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> \<theta> p' \<le> p \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+      and W: "p' \<in> space ?Q" by blast+
+    have sK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF KQ W])
+    have spK: "AE w in \<kappa> p'. w \<in> space (\<kappa> p')" by (rule AE_space)
+    from R spK show ?case
+    proof eventually_elim
+      case (elim w)
+      have mw: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+        using elim(2) sets_eq_imp_space_eq[OF sK] by (simp add: space_borel_of)      have cont: "continuous_on {0..T} (\<lambda>u. snd (w u))"
+        using mspace_path_metricD[OF mw] by (intro continuous_intros)
+      show ?case
+      proof (intro allI impI)
+        fix s t :: real
+        assume s: "\<theta> p' \<le> s" and stlt: "s < t" and tT: "t \<le> T"
+        have s0: "0 \<le> s" using s th0[of p'] by simp
+        show "(1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> sconstraint k L"
+        proof (rule diffquot_all_of_rational_ge
+            [OF closed_sconstraint cont _ s s0 stlt tT])
+          fix p q :: real
+          assume "p \<in> \<rat>" "q \<in> \<rat>" "0 \<le> p" "p < q" "q \<le> T" "\<theta> p' \<le> p"
+          then show "(1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p))
+              \<in> sconstraint k L"
+            using elim(1) by auto
+        qed
+      qed
+    qed
+  qed
+qed
+
 end
