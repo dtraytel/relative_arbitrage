@@ -15910,4 +15910,266 @@ proof -
   then show ?thesis by (rule mspace_path_metricD)
 qed
 
+text \<open>\<open>Qcov\<close>.  The stopped law's covariation constraint holds up to the
+  RANDOM horizon \<open>\<theta> p'\<close> --- and that is exactly the shape
+  @{thm [source] diffquot_all_of_rational} takes, once its horizon parameter is
+  instantiated with \<open>\<theta> p'\<close> rather than \<open>T\<close>.  So no guarded variant is needed
+  here: the rationals the lemma picks already satisfy \<open>q < t \<le> \<theta> p'\<close>.\<close>
+
+theorem pstopped_law_diffquot:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Pcov: "AE \<omega> in P. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T \<longrightarrow>
+        (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
+      \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p' \<longrightarrow>
+        (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM th0 thT])
+  have setsQ: "sets ?Q = sets ?B" by (rule sets_pair_law_of)
+  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have one: "AE p' in ?Q. q \<le> \<theta> p' \<longrightarrow>
+      (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+    if p: "p \<in> {0..T}" and q: "q \<in> {0..T}" and pq: "p < q" for p q :: real
+  proof -
+    have S: "{p' \<in> space ?B.
+        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}
+        \<in> sets ?B"
+      unfolding spB
+      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q]])
+    have G: "{p' \<in> space ?B. q \<le> \<theta> p'} \<in> sets ?B" using thM by measurable
+    have mset: "{p' \<in> space ?B. q \<le> \<theta> p' \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}
+        \<in> sets ?B"
+    proof -
+      have "{p' \<in> space ?B. q \<le> \<theta> p' \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}
+          = (space ?B - {p' \<in> space ?B. q \<le> \<theta> p'})
+            \<union> {p' \<in> space ?B.
+              (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}"
+        by auto
+      then show ?thesis using S G by (simp add: sets.Un sets.compl_sets)
+    qed
+    have "AE \<omega> in P. q \<le> \<theta> (pstopped T \<theta> \<omega>) \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (pstopped T \<theta> \<omega> q) - snd (pstopped T \<theta> \<omega> p))
+          \<in> sconstraint k L"
+      using Pcov
+    proof eventually_elim
+      case (elim \<omega>)
+      show ?case
+      proof
+        assume "q \<le> \<theta> (pstopped T \<theta> \<omega>)"
+        then have le: "q \<le> \<theta> \<omega>" unfolding path_stopping_time_stopped[OF st] .
+        have eq: "pstopped T \<theta> \<omega> q = \<omega> q"
+        proof -
+          have "pstopped T \<theta> \<omega> q = \<omega> (min q (\<theta> \<omega>))" by (rule pstopped_apply[OF q])
+          also have "min q (\<theta> \<omega>) = q" using le by simp
+          finally show ?thesis .
+        qed
+        have ep: "pstopped T \<theta> \<omega> p = \<omega> p"
+        proof -
+          have "pstopped T \<theta> \<omega> p = \<omega> (min p (\<theta> \<omega>))" by (rule pstopped_apply[OF p])
+          also have "min p (\<theta> \<omega>) = p" using le pq by simp
+          finally show ?thesis .
+        qed
+        show "(1 / (q - p)) *\<^sub>R
+            (snd (pstopped T \<theta> \<omega> q) - snd (pstopped T \<theta> \<omega> p)) \<in> sconstraint k L"
+          unfolding eq ep using elim p q pq by auto
+      qed
+    qed
+    then show ?thesis
+      unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+  qed
+  have rat: "AE p' in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE p' in ?Q. \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE p' in ?Q. p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+      proof (cases "p \<in> {0..T} \<and> q \<in> {0..T} \<and> p < q")
+        case True
+        then show ?thesis using one[of p q] by auto
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  have spn: "AE p' in ?Q. p' \<in> space ?Q" by (rule AE_space)
+  from rat spn show ?thesis
+  proof eventually_elim
+    case (elim p')
+    then have R: "\<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+      and W: "p' \<in> space ?Q" by blast+
+    have mw: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W by (simp add: space_pair_law_of)
+    have cT: "continuous_on {0..T} (\<lambda>u. snd (p' u))"
+      using mspace_path_metricD[OF mw] by (intro continuous_intros)
+    have sub: "{0..\<theta> p'} \<subseteq> {0..T}" using thT[of p'] by auto
+    have cont: "continuous_on {0..\<theta> p'} (\<lambda>u. snd (p' u))"
+      by (rule continuous_on_subset[OF cT sub])
+    show ?case
+    proof (intro allI impI)
+      fix a b :: real
+      assume a0: "0 \<le> a" and ab: "a < b" and bth: "b \<le> \<theta> p'"
+      show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+      proof (rule diffquot_all_of_rational[OF closed_sconstraint cont _ a0 ab bth])
+        fix p q :: real
+        assume pq: "p \<in> \<rat>" "q \<in> \<rat>" "0 \<le> p" "p < q" "q \<le> \<theta> p'"
+        have pT: "p \<in> {0..T}" using pq thT[of p'] by auto
+        have qT: "q \<in> {0..T}" using pq thT[of p'] th0[of p'] by auto
+        show "(1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+          using R pq pT qT by blast
+      qed
+    qed
+  qed
+qed
+
+text \<open>The last input the two martingale clauses need: the STOPPED path,
+  evaluated at a time \<open>r \<le> u\<close>, is \<open>\<F>\<^sub>u\<close>-measurable AS A PATH POINT --- no
+  componentwise decomposition.  The trick is to read it off the \<open>u\<close>-cut
+  rather than off the whole path: \<^const>\<open>pcut\<close> is measurable into the
+  \<open>u\<close>-horizon space by the very description of the natural filtration
+  (@{thm [source] sets_natural_filtration_eq_pcut_vimage}), the truncated
+  stopping time \<open>r \<and> \<theta>\<close> is \<open>\<F>\<^sub>u\<close>-measurable because \<open>{r \<and> \<theta> \<le> t}\<close> is either
+  everything or \<open>{\<theta> \<le> t}\<close> with \<open>t < r\<close>, and
+  @{thm [source] path_eval_at_measurable_time} joins the two.\<close>
+
+lemma pstopped_eval_filtration:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and r0: "0 \<le> r" and ru: "r \<le> u"
+  shows "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> r)
+      \<in> borel_measurable (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
+proof (cases "r \<le> T")
+  case False
+  then have "r \<notin> {0..T}" by simp
+  then have "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> r) = (\<lambda>\<omega>. undefined)"
+    by (simp add: pstopped_outside)
+  then show ?thesis by simp
+next
+  case True
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?G = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  define u' where "u' = min u T"
+  have u'0: "0 \<le> u'" using r0 ru True unfolding u'_def by simp
+  have u'T: "u' \<le> T" unfolding u'_def by simp
+  have u'u: "u' \<le> u" unfolding u'_def by simp
+  have ru': "r \<le> u'" using ru True unfolding u'_def by simp
+  have rmem: "r \<in> {0..T}" using r0 True by simp
+  have sp: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
+  have spG: "space (?G v) = space P" for v
+    unfolding natural_filtration_def by simp
+  have nf: "?G v = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) v" for v
+    by (rule natural_filtration_cong_space[OF sp])
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  let ?Bu = "borel_of (mtopology_of (path_metric u' :: ('n pairpath) metric))"
+
+  \<comment> \<open>the truncated stopping time is measurable at level \<open>u'\<close>\<close>
+  have gm: "(\<lambda>\<omega> :: 'n pairpath. min r (\<theta> \<omega>)) \<in> borel_measurable (?G u')"
+  proof (rule borel_measurableI_le)
+    fix t :: real
+    show "{\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t} \<in> sets (?G u')"
+    proof (cases "r \<le> t")
+      case True
+      have e: "{\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t} = space (?G u')"
+        using True by auto
+      show ?thesis unfolding e by (rule sets.top)
+    next
+      case False
+      then have lt: "t < r" by simp
+      show ?thesis
+      proof (cases "0 \<le> t")
+        case True
+        have eqs: "{\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t}
+            = {\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}" using lt sp spG by auto
+        have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
+            \<in> sets (natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t)"
+          by (rule path_stopping_time_event_filtration_all[OF T0 st thM True])
+        then have inG: "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t} \<in> sets (?G t)" unfolding nf .
+        have "sets (?G t) \<subseteq> sets (?G u')"
+          using lt ru' by (intro sets_natural_filtration_mono) simp
+        with inG show ?thesis unfolding eqs by blast
+      next
+        case False
+        then have tneg: "t < 0" by simp
+        have e: "{\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t} = {}"
+        proof (rule equals0I)
+          fix x :: "'n pairpath"
+          assume "x \<in> {\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t}"
+          then have le: "min r (\<theta> x) \<le> t" by blast
+          have "0 \<le> min r (\<theta> x)" using r0 th0[of x] by simp
+          with le tneg show False by simp
+        qed
+        show ?thesis unfolding e by simp
+      qed
+    qed
+  qed
+
+  \<comment> \<open>the \<open>u'\<close>-cut is measurable at level \<open>u'\<close>\<close>
+  have cutP: "pcut u' \<in> P \<rightarrow>\<^sub>M ?Bu" by (rule pcut_measurable[OF u'0 u'T setsP])
+  have cutm: "pcut u' \<in> ?G u' \<rightarrow>\<^sub>M ?Bu"
+  proof (rule measurableI)
+    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space (?G u')"
+    then have "\<omega> \<in> space P" using spG by simp
+    then show "pcut u' \<omega> \<in> space ?Bu" by (rule measurable_space[OF cutP])
+  next
+    fix A :: "('n pairpath) set" assume A: "A \<in> sets ?Bu"
+    have "pcut u' -` A \<inter> space P \<in> sets (?G u')"
+      unfolding sets_natural_filtration_eq_pcut_vimage[OF setsP u'0 u'T]
+      using A by blast
+    then show "pcut u' -` A \<inter> space (?G u') \<in> sets (?G u')"
+      unfolding spG .
+  qed
+
+  have g0: "0 \<le> min r (\<theta> \<omega>)" for \<omega> :: "'n pairpath" using r0 th0[of \<omega>] by simp
+  have gu: "min r (\<theta> \<omega>) \<le> u'" for \<omega> :: "'n pairpath" using ru' by simp
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. pcut u' \<omega> (min r (\<theta> \<omega>)))
+      \<in> borel_measurable (?G u')"
+    by (rule path_eval_at_measurable_time
+        [where X = "pcut u'" and g = "\<lambda>\<omega> :: 'n pairpath. min r (\<theta> \<omega>)",
+          OF u'0 cutm gm g0 gu])
+  have same: "(\<lambda>\<omega> :: 'n pairpath. pcut u' \<omega> (min r (\<theta> \<omega>)))
+      = (\<lambda>\<omega>. pstopped T \<theta> \<omega> r)"
+  proof (rule ext)
+    fix \<omega> :: "'n pairpath"
+    have m: "min r (\<theta> \<omega>) \<in> {0..u'}" using g0[of \<omega>] gu[of \<omega>] by simp
+    have "pcut u' \<omega> (min r (\<theta> \<omega>)) = \<omega> (min r (\<theta> \<omega>))" by (rule pcut_apply[OF m])
+    also have "\<dots> = pstopped T \<theta> \<omega> r" by (rule pstopped_apply[OF rmem, symmetric])
+    finally show "pcut u' \<omega> (min r (\<theta> \<omega>)) = pstopped T \<theta> \<omega> r" .
+  qed
+  have sub: "subalgebra (?G u) (?G u')"
+    unfolding subalgebra_def using spG sets_natural_filtration_mono[OF u'u] by simp
+  show ?thesis
+    by (rule measurable_from_subalg[OF sub]) (use ev same in simp)
+qed
+
 end
