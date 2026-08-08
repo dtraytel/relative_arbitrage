@@ -8699,4 +8699,96 @@ proof -
   then show ?thesis unfolding C_def by (auto elim: eventually_mono)
 qed
 
+text \<open>Collecting the pairs.  Two \<open>AE_ball_countable'\<close> passes on the past-law
+  gather the rational pairs, and two more INSIDE --- on \<open>\<kappa> p'\<close> --- move the
+  almost-sure quantifier over \<open>w\<close> outside the countable conjunction.  What is
+  left after this is a purely pathwise step: extending from rational to real
+  times by continuity of \<open>w\<close> and closedness of \<open>sconstraint k L\<close>.\<close>
+
+lemma AE_rcd_stopping_diffquot_rat:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PS: "prob_space P"
+    and setsP: "sets P = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric)))"
+    and eq: "distr P
+          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+            \<Otimes>\<^sub>M borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric)))
+          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
+        = ksemi (pair_law_of T (pstopped T \<theta>) P)
+            (borel_of (mtopology_of
+              (path_metric T :: ('n pairpath) metric))) \<kappa>"
+    and cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. AE w in \<kappa> p'.
+      \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> \<theta> p' \<le> p \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+proof -
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  have one: "AE p' in ?Q. AE w in \<kappa> p'. \<theta> p' \<le> p \<longrightarrow>
+      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+    if "p \<in> {0..T}" "q \<in> {0..T}" "p < q" for p q :: real
+    by (rule AE_rcd_stopping_diffquot_at
+        [OF T0 PS setsP st thM Km eq cov that(1) that(2) that(3)])
+  have rat: "AE p' in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow>
+        (AE w in \<kappa> p'. \<theta> p' \<le> p \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L)"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE p' in ?Q. \<forall>q\<in>(\<rat>::real set).
+        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow>
+          (AE w in \<kappa> p'. \<theta> p' \<le> p \<longrightarrow>
+            (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L)"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE p' in ?Q. p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow>
+          (AE w in \<kappa> p'. \<theta> p' \<le> p \<longrightarrow>
+            (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L)"
+      proof (cases "p \<in> {0..T} \<and> q \<in> {0..T} \<and> p < q")
+        case True
+        then show ?thesis using one[of p q] by auto
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  show ?thesis
+    using rat
+  proof eventually_elim
+    case (elim p')
+    show ?case
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix p :: real assume p: "p \<in> \<rat>"
+      show "AE w in \<kappa> p'. \<forall>q\<in>(\<rat>::real set).
+          p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> \<theta> p' \<le> p \<longrightarrow>
+            (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+      proof (rule AE_ball_countable'[OF _ countable_rat])
+        fix q :: real assume q: "q \<in> \<rat>"
+        show "AE w in \<kappa> p'. p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q
+            \<longrightarrow> \<theta> p' \<le> p \<longrightarrow>
+              (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+        proof (cases "p \<in> {0..T} \<and> q \<in> {0..T} \<and> p < q")
+          case True
+          then have "AE w in \<kappa> p'. \<theta> p' \<le> p \<longrightarrow>
+              (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+            using elim p q by blast
+          then show ?thesis by (auto elim: eventually_mono)
+        next
+          case False
+          then show ?thesis by auto
+        qed
+      qed
+    qed
+  qed
+qed
+
 end
