@@ -12546,4 +12546,261 @@ text \<open>NEXT: the inner-integral identity, i.e. the four-cell argument itsel
     \<open>\<sigma> = i \<and> \<theta> \<le> \<rho> = j \<and> \<theta>\<close> to the conditioning set
     @{thm [source] pcut_after_in_pre_sigma} supplies.  Do not try to finish it
     with a pointwise argument.\<close>
+subsection \<open>Clause (iv): the inner-integral identity\<close>
+
+theorem aglue_inner_increment:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 < T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and QH: "horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. fst (p' (min u T)) $ c) T"
+    and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
+    and Kfr: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    and Kmean: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ c \<partial>(\<kappa> p')) = 0"
+    and Kint: "\<And>p' u. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (w (min u T)) $ c)"
+    and Kinc: "\<And>p' C u v. p' \<in> space Q
+      \<Longrightarrow> C \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w. w s) u)
+      \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T
+      \<Longrightarrow> set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min u T)) $ c)
+        = set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min v T)) $ c)"
+    and i0: "0 \<le> i" and ij: "i \<le> j" and iT: "i \<le> T" and jT: "j \<le> T"
+    and B: "B \<in> sets (borel_of (mtopology_of
+        (path_metric i :: ('n pairpath) metric)))"
+    and gint: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+        (\<lambda>p'. \<integral>w. indicator B (pcut i (padd T p' w))
+            * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
+  shows "(\<integral>p'. (\<integral>w. indicator B (pcut i (padd T p' w))
+            * (fst (padd T p' w (min i T)) $ c) \<partial>(\<kappa> p')) \<partial>Q)
+       = (\<integral>p'. (\<integral>w. indicator B (pcut i (padd T p' w))
+            * (fst (padd T p' w (min j T)) $ c) \<partial>(\<kappa> p')) \<partial>Q)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?Y = "\<lambda>u p' :: 'n pairpath. fst (p' (min u T)) $ c"
+  let ?g = "\<lambda>u p' :: 'n pairpath. \<integral>w. indicator B (pcut i (padd T p' w))
+      * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')"
+  let ?E = "{p' \<in> space Q. i < \<theta> p'}"
+  let ?D = "pcut i -` B \<inter> space Q"
+  have T0': "0 \<le> T" using T0 by simp
+  have j0: "0 \<le> j" using i0 ij by simp
+  have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have spQ: "space Q = space ?B" by (rule sets_eq_imp_space_eq[OF setsQ])
+  have evQ: "(\<lambda>p' :: 'n pairpath. \<theta> p') \<in> borel_measurable Q"
+    unfolding measurable_cong_sets[OF setsQ refl] by (rule thM)
+  have Emeas: "?E \<in> sets Q" using evQ by measurable
+  have Dmeas: "?D \<in> sets Q"
+    by (rule measurable_sets[OF pcut_measurable[OF i0 iT setsQ] B])
+
+  \<comment> \<open>the two pointwise halves\<close>
+  have after: "?g u p' = indicator B (pcut i p') * ?Y u p'"
+    if sp: "p' \<in> space Q" and lt: "i < \<theta> p'" and u0: "0 \<le> u" and uT: "u \<le> T"
+    for p' u
+  proof -
+    interpret PKi: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    have m: "min u T \<in> {0..T}" using u0 uT by simp
+    have cut: "pcut i (padd T p' w) = pcut i p'" if "w \<in> space (\<kappa> p')" for w
+      by (rule pcut_padd_before[OF i0 iT _ lt]) (use Kfr[OF sp] that in blast)
+    have "?g u p' = (\<integral>w. indicator B (pcut i p')
+        * (?Y u p' + fst (w (min u T)) $ c) \<partial>(\<kappa> p'))"
+      by (rule Bochner_Integration.integral_cong[OF refl])
+         (simp add: cut padd_apply[OF m])
+    also have "\<dots> = indicator B (pcut i p')
+        * (\<integral>w. ?Y u p' + fst (w (min u T)) $ c \<partial>(\<kappa> p'))" by simp
+    also have "(\<integral>w. ?Y u p' + fst (w (min u T)) $ c \<partial>(\<kappa> p'))
+        = ?Y u p' + (\<integral>w. fst (w (min u T)) $ c \<partial>(\<kappa> p'))"
+      using Bochner_Integration.integral_add[OF PKi.integrable_const
+        Kint[OF sp u0 uT]] by (simp add: PKi.prob_space)
+    finally show ?thesis using Kmean[OF sp u0 uT] by simp
+  qed
+
+  have before: "?g j p' = ?g i p'"
+    if sp: "p' \<in> space Q" and le: "\<theta> p' \<le> i" for p'
+  proof -
+    interpret PKi: prob_space "\<kappa> p'" by (rule ksemi_sets_kernel(2)[OF Kp sp])
+    have setsK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
+    have pmem: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using sp spQ by (simp add: space_borel_of)
+    define C where "C = {w \<in> space (\<kappa> p'). pcut i (padd T p' w) \<in> B}"
+    have Cf: "C \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w. w s) i)"
+      unfolding C_def
+      by (rule section_padd_in_filtration[OF i0 iT setsK pmem B])
+    have CK: "C \<in> sets (\<kappa> p')"
+    proof -
+      have "sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w :: 'n pairpath. w s) i)
+          \<subseteq> sets (\<kappa> p')"
+        by (rule sets_natural_filtration_subset)
+           (rule pair_law_eval_measurable[OF setsK])
+      then show ?thesis using Cf by blast
+    qed
+    have same: "?Y j p' = ?Y i p'"
+    proof -
+      have e1: "p' (min i T) = p' (min (min i T) (\<theta> p'))"
+        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' i0])
+      have e2: "p' (min j T) = p' (min (min j T) (\<theta> p'))"
+        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' j0])
+      have m1: "min (min i T) (\<theta> p') = \<theta> p'" using le iT th0[of p'] by simp
+      have m2: "min (min j T) (\<theta> p') = \<theta> p'"
+        using le ij jT th0[of p'] by simp
+      show ?thesis using e1 e2 m1 m2 by simp
+    qed
+    have dec: "?g u p' = ?Y u p' * measure (\<kappa> p') C
+        + set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min u T)) $ c)"
+      if u0: "0 \<le> u" and uT: "u \<le> T" for u
+    proof -
+      have m: "min u T \<in> {0..T}" using u0 uT by simp
+      have Csub: "C \<subseteq> space (\<kappa> p')" unfolding C_def by blast
+      have i1: "integrable (\<kappa> p') (\<lambda>w. indicator C w * ?Y u p')"
+        using integrable_mult_indicator[OF CK PKi.integrable_const,
+          of "?Y u p'"] by simp
+      have i2: "integrable (\<kappa> p') (\<lambda>w. indicator C w * (fst (w (min u T)) $ c))"
+        using integrable_mult_indicator[OF CK Kint[OF sp u0 uT]] by simp
+      have "?g u p' = (\<integral>w. indicator C w * ?Y u p'
+          + indicator C w * (fst (w (min u T)) $ c) \<partial>(\<kappa> p'))"
+        by (rule Bochner_Integration.integral_cong[OF refl])
+           (simp add: C_def padd_apply[OF m] indicator_def)
+      also have "\<dots> = (\<integral>w. indicator C w * ?Y u p' \<partial>(\<kappa> p'))
+          + (\<integral>w. indicator C w * (fst (w (min u T)) $ c) \<partial>(\<kappa> p'))"
+        by (rule Bochner_Integration.integral_add[OF i1 i2])
+      also have "(\<integral>w. indicator C w * ?Y u p' \<partial>(\<kappa> p')) = ?Y u p' * measure (\<kappa> p') C"
+        by (simp add: mult.commute Int_absorb2[OF Csub])
+      finally show ?thesis unfolding set_lebesgue_integral_def by simp
+    qed
+    show ?thesis
+      unfolding dec[OF j0 jT] dec[OF i0 iT] same
+      using Kinc[OF sp Cf i0 ij jT] by simp
+  qed
+
+  \<comment> \<open>the outer split: pointwise on the complement, optional sampling on \<open>?E\<close>\<close>
+  have si: "set_integrable Q S (?g u)"
+    if "S \<in> sets Q" "0 \<le> u" "u \<le> T" for S u
+    unfolding set_integrable_def
+    by (rule integrable_mult_indicator[OF that(1) gint[OF that(2,3)]])
+  have spint: "set_lebesgue_integral Q (space Q) (?g u) = (\<integral>p'. ?g u p' \<partial>Q)"
+    if "0 \<le> u" "u \<le> T" for u
+    by (rule set_integral_space[OF gint[OF that]])
+  have Esplit: "(\<integral>p'. ?g u p' \<partial>Q)
+      = set_lebesgue_integral Q ?E (?g u)
+        + set_lebesgue_integral Q (space Q - ?E) (?g u)"
+    if u0: "0 \<le> u" and uT: "u \<le> T" for u
+  proof -
+    have dis: "?E \<inter> (space Q - ?E) = {}" by auto
+    have cm: "space Q - ?E \<in> sets Q" by (rule sets.compl_sets[OF Emeas])
+    have un: "?E \<union> (space Q - ?E) = space Q" by auto
+    have "set_lebesgue_integral Q (?E \<union> (space Q - ?E)) (?g u)
+        = set_lebesgue_integral Q ?E (?g u)
+          + set_lebesgue_integral Q (space Q - ?E) (?g u)"
+      by (rule set_integral_Un[OF dis si[OF Emeas u0 uT] si[OF cm u0 uT]])
+    then show ?thesis unfolding un spint[OF u0 uT] .
+  qed
+  have compl: "set_lebesgue_integral Q (space Q - ?E) (?g j)
+      = set_lebesgue_integral Q (space Q - ?E) (?g i)"
+    unfolding set_lebesgue_integral_def
+  proof (rule Bochner_Integration.integral_cong[OF refl])
+    fix x assume x: "x \<in> space Q"
+    show "indicator (space Q - ?E) x *\<^sub>R ?g j x
+        = indicator (space Q - ?E) x *\<^sub>R ?g i x"
+    proof (cases "x \<in> space Q - ?E")
+      case True
+      then have "\<theta> x \<le> i" using x by simp
+      then show ?thesis using before[OF x] by simp
+    next
+      case False
+      then show ?thesis by simp
+    qed
+  qed
+  have Epart: "set_lebesgue_integral Q ?E (?g j)
+      = set_lebesgue_integral Q ?E (?g i)"
+  proof -
+    have rew: "set_lebesgue_integral Q ?E (?g u)
+        = set_lebesgue_integral Q (?D \<inter> ?E) (?Y u)"
+      if u0: "0 \<le> u" and uT: "u \<le> T" for u
+      unfolding set_lebesgue_integral_def
+    proof (rule Bochner_Integration.integral_cong[OF refl])
+      fix x assume x: "x \<in> space Q"
+      show "indicator ?E x *\<^sub>R ?g u x = indicator (?D \<inter> ?E) x *\<^sub>R ?Y u x"
+      proof (cases "x \<in> ?E")
+        case True
+        then have lt: "i < \<theta> x" by simp
+        have gv: "?g u x = indicator B (pcut i x) * ?Y u x"
+          by (rule after[OF x lt u0 uT])
+        have iv: "indicator (?D \<inter> ?E) x = (indicator B (pcut i x) :: real)"
+          using True x by (simp add: indicator_def)
+        show ?thesis unfolding gv iv using True by simp
+      next
+        case False
+        then have e1: "indicator ?E x = (0::real)" by simp
+        have e2: "indicator (?D \<inter> ?E) x = (0::real)" using False by simp
+        show ?thesis unfolding e1 e2 by simp
+      qed
+    qed
+    have sti: "path_stopping_time T (\<lambda>p' :: 'n pairpath. min i (\<theta> p'))"
+      by (rule path_stopping_time_min[OF st i0 iT])
+    have stj: "path_stopping_time T (\<lambda>p' :: 'n pairpath. min j (\<theta> p'))"
+      by (rule path_stopping_time_min[OF st j0 jT])
+    have sMi: "(\<lambda>p' :: 'n pairpath. min i (\<theta> p')) \<in> borel_measurable ?B"
+      using thM by measurable
+    have sMj: "(\<lambda>p' :: 'n pairpath. min j (\<theta> p')) \<in> borel_measurable ?B"
+      using thM by measurable
+    have lemin: "min i (\<theta> p') \<le> min j (\<theta> p')" for p' :: "'n pairpath"
+      using ij by simp
+    have Cpre: "?D \<inter> ?E \<in> pre_sigma_of Q ?F (\<lambda>p'. min i (\<theta> p'))"
+      by (rule pcut_after_in_pre_sigma[OF T0' setsQ st thM i0 iT B])
+    have Ycont: "continuous_on {0..T} (\<lambda>s. ?Y s p')"
+      if sp: "p' \<in> space Q" for p'
+    proof -
+      have "continuous_on {0..T} (\<lambda>s. fst (p' s) $ c)"
+        using Qcont[OF sp] by (intro continuous_intros)
+      moreover have "continuous_on {0..T} (\<lambda>s. fst (p' (min s T)) $ c)
+          = continuous_on {0..T} (\<lambda>s. fst (p' s) $ c)"
+        by (rule continuous_on_cong[OF refl]) simp
+      ultimately show ?thesis by simp
+    qed
+    have samp: "set_lebesgue_integral Q (?D \<inter> ?E)
+          (\<lambda>p'. ?Y (min i (\<theta> p')) p')
+        = set_lebesgue_integral Q (?D \<inter> ?E) (\<lambda>p'. ?Y (min j (\<theta> p')) p')"
+      by (rule stopped_increment_of_horizon_gen
+          [OF T0 setsQ QH Ycont sti sMi stj sMj lemin Cpre])
+    have valE: "?Y (min u (\<theta> p')) p' = ?Y u p'"
+      if sp: "p' \<in> space Q" and lt: "i < \<theta> p'" and u0: "0 \<le> u" and uT: "u \<le> T"
+        and ui: "i \<le> u" for p' u
+    proof -
+      have "p' (min u T) = p' (min (min u T) (\<theta> p'))"
+        by (rule pstopped_eval_min[OF st Qst[OF sp] T0' u0])
+      moreover have "min (min u (\<theta> p')) T = min (min u T) (\<theta> p')"
+        using u0 uT th0[of p'] by simp
+      ultimately show ?thesis by simp
+    qed
+    have e1: "set_lebesgue_integral Q (?D \<inter> ?E) (\<lambda>p'. ?Y (min i (\<theta> p')) p')
+        = set_lebesgue_integral Q (?D \<inter> ?E) (?Y i)"
+      unfolding set_lebesgue_integral_def
+      by (rule Bochner_Integration.integral_cong[OF refl])
+         (use valE i0 iT in \<open>auto simp: indicator_def\<close>)
+    have e2: "set_lebesgue_integral Q (?D \<inter> ?E) (\<lambda>p'. ?Y (min j (\<theta> p')) p')
+        = set_lebesgue_integral Q (?D \<inter> ?E) (?Y j)"
+      unfolding set_lebesgue_integral_def
+      by (rule Bochner_Integration.integral_cong[OF refl])
+         (use valE j0 jT ij in \<open>auto simp: indicator_def\<close>)
+    show ?thesis
+      unfolding rew[OF i0 iT] rew[OF j0 jT]
+      using samp e1 e2 by simp
+  qed
+  show ?thesis
+    unfolding Esplit[OF i0 iT] Esplit[OF j0 jT]
+    using compl Epart by simp
+qed
+
 end
