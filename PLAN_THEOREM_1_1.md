@@ -1238,3 +1238,51 @@ Write `g1 p = <past part>`, `g2 p = <continuation part>`; `padd_apply` splits
 `paper_pair_class_aglue` yields the competitor and
 `paper_v_dpp_sup_ge_time_of_const` (already stated for arbitrary `θ`) converts
 it into the `≥` half. Kernel: `λp'. Sel (θ p', fst (p' (θ p')))`.
+
+## §2.1 — `RXint` and `RCint` are proved; a DEFECT in `gintX`/`gintC`
+
+**Done and green:** `integrable_ksemi_of_past_bound` (the workhorse — the inner
+`κ`-bound may be a *function* of the past, provided it is `Q`-integrable),
+`aglue_law_X_integrable` (**RXint**), `padd_comp_norm_le`,
+`aglue_law_comp_integrable` (**RCint**).
+
+`RCint` is not a copy of `RXint`: `outerp` is quadratic, so `outerp_add`
+produces two CROSS terms. `norm_outer_prod` evaluates their norms EXACTLY
+(equality, not Cauchy–Schwarz), giving
+
+  `norm(comp(p'+w)) ≤ norm(comp p') + norm(comp w) + 2·norm(fst p')·norm(fst w)`
+
+whose inner integral is `norm(comp p') + CC + 2·norm(fst p')·CX` — the third
+shape the workhorse was written for. That is the whole reason the workhorse
+takes a past-dependent bound rather than a constant.
+
+### DEFECT to fix before proving `gintX`/`gintC`
+
+`paper_pair_class_aglue` states them with `BB` and `i` **unconstrained**:
+
+  `⋀u BB e i. 0 ≤ u ⟹ u ≤ T ⟹ integrable Q (λp'. ∫w. indicator BB (pcut i …) · … ∂(κ p'))`
+
+For a non-measurable `BB` the inner integrand is non-measurable, so the inner
+Bochner integral is `0` by convention and the statement is *vacuously* provable
+— but only via an ugly case split, and the hypothesis is not what the proof
+needs. **Add `BB ∈ sets (borel_of (mtopology_of (path_metric i)))`, `0 ≤ i`,
+`i ≤ T`.** The call site can supply them: `gintX` is passed through
+`aglue_law_X_martingale` to `aglue_inner_increment`, whose own hypothesis is
+already `B ∈ sets (borel_of (mtopology_of (path_metric i)))` with `0 ≤ i`,
+`i ≤ T`. The constraint has to be threaded through all three lemmas that carry
+`gintX`/`gintC`.
+
+### The remaining shape
+
+Once that is fixed, `msecX`/`msecC` and `gintX`/`gintC` share one generic pair
+(worth writing once, with `c` a measurable factor bounded by 1 — `indicator A`
+for `msec`, `indicator BB ∘ pcut i` for `gint`):
+
+* measurability: `integral_kernel_measurable`, joint measurability from
+  `padd_measurable_ksemi`, per-`p'` integrability from `Kint`/`KintC` via
+  `integrable_bound` against `|h|`;
+* integrability: `integrable_bound` against the same past function, using
+  `|∫ c·h| ≤ ∫|h| ≤ HB p'`.
+
+Then `paper_pair_class_aglue` applies, and
+`paper_v_dpp_sup_ge_time_of_const` closes the `≥` half.
