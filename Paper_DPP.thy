@@ -10254,4 +10254,184 @@ proof -
   qed
 qed
 
+section \<open>Clause (iv), step (c): the conditioning rectangle at \<open>\<theta>\<close>\<close>
+
+text \<open>The deterministic development conditions on rectangles
+  \<open>(pcut r, pfut r T) -` (A \<times> A')\<close> and shows they sit in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> ---
+  @{thm [source] rect_vimage_natural_filtration}.  At a stopping time the
+  split is \<open>(pstopped T \<theta>, pafter T \<theta>)\<close>, and since \<^const>\<open>pafter\<close> is the
+  DELAYED future --- frozen until \<open>\<theta>\<close> and then running on the same clock ---
+  the time on the second factor is an ABSOLUTE time \<open>u\<close>, not an offset.  The
+  sampling time attached to it is therefore \<open>u \<or> \<theta>\<close>, and the whole of this
+  section is about that family.
+
+  Everything rests on one pathwise observation: below a deterministic \<open>t\<close>
+  both factors are read off the path STOPPED at \<open>t\<close>, which is an
+  \<open>\<F>\<^sub>t\<close>-measurable function of \<open>\<omega>\<close>.  That is the same device
+  @{thm [source] path_stopping_time_event_filtration} uses for the event
+  \<open>{\<theta> \<le> t}\<close> itself.\<close>
+
+lemma path_stopping_time_cut_eq:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T" and le: "\<theta> \<omega> \<le> t"
+  shows "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
+proof (rule path_stopping_time_cong[OF st])
+  fix s assume s: "s \<in> {0..\<theta> \<omega>}"
+  then have sT: "s \<in> {0..T}" using le tT by auto
+  have "min s t = s" using s le by simp
+  then show "\<omega> s = pstopped T (\<lambda>_. t) \<omega> s"
+    by (simp add: pstopped_apply[OF sT])
+qed
+
+lemma pstopped_cut_compose:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T" and le: "\<theta> \<omega> \<le> t"
+  shows "pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>) = pstopped T \<theta> \<omega>"
+proof (rule ext)
+  fix s :: real
+  show "pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>) s = pstopped T \<theta> \<omega> s"
+  proof (cases "s \<in> {0..T}")
+    case True
+    have th: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
+      by (rule path_stopping_time_cut_eq[OF st tT le])
+    have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
+    have m: "min s (\<theta> \<omega>) \<in> {0..T}" using True th0 by auto
+    have "pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>) s
+        = pstopped T (\<lambda>_. t) \<omega> (min s (\<theta> \<omega>))"
+      unfolding pstopped_apply[OF True] th ..
+    also have "\<dots> = \<omega> (min (min s (\<theta> \<omega>)) t)" by (rule pstopped_apply[OF m])
+    also have "min (min s (\<theta> \<omega>)) t = min s (\<theta> \<omega>)" using le by simp
+    finally show ?thesis by (simp add: pstopped_apply[OF True])
+  next
+    case False
+    then show ?thesis by (simp add: pstopped_outside)
+  qed
+qed
+
+text \<open>The second factor only agrees up to \<open>u\<close> --- which is exactly as far as
+  an \<open>\<F>\<^sub>u\<close>-set can look, so composing with \<^const>\<open>pcut\<close> loses nothing.\<close>
+
+lemma pcut_pafter_cut_compose:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T"
+    and u: "0 \<le> u" and ut: "u \<le> t" and le: "\<theta> \<omega> \<le> t"
+  shows "pcut u (pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>)) = pcut u (pafter T \<theta> \<omega>)"
+proof (rule ext)
+  fix s :: real
+  show "pcut u (pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>)) s
+      = pcut u (pafter T \<theta> \<omega>) s"
+  proof (cases "s \<in> {0..u}")
+    case True
+    have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
+    have sT: "s \<in> {0..T}" using True u ut tT by auto
+    have th: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
+      by (rule path_stopping_time_cut_eq[OF st tT le])
+    have m1: "max s (\<theta> \<omega>) \<in> {0..T}"
+      using sT th0 path_stopping_time_le[OF st, of \<omega>] by auto
+    have m2: "\<theta> \<omega> \<in> {0..T}"
+      using th0 path_stopping_time_le[OF st, of \<omega>] by simp
+    have mx: "max s (\<theta> \<omega>) \<le> t" using True ut le by simp
+    have "pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>) s
+        = pstopped T (\<lambda>_. t) \<omega> (max s (\<theta> \<omega>))
+          - pstopped T (\<lambda>_. t) \<omega> (\<theta> \<omega>)"
+      unfolding pafter_apply[OF sT] th ..
+    also have "\<dots> = \<omega> (min (max s (\<theta> \<omega>)) t) - \<omega> (min (\<theta> \<omega>) t)"
+      by (simp only: pstopped_apply[OF m1] pstopped_apply[OF m2])
+    also have "\<dots> = \<omega> (max s (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)" using mx le by simp
+    finally have "pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>) s = pafter T \<theta> \<omega> s"
+      unfolding pafter_apply[OF sT] .
+    then show ?thesis by (simp add: pcut_apply[OF True])
+  next
+    case False
+    have out: "pcut u w s = undefined" for w :: "'n pairpath"
+      unfolding pcut_def restrict_def by (rule if_not_P[OF False])
+    show ?thesis unfolding out ..
+  qed
+qed
+
+text \<open>\<open>u \<or> \<theta>\<close> is a stopping time for the same reason \<open>(\<theta>+i) \<and> T\<close> is
+  (@{thm [source] path_stopping_time_shift}): it never looks back less far
+  than \<open>\<theta>\<close> does.\<close>
+
+lemma path_stopping_time_max:
+  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  assumes st: "path_stopping_time T \<theta>" and u: "0 \<le> u" and uT: "u \<le> T"
+  shows "path_stopping_time T (\<lambda>\<omega>. max u (\<theta> \<omega>))"
+proof -
+  have c1: "0 \<le> max u (\<theta> \<omega>) \<and> max u (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+    using u uT path_stopping_time_nonneg[OF st, of \<omega>]
+      path_stopping_time_le[OF st, of \<omega>] by simp
+  have c2: "max u (\<theta> \<omega>') = max u (\<theta> \<omega>)"
+    if ag: "\<forall>s \<in> {0..max u (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
+  proof -
+    have "\<theta> \<omega>' = \<theta> \<omega>"
+    proof (rule path_stopping_time_cong[OF st])
+      fix s assume "s \<in> {0..\<theta> \<omega>}"
+      then have "s \<in> {0..max u (\<theta> \<omega>)}" by auto
+      then show "\<omega> s = \<omega>' s" using ag by blast
+    qed
+    then show ?thesis by simp
+  qed
+  show ?thesis unfolding path_stopping_time_def using c1 c2 by blast
+qed
+
+text \<open>The event lemma with the horizon restriction removed: past \<open>T\<close> there is
+  nothing left to decide.\<close>
+
+lemma path_stopping_time_event_filtration_all:
+  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<sigma>"
+    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric)))"
+    and t: "0 \<le> t"
+  shows "{\<omega> \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))). \<sigma> \<omega> \<le> t}
+      \<in> sets (natural_filtration (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+proof (cases "t \<le> T")
+  case True
+  show ?thesis by (rule path_stopping_time_event_filtration[OF T0 st sM t True])
+next
+  case False
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
+  have lt: "\<sigma> \<omega> \<le> t" for \<omega> :: "'n pairpath"
+    using path_stopping_time_le[OF st, of \<omega>] False by simp
+  have "{\<omega> \<in> space ?B. \<sigma> \<omega> \<le> t} = space ?B" using lt by blast
+  moreover have "space ?B \<in> sets ?F"
+  proof -
+    have "space ?F = space ?B" by simp
+    then show ?thesis using sets.top[of ?F] by simp
+  qed
+  ultimately show ?thesis by simp
+qed
+
+text \<open>A packaging lemma: for a stopping time bounded by \<open>T\<close> it is enough to
+  check the \<open>\<F>\<^sub>\<sigma>\<close> condition at times BELOW the horizon.\<close>
+
+lemma pre_sigma_ofI_le:
+  assumes T0: "0 \<le> T"
+    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
+    and bd: "\<And>\<omega>. \<sigma> \<omega> \<le> T"
+    and S: "S \<in> sets M"
+    and key: "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> T
+      \<Longrightarrow> S \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+  shows "S \<in> pre_sigma_of M F \<sigma>"
+proof (rule pre_sigma_ofI[OF S])
+  fix t :: real assume t: "0 \<le> t"
+  show "S \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
+  proof (cases "t \<le> T")
+    case True
+    show ?thesis by (rule key[OF t True])
+  next
+    case False
+    have lt: "\<sigma> \<omega> \<le> t" for \<omega> using bd[of \<omega>] False by simp
+    have "{\<omega> \<in> space M. \<sigma> \<omega> \<le> t} = {\<omega> \<in> space M. \<sigma> \<omega> \<le> T}"
+      using lt bd by blast
+    then have "S \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F T)"
+      using key[OF T0 order_refl] by simp
+    moreover have "sets (F T) \<subseteq> sets (F t)" using mono[OF T0] False by simp
+    ultimately show ?thesis by blast
+  qed
+qed
+
 end
