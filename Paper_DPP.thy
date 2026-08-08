@@ -10196,4 +10196,62 @@ proof -
   qed
 qed
 
+text \<open>Square-integrability of the compensated entry, from its
+  nonnegative-integral bound.  This is the second half of what
+  \<open>horizon_sq_int_martingale\<close> asks for.\<close>
+
+lemma paper_pair_class_comp_entry_sq_integrable:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x" and u: "u \<in> {0..T}"
+  shows "integrable Q (\<lambda>\<omega>. ((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)"
+proof (rule integrableI_bounded)
+  have e: "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)"
+    by (rule paper_pair_class_compensated_entry_integrable[OF Q u])
+  then have em: "(\<lambda>\<omega>. (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)
+      \<in> borel_measurable Q" by (rule borel_measurable_integrable)
+  show "(\<lambda>\<omega>. ((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
+      \<in> borel_measurable Q" using em by measurable
+next
+  have "(\<integral>\<^sup>+\<omega>. ennreal (norm (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)) \<partial>Q)
+      = (\<integral>\<^sup>+\<omega>. ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2) \<partial>Q)"
+    by simp
+  also have "\<dots> \<le> ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
+               + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)
+               + 2 * (real CARD('n) * L * T)\<^sup>2)"
+    by (rule paper_pair_class_comp_entry_sq_nn[OF T L Q u])
+  also have "\<dots> < \<infinity>" by simp
+  finally show "(\<integral>\<^sup>+\<omega>. ennreal (norm
+      (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)) \<partial>Q) < \<infinity>" .
+qed
+text \<open>Hence the compensated clause is a \<open>horizon_sq_int_martingale\<close> too, and
+  @{thm [source] stopped_increment_of_horizon} applies to it verbatim.\<close>
+
+lemma paper_pair_class_horizon_compensated:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  shows "horizon_sq_int_martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+      (\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d) T"
+proof -
+  have mgm: "martingale P (natural_filtration P 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
+    by (rule paper_pair_class_compensated_martingale[OF P])
+  have mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
+      (\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d)"
+    by (rule martingale_mat_component[OF mgm])
+  interpret Mg: martingale P "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" 0
+    "\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d"
+    by (rule mg)
+  interpret PS: prob_space P by (rule paper_pair_class_prob[OF P])
+  show ?thesis
+  proof unfold_locales
+    show "0 < T" by (rule T0)
+    fix s :: real assume s: "0 \<le> s"
+    have m: "min s T \<in> {0..T}" using s T0 by simp
+    show "integrable P (\<lambda>\<omega>.
+        ((outerp (fst (\<omega> (min s T))) - snd (\<omega> (min s T))) $ c $ d)\<^sup>2)"
+      by (rule paper_pair_class_comp_entry_sq_integrable[OF T0 L0 P m])
+  qed
+qed
+
 end
