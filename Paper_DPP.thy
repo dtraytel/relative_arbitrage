@@ -13964,7 +13964,6 @@ theorem paper_pair_class_aglue:
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
-    and K0: "\<And>p'. p' \<in> space Q \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). w 0 = 0"
     and Kfr: "\<And>p'. p' \<in> space Q
       \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kcov: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
@@ -14015,8 +14014,18 @@ proof -
   have T0': "0 \<le> T" using T0 by simp
   have QstAE: "AE p' in Q. pstopped T \<theta> p' = p'"
     by (rule eventually_mono[OF AE_space]) (rule Qst)
+  have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  \<comment> \<open>\<open>K0\<close> is redundant: it is \<open>Kfr\<close> at \<open>u = 0\<close>.  Asking for it POINTWISE on
+      \<open>space (\<kappa> p')\<close> --- as an earlier version did --- is unsatisfiable by any
+      delayed law, since that space is every continuous path.\<close>
   have K0AE: "AE w in \<kappa> p'. w 0 = 0" if sp: "p' \<in> space Q" for p'
-    by (rule eventually_mono[OF AE_space]) (use K0[OF sp] in blast)
+    using Kfr[OF sp]
+  proof (rule eventually_mono)
+    fix w :: "'n pairpath"
+    assume "\<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    then show "w 0 = 0" using T0' th0[of p'] by simp
+  qed
   have KfrAE: "AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     if sp: "p' \<in> space Q" for p' by (rule Kfr[OF sp])
   show ?thesis
