@@ -9740,4 +9740,88 @@ text \<open>They are also ORDERED in \<open>i\<close>, which is what lets
   earlier sampling time to the later one.  That is pure arithmetic and is
   discharged where it is used.\<close>
 
+text \<open>Step (a) of the application: the stopping-time event is not merely
+  Borel but lies in the natural filtration AT \<open>t\<close> --- which is what
+  @{thm [source] set_martingale_sampling} consumes.  Note
+  @{thm [source] path_eval_measurable_natural_filtration} ties the filtration
+  index to the horizon; decoupling them is the only change its proof needs.\<close>
+
+lemma path_eval_measurable_natural_filtration':
+  fixes U u v :: real
+  assumes v: "v \<in> {0..u}"
+  shows "(\<lambda>\<omega> :: 'n::finite pairpath. \<omega> v) \<in> borel_measurable (natural_filtration
+      (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))
+      0 (\<lambda>v \<omega>. \<omega> v) u)"
+  unfolding natural_filtration_def
+  by (rule measurable_family_vimage_algebra) (use v in auto)
+
+lemma pstopped_const_measurable_filtration:
+  fixes T t :: real
+  assumes T0: "0 \<le> T" and t: "0 \<le> t" and tT: "t \<le> T"
+  shows "pstopped T (\<lambda>_. t)
+      \<in> natural_filtration (borel_of (mtopology_of
+          (path_metric T :: ('n::finite pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
+  have spF: "space ?F = mspace (path_metric T :: ('n pairpath) metric)"
+    by (simp add: space_borel_of)
+  have into: "pstopped T (\<lambda>_. t) \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    if w: "\<omega> \<in> space ?F" for \<omega> :: "'n pairpath"
+  proof -
+    have m: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using w spF by simp
+    show ?thesis by (rule pstopped_mspace[OF t tT m])
+  qed
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. pstopped T (\<lambda>_. t) \<omega> s) \<in> borel_measurable ?F"
+    for s
+  proof (cases "s \<in> {0..T}")
+    case True
+    have mem: "min s t \<in> {0..t}" using True t by simp
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min s t)) \<in> borel_measurable ?F"
+      by (rule path_eval_measurable_natural_filtration'[OF mem])
+    then show ?thesis by (simp add: pstopped_apply[OF True])
+  next
+    case False
+    have "(\<lambda>\<omega> :: 'n pairpath. pstopped T (\<lambda>_. t) \<omega> s)
+        = (\<lambda>\<omega> :: 'n pairpath. undefined)"
+      by (rule ext) (rule pstopped_outside[OF False])
+    then show ?thesis by simp
+  qed
+  show ?thesis
+  proof (rule measurable_into_path_metric[OF into])
+    fix a :: "'n pairpath"
+    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    show "(\<lambda>\<omega>. mdist (path_metric T :: ('n pairpath) metric)
+        (pstopped T (\<lambda>_. t) \<omega>) a) \<in> borel_measurable ?F"
+      by (rule mdist_measurable_of_eval[OF T0 into am ev])
+  qed
+qed
+
+lemma path_stopping_time_event_filtration:
+  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n::finite pairpath) metric)))"
+    and t: "0 \<le> t" and tT: "t \<le> T"
+  shows "{\<omega> \<in> space (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric))). \<theta> \<omega> \<le> t}
+      \<in> sets (natural_filtration (borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
+  have spF: "space ?F = space ?B" by simp
+  have cm: "pstopped T (\<lambda>_. t) \<in> ?F \<rightarrow>\<^sub>M ?B"
+    by (rule pstopped_const_measurable_filtration[OF T0 t tT])
+  have thc: "(\<lambda>\<omega> :: 'n pairpath. \<theta> (pstopped T (\<lambda>_. t) \<omega>)) \<in> borel_measurable ?F"
+    using cm by (rule measurable_compose) (rule thM)
+  have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
+      = {\<omega> \<in> space ?F. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t}"
+    using path_stopping_time_cut[OF st t tT] spF by simp
+  moreover have "{\<omega> \<in> space ?F. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t} \<in> sets ?F"
+    using thc by measurable
+  ultimately show ?thesis by simp
+qed
+
 end
