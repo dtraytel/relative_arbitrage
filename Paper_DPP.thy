@@ -18427,4 +18427,138 @@ proof -
   show ?thesis using gm by measurable
 qed
 
+text \<open>The integrand does not see the stopping: it reads the path only up to
+  \<open>\<theta>\<close>, where \<^const>\<open>pstopped\<close> is the identity, and \<open>\<theta>\<close> itself is unchanged by
+  @{thm [source] path_stopping_time_stopped}.\<close>
+
+lemma dpp_integrand_pstopped:
+  fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"
+  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
+  shows "pexit (\<theta> (pstopped T \<theta> \<omega>)) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
+        + (if pexit (\<theta> (pstopped T \<theta> \<omega>)) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
+              = \<theta> (pstopped T \<theta> \<omega>)
+            \<and> fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))) \<in> K
+           then enn2real (paper_v k L (T - \<theta> (pstopped T \<theta> \<omega>)) K
+             (fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))))) else 0)
+      = pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+           then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+proof -
+  have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
+  have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
+  have ev: "pstopped T \<theta> \<omega> t = \<omega> t" if t: "0 \<le> t" and tth: "t \<le> \<theta> \<omega>" for t
+  proof -
+    have m: "t \<in> {0..T}" using t tth thT by simp
+    have "pstopped T \<theta> \<omega> t = \<omega> (min t (\<theta> \<omega>))" by (rule pstopped_apply[OF m])
+    also have "min t (\<theta> \<omega>) = t" using tth by simp
+    finally show ?thesis .
+  qed
+  have pe: "pexit (\<theta> \<omega>) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
+      = pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))"
+    by (rule pexit_cong_on) (simp add: ev)
+  have en: "pstopped T \<theta> \<omega> (\<theta> \<omega>) = \<omega> (\<theta> \<omega>)" by (rule ev[OF th0 order.refl])
+  show ?thesis unfolding th pe en ..
+qed
+
+theorem paper_v_dpp_ge_const_time:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and P :: "('n pairpath) measure"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and P: "P \<in> paper_pair_class k L T x"
+    and bnd: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+           then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+  shows "ennreal c \<le> paper_v k L T K x"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  have T0': "0 \<le> T" using T0 by simp
+  have L0: "0 \<le> L" using L1 by simp
+  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0' thM th0 thT])
+  have Pcov: "AE \<omega> in P. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T \<longrightarrow>
+      (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L"
+    using P unfolding paper_pair_class_def by blast
+  have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    by (rule paper_pair_class_start[OF P])
+  \<comment> \<open>the bound transports because the integrand does not see the stopping\<close>
+  have Qbnd: "AE p' in ?Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+      + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+         then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+  proof -
+    have mset: "{p' \<in> space ?B. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+        + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+           then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)}
+        \<in> sets ?B"
+      by (rule dpp_integrand_measurable_stopping[OF T0 L1 Kc st thM])
+    have "AE \<omega> in P. c \<le> pexit (\<theta> (pstopped T \<theta> \<omega>)) K
+          (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
+        + (if pexit (\<theta> (pstopped T \<theta> \<omega>)) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
+              = \<theta> (pstopped T \<theta> \<omega>)
+            \<and> fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))) \<in> K
+           then enn2real (paper_v k L (T - \<theta> (pstopped T \<theta> \<omega>)) K
+             (fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))))) else 0)"
+      using bnd by (simp add: dpp_integrand_pstopped[OF T0' st])
+    then show ?thesis
+      unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+  qed
+  show ?thesis
+  proof (rule paper_v_ge_of_stopped_bound
+      [OF T0 L1 Kc pstopped_law_prob[OF T0' PS setsP st thM] sets_pair_law_of
+        st thM pstopped_law_start[OF T0' setsP st thM P0]
+        pstopped_law_idem[OF T0' setsP st thM]
+        pstopped_law_diffquot[OF T0' setsP st thM Pcov]])
+    show "horizon_sq_int_martingale ?Q
+        (natural_filtration ?Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. fst (p' (min u T)) $ e) T" for e
+      by (rule pstopped_law_horizon_component[OF T0 L0 P st thM])
+    show "horizon_sq_int_martingale ?Q
+        (natural_filtration ?Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ cc $ dd) T"
+      for cc dd
+      by (rule pstopped_law_horizon_compensated[OF T0 L0 P st thM])
+    show "continuous_on {0..T} p'" if "p' \<in> space ?Q" for p'
+      by (rule pstopped_law_cont[OF that])
+    show "AE p' in ?Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
+        + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
+           then enn2real (paper_v k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+      by (rule Qbnd)
+  qed
+qed
+
+corollary paper_v_dpp_sup_ge_time:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "(SUP P \<in> paper_pair_class k L T x. ess_inf_time P
+            (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+              + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+                 then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)))
+      \<le> paper_v k L T K x"
+proof (rule paper_v_dpp_sup_ge_time_of_const)
+  show "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_nonneg[OF st])
+  show "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    by (rule path_stopping_time_le[OF st])
+  show "ennreal c \<le> paper_v k L T K x"
+    if P: "P \<in> paper_pair_class k L T x"
+      and bnd: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+           then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+    for P c
+    by (rule paper_v_dpp_ge_const_time[OF T0 L1 Kc st thM P bnd])
+qed
+
 end
