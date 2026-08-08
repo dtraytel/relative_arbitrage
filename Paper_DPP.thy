@@ -9701,4 +9701,43 @@ proof -
   ultimately show ?thesis by simp
 qed
 
+text \<open>The times clause (iv) samples at are \<open>(\<theta> + i) \<and> T\<close>, and they are
+  stopping times for the same reason \<open>\<theta>\<close> is: shifting forward and capping
+  only ever looks further back, so two paths agreeing up to the shifted time
+  agree up to \<open>\<theta>\<close> as well.\<close>
+
+lemma path_stopping_time_shift:
+  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  assumes st: "path_stopping_time T \<theta>" and i: "0 \<le> i"
+  shows "path_stopping_time T (\<lambda>\<omega>. min (\<theta> \<omega> + i) T)"
+proof -
+  have c1: "0 \<le> min (\<theta> \<omega> + i) T \<and> min (\<theta> \<omega> + i) T \<le> T"
+    for \<omega> :: "'n pairpath"
+  proof -
+    have "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
+    moreover have "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
+    ultimately show ?thesis using i by simp
+  qed
+  have c2: "min (\<theta> \<omega>' + i) T = min (\<theta> \<omega> + i) T"
+    if ag: "\<forall>s \<in> {0..min (\<theta> \<omega> + i) T}. \<omega> s = \<omega>' s"
+    for \<omega> \<omega>' :: "'n pairpath"
+  proof -
+    have le: "\<theta> \<omega> \<le> min (\<theta> \<omega> + i) T"
+      using i path_stopping_time_le[OF st, of \<omega>] by simp
+    have "\<theta> \<omega>' = \<theta> \<omega>"
+    proof (rule path_stopping_time_cong[OF st])
+      fix s assume "s \<in> {0..\<theta> \<omega>}"
+      then have "s \<in> {0..min (\<theta> \<omega> + i) T}" using le by auto
+      then show "\<omega> s = \<omega>' s" using ag by blast
+    qed
+    then show ?thesis by simp
+  qed
+  show ?thesis unfolding path_stopping_time_def using c1 c2 by blast
+qed
+
+text \<open>They are also ORDERED in \<open>i\<close>, which is what lets
+  @{thm [source] pre_sigma_of_mono} carry the conditioning set from the
+  earlier sampling time to the later one.  That is pure arithmetic and is
+  discharged where it is used.\<close>
+
 end
