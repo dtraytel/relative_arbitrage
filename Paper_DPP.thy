@@ -11868,4 +11868,216 @@ proof (rule ext)
   qed
 qed
 
+subsection \<open>The glued law, and the clauses that come for free\<close>
+
+text \<open>The law of the reassembled path: run the past under \<open>Q\<close>, draw a
+  continuation from \<open>\<kappa>\<close>, and add.  This is the stopping-time analogue of
+  \<^const>\<open>kglue_law'\<close>, and the only structural difference is that
+  \<^const>\<open>padd\<close> replaces \<^const>\<open>pglue\<close>.\<close>
+
+definition aglue_law :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> ('n pairpath) measure)
+    \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
+  where "aglue_law T \<kappa> Q = distr
+      (ksemi Q (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))) \<kappa>)
+      (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (\<lambda>p. padd T (fst p) (snd p))"
+
+lemma sets_aglue_law:
+  "sets (aglue_law T \<kappa> Q)
+    = sets (borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric)))"
+  unfolding aglue_law_def by (rule sets_distr)
+
+lemma padd_measurable_ksemi:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
+      \<in> Q \<Otimes>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have s: "sets (Q \<Otimes>\<^sub>M ?B) = sets (?B \<Otimes>\<^sub>M ?B)"
+    by (rule sets_pair_measure_cong[OF setsQ refl])
+  show ?thesis
+    unfolding measurable_cong_sets[OF s refl] by (rule padd_measurable[OF T0])
+qed
+
+lemma prob_space_aglue_law:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "prob_space (aglue_law T \<kappa> Q)"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have neQ: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have setsS: "sets (ksemi Q ?B \<kappa>) = sets (Q \<Otimes>\<^sub>M ?B)"
+    by (rule sets_ksemi[OF Kp neQ])
+  have pm: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
+      \<in> ksemi Q ?B \<kappa> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsS refl]
+    by (rule padd_measurable_ksemi[OF T0 setsQ])
+  show ?thesis
+    unfolding aglue_law_def
+    by (rule prob_space.prob_space_distr[OF prob_space_ksemi[OF PQ Kp] pm])
+qed
+
+text \<open>The transfer lemma: an almost-sure property of the glued law is an
+  almost-sure property of the past, then of the continuation.  This is the
+  analogue of @{thm [source] AE_kglue_law'}, and as there the base measure is
+  kept a FREE variable.\<close>
+
+lemma AE_aglue_law:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Phi: "{\<omega> \<in> space (borel_of (mtopology_of
+            (path_metric T :: ('n pairpath) metric))). \<Phi> \<omega>}
+        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+  shows "(AE \<omega> in aglue_law T \<kappa> Q. \<Phi> \<omega>)
+      \<longleftrightarrow> (AE p' in Q. AE w in \<kappa> p'. \<Phi> (padd T p' w))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?g = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p)"
+  have neQ: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
+  have setsS: "sets (ksemi Q ?B \<kappa>) = sets (Q \<Otimes>\<^sub>M ?B)"
+    by (rule sets_ksemi[OF Kp neQ])
+  have pm2: "?g \<in> Q \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B" by (rule padd_measurable_ksemi[OF T0 setsQ])
+  have pm: "?g \<in> ksemi Q ?B \<kappa> \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsS refl] by (rule pm2)
+  have meas: "{p \<in> space (Q \<Otimes>\<^sub>M ?B). \<Phi> (?g p)} \<in> sets (Q \<Otimes>\<^sub>M ?B)"
+  proof -
+    have "{p \<in> space (Q \<Otimes>\<^sub>M ?B). \<Phi> (?g p)}
+        = ?g -` {\<omega> \<in> space ?B. \<Phi> \<omega>} \<inter> space (Q \<Otimes>\<^sub>M ?B)"
+      using measurable_space[OF pm2] by auto
+    then show ?thesis using measurable_sets[OF pm2 Phi] by simp
+  qed
+  have "(AE \<omega> in aglue_law T \<kappa> Q. \<Phi> \<omega>) \<longleftrightarrow> (AE p in ksemi Q ?B \<kappa>. \<Phi> (?g p))"
+    unfolding aglue_law_def by (rule AE_distr_iff[OF pm Phi])
+  also have "\<dots> \<longleftrightarrow> (AE p' in Q. AE w in \<kappa> p'. \<Phi> (padd T p' w))"
+    unfolding AE_ksemi[OF Kp meas] by simp
+  finally show ?thesis .
+qed
+
+text \<open>Clause (ii) for the glue: the past starts at \<open>x\<close> and the continuation
+  at \<open>0\<close>, and \<^const>\<open>padd\<close> adds them.\<close>
+
+lemma aglue_law_start:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
+    and K0: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. w 0 = 0"
+  shows "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have ev0: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have Phi: "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
+  proof -
+    have "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
+        = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(x, 0)} \<inter> space ?B"
+      by (auto simp: prod_eq_iff)
+    then show ?thesis
+      using measurable_sets[OF ev0 borel_closed[OF closed_singleton]] by simp
+  qed
+  have z: "(0 :: real) \<in> {0..T}" using T0 by simp
+  have "AE p' in Q. AE w in \<kappa> p'.
+      fst (padd T p' w 0) = x \<and> snd (padd T p' w 0) = 0"
+    using Q0 AE_space
+  proof eventually_elim
+    case (elim p')
+    then have q: "fst (p' 0) = x \<and> snd (p' 0) = 0" and sp: "p' \<in> space Q"
+      by blast+
+    show ?case using K0[OF sp]
+    proof eventually_elim
+      case (elim w)
+      have "padd T p' w 0 = p' 0 + w 0" by (rule padd_apply[OF z])
+      then show ?case using q elim by simp
+    qed
+  qed
+  then show ?thesis
+    unfolding AE_aglue_law[OF T0 PQ setsQ Kp Phi] .
+qed
+
+text \<open>Clause (iii) for the glue, pathwise.  Exactly the three-case argument
+  of the deterministic pasting: below \<open>r\<close> only the past moves, above \<open>r\<close> only
+  the continuation, and a straddling pair is a CONVEX COMBINATION of the two
+  difference quotients --- which is why \<^const>\<open>sconstraint\<close> had to be convex
+  (@{thm [source] sconstraint_convex}) in the first place.\<close>
+
+lemma padd_diffquot:
+  fixes p' w :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T" and r0: "0 \<le> r" and rT: "r \<le> T"
+    and idem: "\<And>u. u \<in> {0..T} \<Longrightarrow> p' u = p' (min u r)"
+    and w0: "\<And>u. u \<in> {0..T} \<Longrightarrow> u \<le> r \<Longrightarrow> w u = 0"
+    and A: "\<And>a b. 0 \<le> a \<Longrightarrow> a < b \<Longrightarrow> b \<le> r
+      \<Longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+    and B: "\<And>a b. r \<le> a \<Longrightarrow> a < b \<Longrightarrow> b \<le> T
+      \<Longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+    and s: "0 \<le> s" and stlt: "s < t" and tT: "t \<le> T"
+  shows "(1 / (t - s)) *\<^sub>R (snd (padd T p' w t) - snd (padd T p' w s))
+      \<in> sconstraint k L"
+proof -
+  have sT: "s \<in> {0..T}" using s stlt tT by simp
+  have tI: "t \<in> {0..T}" using s stlt tT by simp
+  have split: "snd (padd T p' w t) - snd (padd T p' w s)
+      = (snd (p' t) - snd (p' s)) + (snd (w t) - snd (w s))"
+    unfolding padd_apply[OF sT] padd_apply[OF tI] by simp
+  consider (early) "t \<le> r" | (late) "r \<le> s" | (mid) "s < r" "r < t"
+    using stlt by fastforce
+  then show ?thesis
+  proof cases
+    case early
+    have "w t = 0" by (rule w0[OF tI early])
+    moreover have "w s = 0"
+      by (rule w0[OF sT]) (use stlt early in simp)
+    ultimately show ?thesis
+      unfolding split using A[OF s stlt early] by simp
+  next
+    case late
+    have "p' t = p' r"
+      using idem[OF tI] late stlt by simp
+    moreover have "p' s = p' r" using idem[OF sT] late by simp
+    ultimately show ?thesis
+      unfolding split using B[OF late stlt tT] by simp
+  next
+    case mid
+    let ?a = "(1 / (r - s)) *\<^sub>R (snd (p' r) - snd (p' s))"
+    let ?b = "(1 / (t - r)) *\<^sub>R (snd (w t) - snd (w r))"
+    have rI: "r \<in> {0..T}" using r0 rT by simp
+    have aA: "?a \<in> sconstraint k L" by (rule A[OF s mid(1) order_refl])
+    have bB: "?b \<in> sconstraint k L" by (rule B[OF order_refl mid(2) tT])
+    have pos: "0 < r - s" "0 < t - r" "0 < t - s" using mid stlt by auto
+    have sum1: "(r - s) / (t - s) + (t - r) / (t - s) = 1"
+      by (subst add_divide_distrib[symmetric]) (use pos(3) in simp)
+    have cc: "((r - s) / (t - s)) *\<^sub>R ?a + ((t - r) / (t - s)) *\<^sub>R ?b
+        \<in> sconstraint k L"
+      using pos by (intro convexD[OF sconstraint_convex aA bB] sum1) auto
+    have e1: "((r - s) / (t - s)) *\<^sub>R ?a
+        = (1 / (t - s)) *\<^sub>R (snd (p' r) - snd (p' s))"
+      using pos by simp
+    have e2: "((t - r) / (t - s)) *\<^sub>R ?b
+        = (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w r))"
+      using pos by simp
+    have pt: "p' t = p' r" using idem[OF tI] mid(2) by simp
+    have ws: "w s = 0" by (rule w0[OF sT]) (use mid(1) in simp)
+    have wr: "w r = 0" by (rule w0[OF rI]) simp
+    have "snd (padd T p' w t) - snd (padd T p' w s)
+        = (snd (p' r) - snd (p' s)) + (snd (w t) - snd (w r))"
+      unfolding split pt using ws wr by simp
+    then show ?thesis
+      using cc unfolding e1 e2 by (simp add: scaleR_right_distrib)
+  qed
+qed
+
 end
