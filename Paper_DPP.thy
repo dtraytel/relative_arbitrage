@@ -12935,4 +12935,122 @@ proof -
           i0 ij iT jT B gint])
 qed
 
+subsection \<open>Clause (iv) for the glue: the \<open>X\<close> martingale\<close>
+
+text \<open>Assembly.  The componentwise identity is
+  @{thm [source] aglue_law_X_increment}; the vector one follows by
+  @{thm [source] set_integral_vec_component}, and
+  \<open>martingale_of_set_integral_eq\<close> turns it into the martingale property.
+  Past the horizon the process is constant, so an index above \<open>T\<close> is pulled
+  back to \<open>T\<close> before the identity is applied.\<close>
+
+theorem aglue_law_X_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T0: "0 < T" and PQ: "prob_space Q"
+    and setsQ: "sets Q = sets (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+    and Qst: "\<And>p'. p' \<in> space Q \<Longrightarrow> pstopped T \<theta> p' = p'"
+    and QH: "\<And>c. horizon_sq_int_martingale Q
+        (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
+        (\<lambda>u p'. fst (p' (min u T)) $ c) T"
+    and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
+    and Kfr: "\<And>p'. p' \<in> space Q
+      \<Longrightarrow> \<forall>w \<in> space (\<kappa> p'). \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
+    and Kmean: "\<And>p' u c. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ c \<partial>(\<kappa> p')) = 0"
+    and Kint: "\<And>p' u c. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. fst (w (min u T)) $ c)"
+    and Kinc: "\<And>p' C u v c. p' \<in> space Q
+      \<Longrightarrow> C \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w. w s) u)
+      \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T
+      \<Longrightarrow> set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min u T)) $ c)
+        = set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min v T)) $ c)"
+    and RXint: "\<And>u. 0 \<le> u
+      \<Longrightarrow> integrable (aglue_law T \<kappa> Q) (\<lambda>\<omega>. fst (\<omega> (min u T)))"
+    and msec: "\<And>A u c. A \<in> sets (aglue_law T \<kappa> Q) \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
+      \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
+            * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
+    and gint: "\<And>u BB c i. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
+        (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
+            * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
+  shows "martingale (aglue_law T \<kappa> Q)
+      (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?R = "aglue_law T \<kappa> Q"
+  let ?G = "natural_filtration ?R 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?X = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T))"
+  have T0': "0 \<le> T" using T0 by simp
+  have setsR: "sets ?R = sets ?B" by (rule sets_aglue_law)
+  have PR: "prob_space ?R" by (rule prob_space_aglue_law[OF T0' PQ setsQ Kp])
+  have fin: "finite_measure ?R" using PR by (simp add: prob_space_def)
+  have SP: "Stochastic_Process.stochastic_process ?R (0::real)
+      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+    by unfold_locales (rule pair_law_eval_measurable[OF setsR])
+  interpret SF: finite_filtered_measure ?R ?G 0
+    by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration[OF SP fin])
+  have Xad: "?X u \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
+  proof -
+    have m: "min u T \<in> {0..u}" using u T0' by simp
+    have Rb: "?G u = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) u"
+      by (rule natural_filtration_cong_space
+          [OF sets_eq_imp_space_eq[OF setsR]])
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> borel_measurable (?G u)"
+      unfolding Rb by (rule path_eval_measurable_natural_filtration'[OF m])
+    then show ?thesis by (rule measurable_compose) (rule measurable_fst_borel)
+  qed
+  show ?thesis
+  proof (rule SF.martingale_of_set_integral_eq)
+    show "adapted_process ?R ?G 0 ?X"
+      unfolding adapted_process_def adapted_process_axioms_def
+      using SF.filtered_measure_axioms Xad by blast
+    show "integrable ?R (?X u)" if "0 \<le> u" for u by (rule RXint[OF that])
+    fix C and u v :: real
+    assume uv: "0 \<le> u" "u \<le> v" and C: "C \<in> sets (?G u)"
+    have v0: "0 \<le> v" using uv by simp
+    have CR: "C \<in> sets ?R" using C SF.sets_F_subset[OF uv(1)] by blast
+    have comp: "set_lebesgue_integral ?R C (\<lambda>\<omega>. ?X u \<omega> $ c)
+        = set_lebesgue_integral ?R C (\<lambda>\<omega>. ?X v \<omega> $ c)" for c
+    proof (cases "T \<le> u")
+      case True
+      then have "min u T = T" and "min v T = T" using uv by simp_all
+      then show ?thesis by simp
+    next
+      case False
+      then have uT: "u \<le> T" by simp
+      have vT: "min v T \<le> T" by simp
+      have uvT: "u \<le> min v T" using uv uT by simp
+      have hiA: "integrable ?R (\<lambda>\<omega>. indicator C \<omega> * (fst (\<omega> (min s T)) $ c))"
+        if s: "0 \<le> s" for s
+      proof -
+        have ii: "integrable ?R (\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min s T)) $ c)"
+          by (rule integrable_bounded_linear
+              [OF bounded_linear_vec_nth RXint[OF s]])
+        show ?thesis using integrable_mult_indicator[OF CR ii] by simp
+      qed
+      have "set_lebesgue_integral ?R C (\<lambda>\<omega>. fst (\<omega> (min u T)) $ c)
+          = set_lebesgue_integral ?R C (\<lambda>\<omega>. fst (\<omega> (min (min v T) T)) $ c)"
+        by (rule aglue_law_X_increment
+            [OF T0 PQ setsQ Kp st thM Qst QH Qcont Kfr Kmean Kint Kinc
+              uv(1) uvT uT vT C hiA msec[OF CR] gint])
+      then show ?thesis by simp
+    qed
+    show "set_lebesgue_integral ?R C (?X u) = set_lebesgue_integral ?R C (?X v)"
+    proof -
+      have "set_lebesgue_integral ?R C (?X u) $ c
+          = set_lebesgue_integral ?R C (?X v) $ c" for c
+        using comp[of c]
+        unfolding set_integral_vec_component[OF CR RXint[OF uv(1)]]
+          set_integral_vec_component[OF CR RXint[OF v0]] .
+      then show ?thesis by (simp add: vec_eq_iff)
+    qed
+  qed
+qed
+
 end
