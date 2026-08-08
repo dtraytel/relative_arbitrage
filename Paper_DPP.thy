@@ -16652,4 +16652,105 @@ proof -
   finally show ?thesis .
 qed
 
+section \<open>Fubini over the semidirect product: the glue's side conditions\<close>
+
+text \<open>Three generic facts about \<^const>\<open>ksemi\<close>, all from
+  @{thm [source] nn_integral_ksemi}: a function of the PAST alone is integrable
+  as soon as it is integrable on the base; a function whose inner
+  \<open>\<kappa>\<close>-integral is bounded UNIFORMLY in the past is integrable; and the inner
+  integral is measurable in the past.  Together with the uniform first moments
+  of the delayed class these discharge every side condition of step (4).\<close>
+
+lemma integrable_ksemi_fst:
+  fixes f :: "'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
+    and fi: "integrable M f"
+  shows "integrable (ksemi M N Kr) (\<lambda>p. f (fst p))"
+proof -
+  have setsS: "sets (ksemi M N Kr) = sets (M \<Otimes>\<^sub>M N)"
+    by (rule sets_ksemi[OF K ne])
+  have fm: "f \<in> borel_measurable M"
+    using fi by (simp add: borel_measurable_integrable)
+  have gm: "(\<lambda>p. f (fst p)) \<in> borel_measurable (M \<Otimes>\<^sub>M N)" using fm by measurable
+  have gmS: "(\<lambda>p. f (fst p)) \<in> borel_measurable (ksemi M N Kr)"
+    using gm measurable_cong_sets[OF setsS refl] by blast
+  have gabs: "(\<lambda>p. ennreal (norm (f (fst p)))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    using gm by measurable
+  have "(\<integral>\<^sup>+p. ennreal (norm (f (fst p))) \<partial>(ksemi M N Kr))
+      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (f \<omega>)) \<partial>(Kr \<omega>)) \<partial>M)"
+    using nn_integral_ksemi[OF K gabs] by simp
+  also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal (norm (f \<omega>)) \<partial>M)"
+  proof (rule nn_integral_cong)
+    fix \<omega> assume w: "\<omega> \<in> space M"
+    interpret PK: prob_space "Kr \<omega>" by (rule ksemi_sets_kernel(2)[OF K w])
+    show "(\<integral>\<^sup>+\<omega>'. ennreal (norm (f \<omega>)) \<partial>(Kr \<omega>)) = ennreal (norm (f \<omega>))"
+      by (simp add: PK.emeasure_space_1)
+  qed
+  also have "\<dots> < \<top>" using fi by (simp add: integrable_iff_bounded)
+  finally show ?thesis using gmS by (simp add: integrable_iff_bounded)
+qed
+
+lemma integrable_ksemi_of_bound:
+  fixes g :: "'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and PM: "prob_space M"
+    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    and bnd: "\<And>\<omega>. \<omega> \<in> space M
+      \<Longrightarrow> (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal C"
+  shows "integrable (ksemi M N Kr) g"
+proof -
+  interpret PM: prob_space M by (rule PM)
+  have ne: "space M \<noteq> {}" by (rule PM.not_empty)
+  have setsS: "sets (ksemi M N Kr) = sets (M \<Otimes>\<^sub>M N)"
+    by (rule sets_ksemi[OF K ne])
+  have gmS: "g \<in> borel_measurable (ksemi M N Kr)"
+    using gm measurable_cong_sets[OF setsS refl] by blast
+  have gabs: "(\<lambda>p. ennreal (norm (g p))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    using gm by measurable
+  have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr))
+      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<partial>M)"
+    using nn_integral_ksemi[OF K gabs] by simp
+  also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>. ennreal C \<partial>M)"
+  proof (rule nn_integral_mono_AE)
+    show "AE \<omega> in M. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal C"
+      by (rule eventually_mono[OF AE_space]) (rule bnd)
+  qed
+  also have "\<dots> = ennreal C" by (simp add: PM.emeasure_space_1)
+  finally have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr)) \<le> ennreal C" .
+  then have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr)) < \<top>"
+    by (simp add: order.strict_trans1)
+  then show ?thesis using gmS by (simp add: integrable_iff_bounded)
+qed
+
+lemma integral_kernel_measurable:
+  fixes g :: "'a \<times> 'b \<Rightarrow> real"
+  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
+    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
+    and gi: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> integrable (Kr \<omega>) (\<lambda>\<omega>'. g (\<omega>, \<omega>'))"
+  shows "(\<lambda>\<omega>. \<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) \<in> borel_measurable M"
+proof -
+  define A where "A \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (g (\<omega>, \<omega>')) \<partial>(Kr \<omega>))" for \<omega>
+  define B where "B \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (- g (\<omega>, \<omega>')) \<partial>(Kr \<omega>))" for \<omega>
+  have Ksub: "Kr \<in> M \<rightarrow>\<^sub>M subprob_algebra N"
+    by (rule measurable_prob_algebraD[OF K])
+  have mA: "A \<in> borel_measurable M"
+    unfolding A_def
+    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
+       (use gm in \<open>simp add: case_prod_unfold\<close>)
+  have mB: "B \<in> borel_measurable M"
+    unfolding B_def
+    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
+       (use gm in \<open>simp add: case_prod_unfold\<close>)
+  have mAB: "(\<lambda>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>)) \<in> borel_measurable M"
+    using mA mB by measurable
+  show ?thesis
+  proof (subst measurable_cong)
+    fix \<omega> assume w: "\<omega> \<in> space M"
+    show "(\<integral>\<omega>'. g (\<omega>, \<omega>') \<partial>(Kr \<omega>)) = enn2real (A \<omega>) - enn2real (B \<omega>)"
+      unfolding A_def B_def by (rule real_lebesgue_integral_def[OF gi[OF w]])
+  next
+    show "(\<lambda>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>)) \<in> borel_measurable M"
+      by (rule mAB)
+  qed
+qed
+
 end
