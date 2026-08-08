@@ -10144,4 +10144,56 @@ proof -
           conts contr Dbd Dint])
 qed
 
+text \<open>The matrix-entry analogue of
+  @{thm [source] martingale_vec_component}, which is typed for REAL entries
+  and so does not reach the compensated clause.  The repo already has the
+  three ingredients (@{thm [source] measurable_mat_entries},
+  @{thm [source] integrable_mat_entries},
+  @{thm [source] set_integral_mat_component}); this just assembles them.\<close>
+
+lemma martingale_mat_component:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite^'n"
+  assumes mg: "martingale M F 0 X"
+  shows "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ c $ d)"
+proof -
+  interpret Mg: martingale M F 0 X by (rule mg)
+  have A_M: "A \<in> sets M" if i: "0 \<le> i" and A: "A \<in> sets (F i)" for A i
+  proof -
+    have "sets (F i) \<subseteq> sets M"
+      using Mg.subalgebras[OF i] by (simp add: subalgebra_def)
+    then show ?thesis using A by blast
+  qed
+  have bl: "bounded_linear (\<lambda>Z :: real^'n^'n. Z $ c $ d)"
+    by (rule bounded_linear_compose[OF bounded_linear_vec_nth
+          bounded_linear_vec_nth])
+  have compmeas: "(\<lambda>\<omega>. X i \<omega> $ c $ d) \<in> borel_measurable (F i)"
+    if i: "0 \<le> i" for i
+  proof -
+    have "(\<lambda>\<omega>. X i \<omega> \<bullet> (axis c (axis d 1) :: real^'n^'n))
+        \<in> borel_measurable (F i)"
+      by (intro borel_measurable_inner borel_measurable_const Mg.adapted[OF i])
+    then show ?thesis by (simp add: inner_axis)
+  qed
+  have compint: "integrable M (\<lambda>\<omega>. X i \<omega> $ c $ d)" if i: "0 \<le> i" for i
+    by (rule integrable_bounded_linear[OF bl Mg.integrable[OF i]])
+  show ?thesis  proof (rule Mg.martingale_of_set_integral_eq)
+    show "adapted_process M F 0 (\<lambda>t \<omega>. X t \<omega> $ c $ d)"
+    proof (intro adapted_process.intro adapted_process_axioms.intro)
+      show "filtered_measure M F 0" by unfold_locales
+      show "\<And>i. 0 \<le> i \<Longrightarrow> (\<lambda>\<omega>. X i \<omega> $ c $ d) \<in> borel_measurable (F i)"
+        by (rule compmeas)
+    qed
+    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> $ c $ d)" by (rule compint)
+    fix A and i j :: real
+    assume i: "0 \<le> i" and ij: "i \<le> j" and A: "A \<in> sets (F i)"
+    have j: "0 \<le> j" using i ij by simp
+    have AM: "A \<in> sets M" by (rule A_M[OF i A])
+    show "set_lebesgue_integral M A (\<lambda>\<omega>. X i \<omega> $ c $ d)
+        = set_lebesgue_integral M A (\<lambda>\<omega>. X j \<omega> $ c $ d)"
+      unfolding set_integral_mat_component[OF AM Mg.integrable[OF i]]
+        set_integral_mat_component[OF AM Mg.integrable[OF j]]
+      using Mg.set_integral_eq[OF A i ij] by simp
+  qed
+qed
+
 end
