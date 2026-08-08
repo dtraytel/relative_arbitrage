@@ -1031,3 +1031,59 @@ plumbing `Sel` into `paper_pair_class_aglue` and then into
 Then `paper_v_dpp_sup_ge_time_of_const` (already stated for arbitrary `θ`)
 closes the `≥` half, and with `paper_v_cond_time` (the `≤` half, done) §2.1 is
 finished.
+
+## §2.1: the continuation kernel is COMPLETE (2026-08-08)
+
+All nine kernel hypotheses of `paper_pair_class_aglue` are now supplied by
+`pdelclass`, so the continuation side of step (4) is closed.
+
+**The structural theorem** is that a delayed law keeps BOTH class martingales:
+
+  `pdelclass_X_martingale` / `pdelclass_comp_martingale`
+
+for `ν ∈ pdelclass k L T s`, on the fixed `T`-space, in `ν`'s OWN natural
+filtration. **Delaying is a time change.** A delayed path read at `u` is the
+base path read at `ρ u = min (max (u−s) 0) (T−s)`, which is nondecreasing, so
+`martingale_time_change` gives a martingale for the time-changed filtration
+`ℱ^μ_(ρ u)` — and that is exactly the filtration `martingale_pair_law` needs to
+push it forward along `pembed`. Taking the base's OWN filtration instead makes
+the statement FALSE (`ℱ^μ_u ⊋ ℱ^μ_(ρ u)` and the conditional expectation moves).
+
+New generic tool: **`martingale_time_change_cong`** — the time change plus a
+congruence for `u ≥ 0`, needed because the delayed process term and the
+time-changed one agree only there, and a locale fact is about the term.
+
+Derived: `pdelclass_X_int`/`comp_int` (Kint/KintC), `pdelclass_X_increment`/
+`comp_increment` (Kinc/KincC), `pdelclass_X_mean`/`comp_mean` (Kmean/KmeanC,
+via `martingale_mean_zero_of_start` + `pdelclass_start_zero`).
+`pdelclass_diffquot` is Kcov, by the guarded rational route
+(`closedin_diffquot_constraint` → `AE_distr_iff` → two `AE_ball_countable'`
+passes → `diffquot_all_of_rational_ge`).
+
+### Two hypothesis defects fixed on the way — and the rule they teach
+
+`K0` and `Qst` were stated POINTWISE on `space (κ p')` / `space Q`. Since
+`sets = sets ?B_T` forces the space to be the whole path space, both are
+UNSATISFIABLE — the same defect `Kfr` had. `K0` was deleted (it is `Kfr` at
+`u = 0`); `Qst` was weakened to `AE p' in Q. pstopped T θ p' = p'`, which cost
+a refactor of `aglue_inner_increment` and its compensated twin: the two local
+facts consuming it gain an idempotence hypothesis, and the three consumers move
+from `Bochner_Integration.integral_cong[OF refl]` to
+`set_lebesgue_integral_cong_AE`, which demands measurability of the integrands
+at a RANDOM time (`path_eval_at_measurable_time`).
+
+**Rule: never state a hypothesis about a path law pointwise on its space.**
+See [[pointwise-on-space-is-unsatisfiable]].
+
+### What is left of §2.1
+
+1. **The PAST factor.** `paper_pair_class_aglue` still needs, for
+   `Q = pair_law_of T (pstopped T θ) P` with `P` in the class: `PQ`, `setsQ`,
+   `Q0`, `Qst` (now AE — `pstopped_idem` plus `path_stopping_time_stopped`),
+   `Qcov`, `QH`, `QHC`, `Qcont`. `Stopped_Localization` and
+   `paper_pair_class_stopped_*` are the intended sources; none of it is new
+   probability.
+2. **The glue side conditions** `RXint`, `RCint`, `msecX`, `msecC`, `gintX`,
+   `gintC` — integrability and measurability of the `w`-sections of
+   `ksemi Q ?B_T κ`. Fubini, not new probability.
+3. **Assembly**: feed the result into `paper_v_dpp_sup_ge_time_of_const`.
