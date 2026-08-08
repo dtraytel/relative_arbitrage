@@ -702,3 +702,37 @@ so the cross terms need a martingale-times-known-square-integrable-factor
 identity at a stopping time, on top of the class's own compensated clause.
 Once that single interpretation exists, `pafter_rcd_increment_zero` applies to
 it verbatim, exactly as `paper_pair_class_rcd_X_increment_zero` does.
+
+## §2.1 step (3), clause (iv) — CLOSED 2026-08-08
+
+Both martingale clauses of the class now transfer to the r.c.d. kernel:
+`paper_pair_class_rcd_X_increment_zero` and
+`paper_pair_class_rcd_comp_increment_zero`. Step (3)'s clauses (i)–(iv) are
+therefore all done, and what remains of §2.1 is step (4), class membership of
+the additive glue.
+
+The compensated clause needed one genuinely new result, because `outerp` is
+quadratic and so does NOT ride along on the additive split. With `σ = i ∨ θ`,
+`ρ = j ∨ θ` and `b = fst (ω (θ ω))` the pathwise expansion is
+
+  `h (pafter T θ ω) = (Ym_ρ − Ym_σ) − (Yc_ρ − Yc_σ)·b$d − (Yd_ρ − Yd_σ)·b$c`
+
+— a compensated increment plus two CROSS TERMS. The constants `outerp b` and
+`⟨X⟩_θ` cancel between the two times, which is why only the cross terms are
+new. They are killed by **`set_integral_increment_times_known`**: for a
+square-integrable `ℱ_σ`-measurable `Z`, `∫_A (Y_ρ − Y_σ)·Z dP = 0`.
+
+That lemma needs NO approximation by simple functions. `pre_sigma_of` is
+already a σ-algebra, so `sigma (space P) (pre_sigma_of P F σ)` is a genuine
+sub-σ-algebra of `P`, `finite_measure_subalgebra_is_sigma_finite` makes it a
+`sigma_finite_subalgebra`, and then it is textbook: `cond_exp` of the
+increment vanishes (`AE_zero_of_set_integral_zero` against
+`stopped_increment_of_horizon_gen`), and `Z` pulls out
+(`cond_exp_measurable_mult`). The one quantitative input is square
+integrability of the sampled increment — **`Doob_Inequality.Dsup_sq_integrable`**,
+which already existed.
+
+Also new: `pafter_rcd_increment_zero` now takes the set-integral hypothesis
+`inc` directly rather than a martingale plus a pullback identity, so both
+clauses instantiate it; and `pstopped_comp_vimage_pre_sigma` (a function of
+the stopped path is `ℱ_θ`- and a fortiori `ℱ_(u ∨ θ)`-measurable).
