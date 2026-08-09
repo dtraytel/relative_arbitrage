@@ -4,7 +4,8 @@ Single source of truth for **what is proved, what is left, and in what
 order**. Everything named here is machine-checked in PIDE with
 `commands_failed = 0`, and there is no `sorry` anywhere in the session.
 
-Last updated 2026-08-09 with §2.1's first results (`Paper_Viscosity.thy`).
+Last updated 2026-08-09: §2.1's first results (`Paper_Viscosity.thy`) and the
+`path_stopping_time` refactor (DONE — see §2.1).
 Restructured 2026-08-08, after **the DPP of Prop. 2.4 was proved at a
 STOPPING time** (§1.9), which emptied the old §2.1 and renumbered the queue.
 §1 is an INDEX of closed work — do not re-derive any of it, and do not expand
@@ -39,7 +40,7 @@ time from `K`.
 |---|---|---|
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
-| (2) | `visc_sol k L (interior K) v` | **OPEN, but advanced** — the DPP (Prop. 2.4) is **DONE at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`), and Itô turns out to be UNNECESSARY for quadratic test functions (`Paper_Viscosity.paper_pair_class_quadratic_mean`). The SUBSOLUTION inequality is proved for a globally touching quadratic (`paper_v_subsol_quadratic_global`). Two named gaps remain — localisation and orthogonality — plus the supersolution half; see §2.1 |
+| (2) | `visc_sol k L (interior K) v` | **OPEN, but advanced** — the DPP (Prop. 2.4) is **DONE at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`), and Itô turns out to be UNNECESSARY for quadratic test functions (`Paper_Viscosity.paper_pair_class_quadratic_mean`). The SUBSOLUTION inequality is proved for a globally touching quadratic (`paper_v_subsol_quadratic_global`). The `path_stopping_time` refactor is DONE, so the ball exit time is a stopping time and stochastic localisation is unblocked. Two named gaps remain — localisation (reachable, ~600–900 lines) and orthogonality (open) — plus the supersolution half; see §2.1 |
 | (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.2; transfer to `paper_v` §2.3 |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
 
@@ -541,8 +542,8 @@ a LOWER bound on an essential infimum, which no mean gives.
    error term `p ∙ (X_h − x)` of order `O(h)/ε` — the same order as the term
    it is compared against — even though a fourth moment handles the quadratic
    part at `O(h^{3/2})`. What works is STOCHASTIC localisation at `τ_ball ∧ h`,
-   which needs optional sampling, which needs `path_stopping_time` weakened to
-   the path space (see §3.5 and below).
+   which needs optional sampling, which needed `path_stopping_time` weakened to
+   the path space — **that refactor is now DONE**, see below.
 
 2. **Orthogonality.** (1.9) infimises over `feasible` (`a *v p = 0`); the class
    only constrains covariation to `sconstraint`. `feasible ⊆ sconstraint`
@@ -559,16 +560,64 @@ which is the device that makes an essential infimum and a mean agree to first
 order. That is why the constraint sits in (1.9) and not in (1.7), and why the
 supersolution half is the one that needs it.
 
-**The one structural item that unlocks the rest:** weaken
-`path_stopping_time`'s congruence clause to the path space. `pball_exit_cong`
-gives it along continuous paths and `pexit_mem_of_less_T` shows the
-restriction is FORCED (attainment of the infimum genuinely fails off the path
-space). 252 occurrences in `Paper_DPP`; the congruence itself is consumed only
-through `path_stopping_time_cong`, at four sites, but each is stated for all
-`ω`, so continuity must be threaded through the `pstopped_law_*` and
-`path_stopping_time_*` layer. Note `space Q = mspace (path_metric T)` is
-exactly the continuous paths, so "pointwise on the space" already means
-"along continuous paths" — the refactor should be routine, just not small.
+#### The `path_stopping_time` refactor — DONE 2026-08-09
+
+`path_stopping_time`'s congruence clause now constrains only CONTINUOUS paths.
+`Paper_DPP` verifies clean end to end (19,106 commands, 0 errors, 0 `sorry`),
+and `Paper_Viscosity.pball_exit_path_stopping_time` is the payoff: **the exit
+time of a ball is a legitimate stopping time**, so `paper_v_dpp_sup_ge_time`
+applies at it and optional sampling at `τ ∧ h` is available.
+
+Three things worth not re-deriving:
+
+* **BOTH paths must be continuous, not just the first.** The one-sided version
+  (which the asymmetry of `pexit_cong_stopping` suggests, and which halves the
+  work) is REFUTED by `path_stopping_time_min`: on the branch `θ ω > i` it
+  argues by contradiction *from the perturbed path*. Two-sidedness is free
+  everywhere else — every perturbed path here is a `pstopped` or `padd` of a
+  continuous one.
+* **The restriction is forced, not chosen.** `pexit_mem_of_less_T`: attainment
+  of the infimum genuinely fails off the path space, so no redefinition of an
+  exit time could have avoided it. And it costs nothing, since
+  `space Q = mspace (path_metric T)` IS the set of continuous paths.
+* **Three helpers carry the whole thing** — `path_sets_fst_continuous`
+  (continuity from space membership), `pstopped_fst_continuous`,
+  `padd_fst_continuous` — and each consumer is one of two shapes: thread a `cw`
+  hypothesis through a pathwise lemma, or, where `ω` ranges over a SPACE,
+  supply continuity per `ω` via `Collect_cong` / `eventually_elim` with
+  `AE_space` chained in.
+
+#### What is left in §2.1, in order
+
+1. **Gap 1, localisation — now REACHABLE, no new ideas needed (~600–900 lines).**
+   Stop at `τ_{B_ε(x)} ∧ h` so the path never leaves the ball and the local
+   touching applies unconditionally. Three pieces:
+   (a) measurability of `pball_exit` w.r.t. the path-space σ-algebra. NOTE
+   `pexit_path_measurable` assumes `closed K` and the ball is OPEN, so this
+   needs the closed-TARGET route: `etime_le_iff` (attainment) plus a
+   rational-times argument. This is the only genuinely new piece, ~150–300
+   lines. (b) optional sampling of clauses (iii) and (iv) at the bounded
+   stopping time — `Optional_Sampling` exists and `optional_stopping` is
+   already used in `Paper_DPP`; the work is the vector/matrix lift, as in
+   `martingale_matI`. (c) redo `paper_pair_class_quadform_mean` at `τ ∧ h`;
+   `E[Y_θ]/E[θ] ∈ sconstraint` by the SAME half-space argument as
+   `paper_pair_class_Y_mean_sconstraint` (a weighted average of a convex set).
+   `paper_v_cond_time` needs no stopping-time property at all, and
+   `pball_exit_pos` gives `θ > 0`. Output: `visc_subsol_s` on `interior K`.
+
+2. **Gap 2, orthogonality — OPEN, and needs an idea.** `ell_op_s` vs `ell_op`.
+   `paper_pair_class_frozen_direction` says what the constraint DOES (a
+   direction killed by the averaged covariation is frozen a.s., so feasibility
+   makes essinf and mean agree to first order), but getting `a *v Dv = 0` for
+   the OPTIMIZER is an almost-sure rigidity statement about optimality, not a
+   statement about means. Not reachable by the route of §2.1 as it stands.
+
+3. **The supersolution half — the largest block (~1,500–3,000 lines).** Needs
+   weak solutions of the SDE (3.24), which this development does not have, plus
+   the exponential local martingale with optional sampling ((3.18)–(3.19)).
+   The optional-sampling investment from item 1 is shared. Use
+   `visc_supersol_s_imp_visc_supersol` and work in `ell_op_s` throughout —
+   Gap 2 does not arise on this side.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
 
