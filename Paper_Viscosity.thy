@@ -1212,82 +1212,43 @@ proof -
   show ?thesis by (rule order_less_le_trans[OF m0 mle])
 qed
 
-section \<open>The stopping-time notion the refactor needs\<close>
+section \<open>The ball exit time IS a stopping time\<close>
 
-text \<open>This is the SPECIFICATION of the one structural change left, stated and
-  checked here so that the change inside \<open>Paper_DPP\<close> is purely mechanical.
+text \<open>\<^const>\<open>path_stopping_time\<close> now restricts its congruence clause to
+  CONTINUOUS paths, which is exactly what @{thm [source] pexit_mem_of_less_T}
+  shows is forced --- attainment of the infimum genuinely fails off the path
+  space, so no redefinition of the exit time could have avoided it.  The
+  restriction costs nothing, because \<open>space Q = mspace (path_metric T)\<close> IS the
+  set of continuous paths, and it buys this:\<close>
 
-  Two things make it cheaper than it looks.
-
-  \<^item> Only the FIRST path needs to be continuous.  The asymmetry of
-    @{thm [source] pexit_cong_stopping} is the reason: attainment of the
-    infimum is needed for \<open>\<omega>\<close>, whose exit time is being read off, and not for
-    the perturbed \<open>\<omega>'\<close>.  So the congruence clause below restricts \<open>\<omega>\<close> alone.
-
-  \<^item> \<open>path_stopping_time_sp_weaker\<close>: every existing
-    \<^const>\<open>path_stopping_time\<close> is one of these.  So replacing
-    \<^const>\<open>path_stopping_time\<close> by \<open>path_stopping_time_sp\<close> throughout
-    \<open>Paper_DPP\<close> breaks no SUPPLIER --- every current witness still qualifies.
-    What it costs is on the CONSUMER side: the congruence is used through
-    \<open>path_stopping_time_cong\<close>, \<open>path_stopping_time_stopped\<close> and
-    \<open>path_stopping_time_cut\<close> at about twenty sites, and each needs
-    \<open>continuous_on {0..T} (\<lambda>t. fst (\<omega> t))\<close> for its own \<open>\<omega>\<close>.  That is available
-    at every one of them, because \<open>space Q = mspace (path_metric T)\<close> is exactly
-    the continuous paths and the derived paths (\<open>pcut\<close>, \<open>pstopped\<close>, the shifted
-    time) all preserve continuity.
-
-  The payoff is \<open>pball_exit_path_stopping_time_sp\<close>: the exit time
-  of a ball becomes a legitimate stopping time, which unlocks optional sampling
-  at \<open>\<tau> \<and> h\<close> --- and with it the stochastic localisation that Gap 1 needs and
-  the ball exit time that @{thm [source] paper_v_dpp_sup_ge_time} needs.\<close>
-
-definition path_stopping_time_sp ::
-  "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> bool"
-  where "path_stopping_time_sp T \<theta> \<longleftrightarrow>
-     (\<forall>\<omega>. 0 \<le> \<theta> \<omega> \<and> \<theta> \<omega> \<le> T)
-     \<and> (\<forall>\<omega> \<omega>'. continuous_on {0..T} (\<lambda>t. fst (\<omega> t)) \<longrightarrow>
-          (\<forall>t \<in> {0..\<theta> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow> \<theta> \<omega>' = \<theta> \<omega>)"
-
-lemma path_stopping_time_sp_nonneg:
-  "path_stopping_time_sp T \<theta> \<Longrightarrow> 0 \<le> \<theta> \<omega>"
-  unfolding path_stopping_time_sp_def by blast
-
-lemma path_stopping_time_sp_le:
-  "path_stopping_time_sp T \<theta> \<Longrightarrow> \<theta> \<omega> \<le> T"
-  unfolding path_stopping_time_sp_def by blast
-
-lemma path_stopping_time_sp_cong:
-  assumes st: "path_stopping_time_sp T \<theta>"
-    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
-    and eq: "\<And>t. t \<in> {0..\<theta> \<omega>} \<Longrightarrow> \<omega> t = \<omega>' t"
-  shows "\<theta> \<omega>' = \<theta> \<omega>"
-  using st cont eq unfolding path_stopping_time_sp_def by blast
-
-lemma path_stopping_time_sp_weaker:
-  "path_stopping_time T \<theta> \<Longrightarrow> path_stopping_time_sp T \<theta>"
-  unfolding path_stopping_time_def path_stopping_time_sp_def by blast
-
-theorem pball_exit_path_stopping_time_sp:
+theorem pball_exit_path_stopping_time:
   fixes x :: "real^'n::finite"
   assumes T0: "0 \<le> T"
-  shows "path_stopping_time_sp T (pball_exit T x \<epsilon>)"
-  unfolding path_stopping_time_sp_def
+  shows "path_stopping_time T (pball_exit T x \<epsilon>)"
+  unfolding path_stopping_time_def
 proof (intro conjI)
   show "\<forall>\<omega> :: 'n pairpath.
       0 \<le> pball_exit T x \<epsilon> \<omega> \<and> pball_exit T x \<epsilon> \<omega> \<le> T"
     using pball_exit_nonneg[OF T0] pball_exit_le[OF T0] by blast
 next
-  show "\<forall>\<omega> \<omega>' :: 'n pairpath. continuous_on {0..T} (\<lambda>t. fst (\<omega> t)) \<longrightarrow>
+  show "\<forall>\<omega> \<omega>' :: 'n pairpath.
+      continuous_on {0..T} (\<lambda>t. fst (\<omega> t)) \<longrightarrow>
+      continuous_on {0..T} (\<lambda>t. fst (\<omega>' t)) \<longrightarrow>
       (\<forall>t \<in> {0..pball_exit T x \<epsilon> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow>
       pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
   proof (intro allI impI)
     fix \<omega> \<omega>' :: "'n pairpath"
     assume c: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+      and c': "continuous_on {0..T} (\<lambda>t. fst (\<omega>' t))"
       and e: "\<forall>t \<in> {0..pball_exit T x \<epsilon> \<omega>}. \<omega> t = \<omega>' t"
     show "pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
       by (rule pball_exit_cong[OF T0 c]) (use e in blast)
   qed
 qed
+
+text \<open>So @{thm [source] paper_v_dpp_sup_ge_time} now applies at the exit time
+  of a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available --- which is what
+  Gap 1's stochastic localisation needs.\<close>
 
 section \<open>What remains for clause (2)\<close>
 

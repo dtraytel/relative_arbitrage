@@ -8308,7 +8308,9 @@ text \<open>Everything so far used only Borel measurability of \<open>\<theta>\<
 definition path_stopping_time :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> bool"
   where "path_stopping_time T \<theta> \<longleftrightarrow>
      (\<forall>\<omega>. 0 \<le> \<theta> \<omega> \<and> \<theta> \<omega> \<le> T)
-     \<and> (\<forall>\<omega> \<omega>'. (\<forall>t \<in> {0..\<theta> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow> \<theta> \<omega>' = \<theta> \<omega>)"
+     \<and> (\<forall>\<omega> \<omega>'. continuous_on {0..T} (\<lambda>t. fst (\<omega> t)) \<longrightarrow>
+          continuous_on {0..T} (\<lambda>t. fst (\<omega>' t)) \<longrightarrow>
+          (\<forall>t \<in> {0..\<theta> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow> \<theta> \<omega>' = \<theta> \<omega>)"
 
 lemma path_stopping_time_nonneg:
   "path_stopping_time T \<theta> \<Longrightarrow> 0 \<le> \<theta> \<omega>"
@@ -8318,8 +8320,26 @@ lemma path_stopping_time_le:
   "path_stopping_time T \<theta> \<Longrightarrow> \<theta> \<omega> \<le> T"
   unfolding path_stopping_time_def by blast
 
+text \<open>Continuity is available wherever it is needed: the space of a path law
+  IS the set of continuous paths.\<close>
+
+lemma path_sets_fst_continuous:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes setsN: "sets N = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    and w: "\<omega> \<in> space N"
+  shows "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+proof -
+  have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    using w space_of_path_sets[OF setsN] by simp
+  then have "continuous_on {0..T} \<omega>" by (rule mspace_path_metric_continuous)
+  then show ?thesis by (rule continuous_on_fst)
+qed
+
 lemma path_stopping_time_cong:
-  "path_stopping_time T \<theta> \<Longrightarrow> (\<And>t. t \<in> {0..\<theta> \<omega>} \<Longrightarrow> \<omega> t = \<omega>' t)
+  "path_stopping_time T \<theta> \<Longrightarrow> continuous_on {0..T} (\<lambda>t. fst (\<omega> t))
+    \<Longrightarrow> continuous_on {0..T} (\<lambda>t. fst (\<omega>' t))
+    \<Longrightarrow> (\<And>t. t \<in> {0..\<theta> \<omega>} \<Longrightarrow> \<omega> t = \<omega>' t)
     \<Longrightarrow> \<theta> \<omega>' = \<theta> \<omega>"
   unfolding path_stopping_time_def by blast
 
@@ -8327,11 +8347,29 @@ text \<open>Hence \<open>\<theta>\<close> reads only the stopped path --- the fa
   needs, and the reason the kernel can be indexed by \<open>pstopped T \<theta> \<omega>\<close>
   alone.\<close>
 
+lemma pstopped_fst_continuous:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+    and th0: "0 \<le> \<theta>' \<omega>" and thT: "\<theta>' \<omega> \<le> T"
+  shows "continuous_on {0..T} (\<lambda>s. fst (pstopped T \<theta>' \<omega> s))"
+proof -
+  have e: "fst (pstopped T \<theta>' \<omega> s) = fst (\<omega> (min s (\<theta>' \<omega>)))"
+    if "s \<in> {0..T}" for s by (simp add: pstopped_apply[OF that])
+  have c1: "continuous_on {0..T} (\<lambda>s :: real. min s (\<theta>' \<omega>))"
+    by (intro continuous_intros)
+  have "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s (\<theta>' \<omega>))))"
+    by (rule continuous_on_compose2[OF cw c1]) (use th0 thT in auto)
+  then show ?thesis by (rule continuous_on_eq) (simp add: e)
+qed
+
 lemma path_stopping_time_stopped:
   fixes \<omega> :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>"
+    and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   shows "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
-proof (rule path_stopping_time_cong[OF st])
+proof (rule path_stopping_time_cong[OF st cw
+      pstopped_fst_continuous[OF cw path_stopping_time_nonneg[OF st]
+        path_stopping_time_le[OF st]]])
   fix t assume t: "t \<in> {0..\<theta> \<omega>}"
   then have tT: "t \<in> {0..T}" using path_stopping_time_le[OF st, of \<omega>] by auto
   have "min t (\<theta> \<omega>) = t" using t by simp
@@ -8341,13 +8379,15 @@ qed
 lemma pstopped_idem:
   fixes \<omega> :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>"
+    and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   shows "pstopped T \<theta> (pstopped T \<theta> \<omega>) = pstopped T \<theta> \<omega>"
 proof (rule ext)
   fix t :: real
   show "pstopped T \<theta> (pstopped T \<theta> \<omega>) t = pstopped T \<theta> \<omega> t"
   proof (cases "t \<in> {0..T}")
     case True
-    have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
+    have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
+      by (rule path_stopping_time_stopped[OF st cw])
     have m: "min t (\<theta> \<omega>) \<in> {0..T}"
       using True path_stopping_time_nonneg[OF st, of \<omega>] by auto
     have "pstopped T \<theta> (pstopped T \<theta> \<omega>) t
@@ -8369,9 +8409,11 @@ text \<open>And the future factor of a STOPPED path is trivial: stopping twice
 lemma pafter_pstopped:
   fixes \<omega> :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>" and t: "t \<in> {0..T}"
+    and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   shows "pafter T \<theta> (pstopped T \<theta> \<omega>) t = 0"
 proof -
-  have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
+  have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
+    by (rule path_stopping_time_stopped[OF st cw])
   have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
   have m: "max t (\<theta> \<omega>) \<in> {0..T}" using t th0 thT by simp
@@ -8546,12 +8588,19 @@ proof -
 
   \<comment> \<open>pathwise: the future factor is still \<open>0\<close> when its clock starts\<close>
   have path: "AE \<omega> in P. pafter T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>)) = 0"
-  proof (rule AE_I2)
-    fix \<omega> :: "'n pairpath"
-    have "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
-    moreover have "pafter T \<theta> \<omega> (\<theta> \<omega>) = 0"
-      by (rule pafter_before) (use th0[of \<omega>] thT[of \<omega>] in auto)
-    ultimately show "pafter T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>)) = 0" by simp
+  proof -
+    have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+    then show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      have cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+        by (rule path_sets_fst_continuous[OF setsP]) (use elim in blast)
+      have "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
+        by (rule path_stopping_time_stopped[OF st cw])
+      moreover have "pafter T \<theta> \<omega> (\<theta> \<omega>) = 0"
+        by (rule pafter_before) (use th0[of \<omega>] thT[of \<omega>] in auto)
+      ultimately show ?case by simp
+    qed
   qed
   have joint: "AE p in distr P (?B \<Otimes>\<^sub>M ?B)
       (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)). snd p (\<theta> (fst p)) = 0"
@@ -8658,9 +8707,11 @@ proof -
       case (elim \<omega>)
       show ?case
       proof
+        have cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+          by (rule path_sets_fst_continuous[OF setsP]) (use elim in blast)
         assume le: "\<theta> (pstopped T \<theta> \<omega>) \<le> p"
         then have thp: "\<theta> \<omega> \<le> p"
-          using path_stopping_time_stopped[OF st, of \<omega>] by simp
+          using path_stopping_time_stopped[OF st cw] by simp
         have wq: "pafter T \<theta> \<omega> q = \<omega> q - \<omega> (\<theta> \<omega>)"
         proof -
           have "max q (\<theta> \<omega>) = q" using thp pq by simp
@@ -9656,11 +9707,14 @@ text \<open>\<open>path_stopping_time\<close> is the PATHWISE notion: \<open>\<t
 lemma path_stopping_time_cut:
   fixes \<omega> :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>" and t: "0 \<le> t" and tT: "t \<le> T"
+    and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   shows "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
 proof
   assume h: "\<theta> \<omega> \<le> t"
+  have cs0: "continuous_on {0..T} (\<lambda>s. fst (pstopped T (\<lambda>_. t) \<omega> s))"
+    by (rule pstopped_fst_continuous[OF cw]) (use t tT in auto)
   have "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
-  proof (rule path_stopping_time_cong[OF st])
+  proof (rule path_stopping_time_cong[OF st cw cs0])
     fix s assume s: "s \<in> {0..\<theta> \<omega>}"
     then have sT: "s \<in> {0..T}" using h tT by auto
     have "min s t = s" using s h by simp
@@ -9670,8 +9724,10 @@ proof
   then show "\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t" using h by simp
 next
   assume h: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t"
+  have cs: "continuous_on {0..T} (\<lambda>s. fst (pstopped T (\<lambda>_. t) \<omega> s))"
+    by (rule pstopped_fst_continuous[OF cw]) (use t tT in auto)
   have "\<theta> \<omega> = \<theta> (pstopped T (\<lambda>_. t) \<omega>)"
-  proof (rule path_stopping_time_cong[OF st])
+  proof (rule path_stopping_time_cong[OF st cs cw])
     fix s assume s: "s \<in> {0..\<theta> (pstopped T (\<lambda>_. t) \<omega>)}"
     then have sT: "s \<in> {0..T}" using h tT by auto
     have "min s t = s" using s h by simp
@@ -9701,7 +9757,13 @@ proof -
     using cm by (rule measurable_compose) (rule thM)
   have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
       = {\<omega> \<in> space ?B. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t}"
-    using path_stopping_time_cut[OF st t tT] by simp
+  proof (rule Collect_cong, rule conj_cong[OF refl])
+    fix \<omega> :: "'n pairpath" assume w: "\<omega> \<in> space ?B"
+    have cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
+      by (rule path_sets_fst_continuous[OF refl w])
+    show "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
+      by (rule path_stopping_time_cut[OF st t tT cw])
+  qed
   moreover have "{\<omega> \<in> space ?B. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t} \<in> sets ?B"
     using thc by measurable
   ultimately show ?thesis by simp
@@ -9725,13 +9787,15 @@ proof -
     ultimately show ?thesis using i by simp
   qed
   have c2: "min (\<theta> \<omega>' + i) T = min (\<theta> \<omega> + i) T"
-    if ag: "\<forall>s \<in> {0..min (\<theta> \<omega> + i) T}. \<omega> s = \<omega>' s"
+    if cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
+      and cw': "continuous_on {0..T} (\<lambda>u. fst (\<omega>' u))"
+      and ag: "\<forall>s \<in> {0..min (\<theta> \<omega> + i) T}. \<omega> s = \<omega>' s"
     for \<omega> \<omega>' :: "'n pairpath"
   proof -
     have le: "\<theta> \<omega> \<le> min (\<theta> \<omega> + i) T"
       using i path_stopping_time_le[OF st, of \<omega>] by simp
     have "\<theta> \<omega>' = \<theta> \<omega>"
-    proof (rule path_stopping_time_cong[OF st])
+    proof (rule path_stopping_time_cong[OF st cw cw'])
       fix s assume "s \<in> {0..\<theta> \<omega>}"
       then have "s \<in> {0..min (\<theta> \<omega> + i) T}" using le by auto
       then show "\<omega> s = \<omega>' s" using ag by blast
@@ -9824,7 +9888,14 @@ proof -
     using cm by (rule measurable_compose) (rule thM)
   have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
       = {\<omega> \<in> space ?F. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t}"
-    using path_stopping_time_cut[OF st t tT] spF by simp
+    unfolding spF
+  proof (rule Collect_cong, rule conj_cong[OF refl])
+    fix \<omega> :: "'n pairpath" assume w: "\<omega> \<in> space ?B"
+    have cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
+      by (rule path_sets_fst_continuous[OF refl w])
+    show "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
+      by (rule path_stopping_time_cut[OF st t tT cw])
+  qed
   moreover have "{\<omega> \<in> space ?F. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t} \<in> sets ?F"
     using thc by measurable
   ultimately show ?thesis by simp
@@ -10274,8 +10345,12 @@ text \<open>The deterministic development conditions on rectangles
 lemma path_stopping_time_cut_eq:
   fixes \<omega> :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T" and le: "\<theta> \<omega> \<le> t"
+    and cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
   shows "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
-proof (rule path_stopping_time_cong[OF st])
+proof (rule path_stopping_time_cong[OF st cw
+      pstopped_fst_continuous[OF cw, of "\<lambda>_. t"]])
+  show "0 \<le> t" using le path_stopping_time_nonneg[OF st, of \<omega>] by simp
+  show "t \<le> T" by (rule tT)
   fix s assume s: "s \<in> {0..\<theta> \<omega>}"
   then have sT: "s \<in> {0..T}" using le tT by auto
   have "min s t = s" using s le by simp
@@ -10286,6 +10361,7 @@ qed
 lemma pstopped_cut_compose:
   fixes \<omega> :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T" and le: "\<theta> \<omega> \<le> t"
+    and cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
   shows "pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>) = pstopped T \<theta> \<omega>"
 proof (rule ext)
   fix s :: real
@@ -10293,7 +10369,7 @@ proof (rule ext)
   proof (cases "s \<in> {0..T}")
     case True
     have th: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
-      by (rule path_stopping_time_cut_eq[OF st tT le])
+      by (rule path_stopping_time_cut_eq[OF st tT le cw])
     have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
     have m: "min s (\<theta> \<omega>) \<in> {0..T}" using True th0 by auto
     have "pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>) s
@@ -10315,6 +10391,7 @@ lemma pcut_pafter_cut_compose:
   fixes \<omega> :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T"
     and u: "0 \<le> u" and ut: "u \<le> t" and le: "\<theta> \<omega> \<le> t"
+    and cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
   shows "pcut u (pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>)) = pcut u (pafter T \<theta> \<omega>)"
 proof (rule ext)
   fix s :: real
@@ -10325,7 +10402,7 @@ proof (rule ext)
     have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
     have sT: "s \<in> {0..T}" using True u ut tT by auto
     have th: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
-      by (rule path_stopping_time_cut_eq[OF st tT le])
+      by (rule path_stopping_time_cut_eq[OF st tT le cw])
     have m1: "max s (\<theta> \<omega>) \<in> {0..T}"
       using sT th0 path_stopping_time_le[OF st, of \<omega>] by auto
     have m2: "\<theta> \<omega> \<in> {0..T}"
@@ -10362,10 +10439,12 @@ proof -
     using u uT path_stopping_time_nonneg[OF st, of \<omega>]
       path_stopping_time_le[OF st, of \<omega>] by simp
   have c2: "max u (\<theta> \<omega>') = max u (\<theta> \<omega>)"
-    if ag: "\<forall>s \<in> {0..max u (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
+    if cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
+      and cw': "continuous_on {0..T} (\<lambda>v. fst (\<omega>' v))"
+      and ag: "\<forall>s \<in> {0..max u (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
   proof -
     have "\<theta> \<omega>' = \<theta> \<omega>"
-    proof (rule path_stopping_time_cong[OF st])
+    proof (rule path_stopping_time_cong[OF st cw cw'])
       fix s assume "s \<in> {0..\<theta> \<omega>}"
       then have "s \<in> {0..max u (\<theta> \<omega>)}" by auto
       then show "\<omega> s = \<omega>' s" using ag by blast
@@ -10498,8 +10577,13 @@ proof -
     have eqset: "(pstopped T \<theta> -` A \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}
         = (?g -` A \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}"
     proof -
-      have "pstopped T \<theta> \<omega> = ?g \<omega>" if "\<theta> \<omega> \<le> t" for \<omega> :: "'n pairpath"
-        using pstopped_cut_compose[OF st tT that] by simp
+      have "pstopped T \<theta> \<omega> = ?g \<omega>"
+        if "\<theta> \<omega> \<le> t" and "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+      proof -
+        have cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
+          by (rule path_sets_fst_continuous[OF setsP that(2)])
+        show ?thesis using pstopped_cut_compose[OF st tT that(1) cw] by simp
+      qed
       then show ?thesis by auto
     qed
     show "(pstopped T \<theta> -` A \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}
@@ -10584,11 +10668,14 @@ proof -
           = (?g -` B \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}"
       proof -
         have pt: "pcut u (pafter T \<theta> \<omega>) = ?g \<omega>"
-          if mx: "max u (\<theta> \<omega>) \<le> t" for \<omega> :: "'n pairpath"
+          if mx: "max u (\<theta> \<omega>) \<le> t" and wsp: "\<omega> \<in> space P"
+          for \<omega> :: "'n pairpath"
         proof -
-          have "\<theta> \<omega> \<le> t" using mx by simp
-          from pcut_pafter_cut_compose[OF st tT u True this] show ?thesis
-            by simp
+          have le': "\<theta> \<omega> \<le> t" using mx by simp
+          have cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
+            by (rule path_sets_fst_continuous[OF setsP wsp])
+          show ?thesis
+            using pcut_pafter_cut_compose[OF st tT u True le' cw] by simp
         qed
         show ?thesis unfolding vim using pt True by auto
       qed
@@ -11813,13 +11900,26 @@ text \<open>And the split inverts the glue, PROVIDED the continuation stands sti
   kernel.  The stopping time reads only the stopped factor, because on
   \<open>[0, \<theta> p']\<close> the glue agrees with it.\<close>
 
+lemma padd_fst_continuous:
+  fixes p' w :: "'n::finite pairpath"
+  assumes cp: "continuous_on {0..T} (\<lambda>t. fst (p' t))"
+    and cw: "continuous_on {0..T} (\<lambda>t. fst (w t))"
+  shows "continuous_on {0..T} (\<lambda>t. fst (padd T p' w t))"
+proof (rule continuous_on_eq[OF continuous_on_add[OF cp cw]])
+  fix t :: real assume t: "t \<in> {0..T}"
+  show "fst (p' t) + fst (w t) = fst (padd T p' w t)"
+    by (simp add: padd_apply[OF t])
+qed
+
 lemma padd_stopping_time:
   fixes p' w :: "'n::finite pairpath"
   assumes st: "path_stopping_time T \<theta>"
     and idem: "pstopped T \<theta> p' = p'"
     and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
+    and cp: "continuous_on {0..T} (\<lambda>t. fst (p' t))"
+    and cwv: "continuous_on {0..T} (\<lambda>t. fst (w t))"
   shows "\<theta> (padd T p' w) = \<theta> p'"
-proof (rule path_stopping_time_cong[OF st])
+proof (rule path_stopping_time_cong[OF st cp padd_fst_continuous[OF cp cwv]])
   fix t assume t: "t \<in> {0..\<theta> p'}"
   then have tT: "t \<in> {0..T}"
     using path_stopping_time_nonneg[OF st, of p'] path_stopping_time_le[OF st, of p']
@@ -11833,11 +11933,13 @@ lemma pstopped_padd:
   assumes st: "path_stopping_time T \<theta>"
     and idem: "pstopped T \<theta> p' = p'"
     and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
+    and cp: "continuous_on {0..T} (\<lambda>t. fst (p' t))"
+    and cwv: "continuous_on {0..T} (\<lambda>t. fst (w t))"
   shows "pstopped T \<theta> (padd T p' w) = p'"
 proof (rule ext)
   fix t :: real
   have th: "\<theta> (padd T p' w) = \<theta> p'"
-    by (rule padd_stopping_time[OF st idem w0])
+    by (rule padd_stopping_time[OF st idem w0 cp cwv])
   have th0: "0 \<le> \<theta> p'" by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" by (rule path_stopping_time_le[OF st])
   show "pstopped T \<theta> (padd T p' w) t = p' t"
@@ -11870,11 +11972,13 @@ lemma pafter_padd:
     and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
     and wfr: "\<And>t. t \<in> {0..T} \<Longrightarrow> w t = w (max t (\<theta> p'))"
     and wout: "\<And>t. t \<notin> {0..T} \<Longrightarrow> w t = undefined"
+    and cp: "continuous_on {0..T} (\<lambda>t. fst (p' t))"
+    and cwv: "continuous_on {0..T} (\<lambda>t. fst (w t))"
   shows "pafter T \<theta> (padd T p' w) = w"
 proof (rule ext)
   fix t :: real
   have th: "\<theta> (padd T p' w) = \<theta> p'"
-    by (rule padd_stopping_time[OF st idem w0])
+    by (rule padd_stopping_time[OF st idem w0 cp cwv])
   have th0: "0 \<le> \<theta> p'" by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" by (rule path_stopping_time_le[OF st])
   show "pafter T \<theta> (padd T p' w) t = w t"
@@ -12375,13 +12479,15 @@ proof -
     using i iT path_stopping_time_nonneg[OF st, of \<omega>]
       path_stopping_time_le[OF st, of \<omega>] by simp
   have c2: "min i (\<theta> \<omega>') = min i (\<theta> \<omega>)"
-    if ag: "\<forall>s \<in> {0..min i (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
+    if cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
+      and cw': "continuous_on {0..T} (\<lambda>v. fst (\<omega>' v))"
+      and ag: "\<forall>s \<in> {0..min i (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
   proof (cases "\<theta> \<omega> \<le> i")
     case True
     then have "min i (\<theta> \<omega>) = \<theta> \<omega>" by simp
     then have "\<forall>s \<in> {0..\<theta> \<omega>}. \<omega> s = \<omega>' s" using ag by simp
     then have "\<theta> \<omega>' = \<theta> \<omega>"
-      by (intro path_stopping_time_cong[OF st]) blast
+      by (intro path_stopping_time_cong[OF st cw cw']) blast
     then show ?thesis by simp
   next
     case False
@@ -12390,7 +12496,7 @@ proof -
     proof
       assume lt: "\<theta> \<omega>' < i"
       have "\<theta> \<omega> = \<theta> \<omega>'"
-      proof (rule path_stopping_time_cong[OF st])
+      proof (rule path_stopping_time_cong[OF st cw' cw])
         fix s assume "s \<in> {0..\<theta> \<omega>'}"
         then have "s \<in> {0..min i (\<theta> \<omega>)}" using lt mi by auto
         then show "\<omega>' s = \<omega> s" using ag by auto
@@ -15873,7 +15979,16 @@ proof -
   have mset: "{p' \<in> space ?B. pstopped T \<theta> p' = p'} \<in> sets ?B"
     by (rule pstopped_fixed_set_measurable[OF T0 st thM])
   have "AE \<omega> in P. pstopped T \<theta> (pstopped T \<theta> \<omega>) = pstopped T \<theta> \<omega>"
-    by (simp add: pstopped_idem[OF st])
+  proof -
+    have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+    then show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      have cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
+        by (rule path_sets_fst_continuous[OF setsP elim])
+      show ?case by (rule pstopped_idem[OF st cw])
+    qed
+  qed
   then show ?thesis
     unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
 qed
@@ -15986,13 +16101,16 @@ proof -
     have "AE \<omega> in P. q \<le> \<theta> (pstopped T \<theta> \<omega>) \<longrightarrow>
         (1 / (q - p)) *\<^sub>R (snd (pstopped T \<theta> \<omega> q) - snd (pstopped T \<theta> \<omega> p))
           \<in> sconstraint k L"
-      using Pcov
+      using Pcov AE_space
     proof eventually_elim
       case (elim \<omega>)
+      have cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
+        by (rule path_sets_fst_continuous[OF setsP elim(2)])
       show ?case
       proof
         assume "q \<le> \<theta> (pstopped T \<theta> \<omega>)"
-        then have le: "q \<le> \<theta> \<omega>" unfolding path_stopping_time_stopped[OF st] .
+        then have le: "q \<le> \<theta> \<omega>"
+          unfolding path_stopping_time_stopped[OF st cw] .
         have eq: "pstopped T \<theta> \<omega> q = \<omega> q"
         proof -
           have "pstopped T \<theta> \<omega> q = \<omega> (min q (\<theta> \<omega>))" by (rule pstopped_apply[OF q])
@@ -18434,6 +18552,7 @@ text \<open>The integrand does not see the stopping: it reads the path only up t
 lemma dpp_integrand_pstopped:
   fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
+    and cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
   shows "pexit (\<theta> (pstopped T \<theta> \<omega>)) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
         + (if pexit (\<theta> (pstopped T \<theta> \<omega>)) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
               = \<theta> (pstopped T \<theta> \<omega>)
@@ -18444,7 +18563,8 @@ lemma dpp_integrand_pstopped:
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
            then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
 proof -
-  have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>" by (rule path_stopping_time_stopped[OF st])
+  have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
+    by (rule path_stopping_time_stopped[OF st cw])
   have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
   have ev: "pstopped T \<theta> \<omega> t = \<omega> t" if t: "0 \<le> t" and tth: "t \<le> \<theta> \<omega>" for t
@@ -18508,7 +18628,17 @@ proof -
             \<and> fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))) \<in> K
            then enn2real (paper_v k L (T - \<theta> (pstopped T \<theta> \<omega>)) K
              (fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))))) else 0)"
-      using bnd by (simp add: dpp_integrand_pstopped[OF T0' st])
+    proof -
+      have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+      with bnd show ?thesis
+      proof eventually_elim
+        case (elim \<omega>)
+        have cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
+          by (rule path_sets_fst_continuous[OF setsP]) (use elim in blast)
+        show ?case
+          using elim by (simp add: dpp_integrand_pstopped[OF T0' st cw])
+      qed
+    qed
     then show ?thesis
       unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
   qed
