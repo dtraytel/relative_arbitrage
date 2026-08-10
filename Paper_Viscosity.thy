@@ -6855,6 +6855,123 @@ proof -
   qed
 qed
 
+subsection \<open>The Euler kernel: measurability package\<close>
+
+text \<open>A continuous matrix field with admissible squares induces, through
+  the Gaussian member, a kernel with exactly the three measurability
+  properties @{thm [source] paper_pair_class_kglue_law'} consumes.
+  Sequential continuity in the LP metric comes from
+  @{thm [source] sbm_law_weak_conv}; it upgrades to topological continuity
+  by the closed-preimage criterion (both sides are metric), and the
+  prob-algebra form follows by the same bridge as
+  @{thm [source] paper_v_measurable_selector_kernel'}.\<close>
+
+theorem sbm_kernel_package:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and T' :: real
+  assumes T: "0 < T'" and L: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+  shows "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      \<in> borel \<rightarrow>\<^sub>M prob_algebra (borel_of
+        (mtopology_of (path_metric T' :: ('n pairpath) metric)))"
+    and "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+        (paper_pair_class k L T' (0::real^'n))
+        (Levy_Prokhorov.LPm (mspace (path_metric T' :: ('n pairpath) metric))
+          (mdist (path_metric T' :: ('n pairpath) metric))))"
+    and "\<And>z. pair_law_of T' (sbmpair (SF z) T')
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      \<in> paper_pair_class k L T' (0 :: real^'n)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?X = "mtopology_of (path_metric T' :: ('n pairpath) metric)"
+  let ?B = "borel_of (mtopology_of (path_metric T' :: ('n pairpath) metric))"
+  let ?W = "weak_conv_topology
+      (mtopology_of (path_metric T' :: ('n pairpath) metric))"
+  let ?C = "paper_pair_class k L T' (0::real^'n)"
+  let ?dd = "Levy_Prokhorov.LPm
+      (mspace (path_metric T' :: ('n pairpath) metric))
+      (mdist (path_metric T' :: ('n pairpath) metric))"
+  let ?P = "{N :: ('n pairpath) measure. prob_space N
+      \<and> sets N = sets (borel_of (mtopology_of
+          (path_metric T' :: ('n pairpath) metric)))}"
+  define KK where "KK = (\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)"
+  have T0': "0 \<le> T'" using T by simp
+  have L0: "0 \<le> L" using L by simp
+  interpret MC: Metric_space ?C ?dd
+    by (rule paper_pair_class_compact_metric_space(1)[OF T L0])
+  have Ctop: "MC.mtopology = subtopology ?W ?C"
+    by (rule paper_pair_class_compact_metric_space(2)[OF T L0])
+  show KC: "\<And>z. pair_law_of T' (sbmpair (SF z) T') ?M
+      \<in> paper_pair_class k L T' (0 :: real^'n)"
+    by (rule sbmpair_law_in_paper_pair_class[OF T0' L SFs])
+  have KCk: "KK z \<in> ?C" for z unfolding KK_def by (rule KC)
+  have seq: "limitin MC.mtopology (\<lambda>m. KK (zm m)) (KK z) sequentially"
+    if zc: "zm \<longlonglongrightarrow> z" for zm and z :: "real^'n"
+  proof -
+    have SFzc: "(\<lambda>m. SF (zm m)) \<longlonglongrightarrow> SF z"
+    proof (rule isCont_tendsto_compose[OF _ zc])
+      show "isCont SF z"
+        using SFc continuous_on_eq_continuous_at[of UNIV SF] by simp
+    qed
+    have wc: "limitin ?W (\<lambda>m. KK (zm m)) (KK z) sequentially"
+      unfolding KK_def by (rule sbm_law_weak_conv[OF T0' SFzc])
+    show ?thesis
+      unfolding Ctop limitin_subtopology
+      by (intro conjI wc KCk always_eventually allI)
+  qed
+  have cont: "continuous_map (euclidean :: (real^'n) topology)
+      MC.mtopology KK"
+    unfolding continuous_map_closedin
+  proof (intro conjI allI impI)
+    show "KK \<in> topspace (euclidean :: (real^'n) topology)
+        \<rightarrow> topspace MC.mtopology"
+      using KCk by auto
+    fix C' assume cl: "closedin MC.mtopology C'"
+    have "closed {z. KK z \<in> C'}"
+    proof (rule closed_sequential_limits[THEN iffD2], intro allI impI)
+      fix zm and z :: "real^'n"
+      assume h: "(\<forall>m. zm m \<in> {z. KK z \<in> C'}) \<and> zm \<longlonglongrightarrow> z"
+      have lim: "limitin MC.mtopology (\<lambda>m. KK (zm m)) (KK z) sequentially"
+        using h by (intro seq) blast
+      have ev: "eventually (\<lambda>m. KK (zm m) \<in> C') sequentially"
+        using h by (intro always_eventually) blast
+      have "KK z \<in> C'"
+        by (rule limitin_closedin[OF lim cl ev]) simp
+      then show "z \<in> {z. KK z \<in> C'}" by blast
+    qed
+    then show "closedin (euclidean :: (real^'n) topology)
+        {x \<in> topspace euclidean. KK x \<in> C'}"
+      unfolding closed_closedin[symmetric] by simp
+  qed
+  show "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)
+      \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology ?C ?dd)"
+    using continuous_map_measurable[OF cont]
+    by (simp add: borel_of_euclidean KK_def)
+  have contW: "continuous_map (euclidean :: (real^'n) topology) ?W KK"
+    using cont unfolding Ctop continuous_map_in_subtopology by blast
+  have SmB: "KK \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
+    using continuous_map_measurable[OF contW]
+    by (simp add: borel_of_euclidean)
+  have SP: "KK z \<in> ?P" for z
+    using paper_pair_class_prob[OF KCk] paper_pair_class_sets[OF KCk]
+    by simp
+  have polish: "Polish_space
+      (mtopology_of (path_metric T' :: ('n pairpath) metric))"
+    by (rule Polish_space_path_metric)
+  have setsPA: "sets (borel_of (subtopology ?W ?P)) = sets (prob_algebra ?B)"
+    by (rule weak_conv_topology_eq_prob_algebra[OF polish])
+  have r1: "KK \<in> borel \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?P"
+    by (rule measurable_restrict_space2[OF _ SmB]) (use SP in auto)
+  have r2: "KK \<in> borel \<rightarrow>\<^sub>M borel_of (subtopology ?W ?P)"
+    using r1 by (simp add: borel_of_subtopology)
+  show "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)
+      \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
+    using r2 measurable_cong_sets[OF refl setsPA] unfolding KK_def by blast
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
