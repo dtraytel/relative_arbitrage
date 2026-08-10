@@ -9176,6 +9176,680 @@ proof -
         eulerp_seq_in_class[OF c0 L1 SFc SFs]])
 qed
 
+subsection \<open>The bad event vanishes with the mesh\<close>
+
+text \<open>Batch 3e(i).  The OPEN bad event --- the path stays strictly inside
+  the ball through time \<open>t\<close> yet the quadratic drops below its guaranteed
+  growth --- has vanishing probability under the Euler laws.  Three
+  estimates feed the proof: the grid functional's Chebyshev bound
+  (@{thm [source] eulerp_Xi_chebyshev}), the pathwise lower bound at the
+  nearest grid point (@{thm [source] eulerp_quad_lower}), and a
+  fourth-moment tail for the one-step gap between the grid point and
+  \<open>t\<close>, which we derive first from
+  @{thm [source] paper_pair_class_fourth_moment}.\<close>
+
+lemma paper_pair_class_increment_tail:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
+    and l: "0 < l"
+  shows "measure Q {\<omega> \<in> space Q.
+      l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
+    \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l^4"
+proof -
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have int4: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
+    by (rule paper_pair_class_fourth_moment_integrable[OF T L Q st stt ttT])
+  have nn: "AE \<omega> in Q. 0 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4"
+    by (simp add: zero_le_fourth)
+  have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)
+      \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
+  proof -
+    have eq: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
+        = ennreal (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)"
+      by (rule nn_integral_eq_integral[OF int4 nn])
+    have le: "ennreal (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)
+        \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
+    proof -
+      have f4: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
+          \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
+        by (rule paper_pair_class_fourth_moment[OF T L setsQ Q st stt ttT])
+      show ?thesis using f4 unfolding eq .
+    qed
+    have y0: "0 \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
+      by (auto intro!: mult_nonneg_nonneg)
+    show ?thesis using le y0 by (simp add: ennreal_le_iff)
+  qed
+  have seteq: "{\<omega> \<in> space Q. l^4 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4}
+      = {\<omega> \<in> space Q. l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}"
+  proof -
+    have iff: "l^4 \<le> y^4 \<longleftrightarrow> l \<le> \<bar>y\<bar>" for y :: real
+    proof
+      assume "l^4 \<le> y^4"
+      then have "l ^ Suc 3 \<le> \<bar>y\<bar> ^ Suc 3"
+        by (simp add: power_even_abs eval_nat_numeral)
+      then show "l \<le> \<bar>y\<bar>" by (rule power_le_imp_le_base) simp
+    next
+      assume a: "l \<le> \<bar>y\<bar>"
+      then have "l^4 \<le> \<bar>y\<bar>^4" using l by (intro power_mono) simp_all
+      then show "l^4 \<le> y^4" by (simp add: power_even_abs)
+    qed
+    show ?thesis using iff by auto
+  qed
+  have l4: "0 < l^4" using l by simp
+  have "measure Q {\<omega> \<in> space Q.
+      l^4 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4}
+      \<le> (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) / l^4"
+  proof (rule integral_Markov_inequality_measure)
+    show "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
+      by (rule int4)
+    show "space Q \<in> sets Q" by (rule sets.top)
+    show "AE \<omega> in Q. 0 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4"
+      by (rule nn)
+    show "0 < l^4" by (rule l4)
+  qed
+  also have "\<dots> \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l^4"
+    using intgl l4 by (intro divide_right_mono) simp_all
+  finally show ?thesis using seteq by simp
+qed
+
+lemma paper_pair_class_increment_tail_norm:
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and Q: "Q \<in> paper_pair_class k L T x"
+    and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
+    and l: "0 < l"
+  shows "measure Q {\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
+    \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
+proof -
+  let ?n = "real (CARD('n))"
+  have setsQ: "sets Q = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  interpret PQ: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  have cpos: "0 < CARD('n)" by (simp add: card_gt_0_iff)
+  have n0: "0 < ?n" using cpos by simp
+  define l' where "l' = l / ?n"
+  have l'0: "0 < l'" unfolding l'_def using l n0 by simp
+  have sI: "s \<in> {0..T}" using st stt ttT by simp
+  have tI: "tt \<in> {0..T}" using st stt ttT by simp
+  have fmi: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> tt) $ i - fst (\<omega> s) $ i)
+      \<in> borel_measurable Q" for i
+    by (intro borel_measurable_diff pair_law_coord_measurable[OF setsQ tI]
+        pair_law_coord_measurable[OF setsQ sI])
+  have Em: "{\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
+      \<in> sets Q" for i
+  proof -
+    have am: "(\<lambda>\<omega>. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>)
+        \<in> borel_measurable Q"
+      by (intro borel_measurable_abs fmi)
+    have "{\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
+        = (\<lambda>\<omega>. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>) -` {l'..} \<inter> space Q"
+      by auto
+    then show ?thesis
+      using measurable_sets[OF am borel_closed[OF closed_atLeast]] by simp
+  qed
+  have incl: "{\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
+      \<subseteq> (\<Union>i\<in>(UNIV :: 'n set).
+          {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
+  proof
+    fix \<omega> assume w: "\<omega> \<in> {\<omega> \<in> space Q.
+        l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}"
+    then have sp: "\<omega> \<in> space Q"
+      and ln: "l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))" by auto
+    have ex: "\<exists>i. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>"
+    proof (rule ccontr)
+      assume nc: "\<not> (\<exists>i. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>)"
+      then have all: "\<And>i. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar> < l'"
+        by (auto simp: not_le)
+      have "norm (fst (\<omega> tt) - fst (\<omega> s))
+          \<le> (\<Sum>i\<in>UNIV. \<bar>(fst (\<omega> tt) - fst (\<omega> s)) $ i\<bar>)"
+        by (rule norm_le_l1_cart)
+      also have "\<dots> = (\<Sum>i\<in>UNIV. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>)"
+        by simp
+      also have "\<dots> < (\<Sum>i\<in>(UNIV :: 'n set). l')"
+        by (rule sum_strict_mono) (use all in simp_all)
+      also have "\<dots> = ?n * l'" by simp
+      also have "\<dots> = l" unfolding l'_def using n0 by simp
+      finally show False using ln by simp
+    qed
+    then show "\<omega> \<in> (\<Union>i\<in>(UNIV :: 'n set).
+        {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
+      using sp by auto
+  qed
+  have UNs: "(\<Union>i\<in>(UNIV :: 'n set).
+      {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}) \<in> sets Q"
+    using Em by blast
+  have "measure Q {\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
+      \<le> measure Q (\<Union>i\<in>(UNIV :: 'n set).
+          {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
+    by (rule PQ.finite_measure_mono[OF incl UNs])
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). measure Q
+      {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
+    by (rule measure_UNION_le) (use Em in simp_all)
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)"
+    by (rule sum_mono)
+      (rule paper_pair_class_increment_tail[OF T L Q st stt ttT l'0])
+  also have "\<dots> = ?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)" by simp
+  also have "\<dots> = ?n ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
+  proof -
+    have l'4: "l'^4 = l^4 / ?n^4"
+      unfolding l'_def by (simp add: power_divide)
+    have ln0: "l^4 \<noteq> 0" using l by simp
+    have nn0: "(?n :: real)^4 \<noteq> 0" using n0 by simp
+    have "?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)
+        = ?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 * ?n^4 / l^4)"
+      unfolding l'4 using ln0 nn0 by (simp add: field_simps)
+    also have "\<dots> = ?n ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
+      by (simp add: eval_nat_numeral field_simps)
+    finally show ?thesis .
+  qed
+  finally show ?thesis .
+qed
+
+text \<open>The quadratic is Lipschitz on the ball, with the explicit constant
+  \<open>norm q + 2 C\<^sub>M rb\<close>; the exact one-step Taylor identity
+  @{thm [source] quad_taylor_step} does all the work.\<close>
+
+lemma quad_diff_bound:
+  fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and rb :: real
+  assumes sym: "transpose M = M"
+    and a: "a \<in> cball x rb" and b: "b \<in> cball x rb"
+  shows "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
+       - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
+      \<le> (norm q + 2 * (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * rb)
+          * norm (b - a)"
+proof -
+  let ?CM = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
+  have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
+  have ax: "norm (a - x) \<le> rb"
+    using a by (simp add: mem_cball dist_norm norm_minus_commute)
+  have bx: "norm (b - x) \<le> rb"
+    using b by (simp add: mem_cball dist_norm norm_minus_commute)
+  have dble: "norm (b - a) \<le> 2 * rb"
+  proof -
+    have deq: "b - a = (b - x) + (x - a)" by simp
+    have "norm (b - a) \<le> norm (b - x) + norm (x - a)"
+      by (subst deq) (rule norm_triangle_ineq)
+    moreover have "norm (x - a) \<le> rb"
+      using ax by (simp add: norm_minus_commute)
+    ultimately show ?thesis using bx by linarith
+  qed
+  have step: "q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
+      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))
+      = (q + M *v (a - x)) \<bullet> (b - a)
+        + (1/2) * ((b - a) \<bullet> (M *v (b - a)))"
+    by (rule quad_taylor_step[OF sym])
+  have t1: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
+      \<le> (norm q + ?CM * rb) * norm (b - a)"
+  proof -
+    have cs: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
+        \<le> norm (q + M *v (a - x)) * norm (b - a)"
+      by (rule Cauchy_Schwarz_ineq2)
+    have "norm (q + M *v (a - x)) \<le> norm q + ?CM * rb"
+    proof -
+      have "norm (q + M *v (a - x)) \<le> norm q + norm (M *v (a - x))"
+        by (rule norm_triangle_ineq)
+      moreover have "norm (M *v (a - x)) \<le> ?CM * norm (a - x)"
+        by (rule matvec_norm_le)
+      moreover have "?CM * norm (a - x) \<le> ?CM * rb"
+        by (rule mult_left_mono[OF ax CM0])
+      ultimately show ?thesis by linarith
+    qed
+    then have "norm (q + M *v (a - x)) * norm (b - a)
+        \<le> (norm q + ?CM * rb) * norm (b - a)"
+      by (rule mult_right_mono) simp
+    then show ?thesis using cs by linarith
+  qed
+  have t2: "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
+      \<le> ?CM * rb * norm (b - a)"
+  proof -
+    have "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
+        \<le> norm (b - a) * norm (M *v (b - a))"
+      by (rule Cauchy_Schwarz_ineq2)
+    also have "\<dots> \<le> norm (b - a) * (?CM * norm (b - a))"
+      by (rule mult_left_mono[OF matvec_norm_le norm_ge_zero])
+    finally have h: "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
+        \<le> ?CM * norm (b - a) * norm (b - a)"
+      by (simp add: mult_ac)
+    have h2: "?CM * norm (b - a) * norm (b - a)
+        \<le> ?CM * (2 * rb) * norm (b - a)"
+      by (rule mult_right_mono[OF mult_left_mono[OF dble CM0] norm_ge_zero])
+    have "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
+        = (1/2) * \<bar>(b - a) \<bullet> (M *v (b - a))\<bar>"
+      by (simp add: abs_mult)
+    also have "\<dots> \<le> (1/2) * (?CM * (2 * rb) * norm (b - a))"
+      using h h2 by linarith
+    also have "\<dots> = ?CM * rb * norm (b - a)" by simp
+    finally show ?thesis .
+  qed
+  have tri: "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
+      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
+      \<le> \<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
+        + \<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>"
+    unfolding step by (rule abs_triangle_ineq)
+  have fin: "(norm q + ?CM * rb) * norm (b - a)
+      + ?CM * rb * norm (b - a)
+      = (norm q + 2 * ?CM * rb) * norm (b - a)"
+    by (simp add: algebra_simps)
+  show ?thesis using tri t1 t2 fin by linarith
+qed
+
+text \<open>The bad event is open: staying strictly inside the ball is
+  @{thm [source] open_stay_inside} through the first projection, and the
+  strict quadratic drop is an open condition on the evaluation at \<open>t\<close>
+  (@{thm [source] open_eval_preimage}).\<close>
+
+lemma open_quad_bad_event:
+  fixes x q :: "real^'n::finite" and M :: "real^'n^'n"
+    and t T rb thr :: real
+  assumes t0: "0 \<le> t" and tT: "t \<le> T"
+  shows "openin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb)
+        \<and> q \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))) < thr}"
+proof -
+  have T0: "0 \<le> T" using t0 tT by linarith
+  let ?pm = "path_metric T :: ('n pairpath) metric"
+  have o1: "openin (mtopology_of ?pm)
+      {\<omega> \<in> mspace ?pm. \<forall>s\<in>{0..t}. \<omega> s \<in> fst -` ball x rb}"
+    by (rule open_stay_inside[OF T0 open_vimage_fst[OF open_ball] t0 tT])
+  have c0: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p - x)"
+    by (intro continuous_intros)
+  have c1: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF matvec_blin] c0]) auto
+  have cq: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_inner_right] c0]) auto
+  have cin: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+        (fst p - x) \<bullet> (M *v (fst p - x)))"
+    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner c0 c1])
+  have contf: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
+    by (intro continuous_on_add continuous_on_mult
+        continuous_on_const cq cin)
+  have oU: "open {p :: (real^'n) \<times> (real^'n^'n).
+      q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}"
+    by (rule open_Collect_less[OF contf continuous_on_const])
+  have o2: "openin (mtopology_of ?pm)
+      {\<omega> \<in> mspace ?pm. \<omega> t \<in> {p. q \<bullet> (fst p - x)
+        + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}}"
+    by (rule open_eval_preimage[OF _ oU]) (use t0 tT in simp)
+  have eq: "{\<omega> \<in> mspace ?pm.
+      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb)
+      \<and> q \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))) < thr}
+      = {\<omega> \<in> mspace ?pm. \<forall>s\<in>{0..t}. \<omega> s \<in> fst -` ball x rb}
+        \<inter> {\<omega> \<in> mspace ?pm. \<omega> t \<in> {p. q \<bullet> (fst p - x)
+          + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}}"
+    by auto
+  show ?thesis unfolding eq by (rule openin_Int[OF o1 o2])
+qed
+
+text \<open>The main estimate.  At mesh \<open>c / (i + 1)\<close> the bad-event probability
+  is at most \<open>A h + B h\<^sup>2\<close> once the mesh is fine enough, hence it tends to
+  zero.  Inside: pick the last grid point \<open>m h \<le> t\<close>; on the almost-sure
+  event of @{thm [source] eulerp_quad_lower}, in-ball through \<open>t\<close> and a
+  quadratic drop force either a large \<open>euXi\<close> (Chebyshev) or a large
+  one-step increment (the fourth-moment tail).\<close>
+
+theorem eulerp_bad_event_null:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and q x :: "real^'n" and c rb cm t \<beta> L :: real
+  assumes c0: "0 < c" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and sym: "transpose M = M" and rb0: "0 \<le> rb"
+    and kill: "\<And>z. transpose (SF z) *v
+        (q + M *v (closest_point (cball x rb) z - x)) = 0"
+    and marg: "\<And>z. cm \<le> trace (M ** (SF z ** transpose (SF z)))"
+    and t0: "0 < t" and tc: "t \<le> c" and b0: "0 < \<beta>"
+  shows "(\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i)
+      {\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric).
+        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb)
+        \<and> q \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))
+          < t * cm / 2 - \<beta>}) \<longlonglongrightarrow> 0"
+proof -
+  let ?U = "{\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric).
+      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb)
+      \<and> q \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))
+        < t * cm / 2 - \<beta>}"
+  let ?h = "\<lambda>i. c / real (Suc i)"
+  let ?CM = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
+  define C\<psi> where "C\<psi> = norm q + 2 * ?CM * rb + 1"
+  define \<delta> where "\<delta> = \<beta> / (4 * C\<psi>)"
+  define h\<^sub>0 where "h\<^sub>0 = \<beta> / (2 * (\<bar>cm\<bar> + 1))"
+  define A where "A = 4 * c * xiC M L / \<beta>\<^sup>2"
+  define B where "B = real (CARD('n)) ^ 5 * 8 * L\<^sup>2 / \<delta>^4"
+  have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
+  have C\<psi>1: "1 \<le> C\<psi>"
+  proof -
+    have "0 \<le> 2 * ?CM * rb"
+      using CM0 rb0 by (auto intro!: mult_nonneg_nonneg)
+    then show ?thesis
+      unfolding C\<psi>_def using norm_ge_zero[of q] by linarith
+  qed
+  have C\<psi>0: "0 < C\<psi>" using C\<psi>1 by linarith
+  have \<delta>0: "0 < \<delta>" unfolding \<delta>_def using b0 C\<psi>0 by simp
+  have h\<^sub>00: "0 < h\<^sub>0" unfolding h\<^sub>0_def using b0 by simp
+  have L0: "0 \<le> L" using L1 by linarith
+  have bound: "measure (eulerp SF x (?h i) i) ?U \<le> A * ?h i + B * (?h i)\<^sup>2"
+    if hs: "?h i \<le> h\<^sub>0" for i
+  proof -
+    define h where "h = ?h i"
+    have hs': "h \<le> h\<^sub>0" using hs unfolding h_def .
+    have h0: "0 < h" unfolding h_def using c0 by simp
+    have hc: "real (Suc i) * h = c" unfolding h_def by simp
+    let ?Q = "eulerp SF x h i"
+    have Qc: "?Q \<in> paper_pair_class k L c x"
+      unfolding h_def by (rule eulerp_seq_in_class[OF c0 L1 SFc SFs])
+    have setsQ: "sets ?Q = sets (borel_of (mtopology_of
+        (path_metric c :: ('n pairpath) metric)))"
+      by (rule paper_pair_class_sets[OF Qc])
+    have spQ: "space ?Q = mspace (path_metric c :: ('n pairpath) metric)"
+      by (rule space_of_path_sets[OF setsQ])
+    interpret PQ: prob_space ?Q by (rule paper_pair_class_prob[OF Qc])
+    define m where "m = nat \<lfloor>t / h\<rfloor>"
+    have tdh0: "0 \<le> t / h" using t0 h0 by simp
+    have fl0: "0 \<le> \<lfloor>t / h\<rfloor>" using tdh0 by simp
+    have mreal: "real m = real_of_int \<lfloor>t / h\<rfloor>"
+      unfolding m_def using fl0 by (simp add: of_nat_nat)
+    have mh_le: "real m * h \<le> t"
+    proof -
+      have "real_of_int \<lfloor>t / h\<rfloor> \<le> t / h" by (rule of_int_floor_le)
+      then have "real m \<le> t / h" using mreal by simp
+      then show ?thesis
+        using h0 by (simp add: pos_le_divide_eq mult_ac)
+    qed
+    have mh0: "0 \<le> real m * h" using h0 by simp
+    have t_mh: "t - real m * h \<le> h"
+    proof -
+      have "t / h < real_of_int \<lfloor>t / h\<rfloor> + 1"
+        using floor_correct[of "t / h"] by linarith
+      then have "t / h < real m + 1" using mreal by simp
+      then have "t < (real m + 1) * h"
+        using h0 by (simp add: pos_divide_less_eq)
+      then show ?thesis by (simp add: algebra_simps)
+    qed
+    have mSuc: "m \<le> Suc i"
+    proof -
+      have "t / h \<le> real (Suc i)"
+        using tc hc h0 by (simp add: pos_divide_le_eq mult_ac)
+      then have "\<lfloor>t / h\<rfloor> \<le> int (Suc i)"
+        by (simp add: floor_le_iff)
+      then show ?thesis unfolding m_def by simp
+    qed
+    define E1 where "E1 = {\<omega> \<in> space ?Q. \<beta> / 2 \<le> \<bar>euXi SF M h m \<omega>\<bar>}"
+    define E2 where "E2 = {\<omega> \<in> space ?Q.
+        \<delta> \<le> norm (fst (\<omega> t) - fst (\<omega> (real m * h)))}"
+    have b20: "0 < \<beta> / 2" using b0 by simp
+    have mE1: "measure ?Q E1 \<le> real m * xiC M L * h\<^sup>2 / (\<beta> / 2)\<^sup>2"
+      unfolding E1_def
+      by (rule eulerp_Xi_chebyshev[OF h0 L1 SFc SFs mSuc b20])
+    have mE2: "measure ?Q E2
+        \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4"
+      unfolding E2_def
+      by (rule paper_pair_class_increment_tail_norm[OF c0 L0 Qc
+          mh0 mh_le tc \<delta>0])
+    have sE1: "E1 \<in> sets ?Q"
+    proof -
+      have xm: "euXi SF M h m \<in> borel_measurable ?Q"
+        using euXi_measurable[OF SFc]
+          measurable_cong_sets[OF setsQ refl] by blast
+      have am: "(\<lambda>\<omega>. \<bar>euXi SF M h m \<omega>\<bar>) \<in> borel_measurable ?Q"
+        by (intro borel_measurable_abs xm)
+      have "E1 = (\<lambda>\<omega>. \<bar>euXi SF M h m \<omega>\<bar>) -` {\<beta>/2..} \<inter> space ?Q"
+        unfolding E1_def by auto
+      then show ?thesis
+        using measurable_sets[OF am borel_closed[OF closed_atLeast]]
+        by simp
+    qed
+    have sE2: "E2 \<in> sets ?Q"
+    proof -
+      have e1: "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_measurable ?Q"
+        using pair_law_eval_measurable[OF setsQ] by blast
+      have e2: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real m * h))
+          \<in> borel_measurable ?Q"
+        using pair_law_eval_measurable[OF setsQ] by blast
+      have fm: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+          \<in> borel_measurable borel"
+        by (rule borel_measurable_continuous_onI[OF
+            continuous_on_fst[OF continuous_on_id]])
+      have dd: "(\<lambda>\<omega>. fst (\<omega> t) - fst (\<omega> (real m * h)))
+          \<in> borel_measurable ?Q"
+        by (intro borel_measurable_diff
+            measurable_compose[OF e1 fm] measurable_compose[OF e2 fm])
+      have nm: "(\<lambda>\<omega>. norm (fst (\<omega> t) - fst (\<omega> (real m * h))))
+          \<in> borel_measurable ?Q"
+        by (rule measurable_compose[OF dd borel_measurable_norm])
+      have "E2 = (\<lambda>\<omega>. norm (fst (\<omega> t) - fst (\<omega> (real m * h)))) -` {\<delta>..}
+          \<inter> space ?Q"
+        unfolding E2_def by auto
+      then show ?thesis
+        using measurable_sets[OF nm borel_closed[OF closed_atLeast]]
+        by simp
+    qed
+    have QL: "AE \<omega> in ?Q. \<forall>m'\<le>Suc i.
+        (\<forall>j<m'. fst (\<omega> (real j * h)) \<in> cball x rb) \<longrightarrow>
+        (1/2) * euXi SF M h m' \<omega> + real m' * h * cm / 2
+          \<le> q \<bullet> (fst (\<omega> (real m' * h)) - x)
+            + (1/2) * ((fst (\<omega> (real m' * h)) - x)
+                \<bullet> (M *v (fst (\<omega> (real m' * h)) - x)))"
+      by (rule eulerp_quad_lower[OF h0 L1 SFc SFs sym rb0 kill marg])
+    have incl: "AE \<omega> in ?Q. \<omega> \<in> ?U \<longrightarrow> \<omega> \<in> E1 \<union> E2"
+      using QL
+    proof (eventually_elim)
+      case (elim \<omega>)
+      show ?case
+      proof (intro impI)
+        assume U: "\<omega> \<in> ?U"
+        show "\<omega> \<in> E1 \<union> E2"
+        proof (cases "\<omega> \<in> E1")
+          case True then show ?thesis by simp
+        next
+          case False
+          have wsp: "\<omega> \<in> space ?Q" using U spQ by auto
+          have inb: "\<And>s. s \<in> {0..t} \<Longrightarrow> fst (\<omega> s) \<in> ball x rb"
+            using U by auto
+          have bad: "q \<bullet> (fst (\<omega> t) - x)
+              + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))
+              < t * cm / 2 - \<beta>"
+            using U by auto
+          have small: "\<bar>euXi SF M h m \<omega>\<bar> < \<beta> / 2"
+            using False wsp unfolding E1_def by (auto simp: not_le)
+          have grid: "\<And>j. j < m \<Longrightarrow> fst (\<omega> (real j * h)) \<in> cball x rb"
+          proof -
+            fix j assume jm: "j < m"
+            have "real j * h < real m * h"
+              using jm h0 by (intro mult_strict_right_mono) simp_all
+            then have jh2: "real j * h \<le> t" using mh_le by linarith
+            have jh1: "0 \<le> real j * h" using h0 by simp
+            have "real j * h \<in> {0..t}" using jh1 jh2 by simp
+            then show "fst (\<omega> (real j * h)) \<in> cball x rb"
+              using inb ball_subset_cball by blast
+          qed
+          have QLm: "(1/2) * euXi SF M h m \<omega> + real m * h * cm / 2
+              \<le> q \<bullet> (fst (\<omega> (real m * h)) - x)
+                + (1/2) * ((fst (\<omega> (real m * h)) - x)
+                    \<bullet> (M *v (fst (\<omega> (real m * h)) - x)))"
+            using elim mSuc grid by blast
+          have tin: "t \<in> {0..t}" using t0 by simp
+          have min': "real m * h \<in> {0..t}" using mh0 mh_le by simp
+          have aT: "fst (\<omega> t) \<in> cball x rb"
+            using inb[OF tin] ball_subset_cball by blast
+          have aM: "fst (\<omega> (real m * h)) \<in> cball x rb"
+            using inb[OF min'] ball_subset_cball by blast
+          define p1 where "p1 = q \<bullet> (fst (\<omega> (real m * h)) - x)
+              + (1/2) * ((fst (\<omega> (real m * h)) - x)
+                  \<bullet> (M *v (fst (\<omega> (real m * h)) - x)))"
+          define p2 where "p2 = q \<bullet> (fst (\<omega> t) - x)
+              + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+          define nd where "nd = norm (fst (\<omega> t) - fst (\<omega> (real m * h)))"
+          have nd0: "0 \<le> nd" unfolding nd_def by simp
+          have habs: "\<bar>real m * h - t\<bar> \<le> h"
+          proof -
+            have "real m * h - t \<le> h" using mh_le h0 by linarith
+            moreover have "- h \<le> real m * h - t" using t_mh by linarith
+            ultimately show ?thesis by (simp add: abs_le_iff)
+          qed
+          have g1: "\<bar>(real m * h - t) * cm\<bar> \<le> h * \<bar>cm\<bar>"
+          proof -
+            have "\<bar>(real m * h - t) * cm\<bar> = \<bar>real m * h - t\<bar> * \<bar>cm\<bar>"
+              by (rule abs_mult)
+            also have "\<dots> \<le> h * \<bar>cm\<bar>"
+              by (rule mult_right_mono[OF habs abs_ge_zero])
+            finally show ?thesis .
+          qed
+          have g2: "h * \<bar>cm\<bar> \<le> \<beta> / 2"
+          proof -
+            have "h * (2 * (\<bar>cm\<bar> + 1)) \<le> \<beta>"
+              using hs' unfolding h\<^sub>0_def
+              by (simp add: pos_le_divide_eq)
+            moreover have "h * (2 * (\<bar>cm\<bar> + 1))
+                = 2 * (h * (\<bar>cm\<bar> + 1))" by simp
+            ultimately have hcm1: "h * (\<bar>cm\<bar> + 1) \<le> \<beta> / 2" by linarith
+            have "h * \<bar>cm\<bar> \<le> h * (\<bar>cm\<bar> + 1)"
+              using h0 by (intro mult_left_mono) simp_all
+            then show ?thesis using hcm1 by linarith
+          qed
+          have cmb: "- (\<beta> / 4) \<le> (real m * h - t) * cm / 2"
+          proof -
+            have "- (h * \<bar>cm\<bar>) \<le> (real m * h - t) * cm"
+              using g1 by linarith
+            then show ?thesis using g2 by linarith
+          qed
+          have p1low: "- (\<beta> / 4) + real m * h * cm / 2 \<le> p1"
+            using QLm small unfolding p1_def by linarith
+          have badp: "p2 < t * cm / 2 - \<beta>"
+            unfolding p2_def by (rule bad)
+          have distrib: "(real m * h - t) * cm
+              = real m * h * cm - t * cm"
+            by (simp add: algebra_simps)
+          have gap: "\<beta> / 2 < p1 - p2"
+            using p1low badp cmb distrib by linarith
+          have db: "\<bar>p1 - p2\<bar> \<le> (norm q + 2 * ?CM * rb) * nd"
+            unfolding p1_def p2_def nd_def
+            using quad_diff_bound[OF sym aT aM]
+            by (simp add: norm_minus_commute)
+          have Cle: "norm q + 2 * ?CM * rb \<le> C\<psi>"
+            unfolding C\<psi>_def by simp
+          have bCn: "\<beta> / 2 < C\<psi> * nd"
+          proof -
+            have "\<beta> / 2 < (norm q + 2 * ?CM * rb) * nd"
+              using gap db by linarith
+            also have "\<dots> \<le> C\<psi> * nd"
+              by (rule mult_right_mono[OF Cle nd0])
+            finally show ?thesis .
+          qed
+          have b2Cn: "\<beta> < nd * (2 * C\<psi>)"
+          proof -
+            have "\<beta> < 2 * (C\<psi> * nd)" using bCn by linarith
+            then show ?thesis by (simp add: mult_ac)
+          qed
+          have lt: "\<beta> / (2 * C\<psi>) < nd"
+            using b2Cn C\<psi>0 by (simp add: pos_divide_less_eq)
+          have dle: "\<delta> \<le> \<beta> / (2 * C\<psi>)"
+            unfolding \<delta>_def
+          proof (rule divide_left_mono)
+            show "2 * C\<psi> \<le> 4 * C\<psi>" using C\<psi>0 by linarith
+            show "0 \<le> \<beta>" using b0 by linarith
+            show "0 < 4 * C\<psi> * (2 * C\<psi>)"
+              using C\<psi>0 by (simp add: zero_less_mult_iff)
+          qed
+          have ndl: "\<delta> \<le> nd" using lt dle by linarith
+          show ?thesis
+            using wsp ndl unfolding E2_def nd_def by auto
+        qed
+      qed
+    qed
+    have s1: "measure ?Q ?U \<le> measure ?Q (E1 \<union> E2)"
+      by (rule PQ.finite_measure_mono_AE[OF incl sets.Un[OF sE1 sE2]])
+    have s2: "measure ?Q (E1 \<union> E2) \<le> measure ?Q E1 + measure ?Q E2"
+      by (rule measure_Un_le[OF sE1 sE2])
+    have n1: "real m * xiC M L * h\<^sup>2 / (\<beta> / 2)\<^sup>2 \<le> A * h"
+    proof -
+      have mhc: "real m * h \<le> c"
+      proof -
+        have "real m \<le> real (Suc i)" using mSuc by simp
+        then have "real m * h \<le> real (Suc i) * h"
+          using h0 by (intro mult_right_mono) simp_all
+        then show ?thesis using hc by simp
+      qed
+      have e1: "real m * xiC M L * h\<^sup>2 = real m * h * xiC M L * h"
+        by (simp add: power2_eq_square algebra_simps)
+      have e2: "real m * h * xiC M L * h \<le> c * xiC M L * h"
+        by (intro mult_right_mono mult_right_mono[OF mhc xiC_nonneg])
+          (use h0 in simp_all)
+      have num: "real m * xiC M L * h\<^sup>2 \<le> c * xiC M L * h"
+        unfolding e1 by (rule e2)
+      have "real m * xiC M L * h\<^sup>2 / (\<beta> / 2)\<^sup>2
+          \<le> c * xiC M L * h / (\<beta> / 2)\<^sup>2"
+        by (rule divide_right_mono[OF num]) simp
+      also have "\<dots> = A * h"
+        unfolding A_def using b0 by (simp add: power_divide field_simps)
+      finally show ?thesis .
+    qed
+    have n2: "real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
+        \<le> B * h\<^sup>2"
+    proof -
+      have sq: "(t - real m * h)\<^sup>2 \<le> h\<^sup>2"
+        using t_mh mh_le by (intro power_mono) simp_all
+      have inner8: "8 * L\<^sup>2 * (t - real m * h)\<^sup>2 \<le> 8 * L\<^sup>2 * h\<^sup>2"
+        by (intro mult_left_mono[OF sq]) simp
+      have "real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2)
+          \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * h\<^sup>2)"
+        by (intro mult_left_mono[OF inner8]) simp
+      then have "real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
+          \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * h\<^sup>2) / \<delta>^4"
+        by (intro divide_right_mono) simp_all
+      also have "\<dots> = B * h\<^sup>2"
+        unfolding B_def using \<delta>0 by (simp add: field_simps)
+      finally show ?thesis .
+    qed
+    have "measure ?Q ?U \<le> A * h + B * h\<^sup>2"
+      using s1 s2 mE1 mE2 n1 n2 by linarith
+    then show ?thesis unfolding h_def .
+  qed
+  have hlim: "(\<lambda>i. ?h i) \<longlonglongrightarrow> 0"
+    using tendsto_mult[OF tendsto_const LIMSEQ_inverse_real_of_nat, of c]
+    by (simp add: divide_inverse)
+  have ev: "\<forall>\<^sub>F i in sequentially.
+      measure (eulerp SF x (?h i) i) ?U \<le> A * ?h i + B * (?h i)\<^sup>2"
+  proof -
+    have "\<forall>\<^sub>F i in sequentially. ?h i < h\<^sub>0"
+      by (rule order_tendstoD(2)[OF hlim h\<^sub>00])
+    then show ?thesis
+    proof (eventually_elim)
+      case (elim i)
+      show ?case by (rule bound[OF less_imp_le[OF elim]])
+    qed
+  qed
+  have ev0: "\<forall>\<^sub>F i in sequentially.
+      (0 :: real) \<le> measure (eulerp SF x (?h i) i) ?U"
+    by (intro always_eventually allI measure_nonneg)
+  have glim: "(\<lambda>i. A * ?h i + B * (?h i)\<^sup>2) \<longlonglongrightarrow> 0"
+  proof -
+    have "(\<lambda>i. A * ?h i + B * (?h i)\<^sup>2) \<longlonglongrightarrow> A * 0 + B * 0\<^sup>2"
+      by (intro tendsto_add tendsto_mult tendsto_const
+          tendsto_power hlim)
+    then show ?thesis by simp
+  qed
+  show ?thesis
+    by (rule tendsto_sandwich[OF ev0 ev tendsto_const glim])
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
