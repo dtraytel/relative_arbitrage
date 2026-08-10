@@ -6972,6 +6972,118 @@ proof -
     using r2 measurable_cong_sets[OF refl setsPA] unfolding KK_def by blast
 qed
 
+subsection \<open>The Euler process\<close>
+
+text \<open>Freeze the field at the left endpoint of each step and glue with
+  @{thm [source] paper_pair_class_kglue_law'}: stage \<open>j\<close> is a member on
+  the horizon \<open>(j+1)h\<close>, and membership is plain induction --- the
+  continuation kernel is centred (\<open>pglue\<close> recenters), so it is exactly
+  @{thm [source] sbm_kernel_package} composed with the endpoint map.\<close>
+
+fun eulerp ::
+  "(real^'n::finite \<Rightarrow> real^'n^'n) \<Rightarrow> real^'n \<Rightarrow> real \<Rightarrow> nat
+     \<Rightarrow> ('n pairpath) measure"
+  where
+    "eulerp SF x h 0 = pshift_law h x
+        (pair_law_of h (sbmpair (SF x) h) bm_paths)"
+  | "eulerp SF x h (Suc j) = kglue_law' (real (Suc j) * h)
+        (real (Suc (Suc j)) * h)
+        (\<lambda>\<omega>. pair_law_of h (sbmpair (SF (fst (\<omega> (real (Suc j) * h)))) h)
+             bm_paths)
+        (eulerp SF x h j)"
+
+theorem eulerp_in_class:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and x :: "real^'n"
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+  shows "eulerp SF x h j \<in> paper_pair_class k L (real (Suc j) * h) x"
+proof (induction j)
+  case 0
+  have "pshift_law h x (pair_law_of h (sbmpair (SF x) h)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      \<in> paper_pair_class k L h x"
+    by (rule sbmpair_pshift_law_in_paper_pair_class)
+      (use h0 L1 SFs in simp_all)
+  then show ?case by simp
+next
+  case (Suc j)
+  define r where "r = real (Suc j) * h"
+  define T' where "T' = real (Suc (Suc j)) * h"
+  have hT: "T' - r = h" unfolding r_def T'_def by (simp add: field_simps)
+  have r0: "0 \<le> r" unfolding r_def using h0 by simp
+  have rT: "r < T'" unfolding r_def T'_def using h0 by simp
+  have T0: "0 < T'" unfolding T'_def using h0 by simp
+  have Q: "eulerp SF x h j \<in> paper_pair_class k L r x"
+    using Suc unfolding r_def .
+  have setsQ: "sets (eulerp SF x h j) = sets (borel_of (mtopology_of
+      (path_metric r :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF Q])
+  have hpos: "0 < (h :: real)" by (rule h0)
+  note pack = sbm_kernel_package[OF hpos L1 SFc SFs]
+  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    using measurable_fst[of "borel :: (real^'n) measure"
+        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+  have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
+      \<in> borel_measurable (eulerp SF x h j)"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+  have eF: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
+      \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
+  proof (rule measurable_compose[OF _ mfst])
+    show "(\<lambda>\<omega> :: 'n pairpath. \<omega> r)
+        \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use r0 in auto)
+  qed
+  have Kp: "(\<lambda>\<omega> :: 'n pairpath.
+      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
+      \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+        (path_metric (T' - r) :: ('n pairpath) metric)))"
+    unfolding hT by (rule measurable_compose[OF eQ pack(1)])
+  have Kb: "(\<lambda>\<omega> :: 'n pairpath.
+      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
+      \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r
+      \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+          (paper_pair_class k L (T' - r) (0::real^'n))
+          (Levy_Prokhorov.LPm
+            (mspace (path_metric (T' - r) :: ('n pairpath) metric))
+            (mdist (path_metric (T' - r) :: ('n pairpath) metric))))"
+    unfolding hT by (rule measurable_compose[OF eF pack(2)])
+  have Kc: "pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
+      \<in> paper_pair_class k L (T' - r) 0" for \<omega> :: "'n pairpath"
+    unfolding hT by (rule pack(3))
+  have "kglue_law' r T'
+      (\<lambda>\<omega>. pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
+      (eulerp SF x h j) \<in> paper_pair_class k L T' x"
+  proof (rule paper_pair_class_kglue_law')
+    show "0 \<le> r" by (rule r0)
+    show "r < T'" by (rule rT)
+    show "1 \<le> L" by (rule L1)
+    show "0 < T'" by (rule T0)
+    show "eulerp SF x h j \<in> paper_pair_class k L r x" by (rule Q)
+    show "(\<lambda>\<omega> :: 'n pairpath.
+        pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
+        \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
+          (path_metric (T' - r) :: ('n pairpath) metric)))"
+      by (rule Kp)
+    show "(\<lambda>\<omega> :: 'n pairpath.
+        pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
+        \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r
+        \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
+            (paper_pair_class k L (T' - r) (0::real^'n))
+            (Levy_Prokhorov.LPm
+              (mspace (path_metric (T' - r) :: ('n pairpath) metric))
+              (mdist (path_metric (T' - r) :: ('n pairpath) metric))))"
+      by (rule Kb)
+    show "\<And>\<omega> :: 'n pairpath.
+        pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
+        \<in> paper_pair_class k L (T' - r) 0"
+      by (rule Kc)
+  qed
+  then show ?case unfolding r_def T'_def by simp
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
