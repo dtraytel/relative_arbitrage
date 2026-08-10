@@ -5794,6 +5794,273 @@ proof -
   finally show ?thesis unfolding Cm_def .
 qed
 
+subsection \<open>The skew covariance field\<close>
+
+text \<open>The field of the paper's (3.24), Girsanov-free: at the point \<open>z\<close> the
+  columns are the skew images of the CURRENT gradient \<open>q + M (z - x)\<close> of the
+  quadratic minorant, so the field annihilates that gradient EVERYWHERE ---
+  no stochastic integral will ever be needed to kill the first-order term.
+  On a ball whose radius satisfies three explicit smallness conditions the
+  field stays inside the constraint set and keeps the trace margin.\<close>
+
+definition skewfield ::
+  "(real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> real^'n
+     \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> real^'n \<Rightarrow> real^'n^'n"
+  where "skewfield B lam q M x z
+    = (\<Sum>u\<in>B. outerp (skewv q (sqrt (lam u) *\<^sub>R u) *v (q + M *v (z - x))))"
+
+theorem skewfield_properties:
+  fixes B Bp :: "(real^'n::finite) set" and lam :: "real^'n \<Rightarrow> real"
+    and q x z :: "real^'n" and M :: "real^'n^'n" and L m r \<eta> :: real
+  defines "Cm \<equiv> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+  defines "ec \<equiv> 2 * sqrt L * Cm / norm q"
+  assumes B: "onormal B" and sp: "span B = UNIV"
+    and BpB: "Bp \<subseteq> B" and cardBp: "card Bp = CARD('n) - k"
+    and lam_box: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u \<and> lam u \<le> L - m"
+    and lam_lb: "\<And>u. u \<in> Bp \<Longrightarrow> 1 + m \<le> lam u"
+    and lam_orth: "\<And>u. u \<in> B \<Longrightarrow> 0 < lam u \<Longrightarrow> u \<bullet> q = 0"
+    and m0: "0 < m" and mL: "m \<le> L"
+    and q0: "q \<noteq> 0"
+    and tr: "\<eta> \<le> 1 + trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2"
+    and zr: "dist z x \<le> r" and r0: "0 \<le> r"
+    and sm_ub: "(1 + 1 / (m / (2 * L)))
+        * (real CARD('n) * (ec * r)\<^sup>2) \<le> m / 2"
+    and sm_lb: "real CARD('n) * (ec * r * (2 * sqrt L + ec * r))
+        + 2 * (1 + m) / m
+          * (real CARD('n) * (ec * r * (2 * sqrt L + ec * r)))\<^sup>2 \<le> m / 2"
+    and sm_tr: "real CARD('n)
+        * (Cm * (ec * r * (2 * sqrt L + ec * r))) \<le> \<eta>"
+  shows "skewfield B lam q M x z \<in> sconstraint k L"
+    and "skewfield B lam q M x z *v (q + M *v (z - x)) = 0"
+    and "\<eta> / 2 \<le> 1 + trace (M ** skewfield B lam q M x z) / 2"
+proof -
+  define grad where "grad = q + M *v (z - x)"
+  define w where "w = (\<lambda>u. skewv q (sqrt (lam u) *\<^sub>R u) *v grad)"
+  define d where "d = (\<lambda>u. w u - sqrt (lam u) *\<^sub>R u)"
+  define e where "e = ec * r"
+  have finB: "finite B" by (rule onormal_finite[OF B])
+  have L0: "0 < L" using m0 mL by linarith
+  have sqL0: "0 \<le> sqrt L" using L0 by simp
+  have Cm0: "0 \<le> Cm" unfolding Cm_def by (intro sum_nonneg) simp_all
+  have nq0: "0 < norm q" using q0 by simp
+  have ec0: "0 \<le> ec" unfolding ec_def using sqL0 Cm0 nq0 by simp
+  have e0: "0 \<le> e" unfolding e_def using ec0 r0 by simp
+  have sfw: "skewfield B lam q M x z = (\<Sum>u\<in>B. outerp (w u))"
+    unfolding skewfield_def w_def grad_def ..
+  have lam_nn: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u"
+    and lam_ub: "\<And>u. u \<in> B \<Longrightarrow> lam u \<le> L - m"
+    using lam_box by blast+
+  have lam_leL: "lam u \<le> L" if u: "u \<in> B" for u
+    using lam_ub[OF u] m0 by linarith
+  have sqlam_le: "sqrt (lam u) \<le> sqrt L" if u: "u \<in> B" for u
+    using lam_leL[OF u] by (rule real_sqrt_le_mono)
+  have unorm: "norm u = 1" if u: "u \<in> B" for u
+    using B u unfolding onormal_def by blast
+  \<comment> \<open>the split of each column into its value at \<open>x\<close> plus the error\<close>
+  have wsplit: "w u = sqrt (lam u) *\<^sub>R u + d u" for u
+    unfolding d_def by simp
+  have dform: "d u = skewv q (sqrt (lam u) *\<^sub>R u) *v (M *v (z - x))"
+    if u: "u \<in> B" for u
+  proof -
+    have base: "skewv q (sqrt (lam u) *\<^sub>R u) *v q = sqrt (lam u) *\<^sub>R u"
+    proof (cases "lam u = 0")
+      case True
+      then show ?thesis
+        by (simp add: skewv_apply)
+    next
+      case False
+      then have pos: "0 < lam u"
+        using lam_nn[OF u] by (simp add: order_less_le)
+      have orth: "(sqrt (lam u) *\<^sub>R u) \<bullet> q = 0"
+        using lam_orth[OF u pos] by (simp add: inner_scaleR_left)
+      show ?thesis by (rule skewv_apply_orth[OF q0 orth])
+    qed
+    have "w u = skewv q (sqrt (lam u) *\<^sub>R u) *v q
+        + skewv q (sqrt (lam u) *\<^sub>R u) *v (M *v (z - x))"
+      unfolding w_def grad_def by (rule matvec_add_right)
+    then show ?thesis unfolding d_def using base by simp
+  qed
+  have dbound: "norm (d u) \<le> e" if u: "u \<in> B" for u
+  proof -
+    have n1: "norm (sqrt (lam u) *\<^sub>R u) = sqrt (lam u)"
+      using unorm[OF u] lam_nn[OF u] by simp
+    have s1: "norm (d u)
+        \<le> 2 * norm (sqrt (lam u) *\<^sub>R u) * norm (M *v (z - x)) / norm q"
+      unfolding dform[OF u] by (rule skewv_norm_le[OF q0])
+    have s2: "2 * norm (sqrt (lam u) *\<^sub>R u) * norm (M *v (z - x))
+        \<le> 2 * sqrt L * (Cm * r)"
+    proof (rule mult_mono)
+      show "2 * norm (sqrt (lam u) *\<^sub>R u) \<le> 2 * sqrt L"
+        using n1 sqlam_le[OF u] by simp
+      have "norm (M *v (z - x)) \<le> Cm * norm (z - x)"
+        unfolding Cm_def by (rule matvec_norm_le)
+      also have "\<dots> = Cm * dist z x" by (simp add: dist_norm)
+      also have "\<dots> \<le> Cm * r"
+        using zr Cm0 by (intro mult_left_mono)
+      finally show "norm (M *v (z - x)) \<le> Cm * r" .
+      show "0 \<le> 2 * sqrt L" using sqL0 by simp
+      show "0 \<le> norm (M *v (z - x))" by simp
+    qed
+    have s3: "2 * norm (sqrt (lam u) *\<^sub>R u) * norm (M *v (z - x)) / norm q
+        \<le> 2 * sqrt L * (Cm * r) / norm q"
+      by (rule divide_right_mono[OF s2]) simp
+    have s4: "2 * sqrt L * (Cm * r) / norm q = e"
+      unfolding e_def ec_def by (simp add: field_simps)
+    show ?thesis using s1 s3 s4 by linarith
+  qed
+  \<comment> \<open>annihilation is exact at every \<open>z\<close>\<close>
+  show "skewfield B lam q M x z *v (q + M *v (z - x)) = 0"
+    unfolding sfw grad_def[symmetric]
+  proof (rule outerp_sum_annihilate)
+    fix u assume "u \<in> B"
+    have "grad \<bullet> (skewv q (sqrt (lam u) *\<^sub>R u) *v grad) = 0"
+      by (rule skewv_quadform)
+    then show "w u \<bullet> grad = 0"
+      unfolding w_def by (simp add: inner_commute)
+  qed
+  \<comment> \<open>the constraint set\<close>
+  have psd: "psd (skewfield B lam q M x z)"
+    unfolding sfw by (rule outerp_sum_psd)
+  have ub: "eigen_ub (skewfield B lam q M x z) L"
+    unfolding sfw
+    by (rule perturbed_columns_eigen_ub[OF B sp wsplit lam_nn lam_ub
+          m0 mL dbound e0 sm_ub[folded e_def]])
+  have gram: "\<bar>w u \<bullet> w u' - (if u' = u then lam u else 0)\<bar>
+      \<le> e * (2 * sqrt L + e)"
+    if u: "u \<in> Bp" and u': "u' \<in> Bp" for u u'
+  proof -
+    have uB: "u \<in> B" and uB': "u' \<in> B" using u u' BpB by blast+
+    have ip: "w u \<bullet> w u'
+        = (sqrt (lam u) *\<^sub>R u) \<bullet> (sqrt (lam u') *\<^sub>R u')
+          + ((sqrt (lam u) *\<^sub>R u) \<bullet> d u' + d u \<bullet> (sqrt (lam u') *\<^sub>R u')
+             + d u \<bullet> d u')"
+      by (subst wsplit, subst wsplit)
+        (simp add: inner_add_left inner_add_right algebra_simps)
+    have diag: "(sqrt (lam u) *\<^sub>R u) \<bullet> (sqrt (lam u') *\<^sub>R u')
+        = (if u' = u then lam u else 0)"
+    proof (cases "u' = u")
+      case True
+      then show ?thesis
+        using lam_nn[OF uB] onormal_inner_self[OF B uB]
+        by (simp add: inner_scaleR_left inner_scaleR_right
+            abs_of_nonneg)
+    next
+      case False
+      have "u \<bullet> u' = 0"
+        using B uB uB' False unfolding onormal_def pairwise_def
+          orthogonal_def by metis
+      then show ?thesis using False
+        by (simp add: inner_scaleR_left inner_scaleR_right)
+    qed
+    have b1: "\<bar>(sqrt (lam u) *\<^sub>R u) \<bullet> d u'\<bar> \<le> sqrt L * e"
+    proof -
+      have "\<bar>(sqrt (lam u) *\<^sub>R u) \<bullet> d u'\<bar>
+          \<le> norm (sqrt (lam u) *\<^sub>R u) * norm (d u')"
+        by (rule Cauchy_Schwarz_ineq2)
+      also have "\<dots> \<le> sqrt L * e"
+      proof (intro mult_mono)
+        show "norm (sqrt (lam u) *\<^sub>R u) \<le> sqrt L"
+          using unorm[OF uB] lam_nn[OF uB] sqlam_le[OF uB] by simp
+      qed (use dbound[OF uB'] e0 L0 in simp_all)
+      finally show ?thesis .
+    qed
+    have b2: "\<bar>d u \<bullet> (sqrt (lam u') *\<^sub>R u')\<bar> \<le> e * sqrt L"
+    proof -
+      have "\<bar>d u \<bullet> (sqrt (lam u') *\<^sub>R u')\<bar>
+          \<le> norm (d u) * norm (sqrt (lam u') *\<^sub>R u')"
+        by (rule Cauchy_Schwarz_ineq2)
+      also have "\<dots> \<le> e * sqrt L"
+      proof (intro mult_mono)
+        show "norm (sqrt (lam u') *\<^sub>R u') \<le> sqrt L"
+          using unorm[OF uB'] lam_nn[OF uB'] sqlam_le[OF uB'] by simp
+      qed (use dbound[OF uB] e0 L0 in simp_all)
+      finally show ?thesis .
+    qed
+    have b3: "\<bar>d u \<bullet> d u'\<bar> \<le> e * e"
+    proof -
+      have "\<bar>d u \<bullet> d u'\<bar> \<le> norm (d u) * norm (d u')"
+        by (rule Cauchy_Schwarz_ineq2)
+      also have "\<dots> \<le> e * e"
+        using dbound[OF uB] dbound[OF uB'] e0 by (intro mult_mono) simp_all
+      finally show ?thesis .
+    qed
+    have "\<bar>w u \<bullet> w u' - (if u' = u then lam u else 0)\<bar>
+        = \<bar>(sqrt (lam u) *\<^sub>R u) \<bullet> d u' + d u \<bullet> (sqrt (lam u') *\<^sub>R u')
+            + d u \<bullet> d u'\<bar>"
+      using ip diag by simp
+    also have "\<dots> \<le> sqrt L * e + e * sqrt L + e * e"
+      using b1 b2 b3 by linarith
+    also have "\<dots> = e * (2 * sqrt L + e)"
+      by (simp add: algebra_simps)
+    finally show ?thesis .
+  qed
+  have lb: "eigen_lb (skewfield B lam q M x z) (CARD('n) - k)"
+  proof -
+    define E where "E = e * (2 * sqrt L + e)"
+    have E0: "0 \<le> E" unfolding E_def using e0 sqL0
+      by (intro mult_nonneg_nonneg) simp_all
+    have npn: "real (card Bp) \<le> real CARD('n)"
+    proof -
+      have "card Bp \<le> card B" by (rule card_mono[OF finB BpB])
+      then show ?thesis using onormal_span_card[OF B sp] by simp
+    qed
+    have sm': "real (card Bp) * E
+        + 2 * (1 + m) / m * (real (card Bp) * E)\<^sup>2 \<le> m / 2"
+    proof -
+      have h1: "real (card Bp) * E \<le> real CARD('n) * E"
+        using npn E0 by (intro mult_right_mono)
+      have h2: "(real (card Bp) * E)\<^sup>2 \<le> (real CARD('n) * E)\<^sup>2"
+        using h1 E0 by (intro power_mono mult_nonneg_nonneg) simp_all
+      have h3: "2 * (1 + m) / m * (real (card Bp) * E)\<^sup>2
+          \<le> 2 * (1 + m) / m * (real CARD('n) * E)\<^sup>2"
+        using h2 m0 by (intro mult_left_mono) simp_all
+      show ?thesis using h1 h3 sm_lb[folded e_def]
+        unfolding E_def by linarith
+    qed
+    have "eigen_lb (\<Sum>u\<in>B. outerp (w u)) (card Bp)"
+      by (rule perturbed_columns_eigen_lb[OF finB BpB lam_lb m0
+            gram[folded E_def] E0 sm'])
+    then show ?thesis unfolding sfw cardBp .
+  qed
+  have feas: "skewfield B lam q M x z \<in> feasible k L 0"
+    unfolding feasible_def using psd ub lb by simp
+  show "skewfield B lam q M x z \<in> sconstraint k L"
+    using feasible_subset_sconstraint feas by blast
+  \<comment> \<open>the trace margin\<close>
+  have close: "\<bar>trace (M ** (\<Sum>u\<in>B. outerp (w u)))
+      - (\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))\<bar>
+      \<le> real CARD('n) * (Cm * (e * (2 * sqrt L + e)))"
+  proof -
+    have "\<bar>trace (M ** (\<Sum>u\<in>B. outerp (w u)))
+        - (\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))\<bar>
+        \<le> real (card B) * (Cm * (e * (2 * sqrt L + e)))"
+      unfolding Cm_def
+      by (rule perturbed_columns_trace_close[OF finB wsplit unorm
+            lam_nn lam_leL dbound e0])
+    also have "\<dots> \<le> real CARD('n) * (Cm * (e * (2 * sqrt L + e)))"
+    proof (intro mult_right_mono)
+      show "real (card B) \<le> real CARD('n)"
+        using onormal_span_card[OF B sp] by simp
+      show "0 \<le> Cm * (e * (2 * sqrt L + e))"
+        using Cm0 e0 sqL0 by (intro mult_nonneg_nonneg add_nonneg_nonneg) simp_all
+    qed
+    finally show ?thesis .
+  qed
+  have blend_tr: "(\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))
+      = trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u))"
+    by (rule traceM_sum_outer[symmetric])
+  show "\<eta> / 2 \<le> 1 + trace (M ** skewfield B lam q M x z) / 2"
+  proof -
+    have "trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u))
+        - real CARD('n) * (Cm * (e * (2 * sqrt L + e)))
+        \<le> trace (M ** (\<Sum>u\<in>B. outerp (w u)))"
+      using close blend_tr by linarith
+    moreover have "real CARD('n) * (Cm * (e * (2 * sqrt L + e))) \<le> \<eta>"
+      using sm_tr unfolding e_def .
+    ultimately show ?thesis using tr unfolding sfw by linarith
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
