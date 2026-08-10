@@ -2680,67 +2680,1902 @@ proof (intro ballI allI impI)
   qed
 qed
 
+section \<open>Positive semidefinite forms kill their null directions\<close>
+
+text \<open>The Cauchy--Schwarz inequality for a psd form, in the only shape Gap 2
+  needs: if the form vanishes at \<open>q\<close> then \<open>q\<close> is in the kernel.\<close>
+
+lemma psd_kernel_eq:
+  fixes a :: "real^'n::finite^'n" and q :: "real^'n"
+  assumes a: "psd a" and z: "q \<bullet> (a *v q) = 0"
+  shows "a *v q = 0"
+proof -
+  have sym: "transpose a = a" using a by (simp add: psd_def)
+  have nn: "0 \<le> y \<bullet> (a *v y)" for y using a by (simp add: psd_def)
+  have cross: "z \<bullet> (a *v q) = 0" for z
+  proof (rule ccontr)
+    assume ne: "z \<bullet> (a *v q) \<noteq> 0"
+    define Bc where "Bc = z \<bullet> (a *v q)"
+    define Ac where "Ac = z \<bullet> (a *v z)"
+    have Bc0: "Bc \<noteq> 0" using ne by (simp add: Bc_def)
+    have Ac0: "0 \<le> Ac" by (simp add: Ac_def nn)
+    have qa: "q \<bullet> (a *v z) = Bc"
+    proof -
+      have "q \<bullet> (a *v z) = (transpose a *v q) \<bullet> z"
+        by (rule inner_transpose_matrix)
+      also have "\<dots> = (a *v q) \<bullet> z" using sym by simp
+      also have "\<dots> = z \<bullet> (a *v q)" by (rule inner_commute)
+      finally show ?thesis by (simp add: Bc_def)
+    qed
+    have expand: "(q + r *\<^sub>R z) \<bullet> (a *v (q + r *\<^sub>R z))
+        = 2 * r * Bc + r\<^sup>2 * Ac" for r
+    proof -
+      have lin: "a *v (q + r *\<^sub>R z) = a *v q + r *\<^sub>R (a *v z)"
+        by (simp add: matrix_vector_mult_def vec_eq_iff sum.distrib
+            sum_distrib_left algebra_simps)
+      show ?thesis
+        unfolding lin
+        by (simp add: inner_add_left inner_add_right inner_scaleR_left
+            inner_scaleR_right z qa Bc_def Ac_def power2_eq_square algebra_simps)
+    qed
+    show False
+    proof (cases "Ac = 0")
+      case True
+      have "0 \<le> 2 * (- Bc) * Bc + (- Bc)\<^sup>2 * Ac"
+        using nn[of "q + (- Bc) *\<^sub>R z"] expand[of "- Bc"] by simp
+      then have "Bc * Bc \<le> 0" using True by (simp add: power2_eq_square)
+      moreover have "0 < Bc * Bc"
+        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
+            simp: not_less le_less)
+      ultimately show False by linarith
+    next
+      case False
+      then have AcP: "0 < Ac" using Ac0 by simp
+      define r where "r = - Bc / Ac"
+      have "0 \<le> 2 * r * Bc + r\<^sup>2 * Ac"
+        using nn[of "q + r *\<^sub>R z"] expand[of r] by simp
+      also have "2 * r * Bc + r\<^sup>2 * Ac = - (Bc\<^sup>2 / Ac)"
+        unfolding r_def using AcP by (simp add: power2_eq_square field_simps)
+      finally have h: "Bc\<^sup>2 / Ac \<le> 0" by simp
+      have "0 < Bc * Bc"
+        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
+            simp: not_less le_less)
+      then have "0 < Bc\<^sup>2 / Ac"
+        using AcP by (simp add: power2_eq_square divide_pos_pos)
+      with h show False by linarith
+    qed
+  qed
+  have "(a *v q) \<bullet> (a *v q) = 0" using cross[of "a *v q"] by simp
+  then show ?thesis by simp
+qed
+
+section \<open>Sums of outer products: the toolkit\<close>
+
+lemma onormal_subset:
+  assumes B: "onormal B" and S: "S \<subseteq> B"
+  shows "onormal S"
+  using B S unfolding onormal_def
+  by (auto intro: finite_subset pairwise_subset)
+
+lemma matvec_sum_outer:
+  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
+  assumes finS: "finite S"
+  shows "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
+proof -
+  have "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z
+      = (\<Sum>u\<in>S. (c u *\<^sub>R outer_prod u u) *v z)"
+    by (rule matrix_vector_mult_sum)
+  also have "\<dots> = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
+    by (rule sum.cong[OF refl])
+      (simp add: scaleR_matrix_vector outer_prod_mv)
+  finally show ?thesis .
+qed
+
+lemma quadform_sum_outer:
+  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
+  assumes finS: "finite S"
+  shows "z \<bullet> ((\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z) = (\<Sum>u\<in>S. c u * (u \<bullet> z)\<^sup>2)"
+proof -
+  have "z \<bullet> ((\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z)
+      = z \<bullet> (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
+    by (simp add: matvec_sum_outer[OF finS])
+  also have "\<dots> = (\<Sum>u\<in>S. z \<bullet> ((c u * (u \<bullet> z)) *\<^sub>R u))"
+    by (rule inner_sum_right)
+  also have "\<dots> = (\<Sum>u\<in>S. c u * (u \<bullet> z)\<^sup>2)"
+    by (rule sum.cong[OF refl])
+      (simp add: inner_scaleR_right inner_commute power2_eq_square
+        algebra_simps)
+  finally show ?thesis .
+qed
+
+lemma traceM_sum_outer:
+  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
+    and M :: "real^'n^'n"
+  shows "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
+      = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
+proof -
+  have "M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u)
+      = (\<Sum>u\<in>S. M ** (c u *\<^sub>R outer_prod u u))"
+    by (rule matrix_mult_sum_right)
+  then have "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
+      = (\<Sum>u\<in>S. trace (M ** (c u *\<^sub>R outer_prod u u)))"
+    by (simp add: trace_matrix_sum)
+  also have "\<dots> = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
+  proof (rule sum.cong[OF refl])
+    fix u assume "u \<in> S"
+    have "trace (M ** (c u *\<^sub>R outer_prod u u))
+        = c u * trace (M ** outer_prod u u)"
+      by (rule trace_mult_scaleR)
+    also have "trace (M ** outer_prod u u) = u \<bullet> (M *v u)"
+      using trace_mult_outerp[of M u] by (simp add: outerp_eq_outer_prod)
+    finally show "trace (M ** (c u *\<^sub>R outer_prod u u))
+        = c u * (u \<bullet> (M *v u))" .
+  qed
+  finally show ?thesis .
+qed
+
+lemma trace_mult_add:
+  fixes M A B :: "real^'n::finite^'n"
+  shows "trace (M ** (A + B)) = trace (M ** A) + trace (M ** B)"
+  by (simp add: trace_mult_sum sum.distrib algebra_simps)
+
+lemma onormal_parseval:
+  fixes B :: "(real^'n::finite) set"
+  assumes B: "onormal B" and sp: "span B = UNIV"
+  shows "(\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) = z \<bullet> z"
+proof -
+  have finB: "finite B" by (rule onormal_finite[OF B])
+  have "(\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) = (\<Sum>u\<in>B. 1 * (u \<bullet> z)\<^sup>2)" by simp
+  also have "\<dots> = z \<bullet> ((\<Sum>u\<in>B. 1 *\<^sub>R outer_prod u u) *v z)"
+    by (rule quadform_sum_outer[OF finB, symmetric])
+  also have "(\<Sum>u\<in>B. (1::real) *\<^sub>R outer_prod u u) = (\<Sum>u\<in>B. outer_prod u u)"
+    by simp
+  also have "\<dots> = mat 1" by (rule onormal_complete[OF B sp])
+  also have "z \<bullet> (mat 1 *v z) = z \<bullet> z" by (simp add: matrix_vector_mul_lid)
+  finally show ?thesis .
+qed
+
+lemma onormal_span_parseval:
+  fixes S :: "(real^'n::finite) set"
+  assumes S: "onormal S" and x: "x \<in> span S"
+  shows "(\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2) = x \<bullet> x"
+proof -
+  have finS: "finite S" by (rule onormal_finite[OF S])
+  have "x \<bullet> x = x \<bullet> (\<Sum>u\<in>S. (u \<bullet> x) *\<^sub>R u)"
+    by (simp add: onormal_expand[OF S x])
+  also have "\<dots> = (\<Sum>u\<in>S. x \<bullet> ((u \<bullet> x) *\<^sub>R u))"
+    by (rule inner_sum_right)
+  also have "\<dots> = (\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2)"
+    by (rule sum.cong[OF refl])
+      (simp add: inner_scaleR_right inner_commute power2_eq_square)
+  finally show ?thesis by simp
+qed
+
+section \<open>Selecting a value-minimal index set: the threshold argument\<close>
+
+text \<open>The linear-programming core of the face argument, done by hand: given
+  weights \<open>c \<in> [0,1]\<close> with total mass \<open>\<ge> m\<close>, some set of \<open>\<ge> m\<close> indices beats
+  the weighted value.  No convexity and no induction on fractional entries:
+  one threshold comparison against the \<open>m\<close>-th smallest value settles it.\<close>
+
+lemma exists_min_subset:
+  fixes w :: "'a \<Rightarrow> real"
+  assumes finB: "finite B"
+  shows "m \<le> card B \<Longrightarrow> \<exists>S. S \<subseteq> B \<and> card S = m
+      \<and> (\<forall>u\<in>S. \<forall>v\<in>B - S. w u \<le> w v)"
+proof (induction m)
+  case 0
+  then show ?case by (intro exI[of _ "{}"]) simp
+next
+  case (Suc m)
+  then obtain S where S: "S \<subseteq> B" "card S = m"
+    and least: "\<forall>u\<in>S. \<forall>v\<in>B - S. w u \<le> w v"
+    using Suc_leD by blast
+  have ne: "B - S \<noteq> {}"
+  proof
+    assume "B - S = {}"
+    then have "B \<subseteq> S" by blast
+    with S(1) have "S = B" by blast
+    with S(2) Suc.prems show False by simp
+  qed
+  have finD: "finite (B - S)" using finB by simp
+  have "Min (w ` (B - S)) \<in> w ` (B - S)"
+    by (intro Min_in finite_imageI finD) (use ne in blast)
+  then obtain v0 where v0: "v0 \<in> B - S" and v0min: "w v0 = Min (w ` (B - S))"
+    by auto
+  have v0le: "\<And>v. v \<in> B - S \<Longrightarrow> w v0 \<le> w v"
+    unfolding v0min by (intro Min_le finite_imageI finD) blast
+  have cS: "card (insert v0 S) = Suc m"
+    using S v0 finB by (simp add: card_insert_disjoint finite_subset)
+  have sub: "insert v0 S \<subseteq> B" using S(1) v0 by blast
+  have prp: "\<forall>u\<in>insert v0 S. \<forall>v\<in>B - insert v0 S. w u \<le> w v"
+  proof (intro ballI)
+    fix u v assume u: "u \<in> insert v0 S" and v: "v \<in> B - insert v0 S"
+    have vBS: "v \<in> B - S" using v by blast
+    show "w u \<le> w v"
+    proof (cases "u = v0")
+      case True
+      then show ?thesis using v0le[OF vBS] by simp
+    next
+      case False
+      then have "u \<in> S" using u by simp
+      then show ?thesis using least vBS by blast
+    qed
+  qed
+  show ?case by (intro exI[of _ "insert v0 S"]) (use cS sub prp in blast)
+qed
+
+lemma weighted_min_value:
+  fixes w c :: "'a \<Rightarrow> real"
+  assumes finB: "finite B" and m1: "1 \<le> m" and mB: "m \<le> card B"
+    and c0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> c u" and c1: "\<And>u. u \<in> B \<Longrightarrow> c u \<le> 1"
+    and csum: "real m \<le> (\<Sum>u\<in>B. c u)"
+  obtains S where "S \<subseteq> B" and "m \<le> card S"
+    and "(\<Sum>u\<in>S. w u) \<le> (\<Sum>u\<in>B. c u * w u)"
+proof -
+  obtain S0 where S0: "S0 \<subseteq> B" and cS0: "card S0 = m"
+    and least: "\<forall>u\<in>S0. \<forall>v\<in>B - S0. w u \<le> w v"
+    using exists_min_subset[OF finB mB] by blast
+  have finS0: "finite S0" using S0 finB by (rule finite_subset)
+  have neS0: "S0 \<noteq> {}" using cS0 m1 by auto
+  define Neg where "Neg = {u \<in> B. w u < 0}"
+  have finNeg: "finite Neg" unfolding Neg_def using finB by simp
+  define \<tau> where "\<tau> = Max (w ` S0)"
+  have tauS0: "\<And>u. u \<in> S0 \<Longrightarrow> w u \<le> \<tau>"
+    unfolding \<tau>_def by (intro Max_ge finite_imageI finS0) blast
+  have tauout: "\<And>v. v \<in> B - S0 \<Longrightarrow> \<tau> \<le> w v"
+    unfolding \<tau>_def
+    by (intro Max.boundedI finite_imageI finS0)
+      (use neS0 least in blast)+
+  show ?thesis
+  proof (cases "Neg \<subseteq> S0")
+    case True
+    \<comment> \<open>the threshold is \<open>max \<tau> 0\<close>; every term is compared against it\<close>
+    define tp where "tp = max \<tau> 0"
+    have tp0: "0 \<le> tp" by (simp add: tp_def)
+    have key: "0 \<le> (\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S0. w u)"
+    proof -
+      have split: "(\<Sum>u\<in>B. c u * w u)
+          = (\<Sum>u\<in>S0. c u * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
+        using sum.subset_diff[OF S0 finB, of "\<lambda>u. c u * w u"] by simp
+      have inS: "\<And>u. u \<in> S0 \<Longrightarrow> (c u - 1) * tp \<le> (c u - 1) * w u"
+      proof -
+        fix u assume u: "u \<in> S0"
+        have wle: "w u \<le> tp" using tauS0[OF u] by (simp add: tp_def)
+        have cle: "c u - 1 \<le> 0" using c1 S0 u by auto
+        show "(c u - 1) * tp \<le> (c u - 1) * w u"
+          using mult_left_mono_neg[OF wle cle] by simp
+      qed
+      have outS: "\<And>u. u \<in> B - S0 \<Longrightarrow> c u * tp \<le> c u * w u"
+      proof -
+        fix u assume u: "u \<in> B - S0"
+        have w0: "0 \<le> w u" using True u unfolding Neg_def by auto
+        have wge: "tp \<le> w u"
+          using tauout[OF u] w0 by (simp add: tp_def)
+        have c0': "0 \<le> c u" using c0 u by auto
+        show "c u * tp \<le> c u * w u"
+          by (rule mult_left_mono[OF wge c0'])
+      qed
+      have "(\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S0. w u)
+          = (\<Sum>u\<in>S0. (c u - 1) * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
+        unfolding split by (simp add: sum_subtractf algebra_simps)
+      moreover have "(\<Sum>u\<in>S0. (c u - 1) * tp) + (\<Sum>u\<in>B - S0. c u * tp)
+          \<le> (\<Sum>u\<in>S0. (c u - 1) * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
+        by (intro add_mono sum_mono inS outS)
+      moreover have "(\<Sum>u\<in>S0. (c u - 1) * tp) + (\<Sum>u\<in>B - S0. c u * tp)
+          = tp * ((\<Sum>u\<in>B. c u) - real m)"
+      proof -
+        have h1: "(\<Sum>u\<in>S0. (c u - 1) * tp)
+            = (\<Sum>u\<in>S0. c u * tp) - real m * tp"
+          by (simp add: sum_subtractf cS0 algebra_simps)
+        have h2: "(\<Sum>u\<in>S0. c u * tp) + (\<Sum>u\<in>B - S0. c u * tp)
+            = (\<Sum>u\<in>B. c u * tp)"
+          using sum.subset_diff[OF S0 finB, of "\<lambda>u. c u * tp"] by simp
+        have h3: "(\<Sum>u\<in>B. c u * tp) = (\<Sum>u\<in>B. c u) * tp"
+          by (simp add: sum_distrib_right)
+        show ?thesis using h1 h2 h3 by (simp add: algebra_simps)
+      qed
+      moreover have "0 \<le> tp * ((\<Sum>u\<in>B. c u) - real m)"
+        using tp0 csum by simp
+      ultimately show ?thesis by linarith
+    qed
+    show ?thesis
+      by (rule that[of S0]) (use S0 cS0 key in auto)
+  next
+    case False
+    \<comment> \<open>a negative weight escaped the minimal set, so \<open>\<tau> < 0\<close> and taking all
+      negatives on top of \<open>S0\<close> costs nothing\<close>
+    obtain vn where vn: "vn \<in> Neg" "vn \<notin> S0" using False by blast
+    have tneg: "\<tau> < 0"
+    proof -
+      have "\<tau> \<le> w vn"
+        using tauout vn unfolding Neg_def by auto
+      also have "w vn < 0" using vn unfolding Neg_def by auto
+      finally show ?thesis .
+    qed
+    define S where "S = S0 \<union> Neg"
+    have SB: "S \<subseteq> B" unfolding S_def Neg_def using S0 by auto
+    have finS: "finite S" using SB finB by (rule finite_subset)
+    have cardS: "m \<le> card S"
+      unfolding S_def using cS0 card_mono[OF finS[unfolded S_def], of S0]
+      by simp
+    have inS: "\<And>u. u \<in> S \<Longrightarrow> w u \<le> 0"
+    proof -
+      fix u assume "u \<in> S"
+      then consider "u \<in> S0" | "u \<in> Neg" unfolding S_def by blast
+      then show "w u \<le> 0"
+      proof cases
+        case 1 then show ?thesis using tauS0 tneg by fastforce
+      next
+        case 2 then show ?thesis unfolding Neg_def by auto
+      qed
+    qed
+    have key: "0 \<le> (\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S. w u)"
+    proof -
+      have split: "(\<Sum>u\<in>B. c u * w u)
+          = (\<Sum>u\<in>S. c u * w u) + (\<Sum>u\<in>B - S. c u * w u)"
+        using sum.subset_diff[OF SB finB, of "\<lambda>u. c u * w u"] by simp
+      have t1: "0 \<le> (\<Sum>u\<in>S. (c u - 1) * w u)"
+      proof (rule sum_nonneg)
+        fix u assume u: "u \<in> S"
+        have c1': "c u - 1 \<le> 0" using c1 SB u by auto
+        have w0: "w u \<le> 0" by (rule inS[OF u])
+        show "0 \<le> (c u - 1) * w u" by (rule mult_nonpos_nonpos[OF c1' w0])
+      qed
+      have t2: "0 \<le> (\<Sum>u\<in>B - S. c u * w u)"
+      proof (rule sum_nonneg)
+        fix u assume u: "u \<in> B - S"
+        have "0 \<le> w u" using u unfolding S_def Neg_def by auto
+        then show "0 \<le> c u * w u" using c0 u by auto
+      qed
+      have "(\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S. w u)
+          = (\<Sum>u\<in>S. (c u - 1) * w u) + (\<Sum>u\<in>B - S. c u * w u)"
+        unfolding split by (simp add: sum_subtractf algebra_simps)
+      with t1 t2 show ?thesis by linarith
+    qed
+    show ?thesis
+      by (rule that[of S]) (use SB cardS key in auto)
+  qed
+qed
+
+section \<open>From the convexified constraint to a feasible witness\<close>
+
+text \<open>The step the paper never needs to make explicit.  A matrix of the
+  CONVEXIFIED constraint set that kills \<open>q\<close> dominates, in any linear value, a
+  matrix of the ORIGINAL feasible set of Eq. (1.9).  The construction is a
+  capped spectral split: write \<open>b\<close> in its eigenbasis, cut the eigenvalues at
+  \<open>1\<close>, decompose the capped part by the threshold selection --- its atoms are
+  PROJECTIONS, so they carry eigenvalue cap \<open>1\<close> --- and hand the excess, which
+  is bounded by \<open>L - 1\<close>, to the chosen atom.  The cap closes at
+  \<open>1 + (L-1) = L\<close>, which is exactly why the split must happen at level \<open>1\<close>
+  and nowhere else.  Orthogonality to \<open>q\<close> survives because every eigendirection
+  that carries weight is orthogonal to \<open>q\<close> already.\<close>
+
+theorem sconstraint_orth_feasible:
+  fixes b M :: "real^'n::finite^'n" and q :: "real^'n"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L"
+    and b: "b \<in> sconstraint k L" and orth: "b *v q = 0"
+  obtains a where "a \<in> feasible k L q"
+    and "- trace (M ** a) / 2 \<le> - trace (M ** b) / 2"
+proof -
+  have psd_b: "psd b" and Pi_b: "b \<in> Pi_constraint k" and ub_b: "eigen_ub b L"
+    using b unfolding sconstraint_def Pi_constraint_def by auto
+  have sym_b: "transpose b = b" using psd_b by (simp add: psd_def)
+  obtain B :: "(real^'n) set" where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> b *v u = (u \<bullet> (b *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF sym_b] by blast
+  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF B])
+  have finB: "finite B" by (rule onormal_finite[OF B(1)])
+  define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (b *v u))"
+  have lam_nn: "0 \<le> lam u" for u
+    using psd_b by (simp add: lam_def psd_def)
+  have lam_le: "\<And>u. u \<in> B \<Longrightarrow> lam u \<le> L"
+  proof -
+    fix u assume u: "u \<in> B"
+    have "u \<bullet> (b *v u) \<le> L * (u \<bullet> u)"
+      using ub_b unfolding eigen_ub_def by blast
+    then show "lam u \<le> L"
+      using onormal_inner_self[OF B(1) u] by (simp add: lam_def)
+  qed
+  have bdecomp: "b = (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)"
+    unfolding lam_def by (rule spectral_decomposition[OF B eig])
+  \<comment> \<open>every eigendirection with weight is orthogonal to \<open>q\<close>\<close>
+  have orthu: "\<And>u. u \<in> B \<Longrightarrow> lam u * (u \<bullet> q) = 0"
+  proof -
+    fix u assume u: "u \<in> B"
+    have "u \<bullet> (b *v q) = 0" using orth by simp
+    moreover have "u \<bullet> (b *v q) = (b *v u) \<bullet> q"
+    proof -
+      have "u \<bullet> (b *v q) = (transpose b *v u) \<bullet> q"
+        by (rule inner_transpose_matrix)
+      then show ?thesis using sym_b by simp
+    qed
+    moreover have "(b *v u) \<bullet> q = lam u * (u \<bullet> q)"
+    proof -
+      have "(b *v u) \<bullet> q = ((u \<bullet> (b *v u)) *\<^sub>R u) \<bullet> q"
+        by (rule arg_cong[where f = "\<lambda>v. v \<bullet> q", OF eig[OF u]])
+      then show ?thesis by (simp add: inner_scaleR_left lam_def)
+    qed
+    ultimately show "lam u * (u \<bullet> q) = 0" by simp
+  qed
+  define cap where "cap = (\<lambda>u :: real^'n. min (lam u) 1)"
+  have cap_nn: "0 \<le> cap u" for u using lam_nn by (simp add: cap_def)
+  have cap_le1: "cap u \<le> 1" for u by (simp add: cap_def)
+  have cap_le_lam: "cap u \<le> lam u" for u by (simp add: cap_def)
+  define m where "m = CARD('n) - k"
+  have m1: "1 \<le> m" using kn by (simp add: m_def)
+  have capsum: "real m \<le> (\<Sum>u\<in>B. cap u)"
+    unfolding cap_def lam_def m_def
+    by (rule Pi_constraint_capped_trace[OF Pi_b kn B(1) cardB eig])
+  define B' where "B' = {u \<in> B. 0 < lam u}"
+  have B'B: "B' \<subseteq> B" unfolding B'_def by blast
+  have finB': "finite B'" using B'B finB by (rule finite_subset)
+  have cap0: "\<And>u. u \<in> B - B' \<Longrightarrow> cap u = 0"
+  proof -
+    fix u assume "u \<in> B - B'"
+    then have "lam u \<le> 0" unfolding B'_def by auto
+    then have "lam u = 0" using lam_nn[of u] by simp
+    then show "cap u = 0" by (simp add: cap_def)
+  qed
+  have capsum': "real m \<le> (\<Sum>u\<in>B'. cap u)"
+  proof -
+    have "(\<Sum>u\<in>B. cap u) = (\<Sum>u\<in>B'. cap u)"
+      by (rule sum.mono_neutral_right[OF finB B'B]) (use cap0 in auto)
+    then show ?thesis using capsum by simp
+  qed
+  have mB': "m \<le> card B'"
+  proof -
+    have "(\<Sum>u\<in>B'. cap u) \<le> (\<Sum>u\<in>B'. 1)"
+      by (rule sum_mono) (rule cap_le1)
+    then have "real m \<le> real (card B')" using capsum' by simp
+    then show ?thesis by simp
+  qed
+  have orthB': "\<And>u. u \<in> B' \<Longrightarrow> u \<bullet> q = 0"
+  proof -
+    fix u assume u: "u \<in> B'"
+    have "lam u * (u \<bullet> q) = 0" using orthu B'B u by blast
+    moreover have "lam u \<noteq> 0" using u unfolding B'_def by auto
+    ultimately show "u \<bullet> q = 0" by simp
+  qed
+  \<comment> \<open>select the value-minimal index set with the weights \<open>- u \<bullet> (M *v u)\<close>\<close>
+  obtain S where SB': "S \<subseteq> B'" and cardS: "m \<le> card S"
+    and Sval: "(\<Sum>u\<in>S. - (u \<bullet> (M *v u)))
+        \<le> (\<Sum>u\<in>B'. cap u * - (u \<bullet> (M *v u)))"
+    by (rule weighted_min_value[OF finB' m1 mB' cap_nn cap_le1 capsum'])
+  have SB: "S \<subseteq> B" using SB' B'B by blast
+  have finS: "finite S" using SB finB by (rule finite_subset)
+  define rho where "rho = (\<lambda>u :: real^'n. lam u - cap u)"
+  have rho_nn: "0 \<le> rho u" for u
+    by (simp add: rho_def cap_le_lam)
+  have rho_le: "\<And>u. u \<in> B \<Longrightarrow> rho u \<le> L - 1"
+  proof -
+    fix u assume u: "u \<in> B"
+    show "rho u \<le> L - 1"
+    proof (cases "lam u \<le> 1")
+      case True
+      then have "rho u = 0" by (simp add: rho_def cap_def)
+      then show ?thesis using L1 by simp
+    next
+      case False
+      then have "rho u = lam u - 1" by (simp add: rho_def cap_def)
+      then show ?thesis using lam_le[OF u] by simp
+    qed
+  qed
+  have rho_orth: "\<And>u. u \<in> B \<Longrightarrow> rho u * (u \<bullet> q) = 0"
+  proof -
+    fix u assume u: "u \<in> B"
+    show "rho u * (u \<bullet> q) = 0"
+    proof (cases "rho u = 0")
+      case True then show ?thesis by simp
+    next
+      case False
+      then have "lam u \<noteq> 0" by (simp add: rho_def cap_def min_def split: if_splits)
+      then have "0 < lam u" using lam_nn[of u] by simp
+      then have "u \<in> B'" using u unfolding B'_def by simp
+      then show ?thesis using orthB' by simp
+    qed
+  qed
+  define R where "R = (\<Sum>u\<in>B. rho u *\<^sub>R outer_prod u u)"
+  define a where "a = (\<Sum>u\<in>S. outer_prod u u) + R"
+  \<comment> \<open>the quadratic form of \<open>a\<close>\<close>
+  have quad_a: "z \<bullet> (a *v z)
+      = (\<Sum>u\<in>S. (u \<bullet> z)\<^sup>2) + (\<Sum>u\<in>B. rho u * (u \<bullet> z)\<^sup>2)" for z
+  proof -
+    have "a *v z = (\<Sum>u\<in>S. outer_prod u u) *v z + R *v z"
+      unfolding a_def by (simp add: matrix_vector_mult_add_rdistrib)
+    then have "z \<bullet> (a *v z)
+        = z \<bullet> ((\<Sum>u\<in>S. outer_prod u u) *v z) + z \<bullet> (R *v z)"
+      by (simp add: inner_add_right)
+    moreover have "z \<bullet> ((\<Sum>u\<in>S. outer_prod u u) *v z) = (\<Sum>u\<in>S. (u \<bullet> z)\<^sup>2)"
+      using quadform_sum_outer[OF finS, where c = "\<lambda>_. 1" and z = z] by simp
+    moreover have "z \<bullet> (R *v z) = (\<Sum>u\<in>B. rho u * (u \<bullet> z)\<^sup>2)"
+      unfolding R_def by (rule quadform_sum_outer[OF finB])
+    ultimately show ?thesis by simp
+  qed
+  have quad_a_nn: "0 \<le> z \<bullet> (a *v z)" for z
+    unfolding quad_a
+    by (intro add_nonneg_nonneg sum_nonneg)
+      (auto intro: mult_nonneg_nonneg rho_nn)
+  have sym_a: "transpose a = a"
+  proof -
+    have t1: "transpose (\<Sum>u\<in>S. outer_prod u u) = (\<Sum>u\<in>S. outer_prod u u)"
+      by (simp add: transpose_matrix_sum transpose_outer_prod)
+    have t2: "transpose R = R"
+    proof -
+      have "transpose R = (\<Sum>u\<in>B. transpose (rho u *\<^sub>R outer_prod u u))"
+        unfolding R_def by (rule transpose_matrix_sum)
+      also have "\<dots> = (\<Sum>u\<in>B. rho u *\<^sub>R outer_prod u u)"
+        by (rule sum.cong[OF refl])
+          (simp add: transpose_def vec_eq_iff outer_prod_def mult.commute)
+      finally show ?thesis unfolding R_def .
+    qed
+    have "transpose a = transpose (\<Sum>u\<in>S. outer_prod u u) + transpose R"
+      unfolding a_def by (simp add: transpose_def vec_eq_iff)
+    then show ?thesis unfolding a_def using t1 t2 by simp
+  qed
+  have psd_a: "psd a"
+    unfolding psd_def using sym_a quad_a_nn by blast
+  have aq: "a *v q = 0"
+  proof -
+    have "(\<Sum>u\<in>S. outer_prod u u) *v q = (\<Sum>u\<in>S. (1 * (u \<bullet> q)) *\<^sub>R u)"
+      using matvec_sum_outer[OF finS, of "\<lambda>_. 1" q] by simp
+    also have "\<dots> = 0"
+      by (rule sum.neutral) (use orthB' SB' in auto)
+    finally have z1: "(\<Sum>u\<in>S. outer_prod u u) *v q = 0" .
+    have "R *v q = (\<Sum>u\<in>B. (rho u * (u \<bullet> q)) *\<^sub>R u)"
+      unfolding R_def by (rule matvec_sum_outer[OF finB])
+    also have "\<dots> = 0"
+      by (rule sum.neutral) (use rho_orth in auto)
+    finally have z2: "R *v q = 0" .
+    show ?thesis
+      unfolding a_def by (simp add: matrix_vector_mult_add_rdistrib z1 z2)
+  qed
+  have lb_a: "eigen_lb a (CARD('n) - k)"
+    unfolding eigen_lb_def
+  proof (intro exI[of _ "span S"] conjI)
+    show "subspace (span S)" by (rule subspace_span)
+    have "card S = dim (span S)"
+      by (rule onormal_card_dim_span[OF onormal_subset[OF B(1) SB]])
+    then show "CARD('n) - k \<le> dim (span S)"
+      using cardS m_def by simp
+    show "\<forall>x\<in>span S. x \<bullet> x \<le> x \<bullet> (a *v x)"
+    proof
+      fix x assume x: "x \<in> span S"
+      have "x \<bullet> x = (\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2)"
+        by (rule onormal_span_parseval[OF onormal_subset[OF B(1) SB] x,
+              symmetric])
+      also have "\<dots> \<le> (\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2) + (\<Sum>u\<in>B. rho u * (u \<bullet> x)\<^sup>2)"
+        by (simp add: sum_nonneg mult_nonneg_nonneg rho_nn)
+      finally show "x \<bullet> x \<le> x \<bullet> (a *v x)" unfolding quad_a .
+    qed
+  qed
+  have ub_a: "eigen_ub a L"
+    unfolding eigen_ub_def
+  proof
+    fix z :: "real^'n"
+    have "(\<Sum>u\<in>S. (u \<bullet> z)\<^sup>2) \<le> (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2)"
+      by (rule sum_mono2[OF finB SB]) auto
+    moreover have "(\<Sum>u\<in>B. rho u * (u \<bullet> z)\<^sup>2)
+        \<le> (\<Sum>u\<in>B. (L - 1) * (u \<bullet> z)\<^sup>2)"
+      by (rule sum_mono) (auto intro: mult_right_mono rho_le)
+    ultimately have "z \<bullet> (a *v z)
+        \<le> (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) + (L - 1) * (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2)"
+      unfolding quad_a by (simp add: sum_distrib_left)
+    also have "\<dots> = L * (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2)" by (simp add: algebra_simps)
+    also have "\<dots> = L * (z \<bullet> z)" by (simp add: onormal_parseval[OF B])
+    finally show "z \<bullet> (a *v z) \<le> L * (z \<bullet> z)" .
+  qed
+  have feas: "a \<in> feasible k L q"
+    unfolding feasible_def using psd_a aq lb_a ub_a by blast
+  \<comment> \<open>the value comparison\<close>
+  have val: "trace (M ** b) \<le> trace (M ** a)"
+  proof -
+    have capdec: "b = (\<Sum>u\<in>B. cap u *\<^sub>R outer_prod u u) + R"
+    proof -
+      have "(\<Sum>u\<in>B. cap u *\<^sub>R outer_prod u u) + R
+          = (\<Sum>u\<in>B. cap u *\<^sub>R outer_prod u u + rho u *\<^sub>R outer_prod u u)"
+        unfolding R_def by (rule sum.distrib[symmetric])
+      also have "\<dots> = (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)"
+        by (rule sum.cong[OF refl])
+          (simp add: rho_def scaleR_add_left[symmetric])
+      finally show ?thesis using bdecomp by simp
+    qed
+    have vb: "trace (M ** b)
+        = (\<Sum>u\<in>B. cap u * (u \<bullet> (M *v u))) + trace (M ** R)"
+      by (subst capdec) (simp add: trace_mult_add traceM_sum_outer)
+    have va: "trace (M ** a)
+        = (\<Sum>u\<in>S. u \<bullet> (M *v u)) + trace (M ** R)"
+    proof -
+      have "trace (M ** (\<Sum>u\<in>S. outer_prod u u)) = (\<Sum>u\<in>S. u \<bullet> (M *v u))"
+        using traceM_sum_outer[where M = M and S = S and c = "\<lambda>_. 1"] by simp
+      then show ?thesis
+        unfolding a_def by (simp add: trace_mult_add)
+    qed
+    have capval: "(\<Sum>u\<in>B. cap u * (u \<bullet> (M *v u)))
+        = (\<Sum>u\<in>B'. cap u * (u \<bullet> (M *v u)))"
+      by (rule sum.mono_neutral_right[OF finB B'B]) (use cap0 in auto)
+    have "(\<Sum>u\<in>B'. cap u * (u \<bullet> (M *v u))) \<le> (\<Sum>u\<in>S. u \<bullet> (M *v u))"
+    proof -
+      have "- (\<Sum>u\<in>S. u \<bullet> (M *v u)) \<le> - (\<Sum>u\<in>B'. cap u * (u \<bullet> (M *v u)))"
+        using Sval by (simp add: sum_negf mult_minus_right)
+      then show ?thesis by simp
+    qed
+    then show ?thesis using vb va capval by simp
+  qed
+  have "- trace (M ** a) / 2 \<le> - trace (M ** b) / 2"
+    using val by simp
+  then show ?thesis using that feas by blast
+qed
+
+section \<open>The DPP capped at an arbitrary \<open>[0,T]\<close>-valued time\<close>
+
+theorem paper_v_cond_at_time:
+  fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+    and y :: "real^'n" and \<theta> :: "'n pairpath \<Rightarrow> real"
+  assumes T0: "0 \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
+    and P: "P \<in> paper_pair_class k L T y"
+    and c: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+    and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
+  shows "AE \<omega> in P. c \<le> \<theta> \<omega>
+      + min (enn2real (paper_v k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
+proof -
+  have "AE \<omega> in P. c \<le> \<theta> \<omega>
+      + enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
+    by (rule paper_v_cond_time[OF T0 L1 Kc P c th0 thT])
+  then show ?thesis
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume h: "c \<le> \<theta> \<omega>
+        + enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
+    have a: "0 \<le> T - \<theta> \<omega>" using thT[of \<omega>] by simp
+    have b: "T - \<theta> \<omega> \<le> T" using th0[of \<omega>] by simp
+    have "enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+        = min (enn2real (paper_v k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
+      by (rule enn2real_paper_v_horizon_cap[OF a b L1 Kc])
+    with h show "c \<le> \<theta> \<omega>
+        + min (enn2real (paper_v k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
+      by simp
+  qed
+qed
+
+section \<open>Small pointwise bounds\<close>
+
+lemma quadform_abs_le:
+  fixes M :: "real^'n::finite^'n" and v :: "real^'n"
+  shows "\<bar>v \<bullet> (M *v v)\<bar> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (norm v)\<^sup>2"
+proof -
+  have e: "v \<bullet> (M *v v) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. v $ i * (M $ i $ j * v $ j))"
+    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
+  have "\<bar>v \<bullet> (M *v v)\<bar> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>v $ i * (M $ i $ j * v $ j)\<bar>)"
+    unfolding e by (intro order_trans[OF sum_abs] sum_mono sum_abs)
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * (norm v)\<^sup>2)"
+  proof (intro sum_mono)
+    fix i j :: 'n
+    have vi: "\<bar>v $ i\<bar> \<le> norm v" by (rule component_le_norm_cart)
+    have vj: "\<bar>v $ j\<bar> \<le> norm v" by (rule component_le_norm_cart)
+    have "\<bar>v $ i * (M $ i $ j * v $ j)\<bar> = \<bar>M $ i $ j\<bar> * (\<bar>v $ i\<bar> * \<bar>v $ j\<bar>)"
+      by (simp add: abs_mult algebra_simps)
+    also have "\<dots> \<le> \<bar>M $ i $ j\<bar> * (norm v * norm v)"
+      by (intro mult_left_mono mult_mono vi vj) auto
+    finally show "\<bar>v $ i * (M $ i $ j * v $ j)\<bar>
+        \<le> \<bar>M $ i $ j\<bar> * (norm v)\<^sup>2"
+      by (simp add: power2_eq_square)
+  qed
+  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (norm v)\<^sup>2"
+    by (simp add: sum_distrib_right)
+  finally show ?thesis .
+qed
+
+lemma axis1_inner:
+  fixes w :: "real^'n::finite"
+  shows "axis i 1 \<bullet> w = w $ i"
+proof -
+  have "axis i 1 \<bullet> w = (\<Sum>l\<in>UNIV. axis i 1 $ l * w $ l)"
+    by (simp add: inner_vec_def)
+  also have "\<dots> = (\<Sum>l\<in>UNIV. if l = i then w $ l else 0)"
+    by (rule sum.cong[OF refl]) (simp add: axis_def)
+  also have "\<dots> = w $ i" by (simp add: sum.delta)
+  finally show ?thesis .
+qed
+
+lemma axis1_self:
+  fixes i :: "'n::finite"
+  shows "axis i 1 \<bullet> (axis i 1 :: real^'n) = (1::real)"
+proof -
+  have "axis i 1 \<bullet> (axis i 1 :: real^'n) = axis i 1 $ i"
+    by (rule axis1_inner)
+  also have "\<dots> = 1" by (simp add: axis_def)
+  finally show ?thesis .
+qed
+
+lemma matvec_axis1:
+  fixes a :: "real^'n::finite^'n"
+  shows "(a *v axis i 1) $ l = a $ l $ i"
+proof -
+  have "(a *v axis i 1) $ l = (\<Sum>j\<in>UNIV. a $ l $ j * axis i 1 $ j)"
+    by (simp add: matrix_vector_mult_def)
+  also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
+    by (rule sum.cong[OF refl]) (simp add: axis_def)
+  also have "\<dots> = a $ l $ i" by (simp add: sum.delta)
+  finally show ?thesis .
+qed
+
+lemma trace_eq_sum_axis:
+  fixes a :: "real^'n::finite^'n"
+  shows "trace a = (\<Sum>i\<in>UNIV. axis i 1 \<bullet> (a *v axis i 1))"
+proof -
+  have e: "axis i 1 \<bullet> (a *v axis i 1) = a $ i $ i" for i :: 'n
+    by (simp add: axis1_inner matvec_axis1)
+  show ?thesis by (simp add: trace_def e)
+qed
+
+section \<open>Moments at a stopping time, assembled\<close>
+
+lemma paper_pair_class_stopped_moments:
+  fixes P :: "('n::finite pairpath) measure" and x q :: "real^'n"
+    and M :: "real^'n^'n"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows stopped_X_int: "integrable P (\<lambda>\<omega>. fst (\<omega> (\<theta> \<omega>)))"
+    and stopped_X_mean: "(\<integral>\<omega>. fst (\<omega> (\<theta> \<omega>)) \<partial>P) = x"
+    and stopped_lin_int: "integrable P (\<lambda>\<omega>. q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))"
+    and stopped_lin_mean: "(\<integral>\<omega>. q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x) \<partial>P) = 0"
+    and stopped_quad_int: "integrable P
+      (\<lambda>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x)))"
+    and stopped_quad_mean: "(\<integral>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x)
+        \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x)) \<partial>P)
+      = trace (M ** (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))"
+proof -
+  let ?Xf = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta> \<omega>))"
+  let ?Yf = "\<lambda>\<omega> :: 'n pairpath. snd (\<omega> (\<theta> \<omega>))"
+  have T0: "0 \<le> T" using T by simp
+  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
+  have iXc: "integrable P (\<lambda>\<omega>. ?Xf \<omega> $ c)" for c
+    using paper_pair_class_X_entry_stopped(1)[OF T L0 P st thM] .
+  have EXc: "(\<integral>\<omega>. ?Xf \<omega> $ c \<partial>P) = x $ c" for c
+    using paper_pair_class_X_entry_stopped(2)[OF T L0 P st thM] .
+  have iCc: "integrable P (\<lambda>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd)" for cc dd
+    using paper_pair_class_comp_entry_stopped(1)[OF T L0 P st thM] .
+  have ECc: "(\<integral>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd \<partial>P) = outerp x $ cc $ dd"
+    for cc dd
+    using paper_pair_class_comp_entry_stopped(2)[OF T L0 P st thM] .
+  have iY: "integrable P ?Yf"
+    by (rule paper_pair_class_Y_stopped_integrable[OF T0 L0 P st thM])
+  show iX: "integrable P ?Xf"
+  proof -
+    have "integrable P (\<lambda>\<omega>. \<chi> c. ?Xf \<omega> $ c)"
+      by (intro integrable_vec_components iXc)
+    then show ?thesis by simp
+  qed
+  show EX: "(\<integral>\<omega>. ?Xf \<omega> \<partial>P) = x"
+  proof -
+    have "(\<integral>\<omega>. ?Xf \<omega> \<partial>P) $ c = x $ c" for c
+      using integral_of_bounded_linear[OF bounded_linear_vec_nth iX] EXc[of c]
+      by simp
+    then show ?thesis by (simp add: vec_eq_iff)
+  qed
+  have ig1: "integrable P (\<lambda>\<omega>. q \<bullet> ?Xf \<omega>)"
+    by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
+  have Eg1: "(\<integral>\<omega>. q \<bullet> ?Xf \<omega> \<partial>P) = q \<bullet> x"
+    using integral_of_bounded_linear[OF bounded_linear_inner_right iX] EX
+    by simp
+  have lin_eq: "(\<lambda>\<omega>. q \<bullet> (?Xf \<omega> - x)) = (\<lambda>\<omega>. q \<bullet> ?Xf \<omega> - q \<bullet> x)"
+    by (simp add: fun_eq_iff inner_diff_right)
+  show "integrable P (\<lambda>\<omega>. q \<bullet> (?Xf \<omega> - x))"
+    unfolding lin_eq
+    by (intro Bochner_Integration.integrable_diff ig1 PP.integrable_const)
+  show "(\<integral>\<omega>. q \<bullet> (?Xf \<omega> - x) \<partial>P) = 0"
+    unfolding lin_eq
+    using Bochner_Integration.integral_diff[OF ig1 PP.integrable_const] Eg1
+    by (simp add: PP.prob_space)
+  \<comment> \<open>the quadratic part, through the compensated entries\<close>
+  have blM: "bounded_linear (\<lambda>w :: real^'n. M *v w)"
+    unfolding linear_conv_bounded_linear[symmetric]
+    by (rule matrix_vector_mul_linear)
+  have ig2: "integrable P (\<lambda>\<omega>. x \<bullet> (M *v ?Xf \<omega>))"
+    by (rule integrable_bounded_linear[OF bounded_linear_compose
+          [OF bounded_linear_inner_right blM] iX])
+  have Eg2: "(\<integral>\<omega>. x \<bullet> (M *v ?Xf \<omega>) \<partial>P) = x \<bullet> (M *v x)"
+    using integral_of_bounded_linear[OF bounded_linear_compose
+        [OF bounded_linear_inner_right blM] iX] EX by simp
+  have ig3: "integrable P (\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v x))"
+    by (rule integrable_bounded_linear[OF bounded_linear_inner_left iX])
+  have Eg3: "(\<integral>\<omega>. ?Xf \<omega> \<bullet> (M *v x) \<partial>P) = x \<bullet> (M *v x)"
+    using integral_of_bounded_linear[OF bounded_linear_inner_left iX] EX
+    by simp
+  have icomp: "integrable P (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)))"
+    unfolding trace_mult_sum
+    by (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+  have Ecomp: "(\<integral>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) \<partial>P)
+      = trace (M ** outerp x)"
+  proof -
+    have "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV.
+          M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P)
+        = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (\<Sum>j\<in>UNIV.
+            M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P))"
+      by (rule Bochner_Integration.integral_sum)
+        (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+    also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV.
+        (\<integral>\<omega>. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i \<partial>P))"
+      by (intro sum.cong refl Bochner_Integration.integral_sum
+          integrable_cmult iCc)
+    also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * outerp x $ j $ i)"
+    proof -
+      have iCc': "integrable P
+          (\<lambda>\<omega>. outerp (?Xf \<omega>) $ cc $ dd - ?Yf \<omega> $ cc $ dd)" for cc dd
+      proof -
+        have e: "(\<lambda>\<omega>. outerp (?Xf \<omega>) $ cc $ dd - ?Yf \<omega> $ cc $ dd)
+            = (\<lambda>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd)" by simp
+        show ?thesis unfolding e by (rule iCc)
+      qed
+      have ECc': "(\<integral>\<omega>. outerp (?Xf \<omega>) $ cc $ dd - ?Yf \<omega> $ cc $ dd \<partial>P)
+          = outerp x $ cc $ dd" for cc dd
+      proof -
+        have e: "(\<lambda>\<omega>. outerp (?Xf \<omega>) $ cc $ dd - ?Yf \<omega> $ cc $ dd)
+            = (\<lambda>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd)" by simp
+        show ?thesis unfolding e by (rule ECc)
+      qed
+      show ?thesis
+        by (intro sum.cong refl)
+          (simp add: integral_cmult[OF iCc'] ECc')
+    qed
+    finally show ?thesis unfolding trace_mult_sum .
+  qed
+  have itrY: "integrable P (\<lambda>\<omega>. trace (M ** ?Yf \<omega>))"
+    by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left iY])
+  have EtrY: "(\<integral>\<omega>. trace (M ** ?Yf \<omega>) \<partial>P)
+      = trace (M ** (\<integral>\<omega>. ?Yf \<omega> \<partial>P))"
+    by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left iY])
+  have g4eq: "(\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>))
+      = (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) + trace (M ** ?Yf \<omega>))"
+    by (rule ext) (simp add: trace_mult_diff trace_mult_outerp)
+  have ig4: "integrable P (\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>))"
+    unfolding g4eq by (intro Bochner_Integration.integrable_add icomp itrY)
+  have Eg4: "(\<integral>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>) \<partial>P)
+      = x \<bullet> (M *v x) + trace (M ** (\<integral>\<omega>. ?Yf \<omega> \<partial>P))"
+    unfolding g4eq
+    using Bochner_Integration.integral_add[OF icomp itrY] Ecomp EtrY
+    by (simp add: trace_mult_outerp)
+  have quad_eq: "(\<lambda>\<omega>. (?Xf \<omega> - x) \<bullet> (M *v (?Xf \<omega> - x)))
+      = (\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>) - x \<bullet> (M *v ?Xf \<omega>)
+          - ?Xf \<omega> \<bullet> (M *v x) + x \<bullet> (M *v x))"
+  proof (rule ext)
+    fix \<omega> :: "'n pairpath"
+    have lind: "M *v (a - b) = M *v a - M *v b" for a b :: "real^'n"
+      using linear_diff[OF matrix_vector_mul_linear, of M] by simp
+    show "(?Xf \<omega> - x) \<bullet> (M *v (?Xf \<omega> - x))
+        = ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>) - x \<bullet> (M *v ?Xf \<omega>)
+          - ?Xf \<omega> \<bullet> (M *v x) + x \<bullet> (M *v x)"
+      by (simp add: lind inner_diff_left inner_diff_right algebra_simps)
+  qed
+  show "integrable P (\<lambda>\<omega>. (?Xf \<omega> - x) \<bullet> (M *v (?Xf \<omega> - x)))"
+    unfolding quad_eq
+    by (intro Bochner_Integration.integrable_add
+        Bochner_Integration.integrable_diff ig4 ig2 ig3 PP.integrable_const)
+  show "(\<integral>\<omega>. (?Xf \<omega> - x) \<bullet> (M *v (?Xf \<omega> - x)) \<partial>P)
+      = trace (M ** (\<integral>\<omega>. ?Yf \<omega> \<partial>P))"
+    unfolding quad_eq
+    using Bochner_Integration.integral_add[OF
+        Bochner_Integration.integrable_diff[OF
+          Bochner_Integration.integrable_diff[OF ig4 ig2] ig3]
+        PP.integrable_const]
+      Bochner_Integration.integral_diff[OF
+        Bochner_Integration.integrable_diff[OF ig4 ig2] ig3]
+      Bochner_Integration.integral_diff[OF ig4 ig2]
+      Eg4 Eg2 Eg3 by (simp add: PP.prob_space)
+qed
+
+lemma paper_pair_class_stopped_var:
+  fixes P :: "('n::finite pairpath) measure" and x q :: "real^'n"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "integrable P (\<lambda>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2)"
+    and "(\<integral>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2 \<partial>P)
+      = q \<bullet> ((\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P) *v q)"
+proof -
+  have e: "(\<lambda>\<omega> :: 'n pairpath. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2)
+      = (\<lambda>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (outerp q *v (fst (\<omega> (\<theta> \<omega>)) - x)))"
+    by (rule ext) (simp add: quadform_outerp)
+  show "integrable P (\<lambda>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2)"
+    unfolding e
+    by (rule paper_pair_class_stopped_moments(5)[OF T L0 P st thM])
+  have "(\<integral>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2 \<partial>P)
+      = trace (outerp q ** (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))"
+    unfolding e
+    by (rule paper_pair_class_stopped_moments(6)[OF T L0 P st thM])
+  then show "(\<integral>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2 \<partial>P)
+      = q \<bullet> ((\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P) *v q)"
+    by (simp add: trace_outerp_mult)
+qed
+
+lemma paper_pair_class_stopped_normsq:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+        (path_metric T :: ('n pairpath) metric)))"
+  shows "(\<integral>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x) \<partial>P)
+      = trace (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P)"
+proof -
+  have e: "(\<lambda>\<omega> :: 'n pairpath.
+      (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))
+      = (\<lambda>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (mat 1 *v (fst (\<omega> (\<theta> \<omega>)) - x)))"
+    by (simp add: fun_eq_iff matrix_vector_mul_lid)
+  have "(\<integral>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x) \<partial>P)
+      = trace (mat 1 ** (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))"
+    unfolding e
+    by (rule paper_pair_class_stopped_moments(6)[OF T L0 P st thM])
+  then show ?thesis by (simp add: matrix_mul_lid)
+qed
+
+section \<open>The near-orthogonal direction: the anti-concentration dichotomy\<close>
+
+text \<open>The Girsanov-free replacement for the paper's exponential martingale
+  ((3.18)--(3.19)).  The DPP + touching inequality is ALMOST SURE, so if the
+  averaged covariation kept variance \<open>\<ge> \<epsilon>\<^sub>0\<close> in the gradient direction, the
+  martingale \<open>q \<bullet> X\<close> would take a negative value larger than the entire
+  drift-plus-curvature budget \<open>t + C\<epsilon>\<^sup>2/2\<close> on a set of positive measure ---
+  contradiction.  The quantitative form needs no fourth moment: the stopped
+  increment is BOUNDED by \<open>\<bar>q\<bar>\<epsilon>\<close>, so a bare indicator split gives the
+  anti-concentration, and the scaling \<open>t := \<epsilon>\<^sup>2/(2nL)\<close> closes the loop.\<close>
+
+theorem paper_v_touch_near_orth:
+  fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and eb: "0 < ebar"
+    and touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
+        enn2real (paper_v k L T K z)
+          \<le> enn2real (paper_v k L T K x) + q \<bullet> (z - x)
+            + ((z - x) \<bullet> (M *v (z - x))) / 2"
+    and e0: "0 < \<epsilon>\<^sub>0"
+  obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
+    and "q \<bullet> (b *v q) < \<epsilon>\<^sub>0"
+proof (cases "q = 0")
+  case True
+  obtain b where bmem: "b \<in> sconstraint k L"
+    and w: "- trace (M ** b) / 2 \<le> 1"
+    by (rule paper_v_subsol_quadratic_ball[OF T L1 Kc eb touch])
+  have "q \<bullet> (b *v q) < \<epsilon>\<^sub>0" using True e0 by simp
+  then show ?thesis using that bmem w by blast
+next
+  case False
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have T0: "0 \<le> T" using T by simp
+  have L0: "0 \<le> L" using L1 by simp
+  define nq where "nq = norm q"
+  have nq0: "0 < nq" using False by (simp add: nq_def)
+  define n' where "n' = real CARD('n)"
+  have n'1: "1 \<le> n'" unfolding n'_def
+    using zero_less_card_finite[where 'a = 'n]
+    by (simp add: Suc_leI of_nat_le_iff [symmetric])
+  define Cm where "Cm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+  have Cm0: "0 \<le> Cm" unfolding Cm_def by (intro sum_nonneg) auto
+  define \<beta> where "\<beta> = 1 / (2 * n' * n' * L)"
+  have b0: "0 < \<beta>" unfolding \<beta>_def using n'1 L1 by simp
+  define \<epsilon>K where "\<epsilon>K = sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta>
+      / (16 * nq\<^sup>2 * (\<beta> + Cm / 2))"
+  have den0: "0 < 16 * nq\<^sup>2 * (\<beta> + Cm / 2)"
+    using nq0 b0 Cm0 by (simp add: power2_eq_square)
+  have eK0: "0 < \<epsilon>K"
+    unfolding \<epsilon>K_def using e0 b0 den0 by (simp add: divide_pos_pos)
+  define \<epsilon> where "\<epsilon> = min ebar (min (sqrt (T / \<beta>)) (\<epsilon>K / 2))"
+  have eps0: "0 < \<epsilon>"
+    unfolding \<epsilon>_def using eb T b0 eK0 by simp
+  have epseb: "\<epsilon> \<le> ebar" unfolding \<epsilon>_def by simp
+  have epsK: "\<epsilon> \<le> \<epsilon>K / 2" unfolding \<epsilon>_def by simp
+  define t where "t = \<beta> * \<epsilon>\<^sup>2"
+  have t0: "0 < t" unfolding t_def using b0 eps0 by simp
+  have tT: "t \<le> T"
+  proof -
+    have "\<epsilon> \<le> sqrt (T / \<beta>)" unfolding \<epsilon>_def by simp
+    then have "\<epsilon>\<^sup>2 \<le> (sqrt (T / \<beta>))\<^sup>2"
+      using eps0 by (intro power_mono) auto
+    also have "\<dots> = T / \<beta>" using T b0 by simp
+    finally show ?thesis unfolding t_def using b0 by (simp add: field_simps)
+  qed
+  define \<theta>' where "\<theta>' = (\<lambda>\<omega> :: 'n pairpath. min t (pball_exit T x \<epsilon> \<omega>))"
+  have st': "path_stopping_time T \<theta>'"
+    unfolding \<theta>'_def
+    by (rule path_stopping_time_min[OF pball_exit_path_stopping_time[OF T0]])
+      (use t0 tT in auto)
+  have thM': "\<theta>' \<in> borel_measurable ?B"
+    unfolding \<theta>'_def
+    by (intro borel_measurable_min borel_measurable_const
+        pball_exit_measurable[OF T0])
+  have th0': "0 \<le> \<theta>' \<omega>" for \<omega> :: "'n pairpath"
+    unfolding \<theta>'_def using t0 pball_exit_nonneg[OF T0, of x \<epsilon> \<omega>] by simp
+  have thT': "\<theta>' \<omega> \<le> T" for \<omega> :: "'n pairpath"
+    unfolding \<theta>'_def using tT by simp
+  have thle: "\<theta>' \<omega> \<le> pball_exit T x \<epsilon> \<omega>" for \<omega> :: "'n pairpath"
+    unfolding \<theta>'_def by (rule min.cobounded2)
+  have tht: "\<theta>' \<omega> \<le> t" for \<omega> :: "'n pairpath"
+    unfolding \<theta>'_def by (rule min.cobounded1)
+  define u where "u = (\<lambda>z :: real^'n. enn2real (paper_v k L T K z))"
+  obtain P where P: "P \<in> paper_pair_class k L T x"
+    and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        = paper_v k L T K x"
+    using paper_v_attained[OF T L1 Kc] by blast
+  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have thP': "\<theta>' \<in> borel_measurable P"
+    unfolding measurable_cong_sets[OF setsP refl] by (rule thM')
+  let ?Xf = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta>' \<omega>))"
+  let ?Yf = "\<lambda>\<omega> :: 'n pairpath. snd (\<omega> (\<theta>' \<omega>))"
+  let ?V = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta>' \<omega>)) - x"
+  \<comment> \<open>the almost-sure facts\<close>
+  have cAE: "AE \<omega> in P. u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+  proof (rule eventually_mono
+      [OF ess_inf_time_AE[of P "\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))"]])
+    fix \<omega> :: "'n pairpath"
+    assume "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+    then have le: "paper_v k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+      using Pv by simp
+    have "enn2real (paper_v k L T K x)
+        \<le> enn2real (ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
+      by (rule enn2real_mono[OF le ennreal_less_top])
+    then show "u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+      unfolding u_def
+      using pexit_nonneg[OF T0, of K "\<lambda>t. fst (\<omega> t)"] by simp
+  qed
+  have dpp: "AE \<omega> in P. u x \<le> \<theta>' \<omega> + u (?Xf \<omega>)"
+  proof (rule eventually_mono
+      [OF paper_v_cond_at_time[OF T0 L1 Kc P cAE th0' thT']])
+    fix \<omega> :: "'n pairpath"
+    assume "u x \<le> \<theta>' \<omega>
+        + min (enn2real (paper_v k L T K (?Xf \<omega>))) (T - \<theta>' \<omega>)"
+    moreover have "min (enn2real (paper_v k L T K (?Xf \<omega>))) (T - \<theta>' \<omega>)
+        \<le> enn2real (paper_v k L T K (?Xf \<omega>))"
+      by (rule min.cobounded1)
+    ultimately show "u x \<le> \<theta>' \<omega> + u (?Xf \<omega>)"
+      unfolding u_def by linarith
+  qed
+  have stc: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using P unfolding paper_pair_class_def by blast
+  have cwAE: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+  proof -
+    have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+    then show ?thesis
+    proof (rule eventually_mono)
+      fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"
+      then show "continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+        by (rule path_sets_fst_continuous[OF setsP])
+    qed
+  qed
+  have posAE: "AE \<omega> in P. 0 < \<theta>' \<omega>"
+    using stc cwAE
+  proof eventually_elim
+    case (elim \<omega>)
+    have "dist (fst (\<omega> 0)) x < \<epsilon>" using elim eps0 by simp
+    then have "0 < pball_exit T x \<epsilon> \<omega>"
+      using elim by (intro pball_exit_pos[OF T]) auto
+    then show ?case unfolding \<theta>'_def using t0 by simp
+  qed
+  have inball: "AE \<omega> in P. dist (?Xf \<omega>) x \<le> \<epsilon>"
+    using stc cwAE
+  proof eventually_elim
+    case (elim \<omega>)
+    have "dist (fst (\<omega> 0)) x < \<epsilon>" using elim eps0 by simp
+    then show ?case
+      using elim
+      by (intro pball_exit_stays_cball[OF T0 _ _ th0' thle]) auto
+  qed
+  have key: "AE \<omega> in P. 0 \<le> \<theta>' \<omega> + q \<bullet> (?V \<omega>)
+      + ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2"
+    using dpp inball
+  proof eventually_elim
+    case (elim \<omega>)
+    have "dist (?Xf \<omega>) x \<le> ebar" using elim(2) epseb by simp
+    then have "u (?Xf \<omega>) \<le> u x + q \<bullet> (?V \<omega>)
+        + ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2"
+      unfolding u_def by (rule touch)
+    with elim(1) show ?case by linarith
+  qed
+  \<comment> \<open>moments at the stopping time\<close>
+  define EY where "EY = (\<integral>\<omega>. ?Yf \<omega> \<partial>P)"
+  define et where "et = (\<integral>\<omega>. \<theta>' \<omega> \<partial>P)"
+  have ith: "integrable P \<theta>'"
+    by (rule PP.integrable_const_bound[of _ T])
+      (auto simp: thP' th0' thT' abs_of_nonneg)
+  have et0: "0 < et"
+    unfolding et_def
+    by (rule integral_pos_of_AE_pos[OF PP.prob_space_axioms ith posAE])
+  have ett: "et \<le> t"
+    unfolding et_def
+    using integral_mono_AE[OF ith PP.integrable_const, of t] tht
+    by (simp add: PP.prob_space)
+  have iY: "integrable P ?Yf"
+    by (rule paper_pair_class_Y_stopped_integrable[OF T0 L0 P st' thM'])
+  have bmem: "(1 / et) *\<^sub>R EY \<in> sconstraint k L"
+    unfolding et_def EY_def
+    by (rule paper_pair_class_Y_stopped_mean_sconstraint
+        [OF T L0 P st' thM' posAE])
+  define b where "b = (1 / et) *\<^sub>R EY"
+  have EYb: "EY = et *\<^sub>R b" unfolding b_def using et0 by simp
+  \<comment> \<open>the value inequality\<close>
+  have ilin: "integrable P (\<lambda>\<omega>. q \<bullet> (?V \<omega>))"
+    by (rule paper_pair_class_stopped_moments(3)[OF T L0 P st' thM'])
+  have Elin: "(\<integral>\<omega>. q \<bullet> (?V \<omega>) \<partial>P) = 0"
+    by (rule paper_pair_class_stopped_moments(4)[OF T L0 P st' thM'])
+  have iquad: "integrable P (\<lambda>\<omega>. (?V \<omega>) \<bullet> (M *v (?V \<omega>)))"
+    by (rule paper_pair_class_stopped_moments(5)[OF T L0 P st' thM'])
+  have Equad: "(\<integral>\<omega>. (?V \<omega>) \<bullet> (M *v (?V \<omega>)) \<partial>P) = trace (M ** EY)"
+    unfolding EY_def
+    by (rule paper_pair_class_stopped_moments(6)[OF T L0 P st' thM'])
+  have bl2: "bounded_linear (\<lambda>r :: real. r / 2)"
+    unfolding linear_conv_bounded_linear[symmetric]
+    by (intro linearI) (simp_all add: field_simps)
+  have ihalf: "integrable P (\<lambda>\<omega>. ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2)"
+    by (rule integrable_bounded_linear[OF bl2 iquad])
+  have Ehalf: "(\<integral>\<omega>. ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2 \<partial>P)
+      = trace (M ** EY) / 2"
+    using integral_of_bounded_linear[OF bl2 iquad] Equad by simp
+  have w: "- trace (M ** b) / 2 \<le> 1"
+  proof -
+    have iA: "integrable P (\<lambda>\<omega>. \<theta>' \<omega> + q \<bullet> (?V \<omega>))"
+      by (intro Bochner_Integration.integrable_add ith ilin)
+    have "0 \<le> (\<integral>\<omega>. \<theta>' \<omega> + q \<bullet> (?V \<omega>)
+        + ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2 \<partial>P)"
+      by (rule integral_nonneg_AE) (use key in \<open>auto elim: eventually_mono\<close>)
+    also have "(\<integral>\<omega>. \<theta>' \<omega> + q \<bullet> (?V \<omega>)
+        + ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2 \<partial>P)
+        = et + trace (M ** EY) / 2"
+      using Bochner_Integration.integral_add[OF iA ihalf]
+        Bochner_Integration.integral_add[OF ith ilin] Elin Ehalf
+      by (simp add: et_def)
+    finally have ge: "0 \<le> et + trace (M ** EY) / 2" .
+    have trb: "trace (M ** EY) = et * trace (M ** b)"
+      by (subst EYb) (rule trace_mult_scaleR)
+    have "0 \<le> et * (1 + trace (M ** b) / 2)"
+      using ge trb by (simp add: field_simps)
+    then have "0 \<le> 1 + trace (M ** b) / 2"
+      using et0 by (simp add: zero_le_mult_iff)
+    then show ?thesis by simp
+  qed
+  \<comment> \<open>the martingale increment and its moments\<close>
+  define W where "W = (\<lambda>\<omega> :: 'n pairpath. q \<bullet> (?V \<omega>))"
+  have Wint: "integrable P W" unfolding W_def by (rule ilin)
+  have Wmean: "(\<integral>\<omega>. W \<omega> \<partial>P) = 0" unfolding W_def by (rule Elin)
+  have Wm: "W \<in> borel_measurable P"
+    by (rule borel_measurable_integrable[OF Wint])
+  have W2int: "integrable P (\<lambda>\<omega>. (W \<omega>)\<^sup>2)"
+    unfolding W_def
+    by (rule paper_pair_class_stopped_var(1)[OF T L0 P st' thM'])
+  define s where "s = (\<integral>\<omega>. (W \<omega>)\<^sup>2 \<partial>P)"
+  have svar: "s = q \<bullet> (EY *v q)"
+    unfolding s_def W_def EY_def
+    by (rule paper_pair_class_stopped_var(2)[OF T L0 P st' thM'])
+  have s0: "0 \<le> s"
+    unfolding s_def by (rule integral_nonneg_AE) auto
+  have Wabs: "AE \<omega> in P. \<bar>W \<omega>\<bar> \<le> nq * \<epsilon>"
+    using inball
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume h: "dist (?Xf \<omega>) x \<le> \<epsilon>"
+    have "\<bar>W \<omega>\<bar> \<le> norm q * norm (?V \<omega>)"
+      unfolding W_def by (rule Cauchy_Schwarz_ineq2)
+    also have "norm (?V \<omega>) = dist (?Xf \<omega>) x" by (simp add: dist_norm)
+    also have "norm q * dist (?Xf \<omega>) x \<le> norm q * \<epsilon>"
+      by (rule mult_left_mono[OF h norm_ge_zero])
+    finally show "\<bar>W \<omega>\<bar> \<le> nq * \<epsilon>" unfolding nq_def .
+  qed
+  \<comment> \<open>the negative part is small\<close>
+  have negbnd: "AE \<omega> in P. max (- W \<omega>) 0 \<le> t + Cm * \<epsilon>\<^sup>2 / 2"
+    using key inball
+  proof eventually_elim
+    case (elim \<omega>)
+    have q1: "\<bar>(?V \<omega>) \<bullet> (M *v (?V \<omega>))\<bar> \<le> Cm * \<epsilon>\<^sup>2"
+    proof -
+      have nv2: "(norm (?V \<omega>))\<^sup>2 \<le> \<epsilon>\<^sup>2"
+        using elim(2) by (intro power_mono) (auto simp: dist_norm)
+      have "\<bar>(?V \<omega>) \<bullet> (M *v (?V \<omega>))\<bar> \<le> Cm * (norm (?V \<omega>))\<^sup>2"
+        unfolding Cm_def by (rule quadform_abs_le)
+      also have "\<dots> \<le> Cm * \<epsilon>\<^sup>2"
+        by (rule mult_left_mono[OF nv2 Cm0])
+      finally show ?thesis .
+    qed
+    have "- W \<omega> \<le> \<theta>' \<omega> + ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2"
+      using elim(1) unfolding W_def by linarith
+    also have "\<dots> \<le> t + Cm * \<epsilon>\<^sup>2 / 2"
+      using tht[of \<omega>] q1 by linarith
+    finally have h: "- W \<omega> \<le> t + Cm * \<epsilon>\<^sup>2 / 2" .
+    have "0 \<le> t + Cm * \<epsilon>\<^sup>2 / 2" using t0 Cm0 by simp
+    with h show ?case by simp
+  qed
+  have nqe0: "0 \<le> nq * \<epsilon>" using nq0 eps0 by simp
+  have inegint: "integrable P (\<lambda>\<omega>. max (- W \<omega>) 0)"
+    by (rule PP.integrable_const_bound[of _ "nq * \<epsilon>"])
+      (use Wabs Wm nqe0 in \<open>auto elim: eventually_mono\<close>)
+  have iposint: "integrable P (\<lambda>\<omega>. max (W \<omega>) 0)"
+    by (rule PP.integrable_const_bound[of _ "nq * \<epsilon>"])
+      (use Wabs Wm nqe0 in \<open>auto elim: eventually_mono\<close>)
+  have iabs: "integrable P (\<lambda>\<omega>. \<bar>W \<omega>\<bar>)"
+    by (rule integrable_abs[OF Wint])
+  have negE: "(\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P) \<le> t + Cm * \<epsilon>\<^sup>2 / 2"
+    using integral_mono_AE[OF inegint PP.integrable_const negbnd]
+    by (simp add: PP.prob_space)
+  have halfabs: "(\<integral>\<omega>. \<bar>W \<omega>\<bar> \<partial>P) = 2 * (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)"
+  proof -
+    have d1: "(\<lambda>\<omega>. W \<omega>) = (\<lambda>\<omega>. max (W \<omega>) 0 - max (- W \<omega>) 0)"
+      by (rule ext) (simp add: max_def)
+    have d2: "(\<lambda>\<omega>. \<bar>W \<omega>\<bar>) = (\<lambda>\<omega>. max (W \<omega>) 0 + max (- W \<omega>) 0)"
+      by (rule ext) (simp add: max_def abs_if)
+    have "(\<integral>\<omega>. W \<omega> \<partial>P)
+        = (\<integral>\<omega>. max (W \<omega>) 0 \<partial>P) - (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)"
+      by (subst d1) (rule Bochner_Integration.integral_diff[OF iposint inegint])
+    with Wmean have posneg:
+      "(\<integral>\<omega>. max (W \<omega>) 0 \<partial>P) = (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)"
+      by simp
+    have "(\<integral>\<omega>. \<bar>W \<omega>\<bar> \<partial>P)
+        = (\<integral>\<omega>. max (W \<omega>) 0 \<partial>P) + (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)"
+      unfolding d2 by (rule Bochner_Integration.integral_add[OF iposint inegint])
+    then show ?thesis using posneg by simp
+  qed
+  \<comment> \<open>anti-concentration from boundedness\<close>
+  define A where "A = {\<omega> \<in> space P. sqrt (s / 2) \<le> \<bar>W \<omega>\<bar>}"
+  have Am: "A \<in> sets P" unfolding A_def using Wm by measurable
+  have W2b: "AE \<omega> in P. (W \<omega>)\<^sup>2 \<le> (nq * \<epsilon>)\<^sup>2"
+    using Wabs
+  proof (rule eventually_mono)
+    fix \<omega> assume h: "\<bar>W \<omega>\<bar> \<le> nq * \<epsilon>"
+    have "\<bar>W \<omega>\<bar>\<^sup>2 \<le> (nq * \<epsilon>)\<^sup>2" by (rule power_mono[OF h abs_ge_zero])
+    then show "(W \<omega>)\<^sup>2 \<le> (nq * \<epsilon>)\<^sup>2" by simp
+  qed
+  have W2A_int: "integrable P (\<lambda>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega>)"
+  proof (rule PP.integrable_const_bound[of _ "(nq * \<epsilon>)\<^sup>2"])
+    show "AE \<omega> in P. norm ((W \<omega>)\<^sup>2 * indicat_real A \<omega>) \<le> (nq * \<epsilon>)\<^sup>2"
+      using W2b
+    proof (rule eventually_mono)
+      fix \<omega> assume h: "(W \<omega>)\<^sup>2 \<le> (nq * \<epsilon>)\<^sup>2"
+      have "(W \<omega>)\<^sup>2 * indicat_real A \<omega> \<le> (W \<omega>)\<^sup>2 * 1"
+        by (intro mult_left_mono) (auto simp: indicator_def)
+      then show "norm ((W \<omega>)\<^sup>2 * indicat_real A \<omega>) \<le> (nq * \<epsilon>)\<^sup>2"
+        using h by (auto simp: abs_mult indicator_def)
+    qed
+    show "(\<lambda>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega>) \<in> borel_measurable P"
+      using Wm Am by measurable
+  qed
+  have W2Ac_int: "integrable P
+      (\<lambda>\<omega>. (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega>)"
+  proof (rule PP.integrable_const_bound[of _ "(nq * \<epsilon>)\<^sup>2"])
+    show "AE \<omega> in P. norm ((W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega>)
+        \<le> (nq * \<epsilon>)\<^sup>2"
+      using W2b
+    proof (rule eventually_mono)
+      fix \<omega> assume h: "(W \<omega>)\<^sup>2 \<le> (nq * \<epsilon>)\<^sup>2"
+      have "(W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<le> (W \<omega>)\<^sup>2 * 1"
+        by (intro mult_left_mono) (auto simp: indicator_def)
+      then show "norm ((W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega>) \<le> (nq * \<epsilon>)\<^sup>2"
+        using h by (auto simp: abs_mult indicator_def)
+    qed
+    show "(\<lambda>\<omega>. (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega>) \<in> borel_measurable P"
+      using Wm Am by measurable
+  qed
+  have s_split: "s = (\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega> \<partial>P)
+      + (\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<partial>P)"
+  proof -
+    have "s = (\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega>
+        + (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<partial>P)"
+      unfolding s_def
+      by (rule Bochner_Integration.integral_cong[OF refl])
+        (auto simp: indicator_def)
+    also have "\<dots> = (\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega> \<partial>P)
+        + (\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<partial>P)"
+      by (rule Bochner_Integration.integral_add[OF W2A_int W2Ac_int])
+    finally show ?thesis .
+  qed
+  have EAc_le: "(\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<partial>P) \<le> s / 2"
+  proof -
+    have ptw: "AE \<omega> in P. (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<le> s / 2"
+    proof (rule eventually_mono[OF AE_space])
+      fix \<omega> assume sp: "\<omega> \<in> space P"
+      show "(W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<le> s / 2"
+      proof (cases "\<omega> \<in> A")
+        case True
+        then show ?thesis using s0 by (simp add: indicator_def)
+      next
+        case False
+        then have "\<bar>W \<omega>\<bar> \<le> sqrt (s / 2)"
+          using sp unfolding A_def by auto
+        then have "\<bar>W \<omega>\<bar>\<^sup>2 \<le> (sqrt (s / 2))\<^sup>2"
+          by (rule power_mono[OF _ abs_ge_zero])
+        then have "(W \<omega>)\<^sup>2 \<le> s / 2" using s0 by simp
+        then show ?thesis
+          using sp False by (simp add: indicator_def)
+      qed
+    qed
+    have "(\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real (space P - A) \<omega> \<partial>P)
+        \<le> (\<integral>\<omega>. s / 2 \<partial>P)"
+      by (rule integral_mono_AE[OF W2Ac_int PP.integrable_const ptw])
+    then show ?thesis by (simp add: PP.prob_space)
+  qed
+  have indA_int: "integrable P (indicat_real A)"
+    by (rule integrable_real_indicator[OF Am]) (simp add: PP.emeasure_eq_measure)
+  have indA_E: "(\<integral>\<omega>. indicat_real A \<omega> \<partial>P) = PP.prob A"
+    using Am by simp
+  have EA_le: "(\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega> \<partial>P)
+      \<le> (nq * \<epsilon>)\<^sup>2 * PP.prob A"
+  proof -
+    have ptw: "AE \<omega> in P. (W \<omega>)\<^sup>2 * indicat_real A \<omega>
+        \<le> (nq * \<epsilon>)\<^sup>2 * indicat_real A \<omega>"
+      using W2b
+      by (rule eventually_mono) (auto intro: mult_right_mono simp: indicator_def)
+    have "(\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega> \<partial>P)
+        \<le> (\<integral>\<omega>. (nq * \<epsilon>)\<^sup>2 * indicat_real A \<omega> \<partial>P)"
+      by (rule integral_mono_AE[OF W2A_int integrable_cmult[OF indA_int] ptw])
+    also have "\<dots> = (nq * \<epsilon>)\<^sup>2 * PP.prob A"
+      using integral_cmult[OF indA_int] indA_E by simp
+    finally show ?thesis .
+  qed
+  have probA: "s / 2 \<le> (nq * \<epsilon>)\<^sup>2 * PP.prob A"
+    using s_split EAc_le EA_le by linarith
+  have EabsA: "sqrt (s / 2) * PP.prob A \<le> (\<integral>\<omega>. \<bar>W \<omega>\<bar> \<partial>P)"
+  proof -
+    have ptw: "AE \<omega> in P. sqrt (s / 2) * indicat_real A \<omega> \<le> \<bar>W \<omega>\<bar>"
+    proof (rule eventually_mono[OF AE_space])
+      fix \<omega> assume "\<omega> \<in> space P"
+      show "sqrt (s / 2) * indicat_real A \<omega> \<le> \<bar>W \<omega>\<bar>"
+        unfolding A_def by (auto simp: indicator_def)
+    qed
+    have "sqrt (s / 2) * PP.prob A
+        = (\<integral>\<omega>. sqrt (s / 2) * indicat_real A \<omega> \<partial>P)"
+      using integral_cmult[OF indA_int] indA_E by simp
+    also have "\<dots> \<le> (\<integral>\<omega>. \<bar>W \<omega>\<bar> \<partial>P)"
+      by (rule integral_mono_AE[OF integrable_cmult[OF indA_int] iabs ptw])
+    finally show ?thesis .
+  qed
+  \<comment> \<open>the contradiction\<close>
+  have concl: "q \<bullet> (b *v q) < \<epsilon>\<^sub>0"
+  proof (rule ccontr)
+    assume "\<not> q \<bullet> (b *v q) < \<epsilon>\<^sub>0"
+    then have con: "\<epsilon>\<^sub>0 \<le> q \<bullet> (b *v q)" by simp
+    have sEq: "s = et * (q \<bullet> (b *v q))"
+    proof -
+      have "EY *v q = et *\<^sub>R (b *v q)"
+        by (subst EYb) (simp add: scaleR_matrix_vector)
+      then have "q \<bullet> (EY *v q) = et * (q \<bullet> (b *v q))"
+        by (simp add: inner_scaleR_right)
+      then show ?thesis using svar by simp
+    qed
+    \<comment> \<open>the exit before \<open>t\<close> has probability at most \<open>1/2\<close>\<close>
+    have dq: "AE \<omega> in P. \<forall>s' t'. 0 \<le> s' \<longrightarrow> s' < t' \<longrightarrow> t' \<le> T \<longrightarrow>
+        (1 / (t' - s')) *\<^sub>R (snd (\<omega> t') - snd (\<omega> s')) \<in> sconstraint k L"
+      using P unfolding paper_pair_class_def by blast
+    have trYbnd: "AE \<omega> in P. trace (?Yf \<omega>) \<le> n' * n' * L * \<theta>' \<omega>"
+      using stc dq posAE
+    proof eventually_elim
+      case (elim \<omega>)
+      have mem: "(1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega> \<in> sconstraint k L"
+      proof -
+        have "(1 / (\<theta>' \<omega> - 0)) *\<^sub>R (snd (\<omega> (\<theta>' \<omega>)) - snd (\<omega> 0))
+            \<in> sconstraint k L"
+          using elim thT'[of \<omega>] by blast
+        then show ?thesis using elim by simp
+      qed
+      have trsc: "trace ((1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega>) \<le> n' * (n' * L)"
+        using sconstraint_trace_le[OF L0 mem] by (simp add: n'_def)
+      have t0': "0 < \<theta>' \<omega>" using elim by simp
+      have "trace (?Yf \<omega>) = \<theta>' \<omega> * trace ((1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega>)"
+      proof -
+        have "?Yf \<omega> = \<theta>' \<omega> *\<^sub>R ((1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega>)"
+          using t0' by simp
+        then show ?thesis
+          by (metis trace_scaleR)
+      qed
+      also have "\<dots> \<le> \<theta>' \<omega> * (n' * (n' * L))"
+        using trsc t0' by (intro mult_left_mono) auto
+      finally show ?case by (simp add: algebra_simps)
+    qed
+    have itrY: "integrable P (\<lambda>\<omega>. trace (?Yf \<omega>))"
+      by (rule integrable_bounded_linear[OF bounded_linear_trace iY])
+    have EtrY: "trace EY \<le> n' * n' * L * et"
+    proof -
+      have "trace EY = (\<integral>\<omega>. trace (?Yf \<omega>) \<partial>P)"
+        unfolding EY_def
+        by (rule integral_of_bounded_linear[OF bounded_linear_trace iY,
+              symmetric])
+      also have "\<dots> \<le> (\<integral>\<omega>. n' * n' * L * \<theta>' \<omega> \<partial>P)"
+        by (rule integral_mono_AE[OF itrY integrable_cmult[OF ith] trYbnd])
+      also have "\<dots> = n' * n' * L * et"
+        using integral_cmult[OF ith] by (simp add: et_def)
+      finally show ?thesis .
+    qed
+    have normsqE: "(\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P) = trace EY"
+      unfolding EY_def
+      by (rule paper_pair_class_stopped_normsq[OF T L0 P st' thM'])
+    have inormsq: "integrable P (\<lambda>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>))"
+    proof -
+      have e: "(\<lambda>\<omega> :: 'n pairpath. (?V \<omega>) \<bullet> (?V \<omega>))
+          = (\<lambda>\<omega>. (?V \<omega>) \<bullet> (mat 1 *v (?V \<omega>)))"
+        by (simp add: fun_eq_iff matrix_vector_mul_lid)
+      show ?thesis
+        unfolding e
+        by (rule paper_pair_class_stopped_moments(5)[OF T L0 P st' thM'])
+    qed
+    define Ev where "Ev = {\<omega> \<in> space P. pball_exit T x \<epsilon> \<omega> < t}"
+    have tauP: "pball_exit T x \<epsilon> \<in> borel_measurable P"
+      unfolding measurable_cong_sets[OF setsP refl]
+      by (rule pball_exit_measurable[OF T0])
+    have Evm: "Ev \<in> sets P"
+      unfolding Ev_def using tauP by measurable
+    have chexit: "\<epsilon>\<^sup>2 * PP.prob Ev \<le> trace EY"
+    proof -
+      have ptw: "AE \<omega> in P. \<epsilon>\<^sup>2 * indicat_real Ev \<omega> \<le> (?V \<omega>) \<bullet> (?V \<omega>)"
+        using cwAE AE_space
+      proof eventually_elim
+        case (elim \<omega>)
+        show ?case
+        proof (cases "\<omega> \<in> Ev")
+          case True
+          then have lt: "pball_exit T x \<epsilon> \<omega> < t" unfolding Ev_def by simp
+          have th_eq: "\<theta>' \<omega> = pball_exit T x \<epsilon> \<omega>"
+            unfolding \<theta>'_def using lt by (simp add: min_def)
+          have ltT: "pball_exit T x \<epsilon> \<omega> < T" using lt tT by linarith
+          have "fst (\<omega> (pexit T (ball x \<epsilon>) (\<lambda>s. fst (\<omega> s)))) \<notin> ball x \<epsilon>"
+            by (rule pexit_mem_of_less_T[OF T0 open_ball elim(1)])
+              (use ltT in \<open>simp add: pball_exit_def\<close>)
+          then have "\<epsilon> \<le> dist (?Xf \<omega>) x"
+            unfolding th_eq pball_exit_def
+            by (simp add: mem_ball dist_commute)
+          then have "\<epsilon>\<^sup>2 \<le> (dist (?Xf \<omega>) x)\<^sup>2"
+            using eps0 by (intro power_mono) auto
+          moreover have "(?V \<omega>) \<bullet> (?V \<omega>) = (dist (?Xf \<omega>) x)\<^sup>2"
+            by (simp add: dot_square_norm dist_norm)
+          ultimately show ?thesis using True by (simp add: indicator_def)
+        next
+          case False
+          have "0 \<le> (?V \<omega>) \<bullet> (?V \<omega>)" by (rule inner_ge_zero)
+          then show ?thesis using False by (simp add: indicator_def)
+        qed
+      qed
+      have indEv_int: "integrable P (indicat_real Ev)"
+        by (rule integrable_real_indicator[OF Evm])
+          (simp add: PP.emeasure_eq_measure)
+      have "\<epsilon>\<^sup>2 * PP.prob Ev = (\<integral>\<omega>. \<epsilon>\<^sup>2 * indicat_real Ev \<omega> \<partial>P)"
+        using integral_cmult[OF indEv_int] Evm by simp
+      also have "\<dots> \<le> (\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P)"
+        by (rule integral_mono_AE[OF integrable_cmult[OF indEv_int]
+              inormsq ptw])
+      finally show ?thesis using normsqE by simp
+    qed
+    have probEv: "PP.prob Ev \<le> 1 / 2"
+    proof -
+      have nL0: "0 < n' * n' * L" using n'1 L1 by simp
+      have "n' * n' * L * et \<le> n' * n' * L * t"
+        using ett nL0 by (intro mult_left_mono) auto
+      with EtrY have h1: "trace EY \<le> n' * n' * L * t" by linarith
+      have n'ne: "n' \<noteq> 0" using n'1 by simp
+      have Lne: "L \<noteq> 0" using L1 by simp
+      have "n' * n' * L * t = \<epsilon>\<^sup>2 / 2"
+        unfolding t_def \<beta>_def using n'ne Lne by (simp add: field_simps)
+      with h1 chexit have h2: "\<epsilon>\<^sup>2 * PP.prob Ev \<le> \<epsilon>\<^sup>2 * (1 / 2)" by linarith
+      have e20: "0 < \<epsilon>\<^sup>2" using eps0 by simp
+      show ?thesis using h2 e20 by (simp add: mult_le_cancel_left)
+    qed
+    have etlow: "t / 2 \<le> et"
+    proof -
+      have ptw: "AE \<omega> in P. t * indicat_real (space P - Ev) \<omega> \<le> \<theta>' \<omega>"
+      proof (rule eventually_mono[OF AE_space])
+        fix \<omega> assume sp: "\<omega> \<in> space P"
+        show "t * indicat_real (space P - Ev) \<omega> \<le> \<theta>' \<omega>"
+        proof (cases "\<omega> \<in> Ev")
+          case True
+          then show ?thesis using th0'[of \<omega>] by (simp add: indicator_def)
+        next
+          case False
+          then have "t \<le> pball_exit T x \<epsilon> \<omega>"
+            using sp unfolding Ev_def by auto
+          then have "\<theta>' \<omega> = t" unfolding \<theta>'_def by (simp add: min_def)
+          then show ?thesis using sp False by (simp add: indicator_def)
+        qed
+      qed
+      have indC_int: "integrable P (indicat_real (space P - Ev))"
+        by (rule integrable_real_indicator)
+          (auto simp: PP.emeasure_eq_measure sets.compl_sets Evm)
+      have "t * PP.prob (space P - Ev)
+          = (\<integral>\<omega>. t * indicat_real (space P - Ev) \<omega> \<partial>P)"
+        using integral_cmult[OF indC_int] sets.compl_sets[OF Evm] by simp
+      also have "\<dots> \<le> et"
+        unfolding et_def
+        by (rule integral_mono_AE[OF integrable_cmult[OF indC_int] ith ptw])
+      finally have h: "t * PP.prob (space P - Ev) \<le> et" .
+      have "PP.prob (space P - Ev) = 1 - PP.prob Ev"
+        by (rule PP.prob_compl[OF Evm])
+      then have "1 / 2 \<le> PP.prob (space P - Ev)" using probEv by simp
+      then have "t * (1 / 2) \<le> t * PP.prob (space P - Ev)"
+        using t0 by (intro mult_left_mono) auto
+      then show ?thesis using h by simp
+    qed
+    have slow: "\<epsilon>\<^sub>0 * (t / 2) \<le> s"
+    proof -
+      have "\<epsilon>\<^sub>0 * (t / 2) \<le> (q \<bullet> (b *v q)) * et"
+        using con etlow e0 t0 et0 by (intro mult_mono) auto
+      then show ?thesis using sEq by (simp add: algebra_simps)
+    qed
+    \<comment> \<open>assemble the numeric contradiction\<close>
+    have EnegLow: "sqrt (s / 2) * s / (4 * nq\<^sup>2 * \<epsilon>\<^sup>2)
+        \<le> (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)"
+    proof -
+      have pA: "s / 2 / (nq * \<epsilon>)\<^sup>2 \<le> PP.prob A"
+        using probA nq0 eps0 by (simp add: field_simps power2_eq_square)
+      have sq0: "0 \<le> sqrt (s / 2)"
+        using s0 by (simp add: real_sqrt_ge_zero)
+      have "sqrt (s / 2) * (s / 2 / (nq * \<epsilon>)\<^sup>2)
+          \<le> sqrt (s / 2) * PP.prob A"
+        by (intro mult_left_mono pA sq0)
+      also have "\<dots> \<le> (\<integral>\<omega>. \<bar>W \<omega>\<bar> \<partial>P)" by (rule EabsA)
+      also have "\<dots> = 2 * (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)" by (rule halfabs)
+      finally have "sqrt (s / 2) * (s / 2 / (nq * \<epsilon>)\<^sup>2)
+          \<le> 2 * (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)" .
+      then show ?thesis
+        using nq0 eps0 by (simp add: field_simps power_mult_distrib
+            power2_eq_square)
+    qed
+    have upper: "sqrt (s / 2) * s \<le> 4 * nq\<^sup>2 * \<epsilon>\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>\<^sup>2"
+    proof -
+      have "sqrt (s / 2) * s / (4 * nq\<^sup>2 * \<epsilon>\<^sup>2) \<le> t + Cm * \<epsilon>\<^sup>2 / 2"
+        using EnegLow negE by linarith
+      also have "t + Cm * \<epsilon>\<^sup>2 / 2 = (\<beta> + Cm / 2) * \<epsilon>\<^sup>2"
+        unfolding t_def by (simp add: algebra_simps)
+      finally have h: "sqrt (s / 2) * s / (4 * nq\<^sup>2 * \<epsilon>\<^sup>2)
+          \<le> (\<beta> + Cm / 2) * \<epsilon>\<^sup>2" .
+      have d0: "0 < 4 * nq\<^sup>2 * \<epsilon>\<^sup>2"
+        using nq0 eps0 by (simp add: power2_eq_square)
+      show ?thesis
+        using h d0 by (simp add: pos_divide_le_eq algebra_simps)
+    qed
+    have lower: "sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> * \<epsilon> ^ 3 / 4 \<le> sqrt (s / 2) * s"
+    proof -
+      have s0': "\<epsilon>\<^sub>0 * t / 2 \<le> s" using slow by simp
+      have st0: "0 \<le> \<epsilon>\<^sub>0 * t / 2" using e0 t0 by simp
+      have r1: "sqrt (\<epsilon>\<^sub>0 * t / 4) \<le> sqrt (s / 2)"
+        by (rule real_sqrt_le_mono) (use s0' in simp)
+      have r2: "sqrt (\<epsilon>\<^sub>0 * t / 4) = sqrt (\<epsilon>\<^sub>0 * t) / 2"
+        by (simp add: real_sqrt_divide)
+      have r3: "sqrt (\<epsilon>\<^sub>0 * t) = sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>"
+      proof -
+        have st: "sqrt t = sqrt \<beta> * \<epsilon>"
+        proof -
+          have "sqrt t = sqrt \<beta> * sqrt (\<epsilon>\<^sup>2)"
+            unfolding t_def by (simp add: real_sqrt_mult)
+          also have "sqrt (\<epsilon>\<^sup>2) = \<bar>\<epsilon>\<bar>" by (rule real_sqrt_abs)
+          also have "\<bar>\<epsilon>\<bar> = \<epsilon>" using eps0 by simp
+          finally show ?thesis .
+        qed
+        have "sqrt (\<epsilon>\<^sub>0 * t) = sqrt \<epsilon>\<^sub>0 * sqrt t"
+          by (simp add: real_sqrt_mult)
+        then show ?thesis using st by simp
+      qed
+      have f1: "sqrt (\<epsilon>\<^sub>0 * t) / 2 \<le> sqrt (s / 2)"
+        using r1 r2 by simp
+      have flip: "(sqrt (\<epsilon>\<^sub>0 * t) / 2) * (\<epsilon>\<^sub>0 * t / 2)
+          = sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> * \<epsilon> ^ 3 / 4"
+      proof -
+        have e2: "\<epsilon>\<^sub>0 * t = \<epsilon>\<^sub>0 * \<beta> * \<epsilon>\<^sup>2"
+          unfolding t_def by simp
+        have "(sqrt (\<epsilon>\<^sub>0 * t) / 2) * (\<epsilon>\<^sub>0 * t / 2)
+            = (sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>) * (\<epsilon>\<^sub>0 * t) / 4"
+          unfolding r3 by (simp add: field_simps)
+        also have "\<dots> = (sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>) * (\<epsilon>\<^sub>0 * \<beta> * \<epsilon>\<^sup>2) / 4"
+          by (simp only: e2)
+        also have "\<dots> = sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> * \<epsilon> ^ 3 / 4"
+          by (simp add: power2_eq_square power3_eq_cube algebra_simps)
+        finally show ?thesis .
+      qed
+      have "sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> * \<epsilon> ^ 3 / 4
+          = (sqrt (\<epsilon>\<^sub>0 * t) / 2) * (\<epsilon>\<^sub>0 * t / 2)"
+        by (rule flip[symmetric])
+      also have "\<dots> \<le> sqrt (s / 2) * s"
+      proof -
+        have sq0: "0 \<le> sqrt (s / 2)"
+          using s0 by (simp add: real_sqrt_ge_zero)
+        show ?thesis by (rule mult_mono[OF f1 s0' sq0 st0])
+      qed
+      finally show ?thesis .
+    qed
+    have final: "\<epsilon>K \<le> \<epsilon>"
+    proof -
+      have LU: "sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> * \<epsilon> ^ 3 / 4
+          \<le> 4 * nq\<^sup>2 * \<epsilon>\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>\<^sup>2"
+        using lower upper by linarith
+      have e30: "0 < \<epsilon> ^ 3" using eps0 by simp
+      have ll: "sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> * \<epsilon> ^ 3 / 4
+          = \<epsilon> ^ 3 * (sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> / 4)"
+        by (simp add: algebra_simps)
+      have rr: "4 * nq\<^sup>2 * \<epsilon>\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>\<^sup>2
+          = \<epsilon> ^ 3 * (4 * nq\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>)"
+        by (simp add: power2_eq_square power3_eq_cube algebra_simps)
+      have "\<epsilon> ^ 3 * (sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> / 4)
+          \<le> \<epsilon> ^ 3 * (4 * nq\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>)"
+        using LU unfolding ll rr .
+      then have h3: "sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta> / 4
+          \<le> 4 * nq\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>"
+        using e30 by (simp add: mult_le_cancel_left)
+      have "sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta>
+          \<le> 4 * (4 * nq\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>)"
+        using h3 by linarith
+      then have h4: "sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta>
+          \<le> \<epsilon> * (16 * nq\<^sup>2 * (\<beta> + Cm / 2))"
+        by (simp add: algebra_simps)
+      show ?thesis
+        unfolding \<epsilon>K_def using den0 h4 by (simp add: pos_divide_le_eq)
+    qed
+    show False using final epsK eK0 by linarith
+  qed
+  show ?thesis using that bmem[folded b_def] w concl by blast
+qed
+
+section \<open>Compactness: an exactly orthogonal direction\<close>
+
+theorem paper_v_touch_orth:
+  fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and eb: "0 < ebar"
+    and touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
+        enn2real (paper_v k L T K z)
+          \<le> enn2real (paper_v k L T K x) + q \<bullet> (z - x)
+            + ((z - x) \<bullet> (M *v (z - x))) / 2"
+  obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
+    and "b *v q = 0"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have ex: "\<exists>b. b \<in> sconstraint k L \<and> - trace (M ** b) / 2 \<le> 1
+      \<and> q \<bullet> (b *v q) < 1 / real (Suc n)" for n :: nat
+  proof -
+    obtain b where "b \<in> sconstraint k L" "- trace (M ** b) / 2 \<le> 1"
+      "q \<bullet> (b *v q) < 1 / real (Suc n)"
+      using paper_v_touch_near_orth[OF T L1 Kc eb touch,
+          where \<epsilon>\<^sub>0 = "1 / real (Suc n)"] by auto
+    then show ?thesis by blast
+  qed
+  then obtain bs where bs: "\<And>n :: nat. bs n \<in> sconstraint k L
+      \<and> - trace (M ** bs n) / 2 \<le> 1
+      \<and> q \<bullet> (bs n *v q) < 1 / real (Suc n)"
+    by metis
+  have rng: "range bs \<subseteq> sconstraint k L" using bs by blast
+  have bdd: "bounded (range bs)"
+    by (rule bounded_subset[OF bounded_sconstraint[OF L0] rng])
+  obtain l \<sigma> where sm: "strict_mono \<sigma>" and lim: "(bs \<circ> \<sigma>) \<longlonglongrightarrow> l"
+    using bounded_imp_convergent_subsequence[OF bdd] by blast
+  have inS: "(bs \<circ> \<sigma>) n \<in> sconstraint k L" for n
+    using rng by (auto simp: o_def)
+  have lmem: "l \<in> sconstraint k L"
+    by (rule closed_sequentially[OF closed_sconstraint inS lim])
+  have psd_l: "psd l"
+    using lmem unfolding sconstraint_def Pi_constraint_def by auto
+  \<comment> \<open>the value passes to the limit\<close>
+  have trlim: "(\<lambda>n. trace (M ** bs (\<sigma> n))) \<longlonglongrightarrow> trace (M ** l)"
+  proof -
+    have "(\<lambda>n. trace (M ** (bs \<circ> \<sigma>) n)) \<longlonglongrightarrow> trace (M ** l)"
+      by (rule bounded_linear.tendsto[OF bounded_linear_trace_mult_left lim])    then show ?thesis by (simp add: o_def)
+  qed
+  have w: "- trace (M ** l) / 2 \<le> 1"
+  proof -
+    have h1: "(\<lambda>n. - trace (M ** bs (\<sigma> n)) / 2) \<longlonglongrightarrow> - trace (M ** l) / 2"      by (intro tendsto_intros trlim) simp
+    have h2: "\<exists>N. \<forall>n\<ge>N. - trace (M ** bs (\<sigma> n)) / 2 \<le> 1"
+      using bs by blast
+    show ?thesis by (rule LIMSEQ_le_const2[OF h1 h2])
+  qed  have qlim: "(\<lambda>n. q \<bullet> (bs (\<sigma> n) *v q)) \<longlonglongrightarrow> q \<bullet> (l *v q)"
+  proof -
+    have "(\<lambda>n. q \<bullet> ((bs \<circ> \<sigma>) n *v q)) \<longlonglongrightarrow> q \<bullet> (l *v q)"
+      by (rule bounded_linear.tendsto[OF bounded_linear_quadform lim])    then show ?thesis by (simp add: o_def)
+  qed
+  have qge: "0 \<le> q \<bullet> (l *v q)"
+  proof (rule LIMSEQ_le_const[OF qlim])
+    have "psd (bs (\<sigma> n))" for n
+      using bs[of "\<sigma> n"] unfolding sconstraint_def Pi_constraint_def by auto
+    then show "\<exists>N. \<forall>n\<ge>N. 0 \<le> q \<bullet> (bs (\<sigma> n) *v q)"
+      unfolding psd_def by blast
+  qed
+  have qle: "q \<bullet> (l *v q) \<le> 0"
+  proof (rule LIMSEQ_le[OF qlim])
+    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
+      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
+    have "q \<bullet> (bs (\<sigma> n) *v q) \<le> 1 / real (Suc n)" for n
+    proof -
+      have "q \<bullet> (bs (\<sigma> n) *v q) < 1 / real (Suc (\<sigma> n))"
+        using bs[of "\<sigma> n"] by blast
+      also have "1 / real (Suc (\<sigma> n)) \<le> 1 / real (Suc n)"
+        using seq_suble[OF sm, of n] by (simp add: frac_le)
+      finally show ?thesis by simp
+    qed
+    then show "\<exists>N. \<forall>n\<ge>N. q \<bullet> (bs (\<sigma> n) *v q) \<le> 1 / real (Suc n)" by blast
+  qed
+  have "q \<bullet> (l *v q) = 0" using qge qle by simp
+  then have "l *v q = 0" by (rule psd_kernel_eq[OF psd_l])
+  then show ?thesis using that lmem w by blast
+qed
+
+section \<open>Clause (2): the subsolution property with the paper's operator\<close>
+
+lemma feasible_trace_le:
+  fixes a :: "real^'n::finite^'n" and p :: "real^'n"
+  assumes a: "a \<in> feasible k L p"
+  shows "trace a \<le> real CARD('n) * L"
+proof -
+  have "a $ i $ i \<le> L" for i
+    using feasible_entry_bound[OF a, of i i] by simp
+  then have "trace a \<le> (\<Sum>i\<in>(UNIV :: 'n set). L)"
+    unfolding trace_def by (rule sum_mono)
+  then show ?thesis by simp
+qed
+
+text \<open>Gap 2 closed: clause (2)'s SUBSOLUTION half, with the operator of
+  Eq. (1.9) itself --- orthogonality constraint included.  For each test
+  function and each Hessian bump \<open>\<delta>\<close>: the anti-concentration dichotomy plus
+  compactness produce a convexified direction that kills the gradient
+  (@{thm [source] paper_v_touch_orth}), and the capped spectral split converts
+  it into a FEASIBLE witness (@{thm [source] sconstraint_orth_feasible}).
+  Then \<open>\<delta> \<rightarrow> 0\<close> exactly as in the relaxed case.\<close>
+
+theorem paper_v_visc_subsol:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and kn: "k < CARD('n)"
+  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (paper_v k L T K z))"
+  unfolding visc_subsol_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume x: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>z \<in> ball x e.
+        enn2real (paper_v k L T K z) - \<phi> z
+          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+  have L0: "0 \<le> L" using L1 by simp
+  from lm obtain e0 where e00: "0 < e0"
+    and lme: "\<And>z. z \<in> ball x e0 \<Longrightarrow>
+        enn2real (paper_v k L T K z) - \<phi> z
+          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+    by blast
+  define C where "C = real CARD('n) * L"
+  have n0: "0 < real CARD('n)"
+    using zero_less_card_finite[where 'a = 'n] by simp
+  have C0: "0 < C"
+    unfolding C_def by (intro mult_pos_pos n0) (use L1 in linarith)
+  have key: "ell_op k L (g x) H \<le> 1 + \<delta> * C / 2" if d0: "0 < \<delta>" for \<delta>
+  proof -
+    obtain r where r0: "0 < r"
+      and dom: "\<And>z. z \<in> ball x r \<Longrightarrow>
+          \<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+            + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+      using test_fun_quadratic_dominates[OF tf d0] by blast
+    define ebar where "ebar = min e0 r / 2"
+    have eb0: "0 < ebar" using e00 r0 by (simp add: ebar_def)
+    have touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
+        enn2real (paper_v k L T K z)
+          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+            + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+    proof -
+      fix z assume z: "dist z x \<le> ebar"
+      have zin: "z \<in> ball x e0 \<inter> ball x r"
+        using z e00 r0 by (auto simp: ebar_def mem_ball dist_commute)
+      have "enn2real (paper_v k L T K z) - \<phi> z
+          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+        using lme zin by blast
+      moreover have "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+        using dom zin by blast
+      ultimately show "enn2real (paper_v k L T K z)
+          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+            + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+        by linarith
+    qed
+    obtain b where bmem: "b \<in> sconstraint k L"
+      and wb: "- trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2 \<le> 1"
+      and borth: "b *v (g x) = 0"
+      by (rule paper_v_touch_orth[OF T L1 Kc eb0 touch])
+    obtain a where afeas: "a \<in> feasible k L (g x)"
+      and aval: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2
+          \<le> - trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2"
+      by (rule sconstraint_orth_feasible[OF kn L1 bmem borth])
+    have wa: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2 \<le> 1"
+      using aval wb by linarith
+    have split: "trace ((H + \<delta> *\<^sub>R mat 1) ** a) = trace (H ** a) + \<delta> * trace a"
+    proof -
+      have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
+        by (rule matrix_add_rdistrib)
+      moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
+        by (simp add: scaleR_matrix_mult matrix_mul_lid)
+      ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
+          = trace (H ** a + \<delta> *\<^sub>R a)" by simp
+      have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"
+        by (simp add: trace_def sum.distrib vector_add_component)
+      have e3: "trace (\<delta> *\<^sub>R a) = \<delta> * trace a" by (rule trace_scaleR)
+      from e1 e2 e3 show ?thesis by simp
+    qed
+    have tra: "trace a \<le> C"
+      unfolding C_def by (rule feasible_trace_le[OF afeas])
+    have "- trace (H ** a) / 2 \<le> 1 + \<delta> * trace a / 2"
+      using wa split by (simp add: field_simps)
+    also have "\<dots> \<le> 1 + \<delta> * C / 2"
+      using tra d0 by (simp add: mult_left_mono)
+    finally have wH: "- trace (H ** a) / 2 \<le> 1 + \<delta> * C / 2" .
+    show ?thesis by (rule ell_op_le_of_witness[OF afeas wH])
+  qed
+  show "ell_op k L (g x) H \<le> 1"
+  proof (rule field_le_epsilon)
+    fix e :: real assume e0': "0 < e"
+    have d0: "0 < 2 * e / C" using e0' C0 by simp
+    have "ell_op k L (g x) H \<le> 1 + (2 * e / C) * C / 2"
+      by (rule key[OF d0])
+    also have "\<dots> = 1 + e" using C0 by (simp add: field_simps)
+    finally show "ell_op k L (g x) H \<le> 1 + e" .
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
 
-  \<^bold>\<open>PROVED\<close>: @{thm [source] paper_v_visc_subsol_s} --- the RELAXED subsolution
-  property of \<open>enn2real \<circ> paper_v\<close> on \<open>interior K\<close>, for every \<open>0 < T\<close>,
-  \<open>1 \<le> L\<close>, closed \<open>K\<close>.  Gap 1 (localisation) is CLOSED: the argument stops at
-  the exit time of a ball, uses the touching only on the closed ball, and the
-  quadratic expansion is EXACT at the stopping time, so no remainder estimate
-  ever appears.  The route was stochastic localisation exactly as planned:
-  @{thm [source] pball_exit_path_stopping_time},
+  \<^bold>\<open>PROVED --- the SUBSOLUTION half, with the operator of Eq. (1.9) itself.\<close>
+  @{thm [source] paper_v_visc_subsol}: for every \<open>0 < T\<close>, \<open>1 \<le> L\<close>, closed \<open>K\<close>
+  and \<open>k < CARD('n)\<close>, \<open>enn2real \<circ> paper_v k L T K\<close> is a viscosity subsolution
+  on \<open>interior K\<close>.  The relaxed form @{thm [source] paper_v_visc_subsol_s},
+  over \<open>ell_op_s\<close>, is the intermediate result and is kept: the supersolution
+  half should be attacked there (see below).
+
+  \<^bold>\<open>Gap 1 (localisation) --- CLOSED.\<close>  The argument stops at the exit time of a
+  ball, uses the touching only on the closed ball, and the quadratic expansion
+  is EXACT at the stopping time, so no remainder estimate ever appears.  The
+  chain: @{thm [source] pball_exit_path_stopping_time},
   @{thm [source] pball_exit_measurable},
   @{thm [source] paper_pair_class_X_entry_stopped},
   @{thm [source] paper_pair_class_Y_stopped_mean_sconstraint},
   @{thm [source] paper_v_subsol_quadratic_ball},
   @{thm [source] test_fun_quadratic_dominates}.
 
-  \<^bold>\<open>Gap 2 --- from \<open>ell_op_s\<close> to \<open>ell_op\<close>, i.e. the orthogonality constraint.\<close>
-  The paper (\<section>3.1, displays (3.13)--(3.19)) proves the subsolution property
-  by CONTRADICTION: assume \<open>F(\<nabla>\<phi>, \<nabla>\<^sup>2\<phi>) > 1\<close> at the touching point, split the
-  time axis by whether \<open>\<nabla>\<phi>\<^sup>T a\<^sub>t \<nabla>\<phi> \<ge> \<epsilon>\<close>, and kill the non-orthogonal times
-  with an exponential local martingale (3.18) via optional sampling at
-  \<open>\<tau>\<^bsub>B\<^sub>\<epsilon>\<^esub> \<and> v(x)\<close>.  That construction needs stochastic integrals against the
-  class member, which this development does not have and should not build.
+  \<^bold>\<open>Gap 2 (orthogonality: from \<open>ell_op_s\<close> to \<open>ell_op\<close>) --- CLOSED, and NOT by
+  the paper's route.\<close>  The paper (\<section>3.1, (3.13)--(3.19)) argues by
+  contradiction, splitting the time axis by whether \<open>\<nabla>\<phi>\<^sup>T a\<^sub>t \<nabla>\<phi> \<ge> \<epsilon>\<close> and
+  killing the non-orthogonal times with an exponential local martingale (3.18)
+  under optional sampling at \<open>\<tau>\<^bsub>B\<^sub>\<epsilon>\<^esub> \<and> v(x)\<close>.  That needs stochastic integrals
+  against the class member.  This development has none, and needed none.  The
+  replacement is in two steps, both elementary.
 
-  A GIRSANOV-FREE replacement is available, because the DPP + touching
-  inequality here is ALMOST SURE, so a single positive-probability fluctuation
-  contradicts it.  Two steps:
+  \<^item> \<^emph>\<open>Anti-concentration\<close> (@{thm [source] paper_v_touch_near_orth}).  Because
+    the touching inequality is ALMOST SURE, one positive-probability
+    fluctuation contradicts it --- no measure change.  At \<open>\<theta>' = \<tau>\<^bsub>B\<^sub>\<epsilon>\<^esub> \<and> t\<close> with
+    \<open>t = \<beta>\<epsilon>\<^sup>2\<close>, \<open>\<beta> = 1/(2n\<^sup>2L)\<close>: the increment \<open>W = q \<bullet> (X\<^bsub>\<theta>'\<^esub> - x)\<close> is BOUNDED by
+    \<open>\<bar>q\<bar>\<epsilon>\<close>, has mean \<open>0\<close> and variance \<open>q \<bullet> (E[Y\<^bsub>\<theta>'\<^esub>] *v q)\<close> EXACTLY
+    (@{thm [source] paper_pair_class_stopped_var} --- the frozen-direction
+    identity), while the touching forces \<open>W\<^sup>- \<le> t + C\<^sub>M\<epsilon>\<^sup>2/2\<close> a.s.  Boundedness
+    replaces the fourth moment: an indicator split bounds \<open>E[W\<^sup>-]\<close> from above by
+    \<open>\<bar>q\<bar>\<^sup>2\<epsilon>\<^sup>2\<close> times a tail probability, and from below by the variance, and
+    Chebyshev on the exit (\<open>\<epsilon>\<^sup>2 P(\<tau> < t) \<le> trace E[Y] \<le> n\<^sup>2Lt\<close>) gives
+    \<open>E[\<theta>'] \<ge> t/2\<close>.  For \<open>\<epsilon> < \<epsilon>K\<close> the two bounds collide.  So for EVERY
+    \<open>\<epsilon>\<^sub>0 > 0\<close> there is \<open>b \<in> sconstraint k L\<close> with \<open>- trace (M ** b)/2 \<le> 1\<close> and
+    \<open>q \<bullet> (b *v q) < \<epsilon>\<^sub>0\<close>.  Compactness of the constraint set then gives an
+    exactly orthogonal \<open>b\<^sup>*\<close> (@{thm [source] paper_v_touch_orth}): the limit has
+    \<open>q \<bullet> (b\<^sup>* *v q) = 0\<close>, hence \<open>b\<^sup>* *v q = 0\<close> by psd Cauchy--Schwarz
+    (@{thm [source] psd_kernel_eq}).  \<^emph>\<open>No Doob, no fourth moments, no
+    stochastic integration.\<close>
 
-  \<^item> \<^emph>\<open>Anti-concentration dichotomy.\<close>  Run the argument of
-    @{thm [source] paper_v_subsol_quadratic_ball} at \<open>\<theta> \<and> t\<close> (a stopping time
-    by @{thm [source] path_stopping_time_min}).  The a.s. inequality gives
-    \<open>q \<bullet> (X\<^bsub>\<theta>\<and>t\<^esub> - x) \<ge> -(t + C\<epsilon>\<^sup>2/2)\<close> everywhere, while
-    \<open>Var(q \<bullet> X\<^bsub>\<theta>\<and>t\<^esub>) = q \<bullet> (E[Y\<^bsub>\<theta>\<and>t\<^esub>] *v q)\<close> EXACTLY (the frozen-direction
-    identity) and \<open>E[\<theta>\<and>t] \<ge> t/2\<close> for small \<open>t\<close> (the exit-probability bound
-    \<open>\<epsilon>\<^sup>2 P(\<tau> \<le> t) \<le> E\<bar>X\<^bsub>\<theta>\<and>t\<^esub>-x\<bar>\<^sup>2 = trace E[Y] \<le> nLt\<close>, pure Chebyshev).  A
-    mean-zero variable with variance \<open>\<sigma>\<^sup>2\<close> and fourth moment \<open>\<le> K\<sigma>\<^sup>4\<close> goes below
-    \<open>-c\<sigma>\<close> with probability \<open>\<ge> c'\<close>; with \<open>t = \<epsilon>\<^sup>3\<close> the fluctuation \<open>\<surd>(\<epsilon>\<^sub>0t)\<close>
-    beats \<open>t + C\<epsilon>\<^sup>2\<close> for small \<open>\<epsilon>\<close>.  So for every \<open>\<epsilon>\<^sub>0 > 0\<close> there is
-    \<open>b \<in> sconstraint k L\<close> with \<open>- trace (M ** b) / 2 \<le> 1\<close> AND
-    \<open>q \<bullet> (b *v q) < \<epsilon>\<^sub>0\<close>; compactness of the constraint set
-    (\<open>compact_sconstraint\<close>) gives a limit \<open>b\<^sup>*\<close> with \<open>q \<bullet> (b\<^sup>* *v q) = 0\<close>, hence
-    \<open>b\<^sup>* *v q = 0\<close> (psd Cauchy--Schwarz).  The fourth moment at the stopping
-    time comes from Doob on the submartingale \<open>(q \<bullet> (X-x))\<^sup>2\<close>
-    (\<open>Doob_Inequality\<close>) over the fixed-time bounds of \<open>Increment_Moments\<close>.
+  \<^item> \<^emph>\<open>Capped spectral split\<close> (@{thm [source] sconstraint_orth_feasible}).  \<open>b\<^sup>*\<close>
+    lives in the CONVEXIFIED set, not in the feasible set of (1.9).  The
+    planned route through \<open>lemma_2_1_exact\<close> and a face of the psd cone was
+    dropped: the generators of \<open>suff_volatile\<close> need not respect the eigenvalue
+    CAP \<open>L\<close>.  What works instead is direct.  Diagonalise \<open>b\<^sup>*\<close>
+    (@{thm [source] symmetric_eigenbasis}); cap the eigenvalues at \<open>1\<close>;
+    @{thm [source] Pi_constraint_capped_trace} says the capped eigenvalues
+    still sum to at least \<open>n - k\<close>; a threshold argument
+    (@{thm [source] exists_min_subset}, @{thm [source] weighted_min_value})
+    selects a subset \<open>S\<close> of eigendirections carrying that mass, and the
+    witness is the projection \<open>P\<^sub>S\<close> plus a remainder of size \<open>\<le> L - 1\<close>, so its
+    eigenvalues cap at \<open>1 + (L-1) = L\<close> exactly.  Orthogonality comes for free:
+    \<open>b\<^sup>* *v q = 0\<close> puts \<open>q\<close> in the zero eigenspace, and every direction the
+    witness uses has POSITIVE \<open>b\<^sup>*\<close>-eigenvalue, hence is orthogonal to \<open>q\<close>.
 
-  \<^item> \<^emph>\<open>The face argument.\<close>  \<open>b\<^sup>*\<close> lives in the CONVEXIFIED set, not in the
-    feasible set of (1.9).  But \<open>lemma_2_1_exact\<close> writes it as a convex
-    combination of \<open>suff_volatile\<close> generators, and \<open>{a. q \<bullet> (a *v q) = 0}\<close> is
-    a FACE of the psd cone: every generator in the combination must itself
-    kill \<open>q\<close>, hence lies in \<open>feasible k L q\<close>.  A linear functional's value at
-    a convex combination is beaten by some atom, so one generator is a
-    feasible witness with \<open>- trace (M ** a) / 2 \<le> 1\<close> --- and \<open>ell_op \<le> 1\<close>.
-
-  Both steps are elementary; neither needs stochastic integration.
-
-  \<^bold>\<open>The supersolution half\<close> is unchanged: it consumes
-  @{thm [source] paper_v_dpp_sup_ge_time} plus a weak solution of the SDE
-  (3.24), and should be attacked entirely in \<open>ell_op_s\<close> --- by
-  @{thm [source] visc_supersol_s_imp_visc_supersol} the relaxed form implies
-  the true one, so Gap 2 does not arise on that side at all.\<close>
+  \<^bold>\<open>What is LEFT of clause (2): the supersolution half only.\<close>  It consumes
+  @{thm [source] paper_v_dpp_sup_ge_time} (proved) plus a weak solution of the
+  SDE (3.24), which this development does not have.  Work in \<open>ell_op_s\<close>
+  throughout: by @{thm [source] visc_supersol_s_imp_visc_supersol} the relaxed
+  supersolution property implies the true one, so Gap 2 does not arise on that
+  side at all --- and Gap 1's localisation machinery
+  (@{thm [source] pball_exit_path_stopping_time} and the stopped moments)
+  transfers verbatim.\<close>
 
 
 end

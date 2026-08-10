@@ -40,7 +40,7 @@ time from `K`.
 |---|---|---|
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
-| (2) | `visc_sol k L (interior K) v` | **OPEN, but advanced** — the DPP (Prop. 2.4) is **DONE at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`), and Itô turns out to be UNNECESSARY for quadratic test functions (`Paper_Viscosity.paper_pair_class_quadratic_mean`). The SUBSOLUTION inequality is proved for a globally touching quadratic (`paper_v_subsol_quadratic_global`). The `path_stopping_time` refactor is DONE, so the ball exit time is a stopping time and stochastic localisation is unblocked. **Gap 1 (localisation) is DONE**: `Paper_Viscosity.paper_v_visc_subsol_s` — the RELAXED subsolution property holds on `interior K` unconditionally. Left: Gap 2 (orthogonality — a costed Girsanov-free plan exists, see §2.1) and the supersolution half |
+| (2) | `visc_sol k L (interior K) v` | **HALF DONE** — the **SUBSOLUTION inequality is PROVED with the paper's own operator** (1.9), orthogonality constraint included: `Paper_Viscosity.paper_v_visc_subsol`, unconditional for `0 < T`, `1 ≤ L`, closed `K`, `k < n`. Gap 1 (localisation) and Gap 2 (orthogonality) are both CLOSED, and neither needed stochastic integration — see §2.1. Left: **the supersolution half only** |
 | (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.2; transfer to `paper_v` §2.3 |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
 
@@ -65,7 +65,7 @@ one — see §1.7.
 
 | item | § | lines | risk |
 |---|---|---|---|
-| §3, the two viscosity inequalities | 2.1 | 2,000–4,000 | high — Itô, exponential local martingales, weak SDE solutions |
+| §3, the SUPERSOLUTION inequality (the subsolution half is DONE) | 2.1 | 1,500–3,000 | high — weak solutions of the SDE (3.24) |
 | clause (3) for `n−k ≥ 2` | 2.2 | 1,500–3,000 | high — needs spherical Brownian motion |
 | `stopped_val_fn ≤ paper_v` | 2.3 | ? | only if §2.2 wants it |
 
@@ -614,67 +614,68 @@ higher-order unifier picks a constant path); the `$`-projection DISTRIBUTES
 over matrix differences under simp, so entrywise mean facts must be stated in
 distributed form where simp will compare them.
 
-#### Gap 2 — from `ell_op_s` to `ell_op`: the paper's route, and a cheaper one
+#### Gap 2 (orthogonality) — DONE 2026-08-10, and NOT by the paper's route
 
-**The paper's §3.1 ((3.13)–(3.19)), read 2026-08-10:** contradiction argument.
-Assume `F(∇φ,∇²φ) > 1`; split time by whether `∇φᵀa_t∇φ ≥ ε`; kill the
-non-orthogonal times with an exponential local martingale (3.18) and optional
-sampling at `τ_{B_ε} ∧ v(x)`. This needs stochastic integrals against the
-class member — NOT available here and not worth building.
+`Paper_Viscosity.paper_v_visc_subsol`: **`enn2real ∘ paper_v` is a viscosity
+subsolution on `interior K` for `ell_op` itself** — the operator of Eq. (1.9),
+orthogonality constraint included — for every `0 < T`, `1 ≤ L`, closed `K` and
+`k < CARD('n)`. `paper_v_visc_subsol_s` (the relaxed form) is kept as the
+intermediate result, because the supersolution half should be attacked there.
 
-**The Girsanov-free replacement** (recorded in the theory's closing section):
-the DPP + touching inequality here is ALMOST SURE, so a single
-positive-probability fluctuation contradicts it — no measure change needed.
+**The paper's route ((3.13)–(3.19)) was NOT used and should not be built.** It
+kills the non-orthogonal times with an exponential local martingale under
+optional sampling at `τ_{B_ε} ∧ v(x)`, which needs stochastic integrals against
+the class member. Two elementary steps replace it.
 
-1. *Anti-concentration dichotomy* (~400–600 lines). At `θ ∧ t`
-   (`path_stopping_time_min`): a.s. `q∙(X_{θ∧t}−x) ≥ −(t + Cε²/2)`;
-   `Var(q∙X) = q∙(E[Y]*v q)` EXACTLY; `E[θ∧t] ≥ t/2` by Chebyshev
-   (`ε²P(τ≤t) ≤ trace E[Y] ≤ nLt`); fourth moment at the stopping time by
-   Doob (`Doob_Inequality`) over `Increment_Moments`; mean-zero
-   anti-concentration (elementary, ~100 lines); `t = ε³` makes `√(ε₀t)` beat
-   `t + Cε²`. Result: ∀ε₀>0 ∃b ∈ sconstraint with `−trace(M**b)/2 ≤ 1` and
-   `q∙(b*v q) < ε₀`; `compact_sconstraint` gives `b*` with `b* *v q = 0`
-   (psd Cauchy–Schwarz).
-2. *Face argument* (~150–300 lines). `b*` is only in the CONVEXIFIED set, but
-   `lemma_2_1_exact` (exists, `Lemma_2_1_Exact.thy`) decomposes it over
-   `suff_volatile`, and `{a. q∙(a*v q) = 0}` is a FACE of the psd cone: every
-   atom kills `q`, so every atom is in `feasible k L q`, and some atom beats
-   the average — a feasible witness with `−trace(M**a)/2 ≤ 1`, i.e.
-   `ell_op k L q M ≤ 1`.
+1. **Anti-concentration** (`paper_v_touch_near_orth`, ~700 lines). The touching
+   inequality here is ALMOST SURE, so one positive-probability fluctuation
+   contradicts it — no measure change. At `θ' = τ_{B_ε} ∧ t` with `t = βε²`,
+   `β = 1/(2n²L)`: the increment `W = q ∙ (X_{θ'} − x)` is **BOUNDED** by `|q|ε`,
+   has mean `0`, and variance exactly `q ∙ (E[Y_{θ'}] *v q)`
+   (`paper_pair_class_stopped_var` — the frozen-direction identity), while the
+   touching forces `W⁻ ≤ t + C_M ε²/2` a.s. **Boundedness replaces the fourth
+   moment**: an indicator split bounds `E[W⁻]` above by `|q|²ε²` times a tail
+   probability and below by the variance, and Chebyshev on the exit
+   (`ε² P(τ < t) ≤ trace E[Y] ≤ n²Lt`) gives `E[θ'] ≥ t/2`. For `ε < εK` the two
+   bounds collide. **So the planned Doob / `Increment_Moments` fourth-moment
+   detour was unnecessary — do not build it.** Output: for every `ε₀ > 0` a
+   `b ∈ sconstraint k L` with `−trace(M**b)/2 ≤ 1` and `q ∙ (b *v q) < ε₀`.
+   `paper_v_touch_orth` then takes the limit: `bounded_sconstraint` +
+   `closed_sconstraint` give `b*` with `q ∙ (b* *v q) = 0`, hence `b* *v q = 0`
+   by psd Cauchy–Schwarz (`psd_kernel_eq`).
 
-Both steps elementary; neither needs stochastic integration.
+2. **Capped spectral split** (`sconstraint_orth_feasible`, ~250 lines).
+   **The planned face argument through `lemma_2_1_exact` DOES NOT WORK** — the
+   `suff_volatile` generators need not respect the eigenvalue CAP `L`, so an
+   atom of the decomposition need not be in `feasible k L q`. What works is
+   direct and cheaper: diagonalise `b*` (`symmetric_eigenbasis`), cap the
+   eigenvalues at `1`; `Pi_constraint_capped_trace` says the capped eigenvalues
+   still sum to `≥ n−k`; a threshold argument (`exists_min_subset`,
+   `weighted_min_value`) selects a subset `S` of eigendirections carrying that
+   mass; the witness is the projection `P_S` plus a remainder of size `≤ L−1`,
+   so its eigenvalues cap at `1 + (L−1) = L` exactly. **Orthogonality is free**:
+   `b* *v q = 0` puts `q` in the zero eigenspace, and every direction the
+   witness uses has POSITIVE `b*`-eigenvalue, hence is orthogonal to `q`.
 
-#### What is left in §2.1, in order
+Then `δ → 0` on the Hessian bump through `feasible_trace_le` (`trace a ≤ nL` on
+the feasible set) and `field_le_epsilon`, exactly as in the relaxed case.
 
-1. **Gap 1, localisation — DONE, see above.**
-   Stop at `τ_{B_ε(x)} ∧ h` so the path never leaves the ball and the local
-   touching applies unconditionally. Three pieces:
-   (a) measurability of `pball_exit` w.r.t. the path-space σ-algebra. NOTE
-   `pexit_path_measurable` assumes `closed K` and the ball is OPEN, so this
-   needs the closed-TARGET route: `etime_le_iff` (attainment) plus a
-   rational-times argument. This is the only genuinely new piece, ~150–300
-   lines. (b) optional sampling of clauses (iii) and (iv) at the bounded
-   stopping time — `Optional_Sampling` exists and `optional_stopping` is
-   already used in `Paper_DPP`; the work is the vector/matrix lift, as in
-   `martingale_matI`. (c) redo `paper_pair_class_quadform_mean` at `τ ∧ h`;
-   `E[Y_θ]/E[θ] ∈ sconstraint` by the SAME half-space argument as
-   `paper_pair_class_Y_mean_sconstraint` (a weighted average of a convex set).
-   `paper_v_cond_time` needs no stopping-time property at all, and
-   `pball_exit_pos` gives `θ > 0`. Output: `visc_subsol_s` on `interior K`.
+#### What is left in §2.1
 
-2. **Gap 2, orthogonality — OPEN, and needs an idea.** `ell_op_s` vs `ell_op`.
-   `paper_pair_class_frozen_direction` says what the constraint DOES (a
-   direction killed by the averaged covariation is frozen a.s., so feasibility
-   makes essinf and mean agree to first order), but getting `a *v Dv = 0` for
-   the OPTIMIZER is an almost-sure rigidity statement about optimality, not a
-   statement about means. Not reachable by the route of §2.1 as it stands.
+**Only the supersolution half** (~1,500–3,000 lines). It consumes
+`paper_v_dpp_sup_ge_time` (proved, §1.9) plus a **weak solution of the SDE
+(3.24)**, which this development does not have — that is the whole of the
+remaining risk. Two things make it cheaper than it looks:
 
-3. **The supersolution half — the largest block (~1,500–3,000 lines).** Needs
-   weak solutions of the SDE (3.24), which this development does not have, plus
-   the exponential local martingale with optional sampling ((3.18)–(3.19)).
-   The optional-sampling investment from item 1 is shared. Use
-   `visc_supersol_s_imp_visc_supersol` and work in `ell_op_s` throughout —
-   Gap 2 does not arise on this side.
+* Work in `ell_op_s` throughout. By `visc_supersol_s_imp_visc_supersol` the
+  relaxed supersolution property implies the true one, so **Gap 2 does not
+  arise on this side at all**.
+* Gap 1's localisation machinery transfers verbatim:
+  `pball_exit_path_stopping_time`, `pball_exit_measurable`,
+  `pball_exit_stays_cball`, and the stopped moments
+  (`paper_pair_class_stopped_moments`, `_var`, `_normsq`).
+
+Gaps 1 and 2 are both closed and need no revisiting.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
 
