@@ -6527,6 +6527,60 @@ proof -
   then show ?thesis by simp
 qed
 
+subsection \<open>Writing the field as a square: columns into a matrix\<close>
+
+text \<open>\<open>sbmpair\<close> wants a volatility matrix \<open>S\<close> with \<open>S S\<^sup>T\<close> equal to the
+  field value; the field is a sum of column outer products, so \<open>S\<close> is the
+  matrix whose columns are those columns, indexed through any enumeration
+  of the eigenbasis.\<close>
+
+lemma cols_mult_transpose:
+  fixes w :: "'m::finite \<Rightarrow> real^'n::finite"
+  shows "(\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)
+       = (\<Sum>j\<in>UNIV. outerp (w j))"
+proof -
+  have "((\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)) $ i $ l
+      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
+    by (simp add: matrix_matrix_mult_def transpose_def)
+  moreover have "(\<Sum>j\<in>UNIV. outerp (w j)) $ i $ l
+      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
+    by (induction "UNIV :: 'm set" rule: infinite_finite_induct)
+      (simp_all add: outerp_def vector_add_component)
+  ultimately show ?thesis by (simp add: vec_eq_iff)
+qed
+
+lemma skewfield_decomp:
+  fixes B :: "(real^'n::finite) set" and f :: "'n \<Rightarrow> real^'n"
+  assumes bij: "bij_betw f (UNIV :: 'n set) B"
+  shows "(\<chi> i j. (skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+          *v (q + M *v (z - x))) $ i)
+       ** transpose (\<chi> i j. (skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+          *v (q + M *v (z - x))) $ i)
+       = skewfield B lam q M x z"
+proof -
+  have "(\<chi> i j. (skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+          *v (q + M *v (z - x))) $ i)
+       ** transpose (\<chi> i j. (skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+          *v (q + M *v (z - x))) $ i)
+       = (\<Sum>j\<in>UNIV. outerp (skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+          *v (q + M *v (z - x))))"
+    by (rule cols_mult_transpose)
+  also have "\<dots> = (\<Sum>u\<in>B. outerp (skewv q (sqrt (lam u) *\<^sub>R u)
+      *v (q + M *v (z - x))))"
+    by (rule sum.reindex_bij_betw[OF bij])
+  finally show ?thesis unfolding skewfield_def .
+qed
+
+lemma exists_enum_of_card:
+  fixes B :: "(real^'n::finite) set"
+  assumes finB: "finite B" and cardB: "card B = CARD('n)"
+  obtains f :: "'n \<Rightarrow> real^'n" where "bij_betw f (UNIV :: 'n set) B"
+proof -
+  have "\<exists>f. bij_betw f (UNIV :: 'n set) B"
+    by (rule finite_same_card_bij) (use finB cardB in simp_all)
+  then show ?thesis using that by blast
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
