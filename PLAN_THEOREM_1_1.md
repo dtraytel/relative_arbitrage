@@ -40,7 +40,7 @@ time from `K`.
 |---|---|---|
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
-| (2) | `visc_sol k L (interior K) v` | **OPEN, but advanced** — the DPP (Prop. 2.4) is **DONE at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`), and Itô turns out to be UNNECESSARY for quadratic test functions (`Paper_Viscosity.paper_pair_class_quadratic_mean`). The SUBSOLUTION inequality is proved for a globally touching quadratic (`paper_v_subsol_quadratic_global`). The `path_stopping_time` refactor is DONE, so the ball exit time is a stopping time and stochastic localisation is unblocked. Two named gaps remain — localisation (reachable, ~600–900 lines) and orthogonality (open) — plus the supersolution half; see §2.1 |
+| (2) | `visc_sol k L (interior K) v` | **OPEN, but advanced** — the DPP (Prop. 2.4) is **DONE at a deterministic time AND at a STOPPING time** (`paper_v_dpp`, `paper_v_dpp_sup_ge_time`), and Itô turns out to be UNNECESSARY for quadratic test functions (`Paper_Viscosity.paper_pair_class_quadratic_mean`). The SUBSOLUTION inequality is proved for a globally touching quadratic (`paper_v_subsol_quadratic_global`). The `path_stopping_time` refactor is DONE, so the ball exit time is a stopping time and stochastic localisation is unblocked. **Gap 1 (localisation) is DONE**: `Paper_Viscosity.paper_v_visc_subsol_s` — the RELAXED subsolution property holds on `interior K` unconditionally. Left: Gap 2 (orthogonality — a costed Girsanov-free plan exists, see §2.1) and the supersolution half |
 | (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.2; transfer to `paper_v` §2.3 |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
 
@@ -587,9 +587,66 @@ Three things worth not re-deriving:
   supply continuity per `ω` via `Collect_cong` / `eventually_elim` with
   `AE_space` chained in.
 
+#### Gap 1 (localisation) — DONE 2026-08-10
+
+`Paper_Viscosity.paper_v_visc_subsol_s`: **`enn2real ∘ paper_v` is a viscosity
+subsolution on `interior K` for the relaxed operator `ell_op_s`**, for every
+`0 < T`, `1 ≤ L`, closed `K`. Verified end to end (2,747 lines, 0 `sorry`).
+The chain: `pball_exit_measurable` (closed-complement route: attainment via
+`etime_le_iff` + rationals of `[0,t]` + `t`; ~200 lines, the only genuinely
+new piece, as predicted), `pball_exit_stays_cball` (IVT),
+`integral_pos_of_AE_pos` (archimedean exhaustion — no `AE_False` gymnastics),
+optional sampling read off the ALREADY-PROVED stopped-law martingales
+(`pstopped_law_horizon_component/_compensated` at horizon `T`, transported
+along `pair_law_of` as a `distr` — no new probability),
+`paper_pair_class_Y_stopped_mean_sconstraint` (the weighted half-space
+argument), `paper_v_subsol_quadratic_ball` (exact expansion at the stopping
+time — no remainder anywhere), `test_fun_quadratic_dominates` (Taylor bump,
+one-dimensional along rays via `DERIV_nonpos_imp_nonincreasing`), then
+`δ → 0` through `sconstraint_trace_le` + `field_le_epsilon`.
+
+Traps recorded for reuse: two 288-second simp loops from
+`fun_eq_iff + divide_inverse + ac_simps` on large integrands (use
+`bounded_linear (λr. r/2)` instead); scaleR-cancellation simp rules mangle
+matrix equalities into disjunctions (project entries with `arg_cong`, cancel
+with `mult_left_cancel`); `etime_le_iff` needs `where`-instantiation (the
+higher-order unifier picks a constant path); the `$`-projection DISTRIBUTES
+over matrix differences under simp, so entrywise mean facts must be stated in
+distributed form where simp will compare them.
+
+#### Gap 2 — from `ell_op_s` to `ell_op`: the paper's route, and a cheaper one
+
+**The paper's §3.1 ((3.13)–(3.19)), read 2026-08-10:** contradiction argument.
+Assume `F(∇φ,∇²φ) > 1`; split time by whether `∇φᵀa_t∇φ ≥ ε`; kill the
+non-orthogonal times with an exponential local martingale (3.18) and optional
+sampling at `τ_{B_ε} ∧ v(x)`. This needs stochastic integrals against the
+class member — NOT available here and not worth building.
+
+**The Girsanov-free replacement** (recorded in the theory's closing section):
+the DPP + touching inequality here is ALMOST SURE, so a single
+positive-probability fluctuation contradicts it — no measure change needed.
+
+1. *Anti-concentration dichotomy* (~400–600 lines). At `θ ∧ t`
+   (`path_stopping_time_min`): a.s. `q∙(X_{θ∧t}−x) ≥ −(t + Cε²/2)`;
+   `Var(q∙X) = q∙(E[Y]*v q)` EXACTLY; `E[θ∧t] ≥ t/2` by Chebyshev
+   (`ε²P(τ≤t) ≤ trace E[Y] ≤ nLt`); fourth moment at the stopping time by
+   Doob (`Doob_Inequality`) over `Increment_Moments`; mean-zero
+   anti-concentration (elementary, ~100 lines); `t = ε³` makes `√(ε₀t)` beat
+   `t + Cε²`. Result: ∀ε₀>0 ∃b ∈ sconstraint with `−trace(M**b)/2 ≤ 1` and
+   `q∙(b*v q) < ε₀`; `compact_sconstraint` gives `b*` with `b* *v q = 0`
+   (psd Cauchy–Schwarz).
+2. *Face argument* (~150–300 lines). `b*` is only in the CONVEXIFIED set, but
+   `lemma_2_1_exact` (exists, `Lemma_2_1_Exact.thy`) decomposes it over
+   `suff_volatile`, and `{a. q∙(a*v q) = 0}` is a FACE of the psd cone: every
+   atom kills `q`, so every atom is in `feasible k L q`, and some atom beats
+   the average — a feasible witness with `−trace(M**a)/2 ≤ 1`, i.e.
+   `ell_op k L q M ≤ 1`.
+
+Both steps elementary; neither needs stochastic integration.
+
 #### What is left in §2.1, in order
 
-1. **Gap 1, localisation — now REACHABLE, no new ideas needed (~600–900 lines).**
+1. **Gap 1, localisation — DONE, see above.**
    Stop at `τ_{B_ε(x)} ∧ h` so the path never leaves the ball and the local
    touching applies unconditionally. Three pieces:
    (a) measurability of `pball_exit` w.r.t. the path-space σ-algebra. NOTE
