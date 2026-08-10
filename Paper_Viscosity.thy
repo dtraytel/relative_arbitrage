@@ -8189,6 +8189,303 @@ next
   show ?case using intS bndS by blast
 qed
 
+subsection \<open>The increments are almost surely orthogonal to a killed field\<close>
+
+lemma transpose_kill:
+  fixes S :: "real^'n::finite^'n" and w :: "real^'n"
+  assumes z: "(S ** transpose S) *v w = 0"
+  shows "transpose S *v w = 0"
+proof -
+  have "(norm (transpose S *v w))\<^sup>2
+      = (transpose S *v w) \<bullet> (transpose S *v w)"
+    by (simp add: power2_norm_eq_inner)
+  also have "\<dots> = w \<bullet> (S *v (transpose S *v w))"
+    by (simp add: inner_transpose_matrix)
+  also have "S *v (transpose S *v w) = (S ** transpose S) *v w"
+    by (metis matrix_vector_mul_assoc)
+  also have "w \<bullet> ((S ** transpose S) *v w) = 0" by (simp add: z)
+  finally have "(norm (transpose S *v w))\<^sup>2 = 0" by simp
+  then show ?thesis by simp
+qed
+
+lemma sbm_orth_increment:
+  fixes S :: "real^'n::finite^'n" and w :: "real^'n"
+  assumes h0: "0 \<le> h" and orth: "transpose S *v w = 0"
+  shows "AE \<omega>' in pair_law_of h (sbmpair S h)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+    w \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?B = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  have phim: "sbmpair S h \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF h0])
+  have evh: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' h) \<in> ?B \<rightarrow>\<^sub>M borel"
+    by (rule pair_law_eval_measurable[OF refl])
+  have ev0: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' 0) \<in> ?B \<rightarrow>\<^sub>M borel"
+    by (rule pair_law_eval_measurable[OF refl])
+  have pairm: "(\<lambda>\<omega>' :: 'n pairpath. (\<omega>' h, \<omega>' 0)) \<in> ?B \<rightarrow>\<^sub>M borel"
+    using evh ev0 by (simp add: borel_prod[symmetric])
+  have contf: "(\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+        \<times> ((real^'n) \<times> (real^'n^'n)).
+      w \<bullet> (fst (fst ab) - fst (snd ab))) \<in> borel_measurable borel"
+  proof (intro borel_measurable_continuous_onI)
+    have p1: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+        \<times> ((real^'n) \<times> (real^'n^'n)). fst (fst ab))"
+      by (intro continuous_on_fst continuous_on_id)
+    have p2: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+        \<times> ((real^'n) \<times> (real^'n^'n)). fst (snd ab))"
+      by (intro continuous_on_fst continuous_on_snd continuous_on_id)
+    show "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+        \<times> ((real^'n) \<times> (real^'n^'n)).
+        w \<bullet> (fst (fst ab) - fst (snd ab)))"
+      by (intro continuous_intros p1 p2)
+  qed
+  have fm: "(\<lambda>\<omega>' :: 'n pairpath. w \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)))
+      \<in> borel_measurable ?B"
+    using measurable_compose[OF pairm contf] by simp
+  have mset: "{\<omega>' \<in> space ?B. w \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0}
+      \<in> sets ?B"
+  proof -
+    have "{\<omega>' \<in> space ?B. w \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0}
+        = (\<lambda>\<omega>' :: 'n pairpath. w \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)))
+          -` {0} \<inter> space ?B"
+      by auto
+    then show ?thesis using measurable_sets[OF fm] by simp
+  qed
+  have ptw: "w \<bullet> (fst (sbmpair S h \<omega> h) - fst (sbmpair S h \<omega> 0)) = 0"
+    for \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+  proof -
+    have hI: "h \<in> {0..h}" and zI: "(0::real) \<in> {0..h}"
+      using h0 by simp_all
+    have "fst (sbmpair S h \<omega> h) - fst (sbmpair S h \<omega> 0)
+        = S *v (cbmX (0::real^'n) h \<omega> - cbmX (0::real^'n) 0 \<omega>)"
+      by (simp add: sbmpair_apply[OF hI] sbmpair_apply[OF zI]
+          matrix_vector_mult_diff_distrib)
+    then have "w \<bullet> (fst (sbmpair S h \<omega> h) - fst (sbmpair S h \<omega> 0))
+        = (transpose S *v w)
+          \<bullet> (cbmX (0::real^'n) h \<omega> - cbmX (0::real^'n) 0 \<omega>)"
+      by (simp add: inner_transpose_matrix)
+    then show ?thesis using orth by simp
+  qed
+  show ?thesis
+    unfolding pair_law_of_def
+    by (subst AE_distr_iff[OF phim mset]) (simp add: ptw)
+qed
+
+lemma euOrth_mset:
+  fixes G :: "real^'n::finite \<Rightarrow> real^'n" and h :: real
+  assumes Gc: "continuous_on UNIV G"
+  shows "{\<omega> \<in> space (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric))).
+      \<forall>j<m. G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have per: "{\<omega> \<in> space ?B. G (fst (\<omega> (real j * h))) \<bullet>
+      (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+      \<in> sets ?B" for j
+  proof -
+    have evu: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real (Suc j) * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
+      by (rule pair_law_eval_measurable[OF refl])
+    have evv: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real j * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
+      by (rule pair_law_eval_measurable[OF refl])
+    have pairm: "(\<lambda>\<omega> :: 'n pairpath.
+        (\<omega> (real (Suc j) * h), \<omega> (real j * h))) \<in> ?B \<rightarrow>\<^sub>M borel"
+      using evu evv by (simp add: borel_prod[symmetric])
+    have contf: "(\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)).
+        G (fst (snd ab)) \<bullet> (fst (fst ab) - fst (snd ab)))
+        \<in> borel_measurable borel"
+    proof (intro borel_measurable_continuous_onI)
+      have p1: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)). fst (fst ab))"
+        by (intro continuous_on_fst continuous_on_id)
+      have p2: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)). fst (snd ab))"
+        by (intro continuous_on_fst continuous_on_snd continuous_on_id)
+      have Gcomp: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)). G (fst (snd ab)))"
+        by (rule continuous_on_compose2[OF Gc p2]) auto
+      show "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)).
+          G (fst (snd ab)) \<bullet> (fst (fst ab) - fst (snd ab)))"
+        by (intro continuous_intros Gcomp p1 p2)
+    qed
+    have fm: "(\<lambda>\<omega> :: 'n pairpath. G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))))
+        \<in> borel_measurable ?B"
+      using measurable_compose[OF pairm contf] by simp
+    have "{\<omega> \<in> space ?B. G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+        = (\<lambda>\<omega> :: 'n pairpath. G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))))
+          -` {0} \<inter> space ?B"
+      by auto
+    then show ?thesis using measurable_sets[OF fm] by simp
+  qed
+  show ?thesis
+  proof (induction m)
+    case 0
+    show ?case by simp
+  next
+    case (Suc m)
+    have eq: "{\<omega> \<in> space ?B. \<forall>j<Suc m. G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+        = {\<omega> \<in> space ?B. \<forall>j<m. G (fst (\<omega> (real j * h))) \<bullet>
+            (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+          \<inter> {\<omega> \<in> space ?B. G (fst (\<omega> (real m * h))) \<bullet>
+            (fst (\<omega> (real (Suc m) * h)) - fst (\<omega> (real m * h))) = 0}"
+      by (auto simp: less_Suc_eq)
+    show ?case unfolding eq by (intro sets.Int Suc.IH per)
+  qed
+qed
+
+theorem eulerp_orth_increments:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and G :: "real^'n \<Rightarrow> real^'n"
+    and x :: "real^'n" and h :: real
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and Gc: "continuous_on UNIV G"
+    and kill: "\<And>z. transpose (SF z) *v G z = 0"
+  shows "AE \<omega> in eulerp SF x h N. \<forall>j<Suc N.
+      G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
+proof (induction N)
+  case 0
+  have h0': "(0::real) \<le> h" using h0 by simp
+  let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+  have E0: "eulerp SF x h 0 = pshift_law h x ?\<mu>0" by simp
+  have sets\<mu>: "sets ?\<mu>0 = sets (borel_of (mtopology_of
+      (path_metric h :: ('n pairpath) metric)))" by simp
+  have st: "AE \<omega> in ?\<mu>0. fst (\<omega> 0) = (0 :: real^'n)"
+    using sbmpair_law_start[OF h0', of "SF x"]
+    by (rule eventually_mono) simp
+  have orth0: "AE \<omega> in ?\<mu>0. G x \<bullet> (fst (\<omega> h) - fst (\<omega> 0)) = 0"
+    by (rule sbm_orth_increment[OF h0' kill])
+  have ae: "AE \<omega> in ?\<mu>0. \<forall>j<Suc 0.
+      G (fst (pshift h x \<omega> (real j * h))) \<bullet>
+        (fst (pshift h x \<omega> (real (Suc j) * h))
+          - fst (pshift h x \<omega> (real j * h))) = 0"
+    using st orth0
+  proof eventually_elim
+    case (elim \<omega>)
+    have m1: "h \<in> {0..h}" and m2: "(0::real) \<in> {0..h}"
+      using h0' by simp_all
+    show ?case using elim
+      by (simp add: pshift_fst[OF m1] pshift_fst[OF m2])
+  qed
+  show ?case unfolding E0 by (rule AE_pshift_law[OF h0' sets\<mu> ae])
+next
+  case (Suc N)
+  have h0': "(0::real) \<le> h" using h0 by simp
+  define r where "r = real (Suc N) * h"
+  define T' where "T' = real (Suc (Suc N)) * h"
+  let ?Q = "eulerp SF x h N"
+  let ?Br = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?MR = "borel_of (mtopology_of
+      (path_metric (T' - r) :: ('n pairpath) metric))"
+  let ?K = "\<lambda>\<omega> :: 'n pairpath.
+      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
+  have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
+  have r0: "0 \<le> r" unfolding r_def using h0' by simp
+  have rleT: "r \<le> T'" unfolding r_def T'_def
+    using h0' by (intro mult_right_mono) simp_all
+  have Qc: "?Q \<in> paper_pair_class k L r x"
+    unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
+  have PQ: "prob_space ?Q" by (rule paper_pair_class_prob[OF Qc])
+  have setsQ: "sets ?Q = sets ?Br" by (rule paper_pair_class_sets[OF Qc])
+  have ne: "space ?Q \<noteq> {}" using PQ by (rule prob_space.not_empty)
+  note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
+  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    using measurable_fst[of "borel :: (real^'n) measure"
+        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+  have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+  have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
+    unfolding hT by (rule measurable_compose[OF eQ pack(1)])
+  have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
+    by (simp add: r_def T'_def)
+  have msetP: "{\<omega> \<in> mspace (path_metric T' :: ('n pairpath) metric).
+      \<forall>j<Suc (Suc N). G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+      \<in> sets (borel_of (mtopology_of
+        (path_metric T' :: ('n pairpath) metric)))"
+  proof -
+    have spB: "space (borel_of (mtopology_of
+        (path_metric T' :: ('n pairpath) metric)))
+        = mspace (path_metric T' :: ('n pairpath) metric)"
+      by (rule space_of_path_sets[OF refl])
+    show ?thesis
+      using euOrth_mset[OF Gc, where h = h and T = T' and m = "Suc (Suc N)"]
+      unfolding spB .
+  qed
+  show ?case
+    unfolding Ee
+  proof (rule Paper_Bridge.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
+    show "AE \<omega> in ?Q. \<forall>j<Suc N. G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
+      by (rule Suc.IH)
+    show "AE \<omega>' in ?K \<omega>. G (fst (\<omega> r)) \<bullet>
+        (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
+      if "\<omega> \<in> space ?Q" for \<omega> :: "'n pairpath"
+      by (rule sbm_orth_increment[OF h0' kill])
+    fix \<omega> \<omega>' :: "'n pairpath"
+    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and "\<omega>' \<in> mspace (path_metric (T' - r) :: ('n pairpath) metric)"
+      and A: "\<forall>j<Suc N. G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
+      and B: "G (fst (\<omega> r)) \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
+    have mem: "real j * h \<in> {0..T'}" if le: "j \<le> Suc (Suc N)" for j
+    proof -
+      have a: "0 \<le> real j * h"
+        by (intro mult_nonneg_nonneg h0') simp_all
+      have b: "real j * h \<le> T'" unfolding T'_def
+        using le h0' by (intro mult_right_mono) simp_all
+      show ?thesis using a b by simp
+    qed
+    have prefl: "pglue r T' \<omega> \<omega>' (real j * h) = \<omega> (real j * h)"
+      if j: "j \<le> Suc N" for j
+    proof (rule pglue_le)
+      show "real j * h \<in> {0..T'}" using j by (intro mem) simp
+      show "real j * h \<le> r" unfolding r_def
+        using j h0' by (intro mult_right_mono) simp_all
+    qed
+    have Tmem: "T' \<in> {0..T'}"
+      using mem[of "Suc (Suc N)"] unfolding T'_def by simp
+    have gT: "pglue r T' \<omega> \<omega>' T' = \<omega> r + (\<omega>' (T' - r) - \<omega>' 0)"
+      by (rule pglue_ge[OF Tmem rleT])
+    have gr: "pglue r T' \<omega> \<omega>' r = \<omega> r"
+      using prefl[of "Suc N"] unfolding r_def by simp
+    have head: "fst (pglue r T' \<omega> \<omega>' T') - fst (pglue r T' \<omega> \<omega>' r)
+        = fst (\<omega>' h) - fst (\<omega>' 0)"
+      unfolding gT gr hT by simp
+    show "\<forall>j<Suc (Suc N). G (fst (pglue r T' \<omega> \<omega>' (real j * h))) \<bullet>
+        (fst (pglue r T' \<omega> \<omega>' (real (Suc j) * h))
+          - fst (pglue r T' \<omega> \<omega>' (real j * h))) = 0"
+    proof (intro allI impI)
+      fix j assume jle: "j < Suc (Suc N)"
+      show "G (fst (pglue r T' \<omega> \<omega>' (real j * h))) \<bullet>
+          (fst (pglue r T' \<omega> \<omega>' (real (Suc j) * h))
+            - fst (pglue r T' \<omega> \<omega>' (real j * h))) = 0"
+      proof (cases "j < Suc N")
+        case True
+        then have j1: "Suc j \<le> Suc N" and j2: "j \<le> Suc N" by simp_all
+        show ?thesis
+          using A True by (simp only: prefl[OF j1] prefl[OF j2])
+      next
+        case False
+        with jle have jeq: "j = Suc N" by simp
+        have e1: "real (Suc j) * h = T'" unfolding jeq T'_def by (rule refl)
+        have e2: "real j * h = r" unfolding jeq r_def by (rule refl)
+        show ?thesis unfolding e1 e2 gT gr hT using B by simp
+      qed
+    qed
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
