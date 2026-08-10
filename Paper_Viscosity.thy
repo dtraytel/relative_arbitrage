@@ -2682,90 +2682,65 @@ qed
 
 section \<open>What remains for clause (2)\<close>
 
-text \<open>What is PROVED here, unconditionally:
+text \<open>Where clause (2) stands after this file.
 
-  \<^item> @{thm [source] paper_pair_class_quadratic_mean} --- the exact expansion of
-    a quadratic test function along any class member, from the two martingale
-    clauses alone.  This is the substitute for Ito's formula, and it is not an
-    approximation: for a quadratic the expansion has no remainder.
+  \<^bold>\<open>PROVED\<close>: @{thm [source] paper_v_visc_subsol_s} --- the RELAXED subsolution
+  property of \<open>enn2real \<circ> paper_v\<close> on \<open>interior K\<close>, for every \<open>0 < T\<close>,
+  \<open>1 \<le> L\<close>, closed \<open>K\<close>.  Gap 1 (localisation) is CLOSED: the argument stops at
+  the exit time of a ball, uses the touching only on the closed ball, and the
+  quadratic expansion is EXACT at the stopping time, so no remainder estimate
+  ever appears.  The route was stochastic localisation exactly as planned:
+  @{thm [source] pball_exit_path_stopping_time},
+  @{thm [source] pball_exit_measurable},
+  @{thm [source] paper_pair_class_X_entry_stopped},
+  @{thm [source] paper_pair_class_Y_stopped_mean_sconstraint},
+  @{thm [source] paper_v_subsol_quadratic_ball},
+  @{thm [source] test_fun_quadratic_dominates}.
 
-  \<^item> @{thm [source] paper_v_subsol_quadratic_global} --- the subsolution
-    inequality \<open>ell_op_s k L M \<le> 1\<close> at a GLOBALLY touching quadratic.
+  \<^bold>\<open>Gap 2 --- from \<open>ell_op_s\<close> to \<open>ell_op\<close>, i.e. the orthogonality constraint.\<close>
+  The paper (\<section>3.1, displays (3.13)--(3.19)) proves the subsolution property
+  by CONTRADICTION: assume \<open>F(\<nabla>\<phi>, \<nabla>\<^sup>2\<phi>) > 1\<close> at the touching point, split the
+  time axis by whether \<open>\<nabla>\<phi>\<^sup>T a\<^sub>t \<nabla>\<phi> \<ge> \<epsilon>\<close>, and kill the non-orthogonal times
+  with an exponential local martingale (3.18) via optional sampling at
+  \<open>\<tau>\<^bsub>B\<^sub>\<epsilon>\<^esub> \<and> v(x)\<close>.  That construction needs stochastic integrals against the
+  class member, which this development does not have and should not build.
 
-  Two gaps separate that from \<open>visc_subsol\<close>, and both are named rather than
-  hidden.  Neither is a gap in the argument; each is a gap in what the class,
-  used through expectations, can say.
+  A GIRSANOV-FREE replacement is available, because the DPP + touching
+  inequality here is ALMOST SURE, so a single positive-probability fluctuation
+  contradicts it.  Two steps:
 
-  \<^bold>\<open>Gap 1: localisation.\<close>  \<^const>\<open>visc_subsol\<close> gives a LOCAL touching, on some
-  \<open>ball x e\<close>.  Two routes were checked and BOTH FAIL; do not retry them.
+  \<^item> \<^emph>\<open>Anti-concentration dichotomy.\<close>  Run the argument of
+    @{thm [source] paper_v_subsol_quadratic_ball} at \<open>\<theta> \<and> t\<close> (a stopping time
+    by @{thm [source] path_stopping_time_min}).  The a.s. inequality gives
+    \<open>q \<bullet> (X\<^bsub>\<theta>\<and>t\<^esub> - x) \<ge> -(t + C\<epsilon>\<^sup>2/2)\<close> everywhere, while
+    \<open>Var(q \<bullet> X\<^bsub>\<theta>\<and>t\<^esub>) = q \<bullet> (E[Y\<^bsub>\<theta>\<and>t\<^esub>] *v q)\<close> EXACTLY (the frozen-direction
+    identity) and \<open>E[\<theta>\<and>t] \<ge> t/2\<close> for small \<open>t\<close> (the exit-probability bound
+    \<open>\<epsilon>\<^sup>2 P(\<tau> \<le> t) \<le> E\<bar>X\<^bsub>\<theta>\<and>t\<^esub>-x\<bar>\<^sup>2 = trace E[Y] \<le> nLt\<close>, pure Chebyshev).  A
+    mean-zero variable with variance \<open>\<sigma>\<^sup>2\<close> and fourth moment \<open>\<le> K\<sigma>\<^sup>4\<close> goes below
+    \<open>-c\<sigma>\<close> with probability \<open>\<ge> c'\<close>; with \<open>t = \<epsilon>\<^sup>3\<close> the fluctuation \<open>\<surd>(\<epsilon>\<^sub>0t)\<close>
+    beats \<open>t + C\<epsilon>\<^sup>2\<close> for small \<open>\<epsilon>\<close>.  So for every \<open>\<epsilon>\<^sub>0 > 0\<close> there is
+    \<open>b \<in> sconstraint k L\<close> with \<open>- trace (M ** b) / 2 \<le> 1\<close> AND
+    \<open>q \<bullet> (b *v q) < \<epsilon>\<^sub>0\<close>; compactness of the constraint set
+    (\<open>compact_sconstraint\<close>) gives a limit \<open>b\<^sup>*\<close> with \<open>q \<bullet> (b\<^sup>* *v q) = 0\<close>, hence
+    \<open>b\<^sup>* *v q = 0\<close> (psd Cauchy--Schwarz).  The fourth moment at the stopping
+    time comes from Doob on the submartingale \<open>(q \<bullet> (X-x))\<^sup>2\<close>
+    (\<open>Doob_Inequality\<close>) over the fixed-time bounds of \<open>Increment_Moments\<close>.
 
-  \<^item> \<^emph>\<open>Penalisation.\<close>  Replacing \<open>\<phi>\<close> by \<open>\<phi> + A\<sqdot>\<bar>\<sqdot>-x\<bar>\<^sup>2\<close> does turn a local
-    touching into a global one for \<open>A\<close> large, because \<^const>\<open>paper_v\<close> is
-    bounded by \<open>T\<close> (@{thm [source] paper_v_le_T}) and the penalty dominates the
-    quadratic off the ball.  But the Hessian becomes \<open>M + 2A\<sqdot>1\<close>, and
-    \<open>- trace ((M + 2A\<sqdot>1) ** b) / 2 = - trace (M ** b)/2 - A \<sqdot> trace b\<close> with
-    \<open>trace b \<ge> n - k > 0\<close> (@{thm [source] sconstraint_trace_ge}).  So the
-    conclusion is \<open>- trace (M ** b)/2 \<le> 1 + A \<sqdot> trace b\<close>: strictly WEAKER, and
-    worse the larger \<open>A\<close> gets.  Quadratic test functions cannot be localised by
-    penalisation.
+  \<^item> \<^emph>\<open>The face argument.\<close>  \<open>b\<^sup>*\<close> lives in the CONVEXIFIED set, not in the
+    feasible set of (1.9).  But \<open>lemma_2_1_exact\<close> writes it as a convex
+    combination of \<open>suff_volatile\<close> generators, and \<open>{a. q \<bullet> (a *v q) = 0}\<close> is
+    a FACE of the psd cone: every generator in the combination must itself
+    kill \<open>q\<close>, hence lies in \<open>feasible k L q\<close>.  A linear functional's value at
+    a convex combination is beaten by some atom, so one generator is a
+    feasible witness with \<open>- trace (M ** a) / 2 \<le> 1\<close> --- and \<open>ell_op \<le> 1\<close>.
 
-  \<^item> \<^emph>\<open>An error estimate.\<close>  Split the integral at \<open>{X\<^sub>h \<in> ball x e}\<close>.  The bad
-    event has \<open>P \<le> E\<bar>X\<^sub>h-x\<bar>\<^sup>2/e\<^sup>2 = trace (E Y\<^sub>h)/e\<^sup>2 \<le> n L h/e\<^sup>2\<close>, and
-    Cauchy--Schwarz against a fourth moment controls the QUADRATIC part of the
-    error by \<open>O(h\<^sup>3\<^sup>/\<^sup>2) = o(h)\<close>, which would be fine.  The LINEAR part
-    \<open>p \<bullet> (X\<^sub>h - x)\<close> does not: it is bounded only by
-    \<open>\<bar>p\<bar>\<sqdot>\<surd>P(bad)\<sqdot>\<surd>(E\<bar>X\<^sub>h-x\<bar>\<^sup>2) = O(h)/e\<close> --- the SAME order as the term it is
-    compared against.  The estimate yields \<open>trace (M ** b) \<ge> - 2 - C\<bar>p\<bar>nL/e\<close>
-    and does not close as \<open>h \<rightarrow> 0\<close>.
+  Both steps are elementary; neither needs stochastic integration.
 
-  What WOULD work is STOCHASTIC localisation: stop at \<open>\<tau>\<^bsub>B\<^sub>e\<^bsub>(x)\<^esub>\<^esub> \<and> h\<close> and apply
-  optional sampling to clauses (iii) and (iv), so that the path never leaves
-  the ball and the touching hypothesis applies unconditionally.
-  \<open>Optional_Sampling\<close> and @{thm [source] path_stopping_time_event_filtration}
-  are the tools.  The blocker is the recorded one:
-  \<^const>\<open>path_stopping_time\<close>'s congruence clause quantifies over ALL functions,
-  while @{thm [source] pball_exit_cong} delivers it only along CONTINUOUS
-  paths, and @{thm [source] pexit_mem_of_less_T} shows that restriction is
-  forced --- attainment of the infimum genuinely fails off the path space.
-  Weakening \<^const>\<open>path_stopping_time\<close> inside \<open>Paper_DPP\<close> is mechanical but not
-  small: the congruence is consumed only through
-  @{thm [source] path_stopping_time_cong}, at four sites, but each is stated
-  for all \<open>\<omega>\<close> and the continuity hypothesis would have to be threaded through
-  the downstream \<open>pstopped_law_*\<close> and \<open>path_stopping_time_*\<close> layer.
-
-  \<^bold>\<open>Gap 2: orthogonality.\<close>  Eq. (1.9) takes its infimum over
-  \<^const>\<open>feasible\<close>, which requires \<open>a *v p = 0\<close>; the class of (1.7) constrains
-  its covariation to \<^const>\<open>sconstraint\<close>, which says nothing of the kind.  So a
-  probabilistic argument over the class produces a witness in
-  \<^const>\<open>sconstraint\<close> and \<^const>\<open>ell_op_s\<close>, never \<^const>\<open>ell_op\<close>.  In the
-  paper the orthogonality comes from OPTIMALITY of the direction --- along an
-  optimizer of a minimal-time problem \<open>v(X\<^sub>t) + t\<close> cannot carry a nonzero
-  martingale part, which forces \<open>a Dv = 0\<close>.  That is an almost-sure RIGIDITY
-  statement about the optimizer, not a statement about means, so it is not
-  reachable by the route of this section.
-  \<^const>\<open>class_expansion_witness\<close> is the interface for it: a supplier
-  has only to produce the feasible witness.
-
-  What the constraint DOES is now precise, and proved:
-  @{thm [source] paper_pair_class_frozen_direction} says a direction
-  annihilated by the averaged covariation is frozen almost surely.  So for a
-  quadratic test function with gradient \<open>q\<close> at \<open>x\<close>, feasibility of the
-  covariation direction makes the first-order term \<open>q \<bullet> (X\<^sub>t - x)\<close> vanish
-  IDENTICALLY, leaving a purely second-order increment.  That is the device
-  that makes an essential infimum and a mean agree to first order --- which is
-  exactly what the supersolution half is short of, and exactly why the
-  constraint sits in Eq. (1.9) rather than in (1.7).
-
-  \<^bold>\<open>The supersolution half.\<close>  Unchanged, and structurally harder.  It consumes
+  \<^bold>\<open>The supersolution half\<close> is unchanged: it consumes
   @{thm [source] paper_v_dpp_sup_ge_time} plus a weak solution of the SDE
-  (3.24), and the DPP bound it needs is a LOWER bound on an essential infimum.
-  No mean gives one --- that is exactly why the expectation route of this
-  section proves the subsolution half and cannot touch the supersolution half.
-  The paper's device is the exponential local martingale with optional sampling
-  ((3.18)--(3.19)).  One simplification is available here and is worth using:
-  by @{thm [source] visc_supersol_s_imp_visc_supersol} the RELAXED supersolution
-  property already implies the true one, so that half may be attacked entirely
-  in \<^const>\<open>ell_op_s\<close>, where the class's own \<^const>\<open>sconstraint\<close> is the right
-  index set and Gap 2 does not arise at all.\<close>
+  (3.24), and should be attacked entirely in \<open>ell_op_s\<close> --- by
+  @{thm [source] visc_supersol_s_imp_visc_supersol} the relaxed form implies
+  the true one, so Gap 2 does not arise on that side at all.\<close>
+
 
 end
