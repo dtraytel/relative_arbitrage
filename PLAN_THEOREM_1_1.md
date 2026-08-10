@@ -499,10 +499,12 @@ of the paper on 2026-08-06; do not redo this):
 | **subsolution** (§3.1, display (3.17)) | the DPP **at the optimizer**: `v(x) ≤ t∧θ + v(X(t∧θ))` P-a.s. for the fixed optimizer P. This is the CONDITIONING half — **PROVED at a deterministic time**, §1.7. |
 | **supersolution** (§3.2, after (3.25), and again in Case 2 after (3.30)) | `v(y) ≥ P_y-essinf (τ_{B_ε(x)} + v(X(τ_{B_ε(x)})))` for a SPECIFIC constructed `P_y`. This is the `≥` half, i.e. PASTING — **PROVED at a deterministic time**, §1.7, and **at a STOPPING time**, §1.9 — so `τ_{B_ε}` is covered. |
 
-Beyond the DPP, §3 consumes machinery this development does not have:
-Itô's formula for class members, an exponential local martingale plus
-optional sampling ((3.18)–(3.19)), and weak solutions of the SDEs (3.11) and
-(3.24). **Budget §3 separately from the DPP.**
+The paper's §3 uses Itô's formula for class members, an exponential local
+martingale plus optional sampling ((3.18)–(3.19)), and weak solutions of the
+SDEs (3.11) and (3.24). **The first two turned out to be avoidable** — see the
+Gap 1 and Gap 2 entries below — and the SUBSOLUTION half is now proved without
+any of them. Only the weak SDE solution is genuinely needed, and only for the
+supersolution half.
 
 #### Progress 2026-08-09 — `Paper_Viscosity.thy` (1,300 lines, green, 0 `sorry`)
 
@@ -532,7 +534,9 @@ stopping time anywhere.**
 an ALMOST SURE bound and a.s. bounds survive integration; the `≥` half needs
 a LOWER bound on an essential infimum, which no mean gives.
 
-**Two gaps remain, both named in the theory, neither hidden.**
+**Two gaps were named at that point. BOTH ARE NOW CLOSED** — see the two
+dated entries below. Kept because the dead routes are still worth not
+retrying.
 
 1. **Localisation** (local touching → global). Two routes were checked and
    PROVABLY FAIL; do not retry: (a) penalising by `A|·−x|²` does globalise
@@ -545,7 +549,8 @@ a LOWER bound on an essential infimum, which no mean gives.
    which needs optional sampling, which needed `path_stopping_time` weakened to
    the path space — **that refactor is now DONE**, see below.
 
-2. **Orthogonality.** (1.9) infimises over `feasible` (`a *v p = 0`); the class
+2. **Orthogonality — CLOSED 2026-08-10, see below.** (1.9) infimises over
+   `feasible` (`a *v p = 0`); the class
    only constrains covariation to `sconstraint`. `feasible ⊆ sconstraint`
    (`feasible_subset_sconstraint`), hence `ell_op_s ≤ ell_op`: the relaxed
    statement is WEAKER for a subsolution and STRONGER for a supersolution
