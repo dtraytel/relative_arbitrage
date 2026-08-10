@@ -5132,6 +5132,203 @@ next
     using insert by (simp add: trace_mult_outerp)
 qed
 
+subsection \<open>Perturbation bounds for sums of column outer products\<close>
+
+text \<open>Along the path the columns are \<open>w u = sqrt (lam u) *\<^sub>R u + d u\<close> with a
+  uniform error bound \<open>norm (d u) \<le> e\<close>.  The estimates that keep the field
+  inside the constraint set need no operator-norm calculus --- only the
+  weighted AM--GM inequality \<open>2ab \<le> \<epsilon>a\<^sup>2 + b\<^sup>2/\<epsilon>\<close> and the finite
+  \<open>L\<^sup>1\<close>--\<open>L\<^sup>2\<close> comparison.  \<open>perturbed_columns_eigen_ub\<close> is the upper
+  eigenvalue bound with an EXPLICIT smallness condition on \<open>e\<close>; its \<open>lb\<close>
+  and trace companions follow in the next batch.\<close>
+
+lemma two_mult_le_weighted:
+  fixes a b \<epsilon> :: real
+  assumes e0: "0 < \<epsilon>"
+  shows "2 * a * b \<le> \<epsilon> * a\<^sup>2 + b\<^sup>2 / \<epsilon>"
+proof -
+  have sq: "0 \<le> (\<epsilon> * a - b)\<^sup>2" by simp
+  have expand: "(\<epsilon> * a - b)\<^sup>2 = \<epsilon> * (\<epsilon> * a\<^sup>2) - \<epsilon> * (2 * a * b) + b\<^sup>2"
+    by (simp add: power2_diff power2_eq_square algebra_simps)
+  have h: "\<epsilon> * (2 * a * b) \<le> \<epsilon> * (\<epsilon> * a\<^sup>2) + b\<^sup>2"
+    using sq expand by linarith
+  have "\<epsilon> * (\<epsilon> * a\<^sup>2) + b\<^sup>2 = \<epsilon> * (\<epsilon> * a\<^sup>2 + b\<^sup>2 / \<epsilon>)"
+    using e0 by (simp add: field_simps)
+  with h have "\<epsilon> * (2 * a * b) \<le> \<epsilon> * (\<epsilon> * a\<^sup>2 + b\<^sup>2 / \<epsilon>)" by simp
+  then show ?thesis using e0 by (simp add: mult_le_cancel_left)
+qed
+
+lemma add_sq_le_weighted:
+  fixes a b \<epsilon> :: real
+  assumes e0: "0 < \<epsilon>"
+  shows "(a + b)\<^sup>2 \<le> (1 + \<epsilon>) * a\<^sup>2 + (1 + 1 / \<epsilon>) * b\<^sup>2"
+proof -
+  have "(a + b)\<^sup>2 = a\<^sup>2 + 2 * a * b + b\<^sup>2"
+    by (simp add: power2_sum)
+  also have "\<dots> \<le> a\<^sup>2 + (\<epsilon> * a\<^sup>2 + b\<^sup>2 / \<epsilon>) + b\<^sup>2"
+    using two_mult_le_weighted[OF e0] by simp
+  also have "\<dots> = (1 + \<epsilon>) * a\<^sup>2 + (1 + 1 / \<epsilon>) * b\<^sup>2"
+    by (simp add: field_simps)
+  finally show ?thesis .
+qed
+
+lemma add_sq_ge_weighted:
+  fixes a b \<epsilon> :: real
+  assumes e0: "0 < \<epsilon>"
+  shows "(1 - \<epsilon>) * a\<^sup>2 - b\<^sup>2 / \<epsilon> \<le> (a + b)\<^sup>2"
+proof -
+  have "2 * a * (- b) \<le> \<epsilon> * a\<^sup>2 + (- b)\<^sup>2 / \<epsilon>"
+    by (rule two_mult_le_weighted[OF e0])
+  then have h: "- (2 * a * b) \<le> \<epsilon> * a\<^sup>2 + b\<^sup>2 / \<epsilon>" by simp
+  have "(a + b)\<^sup>2 = a\<^sup>2 + 2 * a * b + b\<^sup>2"
+    by (simp add: power2_sum)
+  moreover have "0 \<le> b\<^sup>2" by simp
+  moreover have "(1 - \<epsilon>) * a\<^sup>2 = a\<^sup>2 - \<epsilon> * a\<^sup>2"
+    by (simp add: algebra_simps)
+  ultimately show ?thesis using h by linarith
+qed
+
+lemma sum_abs_sq_le_card:
+  fixes f :: "'b \<Rightarrow> real"
+  assumes finF: "finite F"
+  shows "(\<Sum>i\<in>F. \<bar>f i\<bar>)\<^sup>2 \<le> real (card F) * (\<Sum>i\<in>F. (f i)\<^sup>2)"
+  using finF
+proof (induction F)
+  case empty
+  show ?case by simp
+next
+  case (insert a F)
+  show ?case
+  proof (cases "F = {}")
+    case True
+    then show ?thesis by simp
+  next
+    case False
+    define n where "n = real (card F)"
+    have n0: "0 < n" unfolding n_def
+      using False insert.hyps by (simp add: card_gt_0_iff)
+    define T where "T = (\<Sum>i\<in>F. \<bar>f i\<bar>)"
+    define S where "S = (\<Sum>i\<in>F. (f i)\<^sup>2)"
+    have IH: "T\<^sup>2 \<le> n * S"
+      unfolding T_def S_def n_def by (rule insert.IH)
+    have cross: "2 * \<bar>f a\<bar> * T \<le> n * \<bar>f a\<bar>\<^sup>2 + T\<^sup>2 / n"
+      by (rule two_mult_le_weighted[OF n0])
+    have Tdiv: "T\<^sup>2 / n \<le> S"
+      using IH n0 by (simp add: divide_le_eq mult.commute)
+    have "(\<Sum>i\<in>insert a F. \<bar>f i\<bar>)\<^sup>2 = (\<bar>f a\<bar> + T)\<^sup>2"
+      unfolding T_def using insert.hyps by simp
+    also have "\<dots> = \<bar>f a\<bar>\<^sup>2 + 2 * \<bar>f a\<bar> * T + T\<^sup>2"
+      by (simp add: power2_sum)
+    also have "\<dots> \<le> \<bar>f a\<bar>\<^sup>2 + (n * \<bar>f a\<bar>\<^sup>2 + S) + n * S"
+      using cross Tdiv IH by linarith
+    also have "\<dots> = (n + 1) * ((f a)\<^sup>2 + S)"
+      by (simp add: algebra_simps)
+    also have "\<dots> = real (card (insert a F)) * (\<Sum>i\<in>insert a F. (f i)\<^sup>2)"
+      unfolding n_def S_def using insert.hyps by simp
+    finally show ?thesis .
+  qed
+qed
+
+lemma perturbed_columns_eigen_ub:
+  fixes B :: "(real^'n::finite) set" and w d :: "real^'n \<Rightarrow> real^'n"
+    and lam :: "real^'n \<Rightarrow> real" and L m e :: real
+  assumes B: "onormal B" and sp: "span B = UNIV"
+    and wu: "\<And>u. u \<in> B \<Longrightarrow> w u = sqrt (lam u) *\<^sub>R u + d u"
+    and lam_nn: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u"
+    and lam_ub: "\<And>u. u \<in> B \<Longrightarrow> lam u \<le> L - m"
+    and mL: "0 < m" "m \<le> L"
+    and de: "\<And>u. u \<in> B \<Longrightarrow> norm (d u) \<le> e" and e0: "0 \<le> e"
+    and small: "(1 + 1 / (m / (2 * L))) * (real CARD('n) * e\<^sup>2) \<le> m / 2"
+  shows "eigen_ub (\<Sum>u\<in>B. outerp (w u)) L"
+  unfolding eigen_ub_def
+proof
+  fix v :: "real^'n"
+  define \<epsilon> where "\<epsilon> = m / (2 * L)"
+  have L0: "0 < L" using mL by linarith
+  have eps0: "0 < \<epsilon>" unfolding \<epsilon>_def using mL L0 by simp
+  have "v \<bullet> ((\<Sum>u\<in>B. outerp (w u)) *v v) = (\<Sum>u\<in>B. (w u \<bullet> v)\<^sup>2)"
+    by (rule outerp_sum_quadform)
+  also have "\<dots> \<le> (\<Sum>u\<in>B. (1 + \<epsilon>) * (lam u * (u \<bullet> v)\<^sup>2)
+      + (1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v)))"
+  proof (rule sum_mono)
+    fix u assume u: "u \<in> B"
+    have split: "w u \<bullet> v = sqrt (lam u) * (u \<bullet> v) + d u \<bullet> v"
+      by (simp add: wu[OF u] inner_add_left)
+    have sqterm: "(sqrt (lam u) * (u \<bullet> v))\<^sup>2 = lam u * (u \<bullet> v)\<^sup>2"
+      using lam_nn[OF u] by (simp add: power_mult_distrib)
+    have dv: "(d u \<bullet> v)\<^sup>2 \<le> e\<^sup>2 * (v \<bullet> v)"
+    proof -
+      have h1: "\<bar>d u \<bullet> v\<bar> \<le> norm (d u) * norm v"
+        by (rule Cauchy_Schwarz_ineq2)
+      have h2: "norm (d u) * norm v \<le> e * norm v"
+        using de[OF u] by (intro mult_right_mono) simp_all
+      have h3: "\<bar>d u \<bullet> v\<bar> \<le> e * norm v" using h1 h2 by linarith
+      have h4: "0 \<le> e * norm v" using e0 by simp
+      have "(d u \<bullet> v)\<^sup>2 = \<bar>d u \<bullet> v\<bar>\<^sup>2" by simp
+      also have "\<dots> \<le> (e * norm v)\<^sup>2"
+        using h3 h4 by (intro power_mono) simp_all
+      finally show ?thesis
+        by (simp add: power_mult_distrib power2_norm_eq_inner)
+    qed
+    have "(w u \<bullet> v)\<^sup>2 \<le> (1 + \<epsilon>) * (sqrt (lam u) * (u \<bullet> v))\<^sup>2
+        + (1 + 1 / \<epsilon>) * (d u \<bullet> v)\<^sup>2"
+      unfolding split by (rule add_sq_le_weighted[OF eps0])
+    also have "\<dots> \<le> (1 + \<epsilon>) * (lam u * (u \<bullet> v)\<^sup>2)
+        + (1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v))"
+    proof -
+      have inv0: "0 \<le> 1 + 1 / \<epsilon>" using eps0 by simp
+      show ?thesis
+        unfolding sqterm using dv inv0
+        by (intro add_left_mono mult_left_mono)
+    qed
+    finally show "(w u \<bullet> v)\<^sup>2 \<le> (1 + \<epsilon>) * (lam u * (u \<bullet> v)\<^sup>2)
+        + (1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v))" .
+  qed
+  also have "\<dots> = (1 + \<epsilon>) * (\<Sum>u\<in>B. lam u * (u \<bullet> v)\<^sup>2)
+      + real (card B) * ((1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v)))"
+    by (simp add: sum.distrib sum_distrib_left mult.commute)
+  also have "\<dots> \<le> (1 + \<epsilon>) * ((L - m) * (v \<bullet> v))
+      + real CARD('n) * ((1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v)))"
+  proof (intro add_mono mult_left_mono)
+    have "(\<Sum>u\<in>B. lam u * (u \<bullet> v)\<^sup>2) \<le> (\<Sum>u\<in>B. (L - m) * (u \<bullet> v)\<^sup>2)"
+      by (intro sum_mono mult_right_mono lam_ub) simp_all
+    also have "\<dots> = (L - m) * (\<Sum>u\<in>B. (u \<bullet> v)\<^sup>2)"
+      by (simp add: sum_distrib_left)
+    also have "\<dots> = (L - m) * (v \<bullet> v)"
+      by (simp add: onormal_parseval[OF B sp])
+    finally show "(\<Sum>u\<in>B. lam u * (u \<bullet> v)\<^sup>2) \<le> (L - m) * (v \<bullet> v)" .
+    have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF B sp])
+    have term_nn: "0 \<le> (1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v))"
+      using eps0 by (intro mult_nonneg_nonneg) simp_all
+    show "real (card B) * ((1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v)))
+        \<le> real CARD('n) * ((1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v)))"
+      unfolding cardB by simp
+    show "0 \<le> 1 + \<epsilon>" using eps0 by simp
+  qed
+  also have "\<dots> \<le> L * (v \<bullet> v)"
+  proof -
+    have vv: "0 \<le> v \<bullet> v" by simp
+    have h1: "(1 + \<epsilon>) * (L - m) \<le> L - m / 2"
+    proof -
+      have "\<epsilon> * (L - m) \<le> \<epsilon> * L"
+        using eps0 mL by (intro mult_left_mono) simp_all
+      moreover have "\<epsilon> * L = m / 2" unfolding \<epsilon>_def using L0 by simp
+      ultimately show ?thesis by (simp add: algebra_simps)
+    qed
+    have h2: "real CARD('n) * ((1 + 1 / \<epsilon>) * e\<^sup>2) \<le> m / 2"
+      using small unfolding \<epsilon>_def by (simp add: algebra_simps)
+    have "(1 + \<epsilon>) * ((L - m) * (v \<bullet> v))
+        + real CARD('n) * ((1 + 1 / \<epsilon>) * (e\<^sup>2 * (v \<bullet> v)))
+        = ((1 + \<epsilon>) * (L - m)
+            + real CARD('n) * ((1 + 1 / \<epsilon>) * e\<^sup>2)) * (v \<bullet> v)"
+      by (simp add: algebra_simps)
+    also have "\<dots> \<le> L * (v \<bullet> v)"
+      using h1 h2 vv by (intro mult_right_mono) linarith+
+    finally show ?thesis .
+  qed
+  finally show "v \<bullet> ((\<Sum>u\<in>B. outerp (w u)) *v v) \<le> L * (v \<bullet> v)" .
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
