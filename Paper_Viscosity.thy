@@ -6581,6 +6581,280 @@ proof -
   then show ?thesis using that by blast
 qed
 
+subsection \<open>Continuity of the Gaussian member in its volatility\<close>
+
+text \<open>The Euler kernel varies only through the frozen matrix, so its
+  measurability reduces to CONTINUITY of \<open>S \<mapsto> law (sbmpair S T)\<close> in the
+  weak topology: pathwise \<open>S \<mapsto> sbmpair S T \<omega>\<close> is continuous into the path
+  metric (the Brownian path is bounded on \<open>[0,T]\<close>), and dominated
+  convergence does the rest --- no tightness, no uniform estimates.\<close>
+
+lemma matrix_norm_le_sum_abs:
+  fixes A :: "real^'n::finite^'m::finite"
+  shows "norm A \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)"
+proof -
+  have row: "norm (A $ i) \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)" for i
+  proof -
+    have "(norm (A $ i))\<^sup>2 = (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>\<^sup>2)"
+      by (simp add: power2_norm_eq_inner inner_vec_def power2_eq_square)
+    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)\<^sup>2"
+      by (rule sum_sq_le_sq_sum) simp
+    finally have h: "(norm (A $ i))\<^sup>2 \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)\<^sup>2" .
+    show ?thesis
+      using h by (simp add: power2_le_iff_abs_le abs_of_nonneg sum_nonneg)
+  qed
+  have "(norm A)\<^sup>2 = (\<Sum>i\<in>UNIV. (norm (A $ i))\<^sup>2)"
+    by (simp add: power2_norm_eq_inner inner_vec_def)
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. norm (A $ i))\<^sup>2"
+    by (rule sum_sq_le_sq_sum) simp
+  finally have h: "(norm A)\<^sup>2 \<le> (\<Sum>i\<in>UNIV. norm (A $ i))\<^sup>2" .
+  have "norm A \<le> (\<Sum>i\<in>UNIV. norm (A $ i))"
+    using h by (simp add: power2_le_iff_abs_le abs_of_nonneg sum_nonneg)
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)"
+    by (rule sum_mono) (rule row)
+  finally show ?thesis .
+qed
+
+lemma dist_pair_le:
+  fixes a c :: "'a::metric_space" and b d :: "'b::metric_space"
+  shows "dist (a, b) (c, d) \<le> dist a c + dist b d"
+proof -
+  have "(dist a c + dist b d)\<^sup>2
+      = (dist a c)\<^sup>2 + 2 * dist a c * dist b d + (dist b d)\<^sup>2"
+    by (simp add: power2_sum)
+  moreover have "0 \<le> 2 * dist a c * dist b d"
+    by (intro mult_nonneg_nonneg) simp_all
+  ultimately have "(dist a c)\<^sup>2 + (dist b d)\<^sup>2 \<le> (dist a c + dist b d)\<^sup>2"
+    by linarith
+  then have "sqrt ((dist a c)\<^sup>2 + (dist b d)\<^sup>2) \<le> dist a c + dist b d"
+    by (metis real_le_lsqrt real_sqrt_le_iff zero_le_dist add_nonneg_nonneg)
+  then show ?thesis by (simp add: dist_prod_def)
+qed
+
+lemma sbmpair_in_mspace:
+  fixes \<omega> :: "'n::finite \<Rightarrow> real \<Rightarrow> real" and S :: "real^'n^'n"
+  shows "sbmpair S T \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  unfolding sbmpair_def
+  by (rule mspace_path_metricI[OF continuous_on_sbmpair_path])
+
+lemma sbmpair_pathwise_tendsto:
+  fixes Sm :: "nat \<Rightarrow> real^'n::finite^'n" and S :: "real^'n^'n"
+    and \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+  assumes T: "0 \<le> T" and Sc: "Sm \<longlonglongrightarrow> S"
+  shows "limitin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      (\<lambda>m. sbmpair (Sm m) T \<omega>) (sbmpair S T \<omega>) sequentially"
+proof -
+  let ?PM = "path_metric T :: ('n pairpath) metric"
+  interpret PM: Metric_space "mspace ?PM" "mdist ?PM"
+    by (rule Metric_space_mspace_mdist)
+  have msp: "sbmpair S' T \<omega> \<in> mspace ?PM" for S' :: "real^'n^'n"
+    by (rule sbmpair_in_mspace)
+  have cW: "continuous_on {0..T} (\<lambda>t. cbmX (0 :: real^'n) t \<omega>)"
+    by (rule continuous_on_subset[OF cbmX_cont]) auto
+  have "bounded ((\<lambda>t. cbmX (0 :: real^'n) t \<omega>) ` {0..T})"
+    by (intro compact_imp_bounded compact_continuous_image cW) simp
+  then obtain BW where BW: "\<And>t. t \<in> {0..T}
+      \<Longrightarrow> norm (cbmX (0 :: real^'n) t \<omega>) \<le> BW"
+    unfolding bounded_iff by blast
+  have BW0: "0 \<le> BW"
+  proof -
+    have z: "(0::real) \<in> {0..T}" using T by simp
+    show ?thesis
+      using BW[OF z] norm_ge_zero[of "cbmX (0 :: real^'n) 0 \<omega>"] by linarith
+  qed
+  define cs where "cs = (\<lambda>m. \<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>(Sm m - S) $ i $ j\<bar>)"
+  define ds where "ds = (\<lambda>m. norm (Sm m ** transpose (Sm m)
+      - S ** transpose S))"
+  define D where "D = (\<lambda>m. cs m * BW + T * ds m)"
+  have cs_nn: "0 \<le> cs m" for m
+    unfolding cs_def by (intro sum_nonneg) simp_all
+  have ds_nn: "0 \<le> ds m" for m unfolding ds_def by simp
+  have cs0: "cs \<longlonglongrightarrow> 0"
+  proof -
+    have ent: "(\<lambda>m. \<bar>(Sm m - S) $ i $ j\<bar>) \<longlonglongrightarrow> 0" for i j
+    proof -
+      have "(\<lambda>m. Sm m - S) \<longlonglongrightarrow> S - S"
+        by (intro tendsto_diff Sc tendsto_const)
+      then have "(\<lambda>m. (Sm m - S) $ i $ j) \<longlonglongrightarrow> (S - S) $ i $ j"
+        by (intro tendsto_vec_nth)
+      then have "(\<lambda>m. (Sm m - S) $ i $ j) \<longlonglongrightarrow> 0" by simp
+      then show ?thesis using tendsto_rabs_zero by blast
+    qed
+    have "(\<lambda>m. \<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>(Sm m - S) $ i $ j\<bar>)
+        \<longlonglongrightarrow> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). (0::real))"
+      by (intro tendsto_sum ent)
+    then show ?thesis unfolding cs_def by simp
+  qed
+  have ds0: "ds \<longlonglongrightarrow> 0"
+  proof -
+    have h: "(\<lambda>m. Sm m ** transpose (Sm m)) \<longlonglongrightarrow> S ** transpose S"
+    proof (intro vec_tendstoI)
+      fix i j
+      have e: "\<And>A :: real^'n^'n. (A ** transpose A) $ i $ j
+          = (\<Sum>l\<in>UNIV. A $ i $ l * A $ j $ l)"
+        by (simp add: matrix_matrix_mult_def transpose_def)
+      have "(\<lambda>m. \<Sum>l\<in>UNIV. Sm m $ i $ l * Sm m $ j $ l)
+          \<longlonglongrightarrow> (\<Sum>l\<in>UNIV. S $ i $ l * S $ j $ l)"
+        by (intro tendsto_sum tendsto_mult tendsto_vec_nth Sc)
+      then show "(\<lambda>m. (Sm m ** transpose (Sm m)) $ i $ j)
+          \<longlonglongrightarrow> (S ** transpose S) $ i $ j"
+        unfolding e .
+    qed
+    have "(\<lambda>m. Sm m ** transpose (Sm m) - S ** transpose S)
+        \<longlonglongrightarrow> S ** transpose S - S ** transpose S"
+      by (intro tendsto_diff h tendsto_const)
+    then have "(\<lambda>m. Sm m ** transpose (Sm m) - S ** transpose S)
+        \<longlonglongrightarrow> 0" by simp
+    then show ?thesis unfolding ds_def
+      using tendsto_norm_zero by blast
+  qed
+  have D0: "D \<longlonglongrightarrow> 0"
+  proof -
+    have "D \<longlonglongrightarrow> 0 * BW + T * 0"
+      unfolding D_def by (intro tendsto_add tendsto_mult tendsto_const cs0 ds0)
+    then show ?thesis by simp
+  qed
+  have mbound: "mdist ?PM (sbmpair (Sm m) T \<omega>) (sbmpair S T \<omega>) \<le> D m" for m
+  proof (rule path_mdist_le_iff_all[OF T msp msp, THEN iffD2], rule ballI)
+    fix t assume t: "t \<in> {0..T}"
+    have fst_b: "dist (Sm m *v cbmX (0 :: real^'n) t \<omega>)
+        (S *v cbmX (0 :: real^'n) t \<omega>) \<le> cs m * BW"
+    proof -
+      have "dist (Sm m *v cbmX (0 :: real^'n) t \<omega>)
+          (S *v cbmX (0 :: real^'n) t \<omega>)
+          = norm ((Sm m - S) *v cbmX (0 :: real^'n) t \<omega>)"
+        by (simp add: dist_norm matrix_vector_mult_diff_rdistrib)
+      also have "\<dots> \<le> cs m * norm (cbmX (0 :: real^'n) t \<omega>)"
+        unfolding cs_def by (rule matvec_norm_le)
+      also have "\<dots> \<le> cs m * BW"
+        using BW[OF t] cs_nn by (intro mult_left_mono)
+      finally show ?thesis .
+    qed
+    have snd_b: "dist (t *\<^sub>R (Sm m ** transpose (Sm m)))
+        (t *\<^sub>R (S ** transpose S)) \<le> T * ds m"
+    proof -
+      have "dist (t *\<^sub>R (Sm m ** transpose (Sm m)))
+          (t *\<^sub>R (S ** transpose S))
+          = \<bar>t\<bar> * ds m"
+        unfolding ds_def
+        by (simp add: dist_norm scaleR_diff_right[symmetric])
+      also have "\<dots> \<le> T * ds m"
+        using t ds_nn by (intro mult_right_mono) auto
+      finally show ?thesis .
+    qed
+    have "dist (sbmpair (Sm m) T \<omega> t) (sbmpair S T \<omega> t)
+        = dist (Sm m *v cbmX (0 :: real^'n) t \<omega>,
+            t *\<^sub>R (Sm m ** transpose (Sm m)))
+          (S *v cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (S ** transpose S))"
+      by (simp add: sbmpair_apply[OF t])
+    also have "\<dots> \<le> dist (Sm m *v cbmX (0 :: real^'n) t \<omega>)
+          (S *v cbmX (0 :: real^'n) t \<omega>)
+        + dist (t *\<^sub>R (Sm m ** transpose (Sm m)))
+            (t *\<^sub>R (S ** transpose S))"
+      by (rule dist_pair_le)
+    also have "\<dots> \<le> cs m * BW + T * ds m"
+      using fst_b snd_b by linarith
+    finally show "dist (sbmpair (Sm m) T \<omega> t) (sbmpair S T \<omega> t) \<le> D m"
+      unfolding D_def .
+  qed
+  show ?thesis
+    unfolding mtopology_of_def
+  proof (rule PM.limitin_metric[THEN iffD2], intro conjI allI impI)
+    show "sbmpair S T \<omega> \<in> mspace ?PM" by (rule msp)
+    fix \<epsilon> :: real assume e: "0 < \<epsilon>"
+    from LIMSEQ_D[OF D0 e] obtain M0
+      where M0': "\<And>m. M0 \<le> m \<Longrightarrow> norm (D m - 0) < \<epsilon>" by blast
+    have M0: "\<And>m. M0 \<le> m \<Longrightarrow> norm (D m) < \<epsilon>" using M0' by simp
+    show "\<forall>\<^sub>F m in sequentially. sbmpair (Sm m) T \<omega> \<in> mspace ?PM
+        \<and> mdist ?PM (sbmpair (Sm m) T \<omega>) (sbmpair S T \<omega>) < \<epsilon>"
+    proof (intro eventually_sequentiallyI[of M0] conjI)
+      fix m assume m: "M0 \<le> m"
+      show "sbmpair (Sm m) T \<omega> \<in> mspace ?PM" by (rule msp)
+      have "mdist ?PM (sbmpair (Sm m) T \<omega>) (sbmpair S T \<omega>) \<le> D m"
+        by (rule mbound)
+      also have "\<dots> \<le> norm (D m)" by simp
+      also have "\<dots> < \<epsilon>" by (rule M0[OF m])
+      finally show "mdist ?PM (sbmpair (Sm m) T \<omega>) (sbmpair S T \<omega>) < \<epsilon>" .
+    qed
+  qed
+qed
+
+theorem sbm_law_weak_conv:
+  fixes Sm :: "nat \<Rightarrow> real^'n::finite^'n" and S :: "real^'n^'n"
+  assumes T: "0 \<le> T" and Sc: "Sm \<longlonglongrightarrow> S"
+  shows "weak_conv_on
+      (\<lambda>m. pair_law_of T (sbmpair (Sm m) T)
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      (pair_law_of T (sbmpair S T) bm_paths)
+      sequentially (mtopology_of (path_metric T :: ('n pairpath) metric))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?S = "mspace (path_metric T :: ('n pairpath) metric)"
+  let ?law = "\<lambda>S'. pair_law_of T (sbmpair S' T) ?M"
+  have fmS: "finite_measure (?law S')" for S' :: "real^'n^'n"
+    using prob_space_sbmpair_law[OF T, where S = S']
+    by (simp add: prob_space.emeasure_space_1 finite_measureI)
+  have MWfin: "mweak_conv_fin ?S
+      (mdist (path_metric T :: ('n pairpath) metric))
+      (\<lambda>m. ?law (Sm m)) (?law S) sequentially"
+    unfolding mweak_conv_fin_def mweak_conv_fin_axioms_def
+    using fmS by (simp add: mtopology_of_def)
+  interpret MW: mweak_conv_fin ?S
+      "mdist (path_metric T :: ('n pairpath) metric)"
+      "\<lambda>m. ?law (Sm m)" "?law S" sequentially
+    by (rule MWfin)
+  show ?thesis
+    unfolding mtopology_of_def
+  proof (rule MW.mweak_conv_eq1[THEN iffD2], intro allI impI)
+    fix f :: "'n pairpath \<Rightarrow> real"
+    assume uc: "uniformly_continuous_map MW.Self euclidean_metric f"
+    assume bnd: "\<exists>B. \<forall>x \<in> ?S. \<bar>f x\<bar> \<le> B"
+    from bnd obtain B where B: "\<And>x. x \<in> ?S \<Longrightarrow> \<bar>f x\<bar> \<le> B" by blast
+    have cf: "continuous_map ?X euclideanreal f"
+      using uniformly_continuous_imp_continuous_map[OF uc]
+      by (simp add: mtopology_of_def)
+    have fm: "f \<in> borel_measurable ?B"
+      using continuous_map_measurable[OF cf] by (simp add: borel_of_euclidean)
+    have distr_int: "(\<integral>\<omega>. f \<omega> \<partial>(?law S')) = (\<integral>\<omega>. f (sbmpair S' T \<omega>) \<partial>?M)"
+      for S' :: "real^'n^'n"
+      unfolding pair_law_of_def
+      by (rule integral_distr[OF sbmpair_measurable[OF T] fm])
+    have ptw: "(\<lambda>m. f (sbmpair (Sm m) T \<omega>)) \<longlonglongrightarrow> f (sbmpair S T \<omega>)"
+      for \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    proof -
+      have "limitin euclideanreal
+          (f \<circ> (\<lambda>m. sbmpair (Sm m) T \<omega>))
+          (f (sbmpair S T \<omega>)) sequentially"
+        by (rule continuous_map_limit[OF cf
+              sbmpair_pathwise_tendsto[OF T Sc]])
+      then show ?thesis by (simp add: o_def)
+    qed
+    have meas: "(\<lambda>\<omega>. f (sbmpair S' T \<omega>)) \<in> borel_measurable ?M"
+      for S' :: "real^'n^'n"
+      by (rule measurable_compose[OF sbmpair_measurable[OF T] fm])
+    have bd: "AE \<omega> in ?M. norm (f (sbmpair S' T \<omega>)) \<le> \<bar>B\<bar>"
+      for S' :: "real^'n^'n"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+      have "\<bar>f (sbmpair S' T \<omega>)\<bar> \<le> B"
+        by (rule B[OF sbmpair_in_mspace])
+      then show "norm (f (sbmpair S' T \<omega>)) \<le> \<bar>B\<bar>" by simp
+    qed
+    interpret BMPP: prob_space ?M by (rule prob_space_bm_paths)
+    have ibd: "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<bar>B\<bar>)"
+      by simp
+    have "(\<lambda>m. \<integral>\<omega>. f (sbmpair (Sm m) T \<omega>) \<partial>?M)
+        \<longlonglongrightarrow> (\<integral>\<omega>. f (sbmpair S T \<omega>) \<partial>?M)"
+      by (rule integral_dominated_convergence[OF meas meas ibd _ bd])
+        (simp add: ptw)
+    then show "(\<lambda>m. \<integral>\<omega>. f \<omega> \<partial>(?law (Sm m)))
+        \<longlonglongrightarrow> (\<integral>\<omega>. f \<omega> \<partial>(?law S))"
+      unfolding distr_int .
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
