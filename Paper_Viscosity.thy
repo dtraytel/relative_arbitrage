@@ -6061,6 +6061,472 @@ proof -
   qed
 qed
 
+subsection \<open>The constant-volatility Gaussian member\<close>
+
+text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
+  so the building block is Brownian motion pushed through a CONSTANT matrix
+  \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>.  Class membership
+  mirrors @{thm [source] bmpair_law_in_paper_pair_class}: the martingale
+  clauses are BOUNDED-LINEAR images of the Brownian ones
+  (@{thm [source] martingale_bounded_linear_image}), the covariation clause
+  is deterministic, and an arbitrary start comes free from
+  @{thm [source] paper_pair_class_pshift}.  The only hypothesis is
+  \<open>S S\<^sup>T \<in> sconstraint k L\<close>.\<close>
+
+definition sbmpair ::
+  "real^'n::finite^'n \<Rightarrow> real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath"
+  where "sbmpair S T \<omega> = restrict
+    (\<lambda>t. (S *v cbmX 0 t \<omega>, t *\<^sub>R (S ** transpose S))) {0..T}"
+
+lemma sbmpair_apply:
+  "t \<in> {0..T} \<Longrightarrow> sbmpair S T \<omega> t
+     = (S *v cbmX 0 t \<omega>, t *\<^sub>R (S ** transpose S))"
+  by (simp add: sbmpair_def)
+
+lemma matvec_blin: "bounded_linear ((*v) (S :: real^'n::finite^'m::finite))"
+  using matrix_vector_mul_linear linear_conv_bounded_linear by blast
+
+lemma matmul_sandwich_blin:
+  fixes S :: "real^'n::finite^'n"
+  shows "bounded_linear (\<lambda>A :: real^'n^'n. S ** A ** transpose S)"
+  unfolding linear_conv_bounded_linear[symmetric]
+proof (intro linearI)
+  fix A B :: "real^'n^'n"
+  show "S ** (A + B) ** transpose S = S ** A ** transpose S
+      + S ** B ** transpose S"
+    by (simp add: matrix_matrix_mult_def vec_eq_iff vector_add_component
+        sum.distrib algebra_simps)
+next
+  fix c :: real and A :: "real^'n^'n"
+  show "S ** (c *\<^sub>R A) ** transpose S = c *\<^sub>R (S ** A ** transpose S)"
+    by (simp add: matrix_matrix_mult_def vec_eq_iff vector_scaleR_component
+        sum_distrib_left algebra_simps)
+qed
+
+lemma outerp_matvec_image:
+  fixes S :: "real^'n::finite^'n" and w :: "real^'n"
+  shows "outerp (S *v w) = S ** outerp w ** transpose S"
+proof -
+  have "outerp (S *v w) $ i $ j
+      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
+    for i j
+  proof -
+    have "outerp (S *v w) $ i $ j
+        = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (\<Sum>l\<in>UNIV. S $ j $ l * w $ l)"
+      by (simp add: outerp_def matrix_vector_mult_def)
+    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * w $ k)
+        * (S $ j $ l * w $ l))"
+      by (rule sum_distrib_left)
+    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l))
+        * S $ j $ l)"
+    proof (rule sum.cong[OF refl])
+      fix l :: 'n
+      have "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
+          = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k * (S $ j $ l * w $ l))"
+        by (rule sum_distrib_right)
+      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l) * S $ j $ l)"
+        by (rule sum.cong[OF refl]) (simp only: mult_ac)
+      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l"
+        by (rule sum_distrib_right[symmetric])
+      finally show "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
+          = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l" .
+    qed
+    finally show ?thesis .
+  qed
+  moreover have "(S ** outerp w ** transpose S) $ i $ j
+      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
+    for i j
+    by (simp add: matrix_matrix_mult_def transpose_def outerp_def)
+  ultimately show ?thesis by (simp add: vec_eq_iff)
+qed
+
+lemma matmul_scaleR_right:
+  fixes A B :: "real^'n::finite^'n"
+  shows "A ** (c *\<^sub>R B) = c *\<^sub>R (A ** B)"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff vector_scaleR_component
+      sum_distrib_left algebra_simps)
+
+lemma sandwich_mat1:
+  fixes S :: "real^'n::finite^'n"
+  shows "S ** (c *\<^sub>R mat 1) ** transpose S = c *\<^sub>R (S ** transpose S)"
+  by (simp add: matmul_scaleR_right matrix_mul_rid scaleR_matrix_mult)
+
+lemma continuous_on_sbmpair_path:
+  fixes \<omega> :: "'n::finite \<Rightarrow> real \<Rightarrow> real" and S :: "real^'n^'n"
+  shows "continuous_on {0..T}
+      (\<lambda>t. (S *v cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (S ** transpose S)))"
+proof (intro continuous_on_Pair)
+  have c1: "continuous_on {0..T} (\<lambda>t. cbmX (0 :: real^'n) t \<omega>)"
+    by (rule continuous_on_subset[OF cbmX_cont]) auto
+  show "continuous_on {0..T} (\<lambda>t. S *v cbmX (0 :: real^'n) t \<omega>)"
+    by (rule continuous_on_compose2[OF linear_continuous_on[OF matvec_blin]
+          c1]) auto
+  show "continuous_on {0..T} (\<lambda>t. t *\<^sub>R (S ** transpose S))"
+    by (rule linear_continuous_on[OF bounded_linear_scaleR_left])
+qed
+
+lemma sbmpair_measurable:
+  assumes T: "0 \<le> T"
+  shows "(sbmpair S T :: ('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath)
+      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))"
+proof -
+  have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict
+          (\<lambda>t. (S *v cbmX (0 :: real^'n) t \<omega>,
+                t *\<^sub>R (S ** transpose S))) {0..T})
+      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
+          (path_metric T :: ('n pairpath) metric))"
+  proof (rule pathify_measurable[OF T])
+    fix t :: real assume "t \<in> {0..T}"
+    have c: "(\<lambda>v :: real^'n. (S *v v, t *\<^sub>R (S ** transpose S)))
+        \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_on_Pair
+          continuous_on_const
+          continuous_on_compose2[OF linear_continuous_on[OF matvec_blin]
+            continuous_on_id])
+        auto
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+          (S *v cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (S ** transpose S)))
+        \<in> borel_measurable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+      by (rule measurable_compose[OF measurable_cbmX c])
+  next
+    fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    show "continuous_on {0..T}
+        (\<lambda>t. (S *v cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (S ** transpose S)))"
+      by (rule continuous_on_sbmpair_path)
+  qed
+  moreover have "(sbmpair S T :: ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath)
+      = (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict
+          (\<lambda>t. (S *v cbmX (0 :: real^'n) t \<omega>,
+                t *\<^sub>R (S ** transpose S))) {0..T})"
+    by (rule ext) (simp add: sbmpair_def)
+  ultimately show ?thesis by simp
+qed
+
+lemma prob_space_sbmpair_law:
+  assumes T: "0 \<le> T"
+  shows "prob_space (pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))"
+  unfolding pair_law_of_def
+  by (rule BMP.prob_space_distr[OF sbmpair_measurable[OF T]])
+
+lemma sbmpair_law_start:
+  assumes T: "0 \<le> T"
+  shows "AE \<omega> in pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure).
+        fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have phim: "sbmpair S T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
+  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
+    by (rule pair_law_eval_measurable[OF refl])
+  have mset: "{\<omega> \<in> space ?B. fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0}
+      \<in> sets ?B"
+  proof -
+    have "{\<omega> \<in> space ?B. fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0}
+        = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(0, 0)} \<inter> space ?B"
+      by (auto simp: prod_eq_iff)
+    then show ?thesis using measurable_sets[OF ev] by simp
+  qed
+  have iff: "(AE \<omega> in pair_law_of T (sbmpair S T) ?M.
+        fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0)
+      = (AE \<omega> in ?M. fst (sbmpair S T \<omega> 0) = (0 :: real^'n)
+          \<and> snd (sbmpair S T \<omega> 0) = 0)"
+    unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+  have z: "(0::real) \<in> {0..T}" using T by simp
+  have "AE \<omega> in ?M. cbmX (0 :: real^'n) 0 \<omega> = bmX 0 0 \<omega>"
+    by (intro cbmX_ae_eq) simp
+  moreover have "AE \<omega> in ?M. bmX (0 :: real^'n) 0 \<omega> = 0"
+    by (rule bmX_start)
+  ultimately have "AE \<omega> in ?M. fst (sbmpair S T \<omega> 0) = (0 :: real^'n)
+      \<and> snd (sbmpair S T \<omega> 0) = 0"
+    by eventually_elim (simp add: sbmpair_apply[OF z])
+  then show ?thesis unfolding iff .
+qed
+
+lemma sbmpair_law_diffquot:
+  assumes T: "0 \<le> T"
+    and SST: "S ** transpose S \<in> sconstraint k L"
+  shows "AE \<omega> in pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure).
+        \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?Q = "pair_law_of T (sbmpair S T) ?M"
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have phim: "sbmpair S T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
+  have spQ: "space ?Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_pair_law_of)
+  have one: "AE \<omega> in ?Q.
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    if pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" for p q :: real
+  proof -
+    have mm: "{\<omega> \<in> space ?B.
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L}
+        \<in> sets ?B"
+      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
+      by (simp add: space_borel_of)
+    have iff: "(AE \<omega> in ?Q.
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)
+        = (AE \<omega> in ?M. (1 / (q - p))
+            *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
+            \<in> sconstraint k L)"
+      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+    have "AE \<omega> in ?M. (1 / (q - p))
+        *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
+        \<in> sconstraint k L"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+      have "(1 / (q - p))
+          *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
+          = (1 / (q - p)) *\<^sub>R ((q - p) *\<^sub>R (S ** transpose S))"
+        using pq by (simp add: sbmpair_apply scaleR_left_diff_distrib)
+      also have "\<dots> = S ** transpose S"
+        using pq(3) by simp
+      finally show "(1 / (q - p))
+          *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
+          \<in> sconstraint k L"
+        using SST by simp
+    qed
+    then show ?thesis unfolding iff .
+  qed
+  have rat: "AE \<omega> in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
+      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  proof (rule AE_ball_countable'[OF _ countable_rat])
+    fix p :: real assume "p \<in> \<rat>"
+    show "AE \<omega> in ?Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+    proof (rule AE_ball_countable'[OF _ countable_rat])
+      fix q :: real assume "q \<in> \<rat>"
+      show "AE \<omega> in ?Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
+        case True
+        then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
+        from one[OF this] show ?thesis by (rule eventually_mono) simp
+      next
+        case False
+        then show ?thesis by auto
+      qed
+    qed
+  qed
+  from rat AE_space show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q
+        \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      and W: "\<omega> \<in> space ?Q" by blast+
+    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using W spQ by simp
+    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
+      using mspace_path_metricD[OF mw] by (intro continuous_intros)
+    show ?case
+    proof (intro allI impI)
+      fix u v :: real
+      assume uv: "0 \<le> u" "u < v" "v \<le> T"
+      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
+        by (rule diffquot_all_of_rational
+            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
+    qed
+  qed
+qed
+
+lemma sbmpair_adapted:
+  fixes r u :: real
+  assumes r: "0 \<le> r" and ru: "r \<le> u"
+  shows "(\<lambda>\<omega> :: 'n::finite \<Rightarrow> real \<Rightarrow> real. sbmpair S T \<omega> r)
+      \<in> borel_measurable
+      (natural_filtration (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0
+        (cbmX (0 :: real^'n)) u)"
+proof (cases "r \<in> {0..T}")
+  case True
+  let ?F = "natural_filtration (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0
+      (cbmX (0 :: real^'n))"
+  interpret MC: martingale "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure" ?F 0
+      "cbmX (0 :: real^'n)"
+    by (rule martingale_cbmX)
+  have cr: "cbmX (0 :: real^'n) r \<in> borel_measurable (?F r)"
+    by (rule MC.adapted[OF r])
+  have cu: "cbmX (0 :: real^'n) r \<in> borel_measurable (?F u)"
+    using MC.borel_measurable_mono[OF r ru] cr by blast
+  have c: "(\<lambda>v :: real^'n. (S *v v, r *\<^sub>R (S ** transpose S)))
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_on_Pair
+        continuous_on_const
+        continuous_on_compose2[OF linear_continuous_on[OF matvec_blin]
+          continuous_on_id])
+      auto
+  have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+        (S *v cbmX (0 :: real^'n) r \<omega>, r *\<^sub>R (S ** transpose S)))
+      \<in> borel_measurable (?F u)"
+    by (rule measurable_compose[OF cu c])
+  then show ?thesis using True by (simp add: sbmpair_apply)
+next
+  case False
+  then have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sbmpair S T \<omega> r) = (\<lambda>\<omega>. undefined)"
+    by (auto simp: sbmpair_def)
+  then show ?thesis by simp
+qed
+
+theorem sbmpair_law_X_martingale:
+  assumes T: "0 \<le> T"
+  shows "martingale (pair_law_of T (sbmpair S T)
+        (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
+        (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n)"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?Q = "pair_law_of T (sbmpair S T) ?M"
+  let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have Zm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T))) \<in> borel_measurable (?G u)"
+    if u: "0 \<le> u" for u
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u T in auto)
+    show ?thesis by (rule measurable_compose[OF ev fstB])
+  qed
+  have mg: "martingale ?M ?F 0 (\<lambda>u \<omega>. fst (sbmpair S T \<omega> (min u T)))"
+  proof (rule martingale_cong_ge[OF martingale_bounded_linear_image
+        [OF matvec_blin martingale_stopped_const[OF T martingale_cbmX]]])
+    fix u :: real assume u: "0 \<le> u"
+    have mI: "min u T \<in> {0..T}" using u T by simp
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. fst (sbmpair S T \<omega> (min u T)))
+        = (\<lambda>\<omega>. S *v cbmX (0 :: real^'n) (min u T) \<omega>)"
+      by (rule ext) (simp add: sbmpair_apply[OF mI])
+  qed
+  show ?thesis
+    by (rule martingale_pair_law[OF prob_space_bm_paths
+        sbmpair_measurable[OF T] sbmpair_adapted Zm mg])
+qed
+
+theorem sbmpair_law_comp_martingale:
+  assumes T: "0 \<le> T"
+  shows "martingale (pair_law_of T (sbmpair S T)
+        (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
+        (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T)) :: real^'n) - snd (\<omega> (min u T)))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?Q = "pair_law_of T (sbmpair S T) ?M"
+  let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+      = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
+    by (rule ext) (simp add: outerp_def vec_eq_iff)
+  have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+      \<in> borel_measurable borel"
+    unfolding e
+    by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
+        continuous_intros)
+  have Zm: "(\<lambda>\<omega> :: 'n pairpath.
+        outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
+      \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
+  proof -
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u T in auto)
+    show ?thesis by (rule measurable_compose[OF ev cB])
+  qed
+  have mg: "martingale ?M ?F 0
+      (\<lambda>u \<omega>. outerp (fst (sbmpair S T \<omega> (min u T)))
+        - snd (sbmpair S T \<omega> (min u T)))"
+  proof (rule martingale_cong_ge[OF martingale_bounded_linear_image
+        [OF matmul_sandwich_blin
+          martingale_stopped_const[OF T martingale_cbm_outerp]]])
+    fix u :: real assume u: "0 \<le> u"
+    have mI: "min u T \<in> {0..T}" using u T by simp
+    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+          outerp (fst (sbmpair S T \<omega> (min u T)))
+            - snd (sbmpair S T \<omega> (min u T)))
+        = (\<lambda>\<omega>. S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
+                - (min u T) *\<^sub>R mat 1) ** transpose S)"
+    proof (rule ext)
+      fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+      have "S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
+            - (min u T) *\<^sub>R mat 1) ** transpose S
+          = S ** outerp (cbmX (0 :: real^'n) (min u T) \<omega>) ** transpose S
+            - S ** ((min u T) *\<^sub>R mat 1) ** transpose S"
+        by (simp add: matrix_matrix_mult_def vec_eq_iff
+            vector_minus_component sum_subtractf algebra_simps)
+      also have "\<dots> = outerp (S *v cbmX (0 :: real^'n) (min u T) \<omega>)
+          - (min u T) *\<^sub>R (S ** transpose S)"
+        by (simp add: outerp_matvec_image sandwich_mat1)
+      finally show "outerp (fst (sbmpair S T \<omega> (min u T)))
+            - snd (sbmpair S T \<omega> (min u T))
+          = S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
+                - (min u T) *\<^sub>R mat 1) ** transpose S"
+        by (simp add: sbmpair_apply[OF mI])
+    qed
+  qed
+  show ?thesis
+    by (rule martingale_pair_law[OF prob_space_bm_paths
+        sbmpair_measurable[OF T] sbmpair_adapted Zm mg])
+qed
+
+theorem sbmpair_law_in_paper_pair_class:
+  assumes T: "0 \<le> T" and L: "1 \<le> L"
+    and SST: "S ** transpose S \<in> sconstraint k L"
+  shows "pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+    \<in> paper_pair_class k L T (0 :: real^'n)"
+  unfolding paper_pair_class_def
+proof (intro CollectI conjI)
+  show "prob_space (pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))"
+    by (rule prob_space_sbmpair_law[OF T])
+  show "sets (pair_law_of T (sbmpair S T)
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    by simp
+  show "AE \<omega> in pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
+    by (rule sbmpair_law_start[OF T])
+  show "AE \<omega> in pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    by (rule sbmpair_law_diffquot[OF T SST])
+  show "martingale (pair_law_of T (sbmpair S T)
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
+        (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. fst (\<omega> (min t T)) :: real^'n)"
+    by (rule sbmpair_law_X_martingale[OF T])
+  show "martingale (pair_law_of T (sbmpair S T)
+        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
+        (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T)) :: real^'n) - snd (\<omega> (min t T)))"
+    by (rule sbmpair_law_comp_martingale[OF T])
+qed
+
+corollary sbmpair_pshift_law_in_paper_pair_class:
+  assumes T: "0 \<le> T" and L: "1 \<le> L"
+    and SST: "S ** transpose S \<in> sconstraint k L"
+  shows "pshift_law T v (pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
+    \<in> paper_pair_class k L T (v :: real^'n)"
+proof -
+  have "pshift_law T v (pair_law_of T (sbmpair S T)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+    \<in> paper_pair_class k L T (v + 0)"
+    by (rule paper_pair_class_pshift[OF T
+          sbmpair_law_in_paper_pair_class[OF T L SST]])
+  then show ?thesis by simp
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
