@@ -1591,8 +1591,8 @@ proof (rule borel_measurableI_le)
       have un_m: "(\<Union>r \<in> ?D. ?S n r) \<in> sets ?B" for n
         by (rule sets.countable_UN'[OF cntD]) (use atom in blast)
       have "(\<Inter>n. \<Union>r \<in> ?D. ?S n r) \<in> sets ?B"
-        using un_m by (intro sets.countable_INT) auto
-      with eq show ?thesis by simp
+        using un_m by blast
+      with eq show ?thesis by metis
     qed
   qed
 qed
@@ -4504,6 +4504,632 @@ proof (intro ballI allI impI)
     also have "\<dots> = 1 + e" using C0 by (simp add: field_simps)
     finally show "ell_op k L (g x) H \<le> 1 + e" .
   qed
+qed
+
+section \<open>Towards the supersolution half: skew-symmetric covariance fields\<close>
+
+text \<open>The supersolution inequality is an essential-infimum statement, so it
+  needs PATHWISE control.  The paper (\<section>3.2, Case 1) gets it from a
+  covariance field whose columns are \<open>S\<^sub>i \<nabla>\<phi>(y)\<close> with \<open>S\<^sub>i\<close> SKEW-symmetric:
+  the field annihilates the gradient of the test function all along the
+  path, so no stochastic integral ever appears --- and in this development
+  none will: the field is fed to an Euler scheme glued by
+  @{thm [source] paper_pair_class_kglue_law'} and passed to a weak limit.
+  This section builds the algebra: the skew building block, the extraction
+  of STRICT eigendata from a feasible witness (the paper's ``modify \<open>a\<close> so
+  the top eigenvalues lie in \<open>(1, L)\<close>''), and the exact identities for
+  sums of column outer products.\<close>
+
+subsection \<open>The skew building block\<close>
+
+definition skewv :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
+  "skewv q u = (1 / (q \<bullet> q)) *\<^sub>R (outer_prod u q - outer_prod q u)"
+
+lemma skewv_apply:
+  "skewv q u *v z = (1 / (q \<bullet> q)) *\<^sub>R ((q \<bullet> z) *\<^sub>R u - (u \<bullet> z) *\<^sub>R q)"
+proof -
+  have "(outer_prod u q - outer_prod q u) *v z
+      = outer_prod u q *v z - outer_prod q u *v z"
+    by (simp add: matrix_vector_mult_diff_rdistrib)
+  also have "\<dots> = (q \<bullet> z) *\<^sub>R u - (u \<bullet> z) *\<^sub>R q"
+    by (simp add: outer_prod_mv)
+  finally show ?thesis
+    by (simp add: skewv_def scaleR_matrix_vector)
+qed
+
+lemma skewv_quadform: "z \<bullet> (skewv q u *v z) = 0"
+proof -
+  have "z \<bullet> ((q \<bullet> z) *\<^sub>R u - (u \<bullet> z) *\<^sub>R q)
+      = (q \<bullet> z) * (z \<bullet> u) - (u \<bullet> z) * (z \<bullet> q)"
+    by (simp add: inner_diff_right)
+  also have "\<dots> = 0"
+    by (simp add: inner_commute)
+  finally show ?thesis
+    by (simp add: skewv_apply)
+qed
+
+lemma skewv_apply_orth:
+  assumes q: "q \<noteq> 0" and orth: "u \<bullet> q = 0"
+  shows "skewv q u *v q = u"
+proof -
+  have qq: "q \<bullet> q \<noteq> 0" using q by simp
+  have "skewv q u *v q = (1 / (q \<bullet> q)) *\<^sub>R ((q \<bullet> q) *\<^sub>R u - (u \<bullet> q) *\<^sub>R q)"
+    by (rule skewv_apply)
+  also have "\<dots> = u" using qq orth by simp
+  finally show ?thesis .
+qed
+
+lemma skewv_norm_le:
+  assumes q: "q \<noteq> 0"
+  shows "norm (skewv q u *v z) \<le> 2 * norm u * norm z / norm q"
+proof -
+  have nq0: "0 < norm q" using q by simp
+  have qq: "q \<bullet> q = (norm q)\<^sup>2"
+    by (simp add: power2_norm_eq_inner)
+  have "norm ((q \<bullet> z) *\<^sub>R u - (u \<bullet> z) *\<^sub>R q)
+      \<le> norm ((q \<bullet> z) *\<^sub>R u) + norm ((u \<bullet> z) *\<^sub>R q)"
+    by (rule norm_triangle_ineq4)
+  also have "\<dots> = \<bar>q \<bullet> z\<bar> * norm u + \<bar>u \<bullet> z\<bar> * norm q"
+    by simp
+  also have "\<dots> \<le> (norm q * norm z) * norm u + (norm u * norm z) * norm q"
+    by (intro add_mono mult_right_mono Cauchy_Schwarz_ineq2) simp_all
+  also have "\<dots> = 2 * norm u * norm z * norm q"
+    by (simp add: algebra_simps)
+  finally have h: "norm ((q \<bullet> z) *\<^sub>R u - (u \<bullet> z) *\<^sub>R q)
+      \<le> 2 * norm u * norm z * norm q" .
+  have "norm (skewv q u *v z)
+      = norm ((q \<bullet> z) *\<^sub>R u - (u \<bullet> z) *\<^sub>R q) / (norm q)\<^sup>2"
+    using nq0 by (simp add: skewv_apply qq)
+  also have "\<dots> \<le> (2 * norm u * norm z * norm q) / (norm q)\<^sup>2"
+    using h nq0 by (intro divide_right_mono) simp_all
+  also have "\<dots> = 2 * norm u * norm z / norm q"
+    using nq0 by (simp add: power2_eq_square)
+  finally show ?thesis .
+qed
+
+lemma skewv_scaleR_arg: "skewv q (r *\<^sub>R u) = r *\<^sub>R skewv q u"
+proof -
+  have "outer_prod (r *\<^sub>R u) q - outer_prod q (r *\<^sub>R u)
+      = r *\<^sub>R (outer_prod u q - outer_prod q u)"
+    by (simp add: outer_prod_def vec_eq_iff algebra_simps)
+  then show ?thesis
+    by (simp add: skewv_def)
+qed
+
+subsection \<open>A crude operator bound for matrices\<close>
+
+lemma sum_sq_le_sq_sum:
+  fixes f :: "'b \<Rightarrow> real"
+  assumes nn: "\<And>i. i \<in> F \<Longrightarrow> 0 \<le> f i"
+  shows "(\<Sum>i\<in>F. (f i)\<^sup>2) \<le> (\<Sum>i\<in>F. f i)\<^sup>2"
+proof (cases "finite F")
+  case True
+  then show ?thesis using nn
+  proof (induction F)
+    case empty
+    show ?case by simp
+  next
+    case (insert a F)
+    have fa: "0 \<le> f a" using insert.prems by simp
+    have sn: "0 \<le> (\<Sum>i\<in>F. f i)"
+      using insert.prems by (intro sum_nonneg) simp
+    have "(\<Sum>i\<in>insert a F. (f i)\<^sup>2) = (f a)\<^sup>2 + (\<Sum>i\<in>F. (f i)\<^sup>2)"
+      using insert.hyps by simp
+    also have "\<dots> \<le> (f a)\<^sup>2 + (\<Sum>i\<in>F. f i)\<^sup>2"
+      using insert by simp
+    also have "\<dots> \<le> (f a)\<^sup>2 + 2 * f a * (\<Sum>i\<in>F. f i) + (\<Sum>i\<in>F. f i)\<^sup>2"
+      using fa sn by simp
+    also have "\<dots> = (f a + (\<Sum>i\<in>F. f i))\<^sup>2"
+      by (simp add: power2_eq_square algebra_simps)
+    finally show ?case using insert.hyps by simp
+  qed
+next
+  case False
+  then show ?thesis by simp
+qed
+
+lemma matvec_norm_le:
+  fixes M :: "real^'n::finite^'n"
+  shows "norm (M *v w) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w"
+proof -
+  let ?C = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
+  have comp: "\<bar>(M *v w) $ i\<bar> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w" for i
+  proof -
+    have "\<bar>(M *v w) $ i\<bar> = \<bar>\<Sum>j\<in>UNIV. M $ i $ j * w $ j\<bar>"
+      by (simp add: matrix_vector_mult_def)
+    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j * w $ j\<bar>)"
+      by (rule sum_abs)
+    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * norm w)"
+      by (intro sum_mono)
+        (simp add: abs_mult mult_left_mono component_le_norm_cart)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w"
+      by (simp add: sum_distrib_right)
+    finally show ?thesis .
+  qed
+  have rownn: "0 \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w" for i
+    by (intro mult_nonneg_nonneg sum_nonneg) simp_all
+  have "(norm (M *v w))\<^sup>2 = (M *v w) \<bullet> (M *v w)"
+    by (simp add: power2_norm_eq_inner)
+  also have "\<dots> = (\<Sum>i\<in>UNIV. ((M *v w) $ i)\<^sup>2)"
+    by (simp add: inner_vec_def power2_eq_square)
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2)"
+  proof (rule sum_mono)
+    fix i :: 'n
+    have "((M *v w) $ i)\<^sup>2 = \<bar>(M *v w) $ i\<bar>\<^sup>2" by simp
+    also have "\<dots> \<le> ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2"
+      using comp[of i] rownn[of i] by (intro power_mono) simp_all
+    finally show "((M *v w) $ i)\<^sup>2
+        \<le> ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2" .
+  qed
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2"
+    by (rule sum_sq_le_sq_sum) (rule rownn)
+  also have "\<dots> = (?C * norm w)\<^sup>2"
+    by (simp add: sum_distrib_right)
+  finally have h: "(norm (M *v w))\<^sup>2 \<le> (?C * norm w)\<^sup>2" .
+  have Cnn: "0 \<le> ?C * norm w"
+    by (intro mult_nonneg_nonneg sum_nonneg) simp_all
+  show ?thesis
+    using h Cnn by (simp add: power2_le_iff_abs_le abs_of_nonneg)
+qed
+
+subsection \<open>Extracting strict eigendata from a feasible witness\<close>
+
+text \<open>\<open>eigen_lb\<close> is variational, so counting eigenvalues \<open>\<ge> 1\<close> is a
+  dimension argument: if fewer than \<open>n - k\<close> eigenvalues were \<open>\<ge> 1\<close>, the
+  span of the remaining eigenvectors would meet the witness subspace of
+  \<open>eigen_lb\<close> nontrivially, and on the intersection the quadratic form is
+  strictly below \<open>|v|\<^sup>2\<close> --- a contradiction.\<close>
+
+lemma feasible_eigen_count:
+  fixes a :: "real^'n::finite^'n" and q :: "real^'n"
+  assumes a: "a \<in> feasible k L q" and kn: "k < CARD('n)"
+  obtains B Bp where "onormal B" "span B = UNIV" "finite B"
+    "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    "Bp \<subseteq> B" "card Bp = CARD('n) - k"
+    "\<And>u. u \<in> Bp \<Longrightarrow> 1 \<le> u \<bullet> (a *v u)"
+proof -
+  have psd_a: "psd a" and lb: "eigen_lb a (CARD('n) - k)"
+    using a unfolding feasible_def by auto
+  have sym: "transpose a = a" using psd_a unfolding psd_def by blast
+  obtain B where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF sym] by blast
+  have finB: "finite B" by (rule onormal_finite[OF B(1)])
+  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF B])
+  define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
+  have lam_nn: "0 \<le> lam u" for u
+    using psd_a unfolding lam_def psd_def by blast
+  define Bge where "Bge = {u \<in> B. 1 \<le> lam u}"
+  have BgeB: "Bge \<subseteq> B" unfolding Bge_def by blast
+  have deco: "a = (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)"
+    unfolding lam_def by (rule spectral_decomposition[OF B eig])
+  have count: "CARD('n) - k \<le> card Bge"
+  proof (rule ccontr)
+    assume "\<not> CARD('n) - k \<le> card Bge"
+    then have lt: "card Bge < CARD('n) - k" by simp
+    define Blt where "Blt = B - Bge"
+    have BltB: "Blt \<subseteq> B" unfolding Blt_def by blast
+    have finBlt: "finite Blt" using finB BltB by (rule finite_subset[rotated])
+    have on_lt: "onormal Blt" by (rule onormal_subset[OF B(1) BltB])
+    have z_notin: "(0 :: real^'n) \<notin> Blt"
+    proof
+      assume "(0 :: real^'n) \<in> Blt"
+      then have "(0 :: real^'n) \<in> B" using BltB by blast
+      then have "norm (0 :: real^'n) = 1"
+        using B(1) unfolding onormal_def by blast
+      then show False by simp
+    qed
+    have ind_lt: "independent Blt"
+      using on_lt z_notin unfolding onormal_def
+      by (intro pairwise_orthogonal_independent) auto
+    have dim_lt: "dim (span Blt) = card Blt"
+      by (rule dim_span_eq_card_independent[OF ind_lt])
+    have card_lt: "card Blt = CARD('n) - card Bge"
+      unfolding Blt_def Bge_def using finB cardB
+      by (subst card_Diff_subset) auto
+    from lb obtain S where S: "subspace S" "CARD('n) - k \<le> dim S"
+      and Sq: "\<And>v. v \<in> S \<Longrightarrow> v \<bullet> v \<le> v \<bullet> (a *v v)"
+      unfolding eigen_lb_def by blast
+    have card_ge_le: "card Bge \<le> CARD('n)"
+      using card_mono[OF finB BgeB] cardB by simp
+    have dim_sum: "dim S + dim (span Blt) \<ge> CARD('n) + 1"
+    proof -
+      have "CARD('n) - card Bge \<ge> CARD('n) - (CARD('n) - k) + 1"
+        using lt kn by linarith
+      then have "dim (span Blt) \<ge> k + 1"
+        using dim_lt card_lt kn by simp
+      then show ?thesis using S(2) kn by linarith
+    qed
+    have inter_pos: "0 < dim (S \<inter> span Blt)"
+    proof -
+      have sub: "subspace (span Blt)" by (rule subspace_span)
+      have "dim {x + y |x y. x \<in> S \<and> y \<in> span Blt} + dim (S \<inter> span Blt)
+          = dim S + dim (span Blt)"
+        by (rule dim_sums_Int[OF S(1) sub])
+      moreover have "dim {x + y |x y. x \<in> S \<and> y \<in> span Blt} \<le> CARD('n)"
+      proof -
+        have "dim {x + y |x y. x \<in> S \<and> y \<in> span Blt}
+            \<le> dim (UNIV :: (real^'n) set)"
+          by (rule dim_subset) simp
+        then show ?thesis by simp
+      qed
+      ultimately show ?thesis using dim_sum by linarith
+    qed
+    obtain v where v: "v \<in> S" "v \<in> span Blt" "v \<noteq> 0"
+    proof -
+      have "\<not> (S \<inter> span Blt \<subseteq> {0})"
+      proof
+        assume "S \<inter> span Blt \<subseteq> {0}"
+        then have "dim (S \<inter> span Blt) = 0"
+          using dim_eq_0 by blast
+        then show False using inter_pos by linarith
+      qed
+      then obtain w where "w \<in> S \<inter> span Blt" "w \<noteq> 0" by blast
+      then show ?thesis using that by blast
+    qed
+    have vanish: "u \<bullet> v = 0" if u: "u \<in> Bge" for u
+    proof -
+      have "orthogonal u y" if y: "y \<in> Blt" for y
+      proof -
+        have "u \<noteq> y" using u y unfolding Blt_def by blast
+        moreover have "u \<in> B" using u BgeB by blast
+        moreover have "y \<in> B" using y BltB by blast
+        ultimately show ?thesis
+          using B(1) unfolding onormal_def pairwise_def by blast
+      qed
+      then have "orthogonal u v"
+        by (rule orthogonal_to_span[OF v(2), rotated]) blast
+      then show ?thesis unfolding orthogonal_def .
+    qed
+    have pars: "(\<Sum>u\<in>Blt. (u \<bullet> v)\<^sup>2) = v \<bullet> v"
+      by (rule onormal_span_parseval[OF on_lt v(2)])
+    have vv0: "0 < v \<bullet> v"
+      using v(3) by (simp add: inner_gt_zero_iff)
+    obtain u0 where u0: "u0 \<in> Blt" "0 < (u0 \<bullet> v)\<^sup>2"
+    proof -
+      have "\<exists>u\<in>Blt. (u \<bullet> v)\<^sup>2 \<noteq> 0"
+      proof (rule ccontr)
+        assume "\<not> (\<exists>u\<in>Blt. (u \<bullet> v)\<^sup>2 \<noteq> 0)"
+        then have "(\<Sum>u\<in>Blt. (u \<bullet> v)\<^sup>2) = 0" by simp
+        then show False using pars vv0 by simp
+      qed
+      then show ?thesis using that
+        by (metis zero_less_power2 power2_eq_iff_nonneg zero_power2
+            linorder_not_le abs_le_zero_iff abs_of_nonneg zero_le_power2)
+    qed
+    have expand: "v \<bullet> (a *v v) = (\<Sum>u\<in>B. lam u * (u \<bullet> v)\<^sup>2)"
+      by (subst deco) (rule quadform_sum_outer[OF finB])
+    have split: "v \<bullet> (a *v v) = (\<Sum>u\<in>Blt. lam u * (u \<bullet> v)\<^sup>2)"
+    proof -
+      have Bsplit: "B = Bge \<union> Blt" unfolding Blt_def Bge_def by blast
+      have disj: "Bge \<inter> Blt = {}" unfolding Blt_def by blast
+      have "(\<Sum>u\<in>B. lam u * (u \<bullet> v)\<^sup>2)
+          = (\<Sum>u\<in>Bge. lam u * (u \<bullet> v)\<^sup>2) + (\<Sum>u\<in>Blt. lam u * (u \<bullet> v)\<^sup>2)"
+        unfolding Bsplit
+        by (rule sum.union_disjoint)
+          (use finB Bsplit disj in \<open>auto intro: finite_subset\<close>)
+      moreover have "(\<Sum>u\<in>Bge. lam u * (u \<bullet> v)\<^sup>2) = 0"
+        using vanish by simp
+      ultimately show ?thesis using expand by simp
+    qed
+    have "v \<bullet> (a *v v) < (\<Sum>u\<in>Blt. (u \<bullet> v)\<^sup>2)"
+      unfolding split
+    proof (rule sum_strict_mono_ex1[OF finBlt])
+      show "\<forall>u\<in>Blt. lam u * (u \<bullet> v)\<^sup>2 \<le> (u \<bullet> v)\<^sup>2"
+      proof
+        fix u assume u: "u \<in> Blt"
+        then have "lam u < 1" unfolding Blt_def Bge_def
+          using BltB by auto
+        then show "lam u * (u \<bullet> v)\<^sup>2 \<le> (u \<bullet> v)\<^sup>2"
+          using lam_nn[of u] by (intro mult_left_le_one_le) simp_all
+      qed
+      show "\<exists>u\<in>Blt. lam u * (u \<bullet> v)\<^sup>2 < (u \<bullet> v)\<^sup>2"
+      proof (intro bexI[OF _ u0(1)])
+        have "lam u0 < 1" using u0(1) unfolding Blt_def Bge_def
+          using BltB by auto
+        then have "lam u0 * (u0 \<bullet> v)\<^sup>2 < 1 * (u0 \<bullet> v)\<^sup>2"
+          by (rule mult_strict_right_mono[OF _ u0(2)])
+        then show "lam u0 * (u0 \<bullet> v)\<^sup>2 < (u0 \<bullet> v)\<^sup>2" by simp
+      qed
+    qed
+    also have "\<dots> = v \<bullet> v" by (rule pars)
+    finally show False using Sq[OF v(1)] by simp
+  qed
+  obtain Bp where Bp: "Bp \<subseteq> Bge" "card Bp = CARD('n) - k"
+    using obtain_subset_with_card_n[OF count] by metis
+  show ?thesis
+  proof (rule that[OF B(1) B(2) finB eig _ Bp(2)])
+    show "Bp \<subseteq> B" using Bp(1) BgeB by blast
+    show "\<And>u. u \<in> Bp \<Longrightarrow> 1 \<le> u \<bullet> (a *v u)"
+      using Bp(1) unfolding Bge_def lam_def by blast
+  qed
+qed
+
+subsection \<open>The strict blend\<close>
+
+text \<open>Blending the witness with the projection onto \<open>Bp\<close> pushes the top
+  \<open>n - k\<close> eigenvalues STRICTLY above \<open>1\<close> and all eigenvalues STRICTLY
+  below \<open>L\<close> --- the margins that survive perturbation along the path.
+  This is the only place the supersolution argument needs \<open>1 < L\<close>.\<close>
+
+lemma feasible_strict_eigendata:
+  fixes a :: "real^'n::finite^'n" and q :: "real^'n" and M :: "real^'n^'n"
+  assumes a: "a \<in> feasible k L q" and kn: "k < CARD('n)" and L1: "1 < L"
+    and tr: "2 * \<eta> \<le> 1 + trace (M ** a) / 2" and eta: "0 < \<eta>"
+  obtains B Bp lam m where
+    "onormal B" "span B = UNIV" "finite B"
+    "Bp \<subseteq> B" "card Bp = CARD('n) - k" "0 < m"
+    "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u \<and> lam u \<le> L - m"
+    "\<And>u. u \<in> Bp \<Longrightarrow> 1 + m \<le> lam u"
+    "\<And>u. u \<in> B \<Longrightarrow> 0 < lam u \<Longrightarrow> u \<bullet> q = 0"
+    "\<eta> \<le> 1 + trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2"
+proof -
+  have psd_a: "psd a" and orth_a: "a *v q = 0" and ub: "eigen_ub a L"
+    using a unfolding feasible_def by auto
+  have sym: "transpose a = a" using psd_a unfolding psd_def by blast
+  obtain B Bp where B: "onormal B" "span B = UNIV" "finite B"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    and BpB: "Bp \<subseteq> B" and cardBp: "card Bp = CARD('n) - k"
+    and Bp1: "\<And>u. u \<in> Bp \<Longrightarrow> 1 \<le> u \<bullet> (a *v u)"
+    using feasible_eigen_count[OF a kn] by metis
+  define lam0 where "lam0 = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
+  have lam0_nn: "0 \<le> lam0 u" for u
+    using psd_a unfolding lam0_def psd_def by blast
+  have lam0_le: "lam0 u \<le> L" if u: "u \<in> B" for u
+  proof -
+    have "u \<bullet> (a *v u) \<le> L * (u \<bullet> u)"
+      using ub unfolding eigen_ub_def by blast
+    then show ?thesis unfolding lam0_def
+      using onormal_inner_self[OF B(1) u] by simp
+  qed
+  have orth0: "u \<bullet> q = 0" if u: "u \<in> B" and pos: "0 < lam0 u" for u
+  proof -
+    have "u \<bullet> (a *v q) = 0" using orth_a by simp
+    moreover have "u \<bullet> (a *v q) = (a *v u) \<bullet> q"
+      using sym by (simp add: inner_transpose_matrix)
+    ultimately have "(a *v u) \<bullet> q = 0" by simp
+    then have "(lam0 u *\<^sub>R u) \<bullet> q = 0"
+      using eig[OF u] unfolding lam0_def by simp
+    then have "lam0 u * (u \<bullet> q) = 0" by simp
+    then show ?thesis using pos by simp
+  qed
+  define c where "c = (1 + L) / 2"
+  have c0: "0 < c" unfolding c_def using L1 by simp
+  define CmB where "CmB = (\<Sum>u\<in>Bp. \<bar>u \<bullet> (M *v u)\<bar>)"
+  have CmB0: "0 \<le> CmB" unfolding CmB_def by (rule sum_nonneg) simp
+  define s where "s = \<eta> / (2 * \<eta> + c * CmB / 2 + 1)"
+  have ccmb: "0 \<le> c * CmB"
+    using c0 CmB0 by (intro mult_nonneg_nonneg) simp_all
+  have den0: "0 < 2 * \<eta> + c * CmB / 2 + 1"
+    using eta ccmb by linarith
+  have s0: "0 < s" unfolding s_def using eta den0 by simp
+  have slt: "\<eta> < 2 * \<eta> + c * CmB / 2 + 1"
+    using eta ccmb by linarith
+  have s1: "s < 1" unfolding s_def using den0 slt
+    by (simp add: divide_less_eq)
+  define lam where
+    "lam = (\<lambda>u. (1 - s) * lam0 u + (if u \<in> Bp then s * c else 0))"
+  define m where "m = s * (L - 1) / 2"
+  have m0: "0 < m" unfolding m_def using s0 L1 by simp
+  have lam_nn_le: "0 \<le> lam u \<and> lam u \<le> L - m" if u: "u \<in> B" for u
+  proof (cases "u \<in> Bp")
+    case True
+    have "0 \<le> lam u" unfolding lam_def using True s0 s1 c0 lam0_nn[of u]
+      by (simp add: mult_nonneg_nonneg)
+    moreover have "lam u \<le> L - m"
+    proof -
+      have "lam u = (1 - s) * lam0 u + s * c"
+        unfolding lam_def using True by simp
+      also have "\<dots> \<le> (1 - s) * L + s * c"
+        using lam0_le[OF u] s1 by (intro add_right_mono mult_left_mono) simp_all
+      also have "\<dots> = L - s * (L - 1) / 2"
+        unfolding c_def by (simp add: field_simps)
+      finally show ?thesis unfolding m_def .
+    qed
+    ultimately show ?thesis by blast
+  next
+    case False
+    have "0 \<le> lam u" unfolding lam_def using False s1 lam0_nn[of u]
+      by (simp add: mult_nonneg_nonneg)
+    moreover have "lam u \<le> L - m"
+    proof -
+      have "lam u = (1 - s) * lam0 u" unfolding lam_def using False by simp
+      also have "\<dots> \<le> (1 - s) * L"
+        using lam0_le[OF u] s1 by (intro mult_left_mono) simp_all
+      also have "\<dots> \<le> L - s * (L - 1) / 2"
+        using s0 L1 by (simp add: field_simps)
+      finally show ?thesis unfolding m_def .
+    qed
+    ultimately show ?thesis by blast
+  qed
+  have lam_lb: "1 + m \<le> lam u" if u: "u \<in> Bp" for u
+  proof -
+    have "1 + s * (L - 1) / 2 = (1 - s) * 1 + s * c"
+      unfolding c_def by (simp add: field_simps)
+    also have "\<dots> \<le> (1 - s) * lam0 u + s * c"
+      using Bp1[OF u] s1 unfolding lam0_def
+      by (intro add_right_mono mult_left_mono) simp_all
+    finally show ?thesis unfolding lam_def m_def using u by simp
+  qed
+  have lam_orth: "u \<bullet> q = 0" if u: "u \<in> B" and pos: "0 < lam u" for u
+  proof (cases "u \<in> Bp")
+    case True
+    have "0 < lam0 u" using Bp1[OF True] unfolding lam0_def by simp
+    then show ?thesis by (rule orth0[OF u])
+  next
+    case False
+    then have "lam u = (1 - s) * lam0 u" unfolding lam_def by simp
+    then have "0 < lam0 u" using pos s1
+      by (metis lam0_nn less_le mult_pos_pos mult_zero_right
+          zero_less_mult_pos linorder_neqE_linordered_idom)
+    then show ?thesis by (rule orth0[OF u])
+  qed
+  have trace_bound:
+    "\<eta> \<le> 1 + trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2"
+  proof -
+    have deco: "a = (\<Sum>u\<in>B. lam0 u *\<^sub>R outer_prod u u)"
+      unfolding lam0_def by (rule spectral_decomposition[OF B(1,2) eig])
+    have t0: "trace (M ** a) = (\<Sum>u\<in>B. lam0 u * (u \<bullet> (M *v u)))"
+      by (subst deco) (rule traceM_sum_outer)
+    have t1: "trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u))
+        = (\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))"
+      by (rule traceM_sum_outer)
+    have splitsum: "(\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))
+        = (1 - s) * (\<Sum>u\<in>B. lam0 u * (u \<bullet> (M *v u)))
+          + s * c * (\<Sum>u\<in>Bp. u \<bullet> (M *v u))"
+    proof -
+      have "(\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))
+          = (\<Sum>u\<in>B. (1 - s) * (lam0 u * (u \<bullet> (M *v u)))
+              + (if u \<in> Bp then s * c * (u \<bullet> (M *v u)) else 0))"
+        by (rule sum.cong[OF refl]) (simp add: lam_def algebra_simps)
+      also have "\<dots> = (1 - s) * (\<Sum>u\<in>B. lam0 u * (u \<bullet> (M *v u)))
+          + (\<Sum>u\<in>B. if u \<in> Bp then s * c * (u \<bullet> (M *v u)) else 0)"
+        by (simp add: sum.distrib sum_distrib_left)
+      also have "(\<Sum>u\<in>B. if u \<in> Bp then s * c * (u \<bullet> (M *v u)) else 0)
+          = s * c * (\<Sum>u\<in>Bp. u \<bullet> (M *v u))"
+        using BpB B(3)
+        by (subst sum.inter_restrict[symmetric])
+          (auto simp: Int_absorb1 sum_distrib_left)
+      finally show ?thesis .
+    qed
+    have absBp: "\<bar>\<Sum>u\<in>Bp. u \<bullet> (M *v u)\<bar> \<le> CmB"
+      unfolding CmB_def by (rule sum_abs)
+    have "1 + trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2
+        = (1 - s) * (1 + trace (M ** a) / 2)
+          + s * (1 + c * (\<Sum>u\<in>Bp. u \<bullet> (M *v u)) / 2)"
+      unfolding t1 splitsum t0[symmetric] by (simp add: field_simps)
+    moreover have "(1 - s) * (1 + trace (M ** a) / 2) \<ge> (1 - s) * (2 * \<eta>)"
+      using tr s1 by (intro mult_left_mono) simp_all
+    moreover have "s * (1 + c * (\<Sum>u\<in>Bp. u \<bullet> (M *v u)) / 2)
+        \<ge> s * (- (c * CmB / 2))"
+    proof (intro mult_left_mono)
+      have "- (c * CmB / 2) \<le> 1 - c * CmB / 2" by simp
+      moreover have "c * (\<Sum>u\<in>Bp. u \<bullet> (M *v u)) / 2 \<ge> - (c * CmB / 2)"
+      proof -
+        have "- CmB \<le> (\<Sum>u\<in>Bp. u \<bullet> (M *v u))"
+          using absBp by (simp add: abs_le_iff)
+        then have "c * (- CmB) \<le> c * (\<Sum>u\<in>Bp. u \<bullet> (M *v u))"
+          using c0 by (intro mult_left_mono) simp_all
+        then show ?thesis by linarith
+      qed
+      ultimately show "- (c * CmB / 2)
+          \<le> 1 + c * (\<Sum>u\<in>Bp. u \<bullet> (M *v u)) / 2" by linarith
+    qed (use s0 in simp)
+    moreover have "(1 - s) * (2 * \<eta>) + s * (- (c * CmB / 2)) \<ge> \<eta>"
+    proof -
+      have "(1 - s) * (2 * \<eta>) + s * (- (c * CmB / 2))
+          = 2 * \<eta> - s * (2 * \<eta> + c * CmB / 2)"
+        by (simp add: algebra_simps)
+      moreover have "s * (2 * \<eta> + c * CmB / 2) \<le> \<eta>"
+      proof -
+        have "s * (2 * \<eta> + c * CmB / 2) \<le> s * (2 * \<eta> + c * CmB / 2 + 1)"
+          using s0 by simp
+        also have "\<dots> = \<eta>" unfolding s_def using den0 by simp
+        finally show ?thesis .
+      qed
+      ultimately show ?thesis by linarith
+    qed
+    ultimately show ?thesis by linarith
+  qed
+  show ?thesis
+    by (rule that[OF B(1,2,3) BpB cardBp m0 _ lam_lb lam_orth trace_bound])
+      (rule lam_nn_le)
+qed
+
+subsection \<open>Sums of column outer products: exact identities\<close>
+
+text \<open>The covariance field will be \<open>\<Sum>\<^sub>u outerp (w u)\<close> for columns \<open>w u\<close>.
+  The identities here are exact regardless of any perturbation: the matrix
+  action, the quadratic form as a sum of squares, positive
+  semidefiniteness, the trace pairing, and --- the point of the whole
+  construction --- annihilation of any vector all the columns are
+  orthogonal to.\<close>
+
+lemma matvec_zero_left: "(0 :: real^'n::finite^'n) *v z = 0"
+  by (simp add: matrix_vector_mult_def vec_eq_iff)
+
+lemma outerp_sum_matvec:
+  fixes w :: "'b \<Rightarrow> real^'n::finite" and F :: "'b set"
+  shows "(\<Sum>u\<in>F. outerp (w u)) *v z = (\<Sum>u\<in>F. (w u \<bullet> z) *\<^sub>R w u)"
+proof (cases "finite F")
+  case True
+  then show ?thesis
+  proof (induction F)
+    case empty
+    show ?case by (simp add: matvec_zero_left)
+  next
+    case (insert u F)
+    have "(\<Sum>v\<in>insert u F. outerp (w v)) *v z
+        = (outerp (w u) + (\<Sum>v\<in>F. outerp (w v))) *v z"
+      using insert.hyps by simp
+    also have "\<dots> = outerp (w u) *v z + (\<Sum>v\<in>F. outerp (w v)) *v z"
+      by (rule matrix_vector_mult_add_rdistrib)
+    also have "outerp (w u) *v z = (w u \<bullet> z) *\<^sub>R w u"
+      by (simp add: outerp_eq_outer_prod outer_prod_mv)
+    finally show ?case using insert by simp
+  qed
+next
+  case False
+  then show ?thesis by (simp add: matvec_zero_left)
+qed
+
+lemma outerp_sum_quadform:
+  fixes w :: "'b \<Rightarrow> real^'n::finite" and F :: "'b set"
+  shows "z \<bullet> ((\<Sum>u\<in>F. outerp (w u)) *v z) = (\<Sum>u\<in>F. (w u \<bullet> z)\<^sup>2)"
+proof -
+  have "z \<bullet> ((\<Sum>u\<in>F. outerp (w u)) *v z)
+      = (\<Sum>u\<in>F. z \<bullet> ((w u \<bullet> z) *\<^sub>R w u))"
+    unfolding outerp_sum_matvec by (rule inner_sum_right)
+  also have "\<dots> = (\<Sum>u\<in>F. (w u \<bullet> z)\<^sup>2)"
+    by (rule sum.cong[OF refl])
+      (simp add: inner_scaleR_right inner_commute power2_eq_square)
+  finally show ?thesis .
+qed
+
+lemma outerp_sum_annihilate:
+  fixes w :: "'b \<Rightarrow> real^'n::finite" and F :: "'b set"
+  assumes orth: "\<And>u. u \<in> F \<Longrightarrow> w u \<bullet> g = 0"
+  shows "(\<Sum>u\<in>F. outerp (w u)) *v g = 0"
+proof -
+  have "(\<Sum>u\<in>F. outerp (w u)) *v g = (\<Sum>u\<in>F. (w u \<bullet> g) *\<^sub>R w u)"
+    by (rule outerp_sum_matvec)
+  also have "\<dots> = 0" using orth by simp
+  finally show ?thesis .
+qed
+
+lemma outerp_sum_psd:
+  fixes w :: "'b \<Rightarrow> real^'n::finite" and F :: "'b set"
+  shows "psd (\<Sum>u\<in>F. outerp (w u))"
+proof -
+  have t: "transpose (\<Sum>u\<in>F. outerp (w u)) = (\<Sum>u\<in>F. outerp (w u))"
+    by (simp add: transpose_matrix_sum outerp_eq_outer_prod
+        transpose_outer_prod)
+  have q: "0 \<le> z \<bullet> ((\<Sum>u\<in>F. outerp (w u)) *v z)" for z
+    unfolding outerp_sum_quadform by (rule sum_nonneg) simp
+  show ?thesis unfolding psd_def using t q by blast
+qed
+
+lemma trace_mult_zero_right: "trace (M ** (0 :: real^'n::finite^'n)) = 0"
+  by (simp add: matrix_matrix_mult_def trace_def vec_eq_iff)
+
+lemma trace_mult_outerp_sum:
+  fixes M :: "real^'n::finite^'n" and w :: "'b \<Rightarrow> real^'n" and F :: "'b set"
+  assumes finF: "finite F"
+  shows "trace (M ** (\<Sum>u\<in>F. outerp (w u))) = (\<Sum>u\<in>F. w u \<bullet> (M *v w u))"
+  using finF
+proof (induction F)
+  case empty
+  show ?case by (simp add: trace_mult_zero_right trace_def)
+next
+  case (insert u F)
+  have "trace (M ** (\<Sum>v\<in>insert u F. outerp (w v)))
+      = trace (M ** (outerp (w u) + (\<Sum>v\<in>F. outerp (w v))))"
+    using insert.hyps by simp
+  also have "\<dots> = trace (M ** outerp (w u))
+      + trace (M ** (\<Sum>v\<in>F. outerp (w v)))"
+    by (rule trace_mult_add)
+  finally show ?case
+    using insert by (simp add: trace_mult_outerp)
 qed
 
 section \<open>What remains for clause (2)\<close>
