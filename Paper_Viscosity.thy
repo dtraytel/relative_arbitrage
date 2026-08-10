@@ -7084,6 +7084,193 @@ next
   then show ?case unfolding r_def T'_def by simp
 qed
 
+subsection \<open>Step moments of the Gaussian member\<close>
+
+text \<open>The Euler analysis needs exactly two facts per step: the compensated
+  quadratic increment has MEAN ZERO (an instance of
+  @{thm [source] paper_pair_class_quadform_mean}, since the member's second
+  component is deterministic), and its VARIANCE is \<open>O(h\<^sup>2)\<close>.  The variance
+  needs no Wick calculus and no coordinate independence: the pointwise
+  AM--GM bound \<open>a\<^sup>2b\<^sup>2 \<le> (a\<^sup>4 + b\<^sup>4)/2\<close> reduces everything to the fourth
+  marginal moment \<open>3h\<^sup>2\<close> of one Brownian coordinate.\<close>
+
+lemma trace_mult_blin:
+  fixes M :: "real^'n::finite^'n"
+  shows "bounded_linear (\<lambda>A :: real^'n^'n. trace (M ** A))"
+  unfolding linear_conv_bounded_linear[symmetric]
+  by (intro linearI)
+    (simp_all add: trace_mult_add matmul_scaleR_right trace_scaleR)
+
+lemma sconstraint_diag_le:
+  fixes a :: "real^'n::finite^'n"
+  assumes a: "a \<in> sconstraint k L"
+  shows "a $ i $ i \<le> L"
+proof -
+  have ub: "eigen_ub a L"
+    using a unfolding sconstraint_def by blast
+  have gen: "\<And>u :: real^'n. u \<bullet> (a *v u) \<le> L * (u \<bullet> u)"
+    using ub unfolding eigen_ub_def by blast
+  have inst: "axis i 1 \<bullet> (a *v axis i 1)
+      \<le> L * ((axis i 1 :: real^'n) \<bullet> axis i 1)"
+    using gen by blast
+  have e1: "axis i 1 \<bullet> (a *v axis i 1) = a $ i $ i"
+    using axis1_inner[of i "a *v axis i 1"] matvec_axis1[of a i i] by simp
+  have e2: "(axis i 1 :: real^'n) \<bullet> axis i 1 = 1"
+    by (rule axis1_self)
+  show ?thesis using inst unfolding e1 e2 by simp
+qed
+
+lemma sbm_entry_bound:
+  fixes S :: "real^'n::finite^'n"
+  assumes SST: "S ** transpose S \<in> sconstraint k L"
+  shows "\<bar>S $ i $ j\<bar> \<le> sqrt L"
+proof -
+  have diag: "(S ** transpose S) $ i $ i = (\<Sum>l\<in>UNIV. (S $ i $ l)\<^sup>2)"
+    by (simp add: matrix_matrix_mult_def transpose_def power2_eq_square)
+  have "(S $ i $ j)\<^sup>2 \<le> (\<Sum>l\<in>UNIV. (S $ i $ l)\<^sup>2)"
+    by (rule member_le_sum) simp_all
+  also have "\<dots> \<le> L"
+    using sconstraint_diag_le[OF SST, of i] diag by simp
+  finally have "(S $ i $ j)\<^sup>2 \<le> L" .
+  then have "sqrt ((S $ i $ j)\<^sup>2) \<le> sqrt L"
+    by (rule real_sqrt_le_mono)
+  then show ?thesis by simp
+qed
+
+lemma bm_coordinate_pow4:
+  assumes h0: "0 < h"
+  shows bm_coordinate_pow4_integrable:
+    "integrable (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<omega> i h) ^ 4)"
+    and bm_coordinate_pow4_integral:
+    "(\<integral>\<omega>. (\<omega> i h) ^ 4 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = 3 * h\<^sup>2"
+proof -
+  have h0': "(0::real) \<le> h" using h0 by simp
+  have m: "(\<lambda>\<omega>. \<omega> i h) \<in> (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      \<rightarrow>\<^sub>M (borel :: real measure)"
+    using h0' by (intro measurable_bm_coordinate) simp
+  have p4: "(\<lambda>y :: real. y ^ 4) \<in> borel_measurable borel"
+    by measurable
+  have hb: "has_bochner_integral (gauss_measure h) (\<lambda>x. x ^ (2 * 2))
+      (fact (2 * 2) / (2 ^ 2 * fact 2) * h ^ 2)"
+    by (rule gauss_measure_moment_even[OF h0])
+  have c3: "(fact (2 * 2) / (2 ^ 2 * fact 2) :: real) = 3"
+    by (simp add: fact_numeral)
+  have hb4: "has_bochner_integral (gauss_measure h) (\<lambda>x. x ^ 4) (3 * h\<^sup>2)"
+    using hb by (simp add: c3 fact_numeral)
+  have ig: "integrable (gauss_measure h) (\<lambda>x. x ^ 4)"
+    and vg: "(\<integral>x. x ^ 4 \<partial>gauss_measure h) = 3 * h\<^sup>2"
+    using hb4 by (auto intro: integrable.intros
+        simp: has_bochner_integral_integral_eq)
+  have d: "distr (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) borel
+      (\<lambda>\<omega>. \<omega> i h) = gauss_measure h"
+    by (rule bm_coordinate_distr[OF h0'])
+  have "integrable (distr (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) borel
+      (\<lambda>\<omega>. \<omega> i h)) (\<lambda>y. y ^ 4)"
+    unfolding d by (rule ig)
+  then show "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<omega> i h) ^ 4)"
+    by (subst (asm) integrable_distr_eq[OF m p4])
+  have "(\<integral>\<omega>. (\<omega> i h) ^ 4 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = (\<integral>y. y ^ 4 \<partial>(distr (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+          borel (\<lambda>\<omega>. \<omega> i h)))"
+    by (rule integral_distr[OF m p4, symmetric])
+  also have "\<dots> = 3 * h\<^sup>2" unfolding d by (rule vg)
+  finally show "(\<integral>\<omega>. (\<omega> i h) ^ 4
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = 3 * h\<^sup>2" .
+qed
+
+lemma bm_R2_moment:
+  assumes h0: "0 < h"
+  shows bm_R2_integrable:
+    "integrable (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2)"
+    and bm_R2_integral:
+    "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2
+        \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      \<le> 3 * (real CARD('n))\<^sup>2 * h\<^sup>2"
+proof -
+  have h0': "(0::real) \<le> h" using h0 by simp
+  have m: "\<And>i. (\<lambda>\<omega>. \<omega> i h)
+      \<in> (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      \<rightarrow>\<^sub>M (borel :: real measure)"
+    using h0' by (intro measurable_bm_coordinate) simp
+  have i4: "\<And>i. integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<omega> i h) ^ 4)"
+    by (rule bm_coordinate_pow4_integrable[OF h0])
+  have prod_int: "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2)" for i j
+  proof (rule Bochner_Integration.integrable_bound
+      [where f = "\<lambda>\<omega>. (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2"])
+    show "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+        (\<lambda>\<omega>. (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2)"
+      using i4 by auto
+    show "(\<lambda>\<omega>. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2)
+        \<in> borel_measurable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+      using m by measurable
+    show "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+        norm ((\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2)
+          \<le> norm ((\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2)"
+    proof (intro AE_I2)
+      fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+      have "(\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2 \<le> (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2"
+        by (rule prod_sq_le_half_pow4)
+      moreover have "0 \<le> (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2" by simp
+      moreover have "0 \<le> (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2"
+        by (intro add_nonneg_nonneg) simp_all
+      ultimately show "norm ((\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2)
+          \<le> norm ((\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2)" by simp
+    qed
+  qed
+  have expand: "(\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2
+      = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2)"
+    for \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    by (simp add: power2_eq_square sum_product)
+  show int: "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2)"
+    unfolding expand by (intro Bochner_Integration.integrable_sum prod_int)
+  have per: "(\<integral>\<omega>. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) \<le> 3 * h\<^sup>2" for i j
+  proof -
+    have "(\<integral>\<omega>. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2
+        \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+        \<le> (\<integral>\<omega>. (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2
+            \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))"
+    proof (rule integral_mono_AE)
+      show "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+          (\<lambda>\<omega>. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2)" by (rule prod_int)
+      show "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+          (\<lambda>\<omega>. (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2)"
+        using i4 by auto
+      show "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
+          (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2
+            \<le> (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2"
+        by (intro AE_I2 prod_sq_le_half_pow4)
+    qed
+    also have "\<dots> = 3 * h\<^sup>2 / 2 + 3 * h\<^sup>2 / 2"
+      using i4 by (simp add: bm_coordinate_pow4_integral[OF h0])
+    finally show ?thesis by simp
+  qed
+  have "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (\<Sum>j\<in>UNIV. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2)
+          \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))"
+    unfolding expand
+    by (rule Bochner_Integration.integral_sum)
+      (intro Bochner_Integration.integrable_sum prod_int)
+  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (\<integral>\<omega>. (\<omega> i h)\<^sup>2 * (\<omega> j h)\<^sup>2
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))"
+    by (intro sum.cong refl Bochner_Integration.integral_sum prod_int)
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). 3 * h\<^sup>2)"
+    by (intro sum_mono per)
+  also have "\<dots> = 3 * (real CARD('n))\<^sup>2 * h\<^sup>2"
+    by (simp add: power2_eq_square)
+  finally show "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2
+      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      \<le> 3 * (real CARD('n))\<^sup>2 * h\<^sup>2" .
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
