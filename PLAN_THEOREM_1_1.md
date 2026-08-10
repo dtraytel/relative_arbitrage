@@ -665,22 +665,93 @@ the class member. Two elementary steps replace it.
 Then `δ → 0` on the Hessian bump through `feasible_trace_le` (`trace a ≤ nL` on
 the feasible set) and `field_le_epsilon`, exactly as in the relaxed case.
 
-#### What is left in §2.1
+#### What is left in §2.1: the supersolution half — DESIGNED 2026-08-10 (paper §3.2 read)
 
-**Only the supersolution half** (~1,500–3,000 lines). It consumes
-`paper_v_dpp_sup_ge_time` (proved, §1.9) plus a **weak solution of the SDE
-(3.24)**, which this development does not have — that is the whole of the
-remaining risk. Two things make it cheaper than it looks:
+**Statement design first — the repo's plain `visc_supersol` is TOO STRONG.**
+The paper's supersolution inequality (Def. 3.1(b)) is `F*(∇φ(x),∇²φ(x)) ≥ 1`
+with the USC ENVELOPE `F*`, and `F* ≠ F` exactly at `p = 0` (their Lemma
+"compute F"). The plain form `1 ≤ ell_op k L 0 H` is REFUTABLE at an interior
+local min (take `φ` const: `ell_op k L 0 0 = 0`). `Envelopes.thy` anticipated
+this: the target is **`visc_supersol_env`** (with `ell_op_usc`), already
+imported by `Paper_Viscosity`. Consequence for assembly:
+`theorem_1_1_uniqueness_general` consumes the strong `visc_sol`; its
+supersolution hypothesis must eventually be weakened to the envelope form
+(the comparison proof uses `F*` at the Crandall–Ishii step anyway, and at
+`p ≠ 0` plain = envelope once Lemma 3.1's `F* = F` off zero is in — the
+`Envelopes.thy` header records what that needs: Ky Fan + `Poincare_Separation`).
 
-* Work in `ell_op_s` throughout. By `visc_supersol_s_imp_visc_supersol` the
-  relaxed supersolution property implies the true one, so **Gap 2 does not
-  arise on this side at all**.
-* Gap 1's localisation machinery transfers verbatim:
-  `pball_exit_path_stopping_time`, `pball_exit_measurable`,
-  `pball_exit_stays_cball`, and the stopped moments
-  (`paper_pair_class_stopped_moments`, `_var`, `_normsq`).
+**The paper's §3.2 mechanism (Case 1, `∇φ(x) ≠ 0`) — the SKEW trick.** Given
+`ell_op < 1`: a witness `a` with `1 + tr(a∇²φ(x))/2 > 0`, `a∇φ(x) = 0`;
+modified so its top `n−k` eigenvalues are STRICTLY inside `(1,L)`. Set
+`S_i := λ_i^{1/2}|∇φ(x)|⁻²(q_i∇φ(x)ᵀ − ∇φ(x)q_iᵀ)` (SKEW-symmetric) and run
+`dX = Σ_i S_i∇φ(X)dW_i`. Skewness kills the Itô martingale term IDENTICALLY
+(`∇φᵀS_i∇φ = 0`), so `τ + φ(X_τ) ≥ φ(y)` holds PATHWISE — which is what an
+essinf bound needs; means cannot reach it. The margin `δ` comes from strict
+touching, not from `τ`. Case 2 (`∇φ(x) = 0`) is a PDE-side reduction:
+perturb by `−yᵀη`; either nonzero-gradient touchings exist arbitrarily close
+(→ Case 1 → envelope limit) or `v_*` is quadratically pinched ⟹ locally
+constant ⟹ contradicted by the DPP + a positive interior lower bound.
 
-Gaps 1 and 2 are both closed and need no revisiting.
+**The Girsanov-free replacement of their SDE (3.24) — Euler + kernel-pasting
++ weak limit.** No stochastic integration and no SDE well-posedness:
+
+1. Quadratic minorant `ψ` (MIRROR of `test_fun_quadratic_dominates`, applied
+   to `−φ`): Hessian `M := H − δ·1`; the same `δ` buys the sphere margin.
+2. `ell_op k L q H < 1` (`q := g x ≠ 0`) gives `a ∈ feasible k L q` with
+   `1 + tr(Ma)/2 ≥ 2η`; perturb to strict interior `(1,L)` (NEEDS `1 < L`;
+   `L = 1` is rigid — excluded by hypothesis for now, as in the paper's own
+   "(1,L)" step).
+3. Covariance field `ā(z) := Σ(π(z))Σ(π(z))ᵀ`, `Σ(y)` = skew field of the
+   paper, `π` = clamp onto `cball x r₀` (Lipschitz). Facts: `ā` continuous;
+   `ā(z) ∈ feasible k L 0 ⊆ sconstraint` (constraint at `p = 0` is vacuous —
+   `eigen_lb` via the variational witness `span{S_i q(π z)}`, Gram ≈
+   `diag λ_i`); `ā(z) *v (q + M(π(z)−x)) = 0` everywhere (skewness);
+   `1 + tr(M ā(z))/2 ≥ η'` on the ball (continuity margin).
+4. Constant-`Σ` Gaussian member `gbmpair`: `X = z + Σ·W`, `Y_t = t·ΣΣᵀ`
+   pathwise; class membership mirrors `bmpair_law_in_paper_pair_class`
+   (Paper_Bridge 5874–6222) — linear images of the cbm martingales; needs
+   `ΣΣᵀ ∈ sconstraint` only. 4th moment `E|X_t−z|⁴ ≤ Ct²` from BM moments.
+5. Kernel `κ(z)` := recentred `gbmpair`-law with covariance `ā(z)`;
+   LP-measurable by CONTINUITY of `Σ ↦ law` in the weak topology (dominated
+   convergence; `paper_pair_class_compact_metric_space(2)` identifies the
+   subtopology). Euler iterate `P^h` := fold of `paper_pair_class_kglue_law'`
+   at constant times `jh` — IN THE CLASS by the kglue theorem, no new
+   probability.
+6. Pathwise per-step identity under `P^h`: `ψ(X_{t_{j+1}}) − ψ(X_{t_j}) =
+   q(X_{t_j})ᵀΔ_j + ½Δ_jᵀMΔ_j` (exact, quadratic); the FROZEN-direction
+   lemma (`paper_pair_class_frozen_direction` for the kernel member,
+   `E[Y_t] = t·ā` deterministic) kills the first term a.s. on the in-ball
+   event. Fluctuations `ξ_j := tr(M(outerp Δ_j − h·ā))`: conditionally
+   mean-zero (clause (iv) of the kernel member through the ksemi Fubini),
+   `E[ξ_j²] ≤ Ch²`. Per-grid-point Chebyshev: `P^h(bad_m) ≤ CTh/β²`.
+   NO Doob needed.
+7. Weak limit `P* ∈ class` (compactness, `paper_pair_class_compact_metric_space(3)`).
+   The bad events are OPEN (`ball` for the in-ball clause, strict `<` for the
+   dip), so the open-set portmanteau (`P*(G) ≤ liminf P^h(G)`) kills each in
+   the limit; countable union over grids and `β ∈ 1/ℕ`, then path continuity:
+   a.s. `∀t ≤ τ_{r₂}: ψ(X_t) − ψ(x) ≥ −(1−η)t`.
+8. Contradiction: `θ := pball_exit r₂ ∧ c` into `paper_v_dpp_sup_ge_time`;
+   the reduced horizon via `enn2real_paper_v_horizon_cap`
+   (`v_S = min(v_T, S)`); exit branch gets the sphere margin `δr₂²/4`,
+   no-exit branch gets `ηc` — BOTH positive, so
+   `essinf ≥ v(x) + margin > v(x)`. Needs `T` beyond the ball bound
+   (`paper_v_le_ball_bound`) so the cap never binds.
+
+**The same keystone yields Example 3.1's `≥` half** — the item recorded as
+blocked on weak solutions of (3.11): take `ā(z)` = spherical-tangential
+around `y₀` (clamped near the singular centre, harmless because the radial
+coordinate is FROZEN + increasing: `|X_t−y₀|²` evolves DETERMINISTICALLY at
+rate `tr(ā) ≥ n−1`), so the ball exit time is deterministic and positive —
+`essinf τ > 0`, giving interior positivity `v > 0` and the quantitative ball
+lower bound. This unblocks clause (3)'s missing half AND supplies the
+positivity that Case 2's "locally constant" contradiction consumes.
+
+**Batches:** (1) skew algebra + covariance field + `gbmpair` member;
+(2) kernel measurability + Euler fold + per-step identities + Chebyshev;
+(3) weak limit + portmanteau transfer + DPP contradiction = Case 1 theorem;
+(4) mirror-dominates + Example 3.1 ≥ + Case 2 + `visc_supersol_env` assembly;
+(5) uniqueness-interface reconciliation (envelope supersolution hypothesis).
+Estimate 3,000–4,500 lines total.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
 
