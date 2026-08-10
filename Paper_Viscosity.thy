@@ -5329,14 +5329,6 @@ proof
   finally show "v \<bullet> ((\<Sum>u\<in>B. outerp (w u)) *v v) \<le> L * (v \<bullet> v)" .
 qed
 
-lemma matvec_scaleR_right: "M *v (c *\<^sub>R x) = c *\<^sub>R (M *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff vector_scaleR_component
-      sum_distrib_left algebra_simps)
-
-lemma matvec_add_right: "M *v (x + y) = M *v x + M *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff vector_add_component
-      sum.distrib algebra_simps)
-
 lemma perturbed_columns_eigen_lb:
   fixes B Bp :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real^'n"
     and lam :: "real^'n \<Rightarrow> real" and m E :: real
@@ -5719,8 +5711,7 @@ proof -
       unfolding su_def using nu[OF u] s0 sL by simp
     have sMs: "su \<bullet> (M *v su) = lam u * (u \<bullet> (M *v u))"
       unfolding su_def
-      by (simp add: matvec_scaleR_right inner_scaleR_left
-          inner_scaleR_right lam_nn[OF u])
+      by (simp add: algebra_simps lam_nn[OF u])
     have wsplit: "w u = su + d u" unfolding su_def by (rule wu[OF u])
     have expand: "w u \<bullet> (M *v w u) - su \<bullet> (M *v su)
         = d u \<bullet> (M *v w u) + su \<bullet> (M *v d u)"
@@ -5729,7 +5720,7 @@ proof -
         by (subst (1) wsplit) (simp add: inner_add_left)
       moreover have "su \<bullet> (M *v w u)
           = su \<bullet> (M *v su) + su \<bullet> (M *v d u)"
-        by (subst wsplit) (simp add: matvec_add_right inner_add_right)
+        by (subst wsplit) (simp add: algebra_simps)
       ultimately show ?thesis by linarith
     qed
     have nw: "norm (w u) \<le> sqrt L + e"
@@ -5877,7 +5868,7 @@ proof -
     qed
     have "w u = skewv q (sqrt (lam u) *\<^sub>R u) *v q
         + skewv q (sqrt (lam u) *\<^sub>R u) *v (M *v (z - x))"
-      unfolding w_def grad_def by (rule matvec_add_right)
+      unfolding w_def grad_def by (rule algebra_simps)
     then show ?thesis unfolding d_def using base by simp
   qed
   have dbound: "norm (d u) \<le> e" if u: "u \<in> B" for u
@@ -6596,7 +6587,7 @@ proof -
   have row: "norm (A $ i) \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)" for i
   proof -
     have "(norm (A $ i))\<^sup>2 = (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>\<^sup>2)"
-      by (simp add: power2_norm_eq_inner inner_vec_def power2_eq_square)
+      by (simp add: power2_norm_eq_inner inner_vec_def power2_eq_square[of "A $ _ $ _"])
     also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)\<^sup>2"
       by (rule sum_sq_le_sq_sum) simp
     finally have h: "(norm (A $ i))\<^sup>2 \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)\<^sup>2" .
@@ -7271,6 +7262,399 @@ proof -
       \<le> 3 * (real CARD('n))\<^sup>2 * h\<^sup>2" .
 qed
 
+subsection \<open>The step increment: mean zero\<close>
+
+theorem sbm_xi_mean0:
+  fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SST: "S ** transpose S \<in> sconstraint k L"
+  shows sbm_xi_integrable:
+    "integrable (pair_law_of h (sbmpair S h)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      (\<lambda>\<omega>'. trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+        - h *\<^sub>R (S ** transpose S))))"
+    and sbm_xi_mean:
+    "(\<integral>\<omega>'. trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+        - h *\<^sub>R (S ** transpose S)))
+      \<partial>(pair_law_of h (sbmpair S h)
+          (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))) = 0"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?\<mu> = "pair_law_of h (sbmpair S h) ?M"
+  let ?B = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  let ?\<xi> = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
+      (fst (\<omega>' h) - fst (\<omega>' 0)) - h *\<^sub>R (S ** transpose S)))"
+  let ?g = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
+      (fst (\<omega>' h)) - snd (\<omega>' h)))"
+  have h0': "(0::real) \<le> h" using h0 by simp
+  have hI: "h \<in> {0..h}" using h0' by simp
+  have mem: "?\<mu> \<in> paper_pair_class k L h (0 :: real^'n)"
+    by (rule sbmpair_law_in_paper_pair_class[OF h0' L1 SST])
+  have sets\<mu>: "sets ?\<mu> = sets ?B" by simp
+  have evh: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' h) \<in> ?B \<rightarrow>\<^sub>M borel"
+    by (rule pair_law_eval_measurable[OF refl])
+  have ev0: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' 0) \<in> ?B \<rightarrow>\<^sub>M borel"
+    by (rule pair_law_eval_measurable[OF refl])
+  have pairm: "(\<lambda>\<omega>' :: 'n pairpath. (\<omega>' h, \<omega>' 0)) \<in> ?B \<rightarrow>\<^sub>M borel"
+    using evh ev0 by (simp add: borel_prod[symmetric])
+  have contxi: "(\<lambda>p :: ((real^'n) \<times> (real^'n^'n))
+        \<times> ((real^'n) \<times> (real^'n^'n)).
+      trace (M ** (outerp (fst (fst p) - fst (snd p))
+        - h *\<^sub>R (S ** transpose S)))) \<in> borel_measurable borel"
+  proof (intro borel_measurable_continuous_onI)
+    have e: "(\<lambda>p :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)).
+        trace (M ** (outerp (fst (fst p) - fst (snd p))
+          - h *\<^sub>R (S ** transpose S))))
+        = (\<lambda>p. \<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j
+            * ((fst (fst p) $ j - fst (snd p) $ j)
+                * (fst (fst p) $ i - fst (snd p) $ i)
+              - h * (S ** transpose S) $ j $ i))"
+      by (rule ext)
+        (simp add: trace_def matrix_matrix_mult_def outerp_def
+          vector_minus_component vector_scaleR_component
+          sum_distrib_left algebra_simps sum_subtractf)
+    show "continuous_on UNIV (\<lambda>p :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)).
+        trace (M ** (outerp (fst (fst p) - fst (snd p))
+          - h *\<^sub>R (S ** transpose S))))"
+      unfolding e by (intro continuous_intros)
+  qed
+  have ximeas: "?\<xi> \<in> borel_measurable ?B"
+    using measurable_compose[OF pairm contxi] by (simp add: o_def)
+  have ximeas\<mu>: "?\<xi> \<in> borel_measurable ?\<mu>"
+    using ximeas measurable_cong_sets[OF sets\<mu>[symmetric] refl] by blast
+  have contg: "(\<lambda>q :: (real^'n) \<times> (real^'n^'n).
+      trace (M ** (outerp (fst q) - snd q))) \<in> borel_measurable borel"
+  proof (intro borel_measurable_continuous_onI)
+    have e: "(\<lambda>q :: (real^'n) \<times> (real^'n^'n).
+        trace (M ** (outerp (fst q) - snd q)))
+        = (\<lambda>q. \<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j
+            * (fst q $ j * fst q $ i - snd q $ j $ i))"
+      by (rule ext)
+        (simp add: trace_def matrix_matrix_mult_def outerp_def
+          vector_minus_component sum_distrib_left algebra_simps
+          sum_subtractf)
+    show "continuous_on UNIV (\<lambda>q :: (real^'n) \<times> (real^'n^'n).
+        trace (M ** (outerp (fst q) - snd q)))"
+      unfolding e by (intro continuous_intros)
+  qed
+  have gmeas: "?g \<in> borel_measurable ?B"
+    using measurable_compose[OF evh contg] by (simp add: o_def)
+  have gmeas\<mu>: "?g \<in> borel_measurable ?\<mu>"
+    using gmeas measurable_cong_sets[OF sets\<mu>[symmetric] refl] by blast
+  have start: "AE \<omega>' in ?\<mu>. fst (\<omega>' 0) = (0 :: real^'n) \<and> snd (\<omega>' 0) = 0"
+    using mem unfolding paper_pair_class_def by blast
+  have snddet: "AE \<omega>' in ?\<mu>. snd (\<omega>' h) = h *\<^sub>R (S ** transpose S)"
+  proof -
+    have phim: "sbmpair S h \<in> ?M \<rightarrow>\<^sub>M ?B"
+      by (rule sbmpair_measurable[OF h0'])
+    have sndm: "(\<lambda>\<omega>' :: 'n pairpath. snd (\<omega>' h)) \<in> ?B \<rightarrow>\<^sub>M borel"
+      using evh by (simp add: borel_prod[symmetric])
+    have mset: "{\<omega>' \<in> space ?B. snd (\<omega>' h) = h *\<^sub>R (S ** transpose S)}
+        \<in> sets ?B"
+    proof -
+      have "{\<omega>' \<in> space ?B. snd (\<omega>' h) = h *\<^sub>R (S ** transpose S)}
+          = (\<lambda>\<omega>' :: 'n pairpath. snd (\<omega>' h))
+            -` {h *\<^sub>R (S ** transpose S)} \<inter> space ?B"
+        by auto
+      then show ?thesis using measurable_sets[OF sndm] by simp
+    qed
+    have iff: "(AE \<omega>' in ?\<mu>. snd (\<omega>' h) = h *\<^sub>R (S ** transpose S))
+        = (AE \<omega> in ?M. snd (sbmpair S h \<omega> h) = h *\<^sub>R (S ** transpose S))"
+      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+    have "AE \<omega> in ?M. snd (sbmpair S h \<omega> h) = h *\<^sub>R (S ** transpose S)"
+      by (intro AE_I2) (simp add: sbmpair_apply[OF hI])
+    then show ?thesis unfolding iff .
+  qed
+  have aeq: "AE \<omega>' in ?\<mu>. ?\<xi> \<omega>' = ?g \<omega>'"
+    using start snddet by eventually_elim simp
+  have int_inner: "integrable ?\<mu>
+      (\<lambda>\<omega>'. outerp (fst (\<omega>' h)) - snd (\<omega>' h))"
+    by (rule paper_pair_class_compensated_integrable[OF mem hI])
+  have intg: "integrable ?\<mu> ?g"
+    by (rule integrable_bounded_linear[OF trace_mult_blin int_inner])
+  show "integrable ?\<mu> ?\<xi>"
+    by (rule integrable_cong_AE[THEN iffD2, OF ximeas\<mu> gmeas\<mu> aeq intg])
+  have op0: "outerp (0 :: real^'n) = 0"
+    by (simp add: outerp_def vec_eq_iff zero_vec_def)
+  have "(\<integral>\<omega>'. ?\<xi> \<omega>' \<partial>?\<mu>) = (\<integral>\<omega>'. ?g \<omega>' \<partial>?\<mu>)"
+    by (rule integral_cong_AE[OF ximeas\<mu> gmeas\<mu> aeq])
+  also have "\<dots> = trace (M ** (\<integral>\<omega>'. outerp (fst (\<omega>' h)) - snd (\<omega>' h)
+      \<partial>?\<mu>))"
+    by (rule integral_of_bounded_linear[OF trace_mult_blin int_inner])
+  also have "\<dots> = trace (M ** outerp (0 :: real^'n))"
+    by (simp add: paper_pair_class_compensated_mean[OF mem hI])
+  also have "\<dots> = 0"
+    unfolding op0 by (rule trace_mult_zero_right)
+  finally show "(\<integral>\<omega>'. ?\<xi> \<omega>' \<partial>?\<mu>) = 0" .
+qed
+
+subsection \<open>The step increment: variance of order \<open>h\<^sup>2\<close>\<close>
+
+lemma diff_sq_le_double:
+  fixes a c :: real
+  shows "(a - c)\<^sup>2 \<le> 2 * a\<^sup>2 + 2 * c\<^sup>2"
+proof -
+  have "2 * a\<^sup>2 + 2 * c\<^sup>2 - (a - c)\<^sup>2 = (a + c)\<^sup>2"
+    by (simp add: power2_diff power2_sum algebra_simps)
+  moreover have "0 \<le> (a + c)\<^sup>2" by simp
+  ultimately show ?thesis by linarith
+qed
+
+theorem sbm_xi_sq_bound:
+  fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real
+  defines "Cmm \<equiv> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+  defines "Cs \<equiv> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>S $ i $ j\<bar>)"
+  defines "n' \<equiv> real (CARD('n))"
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SST: "S ** transpose S \<in> sconstraint k L"
+  shows sbm_xi_sq_integrable:
+    "integrable (pair_law_of h (sbmpair S h)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      (\<lambda>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+        - h *\<^sub>R (S ** transpose S))))\<^sup>2)"
+    and sbm_xi_sq_integral:
+    "(\<integral>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+        - h *\<^sub>R (S ** transpose S))))\<^sup>2
+      \<partial>(pair_law_of h (sbmpair S h)
+          (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))
+      \<le> (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2) * h\<^sup>2"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?\<mu> = "pair_law_of h (sbmpair S h) ?M"
+  let ?B = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  let ?\<xi> = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
+      (fst (\<omega>' h) - fst (\<omega>' 0)) - h *\<^sub>R (S ** transpose S)))"
+  let ?V = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<chi> i. \<omega> i h) :: real^'n"
+  let ?R = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)"
+  define b where "b = trace (M ** (S ** transpose S))"
+  define CA where "CA = 2 * (Cmm * Cs\<^sup>2)\<^sup>2"
+  define CB where "CB = 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2"
+  have h0': "(0::real) \<le> h" using h0 by simp
+  have hI: "h \<in> {0..h}" using h0' by simp
+  have z0: "(0::real) \<in> {0..h}" using h0' by simp
+  have L0: "0 \<le> L" using L1 by simp
+  have Cmm0: "0 \<le> Cmm" unfolding Cmm_def by (intro sum_nonneg) simp_all
+  have Cs0: "0 \<le> Cs" unfolding Cs_def by (intro sum_nonneg) simp_all
+  have CA0: "0 \<le> CA" unfolding CA_def by simp
+  have CB0: "0 \<le> CB" unfolding CB_def by simp
+  interpret BMPP: prob_space ?M by (rule prob_space_bm_paths)
+  \<comment> \<open>measurability of the squared increment functional\<close>
+  have sets\<mu>: "sets ?\<mu> = sets ?B" by simp
+  have xim\<mu>: "?\<xi> \<in> borel_measurable ?\<mu>"
+    by (rule borel_measurable_integrable[OF sbm_xi_integrable[OF h0 L1 SST]])
+  have ximeas: "?\<xi> \<in> borel_measurable ?B"
+    using xim\<mu> measurable_cong_sets[OF sets\<mu> refl] by blast
+  have xi2meas: "(\<lambda>\<omega>'. (?\<xi> \<omega>')\<^sup>2) \<in> borel_measurable ?B"
+    by (intro borel_measurable_power ximeas)
+  have phim: "sbmpair S h \<in> ?M \<rightarrow>\<^sub>M ?B"
+    by (rule sbmpair_measurable[OF h0'])
+  have xi2measM: "(\<lambda>\<omega>. (?\<xi> (sbmpair S h \<omega>))\<^sup>2) \<in> borel_measurable ?M"
+    using measurable_compose[OF phim xi2meas] by (simp add: o_def)
+  \<comment> \<open>the increment is the matrix image of the coordinate vector, a.e.\<close>
+  have aeV: "AE \<omega> in ?M.
+      fst (sbmpair S h \<omega> h) - fst (sbmpair S h \<omega> 0) = S *v ?V \<omega>"
+  proof -
+    have a1: "AE \<omega> in ?M. cbmX (0 :: real^'n) h \<omega> = bmX 0 h \<omega>"
+      by (intro cbmX_ae_eq) (use h0' in simp)
+    have a2: "AE \<omega> in ?M. cbmX (0 :: real^'n) 0 \<omega> = bmX 0 0 \<omega>"
+      by (intro cbmX_ae_eq) simp
+    have a3: "AE \<omega> in ?M. bmX (0 :: real^'n) 0 \<omega> = 0"
+      by (rule bmX_start)
+    show ?thesis
+      using a1 a2 a3
+    proof eventually_elim
+      case (elim \<omega>)
+      have "fst (sbmpair S h \<omega> h) - fst (sbmpair S h \<omega> 0)
+          = S *v cbmX (0 :: real^'n) h \<omega> - S *v cbmX (0 :: real^'n) 0 \<omega>"
+        by (simp add: sbmpair_apply[OF hI] sbmpair_apply[OF z0])
+      also have "\<dots> = S *v (cbmX (0 :: real^'n) h \<omega>
+          - cbmX (0 :: real^'n) 0 \<omega>)"
+        by (simp add: matrix_vector_mult_diff_distrib)
+      also have "\<dots> = S *v bmX (0 :: real^'n) h \<omega>"
+        using elim by simp
+      also have "\<dots> = S *v ?V \<omega>"
+        by (simp add: bmX_def)
+      finally show ?case .
+    qed
+  qed
+  \<comment> \<open>uniform pointwise bounds\<close>
+  have qb: "\<bar>(S *v v) \<bullet> (M *v (S *v v))\<bar> \<le> Cmm * Cs\<^sup>2 * (v \<bullet> v)"
+    for v :: "real^'n"
+  proof -
+    have "\<bar>(S *v v) \<bullet> (M *v (S *v v))\<bar>
+        \<le> norm (S *v v) * norm (M *v (S *v v))"
+      by (rule Cauchy_Schwarz_ineq2)
+    also have "\<dots> \<le> norm (S *v v) * (Cmm * norm (S *v v))"
+      unfolding Cmm_def
+      by (intro mult_left_mono matvec_norm_le) simp
+    also have "\<dots> = Cmm * (norm (S *v v))\<^sup>2"
+      by (simp add: power2_eq_square algebra_simps)
+    also have "\<dots> \<le> Cmm * (Cs * norm v)\<^sup>2"
+      unfolding Cs_def
+      by (intro mult_left_mono power_mono matvec_norm_le)
+        (simp_all add: Cmm_def[symmetric] Cmm0)
+    also have "\<dots> = Cmm * Cs\<^sup>2 * (v \<bullet> v)"
+      by (simp add: power_mult_distrib power2_norm_eq_inner algebra_simps)
+    finally show ?thesis .
+  qed
+  have bb: "\<bar>b\<bar> \<le> n'\<^sup>2 * Cmm * L"
+  proof -
+    define col where "col = (\<lambda>j. (\<chi> i. S $ i $ j) :: real^'n)"
+    have Se: "S = (\<chi> i j. col j $ i)"
+      unfolding col_def by (simp add: vec_eq_iff)
+    have deco: "S ** transpose S = (\<Sum>j\<in>UNIV. outerp (col j))"
+      using Se cols_mult_transpose by blast
+    have beq: "b = (\<Sum>j\<in>UNIV. col j \<bullet> (M *v col j))"
+      unfolding b_def deco by (simp add: trace_mult_outerp_sum)
+    have per: "\<bar>col j \<bullet> (M *v col j)\<bar> \<le> Cmm * (n' * L)" for j
+    proof -
+      have "\<bar>col j \<bullet> (M *v col j)\<bar> \<le> norm (col j) * norm (M *v col j)"
+        by (rule Cauchy_Schwarz_ineq2)
+      also have "\<dots> \<le> norm (col j) * (Cmm * norm (col j))"
+        unfolding Cmm_def by (intro mult_left_mono matvec_norm_le) simp
+      also have "\<dots> = Cmm * (norm (col j))\<^sup>2"
+        by (simp add: power2_eq_square algebra_simps)
+      also have "\<dots> \<le> Cmm * (n' * L)"
+      proof (intro mult_left_mono Cmm0)
+        have "(norm (col j))\<^sup>2 = (\<Sum>i\<in>UNIV. (S $ i $ j)\<^sup>2)"
+          unfolding col_def
+          by (simp add: power2_norm_eq_inner inner_vec_def
+              power2_eq_square[of "S $ _ $ _"])
+        also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). L)"
+        proof (rule sum_mono)
+          fix i :: 'n
+          have "(S $ i $ j)\<^sup>2 = \<bar>S $ i $ j\<bar>\<^sup>2" by simp
+          also have "\<dots> \<le> (sqrt L)\<^sup>2"
+            using sbm_entry_bound[OF SST, of i j]
+            by (intro power_mono) simp_all
+          also have "\<dots> = L" using L0 by simp
+          finally show "(S $ i $ j)\<^sup>2 \<le> L" .
+        qed
+        also have "\<dots> = n' * L" unfolding n'_def by simp
+        finally show "(norm (col j))\<^sup>2 \<le> n' * L" .
+      qed
+      finally show ?thesis .
+    qed
+    have "\<bar>b\<bar> \<le> (\<Sum>j\<in>UNIV. \<bar>col j \<bullet> (M *v col j)\<bar>)"
+      unfolding beq by (rule sum_abs)
+    also have "\<dots> \<le> (\<Sum>j\<in>(UNIV :: 'n set). Cmm * (n' * L))"
+      by (intro sum_mono per)
+    also have "\<dots> = n' * (Cmm * (n' * L))" unfolding n'_def by simp
+    also have "\<dots> = n'\<^sup>2 * Cmm * L"
+      by (simp add: power2_eq_square algebra_simps)
+    finally show ?thesis .
+  qed
+  have Vsq: "?V \<omega> \<bullet> ?V \<omega> = ?R \<omega>" for \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    by (simp add: inner_vec_def power2_eq_square)
+  \<comment> \<open>the pointwise domination\<close>
+  have ptw: "AE \<omega> in ?M. (?\<xi> (sbmpair S h \<omega>))\<^sup>2
+      \<le> CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2"
+    using aeV
+  proof eventually_elim
+    case (elim \<omega>)
+    have xieq: "?\<xi> (sbmpair S h \<omega>)
+        = (S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>)) - h * b"
+    proof -
+      have "?\<xi> (sbmpair S h \<omega>) = trace (M ** (outerp (S *v ?V \<omega>)
+          - h *\<^sub>R (S ** transpose S)))"
+        using elim by simp
+      also have "\<dots> = trace (M ** outerp (S *v ?V \<omega>))
+          - trace (M ** (h *\<^sub>R (S ** transpose S)))"
+        by (simp add: trace_mult_diff)
+      also have "trace (M ** (h *\<^sub>R (S ** transpose S))) = h * b"
+        unfolding b_def by (simp add: matmul_scaleR_right trace_scaleR)
+      also have "trace (M ** outerp (S *v ?V \<omega>))
+          = (S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>))"
+        by (rule trace_mult_outerp)
+      finally show ?thesis by simp
+    qed
+    have step1: "(?\<xi> (sbmpair S h \<omega>))\<^sup>2
+        \<le> 2 * ((S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>)))\<^sup>2 + 2 * (h * b)\<^sup>2"
+      unfolding xieq by (rule diff_sq_le_double)
+    have step2: "((S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>)))\<^sup>2
+        \<le> (Cmm * Cs\<^sup>2)\<^sup>2 * (?R \<omega>)\<^sup>2"
+    proof -
+      have nnq: "0 \<le> Cmm * Cs\<^sup>2 * (?V \<omega> \<bullet> ?V \<omega>)"
+        using Cmm0 Cs0 by (intro mult_nonneg_nonneg) simp_all
+      have "((S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>)))\<^sup>2
+          = \<bar>(S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>))\<bar>\<^sup>2" by simp
+      also have "\<dots> \<le> (Cmm * Cs\<^sup>2 * (?V \<omega> \<bullet> ?V \<omega>))\<^sup>2"
+        using qb[of "?V \<omega>"] nnq by (intro power_mono) simp_all
+      also have "\<dots> = (Cmm * Cs\<^sup>2)\<^sup>2 * (?R \<omega>)\<^sup>2"
+        unfolding Vsq by (simp add: power_mult_distrib)
+      finally show ?thesis .
+    qed
+    have step3: "(h * b)\<^sup>2 \<le> (n'\<^sup>2 * Cmm * L)\<^sup>2 * h\<^sup>2"
+    proof -
+      have nb: "0 \<le> n'\<^sup>2 * Cmm * L"
+        using Cmm0 L0 by (intro mult_nonneg_nonneg) simp_all
+      have "(h * b)\<^sup>2 = h\<^sup>2 * \<bar>b\<bar>\<^sup>2"
+        by (simp add: power_mult_distrib)
+      also have "\<dots> \<le> h\<^sup>2 * (n'\<^sup>2 * Cmm * L)\<^sup>2"
+        using bb nb by (intro mult_left_mono power_mono) simp_all
+      finally show ?thesis by (simp add: algebra_simps)
+    qed
+    show ?case using step1 step2 step3
+      unfolding CA_def CB_def by linarith
+  qed
+  \<comment> \<open>integrability of the dominating function and of the square\<close>
+  have Rint: "integrable ?M (\<lambda>\<omega>. (?R \<omega>)\<^sup>2)"
+    by (rule bm_R2_integrable[OF h0])
+  have domint: "integrable ?M (\<lambda>\<omega>. CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2)"
+    by (intro Bochner_Integration.integrable_add integrable_cmult Rint
+        BMP.integrable_const)
+  have int2M: "integrable ?M (\<lambda>\<omega>. (?\<xi> (sbmpair S h \<omega>))\<^sup>2)"
+  proof (rule Bochner_Integration.integrable_bound[OF domint xi2measM])
+    show "AE \<omega> in ?M. norm ((?\<xi> (sbmpair S h \<omega>))\<^sup>2)
+        \<le> norm (CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2)"
+      using ptw
+    proof eventually_elim
+      case (elim \<omega>)
+      have "0 \<le> CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2"
+        using CA0 CB0 by (intro add_nonneg_nonneg mult_nonneg_nonneg)
+          simp_all
+      then show ?case using elim by simp
+    qed
+  qed
+  show "integrable ?\<mu> (\<lambda>\<omega>'. (?\<xi> \<omega>')\<^sup>2)"
+    unfolding pair_law_of_def
+    by (subst integrable_distr_eq[OF phim xi2meas]) (rule int2M)
+  \<comment> \<open>the integral bound\<close>
+  have "(\<integral>\<omega>'. (?\<xi> \<omega>')\<^sup>2 \<partial>?\<mu>) = (\<integral>\<omega>. (?\<xi> (sbmpair S h \<omega>))\<^sup>2 \<partial>?M)"
+    unfolding pair_law_of_def by (rule integral_distr[OF phim xi2meas])
+  also have "\<dots> \<le> (\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2 \<partial>?M)"
+    by (rule integral_mono_AE[OF int2M domint ptw])
+  also have "\<dots> = CA * (\<integral>\<omega>. (?R \<omega>)\<^sup>2 \<partial>?M) + CB * h\<^sup>2"
+  proof -
+    have ic: "integrable ?M (\<lambda>\<omega>. CA * (?R \<omega>)\<^sup>2)"
+      by (rule integrable_cmult[OF Rint])
+    have icc: "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. CB * h\<^sup>2)"
+      by simp
+    have "(\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2 \<partial>?M)
+        = (\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 \<partial>?M) + (\<integral>\<omega>. CB * h\<^sup>2 \<partial>?M)"
+      by (rule Bochner_Integration.integral_add[OF ic icc])
+    also have "(\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 \<partial>?M) = CA * (\<integral>\<omega>. (?R \<omega>)\<^sup>2 \<partial>?M)"
+      by (rule integral_cmult[OF Rint])
+    also have "(\<integral>\<omega>. CB * h\<^sup>2 \<partial>?M) = measure ?M (space ?M) *\<^sub>R (CB * h\<^sup>2)"
+      by (rule lebesgue_integral_const)
+    finally show ?thesis
+      by (simp add: BMP.prob_space)
+  qed
+  also have "\<dots> \<le> CA * (3 * n'\<^sup>2 * h\<^sup>2) + CB * h\<^sup>2"
+  proof -
+    have "(\<integral>\<omega>. (?R \<omega>)\<^sup>2 \<partial>?M) \<le> 3 * (real CARD('n))\<^sup>2 * h\<^sup>2"
+      by (rule bm_R2_integral[OF h0])
+    then show ?thesis
+      using CA0 unfolding n'_def by (intro add_right_mono mult_left_mono)
+  qed
+  also have "\<dots> = (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2) * h\<^sup>2"
+    unfolding CA_def CB_def by (simp add: algebra_simps)
+  finally show "(\<integral>\<omega>'. (?\<xi> \<omega>')\<^sup>2 \<partial>?\<mu>)
+      \<le> (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2) * h\<^sup>2" .
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
@@ -7341,6 +7725,5 @@ text \<open>Where clause (2) stands after this file.
   side at all --- and Gap 1's localisation machinery
   (@{thm [source] pball_exit_path_stopping_time} and the stopped moments)
   transfers verbatim.\<close>
-
 
 end
