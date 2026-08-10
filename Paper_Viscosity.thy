@@ -7655,6 +7655,540 @@ proof -
       \<le> (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2) * h\<^sup>2" .
 qed
 
+subsection \<open>A volatility-uniform variance constant\<close>
+
+definition xiC :: "real^'n::finite^'n \<Rightarrow> real \<Rightarrow> real" where
+  "xiC M L = (let n' = real (CARD('n));
+      Cmm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)
+    in 6 * (Cmm * (n'\<^sup>2 * sqrt L)\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2)"
+
+lemma xiC_nonneg: "0 \<le> xiC M L"
+proof -
+  have "0 \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+    by (intro sum_nonneg) simp_all
+  then show ?thesis
+    unfolding xiC_def Let_def
+    by (intro add_nonneg_nonneg mult_nonneg_nonneg zero_le_power2) simp_all
+qed
+
+corollary sbm_xi_sq_bound_uniform:
+  fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SST: "S ** transpose S \<in> sconstraint k L"
+  shows "(\<integral>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+        - h *\<^sub>R (S ** transpose S))))\<^sup>2
+      \<partial>(pair_law_of h (sbmpair S h)
+          (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))
+      \<le> xiC M L * h\<^sup>2"
+proof -
+  define Cmm where "Cmm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+  define Cs where "Cs = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>S $ i $ j\<bar>)"
+  define n' where "n' = real (CARD('n))"
+  have Cmm0: "0 \<le> Cmm" unfolding Cmm_def by (intro sum_nonneg) simp_all
+  have Cs0: "0 \<le> Cs" unfolding Cs_def by (intro sum_nonneg) simp_all
+  have Csle: "Cs \<le> n'\<^sup>2 * sqrt L"
+  proof -
+    have "Cs \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). sqrt L)"
+      unfolding Cs_def by (intro sum_mono sbm_entry_bound[OF SST])
+    also have "\<dots> = n'\<^sup>2 * sqrt L"
+      unfolding n'_def by (simp add: power2_eq_square mult_ac)
+    finally show ?thesis .
+  qed
+  have base: "(\<integral>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+        - h *\<^sub>R (S ** transpose S))))\<^sup>2
+      \<partial>(pair_law_of h (sbmpair S h)
+          (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))
+      \<le> (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2) * h\<^sup>2"
+    unfolding Cmm_def Cs_def n'_def by (rule sbm_xi_sq_bound[OF h0 L1 SST])
+  have mono1: "Cmm * Cs\<^sup>2 \<le> Cmm * (n'\<^sup>2 * sqrt L)\<^sup>2"
+    by (intro mult_left_mono power_mono Csle Cs0 Cmm0)
+  have mono2: "(Cmm * Cs\<^sup>2)\<^sup>2 \<le> (Cmm * (n'\<^sup>2 * sqrt L)\<^sup>2)\<^sup>2"
+    by (intro power_mono mono1 mult_nonneg_nonneg Cmm0) simp_all
+  have mono3: "6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 \<le> 6 * (Cmm * (n'\<^sup>2 * sqrt L)\<^sup>2)\<^sup>2 * n'\<^sup>2"
+    by (intro mult_right_mono mult_left_mono mono2) simp_all
+  have xiCe: "xiC M L = 6 * (Cmm * (n'\<^sup>2 * sqrt L)\<^sup>2)\<^sup>2 * n'\<^sup>2
+      + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2"
+    unfolding xiC_def Let_def Cmm_def n'_def by (rule refl)
+  have tot: "6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * L)\<^sup>2 \<le> xiC M L"
+    unfolding xiCe using mono3 by linarith
+  have h2: "(0::real) \<le> h\<^sup>2" by simp
+  from base mult_right_mono[OF tot h2] show ?thesis by linarith
+qed
+
+subsection \<open>The compensated grid functional of the Euler process\<close>
+
+definition euXi :: "(real^'n::finite \<Rightarrow> real^'n^'n) \<Rightarrow> real^'n^'n \<Rightarrow> real
+    \<Rightarrow> nat \<Rightarrow> 'n pairpath \<Rightarrow> real" where
+  "euXi SF M h m \<omega> = (\<Sum>j<m. trace (M ** (outerp
+      (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h)))
+      - h *\<^sub>R (SF (fst (\<omega> (real j * h)))
+          ** transpose (SF (fst (\<omega> (real j * h))))))))"
+
+lemma euXi_term_cont:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and h :: real
+  assumes SFc: "continuous_on UNIV SF"
+  shows "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+        \<times> ((real^'n) \<times> (real^'n^'n)).
+      trace (M ** (outerp (fst (fst ab) - fst (snd ab))
+        - h *\<^sub>R (SF (fst (snd ab)) ** transpose (SF (fst (snd ab)))))))"
+proof -
+  have entry: "continuous_on UNIV (\<lambda>z :: real^'n. SF z $ i $ j)" for i j
+  proof -
+    have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ i $ j)"
+      using bounded_linear_vec_nth bounded_linear_compose by blast
+    show ?thesis
+      by (rule continuous_on_compose2[OF linear_continuous_on[OF bl] SFc])
+        auto
+  qed
+  have proj2: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+      \<times> ((real^'n) \<times> (real^'n^'n)). fst (snd ab))"
+    by (intro continuous_on_fst continuous_on_snd continuous_on_id)
+  have proj1: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+      \<times> ((real^'n) \<times> (real^'n^'n)). fst (fst ab))"
+    by (intro continuous_on_fst continuous_on_id)
+  have SFcomp: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+      \<times> ((real^'n) \<times> (real^'n^'n)). SF (fst (snd ab)) $ i $ j)" for i j
+    by (rule continuous_on_compose2[OF entry proj2]) auto
+  have vcomp1: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+      \<times> ((real^'n) \<times> (real^'n^'n)). fst (fst ab) $ i)" for i
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_vec_nth] proj1]) auto
+  have vcomp2: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+      \<times> ((real^'n) \<times> (real^'n^'n)). fst (snd ab) $ i)" for i
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_vec_nth] proj2]) auto
+  have inner: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+      \<times> ((real^'n) \<times> (real^'n^'n)).
+      outerp (fst (fst ab) - fst (snd ab))
+        - h *\<^sub>R (SF (fst (snd ab)) ** transpose (SF (fst (snd ab)))))"
+  proof -
+    have e: "(\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)).
+        outerp (fst (fst ab) - fst (snd ab))
+          - h *\<^sub>R (SF (fst (snd ab)) ** transpose (SF (fst (snd ab)))))
+        = (\<lambda>ab. \<chi> i j. (fst (fst ab) $ i - fst (snd ab) $ i)
+              * (fst (fst ab) $ j - fst (snd ab) $ j)
+            - h * (\<Sum>l\<in>UNIV. SF (fst (snd ab)) $ i $ l
+                * SF (fst (snd ab)) $ j $ l))"
+      by (rule ext) (simp add: outerp_def matrix_matrix_mult_def
+          transpose_def vec_eq_iff vector_minus_component
+          vector_scaleR_component)
+    show ?thesis unfolding e
+      by (intro continuous_on_vec_lambda continuous_intros
+          SFcomp vcomp1 vcomp2)
+  qed
+  show ?thesis
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF trace_mult_blin] inner]) auto
+qed
+
+lemma euXi_measurable:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and h :: real
+  assumes SFc: "continuous_on UNIV SF"
+  shows "euXi SF M h m \<in> borel_measurable
+      (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have tm: "(\<lambda>\<omega> :: 'n pairpath. trace (M ** (outerp
+      (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h)))
+      - h *\<^sub>R (SF (fst (\<omega> (real j * h)))
+          ** transpose (SF (fst (\<omega> (real j * h))))))))
+      \<in> borel_measurable ?B" for j
+  proof -
+    have evu: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real (Suc j) * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
+      by (rule pair_law_eval_measurable[OF refl])
+    have evv: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real j * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
+      by (rule pair_law_eval_measurable[OF refl])
+    have pairm: "(\<lambda>\<omega> :: 'n pairpath.
+        (\<omega> (real (Suc j) * h), \<omega> (real j * h))) \<in> ?B \<rightarrow>\<^sub>M borel"
+      using evu evv by (simp add: borel_prod[symmetric])
+    have cm: "(\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
+          \<times> ((real^'n) \<times> (real^'n^'n)).
+        trace (M ** (outerp (fst (fst ab) - fst (snd ab))
+          - h *\<^sub>R (SF (fst (snd ab)) ** transpose (SF (fst (snd ab)))))))
+        \<in> borel_measurable borel"
+      by (rule borel_measurable_continuous_onI[OF euXi_term_cont[OF SFc]])
+    show ?thesis using measurable_compose[OF pairm cm] by simp
+  qed
+  show ?thesis unfolding euXi_def by (intro borel_measurable_sum tm)
+qed
+
+lemma euXi_pglue_split:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and \<omega> \<omega>' :: "'n pairpath" and h :: real
+  assumes h0: "0 \<le> h"
+  shows "euXi SF M h (Suc (Suc N)) (pglue (real (Suc N) * h)
+        (real (Suc (Suc N)) * h) \<omega> \<omega>')
+      = euXi SF M h (Suc N) \<omega>
+        + trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+            - h *\<^sub>R (SF (fst (\<omega> (real (Suc N) * h)))
+                ** transpose (SF (fst (\<omega> (real (Suc N) * h)))))))"
+proof -
+  let ?r = "real (Suc N) * h"
+  let ?T = "real (Suc (Suc N)) * h"
+  let ?g = "pglue ?r ?T \<omega> \<omega>'"
+  have mem: "real j * h \<in> {0..?T}" if le: "j \<le> Suc (Suc N)" for j
+  proof -
+    have a: "0 \<le> real j * h"
+      by (intro mult_nonneg_nonneg h0) simp_all
+    have b: "real j * h \<le> ?T"
+      using le h0 by (intro mult_right_mono) simp_all
+    show ?thesis using a b by simp
+  qed
+  have prefl: "?g (real j * h) = \<omega> (real j * h)" if j: "j \<le> Suc N" for j
+  proof (rule pglue_le)
+    show "real j * h \<in> {0..?T}" using j by (intro mem) simp
+    show "real j * h \<le> ?r" using j h0 by (intro mult_right_mono) simp_all
+  qed
+  have rleT: "?r \<le> ?T" using h0 by (intro mult_right_mono) simp_all
+  have Tmem: "?T \<in> {0..?T}" by (rule mem) simp
+  have gT: "?g ?T = \<omega> ?r + (\<omega>' (?T - ?r) - \<omega>' 0)"
+    by (rule pglue_ge[OF Tmem rleT])
+  have gr: "?g ?r = \<omega> ?r" by (rule prefl) simp
+  have Tr: "?T - ?r = h" by (simp add: algebra_simps)
+  have head: "fst (?g ?T) - fst (?g ?r) = fst (\<omega>' h) - fst (\<omega>' 0)"
+    unfolding gT gr Tr by simp
+  have "euXi SF M h (Suc (Suc N)) ?g
+      = (\<Sum>j<Suc N. trace (M ** (outerp
+          (fst (?g (real (Suc j) * h)) - fst (?g (real j * h)))
+          - h *\<^sub>R (SF (fst (?g (real j * h)))
+              ** transpose (SF (fst (?g (real j * h))))))))
+        + trace (M ** (outerp
+          (fst (?g (real (Suc (Suc N)) * h)) - fst (?g (real (Suc N) * h)))
+          - h *\<^sub>R (SF (fst (?g (real (Suc N) * h)))
+              ** transpose (SF (fst (?g (real (Suc N) * h)))))))"
+    unfolding euXi_def by (subst sum.lessThan_Suc) (simp add: add.commute)
+  also have "(\<Sum>j<Suc N. trace (M ** (outerp
+        (fst (?g (real (Suc j) * h)) - fst (?g (real j * h)))
+        - h *\<^sub>R (SF (fst (?g (real j * h)))
+            ** transpose (SF (fst (?g (real j * h))))))))
+      = euXi SF M h (Suc N) \<omega>"
+    unfolding euXi_def
+  proof (rule sum.cong[OF refl])
+    fix j assume "j \<in> {..<Suc N}"
+    then have j1: "Suc j \<le> Suc N" and j2: "j \<le> Suc N" by auto
+    show "trace (M ** (outerp
+        (fst (?g (real (Suc j) * h)) - fst (?g (real j * h)))
+        - h *\<^sub>R (SF (fst (?g (real j * h)))
+            ** transpose (SF (fst (?g (real j * h)))))))
+      = trace (M ** (outerp
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h)))
+        - h *\<^sub>R (SF (fst (\<omega> (real j * h)))
+            ** transpose (SF (fst (\<omega> (real j * h)))))))"
+      by (simp only: prefl[OF j1] prefl[OF j2])
+  qed
+  also have "trace (M ** (outerp
+        (fst (?g (real (Suc (Suc N)) * h)) - fst (?g (real (Suc N) * h)))
+        - h *\<^sub>R (SF (fst (?g (real (Suc N) * h)))
+            ** transpose (SF (fst (?g (real (Suc N) * h)))))))
+      = trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
+          - h *\<^sub>R (SF (fst (\<omega> ?r)) ** transpose (SF (fst (\<omega> ?r))))))"
+  proof -
+    have "fst (?g ?T) - fst (?g ?r) = fst (\<omega>' h) - fst (\<omega>' 0)"
+      by (rule head)
+    moreover have "fst (?g ?r) = fst (\<omega> ?r)" unfolding gr by (rule refl)
+    ultimately show ?thesis by simp
+  qed
+  finally show ?thesis .
+qed
+
+subsection \<open>The second moment of the grid functional grows linearly\<close>
+
+theorem eulerp_Xi_sq_bound:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and x :: "real^'n" and h :: real
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+  shows "integrable (eulerp SF x h N) (\<lambda>\<omega>. (euXi SF M h (Suc N) \<omega>)\<^sup>2)
+      \<and> (\<integral>\<omega>. (euXi SF M h (Suc N) \<omega>)\<^sup>2 \<partial>(eulerp SF x h N))
+        \<le> real (Suc N) * xiC M L * h\<^sup>2"
+proof (induction N)
+  case 0
+  have h0': "(0::real) \<le> h" using h0 by simp
+  let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+  let ?Bh = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  note SFsx = SFs[of x]
+  have E0: "eulerp SF x h 0 = pshift_law h x ?\<mu>0" by simp
+  have sets\<mu>: "sets ?\<mu>0 = sets ?Bh" by simp
+  have shm: "pshift h x \<in> ?\<mu>0 \<rightarrow>\<^sub>M ?Bh"
+    using pshift_measurable[OF h0'] measurable_cong_sets[OF sets\<mu> refl]
+    by blast
+  have Gm2: "(\<lambda>\<omega>. (euXi SF M h (Suc 0) \<omega>)\<^sup>2) \<in> borel_measurable ?Bh"
+    by (intro borel_measurable_power euXi_measurable[OF SFc])
+  have st: "AE \<omega> in ?\<mu>0. fst (\<omega> 0) = (0 :: real^'n)"
+    using sbmpair_law_start[OF h0', of "SF x"]
+    by (rule eventually_mono) simp
+  have cong: "AE \<omega> in ?\<mu>0. (euXi SF M h (Suc 0) (pshift h x \<omega>))\<^sup>2
+      = (trace (M ** (outerp (fst (\<omega> h) - fst (\<omega> 0))
+          - h *\<^sub>R (SF x ** transpose (SF x)))))\<^sup>2"
+    using st
+  proof eventually_elim
+    case (elim \<omega>)
+    have m1: "h \<in> {0..h}" using h0' by simp
+    have m2: "(0::real) \<in> {0..h}" using h0' by simp
+    have "euXi SF M h (Suc 0) (pshift h x \<omega>)
+        = trace (M ** (outerp
+            (fst (pshift h x \<omega> h) - fst (pshift h x \<omega> 0))
+            - h *\<^sub>R (SF (fst (pshift h x \<omega> 0))
+                ** transpose (SF (fst (pshift h x \<omega> 0))))))"
+      unfolding euXi_def by simp
+    also have "\<dots> = trace (M ** (outerp (fst (\<omega> h) - fst (\<omega> 0))
+        - h *\<^sub>R (SF (x + fst (\<omega> 0)) ** transpose (SF (x + fst (\<omega> 0))))))"
+      by (simp add: pshift_fst[OF m1] pshift_fst[OF m2])
+    also have "\<dots> = trace (M ** (outerp (fst (\<omega> h) - fst (\<omega> 0))
+        - h *\<^sub>R (SF x ** transpose (SF x))))"
+      using elim by simp
+    finally show ?case by simp
+  qed
+  have measL: "(\<lambda>\<omega>. (euXi SF M h (Suc 0) (pshift h x \<omega>))\<^sup>2)
+      \<in> borel_measurable ?\<mu>0"
+    by (rule measurable_compose[OF shm Gm2])
+  have measR: "(\<lambda>\<omega>. (trace (M ** (outerp (fst (\<omega> h) - fst (\<omega> 0))
+      - h *\<^sub>R (SF x ** transpose (SF x)))))\<^sup>2) \<in> borel_measurable ?\<mu>0"
+    by (intro borel_measurable_power
+        borel_measurable_integrable[OF sbm_xi_integrable[OF h0 L1 SFsx]])
+  have iB: "integrable (eulerp SF x h 0) (\<lambda>\<omega>. (euXi SF M h (Suc 0) \<omega>)\<^sup>2)"
+  proof -
+    have "integrable ?\<mu>0 (\<lambda>\<omega>. (euXi SF M h (Suc 0) (pshift h x \<omega>))\<^sup>2)"
+      using integrable_cong_AE[OF measL measR cong]
+        sbm_xi_sq_integrable[OF h0 L1 SFsx] by blast
+    then show ?thesis
+      unfolding E0 pshift_law_def
+      using integrable_distr_eq[OF shm Gm2] by blast
+  qed
+  have bB: "(\<integral>\<omega>. (euXi SF M h (Suc 0) \<omega>)\<^sup>2 \<partial>(eulerp SF x h 0))
+      \<le> real (Suc 0) * xiC M L * h\<^sup>2"
+  proof -
+    have "(\<integral>\<omega>. (euXi SF M h (Suc 0) \<omega>)\<^sup>2 \<partial>(eulerp SF x h 0))
+        = (\<integral>\<omega>. (euXi SF M h (Suc 0) (pshift h x \<omega>))\<^sup>2 \<partial>?\<mu>0)"
+      unfolding E0 pshift_law_def by (rule integral_distr[OF shm Gm2])
+    also have "\<dots> = (\<integral>\<omega>. (trace (M ** (outerp (fst (\<omega> h) - fst (\<omega> 0))
+        - h *\<^sub>R (SF x ** transpose (SF x)))))\<^sup>2 \<partial>?\<mu>0)"
+      by (rule integral_cong_AE[OF measL measR cong])
+    also have "\<dots> \<le> xiC M L * h\<^sup>2"
+      by (rule sbm_xi_sq_bound_uniform[OF h0 L1 SFsx])
+    finally show ?thesis by simp
+  qed
+  show ?case using iB bB by blast
+next
+  case (Suc N)
+  have h0': "(0::real) \<le> h" using h0 by simp
+  define r where "r = real (Suc N) * h"
+  define T' where "T' = real (Suc (Suc N)) * h"
+  let ?Q = "eulerp SF x h N"
+  let ?Br = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?Bt = "borel_of (mtopology_of (path_metric T' :: ('n pairpath) metric))"
+  let ?MR = "borel_of (mtopology_of
+      (path_metric (T' - r) :: ('n pairpath) metric))"
+  let ?K = "\<lambda>\<omega> :: 'n pairpath.
+      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
+  let ?A = "euXi SF M h (Suc N)"
+  let ?xi = "\<lambda>\<omega> \<omega>' :: 'n pairpath. trace (M ** (outerp
+      (fst (\<omega>' h) - fst (\<omega>' 0))
+      - h *\<^sub>R (SF (fst (\<omega> r)) ** transpose (SF (fst (\<omega> r))))))"
+  have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
+  have r0: "0 \<le> r" unfolding r_def using h0' by simp
+  have rleT: "r \<le> T'" unfolding r_def T'_def
+    using h0' by (intro mult_right_mono) simp_all
+  have Qc: "?Q \<in> paper_pair_class k L r x"
+    unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
+  interpret PQ: prob_space ?Q by (rule paper_pair_class_prob[OF Qc])
+  have setsQ: "sets ?Q = sets ?Br" by (rule paper_pair_class_sets[OF Qc])
+  have ne: "space ?Q \<noteq> {}" by (rule PQ.not_empty)
+  note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
+  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    using measurable_fst[of "borel :: (real^'n) measure"
+        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+  have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+  have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
+    unfolding hT by (rule measurable_compose[OF eQ pack(1)])
+  have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
+    by (simp add: r_def T'_def)
+  have phim: "(\<lambda>p. pglue r T' (fst p) (snd p))
+      \<in> ksemi ?Q ?MR ?K \<rightarrow>\<^sub>M ?Bt"
+    by (rule kglue_law'_measurable[OF r0 rleT setsQ Kp ne])
+  have sksemi: "sets (ksemi ?Q ?MR ?K) = sets (?Q \<Otimes>\<^sub>M ?MR)"
+    by (rule sets_ksemi[OF Kp ne])
+  have Em: "euXi SF M h (Suc (Suc N)) \<in> borel_measurable ?Bt"
+    by (rule euXi_measurable[OF SFc])
+  have Gmsq: "(\<lambda>\<omega>. (euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)
+      \<in> borel_measurable ?Bt"
+    by (intro borel_measurable_power Em)
+  have Gm2e: "(\<lambda>\<omega>. ennreal ((euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2))
+      \<in> borel_measurable ?Bt"
+    using Gmsq by measurable
+  have Gm2e': "(\<lambda>\<omega>. ennreal ((euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2))
+      \<in> borel_measurable (distr (ksemi ?Q ?MR ?K) ?Bt
+        (\<lambda>p. pglue r T' (fst p) (snd p)))"
+    using Gm2e measurable_cong_sets[OF sets_distr refl] by blast
+  have Fsplit: "(euXi SF M h (Suc (Suc N)) (pglue r T' (fst p) (snd p)))\<^sup>2
+      = (?A (fst p) + ?xi (fst p) (snd p))\<^sup>2"
+    for p :: "'n pairpath \<times> 'n pairpath"
+    unfolding r_def T'_def by (simp only: euXi_pglue_split[OF h0'])
+  have Feq: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
+        (euXi SF M h (Suc (Suc N)) (pglue r T' (fst p) (snd p)))\<^sup>2)
+      = (\<lambda>p. (?A (fst p) + ?xi (fst p) (snd p))\<^sup>2)"
+    by (rule ext) (rule Fsplit)
+  have Fm0: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
+        (euXi SF M h (Suc (Suc N)) (pglue r T' (fst p) (snd p)))\<^sup>2)
+      \<in> borel_measurable (ksemi ?Q ?MR ?K)"
+    by (intro borel_measurable_power measurable_compose[OF phim Em])
+  have Fsq: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
+        (?A (fst p) + ?xi (fst p) (snd p))\<^sup>2)
+      \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?MR)"
+    using Fm0 unfolding Feq
+    using measurable_cong_sets[OF sksemi refl] by blast
+  have Fme: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
+        ennreal ((?A (fst p) + ?xi (fst p) (snd p))\<^sup>2))
+      \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?MR)"
+    using Fsq by measurable
+  \<comment> \<open>the inner conditional bound, valid for every prefix path\<close>
+  have inner: "(\<integral>\<^sup>+\<omega>'. ennreal ((?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2) \<partial>(?K \<omega>))
+      \<le> ennreal ((?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2)" for \<omega> :: "'n pairpath"
+  proof -
+    note SSTw = SFs[of "fst (\<omega> r)"]
+    note i1 = sbm_xi_integrable[OF h0 L1 SSTw]
+    note i2 = sbm_xi_sq_integrable[OF h0 L1 SSTw]
+    note m0 = sbm_xi_mean[OF h0 L1 SSTw]
+    note v1 = sbm_xi_sq_bound_uniform[OF h0 L1 SSTw, where M = M]
+    interpret KP: prob_space "?K \<omega>"
+      by (rule prob_space_sbmpair_law[OF h0'])
+    have exl: "(\<lambda>\<omega>'. (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2)
+        = (\<lambda>\<omega>'. (?A \<omega>)\<^sup>2
+            + ((2 * ?A \<omega>) * ?xi \<omega> \<omega>' + (?xi \<omega> \<omega>')\<^sup>2))"
+      by (rule ext) (simp add: power2_sum algebra_simps)
+    have iconst: "integrable (?K \<omega>) (\<lambda>\<omega>'. (?A \<omega>)\<^sup>2)"
+      by (rule KP.integrable_const)
+    have ia: "integrable (?K \<omega>) (\<lambda>\<omega>'. (2 * ?A \<omega>) * ?xi \<omega> \<omega>')"
+      by (rule integrable_cmult[OF i1])
+    have ib: "integrable (?K \<omega>)
+        (\<lambda>\<omega>'. (2 * ?A \<omega>) * ?xi \<omega> \<omega>' + (?xi \<omega> \<omega>')\<^sup>2)"
+      by (rule Bochner_Integration.integrable_add[OF ia i2])
+    have icc: "integrable (?K \<omega>) (\<lambda>\<omega>'. (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2)"
+      unfolding exl by (rule Bochner_Integration.integrable_add[OF iconst ib])
+    have c1: "(\<integral>\<omega>'. (?A \<omega>)\<^sup>2 \<partial>(?K \<omega>)) = (?A \<omega>)\<^sup>2"
+      using lebesgue_integral_const[of "?K \<omega>" "(?A \<omega>)\<^sup>2"] KP.prob_space
+      by simp
+    have c2: "(\<integral>\<omega>'. (2 * ?A \<omega>) * ?xi \<omega> \<omega>' + (?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))
+        = (2 * ?A \<omega>) * (\<integral>\<omega>'. ?xi \<omega> \<omega>' \<partial>(?K \<omega>))
+          + (\<integral>\<omega>'. (?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))"
+      by (simp add: Bochner_Integration.integral_add[OF ia i2]
+          integral_cmult[OF i1])
+    have split: "(\<integral>\<omega>'. (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))
+        = (\<integral>\<omega>'. (?A \<omega>)\<^sup>2 \<partial>(?K \<omega>))
+          + (\<integral>\<omega>'. (2 * ?A \<omega>) * ?xi \<omega> \<omega>' + (?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))"
+      unfolding exl
+      by (rule Bochner_Integration.integral_add[OF iconst ib])
+    have Eval: "(\<integral>\<omega>'. (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))
+        \<le> (?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2"
+    proof -
+      have "(\<integral>\<omega>'. (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))
+          = (?A \<omega>)\<^sup>2 + (\<integral>\<omega>'. (?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))"
+        using split c1 c2 m0 by simp
+      then show ?thesis using v1 by linarith
+    qed
+    have nn: "AE \<omega>' in ?K \<omega>. 0 \<le> (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2" by simp
+    have "(\<integral>\<^sup>+\<omega>'. ennreal ((?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2) \<partial>(?K \<omega>))
+        = ennreal (\<integral>\<omega>'. (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))"
+      by (rule nn_integral_eq_integral[OF icc nn])
+    also have "\<dots> \<le> ennreal ((?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2)"
+      by (intro ennreal_leI Eval)
+    finally show ?thesis .
+  qed
+  \<comment> \<open>the outer bound through the induction hypothesis\<close>
+  have IHi: "integrable ?Q (\<lambda>\<omega>. (?A \<omega>)\<^sup>2)"
+    and IHb: "(\<integral>\<omega>. (?A \<omega>)\<^sup>2 \<partial>?Q) \<le> real (Suc N) * xiC M L * h\<^sup>2"
+    using Suc.IH by blast+
+  have iQc: "integrable ?Q (\<lambda>\<omega>. (?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2)"
+    by (intro Bochner_Integration.integrable_add IHi PQ.integrable_const)
+  have nnQ: "AE \<omega> in ?Q. 0 \<le> (?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2"
+    by (intro always_eventually allI add_nonneg_nonneg
+        mult_nonneg_nonneg xiC_nonneg) simp_all
+  have step2: "(\<integral>\<^sup>+\<omega>. ennreal ((?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2) \<partial>?Q)
+      = ennreal ((\<integral>\<omega>. (?A \<omega>)\<^sup>2 \<partial>?Q) + xiC M L * h\<^sup>2)"
+  proof -
+    have "(\<integral>\<^sup>+\<omega>. ennreal ((?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2) \<partial>?Q)
+        = ennreal (\<integral>\<omega>. (?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2 \<partial>?Q)"
+      by (rule nn_integral_eq_integral[OF iQc nnQ])
+    also have "(\<integral>\<omega>. (?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2 \<partial>?Q)
+        = (\<integral>\<omega>. (?A \<omega>)\<^sup>2 \<partial>?Q) + (\<integral>\<omega>. xiC M L * h\<^sup>2 \<partial>?Q)"
+      by (rule Bochner_Integration.integral_add[OF IHi PQ.integrable_const])
+    also have "(\<integral>\<omega>. xiC M L * h\<^sup>2 \<partial>?Q)
+        = measure ?Q (space ?Q) *\<^sub>R (xiC M L * h\<^sup>2)"
+      by (rule lebesgue_integral_const)
+    finally show ?thesis by (simp add: PQ.prob_space)
+  qed
+  have main: "(\<integral>\<^sup>+\<omega>. ennreal ((euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)
+      \<partial>(eulerp SF x h (Suc N)))
+      \<le> ennreal (real (Suc (Suc N)) * xiC M L * h\<^sup>2)"
+  proof -
+    have kd: "kglue_law' r T' ?K ?Q = distr (ksemi ?Q ?MR ?K) ?Bt
+        (\<lambda>p. pglue r T' (fst p) (snd p))"
+      unfolding kglue_law'_def pair_law_of_def by (rule refl)
+    have "(\<integral>\<^sup>+\<omega>. ennreal ((euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)
+        \<partial>(eulerp SF x h (Suc N)))
+        = (\<integral>\<^sup>+p. ennreal ((euXi SF M h (Suc (Suc N))
+            (pglue r T' (fst p) (snd p)))\<^sup>2) \<partial>(ksemi ?Q ?MR ?K))"
+      unfolding Ee kd by (rule nn_integral_distr[OF phim Gm2e'])
+    also have "\<dots> = (\<integral>\<^sup>+p. ennreal ((?A (fst p)
+        + ?xi (fst p) (snd p))\<^sup>2) \<partial>(ksemi ?Q ?MR ?K))"
+      by (rule nn_integral_cong) (simp only: Fsplit)
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal ((?A (fst (\<omega>, \<omega>'))
+        + ?xi (fst (\<omega>, \<omega>')) (snd (\<omega>, \<omega>')))\<^sup>2) \<partial>(?K \<omega>)) \<partial>?Q)"
+      by (rule nn_integral_ksemi[OF Kp Fme])
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal ((?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2)
+        \<partial>(?K \<omega>)) \<partial>?Q)"
+      by simp
+    also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>. ennreal ((?A \<omega>)\<^sup>2 + xiC M L * h\<^sup>2) \<partial>?Q)"
+      by (rule nn_integral_mono) (rule inner)
+    also have "\<dots> = ennreal ((\<integral>\<omega>. (?A \<omega>)\<^sup>2 \<partial>?Q) + xiC M L * h\<^sup>2)"
+      by (rule step2)
+    also have "\<dots> \<le> ennreal (real (Suc N) * xiC M L * h\<^sup>2
+        + xiC M L * h\<^sup>2)"
+      by (intro ennreal_leI add_right_mono IHb)
+    also have "\<dots> = ennreal (real (Suc (Suc N)) * xiC M L * h\<^sup>2)"
+      by (simp add: algebra_simps)
+    finally show ?thesis .
+  qed
+  have setsE: "sets (eulerp SF x h (Suc N)) = sets ?Bt"
+    unfolding Ee by simp
+  have Gme: "(\<lambda>\<omega>. (euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)
+      \<in> borel_measurable (eulerp SF x h (Suc N))"
+    using Gmsq measurable_cong_sets[OF setsE refl] by blast
+  have nnG: "AE \<omega> in eulerp SF x h (Suc N).
+      0 \<le> (euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2" by simp
+  have intS: "integrable (eulerp SF x h (Suc N))
+      (\<lambda>\<omega>. (euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)"
+  proof (rule integrableI_nonneg[OF Gme nnG])
+    have "ennreal (real (Suc (Suc N)) * xiC M L * h\<^sup>2) < \<infinity>" by simp
+    with main show "(\<integral>\<^sup>+\<omega>. ennreal ((euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)
+        \<partial>(eulerp SF x h (Suc N))) < \<infinity>"
+      by (rule le_less_trans)
+  qed
+  have c0: "0 \<le> real (Suc (Suc N)) * xiC M L * h\<^sup>2"
+    by (intro mult_nonneg_nonneg xiC_nonneg) simp_all
+  have bndS: "(\<integral>\<omega>. (euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2
+      \<partial>(eulerp SF x h (Suc N)))
+      \<le> real (Suc (Suc N)) * xiC M L * h\<^sup>2"
+  proof -
+    have "ennreal (\<integral>\<omega>. (euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2
+        \<partial>(eulerp SF x h (Suc N)))
+        = (\<integral>\<^sup>+\<omega>. ennreal ((euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)
+          \<partial>(eulerp SF x h (Suc N)))"
+      by (rule nn_integral_eq_integral[OF intS nnG, symmetric])
+    also have "\<dots> \<le> ennreal (real (Suc (Suc N)) * xiC M L * h\<^sup>2)"
+      by (rule main)
+    finally show ?thesis using c0 by (simp add: ennreal_le_iff)
+  qed
+  show ?case using intS bndS by blast
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
