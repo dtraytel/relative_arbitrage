@@ -8933,6 +8933,249 @@ proof -
   qed
 qed
 
+subsection \<open>The weak limit of the Euler laws\<close>
+
+text \<open>Batch 3d of the supersolution plan.  The Euler laws at mesh
+  \<open>c / (i + 1)\<close> all live in the compact class
+  \<open>paper_pair_class k L c x\<close> (@{thm [source]
+  paper_pair_class_compact_metric_space}), so some subsequence converges
+  weakly to a class member \<open>P\<close>.  The transfer principle we record is the
+  portmanteau bound against limits along the FULL sequence: if the
+  measures of an open set converge to \<open>b\<close>, the limit member gives the set
+  at most \<open>b\<close> (and dually for closed sets).  Batch 3e will apply the open
+  half to the "stayed in the ball but the quadratic dropped" event, whose
+  probability vanishes with the mesh by
+  @{thm [source] eulerp_Xi_chebyshev} and @{thm [source]
+  eulerp_quad_lower}.
+
+  The topological brick first: staying strictly inside an open set
+  through time \<open>t\<close> is an OPEN condition on the path.  The image of
+  \<open>{0..t}\<close> is compact, so it sits at a positive distance from the
+  complement (@{thm [source] separate_compact_closed}), and any path
+  uniformly closer than that distance stays inside as well
+  (@{thm [source] path_mdist_le_iff_all}).\<close>
+
+lemma open_stay_inside:
+  fixes T t :: real and A :: "'b::{polish_space, heine_borel} set"
+  assumes T0: "0 \<le> T" and A: "open A" and t0: "0 \<le> t" and tT: "t \<le> T"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+        \<forall>s\<in>{0..t}. f s \<in> A}"
+proof -
+  interpret PM: Metric_space
+      "mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+      "mdist (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    by (rule Metric_space_mspace_mdist)
+  have topeq: "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)
+      = PM.mtopology"
+    by (simp add: mtopology_of_def)
+  let ?S = "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+      \<forall>s\<in>{0..t}. f s \<in> A}"
+  have ball: "\<exists>e>0. PM.mball f e \<subseteq> ?S" if f: "f \<in> ?S" for f
+  proof -
+    have fm: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+      using f by auto
+    have fc: "continuous_on {0..T} f"
+      by (rule mspace_path_metricD[OF fm])
+    have fc': "continuous_on {0..t} f"
+      using fc by (rule continuous_on_subset) (use t0 tT in auto)
+    have cK: "compact (f ` {0..t})"
+      by (intro compact_continuous_image fc' compact_Icc)
+    have KA: "f ` {0..t} \<subseteq> A" using f by auto
+    have dis: "f ` {0..t} \<inter> (- A) = {}" using KA by auto
+    have clA: "closed (- A)" using A by (simp add: closed_Compl)
+    obtain e where e0: "0 < e"
+      and esep: "\<forall>y\<in>f ` {0..t}. \<forall>z\<in>- A. e \<le> dist y z"
+      using separate_compact_closed[OF cK clA dis] by blast
+    have sub: "PM.mball f e \<subseteq> ?S"
+    proof
+      fix g assume g: "g \<in> PM.mball f e"
+      have gm: "g \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+        and dfg: "mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g < e"
+        using g by auto
+      have all: "\<forall>u\<in>{0..T}. dist (f u) (g u)
+          \<le> mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"
+        using path_mdist_le_iff_all[OF T0 fm gm,
+            of "mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"]
+        by simp
+      have inA: "g s \<in> A" if s: "s \<in> {0..t}" for s
+      proof (rule ccontr)
+        assume "g s \<notin> A"
+        then have "g s \<in> - A" by simp
+        then have "e \<le> dist (f s) (g s)"
+          using esep s by blast
+        moreover have "dist (f s) (g s)
+            \<le> mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"
+          using all s t0 tT by auto
+        ultimately show False using dfg by linarith
+      qed
+      show "g \<in> ?S" using gm inA by auto
+    qed
+    show ?thesis using e0 sub by blast
+  qed
+  have "openin PM.mtopology ?S"
+    unfolding PM.openin_mtopology
+  proof (intro conjI allI impI)
+    show "?S \<subseteq> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" by auto
+    fix f assume "f \<in> ?S"
+    then show "\<exists>e>0. PM.mball f e \<subseteq> ?S" by (rule ball)
+  qed
+  then show ?thesis by (simp add: topeq)
+qed
+
+text \<open>The transfer principle.  Sequential compactness of the class
+  extracts a convergent subsequence; membership clause (2) of
+  @{thm [source] paper_pair_class_compact_metric_space} identifies the
+  limit as weak convergence, and the AFP portmanteau
+  (@{thm [source] mweak_conv_fin.mweak_conv_eq2},
+  @{thm [source] mweak_conv_fin.mweak_conv_eq3}) turns it into the
+  open/closed set bounds.  Convergence along the full sequence pins the
+  Liminf and Limsup along any subsequence, so the subsequence never
+  appears in the statement.\<close>
+
+theorem paper_pair_class_weak_limit:
+  fixes Pseq :: "nat \<Rightarrow> ('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T: "0 < T" and L0: "0 \<le> L"
+    and mem: "\<And>i. Pseq i \<in> paper_pair_class k L T x"
+  shows "\<exists>P \<in> paper_pair_class k L T x.
+      (\<forall>U b. openin (mtopology_of
+            (path_metric T :: ('n pairpath) metric)) U
+          \<longrightarrow> (\<lambda>i. measure (Pseq i) U) \<longlonglongrightarrow> b
+          \<longrightarrow> measure P U \<le> b)
+      \<and> (\<forall>D b. closedin (mtopology_of
+            (path_metric T :: ('n pairpath) metric)) D
+          \<longrightarrow> (\<lambda>i. measure (Pseq i) D) \<longlonglongrightarrow> b
+          \<longrightarrow> b \<le> measure P D)"
+proof -
+  let ?pm = "path_metric T :: ('n pairpath) metric"
+  let ?C = "paper_pair_class k L T x"
+  let ?E = "Levy_Prokhorov.LPm (mspace ?pm) (mdist ?pm)"
+  interpret CM: Metric_space ?C ?E
+    by (rule paper_pair_class_compact_metric_space(1)[OF T L0])
+  have cs: "compact_space CM.mtopology"
+    by (rule paper_pair_class_compact_metric_space(3)[OF T L0])
+  have rng: "range Pseq \<subseteq> ?C" using mem by auto
+  obtain P r where P: "P \<in> ?C" and r: "strict_mono r"
+    and liml: "limitin CM.mtopology (Pseq \<circ> r) P sequentially"
+    using cs[unfolded CM.compact_space_sequentially] rng by blast
+  have Ctop: "CM.mtopology = subtopology
+      (weak_conv_topology (mtopology_of ?pm)) ?C"
+    by (rule paper_pair_class_compact_metric_space(2)[OF T L0])
+  have limW: "limitin (weak_conv_topology (mtopology_of ?pm))
+      (Pseq \<circ> r) P sequentially"
+    using liml unfolding Ctop limitin_subtopology by blast
+  have mwc: "limitin (weak_conv_topology
+      (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))
+      (Pseq \<circ> r) P sequentially"
+    using limW by (simp add: mtopology_of_def)
+  have fmi: "finite_measure (Pseq i)" for i
+    using paper_pair_class_prob[OF mem, of i]
+    by (simp add: prob_space.emeasure_space_1 finite_measureI)
+  have fmP: "finite_measure P"
+    using paper_pair_class_prob[OF P]
+    by (simp add: prob_space.emeasure_space_1 finite_measureI)
+  have setsP: "sets P = sets (borel_of
+      (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
+    using paper_pair_class_sets[OF P] by (simp add: mtopology_of_def)
+  have ev1: "\<forall>\<^sub>F i in sequentially. sets ((Pseq \<circ> r) i)
+      = sets (borel_of (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
+  proof (intro always_eventually allI)
+    fix i show "sets ((Pseq \<circ> r) i)
+        = sets (borel_of (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
+      using paper_pair_class_sets[OF mem, of "r i"]
+      by (simp add: mtopology_of_def)
+  qed
+  have ev2: "\<forall>\<^sub>F i in sequentially. finite_measure ((Pseq \<circ> r) i)"
+    by (intro always_eventually allI) (simp add: fmi)
+  have MWfin: "mweak_conv_fin (mspace ?pm) (mdist ?pm)
+      (Pseq \<circ> r) P sequentially"
+    unfolding mweak_conv_fin_def mweak_conv_fin_axioms_def
+    using ev1 ev2 fmP setsP by (simp add: mtopology_of_def)
+  interpret MW: mweak_conv_fin "mspace ?pm" "mdist ?pm"
+      "Pseq \<circ> r" P sequentially
+    by (rule MWfin)
+  note eq3 = MW.mweak_conv_eq3[THEN iffD1, OF mwc,
+      THEN conjunct2, rule_format]
+  note eq2 = MW.mweak_conv_eq2[THEN iffD1, OF mwc,
+      THEN conjunct2, rule_format]
+  have main_open: "measure P U \<le> b"
+    if U: "openin (mtopology_of ?pm) U"
+      and cb: "(\<lambda>i. measure (Pseq i) U) \<longlonglongrightarrow> b" for U b
+  proof -
+    have U': "openin (Metric_space.mtopology (mspace ?pm) (mdist ?pm)) U"
+      using U by (simp add: mtopology_of_def)
+    have sub: "(\<lambda>n. ereal (measure ((Pseq \<circ> r) n) U))
+        \<longlonglongrightarrow> ereal b"
+      using LIMSEQ_subseq_LIMSEQ[OF cb r] by (simp add: o_def)
+    have Linf: "Liminf sequentially
+        (\<lambda>n. ereal (measure ((Pseq \<circ> r) n) U)) = ereal b"
+      by (rule lim_imp_Liminf[OF _ sub]) simp
+    have "ereal (measure P U) \<le> ereal b"
+      using eq3[OF U'] Linf by simp
+    then show ?thesis by simp
+  qed
+  have main_closed: "b \<le> measure P D"
+    if D: "closedin (mtopology_of ?pm) D"
+      and cb: "(\<lambda>i. measure (Pseq i) D) \<longlonglongrightarrow> b" for D b
+  proof -
+    have D': "closedin (Metric_space.mtopology (mspace ?pm) (mdist ?pm)) D"
+      using D by (simp add: mtopology_of_def)
+    have sub: "(\<lambda>n. ereal (measure ((Pseq \<circ> r) n) D))
+        \<longlonglongrightarrow> ereal b"
+      using LIMSEQ_subseq_LIMSEQ[OF cb r] by (simp add: o_def)
+    have Lsup: "Limsup sequentially
+        (\<lambda>n. ereal (measure ((Pseq \<circ> r) n) D)) = ereal b"
+      by (rule lim_imp_Limsup[OF _ sub]) simp
+    have "ereal b \<le> ereal (measure P D)"
+      using eq2[OF D'] Lsup by simp
+    then show ?thesis by simp
+  qed
+  show ?thesis using P main_open main_closed by blast
+qed
+
+text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close>: exactly \<open>i + 1\<close> steps of
+  length \<open>c / (i + 1)\<close> land on the horizon \<open>c\<close> on the nose, so
+  @{thm [source] eulerp_in_class} puts every member of the sequence in
+  the SAME class and the transfer principle applies verbatim.\<close>
+
+lemma eulerp_seq_in_class:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and x :: "real^'n"
+  assumes c0: "0 < c" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+  shows "eulerp SF x (c / real (Suc i)) i \<in> paper_pair_class k L c x"
+proof -
+  have h0: "0 < c / real (Suc i)" using c0 by simp
+  have "eulerp SF x (c / real (Suc i)) i
+      \<in> paper_pair_class k L (real (Suc i) * (c / real (Suc i))) x"
+    by (rule eulerp_in_class[OF h0 L1 SFc SFs])
+  moreover have "real (Suc i) * (c / real (Suc i)) = c" by simp
+  ultimately show ?thesis by simp
+qed
+
+theorem eulerp_weak_limit:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and x :: "real^'n"
+  assumes c0: "0 < c" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+  shows "\<exists>P \<in> paper_pair_class k L c x.
+      (\<forall>U b. openin (mtopology_of
+            (path_metric c :: ('n pairpath) metric)) U
+          \<longrightarrow> (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U)
+              \<longlonglongrightarrow> b
+          \<longrightarrow> measure P U \<le> b)
+      \<and> (\<forall>D b. closedin (mtopology_of
+            (path_metric c :: ('n pairpath) metric)) D
+          \<longrightarrow> (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) D)
+              \<longlonglongrightarrow> b
+          \<longrightarrow> b \<le> measure P D)"
+proof -
+  have L0: "0 \<le> L" using L1 by linarith
+  show ?thesis
+    by (rule paper_pair_class_weak_limit[OF c0 L0
+        eulerp_seq_in_class[OF c0 L1 SFc SFs]])
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
