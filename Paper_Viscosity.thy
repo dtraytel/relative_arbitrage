@@ -5329,6 +5329,471 @@ proof
   finally show "v \<bullet> ((\<Sum>u\<in>B. outerp (w u)) *v v) \<le> L * (v \<bullet> v)" .
 qed
 
+lemma matvec_scaleR_right: "M *v (c *\<^sub>R x) = c *\<^sub>R (M *v x)"
+  by (simp add: matrix_vector_mult_def vec_eq_iff vector_scaleR_component
+      sum_distrib_left algebra_simps)
+
+lemma matvec_add_right: "M *v (x + y) = M *v x + M *v y"
+  by (simp add: matrix_vector_mult_def vec_eq_iff vector_add_component
+      sum.distrib algebra_simps)
+
+lemma perturbed_columns_eigen_lb:
+  fixes B Bp :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real^'n"
+    and lam :: "real^'n \<Rightarrow> real" and m E :: real
+  assumes finB: "finite B" and BpB: "Bp \<subseteq> B"
+    and lam_lb: "\<And>u. u \<in> Bp \<Longrightarrow> 1 + m \<le> lam u"
+    and m0: "0 < m"
+    and gram: "\<And>u u'. u \<in> Bp \<Longrightarrow> u' \<in> Bp \<Longrightarrow>
+        \<bar>w u \<bullet> w u' - (if u' = u then lam u else 0)\<bar> \<le> E"
+    and E0: "0 \<le> E"
+    and small: "real (card Bp) * E
+        + 2 * (1 + m) / m * (real (card Bp) * E)\<^sup>2 \<le> m / 2"
+  shows "eigen_lb (\<Sum>u\<in>B. outerp (w u)) (card Bp)"
+proof -
+  define A where "A = (\<Sum>u\<in>B. outerp (w u))"
+  define np where "np = real (card Bp)"
+  define \<epsilon> where "\<epsilon> = m / (2 * (1 + m))"
+  define D1 where "D1 = np * E"
+  define D2 where "D2 = 2 * (1 + m) / m * (np * E)\<^sup>2"
+  have finBp: "finite Bp" by (rule finite_subset[OF BpB finB])
+  have np0: "0 \<le> np" unfolding np_def by simp
+  have m1: "0 < 1 + m" using m0 by simp
+  have eps0: "0 < \<epsilon>" unfolding \<epsilon>_def using m0 m1 by simp
+  have eps1: "\<epsilon> \<le> 1" unfolding \<epsilon>_def using m0 m1
+    by (simp add: divide_le_eq)
+  have D10: "0 \<le> D1" unfolding D1_def np_def using E0 by simp
+  have D20: "0 \<le> D2" unfolding D2_def using m0 m1
+    by (intro mult_nonneg_nonneg) simp_all
+  have smallD: "D1 + D2 \<le> m / 2"
+    using small unfolding D1_def D2_def np_def .
+  have epsprod: "(1 - \<epsilon>) * (1 + m) = 1 + m / 2"
+    unfolding \<epsilon>_def using m1 by (simp add: field_simps)
+  have epsinv: "1 / \<epsilon> = 2 * (1 + m) / m"
+    unfolding \<epsilon>_def using m0 m1 by (simp add: field_simps)
+  have cores:
+    "vv \<bullet> vv \<le> slc + D1 * nc2
+     \<and> (1 + m / 2) * slc - D2 * nc2 \<le> vv \<bullet> (A *v vv)
+     \<and> (1 + m) * nc2 \<le> slc"
+    if vvdef: "vv = (\<Sum>u\<in>Bp. c u *\<^sub>R w u)"
+      and slcdef: "slc = (\<Sum>u\<in>Bp. lam u * (c u)\<^sup>2)"
+      and ncdef: "nc2 = (\<Sum>u\<in>Bp. (c u)\<^sup>2)"
+    for c :: "real^'n \<Rightarrow> real" and vv :: "real^'n" and slc nc2 :: real
+  proof -
+    define g where "g = (\<lambda>u u'. w u \<bullet> w u' - (if u' = u then lam u else 0))"
+    have gE: "\<bar>g u u'\<bar> \<le> E" if "u \<in> Bp" "u' \<in> Bp" for u u'
+      unfolding g_def using gram[OF that] .
+    define r where "r = (\<lambda>u. \<Sum>u'\<in>Bp. c u' * g u u')"
+    define sac where "sac = (\<Sum>u\<in>Bp. \<bar>c u\<bar>)"
+    have sac0: "0 \<le> sac" unfolding sac_def by (rule sum_nonneg) simp
+    have nc0: "0 \<le> nc2" unfolding ncdef by (rule sum_nonneg) simp
+    have slc0: "0 \<le> slc" unfolding slcdef
+      by (rule sum_nonneg)
+        (use lam_lb m0 in \<open>auto intro!: mult_nonneg_nonneg
+          simp: order_trans[of 0 "1 + m"]\<close>)
+    have sac2: "sac\<^sup>2 \<le> np * nc2"
+      unfolding sac_def ncdef np_def by (rule sum_abs_sq_le_card[OF finBp])
+    have wv: "w u \<bullet> vv = lam u * c u + r u" if u: "u \<in> Bp" for u
+    proof -
+      have "w u \<bullet> vv = (\<Sum>u'\<in>Bp. c u' * (w u \<bullet> w u'))"
+        unfolding vvdef by (simp add: inner_sum_right inner_scaleR_right)
+      also have "\<dots> = (\<Sum>u'\<in>Bp. c u' * (if u' = u then lam u else 0)
+          + c u' * g u u')"
+        by (rule sum.cong[OF refl]) (simp add: g_def algebra_simps)
+      also have "\<dots> = (\<Sum>u'\<in>Bp. c u' * (if u' = u then lam u else 0))
+          + (\<Sum>u'\<in>Bp. c u' * g u u')"
+        by (rule sum.distrib)
+      also have "(\<Sum>u'\<in>Bp. c u' * (if u' = u then lam u else 0))
+          = (\<Sum>u'\<in>Bp. if u' = u then c u' * lam u else 0)"
+        by (rule sum.cong[OF refl]) simp
+      also have "\<dots> = c u * lam u"
+        using u finBp by (simp add: sum.delta)
+      finally show ?thesis unfolding r_def by (simp add: mult.commute)
+    qed
+    have rb: "\<bar>r u\<bar> \<le> E * sac" if u: "u \<in> Bp" for u
+    proof -
+      have "\<bar>r u\<bar> \<le> (\<Sum>u'\<in>Bp. \<bar>c u' * g u u'\<bar>)"
+        unfolding r_def by (rule sum_abs)
+      also have "\<dots> \<le> (\<Sum>u'\<in>Bp. \<bar>c u'\<bar> * E)"
+      proof (rule sum_mono)
+        fix u' assume u': "u' \<in> Bp"
+        have "\<bar>c u' * g u u'\<bar> = \<bar>c u'\<bar> * \<bar>g u u'\<bar>"
+          by (simp add: abs_mult)
+        also have "\<dots> \<le> \<bar>c u'\<bar> * E"
+          by (intro mult_left_mono gE[OF u u']) simp
+        finally show "\<bar>c u' * g u u'\<bar> \<le> \<bar>c u'\<bar> * E" .
+      qed
+      also have "\<dots> = sac * E"
+        unfolding sac_def by (rule sum_distrib_right[symmetric])
+      finally show ?thesis by (simp add: mult.commute)
+    qed
+    have vv_eq: "vv \<bullet> vv = slc + (\<Sum>u\<in>Bp. c u * r u)"
+    proof -
+      have "vv \<bullet> vv = (\<Sum>u\<in>Bp. (c u *\<^sub>R w u) \<bullet> vv)"
+        by (subst (1) vvdef) (rule inner_sum_left)
+      also have "\<dots> = (\<Sum>u\<in>Bp. c u * (lam u * c u + r u))"
+        by (rule sum.cong[OF refl]) (simp add: inner_scaleR_left wv)
+      also have "\<dots> = (\<Sum>u\<in>Bp. lam u * (c u)\<^sup>2 + c u * r u)"
+        by (rule sum.cong[OF refl]) (simp add: power2_eq_square algebra_simps)
+      also have "\<dots> = slc + (\<Sum>u\<in>Bp. c u * r u)"
+        unfolding slcdef by (rule sum.distrib)
+      finally show ?thesis .
+    qed
+    have crb: "\<bar>\<Sum>u\<in>Bp. c u * r u\<bar> \<le> D1 * nc2"
+    proof -
+      have "\<bar>\<Sum>u\<in>Bp. c u * r u\<bar> \<le> (\<Sum>u\<in>Bp. \<bar>c u * r u\<bar>)"
+        by (rule sum_abs)
+      also have "\<dots> \<le> (\<Sum>u\<in>Bp. \<bar>c u\<bar> * (E * sac))"
+      proof (rule sum_mono)
+        fix u assume u: "u \<in> Bp"
+        have "\<bar>c u * r u\<bar> = \<bar>c u\<bar> * \<bar>r u\<bar>" by (simp add: abs_mult)
+        also have "\<dots> \<le> \<bar>c u\<bar> * (E * sac)"
+          by (intro mult_left_mono rb[OF u]) simp
+        finally show "\<bar>c u * r u\<bar> \<le> \<bar>c u\<bar> * (E * sac)" .
+      qed
+      also have "\<dots> = sac * (E * sac)"
+        unfolding sac_def by (rule sum_distrib_right[symmetric])
+      also have "\<dots> = E * sac\<^sup>2"
+        by (simp add: power2_eq_square algebra_simps)
+      also have "\<dots> \<le> E * (np * nc2)"
+        using sac2 E0 by (intro mult_left_mono)
+      also have "\<dots> = D1 * nc2"
+        unfolding D1_def by (simp add: algebra_simps)
+      finally show ?thesis .
+    qed
+    have core2: "vv \<bullet> vv \<le> slc + D1 * nc2"
+      using vv_eq crb by linarith
+    have Av: "vv \<bullet> (A *v vv) = (\<Sum>u\<in>B. (w u \<bullet> vv)\<^sup>2)"
+      unfolding A_def by (rule outerp_sum_quadform)
+    have geBp: "(\<Sum>u\<in>Bp. (w u \<bullet> vv)\<^sup>2) \<le> (\<Sum>u\<in>B. (w u \<bullet> vv)\<^sup>2)"
+      by (rule sum_mono2[OF finB BpB]) simp
+    have r2b: "(\<Sum>u\<in>Bp. (r u)\<^sup>2) \<le> (np * E)\<^sup>2 * nc2"
+    proof -
+      have "(\<Sum>u\<in>Bp. (r u)\<^sup>2) \<le> (\<Sum>u\<in>Bp. (E * sac)\<^sup>2)"
+      proof (rule sum_mono)
+        fix u assume u: "u \<in> Bp"
+        have "(r u)\<^sup>2 = \<bar>r u\<bar>\<^sup>2" by simp
+        also have "\<dots> \<le> (E * sac)\<^sup>2"
+          using rb[OF u] E0 sac0 by (intro power_mono) simp_all
+        finally show "(r u)\<^sup>2 \<le> (E * sac)\<^sup>2" .
+      qed
+      also have "\<dots> = np * (E\<^sup>2 * sac\<^sup>2)"
+        unfolding np_def by (simp add: power_mult_distrib)
+      also have "\<dots> \<le> np * (E\<^sup>2 * (np * nc2))"
+        using sac2 np0 by (intro mult_left_mono) simp_all
+      also have "\<dots> = (np * E)\<^sup>2 * nc2"
+        by (simp add: power_mult_distrib power2_eq_square algebra_simps)
+      finally show ?thesis .
+    qed
+    have lam2: "(1 + m) * slc \<le> (\<Sum>u\<in>Bp. (lam u * c u)\<^sup>2)"
+    proof -
+      have "(1 + m) * slc = (\<Sum>u\<in>Bp. (1 + m) * lam u * (c u)\<^sup>2)"
+        unfolding slcdef by (simp add: sum_distrib_left algebra_simps)
+      also have "\<dots> \<le> (\<Sum>u\<in>Bp. (lam u * c u)\<^sup>2)"
+      proof (rule sum_mono)
+        fix u assume u: "u \<in> Bp"
+        have lu0: "0 \<le> lam u" using lam_lb[OF u] m0 by linarith
+        have "(1 + m) * lam u \<le> lam u * lam u"
+          by (rule mult_right_mono[OF lam_lb[OF u] lu0])
+        then have "(1 + m) * lam u * (c u)\<^sup>2 \<le> lam u * lam u * (c u)\<^sup>2"
+          by (rule mult_right_mono) simp
+        then show "(1 + m) * lam u * (c u)\<^sup>2 \<le> (lam u * c u)\<^sup>2"
+          by (simp add: power_mult_distrib power2_eq_square algebra_simps)
+      qed
+      finally show ?thesis .
+    qed
+    have core1: "(1 + m / 2) * slc - D2 * nc2 \<le> vv \<bullet> (A *v vv)"
+    proof -
+      have perlow: "(1 - \<epsilon>) * (lam u * c u)\<^sup>2 - (r u)\<^sup>2 / \<epsilon>
+          \<le> (w u \<bullet> vv)\<^sup>2" if u: "u \<in> Bp" for u
+        using add_sq_ge_weighted[OF eps0, of "lam u * c u" "r u"] wv[OF u]
+        by simp
+      have "(1 - \<epsilon>) * (\<Sum>u\<in>Bp. (lam u * c u)\<^sup>2)
+          - (\<Sum>u\<in>Bp. (r u)\<^sup>2) / \<epsilon>
+          = (\<Sum>u\<in>Bp. (1 - \<epsilon>) * (lam u * c u)\<^sup>2 - (r u)\<^sup>2 / \<epsilon>)"
+        by (simp add: sum_subtractf sum_distrib_left sum_divide_distrib)
+      also have "\<dots> \<le> (\<Sum>u\<in>Bp. (w u \<bullet> vv)\<^sup>2)"
+        by (rule sum_mono) (rule perlow)
+      also have "\<dots> \<le> vv \<bullet> (A *v vv)"
+        unfolding Av by (rule geBp)
+      finally have h: "(1 - \<epsilon>) * (\<Sum>u\<in>Bp. (lam u * c u)\<^sup>2)
+          - (\<Sum>u\<in>Bp. (r u)\<^sup>2) / \<epsilon> \<le> vv \<bullet> (A *v vv)" .
+      have h1: "(1 + m / 2) * slc
+          \<le> (1 - \<epsilon>) * (\<Sum>u\<in>Bp. (lam u * c u)\<^sup>2)"
+      proof -
+        have "(1 + m / 2) * slc = (1 - \<epsilon>) * ((1 + m) * slc)"
+          by (simp only: mult.assoc[symmetric] epsprod)
+        also have "\<dots> \<le> (1 - \<epsilon>) * (\<Sum>u\<in>Bp. (lam u * c u)\<^sup>2)"
+          using lam2 eps1 by (intro mult_left_mono) simp_all
+        finally show ?thesis .
+      qed
+      have h2: "(\<Sum>u\<in>Bp. (r u)\<^sup>2) / \<epsilon> \<le> D2 * nc2"
+      proof -
+        have "(\<Sum>u\<in>Bp. (r u)\<^sup>2) / \<epsilon> \<le> ((np * E)\<^sup>2 * nc2) / \<epsilon>"
+          by (intro divide_right_mono r2b) (use eps0 in simp)
+        also have "\<dots> = (1 / \<epsilon>) * ((np * E)\<^sup>2 * nc2)"
+          by simp
+        also have "\<dots> = D2 * nc2"
+          unfolding D2_def epsinv by (simp add: algebra_simps)
+        finally show ?thesis .
+      qed
+      show ?thesis using h h1 h2 by linarith
+    qed
+    have core3: "(1 + m) * nc2 \<le> slc"
+      unfolding slcdef ncdef
+      by (subst sum_distrib_left)
+        (rule sum_mono, intro mult_right_mono lam_lb, simp_all)
+    show ?thesis using core2 core1 core3 by blast
+  qed
+  have bracket: "0 < (1 + m / 2) * (1 + m) - D2"
+  proof -
+    have "(1 + m / 2) * (1 + m) = 1 + 3 * m / 2 + m\<^sup>2 / 2"
+      by (simp add: power2_eq_square field_simps)
+    moreover have "D2 \<le> m / 2" using smallD D10 by linarith
+    moreover have "0 \<le> m\<^sup>2 / 2" by simp
+    ultimately show ?thesis using m0 by linarith
+  qed
+  have kernel: "c u = 0"
+    if z: "(\<Sum>u\<in>Bp. c u *\<^sub>R w u) = 0" and u: "u \<in> Bp"
+    for c :: "real^'n \<Rightarrow> real" and u
+  proof -
+    define nc2 where "nc2 = (\<Sum>u\<in>Bp. (c u)\<^sup>2)"
+    define slc where "slc = (\<Sum>u\<in>Bp. lam u * (c u)\<^sup>2)"
+    have h: "(\<Sum>u\<in>Bp. c u *\<^sub>R w u) \<bullet> (\<Sum>u\<in>Bp. c u *\<^sub>R w u) \<le> slc + D1 * nc2
+        \<and> (1 + m / 2) * slc - D2 * nc2
+          \<le> (\<Sum>u\<in>Bp. c u *\<^sub>R w u) \<bullet> (A *v (\<Sum>u\<in>Bp. c u *\<^sub>R w u))
+        \<and> (1 + m) * nc2 \<le> slc"
+      unfolding slc_def nc2_def by (rule cores[OF refl refl refl])
+    have zero: "(1 + m / 2) * slc - D2 * nc2 \<le> 0"
+      using h unfolding z by (simp add: matvec_zero_left)
+    have le: "(1 + m) * nc2 \<le> slc" using h by blast
+    have nc0: "0 \<le> nc2" unfolding nc2_def by (rule sum_nonneg) simp
+    have "(1 + m / 2) * ((1 + m) * nc2) \<le> (1 + m / 2) * slc"
+      using le m0 by (intro mult_left_mono) simp_all
+    with zero have "((1 + m / 2) * (1 + m) - D2) * nc2 \<le> 0"
+      by (simp add: algebra_simps)
+    with bracket nc0 have nc2z: "nc2 = 0"
+      by (metis mult_pos_pos not_le order_less_irrefl
+          order_le_less zero_less_mult_iff)
+    have "(c u)\<^sup>2 = 0"
+    proof (rule ccontr)
+      assume ne: "(c u)\<^sup>2 \<noteq> 0"
+      have "0 < (c u)\<^sup>2" using ne by (simp add: order_less_le)
+      then have "0 < nc2" unfolding nc2_def
+        by (meson finBp sum_pos2 u zero_le_power2)
+      then show False using nc2z by simp
+    qed
+    then show ?thesis by simp
+  qed
+  have inj: "inj_on w Bp"
+  proof (rule inj_onI)
+    fix u u' assume u: "u \<in> Bp" and u': "u' \<in> Bp" and eq: "w u = w u'"
+    show "u = u'"
+    proof (rule ccontr)
+      assume neq: "u \<noteq> u'"
+      define c where "c = (\<lambda>v :: real^'n.
+          if v = u then 1 else if v = u' then - 1 else (0 :: real))"
+      have "(\<Sum>v\<in>Bp. c v *\<^sub>R w v)
+          = (\<Sum>v\<in>Bp. (if v = u then w v else 0))
+            + (\<Sum>v\<in>Bp. (if v = u' then - w v else 0))"
+        unfolding c_def
+        by (subst sum.distrib[symmetric])
+          (rule sum.cong[OF refl], use neq in auto)
+      also have "\<dots> = w u - w u'"
+        using u u' finBp by (simp add: sum.delta)
+      also have "\<dots> = 0" using eq by simp
+      finally have "c u = 0" by (rule kernel[OF _ u])
+      then show False unfolding c_def by simp
+    qed
+  qed
+  have indep: "independent (w ` Bp)"
+  proof (rule ccontr)
+    assume "\<not> independent (w ` Bp)"
+    then have "dependent (w ` Bp)" by simp
+    then obtain t cc where t: "finite t" "t \<subseteq> w ` Bp"
+      and z: "(\<Sum>v\<in>t. cc v *\<^sub>R v) = 0"
+      and ex: "\<exists>v\<in>t. cc v \<noteq> 0"
+      unfolding dependent_explicit by blast
+    obtain y where y: "y \<in> t" "cc y \<noteq> 0" using ex by blast
+    define Bt where "Bt = {u \<in> Bp. w u \<in> t}"
+    have BtBp: "Bt \<subseteq> Bp" unfolding Bt_def by blast
+    have wBt: "w ` Bt = t"
+    proof
+      show "w ` Bt \<subseteq> t" unfolding Bt_def by blast
+      show "t \<subseteq> w ` Bt"
+      proof
+        fix v assume v: "v \<in> t"
+        then obtain u where u: "u \<in> Bp" "v = w u" using t(2) by blast
+        then have "u \<in> Bt" unfolding Bt_def using v by blast
+        then show "v \<in> w ` Bt" using u by blast
+      qed
+    qed
+    define c where "c = (\<lambda>u. if u \<in> Bt then cc (w u) else 0)"
+    have injBt: "inj_on w Bt" by (rule inj_on_subset[OF inj BtBp])
+    have "(\<Sum>u\<in>Bp. c u *\<^sub>R w u) = (\<Sum>u\<in>Bt. c u *\<^sub>R w u)"
+      by (rule sum.mono_neutral_right[OF finBp BtBp])
+        (simp add: c_def)
+    also have "\<dots> = (\<Sum>u\<in>Bt. cc (w u) *\<^sub>R w u)"
+      by (rule sum.cong[OF refl]) (simp add: c_def)
+    also have "\<dots> = (\<Sum>v\<in>w ` Bt. cc v *\<^sub>R v)"
+      by (simp add: sum.reindex[OF injBt] o_def)
+    also have "\<dots> = 0" unfolding wBt by (rule z)
+    finally have zz: "(\<Sum>u\<in>Bp. c u *\<^sub>R w u) = 0" .
+    obtain u0 where u0: "u0 \<in> Bt" "w u0 = y"
+      using y(1) wBt by blast
+    have "c u0 = 0" using kernel[OF zz] u0(1) BtBp by blast
+    then show False unfolding c_def using u0 y(2) by simp
+  qed
+  have quad: "vv \<bullet> vv \<le> vv \<bullet> (A *v vv)"
+    if vv: "vv \<in> span (w ` Bp)" for vv
+  proof -
+    have "span (w ` Bp) = range (\<lambda>u. \<Sum>v\<in>w ` Bp. u v *\<^sub>R v)"
+      by (rule span_finite) (simp add: finBp)
+    then obtain cc where ccdef: "vv = (\<Sum>v\<in>w ` Bp. cc v *\<^sub>R v)"
+      using vv by auto
+    define c where "c = (\<lambda>u. cc (w u))"
+    have vrep: "vv = (\<Sum>u\<in>Bp. c u *\<^sub>R w u)"
+      unfolding ccdef c_def by (simp add: sum.reindex[OF inj] o_def)
+    define nc2 where "nc2 = (\<Sum>u\<in>Bp. (c u)\<^sup>2)"
+    define slc where "slc = (\<Sum>u\<in>Bp. lam u * (c u)\<^sup>2)"
+    have h: "vv \<bullet> vv \<le> slc + D1 * nc2
+        \<and> (1 + m / 2) * slc - D2 * nc2 \<le> vv \<bullet> (A *v vv)
+        \<and> (1 + m) * nc2 \<le> slc"
+      unfolding slc_def nc2_def by (rule cores[OF vrep refl refl])
+    have nc0: "0 \<le> nc2" unfolding nc2_def by (rule sum_nonneg) simp
+    have le3: "(1 + m) * nc2 \<le> slc" using h by blast
+    have le1: "vv \<bullet> vv \<le> slc + D1 * nc2" using h by blast
+    have le2: "(1 + m / 2) * slc - D2 * nc2 \<le> vv \<bullet> (A *v vv)"
+      using h by blast
+    have mn: "0 \<le> m * nc2"
+      using m0 nc0 by (intro mult_nonneg_nonneg) simp_all
+    have "(1 + m) * nc2 = nc2 + m * nc2" by (simp add: algebra_simps)
+    with le3 mn have nc_le_slc: "nc2 \<le> slc" by linarith
+    have "(D1 + D2) * nc2 \<le> (m / 2) * nc2"
+      using smallD nc0 by (intro mult_right_mono)
+    also have "\<dots> \<le> (m / 2) * slc"
+      using nc_le_slc m0 by (intro mult_left_mono) simp_all
+    finally have "(D1 + D2) * nc2 \<le> (m / 2) * slc" .
+    then have "slc + D1 * nc2 \<le> (1 + m / 2) * slc - D2 * nc2"
+      by (simp add: algebra_simps)
+    then show ?thesis using le1 le2 by linarith
+  qed
+  have dimS: "card Bp \<le> dim (span (w ` Bp))"
+  proof -
+    have "dim (span (w ` Bp)) = card (w ` Bp)"
+      by (rule dim_span_eq_card_independent[OF indep])
+    also have "card (w ` Bp) = card Bp"
+      by (rule card_image[OF inj])
+    finally show ?thesis by simp
+  qed
+  show ?thesis
+    unfolding eigen_lb_def A_def[symmetric]
+    by (intro exI[of _ "span (w ` Bp)"] conjI subspace_span dimS ballI quad)
+qed
+
+lemma perturbed_columns_trace_close:
+  fixes B :: "(real^'n::finite) set" and w d :: "real^'n \<Rightarrow> real^'n"
+    and lam :: "real^'n \<Rightarrow> real" and M :: "real^'n^'n" and L e :: real
+  assumes finB: "finite B"
+    and wu: "\<And>u. u \<in> B \<Longrightarrow> w u = sqrt (lam u) *\<^sub>R u + d u"
+    and nu: "\<And>u. u \<in> B \<Longrightarrow> norm u = 1"
+    and lam_nn: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u"
+    and lam_ub: "\<And>u. u \<in> B \<Longrightarrow> lam u \<le> L"
+    and de: "\<And>u. u \<in> B \<Longrightarrow> norm (d u) \<le> e" and e0: "0 \<le> e"
+  shows "\<bar>trace (M ** (\<Sum>u\<in>B. outerp (w u)))
+      - (\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))\<bar>
+    \<le> real (card B) * ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)
+        * (e * (2 * sqrt L + e)))"
+proof -
+  define Cm where "Cm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+  have Cm0: "0 \<le> Cm" unfolding Cm_def
+    by (intro sum_nonneg) simp_all
+  have per_term: "\<bar>w u \<bullet> (M *v w u) - lam u * (u \<bullet> (M *v u))\<bar>
+      \<le> Cm * (e * (2 * sqrt L + e))" if u: "u \<in> B" for u
+  proof -
+    define su where "su = sqrt (lam u) *\<^sub>R u"
+    have sL: "sqrt (lam u) \<le> sqrt L"
+      using lam_ub[OF u] by (rule real_sqrt_le_mono)
+    have s0: "0 \<le> sqrt (lam u)"
+      using lam_nn[OF u] by simp
+    have nsu: "norm su \<le> sqrt L"
+      unfolding su_def using nu[OF u] s0 sL by simp
+    have sMs: "su \<bullet> (M *v su) = lam u * (u \<bullet> (M *v u))"
+      unfolding su_def
+      by (simp add: matvec_scaleR_right inner_scaleR_left
+          inner_scaleR_right lam_nn[OF u])
+    have wsplit: "w u = su + d u" unfolding su_def by (rule wu[OF u])
+    have expand: "w u \<bullet> (M *v w u) - su \<bullet> (M *v su)
+        = d u \<bullet> (M *v w u) + su \<bullet> (M *v d u)"
+    proof -
+      have "w u \<bullet> (M *v w u) = su \<bullet> (M *v w u) + d u \<bullet> (M *v w u)"
+        by (subst (1) wsplit) (simp add: inner_add_left)
+      moreover have "su \<bullet> (M *v w u)
+          = su \<bullet> (M *v su) + su \<bullet> (M *v d u)"
+        by (subst wsplit) (simp add: matvec_add_right inner_add_right)
+      ultimately show ?thesis by linarith
+    qed
+    have nw: "norm (w u) \<le> sqrt L + e"
+    proof -
+      have "norm (w u) \<le> norm su + norm (d u)"
+        unfolding wsplit by (rule norm_triangle_ineq)
+      then show ?thesis using nsu de[OF u] by linarith
+    qed
+    have b1: "\<bar>d u \<bullet> (M *v w u)\<bar> \<le> e * (Cm * (sqrt L + e))"
+    proof -
+      have "\<bar>d u \<bullet> (M *v w u)\<bar> \<le> norm (d u) * norm (M *v w u)"
+        by (rule Cauchy_Schwarz_ineq2)
+      also have "\<dots> \<le> e * (Cm * (sqrt L + e))"
+      proof (intro mult_mono)
+        show "norm (d u) \<le> e" by (rule de[OF u])
+        have "norm (M *v w u) \<le> Cm * norm (w u)"
+          unfolding Cm_def by (rule matvec_norm_le)
+        also have "\<dots> \<le> Cm * (sqrt L + e)"
+          using nw Cm0 by (intro mult_left_mono)
+        finally show "norm (M *v w u) \<le> Cm * (sqrt L + e)" .
+        show "0 \<le> e" by (rule e0)
+        show "0 \<le> norm (M *v w u)" by simp
+      qed
+      finally show ?thesis .
+    qed
+    have b2: "\<bar>su \<bullet> (M *v d u)\<bar> \<le> sqrt L * (Cm * e)"
+    proof -
+      have "\<bar>su \<bullet> (M *v d u)\<bar> \<le> norm su * norm (M *v d u)"
+        by (rule Cauchy_Schwarz_ineq2)
+      also have "\<dots> \<le> sqrt L * (Cm * e)"
+      proof (intro mult_mono)
+        show "norm su \<le> sqrt L" by (rule nsu)
+        have "norm (M *v d u) \<le> Cm * norm (d u)"
+          unfolding Cm_def by (rule matvec_norm_le)
+        also have "\<dots> \<le> Cm * e"
+          using de[OF u] Cm0 by (intro mult_left_mono)
+        finally show "norm (M *v d u) \<le> Cm * e" .
+        show "0 \<le> sqrt L" using s0 sL by linarith
+        show "0 \<le> norm (M *v d u)" by simp
+      qed
+      finally show ?thesis .
+    qed
+    have "\<bar>w u \<bullet> (M *v w u) - lam u * (u \<bullet> (M *v u))\<bar>
+        \<le> \<bar>d u \<bullet> (M *v w u)\<bar> + \<bar>su \<bullet> (M *v d u)\<bar>"
+      using expand sMs by linarith
+    also have "\<dots> \<le> e * (Cm * (sqrt L + e)) + sqrt L * (Cm * e)"
+      using b1 b2 by linarith
+    also have "\<dots> = Cm * (e * (2 * sqrt L + e))"
+      by (simp add: algebra_simps power2_eq_square)
+    finally show ?thesis .
+  qed
+  have "\<bar>trace (M ** (\<Sum>u\<in>B. outerp (w u)))
+      - (\<Sum>u\<in>B. lam u * (u \<bullet> (M *v u)))\<bar>
+      = \<bar>\<Sum>u\<in>B. w u \<bullet> (M *v w u) - lam u * (u \<bullet> (M *v u))\<bar>"
+    by (simp add: trace_mult_outerp_sum[OF finB] sum_subtractf)
+  also have "\<dots> \<le> (\<Sum>u\<in>B. \<bar>w u \<bullet> (M *v w u) - lam u * (u \<bullet> (M *v u))\<bar>)"
+    by (rule sum_abs)
+  also have "\<dots> \<le> (\<Sum>u\<in>B. Cm * (e * (2 * sqrt L + e)))"
+    by (rule sum_mono) (rule per_term)
+  also have "\<dots> = real (card B) * (Cm * (e * (2 * sqrt L + e)))"
+    by simp
+  finally show ?thesis unfolding Cm_def .
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
