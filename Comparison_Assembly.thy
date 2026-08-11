@@ -14694,6 +14694,140 @@ proof -
   then show ?thesis using xhK by (cases "xh \<in> interior K") auto
 qed
 
+subsection \<open>P4's front end: the two-domain doubled maximiser\<close>
+
+text \<open>Existence of the maximiser of \<open>\<theta>u(x) - w(y) - pen(x-y)\<close> over \<open>K \<times> K'\<close> for
+  USC \<open>u\<close> and LSC \<open>w\<close>.  This is the step the paper opens Theorem 4.2(b) with,
+  and it needs no continuity: the objective is usc on the compact product, by
+  the \<open>\<epsilon>\<close>-form calculus in \<open>Envelopes\<close> (\<open>usc_eps_add\<close>, \<open>usc_eps_scale\<close>,
+  \<open>usc_eps_of_continuous\<close>) and \<open>usc_attains_sup_gen\<close>, which is stated there for
+  an arbitrary metric space precisely so that it applies to the PRODUCT.\<close>
+
+theorem two_domain_doubled_maximiser:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"
+    and pn :: "real^'n \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and cK': "compact K'" and neK': "K' \<noteq> {}"
+    and t0: "0 < \<theta>"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and lscw: "\<And>c z. c < w z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < w y"
+    and Bu: "\<And>y. u y \<le> B" and Bw: "\<And>y. - B \<le> w y"
+    and cpn: "continuous_on UNIV pn" and pn0: "\<And>z. 0 \<le> pn z"
+  obtains xh yh where "xh \<in> K" and "yh \<in> K'"
+    and "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K' \<Longrightarrow>
+        \<theta> * u x - w y - pn (x - y) \<le> \<theta> * u xh - w yh - pn (xh - yh)"
+proof -
+  define S where "S = K \<times> K'"
+  have cS: "compact S" unfolding S_def by (rule compact_Times[OF cK cK'])
+  have neS: "S \<noteq> {}" unfolding S_def using neK neK' by simp
+  define F where "F = (\<lambda>z :: (real^'n) \<times> (real^'n).
+      \<theta> * u (fst z) - w (snd z) - pn (fst z - snd z))"
+
+  text \<open>Each of the three summands is usc on the product.\<close>
+  have p1: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> \<theta> * u (fst y) < cc"
+    if lt: "\<theta> * u (fst z) < cc" for cc and z :: "(real^'n) \<times> (real^'n)"
+  proof -
+    obtain e where e0: "0 < e"
+      and h: "\<And>q. dist (fst z) q < e \<Longrightarrow> \<theta> * u q < cc"
+      using usc_eps_scale[OF uscu t0 lt] by blast
+    show ?thesis
+    proof (rule exI[of _ e], intro conjI allI impI e0)
+      fix y :: "(real^'n) \<times> (real^'n)" assume "dist z y < e"
+      then have "dist (fst z) (fst y) < e" using dist_fst_le[of z y] by linarith
+      then show "\<theta> * u (fst y) < cc" by (rule h)
+    qed
+  qed
+  have p2: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> - w (snd y) < cc"
+    if lt: "- w (snd z) < cc" for cc and z :: "(real^'n) \<times> (real^'n)"
+  proof -
+    have "- cc < w (snd z)" using lt by linarith
+    from lscw[OF this] obtain e where e0: "0 < e"
+      and h: "\<And>q. dist (snd z) q < e \<Longrightarrow> - cc < w q" by blast
+    show ?thesis
+    proof (rule exI[of _ e], intro conjI allI impI e0)
+      fix y :: "(real^'n) \<times> (real^'n)" assume "dist z y < e"
+      then have "dist (snd z) (snd y) < e" using dist_snd_le[of z y] by linarith
+      from h[OF this] show "- w (snd y) < cc" by linarith
+    qed
+  qed
+  have cp: "isCont pn q" for q :: "real^'n"
+    using cpn open_UNIV by (simp add: continuous_on_eq_continuous_at)
+  have p3: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> - pn (fst y - snd y) < cc"
+    if lt: "- pn (fst z - snd z) < cc" for cc and z :: "(real^'n) \<times> (real^'n)"
+  proof -
+    have i1: "isCont (\<lambda>z :: (real^'n) \<times> (real^'n). fst z - snd z) z"
+      by (intro continuous_intros)
+    have "isCont (\<lambda>z :: (real^'n) \<times> (real^'n). pn (fst z - snd z)) z"
+      by (rule isCont_o2[OF i1 cp])
+    then have "isCont (\<lambda>z :: (real^'n) \<times> (real^'n). - pn (fst z - snd z)) z"
+      by (intro continuous_intros)
+    then show ?thesis by (rule usc_eps_of_continuous) (rule lt)
+  qed
+  have s12: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> \<theta> * u (fst y) + - w (snd y) < cc"
+    if "\<theta> * u (fst z) + - w (snd z) < cc"
+    for cc and z :: "(real^'n) \<times> (real^'n)"
+    by (rule usc_eps_add[OF p1 p2 that])
+  have uF: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> F y < c" if lt: "F z < c"
+    for c and z :: "(real^'n) \<times> (real^'n)"
+  proof -
+    have lt': "(\<theta> * u (fst z) + - w (snd z)) + (- pn (fst z - snd z)) < c"
+      using lt unfolding F_def by simp
+    from usc_eps_add[OF s12 p3 lt'] obtain e where e0: "0 < e"
+      and h: "\<forall>y. dist z y < e \<longrightarrow>
+          \<theta> * u (fst y) + - w (snd y) + - pn (fst y - snd y) < c" by blast
+    show ?thesis
+    proof (rule exI[of _ e], intro conjI allI impI e0)
+      fix y assume dy: "dist z y < e"
+      have "\<theta> * u (fst y) + - w (snd y) + - pn (fst y - snd y) < c"
+        using h dy by blast
+      then show "F y < c" unfolding F_def by simp
+    qed
+  qed
+  have BF: "F z \<le> \<theta> * B + B" for z
+  proof -
+    have "\<theta> * u (fst z) \<le> \<theta> * B" using Bu t0 by (simp add: mult_left_mono)
+    moreover have "- w (snd z) \<le> B" using Bw[of "snd z"] by linarith
+    moreover have "0 \<le> pn (fst z - snd z)" by (rule pn0)
+    ultimately show ?thesis unfolding F_def by linarith
+  qed
+  obtain zh where zhS: "zh \<in> S" and zmax: "\<And>y. y \<in> S \<Longrightarrow> F y \<le> F zh"
+    using usc_attains_sup_ex[OF uF _ cS neS, of "\<theta> * B + B"] BF by blast
+  have xh: "fst zh \<in> K" and yh: "snd zh \<in> K'" using zhS unfolding S_def by auto
+  show ?thesis
+  proof (rule that[OF xh yh])
+    fix x y assume "x \<in> K" and "y \<in> K'"
+    then have "(x, y) \<in> S" unfolding S_def by simp
+    from zmax[OF this] show
+      "\<theta> * u x - w y - pn (x - y) \<le> \<theta> * u (fst zh) - w (snd zh)
+          - pn (fst zh - snd zh)" unfolding F_def by simp
+  qed
+qed
+
+text \<open>The \<open>y\<close>-side avoidance, which the two-domain setting makes free: \<open>K\<close> sits a
+  positive distance inside \<open>K'\<close>, so once the penalty pins \<open>y\<^sup>h\<close> near \<open>K\<close> it is
+  interior to \<open>K'\<close> with room to spare.  (The \<open>x\<close>-side needs no analogue: the
+  gate lemmas above put \<open>x\<^sup>h\<close> in \<open>\<Omega>\<close> wherever it lands.)\<close>
+
+lemma two_domain_gap:
+  fixes K K' :: "(real^'n::finite) set"
+  assumes cK: "compact K" and cK': "compact K'" and sub: "K \<subseteq> interior K'"
+  obtains d where "0 < d"
+    and "\<And>x b. x \<in> K \<Longrightarrow> b \<in> K' - interior K' \<Longrightarrow> d < dist x b"
+proof -
+  have clB: "closed (K' - interior K')"
+    by (intro closed_Diff compact_imp_closed[OF cK'] open_interior)
+  have disj: "K \<inter> (K' - interior K') = {}" using sub by blast
+  obtain d where d0: "0 < d"
+    and dd: "\<And>x b. x \<in> K \<Longrightarrow> b \<in> K' - interior K' \<Longrightarrow> d \<le> dist x b"
+    using separate_compact_closed[OF cK clB disj] by blast
+  show ?thesis
+  proof (rule that[of "d/2"])
+    show "0 < d/2" using d0 by simp
+    fix x b assume "x \<in> K" and "b \<in> K' - interior K'"
+    from dd[OF this] show "d/2 < dist x b" using d0 by linarith
+  qed
+qed
+
 theorem comparison_two_domain:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"
   assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"

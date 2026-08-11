@@ -2288,7 +2288,7 @@ qed
 subsection \<open>Attainment for semicontinuous functions on compact sets\<close>
 
 lemma lsc_attains_inf_gen:
-  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  fixes f :: "'a::metric_space \<Rightarrow> real" and S :: "'a set"
   assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
     and B: "\<And>y. y \<in> S \<Longrightarrow> B \<le> f y"
     and cS: "compact S" and neS: "S \<noteq> {}"
@@ -2347,7 +2347,7 @@ proof -
 qed
 
 lemma usc_attains_sup_gen:
-  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  fixes f :: "'a::metric_space \<Rightarrow> real" and S :: "'a set"
   assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
     and B: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> B"
     and cS: "compact S" and neS: "S \<noteq> {}"
@@ -2378,7 +2378,7 @@ text \<open>Existential repackaging: an \<open>obtains\<close>-rule cannot be co
   the consumers below use these forms.\<close>
 
 lemma lsc_attains_inf_ex:
-  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  fixes f :: "'a::metric_space \<Rightarrow> real" and S :: "'a set"
   assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
     and B: "\<And>y. y \<in> S \<Longrightarrow> B \<le> f y"
     and cS: "compact S" and neS: "S \<noteq> {}"
@@ -2389,7 +2389,7 @@ proof (rule lsc_attains_inf_gen[OF lsc B cS neS])
 qed
 
 lemma usc_attains_sup_ex:
-  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  fixes f :: "'a::metric_space \<Rightarrow> real" and S :: "'a set"
   assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
     and B: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> B"
     and cS: "compact S" and neS: "S \<noteq> {}"
@@ -2452,6 +2452,77 @@ proof -
   finally have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) \<le> ereal (1 / 2)" .
   also have "ereal (1 / 2 :: real) < 1" by (simp add: one_ereal_def)
   finally show ?thesis .
+qed
+
+subsection \<open>A little upper-semicontinuity calculus\<close>
+
+text \<open>All in the \<open>\<epsilon>\<close>-form the comparison machinery uses, and on an arbitrary
+  metric space so that they apply on the PRODUCT \<open>K \<times> K'\<close> of the two-domain
+  doubling.\<close>
+
+lemma usc_eps_add:
+  fixes f g :: "'a::metric_space \<Rightarrow> real"
+  assumes F: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and G: "\<And>c z. g z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> g y < c"
+    and lt: "f z + g z < c"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y + g y < c"
+proof -
+  define d where "d = (c - f z - g z) / 2"
+  have d0: "0 < d" unfolding d_def using lt by simp
+  have fc: "f z < f z + d" using d0 by simp
+  have gc: "g z < g z + d" using d0 by simp
+  obtain e1 where e10: "0 < e1"
+    and h1: "\<And>y. dist z y < e1 \<Longrightarrow> f y < f z + d" using F[OF fc] by blast
+  obtain e2 where e20: "0 < e2"
+    and h2: "\<And>y. dist z y < e2 \<Longrightarrow> g y < g z + d" using G[OF gc] by blast
+  have sum: "f z + d + (g z + d) = c" unfolding d_def by simp
+  show ?thesis
+  proof (rule exI[of _ "min e1 e2"], intro conjI allI impI)
+    show "0 < min e1 e2" using e10 e20 by simp
+  next
+    fix y assume "dist z y < min e1 e2"
+    then have "dist z y < e1" and "dist z y < e2" by simp_all
+    from h1[OF this(1)] h2[OF this(2)] show "f y + g y < c" using sum by linarith
+  qed
+qed
+
+lemma usc_eps_scale:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes F: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and t0: "0 < \<theta>" and lt: "\<theta> * f z < c"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> \<theta> * f y < c"
+proof -
+  have "f z < c / \<theta>" using lt t0 by (simp add: field_simps)
+  from F[OF this] obtain e where e0: "0 < e"
+    and h: "\<And>y. dist z y < e \<Longrightarrow> f y < c / \<theta>" by blast
+  show ?thesis
+  proof (rule exI[of _ e], intro conjI allI impI e0)
+    fix y assume "dist z y < e"
+    from h[OF this] show "\<theta> * f y < c" using t0 by (simp add: field_simps)
+  qed
+qed
+
+lemma usc_eps_of_continuous:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes cf: "isCont f z" and lt: "f z < c"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+proof -
+  have d0: "0 < c - f z" using lt by simp
+  from cf obtain s where s0: "0 < s"
+    and sb: "\<And>y. y \<noteq> z \<Longrightarrow> dist y z < s \<Longrightarrow> dist (f y) (f z) < c - f z"
+    unfolding isCont_def LIM_def using d0 by blast
+  show ?thesis
+  proof (rule exI[of _ s], intro conjI allI impI s0)
+    fix y assume dzy: "dist z y < s"
+    show "f y < c"
+    proof (cases "y = z")
+      case True then show ?thesis using lt by simp
+    next
+      case False
+      have "dist y z < s" using dzy by (simp add: dist_commute)
+      from sb[OF False this] show ?thesis by (simp add: dist_real_def)
+    qed
+  qed
 qed
 
 text \<open>Extension of a bounded usc function off a closed set.  The extension
