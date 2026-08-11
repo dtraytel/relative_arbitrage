@@ -14773,6 +14773,233 @@ proof -
   then show ?thesis unfolding rotv_def by (simp add: hh_sq[OF u0])
 qed
 
+subsection \<open>Feasibility is invariant under orthogonal conjugation\<close>
+
+text \<open>The transport step itself: an orthogonal \<open>R\<close> carries the feasible
+  set of \<open>p\<close> onto the feasible set of \<open>R p\<close>.  Every clause is the change
+  of variables \<open>x \<mapsto> R\<^sup>T x\<close>: definiteness and the eigenvalue cap because
+  the map is an isometry, the annihilation because \<open>R\<^sup>T R = 1\<close>, and the
+  eigenvalue floor by moving the witnessing subspace along \<open>R\<close>.
+
+  For the dimension of the moved subspace only the INEQUALITY
+  @{thm [source] dim_image_le} is needed, applied to \<open>R\<^sup>T\<close>: since
+  \<open>S = R\<^sup>T(R(S))\<close>, it gives \<open>dim S \<le> dim (R(S))\<close>, which is the direction
+  required --- so the locale-qualified \<open>dim_image_eq\<close> is never invoked.\<close>
+
+lemma orth_preserves_inner:
+  fixes R :: "real^'n::finite^'n"
+  assumes orth: "transpose R ** R = mat 1"
+  shows "(R *v x) \<bullet> (R *v y) = x \<bullet> y"
+proof -
+  have e: "transpose R *v (R *v x) = x"
+  proof -
+    have "transpose R *v (R *v x) = (transpose R ** R) *v x"
+      by (metis matrix_vector_mul_assoc)
+    also have "\<dots> = mat 1 *v x" unfolding orth by (rule refl)
+    also have "\<dots> = x" by (rule matrix_vector_mul_lid)
+    finally show ?thesis .
+  qed
+  have "(R *v x) \<bullet> (R *v y) = (transpose R *v (R *v x)) \<bullet> y"
+    by (rule inner_transpose_matrix)
+  then show ?thesis unfolding e .
+qed
+
+theorem feasible_conj:
+  fixes R a :: "real^'n::finite^'n" and p :: "real^'n"
+  assumes orth: "transpose R ** R = mat 1"
+    and orth': "R ** transpose R = mat 1"
+    and aF: "a \<in> feasible k L p"
+  shows "R ** a ** transpose R \<in> feasible k L (R *v p)"
+proof -
+  have psda: "psd a" and ap: "a *v p = 0"
+    and lba: "eigen_lb a (CARD('n) - k)" and uba: "eigen_ub a L"
+    using aF unfolding feasible_def by blast+
+  have syma: "transpose a = a" using psda unfolding psd_def by blast
+  have RTR: "transpose R *v (R *v z) = z" for z
+  proof -
+    have "transpose R *v (R *v z) = (transpose R ** R) *v z"
+      by (metis matrix_vector_mul_assoc)
+    also have "\<dots> = mat 1 *v z" unfolding orth by (rule refl)
+    also have "\<dots> = z" by (rule matrix_vector_mul_lid)
+    finally show ?thesis .
+  qed
+  have Amv: "(R ** a ** transpose R) *v z = R *v (a *v (transpose R *v z))"
+    for z
+    by (metis matrix_vector_mul_assoc)
+  have quad: "z \<bullet> ((R ** a ** transpose R) *v z)
+      = (transpose R *v z) \<bullet> (a *v (transpose R *v z))" for z
+    unfolding Amv by (rule inner_transpose_matrix)
+  have normT: "(transpose R *v z) \<bullet> (transpose R *v z) = z \<bullet> z" for z
+  proof -
+    have "transpose (transpose R) ** transpose R = mat 1"
+      unfolding transpose_transpose by (rule orth')
+    then show ?thesis by (rule orth_preserves_inner)
+  qed
+  \<comment> \<open>symmetry and definiteness\<close>
+  have symA: "transpose (R ** a ** transpose R) = R ** a ** transpose R"
+  proof -
+    have t1: "transpose ((R ** a) ** transpose R)
+        = transpose (transpose R) ** transpose (R ** a)"
+      by (rule matrix_transpose_mul)
+    have t2: "transpose (R ** a) = transpose a ** transpose R"
+      by (rule matrix_transpose_mul)
+    have t3: "transpose (transpose R) = R" by (rule transpose_transpose)
+    have "transpose ((R ** a) ** transpose R) = R ** (a ** transpose R)"
+      unfolding t1 t2 t3 syma by (rule refl)
+    then show ?thesis by (simp add: matrix_mul_assoc)
+  qed
+  have psdA: "psd (R ** a ** transpose R)"
+    unfolding psd_def
+  proof (intro conjI allI)
+    show "transpose (R ** a ** transpose R) = R ** a ** transpose R"
+      by (rule symA)
+  next
+    fix z :: "real^'n"
+    have "0 \<le> (transpose R *v z) \<bullet> (a *v (transpose R *v z))"
+      using psda unfolding psd_def by blast
+    then show "0 \<le> z \<bullet> ((R ** a ** transpose R) *v z)"
+      using quad[of z] by simp
+  qed
+  \<comment> \<open>the annihilated direction moves with \<open>R\<close>\<close>
+  have killA: "(R ** a ** transpose R) *v (R *v p) = 0"
+  proof -
+    have e1: "(R ** a ** transpose R) *v (R *v p)
+        = R *v (a *v (transpose R *v (R *v p)))" by (rule Amv)
+    have e2: "transpose R *v (R *v p) = p" by (rule RTR)
+    have "(R ** a ** transpose R) *v (R *v p) = R *v (a *v p)"
+      unfolding e1 e2 by (rule refl)
+    then show ?thesis unfolding ap by simp
+  qed
+  \<comment> \<open>the cap, by isometry\<close>
+  have ubA: "eigen_ub (R ** a ** transpose R) L"
+    unfolding eigen_ub_def
+  proof
+    fix z :: "real^'n"
+    have q: "z \<bullet> ((R ** a ** transpose R) *v z)
+        = (transpose R *v z) \<bullet> (a *v (transpose R *v z))" by (rule quad)
+    have le: "(transpose R *v z) \<bullet> (a *v (transpose R *v z))
+        \<le> L * ((transpose R *v z) \<bullet> (transpose R *v z))"
+      using uba unfolding eigen_ub_def by blast
+    show "z \<bullet> ((R ** a ** transpose R) *v z) \<le> L * (z \<bullet> z)"
+      using q le normT[of z] by simp
+  qed
+  \<comment> \<open>the floor, by moving the witnessing subspace\<close>
+  have lbA: "eigen_lb (R ** a ** transpose R) (CARD('n) - k)"
+  proof -
+    obtain S where Ssub: "subspace S" and Sdim: "CARD('n) - k \<le> dim S"
+      and Sge: "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x \<le> x \<bullet> (a *v x)"
+      using lba unfolding eigen_lb_def by blast
+    define S' where "S' = (\<lambda>y. R *v y) ` S"
+    have linRT: "linear (\<lambda>y :: real^'n. transpose R *v y)"
+      by (rule matrix_vector_mul_linear)
+    have z0: "(0 :: real^'n) \<in> S" using Ssub unfolding subspace_def by blast
+    have subS': "subspace S'"
+    proof -
+      have z': "(0 :: real^'n) \<in> S'"
+      proof -
+        have "R *v (0 :: real^'n) = 0" by simp
+        then show ?thesis unfolding S'_def using z0 by force
+      qed
+      have addS: "x + y \<in> S'" if xS: "x \<in> S'" and yS: "y \<in> S'" for x y
+      proof -
+        from xS obtain x0 where x0: "x0 \<in> S" and xe: "x = R *v x0"
+          unfolding S'_def by blast
+        from yS obtain y0 where y0: "y0 \<in> S" and ye: "y = R *v y0"
+          unfolding S'_def by blast
+        have "x + y = R *v (x0 + y0)"
+          unfolding xe ye by (simp add: matrix_vector_right_distrib)
+        moreover have "x0 + y0 \<in> S"
+          using Ssub x0 y0 unfolding subspace_def by blast
+        ultimately show ?thesis unfolding S'_def by blast
+      qed
+      have scalS: "c *\<^sub>R x \<in> S'" if xS: "x \<in> S'" for c x
+      proof -
+        from xS obtain x0 where x0: "x0 \<in> S" and xe: "x = R *v x0"
+          unfolding S'_def by blast
+        have "c *\<^sub>R x = R *v (c *\<^sub>R x0)"
+          unfolding xe by (simp add: matrix_vector_mult_scaleR)
+        moreover have "c *\<^sub>R x0 \<in> S"
+          using Ssub x0 unfolding subspace_def by blast
+        ultimately show ?thesis unfolding S'_def by blast
+      qed
+      show ?thesis unfolding subspace_def using z' addS scalS by blast
+    qed
+    have Seq: "S = (\<lambda>y. transpose R *v y) ` S'"
+    proof
+      show "S \<subseteq> (\<lambda>y. transpose R *v y) ` S'"
+      proof
+        fix x assume xS: "x \<in> S"
+        then have "R *v x \<in> S'" unfolding S'_def by blast
+        moreover have "transpose R *v (R *v x) = x" by (rule RTR)
+        ultimately show "x \<in> (\<lambda>y. transpose R *v y) ` S'" by force
+      qed
+    next
+      show "(\<lambda>y. transpose R *v y) ` S' \<subseteq> S"
+      proof
+        fix z assume "z \<in> (\<lambda>y. transpose R *v y) ` S'"
+        then obtain w where wS: "w \<in> S'" and ze: "z = transpose R *v w"
+          by blast
+        from wS obtain x where xS: "x \<in> S" and we: "w = R *v x"
+          unfolding S'_def by blast
+        have "z = x" unfolding ze we by (rule RTR)
+        then show "z \<in> S" using xS by simp
+      qed
+    qed
+    have dimS': "CARD('n) - k \<le> dim S'"
+    proof -
+      have "dim S = dim ((\<lambda>y. transpose R *v y) ` S')" using Seq by simp
+      also have "\<dots> \<le> dim S'" by (rule dim_image_le[OF linRT])
+      finally show ?thesis using Sdim by linarith
+    qed
+    have geS': "x \<bullet> x \<le> x \<bullet> ((R ** a ** transpose R) *v x)"
+      if xS: "x \<in> S'" for x
+    proof -
+      from xS obtain y where yS: "y \<in> S" and xe: "x = R *v y"
+        unfolding S'_def by blast
+      have RT: "transpose R *v x = y" unfolding xe by (rule RTR)
+      have eq: "x \<bullet> ((R ** a ** transpose R) *v x) = y \<bullet> (a *v y)"
+      proof -
+        have "x \<bullet> ((R ** a ** transpose R) *v x)
+            = (transpose R *v x) \<bullet> (a *v (transpose R *v x))"
+          by (rule quad)
+        then show ?thesis unfolding RT .
+      qed
+      have nn: "x \<bullet> x = y \<bullet> y"
+        unfolding xe by (rule orth_preserves_inner[OF orth])
+      show ?thesis using Sge[OF yS] eq nn by simp
+    qed
+    show ?thesis
+      unfolding eigen_lb_def
+      using subS' dimS' geS' by blast
+  qed
+  show ?thesis
+    unfolding feasible_def using psdA killA lbA ubA by simp
+qed
+
+lemma rotv_orth':
+  fixes u v :: "real^'n::finite"
+  assumes u0: "u \<noteq> 0" and ne: "u + v \<noteq> 0"
+  shows "rotv u v ** transpose (rotv u v) = mat 1"
+proof -
+  have s1: "rotv u v ** transpose (rotv u v)
+      = (hh (u + v) ** hh u) ** (hh u ** hh (u + v))"
+    unfolding rotv_def matrix_transpose_mul hh_sym by (rule refl)
+  have mid: "(hh (u + v) ** hh u) ** hh u = hh (u + v)"
+  proof -
+    have "(hh (u + v) ** hh u) ** hh u = hh (u + v) ** (hh u ** hh u)"
+      by (rule matrix_mul_assoc[symmetric])
+    also have "\<dots> = hh (u + v) ** mat 1" using hh_sq[OF u0] by simp
+    also have "\<dots> = hh (u + v)" by (rule matrix_mul_rid)
+    finally show ?thesis .
+  qed
+  have "(hh (u + v) ** hh u) ** (hh u ** hh (u + v))
+      = ((hh (u + v) ** hh u) ** hh u) ** hh (u + v)"
+    by (rule matrix_mul_assoc)
+  also have "\<dots> = hh (u + v) ** hh (u + v)" unfolding mid by (rule refl)
+  also have "\<dots> = mat 1" by (rule hh_sq[OF ne])
+  finally show ?thesis unfolding s1 .
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
