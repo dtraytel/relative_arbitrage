@@ -13583,6 +13583,228 @@ proof -
   ultimately show ?thesis by simp
 qed
 
+section \<open>The paper's supersolution: touching the lower envelope\<close>
+
+text \<open>Definition 3.1(b) of the paper touches the LOWER SEMICONTINUOUS
+  ENVELOPE \<open>u\<^sub>*\<close>, not \<open>u\<close> itself.  That is what makes the minimisers in
+  the Case-2 dichotomy exist, and it is the form the comparison
+  principle consumes.  This section builds the envelope, states the
+  faithful supersolution notion, and records the two algebraic facts
+  that let the ALREADY VERIFIED Euler machinery serve a process whose
+  START is separated from the quadratic's CENTRE --- which is exactly
+  what the envelope argument needs, since it runs the construction at
+  points APPROACHING the touching point rather than at the touching
+  point itself.\<close>
+
+subsection \<open>The lower semicontinuous envelope\<close>
+
+definition lsc_env :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real"
+  where "lsc_env u x = (SUP e \<in> {0<..}. INF y \<in> ball x e. u y)"
+
+lemma lsc_env_bdd_above:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+  shows "bdd_above ((\<lambda>e. INF y \<in> ball x e. u y) ` {0<..})"
+proof (rule bdd_aboveI[of _ "u x"])
+  fix z assume "z \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
+  then obtain e where e: "0 < e" and z: "z = (INF y \<in> ball x e. u y)"
+    by auto
+  have bdd: "bdd_below (u ` ball x e)"
+    by (rule bdd_belowI[of _ B]) (use B in auto)
+  have "u x \<in> u ` ball x e" using e by auto
+  then show "z \<le> u x" unfolding z by (rule cInf_lower[OF _ bdd])
+qed
+
+lemma lsc_env_le_self:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+  shows "lsc_env u x \<le> u x"
+  unfolding lsc_env_def
+proof (rule cSup_least)
+  show "(\<lambda>e. INF y \<in> ball x e. u y) ` {0<..} \<noteq> {}" by auto
+next
+  fix z assume "z \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
+  then obtain e where e: "0 < e" and z: "z = (INF y \<in> ball x e. u y)"
+    by auto
+  have bdd: "bdd_below (u ` ball x e)"
+    by (rule bdd_belowI[of _ B]) (use B in auto)
+  have "u x \<in> u ` ball x e" using e by auto
+  then show "z \<le> u x" unfolding z by (rule cInf_lower[OF _ bdd])
+qed
+
+lemma lsc_env_ge:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+  shows "B \<le> lsc_env u x"
+proof -
+  have bdd: "bdd_below (u ` ball x 1)"
+    by (rule bdd_belowI[of _ B]) (use B in auto)
+  have "B \<le> (INF y \<in> ball x 1. u y)"
+    by (rule cInf_greatest) (use B in auto)
+  also have "\<dots> \<le> lsc_env u x"
+    unfolding lsc_env_def
+    by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) auto
+  finally show ?thesis .
+qed
+
+text \<open>The property the envelope exists for: arbitrarily near \<open>x\<close> there
+  are points where \<open>u\<close> is arbitrarily close to \<open>u\<^sub>*(x)\<close> from above.  This
+  is what supplies the approximating sequence along which the
+  construction is run.\<close>
+
+lemma lsc_env_approx:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y" and d0: "0 < \<delta>" and e0: "0 < \<epsilon>"
+  obtains y where "dist x y < \<delta>" and "u y < lsc_env u x + \<epsilon>"
+proof -
+  have bdd: "bdd_below (u ` ball x \<delta>)"
+    by (rule bdd_belowI[of _ B]) (use B in auto)
+  have ne: "u ` ball x \<delta> \<noteq> {}" using d0 by auto
+  have le: "(INF y \<in> ball x \<delta>. u y) \<le> lsc_env u x"
+    unfolding lsc_env_def
+    by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use d0 in auto)
+  have "(INF y \<in> ball x \<delta>. u y) < lsc_env u x + \<epsilon>"
+    using le e0 by linarith
+  then obtain z where z: "z \<in> u ` ball x \<delta>" and zlt: "z < lsc_env u x + \<epsilon>"
+    using cInf_less_iff[OF ne bdd] by blast
+  from z obtain y where y: "y \<in> ball x \<delta>" and uy: "z = u y" by auto
+  show ?thesis
+  proof (rule that)
+    show "dist x y < \<delta>" using y by (simp add: mem_ball)
+    show "u y < lsc_env u x + \<epsilon>" using zlt unfolding uy .
+  qed
+qed
+
+subsection \<open>The faithful supersolution property\<close>
+
+text \<open>Definition 3.1(b), verbatim: the test function touches the LOWER
+  ENVELOPE from below, globally on \<open>K\<close>, and the conclusion is the
+  inequality for the UPPER envelope \<open>F\<^sup>*\<close> of the operator.\<close>
+
+definition visc_supersol_lsc ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
+     \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "visc_supersol_lsc k L K \<Omega> u \<longleftrightarrow>
+     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
+        (\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y) \<longrightarrow>
+        1 \<le> ell_op_usc k L (g x) H)"
+
+subsection \<open>Recentring the quadratic\<close>
+
+text \<open>The two facts that make the envelope argument affordable.  A
+  quadratic centred at \<open>x\<close> IS, up to the additive constant of its value
+  at \<open>y\<close>, the quadratic centred at \<open>y\<close> with gradient \<open>q + M(y-x)\<close> ---
+  and the two have the SAME gradient field \<open>q + M(\<sqdot> - x)\<close>, so the kill
+  hypothesis is literally unchanged.  Consequently every verified
+  theorem about a process started at its quadratic's centre applies
+  verbatim to a process started at \<open>y\<close> with the quadratic centred at
+  \<open>x\<close>, and no part of the Euler chain has to be re-derived.\<close>
+
+lemma quad_grad_shift:
+  fixes M :: "real^'n::finite^'n" and q x y z :: "real^'n"
+  shows "(q + M *v (y - x)) + M *v (z - y) = q + M *v (z - x)"
+proof -
+  have "M *v (z - x) = M *v ((y - x) + (z - y))"
+    by (rule arg_cong[where f = "\<lambda>v. M *v v"]) simp
+  also have "\<dots> = M *v (y - x) + M *v (z - y)"
+    by (rule matrix_vector_right_distrib)
+  finally show ?thesis by simp
+qed
+
+lemma quad_shift:
+  fixes M :: "real^'n::finite^'n" and q x y z :: "real^'n"
+  assumes sym: "transpose M = M"
+  shows "q \<bullet> (z - x) + (1/2) * ((z - x) \<bullet> (M *v (z - x)))
+      = (q \<bullet> (y - x) + (1/2) * ((y - x) \<bullet> (M *v (y - x))))
+        + ((q + M *v (y - x)) \<bullet> (z - y)
+           + (1/2) * ((z - y) \<bullet> (M *v (z - y))))"
+  using quad_taylor_step[OF sym, where q = q and x = x and a = y and b = z]
+  by linarith
+
+subsection \<open>Growth up to a time, on a region\<close>
+
+text \<open>@{thm [source] quad_good_upto} with the confinement region and the
+  quadratic's centre both free.  Only reachability from below is used,
+  so the proof is the same sequence-and-continuity passage.\<close>
+
+lemma quad_good_upto_region:
+  fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
+    and M :: "real^'n^'n" and c cm t :: real and RO :: "(real^'n) set"
+  assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
+    and good: "\<And>t'. 0 < t' \<Longrightarrow> t' \<le> c \<Longrightarrow>
+      (\<forall>s\<in>{0..t'}. fst (\<omega> s) \<in> RO) \<Longrightarrow>
+      t' * cm / 2 \<le> q \<bullet> (fst (\<omega> t') - x)
+        + (1/2) * ((fst (\<omega> t') - x) \<bullet> (M *v (fst (\<omega> t') - x)))"
+    and t0: "0 < t" and tc: "t \<le> c"
+    and inb: "\<And>s. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> fst (\<omega> s) \<in> RO"
+  shows "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+      + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+proof -
+  define g where "g = (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
+      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
+  have gc: "continuous_on {0..c} g"
+    unfolding g_def by (rule quad_eval_cont[OF wm])
+  define tj where "tj = (\<lambda>j. t - t / (2 * real (Suc j)))"
+  have tjl: "0 < tj j" for j
+  proof -
+    have "t / (2 * real (Suc j)) \<le> t / 2"
+    proof (rule divide_left_mono)
+      show "2 \<le> 2 * real (Suc j)" by simp
+      show "0 \<le> t" using t0 by linarith
+      show "0 < 2 * real (Suc j) * 2" by simp
+    qed
+    then show ?thesis unfolding tj_def using t0 by linarith
+  qed
+  have tju: "tj j < t" for j
+  proof -
+    have "0 < t / (2 * real (Suc j))" using t0 by simp
+    then show ?thesis unfolding tj_def by linarith
+  qed
+  have tjc: "tj j \<le> c" for j using tju[of j] tc by linarith
+  have glow: "tj j * cm / 2 \<le> g (tj j)" for j
+    unfolding g_def
+  proof (rule good)
+    show "0 < tj j" by (rule tjl)
+    show "tj j \<le> c" by (rule tjc)
+    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> RO"
+    proof
+      fix s assume s: "s \<in> {0..tj j}"
+      then have "0 \<le> s" and "s < t" using tju[of j] by auto
+      then show "fst (\<omega> s) \<in> RO" by (rule inb)
+    qed
+  qed
+  have tjlim: "tj \<longlonglongrightarrow> t"
+  proof -
+    have eq: "(\<lambda>j. (t / 2) * inverse (real (Suc j)))
+        = (\<lambda>j. t / (2 * real (Suc j)))"
+      by (rule ext) (simp add: field_simps)
+    have "(\<lambda>j. (t / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (t / 2) * 0"
+      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
+    then have "(\<lambda>j. t / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
+      unfolding eq by simp
+    then have "(\<lambda>j. t - t / (2 * real (Suc j))) \<longlonglongrightarrow> t - 0"
+      by (intro tendsto_diff tendsto_const)
+    then show ?thesis unfolding tj_def by simp
+  qed
+  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g t"
+  proof -
+    have inS: "\<forall>n. tj n \<in> {0..c}"
+      using tjl tjc by (auto intro: less_imp_le)
+    have tS: "t \<in> {0..c}" using t0 tc by auto
+    have "(g \<circ> tj) \<longlonglongrightarrow> g t"
+      using continuous_on_sequentially[THEN iffD1, OF gc] inS tS tjlim
+      by blast
+    then show ?thesis by (simp add: o_def)
+  qed
+  have lim1: "(\<lambda>j. tj j * cm / 2) \<longlonglongrightarrow> t * cm / 2"
+    by (rule tendsto_divide[OF
+        tendsto_mult[OF tjlim tendsto_const] tendsto_const]) simp
+  have "t * cm / 2 \<le> g t"
+    by (rule LIMSEQ_le[OF lim1 gcomp]) (use glow in blast)
+  then show ?thesis unfolding g_def .
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
