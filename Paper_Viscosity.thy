@@ -10301,6 +10301,271 @@ proof -
   qed
 qed
 
+subsection \<open>The quadratic minorant and the concrete field\<close>
+
+text \<open>Batch 4a.  Two independent bricks for the supersolution assembly.
+
+  First, the mirror of @{thm [source] test_fun_quadratic_dominates}: a
+  test function DOMINATES the quadratic with the softened Hessian
+  \<open>H - \<delta>\<cdot>1\<close> near the touching point.  The proof is the same
+  one-dimensional ray argument with every inequality reversed.
+
+  Second, the concrete volatility field for the Euler construction: the
+  columns of @{const skewfield} through a fixed eigenbasis enumeration,
+  evaluated at the clamped point.  @{thm [source] skewfield_decomp}
+  identifies its square with the field itself, so the three hypotheses
+  of the Euler machinery --- admissible square, gradient kill, trace
+  margin --- are @{thm [source] skewfield_properties} verbatim; the
+  transpose kill needs one extra line of linear algebra
+  (\<open>|S\<^sup>Tg|\<^sup>2 = ((SS\<^sup>T)g)\<bullet>g = 0\<close>).\<close>
+
+lemma test_fun_quadratic_minorates:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n" and x :: "real^'n" and \<delta> :: real
+  assumes tf: "test_fun_at \<phi> g H x" and d0: "0 < \<delta>"
+  obtains r where "0 < r"
+    and "\<And>z. z \<in> ball x r \<Longrightarrow>
+      \<phi> x + g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+proof -
+  have dg: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+    using tf unfolding test_fun_at_def by blast
+  obtain e where e0: "0 < e"
+    and dphi: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    using tf unfolding test_fun_at_def by blast
+  have "\<forall>e>0. \<exists>d>0. \<forall>y. norm (y - x) < d \<longrightarrow>
+      norm (g y - g x - (H *v (y - x))) \<le> e * norm (y - x)"
+    using dg unfolding has_derivative_at_alt by blast
+  moreover have "0 < \<delta> / 2" using d0 by simp
+  ultimately obtain d where dd: "0 < d"
+    and bnd: "\<And>y. norm (y - x) < d \<Longrightarrow>
+        norm (g y - g x - (H *v (y - x))) \<le> (\<delta> / 2) * norm (y - x)"
+    by blast
+  define r where "r = min e d"
+  have r0: "0 < r" using e0 dd by (simp add: r_def)
+  have main: "\<phi> x + g x \<bullet> (z - x)
+      + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+    if z: "z \<in> ball x r" for z
+  proof -
+    define v where "v = z - x"
+    have nv: "norm v < r"
+      using z by (simp add: v_def mem_ball dist_norm norm_minus_commute)
+    define A where "A = g x \<bullet> v"
+    define B where "B = v \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v v)"
+    define f where "f t = (\<phi> x + t * A + t\<^sup>2 * B / 2) - \<phi> (x + t *\<^sub>R v)" for t
+    have f0: "f 0 = 0" by (simp add: f_def)
+    have deriv: "\<exists>y. (f has_field_derivative y) (at t) \<and> y \<le> 0"
+      if t: "0 \<le> t" "t \<le> 1" for t
+    proof -
+      have ntv: "norm (t *\<^sub>R v) \<le> norm v"
+        using t by (simp add: mult_left_le_one_le)
+      have mem: "x + t *\<^sub>R v \<in> ball x e"
+        using ntv nv by (simp add: mem_ball dist_norm r_def)
+      have d1: "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_field_derivative
+          g (x + t *\<^sub>R v) \<bullet> v) (at t)"
+      proof -
+        have i1: "((\<lambda>t :: real. x + t *\<^sub>R v) has_derivative (\<lambda>h. h *\<^sub>R v)) (at t)"
+          by (auto intro!: derivative_eq_intros)
+        have i2: "(\<phi> has_derivative (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> h)) (at (x + t *\<^sub>R v))"
+          by (rule dphi[OF mem])
+        have "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_derivative
+            (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> (h *\<^sub>R v))) (at t)"
+          using diff_chain_at[OF i1 i2] by (simp add: o_def)
+        then show ?thesis
+          by (rule has_derivative_imp_has_field_derivative)
+            (simp add: inner_scaleR_right ac_simps)
+      qed
+      have d2: "((\<lambda>t. \<phi> x + t * A + t\<^sup>2 * B / 2) has_field_derivative
+          A + t * B) (at t)"
+        by (auto intro!: derivative_eq_intros)
+      have df: "(f has_field_derivative
+          ((A + t * B) - g (x + t *\<^sub>R v) \<bullet> v)) (at t)"
+        unfolding f_def by (rule DERIV_diff[OF d2 d1])
+      have expand: "(A + t * B) - g (x + t *\<^sub>R v) \<bullet> v
+          = - ((g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v)
+            - t * (\<delta> * (v \<bullet> v))"
+      proof -
+        have m1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
+          by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
+              matrix_vector_mul_lid)
+        have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
+          by (simp add: matrix_vector_mult_scaleR)
+        show ?thesis
+          unfolding A_def B_def m1 m2
+          by (simp add: inner_diff_left inner_add_right inner_scaleR_left
+              inner_scaleR_right inner_commute algebra_simps)
+      qed
+      have small: "- ((g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v)
+          \<le> (\<delta> / 2) * (t * norm v) * norm v"
+      proof -
+        have "norm (t *\<^sub>R v) < d"
+          using ntv nv by (simp add: r_def)
+        moreover have "(x + t *\<^sub>R v) - x = t *\<^sub>R v" by simp
+        ultimately have nb: "norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))
+            \<le> (\<delta> / 2) * norm (t *\<^sub>R v)"
+          using bnd[of "x + t *\<^sub>R v"] by simp
+        have "- ((g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v)
+            = (- (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))) \<bullet> v"
+          by (metis inner_minus_left)
+        also have "\<dots> \<le> norm (- (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))))
+            * norm v"
+          by (rule norm_cauchy_schwarz)
+        also have "\<dots> = norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))
+            * norm v"
+          by (metis norm_minus_cancel)
+        also have "\<dots> \<le> ((\<delta> / 2) * norm (t *\<^sub>R v)) * norm v"
+          by (rule mult_right_mono[OF nb norm_ge_zero])
+        also have "\<dots> = (\<delta> / 2) * (t * norm v) * norm v"
+          using t by (simp add: abs_of_nonneg)
+        finally show ?thesis .
+      qed
+      have vv: "v \<bullet> v = norm v * norm v"
+        by (simp add: dot_square_norm power2_eq_square)
+      have "(A + t * B) - g (x + t *\<^sub>R v) \<bullet> v
+          \<le> (\<delta> / 2) * (t * norm v) * norm v - t * (\<delta> * (norm v * norm v))"
+        unfolding expand vv by (rule diff_right_mono[OF small])
+      also have "\<dots> = - (\<delta> / 2) * t * (norm v * norm v)"
+        by (simp add: field_simps)
+      also have "\<dots> \<le> 0"
+        using d0 t by (simp add: mult_nonneg_nonneg)
+      finally show ?thesis using df by blast
+    qed
+    have "f 1 \<le> f 0"
+      by (rule DERIV_nonpos_imp_nonincreasing[of 0 1 f])
+        (use deriv in auto)
+    then have "\<phi> x + 1 * A + 1\<^sup>2 * B / 2 \<le> \<phi> (x + 1 *\<^sub>R v)"
+      using f0 by (simp add: f_def)
+    then show ?thesis by (simp add: v_def A_def B_def)
+  qed
+  show ?thesis by (rule that[OF r0 main])
+qed
+
+definition skewSF ::
+  "(real^'n::finite \<Rightarrow> real) \<Rightarrow> ('n \<Rightarrow> real^'n) \<Rightarrow> real^'n
+     \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> real \<Rightarrow> real^'n \<Rightarrow> real^'n^'n"
+  where "skewSF lam f q M x r z
+    = (\<chi> i j. (skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+        *v (q + M *v (closest_point (cball x r) z - x))) $ i)"
+
+lemma skewSF_cont:
+  fixes q x :: "real^'n::finite" and M :: "real^'n^'n" and r :: real
+  assumes r0: "0 \<le> r"
+  shows "continuous_on UNIV (skewSF lam f q M x r)"
+proof -
+  have cpc: "continuous_on UNIV (closest_point (cball x r))"
+    by (rule continuous_on_closest_point)
+      (use r0 in \<open>auto simp: convex_cball closed_cball\<close>)
+  have gradc: "continuous_on UNIV (\<lambda>z :: real^'n.
+      q + M *v (closest_point (cball x r) z - x))"
+  proof -
+    have d: "continuous_on UNIV (\<lambda>z :: real^'n.
+        closest_point (cball x r) z - x)"
+      by (intro continuous_intros cpc)
+    have mv: "continuous_on UNIV (\<lambda>z :: real^'n.
+        M *v (closest_point (cball x r) z - x))"
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matvec_blin] d]) auto
+    show ?thesis by (intro continuous_intros mv)
+  qed
+  have entry: "continuous_on UNIV (\<lambda>z.
+      (skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+        *v (q + M *v (closest_point (cball x r) z - x))) $ i)" for i j
+  proof -
+    have col: "continuous_on UNIV (\<lambda>z.
+        skewv q (sqrt (lam (f j)) *\<^sub>R f j)
+          *v (q + M *v (closest_point (cball x r) z - x)))"
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matvec_blin] gradc]) auto
+    show ?thesis
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF bounded_linear_vec_nth] col]) auto
+  qed
+  show ?thesis
+    unfolding skewSF_def by (intro continuous_on_vec_lambda entry)
+qed
+
+lemma skewSF_square:
+  fixes B :: "(real^'n::finite) set" and f :: "'n \<Rightarrow> real^'n"
+  assumes bij: "bij_betw f (UNIV :: 'n set) B"
+  shows "skewSF lam f q M x r z ** transpose (skewSF lam f q M x r z)
+      = skewfield B lam q M x (closest_point (cball x r) z)"
+  unfolding skewSF_def by (rule skewfield_decomp[OF bij])
+
+theorem skewSF_package:
+  fixes B Bp :: "(real^'n::finite) set" and lam :: "real^'n \<Rightarrow> real"
+    and f :: "'n \<Rightarrow> real^'n" and q x :: "real^'n" and M :: "real^'n^'n"
+    and L m r \<eta> :: real
+  defines "Cm \<equiv> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+  defines "ec \<equiv> 2 * sqrt L * Cm / norm q"
+  assumes bij: "bij_betw f (UNIV :: 'n set) B"
+    and B: "onormal B" and sp: "span B = UNIV"
+    and BpB: "Bp \<subseteq> B" and cardBp: "card Bp = CARD('n) - k"
+    and lam_box: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u \<and> lam u \<le> L - m"
+    and lam_lb: "\<And>u. u \<in> Bp \<Longrightarrow> 1 + m \<le> lam u"
+    and lam_orth: "\<And>u. u \<in> B \<Longrightarrow> 0 < lam u \<Longrightarrow> u \<bullet> q = 0"
+    and m0: "0 < m" and mL: "m \<le> L"
+    and q0: "q \<noteq> 0"
+    and tr: "\<eta> \<le> 1 + trace (M ** (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2"
+    and r0: "0 \<le> r"
+    and sm_ub: "(1 + 1 / (m / (2 * L)))
+        * (real CARD('n) * (ec * r)\<^sup>2) \<le> m / 2"
+    and sm_lb: "real CARD('n) * (ec * r * (2 * sqrt L + ec * r))
+        + 2 * (1 + m) / m
+          * (real CARD('n) * (ec * r * (2 * sqrt L + ec * r)))\<^sup>2 \<le> m / 2"
+    and sm_tr: "real CARD('n)
+        * (Cm * (ec * r * (2 * sqrt L + ec * r))) \<le> \<eta>"
+  shows skewSF_sconstraint: "\<And>z. skewSF lam f q M x r z
+        ** transpose (skewSF lam f q M x r z) \<in> sconstraint k L"
+    and skewSF_kill: "\<And>z. transpose (skewSF lam f q M x r z)
+        *v (q + M *v (closest_point (cball x r) z - x)) = 0"
+    and skewSF_marg: "\<And>z. \<eta> - 2 \<le> trace (M ** (skewSF lam f q M x r z
+        ** transpose (skewSF lam f q M x r z)))"
+proof -
+  have cin: "closest_point (cball x r) z \<in> cball x r" for z
+    by (rule closest_point_in_set) (use r0 in \<open>auto simp: closed_cball\<close>)
+  have zr: "dist (closest_point (cball x r) z) x \<le> r" for z
+    using cin[of z] by (simp add: mem_cball dist_commute)
+  note props = skewfield_properties[OF B sp BpB cardBp lam_box lam_lb
+      lam_orth m0 mL q0 tr zr r0 sm_ub[unfolded ec_def Cm_def]
+      sm_lb[unfolded ec_def Cm_def] sm_tr[unfolded ec_def Cm_def]]
+  have sq: "skewSF lam f q M x r z ** transpose (skewSF lam f q M x r z)
+      = skewfield B lam q M x (closest_point (cball x r) z)" for z
+    by (rule skewSF_square[OF bij])
+  show "skewSF lam f q M x r z ** transpose (skewSF lam f q M x r z)
+      \<in> sconstraint k L" for z
+    unfolding sq by (rule props(1))
+  show "transpose (skewSF lam f q M x r z)
+      *v (q + M *v (closest_point (cball x r) z - x)) = 0" for z
+  proof -
+    define A where "A = skewSF lam f q M x r z"
+    define gr where "gr = q + M *v (closest_point (cball x r) z - x)"
+    have a0: "(A ** transpose A) *v gr = 0"
+      unfolding A_def gr_def sq by (rule props(2))
+    have e1: "(transpose A *v gr) \<bullet> (transpose A *v gr)
+        = (transpose (transpose A) *v (transpose A *v gr)) \<bullet> gr"
+      by (rule inner_transpose_matrix)
+    have e2: "transpose (transpose A) *v (transpose A *v gr)
+        = A *v (transpose A *v gr)"
+      by (simp only: transpose_transpose)
+    have e3: "A *v (transpose A *v gr) = (A ** transpose A) *v gr"
+      by (metis matrix_vector_mul_assoc)
+    have e4: "((A ** transpose A) *v gr) \<bullet> gr = 0"
+      using a0 by simp
+    have "(transpose A *v gr) \<bullet> (transpose A *v gr) = 0"
+      by (metis e1 e2 e3 e4)
+    then have "transpose A *v gr = 0" by simp
+    then show ?thesis unfolding A_def gr_def .
+  qed
+  show "\<eta> - 2 \<le> trace (M ** (skewSF lam f q M x r z
+      ** transpose (skewSF lam f q M x r z)))" for z
+  proof -
+    have "\<eta> / 2 \<le> 1 + trace (M ** skewfield B lam q M x
+        (closest_point (cball x r) z)) / 2"
+      by (rule props(3))
+    then show ?thesis unfolding sq by linarith
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
