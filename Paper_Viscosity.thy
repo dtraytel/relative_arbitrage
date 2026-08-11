@@ -12949,6 +12949,314 @@ proof -
   qed
 qed
 
+subsection \<open>The tangential member: exact radial growth\<close>
+
+text \<open>Batch 4d(vi).  The unclamped tangential field is admissible
+  everywhere --- even where the guarded radial is short, its square
+  keeps a full \<open>(n-1)\<close>-dimensional unit eigenspace --- and on the region
+  where the guard is inactive it kills the radial exactly.  Feeding the
+  two-quadratic limit theorem with \<open>\<pm>(2(x-y\<^sub>0), 2\<cdot>1)\<close> pins the squared
+  distance to \<open>y\<^sub>0\<close> to the deterministic line
+  \<open>|x-y\<^sub>0|\<^sup>2 + (CARD('n)-1) t\<close> while the path stays in the region.  This
+  is the engine behind the second horn of Case 2 and Example 3.1's
+  lower bound: exit times of concentric balls are deterministic.\<close>
+
+lemma tanp_sq_sconstraint:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u \<le> 1" and k1: "1 \<le> k" and L1: "1 \<le> L"
+  shows "tanp u ** transpose (tanp u) \<in> sconstraint k L"
+proof -
+  have tr: "transpose (tanp u) = tanp u" by (rule tanp_sym)
+  define A where "A = tanp u ** tanp u"
+  have symA: "transpose A = A"
+    unfolding A_def by (simp add: matrix_transpose_mul tanp_sym)
+  have qf: "v \<bullet> (A *v v) = (tanp u *v v) \<bullet> (tanp u *v v)" for v
+  proof -
+    have assoc: "A *v v = tanp u *v (tanp u *v v)"
+      unfolding A_def by (metis matrix_vector_mul_assoc)
+    have "v \<bullet> (tanp u *v (tanp u *v v))
+        = (transpose (tanp u) *v v) \<bullet> (tanp u *v v)"
+      by (rule inner_transpose_matrix)
+    then show ?thesis unfolding assoc tr .
+  qed
+  have contract: "(tanp u *v v) \<bullet> (tanp u *v v) \<le> v \<bullet> v" for v
+  proof -
+    have e: "(tanp u *v v) \<bullet> (tanp u *v v)
+        = v \<bullet> v - (2 - u \<bullet> u) * (u \<bullet> v)\<^sup>2"
+      unfolding tanp_mv
+      by (simp add: inner_diff_left inner_diff_right
+          inner_scaleR_left inner_scaleR_right inner_commute
+          power2_eq_square algebra_simps)
+    have uu1: "u \<bullet> u \<le> 1"
+    proof -
+      have "u \<bullet> u = (norm u)\<^sup>2" by (simp add: dot_square_norm)
+      also have "\<dots> \<le> 1"
+        using u1 norm_ge_zero[of u] by (simp add: power_le_one)
+      finally show ?thesis .
+    qed
+    have "0 \<le> (2 - u \<bullet> u) * (u \<bullet> v)\<^sup>2"
+      using uu1 by (intro mult_nonneg_nonneg) simp_all
+    then show ?thesis unfolding e by linarith
+  qed
+  have psdA: "psd A"
+    unfolding psd_def
+  proof (intro conjI allI)
+    show "transpose A = A" by (rule symA)
+    show "0 \<le> v \<bullet> (A *v v)" for v
+      unfolding qf by (rule inner_ge_zero)
+  qed
+  have ubA: "eigen_ub A L"
+    unfolding eigen_ub_def
+  proof
+    fix v :: "real^'n"
+    have "v \<bullet> (A *v v) \<le> v \<bullet> v" unfolding qf by (rule contract)
+    also have "\<dots> = 1 * (v \<bullet> v)" by simp
+    also have "\<dots> \<le> L * (v \<bullet> v)"
+      by (rule mult_right_mono[OF L1 inner_ge_zero])
+    finally show "v \<bullet> (A *v v) \<le> L * (v \<bullet> v)" .
+  qed
+  have lbA: "eigen_lb A (CARD('n) - k)"
+    unfolding eigen_lb_def
+  proof (intro exI[of _ "{v :: real^'n. u \<bullet> v = 0}"] conjI ballI)
+    show "subspace {v :: real^'n. u \<bullet> v = 0}"
+      by (rule subspace_hyperplane)
+    show "CARD('n) - k \<le> dim {v :: real^'n. u \<bullet> v = 0}"
+    proof (cases "u = 0")
+      case True
+      then have "{v :: real^'n. u \<bullet> v = 0} = UNIV" by simp
+      then show ?thesis by simp
+    next
+      case False
+      then have "dim {v :: real^'n. u \<bullet> v = 0} = CARD('n) - 1"
+        by (simp add: dim_hyperplane)
+      then show ?thesis using k1 by simp
+    qed
+  next
+    fix v :: "real^'n" assume "v \<in> {v. u \<bullet> v = 0}"
+    then have uv: "u \<bullet> v = 0" by simp
+    have "tanp u *v v = v" unfolding tanp_mv uv by simp
+    then show "v \<bullet> v \<le> v \<bullet> (A *v v)" unfolding qf by simp
+  qed
+  have "A \<in> feasible k L 0"
+    unfolding feasible_def
+    using psdA ubA lbA by (simp add: matrix_vector_mult_0_right)
+  then have "A \<in> sconstraint k L"
+    using feasible_subset_sconstraint by blast
+  then show ?thesis unfolding A_def tr .
+qed
+
+lemma tanRF_cont:
+  fixes y\<^sub>0 :: "real^'n::finite"
+  assumes rho0: "0 < \<rho>"
+  shows "continuous_on UNIV (\<lambda>z. tanp (uvec y\<^sub>0 \<rho> z))"
+proof -
+  have uc: "continuous_on UNIV (uvec y\<^sub>0 \<rho>)"
+    by (rule uvec_cont[OF rho0])
+  have ci: "continuous_on UNIV (\<lambda>z. uvec y\<^sub>0 \<rho> z $ i)" for i
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_vec_nth] uc]) auto
+  have eq: "(\<lambda>z. tanp (uvec y\<^sub>0 \<rho> z)) = (\<lambda>z. \<chi> i j.
+      (if i = j then 1 else 0)
+      - uvec y\<^sub>0 \<rho> z $ i * uvec y\<^sub>0 \<rho> z $ j)"
+    by (rule ext) (simp add: tanp_def outerp_def mat_def vec_eq_iff)
+  show ?thesis unfolding eq
+    by (intro continuous_on_vec_lambda continuous_intros ci)
+qed
+
+theorem tangential_exact_growth:
+  fixes y\<^sub>0 x :: "real^'n::finite" and \<rho> rB T :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
+    and kn: "k < CARD('n)"
+    and rho0: "0 < \<rho>"
+  shows "\<exists>P \<in> paper_pair_class k L T x. AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB) \<longrightarrow>
+      (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
+        = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
+proof -
+  define RO where "RO = {w :: real^'n. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
+  define SF where "SF = (\<lambda>z. tanp (uvec y\<^sub>0 \<rho> z))"
+  define Rn where "Rn = rB + norm (y\<^sub>0 - x)"
+  have SFc: "continuous_on UNIV SF"
+    unfolding SF_def by (rule tanRF_cont[OF rho0])
+  have SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    unfolding SF_def
+    by (rule tanp_sq_sconstraint[OF uvec_norm_le[OF rho0] k1 L1])
+  have ROo: "open RO"
+  proof -
+    have "open {w :: real^'n. \<rho> < norm (w - y\<^sub>0)}"
+      by (intro open_Collect_less continuous_intros
+          continuous_on_const)
+    then show ?thesis unfolding RO_def
+      by (intro open_Int open_ball)
+  qed
+  have ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
+  proof -
+    fix z assume "z \<in> RO"
+    then have "norm (z - y\<^sub>0) < rB"
+      unfolding RO_def by (simp add: mem_ball dist_norm norm_minus_commute)
+    moreover have "norm (z - x) \<le> norm (z - y\<^sub>0) + norm (y\<^sub>0 - x)"
+    proof -
+      have "z - x = (z - y\<^sub>0) + (y\<^sub>0 - x)" by simp
+      then show ?thesis
+        by (metis norm_triangle_ineq)
+    qed
+    ultimately show "norm (z - x) \<le> Rn" unfolding Rn_def by linarith
+  qed
+  have unitRO: "norm (uvec y\<^sub>0 \<rho> z) = 1" if z: "z \<in> RO" for z
+  proof -
+    have "\<rho> \<le> norm (z - y\<^sub>0)" using z unfolding RO_def by auto
+    then show ?thesis by (rule uvec_unit[OF rho0])
+  qed
+  have killRO: "transpose (SF z) *v (c' *\<^sub>R (x - y\<^sub>0)
+      + (c' *\<^sub>R mat 1) *v (z - x)) = 0"
+    if z: "z \<in> RO" for z c'
+  proof -
+    have far: "\<rho> \<le> norm (z - y\<^sub>0)" using z unfolding RO_def by auto
+    have arg: "c' *\<^sub>R (x - y\<^sub>0) + (c' *\<^sub>R mat 1) *v (z - x)
+        = c' *\<^sub>R (z - y\<^sub>0)"
+      by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+          scaleR_right_diff_distrib scaleR_add_right)
+    have k0: "tanp (uvec y\<^sub>0 \<rho> z) *v (z - y\<^sub>0) = 0"
+      by (rule tanp_kill[OF unitRO[OF z] uvec_par[OF rho0 far]])
+    have "transpose (SF z) *v (c' *\<^sub>R (z - y\<^sub>0))
+        = c' *\<^sub>R (SF z *v (z - y\<^sub>0))"
+      unfolding SF_def tanp_sym
+      by (simp add: matrix_vector_mult_scaleR)
+    also have "\<dots> = 0" unfolding SF_def using k0 by simp
+    finally show ?thesis unfolding arg .
+  qed
+  have sqRO: "SF z ** transpose (SF z) = tanp (uvec y\<^sub>0 \<rho> z)"
+    if z: "z \<in> RO" for z
+    unfolding SF_def
+    by (simp add: tanp_sym tanp_sq[OF unitRO[OF z]])
+  have trRO: "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
+      = c' * (real CARD('n) - 1)"
+    if z: "z \<in> RO" for z c'
+  proof -
+    have "(c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z))
+        = c' *\<^sub>R (SF z ** transpose (SF z))"
+      by (simp add: scaleR_matrix_mult matrix_mul_lid)
+    then have "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
+        = c' * trace (SF z ** transpose (SF z))"
+      by (simp add: trace_scaleR)
+    also have "trace (SF z ** transpose (SF z))
+        = real CARD('n) - 1"
+      unfolding sqRO[OF z] by (rule tanp_trace[OF unitRO[OF z]])
+    finally show ?thesis .
+  qed
+  have sym1: "transpose ((2::real) *\<^sub>R mat 1 :: real^'n^'n)
+      = (2::real) *\<^sub>R mat 1"
+    by (simp add: transpose_scalar)
+  have sym2: "transpose ((-2::real) *\<^sub>R mat 1 :: real^'n^'n)
+      = (-2::real) *\<^sub>R mat 1"
+    by (simp add: transpose_def vec_eq_iff mat_def)
+  obtain P where P: "P \<in> paper_pair_class k L T x"
+    and AE2: "AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
+      (t * (2 * (real CARD('n) - 1)) / 2
+        \<le> (2 *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x)
+              \<bullet> (((2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))
+      \<and> (t * (- 2 * (real CARD('n) - 1)) / 2
+        \<le> ((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x)
+              \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))"
+  proof -
+    have kill1: "\<And>z. z \<in> RO \<Longrightarrow> transpose (SF z)
+        *v (2 *\<^sub>R (x - y\<^sub>0) + ((2::real) *\<^sub>R mat 1) *v (z - x)) = 0"
+      using killRO by blast
+    have kill2: "\<And>z. z \<in> RO \<Longrightarrow> transpose (SF z)
+        *v ((-2) *\<^sub>R (x - y\<^sub>0) + ((-2::real) *\<^sub>R mat 1) *v (z - x)) = 0"
+      using killRO by blast
+    have marg1: "\<And>z. z \<in> RO \<Longrightarrow> 2 * (real CARD('n) - 1)
+        \<le> trace (((2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
+      using trRO by simp
+    have marg2: "\<And>z. z \<in> RO \<Longrightarrow> - 2 * (real CARD('n) - 1)
+        \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
+    proof -
+      fix z assume zRO: "z \<in> RO"
+      show "- 2 * (real CARD('n) - 1)
+          \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
+        using trRO[OF zRO, of "-2"] by simp
+    qed
+    show ?thesis
+      using eulerp_limit_good2_region[OF T0 L1 SFc SFs sym1 sym2
+          ROo ROb kill1 marg1 kill2 marg2] that by blast
+  qed
+  show ?thesis
+  proof (intro bexI[OF _ P])
+    show "AE \<omega> in P. \<forall>t.
+        0 < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB)
+        \<longrightarrow> (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
+          = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
+      using AE2
+    proof (eventually_elim)
+      case (elim \<omega>)
+      show ?case
+      proof (intro allI impI)
+        fix t assume t0: "0 < t" and tT: "t \<le> T"
+          and inb: "\<forall>s\<in>{0..t}. fst (\<omega> s)
+            \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
+        have inb': "\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO"
+          using inb unfolding RO_def by blast
+        have g1: "t * (2 * (real CARD('n) - 1)) / 2
+            \<le> (2 *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
+              + (1/2) * ((fst (\<omega> t) - x)
+                  \<bullet> (((2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x)))"
+          and g2: "t * (- 2 * (real CARD('n) - 1)) / 2
+            \<le> ((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
+              + (1/2) * ((fst (\<omega> t) - x)
+                  \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x)))"
+          using elim t0 tT inb' by blast+
+        define d where "d = fst (\<omega> t) - x"
+        have e1: "(2 *\<^sub>R (x - y\<^sub>0)) \<bullet> d = 2 * ((x - y\<^sub>0) \<bullet> d)"
+          by (simp add: inner_scaleR_left)
+        have e2: "((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> d = - 2 * ((x - y\<^sub>0) \<bullet> d)"
+          by (simp add: inner_scaleR_left)
+        have e3: "d \<bullet> (((2::real) *\<^sub>R mat 1) *v d) = 2 * (d \<bullet> d)"
+          by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+              inner_scaleR_right)
+        have negmv: "\<And>A :: real^'n^'n. (- A) *v d = - (A *v d)"
+          by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
+        have e4: "d \<bullet> (((-2::real) *\<^sub>R mat 1) *v d) = - 2 * (d \<bullet> d)"
+          by (simp add: negmv scaleR_matrix_vector matrix_vector_mul_lid
+              inner_scaleR_right inner_minus_right)
+        have id1: "t * (2 * (real CARD('n) - 1)) / 2
+            = t * (real CARD('n) - 1)" by simp
+        have id2: "t * (- 2 * (real CARD('n) - 1)) / 2
+            = - (t * (real CARD('n) - 1))" by (simp add: field_simps)
+        have both: "2 * ((x - y\<^sub>0) \<bullet> d) + d \<bullet> d
+            = t * (real CARD('n) - 1)"
+          using g1[unfolded id1] g2[unfolded id2]
+          unfolding d_def[symmetric] e1 e2 e3 e4
+          by linarith
+        have split: "(norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
+            = (norm (x - y\<^sub>0))\<^sup>2 + (2 * ((x - y\<^sub>0) \<bullet> d) + d \<bullet> d)"
+        proof -
+          have dd: "fst (\<omega> t) - y\<^sub>0 = (x - y\<^sub>0) + d"
+            unfolding d_def by simp
+          have "(norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
+              = (fst (\<omega> t) - y\<^sub>0) \<bullet> (fst (\<omega> t) - y\<^sub>0)"
+            by (simp add: dot_square_norm)
+          also have "\<dots> = (x - y\<^sub>0) \<bullet> (x - y\<^sub>0)
+              + 2 * ((x - y\<^sub>0) \<bullet> d) + d \<bullet> d"
+            unfolding dd
+            by (simp add: inner_add_left inner_add_right
+                inner_commute)
+          also have "(x - y\<^sub>0) \<bullet> (x - y\<^sub>0) = (norm (x - y\<^sub>0))\<^sup>2"
+            by (simp add: dot_square_norm)
+          finally show ?thesis by simp
+        qed
+        show "(norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
+            = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
+          unfolding split both by (rule refl)
+      qed
+    qed
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
