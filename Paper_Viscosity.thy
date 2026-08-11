@@ -10214,7 +10214,13 @@ theorem eulerp_limit_exit:
       \<and> pball_exit c x rb \<omega> * cm / 2
           \<le> q \<bullet> (fst (\<omega> (pball_exit c x rb \<omega>)) - x)
             + (1/2) * ((fst (\<omega> (pball_exit c x rb \<omega>)) - x)
-                \<bullet> (M *v (fst (\<omega> (pball_exit c x rb \<omega>)) - x)))"
+                \<bullet> (M *v (fst (\<omega> (pball_exit c x rb \<omega>)) - x)))
+      \<and> (\<forall>s. 0 \<le> s \<longrightarrow> s < pball_exit c x rb \<omega> \<longrightarrow>
+          fst (\<omega> s) \<in> ball x rb)
+      \<and> (\<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow>
+          (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb) \<longrightarrow>
+          t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+            + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))))"
 proof -
   let ?pm = "path_metric c :: ('n pairpath) metric"
   have rb0': "0 \<le> rb" using rb0 by linarith
@@ -10242,7 +10248,13 @@ proof -
         \<and> pball_exit c x rb \<omega> * cm / 2
             \<le> q \<bullet> (fst (\<omega> (pball_exit c x rb \<omega>)) - x)
               + (1/2) * ((fst (\<omega> (pball_exit c x rb \<omega>)) - x)
-                  \<bullet> (M *v (fst (\<omega> (pball_exit c x rb \<omega>)) - x)))"
+                  \<bullet> (M *v (fst (\<omega> (pball_exit c x rb \<omega>)) - x)))
+        \<and> (\<forall>s. 0 \<le> s \<longrightarrow> s < pball_exit c x rb \<omega> \<longrightarrow>
+            fst (\<omega> s) \<in> ball x rb)
+        \<and> (\<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow>
+            (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb) \<longrightarrow>
+            t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+              + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))))"
       using good start sp
     proof (eventually_elim)
       case (elim \<omega>)
@@ -10296,7 +10308,8 @@ proof -
           by (rule inside)
       qed
       show ?case
-        using th_pos stays bdry grow unfolding \<theta>_def by blast
+        using th_pos stays bdry grow inside elim(1)
+        unfolding \<theta>_def by blast
     qed
   qed
 qed
@@ -10564,6 +10577,231 @@ proof -
       by (rule props(3))
     then show ?thesis unfolding sq by linarith
   qed
+qed
+
+subsection \<open>Bricks for the Case-1 contradiction\<close>
+
+text \<open>Batch 4b(i).  Small independent pieces the contradiction assembles:
+  algebra for the softened Hessian, a generic small-radius chooser, the
+  witness extraction from a failed operator inequality, the value bound
+  \<open>v(x) < T\<close> forced by a nonzero touching gradient, and the exit-time
+  identity on paths that never leave \<open>K\<close>.\<close>
+
+lemma transpose_sub_smat:
+  fixes H :: "real^'n::finite^'n" and s :: real
+  assumes symH: "transpose H = H"
+  shows "transpose (H - s *\<^sub>R mat 1) = H - s *\<^sub>R mat 1"
+proof -
+  have "transpose (H - s *\<^sub>R mat 1)
+      = transpose H - transpose (s *\<^sub>R mat 1)"
+    by (simp add: transpose_def vec_eq_iff)
+  then show ?thesis by (simp add: transpose_scalar symH)
+qed
+
+lemma trace_msub_mat:
+  fixes H a :: "real^'n::finite^'n" and s :: real
+  shows "trace ((H - s *\<^sub>R mat 1) ** a) = trace (H ** a) - s * trace a"
+proof -
+  have e1: "(H - s *\<^sub>R mat 1) ** a = H ** a - (s *\<^sub>R mat 1) ** a"
+    by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
+        left_diff_distrib)
+  have e2: "(s *\<^sub>R mat 1) ** a = s *\<^sub>R a"
+    by (simp add: scaleR_matrix_mult matrix_mul_lid)
+  have e3: "trace (H ** a - s *\<^sub>R a) = trace (H ** a) - s * trace a"
+    by (simp add: trace_def sum_subtractf sum_distrib_left)
+  show ?thesis unfolding e1 e2 by (rule e3)
+qed
+
+lemma quad_soften_split:
+  fixes H :: "real^'n::finite^'n" and v :: "real^'n" and \<gamma> \<delta> :: real
+  shows "v \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v v)
+      = v \<bullet> ((H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1) *v v) + 2 * \<gamma> * (v \<bullet> v)"
+proof -
+  have e1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
+    by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
+        matrix_vector_mul_lid)
+  have e2: "(H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1) *v v
+      = H *v v - (2 * \<gamma> + \<delta>) *\<^sub>R v"
+    by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
+        matrix_vector_mul_lid)
+  show ?thesis unfolding e1 e2
+    by (simp add: inner_diff_right inner_scaleR_right algebra_simps)
+qed
+
+lemma small_radius_exists:
+  fixes f1 f2 f3 :: "real \<Rightarrow> real" and b1 b2 b3 rmax :: real
+  assumes c1: "isCont f1 0" and c2: "isCont f2 0" and c3: "isCont f3 0"
+    and z1: "f1 0 = 0" and z2: "f2 0 = 0" and z3: "f3 0 = 0"
+    and p1: "0 < b1" and p2: "0 < b2" and p3: "0 < b3" and rm: "0 < rmax"
+  obtains r where "0 < r" and "r \<le> rmax"
+    and "f1 r \<le> b1" and "f2 r \<le> b2" and "f3 r \<le> b3"
+proof -
+  have l1: "f1 \<midarrow>0\<rightarrow> 0" using c1 z1 by (simp add: isCont_def)
+  have l2: "f2 \<midarrow>0\<rightarrow> 0" using c2 z2 by (simp add: isCont_def)
+  have l3: "f3 \<midarrow>0\<rightarrow> 0" using c3 z3 by (simp add: isCont_def)
+  obtain d1 where d10: "0 < d1"
+    and h1: "\<And>y :: real. y \<noteq> 0 \<Longrightarrow> \<bar>y\<bar> < d1 \<Longrightarrow> \<bar>f1 y\<bar> < b1"
+    using LIM_D[OF l1 p1] by auto
+  obtain d2 where d20: "0 < d2"
+    and h2: "\<And>y :: real. y \<noteq> 0 \<Longrightarrow> \<bar>y\<bar> < d2 \<Longrightarrow> \<bar>f2 y\<bar> < b2"
+    using LIM_D[OF l2 p2] by auto
+  obtain d3 where d30: "0 < d3"
+    and h3: "\<And>y :: real. y \<noteq> 0 \<Longrightarrow> \<bar>y\<bar> < d3 \<Longrightarrow> \<bar>f3 y\<bar> < b3"
+    using LIM_D[OF l3 p3] by auto
+  define r where "r = min rmax (min d1 (min d2 d3)) / 2"
+  have r0: "0 < r" unfolding r_def using rm d10 d20 d30 by simp
+  have rr: "r \<le> rmax" unfolding r_def using rm by simp
+  have rd1: "r < d1" and rd2: "r < d2" and rd3: "r < d3"
+    unfolding r_def using rm d10 d20 d30 by auto
+  have rne: "r \<noteq> 0" using r0 by simp
+  have ra: "\<bar>r\<bar> = r" using r0 by simp
+  have b1': "f1 r \<le> b1" using h1[OF rne] rd1 ra by fastforce
+  have b2': "f2 r \<le> b2" using h2[OF rne] rd2 ra by fastforce
+  have b3': "f3 r \<le> b3" using h3[OF rne] rd3 ra by fastforce
+  show ?thesis by (rule that[OF r0 rr b1' b2' b3'])
+qed
+
+lemma ell_op_lt_witness:
+  fixes p :: "real^'n::finite" and H :: "real^'n^'n"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+    and lt: "ell_op k L p H < 1"
+  obtains a where "a \<in> feasible k L p" and "- trace (H ** a) / 2 < 1"
+proof -
+  have L0: "0 \<le> L" using L1 by linarith
+  have ne: "(\<lambda>a. - trace (H ** a) / 2) ` feasible k L p \<noteq> {}"
+    using feasible_nonempty[OF k1 kn L1] by blast
+  have bdd: "bdd_below ((\<lambda>a. - trace (H ** a) / 2) ` feasible k L p)"
+    by (rule bdd_below_mono[OF ell_op_s_bdd_below[OF L0]
+        image_mono[OF feasible_subset_sconstraint]])
+  have "\<exists>v \<in> (\<lambda>a. - trace (H ** a) / 2) ` feasible k L p. v < 1"
+    using lt unfolding ell_op_def using cInf_less_iff[OF ne bdd] by blast
+  then obtain a where a: "a \<in> feasible k L p"
+    and tr: "- trace (H ** a) / 2 < 1" by blast
+  show ?thesis by (rule that[OF a tr])
+qed
+
+lemma pexit_eq_of_stays:
+  fixes f :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T'" and stays: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> T' \<Longrightarrow> f s \<in> K"
+  shows "pexit T' K f = T'"
+proof (rule order.antisym)
+  show "pexit T' K f \<le> T'" by (rule pexit_le_T[OF T0])
+  show "T' \<le> pexit T' K f"
+  proof (rule ccontr)
+    assume "\<not> T' \<le> pexit T' K f"
+    then have "pexit T' K f < T'" by simp
+    then have "(\<exists>r. 0 \<le> r \<and> r \<le> T' \<and> f r \<in> - K \<and> r < T') \<or> T' < T'"
+      using pexit_less_iff[OF T0] by blast
+    then show False using stays by auto
+  qed
+qed
+
+text \<open>A nonzero touching gradient forces \<open>v(x) < T\<close>: the test function
+  strictly increases along its gradient, the global minimum of \<open>v - \<phi>\<close>
+  transfers the increase to \<open>v\<close>, and \<open>v \<le> T\<close> caps the other end.  This
+  is what neutralises the horizon cap in the Case-1 functional.\<close>
+
+lemma touching_grad_lt_horizon:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow>
+      enn2real (paper_v k L T K x) - \<phi> x
+        \<le> enn2real (paper_v k L T K y) - \<phi> y"
+    and gx0: "g x \<noteq> 0"
+  shows "enn2real (paper_v k L T K x) < T"
+proof -
+  obtain eK where eK0: "0 < eK" and eKK: "ball x eK \<subseteq> K"
+    using xi mem_interior by blast
+  obtain e where e0: "0 < e"
+    and dphi: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    using tf unfolding test_fun_at_def by blast
+  define h where "h = (\<lambda>s. \<phi> (x + s *\<^sub>R g x))"
+  have hd: "(h has_field_derivative (g x \<bullet> g x)) (at 0)"
+  proof -
+    have i1: "((\<lambda>s :: real. x + s *\<^sub>R g x)
+        has_derivative (\<lambda>u. u *\<^sub>R g x)) (at 0)"
+      by (auto intro!: derivative_eq_intros)
+    have mem0: "x + (0::real) *\<^sub>R g x \<in> ball x e" using e0 by simp
+    have i2: "(\<phi> has_derivative (\<lambda>u. g (x + (0::real) *\<^sub>R g x) \<bullet> u))
+        (at (x + (0::real) *\<^sub>R g x))"
+      by (rule dphi[OF mem0])
+    have "((\<lambda>s. \<phi> (x + s *\<^sub>R g x)) has_derivative
+        (\<lambda>u. g (x + (0::real) *\<^sub>R g x) \<bullet> (u *\<^sub>R g x))) (at 0)"
+      using diff_chain_at[OF i1 i2] by (simp add: o_def)
+    then show ?thesis unfolding h_def
+      by (rule has_derivative_imp_has_field_derivative)
+        (simp add: inner_scaleR_right ac_simps)
+  qed
+  have gg0: "0 < g x \<bullet> g x"
+    using gx0 by (simp add: inner_gt_zero_iff)
+  have "((\<lambda>s. (h s - h 0) / (s - 0)) \<longlongrightarrow> g x \<bullet> g x) (at 0)"
+    using hd by (simp add: has_field_derivative_iff)
+  then have "\<forall>\<^sub>F s in at (0::real). 0 < (h s - h 0) / (s - 0)"
+    by (rule order_tendstoD(1)[OF _ gg0])
+  then obtain d where d0: "0 < d"
+    and hpos: "\<And>s :: real. s \<noteq> 0 \<Longrightarrow> \<bar>s\<bar> < d \<Longrightarrow> 0 < (h s - h 0) / s"
+    unfolding eventually_at by (auto simp: dist_real_def)
+  define ng where "ng = norm (g x) + 1"
+  have ng0: "0 < ng" unfolding ng_def
+    using norm_ge_zero[of "g x"] by linarith
+  define s where "s = min (min d (e / ng)) (eK / ng) / 2"
+  have s0: "0 < s"
+    unfolding s_def using d0 e0 eK0 ng0 by simp
+  have sd: "s < d" unfolding s_def using d0 e0 eK0 ng0 by auto
+  have se: "s * ng < e"
+  proof -
+    have "s \<le> (e / ng) / 2" unfolding s_def by simp
+    then have "s * ng \<le> e / 2"
+      using ng0 by (simp add: field_simps)
+    then show ?thesis using e0 by linarith
+  qed
+  have sK: "s * ng < eK"
+  proof -
+    have "s \<le> (eK / ng) / 2" unfolding s_def by simp
+    then have "s * ng \<le> eK / 2"
+      using ng0 by (simp add: field_simps)
+    then show ?thesis using eK0 by linarith
+  qed
+  have sg_lt: "s * norm (g x) < min e eK"
+  proof -
+    have "s * norm (g x) \<le> s * ng"
+      unfolding ng_def using s0 by (intro mult_left_mono) auto
+    then show ?thesis using se sK by simp
+  qed
+  define z where "z = x + s *\<^sub>R g x"
+  have dz: "dist x z = s * norm (g x)"
+    unfolding z_def dist_norm using s0 by (simp add: abs_of_nonneg)
+  have zK: "z \<in> K"
+  proof -
+    have "z \<in> ball x eK" using dz sg_lt by (simp add: mem_ball)
+    then show ?thesis using eKK by blast
+  qed
+  have hgt: "\<phi> x < \<phi> z"
+  proof -
+    have "0 < (h s - h 0) / s"
+      using hpos[of s] s0 sd by simp
+    then have "0 < h s - h 0"
+      using s0 by (simp add: zero_less_divide_iff)
+    then show ?thesis unfolding h_def z_def by simp
+  qed
+  have zT: "enn2real (paper_v k L T K z) \<le> T"
+  proof -
+    have "enn2real (paper_v k L T K z)
+        = min (enn2real (paper_v k L T K z)) T"
+      by (rule enn2real_paper_v_horizon_cap[OF less_imp_le[OF T0]
+          order_refl L1 Kc])
+    then show ?thesis by (metis min.cobounded2)
+  qed
+  have "enn2real (paper_v k L T K x)
+      \<le> enn2real (paper_v k L T K z) - (\<phi> z - \<phi> x)"
+    using tmin[OF zK] by simp
+  also have "\<dots> < enn2real (paper_v k L T K z)" using hgt by simp
+  also have "\<dots> \<le> T" by (rule zT)
+  finally show ?thesis .
 qed
 
 section \<open>What remains for clause (2)\<close>
