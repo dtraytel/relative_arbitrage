@@ -3335,4 +3335,201 @@ proof
     unfolding T_def by (rule affine_interior_sub[OF orth cne])
 qed
 
+
+section \<open>A constant is a subsolution: the off-\<open>K\<close> case of P4's extension\<close>
+
+text \<open>If a test function touches from above at a LOCAL MINIMUM of itself ---
+  which is what a touching of a locally CONSTANT function is --- then the
+  subsolution inequality holds for free.  This is what makes the extension of
+  \<open>u\<close> by a constant below its minimum a subsolution off \<open>K\<close>, and hence what
+  turns Definition 3.1's gated \<open>\<Omega>\<close> into the OPEN set \<open>UNIV - S\<close>, with
+  \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> compact --- the shape on which the
+  (already \<open>\<Omega>\<close>-generic) Crandall--Ishii core can be run.\<close>
+
+theorem visc_subsol_at_local_min:
+  fixes x :: "real^'n::finite" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>z \<in> ball x e. \<phi> x \<le> \<phi> z"
+  shows "ell_op k L (g x) H \<le> 1"
+proof -
+  have L0: "0 \<le> L" using LL by simp
+  have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
+  obtain e0 where e00: "0 < e0" and lme: "\<And>z. z \<in> ball x e0 \<Longrightarrow> \<phi> x \<le> \<phi> z"
+    using lm by blast
+
+  text \<open>The one-sided inequality along every ray out of \<open>x\<close>.\<close>
+  have base: "\<exists>rr>0. \<forall>t v. 0 < t \<longrightarrow> t * norm v < rr \<longrightarrow>
+      0 \<le> t * (g x \<bullet> v) + t\<^sup>2 * (v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)) / 2"
+    if d0: "0 < \<delta>" for \<delta>
+  proof -
+    obtain r where r0: "0 < r"
+      and dom: "\<And>z. z \<in> ball x r \<Longrightarrow>
+          \<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+            + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+      using test_fun_quadratic_dominates[OF tf d0] by blast
+    define rr where "rr = min e0 r"
+    have rr0: "0 < rr" unfolding rr_def using e00 r0 by simp
+    have "0 \<le> t * (g x \<bullet> v) + t\<^sup>2 * (v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)) / 2"
+      if t0: "0 < t" and tv: "t * norm v < rr" for t v
+    proof -
+      have dxz: "dist (x + t *\<^sub>R v) x = t * norm v"
+        using t0 by (simp add: dist_norm)
+      have inb: "x + t *\<^sub>R v \<in> ball x e0"
+        using dxz tv unfolding rr_def by (simp add: dist_commute)
+      have inr0: "x + t *\<^sub>R v \<in> ball x r"
+        using dxz tv unfolding rr_def by (simp add: dist_commute)
+      have le1: "\<phi> x \<le> \<phi> (x + t *\<^sub>R v)" by (rule lme[OF inb])
+      have le2: "\<phi> (x + t *\<^sub>R v) \<le> \<phi> x + g x \<bullet> (t *\<^sub>R v)
+          + ((t *\<^sub>R v) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (t *\<^sub>R v))) / 2"
+        using dom[OF inr0] by simp
+      have q1: "g x \<bullet> (t *\<^sub>R v) = t * (g x \<bullet> v)" by simp
+      have q2: "(t *\<^sub>R v) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (t *\<^sub>R v))
+          = t\<^sup>2 * (v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v))"
+        by (simp add: matvec_scaleR_right power2_eq_square)
+      show ?thesis using le1 le2 unfolding q1 q2 by linarith
+    qed
+    then show ?thesis using rr0 by blast
+  qed
+
+  text \<open>Hence the gradient vanishes.\<close>
+  have gz: "g x = 0"
+  proof -
+    obtain rr where rr0: "0 < rr"
+      and bs: "\<And>t v. 0 < t \<Longrightarrow> t * norm v < rr \<Longrightarrow>
+          0 \<le> t * (g x \<bullet> v) + t\<^sup>2 * (v \<bullet> ((H + 1 *\<^sub>R mat 1) *v v)) / 2"
+      using base[of 1] by auto
+    have grad: "0 \<le> g x \<bullet> v" for v
+    proof (rule ccontr)
+      assume "\<not> 0 \<le> g x \<bullet> v"
+      then have A: "g x \<bullet> v < 0" by simp
+      define B where "B = \<bar>v \<bullet> ((H + 1 *\<^sub>R mat 1) *v v)\<bar>"
+      have B0: "0 \<le> B" unfolding B_def by simp
+      have nv1: "0 < norm v + 1" using norm_ge_zero[of v] by linarith
+      have B1: "0 < B + 1" using B0 by simp
+      define t where "t = min (rr / (2 * (norm v + 1))) ((- (g x \<bullet> v)) / (B + 1))"
+      have t1: "0 < rr / (2 * (norm v + 1))" using rr0 nv1 by simp
+      have t2: "0 < (- (g x \<bullet> v)) / (B + 1)"
+        by (rule divide_pos_pos) (use A B1 in linarith)+
+      have t0: "0 < t" unfolding t_def using t1 t2 by simp
+      have tnv: "t * norm v < rr"
+      proof -
+        have "t * norm v \<le> (rr / (2 * (norm v + 1))) * norm v"
+          by (rule mult_right_mono) (use t_def norm_ge_zero in auto)
+        also have "\<dots> \<le> rr / 2"
+          using rr0 nv1 by (simp add: field_simps)
+        also have "\<dots> < rr" using rr0 by simp
+        finally show ?thesis .
+      qed
+      have tB: "t * (B + 1) \<le> - (g x \<bullet> v)"
+      proof -
+        have tle: "t \<le> (- (g x \<bullet> v)) / (B + 1)" unfolding t_def by simp
+        have "t * (B + 1) \<le> ((- (g x \<bullet> v)) / (B + 1)) * (B + 1)"
+          by (rule mult_right_mono[OF tle]) (use B1 in linarith)
+        also have "\<dots> = - (g x \<bullet> v)" using B1 by simp
+        finally show ?thesis .
+      qed
+      have half: "t\<^sup>2 * (v \<bullet> ((H + 1 *\<^sub>R mat 1) *v v)) / 2 < - (t * (g x \<bullet> v))"
+      proof -
+        have "t\<^sup>2 * (v \<bullet> ((H + 1 *\<^sub>R mat 1) *v v)) / 2 \<le> t\<^sup>2 * B / 2"
+          unfolding B_def using t0 by (simp add: mult_left_mono)
+        also have "t\<^sup>2 * B / 2 \<le> t * (t * B)"
+          using t0 B0 by (simp add: power2_eq_square)
+        also have "t * (t * B) < t * (t * (B + 1))"
+          using t0 by (simp add: mult_strict_left_mono)
+        also have "t * (t * (B + 1)) \<le> t * (- (g x \<bullet> v))"
+          by (rule mult_left_mono[OF tB]) (use t0 in linarith)
+        also have "t * (- (g x \<bullet> v)) = - (t * (g x \<bullet> v))" by simp
+        finally show ?thesis .
+      qed
+      have "0 \<le> t * (g x \<bullet> v) + t\<^sup>2 * (v \<bullet> ((H + 1 *\<^sub>R mat 1) *v v)) / 2"
+        by (rule bs[OF t0 tnv])
+      with half show False by linarith
+    qed
+    have "0 \<le> g x \<bullet> (- g x)" by (rule grad)
+    then have "g x \<bullet> g x \<le> 0" by simp
+    moreover have "0 \<le> g x \<bullet> g x" by simp
+    ultimately have "g x \<bullet> g x = 0" by linarith
+    then show ?thesis by simp
+  qed
+
+  text \<open>And the shifted Hessian is positive semidefinite.\<close>
+  have psdH: "psd (H + \<delta> *\<^sub>R mat 1)" if d0: "0 < \<delta>" for \<delta>
+    unfolding psd_def
+  proof (intro conjI allI)
+    show "transpose (H + \<delta> *\<^sub>R mat 1) = H + \<delta> *\<^sub>R mat 1"
+      by (rule transpose_shift_add[OF symH])
+  next
+    fix v :: "real^'n"
+    obtain rr where rr0: "0 < rr"
+      and bs: "\<And>t vv. 0 < t \<Longrightarrow> t * norm vv < rr \<Longrightarrow>
+          0 \<le> t * (g x \<bullet> vv) + t\<^sup>2 * (vv \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v vv)) / 2"
+      using base[OF d0] by auto
+    show "0 \<le> v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)"
+    proof (rule ccontr)
+      assume "\<not> 0 \<le> v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)"
+      then have Bneg: "v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v) < 0" by simp
+      have nv1: "0 < norm v + 1" using norm_ge_zero[of v] by linarith
+      define t where "t = rr / (2 * (norm v + 1))"
+      have t0: "0 < t" unfolding t_def using rr0 nv1 by simp
+      have tnv: "t * norm v < rr"
+      proof -
+        have "t * norm v \<le> t * (norm v + 1)"
+          using t0 by (simp add: mult_left_mono)
+        also have "\<dots> = rr / 2" unfolding t_def using nv1 by (simp add: field_simps)
+        also have "\<dots> < rr" using rr0 by simp
+        finally show ?thesis .
+      qed
+      have "0 \<le> t * (g x \<bullet> v) + t\<^sup>2 * (v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)) / 2"
+        by (rule bs[OF t0 tnv])
+      moreover have "t * (g x \<bullet> v) = 0" unfolding gz by simp
+      moreover have "t\<^sup>2 * (v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)) / 2 < 0"
+        using Bneg t0 by (simp add: mult_pos_neg)
+      ultimately show False by linarith
+    qed
+  qed
+
+  text \<open>Read the inequality off ONE feasible witness, chosen before \<open>\<delta>\<close>.\<close>
+  obtain a where afeas: "a \<in> feasible k L (g x)"
+    using feasible_nonempty[OF kk(1) kk(2) LL] by blast
+  have apsd: "psd a" using afeas unfolding feasible_def by blast
+  define Ca where "Ca = max (trace a) 1"
+  have Ca0: "0 < Ca" unfolding Ca_def by simp
+  have Cage: "trace a \<le> Ca" unfolding Ca_def by simp
+  have step: "ell_op k L (g x) H \<le> \<delta> * Ca / 2" if d0: "0 < \<delta>" for \<delta>
+  proof -
+    have tr0: "0 \<le> trace ((H + \<delta> *\<^sub>R mat 1) ** a)"
+      by (rule trace_mult_psd_nonneg[OF psdH[OF d0] apsd])
+    have split: "trace ((H + \<delta> *\<^sub>R mat 1) ** a) = trace (H ** a) + \<delta> * trace a"
+    proof -
+      have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
+        by (rule matrix_add_rdistrib)
+      moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
+        by (simp add: scaleR_matrix_mult matrix_mul_lid)
+      ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
+          = trace (H ** a + \<delta> *\<^sub>R a)" by simp
+      have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"
+        by (simp add: trace_def sum.distrib vector_add_component)
+      have e3: "trace (\<delta> *\<^sub>R a) = \<delta> * trace a" by (rule trace_scaleR)
+      from e1 e2 e3 show ?thesis by simp
+    qed
+    have "\<delta> * trace a \<le> \<delta> * Ca" using Cage d0 by (simp add: mult_left_mono)
+    with tr0 split have wH: "- trace (H ** a) / 2 \<le> \<delta> * Ca / 2" by linarith
+    have "ell_op k L (g x) H \<le> - trace (H ** a) / 2"
+      unfolding ell_op_def
+      by (rule cInf_lower[OF _ ell_op_bdd[OF L0]]) (use afeas in auto)
+    with wH show ?thesis by linarith
+  qed
+  have "ell_op k L (g x) H \<le> 0"
+  proof (rule field_le_epsilon)
+    fix e :: real assume e0': "0 < e"
+    have d0: "0 < 2 * e / Ca" using e0' Ca0 by simp
+    have "ell_op k L (g x) H \<le> (2 * e / Ca) * Ca / 2" by (rule step[OF d0])
+    also have "\<dots> = e" using Ca0 by (simp add: field_simps)
+    finally show "ell_op k L (g x) H \<le> 0 + e" by simp
+  qed
+  then show ?thesis by linarith
+qed
+
 end
