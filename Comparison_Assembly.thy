@@ -14556,6 +14556,21 @@ text \<open>The paper's Theorem 4.2(b).  \<^bold>\<open>This is the one statemen
   consistent.  No contradiction.  Supplying \<open>X \<preceq> Y\<close> is precisely what
   Crandall--Ishii does and what one-variable-at-a-time freezing loses.
 
+  \<^bold>\<open>And the repo's sup-convolution route cannot be usc-ified.\<close>
+  \<open>doubling_localised_maximiser_soft\<close> calls \<open>supconv_uniform_upper\<close> --- which
+  fixes \<open>\<epsilon>\<close> UNIFORMLY over \<open>K\<close>, before the maximiser is known, and that uniform
+  closeness is what pushes the maximisers off \<open>\<partial>K\<close>.  The uniform statement is
+  FALSE for merely usc \<open>u\<close>: take \<open>u = 1\<close> at \<open>0\<close> and \<open>0\<close> elsewhere on
+  \<open>K = cball 0 1\<close>; then \<open>supconv u \<epsilon> x \<ge> max (1 - \<bar>x\<bar>\<^sup>2/(2\<epsilon>)) 0\<close>, so at
+  \<open>\<bar>x\<bar> = sqrt \<epsilon>\<close> the gap \<open>supconv u \<epsilon> x - u x\<close> is \<open>\<ge> 1/2\<close> for EVERY \<open>\<epsilon>\<close>.
+  Sup-convolutions of usc functions decrease to them pointwise, never
+  uniformly, and Dini does not apply because the limit is not continuous.  So
+  the \<open>continuous_on\<close> hypotheses running through \<open>Sup_Convolution\<close> and the
+  \<open>comparison_soft_*\<close> layer are \<^emph>\<open>by design\<close>, not an oversight: that route is a
+  continuous-data route.  P4 needs the classical Crandall--Ishii lemma for
+  usc/lsc data directly --- which is precisely why the literature states CI
+  that way.  Budget it as a CI-for-usc development, not a refactor.
+
   \<^bold>\<open>So the open problem is exactly this\<close>: a Crandall--Ishii step on the \<open>u\<close>-side
   that works from a touching which is global over \<open>K\<close> and a point that may lie
   on \<open>\<partial>K\<close>, given that the \<open>w\<close>-side is unproblematic (\<open>K \<subseteq> K'\<degree>\<close> gives \<open>y\<^sup>h\<close> a
