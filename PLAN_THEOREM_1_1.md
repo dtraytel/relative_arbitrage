@@ -664,7 +664,7 @@ the class member. Two elementary steps replace it.
 Then `δ → 0` on the Hessian bump through `feasible_trace_le` (`trace a ≤ nL` on
 the feasible set) and `field_le_epsilon`, exactly as in the relaxed case.
 
-#### §2.1 IS CLOSED — both inequalities proved, 2026-08-11
+#### Both inequalities proved, 2026-08-11
 
 **Subsolution.** `paper_v_visc_subsol` (Paper_Viscosity), in the
 envelope-FREE form, which is STRONGER than the paper's Definition 3.1(a).
@@ -803,7 +803,7 @@ counterexample genuinely depends on them (it moves `w` outside
 `interior K`, which Definition 3.1's global touching would notice — that
 non-transfer is exactly the defect the envelope form repairs).
 
-#### What is left of clause (2)
+#### The join — DONE
 
 **The join is DONE.** `paper_v_cap_inert` and
 `paper_v_supersol_lsc_bounded` (Paper_Viscosity) discharge the horizon
@@ -815,11 +815,9 @@ Paper_Viscosity — the two sides had never been visible to each other,
 solution in the sense of Definition 3.1 agreeing with `paper_v` on
 `K - interior K` equals `paper_v`.
 
-**The remaining genuine gap is CONTINUITY of `paper_v` on `K`.** What is
-proved is upper semicontinuity; `visc_supersol_lsc_iff_env` needs both.
-The paper's Theorem 1.1 speaks of the unique UPPER SEMICONTINUOUS
-solution, so closing this properly means the paper's Theorem 4.3
-(comparison with semicontinuous data), not more work on §2.1.
+The one hypothesis it still carries is CONTINUITY of `paper_v` on `K`.
+That is **§2.0**, and it is a Section-4 job — see there for why it should
+NOT be attacked by proving `paper_v` continuous.
 
 ---
 
