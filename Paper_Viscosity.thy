@@ -10804,6 +10804,392 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>Case 1: a nonzero gradient contradicts a failed supersolution
+  inequality\<close>
+
+text \<open>Batch 4b(ii).  The full contradiction.  If the supersolution
+  inequality fails at a touching point with nonzero gradient, then: the
+  failure yields a feasible witness with slack \<open>2\<eta>\<^sub>0\<close>; softening the
+  Hessian by \<open>(2\<gamma>+\<delta>)\<cdot>1\<close> keeps slack \<open>2\<eta>\<close> and buys both the Taylor
+  minorant (via \<open>\<delta>\<close>) and a strict sphere margin (via \<open>\<gamma>\<close>); the strict
+  eigendata builds the skew field, the Euler limit produces a class
+  member whose paths grow along the quadratic, and at the stopping time
+  \<open>min cc (pball_exit T x rr)\<close> the DPP functional is at least
+  \<open>v(x) + mg\<close> almost surely --- the exit branch is paid by \<open>\<gamma> rr\<^sup>2\<close>, the
+  no-exit branch by \<open>cc \<eta> / 2\<close>, and the horizon cap by \<open>T - v(x) > 0\<close>,
+  which a nonzero gradient forces.  That contradicts
+  @{thm [source] paper_v_dpp_sup_ge_time}.\<close>
+
+theorem paper_v_supersol_contradiction_case1:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k"
+    and kn: "k < CARD('n)" and Kc: "closed K"
+    and xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow>
+      enn2real (paper_v k L T K x) - \<phi> x
+        \<le> enn2real (paper_v k L T K y) - \<phi> y"
+    and gx0: "g x \<noteq> 0"
+    and fail: "ell_op k L (g x) H < 1"
+  shows False
+proof -
+  have L1': "1 \<le> L" using L1 by linarith
+  have L0: "0 \<le> L" using L1 by linarith
+  have T0': "0 \<le> T" using T0 by linarith
+  define tv where "tv = (\<lambda>y. enn2real (paper_v k L T K y))"
+  have vxT: "tv x < T"
+    unfolding tv_def
+    by (rule touching_grad_lt_horizon[OF T0 L1' Kc xi tf tmin gx0])
+  obtain a where aF: "a \<in> feasible k L (g x)"
+    and aTr: "- trace (H ** a) / 2 < 1"
+    by (rule ell_op_lt_witness[OF k1 kn L1' fail])
+  define \<eta>\<^sub>0 where "\<eta>\<^sub>0 = (1 - (- trace (H ** a) / 2)) / 2"
+  have h00: "0 < \<eta>\<^sub>0" unfolding \<eta>\<^sub>0_def using aTr by simp
+  have trH: "2 * \<eta>\<^sub>0 \<le> 1 + trace (H ** a) / 2"
+    unfolding \<eta>\<^sub>0_def by simp
+  have aS: "a \<in> sconstraint k L"
+    using aF feasible_subset_sconstraint by blast
+  define TB where "TB = real CARD('n) * (real CARD('n) * L)"
+  have trab: "trace a \<le> TB"
+    unfolding TB_def by (rule sconstraint_trace_le[OF L0 aS])
+  have tra0: "0 \<le> trace a"
+    using sconstraint_trace_ge[OF kn aS] by linarith
+  have TB1: "0 < TB + 1"
+  proof -
+    have "0 \<le> TB" using trab tra0 by linarith
+    then show ?thesis by linarith
+  qed
+  define sft where "sft = min (\<eta>\<^sub>0 / (TB + 1)) 1"
+  have sft0: "0 < sft"
+    unfolding sft_def using h00 TB1 by simp
+  define \<gamma> where "\<gamma> = sft / 4"
+  define \<delta> where "\<delta> = sft / 2"
+  have g0: "0 < \<gamma>" unfolding \<gamma>_def using sft0 by simp
+  have d0: "0 < \<delta>" unfolding \<delta>_def using sft0 by simp
+  have gd_le: "2 * \<gamma> + \<delta> \<le> sft" unfolding \<gamma>_def \<delta>_def by simp
+  have gd0: "0 \<le> 2 * \<gamma> + \<delta>" using g0 d0 by linarith
+  define M where "M = H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1"
+  have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
+  have symM: "transpose M = M"
+    unfolding M_def by (rule transpose_sub_smat[OF symH])
+  define \<eta> where "\<eta> = \<eta>\<^sub>0 / 2"
+  have e0: "0 < \<eta>" unfolding \<eta>_def using h00 by simp
+  have trM: "2 * \<eta> \<le> 1 + trace (M ** a) / 2"
+  proof -
+    have tr_eq: "trace (M ** a) = trace (H ** a) - (2 * \<gamma> + \<delta>) * trace a"
+      unfolding M_def by (rule trace_msub_mat)
+    have "(2 * \<gamma> + \<delta>) * trace a \<le> sft * trace a"
+      by (rule mult_right_mono[OF gd_le tra0])
+    also have "\<dots> \<le> (\<eta>\<^sub>0 / (TB + 1)) * (TB + 1)"
+    proof (rule mult_mono)
+      show "sft \<le> \<eta>\<^sub>0 / (TB + 1)" unfolding sft_def by simp
+      show "trace a \<le> TB + 1" using trab by linarith
+      show "0 \<le> \<eta>\<^sub>0 / (TB + 1)" using h00 TB1 by simp
+      show "0 \<le> trace a" by (rule tra0)
+    qed
+    also have "\<dots> = \<eta>\<^sub>0" using TB1 by simp
+    finally have "(2 * \<gamma> + \<delta>) * trace a \<le> \<eta>\<^sub>0" .
+    then show ?thesis unfolding \<eta>_def using trH tr_eq h00 by linarith
+  qed
+  show False
+  proof (rule feasible_strict_eigendata[OF aF kn L1 trM e0])
+    fix B Bp :: "(real^'n) set" and lam :: "real^'n \<Rightarrow> real" and m :: real
+    assume Bon: "onormal B" and Bsp: "span B = UNIV" and Bfin: "finite B"
+      and BpB: "Bp \<subseteq> B" and cBp: "card Bp = CARD('n) - k" and m0: "0 < m"
+      and lam_box: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u \<and> lam u \<le> L - m"
+      and lam_lb: "\<And>u. u \<in> Bp \<Longrightarrow> 1 + m \<le> lam u"
+      and lam_orth: "\<And>u. u \<in> B \<Longrightarrow> 0 < lam u \<Longrightarrow> u \<bullet> (g x) = 0"
+      and treig: "\<eta> \<le> 1 + trace (M **
+          (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2"
+    show False
+    proof -
+  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF Bon Bsp])
+  have mL: "m \<le> L"
+  proof -
+    have "B \<noteq> {}" using cardB kn by auto
+    then obtain u where uB: "u \<in> B" by blast
+    from lam_box[OF uB] show ?thesis using m0 by linarith
+  qed
+  obtain f where bijf: "bij_betw f (UNIV :: 'n set) B"
+    by (rule exists_enum_of_card[OF Bfin cardB])
+  obtain rphi where rphi0: "0 < rphi"
+    and mino: "\<And>z. z \<in> ball x rphi \<Longrightarrow>
+      \<phi> x + g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+    using test_fun_quadratic_minorates[OF tf d0] by metis
+  obtain eK where eK0: "0 < eK" and eKK: "ball x eK \<subseteq> K"
+    using xi mem_interior by blast
+  define Cm where "Cm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
+  define ec where "ec = 2 * sqrt L * Cm / norm (g x)"
+  define f1 where "f1 = (\<lambda>r. (1 + 1 / (m / (2 * L)))
+      * (real CARD('n) * (ec * r)\<^sup>2))"
+  define f2 where "f2 = (\<lambda>r. real CARD('n)
+      * (ec * r * (2 * sqrt L + ec * r))
+      + 2 * (1 + m) / m
+        * (real CARD('n) * (ec * r * (2 * sqrt L + ec * r)))\<^sup>2)"
+  define f3 where "f3 = (\<lambda>r. real CARD('n)
+      * (Cm * (ec * r * (2 * sqrt L + ec * r))))"
+  have c1: "isCont f1 0" unfolding f1_def by (auto intro!: continuous_intros)
+  have c2: "isCont f2 0" unfolding f2_def
+    using m0 by (auto intro!: continuous_intros)
+  have c3: "isCont f3 0" unfolding f3_def by (auto intro!: continuous_intros)
+  have z1: "f1 0 = 0" unfolding f1_def by simp
+  have z2: "f2 0 = 0" unfolding f2_def by simp
+  have z3: "f3 0 = 0" unfolding f3_def by simp
+  have m20: "0 < m / 2" using m0 by simp
+  have rmx0: "0 < min (rphi / 2) (eK / 2)" using rphi0 eK0 by simp
+  obtain rr where rr0: "0 < rr" and rrx: "rr \<le> min (rphi / 2) (eK / 2)"
+    and s1: "f1 rr \<le> m / 2" and s2: "f2 rr \<le> m / 2" and s3: "f3 rr \<le> \<eta>"
+    by (rule small_radius_exists[OF c1 c2 c3 z1 z2 z3 m20 m20 e0 rmx0])
+  have rr_phi: "rr < rphi" and rr_K: "rr < eK"
+    using rrx rphi0 eK0 by auto
+  have cb_phi: "cball x rr \<subseteq> ball x rphi"
+    using rr_phi by (auto simp: mem_cball mem_ball)
+  have cb_K: "cball x rr \<subseteq> K"
+  proof -
+    have "cball x rr \<subseteq> ball x eK"
+      using rr_K by (auto simp: mem_cball mem_ball)
+    then show ?thesis using eKK by blast
+  qed
+  define SF where "SF = skewSF lam f (g x) M x rr"
+  have SFc: "continuous_on UNIV SF"
+    unfolding SF_def by (rule skewSF_cont[OF less_imp_le[OF rr0]])
+  note pack = skewSF_package[OF bijf Bon Bsp BpB cBp lam_box lam_lb
+      lam_orth m0 mL gx0 treig less_imp_le[OF rr0]
+      s1[unfolded f1_def ec_def Cm_def]
+      s2[unfolded f2_def ec_def Cm_def]
+      s3[unfolded f3_def ec_def Cm_def]]
+  have SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    unfolding SF_def by (rule pack(1))
+  have kill: "\<And>z. transpose (SF z) *v
+      (g x + M *v (closest_point (cball x rr) z - x)) = 0"
+    unfolding SF_def by (rule pack(2))
+  have marg: "\<And>z. \<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))"
+    unfolding SF_def by (rule pack(3))
+  obtain P where Pc: "P \<in> paper_pair_class k L T x"
+    and AEpack: "AE \<omega> in P.
+      0 < pball_exit T x rr \<omega>
+      \<and> (\<forall>s\<in>{0..pball_exit T x rr \<omega>}. fst (\<omega> s) \<in> cball x rr)
+      \<and> (pball_exit T x rr \<omega> < T \<longrightarrow>
+          dist (fst (\<omega> (pball_exit T x rr \<omega>))) x = rr)
+      \<and> pball_exit T x rr \<omega> * (\<eta> - 2) / 2
+          \<le> g x \<bullet> (fst (\<omega> (pball_exit T x rr \<omega>)) - x)
+            + (1/2) * ((fst (\<omega> (pball_exit T x rr \<omega>)) - x)
+                \<bullet> (M *v (fst (\<omega> (pball_exit T x rr \<omega>)) - x)))
+      \<and> (\<forall>s. 0 \<le> s \<longrightarrow> s < pball_exit T x rr \<omega> \<longrightarrow>
+          fst (\<omega> s) \<in> ball x rr)
+      \<and> (\<forall>t. 0 < t \<longrightarrow> t \<le> T \<longrightarrow>
+          (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rr) \<longrightarrow>
+          t * (\<eta> - 2) / 2 \<le> g x \<bullet> (fst (\<omega> t) - x)
+            + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))))"
+    using eulerp_limit_exit[OF T0 L1' SFc SFs symM rr0 kill marg] by blast
+  define cc where "cc = T / 2"
+  have cc0: "0 < cc" unfolding cc_def using T0 by simp
+  have ccT: "cc < T" unfolding cc_def using T0 by simp
+  have ccT': "cc \<le> T" using ccT by linarith
+  define \<theta> where "\<theta> = (\<lambda>\<omega> :: 'n pairpath. min cc (pball_exit T x rr \<omega>))"
+  have st: "path_stopping_time T \<theta>"
+    unfolding \<theta>_def
+    by (rule path_stopping_time_min[OF pball_exit_path_stopping_time[OF T0']
+        less_imp_le[OF cc0] ccT'])
+  have thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    unfolding \<theta>_def
+    by (intro borel_measurable_min pball_exit_measurable[OF T0']
+        borel_measurable_const)
+  define FN where "FN = (\<lambda>\<omega> :: 'n pairpath.
+      pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+      + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega>
+            \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+         then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+         else 0))"
+  have dpp: "(SUP P' \<in> paper_pair_class k L T x. ess_inf_time P' FN)
+      \<le> paper_v k L T K x"
+    unfolding FN_def
+    by (rule paper_v_dpp_sup_ge_time[OF T0 L1' Kc st thM])
+  define mg where "mg = min (min (\<gamma> * rr\<^sup>2) (cc * \<eta> / 2)) (T - tv x)"
+  have mg0: "0 < mg"
+  proof -
+    have "0 < \<gamma> * rr\<^sup>2" using g0 rr0 by simp
+    moreover have "0 < cc * \<eta> / 2" using cc0 e0 by simp
+    moreover have "0 < T - tv x" using vxT by simp
+    ultimately show ?thesis unfolding mg_def by simp
+  qed
+  have AEfun: "AE \<omega> in P. ennreal (tv x + mg) \<le> ennreal (FN \<omega>)"
+    using AEpack
+  proof (eventually_elim)
+    case (elim \<omega>)
+    define \<tau> where "\<tau> = pball_exit T x rr \<omega>"
+    note elim' = elim[folded \<tau>_def]
+    have tau0: "0 < \<tau>" using elim' by blast
+    have stays: "\<And>s. s \<in> {0..\<tau>} \<Longrightarrow> fst (\<omega> s) \<in> cball x rr"
+      using elim' by blast
+    have bdry: "\<tau> < T \<Longrightarrow> dist (fst (\<omega> \<tau>)) x = rr"
+      using elim' by blast
+    have growtau: "\<tau> * (\<eta> - 2) / 2
+        \<le> g x \<bullet> (fst (\<omega> \<tau>) - x)
+          + (1/2) * ((fst (\<omega> \<tau>) - x) \<bullet> (M *v (fst (\<omega> \<tau>) - x)))"
+      using elim' by blast
+    have inside: "\<And>s. 0 \<le> s \<Longrightarrow> s < \<tau> \<Longrightarrow> fst (\<omega> s) \<in> ball x rr"
+      using elim' by blast
+    have growall: "\<And>t. 0 < t \<Longrightarrow> t \<le> T \<Longrightarrow>
+        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rr) \<Longrightarrow>
+        t * (\<eta> - 2) / 2 \<le> g x \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+      using elim' by blast
+    have tauT: "\<tau> \<le> T" unfolding \<tau>_def by (rule pball_exit_le[OF T0'])
+    have thw: "\<theta> \<omega> = min cc \<tau>" unfolding \<theta>_def \<tau>_def by (rule refl)
+    have th0: "0 < \<theta> \<omega>" unfolding thw using cc0 tau0 by simp
+    have thcc: "\<theta> \<omega> \<le> cc" unfolding thw by simp
+    have thtau: "\<theta> \<omega> \<le> \<tau>" unfolding thw by simp
+    have thT: "\<theta> \<omega> < T" using thcc ccT by linarith
+    have inK: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> \<theta> \<omega> \<Longrightarrow> fst (\<omega> s) \<in> K"
+    proof -
+      fix s assume s0: "0 \<le> s" and sth: "s \<le> \<theta> \<omega>"
+      have "s \<in> {0..\<tau>}" using s0 sth thtau by simp
+      then have "fst (\<omega> s) \<in> cball x rr" by (rule stays)
+      then show "fst (\<omega> s) \<in> K" using cb_K by blast
+    qed
+    have pex: "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega>"
+      by (rule pexit_eq_of_stays[OF less_imp_le[OF th0]]) (use inK in simp)
+    have XinK: "fst (\<omega> (\<theta> \<omega>)) \<in> K"
+      using inK[of "\<theta> \<omega>"] th0 by simp
+    have cap: "enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+        = min (tv (fst (\<omega> (\<theta> \<omega>)))) (T - \<theta> \<omega>)"
+      unfolding tv_def
+      by (rule enn2real_paper_v_horizon_cap[OF _ _ L1' Kc])
+        (use thT th0 in auto)
+    have feq: "FN \<omega> = \<theta> \<omega> + min (tv (fst (\<omega> (\<theta> \<omega>)))) (T - \<theta> \<omega>)"
+      unfolding FN_def using pex XinK cap by simp
+    have Xcb: "fst (\<omega> (\<theta> \<omega>)) \<in> cball x rr"
+      using stays[of "\<theta> \<omega>"] th0 thtau by simp
+    have Xphi: "fst (\<omega> (\<theta> \<omega>)) \<in> ball x rphi"
+      using Xcb cb_phi by blast
+    have touch: "tv x + (\<phi> (fst (\<omega> (\<theta> \<omega>))) - \<phi> x)
+        \<le> tv (fst (\<omega> (\<theta> \<omega>)))"
+      using tmin[OF XinK] unfolding tv_def by linarith
+    have minor: "\<phi> x + g x \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
+        + ((fst (\<omega> (\<theta> \<omega>)) - x)
+            \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (fst (\<omega> (\<theta> \<omega>)) - x))) / 2
+        \<le> \<phi> (fst (\<omega> (\<theta> \<omega>)))"
+      by (rule mino[OF Xphi])
+    have soften: "(fst (\<omega> (\<theta> \<omega>)) - x)
+        \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (fst (\<omega> (\<theta> \<omega>)) - x))
+        = (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x))
+          + 2 * \<gamma> * ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))"
+      unfolding M_def by (rule quad_soften_split)
+    have tvX: "tv x + (g x \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
+        + (1/2) * ((fst (\<omega> (\<theta> \<omega>)) - x)
+            \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x)))
+        + \<gamma> * ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)))
+        \<le> tv (fst (\<omega> (\<theta> \<omega>)))"
+      using touch minor soften by linarith
+    have QQ: "\<theta> \<omega> * (\<eta> - 2) / 2
+        + (if \<tau> \<le> cc then \<gamma> * rr\<^sup>2 else 0)
+        \<le> g x \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
+          + (1/2) * ((fst (\<omega> (\<theta> \<omega>)) - x)
+              \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x)))
+          + \<gamma> * ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))"
+    proof (cases "\<tau> \<le> cc")
+      case True
+      have theq: "\<theta> \<omega> = \<tau>" unfolding thw using True by simp
+      have tauTs: "\<tau> < T" using True ccT by linarith
+      have sphere: "dist (fst (\<omega> \<tau>)) x = rr" by (rule bdry[OF tauTs])
+      have nrm: "norm (fst (\<omega> \<tau>) - x) = rr"
+        using sphere by (simp add: dist_norm norm_minus_commute)
+      have dsq: "(fst (\<omega> \<tau>) - x) \<bullet> (fst (\<omega> \<tau>) - x) = rr\<^sup>2"
+        using nrm by (simp add: dot_square_norm)
+      show ?thesis
+        unfolding theq using growtau dsq True by simp
+    next
+      case False
+      have theq: "\<theta> \<omega> = cc" unfolding thw using False by simp
+      have inb: "\<forall>s\<in>{0..cc}. fst (\<omega> s) \<in> ball x rr"
+      proof
+        fix s assume "s \<in> {0..cc}"
+        then have "0 \<le> s" and "s < \<tau>" using False by auto
+        then show "fst (\<omega> s) \<in> ball x rr" by (rule inside)
+      qed
+      have gq: "cc * (\<eta> - 2) / 2 \<le> g x \<bullet> (fst (\<omega> cc) - x)
+          + (1/2) * ((fst (\<omega> cc) - x) \<bullet> (M *v (fst (\<omega> cc) - x)))"
+        by (rule growall[OF cc0 ccT' inb])
+      have nn: "0 \<le> \<gamma> * ((fst (\<omega> cc) - x) \<bullet> (fst (\<omega> cc) - x))"
+        using g0 inner_ge_zero by (simp add: mult_nonneg_nonneg)
+      show ?thesis unfolding theq using gq nn False by simp
+    qed
+    have fun_ge: "tv x + mg \<le> FN \<omega>"
+    proof (cases "tv (fst (\<omega> (\<theta> \<omega>))) \<le> T - \<theta> \<omega>")
+      case True
+      have mfe: "FN \<omega> = \<theta> \<omega> + tv (fst (\<omega> (\<theta> \<omega>)))"
+        unfolding feq using True by simp
+      have id1: "\<theta> \<omega> * (\<eta> - 2) / 2 + \<theta> \<omega> = \<theta> \<omega> * \<eta> / 2"
+        by (simp add: field_simps)
+      show ?thesis
+      proof (cases "\<tau> \<le> cc")
+        case True
+        have QQc: "\<theta> \<omega> * (\<eta> - 2) / 2 + \<gamma> * rr\<^sup>2
+            \<le> g x \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
+              + (1/2) * ((fst (\<omega> (\<theta> \<omega>)) - x)
+                  \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x)))
+              + \<gamma> * ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))"
+          using QQ True by simp
+        have the0: "0 \<le> \<theta> \<omega> * \<eta> / 2"
+          using th0 e0 by simp
+        have mg1: "mg \<le> \<gamma> * rr\<^sup>2" unfolding mg_def by linarith
+        show ?thesis
+          unfolding mfe using tvX QQc id1 the0 mg1 by linarith
+      next
+        case False
+        have QQc: "\<theta> \<omega> * (\<eta> - 2) / 2
+            \<le> g x \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
+              + (1/2) * ((fst (\<omega> (\<theta> \<omega>)) - x)
+                  \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x)))
+              + \<gamma> * ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))"
+          using QQ False by simp
+        have theq: "\<theta> \<omega> = cc" unfolding thw using False by simp
+        have mg2: "mg \<le> cc * \<eta> / 2" unfolding mg_def by linarith
+        show ?thesis
+          unfolding mfe theq
+          using tvX[unfolded theq] QQc[unfolded theq] id1[unfolded theq] mg2
+          by linarith
+      qed
+    next
+      case False
+      have mfe: "FN \<omega> = \<theta> \<omega> + (T - \<theta> \<omega>)"
+        unfolding feq using False by simp
+      have "FN \<omega> = T" unfolding mfe by simp
+      moreover have "mg \<le> T - tv x" unfolding mg_def by simp
+      ultimately show ?thesis by linarith
+    qed
+    show ?case by (rule ennreal_leI[OF fun_ge])
+  qed
+  have essge: "ennreal (tv x + mg) \<le> ess_inf_time P FN"
+    unfolding ess_inf_time_def
+    by (rule Sup_upper) (use AEfun in blast)
+  have esle: "ess_inf_time P FN \<le> paper_v k L T K x"
+  proof -
+    have "ess_inf_time P FN
+        \<le> (SUP P' \<in> paper_pair_class k L T x. ess_inf_time P' FN)"
+      by (rule SUP_upper[OF Pc])
+    then show ?thesis using dpp by (rule order_trans)
+  qed
+  have vfin: "ennreal (tv x) = paper_v k L T K x"
+    unfolding tv_def
+    using paper_v_neq_top[OF T0', of k L K x]
+    by (simp add: ennreal_enn2real less_top)
+  have chain: "ennreal (tv x + mg) \<le> paper_v k L T K x"
+    by (rule order_trans[OF essge esle])
+  have "ennreal (tv x + mg) \<le> ennreal (tv x)"
+    using chain by (simp add: vfin)
+  moreover have "0 \<le> tv x" unfolding tv_def by simp
+  ultimately have "tv x + mg \<le> tv x" by (simp add: ennreal_le_iff)
+  then show False using mg0 by linarith
+    qed
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
