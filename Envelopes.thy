@@ -2676,6 +2676,11 @@ lemma matvec_diff_right:
   shows "A *v (x - y) = A *v x - A *v y"
   by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum_subtractf)
 
+lemma matvec_scaleR_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (r *\<^sub>R x) = r *\<^sub>R (A *v x)"
+  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
+
 lemma matrix_mul_diff_right:
   fixes A B C :: "real^'n::finite^'n"
   shows "A ** (B - C) = A ** B - A ** C"
@@ -3025,5 +3030,238 @@ qed
 text \<open>The \<open>ell_op_lsc\<close> versions follow from \<open>ell_op_usc_transfer\<close> verbatim with
   \<open>INF\<close> and \<open>SUP\<close> exchanged; they are not needed by Theorem 4.3, which reads the
   supersolution side only, so they are not stated.\<close>
+
+
+section \<open>P5 support: envelope monotonicity, usc fixpoint, affine interiors\<close>
+
+lemma visc_supersol_env_mono:
+  assumes "visc_supersol_env k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
+  shows "visc_supersol_env k L K \<Omega>' u"
+  using assms unfolding visc_supersol_env_def by blast
+
+lemma visc_subsol_env_mono:
+  assumes "visc_subsol_env k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
+  shows "visc_subsol_env k L K \<Omega>' u"
+  using assms unfolding visc_subsol_env_def by blast
+
+lemma lsc_env_mono:
+  fixes u v :: "real^'n::finite \<Rightarrow> real"
+  assumes le: "\<And>y. u y \<le> v y" and Bu: "\<And>y. B \<le> u y"
+  shows "lsc_env u x \<le> lsc_env v x"
+proof -
+  have Bv: "\<And>y. B \<le> v y" using Bu le order_trans by blast
+  show ?thesis
+    unfolding lsc_env_def
+  proof (rule cSup_least)
+    show "(\<lambda>e. INF y \<in> ball x e. u y) ` {0<..} \<noteq> {}" by auto
+  next
+    fix t assume "t \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
+    then obtain e where e0: "0 < e" and te: "t = (INF y \<in> ball x e. u y)" by auto
+    have "(INF y \<in> ball x e. u y) \<le> (INF y \<in> ball x e. v y)"
+      by (rule cInf_mono) (use e0 le lsc_env_bdd_below_ball[OF Bu] in auto)
+    also have "\<dots> \<le> (SUP e \<in> {0<..}. INF y \<in> ball x e. v y)"
+      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF Bv]]) (use e0 in auto)
+    finally show "t \<le> (SUP e \<in> {0<..}. INF y \<in> ball x e. v y)" unfolding te .
+  qed
+qed
+
+lemma lsc_env_lsc:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y" and lt: "c < lsc_env u z"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < lsc_env u y"
+proof -
+  have neA: "(\<lambda>e. INF y \<in> ball z e. u y) ` {0<..} \<noteq> {}" by auto
+  from lt obtain t where tmem: "t \<in> (\<lambda>e. INF y \<in> ball z e. u y) ` {0<..}"
+    and tc: "c < t"
+    unfolding lsc_env_def
+    using less_cSup_iff[OF neA lsc_env_bdd_above[OF B]] by auto
+  from tmem obtain e where e0: "0 < e" and te: "t = (INF y \<in> ball z e. u y)"
+    by auto
+  have key: "c < lsc_env u y" if dzy: "dist z y < e / 2" for y
+  proof -
+    have subb: "ball y (e/2) \<subseteq> ball z e"
+    proof
+      fix q assume "q \<in> ball y (e/2)"
+      then have "dist y q < e/2" by simp
+      have "dist z q \<le> dist z y + dist y q" by (rule dist_triangle)
+      also have "\<dots> < e/2 + e/2" using dzy \<open>dist y q < e/2\<close> by linarith
+      finally show "q \<in> ball z e" by simp
+    qed
+    have "t \<le> (INF q \<in> ball y (e/2). u q)"
+      unfolding te
+      by (rule cInf_superset_mono[OF image_mono[OF subb]])
+        (use e0 lsc_env_bdd_below_ball[OF B] in auto)
+    also have "\<dots> \<le> lsc_env u y"
+      unfolding lsc_env_def
+      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use e0 in auto)
+    finally show ?thesis using tc by linarith
+  qed
+  show ?thesis by (rule exI[of _ "e/2"]) (use e0 key in auto)
+qed
+
+lemma usc_env_mono:
+  fixes u v :: "real^'n::finite \<Rightarrow> real"
+  assumes le: "\<And>y. u y \<le> v y" and Bv: "\<And>y. v y \<le> B"
+  shows "usc_env u x \<le> usc_env v x"
+proof -
+  have "lsc_env (\<lambda>y. - v y) x \<le> lsc_env (\<lambda>y. - u y) x"
+    by (rule lsc_env_mono[of _ _ "- B"]) (use le Bv in auto)
+  then show ?thesis unfolding usc_env_def by linarith
+qed
+
+lemma usc_env_eq_self:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B"
+    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+  shows "usc_env u x = u x"
+proof (rule antisym)
+  show "usc_env u x \<le> u x"
+  proof (rule ccontr)
+    assume "\<not> usc_env u x \<le> u x"
+    then have lt: "u x < usc_env u x" by simp
+    define cc where "cc = (u x + usc_env u x) / 2"
+    have cc2: "2 * cc = u x + usc_env u x" unfolding cc_def by simp
+    have c1: "u x < cc" and c2: "cc < usc_env u x" using lt cc2 by linarith+
+    obtain e where e0: "0 < e" and ey: "\<forall>y. dist x y < e \<longrightarrow> u y < cc"
+      using usc[OF c1] by blast
+    have mB: "\<And>y. - B \<le> - u y" using B by simp
+    have "- cc \<le> (INF y \<in> ball x e. - u y)"
+      by (rule cInf_greatest) (use e0 ey in auto)
+    also have "\<dots> \<le> lsc_env (\<lambda>y. - u y) x"
+      unfolding lsc_env_def
+      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF mB]]) (use e0 in auto)
+    finally have "- cc \<le> lsc_env (\<lambda>y. - u y) x" .
+    then have "usc_env u x \<le> cc" unfolding usc_env_def by linarith
+    then show False using c2 by linarith
+  qed
+  show "u x \<le> usc_env u x" by (rule usc_env_ge_self[OF B])
+qed
+
+subsection \<open>Affine maps commute with \<open>interior\<close>\<close>
+
+lemma open_orth_image:
+  fixes R :: "real^'n::finite^'n"
+  assumes orth: "orthogonal_matrix R" and op: "open S"
+  shows "open ((\<lambda>z. R *v z) ` S)"
+proof (rule openI)
+  fix w assume "w \<in> (\<lambda>z. R *v z) ` S"
+  then obtain z0 where z0: "z0 \<in> S" and wz: "w = R *v z0" by auto
+  obtain e where e0: "0 < e" and eb: "ball z0 e \<subseteq> S"
+    using op z0 unfolding open_contains_ball by blast
+  have "ball w e \<subseteq> (\<lambda>z. R *v z) ` S"
+  proof
+    fix y assume yb: "y \<in> ball w e"
+    define z where "z = transpose R *v y"
+    have Rz: "R *v z = y" unfolding z_def by (rule matvec_orth_inv[OF orth])
+    have rd: "R *v (z0 - z) = w - y"
+    proof -
+      have "R *v (z0 - z) = R *v z0 - R *v z" by (rule matvec_diff_right)
+      then show ?thesis unfolding wz Rz .
+    qed
+    have "dist z0 z = norm (z0 - z)" by (simp add: dist_norm)
+    also have "\<dots> = norm (R *v (z0 - z))"
+      by (rule norm_orthogonal_matrix_vector[OF orth, symmetric])
+    also have "\<dots> = norm (w - y)" unfolding rd by (rule refl)
+    finally have "dist z0 z = dist w y" by (simp add: dist_norm)
+    then have "z \<in> ball z0 e" using yb by simp
+    then show "y \<in> (\<lambda>z. R *v z) ` S" using eb Rz by force
+  qed
+  then show "\<exists>e>0. ball w e \<subseteq> (\<lambda>z. R *v z) ` S" using e0 by blast
+qed
+
+lemma open_affine_image:
+  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
+  assumes orth: "orthogonal_matrix R" and c0: "c \<noteq> 0" and op: "open S"
+  shows "open ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)"
+proof -
+  have eq: "(\<lambda>z. c *\<^sub>R (R *v z) + b) ` S
+      = (\<lambda>y. b + y) ` ((\<lambda>y. c *\<^sub>R y) ` ((\<lambda>z. R *v z) ` S))"
+    unfolding image_image by (rule image_cong[OF refl]) (simp add: add.commute)
+  show ?thesis
+    unfolding eq
+    by (rule open_translation, rule open_scaling[OF c0 open_orth_image[OF orth op]])
+qed
+
+lemma affine_interior_sub:
+  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
+  assumes orth: "orthogonal_matrix R" and c0: "c \<noteq> 0"
+  shows "(\<lambda>z. c *\<^sub>R (R *v z) + b) ` interior S
+       \<subseteq> interior ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)"
+  by (rule interior_maximal[OF image_mono[OF interior_subset]
+        open_affine_image[OF orth c0 open_interior]])
+
+text \<open>The inverse of \<open>z \<mapsto> c \<cdot> R z + b\<close> has the same shape, which upgrades the
+  inclusion above to an equality.\<close>
+
+lemma affine_inv_shape:
+  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
+  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
+  shows "(\<lambda>y. (1/c) *\<^sub>R (transpose R *v (y - b)))
+       = (\<lambda>y. (1/c) *\<^sub>R (transpose R *v y) + (- ((1/c) *\<^sub>R (transpose R *v b))))"
+  by (rule ext) (simp add: matvec_diff_right scaleR_right_diff_distrib)
+
+lemma affine_inv_left:
+  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
+  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
+  shows "(1/c) *\<^sub>R (transpose R *v ((c *\<^sub>R (R *v z) + b) - b)) = z"
+proof -
+  have "(c *\<^sub>R (R *v z) + b) - b = c *\<^sub>R (R *v z)" by simp
+  then have "transpose R *v ((c *\<^sub>R (R *v z) + b) - b)
+      = c *\<^sub>R (transpose R *v (R *v z))" by (simp add: matvec_scaleR_right)
+  also have "transpose R *v (R *v z) = z"
+    using orth unfolding orthogonal_matrix_def
+    by (metis matrix_vector_mul_assoc matrix_vector_mul_lid)
+  finally show ?thesis using c0 by simp
+qed
+
+lemma affine_inv_right:
+  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
+  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
+  shows "c *\<^sub>R (R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))) + b = y"
+proof -
+  have "R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))
+      = (1/c) *\<^sub>R (R *v (transpose R *v (y - b)))"
+    by (rule matvec_scaleR_right)
+  also have "R *v (transpose R *v (y - b)) = y - b"
+    by (rule matvec_orth_inv[OF orth])
+  finally have "c *\<^sub>R (R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))) = y - b"
+    using c0 by simp
+  then show ?thesis by simp
+qed
+
+lemma affine_interior_image:
+  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
+  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
+  shows "interior ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)
+       = (\<lambda>z. c *\<^sub>R (R *v z) + b) ` interior S"
+proof
+  define T where "T = (\<lambda>z :: real^'n. c *\<^sub>R (R *v z) + b)"
+  define S' where "S' = (\<lambda>y :: real^'n. (1/c) *\<^sub>R (transpose R *v (y - b)))"
+  have cne: "c \<noteq> 0" using c0 by simp
+  have orthT: "orthogonal_matrix (transpose R)"
+    using orth unfolding orthogonal_matrix_def by auto
+  have c1ne: "1 / c \<noteq> 0" using c0 by simp
+  have ST: "S' (T z) = z" for z unfolding S'_def T_def by (rule affine_inv_left[OF orth c0])
+  have TS: "T (S' y) = y" for y unfolding S'_def T_def by (rule affine_inv_right[OF orth c0])
+  have Seq: "S' = (\<lambda>y. (1/c) *\<^sub>R (transpose R *v y)
+      + (- ((1/c) *\<^sub>R (transpose R *v b))))"
+    unfolding S'_def by (rule affine_inv_shape[OF orth c0])
+  have opS': "open (S' ` A)" if "open A" for A
+    unfolding Seq by (rule open_affine_image[OF orthT c1ne that])
+  have STS: "S' ` (T ` S) = S" unfolding image_image ST by simp
+  show "interior (T ` S) \<subseteq> T ` interior S"
+  proof
+    fix y assume yi: "y \<in> interior (T ` S)"
+    have sub1: "S' ` interior (T ` S) \<subseteq> interior (S' ` (T ` S))"
+      by (rule interior_maximal[OF image_mono[OF interior_subset]])
+        (rule opS'[OF open_interior])
+    have "S' y \<in> S' ` interior (T ` S)" using yi by (rule imageI)
+    then have "S' y \<in> interior (S' ` (T ` S))" using sub1 by blast
+    then have "S' y \<in> interior S" unfolding STS .
+    then show "y \<in> T ` interior S" using TS[of y] by (metis imageI)
+  qed
+  show "T ` interior S \<subseteq> interior (T ` S)"
+    unfolding T_def by (rule affine_interior_sub[OF orth cne])
+qed
 
 end

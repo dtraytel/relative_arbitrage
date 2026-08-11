@@ -14492,70 +14492,102 @@ proof (intro ballI allI impI)
 qed
 
 
-section \<open>P4 + P5 DRAFT: two-domain comparison, Theorem 4.3, Proposition 4.1 (UNVERIFIED)\<close>
+section \<open>P4 + P5: two-domain comparison, Theorem 4.3, Proposition 4.1\<close>
 
-text \<open>End-of-context draft (2026-08-11, Fable).  UNVERIFIED; contains real
-  \<open>sorry\<close>s at the marked holes.  P4's statement is the contract the fixer
-  must implement (re-run the supconv/soft top layer, 6700--13400, with the
-  \<open>u\<close>-side \<Omega> gated and the \<open>w\<close>-side interior to the LARGER set; the CI core
-  is consumed as is).  P5 is drafted as a real proof ON TOP of P4 and should
-  survive fixing with only name/by-line repairs.\<close>
+subsection \<open>P4: the two-domain maximum principle (Theorem 4.2(b))\<close>
 
-subsection \<open>P4: the two-domain maximum principle (Theorem 4.2(b)) --- HOLE\<close>
+text \<open>The paper's Theorem 4.2(b).  \<^bold>\<open>This is the one statement of \<section>2.0 still
+  open\<close>; everything below it is proved FROM it, so filling it completes
+  Theorem 4.3, Proposition 4.1 and the uniqueness clause of Theorem 1.1.
+
+  Why it does not follow from what is already here.  The existing chain
+  funnels into \<open>comparison_soft_complete\<close>, whose
+  \<open>doubling_localised_maximiser_soft\<close> step uses the boundary data
+  \<open>\<theta> u c - w c \<le> m\<close> on ALL of \<open>K - interior K\<close> to push the doubled
+  maximisers a fixed distance \<open>\<kappa>\<^sub>g\<close> AWAY from the boundary, and then reads the
+  sub/supersolution properties off on \<open>interior K\<close>.  Here the maximiser is
+  allowed to sit on \<open>\<partial>K\<close> --- that is exactly where Definition 3.1's gate
+  \<open>u > 0\<close> opens --- so that mechanism is the wrong shape.
+
+  What to do: generalise the chain from the pair \<open>(interior K, K - interior K)\<close>
+  to a pair \<open>(\<Omega>, S)\<close> with \<open>S\<close> compact, \<open>K - S \<subseteq> \<Omega>\<close>, boundary data on \<open>S\<close> only.
+  Here \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close>, on which \<open>\<theta> u - w \<le> 0\<close> because
+  \<open>w \<ge> 0\<close>; the gap to the interior maximum is then supplied exactly as now.
+  The \<open>y\<close>-side needs no such care: \<open>K \<subseteq> interior K'\<close> keeps \<open>y\<^sup>\<epsilon>\<close> interior to
+  \<open>K'\<close> for small penalties.  The Crandall--Ishii core (\<open>Sup_Convolution\<close>,
+  \<open>comparison_soft_off_diagonal\<close>, \<open>comparison_soft_diagonal\<close>) is consumed
+  unchanged --- it never mentions \<open>interior K\<close>.\<close>
 
 theorem comparison_two_domain:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"
-  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 < L"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cK: "compact K" and neK: "K \<noteq> {}" and cK': "compact K'"
-    and sub: "K \<subseteq> interior K'"
-    and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
-      \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
+    and KK': "K \<subseteq> interior K'"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and lscw: "\<And>c z. c < w z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < w y"
-    and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bu" and Bw: "\<And>y. y \<in> K' \<Longrightarrow> \<bar>w y\<bar> \<le> Bw"
+    and Bu: "\<And>y. \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. \<bar>w y\<bar> \<le> B"
     and subu: "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
     and supw: "visc_supersol_env k L K' (interior K') w"
     and w0: "\<And>y. y \<in> K' \<Longrightarrow> 0 \<le> w y"
-    and u0bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 < u y \<Longrightarrow>
-      \<exists>\<phi> g H. False"  \<comment> \<open>FIXER: delete this placeholder hypothesis; the gated
-        \<open>subu\<close> is what handles boundary maximisers.  It is here only so the
-        draft records that no OTHER boundary information is available.\<close>
-  shows "\<And>x. x \<in> K \<Longrightarrow> u x \<le> w x"
+    and x: "x \<in> K"
+  shows "u x \<le> w x"
   sorry
 
-text \<open>FIXER notes for \<open>comparison_two_domain\<close>.
-  (1) If \<open>max_{K} (u - w) \<le> 0\<close> there is nothing to prove; otherwise the max
-      \<open>m > 0\<close> is attained at some \<open>x\<^sub>0 \<in> K\<close> (\<open>usc_attains_sup_gen\<close>; \<open>u - w\<close> is
-      usc since \<open>u\<close> usc, \<open>w\<close> lsc).  Then \<open>u x\<^sub>0 > w x\<^sub>0 \<ge> 0\<close>, so the gate at
-      \<open>x\<^sub>0\<close> is OPEN whether interior or boundary.
-  (2) Run the \<open>\<theta>\<close>-scaled doubling exactly as \<open>comparison_compact\<close> does, but
-      with \<open>\<Phi>(x,y) = \<theta> u x - w y - (\<alpha>/2)\<bar>x-y\<bar>\<^sup>2\<close> maximised over \<open>K \<times> K'\<close>.
-      Extend \<open>u\<close> by \<open>usc_extension_bounded\<close> and \<open>-w\<close> likewise before feeding
-      the supconv layer; the "attaining balls in \<Omega>" smallness conditions hold
-      because the extension value \<open>-Bu\<close> is below every value on \<open>K\<close>.
-  (3) Maximiser dichotomy: \<open>y\<^sup>\<alpha> \<in> interior K'\<close> for large \<open>\<alpha>\<close> because
-      \<open>dist(K, \<partial>K') > 0\<close> beats the penalty; \<open>x\<^sup>\<alpha> \<in> K\<close> and along a subsequence
-      \<open>x\<^sup>\<alpha> \<rightarrow> x\<^sub>0'\<close> with \<open>u x\<^sub>0' - w x\<^sub>0' = m > 0\<close>, so by usc the gate is
-      eventually open at \<open>x\<^sup>\<alpha>\<close> (\<open>u x\<^sup>\<alpha> > 0\<close> for large \<open>\<alpha>\<close>); that is what \<open>subu\<close>'s
-      \<Omega> was designed to accept.
-  (4) From there the CI/Jensen contradiction of the existing chain runs
-      verbatim; \<open>1 < L\<close> feeds the strictness through \<open>\<theta> < 1\<close> exactly as in
-      \<open>viscosity_uniqueness_compact\<close>.\<close>
+subsection \<open>P5: Theorem 4.3, on top of P4\<close>
 
-subsection \<open>P5: Theorem 4.3 and Proposition 4.1, on top of P4\<close>
+text \<open>Two small facts about the inverse of the dilation, used to transfer
+  lower semicontinuity and the bound to the transformed supersolution.\<close>
 
-text \<open>The paper's Theorem 4.3: \<open>u \<le> (w\<^sub>*)\<^sup>*\<close> --- here with \<open>w\<close> ALREADY lsc (the
-  consumer passes \<open>lsc_env\<close> of a solution), so the conclusion reads
-  \<open>u \<le> usc_env w\<close>.  The \<open>\<iota> \<downarrow> 1\<close> limit is a sequence \<open>e\<^sub>j = 1/Suc j\<close>.\<close>
+lemma affine_inv_dist:
+  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
+  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
+  shows "dist ((1/c) *\<^sub>R (transpose R *v (X - b)))
+             ((1/c) *\<^sub>R (transpose R *v (Y - b))) = (1/c) * dist X Y"
+proof -
+  have orthT: "orthogonal_matrix (transpose R)"
+    using orth unfolding orthogonal_matrix_def by auto
+  have e1: "transpose R *v (X - b) - transpose R *v (Y - b)
+      = transpose R *v (X - Y)"
+  proof -
+    have "transpose R *v (X - b) - transpose R *v (Y - b)
+        = transpose R *v ((X - b) - (Y - b))"
+      by (rule matvec_diff_right[symmetric])
+    also have "(X - b) - (Y - b) = X - Y" by simp
+    finally show ?thesis .
+  qed
+  have d: "(1/c) *\<^sub>R (transpose R *v (X - b)) - (1/c) *\<^sub>R (transpose R *v (Y - b))
+      = (1/c) *\<^sub>R (transpose R *v (X - Y))"
+  proof -
+    have "(1/c) *\<^sub>R (transpose R *v (X - b)) - (1/c) *\<^sub>R (transpose R *v (Y - b))
+        = (1/c) *\<^sub>R (transpose R *v (X - b) - transpose R *v (Y - b))"
+      by (rule scaleR_right_diff_distrib[symmetric])
+    also have "\<dots> = (1/c) *\<^sub>R (transpose R *v (X - Y))" unfolding e1 by (rule refl)
+    finally show ?thesis .
+  qed
+  have nn: "norm (transpose R *v (X - Y)) = norm (X - Y)"
+    by (rule norm_orthogonal_matrix_vector[OF orthT])
+  have "dist ((1/c) *\<^sub>R (transpose R *v (X - b)))
+      ((1/c) *\<^sub>R (transpose R *v (Y - b)))
+      = norm ((1/c) *\<^sub>R (transpose R *v (X - Y)))"
+    unfolding dist_norm d by (rule refl)
+  also have "\<dots> = \<bar>1/c\<bar> * norm (transpose R *v (X - Y))" by (rule norm_scaleR)
+  also have "\<dots> = (1/c) * norm (X - Y)" unfolding nn using c0 by simp
+  finally show ?thesis unfolding dist_norm .
+qed
+
+text \<open>The paper's Theorem 4.3, in the form Proposition 4.1 consumes: for an
+  usc bounded subsolution \<open>u\<close> and an lsc bounded supersolution \<open>w\<close>, both
+  satisfying Definition 3.1's boundary condition on an expandable \<open>K\<close>,
+  \<open>u \<le> w\<^sup>*\<close> on \<open>K\<close>.  The \<open>\<iota> \<downarrow> 1\<close> limit is taken along \<open>e\<^sub>j = 1 / Suc j\<close>.\<close>
 
 theorem comparison_expandable:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
-  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 < L"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
-    and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
-      \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and lscw: "\<And>c z. c < w z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < w y"
-    and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. \<bar>w y\<bar> \<le> B"
+    and Bu: "\<And>y. \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. \<bar>w y\<bar> \<le> B"
     and subu: "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
     and supw: "visc_supersol_env k L K
@@ -14563,77 +14595,215 @@ theorem comparison_expandable:
     and x: "x \<in> K"
   shows "u x \<le> usc_env w x"
 proof -
-  \<comment> \<open>For each \<open>j\<close>, expandability gives \<open>T\<^sub>j\<close> with dilation \<open>c\<^sub>j \<in> (1, 1 + 1/Suc j)\<close>.\<close>
-  have step: "\<exists>z. dist z x \<le> 1 / real (Suc j)
-      \<and> u x \<le> (1 + 1 / real (Suc j))\<^sup>2 * w z" for j
+  have wB: "w y \<le> B" for y using Bw[of y] by (simp add: abs_le_iff)
+  have wlb: "- B \<le> w y" for y using Bw[of y] by (simp add: abs_le_iff)
+  have w0K: "\<And>y. y \<in> K \<Longrightarrow> 0 \<le> w y"
   proof -
-    define e where "e = 1 / real (Suc j)"
-    have e0: "0 < e" unfolding e_def by simp
+    have lb: "\<And>y. y \<in> K \<Longrightarrow> - B \<le> w y" using wlb by blast
+    show "\<And>y. y \<in> K \<Longrightarrow> 0 \<le> w y"
+      by (rule supersol_bc_nonneg[OF kk(1) kk(2) LL cK neK lscw lb supw])
+  qed
+
+  text \<open>One dilation step: \<open>u x \<le> c\<^sup>2 \<cdot> w z\<close> with \<open>z\<close> within \<open>e\<close> of \<open>x\<close>.\<close>
+  have step: "\<exists>z c. dist z x \<le> e \<and> 1 < c \<and> c < 1 + e
+      \<and> u x \<le> c\<^sup>2 * w z" if e0: "0 < e" for e
+  proof -
     obtain R b c where orth: "orthogonal_matrix R" and c1: "1 < c"
       and ce: "c < 1 + e"
       and Ksub: "K \<subseteq> interior ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` K)"
       and Tclose: "\<forall>z \<in> K. dist ((1/c) *\<^sub>R (transpose R *v (z - b))) z \<le> e"
       using expK unfolding expandable_def using e0 by blast
-    define T where "T = (\<lambda>z. c *\<^sub>R (R *v z) + b)"
-    define w' where "w' = (\<lambda>X. c\<^sup>2 * w ((1/c) *\<^sub>R (transpose R *v (X - b))))"
+    define T where "T = (\<lambda>z :: real^'n. c *\<^sub>R (R *v z) + b)"
+    define S where "S = (\<lambda>Y :: real^'n. (1/c) *\<^sub>R (transpose R *v (Y - b)))"
+    define w' where "w' = (\<lambda>Y. c\<^sup>2 * w (S Y))"
     have c0: "0 < c" using c1 by linarith
-    \<comment> \<open>The transformed function is an lsc supersolution on \<open>T ` K\<close>, \<ge> 0 there,
-      with \<open>K\<close> compactly inside; apply P4 on \<open>(K, T ` K)\<close>.\<close>
-    have supw': "visc_supersol_env k L (T ` K) (T ` (interior K \<union>
-        {x \<in> K - interior K. w x < 0})) w'"
-      unfolding T_def w'_def
+    have c2: "0 < c\<^sup>2" using c0 by simp
+    have ST: "S (T z) = z" for z unfolding S_def T_def by (rule affine_inv_left[OF orth c0])
+    have TS: "T (S Y) = Y" for Y unfolding S_def T_def by (rule affine_inv_right[OF orth c0])
+
+    text \<open>\<open>T ` K\<close> is compact and contains \<open>K\<close> in its interior.\<close>
+    have contT: "continuous_on UNIV T"
+    proof -
+      have "continuous_on UNIV (\<lambda>z :: real^'n. c *\<^sub>R (R *v z))"
+        by (rule bounded_linear.continuous_on[OF affine_linear continuous_on_id])
+      then show ?thesis unfolding T_def by (intro continuous_intros)
+    qed
+    have cTK: "compact (T ` K)"
+      by (rule compact_continuous_image[OF continuous_on_subset[OF contT subset_UNIV] cK])
+    have KTK: "K \<subseteq> interior (T ` K)" using Ksub unfolding T_def .
+
+    text \<open>The transformed supersolution, on the full interior of \<open>T ` K\<close>.\<close>
+    have supa: "visc_supersol_env k L (T ` K)
+        (T ` (interior K \<union> {x \<in> K - interior K. w x < 0})) w'"
+      unfolding T_def w'_def S_def
       by (rule visc_supersol_env_affine[OF orth c0 supw])
-    \<comment> \<open>HOLE 1 (small): enlarge the \<Omega> of \<open>supw'\<close> to \<open>interior (T ` K)\<close>.  The
-      image of the gated \<Omega> under the homeomorphism \<open>T\<close> contains
-      \<open>interior (T ` K) \<union> gate\<close>; monotonicity of \<open>visc_supersol_env\<close> in \<Omega>
-      (\<open>visc_supersol_env_mono\<close> if present, else 5 lines) closes it.\<close>
-    have supw'': "visc_supersol_env k L (T ` K) (interior (T ` K)) w'"
-      sorry
-    have w'0: "\<And>y. y \<in> T ` K \<Longrightarrow> 0 \<le> w' y"
-      \<comment> \<open>HOLE 2: from P2 \<open>supersol_bc_nonneg\<close> applied to \<open>w'\<close> on \<open>T ` K\<close>
-        (its lsc-ness and bound transfer through the affine map), or
-        directly from \<open>supersol_bc_nonneg\<close> for \<open>w\<close> on \<open>K\<close> and \<open>w' = c\<^sup>2 w \<circ> T\<inverse>\<close>.\<close>
-      sorry
-    have ux: "u x \<le> w' (T x)"
-      \<comment> \<open>HOLE 3: \<open>comparison_two_domain\<close> with \<open>K' = T ` K\<close>, \<open>sub = Ksub\<close>
-        (note \<open>T ` K\<close> is compact: continuous image), then evaluate at \<open>x\<close>;
-        \<open>w'\<close> is lsc as \<open>c\<^sup>2 \<cdot> w \<circ>\<close> an affine homeomorphism; bounds transfer.\<close>
-      sorry
-    have "w' (T x) = c\<^sup>2 * w ((1/c) *\<^sub>R (transpose R *v (T x - b)))"
-      unfolding w'_def by (rule refl)
-    moreover have "(1/c) *\<^sub>R (transpose R *v (T x - b)) = x"
-      unfolding T_def
-      using orth c0 unfolding orthogonal_matrix_def
-      by (metis (no_types, lifting) add_diff_cancel_right'
-          matrix_vector_mul_assoc matrix_vector_mul_lid
-          matvec_scaleR_right' nonzero_eq_divide_eq
-          order_less_irrefl scaleR_one scaleR_scaleR)
-    ultimately have uxx: "u x \<le> c\<^sup>2 * w x" using ux by simp
-    \<comment> \<open>HOLE 4 (statement shape): the draft returns the UNTRANSFORMED point;
-      the honest 4.3 route keeps \<open>z\<^sub>j = T\<^sub>j\<inverse> x \<rightarrow> x\<close> and \<open>u x \<le> c\<^sub>j\<^sup>2 w z\<^sub>j\<close>,
-      feeding \<open>usc_env_limsup_bound\<close>.  With the simplification above the
-      witness is \<open>x\<close> itself, which still satisfies the two clauses: \<close>
-    have "c\<^sup>2 * w x \<le> (1 + e)\<^sup>2 * w x \<or> c\<^sup>2 * w x \<le> (1 + e)\<^sup>2 * w x"
-      by (cases "0 \<le> w x") auto
+    have intTK: "interior (T ` K) = T ` interior K"
+      unfolding T_def by (rule affine_interior_image[OF orth c0])
+    have supw': "visc_supersol_env k L (T ` K) (interior (T ` K)) w'"
+      by (rule visc_supersol_env_mono[OF supa]) (use intTK in blast)
+
+    text \<open>Lower semicontinuity, bound and nonnegativity of \<open>w'\<close>.\<close>
+    have lscw': "\<exists>ee>0. \<forall>Y. dist Z Y < ee \<longrightarrow> d < w' Y" if lt: "d < w' Z" for d Z
+    proof -
+      have "d / c\<^sup>2 < w (S Z)" using lt c2 unfolding w'_def by (simp add: field_simps)
+      then obtain ee where ee0: "0 < ee"
+        and eey: "\<forall>y. dist (S Z) y < ee \<longrightarrow> d / c\<^sup>2 < w y" using lscw by blast
+      have "d < w' Y" if dY: "dist Z Y < c * ee" for Y
+      proof -
+        have "dist (S Z) (S Y) = (1/c) * dist Z Y"
+          unfolding S_def by (rule affine_inv_dist[OF orth c0])
+        also have "\<dots> < (1/c) * (c * ee)"
+          by (rule mult_strict_left_mono[OF dY]) (use c0 in simp)
+        also have "\<dots> = ee" using c0 by simp
+        finally have "d / c\<^sup>2 < w (S Y)" using eey by blast
+        then show ?thesis unfolding w'_def using c2 by (simp add: field_simps)
+      qed
+      then show ?thesis using ee0 c0 by (intro exI[of _ "c * ee"]) auto
+    qed
+    have Bw': "\<bar>w' Y\<bar> \<le> c\<^sup>2 * B" for Y
+    proof -
+      have "\<bar>w' Y\<bar> = c\<^sup>2 * \<bar>w (S Y)\<bar>" unfolding w'_def using c2 by (simp add: abs_mult)
+      also have "\<dots> \<le> c\<^sup>2 * B" using Bw[of "S Y"] c2 by (simp add: mult_left_mono)
+      finally show ?thesis .
+    qed
+    have w'0: "0 \<le> w' Y" if Y: "Y \<in> T ` K" for Y
+    proof -
+      from Y obtain z where zK: "z \<in> K" and Yz: "Y = T z" by auto
+      have "S Y = z" unfolding Yz by (rule ST)
+      then show ?thesis unfolding w'_def using w0K[OF zK] c2 by simp
+    qed
+    have BuB: "\<bar>u y\<bar> \<le> c\<^sup>2 * B" for y
+    proof -
+      have B0: "0 \<le> B" using Bu[of x] by simp
+      have c2ge: "1 \<le> c\<^sup>2"
+      proof -
+        have "1 * 1 \<le> c * c" using c1 by (intro mult_mono) auto
+        then show ?thesis by (simp add: power2_eq_square)
+      qed
+      have "\<bar>u y\<bar> \<le> B" by (rule Bu)
+      also have "B = 1 * B" by simp
+      also have "\<dots> \<le> c\<^sup>2 * B" by (rule mult_right_mono[OF c2ge B0])
+      finally show ?thesis .
+    qed
+
+    text \<open>Apply the two-domain comparison on \<open>(K, T ` K)\<close>.\<close>
+    have "u x \<le> w' x"
+      by (rule comparison_two_domain
+          [OF kk LL cK neK cTK KTK uscu lscw' BuB Bw' subu supw' w'0 x])
+    then have uxw: "u x \<le> c\<^sup>2 * w (S x)" unfolding w'_def .
+    have dSx: "dist (S x) x \<le> e" unfolding S_def using Tclose x by blast
     show ?thesis
-      unfolding e_def[symmetric]
-      by (rule exI[of _ x]) (use uxx c1 ce e0 in \<open>auto intro: sorry\<close>)
+      by (rule exI[of _ "S x"], rule exI[of _ c]) (use dSx c1 ce uxw in blast)
   qed
-  \<comment> \<open>Pass to the limit: \<open>z\<^sub>j \<rightarrow> x\<close>, factors \<open>\<rightarrow> 1\<close>, so any \<open>d < u x\<close> is
-    eventually \<open>\<le> w z\<^sub>j\<close>-ish; conclude with \<open>usc_env_limsup_bound\<close>.\<close>
+
+  text \<open>Let \<open>e \<downarrow> 0\<close> and read off the upper envelope.\<close>
+  have main: "d \<le> usc_env w x" if d: "d < u x" for d
+  proof -
+    have "\<forall>j. \<exists>p. dist (fst p) x \<le> 1 / real (Suc j) \<and> 1 < snd p
+        \<and> snd p < 1 + 1 / real (Suc j) \<and> u x \<le> (snd p)\<^sup>2 * w (fst p)"
+    proof
+      fix j :: nat
+      have "0 < 1 / real (Suc j)" by simp
+      from step[OF this] obtain z cc where
+        "dist z x \<le> 1 / real (Suc j)" "1 < cc" "cc < 1 + 1 / real (Suc j)"
+        "u x \<le> cc\<^sup>2 * w z" by blast
+      then show "\<exists>p. dist (fst p) x \<le> 1 / real (Suc j) \<and> 1 < snd p
+          \<and> snd p < 1 + 1 / real (Suc j) \<and> u x \<le> (snd p)\<^sup>2 * w (fst p)"
+        by (intro exI[of _ "(z, cc)"]) simp
+    qed
+    then obtain p where
+      pd: "\<And>j. dist (fst (p j)) x \<le> 1 / real (Suc j)"
+      and pc1: "\<And>j. 1 < snd (p j)"
+      and pce: "\<And>j. snd (p j) < 1 + 1 / real (Suc j)"
+      and pux: "\<And>j. u x \<le> (snd (p j))\<^sup>2 * w (fst (p j))" by metis
+    define zs where "zs = (\<lambda>j. fst (p j))"
+    define cs where "cs = (\<lambda>j. snd (p j))"
+    have nul: "(\<lambda>j. 1 / real (Suc j)) \<longlonglongrightarrow> 0"
+      by (rule LIMSEQ_Suc[OF lim_1_over_n])
+    have lim: "zs \<longlonglongrightarrow> x"
+    proof (rule metric_LIMSEQ_I)
+      fix r :: real assume r0: "0 < r"
+      obtain N where N: "\<And>j. N \<le> j \<Longrightarrow> \<bar>1 / real (Suc j) - 0\<bar> < r"
+        using nul r0 unfolding lim_sequentially by (metis dist_real_def)
+      show "\<exists>N. \<forall>j\<ge>N. dist (zs j) x < r"
+      proof (intro exI[of _ N] allI impI)
+        fix j assume "N \<le> j"
+        have "dist (zs j) x \<le> 1 / real (Suc j)" unfolding zs_def by (rule pd)
+        also have "\<dots> < r" using N[OF \<open>N \<le> j\<close>] by simp
+        finally show "dist (zs j) x < r" .
+      qed
+    qed
+    have cslim: "cs \<longlonglongrightarrow> 1"
+    proof (rule metric_LIMSEQ_I)
+      fix r :: real assume r0: "0 < r"
+      obtain N where N: "\<And>j. N \<le> j \<Longrightarrow> \<bar>1 / real (Suc j) - 0\<bar> < r"
+        using nul r0 unfolding lim_sequentially by (metis dist_real_def)
+      show "\<exists>N. \<forall>j\<ge>N. dist (cs j) 1 < r"
+      proof (intro exI[of _ N] allI impI)
+        fix j assume "N \<le> j"
+        have "1 < cs j" unfolding cs_def by (rule pc1)
+        moreover have "cs j < 1 + 1 / real (Suc j)" unfolding cs_def by (rule pce)
+        moreover have "1 / real (Suc j) < r" using N[OF \<open>N \<le> j\<close>] by simp
+        ultimately show "dist (cs j) 1 < r" by (simp add: dist_real_def)
+      qed
+    qed
+    have sqlim: "(\<lambda>j. u x / (cs j)\<^sup>2) \<longlonglongrightarrow> u x"
+    proof -
+      have "(\<lambda>j. (cs j)\<^sup>2) \<longlonglongrightarrow> 1\<^sup>2" by (intro tendsto_intros cslim)
+      then have sq: "(\<lambda>j. (cs j)\<^sup>2) \<longlonglongrightarrow> 1" by simp
+      have "(\<lambda>j. u x / (cs j)\<^sup>2) \<longlonglongrightarrow> u x / 1"
+        by (rule tendsto_divide[OF tendsto_const sq]) simp
+      then show ?thesis by simp
+    qed
+    obtain N where N: "\<And>j. N \<le> j \<Longrightarrow> d < u x / (cs j)\<^sup>2"
+      using order_tendstoD(1)[OF sqlim d] unfolding eventually_sequentially by blast
+    have lo: "d \<le> w (zs (j + N))" for j
+    proof -
+      have cN: "1 < cs (j + N)" unfolding cs_def by (rule pc1)
+      then have cN2: "0 < (cs (j + N))\<^sup>2" by simp
+      have "d < u x / (cs (j + N))\<^sup>2" by (rule N) simp
+      then have d1: "d * (cs (j + N))\<^sup>2 < u x"
+        using cN2 by (simp add: divide_le_eq pos_less_divide_eq)
+      have d2: "u x \<le> (cs (j + N))\<^sup>2 * w (zs (j + N))"
+        unfolding cs_def zs_def by (rule pux)
+      have "d * (cs (j + N))\<^sup>2 < w (zs (j + N)) * (cs (j + N))\<^sup>2"
+        using d1 d2 by (simp add: mult.commute)
+      then have "d < w (zs (j + N))"
+        by (rule mult_right_less_imp_less[OF _ less_imp_le[OF cN2]])
+      then show ?thesis by linarith
+    qed
+    have lim': "(\<lambda>j. zs (j + N)) \<longlonglongrightarrow> x"
+      using lim by (rule LIMSEQ_ignore_initial_segment)
+    show ?thesis
+      by (rule usc_env_limsup_bound
+          [where u = w and zs = "\<lambda>j. zs (j + N)" and x = x and c = d and B = B,
+           OF wB lim' lo])
+  qed
   show ?thesis
-    sorry
+  proof (rule ccontr)
+    assume "\<not> u x \<le> usc_env w x"
+    then have lt: "usc_env w x < u x" by simp
+    obtain d where d1: "usc_env w x < d" and d2: "d < u x"
+      using lt dense by blast
+    have "d \<le> usc_env w x" by (rule main[OF d2])
+    then show False using d1 by linarith
+  qed
 qed
+
+subsection \<open>Proposition 4.1: uniqueness among bounded usc solutions\<close>
+
+text \<open>The paper's Proposition 4.1.  Both functions are assumed usc and bounded
+  GLOBALLY; a caller with data only on \<open>K\<close> extends first with
+  \<open>usc_extension_bounded\<close>, which changes nothing on \<open>K\<close> and hence preserves
+  both viscosity properties (they quantify only over \<open>K\<close>).\<close>
 
 theorem uniqueness_expandable:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
-  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 < L"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
-    and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
-      \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
-    and uscw: "\<And>c z. z \<in> K \<Longrightarrow> w z < c \<Longrightarrow>
-      \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> w y < c"
-    and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> B"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and uscw: "\<And>c z. w z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> w y < c"
+    and Bu: "\<And>y. \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. \<bar>w y\<bar> \<le> B"
     and subu: "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
     and supu: "visc_supersol_env k L K
@@ -14644,15 +14814,43 @@ theorem uniqueness_expandable:
       (interior K \<union> {x \<in> K - interior K. lsc_env w x < 0}) (lsc_env w)"
     and x: "x \<in> K"
   shows "u x = w x"
-proof (rule antisym)
-  \<comment> \<open>\<open>u \<le> usc_env (lsc_env w) \<le> usc_env w = w\<close> (\<open>w\<close> usc), and symmetrically.
-    HOLE 5: \<open>lsc_env w\<close> is lsc in the sequential form \<open>comparison_expandable\<close>
-    wants (that is \<open>lsc_env_lower\<close>, Paper_Viscosity/Envelopes), its bound is
-    \<open>B\<close> (\<open>lsc_env_le_self\<close> + \<open>lsc_env_ge\<close> need the GLOBAL bound: extend \<open>w\<close>
-    first or restate with the extension), and \<open>usc_env w = w\<close> on \<open>K\<close> for usc
-    \<open>w\<close> needs the usc-mirror of \<open>lsc_env_eq_self\<close>.\<close>
-  show "u x \<le> w x" sorry
-  show "w x \<le> u x" sorry
+proof -
+  text \<open>One direction, stated once and applied twice with the roles swapped.\<close>
+  have half: "a x \<le> bb x"
+    if usca: "\<And>c z. a z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> a y < c"
+      and uscb: "\<And>c z. bb z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> bb y < c"
+      and Ba: "\<And>y. \<bar>a y\<bar> \<le> B" and Bb: "\<And>y. \<bar>bb y\<bar> \<le> B"
+      and suba: "visc_subsol_env k L K
+        (interior K \<union> {x \<in> K - interior K. 0 < a x}) a"
+      and supb: "visc_supersol_env k L K
+        (interior K \<union> {x \<in> K - interior K. lsc_env bb x < 0}) (lsc_env bb)"
+    for a bb :: "real^'n \<Rightarrow> real"
+  proof -
+    have bl: "- B \<le> bb y" for y using Bb[of y] by (simp add: abs_le_iff)
+    have bu: "bb y \<le> B" for y using Bb[of y] by (simp add: abs_le_iff)
+    have lsclow: "- B \<le> lsc_env bb y" for y by (rule lsc_env_ge[OF bl])
+    have lscself: "lsc_env bb y \<le> bb y" for y by (rule lsc_env_le_self[OF bl])
+    have lscB: "\<bar>lsc_env bb y\<bar> \<le> B" for y
+    proof -
+      have "lsc_env bb y \<le> B" using lscself[of y] bu[of y] by linarith
+      then show ?thesis using lsclow[of y] by (simp add: abs_le_iff)
+    qed
+    have lscl: "\<And>c z. c < lsc_env bb z \<Longrightarrow>
+        \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < lsc_env bb y"
+      by (rule lsc_env_lsc[OF bl])
+    have "a x \<le> usc_env (lsc_env bb) x"
+      by (rule comparison_expandable
+          [OF kk LL cK neK expK usca lscl Ba lscB suba supb x])
+    also have "\<dots> \<le> usc_env bb x"
+      by (rule usc_env_mono[OF lscself bu])
+    also have "\<dots> = bb x" by (rule usc_env_eq_self[OF bu uscb])
+    finally show ?thesis .
+  qed
+  show ?thesis
+  proof (rule antisym)
+    show "u x \<le> w x" by (rule half[OF uscu uscw Bu Bw subu supw])
+    show "w x \<le> u x" by (rule half[OF uscw uscu Bw Bu subw supu])
+  qed
 qed
 
 end
