@@ -14461,6 +14461,95 @@ proof -
   qed
 qed
 
+subsection \<open>Where the envelope is invisible\<close>
+
+text \<open>Batch 5, first piece.  The uniqueness theorem of
+  \<open>Theorem_1_1\<close> (downstream, so not citable here) works with
+  CONTINUOUS solutions, and at a point of continuity the lower envelope
+  is the function itself.  So on that class the faithful notion
+  @{const visc_supersol_lsc} and the repo's @{const visc_supersol_env}
+  agree, and the envelope costs nothing at the interface.  What the
+  interface still needs is the OTHER envelope --- \<open>F\<^sup>* = F\<close> away from
+  \<open>p = 0\<close> --- which is a separate, purely analytic matter recorded at the
+  end of this file.\<close>
+
+lemma lsc_env_eq_self:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y" and c: "isCont u x"
+  shows "lsc_env u x = u x"
+proof (rule antisym)
+  show "lsc_env u x \<le> u x" by (rule lsc_env_le_self[OF B])
+next
+  show "u x \<le> lsc_env u x"
+  proof (rule field_le_epsilon)
+    fix e :: real assume e0: "0 < e"
+    obtain d where d0: "0 < d"
+      and dd: "\<And>z. dist z x < d \<Longrightarrow> dist (u z) (u x) < e"
+      using c[unfolded continuous_at_eps_delta] e0 by blast
+    have bdd: "bdd_below (u ` ball x d)"
+      by (rule bdd_belowI[of _ B]) (use B in auto)
+    have "u x - e \<le> (INF y \<in> ball x d. u y)"
+    proof (rule cInf_greatest)
+      show "u ` ball x d \<noteq> {}" using d0 by auto
+    next
+      fix z assume "z \<in> u ` ball x d"
+      then obtain y where y: "y \<in> ball x d" and zy: "z = u y" by auto
+      have "dist y x < d" using y by (simp add: mem_ball dist_commute)
+      then have "dist (u y) (u x) < e" by (rule dd)
+      then show "u x - e \<le> z" unfolding zy by (simp add: dist_real_def)
+    qed
+    also have "\<dots> \<le> lsc_env u x"
+      unfolding lsc_env_def
+      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use d0 in auto)
+    finally show "u x \<le> lsc_env u x + e" by linarith
+  qed
+qed
+
+lemma visc_supersol_lsc_iff_env:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y" and sub: "\<Omega> \<subseteq> K"
+    and cont: "\<And>y. y \<in> K \<Longrightarrow> isCont u y"
+  shows "visc_supersol_lsc k L K \<Omega> u \<longleftrightarrow> visc_supersol_env k L K \<Omega> u"
+proof -
+  have eqK: "\<And>y. y \<in> K \<Longrightarrow> lsc_env u y = u y"
+    by (rule lsc_env_eq_self[OF B cont])
+  have eqO: "\<And>y. y \<in> \<Omega> \<Longrightarrow> lsc_env u y = u y"
+    using eqK sub by blast
+  show ?thesis
+    unfolding visc_supersol_lsc_def visc_supersol_env_def
+  proof (intro iffI ballI allI impI)
+    fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
+    assume h: "\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
+        (\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y) \<longrightarrow>
+        1 \<le> ell_op_usc k L (g x) H"
+      and x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+      and tm: "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
+    have "\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
+    proof
+      fix y assume y: "y \<in> K"
+      show "lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
+        unfolding eqO[OF x] eqK[OF y] using tm y by blast
+    qed
+    then show "1 \<le> ell_op_usc k L (g x) H" using h x tf by blast
+  next
+    fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
+    assume h: "\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
+        (\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y) \<longrightarrow>
+        1 \<le> ell_op_usc k L (g x) H"
+      and x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+      and tm: "\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
+    have "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
+    proof
+      fix y assume y: "y \<in> K"
+      have h1: "lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
+        using tm y by blast
+      show "u x - \<phi> x \<le> u y - \<phi> y"
+        using h1 unfolding eqO[OF x] eqK[OF y] .
+    qed
+    then show "1 \<le> ell_op_usc k L (g x) H" using h x tf by blast
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
