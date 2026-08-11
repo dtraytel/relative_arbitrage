@@ -953,7 +953,7 @@ place everything here FIRST so later packages never edit upstream again).
   `max_principle_boundary_holds`/`comparison_compact`/
   `viscosity_uniqueness_compact` — usc+lsc versions; keep the old
   continuity forms as corollaries (continuity \<Longrightarrow> both).
-* **P2 — `w \<ge> 0` from the supersolution boundary condition** (new, small,
+* **P2 — DONE** (`supersol_bc_nonneg`, `0887012`): `w \<ge> 0` from the supersolution boundary condition (new, small,
   Comparison_Assembly tail): `w` lsc bounded, `paper_bc_supersol`-style
   hypotheses on compact `K` \<Longrightarrow> `0 \<le> w` on `K`.  Proof: `lsc_env w = w`-min
   attained (`lsc_attains_inf_gen`); if the min is `< 0` the gate is open at
@@ -961,7 +961,8 @@ place everything here FIRST so later packages never edit upstream again).
   touches from below, and `1 \<le> F\<^sup>*(0,0) = 0` is absurd —
   `ell_op_usc k L 0 0 = 0` from `ell_op_usc_le_scaled_norm` (\<le>) and
   `ell_op_le_ell_op_usc` + `ell_op_zero_matrix` (\<ge>).
-* **P3 — the `T_\<iota>` hypothesis and the transformed supersolution**
+* **P3 — DONE** (`expandable`, `convex_expandable`, `test_fun_at_affine`,
+  `visc_supersol_env_affine`; `0887012` + `f78b7e4`): the `T_\<iota>` hypothesis and the transformed supersolution
   (Comparison_Assembly tail).  Predicate (a SEQUENCE suffices for the limit
   and is easier than the indexed family; record that the paper writes a
   family over `\<iota> \<in> (1,2]`):
@@ -1038,7 +1039,8 @@ place everything here FIRST so later packages never edit upstream again).
   horizon, and above the ball bound the value is `T`-independent
   (`enn2real_paper_v_horizon_cap`).
 
-**Costs (Isabelle lines, verified):** P0 400–700 · P1 600–1,200 ·
+**Costs.**  P0, P2, P3 (\<section>2.0) and E1 (\<section>2.2) are DONE; what is left is
+P1, P4\<endash>P7 and E2\<endash>E4.  Original estimates: P0 400–700 · P1 600–1,200 ·
 P2 150–300 · P3 500–800 · P4 1,500–3,000 · P5 250–450 · P6 400–1,500 ·
 P7 200–350.  **Total ≈ 4,000–8,300; 5–9 working sessions** at the
 demonstrated pace.  Wall-clock is dominated by reprocessing: Envelopes edits
@@ -1062,7 +1064,10 @@ currently available only in the weakened form `paper_v_ball_lower` (rate
 SUBSPACE-TANGENTIAL field; it needs no new probability — the Euler theorems
 are already field-parametric.
 
-* **E1 — the field** (Paper_Viscosity, mirror the `tanp` block at 10833).
+* **E1 — DONE** (`221ac56`): `projmat` (sym/mv/trace/fix/idem/span_fix),
+  `orthonormal_dim_span`, `tanpV` (sym/quadform/trace/psd/eigen_ub/eigen_lb),
+  `tanpV_feasible`, `tanpV_trace_projmat`, `orthonormal_family_containing`.
+  Original sketch: the field (Paper_Viscosity, mirror the `tanp` block at 10833).
   Fix a unit `x\<^sub>0 = x /\<^sub>R norm x` (case `x = 0` deferred to E4).  Build an
   orthonormal family `b\<^sub>0 = x\<^sub>0, b\<^sub>1, \<dots>, b\<^sub>{n-k}` (induction on
   `orthogonal_to_subspace_exists`, or reuse `symmetric_eigenbasis`
