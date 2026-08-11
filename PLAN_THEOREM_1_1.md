@@ -4,10 +4,13 @@ Single source of truth for **what is proved, what is left, and in what
 order**. Everything named here is machine-checked in PIDE with
 `commands_failed = 0`, and there is no `sorry` anywhere in the session.
 
-Last updated 2026-08-09: §2.1's first results (`Paper_Viscosity.thy`) and the
-`path_stopping_time` refactor (DONE — see §1.10).
+Last updated 2026-08-11, after **clause (2) was closed** — both viscosity
+inequalities (§1.10) — the comparison chain was **re-based on the paper's
+Definition 3.1** (§1.11), and the two were joined into
+`paper_v_unique_viscosity_solution`.  That emptied §2.1 and §2.1a; the queue
+is renumbered again and now opens at §2.0, continuity of `paper_v`.
 Restructured 2026-08-08, after **the DPP of Prop. 2.4 was proved at a
-STOPPING time** (§1.9), which emptied the old §2.1 and renumbered the queue.
+STOPPING time** (§1.9), which emptied the §2.1 of that day.
 §1 is an INDEX of closed work — do not re-derive any of it, and do not expand
 it; construction narratives, dead ends and session logs live in
 `PLAN_HISTORY.md` and in `git log -p`. §2 is the queue.
@@ -861,9 +864,11 @@ clause (3)/(2) actually need the market-side results transported.
 
 ### Fallback
 
-If §2.1 and §2.2 both stall, the bounded alternative is the rest of
-Section 4 (Theorem 4.2(b), 4.3, Prop 4.1 — 3,000–7,000 lines, reusing the
-Crandall–Ishii investment).
+If §2.2 stalls, the bounded alternative is the rest of Section 4
+(Theorem 4.2(b), 4.3, Prop 4.1 — 3,000–7,000 lines, reusing the
+Crandall–Ishii investment).  Note that §2.0 is ALREADY inside that
+alternative: continuity of `paper_v` is properly Theorem 4.3, so the
+"fallback" and the top of the queue are now the same investment.
 
 ---
 
