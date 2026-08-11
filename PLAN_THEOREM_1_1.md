@@ -885,8 +885,23 @@ checked refutation, all at the `comparison_two_domain` site.
   so at `|x| = √ε` the gap is `≥ 1/2` for EVERY `ε`.  Sup-convolutions of usc
   functions decrease to them pointwise, never uniformly.
 
-**The route.**  Re-run `doubling_localised_maximiser_soft` and
-`comparison_soft_complete` over `K × K'` with
+**Front end: DONE** (2026-08-11, `7b54926`).  The genuinely new part —
+as opposed to a refactor of the existing chain — is proved:
+* `two_domain_doubled_maximiser` — for usc `u` and lsc `w`, both bounded,
+  `θu(x) − w(y) − pen(x−y)` attains its max over the compact product `K × K'`.
+  No continuity used.  This is the step the paper opens 4.2(b) with.
+* `two_domain_gap` — `K` compact inside `interior K'` gives a uniform positive
+  distance to `K' − interior K'` (`separate_compact_closed`).  That is the
+  y-side avoidance, and it is ALL the localisation the doubling needs.
+* Supporting, in `Envelopes`: the attainment lemmas
+  (`lsc_attains_inf_gen`, `usc_attains_sup_gen`, `_ex` forms) are now stated
+  for an ARBITRARY metric space, which is what makes them apply to the
+  product; plus `usc_eps_add`, `usc_eps_scale`, `usc_eps_of_continuous` —
+  usc calculus in the `ε`-form.
+
+**What is left of P4: the chain refactor.**  Re-run
+`doubling_localised_maximiser_soft` and `comparison_soft_complete` over
+`K × K'` with
 
 1. the **x-side boundary-avoidance DELETED** — it was the only consumer of
    `supconv_uniform_upper`, and the gate replaces it;
@@ -896,9 +911,17 @@ checked refutation, all at the `comparison_two_domain` site.
    requirement in `comparison_soft_diagonal` is on the SUPERSOLUTION side; that
    is exactly why the paper uses two domains.)
 
-The Crandall–Ishii core (`Sup_Convolution`, `comparison_soft_off_diagonal`,
-`comparison_soft_diagonal`) is consumed unchanged — it never mentions
-`interior K`.
+The Crandall–Ishii core (`Sup_Convolution`) is consumed unchanged.  Sizing:
+`K − interior K` threads through about EIGHT theorems —
+`doubling_localised_maximiser_soft`, `cball_subset_interior_of_far_from_boundary`,
+`cball_prod_subset_of_far_from_boundary`, `comparison_from_localised_maximiser`
+and its `_gen` / `_soft` variants, `comparison_soft_off_diagonal`,
+`comparison_soft_diagonal`, `comparison_soft_complete` — each needing its
+hypothesis list generalised from the pair `(interior K, K − interior K)` to
+`(Ω, S)` with `S` compact and `K − S ⊆ Ω`.  Mechanical, but `Comparison_Assembly`
+is a 21,000-command file (~20 min per reprocess), so budget it as a session of
+its own and do NOT start it without finishing it — a half-generalised chain
+does not typecheck.
 
 **P1 is not an item.**  The chain that got built never routes through
 `max_principle_boundary` — verified by walking
