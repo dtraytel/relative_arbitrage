@@ -1868,6 +1868,120 @@ next
       has_derivative (\<lambda>h. H *v h)) (at x)" by simp
 qed
 
+lemma test_fun_quadratic_dominates:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n" and x :: "real^'n" and \<delta> :: real
+  assumes tf: "test_fun_at \<phi> g H x" and d0: "0 < \<delta>"
+  obtains r where "0 < r"
+    and "\<And>z. z \<in> ball x r \<Longrightarrow>
+      \<phi> z \<le> \<phi> x + g x \<bullet> (z - x) + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+proof -
+  have symH: "transpose H = H"
+    and dg: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+    using tf unfolding test_fun_at_def by blast+
+  obtain e where e0: "0 < e"
+    and dphi: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    using tf unfolding test_fun_at_def by blast
+  have "\<forall>e>0. \<exists>d>0. \<forall>y. norm (y - x) < d \<longrightarrow>
+      norm (g y - g x - (H *v (y - x))) \<le> e * norm (y - x)"
+    using dg unfolding has_derivative_at_alt by blast
+  moreover have "0 < \<delta> / 2" using d0 by simp
+  ultimately obtain d where dd: "0 < d"
+    and bnd: "\<And>y. norm (y - x) < d \<Longrightarrow>
+        norm (g y - g x - (H *v (y - x))) \<le> (\<delta> / 2) * norm (y - x)"
+    by blast
+  define r where "r = min e d"
+  have r0: "0 < r" using e0 dd by (simp add: r_def)
+  have main: "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+      + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+    if z: "z \<in> ball x r" for z
+  proof -
+    define v where "v = z - x"
+    have nv: "norm v < r"
+      using z by (simp add: v_def mem_ball dist_norm norm_minus_commute)
+    define A where "A = g x \<bullet> v"
+    define B where "B = v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)"
+    define f where "f t = \<phi> (x + t *\<^sub>R v) - (\<phi> x + t * A + t\<^sup>2 * B / 2)" for t
+    have f0: "f 0 = 0" by (simp add: f_def)
+    have deriv: "\<exists>y. (f has_field_derivative y) (at t) \<and> y \<le> 0"
+      if t: "0 \<le> t" "t \<le> 1" for t
+    proof -
+      have ntv: "norm (t *\<^sub>R v) \<le> norm v"
+        using t by (simp add: mult_left_le_one_le)
+      have mem: "x + t *\<^sub>R v \<in> ball x e"
+        using ntv nv by (simp add: mem_ball dist_norm r_def)
+      have d1: "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_field_derivative
+          g (x + t *\<^sub>R v) \<bullet> v) (at t)"
+      proof -
+        have i1: "((\<lambda>t :: real. x + t *\<^sub>R v) has_derivative (\<lambda>h. h *\<^sub>R v)) (at t)"
+          by (auto intro!: derivative_eq_intros)
+        have i2: "(\<phi> has_derivative (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> h)) (at (x + t *\<^sub>R v))"
+          by (rule dphi[OF mem])
+        have "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_derivative
+            (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> (h *\<^sub>R v))) (at t)"
+          using diff_chain_at[OF i1 i2] by (simp add: o_def)
+        then show ?thesis
+          by (rule has_derivative_imp_has_field_derivative)
+            (simp add: inner_scaleR_right ac_simps)
+      qed
+      have d2: "((\<lambda>t. \<phi> x + t * A + t\<^sup>2 * B / 2) has_field_derivative
+          A + t * B) (at t)"
+        by (auto intro!: derivative_eq_intros)
+      have df: "(f has_field_derivative
+          (g (x + t *\<^sub>R v) \<bullet> v - (A + t * B))) (at t)"
+        unfolding f_def by (rule DERIV_diff[OF d1 d2])
+      have expand: "g (x + t *\<^sub>R v) \<bullet> v - (A + t * B)
+          = (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v - t * (\<delta> * (v \<bullet> v))"
+      proof -
+        have m1: "(H + \<delta> *\<^sub>R mat 1) *v v = H *v v + \<delta> *\<^sub>R v"
+          by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
+              matrix_vector_mul_lid)
+        have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
+          by (simp add: matrix_vector_mult_scaleR)
+        show ?thesis
+          unfolding A_def B_def m1 m2
+          by (simp add: inner_diff_left inner_add_right inner_scaleR_left
+              inner_scaleR_right inner_commute algebra_simps)
+      qed
+      have small: "(g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v
+          \<le> (\<delta> / 2) * (t * norm v) * norm v"
+      proof -
+        have "norm (t *\<^sub>R v) < d"
+          using ntv nv by (simp add: r_def)
+        moreover have "(x + t *\<^sub>R v) - x = t *\<^sub>R v" by simp
+        ultimately have nb: "norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))
+            \<le> (\<delta> / 2) * norm (t *\<^sub>R v)"
+          using bnd[of "x + t *\<^sub>R v"] by simp
+        have "(g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v
+            \<le> norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) * norm v"
+          by (rule norm_cauchy_schwarz)
+        also have "\<dots> \<le> ((\<delta> / 2) * norm (t *\<^sub>R v)) * norm v"
+          by (rule mult_right_mono[OF nb norm_ge_zero])
+        also have "\<dots> = (\<delta> / 2) * (t * norm v) * norm v"
+          using t by (simp add: abs_of_nonneg)
+        finally show ?thesis .
+      qed
+      have vv: "v \<bullet> v = norm v * norm v"
+        by (simp add: dot_square_norm power2_eq_square)
+      have "g (x + t *\<^sub>R v) \<bullet> v - (A + t * B)
+          \<le> (\<delta> / 2) * (t * norm v) * norm v - t * (\<delta> * (norm v * norm v))"
+        unfolding expand vv by (rule diff_right_mono[OF small])
+      also have "\<dots> = - (\<delta> / 2) * t * (norm v * norm v)"
+        by (simp add: field_simps)
+      also have "\<dots> \<le> 0"
+        using d0 t by (simp add: mult_nonneg_nonneg)
+      finally show ?thesis using df by blast
+    qed
+    have "f 1 \<le> f 0"
+      by (rule DERIV_nonpos_imp_nonincreasing[of 0 1 f])
+        (use deriv in auto)
+    then have "\<phi> (x + 1 *\<^sub>R v) \<le> \<phi> x + 1 * A + 1\<^sup>2 * B / 2"
+      using f0 by (simp add: f_def)
+    then show ?thesis by (simp add: v_def A_def B_def)
+  qed
+  show ?thesis by (rule that[OF r0 main])
+qed
+
 theorem visc_supersol_env_local:
   fixes K :: "(real^'n::finite) set" and w \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
@@ -1932,6 +2046,74 @@ proof -
   then show ?thesis unfolding ggx .
 qed
 
+
+text \<open>The mirror for subsolutions: ADDING a quartic deepens a local
+  MAXIMUM and, for a large enough coefficient, makes it global over \<open>K\<close>.
+  Reusing @{thm [source] test_fun_at_quartic_shift} with a negative
+  coefficient means no new derivative computation is needed.\<close>
+
+theorem visc_subsol_env_local:
+  fixes K :: "(real^'n::finite) set" and u \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assumes sub: "visc_subsol_env k L K \<Omega> u"
+    and x\<Omega>: "x \<in> \<Omega>"
+    and tf: "test_fun_at \<phi> g H x"
+    and uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
+    and phi: "\<And>y. y \<in> K \<Longrightarrow> B\<phi> \<le> \<phi> y"
+    and r0: "0 < r"
+    and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
+  shows "ell_op_lsc k L (g x) H \<le> 1"
+proof -
+  have r40: "0 < r ^ 4" using r0 by simp
+  define C where "C = max 0 ((Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4)"
+  have C0: "0 \<le> C" unfolding C_def by simp
+  have Cbig: "Bu - B\<phi> - (u x - \<phi> x) \<le> C * r ^ 4"
+  proof -
+    have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 \<le> C" unfolding C_def by simp
+    then have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 * r ^ 4 \<le> C * r ^ 4"
+      by (rule mult_right_mono) (use r40 in linarith)
+    then show ?thesis using r40 by simp
+  qed
+  define \<psi> where
+    "\<psi> = (\<lambda>z. \<phi> z - (- C) * ((z - x) \<bullet> (z - x))\<^sup>2)"
+  define gg where
+    "gg = (\<lambda>z. g z - (4 * (- C) * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))"
+  have tf': "test_fun_at \<psi> gg H x"
+    unfolding \<psi>_def gg_def by (rule test_fun_at_quartic_shift[OF tf])
+  have ggx: "gg x = g x" unfolding gg_def by simp
+  have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
+  have glob: "u y - \<psi> y \<le> u x - \<psi> x" if yK: "y \<in> K" for y
+  proof (cases "y \<in> ball x r")
+    case True
+    have nn: "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_nonneg_nonneg[OF C0]) simp
+    show ?thesis using lm[OF True] nn unfolding \<psi>_def psix[unfolded \<psi>_def]
+      by simp
+  next
+    case False
+    then have dxy: "r \<le> dist x y" by simp
+    have sq: "r\<^sup>2 \<le> (y - x) \<bullet> (y - x)"
+    proof -
+      have "r \<le> norm (y - x)"
+        using dxy by (simp add: dist_norm norm_minus_commute)
+      then have "r\<^sup>2 \<le> (norm (y - x))\<^sup>2" using r0 by (intro power_mono) auto
+      then show ?thesis by (simp add: dot_square_norm)
+    qed
+    have q4: "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
+    proof -
+      have "(r\<^sup>2)\<^sup>2 \<le> ((y - x) \<bullet> (y - x))\<^sup>2" using sq by (intro power_mono) auto
+      then show ?thesis by (simp add: power_even_eq)
+    qed
+    have cq: "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_left_mono[OF q4 C0])
+    have hi: "u y \<le> Bu" by (rule uhi[OF yK])
+    have lo: "B\<phi> \<le> \<phi> y" by (rule phi[OF yK])
+    show ?thesis unfolding \<psi>_def using Cbig cq hi lo by simp
+  qed
+  have "ell_op_lsc k L (gg x) H \<le> 1"
+    using sub[unfolded visc_subsol_env_def] x\<Omega> tf' glob by blast
+  then show ?thesis unfolding ggx .
+qed
 
 corollary ell_op_usc_eq_at_nonzero:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n"
