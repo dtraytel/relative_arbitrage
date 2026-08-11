@@ -69,7 +69,7 @@ one — see §1.7.
 
 | item | § | lines | risk |
 |---|---|---|---|
-| continuity of `paper_v` on `K` | 2.0 | ? | the ONLY thing between clause (2) and a characterisation; properly the paper's Theorem 4.3 |
+| comparison under usc/lsc instead of `continuous_on` | 2.0 | ? | the ONLY thing between clause (2) and a characterisation; it is the paper's Theorem 4.3, and it yields continuity of `paper_v` as an OUTPUT |
 | clause (3) for `n−k ≥ 2` | 2.2 | 1,500–3,000 | high — needs spherical Brownian motion |
 | `stopped_val_fn ≤ paper_v` | 2.3 | ? | only if §2.2 wants it |
 
@@ -818,9 +818,10 @@ Paper_Viscosity — the two sides had never been visible to each other,
 solution in the sense of Definition 3.1 agreeing with `paper_v` on
 `K - interior K` equals `paper_v`.
 
-The one hypothesis it still carries is CONTINUITY of `paper_v` on `K`.
-That is **§2.0**, and it is a Section-4 job — see there for why it should
-NOT be attacked by proving `paper_v` continuous.
+The one hypothesis it still carries is continuity of `paper_v` on `K`, and
+that hypothesis comes from the COMPARISON theorem's regularity assumptions,
+not from clause (2) — see **§2.0**, which locates it and says why continuity
+should be an output rather than an input.
 
 ---
 
@@ -832,18 +833,39 @@ independent of it.  (The DPP at a stopping time, which was §2.1 until
 2026-08-08, is now §1.9; the two viscosity inequalities, which were §2.1 until
 2026-08-11, are now §1.10, and the uniqueness interface is §1.11.)
 
-### 2.0 Continuity of `paper_v` on `K` — the last gap in clause (2)
+### 2.0 The comparison theorem's REGULARITY hypotheses — the last gap
 
-`paper_v_unique_viscosity_solution` (§1.11) carries exactly one hypothesis that
-is not discharged: `isCont (\<lambda>z. enn2real (paper_v k L T K z)) y` for `y \<in> K`.
-What is proved is UPPER semicontinuity (`paper_v_usc_unconditional`);
-`visc_supersol_lsc_iff_env` needs both, since it rests on `lsc_env u = u`.
+`paper_v_unique_viscosity_solution` (§1.11) carries one undischarged
+hypothesis, continuity of `paper_v` on `K`.  **The gap is NOT in clause (2),
+and it is not really about `paper_v`.**  Locate it correctly before working
+on it:
 
-**Do not attack this by proving `paper_v` continuous.**  The paper's Theorem
-1.1 asserts the unique UPPER SEMICONTINUOUS viscosity solution, so continuity
-would be a STRONGER statement than the paper makes, and the intended route is
-the paper's **Theorem 4.3** — comparison with semicontinuous boundary data.
-That is a Section-4 job, not more work on §1.10.
+* The paper's **Theorem 4.2(a)** assumes `u` UPPER semicontinuous and `w`
+  LOWER semicontinuous.  The repo's `max_principle_boundary` (and hence
+  `comparison_compact`, `viscosity_uniqueness_compact`) assumes
+  `continuous_on K` for BOTH.  That is where the strength is lost, and it
+  predates the Definition-3.1 re-basing.
+* `max_principle_boundary_raw` and its counterexample do NOT bear on this:
+  they show that dropping regularity ENTIRELY fails, not that usc/lsc is
+  insufficient.
+
+**Continuity of `paper_v` should be an OUTPUT, not an input.**  The standard
+argument runs the comparison on `v\<^sup>*` against `v\<^sub>*` and concludes
+`v\<^sup>* \<le> v\<^sub>*`, hence equality, hence continuity.  Everything that argument needs
+on the supersolution side is already here and costs nothing:
+
+    visc_supersol_lsc k L K \<Omega> u   IS   visc_supersol_env k L K \<Omega> (lsc_env u)
+
+— the two definitions are the same formula with `lsc_env u` substituted for
+`u`, so the conversion is DEFINITIONAL.  (`visc_supersol_lsc_iff_env` proves
+the same thing for `u` itself and needs continuity; do not reach for it when
+the substituted form is what you want.  It was used unnecessarily in the
+first version of `paper_v_unique_viscosity_solution`.)
+
+So the work is: weaken `max_principle_boundary` from `continuous_on` to
+usc/lsc — which is the paper's **Theorem 4.3**, comparison with
+semicontinuous data — and then continuity of `paper_v` falls out rather than
+being assumed.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
 
