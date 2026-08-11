@@ -14550,6 +14550,229 @@ proof -
   qed
 qed
 
+subsection \<open>Householder reflections and the rotation between two directions\<close>
+
+text \<open>Towards \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close>, which is what the
+  Crandall--Ishii touchpoints of the comparison principle need in order
+  to accept an envelope-form supersolution.  That proof transports a
+  near-optimal feasible witness for \<open>p\<close> to one for a nearby \<open>p'\<close> by an
+  ORTHOGONAL conjugation, so what it needs is an orthogonal map carrying
+  \<open>p\<close>'s direction to \<open>p'\<close>'s AND tending to the identity as \<open>p' \<rightarrow> p\<close>.
+
+  A single Householder reflection carries one direction to the other but
+  does NOT tend to the identity --- its axis \<open>u - v\<close> normalises to a unit
+  vector with no limit.  The composition of two does: \<open>hh (u+v) \<circ> hh u\<close>
+  sends \<open>u \<mapsto> -u \<mapsto> v\<close>, and at \<open>v = u\<close> it is \<open>hh u ** hh u = 1\<close> exactly.
+  (@{thm [source] orthogonal_transformation_exists} supplies an
+  orthogonal map between vectors of equal norm but with no control near
+  the identity, so it does not serve here.)
+
+  The reflection is defined without normalising its axis, which makes it
+  invariant under rescaling and keeps the computations division-free
+  apart from the single coefficient.  Everything is proved on VECTORS
+  through @{thm [source] matrix_eq} rather than on matrix entries.\<close>
+
+definition hh :: "real^'n::finite \<Rightarrow> real^'n^'n"
+  where "hh w = mat 1 - (2 / (w \<bullet> w)) *\<^sub>R outerp w"
+
+lemma matvec_minus_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (- x) = - (A *v x)"
+  by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
+
+lemma hh_sym: "transpose (hh w) = hh w"
+  unfolding hh_def
+  by (simp add: transpose_def outerp_def mat_def vec_eq_iff mult_ac)
+
+lemma hh_mv: "hh w *v x = x - (2 * (w \<bullet> x) / (w \<bullet> w)) *\<^sub>R w"
+proof -
+  have "hh w *v x = mat 1 *v x - ((2 / (w \<bullet> w)) *\<^sub>R outerp w) *v x"
+    unfolding hh_def by (rule matrix_vector_mult_diff_rdistrib)
+  also have "mat 1 *v x = x" by (rule matrix_vector_mul_lid)
+  also have "((2 / (w \<bullet> w)) *\<^sub>R outerp w) *v x
+      = (2 / (w \<bullet> w)) *\<^sub>R (outerp w *v x)"
+    by (rule scaleR_matrix_vector)
+  also have "outerp w *v x = (w \<bullet> x) *\<^sub>R w"
+    unfolding outerp_eq_outer_prod by (rule outer_prod_mv)
+  finally show ?thesis by simp
+qed
+
+lemma hh_self:
+  fixes w :: "real^'n::finite"
+  assumes w0: "w \<noteq> 0"
+  shows "hh w *v w = - w"
+proof -
+  have ww: "w \<bullet> w \<noteq> 0" using w0 by simp
+  have cw: "2 * (w \<bullet> w) / (w \<bullet> w) = 2" using ww by simp
+  have "hh w *v w = w - (2 * (w \<bullet> w) / (w \<bullet> w)) *\<^sub>R w" by (rule hh_mv)
+  also have "\<dots> = w - (2::real) *\<^sub>R w" unfolding cw by (rule refl)
+  also have "\<dots> = - w" by (simp add: vec_eq_iff)
+  finally show ?thesis .
+qed
+
+lemma hh_bisect:
+  fixes u v :: "real^'n::finite"
+  assumes u1: "norm u = 1" and v1: "norm v = 1" and ne: "u + v \<noteq> 0"
+  shows "hh (u + v) *v u = - v"
+proof -
+  have uu: "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
+  have vv: "v \<bullet> v = 1" using v1 by (metis norm_eq_1)
+  have s1: "(u + v) \<bullet> u = 1 + u \<bullet> v"
+  proof -
+    have a: "(u + v) \<bullet> u = u \<bullet> u + v \<bullet> u" by (rule inner_add_left)
+    have b: "v \<bullet> u = u \<bullet> v" by (rule inner_commute)
+    show ?thesis unfolding a b uu by (rule refl)
+  qed
+  have s2: "(u + v) \<bullet> (u + v) = 2 * (1 + u \<bullet> v)"
+  proof -
+    have a: "(u + v) \<bullet> (u + v) = u \<bullet> (u + v) + v \<bullet> (u + v)"
+      by (rule inner_add_left)
+    have b: "u \<bullet> (u + v) = u \<bullet> u + u \<bullet> v" by (rule inner_add_right)
+    have d: "v \<bullet> (u + v) = v \<bullet> u + v \<bullet> v" by (rule inner_add_right)
+    have e: "v \<bullet> u = u \<bullet> v" by (rule inner_commute)
+    show ?thesis unfolding a b d e uu vv by simp
+  qed
+  have nz: "(u + v) \<bullet> (u + v) \<noteq> 0" using ne by simp
+  have c1: "1 + u \<bullet> v \<noteq> 0" using nz unfolding s2 by simp
+  have "hh (u + v) *v u
+      = u - (2 * ((u + v) \<bullet> u) / ((u + v) \<bullet> (u + v))) *\<^sub>R (u + v)"
+    by (rule hh_mv)
+  also have "2 * ((u + v) \<bullet> u) / ((u + v) \<bullet> (u + v)) = 1"
+    unfolding s1 s2 using c1 by simp
+  finally show ?thesis by simp
+qed
+
+lemma hh_sq:
+  fixes w :: "real^'n::finite"
+  assumes w0: "w \<noteq> 0"
+  shows "hh w ** hh w = mat 1"
+proof -
+  have ww: "w \<bullet> w \<noteq> 0" using w0 by simp
+  have key: "(hh w ** hh w) *v x = mat 1 *v x" for x
+  proof -
+    define k where "k = 2 * (w \<bullet> x) / (w \<bullet> w)"
+    have h1: "hh w *v x = x - k *\<^sub>R w" unfolding k_def by (rule hh_mv)
+    have wk: "w \<bullet> (x - k *\<^sub>R w) = - (w \<bullet> x)"
+    proof -
+      have "w \<bullet> (x - k *\<^sub>R w) = w \<bullet> x - k * (w \<bullet> w)"
+        by (simp add: inner_diff_right)
+      also have "k * (w \<bullet> w) = 2 * (w \<bullet> x)"
+        unfolding k_def using ww by simp
+      finally show ?thesis by simp
+    qed
+    have coeff: "2 * (w \<bullet> (x - k *\<^sub>R w)) / (w \<bullet> w) = - k"
+    proof -
+      have "2 * (w \<bullet> (x - k *\<^sub>R w)) / (w \<bullet> w)
+          = 2 * (- (w \<bullet> x)) / (w \<bullet> w)" by (simp add: wk)
+      also have "\<dots> = - (2 * (w \<bullet> x) / (w \<bullet> w))" by simp
+      finally show ?thesis unfolding k_def .
+    qed
+    have h2: "hh w *v (x - k *\<^sub>R w)
+        = (x - k *\<^sub>R w) - (2 * (w \<bullet> (x - k *\<^sub>R w)) / (w \<bullet> w)) *\<^sub>R w"
+      by (rule hh_mv)
+    have "(hh w ** hh w) *v x = hh w *v (hh w *v x)"
+      by (metis matrix_vector_mul_assoc)
+    also have "\<dots> = hh w *v (x - k *\<^sub>R w)" unfolding h1 by (rule refl)
+    also have "\<dots> = (x - k *\<^sub>R w) - (- k) *\<^sub>R w"
+      unfolding h2 coeff by (rule refl)
+    also have "\<dots> = x" by simp
+    finally show ?thesis by (simp add: matrix_vector_mul_lid)
+  qed
+  have "\<forall>x. (hh w ** hh w) *v x = mat 1 *v x" using key by blast
+  then show ?thesis using matrix_eq[of "hh w ** hh w" "mat 1"] by blast
+qed
+
+lemma hh_orth:
+  fixes w :: "real^'n::finite"
+  assumes w0: "w \<noteq> 0"
+  shows "transpose (hh w) ** hh w = mat 1"
+  unfolding hh_sym by (rule hh_sq[OF w0])
+
+lemma hh_scale:
+  fixes w :: "real^'n::finite"
+  assumes r0: "r \<noteq> 0"
+  shows "hh (r *\<^sub>R w) = hh w"
+proof -
+  have key: "hh (r *\<^sub>R w) *v x = hh w *v x" for x
+  proof -
+    have "hh (r *\<^sub>R w) *v x
+        = x - (2 * ((r *\<^sub>R w) \<bullet> x) / ((r *\<^sub>R w) \<bullet> (r *\<^sub>R w))) *\<^sub>R (r *\<^sub>R w)"
+      by (rule hh_mv)
+    also have "\<dots> = x - (2 * (w \<bullet> x) / (w \<bullet> w)) *\<^sub>R w"
+    proof (cases "w \<bullet> w = 0")
+      case True
+      then have "w = 0" by simp
+      then show ?thesis by simp
+    next
+      case False
+      have e1: "(2 * ((r *\<^sub>R w) \<bullet> x) / ((r *\<^sub>R w) \<bullet> (r *\<^sub>R w))) *\<^sub>R (r *\<^sub>R w)
+          = ((2 * (r * (w \<bullet> x)) / (r * r * (w \<bullet> w))) * r) *\<^sub>R w"
+        by (simp add: mult_ac)
+      have e2: "(2 * (r * (w \<bullet> x)) / (r * r * (w \<bullet> w))) * r
+          = 2 * (w \<bullet> x) / (w \<bullet> w)"
+        using r0 False by (simp add: field_simps)
+      show ?thesis unfolding e1 e2 by (rule refl)
+    qed
+    also have "\<dots> = hh w *v x" by (rule hh_mv[symmetric])
+    finally show ?thesis .
+  qed
+  have "\<forall>x. hh (r *\<^sub>R w) *v x = hh w *v x" using key by blast
+  then show ?thesis using matrix_eq[of "hh (r *\<^sub>R w)" "hh w"] by blast
+qed
+
+definition rotv :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n"
+  where "rotv u v = hh (u + v) ** hh u"
+
+lemma rotv_orth:
+  fixes u v :: "real^'n::finite"
+  assumes u0: "u \<noteq> 0" and ne: "u + v \<noteq> 0"
+  shows "transpose (rotv u v) ** rotv u v = mat 1"
+proof -
+  have s1: "transpose (rotv u v) ** rotv u v
+      = (hh u ** hh (u + v)) ** (hh (u + v) ** hh u)"
+    unfolding rotv_def matrix_transpose_mul hh_sym by (rule refl)
+  have mid: "(hh u ** hh (u + v)) ** hh (u + v) = hh u"
+  proof -
+    have "(hh u ** hh (u + v)) ** hh (u + v)
+        = hh u ** (hh (u + v) ** hh (u + v))"
+      by (rule matrix_mul_assoc[symmetric])
+    also have "\<dots> = hh u ** mat 1" using hh_sq[OF ne] by simp
+    also have "\<dots> = hh u" by (rule matrix_mul_rid)
+    finally show ?thesis .
+  qed
+  have "(hh u ** hh (u + v)) ** (hh (u + v) ** hh u)
+      = ((hh u ** hh (u + v)) ** hh (u + v)) ** hh u"
+    by (rule matrix_mul_assoc)
+  also have "\<dots> = hh u ** hh u" unfolding mid by (rule refl)
+  also have "\<dots> = mat 1" by (rule hh_sq[OF u0])
+  finally show ?thesis unfolding s1 .
+qed
+
+lemma rotv_apply:
+  fixes u v :: "real^'n::finite"
+  assumes u1: "norm u = 1" and v1: "norm v = 1" and ne: "u + v \<noteq> 0"
+  shows "rotv u v *v u = v"
+proof -
+  have u0: "u \<noteq> 0" using u1 by auto
+  have "rotv u v *v u = hh (u + v) *v (hh u *v u)"
+    unfolding rotv_def by (metis matrix_vector_mul_assoc)
+  also have "hh u *v u = - u" by (rule hh_self[OF u0])
+  also have "hh (u + v) *v (- u) = - (hh (u + v) *v u)"
+    by (rule matvec_minus_right)
+  also have "hh (u + v) *v u = - v" by (rule hh_bisect[OF u1 v1 ne])
+  finally show ?thesis by simp
+qed
+
+lemma rotv_self:
+  fixes u :: "real^'n::finite"
+  assumes u0: "u \<noteq> 0"
+  shows "rotv u u = mat 1"
+proof -
+  have e: "u + u = (2::real) *\<^sub>R u" by (simp add: vec_eq_iff)
+  have "hh (u + u) = hh u" unfolding e by (rule hh_scale) simp
+  then show ?thesis unfolding rotv_def by (simp add: hh_sq[OF u0])
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
