@@ -15753,6 +15753,76 @@ proof (intro ballI allI impI)
 qed
 
 
+subsection \<open>Discharging the horizon hypothesis\<close>
+
+text \<open>@{thm [source] paper_v_supersol_lsc} carries the assumption that the
+  horizon never binds on the interior.  For a BOUNDED \<open>K\<close> that is not an
+  assumption at all but a consequence of choosing \<open>T\<close> large enough:
+  @{thm [source] paper_v_le_ball_bound} caps the value at
+  \<open>(r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n - k)\<close>, so \<open>T > 2r\<^sup>2/(n - k)\<close> already forces
+  \<open>v\<^sub>* < T/2\<close> everywhere.  This is the paper's own setting: it has no
+  horizon, and the cap here is a device of this formalisation.\<close>
+
+lemma paper_v_cap_inert:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes kn: "k < CARD('n)" and L0: "0 \<le> L" and T0: "0 \<le> T"
+    and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+  shows "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+proof -
+  have tv0: "\<And>u. 0 \<le> enn2real (paper_v k L T K u)" by simp
+  have nk0: "0 < real (CARD('n) - k)" using kn by simp
+  define A where "A = rK * rK / real (CARD('n) - k)"
+  have A0: "0 \<le> A" unfolding A_def using nk0 by simp
+  have AT: "2 * A < T"
+  proof -
+    have "2 * A = 2 * (rK * rK) / real (CARD('n) - k)"
+      unfolding A_def by simp
+    then show ?thesis using Tbig by simp
+  qed
+  have b: "paper_v k L T K x
+      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
+    by (rule paper_v_le_ball_bound[OF kn T0 L0 KB])
+  have le1: "(rK * rK - x \<bullet> x) / real (CARD('n) - k) \<le> A"
+    unfolding A_def
+  proof (rule divide_right_mono)
+    show "rK * rK - x \<bullet> x \<le> rK * rK" using inner_ge_zero[of x] by linarith
+    show "0 \<le> real (CARD('n) - k)" using nk0 by linarith
+  qed
+  have b': "paper_v k L T K x \<le> ennreal A"
+  proof -
+    have "ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)) \<le> ennreal A"
+      by (rule ennreal_leI[OF le1])
+    with b show ?thesis by (rule order_trans)
+  qed
+  have le2: "enn2real (paper_v k L T K x) \<le> A"
+  proof -
+    have "enn2real (paper_v k L T K x) \<le> enn2real (ennreal A)"
+      by (rule enn2real_mono[OF b' ennreal_less_top])
+    then show ?thesis using enn2real_ennreal[OF A0] by simp
+  qed
+  have le3: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
+      \<le> enn2real (paper_v k L T K x)"
+    by (rule lsc_env_le_self[OF tv0])
+  show ?thesis using le2 le3 AT by linarith
+qed
+
+text \<open>So on a bounded \<open>K\<close> the supersolution property is unconditional.\<close>
+
+corollary paper_v_supersol_lsc_bounded:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+  shows "visc_supersol_lsc k L K (interior K)
+      (\<lambda>u. enn2real (paper_v k L T K u))"
+proof (rule paper_v_supersol_lsc[OF T0 L1 k1 kn Kc])
+  fix x :: "real^'n" assume "x \<in> interior K"
+  show "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+    by (rule paper_v_cap_inert[OF kn _ _ KB Tbig]) (use L1 T0 in linarith)+
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.

@@ -65,7 +65,7 @@ one — see §1.7.
 
 | item | § | lines | risk |
 |---|---|---|---|
-| §3, the SUPERSOLUTION inequality (the subsolution half is DONE) | 2.1 | 1,500–3,000 | high — weak solutions of the SDE (3.24) |
+| ~~§3, the two viscosity inequalities~~ | 2.1 | — | **DONE 2026-08-11**, and without the SDE — see below |
 | clause (3) for `n−k ≥ 2` | 2.2 | 1,500–3,000 | high — needs spherical Brownian motion |
 | `stopped_val_fn ≤ paper_v` | 2.3 | ? | only if §2.2 wants it |
 
@@ -665,7 +665,32 @@ the class member. Two elementary steps replace it.
 Then `δ → 0` on the Hessian bump through `feasible_trace_le` (`trace a ≤ nL` on
 the feasible set) and `field_le_epsilon`, exactly as in the relaxed case.
 
-#### What is left in §2.1: the supersolution half — DESIGNED 2026-08-10 (paper §3.2 read)
+#### §2.1 IS CLOSED — both inequalities proved, 2026-08-11
+
+**Subsolution.** `paper_v_visc_subsol` (Paper_Viscosity), in the
+envelope-FREE form, which is STRONGER than the paper's Definition 3.1(a).
+
+**Supersolution.** `paper_v_supersol_lsc` (Paper_Viscosity): Definition
+3.1(b) verbatim for `paper_v`, via `paper_v_supersol_contradiction_case1_lsc`
+(∇φ ≠ 0, the skew trick) and `paper_v_case2` (∇φ = 0, the dichotomy).
+The weak SDE solution feared below was NOT needed: Euler pasting of
+endpoint-frozen Gaussian kernels plus a weak limit replaces it, and
+Case 2 needed no bump function — applying `test_fun_quadratic_minorates`
+at level ε/2 and splitting `H − (ε/2)·1 = (H − ε·1) + (ε/2)·1` supplies
+all three properties the paper's φᵐ was built for.
+
+**One hypothesis, and it is the paper's own setting.** The supersolution
+carries `v_* < T/2` on the interior — the horizon cap must not bind. It
+cannot be dropped: where `v ≡ T` on an open set the inequality is
+genuinely FALSE, since a constant test function would demand
+`1 ≤ F*(0,0) = 0`. The paper has no horizon at all, so a large `T` IS its
+setting, and for bounded `K` the hypothesis is discharged from
+`paper_v_le_ball_bound`.
+
+**The design notes that follow are kept as the record of HOW this was
+done — they are no longer a plan.**
+
+#### The original design (2026-08-10, paper §3.2 read)
 
 **Statement design first — the repo's plain `visc_supersol` is TOO STRONG.**
 The paper's supersolution inequality (Def. 3.1(b)) is `F*(∇φ(x),∇²φ(x)) ≥ 1`
@@ -746,12 +771,56 @@ rate `tr(ā) ≥ n−1`), so the ball exit time is deterministic and positive �
 lower bound. This unblocks clause (3)'s missing half AND supplies the
 positivity that Case 2's "locally constant" contradiction consumes.
 
-**Batches:** (1) skew algebra + covariance field + `gbmpair` member;
-(2) kernel measurability + Euler fold + per-step identities + Chebyshev;
-(3) weak limit + portmanteau transfer + DPP contradiction = Case 1 theorem;
-(4) mirror-dominates + Example 3.1 ≥ + Case 2 + `visc_supersol_env` assembly;
-(5) uniqueness-interface reconciliation (envelope supersolution hypothesis).
-Estimate 3,000–4,500 lines total.
+**Batches — ALL FIVE DONE.** (1)–(3) as planned; (4) Case 2 landed
+without the bump; (5) the uniqueness interface turned out to be a
+RE-BASING, not a reconciliation — see the new §2.1a below.
+
+### 2.1a The uniqueness interface — RE-BASED, 2026-08-11
+
+Batch (5) was mis-scoped as "reconciliation". What it actually needed was
+to re-base the whole comparison/uniqueness chain on the paper's
+Definition 3.1, because sub/supersolution are HYPOTHESES there and the
+repo was assuming the STRONGER envelope-free notions — making its
+comparison theorem WEAKER than Theorem 4.2. Done:
+`max_principle_boundary`, `max_principle_le`,
+`comparison_from_max_principle`, `uniqueness_from_max_principle`,
+`max_principle_boundary_intro`, `comparison_compact`,
+`viscosity_uniqueness_compact` and `theorem_1_1_uniqueness_general` now
+all take `visc_subsol_env` / `visc_supersol_env`.
+
+Two facts made this asymmetric, and they are worth not rediscovering:
+* `F* ≠ F` exactly at `p = 0`, so the supersolution side needed the jet
+  predicate `supersol_jet`, the `p ≠ 0` corollaries via
+  `ell_op_usc_eq_at_nonzero`, and `ell_op_usc_small_shift_lt_one` for the
+  diagonal case. **The paper's own diagonal argument is `1 ≤ F*(0,0) = 0`
+  — `F*(0,0) = 0` FORBIDS a vanishing jet, it does not permit one.**
+* `F_* = F` EVERYWHERE (`ell_op_lsc_at_zero` + `ell_op_lsc_off_zero`), so
+  the subsolution side needed no operator change at all — only the
+  quartic globalisation `visc_subsol_env_local`.
+
+`visc_subsol`/`visc_supersol` are NOT deleted and should not be: they are
+sound, they are the stronger notions, and `max_principle_boundary_raw`'s
+counterexample genuinely depends on them (it moves `w` outside
+`interior K`, which Definition 3.1's global touching would notice — that
+non-transfer is exactly the defect the envelope form repairs).
+
+#### What is left of clause (2)
+
+**The join is DONE.** `paper_v_cap_inert` and
+`paper_v_supersol_lsc_bounded` (Paper_Viscosity) discharge the horizon
+hypothesis from `paper_v_le_ball_bound`, so on a bounded `K` with `T`
+large the supersolution property is unconditional. And
+`paper_v_unique_viscosity_solution` (Theorem_1_1, which now also imports
+Paper_Viscosity — the two sides had never been visible to each other,
+`Paper_Viscosity` being a leaf) states that any continuous viscosity
+solution in the sense of Definition 3.1 agreeing with `paper_v` on
+`K - interior K` equals `paper_v`.
+
+**The remaining genuine gap is CONTINUITY of `paper_v` on `K`.** What is
+proved is upper semicontinuity; `visc_supersol_lsc_iff_env` needs both.
+The paper's Theorem 1.1 speaks of the unique UPPER SEMICONTINUOUS
+solution, so closing this properly means the paper's Theorem 4.3
+(comparison with semicontinuous data), not more work on §2.1.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
 

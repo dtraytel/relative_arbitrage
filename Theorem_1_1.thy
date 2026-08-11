@@ -52,7 +52,7 @@ text \<open>
 
 theory Theorem_1_1
   imports Value_Function Relative_Arbitrage_Comparison Comparison_Assembly
-    Section_2_Usc Deterministic_Radius_Market
+    Section_2_Usc Deterministic_Radius_Market Paper_Viscosity
 begin
 
 theorem theorem_1_1_ball_fragment:
@@ -348,6 +348,72 @@ proof (rule antisym)
   show "ennreal (ball_v r 1 x) \<le> stopped_val_fn 1 L (cball 0 r) x"
     unfolding stopped_val_fn_def bv
     by (rule Sup_upper[OF mem])
+qed
+
+
+section \<open>Clause (2) joined to uniqueness: \<open>paper_v\<close> IS the solution\<close>
+
+text \<open>The two halves of clause (2) live in Paper\_Viscosity and the
+  comparison principle in Comparison\_Assembly, and until now nothing saw
+  both.  They meet here.
+
+  Both halves land in the envelope forms that
+  @{thm [source] viscosity_uniqueness_compact} now consumes ---
+  @{thm [source] visc_subsol_imp_env} on the subsolution side, since the
+  envelope-free notion proved for \<open>paper_v\<close> is the STRONGER one, and
+  @{thm [source] visc_supersol_lsc_iff_env} on the supersolution side.
+  The horizon hypothesis is discharged by
+  @{thm [source] paper_v_cap_inert}, so the only thing assumed about
+  \<open>paper_v\<close> is CONTINUITY on \<open>K\<close>.
+
+  That continuity is the one genuine gap.  What is proved elsewhere in
+  this development is that \<open>paper_v\<close> is upper semicontinuous; lower
+  semicontinuity is not, and the paper's own Theorem 1.1 speaks of the
+  unique UPPER SEMICONTINUOUS solution, so closing the gap properly means
+  the paper's Theorem 4.3 (comparison with semicontinuous data), not
+  this theorem.  Stated with continuity as a hypothesis, the assembly is
+  honest and immediately usable the moment continuity is available.\<close>
+
+theorem paper_v_unique_viscosity_solution:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
+    and k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 < L"
+    and T0: "0 < T"
+    and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+    and cv: "\<And>y. y \<in> K \<Longrightarrow>
+      isCont (\<lambda>z. enn2real (paper_v k L T K z)) y"
+    and cu: "continuous_on K u"
+    and subu: "visc_subsol_env k L K (interior K) u"
+    and supu: "visc_supersol_env k L K (interior K) u"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow>
+      u y = enn2real (paper_v k L T K y)"
+    and x: "x \<in> K"
+  shows "u x = enn2real (paper_v k L T K x)"
+proof -
+  have L1': "1 \<le> L" using L1 by linarith
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  have iK: "interior K \<subseteq> K" by (rule interior_subset)
+  have tv0: "\<And>y. (0 :: real) \<le> enn2real (paper_v k L T K y)" by simp
+  \<comment> \<open>continuity of the value function, in the two shapes needed\<close>
+  have cw: "continuous_on K (\<lambda>z. enn2real (paper_v k L T K z))"
+    by (rule continuous_at_imp_continuous_on) (use cv in blast)
+  \<comment> \<open>clause (2), subsolution half --- the envelope-free form is stronger\<close>
+  have sub0: "visc_subsol k L (interior K) (\<lambda>z. enn2real (paper_v k L T K z))"
+    by (rule paper_v_visc_subsol[OF T0 L1' Kc kn])
+  have subw: "visc_subsol_env k L K (interior K)
+      (\<lambda>z. enn2real (paper_v k L T K z))"
+    by (rule visc_subsol_imp_env[OF sub0 iK open_interior])
+  \<comment> \<open>clause (2), supersolution half --- Definition 3.1(b), horizon discharged\<close>
+  have sup0: "visc_supersol_lsc k L K (interior K)
+      (\<lambda>z. enn2real (paper_v k L T K z))"
+    by (rule paper_v_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
+  have supw: "visc_supersol_env k L K (interior K)
+      (\<lambda>z. enn2real (paper_v k L T K z))"
+    using sup0 visc_supersol_lsc_iff_env[OF tv0 iK cv] by blast
+  show ?thesis
+    by (rule viscosity_uniqueness_compact[OF cK neK k1 kn L1' cu cw
+          subu supu subw supw bd x])
 qed
 
 end
