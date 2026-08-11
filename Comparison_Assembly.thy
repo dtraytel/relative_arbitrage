@@ -214,6 +214,150 @@ proof (intro ballI allI impI)
 qed
 
 
+lemma quad_bdd_below_on_bounded:
+  fixes p yh :: "real^'n::finite" and M :: "real^'n^'n"
+    and K :: "(real^'n) set"
+  assumes Kb: "bounded K"
+  obtains B where "\<And>z. z \<in> K \<Longrightarrow>
+    B \<le> p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2"
+proof -
+  obtain B0 where B0: "\<And>z. z \<in> K \<Longrightarrow>
+    (- p) \<bullet> (z - yh) + ((z - yh) \<bullet> ((- M) *v (z - yh))) / 2 \<le> B0"
+  proof (rule quad_bdd_above_on_bounded[OF Kb,
+          where p = "- p" and yh = yh and M = "- M"])
+    fix BB :: real
+    assume "\<And>z. z \<in> K \<Longrightarrow>
+      (- p) \<bullet> (z - yh) + ((z - yh) \<bullet> ((- M) *v (z - yh))) / 2 \<le> BB"
+    then show thesis by (rule that)
+  qed
+  have main: "- B0 \<le> p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2"
+    if zK: "z \<in> K" for z
+  proof -
+    have mv: "(- M) *v (z - yh) = - (M *v (z - yh))"
+    proof -
+      have "(- M :: real^'n^'n) *v (z - yh) = (0 - M) *v (z - yh)" by simp
+      also have "\<dots> = 0 *v (z - yh) - M *v (z - yh)"
+        by (rule matrix_vector_mult_diff_rdistrib)
+      also have "\<dots> = - (M *v (z - yh))" by simp
+      finally show ?thesis .
+    qed
+    have "(- p) \<bullet> (z - yh) + ((z - yh) \<bullet> ((- M) *v (z - yh))) / 2
+        = - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2)"
+      unfolding mv by (simp add: inner_minus_left inner_minus_right)
+    then show ?thesis using B0[OF zK] by linarith
+  qed
+  show ?thesis by (rule that) (use main in blast)
+qed
+
+text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<close>, and it
+  lands on the envelope-FREE notion rather than on a jet predicate.  The
+  reason is that \<open>F\<^sub>* = F\<close> EVERYWHERE --- @{thm [source] ell_op_lsc_at_zero}
+  at \<open>p = 0\<close> and @{thm [source] ell_op_lsc_off_zero} elsewhere --- so unlike
+  the supersolution side there is no operator change to carry downstream.
+  Only the touching differs, global over \<open>K\<close> versus local, and the quartic
+  of @{thm [source] visc_subsol_env_local} closes exactly that gap.\<close>
+
+theorem visc_subsol_env_imp_visc_subsol:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes sub: "visc_subsol_env k L K \<Omega> u"
+    and Kb: "bounded K"
+    and uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+  shows "visc_subsol k L \<Omega> u"
+  unfolding visc_subsol_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x"
+  have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
+  obtain e0 where e00: "0 < e0"
+    and lme: "\<And>y. y \<in> ball x e0 \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
+    using lm by blast
+  have step: "ell_op k L (g x) (H + \<delta> *\<^sub>R mat 1) \<le> 1" if d: "0 < \<delta>" for \<delta>
+  proof -
+    have symM: "transpose (H + \<delta> *\<^sub>R mat 1) = H + \<delta> *\<^sub>R mat 1"
+      by (rule transpose_shift_add[OF symH])
+    obtain r where r0: "0 < r"
+      and majo: "\<And>z. z \<in> ball x r \<Longrightarrow>
+        \<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+    proof (rule test_fun_quadratic_dominates[OF tf d])
+      fix rr :: real
+      assume a1: "0 < rr" and a2: "\<And>z. z \<in> ball x rr \<Longrightarrow>
+        \<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+      show thesis by (rule that[OF a1 a2])
+    qed
+    define \<psi> where "\<psi> = (\<lambda>z. \<phi> x + (g x \<bullet> (z - x)
+      + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2))"
+    define gg where "gg = (\<lambda>z. g x + (H + \<delta> *\<^sub>R mat 1) *v (z - x))"
+    have tfp: "test_fun_at \<psi> gg (H + \<delta> *\<^sub>R mat 1) x"
+      unfolding \<psi>_def gg_def
+      by (rule test_fun_at_add_const[OF jet_test_fun_at[OF symM]])
+    have ggx: "gg x = g x" unfolding gg_def by simp
+    have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
+    obtain B where B: "\<And>z. z \<in> K \<Longrightarrow>
+      B \<le> g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+    proof (rule quad_bdd_below_on_bounded[OF Kb,
+            where p = "g x" and yh = x and M = "H + \<delta> *\<^sub>R mat 1"])
+      fix BB :: real
+      assume "\<And>z. z \<in> K \<Longrightarrow>
+        BB \<le> g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+      then show thesis by (rule that)
+    qed
+    have Bp: "\<And>z. z \<in> K \<Longrightarrow> \<phi> x + B \<le> \<psi> z"
+      unfolding \<psi>_def using B by simp
+    have r0': "0 < min r e0" using r0 e00 by simp
+    have lm': "u y - \<psi> y \<le> u x - \<psi> x" if y: "y \<in> ball x (min r e0)" for y
+    proof -
+      have y1: "y \<in> ball x r" using y by simp
+      have y2: "y \<in> ball x e0" using y by simp
+      have "\<phi> y \<le> \<psi> y" unfolding \<psi>_def using majo[OF y1] by simp
+      then show ?thesis using lme[OF y2] unfolding psix by simp
+    qed
+    have lsc: "ell_op_lsc k L (gg x) (H + \<delta> *\<^sub>R mat 1) \<le> 1"
+      by (rule visc_subsol_env_local[OF sub x tfp uhi Bp r0' lm'])
+    show ?thesis
+    proof (cases "g x = 0")
+      case True
+      have "ell_op_lsc k L (0 :: real^'n) (H + \<delta> *\<^sub>R mat 1)
+          = ereal (ell_op k L (0 :: real^'n) (H + \<delta> *\<^sub>R mat 1))"
+        by (rule ell_op_lsc_at_zero[OF kk(1) kk(2) LL])
+      then show ?thesis using lsc unfolding ggx True by simp
+    next
+      case False
+      have "ell_op_lsc k L (g x) (H + \<delta> *\<^sub>R mat 1)
+          = ereal (ell_op k L (g x) (H + \<delta> *\<^sub>R mat 1))"
+        by (rule ell_op_lsc_off_zero[OF symM False LL kk(1) kk(2)])
+      then show ?thesis using lsc unfolding ggx by simp
+    qed
+  qed
+  show "ell_op k L (g x) H \<le> 1"
+  proof (rule field_le_epsilon)
+    fix e :: real assume e0: "0 < e"
+    have A0: "0 < real CARD('n) * L / 2" using LL by simp
+    define \<delta> where "\<delta> = e / (real CARD('n) * L / 2)"
+    have d0: "0 < \<delta>" unfolding \<delta>_def using e0 A0 by simp
+    have ne: "feasible k L (g x) \<noteq> ({} :: (real^'n^'n) set)"
+      by (rule feasible_nonempty[OF kk(1) kk(2) LL])
+    have gap: "ell_op k L (g x) H
+        \<le> ell_op k L (g x) (H + \<delta> *\<^sub>R mat 1) + mgap L H (H + \<delta> *\<^sub>R mat 1)"
+      by (rule ell_op_M_gap[OF ne])
+    have mg: "mgap L H (H + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
+      by (rule mgap_shift_id(1)[OF less_imp_le[OF d0]])
+    have L0: "L \<noteq> 0" using LL by linarith
+    have eq: "\<delta> * real CARD('n) * L / 2 = e"
+      unfolding \<delta>_def using A0 L0 by (simp add: field_simps)
+    have mg': "mgap L H (H + \<delta> *\<^sub>R mat 1) = e" using mg eq by simp
+    show "ell_op k L (g x) H \<le> 1 + e"
+      using gap step[OF d0] mg' by linarith
+  qed
+qed
+
+
 lemma jet_test_fun_at_abstract:
   fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)" and p x :: "real^'n"
   assumes lin: "linear X" and sym: "\<And>v w. v \<bullet> X w = w \<bullet> X v"
@@ -1433,50 +1577,6 @@ text \<open>The obligation above is DISCHARGED, and neither disjunct is needed. 
   through the whole family argument, are all unnecessary for the CONTRADICTION.
   They remain in the existing chain, which is still correct; this is the
   alternative route that the diagonal case needs.\<close>
-
-lemma mgap_shift_id:
-  fixes M :: "real^'n::finite^'n"
-  assumes d: "0 \<le> \<delta>"
-  shows "mgap L M (M + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
-    and "mgap L (M - \<delta> *\<^sub>R mat 1) M = \<delta> * real CARD('n) * L / 2"
-proof -
-  have row: "(\<Sum>j\<in>(UNIV::'n set). \<bar>\<delta> * (if i = j then 1 else 0)\<bar>) = \<delta>" for i
-  proof -
-    have "(\<Sum>j\<in>(UNIV::'n set). \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)
-        = (\<Sum>j\<in>(UNIV::'n set). if j = i then \<delta> else 0)"
-      by (rule sum.cong) (use d in auto)
-    also have "\<dots> = \<delta>" by simp
-    finally show ?thesis .
-  qed
-  have s1: "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-        \<bar>M $ i $ j - (M + \<delta> *\<^sub>R mat 1) $ i $ j\<bar>) = \<delta> * real CARD('n)"
-  proof -
-    have "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-          \<bar>M $ i $ j - (M + \<delta> *\<^sub>R mat 1) $ i $ j\<bar>)
-        = (\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-            \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)"
-      by (intro sum.cong refl) (simp add: mat_def)
-    also have "\<dots> = (\<Sum>i\<in>(UNIV::'n set). \<delta>)"
-      by (rule sum.cong[OF refl]) (rule row)
-    finally show ?thesis by simp
-  qed
-  have s2: "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-        \<bar>(M - \<delta> *\<^sub>R mat 1) $ i $ j - M $ i $ j\<bar>) = \<delta> * real CARD('n)"
-  proof -
-    have "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-          \<bar>(M - \<delta> *\<^sub>R mat 1) $ i $ j - M $ i $ j\<bar>)
-        = (\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-            \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)"
-      by (intro sum.cong refl) (simp add: mat_def)
-    also have "\<dots> = (\<Sum>i\<in>(UNIV::'n set). \<delta>)"
-      by (rule sum.cong[OF refl]) (rule row)
-    finally show ?thesis by simp
-  qed
-  show "mgap L M (M + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
-    unfolding mgap_def s1 by simp
-  show "mgap L (M - \<delta> *\<^sub>R mat 1) M = \<delta> * real CARD('n) * L / 2"
-    unfolding mgap_def s2 by simp
-qed
 
 lemma small_multiple_exists:
   fixes C g :: real
@@ -13539,7 +13639,7 @@ proof -
     unfolding max_principle_boundary_def
   proof (intro allI impI)
     fix u w :: "real^'n \<Rightarrow> real"
-    assume sub: "visc_subsol k L (interior K) u"
+    assume subE: "visc_subsol_env k L K (interior K) u"
       and supE: "visc_supersol_env k L K (interior K) w"
       and cu: "continuous_on K u" and cw: "continuous_on K w"
     \<comment> \<open>Definition 3.1(b) yields the jet form once and for all\<close>
@@ -13561,6 +13661,23 @@ proof -
     qed
     have sup: "supersol_jet k L (interior K) w"
       by (rule visc_supersol_env_imp_jet[OF supE Kb Bw])
+    obtain Bu where Bu: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
+    proof -
+      have "bounded (u ` K)"
+        by (rule compact_imp_bounded[OF compact_continuous_image[OF cu cK]])
+      then obtain a where a: "\<forall>z \<in> u ` K. norm z \<le> a"
+        unfolding bounded_iff by blast
+      have "u y \<le> a" if y: "y \<in> K" for y
+      proof -
+        have "norm (u y) \<le> a" using a y by blast
+        then have "\<bar>u y\<bar> \<le> a" by simp
+        then show ?thesis by (simp add: abs_le_iff)
+      qed
+      then show thesis by (rule that)
+    qed
+    have sub: "visc_subsol k L (interior K) u"
+      by (rule visc_subsol_env_imp_visc_subsol[OF subE Kb Bu
+            kk(1) kk(2) LL])
     show "\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
     proof (rule ccontr)
       assume nb: "\<not> (\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x)"
@@ -13707,7 +13824,7 @@ theorem comparison_compact:
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and subu: "visc_subsol k L (interior K) u"
+    and subu: "visc_subsol_env k L K (interior K) u"
     and supw: "visc_supersol_env k L K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> w y"
     and x: "x \<in> K"
@@ -13728,9 +13845,9 @@ theorem viscosity_uniqueness_compact:
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and subu: "visc_subsol k L (interior K) u"
+    and subu: "visc_subsol_env k L K (interior K) u"
     and supu: "visc_supersol_env k L K (interior K) u"
-    and subw: "visc_subsol k L (interior K) w"
+    and subw: "visc_subsol_env k L K (interior K) w"
     and supw: "visc_supersol_env k L K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
     and x: "x \<in> K"

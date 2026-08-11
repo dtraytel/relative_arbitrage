@@ -723,7 +723,7 @@ definition max_principle_boundary ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
   where
   "max_principle_boundary k L K \<longleftrightarrow>
-     (\<forall>u w. visc_subsol k L (interior K) u
+     (\<forall>u w. visc_subsol_env k L K (interior K) u
         \<longrightarrow> visc_supersol_env k L K (interior K) w
         \<longrightarrow> continuous_on K u \<longrightarrow> continuous_on K w
         \<longrightarrow> (\<exists>x \<in> K - interior K.
@@ -752,7 +752,7 @@ text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and NON
 theorem max_principle_le:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes mp: "max_principle_boundary k L K"
-    and sub: "visc_subsol k L (interior K) u"
+    and sub: "visc_subsol_env k L K (interior K) u"
     and sup: "visc_supersol_env k L K (interior K) w"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
     and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
@@ -780,7 +780,7 @@ text \<open>Theorem 4.3 (comparison) in the form the paper uses it: a subsolutio
 theorem comparison_from_max_principle:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes mp: "max_principle_boundary k L K"
-    and sub: "visc_subsol k L (interior K) u"
+    and sub: "visc_subsol_env k L K (interior K) u"
     and sup: "visc_supersol_env k L K (interior K) w"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
     and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
@@ -803,9 +803,9 @@ text \<open>Proposition 4.1 (uniqueness): two viscosity solutions with the same
 theorem uniqueness_from_max_principle:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes mp: "max_principle_boundary k L K"
-    and su: "visc_subsol k L (interior K) u"
+    and su: "visc_subsol_env k L K (interior K) u"
     and pu: "visc_supersol_env k L K (interior K) u"
-    and sw: "visc_subsol k L (interior K) w"
+    and sw: "visc_subsol_env k L K (interior K) w"
     and pw: "visc_supersol_env k L K (interior K) w"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = 0"
@@ -830,7 +830,7 @@ text \<open>And the discharge obligation stated plainly: to remove the interface
   and must not be used as the target.\<close>
 
 lemma max_principle_boundary_intro:
-  assumes "\<And>u w. visc_subsol k L (interior K) u
+  assumes "\<And>u w. visc_subsol_env k L K (interior K) u
       \<Longrightarrow> visc_supersol_env k L K (interior K) w
       \<Longrightarrow> continuous_on K u \<Longrightarrow> continuous_on K w
       \<Longrightarrow> \<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"

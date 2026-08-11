@@ -305,6 +305,50 @@ proof -
     by (simp add: divide_right_mono mult_right_mono)
 qed
 
+lemma mgap_shift_id:
+  fixes M :: "real^'n::finite^'n"
+  assumes d: "0 \<le> \<delta>"
+  shows "mgap L M (M + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
+    and "mgap L (M - \<delta> *\<^sub>R mat 1) M = \<delta> * real CARD('n) * L / 2"
+proof -
+  have row: "(\<Sum>j\<in>(UNIV::'n set). \<bar>\<delta> * (if i = j then 1 else 0)\<bar>) = \<delta>" for i
+  proof -
+    have "(\<Sum>j\<in>(UNIV::'n set). \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)
+        = (\<Sum>j\<in>(UNIV::'n set). if j = i then \<delta> else 0)"
+      by (rule sum.cong) (use d in auto)
+    also have "\<dots> = \<delta>" by simp
+    finally show ?thesis .
+  qed
+  have s1: "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
+        \<bar>M $ i $ j - (M + \<delta> *\<^sub>R mat 1) $ i $ j\<bar>) = \<delta> * real CARD('n)"
+  proof -
+    have "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
+          \<bar>M $ i $ j - (M + \<delta> *\<^sub>R mat 1) $ i $ j\<bar>)
+        = (\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
+            \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)"
+      by (intro sum.cong refl) (simp add: mat_def)
+    also have "\<dots> = (\<Sum>i\<in>(UNIV::'n set). \<delta>)"
+      by (rule sum.cong[OF refl]) (rule row)
+    finally show ?thesis by simp
+  qed
+  have s2: "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
+        \<bar>(M - \<delta> *\<^sub>R mat 1) $ i $ j - M $ i $ j\<bar>) = \<delta> * real CARD('n)"
+  proof -
+    have "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
+          \<bar>(M - \<delta> *\<^sub>R mat 1) $ i $ j - M $ i $ j\<bar>)
+        = (\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
+            \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)"
+      by (intro sum.cong refl) (simp add: mat_def)
+    also have "\<dots> = (\<Sum>i\<in>(UNIV::'n set). \<delta>)"
+      by (rule sum.cong[OF refl]) (rule row)
+    finally show ?thesis by simp
+  qed
+  show "mgap L M (M + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
+    unfolding mgap_def s1 by simp
+  show "mgap L (M - \<delta> *\<^sub>R mat 1) M = \<delta> * real CARD('n) * L / 2"
+    unfolding mgap_def s2 by simp
+qed
+
 subsection \<open>\<open>F\<close> and \<open>F\<^sup>*\<close> vanish with the Hessian, uniformly in the gradient\<close>
 
 text \<open>At \<open>M = 0\<close> the operator is \<open>0\<close> whatever the gradient, because every
