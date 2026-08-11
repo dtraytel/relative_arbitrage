@@ -14719,7 +14719,8 @@ text \<open>Case 2 of the supersolution proof perturbs the test function and
 lemma lsc_attains_inf_gen:
   fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
   assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
-    and B: "\<And>y. B \<le> f y" and cS: "compact S" and neS: "S \<noteq> {}"
+    and B: "\<And>y. y \<in> S \<Longrightarrow> B \<le> f y"
+    and cS: "compact S" and neS: "S \<noteq> {}"
   obtains z where "z \<in> S" and "\<And>y. y \<in> S \<Longrightarrow> f z \<le> f y"
 proof -
   define m where "m = (INF y \<in> S. f y)"
@@ -14929,6 +14930,142 @@ proof -
     then have "c * norm (y - x) \<le> norm \<eta>"
       using pos by (rule mult_right_le_imp_le)
     then show ?thesis using c0 by (simp add: pos_le_divide_eq mult.commute)
+  qed
+qed
+
+
+text \<open>The tilted test function of Case 2 is the quadratic
+  \<open>b + \<onehalf>(z - x)\<^sup>T M (z - x) + \<langle>\<eta>, z - x\<rangle>\<close>, centred at the touching point
+  \<open>x\<close> but examined at a nearby point \<open>y\<close>.  Recentring it into the normal
+  form \<open>c + \<langle>p, z\<rangle> + \<onehalf>z\<^sup>T M z\<close> uses only symmetry of \<open>M\<close>, which
+  \<open>test_fun_at\<close> supplies as part of its own definition.\<close>
+
+lemma test_fun_at_shifted_quadratic:
+  fixes M :: "real^'n::finite^'n" and x \<eta> y :: "real^'n" and b :: real
+  assumes sym: "transpose M = M"
+  shows "test_fun_at (\<lambda>z. b + ((z - x) \<bullet> (M *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
+      (\<lambda>z. M *v (z - x) + \<eta>) M y"
+proof -
+  define p where "p = \<eta> - M *v x"
+  define cc where "cc = b + (x \<bullet> (M *v x)) / 2 - \<eta> \<bullet> x"
+  have f_eq: "(\<lambda>z. b + ((z - x) \<bullet> (M *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
+      = (\<lambda>z. cc + p \<bullet> z + (z \<bullet> (M *v z)) / 2)"
+  proof (rule ext)
+    fix z :: "real^'n"
+    have m1: "M *v (z - x) = M *v z - M *v x"
+      by (simp add: matrix_vector_mult_diff_distrib)
+    have s1: "x \<bullet> (M *v z) = z \<bullet> (M *v x)"
+    proof -
+      have "x \<bullet> (M *v z) = (transpose M *v x) \<bullet> z"
+        by (rule inner_transpose_matrix)
+      also have "\<dots> = (M *v x) \<bullet> z" using sym by simp
+      finally show ?thesis by (simp add: inner_commute)
+    qed
+    have s2: "(M *v x) \<bullet> z = z \<bullet> (M *v x)" by (rule inner_commute)
+    have e: "(z - x) \<bullet> (M *v (z - x))
+        = z \<bullet> (M *v z) - 2 * (z \<bullet> (M *v x)) + x \<bullet> (M *v x)"
+      unfolding m1 using s1
+      by (simp add: inner_diff_left inner_diff_right)
+    have pz: "p \<bullet> z = \<eta> \<bullet> z - z \<bullet> (M *v x)"
+      unfolding p_def by (simp add: inner_diff_left s2)
+    have ez: "\<eta> \<bullet> (z - x) = \<eta> \<bullet> z - \<eta> \<bullet> x"
+      by (simp add: inner_diff_right)
+    show "b + ((z - x) \<bullet> (M *v (z - x))) / 2 + \<eta> \<bullet> (z - x)
+        = cc + p \<bullet> z + (z \<bullet> (M *v z)) / 2"
+      unfolding e cc_def pz ez by (simp add: field_simps)
+  qed
+  have g_eq: "(\<lambda>z :: real^'n. M *v (z - x) + \<eta>) = (\<lambda>z. p + M *v z)"
+    by (rule ext) (simp add: p_def matrix_vector_mult_diff_rdistrib algebra_simps)
+  show ?thesis
+    unfolding f_eq g_eq by (rule test_fun_at_quadratic[OF sym])
+qed
+
+text \<open>The heart of Case 2.  Given a STRICT quadratic separation on a
+  closed ball --- which is what \<open>test_fun_strict_minorate_zero_grad\<close>
+  delivers once the gradient vanishes --- a tilt by \<open>\<eta>\<close> has a minimiser
+  \<open>y\<close>, and that minimiser is within \<open>\<bar>\<eta>\<bar>/c\<close> of the centre.  For
+  \<open>\<bar>\<eta>\<bar> < c\<rho>\<close> that puts \<open>y\<close> strictly inside the ball, so the minimality
+  is a genuine LOCAL touching at \<open>y\<close> --- exactly the hypothesis the
+  localised Case 1 consumes.
+
+  No properties of \<open>W\<close> are used beyond lower semicontinuity: the lower
+  bound needed for the infimum comes from the separation itself, since
+  \<open>W \<ge> W x + Q + c\<bar>z - x\<bar>\<^sup>2\<close> already forces \<open>W - Q - \<langle>\<eta>, \<cdot> - x\<rangle> \<ge> W x - \<bar>\<eta>\<bar>\<rho>\<close>
+  on the ball.\<close>
+
+lemma tilted_local_touching:
+  fixes W :: "real^'n::finite \<Rightarrow> real" and M :: "real^'n^'n"
+    and x \<eta> :: "real^'n"
+  assumes lsc: "\<And>a z. a < W z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> a < W y"
+    and rho0: "0 < \<rho>" and c0: "0 < c"
+    and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      W x + ((z - x) \<bullet> (M *v (z - x))) / 2 + c * ((z - x) \<bullet> (z - x)) \<le> W z"
+    and hsmall: "norm \<eta> < c * \<rho>"
+  obtains y where "dist x y < \<rho>" and "norm (y - x) \<le> norm \<eta> / c"
+    and "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
+      W y - (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+        \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+proof -
+  define Q where "Q = (\<lambda>z :: real^'n. ((z - x) \<bullet> (M *v (z - x))) / 2)"
+  define \<psi> where "\<psi> = (\<lambda>z :: real^'n. Q z + \<eta> \<bullet> (z - x))"
+  have Qx: "Q x = 0" unfolding Q_def by simp
+  have cpsi: "continuous_on UNIV \<psi>"
+    unfolding \<psi>_def Q_def by (rule continuous_on_quad_tilt)
+  have flsc: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> a < W y - \<psi> y"
+    if "a < W z - \<psi> z" for a and z :: "real^'n"
+    by (rule lsc_diff_continuous[OF lsc cpsi that])
+  have sep': "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      W x + Q z + c * ((z - x) \<bullet> (z - x)) \<le> W z"
+    unfolding Q_def by (rule sep)
+  have Bnd: "W x - norm \<eta> * \<rho> \<le> W z - \<psi> z" if zc: "z \<in> cball x \<rho>" for z
+  proof -
+    have s: "W x + Q z + c * ((z - x) \<bullet> (z - x)) \<le> W z" by (rule sep'[OF zc])
+    have q0: "0 \<le> c * ((z - x) \<bullet> (z - x))"
+      by (rule mult_nonneg_nonneg[OF less_imp_le[OF c0] inner_ge_zero])
+    have n1: "norm (z - x) \<le> \<rho>"
+      using zc by (simp add: dist_norm norm_minus_commute)
+    have "norm \<eta> * norm (z - x) \<le> norm \<eta> * \<rho>"
+      by (rule mult_left_mono[OF n1 norm_ge_zero])
+    then have cs: "\<eta> \<bullet> (z - x) \<le> norm \<eta> * \<rho>"
+      using norm_cauchy_schwarz[of \<eta> "z - x"] by linarith
+    show ?thesis unfolding \<psi>_def using s q0 cs by linarith
+  qed
+  have cc: "compact (cball x \<rho>)" by simp
+  have ne: "cball x \<rho> \<noteq> {}" using rho0 by auto
+  obtain y where yc: "y \<in> cball x \<rho>"
+    and ymin: "\<And>w. w \<in> cball x \<rho> \<Longrightarrow> W y - \<psi> y \<le> W w - \<psi> w"
+  proof (rule lsc_attains_inf_gen[OF flsc Bnd cc ne])
+    fix z :: "real^'n" assume a1: "z \<in> cball x \<rho>"
+      and a2: "\<And>w. w \<in> cball x \<rho> \<Longrightarrow> W z - \<psi> z \<le> W w - \<psi> w"
+    show thesis by (rule that[OF a1 a2])
+  qed
+  have xc: "x \<in> cball x \<rho>" using rho0 by simp
+  have close: "norm (y - x) \<le> norm \<eta> / c"
+  proof (rule tilted_minimiser_close[OF sep' Qx c0 xc yc])
+    fix z :: "real^'n" assume zc: "z \<in> cball x \<rho>"
+    show "W y - Q y - \<eta> \<bullet> (y - x) \<le> W z - Q z - \<eta> \<bullet> (z - x)"
+      using ymin[OF zc] unfolding \<psi>_def by simp
+  qed
+  have hlt: "norm \<eta> / c < \<rho>"
+    using hsmall c0 by (simp add: pos_divide_less_eq mult.commute)
+  have dxy: "dist x y < \<rho>"
+  proof -
+    have "dist x y = norm (y - x)" by (simp add: dist_norm norm_minus_commute)
+    then show ?thesis using close hlt by linarith
+  qed
+  have loc: "W y - \<psi> y \<le> W w - \<psi> w" if dw: "dist y w < \<rho> - dist x y" for w
+  proof -
+    have "dist x w \<le> dist x y + dist y w" by (rule dist_triangle)
+    then have "dist x w < \<rho>" using dw by linarith
+    then have "w \<in> cball x \<rho>" by (auto simp: dist_commute)
+    then show ?thesis by (rule ymin)
+  qed
+  show ?thesis
+  proof (rule that[OF dxy close])
+    fix w :: "real^'n" assume dw: "dist y w < \<rho> - dist x y"
+    show "W y - (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+        \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+      using loc[OF dw] by (simp add: \<psi>_def Q_def)
   qed
 qed
 
