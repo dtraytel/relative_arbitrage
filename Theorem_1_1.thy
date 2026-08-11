@@ -604,4 +604,178 @@ text \<open>\<^bold>\<open>What is left: exactly one thing.\<close>  \<open>comp
   boundary \<open>x\<close> with \<open>v x > 0\<close> the needed \<open>0 - \<phi> z \<le> v x - \<phi> x\<close> follows from
   \<open>\<phi> x - \<phi> z < v x\<close>.  No stochastic argument was involved.\<close>
 
+
+section \<open>E4: Example 3.1 assembled from the interior lower bound\<close>
+
+text \<open>PLAN \<open>\<section>2.2\<close>, package E4.  Everything of Example 3.1 EXCEPT the interior
+  lower bound at nonzero points (which is E2--E3, the subspace-tangential
+  field) is discharged here.  Four cases: outside the ball the value is \<open>0\<close>
+  because a path starting outside \<open>K\<close> has exit time \<open>0\<close>
+  (\<open>paper_v_zero_outside\<close>); on the sphere \<open>paper_v_boundary_zero\<close>; strictly
+  inside and nonzero, the hypothesis against \<open>paper_v_le_ball_bound\<close>; and at
+  the CENTRE by upper semicontinuity --- NOT by running the field from \<open>0\<close>,
+  where the clamp sits.\<close>
+
+lemma paper_v_ball_fin:
+  fixes r :: real and y :: "real^'n::finite"
+  assumes kn: "k < CARD('n)" and T0: "0 \<le> T" and L0: "0 \<le> L"
+  shows "paper_v k L T (cball 0 r) y < \<top>"
+proof -
+  have "paper_v k L T (cball 0 r) y
+      \<le> ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k))"
+    by (rule paper_v_le_ball_bound[OF kn T0 L0]) simp
+  also have "\<dots> < \<top>" by simp
+  finally show ?thesis .
+qed
+
+lemma paper_v_ball_upper:
+  fixes r :: real and y :: "real^'n::finite"
+  assumes kn: "k < CARD('n)" and T0: "0 \<le> T" and L0: "0 \<le> L"
+  shows "enn2real (paper_v k L T (cball 0 r) y)
+      \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0"
+proof -
+  have le: "paper_v k L T (cball 0 r) y
+      \<le> ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k))"
+    by (rule paper_v_le_ball_bound[OF kn T0 L0]) simp
+  have "enn2real (paper_v k L T (cball 0 r) y)
+      \<le> enn2real (ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k)))"
+    by (rule enn2real_mono[OF le]) simp
+  also have "\<dots> \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0"
+    by (cases "0 \<le> (r * r - y \<bullet> y) / real (CARD('n) - k)")
+      (simp_all add: ennreal_neg)
+  finally show ?thesis .
+qed
+
+theorem example_3_1_from_lower:
+  fixes r :: real and x :: "real^'n::finite"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and T0: "0 < T" and r0: "0 < r"
+    and lower: "\<And>y :: real^'n. norm y < r \<Longrightarrow> y \<noteq> 0 \<Longrightarrow>
+        (r * r - y \<bullet> y) / real (CARD('n) - k)
+          \<le> enn2real (paper_v k L T (cball 0 r) y)"
+  shows "enn2real (paper_v k L T (cball 0 r) x)
+      = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
+proof -
+  have nk0: "0 < real (CARD('n) - k)" using kn by simp
+  have L0: "0 \<le> L" using L1 by simp
+  have T0': "0 \<le> T" using T0 by simp
+  have Kc: "closed (cball (0 :: real^'n) r)" by simp
+  have sq: "y \<bullet> y = norm y * norm y" for y :: "real^'n"
+    by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
+  have upper: "enn2real (paper_v k L T (cball 0 r) y)
+      \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0" for y :: "real^'n"
+    by (rule paper_v_ball_upper[OF kn T0' L0])
+  consider (out) "r < norm x" | (sph) "norm x = r"
+    | (inn) "norm x < r" "x \<noteq> 0" | (ctr) "x = 0"
+    by (cases "r < norm x", simp) (cases "norm x = r", simp, cases "x = 0", auto)
+  then show ?thesis
+  proof cases
+    case out
+    then have "x \<notin> cball (0 :: real^'n) r" by simp
+    then have z: "paper_v k L T (cball 0 r) x = 0"
+      by (rule paper_v_zero_outside[OF T0'])
+    have "r * r < norm x * norm x"
+      by (rule mult_strict_mono) (use out r0 in auto)
+    then have "(r * r - x \<bullet> x) / real (CARD('n) - k) < 0"
+      unfolding sq using nk0 by (simp add: divide_neg_pos)
+    then show ?thesis unfolding z by simp
+  next
+    case sph
+    then have z: "paper_v k L T (cball 0 r) x = 0"
+      by (rule paper_v_boundary_zero[OF kn T0 L0])
+    have "x \<bullet> x = r * r" unfolding sq sph by (rule refl)
+    then show ?thesis unfolding z by simp
+  next
+    case inn
+    have nn: "0 \<le> (r * r - x \<bullet> x) / real (CARD('n) - k)"
+    proof -
+      have "norm x * norm x \<le> r * r"
+        by (rule mult_mono) (use inn(1) r0 in auto)
+      then show ?thesis unfolding sq using nk0 by simp
+    qed
+    have "(r * r - x \<bullet> x) / real (CARD('n) - k)
+        \<le> enn2real (paper_v k L T (cball 0 r) x)"
+      by (rule lower[OF inn(1) inn(2)])
+    with upper[of x] nn show ?thesis by simp
+  next
+    case ctr
+    text \<open>Abstract the nat subtraction: \<open>linarith\<close> cannot see through
+      \<open>real (CARD('n) - k)\<close>.\<close>
+    define nk where "nk = real (CARD('n) - k)"
+    have nkp: "0 < nk" unfolding nk_def using kn by simp
+    have lower': "\<And>y :: real^'n. norm y < r \<Longrightarrow> y \<noteq> 0 \<Longrightarrow>
+        (r * r - y \<bullet> y) / nk \<le> enn2real (paper_v k L T (cball 0 r) y)"
+      unfolding nk_def by (rule lower)
+    have upper': "enn2real (paper_v k L T (cball 0 r) y)
+        \<le> max ((r * r - y \<bullet> y) / nk) 0" for y :: "real^'n"
+      unfolding nk_def by (rule upper)
+    have goalR: "max ((r * r - x \<bullet> x) / nk) 0 = r * r / nk"
+      unfolding ctr using nkp r0 by simp
+    have le: "enn2real (paper_v k L T (cball 0 r) x) \<le> r * r / nk"
+      using upper'[of x] goalR by simp
+    have ge: "r * r / nk \<le> enn2real (paper_v k L T (cball 0 r) x)"
+    proof (rule ccontr)
+      assume "\<not> r * r / nk \<le> enn2real (paper_v k L T (cball 0 r) x)"
+      then have lt0: "enn2real (paper_v k L T (cball 0 r) x) < r * r / nk"
+        by simp
+      define b where "b = (enn2real (paper_v k L T (cball 0 r) x)
+          + r * r / nk) / 2"
+      have b2: "2 * b = enn2real (paper_v k L T (cball 0 r) x) + r * r / nk"
+        unfolding b_def by simp
+      have blo: "enn2real (paper_v k L T (cball 0 r) x) < b" using lt0 b2 by linarith
+      have bhi: "b < r * r / nk" using lt0 b2 by linarith
+      have "paper_v k L T (cball 0 r) x < ennreal b"
+        using blo paper_v_ball_fin[OF kn T0' L0] by (simp add: enn2real_less_iff)
+      then have "eventually (\<lambda>y. paper_v k L T (cball 0 r) y < ennreal b) (nhds x)"
+        by (rule paper_v_usc_unconditional[OF T0 L1 Kc])
+      then obtain U where opU: "open U" and xU: "x \<in> U"
+        and Uy: "\<And>y. y \<in> U \<Longrightarrow> paper_v k L T (cball 0 r) y < ennreal b"
+        unfolding eventually_nhds by blast
+      obtain e where e0: "0 < e" and eU: "ball x e \<subseteq> U"
+        using opU xU unfolding open_contains_ball by blast
+      obtain i :: 'n where "True" by blast
+      define u1 :: "real^'n" where "u1 = axis i 1"
+      have nu1: "norm u1 = 1" unfolding u1_def by simp
+      have q0: "0 < r * r - b * nk" using bhi nkp by (simp add: field_simps)
+      define s where "s = min (min (e/2) (r/2)) (sqrt (r * r - b * nk) / 2)"
+      have s0: "0 < s" unfolding s_def using e0 r0 q0 by simp
+      define y where "y = s *\<^sub>R u1"
+      have ny: "norm y = s" unfolding y_def using s0 by (simp add: nu1)
+      have ynz: "y \<noteq> 0" using ny s0 by auto
+      have ylt: "norm y < r" unfolding ny s_def using r0 by simp
+      have yU: "y \<in> U"
+      proof -
+        have "dist x y = s" unfolding ctr using ny by (simp add: dist_norm)
+        then have "y \<in> ball x e" unfolding s_def using e0 by simp
+        then show ?thesis using eU by blast
+      qed
+      have vylt: "enn2real (paper_v k L T (cball 0 r) y) < b"
+        using Uy[OF yU] paper_v_ball_fin[OF kn T0' L0]
+        by (simp add: enn2real_less_iff)
+      have "(r * r - y \<bullet> y) / nk \<le> enn2real (paper_v k L T (cball 0 r) y)"
+        by (rule lower'[OF ylt ynz])
+      then have vge: "(r * r - s * s) / nk < b"
+        using vylt unfolding sq ny by simp
+      have ssq: "s * s < r * r - b * nk"
+      proof -
+        have sle: "s \<le> sqrt (r * r - b * nk) / 2" unfolding s_def by simp
+        have sq0: "0 \<le> sqrt (r * r - b * nk) / 2" using q0 by simp
+        have "s * s \<le> (sqrt (r * r - b * nk) / 2) * (sqrt (r * r - b * nk) / 2)"
+          by (rule mult_mono[OF sle sle sq0]) (use s0 in linarith)
+        also have "\<dots> = (r * r - b * nk) / 4"
+        proof -
+          have "sqrt (r * r - b * nk) * sqrt (r * r - b * nk) = r * r - b * nk"
+            using q0 by simp
+          then show ?thesis by simp
+        qed
+        also have "\<dots> < r * r - b * nk" using q0 by simp
+        finally show ?thesis .
+      qed
+      then have blt: "b < (r * r - s * s) / nk"
+        using nkp by (simp add: field_simps)
+      show False using vge blt by linarith
+    qed
+    show ?thesis using le ge goalR unfolding nk_def[symmetric] by simp
+  qed
+qed
+
 end
