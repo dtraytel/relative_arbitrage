@@ -821,6 +821,21 @@ text \<open>And the two envelope-form hypotheses in the shape the doubling produ
   whole doubling argument may be run in the envelope setting where the
   \<open>\<delta> \<rightarrow> 0\<close> passage is legitimate.\<close>
 
+lemma ball_prod_shift_snd:
+  fixes p :: "real^'n::finite" and M N :: "real^'n^'n"
+  assumes "w \<in> ball (p, M) e"
+  shows "w + (0, N - M) \<in> ball (p, N) e"
+proof -
+  have eq: "(w + (0, N - M)) - (p, N) = w - (p, M)"
+    by (simp add: prod_eq_iff)
+  have "dist (w + (0, N - M)) (p, N) = dist w (p, M)"
+    unfolding dist_norm eq ..
+  moreover have "dist w (p, M) < e"
+    using assms by (simp add: dist_commute)
+  ultimately show ?thesis
+    by (simp add: dist_commute)
+qed
+
 lemma ell_op_pair_shift_snd_le:
   fixes M N :: "real^'n::finite^'n"
   assumes psd: "psd (N - M)" and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
@@ -8169,15 +8184,43 @@ proof -
     if "0 < \<delta>" "\<delta> < 1" for i \<delta>
     by (rule subsol_shifted_bound_supconv
         [OF sub t(1) ysuO symX kk(1) kk(2) LL Bu e optu jetu that(1)])
-  have bndw: "1 \<le> ell_op k L (Pw i) (Y i - \<delta> *\<^sub>R mat 1)"
+  \<comment> \<open>The supersolution bound is over \<open>F\<^sup>*\<close>, and \<open>F\<^sup>* = F\<close> only away from
+      \<open>0\<close>; the gradient FAMILY need not avoid \<open>0\<close>, but its LIMIT does, so it
+      avoids \<open>0\<close> eventually.  Shifting every family past that index costs
+      nothing --- all hypotheses are either indexwise or convergences.\<close>
+  have np: "0 < norm p" using pnz by simp
+  obtain N where N: "\<And>i. N \<le> i \<Longrightarrow> norm p / 2 < norm (Pw i)"
+  proof -
+    have cn: "(\<lambda>i. norm (Pw i)) \<longlonglongrightarrow> norm p"
+      by (rule tendsto_norm[OF cPw])
+    have "norm p / 2 < norm p" using np by simp
+    then have "\<forall>\<^sub>F i in sequentially. norm p / 2 < norm (Pw i)"
+      using cn by (rule order_tendstoD(1)[rotated])
+    then obtain N0 where N0: "\<forall>n\<ge>N0. norm p / 2 < norm (Pw n)"
+      unfolding eventually_sequentially by blast
+    show thesis by (rule that[of N0]) (use N0 in blast)
+  qed
+  have pwnz: "Pw (i + N) \<noteq> 0" for i
+  proof -
+    have "norm p / 2 < norm (Pw (i + N))" by (rule N) simp
+    then show ?thesis using np by auto
+  qed
+  have bndw: "1 \<le> ell_op k L (Pw (i + N)) (Y (i + N) - \<delta> *\<^sub>R mat 1)"
     if "0 < \<delta>" "\<delta> < 1" for i \<delta>
-    by (rule supersol_shifted_bound_supconv
-        [OF sup yswO symY Bw e optw jetw that(1)])
+    by (rule supersol_shifted_bound_supconv_ne
+        [OF sup yswO kk(1) kk(2) LL symY Bw e optw jetw that(1) pwnz])
+  have bndu': "ell_op k L (Pu (i + N)) (X (i + N) + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
+    if "0 < \<delta>" "\<delta> < 1" for i \<delta>
+    by (rule bndu[OF that(1) that(2)])
   show False
     by (rule env_strict_contradiction_of_shifted_limits
-        [OF cX cY cPu cPw symX symY p0
+        [OF LIMSEQ_ignore_initial_segment[OF cX]
+           LIMSEQ_ignore_initial_segment[OF cY]
+           LIMSEQ_ignore_initial_segment[OF cPu]
+           LIMSEQ_ignore_initial_segment[OF cPw]
+           symX symY p0
            pnz kk(1) kk(2) LL t(2)
-           zero_less_one bndu bndw])
+           zero_less_one bndu' bndw])
 qed
 
 subsection \<open>The shrinking tilt is always available\<close>
@@ -12568,7 +12611,7 @@ text \<open>Before assembling stage 10 into Theorem 4.2(a) proper, the target ha
   values of \<open>u\<close> on \<open>K - interior K\<close>: its quantifier ranges over \<open>x \<in> interior K\<close>
   and the local condition may always be shrunk into \<open>interior K\<close>, which is open.
   So the boundary values of a sub- or supersolution are entirely free, and can
-  be moved to destroy any boundary maximum.  \<open>supersol_jet_cong_on\<close> below is
+  be moved to destroy any boundary maximum.  \<open>visc_supersol_cong_on\<close> below is
   that observation; \<open>max_principle_boundary_counterexample\<close> is the consequence.
 
   What the paper's Theorem 4.2(a) actually assumes, and what the corrected
@@ -12606,6 +12649,34 @@ proof (intro ballI allI impI)
     unfolding visc_subsol_def by blast
 qed
 
+lemma visc_supersol_cong_on:
+  fixes w w' :: "real^'n::finite \<Rightarrow> real"
+  assumes s: "visc_supersol k L \<Omega> w" and op: "open \<Omega>"
+    and eq: "\<And>y. y \<in> \<Omega> \<Longrightarrow> w' y = w y"
+  shows "visc_supersol k L \<Omega> w'"
+  unfolding visc_supersol_def
+proof (intro ballI allI impI)
+  fix x \<phi> g H
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and loc: "\<exists>e>0. \<forall>y \<in> ball x e. w' x - \<phi> x \<le> w' y - \<phi> y"
+  from loc obtain e where e0: "0 < e"
+    and le: "\<And>y. y \<in> ball x e \<Longrightarrow> w' x - \<phi> x \<le> w' y - \<phi> y" by blast
+  from op x obtain d where d0: "0 < d" and dsub: "ball x d \<subseteq> \<Omega>"
+    using open_contains_ball by blast
+  have loc': "\<exists>e>0. \<forall>y \<in> ball x e. w x - \<phi> x \<le> w y - \<phi> y"
+  proof (intro exI[of _ "min e d"] conjI ballI)
+    show "0 < min e d" using e0 d0 by simp
+    fix y assume y: "y \<in> ball x (min e d)"
+    then have ye: "y \<in> ball x e" and yd: "y \<in> ball x d" by auto
+    have "w x - \<phi> x = w' x - \<phi> x" using eq[OF x] by simp
+    also have "\<dots> \<le> w' y - \<phi> y" by (rule le[OF ye])
+    also have "\<dots> = w y - \<phi> y" using eq[OF subsetD[OF dsub yd]] by simp
+    finally show "w x - \<phi> x \<le> w y - \<phi> y" .
+  qed
+  from s x tf loc' show "1 \<le> ell_op k L (g x) H"
+    unfolding visc_supersol_def by blast
+qed
+
 lemma supersol_jet_cong_on:
   fixes w w' :: "real^'n::finite \<Rightarrow> real"
   assumes s: "supersol_jet k L \<Omega> w" and op: "open \<Omega>"
@@ -12630,7 +12701,7 @@ proof (intro ballI allI impI)
     also have "\<dots> = w y - \<phi> y" using eq[OF subsetD[OF dsub yd]] by simp
     finally show "w x - \<phi> x \<le> w y - \<phi> y" .
   qed
-  from s x tf loc' show "1 \<le> ell_op k L (g x) H"
+  from s x tf loc' show "1 \<le> ell_op_usc k L (g x) H"
     unfolding supersol_jet_def by blast
 qed
 
@@ -12642,7 +12713,7 @@ text \<open>And the refutation.  Given ANY sub/supersolution pair and a nonempty
 theorem max_principle_boundary_counterexample:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "supersol_jet k L (interior K) w"
+    and sup: "visc_supersol k L (interior K) w"
     and ne: "interior K \<noteq> {}"
   shows "\<not> max_principle_boundary_raw k L K"
 proof
@@ -12650,8 +12721,8 @@ proof
   from ne obtain y0 where y0: "y0 \<in> interior K" by blast
   define w' where "w' = (\<lambda>y. if y \<in> interior K then w y
       else u y - (u y0 - w y0) + 1)"
-  have sup': "supersol_jet k L (interior K) w'"
-    by (rule supersol_jet_cong_on[OF sup open_interior]) (simp add: w'_def)
+  have sup': "visc_supersol k L (interior K) w'"
+    by (rule visc_supersol_cong_on[OF sup open_interior]) (simp add: w'_def)
   obtain x where x: "x \<in> K - interior K"
     and mx: "\<And>y. y \<in> K \<Longrightarrow> u y - w' y \<le> u x - w' x"
     using mp sub sup' unfolding max_principle_boundary_raw_def by blast
@@ -13469,8 +13540,27 @@ proof -
   proof (intro allI impI)
     fix u w :: "real^'n \<Rightarrow> real"
     assume sub: "visc_subsol k L (interior K) u"
-      and sup: "supersol_jet k L (interior K) w"
+      and supE: "visc_supersol_env k L K (interior K) w"
       and cu: "continuous_on K u" and cw: "continuous_on K w"
+    \<comment> \<open>Definition 3.1(b) yields the jet form once and for all\<close>
+    have Kb: "bounded K" by (rule compact_imp_bounded[OF cK])
+    obtain Bw where Bw: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
+    proof -
+      have "bounded (w ` K)"
+        by (rule compact_imp_bounded[OF compact_continuous_image[OF cw cK]])
+      then obtain a where a: "\<forall>z \<in> w ` K. norm z \<le> a"
+        unfolding bounded_iff by blast
+      have "- a \<le> w y" if y: "y \<in> K" for y
+      proof -
+        have "norm (w y) \<le> a" using a y by blast
+        then have "\<bar>w y\<bar> \<le> a" by simp
+        then have "- (w y) \<le> a" by (simp add: abs_le_iff)
+        then show ?thesis by linarith
+      qed
+      then show thesis by (rule that)
+    qed
+    have sup: "supersol_jet k L (interior K) w"
+      by (rule visc_supersol_env_imp_jet[OF supE Kb Bw])
     show "\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
     proof (rule ccontr)
       assume nb: "\<not> (\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x)"
@@ -13618,7 +13708,7 @@ theorem comparison_compact:
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
     and subu: "visc_subsol k L (interior K) u"
-    and supw: "supersol_jet k L (interior K) w"
+    and supw: "visc_supersol_env k L K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> w y"
     and x: "x \<in> K"
   shows "u x \<le> w x"
@@ -13638,20 +13728,16 @@ theorem viscosity_uniqueness_compact:
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and su: "visc_sol k L (interior K) u"
-    and sw: "visc_sol k L (interior K) w"
+    and subu: "visc_subsol k L (interior K) u"
+    and supu: "visc_supersol_env k L K (interior K) u"
+    and subw: "visc_subsol k L (interior K) w"
+    and supw: "visc_supersol_env k L K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
     and x: "x \<in> K"
   shows "u x = w x"
 proof -
   have mpb: "max_principle_boundary k L K"
     by (rule max_principle_boundary_holds[OF cK neK kk(1) kk(2) LL])
-  have subu: "visc_subsol k L (interior K) u"
-    and supu: "supersol_jet k L (interior K) u"
-    using su by (auto simp: visc_sol_def)
-  have subw: "visc_subsol k L (interior K) w"
-    and supw: "supersol_jet k L (interior K) w"
-    using sw by (auto simp: visc_sol_def)
   \<comment> \<open>\<open>u - w\<close> peaks on the boundary, where it vanishes\<close>
   have le: "u x \<le> w x"
   proof -
