@@ -15349,6 +15349,142 @@ proof -
 qed
 
 
+text \<open>Three ingredients for the second horn.
+
+  First, a quadratic form is bounded below by a multiple of the squared
+  norm --- the constant \<open>C\<close> that \<open>pinch_implies_constant\<close> consumes.
+
+  Second, the pinch itself.  At a tilted minimiser whose gradient
+  vanishes, the first-order terms of the minimality inequality cancel
+  IDENTICALLY, because the test function is exactly quadratic: expanding
+  around the minimiser, the cross term is \<open>\<langle>u, Mv\<rangle>\<close> and the tilt
+  contributes \<open>\<langle>\<eta>, u\<rangle>\<close>, and \<open>Mv + \<eta> = 0\<close> is precisely the statement
+  that they cancel.  What is left is purely quadratic.
+
+  Third, the SINGULAR case is free.  If \<open>M\<close> is not invertible then it is
+  not surjective, so some \<open>u\<close> is missed; a small multiple of \<open>u\<close> is then
+  a tilt for which \<open>M z + \<eta> = 0\<close> has NO solution at all, so the gradient
+  at the tilted minimiser cannot vanish and the FIRST horn fires
+  instead.  The second horn therefore only has to be run for invertible
+  \<open>M\<close>, which is what makes the tilted minimisers sweep out a whole
+  neighbourhood.\<close>
+
+lemma quad_form_bounded_below:
+  fixes M :: "real^'n::finite^'n"
+  obtains C where "0 \<le> C"
+    and "\<And>u :: real^'n. - (C * (norm u * norm u)) \<le> (u \<bullet> (M *v u)) / 2"
+proof -
+  have bl: "bounded_linear ((*v) M)" by (rule matrix_vector_mul_bounded_linear)
+  define C where "C = onorm ((*v) M)"
+  have C0: "0 \<le> C" unfolding C_def by (rule onorm_pos_le[OF bl])
+  have key: "- (C * (norm u * norm u)) \<le> (u \<bullet> (M *v u)) / 2"
+    for u :: "real^'n"
+  proof -
+    have cs: "\<bar>u \<bullet> (M *v u)\<bar> \<le> norm u * norm (M *v u)"
+      by (rule Cauchy_Schwarz_ineq2)
+    have on: "norm (M *v u) \<le> C * norm u"
+      unfolding C_def by (rule onorm[OF bl])
+    have m: "norm u * norm (M *v u) \<le> norm u * (C * norm u)"
+      by (rule mult_left_mono[OF on norm_ge_zero])
+    have eq: "norm u * (C * norm u) = C * (norm u * norm u)"
+      by (simp add: mult.assoc mult.left_commute)
+    have ab: "\<bar>u \<bullet> (M *v u)\<bar> \<le> C * (norm u * norm u)"
+      using cs m eq by linarith
+    have nn: "0 \<le> C * (norm u * norm u)"
+      by (rule mult_nonneg_nonneg[OF C0
+            mult_nonneg_nonneg[OF norm_ge_zero norm_ge_zero]])
+    show ?thesis using ab[unfolded abs_le_iff] nn by linarith
+  qed
+  show ?thesis by (rule that[OF C0]) (use key in blast)
+qed
+
+lemma quad_minimality_pinch:
+  fixes W :: "real^'n::finite \<Rightarrow> real" and M :: "real^'n^'n"
+    and x y \<eta> w :: "real^'n" and C :: real
+  assumes sym: "transpose M = M"
+    and Cb: "\<And>u :: real^'n. - (C * (norm u * norm u)) \<le> (u \<bullet> (M *v u)) / 2"
+    and grad0: "M *v (y - x) + \<eta> = 0"
+    and mn: "W y - (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+      \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+  shows "W y - C * (dist y w * dist y w) \<le> W w"
+proof -
+  define v where "v = y - x"
+  define u where "u = w - y"
+  have wx: "w - x = v + u" unfolding v_def u_def by simp
+  have s1: "v \<bullet> (M *v u) = u \<bullet> (M *v v)"
+  proof -
+    have "v \<bullet> (M *v u) = (transpose M *v v) \<bullet> u"
+      by (rule inner_transpose_matrix)
+    also have "\<dots> = (M *v v) \<bullet> u" using sym by simp
+    finally show ?thesis by (simp add: inner_commute)
+  qed
+  have expand: "(w - x) \<bullet> (M *v (w - x))
+      = v \<bullet> (M *v v) + 2 * (u \<bullet> (M *v v)) + u \<bullet> (M *v u)"
+    unfolding wx using s1
+    by (simp add: matrix_vector_right_distrib inner_add_left inner_add_right)
+  have etaw: "\<eta> \<bullet> (w - x) = \<eta> \<bullet> v + \<eta> \<bullet> u"
+    unfolding wx by (rule inner_add_right)
+  have kill: "u \<bullet> (M *v v) + \<eta> \<bullet> u = 0"
+  proof -
+    have z: "M *v v + \<eta> = 0" unfolding v_def by (rule grad0)
+    have "u \<bullet> (M *v v) + \<eta> \<bullet> u = u \<bullet> (M *v v + \<eta>)"
+      by (simp add: inner_add_right inner_commute)
+    also have "\<dots> = u \<bullet> (0 :: real^'n)" using z by simp
+    also have "\<dots> = 0" by simp
+    finally show ?thesis .
+  qed
+  have main: "W y - W w \<le> - ((u \<bullet> (M *v u)) / 2)"
+  proof -
+    have "W y - W w \<le> (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+        - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+      using mn by linarith
+    also have "\<dots> = - ((u \<bullet> (M *v u)) / 2 + (u \<bullet> (M *v v) + \<eta> \<bullet> u))"
+      unfolding expand etaw v_def[symmetric] by (simp add: field_simps)
+    also have "\<dots> = - ((u \<bullet> (M *v u)) / 2)" unfolding kill by simp
+    finally show ?thesis .
+  qed
+  have cb: "- (C * (norm u * norm u)) \<le> (u \<bullet> (M *v u)) / 2" by (rule Cb)
+  have dyw: "dist y w = norm u"
+    unfolding u_def by (simp add: dist_norm norm_minus_commute)
+  show ?thesis using main cb unfolding dyw by linarith
+qed
+
+lemma singular_matrix_avoids_range:
+  fixes M :: "real^'n::finite^'n"
+  assumes ni: "\<not> invertible M" and d0: "0 < \<delta>"
+  obtains \<eta> where "norm \<eta> < \<delta>" and "\<And>z :: real^'n. M *v z + \<eta> \<noteq> 0"
+proof -
+  have ns: "\<not> surj ((*v) M)"
+  proof
+    assume "surj ((*v) M)"
+    then have "\<exists>B. M ** B = mat 1"
+      using matrix_right_invertible_surjective by blast
+    then show False using ni invertible_right_inverse by blast
+  qed
+  obtain u :: "real^'n" where nu: "\<And>z :: real^'n. u \<noteq> M *v z"
+    using ns unfolding surj_def by blast
+  have u0: "u \<noteq> 0" using nu[of 0] by simp
+  have nu0: "0 < norm u" using u0 by simp
+  define c where "c = \<delta> / (2 * norm u)"
+  have c0: "0 < c" unfolding c_def using d0 nu0 by simp
+  have nrm: "norm ((- c) *\<^sub>R u) = c * norm u" using c0 by simp
+  have lt: "norm ((- c) *\<^sub>R u) < \<delta>"
+    unfolding nrm c_def using nu0 d0 by (simp add: field_simps)
+  have nz: "M *v z + (- c) *\<^sub>R u \<noteq> 0" for z :: "real^'n"
+  proof
+    assume "M *v z + (- c) *\<^sub>R u = 0"
+    then have mz: "M *v z = c *\<^sub>R u" by (simp add: algebra_simps)
+    have "M *v ((1 / c) *\<^sub>R z) = (1 / c) *\<^sub>R (M *v z)"
+      by (rule matrix_vector_mult_scaleR)
+    also have "\<dots> = (1 / c) *\<^sub>R (c *\<^sub>R u)" unfolding mz by (rule refl)
+    also have "\<dots> = u" using c0 by simp
+    finally have "u = M *v ((1 / c) *\<^sub>R z)" by (rule sym)
+    then show False using nu by blast
+  qed
+  show ?thesis by (rule that[OF lt]) (use nz in blast)
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
