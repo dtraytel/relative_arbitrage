@@ -989,8 +989,12 @@ place everything here FIRST so later packages never edit upstream again).
   cancel the factors exactly as in the paper's (4.4).  Check against the
   paper's proof of Theorem 4.3 (fetch it) that the exponent is `c\<^sup>2` and the
   boundary clauses transform.
-* **P4 — Theorem 4.2(b): the two-domain comparison** (Comparison_Assembly
-  tail; THE big package).  Shape: `u` usc bounded with subsol-bc on `K`;
+* **P4 — OPEN, and now the ONLY comparison-side gap.**  Stated as
+  `comparison_two_domain`; the paper's proof is transcribed at that site
+  WITH A CAVEAT (the boundary sub-case as summarised does not visibly close
+  --- freezing one variable gives Hessians `X` and `-X`, so `X \<preceq> Y` fails;
+  read \<section>4 of the PDF before implementing).  Original sketch: Theorem 4.2(b):
+  the two-domain comparison (Comparison_Assembly tail; THE big package).  Shape: `u` usc bounded with subsol-bc on `K`;
   `w` lsc bounded supersol on `interior K'` with `w \<ge> 0` on `K'` (from P2);
   `K \<subseteq> interior K'`; conclusion `u \<le> w` on `K`.  Route — do NOT redo the
   CI core; re-run the TOP LAYER (the `comparison_supconv_*`/
@@ -1007,7 +1011,9 @@ place everything here FIRST so later packages never edit upstream again).
   (the chain's existing radius bookkeeping).
   Every CI/Jensen/supconv theorem is consumed AS IS.  Expect most lines in
   restating the ~8 top-layer theorems with `\<Omega>\<^sub>u = K`-gate, `\<Omega>\<^sub>w = interior K'`.
-* **P5 — Theorem 4.3 and Prop 4.1** (Comparison_Assembly tail).  4.3: for
+* **P5 — DONE** (`5bbc1f2`): `comparison_expandable` (Thm 4.3) and
+  `uniqueness_expandable` (Prop 4.1), both proved FROM P4.  Original sketch:
+  Theorem 4.3 and Prop 4.1 (Comparison_Assembly tail).  4.3: for
   each `e_j \<downarrow> 0` get `T\<^sub>j` from `expandable`, apply P3+P4:
   `u x \<le> c\<^sub>j\<^sup>2 * lsc_env w (T\<^sub>j\<inverse> x)`; the right side has
   `limsup\<^sub>j \<le> usc_env (lsc_env w) x` (since `T\<^sub>j\<inverse>x \<rightarrow> x`; this is the
@@ -1028,7 +1034,12 @@ place everything here FIRST so later packages never edit upstream again).
   Also state the two trivia: the supersol boundary clause for `paper_v` is
   VACUOUS (`paper_v \<ge> 0` so `lsc_env \<ge> 0`), and `paper_v` is bounded
   (`paper_v_le_ball_bound`).
-* **P7 — Theorem 1.1, assembled** (Theorem_1_1):
+* **P7 — DONE modulo P6** (`Theorem_1_1.theorem_1_1_uniqueness_faithful`):
+  `paper_v` is usc (`paper_v_real_usc`), nonneg, globally bounded
+  (`paper_v_real_bounded`), and satisfies Definition 3.1(b) WITH its boundary
+  gate (`paper_v_supersol_bc` --- the gate is vacuous because `paper_v \<ge> 0`).
+  The uniqueness clause is proved with P6 as an explicit hypothesis.
+  Original sketch: Theorem 1.1, assembled (Theorem_1_1):
 
       theorem theorem_1_1:
         K compact, K \<subseteq> cball 0 rK, T large (2·rK\<^sup>2/(n-k) < T), 1 \<le> k < n, 1 < L
@@ -1044,7 +1055,8 @@ place everything here FIRST so later packages never edit upstream again).
   (`enn2real_paper_v_horizon_cap`).
 
 **Costs.**  P0, P2, P3 (\<section>2.0) and E1 (\<section>2.2) are DONE; what is left is
-P1, P4\<endash>P7 and E2\<endash>E4.  Original estimates: P0 400–700 · P1 600–1,200 ·
+P1, P4 and E2\<endash>E4 (P5, P6-as-hypothesis and P7 are done; P6 itself is
+the other open item).  Original estimates: P0 400–700 · P1 600–1,200 ·
 P2 150–300 · P3 500–800 · P4 1,500–3,000 · P5 250–450 · P6 400–1,500 ·
 P7 200–350.  **Total ≈ 4,000–8,300; 5–9 working sessions** at the
 demonstrated pace.  Wall-clock is dominated by reprocessing: Envelopes edits

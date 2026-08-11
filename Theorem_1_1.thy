@@ -417,43 +417,193 @@ proof -
 qed
 
 
-section \<open>P7 DRAFT: Theorem 1.1 assembled (UNVERIFIED, holes)\<close>
+section \<open>P7: Theorem 1.1 assembled\<close>
 
-text \<open>Fable draft.  The FAITHFUL final statement: \<open>paper_v\<close> is a bounded usc
-  Definition-3.1-with-boundary-condition solution, and under \<open>expandable K\<close>
-  it is the unique one.  Holes: (a) P6 --- the boundary subsolution clause
-  for \<open>paper_v\<close> (extend \<open>paper_v_visc_subsol\<close> to boundary points with
-  \<open>v > 0\<close>; audit says interiority entered only through the small-ball
-  stopping, which \<open>essinf \<ge> v(x) > 0\<close> replaces --- else transcribe the
-  paper's \<open>\<section>3.1\<close> boundary paragraph); (b) the supersol gate is vacuous
-  since \<open>paper_v \<ge> 0\<close> (10 lines); (c) plumb \<open>uniqueness_expandable\<close>.\<close>
+text \<open>\<open>paper_v\<close> as a real-valued function: nonnegative, globally bounded, and
+  upper semicontinuous in the \<open>\<epsilon>\<close>-form the comparison machinery consumes.\<close>
 
-theorem theorem_1_1_faithful:
+lemma paper_v_real_nonneg: "0 \<le> enn2real (paper_v k L T K x)"
+  by simp
+
+lemma paper_v_real_bounded:
   fixes K :: "(real^'n::finite) set"
-  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 < L"
-    and cK: "compact K" and neK: "K \<noteq> {}"
-    and KB: "K \<subseteq> cball 0 rK" and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  defines "v \<equiv> (\<lambda>x. enn2real (paper_v k L T K x))"
-  shows "visc_subsol_env k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"                \<comment> \<open>P6\<close>
-    and "visc_supersol_env k L K
-      (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
-    and "expandable K \<Longrightarrow>
-      (\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
-        \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c) \<Longrightarrow>
-      (\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B) \<Longrightarrow>
-      visc_subsol_env k L K (interior K \<union> {x \<in> K - interior K. 0 < u x}) u \<Longrightarrow>
-      visc_supersol_env k L K
-        (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u) \<Longrightarrow>
-      x \<in> K \<Longrightarrow> u x = v x"
-  sorry
+  assumes kn: "k < CARD('n)" and T0: "0 \<le> T" and L0: "0 \<le> L"
+    and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
+  shows "\<bar>enn2real (paper_v k L T K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
+proof -
+  have nk: "0 < real (CARD('n) - k)" using kn by simp
+  have le: "paper_v k L T K x
+      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
+    by (rule paper_v_le_ball_bound[OF kn T0 L0 KB])
+  have fin: "ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)) < \<top>"
+    by simp
+  have "enn2real (paper_v k L T K x)
+      \<le> enn2real (ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)))"
+    by (rule enn2real_mono[OF le fin])
+  also have "\<dots> \<le> rK * rK / real (CARD('n) - k)"
+  proof (cases "0 \<le> (rK * rK - x \<bullet> x) / real (CARD('n) - k)")
+    case True
+    then have "enn2real (ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)))
+        = (rK * rK - x \<bullet> x) / real (CARD('n) - k)" by simp
+    also have "\<dots> \<le> rK * rK / real (CARD('n) - k)"
+      using nk inner_ge_zero[of x] by (simp add: divide_right_mono)
+    finally show ?thesis .
+  next
+    case False
+    then have "ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)) = 0"
+      by (simp add: ennreal_neg)
+    then show ?thesis using nk r0 by simp
+  qed
+  finally show ?thesis using paper_v_real_nonneg[of k L T K x] by simp
+qed
 
-text \<open>FIXER: split the three clauses into separate theorems before proving.
-  Clause 1 = P6 (Paper_Viscosity is the right home; the machinery is there).
-  Clause 2: \<open>\<Omega>\<close>-enlargement of \<open>paper_v_supersol_lsc_bounded\<close> is vacuous on
-  the gate because \<open>lsc_env v \<ge> 0\<close> (\<open>lsc_env_ge\<close> with \<open>v \<ge> 0\<close>).
-  Clause 3 = \<open>uniqueness_expandable\<close> (Comparison_Assembly) fed with clauses
-  1-2 for \<open>v\<close> (usc: \<open>paper_v_usc_unconditional\<close>, in the sequential form ---
-  convert; bounded: \<open>paper_v_le_ball_bound\<close> + nonnegativity).\<close>
+lemma paper_v_real_usc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L: "1 \<le> L" and Kc: "closed K"
+    and kn: "k < CARD('n)" and KB: "K \<subseteq> cball 0 rK"
+    and lt: "enn2real (paper_v k L T K z) < cc"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (paper_v k L T K y) < cc"
+proof -
+  have L0: "0 \<le> L" using L by simp
+  have T0: "0 \<le> T" using T by simp
+  have cc0: "0 < cc" using lt paper_v_real_nonneg[of k L T K z] by linarith
+  have fin: "paper_v k L T K y < \<top>" for y
+  proof -
+    have "paper_v k L T K y
+        \<le> ennreal ((rK * rK - y \<bullet> y) / real (CARD('n) - k))"
+      by (rule paper_v_le_ball_bound[OF kn T0 L0 KB])
+    also have "\<dots> < \<top>" by simp
+    finally show ?thesis .
+  qed
+  have zlt: "paper_v k L T K z < ennreal cc"
+    using lt fin[of z] by (simp add: enn2real_less_iff)
+  have "eventually (\<lambda>y. paper_v k L T K y < ennreal cc) (nhds z)"
+    by (rule paper_v_usc_unconditional[OF T L Kc zlt])
+  then obtain U where opU: "open U" and zU: "z \<in> U"
+    and Uy: "\<And>y. y \<in> U \<Longrightarrow> paper_v k L T K y < ennreal cc"
+    unfolding eventually_nhds by blast
+  obtain e where e0: "0 < e" and eU: "ball z e \<subseteq> U"
+    using opU zU unfolding open_contains_ball by blast
+  have "enn2real (paper_v k L T K y) < cc" if dy: "dist z y < e" for y
+  proof -
+    have "y \<in> U" using eU dy by auto
+    then have "paper_v k L T K y < ennreal cc" by (rule Uy)
+    then show ?thesis using fin[of y] cc0 by (simp add: enn2real_less_iff)
+  qed
+  then show ?thesis using e0 by blast
+qed
+
+text \<open>The supersolution clause of Definition 3.1 for \<open>paper_v\<close>, with the
+  boundary gate included.  The gate is VACUOUS: \<open>paper_v \<ge> 0\<close>, hence so is its
+  lower envelope, so \<open>{x. lsc_env v x < 0} = {}\<close> and the \<open>\<Omega>\<close> of Definition 3.1(b)
+  collapses to \<open>interior K\<close>, which is what \<open>paper_v_supersol_lsc_bounded\<close>
+  already gives.\<close>
+
+theorem paper_v_supersol_bc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+  shows "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K.
+          lsc_env (\<lambda>z. enn2real (paper_v k L T K z)) x < 0})
+      (lsc_env (\<lambda>z. enn2real (paper_v k L T K z)))"
+proof -
+  define v where "v = (\<lambda>z. enn2real (paper_v k L T K z))"
+  have v0: "0 \<le> v y" for y unfolding v_def by (rule paper_v_real_nonneg)
+  have lsc0: "0 \<le> lsc_env v x" for x by (rule lsc_env_ge[OF v0])
+  have gate: "interior K \<union> {x \<in> K - interior K. lsc_env v x < 0} = interior K"
+  proof
+    show "interior K \<union> {x \<in> K - interior K. lsc_env v x < 0} \<subseteq> interior K"
+    proof
+      fix y assume "y \<in> interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}"
+      then consider "y \<in> interior K" | "lsc_env v y < 0" by auto
+      then show "y \<in> interior K"
+      proof cases
+        case 1 then show ?thesis .
+      next
+        case 2
+        have "0 \<le> lsc_env v y" by (rule lsc0)
+        then have False using 2 by linarith
+        then show ?thesis by simp
+      qed
+    qed
+    show "interior K \<subseteq> interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}"
+      by blast
+  qed
+  have "visc_supersol_lsc k L K (interior K) v"
+    unfolding v_def
+    by (rule paper_v_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
+  then have "visc_supersol_env k L K (interior K) (lsc_env v)"
+    unfolding visc_supersol_lsc_def visc_supersol_env_def by blast
+  then show ?thesis unfolding v_def[symmetric] gate .
+qed
+
+text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause\<close> --- conditional on P6, the boundary
+  SUBsolution clause for \<open>paper_v\<close>, which is the one remaining obligation on
+  the \<open>paper_v\<close> side (see the note after this theorem), and on
+  \<open>comparison_two_domain\<close> (P4) on the comparison side.
+
+  Everything else is discharged here: \<open>paper_v\<close> is usc, nonnegative, globally
+  bounded, and satisfies Definition 3.1(b) with its boundary gate.\<close>
+
+theorem theorem_1_1_uniqueness_faithful:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+    and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+    and P6: "visc_subsol_env k L K
+      (interior K \<union> {x \<in> K - interior K.
+          0 < enn2real (paper_v k L T K x)})
+      (\<lambda>z. enn2real (paper_v k L T K z))"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and Bu: "\<And>y. \<bar>u y\<bar> \<le> rK * rK / real (CARD('n) - k)"
+    and subu: "visc_subsol_env k L K
+      (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+    and supu: "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
+    and x: "x \<in> K"
+  shows "u x = enn2real (paper_v k L T K x)"
+proof -
+  define v where "v = (\<lambda>z. enn2real (paper_v k L T K z))"
+  define B where "B = rK * rK / real (CARD('n) - k)"
+  have L0: "1 \<le> L" using L1 by simp
+  have T0': "0 \<le> T" using T0 by simp
+  have L0': "0 \<le> L" using L1 by simp
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  have Bv: "\<bar>v y\<bar> \<le> B" for y
+    unfolding v_def B_def by (rule paper_v_real_bounded[OF kn T0' L0' KB r0])
+  have uscv: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c" if "v z < c" for c z
+    using that unfolding v_def by (rule paper_v_real_usc[OF T0 L0 Kc kn KB])
+  have supv: "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
+    unfolding v_def by (rule paper_v_supersol_bc[OF T0 L1 k1 kn Kc KB Tbig])
+  have subv: "visc_subsol_env k L K
+      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
+    unfolding v_def by (rule P6)
+  have "u x = v x"
+    by (rule uniqueness_expandable
+        [OF k1 kn L0 cK neK expK uscu uscv Bu[unfolded B_def[symmetric]] Bv
+            subu supu subv supv x])
+  then show ?thesis unfolding v_def by simp
+qed
+
+text \<open>\<^bold>\<open>What is left.\<close>  Two obligations, both stated exactly:
+  \<^item> \<^bold>\<open>P4\<close> \<open>comparison_two_domain\<close> (\<open>Comparison_Assembly\<close>) --- the paper's
+    Theorem 4.2(b); its proof is transcribed there as a comment.
+  \<^item> \<^bold>\<open>P6\<close>, the hypothesis \<open>P6\<close> above: extend \<open>paper_v_visc_subsol\<close> from
+    \<open>interior K\<close> to the boundary points where \<open>paper_v > 0\<close>, in the ENVELOPE
+    form.  Audit note: the interior hypothesis enters
+    \<open>paper_v_visc_subsol\<close> only through the small-ball stopping, and at a
+    boundary point with \<open>v x > 0\<close> the optimiser's essential infimum is already
+    \<open>\<ge> v x > 0\<close>, so the process a.s. stays in \<open>K\<close> for a positive time --- which
+    is what interiority was supplying.  If that audit fails, transcribe the
+    paper's \<section>3.1 boundary paragraph instead.
+
+  With those two, \<open>theorem_1_1_uniqueness_faithful\<close> loses its \<open>P6\<close> hypothesis
+  and Theorem 1.1 is complete: \<open>paper_v\<close> is a bounded usc viscosity solution
+  of \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> on \<open>K\<close> with the zero boundary condition of
+  Definition 3.1, and on an expandable \<open>K\<close> it is the only one.\<close>
 
 end

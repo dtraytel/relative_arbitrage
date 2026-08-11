@@ -14500,23 +14500,57 @@ text \<open>The paper's Theorem 4.2(b).  \<^bold>\<open>This is the one statemen
   open\<close>; everything below it is proved FROM it, so filling it completes
   Theorem 4.3, Proposition 4.1 and the uniqueness clause of Theorem 1.1.
 
+  \<^bold>\<open>The paper's proof\<close> (read off \<section>4 on 2026-08-11), which is what must be
+  formalised:
+  \<^item> Penalise with a QUARTIC over the PRODUCT of the two sets:
+    \<open>\<Phi>\<^sup>\<epsilon>(x,y) = \<kappa> u x - w y - \<epsilon>\<^sup>-\<^sup>1\<bar>x-y\<bar>\<^sup>4\<close> on \<open>K \<times> K'\<close>, with \<open>\<kappa> \<in> (0,1)\<close> the
+    scaling that later produces the contradiction.  Maximisers \<open>(x\<^sup>\<epsilon>, y\<^sup>\<epsilon>)\<close>
+    exist by compactness (usc \<open>u\<close>, lsc \<open>w\<close> --- \<open>usc_attains_sup_gen\<close> on the
+    product).  From \<open>\<Phi>\<^sup>\<epsilon>(x\<^sup>\<epsilon>,y\<^sup>\<epsilon>) \<ge> \<kappa> u x - w x\<close> the penalty term is bounded, so
+    along a subsequence \<open>x\<^sup>\<epsilon>, y\<^sup>\<epsilon> \<rightarrow> x\<^sup>0 = y\<^sup>0\<close>.
+  \<^item> \<^bold>\<open>Diagonal sub-case\<close> \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close>: then \<open>\<nabla>\<^sub>y \<zeta>\<^sup>\<epsilon> = 0\<close> and \<open>\<nabla>\<^sup>2\<^sub>y \<zeta>\<^sup>\<epsilon> = 0\<close>, and
+    Definition 3.1(b) at \<open>y\<^sup>\<epsilon>\<close> gives \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  \<^emph>\<open>That step is already
+    available here as\<close> \<open>ell_op_usc_zero_zero_lt_one\<close>.
+  \<^item> \<^bold>\<open>Interior sub-case\<close> \<open>x\<^sup>0 \<in> K\<degree>\<close>: for small \<open>\<epsilon>\<close> both maximisers are interior
+    (to \<open>K\<close> and to \<open>K'\<close> respectively --- the latter is free, since
+    \<open>K \<subseteq> K'\<degree>\<close>), Crandall--Ishii gives \<open>F\<^sub>*(p\<^sup>\<epsilon>, M\<^sup>\<epsilon>) \<le> \<kappa>\<close> and \<open>F\<^sup>*(p\<^sup>\<epsilon>, N\<^sup>\<epsilon>) \<ge> 1\<close>
+    with \<open>M\<^sup>\<epsilon> \<preceq> N\<^sup>\<epsilon>\<close>, and continuity of \<open>F\<close> off \<open>p = 0\<close> (Lemma 3.1, here
+    \<open>ell_op_usc_eq_at_nonzero\<close>) forces \<open>\<kappa> \<ge> 1\<close> --- contradiction.
+  \<^item> \<^bold>\<open>Boundary sub-case\<close>: the previous item rules out \<open>x\<^sup>0 \<in> K\<degree>\<close>, so
+    \<open>x\<^sup>\<epsilon> \<in> \<partial>K\<close> for small \<open>\<epsilon>\<close>.  There the zero boundary condition on \<open>u\<close> is
+    supposed to yield \<open>\<kappa> u (x\<^sup>\<epsilon>) \<le> 0\<close>, and with \<open>w \<ge> 0\<close> on \<open>K'\<close> that gives
+    \<open>\<Phi>\<^sup>\<epsilon>(x\<^sup>\<epsilon>,y\<^sup>\<epsilon>) \<le> 0\<close>; since \<open>\<Phi>\<^sup>\<epsilon>(x\<^sup>\<epsilon>,y\<^sup>\<epsilon>) \<ge> \<Phi>\<^sup>\<epsilon>(x,x) = \<kappa> u x - w x\<close> for
+    \<open>x \<in> K\<close>, letting \<open>\<kappa> \<uparrow> 1\<close> gives \<open>u \<le> w\<close> on \<open>K\<close>.
+
+  \<^bold>\<open>CAVEAT --- read \<section>4 of the PDF before implementing the boundary sub-case.\<close>
+  The four items above were transcribed on 2026-08-11 from an automated
+  summary of \<section>4, not from the source, and the boundary step as transcribed
+  does NOT visibly close.  Concretely: freezing \<open>y = y\<^sup>\<epsilon>\<close> makes
+  \<open>\<phi>(x) = w y\<^sup>\<epsilon> + \<epsilon>\<^sup>-\<^sup>1\<bar>x - y\<^sup>\<epsilon>\<bar>\<^sup>4\<close> a legitimate Definition 3.1(a) test function
+  touching \<open>\<kappa> u\<close> from above at \<open>x\<^sup>\<epsilon>\<close> GLOBALLY over \<open>K\<close> (so the gate really is
+  usable at a boundary point, with no local structure needed), and freezing
+  \<open>x = x\<^sup>\<epsilon>\<close> makes \<open>\<psi>(y) = \<kappa> u x\<^sup>\<epsilon> - \<epsilon>\<^sup>-\<^sup>1\<bar>x\<^sup>\<epsilon> - y\<bar>\<^sup>4\<close> touch \<open>w\<close> from below at
+  \<open>y\<^sup>\<epsilon>\<close>.  Both jets carry the SAME gradient \<open>p\<close>, but the Hessians are \<open>X\<close> and
+  \<open>-X\<close> with \<open>X = D\<^sup>2(\<epsilon>\<^sup>-\<^sup>1\<bar>\<cdot>\<bar>\<^sup>4)(x\<^sup>\<epsilon> - y\<^sup>\<epsilon>) \<succeq> 0\<close>, so the ordering \<open>X \<preceq> Y\<close> that
+  degenerate ellipticity needs FAILS unless \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close>.  That is exactly the
+  information Crandall--Ishii supplies and one-variable-at-a-time freezing
+  loses.  So either the paper applies a one-sided localisation of
+  Crandall--Ishii at the boundary as well, or its boundary argument is
+  organised differently from the summary.  Resolve that from the source
+  first; do not implement the sketch as written.
+
   Why it does not follow from what is already here.  The existing chain
   funnels into \<open>comparison_soft_complete\<close>, whose
-  \<open>doubling_localised_maximiser_soft\<close> step uses the boundary data
-  \<open>\<theta> u c - w c \<le> m\<close> on ALL of \<open>K - interior K\<close> to push the doubled
-  maximisers a fixed distance \<open>\<kappa>\<^sub>g\<close> AWAY from the boundary, and then reads the
-  sub/supersolution properties off on \<open>interior K\<close>.  Here the maximiser is
-  allowed to sit on \<open>\<partial>K\<close> --- that is exactly where Definition 3.1's gate
-  \<open>u > 0\<close> opens --- so that mechanism is the wrong shape.
-
-  What to do: generalise the chain from the pair \<open>(interior K, K - interior K)\<close>
-  to a pair \<open>(\<Omega>, S)\<close> with \<open>S\<close> compact, \<open>K - S \<subseteq> \<Omega>\<close>, boundary data on \<open>S\<close> only.
-  Here \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close>, on which \<open>\<theta> u - w \<le> 0\<close> because
-  \<open>w \<ge> 0\<close>; the gap to the interior maximum is then supplied exactly as now.
-  The \<open>y\<close>-side needs no such care: \<open>K \<subseteq> interior K'\<close> keeps \<open>y\<^sup>\<epsilon>\<close> interior to
-  \<open>K'\<close> for small penalties.  The Crandall--Ishii core (\<open>Sup_Convolution\<close>,
-  \<open>comparison_soft_off_diagonal\<close>, \<open>comparison_soft_diagonal\<close>) is consumed
-  unchanged --- it never mentions \<open>interior K\<close>.\<close>
+  \<open>doubling_localised_maximiser_soft\<close> step uses the boundary data on ALL of
+  \<open>K - interior K\<close> to push the doubled maximisers a fixed distance \<open>\<kappa>\<^sub>g\<close> AWAY
+  from the boundary, and then reads the sub/supersolution properties off in
+  the LOCAL form \<open>visc_subsol k L (interior K)\<close> --- a local touching over a
+  ball, which a boundary point does not have.  Here the maximiser is allowed
+  to sit on \<open>\<partial>K\<close>, and Definition 3.1's GLOBAL touching is what is available
+  there.  So the route is not to widen \<open>\<Omega>\<close> in the existing chain but to run
+  the paper's quartic doubling directly, reusing the Crandall--Ishii core
+  (\<open>Sup_Convolution\<close>, \<open>comparison_soft_off_diagonal\<close>) for the interior
+  sub-case only.\<close>
 
 theorem comparison_two_domain:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"

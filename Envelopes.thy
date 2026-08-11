@@ -3089,7 +3089,7 @@ proof -
     qed
     have "t \<le> (INF q \<in> ball y (e/2). u q)"
       unfolding te
-      by (rule cInf_superset_mono[OF image_mono[OF subb]])
+      by (rule cInf_superset_mono[OF _ _ image_mono[OF subb]])
         (use e0 lsc_env_bdd_below_ball[OF B] in auto)
     also have "\<dots> \<le> lsc_env u y"
       unfolding lsc_env_def
