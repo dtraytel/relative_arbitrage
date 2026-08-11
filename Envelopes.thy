@@ -2373,6 +2373,87 @@ proof -
   qed
 qed
 
+text \<open>Existential repackaging: an \<open>obtains\<close>-rule cannot be consumed by
+  \<open>obtain \<dots> by (rule \<dots>)\<close> (the schematic \<open>thesis\<close> swallows the whole goal), so
+  the consumers below use these forms.\<close>
+
+lemma lsc_attains_inf_ex:
+  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
+    and B: "\<And>y. y \<in> S \<Longrightarrow> B \<le> f y"
+    and cS: "compact S" and neS: "S \<noteq> {}"
+  shows "\<exists>z \<in> S. \<forall>y \<in> S. f z \<le> f y"
+proof (rule lsc_attains_inf_gen[OF lsc B cS neS])
+  fix z assume zS: "z \<in> S" and zm: "\<And>y. y \<in> S \<Longrightarrow> f z \<le> f y"
+  show ?thesis using zS zm by blast
+qed
+
+lemma usc_attains_sup_ex:
+  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and B: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> B"
+    and cS: "compact S" and neS: "S \<noteq> {}"
+  shows "\<exists>z \<in> S. \<forall>y \<in> S. f y \<le> f z"
+proof (rule usc_attains_sup_gen[OF usc B cS neS])
+  fix z assume zS: "z \<in> S" and zm: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> f z"
+  show ?thesis using zS zm by blast
+qed
+
+text \<open>The constant test function: the touching that Definition 3.1's boundary
+  clause admits at a global minimum, and the one the paper's diagonal case
+  uses to reach \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
+
+lemma test_fun_at_const:
+  fixes x :: "real^'n::finite" and C :: real
+  shows "test_fun_at (\<lambda>y. C) (\<lambda>y. 0) 0 x"
+  unfolding test_fun_at_def
+proof (intro conjI)
+  show "transpose (0 :: real^'n^'n) = 0"
+    by (simp add: transpose_def vec_eq_iff)
+next
+  have z1: "(\<lambda>h. (0 :: real^'n) \<bullet> h) = (\<lambda>h :: real^'n. 0)" by simp
+  have "((\<lambda>y. C) has_derivative (\<lambda>h. (0 :: real^'n) \<bullet> h)) (at y)"
+    for y :: "real^'n" unfolding z1 by (rule has_derivative_const)
+  then show "\<exists>e>0. \<forall>y \<in> ball x e.
+      ((\<lambda>y. C) has_derivative (\<lambda>h. (0 :: real^'n) \<bullet> h)) (at y)"
+    by (intro exI[of _ 1]) auto
+next
+  have z2: "(\<lambda>h. (0 :: real^'n^'n) *v h) = (\<lambda>h :: real^'n. 0)"
+    by (simp add: matrix_vector_mult_def vec_eq_iff fun_eq_iff)
+  show "((\<lambda>y :: real^'n. 0 :: real^'n) has_derivative
+      (\<lambda>h. (0 :: real^'n^'n) *v h)) (at x)"
+    unfolding z2 by (rule has_derivative_const)
+qed
+
+lemma ell_op_usc_zero_zero_lt_one:
+  assumes kk: "1 \<le> k" "k < CARD('n::finite)" and LL: "1 \<le> L"
+  shows "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) < 1"
+proof -
+  have Bc0: "0 < real (CARD('n) * CARD('n)) * L / 2" using LL by simp
+  have Bcne: "real (CARD('n) * CARD('n)) * L / 2 \<noteq> 0"
+  proof
+    assume "real (CARD('n) * CARD('n)) * L / 2 = 0"
+    then show False using Bc0 by simp
+  qed
+  define ee where "ee = 1 / (2 * (real (CARD('n) * CARD('n)) * L / 2))"
+  have e0: "0 < ee" unfolding ee_def using Bc0 by simp
+  have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n)
+      \<le> ereal (real (CARD('n) * CARD('n)) * L / 2
+          * (norm (0 :: real^'n^'n) + ee))"
+    by (rule ell_op_usc_le_scaled_norm[OF kk(1) kk(2) LL e0])
+  also have "real (CARD('n) * CARD('n)) * L / 2 * (norm (0 :: real^'n^'n) + ee)
+      = 1 / 2"
+  proof -
+    have "real (CARD('n) * CARD('n)) * L / 2 * (norm (0 :: real^'n^'n) + ee)
+        = (real (CARD('n) * CARD('n)) * L / 2) * ee" by simp
+    also have "\<dots> = 1 / 2" unfolding ee_def using Bcne by (simp add: field_simps)
+    finally show ?thesis .
+  qed
+  finally have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) \<le> ereal (1 / 2)" .
+  also have "ereal (1 / 2 :: real) < 1" by (simp add: one_ereal_def)
+  finally show ?thesis .
+qed
+
 text \<open>Extension of a bounded usc function off a closed set.  The extension
   value must be \<^emph>\<open>below\<close> every value on \<open>K\<close>: extending by \<open>0\<close> is NOT usc.
   Semicontinuity is stated sequentially-free, in the \<open>\<epsilon>\<close>-form the comparison
