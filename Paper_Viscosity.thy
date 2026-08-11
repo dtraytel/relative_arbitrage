@@ -11190,6 +11190,39 @@ proof -
   qed
 qed
 
+subsection \<open>Case 1, packaged for the envelope form\<close>
+
+text \<open>Batch 4c(i).  The contradiction, read back as the positive
+  statement the envelope supersolution definition wants: at any interior
+  touching point with a NONZERO gradient the usc envelope of the
+  operator is at least one, since \<open>F \<le> F\<^sup>*\<close>
+  (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
+  inequality into a failed plain one.\<close>
+
+theorem paper_v_supersol_env_case1:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k"
+    and kn: "k < CARD('n)" and Kc: "closed K"
+    and xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow>
+      enn2real (paper_v k L T K x) - \<phi> x
+        \<le> enn2real (paper_v k L T K y) - \<phi> y"
+    and gx0: "g x \<noteq> 0"
+  shows "1 \<le> ell_op_usc k L (g x) H"
+proof (rule ccontr)
+  assume nle: "\<not> 1 \<le> ell_op_usc k L (g x) H"
+  then have lt: "ell_op_usc k L (g x) H < 1" by simp
+  have "ereal (ell_op k L (g x) H) < 1"
+    using ell_op_le_ell_op_usc[of k L "g x" H] lt by (rule le_less_trans)
+  then have fail: "ell_op k L (g x) H < 1" by (simp add: one_ereal_def)
+  show False
+    by (rule paper_v_supersol_contradiction_case1[OF T0 L1 k1 kn Kc xi
+        tf tmin gx0 fail])
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
