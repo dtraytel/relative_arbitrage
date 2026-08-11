@@ -15830,18 +15830,33 @@ qed
 section \<open>E1: the subspace-tangential field for Example 3.1, all \<open>k\<close>\<close>
 
 text \<open>PLAN \<open>\<section>2.2\<close>, package E1: the \<open>tanp\<close> block above with the ambient
-  identity replaced by a projector onto an \<open>(n-k+1)\<close>-dimensional subspace
-  containing the start.  What is here is the projector algebra; the field's
-  eigenvalue analysis, and E2--E4, are stated as targets below.\<close>
+  identity replaced by the orthogonal projector onto an \<open>(n-k+1)\<close>-dimensional
+  subspace containing the start.\<close>
 
-definition projmat :: "(nat \<Rightarrow> real^'n::finite) \<Rightarrow> nat \<Rightarrow> real^'n^'n" where
-  "projmat b m = (\<Sum>i < m. outer_prod (b i) (b i))"
+subsection \<open>Small matrix, trace and inner-product facts\<close>
 
-lemma projmat_sym: "transpose (projmat b m) = projmat b m"
-  unfolding projmat_def by (simp add: transpose_matrix_sum)
+lemma matvec_add_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (x + y) = A *v x + A *v y"
+  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum.distrib)
 
-lemma projmat_mv: "projmat b m *v z = (\<Sum>i < m. (b i \<bullet> z) *\<^sub>R b i)"
-  unfolding projmat_def by (simp add: matrix_vector_mult_sum)
+lemma matvec_scaleR_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (c *\<^sub>R x) = c *\<^sub>R (A *v x)"
+  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
+
+lemma matvec_sum_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (\<Sum>i\<in>S. v i) = (\<Sum>i\<in>S. A *v v i)"
+proof (cases "finite S")
+  case True
+  then show ?thesis
+    by (induct S rule: finite_induct)
+      (simp_all add: matvec_add_right matrix_vector_mult_0_right)
+next
+  case False
+  then show ?thesis by (simp add: matrix_vector_mult_0_right)
+qed
 
 lemma trace_sum_matrix:
   fixes f :: "'a \<Rightarrow> real^'n::finite^'n"
@@ -15854,7 +15869,63 @@ proof -
   finally show ?thesis .
 qed
 
+lemma transpose_matrix_diff:
+  fixes A B :: "real^'n::finite^'n"
+  shows "transpose (A - B) = transpose A - transpose B"
+  by (simp add: transpose_def vec_eq_iff)
+
+lemma trace_matrix_diff:
+  fixes A B :: "real^'n::finite^'n"
+  shows "trace (A - B) = trace A - trace B"
+  by (simp add: trace_def sum_subtractf)
+
+lemma inner_matrix_transpose:
+  fixes A :: "real^'n::finite^'n" and x y :: "real^'n"
+  shows "y \<bullet> (A *v x) = (transpose A *v y) \<bullet> x"
+proof -
+  have L: "y \<bullet> (A *v x) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
+    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
+  have R: "(transpose A *v y) \<bullet> x
+      = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
+  proof -
+    have "(transpose A *v y) \<bullet> x
+        = (\<Sum>j\<in>UNIV. (\<Sum>i\<in>UNIV. A $ i $ j * y $ i) * x $ j)"
+      by (simp add: inner_vec_def matrix_vector_mult_def transpose_def)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A $ i $ j * y $ i * x $ j)"
+      by (simp add: sum_distrib_right)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
+      by (intro sum.cong refl) (simp add: mult_ac)
+    finally show ?thesis .
+  qed
+  show ?thesis unfolding L R by (rule sum.swap)
+qed
+
+lemma unit_normalize:
+  fixes v :: "real^'n::finite"
+  assumes v0: "v \<noteq> 0"
+  shows "(v /\<^sub>R norm v) \<bullet> (v /\<^sub>R norm v) = 1"
+proof -
+  have n0: "norm v \<noteq> 0" using v0 by simp
+  have e1: "(v /\<^sub>R norm v) \<bullet> (v /\<^sub>R norm v) = (v \<bullet> v) / (norm v * norm v)"
+    by (simp add: divide_inverse mult_ac)
+  have e2: "v \<bullet> v = norm v * norm v"
+    by (simp add: dot_square_norm power2_eq_square)
+  show ?thesis unfolding e1 e2 using n0 by simp
+qed
+
+subsection \<open>The projector onto an orthonormal family\<close>
+
+definition projmat :: "(nat \<Rightarrow> real^'n::finite) \<Rightarrow> nat \<Rightarrow> real^'n^'n" where
+  "projmat b m = (\<Sum>i < m. outer_prod (b i) (b i))"
+
+lemma projmat_sym: "transpose (projmat b m) = projmat b m"
+  unfolding projmat_def by (simp add: transpose_matrix_sum)
+
+lemma projmat_mv: "projmat b m *v z = (\<Sum>i < m. (b i \<bullet> z) *\<^sub>R b i)"
+  unfolding projmat_def by (simp add: matrix_vector_mult_sum)
+
 lemma projmat_trace:
+  fixes b :: "nat \<Rightarrow> real^'n::finite"
   assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
   shows "trace (projmat b m) = real m"
 proof -
@@ -15866,65 +15937,383 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The field itself: on the slice through the start, the tangential
-  projector of the sphere inside \<open>V = range (projmat b (n-k+1))\<close>.\<close>
+lemma projmat_fix:
+  fixes b :: "nat \<Rightarrow> real^'n::finite"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and i: "i < m"
+  shows "projmat b m *v b i = b i"
+proof -
+  have "projmat b m *v b i = (\<Sum>l < m. (b l \<bullet> b i) *\<^sub>R b l)" by (rule projmat_mv)
+  also have "\<dots> = (\<Sum>l < m. if l = i then b i else 0)"
+    by (rule sum.cong[OF refl]) (use orth i in auto)
+  also have "\<dots> = b i" using i by simp
+  finally show ?thesis .
+qed
+
+lemma projmat_idem:
+  fixes b :: "nat \<Rightarrow> real^'n::finite"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+  shows "projmat b m ** projmat b m = projmat b m"
+proof -
+  have key: "projmat b m *v (projmat b m *v z) = projmat b m *v z" for z
+  proof -
+    have "projmat b m *v (projmat b m *v z)
+        = projmat b m *v (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R b l)"
+      by (simp only: projmat_mv)
+    also have "\<dots> = (\<Sum>l < m. projmat b m *v ((b l \<bullet> z) *\<^sub>R b l))"
+      by (rule matvec_sum_right)
+    also have "\<dots> = (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R (projmat b m *v b l))"
+      by (rule sum.cong[OF refl]) (simp add: matvec_scaleR_right)
+    also have "\<dots> = (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R b l)"
+      by (rule sum.cong[OF refl]) (simp add: projmat_fix[OF orth])
+    also have "\<dots> = projmat b m *v z" by (rule projmat_mv[symmetric])
+    finally show ?thesis .
+  qed
+  show ?thesis
+    unfolding matrix_eq using key by (metis matrix_vector_mul_assoc)
+qed
+
+lemma projmat_span_fix:
+  fixes b :: "nat \<Rightarrow> real^'n::finite"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and x: "x \<in> span (b ` {..<m})"
+  shows "projmat b m *v x = x"
+proof -
+  have sub: "subspace {y :: real^'n. projmat b m *v y = y}"
+    unfolding subspace_def
+    by (auto simp: matvec_add_right matvec_scaleR_right matrix_vector_mult_0_right)
+  have "b ` {..<m} \<subseteq> {y :: real^'n. projmat b m *v y = y}"
+    using projmat_fix[OF orth] by auto
+  then have "span (b ` {..<m}) \<subseteq> {y :: real^'n. projmat b m *v y = y}"
+    using sub by (simp add: span_minimal)
+  then show ?thesis using x by blast
+qed
+
+lemma orthonormal_inj:
+  fixes b :: "nat \<Rightarrow> real^'n::finite"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+  shows "inj_on b {..<m}"
+proof (rule inj_onI)
+  fix i j assume i: "i \<in> {..<m}" and j: "j \<in> {..<m}" and eq: "b i = b j"
+  have im: "i < m" and jm: "j < m" using i j by auto
+  show "i = j"
+  proof (rule ccontr)
+    assume ne: "i \<noteq> j"
+    have "b i \<bullet> b j = 0" using orth[OF im jm] ne by simp
+    moreover have "b i \<bullet> b j = b i \<bullet> b i" using eq by simp
+    moreover have "b i \<bullet> b i = 1" using orth[OF im im] by simp
+    ultimately show False by simp
+  qed
+qed
+
+lemma orthonormal_dim_span:
+  fixes b :: "nat \<Rightarrow> real^'n::finite"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+  shows "dim (span (b ` {..<m})) = m"
+proof (rule dim_unique[where B = "b ` {..<m}"])
+  show "b ` {..<m} \<subseteq> span (b ` {..<m})" by (rule span_superset)
+  show "span (b ` {..<m}) \<subseteq> span (b ` {..<m})" by (rule subset_refl)
+next
+  show "independent (b ` {..<m})"
+  proof (rule pairwise_orthogonal_independent)
+    show "pairwise orthogonal (b ` {..<m})"
+    proof (rule pairwiseI)
+      fix u v assume "u \<in> b ` {..<m}" and "v \<in> b ` {..<m}" and uv: "u \<noteq> v"
+      then obtain i j where i: "i < m" and j: "j < m"
+        and ui: "u = b i" and vj: "v = b j" by auto
+      have "i \<noteq> j" using uv ui vj by blast
+      then show "orthogonal u v"
+        unfolding orthogonal_def ui vj using orth[OF i j] by simp
+    qed
+    show "(0 :: real^'n) \<notin> b ` {..<m}"
+    proof (rule notI)
+      assume "(0 :: real^'n) \<in> b ` {..<m}"
+      then obtain i where i: "i < m" and z: "b i = 0" by auto
+      have "b i \<bullet> b i = 1" using orth[OF i i] by simp
+      then show False unfolding z by simp
+    qed
+  qed
+next
+  show "card (b ` {..<m}) = m"
+    using card_image[OF orthonormal_inj[OF orth]] by simp
+qed
+
+subsection \<open>The subspace-tangential field\<close>
 
 definition tanpV :: "real^'n::finite^'n \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
   "tanpV P z =
      P - outer_prod ((P *v z) /\<^sub>R norm (P *v z)) ((P *v z) /\<^sub>R norm (P *v z))"
 
-lemma transpose_matrix_diff:
-  fixes A B :: "real^'n::finite^'n"
-  shows "transpose (A - B) = transpose A - transpose B"
-  by (simp add: transpose_def vec_eq_iff)
-
 lemma tanpV_sym:
+  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
   assumes P: "transpose P = P"
   shows "transpose (tanpV P z) = tanpV P z"
   unfolding tanpV_def by (simp add: transpose_matrix_diff P)
 
-text \<open>\<^bold>\<open>Remaining E1 targets.\<close>  Stated here rather than as \<open>sorry\<close> so that the
-  development keeps its zero-\<open>sorry\<close> invariant.  Each mirrors a proven
-  \<open>tanp_*\<close> lemma above, with \<open>mat 1\<close> replaced by \<open>P\<close> throughout; the only new
-  ingredient is that \<open>P\<close> is symmetric and idempotent.
+lemma proj_dir_fix:
+  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
+  assumes Pidem: "P ** P = P"
+  shows "P *v ((P *v z) /\<^sub>R norm (P *v z)) = (P *v z) /\<^sub>R norm (P *v z)"
+proof -
+  have i2: "P *v (P *v z) = P *v z" using Pidem by (metis matrix_vector_mul_assoc)
+  show ?thesis by (simp add: matvec_scaleR_right i2)
+qed
 
-  \<^item> \<open>projmat_idem\<close>: under orthonormality of \<open>b\<^sub>0, \<dots>, b\<^sub>m\<^sub>-\<^sub>1\<close>,
-    \<open>projmat b m ** projmat b m = projmat b m\<close>.  Apply both sides to \<open>z\<close> via
-    \<open>projmat_mv\<close> and \<open>matrix_eq\<close>, expand the double sum, kill the off-diagonal
-    terms with the orthonormality hypothesis.
-  \<^item> \<open>orthonormal_family_containing\<close>: for a unit \<open>x\<^sub>0\<close> and \<open>0 < m \<le> CARD('n)\<close>
-    there is an orthonormal \<open>b\<close> with \<open>b 0 = x\<^sub>0\<close>.  Induction on \<open>m\<close> using
-    \<open>orthogonal_to_subspace_exists\<close> (HOL-Analysis): the span of the family so
-    far has dimension \<open>< CARD('n)\<close>, so a unit vector orthogonal to it exists.
-  \<^item> \<open>tanpV_trace\<close>: \<open>trace (tanpV P z) = real m - 1\<close> for \<open>P *v z \<noteq> 0\<close>, i.e.
-    \<open>projmat_trace\<close> minus \<open>trace (outer_prod u u) = 1\<close> for the unit \<open>u\<close>.
-  \<^item> \<open>tanpV_psd\<close>: the quadratic form is \<open>\<bar>P y\<bar>\<^sup>2 - (u \<bullet> y)\<^sup>2 \<ge> 0\<close> with
-    \<open>u = P z /\<^sub>R \<bar>P z\<bar> \<in> V\<close>, by Cauchy--Schwarz INSIDE \<open>V\<close> (note
-    \<open>u \<bullet> y = u \<bullet> (P y)\<close> because \<open>P u = u\<close> and \<open>P\<close> is symmetric idempotent).
-    Mirror \<open>tanp_psd\<close>.
-  \<^item> \<open>tanpV_eigen_feasible\<close>: for \<open>m = CARD('n) - k + 1\<close>, \<open>tanpV P z \<in> feasible k L 0\<close>.
-    The eigenvalues are \<open>1\<close> with multiplicity \<open>m - 1 = n - k\<close> (on \<open>V \<inter> u\<^sup>\<bottom>\<close>) and
-    \<open>0\<close> with multiplicity \<open>k\<close> (on \<open>V\<^sup>\<bottom> \<oplus> span u\<close>), so \<open>\<lambda>\<^sub>n\<^sub>-\<^sub>k \<ge> 1\<close> and \<open>\<lambda>\<^sub>1 \<le> L\<close>;
-    the orthogonality clause \<open>a *v 0 = 0\<close> is trivial at \<open>p = 0\<close>.  Mirror
-    \<open>tanp_feasible\<close>, whose explicit-eigenvector proof pattern transfers.
+lemma tanpV_quadform:
+  fixes P :: "real^'n::finite^'n" and z y :: "real^'n"
+  shows "y \<bullet> (tanpV P z *v y)
+     = y \<bullet> (P *v y) - (((P *v z) /\<^sub>R norm (P *v z)) \<bullet> y)\<^sup>2"
+proof -
+  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
+  have mv: "tanpV P z *v y = P *v y - (u \<bullet> y) *\<^sub>R u"
+    unfolding tanpV_def u_def
+    by (simp add: matrix_vector_mult_diff_rdistrib)
+  have "y \<bullet> (tanpV P z *v y) = y \<bullet> (P *v y) - (u \<bullet> y) * (y \<bullet> u)"
+    unfolding mv by (simp add: inner_diff_right)
+  then show ?thesis
+    unfolding u_def by (simp add: power2_eq_square inner_commute)
+qed
 
-  \<^bold>\<open>E2\<close> (mirror \<open>tangential_exact_growth\<close>): along the clamped Euler chain for
-  \<open>SF z = tanpV P (clamped z)\<close> started at \<open>x \<in> V\<close>, \<open>x \<noteq> 0\<close>, on the in-region
-  event \<open>\<bar>X\<^sub>t\<bar>\<^sup>2 = \<bar>x\<bar>\<^sup>2 + t \<cdot> (real m - 1)\<close>.  The motion stays in the affine slice
-  \<open>x + range P\<close> because the field's range lies in \<open>V\<close>, and there \<open>P *v X = X\<close>
-  collapses every \<open>tanpV\<close> computation to the \<open>tanp\<close> one.  The clamp is FREE:
-  the radius is nondecreasing, so a path started at \<open>\<bar>x\<bar> > 0\<close> never approaches
-  the clamped region --- unlike \<open>paper_v_ball_lower\<close>, do NOT introduce the
-  annulus or the factor 2.
+lemma proj_quadform:
+  fixes P :: "real^'n::finite^'n" and y :: "real^'n"
+  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
+  shows "y \<bullet> (P *v y) = (P *v y) \<bullet> (P *v y)"
+proof -
+  have "(P *v y) \<bullet> (P *v y) = (transpose P *v (P *v y)) \<bullet> y"
+    by (rule inner_matrix_transpose)
+  also have "transpose P *v (P *v y) = P *v (P *v y)" unfolding Psym by (rule refl)
+  also have "P *v (P *v y) = P *v y"
+    using Pidem by (metis matrix_vector_mul_assoc)
+  finally show ?thesis by (simp add: inner_commute)
+qed
 
-  \<^bold>\<open>E3\<close> is SIMPLER than \<open>paper_v_ball_lower\<close>, which needed the DPP to track the
-  value at exit: here the exit time is DETERMINISTIC.  The Euler-limit member
-  from \<open>x\<close> exits \<open>cball 0 r\<close> a.s. at exactly \<open>t\<^sup>* = (r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n-k)\<close>, so
-  \<open>ess_inf_time\<close> is \<open>t\<^sup>*\<close> by \<open>ess_inf_time_const\<close> and \<open>paper_v \<ge> t\<^sup>*\<close> is the
-  DEFINITION of the sup --- no DPP, no conditioning.  Needs \<open>t\<^sup>* \<le> T\<close>.
+lemma tanpV_trace:
+  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
+  assumes nz: "P *v z \<noteq> 0"
+  shows "trace (tanpV P z) = trace P - 1"
+proof -
+  have u1: "((P *v z) /\<^sub>R norm (P *v z)) \<bullet> ((P *v z) /\<^sub>R norm (P *v z)) = 1"
+    by (rule unit_normalize[OF nz])
+  have "trace (tanpV P z)
+      = trace P - trace (outer_prod ((P *v z) /\<^sub>R norm (P *v z))
+                                    ((P *v z) /\<^sub>R norm (P *v z)))"
+    unfolding tanpV_def by (rule trace_matrix_diff)
+  then show ?thesis using u1 by simp
+qed
 
-  \<^bold>\<open>E4\<close>: \<open>x = 0\<close> by usc (do NOT run the field from the centre, the clamp sits
-  there), \<open>\<bar>x\<bar> = r\<close> by \<open>paper_v_boundary_zero\<close>, \<open>x \<notin> K\<close> by \<open>pexit = 0\<close>.\<close>
+lemma tanpV_psd:
+  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
+  assumes Psym: "transpose P = P" and Pidem: "P ** P = P" and nz: "P *v z \<noteq> 0"
+  shows "psd (tanpV P z)"
+  unfolding psd_def
+proof (intro conjI allI)
+  show "transpose (tanpV P z) = tanpV P z" by (rule tanpV_sym[OF Psym])
+next
+  fix y :: "real^'n"
+  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
+  have uu: "u \<bullet> u = 1" unfolding u_def by (rule unit_normalize[OF nz])
+  have ufix: "P *v u = u" unfolding u_def by (rule proj_dir_fix[OF Pidem])
+  have uy: "u \<bullet> y = (P *v y) \<bullet> u"
+  proof -
+    have "u \<bullet> y = (P *v u) \<bullet> y" unfolding ufix by (rule refl)
+    also have "\<dots> = y \<bullet> (P *v u)" by (rule inner_commute)
+    also have "\<dots> = (transpose P *v y) \<bullet> u" by (rule inner_matrix_transpose)
+    also have "\<dots> = (P *v y) \<bullet> u" unfolding Psym by (rule refl)
+    finally show ?thesis .
+  qed
+  have "(u \<bullet> y)\<^sup>2 = ((P *v y) \<bullet> u)\<^sup>2" unfolding uy by (rule refl)
+  also have "\<dots> \<le> ((P *v y) \<bullet> (P *v y)) * (u \<bullet> u)"
+    by (rule Cauchy_Schwarz_ineq)
+  also have "\<dots> = (P *v y) \<bullet> (P *v y)" unfolding uu by simp
+  also have "\<dots> = y \<bullet> (P *v y)" by (rule proj_quadform[OF Psym Pidem, symmetric])
+  finally have le: "(u \<bullet> y)\<^sup>2 \<le> y \<bullet> (P *v y)" .
+  have "y \<bullet> (tanpV P z *v y) = y \<bullet> (P *v y) - (u \<bullet> y)\<^sup>2"
+    unfolding u_def by (rule tanpV_quadform)
+  then show "0 \<le> y \<bullet> (tanpV P z *v y)" using le by linarith
+qed
+
+lemma tanpV_eigen_ub:
+  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
+  assumes Psym: "transpose P = P" and Pidem: "P ** P = P" and L1: "1 \<le> L"
+  shows "eigen_ub (tanpV P z) L"
+  unfolding eigen_ub_def
+proof
+  fix y :: "real^'n"
+  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
+  have q: "y \<bullet> (tanpV P z *v y) = y \<bullet> (P *v y) - (u \<bullet> y)\<^sup>2"
+    unfolding u_def by (rule tanpV_quadform)
+  have shrink: "y \<bullet> (P *v y) \<le> y \<bullet> y"
+  proof -
+    have pq: "y \<bullet> (P *v y) = (P *v y) \<bullet> (P *v y)"
+      by (rule proj_quadform[OF Psym Pidem])
+    have "(y - P *v y) \<bullet> (y - P *v y)
+        = y \<bullet> y - y \<bullet> (P *v y) - (P *v y) \<bullet> y + (P *v y) \<bullet> (P *v y)"
+      by (simp add: inner_diff_left inner_diff_right)
+    also have "(P *v y) \<bullet> y = y \<bullet> (P *v y)" by (rule inner_commute)
+    finally have "(y - P *v y) \<bullet> (y - P *v y) = y \<bullet> y - y \<bullet> (P *v y)"
+      using pq by simp
+    then show ?thesis using inner_ge_zero[of "y - P *v y"] by linarith
+  qed
+  have "y \<bullet> (tanpV P z *v y) \<le> y \<bullet> y"
+    unfolding q using shrink zero_le_power2[of "u \<bullet> y"] by linarith
+  also have "y \<bullet> y = 1 * (y \<bullet> y)" by simp
+  also have "\<dots> \<le> L * (y \<bullet> y)" by (rule mult_right_mono[OF L1 inner_ge_zero])
+  finally show "y \<bullet> (tanpV P z *v y) \<le> L * (y \<bullet> y)" .
+qed
+
+text \<open>The lower eigenvalue bound.  The witnessing subspace is the span of the
+  family cut by the hyperplane orthogonal to the singled-out direction: the
+  dimension drops by at most one, which is exactly what \<open>n - k\<close> needs.\<close>
+
+lemma tanpV_eigen_lb:
+  fixes b :: "nat \<Rightarrow> real^'n::finite" and z :: "real^'n"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and nz: "projmat b m *v z \<noteq> 0"
+  shows "eigen_lb (tanpV (projmat b m) z) (m - 1)"
+proof -
+  define u :: "real^'n"
+    where "u = (projmat b m *v z) /\<^sub>R norm (projmat b m *v z)"
+  define W :: "(real^'n) set" where "W = span (b ` {..<m})"
+  define S :: "(real^'n) set" where "S = W \<inter> {x. u \<bullet> x = 0}"
+  have subW: "subspace W" unfolding W_def by (rule subspace_span)
+  have subH: "subspace {x :: real^'n. u \<bullet> x = 0}" by (rule subspace_hyperplane)
+  have subS: "subspace S" unfolding S_def by (rule subspace_inter[OF subW subH])
+  have dimW: "dim W = m" unfolding W_def by (rule orthonormal_dim_span[OF orth])
+  have uu: "u \<bullet> u = 1" unfolding u_def by (rule unit_normalize[OF nz])
+  have u0: "u \<noteq> 0" using uu by auto
+  have dimH: "dim {x :: real^'n. u \<bullet> x = 0} = CARD('n) - 1"
+    using u0 by (simp add: dim_hyperplane)
+  have dimS: "m - 1 \<le> dim S"
+  proof -
+    have sums: "dim {x + y |x y. x \<in> W \<and> y \<in> {x :: real^'n. u \<bullet> x = 0}}
+        + dim S = dim W + dim {x :: real^'n. u \<bullet> x = 0}"
+      unfolding S_def by (rule dim_sums_Int[OF subW subH])
+    have le: "dim {x + y |x y. x \<in> W \<and> y \<in> {x :: real^'n. u \<bullet> x = 0}}
+        \<le> CARD('n)"
+      using dim_subset_UNIV[of
+        "{x + y |x y. x \<in> W \<and> y \<in> {x :: real^'n. u \<bullet> x = 0}}"] by simp
+    have n1: "1 \<le> CARD('n)" by simp
+    show ?thesis using sums le dimW dimH n1 by linarith
+  qed
+  show ?thesis
+    unfolding eigen_lb_def
+  proof (intro exI[of _ S] conjI ballI)
+    show "subspace S" by (rule subS)
+    show "m - 1 \<le> dim S" by (rule dimS)
+  next
+    fix x assume xS: "x \<in> S"
+    then have xW: "x \<in> span (b ` {..<m})" and xu: "u \<bullet> x = 0"
+      unfolding S_def W_def by auto
+    have Px: "projmat b m *v x = x" by (rule projmat_span_fix[OF orth xW])
+    have "x \<bullet> (tanpV (projmat b m) z *v x)
+        = x \<bullet> (projmat b m *v x) - (u \<bullet> x)\<^sup>2"
+      unfolding u_def by (rule tanpV_quadform)
+    also have "\<dots> = x \<bullet> x" unfolding Px xu by simp
+    finally show "x \<bullet> x \<le> x \<bullet> (tanpV (projmat b m) z *v x)" by simp
+  qed
+qed
+
+theorem tanpV_feasible:
+  fixes b :: "nat \<Rightarrow> real^'n::finite" and z :: "real^'n"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and nz: "projmat b m *v z \<noteq> 0"
+    and mk: "CARD('n) - k \<le> m - 1" and L1: "1 \<le> L"
+  shows "tanpV (projmat b m) z \<in> feasible k L 0"
+  unfolding feasible_def
+proof (intro CollectI conjI)
+  have Psym: "transpose (projmat b m) = projmat b m" by (rule projmat_sym)
+  have Pidem: "projmat b m ** projmat b m = projmat b m"
+    by (rule projmat_idem[OF orth])
+  show "psd (tanpV (projmat b m) z)" by (rule tanpV_psd[OF Psym Pidem nz])
+  show "tanpV (projmat b m) z *v 0 = 0" by (simp add: matrix_vector_mult_0_right)
+  show "eigen_ub (tanpV (projmat b m) z) L"
+    by (rule tanpV_eigen_ub[OF Psym Pidem L1])
+  show "eigen_lb (tanpV (projmat b m) z) (CARD('n) - k)"
+    using tanpV_eigen_lb[OF orth nz] mk unfolding eigen_lb_def by (meson le_trans)
+qed
+
+text \<open>The trace of the field is exactly the growth rate \<open>n - k\<close> that E2 needs.\<close>
+
+corollary tanpV_trace_projmat:
+  fixes b :: "nat \<Rightarrow> real^'n::finite" and z :: "real^'n"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and nz: "projmat b m *v z \<noteq> 0"
+  shows "trace (tanpV (projmat b m) z) = real m - 1"
+  using tanpV_trace[OF nz] projmat_trace[OF orth] by simp
+
+subsection \<open>An orthonormal family through a prescribed unit vector\<close>
+
+lemma orthonormal_family_containing:
+  fixes x0 :: "real^'n::finite"
+  assumes u: "x0 \<bullet> x0 = 1" and m: "m \<le> CARD('n)" and m0: "0 < m"
+  shows "\<exists>b :: nat \<Rightarrow> real^'n. b 0 = x0
+      \<and> (\<forall>i < m. \<forall>j < m. b i \<bullet> b j = (if i = j then 1 else 0))"
+  using m m0
+proof (induct m)
+  case 0
+  then show ?case by simp
+next
+  case (Suc m)
+  show ?case
+  proof (cases "m = 0")
+    case True
+    show ?thesis
+      by (rule exI[of _ "\<lambda>_. x0"]) (use True u in auto)
+  next
+    case False
+    then have m0': "0 < m" by simp
+    have mle: "m \<le> CARD('n)" using Suc.prems by simp
+    obtain b :: "nat \<Rightarrow> real^'n" where b0: "b 0 = x0"
+      and bo: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+      using Suc.hyps[OF mle m0'] by blast
+    have dimlt: "dim (b ` {..<m}) < DIM(real^'n)"
+    proof -
+      have "dim (b ` {..<m}) = dim (span (b ` {..<m}))" by (simp add: dim_span)
+      also have "\<dots> = m" by (rule orthonormal_dim_span[OF bo])
+      also have "\<dots> < CARD('n)" using Suc.prems by simp
+      finally show ?thesis by simp
+    qed
+    have ex: "\<exists>v :: real^'n. v \<noteq> 0
+        \<and> (\<forall>y \<in> span (b ` {..<m}). orthogonal v y)"
+    proof (rule orthogonal_to_subspace_exists[OF dimlt])
+      fix v :: "real^'n"
+      assume v0: "v \<noteq> 0"
+        and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y"
+      show ?thesis using v0 vo by blast
+    qed
+    obtain v :: "real^'n" where v0: "v \<noteq> 0"
+      and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y" using ex by blast
+    define w :: "real^'n" where "w = v /\<^sub>R norm v"
+    have ww: "w \<bullet> w = 1" unfolding w_def by (rule unit_normalize[OF v0])
+    have wo: "w \<bullet> b i = 0" if i: "i < m" for i
+    proof -
+      have "b i \<in> span (b ` {..<m})" using i by (intro span_base) auto
+      then have "orthogonal v (b i)" by (rule vo)
+      then show ?thesis unfolding w_def orthogonal_def by simp
+    qed
+    define b' :: "nat \<Rightarrow> real^'n" where "b' = (\<lambda>i. if i = m then w else b i)"
+    have b'0: "b' 0 = x0" unfolding b'_def using False b0 by simp
+    have b'o: "b' i \<bullet> b' j = (if i = j then 1 else 0)"
+      if i: "i < Suc m" and j: "j < Suc m" for i j
+    proof -
+      consider (both) "i = m" "j = m" | (im) "i = m" "j < m"
+        | (jm) "i < m" "j = m" | (nn) "i < m" "j < m"
+        using i j by fastforce
+      then show ?thesis
+      proof cases
+        case both then show ?thesis unfolding b'_def using ww by simp
+      next
+        case im then show ?thesis unfolding b'_def using wo[of j] by simp
+      next
+        case jm then show ?thesis
+          unfolding b'_def using wo[of i] by (simp add: inner_commute)
+      next
+        case nn then show ?thesis unfolding b'_def using bo by simp
+      qed
+    qed
+    show ?thesis by (rule exI[of _ b']) (use b'0 b'o in blast)
+  qed
+qed
 
 section \<open>What remains for clause (2)\<close>
 
