@@ -14703,6 +14703,236 @@ proof -
   qed
 qed
 
+subsection \<open>Case 2: minimisers of a tilted quadratic\<close>
+
+text \<open>Case 2 of the supersolution proof perturbs the test function and
+  reads off a minimiser of \<open>v\<^sub>* - \<psi>\<close>.  Three ingredients are needed and
+  none of them mentions the value function, so all three are proved here
+  in the abstract.
+
+  First, an infimum-attainment statement for a lower semicontinuous
+  function.  The envelope version proved above attains the infimum of
+  \<open>lsc_env u\<close> itself, but what Case 2 minimises is \<open>lsc_env u\<close> MINUS a
+  quadratic, so the argument is redone with lower semicontinuity as a
+  hypothesis rather than as a property of the envelope.\<close>
+
+lemma lsc_attains_inf_gen:
+  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
+    and B: "\<And>y. B \<le> f y" and cS: "compact S" and neS: "S \<noteq> {}"
+  obtains z where "z \<in> S" and "\<And>y. y \<in> S \<Longrightarrow> f z \<le> f y"
+proof -
+  define m where "m = (INF y \<in> S. f y)"
+  have bdd: "bdd_below (f ` S)"
+    by (rule bdd_belowI[of _ B]) (use B in auto)
+  have neI: "f ` S \<noteq> {}" using neS by auto
+  have mlow: "\<And>y. y \<in> S \<Longrightarrow> m \<le> f y"
+    unfolding m_def by (rule cInf_lower[OF _ bdd]) auto
+  have pick: "\<exists>zz \<in> S. f zz < m + 1 / real (Suc j)" for j
+  proof -
+    have "m < m + 1 / real (Suc j)" by simp
+    then have "\<exists>t \<in> f ` S. t < m + 1 / real (Suc j)"
+      unfolding m_def using cInf_less_iff[OF neI bdd] by blast
+    then show ?thesis by auto
+  qed
+  have "\<forall>j. \<exists>zz. zz \<in> S \<and> f zz < m + 1 / real (Suc j)"
+    using pick by blast
+  then obtain zs where zsS: "\<And>j. zs j \<in> S"
+    and zsm: "\<And>j. f (zs j) < m + 1 / real (Suc j)"
+    by metis
+  have sq: "seq_compact S" using cS by (simp add: compact_eq_seq_compact_metric)
+  obtain z r where zS: "z \<in> S" and rm: "strict_mono r"
+    and lim: "(zs \<circ> r) \<longlonglongrightarrow> z"
+    using sq[unfolded seq_compact_def] zsS by blast
+  have zle: "f z \<le> m"
+  proof (rule ccontr)
+    assume "\<not> f z \<le> m"
+    then have mlt: "m < f z" by simp
+    define c where "c = (m + f z) / 2"
+    have cm: "m < c" unfolding c_def using mlt by simp
+    have cz: "c < f z" unfolding c_def using mlt by simp
+    obtain e where e0: "0 < e"
+      and enear: "\<forall>y. dist z y < e \<longrightarrow> c < f y"
+      using lsc[OF cz] by blast
+    have ev1: "\<forall>\<^sub>F l in sequentially. dist ((zs \<circ> r) l) z < e"
+      using lim e0 by (simp add: tendsto_iff)
+    have ev2: "\<forall>\<^sub>F l in sequentially. 1 / real (Suc (r l)) < c - m"
+    proof -
+      have "(\<lambda>l. 1 / real (Suc l)) \<longlonglongrightarrow> 0"
+        using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
+      then have "(\<lambda>l. 1 / real (Suc (r l))) \<longlonglongrightarrow> 0"
+        using LIMSEQ_subseq_LIMSEQ[OF _ rm] by (simp add: o_def)
+      then show ?thesis using cm by (simp add: order_tendstoD(2))
+    qed
+    from ev1 obtain N1 where N1: "\<And>l. N1 \<le> l \<Longrightarrow>
+        dist ((zs \<circ> r) l) z < e"
+      by (auto simp: eventually_sequentially)
+    from ev2 obtain N2 where N2: "\<And>l. N2 \<le> l \<Longrightarrow>
+        1 / real (Suc (r l)) < c - m"
+      by (auto simp: eventually_sequentially)
+    define l where "l = max N1 N2"
+    have dl: "dist z ((zs \<circ> r) l) < e"
+      using N1[of l] unfolding l_def by (simp add: dist_commute)
+    have gl: "1 / real (Suc (r l)) < c - m"
+      using N2[of l] unfolding l_def by simp
+    have "c < f (zs (r l))"
+      using enear dl by (simp add: o_def)
+    moreover have "f (zs (r l)) < m + 1 / real (Suc (r l))"
+      by (rule zsm)
+    ultimately show False using gl by linarith
+  qed
+  show ?thesis
+  proof (rule that[OF zS])
+    fix y assume yS: "y \<in> S"
+    then show "f z \<le> f y" using zle mlow[OF yS] by linarith
+  qed
+qed
+
+text \<open>Second, lower semicontinuity is stable under subtracting a
+  continuous function --- which is what turns the envelope into
+  something whose minimiser over a small closed ball exists.\<close>
+
+lemma lsc_diff_continuous:
+  fixes f \<psi> :: "real^'n::finite \<Rightarrow> real"
+  assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
+    and cont: "continuous_on UNIV \<psi>"
+    and lt: "c < f z - \<psi> z"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y - \<psi> y"
+proof -
+  define d where "d = (f z - \<psi> z - c) / 2"
+  have d0: "0 < d" using lt unfolding d_def by simp
+  have cz: "continuous (at z) \<psi>"
+    using cont by (simp add: continuous_on_eq_continuous_at)
+  obtain s where s0: "0 < s"
+    and sd: "\<And>y. dist y z < s \<Longrightarrow> dist (\<psi> y) (\<psi> z) < d"
+    using cz d0 unfolding continuous_at_eps_delta by blast
+  have dd: "2 * d = f z - \<psi> z - c" unfolding d_def by simp
+  have big: "c + \<psi> z + d < f z" using lt dd d0 by linarith
+  obtain e where e0: "0 < e"
+    and en: "\<forall>y. dist z y < e \<longrightarrow> c + \<psi> z + d < f y"
+    using lsc[OF big] by blast
+  have "0 < min e s" using e0 s0 by simp
+  moreover have "\<forall>y. dist z y < min e s \<longrightarrow> c < f y - \<psi> y"
+  proof (intro allI impI)
+    fix y assume dy: "dist z y < min e s"
+    then have f1: "c + \<psi> z + d < f y" using en by simp
+    have "dist (\<psi> y) (\<psi> z) < d"
+      using dy by (intro sd) (simp add: dist_commute)
+    then have f2: "\<psi> y - \<psi> z < d" by (simp add: dist_real_def abs_less_iff)
+    show "c < f y - \<psi> y" using f1 f2 by linarith
+  qed
+  ultimately show ?thesis by blast
+qed
+
+text \<open>The tilted test function of Case 2 is a quadratic plus a linear
+  term, so it is continuous.\<close>
+
+lemma continuous_on_quad_tilt:
+  fixes M :: "real^'n::finite^'n" and x \<eta> :: "real^'n"
+  shows "continuous_on S (\<lambda>z. ((z - x) \<bullet> (M *v (z - x))) / 2 + \<eta> \<bullet> (z - x))"
+proof -
+  have c1: "continuous_on S (\<lambda>z. z - x)" by (intro continuous_intros)
+  have c2: "continuous_on S (\<lambda>z. M *v (z - x))"
+    by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matrix_vector_mul_bounded_linear] c1]) auto
+  show ?thesis using c1 c2 by (intro continuous_intros) auto
+qed
+
+text \<open>Third, the STRICT quadratic minorant.  This is what replaces the
+  paper's bump construction.  The paper builds a \<open>C\<^sup>2\<close> function
+  \<open>\<phi>\<^sup>m\<close> lying strictly below \<open>v\<^sub>*\<close> off the touching point, exactly
+  quadratic near it with a nonsingular Hessian tending to
+  \<open>\<nabla>\<^sup>2\<phi>(0)\<close>.  All three of those properties come for free from
+  \<open>test_fun_quadratic_minorates\<close> applied at level \<open>\<epsilon>/2\<close>: since
+  \<open>H - (\<epsilon>/2) \<cdot> 1 = (H - \<epsilon> \<cdot> 1) + (\<epsilon>/2) \<cdot> 1\<close>, the surplus
+  \<open>(\<epsilon>/2)|z - x|\<^sup>2/2\<close> is exactly the strict separation wanted, while
+  \<open>H - \<epsilon> \<cdot> 1\<close> is quadratic by construction and tends to \<open>H\<close>.\<close>
+
+lemma test_fun_strict_minorant_zero_grad:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n" and x :: "real^'n" and \<epsilon> :: real
+  assumes tf: "test_fun_at \<phi> g H x" and g0: "g x = 0" and e0: "0 < \<epsilon>"
+  obtains r where "0 < r"
+    and "\<And>z. z \<in> ball x r \<Longrightarrow>
+      \<phi> x + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> \<phi> z"
+proof -
+  have he: "0 < \<epsilon> / 2" using e0 by simp
+  obtain r where r0: "0 < r"
+    and min2: "\<And>z. z \<in> ball x r \<Longrightarrow>
+      \<phi> x + g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H - (\<epsilon>/2) *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+    by (rule test_fun_quadratic_minorates[OF tf he]) blast
+  have key: "\<phi> x + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+      + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> \<phi> z" if zr: "z \<in> ball x r" for z
+  proof -
+    have e1: "(H - \<epsilon> *\<^sub>R mat 1) *v (z - x) = H *v (z - x) - \<epsilon> *\<^sub>R (z - x)"
+      by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
+          matrix_vector_mul_lid)
+    have e2: "(H - (\<epsilon>/2) *\<^sub>R mat 1) *v (z - x)
+        = H *v (z - x) - (\<epsilon>/2) *\<^sub>R (z - x)"
+      by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
+          matrix_vector_mul_lid)
+    have i1: "(z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))
+        = (z - x) \<bullet> (H *v (z - x)) - \<epsilon> * ((z - x) \<bullet> (z - x))"
+      unfolding e1 by (simp add: inner_diff_right)
+    have i2: "(z - x) \<bullet> ((H - (\<epsilon>/2) *\<^sub>R mat 1) *v (z - x))
+        = (z - x) \<bullet> (H *v (z - x)) - (\<epsilon>/2) * ((z - x) \<bullet> (z - x))"
+      unfolding e2 by (simp add: inner_diff_right)
+    have "\<phi> x + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
+      = \<phi> x + g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H - (\<epsilon>/2) *\<^sub>R mat 1) *v (z - x))) / 2"
+      unfolding i1 i2 g0 by (simp add: field_simps)
+    also have "\<dots> \<le> \<phi> z" by (rule min2[OF zr])
+    finally show ?thesis .
+  qed
+  show ?thesis by (rule that[OF r0]) (use key in blast)
+qed
+
+text \<open>Finally the quantitative part of the tilt.  If \<open>W\<close> is bounded
+  below by \<open>W x + Q\<close> with a quadratic surplus \<open>c|z - x|\<^sup>2\<close>, and \<open>y\<close>
+  minimises \<open>W - Q - \<langle>\<eta>, \<cdot> - x\<rangle>\<close> over the ball, then \<open>y\<close> is within
+  \<open>\<bar>\<eta>\<bar>/c\<close> of \<open>x\<close>.  The paper only records that the minimisers converge
+  to the touching point; the explicit rate is what makes them INTERIOR
+  to the ball for small \<open>\<eta>\<close>, which is what the now-local Case 1 needs.\<close>
+
+lemma tilted_minimiser_close:
+  fixes W Q :: "real^'n::finite \<Rightarrow> real" and x y \<eta> :: "real^'n"
+  assumes sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      W x + Q z + c * ((z - x) \<bullet> (z - x)) \<le> W z"
+    and Qx: "Q x = 0" and c0: "0 < c"
+    and xin: "x \<in> cball x \<rho>" and yin: "y \<in> cball x \<rho>"
+    and mn: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      W y - Q y - \<eta> \<bullet> (y - x) \<le> W z - Q z - \<eta> \<bullet> (z - x)"
+  shows "norm (y - x) \<le> norm \<eta> / c"
+proof -
+  have a1: "W y - Q y - \<eta> \<bullet> (y - x) \<le> W x"
+    using mn[OF xin] Qx by simp
+  have a2: "W x + Q y + c * ((y - x) \<bullet> (y - x)) \<le> W y"
+    by (rule sep[OF yin])
+  have step: "c * ((y - x) \<bullet> (y - x)) \<le> \<eta> \<bullet> (y - x)"
+    using a1 a2 by linarith
+  have cs: "\<eta> \<bullet> (y - x) \<le> norm \<eta> * norm (y - x)"
+    by (rule norm_cauchy_schwarz)
+  have sq: "(y - x) \<bullet> (y - x) = norm (y - x) * norm (y - x)"
+    by (simp add: dot_square_norm power2_eq_square)
+  show ?thesis
+  proof (cases "norm (y - x) = 0")
+    case True
+    then show ?thesis using c0 by simp
+  next
+    case False
+    then have pos: "0 < norm (y - x)" by simp
+    have "(c * norm (y - x)) * norm (y - x) \<le> norm \<eta> * norm (y - x)"
+      using step cs sq by (simp add: mult.assoc)
+    then have "c * norm (y - x) \<le> norm \<eta>"
+      using pos by (rule mult_right_le_imp_le)
+    then show ?thesis using c0 by (simp add: pos_le_divide_eq mult.commute)
+  qed
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
