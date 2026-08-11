@@ -2669,11 +2669,361 @@ proof -
   then show ?thesis unfolding ell_op_def by simp
 qed
 
-text \<open>Fixer note (remaining P0 item, not attempted here): the \<open>ell_op_usc\<close> /
-  \<open>ell_op_lsc\<close> versions of the three invariances above.  The transform
-  \<open>(p, M) \<mapsto> (R *v p, R ** M ** transpose R)\<close> is an isometry of the product
-  (orthogonal matrices preserve the Frobenius norm), so it maps \<open>ball z e\<close>
-  bijectively onto \<open>ball (f z) e\<close>; conjugate the \<open>INF\<close>/\<open>SUP\<close> through that
-  bijection exactly as \<open>ball_prod_shift_snd\<close> does for translations.\<close>
+subsection \<open>Transporting the envelopes along an \<open>F\<close>-preserving homeomorphism\<close>
+
+lemma matvec_diff_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (x - y) = A *v x - A *v y"
+  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum_subtractf)
+
+lemma matrix_mul_diff_right:
+  fixes A B C :: "real^'n::finite^'n"
+  shows "A ** (B - C) = A ** B - A ** C"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff algebra_simps sum_subtractf)
+
+lemma matrix_mul_diff_left:
+  fixes A B C :: "real^'n::finite^'n"
+  shows "(A - B) ** C = A ** C - B ** C"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff algebra_simps sum_subtractf)
+
+lemma inner_matrix_transpose:
+  fixes A :: "real^'n::finite^'n" and x y :: "real^'n"
+  shows "y \<bullet> (A *v x) = (transpose A *v y) \<bullet> x"
+proof -
+  have L: "y \<bullet> (A *v x) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
+    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
+  have R: "(transpose A *v y) \<bullet> x
+      = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
+  proof -
+    have "(transpose A *v y) \<bullet> x
+        = (\<Sum>j\<in>UNIV. (\<Sum>i\<in>UNIV. A $ i $ j * y $ i) * x $ j)"
+      by (simp add: inner_vec_def matrix_vector_mult_def transpose_def)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A $ i $ j * y $ i * x $ j)"
+      by (simp add: sum_distrib_right)
+    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
+      by (intro sum.cong refl) (simp add: mult_ac)
+    finally show ?thesis .
+  qed
+  show ?thesis unfolding L R by (rule sum.swap)
+qed
+
+lemma matvec_orth_inv:
+  fixes R :: "real^'n::finite^'n" and q :: "real^'n"
+  assumes orth: "orthogonal_matrix R"
+  shows "R *v (transpose R *v q) = q"
+proof -
+  have o2: "R ** transpose R = mat 1" using orth unfolding orthogonal_matrix_def by blast
+  have "R *v (transpose R *v q) = (R ** transpose R) *v q"
+    by (metis matrix_vector_mul_assoc)
+  also have "\<dots> = q" unfolding o2 by (rule matrix_vector_mul_lid)
+  finally show ?thesis .
+qed
+
+lemma conj_orth_inv:
+  fixes R N :: "real^'n::finite^'n"
+  assumes orth: "orthogonal_matrix R"
+  shows "R ** (transpose R ** N ** R) ** transpose R = N"
+proof -
+  have o2: "R ** transpose R = mat 1" using orth unfolding orthogonal_matrix_def by blast
+  have "R ** (transpose R ** N ** R) ** transpose R
+      = (R ** transpose R) ** N ** (R ** transpose R)"
+    by (simp add: matrix_mul_assoc)
+  also have "\<dots> = N" unfolding o2 by (simp add: matrix_mul_lid matrix_mul_rid)
+  finally show ?thesis .
+qed
+
+lemma norm_orthogonal_matrix_vector:
+  fixes R :: "real^'n::finite^'n" and v :: "real^'n"
+  assumes orth: "orthogonal_matrix R"
+  shows "norm (R *v v) = norm v"
+proof -
+  have o1: "transpose R ** R = mat 1" using orth unfolding orthogonal_matrix_def by blast
+  have "(R *v v) \<bullet> (R *v v) = (transpose R *v (R *v v)) \<bullet> v"
+    by (rule inner_matrix_transpose)
+  also have "transpose R *v (R *v v) = (transpose R ** R) *v v"
+    by (metis matrix_vector_mul_assoc)
+  also have "\<dots> = v" unfolding o1 by (rule matrix_vector_mul_lid)
+  finally have "(R *v v) \<bullet> (R *v v) = v \<bullet> v" .
+  then show ?thesis by (metis norm_eq_sqrt_inner)
+qed
+
+lemma norm_matrix_sq_trace:
+  fixes M :: "real^'n::finite^'n"
+  shows "(norm M)\<^sup>2 = trace (transpose M ** M)"
+proof -
+  have "trace (transpose M ** M) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ j $ i * M $ j $ i)"
+    by (simp add: trace_def matrix_matrix_mult_def transpose_def)
+  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. M $ j $ i * M $ j $ i)"
+    by (rule sum.swap)
+  also have "\<dots> = (norm M)\<^sup>2"
+    by (simp add: power2_norm_eq_inner inner_vec_def)
+  finally show ?thesis by (rule sym)
+qed
+
+lemma norm_conj_orthogonal:
+  fixes R M :: "real^'n::finite^'n"
+  assumes orth: "orthogonal_matrix R"
+  shows "norm (R ** M ** transpose R) = norm M"
+proof -
+  have o1: "transpose R ** R = mat 1" using orth unfolding orthogonal_matrix_def by blast
+  have tt: "transpose (R ** M ** transpose R) = R ** transpose M ** transpose R"
+    by (simp add: matrix_transpose_mul matrix_mul_assoc)
+  have "transpose (R ** M ** transpose R) ** (R ** M ** transpose R)
+      = R ** transpose M ** transpose R ** (R ** M ** transpose R)"
+    unfolding tt by (rule refl)
+  also have "\<dots> = R ** transpose M ** (transpose R ** R) ** M ** transpose R"
+    by (simp add: matrix_mul_assoc)
+  also have "\<dots> = R ** (transpose M ** M) ** transpose R"
+    unfolding o1 by (simp add: matrix_mul_assoc matrix_mul_rid)
+  finally have eq: "transpose (R ** M ** transpose R) ** (R ** M ** transpose R)
+      = R ** (transpose M ** M) ** transpose R" .
+  have "trace (R ** (transpose M ** M) ** transpose R)
+      = trace (transpose R ** (R ** (transpose M ** M)))"
+    by (rule trace_matrix_commute)
+  also have "\<dots> = trace ((transpose R ** R) ** (transpose M ** M))"
+    by (simp add: matrix_mul_assoc)
+  also have "\<dots> = trace (transpose M ** M)" unfolding o1 by (simp add: matrix_mul_lid)
+  finally have tr: "trace (R ** (transpose M ** M) ** transpose R)
+      = trace (transpose M ** M)" .
+  have sq: "(norm (R ** M ** transpose R))\<^sup>2 = (norm M)\<^sup>2"
+    unfolding norm_matrix_sq_trace eq tr by (rule refl)
+  show ?thesis by (rule power2_eq_imp_eq[OF sq norm_ge_zero norm_ge_zero])
+qed
+
+text \<open>The transfer lemma: if \<open>\<Psi>\<close> leaves \<open>F\<close> invariant and distorts balls around
+  \<open>z\<close> by at most fixed factors in both directions, then it leaves the upper
+  envelope at \<open>z\<close> invariant.  Purely a statement about \<open>INF\<close>/\<open>SUP\<close> reindexing.\<close>
+
+lemma pos_image_scale:
+  assumes r0: "0 < r"
+  shows "(\<lambda>e. e / r) ` {0<..} = {(0::real)<..}"
+proof
+  show "(\<lambda>e. e / r) ` {0<..} \<subseteq> {(0::real)<..}" using r0 by auto
+  show "{(0::real)<..} \<subseteq> (\<lambda>e. e / r) ` {0<..}"
+  proof
+    fix x :: real assume "x \<in> {0<..}"
+    then have x0: "0 < x" by simp
+    have xe: "x = (x * r) / r" using r0 by simp
+    have "x * r \<in> {0<..}" using x0 r0 by simp
+    then show "x \<in> (\<lambda>e. e / r) ` {0<..}" using xe by (metis image_eqI)
+  qed
+qed
+
+lemma ell_op_usc_transfer:
+  fixes \<Psi> :: "((real^'n::finite) \<times> (real^'n^'n)) \<Rightarrow> ((real^'n) \<times> (real^'n^'n))"
+  assumes F: "\<And>v. ell_op_pair k L (\<Psi> v) = ell_op_pair k L v"
+    and a0: "0 < a" and b0: "0 < b"
+    and sub1: "\<And>e. 0 < e \<Longrightarrow> \<Psi> ` ball z (e / a) \<subseteq> ball (\<Psi> z) e"
+    and sub2: "\<And>e. 0 < e \<Longrightarrow> ball (\<Psi> z) (b * e) \<subseteq> \<Psi> ` ball z e"
+  shows "(INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)
+       = (INF e \<in> {0<..}. SUP w \<in> ball z e. ell_op_pair k L w)"
+    (is "?A = ?B")
+proof (rule antisym)
+  have le1: "(SUP w \<in> ball (\<Psi> z) (b * e). ell_op_pair k L w)
+      \<le> (SUP w \<in> ball z e. ell_op_pair k L w)" if e0: "0 < e" for e
+  proof -
+    have "(SUP w \<in> ball (\<Psi> z) (b * e). ell_op_pair k L w)
+        \<le> (SUP w \<in> \<Psi> ` ball z e. ell_op_pair k L w)"
+      by (rule SUP_subset_mono[OF sub2[OF e0]]) simp
+    also have "\<dots> = (SUP v \<in> ball z e. ell_op_pair k L (\<Psi> v))"
+      by (simp add: image_image)
+    also have "\<dots> = (SUP v \<in> ball z e. ell_op_pair k L v)"
+      by (rule SUP_cong[OF refl]) (rule F)
+    finally show ?thesis .
+  qed
+  have imb: "(\<lambda>e. b * e) ` {0<..} = {(0::real)<..}"
+  proof
+    show "(\<lambda>e. b * e) ` {0<..} \<subseteq> {(0::real)<..}" using b0 by auto
+    show "{(0::real)<..} \<subseteq> (\<lambda>e. b * e) ` {0<..}"
+    proof
+      fix x :: real assume "x \<in> {0<..}"
+      then have x0: "0 < x" by simp
+      have xe: "x = b * (x / b)" using b0 by simp
+      have "x / b \<in> {0<..}" using x0 b0 by simp
+      then show "x \<in> (\<lambda>e. b * e) ` {0<..}" using xe by (metis image_eqI)
+    qed
+  qed
+  have "?A = (INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> z) (b * e). ell_op_pair k L w)"
+  proof -
+    have "?A = (INF e \<in> (\<lambda>e. b * e) ` {0<..}.
+        SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)" unfolding imb by (rule refl)
+    then show ?thesis by (simp add: image_image)
+  qed
+  also have "\<dots> \<le> ?B" by (rule INF_mono) (use le1 in blast)
+  finally show "?A \<le> ?B" .
+next
+  have le2: "(SUP w \<in> ball z (e / a). ell_op_pair k L w)
+      \<le> (SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)" if e0: "0 < e" for e
+  proof -
+    have "(SUP w \<in> ball z (e / a). ell_op_pair k L w)
+        = (SUP v \<in> ball z (e / a). ell_op_pair k L (\<Psi> v))"
+      by (rule SUP_cong[OF refl]) (rule F[symmetric])
+    also have "\<dots> = (SUP w \<in> \<Psi> ` ball z (e / a). ell_op_pair k L w)"
+      by (simp add: image_image)
+    also have "\<dots> \<le> (SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)"
+      by (rule SUP_subset_mono[OF sub1[OF e0]]) simp
+    finally show ?thesis .
+  qed
+  have "?B = (INF e \<in> {0<..}. SUP w \<in> ball z (e / a). ell_op_pair k L w)"
+  proof -
+    have "?B = (INF e \<in> (\<lambda>e. e / a) ` {0<..}.
+        SUP w \<in> ball z e. ell_op_pair k L w)"
+      unfolding pos_image_scale[OF a0] by (rule refl)
+    then show ?thesis by (simp add: image_image)
+  qed
+  also have "\<dots> \<le> ?A" by (rule INF_mono) (use le2 in blast)
+  finally show "?B \<le> ?A" .
+qed
+
+subsection \<open>The two envelope invariances that Theorem 4.3 consumes\<close>
+
+lemma dist_prod_scale_fst:
+  fixes v z :: "(real^'n::finite) \<times> (real^'n^'n)"
+  assumes c0: "0 < c"
+  shows "dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z) \<le> max c 1 * dist v z"
+    and "min c 1 * dist v z \<le> dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z)"
+proof -
+  define dp where "dp = dist (fst v) (fst z)"
+  define dm where "dm = dist (snd v) (snd z)"
+  have dp0: "0 \<le> dp" and dm0: "0 \<le> dm" unfolding dp_def dm_def by simp_all
+  have dv: "dist v z = sqrt (dp\<^sup>2 + dm\<^sup>2)"
+    unfolding dp_def dm_def by (simp add: dist_prod_def)
+  have dsp: "dist (c *\<^sub>R fst v) (c *\<^sub>R fst z) = c * dp"
+    unfolding dp_def dist_norm using c0
+    by (simp add: scaleR_right_diff_distrib[symmetric])
+  have ds: "dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z) = sqrt ((c * dp)\<^sup>2 + dm\<^sup>2)"
+    unfolding dm_def by (simp add: dist_prod_def dsp)
+  have mx0: "0 \<le> max c 1" using c0 by simp
+  have mn0: "0 < min c 1" using c0 by simp
+  show "dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z) \<le> max c 1 * dist v z"
+  proof -
+    have cle: "c\<^sup>2 \<le> (max c 1)\<^sup>2" using c0 by (simp add: power_mono)
+    have one: "(1::real) \<le> (max c 1)\<^sup>2" using c0 by (simp add: max_def)
+    have m1: "c\<^sup>2 * dp\<^sup>2 \<le> (max c 1)\<^sup>2 * dp\<^sup>2"
+      using cle by (simp add: mult_right_mono)
+    have m2: "dm\<^sup>2 \<le> (max c 1)\<^sup>2 * dm\<^sup>2"
+      using mult_right_mono[OF one zero_le_power2, of dm] by simp
+    have "(c * dp)\<^sup>2 + dm\<^sup>2 = c\<^sup>2 * dp\<^sup>2 + dm\<^sup>2" by (simp add: power_mult_distrib)
+    also have "\<dots> \<le> (max c 1)\<^sup>2 * dp\<^sup>2 + (max c 1)\<^sup>2 * dm\<^sup>2" using m1 m2 by linarith
+    also have "\<dots> = (max c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)" by (simp add: algebra_simps)
+    finally have "(c * dp)\<^sup>2 + dm\<^sup>2 \<le> (max c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)" .
+    then have "sqrt ((c * dp)\<^sup>2 + dm\<^sup>2) \<le> sqrt ((max c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2))"
+      by (rule real_sqrt_le_mono)
+    also have "\<dots> = max c 1 * sqrt (dp\<^sup>2 + dm\<^sup>2)"
+      using mx0 by (simp add: real_sqrt_mult)
+    finally show ?thesis unfolding ds dv .
+  qed
+  show "min c 1 * dist v z \<le> dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z)"
+  proof -
+    have cle: "(min c 1)\<^sup>2 \<le> c\<^sup>2" using c0 by (simp add: power_mono)
+    have one: "(min c 1)\<^sup>2 \<le> 1" using c0 by (simp add: min_def power_le_one)
+    have m1: "(min c 1)\<^sup>2 * dp\<^sup>2 \<le> c\<^sup>2 * dp\<^sup>2" using cle by (simp add: mult_right_mono)
+    have m2: "(min c 1)\<^sup>2 * dm\<^sup>2 \<le> dm\<^sup>2"
+      using mult_right_mono[OF one zero_le_power2, of dm] by simp
+    have "(min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2) = (min c 1)\<^sup>2 * dp\<^sup>2 + (min c 1)\<^sup>2 * dm\<^sup>2"
+      by (simp add: algebra_simps)
+    also have "\<dots> \<le> c\<^sup>2 * dp\<^sup>2 + dm\<^sup>2" using m1 m2 by linarith
+    also have "\<dots> = (c * dp)\<^sup>2 + dm\<^sup>2" by (simp add: power_mult_distrib)
+    finally have "(min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2) \<le> (c * dp)\<^sup>2 + dm\<^sup>2" .
+    then have step: "sqrt ((min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)) \<le> sqrt ((c * dp)\<^sup>2 + dm\<^sup>2)"
+      by (rule real_sqrt_le_mono)
+    have "sqrt ((min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)) = min c 1 * sqrt (dp\<^sup>2 + dm\<^sup>2)"
+      using mn0 by (simp add: real_sqrt_mult)
+    then show ?thesis using step unfolding ds dv by simp
+  qed
+qed
+
+theorem ell_op_usc_scale:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes c0: "0 < c"
+  shows "ell_op_usc k L (c *\<^sub>R p) M = ell_op_usc k L p M"
+proof -
+  define \<Psi> :: "((real^'n) \<times> (real^'n^'n)) \<Rightarrow> ((real^'n) \<times> (real^'n^'n))"
+    where "\<Psi> = (\<lambda>v. (c *\<^sub>R fst v, snd v))"
+  have F: "ell_op_pair k L (\<Psi> v) = ell_op_pair k L v" for v
+    unfolding \<Psi>_def ell_op_pair_def by (simp add: ell_op_scale[OF c0])
+  have mx0: "0 < max c 1" using c0 by simp
+  have mn0: "0 < min c 1" using c0 by simp
+  have sub1: "\<Psi> ` ball (p, M) (e / max c 1) \<subseteq> ball (\<Psi> (p, M)) e" if e0: "0 < e" for e
+  proof
+    fix w assume "w \<in> \<Psi> ` ball (p, M) (e / max c 1)"
+    then obtain v where vb: "v \<in> ball (p, M) (e / max c 1)" and wv: "w = \<Psi> v" by auto
+    have dvz: "dist (p, M) v < e / max c 1" using vb by simp
+    have "dist (\<Psi> (p, M)) (\<Psi> v) \<le> max c 1 * dist (p, M) v"
+      unfolding \<Psi>_def by (rule dist_prod_scale_fst(1)[OF c0])
+    also have "\<dots> < max c 1 * (e / max c 1)"
+      by (rule mult_strict_left_mono[OF dvz mx0])
+    also have "\<dots> = e" using mx0 by simp
+    finally show "w \<in> ball (\<Psi> (p, M)) e" unfolding wv by simp
+  qed
+  have sub2: "ball (\<Psi> (p, M)) (min c 1 * e) \<subseteq> \<Psi> ` ball (p, M) e" if e0: "0 < e" for e
+  proof
+    fix w assume wb: "w \<in> ball (\<Psi> (p, M)) (min c 1 * e)"
+    define v where "v = ((inverse c) *\<^sub>R fst w, snd w)"
+    have wv: "\<Psi> v = w" unfolding \<Psi>_def v_def using c0 by simp
+    have "min c 1 * dist (p, M) v \<le> dist (\<Psi> (p, M)) (\<Psi> v)"
+      unfolding \<Psi>_def by (rule dist_prod_scale_fst(2)[OF c0])
+    also have "\<dots> < min c 1 * e" unfolding wv using wb by simp
+    finally have "dist (p, M) v < e" using mn0 by simp
+    then have "v \<in> ball (p, M) e" by simp
+    then show "w \<in> \<Psi> ` ball (p, M) e" using wv by (metis image_eqI)
+  qed
+  have "(INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> (p, M)) e. ell_op_pair k L w)
+      = (INF e \<in> {0<..}. SUP w \<in> ball (p, M) e. ell_op_pair k L w)"
+    by (rule ell_op_usc_transfer[OF F mx0 mn0 sub1 sub2])
+  then show ?thesis unfolding ell_op_usc_def \<Psi>_def by simp
+qed
+
+theorem ell_op_usc_conj_rot:
+  fixes p :: "real^'n::finite" and M R :: "real^'n^'n"
+  assumes orth: "orthogonal_matrix R"
+  shows "ell_op_usc k L (R *v p) (R ** M ** transpose R) = ell_op_usc k L p M"
+proof -
+  define \<Psi> :: "((real^'n) \<times> (real^'n^'n)) \<Rightarrow> ((real^'n) \<times> (real^'n^'n))"
+    where "\<Psi> = (\<lambda>v. (R *v fst v, R ** snd v ** transpose R))"
+  have F: "ell_op_pair k L (\<Psi> v) = ell_op_pair k L v" for v
+    unfolding \<Psi>_def ell_op_pair_def by (simp add: ell_op_conj_rot[OF orth])
+  have isom: "dist (\<Psi> v) (\<Psi> v') = dist v v'" for v v'
+  proof -
+    have p1: "R *v fst v - R *v fst v' = R *v (fst v - fst v')"
+      by (rule matvec_diff_right[symmetric])
+    have p2: "R ** snd v ** transpose R - R ** snd v' ** transpose R
+        = R ** (snd v - snd v') ** transpose R"
+      by (simp add: matrix_mul_diff_right matrix_mul_diff_left)
+    show ?thesis
+      unfolding \<Psi>_def dist_prod_def dist_norm
+      by (simp add: p1 p2 norm_orthogonal_matrix_vector[OF orth]
+          norm_conj_orthogonal[OF orth])
+  qed
+  have one: "(0 :: real) < 1" by simp
+  have sub1: "\<Psi> ` ball (p, M) (e / 1) \<subseteq> ball (\<Psi> (p, M)) e" if e0: "0 < e" for e
+  proof
+    fix w assume "w \<in> \<Psi> ` ball (p, M) (e / 1)"
+    then obtain v where vb: "v \<in> ball (p, M) (e / 1)" and wv: "w = \<Psi> v" by auto
+    have "dist (\<Psi> (p, M)) (\<Psi> v) = dist (p, M) v" by (rule isom)
+    also have "\<dots> < e" using vb by simp
+    finally show "w \<in> ball (\<Psi> (p, M)) e" unfolding wv by simp
+  qed
+  have sub2: "ball (\<Psi> (p, M)) (1 * e) \<subseteq> \<Psi> ` ball (p, M) e" if e0: "0 < e" for e
+  proof
+    fix w assume wb: "w \<in> ball (\<Psi> (p, M)) (1 * e)"
+    define v where "v = (transpose R *v fst w, transpose R ** snd w ** R)"
+    have wv: "\<Psi> v = w"
+      unfolding \<Psi>_def v_def
+      by (simp add: matvec_orth_inv[OF orth] conj_orth_inv[OF orth])
+    have "dist (p, M) v = dist (\<Psi> (p, M)) (\<Psi> v)" by (rule isom[symmetric])
+    also have "\<dots> < e" unfolding wv using wb by simp
+    finally have "v \<in> ball (p, M) e" by simp
+    then show "w \<in> \<Psi> ` ball (p, M) e" using wv by (metis image_eqI)
+  qed
+  have "(INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> (p, M)) e. ell_op_pair k L w)
+      = (INF e \<in> {0<..}. SUP w \<in> ball (p, M) e. ell_op_pair k L w)"
+    by (rule ell_op_usc_transfer[OF F one one sub1 sub2])
+  then show ?thesis unfolding ell_op_usc_def \<Psi>_def by simp
+qed
+
+text \<open>The \<open>ell_op_lsc\<close> versions follow from \<open>ell_op_usc_transfer\<close> verbatim with
+  \<open>INF\<close> and \<open>SUP\<close> exchanged; they are not needed by Theorem 4.3, which reads the
+  supersolution side only, so they are not stated.\<close>
 
 end
