@@ -901,7 +901,11 @@ Theorem 4.3, Proposition 4.1, and the definition of the transformations
 
 #### Work packages, in execution order
 
-**P0 — general lemmas into Envelopes** (one reprocess of the chain, ~10 min;
+**P0 — DONE** (2026-08-11, `52946d8` + `f78b7e4`), INCLUDING the
+  `ell_op_usc` invariances that the first pass deferred:
+  `ell_op_usc_transfer` (a metric-free INF/SUP sandwich, so one lemma serves
+  both cases), `ell_op_usc_scale`, `ell_op_usc_conj_rot`.  Original scoping
+  note: general lemmas into Envelopes (one reprocess of the chain, ~10 min;
 place everything here FIRST so later packages never edit upstream again).
   * MOVE `lsc_env` + its lemmas (`lsc_env_bdd_above`, `_le_self`, `_ge`,
     `_approx`, `_lower`, `_attains_inf`, `lsc_env_eq_self`) from
