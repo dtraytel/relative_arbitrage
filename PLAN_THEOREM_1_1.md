@@ -44,9 +44,9 @@ time from `K`.
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
 | (2) | `visc_sol k L (interior K) v` | **DONE — BOTH halves, 2026-08-11.**  Subsolution `Paper_Viscosity.paper_v_visc_subsol`, with the paper's own operator (1.9), orthogonality included, in the envelope-FREE form (STRONGER than Def. 3.1(a)).  Supersolution `Paper_Viscosity.paper_v_supersol_lsc`, Def. 3.1(b) verbatim, plus `paper_v_supersol_lsc_bounded` with the horizon hypothesis discharged for bounded `K`.  Gaps 1 and 2 CLOSED; no stochastic integration and no weak SDE solution anywhere — §1.10 |
-| (3) | zero boundary condition | **SUPERSOLUTION HALF DONE** (`Theorem_1_1.paper_v_supersol_bc`): Definition 3.1(b) WITH its boundary gate, and the gate is VACUOUS because `paper_v ≥ 0` forces `lsc_env paper_v ≥ 0`.  **SUBSOLUTION HALF = P6, OPEN** (hypothesis of `theorem_1_1_uniqueness_faithful`).  Note the target was corrected 2026-08-11: the paper's clause is the VISCOSITY boundary condition, NOT pointwise `v = 0` on `K − interior K`, which is FALSE in general (cube, `k = 2`: `v > 0` on the open 2-faces, paper Lemma 5.3).  Ball instance `paper_v_boundary_zero` |
+| (3) | zero boundary condition | **DONE, BOTH HALVES, 2026-08-11.**  Subsolution `Paper_Viscosity.paper_v_subsol_bc` (P6), supersolution `Theorem_1_1.paper_v_supersol_bc` (gate vacuous, since `paper_v ≥ 0`).  Target corrected 2026-08-11: the paper's clause is the VISCOSITY boundary condition, NOT pointwise `v = 0` on `K − interior K`, which is FALSE in general (cube, `k = 2`).  Ball instance `paper_v_boundary_zero` |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general`, and since 2026-08-11 stated over the paper's **Definition 3.1** rather than the repo's stronger envelope-free notions, so it is Theorem 4.2(a) as written — §1.11 |
-| (2)+(4) | `paper_v` IS the solution | **DONE modulo P4 and P6** — `Theorem_1_1.theorem_1_1_uniqueness_faithful`, the faithful statement: uniqueness among BOUNDED USC Definition-3.1-with-boundary-condition solutions on an expandable `K`.  Route: `uniqueness_expandable` (Prop 4.1) ← `comparison_expandable` (Thm 4.3) ← `comparison_two_domain` (P4).  The earlier `paper_v_unique_viscosity_solution` and its continuity hypothesis are superseded — continuity is NOT part of Theorem 1.1 |
+| (2)+(4) | `paper_v` IS the solution | **DONE modulo P4 alone** — `Theorem_1_1.theorem_1_1_uniqueness_faithful`: uniqueness among BOUNDED USC Definition-3.1-with-boundary-condition solutions on an expandable `K`.  Route: `uniqueness_expandable` (Prop 4.1) ← `comparison_expandable` (Thm 4.3) ← `comparison_two_domain` (P4).  Continuity is NOT part of Theorem 1.1; `paper_v_unique_viscosity_solution` is superseded |
 
 **Three value functions exist**, and the theorem must end up about ONE.
 `val_fn` (all `sufficiently_volatile_market` instances), `stopped_val_fn`
@@ -69,8 +69,8 @@ one — see §1.7.
 
 | item | § | lines | risk |
 |---|---|---|---|
-| **P4** `comparison_two_domain` (Thm 4.2(b)) | 2.0 | 3,000–6,000 | HIGH — needs Crandall–Ishii for usc/lsc data (the repo's sup-convolution route is tied to CONTINUOUS data; see P1 note), and a CI step from a global-over-`K` touching at a possibly-boundary point.  Read the PDF first |
-| **P6** boundary subsolution for `paper_v` | 2.0 | 400–1,500 | MODERATE — audit whether interiority in `paper_v_visc_subsol` is only keeping the small-ball stopping inside where the process lives (which `essinf ≥ v x > 0` supplies) or is needed geometrically |
+| **P4** `comparison_two_domain` (Thm 4.2(b)) | 2.0 | 1,500–3,000 | MODERATE — the enablers are proved (gate open at the maximiser, gate propagates through the sup-convolution, env→local is Ω-generic); the work is re-running the doubling over `K × K'` with the x-side boundary-avoidance replaced by the gate |
+| ~~**P6** boundary subsolution for `paper_v`~~ | 2.0 | — | **DONE** 2026-08-11 (`paper_v_subsol_bc`) |
 | ~~rest of §2.0 (P0, P2, P3, P5, P7)~~ | 2.0 | — | **DONE** 2026-08-11 |
 | Example 3.1 exact, all `k` | 2.2 | 1,500–2,500 | low-moderate — the subspace-tangential field mirrors a proven chain; no DPP needed |
 | `stopped_val_fn ≤ paper_v` | 2.3 | ? | only if §2.2 wants it |
@@ -829,89 +829,83 @@ should be an output rather than an input.
 
 ## 2. What is LEFT
 
-### THE OPEN LIST (2026-08-11, authoritative — everything else in §2.0 is DONE)
+### THE OPEN LIST (2026-08-11, authoritative)
 
-Theorem 1.1 is complete except for **exactly two** obligations.  Nothing else
-in §2.0 is open; §2.2 is a separate illustration and is NOT needed for
-Theorem 1.1.
+Theorem 1.1 rests on **exactly one** admitted step.
 
 | # | what | where | form |
 |---|---|---|---|
 | **P4** | `comparison_two_domain` — the paper's Theorem 4.2(b) | `Comparison_Assembly.thy` | **the only `sorry` in the repo** |
-| **P6** | the boundary SUBsolution clause for `paper_v` | hypothesis `P6` of `theorem_1_1_uniqueness_faithful`, `Theorem_1_1.thy` | a **hypothesis**, not a `sorry` — the theorem is honestly conditional |
 
-Discharging both turns `theorem_1_1_uniqueness_faithful` into Theorem 1.1 as
-the paper states it: `paper_v` is a bounded usc viscosity solution of
+**P6 is CLOSED** (`Paper_Viscosity.paper_v_subsol_bc`, 2026-08-11), so
+`theorem_1_1_uniqueness_faithful` no longer carries it as a hypothesis.  The
+audit came out the easy way but not for the predicted reason:
+`paper_v_visc_subsol` never *uses* `x ∈ interior K` — it is assumed and
+ignored, since `paper_v_touch_orth` is indifferent to where `x` sits (hence
+`paper_v_visc_subsol_any`, the same proof for an arbitrary `Ω`).  What the
+gate actually buys is the upgrade from a touching global over `K` to a local
+one: off `K` the value is `0` (`paper_v_zero_outside`, because a path starting
+outside `K` has exit time `0`) while `φ` is continuous, so near a boundary `x`
+with `v x > 0` the needed `0 − φ z ≤ v x − φ x` follows from `φ x − φ z < v x`.
+No stochastic argument was involved.
+
+Discharging P4 turns `theorem_1_1_uniqueness_faithful` into Theorem 1.1 as the
+paper states it: `paper_v` is a bounded usc viscosity solution of
 `F(∇v, ∇²v) = 1` on `K` with the zero boundary condition of Definition 3.1,
 and on an expandable `K` it is the only one.
 
-**P4's mathematical content, stated sharply** (do not re-derive; see the long
-comment at the `comparison_two_domain` site for the verified/refuted split):
-a Crandall–Ishii step on the `u`-side that works from a touching which is
-GLOBAL over `K` at a point that may lie on `∂K`.  The `w`-side is
-unproblematic — `K ⊆ K'°` gives `y^h` a genuine neighbourhood.
+#### P4: the route, with the enablers proved
 
-Three things about P4 are settled and must not be relitigated:
-* **VERIFIED** (`doubled_maximiser_gate_open`, `doubled_maximiser_in_gate`,
-  `comparison_failure_gives_theta`): the gate is open at every doubled
+Do not relitigate any of the following; each is either a checked lemma or a
+checked refutation, all at the `comparison_two_domain` site.
+
+**Proved enablers.**
+* `doubled_maximiser_gate_open`, `doubled_maximiser_in_gate`,
+  `comparison_failure_gives_theta` — the gate is open at EVERY doubled
   maximiser.  If comparison fails then `M > 0`, and
   `θu(x^h) − w(y^h) − pen ≥ M > 0` with `w ≥ 0`, `pen ≥ 0` forces
-  `u(x^h) > 0`.  So there is **never** a case-split on the sign of `u`.
-* **REFUTED**: that the gate fact reduces P4 to a re-run of Theorem 4.2(a).
-  `comparison_soft_diagonal` assumes `cball p R_w ⊆ interior K` and
-  `comparison_soft_off_diagonal` the `farx` package — Jensen/supconv PERTURBS
-  the touching point, so it needs a whole BALL inside the region where the
-  viscosity property holds.  Being in `Ω` ≠ having a neighbourhood in `Ω`.
-* **REFUTED**: that explicit penalty jets substitute for Crandall–Ishii.
-  Freezing one variable gives the same gradient `p` but Hessians `X = q''`
-  and `Y = −q''`; for convex `q`, `Y ⪯ 0 ⪯ X`, and since `F` DECREASES in the
-  Hessian, `F_*(p,X) ≤ 1 ≤ F*(p,Y)` is consistent.  `X ⪯ Y` is exactly what
-  CI supplies.
+  `u(x^h) > 0`.  There is never a case-split on the sign of `u`.
+* `supconv_attain_gate_open` — the gate PROPAGATES through the
+  sup-convolution: the attainment point `y^s` of `supconv (θu) ε` at `x^h`
+  again has `u(y^s) > 0`.  So every point where the chain reads the
+  subsolution property lies in the gated `Ω`.
+* `visc_subsol_env_imp_visc_subsol` is **Ω-generic** (existing lemma, checked):
+  it turns `visc_subsol_env k L K Ω u` into the LOCAL `visc_subsol k L Ω u` for
+  an ARBITRARY `Ω`, no interiority and no openness — the quartic deepening
+  globalises any local touching, at a boundary point just as well as an
+  interior one.
 
-**Do not trust the automated §4 summary** quoted in §2.0 below.  It claims the
-boundary case closes because the boundary condition yields `κu(x^ε) ≤ 0` — in
-direct tension with the VERIFIED gate fact.  Read the PDF.
+**Refuted, do not attempt.**
+* That explicit penalty jets replace Crandall–Ishii.  Freezing one variable
+  gives the same gradient `p` but Hessians `X = q''` and `Y = −q''`; for convex
+  `q`, `Y ⪯ 0 ⪯ X`, and since `F` DECREASES in the Hessian,
+  `F_*(p,X) ≤ 1 ≤ F*(p,Y)` is consistent.  `X ⪯ Y` is what CI supplies.
+* That `supconv_uniform_upper` can be usc-ified.  Counterexample: `u = 1` at
+  `0`, `0` elsewhere on `cball 0 1`; then `supconv u ε x ≥ max (1 − |x|²/(2ε)) 0`,
+  so at `|x| = √ε` the gap is `≥ 1/2` for EVERY `ε`.  Sup-convolutions of usc
+  functions decrease to them pointwise, never uniformly.
 
-**P1: off the critical path, but NOT cheap, and NOT done.**
+**The route.**  Re-run `doubling_localised_maximiser_soft` and
+`comparison_soft_complete` over `K × K'` with
 
-*Off the critical path*: the chain that got built does not route through
-`max_principle_boundary` at all — verified 2026-08-11 by walking
+1. the **x-side boundary-avoidance DELETED** — it was the only consumer of
+   `supconv_uniform_upper`, and the gate replaces it;
+2. the **y-side avoidance kept** — and it is easy: `K ⊆ interior K'` gives
+   `dist(K, ∂K') > 0`, which beats the penalty for small `ε`, so `y^h` is
+   interior to `K'` and `cball y^h R_w ⊆ interior K'` for free.  (The ball
+   requirement in `comparison_soft_diagonal` is on the SUPERSOLUTION side; that
+   is exactly why the paper uses two domains.)
+
+The Crandall–Ishii core (`Sup_Convolution`, `comparison_soft_off_diagonal`,
+`comparison_soft_diagonal`) is consumed unchanged — it never mentions
+`interior K`.
+
+**P1 is not an item.**  The chain that got built never routes through
+`max_principle_boundary` — verified by walking
 `theorem_1_1_uniqueness_faithful` → `uniqueness_expandable` →
 `comparison_expandable` → `comparison_two_domain`.  `max_principle_boundary`
-is still stated with `continuous_on K u` and `continuous_on K w`, and the only
-things that still consume it are the SUPERSEDED
-`theorem_1_1_uniqueness_general` / `paper_v_unique_viscosity_solution`.  So
-Theorem 1.1 does not need P1.
-
-*Not cheap* — and this re-prices P4 too.  An earlier version of this plan said
-the usc/lsc audit was "confined to attainment and extension".  **That is
-wrong.**  `doubling_localised_maximiser_soft` calls `supconv_uniform_upper`,
-
-    compact K, u bounded, `continuous_on UNIV u`, σ > 0
-      ⟹ ∃ε₀>0. ∀ε ≤ ε₀. ∀x∈K. supconv u ε x ≤ u x + σ
-
-to fix `ε` UNIFORMLY over `K` *before* the maximiser is known — that uniform
-closeness is what pushes the doubled maximisers away from `∂K`.  **The uniform
-statement is FALSE for merely usc `u`.**  Counterexample: `u = 1` at `0` and
-`0` elsewhere (usc), `K = cball 0 1`.  Then
-`supconv u ε x ≥ max (1 − |x|²/(2ε)) 0`, so at `|x| = √ε` we get
-`supconv u ε x ≥ 1/2` while `u x = 0`; the sup of `supconv u ε − u` over `K`
-stays `≥ 1/2` for every `ε`.  Sup-convolutions of usc functions decrease to
-them POINTWISE, never uniformly, and Dini does not apply because the limit is
-not continuous.
-
-*Consequence, and it is the main structural fact for whoever does P4*: the
-repo's "soft" route (sup-convolution + Jensen, `Sup_Convolution` →
-`doubling_localised_maximiser_soft` → `comparison_soft_*`) is **tied to
-continuous data by design, not by oversight**.  P4 cannot be obtained by
-widening `Ω` in that chain, nor by usc-ifying it.  It needs the classical
-Crandall–Ishii lemma stated for usc/lsc functions directly — which is exactly
-why the literature states CI that way.  Budget P4 accordingly: a CI-for-usc
-development, not a refactor.
-
-P1's own reusable ingredients (`usc_attains_sup_gen`, `usc_extension_bounded`,
-the envelope toolbox) ARE built and live in `Envelopes`; what is missing for
-both P1 and P4 is the same thing — CI without continuity.
+is still `continuous_on`-based and is now consumed only by the SUPERSEDED
+`theorem_1_1_uniqueness_general` / `paper_v_unique_viscosity_solution`.
 
 (The DPP at a stopping time, which was §2.1 until 2026-08-08, is now §1.9; the
 two viscosity inequalities, which were §2.1 until 2026-08-11, are now §1.10,
