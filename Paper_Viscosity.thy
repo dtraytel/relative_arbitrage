@@ -16111,6 +16111,102 @@ proof -
 qed
 
 
+subsection \<open>Case 2, and the supersolution property\<close>
+
+text \<open>Letting \<open>\<epsilon> \<rightarrow> 0\<close> along \<open>1/(j+1)\<close> moves the Hessian back to \<open>H\<close>,
+  and one more application of \<open>ell_op_usc_ge_one_limit\<close> --- this time in
+  the matrix argument rather than the gradient --- finishes Case 2.\<close>
+
+theorem paper_v_case2:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
+    and rho0: "0 < \<rho>\<^sub>0"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
+    and cap: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+  shows "1 \<le> ell_op_usc k L 0 H"
+proof -
+  define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
+  have es0: "0 < es j" for j unfolding es_def by simp
+  have eslim: "es \<longlonglongrightarrow> 0"
+    unfolding es_def using LIMSEQ_inverse_real_of_nat
+    by (simp add: divide_inverse)
+  have ge: "1 \<le> ell_op_usc k L 0 (H - es j *\<^sub>R mat 1)" for j
+    by (rule paper_v_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0 rho0 tmin cap es0])
+  have lim: "(\<lambda>j. (0 :: real^'n, H - es j *\<^sub>R mat 1)) \<longlonglongrightarrow> (0, H)"
+  proof -
+    have "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0 *\<^sub>R mat 1"
+      by (rule tendsto_scaleR[OF eslim tendsto_const])
+    then have z: "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0" by simp
+    have "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H - 0"
+      by (rule tendsto_diff[OF tendsto_const z])
+    then have m: "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H" by simp
+    show ?thesis by (rule tendsto_Pair[OF tendsto_const m])
+  qed
+  show ?thesis by (rule ell_op_usc_ge_one_limit[OF ge lim])
+qed
+
+text \<open>Definition 3.1(b) for the paper's own value function.  Case 1
+  (\<open>\<nabla>\<phi>(x) \<noteq> 0\<close>) is the skew-trick contradiction, lifted from
+  \<open>ell_op\<close> to \<open>ell_op_usc\<close>; Case 2 (\<open>\<nabla>\<phi>(x) = 0\<close>) is the dichotomy
+  above.  A global touching over \<open>K\<close> is in particular a local one, which
+  is all either case consumes.
+
+  The hypothesis \<open>cap\<close> says the horizon never binds on the interior.  It
+  is needed only by Case 2 --- Case 1 DERIVES it from the nonvanishing
+  gradient --- and it is faithful to the paper, which has no horizon at
+  all.  For a bounded \<open>K\<close> it follows from
+  @{thm [source] paper_v_le_ball_bound}.\<close>
+
+theorem paper_v_supersol_lsc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K"
+    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+  shows "visc_supersol_lsc k L K (interior K)
+      (\<lambda>u. enn2real (paper_v k L T K u))"
+  unfolding visc_supersol_lsc_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x"
+    and tmin: "\<forall>y\<in>K. lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
+  have loc: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
+    if yK: "y \<in> K" and dy: "dist x y < 1" for y
+    using tmin yK by blast
+  show "1 \<le> ell_op_usc k L (g x) H"
+  proof (cases "g x = 0")
+    case False
+    have plain: "1 \<le> ell_op k L (g x) H"
+    proof (rule ccontr)
+      assume "\<not> 1 \<le> ell_op k L (g x) H"
+      then have flt: "ell_op k L (g x) H < 1" by simp
+      show False
+        by (rule paper_v_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc xi
+              tf zero_less_one loc False flt])
+    qed
+    have "(1 :: ereal) \<le> ereal (ell_op k L (g x) H)" using plain by simp
+    also have "\<dots> \<le> ell_op_usc k L (g x) H" by (rule ell_op_le_ell_op_usc)
+    finally show ?thesis .
+  next
+    case True
+    have "1 \<le> ell_op_usc k L 0 H"
+      by (rule paper_v_case2[OF T0 L1 k1 kn Kc xi tf True zero_less_one loc
+            cap[OF xi]])
+    then show ?thesis unfolding True .
+  qed
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
