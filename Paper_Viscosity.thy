@@ -4203,6 +4203,239 @@ proof (intro ballI allI impI)
   qed
 qed
 
+section \<open>P6: the boundary subsolution clause for \<open>paper_v\<close>\<close>
+
+text \<open>The proof of \<open>paper_v_visc_subsol\<close> above never uses \<open>x \<in> interior K\<close>:
+  everything is driven by the LOCAL touching, and \<open>paper_v_touch_orth\<close> is
+  indifferent to where \<open>x\<close> sits.  So the local subsolution property holds on
+  ANY \<open>\<Omega>\<close>, which is the first half of P6.\<close>
+
+theorem paper_v_visc_subsol_any:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and kn: "k < CARD('n)"
+  shows "visc_subsol k L \<Omega> (\<lambda>z. enn2real (paper_v k L T K z))"
+  unfolding visc_subsol_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>z \<in> ball x e.
+        enn2real (paper_v k L T K z) - \<phi> z
+          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+  have L0: "0 \<le> L" using L1 by simp
+  from lm obtain e0 where e00: "0 < e0"
+    and lme: "\<And>z. z \<in> ball x e0 \<Longrightarrow>
+        enn2real (paper_v k L T K z) - \<phi> z
+          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+    by blast
+  define C where "C = real CARD('n) * L"
+  have n0: "0 < real CARD('n)"
+    using zero_less_card_finite[where 'a = 'n] by simp
+  have C0: "0 < C"
+    unfolding C_def by (intro mult_pos_pos n0) (use L1 in linarith)
+  have key: "ell_op k L (g x) H \<le> 1 + \<delta> * C / 2" if d0: "0 < \<delta>" for \<delta>
+  proof -
+    obtain r where r0: "0 < r"
+      and dom: "\<And>z. z \<in> ball x r \<Longrightarrow>
+          \<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+            + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+      using test_fun_quadratic_dominates[OF tf d0] by blast
+    define ebar where "ebar = min e0 r / 2"
+    have eb0: "0 < ebar" using e00 r0 by (simp add: ebar_def)
+    have touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
+        enn2real (paper_v k L T K z)
+          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+            + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+    proof -
+      fix z assume z: "dist z x \<le> ebar"
+      have zin: "z \<in> ball x e0 \<inter> ball x r"
+        using z e00 r0 by (auto simp: ebar_def mem_ball dist_commute)
+      have "enn2real (paper_v k L T K z) - \<phi> z
+          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+        using lme zin by blast
+      moreover have "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+        using dom zin by blast
+      ultimately show "enn2real (paper_v k L T K z)
+          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+            + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+        by linarith
+    qed
+    obtain b where bmem: "b \<in> sconstraint k L"
+      and wb: "- trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2 \<le> 1"
+      and borth: "b *v (g x) = 0"
+      by (rule paper_v_touch_orth[OF T L1 Kc eb0 touch])
+    obtain a where afeas: "a \<in> feasible k L (g x)"
+      and aval: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2
+          \<le> - trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2"
+      by (rule sconstraint_orth_feasible[OF kn L1 bmem borth])
+    have wa: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2 \<le> 1"
+      using aval wb by linarith
+    have split: "trace ((H + \<delta> *\<^sub>R mat 1) ** a) = trace (H ** a) + \<delta> * trace a"
+    proof -
+      have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
+        by (rule matrix_add_rdistrib)
+      moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
+        by (simp add: scaleR_matrix_mult matrix_mul_lid)
+      ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
+          = trace (H ** a + \<delta> *\<^sub>R a)" by simp
+      have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"
+        by (simp add: trace_def sum.distrib vector_add_component)
+      have e3: "trace (\<delta> *\<^sub>R a) = \<delta> * trace a" by (rule trace_scaleR)
+      from e1 e2 e3 show ?thesis by simp
+    qed
+    have tra: "trace a \<le> C"
+      unfolding C_def by (rule feasible_trace_le[OF afeas])
+    have "- trace (H ** a) / 2 \<le> 1 + \<delta> * trace a / 2"
+      using wa split by (simp add: field_simps)
+    also have "\<dots> \<le> 1 + \<delta> * C / 2"
+      using tra d0 by (simp add: mult_left_mono)
+    finally have wH: "- trace (H ** a) / 2 \<le> 1 + \<delta> * C / 2" .
+    show ?thesis by (rule ell_op_le_of_witness[OF afeas wH])
+  qed
+  show "ell_op k L (g x) H \<le> 1"
+  proof (rule field_le_epsilon)
+    fix e :: real assume e0': "0 < e"
+    have d0: "0 < 2 * e / C" using e0' C0 by simp
+    have "ell_op k L (g x) H \<le> 1 + (2 * e / C) * C / 2"
+      by (rule key[OF d0])
+    also have "\<dots> = 1 + e" using C0 by (simp add: field_simps)
+    finally show "ell_op k L (g x) H \<le> 1 + e" .
+  qed
+qed
+
+text \<open>Outside \<open>K\<close> the exit time is already zero, so the value vanishes.  This
+  is what makes the gate \<open>v x > 0\<close> do its work below.\<close>
+
+lemma paper_v_zero_outside:
+  fixes K :: "(real^'n::finite) set" and z :: "real^'n"
+  assumes T0: "0 \<le> T" and z: "z \<notin> K"
+  shows "paper_v k L T K z = 0"
+proof -
+  have "paper_v k L T K z \<le> 0"
+    unfolding paper_v_def
+  proof (rule Sup_least)
+    fix e :: ennreal
+    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+        ` paper_pair_class k L T z"
+    then obtain Q where Q: "Q \<in> paper_pair_class k L T z"
+      and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
+    have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+    have st: "AE \<omega> in Q. fst (\<omega> 0) = z \<and> snd (\<omega> 0) = 0"
+      by (rule paper_pair_class_start[OF Q])
+    have zero: "AE \<omega> in Q. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))) = 0"
+    proof (rule eventually_mono[OF st])
+      fix \<omega> :: "'n pairpath"
+      assume "fst (\<omega> 0) = z \<and> snd (\<omega> 0) = 0"
+      then have z0: "fst (\<omega> 0) = z" by blast
+      have "pexit T K (\<lambda>t. fst (\<omega> t)) \<le> 0"
+        unfolding pexit_def
+        by (rule etime_le_of_mem[OF T0 order.refl T0]) (use z0 z in simp)
+      moreover have "0 \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+        unfolding pexit_def by (rule etime_nonneg[OF T0])
+      ultimately show "ennreal (pexit T K (\<lambda>t. fst (\<omega> t))) = 0" by simp
+    qed
+    have "e \<le> (\<integral>\<^sup>+\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))) \<partial>Q)"
+      unfolding e by (rule ess_inf_time_le_nn_integral[OF prob])
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. 0 \<partial>Q)" by (rule nn_integral_cong_AE[OF zero])
+    also have "\<dots> = 0" by simp
+    finally show "e \<le> 0" .
+  qed
+  then show ?thesis by simp
+qed
+
+text \<open>\<^bold>\<open>P6\<close>: Definition 3.1(a) for \<open>paper_v\<close> INCLUDING the boundary clause.  At a
+  boundary point where the value is strictly positive, a touching that is only
+  global over \<open>K\<close> upgrades to a local one: off \<open>K\<close> the value is \<open>0\<close>
+  (\<open>paper_v_zero_outside\<close>) while the test function is continuous, so for \<open>z\<close>
+  close enough to \<open>x\<close> the required inequality \<open>0 - \<phi> z \<le> v x - \<phi> x\<close> is implied
+  by \<open>\<phi> x - \<phi> z < v x\<close>.  That is exactly what the gate buys.\<close>
+
+theorem paper_v_subsol_bc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and kn: "k < CARD('n)"
+  shows "visc_subsol_env k L K
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (paper_v k L T K x)})
+      (\<lambda>z. enn2real (paper_v k L T K z))"
+  unfolding visc_subsol_env_def
+proof (intro ballI allI impI)
+  define v where "v = (\<lambda>z. enn2real (paper_v k L T K z))"
+  have T0: "0 \<le> T" using T by simp
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume xO: "x \<in> interior K \<union> {x \<in> K - interior K. 0 < v x}"
+    and tf: "test_fun_at \<phi> g H x"
+    and gmax: "\<forall>y\<in>K. v y - \<phi> y \<le> v x - \<phi> x"
+
+  text \<open>The test function is continuous at \<open>x\<close>.\<close>
+  have cphi: "isCont \<phi> x"
+  proof -
+    obtain ee where ee0: "0 < ee"
+      and dd: "\<And>y. y \<in> ball x ee \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+      using tf unfolding test_fun_at_def by blast
+    have "(\<phi> has_derivative (\<lambda>h. g x \<bullet> h)) (at x)" using dd[of x] ee0 by simp
+    then have "\<phi> differentiable (at x)" by (rule differentiableI)
+    then show ?thesis by (simp add: differentiable_imp_continuous_within)
+  qed
+
+  text \<open>The global touching upgrades to a local one.\<close>
+  have loc: "\<exists>e>0. \<forall>z \<in> ball x e. v z - \<phi> z \<le> v x - \<phi> x"
+  proof (cases "x \<in> interior K")
+    case True
+    obtain e where e0: "0 < e" and eK: "ball x e \<subseteq> K"
+      using True unfolding mem_interior by blast
+    show ?thesis
+    proof (intro exI[of _ e] conjI ballI e0)
+      fix z assume "z \<in> ball x e"
+      then have "z \<in> K" using eK by blast
+      then show "v z - \<phi> z \<le> v x - \<phi> x" using gmax by blast
+    qed
+  next
+    case False
+    then have vpos: "0 < v x" using xO by blast
+    obtain e where e0: "0 < e"
+      and eb: "\<And>z. dist z x < e \<Longrightarrow> \<bar>\<phi> z - \<phi> x\<bar> < v x"
+    proof -
+      from cphi vpos obtain s where s0: "0 < s"
+        and sb: "\<And>y. y \<noteq> x \<Longrightarrow> dist y x < s \<Longrightarrow> dist (\<phi> y) (\<phi> x) < v x"
+        unfolding isCont_def LIM_def by blast
+      have key: "\<bar>\<phi> z - \<phi> x\<bar> < v x" if dz: "dist z x < s" for z
+      proof (cases "z = x")
+        case True then show ?thesis using vpos by simp
+      next
+        case False
+        have "dist (\<phi> z) (\<phi> x) < v x" by (rule sb[OF False dz])
+        then show ?thesis by (simp add: dist_real_def)
+      qed
+      show thesis by (rule that[OF s0 key])
+    qed
+    show ?thesis
+    proof (intro exI[of _ e] conjI ballI e0)
+      fix z assume zb: "z \<in> ball x e"
+      then have dzx: "dist z x < e" by (simp add: dist_commute)
+      show "v z - \<phi> z \<le> v x - \<phi> x"
+      proof (cases "z \<in> K")
+        case True then show ?thesis using gmax by blast
+      next
+        case False
+        have "v z = 0" unfolding v_def
+          using paper_v_zero_outside[OF T0 False] by simp
+        moreover have "\<phi> x - \<phi> z < v x" using eb[OF dzx] by linarith
+        ultimately show ?thesis by linarith
+      qed
+    qed
+  qed
+
+  have "ell_op k L (g x) H \<le> 1"
+    using paper_v_visc_subsol_any[OF T L1 Kc kn, of UNIV] tf loc
+    unfolding visc_subsol_def v_def by blast
+  then have "ereal (ell_op k L (g x) H) \<le> 1" by simp
+  with ell_op_lsc_le_ell_op[of k L "g x" H]
+  show "ell_op_lsc k L (g x) H \<le> 1" by (rule order_trans)
+qed
+
 section \<open>Towards the supersolution half: skew-symmetric covariance fields\<close>
 
 text \<open>The supersolution inequality is an essential-infimum statement, so it

@@ -539,13 +539,13 @@ proof -
   then show ?thesis unfolding v_def[symmetric] gate .
 qed
 
-text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause\<close> --- conditional on P6, the boundary
-  SUBsolution clause for \<open>paper_v\<close>, which is the one remaining obligation on
-  the \<open>paper_v\<close> side (see the note after this theorem), and on
-  \<open>comparison_two_domain\<close> (P4) on the comparison side.
-
-  Everything else is discharged here: \<open>paper_v\<close> is usc, nonnegative, globally
-  bounded, and satisfies Definition 3.1(b) with its boundary gate.\<close>
+text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  Every hypothesis about \<open>paper_v\<close> is
+  now discharged: it is usc (\<open>paper_v_real_usc\<close>), nonnegative, globally
+  bounded (\<open>paper_v_real_bounded\<close>), and satisfies BOTH clauses of
+  Definition 3.1 with their boundary gates --- \<open>paper_v_subsol_bc\<close> (P6) and
+  \<open>paper_v_supersol_bc\<close>.  The only thing the statement still rests on is
+  \<open>comparison_two_domain\<close> (P4), the paper's Theorem 4.2(b), which is the sole
+  admitted step in the development.\<close>
 
 theorem theorem_1_1_uniqueness_faithful:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
@@ -553,10 +553,6 @@ theorem theorem_1_1_uniqueness_faithful:
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
     and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    and P6: "visc_subsol_env k L K
-      (interior K \<union> {x \<in> K - interior K.
-          0 < enn2real (paper_v k L T K x)})
-      (\<lambda>z. enn2real (paper_v k L T K z))"
     and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and Bu: "\<And>y. \<bar>u y\<bar> \<le> rK * rK / real (CARD('n) - k)"
     and subu: "visc_subsol_env k L K
@@ -581,7 +577,7 @@ proof -
     unfolding v_def by (rule paper_v_supersol_bc[OF T0 L1 k1 kn Kc KB Tbig])
   have subv: "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-    unfolding v_def by (rule P6)
+    unfolding v_def by (rule paper_v_subsol_bc[OF T0 L0 Kc kn])
   have "u x = v x"
     by (rule uniqueness_expandable
         [OF k1 kn L0 cK neK expK uscu uscv Bu[unfolded B_def[symmetric]] Bv
@@ -589,21 +585,23 @@ proof -
   then show ?thesis unfolding v_def by simp
 qed
 
-text \<open>\<^bold>\<open>What is left.\<close>  Two obligations, both stated exactly:
-  \<^item> \<^bold>\<open>P4\<close> \<open>comparison_two_domain\<close> (\<open>Comparison_Assembly\<close>) --- the paper's
-    Theorem 4.2(b); its proof is transcribed there as a comment.
-  \<^item> \<^bold>\<open>P6\<close>, the hypothesis \<open>P6\<close> above: extend \<open>paper_v_visc_subsol\<close> from
-    \<open>interior K\<close> to the boundary points where \<open>paper_v > 0\<close>, in the ENVELOPE
-    form.  Audit note: the interior hypothesis enters
-    \<open>paper_v_visc_subsol\<close> only through the small-ball stopping, and at a
-    boundary point with \<open>v x > 0\<close> the optimiser's essential infimum is already
-    \<open>\<ge> v x > 0\<close>, so the process a.s. stays in \<open>K\<close> for a positive time --- which
-    is what interiority was supplying.  If that audit fails, transcribe the
-    paper's \<section>3.1 boundary paragraph instead.
+text \<open>\<^bold>\<open>What is left: exactly one thing.\<close>  \<open>comparison_two_domain\<close> (P4) in
+  \<open>Comparison_Assembly\<close> --- the paper's Theorem 4.2(b) --- is the only admitted
+  step in the whole development.  Discharging it makes Theorem 1.1 complete:
+  \<open>paper_v\<close> is a bounded usc viscosity solution of \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> on \<open>K\<close> with
+  the zero boundary condition of Definition 3.1, and on an expandable \<open>K\<close> it is
+  the only one.
 
-  With those two, \<open>theorem_1_1_uniqueness_faithful\<close> loses its \<open>P6\<close> hypothesis
-  and Theorem 1.1 is complete: \<open>paper_v\<close> is a bounded usc viscosity solution
-  of \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> on \<open>K\<close> with the zero boundary condition of
-  Definition 3.1, and on an expandable \<open>K\<close> it is the only one.\<close>
+  \<^bold>\<open>P6 was closed 2026-08-11\<close> (\<open>Paper_Viscosity.paper_v_subsol_bc\<close>), and the
+  audit predicted in this note came out the easy way, though not for the
+  reason predicted.  \<open>paper_v_visc_subsol\<close> turns out never to USE
+  \<open>x \<in> interior K\<close> at all --- it is assumed and then ignored, since
+  \<open>paper_v_touch_orth\<close> is indifferent to where \<open>x\<close> sits; hence
+  \<open>paper_v_visc_subsol_any\<close> for an arbitrary \<open>\<Omega>\<close>.  What the gate actually buys
+  is the upgrade from a touching that is global over \<open>K\<close> to a local one: off
+  \<open>K\<close> the value is \<open>0\<close> (\<open>paper_v_zero_outside\<close>, because the exit time of a
+  path starting outside \<open>K\<close> is \<open>0\<close>), while \<open>\<phi>\<close> is continuous, so for \<open>z\<close> near a
+  boundary \<open>x\<close> with \<open>v x > 0\<close> the needed \<open>0 - \<phi> z \<le> v x - \<phi> x\<close> follows from
+  \<open>\<phi> x - \<phi> z < v x\<close>.  No stochastic argument was involved.\<close>
 
 end
