@@ -49,6 +49,132 @@ text \<open>And the form actually used downstream: a jet whose matrix arrives as
   abstract symmetric bounded linear map, as everything in
   \<open>Sup_Convolution.thy\<close> produces it.\<close>
 
+subsection \<open>The jet interface to Definition 3.1(b)\<close>
+
+text \<open>Everything downstream consumes the supersolution property in ONE
+  shape: a quadratic built from jet data touches \<open>w\<close> from below on a
+  BALL, and the operator inequality is read off.  That shape is named
+  here, over the UPPER ENVELOPE \<open>F\<^sup>*\<close>, so the whole comparison development
+  can be stated over it; \<open>visc_supersol_env_imp_jet\<close> then derives it from
+  the paper's Definition 3.1(b), once and for all, at the top level where
+  \<open>K\<close> and the bound on \<open>w\<close> are available.
+
+  The two hypotheses of that derivation are exactly the paper's standing
+  ones --- Definition 3.1 is stated for a BOUNDED function on \<open>K\<close>, and
+  \<open>K\<close> is compact throughout \<section>4.  Boundedness of the test function is
+  not assumed but PROVED: the test functions in question are quadratics,
+  and a quadratic is bounded above on a bounded set.\<close>
+
+lemma quad_bdd_above_on_bounded:
+  fixes p yh :: "real^'n::finite" and M :: "real^'n^'n"
+    and K :: "(real^'n) set"
+  assumes Kb: "bounded K"
+  obtains B where "\<And>z. z \<in> K \<Longrightarrow>
+    p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2 \<le> B"
+proof -
+  obtain R where R: "\<And>z. z \<in> K \<Longrightarrow> norm z \<le> R"
+    using Kb unfolding bounded_iff by blast
+  define D where "D = R + norm yh"
+  have bl: "bounded_linear ((*v) M)" by (rule matrix_vector_mul_bounded_linear)
+  define N where "N = onorm ((*v) M)"
+  have N0: "0 \<le> N" unfolding N_def by (rule onorm_pos_le[OF bl])
+  have main: "p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2
+      \<le> norm p * D + D * (N * D) / 2" if zK: "z \<in> K" for z
+  proof -
+    have nz: "norm z \<le> R" by (rule R[OF zK])
+    have nzy: "norm (z - yh) \<le> D"
+    proof -
+      have "norm (z - yh) \<le> norm z + norm yh" by (rule norm_triangle_ineq4)
+      then show ?thesis unfolding D_def using nz by linarith
+    qed
+    have D0: "0 \<le> D" using nzy by (meson norm_ge_zero order_trans)
+    have t1: "p \<bullet> (z - yh) \<le> norm p * D"
+    proof -
+      have "p \<bullet> (z - yh) \<le> norm p * norm (z - yh)"
+        by (rule norm_cauchy_schwarz)
+      moreover have "norm p * norm (z - yh) \<le> norm p * D"
+        by (rule mult_left_mono[OF nzy norm_ge_zero])
+      ultimately show ?thesis by linarith
+    qed
+    have t2: "(z - yh) \<bullet> (M *v (z - yh)) \<le> D * (N * D)"
+    proof -
+      have a: "(z - yh) \<bullet> (M *v (z - yh))
+          \<le> norm (z - yh) * norm (M *v (z - yh))"
+        by (rule norm_cauchy_schwarz)
+      have b: "norm (M *v (z - yh)) \<le> N * norm (z - yh)"
+        unfolding N_def by (rule onorm[OF bl])
+      have c: "N * norm (z - yh) \<le> N * D"
+        by (rule mult_left_mono[OF nzy N0])
+      have d: "norm (z - yh) * norm (M *v (z - yh))
+          \<le> norm (z - yh) * (N * D)"
+      proof (rule mult_left_mono)
+        show "norm (M *v (z - yh)) \<le> N * D" using b c by linarith
+        show "0 \<le> norm (z - yh)" by simp
+      qed
+      have e: "norm (z - yh) * (N * D) \<le> D * (N * D)"
+        by (rule mult_right_mono[OF nzy]) (use N0 D0 in simp)
+      show ?thesis using a d e by linarith
+    qed
+    show ?thesis using t1 t2 by linarith
+  qed
+  show ?thesis by (rule that) (use main in blast)
+qed
+
+definition supersol_jet ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "supersol_jet k L \<Omega> w \<longleftrightarrow>
+     (\<forall>yh\<in>\<Omega>. \<forall>p M. transpose M = M \<longrightarrow>
+        (\<exists>e>0. \<forall>z \<in> ball yh e.
+           w yh - (p \<bullet> (yh - yh) + ((yh - yh) \<bullet> (M *v (yh - yh)))/2)
+             \<le> w z - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2))
+        \<longrightarrow> 1 \<le> ell_op_usc k L p M)"
+
+theorem visc_supersol_env_imp_jet:
+  fixes K :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real"
+  assumes sup: "visc_supersol_env k L K \<Omega> w"
+    and Kb: "bounded K"
+    and wlo: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
+  shows "supersol_jet k L \<Omega> w"
+  unfolding supersol_jet_def
+proof (intro ballI allI impI)
+  fix yh :: "real^'n" and p :: "real^'n" and M :: "real^'n^'n"
+  assume yh: "yh \<in> \<Omega>" and sym: "transpose M = M"
+    and minloc: "\<exists>e>0. \<forall>z \<in> ball yh e.
+      w yh - (p \<bullet> (yh - yh) + ((yh - yh) \<bullet> (M *v (yh - yh)))/2)
+        \<le> w z - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2)"
+  define \<phi> where
+    "\<phi> = (\<lambda>z. p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2)"
+  define gg where "gg = (\<lambda>z. p + M *v (z - yh))"
+  have tf: "test_fun_at \<phi> gg M yh"
+    unfolding \<phi>_def gg_def by (rule jet_test_fun_at[OF sym])
+  have gyh: "gg yh = p" unfolding gg_def by simp
+  obtain B where B: "\<And>z. z \<in> K \<Longrightarrow> \<phi> z \<le> B"
+  proof (rule quad_bdd_above_on_bounded[OF Kb,
+          where p = p and yh = yh and M = M])
+    fix BB :: real
+    assume "\<And>z. z \<in> K \<Longrightarrow>
+      p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2 \<le> BB"
+    then have "\<And>z. z \<in> K \<Longrightarrow> \<phi> z \<le> BB" unfolding \<phi>_def by simp
+    then show thesis by (rule that)
+  qed
+  obtain r where r0: "0 < r"
+    and lm: "\<And>z. z \<in> ball yh r \<Longrightarrow> w yh - \<phi> yh \<le> w z - \<phi> z"
+  proof -
+    obtain e where e0: "0 < e" and ee: "\<forall>z \<in> ball yh e.
+        w yh - (p \<bullet> (yh - yh) + ((yh - yh) \<bullet> (M *v (yh - yh)))/2)
+          \<le> w z - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2)"
+      using minloc by blast
+    have "w yh - \<phi> yh \<le> w z - \<phi> z" if "z \<in> ball yh e" for z
+      using ee that unfolding \<phi>_def by simp
+    then show thesis using e0 by (rule that[rotated])
+  qed
+  have "1 \<le> ell_op_usc k L (gg yh) M"
+    by (rule visc_supersol_env_local[OF sup yh tf wlo B r0 lm])
+  then show "1 \<le> ell_op_usc k L p M" unfolding gyh .
+qed
+
+
 lemma jet_test_fun_at_abstract:
   fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)" and p x :: "real^'n"
   assumes lin: "linear X" and sym: "\<And>v w. v \<bullet> X w = w \<bullet> X v"
