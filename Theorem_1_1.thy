@@ -222,13 +222,15 @@ theorem theorem_1_1_uniqueness_general:
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and su: "visc_sol k L (interior K) u"
-    and sw: "visc_sol k L (interior K) w"
+    and subu: "visc_subsol k L (interior K) u"
+    and supu: "visc_supersol_env k L K (interior K) u"
+    and subw: "visc_subsol k L (interior K) w"
+    and supw: "visc_supersol_env k L K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
     and x: "x \<in> K"
   shows "u x = w x"
   by (rule viscosity_uniqueness_compact
-      [OF cK neK k(1) k(2) L cu cw su sw bd x])
+      [OF cK neK k(1) k(2) L cu cw subu supu subw supw bd x])
 
 section \<open>Example 3.1 realises the ball value exactly (clause (3), n − k = 1)\<close>
 

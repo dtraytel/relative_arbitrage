@@ -225,7 +225,7 @@ lemma jet_test_fun_at_abstract:
 subsection \<open>The closing step of Theorem 4.2\<close>
 
 text \<open>At the test point the gradient field of the jet test function is just
-  \<open>p\<close>, which is what \<open>visc_subsol\<close> and \<open>visc_supersol\<close> feed to \<open>ell_op\<close>.\<close>
+  \<open>p\<close>, which is what \<open>visc_subsol\<close> and \<open>supersol_jet\<close> feed to \<open>ell_op\<close>.\<close>
 
 lemma test_grad_at_point:
   fixes H :: "real^'n::finite^'n" and p x :: "real^'n"
@@ -486,7 +486,7 @@ text \<open>The doubling argument enters the viscosity definitions through the t
   MINIMISER of \<open>w\<close> against \<open>y \<mapsto> - (\<alpha>/2) * norm (xh - y)\<^sup>2\<close>. Both test
   functions are smooth quadratics, so no regularity of \<open>u\<close> or \<open>w\<close> is used
   here; this is the step that converts a two-variable maximum into the
-  one-variable data that \<open>visc_subsol\<close> and \<open>visc_supersol\<close> consume.\<close>
+  one-variable data that \<open>visc_subsol\<close> and \<open>supersol_jet\<close> consume.\<close>
 
 lemma doubling_partial_max_fst:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -586,7 +586,7 @@ qed
 text \<open>Packaging both frozen penalties as test functions in the project's
   sense. Combined with \<open>doubling_partial_max_fst\<close> and
   \<open>doubling_partial_min_snd\<close>, these are precisely the hypotheses that
-  \<open>visc_subsol\<close> and \<open>visc_supersol\<close> require, so the doubled maximum can now be
+  \<open>visc_subsol\<close> and \<open>supersol_jet\<close> require, so the doubled maximum can now be
   fed directly into the two viscosity inequalities.\<close>
 
 lemma frozen_penalty_test_fun_fst:
@@ -647,7 +647,7 @@ text \<open>Feeding the two frozen test functions into the two viscosity definit
 
 theorem doubling_viscosity_inequalities:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and xh: "xh \<in> \<Omega>" and yh: "yh \<in> \<Omega>"
     and lmax: "\<exists>e>0. \<forall>x \<in> ball xh e.
         u x - (\<alpha>/2) * (norm (x - yh))\<^sup>2
@@ -656,7 +656,7 @@ theorem doubling_viscosity_inequalities:
         w yh - (- ((\<alpha>/2) * (norm (xh - yh))\<^sup>2))
         \<le> w y - (- ((\<alpha>/2) * (norm (xh - y))\<^sup>2))"
   shows "ell_op k L (\<alpha> *\<^sub>R (xh - yh)) (\<alpha> *\<^sub>R mat 1) \<le> 1"
-    and "1 \<le> ell_op k L (\<alpha> *\<^sub>R (xh - yh)) ((- \<alpha>) *\<^sub>R mat 1)"
+    and "1 \<le> ell_op_usc k L (\<alpha> *\<^sub>R (xh - yh)) ((- \<alpha>) *\<^sub>R mat 1)"
 proof -
   have tf1: "test_fun_at (\<lambda>x. (\<alpha>/2) * (norm (x - yh))\<^sup>2)
       (\<lambda>x. \<alpha> *\<^sub>R (x - yh)) (\<alpha> *\<^sub>R mat 1) xh"
@@ -668,9 +668,10 @@ next
   have tf2: "test_fun_at (\<lambda>y. - ((\<alpha>/2) * (norm (xh - y))\<^sup>2))
       (\<lambda>y. \<alpha> *\<^sub>R (xh - y)) ((- \<alpha>) *\<^sub>R mat 1) yh"
     by (rule frozen_penalty_test_fun_snd)
-  have "1 \<le> ell_op k L ((\<lambda>y. \<alpha> *\<^sub>R (xh - y)) yh) ((- \<alpha>) *\<^sub>R mat 1)"
-    using sup yh tf2 lmin unfolding visc_supersol_def by blast
-  thus "1 \<le> ell_op k L (\<alpha> *\<^sub>R (xh - yh)) ((- \<alpha>) *\<^sub>R mat 1)" by simp
+  have "1 \<le> ell_op_usc k L ((\<lambda>y. \<alpha> *\<^sub>R (xh - y)) yh) ((- \<alpha>) *\<^sub>R mat 1)"
+    using sup yh tf2 lmin unfolding supersol_jet_def by blast
+  thus "1 \<le> ell_op_usc k L (\<alpha> *\<^sub>R (xh - yh)) ((- \<alpha>) *\<^sub>R mat 1)"
+    by simp
 qed
 
 text \<open>And here is the OBSTRUCTION made precise. Degenerate ellipticity would
@@ -753,7 +754,7 @@ text \<open>Everything assembled. Given the data the doubling argument produces,
 theorem comparison_contradiction:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and X Y :: "(real^'n) \<Rightarrow> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and xh: "xh \<in> \<Omega>" and yh: "yh \<in> \<Omega>"
     and lX: "linear X" and lY: "linear Y"
@@ -761,6 +762,7 @@ theorem comparison_contradiction:
     and symY: "\<And>v z. v \<bullet> Y z = z \<bullet> Y v"
     and ord: "\<And>v. v \<bullet> X v \<le> v \<bullet> Y v"
     and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L" and pnz: "p \<noteq> 0"
     and subtest: "\<exists>e>0. \<forall>z \<in> ball xh e.
         \<theta> * u z - (p \<bullet> (z - xh) + ((z - xh) \<bullet> (matrix X *v (z - xh)))/2)
         \<le> \<theta> * u xh
@@ -786,9 +788,11 @@ proof -
       (\<lambda>z. p + matrix Y *v (z - yh)) (matrix Y) yh"
     by (rule jet_test_fun_at_abstract[OF lY symY])
   have gY: "(\<lambda>z. p + matrix Y *v (z - yh)) yh = p" by simp
-  have "1 \<le> ell_op k L ((\<lambda>z. p + matrix Y *v (z - yh)) yh) (matrix Y)"
-    using sup yh tfY suptest unfolding visc_supersol_def by blast
-  hence supp: "1 \<le> ell_op k L p (matrix Y)" unfolding gY .
+  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + matrix Y *v (z - yh)) yh) (matrix Y)"
+    using sup yh tfY suptest unfolding supersol_jet_def by blast
+  hence "1 \<le> ell_op_usc k L p (matrix Y)" unfolding gY .
+  hence supp: "1 \<le> ell_op k L p (matrix Y)"
+    unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL pnz] by simp
   have psdXY: "psd (matrix Y - matrix X)"
     by (rule psd_of_abstract_le[OF lX lY symX symY ord])
   show False
@@ -816,36 +820,6 @@ text \<open>And the two envelope-form hypotheses in the shape the doubling produ
   project's envelope-free sense are also envelope sub/supersolutions, so the
   whole doubling argument may be run in the envelope setting where the
   \<open>\<delta> \<rightarrow> 0\<close> passage is legitimate.\<close>
-
-lemma doubling_env_forms:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
-    and subK: "\<Omega> \<subseteq> K" and op: "open \<Omega>"
-  shows "visc_subsol_env k L K \<Omega> u" and "visc_supersol_env k L K \<Omega> w"
-  by (rule visc_subsol_imp_env[OF sub subK op],
-      rule visc_supersol_imp_env[OF sup subK op])
-
-
-subsection \<open>Degenerate ellipticity of the ENVELOPES\<close>
-
-text \<open>The ordering step of the doubling argument needs degenerate ellipticity
-  not for \<open>ell_op\<close> but for the lower envelope \<open>ell_op_lsc\<close>, and that does NOT
-  follow termwise from \<open>ell_op_elliptic_le\<close>: the infimum defining
-  \<open>ell_op_lsc k L p M\<close> ranges over a ball in the PRODUCT variable \<open>(p, M)\<close>, so
-  replacing \<open>M\<close> by \<open>N\<close> moves the ball as well as the integrand.
-
-  The fix is that the ball moves by a TRANSLATION, and the translation is by
-  \<open>(0, N - M)\<close>, which is exactly the increment the pointwise ellipticity
-  consumes.  Concretely: \<open>w \<in> ball (p, M) e\<close> iff \<open>w + (0, N - M) \<in> ball (p, N) e\<close>,
-  because the two difference vectors coincide; and along that bijection the
-  integrand only decreases, by \<open>ell_op_elliptic_le\<close> applied at the first
-  component of \<open>w\<close>.  So the infima compare for every radius, and hence so do
-  the suprema over the radius.
-
-  Note that the ellipticity is applied at the PERTURBED gradient \<open>fst w\<close>, not
-  at \<open>p\<close>; this is why the version of \<open>ell_op_elliptic_le\<close> phrased with the
-  \<open>k\<close>/\<open>L\<close> hypotheses is the one needed here, since it supplies nonemptiness of
-  \<open>feasible k L q\<close> uniformly in \<open>q\<close> rather than at a single \<open>p\<close>.\<close>
 
 lemma ball_prod_shift_snd:
   fixes p :: "real^'n::finite" and M N :: "real^'n^'n"
@@ -2494,14 +2468,14 @@ qed
 
 theorem supersol_shifted_bound_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "visc_supersol k L \<Omega> w"
+  assumes sup: "supersol_jet k L \<Omega> w"
     and yh: "yh \<in> \<Omega>"
     and Ys: "transpose Ym = Ym"
     and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
         ((- w) (yh + hh) - (- w) yh - (- p) \<bullet> hh
           - (hh \<bullet> ((- Ym) *v hh))/2) / (norm hh)\<^sup>2 < c"
     and d: "0 < \<delta>"
-  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
 proof -
   have sym: "transpose (Ym - \<delta> *\<^sub>R mat 1) = Ym - \<delta> *\<^sub>R mat 1"
     by (rule transpose_shift_diff[OF Ys])
@@ -2518,21 +2492,38 @@ proof -
       \<le> w z - (p \<bullet> (z - yh)
           + ((z - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
     by (rule jet_imp_local_min_test_onesided[OF ub d])
-  have "1 \<le> ell_op k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
+  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
       (Ym - \<delta> *\<^sub>R mat 1)"
-    using sup yh tf minloc unfolding visc_supersol_def by blast
+    using sup yh tf minloc unfolding supersol_jet_def by blast
   thus ?thesis unfolding g .
+qed
+
+corollary supersol_shifted_bound_onesided_ne:
+  fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
+  assumes sup: "supersol_jet k L \<Omega> w" and yh: "yh \<in> \<Omega>"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and Ys: "transpose Ym = Ym"
+    and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
+        ((- w) (yh + hh) - (- w) yh - (- p) \<bullet> hh
+          - (hh \<bullet> ((- Ym) *v hh))/2) / (norm hh)\<^sup>2 < c"
+    and d: "0 < \<delta>" and p0: "p \<noteq> 0"
+  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+proof -
+  have "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
+    by (rule supersol_shifted_bound_onesided[OF sup yh Ys ub d])
+  then show ?thesis
+    unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL p0] by simp
 qed
 
 theorem supersol_shifted_bound:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "visc_supersol k L \<Omega> w"
+  assumes sup: "supersol_jet k L \<Omega> w"
     and yh: "yh \<in> \<Omega>"
     and Ys: "transpose Ym = Ym"
     and jet: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- p) \<bullet> h
         - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
     and d: "0 < \<delta>"
-  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
 proof -
   have sym: "transpose (Ym - \<delta> *\<^sub>R mat 1) = Ym - \<delta> *\<^sub>R mat 1"
     by (rule transpose_shift_diff[OF Ys])
@@ -2549,10 +2540,26 @@ proof -
       \<le> w z - (p \<bullet> (z - yh)
           + ((z - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
     by (rule jet_imp_local_min_test[OF jet d])
-  have "1 \<le> ell_op k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
+  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
       (Ym - \<delta> *\<^sub>R mat 1)"
-    using sup yh tf minloc unfolding visc_supersol_def by blast
+    using sup yh tf minloc unfolding supersol_jet_def by blast
   thus ?thesis unfolding g .
+qed
+
+corollary supersol_shifted_bound_ne:
+  fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
+  assumes sup: "supersol_jet k L \<Omega> w" and yh: "yh \<in> \<Omega>"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and Ys: "transpose Ym = Ym"
+    and jet: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- p) \<bullet> h
+        - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and d: "0 < \<delta>" and p0: "p \<noteq> 0"
+  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+proof -
+  have "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
+    by (rule supersol_shifted_bound[OF sup yh Ys jet d])
+  then show ?thesis
+    unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL p0] by simp
 qed
 
 subsection \<open>The quartic penalty and its exact second-order expansion\<close>
@@ -4781,74 +4788,64 @@ text \<open>The end of the one-sided chain.  Identical to
 
 theorem supersol_no_vanishing_jet_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real"
-  assumes sup: "visc_supersol k L \<Omega> w"
+  assumes sup: "supersol_jet k L \<Omega> w"
     and yh: "yh \<in> \<Omega>"
     and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
     and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
         ((- w) (yh + hh) - (- w) yh) / (norm hh)\<^sup>2 < c"
   shows False
 proof -
-  have ne: "feasible k L (0::real^'n) \<noteq> ({} :: (real^'n^'n) set)"
-    by (rule feasible_nonempty[OF k(1) k(2) L])
-  have C0: "0 < real CARD('n) * L / 2" using k L by simp
-  obtain \<delta> where d0: "0 < \<delta>" and d1: "\<delta> < 1"
-    and dlt: "\<delta> * (real CARD('n) * L / 2) < 1"
-    using small_multiple_exists[OF C0 zero_less_one] by blast
+  obtain \<delta> :: real where d0: "0 < \<delta>"
+    and ltone: "\<And>q :: real^'n.
+      ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
+  proof (rule ell_op_usc_small_shift_lt_one[OF k(1) k(2) L])
+    fix dd :: real
+    assume a1: "0 < dd" and a2: "dd < 1"
+      and a3: "\<And>q :: real^'n.
+        ell_op_usc k L q ((0::real^'n^'n) - dd *\<^sub>R mat 1) < 1"
+    show thesis by (rule that[OF a1 a3])
+  qed
   have Ys: "transpose (0::real^'n^'n) = 0"
     by (simp add: transpose_def vec_eq_iff)
   have ub0: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
       ((- w) (yh + hh) - (- w) yh - (- (0::real^'n)) \<bullet> hh
         - (hh \<bullet> ((- (0::real^'n^'n)) *v hh))/2) / (norm hh)\<^sup>2 < c"
     using ub by simp
-  have one: "1 \<le> ell_op k L (0::real^'n) ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)"
+  have one: "1 \<le> ell_op_usc k L (0::real^'n)
+      ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)"
     by (rule supersol_shifted_bound_onesided[OF sup yh Ys ub0 d0])
-  have gap: "ell_op k L (0::real^'n) ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)
-      \<le> ell_op k L (0::real^'n) (0::real^'n^'n)
-        + mgap L ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) 0"
-    by (rule ell_op_M_gap[OF ne])
-  have mg: "mgap L ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) 0
-      = \<delta> * real CARD('n) * L / 2"
-    by (rule mgap_shift_id(2)[OF less_imp_le[OF d0]])
-  have zz: "ell_op k L (0::real^'n) (0::real^'n^'n) = 0"
-    by (rule ell_op_zero_matrix[OF k(1) k(2) L])
-  have e1: "\<delta> * real CARD('n) * L / 2 = \<delta> * (real CARD('n) * L / 2)"
-    by simp
-  from one gap mg zz dlt show False unfolding e1 by linarith
+  show False using one ltone[of "0::real^'n"] by simp
+
 qed
 
 theorem supersol_no_vanishing_jet:
   fixes w :: "real^'n::finite \<Rightarrow> real"
-  assumes sup: "visc_supersol k L \<Omega> w"
+  assumes sup: "supersol_jet k L \<Omega> w"
     and yh: "yh \<in> \<Omega>"
     and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
     and jet: "((\<lambda>h. ((- w) (yh + h) - (- w) yh) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
   shows False
 proof -
-  have ne: "feasible k L (0::real^'n) \<noteq> ({} :: (real^'n^'n) set)"
-    by (rule feasible_nonempty[OF k(1) k(2) L])
-  have C0: "0 < real CARD('n) * L / 2" using k L by simp
-  obtain \<delta> where d0: "0 < \<delta>" and d1: "\<delta> < 1"
-    and dlt: "\<delta> * (real CARD('n) * L / 2) < 1"
-    using small_multiple_exists[OF C0 zero_less_one] by blast
+  obtain \<delta> :: real where d0: "0 < \<delta>"
+    and ltone: "\<And>q :: real^'n.
+      ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
+  proof (rule ell_op_usc_small_shift_lt_one[OF k(1) k(2) L])
+    fix dd :: real
+    assume a1: "0 < dd" and a2: "dd < 1"
+      and a3: "\<And>q :: real^'n.
+        ell_op_usc k L q ((0::real^'n^'n) - dd *\<^sub>R mat 1) < 1"
+    show thesis by (rule that[OF a1 a3])
+  qed
   have Ys: "transpose (0::real^'n^'n) = 0"
     by (simp add: transpose_def vec_eq_iff)
   have jet0: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- (0::real^'n)) \<bullet> h
       - (h \<bullet> ((- (0::real^'n^'n)) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
     using jet by simp
-  have one: "1 \<le> ell_op k L (0::real^'n) ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)"
+  have one: "1 \<le> ell_op_usc k L (0::real^'n)
+      ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)"
     by (rule supersol_shifted_bound[OF sup yh Ys jet0 d0])
-  have gap: "ell_op k L (0::real^'n) ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)
-      \<le> ell_op k L (0::real^'n) (0::real^'n^'n)
-        + mgap L ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) 0"
-    by (rule ell_op_M_gap[OF ne])
-  have mg: "mgap L ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) 0
-      = \<delta> * real CARD('n) * L / 2"
-    by (rule mgap_shift_id(2)[OF less_imp_le[OF d0]])
-  have zz: "ell_op k L (0::real^'n) (0::real^'n^'n) = 0"
-    by (rule ell_op_zero_matrix[OF k(1) k(2) L])
-  have e1: "\<delta> * real CARD('n) * L / 2 = \<delta> * (real CARD('n) * L / 2)"
-    by simp
-  from one gap mg zz dlt show False unfolding e1 by linarith
+  show False using one ltone[of "0::real^'n"] by simp
+
 qed
 
 
@@ -4866,7 +4863,7 @@ text \<open>Everything now composes.  The hypotheses are exactly the output of t
 
 theorem comparison_env_from_jets:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and xh: "xh \<in> \<Omega>" and yh: "yh \<in> \<Omega>"
     and Xs: "transpose Xm = Xm" and Ys: "transpose Ym = Ym"
@@ -4884,7 +4881,8 @@ proof -
     by (rule subsol_shifted_bound[OF sub t(1) xh Xs k(1) k(2) L jetu that(1)])
   have sups: "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
     if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule supersol_shifted_bound[OF sup yh Ys jetw that(1)])
+    by (rule supersol_shifted_bound_ne[OF sup yh k(1) k(2) L Ys jetw
+          that(1) p])
   show False
     by (rule env_strict_contradiction_of_shifts[OF psd Xs Ys p k(1) k(2) L
           zero_less_one t(2) subs sups])
@@ -4901,34 +4899,9 @@ text \<open>And the same conclusion with NO condition on \<open>p\<close> at all
   diagonal case \<open>x\<hat> = y\<hat>\<close>, which the doubling drives us into for large \<open>\<alpha>\<close>, is
   no longer a special case that has to be avoided.\<close>
 
-theorem comparison_env_from_jets_any_p:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
-    and t: "0 < \<theta>" "\<theta> < 1"
-    and xh: "xh \<in> \<Omega>" and yh: "yh \<in> \<Omega>"
-    and Xs: "transpose Xm = Xm" and Ys: "transpose Ym = Ym"
-    and psd: "psd (Ym - Xm)"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and jetu: "((\<lambda>h. (\<theta> * u (xh + h) - \<theta> * u xh - p \<bullet> h
-        - (h \<bullet> (Xm *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and jetw: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- p) \<bullet> h
-        - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-  shows False
-proof -
-  have subs: "ell_op k L p (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
-    if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule subsol_shifted_bound[OF sub t(1) xh Xs k(1) k(2) L jetu that(1)])
-  have sups: "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
-    if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule supersol_shifted_bound[OF sup yh Ys jetw that(1)])
-  show False
-    by (rule strict_contradiction_of_shifts_any_p
-        [OF psd k(1) k(2) L t(2) subs sups])
-qed
-
 corollary comparison_env_from_jets_offdiag:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and xh: "xh \<in> \<Omega>" and yh: "yh \<in> \<Omega>"
     and Xs: "transpose Xm = Xm" and Ys: "transpose Ym = Ym"
@@ -5755,7 +5728,7 @@ proof -
   then show ?thesis by linarith
 qed
 
-text \<open>The ball form, which is what \<open>visc_subsol\<close> and \<open>visc_supersol\<close> are stated
+text \<open>The ball form, which is what \<open>visc_subsol\<close> and \<open>supersol_jet\<close> are stated
   with.  Note the shift of base point: the local statement about
   \<open>supconv u \<epsilon>\<close> near \<open>x\<close> becomes a local statement about \<open>u\<close> near \<open>y\<^sub>s\<close>, on a
   ball of the SAME radius.\<close>
@@ -6010,7 +5983,7 @@ theorem comparison_env_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and a b :: "real^'n \<Rightarrow> real"
     and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and xhO: "xh \<in> \<Omega>" and yhO: "yh \<in> \<Omega>"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
@@ -6060,7 +6033,7 @@ corollary comparison_env_complete_offdiag:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and a b :: "real^'n \<Rightarrow> real"
     and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and xhO: "xh \<in> \<Omega>" and yhO: "yh \<in> \<Omega>"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
@@ -6561,7 +6534,7 @@ text \<open>The composition.  The component jets are no longer hypotheses: they 
 theorem comparison_from_doubled_jet:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and xhO: "xh \<in> \<Omega>" and yhO: "yh \<in> \<Omega>"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
@@ -6696,7 +6669,7 @@ qed
 
 theorem supersol_shifted_bound_supconv:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "visc_supersol k L \<Omega> w"
+  assumes sup: "supersol_jet k L \<Omega> w"
     and ysO: "ys \<in> \<Omega>"
     and Ys: "transpose Ym = Ym"
     and Bw: "\<And>y. (- w) y \<le> Bw" and e: "0 < \<epsilon>"
@@ -6705,7 +6678,7 @@ theorem supersol_shifted_bound_supconv:
         - (- p) \<bullet> h - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
     and d: "0 < \<delta>"
-  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
 proof -
   have sym: "transpose (Ym - \<delta> *\<^sub>R mat 1) = Ym - \<delta> *\<^sub>R mat 1"
     by (rule transpose_shift_diff[OF Ys])
@@ -6761,10 +6734,29 @@ proof -
     by (rule jet_test_fun_at[OF sym])
   have g: "(\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - ys)) ys = p"
     by simp
-  have "1 \<le> ell_op k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - ys)) ys)
+  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - ys)) ys)
       (Ym - \<delta> *\<^sub>R mat 1)"
-    using sup ysO tf minloc unfolding visc_supersol_def by blast
+    using sup ysO tf minloc unfolding supersol_jet_def by blast
   thus ?thesis unfolding g .
+qed
+
+corollary supersol_shifted_bound_supconv_ne:
+  fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
+  assumes sup: "supersol_jet k L \<Omega> w" and ysO: "ys \<in> \<Omega>"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and Ys: "transpose Ym = Ym"
+    and Bw: "\<And>y. (- w) y \<le> Bw" and e: "0 < \<epsilon>"
+    and opt: "supconv (- w) \<epsilon> x = (- w) ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+    and jet: "((\<lambda>h. (supconv (- w) \<epsilon> (x + h) - supconv (- w) \<epsilon> x
+        - (- p) \<bullet> h - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2)
+      \<longlongrightarrow> 0) (at 0)"
+    and d: "0 < \<delta>" and p0: "p \<noteq> 0"
+  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+proof -
+  have "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
+    by (rule supersol_shifted_bound_supconv[OF sup ysO Ys Bw e opt jet d])
+  then show ?thesis
+    unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL p0] by simp
 qed
 
 subsection \<open>Theorem 4.2(a) from sup-convolution jets\<close>
@@ -6781,7 +6773,7 @@ text \<open>And the closing chain in the form the comparison argument actually
 
 theorem comparison_supconv_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and ysuO: "ysu \<in> \<Omega>" and yswO: "ysw \<in> \<Omega>"
     and Xs: "transpose Xm = Xm" and Ys: "transpose Ym = Ym"
@@ -6807,8 +6799,8 @@ proof -
           Bu e optu jetu that(1)])
   have sups: "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
     if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule supersol_shifted_bound_supconv[OF sup yswO Ys Bw e optw jetw
-          that(1)])
+    by (rule supersol_shifted_bound_supconv_ne[OF sup yswO kk(1) kk(2) LL
+          Ys Bw e optw jetw that(1) pnz])
   show False
     by (rule env_strict_contradiction_of_shifts[OF psd Xs Ys pnz kk(1) kk(2) LL
           zero_less_one t(2) subs sups])
@@ -6831,7 +6823,7 @@ text \<open>The full composition.  The two component jets are no longer hypothes
 theorem comparison_supconv_from_doubled_jet:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and ysuO: "ysu \<in> \<Omega>" and yswO: "ysw \<in> \<Omega>"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
@@ -8164,7 +8156,7 @@ theorem comparison_supconv_sequence_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and X Y :: "nat \<Rightarrow> real^'n^'n" and Pu Pw :: "nat \<Rightarrow> real^'n"
     and xu xw ysu ysw :: "nat \<Rightarrow> real^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>"
@@ -8192,15 +8184,43 @@ proof -
     if "0 < \<delta>" "\<delta> < 1" for i \<delta>
     by (rule subsol_shifted_bound_supconv
         [OF sub t(1) ysuO symX kk(1) kk(2) LL Bu e optu jetu that(1)])
-  have bndw: "1 \<le> ell_op k L (Pw i) (Y i - \<delta> *\<^sub>R mat 1)"
+  \<comment> \<open>The supersolution bound is over \<open>F\<^sup>*\<close>, and \<open>F\<^sup>* = F\<close> only away from
+      \<open>0\<close>; the gradient FAMILY need not avoid \<open>0\<close>, but its LIMIT does, so it
+      avoids \<open>0\<close> eventually.  Shifting every family past that index costs
+      nothing --- all hypotheses are either indexwise or convergences.\<close>
+  have np: "0 < norm p" using pnz by simp
+  obtain N where N: "\<And>i. N \<le> i \<Longrightarrow> norm p / 2 < norm (Pw i)"
+  proof -
+    have cn: "(\<lambda>i. norm (Pw i)) \<longlonglongrightarrow> norm p"
+      by (rule tendsto_norm[OF cPw])
+    have "norm p / 2 < norm p" using np by simp
+    then have "\<forall>\<^sub>F i in sequentially. norm p / 2 < norm (Pw i)"
+      using cn by (rule order_tendstoD(1)[rotated])
+    then obtain N0 where N0: "\<forall>n\<ge>N0. norm p / 2 < norm (Pw n)"
+      unfolding eventually_sequentially by blast
+    show thesis by (rule that[of N0]) (use N0 in blast)
+  qed
+  have pwnz: "Pw (i + N) \<noteq> 0" for i
+  proof -
+    have "norm p / 2 < norm (Pw (i + N))" by (rule N) simp
+    then show ?thesis using np by auto
+  qed
+  have bndw: "1 \<le> ell_op k L (Pw (i + N)) (Y (i + N) - \<delta> *\<^sub>R mat 1)"
     if "0 < \<delta>" "\<delta> < 1" for i \<delta>
-    by (rule supersol_shifted_bound_supconv
-        [OF sup yswO symY Bw e optw jetw that(1)])
+    by (rule supersol_shifted_bound_supconv_ne
+        [OF sup yswO kk(1) kk(2) LL symY Bw e optw jetw that(1) pwnz])
+  have bndu': "ell_op k L (Pu (i + N)) (X (i + N) + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
+    if "0 < \<delta>" "\<delta> < 1" for i \<delta>
+    by (rule bndu[OF that(1) that(2)])
   show False
     by (rule env_strict_contradiction_of_shifted_limits
-        [OF cX cY cPu cPw symX symY p0
+        [OF LIMSEQ_ignore_initial_segment[OF cX]
+           LIMSEQ_ignore_initial_segment[OF cY]
+           LIMSEQ_ignore_initial_segment[OF cPu]
+           LIMSEQ_ignore_initial_segment[OF cPw]
+           symX symY p0
            pnz kk(1) kk(2) LL t(2)
-           zero_less_one bndu bndw])
+           zero_less_one bndu' bndw])
 qed
 
 subsection \<open>The shrinking tilt is always available\<close>
@@ -11196,7 +11216,7 @@ theorem comparison_supconv_bounded_family:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and X Y :: "nat \<Rightarrow> real^'n^'n" and Pu Pw G :: "nat \<Rightarrow> real^'n"
     and xu xw ysu ysw :: "nat \<Rightarrow> real^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>"
@@ -11338,7 +11358,7 @@ qed
 theorem comparison_supconv_doubling_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and \<xi> :: "(real^'n) \<times> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
@@ -11547,7 +11567,7 @@ theorem comparison_supconv_maximiser_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
     and D\<^sub>0 :: real
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
@@ -12109,7 +12129,7 @@ theorem comparison_supconv_maximiser_complete_gen:
     and D\<^sub>0 :: real
     and Pn :: "real^'n \<Rightarrow> real"
     and Gf :: "real^'n \<Rightarrow> real^'n" and Zf :: "real^'n \<Rightarrow> real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "visc_supersol k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>"
@@ -12583,7 +12603,7 @@ text \<open>Before assembling stage 10 into Theorem 4.2(a) proper, the target ha
 
   \<open>max_principle_boundary k L K\<close> (Lemma\_3\_1\_Envelopes) quantifies over ALL
   \<open>u\<close> and \<open>w\<close> satisfying \<open>visc_subsol k L (interior K)\<close> and
-  \<open>visc_supersol k L (interior K)\<close>, with no semicontinuity and no boundedness,
+  \<open>supersol_jet k L (interior K)\<close>, with no semicontinuity and no boundedness,
   and asserts that \<open>u - w\<close> attains its maximum over \<open>K\<close> at a point of
   \<open>K - interior K\<close>.
 
@@ -12655,6 +12675,34 @@ proof (intro ballI allI impI)
   qed
   from s x tf loc' show "1 \<le> ell_op k L (g x) H"
     unfolding visc_supersol_def by blast
+qed
+
+lemma supersol_jet_cong_on:
+  fixes w w' :: "real^'n::finite \<Rightarrow> real"
+  assumes s: "supersol_jet k L \<Omega> w" and op: "open \<Omega>"
+    and eq: "\<And>y. y \<in> \<Omega> \<Longrightarrow> w' y = w y"
+  shows "supersol_jet k L \<Omega> w'"
+  unfolding supersol_jet_def
+proof (intro ballI allI impI)
+  fix x \<phi> g H
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and loc: "\<exists>e>0. \<forall>y \<in> ball x e. w' x - \<phi> x \<le> w' y - \<phi> y"
+  from loc obtain e where e0: "0 < e"
+    and le: "\<And>y. y \<in> ball x e \<Longrightarrow> w' x - \<phi> x \<le> w' y - \<phi> y" by blast
+  from op x obtain d where d0: "0 < d" and dsub: "ball x d \<subseteq> \<Omega>"
+    using open_contains_ball by blast
+  have loc': "\<exists>e>0. \<forall>y \<in> ball x e. w x - \<phi> x \<le> w y - \<phi> y"
+  proof (intro exI[of _ "min e d"] conjI ballI)
+    show "0 < min e d" using e0 d0 by simp
+    fix y assume y: "y \<in> ball x (min e d)"
+    then have ye: "y \<in> ball x e" and yd: "y \<in> ball x d" by auto
+    have "w x - \<phi> x = w' x - \<phi> x" using eq[OF x] by simp
+    also have "\<dots> \<le> w' y - \<phi> y" by (rule le[OF ye])
+    also have "\<dots> = w y - \<phi> y" using eq[OF subsetD[OF dsub yd]] by simp
+    finally show "w x - \<phi> x \<le> w y - \<phi> y" .
+  qed
+  from s x tf loc' show "1 \<le> ell_op_usc k L (g x) H"
+    unfolding supersol_jet_def by blast
 qed
 
 text \<open>And the refutation.  Given ANY sub/supersolution pair and a nonempty
@@ -12751,12 +12799,12 @@ proof (rule visc_subsol_cong_on[OF s open_interior])
   then show "v y = u y" by (rule eq)
 qed
 
-lemma visc_supersol_extend:
+lemma supersol_jet_extend:
   fixes w v :: "real^'n::finite \<Rightarrow> real"
-  assumes s: "visc_supersol k L (interior K) w"
+  assumes s: "supersol_jet k L (interior K) w"
     and eq: "\<And>y. y \<in> K \<Longrightarrow> v y = w y"
-  shows "visc_supersol k L (interior K) v"
-proof (rule visc_supersol_cong_on[OF s open_interior])
+  shows "supersol_jet k L (interior K) v"
+proof (rule supersol_jet_cong_on[OF s open_interior])
   fix y assume "y \<in> interior K"
   then have "y \<in> K" using interior_subset by blast
   then show "v y = w y" by (rule eq)
@@ -12885,7 +12933,7 @@ theorem comparison_from_localised_maximiser:
     and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
     and D\<^sub>0 :: real
   assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "visc_supersol k L (interior K) w"
+    and sup: "supersol_jet k L (interior K) w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
@@ -12988,7 +13036,7 @@ theorem comparison_from_localised_maximiser_gen:
     and Pn :: "real^'n \<Rightarrow> real"
     and Gf :: "real^'n \<Rightarrow> real^'n" and Zf :: "real^'n \<Rightarrow> real^'n^'n"
   assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "visc_supersol k L (interior K) w"
+    and sup: "supersol_jet k L (interior K) w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>\<^sub>P"
@@ -13107,7 +13155,7 @@ theorem comparison_from_localised_maximiser_soft:
     and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
     and D\<^sub>0 :: real
   assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "visc_supersol k L (interior K) w"
+    and sup: "supersol_jet k L (interior K) w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>\<^sub>P"
@@ -13171,7 +13219,7 @@ text \<open>Given the localised maximiser AND that it is off the diagonal, every
 theorem comparison_soft_off_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "visc_supersol k L (interior K) w"
+    and sup: "supersol_jet k L (interior K) w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cK: "compact K"
@@ -13253,7 +13301,7 @@ text \<open>The four steps chained.  At a diagonal maximiser \<open>p\<close> (i
 
 theorem comparison_soft_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n \<Rightarrow> real"
-  assumes sup: "visc_supersol k L (interior K) w"
+  assumes sup: "supersol_jet k L (interior K) w"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and Bw: "\<And>y. (- w) y \<le> Bw"
     and cw: "continuous_on UNIV (- w)"
@@ -13366,7 +13414,7 @@ text \<open>The case split.  \<open>doubling_localised_maximiser_soft\<close> pr
 theorem comparison_soft_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "visc_supersol k L (interior K) w"
+    and sup: "supersol_jet k L (interior K) w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cK: "compact K" and neK: "K \<noteq> {}"
@@ -13452,7 +13500,7 @@ section \<open>Theorem 4.2(a): \<open>max_principle_boundary\<close>\<close>
 text \<open>The packaging.  \<open>comparison_soft_complete\<close> needs GLOBALLY bounded and
   GLOBALLY continuous data, while the predicate supplies only \<open>continuous_on K\<close>;
   the gap is closed by \<open>continuous_extension_bounded\<close> together with
-  \<open>visc_subsol_extend\<close> / \<open>visc_supersol_extend\<close>, which work precisely because
+  \<open>visc_subsol_extend\<close> / \<open>supersol_jet_extend\<close>, which work precisely because
   the viscosity conditions are LOCAL and \<open>interior K\<close> is open.
 
   \<open>K \<noteq> {}\<close> is a genuine side condition, not an artefact: see
@@ -13492,8 +13540,27 @@ proof -
   proof (intro allI impI)
     fix u w :: "real^'n \<Rightarrow> real"
     assume sub: "visc_subsol k L (interior K) u"
-      and sup: "visc_supersol k L (interior K) w"
+      and supE: "visc_supersol_env k L K (interior K) w"
       and cu: "continuous_on K u" and cw: "continuous_on K w"
+    \<comment> \<open>Definition 3.1(b) yields the jet form once and for all\<close>
+    have Kb: "bounded K" by (rule compact_imp_bounded[OF cK])
+    obtain Bw where Bw: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
+    proof -
+      have "bounded (w ` K)"
+        by (rule compact_imp_bounded[OF compact_continuous_image[OF cw cK]])
+      then obtain a where a: "\<forall>z \<in> w ` K. norm z \<le> a"
+        unfolding bounded_iff by blast
+      have "- a \<le> w y" if y: "y \<in> K" for y
+      proof -
+        have "norm (w y) \<le> a" using a y by blast
+        then have "\<bar>w y\<bar> \<le> a" by simp
+        then have "- (w y) \<le> a" by (simp add: abs_le_iff)
+        then show ?thesis by linarith
+      qed
+      then show thesis by (rule that)
+    qed
+    have sup: "supersol_jet k L (interior K) w"
+      by (rule visc_supersol_env_imp_jet[OF supE Kb Bw])
     show "\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
     proof (rule ccontr)
       assume nb: "\<not> (\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x)"
@@ -13546,8 +13613,8 @@ proof -
         using continuous_extension_bounded[OF clK cw B0 BwB] by blast
       have sub': "visc_subsol k L (interior K) u'"
         by (rule visc_subsol_extend[OF sub equ])
-      have sup': "visc_supersol k L (interior K) w'"
-        by (rule visc_supersol_extend[OF sup eqw])
+      have sup': "supersol_jet k L (interior K) w'"
+        by (rule supersol_jet_extend[OF sup eqw])
       \<comment> \<open>the \<open>\<theta>\<close>-scaling preserves the gap\<close>
       have Gpos: "0 < (u xs - w xs) - (u xb - w xb)" using gap by linarith
       obtain \<theta> where tpos: "0 < \<theta>" and tlt1: "\<theta> < 1"
@@ -13641,7 +13708,7 @@ theorem comparison_compact:
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
     and subu: "visc_subsol k L (interior K) u"
-    and supw: "visc_supersol k L (interior K) w"
+    and supw: "visc_supersol_env k L K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> w y"
     and x: "x \<in> K"
   shows "u x \<le> w x"
@@ -13661,20 +13728,16 @@ theorem viscosity_uniqueness_compact:
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and su: "visc_sol k L (interior K) u"
-    and sw: "visc_sol k L (interior K) w"
+    and subu: "visc_subsol k L (interior K) u"
+    and supu: "visc_supersol_env k L K (interior K) u"
+    and subw: "visc_subsol k L (interior K) w"
+    and supw: "visc_supersol_env k L K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
     and x: "x \<in> K"
   shows "u x = w x"
 proof -
   have mpb: "max_principle_boundary k L K"
     by (rule max_principle_boundary_holds[OF cK neK kk(1) kk(2) LL])
-  have subu: "visc_subsol k L (interior K) u"
-    and supu: "visc_supersol k L (interior K) u"
-    using su by (auto simp: visc_sol_def)
-  have subw: "visc_subsol k L (interior K) w"
-    and supw: "visc_supersol k L (interior K) w"
-    using sw by (auto simp: visc_sol_def)
   \<comment> \<open>\<open>u - w\<close> peaks on the boundary, where it vanishes\<close>
   have le: "u x \<le> w x"
   proof -
@@ -13802,7 +13865,7 @@ text \<open>This theory is long enough that the order of the argument is no long
   discharge did not hold: \<open>max_principle_boundary_counterexample\<close> refutes the
   hypothesis-free form (now \<open>max_principle_boundary_raw\<close>) whenever a single
   sub/supersolution pair exists and \<open>interior K \<noteq> {}\<close>.  The cause is
-  \<open>visc_supersol_cong_on\<close> --- the boundary values of a sub- or supersolution on
+  \<open>supersol_jet_cong_on\<close> --- the boundary values of a sub- or supersolution on
   \<open>interior K\<close> are completely free, so any boundary maximum can be destroyed by
   moving them.  \<open>max_principle_boundary\<close> (Lemma\_3\_1\_Envelopes) has been
   corrected to carry continuity of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>, and its three consumers
