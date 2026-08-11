@@ -11223,6 +11223,902 @@ proof (rule ccontr)
         tf tmin gx0 fail])
 qed
 
+subsection \<open>Bricks for Case 2: the envelope limit and the tangential field\<close>
+
+text \<open>Batch 4c(ii).  Two independent inputs to the paper's Case-2
+  reduction (\S3.2).  First, the usc envelope passes \<open>\<ge> 1\<close> through
+  limits in \<open>(p, M)\<close> --- this is what turns the Case-1 conclusions at
+  perturbed touching points into \<open>1 \<le> F\<^sup>*(0, H)\<close>.  Second, the
+  sphere-tangential projector field: clamped to a ball separated from
+  its centre \<open>y\<^sub>0\<close>, it is an admissible volatility that kills the radial
+  direction EXACTLY, so the squared distance to \<open>y\<^sub>0\<close> moves at the
+  deterministic rate \<open>CARD('n) - 1\<close>; this feeds the same Euler
+  machinery as Case 1 and is the positivity input for the second horn
+  of the dichotomy (and for Example 3.1's lower bound).\<close>
+
+lemma ell_op_usc_ge_one_limit:
+  fixes ps :: "nat \<Rightarrow> real^'n::finite" and Ms :: "nat \<Rightarrow> real^'n^'n"
+    and p0 :: "real^'n" and M0 :: "real^'n^'n"
+  assumes ge: "\<And>j. 1 \<le> ell_op_usc k L (ps j) (Ms j)"
+    and lim: "(\<lambda>j. (ps j, Ms j)) \<longlonglongrightarrow> (p0, M0)"
+  shows "1 \<le> ell_op_usc k L p0 M0"
+  unfolding ell_op_usc_def
+proof (rule INF_greatest)
+  fix e :: real assume "e \<in> {0<..}"
+  then have e0: "0 < e" by simp
+  have "\<forall>\<^sub>F j in sequentially. dist ((ps j, Ms j)) ((p0, M0)) < e / 2"
+    by (rule tendstoD[OF lim]) (use e0 in simp)
+  then obtain j where j: "dist ((ps j, Ms j)) ((p0, M0)) < e / 2"
+    by (auto simp: eventually_sequentially)
+  have sub: "ball ((ps j, Ms j)) (e / 2) \<subseteq> ball ((p0, M0)) e"
+  proof
+    fix w assume "w \<in> ball ((ps j, Ms j)) (e / 2)"
+    then have "dist ((ps j, Ms j)) w < e / 2" by (simp add: mem_ball)
+    then have "dist ((p0, M0)) w < e"
+      using j dist_triangle[of "(p0, M0)" w "(ps j, Ms j)"]
+      by (simp add: dist_commute)
+    then show "w \<in> ball ((p0, M0)) e" by (simp add: mem_ball)
+  qed
+  have "(1 :: ereal) \<le> ell_op_usc k L (ps j) (Ms j)" by (rule ge)
+  also have "\<dots> \<le> (SUP w \<in> ball ((ps j, Ms j)) (e / 2). ell_op_pair k L w)"
+    unfolding ell_op_usc_def by (rule INF_lower) (use e0 in simp)
+  also have "\<dots> \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)"
+    by (rule SUP_subset_mono[OF sub order_refl])
+  finally show "1 \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)" .
+qed
+
+text \<open>Matrix difference distributes over the product --- inline bricks,
+  entrywise.\<close>
+
+lemma matrix_msub_rdistrib:
+  fixes A B C :: "real^'n::finite^'n"
+  shows "(A - B) ** C = A ** C - B ** C"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
+      left_diff_distrib)
+
+lemma matrix_msub_ldistrib:
+  fixes A B C :: "real^'n::finite^'n"
+  shows "A ** (B - C) = A ** B - A ** C"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
+      right_diff_distrib)
+
+subsubsection \<open>The tangential projector\<close>
+
+definition tanp :: "real^'n::finite \<Rightarrow> real^'n^'n"
+  where "tanp u = mat 1 - outerp u"
+
+lemma tanp_mv: "tanp u *v w = w - (u \<bullet> w) *\<^sub>R u"
+  unfolding tanp_def outerp_eq_outer_prod
+  by (simp add: matrix_vector_mult_diff_rdistrib matrix_vector_mul_lid)
+
+lemma tanp_sym: "transpose (tanp u) = tanp u"
+proof -
+  have "transpose (tanp u) = transpose (mat 1) - transpose (outerp u)"
+    unfolding tanp_def by (simp add: transpose_def vec_eq_iff)
+  also have "transpose (outerp u) = outerp u"
+    by (simp add: transpose_def outerp_def vec_eq_iff mult_ac)
+  finally show ?thesis by (simp add: tanp_def)
+qed
+
+lemma tanp_quadform: "x \<bullet> (tanp u *v x) = x \<bullet> x - (u \<bullet> x)\<^sup>2"
+  unfolding tanp_mv
+  by (simp add: inner_diff_right inner_scaleR_right
+      power2_eq_square inner_commute)
+
+lemma tanp_psd:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u \<le> 1"
+  shows "psd (tanp u)"
+  unfolding psd_def
+proof (intro conjI allI)
+  show "transpose (tanp u) = tanp u" by (rule tanp_sym)
+next
+  fix x :: "real^'n"
+  have "\<bar>u \<bullet> x\<bar> \<le> norm u * norm x" by (rule Cauchy_Schwarz_ineq2)
+  also have "\<dots> \<le> 1 * norm x"
+    by (rule mult_right_mono[OF u1 norm_ge_zero])
+  finally have cs: "\<bar>u \<bullet> x\<bar> \<le> norm x" by simp
+  have sq: "(u \<bullet> x)\<^sup>2 \<le> (norm x)\<^sup>2"
+    using cs by (metis abs_ge_zero power2_abs power_mono)
+  have xx: "x \<bullet> x = (norm x)\<^sup>2" by (simp add: dot_square_norm)
+  show "0 \<le> x \<bullet> (tanp u *v x)"
+    unfolding tanp_quadform using sq xx by linarith
+qed
+
+lemma tanp_eigen_ub:
+  fixes u :: "real^'n::finite"
+  assumes L1: "1 \<le> L"
+  shows "eigen_ub (tanp u) L"
+  unfolding eigen_ub_def
+proof
+  fix x :: "real^'n"
+  have "x \<bullet> (tanp u *v x) \<le> x \<bullet> x"
+    unfolding tanp_quadform by simp
+  also have "\<dots> = 1 * (x \<bullet> x)" by simp
+  also have "\<dots> \<le> L * (x \<bullet> x)"
+    by (rule mult_right_mono[OF L1 inner_ge_zero])
+  finally show "x \<bullet> (tanp u *v x) \<le> L * (x \<bullet> x)" .
+qed
+
+lemma tanp_eigen_lb:
+  fixes u :: "real^'n::finite"
+  assumes k1: "1 \<le> k"
+  shows "eigen_lb (tanp u) (CARD('n) - k)"
+  unfolding eigen_lb_def
+proof (intro exI[of _ "{x :: real^'n. u \<bullet> x = 0}"] conjI ballI)
+  show "subspace {x :: real^'n. u \<bullet> x = 0}"
+    by (rule subspace_hyperplane)
+  show "CARD('n) - k \<le> dim {x :: real^'n. u \<bullet> x = 0}"
+  proof (cases "u = 0")
+    case True
+    then have "{x :: real^'n. u \<bullet> x = 0} = UNIV" by simp
+    then show ?thesis by simp
+  next
+    case False
+    then have "dim {x :: real^'n. u \<bullet> x = 0} = CARD('n) - 1"
+      by (simp add: dim_hyperplane)
+    then show ?thesis using k1 by simp
+  qed
+next
+  fix x :: "real^'n" assume "x \<in> {x. u \<bullet> x = 0}"
+  then have "u \<bullet> x = 0" by simp
+  then show "x \<bullet> x \<le> x \<bullet> (tanp u *v x)"
+    unfolding tanp_quadform by simp
+qed
+
+lemma tanp_feasible:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u \<le> 1" and k1: "1 \<le> k" and L1: "1 \<le> L"
+  shows "tanp u \<in> feasible k L 0"
+  unfolding feasible_def
+  using tanp_psd[OF u1] tanp_eigen_ub[OF L1, of u]
+    tanp_eigen_lb[OF k1, of u]
+  by (simp add: matrix_vector_mult_0_right)
+
+lemma tanp_sconstraint:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u \<le> 1" and k1: "1 \<le> k" and L1: "1 \<le> L"
+  shows "tanp u \<in> sconstraint k L"
+  using tanp_feasible[OF u1 k1 L1] feasible_subset_sconstraint by blast
+
+lemma outerp_sq: "outerp u ** outerp u = (u \<bullet> u) *\<^sub>R outerp u"
+proof -
+  have "(outerp u ** outerp u) $ i $ j = ((u \<bullet> u) *\<^sub>R outerp u) $ i $ j"
+    for i j
+  proof -
+    have "(outerp u ** outerp u) $ i $ j
+        = (\<Sum>l\<in>UNIV. (u $ i * u $ l) * (u $ l * u $ j))"
+      by (simp add: outerp_def matrix_matrix_mult_def)
+    also have "\<dots> = u $ i * u $ j * (\<Sum>l\<in>UNIV. u $ l * u $ l)"
+      by (simp add: sum_distrib_left mult_ac)
+    also have "\<dots> = ((u \<bullet> u) *\<^sub>R outerp u) $ i $ j"
+      by (simp add: outerp_def inner_vec_def mult_ac)
+    finally show ?thesis .
+  qed
+  then show ?thesis by (simp add: vec_eq_iff)
+qed
+
+lemma tanp_sq:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u = 1"
+  shows "tanp u ** tanp u = tanp u"
+proof -
+  have uu: "u \<bullet> u = 1"
+    using u1 by (metis norm_eq_1)
+  have "tanp u ** tanp u
+      = mat 1 ** tanp u - outerp u ** tanp u"
+    unfolding tanp_def by (rule matrix_msub_rdistrib)
+  also have "mat 1 ** tanp u = tanp u" by (rule matrix_mul_lid)
+  also have "outerp u ** tanp u
+      = outerp u ** mat 1 - outerp u ** outerp u"
+    unfolding tanp_def by (rule matrix_msub_ldistrib)
+  also have "\<dots> = outerp u - outerp u"
+    by (simp add: matrix_mul_rid outerp_sq uu)
+  finally show ?thesis by (simp add: tanp_def)
+qed
+
+lemma tanp_trace:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u = 1"
+  shows "trace (tanp u) = real CARD('n) - 1"
+proof -
+  have uu: "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
+  have tm: "trace (mat 1 :: real^'n^'n) = real CARD('n)"
+    by (simp add: trace_def mat_def)
+  have td: "trace (tanp u :: real^'n^'n)
+      = trace (mat 1 :: real^'n^'n) - trace (outerp u)"
+    unfolding tanp_def by (simp add: trace_def sum_subtractf)
+  show ?thesis unfolding td tm trace_outerp uu by simp
+qed
+
+lemma tanp_kill:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u = 1" and par: "w = (norm w) *\<^sub>R u"
+  shows "tanp u *v w = 0"
+proof -
+  have uu: "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
+  have "u \<bullet> w = u \<bullet> ((norm w) *\<^sub>R u)"
+    by (rule arg_cong[where f = "\<lambda>v. u \<bullet> v", OF par])
+  also have "\<dots> = norm w * (u \<bullet> u)"
+    by (simp add: inner_scaleR_right)
+  also have "\<dots> = norm w" using uu by simp
+  finally have uw: "u \<bullet> w = norm w" .
+  have "tanp u *v w = w - (u \<bullet> w) *\<^sub>R u" by (rule tanp_mv)
+  also have "\<dots> = w - (norm w) *\<^sub>R u" using uw by simp
+  also have "\<dots> = 0" using par by simp
+  finally show ?thesis .
+qed
+
+subsubsection \<open>The guarded unit radial and the clamped field\<close>
+
+definition uvec :: "real^'n::finite \<Rightarrow> real \<Rightarrow> real^'n \<Rightarrow> real^'n"
+  where "uvec y\<^sub>0 \<rho> w = (1 / max \<rho> (norm (w - y\<^sub>0))) *\<^sub>R (w - y\<^sub>0)"
+
+lemma uvec_unit:
+  assumes rho0: "0 < \<rho>" and far: "\<rho> \<le> norm (w - y\<^sub>0)"
+  shows "norm (uvec y\<^sub>0 \<rho> w) = 1"
+proof -
+  have mx: "max \<rho> (norm (w - y\<^sub>0)) = norm (w - y\<^sub>0)"
+    using far by (simp add: max_def)
+  have n0: "norm (w - y\<^sub>0) \<noteq> 0" using rho0 far by linarith
+  show ?thesis unfolding uvec_def mx using n0 by simp
+qed
+
+lemma uvec_norm_le:
+  assumes rho0: "0 < \<rho>"
+  shows "norm (uvec y\<^sub>0 \<rho> w) \<le> 1"
+proof -
+  have mx0: "0 < max \<rho> (norm (w - y\<^sub>0))" using rho0 by simp
+  have le: "norm (w - y\<^sub>0) \<le> max \<rho> (norm (w - y\<^sub>0))" by simp
+  have "norm (uvec y\<^sub>0 \<rho> w)
+      = norm (w - y\<^sub>0) / max \<rho> (norm (w - y\<^sub>0))"
+    unfolding uvec_def using mx0 by simp
+  also have "\<dots> \<le> 1" using mx0 le by (simp add: divide_le_eq_1)
+  finally show ?thesis .
+qed
+
+lemma uvec_par:
+  assumes rho0: "0 < \<rho>" and far: "\<rho> \<le> norm (w - y\<^sub>0)"
+  shows "w - y\<^sub>0 = norm (w - y\<^sub>0) *\<^sub>R uvec y\<^sub>0 \<rho> w"
+proof -
+  have mx: "max \<rho> (norm (w - y\<^sub>0)) = norm (w - y\<^sub>0)"
+    using far by (simp add: max_def)
+  have n0: "norm (w - y\<^sub>0) \<noteq> 0" using rho0 far by linarith
+  show ?thesis unfolding uvec_def mx using n0 by simp
+qed
+
+lemma uvec_cont:
+  fixes y\<^sub>0 :: "real^'n::finite"
+  assumes rho0: "0 < \<rho>"
+  shows "continuous_on UNIV (uvec y\<^sub>0 \<rho>)"
+proof -
+  have nz: "\<And>w :: real^'n. max \<rho> (norm (w - y\<^sub>0)) \<noteq> 0"
+    using rho0 by simp
+  show ?thesis
+    unfolding uvec_def
+    by (intro continuous_intros) (use nz in simp_all)
+qed
+
+definition tanSF ::
+  "real^'n::finite \<Rightarrow> real \<Rightarrow> real^'n \<Rightarrow> real \<Rightarrow> real^'n \<Rightarrow> real^'n^'n"
+  where "tanSF y\<^sub>0 \<rho> x rb z
+    = tanp (uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z))"
+
+theorem tanSF_package:
+  fixes y\<^sub>0 x :: "real^'n::finite" and \<rho> rb :: real
+  assumes rho0: "0 < \<rho>" and rb0: "0 \<le> rb"
+    and sep: "\<rho> + rb \<le> dist x y\<^sub>0"
+    and k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+  shows tanSF_cont: "continuous_on UNIV (tanSF y\<^sub>0 \<rho> x rb)"
+    and tanSF_sconstraint: "\<And>z. tanSF y\<^sub>0 \<rho> x rb z
+        ** transpose (tanSF y\<^sub>0 \<rho> x rb z) \<in> sconstraint k L"
+    and tanSF_kill: "\<And>z c. transpose (tanSF y\<^sub>0 \<rho> x rb z)
+        *v (c *\<^sub>R (x - y\<^sub>0) + (c *\<^sub>R mat 1)
+            *v (closest_point (cball x rb) z - x)) = 0"
+    and tanSF_trace: "\<And>z. trace (tanSF y\<^sub>0 \<rho> x rb z
+        ** transpose (tanSF y\<^sub>0 \<rho> x rb z)) = real CARD('n) - 1"
+proof -
+  have cin: "closest_point (cball x rb) z \<in> cball x rb" for z
+    by (rule closest_point_in_set) (use rb0 in \<open>auto simp: closed_cball\<close>)
+  have far: "\<rho> \<le> norm (closest_point (cball x rb) z - y\<^sub>0)" for z
+  proof -
+    have "dist (closest_point (cball x rb) z) x \<le> rb"
+      using cin[of z] by (simp add: mem_cball dist_commute)
+    moreover have "dist x y\<^sub>0
+        \<le> dist x (closest_point (cball x rb) z)
+          + dist (closest_point (cball x rb) z) y\<^sub>0"
+      by (rule dist_triangle)
+    ultimately have "\<rho> \<le> dist (closest_point (cball x rb) z) y\<^sub>0"
+      using sep by (simp add: dist_commute)
+    then show ?thesis by (simp add: dist_norm)
+  qed
+  have unit: "norm (uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z)) = 1" for z
+    by (rule uvec_unit[OF rho0 far])
+  show "continuous_on UNIV (tanSF y\<^sub>0 \<rho> x rb)"
+  proof -
+    have cpc: "continuous_on UNIV (closest_point (cball x rb))"
+      by (rule continuous_on_closest_point)
+        (use rb0 in \<open>auto simp: convex_cball closed_cball\<close>)
+    have uc: "continuous_on UNIV
+        (\<lambda>z. uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z))"
+      by (rule continuous_on_compose2[OF uvec_cont[OF rho0] cpc]) auto
+    have ci: "continuous_on UNIV
+        (\<lambda>z. uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z) $ i)" for i
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF bounded_linear_vec_nth] uc]) auto
+    have eq: "tanSF y\<^sub>0 \<rho> x rb = (\<lambda>z. \<chi> i j.
+        (if i = j then 1 else 0)
+        - uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z) $ i
+          * uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z) $ j)"
+      by (rule ext)
+        (simp add: tanSF_def tanp_def outerp_def mat_def vec_eq_iff)
+    show ?thesis unfolding eq
+      by (intro continuous_on_vec_lambda continuous_intros ci)
+  qed
+  have sq: "tanSF y\<^sub>0 \<rho> x rb z ** transpose (tanSF y\<^sub>0 \<rho> x rb z)
+      = tanSF y\<^sub>0 \<rho> x rb z" for z
+    unfolding tanSF_def
+    by (simp add: tanp_sym tanp_sq[OF unit])
+  show "tanSF y\<^sub>0 \<rho> x rb z ** transpose (tanSF y\<^sub>0 \<rho> x rb z)
+      \<in> sconstraint k L" for z
+    unfolding sq unfolding tanSF_def
+    by (rule tanp_sconstraint[OF uvec_norm_le[OF rho0] k1 L1])
+  show "transpose (tanSF y\<^sub>0 \<rho> x rb z)
+      *v (c *\<^sub>R (x - y\<^sub>0) + (c *\<^sub>R mat 1)
+          *v (closest_point (cball x rb) z - x)) = 0" for z c
+  proof -
+    have arg: "c *\<^sub>R (x - y\<^sub>0) + (c *\<^sub>R mat 1)
+        *v (closest_point (cball x rb) z - x)
+        = c *\<^sub>R (closest_point (cball x rb) z - y\<^sub>0)"
+      by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+          scaleR_right_diff_distrib scaleR_add_right)
+    have k0: "tanp (uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z))
+        *v (closest_point (cball x rb) z - y\<^sub>0) = 0"
+      by (rule tanp_kill[OF unit uvec_par[OF rho0 far]])
+    have "transpose (tanSF y\<^sub>0 \<rho> x rb z)
+        *v (c *\<^sub>R (closest_point (cball x rb) z - y\<^sub>0))
+        = c *\<^sub>R (tanSF y\<^sub>0 \<rho> x rb z
+            *v (closest_point (cball x rb) z - y\<^sub>0))"
+      unfolding tanSF_def tanp_sym
+      by (simp add: matrix_vector_mult_scaleR)
+    also have "\<dots> = 0" unfolding tanSF_def using k0 by simp
+    finally show ?thesis unfolding arg .
+  qed
+  show "trace (tanSF y\<^sub>0 \<rho> x rb z
+      ** transpose (tanSF y\<^sub>0 \<rho> x rb z)) = real CARD('n) - 1" for z
+    unfolding sq unfolding tanSF_def by (rule tanp_trace[OF unit])
+qed
+
+subsection \<open>Conditional orthogonality: the kill checked at the point\<close>
+
+text \<open>Batch 4d(i).  The Euler increments annihilate a continuous field
+  WHEREVER the field is killed by the volatility --- the kill condition
+  moves from a global hypothesis into the conclusion, checked at each
+  grid point.  This is what lets a field be tangential only away from
+  its singular centre: the growth telescope only ever uses
+  orthogonality at grid points inside the good region, where the kill
+  holds.  The proof is the committed induction of
+  @{thm [source] eulerp_orth_increments} with the implication carried
+  through the glue.\<close>
+
+lemma euOrth_mset_cond:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n"
+    and G :: "real^'n \<Rightarrow> real^'n" and h :: real
+  assumes SFc: "continuous_on UNIV SF" and Gc: "continuous_on UNIV G"
+  shows "{\<omega> \<in> space (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric))).
+      \<forall>j<m. transpose (SF (fst (\<omega> (real j * h))))
+          *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+        G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+proof -
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have evm: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?B \<rightarrow>\<^sub>M borel" for u
+    by (rule pair_law_eval_measurable[OF refl])
+  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    by (rule borel_measurable_continuous_onI[OF
+        continuous_on_fst[OF continuous_on_id]])
+  have evf: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u)) \<in> ?B \<rightarrow>\<^sub>M borel" for u
+    by (rule measurable_compose[OF evm mfst])
+  have condm: "(\<lambda>\<omega> :: 'n pairpath.
+      transpose (SF (fst (\<omega> (real j * h))))
+        *v G (fst (\<omega> (real j * h)))) \<in> ?B \<rightarrow>\<^sub>M borel" for j
+  proof -
+    have c: "continuous_on UNIV (\<lambda>w :: real^'n. transpose (SF w) *v G w)"
+    proof -
+      have ct: "continuous_on UNIV (\<lambda>w :: real^'n. transpose (SF w))"
+      proof -
+        have e: "(\<lambda>w :: real^'n. transpose (SF w))
+            = (\<lambda>w. \<chi> i j. SF w $ j $ i)"
+          by (rule ext) (simp add: transpose_def)
+        have entry: "continuous_on UNIV (\<lambda>w :: real^'n. SF w $ j $ i)"
+          for i j
+        proof -
+          have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ j $ i)"
+            using bounded_linear_vec_nth bounded_linear_compose by blast
+          show ?thesis
+            by (rule continuous_on_compose2[OF
+                linear_continuous_on[OF bl] SFc]) auto
+        qed
+        show ?thesis unfolding e
+          by (intro continuous_on_vec_lambda entry)
+      qed
+      have prodc: "continuous_on UNIV (\<lambda>w :: real^'n.
+          transpose (SF w) *v G w)"
+      proof -
+        have e: "(\<lambda>w :: real^'n. transpose (SF w) *v G w)
+            = (\<lambda>w. \<chi> i. (\<Sum>l\<in>UNIV. transpose (SF w) $ i $ l * G w $ l))"
+          by (rule ext) (simp add: matrix_vector_mult_def)
+        have entry: "continuous_on UNIV (\<lambda>w :: real^'n.
+            \<Sum>l\<in>UNIV. transpose (SF w) $ i $ l * G w $ l)" for i
+        proof -
+          have tc: "continuous_on UNIV
+              (\<lambda>w :: real^'n. transpose (SF w) $ i $ l)" for l
+          proof -
+            have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ i $ l)"
+              using bounded_linear_vec_nth bounded_linear_compose by blast
+            show ?thesis
+              by (rule continuous_on_compose2[OF
+                  linear_continuous_on[OF bl] ct]) auto
+          qed
+          have gc: "continuous_on UNIV (\<lambda>w :: real^'n. G w $ l)" for l
+            by (rule continuous_on_compose2[OF
+                linear_continuous_on[OF bounded_linear_vec_nth] Gc]) auto
+          show ?thesis
+            by (intro continuous_on_sum continuous_on_mult tc gc)
+        qed
+        show ?thesis unfolding e
+          by (intro continuous_on_vec_lambda entry)
+      qed
+      show ?thesis by (rule prodc)
+    qed
+    show ?thesis
+      by (rule measurable_compose[OF evf
+          borel_measurable_continuous_onI[OF c]])
+  qed
+  have orthm: "(\<lambda>\<omega> :: 'n pairpath.
+      G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))))
+      \<in> ?B \<rightarrow>\<^sub>M borel" for j
+  proof -
+    have gc: "(\<lambda>\<omega> :: 'n pairpath. G (fst (\<omega> (real j * h))))
+        \<in> ?B \<rightarrow>\<^sub>M borel"
+      by (rule measurable_compose[OF evf
+          borel_measurable_continuous_onI[OF Gc]])
+    have dc: "(\<lambda>\<omega> :: 'n pairpath.
+        fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h)))
+        \<in> ?B \<rightarrow>\<^sub>M borel"
+      by (intro borel_measurable_diff evf)
+    show ?thesis by (intro borel_measurable_inner gc dc)
+  qed
+  have per: "{\<omega> \<in> space ?B.
+      transpose (SF (fst (\<omega> (real j * h))))
+        *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+      G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+      \<in> sets ?B" for j
+  proof -
+    have cset: "{\<omega> \<in> space ?B.
+        transpose (SF (fst (\<omega> (real j * h))))
+          *v G (fst (\<omega> (real j * h))) = 0} \<in> sets ?B"
+    proof -
+      have "{\<omega> \<in> space ?B.
+          transpose (SF (fst (\<omega> (real j * h))))
+            *v G (fst (\<omega> (real j * h))) = 0}
+          = (\<lambda>\<omega> :: 'n pairpath.
+            transpose (SF (fst (\<omega> (real j * h))))
+              *v G (fst (\<omega> (real j * h)))) -` {0} \<inter> space ?B"
+        by auto
+      then show ?thesis
+        using measurable_sets[OF condm[of j], of "{0}"]
+        by (simp add: borel_closed)
+    qed
+    have oset: "{\<omega> \<in> space ?B.
+        G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+        \<in> sets ?B"
+    proof -
+      have "{\<omega> \<in> space ?B.
+          G (fst (\<omega> (real j * h))) \<bullet>
+            (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+          = (\<lambda>\<omega> :: 'n pairpath.
+            G (fst (\<omega> (real j * h))) \<bullet>
+              (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))))
+            -` {0} \<inter> space ?B"
+        by auto
+      then show ?thesis
+        using measurable_sets[OF orthm[of j], of "{0}"]
+        by (simp add: borel_closed)
+    qed
+    have eq: "{\<omega> \<in> space ?B.
+        transpose (SF (fst (\<omega> (real j * h))))
+          *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+        G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+        = (space ?B - {\<omega> \<in> space ?B.
+            transpose (SF (fst (\<omega> (real j * h))))
+              *v G (fst (\<omega> (real j * h))) = 0})
+          \<union> {\<omega> \<in> space ?B.
+            G (fst (\<omega> (real j * h))) \<bullet>
+              (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}"
+      by auto
+    show ?thesis unfolding eq
+      by (intro sets.Un sets.Diff sets.top cset oset)
+  qed
+  show ?thesis
+  proof (induction m)
+    case 0
+    show ?case by simp
+  next
+    case (Suc m)
+    have eq: "{\<omega> \<in> space ?B. \<forall>j<Suc m.
+        transpose (SF (fst (\<omega> (real j * h))))
+          *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+        G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+        = {\<omega> \<in> space ?B. \<forall>j<m.
+            transpose (SF (fst (\<omega> (real j * h))))
+              *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+            G (fst (\<omega> (real j * h))) \<bullet>
+              (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+          \<inter> {\<omega> \<in> space ?B.
+            transpose (SF (fst (\<omega> (real m * h))))
+              *v G (fst (\<omega> (real m * h))) = 0 \<longrightarrow>
+            G (fst (\<omega> (real m * h))) \<bullet>
+              (fst (\<omega> (real (Suc m) * h)) - fst (\<omega> (real m * h))) = 0}"
+      by (auto simp: less_Suc_eq)
+    show ?case unfolding eq by (intro sets.Int Suc.IH per)
+  qed
+qed
+
+theorem eulerp_orth_increments_cond:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and G :: "real^'n \<Rightarrow> real^'n"
+    and x :: "real^'n" and h :: real
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and Gc: "continuous_on UNIV G"
+  shows "AE \<omega> in eulerp SF x h N. \<forall>j<Suc N.
+      transpose (SF (fst (\<omega> (real j * h))))
+        *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+      G (fst (\<omega> (real j * h))) \<bullet>
+        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
+proof (induction N)
+  case 0
+  have h0': "(0::real) \<le> h" using h0 by simp
+  let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
+      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+  have E0: "eulerp SF x h 0 = pshift_law h x ?\<mu>0" by simp
+  have sets\<mu>: "sets ?\<mu>0 = sets (borel_of (mtopology_of
+      (path_metric h :: ('n pairpath) metric)))" by simp
+  have st: "AE \<omega> in ?\<mu>0. fst (\<omega> 0) = (0 :: real^'n)"
+    using sbmpair_law_start[OF h0', of "SF x"]
+    by (rule eventually_mono) simp
+  have orth0: "AE \<omega> in ?\<mu>0. transpose (SF x) *v G x = 0 \<longrightarrow>
+      G x \<bullet> (fst (\<omega> h) - fst (\<omega> 0)) = 0"
+  proof (cases "transpose (SF x) *v G x = 0")
+    case True
+    have "AE \<omega> in ?\<mu>0. G x \<bullet> (fst (\<omega> h) - fst (\<omega> 0)) = 0"
+      by (rule sbm_orth_increment[OF h0' True])
+    then show ?thesis by (rule eventually_mono) simp
+  next
+    case False
+    then show ?thesis by simp
+  qed
+  have ae: "AE \<omega> in ?\<mu>0. \<forall>j<Suc 0.
+      transpose (SF (fst (pshift h x \<omega> (real j * h))))
+        *v G (fst (pshift h x \<omega> (real j * h))) = 0 \<longrightarrow>
+      G (fst (pshift h x \<omega> (real j * h))) \<bullet>
+        (fst (pshift h x \<omega> (real (Suc j) * h))
+          - fst (pshift h x \<omega> (real j * h))) = 0"
+    using st orth0
+  proof eventually_elim
+    case (elim \<omega>)
+    have m1: "h \<in> {0..h}" and m2: "(0::real) \<in> {0..h}"
+      using h0' by simp_all
+    show ?case using elim
+      by (simp add: pshift_fst[OF m1] pshift_fst[OF m2])
+  qed
+  show ?case unfolding E0 by (rule AE_pshift_law[OF h0' sets\<mu> ae])
+next
+  case (Suc N)
+  have h0': "(0::real) \<le> h" using h0 by simp
+  define r where "r = real (Suc N) * h"
+  define T' where "T' = real (Suc (Suc N)) * h"
+  let ?Q = "eulerp SF x h N"
+  let ?Br = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?MR = "borel_of (mtopology_of
+      (path_metric (T' - r) :: ('n pairpath) metric))"
+  let ?K = "\<lambda>\<omega> :: 'n pairpath.
+      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
+  have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
+  have r0: "0 \<le> r" unfolding r_def using h0' by simp
+  have rleT: "r \<le> T'" unfolding r_def T'_def
+    using h0' by (intro mult_right_mono) simp_all
+  have Qc: "?Q \<in> paper_pair_class k L r x"
+    unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
+  have PQ: "prob_space ?Q" by (rule paper_pair_class_prob[OF Qc])
+  have setsQ: "sets ?Q = sets ?Br" by (rule paper_pair_class_sets[OF Qc])
+  note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
+  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
+      \<in> borel_measurable borel"
+    using measurable_fst[of "borel :: (real^'n) measure"
+        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+  have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+  have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
+    unfolding hT by (rule measurable_compose[OF eQ pack(1)])
+  have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
+    by (simp add: r_def T'_def)
+  have msetP: "{\<omega> \<in> mspace (path_metric T' :: ('n pairpath) metric).
+      \<forall>j<Suc (Suc N).
+        transpose (SF (fst (\<omega> (real j * h))))
+          *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+        G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
+      \<in> sets (borel_of (mtopology_of
+        (path_metric T' :: ('n pairpath) metric)))"
+  proof -
+    have spB: "space (borel_of (mtopology_of
+        (path_metric T' :: ('n pairpath) metric)))
+        = mspace (path_metric T' :: ('n pairpath) metric)"
+      by (rule space_of_path_sets[OF refl])
+    show ?thesis
+      using euOrth_mset_cond[OF SFc Gc,
+          where h = h and T = T' and m = "Suc (Suc N)"]
+      unfolding spB .
+  qed
+  show ?case
+    unfolding Ee
+  proof (rule Paper_Bridge.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
+    show "AE \<omega> in ?Q. \<forall>j<Suc N.
+        transpose (SF (fst (\<omega> (real j * h))))
+          *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+        G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
+      by (rule Suc.IH)
+    show "AE \<omega>' in ?K \<omega>.
+        transpose (SF (fst (\<omega> r))) *v G (fst (\<omega> r)) = 0 \<longrightarrow>
+        G (fst (\<omega> r)) \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
+      if "\<omega> \<in> space ?Q" for \<omega> :: "'n pairpath"
+    proof (cases "transpose (SF (fst (\<omega> r))) *v G (fst (\<omega> r)) = 0")
+      case True
+      have "AE \<omega>' in ?K \<omega>. G (fst (\<omega> r)) \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
+        by (rule sbm_orth_increment[OF h0' True])
+      then show ?thesis by (rule eventually_mono) simp
+    next
+      case False
+      then show ?thesis by simp
+    qed
+    fix \<omega> \<omega>' :: "'n pairpath"
+    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+      and "\<omega>' \<in> mspace (path_metric (T' - r) :: ('n pairpath) metric)"
+      and A: "\<forall>j<Suc N.
+        transpose (SF (fst (\<omega> (real j * h))))
+          *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
+        G (fst (\<omega> (real j * h))) \<bullet>
+          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
+      and B: "transpose (SF (fst (\<omega> r))) *v G (fst (\<omega> r)) = 0 \<longrightarrow>
+        G (fst (\<omega> r)) \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
+    have mem: "real j * h \<in> {0..T'}" if le: "j \<le> Suc (Suc N)" for j
+    proof -
+      have a: "0 \<le> real j * h"
+        by (intro mult_nonneg_nonneg h0') simp_all
+      have b: "real j * h \<le> T'" unfolding T'_def
+        using le h0' by (intro mult_right_mono) simp_all
+      show ?thesis using a b by simp
+    qed
+    have prefl: "pglue r T' \<omega> \<omega>' (real j * h) = \<omega> (real j * h)"
+      if j: "j \<le> Suc N" for j
+    proof (rule pglue_le)
+      show "real j * h \<in> {0..T'}" using j by (intro mem) simp
+      show "real j * h \<le> r" unfolding r_def
+        using j h0' by (intro mult_right_mono) simp_all
+    qed
+    have Tmem: "T' \<in> {0..T'}"
+      using mem[of "Suc (Suc N)"] unfolding T'_def by simp
+    have gT: "pglue r T' \<omega> \<omega>' T' = \<omega> r + (\<omega>' (T' - r) - \<omega>' 0)"
+      by (rule pglue_ge[OF Tmem rleT])
+    have gr: "pglue r T' \<omega> \<omega>' r = \<omega> r"
+      using prefl[of "Suc N"] unfolding r_def by simp
+    show "\<forall>j<Suc (Suc N).
+        transpose (SF (fst (pglue r T' \<omega> \<omega>' (real j * h))))
+          *v G (fst (pglue r T' \<omega> \<omega>' (real j * h))) = 0 \<longrightarrow>
+        G (fst (pglue r T' \<omega> \<omega>' (real j * h))) \<bullet>
+          (fst (pglue r T' \<omega> \<omega>' (real (Suc j) * h))
+            - fst (pglue r T' \<omega> \<omega>' (real j * h))) = 0"
+    proof (intro allI impI)
+      fix j assume jle: "j < Suc (Suc N)"
+        and cnd: "transpose (SF (fst (pglue r T' \<omega> \<omega>' (real j * h))))
+          *v G (fst (pglue r T' \<omega> \<omega>' (real j * h))) = 0"
+      show "G (fst (pglue r T' \<omega> \<omega>' (real j * h))) \<bullet>
+          (fst (pglue r T' \<omega> \<omega>' (real (Suc j) * h))
+            - fst (pglue r T' \<omega> \<omega>' (real j * h))) = 0"
+      proof (cases "j < Suc N")
+        case True
+        then have j1: "Suc j \<le> Suc N" and j2: "j \<le> Suc N" by simp_all
+        show ?thesis
+          using A True cnd by (simp only: prefl[OF j1] prefl[OF j2])
+      next
+        case False
+        with jle have jeq: "j = Suc N" by simp
+        have e1: "real (Suc j) * h = T'" unfolding jeq T'_def by (rule refl)
+        have e2: "real j * h = r" unfolding jeq r_def by (rule refl)
+        show ?thesis
+          using B cnd unfolding e1 e2 gT gr hT by simp
+      qed
+    qed
+  qed
+qed
+
+subsection \<open>The growth telescope on an arbitrary region\<close>
+
+text \<open>Batch 4d(ii).  The exact quadratic lower bound of
+  @{thm [source] eulerp_quad_lower}, with the confinement region
+  decoupled from the start-centred clamp: the kill and the trace margin
+  are only assumed ON the region, and the conclusion holds on the event
+  that the grid stays there.  The conditional orthogonality
+  (@{thm [source] eulerp_orth_increments_cond}) checks the kill at each
+  grid point, so no clamp and no global hypothesis are needed.  This is
+  the form the tangential field of Case 2 can feed: tangential exactly
+  on an annulus around its centre, arbitrary elsewhere.\<close>
+
+theorem eulerp_quad_lower_region:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and q x :: "real^'n" and h cm :: real and R :: "(real^'n) set"
+  assumes h0: "0 < h" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and sym: "transpose M = M"
+    and kill: "\<And>z. z \<in> R \<Longrightarrow>
+        transpose (SF z) *v (q + M *v (z - x)) = 0"
+    and marg: "\<And>z. z \<in> R \<Longrightarrow>
+        cm \<le> trace (M ** (SF z ** transpose (SF z)))"
+  shows "AE \<omega> in eulerp SF x h N. \<forall>m\<le>Suc N.
+      (\<forall>j<m. fst (\<omega> (real j * h)) \<in> R) \<longrightarrow>
+      (1/2) * euXi SF M h m \<omega> + real m * h * cm / 2
+        \<le> q \<bullet> (fst (\<omega> (real m * h)) - x)
+          + (1/2) * ((fst (\<omega> (real m * h)) - x)
+              \<bullet> (M *v (fst (\<omega> (real m * h)) - x)))"
+proof -
+  have Gc: "continuous_on UNIV (\<lambda>z :: real^'n. q + M *v (z - x))"
+  proof -
+    have d: "continuous_on UNIV (\<lambda>z :: real^'n. z - x)"
+      by (intro continuous_intros)
+    have mv: "continuous_on UNIV (\<lambda>z :: real^'n. M *v (z - x))"
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matvec_blin] d]) auto
+    show ?thesis by (intro continuous_intros mv)
+  qed
+  note orth = eulerp_orth_increments_cond[OF h0 L1 SFc SFs Gc]
+  have Qc: "eulerp SF x h N \<in> paper_pair_class k L (real (Suc N) * h) x"
+    by (rule eulerp_in_class[OF h0 L1 SFc SFs])
+  have st: "AE \<omega> in eulerp SF x h N. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using Qc unfolding paper_pair_class_def by blast
+  show ?thesis
+    using orth st
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (intro allI impI)
+      fix m assume mle: "m \<le> Suc N"
+        and inb: "\<forall>j<m. fst (\<omega> (real j * h)) \<in> R"
+      define X where "X j = fst (\<omega> (real j * h))" for j
+      define \<psi> where "\<psi> z = q \<bullet> (z - x)
+          + (1/2) * ((z - x) \<bullet> (M *v (z - x)))" for z
+      have x0: "X 0 = x" unfolding X_def using elim by simp
+      have XR: "X j \<in> R" if j: "j < m" for j
+        using inb j unfolding X_def by blast
+      have step: "\<psi> (X (Suc j)) - \<psi> (X j)
+          = (1/2) * ((X (Suc j) - X j) \<bullet> (M *v (X (Suc j) - X j)))"
+        if j: "j < m" for j
+      proof -
+        have jN: "j < Suc N" using j mle by simp
+        have cnd: "transpose (SF (X j)) *v (q + M *v (X j - x)) = 0"
+          by (rule kill[OF XR[OF j]])
+        have k0: "(q + M *v (X j - x)) \<bullet> (X (Suc j) - X j) = 0"
+          using elim(1) jN cnd unfolding X_def by metis
+        have "\<psi> (X (Suc j)) - \<psi> (X j)
+            = (q + M *v (X j - x)) \<bullet> (X (Suc j) - X j)
+              + (1/2) * ((X (Suc j) - X j) \<bullet> (M *v (X (Suc j) - X j)))"
+          unfolding \<psi>_def by (rule quad_taylor_step[OF sym])
+        then show ?thesis using k0 by simp
+      qed
+      have tele: "\<psi> (X m) - \<psi> (X 0)
+          = (\<Sum>j<m. \<psi> (X (Suc j)) - \<psi> (X j))"
+        by (rule sum_lessThan_telescope[symmetric])
+      have quadsum: "\<psi> (X m) - \<psi> (X 0)
+          = (\<Sum>j<m. (1/2) * ((X (Suc j) - X j)
+              \<bullet> (M *v (X (Suc j) - X j))))"
+        unfolding tele
+        by (rule sum.cong[OF refl]) (use step in simp)
+      have perj: "(1/2) * ((X (Suc j) - X j) \<bullet> (M *v (X (Suc j) - X j)))
+          = (1/2) * (trace (M ** (outerp (X (Suc j) - X j)
+              - h *\<^sub>R (SF (X j) ** transpose (SF (X j)))))
+            + h * trace (M ** (SF (X j) ** transpose (SF (X j)))))" for j
+      proof -
+        have "trace (M ** (outerp (X (Suc j) - X j)
+            - h *\<^sub>R (SF (X j) ** transpose (SF (X j)))))
+            = trace (M ** outerp (X (Suc j) - X j))
+              - h * trace (M ** (SF (X j) ** transpose (SF (X j))))"
+          by (simp add: trace_mult_diff matmul_scaleR_right trace_scaleR)
+        then show ?thesis by (simp add: trace_mult_outerp)
+      qed
+      have persum: "(\<Sum>j<m. (1/2) * ((X (Suc j) - X j)
+            \<bullet> (M *v (X (Suc j) - X j))))
+          = (1/2) * euXi SF M h m \<omega>
+            + (h/2) * (\<Sum>j<m. trace (M ** (SF (X j)
+                ** transpose (SF (X j)))))"
+      proof -
+        have "(\<Sum>j<m. (1/2) * ((X (Suc j) - X j)
+              \<bullet> (M *v (X (Suc j) - X j))))
+            = (\<Sum>j<m. (1/2) * (trace (M ** (outerp (X (Suc j) - X j)
+                - h *\<^sub>R (SF (X j) ** transpose (SF (X j)))))
+              + h * trace (M ** (SF (X j) ** transpose (SF (X j))))))"
+          by (rule sum.cong[OF refl]) (rule perj)
+        also have "\<dots> = (\<Sum>j<m. (1/2) * trace (M **
+              (outerp (X (Suc j) - X j)
+                - h *\<^sub>R (SF (X j) ** transpose (SF (X j)))))
+            + (h/2) * trace (M ** (SF (X j) ** transpose (SF (X j)))))"
+          by (rule sum.cong[OF refl]) (simp add: field_simps)
+        also have "\<dots> = (\<Sum>j<m. (1/2) * trace (M **
+              (outerp (X (Suc j) - X j)
+                - h *\<^sub>R (SF (X j) ** transpose (SF (X j))))))
+            + (\<Sum>j<m. (h/2) * trace (M ** (SF (X j)
+                ** transpose (SF (X j)))))"
+          by (rule sum.distrib)
+        also have "(\<Sum>j<m. (1/2) * trace (M **
+              (outerp (X (Suc j) - X j)
+                - h *\<^sub>R (SF (X j) ** transpose (SF (X j))))))
+            = (1/2) * (\<Sum>j<m. trace (M **
+              (outerp (X (Suc j) - X j)
+                - h *\<^sub>R (SF (X j) ** transpose (SF (X j))))))"
+          by (rule sum_distrib_left[symmetric])
+        also have "(\<Sum>j<m. (h/2) * trace (M ** (SF (X j)
+              ** transpose (SF (X j)))))
+            = (h/2) * (\<Sum>j<m. trace (M ** (SF (X j)
+                ** transpose (SF (X j)))))"
+          by (rule sum_distrib_left[symmetric])
+        also have "(\<Sum>j<m. trace (M ** (outerp (X (Suc j) - X j)
+              - h *\<^sub>R (SF (X j) ** transpose (SF (X j))))))
+            = euXi SF M h m \<omega>"
+          unfolding euXi_def X_def by (rule refl)
+        finally show ?thesis .
+      qed
+      have margsum: "real m * cm
+          \<le> (\<Sum>j<m. trace (M ** (SF (X j) ** transpose (SF (X j)))))"
+      proof -
+        have "real m * cm = (\<Sum>j\<in>{..<m}. cm)" by simp
+        also have "\<dots> \<le> (\<Sum>j<m. trace (M ** (SF (X j)
+            ** transpose (SF (X j)))))"
+        proof (rule sum_mono)
+          fix j assume "j \<in> {..<m}"
+          then have "X j \<in> R" by (intro XR) simp
+          then show "cm \<le> trace (M ** (SF (X j) ** transpose (SF (X j))))"
+            by (rule marg)
+        qed
+        finally show ?thesis .
+      qed
+      have psi0: "\<psi> (X 0) = 0" unfolding \<psi>_def x0 by simp
+      have hm: "(h/2) * (real m * cm)
+          \<le> (h/2) * (\<Sum>j<m. trace (M ** (SF (X j)
+              ** transpose (SF (X j)))))"
+        using h0 margsum by (intro mult_left_mono) simp_all
+      have ee: "real m * h * cm / 2 = (h/2) * (real m * cm)" by simp
+      have main: "(1/2) * euXi SF M h m \<omega> + real m * h * cm / 2
+          \<le> \<psi> (X m)"
+        using quadsum persum psi0 hm ee by linarith
+      show "(1/2) * euXi SF M h m \<omega> + real m * h * cm / 2
+          \<le> q \<bullet> (fst (\<omega> (real m * h)) - x)
+            + (1/2) * ((fst (\<omega> (real m * h)) - x)
+                \<bullet> (M *v (fst (\<omega> (real m * h)) - x)))"
+        using main unfolding \<psi>_def X_def .
+    qed
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
