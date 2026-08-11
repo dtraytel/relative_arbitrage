@@ -930,110 +930,6 @@ next
     by (auto intro!: derivative_eq_intros)
 qed
 
-text \<open>The relaxed viscosity predicates.  Because \<open>ell_op_s \<le> ell_op\<close>, the
-  relaxed SUBsolution property is implied by the true one and the relaxed
-  SUPERsolution property IMPLIES the true one --- so the half this development
-  can reach probabilistically (the subsolution) is the half where the relaxed
-  form is the weaker statement.  That asymmetry is the honest summary of where
-  \<open>\<section>3\<close> stands here.\<close>
-
-definition visc_subsol_s ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
-  where
-  "visc_subsol_s k L \<Omega> u \<longleftrightarrow>
-     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x) \<longrightarrow>
-        ell_op_s k L H \<le> 1)"
-
-definition visc_supersol_s ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
-  where
-  "visc_supersol_s k L \<Omega> u \<longleftrightarrow>
-     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<exists>e>0. \<forall>y \<in> ball x e. u x - \<phi> x \<le> u y - \<phi> y) \<longrightarrow>
-        1 \<le> ell_op_s k L H)"
-
-lemma visc_supersol_s_imp_visc_supersol:
-  fixes \<Omega> :: "(real^'n::finite) set"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and S: "visc_supersol_s k L \<Omega> u"
-  shows "visc_supersol k L \<Omega> u"
-  unfolding visc_supersol_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. u x - \<phi> x \<le> u y - \<phi> y"
-  have "1 \<le> ell_op_s k L H"
-    using S[unfolded visc_supersol_s_def] x tf lm by blast
-  also have "\<dots> \<le> ell_op k L (g x) H" by (rule ell_op_s_le_ell_op[OF k L])
-  finally show "1 \<le> ell_op k L (g x) H" .
-qed
-
-lemma visc_subsol_imp_visc_subsol_s:
-  fixes \<Omega> :: "(real^'n::finite) set"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and S: "visc_subsol k L \<Omega> u"
-  shows "visc_subsol_s k L \<Omega> u"
-  unfolding visc_subsol_s_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x"
-  have "ell_op_s k L H \<le> ell_op k L (g x) H" by (rule ell_op_s_le_ell_op[OF k L])
-  also have "\<dots> \<le> 1" using S[unfolded visc_subsol_def] x tf lm by blast
-  finally show "ell_op_s k L H \<le> 1" .
-qed
-
-section \<open>The analytic input, isolated\<close>
-
-text \<open>Everything above is unconditional.  What the subsolution proof still
-  needs from \<^const>\<open>paper_pair_class\<close> is ONE statement, and it is exactly
-  Ito's formula applied to a test function along a class member:
-
-  for a test function \<open>\<phi>\<close> touching \<^const>\<open>paper_v\<close> from above at \<open>x\<close>, the
-  DPP bound of @{thm [source] paper_v_cond_ball} forces the second-order
-  expansion of \<open>\<phi>\<close> against the member's covariation to beat \<open>-2\<close>, and the
-  covariation direction is feasible because a class member's \<open>d\<langle>X\<rangle>\<close> lies in
-  \<^const>\<open>sconstraint\<close> and is orthogonal to the gradient at the touching
-  point.
-
-  We name that output as a predicate rather than assume Ito itself, so the
-  interface is the smallest possible: a supplier only has to produce the
-  WITNESS.  This is the same discipline
-  @{thm [source] paper_pair_class_aglue} was built with --- hypotheses first,
-  suppliers later --- and it means the reduction below can be checked now.\<close>
-
-definition class_expansion_witness ::
-  "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
-  where
-  "class_expansion_witness k L T K \<longleftrightarrow>
-     (\<forall>x \<in> interior K. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<exists>e>0. \<forall>z \<in> ball x e.
-           enn2real (paper_v k L T K z) - \<phi> z
-             \<le> enn2real (paper_v k L T K x) - \<phi> x) \<longrightarrow>
-        (\<exists>a \<in> feasible k L (g x). - trace (H ** a) / 2 \<le> 1))"
-
-theorem paper_v_visc_subsol_of_witness:
-  fixes K :: "(real^'n::finite) set"
-  assumes W: "class_expansion_witness k L T K"
-  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (paper_v k L T K z))"
-  unfolding visc_subsol_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume x: "x \<in> interior K"
-    and tf: "test_fun_at \<phi> g H x"
-    and lm: "\<exists>e>0. \<forall>z \<in> ball x e.
-        enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
-  from W[unfolded class_expansion_witness_def] x tf lm
-  obtain a where a: "a \<in> feasible k L (g x)"
-    and le: "- trace (H ** a) / 2 \<le> 1" by blast
-  show "ell_op k L (g x) H \<le> 1" by (rule ell_op_le_one_of_witness[OF a le])
-qed
-
 section \<open>The ball exit time along a continuous path\<close>
 
 text \<open>Three pathwise facts about \<^const>\<open>pball_exit\<close>.  All three are what an
@@ -2593,91 +2489,6 @@ proof -
   also have "\<dots> = real CARD('n) * (real CARD('n) * L)"
     by simp
   finally show ?thesis .
-qed
-
-section \<open>Gap 1 closed: the relaxed subsolution property of \<open>paper_v\<close>\<close>
-
-theorem paper_v_visc_subsol_s:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
-  shows "visc_subsol_s k L (interior K) (\<lambda>z. enn2real (paper_v k L T K z))"
-  unfolding visc_subsol_s_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume x: "x \<in> interior K"
-    and tf: "test_fun_at \<phi> g H x"
-    and lm: "\<exists>e>0. \<forall>z \<in> ball x e.
-        enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
-  have L0: "0 \<le> L" using L1 by simp
-  define u where "u = (\<lambda>z :: real^'n. enn2real (paper_v k L T K z))"
-  from lm obtain e0 where e00: "0 < e0"
-    and lme: "\<And>z. z \<in> ball x e0 \<Longrightarrow> u z - \<phi> z \<le> u x - \<phi> x"
-    unfolding u_def by blast
-  define C where "C = real CARD('n) * (real CARD('n) * L)"
-  have n0: "0 < real CARD('n)"
-    using zero_less_card_finite[where 'a = 'n] by simp
-  have C0: "0 < C"
-    unfolding C_def by (intro mult_pos_pos n0) (use L1 in linarith)
-  have key: "ell_op_s k L H \<le> 1 + \<delta> * C / 2" if d0: "0 < \<delta>" for \<delta>
-  proof -
-    obtain r where r0: "0 < r"
-      and dom: "\<And>z. z \<in> ball x r \<Longrightarrow>
-          \<phi> z \<le> \<phi> x + g x \<bullet> (z - x) + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
-      using test_fun_quadratic_dominates[OF tf d0] by blast
-    define \<epsilon> where "\<epsilon> = min e0 r / 2"
-    have eps0: "0 < \<epsilon>" using e00 r0 by (simp add: \<epsilon>_def)
-    have touch: "u z \<le> u x + g x \<bullet> (z - x)
-        + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
-      if z: "dist z x \<le> \<epsilon>" for z
-    proof -
-      have zin: "z \<in> ball x e0 \<inter> ball x r"
-        using z e00 r0 by (auto simp: \<epsilon>_def mem_ball dist_commute)
-      have "u z - \<phi> z \<le> u x - \<phi> x" using lme zin by blast
-      moreover have "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
-          + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
-        using dom zin by blast
-      ultimately show ?thesis by linarith
-    qed
-    have touch': "\<And>z. dist z x \<le> \<epsilon> \<Longrightarrow> enn2real (paper_v k L T K z)
-        \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
-          + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
-      using touch[unfolded u_def] by simp
-    obtain b where bmem: "b \<in> sconstraint k L"
-      and w: "- trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2 \<le> 1"
-      using paper_v_subsol_quadratic_ball[OF T L1 Kc eps0 touch'] by blast
-    have split: "trace ((H + \<delta> *\<^sub>R mat 1) ** b) = trace (H ** b) + \<delta> * trace b"
-    proof -
-      have "(H + \<delta> *\<^sub>R mat 1) ** b = H ** b + (\<delta> *\<^sub>R mat 1) ** b"
-        by (rule matrix_add_rdistrib)
-      moreover have "(\<delta> *\<^sub>R mat 1) ** b = \<delta> *\<^sub>R b"
-        by (simp add: scaleR_matrix_mult matrix_mul_lid)
-      ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** b)
-          = trace (H ** b + \<delta> *\<^sub>R b)" by simp
-      have e2: "trace (H ** b + \<delta> *\<^sub>R b) = trace (H ** b) + trace (\<delta> *\<^sub>R b)"
-        by (simp add: trace_def sum.distrib vector_add_component)
-      have e3: "trace (\<delta> *\<^sub>R b) = \<delta> * trace b" by (rule trace_scaleR)
-      from e1 e2 e3 show ?thesis by simp
-    qed
-    have trb: "trace b \<le> C"
-      unfolding C_def by (rule sconstraint_trace_le[OF L0 bmem])
-    have "- trace (H ** b) / 2 \<le> 1 + \<delta> * trace b / 2"
-      using w split by (simp add: field_simps)
-    also have "\<dots> \<le> 1 + \<delta> * C / 2"
-      using trb d0 by (simp add: mult_left_mono)
-    finally have wb: "- trace (H ** b) / 2 \<le> 1 + \<delta> * C / 2" .
-    show ?thesis by (rule ell_op_s_le_of_witness[OF L0 bmem wb])
-  qed
-  show "ell_op_s k L H \<le> 1"
-  proof (rule field_le_epsilon)
-    fix e :: real assume e0: "0 < e"
-    have d0: "0 < 2 * e / C" using e0 C0 by simp
-    have "ell_op_s k L H \<le> 1 + (2 * e / C) * C / 2"
-      by (rule key[OF d0])
-    also have "\<dots> = 1 + e" using C0 by (simp add: field_simps)
-    finally show "ell_op_s k L H \<le> 1 + e" .
-  qed
 qed
 
 section \<open>Positive semidefinite forms kill their null directions\<close>
@@ -16214,9 +16025,7 @@ text \<open>Where clause (2) stands after this file.
   \<^bold>\<open>PROVED --- the SUBSOLUTION half, with the operator of Eq. (1.9) itself.\<close>
   @{thm [source] paper_v_visc_subsol}: for every \<open>0 < T\<close>, \<open>1 \<le> L\<close>, closed \<open>K\<close>
   and \<open>k < CARD('n)\<close>, \<open>enn2real \<circ> paper_v k L T K\<close> is a viscosity subsolution
-  on \<open>interior K\<close>.  The relaxed form @{thm [source] paper_v_visc_subsol_s},
-  over \<open>ell_op_s\<close>, is the intermediate result and is kept: the supersolution
-  half should be attacked there (see below).
+  on \<open>interior K\<close>.
 
   \<^bold>\<open>Gap 1 (localisation) --- CLOSED.\<close>  The argument stops at the exit time of a
   ball, uses the touching only on the closed ball, and the quadratic expansion
@@ -16269,13 +16078,53 @@ text \<open>Where clause (2) stands after this file.
     \<open>b\<^sup>* *v q = 0\<close> puts \<open>q\<close> in the zero eigenspace, and every direction the
     witness uses has POSITIVE \<open>b\<^sup>*\<close>-eigenvalue, hence is orthogonal to \<open>q\<close>.
 
-  \<^bold>\<open>What is LEFT of clause (2): the supersolution half only.\<close>  It consumes
-  @{thm [source] paper_v_dpp_sup_ge_time} (proved) plus a weak solution of the
-  SDE (3.24), which this development does not have.  Work in \<open>ell_op_s\<close>
-  throughout: by @{thm [source] visc_supersol_s_imp_visc_supersol} the relaxed
-  supersolution property implies the true one, so Gap 2 does not arise on that
-  side at all --- and Gap 1's localisation machinery
-  (@{thm [source] pball_exit_path_stopping_time} and the stopped moments)
-  transfers verbatim.\<close>
+  \<^bold>\<open>PROVED --- the SUPERSOLUTION half, in the paper's own Definition
+  3.1(b).\<close>  @{thm [source] paper_v_supersol_lsc}: the LOWER SEMICONTINUOUS
+  ENVELOPE of \<open>enn2real \<circ> paper_v k L T K\<close> satisfies
+  \<open>1 \<le> F\<^sup>*(\<nabla>\<phi>(x), \<nabla>\<^sup>2\<phi>(x))\<close> at every global touching over \<open>K\<close> from an
+  interior point.  Two cases, split on the gradient.
+
+  \<^item> \<^emph>\<open>Case 1, \<open>\<nabla>\<phi>(x) \<noteq> 0\<close>\<close>
+    (@{thm [source] paper_v_supersol_contradiction_case1_lsc}): the skew
+    trick.  A skew-symmetric diffusion field kills the Ito martingale term
+    IDENTICALLY, so the touching inequality holds PATHWISE, which is what an
+    essential infimum needs.  The process is built by Euler pasting of
+    endpoint-frozen Gaussian kernels and a weak limit --- no stochastic
+    integral and no SDE well-posedness.  This case consults the touching only
+    on a ball, which is what lets Case 2 use it at perturbed points.
+
+  \<^item> \<^emph>\<open>Case 2, \<open>\<nabla>\<phi>(x) = 0\<close>\<close> (@{thm [source] paper_v_case2}): a
+    dichotomy, and NOT the paper's bump construction.  Applying
+    @{thm [source] test_fun_quadratic_minorates} at level \<open>\<epsilon>/2\<close> and splitting
+    \<open>H - (\<epsilon>/2)\<cdot>1 = (H - \<epsilon>\<cdot>1) + (\<epsilon>/2)\<cdot>1\<close> supplies, for free, all three
+    properties the paper's \<open>\<phi>\<^sup>m\<close> was built for.  Tilting by \<open>\<eta>\<close> then either
+    yields local minimisers with NONZERO gradient arbitrarily close to \<open>x\<close>
+    --- Case 1 fires at each, and the gradients vanish in the limit because
+    \<open>\<bar>y - x\<bar> \<le> 4\<bar>\<eta>\<bar>/\<epsilon>\<close> (@{thm [source] tilted_minimiser_close}) --- or the
+    gradient vanishes at every one of them, and then
+    @{thm [source] horn_B_locally_constant} makes \<open>v\<^sub>*\<close> locally constant,
+    which @{thm [source] paper_v_not_locally_constant} refutes through the
+    DPP and the deterministic-radius member.
+
+  \<^bold>\<open>The one hypothesis, and why it is faithful.\<close>
+  @{thm [source] paper_v_supersol_lsc} assumes the horizon never binds on the
+  interior, \<open>v\<^sub>*(x) < T/2\<close>.  Only Case 2 needs it: Case 1 DERIVES it from the
+  nonvanishing gradient (@{thm [source] touching_grad_lt_horizon_gen}).  It
+  cannot be dropped, because where \<open>v \<equiv> T\<close> on an open set the supersolution
+  inequality is genuinely FALSE --- a constant test function would demand
+  \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  The paper has no horizon at all, so \<open>T\<close> large enough to
+  be inert IS the paper's setting; for a bounded \<open>K\<close> the hypothesis follows
+  from @{thm [source] paper_v_le_ball_bound}.
+
+  \<^bold>\<open>Why the supersolution is stated at the ENVELOPE and the subsolution is
+  not.\<close>  The envelope-free notions of Relative\_Arbitrage\_PDE are the
+  STRONGER ones, and for the subsolution the stronger one is available:
+  \<open>ell_op k L 0 0 = 0 \<le> 1\<close>, so a constant test function at an interior local
+  MAXIMUM costs nothing.  On the supersolution side the same test function at
+  an interior local MINIMUM would demand \<open>1 \<le> ell_op k L 0 0 = 0\<close>, so
+  @{const visc_supersol} rules out interior local minima outright and cannot
+  hold for \<open>paper_v\<close>.  That asymmetry is exactly what Definition 3.1's
+  envelopes exist to repair, and it is why this file proves the subsolution in
+  the envelope-free form and the supersolution in the envelope form.\<close>
 
 end
