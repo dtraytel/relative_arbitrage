@@ -12119,6 +12119,148 @@ proof -
   qed
 qed
 
+subsection \<open>Region variants of the Lipschitz bound and the open event\<close>
+
+text \<open>Batch 4d(iii).  Two committed Case-1 lemmas, re-stated with the
+  confinement region decoupled from the quadratic's centre.  The
+  Lipschitz bound needs only the two norm bounds, and the bad event
+  stays open for ANY open region: the stay-condition and the quadratic
+  no longer share a centre.  These feed the region versions of the
+  vanishing-probability and limit theorems.\<close>
+
+lemma quad_diff_bound_gen:
+  fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and R :: real
+  assumes sym: "transpose M = M"
+    and na: "norm (a - x) \<le> R" and nb: "norm (b - x) \<le> R"
+  shows "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
+       - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
+      \<le> (norm q + 2 * (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * R)
+          * norm (b - a)"
+proof -
+  let ?CM = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
+  have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
+  have dble: "norm (b - a) \<le> 2 * R"
+  proof -
+    have deq: "b - a = (b - x) + (x - a)" by simp
+    have "norm (b - a) \<le> norm (b - x) + norm (x - a)"
+      by (subst deq) (rule norm_triangle_ineq)
+    moreover have "norm (x - a) \<le> R"
+      using na by (simp add: norm_minus_commute)
+    ultimately show ?thesis using nb by linarith
+  qed
+  have step: "q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
+      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))
+      = (q + M *v (a - x)) \<bullet> (b - a)
+        + (1/2) * ((b - a) \<bullet> (M *v (b - a)))"
+    by (rule quad_taylor_step[OF sym])
+  have t1: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
+      \<le> (norm q + ?CM * R) * norm (b - a)"
+  proof -
+    have cs: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
+        \<le> norm (q + M *v (a - x)) * norm (b - a)"
+      by (rule Cauchy_Schwarz_ineq2)
+    have "norm (q + M *v (a - x)) \<le> norm q + ?CM * R"
+    proof -
+      have "norm (q + M *v (a - x)) \<le> norm q + norm (M *v (a - x))"
+        by (rule norm_triangle_ineq)
+      moreover have "norm (M *v (a - x)) \<le> ?CM * norm (a - x)"
+        by (rule matvec_norm_le)
+      moreover have "?CM * norm (a - x) \<le> ?CM * R"
+        by (rule mult_left_mono[OF na CM0])
+      ultimately show ?thesis by linarith
+    qed
+    then have "norm (q + M *v (a - x)) * norm (b - a)
+        \<le> (norm q + ?CM * R) * norm (b - a)"
+      by (rule mult_right_mono) simp
+    then show ?thesis using cs by linarith
+  qed
+  have t2: "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
+      \<le> ?CM * R * norm (b - a)"
+  proof -
+    have "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
+        \<le> norm (b - a) * norm (M *v (b - a))"
+      by (rule Cauchy_Schwarz_ineq2)
+    also have "\<dots> \<le> norm (b - a) * (?CM * norm (b - a))"
+      by (rule mult_left_mono[OF matvec_norm_le norm_ge_zero])
+    finally have h: "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
+        \<le> ?CM * norm (b - a) * norm (b - a)"
+      by (simp add: mult_ac)
+    have h2: "?CM * norm (b - a) * norm (b - a)
+        \<le> ?CM * (2 * R) * norm (b - a)"
+      by (rule mult_right_mono[OF mult_left_mono[OF dble CM0] norm_ge_zero])
+    have "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
+        = (1/2) * \<bar>(b - a) \<bullet> (M *v (b - a))\<bar>"
+      by (simp add: abs_mult)
+    also have "\<dots> \<le> (1/2) * (?CM * (2 * R) * norm (b - a))"
+      using h h2 by linarith
+    also have "\<dots> = ?CM * R * norm (b - a)" by simp
+    finally show ?thesis .
+  qed
+  have tri: "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
+      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
+      \<le> \<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
+        + \<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>"
+    unfolding step by (rule abs_triangle_ineq)
+  have fin: "(norm q + ?CM * R) * norm (b - a)
+      + ?CM * R * norm (b - a)
+      = (norm q + 2 * ?CM * R) * norm (b - a)"
+    by (simp add: algebra_simps)
+  show ?thesis using tri t1 t2 fin by linarith
+qed
+
+lemma open_quad_bad_event_region:
+  fixes x q :: "real^'n::finite" and M :: "real^'n^'n"
+    and t T thr :: real and RO :: "(real^'n) set"
+  assumes t0: "0 \<le> t" and tT: "t \<le> T" and RO: "open RO"
+  shows "openin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO)
+        \<and> q \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))) < thr}"
+proof -
+  have T0: "0 \<le> T" using t0 tT by linarith
+  let ?pm = "path_metric T :: ('n pairpath) metric"
+  have o1: "openin (mtopology_of ?pm)
+      {\<omega> \<in> mspace ?pm. \<forall>s\<in>{0..t}. \<omega> s \<in> fst -` RO}"
+    by (rule open_stay_inside[OF T0 open_vimage_fst[OF RO] t0 tT])
+  have c0: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p - x)"
+    by (intro continuous_intros)
+  have c1: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF matvec_blin] c0]) auto
+  have cq: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_inner_right] c0]) auto
+  have cin: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+        (fst p - x) \<bullet> (M *v (fst p - x)))"
+    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner c0 c1])
+  have contf: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
+    by (intro continuous_on_add continuous_on_mult
+        continuous_on_const cq cin)
+  have oU: "open {p :: (real^'n) \<times> (real^'n^'n).
+      q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}"
+    by (rule open_Collect_less[OF contf continuous_on_const])
+  have o2: "openin (mtopology_of ?pm)
+      {\<omega> \<in> mspace ?pm. \<omega> t \<in> {p. q \<bullet> (fst p - x)
+        + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}}"
+    by (rule open_eval_preimage[OF _ oU]) (use t0 tT in simp)
+  have eq: "{\<omega> \<in> mspace ?pm.
+      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO)
+      \<and> q \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))) < thr}
+      = {\<omega> \<in> mspace ?pm. \<forall>s\<in>{0..t}. \<omega> s \<in> fst -` RO}
+        \<inter> {\<omega> \<in> mspace ?pm. \<omega> t \<in> {p. q \<bullet> (fst p - x)
+          + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}}"
+    by auto
+  show ?thesis unfolding eq by (rule openin_Int[OF o1 o2])
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
