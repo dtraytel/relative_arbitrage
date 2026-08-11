@@ -15567,9 +15567,10 @@ lemma horn_B_locally_constant:
   assumes lsc: "\<And>a z. a < W z \<Longrightarrow> \<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < W u"
     and symM: "transpose M = M" and inv: "invertible M"
     and rho: "0 < \<rho>" and c0: "0 < c"
+    and h0: "0 < h" and hle: "h \<le> c * \<rho>"
     and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
       W x + ((z - x) \<bullet> (M *v (z - x))) / 2 + c * ((z - x) \<bullet> (z - x)) \<le> W z"
-    and hornB: "\<And>\<eta> y. norm \<eta> < c * \<rho> \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
+    and hornB: "\<And>\<eta> y. norm \<eta> < h \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
       (\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
         W y - (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
           \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x)))
@@ -15589,8 +15590,8 @@ proof -
   define N where "N = onorm ((*v) M)"
   have N0: "0 \<le> N" unfolding N_def by (rule onorm_pos_le[OF bl])
   have N1: "0 < N + 1" using N0 by simp
-  define r0 where "r0 = min (\<rho> / 2) (c * \<rho> / (2 * (N + 1)))"
-  have r00: "0 < r0" unfolding r0_def using rho c0 N1 by simp
+  define r0 where "r0 = min (\<rho> / 2) (h / (2 * (N + 1)))"
+  have r00: "0 < r0" unfolding r0_def using rho h0 N1 by simp
   have cp: "0 < c * \<rho>" using c0 rho by simp
   have pinch0: "W y - C * (dist y w * dist y w) \<le> W w"
     if dy: "dist x y < r0" and dw: "dist y w < \<rho> - dist x y"
@@ -15607,11 +15608,12 @@ proof -
     have s2: "N * r0 \<le> (N + 1) * r0"
       by (rule mult_right_mono) (use r00 in auto)
     have hb: "norm \<eta> \<le> (N + 1) * r0" using e1 e2 s1 s2 by linarith
-    have q1: "(N + 1) * r0 \<le> (N + 1) * (c * \<rho> / (2 * (N + 1)))"
+    have q1: "(N + 1) * r0 \<le> (N + 1) * (h / (2 * (N + 1)))"
       by (rule mult_left_mono) (use r0_def N1 in auto)
-    have q2: "(N + 1) * (c * \<rho> / (2 * (N + 1))) = c * \<rho> / 2"
+    have q2: "(N + 1) * (h / (2 * (N + 1))) = h / 2"
       using N1 by (simp add: field_simps)
-    have hlt: "norm \<eta> < c * \<rho>" using hb q1 q2 cp by linarith
+    have hlth: "norm \<eta> < h" using hb q1 q2 h0 by linarith
+    have hlt: "norm \<eta> < c * \<rho>" using hlth hle by linarith
     obtain y' where dxy': "dist x y' < \<rho>"
       and loc': "\<And>w. dist y' w < \<rho> - dist x y' \<Longrightarrow>
         W y' - (((y' - x) \<bullet> (M *v (y' - x))) / 2 + \<eta> \<bullet> (y' - x))
@@ -15624,7 +15626,7 @@ proof -
             \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
       show thesis by (rule that[OF b1 b3])
     qed
-    have g0: "M *v (y' - x) + \<eta> = 0" by (rule hornB[OF hlt dxy' loc'])
+    have g0: "M *v (y' - x) + \<eta> = 0" by (rule hornB[OF hlth dxy' loc'])
     have meq: "M *v (y' - x) = M *v (y - x)"
       using g0 unfolding \<eta>_def by (simp add: algebra_simps)
     have yeq: "y' = y"
@@ -15823,6 +15825,57 @@ proof -
   then have ge: "\<theta> + lsc_env tv x \<le> tv z"
     using tv0[of z] by (simp add: ennreal_le_iff)
   show False using ge vz th0 by linarith
+qed
+
+
+text \<open>Horn A at a GIVEN local minimiser.  \<open>paper_v_case2_tilt_step\<close>
+  produces its own minimiser; the assembly instead has one handed to it
+  by the case split, so the last step of that proof is isolated here.\<close>
+
+lemma paper_v_case2_at_minimiser:
+  fixes K :: "(real^'n::finite) set" and x y \<eta> :: "real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and symH: "transpose H = H"
+    and rho: "0 < \<rho>" and sub: "cball x \<rho> \<subseteq> interior K"
+    and dxy: "dist x y < \<rho>"
+    and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+          - (((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+          - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+    and gy: "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0"
+  shows "1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+      (H - \<epsilon> *\<^sub>R mat 1)"
+proof -
+  have symM: "transpose (H - \<epsilon> *\<^sub>R mat 1) = H - \<epsilon> *\<^sub>R mat 1"
+    by (rule transpose_sub_smat[OF symH])
+  have rp: "0 < \<rho> - dist x y" using dxy by simp
+  have yi: "y \<in> interior K"
+  proof -
+    have "y \<in> cball x \<rho>" using dxy by (auto simp: dist_commute)
+    then show ?thesis using sub by blast
+  qed
+  have tfy: "test_fun_at
+      (\<lambda>z. 0 + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
+      (\<lambda>z. (H - \<epsilon> *\<^sub>R mat 1) *v (z - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1) y"
+    by (rule test_fun_at_shifted_quadratic[OF symM])
+  have tminy: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+        - (0 + ((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+        - (0 + ((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+    if wK: "w \<in> K" and dw: "dist y w < \<rho> - dist x y" for w
+    using loc[OF dw] by simp
+  show ?thesis
+  proof (rule ccontr)
+    assume "\<not> 1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+        (H - \<epsilon> *\<^sub>R mat 1)"
+    then have flt: "ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+        (H - \<epsilon> *\<^sub>R mat 1) < 1" by simp
+    show False
+      by (rule paper_v_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
+            tfy rp tminy gy flt])
+  qed
 qed
 
 
