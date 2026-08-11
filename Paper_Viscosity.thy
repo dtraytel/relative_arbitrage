@@ -15000,6 +15000,169 @@ proof -
   finally show ?thesis unfolding s1 .
 qed
 
+subsection \<open>Continuity of the transport\<close>
+
+text \<open>The plumbing for \<open>F\<^sup>* = F\<close> at \<open>p \<noteq> 0\<close>: the rotation, and hence the
+  conjugated witness and its pairing with the Hessian, depends
+  continuously on the direction it is built from.  Everything is
+  assembled from four reusable helpers, so that no proof below ever
+  descends to matrix entries more than once.
+
+  The domain is \<open>{q. 0 < u \<bullet> q}\<close> --- an open half space containing \<open>p\<close>
+  when \<open>u\<close> is \<open>p\<close>'s direction.  It rules out both degeneracies at once:
+  \<open>q \<noteq> 0\<close>, and \<open>u + q/|q| \<noteq> 0\<close>, since the latter would force
+  \<open>u \<bullet> q/|q| = -1\<close>.\<close>
+
+lemma continuous_on_matrix_entry:
+  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
+  assumes cF: "continuous_on S F"
+  shows "continuous_on S (\<lambda>z. F z $ i $ j)"
+proof -
+  have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ i $ j)"
+    using bounded_linear_vec_nth bounded_linear_compose by blast
+  show ?thesis
+    by (rule continuous_on_compose2[OF linear_continuous_on[OF bl] cF]) auto
+qed
+
+lemma continuous_on_matrix_mult:
+  fixes F G :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
+  assumes cF: "continuous_on S F" and cG: "continuous_on S G"
+  shows "continuous_on S (\<lambda>z. F z ** G z)"
+proof -
+  have eq: "(\<lambda>z. F z ** G z)
+      = (\<lambda>z. \<chi> i j. (\<Sum>l\<in>UNIV. F z $ i $ l * G z $ l $ j))"
+    by (rule ext) (simp add: matrix_matrix_mult_def)
+  show ?thesis unfolding eq
+    by (intro continuous_on_vec_lambda continuous_on_sum continuous_on_mult
+        continuous_on_matrix_entry cF cG)
+qed
+
+lemma continuous_on_matrix_transpose:
+  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
+  assumes cF: "continuous_on S F"
+  shows "continuous_on S (\<lambda>z. transpose (F z))"
+proof -
+  have eq: "(\<lambda>z. transpose (F z)) = (\<lambda>z. \<chi> i j. F z $ j $ i)"
+    by (rule ext) (simp add: transpose_def)
+  show ?thesis unfolding eq
+    by (intro continuous_on_vec_lambda continuous_on_matrix_entry cF)
+qed
+
+lemma continuous_on_hh:
+  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite"
+  assumes cF: "continuous_on S F" and nz: "\<And>z. z \<in> S \<Longrightarrow> F z \<noteq> 0"
+  shows "continuous_on S (\<lambda>z. hh (F z))"
+proof -
+  have entF: "continuous_on S (\<lambda>z. F z $ i)" for i
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_vec_nth] cF]) auto
+  have cip: "continuous_on S (\<lambda>z. F z \<bullet> F z)"
+    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner cF cF])
+  have nz': "F z \<bullet> F z \<noteq> 0" if "z \<in> S" for z using nz[OF that] by simp
+  have eq: "(\<lambda>z. hh (F z)) = (\<lambda>z. \<chi> i j. (if i = j then 1 else 0)
+      - 2 / (F z \<bullet> F z) * (F z $ i * F z $ j))"
+    by (rule ext) (simp add: hh_def mat_def outerp_def vec_eq_iff)
+  show ?thesis unfolding eq
+    by (intro continuous_on_vec_lambda continuous_on_diff continuous_on_const
+        continuous_on_mult continuous_on_divide cip entF)
+      (use nz' in auto)
+qed
+
+lemma continuous_on_rotv:
+  fixes u :: "real^'n::finite" and F :: "'a::topological_space \<Rightarrow> real^'n"
+  assumes cF: "continuous_on S F" and nz: "\<And>z. z \<in> S \<Longrightarrow> u + F z \<noteq> 0"
+  shows "continuous_on S (\<lambda>z. rotv u (F z))"
+proof -
+  have c1: "continuous_on S (\<lambda>z. hh (u + F z))"
+  proof (rule continuous_on_hh)
+    show "continuous_on S (\<lambda>z. u + F z)"
+      by (intro continuous_on_add continuous_on_const cF)
+    show "\<And>z. z \<in> S \<Longrightarrow> u + F z \<noteq> 0" by (rule nz)
+  qed
+  have c2: "continuous_on S (\<lambda>z :: 'a. hh u)" by (rule continuous_on_const)
+  show ?thesis unfolding rotv_def
+    by (rule continuous_on_matrix_mult[OF c1 c2])
+qed
+
+text \<open>The half space, and what it rules out.\<close>
+
+lemma halfspace_open: "open {q :: real^'n::finite. 0 < u \<bullet> q}"
+proof -
+  have "continuous_on UNIV (\<lambda>q :: real^'n. u \<bullet> q)"
+    by (rule linear_continuous_on[OF bounded_linear_inner_right])
+  then have "open {q :: real^'n. 0 < u \<bullet> q}"
+    by (rule open_Collect_less[OF continuous_on_const])
+  then show ?thesis .
+qed
+
+lemma halfspace_nonzero:
+  fixes q :: "real^'n::finite"
+  assumes "0 < u \<bullet> q" shows "q \<noteq> 0"
+  using assms by auto
+
+lemma halfspace_not_antipodal:
+  fixes u q :: "real^'n::finite"
+  assumes u1: "norm u = 1" and hq: "0 < u \<bullet> q"
+  shows "u + q /\<^sub>R norm q \<noteq> 0"
+proof
+  assume z: "u + q /\<^sub>R norm q = 0"
+  have q0: "q \<noteq> 0" using hq by auto
+  have nq: "0 < norm q" using q0 by simp
+  have "u \<bullet> (q /\<^sub>R norm q) = (u \<bullet> q) / norm q"
+    by (simp add: divide_inverse)
+  then have pos: "0 < u \<bullet> (q /\<^sub>R norm q)" using hq nq by simp
+  have "q /\<^sub>R norm q = - u" using z by (metis add_eq_0_iff)
+  then have "u \<bullet> (q /\<^sub>R norm q) = - (u \<bullet> u)" by simp
+  also have "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
+  finally have "u \<bullet> (q /\<^sub>R norm q) = - 1" by simp
+  then show False using pos by simp
+qed
+
+lemma continuous_on_rotv_dir:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u = 1"
+  shows "continuous_on {q :: real^'n. 0 < u \<bullet> q}
+      (\<lambda>q. rotv u (q /\<^sub>R norm q))"
+proof (rule continuous_on_rotv)
+  show "continuous_on {q :: real^'n. 0 < u \<bullet> q} (\<lambda>q. q /\<^sub>R norm q)"
+  proof -
+    have nz: "norm q \<noteq> 0" if "q \<in> {q :: real^'n. 0 < u \<bullet> q}" for q
+      using that by auto
+    have "continuous_on {q :: real^'n. 0 < u \<bullet> q}
+        (\<lambda>q. (1 / norm q) *\<^sub>R q)"
+      by (intro continuous_on_scaleR continuous_on_divide continuous_on_const
+          continuous_on_norm continuous_on_id) (use nz in auto)
+    then show ?thesis by (simp add: divide_inverse)
+  qed
+next
+  show "\<And>q. q \<in> {q :: real^'n. 0 < u \<bullet> q} \<Longrightarrow> u + q /\<^sub>R norm q \<noteq> 0"
+    using halfspace_not_antipodal[OF u1] by blast
+qed
+
+text \<open>And the real-valued functional the assembly actually needs: the
+  Hessian paired with the conjugated witness.\<close>
+
+lemma continuous_on_conj_trace:
+  fixes a :: "real^'n::finite^'n"
+    and R M :: "'b::topological_space \<Rightarrow> real^'n^'n"
+  assumes cR: "continuous_on S R" and cM: "continuous_on S M"
+  shows "continuous_on S (\<lambda>z. trace (M z ** (R z ** a ** transpose (R z))))"
+proof -
+  have c1: "continuous_on S (\<lambda>z. R z ** a)"
+    by (rule continuous_on_matrix_mult[OF cR continuous_on_const])
+  have c2: "continuous_on S (\<lambda>z. transpose (R z))"
+    by (rule continuous_on_matrix_transpose[OF cR])
+  have c3: "continuous_on S (\<lambda>z. R z ** a ** transpose (R z))"
+    by (rule continuous_on_matrix_mult[OF c1 c2])
+  have c4: "continuous_on S (\<lambda>z. M z ** (R z ** a ** transpose (R z)))"
+    by (rule continuous_on_matrix_mult[OF cM c3])
+  have tr: "(\<lambda>B :: real^'n^'n. trace B) = (\<lambda>B. \<Sum>i\<in>UNIV. B $ i $ i)"
+    by (rule ext) (simp add: trace_def)
+  show ?thesis
+    unfolding tr
+    by (intro continuous_on_sum continuous_on_matrix_entry c4)
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
