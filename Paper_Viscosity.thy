@@ -15070,6 +15070,162 @@ proof -
 qed
 
 
+text \<open>Assembling the separation for the value function.  On a small
+  enough ball the touching hypothesis and the strict quadratic minorant
+  combine into exactly the separation \<open>tilted_local_touching\<close> wants:
+  the touching gives \<open>\<phi> z - \<phi> x \<le> W z - W x\<close> and the minorant gives
+  \<open>Q\<^sub>\<epsilon>(z) + (\<epsilon>/4)\<bar>z - x\<bar>\<^sup>2 \<le> \<phi> z - \<phi> x\<close>.  The radius is also shrunk
+  below the distance to the complement of \<open>interior K\<close>, so that every
+  point of the ball is an admissible touching point in its own right.\<close>
+
+lemma paper_v_case2_separation:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
+    and rho0: "0 < \<rho>\<^sub>0"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
+    and e0: "0 < \<epsilon>"
+  obtains \<rho> where "0 < \<rho>" and "cball x \<rho> \<subseteq> interior K"
+    and "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
+        + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
+      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+proof -
+  obtain r where r0: "0 < r"
+    and mino: "\<And>z. z \<in> ball x r \<Longrightarrow>
+      \<phi> x + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> \<phi> z"
+    by (rule test_fun_strict_minorant_zero_grad[OF tf gx0 e0]) blast
+  have exb: "\<exists>e>0. ball x e \<subseteq> interior K"
+    using open_interior[of K, unfolded open_contains_ball] xi by blast
+  obtain e where e0': "0 < e" and eK: "ball x e \<subseteq> interior K"
+    using exb by blast
+  define \<rho> where "\<rho> = min (r / 2) (min (\<rho>\<^sub>0 / 2) (e / 2))"
+  have rho: "0 < \<rho>" unfolding \<rho>_def using r0 rho0 e0' by simp
+  have rlt: "\<rho> < r" unfolding \<rho>_def using r0 rho0 e0' by simp
+  have rholt: "\<rho> < \<rho>\<^sub>0" unfolding \<rho>_def using r0 rho0 e0' by simp
+  have elt: "\<rho> < e" unfolding \<rho>_def using r0 rho0 e0' by simp
+  have sub: "cball x \<rho> \<subseteq> interior K"
+  proof
+    fix z :: "real^'n" assume "z \<in> cball x \<rho>"
+    then have "dist x z \<le> \<rho>" by simp
+    then have "dist x z < e" using elt by linarith
+    then show "z \<in> interior K" using eK by auto
+  qed
+  have key: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
+      + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+      + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
+    \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+    if zc: "z \<in> cball x \<rho>" for z
+  proof -
+    have dzx: "dist x z \<le> \<rho>" using zc by simp
+    have zb: "z \<in> ball x r" using dzx rlt by auto
+    have zK: "z \<in> K" using sub zc interior_subset by blast
+    have dxz: "dist x z < \<rho>\<^sub>0" using dzx rholt by linarith
+    have t: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z - \<phi> z"
+      by (rule tmin[OF zK dxz])
+    have m: "\<phi> x + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> \<phi> z" by (rule mino[OF zb])
+    show ?thesis using t m by linarith
+  qed
+  show ?thesis by (rule that[OF rho sub]) (use key in blast)
+qed
+
+text \<open>Case 2's tilt step for the value function.  The minimiser \<open>y\<close>
+  produced by \<open>tilted_local_touching\<close> lies strictly inside the ball, so
+  it is an interior point of \<open>K\<close> at which the tilted quadratic touches
+  \<open>v\<^sub>*\<close> from below on a whole neighbourhood.  That is precisely the
+  hypothesis of the LOCALISED Case 1, which therefore applies at \<open>y\<close>
+  whenever the tilted gradient there is nonzero.\<close>
+
+theorem paper_v_case2_tilt_step:
+  fixes K :: "(real^'n::finite) set" and x \<eta> :: "real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and symH: "transpose H = H"
+    and e0: "0 < \<epsilon>" and rho: "0 < \<rho>"
+    and sub: "cball x \<rho> \<subseteq> interior K"
+    and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
+        + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
+        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
+      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+    and hsm: "norm \<eta> < (\<epsilon> / 4) * \<rho>"
+  obtains y where "dist x y < \<rho>" and "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
+    and "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0 \<Longrightarrow>
+      1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1)"
+proof -
+  have symM: "transpose (H - \<epsilon> *\<^sub>R mat 1) = H - \<epsilon> *\<^sub>R mat 1"
+    by (rule transpose_sub_smat[OF symH])
+  have c0: "0 < \<epsilon> / 4" using e0 by simp
+  have tv0: "\<And>u. 0 \<le> enn2real (paper_v k L T K u)" by simp
+  have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow>
+      a < lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) u"
+    if lt: "a < lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+    for a and z :: "real^'n"
+  proof (rule lsc_env_lower[OF tv0 lt])
+    fix d assume "0 < d"
+      and "\<forall>u. dist z u < d \<longrightarrow>
+        a < lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) u"
+    then show ?thesis by blast
+  qed
+  obtain y where dxy: "dist x y < \<rho>"
+    and close: "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
+    and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+          - (((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+          - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+  proof (rule tilted_local_touching[OF lscW rho c0 sep hsm])
+    fix yy :: "real^'n"
+    assume a1: "dist x yy < \<rho>" and a2: "norm (yy - x) \<le> norm \<eta> / (\<epsilon> / 4)"
+      and a3: "\<And>w. dist yy w < \<rho> - dist x yy \<Longrightarrow>
+        lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) yy
+            - (((yy - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (yy - x))) / 2
+               + \<eta> \<bullet> (yy - x))
+          \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+            - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2
+               + \<eta> \<bullet> (w - x))"
+    show thesis by (rule that[OF a1 a2 a3])
+  qed
+  have rp: "0 < \<rho> - dist x y" using dxy by simp
+  have yi: "y \<in> interior K"
+  proof -
+    have "y \<in> cball x \<rho>" using dxy by (auto simp: dist_commute)
+    then show ?thesis using sub by blast
+  qed
+  have tfy: "test_fun_at
+      (\<lambda>z. 0 + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
+      (\<lambda>z. (H - \<epsilon> *\<^sub>R mat 1) *v (z - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1) y"
+    by (rule test_fun_at_shifted_quadratic[OF symM])
+  have tminy: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+        - (0 + ((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+        - (0 + ((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+    if wK: "w \<in> K" and dw: "dist y w < \<rho> - dist x y" for w
+    using loc[OF dw] by simp
+  have gt: "1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+      (H - \<epsilon> *\<^sub>R mat 1)"
+    if gy: "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0"
+  proof (rule ccontr)
+    assume "\<not> 1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+        (H - \<epsilon> *\<^sub>R mat 1)"
+    then have flt: "ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+        (H - \<epsilon> *\<^sub>R mat 1) < 1" by simp
+    show False
+      by (rule paper_v_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
+            tfy rp tminy gy flt])
+  qed
+  show ?thesis by (rule that[OF dxy close]) (use gt in blast)
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
