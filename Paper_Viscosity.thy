@@ -15485,6 +15485,134 @@ proof -
 qed
 
 
+text \<open>The sweep.  With \<open>M\<close> invertible the tilt \<open>\<eta> := -M(y - x)\<close> selects
+  \<open>y\<close> itself as the tilted minimiser: whatever minimiser \<open>y'\<close> the
+  machinery returns, the second horn says \<open>M(y' - x) + \<eta> = 0\<close>, i.e.
+  \<open>M(y' - x) = M(y - x)\<close>, and injectivity forces \<open>y' = y\<close>.  So the pinch
+  is available at EVERY point of a neighbourhood of \<open>x\<close>, not just at the
+  minimisers of one fixed tilt --- and that is exactly the hypothesis of
+  \<open>pinch_implies_constant\<close>.\<close>
+
+lemma invertible_matrix_vector_inj:
+  fixes M :: "real^'n::finite^'n"
+  assumes inv: "invertible M" and eq: "M *v a = M *v b"
+  shows "a = b"
+proof -
+  obtain M' where M': "M' ** M = mat 1"
+    using inv invertible_left_inverse by blast
+  have "a = (M' ** M) *v a" unfolding M' by (simp add: matrix_vector_mul_lid)
+  also have "\<dots> = M' *v (M *v a)" by (simp add: matrix_vector_mul_assoc)
+  also have "\<dots> = M' *v (M *v b)" unfolding eq by (rule refl)
+  also have "\<dots> = (M' ** M) *v b" by (simp add: matrix_vector_mul_assoc)
+  also have "\<dots> = b" unfolding M' by (simp add: matrix_vector_mul_lid)
+  finally show ?thesis .
+qed
+
+lemma horn_B_locally_constant:
+  fixes W :: "real^'n::finite \<Rightarrow> real" and M :: "real^'n^'n" and x :: "real^'n"
+  assumes lsc: "\<And>a z. a < W z \<Longrightarrow> \<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < W u"
+    and symM: "transpose M = M" and inv: "invertible M"
+    and rho: "0 < \<rho>" and c0: "0 < c"
+    and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      W x + ((z - x) \<bullet> (M *v (z - x))) / 2 + c * ((z - x) \<bullet> (z - x)) \<le> W z"
+    and hornB: "\<And>\<eta> y. norm \<eta> < c * \<rho> \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
+      (\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
+        W y - (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+          \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x)))
+      \<Longrightarrow> M *v (y - x) + \<eta> = 0"
+  obtains r where "0 < r" and "\<And>y. dist x y < r \<Longrightarrow> W y = W x"
+proof -
+  obtain C where C0: "0 \<le> C"
+    and Cb: "\<And>u :: real^'n. - (C * (norm u * norm u)) \<le> (u \<bullet> (M *v u)) / 2"
+  proof (rule quad_form_bounded_below[where M = M])
+    fix CC :: real
+    assume a1: "0 \<le> CC"
+      and a2: "\<And>u :: real^'n.
+        - (CC * (norm u * norm u)) \<le> (u \<bullet> (M *v u)) / 2"
+    show thesis by (rule that[OF a1 a2])
+  qed
+  have bl: "bounded_linear ((*v) M)" by (rule matrix_vector_mul_bounded_linear)
+  define N where "N = onorm ((*v) M)"
+  have N0: "0 \<le> N" unfolding N_def by (rule onorm_pos_le[OF bl])
+  have N1: "0 < N + 1" using N0 by simp
+  define r0 where "r0 = min (\<rho> / 2) (c * \<rho> / (2 * (N + 1)))"
+  have r00: "0 < r0" unfolding r0_def using rho c0 N1 by simp
+  have cp: "0 < c * \<rho>" using c0 rho by simp
+  have pinch0: "W y - C * (dist y w * dist y w) \<le> W w"
+    if dy: "dist x y < r0" and dw: "dist y w < \<rho> - dist x y"
+    for y w :: "real^'n"
+  proof -
+    define \<eta> where "\<eta> = - (M *v (y - x))"
+    have nyx: "norm (y - x) = dist x y"
+      by (simp add: dist_norm norm_minus_commute)
+    have e1: "norm \<eta> = norm (M *v (y - x))" unfolding \<eta>_def by simp
+    have e2: "norm (M *v (y - x)) \<le> N * norm (y - x)"
+      unfolding N_def by (rule onorm[OF bl])
+    have s1: "N * norm (y - x) \<le> N * r0"
+      by (rule mult_left_mono) (use nyx dy N0 in auto)
+    have s2: "N * r0 \<le> (N + 1) * r0"
+      by (rule mult_right_mono) (use r00 in auto)
+    have hb: "norm \<eta> \<le> (N + 1) * r0" using e1 e2 s1 s2 by linarith
+    have q1: "(N + 1) * r0 \<le> (N + 1) * (c * \<rho> / (2 * (N + 1)))"
+      by (rule mult_left_mono) (use r0_def N1 in auto)
+    have q2: "(N + 1) * (c * \<rho> / (2 * (N + 1))) = c * \<rho> / 2"
+      using N1 by (simp add: field_simps)
+    have hlt: "norm \<eta> < c * \<rho>" using hb q1 q2 cp by linarith
+    obtain y' where dxy': "dist x y' < \<rho>"
+      and loc': "\<And>w. dist y' w < \<rho> - dist x y' \<Longrightarrow>
+        W y' - (((y' - x) \<bullet> (M *v (y' - x))) / 2 + \<eta> \<bullet> (y' - x))
+          \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+    proof (rule tilted_local_touching[OF lsc rho c0 sep hlt])
+      fix yy :: "real^'n"
+      assume b1: "dist x yy < \<rho>" and b2: "norm (yy - x) \<le> norm \<eta> / c"
+        and b3: "\<And>w. dist yy w < \<rho> - dist x yy \<Longrightarrow>
+          W yy - (((yy - x) \<bullet> (M *v (yy - x))) / 2 + \<eta> \<bullet> (yy - x))
+            \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+      show thesis by (rule that[OF b1 b3])
+    qed
+    have g0: "M *v (y' - x) + \<eta> = 0" by (rule hornB[OF hlt dxy' loc'])
+    have meq: "M *v (y' - x) = M *v (y - x)"
+      using g0 unfolding \<eta>_def by (simp add: algebra_simps)
+    have yeq: "y' = y"
+      using invertible_matrix_vector_inj[OF inv meq] by simp
+    show ?thesis
+    proof (rule quad_minimality_pinch[OF symM Cb])
+      show "M *v (y - x) + \<eta> = 0" using g0 unfolding yeq .
+      show "W y - (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+          \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+        using loc'[of w] dw unfolding yeq by simp
+    qed
+  qed
+  define r where "r = min r0 (\<rho> / 4)"
+  have r0': "0 < r" unfolding r_def using r00 rho by simp
+  have pin: "W u - C * (dist u w * dist u w) \<le> W w"
+    if ub: "u \<in> ball x r" and wb: "w \<in> ball x r" for u w :: "real^'n"
+  proof -
+    have du: "dist x u < r" using ub by simp
+    have dw: "dist x w < r" using wb by simp
+    have a1: "dist x u < r0" using du unfolding r_def by simp
+    have a2: "dist u w < \<rho> - dist x u"
+    proof -
+      have t: "dist u w \<le> dist u x + dist x w" by (rule dist_triangle)
+      have "dist u x < r" using du by (simp add: dist_commute)
+      then have lt2: "dist u w < 2 * r" using t dw by linarith
+      have g1: "2 * r \<le> \<rho> / 2" unfolding r_def using rho by simp
+      have g2: "dist x u < \<rho> / 4" using du unfolding r_def by simp
+      show ?thesis using lt2 g1 g2 rho by linarith
+    qed
+    show ?thesis by (rule pinch0[OF a1 a2])
+  qed
+  have const: "W y = W x" if dy: "dist x y < r" for y :: "real^'n"
+  proof (rule pinch_implies_constant[OF r0' C0])
+    show "\<And>u w. u \<in> ball x r \<Longrightarrow> w \<in> ball x r \<Longrightarrow>
+        W u - C * (dist u w * dist u w) \<le> W w"
+      by (rule pin)
+    show "y \<in> ball x r" using dy by simp
+  qed
+  show ?thesis by (rule that[OF r0']) (use const in blast)
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
