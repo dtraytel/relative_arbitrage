@@ -14057,4 +14057,175 @@ text \<open>This theory is long enough that the order of the argument is no long
   \<open>ball_v \<le> v\<close> at interior points.  Those are the probabilistic line and are
   untouched.\<close>
 
+
+section \<open>P2 + P3: boundary nonnegativity, expandability, the transformed supersolution (UNVERIFIED)\<close>
+
+text \<open>End-of-context batch, written WITHOUT verification; fixer repairs.
+  Everything below is generic (no \<open>paper_v\<close>).\<close>
+
+subsection \<open>P2: a supersolution with the zero boundary condition is nonnegative\<close>
+
+text \<open>The gate: the paper's Definition 3.1 boundary clause for the
+  supersolution is active exactly where \<open>u\<^sub>* < 0\<close>.  Stated here with the
+  function itself lsc (the Prop 4.1 consumer feeds \<open>lsc_env w\<close>, which is
+  lsc, so nothing is lost).  Sequential lsc as in \<open>lsc_attains_inf_gen\<close>.\<close>
+
+theorem supersol_bc_nonneg:
+  fixes w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and cK: "compact K" and neK: "K \<noteq> {}"
+    and lscw: "\<And>c z. c < w z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < w y"
+    and Bw: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
+    and sup: "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K. w x < 0}) w"
+  shows "\<And>x. x \<in> K \<Longrightarrow> 0 \<le> w x"
+proof -
+  fix x0 assume x0K: "x0 \<in> K"
+  show "0 \<le> w x0"
+  proof (rule ccontr)
+    assume neg: "\<not> 0 \<le> w x0"
+    obtain z where zK: "z \<in> K" and zmin: "\<And>y. y \<in> K \<Longrightarrow> w z \<le> w y"
+      by (rule lsc_attains_inf_gen[OF lscw Bw cK neK])
+    have wz0: "w z < 0" using zmin[OF x0K] neg by linarith
+    have zO: "z \<in> interior K \<union> {x \<in> K - interior K. w x < 0}"
+      using zK wz0 by (cases "z \<in> interior K") auto
+    have tf: "test_fun_at (\<lambda>y. w z) (\<lambda>y. 0) 0 z"
+      using test_fun_at_quadratic[of 0 0 "w z" z]
+      by (simp add: transpose_zero)
+    have touch: "\<forall>y\<in>K. w z - w z \<le> w y - w z"
+      using zmin by simp
+    have "1 \<le> ell_op_usc k L ((\<lambda>y. 0 :: real^'n) z) (0 :: real^'n^'n)"
+      using sup[unfolded visc_supersol_env_def] zO tf touch by blast
+    then have one: "1 \<le> ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n)"
+      by simp
+    have le0: "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n)
+        \<le> ereal (real (CARD('n) * CARD('n)) * L / 2 * (norm (0::real^'n^'n) + 1/2))"
+      by (rule ell_op_usc_le_scaled_norm[OF kk(1) kk(2) LL]) simp
+    text \<open>Fixer: the bound above is not yet \<open>< 1\<close>; use
+      \<open>ell_op_usc_small_shift_lt_one\<close> instead, or the cleaner route:
+      \<open>ell_op_usc k L 0 0 = 0\<close> by antisymmetry from
+      \<open>ell_op_usc_le_scaled_norm\<close> with \<open>e \<rightarrow> 0\<close> (INF over e) and
+      \<open>ell_op_le_ell_op_usc + ell_op_zero_matrix\<close>.  Then \<open>1 \<le> 0\<close> closes.\<close>
+    show False using one le0 by (simp add: one_ereal_def)
+  qed
+qed
+
+subsection \<open>P3: the \<open>T\<^sub>\<iota>\<close> hypothesis, its convex instance, and the transform\<close>
+
+definition expandable :: "(real^'n::finite) set \<Rightarrow> bool" where
+  "expandable K \<longleftrightarrow>
+     (\<forall>e > 0. \<exists>R b c. orthogonal_matrix R \<and> 1 < c \<and> c < 1 + e
+        \<and> K \<subseteq> interior ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` K)
+        \<and> (\<forall>x \<in> K. dist ((1/c) *\<^sub>R (transpose R *v (x - b))) x \<le> e))"
+
+theorem convex_expandable:
+  fixes K :: "(real^'n::finite) set"
+  assumes cK: "compact K" and cvx: "convex K" and iK: "interior K \<noteq> {}"
+  shows "expandable K"
+  unfolding expandable_def
+proof (intro allI impI)
+  fix e :: real assume e0: "0 < e"
+  obtain x0 where x0: "x0 \<in> interior K" using iK by blast
+  obtain D where D0: "0 \<le> D" and Db: "\<And>x. x \<in> K \<Longrightarrow> norm (x - x0) \<le> D"
+    using compact_imp_bounded[OF cK] bounded_iff
+    by (metis add_diff_cancel_left' bounded_diff bounded_singleton
+        imageI image_diff_subset norm_ge_zero subsetD)
+  define c where "c = 1 + min (e/2) (e / (2 * (D + 1)))"
+  have c1: "1 < c" unfolding c_def using e0 D0 by simp
+  have ce: "c < 1 + e" unfolding c_def using e0 by simp
+  define T where "T = (\<lambda>x :: real^'n. c *\<^sub>R (mat 1 *v x) + (1 - c) *\<^sub>R x0)"
+  have Teq: "\<And>x. T x = x0 + c *\<^sub>R (x - x0)"
+    unfolding T_def by (simp add: matrix_vector_mul_lid algebra_simps)
+  have sub: "K \<subseteq> interior (T ` K)"
+  proof
+    fix x assume xK: "x \<in> K"
+    define y where "y = x0 + (1/c) *\<^sub>R (x - x0)"
+    have yint: "y \<in> interior K"
+      unfolding y_def
+      using mem_interior_closure_convex_shrink[OF cvx x0, of x "1 - 1/c"]
+        xK c1 closure_subset
+      by (auto simp: algebra_simps scaleR_diff_right scaleR_diff_left)
+    have Ty: "T y = x"
+      unfolding Teq y_def using c1 by (simp add: algebra_simps)
+    have "T ` interior K \<subseteq> interior (T ` K)"
+      text \<open>Fixer: \<open>T\<close> is an invertible affine map, hence a homeomorphism;
+        use \<open>interior_injective_linear_image\<close> composed with
+        \<open>interior_translation\<close>, or \<open>homeomorphism_imp_open_map\<close>.\<close>
+      by (metis (no_types, lifting) Teq interior_translation
+          image_image interior_scaleR c1 less_numeral_extra(3)
+          zero_less_one order_less_trans image_mono interior_subset
+          subset_antisym interior_maximal open_interior)
+    then show "x \<in> interior (T ` K)" using yint Ty by blast
+  qed
+  have inv: "\<forall>x \<in> K. dist ((1/c) *\<^sub>R (transpose (mat 1) *v (x - (1 - c) *\<^sub>R x0))) x \<le> e"
+  proof
+    fix x assume xK: "x \<in> K"
+    have "(1/c) *\<^sub>R (transpose (mat 1) *v (x - (1 - c) *\<^sub>R x0))
+        = x0 + (1/c) *\<^sub>R (x - x0)"
+      using c1 by (simp add: matrix_vector_mul_lid transpose_mat
+          algebra_simps scaleR_diff_right)
+    then have "dist ((1/c) *\<^sub>R (transpose (mat 1) *v (x - (1 - c) *\<^sub>R x0))) x
+        = ((c - 1)/c) * norm (x - x0)"
+      using c1 by (simp add: dist_norm algebra_simps scaleR_diff_right)
+        (simp add: field_simps norm_minus_commute)
+    also have "\<dots> \<le> (c - 1) * (D + 1)"
+      using c1 Db[OF xK] D0
+      by (intro mult_mono) (auto simp: field_simps)
+    also have "\<dots> \<le> e"
+      unfolding c_def using e0 D0 by (simp add: field_simps min_def)
+    finally show "dist ((1/c) *\<^sub>R (transpose (mat 1) *v (x - (1 - c) *\<^sub>R x0))) x \<le> e" .
+  qed
+  show "\<exists>R b c. orthogonal_matrix R \<and> 1 < c \<and> c < 1 + e
+      \<and> K \<subseteq> interior ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` K)
+      \<and> (\<forall>x \<in> K. dist ((1/c) *\<^sub>R (transpose R *v (x - b))) x \<le> e)"
+    by (rule exI[of _ "mat 1"], rule exI[of _ "(1 - c) *\<^sub>R x0"],
+        rule exI[of _ c])
+      (use c1 ce sub inv orthogonal_matrix_id T_def in auto)
+qed
+
+subsection \<open>Test functions compose with invertible affine maps\<close>
+
+lemma test_fun_at_affine:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n" and R :: "real^'n^'n" and b :: "real^'n"
+  assumes tf: "test_fun_at \<phi> g H (c *\<^sub>R (R *v x) + b)"
+    and orth: "orthogonal_matrix R" and c0: "0 < c"
+  shows "test_fun_at (\<lambda>z. \<phi> (c *\<^sub>R (R *v z) + b))
+      (\<lambda>z. c *\<^sub>R (transpose R *v g (c *\<^sub>R (R *v z) + b)))
+      ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x"
+  text \<open>Fixer: unfold \<open>test_fun_at_def\<close>; the three clauses are
+    (i) symmetry: from \<open>transpose H = H\<close> and transpose algebra;
+    (ii) the gradient field: chain rule \<open>has_derivative\<close> through the affine
+    map \<open>A z = c *\<^sub>R R *v z + b\<close> whose derivative is the linear map
+    \<open>h \<mapsto> c *\<^sub>R (R *v h)\<close>; the ball transfers because \<open>A\<close> is a bilipschitz
+    bijection (\<open>A ` ball x (e/c) \<subseteq> ball (A x) e\<close>);
+    (iii) the Hessian clause: chain rule once more, with
+    \<open>inner_transpose_matrix\<close> to move \<open>R\<close> across the inner product.
+    Mirror the proof shape of \<open>test_fun_at_quartic_shift\<close> (Envelopes).\<close>
+  sorry
+
+subsection \<open>The transformed supersolution — Theorem 4.3's engine\<close>
+
+theorem visc_supersol_env_affine:
+  fixes w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+    and R :: "real^'n^'n" and b :: "real^'n"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and orth: "orthogonal_matrix R" and c0: "0 < c"
+    and sup: "visc_supersol_env k L K \<Omega> w"
+  defines "T \<equiv> (\<lambda>x. c *\<^sub>R (R *v x) + b)"
+  defines "w' \<equiv> (\<lambda>x. c\<^sup>2 * w ((1/c) *\<^sub>R (transpose R *v (x - b))))"
+  shows "visc_supersol_env k L (T ` K) (T ` \<Omega>) w'"
+  text \<open>Fixer: unfold both \<open>visc_supersol_env_def\<close>s.  Given a touching of
+    \<open>w'\<close> at \<open>T x \<in> T ` \<Omega>\<close> by \<open>(\<phi>, g, H)\<close>: pull back with
+    \<open>test_fun_at_affine\<close> to a touching of \<open>c\<^sup>2 \<cdot> w\<close> at \<open>x\<close> by
+    \<open>(\<phi> \<circ> T, c \<cdot> R\<^sup>T g \<circ> T, c\<^sup>2 R\<^sup>T H R)\<close>, divide by \<open>c\<^sup>2\<close>
+    (touchings scale), read off \<open>1 \<le> ell_op_usc k L ((1/c) \<cdot> stuff)\<close> from
+    \<open>sup\<close>, and translate back with the P0 invariances: the envelope
+    versions of \<open>ell_op_scale\<close> (gradient direction only) and
+    \<open>ell_op_conj_rot\<close>, plus \<open>ell_op_hess_scale\<close> cancelling \<open>c\<^sup>2\<close> against
+    the \<open>c\<^sup>2\<close> in \<open>w'\<close>.  Follow the paper's display (4.4) EXACTLY:
+    \<open>F(p, M) = c\<^sup>2 F(R\<^sup>T p, c\<^sup>{-2} R\<^sup>T M R)\<close>; if a factor refuses to cancel,
+    re-read (4.4) rather than force it.\<close>
+  sorry
+
 end

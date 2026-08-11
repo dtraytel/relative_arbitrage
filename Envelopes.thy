@@ -2171,4 +2171,333 @@ proof (rule antisym)
     by (rule ell_op_le_ell_op_usc)
 qed
 
+
+section \<open>P0: semicontinuity toolbox and the invariances of \<open>F\<close> (UNVERIFIED)\<close>
+
+text \<open>Written 2026-08-11 WITHOUT verification (end-of-context batch); a
+  fixer model repairs errors.  NOTE for the fixer: \<open>lsc_env\<close> and several
+  of its lemmas below DUPLICATE Paper_Viscosity; DELETE the copies there
+  (the planned P0 move).  Style: explicit rules, no linarith on compound
+  divisions, no blast on obtains-elimination.\<close>
+
+definition lsc_env :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real" where
+  "lsc_env u x = (SUP e \<in> {0<..}. INF y \<in> ball x e. u y)"
+
+definition usc_env :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real" where
+  "usc_env u x = - lsc_env (\<lambda>y. - u y) x"
+
+lemma lsc_env_bdd_above:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+  shows "bdd_above ((\<lambda>e. INF y \<in> ball x e. u y) ` {0<..})"
+proof (rule bdd_aboveI[of _ "u x"])
+  fix t assume "t \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
+  then obtain e where e0: "0 < e" and te: "t = (INF y \<in> ball x e. u y)" by auto
+  have "(INF y \<in> ball x e. u y) \<le> u x"
+    by (rule cInf_lower) (use e0 B bdd_belowI[of _ B] in auto)
+  then show "t \<le> u x" unfolding te .
+qed
+
+lemma lsc_env_le_self:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+  shows "lsc_env u x \<le> u x"
+  unfolding lsc_env_def
+proof (rule cSup_least)
+  show "(\<lambda>e. INF y \<in> ball x e. u y) ` {0<..} \<noteq> {}" by auto
+next
+  fix t assume "t \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
+  then obtain e where e0: "0 < e" and te: "t = (INF y \<in> ball x e. u y)" by auto
+  show "t \<le> u x"
+    unfolding te by (rule cInf_lower) (use e0 B bdd_belowI[of _ B] in auto)
+qed
+
+lemma lsc_env_ge:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+  shows "B \<le> lsc_env u x"
+proof -
+  have "B \<le> (INF y \<in> ball x 1. u y)"
+    by (rule cInf_greatest) (use B in auto)
+  also have "\<dots> \<le> lsc_env u x"
+    unfolding lsc_env_def
+    by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) auto
+  finally show ?thesis .
+qed
+
+lemma usc_env_ge_self:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B"
+  shows "u x \<le> usc_env u x"
+proof -
+  have "lsc_env (\<lambda>y. - u y) x \<le> - u x"
+    by (rule lsc_env_le_self[of "- B"]) (use B in auto)
+  then show ?thesis unfolding usc_env_def by linarith
+qed
+
+lemma usc_env_le:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B"
+  shows "usc_env u x \<le> B"
+proof -
+  have "- B \<le> lsc_env (\<lambda>y. - u y) x"
+    by (rule lsc_env_ge[of "- B"]) (use B in auto)
+  then show ?thesis unfolding usc_env_def by linarith
+qed
+
+text \<open>The limsup bound Theorem 4.3's \<open>\<iota> \<downarrow> 1\<close> step consumes: values of \<open>u\<close>
+  along a sequence tending to \<open>x\<close> are eventually below \<open>usc_env u x + \<epsilon>\<close>.\<close>
+
+lemma usc_env_limsup_bound:
+  fixes u :: "real^'n::finite \<Rightarrow> real" and zs :: "nat \<Rightarrow> real^'n"
+  assumes B: "\<And>y. u y \<le> B" and lim: "zs \<longlonglongrightarrow> x"
+    and lo: "\<And>j. c \<le> u (zs j)"
+  shows "c \<le> usc_env u x"
+proof (rule ccontr)
+  assume "\<not> c \<le> usc_env u x"
+  then have lt: "usc_env u x < c" by simp
+  have "- c < lsc_env (\<lambda>y. - u y) x" using lt unfolding usc_env_def by simp
+  then have "- c < (SUP e \<in> {0<..}. INF y \<in> ball x e. - u y)"
+    unfolding lsc_env_def .
+  then obtain t where tmem: "t \<in> (\<lambda>e. INF y \<in> ball x e. - u y) ` {0<..}"
+    and tc: "- c < t"
+    using less_cSup_iff[OF _ lsc_env_bdd_above[of "- B" "\<lambda>y. - u y" x]]
+    by (auto simp del: mem_ball) (use B in force)
+  from tmem obtain e where e0: "0 < e"
+    and te: "t = (INF y \<in> ball x e. - u y)" by auto
+  obtain N where N: "\<And>j. N \<le> j \<Longrightarrow> dist (zs j) x < e"
+    using lim e0 unfolding lim_sequentially by blast
+  have zin: "zs N \<in> ball x e" using N[of N] by (simp add: dist_commute)
+  have "t \<le> - u (zs N)"
+    unfolding te
+    by (rule cInf_lower) (use zin bdd_belowI[of _ "- B"] B in auto)
+  moreover have "c \<le> u (zs N)" by (rule lo)
+  ultimately show False using tc by linarith
+qed
+
+subsection \<open>Attainment and extension for semicontinuous functions\<close>
+
+lemma lsc_attains_inf_gen:
+  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
+    and B: "\<And>y. y \<in> S \<Longrightarrow> B \<le> f y"
+    and cS: "compact S" and neS: "S \<noteq> {}"
+  obtains z where "z \<in> S" and "\<And>y. y \<in> S \<Longrightarrow> f z \<le> f y"
+proof -
+  define m where "m = (INF y \<in> S. f y)"
+  have bdd: "bdd_below (f ` S)" by (rule bdd_belowI[of _ B]) (use B in auto)
+  have mlow: "\<And>y. y \<in> S \<Longrightarrow> m \<le> f y"
+    unfolding m_def by (rule cInf_lower[OF _ bdd]) auto
+  have "\<forall>j. \<exists>zz. zz \<in> S \<and> f zz < m + 1 / real (Suc j)"
+  proof
+    fix j :: nat
+    have "m < m + 1 / real (Suc j)" by simp
+    then have "\<exists>t \<in> f ` S. t < m + 1 / real (Suc j)"
+      unfolding m_def using cInf_less_iff[OF _ bdd] neS by auto
+    then show "\<exists>zz. zz \<in> S \<and> f zz < m + 1 / real (Suc j)" by auto
+  qed
+  then obtain zs where zsS: "\<And>j. zs j \<in> S"
+    and zsm: "\<And>j. f (zs j) < m + 1 / real (Suc j)" by metis
+  obtain z r where zS: "z \<in> S" and rm: "strict_mono r"
+    and lim: "(zs \<circ> r) \<longlonglongrightarrow> z"
+    using compact_eq_seq_compact_metric[THEN iffD1, OF cS]
+      zsS unfolding seq_compact_def by blast
+  have zle: "f z \<le> m"
+  proof (rule ccontr)
+    assume "\<not> f z \<le> m"
+    then have mlt: "m < f z" by simp
+    define c where "c = (m + f z) / 2"
+    have c2: "2 * c = m + f z" unfolding c_def by simp
+    have cm: "m < c" and cz: "c < f z" using mlt c2 by linarith+
+    obtain e where e0: "0 < e"
+      and en: "\<forall>y. dist z y < e \<longrightarrow> c < f y" using lsc[OF cz] by blast
+    obtain N1 where N1: "\<And>l. N1 \<le> l \<Longrightarrow> dist ((zs \<circ> r) l) z < e"
+      using lim e0 unfolding lim_sequentially by blast
+    have "(\<lambda>l. 1 / real (Suc (r l))) \<longlonglongrightarrow> 0"
+      using LIMSEQ_subseq_LIMSEQ[OF _ rm] LIMSEQ_inverse_real_of_nat
+      by (simp add: o_def divide_inverse)
+    then obtain N2 where N2: "\<And>l. N2 \<le> l \<Longrightarrow> 1 / real (Suc (r (l))) < c - m"
+      using cm order_tendstoD(2)[of _ 0 sequentially "c - m"]
+      unfolding eventually_sequentially by fastforce
+    define l where "l = max N1 N2"
+    have "c < f (zs (r l))"
+      using en N1[of l] unfolding l_def by (simp add: o_def dist_commute)
+    moreover have "f (zs (r l)) < m + 1 / real (Suc (r l))" by (rule zsm)
+    moreover have "1 / real (Suc (r l)) < c - m"
+      using N2[of l] unfolding l_def by simp
+    ultimately show False by linarith
+  qed
+  show ?thesis
+  proof (rule that[OF zS])
+    fix y assume yS: "y \<in> S"
+    show "f z \<le> f y" using zle mlow[OF yS] by linarith
+  qed
+qed
+
+lemma usc_attains_sup_gen:
+  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and B: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> B"
+    and cS: "compact S" and neS: "S \<noteq> {}"
+  obtains z where "z \<in> S" and "\<And>y. y \<in> S \<Longrightarrow> f y \<le> f z"
+proof -
+  have lsc': "\<And>c z. c < - f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < - f y"
+  proof -
+    fix c z assume "c < - f z"
+    then have "f z < - c" by linarith
+    from usc[OF this] obtain e where "0 < e"
+      and "\<forall>y. dist z y < e \<longrightarrow> f y < - c" by blast
+    then show "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < - f y" by force
+  qed
+  obtain z where zS: "z \<in> S" and zm: "\<And>y. y \<in> S \<Longrightarrow> - f z \<le> - f y"
+  proof (rule lsc_attains_inf_gen[OF lsc' _ cS neS, of "- B"])
+    fix y assume "y \<in> S" then show "- B \<le> - f y" using B by simp
+  qed (rule that)
+  show ?thesis
+  proof (rule that[OF zS])
+    fix y assume "y \<in> S" then show "f y \<le> f z" using zm by simp
+  qed
+qed
+
+text \<open>Extension by a constant BELOW the minimum is usc (extension by \<open>0\<close>
+  is NOT — recorded trap).  Sequential form of usc, matching the repo.\<close>
+
+lemma usc_extension_bounded:
+  fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  assumes cl: "closed K"
+    and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
+      \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
+    and Bd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B"
+  obtains u' where "\<And>y. y \<in> K \<Longrightarrow> u' y = u y"
+    and "\<And>y. \<bar>u' y\<bar> \<le> B"
+    and "\<And>c z. u' z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u' y < c"
+proof -
+  define u' where "u' = (\<lambda>y. if y \<in> K then u y else - B)"
+  have agree: "\<And>y. y \<in> K \<Longrightarrow> u' y = u y" unfolding u'_def by simp
+  have B0: "0 \<le> B"
+  proof (cases "K = {}")
+    case True then show ?thesis
+      using abs_ge_zero Bd by (cases "0 \<le> B") auto
+  next
+    case False
+    then obtain y where "y \<in> K" by blast
+    from Bd[OF this] show ?thesis by linarith
+  qed
+  have bnd: "\<And>y. \<bar>u' y\<bar> \<le> B"
+    unfolding u'_def using Bd B0 by auto
+  have ue: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u' y < c"
+    if lt: "u' z < c" for c z
+  proof (cases "z \<in> K")
+    case True
+    have uzc: "u z < c" using lt agree[OF True] by simp
+    obtain e where e0: "0 < e"
+      and eK: "\<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
+      using usc[OF True uzc] by blast
+    have "- B \<le> u z" using Bd[OF True] by linarith
+    then have mBc: "- B < c" using uzc by linarith
+    have "u' y < c" if "dist z y < e" for y
+      using eK that mBc unfolding u'_def by (cases "y \<in> K") auto
+    then show ?thesis using e0 by blast
+  next
+    case False
+    then have "0 < infdist z K \<or> K = {}"
+      using cl infdist_pos_not_in_closed by auto
+    then obtain d where d0: "0 < d" and dK: "\<And>y. y \<in> K \<Longrightarrow> d \<le> dist z y"
+      using infdist_le2
+      by (metis all_not_in_conv dual_order.strict_iff_not
+          infdist_le zero_less_one)
+    have mBc: "- B < c" using lt False unfolding u'_def by simp
+    have "u' y < c" if dy: "dist z y < d" for y
+    proof -
+      have "y \<notin> K" using dK dy by fastforce
+      then show ?thesis using mBc unfolding u'_def by simp
+    qed
+    then show ?thesis using d0 by blast
+  qed
+  show ?thesis by (rule that[OF agree bnd ue])
+qed
+
+subsection \<open>The invariances of \<open>F\<close> — the paper's display (4.4)\<close>
+
+lemma ell_op_scale:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes c0: "0 < c"
+  shows "ell_op k L (c *\<^sub>R p) M = ell_op k L p M"
+proof -
+  have "feasible k L (c *\<^sub>R p) = feasible k L p"
+    by (rule feasible_scale[OF c0])
+  then show ?thesis unfolding ell_op_def by simp
+qed
+
+lemma ell_op_hess_scale:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes c0: "0 < c"
+  shows "ell_op k L p (c *\<^sub>R M) = c * ell_op k L p M"
+proof -
+  have tr: "\<And>a. - trace ((c *\<^sub>R M) ** a) / 2 = c * (- trace (M ** a) / 2)"
+  proof -
+    fix a :: "real^'n^'n"
+    have "(c *\<^sub>R M) ** a = c *\<^sub>R (M ** a)"
+      by (simp add: matrix_scaleR_ac scaleR_matrix_mult_left)
+    then have "trace ((c *\<^sub>R M) ** a) = c * trace (M ** a)"
+      by (simp add: trace_scaleR)
+    then show "- trace ((c *\<^sub>R M) ** a) / 2 = c * (- trace (M ** a) / 2)"
+      by simp
+  qed
+  have img: "(\<lambda>a. - trace ((c *\<^sub>R M) ** a) / 2) ` feasible k L p
+      = (\<lambda>t. c * t) ` (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
+    unfolding image_image by (rule image_cong[OF refl]) (rule tr)
+  show ?thesis
+    unfolding ell_op_def img
+    by (rule cInf_scale_pos) (rule c0)
+qed
+
+text \<open>Fixer note: if \<open>cInf_scale_pos\<close>, \<open>trace_scaleR\<close> or
+  \<open>scaleR_matrix_mult_left\<close> do not exist under these names, prove them
+  inline (all are one-liners over \<open>Inf ((*) c ` A) = c * Inf A\<close> for
+  \<open>c > 0\<close> — \<open>Inf\<close> version of \<open>cSup_scale\<close> — and entrywise trace algebra).\<close>
+
+lemma ell_op_conj_rot:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n" and R :: "real^'n^'n"
+  assumes orth: "orthogonal_matrix R"
+  shows "ell_op k L (R *v p) (R ** M ** transpose R) = ell_op k L p M"
+proof -
+  have bij: "(\<lambda>a. R ** a ** transpose R) ` feasible k L p
+      = feasible k L (R *v p)"
+    by (rule feasible_conj[OF orth])
+  have tr: "\<And>a. - trace ((R ** M ** transpose R) ** (R ** a ** transpose R)) / 2
+      = - trace (M ** a) / 2"
+  proof -
+    fix a :: "real^'n^'n"
+    have RtR: "transpose R ** R = mat 1"
+      using orth unfolding orthogonal_matrix_def by blast
+    have "(R ** M ** transpose R) ** (R ** a ** transpose R)
+        = R ** (M ** a) ** transpose R"
+      by (metis RtR matrix_mul_assoc matrix_mul_rid)
+    then have "trace ((R ** M ** transpose R) ** (R ** a ** transpose R))
+        = trace (M ** a)"
+      by (metis orth orthogonal_matrix_def trace_conj_orth)
+    then show "- trace ((R ** M ** transpose R) ** (R ** a ** transpose R)) / 2
+        = - trace (M ** a) / 2" by simp
+  qed
+  have "(\<lambda>a. - trace ((R ** M ** transpose R) ** a) / 2) ` feasible k L (R *v p)
+      = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
+    unfolding bij[symmetric] image_image
+    by (rule image_cong[OF refl]) (rule tr)
+  then show ?thesis unfolding ell_op_def by simp
+qed
+
+text \<open>Fixer notes.  (1) Check \<open>feasible_conj\<close>'s exact statement (Envelopes
+  1029): it may be stated with two orthogonality hypotheses or with the
+  image in the other direction; adapt \<open>bij\<close> accordingly.  (2) If
+  \<open>trace_conj_orth\<close> is absent: \<open>trace (R ** N ** transpose R) = trace N\<close>
+  follows from cyclicity \<open>trace (A ** B) = trace (B ** A)\<close> (the repo has a
+  form of this near the mgap material) and \<open>transpose R ** R = mat 1\<close>.
+  (3) The envelope versions \<open>ell_op_usc\<close>/\<open>ell_op_lsc\<close> of both invariances
+  are P0's remaining item: the transform \<open>(p, M) \<mapsto> (R *v p, R ** M ** R\<^sup>T)\<close>
+  is an isometry of the product (orthogonal matrices preserve the norms
+  entrywise up to the fixed constants), so it maps \<open>ball z e\<close> BIJECTIVELY
+  onto \<open>ball (f z) e\<close>; conjugate the INF/SUP through the bijection exactly
+  as \<open>ball_prod_shift_snd\<close> does for translations.\<close>
+
 end

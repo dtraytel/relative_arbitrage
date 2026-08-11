@@ -15823,6 +15823,114 @@ proof (rule paper_v_supersol_lsc[OF T0 L1 k1 kn Kc])
 qed
 
 
+
+section \<open>E1: the subspace-tangential field for Example 3.1, all \<open>k\<close> (UNVERIFIED)\<close>
+
+text \<open>End-of-context batch, UNVERIFIED; fixer repairs.  Mirrors the
+  \<open>tanp\<close> block above with the ambient identity replaced by a projector
+  \<open>P\<close> onto an \<open>(n-k+1)\<close>-dimensional subspace containing the start.
+  Fixer: compare each lemma with its \<open>tanp_*\<close> twin and reuse those
+  proofs; the only new ingredient is \<open>P\<close> idempotent symmetric.\<close>
+
+definition projmat :: "(nat \<Rightarrow> real^'n::finite) \<Rightarrow> nat \<Rightarrow> real^'n^'n" where
+  "projmat b m = (\<Sum>i < m. outer_prod (b i) (b i))"
+
+lemma projmat_sym: "transpose (projmat b m) = projmat b m"
+  unfolding projmat_def
+  by (simp add: transpose_matrix_sum transpose_outer_prod)
+
+lemma projmat_mv:
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+  shows "projmat b m *v z = (\<Sum>i < m. (b i \<bullet> z) *\<^sub>R b i)"
+  unfolding projmat_def
+  by (simp add: matrix_vector_mult_sum outer_prod_mv)
+
+lemma projmat_idem:
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+  shows "projmat b m ** projmat b m = projmat b m"
+  text \<open>Fixer: entrywise or via \<open>projmat_mv\<close> + \<open>matrix_eq\<close>: apply both
+    sides to \<open>z\<close>, expand the double sum, kill off-diagonal terms with
+    \<open>orth\<close>.\<close>
+  sorry
+
+lemma projmat_trace:
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+  shows "trace (projmat b m) = real m"
+  text \<open>Fixer: \<open>trace (outer_prod u u) = u \<bullet> u = 1\<close> summed; the repo has
+    \<open>trace_outer_prod\<close> or its inline equivalent near \<open>outerp\<close>.\<close>
+  sorry
+
+text \<open>An orthonormal family of size \<open>m \<le> CARD('n)\<close> whose first vector is
+  a prescribed unit vector.\<close>
+
+lemma orthonormal_family_containing:
+  fixes x0 :: "real^'n::finite"
+  assumes u: "norm x0 = 1" and m: "m \<le> CARD('n)" and m0: "0 < m"
+  obtains b :: "nat \<Rightarrow> real^'n" where "b 0 = x0"
+    and "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+  text \<open>Fixer: induction on \<open>m\<close> with
+    \<open>orthogonal_to_subspace_exists\<close> (HOL-Analysis): at each step the span
+    of the family so far has dimension \<open>< CARD('n)\<close>, so a unit vector
+    orthogonal to it exists.  Alternatively reuse the eigenbasis
+    machinery (\<open>symmetric_eigenbasis\<close>) applied to \<open>outer_prod x0 x0\<close>.\<close>
+  sorry
+
+text \<open>The field: on the slice through the start, the tangential
+  projector of the sphere inside \<open>V = range (projmat b (n-k+1))\<close>.\<close>
+
+definition tanpV :: "real^'n::finite^'n \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
+  "tanpV P z = P - outer_prod ((P *v z) /\<^sub>R norm (P *v z)) ((P *v z) /\<^sub>R norm (P *v z))"
+
+lemma tanpV_sym:
+  assumes "transpose P = P"
+  shows "transpose (tanpV P z) = tanpV P z"
+  unfolding tanpV_def
+  by (simp add: transpose_diff assms transpose_outer_prod)
+
+lemma tanpV_trace:
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and P: "P = projmat b m" and nz: "P *v z \<noteq> 0"
+  shows "trace (tanpV P z) = real m - 1"
+  text \<open>Fixer: \<open>trace P = m\<close> (\<open>projmat_trace\<close>) minus
+    \<open>trace (outer_prod u u) = 1\<close> for the unit \<open>u\<close>.\<close>
+  sorry
+
+lemma tanpV_psd:
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and P: "P = projmat b m" and nz: "P *v z \<noteq> 0"
+  shows "psd (tanpV P z)"
+  text \<open>Fixer: quadratic form \<open>y \<bullet> (tanpV P z *v y) = \<bar>P y\<bar>\<^sup>2 - (u \<bullet> y)\<^sup>2
+    \<ge> 0\<close> with \<open>u = P z /\<^sub>R \<bar>P z\<bar> \<in> V\<close> by Cauchy--Schwarz INSIDE \<open>V\<close>
+    (\<open>u \<bullet> y = u \<bullet> (P y)\<close> since \<open>P u = u\<close> and \<open>P\<close> symmetric idempotent).
+    Mirror \<open>tanp_psd\<close>.\<close>
+  sorry
+
+lemma tanpV_eigen_feasible:
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and P: "P = projmat b m" and nz: "P *v z \<noteq> 0"
+    and m: "m = CARD('n) - k + 1" and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+  shows "tanpV P z \<in> feasible k L 0"
+  text \<open>Fixer: the eigenvalues are \<open>1\<close> with multiplicity \<open>m - 1 = n - k\<close>
+    (on \<open>V \<inter> u\<^sup>\<bottom>\<close>) and \<open>0\<close> with multiplicity \<open>k\<close> (on \<open>V\<^sup>\<bottom> \<oplus> span u\<close>).
+    Feasibility at \<open>p = 0\<close>: the orthogonality clause \<open>a *v 0 = 0\<close> is
+    trivial; the eigenvalue clauses are \<open>\<lambda>\<^sub>{n-k} \<ge> 1\<close> and \<open>\<lambda>\<^sub>1 \<le> L\<close> —
+    mirror \<open>tanp_feasible\<close>, whose proof pattern (explicit eigenvectors:
+    the \<open>b i \<noteq> u\<close> directions rotated inside \<open>V\<close>, plus \<open>u\<close> and \<open>V\<^sup>\<bottom>\<close>)
+    transfers with \<open>mat 1\<close> replaced by \<open>P\<close> throughout.\<close>
+  sorry
+
+text \<open>E2 target (state now, prove by mirroring
+  \<open>tangential_exact_growth\<close>): along the clamped Euler chain for the
+  field \<open>SF z = tanpV P (clamped z)\<close> started at \<open>x \<in> V\<close>, \<open>x \<noteq> 0\<close>, on
+  the in-region event, \<open>\<bar>X\<^sub>t\<bar>\<^sup>2 = \<bar>x\<bar>\<^sup>2 + t \<cdot> (real m - 1)\<close> — the motion
+  stays in the affine slice \<open>x + range P\<close> because the field's range is
+  contained in \<open>V\<close>, and there \<open>P *v X = X\<close> collapses every \<open>tanpV\<close>
+  computation to the \<open>tanp\<close> one.  E3: the resulting member exits
+  \<open>cball 0 r\<close> at exactly \<open>t\<^sup>* = (r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n-k)\<close> a.s., so
+  \<open>ess_inf_time = t\<^sup>*\<close> (\<open>ess_inf_time_const\<close>) and \<open>paper_v \<ge> t\<^sup>*\<close> by
+  \<open>Sup\<close>-introduction on the class — NO DPP.  E4: \<open>x = 0\<close> by usc, sphere
+  by \<open>paper_v_boundary_zero\<close>, outside by \<open>pexit = 0\<close>.\<close>
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
