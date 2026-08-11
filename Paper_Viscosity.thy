@@ -13257,6 +13257,332 @@ proof -
   qed
 qed
 
+subsection \<open>Deterministic confinement and the ball lower bound\<close>
+
+text \<open>Batch 4d(vii).  The payoff of the exact radial growth: paths of
+  the tangential member CANNOT leave the annulus before the
+  deterministic time \<open>(rB\<^sup>2 - |x-y\<^sub>0|\<^sup>2)/(n-1)\<close> --- the inner boundary is
+  unreachable because the squared distance only grows, and reaching the
+  outer sphere pins the time exactly.  Feeding the constant-time DPP
+  (@{thm [source] paper_v_dpp_sup_ge}) turns confinement into the
+  POSITIVE lower bound \<open>v(x) \<ge> min(T/2, \<delta>/2)\<close> whenever the ball sits
+  inside \<open>K\<close>.  This is the second horn's contradiction input in Case 2,
+  and a (non-sharp) form of Example 3.1's missing half.\<close>
+
+lemma radial_sq_upto:
+  fixes \<omega> :: "'n::finite pairpath" and y\<^sub>0 x :: "real^'n"
+    and TT e cn :: real and RO :: "(real^'n) set"
+  assumes wm: "\<omega> \<in> mspace (path_metric TT :: ('n pairpath) metric)"
+    and grow: "\<And>t. 0 < t \<Longrightarrow> t \<le> TT \<Longrightarrow>
+      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<Longrightarrow>
+      (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * cn"
+    and e0: "0 < e" and eT: "e \<le> TT"
+    and inside: "\<And>s. 0 \<le> s \<Longrightarrow> s < e \<Longrightarrow> fst (\<omega> s) \<in> RO"
+  shows "(norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
+proof -
+  define g where "g = (\<lambda>s. (norm (fst (\<omega> s) - y\<^sub>0))\<^sup>2)"
+  have gc: "continuous_on {0..TT} g"
+  proof -
+    have wc: "continuous_on {0..TT} \<omega>"
+      by (rule mspace_path_metricD[OF wm])
+    have fc: "continuous_on {0..TT} (\<lambda>s. fst (\<omega> s))"
+      by (rule continuous_on_fst[OF wc])
+    show ?thesis
+      unfolding g_def by (intro continuous_intros fc)
+  qed
+  define tj where "tj = (\<lambda>j. e - e / (2 * real (Suc j)))"
+  have tjl: "0 < tj j" for j
+  proof -
+    have "e / (2 * real (Suc j)) \<le> e / 2"
+    proof (rule divide_left_mono)
+      show "2 \<le> 2 * real (Suc j)" by simp
+      show "0 \<le> e" using e0 by linarith
+      show "0 < 2 * real (Suc j) * 2" by simp
+    qed
+    then show ?thesis unfolding tj_def using e0 by linarith
+  qed
+  have tju: "tj j < e" for j
+  proof -
+    have "0 < e / (2 * real (Suc j))" using e0 by simp
+    then show ?thesis unfolding tj_def by linarith
+  qed
+  have tjT: "tj j \<le> TT" for j using tju[of j] eT by linarith
+  have glow: "g (tj j) = (norm (x - y\<^sub>0))\<^sup>2 + tj j * cn" for j
+    unfolding g_def
+  proof (rule grow)
+    show "0 < tj j" by (rule tjl)
+    show "tj j \<le> TT" by (rule tjT)
+    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> RO"
+    proof
+      fix s assume s: "s \<in> {0..tj j}"
+      then have "0 \<le> s" and "s < e" using tju[of j] by auto
+      then show "fst (\<omega> s) \<in> RO" by (rule inside)
+    qed
+  qed
+  have tjlim: "tj \<longlonglongrightarrow> e"
+  proof -
+    have eq: "(\<lambda>j. (e / 2) * inverse (real (Suc j)))
+        = (\<lambda>j. e / (2 * real (Suc j)))"
+      by (rule ext) (simp add: field_simps)
+    have "(\<lambda>j. (e / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (e / 2) * 0"
+      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
+    then have "(\<lambda>j. e / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
+      unfolding eq by simp
+    then have "(\<lambda>j. e - e / (2 * real (Suc j))) \<longlonglongrightarrow> e - 0"
+      by (intro tendsto_diff tendsto_const)
+    then show ?thesis unfolding tj_def by simp
+  qed
+  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g e"
+  proof -
+    have inS: "\<forall>n. tj n \<in> {0..TT}"
+      using tjl tjT by (auto intro: less_imp_le)
+    have eS: "e \<in> {0..TT}" using e0 eT by auto
+    have "(g \<circ> tj) \<longlonglongrightarrow> g e"
+      using continuous_on_sequentially[THEN iffD1, OF gc] inS eS tjlim
+      by blast
+    then show ?thesis by (simp add: o_def)
+  qed
+  have vlim: "(\<lambda>j. (norm (x - y\<^sub>0))\<^sup>2 + tj j * cn)
+      \<longlonglongrightarrow> (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
+    by (intro tendsto_add tendsto_const tendsto_mult tjlim)
+  have "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
+    using vlim unfolding glow by simp
+  then have "g e = (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
+    using gcomp LIMSEQ_unique by blast
+  then show ?thesis unfolding g_def .
+qed
+
+theorem paper_v_ball_lower:
+  fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
+    and rB T :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
+    and kn: "k < CARD('n)"
+    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
+    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
+  shows "ennreal (min (T / 2)
+      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))))
+      \<le> paper_v k L T K x"
+proof -
+  define \<rho>\<^sub>0 where "\<rho>\<^sub>0 = norm (x - y\<^sub>0)"
+  define \<rho> where "\<rho> = \<rho>\<^sub>0 / 2"
+  define cn where "cn = real CARD('n) - 1"
+  define \<delta>f where "\<delta>f = (rB\<^sup>2 - \<rho>\<^sub>0\<^sup>2) / cn"
+  define cc where "cc = min (T / 2) (\<delta>f / 2)"
+  let ?RO = "{w :: real^'n. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
+  have r00: "0 < \<rho>\<^sub>0" unfolding \<rho>\<^sub>0_def using xy by simp
+  have rho0: "0 < \<rho>" unfolding \<rho>_def using r00 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  have cn1: "1 \<le> cn"
+  proof -
+    have "(2::real) \<le> real CARD('n)"
+      using n2 by (simp add: of_nat_le_iff [where m = 2, symmetric])
+    then show ?thesis unfolding cn_def by linarith
+  qed
+  have cn0: "0 < cn" using cn1 by linarith
+  have rr: "\<rho>\<^sub>0 < rB" using xin unfolding \<rho>\<^sub>0_def .
+  have rB0: "0 < rB" using r00 rr by linarith
+  have sq_lt: "\<rho>\<^sub>0\<^sup>2 < rB\<^sup>2"
+    using r00 rr by (intro power_strict_mono) simp_all
+  have df0: "0 < \<delta>f" unfolding \<delta>f_def using sq_lt cn0 by simp
+  have cc0: "0 < cc" unfolding cc_def using T0 df0 by simp
+  have ccT: "cc < T" unfolding cc_def using T0 by simp
+  have ccdf: "cc < \<delta>f" unfolding cc_def using df0 by simp
+  obtain P where P: "P \<in> paper_pair_class k L T x"
+    and AEg: "AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ?RO) \<longrightarrow>
+      (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
+        = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
+    using tangential_exact_growth[OF T0 L1 k1 kn rho0,
+        where y\<^sub>0 = y\<^sub>0 and rB = rB and x = x]
+    by blast
+  have setsP: "sets P = sets (borel_of (mtopology_of
+      (path_metric T :: ('n pairpath) metric)))"
+    by (rule paper_pair_class_sets[OF P])
+  have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsP])
+  have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    by (rule paper_pair_class_start[OF P])
+  have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+  have AEfun: "AE \<omega> in P. ennreal cc
+      \<le> ennreal (pexit cc K (\<lambda>t. fst (\<omega> t))
+        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
+           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
+    using AEg start sp
+  proof (eventually_elim)
+    case (elim \<omega>)
+    have wm: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      using elim(3) by (simp add: spaceP)
+    have x0: "fst (\<omega> 0) = x" using elim(2) by blast
+    have cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+      by (rule path_sets_fst_continuous[OF setsP])
+        (use elim(3) in simp)
+    have grow: "\<And>t. 0 < t \<Longrightarrow> t \<le> T \<Longrightarrow>
+        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ?RO) \<Longrightarrow>
+        (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * cn"
+      unfolding cn_def using elim(1) by blast
+    have xRO: "x \<in> ?RO"
+      using rho0 rr r00 unfolding \<rho>_def \<rho>\<^sub>0_def
+      by (auto simp: mem_ball dist_norm norm_minus_commute)
+    have ROopen: "open ?RO"
+    proof -
+      have "open {w :: real^'n. \<rho> < norm (w - y\<^sub>0)}"
+        by (intro open_Collect_less continuous_intros
+            continuous_on_const)
+      then show ?thesis by (intro open_Int open_ball)
+    qed
+    have cc0': "0 \<le> cc" using cc0 by linarith
+    have contc: "continuous_on {0..cc} (\<lambda>t. fst (\<omega> t))"
+      by (rule continuous_on_subset[OF cont]) (use ccT in auto)
+    \<comment> \<open>the path stays in the annulus strictly before \<open>cc\<close>\<close>
+    have IN: "fst (\<omega> s) \<in> ?RO" if s0: "0 \<le> s" and sc: "s < cc" for s
+    proof -
+      define e where "e = pexit cc ?RO (\<lambda>t. fst (\<omega> t))"
+      have eup: "e \<le> cc" unfolding e_def by (rule pexit_le_T[OF cc0'])
+      have before: "fst (\<omega> u) \<in> ?RO"
+        if u0: "0 \<le> u" and ue: "u < e" for u
+      proof (rule ccontr)
+        assume nb: "fst (\<omega> u) \<notin> ?RO"
+        have uc: "u \<le> cc" using ue eup by linarith
+        have "pexit cc ?RO (\<lambda>t. fst (\<omega> t)) \<le> u"
+          by (rule pexit_le_of_mem[OF cc0' u0 uc]) (use nb in simp)
+        then show False using ue unfolding e_def by linarith
+      qed
+      have ecc: "e = cc"
+      proof (rule ccontr)
+        assume "e \<noteq> cc"
+        then have elt: "e < cc" using eup by linarith
+        have Xe: "fst (\<omega> e) \<notin> ?RO"
+          using pexit_mem_of_less_T[OF cc0' ROopen contc]
+          using elt unfolding e_def by simp
+        have e0': "0 < e"
+        proof (rule ccontr)
+          assume "\<not> 0 < e"
+          moreover have "0 \<le> e"
+            unfolding e_def by (rule pexit_nonneg[OF cc0'])
+          ultimately have "e = 0" by linarith
+          then show False using Xe x0 xRO by simp
+        qed
+        have esq: "(norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2
+            = (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
+        proof (rule radial_sq_upto[OF wm grow e0'])
+          show "e \<le> T" using elt ccT by linarith
+          show "\<And>s. 0 \<le> s \<Longrightarrow> s < e \<Longrightarrow> fst (\<omega> s) \<in> ?RO"
+            by (rule before)
+        qed
+        have dichot: "norm (fst (\<omega> e) - y\<^sub>0) \<le> \<rho>
+            \<or> rB \<le> norm (fst (\<omega> e) - y\<^sub>0)"
+          using Xe
+          by (auto simp: mem_ball dist_norm norm_minus_commute)
+        show False
+        proof (cases rule: disjE[OF dichot])
+          case 1
+          have "(norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2 \<le> \<rho>\<^sup>2"
+            using 1 rho0 by (intro power_mono) simp_all
+          moreover have "\<rho>\<^sup>2 < \<rho>\<^sub>0\<^sup>2"
+            unfolding \<rho>_def using r00 by (simp add: power_divide)
+          moreover have "\<rho>\<^sub>0\<^sup>2 \<le> (norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2"
+            unfolding esq \<rho>\<^sub>0_def using e0' cn0
+            by (simp add: mult_nonneg_nonneg)
+          ultimately show False by linarith
+        next
+          case 2
+          have "rB\<^sup>2 \<le> (norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2"
+            using 2 rB0 by (intro power_mono) simp_all
+          then have "rB\<^sup>2 - \<rho>\<^sub>0\<^sup>2 \<le> e * cn"
+            unfolding esq \<rho>\<^sub>0_def by linarith
+          then have "\<delta>f \<le> e"
+            unfolding \<delta>f_def using cn0 by (simp add: pos_divide_le_eq)
+          then show False using elt ccdf by linarith
+        qed
+      qed
+      show ?thesis using before[OF s0] sc unfolding ecc by simp
+    qed
+    \<comment> \<open>hence in \<open>K\<close> through \<open>cc\<close>, including the endpoint\<close>
+    have inK: "fst (\<omega> s) \<in> K" if s0: "0 \<le> s" and sc: "s \<le> cc" for s
+    proof (cases "s < cc")
+      case True
+      have "fst (\<omega> s) \<in> ball y\<^sub>0 rB" using IN[OF s0 True] by blast
+      then show ?thesis using sub ball_subset_cball by blast
+    next
+      case False
+      then have seq: "s = cc" using sc by linarith
+      have csq: "(norm (fst (\<omega> cc) - y\<^sub>0))\<^sup>2
+          = (norm (x - y\<^sub>0))\<^sup>2 + cc * cn"
+      proof (rule radial_sq_upto[OF wm grow cc0])
+        show "cc \<le> T" using ccT by linarith
+        show "\<And>s. 0 \<le> s \<Longrightarrow> s < cc \<Longrightarrow> fst (\<omega> s)
+            \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
+          by (rule IN)
+      qed
+      have "(norm (fst (\<omega> cc) - y\<^sub>0))\<^sup>2 < rB\<^sup>2"
+      proof -
+        have "cc * cn < \<delta>f * cn"
+          using ccdf cn0 by (intro mult_strict_right_mono)
+        also have "\<delta>f * cn = rB\<^sup>2 - \<rho>\<^sub>0\<^sup>2"
+          unfolding \<delta>f_def using cn0 by simp
+        finally show ?thesis
+          unfolding csq \<rho>\<^sub>0_def[symmetric] by linarith
+      qed
+      then have "norm (fst (\<omega> cc) - y\<^sub>0) < rB"
+        using rB0 by (metis norm_ge_zero power2_le_imp_le
+            linorder_not_less nless_le)
+      then have "fst (\<omega> cc) \<in> ball y\<^sub>0 rB"
+        by (simp add: mem_ball dist_norm norm_minus_commute)
+      then show ?thesis using sub ball_subset_cball seq by blast
+    qed
+    have pex: "pexit cc K (\<lambda>t. fst (\<omega> t)) = cc"
+      by (rule pexit_eq_of_stays[OF cc0']) (use inK in simp)
+    have XccK: "fst (\<omega> cc) \<in> K" using inK[of cc] cc0 by simp
+    have fn: "pexit cc K (\<lambda>t. fst (\<omega> t))
+        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
+           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0)
+        = cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+      using pex XccK by simp
+    have "cc \<le> cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+      by simp
+    then show ?case unfolding fn by (intro ennreal_leI) simp
+  qed
+  have essge: "ennreal cc \<le> ess_inf_time P
+      (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
+        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
+           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
+    unfolding ess_inf_time_def
+    by (rule Sup_upper) (use AEfun in blast)
+  have esle: "ess_inf_time P
+      (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
+        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
+           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))
+      \<le> paper_v k L T K x"
+  proof -
+    have "ess_inf_time P
+        (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
+          + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
+             then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))
+        \<le> (SUP P' \<in> paper_pair_class k L T x. ess_inf_time P'
+          (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
+            + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
+               then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))
+               else 0)))"
+      by (rule SUP_upper[OF P])
+    also have "\<dots> \<le> paper_v k L T K x"
+      by (rule paper_v_dpp_sup_ge[OF less_imp_le[OF cc0] ccT L1 Kc])
+    finally show ?thesis .
+  qed
+  have "ennreal cc \<le> paper_v k L T K x"
+    by (rule order_trans[OF essge esle])
+  moreover have "cc = min (T / 2)
+      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))"
+  proof -
+    have e: "\<delta>f / 2
+        = (rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))"
+      unfolding \<delta>f_def \<rho>\<^sub>0_def cn_def
+      using cn0 unfolding cn_def by (simp add: mult_ac)
+    show ?thesis unfolding cc_def e by (rule refl)
+  qed
+  ultimately show ?thesis by simp
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
