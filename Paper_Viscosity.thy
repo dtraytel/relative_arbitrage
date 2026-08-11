@@ -10107,6 +10107,200 @@ proof -
   qed
 qed
 
+subsection \<open>The limit member at the exit time\<close>
+
+text \<open>Batch 3e(iii).  The almost-sure growth statement, specialised to the
+  exit time of the ball.  Pathwise: before the exit the path is strictly
+  inside (@{thm [source] pexit_le_of_mem}), so the growth bound holds at
+  every earlier time and passes to the exit by continuity; the exit is
+  strictly positive because the path starts at the centre
+  (@{thm [source] pball_exit_pos}), stays in the closed ball through the
+  exit (@{thm [source] pball_exit_stays_cball}), and lands on the sphere
+  whenever it happens before the cap (@{thm [source] pball_exit_outside}).
+  This is everything the DPP contradiction needs from the process.\<close>
+
+lemma quad_good_upto:
+  fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
+    and M :: "real^'n^'n" and c cm rb t :: real
+  assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
+    and good: "\<And>t'. 0 < t' \<Longrightarrow> t' \<le> c \<Longrightarrow>
+      (\<forall>s\<in>{0..t'}. fst (\<omega> s) \<in> ball x rb) \<Longrightarrow>
+      t' * cm / 2 \<le> q \<bullet> (fst (\<omega> t') - x)
+        + (1/2) * ((fst (\<omega> t') - x) \<bullet> (M *v (fst (\<omega> t') - x)))"
+    and t0: "0 < t" and tc: "t \<le> c"
+    and inb: "\<And>s. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> fst (\<omega> s) \<in> ball x rb"
+  shows "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+      + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+proof -
+  define g where "g = (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
+      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
+  have gc: "continuous_on {0..c} g"
+    unfolding g_def by (rule quad_eval_cont[OF wm])
+  define tj where "tj = (\<lambda>j. t - t / (2 * real (Suc j)))"
+  have tjl: "0 < tj j" for j
+  proof -
+    have "t / (2 * real (Suc j)) \<le> t / 2"
+    proof (rule divide_left_mono)
+      show "2 \<le> 2 * real (Suc j)" by simp
+      show "0 \<le> t" using t0 by linarith
+      show "0 < 2 * real (Suc j) * 2" by simp
+    qed
+    then show ?thesis unfolding tj_def using t0 by linarith
+  qed
+  have tju: "tj j < t" for j
+  proof -
+    have "0 < t / (2 * real (Suc j))" using t0 by simp
+    then show ?thesis unfolding tj_def by linarith
+  qed
+  have tjc: "tj j \<le> c" for j using tju[of j] tc by linarith
+  have glow: "tj j * cm / 2 \<le> g (tj j)" for j
+    unfolding g_def
+  proof (rule good)
+    show "0 < tj j" by (rule tjl)
+    show "tj j \<le> c" by (rule tjc)
+    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> ball x rb"
+    proof
+      fix s assume s: "s \<in> {0..tj j}"
+      then have s0: "0 \<le> s" and st: "s < t" using tju[of j] by auto
+      show "fst (\<omega> s) \<in> ball x rb" by (rule inb[OF s0 st])
+    qed
+  qed
+  have tjlim: "tj \<longlonglongrightarrow> t"
+  proof -
+    have eq: "(\<lambda>j. (t / 2) * inverse (real (Suc j)))
+        = (\<lambda>j. t / (2 * real (Suc j)))"
+      by (rule ext) (simp add: field_simps)
+    have "(\<lambda>j. (t / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (t / 2) * 0"
+      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
+    then have "(\<lambda>j. t / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
+      unfolding eq by simp
+    then have "(\<lambda>j. t - t / (2 * real (Suc j))) \<longlonglongrightarrow> t - 0"
+      by (intro tendsto_diff tendsto_const)
+    then show ?thesis unfolding tj_def by simp
+  qed
+  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g t"
+  proof -
+    have inS: "\<forall>n. tj n \<in> {0..c}"
+      using tjl tjc by (auto intro: less_imp_le)
+    have tS: "t \<in> {0..c}" using t0 tc by auto
+    have "(g \<circ> tj) \<longlonglongrightarrow> g t"
+      using continuous_on_sequentially[THEN iffD1, OF gc] inS tS tjlim
+      by blast
+    then show ?thesis by (simp add: o_def)
+  qed
+  have lim1: "(\<lambda>j. tj j * cm / 2) \<longlonglongrightarrow> t * cm / 2"
+    by (rule tendsto_divide[OF
+        tendsto_mult[OF tjlim tendsto_const] tendsto_const]) simp
+  have "t * cm / 2 \<le> g t"
+    by (rule LIMSEQ_le[OF lim1 gcomp]) (use glow in blast)
+  then show ?thesis unfolding g_def .
+qed
+
+theorem eulerp_limit_exit:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and q x :: "real^'n" and c rb cm L :: real
+  assumes c0: "0 < c" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and sym: "transpose M = M" and rb0: "0 < rb"
+    and kill: "\<And>z. transpose (SF z) *v
+        (q + M *v (closest_point (cball x rb) z - x)) = 0"
+    and marg: "\<And>z. cm \<le> trace (M ** (SF z ** transpose (SF z)))"
+  shows "\<exists>P \<in> paper_pair_class k L c x. AE \<omega> in P.
+      0 < pball_exit c x rb \<omega>
+      \<and> (\<forall>s\<in>{0..pball_exit c x rb \<omega>}. fst (\<omega> s) \<in> cball x rb)
+      \<and> (pball_exit c x rb \<omega> < c \<longrightarrow>
+          dist (fst (\<omega> (pball_exit c x rb \<omega>))) x = rb)
+      \<and> pball_exit c x rb \<omega> * cm / 2
+          \<le> q \<bullet> (fst (\<omega> (pball_exit c x rb \<omega>)) - x)
+            + (1/2) * ((fst (\<omega> (pball_exit c x rb \<omega>)) - x)
+                \<bullet> (M *v (fst (\<omega> (pball_exit c x rb \<omega>)) - x)))"
+proof -
+  let ?pm = "path_metric c :: ('n pairpath) metric"
+  have rb0': "0 \<le> rb" using rb0 by linarith
+  have c0': "0 \<le> c" using c0 by linarith
+  obtain P where P: "P \<in> paper_pair_class k L c x"
+    and good: "AE \<omega> in P. \<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow>
+      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb) \<longrightarrow>
+      t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+    using eulerp_limit_good[OF c0 L1 SFc SFs sym rb0' kill marg] by blast
+  have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
+    by (rule paper_pair_class_sets[OF P])
+  have spaceP: "space P = mspace ?pm"
+    by (rule space_of_path_sets[OF setsP])
+  have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    by (rule paper_pair_class_start[OF P])
+  have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+  show ?thesis
+  proof (intro bexI[OF _ P])
+    show "AE \<omega> in P.
+        0 < pball_exit c x rb \<omega>
+        \<and> (\<forall>s\<in>{0..pball_exit c x rb \<omega>}. fst (\<omega> s) \<in> cball x rb)
+        \<and> (pball_exit c x rb \<omega> < c \<longrightarrow>
+            dist (fst (\<omega> (pball_exit c x rb \<omega>))) x = rb)
+        \<and> pball_exit c x rb \<omega> * cm / 2
+            \<le> q \<bullet> (fst (\<omega> (pball_exit c x rb \<omega>)) - x)
+              + (1/2) * ((fst (\<omega> (pball_exit c x rb \<omega>)) - x)
+                  \<bullet> (M *v (fst (\<omega> (pball_exit c x rb \<omega>)) - x)))"
+      using good start sp
+    proof (eventually_elim)
+      case (elim \<omega>)
+      have wsp: "\<omega> \<in> space P" using elim(3) .
+      have wm: "\<omega> \<in> mspace ?pm" using wsp by (simp add: spaceP)
+      have cont: "continuous_on {0..c} (\<lambda>t. fst (\<omega> t))"
+        by (rule path_sets_fst_continuous[OF setsP wsp])
+      have x0: "fst (\<omega> 0) = x" using elim(2) by blast
+      have sdist: "dist (fst (\<omega> 0)) x < rb" using x0 rb0 by simp
+      define \<theta> where "\<theta> = pball_exit c x rb \<omega>"
+      have th_pos: "0 < \<theta>" unfolding \<theta>_def
+        by (rule pball_exit_pos[OF c0 sdist cont])
+      have th_le: "\<theta> \<le> c" unfolding \<theta>_def by (rule pball_exit_le[OF c0'])
+      have stays: "fst (\<omega> s) \<in> cball x rb" if s: "s \<in> {0..\<theta>}" for s
+      proof -
+        have "dist (fst (\<omega> s)) x \<le> rb"
+          using pball_exit_stays_cball[OF c0' sdist cont, of s] s
+          unfolding \<theta>_def by auto
+        then show ?thesis by (simp add: mem_cball dist_commute)
+      qed
+      have inside: "fst (\<omega> s) \<in> ball x rb"
+        if s0: "0 \<le> s" and st: "s < \<theta>" for s
+      proof (rule ccontr)
+        assume nb: "fst (\<omega> s) \<notin> ball x rb"
+        have sc: "s \<le> c" using st th_le by linarith
+        have "pexit c (ball x rb) (\<lambda>t. fst (\<omega> t)) \<le> s"
+          by (rule pexit_le_of_mem[OF c0' s0 sc]) (use nb in simp)
+        then have "\<theta> \<le> s" unfolding \<theta>_def pball_exit_def .
+        then show False using st by linarith
+      qed
+      have bdry: "dist (fst (\<omega> \<theta>)) x = rb" if lt: "\<theta> < c"
+      proof -
+        have lt': "pball_exit c x rb \<omega> < c" using lt unfolding \<theta>_def .
+        have ge: "rb \<le> dist (fst (\<omega> \<theta>)) x"
+          using pball_exit_outside[OF c0' cont lt'] unfolding \<theta>_def by simp
+        have inc: "fst (\<omega> \<theta>) \<in> cball x rb"
+          using stays[of \<theta>] th_pos by simp
+        then have le: "dist (fst (\<omega> \<theta>)) x \<le> rb"
+          by (simp add: mem_cball dist_commute)
+        show ?thesis using ge le by linarith
+      qed
+      have grow: "\<theta> * cm / 2 \<le> q \<bullet> (fst (\<omega> \<theta>) - x)
+          + (1/2) * ((fst (\<omega> \<theta>) - x) \<bullet> (M *v (fst (\<omega> \<theta>) - x)))"
+      proof (rule quad_good_upto[OF wm _ th_pos th_le])
+        show "\<And>t'. 0 < t' \<Longrightarrow> t' \<le> c \<Longrightarrow>
+            (\<forall>s\<in>{0..t'}. fst (\<omega> s) \<in> ball x rb) \<Longrightarrow>
+            t' * cm / 2 \<le> q \<bullet> (fst (\<omega> t') - x)
+              + (1/2) * ((fst (\<omega> t') - x) \<bullet> (M *v (fst (\<omega> t') - x)))"
+          using elim(1) by blast
+        show "\<And>s. 0 \<le> s \<Longrightarrow> s < \<theta> \<Longrightarrow> fst (\<omega> s) \<in> ball x rb"
+          by (rule inside)
+      qed
+      show ?case
+        using th_pos stays bdry grow unfolding \<theta>_def by blast
+    qed
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
