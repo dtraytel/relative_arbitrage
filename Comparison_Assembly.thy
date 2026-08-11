@@ -4634,22 +4634,6 @@ text \<open>This is the step the PAPER uses to rule out the diagonal case, and i
   sums is set up here for a penalty with CONSTANT Hessian --- but the fact that
   makes it work is proved here, so the remaining work is engineering.\<close>
 
-lemma ell_op_zero_matrix:
-  fixes p :: "real^'n::finite"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op k L p (0::real^'n^'n) = 0"
-proof -
-  have ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-    by (rule feasible_nonempty[OF k(1) k(2) L])
-  have img: "(\<lambda>a. - trace ((0::real^'n^'n) ** a) / 2) ` feasible k L p = {0}"
-  proof -
-    have z: "- trace ((0::real^'n^'n) ** a) / 2 = 0" for a :: "real^'n^'n"
-      by (simp add: matrix_matrix_mult_def trace_def)
-    show ?thesis using ne z by auto
-  qed
-  show ?thesis unfolding ell_op_def img by simp
-qed
-
 text \<open>The end of the one-sided chain.  Identical to
   \<open>supersol_no_vanishing_jet\<close> except that the jet hypothesis is the one-sided
   form, which is what the DIAGONAL branch of Theorem 4.2(a) can actually

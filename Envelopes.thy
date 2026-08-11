@@ -268,6 +268,158 @@ proof -
     by (simp add: divide_right_mono mult_right_mono)
 qed
 
+subsection \<open>\<open>F\<close> and \<open>F\<^sup>*\<close> vanish with the Hessian, uniformly in the gradient\<close>
+
+text \<open>At \<open>M = 0\<close> the operator is \<open>0\<close> whatever the gradient, because every
+  feasible \<open>a\<close> gives \<open>- trace (0 a)/2 = 0\<close>.  Combined with the Lipschitz
+  bound @{thm [source] ell_op_M_gap} this makes \<open>F\<close> small whenever \<open>M\<close> is
+  small, UNIFORMLY in \<open>p\<close> --- and a bound uniform in \<open>p\<close> survives the
+  supremum over a ball, hence passes to \<open>F\<^sup>*\<close>.
+
+  This is what the paper's Theorem 4.2(a) uses to close the diagonal case:
+  when the doubled maximiser has \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close> the test function has a
+  VANISHING two-jet at \<open>y\<^sup>\<epsilon>\<close>, and the supersolution property would give
+  \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  The envelope changes nothing here: \<open>F\<^sup>*(0,0)\<close> is \<open>0\<close>
+  for the same reason \<open>F(0,0)\<close> is.\<close>
+
+lemma ell_op_zero_matrix:
+  fixes p :: "real^'n::finite"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+  shows "ell_op k L p (0::real^'n^'n) = 0"
+proof -
+  have ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
+    by (rule feasible_nonempty[OF k(1) k(2) L])
+  have img: "(\<lambda>a. - trace ((0::real^'n^'n) ** a) / 2) ` feasible k L p = {0}"
+  proof -
+    have z: "- trace ((0::real^'n^'n) ** a) / 2 = 0" for a :: "real^'n^'n"
+      by (simp add: matrix_matrix_mult_def trace_def)
+    show ?thesis using ne z by auto
+  qed
+  show ?thesis unfolding ell_op_def img by simp
+qed
+
+lemma ell_op_le_mgap_zero:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+  shows "ell_op k L p M \<le> mgap L M 0"
+proof -
+  have ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
+    by (rule feasible_nonempty[OF k(1) k(2) L])
+  have a1: "ell_op k L p M \<le> ell_op k L p 0 + mgap L M 0"
+    by (rule ell_op_M_gap[OF ne])
+  have a2: "ell_op k L p (0 :: real^'n^'n) = 0"
+    by (rule ell_op_zero_matrix[OF k(1) k(2) L])
+  show ?thesis using a1 a2 by linarith
+qed
+
+lemma ell_op_le_scaled_norm:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+  shows "ell_op k L p M
+      \<le> real (CARD('n) * CARD('n)) * L / 2 * norm M"
+proof -
+  have L0: "0 \<le> L" using L by linarith
+  have a1: "ell_op k L p M \<le> mgap L M 0"
+    by (rule ell_op_le_mgap_zero[OF k(1) k(2) L])
+  have a2: "mgap L M 0
+      \<le> real (CARD('n) * CARD('n)) * norm (M - 0) * L / 2"
+    by (rule mgap_le_norm[OF L0])
+  have a3: "real (CARD('n) * CARD('n)) * norm (M - 0) * L / 2
+      = real (CARD('n) * CARD('n)) * L / 2 * norm M"
+    by (simp add: field_simps)
+  show ?thesis using a1 a2 unfolding a3 by linarith
+qed
+
+lemma ell_op_usc_le_scaled_norm:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and e: "0 < e"
+  shows "ell_op_usc k L p M
+      \<le> ereal (real (CARD('n) * CARD('n)) * L / 2 * (norm M + e))"
+proof -
+  define B where "B = real (CARD('n) * CARD('n)) * L / 2"
+  have B0: "0 \<le> B" unfolding B_def using L by simp
+  have step: "ell_op_pair k L w \<le> ereal (B * (norm M + e))"
+    if w: "w \<in> ball (p, M) e" for w :: "(real^'n) \<times> (real^'n^'n)"
+  proof -
+    have dN: "norm (snd w - M) < e"
+    proof -
+      have "dist (snd w) (snd (p, M)) \<le> dist w (p, M)" by (rule dist_snd_le)
+      then have "dist (snd w) M \<le> dist w (p, M)" by simp
+      also have "\<dots> < e" using w by (simp add: dist_commute)
+      finally show ?thesis by (simp add: dist_norm)
+    qed
+    have nb: "norm (snd w) \<le> norm M + e"
+      using dN norm_triangle_ineq[of "snd w - M" M] by simp
+    have "ell_op k L (fst w) (snd w) \<le> B * norm (snd w)"
+      unfolding B_def by (rule ell_op_le_scaled_norm[OF k(1) k(2) L])
+    also have "\<dots> \<le> B * (norm M + e)"
+      by (rule mult_left_mono[OF nb B0])
+    finally show ?thesis by (simp add: ell_op_pair_def)
+  qed
+  have "ell_op_usc k L p M
+      \<le> (SUP w \<in> ball (p, M) e. ell_op_pair k L w)"
+    unfolding ell_op_usc_def by (rule INF_lower) (use e in simp)
+  also have "\<dots> \<le> ereal (B * (norm M + e))"
+    by (rule SUP_least) (use step in blast)
+  finally show ?thesis unfolding B_def .
+qed
+
+text \<open>The form the diagonal case consumes: for a small enough shift the
+  UPPER envelope at \<open>-\<delta>I\<close> is below \<open>1\<close>, whatever the gradient.\<close>
+
+lemma ell_op_usc_small_shift_lt_one:
+  fixes k :: nat
+  assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
+  obtains \<delta> :: real where "0 < \<delta>" and "\<delta> < 1"
+    and "\<And>q :: real^'n.
+      ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
+proof -
+  define B where "B = real (CARD('n) * CARD('n)) * L / 2"
+  have B0: "0 < B" unfolding B_def using L by simp
+  define Nm where "Nm = norm (mat 1 :: real^'n^'n)"
+  have Nm0: "0 \<le> Nm" unfolding Nm_def by simp
+  define t where "t = 1 / (2 * B)"
+  have t0: "0 < t" unfolding t_def using B0 by simp
+  have Bt: "B * t = 1 / 2" unfolding t_def using B0 by simp
+  define \<delta> where "\<delta> = min (1 / 2) (t / (2 * (Nm + 1)))"
+  have d0: "0 < \<delta>" unfolding \<delta>_def using t0 Nm0 by simp
+  have d1: "\<delta> < 1" unfolding \<delta>_def by simp
+  have dN: "\<delta> * Nm \<le> t / 2"
+  proof -
+    have "\<delta> \<le> t / (2 * (Nm + 1))" unfolding \<delta>_def by simp
+    then have "\<delta> * Nm \<le> t / (2 * (Nm + 1)) * Nm"
+      by (rule mult_right_mono[OF _ Nm0])
+    moreover have "t / (2 * (Nm + 1)) * Nm \<le> t / 2"
+      using t0 Nm0 by (simp add: field_simps)
+    ultimately show ?thesis by linarith
+  qed
+  have key: "ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
+    for q :: "real^'n"
+  proof -
+    have e0: "0 < t / 2" using t0 by simp
+    have nrm: "norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) = \<delta> * Nm"
+      unfolding Nm_def using d0 by simp
+    have "ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)
+        \<le> ereal (B * (norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) + t / 2))"
+      unfolding B_def
+      by (rule ell_op_usc_le_scaled_norm[OF k(1) k(2) L e0])
+    also have "\<dots> = ereal (B * (\<delta> * Nm + t / 2))" unfolding nrm by (rule refl)
+    also have "\<dots> \<le> ereal (B * t)"
+    proof -
+      have "\<delta> * Nm + t / 2 \<le> t" using dN by linarith
+      then have "B * (\<delta> * Nm + t / 2) \<le> B * t"
+        by (rule mult_left_mono) (use B0 in linarith)
+      then show ?thesis by simp
+    qed
+    also have "\<dots> = ereal (1 / 2)" unfolding Bt by (rule refl)
+    also have "\<dots> < 1" by simp
+    finally show ?thesis .
+  qed
+  show ?thesis by (rule that[OF d0 d1]) (use key in blast)
+qed
+
+
+
 theorem ell_op_lsc_at_zero:
   fixes M :: "real^'n::finite^'n"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
@@ -1414,6 +1566,150 @@ proof (rule ereal_le_epsilon)
     then show ?thesis using ee0 by simp
   qed
 qed
+
+subsection \<open>From a global touching over \<open>K\<close> to a local one\<close>
+
+text \<open>Definition 3.1 constrains only test functions whose touching is
+  GLOBAL over \<open>K\<close>, while the Crandall--Ishii machinery produces LOCAL
+  touchings from jet data.  The gap is closed by subtracting a quartic:
+  \<open>\<psi> := \<phi> - C\<bar>z - x\<bar>\<^sup>4\<close> has the same two-jet at \<open>x\<close> (a quartic vanishes to
+  second order), it only DEEPENS the touching inside the ball, and outside
+  the ball the quartic is bounded below by \<open>Cr\<^sup>4\<close>, which for large \<open>C\<close>
+  overwhelms the oscillation of \<open>w - \<phi>\<close> on \<open>K\<close>.
+
+  The two boundedness hypotheses are exactly what a genuine \<open>C\<^sup>2\<close> test
+  function on a compact \<open>K\<close> supplies, and they are what keeps the step
+  honest: without a bound on \<open>\<phi>\<close> over \<open>K\<close> one could simply truncate \<open>\<phi>\<close>
+  far from \<open>x\<close>, which \<^const>\<open>test_fun_at\<close> would tolerate but the paper's
+  \<open>C\<^sup>2(\<real>\<^sup>n)\<close> would not.\<close>
+
+lemma inner_scaleR_diff_eq:
+  fixes q v h :: "real^'n::finite" and c :: real
+  shows "q \<bullet> h - c * (v \<bullet> h) = (q - c *\<^sub>R v) \<bullet> h"
+  by (simp add: inner_diff_left)
+
+lemma quartic_coeff_assoc:
+  fixes c u w :: real
+  shows "c * (2 * u * (2 * w)) = 4 * c * u * w"
+  by (simp add: field_simps)
+
+lemma test_fun_at_quartic_shift:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n" and x :: "real^'n" and C :: real
+  assumes tf: "test_fun_at \<phi> g H x"
+  shows "test_fun_at (\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2)
+      (\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x)) H x"
+  unfolding test_fun_at_def
+proof (intro conjI)
+  show "transpose H = H" using tf unfolding test_fun_at_def by blast
+next
+  obtain e where e0: "0 < e"
+    and dphi: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    using tf unfolding test_fun_at_def by blast
+  have main: "((\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
+      (\<lambda>h. (g y - (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (y - x)) \<bullet> h)) (at y)"
+    if y: "y \<in> ball x e" for y
+  proof -
+    have d1: "(\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)" by (rule dphi[OF y])
+    have d2: "((\<lambda>z :: real^'n. C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
+        (\<lambda>h. C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h))))) (at y)"
+      by (auto intro!: derivative_eq_intros simp: inner_commute)
+    have d3: "((\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
+        (\<lambda>h. g y \<bullet> h
+          - C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h))))) (at y)"
+      by (rule has_derivative_diff[OF d1 d2])
+    have d4: "(\<lambda>h. g y \<bullet> h
+          - C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h))))
+        = (\<lambda>h. (g y - (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (y - x)) \<bullet> h)"
+    proof (rule ext)
+      fix h :: "real^'n"
+      show "g y \<bullet> h - C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h)))
+          = (g y - (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (y - x)) \<bullet> h"
+        unfolding quartic_coeff_assoc by (rule inner_scaleR_diff_eq)
+    qed
+    show ?thesis using d3 unfolding d4 .
+  qed
+  show "\<exists>e>0. \<forall>y \<in> ball x e.
+      ((\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
+        (\<lambda>h. (g y - (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (y - x)) \<bullet> h)) (at y)"
+    using e0 main by blast
+next
+  have dg: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+    using tf unfolding test_fun_at_def by blast
+  have dq: "((\<lambda>z :: real^'n. (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))
+      has_derivative (\<lambda>h. 0)) (at x)"
+    by (auto intro!: derivative_eq_intros)
+  have "((\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x)) has_derivative
+      (\<lambda>h. H *v h - 0)) (at x)"
+    by (rule has_derivative_diff[OF dg dq])
+  then show "((\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))
+      has_derivative (\<lambda>h. H *v h)) (at x)" by simp
+qed
+
+theorem visc_supersol_env_local:
+  fixes K :: "(real^'n::finite) set" and w \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assumes sup: "visc_supersol_env k L K \<Omega> w"
+    and x\<Omega>: "x \<in> \<Omega>"
+    and tf: "test_fun_at \<phi> g H x"
+    and wlo: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
+    and phi: "\<And>y. y \<in> K \<Longrightarrow> \<phi> y \<le> B\<phi>"
+    and r0: "0 < r"
+    and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
+  shows "1 \<le> ell_op_usc k L (g x) H"
+proof -
+  have r40: "0 < r ^ 4" using r0 by simp
+  define C where "C = max 0 ((w x - \<phi> x - Bw + B\<phi>) / r ^ 4)"
+  have C0: "0 \<le> C" unfolding C_def by simp
+  have Cbig: "w x - \<phi> x - Bw + B\<phi> \<le> C * r ^ 4"
+  proof -
+    have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 \<le> C" unfolding C_def by simp
+    then have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 * r ^ 4 \<le> C * r ^ 4"
+      by (rule mult_right_mono) (use r40 in linarith)
+    then show ?thesis using r40 by simp
+  qed
+  define \<psi> where "\<psi> = (\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2)"
+  define gg where
+    "gg = (\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))"
+  have tf': "test_fun_at \<psi> gg H x"
+    unfolding \<psi>_def gg_def by (rule test_fun_at_quartic_shift[OF tf])
+  have ggx: "gg x = g x" unfolding gg_def by simp
+  have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
+  have glob: "w x - \<psi> x \<le> w y - \<psi> y" if yK: "y \<in> K" for y
+  proof (cases "y \<in> ball x r")
+    case True
+    have nn: "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_nonneg_nonneg[OF C0]) simp
+    show ?thesis using lm[OF True] nn unfolding \<psi>_def psix[unfolded \<psi>_def] by simp
+  next
+    case False
+    then have dxy: "r \<le> dist x y" by simp
+    have sq: "r\<^sup>2 \<le> (y - x) \<bullet> (y - x)"
+    proof -
+      have "r \<le> norm (y - x)"
+        using dxy by (simp add: dist_norm norm_minus_commute)
+      then have "r\<^sup>2 \<le> (norm (y - x))\<^sup>2"
+        using r0 by (intro power_mono) auto
+      then show ?thesis by (simp add: dot_square_norm)
+    qed
+    have q4: "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
+    proof -
+      have "(r\<^sup>2)\<^sup>2 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
+        using sq by (intro power_mono) auto
+      then show ?thesis by (simp add: power_even_eq)
+    qed
+    have cq: "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_left_mono[OF q4 C0])
+    have lo: "Bw \<le> w y" by (rule wlo[OF yK])
+    have hi: "\<phi> y \<le> B\<phi>" by (rule phi[OF yK])
+    show ?thesis
+      unfolding \<psi>_def using Cbig cq lo hi by simp
+  qed
+  have "1 \<le> ell_op_usc k L (gg x) H"
+    using sup[unfolded visc_supersol_env_def] x\<Omega> tf' glob by blast
+  then show ?thesis unfolding ggx .
+qed
+
 
 corollary ell_op_usc_eq_at_nonzero:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n"
