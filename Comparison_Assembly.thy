@@ -14522,51 +14522,112 @@ text \<open>The paper's Theorem 4.2(b).  \<^bold>\<open>This is the one statemen
     \<open>\<Phi>\<^sup>\<epsilon>(x\<^sup>\<epsilon>,y\<^sup>\<epsilon>) \<le> 0\<close>; since \<open>\<Phi>\<^sup>\<epsilon>(x\<^sup>\<epsilon>,y\<^sup>\<epsilon>) \<ge> \<Phi>\<^sup>\<epsilon>(x,x) = \<kappa> u x - w x\<close> for
     \<open>x \<in> K\<close>, letting \<open>\<kappa> \<uparrow> 1\<close> gives \<open>u \<le> w\<close> on \<open>K\<close>.
 
-  \<^bold>\<open>RESOLUTION of the boundary worry (2026-08-11, Fable).\<close>  The freezing
-  argument recorded in an earlier caveat here was indeed a dead end, but no
-  boundary Crandall--Ishii is needed either.  Two observations dissolve it:
+  \<^bold>\<open>What is settled, and what is not\<close> (2026-08-11, after two passes).
 
-  \<^item> \<^bold>\<open>The gate is ALWAYS open at the doubled maximiser.\<close>  If the conclusion
-    fails, the max \<open>M\<close> of \<open>\<theta> u - w\<close> over \<open>K\<close> is \<open>> 0\<close> (since \<open>w \<ge> 0\<close>, a
-    failure point \<open>x\<close> has \<open>u x > w x \<ge> 0\<close>, and \<open>\<theta>\<close> close to \<open>1\<close> keeps
-    \<open>\<theta> u x - w x > 0\<close>).  At any maximiser \<open>(x\<^sup>h, y\<^sup>h)\<close> of the doubled
-    functional, \<open>\<theta> u x\<^sup>h - w y\<^sup>h - pen \<ge> M > 0\<close> with \<open>w \<ge> 0\<close> and \<open>pen \<ge> 0\<close>
-    forces \<open>u x\<^sup>h > 0\<close>.  So \<open>x\<^sup>h\<close> lies in the gated \<open>\<Omega>\<close> \<^emph>\<open>whether or not it is
-    interior\<close> --- there is no boundary sub-case on the \<open>u\<close>-side at all.  On
-    the \<open>y\<close>-side, \<open>dist(K, \<partial>K') > 0\<close> plus the penalty keeps \<open>y\<^sup>h\<close> interior
-    to \<open>K'\<close> once the penalty coefficient is large (or the supconv radius
-    small); this is the only localisation needed, and it is one-sided.
+  \<^bold>\<open>Settled: the gate is always open at the doubled maximiser.\<close>  Proved below
+  as \<open>doubled_maximiser_gate_open\<close> and \<open>comparison_failure_gives_theta\<close>.  If
+  the conclusion fails at \<open>x\<^sub>0\<close> then \<open>u x\<^sub>0 > w x\<^sub>0 \<ge> 0\<close>, so some \<open>\<theta> < 1\<close> has
+  \<open>\<theta> u x\<^sub>0 - w x\<^sub>0 > 0\<close> and hence \<open>M > 0\<close>; and at ANY maximiser of the doubled
+  functional, \<open>\<theta> u x\<^sup>h - w y\<^sup>h - pen \<ge> M > 0\<close> together with \<open>w \<ge> 0\<close> and
+  \<open>pen \<ge> 0\<close> forces \<open>u x\<^sup>h > 0\<close>.  So \<open>x\<^sup>h\<close> is in Definition 3.1's gated \<open>\<Omega>\<close>
+  \<^emph>\<open>whether or not it is interior\<close>: there is never a case-split on the sign of
+  \<open>u\<close> at the maximiser, and the paper's boundary clause is available there for
+  free.  That removes one worry, and it is the fact any P4 proof will use.
 
-  \<^item> \<^bold>\<open>The repo's own supconv/Jensen route never needed interiority
-    analytically.\<close>  \<open>supconv\<close> is taken over UNIV of the (constant-below-min)
-    extension, Jensen's lemma runs at ANY maximiser of a semiconvex
-    function, and \<open>test_fun_at_quartic_shift\<close> / \<open>quad_bdd_above_on_bounded\<close>
-    build GLOBAL touchings over \<open>K\<close>.  Interiority entered ONLY in the
-    conversion lemmas \<open>visc_subsol_env_imp_visc_subsol\<close> /
-    \<open>visc_supersol_env_imp_jet\<close>, which manufacture a LOCAL touching because
-    the LOCAL definitions demanded one.  Definition 3.1's env form accepts
-    the global touching directly, so the fix is to re-run those conversion
-    proofs with \<open>\<Omega> = interior K \<union> {x \<in> K. 0 < u x}\<close>, dropping the
-    ball-shrinking step, and then mirror \<open>comparison_soft_complete\<close> +
-    \<open>max_principle_boundary_holds\<close> with (i) the boundary-attained max \<open>xb\<close>
-    replaced by the set \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> (on which
-    \<open>\<theta> u - w \<le> 0 < M\<close> gives the gap for free, and which may be EMPTY ---
-    handle that case by noting no localisation is then needed at all), and
-    (ii) the far-from-boundary bookkeeping \<open>farx\<close> applied to \<open>S\<close> instead of
-    \<open>K - interior K\<close>, and \<open>fary\<close> to \<open>\<partial>K'\<close>.
+  \<^bold>\<open>NOT settled: the localisation.\<close>  A previous note here claimed the gate
+  observation makes P4 a mechanical re-run of Theorem 4.2(a), on the grounds
+  that interiority entered only through the env-to-local conversion lemmas.
+  \<^bold>\<open>That is false.\<close>  \<open>comparison_soft_diagonal\<close> assumes \<open>cball p R\<^sub>w \<subseteq> interior K\<close>
+  and \<open>comparison_soft_off_diagonal\<close> the analogous \<open>farx\<close>/\<open>farxp\<close> package: the
+  Jensen/sup-convolution step perturbs the touching point, so it needs a whole
+  BALL inside the region where the viscosity property holds.  A boundary
+  maximiser has no such ball in \<open>K\<close> at all, gate or no gate.  Being in \<open>\<Omega>\<close> and
+  having a neighbourhood in \<open>\<Omega>\<close> are different things, and it is the second
+  that the Crandall--Ishii core consumes.
 
-  In short: P4 = the existing 4.2(a) proof with the localisation target
-  changed from \<open>\<partial>K\<close> to \<open>S\<close> and the conversion lemmas re-proved gate-aware.
-  No new analysis, no new CI.  Estimated 800--1,500 lines, LOW mathematical
-  risk.
+  \<^bold>\<open>And the explicit jets do not substitute for Crandall--Ishii.\<close>  Freezing
+  \<open>y = y\<^sup>h\<close> makes \<open>\<phi>(x) = q(x - y\<^sup>h) + c\<close> a Definition 3.1(a) test function
+  touching \<open>\<theta> u\<close> from above at \<open>x\<^sup>h\<close> globally over \<open>K\<close> (legitimate at a
+  boundary point --- the env form wants exactly this), and freezing \<open>x = x\<^sup>h\<close>
+  makes \<open>\<psi>(y) = -q(x\<^sup>h - y) + c'\<close> touch \<open>w\<close> from below at \<open>y\<^sup>h\<close>.  The gradients
+  agree, at \<open>p = q'(x\<^sup>h - y\<^sup>h)\<close>, but the Hessians are \<open>X = q''(x\<^sup>h - y\<^sup>h)\<close> and
+  \<open>Y = -q''(x\<^sup>h - y\<^sup>h)\<close>.  For convex \<open>q\<close> that gives \<open>Y \<preceq> 0 \<preceq> X\<close>, and since \<open>F\<close>
+  DECREASES in the Hessian the two inequalities \<open>F\<^sub>*(p,X) \<le> 1 \<le> F\<^sup>*(p,Y)\<close> are
+  consistent.  No contradiction.  Supplying \<open>X \<preceq> Y\<close> is precisely what
+  Crandall--Ishii does and what one-variable-at-a-time freezing loses.
+
+  \<^bold>\<open>So the open problem is exactly this\<close>: a Crandall--Ishii step on the \<open>u\<close>-side
+  that works from a touching which is global over \<open>K\<close> and a point that may lie
+  on \<open>\<partial>K\<close>, given that the \<open>w\<close>-side is unproblematic (\<open>K \<subseteq> K'\<degree>\<close> gives \<open>y\<^sup>h\<close> a
+  genuine neighbourhood).  Read \<section>4 of the PDF for how the paper does it ---
+  the automated summary consulted here was too lossy to settle it, and its
+  claim that the boundary case is closed by the value inequality
+  \<open>\<Phi>\<^sup>\<epsilon> \<le> 0\<close> is in direct tension with the gate fact proved below, which says
+  \<open>u(x\<^sup>h) > 0\<close> at every maximiser whenever the conclusion fails.
 
   \<^bold>\<open>P6 note\<close> (the other open item, in \<open>Theorem_1_1\<close>): at a boundary \<open>x\<close> with
-  \<open>v x > 0\<close>, the optimiser \<open>P\<close> from \<open>paper_v_attained\<close> has
-  \<open>essinf(exit) \<ge> v x > 0\<close>, so \<open>P\<close>-a.s. the path stays in \<open>K\<close> up to time
-  \<open>v x\<close>; every use of \<open>x \<in> interior K\<close> in \<open>paper_v_visc_subsol\<close>'s proof is
-  there to keep the small-ball stopping inside the REGION WHERE THE PROCESS
-  LIVES, which the essinf bound supplies directly.  Audit the \<open>xi\<close> uses; none
-  should touch the geometry of \<open>K\<close> beyond that.\<close>
+  \<open>v x > 0\<close>, the optimiser from \<open>paper_v_attained\<close> has \<open>essinf(exit) \<ge> v x > 0\<close>,
+  so a.s. the path stays in \<open>K\<close> up to time \<open>v x\<close>.  The audit to do is whether
+  every use of \<open>x \<in> interior K\<close> in \<open>paper_v_visc_subsol\<close> is only keeping the
+  small-ball stopping inside the region where the process lives --- which the
+  essinf bound supplies --- or whether some step needs a ball inside \<open>K\<close>
+  geometrically, as the comparison chain above does.\<close>
+
+subsection \<open>The gate fact, verified\<close>
+
+lemma comparison_failure_gives_theta:
+  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  assumes w0: "0 \<le> w x0" and fail: "w x0 < u x0"
+  obtains \<theta> where "0 < \<theta>" and "\<theta> < 1" and "0 < \<theta> * u x0 - w x0"
+proof -
+  have ux0: "0 < u x0" using w0 fail by linarith
+  define r where "r = w x0 / u x0"
+  have r0: "0 \<le> r" unfolding r_def using w0 ux0 by simp
+  have r1: "r < 1" unfolding r_def using fail ux0 by (simp add: divide_less_eq)
+  define th where "th = (r + 1) / 2"
+  have t0: "0 < th" unfolding th_def using r0 by simp
+  have t1: "th < 1" unfolding th_def using r1 by simp
+  have "r < th" unfolding th_def using r1 by simp
+  then have "w x0 / u x0 < th" unfolding r_def .
+  then have "w x0 < th * u x0"
+    using ux0 by (simp add: divide_less_eq mult.commute)
+  then have key: "0 < th * u x0 - w x0" by linarith
+  show ?thesis by (rule that[OF t0 t1 key])
+qed
+
+text \<open>The gate of Definition 3.1(a) is open at every maximiser of the doubled
+  functional, boundary or not: no case-split on the sign of \<open>u\<close> is ever
+  needed.  Stated for an arbitrary nonnegative penalty, so it applies to the
+  quartic of the paper and to \<open>soft_pen\<close> alike.\<close>
+
+lemma doubled_maximiser_gate_open:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and xh yh :: "real^'n"
+  assumes t0: "0 < \<theta>"
+    and Mpos: "0 < M"
+    and wy: "0 \<le> w yh"
+    and pen: "0 \<le> pn"
+    and mx: "M \<le> \<theta> * u xh - w yh - pn"
+  shows "0 < u xh"
+proof -
+  have "0 < \<theta> * u xh" using Mpos wy pen mx by linarith
+  then show ?thesis using t0 by (simp add: zero_less_mult_iff)
+qed
+
+corollary doubled_maximiser_in_gate:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+    and xh yh :: "real^'n"
+  assumes t0: "0 < \<theta>" and Mpos: "0 < M"
+    and wy: "0 \<le> w yh" and pen: "0 \<le> pn"
+    and mx: "M \<le> \<theta> * u xh - w yh - pn"
+    and xhK: "xh \<in> K"
+  shows "xh \<in> interior K \<union> {x \<in> K - interior K. 0 < u x}"
+proof -
+  have "0 < u xh"
+    by (rule doubled_maximiser_gate_open
+        [where u = u and w = w and \<theta> = \<theta> and M = M
+           and xh = xh and yh = yh and pn = pn, OF t0 Mpos wy pen mx])
+  then show ?thesis using xhK by (cases "xh \<in> interior K") auto
+qed
 
 theorem comparison_two_domain:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"
