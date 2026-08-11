@@ -13198,8 +13198,11 @@ text \<open>Definition 3.1(b) of the paper touches the LOWER SEMICONTINUOUS
 
 subsection \<open>The lower semicontinuous envelope\<close>
 
-definition lsc_env :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real"
-  where "lsc_env u x = (SUP e \<in> {0<..}. INF y \<in> ball x e. u y)"
+text \<open>\<open>lsc_env\<close> itself now lives in \<open>Envelopes\<close> (the P0 move), together with
+  \<open>usc_env\<close> and the attainment/extension lemmas; what follows are the
+  \<open>paper_v\<close>-facing consequences.  The three general lemmas immediately below
+  duplicate their \<open>Envelopes\<close> twins and are kept only so that the local
+  proofs need no requalification.\<close>
 
 lemma lsc_env_bdd_above:
   fixes u :: "real^'n::finite \<Rightarrow> real"
