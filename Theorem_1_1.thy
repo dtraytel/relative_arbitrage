@@ -416,4 +416,44 @@ proof -
           subu supu subw supw bd x])
 qed
 
+
+section \<open>P7 DRAFT: Theorem 1.1 assembled (UNVERIFIED, holes)\<close>
+
+text \<open>Fable draft.  The FAITHFUL final statement: \<open>paper_v\<close> is a bounded usc
+  Definition-3.1-with-boundary-condition solution, and under \<open>expandable K\<close>
+  it is the unique one.  Holes: (a) P6 --- the boundary subsolution clause
+  for \<open>paper_v\<close> (extend \<open>paper_v_visc_subsol\<close> to boundary points with
+  \<open>v > 0\<close>; audit says interiority entered only through the small-ball
+  stopping, which \<open>essinf \<ge> v(x) > 0\<close> replaces --- else transcribe the
+  paper's \<open>\<section>3.1\<close> boundary paragraph); (b) the supersol gate is vacuous
+  since \<open>paper_v \<ge> 0\<close> (10 lines); (c) plumb \<open>uniqueness_expandable\<close>.\<close>
+
+theorem theorem_1_1_faithful:
+  fixes K :: "(real^'n::finite) set"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 < L"
+    and cK: "compact K" and neK: "K \<noteq> {}"
+    and KB: "K \<subseteq> cball 0 rK" and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+  defines "v \<equiv> (\<lambda>x. enn2real (paper_v k L T K x))"
+  shows "visc_subsol_env k L K
+      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"                \<comment> \<open>P6\<close>
+    and "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
+    and "expandable K \<Longrightarrow>
+      (\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
+        \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c) \<Longrightarrow>
+      (\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B) \<Longrightarrow>
+      visc_subsol_env k L K (interior K \<union> {x \<in> K - interior K. 0 < u x}) u \<Longrightarrow>
+      visc_supersol_env k L K
+        (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u) \<Longrightarrow>
+      x \<in> K \<Longrightarrow> u x = v x"
+  sorry
+
+text \<open>FIXER: split the three clauses into separate theorems before proving.
+  Clause 1 = P6 (Paper_Viscosity is the right home; the machinery is there).
+  Clause 2: \<open>\<Omega>\<close>-enlargement of \<open>paper_v_supersol_lsc_bounded\<close> is vacuous on
+  the gate because \<open>lsc_env v \<ge> 0\<close> (\<open>lsc_env_ge\<close> with \<open>v \<ge> 0\<close>).
+  Clause 3 = \<open>uniqueness_expandable\<close> (Comparison_Assembly) fed with clauses
+  1-2 for \<open>v\<close> (usc: \<open>paper_v_usc_unconditional\<close>, in the sequential form ---
+  convert; bounded: \<open>paper_v_le_ball_bound\<close> + nonnegativity).\<close>
+
 end
