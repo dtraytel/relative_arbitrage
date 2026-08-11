@@ -13352,15 +13352,19 @@ proof -
   then show ?thesis unfolding g_def .
 qed
 
-theorem paper_v_ball_lower:
+theorem paper_v_ball_lower_plus:
   fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
-    and rB T :: real
+    and rB T \<beta> :: real
   assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
     and kn: "k < CARD('n)"
     and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
     and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
+    and b0: "0 \<le> \<beta>"
+    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow>
+      \<beta> \<le> enn2real (paper_v k L T K w)"
   shows "ennreal (min (T / 2)
-      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))))
+      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
+      + min \<beta> (T / 2))
       \<le> paper_v k L T K x"
 proof -
   define \<rho>\<^sub>0 where "\<rho>\<^sub>0 = norm (x - y\<^sub>0)"
@@ -13386,6 +13390,7 @@ proof -
   have df0: "0 < \<delta>f" unfolding \<delta>f_def using sq_lt cn0 by simp
   have cc0: "0 < cc" unfolding cc_def using T0 df0 by simp
   have ccT: "cc < T" unfolding cc_def using T0 by simp
+  have ccT2: "cc \<le> T / 2" unfolding cc_def by simp
   have ccdf: "cc < \<delta>f" unfolding cc_def using df0 by simp
   obtain P where P: "P \<in> paper_pair_class k L T x"
     and AEg: "AE \<omega> in P. \<forall>t.
@@ -13404,7 +13409,7 @@ proof -
   have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
     by (rule paper_pair_class_start[OF P])
   have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
-  have AEfun: "AE \<omega> in P. ennreal cc
+  have AEfun: "AE \<omega> in P. ennreal (cc + min \<beta> (T / 2))
       \<le> ennreal (pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
            then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
@@ -13499,11 +13504,11 @@ proof -
       show ?thesis using before[OF s0] sc unfolding ecc by simp
     qed
     \<comment> \<open>hence in \<open>K\<close> through \<open>cc\<close>, including the endpoint\<close>
-    have inK: "fst (\<omega> s) \<in> K" if s0: "0 \<le> s" and sc: "s \<le> cc" for s
+    have inB: "fst (\<omega> s) \<in> ball y\<^sub>0 rB"
+      if s0: "0 \<le> s" and sc: "s \<le> cc" for s
     proof (cases "s < cc")
       case True
-      have "fst (\<omega> s) \<in> ball y\<^sub>0 rB" using IN[OF s0 True] by blast
-      then show ?thesis using sub ball_subset_cball by blast
+      show ?thesis using IN[OF s0 True] by blast
     next
       case False
       then have seq: "s = cc" using sc by linarith
@@ -13529,8 +13534,10 @@ proof -
             linorder_not_less nless_le)
       then have "fst (\<omega> cc) \<in> ball y\<^sub>0 rB"
         by (simp add: mem_ball dist_norm norm_minus_commute)
-      then show ?thesis using sub ball_subset_cball seq by blast
+      then show ?thesis unfolding seq .
     qed
+    have inK: "fst (\<omega> s) \<in> K" if s0: "0 \<le> s" and sc: "s \<le> cc" for s
+      using inB[OF s0 sc] sub ball_subset_cball by blast
     have pex: "pexit cc K (\<lambda>t. fst (\<omega> t)) = cc"
       by (rule pexit_eq_of_stays[OF cc0']) (use inK in simp)
     have XccK: "fst (\<omega> cc) \<in> K" using inK[of cc] cc0 by simp
@@ -13539,11 +13546,33 @@ proof -
            then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0)
         = cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
       using pex XccK by simp
-    have "cc \<le> cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
-      by simp
+    have XccB: "fst (\<omega> cc) \<in> ball y\<^sub>0 rB"
+      using inB[of cc] cc0 by simp
+    have s1: "0 \<le> T - cc" using ccT by linarith
+    have s2: "T - cc \<le> T" using cc0 by linarith
+    have cap: "enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))
+        = min (enn2real (paper_v k L T K (fst (\<omega> cc)))) (T - cc)"
+      by (rule enn2real_paper_v_horizon_cap[OF s1 s2 L1 Kc])
+    have vge: "min \<beta> (T / 2)
+        \<le> enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+    proof -
+      have b1: "\<beta> \<le> enn2real (paper_v k L T K (fst (\<omega> cc)))"
+        by (rule vlow[OF XccB])
+      have b2: "T / 2 \<le> T - cc" using ccT2 by linarith
+      have c1: "min \<beta> (T / 2) \<le> \<beta>" by (rule min.cobounded1)
+      have c2: "min \<beta> (T / 2) \<le> T / 2" by (rule min.cobounded2)
+      have d1: "min \<beta> (T / 2)
+          \<le> enn2real (paper_v k L T K (fst (\<omega> cc)))"
+        using c1 b1 by linarith
+      have d2: "min \<beta> (T / 2) \<le> T - cc" using c2 b2 by linarith
+      show ?thesis unfolding cap using d1 d2 by simp
+    qed
+    have "cc + min \<beta> (T / 2)
+        \<le> cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+      using vge by linarith
     then show ?case unfolding fn by (intro ennreal_leI) simp
   qed
-  have essge: "ennreal cc \<le> ess_inf_time P
+  have essge: "ennreal (cc + min \<beta> (T / 2)) \<le> ess_inf_time P
       (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
            then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
@@ -13569,7 +13598,7 @@ proof -
       by (rule paper_v_dpp_sup_ge[OF less_imp_le[OF cc0] ccT L1 Kc])
     finally show ?thesis .
   qed
-  have "ennreal cc \<le> paper_v k L T K x"
+  have "ennreal (cc + min \<beta> (T / 2)) \<le> paper_v k L T K x"
     by (rule order_trans[OF essge esle])
   moreover have "cc = min (T / 2)
       ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))"
@@ -13581,6 +13610,31 @@ proof -
     show ?thesis unfolding cc_def e by (rule refl)
   qed
   ultimately show ?thesis by simp
+qed
+
+text \<open>The original ball bound is the case \<open>\<beta> = 0\<close>: the value at the
+  exit point is simply dropped.\<close>
+
+corollary paper_v_ball_lower:
+  fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
+    and rB T :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
+    and kn: "k < CARD('n)"
+    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
+    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
+  shows "ennreal (min (T / 2)
+      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))))
+      \<le> paper_v k L T K x"
+proof -
+  have z: "(0 :: real) \<le> 0" by simp
+  have v0: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow>
+      (0 :: real) \<le> enn2real (paper_v k L T K w)" by simp
+  have "ennreal (min (T / 2)
+      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
+      + min 0 (T / 2))
+      \<le> paper_v k L T K x"
+    by (rule paper_v_ball_lower_plus[OF T0 L1 k1 kn Kc sub xy xin z v0])
+  then show ?thesis using T0 by simp
 qed
 
 section \<open>The paper's supersolution: touching the lower envelope\<close>
