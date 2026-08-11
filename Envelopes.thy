@@ -123,6 +123,43 @@ lemma ell_op_le_ell_op_usc:
   shows "ereal (ell_op k L p M) \<le> ell_op_usc k L p M"
   using ell_op_le_usc[of k L p M] by (simp add: ell_op_pair_def)
 
+text \<open>\<open>F\<^sup>*\<close> is upper semicontinuous by construction, so the inequality
+  \<open>\<ge> 1\<close> passes through limits in \<open>(p, M)\<close>.  Both the Case-2 reduction of
+  \<section>3.2 and the envelope re-basing of the comparison proof use this to
+  move a conclusion obtained at PERTURBED jets back to the jet of
+  interest.\<close>
+
+lemma ell_op_usc_ge_one_limit:
+  fixes ps :: "nat \<Rightarrow> real^'n::finite" and Ms :: "nat \<Rightarrow> real^'n^'n"
+    and p0 :: "real^'n" and M0 :: "real^'n^'n"
+  assumes ge: "\<And>j. 1 \<le> ell_op_usc k L (ps j) (Ms j)"
+    and lim: "(\<lambda>j. (ps j, Ms j)) \<longlonglongrightarrow> (p0, M0)"
+  shows "1 \<le> ell_op_usc k L p0 M0"
+  unfolding ell_op_usc_def
+proof (rule INF_greatest)
+  fix e :: real assume "e \<in> {0<..}"
+  then have e0: "0 < e" by simp
+  have "\<forall>\<^sub>F j in sequentially. dist ((ps j, Ms j)) ((p0, M0)) < e / 2"
+    by (rule tendstoD[OF lim]) (use e0 in simp)
+  then obtain j where j: "dist ((ps j, Ms j)) ((p0, M0)) < e / 2"
+    by (auto simp: eventually_sequentially)
+  have sub: "ball ((ps j, Ms j)) (e / 2) \<subseteq> ball ((p0, M0)) e"
+  proof
+    fix w assume "w \<in> ball ((ps j, Ms j)) (e / 2)"
+    then have "dist ((ps j, Ms j)) w < e / 2" by (simp add: mem_ball)
+    then have "dist ((p0, M0)) w < e"
+      using j dist_triangle[of "(p0, M0)" w "(ps j, Ms j)"]
+      by (simp add: dist_commute)
+    then show "w \<in> ball ((p0, M0)) e" by (simp add: mem_ball)
+  qed
+  have "(1 :: ereal) \<le> ell_op_usc k L (ps j) (Ms j)" by (rule ge)
+  also have "\<dots> \<le> (SUP w \<in> ball ((ps j, Ms j)) (e / 2). ell_op_pair k L w)"
+    unfolding ell_op_usc_def by (rule INF_lower) (use e0 in simp)
+  also have "\<dots> \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)"
+    by (rule SUP_subset_mono[OF sub order_refl])
+  finally show "1 \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)" .
+qed
+
 section \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
 
 text \<open>At \<open>p = 0\<close> the constraint \<open>a p = 0\<close> of Eq. (1.9) is vacuous, so the
@@ -1583,6 +1620,133 @@ text \<open>Definition 3.1 constrains only test functions whose touching is
   far from \<open>x\<close>, which \<^const>\<open>test_fun_at\<close> would tolerate but the paper's
   \<open>C\<^sup>2(\<real>\<^sup>n)\<close> would not.\<close>
 
+text \<open>A test function is minorised near \<open>x\<close> by its two-jet quadratic,
+  once the Hessian is shifted down by any \<open>\<delta> > 0\<close>.  This is what lets a
+  touching by an ARBITRARY test function be replaced by a touching by a
+  genuine quadratic --- which, unlike the original, is bounded on a
+  bounded set.\<close>
+
+lemma test_fun_quadratic_minorates:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n" and x :: "real^'n" and \<delta> :: real
+  assumes tf: "test_fun_at \<phi> g H x" and d0: "0 < \<delta>"
+  obtains r where "0 < r"
+    and "\<And>z. z \<in> ball x r \<Longrightarrow>
+      \<phi> x + g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+proof -
+  have dg: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+    using tf unfolding test_fun_at_def by blast
+  obtain e where e0: "0 < e"
+    and dphi: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    using tf unfolding test_fun_at_def by blast
+  have "\<forall>e>0. \<exists>d>0. \<forall>y. norm (y - x) < d \<longrightarrow>
+      norm (g y - g x - (H *v (y - x))) \<le> e * norm (y - x)"
+    using dg unfolding has_derivative_at_alt by blast
+  moreover have "0 < \<delta> / 2" using d0 by simp
+  ultimately obtain d where dd: "0 < d"
+    and bnd: "\<And>y. norm (y - x) < d \<Longrightarrow>
+        norm (g y - g x - (H *v (y - x))) \<le> (\<delta> / 2) * norm (y - x)"
+    by blast
+  define r where "r = min e d"
+  have r0: "0 < r" using e0 dd by (simp add: r_def)
+  have main: "\<phi> x + g x \<bullet> (z - x)
+      + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+    if z: "z \<in> ball x r" for z
+  proof -
+    define v where "v = z - x"
+    have nv: "norm v < r"
+      using z by (simp add: v_def mem_ball dist_norm norm_minus_commute)
+    define A where "A = g x \<bullet> v"
+    define B where "B = v \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v v)"
+    define f where "f t = (\<phi> x + t * A + t\<^sup>2 * B / 2) - \<phi> (x + t *\<^sub>R v)" for t
+    have f0: "f 0 = 0" by (simp add: f_def)
+    have deriv: "\<exists>y. (f has_field_derivative y) (at t) \<and> y \<le> 0"
+      if t: "0 \<le> t" "t \<le> 1" for t
+    proof -
+      have ntv: "norm (t *\<^sub>R v) \<le> norm v"
+        using t by (simp add: mult_left_le_one_le)
+      have mem: "x + t *\<^sub>R v \<in> ball x e"
+        using ntv nv by (simp add: mem_ball dist_norm r_def)
+      have d1: "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_field_derivative
+          g (x + t *\<^sub>R v) \<bullet> v) (at t)"
+      proof -
+        have i1: "((\<lambda>t :: real. x + t *\<^sub>R v) has_derivative (\<lambda>h. h *\<^sub>R v)) (at t)"
+          by (auto intro!: derivative_eq_intros)
+        have i2: "(\<phi> has_derivative (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> h)) (at (x + t *\<^sub>R v))"
+          by (rule dphi[OF mem])
+        have "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_derivative
+            (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> (h *\<^sub>R v))) (at t)"
+          using diff_chain_at[OF i1 i2] by (simp add: o_def)
+        then show ?thesis
+          by (rule has_derivative_imp_has_field_derivative)
+            (simp add: inner_scaleR_right ac_simps)
+      qed
+      have d2: "((\<lambda>t. \<phi> x + t * A + t\<^sup>2 * B / 2) has_field_derivative
+          A + t * B) (at t)"
+        by (auto intro!: derivative_eq_intros)
+      have df: "(f has_field_derivative
+          ((A + t * B) - g (x + t *\<^sub>R v) \<bullet> v)) (at t)"
+        unfolding f_def by (rule DERIV_diff[OF d2 d1])
+      have expand: "(A + t * B) - g (x + t *\<^sub>R v) \<bullet> v
+          = - ((g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v)
+            - t * (\<delta> * (v \<bullet> v))"
+      proof -
+        have m1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
+          by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
+              matrix_vector_mul_lid)
+        have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
+          by (simp add: matrix_vector_mult_scaleR)
+        show ?thesis
+          unfolding A_def B_def m1 m2
+          by (simp add: inner_diff_left inner_add_right inner_scaleR_left
+              inner_scaleR_right inner_commute algebra_simps)
+      qed
+      have small: "- ((g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v)
+          \<le> (\<delta> / 2) * (t * norm v) * norm v"
+      proof -
+        have "norm (t *\<^sub>R v) < d"
+          using ntv nv by (simp add: r_def)
+        moreover have "(x + t *\<^sub>R v) - x = t *\<^sub>R v" by simp
+        ultimately have nb: "norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))
+            \<le> (\<delta> / 2) * norm (t *\<^sub>R v)"
+          using bnd[of "x + t *\<^sub>R v"] by simp
+        have "- ((g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v)
+            = (- (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))) \<bullet> v"
+          by (metis inner_minus_left)
+        also have "\<dots> \<le> norm (- (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))))
+            * norm v"
+          by (rule norm_cauchy_schwarz)
+        also have "\<dots> = norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))
+            * norm v"
+          by (metis norm_minus_cancel)
+        also have "\<dots> \<le> ((\<delta> / 2) * norm (t *\<^sub>R v)) * norm v"
+          by (rule mult_right_mono[OF nb norm_ge_zero])
+        also have "\<dots> = (\<delta> / 2) * (t * norm v) * norm v"
+          using t by (simp add: abs_of_nonneg)
+        finally show ?thesis .
+      qed
+      have vv: "v \<bullet> v = norm v * norm v"
+        by (simp add: dot_square_norm power2_eq_square)
+      have "(A + t * B) - g (x + t *\<^sub>R v) \<bullet> v
+          \<le> (\<delta> / 2) * (t * norm v) * norm v - t * (\<delta> * (norm v * norm v))"
+        unfolding expand vv by (rule diff_right_mono[OF small])
+      also have "\<dots> = - (\<delta> / 2) * t * (norm v * norm v)"
+        by (simp add: field_simps)
+      also have "\<dots> \<le> 0"
+        using d0 t by (simp add: mult_nonneg_nonneg)
+      finally show ?thesis using df by blast
+    qed
+    have "f 1 \<le> f 0"
+      by (rule DERIV_nonpos_imp_nonincreasing[of 0 1 f])
+        (use deriv in auto)
+    then have "\<phi> x + 1 * A + 1\<^sup>2 * B / 2 \<le> \<phi> (x + 1 *\<^sub>R v)"
+      using f0 by (simp add: f_def)
+    then show ?thesis by (simp add: v_def A_def B_def)
+  qed
+  show ?thesis by (rule that[OF r0 main])
+qed
+
 lemma inner_scaleR_diff_eq:
   fixes q v h :: "real^'n::finite" and c :: real
   shows "q \<bullet> h - c * (v \<bullet> h) = (q - c *\<^sub>R v) \<bullet> h"
@@ -1592,6 +1756,64 @@ lemma quartic_coeff_assoc:
   fixes c u w :: real
   shows "c * (2 * u * (2 * w)) = 4 * c * u * w"
   by (simp add: field_simps)
+
+text \<open>Shifting a symmetric matrix by a multiple of the identity keeps it
+  symmetric.\<close>
+
+lemma transpose_shift_add:
+  fixes A :: "real^'n::finite^'n"
+  assumes s: "transpose A = A"
+  shows "transpose (A + \<delta> *\<^sub>R mat 1) = A + \<delta> *\<^sub>R mat 1"
+proof -
+  have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j = (A + \<delta> *\<^sub>R mat 1) $ i $ j"
+    for i j
+  proof -
+    have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j
+        = A $ j $ i + \<delta> * (if j = i then 1 else 0)"
+      by (simp add: transpose_def mat_def)
+    also have "A $ j $ i = transpose A $ i $ j"
+      by (simp add: transpose_def)
+    also have "transpose A $ i $ j = A $ i $ j"
+      using s by simp
+    finally show ?thesis
+      by (simp add: mat_def)
+  qed
+  then show ?thesis
+    by (simp add: vec_eq_iff)
+qed
+
+lemma transpose_shift_diff:
+  fixes A :: "real^'n::finite^'n"
+  assumes s: "transpose A = A"
+  shows "transpose (A - \<delta> *\<^sub>R mat 1) = A - \<delta> *\<^sub>R mat 1"
+proof -
+  have "A - \<delta> *\<^sub>R mat 1 = A + (- \<delta>) *\<^sub>R mat 1"
+    by simp
+  then show ?thesis
+    using transpose_shift_add[OF s, of "- \<delta>"] by simp
+qed
+
+lemma test_fun_at_add_const:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and c :: real
+  assumes tf: "test_fun_at \<phi> g H x"
+  shows "test_fun_at (\<lambda>z. c + \<phi> z) g H x"
+  unfolding test_fun_at_def
+proof (intro conjI)
+  show "transpose H = H" using tf unfolding test_fun_at_def by blast
+next
+  obtain e where e0: "0 < e"
+    and d: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    using tf unfolding test_fun_at_def by blast
+  have "((\<lambda>z. c + \<phi> z) has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    if y: "y \<in> ball x e" for y
+    using d[OF y] by (auto intro!: derivative_eq_intros)
+  then show "\<exists>e>0. \<forall>y \<in> ball x e.
+      ((\<lambda>z. c + \<phi> z) has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    using e0 by blast
+next
+  show "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+    using tf unfolding test_fun_at_def by blast
+qed
 
 lemma test_fun_at_quartic_shift:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"

@@ -124,11 +124,9 @@ definition supersol_jet ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
   where
   "supersol_jet k L \<Omega> w \<longleftrightarrow>
-     (\<forall>yh\<in>\<Omega>. \<forall>p M. transpose M = M \<longrightarrow>
-        (\<exists>e>0. \<forall>z \<in> ball yh e.
-           w yh - (p \<bullet> (yh - yh) + ((yh - yh) \<bullet> (M *v (yh - yh)))/2)
-             \<le> w z - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2))
-        \<longrightarrow> 1 \<le> ell_op_usc k L p M)"
+     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
+        (\<exists>e>0. \<forall>y \<in> ball x e. w x - \<phi> x \<le> w y - \<phi> y) \<longrightarrow>
+        1 \<le> ell_op_usc k L (g x) H)"
 
 theorem visc_supersol_env_imp_jet:
   fixes K :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real"
@@ -138,40 +136,81 @@ theorem visc_supersol_env_imp_jet:
   shows "supersol_jet k L \<Omega> w"
   unfolding supersol_jet_def
 proof (intro ballI allI impI)
-  fix yh :: "real^'n" and p :: "real^'n" and M :: "real^'n^'n"
-  assume yh: "yh \<in> \<Omega>" and sym: "transpose M = M"
-    and minloc: "\<exists>e>0. \<forall>z \<in> ball yh e.
-      w yh - (p \<bullet> (yh - yh) + ((yh - yh) \<bullet> (M *v (yh - yh)))/2)
-        \<le> w z - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2)"
-  define \<phi> where
-    "\<phi> = (\<lambda>z. p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2)"
-  define gg where "gg = (\<lambda>z. p + M *v (z - yh))"
-  have tf: "test_fun_at \<phi> gg M yh"
-    unfolding \<phi>_def gg_def by (rule jet_test_fun_at[OF sym])
-  have gyh: "gg yh = p" unfolding gg_def by simp
-  obtain B where B: "\<And>z. z \<in> K \<Longrightarrow> \<phi> z \<le> B"
-  proof (rule quad_bdd_above_on_bounded[OF Kb,
-          where p = p and yh = yh and M = M])
-    fix BB :: real
-    assume "\<And>z. z \<in> K \<Longrightarrow>
-      p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2 \<le> BB"
-    then have "\<And>z. z \<in> K \<Longrightarrow> \<phi> z \<le> BB" unfolding \<phi>_def by simp
-    then show thesis by (rule that)
-  qed
-  obtain r where r0: "0 < r"
-    and lm: "\<And>z. z \<in> ball yh r \<Longrightarrow> w yh - \<phi> yh \<le> w z - \<phi> z"
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. w x - \<phi> x \<le> w y - \<phi> y"
+  have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
+  obtain e0 where e00: "0 < e0"
+    and lme: "\<And>y. y \<in> ball x e0 \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
+    using lm by blast
+  have step: "1 \<le> ell_op_usc k L (g x) (H - \<delta> *\<^sub>R mat 1)"
+    if d: "0 < \<delta>" for \<delta>
   proof -
-    obtain e where e0: "0 < e" and ee: "\<forall>z \<in> ball yh e.
-        w yh - (p \<bullet> (yh - yh) + ((yh - yh) \<bullet> (M *v (yh - yh)))/2)
-          \<le> w z - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh)))/2)"
-      using minloc by blast
-    have "w yh - \<phi> yh \<le> w z - \<phi> z" if "z \<in> ball yh e" for z
-      using ee that unfolding \<phi>_def by simp
-    then show thesis using e0 by (rule that[rotated])
+    have symM: "transpose (H - \<delta> *\<^sub>R mat 1) = H - \<delta> *\<^sub>R mat 1"
+      by (rule transpose_shift_diff[OF symH])
+    obtain r where r0: "0 < r"
+      and mino: "\<And>z. z \<in> ball x r \<Longrightarrow>
+        \<phi> x + g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+    proof (rule test_fun_quadratic_minorates[OF tf d])
+      fix rr :: real
+      assume a1: "0 < rr" and a2: "\<And>z. z \<in> ball x rr \<Longrightarrow>
+        \<phi> x + g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+      show thesis by (rule that[OF a1 a2])
+    qed
+    define \<psi> where "\<psi> = (\<lambda>z. \<phi> x + (g x \<bullet> (z - x)
+      + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2))"
+    define gg where "gg = (\<lambda>z. g x + (H - \<delta> *\<^sub>R mat 1) *v (z - x))"
+    have tfp: "test_fun_at \<psi> gg (H - \<delta> *\<^sub>R mat 1) x"
+      unfolding \<psi>_def gg_def
+      by (rule test_fun_at_add_const[OF jet_test_fun_at[OF symM]])
+    have ggx: "gg x = g x" unfolding gg_def by simp
+    have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
+    obtain B where B: "\<And>z. z \<in> K \<Longrightarrow>
+      g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> B"
+    proof (rule quad_bdd_above_on_bounded[OF Kb,
+            where p = "g x" and yh = x and M = "H - \<delta> *\<^sub>R mat 1"])
+      fix BB :: real
+      assume "\<And>z. z \<in> K \<Longrightarrow>
+        g x \<bullet> (z - x)
+          + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> BB"
+      then show thesis by (rule that)
+    qed
+    have Bp: "\<And>z. z \<in> K \<Longrightarrow> \<psi> z \<le> \<phi> x + B"
+      unfolding \<psi>_def using B by simp
+    have r0': "0 < min r e0" using r0 e00 by simp
+    have lm': "w x - \<psi> x \<le> w y - \<psi> y" if y: "y \<in> ball x (min r e0)" for y
+    proof -
+      have y1: "y \<in> ball x r" using y by simp
+      have y2: "y \<in> ball x e0" using y by simp
+      have "\<psi> y \<le> \<phi> y" unfolding \<psi>_def using mino[OF y1] by simp
+      then show ?thesis using lme[OF y2] unfolding psix by simp
+    qed
+    have "1 \<le> ell_op_usc k L (gg x) (H - \<delta> *\<^sub>R mat 1)"
+      by (rule visc_supersol_env_local[OF sup x tfp wlo Bp r0' lm'])
+    then show ?thesis unfolding ggx .
   qed
-  have "1 \<le> ell_op_usc k L (gg yh) M"
-    by (rule visc_supersol_env_local[OF sup yh tf wlo B r0 lm])
-  then show "1 \<le> ell_op_usc k L p M" unfolding gyh .
+  define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
+  have es0: "0 < es j" for j unfolding es_def by simp
+  have ge: "1 \<le> ell_op_usc k L (g x) (H - es j *\<^sub>R mat 1)" for j
+    by (rule step[OF es0])
+  have lim: "(\<lambda>j. (g x, H - es j *\<^sub>R mat 1)) \<longlonglongrightarrow> (g x, H)"
+  proof -
+    have "es \<longlonglongrightarrow> 0" unfolding es_def
+      using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
+    then have "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0 *\<^sub>R mat 1"
+      by (rule tendsto_scaleR[OF _ tendsto_const])
+    then have z: "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0" by simp
+    have "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H - 0"
+      by (rule tendsto_diff[OF tendsto_const z])
+    then have m: "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H" by simp
+    show ?thesis by (rule tendsto_Pair[OF tendsto_const m])
+  qed
+  show "1 \<le> ell_op_usc k L (g x) H"
+    by (rule ell_op_usc_ge_one_limit[OF ge lim])
 qed
 
 
@@ -2411,39 +2450,6 @@ qed
 text \<open>Symmetry of the corrected matrices, which the jet test function needs.
   \<open>transpose_mat\<close> is a simp rule and transposition is additive entrywise, so
   both directions of the correction preserve symmetry.\<close>
-
-lemma transpose_shift_add:
-  fixes A :: "real^'n::finite^'n"
-  assumes s: "transpose A = A"
-  shows "transpose (A + \<delta> *\<^sub>R mat 1) = A + \<delta> *\<^sub>R mat 1"
-proof -
-  have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j = (A + \<delta> *\<^sub>R mat 1) $ i $ j"
-    for i j
-  proof -
-    have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j
-        = A $ j $ i + \<delta> * (if j = i then 1 else 0)"
-      by (simp add: transpose_def mat_def)
-    also have "A $ j $ i = transpose A $ i $ j"
-      by (simp add: transpose_def)
-    also have "transpose A $ i $ j = A $ i $ j"
-      using s by simp
-    finally show ?thesis
-      by (simp add: mat_def)
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
-
-lemma transpose_shift_diff:
-  fixes A :: "real^'n::finite^'n"
-  assumes s: "transpose A = A"
-  shows "transpose (A - \<delta> *\<^sub>R mat 1) = A - \<delta> *\<^sub>R mat 1"
-proof -
-  have "A - \<delta> *\<^sub>R mat 1 = A + (- \<delta>) *\<^sub>R mat 1"
-    by simp
-  then show ?thesis
-    using transpose_shift_add[OF s, of "- \<delta>"] by simp
-qed
 
 text \<open>And the two producers.  From an Alexandrov jet of \<open>\<theta> u\<close> at \<open>x\<hat>\<close> with data
   \<open>(p, X)\<close> one gets, for EVERY \<open>\<delta> > 0\<close>, the uniform bound \<open>F(p, X + \<delta> I) \<le> \<theta>\<close>;
