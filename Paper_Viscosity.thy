@@ -15226,6 +15226,129 @@ proof -
 qed
 
 
+subsection \<open>Case 2, second horn: quadratic pinching forces local constancy\<close>
+
+text \<open>The other horn of Case 2's dichotomy is that the tilted gradient
+  vanishes at every tilted minimiser.  Because the test function is
+  EXACTLY quadratic, a vanishing gradient makes the first-order terms of
+  the minimality inequality cancel identically, leaving the purely
+  quadratic bound
+
+    \<open>W w - W y \<ge> \<onehalf>(w - y)\<^sup>T M (w - y) \<ge> -C\<bar>w - y\<bar>\<^sup>2\<close>
+
+  for every \<open>w\<close> near \<open>y\<close>.  If that holds for every \<open>y\<close> in a ball ---
+  which it does, once the tilted minimisers sweep out a neighbourhood ---
+  then the bound is available in BOTH directions between any two points
+  of the ball, and a function whose increments are \<open>O(\<bar>\<Delta>\<bar>\<^sup>2)\<close> along
+  every segment is constant: subdividing a segment into \<open>n\<close> pieces costs
+  \<open>n \<cdot> C(\<bar>\<Delta>\<bar>/n)\<^sup>2 = C\<bar>\<Delta>\<bar>\<^sup>2/n\<close>, which vanishes.
+
+  Both statements below are pure real analysis; neither mentions the
+  value function or the operator.\<close>
+
+lemma pinch_segment_bound:
+  fixes W :: "real^'n::finite \<Rightarrow> real" and a b :: "real^'n"
+    and S :: "(real^'n) set"
+  assumes C0: "0 \<le> C" and n0: "0 < n"
+    and pin: "\<And>u w. u \<in> S \<Longrightarrow> w \<in> S \<Longrightarrow>
+      W u - C * (dist u w * dist u w) \<le> W w"
+    and seg: "\<And>i. i \<le> n \<Longrightarrow> a + (real i / real n) *\<^sub>R (b - a) \<in> S"
+  shows "W a - W b \<le> C * (dist a b * dist a b) / real n"
+proof -
+  define p where "p = (\<lambda>i :: nat. a + (real i / real n) *\<^sub>R (b - a))"
+  define d where "d = dist a b / real n"
+  have rn0: "(0 :: real) < real n" using n0 by simp
+  have p0: "p 0 = a" unfolding p_def by simp
+  have pn: "p n = b" unfolding p_def using rn0 by simp
+  have pd: "dist (p i) (p (Suc i)) = d" for i
+  proof -
+    have c1: "p i - p (Suc i)
+        = (real i / real n - real (Suc i) / real n) *\<^sub>R (b - a)"
+      unfolding p_def by (simp add: scaleR_left_diff_distrib)
+    have c2: "real i / real n - real (Suc i) / real n = - (1 / real n)"
+      using rn0 by (simp add: field_simps)
+    have "dist (p i) (p (Suc i)) = norm ((- (1 / real n)) *\<^sub>R (b - a))"
+      unfolding dist_norm c1 c2 by (rule refl)
+    also have "\<dots> = (1 / real n) * norm (b - a)"
+      using rn0 by simp
+    finally show ?thesis
+      unfolding d_def by (simp add: dist_norm norm_minus_commute)
+  qed
+  have d0: "0 \<le> d" unfolding d_def using rn0 by simp
+  have step: "W a - W (p j) \<le> real j * (C * (d * d))" if "j \<le> n" for j
+    using that
+  proof (induction j)
+    case 0
+    show ?case unfolding p0 by simp
+  next
+    case (Suc j)
+    have jn: "j \<le> n" using Suc.prems by simp
+    have ih: "W a - W (p j) \<le> real j * (C * (d * d))" by (rule Suc.IH[OF jn])
+    have "W (p j) - C * (dist (p j) (p (Suc j)) * dist (p j) (p (Suc j)))
+        \<le> W (p (Suc j))"
+      unfolding p_def by (rule pin[OF seg[OF jn] seg[OF Suc.prems]])
+    then have "W (p j) - W (p (Suc j)) \<le> C * (d * d)"
+      unfolding pd by simp
+    then show ?case using ih by (simp add: field_simps)
+  qed
+  have "W a - W b \<le> real n * (C * (d * d))"
+    using step[OF order_refl] unfolding pn .
+  also have "real n * (C * (d * d)) = C * (dist a b * dist a b) / real n"
+    unfolding d_def using rn0 by (simp add: field_simps)
+  finally show ?thesis .
+qed
+
+lemma pinch_implies_constant:
+  fixes W :: "real^'n::finite \<Rightarrow> real" and x y :: "real^'n"
+  assumes r0: "0 < r" and C0: "0 \<le> C"
+    and pin: "\<And>u w. u \<in> ball x r \<Longrightarrow> w \<in> ball x r \<Longrightarrow>
+      W u - C * (dist u w * dist u w) \<le> W w"
+    and yb: "y \<in> ball x r"
+  shows "W y = W x"
+proof -
+  have xb: "x \<in> ball x r" using r0 by simp
+  have segb: "a + (real i / real n) *\<^sub>R (b - a) \<in> ball x r"
+    if ab: "a \<in> ball x r" and bb: "b \<in> ball x r" and inn: "i \<le> n" and n0: "0 < n"
+    for a b :: "real^'n" and i n :: nat
+  proof -
+    define t where "t = real i / real n"
+    have t0: "0 \<le> t" unfolding t_def by simp
+    have t1: "t \<le> 1" unfolding t_def using inn n0 by simp
+    have conv: "a + t *\<^sub>R (b - a) = (1 - t) *\<^sub>R a + t *\<^sub>R b"
+      by (simp add: algebra_simps scaleR_left_diff_distrib
+          scaleR_right_diff_distrib)
+    have "(1 - t) *\<^sub>R a + t *\<^sub>R b \<in> ball x r"
+      by (rule convexD[OF convex_ball ab bb]) (use t0 t1 in auto)
+    then show ?thesis unfolding t_def conv[unfolded t_def] .
+  qed
+  have half: "W u - W w \<le> C * (dist u w * dist u w) / real n"
+    if ub: "u \<in> ball x r" and wb: "w \<in> ball x r" and n0: "0 < n"
+    for u w :: "real^'n" and n :: nat
+  proof (rule pinch_segment_bound[OF C0 n0 pin])
+    fix i assume "i \<le> n"
+    then show "u + (real i / real n) *\<^sub>R (w - u) \<in> ball x r"
+      by (rule segb[OF ub wb _ n0])
+  qed
+  have zero: "W u \<le> W w"
+    if ub: "u \<in> ball x r" and wb: "w \<in> ball x r" for u w :: "real^'n"
+  proof (rule ccontr)
+    assume "\<not> W u \<le> W w"
+    then have pos: "0 < W u - W w" by simp
+    obtain n :: nat where nn: "C * (dist u w * dist u w) / (W u - W w) < real n"
+      using reals_Archimedean2 by blast
+    have nneg: "0 \<le> C * (dist u w * dist u w) / (W u - W w)"
+      using C0 pos by (simp add: zero_le_mult_iff)
+    have n0: "0 < n" using nn nneg by simp
+    have h1: "W u - W w \<le> C * (dist u w * dist u w) / real n"
+      by (rule half[OF ub wb n0])
+    have h2: "C * (dist u w * dist u w) / real n < W u - W w"
+      using nn pos n0 by (simp add: pos_divide_less_eq field_simps)
+    show False using h1 h2 by linarith
+  qed
+  show ?thesis using zero[OF yb xb] zero[OF xb yb] by linarith
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
