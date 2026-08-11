@@ -13827,7 +13827,9 @@ lemma touching_grad_lt_horizon_gen:
     and H :: "real^'n^'n" and W :: "real^'n \<Rightarrow> real"
   assumes xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
-    and tmin: "\<And>y. y \<in> K \<Longrightarrow> W x - \<phi> x \<le> W y - \<phi> y"
+    and rho0: "0 < \<rho>"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
+      W x - \<phi> x \<le> W y - \<phi> y"
     and bnd: "\<And>y. y \<in> K \<Longrightarrow> W y \<le> T"
     and gx0: "g x \<noteq> 0"
   shows "W x < T"
@@ -13866,10 +13868,11 @@ proof -
   define ng where "ng = norm (g x) + 1"
   have ng0: "0 < ng" unfolding ng_def
     using norm_ge_zero[of "g x"] by linarith
-  define s where "s = min (min d (e / ng)) (eK / ng) / 2"
+  define s where
+    "s = min (min d (e / ng)) (min (eK / ng) (\<rho> / ng)) / 2"
   have s0: "0 < s"
-    unfolding s_def using d0 e0 eK0 ng0 by simp
-  have sd: "s < d" unfolding s_def using d0 e0 eK0 ng0 by auto
+    unfolding s_def using d0 e0 eK0 ng0 rho0 by simp
+  have sd: "s < d" unfolding s_def using d0 e0 eK0 ng0 rho0 by auto
   have se: "s * ng < e"
   proof -
     have "s \<le> (e / ng) / 2" unfolding s_def by simp
@@ -13882,11 +13885,17 @@ proof -
     then have "s * ng \<le> eK / 2" using ng0 by (simp add: field_simps)
     then show ?thesis using eK0 by linarith
   qed
-  have sg_lt: "s * norm (g x) < min e eK"
+  have sR: "s * ng < \<rho>"
+  proof -
+    have "s \<le> (\<rho> / ng) / 2" unfolding s_def by simp
+    then have "s * ng \<le> \<rho> / 2" using ng0 by (simp add: field_simps)
+    then show ?thesis using rho0 by linarith
+  qed
+  have sg_lt: "s * norm (g x) < min e (min eK \<rho>)"
   proof -
     have "s * norm (g x) \<le> s * ng"
       unfolding ng_def using s0 by (intro mult_left_mono) auto
-    then show ?thesis using se sK by simp
+    then show ?thesis using se sK sR by simp
   qed
   define z where "z = x + s *\<^sub>R g x"
   have dz: "dist x z = s * norm (g x)"
@@ -13896,13 +13905,14 @@ proof -
     have "z \<in> ball x eK" using dz sg_lt by (simp add: mem_ball)
     then show ?thesis using eKK by blast
   qed
+  have zR: "dist x z < \<rho>" using dz sg_lt by simp
   have hgt: "\<phi> x < \<phi> z"
   proof -
     have "0 < (h s - h 0) / s" using hpos[of s] s0 sd by simp
     then have "0 < h s - h 0" using s0 by (simp add: zero_less_divide_iff)
     then show ?thesis unfolding h_def z_def by simp
   qed
-  have "W x \<le> W z - (\<phi> z - \<phi> x)" using tmin[OF zK] by simp
+  have "W x \<le> W z - (\<phi> z - \<phi> x)" using tmin[OF zK zR] by simp
   also have "\<dots> < W z" using hgt by simp
   also have "\<dots> \<le> T" by (rule bnd[OF zK])
   finally show ?thesis .
@@ -13916,7 +13926,8 @@ theorem paper_v_supersol_contradiction_case1_lsc:
     and kn: "k < CARD('n)" and Kc: "closed K"
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
-    and tmin: "\<And>y. y \<in> K \<Longrightarrow>
+    and rho0: "0 < \<rho>"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
       lsc_env (\<lambda>z. enn2real (paper_v k L T K z)) x - \<phi> x
         \<le> lsc_env (\<lambda>z. enn2real (paper_v k L T K z)) y - \<phi> y"
     and gx0: "g x \<noteq> 0"
@@ -13941,10 +13952,11 @@ proof -
     unfolding vs_def by (rule lsc_env_le_self[OF tv0])
   have vs_ge: "\<And>z. 0 \<le> vs z"
     unfolding vs_def by (rule lsc_env_ge[OF tv0])
-  have tminv: "\<And>y. y \<in> K \<Longrightarrow> vs x - \<phi> x \<le> vs y - \<phi> y"
+  have tminv: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
+      vs x - \<phi> x \<le> vs y - \<phi> y"
     unfolding vs_def tv_def by (rule tmin)
   have vxT: "vs x < T"
-  proof (rule touching_grad_lt_horizon_gen[OF xi tf tminv _ gx0])
+  proof (rule touching_grad_lt_horizon_gen[OF xi tf rho0 tminv _ gx0])
     fix y :: "real^'n" assume "y \<in> K"
     show "vs y \<le> T" using vs_le[of y] tvT[of y] by linarith
   qed
@@ -14047,12 +14059,14 @@ proof -
       have z2: "f2 0 = 0" unfolding f2_def by simp
       have z3: "f3 0 = 0" unfolding f3_def by simp
       have m20: "0 < m / 2" using m0 by simp
-      have rmx0: "0 < min (rphi / 2) (eK / 2)" using rphi0 eK0 by simp
-      obtain rr where rr0: "0 < rr" and rrx: "rr \<le> min (rphi / 2) (eK / 2)"
+      have rmx0: "0 < min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
+        using rphi0 eK0 rho0 by simp
+      obtain rr where rr0: "0 < rr"
+        and rrx: "rr \<le> min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
         and s1: "f1 rr \<le> m / 2" and s2: "f2 rr \<le> m / 2" and s3: "f3 rr \<le> \<eta>"
         by (rule small_radius_exists[OF c1 c2 c3 z1 z2 z3 m20 m20 e0 rmx0])
-      have rr_phi: "rr < rphi" and rr_K: "rr < eK"
-        using rrx rphi0 eK0 by auto
+      have rr_phi: "rr < rphi" and rr_K: "rr < eK" and rr_rho: "rr < \<rho>"
+        using rrx rphi0 eK0 rho0 by auto
       have cb_phi: "cball x rr \<subseteq> ball x rphi"
         using rr_phi by (auto simp: mem_cball mem_ball)
       have cb_K: "cball x rr \<subseteq> K"
@@ -14322,11 +14336,17 @@ proof -
         have Xcb: "fst (\<omega> (\<theta> \<omega>)) \<in> cball x rr"
           using stays[of "\<theta> \<omega>"] th0 thtau by simp
         have Xphi: "fst (\<omega> (\<theta> \<omega>)) \<in> ball x rphi" using Xcb cb_phi by blast
+        have XinR: "dist x (fst (\<omega> (\<theta> \<omega>))) < \<rho>"
+        proof -
+          have "dist x (fst (\<omega> (\<theta> \<omega>))) \<le> rr"
+            using Xcb by (simp add: mem_cball dist_commute)
+          then show ?thesis using rr_rho by linarith
+        qed
         have touch: "vs x + (\<phi> (fst (\<omega> (\<theta> \<omega>))) - \<phi> x)
             \<le> tv (fst (\<omega> (\<theta> \<omega>)))"
         proof -
           have "vs x + (\<phi> (fst (\<omega> (\<theta> \<omega>))) - \<phi> x) \<le> vs (fst (\<omega> (\<theta> \<omega>)))"
-            using tminv[OF XinK] by linarith
+            using tminv[OF XinK XinR] by linarith
           then show ?thesis using vs_le[of "fst (\<omega> (\<theta> \<omega>))"] by linarith
         qed
         have minor: "\<phi> x + g x \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
