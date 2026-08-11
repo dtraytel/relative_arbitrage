@@ -14570,6 +14570,139 @@ proof -
   qed
 qed
 
+subsection \<open>The envelope is lower semicontinuous, and attains its infimum\<close>
+
+text \<open>Case 2 tilts the test function and reads off a MINIMISER of
+  \<open>v\<^sub>* - \<psi>\<close> over a small closed ball.  The minimiser exists because the
+  lower envelope is lower semicontinuous --- which is the point of the
+  envelope --- and an lsc function attains its infimum on a nonempty
+  compact set.  Neither fact is in the library for this setting, so both
+  are proved here.
+
+  Lower semicontinuity is immediate from the definition: if
+  \<open>c < lsc_env u z\<close> then some ball around \<open>z\<close> already has \<open>u > c\<close> on it,
+  and every point of the half-sized ball inherits that ball's infimum as
+  a lower bound for its own envelope.\<close>
+
+lemma lsc_env_lower:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y" and lt: "c < lsc_env u z"
+  obtains e where "0 < e"
+    and "\<forall>y. dist z y < e \<longrightarrow> c < lsc_env u y"
+proof -
+  have ne: "(\<lambda>e. INF y \<in> ball z e. u y) ` {0<..} \<noteq> {}" by auto
+  have "c < Sup ((\<lambda>e. INF y \<in> ball z e. u y) ` {0<..})"
+    using lt unfolding lsc_env_def .
+  then obtain w where wmem: "w \<in> (\<lambda>e. INF y \<in> ball z e. u y) ` {0<..}"
+    and wc: "c < w"
+    using less_cSup_iff[OF ne lsc_env_bdd_above[OF B]] by blast
+  from wmem obtain e where e0: "0 < e"
+    and we: "w = (INF y \<in> ball z e. u y)" by auto
+  have key: "c < lsc_env u y" if dzy: "dist z y < e / 2" for y
+  proof -
+    have sub: "ball y (e / 2) \<subseteq> ball z e"
+    proof
+      fix q assume "q \<in> ball y (e / 2)"
+      then have "dist y q < e / 2" by (simp add: mem_ball)
+      then have "dist z q < e"
+        using dzy dist_triangle[of z q y] by (simp add: dist_commute)
+      then show "q \<in> ball z e" by (simp add: mem_ball)
+    qed
+    have bdd: "bdd_below (u ` ball z e)"
+      by (rule bdd_belowI[of _ B]) (use B in auto)
+    have "(INF y \<in> ball z e. u y) \<le> (INF q \<in> ball y (e / 2). u q)"
+    proof (rule cInf_greatest)
+      show "u ` ball y (e / 2) \<noteq> {}" using e0 by auto
+    next
+      fix t assume "t \<in> u ` ball y (e / 2)"
+      then obtain q where q: "q \<in> ball y (e / 2)" and tq: "t = u q" by auto
+      have "q \<in> ball z e" using sub q by blast
+      then have "u q \<in> u ` ball z e" by blast
+      then show "(INF y \<in> ball z e. u y) \<le> t"
+        unfolding tq by (rule cInf_lower[OF _ bdd])
+    qed
+    also have "(INF q \<in> ball y (e / 2). u q) \<le> lsc_env u y"
+      unfolding lsc_env_def
+      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use e0 in auto)
+    finally show ?thesis using wc unfolding we by linarith
+  qed
+  show ?thesis by (rule that[of "e / 2"]) (use e0 key in auto)+
+qed
+
+lemma lsc_env_attains_inf:
+  fixes u :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
+  assumes B: "\<And>y. B \<le> u y" and cS: "compact S" and neS: "S \<noteq> {}"
+  obtains z where "z \<in> S"
+    and "\<And>y. y \<in> S \<Longrightarrow> lsc_env u z \<le> lsc_env u y"
+proof -
+  define m where "m = (INF y \<in> S. lsc_env u y)"
+  have bdd: "bdd_below (lsc_env u ` S)"
+    by (rule bdd_belowI[of _ B]) (use lsc_env_ge[OF B] in auto)
+  have neI: "lsc_env u ` S \<noteq> {}" using neS by auto
+  have mlow: "\<And>y. y \<in> S \<Longrightarrow> m \<le> lsc_env u y"
+    unfolding m_def by (rule cInf_lower[OF _ bdd]) auto
+  have pick: "\<exists>zz \<in> S. lsc_env u zz < m + 1 / real (Suc j)" for j
+  proof -
+    have "m < m + 1 / real (Suc j)" by simp
+    then have "\<exists>t \<in> lsc_env u ` S. t < m + 1 / real (Suc j)"
+      unfolding m_def using cInf_less_iff[OF neI bdd] by blast
+    then show ?thesis by auto
+  qed
+  have "\<forall>j. \<exists>zz. zz \<in> S \<and> lsc_env u zz < m + 1 / real (Suc j)"
+    using pick by blast
+  then obtain zs where zsS: "\<And>j. zs j \<in> S"
+    and zsm: "\<And>j. lsc_env u (zs j) < m + 1 / real (Suc j)"
+    by metis
+  have sq: "seq_compact S" using cS by (simp add: compact_eq_seq_compact_metric)
+  obtain z r where zS: "z \<in> S" and rm: "strict_mono r"
+    and lim: "(zs \<circ> r) \<longlonglongrightarrow> z"
+    using sq[unfolded seq_compact_def] zsS by blast
+  have zle: "lsc_env u z \<le> m"
+  proof (rule ccontr)
+    assume "\<not> lsc_env u z \<le> m"
+    then have mlt: "m < lsc_env u z" by simp
+    define c where "c = (m + lsc_env u z) / 2"
+    have cm: "m < c" unfolding c_def using mlt by simp
+    have cz: "c < lsc_env u z" unfolding c_def using mlt by simp
+    obtain e where e0: "0 < e"
+      and enearA: "\<forall>y. dist z y < e \<longrightarrow> c < lsc_env u y"
+      by (rule lsc_env_lower[OF B cz])
+    have enear: "\<And>y. dist z y < e \<Longrightarrow> c < lsc_env u y"
+      using enearA by blast
+    have ev1: "\<forall>\<^sub>F l in sequentially. dist ((zs \<circ> r) l) z < e"
+      using lim e0 by (simp add: tendsto_iff)
+    have ev2: "\<forall>\<^sub>F l in sequentially. 1 / real (Suc (r l)) < c - m"
+    proof -
+      have "(\<lambda>l. 1 / real (Suc l)) \<longlonglongrightarrow> 0"
+        using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
+      then have "(\<lambda>l. 1 / real (Suc (r l))) \<longlonglongrightarrow> 0"
+        using LIMSEQ_subseq_LIMSEQ[OF _ rm] by (simp add: o_def)
+      then show ?thesis using cm by (simp add: order_tendstoD(2))
+    qed
+    from ev1 obtain N1 where N1: "\<And>l. N1 \<le> l \<Longrightarrow>
+        dist ((zs \<circ> r) l) z < e"
+      by (auto simp: eventually_sequentially)
+    from ev2 obtain N2 where N2: "\<And>l. N2 \<le> l \<Longrightarrow>
+        1 / real (Suc (r l)) < c - m"
+      by (auto simp: eventually_sequentially)
+    define l where "l = max N1 N2"
+    have dl: "dist z ((zs \<circ> r) l) < e"
+      using N1[of l] unfolding l_def by (simp add: dist_commute)
+    have gl: "1 / real (Suc (r l)) < c - m"
+      using N2[of l] unfolding l_def by simp
+    have "c < lsc_env u (zs (r l))"
+      using enear[OF dl] by (simp add: o_def)
+    moreover have "lsc_env u (zs (r l)) < m + 1 / real (Suc (r l))"
+      by (rule zsm)
+    ultimately show False using gl by linarith
+  qed
+  show ?thesis
+  proof (rule that[OF zS])
+    fix y assume yS: "y \<in> S"
+    show "lsc_env u z \<le> lsc_env u y" using zle mlow[OF yS] by linarith
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
