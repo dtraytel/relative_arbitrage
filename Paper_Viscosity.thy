@@ -15571,6 +15571,7 @@ lemma horn_B_locally_constant:
     and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
       W x + ((z - x) \<bullet> (M *v (z - x))) / 2 + c * ((z - x) \<bullet> (z - x)) \<le> W z"
     and hornB: "\<And>\<eta> y. norm \<eta> < h \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
+      norm (y - x) \<le> norm \<eta> / c \<Longrightarrow>
       (\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
         W y - (((y - x) \<bullet> (M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
           \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x)))
@@ -15615,6 +15616,7 @@ proof -
     have hlth: "norm \<eta> < h" using hb q1 q2 h0 by linarith
     have hlt: "norm \<eta> < c * \<rho>" using hlth hle by linarith
     obtain y' where dxy': "dist x y' < \<rho>"
+      and cl': "norm (y' - x) \<le> norm \<eta> / c"
       and loc': "\<And>w. dist y' w < \<rho> - dist x y' \<Longrightarrow>
         W y' - (((y' - x) \<bullet> (M *v (y' - x))) / 2 + \<eta> \<bullet> (y' - x))
           \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
@@ -15624,9 +15626,10 @@ proof -
         and b3: "\<And>w. dist yy w < \<rho> - dist x yy \<Longrightarrow>
           W yy - (((yy - x) \<bullet> (M *v (yy - x))) / 2 + \<eta> \<bullet> (yy - x))
             \<le> W w - (((w - x) \<bullet> (M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
-      show thesis by (rule that[OF b1 b3])
+      show thesis by (rule that[OF b1 b2 b3])
     qed
-    have g0: "M *v (y' - x) + \<eta> = 0" by (rule hornB[OF hlth dxy' loc'])
+    have g0: "M *v (y' - x) + \<eta> = 0"
+      by (rule hornB[OF hlth dxy' cl' loc'])
     have meq: "M *v (y' - x) = M *v (y - x)"
       using g0 unfolding \<eta>_def by (simp add: algebra_simps)
     have yeq: "y' = y"
@@ -15875,6 +15878,235 @@ proof -
     show False
       by (rule paper_v_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
             tfy rp tminy gy flt])
+  qed
+qed
+
+
+subsection \<open>Case 2 assembled at a fixed \<open>\<epsilon>\<close>\<close>
+
+text \<open>The dichotomy.  Either arbitrarily small tilts admit a local
+  minimiser with NONZERO gradient --- and then Case 1 fires at each of
+  them, the gradients tend to \<open>0\<close> because \<open>\<bar>y - x\<bar> \<le> 4\<bar>\<eta>\<bar>/\<epsilon>\<close>, and
+  \<open>ell_op_usc_ge_one_limit\<close> delivers the inequality at \<open>p = 0\<close> --- or
+  some threshold fails, which is exactly the hypothesis of
+  \<open>horn_B_locally_constant\<close>, and then \<open>v\<^sub>*\<close> is locally constant, which
+  \<open>paper_v_not_locally_constant\<close> refutes.
+
+  A singular \<open>H - \<epsilon>\<cdot>1\<close> needs no separate treatment: it supplies
+  arbitrarily small tilts for which the gradient can never vanish, so
+  the first branch always applies.  That is why the second branch may
+  assume invertibility.\<close>
+
+theorem paper_v_case2_eps:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
+    and rho0: "0 < \<rho>\<^sub>0"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
+    and cap: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+    and e0: "0 < \<epsilon>"
+  shows "1 \<le> ell_op_usc k L 0 (H - \<epsilon> *\<^sub>R mat 1)"
+proof -
+  let ?W = "lsc_env (\<lambda>u. enn2real (paper_v k L T K u))"
+  let ?M = "H - \<epsilon> *\<^sub>R mat 1"
+  have L1': "1 \<le> L" using L1 by linarith
+  have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
+  have symM: "transpose ?M = ?M" by (rule transpose_sub_smat[OF symH])
+  have c0: "0 < \<epsilon> / 4" using e0 by simp
+  have tv0: "\<And>u. (0 :: real) \<le> enn2real (paper_v k L T K u)" by simp
+  have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < ?W u"
+    if lt: "a < ?W z" for a and z :: "real^'n"
+  proof (rule lsc_env_lower[OF tv0 lt])
+    fix d assume "0 < d" and "\<forall>u. dist z u < d \<longrightarrow> a < ?W u"
+    then show ?thesis by blast
+  qed
+  obtain \<rho> where rho: "0 < \<rho>" and subK: "cball x \<rho> \<subseteq> interior K"
+    and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
+      ?W x + ((z - x) \<bullet> (?M *v (z - x))) / 2
+        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> ?W z"
+  proof (rule paper_v_case2_separation[OF xi tf gx0 rho0 tmin e0])
+    fix rr :: real
+    assume a1: "0 < rr" and a2: "cball x rr \<subseteq> interior K"
+      and a3: "\<And>z. z \<in> cball x rr \<Longrightarrow>
+        ?W x + ((z - x) \<bullet> (?M *v (z - x))) / 2
+          + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> ?W z"
+    show thesis by (rule that[OF a1 a2 a3])
+  qed
+  define good where "good = (\<lambda>\<delta> :: real. \<exists>\<eta> y :: real^'n.
+      norm \<eta> < \<delta> \<and> dist x y < \<rho> \<and> norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4) \<and>
+      (\<forall>w. dist y w < \<rho> - dist x y \<longrightarrow>
+        ?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+          \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x)))
+      \<and> ?M *v (y - x) + \<eta> \<noteq> 0)"
+  define \<delta>s where "\<delta>s = (\<lambda>j :: nat. min ((\<epsilon> / 4) * \<rho>) (1 / real (Suc j)))"
+  have ds0: "0 < \<delta>s j" for j unfolding \<delta>s_def using c0 rho by simp
+  show ?thesis
+  proof (cases "\<forall>j. good (\<delta>s j)")
+    case True
+    have bl: "bounded_linear ((*v) ?M)"
+      by (rule matrix_vector_mul_bounded_linear)
+    define N where "N = onorm ((*v) ?M)"
+    have N0: "0 \<le> N" unfolding N_def by (rule onorm_pos_le[OF bl])
+    have Cpos: "0 \<le> 4 * N / \<epsilon> + 1" using N0 e0 by simp
+    have ex: "\<exists>p :: real^'n. 1 \<le> ell_op k L p ?M
+        \<and> norm p \<le> (4 * N / \<epsilon> + 1) * \<delta>s j" for j
+    proof -
+      have gd: "good (\<delta>s j)" using True by blast
+      obtain \<eta> y :: "real^'n" where hn: "norm \<eta> < \<delta>s j"
+        and dxy: "dist x y < \<rho>"
+        and cl: "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
+        and loc: "\<forall>w. dist y w < \<rho> - dist x y \<longrightarrow>
+          ?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+            \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+        and gy: "?M *v (y - x) + \<eta> \<noteq> 0"
+        using gd unfolding good_def by blast
+      have ge: "1 \<le> ell_op k L (?M *v (y - x) + \<eta>) ?M"
+      proof (rule paper_v_case2_at_minimiser[OF T0 L1 k1 kn Kc symH rho subK
+              dxy _ gy])
+        fix w :: "real^'n" assume "dist y w < \<rho> - dist x y"
+        then show "?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+            \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+          using loc by blast
+      qed
+      have nb: "norm (?M *v (y - x) + \<eta>) \<le> (4 * N / \<epsilon> + 1) * \<delta>s j"
+      proof -
+        have t1: "norm (?M *v (y - x) + \<eta>) \<le> norm (?M *v (y - x)) + norm \<eta>"
+          by (rule norm_triangle_ineq)
+        have t2: "norm (?M *v (y - x)) \<le> N * norm (y - x)"
+          unfolding N_def by (rule onorm[OF bl])
+        have t3: "N * norm (y - x) \<le> N * (norm \<eta> / (\<epsilon> / 4))"
+          by (rule mult_left_mono[OF cl N0])
+        have t4: "N * (norm \<eta> / (\<epsilon> / 4)) = (4 * N / \<epsilon>) * norm \<eta>"
+          using e0 by (simp add: field_simps)
+        have t5: "(4 * N / \<epsilon>) * norm \<eta> + norm \<eta> = (4 * N / \<epsilon> + 1) * norm \<eta>"
+          by (simp add: field_simps)
+        have t6: "(4 * N / \<epsilon> + 1) * norm \<eta> \<le> (4 * N / \<epsilon> + 1) * \<delta>s j"
+          by (rule mult_left_mono[OF _ Cpos]) (use hn in linarith)
+        show ?thesis using t1 t2 t3 t4 t5 t6 by linarith
+      qed
+      show ?thesis using ge nb by blast
+    qed
+    obtain ps :: "nat \<Rightarrow> real^'n" where
+      psge: "\<And>j. 1 \<le> ell_op k L (ps j) ?M"
+      and psn: "\<And>j. norm (ps j) \<le> (4 * N / \<epsilon> + 1) * \<delta>s j"
+      using ex by metis
+    have dslim: "\<delta>s \<longlonglongrightarrow> 0"
+    proof (rule tendsto_sandwich)
+      show "\<forall>\<^sub>F j in sequentially. (0 :: real) \<le> \<delta>s j"
+        using ds0 by (simp add: less_imp_le)
+      show "\<forall>\<^sub>F j in sequentially. \<delta>s j \<le> 1 / real (Suc j)"
+        unfolding \<delta>s_def by simp
+      show "((\<lambda>j. 0 :: real) \<longlongrightarrow> 0) sequentially" by simp
+      show "((\<lambda>j :: nat. 1 / real (Suc j)) \<longlongrightarrow> 0) sequentially"
+        using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
+    qed
+    have d1: "(\<lambda>j. (4 * N / \<epsilon> + 1) * \<delta>s j) \<longlonglongrightarrow> 0"
+    proof -
+      have "(\<lambda>j. (4 * N / \<epsilon> + 1) * \<delta>s j) \<longlonglongrightarrow> (4 * N / \<epsilon> + 1) * 0"
+        by (intro tendsto_mult tendsto_const dslim)
+      then show ?thesis by simp
+    qed
+    have d2: "(\<lambda>j. norm (ps j)) \<longlonglongrightarrow> 0"
+    proof (rule tendsto_sandwich)
+      show "\<forall>\<^sub>F j in sequentially. (0 :: real) \<le> norm (ps j)" by simp
+      show "\<forall>\<^sub>F j in sequentially. norm (ps j) \<le> (4 * N / \<epsilon> + 1) * \<delta>s j"
+        using psn by simp
+      show "((\<lambda>j. 0 :: real) \<longlongrightarrow> 0) sequentially" by simp
+      show "((\<lambda>j. (4 * N / \<epsilon> + 1) * \<delta>s j) \<longlongrightarrow> 0) sequentially" by (rule d1)
+    qed
+    have plim: "ps \<longlonglongrightarrow> 0" using d2 by (simp add: tendsto_norm_zero_iff)
+    have lim: "(\<lambda>j. (ps j, ?M)) \<longlonglongrightarrow> (0, ?M)"
+      by (intro tendsto_Pair plim tendsto_const)
+    have gew: "1 \<le> ell_op_usc k L (ps j) ?M" for j
+    proof -
+      have "(1 :: ereal) \<le> ereal (ell_op k L (ps j) ?M)"
+        using psge[of j] by simp
+      also have "\<dots> \<le> ell_op_usc k L (ps j) ?M"
+        by (rule ell_op_le_ell_op_usc)
+      finally show ?thesis .
+    qed
+    show ?thesis by (rule ell_op_usc_ge_one_limit[OF gew lim])
+  next
+    case False
+    then obtain j where nj: "\<not> good (\<delta>s j)" by blast
+    have h0: "0 < \<delta>s j" by (rule ds0)
+    have hle: "\<delta>s j \<le> (\<epsilon> / 4) * \<rho>" unfolding \<delta>s_def by simp
+    show ?thesis
+    proof (cases "invertible ?M")
+      case False
+      \<comment> \<open>a singular \<open>?M\<close> yields tilts whose gradient never vanishes\<close>
+      obtain \<eta> :: "real^'n" where hn: "norm \<eta> < \<delta>s j"
+        and nz: "\<And>z :: real^'n. ?M *v z + \<eta> \<noteq> 0"
+      proof (rule singular_matrix_avoids_range[OF False h0])
+        fix ee :: "real^'n"
+        assume b1: "norm ee < \<delta>s j" and b2: "\<And>z :: real^'n. ?M *v z + ee \<noteq> 0"
+        show thesis by (rule that[OF b1 b2])
+      qed
+      have hlt: "norm \<eta> < (\<epsilon> / 4) * \<rho>" using hn hle by linarith
+      obtain y :: "real^'n" where dxy: "dist x y < \<rho>"
+        and cl: "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
+        and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
+          ?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+            \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+      proof (rule tilted_local_touching[OF lscW rho c0 sep hlt])
+        fix yy :: "real^'n"
+        assume b1: "dist x yy < \<rho>" and b2: "norm (yy - x) \<le> norm \<eta> / (\<epsilon> / 4)"
+          and b3: "\<And>w. dist yy w < \<rho> - dist x yy \<Longrightarrow>
+            ?W yy - (((yy - x) \<bullet> (?M *v (yy - x))) / 2 + \<eta> \<bullet> (yy - x))
+              \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+        show thesis by (rule that[OF b1 b2 b3])
+      qed
+      have gd: "good (\<delta>s j)"
+        unfolding good_def using hn dxy cl loc nz[of "y - x"] by blast
+      show ?thesis using gd nj by simp
+    next
+      case True
+      \<comment> \<open>the second horn: \<open>v\<^sub>*\<close> would be locally constant\<close>
+      have hornB: "?M *v (y - x) + \<eta> = 0"
+        if hn: "norm \<eta> < \<delta>s j" and dxy: "dist x y < \<rho>"
+          and cl: "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
+          and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
+            ?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+              \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
+        for \<eta> y :: "real^'n"
+      proof (rule ccontr)
+        assume "?M *v (y - x) + \<eta> \<noteq> 0"
+        then have "good (\<delta>s j)"
+          unfolding good_def using hn dxy cl loc by blast
+        then show False using nj by simp
+      qed
+      obtain rr where rr0: "0 < rr"
+        and rc: "\<And>y. dist x y < rr \<Longrightarrow> ?W y = ?W x"
+      proof (rule horn_B_locally_constant[OF lscW symM True rho c0 h0 hle sep
+              hornB])
+        fix r' :: real
+        assume b1: "0 < r'" and b2: "\<And>y. dist x y < r' \<Longrightarrow> ?W y = ?W x"
+        show thesis by (rule that[OF b1 b2])
+      qed
+      define r2 where "r2 = min (rr / 2) (\<rho> / 2)"
+      have r20: "0 < r2" unfolding r2_def using rr0 rho by simp
+      have r2K: "cball x r2 \<subseteq> K"
+      proof -
+        have "cball x r2 \<subseteq> cball x \<rho>"
+          unfolding r2_def using rho by (auto simp: mem_cball)
+        then show ?thesis using subK interior_subset by blast
+      qed
+      have contra: False
+      proof (rule paper_v_not_locally_constant[OF T0 L1' k1 kn Kc refl r20 r2K])
+        show "?W x < T / 2" by (rule cap)
+      next
+        fix y :: "real^'n" assume dy: "dist x y < r2"
+        have "r2 \<le> rr / 2" unfolding r2_def by simp
+        then have "dist x y < rr" using dy rr0 by linarith
+        then show "?W y = ?W x" by (rule rc)
+      qed
+      then show ?thesis by simp
+    qed
   qed
 qed
 
