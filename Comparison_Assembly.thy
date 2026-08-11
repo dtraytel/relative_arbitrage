@@ -14571,6 +14571,33 @@ text \<open>The paper's Theorem 4.2(b).  \<^bold>\<open>This is the one statemen
   usc/lsc data directly --- which is precisely why the literature states CI
   that way.  Budget it as a CI-for-usc development, not a refactor.
 
+  \<^bold>\<open>UPDATE 2026-08-11: the localisation IS available, and the route is now
+  clear.\<close>  Two facts, both checked:
+  \<^item> \<open>visc_subsol_env_imp_visc_subsol\<close> is \<^emph>\<open>\<Omega>-generic\<close>: it turns
+    \<open>visc_subsol_env k L K \<Omega> u\<close> into the LOCAL \<open>visc_subsol k L \<Omega> u\<close> for an
+    ARBITRARY \<open>\<Omega>\<close>, with no interiority and no openness --- the quartic
+    deepening (\<open>visc_subsol_env_local\<close> + \<open>quad_bdd_below_on_bounded\<close>) globalises
+    any local touching, at a boundary point just as well as an interior one.
+    So the gated \<open>\<Omega>\<close> supplies the local subsolution property directly.
+  \<^item> The gate PROPAGATES through the sup-convolution
+    (\<open>supconv_attain_gate_open\<close>, below): the attainment point \<open>y\<^sup>s\<close> of
+    \<open>supconv (\<theta>u) \<epsilon>\<close> at \<open>x\<^sup>h\<close> again has \<open>u y\<^sup>s > 0\<close>, since
+    \<open>\<theta> u y\<^sup>s \<ge> supconv (\<theta>u) \<epsilon> x\<^sup>h \<ge> \<theta> u x\<^sup>h > 0\<close>.  So every point at which the
+    chain wants to read the subsolution property is in the gated \<open>\<Omega>\<close>.
+  What the earlier note got right is that a boundary point has no BALL in \<open>K\<close>;
+  what it missed is that the \<open>u\<close>-side never needs one --- the ball requirement
+  in \<open>comparison_soft_diagonal\<close> (\<open>cball p R\<^sub>w \<subseteq> interior K\<close>) is on the
+  \<^emph>\<open>supersolution\<close> side, and in the two-domain setting that is FREE, because
+  \<open>K \<subseteq> K'\<degree>\<close> gives every point of \<open>K\<close> a ball inside \<open>interior K'\<close>.  That is
+  exactly why the paper uses two domains.
+  Remaining obstruction: \<open>supconv_uniform_upper\<close> is still false for usc \<open>u\<close>
+  (counterexample above), but it is used ONLY to push the \<open>x\<close>-maximiser off
+  \<open>\<partial>K\<close> --- which the gate now makes unnecessary.  The \<open>y\<close>-side avoidance is a
+  separate, easier fact (\<open>dist(K, \<partial>K') > 0\<close> beats the penalty).  So the work
+  is: re-run \<open>doubling_localised_maximiser_soft\<close> and \<open>comparison_soft_complete\<close>
+  over \<open>K \<times> K'\<close> with the \<open>x\<close>-side boundary-avoidance DELETED and replaced by the
+  gate, and the \<open>y\<close>-side avoidance kept.
+
   \<^bold>\<open>So the open problem is exactly this\<close>: a Crandall--Ishii step on the \<open>u\<close>-side
   that works from a touching which is global over \<open>K\<close> and a point that may lie
   on \<open>\<partial>K\<close>, given that the \<open>w\<close>-side is unproblematic (\<open>K \<subseteq> K'\<degree>\<close> gives \<open>y\<^sup>h\<close> a
@@ -14625,6 +14652,29 @@ lemma doubled_maximiser_gate_open:
   shows "0 < u xh"
 proof -
   have "0 < \<theta> * u xh" using Mpos wy pen mx by linarith
+  then show ?thesis using t0 by (simp add: zero_less_mult_iff)
+qed
+
+text \<open>The gate is inherited by the sup-convolution's attainment point.  This is
+  the second half of what P4 needs: the Jensen/sup-convolution step reads the
+  subsolution property off at the ATTAINMENT point, not at \<open>x\<^sup>h\<close>, and that point
+  is again in Definition 3.1's gated \<open>\<Omega>\<close> --- because the sup-convolution is
+  \<open>\<ge>\<close> the function, so the attained value is \<open>\<ge> \<theta> u x\<^sup>h > 0\<close>.\<close>
+
+lemma supconv_attain_gate_open:
+  fixes u :: "real^'n::finite \<Rightarrow> real" and xh ys :: "real^'n"
+  assumes t0: "0 < \<theta>" and e: "0 < \<epsilon>"
+    and B: "\<And>y. \<theta> * u y \<le> Bu"
+    and opt: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh = \<theta> * u ys - (dist xh ys)\<^sup>2 / (2*\<epsilon>)"
+    and pos: "0 < u xh"
+  shows "0 < u ys"
+proof -
+  have "0 < \<theta> * u xh" using t0 pos by simp
+  also have "\<theta> * u xh \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh"
+    by (rule supconv_ge[OF B e])
+  finally have s0: "0 < \<theta> * u ys - (dist xh ys)\<^sup>2 / (2*\<epsilon>)" unfolding opt .
+  have "0 \<le> (dist xh ys)\<^sup>2 / (2*\<epsilon>)" using e by simp
+  with s0 have "0 < \<theta> * u ys" by linarith
   then show ?thesis using t0 by (simp add: zero_less_mult_iff)
 qed
 
