@@ -15163,6 +15163,243 @@ proof -
     by (intro continuous_on_sum continuous_on_matrix_entry c4)
 qed
 
+subsection \<open>\<open>F\<^sup>* = F\<close> away from the origin\<close>
+
+text \<open>The assembly.  Feasibility depends on the gradient only through
+  its DIRECTION, so the rotation carrying \<open>p\<close>'s direction to \<open>p'\<close>'s
+  carries the whole feasible set across; a near-optimal witness for
+  \<open>(p, M)\<close> therefore supplies a competitor for every nearby \<open>(p', M')\<close>,
+  and continuity of the pairing makes the competitor's value beat
+  \<open>F(p, M) + \<epsilon>\<close> on a whole ball.  That bounds the supremum defining the
+  upper envelope, and the infimum over radii finishes it.\<close>
+
+lemma feasible_scale:
+  fixes q :: "real^'n::finite"
+  assumes c0: "c \<noteq> 0"
+  shows "feasible k L (c *\<^sub>R q) = feasible k L q"
+proof -
+  have iff: "(a *v (c *\<^sub>R q) = 0) = (a *v q = 0)" for a :: "real^'n^'n"
+  proof -
+    have "a *v (c *\<^sub>R q) = c *\<^sub>R (a *v q)"
+      by (simp add: matrix_vector_mult_scaleR)
+    then show ?thesis using c0 by simp
+  qed
+  show ?thesis unfolding feasible_def using iff by auto
+qed
+
+lemma ell_op_bdd:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes L0: "0 \<le> L"
+  shows "bdd_below ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
+  by (rule bdd_below_mono[OF ell_op_s_bdd_below[OF L0]
+      image_mono[OF feasible_subset_sconstraint]])
+
+lemma ell_op_le_witness:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes L0: "0 \<le> L" and aF: "a \<in> feasible k L p"
+  shows "ell_op k L p M \<le> - trace (M ** a) / 2"
+  unfolding ell_op_def
+  by (rule cInf_lower[OF _ ell_op_bdd[OF L0]]) (use aF in auto)
+
+lemma ell_op_approx:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+    and e0: "0 < \<epsilon>"
+  obtains a where "a \<in> feasible k L p"
+    and "- trace (M ** a) / 2 < ell_op k L p M + \<epsilon>"
+proof -
+  have L0: "0 \<le> L" using L1 by linarith
+  have ne: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p \<noteq> {}"
+    using feasible_nonempty[OF k1 kn L1] by blast
+  have bdd: "bdd_below ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
+    by (rule ell_op_bdd[OF L0])
+  have "ell_op k L p M < ell_op k L p M + \<epsilon>" using e0 by simp
+  then have "\<exists>v \<in> (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p.
+      v < ell_op k L p M + \<epsilon>"
+    unfolding ell_op_def using cInf_less_iff[OF ne bdd] by blast
+  then obtain a where a1: "a \<in> feasible k L p"
+    and a2: "- trace (M ** a) / 2 < ell_op k L p M + \<epsilon>" by blast
+  show ?thesis by (rule that[OF a1 a2])
+qed
+
+theorem ell_op_usc_le_at_nonzero:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+    and p0: "p \<noteq> 0"
+  shows "ell_op_usc k L p M \<le> ereal (ell_op k L p M)"
+proof (rule ereal_le_epsilon)
+  have L0: "0 \<le> L" using L1 by linarith
+  fix ee :: ereal assume ee0: "0 < ee"
+  show "ell_op_usc k L p M \<le> ereal (ell_op k L p M) + ee"
+  proof (cases ee)
+    case (real r)
+    have r0: "0 < r" using ee0 unfolding real by simp
+    define u where "u = p /\<^sub>R norm p"
+    have np: "0 < norm p" using p0 by simp
+    have u1: "norm u = 1" unfolding u_def using np by simp
+    have u0: "u \<noteq> 0" using u1 by auto
+    have uu: "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
+    have pu: "p = norm p *\<^sub>R u" unfolding u_def using np by simp
+    have hp: "0 < u \<bullet> p"
+    proof -
+      have "u \<bullet> p = u \<bullet> (norm p *\<^sub>R u)" using pu by simp
+      also have "\<dots> = norm p * (u \<bullet> u)" by (simp add: inner_scaleR_right)
+      finally show ?thesis unfolding uu using np by simp
+    qed
+    obtain a where aF: "a \<in> feasible k L p"
+      and aval: "- trace (M ** a) / 2 < ell_op k L p M + r / 2"
+      by (rule ell_op_approx[OF k1 kn L1 half_gt_zero[OF r0]])
+    define W where "W = {z :: (real^'n) \<times> (real^'n^'n). 0 < u \<bullet> fst z}"
+    have cfst: "continuous_on A (\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z)"
+      for A by (intro continuous_on_fst continuous_on_id)
+    have csnd: "continuous_on A (\<lambda>z :: (real^'n) \<times> (real^'n^'n). snd z)"
+      for A by (intro continuous_on_snd continuous_on_id)
+    have Wopen: "open W"
+    proof -
+      have "continuous_on UNIV (\<lambda>z :: (real^'n) \<times> (real^'n^'n). u \<bullet> fst z)"
+        by (rule continuous_on_compose2[OF
+            linear_continuous_on[OF bounded_linear_inner_right] cfst]) auto
+      then show ?thesis unfolding W_def
+        by (rule open_Collect_less[OF continuous_on_const])
+    qed
+    have WpM: "(p, M) \<in> W" unfolding W_def using hp by simp
+    define Rm where "Rm = (\<lambda>z :: (real^'n) \<times> (real^'n^'n).
+        rotv u (fst z /\<^sub>R norm (fst z)))"
+    have cR: "continuous_on W Rm"
+    proof -
+      have img: "fst z \<in> {q :: real^'n. 0 < u \<bullet> q}" if "z \<in> W" for z
+        using that unfolding W_def by simp
+      show ?thesis
+        unfolding Rm_def
+        by (rule continuous_on_compose2[OF
+            continuous_on_rotv_dir[OF u1] cfst]) (use img in auto)
+    qed
+    define G where "G = (\<lambda>z :: (real^'n) \<times> (real^'n^'n).
+        - trace (snd z ** (Rm z ** a ** transpose (Rm z))) / 2)"
+    have cG: "continuous_on W G"
+    proof -
+      have "continuous_on W
+          (\<lambda>z. trace (snd z ** (Rm z ** a ** transpose (Rm z))))"
+        by (rule continuous_on_conj_trace[OF cR csnd])
+      then show ?thesis unfolding G_def by (intro continuous_intros) auto
+    qed
+    have GpM: "G (p, M) = - trace (M ** a) / 2"
+    proof -
+      have "fst ((p, M) :: (real^'n) \<times> (real^'n^'n))
+          /\<^sub>R norm (fst ((p, M) :: (real^'n) \<times> (real^'n^'n))) = u"
+        unfolding u_def by simp
+      then have "Rm (p, M) = rotv u u" unfolding Rm_def by simp
+      also have "\<dots> = mat 1" by (rule rotv_self[OF u0])
+      finally have R1: "Rm (p, M) = mat 1" .
+      have "mat 1 ** a ** transpose (mat 1) = a"
+        by (simp add: matrix_mul_lid matrix_mul_rid)
+      then show ?thesis unfolding G_def R1 by simp
+    qed
+    have isG: "isCont G (p, M)"
+      using continuous_on_interior[OF cG] WpM Wopen by (simp add: interior_open)
+    obtain d1 where d10: "0 < d1"
+      and d1W: "ball ((p, M) :: (real^'n) \<times> (real^'n^'n)) d1 \<subseteq> W"
+      using Wopen WpM unfolding open_contains_ball by blast
+    obtain d2 where d20: "0 < d2"
+      and d2G: "\<And>z. dist z ((p, M) :: (real^'n) \<times> (real^'n^'n)) < d2
+          \<Longrightarrow> dist (G z) (G (p, M)) < r / 2"
+      using isG[unfolded continuous_at_eps_delta] half_gt_zero[OF r0] by blast
+    define e where "e = min d1 d2"
+    have e0': "0 < e" unfolding e_def using d10 d20 by simp
+    have main: "ell_op_pair k L z \<le> ereal (ell_op k L p M + r)"
+      if zb: "z \<in> ball ((p, M) :: (real^'n) \<times> (real^'n^'n)) e" for z
+    proof -
+      have dz: "dist ((p, M) :: (real^'n) \<times> (real^'n^'n)) z < e"
+        using zb by (simp add: mem_ball)
+      have zW: "z \<in> W"
+      proof -
+        have "dist ((p, M) :: (real^'n) \<times> (real^'n^'n)) z < d1"
+          using dz unfolding e_def by simp
+        then have "z \<in> ball ((p, M) :: (real^'n) \<times> (real^'n^'n)) d1"
+          by (simp add: mem_ball)
+        then show ?thesis using d1W by blast
+      qed
+      have Gle: "G z < G (p, M) + r / 2"
+      proof -
+        have "dist z ((p, M) :: (real^'n) \<times> (real^'n^'n)) < d2"
+          using dz unfolding e_def by (simp add: dist_commute)
+        then have "dist (G z) (G (p, M)) < r / 2" by (rule d2G)
+        then have "\<bar>G z - G (p, M)\<bar> < r / 2" by (simp add: dist_real_def)
+        then have "G z - G (p, M) < r / 2" using abs_less_iff by blast
+        then show ?thesis by linarith
+      qed
+      obtain p' M' where zeq: "z = (p', M')" by (cases z)
+      have hp': "0 < u \<bullet> p'" using zW unfolding W_def zeq by simp
+      have p'0: "p' \<noteq> 0" using hp' by auto
+      have np': "0 < norm p'" using p'0 by simp
+      define v where "v = p' /\<^sub>R norm p'"
+      have v1: "norm v = 1" unfolding v_def using np' by simp
+      have neuv: "u + v \<noteq> 0"
+        unfolding v_def by (rule halfspace_not_antipodal[OF u1 hp'])
+      define R where "R = rotv u v"
+      have Rorth: "transpose R ** R = mat 1"
+        unfolding R_def by (rule rotv_orth[OF u0 neuv])
+      have Rorth': "R ** transpose R = mat 1"
+        unfolding R_def by (rule rotv_orth'[OF u0 neuv])
+      have Ru: "R *v u = v" unfolding R_def by (rule rotv_apply[OF u1 v1 neuv])
+      have Rp: "R *v p = (norm p / norm p') *\<^sub>R p'"
+      proof -
+        have "R *v p = R *v (norm p *\<^sub>R u)" using pu by simp
+        also have "\<dots> = norm p *\<^sub>R (R *v u)"
+          by (simp add: matrix_vector_mult_scaleR)
+        also have "\<dots> = norm p *\<^sub>R v" unfolding Ru by (rule refl)
+        also have "\<dots> = (norm p / norm p') *\<^sub>R p'"
+          unfolding v_def using np' by (simp add: divide_inverse)
+        finally show ?thesis .
+      qed
+      have aF': "R ** a ** transpose R \<in> feasible k L p'"
+      proof -
+        have c1: "R ** a ** transpose R \<in> feasible k L (R *v p)"
+          by (rule feasible_conj[OF Rorth Rorth' aF])
+        have c2: "feasible k L (R *v p) = feasible k L p'"
+          unfolding Rp by (rule feasible_scale) (use np np' in simp)
+        show ?thesis using c1 unfolding c2 .
+      qed
+      have Gz: "- trace (M' ** (R ** a ** transpose R)) / 2 = G z"
+        unfolding G_def zeq Rm_def R_def v_def by simp
+      have "ell_op k L p' M' \<le> - trace (M' ** (R ** a ** transpose R)) / 2"
+        by (rule ell_op_le_witness[OF L0 aF'])
+      then have "ell_op k L p' M' \<le> G z" unfolding Gz .
+      then have "ell_op k L p' M' < ell_op k L p M + r"
+        using Gle aval unfolding GpM by linarith
+      then show ?thesis unfolding ell_op_pair_def zeq by simp
+    qed
+    have sup_le: "(SUP w \<in> ball ((p, M) :: (real^'n) \<times> (real^'n^'n)) e.
+        ell_op_pair k L w) \<le> ereal (ell_op k L p M + r)"
+      by (rule SUP_least) (use main in blast)
+    have inf_le: "ell_op_usc k L p M
+        \<le> (SUP w \<in> ball ((p, M) :: (real^'n) \<times> (real^'n^'n)) e.
+            ell_op_pair k L w)"
+      unfolding ell_op_usc_def by (rule INF_lower) (use e0' in simp)
+    have "ell_op_usc k L p M \<le> ereal (ell_op k L p M + r)"
+      using inf_le sup_le by simp
+    then show ?thesis unfolding real by simp
+  next
+    case PInf
+    then show ?thesis by simp
+  next
+    case MInf
+    then show ?thesis using ee0 by simp
+  qed
+qed
+
+corollary ell_op_usc_eq_at_nonzero:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+    and p0: "p \<noteq> 0"
+  shows "ell_op_usc k L p M = ereal (ell_op k L p M)"
+proof (rule antisym)
+  show "ell_op_usc k L p M \<le> ereal (ell_op k L p M)"
+    by (rule ell_op_usc_le_at_nonzero[OF k1 kn L1 p0])
+  show "ereal (ell_op k L p M) \<le> ell_op_usc k L p M"
+    by (rule ell_op_le_ell_op_usc)
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
