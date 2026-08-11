@@ -15667,6 +15667,165 @@ proof -
 qed
 
 
+text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were constant \<open>= c\<close> on a
+  ball around \<open>x\<close> whose closure lies in \<open>K\<close>.  The envelope's own defining
+  property supplies points \<open>z\<close> arbitrarily close to \<open>x\<close> at which \<open>v\<close>
+  itself is within \<open>\<theta>/2\<close> of \<open>c\<close>.  But the deterministic-radius member
+  started at such a \<open>z\<close> stays inside the ball for a time \<open>\<theta>\<close> that does
+  NOT shrink with \<open>z\<close>, and its endpoint is again in the ball where
+  \<open>v \<ge> c\<close>; so \<open>paper_v_ball_lower_plus\<close> gives \<open>v z \<ge> \<theta> + c\<close>.  Those two
+  are incompatible.
+
+  The hypothesis \<open>c < T/2\<close> is what keeps the horizon cap inert.  It
+  cannot be dropped: if \<open>v \<equiv> T\<close> on an open set then \<open>v\<^sub>*\<close> IS locally
+  constant there, and no contradiction is available --- indeed the
+  supersolution inequality itself fails at such a point, since a
+  constant test function would demand \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  For a
+  bounded \<open>K\<close> the hypothesis is discharged by
+  @{thm [source] paper_v_le_ball_bound} once \<open>T\<close> exceeds twice the ball
+  bound.\<close>
+
+theorem paper_v_not_locally_constant:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and tv :: "real^'n \<Rightarrow> real" and r T :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K"
+    and tvdef: "tv = (\<lambda>u. enn2real (paper_v k L T K u))"
+    and r0: "0 < r" and sub: "cball x r \<subseteq> K"
+    and cap: "lsc_env tv x < T / 2"
+    and const: "\<And>y. dist x y < r \<Longrightarrow> lsc_env tv y = lsc_env tv x"
+  shows False
+proof -
+  have tv0: "\<And>u. 0 \<le> tv u" unfolding tvdef by simp
+  have c0: "0 \<le> lsc_env tv x" by (rule lsc_env_ge[OF tv0])
+  define rB where "rB = r / 4"
+  have rB0: "0 < rB" unfolding rB_def using r0 by simp
+  have rBr: "5 * rB / 4 \<le> r" unfolding rB_def using r0 by simp
+  define e :: "real^'n" where "e = axis (undefined :: 'n) (1 :: real)"
+  have e1: "norm e = 1" unfolding e_def by simp
+  define y\<^sub>0 where "y\<^sub>0 = x + (rB / 4) *\<^sub>R e"
+  have dxy: "dist x y\<^sub>0 = rB / 4"
+  proof -
+    have "dist x y\<^sub>0 = norm ((rB / 4) *\<^sub>R e)"
+      unfolding y\<^sub>0_def by (simp add: dist_norm)
+    also have "\<dots> = \<bar>rB / 4\<bar> * norm e" by simp
+    finally show ?thesis using rB0 e1 by simp
+  qed
+  have near: "dist x w \<le> 5 * rB / 4" if "dist y\<^sub>0 w \<le> rB" for w
+  proof -
+    have "dist x w \<le> dist x y\<^sub>0 + dist y\<^sub>0 w" by (rule dist_triangle)
+    then show ?thesis using dxy that by linarith
+  qed
+  have subB: "cball y\<^sub>0 rB \<subseteq> K"
+  proof
+    fix w :: "real^'n" assume "w \<in> cball y\<^sub>0 rB"
+    then have "dist y\<^sub>0 w \<le> rB" by simp
+    then have "dist x w \<le> r" using near[of w] rBr by linarith
+    then show "w \<in> K" using sub by auto
+  qed
+  have cn0: "0 < real CARD('n) - 1"
+  proof -
+    have "2 \<le> CARD('n)" using k1 kn by linarith
+    then have "(2 :: real) \<le> real CARD('n)"
+      by (simp add: of_nat_le_iff [where m = 2, symmetric])
+    then show ?thesis by linarith
+  qed
+  define \<theta> where "\<theta> = min (T / 2) (rB\<^sup>2 / (4 * (real CARD('n) - 1)))"
+  have th0: "0 < \<theta>" unfolding \<theta>_def using T0 rB0 cn0 by simp
+  have vlow: "lsc_env tv x \<le> tv w" if wb: "w \<in> ball y\<^sub>0 rB" for w
+  proof -
+    have lt: "dist y\<^sub>0 w < rB" using wb by simp
+    have tr: "dist x w \<le> dist x y\<^sub>0 + dist y\<^sub>0 w" by (rule dist_triangle)
+    have "dist x w < r" using tr lt dxy rBr by linarith
+    then have "lsc_env tv w = lsc_env tv x" by (rule const)
+    moreover have "lsc_env tv w \<le> tv w" by (rule lsc_env_le_self[OF tv0])
+    ultimately show ?thesis by linarith
+  qed
+  have d8: "0 < rB / 8" using rB0 by simp
+  have t2: "0 < \<theta> / 2" using th0 by simp
+  obtain z where dz: "dist x z < rB / 8"
+    and vz: "tv z < lsc_env tv x + \<theta> / 2"
+  proof (rule lsc_env_approx[OF tv0 d8 t2])
+    fix zz :: "real^'n"
+    assume a1: "dist x zz < rB / 8" and a2: "tv zz < lsc_env tv x + \<theta> / 2"
+    show thesis by (rule that[OF a1 a2])
+  qed
+  have dzy: "dist z y\<^sub>0 < 3 * rB / 8"
+  proof -
+    have "dist z y\<^sub>0 \<le> dist z x + dist x y\<^sub>0" by (rule dist_triangle)
+    moreover have "dist z x = dist x z" by (rule dist_commute)
+    ultimately show ?thesis using dz dxy by linarith
+  qed
+  have dzy': "rB / 8 < dist z y\<^sub>0"
+  proof -
+    have "dist x y\<^sub>0 \<le> dist x z + dist z y\<^sub>0" by (rule dist_triangle)
+    then show ?thesis using dz dxy by linarith
+  qed
+  have nzy: "norm (z - y\<^sub>0) = dist z y\<^sub>0" by (simp add: dist_norm)
+  have zy: "z \<noteq> y\<^sub>0" using dzy' rB0 by auto
+  have zin: "norm (z - y\<^sub>0) < rB" unfolding nzy using dzy rB0 by linarith
+  have pv: "ennreal (min (T / 2)
+      ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
+      + min (lsc_env tv x) (T / 2))
+      \<le> paper_v k L T K z"
+  proof (rule paper_v_ball_lower_plus[OF T0 L1 k1 kn Kc subB zy zin c0])
+    fix w :: "real^'n" assume "w \<in> ball y\<^sub>0 rB"
+    then have "lsc_env tv x \<le> tv w" by (rule vlow)
+    then show "lsc_env tv x \<le> enn2real (paper_v k L T K w)"
+      using tvdef by simp
+  qed
+  have sq: "(norm (z - y\<^sub>0))\<^sup>2 \<le> rB\<^sup>2 / 2"
+  proof -
+    have n0: "0 \<le> norm (z - y\<^sub>0)" by simp
+    have rBsq: "0 \<le> rB\<^sup>2" by simp
+    have "(norm (z - y\<^sub>0))\<^sup>2 \<le> (3 * rB / 8)\<^sup>2"
+      using zin dzy n0 unfolding nzy by (intro power_mono) auto
+    also have "\<dots> = 9 / 64 * rB\<^sup>2"
+      by (simp add: power2_eq_square field_simps)
+    also have "\<dots> \<le> 1 / 2 * rB\<^sup>2"
+      by (rule mult_right_mono[OF _ rBsq]) simp
+    also have "\<dots> = rB\<^sup>2 / 2" by simp
+    finally show ?thesis .
+  qed
+  have B: "rB\<^sup>2 / (4 * (real CARD('n) - 1))
+      \<le> (rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))"
+  proof -
+    have m0: "0 \<le> 2 * (real CARD('n) - 1)" using cn0 by auto
+    have a: "rB\<^sup>2 / 2 \<le> rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2" using sq by linarith
+    have eqd: "(rB\<^sup>2 / 2) / (2 * (real CARD('n) - 1))
+        = rB\<^sup>2 / (4 * (real CARD('n) - 1))"
+      by (simp add: field_simps)
+    have "(rB\<^sup>2 / 2) / (2 * (real CARD('n) - 1))
+        \<le> (rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))"
+      by (rule divide_right_mono[OF a m0])
+    then show ?thesis unfolding eqd[symmetric] .
+  qed
+  have mc: "min (lsc_env tv x) (T / 2) = lsc_env tv x" using cap by simp
+  have fin: "\<theta> + lsc_env tv x \<le> min (T / 2)
+      ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
+      + min (lsc_env tv x) (T / 2)"
+    unfolding \<theta>_def mc using B by linarith
+  have T0': "0 \<le> T" using T0 by linarith
+  have ltop: "paper_v k L T K z < \<top>"
+    using paper_v_neq_top[OF T0'] by (simp add: less_top)
+  have eq: "ennreal (tv z) = paper_v k L T K z"
+    unfolding tvdef using ltop by (simp add: ennreal_enn2real)
+  have "ennreal (\<theta> + lsc_env tv x) \<le> paper_v k L T K z"
+  proof -
+    have "ennreal (\<theta> + lsc_env tv x) \<le> ennreal (min (T / 2)
+        ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
+        + min (lsc_env tv x) (T / 2))"
+      by (rule ennreal_leI[OF fin])
+    then show ?thesis using pv by (rule order_trans)
+  qed
+  then have "ennreal (\<theta> + lsc_env tv x) \<le> ennreal (tv z)"
+    unfolding eq .
+  then have ge: "\<theta> + lsc_env tv x \<le> tv z"
+    using tv0[of z] by (simp add: ennreal_le_iff)
+  show False using ge vz th0 by linarith
+qed
+
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
