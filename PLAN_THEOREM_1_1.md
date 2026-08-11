@@ -5,7 +5,7 @@ order**. Everything named here is machine-checked in PIDE with
 `commands_failed = 0`, and there is no `sorry` anywhere in the session.
 
 Last updated 2026-08-09: §2.1's first results (`Paper_Viscosity.thy`) and the
-`path_stopping_time` refactor (DONE — see §2.1).
+`path_stopping_time` refactor (DONE — see §1.10).
 Restructured 2026-08-08, after **the DPP of Prop. 2.4 was proved at a
 STOPPING time** (§1.9), which emptied the old §2.1 and renumbered the queue.
 §1 is an INDEX of closed work — do not re-derive any of it, and do not expand
@@ -40,15 +40,16 @@ time from `K`.
 |---|---|---|
 | (0) | `v < ⊤` | **DONE for `paper_v`** (`paper_v_le_T`, and sharply `paper_v_le_ball_bound`) and for `val_fn` / `stopped_val_fn` |
 | (1) | regularity (usc) | **DONE for `paper_v`** — `Paper_Bridge.paper_v_usc_unconditional` |
-| (2) | `visc_sol k L (interior K) v` | **HALF DONE** — the **SUBSOLUTION inequality is PROVED with the paper's own operator** (1.9), orthogonality constraint included: `Paper_Viscosity.paper_v_visc_subsol`, unconditional for `0 < T`, `1 ≤ L`, closed `K`, `k < n`. Gap 1 (localisation) and Gap 2 (orthogonality) are both CLOSED, and neither needed stochastic integration — see §2.1. Left: **the supersolution half only** |
+| (2) | `visc_sol k L (interior K) v` | **DONE — BOTH halves, 2026-08-11.**  Subsolution `Paper_Viscosity.paper_v_visc_subsol`, with the paper's own operator (1.9), orthogonality included, in the envelope-FREE form (STRONGER than Def. 3.1(a)).  Supersolution `Paper_Viscosity.paper_v_supersol_lsc`, Def. 3.1(b) verbatim, plus `paper_v_supersol_lsc_bounded` with the horizon hypothesis discharged for bounded `K`.  Gaps 1 and 2 CLOSED; no stochastic integration and no weak SDE solution anywhere — §1.10 |
 | (3) | `v = 0` on `K − interior K` | ball case **DONE for `paper_v`** (`paper_v_boundary_zero`); interior value REALIZED for `n−k=1` (`Theorem_1_1.stopped_val_fn_ball_eq_2d`); general `n−k ≥ 2` **OPEN**, §2.2; transfer to `paper_v` §2.3 |
-| (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general` |
+| (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general`, and since 2026-08-11 stated over the paper's **Definition 3.1** rather than the repo's stronger envelope-free notions, so it is Theorem 4.2(a) as written — §1.11 |
+| (2)+(4) | `paper_v` IS the solution | **DONE modulo continuity** — `Theorem_1_1.paper_v_unique_viscosity_solution`.  The join needed Theorem_1_1 to import Paper_Viscosity: clause (2) lived in a LEAF and the comparison principle in Comparison_Assembly, so the two had never been visible to each other.  Open: continuity of `paper_v`, §2.0 |
 
 **Three value functions exist**, and the theorem must end up about ONE.
 `val_fn` (all `sufficiently_volatile_market` instances), `stopped_val_fn`
 (the locale plus the paper's stopped/killed side conditions) and `paper_v`
-(the class (1.7) as pair laws). Clauses (0), (1), (3)-ball and (4) are
-proved for `paper_v` itself. What still lives only on the market-side
+(the class (1.7) as pair laws). Clauses (0), (1), (2), (3)-ball and (4)
+are proved for `paper_v` itself. What still lives only on the market-side
 functions is the `n−k=1` realization inside clause (3)
 (`stopped_val_fn_ball_eq_2d`); transferring it is §2.3, and it is needed
 only if §2.2 turns out to want it.
@@ -65,9 +66,13 @@ one — see §1.7.
 
 | item | § | lines | risk |
 |---|---|---|---|
-| ~~§3, the two viscosity inequalities~~ | 2.1 | — | **DONE 2026-08-11**, and without the SDE — see below |
+| continuity of `paper_v` on `K` | 2.0 | ? | the ONLY thing between clause (2) and a characterisation; properly the paper's Theorem 4.3 |
 | clause (3) for `n−k ≥ 2` | 2.2 | 1,500–3,000 | high — needs spherical Brownian motion |
 | `stopped_val_fn ≤ paper_v` | 2.3 | ? | only if §2.2 wants it |
+
+Closed since this table was last priced, and moved into §1: the two viscosity
+inequalities (was §2.1, now §1.10 — and the weak SDE solution the table feared
+turned out not to be needed) and the uniqueness interface (now §1.11).
 
 ---
 
@@ -483,13 +488,7 @@ it off the `u`-cut; no componentwise decomposition),
 
 ---
 
-## 2. What is LEFT
-
-In dependency order. §2.2 and §2.3 are independent of §2.1 and can be
-interleaved. **§2.1 is the top of the queue.** (The DPP at a stopping time,
-which was §2.1 until 2026-08-08, is now §1.9.)
-
-### 2.1 §3 — the two viscosity inequalities → clause (2)
+### 1.10 Clause (2): the two viscosity inequalities — CLOSED 2026-08-11
 
 **Which half of the DPP feeds which inequality** (read out of §3.1 and §3.2
 of the paper on 2026-08-06; do not redo this):
@@ -773,9 +772,9 @@ positivity that Case 2's "locally constant" contradiction consumes.
 
 **Batches — ALL FIVE DONE.** (1)–(3) as planned; (4) Case 2 landed
 without the bump; (5) the uniqueness interface turned out to be a
-RE-BASING, not a reconciliation — see the new §2.1a below.
+RE-BASING, not a reconciliation — see the new §1.11 below.
 
-### 2.1a The uniqueness interface — RE-BASED, 2026-08-11
+### 1.11 The uniqueness interface — RE-BASED on Definition 3.1, 2026-08-11
 
 Batch (5) was mis-scoped as "reconciliation". What it actually needed was
 to re-base the whole comparison/uniqueness chain on the paper's
@@ -821,6 +820,29 @@ proved is upper semicontinuity; `visc_supersol_lsc_iff_env` needs both.
 The paper's Theorem 1.1 speaks of the unique UPPER SEMICONTINUOUS
 solution, so closing this properly means the paper's Theorem 4.3
 (comparison with semicontinuous data), not more work on §2.1.
+
+---
+
+## 2. What is LEFT
+
+In dependency order.  **§2.0 is the top of the queue** — it is all that stands
+between clause (2) and a genuine characterisation.  §2.2 and §2.3 are
+independent of it.  (The DPP at a stopping time, which was §2.1 until
+2026-08-08, is now §1.9; the two viscosity inequalities, which were §2.1 until
+2026-08-11, are now §1.10, and the uniqueness interface is §1.11.)
+
+### 2.0 Continuity of `paper_v` on `K` — the last gap in clause (2)
+
+`paper_v_unique_viscosity_solution` (§1.11) carries exactly one hypothesis that
+is not discharged: `isCont (\<lambda>z. enn2real (paper_v k L T K z)) y` for `y \<in> K`.
+What is proved is UPPER semicontinuity (`paper_v_usc_unconditional`);
+`visc_supersol_lsc_iff_env` needs both, since it rests on `lsc_env u = u`.
+
+**Do not attack this by proving `paper_v` continuous.**  The paper's Theorem
+1.1 asserts the unique UPPER SEMICONTINUOUS viscosity solution, so continuity
+would be a STRONGER statement than the paper makes, and the intended route is
+the paper's **Theorem 4.3** — comparison with semicontinuous boundary data.
+That is a Section-4 job, not more work on §1.10.
 
 ### 2.2 Clause (3) for general `n − k ≥ 2`
 
