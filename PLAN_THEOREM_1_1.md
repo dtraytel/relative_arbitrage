@@ -885,6 +885,23 @@ checked refutation, all at the `comparison_two_domain` site.
   so at `|x| = √ε` the gap is `≥ 1/2` for EVERY `ε`.  Sup-convolutions of usc
   functions decrease to them pointwise, never uniformly.
 
+**The CI core needs NO refactor.**  `comparison_supconv_maximiser_complete_gen`
+— the theorem the whole chain funnels into — is already stated with an
+ABSTRACT `Ω`, and `comparison_from_localised_maximiser_gen` instantiates
+`Ω := interior K` only at the call site.  So what has to be rebuilt is only
+the wrappers that manufacture its `mxK` / `subu` / `subw` hypotheses.
+
+**Enablers, all proved.**
+* `visc_subsol_at_local_min` (`Envelopes`) — a test function touching from
+  above at a local MINIMUM of itself gives `ell_op ≤ 1` for free.  Hence the
+  extension of `u` by a constant BELOW its minimum is a subsolution off `K`,
+  and combined with the Ω-generic `visc_subsol_env_imp_visc_subsol` at gate
+  points, Definition 3.1's gated Ω becomes the OPEN set `UNIV − S` with
+  `S = {x ∈ K − interior K. u x ≤ 0}` compact — exactly the shape the
+  Ω-generic core consumes.
+* `two_domain_doubled_maximiser`, `two_domain_gap`,
+  `doubled_maximiser_in_gate`, `supconv_attain_gate_open` (front end, `7b54926`).
+
 **Front end: DONE** (2026-08-11, `7b54926`).  The genuinely new part —
 as opposed to a refactor of the existing chain — is proved:
 * `two_domain_doubled_maximiser` — for usc `u` and lsc `w`, both bounded,
@@ -1214,7 +1231,11 @@ are already field-parametric.
   `ess_inf_time Q (pexit \<dots>) = t\<^sup>*` (`ess_inf_time_const`, Theorem_1_1 —
   move it or inline it), and `paper_v \<ge> t\<^sup>*` is the DEFINITION of the sup —
   no DPP, no conditioning.  Needs `t\<^sup>* \<le> T`, hence the horizon hypothesis.
-* **E4 — endgame** (Theorem_1_1).  `x` interior, `\<noteq> 0`: E3 + the upper
+* **E4 — DONE** (2026-08-11, `ae624b4`): `example_3_1_from_lower` — given the
+  interior lower bound at nonzero points, Example 3.1 holds at EVERY `x`.
+  Three of the four cases were already available (`paper_v_zero_outside`,
+  `paper_v_boundary_zero`, `paper_v_le_ball_bound`); the centre is by usc.
+  So E2/E3 are the ONLY missing input to Example 3.1.  Original sketch: endgame (Theorem_1_1).  `x` interior, `\<noteq> 0`: E3 + the upper
   bound.  `x = 0`: usc — `limsup\<^sub>{x \<rightarrow> 0} v(x) \<le> v(0)` gives
   `v(0) \<ge> r\<^sup>2/(n-k)` from E3 along `x \<rightarrow> 0`, and `\<le>` from the ball bound;
   do NOT try to run the field from the centre (the clamp sits there).
