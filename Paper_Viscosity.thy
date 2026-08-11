@@ -9850,6 +9850,263 @@ proof -
     by (rule tendsto_sandwich[OF ev0 ev tendsto_const glim])
 qed
 
+subsection \<open>The limit member grows along the quadratic, almost surely\<close>
+
+text \<open>Batch 3e(ii).  Combining the weak-limit transfer with the vanishing
+  bad events: SOME class member \<open>P\<close> satisfies, almost surely, for EVERY
+  time \<open>t\<close> --- not just rational ones --- that staying strictly inside
+  the ball through \<open>t\<close> forces the quadratic to grow at rate \<open>cm/2\<close>.
+  The countable skeleton (rational \<open>t\<close>, margins \<open>1/(n+1)\<close>) comes from
+  @{thm [source] eulerp_weak_limit} + @{thm [source] eulerp_bad_event_null}
+  + @{thm [source] open_quad_bad_event}; the upgrade to real \<open>t\<close> is
+  pathwise, using only that members of the path space are continuous.\<close>
+
+lemma quad_eval_cont:
+  fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
+    and M :: "real^'n^'n" and c :: real
+  assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
+  shows "continuous_on {0..c} (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
+      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
+proof -
+  have wc: "continuous_on {0..c} \<omega>" by (rule mspace_path_metricD[OF wm])
+  have c0: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p - x)"
+    by (intro continuous_intros)
+  have c1: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF matvec_blin] c0]) auto
+  have cq: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_inner_right] c0]) auto
+  have cin: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+        (fst p - x) \<bullet> (M *v (fst p - x)))"
+    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner c0 c1])
+  have contf: "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
+    by (intro continuous_on_add continuous_on_mult
+        continuous_on_const cq cin)
+  show ?thesis
+    by (rule continuous_on_compose2[OF contf wc]) auto
+qed
+
+lemma quad_good_rat_to_real:
+  fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
+    and M :: "real^'n^'n" and c cm rb t :: real
+  assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
+    and rat: "\<And>r. r \<in> \<rat> \<Longrightarrow> 0 < r \<Longrightarrow> r \<le> c \<Longrightarrow>
+      (\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> ball x rb) \<Longrightarrow>
+      r * cm / 2 \<le> q \<bullet> (fst (\<omega> r) - x)
+        + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))"
+    and t0: "0 < t" and tc: "t \<le> c"
+    and inb: "\<And>s. s \<in> {0..t} \<Longrightarrow> fst (\<omega> s) \<in> ball x rb"
+  shows "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+      + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+proof -
+  define g where "g = (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
+      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
+  have gc: "continuous_on {0..c} g"
+    unfolding g_def by (rule quad_eval_cont[OF wm])
+  have exr: "\<exists>r. r \<in> \<rat>
+      \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t" for j
+  proof -
+    have "max 0 (t - inverse (real (Suc j))) < t"
+      using t0 by (simp add: max_less_iff_conj)
+    then show ?thesis
+      using Rats_dense_in_real[of
+          "max 0 (t - inverse (real (Suc j)))" t] by blast
+  qed
+  have exr': "\<forall>j. \<exists>r. r \<in> \<rat>
+      \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t"
+    using exr by blast
+  obtain rj where rjprop: "\<forall>j. rj j \<in> \<rat>
+      \<and> max 0 (t - inverse (real (Suc j))) < rj j \<and> rj j < t"
+    using choice[OF exr'] by blast
+  have rjQ: "rj j \<in> \<rat>" for j using rjprop by blast
+  have rjl: "max 0 (t - inverse (real (Suc j))) < rj j" for j
+    using rjprop by blast
+  have rju: "rj j < t" for j using rjprop by blast
+  have rj0: "0 < rj j" for j
+  proof -
+    have "(0::real) \<le> max 0 (t - inverse (real (Suc j)))" by simp
+    then show ?thesis using rjl[of j] by linarith
+  qed
+  have rjc: "rj j \<le> c" for j using rju[of j] tc by linarith
+  have glow: "rj j * cm / 2 \<le> g (rj j)" for j
+    unfolding g_def
+  proof (rule rat)
+    show "rj j \<in> \<rat>" by (rule rjQ)
+    show "0 < rj j" by (rule rj0)
+    show "rj j \<le> c" by (rule rjc)
+    show "\<forall>s\<in>{0..rj j}. fst (\<omega> s) \<in> ball x rb"
+    proof
+      fix s assume "s \<in> {0..rj j}"
+      then have "s \<in> {0..t}" using rju[of j] by auto
+      then show "fst (\<omega> s) \<in> ball x rb" by (rule inb)
+    qed
+  qed
+  have rjlim: "rj \<longlonglongrightarrow> t"
+  proof (rule tendsto_sandwich[of
+      "\<lambda>j. t - inverse (real (Suc j))" rj sequentially "\<lambda>_. t"])
+    show "\<forall>\<^sub>F j in sequentially. t - inverse (real (Suc j)) \<le> rj j"
+    proof (intro always_eventually allI)
+      fix j
+      have "t - inverse (real (Suc j))
+          \<le> max 0 (t - inverse (real (Suc j)))"
+        by (rule max.cobounded2)
+      then show "t - inverse (real (Suc j)) \<le> rj j"
+        using rjl[of j] by linarith
+    qed
+    show "\<forall>\<^sub>F j in sequentially. rj j \<le> t"
+      by (intro always_eventually allI less_imp_le rju)
+    show "(\<lambda>j. t - inverse (real (Suc j))) \<longlonglongrightarrow> t"
+      using tendsto_diff[OF tendsto_const
+          LIMSEQ_inverse_real_of_nat, of t] by simp
+    show "(\<lambda>_. t) \<longlonglongrightarrow> t" by (rule tendsto_const)
+  qed
+  have gcomp: "(\<lambda>j. g (rj j)) \<longlonglongrightarrow> g t"
+  proof -
+    have inS: "\<forall>n. rj n \<in> {0..c}"
+      using rj0 rjc by (auto intro: less_imp_le)
+    have tS: "t \<in> {0..c}" using t0 tc by auto
+    have "(g \<circ> rj) \<longlonglongrightarrow> g t"
+      using continuous_on_sequentially[THEN iffD1, OF gc] inS tS rjlim
+      by blast
+    then show ?thesis by (simp add: o_def)
+  qed
+  have lim1: "(\<lambda>j. rj j * cm / 2) \<longlonglongrightarrow> t * cm / 2"
+    by (rule tendsto_divide[OF
+        tendsto_mult[OF rjlim tendsto_const] tendsto_const]) simp
+  have "t * cm / 2 \<le> g t"
+    by (rule LIMSEQ_le[OF lim1 gcomp]) (use glow in blast)
+  then show ?thesis unfolding g_def .
+qed
+
+theorem eulerp_limit_good:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and q x :: "real^'n" and c rb cm L :: real
+  assumes c0: "0 < c" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and sym: "transpose M = M" and rb0: "0 \<le> rb"
+    and kill: "\<And>z. transpose (SF z) *v
+        (q + M *v (closest_point (cball x rb) z - x)) = 0"
+    and marg: "\<And>z. cm \<le> trace (M ** (SF z ** transpose (SF z)))"
+  shows "\<exists>P \<in> paper_pair_class k L c x. AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb) \<longrightarrow>
+      t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+proof -
+  let ?pm = "path_metric c :: ('n pairpath) metric"
+  define Us where "Us = (\<lambda>r \<beta> :: real. {\<omega> \<in> mspace ?pm.
+      (\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> ball x rb)
+      \<and> q \<bullet> (fst (\<omega> r) - x)
+        + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))
+        < r * cm / 2 - \<beta>})"
+  obtain P where P: "P \<in> paper_pair_class k L c x"
+    and Praw: "\<forall>U b'. openin (mtopology_of ?pm) U \<longrightarrow>
+      (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U) \<longlonglongrightarrow> b' \<longrightarrow>
+      measure P U \<le> b'"
+    using eulerp_weak_limit[OF c0 L1 SFc SFs] by blast
+  interpret FP: prob_space P by (rule paper_pair_class_prob[OF P])
+  have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
+    by (rule paper_pair_class_sets[OF P])
+  have spaceP: "space P = mspace ?pm"
+    by (rule space_of_path_sets[OF setsP])
+  have AErn: "AE \<omega> in P. \<omega> \<notin> Us r (inverse (real (Suc n)))"
+    if r0: "0 < r" and rc: "r \<le> c" for r and n :: nat
+  proof -
+    have inv0: "(0::real) < inverse (real (Suc n))" by simp
+    have opn: "openin (mtopology_of ?pm) (Us r (inverse (real (Suc n))))"
+      unfolding Us_def
+      by (rule open_quad_bad_event[OF less_imp_le[OF r0] rc])
+    have tnd: "(\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i)
+        (Us r (inverse (real (Suc n))))) \<longlonglongrightarrow> 0"
+      unfolding Us_def
+      by (rule eulerp_bad_event_null[OF c0 L1 SFc SFs sym rb0 kill marg
+          r0 rc inv0])
+    have le0: "measure P (Us r (inverse (real (Suc n)))) \<le> 0"
+      using Praw opn tnd by blast
+    have m0: "measure P (Us r (inverse (real (Suc n)))) = 0"
+      using le0 measure_nonneg[of P "Us r (inverse (real (Suc n)))"]
+      by linarith
+    have Uset: "Us r (inverse (real (Suc n))) \<in> sets P"
+      using borel_of_open[OF opn] by (simp add: setsP)
+    have "Us r (inverse (real (Suc n))) \<in> null_sets P"
+    proof (rule null_setsI)
+      show "emeasure P (Us r (inverse (real (Suc n)))) = 0"
+        using m0 by (simp add: FP.emeasure_eq_measure)
+      show "Us r (inverse (real (Suc n))) \<in> sets P" by (rule Uset)
+    qed
+    then show ?thesis by (rule AE_not_in)
+  qed
+  define I where "I = {r. r \<in> \<rat> \<and> 0 < r \<and> r \<le> c}"
+  have cI: "countable I"
+    unfolding I_def by (rule countable_subset[OF _ countable_rat]) auto
+  have AEall: "AE \<omega> in P. \<forall>r\<in>I. \<forall>n::nat.
+      \<omega> \<notin> Us r (inverse (real (Suc n)))"
+    unfolding AE_ball_countable[OF cI]
+  proof
+    fix r assume "r \<in> I"
+    then have r0: "0 < r" and rc: "r \<le> c" unfolding I_def by auto
+    show "AE \<omega> in P. \<forall>n::nat. \<omega> \<notin> Us r (inverse (real (Suc n)))"
+      unfolding AE_all_countable by (intro allI AErn[OF r0 rc])
+  qed
+  have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+  show ?thesis
+  proof (intro bexI[OF _ P])
+    show "AE \<omega> in P. \<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow>
+        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb) \<longrightarrow>
+        t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+      using AEall sp
+    proof (eventually_elim)
+      case (elim \<omega>)
+      have wm: "\<omega> \<in> mspace ?pm" using elim(2) by (simp add: spaceP)
+      have notin: "\<And>r n. r \<in> I \<Longrightarrow>
+          \<omega> \<notin> Us r (inverse (real (Suc n)))"
+        using elim(1) by blast
+      show ?case
+      proof (intro allI impI)
+        fix t assume t0: "0 < t" and tc: "t \<le> c"
+          and inb: "\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb"
+        have rat: "r * cm / 2 \<le> q \<bullet> (fst (\<omega> r) - x)
+            + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))"
+          if rQ: "r \<in> \<rat>" and r0: "0 < r" and rc: "r \<le> c"
+            and rball: "\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> ball x rb" for r
+        proof (rule ccontr)
+          assume nle: "\<not> r * cm / 2 \<le> q \<bullet> (fst (\<omega> r) - x)
+              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))"
+          have pos: "0 < r * cm / 2 - (q \<bullet> (fst (\<omega> r) - x)
+              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x))))"
+            using nle by simp
+          obtain n where nsm: "inverse (real (Suc n))
+              < r * cm / 2 - (q \<bullet> (fst (\<omega> r) - x)
+                + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x))))"
+            using reals_Archimedean[OF pos] by auto
+          have drop: "q \<bullet> (fst (\<omega> r) - x)
+              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))
+              < r * cm / 2 - inverse (real (Suc n))"
+            using nsm by linarith
+          have "\<omega> \<in> Us r (inverse (real (Suc n)))"
+            unfolding Us_def using wm rball drop by auto
+          moreover have "r \<in> I" unfolding I_def using rQ r0 rc by simp
+          ultimately show False using notin by blast
+        qed
+        show "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+            + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+        proof (rule quad_good_rat_to_real[OF wm rat t0 tc])
+          fix s assume "s \<in> {0..t}"
+          then show "fst (\<omega> s) \<in> ball x rb" using inb by blast
+        qed
+      qed
+    qed
+  qed
+qed
+
 section \<open>What remains for clause (2)\<close>
 
 text \<open>Where clause (2) stands after this file.
