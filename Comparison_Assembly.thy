@@ -14522,35 +14522,51 @@ text \<open>The paper's Theorem 4.2(b).  \<^bold>\<open>This is the one statemen
     \<open>\<Phi>\<^sup>\<epsilon>(x\<^sup>\<epsilon>,y\<^sup>\<epsilon>) \<le> 0\<close>; since \<open>\<Phi>\<^sup>\<epsilon>(x\<^sup>\<epsilon>,y\<^sup>\<epsilon>) \<ge> \<Phi>\<^sup>\<epsilon>(x,x) = \<kappa> u x - w x\<close> for
     \<open>x \<in> K\<close>, letting \<open>\<kappa> \<uparrow> 1\<close> gives \<open>u \<le> w\<close> on \<open>K\<close>.
 
-  \<^bold>\<open>CAVEAT --- read \<section>4 of the PDF before implementing the boundary sub-case.\<close>
-  The four items above were transcribed on 2026-08-11 from an automated
-  summary of \<section>4, not from the source, and the boundary step as transcribed
-  does NOT visibly close.  Concretely: freezing \<open>y = y\<^sup>\<epsilon>\<close> makes
-  \<open>\<phi>(x) = w y\<^sup>\<epsilon> + \<epsilon>\<^sup>-\<^sup>1\<bar>x - y\<^sup>\<epsilon>\<bar>\<^sup>4\<close> a legitimate Definition 3.1(a) test function
-  touching \<open>\<kappa> u\<close> from above at \<open>x\<^sup>\<epsilon>\<close> GLOBALLY over \<open>K\<close> (so the gate really is
-  usable at a boundary point, with no local structure needed), and freezing
-  \<open>x = x\<^sup>\<epsilon>\<close> makes \<open>\<psi>(y) = \<kappa> u x\<^sup>\<epsilon> - \<epsilon>\<^sup>-\<^sup>1\<bar>x\<^sup>\<epsilon> - y\<bar>\<^sup>4\<close> touch \<open>w\<close> from below at
-  \<open>y\<^sup>\<epsilon>\<close>.  Both jets carry the SAME gradient \<open>p\<close>, but the Hessians are \<open>X\<close> and
-  \<open>-X\<close> with \<open>X = D\<^sup>2(\<epsilon>\<^sup>-\<^sup>1\<bar>\<cdot>\<bar>\<^sup>4)(x\<^sup>\<epsilon> - y\<^sup>\<epsilon>) \<succeq> 0\<close>, so the ordering \<open>X \<preceq> Y\<close> that
-  degenerate ellipticity needs FAILS unless \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close>.  That is exactly the
-  information Crandall--Ishii supplies and one-variable-at-a-time freezing
-  loses.  So either the paper applies a one-sided localisation of
-  Crandall--Ishii at the boundary as well, or its boundary argument is
-  organised differently from the summary.  Resolve that from the source
-  first; do not implement the sketch as written.
+  \<^bold>\<open>RESOLUTION of the boundary worry (2026-08-11, Fable).\<close>  The freezing
+  argument recorded in an earlier caveat here was indeed a dead end, but no
+  boundary Crandall--Ishii is needed either.  Two observations dissolve it:
 
-  Why it does not follow from what is already here.  The existing chain
-  funnels into \<open>comparison_soft_complete\<close>, whose
-  \<open>doubling_localised_maximiser_soft\<close> step uses the boundary data on ALL of
-  \<open>K - interior K\<close> to push the doubled maximisers a fixed distance \<open>\<kappa>\<^sub>g\<close> AWAY
-  from the boundary, and then reads the sub/supersolution properties off in
-  the LOCAL form \<open>visc_subsol k L (interior K)\<close> --- a local touching over a
-  ball, which a boundary point does not have.  Here the maximiser is allowed
-  to sit on \<open>\<partial>K\<close>, and Definition 3.1's GLOBAL touching is what is available
-  there.  So the route is not to widen \<open>\<Omega>\<close> in the existing chain but to run
-  the paper's quartic doubling directly, reusing the Crandall--Ishii core
-  (\<open>Sup_Convolution\<close>, \<open>comparison_soft_off_diagonal\<close>) for the interior
-  sub-case only.\<close>
+  \<^item> \<^bold>\<open>The gate is ALWAYS open at the doubled maximiser.\<close>  If the conclusion
+    fails, the max \<open>M\<close> of \<open>\<theta> u - w\<close> over \<open>K\<close> is \<open>> 0\<close> (since \<open>w \<ge> 0\<close>, a
+    failure point \<open>x\<close> has \<open>u x > w x \<ge> 0\<close>, and \<open>\<theta>\<close> close to \<open>1\<close> keeps
+    \<open>\<theta> u x - w x > 0\<close>).  At any maximiser \<open>(x\<^sup>h, y\<^sup>h)\<close> of the doubled
+    functional, \<open>\<theta> u x\<^sup>h - w y\<^sup>h - pen \<ge> M > 0\<close> with \<open>w \<ge> 0\<close> and \<open>pen \<ge> 0\<close>
+    forces \<open>u x\<^sup>h > 0\<close>.  So \<open>x\<^sup>h\<close> lies in the gated \<open>\<Omega>\<close> \<^emph>\<open>whether or not it is
+    interior\<close> --- there is no boundary sub-case on the \<open>u\<close>-side at all.  On
+    the \<open>y\<close>-side, \<open>dist(K, \<partial>K') > 0\<close> plus the penalty keeps \<open>y\<^sup>h\<close> interior
+    to \<open>K'\<close> once the penalty coefficient is large (or the supconv radius
+    small); this is the only localisation needed, and it is one-sided.
+
+  \<^item> \<^bold>\<open>The repo's own supconv/Jensen route never needed interiority
+    analytically.\<close>  \<open>supconv\<close> is taken over UNIV of the (constant-below-min)
+    extension, Jensen's lemma runs at ANY maximiser of a semiconvex
+    function, and \<open>test_fun_at_quartic_shift\<close> / \<open>quad_bdd_above_on_bounded\<close>
+    build GLOBAL touchings over \<open>K\<close>.  Interiority entered ONLY in the
+    conversion lemmas \<open>visc_subsol_env_imp_visc_subsol\<close> /
+    \<open>visc_supersol_env_imp_jet\<close>, which manufacture a LOCAL touching because
+    the LOCAL definitions demanded one.  Definition 3.1's env form accepts
+    the global touching directly, so the fix is to re-run those conversion
+    proofs with \<open>\<Omega> = interior K \<union> {x \<in> K. 0 < u x}\<close>, dropping the
+    ball-shrinking step, and then mirror \<open>comparison_soft_complete\<close> +
+    \<open>max_principle_boundary_holds\<close> with (i) the boundary-attained max \<open>xb\<close>
+    replaced by the set \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> (on which
+    \<open>\<theta> u - w \<le> 0 < M\<close> gives the gap for free, and which may be EMPTY ---
+    handle that case by noting no localisation is then needed at all), and
+    (ii) the far-from-boundary bookkeeping \<open>farx\<close> applied to \<open>S\<close> instead of
+    \<open>K - interior K\<close>, and \<open>fary\<close> to \<open>\<partial>K'\<close>.
+
+  In short: P4 = the existing 4.2(a) proof with the localisation target
+  changed from \<open>\<partial>K\<close> to \<open>S\<close> and the conversion lemmas re-proved gate-aware.
+  No new analysis, no new CI.  Estimated 800--1,500 lines, LOW mathematical
+  risk.
+
+  \<^bold>\<open>P6 note\<close> (the other open item, in \<open>Theorem_1_1\<close>): at a boundary \<open>x\<close> with
+  \<open>v x > 0\<close>, the optimiser \<open>P\<close> from \<open>paper_v_attained\<close> has
+  \<open>essinf(exit) \<ge> v x > 0\<close>, so \<open>P\<close>-a.s. the path stays in \<open>K\<close> up to time
+  \<open>v x\<close>; every use of \<open>x \<in> interior K\<close> in \<open>paper_v_visc_subsol\<close>'s proof is
+  there to keep the small-ball stopping inside the REGION WHERE THE PROCESS
+  LIVES, which the essinf bound supplies directly.  Audit the \<open>xi\<close> uses; none
+  should touch the geometry of \<open>K\<close> beyond that.\<close>
 
 theorem comparison_two_domain:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"
