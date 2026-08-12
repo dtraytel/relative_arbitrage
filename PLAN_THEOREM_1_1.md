@@ -916,103 +916,68 @@ One `Ω` was not enough after all, and the fix was a signature change only.
   base point (not just the one `supconv_attained_ball` produces), because
   `u z − d²/(2ε) = supconv u ε x ≥ u x`.  So `radu` + `subu` still give `atu`.
 
-#### P4 step 2 — OPEN: the two-domain wrapper
+#### P4 step 2 — the two-domain wrapper: ALL PIECES PROVED, assembly OPEN
 
-What is left is to manufacture `mxK` and `atu`/`atw` in the two-domain
-setting, i.e. to rebuild `doubling_localised_maximiser_soft` +
-`comparison_from_localised_maximiser_gen` over `K × K'`.  The pieces:
+Everything the Crandall--Ishii core asks for in the two-domain setting is now
+a proved lemma in `Comparison_Assembly`.  What is left is the ASSEMBLY: pick
+the parameters consistently and run the two branches.  No new mathematics.
 
-1. **`atu` from the gate.**  `atu` needs `z ∈ Ω⇩u` for every attainment point
-   `z` of `supconv (θu) ε` at base points within `ρ` of `x⇧h`.  Take
-   `Ω⇩u := {z. 0 < u z}` and add the hypothesis `u ≤ 0 off K` (TRUE for
-   `paper_v`, by `paper_v_zero_outside`), so `Ω⇩u ⊆ K` and, with the gate,
-   `Ω⇩u ⊆ interior K ∪ {x ∈ K − interior K. 0 < u x}` — exactly the set
-   Definition 3.1(a) supplies.  `visc_subsol` is monotone in `Ω`, so
-   `visc_subsol k L Ω⇩u u` follows from `visc_subsol_env_imp_visc_subsol`.
-   By `supconv_attain_gate_open` it then suffices that
-   `supconv (θu) ε x > 0` for every `x` within `ρ` of `x⇧h`.  That is where
-   the FREE parameter `D⇩0 > 0` of the core earns its keep: the shifted-Jensen
-   maximality at `z⇩i` gives
-   `supconv (θu) ε (fst z⇩i) ≥ Φ(ξ⇩0) − |p⇩i| ρ ≥ M − |p⇩i| ρ` (using
-   `supconv (−w) ≤ 0`, which needs `w ≥ 0` globally, and `Pn ≥ 0`), and
-   `|p⇩i| ≤ D⇩0/(2+i) · ρ²/(4r)`, so choosing `D⇩0` small keeps it positive
-   for EVERY `i`.  `M > 0` is `comparison_failure_gives_theta` +
-   `two_domain_doubled_maximiser`.
-2. **`atw` on the y-side** is free: `two_domain_gap` gives
-   `dist(K, ∂K') > 0`, and the penalty pins `y⇧h` to `x⇧h ∈ K` — the standard
-   `Pn(x−y) ≥ c|x−y|⁴` + boundedness estimate `|x⇧h − y⇧h| ≤ (2B/c)^{1/4}`,
-   made smaller than the gap by taking the penalty coefficient large.
-3. **`mxK` is the REAL remaining obstruction.**  The core wants maximality of
-   the SUP-CONVOLVED functional over a genuine ball `cball ξ⇩0 r` in
-   `ℝⁿ × ℝⁿ`, and if `x⇧h ∈ ∂K` no such ball lies in `K × K'`.  The classical
-   fix is to extend `u` by a constant BELOW its minimum off `K` (legitimate:
-   `visc_subsol_at_local_min` makes the extension a subsolution off `K` for
-   free, and `usc_extension_bounded` keeps it usc), so that the doubled
-   functional has a GLOBAL max at `ξ⇩0`; then take a maximiser `ξ^ε` of the
-   sup-convolved functional over a fixed compact ball and show `ξ^ε → ξ⇩0`
-   along a subsequence by usc — the classical CI-for-usc argument, which does
-   NOT need `supconv_uniform_upper`.  This is the piece to build next, and it
-   is the only genuinely new mathematics left in the whole development.
+**The `mxK` obstruction is gone** (`c5393dd`).  The earlier note said the
+localisation at a boundary maximiser was the only genuinely new mathematics
+left, and predicted a compactness/subsequence argument.  The route that works
+is simpler — the constant extension:
 
-**Enablers, all proved.**
-* `visc_subsol_at_local_min` (`Envelopes`) — a test function touching from
-  above at a local MINIMUM of itself gives `ell_op ≤ 1` for free.  Hence the
-  extension of `u` by a constant BELOW its minimum is a subsolution off `K`,
-  and combined with the Ω-generic `visc_subsol_env_imp_visc_subsol` at gate
-  points, Definition 3.1's gated Ω becomes the OPEN set `UNIV − S` with
-  `S = {x ∈ K − interior K. u x ≤ 0}` compact — exactly the shape the
-  Ω-generic core consumes.
-* `two_domain_doubled_maximiser`, `two_domain_gap`,
-  `doubled_maximiser_in_gate`, `supconv_attain_gate_open` (front end, `7b54926`).
+* `usc_extend_const_below` — extending an usc `u` off a closed `K` by a
+  constant at or below its minimum keeps it usc.
+* `visc_subsol_env_agrees` — `visc_subsol_env k L K Ω u` reads `u` ONLY on
+  `K` (global touching, and `Ω ⊆ K`), so Definition 3.1(a) transfers to the
+  extension verbatim.  Hence so does `visc_subsol_env_imp_visc_subsol`.
+* `supconv_extend_far_le` — far from `K` the sup-convolution of the extension
+  is back down at the constant (via `supconv_le_of_local_bound_usc`).
+* `doubled_maximiser_over_UNIV_snd` — so a maximiser of the doubled
+  SUP-CONVOLVED functional over the compact `Q × K'` maximises over all of
+  `UNIV × K'`, provided a witness `z` beats `β + B⇩w`.
+* `mxK_of_UNIV_snd` — and maximality over `UNIV × K'` restricts to
+  `cball ξ⇩0 r` as soon as the `y`-coordinate has room.  **Nothing is asked of
+  the `x`-coordinate**, so `x⇧h ∈ ∂K` costs nothing.
 
-**Front end: DONE** (2026-08-11, `7b54926`).  The genuinely new part —
-as opposed to a refactor of the existing chain — is proved:
-* `two_domain_doubled_maximiser` — for usc `u` and lsc `w`, both bounded,
-  `θu(x) − w(y) − pen(x−y)` attains its max over the compact product `K × K'`.
-  No continuity used.  This is the step the paper opens 4.2(b) with.
-* `two_domain_gap` — `K` compact inside `interior K'` gives a uniform positive
-  distance to `K' − interior K'` (`separate_compact_closed`).  That is the
-  y-side avoidance, and it is ALL the localisation the doubling needs.
-* Supporting, in `Envelopes`: the attainment lemmas
-  (`lsc_attains_inf_gen`, `usc_attains_sup_gen`, `_ex` forms) are now stated
-  for an ARBITRARY metric space, which is what makes them apply to the
-  product; plus `usc_eps_add`, `usc_eps_scale`, `usc_eps_of_continuous` —
-  usc calculus in the `ε`-form.
+**The `atu` (u-side) interface**: `cont_pos_near`,
+`attain_gate_of_positive`, `atu_of_positive_ball`.  Take
+`Ω⇩u = {q. 0 < u q}` and add the hypothesis `u ≤ 0 off K` (TRUE for `paper_v`,
+`paper_v_zero_outside`), so `Ω⇩u ⊆ K` and `Ω⇩u` sits inside Definition 3.1's
+gated set; `visc_subsol_mono_dom` restricts the subsolution property to it.
+Positivity of `supconv (θu) ε` on the `ρ`-ball comes from continuity plus the
+freedom to shrink `ρ`.
 
-**What is left of P4: the chain refactor.**  Re-run
-`doubling_localised_maximiser_soft` and `comparison_soft_complete` over
-`K × K'` with
+**The `fary` (w-side) interface**: `pin_of_penalty_bound`, `fary_of_pin`,
+on top of the existing `soft_pen_coercive_outside` / `soft_pen_kappa_exists`.
 
-1. the **x-side boundary-avoidance DELETED** — it was the only consumer of
-   `supconv_uniform_upper`, and the gate replaces it;
-2. the **y-side avoidance kept** — and it is easy: `K ⊆ interior K'` gives
-   `dist(K, ∂K') > 0`, which beats the penalty for small `ε`, so `y^h` is
-   interior to `K'` and `cball y^h R_w ⊆ interior K'` for free.  (The ball
-   requirement in `comparison_soft_diagonal` is on the SUPERSOLUTION side; that
-   is exactly why the paper uses two domains.)
+**What the assembly still has to do.**  In `comparison_two_domain`, assuming
+`w x < u x`:
+1. `comparison_failure_gives_theta` → `θ ∈ (0,1)` and `M = θ u x − w x > 0`.
+2. Replace `w` by `w̃ = (λy. max (w y) 0)`: it agrees with `w` on `K'` (where
+   `w ≥ 0` by `w0`), so `supersol_jet` transfers on the OPEN `interior K'`
+   (`supersol_jet_congruent`-style lemma at the top of the core section), and
+   `− w̃ ≤ 0` gives `supconv (− w̃) ε ≤ 0` by `supconv_le` — which is what
+   `doubled_maximiser_gate_open` and `pin_of_penalty_bound` need.
+3. Replace `u` by `ũ = (λy. if y ∈ K then u y else C)` with `C` below both
+   `−B` and `(M − B⇩w)/θ`, and set `Q = {q. ∃b∈K. dist q b ≤ d}` for a `d`
+   with `2ε(B⇩u − θC) < d²`.  `Q` is compact (closed and bounded).
+4. `doubled_maximiser_over_UNIV_snd` with witness `z = x` gives `ξ⇩0`;
+   `Ψ(ξ⇩0) ≥ M` since `supconv ≥` the function and `soft_pen 0 = 0`.
+5. `pin_of_penalty_bound` + `fary_of_pin` + `two_domain_gap` give `fary`;
+   `cball_subset_interior_of_far_from_boundary` turns it into the ball, hence
+   `atw` (as at the existing `_gen` call site) and `mxK` via
+   `mxK_of_UNIV_snd`.
+6. `cont_pos_near` at `fst ξ⇩0` fixes `ρ`; then `atu_of_positive_ball`.
+7. Split on `fst ξ⇩0 = snd ξ⇩0`.  Off-diagonal: `comparison_soft_off_diagonal`
+   supplies `glb`/`rsmall`; feed `comparison_supconv_maximiser_complete_gen`
+   with `Ω⇩u = {u > 0}`, `Ω⇩w = interior K'`.  Diagonal: `comparison_soft_diagonal`
+   instantiated at `K := Q ∩ K'` — its ball requirement is on the SUPERSOLUTION
+   side and `K ⊆ K'°` makes it free.
 
-The Crandall–Ishii core (`Sup_Convolution`) is consumed unchanged.  Sizing:
-`K − interior K` threads through about EIGHT theorems —
-`doubling_localised_maximiser_soft`, `cball_subset_interior_of_far_from_boundary`,
-`cball_prod_subset_of_far_from_boundary`, `comparison_from_localised_maximiser`
-and its `_gen` / `_soft` variants, `comparison_soft_off_diagonal`,
-`comparison_soft_diagonal`, `comparison_soft_complete` — each needing its
-hypothesis list generalised from the pair `(interior K, K − interior K)` to
-`(Ω, S)` with `S` compact and `K − S ⊆ Ω`.  Mechanical, but `Comparison_Assembly`
-is a 21,000-command file (~20 min per reprocess), so budget it as a session of
-its own and do NOT start it without finishing it — a half-generalised chain
-does not typecheck.
+Cost estimate: 300–500 lines of parameter bookkeeping, one session.
 
-**P1 is not an item.**  The chain that got built never routes through
-`max_principle_boundary` — verified by walking
-`theorem_1_1_uniqueness_faithful` → `uniqueness_expandable` →
-`comparison_expandable` → `comparison_two_domain`.  `max_principle_boundary`
-is still `continuous_on`-based and is now consumed only by the SUPERSEDED
-`theorem_1_1_uniqueness_general` / `paper_v_unique_viscosity_solution`.
-
-(The DPP at a stopping time, which was §2.1 until 2026-08-08, is now §1.9; the
-two viscosity inequalities, which were §2.1 until 2026-08-11, are now §1.10,
-and the uniqueness interface is §1.11.)
 
 ### 2.0 Theorem 1.1 faithfully: the viscosity boundary condition and uniqueness among usc solutions (paper §4)
 
