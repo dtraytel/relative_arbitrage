@@ -522,6 +522,29 @@ next
     by (rule iexit_val_ge_of_extension[OF T Kc ext])
 qed
 
+subsection \<open>Towards the extension: cutting a glue back\<close>
+
+text \<open>Gluing a continuation onto a path at \<open>r\<close> and cutting back at \<open>r\<close>
+  returns the original path, so an extension built by
+  @{thm [source] exit_class_pglue_law} restricts to the law it extends.\<close>
+
+lemma pcut_pglue:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+  shows "pcut r (pglue r T \<omega> \<omega>') = pcut r \<omega>"
+proof (rule ext)
+  fix t :: real
+  show "pcut r (pglue r T \<omega> \<omega>') t = pcut r \<omega> t"
+  proof (cases "t \<in> {0..r}")
+    case True
+    then have "t \<in> {0..T}" using rT by auto
+    then show ?thesis using True by (simp add: pcut_def pglue_def)
+  next
+    case False
+    then show ?thesis by (auto simp: pcut_def)
+  qed
+qed
+
 (*<*)
 end
 (*>*)
