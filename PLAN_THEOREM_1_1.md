@@ -837,6 +837,11 @@ Theorem 1.1 rests on **exactly one** admitted step.
 |---|---|---|---|
 | **P4** | `comparison_two_domain` — the paper's Theorem 4.2(b) | `Comparison_Assembly.thy` | **the only `sorry` in the repo** |
 
+**§2.2 (Example 3.1) is CLOSED for general `k`, 2026-08-12** — E1, E2, E3, E4
+are all proved and nothing there is open any more.  See §2.2 below.  The
+`k = 1` shortcut recorded there was NOT taken: `Theorem_1_1.example_3_1` holds
+for every `1 ≤ k < CARD('n)`.
+
 **P6 is CLOSED** (`Paper_Viscosity.paper_v_subsol_bc`, 2026-08-11), so
 `theorem_1_1_uniqueness_faithful` no longer carries it as a hypothesis.  The
 audit came out the easy way but not for the predicted reason:
@@ -1182,89 +1187,66 @@ demonstrated pace.  Wall-clock is dominated by reprocessing: Envelopes edits
 ~50 min, a cold full load 3–4 h — batch accordingly (§3.2), and do ALL git
 operations before loading theories (§3.1, the PIDE pinning trap).
 
-### 2.2 Example 3.1 exactly, for every `k`
+### 2.2 Example 3.1 exactly, for every `k` — CLOSED 2026-08-12
 
-**Target** (the paper's Example 3.1, verbatim):
+**PROVED** (`Theorem_1_1.example_3_1`, commit `d9646b0`):
 
     theorem example_3_1:
-      1 \<le> k, k < n, 1 \<le> L, r > 0, T \<ge> r\<^sup>2 / (n - k)   (horizon inert)
+      assumes 1 \<le> k, k < CARD('n), 1 \<le> L, 0 < T, 0 < r,
+              r * r / real (CARD('n) - k) \<le> T
       shows enn2real (paper_v k L T (cball 0 r) x)
-              = max (r\<^sup>2 - norm x ^ 2) 0 / real (CARD('n) - k)
+              = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0
 
-`\<le>` is DONE for all `k`: `paper_v_le_ball_bound` gives exactly
-`(r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n-k)`, and `x \<notin> K` gives `pexit = 0`.  What is open is `\<ge>`,
-currently available only in the weakened form `paper_v_ball_lower` (rate
-`n - 1`, an annulus clamp, factors of 2, a `T/2` cap).  The route is the
-SUBSPACE-TANGENTIAL field; it needs no new probability — the Euler theorems
-are already field-parametric.
+The horizon hypothesis is NOT a weakening: a finite-horizon value function is
+capped by its horizon (`enn2real_paper_v_horizon_cap`), so without it the
+identity is FALSE at the centre.  It says only that the horizon does not bind.
 
-* **E1 — DONE** (`221ac56`), plus `tanpV_mv`, `tanpV_idem` (the field is a
-  PROJECTOR, so the Euler covariance equals it) and `tanpV_radial_kill` (the
-  radial drift vanishes, which is what makes the growth exact rather than
-  merely bounded) — the two facts E2 runs on.: `projmat` (sym/mv/trace/fix/idem/span_fix),
-  `orthonormal_dim_span`, `tanpV` (sym/quadform/trace/psd/eigen_ub/eigen_lb),
-  `tanpV_feasible`, `tanpV_trace_projmat`, `orthonormal_family_containing`.
-  Original sketch: the field (Paper_Viscosity, mirror the `tanp` block at 10833).
-  Fix a unit `x\<^sub>0 = x /\<^sub>R norm x` (case `x = 0` deferred to E4).  Build an
-  orthonormal family `b\<^sub>0 = x\<^sub>0, b\<^sub>1, \<dots>, b\<^sub>{n-k}` (induction on
-  `orthogonal_to_subspace_exists`, or reuse `symmetric_eigenbasis`
-  machinery), let `P = (\<Sum>i\<le>n-k. outer_prod (b i) (b i))` and `V = range P`.
-  Define `tanpV z = P - outer_prod (uV z) (uV z)` with `uV z = P *v z /\<^sub>R
-  norm (P *v z)`, clamped near `0` exactly as `tanSF` clamps.  Prove the
-  mirror of the `tanp_*` list: `_mv`, `_sym`, `_quadform`, `_psd`,
-  eigenvalues (`1` with multiplicity `n - k` on `V \<inter> (uV z)\<^sup>\<bottom>`, `0` with
-  multiplicity `k`), `trace = n - k`, `feasible k L 0` (descending
-  eigenvalues `(1,\<dots>,1,0,\<dots>)` give `\<lambda>\<^sub>{n-k} = 1 \<ge> 1`, `\<lambda>\<^sub>1 = 1 \<le> L`),
-  continuity of the clamped field.  All proofs mirror the existing ones;
-  the only new ingredient is `P` (idempotent, symmetric, `P *v b i = b i`).
-* **E2 — exact radial growth at rate `n - k`** (mirror
-  `tangential_exact_growth`).  Along the Euler chain for `tanpV`, on the
-  event of staying in the region: `\<bar>X\<^sub>t\<bar>\<^sup>2 = \<bar>x\<bar>\<^sup>2 + t * (n - k)`.  Two facts
-  make it exact and keep the old proof's shape: the motion stays in the
-  affine slice `x + V` (the field's range is `\<subseteq> V`), and on that slice
-  `P *v z = z`-component identities collapse `tanpV` to the old `tanp`
-  computation in `n - k + 1` ambient dimensions.  The clamp is FREE here:
-  the radius is nondecreasing, so a path started at `\<bar>x\<bar> > 0` never
-  approaches the clamped region — unlike `paper_v_ball_lower`, do NOT
-  introduce the annulus or the factor 2.
-* **E3 — exact essinf, no DPP** (this is SIMPLER than `paper_v_ball_lower`,
-  which needed the DPP to track the value at exit; here the exit time
-  itself is deterministic).  The Euler-limit member `Q` from `x` satisfies
-  a.s.: exit from `cball 0 r` at exactly `t\<^sup>* = (r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n-k)`.  Then
-  `ess_inf_time Q (pexit \<dots>) = t\<^sup>*` (`ess_inf_time_const`, Theorem_1_1 —
-  move it or inline it), and `paper_v \<ge> t\<^sup>*` is the DEFINITION of the sup —
-  no DPP, no conditioning.  Needs `t\<^sup>* \<le> T`, hence the horizon hypothesis.
-* **E4 — DONE** (2026-08-11, `ae624b4`): `example_3_1_from_lower` — given the
-  interior lower bound at nonzero points, Example 3.1 holds at EVERY `x`.
-  Three of the four cases were already available (`paper_v_zero_outside`,
-  `paper_v_boundary_zero`, `paper_v_le_ball_bound`); the centre is by usc.
-  So E2/E3 are the ONLY missing input to Example 3.1.  Original sketch: endgame (Theorem_1_1).  `x` interior, `\<noteq> 0`: E3 + the upper
-  bound.  `x = 0`: usc — `limsup\<^sub>{x \<rightarrow> 0} v(x) \<le> v(0)` gives
-  `v(0) \<ge> r\<^sup>2/(n-k)` from E3 along `x \<rightarrow> 0`, and `\<le>` from the ball bound;
-  do NOT try to run the field from the centre (the clamp sits there).
-  `\<bar>x\<bar> = r`: `paper_v_boundary_zero`.  `x \<notin> K`: `pexit = 0`.  Assemble
-  `example_3_1`.
+The `k = 1` shortcut recorded in earlier revisions was NOT taken — the result
+holds for every `1 \<le> k < CARD('n)`.
 
-**\<^bold>SHORTCUT for `k = 1`, found 2026-08-11.**  `tangential_exact_growth`
-(Paper_Viscosity) already gives EXACT growth at rate `real CARD('n) - 1`, and
-for `k = 1` that IS `real (CARD('n) - k)`.  So for `k = 1` the
-subspace-tangential field is not needed at all — E1/E2 are already done.  What
-stands between `tangential_exact_growth` and Example 3.1 for `k = 1` is only
-the weakening inside `paper_v_ball_lower`: the annulus clamp, a factor `2` and
-the `T/2` cap.  The factor `2` does NOT come from the growth (that identity is
-exact), so it should come out.  Sharpening `paper_v_ball_lower` at `y₀ = 0`,
-`rB = r` and feeding `Theorem_1_1.example_3_1_from_lower` (E4, proved) would
-give **Example 3.1 for `k = 1` outright** — a much smaller job than E1–E3 for
-general `k`, and the obvious next step.
+#### What was built (all in `Paper_Viscosity` unless noted)
 
-**Costs:** E1 500–800 · E2 500–900 · E3 300–500 · E4 150–300.
-**Total ≈ 1,500–2,500 lines; 1–2 sessions.**  Risk LOW-MODERATE: every step
-mirrors a proven chain; the one genuinely new object is the projector `P`.
-
-With §2.0 and §2.2 both closed, what remains of Theorem 1.1 is NOTHING —
-the statement is assembled in P7, and Example 3.1 is the paper's
-illustration of it.  §2.3 stays conditional (only if some later consumer
-wants the market-side transfer).
+* **E1 — the projector and the subspace-tangential matrix.**  `projmat b m`
+  (sym / mv / trace / fix / idem / span_fix), `orthonormal_dim_span`,
+  `orthonormal_family_containing` (an orthonormal family through a prescribed
+  unit vector), `tanpU P u = P - outer_prod u u` (sym / mv / trace / psd /
+  eigen_ub / eigen_lb / feasible / kill), and the clamped direction
+  `uvecV P \<rho> z = (1 / max \<rho> (norm (P *v z))) *\<^sub>R (P *v z)`
+  (norm_le / fix / unit / par).
+  `tanpU_kill` needs NO confinement to `V`, because `(P *v z) \<bullet> z =
+  \<bar>P *v z\<bar>\<^sup>2` for a symmetric idempotent `P`.  Had confinement been needed the
+  Euler region would have had to contain the closed subspace `V` and could not
+  be open, which `eulerp_limit_good2_region` demands.
+* **E2 — `subspace_tangential_exact_growth`.**  Mirrors
+  `tangential_exact_growth` at `y\<^sub>0 = 0` with `SF z = tanpU P (uvecV P \<rho> z)`,
+  region `{w. \<rho> < norm (P *v w)} \<inter> ball 0 rB`, giving
+  `\<bar>X\<^sub>t\<bar>\<^sup>2 = \<bar>x\<bar>\<^sup>2 + t*(m-1)` on the confinement event.  Supporting:
+  `tanpUV_cont`, `uvecV_cont`, and the covariance identity
+  `tanpU_sq`: `(P - uu\<^sup>T)\<^sup>2 = tanpU P (sqrt (2 - u\<bullet>u) *\<^sub>R u)`, whose rescaled
+  direction still has norm `\<le> 1` because `(2-a)a = 1-(a-1)\<^sup>2 \<le> 1` — that is
+  what makes the CLAMPED field feasible EVERYWHERE (`tanpU_sq_sconstraint`).
+  **The conclusion pins BOTH norms.**  The region's inner barrier is stated in
+  the PROJECTED norm (that is what `tanpU_kill_proj` needs), so the growing
+  quantity must be the projected norm too.  The two Euler slots therefore carry
+  `\<bar>P z\<bar>\<^sup>2` (lower, `M = 2 *\<^sub>R P`, `q = 2 *\<^sub>R x`, using `xfix: P *v x = x`) and
+  `\<bar>z\<bar>\<^sup>2` (upper, `M = -2 *\<^sub>R mat 1`); `proj_norm_le` squeezes them together, so
+  both equal `\<bar>x\<bar>\<^sup>2 + t*(m-1)`.  Enablers: `tanpU_absorb`, `tanpU_kill_proj`.
+* **E3 — `paper_v_ball_lower_subspace` / `paper_v_ball_lower_sharp`.**
+  `radial_sq_upto_gen` generalises the endpoint transport of `radial_sq_upto`
+  to ANY continuous functional of the position (E3 needs it for the projected
+  square as well).  The confinement argument then runs with `cc` a FREE
+  parameter (`0 < cc < T`, `cc < \<delta> = (rB\<^sup>2-\<bar>x\<bar>\<^sup>2)/(m-1)`) and `\<beta> = 0`; the
+  corollary lets `cc \<longrightarrow> min T \<delta>` by `tendsto_ennrealI` +
+  `tendsto_upperbound`.  **No factor `2` and no `T/2` cap survive** — unlike
+  `paper_v_ball_lower_plus`, whose `\<beta>`-iteration is useless because the only
+  uniform lower bound on a ball is `0`.
+* **E4 — `example_3_1_from_lower` (Theorem_1_1).**  Given the interior lower
+  bound at nonzero points, Example 3.1 holds at EVERY `x`; three of the four
+  cases were already available (`paper_v_zero_outside`, `paper_v_boundary_zero`,
+  `paper_v_le_ball_bound`) and the centre is by usc.
+* **Assembly — `example_3_1` (Theorem_1_1).**  For `y \<noteq> 0` take
+  `m = CARD('n) - k + 1` and the orthonormal family through `y/\<bar>y\<bar>`, so
+  `projmat b m *v y = y` and the growth rate `m - 1` IS `real (CARD('n) - k)`.
 
 ### 2.3 `stopped_val_fn ≤ paper_v` (only if §2.2 needs it)
 
