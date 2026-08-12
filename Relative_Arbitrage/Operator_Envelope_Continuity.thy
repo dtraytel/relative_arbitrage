@@ -1,26 +1,26 @@
 (*
-  Title:   Lemma_3_1_Envelopes.thy
+  Title:   Operator_Envelope_Continuity.thy
   Content: Lemma 3.1 of arXiv:2512.17702, the part that genuinely mentions the
            semicontinuous envelopes F_* and F^*.
 
   This is the ONLY theory that needs both halves of the development at once:
-  * Envelopes.thy supplies ell_op_lsc = F_* and ell_op_usc = F^*, and already
+  * Operator_Envelopes.thy supplies ell_op_lsc = F_* and ell_op_usc = F^*, and already
     proves the clause F_* = F at p = 0 (theorem ell_op_lsc_at_zero);
   * Poincare_Separation.thy supplies Eq. (3.5) and the index shift that makes
     Eq. (3.6) what it is.
 
   Because the import graph is a diamond over the draft theory
-  Relative_Arbitrage_Convexity, PIDE reports a spurious "Malformed theory" at
+  Constraint_Set_Convexity, PIDE reports a spurious "Malformed theory" at
   the header of this file.  That is an artifact: check this theory with
 
     ~/isabelle/bin/isabelle build -d . Arbitrage
 
-  which is ~22 s warm.  See the header of Lemma_3_1.thy for why everything else
+  which is ~22 s warm.  See the header of Operator_Continuity.thy for why everything else
   was arranged to avoid this situation.
 *)
 
-theory Lemma_3_1_Envelopes
-  imports Envelopes Poincare_Separation
+theory Operator_Envelope_Continuity
+  imports Operator_Envelopes Poincare_Separation
 begin
 
 section \<open>Eq. (3.6): the lower bound for \<open>F\<^sup>*(0, M)\<close>\<close>
@@ -132,7 +132,7 @@ section \<open>Eq. (3.6): the envelope upper bound, and the equality\<close>
 text \<open>The upper bound for the envelope.  The nearby matrices \<open>snd w\<close> need not be
   symmetric: the comparison is made against the symmetric \<open>M\<close> using
   \<open>ell_op_M_gap\<close>, and only \<open>M\<close> itself has to be symmetric for
-  \<open>ell_op_le_eq36\<close>.  This mirrors \<open>ell_op_lsc_at_zero\<close> in Envelopes.thy.\<close>
+  \<open>ell_op_le_eq36\<close>.  This mirrors \<open>ell_op_lsc_at_zero\<close> in Operator_Envelopes.thy.\<close>
 
 theorem ell_op_usc_at_zero_le:
   fixes M :: "real^'n::finite^'n"
@@ -491,7 +491,7 @@ text \<open>Theorem 4.2 of the paper reaches its contradiction through Eq. (4.3)
   \<open>F(p\<^sub>\<epsilon>, M\<^sub>\<epsilon>) \<ge> F(p\<^sub>\<epsilon>, N\<^sub>\<epsilon>)\<close>, which is the degenerate ellipticity of \<open>F\<close>:
   adding a positive semidefinite matrix to the Hessian argument can only
   decrease \<open>F\<close>, since \<open>F\<close> is an infimum of \<open>-\<onehalf> tr(M a)\<close> over positive
-  semidefinite \<open>a\<close>.  \<open>ell_op_pointwise_elliptic\<close> (Relative_Arbitrage_PDE.thy)
+  semidefinite \<open>a\<close>.  \<open>ell_op_pointwise_elliptic\<close> (Curvature_Operator.thy)
   is the statement for a single \<open>a\<close>; passing to the infimum is what Section 4
   actually uses, and is proved here.\<close>
 
@@ -553,7 +553,7 @@ text \<open>Consequence of the continuity clause, and the reason Section 4 can w
   with the envelope-free operator away from the origin: there the viscosity
   sub- and supersolution inequalities of Definition 3.1 are literally the same
   conditions as the envelope-free ones.  This is the off-origin companion of
-  \<open>ell_op_lsc_at_zero_iff\<close> (Envelopes.thy), which handles \<open>p = 0\<close>.\<close>
+  \<open>ell_op_lsc_at_zero_iff\<close> (Operator_Envelopes.thy), which handles \<open>p = 0\<close>.\<close>
 
 corollary ell_op_lsc_off_zero_iff:
   fixes M :: "real^'n::finite^'n"
@@ -641,8 +641,8 @@ section \<open>Lemma 3.1\<close>
 
 text \<open>Lemma 3.1 consists of:
   \<^item> \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close> always (\<open>ell_op_lsc_le_ell_op\<close>, \<open>ell_op_le_ell_op_usc\<close>,
-    Envelopes.thy);
-  \<^item> \<open>F\<^sub>*(0, M) = F(0, M)\<close> (\<open>ell_op_lsc_at_zero\<close>, Envelopes.thy);
+    Operator_Envelopes.thy);
+  \<^item> \<open>F\<^sub>*(0, M) = F(0, M)\<close> (\<open>ell_op_lsc_at_zero\<close>, Operator_Envelopes.thy);
   \<^item> \<open>F(p, M) = -\<onehalf> bracket (n-k) L M\<^sub>p\<close> for \<open>p \<noteq> 0\<close>, i.e. Eq. (3.5)
     (\<open>ell_op_eq_half_bracket\<close>, Poincare_Separation.thy);
   \<^item> \<open>F\<^sup>*(0, M) = eq36_rhs\<close>, i.e. Eq. (3.6) (\<open>eq36\<close>, above);
@@ -675,7 +675,7 @@ text \<open>Theorem 4.2(a) -- the maximum principle: for a subsolution \<open>u\
   \<open>visc_subsol k L (interior K) u\<close> constrains only \<open>interior K\<close>, so raising
   \<open>w\<close> by a constant on \<open>K - interior K\<close> destroys every boundary maximum,
   making the predicate genuinely false without continuity, as
-  \<open>max_principle_boundary_counterexample\<close> (Comparison\_Assembly) shows for
+  \<open>max_principle_boundary_counterexample\<close> (Comparison\_Principle) shows for
   the continuity-free \<open>max_principle_boundary_raw\<close>.  Plain continuity,
   rather than a usc/lsc split, matches the rest of the development and this
   HOL-Analysis's lack of a semicontinuity library.\<close>

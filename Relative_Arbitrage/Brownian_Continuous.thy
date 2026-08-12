@@ -428,7 +428,7 @@ text \<open>Specialising the theorem above to the planar market with
   \<open>k = L = 1\<close>, horizon \<open>1\<close> and start \<open>0\<close> discharges all its side
   conditions numerically, so the following statement has no hypotheses
   whatsoever: the axiomatised market class of
-  Relative\_Arbitrage\_Stochastic is non-vacuous.\<close>
+  Volatile\_Market is non-vacuous.\<close>
 
 theorem sufficiently_volatile_market_nonvacuous:
   "sufficiently_volatile_market

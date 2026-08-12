@@ -1,9 +1,9 @@
 (*
-  Title:   Lemma_2_1_Exact.thy
+  Title:   Eigenvalue_Bound_Exact.thy
   Content: Lemma 2.1 of arXiv:2512.17702 in its exact form, i.e. with the
            convex hull rather than its closure.
 
-  Relative_Arbitrage_Convexity proves conv B_k <= A_k <= closure (conv B_k),
+  Constraint_Set_Convexity proves conv B_k <= A_k <= closure (conv B_k),
   so A_k is the closed convex hull of B_k; the paper states equality with
   the convex hull itself, which this theory establishes in three steps:
 
@@ -24,8 +24,8 @@
   suff_volatile_augment.
 *)
 
-theory Lemma_2_1_Exact
-  imports Relative_Arbitrage_Convexity
+theory Eigenvalue_Bound_Exact
+  imports Constraint_Set_Convexity
 begin
 
 unbundle inner_syntax

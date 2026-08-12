@@ -1,5 +1,5 @@
 (*
-  Title:   Paper_Class.thy
+  Title:   Exit_Class.thy
   Content: The class P_x of Eq. (1.7) of arXiv:2512.17702, encoded as laws of
            the pair (X, <X>) on the path space, following the paper's own
            proof of Lemma 2.3: the covariation is carried as a second,
@@ -10,9 +10,9 @@
            unconvexified sufficient-volatility set (1.4).
 *)
 
-theory Paper_Class
+theory Exit_Class
   imports "Path_Space_Tightness.Path_Space" "Path_Space_Tightness.Path_Tightness" Exit_Semicontinuity Poincare_Separation
-    Relative_Arbitrage_Comparison
+    Viscosity_Solutions
 begin
 
 section \<open>The constraint set of Eq. (1.5) with the technical cap\<close>
@@ -265,11 +265,11 @@ text \<open>Operational reading of (1.7), equivalent by compensator uniqueness: 
   constant, emptying the class for every \<open>T > 0\<close>. Stopping at \<open>T\<close>
   captures exactly (1.7) on \<open>[0,T]\<close>.\<close>
 
-definition paper_pair_class ::
+definition exit_class ::
   "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n::finite
      \<Rightarrow> (('n pairpath) measure) set"
   where
-  "paper_pair_class k L T x = {Q.
+  "exit_class k L T x = {Q.
      prob_space Q \<and>
      sets Q = sets (borel_of (mtopology_of (path_metric T
        :: ('n pairpath) metric))) \<and>
@@ -286,18 +286,18 @@ definition paper_pair_class ::
 
 text \<open>Projections out of the definition, used throughout.\<close>
 
-lemma paper_pair_class_prob:
+lemma exit_class_prob:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x"
+  assumes Q: "Q \<in> exit_class k L T x"
   shows "prob_space Q"
-  using Q unfolding paper_pair_class_def by blast
+  using Q unfolding exit_class_def by blast
 
-lemma paper_pair_class_sets:
+lemma exit_class_sets:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x"
+  assumes Q: "Q \<in> exit_class k L T x"
   shows "sets Q = sets (borel_of (mtopology_of
       (path_metric T :: ('n pairpath) metric)))"
-  using Q unfolding paper_pair_class_def by blast
+  using Q unfolding exit_class_def by blast
 
 lemma space_of_path_sets:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -867,7 +867,7 @@ qed
 
 text \<open>Hence the continued volatility has all its difference quotients in the
   constraint set --- which is exactly the covariation condition of
-  \<open>paper_pair_class\<close>, holding for every \<open>0 \<le> s < t\<close> with no stopping
+  \<open>exit_class\<close>, holding for every \<open>0 \<le> s < t\<close> with no stopping
   caveat, as (1.7) demands.\<close>
 
 theorem diffquot_of_continued_density:
@@ -891,7 +891,7 @@ subsection \<open>The running covariation built from a continued volatility\<clo
 text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>₀ᵗ a\<close> starts at
   \<open>0\<close>, has increments given by interval integrals, and --- for the
   continued density --- difference quotients in the constraint set for every
-  \<open>0 \<le> s < t\<close>: the covariation half of \<open>paper_pair_class\<close>.\<close>
+  \<open>0 \<le> s < t\<close>: the covariation half of \<open>exit_class\<close>.\<close>
 
 definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
@@ -957,15 +957,15 @@ text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the c
   \<open>pair_holder_charge_split\<close> with probability one, leaving only the
   \<open>X\<close>-side Hoelder estimate.\<close>
 
-theorem paper_pair_class_lipschitz_ae:
+theorem exit_class_lipschitz_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
   shows "AE \<omega> in Q. (real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
 proof -
   have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding paper_pair_class_def by blast
+    using Q unfolding exit_class_def by blast
   have B0: "0 \<le> real CARD('n) * L" using L by simp
   show ?thesis
   proof (rule AE_mp[OF dq], rule AE_I2, intro impI)
@@ -992,10 +992,10 @@ text \<open>Combined with the difference-quotient-to-density transfer, the class
   times with derivative in the constraint set --- the density statement of
   Eq. (1.7), stated for the class itself rather than for a bare path.\<close>
 
-theorem paper_pair_class_density_ae:
+theorem exit_class_density_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
   shows "AE \<omega> in Q.
       negligible {u \<in> {0..T}. \<not> (\<lambda>t. snd (\<omega> t)) differentiable (at u)}
       \<and> (\<forall>u D. 0 \<le> u \<longrightarrow> u < T
@@ -1004,7 +1004,7 @@ theorem paper_pair_class_density_ae:
 proof -
   have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding paper_pair_class_def by blast
+    using Q unfolding exit_class_def by blast
   have B0: "0 \<le> real CARD('n) * L" using L by simp
   show ?thesis
   proof (rule AE_mp[OF dq], rule AE_I2, intro impI)
@@ -1044,18 +1044,18 @@ text \<open>On the capped horizon the second component of a class member is
   makes \<open>outerp X - Y\<close> integrable, and \<open>Y\<close> being bounded transfers the
   integrability to \<open>outerp X\<close>.\<close>
 
-theorem paper_pair_class_Y_bounded_ae:
+theorem exit_class_Y_bounded_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
   shows "AE \<omega> in Q. \<forall>t\<in>{0..T}. norm (snd (\<omega> t)) \<le> real CARD('n) * L * T"
 proof -
   have B0: "0 \<le> real CARD('n) * L" using L by simp
   have z0: "(0::real) \<in> {0..T}" using T by simp
   have lip: "AE \<omega> in Q. (real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
-    by (rule paper_pair_class_lipschitz_ae[OF T L Q])
+    by (rule exit_class_lipschitz_ae[OF T L Q])
   have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Q unfolding paper_pair_class_def by blast
+    using Q unfolding exit_class_def by blast
   from lip st show ?thesis
   proof eventually_elim
     case (elim \<omega>)
@@ -1094,16 +1094,16 @@ proof -
   show "a $ i $ i \<le> L" by (rule psd_eigen_ub_diag(2)[OF p u])
 qed
 
-theorem paper_pair_class_Y_diag_increment:
+theorem exit_class_Y_diag_increment:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes L: "0 \<le> L" and Q: "Q \<in> paper_pair_class k L T x"
+  assumes L: "0 \<le> L" and Q: "Q \<in> exit_class k L T x"
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
       0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
       \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
 proof -
   have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding paper_pair_class_def by blast
+    using Q unfolding exit_class_def by blast
   from dq show ?thesis
   proof (rule eventually_mono)
     fix \<omega> :: "'n pairpath"
@@ -1151,12 +1151,12 @@ text \<open>Under a class law the coordinate process is square integrable on the
   capped horizon, though not from a uniform bound on \<open>X\<close> --- the paper's
   processes are neither stopped nor confined ((1.7)--(1.8)). Instead:
   \<open>outerp X - Y\<close> is integrable by the martingale clause, \<open>Y\<close> is bounded
-  (\<open>paper_pair_class_Y_bounded_ae\<close>), and their sum \<open>outerp X\<close> has the
+  (\<open>exit_class_Y_bounded_ae\<close>), and their sum \<open>outerp X\<close> has the
   squared coordinates as diagonal entries.\<close>
 
-lemma paper_pair_class_eval_measurable:
+lemma exit_class_eval_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
 proof -
   have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_of (mtopology_of
@@ -1164,14 +1164,14 @@ proof -
     using continuous_map_measurable[OF continuous_map_path_eval[OF t]]
     by (simp add: borel_of_euclidean)
   then show ?thesis
-    using measurable_cong_sets[OF paper_pair_class_sets[OF Q] refl] by blast
+    using measurable_cong_sets[OF exit_class_sets[OF Q] refl] by blast
 qed
 
-lemma paper_pair_class_Y_entry_measurable:
+lemma exit_class_Y_entry_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<lambda>\<omega>. snd (\<omega> t) $ i $ j) \<in> borel_measurable Q"
-proof (rule measurable_compose[OF paper_pair_class_eval_measurable[OF Q t]])
+proof (rule measurable_compose[OF exit_class_eval_measurable[OF Q t]])
   have s: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
       \<in> borel_measurable borel"
     by (intro borel_measurable_continuous_onI continuous_intros)
@@ -1188,14 +1188,14 @@ proof (rule measurable_compose[OF paper_pair_class_eval_measurable[OF Q t]])
     by (rule measurable_compose[OF measurable_compose[OF s n1] n2])
 qed
 
-lemma paper_pair_class_Y_entry_bound_ae:
+lemma exit_class_Y_entry_bound_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "AE \<omega> in Q. norm (snd (\<omega> t) $ i $ j) \<le> real CARD('n) * L * T"
 proof -
   have "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
-    by (rule paper_pair_class_Y_bounded_ae[OF T L Q])
+    by (rule exit_class_Y_bounded_ae[OF T L Q])
   then show ?thesis
   proof (rule eventually_mono)
     fix \<omega> :: "'n pairpath"
@@ -1210,46 +1210,46 @@ proof -
   qed
 qed
 
-lemma paper_pair_class_Y_entry_integrable:
+lemma exit_class_Y_entry_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. snd (\<omega> t) $ i $ j)"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   show ?thesis
     by (rule P.integrable_const_bound
-        [OF paper_pair_class_Y_entry_bound_ae[OF T L Q t]
-            paper_pair_class_Y_entry_measurable[OF Q t]])
+        [OF exit_class_Y_entry_bound_ae[OF T L Q t]
+            exit_class_Y_entry_measurable[OF Q t]])
 qed
 
-lemma paper_pair_class_compensated_martingale:
+lemma exit_class_compensated_martingale:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x"
+  assumes Q: "Q \<in> exit_class k L T x"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-  using Q unfolding paper_pair_class_def by blast
+  using Q unfolding exit_class_def by blast
 
-lemma paper_pair_class_compensated_integrable:
+lemma exit_class_compensated_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
 proof -
   interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
       "\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
-    by (rule paper_pair_class_compensated_martingale[OF Q])
+    by (rule exit_class_compensated_martingale[OF Q])
   have "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
     using t by (intro MG.integrable) simp
   then show ?thesis using t by simp
 qed
 
-lemma paper_pair_class_compensated_entry_integrable:
+lemma exit_class_compensated_entry_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ j)"
   by (rule integrable_bounded_linear[OF bounded_linear_vec_nth,
         OF integrable_bounded_linear[OF bounded_linear_vec_nth
-          paper_pair_class_compensated_integrable[OF Q t]]])
+          exit_class_compensated_integrable[OF Q t]]])
 
 text \<open>Squaring the coordinate is the diagonal entry of \<open>outerp\<close>, so the
   split of \<open>(X\<^sub>t $ i)\<^sup>2\<close> into the compensated part plus \<open>Y\<close> is an
@@ -1260,10 +1260,10 @@ lemma sq_coord_split:
   shows "(v $ i)\<^sup>2 = (outerp v - w) $ i $ i + w $ i $ i"
   by (simp add: outerp_def power2_eq_square)
 
-theorem paper_pair_class_sq_integrable:
+theorem exit_class_sq_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
 proof -
   have t0: "0 \<le> t" using t by simp
@@ -1273,8 +1273,8 @@ proof -
   show ?thesis
     unfolding eq
     by (rule Bochner_Integration.integrable_add
-        [OF paper_pair_class_compensated_entry_integrable[OF Q t]
-            paper_pair_class_Y_entry_integrable[OF T L Q t]])
+        [OF exit_class_compensated_entry_integrable[OF Q t]
+            exit_class_Y_entry_integrable[OF T L Q t]])
 qed
 
 subsection \<open>The uniform \<open>L\<^sup>2\<close> bound on the class\<close>
@@ -1374,21 +1374,21 @@ corollary martingale_mat_nth:
   by (rule martingale_vec_nth
       [OF martingale_bounded_linear_image[OF bounded_linear_vec_nth mg]])
 
-theorem paper_pair_class_compensated_mean:
+theorem exit_class_compensated_mean:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
       "\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
-    by (rule paper_pair_class_compensated_martingale[OF Q])
+    by (rule exit_class_compensated_martingale[OF Q])
   have t0: "0 \<le> t" and tT: "t \<le> T" using t by simp_all
   have z: "(0::real) \<in> {0..T}" using t by simp
   have i0: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0))"
-    by (rule paper_pair_class_compensated_integrable[OF Q z])
+    by (rule exit_class_compensated_integrable[OF Q z])
   have it: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-    by (rule paper_pair_class_compensated_integrable[OF Q t])
+    by (rule exit_class_compensated_integrable[OF Q t])
   \<comment> \<open>the whole space is in the filtration at time \<open>0\<close>, so the martingale's
       set-integral identity there IS constancy of the mean.\<close>
   have top: "space Q \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0)"
@@ -1403,7 +1403,7 @@ proof -
     have ae: "AE \<omega> in Q. outerp (fst (\<omega> 0)) - snd (\<omega> 0) = outerp x"
     proof -
       have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-        using Q unfolding paper_pair_class_def by blast
+        using Q unfolding exit_class_def by blast
       then show ?thesis by (rule eventually_mono) simp
     qed
     have "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q) = (\<integral>\<omega>. outerp x \<partial>Q)"
@@ -1414,18 +1414,18 @@ proof -
   from const start show ?thesis by simp
 qed
 
-theorem paper_pair_class_sq_mean_le:
+theorem exit_class_sq_mean_le:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> (x $ i)\<^sup>2 + real CARD('n) * L * T"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have t0: "0 \<le> t" using t by simp
   have iA: "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i)"
-    by (rule paper_pair_class_compensated_entry_integrable[OF Q t])
+    by (rule exit_class_compensated_entry_integrable[OF Q t])
   have iB: "integrable Q (\<lambda>\<omega>. snd (\<omega> t) $ i $ i)"
-    by (rule paper_pair_class_Y_entry_integrable[OF T L Q t])
+    by (rule exit_class_Y_entry_integrable[OF T L Q t])
   have eq: "(\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)
       = (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i + snd (\<omega> t) $ i $ i)"
     by (rule ext) (rule sq_coord_split)
@@ -1442,13 +1442,13 @@ proof -
         = (\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q) $ i"
       by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth]
           , rule integrable_bounded_linear[OF bounded_linear_vec_nth])
-        (rule paper_pair_class_compensated_integrable[OF Q t])
+        (rule exit_class_compensated_integrable[OF Q t])
     also have "(\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q)
         = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) $ i"
       by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth
-            paper_pair_class_compensated_integrable[OF Q t]])
+            exit_class_compensated_integrable[OF Q t]])
     also have "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
-      by (rule paper_pair_class_compensated_mean[OF Q t])
+      by (rule exit_class_compensated_mean[OF Q t])
     finally show ?thesis by (simp add: outerp_def power2_eq_square)
   qed
   have partB: "(\<integral>\<omega>. snd (\<omega> t) $ i $ i \<partial>Q) \<le> real CARD('n) * L * T"
@@ -1456,7 +1456,7 @@ proof -
     have "(\<integral>\<omega>. snd (\<omega> t) $ i $ i \<partial>Q) \<le> (\<integral>\<omega>. real CARD('n) * L * T \<partial>Q)"
     proof (rule integral_mono_AE[OF iB P.integrable_const])
       show "AE \<omega> in Q. snd (\<omega> t) $ i $ i \<le> real CARD('n) * L * T"
-        using paper_pair_class_Y_entry_bound_ae[OF T L Q t, of i i]
+        using exit_class_Y_entry_bound_ae[OF T L Q t, of i i]
         by (rule eventually_mono) simp
     qed
     then show ?thesis by (simp add: P.prob_space)
@@ -1789,17 +1789,17 @@ text \<open>Lemma 2.3 of the paper says the class is closed, passing each defini
 
 subsection \<open>Full mass of the two closed clauses on a class member\<close>
 
-lemma paper_pair_class_diffquot_full_mass:
+lemma exit_class_diffquot_full_mass:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x"
+  assumes Q: "Q \<in> exit_class k L T x"
     and s: "s \<in> {0..T}" and t: "t \<in> {0..T}" and st: "s < t"
   shows "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have setsQ: "sets Q = sets (borel_of (mtopology_of
       (path_metric T :: ('n pairpath) metric)))"
-    by (rule paper_pair_class_sets[OF Q])
+    by (rule exit_class_sets[OF Q])
   have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have mm: "{\<omega> \<in> space Q. (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))
@@ -1811,7 +1811,7 @@ proof -
   proof -
     have "AE \<omega> in Q. \<forall>u v. 0 \<le> u \<longrightarrow> u < v \<longrightarrow> v \<le> T \<longrightarrow>
         (1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
-      using Q unfolding paper_pair_class_def by blast
+      using Q unfolding exit_class_def by blast
     then show ?thesis
       by (rule eventually_mono) (use s t st in auto)
   qed
@@ -1837,16 +1837,16 @@ proof -
   then show ?thesis by simp
 qed
 
-lemma paper_pair_class_start_full_mass:
+lemma exit_class_start_full_mass:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 \<le> T" and Q: "Q \<in> paper_pair_class k L T x"
+  assumes T: "0 \<le> T" and Q: "Q \<in> exit_class k L T x"
   shows "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
       \<omega> 0 = (x, 0)} = 1"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have setsQ: "sets Q = sets (borel_of (mtopology_of
       (path_metric T :: ('n pairpath) metric)))"
-    by (rule paper_pair_class_sets[OF Q])
+    by (rule exit_class_sets[OF Q])
   have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
@@ -1854,7 +1854,7 @@ proof -
   have ae: "AE \<omega> in Q. \<omega> 0 = (x, 0)"
   proof -
     have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-      using Q unfolding paper_pair_class_def by blast
+      using Q unfolding exit_class_def by blast
     then show ?thesis
       by (rule eventually_mono) (simp add: prod_eq_iff)
   qed
@@ -1869,11 +1869,11 @@ text \<open>The start clause needs nothing beyond portmanteau. The covariation
   \<open>diffquot_all_of_rational\<close> --- the paper's own last step, "by continuity"
   --- extends it to every real pair.\<close>
 
-theorem paper_pair_class_start_limit:
+theorem exit_class_start_limit:
   fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
     and Q :: "('n pairpath) measure"
   assumes T: "0 \<le> T"
-    and mem: "\<And>i. Qi i \<in> paper_pair_class k L T x"
+    and mem: "\<And>i. Qi i \<in> exit_class k L T x"
     and wc: "weak_conv_on Qi Q sequentially
       (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
@@ -1889,21 +1889,21 @@ proof -
   have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
       \<omega> 0 = (x, 0)} = 1"
   proof (rule weak_conv_closed_full_mass[OF wc closedin_start_point[OF T]])
-    show "\<And>i. prob_space (Qi i)" by (rule paper_pair_class_prob[OF mem])
+    show "\<And>i. prob_space (Qi i)" by (rule exit_class_prob[OF mem])
     show "prob_space Q" by (rule prob)
     show "\<And>i. measure (Qi i)
         {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)} = 1"
-      by (rule paper_pair_class_start_full_mass[OF T mem])
+      by (rule exit_class_start_full_mass[OF T mem])
   qed
   then have "AE \<omega> in Q. \<omega> 0 = (x, 0)"
     using P.prob_Collect_eq_1[OF mm] unfolding sp by blast
   then show ?thesis by (rule eventually_mono) (simp add: prod_eq_iff)
 qed
 
-theorem paper_pair_class_diffquot_limit:
+theorem exit_class_diffquot_limit:
   fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
     and Q :: "('n pairpath) measure"
-  assumes mem: "\<And>i. Qi i \<in> paper_pair_class k L T x"
+  assumes mem: "\<And>i. Qi i \<in> exit_class k L T x"
     and wc: "weak_conv_on Qi Q sequentially
       (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
@@ -1927,12 +1927,12 @@ proof -
     have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
         (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} = 1"
     proof (rule diffquot_constraint_weak_limit[OF pq(1) pq(2) wc])
-      show "\<And>i. prob_space (Qi i)" by (rule paper_pair_class_prob[OF mem])
+      show "\<And>i. prob_space (Qi i)" by (rule exit_class_prob[OF mem])
       show "prob_space Q" by (rule prob)
       show "\<And>i. measure (Qi i)
           {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
              (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} = 1"
-        by (rule paper_pair_class_diffquot_full_mass[OF mem pq])
+        by (rule exit_class_diffquot_full_mass[OF mem pq])
     qed
     then show ?thesis
       using P.prob_Collect_eq_1[OF mm] unfolding sp by blast
@@ -1982,11 +1982,11 @@ qed
 
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>
 
-definition paper_v ::
+definition exit_val ::
   "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> real^'n \<Rightarrow> ennreal"
   where
-  "paper_v k L T K x =
+  "exit_val k L T K x =
      Sup ((\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-       ` paper_pair_class k L T x)"
+       ` exit_class k L T x)"
 
 end

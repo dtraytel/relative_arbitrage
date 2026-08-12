@@ -1,5 +1,5 @@
 (*
-  Title:   Relative_Arbitrage_PDE.thy
+  Title:   Curvature_Operator.thy
   Content: The deterministic core of
 
              J.-H. Lai, M. Shkolnikov, H. M. Soner:
@@ -30,12 +30,12 @@
   solution on the open ball with zero boundary values.
 
   The probabilistic side is formalized in the companion theories
-  Relative_Arbitrage_Stochastic and Relative_Arbitrage_Ito; the
+  Volatile_Market and Optimal_Exit_Time; the
   comparison and uniqueness part of Theorem 1.1 in
-  Relative_Arbitrage_Comparison and Relative_Arbitrage_Uniqueness.
+  Viscosity_Solutions and Viscosity_Comparison_Interface.
 *)
 
-theory Relative_Arbitrage_PDE
+theory Curvature_Operator
   imports "HOL-Analysis.Analysis"
 begin
 

@@ -1,5 +1,5 @@
 (*
-  Title:   Relative_Arbitrage_Ito.thy
+  Title:   Optimal_Exit_Time.thy
   Content: The arbitrage side of arXiv:2512.17702 (Lai/Shkolnikov/Soner):
            relative arbitrage beyond the critical horizon, and optimality
            of the ball value function (Example 3.1).
@@ -32,8 +32,8 @@
     yields the exact value E[\<tau>] = v(x\<^sub>0) (optimal_exit_time_value).
 *)
 
-theory Relative_Arbitrage_Ito
-  imports Relative_Arbitrage_Stochastic
+theory Optimal_Exit_Time
+  imports Volatile_Market
 begin
 
 section \<open>Measurability of the ball value function\<close>

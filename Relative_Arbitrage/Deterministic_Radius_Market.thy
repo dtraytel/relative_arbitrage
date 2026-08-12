@@ -3310,7 +3310,7 @@ subsection \<open>The deterministic-radius market is sufficiently volatile\<clos
 
 text \<open>The \<open>stopped_market\<close> packaging (which additionally records that the
   process is stopped, the covariance killed, and the diagonal
-  compensators integrable) lives in \<open>Section_2_Usc\<close>, outside this
+  compensators integrable) lives in \<open>Exit_Time_Semicontinuity\<close>, outside this
   theory's import closure; the three extra clauses are provided as
   standalone lemmas below and assembled where both theories are in
   scope.\<close>

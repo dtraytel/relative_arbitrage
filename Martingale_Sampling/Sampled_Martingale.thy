@@ -103,7 +103,7 @@ text \<open>
   (which cannot be cited as an antiquotation here, since that theory sits
   above this one in the import order), the increment of @{term Sq} is a
   conditional variance, so the hypothesis below is precisely the statement
-  that @{term A} is the compensator -- the paper's own defining condition,
+  that @{term A} is the compensator -- the defining condition used there,
   with no martingale property assumed of the compensated process itself.
 \<close>
 

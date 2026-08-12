@@ -303,7 +303,7 @@ qed
 subsection \<open>A sufficient condition: a uniform bound on a higher moment\<close>
 
 text \<open>
-  The practical criterion, and the one the paper's setting supplies: if the
+  The practical criterion, and the one a uniform higher-moment bound supplies: if the
   @{term p}-th moments are bounded uniformly for some @{term "p > 1"}, the family
   is uniformly integrable. This is the route by which a moment bound of the
   shape of Eq. (2.7) feeds into Lemma 2.3.

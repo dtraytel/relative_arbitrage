@@ -18,7 +18,7 @@
     E[X_n^2] = E[X_0^2] + E[[X]_n].
 
   This is the discrete-time shape of the martingale-problem assumption
-  dynkin_quadratic of Relative_Arbitrage_Stochastic.
+  dynkin_quadratic of Volatile_Market.
 *)
 
 theory Quadratic_Variation
@@ -601,7 +601,7 @@ qed
 subsection \<open>The stopped Dynkin identity\<close>
 
 text \<open>The exact discrete-time shape of the martingale-problem assumption
-  \<open>dynkin_quadratic\<close> of Relative\_Arbitrage\_Stochastic, now a theorem.\<close>
+  \<open>dynkin_quadratic\<close> of Volatile\_Market, now a theorem.\<close>
 
 theorem stopped_expectation_sq_qvar:
   "(\<integral>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2 \<partial>M)

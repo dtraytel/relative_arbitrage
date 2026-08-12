@@ -1,17 +1,17 @@
 (*
-  Title:   Lemma_3_1.thy
+  Title:   Operator_Continuity.thy
   Content: Eq. (3.4)-(3.6) of arXiv:2512.17702: the matrix M_p, the closed
            formula (3.5) for F, and Lemma 3.1.
 
   IMPORTS: this theory deliberately imports only Threshold_Chain (hence
-  Eigenvalues, Lemma_2_1_Exact, Relative_Arbitrage_Convexity,
-  Relative_Arbitrage_PDE) and NOT Envelopes.  ell_op and feasible already come
-  from Relative_Arbitrage_PDE, which the Eigenvalues chain reaches, so the only
-  thing the Envelopes side ever supplied here was `trace_conjugate` -- a
+  Eigenvalues, Eigenvalue_Bound_Exact, Constraint_Set_Convexity,
+  Curvature_Operator) and NOT Operator_Envelopes.  ell_op and feasible already come
+  from Curvature_Operator, which the Eigenvalues chain reaches, so the only
+  thing the Operator_Envelopes side ever supplied here was `trace_conjugate` -- a
   six-line trace identity, reproved locally below as `trace_conj`.
 
   That matters for development, not just tidiness: PIDE cannot hold the
-  Envelopes chain and the Eigenvalues chain at the same time (it evicts one and
+  Operator_Envelopes chain and the Eigenvalues chain at the same time (it evicts one and
   then queues forever), so a theory importing both can only be checked by a
   batch build, with no per-command feedback.  With this import the whole of
   Eq. (3.4)-(3.5) is PIDE-workable.  Only the final Eq. (3.6) statement, which
@@ -32,14 +32,14 @@
   M_p is diagonalisable in a way adapted to p.
 *)
 
-theory Lemma_3_1
+theory Operator_Continuity
   imports Threshold_Chain
 begin
 
 section \<open>Elementary matrix algebra not already in the development\<close>
 
-text \<open>A local copy of \<open>trace_conjugate\<close> (Relative_Arbitrage_Uniqueness), so
-  that this theory need not import the Envelopes chain; see the header.\<close>
+text \<open>A local copy of \<open>trace_conjugate\<close> (Viscosity_Comparison_Interface), so
+  that this theory need not import the Operator_Envelopes chain; see the header.\<close>
 
 lemma trace_conj:
   fixes M Q a :: "real^'n::finite^'n"

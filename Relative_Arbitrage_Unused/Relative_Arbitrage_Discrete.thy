@@ -8,7 +8,7 @@
     E[|X (t \<sqinter> \<tau>)|\<^sup>2] - E[\<integral>\<^sub>0\<^sup>(t \<sqinter> \<tau>) tr(acov\<^sub>s) ds] = |x\<^sub>0|\<^sup>2
 
   is Ito's formula plus optional sampling, and is the locale assumption
-  dynkin_quadratic of Relative_Arbitrage_Stochastic.  Here the whole
+  dynkin_quadratic of Volatile_Market.  Here the whole
   development is redone in discrete time, where the corresponding
   identity is a THEOREM: the compensator of |X|\<^sup>2 is the discrete
   quadratic variation of Quadratic_Variation, summed over coordinates.
@@ -26,7 +26,7 @@
 theory Relative_Arbitrage_Discrete
   imports
     "Martingale_Sampling.Quadratic_Variation"
-    "Relative_Arbitrage.Relative_Arbitrage_Stochastic"
+    "Relative_Arbitrage.Volatile_Market"
 begin
 
 section \<open>Vector-valued quadratic variation\<close>
@@ -360,7 +360,7 @@ section \<open>The discrete gradient strategy realizes relative arbitrage\<close
 text \<open>The discrete relative value process of the gradient strategy: the
   ball value function of the current position plus the accumulated
   quadratic variation, normalised as in Eq. (1.1).  In continuous time
-  this is \<open>arb_V\<close> of Relative\_Arbitrage\_Ito; here it needs no
+  this is \<open>arb_V\<close> of Optimal\_Exit\_Time; here it needs no
   stochastic integral at all, and the pathwise lower bound below is a
   theorem rather than a consequence of Ito's formula.\<close>
 
@@ -571,7 +571,7 @@ end
 section \<open>The exit-time bound of Example 3.1, with a stopping time\<close>
 
 text \<open>The full discrete analogue of \<open>expected_stopped_time_ball_v\<close> of
-  Relative\_Arbitrage\_Stochastic: the market need only stay in the ball
+  Volatile\_Market: the market need only stay in the ball
   up to the stopping time \<open>T\<close>, and the conclusion bounds the expected
   stopped horizon.  Unlike the continuous-time version, no
   martingale-problem assumption enters: the identity used is the stopped

@@ -15,7 +15,7 @@ text \<open>
 theory Path_Space
   imports "Levy_Prokhorov_Metric.Prokhorov_Theorem"
     "Standard_Borel_Spaces.Set_Based_Metric_Space"
-    Section_2_Compactness
+    Equicontinuity
 begin
 
 definition path_metric :: "real \<Rightarrow> (real \<Rightarrow> 'b::polish_space) metric" where
@@ -66,7 +66,7 @@ text \<open>
   The Arzel\`a--Ascoli input for tightness: the set of paths starting at a fixed
   point with a uniform H\"older bound is sequentially compact in the sup metric.
   The subsequence extraction is the type-class \<open>holder_family_subsequence\<close>
-  (Section\_2\_Compactness); this theorem transports it into the set-based
+  (Equicontinuity); this theorem transports it into the set-based
   framework via \<open>compactin_sequentially\<close> and \<open>cfunspace_mdist_le\<close>.
 \<close>
 
@@ -933,7 +933,7 @@ text \<open>The closed-set half of the Portmanteau theorem, in the shape needed
   Only the \<open>measure = 1\<close> instance is needed: for the usc argument for
   \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close>, the superlevel set \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed since
   \<open>\<tau>\<^sub>K\<close> is upper semicontinuous, and \<open>c \<le> P-essinf \<tau>\<^sub>K\<close> is by definition
-  \<open>P {\<tau>\<^sub>K \<ge> c} = 1\<close> -- \<open>Value_Function.ess_inf_time_ge_iff_measure\<close> states
+  \<open>P {\<tau>\<^sub>K \<ge> c} = 1\<close> -- \<open>Value_Function_Market.ess_inf_time_ge_iff_measure\<close> states
   this with \<open>measure\<close> rather than \<open>AE\<close> for precisely this junction.\<close>
 
 lemma weak_conv_closed_full_measure:
@@ -1068,7 +1068,7 @@ proof -
   from less_LiminfD[OF this] show ?thesis by simp
 qed
 
-text \<open>The hypothesis that makes \<open>Section_2_Compactness.box_of_sequential\<close>
+text \<open>The hypothesis that makes \<open>Equicontinuity.box_of_sequential\<close>
   usable on the space of laws: the weak topology over the path space is
   metrizable, by the L\'evy--Prokhorov theorem.  Both inputs are already
   here: the path space is a metric space by construction and separable by

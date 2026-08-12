@@ -1,6 +1,6 @@
 (*
   Title:   Ito_Market.thy
-  Content: The martingale-problem identity of Relative_Arbitrage_Stochastic
+  Content: The martingale-problem identity of Volatile_Market
            becomes a theorem.
 
   The locale sufficiently_volatile_market assumes the identity

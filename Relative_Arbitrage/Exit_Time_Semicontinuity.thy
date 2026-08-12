@@ -6,13 +6,13 @@ text \<open>
   function from two facts: \<open>g(P) = P\<hyphen>essinf \<tau>\<^sub>K\<close> is usc on the
   candidate laws, and Berge's maximum theorem turns a usc integrand into a
   usc supremum. Berge is already available
-  (\<open>Section_2_Compactness.usc_sup_over_compact\<close>); this theory supplies
+  (\<open>Equicontinuity.usc_sup_over_compact\<close>); this theory supplies
   the first fact, as a separate leaf since no existing theory imports both
-  \<open>Value_Function\<close> and \<open>Path_Tightness_Market\<close>.
+  \<open>Value_Function_Market\<close> and \<open>Path_Tightness_Market\<close>.
 \<close>
 
-theory Section_2_Usc
-  imports Path_Tightness_Market Value_Function
+theory Exit_Time_Semicontinuity
+  imports Path_Tightness_Market Value_Function_Market
 begin
 
 subsection \<open>Superlevel sets of the exit time are closed\<close>
@@ -721,7 +721,7 @@ subsection \<open>From a market to its law: transferring the exit time\<close>
 
 text \<open>
   \<open>vshift\<close> speaks about laws on the path space, while
-  \<open>Value_Function.val_fn\<close> is a supremum over markets --- a measure,
+  \<open>Value_Function_Market.val_fn\<close> is a supremum over markets --- a measure,
   filtration, process and covariation. \<open>Path_Space.path_law\<close> bridges the
   two, and these lemmas carry the essential infimum of the exit time
   across it, connecting the semicontinuity results above to \<open>\<P>\<^sub>x\<close>.
@@ -2976,7 +2976,7 @@ subsection \<open>The paper-class value function and its usc majorant\<close>
 text \<open>The paper's class (1.7) consists of stopped markets --- process stopped
   at its horizon, covariance vanishing after it, diagonal entries
   pathwise integrable --- the witness predicate without its path-law
-  clause. \<open>val_fn\<close> (Value\_Function) quantifies over the bare locale; the
+  clause. \<open>val_fn\<close> (Value\_Function\_Market) quantifies over the bare locale; the
   paper-class value function defined here is dominated by the law-level
   value function via \<open>witness_value_le_law_sup_ball\<close>, and
   \<open>vshift_sup_usc_mkt\<close> proves the latter usc. The bare-locale \<open>val_fn\<close>

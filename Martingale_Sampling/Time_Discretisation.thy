@@ -18,7 +18,7 @@
   on the grid itself.  That is the first half of the construction of the
   quadratic variation <Y> (whose existence as a process is layer 3, and is
   what turns the martingale-problem assumption dynkin_quadratic of
-  Relative_Arbitrage_Stochastic into a theorem).
+  Volatile_Market into a theorem).
 *)
 
 theory Time_Discretisation

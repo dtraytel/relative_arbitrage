@@ -7,7 +7,7 @@ text \<open>
     \<open>E[(X u - X s)\<^sup>2] \<le> C * (u - s)\<close>
 
   whenever the compensator of the square grows at rate at most \<open>C\<close> --
-  for the paper's admissible family the hypothesis \<open>trace (acov) \<le> C\<close>,
+  for the admissible family there the hypothesis \<open>trace (acov) \<le> C\<close>,
   since the compensator is \<open>integral (trace o acov)\<close>.
 
   The proof needs no stochastic integral: it combines the energy identity along a
@@ -502,10 +502,11 @@ qed
 subsection \<open>Fourth moments along a partition: Eq. (2.7) with an explicit remainder\<close>
 
 text \<open>
-  The paper derives Eq. (2.7) through the Burkholder-Davis-Gundy inequality, which
+  Eq. (2.7) of arXiv:2512.17702 is derived there through the Burkholder-Davis-Gundy
+  inequality, which
   is absent from Isabelle and the AFP. The theorem below reaches the same bound by
   expanding \<open>(Y + d)^4\<close> directly along the partition using only conditional
-  pull-outs: with a common constant \<open>8 C\<^sup>2\<close> (the paper's route gives \<open>66 C\<^sup>2\<close>), the
+  pull-outs: with a common constant \<open>8 C\<^sup>2\<close> (that route gives \<open>66 C\<^sup>2\<close>), the
   fourth moment of the increment is bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> plus three times the
   accumulated fourth moments of the partition increments, an explicit remainder
   vanishing in the mesh limit for continuous paths.
@@ -1665,7 +1666,7 @@ qed
 subsection \<open>The remainder vanishes along the uniform partitions\<close>
 
 text \<open>
-  The hypotheses package the paper's setting: a global compensator @{term A}
+  The hypotheses package the setting of arXiv:2512.17702: a global compensator @{term A}
   with rate at most @{term C} (in the application, \<open>A u = \<integral> trace (acov)\<close>
   over \<open>[0,u]\<close>), the conditional covariation identity per pair of times,
   boundedness by @{term R}, and almost-surely continuous paths on \<open>[s,T]\<close>.
@@ -2010,7 +2011,7 @@ text \<open>
   The fourth-moment bound of Eq. (2.7) of arXiv:2512.17702, for a martingale
   that is bounded and has almost-surely continuous paths on \<open>[s,T]\<close>, with
   covariation compensator of rate at most @{term C}. The constant is \<open>8 C\<^sup>2\<close>,
-  against the paper's \<open>66 C\<^sup>2\<close> obtained through the Burkholder-Davis-Gundy
+  against the \<open>66 C\<^sup>2\<close> obtained through the Burkholder-Davis-Gundy
   inequality; no BDG and no stochastic integral is used anywhere in the proof.
 \<close>
 

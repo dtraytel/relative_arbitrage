@@ -1,5 +1,5 @@
 (*
-  Title:   Envelopes.thy
+  Title:   Operator_Envelopes.thy
   Content: The semicontinuous envelopes F_* and F^* of Eq. (1.9), and
            Definition 3.1 of arXiv:2512.17702 stated with them.
 
@@ -15,7 +15,7 @@
   * the sandwich  F_* <= F <= F^*  (ell_op_lsc_le, ell_op_le_usc);
   * Definition 3.1 in envelope form, with the paper's GLOBAL touching
     condition (max over K, not a local max on a small ball);
-  * that the envelope-free notions of Relative_Arbitrage_PDE imply the
+  * that the envelope-free notions of Curvature_Operator imply the
     envelope ones (visc_subsol_imp_env, visc_supersol_imp_env) -- both
     because F_* <= F <= F^* and because a global max is a local max;
   * hence Example 3.1 satisfies Definition 3.1 as the paper states it
@@ -43,8 +43,8 @@
   now provably coincide, by ell_op_lsc_at_zero.
 *)
 
-theory Envelopes
-  imports Relative_Arbitrage_Comparison
+theory Operator_Envelopes
+  imports Viscosity_Solutions
 begin
 
 unbundle inner_syntax
@@ -588,7 +588,7 @@ section \<open>Definition 3.1 in envelope form\<close>
 text \<open>The paper's touching condition is global: \<open>(u - \<phi>)(x)\<close> is the maximum
   of \<open>u - \<phi>\<close> over all of \<open>K\<close> (resp. the minimum, for supersolutions).  The
   test-function data \<open>(\<phi>, g, H)\<close> is the same as in
-  Relative\_Arbitrage\_PDE, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
+  Curvature\_Operator, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
 
 definition visc_subsol_env ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set

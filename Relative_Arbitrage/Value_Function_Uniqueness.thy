@@ -5,13 +5,13 @@ text \<open>
   Eq. (1.6) is the unique bounded upper semicontinuous viscosity solution of
   Eq. (1.9) satisfying the zero boundary condition of Eq. (1.10).  This theory
   joins the two halves of that statement: the viscosity property, proved in
-  Paper\_Viscosity, and the comparison principle, proved in
-  Comparison\_Assembly.  It also derives Example 3.1 in closed form.
+  Value\_Function\_Market\_Viscosity, and the comparison principle, proved in
+  Comparison\_Principle.  It also derives Example 3.1 in closed form.
 \<close>
 
-theory Theorem_1_1
-  imports Value_Function Relative_Arbitrage_Comparison Comparison_Assembly
-    Section_2_Usc Deterministic_Radius_Market Paper_Viscosity
+theory Value_Function_Uniqueness
+  imports Value_Function_Market Viscosity_Solutions Comparison_Principle
+    Exit_Time_Semicontinuity Deterministic_Radius_Market Value_Function_Viscosity
 begin
 
 theorem theorem_1_1_ball_fragment:
@@ -46,17 +46,17 @@ qed
 
 section \<open>The clauses of Theorem 1.1 and where they are proved\<close>
 
-text \<open>With \<open>v = enn2real \<circ> paper_v k L T K\<close>, Theorem 1.1 has five clauses.
+text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1.1 has five clauses.
 
-  \<^item> Finiteness, \<open>paper_v k L T K x < \<top>\<close>: \<open>paper_v_le_T\<close>, and sharply
-    \<open>paper_v_le_ball_bound\<close>.
-  \<^item> Upper semicontinuity: \<open>Paper_Bridge.paper_v_usc_unconditional\<close>.
-  \<^item> The viscosity property of Eq. (1.9): \<open>Paper_Viscosity.paper_v_visc_subsol\<close>
+  \<^item> Finiteness, \<open>exit_val k L T K x < \<top>\<close>: \<open>exit_val_le_T\<close>, and sharply
+    \<open>exit_val_le_ball_bound\<close>.
+  \<^item> Upper semicontinuity: \<open>Exit_Class_Compactness.exit_val_usc_unconditional\<close>.
+  \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Viscosity.exit_val_visc_subsol\<close>
     for the subsolution half, with the operator of Eq. (1.9) itself, and
-    \<open>Paper_Viscosity.paper_v_supersol_lsc\<close> for the supersolution half.
+    \<open>Value_Function_Viscosity.exit_val_supersol_lsc\<close> for the supersolution half.
   \<^item> The zero boundary condition of Eq. (1.10), in the viscosity sense of
-    Definition 3.1: \<open>Paper_Viscosity.paper_v_subsol_bc\<close> and
-    \<open>paper_v_supersol_bc\<close> below.
+    Definition 3.1: \<open>Value_Function_Viscosity.exit_val_subsol_bc\<close> and
+    \<open>exit_val_supersol_bc\<close> below.
   \<^item> Uniqueness: \<open>theorem_1_1_uniqueness_faithful\<close> below, via the paper's
     Theorem 4.2(a), Theorem 4.2(b), Theorem 4.3 and Proposition 4.1.
 
@@ -69,7 +69,7 @@ text \<open>With \<open>v = enn2real \<circ> paper_v k L T K\<close>, Theorem 1.
 
 section \<open>A comparison principle without a regularity hypothesis is refutable\<close>
 
-text \<open>\<open>comparison_principle\<close> (Relative\_Arbitrage\_Uniqueness) states comparison
+text \<open>\<open>comparison_principle\<close> (Viscosity\_Comparison\_Interface) states comparison
   with no regularity hypothesis on \<open>u\<close> and \<open>w\<close>.  It holds for no ball.
   \<open>visc_subsol\<close> and \<open>visc_supersol\<close> are conditions local to \<open>\<Omega>\<close>, so the values
   of a sub- or supersolution outside \<open>\<Omega>\<close> are unconstrained: \<open>u = ball_v + 1\<close> is
@@ -270,16 +270,16 @@ section \<open>The value function satisfies both clauses of Definition 3.1\<clos
 text \<open>Both halves of the viscosity property land in the envelope forms that
   @{thm [source] viscosity_uniqueness_compact} consumes:
   @{thm [source] visc_subsol_imp_env} on the subsolution side, the
-  envelope-free notion proved for \<open>paper_v\<close> being the stronger one, and
+  envelope-free notion proved for \<open>exit_val\<close> being the stronger one, and
   @{thm [source] visc_supersol_lsc_iff_env} on the supersolution side.  The
-  horizon hypothesis is discharged by @{thm [source] paper_v_cap_inert}.
+  horizon hypothesis is discharged by @{thm [source] exit_val_cap_inert}.
 
-  The statement below assumes continuity of \<open>paper_v\<close> on \<open>K\<close>.  Theorem 1.1
+  The statement below assumes continuity of \<open>exit_val\<close> on \<open>K\<close>.  Theorem 1.1
   speaks of the unique upper semicontinuous solution and needs no continuity;
   \<open>theorem_1_1_uniqueness_faithful\<close> below is the faithful form, and
   supersedes this one.\<close>
 
-theorem paper_v_unique_viscosity_solution:
+theorem exit_val_unique_viscosity_solution:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 < L"
@@ -287,34 +287,34 @@ theorem paper_v_unique_viscosity_solution:
     and KB: "K \<subseteq> cball 0 rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
     and cv: "\<And>y. y \<in> K \<Longrightarrow>
-      isCont (\<lambda>z. enn2real (paper_v k L T K z)) y"
+      isCont (\<lambda>z. enn2real (exit_val k L T K z)) y"
     and cu: "continuous_on K u"
     and subu: "visc_subsol_env k L K (interior K) u"
     and supu: "visc_supersol_env k L K (interior K) u"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow>
-      u y = enn2real (paper_v k L T K y)"
+      u y = enn2real (exit_val k L T K y)"
     and x: "x \<in> K"
-  shows "u x = enn2real (paper_v k L T K x)"
+  shows "u x = enn2real (exit_val k L T K x)"
 proof -
   have L1': "1 \<le> L" using L1 by linarith
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   have iK: "interior K \<subseteq> K" by (rule interior_subset)
-  have tv0: "\<And>y. (0 :: real) \<le> enn2real (paper_v k L T K y)" by simp
+  have tv0: "\<And>y. (0 :: real) \<le> enn2real (exit_val k L T K y)" by simp
   \<comment> \<open>continuity of the value function, in the two shapes needed\<close>
-  have cw: "continuous_on K (\<lambda>z. enn2real (paper_v k L T K z))"
+  have cw: "continuous_on K (\<lambda>z. enn2real (exit_val k L T K z))"
     by (rule continuous_at_imp_continuous_on) (use cv in blast)
   \<comment> \<open>clause (2), subsolution half --- the envelope-free form is stronger\<close>
-  have sub0: "visc_subsol k L (interior K) (\<lambda>z. enn2real (paper_v k L T K z))"
-    by (rule paper_v_visc_subsol[OF T0 L1' Kc kn])
+  have sub0: "visc_subsol k L (interior K) (\<lambda>z. enn2real (exit_val k L T K z))"
+    by (rule exit_val_visc_subsol[OF T0 L1' Kc kn])
   have subw: "visc_subsol_env k L K (interior K)
-      (\<lambda>z. enn2real (paper_v k L T K z))"
+      (\<lambda>z. enn2real (exit_val k L T K z))"
     by (rule visc_subsol_imp_env[OF sub0 iK open_interior])
   \<comment> \<open>clause (2), supersolution half --- Definition 3.1(b), horizon discharged\<close>
   have sup0: "visc_supersol_lsc k L K (interior K)
-      (\<lambda>z. enn2real (paper_v k L T K z))"
-    by (rule paper_v_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
+      (\<lambda>z. enn2real (exit_val k L T K z))"
+    by (rule exit_val_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
   have supw: "visc_supersol_env k L K (interior K)
-      (\<lambda>z. enn2real (paper_v k L T K z))"
+      (\<lambda>z. enn2real (exit_val k L T K z))"
     using sup0 visc_supersol_lsc_iff_env[OF tv0 iK cv] by blast
   show ?thesis
     by (rule viscosity_uniqueness_compact[OF cK neK k1 kn L1' cu cw
@@ -324,25 +324,25 @@ qed
 
 section \<open>Theorem 1.1 assembled\<close>
 
-text \<open>\<open>paper_v\<close> as a real-valued function: nonnegative, globally bounded, and
+text \<open>\<open>exit_val\<close> as a real-valued function: nonnegative, globally bounded, and
   upper semicontinuous in the \<open>\<epsilon>\<close>-form the comparison machinery consumes.\<close>
 
-lemma paper_v_real_nonneg: "0 \<le> enn2real (paper_v k L T K x)"
+lemma exit_val_real_nonneg: "0 \<le> enn2real (exit_val k L T K x)"
   by simp
 
-lemma paper_v_real_bounded:
+lemma exit_val_real_bounded:
   fixes K :: "(real^'n::finite) set"
   assumes kn: "k < CARD('n)" and T0: "0 \<le> T" and L0: "0 \<le> L"
     and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
-  shows "\<bar>enn2real (paper_v k L T K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
+  shows "\<bar>enn2real (exit_val k L T K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
 proof -
   have nk: "0 < real (CARD('n) - k)" using kn by simp
-  have le: "paper_v k L T K x
+  have le: "exit_val k L T K x
       \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
-    by (rule paper_v_le_ball_bound[OF kn T0 L0 KB])
+    by (rule exit_val_le_ball_bound[OF kn T0 L0 KB])
   have fin: "ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)) < \<top>"
     by simp
-  have "enn2real (paper_v k L T K x)
+  have "enn2real (exit_val k L T K x)
       \<le> enn2real (ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)))"
     by (rule enn2real_mono[OF le fin])
   also have "\<dots> \<le> rK * rK / real (CARD('n) - k)"
@@ -359,62 +359,62 @@ proof -
       by (simp add: ennreal_neg)
     then show ?thesis using nk r0 by simp
   qed
-  finally show ?thesis using paper_v_real_nonneg[of k L T K x] by simp
+  finally show ?thesis using exit_val_real_nonneg[of k L T K x] by simp
 qed
 
-lemma paper_v_real_usc:
+lemma exit_val_real_usc:
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L: "1 \<le> L" and Kc: "closed K"
     and kn: "k < CARD('n)" and KB: "K \<subseteq> cball 0 rK"
-    and lt: "enn2real (paper_v k L T K z) < cc"
-  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (paper_v k L T K y) < cc"
+    and lt: "enn2real (exit_val k L T K z) < cc"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (exit_val k L T K y) < cc"
 proof -
   have L0: "0 \<le> L" using L by simp
   have T0: "0 \<le> T" using T by simp
-  have cc0: "0 < cc" using lt paper_v_real_nonneg[of k L T K z] by linarith
-  have fin: "paper_v k L T K y < \<top>" for y
+  have cc0: "0 < cc" using lt exit_val_real_nonneg[of k L T K z] by linarith
+  have fin: "exit_val k L T K y < \<top>" for y
   proof -
-    have "paper_v k L T K y
+    have "exit_val k L T K y
         \<le> ennreal ((rK * rK - y \<bullet> y) / real (CARD('n) - k))"
-      by (rule paper_v_le_ball_bound[OF kn T0 L0 KB])
+      by (rule exit_val_le_ball_bound[OF kn T0 L0 KB])
     also have "\<dots> < \<top>" by simp
     finally show ?thesis .
   qed
-  have zlt: "paper_v k L T K z < ennreal cc"
+  have zlt: "exit_val k L T K z < ennreal cc"
     using lt fin[of z] by simp
-  have "eventually (\<lambda>y. paper_v k L T K y < ennreal cc) (nhds z)"
-    by (rule paper_v_usc_unconditional[OF T L Kc zlt])
+  have "eventually (\<lambda>y. exit_val k L T K y < ennreal cc) (nhds z)"
+    by (rule exit_val_usc_unconditional[OF T L Kc zlt])
   then obtain U where opU: "open U" and zU: "z \<in> U"
-    and Uy: "\<And>y. y \<in> U \<Longrightarrow> paper_v k L T K y < ennreal cc"
+    and Uy: "\<And>y. y \<in> U \<Longrightarrow> exit_val k L T K y < ennreal cc"
     unfolding eventually_nhds by blast
   obtain e where e0: "0 < e" and eU: "ball z e \<subseteq> U"
     using opU zU unfolding open_contains_ball by blast
-  have "enn2real (paper_v k L T K y) < cc" if dy: "dist z y < e" for y
+  have "enn2real (exit_val k L T K y) < cc" if dy: "dist z y < e" for y
   proof -
     have "y \<in> U" using eU dy by auto
-    then have "paper_v k L T K y < ennreal cc" by (rule Uy)
+    then have "exit_val k L T K y < ennreal cc" by (rule Uy)
     then show ?thesis using fin[of y] cc0 by simp
   qed
   then show ?thesis using e0 by blast
 qed
 
-text \<open>The supersolution clause of Definition 3.1 for \<open>paper_v\<close>, with the
-  boundary gate included.  The gate is vacuous: \<open>paper_v \<ge> 0\<close>, hence so is its
+text \<open>The supersolution clause of Definition 3.1 for \<open>exit_val\<close>, with the
+  boundary gate included.  The gate is vacuous: \<open>exit_val \<ge> 0\<close>, hence so is its
   lower envelope, so \<open>{x. lsc_env v x < 0} = {}\<close> and the \<open>\<Omega>\<close> of
   Definition 3.1(b) collapses to \<open>interior K\<close>.\<close>
 
-theorem paper_v_supersol_bc:
+theorem exit_val_supersol_bc:
   fixes K :: "(real^'n::finite) set"
   assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
   shows "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K.
-          lsc_env (\<lambda>z. enn2real (paper_v k L T K z)) x < 0})
-      (lsc_env (\<lambda>z. enn2real (paper_v k L T K z)))"
+          lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
+      (lsc_env (\<lambda>z. enn2real (exit_val k L T K z)))"
 proof -
-  define v where "v = (\<lambda>z. enn2real (paper_v k L T K z))"
-  have v0: "0 \<le> v y" for y unfolding v_def by (rule paper_v_real_nonneg)
+  define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
+  have v0: "0 \<le> v y" for y unfolding v_def by (rule exit_val_real_nonneg)
   have lsc0: "0 \<le> lsc_env v x" for x by (rule lsc_env_ge[OF v0])
   have gate: "interior K \<union> {x \<in> K - interior K. lsc_env v x < 0} = interior K"
   proof
@@ -437,16 +437,16 @@ proof -
   qed
   have "visc_supersol_lsc k L K (interior K) v"
     unfolding v_def
-    by (rule paper_v_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
+    by (rule exit_val_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
   then have "visc_supersol_env k L K (interior K) (lsc_env v)"
     unfolding visc_supersol_lsc_def visc_supersol_env_def by blast
   then show ?thesis unfolding v_def[symmetric] gate .
 qed
 
-text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>paper_v\<close> is upper semicontinuous
-  (\<open>paper_v_real_usc\<close>), nonnegative, globally bounded (\<open>paper_v_real_bounded\<close>)
+text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>exit_val\<close> is upper semicontinuous
+  (\<open>exit_val_real_usc\<close>), nonnegative, globally bounded (\<open>exit_val_real_bounded\<close>)
   and satisfies both clauses of Definition 3.1 with their boundary gates
-  (\<open>paper_v_subsol_bc\<close>, \<open>paper_v_supersol_bc\<close>); on an expandable \<open>K\<close> it is the
+  (\<open>exit_val_subsol_bc\<close>, \<open>exit_val_supersol_bc\<close>); on an expandable \<open>K\<close> it is the
   only such function.\<close>
 
 theorem theorem_1_1_uniqueness_faithful:
@@ -462,24 +462,24 @@ theorem theorem_1_1_uniqueness_faithful:
     and supu: "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
     and x: "x \<in> K"
-  shows "u x = enn2real (paper_v k L T K x)"
+  shows "u x = enn2real (exit_val k L T K x)"
 proof -
-  define v where "v = (\<lambda>z. enn2real (paper_v k L T K z))"
+  define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
   define B where "B = rK * rK / real (CARD('n) - k)"
   have L0: "1 \<le> L" using L1 by simp
   have T0': "0 \<le> T" using T0 by simp
   have L0': "0 \<le> L" using L1 by simp
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   have Bv: "\<bar>v y\<bar> \<le> B" for y
-    unfolding v_def B_def by (rule paper_v_real_bounded[OF kn T0' L0' KB r0])
+    unfolding v_def B_def by (rule exit_val_real_bounded[OF kn T0' L0' KB r0])
   have uscv: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c" if "v z < c" for c z
-    using that unfolding v_def by (rule paper_v_real_usc[OF T0 L0 Kc kn KB])
+    using that unfolding v_def by (rule exit_val_real_usc[OF T0 L0 Kc kn KB])
   have supv: "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
-    unfolding v_def by (rule paper_v_supersol_bc[OF T0 L1 k1 kn Kc KB Tbig])
+    unfolding v_def by (rule exit_val_supersol_bc[OF T0 L1 k1 kn Kc KB Tbig])
   have subv: "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-    unfolding v_def by (rule paper_v_subsol_bc[OF T0 L0 Kc kn])
+    unfolding v_def by (rule exit_val_subsol_bc[OF T0 L0 Kc kn])
   have "u x = v x"
     by (rule uniqueness_expandable
         [OF k1 kn L0 cK neK expK uscu uscv Bu[unfolded B_def[symmetric]] Bv
@@ -491,33 +491,33 @@ section \<open>Example 3.1 from the interior lower bound\<close>
 
 text \<open>Everything of Example 3.1 except the interior lower bound at nonzero
   points.  Four cases: outside the ball the value is \<open>0\<close>, since a path starting
-  outside \<open>K\<close> has exit time \<open>0\<close> (\<open>paper_v_zero_outside\<close>); on the sphere,
-  \<open>paper_v_boundary_zero\<close>; strictly inside and nonzero, the hypothesis against
-  \<open>paper_v_le_ball_bound\<close>; and at the centre by upper semicontinuity, rather
+  outside \<open>K\<close> has exit time \<open>0\<close> (\<open>exit_val_zero_outside\<close>); on the sphere,
+  \<open>exit_val_boundary_zero\<close>; strictly inside and nonzero, the hypothesis against
+  \<open>exit_val_le_ball_bound\<close>; and at the centre by upper semicontinuity, rather
   than by running the tangential field from \<open>0\<close>, where the clamp sits.\<close>
 
-lemma paper_v_ball_fin:
+lemma exit_val_ball_fin:
   fixes r :: real and y :: "real^'n::finite"
   assumes kn: "k < CARD('n)" and T0: "0 \<le> T" and L0: "0 \<le> L"
-  shows "paper_v k L T (cball 0 r) y < \<top>"
+  shows "exit_val k L T (cball 0 r) y < \<top>"
 proof -
-  have "paper_v k L T (cball 0 r) y
+  have "exit_val k L T (cball 0 r) y
       \<le> ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k))"
-    by (rule paper_v_le_ball_bound[OF kn T0 L0]) simp
+    by (rule exit_val_le_ball_bound[OF kn T0 L0]) simp
   also have "\<dots> < \<top>" by simp
   finally show ?thesis .
 qed
 
-lemma paper_v_ball_upper:
+lemma exit_val_ball_upper:
   fixes r :: real and y :: "real^'n::finite"
   assumes kn: "k < CARD('n)" and T0: "0 \<le> T" and L0: "0 \<le> L"
-  shows "enn2real (paper_v k L T (cball 0 r) y)
+  shows "enn2real (exit_val k L T (cball 0 r) y)
       \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0"
 proof -
-  have le: "paper_v k L T (cball 0 r) y
+  have le: "exit_val k L T (cball 0 r) y
       \<le> ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k))"
-    by (rule paper_v_le_ball_bound[OF kn T0 L0]) simp
-  have "enn2real (paper_v k L T (cball 0 r) y)
+    by (rule exit_val_le_ball_bound[OF kn T0 L0]) simp
+  have "enn2real (exit_val k L T (cball 0 r) y)
       \<le> enn2real (ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k)))"
     by (rule enn2real_mono[OF le]) simp
   also have "\<dots> \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0"
@@ -531,8 +531,8 @@ theorem example_3_1_from_lower:
   assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and T0: "0 < T" and r0: "0 < r"
     and lower: "\<And>y :: real^'n. norm y < r \<Longrightarrow> y \<noteq> 0 \<Longrightarrow>
         (r * r - y \<bullet> y) / real (CARD('n) - k)
-          \<le> enn2real (paper_v k L T (cball 0 r) y)"
-  shows "enn2real (paper_v k L T (cball 0 r) x)
+          \<le> enn2real (exit_val k L T (cball 0 r) y)"
+  shows "enn2real (exit_val k L T (cball 0 r) x)
       = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
 proof -
   have nk0: "0 < real (CARD('n) - k)" using kn by simp
@@ -541,9 +541,9 @@ proof -
   have Kc: "closed (cball (0 :: real^'n) r)" by simp
   have sq: "y \<bullet> y = norm y * norm y" for y :: "real^'n"
     by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
-  have upper: "enn2real (paper_v k L T (cball 0 r) y)
+  have upper: "enn2real (exit_val k L T (cball 0 r) y)
       \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0" for y :: "real^'n"
-    by (rule paper_v_ball_upper[OF kn T0' L0])
+    by (rule exit_val_ball_upper[OF kn T0' L0])
   consider (out) "r < norm x" | (sph) "norm x = r"
     | (inn) "norm x < r" "x \<noteq> 0" | (ctr) "x = 0"
     by (cases "r < norm x", simp) (cases "norm x = r", simp, cases "x = 0", auto)
@@ -551,8 +551,8 @@ proof -
   proof cases
     case out
     then have "x \<notin> cball (0 :: real^'n) r" by simp
-    then have z: "paper_v k L T (cball 0 r) x = 0"
-      by (rule paper_v_zero_outside[OF T0'])
+    then have z: "exit_val k L T (cball 0 r) x = 0"
+      by (rule exit_val_zero_outside[OF T0'])
     have "r * r < norm x * norm x"
       by (rule mult_strict_mono) (use out r0 in auto)
     then have "(r * r - x \<bullet> x) / real (CARD('n) - k) < 0"
@@ -560,8 +560,8 @@ proof -
     then show ?thesis unfolding z by simp
   next
     case sph
-    then have z: "paper_v k L T (cball 0 r) x = 0"
-      by (rule paper_v_boundary_zero[OF kn T0 L0])
+    then have z: "exit_val k L T (cball 0 r) x = 0"
+      by (rule exit_val_boundary_zero[OF kn T0 L0])
     have "x \<bullet> x = r * r" unfolding sq sph by (rule refl)
     then show ?thesis unfolding z by simp
   next
@@ -573,7 +573,7 @@ proof -
       then show ?thesis unfolding sq using nk0 by simp
     qed
     have "(r * r - x \<bullet> x) / real (CARD('n) - k)
-        \<le> enn2real (paper_v k L T (cball 0 r) x)"
+        \<le> enn2real (exit_val k L T (cball 0 r) x)"
       by (rule lower[OF inn(1) inn(2)])
     with upper[of x] nn show ?thesis by simp
   next
@@ -583,32 +583,32 @@ proof -
     define nk where "nk = real (CARD('n) - k)"
     have nkp: "0 < nk" unfolding nk_def using kn by simp
     have lower': "\<And>y :: real^'n. norm y < r \<Longrightarrow> y \<noteq> 0 \<Longrightarrow>
-        (r * r - y \<bullet> y) / nk \<le> enn2real (paper_v k L T (cball 0 r) y)"
+        (r * r - y \<bullet> y) / nk \<le> enn2real (exit_val k L T (cball 0 r) y)"
       unfolding nk_def by (rule lower)
-    have upper': "enn2real (paper_v k L T (cball 0 r) y)
+    have upper': "enn2real (exit_val k L T (cball 0 r) y)
         \<le> max ((r * r - y \<bullet> y) / nk) 0" for y :: "real^'n"
       unfolding nk_def by (rule upper)
     have goalR: "max ((r * r - x \<bullet> x) / nk) 0 = r * r / nk"
       unfolding ctr using nkp r0 by simp
-    have le: "enn2real (paper_v k L T (cball 0 r) x) \<le> r * r / nk"
+    have le: "enn2real (exit_val k L T (cball 0 r) x) \<le> r * r / nk"
       using upper'[of x] goalR by simp
-    have ge: "r * r / nk \<le> enn2real (paper_v k L T (cball 0 r) x)"
+    have ge: "r * r / nk \<le> enn2real (exit_val k L T (cball 0 r) x)"
     proof (rule ccontr)
-      assume "\<not> r * r / nk \<le> enn2real (paper_v k L T (cball 0 r) x)"
-      then have lt0: "enn2real (paper_v k L T (cball 0 r) x) < r * r / nk"
+      assume "\<not> r * r / nk \<le> enn2real (exit_val k L T (cball 0 r) x)"
+      then have lt0: "enn2real (exit_val k L T (cball 0 r) x) < r * r / nk"
         by simp
-      define b where "b = (enn2real (paper_v k L T (cball 0 r) x)
+      define b where "b = (enn2real (exit_val k L T (cball 0 r) x)
           + r * r / nk) / 2"
-      have b2: "2 * b = enn2real (paper_v k L T (cball 0 r) x) + r * r / nk"
+      have b2: "2 * b = enn2real (exit_val k L T (cball 0 r) x) + r * r / nk"
         unfolding b_def by simp
-      have blo: "enn2real (paper_v k L T (cball 0 r) x) < b" using lt0 b2 by linarith
+      have blo: "enn2real (exit_val k L T (cball 0 r) x) < b" using lt0 b2 by linarith
       have bhi: "b < r * r / nk" using lt0 b2 by linarith
-      have "paper_v k L T (cball 0 r) x < ennreal b"
-        using blo paper_v_ball_fin[OF kn T0' L0] by simp
-      then have "eventually (\<lambda>y. paper_v k L T (cball 0 r) y < ennreal b) (nhds x)"
-        by (rule paper_v_usc_unconditional[OF T0 L1 Kc])
+      have "exit_val k L T (cball 0 r) x < ennreal b"
+        using blo exit_val_ball_fin[OF kn T0' L0] by simp
+      then have "eventually (\<lambda>y. exit_val k L T (cball 0 r) y < ennreal b) (nhds x)"
+        by (rule exit_val_usc_unconditional[OF T0 L1 Kc])
       then obtain U where opU: "open U" and xU: "x \<in> U"
-        and Uy: "\<And>y. y \<in> U \<Longrightarrow> paper_v k L T (cball 0 r) y < ennreal b"
+        and Uy: "\<And>y. y \<in> U \<Longrightarrow> exit_val k L T (cball 0 r) y < ennreal b"
         unfolding eventually_nhds by blast
       obtain e where e0: "0 < e" and eU: "ball x e \<subseteq> U"
         using opU xU unfolding open_contains_ball by blast
@@ -628,10 +628,10 @@ proof -
         then have "y \<in> ball x e" unfolding s_def using e0 by simp
         then show ?thesis using eU by blast
       qed
-      have vylt: "enn2real (paper_v k L T (cball 0 r) y) < b"
-        using Uy[OF yU] paper_v_ball_fin[OF kn T0' L0]
+      have vylt: "enn2real (exit_val k L T (cball 0 r) y) < b"
+        using Uy[OF yU] exit_val_ball_fin[OF kn T0' L0]
         by simp
-      have "(r * r - y \<bullet> y) / nk \<le> enn2real (paper_v k L T (cball 0 r) y)"
+      have "(r * r - y \<bullet> y) / nk \<le> enn2real (exit_val k L T (cball 0 r) y)"
         by (rule lower'[OF ylt ynz])
       then have vge: "(r * r - s * s) / nk < b"
         using vylt unfolding sq ny by simp
@@ -664,7 +664,7 @@ text \<open>The interior lower bound holds at the sharp rate \<open>CARD('n) - k
   \<open>y \<noteq> 0\<close> take the \<open>(CARD('n) - k + 1)\<close>-dimensional subspace \<open>V\<close> spanned by an
   orthonormal family whose first member is \<open>y / |y|\<close>
   (@{thm [source] orthonormal_family_containing}), so that \<open>y \<in> V\<close>, and run the
-  subspace-tangential member of @{thm [source] paper_v_ball_lower_sharp} inside
+  subspace-tangential member of @{thm [source] exit_val_ball_lower_sharp} inside
   \<open>V\<close>.  Its growth rate is \<open>dim V - 1 = CARD('n) - k\<close>, the constant of (3.1).
 
   The hypothesis \<open>r\<^sup>2/(CARD('n) - k) \<le> T\<close> says only that the horizon does not
@@ -677,7 +677,7 @@ theorem example_3_1:
   assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
     and T0: "0 < T" and r0: "0 < r"
     and Tbig: "r * r / real (CARD('n) - k) \<le> T"
-  shows "enn2real (paper_v k L T (cball 0 r) x)
+  shows "enn2real (exit_val k L T (cball 0 r) x)
       = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
 proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
   fix y :: "real^'n" assume ylt: "norm y < r" and ynz: "y \<noteq> 0"
@@ -717,8 +717,8 @@ proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
   have Kc: "closed (cball (0 :: real^'n) r)" by simp
   have sub: "cball (0 :: real^'n) r \<subseteq> cball 0 r" by simp
   have bound: "ennreal (min T ((r\<^sup>2 - (norm y)\<^sup>2) / (real m - 1)))
-      \<le> paper_v k L T (cball 0 r) y"
-    by (rule paper_v_ball_lower_sharp[OF T0 L1 Kc sub ynz ylt orth mk m2 yfix])
+      \<le> exit_val k L T (cball 0 r) y"
+    by (rule exit_val_ball_lower_sharp[OF T0 L1 Kc sub ynz ylt orth mk m2 yfix])
   have sq: "(norm y)\<^sup>2 = y \<bullet> y" by (simp add: dot_square_norm)
   have rsq: "r\<^sup>2 = r * r" by (simp add: power2_eq_square)
   have nn: "0 \<le> (r * r - y \<bullet> y) / real (CARD('n) - k)"
@@ -739,16 +739,16 @@ proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
       = (r * r - y \<bullet> y) / real (CARD('n) - k)"
     using dle by simp
   have bound': "ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k))
-      \<le> paper_v k L T (cball 0 r) y"
+      \<le> exit_val k L T (cball 0 r) y"
     using bound unfolding sq rsq cn mineq .
-  have fin: "paper_v k L T (cball 0 r) y < \<top>"
-    by (rule paper_v_ball_fin[OF kn]) (use T0 L1 in auto)
-  have ntop: "paper_v k L T (cball 0 r) y \<noteq> \<top>" using fin by simp
+  have fin: "exit_val k L T (cball 0 r) y < \<top>"
+    by (rule exit_val_ball_fin[OF kn]) (use T0 L1 in auto)
+  have ntop: "exit_val k L T (cball 0 r) y \<noteq> \<top>" using fin by simp
   have "enn2real (ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k)))
-      \<le> enn2real (paper_v k L T (cball 0 r) y)"
+      \<le> enn2real (exit_val k L T (cball 0 r) y)"
     by (rule enn2real_mono[OF bound' fin])
   then show "(r * r - y \<bullet> y) / real (CARD('n) - k)
-      \<le> enn2real (paper_v k L T (cball 0 r) y)"
+      \<le> enn2real (exit_val k L T (cball 0 r) y)"
     unfolding enn2real_ennreal[OF nn] .
 qed
 

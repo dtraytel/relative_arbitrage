@@ -1,9 +1,9 @@
 (*
-  Title:   Relative_Arbitrage_Comparison.thy
+  Title:   Viscosity_Solutions.thy
   Content: Uniqueness of the ball solution of Eq. (3.9) without the
            Crandall--Ishii comparison principle.
 
-  Relative_Arbitrage_Uniqueness derives uniqueness from the locale
+  Viscosity_Comparison_Interface derives uniqueness from the locale
   comparison_principle, i.e. from the comparison principle for two
   arbitrary viscosity solutions -- that is the Crandall--Ishii theorem,
   which needs sup-convolutions and Jensen's lemma.
@@ -20,8 +20,8 @@
   data, proved from first principles.
 *)
 
-theory Relative_Arbitrage_Comparison
-  imports Relative_Arbitrage_Uniqueness
+theory Viscosity_Solutions
+  imports Viscosity_Comparison_Interface
 begin
 
 section \<open>Continuity of the ball value function\<close>
@@ -441,7 +441,7 @@ text \<open>Theorem 4.3 (comparison) and Proposition 4.1 (uniqueness) are proved
   the paper for general compact \<open>K\<close> via Theorem 4.2(a), whose proof doubles
   the variables and invokes the Crandall--Ishii theorem on sums -- cited as
   [CI90] and not formalized here (see \<open>max_principle_boundary\<close> in
-  Lemma\_3\_1\_Envelopes.thy for where that hypothesis is isolated).
+  Operator\_Envelope\_Continuity.thy for where that hypothesis is isolated).
 
   For \<open>K\<close> a closed ball, Section 4's conclusion holds unconditionally: the
   explicit solution \<open>ball_v\<close> of Eq. (3.9) is interposed, a subsolution

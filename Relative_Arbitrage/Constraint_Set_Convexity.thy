@@ -1,5 +1,5 @@
 (*
-  Title:   Relative_Arbitrage_Convexity.thy
+  Title:   Constraint_Set_Convexity.thy
   Content: Lemma 2.1 of arXiv:2512.17702 (Lai/Shkolnikov/Soner):
            the convexification of the eigenvalue constraint.
 
@@ -13,7 +13,7 @@
   ingredients:
     * conv B_k \<subseteq> A_k, via the Grassmann dimension formula and
       basis-independent subspace traces (the spectral theorem of
-      Relative_Arbitrage_PDE diagonalizes orthogonal projections);
+      Curvature_Operator diagonalizes orthogonal projections);
     * A_k \<subseteq> closure (conv B_k), via hyperplane separation from the
       closed convex hull, symmetrization and eigen-decomposition of the
       separating functional, and an Abel-summation estimate against the
@@ -24,12 +24,12 @@
   i.e. A_k is the closed convex hull of B_k, the form in which the paper
   uses Lemma 2.1.
 
-  As in Relative_Arbitrage_PDE, the spectral condition lambda_(n-k)(a) >= 1
+  As in Curvature_Operator, the spectral condition lambda_(n-k)(a) >= 1
   is expressed by its Courant-Fischer characterization eigen_lb.
 *)
 
-theory Relative_Arbitrage_Convexity
-  imports Relative_Arbitrage_PDE
+theory Constraint_Set_Convexity
+  imports Curvature_Operator
 begin
 
 unbundle inner_syntax

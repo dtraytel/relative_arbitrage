@@ -18,7 +18,7 @@ subsection \<open>The bad event at one dyadic level\<close>
 text \<open>
   The level bound in its abstract form: only measurability, integrability of
   the fourth powers and the Eq. (2.7) moment bound itself are consumed. The
-  paper's Lemma 2.2 needs this for unbounded martingale laws, where (2.7)
+  Lemma 2.2 there needs this for unbounded martingale laws, where (2.7)
   will be obtained by localization + Fatou; the bounded package is a
   corollary below.
 \<close>

@@ -309,7 +309,7 @@ lemma qvar_vec_Suc:
   by (simp add: qvar_vec_def)
 
 text \<open>Ito's formula for \<open>w\<close> in discrete time.  This is the identity that
-  the continuous-time development of Relative\_Arbitrage\_Ito can only
+  the continuous-time development of Optimal\_Exit\_Time can only
   postulate (\<open>sint_def\<close> there); here it is a theorem, with the stochastic
   integral of Eq. (1.1) on the right-hand side.\<close>
 

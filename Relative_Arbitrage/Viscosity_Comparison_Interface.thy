@@ -1,5 +1,5 @@
 (*
-  Title:   Relative_Arbitrage_Uniqueness.thy
+  Title:   Viscosity_Comparison_Interface.thy
   Content: The uniqueness side of Theorem 1.1 of arXiv:2512.17702
            (Lai/Shkolnikov/Soner), and the structural pieces of Lemma 3.1.
 
@@ -23,8 +23,8 @@
   formalization, and is taken here as an interface assumption.
 *)
 
-theory Relative_Arbitrage_Uniqueness
-  imports Relative_Arbitrage_Convexity
+theory Viscosity_Comparison_Interface
+  imports Constraint_Set_Convexity
 begin
 
 unbundle inner_syntax

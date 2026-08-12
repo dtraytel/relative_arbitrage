@@ -11,35 +11,35 @@ session Relative_Arbitrage = Path_Space_Tightness +
     Disintegration
     Levy_Prokhorov_Metric
   theories
-    Relative_Arbitrage_PDE
-    Relative_Arbitrage_Stochastic
-    Relative_Arbitrage_Convexity
-    Relative_Arbitrage_Uniqueness
-    Relative_Arbitrage_Comparison
-    Relative_Arbitrage_Ito
-    Lemma_2_1_Exact
+    Curvature_Operator
+    Volatile_Market
+    Constraint_Set_Convexity
+    Viscosity_Comparison_Interface
+    Viscosity_Solutions
+    Optimal_Exit_Time
+    Eigenvalue_Bound_Exact
     Eigenvalues
     Eigenvalue_Continuity
     Threshold_Chain
-    Lemma_3_1
+    Operator_Continuity
     Poincare_Separation
-    Envelopes
-    Lemma_3_1_Envelopes
+    Operator_Envelopes
+    Operator_Envelope_Continuity
     Brownian_Market
     Ito_Market
     Modification_Transfer
     Brownian_Continuous
     Brownian_Optimal_Boundary
-    Value_Function
+    Value_Function_Market
     Exit_Time
     Stopped_Localization
     Path_Tightness_Market
-    Section_2_Usc
+    Exit_Time_Semicontinuity
     Exit_Semicontinuity
     Deterministic_Radius_Market
-    Paper_Class
-    Paper_Bridge
-    Paper_DPP
-    Paper_Viscosity
-    Comparison_Assembly
-    Theorem_1_1
+    Exit_Class
+    Exit_Class_Compactness
+    Exit_Class_DPP
+    Value_Function_Viscosity
+    Comparison_Principle
+    Value_Function_Uniqueness

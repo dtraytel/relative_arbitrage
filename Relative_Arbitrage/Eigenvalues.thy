@@ -4,7 +4,7 @@
            matrix, developed basis-free, towards Eq. (3.6) of
            arXiv:2512.17702 (Lai/Shkolnikov/Soner).
 
-  Design.  Relative_Arbitrage_Convexity already defines
+  Design.  Constraint_Set_Convexity already defines
 
     Pi_proj a m = Inf {trace (a ** P) | is_proj P, trace P = m}
 
@@ -28,7 +28,7 @@
 *)
 
 theory Eigenvalues
-  imports Lemma_2_1_Exact
+  imports Eigenvalue_Bound_Exact
 begin
 
 section \<open>The linear program on the simplex inside a box\<close>

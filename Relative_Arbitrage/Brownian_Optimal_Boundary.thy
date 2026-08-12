@@ -1,6 +1,6 @@
 (*
   Title:   Brownian_Optimal_Boundary.thy
-  Content: The optimality locale of Relative_Arbitrage_Ito is consistent.
+  Content: The optimality locale of Optimal_Exit_Time is consistent.
 
   optimal_ball_market assumes the reverse inequality E[tau] >= v(x0) of
   Eq. (3.11), whose proof needs the time-changed spherical martingale and
@@ -21,7 +21,7 @@
 theory Brownian_Optimal_Boundary
   imports
     Brownian_Continuous
-    Relative_Arbitrage_Ito
+    Optimal_Exit_Time
 begin
 
 section \<open>A Brownian market confined to the closed ball\<close>

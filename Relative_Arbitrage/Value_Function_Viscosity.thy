@@ -1,7 +1,7 @@
 (*
-  Title:   Paper_Viscosity.thy
+  Title:   Value_Function_Viscosity.thy
   Content: Towards clause (2) of Theorem 1.1 of arXiv:2512.17702 --- the two
-           viscosity inequalities for `paper_v`.  PLAN section 2.1.
+           viscosity inequalities for `exit_val`.  PLAN section 2.1.
 
   Two facts shape everything here.
 
@@ -21,7 +21,7 @@
   formula is unavailable.  For QUADRATIC test functions it is also unnecessary:
   z . (M *v z) = trace (M ** outerp z) is a linear functional of the
   compensated clause, so the expansion is exact and elementary.  That is
-  paper_pair_class_quadratic_mean, and paper_v_subsol_quadratic_global is the
+  exit_class_quadratic_mean, and exit_val_subsol_quadratic_global is the
   subsolution inequality it yields, for the relaxed operator ell_op_s and a
   globally touching quadratic.
 
@@ -29,8 +29,8 @@
   including two localisation routes that were checked and provably do not work.
 *)
 
-theory Paper_Viscosity
-  imports Paper_DPP Relative_Arbitrage_PDE Envelopes
+theory Value_Function_Viscosity
+  imports Exit_Class_DPP Curvature_Operator Operator_Envelopes
 begin
 
 section \<open>One witness suffices for the subsolution inequality\<close>
@@ -61,11 +61,11 @@ corollary ell_op_le_one_of_witness:
 
 section \<open>The DPP at the exit time of a ball\<close>
 
-text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] paper_v_cond_time}, needs its
+text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] exit_val_cond_time}, needs its
   random time only to lie in \<open>[0,T]\<close>, so the subsolution argument can use
   the exit time of a ball directly.
 
-  The supersolution half needs @{thm [source] paper_v_dpp_sup_ge_time},
+  The supersolution half needs @{thm [source] exit_val_dpp_sup_ge_time},
   whose \<open>\<theta>\<close> must be a \<^const>\<open>path_stopping_time\<close> --- true of the ball's
   exit time only on continuous paths, since the stopping-time predicate
   quantifies over all functions.
@@ -85,14 +85,14 @@ lemma pball_exit_le:
   assumes T0: "0 \<le> T" shows "pball_exit T x \<epsilon> \<omega> \<le> T"
   unfolding pball_exit_def by (rule pexit_le_T[OF T0])
 
-theorem paper_v_cond_ball:
+theorem exit_val_cond_ball:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
     and x y :: "real^'n"
   assumes T0: "0 \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
-    and P: "P \<in> paper_pair_class k L T y"
+    and P: "P \<in> exit_class k L T y"
     and c: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
   shows "AE \<omega> in P. c \<le> pball_exit T x \<epsilon> \<omega>
-      + min (enn2real (paper_v k L T K (fst (\<omega> (pball_exit T x \<epsilon> \<omega>)))))
+      + min (enn2real (exit_val k L T K (fst (\<omega> (pball_exit T x \<epsilon> \<omega>)))))
             (T - pball_exit T x \<epsilon> \<omega>)"
 proof -
   have th0: "0 \<le> pball_exit T x \<epsilon> \<omega>" for \<omega> :: "'n pairpath"
@@ -100,24 +100,24 @@ proof -
   have thT: "pball_exit T x \<epsilon> \<omega> \<le> T" for \<omega> :: "'n pairpath"
     by (rule pball_exit_le[OF T0])
   have "AE \<omega> in P. c \<le> pball_exit T x \<epsilon> \<omega>
-      + enn2real (paper_v k L (T - pball_exit T x \<epsilon> \<omega>) K
+      + enn2real (exit_val k L (T - pball_exit T x \<epsilon> \<omega>) K
           (fst (\<omega> (pball_exit T x \<epsilon> \<omega>))))"
-    by (rule paper_v_cond_time[OF T0 L1 Kc P c th0 thT])
+    by (rule exit_val_cond_time[OF T0 L1 Kc P c th0 thT])
   then show ?thesis
   proof (rule eventually_mono)
     fix \<omega> :: "'n pairpath"
     assume h: "c \<le> pball_exit T x \<epsilon> \<omega>
-        + enn2real (paper_v k L (T - pball_exit T x \<epsilon> \<omega>) K
+        + enn2real (exit_val k L (T - pball_exit T x \<epsilon> \<omega>) K
             (fst (\<omega> (pball_exit T x \<epsilon> \<omega>))))"
     have a: "0 \<le> T - pball_exit T x \<epsilon> \<omega>" using thT[of \<omega>] by simp
     have b: "T - pball_exit T x \<epsilon> \<omega> \<le> T" using th0[of \<omega>] by simp
-    have "enn2real (paper_v k L (T - pball_exit T x \<epsilon> \<omega>) K
+    have "enn2real (exit_val k L (T - pball_exit T x \<epsilon> \<omega>) K
           (fst (\<omega> (pball_exit T x \<epsilon> \<omega>))))
-        = min (enn2real (paper_v k L T K (fst (\<omega> (pball_exit T x \<epsilon> \<omega>)))))
+        = min (enn2real (exit_val k L T K (fst (\<omega> (pball_exit T x \<epsilon> \<omega>)))))
               (T - pball_exit T x \<epsilon> \<omega>)"
       by (rule enn2real_paper_v_horizon_cap[OF a b L1 Kc])
     with h show "c \<le> pball_exit T x \<epsilon> \<omega>
-        + min (enn2real (paper_v k L T K (fst (\<omega> (pball_exit T x \<epsilon> \<omega>)))))
+        + min (enn2real (exit_val k L T K (fst (\<omega> (pball_exit T x \<epsilon> \<omega>)))))
               (T - pball_exit T x \<epsilon> \<omega>)" by simp
   qed
 qed
@@ -225,21 +225,21 @@ text \<open>Every condition defining \<^const>\<open>sconstraint\<close> is a li
   \<open>c \<le> trace (a ** P)\<close>, again linear in \<open>a\<close>.  The set is an intersection of
   closed half-spaces and passes through the integral.\<close>
 
-lemma paper_pair_class_Y_integrable:
+lemma exit_class_Y_integrable:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have meas: "(\<lambda>\<omega>. snd (\<omega> t)) \<in> borel_measurable Q"
-  proof (rule measurable_compose[OF paper_pair_class_eval_measurable[OF Q t]])
+  proof (rule measurable_compose[OF exit_class_eval_measurable[OF Q t]])
     show "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
         \<in> borel_measurable borel"
       by (intro borel_measurable_continuous_onI continuous_intros)
   qed
   have bd: "AE \<omega> in Q. norm (snd (\<omega> t)) \<le> real CARD('n) * L * T"
-    using paper_pair_class_Y_bounded_ae[OF T L Q]
+    using exit_class_Y_bounded_ae[OF T L Q]
   proof (rule eventually_mono)
     fix \<omega> :: "'n pairpath"
     assume "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
@@ -248,17 +248,17 @@ proof -
   show ?thesis by (rule P.integrable_const_bound[OF bd meas])
 qed
 
-theorem paper_pair_class_Y_mean_sconstraint:
+theorem exit_class_Y_mean_sconstraint:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
     and t: "0 < t" and tT: "t \<le> T"
   shows "(1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q) \<in> sconstraint k L"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have tI: "t \<in> {0..T}" using t tT by simp
   have iY: "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
-    by (rule paper_pair_class_Y_integrable[OF T L Q tI])
+    by (rule exit_class_Y_integrable[OF T L Q tI])
   have i1: "integrable Q (\<lambda>\<omega>. (1 / t) *\<^sub>R snd (\<omega> t))"
     using iY by simp
   define b where "b = (1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)"
@@ -266,10 +266,10 @@ proof -
     unfolding b_def by simp
   text \<open>the constraint of clause (iii), read between \<open>0\<close> and \<open>t\<close>\<close>
   have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Q unfolding paper_pair_class_def by blast
+    using Q unfolding exit_class_def by blast
   have dq: "AE \<omega> in Q. \<forall>s u. 0 \<le> s \<longrightarrow> s < u \<longrightarrow> u \<le> T \<longrightarrow>
       (1 / (u - s)) *\<^sub>R (snd (\<omega> u) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding paper_pair_class_def by blast
+    using Q unfolding exit_class_def by blast
   have mem: "AE \<omega> in Q. (1 / t) *\<^sub>R snd (\<omega> t) \<in> sconstraint k L"
     using st dq
   proof eventually_elim
@@ -374,34 +374,34 @@ qed
 
 subsection \<open>The exact expansion of a quadratic test function\<close>
 
-lemma paper_pair_class_X_integrable:
+lemma exit_class_X_integrable:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
 proof -
   interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
       "\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n"
-    by (rule paper_pair_class_X_martingale[OF Q])
+    by (rule exit_class_X_martingale[OF Q])
   have "integrable Q (\<lambda>\<omega>. fst (\<omega> (min t T)) :: real^'n)"
     using t by (intro MG.integrable) simp
   then show ?thesis using t by simp
 qed
 
-theorem paper_pair_class_X_mean:
+theorem exit_class_X_mean:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. fst (\<omega> t) \<partial>Q) = x"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
       "\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n"
-    by (rule paper_pair_class_X_martingale[OF Q])
+    by (rule exit_class_X_martingale[OF Q])
   have t0: "0 \<le> t" and tT: "t \<le> T" using t by simp_all
   have z: "(0::real) \<in> {0..T}" using t by simp
   have i0: "integrable Q (\<lambda>\<omega>. fst (\<omega> 0) :: real^'n)"
-    by (rule paper_pair_class_X_integrable[OF Q z])
+    by (rule exit_class_X_integrable[OF Q z])
   have it: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
-    by (rule paper_pair_class_X_integrable[OF Q t])
+    by (rule exit_class_X_integrable[OF Q t])
   have top: "space Q \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0)"
     using sets.top[of "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0"] by simp
   have const: "(\<integral>\<omega>. fst (\<omega> 0) \<partial>Q) = (\<integral>\<omega>. fst (\<omega> t) \<partial>Q)"
@@ -412,7 +412,7 @@ proof -
     have ae: "AE \<omega> in Q. fst (\<omega> 0) = x"
     proof -
       have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-        using Q unfolding paper_pair_class_def by blast
+        using Q unfolding exit_class_def by blast
       then show ?thesis by (rule eventually_mono) simp
     qed
     have "(\<integral>\<omega>. fst (\<omega> 0) \<partial>Q) = (\<integral>\<omega>. x \<partial>Q)"
@@ -425,20 +425,20 @@ qed
 
 text \<open>The second-order identity holds with no symmetry hypothesis on \<open>M\<close> and
   no stopping: clause (iv) is used at the fixed time \<open>t\<close>, exactly as in
-  @{thm [source] paper_pair_class_sq_norm_mean_ge}, of which this is the
+  @{thm [source] exit_class_sq_norm_mean_ge}, of which this is the
   \<open>M = 1\<close> case with the inequality replaced by an identity.\<close>
 
-theorem paper_pair_class_quadform_mean:
+theorem exit_class_quadform_mean:
   fixes Q :: "('n::finite pairpath) measure" and M :: "real^'n^'n"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q)
        = x \<bullet> (M *v x) + trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
 proof -
   have ci: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-    by (rule paper_pair_class_compensated_integrable[OF Q t])
+    by (rule exit_class_compensated_integrable[OF Q t])
   have iY: "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
-    by (rule paper_pair_class_Y_integrable[OF T L Q t])
+    by (rule exit_class_Y_integrable[OF T L Q t])
   have iA: "integrable Q
       (\<lambda>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t))))"
     by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left ci])
@@ -458,7 +458,7 @@ proof -
         = trace (M ** (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q))"
       by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left ci])
     also have "\<dots> = trace (M ** outerp x)"
-      by (simp add: paper_pair_class_compensated_mean[OF Q t])
+      by (simp add: exit_class_compensated_mean[OF Q t])
     finally show ?thesis .
   qed
   have e2: "(\<integral>\<omega>. trace (M ** snd (\<omega> t)) \<partial>Q)
@@ -475,16 +475,16 @@ proof -
   finally show ?thesis .
 qed
 
-lemma paper_pair_class_quadform_integrable:
+lemma exit_class_quadform_integrable:
   fixes Q :: "('n::finite pairpath) measure" and M :: "real^'n^'n"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)))"
 proof -
   have ci: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-    by (rule paper_pair_class_compensated_integrable[OF Q t])
+    by (rule exit_class_compensated_integrable[OF Q t])
   have iY: "integrable Q (\<lambda>\<omega>. snd (\<omega> t))"
-    by (rule paper_pair_class_Y_integrable[OF T L Q t])
+    by (rule exit_class_Y_integrable[OF T L Q t])
   have iA: "integrable Q
       (\<lambda>\<omega>. trace (M ** (outerp (fst (\<omega> t)) - snd (\<omega> t))))"
     by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left ci])
@@ -506,38 +506,38 @@ text \<open>The mean increment of a quadratic test function along any class memb
   constraint set: the substitute for Ito's formula that the viscosity
   argument needs.\<close>
 
-theorem paper_pair_class_quadratic_mean:
+theorem exit_class_quadratic_mean:
   fixes Q :: "('n::finite pairpath) measure" and M :: "real^'n^'n"
     and p :: "real^'n" and c :: real
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
     and t: "0 < t" and tT: "t \<le> T"
   obtains b where "b \<in> sconstraint k L"
     and "(\<integral>\<omega>. c + p \<bullet> fst (\<omega> t) + (fst (\<omega> t) \<bullet> (M *v fst (\<omega> t))) / 2 \<partial>Q)
        = c + p \<bullet> x + (x \<bullet> (M *v x)) / 2 + (t / 2) * trace (M ** b)"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have tI: "t \<in> {0..T}" using t tT by simp
   define b where "b = (1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)"
   have bmem: "b \<in> sconstraint k L"
-    unfolding b_def by (rule paper_pair_class_Y_mean_sconstraint[OF T L Q t tT])
+    unfolding b_def by (rule exit_class_Y_mean_sconstraint[OF T L Q t tT])
   have bY: "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) = t *\<^sub>R b"
     unfolding b_def using t by simp
   have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
-    by (rule paper_pair_class_X_integrable[OF Q tI])
+    by (rule exit_class_X_integrable[OF Q tI])
   have iP: "integrable Q (\<lambda>\<omega>. p \<bullet> fst (\<omega> t))"
     by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
   have iM: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)))"
-    by (rule paper_pair_class_quadform_integrable[OF T L Q tI])
+    by (rule exit_class_quadform_integrable[OF T L Q tI])
   have mP: "(\<integral>\<omega>. p \<bullet> fst (\<omega> t) \<partial>Q) = p \<bullet> x"
     using integral_of_bounded_linear[OF bounded_linear_inner_right iX]
-      paper_pair_class_X_mean[OF Q tI] by simp
+      exit_class_X_mean[OF Q tI] by simp
   have mM: "(\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q)
       = x \<bullet> (M *v x) + t * trace (M ** b)"
   proof -
     have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> (M *v fst (\<omega> t)) \<partial>Q)
         = x \<bullet> (M *v x) + trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
-      by (rule paper_pair_class_quadform_mean[OF T L Q tI])
+      by (rule exit_class_quadform_mean[OF T L Q tI])
     also have "trace (M ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)) = t * trace (M ** b)"
       unfolding bY by (rule trace_mult_scaleR)
     finally show ?thesis .
@@ -585,25 +585,25 @@ lemma quadform_outerp:
   shows "z \<bullet> (outerp q *v z) = (q \<bullet> z)\<^sup>2"
   by (simp add: outerp_eq_outer_prod power2_eq_square inner_commute)
 
-theorem paper_pair_class_frozen_direction:
+theorem exit_class_frozen_direction:
   fixes Q :: "('n::finite pairpath) measure" and q :: "real^'n"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x" and t: "t \<in> {0..T}"
+    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
     and orth: "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q = 0"
   shows "AE \<omega> in Q. q \<bullet> fst (\<omega> t) = q \<bullet> x"
 proof -
-  interpret P: prob_space Q by (rule paper_pair_class_prob[OF Q])
+  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
-    by (rule paper_pair_class_X_integrable[OF Q t])
+    by (rule exit_class_X_integrable[OF Q t])
   have i1: "integrable Q (\<lambda>\<omega>. q \<bullet> fst (\<omega> t))"
     by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
   have i2': "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> (outerp q *v fst (\<omega> t)))"
-    by (rule paper_pair_class_quadform_integrable[OF T L Q t])
+    by (rule exit_class_quadform_integrable[OF T L Q t])
   have i2: "integrable Q (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2)"
     using i2' by (simp add: quadform_outerp)
   have m1: "(\<integral>\<omega>. q \<bullet> fst (\<omega> t) \<partial>Q) = q \<bullet> x"
     using integral_of_bounded_linear[OF bounded_linear_inner_right iX]
-      paper_pair_class_X_mean[OF Q t] by simp
+      exit_class_X_mean[OF Q t] by simp
   have m2: "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q) = (q \<bullet> x)\<^sup>2"
   proof -
     have "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q)
@@ -611,7 +611,7 @@ proof -
       by (simp add: quadform_outerp)
     also have "\<dots> = x \<bullet> (outerp q *v x)
         + trace (outerp q ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
-      by (rule paper_pair_class_quadform_mean[OF T L Q t])
+      by (rule exit_class_quadform_mean[OF T L Q t])
     also have "trace (outerp q ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))
         = q \<bullet> ((\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q)"
       by (rule trace_outerp_mult)
@@ -655,14 +655,14 @@ proof -
   then show ?thesis by eventually_elim simp
 qed
 
-corollary paper_pair_class_feasible_freezes_gradient:
+corollary exit_class_feasible_freezes_gradient:
   fixes Q :: "('n::finite pairpath) measure" and q :: "real^'n"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
     and t: "0 < t" and tT: "t \<le> T"
     and a: "(1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q) \<in> feasible k L q"
   shows "AE \<omega> in Q. q \<bullet> fst (\<omega> t) = q \<bullet> x"
-proof (rule paper_pair_class_frozen_direction[OF T L Q _ ])
+proof (rule exit_class_frozen_direction[OF T L Q _ ])
   show "t \<in> {0..T}" using t tT by simp
   have z: "((1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)) *v q = 0"
     using a unfolding feasible_def by blast
@@ -764,7 +764,7 @@ proof -
     by (rule cInf_superset_mono[OF ne ell_op_s_bdd_below[OF L0] sub])
 qed
 
-text \<open>@{thm [source] paper_v_attained} supplies the optimizer, at which the
+text \<open>@{thm [source] exit_val_attained} supplies the optimizer, at which the
   exit time dominates the value almost surely --- the reason the
   subsolution half is reachable by expectations: the DPP bound it
   consumes is an a.s. bound, and a.s. bounds survive integration, whereas
@@ -776,28 +776,28 @@ text \<open>@{thm [source] paper_v_attained} supplies the optimizer, at which th
   step, not used here, so \<open>ell_op_s\<close> rather than \<^const>\<open>ell_op\<close> is what
   comes out.\<close>
 
-theorem paper_v_subsol_quadratic_global:
+theorem exit_val_subsol_quadratic_global:
   fixes K :: "(real^'n::finite) set" and M :: "real^'n^'n"
     and p :: "real^'n" and x :: "real^'n" and c :: real
   assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
-    and touch: "\<And>z. enn2real (paper_v k L T K z)
+    and touch: "\<And>z. enn2real (exit_val k L T K z)
           - (c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
-        \<le> enn2real (paper_v k L T K x)
+        \<le> enn2real (exit_val k L T K x)
           - (c + p \<bullet> x + (x \<bullet> (M *v x)) / 2)"
   shows "ell_op_s k L M \<le> 1"
 proof -
   have L0: "0 \<le> L" using L1 by simp
   have T0: "0 \<le> T" using T by simp
-  define u where "u = (\<lambda>z :: real^'n. enn2real (paper_v k L T K z))"
+  define u where "u = (\<lambda>z :: real^'n. enn2real (exit_val k L T K z))"
   define \<phi> where "\<phi> = (\<lambda>z :: real^'n. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)"
   define h where "h = T / 2"
   have h0: "0 < h" and hT: "h \<le> T" using T by (simp_all add: h_def)
   have hI: "h \<in> {0..T}" using h0 hT by simp
-  obtain P where P: "P \<in> paper_pair_class k L T x"
+  obtain P where P: "P \<in> exit_class k L T x"
     and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = paper_v k L T K x"
-    using paper_v_attained[OF T L1 Kc] by blast
-  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
+        = exit_val k L T K x"
+    using exit_val_attained[OF T L1 Kc] by blast
+  interpret PP: prob_space P by (rule exit_class_prob[OF P])
   text \<open>at the optimizer the exit time dominates the value almost surely\<close>
   have cAE: "AE \<omega> in P. u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
   proof (rule eventually_mono
@@ -805,9 +805,9 @@ proof -
     fix \<omega> :: "'n pairpath"
     assume "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
         \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-    then have le: "paper_v k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+    then have le: "exit_val k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
       using Pv by simp
-    have "enn2real (paper_v k L T K x)
+    have "enn2real (exit_val k L T K x)
         \<le> enn2real (ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
       by (rule enn2real_mono[OF le ennreal_less_top])
     then show "u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
@@ -815,15 +815,15 @@ proof -
       using pexit_nonneg[OF T0, of K "\<lambda>t. fst (\<omega> t)"] by simp
   qed
   text \<open>the DPP at the constant time \<open>h\<close>, then the horizon cap\<close>
-  have dpp: "AE \<omega> in P. u x \<le> h + enn2real (paper_v k L (T - h) K (fst (\<omega> h)))"
-    by (rule paper_v_cond_time[OF T0 L1 Kc P cAE]) (use h0 hT in auto)
+  have dpp: "AE \<omega> in P. u x \<le> h + enn2real (exit_val k L (T - h) K (fst (\<omega> h)))"
+    by (rule exit_val_cond_time[OF T0 L1 Kc P cAE]) (use h0 hT in auto)
   have low: "AE \<omega> in P. u x - h \<le> u (fst (\<omega> h))"
   proof (rule eventually_mono[OF dpp])
     fix \<omega> :: "'n pairpath"
-    assume d: "u x \<le> h + enn2real (paper_v k L (T - h) K (fst (\<omega> h)))"
+    assume d: "u x \<le> h + enn2real (exit_val k L (T - h) K (fst (\<omega> h)))"
     have a: "0 \<le> T - h" using hT by simp
     have b: "T - h \<le> T" using h0 by simp
-    have "enn2real (paper_v k L (T - h) K (fst (\<omega> h)))
+    have "enn2real (exit_val k L (T - h) K (fst (\<omega> h)))
         = min (u (fst (\<omega> h))) (T - h)"
       unfolding u_def by (rule enn2real_paper_v_horizon_cap[OF a b L1 Kc])
     with d show "u x - h \<le> u (fst (\<omega> h))" by simp
@@ -842,12 +842,12 @@ proof -
     and mean: "(\<integral>\<omega>. c + p \<bullet> fst (\<omega> h)
           + (fst (\<omega> h) \<bullet> (M *v fst (\<omega> h))) / 2 \<partial>P)
         = c + p \<bullet> x + (x \<bullet> (M *v x)) / 2 + (h / 2) * trace (M ** b)"
-    by (rule paper_pair_class_quadratic_mean[OF T0 L0 P h0 hT])
+    by (rule exit_class_quadratic_mean[OF T0 L0 P h0 hT])
   have i1: "integrable P (\<lambda>\<omega>. p \<bullet> fst (\<omega> h))"
     by (rule integrable_bounded_linear[OF bounded_linear_inner_right
-        paper_pair_class_X_integrable[OF P hI]])
+        exit_class_X_integrable[OF P hI]])
   have i2: "integrable P (\<lambda>\<omega>. fst (\<omega> h) \<bullet> (M *v fst (\<omega> h)))"
-    by (rule paper_pair_class_quadform_integrable[OF T0 L0 P hI])
+    by (rule exit_class_quadform_integrable[OF T0 L0 P hI])
   have bl2: "bounded_linear (\<lambda>r :: real. r / 2)"
     unfolding linear_conv_bounded_linear[symmetric]
     by (intro linearI) (simp_all add: field_simps)
@@ -1060,7 +1060,7 @@ qed
 text \<open>And it is strictly positive when the path starts strictly inside the
   ball --- exactly the situation of the subsolution argument, where the
   starting point is the touching point \<open>x\<close> itself.  Without this the DPP
-  bound of @{thm [source] paper_v_cond_ball} would be vacuous.\<close>
+  bound of @{thm [source] exit_val_cond_ball} would be vacuous.\<close>
 
 lemma pball_exit_pos:
   fixes \<omega> :: "'n::finite pairpath"
@@ -1135,7 +1135,7 @@ next
   qed
 qed
 
-text \<open>So @{thm [source] paper_v_dpp_sup_ge_time} applies at the exit time of
+text \<open>So @{thm [source] exit_val_dpp_sup_ge_time} applies at the exit time of
   a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
   localisation.\<close>
 
@@ -1563,9 +1563,9 @@ proof (rule measurable_compose[OF pair_law_eval_measurable[OF refl]])
     by (rule measurable_compose[OF measurable_compose[OF dm n1] n2])
 qed
 
-lemma paper_pair_class_X_entry_stopped:
+lemma exit_class_X_entry_stopped:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
@@ -1576,10 +1576,10 @@ proof -
   let ?Q = "pair_law_of T (pstopped T \<theta>) P"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have T0: "0 \<le> T" using T by simp
-  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using P unfolding paper_pair_class_def by blast
+    using P unfolding exit_class_def by blast
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
@@ -1653,9 +1653,9 @@ proof -
     using const' start QT by simp
 qed
 
-lemma paper_pair_class_comp_entry_stopped:
+lemma exit_class_comp_entry_stopped:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
@@ -1667,10 +1667,10 @@ proof -
   let ?Q = "pair_law_of T (pstopped T \<theta>) P"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have T0: "0 \<le> T" using T by simp
-  have PS: "prob_space P" by (rule paper_pair_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  have PS: "prob_space P" by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using P unfolding paper_pair_class_def by blast
+    using P unfolding exit_class_def by blast
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
@@ -1761,17 +1761,17 @@ proof -
     using const' start QT by simp
 qed
 
-lemma paper_pair_class_Y_stopped_integrable:
+lemma exit_class_Y_stopped_integrable:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 \<le> T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  assumes T0: "0 \<le> T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
   shows "integrable P (\<lambda>\<omega>. snd (\<omega> (\<theta> \<omega>)))"
 proof -
   let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  interpret PP: prob_space P by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   have idm: "(\<lambda>\<omega> :: 'n pairpath. \<omega>) \<in> P \<rightarrow>\<^sub>M ?B"
     by (rule measurable_ident_sets[OF setsP])
   have thP: "\<theta> \<in> borel_measurable P"
@@ -1784,7 +1784,7 @@ proof -
   have m: "(\<lambda>\<omega>. snd (\<omega> (\<theta> \<omega>))) \<in> borel_measurable P"
     by (rule measurable_compose[OF ev sm])
   have bd: "AE \<omega> in P. norm (snd (\<omega> (\<theta> \<omega>))) \<le> real CARD('n) * L * T"
-    using paper_pair_class_Y_bounded_ae[OF T0 L0 P]
+    using exit_class_Y_bounded_ae[OF T0 L0 P]
     by (rule eventually_mono)
       (use path_stopping_time_nonneg[OF st] path_stopping_time_le[OF st] in auto)
   show ?thesis by (rule PP.integrable_const_bound[OF bd m])
@@ -1792,15 +1792,15 @@ qed
 
 section \<open>The averaged covariation at a stopping time\<close>
 
-text \<open>The weighted analogue of @{thm [source] paper_pair_class_Y_mean_sconstraint}:
+text \<open>The weighted analogue of @{thm [source] exit_class_Y_mean_sconstraint}:
   \<open>E[Y\<^sub>\<theta>] / E[\<theta>]\<close> lies in the constraint set.  Pathwise, \<open>(1/\<theta>) Y\<^sub>\<theta>\<close> is in
   the set (the diffquot clause at \<open>(0, \<theta>]\<close>); every defining condition is a
   linear inequality in the matrix, so it integrates against the weight
   \<open>\<theta>\<close> and divides by \<open>E[\<theta>] > 0\<close>.\<close>
 
-theorem paper_pair_class_Y_stopped_mean_sconstraint:
+theorem exit_class_Y_stopped_mean_sconstraint:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
@@ -1810,8 +1810,8 @@ proof -
   let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
   let ?Y = "\<lambda>\<omega> :: 'n pairpath. snd (\<omega> (\<theta> \<omega>))"
   have T0: "0 \<le> T" using T by simp
-  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+  interpret PP: prob_space P by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   have thP: "\<theta> \<in> borel_measurable P"
     unfolding measurable_cong_sets[OF setsP refl] by (rule thM)
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
@@ -1826,14 +1826,14 @@ proof -
     unfolding et_def
     by (rule integral_pos_of_AE_pos[OF PP.prob_space_axioms ith pos])
   have iY: "integrable P ?Y"
-    by (rule paper_pair_class_Y_stopped_integrable[OF T0 L0 P st thM])
+    by (rule exit_class_Y_stopped_integrable[OF T0 L0 P st thM])
   define EY where "EY = (\<integral>\<omega>. ?Y \<omega> \<partial>P)"
   define b where "b = (1 / et) *\<^sub>R EY"
   have stc: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using P unfolding paper_pair_class_def by blast
+    using P unfolding exit_class_def by blast
   have dq: "AE \<omega> in P. \<forall>s t'. 0 \<le> s \<longrightarrow> s < t' \<longrightarrow> t' \<le> T \<longrightarrow>
       (1 / (t' - s)) *\<^sub>R (snd (\<omega> t') - snd (\<omega> s)) \<in> sconstraint k L"
-    using P unfolding paper_pair_class_def by blast
+    using P unfolding exit_class_def by blast
   have mem: "AE \<omega> in P. (1 / \<theta> \<omega>) *\<^sub>R ?Y \<omega> \<in> sconstraint k L \<and> 0 < \<theta> \<omega>"
     using stc dq pos
   proof eventually_elim
@@ -2054,25 +2054,25 @@ text \<open>The DPP at the ball exit time, the touching used only on the closed
   remainder estimate: for a quadratic the expansion is exact at any
   bounded stopping time.\<close>
 
-theorem paper_v_subsol_quadratic_ball:
+theorem exit_val_subsol_quadratic_ball:
   fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
   assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and e0: "0 < \<epsilon>"
     and touch: "\<And>z. dist z x \<le> \<epsilon> \<Longrightarrow>
-        enn2real (paper_v k L T K z)
-          \<le> enn2real (paper_v k L T K x) + q \<bullet> (z - x)
+        enn2real (exit_val k L T K z)
+          \<le> enn2real (exit_val k L T K x) + q \<bullet> (z - x)
             + ((z - x) \<bullet> (M *v (z - x))) / 2"
   obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
 proof -
   let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
   have T0: "0 \<le> T" using T by simp
   have L0: "0 \<le> L" using L1 by simp
-  define u where "u = (\<lambda>z :: real^'n. enn2real (paper_v k L T K z))"
-  obtain P where P: "P \<in> paper_pair_class k L T x"
+  define u where "u = (\<lambda>z :: real^'n. enn2real (exit_val k L T K z))"
+  obtain P where P: "P \<in> exit_class k L T x"
     and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = paper_v k L T K x"
-    using paper_v_attained[OF T L1 Kc] by blast
-  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+        = exit_val k L T K x"
+    using exit_val_attained[OF T L1 Kc] by blast
+  interpret PP: prob_space P by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   let ?th = "pball_exit T x \<epsilon>"
   let ?Xf = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (?th \<omega>))"
   let ?Yf = "\<lambda>\<omega> :: 'n pairpath. snd (\<omega> (?th \<omega>))"
@@ -2093,9 +2093,9 @@ proof -
     fix \<omega> :: "'n pairpath"
     assume "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
         \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-    then have le: "paper_v k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+    then have le: "exit_val k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
       using Pv by simp
-    have "enn2real (paper_v k L T K x)
+    have "enn2real (exit_val k L T K x)
         \<le> enn2real (ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
       by (rule enn2real_mono[OF le ennreal_less_top])
     then show "u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
@@ -2103,17 +2103,17 @@ proof -
       using pexit_nonneg[OF T0, of K "\<lambda>t. fst (\<omega> t)"] by simp
   qed
   have dpp: "AE \<omega> in P. u x \<le> ?th \<omega> + u (?Xf \<omega>)"
-  proof (rule eventually_mono[OF paper_v_cond_ball
+  proof (rule eventually_mono[OF exit_val_cond_ball
       [OF T0 L1 Kc P cAE, where x = x and \<epsilon> = \<epsilon>]])
     fix \<omega> :: "'n pairpath"
-    assume "u x \<le> ?th \<omega> + min (enn2real (paper_v k L T K (?Xf \<omega>))) (T - ?th \<omega>)"
-    moreover have "min (enn2real (paper_v k L T K (?Xf \<omega>))) (T - ?th \<omega>)
-        \<le> enn2real (paper_v k L T K (?Xf \<omega>))"
+    assume "u x \<le> ?th \<omega> + min (enn2real (exit_val k L T K (?Xf \<omega>))) (T - ?th \<omega>)"
+    moreover have "min (enn2real (exit_val k L T K (?Xf \<omega>))) (T - ?th \<omega>)
+        \<le> enn2real (exit_val k L T K (?Xf \<omega>))"
       by (rule min.cobounded1)
     ultimately show "u x \<le> ?th \<omega> + u (?Xf \<omega>)" unfolding u_def by linarith
   qed
   have stc: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using P unfolding paper_pair_class_def by blast
+    using P unfolding exit_class_def by blast
   have cwAE: "AE \<omega> in P. continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   proof -
     have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
@@ -2158,16 +2158,16 @@ proof -
     unfolding et_def
     by (rule integral_pos_of_AE_pos[OF PP.prob_space_axioms ith posAE])
   have iXc: "integrable P (\<lambda>\<omega>. ?Xf \<omega> $ c)" for c
-    using paper_pair_class_X_entry_stopped(1)[OF T L0 P st thM] .
+    using exit_class_X_entry_stopped(1)[OF T L0 P st thM] .
   have EXc: "(\<integral>\<omega>. ?Xf \<omega> $ c \<partial>P) = x $ c" for c
-    using paper_pair_class_X_entry_stopped(2)[OF T L0 P st thM] .
+    using exit_class_X_entry_stopped(2)[OF T L0 P st thM] .
   have iCc: "integrable P (\<lambda>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd)" for cc dd
-    using paper_pair_class_comp_entry_stopped(1)[OF T L0 P st thM] .
+    using exit_class_comp_entry_stopped(1)[OF T L0 P st thM] .
   have ECc: "(\<integral>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd \<partial>P) = outerp x $ cc $ dd"
     for cc dd
-    using paper_pair_class_comp_entry_stopped(2)[OF T L0 P st thM] .
+    using exit_class_comp_entry_stopped(2)[OF T L0 P st thM] .
   have iY: "integrable P ?Yf"
-    by (rule paper_pair_class_Y_stopped_integrable[OF T0 L0 P st thM])
+    by (rule exit_class_Y_stopped_integrable[OF T0 L0 P st thM])
   define EY where "EY = (\<integral>\<omega>. ?Yf \<omega> \<partial>P)"
   have iX: "integrable P ?Xf"
   proof -
@@ -2322,7 +2322,7 @@ proof -
   \<comment> \<open>the averaged direction\<close>
   have bmem: "(1 / et) *\<^sub>R EY \<in> sconstraint k L"
     unfolding et_def EY_def
-    by (rule paper_pair_class_Y_stopped_mean_sconstraint[OF T L0 P st thM posAE])
+    by (rule exit_class_Y_stopped_mean_sconstraint[OF T L0 P st thM posAE])
   have EYb: "EY = et *\<^sub>R ((1 / et) *\<^sub>R EY)"
     using et0 by simp
   have trb: "trace (M ** EY) = et * trace (M ** ((1 / et) *\<^sub>R EY))"
@@ -2998,31 +2998,31 @@ qed
 
 section \<open>The DPP capped at an arbitrary \<open>[0,T]\<close>-valued time\<close>
 
-theorem paper_v_cond_at_time:
+theorem exit_val_cond_at_time:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
     and y :: "real^'n" and \<theta> :: "'n pairpath \<Rightarrow> real"
   assumes T0: "0 \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
-    and P: "P \<in> paper_pair_class k L T y"
+    and P: "P \<in> exit_class k L T y"
     and c: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
     and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
   shows "AE \<omega> in P. c \<le> \<theta> \<omega>
-      + min (enn2real (paper_v k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
+      + min (enn2real (exit_val k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
 proof -
   have "AE \<omega> in P. c \<le> \<theta> \<omega>
-      + enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
-    by (rule paper_v_cond_time[OF T0 L1 Kc P c th0 thT])
+      + enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
+    by (rule exit_val_cond_time[OF T0 L1 Kc P c th0 thT])
   then show ?thesis
   proof (rule eventually_mono)
     fix \<omega> :: "'n pairpath"
     assume h: "c \<le> \<theta> \<omega>
-        + enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
+        + enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
     have a: "0 \<le> T - \<theta> \<omega>" using thT[of \<omega>] by simp
     have b: "T - \<theta> \<omega> \<le> T" using th0[of \<omega>] by simp
-    have "enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
-        = min (enn2real (paper_v k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
+    have "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+        = min (enn2real (exit_val k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
       by (rule enn2real_paper_v_horizon_cap[OF a b L1 Kc])
     with h show "c \<le> \<theta> \<omega>
-        + min (enn2real (paper_v k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
+        + min (enn2real (exit_val k L T K (fst (\<omega> (\<theta> \<omega>))))) (T - \<theta> \<omega>)"
       by simp
   qed
 qed
@@ -3100,10 +3100,10 @@ qed
 
 section \<open>Moments at a stopping time, assembled\<close>
 
-lemma paper_pair_class_stopped_moments:
+lemma exit_class_stopped_moments:
   fixes P :: "('n::finite pairpath) measure" and x q :: "real^'n"
     and M :: "real^'n^'n"
-  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
@@ -3120,18 +3120,18 @@ proof -
   let ?Xf = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta> \<omega>))"
   let ?Yf = "\<lambda>\<omega> :: 'n pairpath. snd (\<omega> (\<theta> \<omega>))"
   have T0: "0 \<le> T" using T by simp
-  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
+  interpret PP: prob_space P by (rule exit_class_prob[OF P])
   have iXc: "integrable P (\<lambda>\<omega>. ?Xf \<omega> $ c)" for c
-    using paper_pair_class_X_entry_stopped(1)[OF T L0 P st thM] .
+    using exit_class_X_entry_stopped(1)[OF T L0 P st thM] .
   have EXc: "(\<integral>\<omega>. ?Xf \<omega> $ c \<partial>P) = x $ c" for c
-    using paper_pair_class_X_entry_stopped(2)[OF T L0 P st thM] .
+    using exit_class_X_entry_stopped(2)[OF T L0 P st thM] .
   have iCc: "integrable P (\<lambda>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd)" for cc dd
-    using paper_pair_class_comp_entry_stopped(1)[OF T L0 P st thM] .
+    using exit_class_comp_entry_stopped(1)[OF T L0 P st thM] .
   have ECc: "(\<integral>\<omega>. (outerp (?Xf \<omega>) - ?Yf \<omega>) $ cc $ dd \<partial>P) = outerp x $ cc $ dd"
     for cc dd
-    using paper_pair_class_comp_entry_stopped(2)[OF T L0 P st thM] .
+    using exit_class_comp_entry_stopped(2)[OF T L0 P st thM] .
   have iY: "integrable P ?Yf"
-    by (rule paper_pair_class_Y_stopped_integrable[OF T0 L0 P st thM])
+    by (rule exit_class_Y_stopped_integrable[OF T0 L0 P st thM])
   show iX: "integrable P ?Xf"
   proof -
     have "integrable P (\<lambda>\<omega>. \<chi> c. ?Xf \<omega> $ c)"
@@ -3256,9 +3256,9 @@ proof -
       Eg4 Eg2 Eg3 by (simp add: PP.prob_space)
 qed
 
-lemma paper_pair_class_stopped_var:
+lemma exit_class_stopped_var:
   fixes P :: "('n::finite pairpath) measure" and x q :: "real^'n"
-  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
@@ -3271,19 +3271,19 @@ proof -
     by (rule ext) (simp add: quadform_outerp)
   show "integrable P (\<lambda>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2)"
     unfolding e
-    by (rule paper_pair_class_stopped_moments(5)[OF T L0 P st thM])
+    by (rule exit_class_stopped_moments(5)[OF T L0 P st thM])
   have "(\<integral>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2 \<partial>P)
       = trace (outerp q ** (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))"
     unfolding e
-    by (rule paper_pair_class_stopped_moments(6)[OF T L0 P st thM])
+    by (rule exit_class_stopped_moments(6)[OF T L0 P st thM])
   then show "(\<integral>\<omega>. (q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))\<^sup>2 \<partial>P)
       = q \<bullet> ((\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P) *v q)"
     by (simp add: trace_outerp_mult)
 qed
 
-lemma paper_pair_class_stopped_normsq:
+lemma exit_class_stopped_normsq:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> paper_pair_class k L T x"
+  assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
         (path_metric T :: ('n pairpath) metric)))"
@@ -3297,7 +3297,7 @@ proof -
   have "(\<integral>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x) \<partial>P)
       = trace (mat 1 ** (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))"
     unfolding e
-    by (rule paper_pair_class_stopped_moments(6)[OF T L0 P st thM])
+    by (rule exit_class_stopped_moments(6)[OF T L0 P st thM])
   then show ?thesis by simp
 qed
 
@@ -3313,12 +3313,12 @@ text \<open>The Girsanov-free replacement for the paper's exponential martingale
   indicator split gives the anti-concentration, and the scaling
   \<open>t := \<epsilon>\<^sup>2/(2nL)\<close> closes the loop.\<close>
 
-theorem paper_v_touch_near_orth:
+theorem exit_val_touch_near_orth:
   fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
   assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and eb: "0 < ebar"
     and touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
-        enn2real (paper_v k L T K z)
-          \<le> enn2real (paper_v k L T K x) + q \<bullet> (z - x)
+        enn2real (exit_val k L T K z)
+          \<le> enn2real (exit_val k L T K x) + q \<bullet> (z - x)
             + ((z - x) \<bullet> (M *v (z - x))) / 2"
     and e0: "0 < \<epsilon>\<^sub>0"
   obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
@@ -3327,7 +3327,7 @@ proof (cases "q = 0")
   case True
   obtain b where bmem: "b \<in> sconstraint k L"
     and w: "- trace (M ** b) / 2 \<le> 1"
-    by (rule paper_v_subsol_quadratic_ball[OF T L1 Kc eb touch])
+    by (rule exit_val_subsol_quadratic_ball[OF T L1 Kc eb touch])
   have "q \<bullet> (b *v q) < \<epsilon>\<^sub>0" using True e0 by simp
   then show ?thesis using that bmem w by blast
 next
@@ -3383,13 +3383,13 @@ next
     unfolding \<theta>'_def by (rule min.cobounded2)
   have tht: "\<theta>' \<omega> \<le> t" for \<omega> :: "'n pairpath"
     unfolding \<theta>'_def by (rule min.cobounded1)
-  define u where "u = (\<lambda>z :: real^'n. enn2real (paper_v k L T K z))"
-  obtain P where P: "P \<in> paper_pair_class k L T x"
+  define u where "u = (\<lambda>z :: real^'n. enn2real (exit_val k L T K z))"
+  obtain P where P: "P \<in> exit_class k L T x"
     and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = paper_v k L T K x"
-    using paper_v_attained[OF T L1 Kc] by blast
-  interpret PP: prob_space P by (rule paper_pair_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule paper_pair_class_sets[OF P])
+        = exit_val k L T K x"
+    using exit_val_attained[OF T L1 Kc] by blast
+  interpret PP: prob_space P by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   have thP': "\<theta>' \<in> borel_measurable P"
     unfolding measurable_cong_sets[OF setsP refl] by (rule thM')
   let ?Xf = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta>' \<omega>))"
@@ -3402,9 +3402,9 @@ next
     fix \<omega> :: "'n pairpath"
     assume "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
         \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-    then have le: "paper_v k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
+    then have le: "exit_val k L T K x \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
       using Pv by simp
-    have "enn2real (paper_v k L T K x)
+    have "enn2real (exit_val k L T K x)
         \<le> enn2real (ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
       by (rule enn2real_mono[OF le ennreal_less_top])
     then show "u x \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
@@ -3413,18 +3413,18 @@ next
   qed
   have dpp: "AE \<omega> in P. u x \<le> \<theta>' \<omega> + u (?Xf \<omega>)"
   proof (rule eventually_mono
-      [OF paper_v_cond_at_time[OF T0 L1 Kc P cAE th0' thT']])
+      [OF exit_val_cond_at_time[OF T0 L1 Kc P cAE th0' thT']])
     fix \<omega> :: "'n pairpath"
     assume "u x \<le> \<theta>' \<omega>
-        + min (enn2real (paper_v k L T K (?Xf \<omega>))) (T - \<theta>' \<omega>)"
-    moreover have "min (enn2real (paper_v k L T K (?Xf \<omega>))) (T - \<theta>' \<omega>)
-        \<le> enn2real (paper_v k L T K (?Xf \<omega>))"
+        + min (enn2real (exit_val k L T K (?Xf \<omega>))) (T - \<theta>' \<omega>)"
+    moreover have "min (enn2real (exit_val k L T K (?Xf \<omega>))) (T - \<theta>' \<omega>)
+        \<le> enn2real (exit_val k L T K (?Xf \<omega>))"
       by (rule min.cobounded1)
     ultimately show "u x \<le> \<theta>' \<omega> + u (?Xf \<omega>)"
       unfolding u_def by linarith
   qed
   have stc: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using P unfolding paper_pair_class_def by blast
+    using P unfolding exit_class_def by blast
   have cwAE: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
   proof -
     have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
@@ -3478,23 +3478,23 @@ next
     using integral_mono_AE[OF ith PP.integrable_const, of t] tht
     by (simp add: PP.prob_space)
   have iY: "integrable P ?Yf"
-    by (rule paper_pair_class_Y_stopped_integrable[OF T0 L0 P st' thM'])
+    by (rule exit_class_Y_stopped_integrable[OF T0 L0 P st' thM'])
   have bmem: "(1 / et) *\<^sub>R EY \<in> sconstraint k L"
     unfolding et_def EY_def
-    by (rule paper_pair_class_Y_stopped_mean_sconstraint
+    by (rule exit_class_Y_stopped_mean_sconstraint
         [OF T L0 P st' thM' posAE])
   define b where "b = (1 / et) *\<^sub>R EY"
   have EYb: "EY = et *\<^sub>R b" unfolding b_def using et0 by simp
   \<comment> \<open>the value inequality\<close>
   have ilin: "integrable P (\<lambda>\<omega>. q \<bullet> (?V \<omega>))"
-    by (rule paper_pair_class_stopped_moments(3)[OF T L0 P st' thM'])
+    by (rule exit_class_stopped_moments(3)[OF T L0 P st' thM'])
   have Elin: "(\<integral>\<omega>. q \<bullet> (?V \<omega>) \<partial>P) = 0"
-    by (rule paper_pair_class_stopped_moments(4)[OF T L0 P st' thM'])
+    by (rule exit_class_stopped_moments(4)[OF T L0 P st' thM'])
   have iquad: "integrable P (\<lambda>\<omega>. (?V \<omega>) \<bullet> (M *v (?V \<omega>)))"
-    by (rule paper_pair_class_stopped_moments(5)[OF T L0 P st' thM'])
+    by (rule exit_class_stopped_moments(5)[OF T L0 P st' thM'])
   have Equad: "(\<integral>\<omega>. (?V \<omega>) \<bullet> (M *v (?V \<omega>)) \<partial>P) = trace (M ** EY)"
     unfolding EY_def
-    by (rule paper_pair_class_stopped_moments(6)[OF T L0 P st' thM'])
+    by (rule exit_class_stopped_moments(6)[OF T L0 P st' thM'])
   have bl2: "bounded_linear (\<lambda>r :: real. r / 2)"
     unfolding linear_conv_bounded_linear[symmetric]
     by (intro linearI) (simp_all add: field_simps)
@@ -3533,11 +3533,11 @@ next
     by (rule borel_measurable_integrable[OF Wint])
   have W2int: "integrable P (\<lambda>\<omega>. (W \<omega>)\<^sup>2)"
     unfolding W_def
-    by (rule paper_pair_class_stopped_var(1)[OF T L0 P st' thM'])
+    by (rule exit_class_stopped_var(1)[OF T L0 P st' thM'])
   define s where "s = (\<integral>\<omega>. (W \<omega>)\<^sup>2 \<partial>P)"
   have svar: "s = q \<bullet> (EY *v q)"
     unfolding s_def W_def EY_def
-    by (rule paper_pair_class_stopped_var(2)[OF T L0 P st' thM'])
+    by (rule exit_class_stopped_var(2)[OF T L0 P st' thM'])
   have s0: "0 \<le> s"
     unfolding s_def by (rule integral_nonneg_AE) auto
   have Wabs: "AE \<omega> in P. \<bar>W \<omega>\<bar> \<le> nq * \<epsilon>"
@@ -3733,7 +3733,7 @@ next
     \<comment> \<open>the exit before \<open>t\<close> has probability at most \<open>1/2\<close>\<close>
     have dq: "AE \<omega> in P. \<forall>s' t'. 0 \<le> s' \<longrightarrow> s' < t' \<longrightarrow> t' \<le> T \<longrightarrow>
         (1 / (t' - s')) *\<^sub>R (snd (\<omega> t') - snd (\<omega> s')) \<in> sconstraint k L"
-      using P unfolding paper_pair_class_def by blast
+      using P unfolding exit_class_def by blast
     have trYbnd: "AE \<omega> in P. trace (?Yf \<omega>) \<le> n' * n' * L * \<theta>' \<omega>"
       using stc dq posAE
     proof eventually_elim
@@ -3775,7 +3775,7 @@ next
     qed
     have normsqE: "(\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P) = trace EY"
       unfolding EY_def
-      by (rule paper_pair_class_stopped_normsq[OF T L0 P st' thM'])
+      by (rule exit_class_stopped_normsq[OF T L0 P st' thM'])
     have inormsq: "integrable P (\<lambda>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>))"
     proof -
       have e: "(\<lambda>\<omega> :: 'n pairpath. (?V \<omega>) \<bullet> (?V \<omega>))
@@ -3783,7 +3783,7 @@ next
         by (simp add: fun_eq_iff)
       show ?thesis
         unfolding e
-        by (rule paper_pair_class_stopped_moments(5)[OF T L0 P st' thM'])
+        by (rule exit_class_stopped_moments(5)[OF T L0 P st' thM'])
     qed
     define Ev where "Ev = {\<omega> \<in> space P. pball_exit T x \<epsilon> \<omega> < t}"
     have tauP: "pball_exit T x \<epsilon> \<in> borel_measurable P"
@@ -4000,12 +4000,12 @@ qed
 
 section \<open>Compactness: an exactly orthogonal direction\<close>
 
-theorem paper_v_touch_orth:
+theorem exit_val_touch_orth:
   fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
   assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and eb: "0 < ebar"
     and touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
-        enn2real (paper_v k L T K z)
-          \<le> enn2real (paper_v k L T K x) + q \<bullet> (z - x)
+        enn2real (exit_val k L T K z)
+          \<le> enn2real (exit_val k L T K x) + q \<bullet> (z - x)
             + ((z - x) \<bullet> (M *v (z - x))) / 2"
   obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
     and "b *v q = 0"
@@ -4016,7 +4016,7 @@ proof -
   proof -
     obtain b where "b \<in> sconstraint k L" "- trace (M ** b) / 2 \<le> 1"
       "q \<bullet> (b *v q) < 1 / real (Suc n)"
-      using paper_v_touch_near_orth[OF T L1 Kc eb touch,
+      using exit_val_touch_near_orth[OF T L1 Kc eb touch,
           where \<epsilon>\<^sub>0 = "1 / real (Suc n)"] by auto
     then show ?thesis by blast
   qed
@@ -4096,15 +4096,15 @@ text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9)
   itself, orthogonality constraint included.  For each test function and
   each Hessian bump \<open>\<delta>\<close>, an anti-concentration argument together with
   compactness produces a direction that kills the gradient
-  (@{thm [source] paper_v_touch_orth}); the capped spectral split converts
+  (@{thm [source] exit_val_touch_orth}); the capped spectral split converts
   it into a feasible witness (@{thm [source] sconstraint_orth_feasible}),
   and \<open>\<delta> \<rightarrow> 0\<close> concludes as in the relaxed case.\<close>
 
-theorem paper_v_visc_subsol:
+theorem exit_val_visc_subsol:
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
     and kn: "k < CARD('n)"
-  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (paper_v k L T K z))"
+  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (exit_val k L T K z))"
   unfolding visc_subsol_def
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
@@ -4112,13 +4112,13 @@ proof (intro ballI allI impI)
   assume x: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
     and lm: "\<exists>e>0. \<forall>z \<in> ball x e.
-        enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+        enn2real (exit_val k L T K z) - \<phi> z
+          \<le> enn2real (exit_val k L T K x) - \<phi> x"
   have L0: "0 \<le> L" using L1 by simp
   from lm obtain e0 where e00: "0 < e0"
     and lme: "\<And>z. z \<in> ball x e0 \<Longrightarrow>
-        enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+        enn2real (exit_val k L T K z) - \<phi> z
+          \<le> enn2real (exit_val k L T K x) - \<phi> x"
     by blast
   define C where "C = real CARD('n) * L"
   have n0: "0 < real CARD('n)"
@@ -4135,28 +4135,28 @@ proof (intro ballI allI impI)
     define ebar where "ebar = min e0 r / 2"
     have eb0: "0 < ebar" using e00 r0 by (simp add: ebar_def)
     have touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
-        enn2real (paper_v k L T K z)
-          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+        enn2real (exit_val k L T K z)
+          \<le> enn2real (exit_val k L T K x) + g x \<bullet> (z - x)
             + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
     proof -
       fix z assume z: "dist z x \<le> ebar"
       have zin: "z \<in> ball x e0 \<inter> ball x r"
         using z e00 r0 by (auto simp: ebar_def dist_commute)
-      have "enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+      have "enn2real (exit_val k L T K z) - \<phi> z
+          \<le> enn2real (exit_val k L T K x) - \<phi> x"
         using lme zin by blast
       moreover have "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
           + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
         using dom zin by blast
-      ultimately show "enn2real (paper_v k L T K z)
-          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+      ultimately show "enn2real (exit_val k L T K z)
+          \<le> enn2real (exit_val k L T K x) + g x \<bullet> (z - x)
             + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
         by linarith
     qed
     obtain b where bmem: "b \<in> sconstraint k L"
       and wb: "- trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2 \<le> 1"
       and borth: "b *v (g x) = 0"
-      by (rule paper_v_touch_orth[OF T L1 Kc eb0 touch])
+      by (rule exit_val_touch_orth[OF T L1 Kc eb0 touch])
     obtain a where afeas: "a \<in> feasible k L (g x)"
       and aval: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2
           \<le> - trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2"
@@ -4196,30 +4196,30 @@ proof (intro ballI allI impI)
   qed
 qed
 
-section \<open>The boundary subsolution clause for \<open>paper_v\<close>\<close>
+section \<open>The boundary subsolution clause for \<open>exit_val\<close>\<close>
 
-text \<open>The proof of \<open>paper_v_visc_subsol\<close> does not use \<open>x \<in> interior K\<close>: it
-  is driven by the local touching, and \<open>paper_v_touch_orth\<close> is indifferent
+text \<open>The proof of \<open>exit_val_visc_subsol\<close> does not use \<open>x \<in> interior K\<close>: it
+  is driven by the local touching, and \<open>exit_val_touch_orth\<close> is indifferent
   to where \<open>x\<close> sits.  So the subsolution property holds locally on any \<open>\<Omega>\<close>.\<close>
 
-theorem paper_v_visc_subsol_any:
+theorem exit_val_visc_subsol_any:
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
     and kn: "k < CARD('n)"
-  shows "visc_subsol k L \<Omega> (\<lambda>z. enn2real (paper_v k L T K z))"
+  shows "visc_subsol k L \<Omega> (\<lambda>z. enn2real (exit_val k L T K z))"
   unfolding visc_subsol_def
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
   assume tf: "test_fun_at \<phi> g H x"
     and lm: "\<exists>e>0. \<forall>z \<in> ball x e.
-        enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+        enn2real (exit_val k L T K z) - \<phi> z
+          \<le> enn2real (exit_val k L T K x) - \<phi> x"
   have L0: "0 \<le> L" using L1 by simp
   from lm obtain e0 where e00: "0 < e0"
     and lme: "\<And>z. z \<in> ball x e0 \<Longrightarrow>
-        enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+        enn2real (exit_val k L T K z) - \<phi> z
+          \<le> enn2real (exit_val k L T K x) - \<phi> x"
     by blast
   define C where "C = real CARD('n) * L"
   have n0: "0 < real CARD('n)"
@@ -4236,28 +4236,28 @@ proof (intro ballI allI impI)
     define ebar where "ebar = min e0 r / 2"
     have eb0: "0 < ebar" using e00 r0 by (simp add: ebar_def)
     have touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
-        enn2real (paper_v k L T K z)
-          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+        enn2real (exit_val k L T K z)
+          \<le> enn2real (exit_val k L T K x) + g x \<bullet> (z - x)
             + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
     proof -
       fix z assume z: "dist z x \<le> ebar"
       have zin: "z \<in> ball x e0 \<inter> ball x r"
         using z e00 r0 by (auto simp: ebar_def dist_commute)
-      have "enn2real (paper_v k L T K z) - \<phi> z
-          \<le> enn2real (paper_v k L T K x) - \<phi> x"
+      have "enn2real (exit_val k L T K z) - \<phi> z
+          \<le> enn2real (exit_val k L T K x) - \<phi> x"
         using lme zin by blast
       moreover have "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
           + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
         using dom zin by blast
-      ultimately show "enn2real (paper_v k L T K z)
-          \<le> enn2real (paper_v k L T K x) + g x \<bullet> (z - x)
+      ultimately show "enn2real (exit_val k L T K z)
+          \<le> enn2real (exit_val k L T K x) + g x \<bullet> (z - x)
             + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
         by linarith
     qed
     obtain b where bmem: "b \<in> sconstraint k L"
       and wb: "- trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2 \<le> 1"
       and borth: "b *v (g x) = 0"
-      by (rule paper_v_touch_orth[OF T L1 Kc eb0 touch])
+      by (rule exit_val_touch_orth[OF T L1 Kc eb0 touch])
     obtain a where afeas: "a \<in> feasible k L (g x)"
       and aval: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2
           \<le> - trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2"
@@ -4300,22 +4300,22 @@ qed
 text \<open>Outside \<open>K\<close> the exit time is already zero, so the value vanishes.  This
   is what makes the gate \<open>v x > 0\<close> do its work below.\<close>
 
-lemma paper_v_zero_outside:
+lemma exit_val_zero_outside:
   fixes K :: "(real^'n::finite) set" and z :: "real^'n"
   assumes T0: "0 \<le> T" and z: "z \<notin> K"
-  shows "paper_v k L T K z = 0"
+  shows "exit_val k L T K z = 0"
 proof -
-  have "paper_v k L T K z \<le> 0"
-    unfolding paper_v_def
+  have "exit_val k L T K z \<le> 0"
+    unfolding exit_val_def
   proof (rule Sup_least)
     fix e :: ennreal
     assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-        ` paper_pair_class k L T z"
-    then obtain Q where Q: "Q \<in> paper_pair_class k L T z"
+        ` exit_class k L T z"
+    then obtain Q where Q: "Q \<in> exit_class k L T z"
       and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
-    have prob: "prob_space Q" by (rule paper_pair_class_prob[OF Q])
+    have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
     have st: "AE \<omega> in Q. fst (\<omega> 0) = z \<and> snd (\<omega> 0) = 0"
-      by (rule paper_pair_class_start[OF Q])
+      by (rule exit_class_start[OF Q])
     have zero: "AE \<omega> in Q. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))) = 0"
     proof (rule eventually_mono[OF st])
       fix \<omega> :: "'n pairpath"
@@ -4337,23 +4337,23 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>Definition 3.1(a) for \<open>paper_v\<close>, including the boundary clause.  At a
+text \<open>Definition 3.1(a) for \<open>exit_val\<close>, including the boundary clause.  At a
   boundary point where the value is strictly positive, a touching that is
   only global over \<open>K\<close> upgrades to a local one: off \<open>K\<close> the value is \<open>0\<close>
-  (\<open>paper_v_zero_outside\<close>) while the test function is continuous, so for
+  (\<open>exit_val_zero_outside\<close>) while the test function is continuous, so for
   \<open>z\<close> close enough to \<open>x\<close> the required inequality \<open>0 - \<phi> z \<le> v x - \<phi> x\<close>
   follows from \<open>\<phi> x - \<phi> z < v x\<close>.\<close>
 
-theorem paper_v_subsol_bc:
+theorem exit_val_subsol_bc:
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
     and kn: "k < CARD('n)"
   shows "visc_subsol_env k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (paper_v k L T K x)})
-      (\<lambda>z. enn2real (paper_v k L T K z))"
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (exit_val k L T K x)})
+      (\<lambda>z. enn2real (exit_val k L T K z))"
   unfolding visc_subsol_env_def
 proof (intro ballI allI impI)
-  define v where "v = (\<lambda>z. enn2real (paper_v k L T K z))"
+  define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
   have T0: "0 \<le> T" using T by simp
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
@@ -4413,7 +4413,7 @@ proof (intro ballI allI impI)
       next
         case False
         have "v z = 0" unfolding v_def
-          using paper_v_zero_outside[OF T0 False] by simp
+          using exit_val_zero_outside[OF T0 False] by simp
         moreover have "\<phi> x - \<phi> z < v x" using eb[OF dzx] by linarith
         ultimately show ?thesis by linarith
       qed
@@ -4421,7 +4421,7 @@ proof (intro ballI allI impI)
   qed
 
   have "ell_op k L (g x) H \<le> 1"
-    using paper_v_visc_subsol_any[OF T L1 Kc kn, of UNIV] tf loc
+    using exit_val_visc_subsol_any[OF T L1 Kc kn, of UNIV] tf loc
     unfolding visc_subsol_def v_def by blast
   then have "ereal (ell_op k L (g x) H) \<le> 1" by simp
   with ell_op_lsc_le_ell_op[of k L "g x" H]
@@ -4435,7 +4435,7 @@ text \<open>The supersolution inequality is an essential-infimum statement, so i
   covariance field whose columns are \<open>S\<^sub>i \<nabla>\<phi>(y)\<close> with \<open>S\<^sub>i\<close> skew-symmetric:
   the field annihilates the gradient of the test function along the path,
   so no stochastic integral appears.  Here the field is fed to an Euler
-  scheme glued by @{thm [source] paper_pair_class_kglue_law'} and passed
+  scheme glued by @{thm [source] exit_class_kglue_law'} and passed
   to a weak limit.  This section builds the algebra: the skew building
   block, the extraction of strict eigendata from a feasible witness
   (modifying \<open>a\<close> so the top eigenvalues lie in \<open>(1, L)\<close>), and identities
@@ -5982,7 +5982,7 @@ text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
   martingale clauses are bounded-linear images of the Brownian ones
   (@{thm [source] martingale_bounded_linear_image}), the covariation
   clause is deterministic, and an arbitrary start comes free from
-  @{thm [source] paper_pair_class_pshift}.  The only hypothesis is
+  @{thm [source] exit_class_pshift}.  The only hypothesis is
   \<open>S S\<^sup>T \<in> sconstraint k L\<close>.\<close>
 
 definition sbmpair ::
@@ -6391,8 +6391,8 @@ theorem sbmpair_law_in_paper_pair_class:
     and SST: "S ** transpose S \<in> sconstraint k L"
   shows "pair_law_of T (sbmpair S T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
-    \<in> paper_pair_class k L T (0 :: real^'n)"
-  unfolding paper_pair_class_def
+    \<in> exit_class k L T (0 :: real^'n)"
+  unfolding exit_class_def
 proof (intro CollectI conjI)
   show "prob_space (pair_law_of T (sbmpair S T)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))"
@@ -6429,12 +6429,12 @@ corollary sbmpair_pshift_law_in_paper_pair_class:
     and SST: "S ** transpose S \<in> sconstraint k L"
   shows "pshift_law T v (pair_law_of T (sbmpair S T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
-    \<in> paper_pair_class k L T (v :: real^'n)"
+    \<in> exit_class k L T (v :: real^'n)"
 proof -
   have "pshift_law T v (pair_law_of T (sbmpair S T)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-    \<in> paper_pair_class k L T (v + 0)"
-    by (rule paper_pair_class_pshift[OF T
+    \<in> exit_class k L T (v + 0)"
+    by (rule exit_class_pshift[OF T
           sbmpair_law_in_paper_pair_class[OF T L SST]])
   then show ?thesis by simp
 qed
@@ -6771,12 +6771,12 @@ subsection \<open>The Euler kernel: measurability package\<close>
 
 text \<open>A continuous matrix field with admissible squares induces, through
   the Gaussian member, a kernel with exactly the three measurability
-  properties @{thm [source] paper_pair_class_kglue_law'} consumes.
+  properties @{thm [source] exit_class_kglue_law'} consumes.
   Sequential continuity in the LP metric comes from
   @{thm [source] sbm_law_weak_conv}; it upgrades to topological continuity
   by the closed-preimage criterion (both sides are metric), and the
   prob-algebra form follows by the same bridge as
-  @{thm [source] paper_v_measurable_selector_kernel'}.\<close>
+  @{thm [source] exit_val_measurable_selector_kernel'}.\<close>
 
 theorem sbm_kernel_package:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and T' :: real
@@ -6790,19 +6790,19 @@ theorem sbm_kernel_package:
     and "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-        (paper_pair_class k L T' (0::real^'n))
+        (exit_class k L T' (0::real^'n))
         (Levy_Prokhorov.LPm (mspace (path_metric T' :: ('n pairpath) metric))
           (mdist (path_metric T' :: ('n pairpath) metric))))"
     and "\<And>z. pair_law_of T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      \<in> paper_pair_class k L T' (0 :: real^'n)"
+      \<in> exit_class k L T' (0 :: real^'n)"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?X = "mtopology_of (path_metric T' :: ('n pairpath) metric)"
   let ?B = "borel_of (mtopology_of (path_metric T' :: ('n pairpath) metric))"
   let ?W = "weak_conv_topology
       (mtopology_of (path_metric T' :: ('n pairpath) metric))"
-  let ?C = "paper_pair_class k L T' (0::real^'n)"
+  let ?C = "exit_class k L T' (0::real^'n)"
   let ?dd = "Levy_Prokhorov.LPm
       (mspace (path_metric T' :: ('n pairpath) metric))
       (mdist (path_metric T' :: ('n pairpath) metric))"
@@ -6813,11 +6813,11 @@ proof -
   have T0': "0 \<le> T'" using T by simp
   have L0: "0 \<le> L" using L by simp
   interpret MC: Metric_space ?C ?dd
-    by (rule paper_pair_class_compact_metric_space(1)[OF T L0])
+    by (rule exit_class_compact_metric_space(1)[OF T L0])
   have Ctop: "MC.mtopology = subtopology ?W ?C"
-    by (rule paper_pair_class_compact_metric_space(2)[OF T L0])
+    by (rule exit_class_compact_metric_space(2)[OF T L0])
   show KC: "\<And>z. pair_law_of T' (sbmpair (SF z) T') ?M
-      \<in> paper_pair_class k L T' (0 :: real^'n)"
+      \<in> exit_class k L T' (0 :: real^'n)"
     by (rule sbmpair_law_in_paper_pair_class[OF T0' L SFs])
   have KCk: "KK z \<in> ?C" for z unfolding KK_def by (rule KC)
   have seq: "limitin MC.mtopology (\<lambda>m. KK (zm m)) (KK z) sequentially"
@@ -6868,7 +6868,7 @@ proof -
     using continuous_map_measurable[OF contW]
     by (simp add: borel_of_euclidean)
   have SP: "KK z \<in> ?P" for z
-    using paper_pair_class_prob[OF KCk] paper_pair_class_sets[OF KCk]
+    using exit_class_prob[OF KCk] exit_class_sets[OF KCk]
     by simp
   have polish: "Polish_space
       (mtopology_of (path_metric T' :: ('n pairpath) metric))"
@@ -6887,7 +6887,7 @@ qed
 subsection \<open>The Euler process\<close>
 
 text \<open>Freeze the field at the left endpoint of each step and glue with
-  @{thm [source] paper_pair_class_kglue_law'}: stage \<open>j\<close> is a member on
+  @{thm [source] exit_class_kglue_law'}: stage \<open>j\<close> is a member on
   the horizon \<open>(j+1)h\<close>, and membership is plain induction --- the
   continuation kernel is centred (\<open>pglue\<close> recenters), so it is exactly
   @{thm [source] sbm_kernel_package} composed with the endpoint map.\<close>
@@ -6909,12 +6909,12 @@ theorem eulerp_in_class:
   assumes h0: "0 < h" and L1: "1 \<le> L"
     and SFc: "continuous_on UNIV SF"
     and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-  shows "eulerp SF x h j \<in> paper_pair_class k L (real (Suc j) * h) x"
+  shows "eulerp SF x h j \<in> exit_class k L (real (Suc j) * h) x"
 proof (induction j)
   case 0
   have "pshift_law h x (pair_law_of h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      \<in> paper_pair_class k L h x"
+      \<in> exit_class k L h x"
     by (rule sbmpair_pshift_law_in_paper_pair_class)
       (use h0 L1 SFs in simp_all)
   then show ?case by simp
@@ -6926,11 +6926,11 @@ next
   have r0: "0 \<le> r" unfolding r_def using h0 by simp
   have rT: "r < T'" unfolding r_def T'_def using h0 by simp
   have T0: "0 < T'" unfolding T'_def using h0 by simp
-  have Q: "eulerp SF x h j \<in> paper_pair_class k L r x"
+  have Q: "eulerp SF x h j \<in> exit_class k L r x"
     using Suc unfolding r_def .
   have setsQ: "sets (eulerp SF x h j) = sets (borel_of (mtopology_of
       (path_metric r :: ('n pairpath) metric)))"
-    by (rule paper_pair_class_sets[OF Q])
+    by (rule exit_class_sets[OF Q])
   have hpos: "0 < (h :: real)" by (rule h0)
   note pack = sbm_kernel_package[OF hpos L1 SFc SFs]
   have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
@@ -6957,23 +6957,23 @@ next
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
       \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r
       \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-          (paper_pair_class k L (T' - r) (0::real^'n))
+          (exit_class k L (T' - r) (0::real^'n))
           (Levy_Prokhorov.LPm
             (mspace (path_metric (T' - r) :: ('n pairpath) metric))
             (mdist (path_metric (T' - r) :: ('n pairpath) metric))))"
     unfolding hT by (rule measurable_compose[OF eF pack(2)])
   have Kc: "pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
-      \<in> paper_pair_class k L (T' - r) 0" for \<omega> :: "'n pairpath"
+      \<in> exit_class k L (T' - r) 0" for \<omega> :: "'n pairpath"
     unfolding hT by (rule pack(3))
   have "kglue_law' r T'
       (\<lambda>\<omega>. pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
-      (eulerp SF x h j) \<in> paper_pair_class k L T' x"
-  proof (rule paper_pair_class_kglue_law')
+      (eulerp SF x h j) \<in> exit_class k L T' x"
+  proof (rule exit_class_kglue_law')
     show "0 \<le> r" by (rule r0)
     show "r < T'" by (rule rT)
     show "1 \<le> L" by (rule L1)
     show "0 < T'" by (rule T0)
-    show "eulerp SF x h j \<in> paper_pair_class k L r x" by (rule Q)
+    show "eulerp SF x h j \<in> exit_class k L r x" by (rule Q)
     show "(\<lambda>\<omega> :: 'n pairpath.
         pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
         \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
@@ -6983,14 +6983,14 @@ next
         pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
         \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r
         \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-            (paper_pair_class k L (T' - r) (0::real^'n))
+            (exit_class k L (T' - r) (0::real^'n))
             (Levy_Prokhorov.LPm
               (mspace (path_metric (T' - r) :: ('n pairpath) metric))
               (mdist (path_metric (T' - r) :: ('n pairpath) metric))))"
       by (rule Kb)
     show "\<And>\<omega> :: 'n pairpath.
         pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
-        \<in> paper_pair_class k L (T' - r) 0"
+        \<in> exit_class k L (T' - r) 0"
       by (rule Kc)
   qed
   then show ?case unfolding r_def T'_def by simp
@@ -7000,7 +7000,7 @@ subsection \<open>Step moments of the Gaussian member\<close>
 
 text \<open>The Euler analysis needs exactly two facts per step: the compensated
   quadratic increment has mean zero (an instance of
-  @{thm [source] paper_pair_class_quadform_mean}, since the member's
+  @{thm [source] exit_class_quadform_mean}, since the member's
   second component is deterministic), and its variance is \<open>O(h\<^sup>2)\<close>.  The
   variance bound needs no Wick calculus and no coordinate independence:
   the pointwise AM--GM bound \<open>a\<^sup>2b\<^sup>2 \<le> (a\<^sup>4 + b\<^sup>4)/2\<close> reduces everything
@@ -7209,7 +7209,7 @@ proof -
       (fst (\<omega>' h)) - snd (\<omega>' h)))"
   have h0': "(0::real) \<le> h" using h0 by simp
   have hI: "h \<in> {0..h}" using h0' by simp
-  have mem: "?\<mu> \<in> paper_pair_class k L h (0 :: real^'n)"
+  have mem: "?\<mu> \<in> exit_class k L h (0 :: real^'n)"
     by (rule sbmpair_law_in_paper_pair_class[OF h0' L1 SST])
   have sets\<mu>: "sets ?\<mu> = sets ?B" by simp
   have evh: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' h) \<in> ?B \<rightarrow>\<^sub>M borel"
@@ -7265,7 +7265,7 @@ proof -
   have gmeas\<mu>: "?g \<in> borel_measurable ?\<mu>"
     using gmeas measurable_cong_sets[OF sets\<mu>[symmetric] refl] by blast
   have start: "AE \<omega>' in ?\<mu>. fst (\<omega>' 0) = (0 :: real^'n) \<and> snd (\<omega>' 0) = 0"
-    using mem unfolding paper_pair_class_def by blast
+    using mem unfolding exit_class_def by blast
   have snddet: "AE \<omega>' in ?\<mu>. snd (\<omega>' h) = h *\<^sub>R (S ** transpose S)"
   proof -
     have phim: "sbmpair S h \<in> ?M \<rightarrow>\<^sub>M ?B"
@@ -7292,7 +7292,7 @@ proof -
     using start snddet by eventually_elim simp
   have int_inner: "integrable ?\<mu>
       (\<lambda>\<omega>'. outerp (fst (\<omega>' h)) - snd (\<omega>' h))"
-    by (rule paper_pair_class_compensated_integrable[OF mem hI])
+    by (rule exit_class_compensated_integrable[OF mem hI])
   have intg: "integrable ?\<mu> ?g"
     by (rule integrable_bounded_linear[OF trace_mult_blin int_inner])
   show "integrable ?\<mu> ?\<xi>"
@@ -7305,7 +7305,7 @@ proof -
       \<partial>?\<mu>))"
     by (rule integral_of_bounded_linear[OF trace_mult_blin int_inner])
   also have "\<dots> = trace (M ** outerp (0 :: real^'n))"
-    by (simp add: paper_pair_class_compensated_mean[OF mem hI])
+    by (simp add: exit_class_compensated_mean[OF mem hI])
   also have "\<dots> = 0"
     unfolding op0 by (rule trace_mult_zero_right)
   finally show "(\<integral>\<omega>'. ?\<xi> \<omega>' \<partial>?\<mu>) = 0" .
@@ -7915,10 +7915,10 @@ next
   have r0: "0 \<le> r" unfolding r_def using h0' by simp
   have rleT: "r \<le> T'" unfolding r_def T'_def
     using h0' by (intro mult_right_mono) simp_all
-  have Qc: "?Q \<in> paper_pair_class k L r x"
+  have Qc: "?Q \<in> exit_class k L r x"
     unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
-  interpret PQ: prob_space ?Q by (rule paper_pair_class_prob[OF Qc])
-  have setsQ: "sets ?Q = sets ?Br" by (rule paper_pair_class_sets[OF Qc])
+  interpret PQ: prob_space ?Q by (rule exit_class_prob[OF Qc])
+  have setsQ: "sets ?Q = sets ?Br" by (rule exit_class_sets[OF Qc])
   have ne: "space ?Q \<noteq> {}" by (rule PQ.not_empty)
   note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
   have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
@@ -8313,10 +8313,10 @@ next
   have r0: "0 \<le> r" unfolding r_def using h0' by simp
   have rleT: "r \<le> T'" unfolding r_def T'_def
     using h0' by (intro mult_right_mono) simp_all
-  have Qc: "?Q \<in> paper_pair_class k L r x"
+  have Qc: "?Q \<in> exit_class k L r x"
     unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
-  have PQ: "prob_space ?Q" by (rule paper_pair_class_prob[OF Qc])
-  have setsQ: "sets ?Q = sets ?Br" by (rule paper_pair_class_sets[OF Qc])
+  have PQ: "prob_space ?Q" by (rule exit_class_prob[OF Qc])
+  have setsQ: "sets ?Q = sets ?Br" by (rule exit_class_sets[OF Qc])
   have ne: "space ?Q \<noteq> {}" using PQ by (rule prob_space.not_empty)
   note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
   have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
@@ -8345,7 +8345,7 @@ next
   qed
   show ?case
     unfolding Ee
-  proof (rule Paper_Bridge.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
+  proof (rule Exit_Class_Compactness.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
     show "AE \<omega> in ?Q. \<forall>j<Suc N. G (fst (\<omega> (real j * h))) \<bullet>
         (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
       by (rule Suc.IH)
@@ -8500,10 +8500,10 @@ next
     have r0: "0 \<le> r" unfolding r_def using h0' by simp
     have rleT: "r \<le> T'" unfolding r_def T'_def
       using h0' by (intro mult_right_mono) simp_all
-    have Qc: "?Q \<in> paper_pair_class k L r x"
+    have Qc: "?Q \<in> exit_class k L r x"
       unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
-    interpret PQ: prob_space ?Q by (rule paper_pair_class_prob[OF Qc])
-    have setsQ: "sets ?Q = sets ?Br" by (rule paper_pair_class_sets[OF Qc])
+    interpret PQ: prob_space ?Q by (rule exit_class_prob[OF Qc])
+    have setsQ: "sets ?Q = sets ?Br" by (rule exit_class_sets[OF Qc])
     have ne: "space ?Q \<noteq> {}" by (rule PQ.not_empty)
     note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
     have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
@@ -8735,10 +8735,10 @@ proof -
     show ?thesis by (intro continuous_intros mv)
   qed
   note orth = eulerp_orth_increments[OF h0 L1 SFc SFs Gc kill]
-  have Qc: "eulerp SF x h N \<in> paper_pair_class k L (real (Suc N) * h) x"
+  have Qc: "eulerp SF x h N \<in> exit_class k L (real (Suc N) * h) x"
     by (rule eulerp_in_class[OF h0 L1 SFc SFs])
   have st: "AE \<omega> in eulerp SF x h N. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Qc unfolding paper_pair_class_def by blast
+    using Qc unfolding exit_class_def by blast
   show ?thesis
     using orth st
   proof eventually_elim
@@ -8857,8 +8857,8 @@ qed
 subsection \<open>The weak limit of the Euler laws\<close>
 
 text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the compact class
-  \<open>paper_pair_class k L c x\<close> (@{thm [source]
-  paper_pair_class_compact_metric_space}), so some subsequence converges
+  \<open>exit_class k L c x\<close> (@{thm [source]
+  exit_class_compact_metric_space}), so some subsequence converges
   weakly to a class member \<open>P\<close>.  The portmanteau bound --- if the
   measures of an open set converge to \<open>b\<close>, the limit member gives the set
   at most \<open>b\<close>, and dually for closed sets --- applies to the event that a
@@ -8943,7 +8943,7 @@ qed
 
 text \<open>The transfer principle.  Sequential compactness of the class
   extracts a convergent subsequence; membership clause (2) of
-  @{thm [source] paper_pair_class_compact_metric_space} identifies the
+  @{thm [source] exit_class_compact_metric_space} identifies the
   limit as weak convergence, and the AFP portmanteau
   (@{thm [source] mweak_conv_fin.mweak_conv_eq2},
   @{thm [source] mweak_conv_fin.mweak_conv_eq3}) turns it into the
@@ -8951,11 +8951,11 @@ text \<open>The transfer principle.  Sequential compactness of the class
   Liminf and Limsup along any subsequence, so the subsequence never
   appears in the statement.\<close>
 
-theorem paper_pair_class_weak_limit:
+theorem exit_class_weak_limit:
   fixes Pseq :: "nat \<Rightarrow> ('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 < T" and L0: "0 \<le> L"
-    and mem: "\<And>i. Pseq i \<in> paper_pair_class k L T x"
-  shows "\<exists>P \<in> paper_pair_class k L T x.
+    and mem: "\<And>i. Pseq i \<in> exit_class k L T x"
+  shows "\<exists>P \<in> exit_class k L T x.
       (\<forall>U b. openin (mtopology_of
             (path_metric T :: ('n pairpath) metric)) U
           \<longrightarrow> (\<lambda>i. measure (Pseq i) U) \<longlonglongrightarrow> b
@@ -8966,19 +8966,19 @@ theorem paper_pair_class_weak_limit:
           \<longrightarrow> b \<le> measure P D)"
 proof -
   let ?pm = "path_metric T :: ('n pairpath) metric"
-  let ?C = "paper_pair_class k L T x"
+  let ?C = "exit_class k L T x"
   let ?E = "Levy_Prokhorov.LPm (mspace ?pm) (mdist ?pm)"
   interpret CM: Metric_space ?C ?E
-    by (rule paper_pair_class_compact_metric_space(1)[OF T L0])
+    by (rule exit_class_compact_metric_space(1)[OF T L0])
   have cs: "compact_space CM.mtopology"
-    by (rule paper_pair_class_compact_metric_space(3)[OF T L0])
+    by (rule exit_class_compact_metric_space(3)[OF T L0])
   have rng: "range Pseq \<subseteq> ?C" using mem by auto
   obtain P r where P: "P \<in> ?C" and r: "strict_mono r"
     and liml: "limitin CM.mtopology (Pseq \<circ> r) P sequentially"
     using cs[unfolded CM.compact_space_sequentially] rng by blast
   have Ctop: "CM.mtopology = subtopology
       (weak_conv_topology (mtopology_of ?pm)) ?C"
-    by (rule paper_pair_class_compact_metric_space(2)[OF T L0])
+    by (rule exit_class_compact_metric_space(2)[OF T L0])
   have limW: "limitin (weak_conv_topology (mtopology_of ?pm))
       (Pseq \<circ> r) P sequentially"
     using liml unfolding Ctop limitin_subtopology by blast
@@ -8987,20 +8987,20 @@ proof -
       (Pseq \<circ> r) P sequentially"
     using limW by (simp add: mtopology_of_def)
   have fmi: "finite_measure (Pseq i)" for i
-    using paper_pair_class_prob[OF mem, of i]
+    using exit_class_prob[OF mem, of i]
     by (simp add: prob_space.emeasure_space_1 finite_measureI)
   have fmP: "finite_measure P"
-    using paper_pair_class_prob[OF P]
+    using exit_class_prob[OF P]
     by (simp add: prob_space.emeasure_space_1 finite_measureI)
   have setsP: "sets P = sets (borel_of
       (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
-    using paper_pair_class_sets[OF P] by (simp add: mtopology_of_def)
+    using exit_class_sets[OF P] by (simp add: mtopology_of_def)
   have ev1: "\<forall>\<^sub>F i in sequentially. sets ((Pseq \<circ> r) i)
       = sets (borel_of (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
   proof (intro always_eventually allI)
     fix i show "sets ((Pseq \<circ> r) i)
         = sets (borel_of (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
-      using paper_pair_class_sets[OF mem, of "r i"]
+      using exit_class_sets[OF mem, of "r i"]
       by (simp add: mtopology_of_def)
   qed
   have ev2: "\<forall>\<^sub>F i in sequentially. finite_measure ((Pseq \<circ> r) i)"
@@ -9061,11 +9061,11 @@ lemma eulerp_seq_in_class:
   assumes c0: "0 < c" and L1: "1 \<le> L"
     and SFc: "continuous_on UNIV SF"
     and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-  shows "eulerp SF x (c / real (Suc i)) i \<in> paper_pair_class k L c x"
+  shows "eulerp SF x (c / real (Suc i)) i \<in> exit_class k L c x"
 proof -
   have h0: "0 < c / real (Suc i)" using c0 by simp
   have "eulerp SF x (c / real (Suc i)) i
-      \<in> paper_pair_class k L (real (Suc i) * (c / real (Suc i))) x"
+      \<in> exit_class k L (real (Suc i) * (c / real (Suc i))) x"
     by (rule eulerp_in_class[OF h0 L1 SFc SFs])
   moreover have "real (Suc i) * (c / real (Suc i)) = c" by simp
   ultimately show ?thesis by simp
@@ -9076,7 +9076,7 @@ theorem eulerp_weak_limit:
   assumes c0: "0 < c" and L1: "1 \<le> L"
     and SFc: "continuous_on UNIV SF"
     and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-  shows "\<exists>P \<in> paper_pair_class k L c x.
+  shows "\<exists>P \<in> exit_class k L c x.
       (\<forall>U b. openin (mtopology_of
             (path_metric c :: ('n pairpath) metric)) U
           \<longrightarrow> (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U)
@@ -9090,7 +9090,7 @@ theorem eulerp_weak_limit:
 proof -
   have L0: "0 \<le> L" using L1 by linarith
   show ?thesis
-    by (rule paper_pair_class_weak_limit[OF c0 L0
+    by (rule exit_class_weak_limit[OF c0 L0
         eulerp_seq_in_class[OF c0 L1 SFc SFs]])
 qed
 
@@ -9104,12 +9104,12 @@ text \<open>The open bad event --- the path stays strictly inside the ball
   nearest grid point (@{thm [source] eulerp_quad_lower}), and a
   fourth-moment tail for the one-step gap between the grid point and
   \<open>t\<close>, derived first from
-  @{thm [source] paper_pair_class_fourth_moment}.\<close>
+  @{thm [source] exit_class_fourth_moment}.\<close>
 
-lemma paper_pair_class_increment_tail:
+lemma exit_class_increment_tail:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
     and l: "0 < l"
   shows "measure Q {\<omega> \<in> space Q.
@@ -9118,9 +9118,9 @@ lemma paper_pair_class_increment_tail:
 proof -
   have setsQ: "sets Q = sets (borel_of (mtopology_of
       (path_metric T :: ('n pairpath) metric)))"
-    by (rule paper_pair_class_sets[OF Q])
+    by (rule exit_class_sets[OF Q])
   have int4: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
-    by (rule paper_pair_class_fourth_moment_integrable[OF T L Q st stt ttT])
+    by (rule exit_class_fourth_moment_integrable[OF T L Q st stt ttT])
   have nn: "AE \<omega> in Q. 0 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4"
     by (simp add: zero_le_fourth)
   have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)
@@ -9134,7 +9134,7 @@ proof -
     proof -
       have f4: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
           \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
-        by (rule paper_pair_class_fourth_moment[OF T L setsQ Q st stt ttT])
+        by (rule exit_class_fourth_moment[OF T L setsQ Q st stt ttT])
       show ?thesis using f4 unfolding eq .
     qed
     have y0: "0 \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
@@ -9174,10 +9174,10 @@ proof -
   finally show ?thesis using seteq by simp
 qed
 
-lemma paper_pair_class_increment_tail_norm:
+lemma exit_class_increment_tail_norm:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and Q: "Q \<in> paper_pair_class k L T x"
+    and Q: "Q \<in> exit_class k L T x"
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
     and l: "0 < l"
   shows "measure Q {\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
@@ -9186,8 +9186,8 @@ proof -
   let ?n = "real (CARD('n))"
   have setsQ: "sets Q = sets (borel_of (mtopology_of
       (path_metric T :: ('n pairpath) metric)))"
-    by (rule paper_pair_class_sets[OF Q])
-  interpret PQ: prob_space Q by (rule paper_pair_class_prob[OF Q])
+    by (rule exit_class_sets[OF Q])
+  interpret PQ: prob_space Q by (rule exit_class_prob[OF Q])
   have cpos: "0 < CARD('n)" by (simp add: card_gt_0_iff)
   have n0: "0 < ?n" using cpos by simp
   define l' where "l' = l / ?n"
@@ -9250,7 +9250,7 @@ proof -
     by (rule measure_UNION_le) (use Em in simp_all)
   also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)"
     by (rule sum_mono)
-      (rule paper_pair_class_increment_tail[OF T L Q st stt ttT l'0])
+      (rule exit_class_increment_tail[OF T L Q st stt ttT l'0])
   also have "\<dots> = ?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)" by simp
   also have "\<dots> = ?n ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
   proof -
@@ -9471,14 +9471,14 @@ proof -
     have h0: "0 < h" unfolding h_def using c0 by simp
     have hc: "real (Suc i) * h = c" unfolding h_def by simp
     let ?Q = "eulerp SF x h i"
-    have Qc: "?Q \<in> paper_pair_class k L c x"
+    have Qc: "?Q \<in> exit_class k L c x"
       unfolding h_def by (rule eulerp_seq_in_class[OF c0 L1 SFc SFs])
     have setsQ: "sets ?Q = sets (borel_of (mtopology_of
         (path_metric c :: ('n pairpath) metric)))"
-      by (rule paper_pair_class_sets[OF Qc])
+      by (rule exit_class_sets[OF Qc])
     have spQ: "space ?Q = mspace (path_metric c :: ('n pairpath) metric)"
       by (rule space_of_path_sets[OF setsQ])
-    interpret PQ: prob_space ?Q by (rule paper_pair_class_prob[OF Qc])
+    interpret PQ: prob_space ?Q by (rule exit_class_prob[OF Qc])
     define m where "m = nat \<lfloor>t / h\<rfloor>"
     have tdh0: "0 \<le> t / h" using t0 h0 by simp
     have fl0: "0 \<le> \<lfloor>t / h\<rfloor>" using tdh0 by simp
@@ -9519,7 +9519,7 @@ proof -
     have mE2: "measure ?Q E2
         \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4"
       unfolding E2_def
-      by (rule paper_pair_class_increment_tail_norm[OF c0 L0 Qc
+      by (rule exit_class_increment_tail_norm[OF c0 L0 Qc
           mh0 mh_le tc \<delta>0])
     have sE1: "E1 \<in> sets ?Q"
     proof -
@@ -9913,7 +9913,7 @@ theorem eulerp_limit_good:
     and kill: "\<And>z. transpose (SF z) *v
         (q + M *v (closest_point (cball x rb) z - x)) = 0"
     and marg: "\<And>z. cm \<le> trace (M ** (SF z ** transpose (SF z)))"
-  shows "\<exists>P \<in> paper_pair_class k L c x. AE \<omega> in P. \<forall>t.
+  shows "\<exists>P \<in> exit_class k L c x. AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb) \<longrightarrow>
       t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
@@ -9924,14 +9924,14 @@ proof -
       \<and> q \<bullet> (fst (\<omega> r) - x)
         + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))
         < r * cm / 2 - \<beta>})"
-  obtain P where P: "P \<in> paper_pair_class k L c x"
+  obtain P where P: "P \<in> exit_class k L c x"
     and Praw: "\<forall>U b'. openin (mtopology_of ?pm) U \<longrightarrow>
       (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U) \<longlonglongrightarrow> b' \<longrightarrow>
       measure P U \<le> b'"
     using eulerp_weak_limit[OF c0 L1 SFc SFs] by blast
-  interpret FP: prob_space P by (rule paper_pair_class_prob[OF P])
+  interpret FP: prob_space P by (rule exit_class_prob[OF P])
   have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
-    by (rule paper_pair_class_sets[OF P])
+    by (rule exit_class_sets[OF P])
   have spaceP: "space P = mspace ?pm"
     by (rule space_of_path_sets[OF setsP])
   have AErn: "AE \<omega> in P. \<omega> \<notin> Us r (inverse (real (Suc n)))"
@@ -10123,7 +10123,7 @@ theorem eulerp_limit_exit:
     and kill: "\<And>z. transpose (SF z) *v
         (q + M *v (closest_point (cball x rb) z - x)) = 0"
     and marg: "\<And>z. cm \<le> trace (M ** (SF z ** transpose (SF z)))"
-  shows "\<exists>P \<in> paper_pair_class k L c x. AE \<omega> in P.
+  shows "\<exists>P \<in> exit_class k L c x. AE \<omega> in P.
       0 < pball_exit c x rb \<omega>
       \<and> (\<forall>s\<in>{0..pball_exit c x rb \<omega>}. fst (\<omega> s) \<in> cball x rb)
       \<and> (pball_exit c x rb \<omega> < c \<longrightarrow>
@@ -10142,18 +10142,18 @@ proof -
   let ?pm = "path_metric c :: ('n pairpath) metric"
   have rb0': "0 \<le> rb" using rb0 by linarith
   have c0': "0 \<le> c" using c0 by linarith
-  obtain P where P: "P \<in> paper_pair_class k L c x"
+  obtain P where P: "P \<in> exit_class k L c x"
     and good: "AE \<omega> in P. \<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb) \<longrightarrow>
       t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
     using eulerp_limit_good[OF c0 L1 SFc SFs sym rb0' kill marg] by blast
   have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
-    by (rule paper_pair_class_sets[OF P])
+    by (rule exit_class_sets[OF P])
   have spaceP: "space P = mspace ?pm"
     by (rule space_of_path_sets[OF setsP])
   have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule paper_pair_class_start[OF P])
+    by (rule exit_class_start[OF P])
   have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
   show ?thesis
   proof (intro bexI[OF _ P])
@@ -10505,10 +10505,10 @@ lemma touching_grad_lt_horizon:
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow>
-      enn2real (paper_v k L T K x) - \<phi> x
-        \<le> enn2real (paper_v k L T K y) - \<phi> y"
+      enn2real (exit_val k L T K x) - \<phi> x
+        \<le> enn2real (exit_val k L T K y) - \<phi> y"
     and gx0: "g x \<noteq> 0"
-  shows "enn2real (paper_v k L T K x) < T"
+  shows "enn2real (exit_val k L T K x) < T"
 proof -
   obtain eK where eK0: "0 < eK" and eKK: "ball x eK \<subseteq> K"
     using xi mem_interior by blast
@@ -10584,18 +10584,18 @@ proof -
       using s0 by (simp add: zero_less_divide_iff)
     then show ?thesis unfolding h_def z_def by simp
   qed
-  have zT: "enn2real (paper_v k L T K z) \<le> T"
+  have zT: "enn2real (exit_val k L T K z) \<le> T"
   proof -
-    have "enn2real (paper_v k L T K z)
-        = min (enn2real (paper_v k L T K z)) T"
+    have "enn2real (exit_val k L T K z)
+        = min (enn2real (exit_val k L T K z)) T"
       by (rule enn2real_paper_v_horizon_cap[OF less_imp_le[OF T0]
           order_refl L1 Kc])
     then show ?thesis by (metis min.cobounded2)
   qed
-  have "enn2real (paper_v k L T K x)
-      \<le> enn2real (paper_v k L T K z) - (\<phi> z - \<phi> x)"
+  have "enn2real (exit_val k L T K x)
+      \<le> enn2real (exit_val k L T K z) - (\<phi> z - \<phi> x)"
     using tmin[OF zK] by simp
-  also have "\<dots> < enn2real (paper_v k L T K z)" using hgt by simp
+  also have "\<dots> < enn2real (exit_val k L T K z)" using hgt by simp
   also have "\<dots> \<le> T" by (rule zT)
   finally show ?thesis .
 qed
@@ -10613,9 +10613,9 @@ text \<open>If the supersolution inequality fails at a touching point with
   least \<open>v(x) + mg\<close> almost surely -- the exit branch is paid by
   \<open>\<gamma> rr\<^sup>2\<close>, the no-exit branch by \<open>cc \<eta> / 2\<close>, and the horizon cap by
   \<open>T - v(x) > 0\<close>, which a nonzero gradient forces.  That contradicts
-  @{thm [source] paper_v_dpp_sup_ge_time}.\<close>
+  @{thm [source] exit_val_dpp_sup_ge_time}.\<close>
 
-theorem paper_v_supersol_contradiction_case1:
+theorem exit_val_supersol_contradiction_case1:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
@@ -10624,8 +10624,8 @@ theorem paper_v_supersol_contradiction_case1:
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow>
-      enn2real (paper_v k L T K x) - \<phi> x
-        \<le> enn2real (paper_v k L T K y) - \<phi> y"
+      enn2real (exit_val k L T K x) - \<phi> x
+        \<le> enn2real (exit_val k L T K y) - \<phi> y"
     and gx0: "g x \<noteq> 0"
     and fail: "ell_op k L (g x) H < 1"
   shows False
@@ -10633,7 +10633,7 @@ proof -
   have L1': "1 \<le> L" using L1 by linarith
   have L0: "0 \<le> L" using L1 by linarith
   have T0': "0 \<le> T" using T0 by linarith
-  define tv where "tv = (\<lambda>y. enn2real (paper_v k L T K y))"
+  define tv where "tv = (\<lambda>y. enn2real (exit_val k L T K y))"
   have vxT: "tv x < T"
     unfolding tv_def
     by (rule touching_grad_lt_horizon[OF T0 L1' Kc xi tf tmin gx0])
@@ -10763,7 +10763,7 @@ proof -
     unfolding SF_def by (rule pack(2))
   have marg: "\<And>z. \<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))"
     unfolding SF_def by (rule pack(3))
-  obtain P where Pc: "P \<in> paper_pair_class k L T x"
+  obtain P where Pc: "P \<in> exit_class k L T x"
     and AEpack: "AE \<omega> in P.
       0 < pball_exit T x rr \<omega>
       \<and> (\<forall>s\<in>{0..pball_exit T x rr \<omega>}. fst (\<omega> s) \<in> cball x rr)
@@ -10798,12 +10798,12 @@ proof -
       pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
       + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega>
             \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-         then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+         then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
          else 0))"
-  have dpp: "(SUP P' \<in> paper_pair_class k L T x. ess_inf_time P' FN)
-      \<le> paper_v k L T K x"
+  have dpp: "(SUP P' \<in> exit_class k L T x. ess_inf_time P' FN)
+      \<le> exit_val k L T K x"
     unfolding FN_def
-    by (rule paper_v_dpp_sup_ge_time[OF T0 L1' Kc st thM])
+    by (rule exit_val_dpp_sup_ge_time[OF T0 L1' Kc st thM])
   define mg where "mg = min (min (\<gamma> * rr\<^sup>2) (cc * \<eta> / 2)) (T - tv x)"
   have mg0: "0 < mg"
   proof -
@@ -10851,7 +10851,7 @@ proof -
       by (rule pexit_eq_of_stays[OF less_imp_le[OF th0]]) (use inK in simp)
     have XinK: "fst (\<omega> (\<theta> \<omega>)) \<in> K"
       using inK[of "\<theta> \<omega>"] th0 by simp
-    have cap: "enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+    have cap: "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
         = min (tv (fst (\<omega> (\<theta> \<omega>)))) (T - \<theta> \<omega>)"
       unfolding tv_def
       by (rule enn2real_paper_v_horizon_cap[OF _ _ L1' Kc])
@@ -10963,18 +10963,18 @@ proof -
   have essge: "ennreal (tv x + mg) \<le> ess_inf_time P FN"
     unfolding ess_inf_time_def
     by (rule Sup_upper) (use AEfun in blast)
-  have esle: "ess_inf_time P FN \<le> paper_v k L T K x"
+  have esle: "ess_inf_time P FN \<le> exit_val k L T K x"
   proof -
     have "ess_inf_time P FN
-        \<le> (SUP P' \<in> paper_pair_class k L T x. ess_inf_time P' FN)"
+        \<le> (SUP P' \<in> exit_class k L T x. ess_inf_time P' FN)"
       by (rule SUP_upper[OF Pc])
     then show ?thesis using dpp by (rule order_trans)
   qed
-  have vfin: "ennreal (tv x) = paper_v k L T K x"
+  have vfin: "ennreal (tv x) = exit_val k L T K x"
     unfolding tv_def
-    using paper_v_neq_top[OF T0', of k L K x]
+    using exit_val_neq_top[OF T0', of k L K x]
     by (simp add: less_top)
-  have chain: "ennreal (tv x + mg) \<le> paper_v k L T K x"
+  have chain: "ennreal (tv x + mg) \<le> exit_val k L T K x"
     by (rule order_trans[OF essge esle])
   have "ennreal (tv x + mg) \<le> ennreal (tv x)"
     using chain by (simp add: vfin)
@@ -10993,7 +10993,7 @@ text \<open>The contradiction, read back as the positive statement the envelope
   \<open>F \<le> F\<^sup>*\<close> (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
   inequality into a failed plain one.\<close>
 
-theorem paper_v_supersol_env_case1:
+theorem exit_val_supersol_env_case1:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
@@ -11002,8 +11002,8 @@ theorem paper_v_supersol_env_case1:
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow>
-      enn2real (paper_v k L T K x) - \<phi> x
-        \<le> enn2real (paper_v k L T K y) - \<phi> y"
+      enn2real (exit_val k L T K x) - \<phi> x
+        \<le> enn2real (exit_val k L T K y) - \<phi> y"
     and gx0: "g x \<noteq> 0"
   shows "1 \<le> ell_op_usc k L (g x) H"
 proof (rule ccontr)
@@ -11013,7 +11013,7 @@ proof (rule ccontr)
     using ell_op_le_ell_op_usc[of k L "g x" H] lt by (rule le_less_trans)
   then have fail: "ell_op k L (g x) H < 1" by (simp add: one_ereal_def)
   show False
-    by (rule paper_v_supersol_contradiction_case1[OF T0 L1 k1 kn Kc xi
+    by (rule exit_val_supersol_contradiction_case1[OF T0 L1 k1 kn Kc xi
         tf tmin gx0 fail])
 qed
 
@@ -11597,10 +11597,10 @@ next
   have r0: "0 \<le> r" unfolding r_def using h0' by simp
   have rleT: "r \<le> T'" unfolding r_def T'_def
     using h0' by (intro mult_right_mono) simp_all
-  have Qc: "?Q \<in> paper_pair_class k L r x"
+  have Qc: "?Q \<in> exit_class k L r x"
     unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
-  have PQ: "prob_space ?Q" by (rule paper_pair_class_prob[OF Qc])
-  have setsQ: "sets ?Q = sets ?Br" by (rule paper_pair_class_sets[OF Qc])
+  have PQ: "prob_space ?Q" by (rule exit_class_prob[OF Qc])
+  have setsQ: "sets ?Q = sets ?Br" by (rule exit_class_sets[OF Qc])
   note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
   have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
       \<in> borel_measurable borel"
@@ -11632,7 +11632,7 @@ next
   qed
   show ?case
     unfolding Ee
-  proof (rule Paper_Bridge.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
+  proof (rule Exit_Class_Compactness.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
     show "AE \<omega> in ?Q. \<forall>j<Suc N.
         transpose (SF (fst (\<omega> (real j * h))))
           *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
@@ -11752,10 +11752,10 @@ proof -
     show ?thesis by (intro continuous_intros mv)
   qed
   note orth = eulerp_orth_increments_cond[OF h0 L1 SFc SFs Gc]
-  have Qc: "eulerp SF x h N \<in> paper_pair_class k L (real (Suc N) * h) x"
+  have Qc: "eulerp SF x h N \<in> exit_class k L (real (Suc N) * h) x"
     by (rule eulerp_in_class[OF h0 L1 SFc SFs])
   have st: "AE \<omega> in eulerp SF x h N. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Qc unfolding paper_pair_class_def by blast
+    using Qc unfolding exit_class_def by blast
   show ?thesis
     using orth st
   proof eventually_elim
@@ -12102,14 +12102,14 @@ proof -
       have h0: "0 < h" unfolding h_def using c0 by simp
       have hc: "real (Suc i) * h = c" unfolding h_def by simp
       let ?Q = "eulerp SF x h i"
-      have Qc: "?Q \<in> paper_pair_class k L c x"
+      have Qc: "?Q \<in> exit_class k L c x"
         unfolding h_def by (rule eulerp_seq_in_class[OF c0 L1 SFc SFs])
       have setsQ: "sets ?Q = sets (borel_of (mtopology_of
           (path_metric c :: ('n pairpath) metric)))"
-        by (rule paper_pair_class_sets[OF Qc])
+        by (rule exit_class_sets[OF Qc])
       have spQ: "space ?Q = mspace (path_metric c :: ('n pairpath) metric)"
         by (rule space_of_path_sets[OF setsQ])
-      interpret PQ: prob_space ?Q by (rule paper_pair_class_prob[OF Qc])
+      interpret PQ: prob_space ?Q by (rule exit_class_prob[OF Qc])
       define m where "m = nat \<lfloor>t / h\<rfloor>"
       have tdh0: "0 \<le> t / h" using t0 h0 by simp
       have fl0: "0 \<le> \<lfloor>t / h\<rfloor>" using tdh0 by simp
@@ -12150,7 +12150,7 @@ proof -
       have mE2: "measure ?Q E2
           \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4"
         unfolding E2_def
-        by (rule paper_pair_class_increment_tail_norm[OF c0 L0 Qc
+        by (rule exit_class_increment_tail_norm[OF c0 L0 Qc
             mh0 mh_le tc \<delta>0])
       have sE1: "E1 \<in> sets ?Q"
       proof -
@@ -12520,7 +12520,7 @@ theorem eulerp_limit_good2_region:
         transpose (SF z) *v (q2 + M2 *v (z - x)) = 0"
     and marg2: "\<And>z. z \<in> RO \<Longrightarrow>
         cm2 \<le> trace (M2 ** (SF z ** transpose (SF z)))"
-  shows "\<exists>P \<in> paper_pair_class k L c x. AE \<omega> in P. \<forall>t.
+  shows "\<exists>P \<in> exit_class k L c x. AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       (t * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M1 *v (fst (\<omega> t) - x))))
@@ -12538,14 +12538,14 @@ proof -
       \<and> q2 \<bullet> (fst (\<omega> r) - x)
         + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M2 *v (fst (\<omega> r) - x)))
         < r * cm2 / 2 - \<beta>})"
-  obtain P where P: "P \<in> paper_pair_class k L c x"
+  obtain P where P: "P \<in> exit_class k L c x"
     and Praw: "\<forall>U b'. openin (mtopology_of ?pm) U \<longrightarrow>
       (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U) \<longlonglongrightarrow> b' \<longrightarrow>
       measure P U \<le> b'"
     using eulerp_weak_limit[OF c0 L1 SFc SFs] by blast
-  interpret FP: prob_space P by (rule paper_pair_class_prob[OF P])
+  interpret FP: prob_space P by (rule exit_class_prob[OF P])
   have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
-    by (rule paper_pair_class_sets[OF P])
+    by (rule exit_class_sets[OF P])
   have spaceP: "space P = mspace ?pm"
     by (rule space_of_path_sets[OF setsP])
   have AErn1: "AE \<omega> in P. \<omega> \<notin> U1 r (inverse (real (Suc n)))"
@@ -12827,7 +12827,7 @@ theorem tangential_exact_growth:
   assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
     and kn: "k < CARD('n)"
     and rho0: "0 < \<rho>"
-  shows "\<exists>P \<in> paper_pair_class k L T x. AE \<omega> in P. \<forall>t.
+  shows "\<exists>P \<in> exit_class k L T x. AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB) \<longrightarrow>
       (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
@@ -12910,7 +12910,7 @@ proof -
   have sym2: "transpose ((-2::real) *\<^sub>R mat 1 :: real^'n^'n)
       = (-2::real) *\<^sub>R mat 1"
     by (simp add: transpose_def vec_eq_iff mat_def)
-  obtain P where P: "P \<in> paper_pair_class k L T x"
+  obtain P where P: "P \<in> exit_class k L T x"
     and AE2: "AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       (t * (2 * (real CARD('n) - 1)) / 2
@@ -13022,7 +13022,7 @@ text \<open>Paths of the tangential member cannot leave the annulus before the
   deterministic time \<open>(rB\<^sup>2 - |x-y\<^sub>0|\<^sup>2)/(n-1)\<close>: the inner boundary is
   unreachable because the squared distance only grows, and reaching the
   outer sphere pins the time exactly.  Feeding the constant-time DPP
-  @{thm [source] paper_v_dpp_sup_ge} turns confinement into the lower
+  @{thm [source] exit_val_dpp_sup_ge} turns confinement into the lower
   bound \<open>v(x) \<ge> min(T/2, \<delta>/2)\<close> whenever the ball sits inside \<open>K\<close>, a
   (non-sharp) form of Example 3.1's lower bound.\<close>
 
@@ -13109,7 +13109,7 @@ proof -
   then show ?thesis unfolding g_def .
 qed
 
-theorem paper_v_ball_lower_plus:
+theorem exit_val_ball_lower_plus:
   fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
     and rB T \<beta> :: real
   assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
@@ -13118,11 +13118,11 @@ theorem paper_v_ball_lower_plus:
     and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
     and b0: "0 \<le> \<beta>"
     and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow>
-      \<beta> \<le> enn2real (paper_v k L T K w)"
+      \<beta> \<le> enn2real (exit_val k L T K w)"
   shows "ennreal (min (T / 2)
       ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
       + min \<beta> (T / 2))
-      \<le> paper_v k L T K x"
+      \<le> exit_val k L T K x"
 proof -
   define \<rho>\<^sub>0 where "\<rho>\<^sub>0 = norm (x - y\<^sub>0)"
   define \<rho> where "\<rho> = \<rho>\<^sub>0 / 2"
@@ -13149,7 +13149,7 @@ proof -
   have ccT: "cc < T" unfolding cc_def using T0 by simp
   have ccT2: "cc \<le> T / 2" unfolding cc_def by simp
   have ccdf: "cc < \<delta>f" unfolding cc_def using df0 by simp
-  obtain P where P: "P \<in> paper_pair_class k L T x"
+  obtain P where P: "P \<in> exit_class k L T x"
     and AEg: "AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ?RO) \<longrightarrow>
@@ -13160,16 +13160,16 @@ proof -
     by blast
   have setsP: "sets P = sets (borel_of (mtopology_of
       (path_metric T :: ('n pairpath) metric)))"
-    by (rule paper_pair_class_sets[OF P])
+    by (rule exit_class_sets[OF P])
   have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsP])
   have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule paper_pair_class_start[OF P])
+    by (rule exit_class_start[OF P])
   have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
   have AEfun: "AE \<omega> in P. ennreal (cc + min \<beta> (T / 2))
       \<le> ennreal (pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))"
     using AEg start sp
   proof (eventually_elim)
     case (elim \<omega>)
@@ -13300,62 +13300,62 @@ proof -
     have XccK: "fst (\<omega> cc) \<in> K" using inK[of cc] cc0 by simp
     have fn: "pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0)
-        = cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0)
+        = cc + enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))"
       using pex XccK by simp
     have XccB: "fst (\<omega> cc) \<in> ball y\<^sub>0 rB"
       using inB[of cc] cc0 by simp
     have s1: "0 \<le> T - cc" using ccT by linarith
     have s2: "T - cc \<le> T" using cc0 by linarith
-    have cap: "enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))
-        = min (enn2real (paper_v k L T K (fst (\<omega> cc)))) (T - cc)"
+    have cap: "enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))
+        = min (enn2real (exit_val k L T K (fst (\<omega> cc)))) (T - cc)"
       by (rule enn2real_paper_v_horizon_cap[OF s1 s2 L1 Kc])
     have vge: "min \<beta> (T / 2)
-        \<le> enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+        \<le> enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))"
     proof -
-      have b1: "\<beta> \<le> enn2real (paper_v k L T K (fst (\<omega> cc)))"
+      have b1: "\<beta> \<le> enn2real (exit_val k L T K (fst (\<omega> cc)))"
         by (rule vlow[OF XccB])
       have b2: "T / 2 \<le> T - cc" using ccT2 by linarith
       have c1: "min \<beta> (T / 2) \<le> \<beta>" by (rule min.cobounded1)
       have c2: "min \<beta> (T / 2) \<le> T / 2" by (rule min.cobounded2)
       have d1: "min \<beta> (T / 2)
-          \<le> enn2real (paper_v k L T K (fst (\<omega> cc)))"
+          \<le> enn2real (exit_val k L T K (fst (\<omega> cc)))"
         using c1 b1 by linarith
       have d2: "min \<beta> (T / 2) \<le> T - cc" using c2 b2 by linarith
       show ?thesis unfolding cap using d1 d2 by simp
     qed
     have "cc + min \<beta> (T / 2)
-        \<le> cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+        \<le> cc + enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))"
       using vge by linarith
     then show ?case unfolding fn by (intro ennreal_leI) simp
   qed
   have essge: "ennreal (cc + min \<beta> (T / 2)) \<le> ess_inf_time P
       (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))"
     unfolding ess_inf_time_def
     by (rule Sup_upper) (use AEfun in blast)
   have esle: "ess_inf_time P
       (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))
-      \<le> paper_v k L T K x"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))
+      \<le> exit_val k L T K x"
   proof -
     have "ess_inf_time P
         (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
           + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-             then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))
-        \<le> (SUP P' \<in> paper_pair_class k L T x. ess_inf_time P'
+             then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))
+        \<le> (SUP P' \<in> exit_class k L T x. ess_inf_time P'
           (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
             + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-               then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))
+               then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))
                else 0)))"
       by (rule SUP_upper[OF P])
-    also have "\<dots> \<le> paper_v k L T K x"
-      by (rule paper_v_dpp_sup_ge[OF less_imp_le[OF cc0] ccT L1 Kc])
+    also have "\<dots> \<le> exit_val k L T K x"
+      by (rule exit_val_dpp_sup_ge[OF less_imp_le[OF cc0] ccT L1 Kc])
     finally show ?thesis .
   qed
-  have "ennreal (cc + min \<beta> (T / 2)) \<le> paper_v k L T K x"
+  have "ennreal (cc + min \<beta> (T / 2)) \<le> exit_val k L T K x"
     by (rule order_trans[OF essge esle])
   moreover have "cc = min (T / 2)
       ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))"
@@ -13386,10 +13386,10 @@ text \<open>Definition 3.1(b) of the paper touches the lower semicontinuous
 
 subsection \<open>The lower semicontinuous envelope\<close>
 
-text \<open>\<open>lsc_env\<close> lives in \<open>Envelopes\<close>, together with \<open>usc_env\<close> and the
-  attainment/extension lemmas; what follows are the \<open>paper_v\<close>-facing
+text \<open>\<open>lsc_env\<close> lives in \<open>Operator_Envelopes\<close>, together with \<open>usc_env\<close> and the
+  attainment/extension lemmas; what follows are the \<open>exit_val\<close>-facing
   consequences.  The three general lemmas below duplicate their
-  \<open>Envelopes\<close> twins so that the local proofs need no requalification.\<close>
+  \<open>Operator_Envelopes\<close> twins so that the local proofs need no requalification.\<close>
 
 lemma lsc_env_bdd_above:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -13597,7 +13597,7 @@ qed
 subsection \<open>Case 1 for the lower envelope\<close>
 
 text \<open>The touching-point argument at the envelope.  Two things change
-  relative to @{thm [source] paper_v_supersol_contradiction_case1}.
+  relative to @{thm [source] exit_val_supersol_contradiction_case1}.
   First, the horizon lemma is applied to the envelope, so it is stated
   for an arbitrary touching function with an explicit cap.  Second, the
   value at the touching point need not be attained there, so the
@@ -13706,7 +13706,7 @@ proof -
   finally show ?thesis .
 qed
 
-theorem paper_v_supersol_contradiction_case1_lsc:
+theorem exit_val_supersol_contradiction_case1_lsc:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
@@ -13716,8 +13716,8 @@ theorem paper_v_supersol_contradiction_case1_lsc:
     and tf: "test_fun_at \<phi> g H x"
     and rho0: "0 < \<rho>"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
-      lsc_env (\<lambda>z. enn2real (paper_v k L T K z)) x - \<phi> x
-        \<le> lsc_env (\<lambda>z. enn2real (paper_v k L T K z)) y - \<phi> y"
+      lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) x - \<phi> x
+        \<le> lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) y - \<phi> y"
     and gx0: "g x \<noteq> 0"
     and fail: "ell_op k L (g x) H < 1"
   shows False
@@ -13725,7 +13725,7 @@ proof -
   have L1': "1 \<le> L" using L1 by linarith
   have L0: "0 \<le> L" using L1 by linarith
   have T0': "0 \<le> T" using T0 by linarith
-  define tv where "tv = (\<lambda>y. enn2real (paper_v k L T K y))"
+  define tv where "tv = (\<lambda>y. enn2real (exit_val k L T K y))"
   define vs where "vs = lsc_env tv"
   have tv0: "\<And>z. 0 \<le> tv z" unfolding tv_def by simp
   have tvT: "\<And>z. tv z \<le> T"
@@ -13962,7 +13962,7 @@ proof -
       have psiY_ub: "psiY \<le> mg / 4"
         using psiY_small[unfolded abs_le_iff] by linarith
       \<comment> \<open>the growth package, run at \<open>y\<close> with the quadratic centred at \<open>x\<close>\<close>
-      obtain P where Pc: "P \<in> paper_pair_class k L T y"
+      obtain P where Pc: "P \<in> exit_class k L T y"
         and AEg: "AE \<omega> in P. \<forall>t.
           0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rr) \<longrightarrow>
           (t * (\<eta> - 2) / 2 \<le> qy \<bullet> (fst (\<omega> t) - y)
@@ -14001,11 +14001,11 @@ proof -
       qed
       have setsP: "sets P = sets (borel_of (mtopology_of
           (path_metric T :: ('n pairpath) metric)))"
-        by (rule paper_pair_class_sets[OF Pc])
+        by (rule exit_class_sets[OF Pc])
       have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
         by (rule space_of_path_sets[OF setsP])
       have start: "AE \<omega> in P. fst (\<omega> 0) = y \<and> snd (\<omega> 0) = 0"
-        by (rule paper_pair_class_start[OF Pc])
+        by (rule exit_class_start[OF Pc])
       have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
       define \<theta> where "\<theta> = (\<lambda>\<omega> :: 'n pairpath. min cc (pball_exit T x rr \<omega>))"
       have st: "path_stopping_time T \<theta>"
@@ -14022,12 +14022,12 @@ proof -
           pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
           + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega>
                 \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-             then enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+             then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
              else 0))"
-      have dpp: "(SUP P' \<in> paper_pair_class k L T y. ess_inf_time P' FN)
-          \<le> paper_v k L T K y"
+      have dpp: "(SUP P' \<in> exit_class k L T y. ess_inf_time P' FN)
+          \<le> exit_val k L T K y"
         unfolding FN_def
-        by (rule paper_v_dpp_sup_ge_time[OF T0 L1' Kc st thM])
+        by (rule exit_val_dpp_sup_ge_time[OF T0 L1' Kc st thM])
       have AEfun: "AE \<omega> in P. ennreal (vs x + mg + psiY) \<le> ennreal (FN \<omega>)"
         using AEg start sp
       proof (eventually_elim)
@@ -14082,7 +14082,7 @@ proof -
           by (rule pexit_eq_of_stays[OF less_imp_le[OF th0]])
             (use inK in simp)
         have XinK: "fst (\<omega> (\<theta> \<omega>)) \<in> K" using inK[of "\<theta> \<omega>"] th0 by simp
-        have cap: "enn2real (paper_v k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+        have cap: "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
             = min (tv (fst (\<omega> (\<theta> \<omega>)))) (T - \<theta> \<omega>)"
           unfolding tv_def
           by (rule enn2real_paper_v_horizon_cap[OF _ _ L1' Kc])
@@ -14248,16 +14248,16 @@ proof -
       have essge: "ennreal (vs x + mg + psiY) \<le> ess_inf_time P FN"
         unfolding ess_inf_time_def
         by (rule Sup_upper) (use AEfun in blast)
-      have esle: "ess_inf_time P FN \<le> paper_v k L T K y"
+      have esle: "ess_inf_time P FN \<le> exit_val k L T K y"
       proof -
         have "ess_inf_time P FN
-            \<le> (SUP P' \<in> paper_pair_class k L T y. ess_inf_time P' FN)"
+            \<le> (SUP P' \<in> exit_class k L T y. ess_inf_time P' FN)"
           by (rule SUP_upper[OF Pc])
         then show ?thesis using dpp by (rule order_trans)
       qed
-      have vfin: "ennreal (tv y) = paper_v k L T K y"
+      have vfin: "ennreal (tv y) = exit_val k L T K y"
         unfolding tv_def
-        using paper_v_neq_top[OF T0', of k L K y]
+        using exit_val_neq_top[OF T0', of k L K y]
         by (simp add: less_top)
       have chain: "ennreal (vs x + mg + psiY) \<le> ennreal (tv y)"
         using order_trans[OF essge esle] by (simp add: vfin)
@@ -14271,7 +14271,7 @@ qed
 
 subsection \<open>Where the envelope is invisible\<close>
 
-text \<open>The uniqueness theorem of \<open>Theorem_1_1\<close> works with continuous
+text \<open>The uniqueness theorem of \<open>Value_Function_Uniqueness\<close> works with continuous
   solutions, and at a point of continuity the lower envelope is the
   function itself, so on that class the faithful notion
   @{const visc_supersol_lsc} and @{const visc_supersol_env} agree and the
@@ -14863,7 +14863,7 @@ text \<open>Assembling the separation for the value function.  On a small
   below the distance to the complement of \<open>interior K\<close>, so that every
   point of the ball is an admissible touching point in its own right.\<close>
 
-lemma paper_v_case2_separation:
+lemma exit_val_case2_separation:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
@@ -14871,15 +14871,15 @@ lemma paper_v_case2_separation:
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
     and e0: "0 < \<epsilon>"
   obtains \<rho> where "0 < \<rho>" and "cball x \<rho> \<subseteq> interior K"
     and "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
         + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
         + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
-      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
 proof -
   obtain r where r0: "0 < r"
     and mino: "\<And>z. z \<in> ball x r \<Longrightarrow>
@@ -14902,18 +14902,18 @@ proof -
     then have "dist x z < e" using elt by linarith
     then show "z \<in> interior K" using eK by auto
   qed
-  have key: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
+  have key: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
       + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
       + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
-    \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+    \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
     if zc: "z \<in> cball x \<rho>" for z
   proof -
     have dzx: "dist x z \<le> \<rho>" using zc by simp
     have zb: "z \<in> ball x r" using dzx rlt by auto
     have zK: "z \<in> K" using sub zc interior_subset by blast
     have dxz: "dist x z < \<rho>\<^sub>0" using dzx rholt by linarith
-    have t: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z - \<phi> z"
+    have t: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z - \<phi> z"
       by (rule tmin[OF zK dxz])
     have m: "\<phi> x + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
         + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> \<phi> z" by (rule mino[OF zb])
@@ -14929,7 +14929,7 @@ text \<open>Case 2's tilt step for the value function.  The minimiser \<open>y\<
   hypothesis of the localised Case 1, which therefore applies at \<open>y\<close>
   whenever the tilted gradient there is nonzero.\<close>
 
-theorem paper_v_case2_tilt_step:
+theorem exit_val_case2_tilt_step:
   fixes K :: "(real^'n::finite) set" and x \<eta> :: "real^'n"
     and H :: "real^'n^'n"
   assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
@@ -14937,10 +14937,10 @@ theorem paper_v_case2_tilt_step:
     and e0: "0 < \<epsilon>" and rho: "0 < \<rho>"
     and sub: "cball x \<rho> \<subseteq> interior K"
     and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
         + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
         + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
-      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
     and hsm: "norm \<eta> < (\<epsilon> / 4) * \<rho>"
   obtains y where "dist x y < \<rho>" and "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
     and "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0 \<Longrightarrow>
@@ -14949,32 +14949,32 @@ proof -
   have symM: "transpose (H - \<epsilon> *\<^sub>R mat 1) = H - \<epsilon> *\<^sub>R mat 1"
     by (rule transpose_sub_smat[OF symH])
   have c0: "0 < \<epsilon> / 4" using e0 by simp
-  have tv0: "\<And>u. 0 \<le> enn2real (paper_v k L T K u)" by simp
+  have tv0: "\<And>u. 0 \<le> enn2real (exit_val k L T K u)" by simp
   have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow>
-      a < lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) u"
-    if lt: "a < lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) z"
+      a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) u"
+    if lt: "a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
     for a and z :: "real^'n"
   proof (rule lsc_env_lower[OF tv0 lt])
     fix d assume "0 < d"
       and "\<forall>u. dist z u < d \<longrightarrow>
-        a < lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) u"
+        a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) u"
     then show ?thesis by blast
   qed
   obtain y where dxy: "dist x y < \<rho>"
     and close: "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
     and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
           - (((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
           - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
   proof (rule tilted_local_touching[OF lscW rho c0 sep hsm])
     fix yy :: "real^'n"
     assume a1: "dist x yy < \<rho>" and a2: "norm (yy - x) \<le> norm \<eta> / (\<epsilon> / 4)"
       and a3: "\<And>w. dist yy w < \<rho> - dist x yy \<Longrightarrow>
-        lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) yy
+        lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) yy
             - (((yy - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (yy - x))) / 2
                + \<eta> \<bullet> (yy - x))
-          \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+          \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
             - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2
                + \<eta> \<bullet> (w - x))"
     show thesis by (rule that[OF a1 a2 a3])
@@ -14989,9 +14989,9 @@ proof -
       (\<lambda>z. 0 + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
       (\<lambda>z. (H - \<epsilon> *\<^sub>R mat 1) *v (z - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1) y"
     by (rule test_fun_at_shifted_quadratic[OF symM])
-  have tminy: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+  have tminy: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
         - (0 + ((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
         - (0 + ((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
     if wK: "w \<in> K" and dw: "dist y w < \<rho> - dist x y" for w
     using loc[OF dw] by simp
@@ -15004,7 +15004,7 @@ proof -
     then have flt: "ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
         (H - \<epsilon> *\<^sub>R mat 1) < 1" by simp
     show False
-      by (rule paper_v_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
+      by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
             tfy rp tminy gy flt])
   qed
   show ?thesis by (rule that[OF dxy close]) (use gt in blast)
@@ -15409,7 +15409,7 @@ text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were co
   itself is within \<open>\<theta>/2\<close> of \<open>c\<close>.  But the deterministic-radius member
   started at such a \<open>z\<close> stays inside the ball for a time \<open>\<theta>\<close> that does
   not shrink with \<open>z\<close>, and its endpoint is again in the ball where
-  \<open>v \<ge> c\<close>; so \<open>paper_v_ball_lower_plus\<close> gives \<open>v z \<ge> \<theta> + c\<close>.  Those two
+  \<open>v \<ge> c\<close>; so \<open>exit_val_ball_lower_plus\<close> gives \<open>v z \<ge> \<theta> + c\<close>.  Those two
   are incompatible.
 
   The hypothesis \<open>c < T/2\<close> is what keeps the horizon cap inert.  It
@@ -15418,15 +15418,15 @@ text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were co
   supersolution inequality itself fails at such a point, since a
   constant test function would demand \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  For a
   bounded \<open>K\<close> the hypothesis is discharged by
-  @{thm [source] paper_v_le_ball_bound} once \<open>T\<close> exceeds twice the ball
+  @{thm [source] exit_val_le_ball_bound} once \<open>T\<close> exceeds twice the ball
   bound.\<close>
 
-theorem paper_v_not_locally_constant:
+theorem exit_val_not_locally_constant:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and tv :: "real^'n \<Rightarrow> real" and r T :: real
   assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K"
-    and tvdef: "tv = (\<lambda>u. enn2real (paper_v k L T K u))"
+    and tvdef: "tv = (\<lambda>u. enn2real (exit_val k L T K u))"
     and r0: "0 < r" and sub: "cball x r \<subseteq> K"
     and cap: "lsc_env tv x < T / 2"
     and const: "\<And>y. dist x y < r \<Longrightarrow> lsc_env tv y = lsc_env tv x"
@@ -15503,11 +15503,11 @@ proof -
   have pv: "ennreal (min (T / 2)
       ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
       + min (lsc_env tv x) (T / 2))
-      \<le> paper_v k L T K z"
-  proof (rule paper_v_ball_lower_plus[OF T0 L1 k1 kn Kc subB zy zin c0])
+      \<le> exit_val k L T K z"
+  proof (rule exit_val_ball_lower_plus[OF T0 L1 k1 kn Kc subB zy zin c0])
     fix w :: "real^'n" assume "w \<in> ball y\<^sub>0 rB"
     then have "lsc_env tv x \<le> tv w" by (rule vlow)
-    then show "lsc_env tv x \<le> enn2real (paper_v k L T K w)"
+    then show "lsc_env tv x \<le> enn2real (exit_val k L T K w)"
       using tvdef by simp
   qed
   have sq: "(norm (z - y\<^sub>0))\<^sup>2 \<le> rB\<^sup>2 / 2"
@@ -15542,11 +15542,11 @@ proof -
       + min (lsc_env tv x) (T / 2)"
     unfolding \<theta>_def mc using B by linarith
   have T0': "0 \<le> T" using T0 by linarith
-  have ltop: "paper_v k L T K z < \<top>"
-    using paper_v_neq_top[OF T0'] by (simp add: less_top)
-  have eq: "ennreal (tv z) = paper_v k L T K z"
+  have ltop: "exit_val k L T K z < \<top>"
+    using exit_val_neq_top[OF T0'] by (simp add: less_top)
+  have eq: "ennreal (tv z) = exit_val k L T K z"
     unfolding tvdef using ltop by simp
-  have "ennreal (\<theta> + lsc_env tv x) \<le> paper_v k L T K z"
+  have "ennreal (\<theta> + lsc_env tv x) \<le> exit_val k L T K z"
   proof -
     have "ennreal (\<theta> + lsc_env tv x) \<le> ennreal (min (T / 2)
         ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
@@ -15562,11 +15562,11 @@ proof -
 qed
 
 
-text \<open>Horn A at a given local minimiser.  \<open>paper_v_case2_tilt_step\<close>
+text \<open>Horn A at a given local minimiser.  \<open>exit_val_case2_tilt_step\<close>
   produces its own minimiser; the assembly instead has one handed to it
   by the case split, so the last step of that proof is isolated here.\<close>
 
-lemma paper_v_case2_at_minimiser:
+lemma exit_val_case2_at_minimiser:
   fixes K :: "(real^'n::finite) set" and x y \<eta> :: "real^'n"
     and H :: "real^'n^'n"
   assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
@@ -15574,9 +15574,9 @@ lemma paper_v_case2_at_minimiser:
     and rho: "0 < \<rho>" and sub: "cball x \<rho> \<subseteq> interior K"
     and dxy: "dist x y < \<rho>"
     and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
           - (((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
           - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
     and gy: "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0"
   shows "1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
@@ -15594,9 +15594,9 @@ proof -
       (\<lambda>z. 0 + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
       (\<lambda>z. (H - \<epsilon> *\<^sub>R mat 1) *v (z - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1) y"
     by (rule test_fun_at_shifted_quadratic[OF symM])
-  have tminy: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y
+  have tminy: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
         - (0 + ((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) w
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
         - (0 + ((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
     if wK: "w \<in> K" and dw: "dist y w < \<rho> - dist x y" for w
     using loc[OF dw] by simp
@@ -15607,7 +15607,7 @@ proof -
     then have flt: "ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
         (H - \<epsilon> *\<^sub>R mat 1) < 1" by simp
     show False
-      by (rule paper_v_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
+      by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
             tfy rp tminy gy flt])
   qed
 qed
@@ -15621,14 +15621,14 @@ text \<open>The dichotomy.  Either arbitrarily small tilts admit a local
   \<open>ell_op_usc_ge_one_limit\<close> delivers the inequality at \<open>p = 0\<close> --- or
   some threshold fails, which is exactly the hypothesis of
   \<open>horn_B_locally_constant\<close>, and then \<open>v\<^sub>*\<close> is locally constant, which
-  \<open>paper_v_not_locally_constant\<close> refutes.
+  \<open>exit_val_not_locally_constant\<close> refutes.
 
   A singular \<open>H - \<epsilon>\<cdot>1\<close> needs no separate treatment: it supplies
   arbitrarily small tilts for which the gradient can never vanish, so
   the first branch always applies.  That is why the second branch may
   assume invertibility.\<close>
 
-theorem paper_v_case2_eps:
+theorem exit_val_case2_eps:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
@@ -15637,19 +15637,19 @@ theorem paper_v_case2_eps:
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
-    and cap: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+    and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
     and e0: "0 < \<epsilon>"
   shows "1 \<le> ell_op_usc k L 0 (H - \<epsilon> *\<^sub>R mat 1)"
 proof -
-  let ?W = "lsc_env (\<lambda>u. enn2real (paper_v k L T K u))"
+  let ?W = "lsc_env (\<lambda>u. enn2real (exit_val k L T K u))"
   let ?M = "H - \<epsilon> *\<^sub>R mat 1"
   have L1': "1 \<le> L" using L1 by linarith
   have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
   have symM: "transpose ?M = ?M" by (rule transpose_sub_smat[OF symH])
   have c0: "0 < \<epsilon> / 4" using e0 by simp
-  have tv0: "\<And>u. (0 :: real) \<le> enn2real (paper_v k L T K u)" by simp
+  have tv0: "\<And>u. (0 :: real) \<le> enn2real (exit_val k L T K u)" by simp
   have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < ?W u"
     if lt: "a < ?W z" for a and z :: "real^'n"
   proof (rule lsc_env_lower[OF tv0 lt])
@@ -15660,7 +15660,7 @@ proof -
     and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
       ?W x + ((z - x) \<bullet> (?M *v (z - x))) / 2
         + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> ?W z"
-  proof (rule paper_v_case2_separation[OF xi tf gx0 rho0 tmin e0])
+  proof (rule exit_val_case2_separation[OF xi tf gx0 rho0 tmin e0])
     fix rr :: real
     assume a1: "0 < rr" and a2: "cball x rr \<subseteq> interior K"
       and a3: "\<And>z. z \<in> cball x rr \<Longrightarrow>
@@ -15697,7 +15697,7 @@ proof -
         and gy: "?M *v (y - x) + \<eta> \<noteq> 0"
         using gd unfolding good_def by blast
       have ge: "1 \<le> ell_op k L (?M *v (y - x) + \<eta>) ?M"
-      proof (rule paper_v_case2_at_minimiser[OF T0 L1 k1 kn Kc symH rho subK
+      proof (rule exit_val_case2_at_minimiser[OF T0 L1 k1 kn Kc symH rho subK
               dxy _ gy])
         fix w :: "real^'n" assume "dist y w < \<rho> - dist x y"
         then show "?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
@@ -15828,7 +15828,7 @@ proof -
         then show ?thesis using subK interior_subset by blast
       qed
       have contra: False
-      proof (rule paper_v_not_locally_constant[OF T0 L1' k1 kn Kc refl r20 r2K])
+      proof (rule exit_val_not_locally_constant[OF T0 L1' k1 kn Kc refl r20 r2K])
         show "?W x < T / 2" by (rule cap)
       next
         fix y :: "real^'n" assume dy: "dist x y < r2"
@@ -15848,7 +15848,7 @@ text \<open>Letting \<open>\<epsilon> \<rightarrow> 0\<close> along \<open>1/(j+
   and one more application of \<open>ell_op_usc_ge_one_limit\<close> --- this time in
   the matrix argument rather than the gradient --- finishes Case 2.\<close>
 
-theorem paper_v_case2:
+theorem exit_val_case2:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
@@ -15857,9 +15857,9 @@ theorem paper_v_case2:
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
-    and cap: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+    and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
   shows "1 \<le> ell_op_usc k L 0 H"
 proof -
   define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
@@ -15868,7 +15868,7 @@ proof -
     unfolding es_def using LIMSEQ_inverse_real_of_nat
     by (simp add: divide_inverse)
   have ge: "1 \<le> ell_op_usc k L 0 (H - es j *\<^sub>R mat 1)" for j
-    by (rule paper_v_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0 rho0 tmin cap es0])
+    by (rule exit_val_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0 rho0 tmin cap es0])
   have lim: "(\<lambda>j. (0 :: real^'n, H - es j *\<^sub>R mat 1)) \<longlonglongrightarrow> (0, H)"
   proof -
     have "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0 *\<^sub>R mat 1"
@@ -15892,26 +15892,26 @@ text \<open>Definition 3.1(b) for the paper's own value function.  Case 1
   is needed only by Case 2 --- Case 1 derives it from the nonvanishing
   gradient --- and it is faithful to the paper, which has no horizon at
   all.  For a bounded \<open>K\<close> it follows from
-  @{thm [source] paper_v_le_ball_bound}.\<close>
+  @{thm [source] exit_val_le_ball_bound}.\<close>
 
-theorem paper_v_supersol_lsc:
+theorem exit_val_supersol_lsc:
   fixes K :: "(real^'n::finite) set"
   assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K"
     and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
   shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (paper_v k L T K u))"
+      (\<lambda>u. enn2real (exit_val k L T K u))"
   unfolding visc_supersol_lsc_def
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
   assume xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
-    and tmin: "\<forall>y\<in>K. lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
-      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
-  have loc: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x - \<phi> x
-      \<le> lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) y - \<phi> y"
+    and tmin: "\<forall>y\<in>K. lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+  have loc: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
     if yK: "y \<in> K" and dy: "dist x y < 1" for y
     using tmin yK by blast
   show "1 \<le> ell_op_usc k L (g x) H"
@@ -15922,7 +15922,7 @@ proof (intro ballI allI impI)
       assume "\<not> 1 \<le> ell_op k L (g x) H"
       then have flt: "ell_op k L (g x) H < 1" by simp
       show False
-        by (rule paper_v_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc xi
+        by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc xi
               tf zero_less_one loc False flt])
     qed
     have "(1 :: ereal) \<le> ereal (ell_op k L (g x) H)" using plain by simp
@@ -15931,7 +15931,7 @@ proof (intro ballI allI impI)
   next
     case True
     have "1 \<le> ell_op_usc k L 0 H"
-      by (rule paper_v_case2[OF T0 L1 k1 kn Kc xi tf True zero_less_one loc
+      by (rule exit_val_case2[OF T0 L1 k1 kn Kc xi tf True zero_less_one loc
             cap[OF xi]])
     then show ?thesis unfolding True .
   qed
@@ -15940,22 +15940,22 @@ qed
 
 subsection \<open>Discharging the horizon hypothesis\<close>
 
-text \<open>@{thm [source] paper_v_supersol_lsc} carries the assumption that the
+text \<open>@{thm [source] exit_val_supersol_lsc} carries the assumption that the
   horizon never binds on the interior.  For a bounded \<open>K\<close> that is not an
   assumption at all but a consequence of choosing \<open>T\<close> large enough:
-  @{thm [source] paper_v_le_ball_bound} caps the value at
+  @{thm [source] exit_val_le_ball_bound} caps the value at
   \<open>(r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n - k)\<close>, so \<open>T > 2r\<^sup>2/(n - k)\<close> already forces
   \<open>v\<^sub>* < T/2\<close> everywhere.  This is the paper's own setting: it has no
   horizon, and the cap here is a device of this formalisation.\<close>
 
-lemma paper_v_cap_inert:
+lemma exit_val_cap_inert:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
   assumes kn: "k < CARD('n)" and L0: "0 \<le> L" and T0: "0 \<le> T"
     and KB: "K \<subseteq> cball 0 rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  shows "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
+  shows "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
 proof -
-  have tv0: "\<And>u. 0 \<le> enn2real (paper_v k L T K u)" by simp
+  have tv0: "\<And>u. 0 \<le> enn2real (exit_val k L T K u)" by simp
   have nk0: "0 < real (CARD('n) - k)" using kn by simp
   define A where "A = rK * rK / real (CARD('n) - k)"
   have A0: "0 \<le> A" unfolding A_def using nk0 by simp
@@ -15965,46 +15965,46 @@ proof -
       unfolding A_def by simp
     then show ?thesis using Tbig by simp
   qed
-  have b: "paper_v k L T K x
+  have b: "exit_val k L T K x
       \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
-    by (rule paper_v_le_ball_bound[OF kn T0 L0 KB])
+    by (rule exit_val_le_ball_bound[OF kn T0 L0 KB])
   have le1: "(rK * rK - x \<bullet> x) / real (CARD('n) - k) \<le> A"
     unfolding A_def
   proof (rule divide_right_mono)
     show "rK * rK - x \<bullet> x \<le> rK * rK" using inner_ge_zero[of x] by linarith
     show "0 \<le> real (CARD('n) - k)" using nk0 by linarith
   qed
-  have b': "paper_v k L T K x \<le> ennreal A"
+  have b': "exit_val k L T K x \<le> ennreal A"
   proof -
     have "ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)) \<le> ennreal A"
       by (rule ennreal_leI[OF le1])
     with b show ?thesis by (rule order_trans)
   qed
-  have le2: "enn2real (paper_v k L T K x) \<le> A"
+  have le2: "enn2real (exit_val k L T K x) \<le> A"
   proof -
-    have "enn2real (paper_v k L T K x) \<le> enn2real (ennreal A)"
+    have "enn2real (exit_val k L T K x) \<le> enn2real (ennreal A)"
       by (rule enn2real_mono[OF b' ennreal_less_top])
     then show ?thesis using enn2real_ennreal[OF A0] by simp
   qed
-  have le3: "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x
-      \<le> enn2real (paper_v k L T K x)"
+  have le3: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
+      \<le> enn2real (exit_val k L T K x)"
     by (rule lsc_env_le_self[OF tv0])
   show ?thesis using le2 le3 AT by linarith
 qed
 
 text \<open>So on a bounded \<open>K\<close> the supersolution property is unconditional.\<close>
 
-corollary paper_v_supersol_lsc_bounded:
+corollary exit_val_supersol_lsc_bounded:
   fixes K :: "(real^'n::finite) set"
   assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
   shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (paper_v k L T K u))"
-proof (rule paper_v_supersol_lsc[OF T0 L1 k1 kn Kc])
+      (\<lambda>u. enn2real (exit_val k L T K u))"
+proof (rule exit_val_supersol_lsc[OF T0 L1 k1 kn Kc])
   fix x :: "real^'n" assume "x \<in> interior K"
-  show "lsc_env (\<lambda>u. enn2real (paper_v k L T K u)) x < T / 2"
-    by (rule paper_v_cap_inert[OF kn _ _ KB Tbig]) (use L1 T0 in linarith)+
+  show "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+    by (rule exit_val_cap_inert[OF kn _ _ KB Tbig]) (use L1 T0 in linarith)+
 qed
 
 
@@ -17007,7 +17007,7 @@ theorem subspace_tangential_exact_growth:
     and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
     and mk: "CARD('n) - k \<le> m - 1"
     and xfix: "projmat b m *v x = x"
-  shows "\<exists>P \<in> paper_pair_class k L T x. AE \<omega> in P. \<forall>t.
+  shows "\<exists>P \<in> exit_class k L T x. AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s)
           \<in> {w. \<rho> < norm (projmat b m *v w)} \<inter> ball 0 rB) \<longrightarrow>
@@ -17158,7 +17158,7 @@ proof -
   have sym2: "transpose ((-2::real) *\<^sub>R mat 1 :: real^'n^'n)
       = (-2::real) *\<^sub>R mat 1"
     by (simp add: transpose_def vec_eq_iff mat_def)
-  obtain P where P: "P \<in> paper_pair_class k L T x"
+  obtain P where P: "P \<in> exit_class k L T x"
     and AE2: "AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       (t * (2 * (real m - 1)) / 2
@@ -17387,17 +17387,17 @@ qed
 
 section \<open>Clause (2): the value function is a viscosity solution\<close>
 
-text \<open>\<open>enn2real \<circ> paper_v k L T K\<close> is a viscosity solution of Eq. (1.9) on
-  \<open>interior K\<close>: an ordinary subsolution (@{thm [source] paper_v_visc_subsol})
+text \<open>\<open>enn2real \<circ> exit_val k L T K\<close> is a viscosity solution of Eq. (1.9) on
+  \<open>interior K\<close>: an ordinary subsolution (@{thm [source] exit_val_visc_subsol})
   and, in the enveloped sense of Definition 3.1(b), a supersolution
-  (@{thm [source] paper_v_supersol_lsc}), where the lower semicontinuous
+  (@{thm [source] exit_val_supersol_lsc}), where the lower semicontinuous
   envelope replaces \<open>v\<close> because the plain supersolution property fails
   wherever \<open>v\<close> has an interior local minimum.  Both proofs are pathwise,
   built by Euler pasting of endpoint-frozen Gaussian kernels rather than
   stochastic integrals or SDE well-posedness.  The supersolution assumes
   the horizon does not bind on the interior, \<open>v\<^sub>*(x) < T/2\<close>, which for a
   bounded \<open>K\<close> holds automatically once \<open>T\<close> is large enough
-  (@{thm [source] paper_v_le_ball_bound}).\<close>
+  (@{thm [source] exit_val_le_ball_bound}).\<close>
 
 subsection \<open>The sharp ball lower bound at rate \<open>m - 1\<close>\<close>
 
@@ -17498,7 +17498,7 @@ text \<open>The subspace-tangential member confines the path to
   Feeding the constant-time DPP gives \<open>cc \<le> v(x)\<close>, and \<open>cc\<close> is a free
   parameter, so no factor \<open>2\<close> and no \<open>T/2\<close> cap survive: letting
   \<open>cc \<longrightarrow> min T \<delta>\<close> is the corollary below.\<close>
-theorem paper_v_ball_lower_subspace:
+theorem exit_val_ball_lower_subspace:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and b :: "nat \<Rightarrow> real^'n" and rB T cc :: real
   assumes T0: "0 < T" and L1: "1 \<le> L"
@@ -17509,7 +17509,7 @@ theorem paper_v_ball_lower_subspace:
     and xfix: "projmat b m *v x = x"
     and cc0: "0 < cc" and ccT: "cc < T"
     and ccdf: "cc < (rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)"
-  shows "ennreal cc \<le> paper_v k L T K x"
+  shows "ennreal cc \<le> exit_val k L T K x"
 proof -
   define \<rho>\<^sub>0 where "\<rho>\<^sub>0 = norm x"
   define \<rho> where "\<rho> = \<rho>\<^sub>0 / 2"
@@ -17542,7 +17542,7 @@ proof -
     by (intro continuous_intros mvc)
   have Fnc: "continuous_on UNIV (\<lambda>w :: real^'n. (norm w)\<^sup>2)"
     by (intro continuous_intros)
-  obtain P where P: "P \<in> paper_pair_class k L T x"
+  obtain P where P: "P \<in> exit_class k L T x"
     and AEg: "AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ?RO) \<longrightarrow>
@@ -17553,16 +17553,16 @@ proof -
     by blast
   have setsP: "sets P = sets (borel_of (mtopology_of
       (path_metric T :: ('n pairpath) metric)))"
-    by (rule paper_pair_class_sets[OF P])
+    by (rule exit_class_sets[OF P])
   have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsP])
   have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule paper_pair_class_start[OF P])
+    by (rule exit_class_start[OF P])
   have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
   have AEfun: "AE \<omega> in P. ennreal cc
       \<le> ennreal (pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))"
     using AEg start sp
   proof (eventually_elim)
     case (elim \<omega>)
@@ -17692,36 +17692,36 @@ proof -
     have XccK: "fst (\<omega> cc) \<in> K" using inK[of cc] cc0 by simp
     have fn: "pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0)
-        = cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0)
+        = cc + enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))"
       using pex XccK by simp
-    have "cc \<le> cc + enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))" by simp
+    have "cc \<le> cc + enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))" by simp
     then show ?case unfolding fn by (intro ennreal_leI) simp
   qed
   have essge: "ennreal cc \<le> ess_inf_time P
       (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))"
     unfolding ess_inf_time_def
     by (rule Sup_upper) (use AEfun in blast)
   have esle: "ess_inf_time P
       (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))
-      \<le> paper_v k L T K x"
+           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))
+      \<le> exit_val k L T K x"
   proof -
     have "ess_inf_time P
         (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
           + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-             then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc))) else 0))
-        \<le> (SUP P' \<in> paper_pair_class k L T x. ess_inf_time P'
+             then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))
+        \<le> (SUP P' \<in> exit_class k L T x. ess_inf_time P'
           (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
             + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-               then enn2real (paper_v k L (T - cc) K (fst (\<omega> cc)))
+               then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))
                else 0)))"
       by (rule SUP_upper[OF P])
-    also have "\<dots> \<le> paper_v k L T K x"
-      by (rule paper_v_dpp_sup_ge[OF cc0' ccT L1 Kc])
+    also have "\<dots> \<le> exit_val k L T K x"
+      by (rule exit_val_dpp_sup_ge[OF cc0' ccT L1 Kc])
     finally show ?thesis .
   qed
   show ?thesis by (rule order_trans[OF essge esle])
@@ -17731,7 +17731,7 @@ text \<open>Letting \<open>cc \<longrightarrow> min T \<delta>\<close> removes t
   interior lower bound Example 3.1 asks for: at rate \<open>m - 1\<close>, with no factor
   \<open>2\<close> and no \<open>T/2\<close> cap.\<close>
 
-corollary paper_v_ball_lower_sharp:
+corollary exit_val_ball_lower_sharp:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and b :: "nat \<Rightarrow> real^'n" and rB T :: real
   assumes T0: "0 < T" and L1: "1 \<le> L"
@@ -17741,7 +17741,7 @@ corollary paper_v_ball_lower_sharp:
     and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
     and xfix: "projmat b m *v x = x"
   shows "ennreal (min T ((rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)))
-      \<le> paper_v k L T K x"
+      \<le> exit_val k L T K x"
 proof -
   define \<delta>f where "\<delta>f = (rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)"
   define c0 where "c0 = min T \<delta>f"
@@ -17786,8 +17786,8 @@ proof -
       by (intro tendsto_diff tendsto_const)
     then show ?thesis unfolding ccs_def by simp
   qed
-  have le: "ennreal (ccs j) \<le> paper_v k L T K x" for j
-  proof (rule paper_v_ball_lower_subspace[OF T0 L1 Kc sub xnz xin orth
+  have le: "ennreal (ccs j) \<le> exit_val k L T K x" for j
+  proof (rule exit_val_ball_lower_subspace[OF T0 L1 Kc sub xnz xin orth
         mk m2 xfix])
     show "0 < ccs j" by (rule ccl)
     show "ccs j < T" using ccu[of j] unfolding c0_def by simp
@@ -17796,7 +17796,7 @@ proof -
   qed
   have "(\<lambda>j. ennreal (ccs j)) \<longlonglongrightarrow> ennreal c0"
     by (rule tendsto_ennrealI[OF lim])
-  then have "ennreal c0 \<le> paper_v k L T K x"
+  then have "ennreal c0 \<le> exit_val k L T K x"
     by (rule tendsto_upperbound) (use le in auto)
   then show ?thesis unfolding c0_def \<delta>f_def .
 qed

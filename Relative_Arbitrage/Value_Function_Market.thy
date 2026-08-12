@@ -1,5 +1,5 @@
 (*
-  Title:   Value_Function.thy
+  Title:   Value_Function_Market.thy
   Content: The value function of Eq. (1.6) of arXiv:2512.17702
            (Lai/Shkolnikov/Soner), as an actual supremum over markets.
 
@@ -20,7 +20,7 @@
   Results:
   * ess_inf_time_le_nn_integral: an almost-sure lower bound on tau is at
     most E[tau] -- the step that lets the expectation bounds of
-    Relative_Arbitrage_Stochastic speak about the essential infimum.
+    Volatile_Market speak about the essential infimum.
   * val_fn_le_ball_v: v(x0) <= (r^2 - |x0|^2)^+/(n-k) for K = cball 0 r,
     i.e. the "<=" half of Eq. (3.9) of Example 3.1, now as a statement
     about the paper's value function rather than about one market.
@@ -33,7 +33,7 @@
   calculus): the reverse inequality at interior points.
 *)
 
-theory Value_Function
+theory Value_Function_Market
   imports Brownian_Optimal_Boundary
 begin
 
@@ -50,7 +50,7 @@ lemma ess_inf_time_ge_zero: "0 \<le> ess_inf_time M tau"
 
 text \<open>Every almost-sure lower bound is dominated by the mean, so the
   essential infimum is too. This is what turns the expectation bound of
-  Relative\_Arbitrage\_Stochastic into a bound on Eq. (1.6).\<close>
+  Volatile\_Market into a bound on Eq. (1.6).\<close>
 
 lemma ess_inf_time_le_nn_integral:
   assumes M: "prob_space M"
@@ -342,7 +342,7 @@ section \<open>Monotonicity of the value function in the domain\<close>
 
 text \<open>The first structural property of \<open>val_fn\<close>, used repeatedly by
   Section 2's dynamic programming. Of the fourteen assumptions of
-  \<open>sufficiently_volatile_market\<close> (Relative\_Arbitrage\_Stochastic.thy), the
+  \<open>sufficiently_volatile_market\<close> (Volatile\_Market.thy), the
   domain \<open>K\<close> occurs only in \<open>X_in_K\<close>, which is monotone in \<open>K\<close>; every
   other assumption is untouched by enlarging the domain. So enlarging \<open>K\<close>
   only admits more markets and \<open>val_fn\<close> increases: the locale half is

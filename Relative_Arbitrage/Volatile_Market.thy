@@ -1,5 +1,5 @@
 (*
-  Title:   Relative_Arbitrage_Stochastic.thy
+  Title:   Volatile_Market.thy
   Content: Probabilistic side of
 
              J.-H. Lai, M. Shkolnikov, H. M. Soner:
@@ -21,7 +21,7 @@
       pre-exit time tau, whose instantaneous covariation acov satisfies
       the eigenvalue constraints of Eqs. (1.4)/(1.5), expressed through
       the Courant-Fischer characterizations eigen_lb/eigen_ub of the
-      accompanying theory Relative_Arbitrage_PDE.  Since Ito calculus is
+      accompanying theory Curvature_Operator.  Since Ito calculus is
       unavailable, the dynamics are specified in martingale-problem form
       (Stroock--Varadhan): Dynkin's formula for the quadratic test
       function y \<mapsto> y \<bullet> y at stopped times is a locale assumption
@@ -40,9 +40,9 @@
       martingale problems and is out of reach of current libraries.
 *)
 
-theory Relative_Arbitrage_Stochastic
+theory Volatile_Market
   imports
-    Relative_Arbitrage_PDE
+    Curvature_Operator
     "HOL-Probability.Probability"
     "Martingales.Martingale"
 begin

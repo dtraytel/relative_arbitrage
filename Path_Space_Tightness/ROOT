@@ -16,6 +16,6 @@ session Path_Space_Tightness = Martingale_Sampling +
     Modulus_Tails
     Holder_Interpolation
     Conditional_UI
-    Section_2_Compactness
+    Equicontinuity
     Path_Space
     Path_Tightness

@@ -946,7 +946,7 @@ proof (intro ito_stopped_market.intro[OF martingale_cbmX_stopped[OF T]]
 next
   \<comment> \<open>The volatility is an INDICATOR in time, so its time-measurability
       is the same one-line \<open>measurable_If\<close> as
-      \<open>Paper_Class.acont_set_borel_measurable\<close>.  \<open>lborel\<close> has to be pinned
+      \<open>Exit_Class.acont_set_borel_measurable\<close>.  \<open>lborel\<close> has to be pinned
       at \<open>real measure\<close> and every binder annotated: it is polymorphic, and
       \<open>real^'n^'n\<close> has an \<open>ord\<close> instance, so an unannotated binder
       elaborates at the MATRIX type.\<close>

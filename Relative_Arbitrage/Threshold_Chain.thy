@@ -34,7 +34,7 @@ begin
 
 text \<open>The import is \<open>Eigenvalue_Continuity\<close> rather than \<open>Eigenvalues\<close> so that
   the whole development forms a single chain
-  \<open>Eigenvalues \<rightarrow> Eigenvalue_Continuity \<rightarrow> Threshold_Chain \<rightarrow> Lemma_3_1
+  \<open>Eigenvalues \<rightarrow> Eigenvalue_Continuity \<rightarrow> Threshold_Chain \<rightarrow> Operator_Continuity
    \<rightarrow> Poincare_Separation\<close>,
   making the Lipschitz facts (\<open>entrysum\<close>, \<open>kyfan_lipschitz\<close>,
   \<open>eigval_lipschitz\<close>) available downstream.  Nothing in this theory uses

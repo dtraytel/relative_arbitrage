@@ -1,7 +1,7 @@
 (*
   Title:   Brownian_Market.thy
   Content: An n-dimensional Brownian market model discharging the locale
-           "sufficiently_volatile_market" of Relative_Arbitrage_Stochastic.
+           "sufficiently_volatile_market" of Volatile_Market.
 
   The market is the product of CARD('n) independent copies of the Wiener
   measure wiener_pre from Brownian_Motion, started at x0, with constant
@@ -15,7 +15,7 @@
 theory Brownian_Market
   imports
     "Wiener_Measure.Brownian_Motion"
-    Relative_Arbitrage_Stochastic
+    Volatile_Market
     "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras"
 begin
 
@@ -1435,7 +1435,7 @@ section \<open>The Brownian market is sufficiently volatile\<close>
 text \<open>The martingale property \<open>martingale_bmX\<close> above, together with the
   martingale-problem identity \<open>dynkin_quadratic\<close> proved in the next
   section, assembles into an instance of \<open>sufficiently_volatile_market\<close>
-  from Relative\_Arbitrage\_Stochastic; the concrete instantiation, for the
+  from Volatile\_Market; the concrete instantiation, for the
   continuous modification of the market, is carried out in
   Brownian_Continuous.thy.\<close>
 

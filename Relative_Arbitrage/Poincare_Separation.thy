@@ -17,20 +17,20 @@
   * for Eq. (3.6): the limit p^m -> 0 along p^m = q_1/m, where the index shift
     in (3.6) comes from the full separation inequality.
 
-  This theory is deliberately chained off Lemma_3_1 (rather than importing
+  This theory is deliberately chained off Operator_Continuity (rather than importing
   Eigenvalues in parallel with it) so that the import graph stays a single
-  chain that PIDE can hold; see the header of Lemma_3_1.thy.
+  chain that PIDE can hold; see the header of Operator_Continuity.thy.
 *)
 
 theory Poincare_Separation
-  imports Lemma_3_1
+  imports Operator_Continuity
 begin
 
 section \<open>Elementary matrix algebra, continued\<close>
 
 text \<open>The right-distributivity of \<open>**\<close> over subtraction and the additivity
   of \<open>trace\<close> over subtraction; neither is in this HOL-Analysis, and both are
-  proved exactly like \<open>matrix_vector_mult_diff\<close> in Lemma_3_1.thy.\<close>
+  proved exactly like \<open>matrix_vector_mult_diff\<close> in Operator_Continuity.thy.\<close>
 
 lemma matrix_matrix_mult_diff_right:
   fixes A B C :: "real^'n::finite^'n"
@@ -1328,7 +1328,7 @@ section \<open>The objective of Eq. (3.5) in the adapted eigenbasis\<close>
 
 text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^sub>p a)\<close> for
   \<open>a \<succeq> 0\<close> with \<open>ap = 0\<close>, and writing symmetric \<open>M\<^sub>p\<close> as a linear
-  combination of outer products (\<open>trace_Mp\<close> in Lemma_3_1.thy gives the
+  combination of outer products (\<open>trace_Mp\<close> in Operator_Continuity.thy gives the
   first fact).  This section carries out the expansion and its weight
   constraints.\<close>
 
@@ -3518,7 +3518,7 @@ qed
 section \<open>Continuity of \<open>F\<close> away from \<open>p = 0\<close>\<close>
 
 text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<close> here,
-  \<open>eq36\<close> in Lemma_3_1_Envelopes.thy), as is the general Poincare separation
+  \<open>eq36\<close> in Operator_Envelope_Continuity.thy), as is the general Poincare separation
   inequality (\<open>poincare_separation\<close>).  The remaining clause of Lemma 3.1,
   \<open>F\<^sub>* = F\<^sup>* = F\<close> on \<open>(\<real>\<^sup>n \ {0}) \<times> \<S>\<^sup>n\<close>, is continuity of \<open>F\<close> away from
   \<open>p = 0\<close>.  Writing \<open>F(p, M) = -\<onehalf> bracket (n-k) L (M\<^sub>p)\<close> with \<open>M\<close> replaced
@@ -3527,7 +3527,7 @@ text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<c
 
 text \<open>The estimate on \<open>F\<close> itself: for symmetric \<open>M\<close> and \<open>p \<noteq> 0\<close>,
   \<open>p' \<mapsto> F(p', M)\<close> is Lipschitz near \<open>p\<close>.  Combined with \<open>ell_op_M_gap\<close>
-  (Envelopes.thy), which absorbs the variation of the second argument, both
+  (Operator_Envelopes.thy), which absorbs the variation of the second argument, both
   semicontinuous envelopes collapse onto \<open>F\<close> off the origin.\<close>
 
 theorem ell_op_lipschitz_in_p:
@@ -3687,7 +3687,7 @@ text \<open>
   continuous inequalities, closed outright; the eigenvalue lower bound is an
   existential over subspaces, but \<open>feasible_iff_eigval\<close> trades it for
   \<open>1 \<le> eigval (n-k) a\<close>, Lipschitz on symmetric matrices.  Combined with
-  boundedness (\<open>feasible_bounded\<close>, Relative\_Arbitrage\_Comparison) this
+  boundedness (\<open>feasible_bounded\<close>, Viscosity\_Solutions) this
   gives compactness of the constraint set.
 \<close>
 

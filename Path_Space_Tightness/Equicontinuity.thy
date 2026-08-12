@@ -30,7 +30,7 @@ text \<open>
   Lemma 2.2.
 \<close>
 
-theory Section_2_Compactness
+theory Equicontinuity
   imports
     "HOL-Complex_Analysis.Great_Picard"
     "Kolmogorov_Chentsov.Holder_Continuous"
@@ -349,7 +349,7 @@ section \<open>Feeding \<open>box\<close> from a sequential statement\<close>
 text \<open>
   \<open>usc_sup_over_compact\<close> asks for \<open>box\<close> topologically, but weak convergence
   of measures is naturally a statement about sequences -- the form of the
-  AFP's Portmanteau theorems and of \<open>Section_2_Usc.etime_shift_box\<close>.
+  AFP's Portmanteau theorems and of \<open>Exit_Time_Semicontinuity.etime_shift_box\<close>.
 
   The two are equivalent when both spaces are metrizable, by the
   Levy--Prokhorov theorem (\<open>metrizable_weak_conv_topology\<close>), applicable
@@ -491,7 +491,7 @@ qed
 section \<open>Sequential compactness gives \<open>compactin\<close> in a metrizable space\<close>
 
 text \<open>
-  The glue between Lemmas 2.2/2.3 of the paper and Berge. Those lemmas
+  The glue between Lemmas 2.2 and 2.3 of arXiv:2512.17702 and Berge's theorem. Those lemmas
   deliver sequential compactness of the law set -- 2.2 extracts a weakly
   convergent subsequence, 2.3 puts the limit back in the set -- whereas
   \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the
