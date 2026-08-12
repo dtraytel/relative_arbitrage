@@ -1198,7 +1198,10 @@ currently available only in the weakened form `paper_v_ball_lower` (rate
 SUBSPACE-TANGENTIAL field; it needs no new probability — the Euler theorems
 are already field-parametric.
 
-* **E1 — DONE** (`221ac56`): `projmat` (sym/mv/trace/fix/idem/span_fix),
+* **E1 — DONE** (`221ac56`), plus `tanpV_mv`, `tanpV_idem` (the field is a
+  PROJECTOR, so the Euler covariance equals it) and `tanpV_radial_kill` (the
+  radial drift vanishes, which is what makes the growth exact rather than
+  merely bounded) — the two facts E2 runs on.: `projmat` (sym/mv/trace/fix/idem/span_fix),
   `orthonormal_dim_span`, `tanpV` (sym/quadform/trace/psd/eigen_ub/eigen_lb),
   `tanpV_feasible`, `tanpV_trace_projmat`, `orthonormal_family_containing`.
   Original sketch: the field (Paper_Viscosity, mirror the `tanp` block at 10833).
@@ -1241,6 +1244,18 @@ are already field-parametric.
   do NOT try to run the field from the centre (the clamp sits there).
   `\<bar>x\<bar> = r`: `paper_v_boundary_zero`.  `x \<notin> K`: `pexit = 0`.  Assemble
   `example_3_1`.
+
+**\<^bold>SHORTCUT for `k = 1`, found 2026-08-11.**  `tangential_exact_growth`
+(Paper_Viscosity) already gives EXACT growth at rate `real CARD('n) - 1`, and
+for `k = 1` that IS `real (CARD('n) - k)`.  So for `k = 1` the
+subspace-tangential field is not needed at all — E1/E2 are already done.  What
+stands between `tangential_exact_growth` and Example 3.1 for `k = 1` is only
+the weakening inside `paper_v_ball_lower`: the annulus clamp, a factor `2` and
+the `T/2` cap.  The factor `2` does NOT come from the growth (that identity is
+exact), so it should come out.  Sharpening `paper_v_ball_lower` at `y₀ = 0`,
+`rB = r` and feeding `Theorem_1_1.example_3_1_from_lower` (E4, proved) would
+give **Example 3.1 for `k = 1` outright** — a much smaller job than E1–E3 for
+general `k`, and the obvious next step.
 
 **Costs:** E1 500–800 · E2 500–900 · E3 300–500 · E4 150–300.
 **Total ≈ 1,500–2,500 lines; 1–2 sessions.**  Risk LOW-MODERATE: every step

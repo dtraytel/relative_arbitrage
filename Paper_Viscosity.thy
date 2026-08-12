@@ -16465,6 +16465,104 @@ proof (intro CollectI conjI)
     using tanpV_eigen_lb[OF orth nz] mk unfolding eigen_lb_def by (meson le_trans)
 qed
 
+text \<open>The field is a PROJECTOR, which is what makes the Euler chain's
+  covariance equal to it and the radial drift vanish --- the two facts E2
+  runs on.\<close>
+
+lemma tanpV_mv:
+  fixes P :: "real^'n::finite^'n" and z y :: "real^'n"
+  shows "tanpV P z *v y
+      = P *v y - (((P *v z) /\<^sub>R norm (P *v z)) \<bullet> y)
+          *\<^sub>R ((P *v z) /\<^sub>R norm (P *v z))"
+proof -
+  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
+  have "tanpV P z *v y = (P - outer_prod u u) *v y"
+    unfolding tanpV_def u_def by (rule refl)
+  also have "\<dots> = P *v y - (outer_prod u u) *v y"
+    by (simp add: matrix_vector_mult_diff_rdistrib)
+  also have "(outer_prod u u) *v y = (u \<bullet> y) *\<^sub>R u" by simp
+  finally show ?thesis unfolding u_def .
+qed
+
+lemma tanpV_idem:
+  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
+  assumes Psym: "transpose P = P" and Pidem: "P ** P = P" and nz: "P *v z \<noteq> 0"
+  shows "tanpV P z ** tanpV P z = tanpV P z"
+proof -
+  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
+  have uu: "u \<bullet> u = 1" unfolding u_def by (rule unit_normalize[OF nz])
+  have ufix: "P *v u = u" unfolding u_def by (rule proj_dir_fix[OF Pidem])
+  have tv: "tanpV P z *v y = P *v y - (u \<bullet> y) *\<^sub>R u" for y
+    unfolding u_def by (rule tanpV_mv)
+  have uP: "u \<bullet> (P *v y) = u \<bullet> y" for y
+  proof -
+    have "u \<bullet> (P *v y) = (transpose P *v u) \<bullet> y"
+      by (rule inner_matrix_transpose)
+    also have "\<dots> = (P *v u) \<bullet> y" unfolding Psym by (rule refl)
+    finally show ?thesis unfolding ufix .
+  qed
+  have killu: "tanpV P z *v u = 0" unfolding tv ufix uu by simp
+  have onP: "tanpV P z *v (P *v y) = tanpV P z *v y" for y
+  proof -
+    have "tanpV P z *v (P *v y) = P *v (P *v y) - (u \<bullet> (P *v y)) *\<^sub>R u"
+      by (rule tv)
+    also have "P *v (P *v y) = P *v y"
+      using Pidem by (metis matrix_vector_mul_assoc)
+    also have "u \<bullet> (P *v y) = u \<bullet> y" by (rule uP)
+    finally show ?thesis unfolding tv by simp
+  qed
+  have key: "tanpV P z *v (tanpV P z *v y) = tanpV P z *v y" for y
+  proof -
+    have "tanpV P z *v (tanpV P z *v y)
+        = tanpV P z *v (P *v y - (u \<bullet> y) *\<^sub>R u)" by (simp only: tv)
+    also have "\<dots> = tanpV P z *v (P *v y) - (u \<bullet> y) *\<^sub>R (tanpV P z *v u)"
+      by (simp add: matvec_diff_right matvec_scaleR_right)
+    also have "\<dots> = tanpV P z *v y" unfolding onP killu by simp
+    finally show ?thesis .
+  qed
+  show ?thesis
+    unfolding matrix_eq using key by (metis matrix_vector_mul_assoc)
+qed
+
+text \<open>The radial direction is killed at the point itself: this is why the
+  squared radius has NO drift beyond the trace term, so the growth is exact
+  rather than merely bounded.\<close>
+
+lemma tanpV_radial_kill:
+  fixes P :: "real^'n::finite^'n" and x :: "real^'n"
+  assumes Pfix: "P *v x = x" and xnz: "x \<noteq> 0"
+  shows "x \<bullet> (tanpV P x *v x) = 0"
+proof -
+  have n0: "norm x \<noteq> 0" using xnz by simp
+  define u :: "real^'n" where "u = x /\<^sub>R norm x"
+  have ueq: "(P *v x) /\<^sub>R norm (P *v x) = u" unfolding u_def Pfix by (rule refl)
+  have xx: "x \<bullet> x = norm x * norm x"
+    by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
+  have ux: "u \<bullet> x = norm x"
+  proof -
+    have "u \<bullet> x = inverse (norm x) * (x \<bullet> x)" unfolding u_def by simp
+    then show ?thesis unfolding xx using n0 by simp
+  qed
+  have xu: "x \<bullet> u = norm x" using ux by (simp add: inner_commute)
+  have mv: "tanpV P x *v x = P *v x - (u \<bullet> x) *\<^sub>R u"
+    using tanpV_mv[of P x x] unfolding ueq .
+  have e1: "x \<bullet> (tanpV P x *v x) = x \<bullet> (P *v x) - (u \<bullet> x) * (x \<bullet> u)"
+    unfolding mv by (simp add: inner_diff_right)
+  have e2: "x \<bullet> (P *v x) = norm x * norm x" unfolding Pfix by (rule xx)
+  show ?thesis unfolding e1 e2 ux xu by simp
+qed
+
+text \<open>\<^bold>\<open>E2 for \<open>k = 1\<close> is ALREADY AVAILABLE.\<close>  \<open>tangential_exact_growth\<close> above
+  gives exact growth at rate \<open>real CARD('n) - 1\<close>, and for \<open>k = 1\<close> that IS
+  \<open>real (CARD('n) - k)\<close>.  So for \<open>k = 1\<close> the subspace-tangential field is not
+  needed at all: what stands between \<open>tangential_exact_growth\<close> and Example 3.1
+  is only the weakening in \<open>paper_v_ball_lower\<close> (the annulus clamp, the factor
+  \<open>2\<close> and the \<open>T/2\<close> cap), NOT the construction of a new field.  The factor
+  \<open>2\<close> does not come from the growth --- that identity is exact --- so it should
+  be removable.  Sharpening \<open>paper_v_ball_lower\<close> at \<open>y\<^sub>0 = 0\<close>, \<open>rB = r\<close> and
+  feeding \<open>Theorem_1_1.example_3_1_from_lower\<close> would give Example 3.1 for
+  \<open>k = 1\<close> outright, and is a much smaller job than E1--E3 for general \<open>k\<close>.\<close>
+
 text \<open>The trace of the field is exactly the growth rate \<open>n - k\<close> that E2 needs.\<close>
 
 corollary tanpV_trace_projmat:
