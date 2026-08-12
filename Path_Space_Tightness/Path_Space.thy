@@ -14,7 +14,7 @@ text \<open>
   HOL-Analysis' set-based \<open>cfunspace\<close> (bounded continuous maps with the sup
   metric) over the compact interval \<open>{0..T}\<close>, valued in a Polish type.
   Completeness is \<open>Metric_space.mcomplete_cfunspace\<close> and separability
-  \<open>Metric_space.separable_space_cfunspace\<close> (AFP Standard\_Borel\_Spaces);
+  \<open>Metric_space.separable_space_cfunspace\<close> (AFP \<open>Standard\_Borel\_Spaces);\<close>
   with compactness and metrizability of the domain, these are the
   hypotheses of the AFP's \<open>Prokhorov_theorem_LP\<close>, converting tightness of
   the Lemma 2.2 laws into relative compactness in the L\'evy-Prokhorov

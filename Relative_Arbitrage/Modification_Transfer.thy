@@ -378,7 +378,7 @@ section \<open>The vector-valued case, componentwise\<close>
 
 text \<open>The market processes of @{theory Relative_Arbitrage.Ito_Market} take values in \<open>real^'n\<close>, so the
   transfer is needed there too.  The increments in
-  set\_integral\_zero\_transfer are real-valued and independent of the value
+  \<open>set\_integral\_zero\_transfer\<close> are real-valued and independent of the value
   type of the process, so the vector case follows componentwise.\<close>
 
 theorem martingale_of_modification_vec:
@@ -645,7 +645,7 @@ qed
 text \<open>Adaptedness of a measurable function of the state to the state's own
   natural filtration.  This is stated here rather than at the point of use
   because the Kolmogorov-Chentsov entry has a type of the same name as the
-  locale stochastic\_process, so the locale cannot be interpreted in a
+  locale \<open>stochastic\_process,\<close> so the locale cannot be interpreted in a
   theory that imports both.\<close>
 
 lemma adapted_of_natural_filtration:
@@ -669,7 +669,7 @@ proof -
   qed
 qed
 
-text \<open>Two more facts that need the locale stochastic\_process and therefore
+text \<open>Two more facts that need the locale \<open>stochastic\_process\<close> and therefore
   have to live in a theory that does not import Kolmogorov-Chentsov.\<close>
 
 lemma adapted_process_natural_filtration_of:

@@ -443,7 +443,7 @@ text \<open>Theorem 4.3 (comparison) and Proposition 4.1 (uniqueness) are proved
   the paper for general compact \<open>K\<close> via Theorem 4.2(a), whose proof doubles
   the variables and invokes the Crandall--Ishii theorem on sums -- cited as
   [CI90] and not formalized here (see \<open>max_principle_boundary\<close> in
-  Operator\_Envelope\_Continuity.thy for where that hypothesis is isolated).
+  \<open>Operator\_Envelope\_Continuity.thy\<close> for where that hypothesis is isolated).
 
   For \<open>K\<close> a closed ball, Section 4's conclusion holds unconditionally: the
   explicit solution \<open>ball_v\<close> of Eq. (3.9) is interposed, a subsolution

@@ -14,12 +14,12 @@ text \<open>
 
     Design.  \<open>Constraint_Set_Convexity\<close> already defines
 
-      \<open>Pi_proj\<close> a m = Inf {trace (a ** P) | \<open>is_proj\<close> P, trace P = m}
+      \<open>Pi_proj\<close> a m = Inf \<open>{trace\<close> (a ** P) | \<open>is_proj\<close> P, trace P = \<open>m}\<close>
 
     which is the sum of the m SMALLEST eigenvalues of a -- basis-free by
     construction, so no well-definedness argument is needed.  Dually,
 
-      kyfan m a = Sup {trace (a ** P) | \<open>is_proj\<close> P, trace P = m}
+      kyfan m a = Sup \<open>{trace\<close> (a ** P) | \<open>is_proj\<close> P, trace P = \<open>m}\<close>
 
     is the sum of the m LARGEST, and the i-th largest eigenvalue is the
     difference  lam i a = kyfan i a - kyfan (i-1) a.  This route avoids

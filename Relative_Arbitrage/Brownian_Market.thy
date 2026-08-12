@@ -1450,7 +1450,7 @@ text \<open>The martingale-problem identity used above is the \<^emph>\<open>exp
 
     \<open>Z t = |B t|\<^sup>2 - int_0^t tr(mat 1) ds\<close> is a martingale,
 
-  is proved in this section.  It is what the locales of Ito\_Market take as
+  is proved in this section.  It is what the locales of \<open>Ito\_Market\<close> take as
   their hypothesis, so it shows that the martingale problem in process form
   is inhabited as well.  Everything rests on the independence of the
   increment from the past, generalised here from indicators of past events
@@ -2035,7 +2035,7 @@ text \<open>Consequently the process form of the martingale problem is
   inhabited: with \<open>acov = mat 1\<close> the process of \<open>ito_Z\<close> is exactly \<open>?Z\<close>
   above, so \<open>martingale_bm_square\<close> discharges the hypothesis
   \<open>Z_martingale\<close> of \<open>ito_const_horizon_market\<close>.  The instantiation
-  itself belongs to Ito\_Market, which imports this theory's ambient
+  itself belongs to \<open>Ito\_Market,\<close> which imports this theory's ambient
   definitions.\<close>
 
 section \<open>The compensated square of a single coordinate is a martingale\<close>

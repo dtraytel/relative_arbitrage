@@ -362,7 +362,7 @@ section \<open>The discrete gradient strategy realizes relative arbitrage\<close
 text \<open>The discrete relative value process of the gradient strategy: the
   ball value function of the current position plus the accumulated
   quadratic variation, normalised as in Eq. (1.1).  In continuous time
-  this is \<open>arb_V\<close> of Optimal\_Exit\_Time; here it needs no
+  this is \<open>arb_V\<close> of \<open>Optimal\_Exit\_Time;\<close> here it needs no
   stochastic integral at all, and the pathwise lower bound below is a
   theorem rather than a consequence of Ito's formula.\<close>
 

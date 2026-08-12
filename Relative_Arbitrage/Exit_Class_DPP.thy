@@ -370,8 +370,8 @@ subsection \<open>The \<open>\<ge>\<close> half of the dynamic programming princ
 
 text \<open>Proposition 2.4 of arXiv:2512.17702 states the dynamic programming
   principle
-  \[ v(x) \;=\; \sup_{P \in \mathcal {P_x}} P\text{-}\operatorname*{ess\,inf}
-      \bigl(\theta \wedge \tau_K + v(X_\theta)\,1_{\{\theta \le \tau_K\}}\bigr). \]
+    \<open>v x = (SUP P \<in> exit_class k L T x. P-ess-inf
+      (\<theta> \<and> \<tau>\<^sub>K + v (X \<theta>) * 1\<^sub>{\<theta> \<le> \<tau>\<^sub>K}))\<close>.
   This is its \<open>\<ge>\<close> half at a deterministic time \<open>\<theta> = r\<close>.  Both summands are
   read off the first piece: \<open>\<theta> \<and> \<tau>_K\<close> is the exit time capped at \<open>r\<close>, i.e.
   \<open>pexit r K\<close>, and \<open>1\<^sub>{\<theta> \<le> \<tau>_K}\<close> is \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>.
@@ -713,11 +713,11 @@ qed
 text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a single statement about
   conditioning, and no other property of the class is needed:
 
-  \begin{quote}
+  \<open>\begin{quote}\<close>
   if the exit time of \<open>P \<in> \<P>\<^sub>x\<close> is almost surely at least \<open>c\<close>, then almost
   surely on the survival event \<open>{r \<le> \<tau>\<^sub>K}\<close> the value at the position reached
   is at least the time still to run, \<open>c - r\<close>.
-  \end{quote}
+  \<open>\end{quote}\<close>
 
   That is exactly the statement that the conditional law of the future given
   \<open>\<F>\<^sub>r\<close> is, almost surely, a member of the class started at \<open>X\<^sub>r\<close>, so that its

@@ -1,5 +1,3 @@
-chapter \<open>Theorem 1.1, as formalised\<close>
-
 (*<*)
 theory Theorem_1_1_Statement
   imports "Relative_Arbitrage.Value_Function_Uniqueness"

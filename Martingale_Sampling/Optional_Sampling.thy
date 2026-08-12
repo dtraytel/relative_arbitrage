@@ -16,13 +16,13 @@ text \<open>
 
       E[Z (t /\ tau)] = E[Z 0]                                          (star)
 
-    for the process Z t = |X t|^2 - \<open>int_0\<close>^t tr(a s) ds, which Ito's formula
+    for the process Z t = |X \<open>t|^2\<close> - \<open>int_0\<close>\<open>^t\<close> tr(a s) ds, which Ito's formula
     makes a martingale.  Deriving (star) from "Z is a martingale" is exactly
     optional sampling at the bounded stopping time t /\ tau, and that is what
     is proved here, in three steps:
 
       1. discrete time, arbitrary stopping time: the stopped process is the
-         martingale transform of Z by the indicators of {T > k}, so its
+         martingale transform of Z by the indicators of \<open>{T\<close> > \<open>k},\<close> so its
          expectation is constant (no square integrability needed, unlike the
          optional-sampling section of \<open>Quadratic_Variation\<close>);
 

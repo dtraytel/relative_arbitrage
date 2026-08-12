@@ -20,7 +20,7 @@ text \<open>
     exit-time bound of Example 3.1 specializes to an assumption-free
     statement about the random walk:
 
-      E[exit time from the ball of radius m+1, capped at N] <= (m+1)^2.
+      E[exit time from the ball of radius m+1, capped at N] <= \<open>(m+1)^2.\<close>
 
     The coin-tossing probability space, the fortune process and its
     martingale property are taken from the AFP entry Martingales

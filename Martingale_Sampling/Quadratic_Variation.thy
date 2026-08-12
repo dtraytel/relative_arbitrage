@@ -17,13 +17,13 @@ text \<open>
     AFP entry covers stochastic integration.  This theory supplies the
     first layer: for a square-integrable martingale X in discrete time,
 
-      [X]_n = sum of (X_{k+1} - \<open>X_k\<close>)^2 for k < n
+      \<open>[X]_n\<close> = sum of \<open>(X_{k+1}\<close> - \<open>X_k\<close>\<open>)^2\<close> for k < n
 
-    compensates the square, i.e. X^2 - [X] is again a martingale (the
+    compensates the square, i.e. \<open>X^2\<close> - [X] is again a martingale (the
     discrete Ito formula for the square function), whence the Dynkin
     identity
 
-      E[\<open>X_n\<close>^2] = E[\<open>X_0\<close>^2] + E[[X]_n].
+      E[\<open>X_n\<close>\<open>^2]\<close> = E[\<open>X_0\<close>\<open>^2]\<close> + \<open>E[[X]_n].\<close>
 
     This is the discrete-time shape of the martingale-problem assumption
     \<open>dynkin_quadratic\<close> of \<open>Volatile_Market\<close>.\<close>
@@ -603,7 +603,7 @@ qed
 subsection \<open>The stopped Dynkin identity\<close>
 
 text \<open>The exact discrete-time shape of the martingale-problem assumption
-  \<open>dynkin_quadratic\<close> of Volatile\_Market, now a theorem.\<close>
+  \<open>dynkin_quadratic\<close> of \<open>Volatile\_Market,\<close> now a theorem.\<close>
 
 theorem stopped_expectation_sq_qvar:
   "(\<integral>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2 \<partial>M)
