@@ -9218,6 +9218,64 @@ proof -
   then have "snd p \<in> K'" using ball by blast
   from mx[OF this] show ?thesis .
 qed
+text \<open>The other half of the two-domain interface: \<open>atu\<close>.  The core reads the
+  subsolution property at the ATTAINMENT point of \<open>supconv (\<theta>u) \<epsilon>\<close> over the
+  \<open>\<rho>\<close>-ball around \<open>x\<^sup>h\<close>, and Definition 3.1's gate puts that point in \<open>{u > 0}\<close>
+  as soon as the sup-convolution is positive there --- because the attained
+  value is the sup-convolution PLUS the (nonnegative) penalty.
+
+  Positivity on the whole \<open>\<rho>\<close>-ball, not just at \<open>x\<^sup>h\<close>, is free: \<open>\<rho>\<close> is a FREE
+  parameter of \<open>comparison_supconv_maximiser_complete_gen\<close> below (only
+  \<open>0 < \<rho>\<close>, \<open>\<rho> < r\<close> and \<open>\<rho> + R\<^sub>w \<le> \<kappa>\<close> are asked, all preserved by
+  shrinking), and \<open>supconv\<close> is continuous whenever its argument is bounded
+  above.\<close>
+
+lemma cont_pos_near:
+  fixes A :: "real^'n::finite \<Rightarrow> real"
+  assumes cA: "continuous_on UNIV A" and pos: "0 < A p"
+  obtains \<rho> where "0 < \<rho>" and "\<And>x. dist x p \<le> \<rho> \<Longrightarrow> 0 < A x"
+proof -
+  have ic: "isCont A p"
+    using cA by (simp add: continuous_on_eq_continuous_at)
+  obtain d where d0: "0 < d"
+    and h: "\<And>x. dist x p < d \<Longrightarrow> dist (A x) (A p) < A p"
+    using ic[unfolded continuous_at_eps_delta] pos by blast
+  show ?thesis
+  proof (rule that[of "d/2"])
+    show "0 < d/2" using d0 by simp
+    fix x assume "dist x p \<le> d/2"
+    then have "dist x p < d" using d0 by linarith
+    from h[OF this] have "\<bar>A x - A p\<bar> < A p" by (simp add: dist_real_def)
+    then show "0 < A x" by linarith
+  qed
+qed
+
+lemma attain_gate_of_positive:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes t0: "0 < \<theta>" and e: "0 < \<epsilon>"
+    and pos: "0 < supconv (\<lambda>y. \<theta> * u y) \<epsilon> x"
+    and opt: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x = \<theta> * u z - (dist x z)\<^sup>2 / (2*\<epsilon>)"
+  shows "0 < u z"
+proof -
+  have s0: "0 < \<theta> * u z - (dist x z)\<^sup>2 / (2*\<epsilon>)" using pos unfolding opt .
+  have "0 \<le> (dist x z)\<^sup>2 / (2*\<epsilon>)" using e by simp
+  with s0 have "0 < \<theta> * u z" by linarith
+  then show ?thesis using t0 by (simp add: zero_less_mult_iff)
+qed
+
+text \<open>Packaged: on a \<open>\<rho>\<close>-ball where the sup-convolution stays positive, every
+  attainment point lies in the gated set --- which is precisely the core's
+  \<open>atu\<close> hypothesis.\<close>
+
+lemma atu_of_positive_ball:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes t0: "0 < \<theta>" and e: "0 < \<epsilon>"
+    and posb: "\<And>x. dist x p \<le> \<rho> \<Longrightarrow> 0 < supconv (\<lambda>y. \<theta> * u y) \<epsilon> x"
+    and dx: "dist x p \<le> \<rho>"
+    and opt: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x = \<theta> * u z - (dist x z)\<^sup>2 / (2*\<epsilon>)"
+  shows "z \<in> {q. 0 < u q}"
+  using attain_gate_of_positive[OF t0 e posb[OF dx] opt] by simp
+
 
 
 
@@ -9717,6 +9775,52 @@ proof -
     using lt unfolding scale[of \<kappa>] .
   from kpos final show ?thesis by blast
 qed
+text \<open>\<^bold>\<open>The \<open>y\<close>-side of the two-domain interface.\<close>  At the maximiser the
+  penalty is bounded by the range, so a large enough \<open>\<kappa>\<^sub>P\<close> pins \<open>y\<^sup>h\<close> to \<open>x\<^sup>h\<close>;
+  \<open>x\<^sup>h\<close> is near \<open>K\<close> (it lies in the confinement region \<open>Q\<close>), and
+  \<open>two_domain_gap\<close> below keeps \<open>K\<close> a positive distance from \<open>\<partial>K'\<close>.
+  Composing the three gives the \<open>fary\<close> the Crandall--Ishii chain wants ---
+  and \<^emph>\<open>only\<close> on the \<open>y\<close>-side, which is the whole point of two domains.
+
+  \<open>soft_pen_kappa_exists\<close> says such a \<open>\<kappa>\<^sub>P\<close> always exists, so \<open>big\<close> below costs
+  nothing.\<close>
+
+lemma pin_of_penalty_bound:
+  fixes A Bfun :: "real^'n::finite \<Rightarrow> real" and xh yh :: "real^'n"
+  assumes k: "0 \<le> \<kappa>\<^sub>P" and bnn: "0 \<le> \<beta>"
+    and Aub: "\<And>x. A x \<le> Bu" and Bnp: "\<And>y. Bfun y \<le> 0"
+    and Mnn: "0 \<le> M"
+    and mx: "M \<le> A xh + Bfun yh - soft_pen \<kappa>\<^sub>P (xh - yh)"
+    and big: "Bu < (\<kappa>\<^sub>P/2)*\<beta>\<^sup>2 - \<kappa>\<^sub>P*(sqrt (\<beta>\<^sup>2 + 1) - 1)"
+  shows "norm (xh - yh) < \<beta>"
+proof (rule ccontr)
+  assume "\<not> norm (xh - yh) < \<beta>"
+  then have b: "\<beta> \<le> norm (xh - yh)" by linarith
+  have lo: "Bu < soft_pen \<kappa>\<^sub>P (xh - yh)"
+    by (rule soft_pen_coercive_outside[OF k bnn big b])
+  have hi: "soft_pen \<kappa>\<^sub>P (xh - yh) \<le> Bu"
+    using mx Aub[of xh] Bnp[of yh] Mnn by linarith
+  from lo hi show False by linarith
+qed
+
+lemma fary_of_pin:
+  fixes K K' :: "(real^'n::finite) set" and xh yh q b :: "real^'n"
+  assumes gap: "\<And>x c. x \<in> K \<Longrightarrow> c \<in> K' - interior K' \<Longrightarrow> d < dist x c"
+    and qK: "q \<in> K" and xQ: "dist xh q \<le> dQ"
+    and pin: "norm (xh - yh) < \<beta>"
+    and fit: "\<beta> + dQ + \<kappa> \<le> d"
+    and bK: "b \<in> K' - interior K'"
+  shows "\<kappa> < dist yh b"
+proof -
+  have g: "d < dist q b" by (rule gap[OF qK bK])
+  have t1: "dist q b \<le> dist q yh + dist yh b" by (rule dist_triangle)
+  have t2: "dist q yh \<le> dist q xh + dist xh yh" by (rule dist_triangle)
+  have e1: "dist xh yh = norm (xh - yh)" by (simp add: dist_norm)
+  have e2: "dist q xh = dist xh q" by (rule dist_commute)
+  have "dist q yh < dQ + \<beta>" using t2 pin xQ unfolding e1 e2 by linarith
+  then show ?thesis using g t1 fit by linarith
+qed
+
 
 text \<open>Continuity of \<open>soft_pen\<close>, which is the single hypothesis
   \<open>doubling_maximiser_exists_gen\<close> needs about the penalty, and the resulting
