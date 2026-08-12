@@ -1,22 +1,17 @@
 (*
   Title:   Deterministic_Radius_Market.thy
-  Content: Towards Example 3.1 of arXiv:2512.17702 for n - k = 1: the
-           explicit trigonometric representation of the deterministic-radius
-           market and its Gaussian toolkit.
+  Content: The deterministic-radius market of Example 3.1 of arXiv:2512.17702
+           (case n - k = 1): its explicit trigonometric representation and
+           the Gaussian toolkit underlying it.
 
   The process X_t = sqrt(|x|^2 + t) (cos(W_c(t) + phi), sin(W_c(t) + phi)),
   c(t) = ln(1 + t/|x|^2), is a martingale whose covariance is the sphere
   projection a(X) = I - X X^T/|X|^2; its radius is deterministic, so with
   the constant horizon tau = r^2 - |x|^2 it realises ball_v exactly and
   witnesses stopped_val_fn = ball_v at nonzero interior points for
-  k = CARD('n) - 1.  See PLAN_THEOREM_1_1.md, item N4, for the brick
-  sequence.  This theory provides bricks 1 and 2: the increment
-  distribution of the product Brownian model and the characteristic
-  function of gauss_measure.
-
-  VERIFICATION NOTE: proved interactively against the running PIDE session
-  (scratch with identical imports); the theory is registered in ROOT but a
-  freshly started PIDE snapshots ROOT, so cross-check with the batch build.
+  k = CARD('n) - 1.  This theory establishes the increment distribution of
+  the product Brownian model and the characteristic function of
+  gauss_measure.
 *)
 
 theory Deterministic_Radius_Market
@@ -191,11 +186,11 @@ section \<open>Conditional expectation of a function of an increment\<close>
 
 text \<open>A bounded measurable function of a coordinate increment has as its
   conditional expectation, given the natural filtration of the market
-  process at the earlier time, simply its Gaussian mean: the past and the
+  process at the earlier time, its Gaussian mean: the past and the
   increment are independent (\<open>bm_indicator_increment_indep_var\<close>), so the
-  set-integral characterisation factorises.  Note the qualified locale
-  name: \<open>Kolmogorov_Chentsov\<close> shadows the \<open>Martingales\<close> notion of
-  \<open>stochastic_process\<close> in this import closure.\<close>
+  set-integral characterisation factorises. The locale name
+  \<open>Stochastic_Process.stochastic_process\<close> is qualified because
+  \<open>Kolmogorov_Chentsov\<close> shadows it in this import closure.\<close>
 
 lemma bm_increment_has_cond_exp:
   fixes g :: "real \<Rightarrow> real" and i :: "'n::finite" and x0 :: "real^'n"
@@ -224,7 +219,7 @@ proof (rule has_cond_expI')
     by (rule measurable_compose[OF Dm gm])
   have int_gD: "integrable ?M (\<lambda>\<omega>. g (?D \<omega>))"
     by (rule BMP.integrable_const_bound[where B = C])
-      (use gb gDm in \<open>auto intro!: AE_I2\<close>)
+      (use gb gDm in \<open>auto\<close>)
   show "integrable ?M (\<lambda>\<omega>. g (?D \<omega>))" by (rule int_gD)
   show "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. ?c)" by simp
   show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. ?c) \<in> borel_measurable ?F"
@@ -234,7 +229,7 @@ proof (rule has_cond_expI')
     using A subalg by (auto simp: subalgebra_def)
   have indA_int: "integrable ?M (indicat_real A)"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use A_M in \<open>auto intro!: AE_I2 simp: indicator_def\<close>)
+      (use A_M in \<open>auto intro!: simp: indicator_def\<close>)
   have iv: "BMP.indep_var borel (indicat_real A) borel (\<lambda>\<omega>. g (?D \<omega>))"
     using BMP.indep_var_compose[OF bm_indicator_increment_indep_var
         [OF s st A] measurable_ident gm]
@@ -290,9 +285,9 @@ proof -
 qed
 
 
-text \<open>Generalize the indicator/increment independence to any past-measurable
-  real variable (the proof of \<open>bm_indicator_increment_indep_var\<close> verbatim,
-  with the indicator replaced by \<open>Z\<close>).\<close>
+text \<open>The indicator/increment independence generalized to any past-measurable
+  real variable \<open>Z\<close>; the proof mirrors that of
+  \<open>bm_indicator_increment_indep_var\<close> verbatim.\<close>
 
 lemma bm_past_increment_indep_var:
   fixes x0 :: "real^'n::finite" and Z :: "('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real"
@@ -443,14 +438,14 @@ proof -
     by (rule measurable_compose[OF Dm gm])
   have int_gD: "integrable ?M (\<lambda>\<omega>. g (?D \<omega>))"
     by (rule BMP.integrable_const_bound[where B = C])
-      (use gb gDm in \<open>auto intro!: AE_I2\<close>)
+      (use gb gDm in \<open>auto\<close>)
   have int_Z: "integrable ?M Z"
     by (rule BMP.integrable_const_bound[where B = B])
-      (use Zb Z_M in \<open>auto intro!: AE_I2\<close>)
+      (use Zb Z_M in \<open>auto\<close>)
   have int_ZgD: "integrable ?M (\<lambda>\<omega>. Z \<omega> * g (?D \<omega>))"
     by (rule BMP.integrable_const_bound[where B = "B * C"])
       (use Zb gb Z_M gDm in
-        \<open>auto intro!: AE_I2 mult_mono' abs_ge_zero
+        \<open>auto intro!: mult_mono' abs_ge_zero
           simp: abs_mult intro: order_trans\<close>)
   have hce: "has_cond_exp ?M ?F (\<lambda>\<omega>. Z \<omega> * g (?D \<omega>)) (\<lambda>\<omega>. Z \<omega> * ?c)"
   proof (rule has_cond_expI')
@@ -469,7 +464,7 @@ proof -
     have int_iAZ: "integrable ?M (\<lambda>\<omega>. indicat_real A \<omega> * Z \<omega>)"
       by (rule BMP.integrable_const_bound[where B = B])
         (use Zb iAZ_M B0 in
-          \<open>auto intro!: AE_I2 simp: abs_mult indicator_def\<close>)
+          \<open>auto intro!: simp: abs_mult indicator_def\<close>)
     have iv: "BMP.indep_var borel (\<lambda>\<omega>. indicat_real A \<omega> * Z \<omega>)
         borel (\<lambda>\<omega>. g (?D \<omega>))"
       using BMP.indep_var_compose[OF bm_past_increment_indep_var
@@ -592,12 +587,12 @@ proof -
   have int1: "integrable ?M
       (\<lambda>\<omega>. cos (a * \<omega> i s + b) * cos (a * ?D \<omega>))"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use m1 in \<open>auto intro!: AE_I2 mult_le_one
+      (use m1 in \<open>auto intro!: mult_le_one
         abs_cos_le_one abs_sin_le_one simp: abs_mult\<close>)
   have int2: "integrable ?M
       (\<lambda>\<omega>. sin (a * \<omega> i s + b) * sin (a * ?D \<omega>))"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use m2 in \<open>auto intro!: AE_I2 mult_le_one
+      (use m2 in \<open>auto intro!: mult_le_one
         abs_cos_le_one abs_sin_le_one simp: abs_mult\<close>)
   have fun_eq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cos (a * \<omega> i t + b))
       = (\<lambda>\<omega>. cos (a * \<omega> i s + b) * cos (a * ?D \<omega>)
@@ -699,12 +694,12 @@ proof -
   have int1: "integrable ?M
       (\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>))"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use m1 in \<open>auto intro!: AE_I2 mult_le_one
+      (use m1 in \<open>auto intro!: mult_le_one
         abs_cos_le_one abs_sin_le_one simp: abs_mult\<close>)
   have int2: "integrable ?M
       (\<lambda>\<omega>. cos (a * \<omega> i s + b) * sin (a * ?D \<omega>))"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use m2 in \<open>auto intro!: AE_I2 mult_le_one
+      (use m2 in \<open>auto intro!: mult_le_one
         abs_cos_le_one abs_sin_le_one simp: abs_mult\<close>)
   have fun_eq: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. sin (a * \<omega> i t + b))
       = (\<lambda>\<omega>. sin (a * \<omega> i s + b) * cos (a * ?D \<omega>)
@@ -779,10 +774,10 @@ proof -
     using wsM by measurable
   have int_f: "integrable ?M ?f"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use fM in \<open>auto intro!: AE_I2 abs_cos_le_one\<close>)
+      (use fM in \<open>auto intro!: abs_cos_le_one\<close>)
   have int_g: "integrable ?M ?g"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use gM st in \<open>auto intro!: AE_I2 mult_le_one abs_cos_le_one
+      (use gM st in \<open>auto intro!: mult_le_one abs_cos_le_one
         mult_nonneg_nonneg zero_le_power2 simp: abs_mult\<close>)
   have e1: "(\<integral>\<omega> \<in> B. ?f \<omega> \<partial>?M) = (\<integral>\<omega> \<in> B. cond_exp ?M ?F ?f \<omega> \<partial>?M)"
     by (rule sigma_finite_subalgebra.cond_exp_set_integral
@@ -861,10 +856,10 @@ proof -
     using wsM by measurable
   have int_f: "integrable ?M ?f"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use fM in \<open>auto intro!: AE_I2 abs_sin_le_one\<close>)
+      (use fM in \<open>auto intro!: abs_sin_le_one\<close>)
   have int_g: "integrable ?M ?g"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use gM st in \<open>auto intro!: AE_I2 mult_le_one abs_sin_le_one
+      (use gM st in \<open>auto intro!: mult_le_one abs_sin_le_one
         mult_nonneg_nonneg zero_le_power2 simp: abs_mult\<close>)
   have e1: "(\<integral>\<omega> \<in> B. ?f \<omega> \<partial>?M) = (\<integral>\<omega> \<in> B. cond_exp ?M ?F ?f \<omega> \<partial>?M)"
     by (rule sigma_finite_subalgebra.cond_exp_set_integral
@@ -969,10 +964,10 @@ proof -
   qed
   have D_int: "integrable ?M ?D"
     by (rule BMP.integrable_const_bound[where B = 2])
-      (use Dm Dabs in \<open>auto intro!: AE_I2\<close>)
+      (use Dm Dabs in \<open>auto\<close>)
   have D'_int: "integrable ?M ?D'"
     by (rule BMP.integrable_const_bound[where B = 2])
-      (use D'm D'abs in \<open>auto intro!: AE_I2\<close>)
+      (use D'm D'abs in \<open>auto\<close>)
   have ae_D: "AE \<omega> in ?M. ?D' \<omega> = ?D \<omega>"
     using aecoord[OF t0] aecoord[OF s]
     by eventually_elim simp
@@ -1063,10 +1058,10 @@ proof -
   qed
   have D_int: "integrable ?M ?D"
     by (rule BMP.integrable_const_bound[where B = 2])
-      (use Dm Dabs in \<open>auto intro!: AE_I2\<close>)
+      (use Dm Dabs in \<open>auto\<close>)
   have D'_int: "integrable ?M ?D'"
     by (rule BMP.integrable_const_bound[where B = 2])
-      (use D'm D'abs in \<open>auto intro!: AE_I2\<close>)
+      (use D'm D'abs in \<open>auto\<close>)
   have ae_D: "AE \<omega> in ?M. ?D' \<omega> = ?D \<omega>"
     using aecoord[OF t0] aecoord[OF s]
     by eventually_elim simp
@@ -1135,10 +1130,10 @@ proof -
     using cwM by measurable
   have int_f: "integrable ?M ?f"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use fM in \<open>auto intro!: AE_I2 abs_cos_le_one\<close>)
+      (use fM in \<open>auto intro!: abs_cos_le_one\<close>)
   have int_g: "integrable ?M ?g"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use gM exple in \<open>auto intro!: AE_I2 mult_le_one abs_cos_le_one
+      (use gM exple in \<open>auto intro!: mult_le_one abs_cos_le_one
         simp: abs_mult\<close>)
   have bs: "cbmX x0 s \<in> borel_measurable ?F"
     by (rule Stochastic_Process.adapted_process.adapted[OF
@@ -1232,10 +1227,10 @@ proof -
     using cwM by measurable
   have int_f: "integrable ?M ?f"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use fM in \<open>auto intro!: AE_I2 abs_sin_le_one\<close>)
+      (use fM in \<open>auto intro!: abs_sin_le_one\<close>)
   have int_g: "integrable ?M ?g"
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use gM exple in \<open>auto intro!: AE_I2 mult_le_one abs_sin_le_one
+      (use gM exple in \<open>auto intro!: mult_le_one abs_sin_le_one
         simp: abs_mult\<close>)
   have bs: "cbmX x0 s \<in> borel_measurable ?F"
     by (rule Stochastic_Process.adapted_process.adapted[OF
@@ -1489,7 +1484,7 @@ proof -
   qed
   have Yint: "integrable ?M (?Y t)" for t
     by (rule BMP.integrable_const_bound[where B = "\<bar>drR q t\<bar>"])
-      (use YM Yabs in \<open>auto intro!: AE_I2\<close>)
+      (use YM Yabs in \<open>auto\<close>)
   have intcos: "integrable ?M (\<lambda>\<omega>. cos (Bcont (drc q u) (\<omega> 1) + \<phi>))"
     for u
   proof -
@@ -1498,7 +1493,7 @@ proof -
       using measurable_cbmX_coord[of "drc q u" "1 :: 2"] by measurable
     show ?thesis
       by (rule BMP.integrable_const_bound[where B = 1])
-        (use m in \<open>auto intro!: AE_I2 abs_cos_le_one\<close>)
+        (use m in \<open>auto intro!: abs_cos_le_one\<close>)
   qed
   show ?thesis
   proof (intro martingale.intro martingale_axioms.intro)
@@ -1636,7 +1631,7 @@ proof -
   qed
   have Yint: "integrable ?M (?Y t)" for t
     by (rule BMP.integrable_const_bound[where B = "\<bar>drR q t\<bar>"])
-      (use YM Yabs in \<open>auto intro!: AE_I2\<close>)
+      (use YM Yabs in \<open>auto\<close>)
   have intsin: "integrable ?M (\<lambda>\<omega>. sin (Bcont (drc q u) (\<omega> 1) + \<phi>))"
     for u
   proof -
@@ -1645,7 +1640,7 @@ proof -
       using measurable_cbmX_coord[of "drc q u" "1 :: 2"] by measurable
     show ?thesis
       by (rule BMP.integrable_const_bound[where B = 1])
-        (use m in \<open>auto intro!: AE_I2 abs_sin_le_one\<close>)
+        (use m in \<open>auto intro!: abs_sin_le_one\<close>)
   qed
   show ?thesis
   proof (intro martingale.intro martingale_axioms.intro)
@@ -1741,7 +1736,7 @@ proof (rule martingale_vecI)
   qed
 qed
 
-text \<open>Stopping a martingale at a DETERMINISTIC time needs no optional
+text \<open>Stopping a martingale at a deterministic time needs no optional
   stopping: below the horizon it is the base property, above it the
   stopped value is measurable at the earlier time.\<close>
 
@@ -2083,7 +2078,7 @@ proof -
     by (rule continuous_on_compose2[OF Bcont_cont m2 img])
   show ?thesis
     unfolding drC2_def drW_def
-    by (auto intro!: continuous_intros m3)
+    by (intro continuous_intros m3)
 qed
 
 lemma drC2_meas:
@@ -2172,7 +2167,7 @@ proof -
     using B drC2_meas by measurable
   show ?thesis
     by (rule BMP.integrable_const_bound[where B = 1])
-      (use m drC2_abs in \<open>auto intro!: AE_I2 mult_le_one
+      (use m drC2_abs in \<open>auto intro!: mult_le_one
         simp: abs_mult indicator_def\<close>)
 qed
 
@@ -2344,7 +2339,7 @@ proof -
   qed
   show ?thesis
     by (rule BMP.integrable_const_bound[where B = "(q + t) + t"])
-      (use m bnd in \<open>auto intro!: AE_I2\<close>)
+      (use m bnd in \<open>auto\<close>)
 qed
 
 lemma drN_set_integral_identity:
@@ -2418,7 +2413,7 @@ proof -
     qed
     show ?thesis
       by (rule BMP.integrable_const_bound[where B = v])
-        (use m bnd in \<open>auto intro!: AE_I2\<close>)
+        (use m bnd in \<open>auto\<close>)
   qed
   have i_Is: "integrable ?M (\<lambda>\<omega>. indicat_real B \<omega> * ?Is \<omega>)"
   proof -
@@ -2434,7 +2429,7 @@ proof -
     qed
     show ?thesis
       by (rule BMP.integrable_const_bound[where B = "t - s"])
-        (use m bnd in \<open>auto intro!: AE_I2\<close>)
+        (use m bnd in \<open>auto\<close>)
   qed
   have exp_t: "indicat_real B \<omega> * drN q \<phi> t \<omega>
       = indicat_real B \<omega> * ((q + t) * drC2 q \<phi> t \<omega>)
@@ -2508,7 +2503,7 @@ lemma drN_integrable:
   assumes q: "0 < q" and t: "0 \<le> t"
   shows "integrable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) (drN q \<phi> t)"
   by (rule BMP.integrable_const_bound[where B = "(q + t) + t"])
-    (use drN_meas[OF q] drN_abs[OF q t] in \<open>auto intro!: AE_I2\<close>)
+    (use drN_meas[OF q] drN_abs[OF q t] in \<open>auto\<close>)
 
 lemma drC2_max: "drC2 q \<phi> (max u 0) = drC2 q \<phi> u"
 proof -
@@ -2648,14 +2643,13 @@ definition dra :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \
      * (if l = 1 then sin (drW (drc q u) \<omega> + \<phi>)
         else - cos (drW (drc q u) \<omega> + \<phi>)))"
 
-text \<open>Continuity of \<^const>\<open>dra\<close> in TIME, by the same route as
+text \<open>Continuity of \<^const>\<open>dra\<close> in time, by the same route as
   \<^const>\<open>drC2\<close>'s continuity lemma: the clock is continuous on the
   nonnegative reals, the Brownian path is continuous, and the entries are
-  sines and cosines of their composition.  This is what the market locale's
-  covariance time-measurability assumption needs.  The paper gets that
-  property for free, because there the covariation density is an a.e.
-  derivative and so measurable by construction; here the density is
-  primitive, so it has to be proved.\<close>
+  sines and cosines of their composition. The market locale's covariance
+  time-measurability assumption needs this explicitly, since the paper's
+  covariation density is an a.e. derivative and thus measurable by
+  construction, whereas here it is primitive.\<close>
 
 lemma dra_cont:
   assumes q: "0 < q"
@@ -2672,8 +2666,8 @@ proof -
   have ent: "continuous_on UNIV
       (\<lambda>u. dra q \<phi> (max u 0) \<omega> $ j $ l)" for j l
     unfolding dra_def drW_def
-    by (cases "j = 1"; cases "l = 1")
-      (auto intro!: continuous_intros m3)
+    by (cases "j = 1"; cases "l = 1"; simp)
+      (intro continuous_intros m3)+
   have "continuous_on UNIV
       (\<lambda>u. \<chi> j. \<chi> l. dra q \<phi> (max u 0) \<omega> $ j $ l)"
     by (intro continuous_on_vec_lambda ent)
@@ -2697,9 +2691,8 @@ lemma dra_diag_integrable:
     and "set_integrable lborel {0..t} (\<lambda>_ :: real. 1 / 2 :: real)"
 proof -
   show "set_integrable lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2)"
-    by (rule borel_integrable_atLeastAtMost')
-      (auto intro!: continuous_intros
-        continuous_on_subset[OF drC2_cont[OF q] subset_UNIV])
+    by (intro borel_integrable_atLeastAtMost' continuous_intros
+        continuous_on_subset[OF drC2_cont[OF q] subset_UNIV]) simp
   show "set_integrable lborel {0..t} (\<lambda>_ :: real. 1 / 2 :: real)"
     by (rule borel_integrable_atLeastAtMost') simp
 qed
@@ -2973,9 +2966,9 @@ proof -
     using dra_cont[OF q] by (simp add: borel_measurable_continuous_onI)
   \<comment> \<open>On the nonnegative axis — all the locale asks about, and all the
       paper's (1.7) constrains — the truncation by \<open>max u 0\<close> is invisible,
-      so the continuous representative may be used.  Off it the claim
-      would be FALSE: for \<open>u < 0\<close> one has \<open>dras \<dots> u \<omega> = dra q \<phi> u \<omega>\<close>,
-      which is not \<open>dra q \<phi> 0 \<omega>\<close>.\<close>
+      so the continuous representative may be used. Off it the claim
+      fails: for \<open>u < 0\<close>, \<open>dras \<dots> u \<omega> = dra q \<phi> u \<omega>\<close>, not
+      \<open>dra q \<phi> 0 \<omega>\<close>.\<close>
   have eq: "(\<lambda>u. indicat_real {0..} u *\<^sub>R dras q \<phi> T0 u \<omega>)
       = (\<lambda>u. indicat_real {0..} u *\<^sub>R
            (if u \<le> T0 then dra q \<phi> (max u 0) \<omega> else 0))"
@@ -3090,17 +3083,15 @@ proof -
   proof (cases "i = 1")
     case True
     show ?thesis
-      unfolding True
-      by (rule borel_integrable_atLeastAtMost')
-        (auto intro!: continuous_intros
-          continuous_on_subset[OF drC2_cont[OF q] subset_UNIV])
+      unfolding True simp_thms if_True
+      by (intro borel_integrable_atLeastAtMost' continuous_intros
+          continuous_on_subset[OF drC2_cont[OF q] subset_UNIV]) simp
   next
     case False
     show ?thesis
-      using False
-      by (simp, intro borel_integrable_atLeastAtMost')
-        (auto intro!: continuous_intros
-          continuous_on_subset[OF drC2_cont[OF q] subset_UNIV])
+      unfolding False[THEN eq_False[THEN iffD2]] simp_thms if_False
+      by (intro borel_integrable_atLeastAtMost' continuous_intros
+          continuous_on_subset[OF drC2_cont[OF q] subset_UNIV]) simp
   qed
   have eq: "(\<lambda>u. indicat_real {a..b} u *\<^sub>R (dra q \<phi> u \<omega> $ i $ i))
       = (\<lambda>u. indicat_real {a..b} u *\<^sub>R
@@ -3297,12 +3288,12 @@ proof -
   proof (cases "i = 1")
     case True
     show ?thesis
-      unfolding True drW_def by (auto intro!: continuous_intros cW)
+      unfolding drW_def True if_True simp_thms by (intro continuous_intros cW)
   next
     case False
     show ?thesis
-      using False unfolding drW_def
-      by (auto intro!: continuous_intros cW)
+      unfolding drW_def False[THEN eq_False[THEN iffD2]] if_False
+      by (intro continuous_intros cW)
   qed
   show ?thesis
     unfolding drX_def
@@ -3313,8 +3304,7 @@ lemma drXs_cont:
   assumes q: "0 < q" and T0: "0 \<le> T0"
   shows "continuous_on {0..} (\<lambda>t. drXs q \<phi> T0 t \<omega>)"
   unfolding drXs_def
-  by (rule continuous_on_compose2[OF drX_cont[OF q]])
-    (auto intro!: continuous_intros simp: T0)
+  by (intro continuous_on_compose2[OF drX_cont[OF q]] continuous_intros) (auto simp: T0)
 
 subsection \<open>The deterministic-radius market is sufficiently volatile\<close>
 

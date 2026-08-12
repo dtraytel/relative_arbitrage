@@ -257,7 +257,7 @@ proof -
       show "{F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> {Pi\<^sub>E I A |A.
           (\<forall>i. A i \<in> sets (T i)) \<and> finite {i. A i \<noteq> space (T i)}}}
           \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E"
-        by (auto intro!: sigma_sets.Basic Emem)
+        by (auto intro!: Emem)
     qed
     finally have fam: "{F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I T)}
         \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E" .
@@ -1067,7 +1067,7 @@ proof -
           {bmX x0 u -` A \<inter> space ?M | A. A \<in> sets borel})"
       by (rule sets_natural_filtration)
     also have "\<dots> \<subseteq> sigma_sets (space ?M) G1"
-      using E1G1 by (intro sigma_sets_mono) (auto intro: sigma_sets.Basic)
+      using E1G1 by (intro sigma_sets_mono) auto
     finally show ?thesis .
   qed
   have D_sub: "sets (vimage_algebra (space ?M)
@@ -1078,7 +1078,7 @@ proof -
       by (auto simp: G2_def D_def)
     then show ?thesis
       unfolding sets_vimage_algebra bmX_increment_eq
-      by (intro sigma_sets_mono) (auto intro: sigma_sets.Basic)
+      by (intro sigma_sets_mono) auto
   qed
   have "BMP.indep_sets (case_bool (sigma_sets (space ?M) G1)
       (sigma_sets (space ?M) G2)) UNIV"
@@ -1432,12 +1432,12 @@ qed
 
 section \<open>The Brownian market is sufficiently volatile\<close>
 
-text \<open>The main theorem of this theory: the axiomatized market class
-  \<open>\<P>\<^sub>x\<close> of Relative\_Arbitrage\_Stochastic is inhabited.  The
-  \<open>n\<close>-dimensional Brownian market started at \<open>x0\<close>, with constant
-  covariation \<open>mat 1\<close> and any deterministic horizon, satisfies every
-  assumption of the locale --- in particular the martingale-problem
-  identity \<open>dynkin_quadratic\<close> is here a theorem, not an axiom.\<close>
+text \<open>The martingale property \<open>martingale_bmX\<close> above, together with the
+  martingale-problem identity \<open>dynkin_quadratic\<close> proved in the next
+  section, assembles into an instance of \<open>sufficiently_volatile_market\<close>
+  from Relative\_Arbitrage\_Stochastic; the concrete instantiation, for the
+  continuous modification of the market, is carried out in
+  Brownian_Continuous.thy.\<close>
 
 
 
@@ -2036,26 +2036,18 @@ text \<open>Consequently the process form of the martingale problem is
   itself belongs to Ito\_Market, which imports this theory's ambient
   definitions.\<close>
 
-section \<open>The compensated square of a SINGLE coordinate is a martingale\<close>
+section \<open>The compensated square of a single coordinate is a martingale\<close>
 
-text \<open>
-  \<open>martingale_bm_square\<close> above compensates the squared NORM by the trace. That is
-  what \<open>ito_Z\<close> and \<open>dynkin_quadratic\<close> speak about, and it is all the market
-  locales currently demand.
-
-  It is not enough for Lemma 2.2 of arXiv:2512.17702. The tightness chain
-  (\<open>Path_Tightness.tight_on_set_path_laws_vec\<close> \<open>\<leftarrow>\<close>
-  \<open>Increment_Moments.fourth_moment_bound_bounded\<close> \<open>\<leftarrow>\<close>
-  \<open>Stopped_Localization.stopped_covariation\<close>) needs a fourth-moment bound on each
-  COORDINATE separately, hence the compensated square of each coordinate must be
-  a martingale in its own right. A trace identity does not give the coordinate
-  ones, so this has to be proved.
-
-  It costs little: \<open>bm_set_integral_coord_sq_eq\<close> is already the per-coordinate
-  increment identity that \<open>bm_set_integral_sq_eq\<close> sums up. The proof below is the
-  proof of \<open>martingale_bm_square\<close> with the sum removed --- the compensator drops
-  from \<open>CARD('n) * w\<close> to \<open>w\<close>, since \<open>mat 1 $ i $ i = 1\<close>.
-\<close>
+text \<open>\<open>martingale_bm_square\<close> compensates the squared norm by the trace,
+  which is what \<open>ito_Z\<close> and \<open>dynkin_quadratic\<close> speak about. Lemma 2.2 of
+  arXiv:2512.17702 needs more: a fourth-moment bound on each coordinate
+  separately, along the tightness chain
+  \<open>Path_Tightness.tight_on_set_path_laws_vec \<leftarrow>
+  Increment_Moments.fourth_moment_bound_bounded \<leftarrow>
+  Stopped_Localization.stopped_covariation\<close>, so the compensated square of
+  each coordinate must also be a martingale in its own right; a trace
+  identity alone does not give this. The per-coordinate compensator is
+  \<open>w\<close> rather than \<open>CARD('n) * w\<close>, since \<open>mat 1 $ i $ i = 1\<close>.\<close>
 
 lemma bm_compensator_coord:
   assumes u: "0 \<le> u"

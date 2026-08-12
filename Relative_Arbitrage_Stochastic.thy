@@ -90,16 +90,13 @@ qed
 
 section \<open>Sufficiently volatile markets: the class \<open>\<P>\<^sub>x\<close> in martingale-problem form\<close>
 
-text \<open>The compensated square of a SINGLE coordinate. The trace analogue is
-  \<open>Ito_Market.ito_Z\<close>, and until 2026-08-03 the trace version was all the market
-  class demanded --- in the weak form \<open>dynkin_quadratic\<close>, which says only that an
-  expectation is constant in \<open>t\<close>.
-
-  That is strictly weaker than the paper's class (1.7), a martingale problem in
-  which \<open>X\<close> and \<open>X X\<^sup>T - \<int>a\<close> are BOTH martingales, and it is too weak to reach
-  Lemma 2.2: the tightness chain needs a fourth-moment bound COORDINATE BY
-  COORDINATE, and a trace identity does not give the coordinate ones. Hence
-  \<open>coord_Z_martingale\<close> below.\<close>
+text \<open>The compensated square of a single coordinate.  The trace analogue is
+  \<open>Ito_Market.ito_Z\<close>, but the trace version alone -- the weak form
+  \<open>dynkin_quadratic\<close>, saying only that an expectation is constant in \<open>t\<close> -- is
+  strictly weaker than the paper's class (1.7), a martingale problem in which
+  \<open>X\<close> and \<open>X X\<^sup>T - \<int>a\<close> are both martingales.  Lemma 2.2's tightness chain
+  needs a fourth-moment bound coordinate by coordinate, which a trace
+  identity alone does not give; hence \<open>coord_Z_martingale\<close> below.\<close>
 
 definition coord_Z ::
   "(real \<Rightarrow> 'a \<Rightarrow> real^'n::finite) \<Rightarrow> (real \<Rightarrow> 'a \<Rightarrow> real^'n^'n)
@@ -365,56 +362,5 @@ proof -
 qed
 
 end
-
-text \<open>
-  Coverage summary for arXiv:2512.17702.
-
-  Formalized and proved:
-  \<^item> the operator \<open>F\<close> of Eq. (1.9) with the spectral constraints in
-    Courant--Fischer form, the trace bound underlying Lemma 2.1/Ky Fan,
-    feasibility, and the exact evaluation \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> for the ball
-    (Example 3.1, classical part) --- theory Relative_Arbitrage_PDE;
-  \<^item> the spectral theorem for real symmetric matrices, positive
-    semidefiniteness of trace products, and degenerate ellipticity of \<open>F\<close>;
-  \<^item> viscosity sub- and supersolutions of \<open>F(Du, D\<^sup>2u) = 1\<close> and the proof
-    that the explicit \<open>v\<close> of Eq. (3.9) is a viscosity solution on the
-    punctured ball with zero boundary values (the solvability part of
-    Theorem 1.1 for Example 3.1);
-  \<^item> Definition 1.1 (relative arbitrage) for abstract value processes;
-  \<^item> the class \<open>\<P>\<^sub>x\<close> as a locale over the AFP Martingales entry, with the
-    eigenvalue volatility constraints of Eqs. (1.4)/(1.5), in
-    martingale-problem form;
-  \<^item> the exit-time bound \<open>E[tau] \<le> v(x0)\<close> of Example 3.1 in every such
-    market (Theorem expected_exit_time_bound above).
-
-  Proved in the companion theories, without axiomatic input:
-  \<^item> Brownian motion itself (Daniell--Kolmogorov plus Kolmogorov--Chentsov)
-    and a Brownian market satisfying every assumption of the locale
-    \<open>sufficiently_volatile_market\<close> above --- theories Brownian_Motion,
-    Brownian_Motion_Continuity, Brownian_Market;
-  \<^item> the discrete-time quadratic-variation calculus, including optional
-    sampling, and hence the discrete-time counterparts of
-    \<open>dynkin_quadratic\<close>, of the exit-time bound and of the
-    arbitrage-from-exit-time construction, all as theorems --- theories
-    Quadratic_Variation, Relative_Arbitrage_Discrete;
-  \<^item> a concrete such market: the simple symmetric random walk in the
-    plane, stopped on leaving a ball, which instantiates the discrete
-    locales and turns Example 3.1 into the assumption-free statement that
-    its expected exit time from the ball of radius \<open>m + 1\<close> is at most
-    \<open>(m + 1)\<^sup>2\<close> --- theory Random_Walk_Market;
-  \<^item> uniqueness in Theorem 1.1 for Example 3.1 with no comparison
-    principle assumed: the explicit \<open>v\<close> is smooth, so the scaled
-    functions \<open>(1 \<plusminus> e) * v\<close> are strict super-/subsolutions usable as test
-    functions, which replaces the Crandall--Ishii doubling argument ---
-    theory Relative_Arbitrage_Comparison.
-
-  Remaining assumptions (all of them continuous-time constructions that
-  need stochastic integration, which no Isabelle library provides):
-  the martingale-problem identity \<open>dynkin_quadratic\<close> of the locale above
-  (a definition of the model class rather than a known theorem: it ties
-  \<open>acov\<close> to \<open>X\<close>; its discrete counterpart is proved, and it is discharged
-  for the Brownian market), the concrete value process \<open>V\<^sup>\<theta>\<close> of Eq. (1.1),
-  and the optimal martingale of Eq. (3.11).
-\<close>
 
 end

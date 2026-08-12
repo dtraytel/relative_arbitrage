@@ -7,13 +7,8 @@ text \<open>
   \<open>fourth_moment_L2_integrable\<close> / \<open>fourth_moment_L2_bochner\<close>, so the
   subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
   per coordinate, an \<open>L\<^sup>2\<close> martingale with a compensated square whose adapted
-  compensator grows at rate at most \<open>C\<close> — the formal content of the paper's
+  compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's
   admissibility conditions Eqs. (1.7)-(1.8).
-
-  NOTE on imports: this theory imports Path\_Tightness and
-  Stopped\_Localization, which share the DRAFT ancestor Increment\_Moments, so
-  it forms the diamond that PIDE cannot load (STATUS.md, environment traps);
-  it is verified by the batch build only.
 \<close>
 
 theory Path_Tightness_Market
@@ -77,21 +72,21 @@ proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0
 qed
 
 
-section \<open>Item 2.1 of the Theorem 1.1 plan: the exit time is upper semicontinuous\<close>
+section \<open>The exit time is upper semicontinuous\<close>
 
-text \<open>The join.  \<open>Exit_Time.etime_less_iff\<close> says being strictly below \<open>c\<close> is
-  WITNESSED by a single time \<open>r < c\<close> at which the path is already in \<open>A\<close>;
-  \<open>Path_Space.open_hit_strictly_before\<close> says the witnessed condition is OPEN in
-  the path topology.  Together they give upper semicontinuity of the exit time,
-  which is what Larsson--Ruf's Lemma 2.1 needs and what feeds item 2.3.
+text \<open>The join.  \<open>Exit_Time.etime_less_iff\<close> says being strictly below \<open>c\<close>
+  is witnessed by a single time \<open>r < c\<close> at which the path is already in
+  \<open>A\<close>; \<open>Path_Space.open_hit_strictly_before\<close> says the witnessed condition
+  is open in the path topology.  Together they give upper semicontinuity of
+  the exit time, which is what Larsson--Ruf's Lemma 2.1 needs.
 
-  This theory is the ONLY one in the development that sees both halves:
+  This is the only theory in the development that sees both halves:
   \<open>Exit_Time\<close> sits under \<open>Ito_Market\<close> while \<open>Path_Space\<close> sits under the AFP
   Prokhorov entry, and the two branches meet nowhere else.
 
-  The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one --- a
-  path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close> EVERY path
-  qualifies and the set is the whole space.\<close>
+  The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one:
+  a path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close>
+  every path qualifies and the set is the whole space.\<close>
 
 lemma etime_usc_on_paths:
   fixes T c :: real and A :: "'b::polish_space set"
@@ -233,13 +228,10 @@ proof -
   define GG where "GG = (\<lambda>i. SOME G. G \<in> sets (MM i)
       \<and> (AE \<omega> in MM i. \<omega> \<in> G)
       \<and> (\<forall>\<omega>\<in>G. \<omega> \<in> space (MM i) \<and> good i \<omega>))"
-  \<comment> \<open>Extract the defining property ONCE, then project.  Using
-      \<^verbatim>\<open>auto simp: GG_def\<close> for each conjunct separately is very slow: it
-      unfolds \<^verbatim>\<open>GG_def\<close> into the goal, leaving a \<^verbatim>\<open>SOME\<close>-term that the
-      simplifier then rewrites underneath — inside \<^verbatim>\<open>good\<close>, inside the
-      \<^verbatim>\<open>AE\<close>, and inside the bounded quantifier — on each of the three
-      calls.  \<^verbatim>\<open>someI_ex\<close> already delivers the conjunction, so no search
-      is needed at all.\<close>
+  \<comment> \<open>Extract the defining property once, then project: unfolding
+      \<^verbatim>\<open>GG_def\<close> afresh for each conjunct would force the simplifier to
+      search under the \<^verbatim>\<open>SOME\<close>-term three times, so \<^verbatim>\<open>someI_ex\<close> is
+      applied once instead.\<close>
   have GGspec: "GG i \<in> sets (MM i)
       \<and> (AE \<omega> in MM i. \<omega> \<in> GG i)
       \<and> (\<forall>\<omega>\<in>GG i. \<omega> \<in> space (MM i) \<and> good i \<omega>)" for i

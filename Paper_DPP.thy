@@ -3,19 +3,18 @@ theory Paper_DPP
 begin
 
 text \<open>The dynamic programming principle of Proposition 2.4 of
-  arXiv:2512.17702, split off from \<open>Paper_Bridge\<close>, which had grown past
-  13,000 lines.  Everything here is about the VALUE FUNCTION rather than the
-  class: the pasting bound, the \<open>\<ge>\<close> half of (2.9) at a deterministic time,
-  the reduction of the \<open>\<le>\<close> half to a single conditioning statement, and the
-  conditioning layer that statement is being built from.\<close>
+  arXiv:2512.17702, for the value function: the pasting bound, the
+  \<open>\<ge>\<close> half of (2.9) at a deterministic time, the reduction of the
+  \<open>\<le>\<close> half to a single conditioning statement, and the conditioning
+  theory that statement rests on.\<close>
 
-section \<open>Towards the dynamic programming principle: the pasting bound\<close>
+section \<open>The pasting bound for the dynamic programming principle\<close>
 
 text \<open>The kernel analogue of @{thm [source] paper_v_paste_ge}: an
-  almost-sure lower bound on the exit time of the KERNEL glue is a lower
-  bound for @{term paper_v}.  This is what turns
-  @{thm [source] paper_pair_class_kglue_law'} into an inequality about the
-  value function, and it is the step the \<open>\<ge>\<close> half of (2.9) is built on.\<close>
+  almost-sure lower bound on the exit time of the kernel glue is a lower
+  bound for @{term paper_v}, turning @{thm [source]
+  paper_pair_class_kglue_law'} into an inequality about the value
+  function.\<close>
 
 theorem paper_v_kpaste_ge:
   fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
@@ -78,11 +77,10 @@ qed
 
 subsection \<open>The pathwise form of the dynamic programming bound\<close>
 
-text \<open>A strict variant of @{thm [source] pexit_pglue_split}: the continuation
-  only has to stay in \<open>K\<close> on the HALF-OPEN interval \<open>{0..<c}\<close>.  The proof is
-  the same --- the case analysis already produces a strict inequality --- and
-  the strict form is what the essential infimum supplies, since
-  \<open>c \<le> pexit\<close> says nothing about the path AT time \<open>c\<close>.\<close>
+text \<open>A strict variant of @{thm [source] pexit_pglue_split}: the
+  continuation only has to stay in \<open>K\<close> on the half-open interval
+  \<open>{0..<c}\<close>, which is the form the essential infimum supplies, since
+  \<open>c \<le> pexit\<close> says nothing about the path at time \<open>c\<close>.\<close>
 
 lemma pexit_pglue_split':
   fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
@@ -133,13 +131,12 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>The pathwise dynamic programming bound at the DETERMINISTIC time \<open>r\<close>.
+text \<open>The pathwise dynamic programming bound at a deterministic time \<open>r\<close>.
   The two summands are the paper's \<open>r \<and> \<tau>\<^sub>K\<close> and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>: the
-  first piece's own exit time is a lower bound in all cases
-  (@{thm [source] pexit_pglue_ge}), and when the first piece has NOT exited by
-  \<open>r\<close> --- which for the capped exit time is exactly
-  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>, with no path continuity needed --- the
-  continuation adds its own survival time on top.\<close>
+  first piece's exit time is a lower bound in all cases (@{thm [source]
+  pexit_pglue_ge}), and when it has not exited by \<open>r\<close> --- exactly
+  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close> --- the continuation adds its own
+  survival time on top.\<close>
 
 lemma pexit_pglue_dpp:
   fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
@@ -190,17 +187,17 @@ next
   with le show ?thesis by simp
 qed
 
-subsection \<open>The selector as a kernel into the CLASS\<close>
+subsection \<open>The selector as a kernel into the class\<close>
 
-text \<open>@{thm [source] paper_v_measurable_selector_kernel} makes the selector a
-  Giry-monad kernel, which is hypothesis \<^emph>\<open>Kp\<close> of
-  @{thm [source] paper_pair_class_kglue_law'}.  That theorem also needs
-  hypothesis \<^emph>\<open>Kb\<close>: measurability into the CLASS with its Lévy--Prokhorov
-  metric, for the natural filtration.  Both come from the same selector, so we
-  package them together --- measurability into the subspace is free, because
-  the selector lands in the subspace and
-  @{thm [source] paper_pair_class_compact_metric_space} identifies the metric
-  topology of the class with the subspace topology of weak convergence.\<close>
+text \<open>@{thm [source] paper_v_measurable_selector_kernel} makes the selector
+  a Giry-monad kernel, which is hypothesis \<^emph>\<open>Kp\<close> of @{thm [source]
+  paper_pair_class_kglue_law'}.  That theorem also needs hypothesis
+  \<^emph>\<open>Kb\<close>: measurability into the class with its Levy-Prokhorov metric, for
+  the natural filtration.  Both come from the same selector: measurability
+  into the subspace is free, because the selector lands in the subspace and
+  @{thm [source] paper_pair_class_compact_metric_space} identifies the
+  metric topology of the class with the subspace topology of weak
+  convergence.\<close>
 
 theorem paper_v_measurable_selector_kernel':
   fixes K :: "(real^'n::finite) set"
@@ -300,9 +297,8 @@ subsection \<open>The value function is Borel measurable\<close>
 
 text \<open>Clause (1) --- upper semicontinuity --- makes every sublevel set
   \<open>{y. v y < b}\<close> open, and the horizon bound makes \<open>v\<close> finite, so the real
-  version \<open>enn2real \<circ> v\<close> is Borel measurable.  The dynamic programming
-  principle needs this in order to even STATE its integrand as a random
-  variable.\<close>
+  version \<open>enn2real \<circ> v\<close> is Borel measurable, as needed to state the
+  dynamic programming principle's integrand as a random variable.\<close>
 
 lemma paper_v_open_less:
   fixes K :: "(real^'n::finite) set" and b :: ennreal
@@ -376,16 +372,16 @@ text \<open>Proposition 2.4 of arXiv:2512.17702 states the dynamic programming
   principle
   \[ v(x) \;=\; \sup_{P \in \mathcal P_x} P\text{-}\operatorname*{ess\,inf}
       \bigl(\theta \wedge \tau_K + v(X_\theta)\,1_{\{\theta \le \tau_K\}}\bigr). \]
-  This is its \<open>\<ge>\<close> half at a DETERMINISTIC time \<open>\<theta> = r\<close>, which is the half the
-  supersolution argument of \<section>3.2 consumes.  Both summands are read off the
-  first piece: \<open>\<theta> \<and> \<tau>_K\<close> is the exit time capped at \<open>r\<close>, i.e.
+  This is its \<open>\<ge>\<close> half at a deterministic time \<open>\<theta> = r\<close>.  Both summands are
+  read off the first piece: \<open>\<theta> \<and> \<tau>_K\<close> is the exit time capped at \<open>r\<close>, i.e.
   \<open>pexit r K\<close>, and \<open>1\<^sub>{\<theta> \<le> \<tau>_K}\<close> is \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>.
 
-  The construction: restrict \<open>P\<close> to \<open>[0,r]\<close>, continue from the endpoint with
-  the law the measurable selector picks there, and paste.  The pasted law is
-  in the class by @{thm [source] paper_pair_class_kglue_law'}, its exit time
+  The proof restricts \<open>P\<close> to \<open>[0,r]\<close>, continues from the endpoint with the
+  law the measurable selector picks there, and pastes: the pasted law is in
+  the class by @{thm [source] paper_pair_class_kglue_law'}, its exit time
   dominates the DPP integrand pathwise by @{thm [source] pexit_pglue_dpp},
-  and @{thm [source] paper_v_kpaste_ge} turns that into a bound on \<open>v(x)\<close>.\<close>
+  and @{thm [source] paper_v_kpaste_ge} turns that into a bound on
+  \<open>v(x)\<close>.\<close>
 
 theorem paper_v_dpp_ge_const:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -580,10 +576,9 @@ proof -
     by (rule paper_v_kpaste_ge[OF r rT T0 L1 K QC Kp Kb Kc stay])
 qed
 
-text \<open>The essential infimum form: the DPP integrand is bounded by \<open>T\<close>, so its
-  essential infimum is finite and @{thm [source] ess_inf_time_AE} turns it
-  into an almost-sure bound with a REAL constant, which is what the pasting
-  construction consumes.\<close>
+text \<open>The essential infimum form: the DPP integrand is bounded by \<open>T\<close>, so
+  its essential infimum is finite, and @{thm [source] ess_inf_time_AE} turns
+  it into an almost-sure bound with a real constant.\<close>
 
 theorem paper_v_dpp_ge:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -687,11 +682,12 @@ qed
 
 subsection \<open>The \<open>\<le>\<close> half of (2.9), reduced to conditioning\<close>
 
-text \<open>Off the survival event the horizon cap at \<open>r\<close> is invisible: a path that
-  has already left \<open>K\<close> by time \<open>r\<close> has the same exit time whichever horizon it
-  is measured against.  Note the event is \<open>\<not> (pexit r K f = r \<and> f r \<in> K)\<close>,
-  which is genuinely weaker than \<open>pexit r K f < r\<close> --- a path may exit exactly
-  AT \<open>r\<close>, and @{thm [source] pexit_stable_above_T} does not cover that case.\<close>
+text \<open>Off the survival event the horizon cap at \<open>r\<close> is invisible: a path
+  that has already left \<open>K\<close> by time \<open>r\<close> has the same exit time whichever
+  horizon it is measured against.  The event
+  \<open>\<not> (pexit r K f = r \<and> f r \<in> K)\<close> is genuinely weaker than
+  \<open>pexit r K f < r\<close>, since a path may exit exactly at \<open>r\<close>, a case
+  @{thm [source] pexit_stable_above_T} does not cover.\<close>
 
 lemma pexit_cap_eq:
   fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
@@ -714,21 +710,20 @@ next
   qed
 qed
 
-text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a SINGLE statement about
+text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a single statement about
   conditioning, and no other property of the class is needed:
 
   \begin{quote}
   if the exit time of \<open>P \<in> \<P>\<^sub>x\<close> is almost surely at least \<open>c\<close>, then almost
-  surely ON THE SURVIVAL EVENT \<open>{r \<le> \<tau>\<^sub>K}\<close> the value at the position reached
+  surely on the survival event \<open>{r \<le> \<tau>\<^sub>K}\<close> the value at the position reached
   is at least the time still to run, \<open>c - r\<close>.
   \end{quote}
 
   That is exactly the statement that the conditional law of the future given
   \<open>\<F>\<^sub>r\<close> is, almost surely, a member of the class started at \<open>X\<^sub>r\<close>, so that its
-  own essential infimum is bounded by \<open>v(X\<^sub>r)\<close>; it is the regular conditional
-  distribution argument, and it is the only thing still missing from the
-  dynamic programming principle at a deterministic time.  Everything OFF the
-  survival event is unconditional, by @{thm [source] pexit_cap_eq}.\<close>
+  own essential infimum is bounded by \<open>v(X\<^sub>r)\<close>; it is a regular conditional
+  distribution argument.  Off the survival event it is unconditional, by
+  @{thm [source] pexit_cap_eq}.\<close>
 
 theorem paper_v_dpp_le_of_cond:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -880,13 +875,12 @@ proof (rule order.antisym)
     by (rule paper_v_dpp_sup_ge[OF r rT L1 K])
 qed
 
-section \<open>Conditioning on the past: towards the \<open>\<le>\<close> half\<close>
+section \<open>Conditioning on the past for the \<open>\<le>\<close> half\<close>
 
-text \<open>The remaining obligation of the dynamic programming principle at a
-  deterministic time is the conditioning statement isolated in
-  @{thm [source] paper_v_dpp_le_of_cond}.  This section builds its
-  ingredients: the exit time SPLITS at \<open>r\<close> on the survival event, and the
-  rebased future \<open>pfut\<close> is a measurable map of path spaces.\<close>
+text \<open>This section builds the ingredients for the conditioning statement
+  isolated in @{thm [source] paper_v_dpp_le_of_cond}: the exit time splits at
+  \<open>r\<close> on the survival event, and the rebased future \<open>pfut\<close> is a measurable
+  map of path spaces.\<close>
 
 lemma cInf_shift_real:
   fixes S :: "real set"
@@ -917,7 +911,7 @@ proof -
 qed
 
 text \<open>On the survival event the exit time splits exactly: the first piece
-  contributes \<open>r\<close> and the rest is the exit time of the TIME-SHIFTED path
+  contributes \<open>r\<close> and the rest is the exit time of the time-shifted path
   measured against the shortened horizon.  This is the identity that turns
   the almost-sure bound \<open>\<tau>\<^sub>K \<ge> c\<close> into a bound on the future.\<close>
 
@@ -1099,12 +1093,11 @@ lemma pexit_pfut:
 
 subsection \<open>Conditioning on an event of the past keeps martingales martingales\<close>
 
-text \<open>The structural fact the \<open>\<le>\<close> half turns on.  Conditioning on an event
-  \<open>A\<close> of the PAST rescales the measure by a density that is measurable for
-  the filtration at time \<open>0\<close>; a set integral over \<open>C \<in> \<F>\<^sub>i\<close> then becomes one
-  over \<open>C \<inter> A \<in> \<F>\<^sub>i\<close>, and the martingale property applies unchanged.  There
-  is no approximation and no monotone-class step --- that is what makes this
-  route to the conditional law elementary.\<close>
+text \<open>Conditioning on an event \<open>A\<close> of the past rescales the measure by a
+  density that is measurable for the filtration at time \<open>0\<close>; a set integral
+  over \<open>C \<in> \<F>\<^sub>i\<close> then becomes one over \<open>C \<inter> A \<in> \<F>\<^sub>i\<close>, and the martingale
+  property applies unchanged, with no approximation or monotone-class
+  step.\<close>
 
 lemma uniform_measure_density_real:
   assumes M: "prob_space M" and pos: "0 < measure M A"
@@ -1349,9 +1342,9 @@ proof -
   then show ?thesis unfolding iff .
 qed
 
-text \<open>Clause (ii) is inheritance: the future's increment over \<open>[p,q]\<close> IS the
-  path's increment over \<open>[r+p, r+q]\<close>, the base point cancelling, and the two
-  time spans agree.\<close>
+text \<open>Clause (ii) is inheritance: the future's increment over \<open>[p,q]\<close> is
+  the path's increment over \<open>[r+p, r+q]\<close>, the base point cancelling, and the
+  two time spans agree.\<close>
 
 lemma pfut_law_diffquot:
   fixes P :: "('n::finite pairpath) measure"
@@ -1481,30 +1474,20 @@ proof -
     by (rule martingale_future_of_past[OF r rT setsP PS A pos Zm mg])
 qed
 
-text \<open>Clause (iv) does NOT follow the same way, and the obstruction is
-  algebraic rather than probabilistic: \<^const>\<open>outerp\<close> is QUADRATIC, so the
-  compensated process of the rebased future is not the increment of the
-  compensated process.  Expanding,
-
-  \<^item> \<open>outerp (a - b) = outerp a - (a \<otimes> b + b \<otimes> a) + outerp b\<close>,
-
-  so with \<open>a = X\<^sub>t\<close>, \<open>b = X\<^sub>r\<close>,
-
-  \<^item> \<open>outerp (X\<^sub>t - X\<^sub>r) - (Y\<^sub>t - Y\<^sub>r)
+text \<open>Clause (iv) does not follow the same way as clause (iii), because
+  \<^const>\<open>outerp\<close> is quadratic: the compensated process of the rebased
+  future is not the increment of the compensated process.  Expanding
+  \<open>outerp (a - b) = outerp a - (a \<otimes> b + b \<otimes> a) + outerp b\<close> with
+  \<open>a = X\<^sub>t\<close>, \<open>b = X\<^sub>r\<close> gives
+  \<open>outerp (X\<^sub>t - X\<^sub>r) - (Y\<^sub>t - Y\<^sub>r)
        = (outerp X\<^sub>t - Y\<^sub>t) - (X\<^sub>t \<otimes> X\<^sub>r + X\<^sub>r \<otimes> X\<^sub>t) + (outerp X\<^sub>r + Y\<^sub>r)\<close>.
-
   The first bracket is clause (iv) for \<open>P\<close>; the third is constant in \<open>t\<close> and
-  \<open>\<F>\<^sub>r\<close>-measurable.  The middle term is the real work: it is a martingale
-  only because \<open>X\<^sub>r\<close> is \<open>\<F>\<^sub>r\<close>-measurable, so what is needed is "pulling out
-  what is known" --- a martingale multiplied entrywise by a fixed
-  \<open>F 0\<close>-measurable factor is again a martingale.  The AFP has the
-  conditional-expectation half of that (\<open>cond_exp_measurable_mult\<close> in
-  \<open>Conditional_Expectation_Banach\<close>, for REAL-valued factors); what is
-  missing here is the martingale-level statement, the entrywise lift to
-  \<open>real^'n^'n\<close> through @{thm [source] martingale_matI}, and the
-  integrability of \<open>X\<^sub>t $ i * X\<^sub>r $ j\<close>, which the class's fourth moments
-  (@{thm [source] paper_pair_class_fourth_moment}) supply by
-  Cauchy--Schwarz.\<close>
+  \<open>\<F>\<^sub>r\<close>-measurable.  The middle, cross term is a martingale because \<open>X\<^sub>r\<close> is
+  \<open>\<F>\<^sub>r\<close>-measurable: a martingale multiplied entrywise by a fixed
+  \<open>F 0\<close>-measurable factor is again a martingale, lifted entrywise to
+  \<open>real^'n^'n\<close> through @{thm [source] martingale_matI}, with integrability
+  of \<open>X\<^sub>t $ i * X\<^sub>r $ j\<close> supplied by Cauchy--Schwarz from the class's fourth
+  moments (@{thm [source] paper_pair_class_fourth_moment}).\<close>
 
 lemma outerp_diff:
   fixes a b :: "real^'n::finite"
@@ -1519,11 +1502,11 @@ lemma outerp_diff_compensated:
         + (outerp b + Yb)"
   by (simp add: outerp_diff)
 
-text \<open>"Pulling out what is known", at the MARTINGALE level.  The AFP has the
-  conditional-expectation half (\<open>cond_exp_measurable_mult\<close>); this is what
-  the cross term of @{thm [source] outerp_diff_compensated} actually needs.
-  Note the factor must be measurable for the filtration at the INITIAL time,
-  not merely somewhere along it --- otherwise it is not adapted.\<close>
+text \<open>The martingale-level form of "pulling out what is known": the AFP's
+  conditional-expectation version, \<open>cond_exp_measurable_mult\<close>, is what the
+  cross term of @{thm [source] outerp_diff_compensated} needs.  The factor
+  must be measurable for the filtration at the initial time, not merely
+  somewhere along it, or it is not adapted.\<close>
 
 lemma martingale_mult_measurable:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and v :: "'a \<Rightarrow> real"
@@ -1643,10 +1626,9 @@ proof (rule martingale_matI)
     unfolding eq by (rule m)
 qed
 
-text \<open>Differences of martingales.  @{thm [source] martingale_add} is in the
-  development but its subtractive companion is in neither the development nor
-  the AFP, and the decomposition of
-  @{thm [source] outerp_diff_compensated} needs it.\<close>
+text \<open>Differences of martingales: the subtractive companion to
+  @{thm [source] martingale_add}, needed by the decomposition of
+  @{thm [source] outerp_diff_compensated}.\<close>
 
 lemma martingale_diff:
   fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
@@ -1771,19 +1753,14 @@ proof -
   show ?thesis using mg1 by (simp add: eqmin)
 qed
 
-text \<open>The compensated process OF THE REBASED FUTURE, as a martingale under
-  \<open>P\<close> itself in the shifted filtration.  This is the clause-(iv) counterpart
-  of @{thm [source] paper_pair_class_shifted_X_martingale}, and it is NOT the
-  same statement: \<^const>\<open>outerp\<close> is quadratic, so the compensated process of
-  the rebased future is not the increment of the compensated process.  The
-  decomposition is @{thm [source] outerp_diff_compensated} --- the class's own
+text \<open>The compensated process of the rebased future is a martingale under
+  \<open>P\<close> itself, in the shifted filtration.  This is the clause-(iv) analogue
+  of @{thm [source] paper_pair_class_shifted_X_martingale}, but not the same
+  statement, since \<^const>\<open>outerp\<close> is quadratic: the decomposition
+  @{thm [source] outerp_diff_compensated} splits it into the class's own
   clause (iv) restarted at \<open>r\<close>, minus the cross term
-  (@{thm [source] martingale_cross_measurable}, which is where
-  \<open>\<F>\<^sub>r\<close>-measurability of \<open>X\<^sub>r\<close> is used), plus an \<open>\<F>\<^sub>r\<close>-measurable constant.
-
-  Both the positive-measure conditioning route (\<open>pfut_law_comp_martingale\<close>)
-  and the kernel route of (b3) consume it, which is why it is stated
-  separately rather than inlined.\<close>
+  (@{thm [source] martingale_cross_measurable}, using \<open>\<F>\<^sub>r\<close>-measurability of
+  \<open>X\<^sub>r\<close>), plus an \<open>\<F>\<^sub>r\<close>-measurable constant.\<close>
 
 lemma paper_pair_class_pfut_comp_martingale:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -1937,11 +1914,10 @@ proof -
   qed
 qed
 
-text \<open>Clause (iv) for the conditioned future law.  The decomposition is
-  @{thm [source] outerp_diff_compensated}; the three summands are the class's
-  own clause (iv) restarted at \<open>r\<close>, the cross term
-  (@{thm [source] martingale_cross_measurable}, which is where \<open>\<F>\<^sub>r\<close>-
-  measurability of \<open>X\<^sub>r\<close> is used), and an \<open>\<F>\<^sub>r\<close>-measurable constant.\<close>
+text \<open>Clause (iv) for the conditioned future law, by the decomposition
+  @{thm [source] outerp_diff_compensated}: the class's own clause (iv)
+  restarted at \<open>r\<close>, the cross term (@{thm [source]
+  martingale_cross_measurable}), and an \<open>\<F>\<^sub>r\<close>-measurable constant.\<close>
 
 lemma pfut_law_comp_martingale:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -2065,10 +2041,10 @@ qed
 subsection \<open>The survival event belongs to the past\<close>
 
 text \<open>\<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close> says exactly that the path never
-  leaves \<open>K\<close> on \<open>{0..r}\<close>, and for a CONTINUOUS path against a CLOSED \<open>K\<close>
-  that is decided by the rational times alone.  So the survival event is
-  \<open>\<F>\<^sub>r\<close>-measurable --- which is what lets it be used as the conditioning
-  event \<open>A\<close> of @{thm [source] paper_pair_class_future_of_past}.\<close>
+  leaves \<open>K\<close> on \<open>{0..r}\<close>, and for a continuous path against a closed \<open>K\<close>
+  that is decided by the rational times alone, so the survival event is
+  \<open>\<F>\<^sub>r\<close>-measurable and can be used as the conditioning event \<open>A\<close> of
+  @{thm [source] paper_pair_class_future_of_past}.\<close>
 
 lemma survival_event_filtration:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
@@ -2160,15 +2136,14 @@ proof -
     unfolding eq using cnt ne coord by (intro sets.countable_INT') auto
 qed
 
-subsection \<open>Towards the regular conditional distribution\<close>
+subsection \<open>A set-integral criterion for the conditional law\<close>
 
-text \<open>The workhorse of the disintegration argument.  Every condition
-  defining the class is LINEAR in the measure --- \<open>\<mu> C = 1\<close> for the initial
-  and covariation clauses, \<open>\<integral> (X\<^sub>t - X\<^sub>s) 1\<^sub>A d\<mu> = 0\<close> for the martingale
-  clauses --- so passing from "it holds for \<open>P(\<sqdot> | A)\<close>, every \<open>A \<in> \<F>\<^sub>r\<close>" to
-  "it holds for the conditional law at almost every \<open>\<omega>\<close>" never needs a
-  separation theorem.  It only needs THIS: a \<open>\<G>\<close>-measurable function all of
-  whose \<open>\<G>\<close>-set integrals vanish is almost everywhere zero.\<close>
+text \<open>Every condition defining the class is linear in the measure ---
+  \<open>\<mu> C = 1\<close> for the initial and covariation clauses, \<open>\<integral> (X\<^sub>t - X\<^sub>s) 1\<^sub>A d\<mu> = 0\<close>
+  for the martingale clauses --- so passing from "it holds for
+  \<open>P(\<sqdot> | A)\<close>, every \<open>A \<in> \<F>\<^sub>r\<close>" to "it holds for the conditional law at
+  almost every \<open>\<omega>\<close>" needs only that a \<open>\<G>\<close>-measurable function all of whose
+  \<open>\<G>\<close>-set integrals vanish is almost everywhere zero.\<close>
 
 lemma AE_nonpos_of_set_integral_zero:
   fixes f :: "'a \<Rightarrow> real"
@@ -2219,12 +2194,13 @@ proof -
   show ?thesis using up dn by eventually_elim simp
 qed
 
-subsection \<open>Step (b1): the conditional law of the future given the past\<close>
+subsection \<open>The conditional law of the future given the past\<close>
 
 text \<open>The only hypothesis of AFP \<^theory>\<open>Disintegration.Disintegration\<close> that
-  is not automatic here is that the future path space is standard Borel, and
-  that is immediate: \<open>standard_borel\<close> asks for SOME Polish topology whose
-  Borel sets agree, and the path space already IS the Borel algebra of one.\<close>
+  is not automatic here is that the future path space is standard Borel: this
+  is immediate, since \<open>standard_borel\<close> only asks for some Polish topology
+  whose Borel sets agree, and the path space already is the Borel algebra of
+  one.\<close>
 
 lemma standard_borel_path_metric:
   "standard_borel (borel_of (mtopology_of
@@ -2258,10 +2234,10 @@ proof -
     using standard_borel_path_metric by blast
 qed
 
-text \<open>The regular conditional distribution itself.  Note what the AFP
-  actually delivers: \<open>disintegration\<close> constrains RECTANGLES only.  That is
-  enough, because the next step converts it to our own \<open>ksemi\<close>, for which the
-  almost-sure and integral forms are already proved.\<close>
+text \<open>The regular conditional distribution itself.  The AFP's
+  \<open>disintegration\<close> constrains rectangles only, which suffices because the
+  next step converts it to \<open>ksemi\<close>, for which the almost-sure and integral
+  forms are already proved.\<close>
 
 theorem paper_pair_class_rcd:
   fixes P :: "('n::finite pairpath) measure"
@@ -2356,7 +2332,7 @@ proof -
   qed
 qed
 
-text \<open>The semidirect product on a RECTANGLE --- the shape in which the AFP's
+text \<open>The semidirect product on a rectangle, the shape in which the AFP's
   disintegration arrives.\<close>
 
 lemma emeasure_ksemi_rect:
@@ -2394,12 +2370,11 @@ proof -
   finally show ?thesis by (simp add: nn_integral_set_ennreal mult.commute)
 qed
 
-text \<open>And the conversion.  Two probability measures on \<open>?X \<Otimes>\<^sub>M ?Y\<close> that agree
-  on the rectangle \<pi>-system are equal, so the AFP's rectangle-level
-  disintegration IS our semidirect product --- after which
-  @{thm [source] AE_ksemi} and @{thm [source] nn_integral_ksemi}, proved for
-  the kernel-pasting work, give the almost-sure and integral forms with no
-  further measure-theoretic induction.\<close>
+text \<open>Two probability measures on \<open>?X \<Otimes>\<^sub>M ?Y\<close> that agree on the rectangle
+  \<pi>-system are equal, so the AFP's rectangle-level disintegration is the
+  semidirect product \<open>ksemi\<close>, after which @{thm [source] AE_ksemi} and
+  @{thm [source] nn_integral_ksemi} give the almost-sure and integral forms
+  with no further measure-theoretic induction.\<close>
 
 theorem paper_pair_class_rcd_ksemi:
   fixes P :: "('n::finite pairpath) measure"
@@ -2479,12 +2454,12 @@ proof -
   show ?thesis by (rule that[OF Km eq])
 qed
 
-subsection \<open>Step (b2): the almost-sure clauses pass to the kernel\<close>
+subsection \<open>The almost-sure clauses pass to the kernel\<close>
 
 text \<open>Clauses (i) and (ii) of (1.7) both say "\<open>\<mu> C = 1\<close> for a fixed
-  measurable \<open>C\<close>", and that is LINEAR in \<open>\<mu>\<close>.  So each transfers to the
-  kernel by a single nonnegative-integral argument: the complement has
-  integral \<open>0\<close>, hence vanishes almost everywhere.\<close>
+  measurable \<open>C\<close>", linear in \<open>\<mu>\<close>, so each transfers to the kernel by a
+  single nonnegative-integral argument: the complement has integral \<open>0\<close>,
+  hence vanishes almost everywhere.\<close>
 
 lemma AE_kernel_full:
   assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
@@ -2527,8 +2502,8 @@ proof -
 qed
 
 text \<open>Clause (i) for the kernel.  It is the easiest of the four, because
-  @{thm [source] pfut_zero} makes the initial condition hold IDENTICALLY:
-  the offending set has EMPTY preimage, not merely a null one.\<close>
+  @{thm [source] pfut_zero} makes the initial condition hold identically: the
+  offending set has empty preimage, not merely a null one.\<close>
 
 lemma pfut_rcd_start:
   fixes P :: "('n::finite pairpath) measure"
@@ -2605,8 +2580,8 @@ qed
 
 text \<open>A rational-hypothesis variant of
   @{thm [source] paper_pair_class_diffquot_of_pairs}.  The original demands
-  the pairwise bound at ALL real pairs, which an almost-sure argument cannot
-  supply --- only COUNTABLY many conditions survive the passage from "for
+  the pairwise bound at all real pairs, which an almost-sure argument cannot
+  supply, since only countably many conditions survive the passage from "for
   each, almost surely" to "almost surely, for all".  Its proof already uses
   the hypothesis at rational pairs only, so the weakening is free.\<close>
 
@@ -2724,11 +2699,10 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The last piece of plumbing: @{thm [source] AE_kernel_full} delivers
-  \<open>emeasure (\<kappa> p) C = 1\<close>, while the class's clauses are stated as \<open>AE\<close>
-  properties.  The library's @{thm [source] prob_space.AE_prob_1} is phrased
-  with the REAL measure, so the bridge goes through
-  @{thm [source] finite_measure.emeasure_eq_measure}.\<close>
+text \<open>@{thm [source] AE_kernel_full} delivers \<open>emeasure (\<kappa> p) C = 1\<close>, while
+  the class's clauses are stated as \<open>AE\<close> properties.  The library's
+  @{thm [source] prob_space.AE_prob_1} is phrased with the real measure, so
+  the bridge goes through @{thm [source] finite_measure.emeasure_eq_measure}.\<close>
 
 lemma AE_mem_of_emeasure_1:
   assumes PS: "prob_space M" and one: "emeasure M C = 1"
@@ -2739,10 +2713,10 @@ proof -
   then show ?thesis by (rule PM.AE_prob_1)
 qed
 
-text \<open>Clause (ii) for the conditional law.  Only RATIONAL pairs can be
-  handled --- an almost-sure statement survives only countably many
-  conditions --- which is exactly what
-  @{thm [source] paper_pair_class_diffquot_of_rational_pairs} was made for.\<close>
+text \<open>Clause (ii) for the conditional law.  Only rational pairs can be
+  handled, since an almost-sure statement survives only countably many
+  conditions, which is what
+  @{thm [source] paper_pair_class_diffquot_of_rational_pairs} supplies.\<close>
 
 lemma pfut_rcd_diffquot:
   fixes P :: "('n::finite pairpath) measure"
@@ -2864,17 +2838,15 @@ proof -
   qed
 qed
 
-subsection \<open>Step (b3): towards the martingale clauses\<close>
+subsection \<open>Unbounded disintegration for the martingale clauses\<close>
 
 text \<open>Clauses (i) and (ii) needed only \<open>emeasure\<close>, so the unconditional
   @{thm [source] nn_integral_ksemi} sufficed.  The martingale clauses need
-  \<open>\<integral>\<^sub>A\<^sub>' X\<^sub>i d\<kappa> p'\<close>, and the coordinate process is NOT bounded on the path
-  space, while @{thm [source] integral_ksemi_bounded} --- the only
-  Bochner-level disintegration in the development --- assumes a uniform
-  bound.  So the unbounded version has to be built, and it is built the
-  standard way: through the positive and negative parts, where
-  @{thm [source] nn_integral_ksemi} does apply.  First the integrability of
-  the sections.\<close>
+  \<open>\<integral>\<^sub>A\<^sub>' X\<^sub>i d\<kappa> p'\<close>, and the coordinate process is not bounded on the path
+  space, while @{thm [source] integral_ksemi_bounded} assumes a uniform
+  bound, so the unbounded version is built through the positive and negative
+  parts, where @{thm [source] nn_integral_ksemi} applies with no boundedness
+  hypothesis.\<close>
 
 lemma AE_integrable_ksemi_section:
   fixes g :: "'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
@@ -3009,9 +2981,9 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The shape (b3) actually consumes: the integrand is an indicator of a
-  RECTANGLE times a function of the future only.  Then the \<open>msec\<close> hypothesis
-  of @{thm [source] integral_ksemi_real} is discharged by the AFP's
+text \<open>The shape actually needed: the integrand is an indicator of a
+  rectangle times a function of the future only.  The \<open>msec\<close> hypothesis of
+  @{thm [source] integral_ksemi_real} is then discharged by the AFP's
   fixed-integrand @{thm [source] integral_measurable_subprob_algebra}, and
   the section integral factors as a constant times an integral over the
   kernel.\<close>
@@ -3064,12 +3036,12 @@ lemma measurable_integral_kernel:
 lemma subalgebra_self: "subalgebra M M"
   by (simp add: subalgebra_def)
 
-text \<open>The workhorse of (b3), at the \<open>ksemi\<close> level.  If every RECTANGLE
-  integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes, then the kernel's own integral of
-  \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes almost everywhere.  It isolates exactly the two things
-  the path-specific part has to supply: integrability, and the vanishing of
-  the rectangle integrals --- which for the martingale clauses is precisely
-  @{thm [source] martingale.set_integral_eq} applied to \<open>P\<close>.\<close>
+text \<open>At the \<open>ksemi\<close> level: if every rectangle integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close>
+  vanishes, then the kernel's own integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes almost
+  everywhere.  It isolates the two things the path-specific part has to
+  supply: integrability, and the vanishing of the rectangle integrals, which
+  for the martingale clauses is @{thm [source] martingale.set_integral_eq}
+  applied to \<open>P\<close>.\<close>
 
 lemma AE_kernel_integral_zero:
   fixes h :: "'b \<Rightarrow> real"
@@ -3103,9 +3075,9 @@ proof -
     by (rule AE_zero_of_set_integral_zero[OF subalgebra_self fi fmeas zz])
 qed
 
-text \<open>Two path-specific facts the instantiation needs.  First: an INCREMENT
-  of the rebased future is an increment of the original path --- the base
-  point cancels, which is why the martingale property of \<open>P\<close> applies to it
+text \<open>Two path-specific facts the instantiation needs.  First: an increment
+  of the rebased future is an increment of the original path, the base point
+  cancelling, which is why the martingale property of \<open>P\<close> applies to it
   unchanged.\<close>
 
 lemma pfut_increment:
@@ -3115,7 +3087,7 @@ lemma pfut_increment:
       = fst (\<omega> (r + v)) - fst (\<omega> (r + u))"
   using u v by (simp add: pfut_fst)
 
-text \<open>Second: \<open>pfut\<close> pulls the FUTURE's natural filtration back into \<open>P\<close>'s,
+text \<open>Second: \<open>pfut\<close> pulls the future's natural filtration back into \<open>P\<close>'s,
   with the clock shifted by \<open>r\<close>.  This is what puts the conditioning set
   \<open>(pcut r) -` A \<inter> (pfut r T) -` A'\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, where the martingale
   property of \<open>P\<close> applies to it.\<close>
@@ -3167,7 +3139,7 @@ proof -
 qed
 
 text \<open>The \<open>gi\<close> hypothesis of @{thm [source] AE_kernel_integral_zero}: since
-  the semidirect product IS a pushforward of \<open>P\<close>, integrability of the
+  the semidirect product is a pushforward of \<open>P\<close>, integrability of the
   rectangle integrand reduces to integrability of the future part under \<open>P\<close>,
   the two indicators only shrinking the norm.\<close>
 
@@ -3252,10 +3224,10 @@ proof -
 qed
 
 text \<open>The \<open>z\<close> hypothesis: the rectangle integral over the semidirect product
-  IS a single SET integral over \<open>P\<close>, the two indicators combining into the
+  is a single set integral over \<open>P\<close>, the two indicators combining into the
   indicator of \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close>.  That set is where the martingale property
-  of \<open>P\<close> gets applied, so this lemma is the whole bridge from the kernel back
-  to the original law.\<close>
+  of \<open>P\<close> is applied, so this lemma is the bridge from the kernel back to the
+  original law.\<close>
 
 lemma integral_ksemi_rect_of_set_integral:
   fixes h :: "'b \<Rightarrow> real"
@@ -3288,10 +3260,10 @@ proof -
 qed
 
 text \<open>The companion of @{thm [source] pfut_filtration_measurable} for the
-  PAST.  Together they put \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> for
-  \<open>A\<close> in the past law's filtration and \<open>A'\<close> in the future law's at level
-  \<open>i\<close>, which is what @{thm [source] integral_ksemi_rect_of_set_integral}
-  hands to the martingale property of \<open>P\<close>.\<close>
+  past.  Together they put \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, with \<open>A\<close> in the
+  past law's filtration and \<open>A'\<close> in the future law's at level \<open>i\<close>, which is
+  what @{thm [source] integral_ksemi_rect_of_set_integral} hands to the
+  martingale property of \<open>P\<close>.\<close>
 
 lemma pcut_filtration_measurable:
   fixes P :: "('n::finite pairpath) measure"
@@ -3320,18 +3292,14 @@ qed
 subsection \<open>The evaluations generate the path space's Borel sets\<close>
 
 text \<open>@{thm [source] pcut_filtration_measurable} lands in the natural
-  filtration of the CUT LAW, while the per-\<open>(i,j,A')\<close> statement of (b3)
-  quantifies the conditioning set over ALL of \<open>sets ?Q\<close> --- because
-  @{thm [source] AE_zero_of_set_integral_zero} is applied with \<open>\<G> = ?Q\<close>, and
-  restating it with a genuine sub-\<sigma>-algebra would only move the question to
-  the kernel's measurability.  So the two must be the SAME \<sigma>-algebra, i.e.
-  the coordinate evaluations have to generate the Borel sets of the path
-  space.  They do, and the proof is metric: the distance to a fixed path is
-  decided by the RATIONAL times alone, so it is measurable in the filtration,
-  hence so is every ball --- and the balls generate, the path space being
-  second countable.
-
-  First the coordinates themselves, which is all the easy inclusion needs.\<close>
+  filtration of the cut law, while the per-\<open>(i,j,A')\<close> statement quantifies
+  the conditioning set over all of \<open>sets ?Q\<close>, because
+  @{thm [source] AE_zero_of_set_integral_zero} is applied with \<open>\<G> = ?Q\<close>.  So
+  the two must be the same \<sigma>-algebra: the coordinate evaluations have to
+  generate the Borel sets of the path space.  The proof is metric: the
+  distance to a fixed path is decided by the rational times alone, so it is
+  measurable in the filtration, hence so is every ball, and the balls
+  generate since the path space is second countable.\<close>
 
 lemma path_eval_measurable_natural_filtration:
   fixes U v :: real
@@ -3365,10 +3333,10 @@ proof -
 qed
 
 text \<open>The metric half.  @{thm [source] path_mdist_le_iff} turns the sup
-  distance into a condition at the rational times only --- countably many,
-  so @{thm [source] sets.countable_INT'} applies.  Note the intersection is
-  over a NONEMPTY index set, which is what keeps \<open>\<omega> \<in> space \<FF>\<close> on the
-  \<open>\<supseteq>\<close> side; over an empty one it would be the universe.\<close>
+  distance into a condition at the rational times only, countably many, so
+  @{thm [source] sets.countable_INT'} applies.  The intersection must be over
+  a nonempty index set to keep \<open>\<omega> \<in> space \<FF>\<close> on the \<open>\<supseteq>\<close> side; over an empty
+  one it would be the universe.\<close>
 
 lemma mdist_measurable_natural_filtration:
   fixes U :: real and f :: "'n::finite pairpath"
@@ -3429,10 +3397,10 @@ proof -
 qed
 
 text \<open>Hence every metric ball is a filtration event.  The identification of
-  the ball with the sublevel set of the distance must NOT be left to
+  the ball with the sublevel set of the distance must not be left to
   \<open>auto\<close> or \<open>simp\<close>: with the \<^locale>\<open>Metric_space\<close> interpretation in scope
-  the search takes ten minutes on this two-line goal.  A calculation with
-  \<open>simp only\<close> closes it instantly.\<close>
+  the search takes several minutes on this two-line goal, while a calculation
+  with \<open>simp only\<close> closes it instantly.\<close>
 
 lemma mball_in_natural_filtration:
   fixes U :: real and f :: "'n::finite pairpath"
@@ -3469,7 +3437,7 @@ proof -
 qed
 
 text \<open>And the balls generate: the path space is second countable, so its
-  Borel \<sigma>-algebra is generated by ANY base
+  Borel \<sigma>-algebra is generated by any base
   (@{thm [source] borel_of_second_countable'}), and the balls are one.\<close>
 
 theorem sets_natural_filtration_path:
@@ -3510,12 +3478,11 @@ subsection \<open>The conditioning rectangle lives in the past-plus-\<open>i\<cl
 
 text \<open>What @{thm [source] integral_ksemi_rect_of_set_integral} hands to the
   martingale property of \<open>P\<close> is the set \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close>.  For the martingale
-  property to apply at time \<open>r + i\<close> that set must lie in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, and it
-  does: the past factor is in \<open>\<F>\<^sub>r\<close> --- this is where
-  @{thm [source] sets_natural_filtration_path} is consumed, because \<open>A\<close>
-  ranges over ALL Borel sets of the \<open>r\<close>-path space, not merely over the cut
-  law's natural filtration --- and the future factor is in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> by
-  @{thm [source] pfut_filtration_measurable}.\<close>
+  property to apply at time \<open>r + i\<close> that set must lie in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>: the
+  past factor is in \<open>\<F>\<^sub>r\<close> by @{thm [source] sets_natural_filtration_path},
+  since \<open>A\<close> ranges over all Borel sets of the \<open>r\<close>-path space and not merely
+  over the cut law's natural filtration, and the future factor is in
+  \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> by @{thm [source] pfut_filtration_measurable}.\<close>
 
 lemma sets_natural_filtration_mono:
   fixes i j :: "'b :: {second_countable_topology, order_topology}"
@@ -3620,29 +3587,26 @@ proof -
   then show ?thesis using sets.Int[OF c1' c2] by simp
 qed
 
-subsection \<open>Step (b3): the martingale increment vanishes under the kernel\<close>
+subsection \<open>The martingale increment vanishes under the kernel\<close>
 
-text \<open>The per-\<open>(i,j,A')\<close> statement, and the point at which every piece built
-  so far meets.  Read the chain from the outside in:
+text \<open>The per-\<open>(i,j,A')\<close> statement.  Reading the chain from the outside in:
   @{thm [source] AE_kernel_integral_zero} reduces the almost-sure vanishing
-  of the kernel integral to the vanishing of every RECTANGLE integral;
+  of the kernel integral to the vanishing of every rectangle integral;
   @{thm [source] integral_ksemi_rect_of_set_integral} turns each rectangle
-  integral into a single SET integral over \<open>P\<close>;
+  integral into a single set integral over \<open>P\<close>;
   @{thm [source] rect_vimage_natural_filtration} puts that set into
   \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>; and there @{thm [source] martingale.set_integral_eq} closes it.
   The two integrability hypotheses come from
   @{thm [source] integrable_ksemi_of_distr_rect} and
   @{thm [source] integrable_kernel_integral}.
 
-  The statement is COMPONENTWISE (\<open>\<sqdot> $ c\<close>): the workhorse
-  @{thm [source] AE_zero_of_set_integral_zero} is real-valued, and \<open>'n\<close> is
-  finite, so the finitely many components can be reassembled afterwards
-  without leaving the almost-sure world.
-
-  Note the two measures \<^term>\<open>pair_law_of r (pcut r) P\<close> and the Borel algebra
-  of the \<open>r\<close>-path space have the same SETS but are not the same term, so the
-  hypothesis \<open>eq\<close> --- which mentions the latter --- has to be transported to
-  the former before the \<open>ksemi\<close> lemmas apply.\<close>
+  The statement is componentwise (\<open>\<sqdot> $ c\<close>), since the workhorse
+  @{thm [source] AE_zero_of_set_integral_zero} is real-valued and \<open>'n\<close> is
+  finite, so the components can be reassembled afterwards without leaving
+  the almost-sure world.  The measures \<^term>\<open>pair_law_of r (pcut r) P\<close> and
+  the Borel algebra of the \<open>r\<close>-path space have the same sets but are not the
+  same term, so hypothesis \<open>eq\<close>, which mentions the latter, has to be
+  transported to the former before the \<open>ksemi\<close> lemmas apply.\<close>
 
 lemma pfut_rcd_X_increment_zero:
   fixes P :: "('n::finite pairpath) measure"
@@ -3915,34 +3879,31 @@ qed
 
 subsection \<open>From rational times to all times\<close>
 
-text \<open>The structural step (b3) still needs, and the one an earlier plan note
-  had wrong.  Only COUNTABLY many conditions survive the passage from "for
-  each, almost surely" to "almost surely, for all", so the martingale
-  identity arrives at RATIONAL times only, and extending it to every real
-  time is NOT a matter of path continuity alone: pointwise convergence does
-  not move a set integral.  It needs UNIFORM INTEGRABILITY.
+text \<open>Only countably many conditions survive the passage from "for each,
+  almost surely" to "almost surely, for all", so the martingale identity
+  arrives at rational times only, and extending it to every real time is not
+  a matter of path continuity alone: pointwise convergence does not move a
+  set integral, so uniform integrability is needed.
 
-  And the family in question is a family of conditional expectations of the
-  single TERMINAL value, so @{thm [source] prob_space.unif_integrable_of_averaging}
-  applies with its hypothesis list verbatim and
-  @{thm [source] finite_measure.vitali_convergence} finishes.  Both were
-  written for exactly this pattern (the domination-free optional-stopping
-  rework) and are reused unchanged; this is why \<open>Paper_DPP\<close> imports
-  \<open>Conditional_UI\<close>.  (Do NOT write that as a \<^verbatim>\<open>\<^theory>\<close>
-  antiquotation: a session-qualified one hard-codes the session name and makes
-  the file unbuildable from any other session.)
+  The family in question is a family of conditional expectations of the
+  single terminal value, so
+  @{thm [source] prob_space.unif_integrable_of_averaging} applies with its
+  hypothesis list verbatim and @{thm [source] finite_measure.vitali_convergence}
+  finishes; both come from \<open>Conditional_UI\<close>, which should be referenced by
+  name rather than as a \<^verbatim>\<open>\<^theory>\<close> antiquotation, since a
+  session-qualified one hard-codes the session name and makes the file
+  unbuildable from any other session.
 
-  Note the terminal time \<open>S\<close> is a FIXED real, so the pairs \<open>(q, S)\<close> with \<open>q\<close>
-  rational are still countably many --- which is what puts the averaging form
-  within reach.  Note also that the a.e. convergence Vitali wants is here
-  POINTWISE on \<open>space Q\<close>: every point of the path space IS a continuous path.
+  The terminal time \<open>S\<close> is a fixed real, so the pairs \<open>(q, S)\<close> with \<open>q\<close>
+  rational are still countably many, which keeps the averaging form within
+  reach.  The a.e. convergence Vitali wants is here pointwise on
+  \<open>space Q\<close>, since every point of the path space is a continuous path.
 
-  (Larsson--Ruf condition with a regular conditional distribution citing
-  Stroock--Varadhan Thm 1.3.4, so this route is the authors' own.  Their
-  classical conditioning theorem needs none of this because the martingale
-  problem is stated with test functions in \<open>C\<^sub>c\<^sup>\<infinity>\<close>, whose martingales are
-  BOUNDED; the paper's class (1.7) makes \<open>X\<close> itself and \<open>outerp X - Y\<close> the
-  martingales, and those are not.)\<close>
+  Larsson--Ruf's argument uses a regular conditional distribution citing
+  Stroock--Varadhan, Thm 1.3.4.  Their classical conditioning theorem needs
+  none of this because the martingale problem is stated with test functions
+  in \<open>C\<^sub>c\<^sup>\<infinity>\<close>, whose martingales are bounded, while the paper's class (1.7)
+  makes \<open>X\<close> itself and \<open>outerp X - Y\<close> the martingales, and those are not.\<close>
 
 lemma subalgebra_natural_filtration_path:
   fixes Q :: "('n::finite pairpath) measure"
@@ -4106,18 +4067,16 @@ qed
 
 subsection \<open>From a generating \<pi>-system to the whole sub-\<sigma>-algebra\<close>
 
-text \<open>The other half of the countability bookkeeping.  The conditioning set
+text \<open>The other half of the countability bookkeeping: the conditioning set
   \<open>A'\<close> of @{thm [source] pfut_rcd_X_increment_zero} also has to range over a
-  COUNTABLE family, so what arrives at almost every \<open>p'\<close> is the vanishing of
+  countable family, so what arrives at almost every \<open>p'\<close> is the vanishing of
   the set integral on a \<pi>-system only.  Upgrading that to the generated
-  \<sigma>-algebra is a Dynkin argument, and both halves of it are in the
-  distribution: @{thm [source] sigma_sets_induct_disjoint} does the induction
-  and @{thm [source] lebesgue_integral_countable_add} discharges its
-  disjoint-union case.  The complement case is where \<open>space M \<in> E\<close> is used,
-  so the \<pi>-system must be given WITH the whole space in it.
-
-  Stated for a general measure and a general generating \<pi>-system: nothing
-  here is about paths, and the same lemma serves clause (iv).\<close>
+  \<sigma>-algebra is a Dynkin argument: @{thm [source] sigma_sets_induct_disjoint}
+  does the induction and @{thm [source] lebesgue_integral_countable_add}
+  discharges its disjoint-union case.  The complement case uses
+  \<open>space M \<in> E\<close>, so the \<pi>-system must include the whole space.  The lemma is
+  stated for a general measure and generating \<pi>-system, and also serves
+  clause (iv).\<close>
 
 lemma set_integral_zero_of_generator:
   fixes g :: "'a \<Rightarrow> real"
@@ -4172,21 +4131,17 @@ proof -
   qed
 qed
 
-text \<open>And the \<pi>-system the previous lemma is going to be handed.  The key
-  identification is that \<open>\<F>\<^sub>s\<close> IS the pullback of the \<open>s\<close>-path space's Borel
-  sets along \<^const>\<open>pcut\<close> --- one inclusion is
-  @{thm [source] natural_filtration_eq_restrict_vimage} (already in
-  \<open>Paper_Bridge\<close>), the other is
-  @{thm [source] pcut_vimage_natural_filtration}.
-
-  That identification is what makes the countable \<pi>-system cheap.  Going
-  through the coordinate evaluations directly would force a restriction of
-  the TIME index to the rationals, and hence a limit-of-measurable-functions
-  argument to recover the irrational times.  Going through \<^const>\<open>pcut\<close>
-  instead, the continuity of the paths is already encoded in the topology of
-  the \<open>s\<close>-path space, and SECOND COUNTABILITY of that space
-  (@{thm [source] second_countable_path_metric}) hands over a countable base
-  with no limit argument at all.\<close>
+text \<open>The \<pi>-system for the previous lemma: the key identification is that
+  \<open>\<F>\<^sub>s\<close> is the pullback of the \<open>s\<close>-path space's Borel sets along
+  \<^const>\<open>pcut\<close>, via @{thm [source] natural_filtration_eq_restrict_vimage}
+  and @{thm [source] pcut_vimage_natural_filtration}.  That identification is
+  what makes the countable \<pi>-system cheap: going through the coordinate
+  evaluations directly would force a restriction of the time index to the
+  rationals and a limit-of-measurable-functions argument for the irrational
+  times, whereas going through \<^const>\<open>pcut\<close> the continuity of the paths is
+  already encoded in the topology of the \<open>s\<close>-path space, and second
+  countability of that space (@{thm [source] second_countable_path_metric})
+  hands over a countable base with no limit argument at all.\<close>
 
 lemma sets_natural_filtration_eq_pcut_vimage:
   fixes Q :: "('n::finite pairpath) measure"
@@ -4215,8 +4170,8 @@ next
     unfolding Aeq by (rule pcut_vimage_natural_filtration[OF s sT setsQ B])
 qed
 
-text \<open>A COUNTABLE \<pi>-system generating the path space's Borel sets.  A base is
-  not \<pi>-stable, so close it under FINITE intersections --- still countable,
+text \<open>A countable \<pi>-system generating the path space's Borel sets.  A base
+  is not \<pi>-stable, so close it under finite intersections: still countable,
   and it generates the same \<sigma>-algebra because a \<sigma>-algebra is closed under
   finite intersections.  The whole space is thrown in so that the complement
   case of @{thm [source] set_integral_zero_of_generator} has something to
@@ -4342,8 +4297,8 @@ proof -
   show thesis by (rule that[OF cD DInt Dpow Dtop Dsets])
 qed
 
-text \<open>And its pullback: the countable \<pi>-system for \<open>\<F>\<^sub>s\<close> that (b3)'s
-  conditioning sets are going to range over.\<close>
+text \<open>And its pullback: the countable \<pi>-system for \<open>\<F>\<^sub>s\<close> that the
+  conditioning sets of clause (iii)/(iv) range over.\<close>
 
 lemma countable_pi_system_natural_filtration_path:
   fixes Q :: "('n::finite pairpath) measure"
@@ -4407,16 +4362,15 @@ qed
 
 subsection \<open>The martingale property at a fixed law\<close>
 
-text \<open>Everything (b3) needs at a FIXED \<open>p'\<close>, packaged: adaptedness,
-  integrability, continuity in time and the set-integral identity against the
-  terminal value AT RATIONAL TIMES ONLY give the martingale property.  The
-  two upgrades are
-  @{thm [source] integrable_and_set_integral_eq_of_rational_times}
-  (rational to real, and it supplies the integrability at the irrational
-  times too) and, inside its \<open>rat\<close> hypothesis at the call site,
+text \<open>At a fixed \<open>p'\<close>, adaptedness, integrability, continuity in time and
+  the set-integral identity against the terminal value at rational times
+  only give the martingale property.  The two upgrades are
+  @{thm [source] integrable_and_set_integral_eq_of_rational_times} (rational
+  to real, which also supplies the integrability at the irrational times)
+  and, inside its \<open>rat\<close> hypothesis at the call site,
   @{thm [source] set_integral_zero_of_generator} (\<pi>-system to \<open>\<F>\<^sub>q\<close>).
 
-  The process is required to be CONSTANT past \<open>S\<close> --- which the capped
+  The process is required to be constant past \<open>S\<close> --- which the capped
   \<open>\<lambda>u w. w (min u S)\<close> is --- because the filtration is indexed by all of
   \<open>[0,\<infinity>)\<close> while the path space only knows about \<open>[0,S]\<close>.\<close>
 
@@ -4547,22 +4501,21 @@ proof -
   then show ?thesis using c1 by simp
 qed
 
-text \<open>Clause (iii) of (1.7) for the conditional law.  Everything (b3) built
-  meets here:
+text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
 
-  \<^item> @{thm [source] pfut_rcd_X_increment_zero} supplies one almost-sure
-    condition per \<open>(q, A', c)\<close>, and there are only countably many of those
-    --- rational \<open>q\<close>, \<open>A'\<close> in the \<pi>-system of
-    @{thm [source] countable_pi_system_natural_filtration_path}, and \<open>c\<close> in
-    the finite index type;
-  \<^item> @{thm [source] AE_ball_countable'} turns "for each, almost surely" into
-    "almost surely, for all";
+  \<^item> @{thm [source] pfut_rcd_X_increment_zero}, supplying one almost-sure
+    condition per \<open>(q, A', c)\<close>, countably many since \<open>q\<close> is rational,
+    \<open>A'\<close> ranges over the \<pi>-system of
+    @{thm [source] countable_pi_system_natural_filtration_path}, and \<open>c\<close>
+    ranges over the finite index type;
+  \<^item> @{thm [source] AE_ball_countable'}, turning "for each, almost surely"
+    into "almost surely, for all";
   \<^item> at a fixed good \<open>p'\<close>, @{thm [source] set_integral_zero_of_generator}
-    widens the \<pi>-system to \<open>\<F>\<^sub>q\<close> and
-    @{thm [source] martingale_of_rational_set_integral_eq} widens the
+    widening the \<pi>-system to \<open>\<F>\<^sub>q\<close> and
+    @{thm [source] martingale_of_rational_set_integral_eq} widening the
     rational times to all times;
-  \<^item> @{thm [source] martingale_vecI} puts the finitely many components back
-    together.\<close>
+  \<^item> @{thm [source] martingale_vecI}, putting the finitely many components
+    back together.\<close>
 
 theorem pfut_rcd_X_martingale:
   fixes P :: "('n::finite pairpath) measure"
@@ -4804,9 +4757,9 @@ text \<open>The clause-(iv) twin of
   @{thm [source] pfut_rcd_X_increment_zero}.  Two differences, both
   bookkeeping: the \<open>P\<close>-side martingale is
   @{thm [source] paper_pair_class_pfut_comp_martingale}, which lives in the
-  SHIFTED filtration and is therefore read at times \<open>i, j\<close> rather than
-  \<open>r+i, r+j\<close> (the two agree, since \<open>?FP i = \<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> for \<open>i \<le> T-r\<close>); and the
-  component is a MATRIX entry, so the bounded-linear map is
+  shifted filtration and is therefore read at times \<open>i, j\<close> rather than
+  \<open>r+i, r+j\<close> (the two agree, since \<open>?FP i = \<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> for \<open>i \<le> T-r\<close>); and
+  the component is a matrix entry, so the bounded-linear map is
   @{thm [source] bounded_linear_vec_nth} composed with itself.\<close>
 
 lemma pfut_rcd_comp_increment_zero:
@@ -5136,7 +5089,7 @@ proof -
 qed
 
 text \<open>Clause (iv) of (1.7) for the conditional law, by the same assembly as
-  clause (iii) --- only the index set of components is now a PAIR, and
+  clause (iii): the index set of components is now a pair, and
   @{thm [source] martingale_matI} does the reassembly.\<close>
 
 theorem pfut_rcd_comp_martingale:
@@ -5400,19 +5353,17 @@ proof -
   qed
 qed
 
-subsection \<open>Steps (b1)--(b3) together: the conditional law is in the class\<close>
+subsection \<open>The conditional law is in the class\<close>
 
-text \<open>The deliverable of route (b).  The regular conditional distribution of
-  the REBASED FUTURE given the PAST lies, at almost every \<open>p'\<close>, in the
-  paper's class (1.7) at the ORIGIN.  All four clauses are now available:
-  (i) @{thm [source] pfut_rcd_start}, (ii) @{thm [source] pfut_rcd_diffquot},
-  (iii) @{thm [source] pfut_rcd_X_martingale}, (iv)
-  @{thm [source] pfut_rcd_comp_martingale}.
-
-  This is what (b4) consumes: under \<open>\<kappa> p'\<close> the starting point is a CONSTANT,
-  so the shifted law lies in the class at that point and its essential
-  infimum is bounded by \<^const>\<open>paper_v\<close> by definition --- no localization and
-  no \<open>K\<^sub>\<epsilon>\<close>.\<close>
+text \<open>The regular conditional distribution of the rebased future given the
+  past lies, at almost every \<open>p'\<close>, in the paper's class (1.7) at the origin,
+  from the four clauses: (i) @{thm [source] pfut_rcd_start}, (ii)
+  @{thm [source] pfut_rcd_diffquot}, (iii)
+  @{thm [source] pfut_rcd_X_martingale}, (iv)
+  @{thm [source] pfut_rcd_comp_martingale}.  Under \<open>\<kappa> p'\<close> the starting point
+  is a constant, so the shifted law lies in the class at that point and its
+  essential infimum is bounded by \<^const>\<open>paper_v\<close> by definition, with no
+  localization and no \<open>K\<^sub>\<epsilon>\<close>.\<close>
 
 theorem paper_pair_class_rcd_member:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -5489,13 +5440,14 @@ proof -
   qed
 qed
 
-section \<open>Step (b4): the conditioning statement\<close>
+section \<open>The conditioning statement\<close>
 
-text \<open>The last obligation of the DPP at a deterministic time.  Two pathwise
-  facts first.  On the survival event the exit time splits at \<open>r\<close>
-  (@{thm [source] pexit_split_at_r}) and the second piece is the exit time of
-  the rebased future SHIFTED BACK to where the path actually was --- which is
-  exactly the object \<^const>\<open>pshift_law\<close> pushes into the class at that point.\<close>
+text \<open>Two pathwise facts underlying the conditioning statement for the DPP
+  at a deterministic time.  On the survival event the exit time splits at
+  \<open>r\<close> (@{thm [source] pexit_split_at_r}), and the second piece is the exit
+  time of the rebased future shifted back to where the path actually was,
+  which is exactly the object \<^const>\<open>pshift_law\<close> pushes into the class at
+  that point.\<close>
 
 lemma pexit_split_pshift_pfut:
   fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"
@@ -5520,11 +5472,10 @@ proof -
   then show ?thesis using pexit_split_at_r[OF r rT surv endK] by simp
 qed
 
-text \<open>And the class-level step: an almost-sure lower bound on the exit time
-  of the SHIFTED law is a lower bound for \<^const>\<open>paper_v\<close> at the shift.  This
-  is where "no localization and no \<open>K\<^sub>\<epsilon>\<close>" is cashed in --- the starting point
-  is a single vector \<open>y\<close>, not a small ball, so the bound lands on
-  \<open>paper_v \<dots> y\<close> itself.\<close>
+text \<open>The class-level step: an almost-sure lower bound on the exit time of
+  the shifted law is a lower bound for \<^const>\<open>paper_v\<close> at the shift.  The
+  starting point here is a single vector \<open>y\<close>, not a small ball, so the bound
+  lands on \<open>paper_v \<dots> y\<close> itself, with no localization needed.\<close>
 
 lemma paper_v_ge_of_AE_pshift:
   fixes R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
@@ -5551,14 +5502,14 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The identity that lets the disintegration see the hypothesis at all:
-  gluing the past back onto the rebased future RECOVERS the path.  So the
-  hypothesis \<open>c \<le> \<tau>\<^sub>K(\<omega>)\<close> IS a statement about \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, and
-  it is a MEASURABLE one, because @{thm [source] pglue_measurable} and
-  @{thm [source] pexit_path_measurable} compose.  Expressing the coupling
-  through \<^const>\<open>pglue\<close> rather than through \<^const>\<open>pshift\<close> is what keeps that
-  measurability off the shelf --- \<^const>\<open>pshift\<close> is Lipschitz in the path for
-  a FIXED shift, and the joint statement would have to be built.\<close>
+text \<open>Gluing the past back onto the rebased future recovers the path, so the
+  hypothesis \<open>c \<le> \<tau>\<^sub>K(\<omega>)\<close> is a statement about
+  \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, and a measurable one, since
+  @{thm [source] pglue_measurable} and @{thm [source] pexit_path_measurable}
+  compose.  Expressing the coupling through \<^const>\<open>pglue\<close> rather than
+  \<^const>\<open>pshift\<close> keeps that measurability off the shelf: \<^const>\<open>pshift\<close> is
+  only Lipschitz in the path for a fixed shift, and the joint statement would
+  have to be built separately.\<close>
 
 lemma pglue_pcut_pfut:
   fixes \<omega> :: "'n::finite pairpath"
@@ -5640,21 +5591,21 @@ proof -
   then show ?thesis using sets.Int[OF s1 s2] by simp
 qed
 
-text \<open>And the conditioning statement itself --- the last obligation of
-  @{thm [source] paper_v_dpp_le_of_cond}, hence of the DPP at a deterministic
+text \<open>The conditioning statement itself, discharging the hypothesis of
+  @{thm [source] paper_v_dpp_le_of_cond} and hence the DPP at a deterministic
   time.  The chain is:
 
-  \<^item> the hypothesis becomes a MEASURABLE property of the pair
+  \<^item> the hypothesis becomes a measurable property of the pair
     \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, by @{thm [source] pglue_pcut_pfut};
   \<^item> @{thm [source] AE_ksemi} disintegrates it along the r.c.d.;
   \<^item> @{thm [source] paper_pair_class_rcd_member} says the r.c.d. lands in the
-    class at the ORIGIN, so at a fixed good \<open>p'\<close> the surviving future is a
-    class member started at \<open>0\<close> and shifted by the CONSTANT \<open>fst (p' r)\<close>;
+    class at the origin, so at a fixed good \<open>p'\<close> the surviving future is a
+    class member started at \<open>0\<close> and shifted by the constant \<open>fst (p' r)\<close>;
   \<^item> @{thm [source] paper_v_ge_of_AE_pshift} turns the almost-sure lower bound
     on its exit time into a lower bound for \<^const>\<open>paper_v\<close> at that point.
 
-  No localization and no \<open>K\<^sub>\<epsilon>\<close>: the starting point is a single vector, which
-  is exactly what route (a) could not arrange.\<close>
+  No localization and no \<open>K\<^sub>\<epsilon>\<close> are needed: the starting point is a single
+  vector.\<close>
 
 theorem paper_v_cond:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
@@ -5843,14 +5794,13 @@ qed
 
 section \<open>The dynamic programming principle at a deterministic time\<close>
 
-text \<open>Proposition 2.4 of arXiv:2512.17702 at a DETERMINISTIC \<open>\<theta> = r\<close>,
-  unconditionally.  The \<open>\<ge>\<close> half is @{thm [source] paper_v_dpp_sup_ge} (kernel
-  pasting, \<S>1.9); the \<open>\<le>\<close> half is
-  @{thm [source] paper_v_dpp_le_of_cond} with its one hypothesis now
-  discharged by @{thm [source] paper_v_cond}, which is route (b) --- the
-  regular conditional distribution --- end to end.
+text \<open>Proposition 2.4 of arXiv:2512.17702 at a deterministic \<open>\<theta> = r\<close>,
+  unconditionally.  The \<open>\<ge>\<close> half is @{thm [source] paper_v_dpp_sup_ge}
+  (kernel pasting); the \<open>\<le>\<close> half is @{thm [source] paper_v_dpp_le_of_cond}
+  with its one hypothesis discharged by @{thm [source] paper_v_cond} via the
+  regular conditional distribution.
 
-  Both summands are read off the FIRST piece: \<open>\<theta> \<and> \<tau>\<^sub>K\<close> is the exit time
+  Both summands are read off the first piece: \<open>\<theta> \<and> \<tau>\<^sub>K\<close> is the exit time
   capped at \<open>r\<close>, and the indicator \<open>1\<^bsub>{\<theta> \<le> \<tau>\<^sub>K}\<^esub>\<close> is
   \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>, which is exact for the capped exit time
   and needs no path continuity.\<close>
@@ -5874,33 +5824,32 @@ proof (rule paper_v_dpp_eq_of_cond[OF r rT L1 Kc])
     by (rule paper_v_cond[OF r rT' L0 Kc P c])
 qed
 
-section \<open>The conditioning statement at a RANDOM time\<close>
+section \<open>The conditioning statement at a random time\<close>
 
 text \<open>The conditioning half of the DPP holds at an arbitrary time function
-  \<open>s(\<omega>)\<close>, with NO stopping-time hypothesis and no measurability of \<open>s\<close>
-  whatever.  That is not an accident: the statement is an almost-sure
-  PATHWISE one, so all that is needed is the deterministic
-  @{thm [source] paper_v_cond} at COUNTABLY many deterministic times, and a
-  pointwise limit at each path.  Measurability of \<open>s\<close> only becomes relevant
-  when the result is fed back into an \<open>ess_inf_time\<close>.
+  \<open>s(\<omega>)\<close>, with no stopping-time hypothesis and no measurability of \<open>s\<close>
+  whatever: the statement is an almost-sure pathwise one, so all that is
+  needed is the deterministic @{thm [source] paper_v_cond} at countably many
+  deterministic times, and a pointwise limit at each path.  Measurability of
+  \<open>s\<close> only becomes relevant when the result is fed back into an
+  \<open>ess_inf_time\<close>.
 
   Two observations make it work.
 
-  \<^item> Below \<open>c\<close> the survival event is FREE: if the path has not left \<open>K\<close> before
-    \<open>c\<close> and \<open>r < c\<close>, it certainly has not left before \<open>r\<close>
+  \<^item> Below \<open>c\<close> the survival event is free: if the path has not left \<open>K\<close>
+    before \<open>c\<close> and \<open>r < c\<close>, it certainly has not left before \<open>r\<close>
     (\<open>pexit_surv_of_less\<close> below).  So the conditional conclusion of
     @{thm [source] paper_v_cond} becomes an unconditional one at every
-    deterministic time below \<open>c\<close>, and the survival hypothesis disappears from
-    the random-time statement too.
-  \<^item> Approaching \<open>s(\<omega>)\<close> from ABOVE through rationals keeps the residual
-    horizon SMALLER, and \<^const>\<open>paper_v\<close> is monotone in the horizon
+    deterministic time below \<open>c\<close>, and the survival hypothesis disappears
+    from the random-time statement too.
+  \<^item> Approaching \<open>s(\<omega>)\<close> from above through rationals keeps the residual
+    horizon smaller, and \<^const>\<open>paper_v\<close> is monotone in the horizon
     (@{thm [source] paper_v_horizon_mono}), so the bound survives the
-    replacement of \<open>T - t\<^sub>n\<close> by \<open>T - s(\<omega>)\<close>.  What is then left is a limit in
-    the SPACE variable, and that is clause (1), upper semicontinuity
-    (@{thm [source] paper_v_usc_unconditional}).
-
-  Approaching from BELOW would not work: the horizon would grow, and
-  monotonicity would point the wrong way.\<close>
+    replacement of \<open>T - t\<^sub>n\<close> by \<open>T - s(\<omega>)\<close>.  What is left is a limit in the
+    space variable, which is clause (1), upper semicontinuity
+    (@{thm [source] paper_v_usc_unconditional}).  Approaching from below
+    would not work, since the horizon would grow and monotonicity would
+    point the wrong way.\<close>
 
 lemma pexit_surv_of_less:
   fixes f :: "real \<Rightarrow> 'a::polish_space" and K :: "'a set"
@@ -5922,9 +5871,9 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>The pointwise core: at a SINGLE path, the deterministic bound at
+text \<open>The pointwise core: at a single path, the deterministic bound at
   countably many rational times below \<open>c\<close> gives the bound at an arbitrary
-  time \<open>s\<close>.  No measure theory here at all.\<close>
+  time \<open>s\<close>, with no measure theory at all.\<close>
 
 lemma paper_v_cond_pointwise:
   fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"
@@ -6060,11 +6009,11 @@ proof -
   qed
 qed
 
-text \<open>The conditioning statement at a RANDOM time, and the headline of
-  \<S>2.1's first half.  The time \<open>\<theta>\<close> is an ARBITRARY function of the path: no
-  stopping-time property, no measurability, no adaptedness.  Note also that
-  the survival hypothesis of @{thm [source] paper_v_cond} is gone --- below
-  \<open>c\<close> it is automatic, and above \<open>c\<close> the conclusion is trivial.\<close>
+text \<open>The conditioning statement at a random time.  The time \<open>\<theta>\<close> is an
+  arbitrary function of the path: no stopping-time property, no
+  measurability, no adaptedness.  The survival hypothesis of
+  @{thm [source] paper_v_cond} is gone, since below \<open>c\<close> it is automatic and
+  above \<open>c\<close> the conclusion is trivial.\<close>
 
 theorem paper_v_cond_time:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
@@ -6128,23 +6077,24 @@ proof -
   qed
 qed
 
-section \<open>Towards the \<open>\<ge>\<close> half at a random time\<close>
+section \<open>Kernels into the class: measurability and repair\<close>
 
-text \<open>@{thm [source] paper_pair_class_kglue_law'} asks a kernel for TWO
-  measurability facts: into \<^const>\<open>prob_algebra\<close> (its \<open>Kp\<close>) and into the CLASS
-  carrying its L\'evy--Prokhorov metric (its \<open>Kb\<close>).  Until now the second was
-  available only for the measurable selector, where
+text \<open>@{thm [source] paper_pair_class_kglue_law'} asks a kernel for two
+  measurability facts: into \<^const>\<open>prob_algebra\<close> (its \<open>Kp\<close>) and into the
+  class carrying its Levy-Prokhorov metric (its \<open>Kb\<close>).  Until now the second
+  was available only for the measurable selector, where
   @{thm [source] paper_v_measurable_selector_kernel'} produces it as part of
   the packaging.  Every further kernel construction needs it too, so here it
-  is as a factory: \<open>Kb\<close> is FREE once the kernel is measurable into
+  is as a factory: \<open>Kb\<close> is free once the kernel is measurable into
   \<^const>\<open>prob_algebra\<close> and lands in the class.
 
   The chain is: \<^const>\<open>prob_algebra\<close> is the Borel algebra of the weak
   topology restricted to the probability measures
   (@{thm [source] weak_conv_topology_eq_prob_algebra}); a map into a
   restricted space that lands in the restricting set is measurable into the
-  ambient space; and the class's own metric topology IS the subspace topology
-  of weak convergence (@{thm [source] paper_pair_class_compact_metric_space}).\<close>
+  ambient space; and the class's own metric topology is the subspace
+  topology of weak convergence
+  (@{thm [source] paper_pair_class_compact_metric_space}).\<close>
 
 lemma kernel_class_LP_measurable:
   fixes Kr :: "'a \<Rightarrow> ('n::finite pairpath) measure"
@@ -6205,11 +6155,11 @@ proof -
   show ?thesis unfolding top using r2 by (simp add: borel_of_subtopology)
 qed
 
-text \<open>The "do nothing" branch of the mixed kernel: gluing a law onto its own
-  regular conditional distribution GIVES THE LAW BACK.  This is the law-level
-  counterpart of @{thm [source] pglue_pcut_pfut}, and it is what lets a
-  single fixed-time gluing change the law only on a chosen \<open>\<F>\<^sub>r\<close>-event and
-  leave it alone elsewhere.\<close>
+text \<open>The "do nothing" branch of the mixed kernel: gluing a law onto its
+  own regular conditional distribution gives the law back.  This is the
+  law-level counterpart of @{thm [source] pglue_pcut_pfut}, and it is what
+  lets a single fixed-time gluing change the law only on a chosen
+  \<open>\<F>\<^sub>r\<close>-event and leave it alone elsewhere.\<close>
 
 theorem kglue_law'_rcd_eq:
   fixes P :: "('n::finite pairpath) measure"
@@ -6255,12 +6205,13 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The other branch needs a repair, and the repair needs the class to be
-  a MEASURABLE set of laws.  It is: the class is compact in the weak topology
-  (@{thm [source] paper_pair_class_compactin_weak}), that topology is the
-  L\'evy--Prokhorov METRIC topology hence Hausdorff, so the class is closed,
-  hence Borel; and \<^const>\<open>prob_algebra\<close> is that Borel algebra restricted to
-  the probability measures, which the class already consists of.\<close>
+text \<open>The other branch needs a repair, and the repair needs the class to
+  be a measurable set of laws.  It is: the class is compact in the weak
+  topology (@{thm [source] paper_pair_class_compactin_weak}), that topology
+  is the Levy-Prokhorov metric topology hence Hausdorff, so the class is
+  closed, hence Borel; and \<^const>\<open>prob_algebra\<close> is that Borel algebra
+  restricted to the probability measures, which the class already consists
+  of.\<close>
 
 lemma paper_pair_class_sets_prob_algebra:
   fixes x :: "real^'n::finite"
@@ -6306,11 +6257,11 @@ proof -
   then show ?thesis using setsPA by simp
 qed
 
-text \<open>The repair.  A regular conditional distribution lands in the class only
-  ALMOST surely, while @{thm [source] paper_pair_class_kglue_law'} asks for
-  it at EVERY point.  Since the class is a measurable set of laws, the kernel
-  can be redirected to a fixed member off the good set --- and the good set
-  carries full measure, so nothing is lost.\<close>
+text \<open>The repair.  A regular conditional distribution lands in the class
+  only almost surely, while @{thm [source] paper_pair_class_kglue_law'}
+  asks for it at every point.  Since the class is a measurable set of laws,
+  the kernel can be redirected to a fixed member off the good set, and the
+  good set carries full measure, so nothing is lost.\<close>
 
 lemma kernel_repair_into_class:
   fixes \<kappa> :: "'a \<Rightarrow> ('n::finite pairpath) measure"
@@ -6349,11 +6300,10 @@ proof -
   show thesis by (rule that[OF m inC agree])
 qed
 
-text \<open>And the mixed kernel itself: OPTIMAL on a chosen event of the past, the
+text \<open>The mixed kernel itself: optimal on a chosen event of the past, the
   law's own conditional distribution elsewhere.  Measurability is
-  @{thm [source] measurable_If}; the point is that the event has to be one
-  the PAST can see, which for \<open>{\<theta> = t}\<close> is exactly the stopping-time
-  property.\<close>
+  @{thm [source] measurable_If}; the event has to be one the past can see,
+  which for \<open>{\<theta> = t}\<close> is exactly the stopping-time property.\<close>
 
 lemma kernel_mix_measurable:
   assumes A: "A \<in> sets G"
@@ -6364,25 +6314,24 @@ proof (rule measurable_If[OF K1 K2])
   then show "{p \<in> space G. p \<in> A} \<in> sets G" using A by simp
 qed
 
-text \<open>**The one-step engine of the stopping-time construction.**  Glue \<open>P\<close> at
-  a FIXED time \<open>r\<close> with a kernel that plays the optimal continuation on a
+text \<open>The one-step engine of the stopping-time construction: glue \<open>P\<close> at a
+  fixed time \<open>r\<close> with a kernel that plays the optimal continuation on a
   chosen event \<open>A\<close> of the past and \<open>P\<close>'s own conditional law elsewhere.  The
   result is again a class member, and off \<open>A\<close> nothing has changed
   (@{thm [source] kglue_law'_rcd_eq} is the reason).
 
   Iterating this over the finitely many values of a simple stopping time,
   with \<open>A = {\<theta> = t_j}\<close> --- an \<open>\<F>\<^sub>t\<^sub>j\<close>-event exactly because \<open>\<theta>\<close> is a stopping
-  time --- is the construction the \<open>\<ge>\<close> half needs.  Note that
+  time --- is the construction the \<open>\<ge>\<close> half needs.
   @{thm [source] paper_pair_class_kglue_law'} asks for the kernel's
-  measurability with respect to the natural filtration AT \<open>r\<close>, and that
+  measurability with respect to the natural filtration at \<open>r\<close>, and that
   \<sigma>-algebra is the whole of \<open>sets Q\<close> by
-  @{thm [source] sets_natural_filtration_path} --- the (b3) lemma paying for
-  itself a second time.\<close>
+  @{thm [source] sets_natural_filtration_path}.\<close>
 
 text \<open>Gluing does not touch the past: the \<open>r\<close>-cut of a glued path is the
   \<open>r\<close>-cut of its first factor, and if that factor already lives in the
-  \<open>r\<close>-path space it IS the factor.  This is what makes an \<open>\<F>\<^sub>r\<close>-event survive a
-  glue at \<open>r\<close> --- the bookkeeping the stopping-time induction runs on.\<close>
+  \<open>r\<close>-path space it is the factor.  This is what makes an \<open>\<F>\<^sub>r\<close>-event survive
+  a glue at \<open>r\<close>.\<close>
 
 lemma pcut_pglue:
   fixes \<omega> \<omega>' :: "'n::finite pairpath"
@@ -6418,7 +6367,7 @@ proof -
 qed
 
 text \<open>The almost-sure transfer through a glue, with the underlying measure
-  \<open>Q\<close> left FREE --- so that unfolding @{thm [source] pair_law_of_def} cannot
+  \<open>Q\<close> left free, so that unfolding @{thm [source] pair_law_of_def} cannot
   also unfold a \<open>pair_law_of\<close> hiding inside \<open>Q\<close> itself.\<close>
 
 lemma AE_kglue_law':
@@ -6724,17 +6673,15 @@ proof -
   show thesis by (rule that[OF glue onA Kc offA onAae])
 qed
 
-subsection \<open>The \<open>\<ge>\<close> half at a RANDOM time, reduced to a constant\<close>
+subsection \<open>The \<open>\<ge>\<close> half at a random time, reduced to a constant\<close>
 
-text \<open>The passage from a constant lower bound to the essential infimum does not
-  care whether the time is deterministic: it needs only that the integrand lies
-  between \<open>0\<close> and \<open>T\<close>, which holds for every \<open>0 \<le> \<theta> \<omega> \<le> T\<close> whatsoever --- no
-  measurability, no stopping-time property.  So the whole \<open>\<ge>\<close> half at a random
-  time reduces to the CONSTANT statement, exactly as
-  @{thm [source] paper_v_dpp_sup_ge} reduces to
-  @{thm [source] paper_v_dpp_ge_const}.  Together with
-  @{thm [source] paper_v_cond_time} for the \<open>\<le>\<close> half, this leaves Section 2.1
-  with a single open obligation, namely the hypothesis \<open>const\<close> below.\<close>
+text \<open>The passage from a constant lower bound to the essential infimum does
+  not care whether the time is deterministic: it needs only that the
+  integrand lies between \<open>0\<close> and \<open>T\<close>, which holds for every
+  \<open>0 \<le> \<theta> \<omega> \<le> T\<close>, with no measurability and no stopping-time property.  So
+  the whole \<open>\<ge>\<close> half at a random time reduces to the constant statement,
+  exactly as @{thm [source] paper_v_dpp_sup_ge} reduces to
+  @{thm [source] paper_v_dpp_ge_const}.\<close>
 
 theorem paper_v_dpp_sup_ge_time_of_const:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -6831,11 +6778,11 @@ proof (rule SUP_least)
     using main by simp
 qed
 
-subsection \<open>The constant form at a genuinely RANDOM time: two values\<close>
+subsection \<open>The constant form at a random time with two values\<close>
 
-text \<open>At the horizon \<open>0\<close> there is nothing left to gain, so the DPP integrand
-  at \<open>\<theta> = T\<close> is the plain exit time --- which is why a stopping time with
-  values \<open>{r, T}\<close> costs exactly ONE glue.\<close>
+text \<open>At the horizon \<open>0\<close> there is nothing left to gain, so the DPP
+  integrand at \<open>\<theta> = T\<close> is the plain exit time, which is why a stopping time
+  with values \<open>{r, T}\<close> costs exactly one glue.\<close>
 
 lemma paper_v_horizon_zero:
   fixes K :: "(real^'n::finite) set" and y :: "real^'n"
@@ -6845,9 +6792,10 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>The selector's optimality, transported to the glued path.  This is the
-  \<open>inner\<close> step of @{thm [source] paper_v_dpp_ge_const}, pulled out so that the
-  mixed glue can use it for the branch that lands ON the gluing event.\<close>
+text \<open>The selector's optimality, transported to the glued path.  This is
+  the \<open>inner\<close> step of @{thm [source] paper_v_dpp_ge_const}, pulled out so
+  that the mixed glue can use it for the branch that lands on the gluing
+  event.\<close>
 
 lemma pexit_pglue_selector_ge:
   fixes K :: "(real^'n::finite) set" and \<omega> :: "'n pairpath"
@@ -6936,12 +6884,12 @@ proof -
   qed
 qed
 
-text \<open>And now the constant form of the \<open>\<ge>\<close> half at the two-valued stopping
-  time \<open>\<theta> = (if pcut r \<omega> \<in> A then r else T)\<close>, for an ARBITRARY
-  \<open>\<F>\<^sub>r\<close>-event \<open>A\<close>.  The hypothesis is exactly \<open>c \<le> integrand\<^sub>\<theta>\<close> for that \<open>\<theta>\<close>,
-  read through @{thm [source] paper_v_horizon_zero} on the \<open>\<theta> = T\<close> branch.
-  One glue does it: the mixed kernel plays the optimal continuation on \<open>A\<close>
-  and the conditional law of \<open>P\<close> off it, and the two transfer conclusions of
+text \<open>The constant form of the \<open>\<ge>\<close> half at the two-valued stopping time
+  \<open>\<theta> = (if pcut r \<omega> \<in> A then r else T)\<close>, for an arbitrary \<open>\<F>\<^sub>r\<close>-event \<open>A\<close>.
+  The hypothesis is exactly \<open>c \<le> integrand\<^sub>\<theta>\<close> for that \<open>\<theta>\<close>, read through
+  @{thm [source] paper_v_horizon_zero} on the \<open>\<theta> = T\<close> branch.  One glue does
+  it: the mixed kernel plays the optimal continuation on \<open>A\<close> and the
+  conditional law of \<open>P\<close> off it, and the two transfer conclusions of
   @{thm [source] paper_pair_class_kglue_mixed} cover the two branches.\<close>
 
 theorem paper_v_dpp_ge_const_two:
@@ -7110,8 +7058,7 @@ proof -
 qed
 
 text \<open>Feeding that into @{thm [source] paper_v_dpp_sup_ge_time_of_const}
-  gives the \<open>\<ge>\<close> half of (2.9) ITSELF at the two-valued stopping time --- the
-  first genuinely random time for which the whole chain closes.\<close>
+  gives the \<open>\<ge>\<close> half of (2.9) at the two-valued stopping time.\<close>
 
 corollary paper_v_dpp_sup_ge_two:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -7171,13 +7118,12 @@ qed
 subsection \<open>The induction step: one glue, with the rest left as a predicate\<close>
 
 text \<open>@{thm [source] paper_v_dpp_ge_const_two} is this lemma with
-  \<open>\<Psi> \<omega> = (c \<le> \<tau>\<^sub>K \<omega>)\<close>.  Leaving \<open>\<Psi>\<close> FREE turns it into the step of the
+  \<open>\<Psi> \<omega> = (c \<le> \<tau>\<^sub>K \<omega>)\<close>.  Leaving \<open>\<Psi>\<close> free turns it into the step of the
   induction over the values of a simple stopping time: glue at \<open>r\<close> on the
   \<open>\<F>\<^sub>r\<close>-event \<open>A\<close>, keep whatever \<open>\<Psi>\<close> says off it, and hand the result to the
-  next value.  The conclusion records \<open>pcut r \<omega> \<in> A\<close> alongside the bound
-  precisely so that the next step can see that those paths have \<open>\<theta> \<omega> = r\<close>
-  and therefore are NOT in the next gluing event --- which is what keeps the
-  earlier glues from being undone.\<close>
+  next value.  The conclusion records \<open>pcut r \<omega> \<in> A\<close> alongside the bound so
+  that the next step can see those paths have \<open>\<theta> \<omega> = r\<close> and are not in the
+  next gluing event, which keeps the earlier glues from being undone.\<close>
 
 theorem paper_v_dpp_ge_step:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -7485,11 +7431,12 @@ primrec dpp_disj :: "(real \<times> ('n::finite pairpath) set) list \<Rightarrow
       ((pcut (fst p) \<omega> \<in> snd p \<longrightarrow> (\<forall>q \<in> set rs. pcut (fst q) \<omega> \<notin> snd q))
        \<and> dpp_disj rs \<omega>)"
 
-text \<open>And the induction: iterate @{thm [source] paper_v_dpp_ge_step} down the
-  list, carrying \<open>D\<close> --- the paths already glued and already good.  The
+text \<open>The induction: iterate @{thm [source] paper_v_dpp_ge_step} down the
+  list, carrying \<open>D\<close>, the paths already glued and already good.  The
   invariant is \<open>D \<omega> \<or> dpp_chain rs \<omega>\<close>, and the two side conditions on \<open>D\<close>
   are what make it go through: \<open>D\<close> implies the bound, and \<open>D\<close> implies that
-  none of the REMAINING events fires, so no later glue touches those paths.\<close>
+  none of the remaining events fires, so no later glue touches those
+  paths.\<close>
 
 theorem paper_v_dpp_ge_const_list:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -7619,16 +7566,16 @@ next
        (use rsv RC D'0 D'1 D'm dj Rae' in blast)+
 qed
 
-subsection \<open>Splitting at a stopping time WITHOUT re-clocking\<close>
+subsection \<open>Splitting at a stopping time without re-clocking\<close>
 
 text \<open>Stroock--Varadhan concatenate at a stopping time on \<open>C([0,\<infinity>))\<close>, and
-  never rebase the time axis: the continuation lives on the SAME path space
-  and is spliced in place.  Transplanted to the capped space that makes the
-  past/future split ADDITIVE --- freeze the path after \<open>\<theta>\<close>, and keep the
+  never rebase the time axis: the continuation lives on the same path space
+  and is spliced in place.  Transplanted to the capped space this makes the
+  past/future split additive: freeze the path after \<open>\<theta>\<close>, and keep the
   increments after \<open>\<theta>\<close> as a second path that is \<open>0\<close> before \<open>\<theta>\<close>.  Both live
-  on the SAME \<open>T\<close>-path space, so the random horizon \<open>T - \<theta>\<close> never appears,
-  and reassembly is addition --- in particular it does NOT need \<open>\<theta>\<close> back,
-  which is what killed the freeze-and-rebase design.\<close>
+  on the same \<open>T\<close>-path space, so the random horizon \<open>T - \<theta>\<close> never appears
+  and reassembly is addition, needing no reference to \<open>\<theta>\<close> on the far side; a
+  freeze-and-rebase design would need \<open>\<theta>\<close> back and so does not work here.\<close>
 
 definition pstopped :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> 'n pairpath
     \<Rightarrow> 'n pairpath"
@@ -7651,7 +7598,7 @@ lemma pstopped_outside: "t \<notin> {0..T} \<Longrightarrow> pstopped T \<theta>
 lemma pafter_outside: "t \<notin> {0..T} \<Longrightarrow> pafter T \<theta> \<omega> t = undefined"
   unfolding pafter_def restrict_def by (rule if_not_P)
 text \<open>The reassembly law.  This is the analogue of
-  @{thm [source] pglue_pcut_pfut} at a RANDOM time, and unlike that one it
+  @{thm [source] pglue_pcut_pfut} at a random time, and unlike that one it
   costs nothing: no membership hypothesis on \<open>\<omega>\<close>, and no \<open>\<theta>\<close> on the
   right-hand side.\<close>
 
@@ -7694,17 +7641,16 @@ lemma pstopped_after:
   shows "pstopped T \<theta> \<omega> t = \<omega> (\<theta> \<omega>)"
   using t ge by (simp add: pstopped_apply min_absorb2)
 
-text \<open>Evaluating a path at a RANDOM time.  This is the one new measurability
+text \<open>Evaluating a path at a random time.  This is the one new measurability
   fact the additive split needs, and it is where the paths' continuity is
-  spent: approximate the time from above by dyadic rationals --- for each
-  fixed dyadic the evaluation is measurable and there are only countably many
-  of them --- and pass to the limit inside each path.  Only POINTWISE
-  continuity of each path is used, so no uniform-continuity machinery.
-  Compare @{thm [source] stopped_adapted_of_cont}, which runs the same dyadic
-  argument for a REAL-valued adapted process and delivers the sharper
-  \<open>\<F>\<^sub>v\<close>-measurability; that is the version to reuse once the kernel has to be a
-  function of the past, and it needs the paths capped as \<open>\<omega> (min s T)\<close>
-  because it asks for continuity on all of \<open>{0..}\<close>.\<close>
+  spent: approximate the time from above by dyadic rationals, each fixed
+  dyadic giving a measurable evaluation among only countably many, and pass
+  to the limit inside each path.  Only pointwise continuity of each path is
+  used, so no uniform-continuity machinery is needed.  Compare
+  @{thm [source] stopped_adapted_of_cont}, which runs the same dyadic
+  argument for a real-valued adapted process and delivers the sharper
+  \<open>\<F>\<^sub>v\<close>-measurability, needing the paths capped as \<open>\<omega> (min s T)\<close> because it
+  asks for continuity on all of \<open>{0..}\<close>.\<close>
 
 lemma path_eval_at_measurable_time:
   fixes M :: "'a measure" and g :: "'a \<Rightarrow> real"
@@ -7817,10 +7763,10 @@ proof -
   then show ?thesis unfolding pafter_def by (rule mspace_path_metricI)
 qed
 
-text \<open>A criterion for landing IN the path space.  The balls are a base, so
+text \<open>A criterion for landing in the path space.  The balls are a base, so
   Borel measurability into \<open>?B\<^sub>T\<close> reduces to measurability of the distance to
-  each point --- and that is the form the additive split can actually supply,
-  since the distance is a sup over time of evaluations and
+  each point, which is the form the additive split can supply, since the
+  distance is a sup over time of evaluations and
   @{thm [source] path_eval_at_measurable_time} makes each evaluation
   measurable.  The generator route through
   @{thm [source] sets_natural_filtration_path} would work too, but this one
@@ -7864,9 +7810,9 @@ proof -
   qed
 qed
 
-text \<open>Hypothesis (ii) of the criterion, discharged once and for all: the
-  distance to a fixed path is a sup of evaluations over the RATIONALS ---
-  @{thm [source] path_mdist_le_iff} --- hence a countable intersection.\<close>
+text \<open>Hypothesis (ii) of the criterion: the distance to a fixed path is a
+  sup of evaluations over the rationals (@{thm [source] path_mdist_le_iff}),
+  hence a countable intersection.\<close>
 
 lemma mdist_measurable_of_eval:
   fixes f :: "'a \<Rightarrow> 'n::finite pairpath"
@@ -7891,8 +7837,8 @@ proof (rule borel_measurable_iff_le[THEN iffD2], intro allI)
     unfolding eq by (intro sets.countable_INT'[OF cnt ne]) (auto simp: inner)qed
 
 text \<open>Hence both halves of the split are measurable maps of the path.  Only
-  Borel measurability of \<open>\<theta>\<close> is used here; the stopping-time property is what
-  will make the kernel a function of the PAST, and enters later through
+  Borel measurability of \<open>\<theta>\<close> is used here; the stopping-time property is
+  what makes the kernel a function of the past, entering later through
   @{thm [source] stopped_adapted_of_cont}.\<close>
 
 lemma pstopped_measurable:
@@ -18401,7 +18347,7 @@ proof -
   qed
   have Rbnd: "AE \<omega> in ?R. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
     by (rule aglue_law_pexit_ge
-        [OF T0' PQ setsQ Kp Kc L1 st Qst Qbnd Kfr Kval])
+        [of T Q ?\<kappa> K, OF T0' PQ setsQ Kp Kc L1 st Qst Qbnd Kfr Kval])
 
   \<comment> \<open>hence \<open>c\<close> is below the value function\<close>
   have "ennreal c \<le> ess_inf_time ?R (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"

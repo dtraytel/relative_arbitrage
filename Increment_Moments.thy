@@ -1,21 +1,16 @@
 section \<open>The second-moment bound on increments\<close>
 
 text \<open>
-  Back to Section 2 of arXiv:2512.17702 (open task 25) now that the stochastic
-  integration layers (task 15) are built.
-
-  Lemma 2.2's analytic chain is: the second-moment bound on increments, then the
-  quadratic-variation bound, then Eq. (2.7), then Kolmogorov's criterion, then
-  Arzela-Ascoli, then Prokhorov. Everything except the first two links was already
-  proved or available. This theory supplies the FIRST link:
+  This theory proves the second-moment bound on increments used in Lemma 2.2 of
+  arXiv:2512.17702:
 
     \<open>E[(X u - X s)\<^sup>2] \<le> C * (u - s)\<close>
 
-  whenever the compensator of the square grows at rate at most \<open>C\<close> -- which for the
-  paper's admissible family is exactly the hypothesis \<open>trace (acov) \<le> C\<close>, since the
+  whenever the compensator of the square grows at rate at most \<open>C\<close> -- for the
+  paper's admissible family this is the hypothesis \<open>trace (acov) \<le> C\<close>, since the
   compensator there is \<open>integral (trace o acov)\<close>.
 
-  The proof needs no stochastic integral. It combines the energy identity along a
+  The proof needs no stochastic integral: it combines the energy identity along a
   two-point partition (\<open>expectation_sq_sampled\<close>) with the fact that a martingale
   has constant expectation, applied to the compensated square.
 \<close>
@@ -512,11 +507,10 @@ text \<open>
   is absent from Isabelle and the AFP. The theorem below reaches the same bound by
   expanding \<open>(Y + d)^4\<close> directly along the partition and using only conditional
   pull-outs: with a common constant \<open>8 C\<^sup>2\<close> (the paper's route gives \<open>66 C\<^sup>2\<close>), the
-  fourth moment of the increment is bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> PLUS three times the
-  accumulated fourth moments of the partition increments. The latter is the
+  fourth moment of the increment is bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> plus three times the
+  accumulated fourth moments of the partition increments. The latter is an
   explicit remainder that vanishes in the mesh limit for continuous paths; no
-  fixed-partition argument can remove it (STATUS.md 25f), but nothing else is
-  missing.
+  fixed-partition argument can remove it.
 
   The fourth-moment integrability hypothesis is discharged in the intended
   application by localisation: up to the exit time the paths live in the compact
@@ -695,7 +689,7 @@ proof -
     also have "\<dots> \<le> (C * (t (Suc n) - t n)) * (C * (t n - t 0))"
     proof (rule mult_left_mono)
       show "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M) \<le> C * (t n - t 0)"
-        by (rule second_moment_partition_bound[OF P X t0 tmono sq dA_int
+        by (rule second_moment_partition_bound[of M _ X t, OF P X t0 tmono sq dA_int
               dA_bounds cov])
       show "0 \<le> C * (t (Suc n) - t n)" using C dt_nn[of n] by simp
     qed
@@ -888,10 +882,9 @@ qed
 subsection \<open>Per-interval energy, standalone\<close>
 
 text \<open>
-  Plan step A2 (STATUS.md 25h). The mesh limit of the remainder
-  \<open>SUM E[d_k^4]\<close> rests on the uniform bound
+  The mesh limit of the remainder \<open>SUM E[d_k^4]\<close> rests on the uniform bound
   \<open>E[(SUM d_k\<^sup>2)\<^sup>2] \<le> 4 R\<^sup>2 C (t-s) + C\<^sup>2 (t-s)\<^sup>2\<close>, which makes \<open>SUM d_k\<^sup>2\<close> bounded
-  in \<open>L\<^sup>2\<close> UNIFORMLY over partitions. This subsection isolates the per-interval
+  in \<open>L\<^sup>2\<close> uniformly over partitions. This subsection isolates the per-interval
   facts it needs.
 \<close>
 
@@ -946,7 +939,7 @@ lemma interval_sq_le:
 proof -
   interpret P: prob_space M by (rule P)
   have "(\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2 \<partial>M) = (\<integral>\<omega>. dA k \<omega> \<partial>M)"
-    by (rule interval_sq_eq_dA[OF P X t0 tmono sq dA_int cov])
+    by (rule interval_sq_eq_dA[of M _ X t, OF P X t0 tmono sq dA_int cov])
   also have "\<dots> \<le> (\<integral>\<omega>. C * (t (Suc k) - t k) \<partial>M)"
   proof (rule integral_mono_AE)
     show "integrable M (dA k)" by (rule dA_int)
@@ -959,7 +952,7 @@ proof -
 qed
 
 text \<open>
-  The mixed-term estimate with an ARBITRARY weight measurable at the left end
+  The mixed-term estimate with an arbitrary weight measurable at the left end
   of the interval: \<open>E[f\<^sup>2 d_k\<^sup>2] \<le> C \<Delta>t_k E[f\<^sup>2]\<close>. Taking \<open>f\<close> to be an earlier
   increment gives the off-diagonal terms of \<open>E[(SUM d\<^sup>2)\<^sup>2]\<close>.
 \<close>
@@ -1145,7 +1138,7 @@ proof -
   also have "\<dots> \<le> 4*R\<^sup>2*(C*(t (Suc k) - t k))"
   proof (rule mult_left_mono)
     show "(\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2 \<partial>M) \<le> C*(t (Suc k) - t k)"
-      by (rule interval_sq_le[OF P X t0 tmono sq dA_int dA_bounds cov])
+      by (rule interval_sq_le[of M _ X t, OF P X t0 tmono sq dA_int dA_bounds cov])
     show "0 \<le> 4*R\<^sup>2" by simp
   qed
   finally show ?thesis .
@@ -1154,12 +1147,11 @@ qed
 subsection \<open>The sum of squared increments is bounded in \<open>L\<^sup>2\<close>, uniformly in the partition\<close>
 
 text \<open>
-  The theorem plan step A2 rests on: for a martingale bounded by @{term R} with
-  covariation rate at most @{term C},
+  For a martingale bounded by @{term R} with covariation rate at most @{term C},
 
     \<open>E[(SUM_{k<n} d_k\<^sup>2)\<^sup>2] \<le> 4 R\<^sup>2 C (t n - t 0) + C\<^sup>2 (t n - t 0)\<^sup>2\<close>
 
-  for EVERY partition. Expanding the square, the diagonal is controlled by
+  holds for every partition. Expanding the square, the diagonal is controlled by
   @{thm [source] interval_pow4_le} and each off-diagonal term by
   @{thm [source] weighted_interval_bound} with the earlier increment as weight.
   This makes \<open>SUM d\<^sup>2\<close> bounded in \<open>L\<^sup>2\<close> uniformly over partitions, which is what
@@ -1219,7 +1211,7 @@ proof -
             cov C iY4 fF])
     have s: "(\<integral>\<omega>. (X (t (Suc j)) \<omega> - X (t j) \<omega>)\<^sup>2 \<partial>M)
                \<le> C * (t (Suc j) - t j)"
-      by (rule interval_sq_le[OF P X t0 tmono sq dA_int dA_bounds cov])
+      by (rule interval_sq_le[of M _ X t, OF P X t0 tmono sq dA_int dA_bounds cov])
     have cd: "0 \<le> C * (t (Suc k) - t k)"
       by (rule mult_nonneg_nonneg[OF C dt_nn])
     have m: "(C * (t (Suc k) - t k))
@@ -1243,7 +1235,7 @@ proof -
       by (intro Bochner_Integration.integral_cong refl) (simp add: sq_times_sq)
     have b: "(\<integral>\<omega>. (X (t (Suc j)) \<omega> - X (t j) \<omega>)^4 \<partial>M)
                \<le> 4*R\<^sup>2*(C*(t (Suc j) - t j))"
-      by (rule interval_pow4_le[OF P X t0 tmono q4 dA_int dA_bounds cov R bnd])
+      by (rule interval_pow4_le[of M _ X t, OF P X t0 tmono q4 dA_int dA_bounds cov R bnd])
     have nn: "0 \<le> C\<^sup>2*((t (Suc j) - t j)*(t (Suc j) - t j))"
       by (intro mult_nonneg_nonneg zero_le_power2 dt_nn)
     have goal': "(\<integral>\<omega>. (X (t (Suc j)) \<omega> - X (t j) \<omega>)\<^sup>2
@@ -1348,10 +1340,10 @@ qed
 subsection \<open>The uniform partitions of \<open>[s, T]\<close>\<close>
 
 text \<open>
-  Plan steps a2-lim (STATUS.md 25i). The \<open>m\<close>-th uniform partition of \<open>[s,T]\<close> has
-  \<open>Suc m\<close> intervals (never zero, so maxima over the increments are well defined)
-  and is capped at \<open>T\<close>, so it is defined and monotone on ALL of @{typ nat}, which
-  is the shape the partition theorems above expect.
+  The \<open>m\<close>-th uniform partition of \<open>[s,T]\<close> has \<open>Suc m\<close> intervals (never zero, so
+  maxima over the increments are well defined) and is capped at \<open>T\<close>, so it is
+  defined and monotone on all of @{typ nat}, which is the shape the partition
+  theorems above expect.
 \<close>
 
 definition upart :: "real \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> real" where
@@ -1476,10 +1468,10 @@ qed
 subsection \<open>The maximal squared increment vanishes in expectation\<close>
 
 text \<open>
-  Step 3 of a2-lim: for a bounded process with almost-surely continuous paths on
-  \<open>[s,T]\<close>, the expectation of the LARGEST squared increment along the \<open>m\<close>-th
-  uniform partition tends to zero. The pointwise limit is uniform continuity on
-  the compact; the passage to expectations is dominated convergence with the
+  For a bounded process with almost-surely continuous paths on \<open>[s,T]\<close>, the
+  expectation of the largest squared increment along the \<open>m\<close>-th uniform
+  partition tends to zero. The pointwise limit is uniform continuity on the
+  compact; the passage to expectations is dominated convergence with the
   constant dominator \<open>4 R\<^sup>2\<close>. No martingale structure is used.
 \<close>
 
@@ -1676,12 +1668,11 @@ qed
 subsection \<open>Step 4: the remainder vanishes along the uniform partitions\<close>
 
 text \<open>
-  The assembly. The hypotheses package the paper's setting: a GLOBAL compensator
-  @{term A} with rate at most @{term C} (in the application,
-  \<open>A u = \<integral> trace (acov)\<close> over \<open>[0,u]\<close>), the conditional covariation identity per
-  pair of times, boundedness by @{term R}, and almost-surely continuous paths on
-  \<open>[s,T]\<close>. Fourth-moment integrability is NOT assumed -- it follows from
-  boundedness.
+  The hypotheses package the paper's setting: a global compensator @{term A}
+  with rate at most @{term C} (in the application, \<open>A u = \<integral> trace (acov)\<close>
+  over \<open>[0,u]\<close>), the conditional covariation identity per pair of times,
+  boundedness by @{term R}, and almost-surely continuous paths on \<open>[s,T]\<close>.
+  Fourth-moment integrability is not assumed -- it follows from boundedness.
 \<close>
 
 theorem remainder_tendsto_zero:
@@ -1746,7 +1737,7 @@ proof -
                             - X (upart s T m k) \<omega>)\<^sup>2)\<^sup>2 \<partial>M)
             \<le> 4*R\<^sup>2*C*(upart s T m (Suc m) - upart s T m 0)
               + C\<^sup>2*(upart s T m (Suc m) - upart s T m 0)\<^sup>2"
-      by (rule sum_sq_squared_bound[OF P X upt_nn upt_mono q4 dAint dAbnd
+      by (rule sum_sq_squared_bound[of M _ X "upart s T m", OF P X upt_nn upt_mono q4 dAint dAbnd
             covm C R bndm])
     also have "\<dots> = B" unfolding B_def by (simp add: upart_top)
     finally show ?thesis .
@@ -2019,12 +2010,11 @@ qed
 subsection \<open>Eq. (2.7) for bounded continuous martingales\<close>
 
 text \<open>
-  The payoff of plan step A2 (STATUS.md 25h/25i): the fourth-moment bound of
-  Eq. (2.7) of arXiv:2512.17702, for a martingale that is bounded and has
-  almost-surely continuous paths on \<open>[s,T]\<close>, with covariation compensator of
-  rate at most @{term C}. The constant is \<open>8 C\<^sup>2\<close>, against the paper's \<open>66 C\<^sup>2\<close>
-  obtained through the Burkholder-Davis-Gundy inequality; no BDG and no
-  stochastic integral is used anywhere in the proof.
+  The fourth-moment bound of Eq. (2.7) of arXiv:2512.17702, for a martingale
+  that is bounded and has almost-surely continuous paths on \<open>[s,T]\<close>, with
+  covariation compensator of rate at most @{term C}. The constant is \<open>8 C\<^sup>2\<close>,
+  against the paper's \<open>66 C\<^sup>2\<close> obtained through the Burkholder-Davis-Gundy
+  inequality; no BDG and no stochastic integral is used anywhere in the proof.
 \<close>
 
 theorem fourth_moment_bound_bounded:
@@ -2081,7 +2071,7 @@ proof -
        \<le> 8*C\<^sup>2*(upart s T m (Suc m) - upart s T m 0)\<^sup>2
          + 3*(\<Sum>k<Suc m. (\<integral>\<omega>. (X (upart s T m (Suc k)) \<omega>
                               - X (upart s T m k) \<omega>)^4 \<partial>M))"
-      by (rule fourth_moment_partition_bound[OF P X upt_nn upt_mono q4 dAint
+      by (rule fourth_moment_partition_bound[of M _ X "upart s T m", OF P X upt_nn upt_mono q4 dAint
             dAbnd covm C])
     thus ?thesis by (simp add: upart_top)
   qed
@@ -2103,28 +2093,26 @@ proof -
 qed
 
 
-section \<open>Uniform integrability of the squared increments (RQ-A)\<close>
+section \<open>Uniform integrability of the squared increments\<close>
 
-text \<open>Research question A of \<open>PLAN_THEOREM_1_1.md\<close> asks whether the closedness
-  half of Lemma 2.3 can avoid a Skorokhod representation by passing the
-  covariation constraint to weak limits through the LINEAR inequalities
+text \<open>The closedness half of Lemma 2.3 needs to pass the covariation
+  constraint's linear inequalities
 
-    \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>.
+    \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>
 
-  RESOLVED NEGATIVELY, the shortcut does not cover everything.  For \<open>M \<succeq> 0\<close> the
-  integrand is non-negative and one can truncate and use monotone convergence,
-  needing no integrability hypothesis at all.  But PSD test matrices alone do NOT
-  characterise this \<open>S\<close>: the set cut out by \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is the
-  DOWNWARD closure of \<open>S\<close> in the psd order, whereas \<open>S\<close> carries LOWER bounds
-  (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and so is not downward closed --- \<open>0 \<preceq> a\<close> for \<open>a \<in> S\<close> yet \<open>0 \<notin> S\<close>.
-  For the lower constraints the required inequality runs the other way, and weak
-  convergence alone gives only the Fatou direction \<open>liminf \<ge> lim\<close>.
+  to weak limits, to avoid a Skorokhod representation. This does not work by
+  quantifying only over \<open>M \<succeq> 0\<close>: the set \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is the
+  downward closure of the constraint set \<open>S\<close> in the psd order, whereas \<open>S\<close>
+  carries lower bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and so is not downward closed --- \<open>0 \<preceq> a\<close>
+  for \<open>a \<in> S\<close> yet \<open>0 \<notin> S\<close>. For the lower constraints the required inequality runs
+  the other way, and weak convergence alone gives only the Fatou direction
+  \<open>liminf \<ge> lim\<close>.
 
-  So uniform integrability is genuinely needed, and this is the lemma that
-  supplies it: the fourth-moment bound of Eq. (2.7) --- already available here as
-  \<open>fourth_moment_bound_bounded\<close>, and already free of Ito and BDG --- controls the
-  tail of the SQUARED increment uniformly over the family.  That is exactly the
-  hypothesis \<open>unif_integrable\<close> of \<open>Vitali_Convergence.vitali_convergence\<close>.
+  Uniform integrability is needed instead, and this is the lemma that supplies
+  it: the fourth-moment bound of Eq. (2.7) (\<open>fourth_moment_bound_bounded\<close>,
+  free of Ito and BDG) controls the tail of the squared increment uniformly
+  over the family, which is exactly the hypothesis \<open>unif_integrable\<close> of
+  \<open>Vitali_Convergence.vitali_convergence\<close>.
 
   The estimate itself is pointwise and elementary: on \<open>{Z\<^sup>2 > R}\<close> one has
   \<open>Z\<^sup>2 = Z\<^sup>4/Z\<^sup>2 < Z\<^sup>4/R\<close>, and off that set the left-hand side vanishes.\<close>
@@ -2174,30 +2162,24 @@ qed
 
 subsection \<open>Truncation: the other half of the \<open>3\<epsilon>\<close> argument\<close>
 
-text \<open>The remaining step of RQ-A is to upgrade weak convergence by uniform
-  integrability: if \<open>P\<^sub>m \<rightarrow> P\<close> weakly and \<open>f\<close> is continuous with uniformly
-  integrable tails, then \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> even though \<open>f\<close> is unbounded.  The
-  argument truncates \<open>f\<close> at height \<open>R\<close> --- the truncation is bounded and
-  continuous, so weak convergence applies to it directly --- and controls the two
-  truncation errors by the tail bound above.
+text \<open>Weak convergence upgrades to convergence of unbounded continuous
+  integrals \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> when \<open>f\<close> has uniformly integrable tails: truncate
+  \<open>f\<close> at height \<open>R\<close> --- the truncation is bounded and continuous, so weak
+  convergence applies to it directly --- and control the two truncation errors
+  by the tail bound above.
 
-  This is the error estimate.  Pointwise the clamped function differs from \<open>f\<close>
+  This is the error estimate: pointwise the clamped function differs from \<open>f\<close>
   only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the whole error is
   dominated by the tail integral that \<open>sq_tail_bound_of_fourth_moment\<close> bounds.\<close>
 
-text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with all measure theory removed.
+text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with all measure theory removed:
+  a sequence that is uniformly within \<open>e\<close> of some convergent sequence, whose
+  limit is itself within \<open>e\<close> of \<open>z\<close>, for every \<open>e\<close>, converges to \<open>z\<close>. This is
+  what truncating the integrand at height \<open>R\<close> and controlling the two
+  truncation errors via \<open>sq_tail_bound_of_fourth_moment\<close> leaves to prove.
 
-  RQ-A passes a linear inequality to a weak limit by truncating the integrand at
-  height \<open>R\<close>: the truncation is bounded and continuous, so weak convergence
-  applies to it directly, and the two truncation errors are controlled uniformly
-  by \<open>sq_tail_bound_of_fourth_moment\<close>.  What that leaves is precisely this
-  real-analysis fact --- a sequence that is UNIFORMLY within \<open>e\<close> of some
-  convergent sequence, whose limit is itself within \<open>e\<close> of \<open>z\<close>, for EVERY \<open>e\<close>,
-  converges to \<open>z\<close>.
-
-  Isolating it here means the measure-theoretic assembly never has to do
-  \<open>\<epsilon>\<close>-juggling inline.  The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so that the
-  three terms sum to \<open>3\<epsilon>/4 < \<epsilon>\<close> STRICTLY, which is what \<open>LIMSEQ_I\<close> wants.\<close>
+  The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so that the three terms sum to
+  \<open>3\<epsilon>/4 < \<epsilon>\<close> strictly, which is what \<open>LIMSEQ_I\<close> wants.\<close>
 
 lemma tendsto_real_of_approximants:
   fixes x :: "nat \<Rightarrow> real" and z :: real

@@ -2,42 +2,20 @@
   Title:   Modification_Transfer.thy
   Content: Transferring the vanishing of increment integrals to a modification,
            the resulting martingale transfer theorems, and the reduction of
-           vector martingales to their components.
-
-  A modification X' of a process X agrees with it almost surely at each fixed
-  time, but their natural filtrations agree only up to null sets, so
-  adaptedness -- and with it the martingale property -- does not transfer for
-  free.  What does transfer is
-
-    int_A (X'_j - X'_i) = 0  for A in the natural filtration of X' at i,
-
-  because a cylinder event of the modification has almost surely the same
-  indicator as the corresponding cylinder event of X, and cylinders form an
-  intersection-stable generator, so a Dynkin induction extends the identity to
-  the whole filtration.  Together with martingale_of_set_integral_eq this gives
-  the martingale property of X' for its own natural filtration, which is what
-  makes the continuous Kolmogorov-Chentsov modification usable as a market.
-
-  LESSON (this cost several hours of wall clock): on goals of the form
-  "B : sets (natural_filtration ...)" or "B : sigma_sets Omega G", the methods
-  blast and intro with sigma_sets.Basic do NOT terminate -- they chase the
-  introduction rules of the inductive sigma_sets predicate.  The two offending
-  steps here were "by blast" for B0 : sets M and
-  "by (intro sets_M sigma_sets.Basic)" for B : sets M; both are now explicit
-  subsetD / rev_subsetD / rule applications.  Diagnose such hangs by asking
-  PIDE for the commands with status still_running_possibly_nonterminating:
-  everything after the first of them is merely queued behind it.
+           vector martingales to their components.  Together with
+           martingale_of_set_integral_eq this gives the martingale property of
+           a modification for its own natural filtration, which is what makes
+           the continuous Kolmogorov-Chentsov modification usable as a market.
 *)
 
 theory Modification_Transfer
   imports Ito_Market
 begin
 
-text \<open>The remainder of this theory transfers the vanishing of increment
-  integrals to a modification.  A modification agrees with the process almost
-  surely at each fixed time, but their natural filtrations agree only up to
-  null sets, so adaptedness --- and with it the martingale property --- does
-  not transfer for free.  What does transfer is
+text \<open>A modification agrees with the process almost surely at each fixed
+  time, but their natural filtrations agree only up to null sets, so
+  adaptedness --- and with it the martingale property --- does not transfer
+  for free.  What does transfer is
 
     int_A (X'_j - X'_i) = 0  for A in the natural filtration of X' at i,
 
@@ -148,7 +126,7 @@ proof (rule antisym)
       using cylset_subset_Pow by (rule sigma_algebra_sigma_sets)
     show "(\<Union>i\<in>{0..t}. {X i -` A \<inter> space M | A. A \<in> sets borel})
         \<subseteq> sigma_sets (space M) (cylset M X t)"
-      by (auto intro!: sigma_sets.Basic cylset_single)
+      by (auto intro!: cylset_single)
   qed
 qed
 
@@ -661,14 +639,11 @@ qed
 section \<open>Separating the filtration from the martingale\<close>
 
 text \<open>The market locales require a single filtration for both the state
-  process and its compensated square, so the transfer is needed in the form
-  where the process generating the filtration and the martingale itself are
-  different: the filtration generator moves from X to its modification X',
-  while the martingale moves from Y to its modification Y'.  This is exactly
-  the extra generality that set\_integral\_zero\_transfer already provides,
-  since the increments there are an independent parameter.  Adaptedness of
-  the new martingale to the new filtration cannot come for free here and is
-  assumed; in the applications Y' is a continuous function of X'.\<close>
+  process and its compensated square, so here the process generating the
+  filtration (\<open>X\<close> to \<open>X'\<close>) and the martingale (\<open>Y\<close> to \<open>Y'\<close>) are transferred
+  separately.  Adaptedness of the new martingale to the new filtration is
+  assumed, since it does not transfer for free; in the applications \<open>Y'\<close> is a
+  continuous function of \<open>X'\<close>.\<close>
 
 theorem martingale_of_modification_gen:
   fixes X X' :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"

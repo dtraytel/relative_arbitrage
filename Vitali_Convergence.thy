@@ -1,17 +1,16 @@
 section \<open>Uniform integrability and Vitali's convergence theorem\<close>
 
 text \<open>
-  Neither uniform integrability nor Vitali's convergence theorem exists anywhere
-  in the Isabelle distribution or the AFP (searched: no occurrence of
-  @{text uniformly_integrable} or a convergence-type @{text Vitali} in either;
-  @{text Vitali_Covering_Theorem} in HOL-Analysis is an unrelated result). They
-  are required by the proof of Lemma 2.3 of arXiv:2512.17702, which invokes
-  Vitali's theorem to pass the covariation constraint through a weak limit, so
-  they are developed here from scratch.
+  Neither uniform integrability nor Vitali's convergence theorem exists
+  anywhere in the Isabelle distribution or the AFP (@{text
+  Vitali_Covering_Theorem} in HOL-Analysis is an unrelated result), so they are
+  developed here from scratch for the proof of Lemma 2.3 of arXiv:2512.17702,
+  which invokes Vitali's theorem to pass the covariation constraint through a
+  weak limit.
 
-  The classical statement: on a FINITE measure space, if a sequence is uniformly
-  integrable and converges almost everywhere, then the limit is integrable and
-  the convergence also holds in @{text "L\<^sup>1"}.
+  The classical statement: on a finite measure space, if a sequence is
+  uniformly integrable and converges almost everywhere, then the limit is
+  integrable and the convergence also holds in @{text "L\<^sup>1"}.
 \<close>
 
 theory Vitali_Convergence

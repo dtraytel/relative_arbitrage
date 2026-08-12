@@ -16,7 +16,7 @@
     E|B_t - B_s|^4 = 3 |t-s|^2  (HOL-Probability's normal_moment_even).
 
   This part provides the Gaussian increment measure gauss_measure,
-  parameterized by its VARIANCE (variance 0 degenerating to a point
+  parameterized by its variance (variance 0 degenerating to a point
   mass), its moments, and the convolution law both in pushforward and in
   iterated-integral form.
 *)
@@ -130,7 +130,7 @@ next
     using gauss_measure_moment_even[OF v', of 2]
     by (auto intro: integrable.intros)
   have nonneg: "AE x in gauss_measure v. 0 \<le> x ^ 4"
-    by (auto intro!: AE_I2 zero_le_even_power)
+    by (auto intro!: zero_le_even_power)
   have "(\<integral>\<^sup>+x. x ^ 4 \<partial>gauss_measure v) = ennreal (\<integral>x. x ^ 4 \<partial>gauss_measure v)"
     by (rule nn_integral_eq_integral[OF integrable nonneg])
   then show ?thesis

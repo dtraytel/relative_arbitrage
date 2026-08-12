@@ -14,7 +14,7 @@
   from which the identity at a stopped time is exactly optional sampling.
   The locale ito_volatile_market below assumes the process form together
   with the regularity that optional sampling needs -- continuous paths and
-  an integrable bound on the horizon -- and PROVES
+  an integrable bound on the horizon -- and proves
   sufficiently_volatile_market.  So every result of the probabilistic part
   of the paper (Lemma 2.1, the exit-time bound, the arbitrage and
   optimality theorems) holds under the martingale property of Z instead of

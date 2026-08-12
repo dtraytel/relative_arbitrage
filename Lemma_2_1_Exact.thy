@@ -3,27 +3,25 @@
   Content: Lemma 2.1 of arXiv:2512.17702 in its exact form, i.e. with the
            convex hull rather than its closure.
 
-  Relative_Arbitrage_Convexity proves  conv B_k <= A_k <= closure (conv B_k),
-  so A_k is the CLOSED convex hull of B_k.  The paper states equality with
-  the convex hull itself.  Here we close that gap.
+  Relative_Arbitrage_Convexity proves conv B_k <= A_k <= closure (conv B_k),
+  so A_k is the closed convex hull of B_k; the paper states equality with
+  the convex hull itself, which this theory establishes in three steps:
 
-  Plan, three pieces:
+  A capped trace bound on A_k: for a in A_k with orthonormal eigenbasis B
+  and eigenvalues lambda_u = u . (a u), sum_u min(lambda_u,1) >= n-k.  This
+  needs only Pi_proj a m <= trace (a ** P) for the spectral projection P
+  onto the small-eigenvalue coordinates -- immediate since Pi_proj is an
+  infimum -- and not the identity "Pi_m = sum of the m smallest
+  eigenvalues".
 
-  P1  Capped trace bound.  For a in A_k with orthonormal eigenbasis B and
-      eigenvalues lambda_u = u . (a u),  sum_u min(lambda_u,1) >= n-k.
-      This needs only  Pi_proj a m <= trace (a ** P)  for the spectral
-      projection P onto the small-eigenvalue coordinates -- immediate since
-      Pi_proj is an infimum.  In particular we do NOT need the identity
-      "Pi_m = sum of the m smallest eigenvalues".
+  A hypersimplex decomposition, carried out directly on matrices: a
+  combination sum_u c_u (u u^T) with coefficients in [0,1] summing to n-k
+  lies in conv B_k, by a Birkhoff-style swap induction on the number of
+  coefficients that are not already 0 or 1.
 
-  P2  Hypersimplex decomposition, carried out directly on matrices: a
-      combination sum_u c_u (u u^T) with coefficients in [0,1] summing to
-      n-k lies in conv B_k.  Birkhoff-style swap induction on the number of
-      coefficients that are not already 0 or 1.
-
-  P3  Assemble: cap the eigenvalues at 1, rescale so the sum is exactly
-      n-k, decompose with P2, and add the nonnegative remainder back using
-      suff_volatile_augment.
+  The assembly: cap the eigenvalues at 1, rescale so the sum is exactly
+  n-k, decompose, and add the nonnegative remainder back using
+  suff_volatile_augment.
 *)
 
 theory Lemma_2_1_Exact
@@ -68,7 +66,7 @@ proof -
 qed
 
 
-section \<open>P2: the hypersimplex decomposition\<close>
+section \<open>The hypersimplex decomposition\<close>
 
 text \<open>Base case of the swap induction: if every coefficient is already \<open>0\<close>
   or \<open>1\<close>, the combination is the spectral projection onto the coefficient-\<open>1\<close>
@@ -474,7 +472,8 @@ next
 qed
 
 
-text \<open>P2, packaged: the measure is bounded by its own value.\<close>
+text \<open>The hypersimplex decomposition, packaged: the measure is bounded by
+  its own value.\<close>
 
 lemma diag_in_convex_hull:
   fixes B :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
@@ -495,7 +494,7 @@ proof (rule diag_in_convex_hull_aux
     by (rule csum)
 qed
 
-section \<open>P1: the capped trace bound\<close>
+section \<open>The capped trace bound\<close>
 
 text \<open>The trace of \<open>a\<close> against the spectral projection onto a subset of the
   eigenbasis is the sum of the corresponding eigenvalues.\<close>
@@ -599,7 +598,7 @@ proof -
   qed
 qed
 
-section \<open>P3: the exact inclusion\<close>
+section \<open>The exact inclusion\<close>
 
 text \<open>\<open>suff_volatile k\<close> is closed under adding a nonnegative multiple of a
   rank-one projection (\<open>suff_volatile_augment\<close>), and translation commutes with
@@ -667,8 +666,9 @@ qed
 
 text \<open>Lemma 2.1, exact form.  Diagonalise \<open>a\<close>, cap the eigenvalues at \<open>1\<close>,
   rescale the capped vector so that its sum is exactly \<open>n - k\<close> --- possible
-  because by P1 the capped sum is at least \<open>n - k\<close> --- decompose that by P2,
-  and add the nonnegative remainder back.\<close>
+  because the capped sum is at least \<open>n - k\<close> by the trace bound --- decompose
+  the result via the hypersimplex decomposition, and add the nonnegative
+  remainder back.\<close>
 
 theorem lemma_2_1_exact:
   fixes k :: nat
@@ -784,8 +784,8 @@ proof
 qed
 
 text \<open>Lemma 2.1 of the paper, verbatim: the convex hull of
-  \<open>{a \<in> \<bbbS>\<^sup>n\<^sub>+ : \<lambda>\<^sub>(\<^sub>n\<^sub>-\<^sub>k\<^sub>)(a) \<ge> 1}\<close> IS the constraint set \<open>A\<close> of Eq. (2.1) ---
-  no closure.\<close>
+  \<open>{a \<in> \<bbbS>\<^sup>n\<^sub>+ : \<lambda>\<^sub>(\<^sub>n\<^sub>-\<^sub>k\<^sub>)(a) \<ge> 1}\<close> equals the constraint set \<open>A\<close> of Eq. (2.1),
+  with no closure.\<close>
 
 corollary lemma_2_1_eq:
   fixes k :: nat

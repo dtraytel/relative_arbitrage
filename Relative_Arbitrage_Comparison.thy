@@ -1,6 +1,6 @@
 (*
   Title:   Relative_Arbitrage_Comparison.thy
-  Content: Uniqueness of the ball solution of Eq. (3.9) WITHOUT the
+  Content: Uniqueness of the ball solution of Eq. (3.9) without the
            Crandall--Ishii comparison principle.
 
   Relative_Arbitrage_Uniqueness derives uniqueness from the locale
@@ -9,17 +9,15 @@
   which needs sup-convolutions and Jensen's lemma.
 
   For the paper's statement (Theorem 1.1, uniqueness, for Example 3.1)
-  none of that is required: one of the two functions being compared is
-  the EXPLICIT SMOOTH solution v of Eq. (3.9), so it can serve directly
-  as a test function.  Since the operator F is positively homogeneous in
-  the Hessian and invariant under scaling of the gradient, the scaled
-  function (1+e)v is a STRICT supersolution and (1-e)v a STRICT
-  subsolution, which turns the touching argument into a contradiction
-  without any doubling of variables.
-
-  Result: ball_v_unique_solution_smooth -- the explicit v is the unique
-  continuous viscosity solution with its boundary data, proved from
-  first principles.
+  none of that is needed: one of the two functions being compared is the
+  explicit smooth solution v of Eq. (3.9), so it can serve directly as a
+  test function.  Since the operator F is positively homogeneous in the
+  Hessian and invariant under scaling of the gradient, the scaled function
+  (1+e)v is a strict supersolution and (1-e)v a strict subsolution, which
+  turns the touching argument into a contradiction without any doubling of
+  variables.  The main result, ball_v_unique_solution_smooth, is that the
+  explicit v is the unique continuous viscosity solution with its boundary
+  data, proved from first principles.
 *)
 
 theory Relative_Arbitrage_Comparison
@@ -201,7 +199,7 @@ qed
 
 text \<open>Every viscosity subsolution which is dominated by \<open>v\<close> on the
   boundary is dominated by \<open>v\<close> everywhere.  The proof compares \<open>u\<close> with
-  the STRICT supersolution \<open>c * v\<close>, \<open>c > 1\<close>: at an interior maximum of
+  the strict supersolution \<open>c * v\<close>, \<open>c > 1\<close>: at an interior maximum of
   \<open>u - c * v\<close> the smooth function \<open>c * v\<close> is an admissible test function,
   so the subsolution property forces \<open>c = ell_op \<dots> \<le> 1\<close>.  No doubling of
   variables and hence no Crandall--Ishii lemma is needed.\<close>
@@ -286,7 +284,7 @@ proof (rule field_le_epsilon)
 qed
 
 text \<open>Dually, \<open>v\<close> is dominated by every viscosity supersolution, comparing
-  with the STRICT subsolution \<open>c * v\<close>, \<open>0 < c < 1\<close>.\<close>
+  with the strict subsolution \<open>c * v\<close>, \<open>0 < c < 1\<close>.\<close>
 
 theorem ball_v_le_visc_supersol:
   fixes r :: real and u :: "real^'n::finite \<Rightarrow> real"
@@ -441,19 +439,18 @@ corollary ball_v_visc_sol_exists:
 section \<open>Section 4 for the ball, with no Crandall--Ishii input\<close>
 
 text \<open>Theorem 4.3 of the paper (comparison) and Proposition 4.1 (uniqueness) are
-  proved there for a general compact \<open>K\<close>, via Theorem 4.2(a), whose proof doubles
-  the variables and invokes the Crandall--Ishii theorem on sums -- cited in the
-  paper as [CI90] and NOT available in this development (see
-  \<open>max_principle_boundary\<close> in Lemma_3_1_Envelopes.thy for where that gap is
-  isolated).
+  proved there for a general compact \<open>K\<close>, via Theorem 4.2(a), whose proof
+  doubles the variables and invokes the Crandall--Ishii theorem on sums --
+  cited in the paper as [CI90] and not formalized here (see
+  \<open>max_principle_boundary\<close> in Lemma_3_1_Envelopes.thy for where that
+  hypothesis is isolated).
 
-  For \<open>K\<close> a closed ball, however, the whole of Section 4's conclusion is
-  available UNCONDITIONALLY, because the explicit solution \<open>ball_v\<close> of Eq. (3.9)
-  can be interposed: a subsolution lies below it and a supersolution above it,
-  each by comparison with a strictly scaled copy of \<open>ball_v\<close> used as a test
-  function.  No doubling of variables occurs anywhere.
-
-  This is exactly the case Theorem 1.1 needs for Example 3.1.\<close>
+  For \<open>K\<close> a closed ball, the whole of Section 4's conclusion holds
+  unconditionally, because the explicit solution \<open>ball_v\<close> of Eq. (3.9) can be
+  interposed: a subsolution lies below it and a supersolution above it, each
+  by comparison with a strictly scaled copy of \<open>ball_v\<close> used as a test
+  function, with no doubling of variables.  This is exactly the case
+  Theorem 1.1 needs for Example 3.1.\<close>
 
 theorem comparison_ball:
   fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
@@ -476,10 +473,9 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Boundary data given as an ORDERED pair on the sphere, which is the form
-  Theorem 4.3 is stated in: \<open>u \<le> w\<close> on the sphere suffices, provided the common
-  value is that of \<open>ball_v\<close>.  Stated separately because it is the shape the
-  assembly of Theorem 1.1 will want.\<close>
+text \<open>Boundary data given as an ordered pair on the sphere, which is the form
+  Theorem 4.3 is stated in: \<open>u \<le> w\<close> on the sphere suffices, provided the
+  common value is that of \<open>ball_v\<close>.\<close>
 
 corollary comparison_ball_zero_boundary:
   fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
@@ -538,16 +534,16 @@ qed
 section \<open>Theorem 4.2(a) when one function is smooth: no Crandall--Ishii\<close>
 
 text \<open>The mechanism of the ball argument, abstracted.  Theorem 4.2(a) of the
-  paper needs the Crandall--Ishii theorem on sums because BOTH \<open>u\<close> and \<open>w\<close> are
-  merely semicontinuous, so neither can serve as a test function for the other.
-  If, however, one of them is a SMOOTH STRICT supersolution, the maximum
-  principle is elementary: at an interior maximum of \<open>u - \<psi>\<close> the smooth \<open>\<psi>\<close> IS an
-  admissible test function, so the subsolution property forces
-  \<open>F(\<nabla>\<psi>, \<nabla>\<^sup>2\<psi>) \<le> 1\<close> there, contradicting strictness.  Hence the maximum sits on
-  the boundary.
+  paper needs the Crandall--Ishii theorem on sums because both \<open>u\<close> and \<open>w\<close> are
+  merely semicontinuous, so neither can serve as a test function for the
+  other.  If, however, one of them is a smooth strict supersolution, the
+  maximum principle is elementary: at an interior maximum of \<open>u - \<psi>\<close> the
+  smooth \<open>\<psi>\<close> is an admissible test function, so the subsolution property
+  forces \<open>F(\<nabla>\<psi>, \<nabla>\<^sup>2\<psi>) \<le> 1\<close> there, contradicting strictness, so the maximum
+  sits on the boundary.
 
   This is the general form of what \<open>visc_subsol_le_ball_v\<close> does with
-  \<open>\<psi> = c \<cdot> ball_v\<close>, \<open>c > 1\<close>.  It applies on ANY compact \<open>K\<close> for which a smooth
+  \<open>\<psi> = c \<cdot> ball_v\<close>, \<open>c > 1\<close>.  It applies on any compact \<open>K\<close> for which a smooth
   strict supersolution is available, and needs nothing from Section 4's harder
   half.  The gradient field is \<open>g\<close> and the Hessian field \<open>Hf\<close>, matching the shape
   of \<open>test_fun_at\<close>.\<close>
@@ -599,7 +595,7 @@ proof -
     unfolding \<Phi>_def by simp
 qed
 
-text \<open>The dual statement, for a smooth STRICT subsolution below a
+text \<open>The dual statement, for a smooth strict subsolution below a
   supersolution.\<close>
 
 theorem smooth_strict_le_visc_supersol:
@@ -651,10 +647,10 @@ qed
 section \<open>Towards Section 2: the feasible set is entrywise bounded\<close>
 
 text \<open>Lemma 2.2 of the paper assumes the set \<open>S\<close> of admissible covariances is
-  BOUNDED.  For the paper's \<open>S\<close> that is a purely linear-algebraic fact, provable
-  here without any probability: \<open>psd a\<close> bounds the diagonal below by \<open>0\<close> and
-  \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form at the
-  coordinate vectors.\<close>
+  bounded.  For the paper's \<open>S\<close> that is a purely linear-algebraic fact,
+  provable without any probability: \<open>psd a\<close> bounds the diagonal below by
+  \<open>0\<close> and \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form
+  at the coordinate vectors.\<close>
 
 lemma inner_axis_one:
   fixes y :: "real^'n::finite"
@@ -795,9 +791,9 @@ proof -
     by simp
 qed
 
-text \<open>Hence Lemma 2.2's hypothesis: the feasible set is BOUNDED.  Combined with
-  the Frobenius entry bound this is the quantitative statement the compactness
-  argument of Section 2 consumes.\<close>
+text \<open>Hence Lemma 2.2's hypothesis: the feasible set is bounded.  Combined
+  with the Frobenius entry bound this is the quantitative statement the
+  compactness argument of Section 2 consumes.\<close>
 
 theorem feasible_bounded:
   fixes p :: "real^'n::finite"

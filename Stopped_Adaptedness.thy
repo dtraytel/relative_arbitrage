@@ -3,17 +3,7 @@
   Content: A continuous adapted process stopped at a stopping time is adapted.
 
   This discharges the hypothesis stopped_adapted of theorem optional_stopping
-  (Optional_Sampling.thy), which that theorem leaves to the caller.
-
-  The proof is the usual dyadic approximation.  The stopped time
-  rho = min v tau is measurable at the horizon v, because {rho <= a} is
-  either the whole space (a >= v), or {tau <= a} in F a and hence in F v
-  (0 <= a < v), or empty (a < 0).  The dyadic index
-  idx n = min (nat ceiling(2^n rho)) (nat ceiling(2^n v)) has all its level
-  sets in F v, since {idx n <= i} is again a sublevel set of rho, and the
-  process evaluated at the corresponding grid time is a finite sum of
-  F v-measurable terms.  Finally the grid times are within 2^-n of rho, so
-  path continuity gives convergence and the limit is F v-measurable.
+  (Optional_Sampling.thy).
 *)
 
 theory Stopped_Adaptedness

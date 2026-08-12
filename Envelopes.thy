@@ -52,9 +52,9 @@ unbundle inner_syntax
 section \<open>The operator of Eq. (1.9) on pairs\<close>
 
 text \<open>The envelopes are taken in the pair \<open>(p, M)\<close> jointly, as in the
-  paper, so we first package \<open>F\<close> as a function on the product metric
-  space.  Values are put in \<open>ereal\<close> so that the suprema and infima below
-  are unconditionally defined.\<close>
+  paper, so \<open>F\<close> is first packaged as a function on the product metric
+  space, with values in \<open>ereal\<close> so that the suprema and infima below are
+  unconditionally defined.\<close>
 
 definition ell_op_pair ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> ereal"
@@ -124,10 +124,8 @@ lemma ell_op_le_ell_op_usc:
   using ell_op_le_usc[of k L p M] by (simp add: ell_op_pair_def)
 
 text \<open>\<open>F\<^sup>*\<close> is upper semicontinuous by construction, so the inequality
-  \<open>\<ge> 1\<close> passes through limits in \<open>(p, M)\<close>.  Both the Case-2 reduction of
-  \<section>3.2 and the envelope re-basing of the comparison proof use this to
-  move a conclusion obtained at PERTURBED jets back to the jet of
-  interest.\<close>
+  \<open>\<ge> 1\<close> passes through limits in \<open>(p, M)\<close>: this moves a conclusion
+  obtained at perturbed jets back to the jet of interest.\<close>
 
 lemma ell_op_usc_ge_one_limit:
   fixes ps :: "nat \<Rightarrow> real^'n::finite" and Ms :: "nat \<Rightarrow> real^'n^'n"
@@ -163,11 +161,10 @@ qed
 section \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
 
 text \<open>At \<open>p = 0\<close> the constraint \<open>a p = 0\<close> of Eq. (1.9) is vacuous, so the
-  feasible set is the largest one and \<open>F(0, \<sqdot>)\<close> is the smallest value of \<open>F\<close>.
-  Since \<open>F\<close> is moreover Lipschitz in \<open>M\<close> uniformly in \<open>p\<close> (the feasible set is
-  entrywise bounded by \<open>L\<close>), the infimum over any neighbourhood of \<open>(0, M)\<close> is
-  attained in the limit at \<open>(0, M)\<close> itself, which is exactly \<open>F\<^sub>*(0,M) = F(0,M)\<close>.
-  No eigenvalue theory is needed for this clause.\<close>
+  feasible set is the largest one and \<open>F(0, \<sqdot>)\<close> is the smallest value of
+  \<open>F\<close>.  Since \<open>F\<close> is also Lipschitz in \<open>M\<close> uniformly in \<open>p\<close>, the infimum
+  over any neighbourhood of \<open>(0, M)\<close> is attained in the limit at
+  \<open>(0, M)\<close> itself, giving \<open>F\<^sub>*(0,M) = F(0,M)\<close>.\<close>
 
 lemma feasible_zero_mono:
   fixes p :: "real^'n::finite"
@@ -353,15 +350,12 @@ subsection \<open>\<open>F\<close> and \<open>F\<^sup>*\<close> vanish with the 
 
 text \<open>At \<open>M = 0\<close> the operator is \<open>0\<close> whatever the gradient, because every
   feasible \<open>a\<close> gives \<open>- trace (0 a)/2 = 0\<close>.  Combined with the Lipschitz
-  bound @{thm [source] ell_op_M_gap} this makes \<open>F\<close> small whenever \<open>M\<close> is
-  small, UNIFORMLY in \<open>p\<close> --- and a bound uniform in \<open>p\<close> survives the
-  supremum over a ball, hence passes to \<open>F\<^sup>*\<close>.
-
-  This is what the paper's Theorem 4.2(a) uses to close the diagonal case:
-  when the doubled maximiser has \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close> the test function has a
-  VANISHING two-jet at \<open>y\<^sup>\<epsilon>\<close>, and the supersolution property would give
-  \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  The envelope changes nothing here: \<open>F\<^sup>*(0,0)\<close> is \<open>0\<close>
-  for the same reason \<open>F(0,0)\<close> is.\<close>
+  bound @{thm [source] ell_op_M_gap}, this makes \<open>F\<close> small whenever \<open>M\<close> is
+  small, uniformly in \<open>p\<close>; a bound uniform in \<open>p\<close> survives the supremum
+  over a ball, so it passes to \<open>F\<^sup>*\<close> as well.  The paper's Theorem 4.2(a)
+  uses this to close the diagonal case: when the doubled maximiser has
+  \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close> the test function has a vanishing two-jet at \<open>y\<^sup>\<epsilon>\<close>, and
+  \<open>F\<^sup>*(0,0) = 0\<close> for the same reason \<open>F(0,0)\<close> is.\<close>
 
 lemma ell_op_zero_matrix:
   fixes p :: "real^'n::finite"
@@ -445,8 +439,8 @@ proof -
   finally show ?thesis unfolding B_def .
 qed
 
-text \<open>The form the diagonal case consumes: for a small enough shift the
-  UPPER envelope at \<open>-\<delta>I\<close> is below \<open>1\<close>, whatever the gradient.\<close>
+text \<open>For a small enough shift, the upper envelope at \<open>-\<delta>I\<close> is below
+  \<open>1\<close>, whatever the gradient.\<close>
 
 lemma ell_op_usc_small_shift_lt_one:
   fixes k :: nat
@@ -582,10 +576,9 @@ next
   qed
 qed
 
-text \<open>Consequence: at the degenerate gradient the subsolution inequality of
-  Definition 3.1 and the envelope-free one are the SAME condition.  This is
-  the point of the clause: without it, \<open>F\<^sub>*(0,H) \<le> 1\<close> could conceivably be
-  strictly weaker than \<open>F(0,H) \<le> 1\<close>.\<close>
+text \<open>At the degenerate gradient, the subsolution inequality of
+  Definition 3.1 and the envelope-free one coincide: \<open>F\<^sub>*(0,H) \<le> 1\<close> and
+  \<open>F(0,H) \<le> 1\<close> are the same condition.\<close>
 
 corollary ell_op_lsc_at_zero_iff:
   fixes M :: "real^'n::finite^'n"
@@ -627,11 +620,10 @@ definition visc_sol_env ::
 
 section \<open>The envelope-free notions are the stronger ones\<close>
 
-text \<open>Two independent reasons.  First, \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>, so the envelope
-  inequalities are weaker at each test function.  Second, a global maximum
-  over \<open>K\<close> is in particular a local maximum on any ball around \<open>x\<close> that
-  stays inside \<open>K\<close>, so the envelope notion constrains fewer test
-  functions.  Both point the same way.\<close>
+text \<open>Two reasons: \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close> makes the envelope inequalities weaker
+  at each test function, and a global maximum over \<open>K\<close> is in particular a
+  local maximum on any ball around \<open>x\<close> that stays inside \<open>K\<close>, so the
+  envelope notion constrains fewer test functions.\<close>
 
 lemma visc_subsol_imp_env:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -724,75 +716,32 @@ proof -
     by (rule ball_v_boundary)
 qed
 
-section \<open>Note: what Eq. (3.6) still needs\<close>
+section \<open>The closed formula of Eq. (3.6)\<close>
 
-text \<open>For the record, the route to Eq. (3.6), following the paper's own
-  proof, so that the remaining work is precisely delimited.
-
-  The key definition is Eq. (3.4).  It is NOT a compression to an
-  \<open>(n-1)\<close>-dimensional space --- it is an \<open>n \<times> n\<close> matrix:
-
-    \<open>M\<^sub>p = (I - p p\<^sup>T/|p|²) M (I - p p\<^sup>T/|p|²) + min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0) * p p\<^sup>T/|p|²\<close>
-    for \<open>p \<noteq> 0\<close>, and \<open>M\<^sub>0 = M\<close>.
-
-  So no change of dimension is involved anywhere, and \<open>real^'n^'n\<close> is
-  exactly the right type.  The correction term \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close> in the
-  \<open>p\<close>-direction is chosen so that this eigenvalue sorts to the BOTTOM of the
-  spectrum of \<open>M\<^sub>p\<close>; that is what makes Eq. (3.5) a clean sum over
-  \<open>i = 1..n\<close> and what produces the index shift in Eq. (3.6).
-
-  \<^item> Step 1 (Eq. (3.5)).  Since \<open>trace (M ** a) = trace (M\<^sub>p ** a)\<close> for psd
-    \<open>a\<close> with \<open>a p = 0\<close>, diagonalising \<open>M\<^sub>p\<close> gives
-      \<open>F(p,M) = -(1/2) * bracket (n-k) L M\<^sub>p\<close>
-    with \<open>bracket\<close> as in Eigenvalues.thy, i.e.
-      \<open>bracket m L a = L * possum n a + (kyfan m a - possum m a)\<close>.
-    This is exactly the bracket of Eq. (3.5).
-
-  \<^item> Step 2 (\<open>F\<^sup>*\<close> at \<open>p = 0\<close>, upper bound).  Only the ONE-SIDED Poincare
-    bound is used: \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for \<open>i = 1..n-1\<close>.  Since
-    \<open>\<lambda> \<mapsto> L \<lambda>\<^sup>+ + \<lambda> 1\<^sub>{\<^sub>\<lambda>\<^sub>\<le>\<^sub>0\<^sub>}\<close> and \<open>\<lambda> \<mapsto> L \<lambda>\<^sup>+\<close> are nondecreasing, this bounds
-    \<open>F(p\<^sup>m, M\<^sup>m)\<close> above by the shifted-index expression, and continuity of
-    \<open>M \<mapsto> (\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>n\<^sub>))\<close> passes to the limit.
-
-  \<^item> Step 3 (lower bound).  NOT an optimisation: evaluate \<open>F\<close> along the
-    single sequence \<open>(q\<^sub>1/m, M)\<close> with \<open>q\<^sub>1\<close> a TOP eigenvector of \<open>M\<close>.  Then
-    \<open>F(q\<^sub>1/m, M)\<close> is constant in \<open>m\<close> and equals the right-hand side of
-    Eq. (3.6) exactly.
-
-  \<^item> Step 4 (the clause off \<open>p = 0\<close>).  \<open>F\<close> is continuous there because
-    \<open>(p,M) \<mapsto> M\<^sub>p\<close> is (pure algebra off \<open>p = 0\<close>) and \<open>M \<mapsto> \<lambda>\<^sub>(\<^sub>i\<^sub>)(M)\<close> is.
-
-  What Eigenvalues.thy already supplies: ordered eigenvalues \<open>eigval\<close> with
-  \<open>eigval_antimono\<close>, Ky Fan's maximum principle, and the positive/negative
-  part sums \<open>possum\<close> --- so no functional calculus \<open>A\<^sup>\<plusminus>\<close> is needed, and
-  Courant--Fischer is not needed either.  Continuity of \<open>M \<mapsto> \<lambda>\<^sub>(\<^sub>i\<^sub>)(M)\<close> is
-  also cheap there: \<open>eigval\<close> is a difference of \<open>kyfan\<close>s and \<open>kyfan\<close> is
-  Lipschitz in the matrix by the same argument as \<open>ell_op_M_gap\<close> above.
-
-  Only \<open>ell_op_lsc_at_zero\<close> is independent of all of this, which is why it
-  is the clause that is proved here.\<close>
+text \<open>Eq. (3.4) defines, for \<open>p \<noteq> 0\<close>, the \<open>n \<times> n\<close> matrix
+    \<open>M\<^sub>p = (I - p p\<^sup>T/|p|\<^sup>2) M (I - p p\<^sup>T/|p|\<^sup>2) + min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0) * p p\<^sup>T/|p|\<^sup>2\<close>
+  (and \<open>M\<^sub>0 = M\<close>), with the correction term chosen so that \<open>\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)\<close> sorts
+  to the bottom of the spectrum of \<open>M\<^sub>p\<close>.  Since \<open>trace (M ** a) =
+  trace (M\<^sub>p ** a)\<close> for psd \<open>a\<close> with \<open>a p = 0\<close>, diagonalising \<open>M\<^sub>p\<close> gives
+  \<open>F(p,M) = -(1/2) * bracket (n-k) L M\<^sub>p\<close> (Eq. (3.5)), and the paper
+  passes to the limit \<open>p \<rightarrow> 0\<close> using the one-sided Poincare separation
+  bound \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> together with Ky Fan's maximum principle
+  to obtain the index-shifted sum of Eq. (3.6).  This development instead
+  establishes \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close> by transporting a feasible
+  witness under orthogonal conjugation, below.\<close>
 
 subsection \<open>Householder reflections and the rotation between two directions\<close>
 
-text \<open>Towards \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close>, which is what the
-  Crandall--Ishii touchpoints of the comparison principle need in order
-  to accept an envelope-form supersolution.  That proof transports a
-  near-optimal feasible witness for \<open>p\<close> to one for a nearby \<open>p'\<close> by an
-  ORTHOGONAL conjugation, so what it needs is an orthogonal map carrying
-  \<open>p\<close>'s direction to \<open>p'\<close>'s AND tending to the identity as \<open>p' \<rightarrow> p\<close>.
-
-  A single Householder reflection carries one direction to the other but
-  does NOT tend to the identity --- its axis \<open>u - v\<close> normalises to a unit
-  vector with no limit.  The composition of two does: \<open>hh (u+v) \<circ> hh u\<close>
-  sends \<open>u \<mapsto> -u \<mapsto> v\<close>, and at \<open>v = u\<close> it is \<open>hh u ** hh u = 1\<close> exactly.
-  (@{thm [source] orthogonal_transformation_exists} supplies an
-  orthogonal map between vectors of equal norm but with no control near
-  the identity, so it does not serve here.)
-
-  The reflection is defined without normalising its axis, which makes it
-  invariant under rescaling and keeps the computations division-free
-  apart from the single coefficient.  Everything is proved on VECTORS
-  through @{thm [source] matrix_eq} rather than on matrix entries.\<close>
+text \<open>Towards \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close>: transporting a near-optimal
+  feasible witness for \<open>p\<close> to a nearby \<open>p'\<close> by orthogonal conjugation
+  needs an orthogonal map carrying \<open>p\<close>'s direction to \<open>p'\<close>'s and tending
+  to the identity as \<open>p' \<rightarrow> p\<close>.  A single Householder reflection carries
+  one direction to the other but does not tend to the identity, since its
+  axis \<open>u - v\<close> normalises to a unit vector with no limit; the composition
+  of two does: \<open>hh (u+v) \<circ> hh u\<close> sends \<open>u \<mapsto> -u \<mapsto> v\<close>, and at \<open>v = u\<close>
+  it is \<open>hh u ** hh u = 1\<close> exactly.  The reflection is defined without
+  normalising its axis, which keeps the computations division-free apart
+  from a single coefficient.\<close>
 
 definition hh :: "real^'n::finite \<Rightarrow> real^'n^'n"
   where "hh w = mat 1 - (2 / (w \<bullet> w)) *\<^sub>R outer_prod w w"
@@ -997,16 +946,15 @@ qed
 
 subsection \<open>Feasibility is invariant under orthogonal conjugation\<close>
 
-text \<open>The transport step itself: an orthogonal \<open>R\<close> carries the feasible
-  set of \<open>p\<close> onto the feasible set of \<open>R p\<close>.  Every clause is the change
-  of variables \<open>x \<mapsto> R\<^sup>T x\<close>: definiteness and the eigenvalue cap because
-  the map is an isometry, the annihilation because \<open>R\<^sup>T R = 1\<close>, and the
-  eigenvalue floor by moving the witnessing subspace along \<open>R\<close>.
+text \<open>An orthogonal \<open>R\<close> carries the feasible set of \<open>p\<close> onto the feasible
+  set of \<open>R p\<close>.  Every clause is the change of variables \<open>x \<mapsto> R\<^sup>T x\<close>:
+  definiteness and the eigenvalue cap because the map is an isometry, the
+  annihilation because \<open>R\<^sup>T R = 1\<close>, and the eigenvalue floor by moving the
+  witnessing subspace along \<open>R\<close>.
 
-  For the dimension of the moved subspace only the INEQUALITY
+  For the dimension of the moved subspace only the inequality
   @{thm [source] dim_image_le} is needed, applied to \<open>R\<^sup>T\<close>: since
-  \<open>S = R\<^sup>T(R(S))\<close>, it gives \<open>dim S \<le> dim (R(S))\<close>, which is the direction
-  required --- so the locale-qualified \<open>dim_image_eq\<close> is never invoked.\<close>
+  \<open>S = R\<^sup>T(R(S))\<close>, it gives \<open>dim S \<le> dim (R(S))\<close>, the direction required.\<close>
 
 lemma orth_preserves_inner:
   fixes R :: "real^'n::finite^'n"
@@ -1224,15 +1172,11 @@ qed
 
 subsection \<open>Continuity of the transport\<close>
 
-text \<open>The plumbing for \<open>F\<^sup>* = F\<close> at \<open>p \<noteq> 0\<close>: the rotation, and hence the
-  conjugated witness and its pairing with the Hessian, depends
-  continuously on the direction it is built from.  Everything is
-  assembled from four reusable helpers, so that no proof below ever
-  descends to matrix entries more than once.
-
-  The domain is \<open>{q. 0 < u \<bullet> q}\<close> --- an open half space containing \<open>p\<close>
-  when \<open>u\<close> is \<open>p\<close>'s direction.  It rules out both degeneracies at once:
-  \<open>q \<noteq> 0\<close>, and \<open>u + q/|q| \<noteq> 0\<close>, since the latter would force
+text \<open>The rotation, and hence the conjugated witness and its pairing
+  with the Hessian, depends continuously on the direction it is built
+  from.  The domain is the open half space \<open>{q. 0 < u \<bullet> q}\<close> containing
+  \<open>p\<close> when \<open>u\<close> is \<open>p\<close>'s direction, which rules out both \<open>q \<noteq> 0\<close> and
+  \<open>u + q/|q| \<noteq> 0\<close> at once, since the latter would force
   \<open>u \<bullet> q/|q| = -1\<close>.\<close>
 
 lemma continuous_on_matrix_entry:
@@ -1387,13 +1331,12 @@ qed
 
 subsection \<open>\<open>F\<^sup>* = F\<close> away from the origin\<close>
 
-text \<open>The assembly.  Feasibility depends on the gradient only through
-  its DIRECTION, so the rotation carrying \<open>p\<close>'s direction to \<open>p'\<close>'s
-  carries the whole feasible set across; a near-optimal witness for
-  \<open>(p, M)\<close> therefore supplies a competitor for every nearby \<open>(p', M')\<close>,
-  and continuity of the pairing makes the competitor's value beat
-  \<open>F(p, M) + \<epsilon>\<close> on a whole ball.  That bounds the supremum defining the
-  upper envelope, and the infimum over radii finishes it.\<close>
+text \<open>Feasibility depends on the gradient only through its direction, so
+  the rotation carrying \<open>p\<close>'s direction to \<open>p'\<close>'s carries the whole
+  feasible set across; a near-optimal witness for \<open>(p, M)\<close> therefore
+  supplies a competitor for every nearby \<open>(p', M')\<close>, and continuity of the
+  pairing makes the competitor's value beat \<open>F(p, M) + \<epsilon>\<close> on a whole ball,
+  which bounds the supremum defining the upper envelope.\<close>
 
 lemma feasible_scale:
   fixes q :: "real^'n::finite"
@@ -1651,24 +1594,21 @@ qed
 subsection \<open>From a global touching over \<open>K\<close> to a local one\<close>
 
 text \<open>Definition 3.1 constrains only test functions whose touching is
-  GLOBAL over \<open>K\<close>, while the Crandall--Ishii machinery produces LOCAL
+  global over \<open>K\<close>, while the Crandall--Ishii machinery produces local
   touchings from jet data.  The gap is closed by subtracting a quartic:
   \<open>\<psi> := \<phi> - C\<bar>z - x\<bar>\<^sup>4\<close> has the same two-jet at \<open>x\<close> (a quartic vanishes to
-  second order), it only DEEPENS the touching inside the ball, and outside
+  second order), it only deepens the touching inside the ball, and outside
   the ball the quartic is bounded below by \<open>Cr\<^sup>4\<close>, which for large \<open>C\<close>
-  overwhelms the oscillation of \<open>w - \<phi>\<close> on \<open>K\<close>.
-
-  The two boundedness hypotheses are exactly what a genuine \<open>C\<^sup>2\<close> test
-  function on a compact \<open>K\<close> supplies, and they are what keeps the step
-  honest: without a bound on \<open>\<phi>\<close> over \<open>K\<close> one could simply truncate \<open>\<phi>\<close>
+  overwhelms the oscillation of \<open>w - \<phi>\<close> on \<open>K\<close>.  The two boundedness
+  hypotheses are exactly what a genuine \<open>C\<^sup>2\<close> test function on a compact
+  \<open>K\<close> supplies: without a bound on \<open>\<phi>\<close> over \<open>K\<close> one could truncate \<open>\<phi>\<close>
   far from \<open>x\<close>, which \<^const>\<open>test_fun_at\<close> would tolerate but the paper's
   \<open>C\<^sup>2(\<real>\<^sup>n)\<close> would not.\<close>
 
 text \<open>A test function is minorised near \<open>x\<close> by its two-jet quadratic,
-  once the Hessian is shifted down by any \<open>\<delta> > 0\<close>.  This is what lets a
-  touching by an ARBITRARY test function be replaced by a touching by a
-  genuine quadratic --- which, unlike the original, is bounded on a
-  bounded set.\<close>
+  once the Hessian is shifted down by any \<open>\<delta> > 0\<close>, which lets a touching
+  by an arbitrary test function be replaced by a touching by a genuine
+  quadratic, bounded on a bounded set.\<close>
 
 lemma test_fun_quadratic_minorates:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -2091,10 +2031,10 @@ proof -
 qed
 
 
-text \<open>The mirror for subsolutions: ADDING a quartic deepens a local
-  MAXIMUM and, for a large enough coefficient, makes it global over \<open>K\<close>.
-  Reusing @{thm [source] test_fun_at_quartic_shift} with a negative
-  coefficient means no new derivative computation is needed.\<close>
+text \<open>The mirror for subsolutions: adding a quartic deepens a local
+  maximum and, for a large enough coefficient, makes it global over \<open>K\<close>,
+  reusing @{thm [source] test_fun_at_quartic_shift} with a negative
+  coefficient.\<close>
 
 theorem visc_subsol_env_local:
   fixes K :: "(real^'n::finite) set" and u \<phi> :: "real^'n \<Rightarrow> real"
@@ -2172,12 +2112,11 @@ proof (rule antisym)
 qed
 
 
-section \<open>P0: semicontinuity toolbox and the invariances of \<open>F\<close>\<close>
+section \<open>Semicontinuity toolbox and the invariances of \<open>F\<close>\<close>
 
-text \<open>The P0 package of PLAN \<open>\<section>2.0\<close>: the semicontinuous envelopes and their
-  attainment/extension lemmas (moved here from \<open>Paper_Viscosity\<close>, which now
-  only keeps the \<open>paper_v\<close>-facing consequences), and the three invariances of
-  \<open>F\<close> that make up the paper's display (4.4).\<close>
+text \<open>The semicontinuous envelopes of a general real-valued function, their
+  attainment and extension lemmas, and the three invariances of \<open>F\<close> that
+  make up the paper's display (4.4).\<close>
 
 definition lsc_env :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real" where
   "lsc_env u x = (SUP e \<in> {0<..}. INF y \<in> ball x e. u y)"
@@ -2457,7 +2396,7 @@ qed
 subsection \<open>A little upper-semicontinuity calculus\<close>
 
 text \<open>All in the \<open>\<epsilon>\<close>-form the comparison machinery uses, and on an arbitrary
-  metric space so that they apply on the PRODUCT \<open>K \<times> K'\<close> of the two-domain
+  metric space so that they apply on the product \<open>K \<times> K'\<close> of the two-domain
   doubling.\<close>
 
 lemma usc_eps_add:
@@ -2526,9 +2465,9 @@ proof -
 qed
 
 text \<open>Extension of a bounded usc function off a closed set.  The extension
-  value must be \<^emph>\<open>below\<close> every value on \<open>K\<close>: extending by \<open>0\<close> is NOT usc.
-  Semicontinuity is stated sequentially-free, in the \<open>\<epsilon>\<close>-form the comparison
-  chain consumes.\<close>
+  value must be \<^emph>\<open>below\<close> every value on \<open>K\<close>: extending by \<open>0\<close> need not be
+  usc.  Semicontinuity is stated in the \<open>\<epsilon>\<close>-form the comparison chain
+  consumes.\<close>
 
 lemma usc_extension_bounded:
   fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
@@ -3103,7 +3042,7 @@ text \<open>The \<open>ell_op_lsc\<close> versions follow from \<open>ell_op_usc
   supersolution side only, so they are not stated.\<close>
 
 
-section \<open>P5 support: envelope monotonicity, usc fixpoint, affine interiors\<close>
+section \<open>Envelope monotonicity, the usc fixpoint, and affine images of open sets\<close>
 
 lemma visc_supersol_env_mono:
   assumes "visc_supersol_env k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
@@ -3336,15 +3275,15 @@ proof
 qed
 
 
-section \<open>A constant is a subsolution: the off-\<open>K\<close> case of P4's extension\<close>
+section \<open>A constant is a subsolution off \<open>K\<close>\<close>
 
-text \<open>If a test function touches from above at a LOCAL MINIMUM of itself ---
-  which is what a touching of a locally CONSTANT function is --- then the
-  subsolution inequality holds for free.  This is what makes the extension of
-  \<open>u\<close> by a constant below its minimum a subsolution off \<open>K\<close>, and hence what
-  turns Definition 3.1's gated \<open>\<Omega>\<close> into the OPEN set \<open>UNIV - S\<close>, with
-  \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> compact --- the shape on which the
-  (already \<open>\<Omega>\<close>-generic) Crandall--Ishii core can be run.\<close>
+text \<open>If a test function touches from above at a local minimum of itself
+  --- which is what a touching of a locally constant function is --- then
+  the subsolution inequality holds for free.  This makes the extension of
+  \<open>u\<close> by a constant below its minimum a subsolution off \<open>K\<close>, and hence
+  turns Definition 3.1's gated \<open>\<Omega>\<close> into the open set \<open>UNIV - S\<close>, with
+  \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> compact, the shape on which the
+  Crandall--Ishii core can be run.\<close>
 
 theorem visc_subsol_at_local_min:
   fixes x :: "real^'n::finite" and \<phi> :: "real^'n \<Rightarrow> real"
@@ -3490,7 +3429,7 @@ proof -
     qed
   qed
 
-  text \<open>Read the inequality off ONE feasible witness, chosen before \<open>\<delta>\<close>.\<close>
+  text \<open>Read the inequality off one feasible witness, chosen before \<open>\<delta>\<close>.\<close>
   obtain a where afeas: "a \<in> feasible k L (g x)"
     using feasible_nonempty[OF kk(1) kk(2) LL] by blast
   have apsd: "psd a" using afeas unfolding feasible_def by blast

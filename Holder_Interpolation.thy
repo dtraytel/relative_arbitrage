@@ -1,17 +1,12 @@
 section \<open>From dyadic moduli to a H\"older bound\<close>
 
 text \<open>
-  Plan step A5c (STATUS.md 25h), tightness half: the bridge from
-  \<open>modulus_of_good_path\<close> (Modulus\_Tails) to the compact H\"older balls of
-  \<open>Path_Space\<close>. A path whose modulus at every dyadic scale \<open>1/2^m\<close>, \<open>m \<ge> n\<close>, is
-  bounded by \<open>E * 2 powr (-g m)\<close> satisfies a global H\"older-\<open>g\<close> bound with a
-  constant explicit in \<open>(E, g, n, T)\<close>. Small gaps use the matching dyadic
-  level; large gaps telescope over an arithmetic grid of mesh below \<open>1/2^n\<close>.
-
-  NOTE on provenance: this theory was developed while the PIDE server was
-  unavailable and verified through batch builds only; it deliberately avoids
-  the proof patterns recorded as fragile in STATUS.md (mixed calculations,
-  denominator-clearing \<open>field_simps\<close>, unpinned higher-order \<open>rule\<close>).
+  The bridge from \<open>modulus_of_good_path\<close> (Modulus\_Tails) to the compact
+  H\"older balls of \<open>Path_Space\<close>: a path whose modulus at every dyadic scale
+  \<open>1/2^m\<close>, \<open>m \<ge> n\<close>, is bounded by \<open>E * 2 powr (-g m)\<close> satisfies a global
+  H\"older-\<open>g\<close> bound with a constant explicit in \<open>(E, g, n, T)\<close>. Small gaps use
+  the matching dyadic level; large gaps telescope over an arithmetic grid of
+  mesh below \<open>1/2^n\<close>.
 \<close>
 
 theory Holder_Interpolation
@@ -194,7 +189,7 @@ proof -
       show ?thesis by (rule H[OF order.refl m1 m2 gp])
     qed
     have t1: "\<bar>f b - f a\<bar> \<le> real N * (E * 2 powr (- g * real n))"
-      by (rule telescope_grid[OF Npos per])
+      by (rule telescope_grid[of N f, OF Npos per])
     have pw0: "0 \<le> E * 2 powr (- g * real n)" using E0 by simp
     have t2: "real N * (E * 2 powr (- g * real n))
         \<le> 2 * (d * 2 ^ n) * (E * 2 powr (- g * real n))"

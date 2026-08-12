@@ -1,56 +1,38 @@
 (*
   Title:   Relative_Arbitrage_PDE.thy
-  Content: Formalization of the deterministic core of
+  Content: The deterministic core of
 
              J.-H. Lai, M. Shkolnikov, H. M. Soner:
              "Relative arbitrage problem under eigenvalue lower bounds"
              arXiv:2512.17702
 
-  Scope: The paper characterizes time horizons for relative arbitrage via the
+  The paper characterizes time horizons for relative arbitrage via the
   fully nonlinear elliptic PDE  F(Dv, D^2 v) = 1  on a compact set K, where
   (Eq. 1.9)
 
     F(p, M) = inf { -1/2 tr(M a) :  a psd,  a p = 0,
                                     lambda_(n-k)(a) >= 1,  lambda_(1)(a) <= L }
 
-  (lambda_(m) = m-th largest eigenvalue).  We formalize:
+  (lambda_(m) = m-th largest eigenvalue).  This theory formalizes the
+  constraint set of Eq. 1.9 -- with the spectral conditions expressed
+  through their Courant-Fischer variational characterizations, which
+  avoids developing the spectral theorem while remaining equivalent for
+  symmetric matrices -- and the operator F; the trace lower bound
+  tr(a) >= n - k for feasible a (the Ky Fan / Courant-Fischer argument
+  underlying the lower bound in Example 3.1) and its attainment by
+  rank-(n-k) orthogonal projections; Example 3.1 (Eq. 3.9), the explicit
+  solution on the ball B_r(0); the spectral theorem for real symmetric
+  matrices, nonnegativity of traces of products of psd matrices, and the
+  degenerate ellipticity of F; and viscosity sub-/supersolutions of
+  F(Du, D^2u) = 1 in the Crandall-Ishii-Lions test-function formulation,
+  together with first- and second-order conditions at interior minima and
+  the theorem that the explicit solution of Example 3.1 is a viscosity
+  solution on the open ball with zero boundary values.
 
-    * the constraint set of Eq. 1.9, with the spectral conditions expressed
-      through their Courant-Fischer variational characterizations
-      (lambda_(m)(a) >= 1  iff  some m-dimensional subspace S has
-       Rayleigh quotient >= 1 on S;  lambda_(1)(a) <= L  iff the Rayleigh
-       quotient is <= L everywhere), which avoids developing the spectral
-      theorem while remaining equivalent for symmetric matrices;
-    * the operator F;
-    * the trace lower bound  tr(a) >= n - k  for feasible a (the Ky Fan /
-      Courant-Fischer argument underlying the lower bound in Example 3.1);
-    * feasibility: rank-(n-k) orthogonal projections orthogonal to p are
-      admissible and attain the bound;
-    * Example 3.1 (Eq. 3.9): on the ball B_r(0) the function
-        v(x) = max (r^2 - |x|^2) 0 / (n - k)
-      satisfies F(grad v(x), Hess v(x)) = 1 for every x in the open ball
-      (including the centre, where the gradient vanishes and the constraint
-      a p = 0 of Eq. 1.9 becomes vacuous),
-      with v = 0 on the boundary; we also verify grad and Hess by
-      differentiation;
-    * the spectral theorem for real symmetric matrices (variational proof),
-      nonnegativity of traces of products of psd matrices, and the
-      degenerate ellipticity of F;
-    * viscosity sub-/supersolutions of F(Du, D^2u) = 1 in the standard
-      Crandall-Ishii-Lions test-function formulation (no AFP entry covers
-      viscosity solutions), together with first- and second-order
-      conditions at interior minima, and the theorem that v is a viscosity
-      solution on the whole open ball -- the interior of K in Definition
-      3.1 -- with zero boundary values: the
-      solvability part of Theorem 1.1 for Example 3.1.
-
-  The probabilistic side (Definition 1.1, the class of sufficiently
-  volatile markets in martingale-problem form, and the exit-time bound of
-  Example 3.1) is formalized in the companion theory
-  Relative_Arbitrage_Stochastic.  Not formalized (out of reach of current
-  Isabelle/HOL libraries): Ito calculus and stochastic integration, the
-  optimal-martingale construction (Eq. 3.11), the comparison/uniqueness
-  part of Theorem 1.1, and Lemma 3.1 (semicontinuous envelopes).
+  The probabilistic side is formalized in the companion theories
+  Relative_Arbitrage_Stochastic and Relative_Arbitrage_Ito; the
+  comparison and uniqueness part of Theorem 1.1 in
+  Relative_Arbitrage_Comparison and Relative_Arbitrage_Uniqueness.
 *)
 
 theory Relative_Arbitrage_PDE
@@ -483,7 +465,7 @@ text \<open>
   For the ball \<open>K = cball 0 r\<close> the candidate value function is
   \<open>v x = max (r\<^sup>2 - \<bar>x\<bar>\<^sup>2) 0 / (n - k)\<close>, whose gradient at \<open>x\<close> is
   \<open>- (2/(n-k)) *\<^sub>R x\<close> and whose Hessian is the constant matrix
-  \<open>- (2/(n-k)) *\<^sub>R mat 1\<close>.  We show \<open>F(\<nabla>v x, \<nabla>\<^sup>2 v x) = 1\<close> for all
+  \<open>- (2/(n-k)) *\<^sub>R mat 1\<close>.  Then \<open>F(\<nabla>v x, \<nabla>\<^sup>2 v x) = 1\<close> for all
   interior points \<open>x \<noteq> 0\<close>.
 \<close>
 
@@ -572,8 +554,7 @@ proof -
   have inner_deriv: "((\<lambda>y. (r\<^sup>2 - y \<bullet> y) / c) has_derivative
       (\<lambda>h. (- (2 / c) *\<^sub>R x) \<bullet> h)) (at x)"
     using c_pos
-    by (auto intro!: derivative_eq_intros
-        simp: inner_commute divide_simps algebra_simps)
+    by (auto intro!: derivative_eq_intros simp: inner_commute divide_simps)
   have eq: "(r\<^sup>2 - y \<bullet> y) / c = ball_v r k y" if "y \<in> ball (0::real^'n) r" for y
   proof -
     have "norm y < r"
@@ -637,9 +618,9 @@ section \<open>The spectral theorem for real symmetric matrices\<close>
 text \<open>
   Needed for the degenerate ellipticity of \<open>F\<close> (monotonicity in the Hessian
   argument w.r.t. the Loewner order), which in turn is the key structural
-  property behind the viscosity-solution formulation of Theorem 1.1.  We prove
-  the spectral theorem by the variational argument (Rayleigh-quotient
-  maximization on invariant subspaces); no derivatives are needed.
+  property behind the viscosity-solution formulation of Theorem 1.1.  The
+  proof is the variational argument (Rayleigh-quotient maximization on
+  invariant subspaces); no derivatives are needed.
 \<close>
 
 lemma inner_transpose_matrix:
@@ -1040,9 +1021,8 @@ qed
 section \<open>Viscosity solutions of \<open>F(Du, D\<^sup>2u) = 1\<close> (Theorem 1.1, PDE side)\<close>
 
 text \<open>
-  The AFP contains no viscosity-solution theory, so we formalize the standard
-  Crandall--Ishii--Lions test-function definitions for the equation
-  \<open>F(Du, D\<^sup>2u) = 1\<close> directly.  A test function at \<open>x\<close> is represented by its
+  The standard Crandall--Ishii--Lions test-function definitions for the
+  equation \<open>F(Du, D\<^sup>2u) = 1\<close>.  A test function at \<open>x\<close> is represented by its
   gradient field \<open>g\<close> on a neighbourhood of \<open>x\<close> and its (symmetric) Hessian
   matrix \<open>H\<close> at \<open>x\<close>.
 \<close>
@@ -1440,8 +1420,7 @@ lemma quadratic_gradient:
   shows "((\<lambda>y :: real^'n. (r\<^sup>2 - y \<bullet> y) / c) has_derivative
       (\<lambda>h. (- (2 / c) *\<^sub>R y) \<bullet> h)) (at y)"
   using c_pos
-  by (auto intro!: derivative_eq_intros
-      simp: inner_commute divide_simps algebra_simps)
+  by (auto intro!: derivative_eq_intros simp: inner_commute divide_simps)
 
 theorem ball_v_viscosity_subsol:
   fixes r :: real and k :: nat and L :: real

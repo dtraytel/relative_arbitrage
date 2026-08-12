@@ -18,9 +18,9 @@ text \<open>(The crowning theorem of this theory is \<open>ess_inf_pexit_usc\<cl
   end: the essential infimum of the exit time is upper semicontinuous
   along weak convergence of path laws.)\<close>
 
-text \<open>The capped exit time from \<open>K\<close>, read off a PATH rather than a sample
-  point: the composition of \<open>etime\<close> with the identity process.  All laws in
-  the paper's class share the same sample space — the path space — and the
+text \<open>The capped exit time from \<open>K\<close>, read off a path rather than a sample
+  point: the composition of \<open>etime\<close> with the identity process. All laws in
+  the paper's class share the same sample space -- the path space -- and the
   same exit functional; this is the object whose essential infimum the value
   function (1.6) takes.\<close>
 
@@ -38,15 +38,14 @@ lemma pexit_less_iff:
     \<longleftrightarrow> ((\<exists>r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K \<and> r < c) \<or> T < c)"
   unfolding pexit_def by (rule etime_less_iff)
 
-text \<open>CAP INVISIBILITY.  The paper (arXiv:2512.17702, (1.6)–(1.8)) works on
-  \<open>C([0,\<infinity>), \<real>ⁿ)\<close> and takes the essential infimum of the UNCAPPED exit time
-  \<open>\<tau>\<^sub>K = inf {t \<ge> 0 : X t \<notin> K}\<close>; our \<open>pexit T K\<close> caps at the horizon \<open>T\<close>.
-  The cap is ours, so it needs justifying.  It is monotone in \<open>T\<close>, and once
-  a path has actually exited before \<open>T\<close> the cap is invisible: raising the
-  horizon does not move the value.  Hence for laws under which the exit
-  happens before \<open>T\<close> almost surely, every capped horizon beyond that point
-  gives the same essential infimum — which is what licenses working at a
-  fixed finite \<open>T\<close>.\<close>
+text \<open>The paper (arXiv:2512.17702, (1.6)--(1.8)) works on \<open>C([0,\<infinity>), \<real>\<^sup>n)\<close> and
+  takes the essential infimum of the uncapped exit time
+  \<open>\<tau>\<^sub>K = inf {t \<ge> 0 : X t \<notin> K}\<close>, whereas \<open>pexit T K\<close> caps at the horizon \<open>T\<close>.
+  The cap is monotone in \<open>T\<close> and invisible once a path has exited before
+  \<open>T\<close>: raising the horizon does not move the value. Hence for laws under
+  which the exit happens before \<open>T\<close> almost surely, every capped horizon
+  beyond that point gives the same essential infimum, which licenses working
+  at a fixed finite \<open>T\<close>.\<close>
 
 lemma pexit_mono_T:
   assumes T: "0 \<le> T" and TT: "T \<le> T'"
@@ -161,8 +160,8 @@ proof (rule ess_inf_time_cong_AE)
 qed
 
 text \<open>Upper semicontinuity, in sublevel-set form: strict sublevels of the
-  exit time are open in the path topology.  A path that exits before \<open>c\<close>
-  does so at a time where it sits in the OPEN complement of \<open>K\<close>, and
+  exit time are open in the path topology. A path that exits before \<open>c\<close>
+  does so at a time where it sits in the open complement of \<open>K\<close>, and
   evaluation at that time is continuous.\<close>
 
 lemma pexit_sublevel_open:
@@ -244,7 +243,7 @@ proof -
     by (simp add: abs_of_pos)
   show ?thesis
     by (rule integrable_const_bound[where B = 1])
-      (use m b in \<open>auto intro!: AE_I2\<close>)
+      (use m b in \<open>auto\<close>)
 qed
 
 lemma exp_neg_time_integral_lower:
@@ -536,11 +535,10 @@ qed
 section \<open>The telescoping step minorant\<close>
 
 text \<open>A decreasing continuous transform of the exit time is approximated
-  from below, uniformly up to the mesh modulus, by a positive
-  combination of indicators of the OPEN sublevels \<open>{pexit < s_j}\<close> on a
-  uniform grid — the device that carries the Laplace transforms through
-  weak convergence with nothing but the open-set liminf half of the
-  portmanteau theorem.\<close>
+  from below, uniformly up to the mesh modulus, by a positive combination of
+  indicators of the open sublevels \<open>{pexit < s_j}\<close> on a uniform grid -- the
+  device that carries the Laplace transforms through weak convergence with
+  nothing but the open-set liminf half of the portmanteau theorem.\<close>
 
 definition pstep ::
   "real \<Rightarrow> ('b :: polish_space) set \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> real"
@@ -739,7 +737,7 @@ qed
 text \<open>Along weak convergence of path laws, the measure of each open
   sublevel can only gain mass in the limit (portmanteau), and the step
   minorant is a positive combination of such measures plus a
-  total-mass term — so its integral is lower semicontinuous.\<close>
+  total-mass term, so its integral is lower semicontinuous.\<close>
 
 lemma weak_conv_open_liminf:
   fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
@@ -814,10 +812,9 @@ proof -
     using MW.mweak_conv3[OF cls mass] U top by simp
 qed
 
-text \<open>The companion CLOSED-set half of the portmanteau theorem on the path
-  space, exported for the constraint-passing step of the canonical-market
-  construction (plan item NC-3): a closed condition on paths that every
-  approximating law satisfies with full mass survives the weak limit.\<close>
+text \<open>The closed-set half of the portmanteau theorem on the path space: a
+  closed condition on paths that every approximating law satisfies with full
+  mass survives the weak limit.\<close>
 
 lemma weak_conv_closed_limsup:
   fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
@@ -873,7 +870,7 @@ proof -
 qed
 
 text \<open>The form the constraint step consumes: a closed set carrying full mass
-  under every approximating PROBABILITY law carries full mass in the limit.\<close>
+  under every approximating probability law carries full mass in the limit.\<close>
 
 lemma weak_conv_closed_full_mass:
   fixes \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b :: polish_space) measure"
@@ -1130,7 +1127,7 @@ proof -
       by simp
     show ?thesis
       by (rule integrable_const_bound[where B = 1])
-        (use m b in \<open>auto intro!: AE_I2\<close>)
+        (use m b in \<open>auto\<close>)
   qed
   have key: "ereal (?E \<Lambda> - (1 - exp (- l * (T / real N)))
       * measure \<Lambda> (space \<Lambda>)) \<le> ?L" if N: "0 < N" for N

@@ -1,7 +1,6 @@
 (*
   Title:   Doob_Inequality.thy
-  Content: Stochastic integration, layer 3a: Doob's maximal inequality for
-           discrete-time martingales.
+  Content: Doob's maximal inequality for discrete-time martingales.
 
   Neither HOL-Probability nor the AFP entry Martingales contains Doob's
   inequality, and every passage from a time grid to continuous time needs

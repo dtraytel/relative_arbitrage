@@ -62,19 +62,17 @@ corollary ell_op_le_one_of_witness:
 section \<open>The DPP at the exit time of a ball\<close>
 
 text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] paper_v_cond_time}, asks of its
-  random time only that it lie in \<open>[0,T]\<close> --- NOT that it be a
-  \<^const>\<open>path_stopping_time\<close>.  That is what lets the SUBSOLUTION argument use
-  the exit time of a ball directly.
+  random time only that it lie in \<open>[0,T]\<close>, not that it be a
+  \<^const>\<open>path_stopping_time\<close>, which lets the subsolution argument use the
+  exit time of a ball directly.
 
-  (The supersolution half is not so lucky: it consumes
-  @{thm [source] paper_v_dpp_sup_ge_time}, whose \<open>\<theta>\<close> must be a path stopping
-  time, and the exit time of a ball is one only for CONTINUOUS paths, while
-  \<^const>\<open>path_stopping_time\<close> quantifies over all functions.  The fix is to
-  restrict the congruence clause to the path space; that is a separate,
-  small piece of work and it is recorded here so it is not rediscovered.)
+  The supersolution half needs @{thm [source] paper_v_dpp_sup_ge_time}, whose
+  \<open>\<theta>\<close> must be a path stopping time; the exit time of a ball is one only for
+  continuous paths, since \<^const>\<open>path_stopping_time\<close> quantifies over all
+  functions.
 
   Combining with @{thm [source] enn2real_paper_v_horizon_cap} puts the
-  conclusion in a form with NO varying horizon left: the value at the reduced
+  conclusion in a form with no varying horizon: the value at the reduced
   horizon is the value at \<open>T\<close>, capped.\<close>
 
 definition pball_exit :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real \<Rightarrow> 'n pairpath \<Rightarrow> real"
@@ -127,22 +125,21 @@ qed
 
 section \<open>Ito for quadratic test functions, from the martingale clauses\<close>
 
-text \<open>The class of (1.7) is defined by MARTINGALE properties, not by an SDE,
-  so Ito's formula is not available and cannot be cheaply built.  But for a
-  QUADRATIC test function the expansion is EXACT and needs no stochastic
-  integration at all:
+text \<open>The class of (1.7) is defined by martingale properties, not by an SDE,
+  so Ito's formula is not available.  For a quadratic test function the
+  expansion is exact and needs no stochastic integration at all:
 
     \<open>\<phi> z = c + p \<bullet> z + (z \<bullet> (M *v z))/2\<close>,
 
   and \<open>z \<bullet> (M *v z) = trace (M ** outerp z)\<close>, so the second-order term is a
-  LINEAR functional of the compensated clause (iv) of (1.7).  Its mean is
+  linear functional of the compensated clause (iv) of (1.7).  Its mean is
   therefore pinned by that clause alone, and the first-order term by the
   martingale clause (iii).  What comes out is
 
     \<open>E[\<phi>(X\<^sub>t)] - \<phi>(x) = (t/2) \<sqdot> trace (M ** b)\<close>,  \<open>b \<in> sconstraint k L\<close>,
 
   which is exactly the shape the viscosity argument consumes, with \<open>b\<close> the
-  averaged covariation direction.  The whole section is elementary.\<close>
+  averaged covariation direction.\<close>
 
 subsection \<open>Matrix functionals that are bounded linear\<close>
 
@@ -222,11 +219,11 @@ lemma bounded_linear_transpose:
 
 subsection \<open>The averaged covariation stays in the constraint set\<close>
 
-text \<open>Every condition defining \<^const>\<open>sconstraint\<close> is a LINEAR (in)equality in
+text \<open>Every condition defining \<^const>\<open>sconstraint\<close> is a linear (in)equality in
   the matrix: \<^const>\<open>psd\<close> and \<^const>\<open>eigen_ub\<close> are conditions on the quadratic
   form \<open>z \<bullet> (a *v z)\<close>, which is linear in \<open>a\<close>, and \<open>c \<le> Pi_proj a m\<close> is by
   @{thm [source] Pi_proj_ge} an intersection of the half-spaces
-  \<open>c \<le> trace (a ** P)\<close>, again linear in \<open>a\<close>.  So the set is an intersection of
+  \<open>c \<le> trace (a ** P)\<close>, again linear in \<open>a\<close>.  The set is an intersection of
   closed half-spaces and passes through the integral.\<close>
 
 lemma paper_pair_class_Y_integrable:
@@ -427,9 +424,9 @@ proof -
   from const start show ?thesis by simp
 qed
 
-text \<open>The second-order identity.  Note there is no symmetry hypothesis on
-  \<open>M\<close> and no stopping: clause (iv) is used at the FIXED time \<open>t\<close>, exactly as
-  in @{thm [source] paper_pair_class_sq_norm_mean_ge}, of which this is the
+text \<open>The second-order identity holds with no symmetry hypothesis on \<open>M\<close> and
+  no stopping: clause (iv) is used at the fixed time \<open>t\<close>, exactly as in
+  @{thm [source] paper_pair_class_sq_norm_mean_ge}, of which this is the
   \<open>M = 1\<close> case with the inequality replaced by an identity.\<close>
 
 theorem paper_pair_class_quadform_mean:
@@ -505,10 +502,10 @@ proof -
     unfolding eqf by (rule Bochner_Integration.integrable_add[OF iA iB])
 qed
 
-text \<open>The packaged form: the mean increment of a quadratic test function
-  along ANY class member is \<open>(t/2) \<sqdot> trace (M ** b)\<close> for a single averaged
-  direction \<open>b\<close> of the constraint set.  This is the substitute for Ito's
-  formula that the viscosity argument actually needs.\<close>
+text \<open>The mean increment of a quadratic test function along any class member
+  is \<open>(t/2) \<sqdot> trace (M ** b)\<close> for a single averaged direction \<open>b\<close> of the
+  constraint set: the substitute for Ito's formula that the viscosity
+  argument needs.\<close>
 
 theorem paper_pair_class_quadratic_mean:
   fixes Q :: "('n::finite pairpath) measure" and M :: "real^'n^'n"
@@ -558,10 +555,10 @@ qed
 
 subsection \<open>What the orthogonality constraint of Eq. (1.9) actually does\<close>
 
-text \<open>A direction annihilated by the averaged covariation is FROZEN: the
+text \<open>A direction annihilated by the averaged covariation is frozen: the
   process does not move along it at all, almost surely.  The proof is the
   quadratic identity at \<open>M = outerp q\<close>, which turns the second moment of
-  \<open>q \<bullet> X\<^sub>t\<close> into \<open>q \<bullet> (E[Y\<^sub>t] *v q)\<close> --- so the variance vanishes exactly when
+  \<open>q \<bullet> X\<^sub>t\<close> into \<open>q \<bullet> (E[Y\<^sub>t] *v q)\<close>, so the variance vanishes exactly when
   that number does.
 
   This is the mechanism behind the constraint \<open>a *v p = 0\<close> of Eq. (1.9).  For a
@@ -569,10 +566,10 @@ text \<open>A direction annihilated by the averaged covariation is FROZEN: the
 
     \<open>\<phi>(X\<^sub>t) - \<phi>(x) = q \<bullet> (X\<^sub>t - x) + (X\<^sub>t - x) \<bullet> (M *v (X\<^sub>t - x)) / 2\<close>
 
-  when \<open>M\<close> is symmetric, and feasibility of the covariation direction kills the
-  FIRST-ORDER term identically --- not just in mean.  That is what a
-  supersolution argument needs and a subsolution argument does not: an a.s.
-  statement, obtained from a mean-zero variance.\<close>
+  when \<open>M\<close> is symmetric, and feasibility of the covariation direction kills
+  the first-order term identically, not just in mean: an a.s. statement,
+  obtained from a mean-zero variance, that a supersolution argument needs and
+  a subsolution argument does not.\<close>
 
 lemma trace_mult_commute:
   fixes A B :: "real^'n::finite^'n"
@@ -682,18 +679,16 @@ qed
 section \<open>The relaxed operator, and the inequality the class really gives\<close>
 
 text \<open>Eq. (1.9) takes its infimum over \<^const>\<open>feasible\<close>, which carries the
-  ORTHOGONALITY constraint \<open>a *v p = 0\<close> on top of the spectral bounds.  The
+  orthogonality constraint \<open>a *v p = 0\<close> on top of the spectral bounds.  The
   class of (1.7) carries no such constraint: its covariation directions live in
   \<^const>\<open>sconstraint\<close>.  The two are related in one direction only,
 
     \<^const>\<open>feasible\<close> \<open>k L p\<close> \<open>\<subseteq>\<close> \<^const>\<open>sconstraint\<close> \<open>k L\<close>
 
   (@{thm [source] suff_volatile_cap_in_sconstraint}), so the infimum over the
-  larger set is SMALLER: \<open>ell_op_s \<le> ell_op\<close>.  Naming the relaxed operator is
-  not a weakening for its own sake --- it is the exact record of what a
-  probabilistic argument over the class can and cannot deliver, and it keeps
-  the missing ingredient (the orthogonality of the OPTIMAL direction to the
-  gradient) visible instead of buried.\<close>
+  larger set is smaller: \<open>ell_op_s \<le> ell_op\<close>.  Naming the relaxed operator
+  keeps the missing ingredient --- orthogonality of the optimal direction to
+  the gradient --- visible instead of buried.\<close>
 
 definition ell_op_s :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "ell_op_s k L M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L)"
@@ -770,19 +765,17 @@ proof -
     by (rule cInf_superset_mono[OF ne ell_op_s_bdd_below[OF L0] sub])
 qed
 
-text \<open>Now the inequality itself.  Everything the argument needs is in place:
-  @{thm [source] paper_v_attained} supplies the optimizer, at which the exit
-  time dominates the value ALMOST SURELY --- and that is the whole reason the
-  SUBSOLUTION half is the one reachable by expectations, since the DPP bound it
-  consumes is an a.s. bound and a.s. bounds survive integration, whereas the
-  supersolution half needs a lower bound on an essential infimum, which a mean
-  cannot give.
+text \<open>Everything the argument needs is in place: @{thm [source]
+  paper_v_attained} supplies the optimizer, at which the exit time dominates
+  the value almost surely --- the reason the subsolution half is reachable by
+  expectations, since the DPP bound it consumes is an a.s. bound and a.s.
+  bounds survive integration, whereas the supersolution half needs a lower
+  bound on an essential infimum, which a mean cannot give.
 
-  The test function is quadratic and touches GLOBALLY.  Localisation ---
-  turning a local touching into a global one --- is the Crandall--Ishii step and
-  is not attempted here; and \<open>ell_op_s\<close> rather than \<^const>\<open>ell_op\<close> is what
-  comes out, for the reason recorded above.  Both gaps are named, neither is
-  hidden.\<close>
+  The test function is quadratic and touches globally.  Localisation ---
+  turning a local touching into a global one --- is the Crandall--Ishii step
+  and is not attempted here, so \<open>ell_op_s\<close> rather than \<^const>\<open>ell_op\<close> is what
+  comes out.\<close>
 
 theorem paper_v_subsol_quadratic_global:
   fixes K :: "(real^'n::finite) set" and M :: "real^'n^'n"
@@ -822,7 +815,7 @@ proof -
       unfolding u_def
       using pexit_nonneg[OF T0, of K "\<lambda>t. fst (\<omega> t)"] by simp
   qed
-  text \<open>the DPP at the CONSTANT time \<open>h\<close>, then the horizon cap\<close>
+  text \<open>the DPP at the constant time \<open>h\<close>, then the horizon cap\<close>
   have dpp: "AE \<omega> in P. u x \<le> h + enn2real (paper_v k L (T - h) K (fst (\<omega> h)))"
     by (rule paper_v_cond_time[OF T0 L1 Kc P cAE]) (use h0 hT in auto)
   have low: "AE \<omega> in P. u x - h \<le> u (fst (\<omega> h))"
@@ -932,14 +925,14 @@ qed
 
 section \<open>The ball exit time along a continuous path\<close>
 
-text \<open>Three pathwise facts about \<^const>\<open>pball_exit\<close>.  All three are what an
-  Ito-side supplier will consume, and none of them needs a law: they are
-  statements about a single continuous path.
+text \<open>Three pathwise facts about \<^const>\<open>pball_exit\<close>, all consumed by an
+  Ito-side supplier and none needing a law: they are statements about a
+  single continuous path.
 
-  The first is ATTAINMENT.  With \<open>K\<close> open the target \<open>-K\<close> is closed, so along
+  The first is attainment.  With \<open>K\<close> open the target \<open>-K\<close> is closed, so along
   a continuous path the infimum defining \<^const>\<open>pexit\<close> is a minimum whenever
-  it is below the horizon --- the path really is outside \<open>K\<close> at the exit time.
-  This is the single fact that fails for a general (discontinuous) function,
+  it is below the horizon: the path really is outside \<open>K\<close> at the exit time.
+  This is the single fact that fails for a general discontinuous function,
   and every other clause below is a consequence of it.\<close>
 
 lemma pexit_le_of_mem:
@@ -988,9 +981,9 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>The second is the CONGRUENCE clause of a stopping time, restricted to
-  continuous paths.  Note the asymmetry: the \<open>\<ge>\<close> direction is unconditional
-  (a witness for \<open>g\<close> strictly below the exit time of \<open>f\<close> is a witness for \<open>f\<close>
+text \<open>The second is the congruence clause of a stopping time, restricted to
+  continuous paths.  The asymmetry: the \<open>\<ge>\<close> direction is unconditional (a
+  witness for \<open>g\<close> strictly below the exit time of \<open>f\<close> is a witness for \<open>f\<close>
   too), and only the \<open>\<le>\<close> direction needs attainment.\<close>
 
 lemma pexit_cong_stopping:
@@ -1047,8 +1040,8 @@ proof (rule pexit_cong_stopping[OF T0 open_ball cont])
   from eq[OF this] show "fst (\<omega> t) = fst (\<omega>' t)" by simp
 qed
 
-text \<open>The third is what makes the exit time USEFUL to the expansion: below the
-  horizon the path has actually travelled the full distance \<open>\<epsilon>\<close>.\<close>
+text \<open>The third is what makes the exit time useful to the expansion: below
+  the horizon the path has actually travelled the full distance \<open>\<epsilon>\<close>.\<close>
 
 lemma pball_exit_outside:
   fixes \<omega> :: "'n::finite pairpath"
@@ -1108,14 +1101,14 @@ proof -
   show ?thesis by (rule order_less_le_trans[OF m0 mle])
 qed
 
-section \<open>The ball exit time IS a stopping time\<close>
+section \<open>The ball exit time is a stopping time\<close>
 
-text \<open>\<^const>\<open>path_stopping_time\<close> now restricts its congruence clause to
-  CONTINUOUS paths, which is exactly what @{thm [source] pexit_mem_of_less_T}
-  shows is forced --- attainment of the infimum genuinely fails off the path
+text \<open>\<^const>\<open>path_stopping_time\<close> restricts its congruence clause to
+  continuous paths, which is exactly what @{thm [source] pexit_mem_of_less_T}
+  shows is forced: attainment of the infimum genuinely fails off the path
   space, so no redefinition of the exit time could have avoided it.  The
-  restriction costs nothing, because \<open>space Q = mspace (path_metric T)\<close> IS the
-  set of continuous paths, and it buys this:\<close>
+  restriction costs nothing, because \<open>space Q = mspace (path_metric T)\<close> is
+  the set of continuous paths, and it buys this:\<close>
 
 theorem pball_exit_path_stopping_time:
   fixes x :: "real^'n::finite"
@@ -1142,15 +1135,14 @@ next
   qed
 qed
 
-text \<open>So @{thm [source] paper_v_dpp_sup_ge_time} now applies at the exit time
-  of a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available --- which is what
-  Gap 1's stochastic localisation needs.\<close>
+text \<open>So @{thm [source] paper_v_dpp_sup_ge_time} applies at the exit time of
+  a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
+  localisation.\<close>
 
 section \<open>Scalar multiples through the Bochner integral\<close>
 
 text \<open>Two tiny facts used throughout the localisation: multiplying by a real
-  constant passes through integrability and the integral.  Stated once, since
-  the global names for these keep shifting.\<close>
+  constant passes through integrability and the integral.\<close>
 
 lemma integrable_cmult:
   fixes g :: "'a \<Rightarrow> real"
@@ -1268,14 +1260,14 @@ qed
 
 section \<open>Measurability of the ball exit time\<close>
 
-text \<open>\<open>pexit_path_measurable\<close> covers CLOSED targets and the ball is OPEN, so
-  this cannot be inherited.  The route: with the closed set \<open>- ball x \<epsilon>\<close> as the
-  hitting target, along a continuous path the sublevel event
-  \<open>{\<tau> \<le> t}\<close> is (by @{thm [source] etime_le_iff}, i.e. by ATTAINMENT) the event
-  that the path reaches distance \<open>\<ge> \<epsilon>\<close> somewhere on \<open>[0,t]\<close>, and by continuity
-  that is decided by countably many times: the rationals of \<open>[0,t]\<close> and \<open>t\<close>
-  itself.  A countable intersection of countable unions of evaluation events
-  remains measurable.\<close>
+text \<open>\<open>pexit_path_measurable\<close> covers closed targets and the ball is open, so
+  this cannot be inherited directly.  With the closed set \<open>- ball x \<epsilon>\<close> as the
+  hitting target, along a continuous path the sublevel event \<open>{\<tau> \<le> t}\<close> is (by
+  @{thm [source] etime_le_iff}, using attainment) the event that the path
+  reaches distance \<open>\<ge> \<epsilon>\<close> somewhere on \<open>[0,t]\<close>, and by continuity that is
+  decided by countably many times: the rationals of \<open>[0,t]\<close> and \<open>t\<close> itself.  A
+  countable intersection of countable unions of evaluation events remains
+  measurable.\<close>
 
 lemma dist_eval_measurable:
   fixes x :: "real^'n::finite"
@@ -1529,13 +1521,12 @@ qed
 
 section \<open>Optional sampling at a stopping time, via the stopped law\<close>
 
-text \<open>The optional-sampling content was ALREADY PROVED for the DPP:
+text \<open>The optional-sampling content follows from the DPP:
   @{thm [source] pstopped_law_horizon_component} and
   @{thm [source] pstopped_law_horizon_compensated} say the two martingale
   clauses of (1.7) survive stopping.  Reading those martingales' means at the
-  horizon \<open>T\<close> --- where the stopped path IS the path at \<open>\<theta>\<close> --- and
-  transporting along \<open>pair_law_of\<close> (a \<open>distr\<close>) yields the sampled means.  No
-  new probabilistic content.\<close>
+  horizon \<open>T\<close>, where the stopped path is the path at \<open>\<theta>\<close>, and transporting
+  along \<open>pair_law_of\<close> (a \<open>distr\<close>) yields the sampled means.\<close>
 
 lemma X_eval_entry_measurable:
   "(\<lambda>p' :: 'n::finite pairpath. fst (p' u) $ c) \<in> borel_measurable
@@ -2057,11 +2048,11 @@ qed
 
 section \<open>The localised subsolution inequality\<close>
 
-text \<open>The DPP at the ball exit time, the touching used only on the CLOSED
-  ball, and the exact quadratic expansion at the stopping time.  This is the
-  stochastic localisation that Gap 1 required, and no remainder estimate
-  appears anywhere: for a quadratic the expansion is exact at ANY bounded
-  stopping time.\<close>
+text \<open>The DPP at the ball exit time, the touching used only on the closed
+  ball, and the exact quadratic expansion at the stopping time give the
+  stochastic localisation of the subsolution inequality, with no remainder
+  estimate: for a quadratic the expansion is exact at any bounded stopping
+  time.\<close>
 
 theorem paper_v_subsol_quadratic_ball:
   fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
@@ -2379,8 +2370,8 @@ qed
 
 section \<open>Positive semidefinite forms kill their null directions\<close>
 
-text \<open>The Cauchy--Schwarz inequality for a psd form, in the only shape Gap 2
-  needs: if the form vanishes at \<open>q\<close> then \<open>q\<close> is in the kernel.\<close>
+text \<open>The Cauchy--Schwarz inequality for a psd form, in the shape needed
+  later: if the form vanishes at \<open>q\<close> then \<open>q\<close> is in the kernel.\<close>
 
 lemma psd_kernel_eq:
   fixes a :: "real^'n::finite^'n" and q :: "real^'n"
@@ -2737,12 +2728,12 @@ qed
 
 section \<open>From the convexified constraint to a feasible witness\<close>
 
-text \<open>The step the paper never needs to make explicit.  A matrix of the
-  CONVEXIFIED constraint set that kills \<open>q\<close> dominates, in any linear value, a
-  matrix of the ORIGINAL feasible set of Eq. (1.9).  The construction is a
+text \<open>The step the paper never needs to make explicit: a matrix of the
+  convexified constraint set that kills \<open>q\<close> dominates, in any linear value, a
+  matrix of the original feasible set of Eq. (1.9).  The construction is a
   capped spectral split: write \<open>b\<close> in its eigenbasis, cut the eigenvalues at
   \<open>1\<close>, decompose the capped part by the threshold selection --- its atoms are
-  PROJECTIONS, so they carry eigenvalue cap \<open>1\<close> --- and hand the excess, which
+  projections, so they carry eigenvalue cap \<open>1\<close> --- and hand the excess, which
   is bounded by \<open>L - 1\<close>, to the chosen atom.  The cap closes at
   \<open>1 + (L-1) = L\<close>, which is exactly why the split must happen at level \<open>1\<close>
   and nowhere else.  Orthogonality to \<open>q\<close> survives because every eigendirection
@@ -3312,12 +3303,12 @@ qed
 section \<open>The near-orthogonal direction: the anti-concentration dichotomy\<close>
 
 text \<open>The Girsanov-free replacement for the paper's exponential martingale
-  ((3.18)--(3.19)).  The DPP + touching inequality is ALMOST SURE, so if the
-  averaged covariation kept variance \<open>\<ge> \<epsilon>\<^sub>0\<close> in the gradient direction, the
-  martingale \<open>q \<bullet> X\<close> would take a negative value larger than the entire
-  drift-plus-curvature budget \<open>t + C\<epsilon>\<^sup>2/2\<close> on a set of positive measure ---
+  ((3.18)--(3.19)).  The DPP and touching inequality hold almost surely, so
+  if the averaged covariation kept variance \<open>\<ge> \<epsilon>\<^sub>0\<close> in the gradient direction,
+  the martingale \<open>q \<bullet> X\<close> would take a negative value larger than the entire
+  drift-plus-curvature budget \<open>t + C\<epsilon>\<^sup>2/2\<close> on a set of positive measure, a
   contradiction.  The quantitative form needs no fourth moment: the stopped
-  increment is BOUNDED by \<open>\<bar>q\<bar>\<epsilon>\<close>, so a bare indicator split gives the
+  increment is bounded by \<open>\<bar>q\<bar>\<epsilon>\<close>, so a bare indicator split gives the
   anti-concentration, and the scaling \<open>t := \<epsilon>\<^sup>2/(2nL)\<close> closes the loop.\<close>
 
 theorem paper_v_touch_near_orth:
@@ -4099,13 +4090,13 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>Gap 2 closed: clause (2)'s SUBSOLUTION half, with the operator of
-  Eq. (1.9) itself --- orthogonality constraint included.  For each test
-  function and each Hessian bump \<open>\<delta>\<close>: the anti-concentration dichotomy plus
-  compactness produce a convexified direction that kills the gradient
-  (@{thm [source] paper_v_touch_orth}), and the capped spectral split converts
-  it into a FEASIBLE witness (@{thm [source] sconstraint_orth_feasible}).
-  Then \<open>\<delta> \<rightarrow> 0\<close> exactly as in the relaxed case.\<close>
+text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9)
+  itself, orthogonality constraint included.  For each test function and each
+  Hessian bump \<open>\<delta>\<close>, an anti-concentration argument together with compactness
+  produces a direction that kills the gradient (@{thm [source]
+  paper_v_touch_orth}); the capped spectral split converts it into a feasible
+  witness (@{thm [source] sconstraint_orth_feasible}), and \<open>\<delta> \<rightarrow> 0\<close> concludes
+  as in the relaxed case.\<close>
 
 theorem paper_v_visc_subsol:
   fixes K :: "(real^'n::finite) set"
@@ -4203,12 +4194,11 @@ proof (intro ballI allI impI)
   qed
 qed
 
-section \<open>P6: the boundary subsolution clause for \<open>paper_v\<close>\<close>
+section \<open>The boundary subsolution clause for \<open>paper_v\<close>\<close>
 
-text \<open>The proof of \<open>paper_v_visc_subsol\<close> above never uses \<open>x \<in> interior K\<close>:
-  everything is driven by the LOCAL touching, and \<open>paper_v_touch_orth\<close> is
-  indifferent to where \<open>x\<close> sits.  So the local subsolution property holds on
-  ANY \<open>\<Omega>\<close>, which is the first half of P6.\<close>
+text \<open>The proof of \<open>paper_v_visc_subsol\<close> does not use \<open>x \<in> interior K\<close>: it
+  is driven by the local touching, and \<open>paper_v_touch_orth\<close> is indifferent to
+  where \<open>x\<close> sits.  So the subsolution property holds locally on any \<open>\<Omega>\<close>.\<close>
 
 theorem paper_v_visc_subsol_any:
   fixes K :: "(real^'n::finite) set"
@@ -4345,12 +4335,12 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>\<^bold>\<open>P6\<close>: Definition 3.1(a) for \<open>paper_v\<close> INCLUDING the boundary clause.  At a
+text \<open>Definition 3.1(a) for \<open>paper_v\<close>, including the boundary clause.  At a
   boundary point where the value is strictly positive, a touching that is only
   global over \<open>K\<close> upgrades to a local one: off \<open>K\<close> the value is \<open>0\<close>
   (\<open>paper_v_zero_outside\<close>) while the test function is continuous, so for \<open>z\<close>
-  close enough to \<open>x\<close> the required inequality \<open>0 - \<phi> z \<le> v x - \<phi> x\<close> is implied
-  by \<open>\<phi> x - \<phi> z < v x\<close>.  That is exactly what the gate buys.\<close>
+  close enough to \<open>x\<close> the required inequality \<open>0 - \<phi> z \<le> v x - \<phi> x\<close> follows
+  from \<open>\<phi> x - \<phi> z < v x\<close>.\<close>
 
 theorem paper_v_subsol_bc:
   fixes K :: "(real^'n::finite) set"
@@ -4439,16 +4429,15 @@ qed
 section \<open>Towards the supersolution half: skew-symmetric covariance fields\<close>
 
 text \<open>The supersolution inequality is an essential-infimum statement, so it
-  needs PATHWISE control.  The paper (\<section>3.2, Case 1) gets it from a
-  covariance field whose columns are \<open>S\<^sub>i \<nabla>\<phi>(y)\<close> with \<open>S\<^sub>i\<close> SKEW-symmetric:
-  the field annihilates the gradient of the test function all along the
-  path, so no stochastic integral ever appears --- and in this development
-  none will: the field is fed to an Euler scheme glued by
-  @{thm [source] paper_pair_class_kglue_law'} and passed to a weak limit.
-  This section builds the algebra: the skew building block, the extraction
-  of STRICT eigendata from a feasible witness (the paper's ``modify \<open>a\<close> so
-  the top eigenvalues lie in \<open>(1, L)\<close>''), and the exact identities for
-  sums of column outer products.\<close>
+  needs pathwise control.  The paper (\<section>3.2, Case 1) gets it from a
+  covariance field whose columns are \<open>S\<^sub>i \<nabla>\<phi>(y)\<close> with \<open>S\<^sub>i\<close> skew-symmetric:
+  the field annihilates the gradient of the test function along the path, so
+  no stochastic integral appears.  Here the field is fed to an Euler scheme
+  glued by @{thm [source] paper_pair_class_kglue_law'} and passed to a weak
+  limit.  This section builds the algebra: the skew building block, the
+  extraction of strict eigendata from a feasible witness (modifying \<open>a\<close> so
+  the top eigenvalues lie in \<open>(1, L)\<close>), and identities for sums of column
+  outer products.\<close>
 
 subsection \<open>The skew building block\<close>
 
@@ -4778,7 +4767,7 @@ qed
 subsection \<open>The strict blend\<close>
 
 text \<open>Blending the witness with the projection onto \<open>Bp\<close> pushes the top
-  \<open>n - k\<close> eigenvalues STRICTLY above \<open>1\<close> and all eigenvalues STRICTLY
+  \<open>n - k\<close> eigenvalues strictly above \<open>1\<close> and all eigenvalues strictly
   below \<open>L\<close> --- the margins that survive perturbation along the path.
   This is the only place the supersolution argument needs \<open>1 < L\<close>.\<close>
 
@@ -5069,8 +5058,8 @@ text \<open>Along the path the columns are \<open>w u = sqrt (lam u) *\<^sub>R u
   inside the constraint set need no operator-norm calculus --- only the
   weighted AM--GM inequality \<open>2ab \<le> \<epsilon>a\<^sup>2 + b\<^sup>2/\<epsilon>\<close> and the finite
   \<open>L\<^sup>1\<close>--\<open>L\<^sup>2\<close> comparison.  \<open>perturbed_columns_eigen_ub\<close> is the upper
-  eigenvalue bound with an EXPLICIT smallness condition on \<open>e\<close>; its \<open>lb\<close>
-  and trace companions follow in the next batch.\<close>
+  eigenvalue bound with an explicit smallness condition on \<open>e\<close>; its lower and
+  trace bounds follow below.\<close>
 
 lemma two_mult_le_weighted:
   fixes a b \<epsilon> :: real
@@ -5718,11 +5707,11 @@ qed
 subsection \<open>The skew covariance field\<close>
 
 text \<open>The field of the paper's (3.24), Girsanov-free: at the point \<open>z\<close> the
-  columns are the skew images of the CURRENT gradient \<open>q + M (z - x)\<close> of the
-  quadratic minorant, so the field annihilates that gradient EVERYWHERE ---
-  no stochastic integral will ever be needed to kill the first-order term.
-  On a ball whose radius satisfies three explicit smallness conditions the
-  field stays inside the constraint set and keeps the trace margin.\<close>
+  columns are the skew images of the gradient \<open>q + M (z - x)\<close> of the
+  quadratic minorant, so the field annihilates that gradient everywhere and no
+  stochastic integral is needed to kill the first-order term.  On a ball
+  whose radius satisfies three explicit smallness conditions the field stays
+  inside the constraint set and keeps the trace margin.\<close>
 
 definition skewfield ::
   "(real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> real^'n
@@ -5985,10 +5974,10 @@ qed
 subsection \<open>The constant-volatility Gaussian member\<close>
 
 text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
-  so the building block is Brownian motion pushed through a CONSTANT matrix
+  so the building block is Brownian motion pushed through a constant matrix
   \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>.  Class membership
   mirrors @{thm [source] bmpair_law_in_paper_pair_class}: the martingale
-  clauses are BOUNDED-LINEAR images of the Brownian ones
+  clauses are bounded-linear images of the Brownian ones
   (@{thm [source] martingale_bounded_linear_image}), the covariation clause
   is deterministic, and an arbitrary start comes free from
   @{thm [source] paper_pair_class_pshift}.  The only hypothesis is
@@ -6505,7 +6494,7 @@ qed
 subsection \<open>Continuity of the Gaussian member in its volatility\<close>
 
 text \<open>The Euler kernel varies only through the frozen matrix, so its
-  measurability reduces to CONTINUITY of \<open>S \<mapsto> law (sbmpair S T)\<close> in the
+  measurability reduces to continuity of \<open>S \<mapsto> law (sbmpair S T)\<close> in the
   weak topology: pathwise \<open>S \<mapsto> sbmpair S T \<omega>\<close> is continuous into the path
   metric (the Brownian path is bounded on \<open>[0,T]\<close>), and dominated
   convergence does the rest --- no tightness, no uniform estimates.\<close>
@@ -7008,10 +6997,10 @@ qed
 subsection \<open>Step moments of the Gaussian member\<close>
 
 text \<open>The Euler analysis needs exactly two facts per step: the compensated
-  quadratic increment has MEAN ZERO (an instance of
+  quadratic increment has mean zero (an instance of
   @{thm [source] paper_pair_class_quadform_mean}, since the member's second
-  component is deterministic), and its VARIANCE is \<open>O(h\<^sup>2)\<close>.  The variance
-  needs no Wick calculus and no coordinate independence: the pointwise
+  component is deterministic), and its variance is \<open>O(h\<^sup>2)\<close>.  The variance
+  bound needs no Wick calculus and no coordinate independence: the pointwise
   AM--GM bound \<open>a\<^sup>2b\<^sup>2 \<le> (a\<^sup>4 + b\<^sup>4)/2\<close> reduces everything to the fourth
   marginal moment \<open>3h\<^sup>2\<close> of one Brownian coordinate.\<close>
 
@@ -8865,25 +8854,22 @@ qed
 
 subsection \<open>The weak limit of the Euler laws\<close>
 
-text \<open>Batch 3d of the supersolution plan.  The Euler laws at mesh
-  \<open>c / (i + 1)\<close> all live in the compact class
+text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the compact class
   \<open>paper_pair_class k L c x\<close> (@{thm [source]
   paper_pair_class_compact_metric_space}), so some subsequence converges
-  weakly to a class member \<open>P\<close>.  The transfer principle we record is the
-  portmanteau bound against limits along the FULL sequence: if the
-  measures of an open set converge to \<open>b\<close>, the limit member gives the set
-  at most \<open>b\<close> (and dually for closed sets).  Batch 3e will apply the open
-  half to the "stayed in the ball but the quadratic dropped" event, whose
-  probability vanishes with the mesh by
-  @{thm [source] eulerp_Xi_chebyshev} and @{thm [source]
-  eulerp_quad_lower}.
+  weakly to a class member \<open>P\<close>.  The portmanteau bound against limits
+  along the full sequence -- if the measures of an open set converge to
+  \<open>b\<close>, the limit member gives the set at most \<open>b\<close> (and dually for closed
+  sets) -- applies to the event that a path stays inside the ball while
+  the quadratic drops below its guaranteed growth, whose probability
+  vanishes with the mesh by @{thm [source] eulerp_Xi_chebyshev} and
+  @{thm [source] eulerp_quad_lower}.
 
-  The topological brick first: staying strictly inside an open set
-  through time \<open>t\<close> is an OPEN condition on the path.  The image of
-  \<open>{0..t}\<close> is compact, so it sits at a positive distance from the
-  complement (@{thm [source] separate_compact_closed}), and any path
-  uniformly closer than that distance stays inside as well
-  (@{thm [source] path_mdist_le_iff_all}).\<close>
+  Staying strictly inside an open set through time \<open>t\<close> is an open
+  condition on the path: the image of \<open>{0..t}\<close> is compact, so it sits at
+  a positive distance from the complement (@{thm [source]
+  separate_compact_closed}), and any path uniformly closer than that
+  distance stays inside as well (@{thm [source] path_mdist_le_iff_all}).\<close>
 
 lemma open_stay_inside:
   fixes T t :: real and A :: "'b::{polish_space, heine_borel} set"
@@ -9066,7 +9052,7 @@ qed
 text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close>: exactly \<open>i + 1\<close> steps of
   length \<open>c / (i + 1)\<close> land on the horizon \<open>c\<close> on the nose, so
   @{thm [source] eulerp_in_class} puts every member of the sequence in
-  the SAME class and the transfer principle applies verbatim.\<close>
+  the same class and the transfer principle applies verbatim.\<close>
 
 lemma eulerp_seq_in_class:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and x :: "real^'n"
@@ -9108,14 +9094,14 @@ qed
 
 subsection \<open>The bad event vanishes with the mesh\<close>
 
-text \<open>Batch 3e(i).  The OPEN bad event --- the path stays strictly inside
-  the ball through time \<open>t\<close> yet the quadratic drops below its guaranteed
+text \<open>The open bad event --- the path stays strictly inside the ball
+  through time \<open>t\<close> yet the quadratic drops below its guaranteed
   growth --- has vanishing probability under the Euler laws.  Three
   estimates feed the proof: the grid functional's Chebyshev bound
   (@{thm [source] eulerp_Xi_chebyshev}), the pathwise lower bound at the
   nearest grid point (@{thm [source] eulerp_quad_lower}), and a
   fourth-moment tail for the one-step gap between the grid point and
-  \<open>t\<close>, which we derive first from
+  \<open>t\<close>, derived first from
   @{thm [source] paper_pair_class_fourth_moment}.\<close>
 
 lemma paper_pair_class_increment_tail:
@@ -9280,9 +9266,9 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The quadratic is Lipschitz on the ball, with the explicit constant
-  \<open>norm q + 2 C\<^sub>M rb\<close>; the exact one-step Taylor identity
-  @{thm [source] quad_taylor_step} does all the work.\<close>
+text \<open>The quadratic is Lipschitz on the ball, with explicit constant
+  \<open>norm q + 2 C\<^sub>M rb\<close>, via the one-step Taylor identity
+  @{thm [source] quad_taylor_step}.\<close>
 
 lemma quad_diff_bound:
   fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and rb :: real
@@ -9370,8 +9356,8 @@ qed
 
 text \<open>The bad event is open: staying strictly inside the ball is
   @{thm [source] open_stay_inside} through the first projection, and the
-  strict quadratic drop is an open condition on the evaluation at \<open>t\<close>
-  (@{thm [source] open_eval_preimage}).\<close>
+  strict quadratic drop is an open condition on the evaluation at \<open>t\<close>,
+  via @{thm [source] open_eval_preimage}.\<close>
 
 lemma open_quad_bad_event:
   fixes x q :: "real^'n::finite" and M :: "real^'n^'n"
@@ -9426,11 +9412,11 @@ proof -
   show ?thesis unfolding eq by (rule openin_Int[OF o1 o2])
 qed
 
-text \<open>The main estimate.  At mesh \<open>c / (i + 1)\<close> the bad-event probability
-  is at most \<open>A h + B h\<^sup>2\<close> once the mesh is fine enough, hence it tends to
-  zero.  Inside: pick the last grid point \<open>m h \<le> t\<close>; on the almost-sure
-  event of @{thm [source] eulerp_quad_lower}, in-ball through \<open>t\<close> and a
-  quadratic drop force either a large \<open>euXi\<close> (Chebyshev) or a large
+text \<open>At mesh \<open>c / (i + 1)\<close> the bad-event probability is at most
+  \<open>A h + B h\<^sup>2\<close> once the mesh is fine enough, so it tends to zero.  At the
+  last grid point \<open>m h \<le> t\<close>, on the almost-sure event of
+  @{thm [source] eulerp_quad_lower}, staying in-ball through \<open>t\<close> together
+  with a quadratic drop forces either a large \<open>euXi\<close> (Chebyshev) or a large
   one-step increment (the fourth-moment tail).\<close>
 
 theorem eulerp_bad_event_null:
@@ -9782,14 +9768,14 @@ qed
 
 subsection \<open>The limit member grows along the quadratic, almost surely\<close>
 
-text \<open>Batch 3e(ii).  Combining the weak-limit transfer with the vanishing
-  bad events: SOME class member \<open>P\<close> satisfies, almost surely, for EVERY
-  time \<open>t\<close> --- not just rational ones --- that staying strictly inside
-  the ball through \<open>t\<close> forces the quadratic to grow at rate \<open>cm/2\<close>.
-  The countable skeleton (rational \<open>t\<close>, margins \<open>1/(n+1)\<close>) comes from
-  @{thm [source] eulerp_weak_limit} + @{thm [source] eulerp_bad_event_null}
-  + @{thm [source] open_quad_bad_event}; the upgrade to real \<open>t\<close> is
-  pathwise, using only that members of the path space are continuous.\<close>
+text \<open>Combining the weak-limit transfer with the vanishing bad events gives a
+  class member \<open>P\<close> that, almost surely, for every time \<open>t\<close> and not just
+  rational ones, has: staying strictly inside the ball through \<open>t\<close> forces
+  the quadratic to grow at rate \<open>cm/2\<close>.  The countable skeleton (rational
+  \<open>t\<close>, margins \<open>1/(n+1)\<close>) comes from @{thm [source] eulerp_weak_limit},
+  @{thm [source] eulerp_bad_event_null} and @{thm [source]
+  open_quad_bad_event}; the upgrade to real \<open>t\<close> is pathwise, using only
+  that members of the path space are continuous.\<close>
 
 lemma quad_eval_cont:
   fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
@@ -10039,15 +10025,14 @@ qed
 
 subsection \<open>The limit member at the exit time\<close>
 
-text \<open>Batch 3e(iii).  The almost-sure growth statement, specialised to the
-  exit time of the ball.  Pathwise: before the exit the path is strictly
-  inside (@{thm [source] pexit_le_of_mem}), so the growth bound holds at
-  every earlier time and passes to the exit by continuity; the exit is
-  strictly positive because the path starts at the centre
+text \<open>The almost-sure growth statement, specialised to the exit time of the
+  ball.  Before the exit the path is strictly inside
+  (@{thm [source] pexit_le_of_mem}), so the growth bound holds at every
+  earlier time and passes to the exit by continuity; the exit is strictly
+  positive because the path starts at the centre
   (@{thm [source] pball_exit_pos}), stays in the closed ball through the
   exit (@{thm [source] pball_exit_stays_cball}), and lands on the sphere
-  whenever it happens before the cap (@{thm [source] pball_exit_outside}).
-  This is everything the DPP contradiction needs from the process.\<close>
+  whenever it happens before the cap (@{thm [source] pball_exit_outside}).\<close>
 
 lemma quad_good_upto:
   fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
@@ -10246,20 +10231,20 @@ qed
 
 subsection \<open>The quadratic minorant and the concrete field\<close>
 
-text \<open>Batch 4a.  Two independent bricks for the supersolution assembly.
+text \<open>Two independent bricks for the supersolution assembly.
 
   First, the mirror of @{thm [source] test_fun_quadratic_dominates}: a
-  test function DOMINATES the quadratic with the softened Hessian
-  \<open>H - \<delta>\<cdot>1\<close> near the touching point.  The proof is the same
-  one-dimensional ray argument with every inequality reversed.
+  test function dominates the quadratic with the softened Hessian
+  \<open>H - \<delta>\<cdot>1\<close> near the touching point, by the same one-dimensional ray
+  argument with every inequality reversed.
 
   Second, the concrete volatility field for the Euler construction: the
   columns of @{const skewfield} through a fixed eigenbasis enumeration,
   evaluated at the clamped point.  @{thm [source] skewfield_decomp}
-  identifies its square with the field itself, so the three hypotheses
-  of the Euler machinery --- admissible square, gradient kill, trace
-  margin --- are @{thm [source] skewfield_properties} verbatim; the
-  transpose kill needs one extra line of linear algebra
+  identifies its square with the field itself, so the three hypotheses of
+  the Euler machinery -- admissible square, gradient kill, trace margin --
+  are @{thm [source] skewfield_properties} verbatim; the transpose kill
+  needs one extra line of linear algebra
   (\<open>|S\<^sup>Tg|\<^sup>2 = ((SS\<^sup>T)g)\<bullet>g = 0\<close>).\<close>
 
 definition skewSF ::
@@ -10390,11 +10375,11 @@ qed
 
 subsection \<open>Bricks for the Case-1 contradiction\<close>
 
-text \<open>Batch 4b(i).  Small independent pieces the contradiction assembles:
-  algebra for the softened Hessian, a generic small-radius chooser, the
-  witness extraction from a failed operator inequality, the value bound
-  \<open>v(x) < T\<close> forced by a nonzero touching gradient, and the exit-time
-  identity on paths that never leave \<open>K\<close>.\<close>
+text \<open>Small independent pieces the contradiction assembles: algebra for the
+  softened Hessian, a generic small-radius chooser, the witness extraction
+  from a failed operator inequality, the value bound \<open>v(x) < T\<close> forced by a
+  nonzero touching gradient, and the exit-time identity on paths that never
+  leave \<open>K\<close>.\<close>
 
 lemma transpose_sub_smat:
   fixes H :: "real^'n::finite^'n" and s :: real
@@ -10616,17 +10601,16 @@ qed
 subsection \<open>Case 1: a nonzero gradient contradicts a failed supersolution
   inequality\<close>
 
-text \<open>Batch 4b(ii).  The full contradiction.  If the supersolution
-  inequality fails at a touching point with nonzero gradient, then: the
-  failure yields a feasible witness with slack \<open>2\<eta>\<^sub>0\<close>; softening the
-  Hessian by \<open>(2\<gamma>+\<delta>)\<cdot>1\<close> keeps slack \<open>2\<eta>\<close> and buys both the Taylor
-  minorant (via \<open>\<delta>\<close>) and a strict sphere margin (via \<open>\<gamma>\<close>); the strict
-  eigendata builds the skew field, the Euler limit produces a class
-  member whose paths grow along the quadratic, and at the stopping time
-  \<open>min cc (pball_exit T x rr)\<close> the DPP functional is at least
-  \<open>v(x) + mg\<close> almost surely --- the exit branch is paid by \<open>\<gamma> rr\<^sup>2\<close>, the
-  no-exit branch by \<open>cc \<eta> / 2\<close>, and the horizon cap by \<open>T - v(x) > 0\<close>,
-  which a nonzero gradient forces.  That contradicts
+text \<open>If the supersolution inequality fails at a touching point with
+  nonzero gradient, the failure yields a feasible witness with slack
+  \<open>2\<eta>\<^sub>0\<close>.  Softening the Hessian by \<open>(2\<gamma>+\<delta>)\<cdot>1\<close> keeps slack \<open>2\<eta>\<close> and buys
+  both the Taylor minorant (via \<open>\<delta>\<close>) and a strict sphere margin (via
+  \<open>\<gamma>\<close>); the strict eigendata builds the skew field, the Euler limit
+  produces a class member whose paths grow along the quadratic, and at the
+  stopping time \<open>min cc (pball_exit T x rr)\<close> the DPP functional is at
+  least \<open>v(x) + mg\<close> almost surely -- the exit branch is paid by
+  \<open>\<gamma> rr\<^sup>2\<close>, the no-exit branch by \<open>cc \<eta> / 2\<close>, and the horizon cap by
+  \<open>T - v(x) > 0\<close>, which a nonzero gradient forces.  That contradicts
   @{thm [source] paper_v_dpp_sup_ge_time}.\<close>
 
 theorem paper_v_supersol_contradiction_case1:
@@ -10740,10 +10724,10 @@ proof -
         * (real CARD('n) * (ec * r * (2 * sqrt L + ec * r)))\<^sup>2)"
   define f3 where "f3 = (\<lambda>r. real CARD('n)
       * (Cm * (ec * r * (2 * sqrt L + ec * r))))"
-  have c1: "isCont f1 0" unfolding f1_def by (auto intro!: continuous_intros)
+  have c1: "isCont f1 0" unfolding f1_def by auto
   have c2: "isCont f2 0" unfolding f2_def
-    using m0 by (auto intro!: continuous_intros)
-  have c3: "isCont f3 0" unfolding f3_def by (auto intro!: continuous_intros)
+    using m0 by auto
+  have c3: "isCont f3 0" unfolding f3_def by auto
   have z1: "f1 0 = 0" unfolding f1_def by simp
   have z2: "f2 0 = 0" unfolding f2_def by simp
   have z3: "f3 0 = 0" unfolding f3_def by simp
@@ -11001,11 +10985,10 @@ qed
 
 subsection \<open>Case 1, packaged for the envelope form\<close>
 
-text \<open>Batch 4c(i).  The contradiction, read back as the positive
-  statement the envelope supersolution definition wants: at any interior
-  touching point with a NONZERO gradient the usc envelope of the
-  operator is at least one, since \<open>F \<le> F\<^sup>*\<close>
-  (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
+text \<open>The contradiction, read back as the positive statement the envelope
+  supersolution definition wants: at any interior touching point with a
+  nonzero gradient the usc envelope of the operator is at least one, since
+  \<open>F \<le> F\<^sup>*\<close> (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
   inequality into a failed plain one.\<close>
 
 theorem paper_v_supersol_env_case1:
@@ -11034,20 +11017,17 @@ qed
 
 subsection \<open>Bricks for Case 2: the envelope limit and the tangential field\<close>
 
-text \<open>Batch 4c(ii).  The sphere-tangential projector field.  (The
-  companion input --- that the usc envelope passes \<open>\<ge> 1\<close> through limits
-  in \<open>(p, M)\<close>, which is what turns the Case-1 conclusions at perturbed
-  touching points into \<open>1 \<le> F\<^sup>*(0, H)\<close> --- is
-  @{thm [source] ell_op_usc_ge_one_limit}, now in Envelopes with the
-  rest of the envelope theory.)  Clamped to a ball separated from clamped to a ball separated from
-  its centre \<open>y\<^sub>0\<close>, it is an admissible volatility that kills the radial
-  direction EXACTLY, so the squared distance to \<open>y\<^sub>0\<close> moves at the
-  deterministic rate \<open>CARD('n) - 1\<close>; this feeds the same Euler
-  machinery as Case 1 and is the positivity input for the second horn
-  of the dichotomy (and for Example 3.1's lower bound).\<close>
+text \<open>The sphere-tangential projector field.  The companion input, that the
+  usc envelope passes \<open>\<ge> 1\<close> through limits in \<open>(p, M)\<close> and so turns the
+  Case-1 conclusions at perturbed touching points into
+  \<open>1 \<le> F\<^sup>*(0, H)\<close>, is @{thm [source] ell_op_usc_ge_one_limit}.  Clamped
+  to a ball separated from its centre \<open>y\<^sub>0\<close>, the field is an admissible
+  volatility that kills the radial direction exactly, so the squared
+  distance to \<open>y\<^sub>0\<close> moves at the deterministic rate \<open>CARD('n) - 1\<close>; this
+  feeds the same Euler machinery as Case 1 and is the positivity input for
+  the second horn of the dichotomy, and for Example 3.1's lower bound.\<close>
 
-text \<open>Matrix difference distributes over the product --- inline bricks,
-  entrywise.\<close>
+text \<open>Matrix difference distributes over the product, entrywise.\<close>
 
 lemma matrix_msub_rdistrib:
   fixes A B C :: "real^'n::finite^'n"
@@ -11370,13 +11350,12 @@ qed
 
 subsection \<open>Conditional orthogonality: the kill checked at the point\<close>
 
-text \<open>Batch 4d(i).  The Euler increments annihilate a continuous field
-  WHEREVER the field is killed by the volatility --- the kill condition
-  moves from a global hypothesis into the conclusion, checked at each
-  grid point.  This is what lets a field be tangential only away from
-  its singular centre: the growth telescope only ever uses
-  orthogonality at grid points inside the good region, where the kill
-  holds.  The proof is the committed induction of
+text \<open>The Euler increments annihilate a continuous field wherever the field
+  is killed by the volatility: the kill condition moves from a global
+  hypothesis into the conclusion, checked at each grid point.  This lets a
+  field be tangential only away from its singular centre, since the growth
+  telescope only ever uses orthogonality at grid points inside the good
+  region, where the kill holds.  The proof is the committed induction of
   @{thm [source] eulerp_orth_increments} with the implication carried
   through the glue.\<close>
 
@@ -11734,15 +11713,14 @@ qed
 
 subsection \<open>The growth telescope on an arbitrary region\<close>
 
-text \<open>Batch 4d(ii).  The exact quadratic lower bound of
-  @{thm [source] eulerp_quad_lower}, with the confinement region
+text \<open>The quadratic lower bound of @{thm [source] eulerp_quad_lower},
   decoupled from the start-centred clamp: the kill and the trace margin
-  are only assumed ON the region, and the conclusion holds on the event
-  that the grid stays there.  The conditional orthogonality
-  (@{thm [source] eulerp_orth_increments_cond}) checks the kill at each
-  grid point, so no clamp and no global hypothesis are needed.  This is
-  the form the tangential field of Case 2 can feed: tangential exactly
-  on an annulus around its centre, arbitrary elsewhere.\<close>
+  are assumed only on the confinement region, and the conclusion holds
+  on the event that the grid stays there.  The conditional orthogonality
+  @{thm [source] eulerp_orth_increments_cond} checks the kill at each
+  grid point, so no clamp or global hypothesis is needed.  This form
+  admits a vector field that is tangential only on an annulus around its
+  own centre.\<close>
 
 theorem eulerp_quad_lower_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -11900,12 +11878,13 @@ qed
 
 subsection \<open>Region variants of the Lipschitz bound and the open event\<close>
 
-text \<open>Batch 4d(iii).  Two committed Case-1 lemmas, re-stated with the
-  confinement region decoupled from the quadratic's centre.  The
-  Lipschitz bound needs only the two norm bounds, and the bad event
-  stays open for ANY open region: the stay-condition and the quadratic
-  no longer share a centre.  These feed the region versions of the
-  vanishing-probability and limit theorems.\<close>
+text \<open>The Lipschitz bound on a quadratic and the openness of its bad
+  event, re-stated with the confinement region decoupled from the
+  quadratic's centre: the Lipschitz bound needs only the two norm
+  bounds, and the bad event stays open for any open region, since the
+  stay-condition and the quadratic no longer share a centre.  These feed
+  the region versions of the vanishing-probability and limit theorems
+  below.\<close>
 
 lemma quad_diff_bound_gen:
   fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and R :: real
@@ -12042,12 +12021,12 @@ qed
 
 subsection \<open>The bad event vanishes on a region\<close>
 
-text \<open>Batch 4d(iv).  The vanishing-probability theorem of
-  @{thm [source] eulerp_bad_event_null}, over an arbitrary bounded open
-  stay-region: the kill and the trace margin hold on the region, the
-  region is contained in a ball of radius \<open>Rn\<close> around the quadratic's
-  centre, and the same Chebyshev-plus-gap dissection gives the
-  \<open>A h + B h\<^sup>2\<close> bound once the mesh is fine.\<close>
+text \<open>The vanishing-probability theorem @{thm [source]
+  eulerp_bad_event_null}, over an arbitrary bounded open stay-region:
+  the kill and the trace margin hold on the region, which is contained
+  in a ball of radius \<open>Rn\<close> around the quadratic's centre, and the same
+  Chebyshev-plus-gap dissection gives the \<open>A h + B h\<^sup>2\<close> bound once the
+  mesh is fine.\<close>
 
 theorem eulerp_bad_event_null_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -12421,13 +12400,13 @@ qed
 
 subsection \<open>One limit member, two quadratics, one region\<close>
 
-text \<open>Batch 4d(v).  The region version of the almost-sure growth
-  statement, carrying TWO quadratic packages against ONE field and ONE
-  limit member: the weak-limit transfer serves every vanishing open
-  event of a single member simultaneously, so both growth directions
-  hold together.  For the tangential field with \<open>\<pm>(2(x-y\<^sub>0), 2\<cdot>1)\<close> this
-  pins \<open>|X\<^sub>t - y\<^sub>0|\<^sup>2\<close> to the deterministic line
-  \<open>|x - y\<^sub>0|\<^sup>2 + (n-1) t\<close> while the path stays in the region.\<close>
+text \<open>The region version of the almost-sure growth statement, carrying
+  two quadratic packages against one field and one limit member: the
+  weak-limit transfer serves every vanishing open event of a single
+  member simultaneously, so both growth directions hold together.  For
+  the tangential field with \<open>\<pm>(2(x-y\<^sub>0), 2\<cdot>1)\<close> this pins
+  \<open>|X\<^sub>t - y\<^sub>0|\<^sup>2\<close> to the deterministic line \<open>|x - y\<^sub>0|\<^sup>2 + (n-1) t\<close>
+  while the path stays in the region.\<close>
 
 lemma quad_good_rat_to_real_region:
   fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
@@ -12730,15 +12709,14 @@ qed
 
 subsection \<open>The tangential member: exact radial growth\<close>
 
-text \<open>Batch 4d(vi).  The unclamped tangential field is admissible
-  everywhere --- even where the guarded radial is short, its square
-  keeps a full \<open>(n-1)\<close>-dimensional unit eigenspace --- and on the region
-  where the guard is inactive it kills the radial exactly.  Feeding the
-  two-quadratic limit theorem with \<open>\<pm>(2(x-y\<^sub>0), 2\<cdot>1)\<close> pins the squared
-  distance to \<open>y\<^sub>0\<close> to the deterministic line
-  \<open>|x-y\<^sub>0|\<^sup>2 + (CARD('n)-1) t\<close> while the path stays in the region.  This
-  is the engine behind the second horn of Case 2 and Example 3.1's
-  lower bound: exit times of concentric balls are deterministic.\<close>
+text \<open>The unclamped tangential field is admissible everywhere: even
+  where the guarded radial is short, its square keeps a full
+  \<open>(n-1)\<close>-dimensional unit eigenspace, and on the region where the guard
+  is inactive it kills the radial exactly.  Feeding the two-quadratic
+  limit theorem with \<open>\<pm>(2(x-y\<^sub>0), 2\<cdot>1)\<close> pins the squared distance to
+  \<open>y\<^sub>0\<close> to the deterministic line \<open>|x-y\<^sub>0|\<^sup>2 + (CARD('n)-1) t\<close> while the
+  path stays in the region, so exit times of concentric balls are
+  deterministic, as used in Example 3.1's lower bound.\<close>
 
 lemma tanp_sq_sconstraint:
   fixes u :: "real^'n::finite"
@@ -13038,15 +13016,13 @@ qed
 
 subsection \<open>Deterministic confinement and the ball lower bound\<close>
 
-text \<open>Batch 4d(vii).  The payoff of the exact radial growth: paths of
-  the tangential member CANNOT leave the annulus before the
-  deterministic time \<open>(rB\<^sup>2 - |x-y\<^sub>0|\<^sup>2)/(n-1)\<close> --- the inner boundary is
+text \<open>Paths of the tangential member cannot leave the annulus before the
+  deterministic time \<open>(rB\<^sup>2 - |x-y\<^sub>0|\<^sup>2)/(n-1)\<close>: the inner boundary is
   unreachable because the squared distance only grows, and reaching the
   outer sphere pins the time exactly.  Feeding the constant-time DPP
-  (@{thm [source] paper_v_dpp_sup_ge}) turns confinement into the
-  POSITIVE lower bound \<open>v(x) \<ge> min(T/2, \<delta>/2)\<close> whenever the ball sits
-  inside \<open>K\<close>.  This is the second horn's contradiction input in Case 2,
-  and a (non-sharp) form of Example 3.1's missing half.\<close>
+  @{thm [source] paper_v_dpp_sup_ge} turns confinement into the lower
+  bound \<open>v(x) \<ge> min(T/2, \<delta>/2)\<close> whenever the ball sits inside \<open>K\<close>, a
+  (non-sharp) form of Example 3.1's lower bound.\<close>
 
 lemma radial_sq_upto:
   fixes \<omega> :: "'n::finite pairpath" and y\<^sub>0 x :: "real^'n"
@@ -13418,24 +13394,22 @@ qed
 
 section \<open>The paper's supersolution: touching the lower envelope\<close>
 
-text \<open>Definition 3.1(b) of the paper touches the LOWER SEMICONTINUOUS
-  ENVELOPE \<open>u\<^sub>*\<close>, not \<open>u\<close> itself.  That is what makes the minimisers in
-  the Case-2 dichotomy exist, and it is the form the comparison
-  principle consumes.  This section builds the envelope, states the
-  faithful supersolution notion, and records the two algebraic facts
-  that let the ALREADY VERIFIED Euler machinery serve a process whose
-  START is separated from the quadratic's CENTRE --- which is exactly
-  what the envelope argument needs, since it runs the construction at
-  points APPROACHING the touching point rather than at the touching
-  point itself.\<close>
+text \<open>Definition 3.1(b) of the paper touches the lower semicontinuous
+  envelope \<open>u\<^sub>*\<close>, not \<open>u\<close> itself, which is what makes the minimisers in
+  the Case-2 dichotomy exist and is the form the comparison principle
+  consumes.  This section builds the envelope, states the faithful
+  supersolution notion, and records two algebraic facts that let the
+  verified Euler machinery serve a process whose start is separated
+  from the quadratic's centre, since the envelope argument runs the
+  construction at points approaching the touching point rather than at
+  the touching point itself.\<close>
 
 subsection \<open>The lower semicontinuous envelope\<close>
 
-text \<open>\<open>lsc_env\<close> itself now lives in \<open>Envelopes\<close> (the P0 move), together with
-  \<open>usc_env\<close> and the attainment/extension lemmas; what follows are the
-  \<open>paper_v\<close>-facing consequences.  The three general lemmas immediately below
-  duplicate their \<open>Envelopes\<close> twins and are kept only so that the local
-  proofs need no requalification.\<close>
+text \<open>\<open>lsc_env\<close> lives in \<open>Envelopes\<close>, together with \<open>usc_env\<close> and the
+  attainment/extension lemmas; what follows are the \<open>paper_v\<close>-facing
+  consequences.  The three general lemmas below duplicate their
+  \<open>Envelopes\<close> twins so that the local proofs need no requalification.\<close>
 
 lemma lsc_env_bdd_above:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -13513,9 +13487,9 @@ qed
 
 subsection \<open>The faithful supersolution property\<close>
 
-text \<open>Definition 3.1(b), verbatim: the test function touches the LOWER
-  ENVELOPE from below, globally on \<open>K\<close>, and the conclusion is the
-  inequality for the UPPER envelope \<open>F\<^sup>*\<close> of the operator.\<close>
+text \<open>Definition 3.1(b), verbatim: the test function touches the lower
+  envelope from below, globally on \<open>K\<close>, and the conclusion is the
+  inequality for the upper envelope \<open>F\<^sup>*\<close> of the operator.\<close>
 
 definition visc_supersol_lsc ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
@@ -13529,13 +13503,12 @@ definition visc_supersol_lsc ::
 subsection \<open>Recentring the quadratic\<close>
 
 text \<open>The two facts that make the envelope argument affordable.  A
-  quadratic centred at \<open>x\<close> IS, up to the additive constant of its value
-  at \<open>y\<close>, the quadratic centred at \<open>y\<close> with gradient \<open>q + M(y-x)\<close> ---
-  and the two have the SAME gradient field \<open>q + M(\<sqdot> - x)\<close>, so the kill
-  hypothesis is literally unchanged.  Consequently every verified
-  theorem about a process started at its quadratic's centre applies
-  verbatim to a process started at \<open>y\<close> with the quadratic centred at
-  \<open>x\<close>, and no part of the Euler chain has to be re-derived.\<close>
+  quadratic centred at \<open>x\<close> is, up to the additive constant of its value
+  at \<open>y\<close>, the quadratic centred at \<open>y\<close> with gradient \<open>q + M(y-x)\<close>, and
+  the two have the same gradient field \<open>q + M(\<sqdot> - x)\<close>, so the kill
+  hypothesis is unchanged.  Consequently every verified theorem about a
+  process started at its quadratic's centre applies verbatim to a
+  process started at \<open>y\<close> with the quadratic centred at \<open>x\<close>.\<close>
 
 lemma quad_grad_shift:
   fixes M :: "real^'n::finite^'n" and q x y z :: "real^'n"
@@ -13643,19 +13616,18 @@ qed
 
 subsection \<open>Case 1 for the lower envelope\<close>
 
-text \<open>The touching-point argument at the ENVELOPE.  Two things change
+text \<open>The touching-point argument at the envelope.  Two things change
   relative to @{thm [source] paper_v_supersol_contradiction_case1}.
   First, the horizon lemma is applied to the envelope, so it is stated
-  for an arbitrary touching function with an explicit cap.  Second --
-  and this is the whole point of the envelope -- the value at the
-  touching point need not be attained there, so the construction is run
-  at an approximating point \<open>y\<close> supplied by
+  for an arbitrary touching function with an explicit cap.  Second, the
+  value at the touching point need not be attained there, so the
+  construction is run at an approximating point \<open>y\<close> supplied by
   @{thm [source] lsc_env_approx}, with the quadratic still centred at
   \<open>x\<close>.  @{thm [source] quad_shift} and @{thm [source] quad_grad_shift}
   make the verified machinery serve that configuration unchanged: the
-  gradient field is the same, so the kill hypothesis is the same, and
-  the only trace of the displacement is the additive constant \<open>\<psi>(y)\<close>,
-  which the choice of \<open>y\<close> drives below any prescribed margin.\<close>
+  gradient field and the kill hypothesis are the same, and the only
+  trace of the displacement is the additive constant \<open>\<psi>(y)\<close>, which the
+  choice of \<open>y\<close> drives below any prescribed margin.\<close>
 
 lemma touching_grad_lt_horizon_gen:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -13886,11 +13858,11 @@ proof -
       define f3 where "f3 = (\<lambda>r. real CARD('n)
           * (Cm * (ec * r * (2 * sqrt L + ec * r))))"
       have c1: "isCont f1 0" unfolding f1_def
-        by (auto intro!: continuous_intros)
+        by auto
       have c2: "isCont f2 0" unfolding f2_def
-        using m0 by (auto intro!: continuous_intros)
+        using m0 by auto
       have c3: "isCont f3 0" unfolding f3_def
-        by (auto intro!: continuous_intros)
+        by auto
       have z1: "f1 0 = 0" unfolding f1_def by simp
       have z2: "f2 0 = 0" unfolding f2_def by simp
       have z3: "f3 0 = 0" unfolding f3_def by simp

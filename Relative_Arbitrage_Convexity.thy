@@ -9,7 +9,7 @@
       B_k = { a psd : lambda_(n-k)(a) >= 1 }
   is  A_k = { a psd : Pi_m(a) >= m - k  for m = k+1, ..., n }.
 
-  This theory proves BOTH inclusions in full, with no axiomatized
+  This theory proves both inclusions in full, with no axiomatized
   ingredients:
     * conv B_k \<subseteq> A_k, via the Grassmann dimension formula and
       basis-independent subspace traces (the spectral theorem of
@@ -1128,27 +1128,15 @@ theorem lemma_2_1:
 
 section \<open>Support-function characterisation of a closed convex constraint set\<close>
 
-text \<open>This is the crux of research question A in \<open>PLAN_THEOREM_1_1.md\<close>: whether
-  the closedness half of Lemma 2.3 can be obtained without a Skorokhod
-  representation theorem (which does not exist in the AFP).
-
-  The proposed route replaces the constraint \<open>d\<langle>X\<rangle>/dt \<in> S\<close> by the family of
-  LINEAR inequalities \<open>tr(M a) \<le> sup\<^bsub>b\<in>S\<^esub> tr(M b)\<close>, one for each symmetric \<open>M\<close>.
-  Linear inequalities in the law pass to weak limits (given uniform
-  integrability, which the fourth-moment bound supplies through
-  \<open>Vitali_Convergence\<close>), whereas the constraint in its original form does not.
-
-  What makes the replacement FAITHFUL --- i.e. what makes the linear
-  inequalities imply membership rather than merely follow from it --- is
-  precisely that \<open>S\<close> is closed and CONVEX.  That is the content below, and it is
-  where \<open>lemma_2_1_exact\<close> earns its keep: the constraint set of Eq. (1.5)/(1.7)
-  is convex exactly because it is the convex hull of the eigenvalue condition.
-
-  Note the argument is run on the SYMMETRISED separating functional.  The
-  ambient inner product \<open>m \<bullet> x\<close> on \<open>real^'n^'n\<close> is the Frobenius product, which
-  agrees with \<open>tr(m x)\<close> on symmetric matrices; \<open>inner_sym_part\<close> is what lets the
-  separating \<open>m\<close> be replaced by its symmetric part without changing any of the
-  inner products in play.\<close>
+text \<open>A closed convex set \<open>S\<close> of symmetric matrices is characterized by its
+  support function: \<open>a \<in> S\<close> once, for every symmetric \<open>M\<close>, some \<open>b \<in> S\<close>
+  attains \<open>tr(Ma) \<le> tr(Mb)\<close>.  This lets membership in the constraint set of
+  Eq. (1.5)/(1.7) be tested through linear inequalities, which pass to weak
+  limits in the law, in place of the constraint's original non-linear form;
+  convexity of the constraint set (Lemma 2.1) is what makes the replacement
+  faithful.  The argument runs on the symmetrized separating functional,
+  since the Frobenius inner product \<open>m \<bullet> x\<close> agrees with \<open>tr(mx)\<close> only on
+  symmetric matrices.\<close>
 
 theorem support_characterisation:
   fixes S :: "(real^'n::finite^'n) set" and a :: "real^'n^'n"
@@ -1178,7 +1166,7 @@ proof (rule ccontr)
     also have "m \<bullet> b = Ms \<bullet> b" by (rule Ms_b[OF that])
     finally show ?thesis .
   qed
-  \<comment> \<open>the hypothesis at the NEGATED functional gives the opposite\<close>
+  \<comment> \<open>the hypothesis at the negated functional gives the opposite\<close>
   \<comment> \<open>\<open>transpose_minus\<close> does not exist in this HOL-Analysis (same family as
       \<open>transpose_diff\<close>); it is one line entrywise\<close>
   have tneg: "transpose (- A) = - transpose A" for A :: "real^'n^'n"

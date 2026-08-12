@@ -81,10 +81,8 @@ lemma trace_diff_matrix:
 
 section \<open>The full Ky Fan sum is the trace\<close>
 
-text \<open>\<open>kyfan CARD('n)\<close> takes the whole spectrum, so it is the trace.  The
-  proof evaluates \<open>kyfan\<close> on the eigenbasis itself: the threshold condition of
-  \<open>kyfan_threshold\<close> is vacuous when the threshold set is all of \<open>B\<close>, and the
-  resulting sum is the trace by the completeness relation.\<close>
+text \<open>\<open>kyfan CARD('n)\<close> takes the whole spectrum, so it equals the trace, by
+  evaluating \<open>kyfan\<close> on the eigenbasis via the completeness relation.\<close>
 
 lemma kyfan_full_eq_trace:
   fixes a :: "real^'n::finite^'n"
@@ -184,10 +182,9 @@ proof -
 qed
 
 text \<open>The two Rayleigh bounds.  The upper one is immediate from
-  \<open>kyfan_ge_trace_mult\<close>; the lower one is its mirror image, obtained by
-  pairing \<open>a\<close> with the complementary projection and using that the full Ky Fan
-  sum is the trace.  This is the weak form of Poincare separation that
-  Eq. (3.5) needs.\<close>
+  \<open>kyfan_ge_trace_mult\<close>; the lower one pairs \<open>a\<close> with the complementary
+  projection, using that the full Ky Fan sum is the trace.  The weak form of
+  Poincare separation Eq. (3.5) needs.\<close>
 
 lemma quadform_le_eigval_1:
   fixes a :: "real^'n::finite^'n"
@@ -234,12 +231,10 @@ qed
 
 section \<open>\<open>M\<^sub>p\<close> on the hyperplane \<open>p\<^sup>\<bottom>\<close>\<close>
 
-text \<open>On \<open>p\<^sup>\<bottom>\<close> the projection \<open>I - pp'/|p|\<^sup>2\<close> acts as the identity and the
-  correction term vanishes, so \<open>M\<^sub>p\<close> has exactly the Rayleigh quotients of
-  \<open>M\<close> there.  Combined with the Rayleigh bound above, this is precisely the
-  statement that the eigenvalue \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close> that \<open>M\<^sub>p\<close> carries in the
-  \<open>p\<close>-direction sorts to the BOTTOM of the spectrum of \<open>M\<^sub>p\<close> -- the sentence
-  after Eq. (3.4) that makes Eq. (3.5) a clean sum over \<open>i = 1, \<dots>, n\<close>.\<close>
+text \<open>On \<open>p\<^sup>\<bottom>\<close> the projection \<open>I - pp'/|p|\<^sup>2\<close> acts as the identity, so
+  \<open>M\<^sub>p\<close> has exactly the Rayleigh quotients of \<open>M\<close> there, and its
+  \<open>p\<close>-direction eigenvalue \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close> is the smallest of its
+  spectrum, as needed for Eq. (3.5).\<close>
 
 lemma rank1proj_annihilates_perp:
   fixes p :: "real^'n::finite"
@@ -322,10 +317,9 @@ qed
 section \<open>An orthonormal eigenbasis of \<open>M\<^sub>p\<close> containing \<open>p/|p|\<close>\<close>
 
 text \<open>The hyperplane \<open>p\<^sup>\<bottom>\<close> is \<open>M\<^sub>p\<close>-invariant, so it carries an orthonormal
-  eigenbasis of \<open>M\<^sub>p\<close>; adjoining the unit vector \<open>p/|p|\<close>, which is itself an
-  eigenvector by \<open>Mp_apply_p\<close>, gives an eigenbasis of the whole space in which
-  the \<open>p\<close>-direction is one distinguished element and all the others lie in
-  \<open>p\<^sup>\<bottom>\<close>.  This is the basis in which Eq. (3.5) is read off.\<close>
+  eigenbasis of \<open>M\<^sub>p\<close>; adjoining the unit eigenvector \<open>p/|p|\<close> gives an
+  eigenbasis of the whole space with \<open>p\<close> distinguished and the rest in
+  \<open>p\<^sup>\<bottom>\<close>.\<close>
 
 lemma Mp_invariant_perp:
   fixes M :: "real^'n::finite^'n"
@@ -475,11 +469,9 @@ qed
 
 section \<open>Traces of weighted outer-product sums\<close>
 
-text \<open>Towards step (A) of the linear program of Eq. (3.5) (see the closing
-  note): the trace of a matrix written in an orthonormal basis as a weighted
-  sum of outer products is just the sum of the weights, and each basis vector
-  reads off its own weight as a Rayleigh quotient.  These are the two facts the
-  clipped matrix \<open>c = \<Sum>\<^sub>j min \<mu>\<^sub>j 1 *\<^sub>R v\<^sub>j v\<^sub>j'\<close> is used through.\<close>
+text \<open>The trace of a matrix written in an orthonormal basis as a weighted sum
+  of outer products is the sum of the weights, and each basis vector reads off
+  its own weight as a Rayleigh quotient.\<close>
 
 lemma trace_sum_matrix:
   fixes f :: "'a \<Rightarrow> real^'n::finite^'n"
@@ -533,17 +525,13 @@ proof -
     by (simp add: uu)
 qed
 
-text \<open>Nonnegative weights give a nonnegative quadratic form.  This is what
-  makes both \<open>a - c\<close> and \<open>I - c\<close> positive semidefinite for the clipped matrix
-  \<open>c\<close>, since their weights are \<open>max (\<mu>\<^sub>j - 1) 0\<close> and \<open>1 - min \<mu>\<^sub>j 1\<close>
-  respectively; that is how step (A) gets \<open>u \<bullet> (c *v u) \<le> min (w u) 1\<close> for
-  basis vectors \<open>u\<close> of the OTHER basis.\<close>
+text \<open>Nonnegative weights give a nonnegative quadratic form.  This makes both
+  \<open>a - c\<close> and \<open>I - c\<close> positive semidefinite for the clipped matrix \<open>c\<close>, whose
+  weights are \<open>max (\<mu>\<^sub>j - 1) 0\<close> and \<open>1 - min \<mu>\<^sub>j 1\<close> respectively.\<close>
 
-text \<open>The expansion identity behind all of this: against a weighted sum of
-  outer products the quadratic form is the weighted sum of squared
-  coefficients.  No orthonormality is needed.  This is also the identity
-  step (5) of the Courant-Fischer bound uses to dominate \<open>x \<bullet> (a *v x)\<close> by the
-  largest weight occurring in the sum.\<close>
+text \<open>Against a weighted sum of outer products, the quadratic form is the
+  weighted sum of squared coefficients; no orthonormality is needed.  This
+  bounds \<open>x \<bullet> (a *v x)\<close> by the largest weight in the sum.\<close>
 
 lemma quadform_weighted_outer_sum_eq:
   fixes g :: "real^'n::finite \<Rightarrow> real"
@@ -560,11 +548,9 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Every eigenvalue OUTSIDE a threshold set of size \<open>m\<close> is dominated by
-  \<open>eigval m a\<close>.  This is the link step (6) of the Courant-Fischer argument needs,
-  and in exactly the pointwise form step (5) uses: \<open>eigval m a\<close> is the minimum
-  over the threshold set, and the threshold property puts everything outside
-  below that minimum.\<close>
+text \<open>Every eigenvalue outside a threshold set of size \<open>m\<close> is dominated by
+  \<open>eigval m a\<close>: the latter is the minimum over the threshold set, and the
+  threshold property puts everything outside below that minimum.\<close>
 
 lemma quadform_outside_threshold_le_eigval:
   fixes a :: "real^'n::finite^'n"
@@ -600,10 +586,9 @@ proof -
 qed
 
 text \<open>The dimension-counting core of the Courant-Fischer argument: two
-  subspaces whose dimensions together exceed the ambient dimension must meet in
-  a nonzero vector.  In step (4) this is applied to the subspace \<open>S\<close> supplied by
-  \<open>eigen_lb a m\<close> (of dimension \<open>\<ge> m\<close>) and to \<open>span (B - T')\<close> (of dimension
-  \<open>CARD('n) - m + 1\<close>), whose dimensions sum to at least \<open>CARD('n) + 1\<close>.\<close>
+  subspaces whose dimensions exceed the ambient dimension must meet in a
+  nonzero vector, applied below to \<open>S\<close> of dimension \<open>\<ge> m\<close> and
+  \<open>span (B - T')\<close> of dimension \<open>CARD('n) - m + 1\<close>.\<close>
 
 lemma subspace_inter_nonzero:
   fixes S W :: "(real^'n::finite) set"
@@ -637,10 +622,9 @@ proof -
     by blast
 qed
 
-text \<open>Parseval's identity for a full orthonormal basis is the special case
-  \<open>g = 1\<close> of the expansion, via the completeness relation.  Together with the
-  expansion it gives the bound step (5) of the Courant-Fischer argument needs:
-  \<open>x \<bullet> (a *v x) = (\<Sum>v. \<lambda>\<^sub>v * (v \<bullet> x)\<^sup>2) \<le> \<lambda>\<^sub>m\<^sub>a\<^sub>x * (\<Sum>v. (v \<bullet> x)\<^sup>2) = \<lambda>\<^sub>m\<^sub>a\<^sub>x * (x \<bullet> x)\<close>.\<close>
+text \<open>Parseval's identity for a full orthonormal basis is the case \<open>g = 1\<close>
+  of the expansion.  Together they give the bound the Courant-Fischer
+  argument needs: \<open>x \<bullet> (a *v x) = (\<Sum>v. \<lambda>\<^sub>v * (v \<bullet> x)\<^sup>2) \<le> \<lambda>\<^sub>m\<^sub>a\<^sub>x * (x \<bullet> x)\<close>.\<close>
 
 lemma parseval_onormal:
   fixes x :: "real^'n::finite"
@@ -661,9 +645,8 @@ proof -
 qed
 
 text \<open>A basis vector is orthogonal to the span of any part of the basis not
-  containing it.  This is the remaining elementary ingredient of step (5): it
-  kills the \<open>v \<in> T'\<close> terms of the expansion, leaving only eigenvalues that
-  \<open>eigval m a\<close> dominates.\<close>
+  containing it.  This kills the \<open>v \<in> T'\<close> terms of the expansion, leaving only
+  eigenvalues that \<open>eigval m a\<close> dominates.\<close>
 
 lemma onormal_orthogonal_to_span_complement:
   fixes x :: "real^'n::finite"
@@ -701,11 +684,10 @@ proof -
     using g by (intro sum_nonneg) simp
 qed
 
-text \<open>Comparison of two matrices written in the SAME orthonormal basis: larger
-  weights give a larger quadratic form.  Both halves of step (A) are instances:
-  taking \<open>f = \<mu>\<close> and \<open>g = (\<lambda>v. min (\<mu> v) 1)\<close> gives \<open>x \<bullet> (c *v x) \<le> x \<bullet> (a *v x)\<close>
-  (using \<open>spectral_decomposition\<close> for \<open>a\<close>), and taking \<open>f = (\<lambda>_. 1)\<close> gives
-  \<open>x \<bullet> (c *v x) \<le> x \<bullet> x\<close> (using \<open>onormal_complete\<close> for \<open>mat 1\<close>).\<close>
+text \<open>Comparison of two matrices in the same orthonormal basis: larger
+  weights give a larger quadratic form.  \<open>f = \<mu>\<close>, \<open>g = (\<lambda>v. min (\<mu> v) 1)\<close>
+  gives \<open>x \<bullet> (c *v x) \<le> x \<bullet> (a *v x)\<close>; \<open>f = (\<lambda>_. 1)\<close> gives
+  \<open>x \<bullet> (c *v x) \<le> x \<bullet> x\<close>.\<close>
 
 lemma quadform_weighted_outer_mono:
   fixes N c :: "real^'n::finite^'n"
@@ -728,12 +710,10 @@ qed
 
 section \<open>The Courant-Fischer min-max lower bound\<close>
 
-text \<open>\<open>eigen_lb a m\<close> forces \<open>eigval m a \<ge> 1\<close>.  Note the off-by-one: the
-  comparison subspace must be \<open>span (insert w (B - T))\<close> where \<open>T\<close> is a top-\<open>m\<close>
-  threshold set and \<open>w\<close> its minimum, giving dimension \<open>CARD('n) - m + 1\<close>, so
-  that the dimensions sum to \<open>CARD('n) + 1\<close> and the intersection is nontrivial.
-  Every eigenvalue occurring in that subspace is \<open>\<le> eigval m a\<close>: those outside
-  \<open>T\<close> by \<open>quadform_outside_threshold_le_eigval\<close>, and \<open>w\<close> itself with equality.\<close>
+text \<open>The general Courant-Fischer lower bound: if the Rayleigh quotient of
+  \<open>a\<close> is at least \<open>c\<close> on a subspace of dimension \<open>\<ge> m\<close>, then
+  \<open>c \<le> eigval m a\<close>, via a comparison subspace whose dimension, together
+  with \<open>m\<close>, exceeds \<open>CARD('n)\<close>.\<close>
 
 lemma onormal_subset:
   assumes "onormal B" and "U \<subseteq> B"
@@ -812,9 +792,9 @@ proof -
   qed
   text \<open>Expand \<open>x \<bullet> (a *v x)\<close> in the eigenbasis; the terms outside \<open>U\<close> vanish
     because \<open>x \<in> span U\<close>.\<close>
-  text \<open>Bind the eigenvalues to a local constant BEFORE decomposing: the right
-    hand side of \<open>spectral_decomposition\<close> mentions \<open>a\<close> again, so using it as a
-    rewrite rule directly loops (\<open>Interrupt_Breakdown\<close>).\<close>
+  text \<open>Bind the eigenvalues to a local constant before decomposing, since
+    \<open>spectral_decomposition\<close> mentions \<open>a\<close> on the right as well and would loop
+    as a rewrite rule.\<close>
   define lam where "lam = (\<lambda>v :: real^'n. v \<bullet> (a *v v))"
   have adecomp: "a = (\<Sum>v\<in>B. lam v *\<^sub>R outer_prod v v)"
     unfolding lam_def by (rule spectral_decomposition[OF B eig])
@@ -868,13 +848,12 @@ proof -
     by (rule eigval_ge_of_subspace[OF sym S(1) S(2) quad' m(1) m(2)])
 qed
 
-section \<open>Step (A) of the linear program: the clipped trace bound\<close>
+section \<open>The clipped trace bound\<close>
 
 text \<open>With the Courant-Fischer bound in hand, the clipped weights sum to at
-  least \<open>m\<close> over an eigenbasis of \<open>a\<close>: the top-\<open>m\<close> threshold set consists of
-  eigenvalues \<open>\<ge> eigval m a \<ge> 1\<close>, each contributing exactly \<open>1\<close> after clipping,
-  and the remaining ones contribute \<open>\<ge> 0\<close> because \<open>a\<close> is positive
-  semidefinite.\<close>
+  least \<open>m\<close> over an eigenbasis of \<open>a\<close>: the top-\<open>m\<close> threshold set has
+  eigenvalues \<open>\<ge> eigval m a \<ge> 1\<close>, each clipped to \<open>1\<close>, and the rest
+  contribute \<open>\<ge> 0\<close> by positive semidefiniteness.\<close>
 
 lemma sum_min_eigval_ge:
   fixes a :: "real^'n::finite^'n"
@@ -927,12 +906,10 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Step (A) itself: the bound transfers from an eigenbasis of \<open>a\<close> to an
-  ARBITRARY orthonormal basis, which is what Eq. (3.5) needs since there the
-  basis is the adapted eigenbasis of \<open>M\<^sub>p\<close>, not of \<open>a\<close>.  The transfer goes
-  through the clipped matrix \<open>c\<close>: it is dominated by both \<open>a\<close> and the identity,
-  so its Rayleigh quotients are below the clipped weights, while its trace is
-  basis-independent.\<close>
+text \<open>The bound transfers from an eigenbasis of \<open>a\<close> to an arbitrary
+  orthonormal basis, as Eq. (3.5) needs for the adapted eigenbasis of
+  \<open>M\<^sub>p\<close>.  The clipped matrix \<open>c\<close> is dominated by both \<open>a\<close> and the identity,
+  with basis-independent trace.\<close>
 
 theorem sum_min_weights_ge:
   fixes a :: "real^'n::finite^'n"
@@ -986,15 +963,12 @@ proof -
   finally show ?thesis .
 qed
 
-section \<open>Step (B) of the linear program: the box program\<close>
+section \<open>The box program\<close>
 
 text \<open>The combinatorial heart of Eq. (3.5), stated without matrices.  Splitting
-  \<open>lam u = max (lam u) 0 + min (lam u) 0\<close>, the positive part is bounded using
-  \<open>t \<le> 1\<close> and the negative part by \<open>sum_weighted_le_top_subset\<close>, whose
-  "top subset" for \<open>min (lam u) 0\<close> is precisely the set of \<open>m\<close> LEAST negative
-  directions -- the ones the optimum is forced onto.  The two bounds add up to
-  \<open>possum CARD('n) + (kyfan m - possum m)\<close> once read back through
-  \<open>possum_eq_sum_pos\<close> and \<open>kyfan_minus_possum\<close>.\<close>
+  \<open>lam u = max (lam u) 0 + min (lam u) 0\<close>, the positive part is bounded by
+  \<open>t \<le> 1\<close> and the negative part by \<open>sum_weighted_le_top_subset\<close>, whose "top
+  subset" is the \<open>m\<close> least negative directions.\<close>
 
 lemma box_program_bound_exact:
   fixes lam t :: "'a \<Rightarrow> real"
@@ -1030,12 +1004,10 @@ proof -
     by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
 qed
 
-text \<open>\<open>sum_weighted_le_top_subset\<close> needs the weights to sum to \<open>m\<close> EXACTLY,
-  while step (A) only delivers \<open>\<ge> m\<close>.  Scaling the weights down by
-  \<open>real m / (\<Sum>t)\<close> repairs that: the scaled weights are pointwise below the
-  originals, which is all the negative part of the objective needs, since
-  \<open>min (lam u) 0 \<le> 0\<close> means shrinking a weight can only INCREASE that
-  contribution.\<close>
+text \<open>\<open>sum_weighted_le_top_subset\<close> needs weights summing to \<open>m\<close> exactly,
+  while the clipped-weight bound only gives \<open>\<ge> m\<close>.  Scaling down by
+  \<open>real m / (\<Sum>t)\<close> repairs this without hurting the negative part, since
+  \<open>min (lam u) 0 \<le> 0\<close>.\<close>
 
 lemma reduce_weights_to_exact:
   fixes t :: "'a \<Rightarrow> real"
@@ -1076,11 +1048,9 @@ next
     by (rule exI[of _ "\<lambda>u. r * t u"]) (intro conjI ballI bounds rsum)
 qed
 
-text \<open>The box program in the form step (A) actually delivers, with
-  \<open>(\<Sum>t) \<ge> real m\<close> rather than equality.  The positive part is bounded using
-  \<open>t \<le> 1\<close> directly; the negative part is first pushed onto the scaled-down
-  weights (which only increases it, the coefficients being nonpositive) and
-  then handed to \<open>sum_weighted_le_top_subset\<close>.\<close>
+text \<open>The box program with \<open>(\<Sum>t) \<ge> real m\<close> rather than equality: the
+  positive part uses \<open>t \<le> 1\<close> directly, and the negative part is pushed onto
+  the scaled-down weights before applying \<open>sum_weighted_le_top_subset\<close>.\<close>
 
 theorem box_program_bound:
   fixes lam t :: "'a \<Rightarrow> real"
@@ -1131,13 +1101,10 @@ proof -
     by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
 qed
 
-text \<open>Assembling the two halves: the upper bound of Eq. (3.5), in the abstract
-  form the eigenbasis expansion delivers it.  Writing \<open>w = t + s\<close> with
-  \<open>t u = min (w u) 1 \<in> [0,1]\<close> and \<open>s u = max (w u - 1) 0 \<in> [0, L-1]\<close>, the
-  \<open>t\<close>-part is the box program and the \<open>s\<close>-part contributes at most
-  \<open>(L-1) * (\<Sum> max (lam u) 0)\<close>.  The total is
-  \<open>L * (\<Sum> max (lam u) 0) + (\<Sum>\<^sub>T min (lam u) 0)\<close>, which is the bracket of
-  Eq. (3.5).\<close>
+text \<open>The upper bound of Eq. (3.5): writing \<open>w = t + s\<close> with
+  \<open>t u = min (w u) 1\<close> and \<open>s u = max (w u - 1) 0\<close>, the \<open>t\<close>-part is the box
+  program and the \<open>s\<close>-part contributes \<open>\<le> (L-1) * (\<Sum> max (lam u) 0)\<close>,
+  giving the bracket of Eq. (3.5).\<close>
 
 theorem lp_upper_bound:
   fixes lam w :: "'a \<Rightarrow> real"
@@ -1195,12 +1162,10 @@ proof -
     by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
 qed
 
-text \<open>The subtlety flagged for the conversion to \<open>bracket\<close> form: the box
-  program returns an ARBITRARY size-\<open>m\<close> set \<open>T\<close>, whereas \<open>kyfan m - possum m\<close> is
-  the sum over a THRESHOLD set.  The inequality does go the right way, because
-  \<open>min (\<cdot>) 0\<close> is monotone: a threshold set for \<open>lam\<close> is therefore also a
-  threshold set for \<open>\<lambda>u. min (lam u) 0\<close>, and \<open>threshold_sum_maximal\<close> says a
-  threshold set maximises the sum among all subsets of its size.\<close>
+text \<open>The box program returns an arbitrary size-\<open>m\<close> set \<open>T\<close>, whereas
+  \<open>kyfan m - possum m\<close> sums over a threshold set.  Since \<open>min (\<cdot>) 0\<close> is
+  monotone, a threshold set for \<open>lam\<close> is also one for
+  \<open>\<lambda>u. min (lam u) 0\<close>, and \<open>threshold_sum_maximal\<close> gives the inequality.\<close>
 
 lemma sum_min_le_threshold:
   fixes lam :: "'a \<Rightarrow> real"
@@ -1220,12 +1185,11 @@ qed
 
 section \<open>The upper bound of Eq. (3.5) in bracket form\<close>
 
-text \<open>Everything above assembled: for a symmetric \<open>N\<close> with eigenbasis \<open>B\<close>, and
-  weights coming from any \<open>a\<close> satisfying the feasible-set constraints, the
-  objective is bounded by \<open>bracket m L N\<close>.  The two conversions are
-  \<open>possum_full_eq_sum_basis\<close> (for the positive part) and
-  \<open>kyfan_minus_possum_threshold\<close> (for the negative part, over a threshold set,
-  which \<open>sum_min_le_threshold\<close> lets us pass to).\<close>
+text \<open>For a symmetric \<open>N\<close> with eigenbasis \<open>B\<close>, and weights coming from any
+  \<open>a\<close> satisfying the feasible-set constraints, the objective is bounded by
+  \<open>bracket m L N\<close>.  The two conversions are \<open>possum_full_eq_sum_basis\<close> (the
+  positive part) and \<open>kyfan_minus_possum_threshold\<close> (the negative part, via
+  \<open>sum_min_le_threshold\<close>).\<close>
 
 theorem bracket_upper_bound:
   fixes N a :: "real^'n::finite^'n"
@@ -1362,14 +1326,11 @@ qed
 
 section \<open>The objective of Eq. (3.5) in the adapted eigenbasis\<close>
 
-text \<open>The paper justifies Eq. (3.5) in one sentence: "Observing that
-  \<open>tr(Ma) = tr(M\<^sub>p a)\<close> for all \<open>a \<succeq> 0\<close> with \<open>ap = 0\<close> in the definition (3.1) of
-  \<open>F\<close>, and writing the symmetric \<open>M\<^sub>p\<close> as a linear combination of outer
-  products, we see that ...".  Both halves are now available: \<open>trace_Mp\<close>
-  (Lemma_3_1.thy) is the first observation, and the second is the expansion of
-  \<open>M\<^sub>p\<close> against the adapted eigenbasis.  This section carries out that step and
-  records the three constraints the feasible set puts on the resulting
-  weights, which is what turns the expansion into (3.5).\<close>
+text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^sub>p a)\<close> for
+  \<open>a \<succeq> 0\<close> with \<open>ap = 0\<close>, and writing symmetric \<open>M\<^sub>p\<close> as a linear
+  combination of outer products (\<open>trace_Mp\<close> in Lemma_3_1.thy gives the
+  first fact).  This section carries out the expansion and its weight
+  constraints.\<close>
 
 lemma feasible_quadform_nonneg:
   fixes a :: "real^'n::finite^'n"
@@ -1468,11 +1429,10 @@ qed
 
 section \<open>Feasibility of weighted outer-product sums\<close>
 
-text \<open>For the reverse inequality of Eq. (3.5) we must EXHIBIT a feasible \<open>a\<close>
-  attaining the bracket.  Every candidate has the form
-  \<open>a = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)\<close> for an orthonormal basis \<open>B\<close>, so this
-  section checks each clause of \<open>feasible\<close> for such a sum:
-  \<open>psd\<close>, \<open>a *v p = 0\<close>, \<open>eigen_ub\<close> and \<open>eigen_lb\<close>.\<close>
+text \<open>For the reverse inequality of Eq. (3.5) a feasible \<open>a\<close> attaining the
+  bracket must be exhibited, of the form
+  \<open>a = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)\<close> for an orthonormal basis \<open>B\<close>.  This
+  section checks each clause of \<open>feasible\<close> for such a sum.\<close>
 
 lemma transpose_sum_matrix:
   fixes f :: "'a \<Rightarrow> real^'n::finite^'n"
@@ -1635,12 +1595,10 @@ qed
 
 section \<open>The reverse inequality of Eq. (3.5): the attaining witness\<close>
 
-text \<open>The optimum of the linear program is ATTAINED, at the \<open>a\<close> that puts weight
-  \<open>L\<close> on every positive eigendirection of \<open>M\<^sub>p\<close> and weight \<open>1\<close> on a top-\<open>m\<close>
-  threshold set chosen inside \<open>p\<^sup>\<bottom>\<close>.  Choosing the threshold set away from the
-  \<open>p\<close>-direction is what makes \<open>a *v p = 0\<close>, and it is possible precisely because
-  \<open>m = CARD('n) - k \<le> CARD('n) - 1\<close> when \<open>k \<ge> 1\<close>, and because the
-  \<open>p\<close>-eigenvalue is minimal (so dropping it from the basis loses nothing).\<close>
+text \<open>The optimum of the linear program is attained at the \<open>a\<close> that puts
+  weight \<open>L\<close> on every positive eigendirection of \<open>M\<^sub>p\<close> and weight \<open>1\<close> on a
+  top-\<open>m\<close> threshold set inside \<open>p\<^sup>\<bottom>\<close>, possible since
+  \<open>m \<le> CARD('n) - 1\<close> and the \<open>p\<close>-eigenvalue is minimal.\<close>
 
 theorem bracket_attained:
   fixes M :: "real^'n::finite^'n"
@@ -1683,7 +1641,7 @@ proof -
     then show ?thesis
       unfolding lamq lu .
   qed
-  text \<open>Pick the top-\<open>m\<close> threshold set INSIDE \<open>B - {q}\<close>.\<close>
+  text \<open>Pick the top-\<open>m\<close> threshold set inside \<open>B - {q}\<close>.\<close>
   have finB': "finite (B - {q})"
     using finB by simp
   have cardB': "card (B - {q}) = CARD('n) - 1"
@@ -1872,10 +1830,9 @@ qed
 
 section \<open>Scale invariance: the paper's sequence is constant\<close>
 
-text \<open>\<open>rank1proj\<close> depends only on the LINE through \<open>p\<close>, so \<open>M\<^sub>p\<close> does too.  This
-  is why the sequence \<open>(q\<^sub>1/m, M)\<close> that the paper plugs in to get the lower bound
-  for Eq. (3.6) is constant in \<open>m\<close>: \<open>M\<^sub>q\<^sub>1\<^sub>/\<^sub>m = M\<^sub>q\<^sub>1\<close> for every \<open>m \<noteq> 0\<close>, so no
-  limit has to be computed at all -- only \<open>p\<^sup>m \<longrightarrow> 0\<close> matters.\<close>
+text \<open>\<open>rank1proj\<close> depends only on the line through \<open>p\<close>, so \<open>M\<^sub>p\<close> does too.
+  Hence the paper's sequence \<open>(q\<^sub>1/m, M)\<close> for the lower bound of Eq. (3.6)
+  is constant in \<open>m\<close>: \<open>M\<^sub>q\<^sub>1\<^sub>/\<^sub>m = M\<^sub>q\<^sub>1\<close>, so only \<open>p\<^sup>m \<longrightarrow> 0\<close> matters.\<close>
 
 lemma outer_prod_scaleR_right:
   fixes u v :: "real^'n::finite"
@@ -1948,12 +1905,12 @@ qed
 
 section \<open>The spectrum of \<open>M\<^sub>q\<close> when \<open>q\<close> is an eigenvector of \<open>M\<close>\<close>
 
-text \<open>This is the computation behind Eq. (3.6).  If \<open>q\<close> is a unit eigenvector of
-  \<open>M\<close> then any eigenbasis of \<open>M\<close> containing \<open>q\<close> is SIMULTANEOUSLY an eigenbasis
-  of \<open>M\<^sub>q\<close>: off \<open>q\<close> the two matrices have the same eigenvalues, while in the
-  \<open>q\<close>-direction \<open>M\<^sub>q\<close> carries \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close>.  Taking \<open>q = q\<^sub>1\<close> a TOP
-  eigenvector therefore deletes \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> from the spectrum and replaces it by
-  something at the bottom -- which is exactly the index shift of Eq. (3.6).\<close>
+text \<open>This is the computation behind Eq. (3.6).  If \<open>q\<close> is a unit eigenvector
+  of \<open>M\<close>, any eigenbasis of \<open>M\<close> containing \<open>q\<close> is also an eigenbasis of
+  \<open>M\<^sub>q\<close>: off \<open>q\<close> the eigenvalues agree, while \<open>M\<^sub>q\<close> carries
+  \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close> at \<open>q\<close>.  Taking \<open>q = q\<^sub>1\<close> the top eigenvector deletes
+  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> from the spectrum and replaces it at the bottom, the index
+  shift of Eq. (3.6).\<close>
 
 lemma eigenbasis_containing_eigenvector:
   fixes A :: "real^'n::finite^'n"
@@ -2159,11 +2116,10 @@ proof -
     by (rule exI[of _ q]) (intro conjI nq eigq top)
 qed
 
-text \<open>The Ky Fan sums of \<open>M\<^sub>q\<^sub>1\<close> are those of \<open>M\<close> shifted by one and reduced by
-  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close>.  The two ingredients: the \<open>q\<^sub>1\<close>-direction eigenvalue of \<open>M\<^sub>q\<^sub>1\<close> is
-  MINIMAL, so for \<open>j \<le> n-1\<close> the top-\<open>j\<close> set can be taken inside \<open>B - {q\<^sub>1}\<close>,
-  where the eigenvalues of \<open>M\<^sub>q\<^sub>1\<close> and \<open>M\<close> agree; and \<open>q\<^sub>1\<close> attains the MAXIMUM,
-  so a top-\<open>(j+1)\<close> set of \<open>B\<close> for \<open>M\<close> can be taken to contain \<open>q\<^sub>1\<close>.\<close>
+text \<open>The Ky Fan sums of \<open>M\<^sub>q\<^sub>1\<close> are those of \<open>M\<close> shifted by one and reduced
+  by \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close>.  Since the \<open>q\<^sub>1\<close>-direction eigenvalue of \<open>M\<^sub>q\<^sub>1\<close> is minimal, a
+  top-\<open>j\<close> set can be taken inside \<open>B - {q\<^sub>1}\<close>; since \<open>q\<^sub>1\<close> attains the
+  maximum for \<open>M\<close>, a top-\<open>(j+1)\<close> set can be taken to contain it.\<close>
 
 theorem kyfan_Mp_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
@@ -2313,10 +2269,10 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>Hence the ordered eigenvalues themselves shift: this is the index shift of
-  Eq. (3.6), \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>q\<^sub>1) = \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for \<open>i = 1, \<dots>, n-1\<close>.  Note the paper only
-  needs the INEQUALITY (Poincare separation); with \<open>q\<^sub>1\<close> an eigenvector it is an
-  equality, which is why evaluating at \<open>(q\<^sub>1/m, M)\<close> gives the matching bound.\<close>
+text \<open>Hence the ordered eigenvalues themselves shift: \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>q\<^sub>1) = \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close>
+  for \<open>i = 1, \<dots>, n-1\<close>.  The paper only needs the inequality (Poincare
+  separation); with \<open>q\<^sub>1\<close> an eigenvector it is an equality, which is why
+  evaluating at \<open>(q\<^sub>1/m, M)\<close> gives the matching bound.\<close>
 
 corollary eigval_Mp_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
@@ -2370,10 +2326,10 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Putting the shift and the sign together: the bracket of \<open>M\<^sub>q\<^sub>1\<close> is the
-  bracket of \<open>M\<close> with every index moved up by one -- the positive part running
-  \<open>i = 2, \<dots>, n\<close> and the negative part \<open>i = 2, \<dots>, n-k+1\<close>.  This is exactly the
-  right hand side of Eq. (3.6).\<close>
+text \<open>Putting the shift and sign together: the bracket of \<open>M\<^sub>q\<^sub>1\<close> is the
+  bracket of \<open>M\<close> with every index moved up by one, the positive part
+  running \<open>i = 2, \<dots>, n\<close> and the negative part \<open>i = 2, \<dots>, n-k+1\<close>: the right
+  hand side of Eq. (3.6).\<close>
 
 theorem bracket_Mp_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
@@ -2464,10 +2420,9 @@ proof -
     unfolding m_def n_def .
 qed
 
-text \<open>The value of \<open>F\<close> along the paper's sequence \<open>(q\<^sub>1/m, M)\<close>.  By scale
-  invariance it does not depend on \<open>m\<close> at all, and it equals the right hand side
-  of Eq. (3.6).  This is the lower bound for \<open>F\<^sup>*(0, M)\<close>: the envelope is at
-  least the value along any sequence with \<open>p\<^sup>m \<longrightarrow> 0\<close>, and \<open>q\<^sub>1/m \<longrightarrow> 0\<close>.\<close>
+text \<open>The value of \<open>F\<close> along the paper's sequence \<open>(q\<^sub>1/m, M)\<close>: by scale
+  invariance it is constant in \<open>m\<close> and equals the right hand side of
+  Eq. (3.6), giving the lower bound for \<open>F\<^sup>*(0, M)\<close> since \<open>q\<^sub>1/m \<longrightarrow> 0\<close>.\<close>
 
 corollary ell_op_at_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
@@ -2494,12 +2449,11 @@ qed
 
 section \<open>General Poincare separation\<close>
 
-text \<open>The paper's inequality \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for ARBITRARY \<open>p \<noteq> 0\<close>
-  (above it was proved, as an equality, only for \<open>p\<close> an eigenvector).  The proof
-  is the classical dimension count: the span \<open>S\<close> of the top \<open>i+1\<close> eigenvectors of
-  \<open>M\<close> has dimension \<open>i+1\<close>, the hyperplane \<open>p\<^sup>\<bottom>\<close> has dimension \<open>n-1\<close>, so their
-  intersection has dimension at least \<open>i\<close>; on it the Rayleigh quotient of \<open>M\<^sub>p\<close>
-  agrees with that of \<open>M\<close> and is at least \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close>.\<close>
+text \<open>The paper's inequality \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary
+  \<open>p \<noteq> 0\<close>, by a dimension count: the span \<open>S\<close> of the top \<open>i+1\<close>
+  eigenvectors of \<open>M\<close> and the hyperplane \<open>p\<^sup>\<bottom>\<close> have dimensions \<open>i+1\<close> and
+  \<open>n-1\<close>, so their intersection has dimension \<open>\<ge> i\<close>, where the Rayleigh
+  quotients of \<open>M\<^sub>p\<close> and \<open>M\<close> agree.\<close>
 
 lemma dim_inter_ge:
   fixes S W :: "(real^'n::finite) set"
@@ -2660,9 +2614,9 @@ next
     by (rule poincare_separation[OF sym _ i(1) i(2)])
 qed
 
-text \<open>Hence the bracket of \<open>M\<^sub>p\<close> always DOMINATES the shifted bracket of \<open>M\<close> --
-  which, since \<open>F = -\<onehalf> bracket\<close>, is the upper bound
-  \<open>F(p, M) \<le> eq36_rhs\<close> needed for Eq. (3.6).\<close>
+text \<open>Hence the bracket of \<open>M\<^sub>p\<close> always dominates the shifted bracket of \<open>M\<close>,
+  which, since \<open>F = -\<onehalf> bracket\<close>, is the upper bound \<open>F(p, M) \<le> eq36_rhs\<close>
+  needed for Eq. (3.6).\<close>
 
 theorem bracket_ge_shifted:
   fixes M :: "real^'n::finite^'n"
@@ -2748,10 +2702,10 @@ qed
 
 section \<open>Continuity of the bracket in the matrix\<close>
 
-text \<open>Towards the first clause of Lemma 3.1 (\<open>F\<^sub>* = F\<^sup>* = F\<close> off \<open>p = 0\<close>).  By
-  Eq. (3.5), \<open>F\<close> is \<open>-\<onehalf> bracket (n-k) L M\<^sub>p\<close>, so it suffices that \<open>bracket\<close> is
-  continuous in its matrix argument and that \<open>(p, M) \<mapsto> M\<^sub>p\<close> is continuous off
-  \<open>p = 0\<close>.  The first is Lipschitz, inherited from \<open>kyfan_lipschitz\<close>.\<close>
+text \<open>By Eq. (3.5), \<open>F\<close> is \<open>-\<onehalf> bracket (n-k) L M\<^sub>p\<close>, so the first clause
+  of Lemma 3.1 (\<open>F\<^sub>* = F\<^sup>* = F\<close> off \<open>p = 0\<close>) needs \<open>bracket\<close> continuous in
+  its matrix argument, and \<open>(p, M) \<mapsto> M\<^sub>p\<close> continuous off \<open>p = 0\<close>.  The
+  first is Lipschitz, from \<open>kyfan_lipschitz\<close>.\<close>
 
 lemma possum_lipschitz:
   fixes A B :: "real^'n::finite^'n"
@@ -2867,10 +2821,9 @@ qed
 section \<open>\<open>F\<close> only sees the symmetric part of \<open>M\<close>\<close>
 
 text \<open>Every feasible \<open>a\<close> is symmetric, and against a symmetric \<open>a\<close> the trace
-  pairing cannot distinguish \<open>M\<close> from \<open>transpose M\<close>.  Hence \<open>F(p, M)\<close> depends
-  only on \<open>sym M = \<onehalf>(M + M\<^sup>\<top>)\<close>.  This is what allows the nearby, not
-  necessarily symmetric, matrices in a ball to be handled by results that assume
-  symmetry.\<close>
+  pairing cannot distinguish \<open>M\<close> from \<open>transpose M\<close>.  So \<open>F(p, M)\<close> depends
+  only on \<open>sym M = \<onehalf>(M + M\<^sup>\<top>)\<close>, letting nearby non-symmetric matrices be
+  handled by results assuming symmetry.\<close>
 
 lemma trace_transpose_matrix:
   fixes A :: "real^'n::finite^'n"
@@ -2929,8 +2882,8 @@ proof -
     by (simp add: ell_op_def)
 qed
 
-text \<open>Consequently Eq. (3.5) holds for an ARBITRARY \<open>M\<close>, symmetric or not, with
-  \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
+text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
+  with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
 
 corollary ell_op_eq_half_bracket_sym_part:
   fixes M :: "real^'n::finite^'n"
@@ -2952,11 +2905,10 @@ qed
 
 section \<open>The norm of an outer product, and \<open>rank1proj\<close> as a unit outer product\<close>
 
-text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off \<open>p = 0\<close>.  Because the correction
-  coefficient \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close> at all, the ONLY
-  \<open>p\<close>-dependence of \<open>M\<^sub>p\<close> is through \<open>rank1proj p\<close>.  So the whole clause reduces
-  to an estimate on \<open>norm (rank1proj p' - rank1proj p)\<close>, and by scale invariance
-  \<open>rank1proj\<close> is just the outer square of the NORMALISED vector.\<close>
+text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off \<open>p = 0\<close>.  The correction
+  coefficient \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>, so the only
+  \<open>p\<close>-dependence is through \<open>rank1proj p\<close>, reducing to an estimate on
+  \<open>norm (rank1proj p' - rank1proj p)\<close>.\<close>
 
 lemma inner_outer_prod_self:
   fixes u v :: "real^'n::finite"
@@ -3011,13 +2963,10 @@ qed
 
 section \<open>\<open>rank1proj\<close> is Lipschitz away from the origin\<close>
 
-text \<open>The estimate the continuity clause of Lemma 3.1 needs.  Since
-  \<open>rank1proj p = outer_prod q q\<close> with \<open>q = p/|p|\<close> a UNIT vector, and \<open>outer_prod\<close>
-  is bilinear with \<open>norm (outer_prod u v) = norm u * norm v\<close>, it is enough to
-  bound the normalisation map, which is Lipschitz with constant \<open>2/|p|\<close> away
-  from the origin.  Note the constant blows up as \<open>p \<rightarrow> 0\<close> -- exactly the
-  failure of continuity at the origin that makes Eq. (3.6) a different
-  formula.\<close>
+text \<open>Since \<open>rank1proj p = outer_prod q q\<close> with \<open>q = p/|p|\<close> a unit vector,
+  and \<open>outer_prod\<close> is bilinear, it suffices to bound the normalisation map,
+  Lipschitz with constant \<open>2/|p|\<close> away from the origin, blowing up as
+  \<open>p \<rightarrow> 0\<close>, why Eq. (3.6) differs there.\<close>
 
 lemma outer_prod_diff_left:
   fixes u v w :: "real^'n::finite"
@@ -3103,12 +3052,9 @@ qed
 
 section \<open>The Frobenius norm: transpose invariance and submultiplicativity\<close>
 
-text \<open>The last two general tools needed to compose the continuity clause of
-  Lemma 3.1: \<open>M\<^sub>p\<close> is built from \<open>rank1proj p\<close> by matrix products, so bounding
-  \<open>norm (M\<^sub>p\<^sub>' - M\<^sub>p)\<close> in terms of \<open>norm (rank1proj p' - rank1proj p)\<close> needs
-  \<open>norm (A ** B) \<le> norm A * norm B\<close>.  On \<open>real^'n^'n\<close> the inherited norm is the
-  Frobenius norm, for which both facts hold; neither is in this
-  HOL-Analysis.\<close>
+text \<open>The last two tools for the continuity clause of Lemma 3.1:
+  \<open>norm (A ** B) \<le> norm A * norm B\<close>, and that the Frobenius norm inherited
+  on \<open>real^'n^'n\<close> satisfies it; neither is in this HOL-Analysis.\<close>
 
 lemma inner_transpose_self:
   fixes A :: "real^'n::finite^'n"
@@ -3245,10 +3191,9 @@ qed
 section \<open>The conjugation expansion, and the Lipschitz bound for \<open>M\<^sub>p\<close>\<close>
 
 text \<open>Perturbing the projection expands the conjugation into four terms.  With
-  \<open>Q = I - rank1proj p\<close> and \<open>D = rank1proj p' - rank1proj p\<close> one has
-  \<open>I - rank1proj p' = Q - D\<close>, so this is exactly the difference
-  \<open>M\<^sub>p\<^sub>' - M\<^sub>p\<close> up to the correction term, which contributes only \<open>c *\<^sub>R D\<close>
-  because the coefficient \<open>c = min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>.\<close>
+  \<open>Q = I - rank1proj p\<close> and \<open>D = rank1proj p' - rank1proj p\<close>,
+  \<open>I - rank1proj p' = Q - D\<close>, giving \<open>M\<^sub>p\<^sub>' - M\<^sub>p\<close> up to a correction
+  \<open>c *\<^sub>R D\<close>, since \<open>c = min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>.\<close>
 
 lemma conj_diff_expand:
   fixes M Q D :: "real^'n::finite^'n"
@@ -3448,20 +3393,11 @@ qed
 
 section \<open>A rank obstruction: the deterministic core of Lemma 5.3\<close>
 
-text \<open>Lemma 5.3 of the paper characterises \<open>v(x) = 0\<close>, for convex \<open>K\<close>, by
-  \<open>dim F\<^sub>x \<le> n - k\<close>, where \<open>F\<^sub>x\<close> is the face of \<open>K\<close> whose relative interior
-  contains \<open>x\<close>.  The geometric obstruction behind that is purely
-  linear-algebraic and can be recorded now, independently of Sections 2 and 4:
-
-  a covariance matrix degenerate on a subspace \<open>W\<close> cannot satisfy the eigenvalue
-  lower bound \<open>eigen_lb a m\<close> unless \<open>m + dim W \<le> n\<close>.
-
-  Applied on a face: a martingale started in the relative interior of a face
-  \<open>F\<^sub>x\<close> of a convex \<open>K\<close> and staying in \<open>K\<close> stays in \<open>F\<^sub>x\<close>, so its covariance
-  vanishes in the \<open>n - dim F\<^sub>x\<close> directions normal to \<open>F\<^sub>x\<close>; the theorem below
-  with \<open>m = n - k\<close> then forces \<open>dim F\<^sub>x \<ge> n - k\<close>.  Contrapositively, if
-  \<open>dim F\<^sub>x < n - k\<close> there is NO admissible covariance at all, which is the
-  \<open>v(x) = 0\<close> side of Lemma 5.3.\<close>
+text \<open>Lemma 5.3 characterises \<open>v(x) = 0\<close>, for convex \<open>K\<close>, by
+  \<open>dim F\<^sub>x \<le> n - k\<close>, the dimension of the face \<open>F\<^sub>x\<close> containing \<open>x\<close> in its
+  relative interior.  A covariance matrix degenerate on \<open>W\<close> cannot satisfy
+  \<open>eigen_lb a m\<close> unless \<open>m + dim W \<le> n\<close>; applied to \<open>F\<^sub>x\<close>'s normal
+  directions this gives the \<open>v(x) = 0\<close> side.\<close>
 
 theorem eigen_lb_dim_obstruction:
   fixes a :: "real^'n::finite^'n"
@@ -3527,10 +3463,10 @@ qed
 
 section \<open>From the Lipschitz bounds to the norm topology\<close>
 
-text \<open>\<open>bracket_lipschitz\<close> and \<open>eigval_lipschitz\<close> are stated in terms of
-  \<open>entrysum\<close>; to feed them into a topological continuity argument (the last
-  clause of Lemma 3.1) they must be converted to the norm.  The entrywise bound
-  \<open>\<bar>D $ i $ j\<bar> \<le> norm D\<close> does that, at the cost of a factor \<open>n\<^sup>2\<close>.\<close>
+text \<open>\<open>bracket_lipschitz\<close> and \<open>eigval_lipschitz\<close> are stated via \<open>entrysum\<close>;
+  a topological continuity argument needs the norm instead.  The entrywise
+  bound \<open>\<bar>D $ i $ j\<bar> \<le> norm D\<close> converts them, at the cost of a factor
+  \<open>n\<^sup>2\<close>.\<close>
 
 lemma entry_abs_le_norm:
   fixes D :: "real^'n::finite^'n"
@@ -3556,7 +3492,7 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Hence the bracket is Lipschitz in the NORM as well.\<close>
+text \<open>Hence the bracket is Lipschitz in the norm as well.\<close>
 
 corollary bracket_lipschitz_norm:
   fixes A B :: "real^'n::finite^'n"
@@ -3579,46 +3515,20 @@ proof -
   finally show ?thesis .
 qed
 
-section \<open>What remains: the last clause of Lemma 3.1\<close>
+section \<open>Continuity of \<open>F\<close> away from \<open>p = 0\<close>\<close>
 
-text \<open>Eq. (3.5) and Eq. (3.6) are now both PROVED
-  (\<open>ell_op_eq_half_bracket\<close> here, \<open>eq36\<close> in Lemma_3_1_Envelopes.thy), as is the
-  general Poincare separation inequality (\<open>poincare_separation\<close>).  The single
-  remaining clause of Lemma 3.1 is
+text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<close> here,
+  \<open>eq36\<close> in Lemma_3_1_Envelopes.thy), as is the general Poincare separation
+  inequality (\<open>poincare_separation\<close>).  The remaining clause of Lemma 3.1,
+  \<open>F\<^sub>* = F\<^sup>* = F\<close> on \<open>(\<real>\<^sup>n \ {0}) \<times> \<S>\<^sup>n\<close>, is continuity of \<open>F\<close> away from
+  \<open>p = 0\<close>.  Writing \<open>F(p, M) = -\<onehalf> bracket (n-k) L (M\<^sub>p)\<close> with \<open>M\<close> replaced
+  by its symmetric part, this reduces to the Lipschitz bounds on \<open>bracket\<close>
+  and on \<open>(p, M) \<mapsto> M\<^sub>p\<close> established above.\<close>
 
-    \<open>F\<^sub>* = F\<^sup>* = F\<close>  on  \<open>(\<real>\<^sup>n \ {0}) \<times> \<S>\<^sup>n\<close>,
-
-  i.e. continuity of \<open>F\<close> away from \<open>p = 0\<close>.  Everything algebraic is in place:
-
-  \<^item> \<open>ell_op_eq_half_bracket_sym_part\<close> writes \<open>F(p, M)\<close> as
-    \<open>-\<onehalf> bracket (n-k) L (M\<^sub>p)\<close> with \<open>M\<close> replaced by its symmetric part, so the
-    non-symmetric matrices in a ball are covered;
-  \<^item> \<open>bracket_lipschitz_norm\<close> (just above) bounds the change of the bracket by
-    the norm of the change of the matrix.
-
-  So the clause reduces to CONTINUITY OF \<open>(p, M) \<mapsto> M\<^sub>p\<close> at \<open>p \<noteq> 0\<close>, for which
-  the ingredients are: \<open>rank1proj p = inverse (p \<bullet> p) *\<^sub>R outer_prod p p\<close> is
-  continuous exactly where \<open>p \<bullet> p \<noteq> 0\<close> (this is why the clause excludes the
-  origin, and why Eq. (3.6) is a genuinely different formula there);
-  \<open>M \<mapsto> eigval CARD('n) M\<close> is Lipschitz on symmetric matrices
-  (\<open>eigval_lipschitz\<close>, converted by \<open>entrysum_le_norm\<close>); and matrix product and
-  \<open>scaleR\<close> are continuous.  Two things to check before starting: whether
-  \<open>continuous_intros\<close> copes with the product topology on
-  \<open>(real^'n) \<times> (real^'n^'n)\<close>, and whether continuity of \<open>outer_prod\<close> (bilinear,
-  hence continuous) is available or has to be proved componentwise via
-  \<open>tendsto_vec_nth\<close> / \<open>vec_tendstoI\<close>.
-
-  NOTE ON DEPENDENCIES: this clause is not optional decoration.  Theorem 4.2 of
-  the paper (the maximum principle) uses it, via Eq. (4.3)
-  \<open>F(p\<^sub>\<epsilon>, M\<^sub>\<epsilon>) \<ge> F(p\<^sub>\<epsilon>, N\<^sub>\<epsilon>)\<close>, to reach the contradiction \<open>\<kappa> \<ge> 1\<close>.  So
-  Section 4 -- and through it Theorem 4.3 and Proposition 4.1 -- is blocked on
-  finishing it.\<close>
-
-text \<open>And finally the estimate on \<open>F\<close> itself: for symmetric \<open>M\<close> and \<open>p \<noteq> 0\<close>,
-  \<open>p' \<mapsto> F(p', M)\<close> is Lipschitz near \<open>p\<close>.  This is the last ingredient of the
-  continuity clause of Lemma 3.1; combined with \<open>ell_op_M_gap\<close> (Envelopes.thy),
-  which absorbs the variation of the second argument, both semicontinuous
-  envelopes collapse onto \<open>F\<close> off the origin.\<close>
+text \<open>The estimate on \<open>F\<close> itself: for symmetric \<open>M\<close> and \<open>p \<noteq> 0\<close>,
+  \<open>p' \<mapsto> F(p', M)\<close> is Lipschitz near \<open>p\<close>.  Combined with \<open>ell_op_M_gap\<close>
+  (Envelopes.thy), which absorbs the variation of the second argument, both
+  semicontinuous envelopes collapse onto \<open>F\<close> off the origin.\<close>
 
 theorem ell_op_lipschitz_in_p:
   fixes M :: "real^'n::finite^'n"
@@ -3686,18 +3596,14 @@ proof -
   qed
 qed
 
-section \<open>Towards Section 2: \<open>eigen_lb\<close> is an eigenvalue condition\<close>
+section \<open>\<open>eigen_lb\<close> as an eigenvalue condition\<close>
 
-text \<open>\<open>eigen_lb a m\<close> is stated as an EXISTENTIAL over subspaces, which is the
-  wrong shape for a closedness argument.  It is equivalent to the single
-  inequality \<open>1 \<le> eigval m a\<close>, and \<open>eigval m\<close> is Lipschitz in \<open>a\<close>
-  (\<open>eigval_lipschitz\<close>), so in that form the condition is visibly closed.  This
-  is what Lemma 2.3's compactness requirement needs.
-
-  Both directions are already available: \<open>eigval_ge_of_eigen_lb\<close> gives
-  \<open>\<Longrightarrow>\<close>, and for \<open>\<Longleftarrow>\<close> the span of a top-\<open>m\<close> threshold set is a witnessing subspace,
-  on which \<open>quadform_ge_on_span_threshold\<close> bounds the Rayleigh quotient below by
-  \<open>eigval m a\<close>.\<close>
+text \<open>\<open>eigen_lb a m\<close>, an existential over subspaces, is equivalent to the
+  single inequality \<open>1 \<le> eigval m a\<close>; since \<open>eigval m\<close> is Lipschitz in \<open>a\<close>
+  (\<open>eigval_lipschitz\<close>), this form is visibly closed, as Lemma 2.3's
+  compactness requirement needs.  \<open>eigval_ge_of_eigen_lb\<close> gives one
+  direction; for the other, the span of a top-\<open>m\<close> threshold set witnesses
+  \<open>eigen_lb\<close>.\<close>
 
 theorem eigen_lb_iff_eigval_ge:
   fixes a :: "real^'n::finite^'n"
@@ -3777,17 +3683,12 @@ qed
 section \<open>Closedness of the feasible set\<close>
 
 text \<open>
-  The deterministic core of Lemma 2.3's closedness step (STATUS.md, task 25
-  phase B3): the feasible set of Eq. (1.9) is CLOSED. Three of its four
-  defining conditions are universally quantified continuous inequalities and
-  are closed outright; the eigenvalue lower bound is an EXISTENTIAL over
-  subspaces, and closedness comes through \<open>feasible_iff_eigval\<close>, which trades
-  it for \<open>1 \<le> eigval (n-k) a\<close> — a condition on a function that is Lipschitz
-  on the (closed) set of symmetric matrices by \<open>eigval_lipschitz\<close>.
-  Combined with boundedness (\<open>feasible_bounded\<close>,
-  Relative\_Arbitrage\_Comparison) this gives compactness of the constraint
-  set, which is what the closedness of the admissible covariation constraint
-  under weak limits rests on.
+  The feasible set of Eq. (1.9) is closed.  Three of its four conditions are
+  continuous inequalities, closed outright; the eigenvalue lower bound is an
+  existential over subspaces, but \<open>feasible_iff_eigval\<close> trades it for
+  \<open>1 \<le> eigval (n-k) a\<close>, Lipschitz on symmetric matrices.  Combined with
+  boundedness (\<open>feasible_bounded\<close>, Relative\_Arbitrage\_Comparison) this
+  gives compactness of the constraint set.
 \<close>
 
 lemma continuous_on_matrix_entry:

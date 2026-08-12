@@ -7,16 +7,15 @@
   Isabelle/HOL has no Ito integration theory.  Since Ito's formula for
   the single C\<^sup>2 test function  w(y) = (r\<^sup>2 - |y|\<^sup>2)/(n-k)  determines the
   stochastic integral  t \<mapsto> \<integral>\<^sub>0\<^sup>t \<nabla>w(X\<^sub>s) \<bullet> dX\<^sub>s  uniquely, that value is
-  here taken as the DEFINITION of sint (see sint_def below), so no
-  assumption about stochastic integration is used: what was previously
-  the locale axiom ito_formula_quadratic is now the theorem
-  ito_formula_quadratic, proved by unfolding the definition.  The only
+  taken as the definition of sint (see sint_def below), so no assumption
+  about stochastic integration is needed: the identity
+  ito_formula_quadratic is proved by unfolding the definition.  The only
   side condition retained is the measurability of the compensator
   \<omega> \<mapsto> \<integral>\<^sub>0\<^sup>t tr(acov\<^sub>s(\<omega>)) ds (a regularity condition on the data acov, not a
-  statement about stochastic integrals).  The identification of the
-  explicitly given process sint with the stochastic integral of the
-  gradient strategy is exactly Ito's formula and remains outside the
-  formalization; all results below hold for the explicit process.
+  statement about stochastic integrals).  The identification of sint with
+  the stochastic integral of the gradient strategy is exactly Ito's formula
+  and remains outside the formalization; all results below hold for the
+  explicit process sint.
 
   Main results:
   \<^item> ball_relative_arbitrage: in every sufficiently volatile market on
@@ -97,8 +96,9 @@ definition sint :: "real \<Rightarrow> 'a \<Rightarrow> real" where
      + (1 / real (CARD('n) - k))
        * set_lebesgue_integral lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
 
-text \<open>What used to be the locale axiom \<open>ito_formula_quadratic\<close> is now a
-  theorem.\<close>
+text \<open>The Ito identity for the quadratic test function \<open>w\<close>, restated as a
+  fact about \<open>sint\<close>; it holds unconditionally since \<open>sint\<close> is defined to
+  satisfy it.\<close>
 
 lemma ito_formula_quadratic:
   "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow> t \<le> T \<longrightarrow>

@@ -443,11 +443,9 @@ interpretation BM2: sufficiently_volatile_market
     "\<lambda>_ _. mat 1" 1 1 UNIV 0 "\<lambda>_. 1"
   by (rule sufficiently_volatile_market_nonvacuous)
 
-text \<open>With the interpretation in place, the locale's facts are ordinary
-  theorems about the Brownian market.  In particular the
-  martingale-problem identity --- an \<^emph>\<open>assumption\<close> of the locale, here a
-  consequence of the construction --- yields a closed numerical
-  statement with no hypotheses: planar Brownian motion started at the
+text \<open>With the interpretation in place, the locale's martingale-problem
+  identity --- an \<^emph>\<open>assumption\<close> there, here a proved consequence ---
+  gives an unconditional fact: planar Brownian motion started at the
   origin has expected squared norm \<open>2\<close> at time \<open>1\<close>.\<close>
 
 corollary bm2_expected_square:
@@ -463,10 +461,9 @@ proof -
 qed
 
 text \<open>The exit-time bound \<open>E[\<tau>] \<le> v(x0)\<close> of Example 3.1 is available
-  inside the locale as \<open>expected_exit_time_bound\<close>, but instantiating it
-  non-degenerately requires \<open>K = cball 0 r\<close> together with the first exit
-  time of the ball; that is a genuine stopping time of the continuous
-  modification and hence belongs to the quadratic-variation phase.\<close>
+  as \<open>expected_exit_time_bound\<close>; a non-degenerate instance with
+  \<open>K = cball 0 r\<close> needs the ball's first exit time, a genuine stopping
+  time of the continuous modification.\<close>
 
 section \<open>The process form of the martingale problem is inhabited\<close>
 

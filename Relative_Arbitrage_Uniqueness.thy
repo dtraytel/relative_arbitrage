@@ -20,8 +20,7 @@
   the comparison half itself.  Its proof in the paper runs through the
   Crandall--Ishii lemma (doubling of variables with quartic penalty and
   second-order jets), a deep result of viscosity theory with no Isabelle
-  formalization; per the instruction, it is taken as the interface
-  assumption rather than reproved here.
+  formalization, and is taken here as an interface assumption.
 *)
 
 theory Relative_Arbitrage_Uniqueness
@@ -491,10 +490,10 @@ qed
 
 end
 
-text \<open>In particular, on the open ball the explicit function of
-  Eq. (3.9) is THE viscosity solution with its boundary data: any other
-  viscosity solution agreeing with it near the boundary coincides with it
-  (Theorem 1.1, uniqueness, for Example 3.1).\<close>
+text \<open>On the open ball, the explicit function of Eq. (3.9) is the unique
+  viscosity solution with its boundary data: any other viscosity solution
+  agreeing with it near the boundary coincides with it (Theorem 1.1,
+  uniqueness, for Example 3.1).\<close>
 
 theorem ball_v_unique_solution:
   fixes r :: real and k :: nat and L :: real

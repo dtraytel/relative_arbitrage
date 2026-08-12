@@ -5,10 +5,11 @@
   optimal_ball_market assumes the reverse inequality E[tau] >= v(x0) of
   Eq. (3.11), whose proof needs the time-changed spherical martingale and
   hence Ito calculus.  A locale that cannot be instantiated would make its
-  theorem optimal_exit_time_value vacuous, so we exhibit an instance: the
-  Brownian market started ON the sphere and stopped immediately.  There
-  v(x0) = 0 and the optimal exit time is 0, so the assumed inequality
-  holds by ball_v_boundary; this is the boundary case of Example 3.1.
+  theorem optimal_exit_time_value vacuous, so this theory exhibits an
+  instance: the Brownian market started on the sphere and stopped
+  immediately.  There v(x0) = 0 and the optimal exit time is 0, so the
+  assumed inequality holds by ball_v_boundary; this is the boundary case
+  of Example 3.1.
 
   A non-degenerate instance (Brownian motion stopped at the exit time of
   the ball, where E[tau] = v(x0) > 0) needs continuous-time optional
