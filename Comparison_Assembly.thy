@@ -8943,6 +8943,91 @@ text \<open>Locating the doubling maximiser needs to know that \<open>supconv u 
   every \<open>\<epsilon>\<close> below an explicit threshold.  No Lipschitz constant enters, which is
   the point --- the top level has none.\<close>
 
+text \<open>\<^bold>\<open>The usc replacement for \<open>supconv_uniform_upper\<close>.\<close>  That lemma is FALSE
+  for merely usc data (see the counterexample recorded with P4), and it is used
+  only to push the doubling maximiser off \<open>\<partial>K\<close>.  What IS true for usc data, and
+  what the classical Crandall--Ishii argument actually uses, is a LOCAL upper
+  bound with no continuity and no attainment: if \<open>u \<le> M\<close> on \<open>cball x R\<close> and the
+  penalty already beats the global range outside that ball, then
+  \<open>supconv u \<epsilon> x \<le> M\<close> outright.  Compare \<open>supconv_le_of_local_bound\<close>
+  below, which needs \<open>continuous_on UNIV u\<close> because it goes through
+  attainment; this one splits the supremum by hand instead.\<close>
+
+lemma supconv_le_of_local_bound_usc:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>" and R0: "0 \<le> R"
+    and gap: "2*\<epsilon>*(Bu - M) < R\<^sup>2"
+    and loc: "\<And>y. dist x y \<le> R \<Longrightarrow> u y \<le> M"
+  shows "supconv u \<epsilon> x \<le> M"
+  unfolding supconv_def
+proof (rule cSUP_least)
+  show "(UNIV :: 'a set) \<noteq> {}" by simp
+  fix y :: 'a
+  show "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> M"
+  proof (cases "dist x y \<le> R")
+    case True
+    have "0 \<le> (dist x y)\<^sup>2 / (2*\<epsilon>)" using e by simp
+    then show ?thesis using loc[OF True] by linarith
+  next
+    case False
+    then have Rlt: "R < dist x y" by linarith
+    have "R\<^sup>2 \<le> (dist x y)\<^sup>2" using R0 Rlt by (intro power_mono) simp_all
+    then have "2*\<epsilon>*(Bu - M) < (dist x y)\<^sup>2" using gap by linarith
+    then have "Bu - M < (dist x y)\<^sup>2 / (2*\<epsilon>)"
+      using e by (simp add: pos_less_divide_eq mult.commute)
+    then show ?thesis using B[of y] by linarith
+  qed
+qed
+
+text \<open>The consequence P4 step 2 runs on: along ANY sequence of base points
+  converging to \<open>x\<^sub>0\<close> with \<open>\<epsilon>\<^sub>j \<longrightarrow> 0\<close>, the sup-convolutions are eventually below
+  any strict upper bound for \<open>u\<close> at \<open>x\<^sub>0\<close>.  This is the usc statement that
+  replaces uniform convergence in the localisation of the doubling maximiser:
+  the radius \<open>\<surd>(2\<epsilon>\<^sub>j(B\<^sub>u - B\<^sub>l))\<close> shrinks, so eventually the whole competing ball
+  sits inside the neighbourhood on which usc gives \<open>u < c\<close>.\<close>
+
+lemma supconv_usc_eventually_below:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real" and xs :: "nat \<Rightarrow> 'a"
+  assumes B: "\<And>y. u y \<le> Bu" and Bl: "\<And>y. Bl \<le> u y"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
+    and ep: "\<And>j. 0 < eps j" and e0: "eps \<longlonglongrightarrow> 0"
+    and xx: "xs \<longlonglongrightarrow> x\<^sub>0" and c: "u x\<^sub>0 < c"
+  shows "\<forall>\<^sub>F j in sequentially. supconv u (eps j) (xs j) \<le> c"
+proof -
+  obtain d where d0: "0 < d" and du: "\<And>y. dist x\<^sub>0 y < d \<Longrightarrow> u y < c"
+    using uscu[OF c] by blast
+  define R where "R = d/3"
+  have R0: "0 < R" unfolding R_def using d0 by simp
+  have Bge: "Bl \<le> Bu" using Bl[of x\<^sub>0] B[of x\<^sub>0] by linarith
+  \<comment> \<open>the penalty beats the range once \<open>\<epsilon>\<close> is small\<close>
+  have "(\<lambda>j. 2*(eps j)*(Bu - c)) \<longlonglongrightarrow> 2*0*(Bu - c)"
+    by (intro tendsto_mult tendsto_const e0)
+  then have lim0: "(\<lambda>j. 2*(eps j)*(Bu - c)) \<longlonglongrightarrow> 0" by simp
+  have "0 < R\<^sup>2" using R0 by simp
+  then have gapE: "\<forall>\<^sub>F j in sequentially. 2*(eps j)*(Bu - c) < R\<^sup>2"
+    using lim0 by (rule order_tendstoD(2)[rotated])
+  \<comment> \<open>and the base points settle inside the usc neighbourhood\<close>
+  have "\<forall>\<^sub>F j in sequentially. dist (xs j) x\<^sub>0 < R"
+    using xx R0 unfolding tendsto_iff by blast
+  moreover note gapE
+  ultimately show ?thesis
+  proof (eventually_elim)
+    case (elim j)
+    have near: "dist (xs j) x\<^sub>0 < R" and gj: "2*(eps j)*(Bu - c) < R\<^sup>2"
+      using elim by blast+
+    have loc: "u y \<le> c" if dy: "dist (xs j) y \<le> R" for y
+    proof -
+      have "dist x\<^sub>0 y \<le> dist x\<^sub>0 (xs j) + dist (xs j) y" by (rule dist_triangle)
+      also have "\<dots> < R + R" using near dy by (simp add: dist_commute)
+      also have "\<dots> < d" unfolding R_def using d0 by simp
+      finally have "dist x\<^sub>0 y < d" .
+      from du[OF this] show ?thesis by linarith
+    qed
+    show ?case
+      by (rule supconv_le_of_local_bound_usc[OF B ep less_imp_le[OF R0] gj loc])
+  qed
+qed
+
 lemma supconv_le_of_local_bound:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
