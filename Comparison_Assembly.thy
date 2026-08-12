@@ -13777,9 +13777,9 @@ proof -
     then show ?thesis using insy by blast
   qed
   have icu: "isCont (\<lambda>y. \<theta> * u y) z" for z
-    using cu by (simp add: continuous_on_eq_continuous_at)
+    using cu[unfolded continuous_on_eq_continuous_at[OF open_UNIV]] by blast
   have icw: "isCont (- w) z" for z
-    using cw by (simp add: continuous_on_eq_continuous_at)
+    using cw[unfolded continuous_on_eq_continuous_at[OF open_UNIV]] by blast
   have uu: "\<And>c z. \<theta> * u z < c \<Longrightarrow>
       \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> \<theta> * u y < c"
     by (rule usc_eps_of_continuous[OF icu])
@@ -14288,7 +14288,7 @@ proof -
     have rad: "sqrt (max 0 (2*\<epsilon>*(Bw - (- w) xh))) < \<kappa>\<^sub>g/4"
       by (rule supconv_radius_uniform[OF low epos Rwpos smallw])
     have icwd: "isCont (- w) z" for z
-      using cw by (simp add: continuous_on_eq_continuous_at)
+      using cw[unfolded continuous_on_eq_continuous_at[OF open_UNIV]] by blast
     have uwd: "\<And>c z. (- w) z < c \<Longrightarrow>
         \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> (- w) y < c"
       by (rule usc_eps_of_continuous[OF icwd])
@@ -15552,7 +15552,333 @@ theorem comparison_two_domain:
     and w0: "\<And>y. y \<in> K' \<Longrightarrow> 0 \<le> w y"
     and x: "x \<in> K"
   shows "u x \<le> w x"
-  sorry
+proof (rule ccontr)
+  assume "\<not> u x \<le> w x"
+  then have fail: "w x < u x" by linarith
+  have B0: "0 \<le> B" using Bu[of x] by linarith
+  have uup: "u y \<le> B" for y using abs_le_D1[OF Bu[of y]] .
+  have ulo: "- B \<le> u y" for y using abs_le_D2[OF Bu[of y]] by linarith
+  have wupB: "w y \<le> B" for y using abs_le_D1[OF Bw[of y]] .
+  have wloB: "- B \<le> w y" for y using abs_le_D2[OF Bw[of y]] by linarith
+  have xK': "x \<in> K'" using x KK' interior_subset by blast
+  have wx0: "0 \<le> w x" by (rule w0[OF xK'])
+  have ux0: "0 < u x" using wx0 fail by linarith
+  \<comment> \<open>abstract the quotient: \<open>linarith\<close> and \<open>simp\<close> handle an ATOM over \<open>2\<close>,
+      not a compound\<close>
+  define rr where "rr = w x / u x"
+  have r0: "0 \<le> rr" unfolding rr_def
+    using wx0 ux0 by (simp add: zero_le_divide_iff)
+  have r1: "rr < 1" unfolding rr_def
+    using fail ux0 by (simp add: divide_less_eq)
+  define \<theta> where "\<theta> = (rr + 1) / 2"
+  have t0: "0 < \<theta>" unfolding \<theta>_def using r0 by simp
+  have t1: "\<theta> < 1" unfolding \<theta>_def using r1 by simp
+  have rt: "rr < \<theta>" unfolding \<theta>_def using r1 by simp
+  have "w x / u x < \<theta>" using rt unfolding rr_def .
+  then have "w x < \<theta> * u x"
+    using ux0 by (simp add: divide_less_eq mult.commute)
+  then have Mp: "0 < \<theta> * u x - w x" by linarith
+  define M where "M = \<theta> * u x - w x"
+  have M0: "0 < M" unfolding M_def by (rule Mp)
+
+  \<comment> \<open>1.  the \<open>w\<close>-side replacement: clipping at \<open>0\<close> costs nothing on \<open>K'\<close>,
+      where \<open>w \<ge> 0\<close> already, and buys \<open>supconv (-w\<tilde>) \<epsilon> \<le> 0\<close> --- which is what
+      both the gate and the pinning need\<close>
+  define wt where "wt = (\<lambda>y. max (w y) 0)"
+  have wtnn: "0 \<le> wt y" for y unfolding wt_def by simp
+  have wteq: "wt y = w y" if "y \<in> K'" for y
+    unfolding wt_def using w0[OF that] by simp
+  have wtB: "\<bar>wt y\<bar> \<le> B" for y
+    unfolding wt_def using wupB[of y] wloB[of y] B0 by simp
+  have negwt: "(- wt) y \<le> 0" for y using wtnn[of y] by simp
+  have lowt: "- B \<le> (- wt) y" for y using wtB[of y] by simp
+  have wlo: "\<And>y. y \<in> K' \<Longrightarrow> - B \<le> w y" using wloB by blast
+  have supj0: "supersol_jet k L (interior K') w"
+    by (rule visc_supersol_env_imp_jet
+        [OF supw compact_imp_bounded[OF cK'] wlo])
+  have supj: "supersol_jet k L (interior K') wt"
+  proof (rule supersol_jet_cong_on[OF supj0 open_interior])
+    fix y assume "y \<in> interior K'"
+    then have "y \<in> K'" using interior_subset by blast
+    then show "wt y = w y" by (rule wteq)
+  qed
+  have uwt: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (- wt) y < c"
+    if lt: "(- wt) z < c" for c z
+  proof (cases "0 < c")
+    case True
+    show ?thesis
+    proof (rule exI[of _ 1], intro conjI allI impI)
+      show "(0::real) < 1" by simp
+      fix y assume "dist z y < 1"
+      show "(- wt) y < c" using True negwt[of y] by linarith
+    qed
+  next
+    case False
+    then have c0: "c \<le> 0" by linarith
+    have "- max (w z) 0 < c" using lt unfolding wt_def by simp
+    then have "0 < max (w z) 0" using c0 by linarith
+    then have "max (w z) 0 = w z" by simp
+    then have "- c < w z" using \<open>- max (w z) 0 < c\<close> by linarith
+    from lscw[OF this] obtain e where e0: "0 < e"
+      and h: "\<forall>y. dist z y < e \<longrightarrow> - c < w y" by blast
+    show ?thesis
+    proof (rule exI[of _ e], intro conjI allI impI e0)
+      fix y assume "dist z y < e"
+      then have "- c < w y" using h by blast
+      then have "- w y < c" by linarith
+      moreover have "(- wt) y \<le> - w y" unfolding wt_def by simp
+      ultimately show "(- wt) y < c" by linarith
+    qed
+  qed
+
+  \<comment> \<open>2.  the \<open>u\<close>-side extension: below the minimum, so the doubled functional
+      cannot be maximised off \<open>K\<close>, and Definition 3.1(a) is untouched\<close>
+  define C where "C = - B - 1"
+  have Cneg: "C < 0" unfolding C_def using B0 by simp
+  have CleB: "C \<le> - B" unfolding C_def by simp
+  define ut where "ut = (\<lambda>y. if y \<in> K then u y else C)"
+  have utK: "ut y = u y" if "y \<in> K" for y unfolding ut_def using that by simp
+  have loK: "\<And>y. y \<in> K \<Longrightarrow> - B \<le> u y" using ulo by blast
+  have utB: "ut y \<le> B" for y
+  proof (cases "y \<in> K")
+    case True
+    then show ?thesis unfolding ut_def using uup[of y] by simp
+  next
+    case False
+    then show ?thesis unfolding ut_def C_def using B0 by simp
+  qed
+  have BuA: "\<theta> * ut y \<le> B" for y
+  proof (cases "0 \<le> ut y")
+    case True
+    have "\<theta> * ut y \<le> 1 * ut y"
+      using True t1 by (intro mult_right_mono) simp_all
+    then show ?thesis using utB[of y] by simp
+  next
+    case False
+    have "\<theta> * ut y \<le> 0" using False t0 by (simp add: mult_nonneg_nonpos)
+    then show ?thesis using B0 by linarith
+  qed
+  have uscut: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> ut y < c" if lt: "ut z < c" for c z
+  proof -
+    have lt': "(if z \<in> K then u z else C) < c" using lt unfolding ut_def .
+    have "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then u y else C) < c"
+      by (rule usc_extend_const_below
+          [OF compact_imp_closed[OF cK] uscu loK CleB lt'])
+    then show ?thesis unfolding ut_def .
+  qed
+  have uut: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> \<theta> * ut y < c"
+    if "\<theta> * ut z < c" for c z
+    by (rule usc_eps_scale[OF uscut t0 that])
+  have OmK: "interior K \<union> {q \<in> K - interior K. 0 < u q} \<subseteq> K"
+    using interior_subset by blast
+  have subenv: "visc_subsol_env k L K
+      (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
+    by (rule visc_subsol_env_agrees[OF subu OmK]) (simp add: ut_def)
+  have subloc: "visc_subsol k L
+      (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
+    by (rule visc_subsol_env_imp_visc_subsol
+        [OF subenv compact_imp_bounded[OF cK] _ kk(1) kk(2) LL, where Bu = B])
+      (use utB in simp)
+  have gateK: "{q. 0 < ut q}
+      \<subseteq> interior K \<union> {q \<in> K - interior K. 0 < u q}"
+  proof
+    fix q assume "q \<in> {q. 0 < ut q}"
+    then have p: "0 < ut q" by simp
+    have qK: "q \<in> K"
+    proof (rule ccontr)
+      assume "q \<notin> K"
+      then have "ut q = C" unfolding ut_def by simp
+      then show False using p Cneg by linarith
+    qed
+    then have pu: "0 < u q" using p unfolding ut_def by simp
+    show "q \<in> interior K \<union> {q \<in> K - interior K. 0 < u q}"
+      using qK pu by (cases "q \<in> interior K") auto
+  qed
+  have subgate: "visc_subsol k L {q. 0 < ut q} ut"
+    by (rule visc_subsol_mono_dom[OF subloc gateK])
+
+  \<comment> \<open>3.  the geometry: one gap, split three ways\<close>
+  obtain dg where dg0: "0 < dg"
+    and gap: "\<And>a b. a \<in> K \<Longrightarrow> b \<in> K' - interior K' \<Longrightarrow> dg < dist a b"
+    using two_domain_gap[OF cK cK' KK'] by blast
+  define kg where "kg = dg/8"
+  define dQ where "dQ = dg/8"
+  define bet where "bet = dg/8"
+  have kg0: "0 < kg" unfolding kg_def using dg0 by simp
+  have kgnn: "0 \<le> kg" using kg0 by linarith
+  have dQ0: "0 < dQ" unfolding dQ_def using dg0 by simp
+  have dQnn: "0 \<le> dQ" using dQ0 by linarith
+  have bet0: "0 < bet" unfolding bet_def using dg0 by simp
+  have betnn: "0 \<le> bet" using bet0 by linarith
+  have fit: "bet + dQ + kg \<le> dg"
+    unfolding bet_def dQ_def kg_def using dg0 by simp
+
+  \<comment> \<open>4.  the confinement region\<close>
+  define Q where "Q = {b + h |b h. b \<in> K \<and> h \<in> cball (0::real^'n) dQ}"
+  have cQ: "compact Q" unfolding Q_def
+    by (rule compact_sums[OF cK compact_cball])
+  have xQ: "x \<in> Q"
+  proof -
+    have "(0::real^'n) \<in> cball 0 dQ" using dQnn by simp
+    then have "x + 0 \<in> Q" unfolding Q_def using x by blast
+    then show ?thesis by simp
+  qed
+  have Qnear: "\<exists>b\<in>K. dist q b \<le> dQ" if "q \<in> Q" for q
+  proof -
+    from that obtain b h where qeq: "q = b + h" and bK: "b \<in> K"
+      and hb: "h \<in> cball (0::real^'n) dQ" unfolding Q_def by blast
+    have "dist q b = norm h" unfolding qeq by (simp add: dist_norm)
+    also have "\<dots> \<le> dQ" using hb by simp
+    finally show ?thesis using bK by blast
+  qed
+  have Qfar: "dQ < dist q b" if qQ: "q \<notin> Q" and bK: "b \<in> K" for q b
+  proof (rule ccontr)
+    assume "\<not> dQ < dist q b"
+    then have "dist q b \<le> dQ" by linarith
+    then have "q - b \<in> cball (0::real^'n) dQ"
+      by (simp add: dist_norm norm_minus_commute)
+    moreover have "q = b + (q - b)" by simp
+    ultimately have "q \<in> Q" unfolding Q_def using bK by blast
+    then show False using qQ by blast
+  qed
+
+  \<comment> \<open>5.  \<open>\<epsilon>\<close> small: the far-field bound and the \<open>w\<close>-side radius\<close>
+  define D where "D = max (B - \<theta>*C) B"
+  define H where "H = min (dQ\<^sup>2) ((kg/4)\<^sup>2)"
+  have Dnn: "0 \<le> D" unfolding D_def using B0 by simp
+  have H0: "0 < H" unfolding H_def using dQ0 kg0 by simp
+  obtain \<epsilon> where e0: "0 < \<epsilon>" and esm: "2*\<epsilon>*D < H"
+    using exists_eps_aux[OF H0 Dnn] by blast
+  have esm1: "2*\<epsilon>*(B - \<theta>*C) < dQ\<^sup>2"
+  proof -
+    have "2*\<epsilon>*(B - \<theta>*C) \<le> 2*\<epsilon>*D"
+      unfolding D_def using e0 by (intro mult_left_mono) simp_all
+    also have "\<dots> < H" by (rule esm)
+    also have "H \<le> dQ\<^sup>2" unfolding H_def by simp
+    finally show ?thesis .
+  qed
+  have esm2: "2*\<epsilon>*(0 - (- B)) < (kg/4)\<^sup>2"
+  proof -
+    have "2*\<epsilon>*(0 - (- B)) \<le> 2*\<epsilon>*D"
+      unfolding D_def using e0 by (intro mult_left_mono) simp_all
+    also have "\<dots> < H" by (rule esm)
+    also have "H \<le> (kg/4)\<^sup>2" unfolding H_def by simp
+    finally show ?thesis .
+  qed
+
+  \<comment> \<open>6.  \<open>\<kappa>\<^sub>P\<close> large: the pinning\<close>
+  obtain kP where kP0: "0 < kP"
+    and kPbig: "B < (kP/2)*bet\<^sup>2 - kP*(sqrt (bet\<^sup>2 + 1) - 1)"
+    using soft_pen_kappa_exists[OF bet0, of B] by blast
+  have kPnn: "0 \<le> kP" using kP0 by linarith
+
+  \<comment> \<open>7.  the doubled maximiser over \<open>UNIV \<times> K'\<close>\<close>
+  define A where "A = supconv (\<lambda>y. \<theta> * ut y) \<epsilon>"
+  define Bf where "Bf = supconv (- wt) \<epsilon>"
+  have cA: "continuous_on UNIV A"
+    unfolding A_def by (rule supconv_continuous[OF BuA e0])
+  have cB: "continuous_on UNIV Bf"
+    unfolding Bf_def by (rule supconv_continuous[OF negwt e0])
+  have Ale: "A y \<le> B" for y unfolding A_def by (rule supconv_le[OF BuA e0])
+  have Bfle: "Bf y \<le> 0" for y unfolding Bf_def by (rule supconv_le[OF negwt e0])
+  have out: "A q \<le> \<theta>*C" if qQ: "q \<notin> Q" for q
+  proof -
+    have far: "\<And>b. b \<in> K \<Longrightarrow> dQ < dist q b" using Qfar[OF qQ] by blast
+    have Bu': "\<And>y. \<theta> * (if y \<in> K then u y else C) \<le> B"
+      using BuA unfolding ut_def by simp
+    show ?thesis
+      unfolding A_def ut_def
+      by (rule supconv_extend_far_le[OF Bu' e0 dQnn esm1 far])
+  qed
+  have base: "M \<le> A x + Bf x - soft_pen kP (x - x)"
+  proof -
+    have a1: "\<theta> * ut x \<le> A x" unfolding A_def by (rule supconv_ge[OF BuA e0])
+    have a2: "(- wt) x \<le> Bf x" unfolding Bf_def by (rule supconv_ge[OF negwt e0])
+    have a3: "\<theta> * ut x = \<theta> * u x" using utK[OF x] by simp
+    have a4: "(- wt) x = - w x" using wteq[OF xK'] by simp
+    have a5: "soft_pen kP (x - x) = 0" by (simp add: soft_pen_zero)
+    show ?thesis unfolding M_def a5 using a1 a2 a3 a4 by linarith
+  qed
+  have gapv: "\<theta>*C + 0 < A x + Bf x - soft_pen kP (x - x)"
+  proof -
+    have "\<theta>*C < 0" using t0 Cneg by (simp add: mult_pos_neg)
+    then show ?thesis using base M0 by linarith
+  qed
+  obtain xh yh where xhQ: "xh \<in> Q" and yhK': "yh \<in> K'"
+    and mxU: "\<And>a q. q \<in> K' \<Longrightarrow>
+        A a + Bf q - soft_pen kP (a - q)
+        \<le> A xh + Bf yh - soft_pen kP (xh - yh)"
+    using doubled_maximiser_over_UNIV_snd
+      [OF cQ cK' cA cB soft_pen_continuous xQ xK' Bfle
+          soft_pen_nonneg[OF kPnn] out gapv]
+    by blast
+  have Mmax: "M \<le> A xh + Bf yh - soft_pen kP (xh - yh)"
+    using base mxU[OF xK', of x] by linarith
+
+  \<comment> \<open>8.  the gate at the maximiser, and the pinning\<close>
+  have Axh: "0 < A xh"
+    using Mmax Bfle[of yh] soft_pen_nonneg[OF kPnn, of "xh - yh"] M0 by linarith
+  obtain ru where ru0: "0 < ru" and posb: "\<And>a. dist a xh \<le> ru \<Longrightarrow> 0 < A a"
+    using cont_pos_near[OF cA Axh] by blast
+  have M0': "0 \<le> M" using M0 by linarith
+  have pin: "norm (xh - yh) < bet"
+    by (rule pin_of_penalty_bound
+        [where A = A and Bfun = Bf and xh = xh and yh = yh
+           and \<kappa>\<^sub>P = kP and \<beta> = bet and Bu = B and M = M,
+         OF kPnn betnn Ale Bfle M0' Mmax kPbig])
+  obtain q where qK: "q \<in> K" and dq: "dist xh q \<le> dQ"
+    using Qnear[OF xhQ] by blast
+  have fary: "kg < dist yh b" if bK: "b \<in> K' - interior K' " for b
+    by (rule fary_of_pin[OF gap qK dq pin fit bK])
+  have insy: "cball yh kg \<subseteq> interior K'"
+    by (rule cball_subset_interior_of_far_from_boundary
+        [OF compact_imp_closed[OF cK'] yhK' kgnn fary])
+  have mxU': "\<And>a q. q \<in> K' \<Longrightarrow>
+      supconv (\<lambda>y. \<theta> * ut y) \<epsilon> a + supconv (- wt) \<epsilon> q - soft_pen kP (a - q)
+      \<le> supconv (\<lambda>y. \<theta> * ut y) \<epsilon> xh + supconv (- wt) \<epsilon> yh
+        - soft_pen kP (xh - yh)"
+    using mxU unfolding A_def Bf_def .
+  have posb': "\<And>a. dist a xh \<le> ru \<Longrightarrow> 0 < supconv (\<lambda>y. \<theta> * ut y) \<epsilon> a"
+    using posb unfolding A_def .
+
+  \<comment> \<open>9.  the two branches\<close>
+  show False
+  proof (cases "xh = yh")
+    case False
+    show False
+      by (rule comparison_2dom_off_diagonal
+          [where u = ut and w = wt and K' = K' and \<theta> = \<theta> and \<epsilon> = \<epsilon>
+             and Bu = B and Bw = 0 and Blw = "- B" and \<kappa>\<^sub>g = kg
+             and \<kappa>\<^sub>P = kP and xh = xh and yh = yh and \<rho>\<^sub>u = ru,
+           OF subgate supj t0 t1 kk(1) kk(2) LL BuA negwt lowt uut uwt
+              e0 kg0 kP0 compact_imp_closed[OF cK'] yhK' mxU' fary
+              esm2 ru0 posb' False])
+  next
+    case True
+    have xhK'2: "xh \<in> K'" using yhK' True by simp
+    have pint: "xh \<in> interior K'"
+      using insy True kgnn by auto
+    have subwd: "cball xh (kg/4) \<subseteq> interior K'"
+    proof -
+      have "cball xh (kg/4) \<subseteq> cball yh kg"
+        using True kg0 by (simp add: cball_subset_cball_iff)
+      then show ?thesis using insy by blast
+    qed
+    have radd: "sqrt (max 0 (2*\<epsilon>*(0 - (- wt) xh))) < kg/4"
+      by (rule supconv_radius_uniform[OF lowt e0 _ esm2]) (use kg0 in simp)
+    have mxd: "\<And>a q. a \<in> K' \<Longrightarrow> q \<in> K' \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * ut y) \<epsilon> a + supconv (- wt) \<epsilon> q
+          - soft_pen kP (a - q)
+        \<le> supconv (\<lambda>y. \<theta> * ut y) \<epsilon> xh + supconv (- wt) \<epsilon> xh
+          - soft_pen kP (xh - xh)"
+      using mxU' unfolding True[symmetric] by blast
+    show False
+      by (rule comparison_soft_diagonal
+          [where w = wt and K = K' and A = "supconv (\<lambda>y. \<theta> * ut y) \<epsilon>"
+             and \<epsilon> = \<epsilon> and \<kappa>\<^sub>P = kP and p = xh and R\<^sub>w = "kg/4" and Bw = 0,
+           OF supj kk(1) kk(2) LL negwt uwt e0 xhK'2 pint mxd radd subwd])
+  qed
+qed
 
 subsection \<open>P5: Theorem 4.3, on top of P4\<close>
 
