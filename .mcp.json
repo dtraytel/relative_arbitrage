@@ -5,7 +5,9 @@
       "args": [
         "pide_mcp",
         "-d",
-        "/Users/kfx532/experiment_arbitrage"
+        "/Users/kfx532/experiment_arbitrage",
+		"-R",
+		"Relative_Arbitrage"
       ]
     }
   }
