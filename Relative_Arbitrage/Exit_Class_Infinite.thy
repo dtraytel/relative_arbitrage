@@ -131,6 +131,34 @@ proof (rule Sup_least)
     by (intro Sup_upper) simp
 qed
 
+lemma ess_inf_enn_AE: "AE \<omega> in M. ess_inf_enn M tau \<le> tau \<omega>"
+proof -
+  define S where "S = {c. AE \<omega> in M. c \<le> tau \<omega>}"
+  have "0 \<in> S" unfolding S_def by simp
+  then have ne: "S \<noteq> {}" by blast
+  obtain f :: "nat \<Rightarrow> ennreal"
+    where f: "range f \<subseteq> S" and sup: "Sup S = Sup (range f)"
+    using ennreal_Sup_countable_SUP[OF ne] by blast
+  have fS: "AE \<omega> in M. f n \<le> tau \<omega>" for n
+    using f unfolding S_def by blast
+  have "AE \<omega> in M. \<forall>n. f n \<le> tau \<omega>"
+    using fS by (subst AE_all_countable) blast
+  then have "AE \<omega> in M. Sup (range f) \<le> tau \<omega>"
+    by eventually_elim (auto intro: Sup_least)
+  thus ?thesis unfolding ess_inf_enn_def S_def[symmetric] using sup by simp
+qed
+
+lemma ess_inf_enn_min_const:
+  "min (ess_inf_enn M tau) c \<le> ess_inf_enn M (\<lambda>\<omega>. min (tau \<omega>) c)"
+proof (rule ess_inf_ennI)
+  have "AE \<omega> in M. ess_inf_enn M tau \<le> tau \<omega>" by (rule ess_inf_enn_AE)
+  then show "AE \<omega> in M. min (ess_inf_enn M tau) c \<le> min (tau \<omega>) c"
+  proof eventually_elim
+    case (elim \<omega>)
+    then show ?case by (rule min.mono[OF _ order_refl])
+  qed
+qed
+
 lemma ess_inf_enn_ennreal:
   "ess_inf_enn M (\<lambda>\<omega>. ennreal (tau \<omega>)) = ess_inf_time M tau"
   unfolding ess_inf_enn_def ess_inf_time_def by simp
