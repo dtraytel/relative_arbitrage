@@ -1315,7 +1315,7 @@ proof -
     then obtain r0 where r0: "r0 \<in> {0..t}" and m0: "fst (\<omega> r0) \<notin> ball x \<epsilon>"
       by auto
     have d0: "\<epsilon> \<le> dist (fst (\<omega> r0)) x"
-      using m0 by (simp add: mem_ball dist_commute)
+      using m0 by (simp add: dist_commute)
     show "\<forall>n :: nat. \<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
         \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x"
     proof
@@ -1325,7 +1325,7 @@ proof -
       proof (cases "r0 = 0 \<or> r0 = t")
         case True
         have mem: "r0 \<in> insert t ({0..t} \<inter> \<rat>)"
-          using True r0 t by (auto simp: Rats_0)
+          using True r0 t by auto
         have p1: "0 < 1 / real (Suc n)" by simp
         with d0 have "\<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r0)) x" by linarith
         with mem show ?thesis by blast
@@ -1408,7 +1408,7 @@ proof -
     qed
     then obtain r where r: "r \<in> {0..t}" and rd: "\<epsilon> \<le> dist (fst (\<omega> r)) x"
       by blast
-    have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: mem_ball dist_commute)
+    have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: dist_commute)
     then have "pexit T (ball x \<epsilon>) (\<lambda>s. fst (\<omega> s)) \<le> r"
       using r tT by (intro pexit_le_of_mem[OF T0]) auto
     then have "pball_exit T x \<epsilon> \<omega> \<le> r" by (simp add: pball_exit_def)
@@ -1446,7 +1446,7 @@ proof (rule borel_measurableI_le)
       have ya: "pball_exit T x \<epsilon> \<omega> \<le> a" for \<omega> :: "'n pairpath"
         using pball_exit_le[OF T0, of x \<epsilon> \<omega>] True by linarith
       then have "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a} = space ?B" by auto
-      then show ?thesis by (simp add: sets.top)
+      then show ?thesis by simp
     next
       case False
       then have aT: "a < T" by simp
@@ -1507,7 +1507,7 @@ proof (rule ccontr)
   then have gt: "\<epsilon> < dist (fst (\<omega> s)) x" by simp
   have sT: "s \<le> T" using sle pball_exit_le[OF T0] order_trans by blast
   have notin: "fst (\<omega> s) \<notin> ball x \<epsilon>"
-    using gt by (simp add: mem_ball dist_commute)
+    using gt by (simp add: dist_commute)
   have le1: "pball_exit T x \<epsilon> \<omega> \<le> s"
     unfolding pball_exit_def
     by (rule pexit_le_of_mem[where f = "\<lambda>s. fst (\<omega> s)" and r = s
@@ -1520,7 +1520,7 @@ proof (rule ccontr)
   obtain r where r0: "0 \<le> r" and rs: "r \<le> s" and rd: "dist (fst (\<omega> r)) x = \<epsilon>"
     using IVT'[of "\<lambda>r. dist (fst (\<omega> r)) x" 0 \<epsilon> s] h0 gt s hc by auto
   have rlt: "r < s" using rd gt rs by (cases "r = s") auto
-  have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: mem_ball dist_commute)
+  have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: dist_commute)
   then have "pball_exit T x \<epsilon> \<omega> \<le> r"
     unfolding pball_exit_def
     by (intro pexit_le_of_mem[OF T0 r0]) (use rs sT in auto)
@@ -1829,7 +1829,7 @@ proof -
     by (rule path_stopping_time_le[OF st])
   have ith: "integrable P \<theta>"
     by (rule PP.integrable_const_bound[of _ T])
-      (auto simp: thP th0 thT abs_of_nonneg)
+      (auto simp: thP th0 thT)
   define et where "et = (\<integral>\<omega>. \<theta> \<omega> \<partial>P)"
   have et0: "0 < et"
     unfolding et_def
@@ -1905,7 +1905,7 @@ proof -
         by (rule arg_cong[where f = "\<lambda>A. A $ i $ j", OF eqs])
       then have "(1 / \<theta> \<omega>) * transpose (?Y \<omega>) $ i $ j
           = (1 / \<theta> \<omega>) * ?Y \<omega> $ i $ j"
-        by (simp add: vector_scaleR_component)
+        by simp
       then show ?thesis using mult_left_cancel[OF nz] by blast
     qed
     show "transpose (?Y \<omega>) = ?Y \<omega>" using entry by (simp add: vec_eq_iff)
@@ -2161,7 +2161,7 @@ proof -
   \<comment> \<open>the integrable pieces and their means\<close>
   have ith: "integrable P ?th"
     by (rule PP.integrable_const_bound[of _ T])
-      (auto simp: thP th0 thT abs_of_nonneg)
+      (auto simp: thP th0 thT)
   define et where "et = (\<integral>\<omega>. ?th \<omega> \<partial>P)"
   have et0: "0 < et"
     unfolding et_def
@@ -2274,7 +2274,7 @@ proof -
         + (?Xf \<omega> \<bullet> (M *v ?Xf \<omega>) - x \<bullet> (M *v ?Xf \<omega>) - ?Xf \<omega> \<bullet> (M *v x)
            + x \<bullet> (M *v x)) / 2"
       unfolding F_def
-      by (simp add: lind inner_diff_left inner_diff_right algebra_simps)
+      by (simp add: lind algebra_simps)
   qed
   have iq2: "integrable P (\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>) - x \<bullet> (M *v ?Xf \<omega>)
       - ?Xf \<omega> \<bullet> (M *v x) + x \<bullet> (M *v x))"
@@ -2412,8 +2412,8 @@ proof -
             sum_distrib_left algebra_simps)
       show ?thesis
         unfolding lin
-        by (simp add: inner_add_left inner_add_right inner_scaleR_left
-            inner_scaleR_right z qa Bc_def Ac_def power2_eq_square algebra_simps)
+        by (simp add: z qa Bc_def Ac_def power2_eq_square
+            algebra_simps)
     qed
     show False
     proof (cases "Ac = 0")
@@ -2438,7 +2438,7 @@ proof -
         using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
             simp: not_less le_less)
       then have "0 < Bc\<^sup>2 / Ac"
-        using AcP by (simp add: power2_eq_square divide_pos_pos)
+        using AcP by (simp add: power2_eq_square)
       with h show False by linarith
     qed
   qed
@@ -2464,7 +2464,7 @@ proof -
     by (rule matrix_vector_mult_sum)
   also have "\<dots> = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
     by (rule sum.cong[OF refl])
-      (simp add: scaleR_matrix_vector outer_prod_mv)
+      (simp add: scaleR_matrix_vector)
   finally show ?thesis .
 qed
 
@@ -2480,7 +2480,7 @@ proof -
     by (rule inner_sum_right)
   also have "\<dots> = (\<Sum>u\<in>S. c u * (u \<bullet> z)\<^sup>2)"
     by (rule sum.cong[OF refl])
-      (simp add: inner_scaleR_right inner_commute power2_eq_square
+      (simp add: inner_commute power2_eq_square
         algebra_simps)
   finally show ?thesis .
 qed
@@ -2528,7 +2528,7 @@ proof -
   also have "(\<Sum>u\<in>B. (1::real) *\<^sub>R outer_prod u u) = (\<Sum>u\<in>B. outer_prod u u)"
     by simp
   also have "\<dots> = mat 1" by (rule onormal_complete[OF B sp])
-  also have "z \<bullet> (mat 1 *v z) = z \<bullet> z" by (simp add: matrix_vector_mul_lid)
+  also have "z \<bullet> (mat 1 *v z) = z \<bullet> z" by simp
   finally show ?thesis .
 qed
 
@@ -2544,7 +2544,7 @@ proof -
     by (rule inner_sum_right)
   also have "\<dots> = (\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2)"
     by (rule sum.cong[OF refl])
-      (simp add: inner_scaleR_right inner_commute power2_eq_square)
+      (simp add: inner_commute power2_eq_square)
   finally show ?thesis by simp
 qed
 
@@ -2583,7 +2583,7 @@ next
   have v0le: "\<And>v. v \<in> B - S \<Longrightarrow> w v0 \<le> w v"
     unfolding v0min by (intro Min_le finite_imageI finD) blast
   have cS: "card (insert v0 S) = Suc m"
-    using S v0 finB by (simp add: card_insert_disjoint finite_subset)
+    using S v0 finB by (simp add: finite_subset)
   have sub: "insert v0 S \<subseteq> B" using S(1) v0 by blast
   have prp: "\<forall>u\<in>insert v0 S. \<forall>v\<in>B - insert v0 S. w u \<le> w v"
   proof (intro ballI)
@@ -2791,7 +2791,7 @@ proof -
     proof -
       have "(b *v u) \<bullet> q = ((u \<bullet> (b *v u)) *\<^sub>R u) \<bullet> q"
         by (rule arg_cong[where f = "\<lambda>v. v \<bullet> q", OF eig[OF u]])
-      then show ?thesis by (simp add: inner_scaleR_left lam_def)
+      then show ?thesis by (simp add: lam_def)
     qed
     ultimately show "lam u * (u \<bullet> q) = 0" by simp
   qed
@@ -2896,7 +2896,7 @@ proof -
   have sym_a: "transpose a = a"
   proof -
     have t1: "transpose (\<Sum>u\<in>S. outer_prod u u) = (\<Sum>u\<in>S. outer_prod u u)"
-      by (simp add: transpose_matrix_sum transpose_outer_prod)
+      by (simp add: transpose_matrix_sum)
     have t2: "transpose R = R"
     proof -
       have "transpose R = (\<Sum>u\<in>B. transpose (rho u *\<^sub>R outer_prod u u))"
@@ -2942,7 +2942,7 @@ proof -
         by (rule onormal_span_parseval[OF onormal_subset[OF B(1) SB] x,
               symmetric])
       also have "\<dots> \<le> (\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2) + (\<Sum>u\<in>B. rho u * (u \<bullet> x)\<^sup>2)"
-        by (simp add: sum_nonneg mult_nonneg_nonneg rho_nn)
+        by (simp add: sum_nonneg rho_nn)
       finally show "x \<bullet> x \<le> x \<bullet> (a *v x)" unfolding quad_a .
     qed
   qed
@@ -2994,7 +2994,7 @@ proof -
     have "(\<Sum>u\<in>B'. cap u * (u \<bullet> (M *v u))) \<le> (\<Sum>u\<in>S. u \<bullet> (M *v u))"
     proof -
       have "- (\<Sum>u\<in>S. u \<bullet> (M *v u)) \<le> - (\<Sum>u\<in>B'. cap u * (u \<bullet> (M *v u)))"
-        using Sval by (simp add: sum_negf mult_minus_right)
+        using Sval by (simp add: sum_negf)
       then show ?thesis by simp
     qed
     then show ?thesis using vb va capval by simp
@@ -3071,7 +3071,7 @@ proof -
     by (simp add: inner_vec_def)
   also have "\<dots> = (\<Sum>l\<in>UNIV. if l = i then w $ l else 0)"
     by (rule sum.cong[OF refl]) (simp add: axis_def)
-  also have "\<dots> = w $ i" by (simp add: sum.delta)
+  also have "\<dots> = w $ i" by simp
   finally show ?thesis .
 qed
 
@@ -3093,7 +3093,7 @@ proof -
     by (simp add: matrix_vector_mult_def)
   also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
     by (rule sum.cong[OF refl]) (simp add: axis_def)
-  also have "\<dots> = a $ l $ i" by (simp add: sum.delta)
+  also have "\<dots> = a $ l $ i" by simp
   finally show ?thesis .
 qed
 
@@ -3245,7 +3245,7 @@ proof -
     show "(?Xf \<omega> - x) \<bullet> (M *v (?Xf \<omega> - x))
         = ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>) - x \<bullet> (M *v ?Xf \<omega>)
           - ?Xf \<omega> \<bullet> (M *v x) + x \<bullet> (M *v x)"
-      by (simp add: lind inner_diff_left inner_diff_right algebra_simps)
+      by (simp add: lind algebra_simps)
   qed
   show "integrable P (\<lambda>\<omega>. (?Xf \<omega> - x) \<bullet> (M *v (?Xf \<omega> - x)))"
     unfolding quad_eq
@@ -3301,12 +3301,12 @@ proof -
   have e: "(\<lambda>\<omega> :: 'n pairpath.
       (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))
       = (\<lambda>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (mat 1 *v (fst (\<omega> (\<theta> \<omega>)) - x)))"
-    by (simp add: fun_eq_iff matrix_vector_mul_lid)
+    by (simp add: fun_eq_iff)
   have "(\<integral>\<omega>. (fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x) \<partial>P)
       = trace (mat 1 ** (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))"
     unfolding e
     by (rule paper_pair_class_stopped_moments(6)[OF T L0 P st thM])
-  then show ?thesis by (simp add: matrix_mul_lid)
+  then show ?thesis by simp
 qed
 
 section \<open>The near-orthogonal direction: the anti-concentration dichotomy\<close>
@@ -3357,7 +3357,7 @@ next
   have den0: "0 < 16 * nq\<^sup>2 * (\<beta> + Cm / 2)"
     using nq0 b0 Cm0 by (simp add: power2_eq_square)
   have eK0: "0 < \<epsilon>K"
-    unfolding \<epsilon>K_def using e0 b0 den0 by (simp add: divide_pos_pos)
+    unfolding \<epsilon>K_def using e0 b0 den0 by simp
   define \<epsilon> where "\<epsilon> = min ebar (min (sqrt (T / \<beta>)) (\<epsilon>K / 2))"
   have eps0: "0 < \<epsilon>"
     unfolding \<epsilon>_def using eb T b0 eK0 by simp
@@ -3476,7 +3476,7 @@ next
   define et where "et = (\<integral>\<omega>. \<theta>' \<omega> \<partial>P)"
   have ith: "integrable P \<theta>'"
     by (rule PP.integrable_const_bound[of _ T])
-      (auto simp: thP' th0' thT' abs_of_nonneg)
+      (auto simp: thP' th0' thT')
   have et0: "0 < et"
     unfolding et_def
     by (rule integral_pos_of_AE_pos[OF PP.prob_space_axioms ith posAE])
@@ -3734,7 +3734,7 @@ next
       have "EY *v q = et *\<^sub>R (b *v q)"
         by (subst EYb) (simp add: scaleR_matrix_vector)
       then have "q \<bullet> (EY *v q) = et * (q \<bullet> (b *v q))"
-        by (simp add: inner_scaleR_right)
+        by simp
       then show ?thesis using svar by simp
     qed
     \<comment> \<open>the exit before \<open>t\<close> has probability at most \<open>1/2\<close>\<close>
@@ -3787,7 +3787,7 @@ next
     proof -
       have e: "(\<lambda>\<omega> :: 'n pairpath. (?V \<omega>) \<bullet> (?V \<omega>))
           = (\<lambda>\<omega>. (?V \<omega>) \<bullet> (mat 1 *v (?V \<omega>)))"
-        by (simp add: fun_eq_iff matrix_vector_mul_lid)
+        by (simp add: fun_eq_iff)
       show ?thesis
         unfolding e
         by (rule paper_pair_class_stopped_moments(5)[OF T L0 P st' thM'])
@@ -3816,7 +3816,7 @@ next
               (use ltT in \<open>simp add: pball_exit_def\<close>)
           then have "\<epsilon> \<le> dist (?Xf \<omega>) x"
             unfolding th_eq pball_exit_def
-            by (simp add: mem_ball dist_commute)
+            by (simp add: dist_commute)
           then have "\<epsilon>\<^sup>2 \<le> (dist (?Xf \<omega>) x)\<^sup>2"
             using eps0 by (intro power_mono) auto
           moreover have "(?V \<omega>) \<bullet> (?V \<omega>) = (dist (?Xf \<omega>) x)\<^sup>2"
@@ -3908,7 +3908,7 @@ next
       finally have "sqrt (s / 2) * (s / 2 / (nq * \<epsilon>)\<^sup>2)
           \<le> 2 * (\<integral>\<omega>. max (- W \<omega>) 0 \<partial>P)" .
       then show ?thesis
-        using nq0 eps0 by (simp add: field_simps power_mult_distrib
+        using nq0 eps0 by (simp add: field_simps
             power2_eq_square)
     qed
     have upper: "sqrt (s / 2) * s \<le> 4 * nq\<^sup>2 * \<epsilon>\<^sup>2 * (\<beta> + Cm / 2) * \<epsilon>\<^sup>2"
@@ -4148,7 +4148,7 @@ proof (intro ballI allI impI)
     proof -
       fix z assume z: "dist z x \<le> ebar"
       have zin: "z \<in> ball x e0 \<inter> ball x r"
-        using z e00 r0 by (auto simp: ebar_def mem_ball dist_commute)
+        using z e00 r0 by (auto simp: ebar_def dist_commute)
       have "enn2real (paper_v k L T K z) - \<phi> z
           \<le> enn2real (paper_v k L T K x) - \<phi> x"
         using lme zin by blast
@@ -4175,11 +4175,11 @@ proof (intro ballI allI impI)
       have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
         by (rule matrix_add_rdistrib)
       moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
-        by (simp add: scaleR_matrix_mult matrix_mul_lid)
+        by (simp add: scaleR_matrix_mult)
       ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
           = trace (H ** a + \<delta> *\<^sub>R a)" by simp
       have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"
-        by (simp add: trace_def sum.distrib vector_add_component)
+        by (simp add: trace_def sum.distrib)
       have e3: "trace (\<delta> *\<^sub>R a) = \<delta> * trace a" by (rule trace_scaleR)
       from e1 e2 e3 show ?thesis by simp
     qed
@@ -4250,7 +4250,7 @@ proof (intro ballI allI impI)
     proof -
       fix z assume z: "dist z x \<le> ebar"
       have zin: "z \<in> ball x e0 \<inter> ball x r"
-        using z e00 r0 by (auto simp: ebar_def mem_ball dist_commute)
+        using z e00 r0 by (auto simp: ebar_def dist_commute)
       have "enn2real (paper_v k L T K z) - \<phi> z
           \<le> enn2real (paper_v k L T K x) - \<phi> x"
         using lme zin by blast
@@ -4277,11 +4277,11 @@ proof (intro ballI allI impI)
       have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
         by (rule matrix_add_rdistrib)
       moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
-        by (simp add: scaleR_matrix_mult matrix_mul_lid)
+        by (simp add: scaleR_matrix_mult)
       ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
           = trace (H ** a + \<delta> *\<^sub>R a)" by simp
       have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"
-        by (simp add: trace_def sum.distrib vector_add_component)
+        by (simp add: trace_def sum.distrib)
       have e3: "trace (\<delta> *\<^sub>R a) = \<delta> * trace a" by (rule trace_scaleR)
       from e1 e2 e3 show ?thesis by simp
     qed
@@ -4462,7 +4462,7 @@ proof -
       = outer_prod u q *v z - outer_prod q u *v z"
     by (simp add: matrix_vector_mult_diff_rdistrib)
   also have "\<dots> = (q \<bullet> z) *\<^sub>R u - (u \<bullet> z) *\<^sub>R q"
-    by (simp add: outer_prod_mv)
+    by simp
   finally show ?thesis
     by (simp add: skewv_def scaleR_matrix_vector)
 qed
@@ -4599,7 +4599,7 @@ proof -
   have Cnn: "0 \<le> ?C * norm w"
     by (intro mult_nonneg_nonneg sum_nonneg) simp_all
   show ?thesis
-    using h Cnn by (simp add: power2_le_iff_abs_le abs_of_nonneg)
+    using h Cnn by (simp add: power2_le_iff_abs_le)
 qed
 
 subsection \<open>Extracting strict eigendata from a feasible witness\<close>
@@ -4714,7 +4714,7 @@ proof -
     have pars: "(\<Sum>u\<in>Blt. (u \<bullet> v)\<^sup>2) = v \<bullet> v"
       by (rule onormal_span_parseval[OF on_lt v(2)])
     have vv0: "0 < v \<bullet> v"
-      using v(3) by (simp add: inner_gt_zero_iff)
+      using v(3) by simp
     obtain u0 where u0: "u0 \<in> Blt" "0 < (u0 \<bullet> v)\<^sup>2"
     proof -
       have "\<exists>u\<in>Blt. (u \<bullet> v)\<^sup>2 \<noteq> 0"
@@ -4724,8 +4724,8 @@ proof -
         then show False using pars vv0 by simp
       qed
       then show ?thesis using that
-        by (metis zero_less_power2 power2_eq_iff_nonneg zero_power2
-            linorder_not_le abs_le_zero_iff abs_of_nonneg zero_le_power2)
+        by (metis zero_less_power2
+            zero_power2)
     qed
     have expand: "v \<bullet> (a *v v) = (\<Sum>u\<in>B. lam u * (u \<bullet> v)\<^sup>2)"
       by (subst deco) (rule quadform_sum_outer[OF finB])
@@ -4845,7 +4845,7 @@ proof -
   proof (cases "u \<in> Bp")
     case True
     have "0 \<le> lam u" unfolding lam_def using True s0 s1 c0 lam0_nn[of u]
-      by (simp add: mult_nonneg_nonneg)
+      by simp
     moreover have "lam u \<le> L - m"
     proof -
       have "lam u = (1 - s) * lam0 u + s * c"
@@ -4860,7 +4860,7 @@ proof -
   next
     case False
     have "0 \<le> lam u" unfolding lam_def using False s1 lam0_nn[of u]
-      by (simp add: mult_nonneg_nonneg)
+      by simp
     moreover have "lam u \<le> L - m"
     proof -
       have "lam u = (1 - s) * lam0 u" unfolding lam_def using False by simp
@@ -4890,8 +4890,8 @@ proof -
     case False
     then have "lam u = (1 - s) * lam0 u" unfolding lam_def by simp
     then have "0 < lam0 u" using pos s1
-      by (metis lam0_nn less_le mult_pos_pos mult_zero_right
-          zero_less_mult_pos linorder_neqE_linordered_idom)
+      by (metis lam0_nn less_le
+          mult_zero_right)
     then show ?thesis by (rule orth0[OF u])
   qed
   have trace_bound:
@@ -4995,7 +4995,7 @@ proof (cases "finite F")
     also have "\<dots> = outerp (w u) *v z + (\<Sum>v\<in>F. outerp (w v)) *v z"
       by (rule matrix_vector_mult_add_rdistrib)
     also have "outerp (w u) *v z = (w u \<bullet> z) *\<^sub>R w u"
-      by (simp add: outerp_eq_outer_prod outer_prod_mv)
+      by (simp add: outerp_eq_outer_prod)
     finally show ?case using insert by simp
   qed
 next
@@ -5012,7 +5012,7 @@ proof -
     unfolding outerp_sum_matvec by (rule inner_sum_right)
   also have "\<dots> = (\<Sum>u\<in>F. (w u \<bullet> z)\<^sup>2)"
     by (rule sum.cong[OF refl])
-      (simp add: inner_scaleR_right inner_commute power2_eq_square)
+      (simp add: inner_commute power2_eq_square)
   finally show ?thesis .
 qed
 
@@ -5032,8 +5032,8 @@ lemma outerp_sum_psd:
   shows "psd (\<Sum>u\<in>F. outerp (w u))"
 proof -
   have t: "transpose (\<Sum>u\<in>F. outerp (w u)) = (\<Sum>u\<in>F. outerp (w u))"
-    by (simp add: transpose_matrix_sum outerp_eq_outer_prod
-        transpose_outer_prod)
+    by (simp add: transpose_matrix_sum
+        outerp_eq_outer_prod)
   have q: "0 \<le> z \<bullet> ((\<Sum>u\<in>F. outerp (w u)) *v z)" for z
     unfolding outerp_sum_quadform by (rule sum_nonneg) simp
   show ?thesis unfolding psd_def using t q by blast
@@ -5317,7 +5317,7 @@ proof -
     have wv: "w u \<bullet> vv = lam u * c u + r u" if u: "u \<in> Bp" for u
     proof -
       have "w u \<bullet> vv = (\<Sum>u'\<in>Bp. c u' * (w u \<bullet> w u'))"
-        unfolding vvdef by (simp add: inner_sum_right inner_scaleR_right)
+        unfolding vvdef by (simp add: inner_sum_right)
       also have "\<dots> = (\<Sum>u'\<in>Bp. c u' * (if u' = u then lam u else 0)
           + c u' * g u u')"
         by (rule sum.cong[OF refl]) (simp add: g_def algebra_simps)
@@ -5328,7 +5328,7 @@ proof -
           = (\<Sum>u'\<in>Bp. if u' = u then c u' * lam u else 0)"
         by (rule sum.cong[OF refl]) simp
       also have "\<dots> = c u * lam u"
-        using u finBp by (simp add: sum.delta)
+        using u finBp by simp
       finally show ?thesis unfolding r_def by (simp add: mult.commute)
     qed
     have rb: "\<bar>r u\<bar> \<le> E * sac" if u: "u \<in> Bp" for u
@@ -5353,7 +5353,7 @@ proof -
       have "vv \<bullet> vv = (\<Sum>u\<in>Bp. (c u *\<^sub>R w u) \<bullet> vv)"
         by (subst (1) vvdef) (rule inner_sum_left)
       also have "\<dots> = (\<Sum>u\<in>Bp. c u * (lam u * c u + r u))"
-        by (rule sum.cong[OF refl]) (simp add: inner_scaleR_left wv)
+        by (rule sum.cong[OF refl]) (simp add: wv)
       also have "\<dots> = (\<Sum>u\<in>Bp. lam u * (c u)\<^sup>2 + c u * r u)"
         by (rule sum.cong[OF refl]) (simp add: power2_eq_square algebra_simps)
       also have "\<dots> = slc + (\<Sum>u\<in>Bp. c u * r u)"
@@ -5403,7 +5403,7 @@ proof -
       also have "\<dots> \<le> np * (E\<^sup>2 * (np * nc2))"
         using sac2 np0 by (intro mult_left_mono) simp_all
       also have "\<dots> = (np * E)\<^sup>2 * nc2"
-        by (simp add: power_mult_distrib power2_eq_square algebra_simps)
+        by (simp add: power2_eq_square algebra_simps)
       finally show ?thesis .
     qed
     have lam2: "(1 + m) * slc \<le> (\<Sum>u\<in>Bp. (lam u * c u)\<^sup>2)"
@@ -5419,7 +5419,7 @@ proof -
         then have "(1 + m) * lam u * (c u)\<^sup>2 \<le> lam u * lam u * (c u)\<^sup>2"
           by (rule mult_right_mono) simp
         then show "(1 + m) * lam u * (c u)\<^sup>2 \<le> (lam u * c u)\<^sup>2"
-          by (simp add: power_mult_distrib power2_eq_square algebra_simps)
+          by (simp add: power2_eq_square algebra_simps)
       qed
       finally show ?thesis .
     qed
@@ -5494,7 +5494,7 @@ proof -
     with zero have "((1 + m / 2) * (1 + m) - D2) * nc2 \<le> 0"
       by (simp add: algebra_simps)
     with bracket nc0 have nc2z: "nc2 = 0"
-      by (metis mult_pos_pos not_le order_less_irrefl
+      by (metis mult_pos_pos not_le
           order_le_less zero_less_mult_iff)
     have "(c u)\<^sup>2 = 0"
     proof (rule ccontr)
@@ -5521,7 +5521,7 @@ proof -
         by (subst sum.distrib[symmetric])
           (rule sum.cong[OF refl], use neq in auto)
       also have "\<dots> = w u - w u'"
-        using u u' finBp by (simp add: sum.delta)
+        using u u' finBp by simp
       also have "\<dots> = 0" using eq by simp
       finally have "c u = 0" by (rule kernel[OF _ u])
       then show False unfolding c_def by simp
@@ -5793,7 +5793,7 @@ proof -
       then have pos: "0 < lam u"
         using lam_nn[OF u] by (simp add: order_less_le)
       have orth: "(sqrt (lam u) *\<^sub>R u) \<bullet> q = 0"
-        using lam_orth[OF u pos] by (simp add: inner_scaleR_left)
+        using lam_orth[OF u pos] by simp
       show ?thesis by (rule skewv_apply_orth[OF q0 orth])
     qed
     have "w u = skewv q (sqrt (lam u) *\<^sub>R u) *v q
@@ -5856,22 +5856,22 @@ proof -
           + ((sqrt (lam u) *\<^sub>R u) \<bullet> d u' + d u \<bullet> (sqrt (lam u') *\<^sub>R u')
              + d u \<bullet> d u')"
       by (subst wsplit, subst wsplit)
-        (simp add: inner_add_left inner_add_right algebra_simps)
+        (simp add: algebra_simps)
     have diag: "(sqrt (lam u) *\<^sub>R u) \<bullet> (sqrt (lam u') *\<^sub>R u')
         = (if u' = u then lam u else 0)"
     proof (cases "u' = u")
       case True
       then show ?thesis
         using lam_nn[OF uB] onormal_inner_self[OF B uB]
-        by (simp add: inner_scaleR_left inner_scaleR_right
-            abs_of_nonneg)
+        by simp
+
     next
       case False
       have "u \<bullet> u' = 0"
         using B uB uB' False unfolding onormal_def pairwise_def
           orthogonal_def by metis
       then show ?thesis using False
-        by (simp add: inner_scaleR_left inner_scaleR_right)
+        by simp
     qed
     have b1: "\<bar>(sqrt (lam u) *\<^sub>R u) \<bullet> d u'\<bar> \<le> sqrt L * e"
     proof -
@@ -6015,12 +6015,12 @@ proof (intro linearI)
   fix A B :: "real^'n^'n"
   show "S ** (A + B) ** transpose S = S ** A ** transpose S
       + S ** B ** transpose S"
-    by (simp add: matrix_matrix_mult_def vec_eq_iff vector_add_component
+    by (simp add: matrix_matrix_mult_def vec_eq_iff
         sum.distrib algebra_simps)
 next
   fix c :: real and A :: "real^'n^'n"
   show "S ** (c *\<^sub>R A) ** transpose S = c *\<^sub>R (S ** A ** transpose S)"
-    by (simp add: matrix_matrix_mult_def vec_eq_iff vector_scaleR_component
+    by (simp add: matrix_matrix_mult_def vec_eq_iff
         sum_distrib_left algebra_simps)
 qed
 
@@ -6064,13 +6064,13 @@ qed
 lemma matmul_scaleR_right:
   fixes A B :: "real^'n::finite^'n"
   shows "A ** (c *\<^sub>R B) = c *\<^sub>R (A ** B)"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff vector_scaleR_component
+  by (simp add: matrix_matrix_mult_def vec_eq_iff
       sum_distrib_left algebra_simps)
 
 lemma sandwich_mat1:
   fixes S :: "real^'n::finite^'n"
   shows "S ** (c *\<^sub>R mat 1) ** transpose S = c *\<^sub>R (S ** transpose S)"
-  by (simp add: matmul_scaleR_right matrix_mul_rid scaleR_matrix_mult)
+  by (simp add: matmul_scaleR_right scaleR_matrix_mult)
 
 lemma continuous_on_sbmpair_path:
   fixes \<omega> :: "'n::finite \<Rightarrow> real \<Rightarrow> real" and S :: "real^'n^'n"
@@ -6379,7 +6379,7 @@ proof -
           = S ** outerp (cbmX (0 :: real^'n) (min u T) \<omega>) ** transpose S
             - S ** ((min u T) *\<^sub>R mat 1) ** transpose S"
         by (simp add: matrix_matrix_mult_def vec_eq_iff
-            vector_minus_component sum_subtractf algebra_simps)
+            sum_subtractf algebra_simps)
       also have "\<dots> = outerp (S *v cbmX (0 :: real^'n) (min u T) \<omega>)
           - (min u T) *\<^sub>R (S ** transpose S)"
         by (simp add: outerp_matvec_image sandwich_mat1)
@@ -6466,7 +6466,7 @@ proof -
   moreover have "(\<Sum>j\<in>UNIV. outerp (w j)) $ i $ l
       = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
     by (induction "UNIV :: 'm set" rule: infinite_finite_induct)
-      (simp_all add: outerp_def vector_add_component)
+      (simp_all add: outerp_def)
   ultimately show ?thesis by (simp add: vec_eq_iff)
 qed
 
@@ -6522,7 +6522,7 @@ proof -
       by (rule sum_sq_le_sq_sum) simp
     finally have h: "(norm (A $ i))\<^sup>2 \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)\<^sup>2" .
     show ?thesis
-      using h by (simp add: power2_le_iff_abs_le abs_of_nonneg sum_nonneg)
+      using h by (simp add: power2_le_iff_abs_le sum_nonneg)
   qed
   have "(norm A)\<^sup>2 = (\<Sum>i\<in>UNIV. (norm (A $ i))\<^sup>2)"
     by (simp add: power2_norm_eq_inner inner_vec_def)
@@ -6530,7 +6530,7 @@ proof -
     by (rule sum_sq_le_sq_sum) simp
   finally have h: "(norm A)\<^sup>2 \<le> (\<Sum>i\<in>UNIV. norm (A $ i))\<^sup>2" .
   have "norm A \<le> (\<Sum>i\<in>UNIV. norm (A $ i))"
-    using h by (simp add: power2_le_iff_abs_le abs_of_nonneg sum_nonneg)
+    using h by (simp add: power2_le_iff_abs_le sum_nonneg)
   also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)"
     by (rule sum_mono) (rule row)
   finally show ?thesis .
@@ -6548,7 +6548,7 @@ proof -
   ultimately have "(dist a c)\<^sup>2 + (dist b d)\<^sup>2 \<le> (dist a c + dist b d)\<^sup>2"
     by linarith
   then have "sqrt ((dist a c)\<^sup>2 + (dist b d)\<^sup>2) \<le> dist a c + dist b d"
-    by (metis real_le_lsqrt real_sqrt_le_iff zero_le_dist add_nonneg_nonneg)
+    by (metis real_le_lsqrt zero_le_dist add_nonneg_nonneg)
   then show ?thesis by (simp add: dist_prod_def)
 qed
 
@@ -7242,8 +7242,8 @@ proof -
               - h * (S ** transpose S) $ j $ i))"
       by (rule ext)
         (simp add: trace_def matrix_matrix_mult_def outerp_def
-          vector_minus_component vector_scaleR_component
-          sum_distrib_left algebra_simps sum_subtractf)
+          sum_distrib_left algebra_simps
+          sum_subtractf)
     show "continuous_on UNIV (\<lambda>p :: ((real^'n) \<times> (real^'n^'n))
           \<times> ((real^'n) \<times> (real^'n^'n)).
         trace (M ** (outerp (fst (fst p) - fst (snd p))
@@ -7263,7 +7263,7 @@ proof -
             * (fst q $ j * fst q $ i - snd q $ j $ i))"
       by (rule ext)
         (simp add: trace_def matrix_matrix_mult_def outerp_def
-          vector_minus_component sum_distrib_left algebra_simps
+          sum_distrib_left algebra_simps
           sum_subtractf)
     show "continuous_on UNIV (\<lambda>q :: (real^'n) \<times> (real^'n^'n).
         trace (M ** (outerp (fst q) - snd q)))"
@@ -7426,7 +7426,7 @@ proof -
       by (intro mult_left_mono power_mono matvec_norm_le)
         (simp_all add: Cmm_def[symmetric] Cmm0)
     also have "\<dots> = Cmm * Cs\<^sup>2 * (v \<bullet> v)"
-      by (simp add: power_mult_distrib power2_norm_eq_inner algebra_simps)
+      by (simp add: power2_norm_eq_inner algebra_simps)
     finally show ?thesis .
   qed
   have bb: "\<bar>b\<bar> \<le> n'\<^sup>2 * Cmm * L"
@@ -7702,8 +7702,8 @@ proof -
             - h * (\<Sum>l\<in>UNIV. SF (fst (snd ab)) $ i $ l
                 * SF (fst (snd ab)) $ j $ l))"
       by (rule ext) (simp add: outerp_def matrix_matrix_mult_def
-          transpose_def vec_eq_iff vector_minus_component
-          vector_scaleR_component)
+          transpose_def
+          vec_eq_iff)
     show ?thesis unfolding e
       by (intro continuous_on_vec_lambda continuous_intros
           SFcomp vcomp1 vcomp2)
@@ -8114,7 +8114,7 @@ next
       by (rule nn_integral_eq_integral[OF intS nnG, symmetric])
     also have "\<dots> \<le> ennreal (real (Suc (Suc N)) * xiC M L * h\<^sup>2)"
       by (rule main)
-    finally show ?thesis using c0 by (simp add: ennreal_le_iff)
+    finally show ?thesis using c0 by simp
   qed
   show ?case using intS bndS by blast
 qed
@@ -8607,7 +8607,7 @@ next
         unfolding nnA nnQfin by (rule refl)
       also have "\<dots> \<le> ennreal (real m * xiC M L * h\<^sup>2)"
         by (intro ennreal_leI IHb)
-      finally show ?thesis using c0 by (simp add: ennreal_le_iff)
+      finally show ?thesis using c0 by simp
     qed
     show ?thesis using intS bndS by blast
   qed
@@ -8730,7 +8730,7 @@ theorem eulerp_quad_lower:
 proof -
   have cpc: "continuous_on UNIV (closest_point (cball x rb))"
     by (rule continuous_on_closest_point)
-      (use rb0 in \<open>auto simp: convex_cball closed_cball\<close>)
+      (use rb0 in \<open>auto\<close>)
   have Gc: "continuous_on UNIV (\<lambda>z :: real^'n.
       q + M *v (closest_point (cball x rb) z - x))"
   proof -
@@ -9151,7 +9151,7 @@ proof -
     qed
     have y0: "0 \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
       by (auto intro!: mult_nonneg_nonneg)
-    show ?thesis using le y0 by (simp add: ennreal_le_iff)
+    show ?thesis using le y0 by simp
   qed
   have seteq: "{\<omega> \<in> space Q. l^4 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4}
       = {\<omega> \<in> space Q. l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}"
@@ -9296,9 +9296,9 @@ proof -
   let ?CM = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
   have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
   have ax: "norm (a - x) \<le> rb"
-    using a by (simp add: mem_cball dist_norm norm_minus_commute)
+    using a by (simp add: dist_norm norm_minus_commute)
   have bx: "norm (b - x) \<le> rb"
-    using b by (simp add: mem_cball dist_norm norm_minus_commute)
+    using b by (simp add: dist_norm norm_minus_commute)
   have dble: "norm (b - a) \<le> 2 * rb"
   proof -
     have deq: "b - a = (b - x) + (x - a)" by simp
@@ -9495,7 +9495,7 @@ proof -
     have tdh0: "0 \<le> t / h" using t0 h0 by simp
     have fl0: "0 \<le> \<lfloor>t / h\<rfloor>" using tdh0 by simp
     have mreal: "real m = real_of_int \<lfloor>t / h\<rfloor>"
-      unfolding m_def using fl0 by (simp add: of_nat_nat)
+      unfolding m_def using fl0 by simp
     have mh_le: "real m * h \<le> t"
     proof -
       have "real_of_int \<lfloor>t / h\<rfloor> \<le> t / h" by (rule of_int_floor_le)
@@ -9728,7 +9728,7 @@ proof -
           \<le> c * xiC M L * h / (\<beta> / 2)\<^sup>2"
         by (rule divide_right_mono[OF num]) simp
       also have "\<dots> = A * h"
-        unfolding A_def using b0 by (simp add: power_divide field_simps)
+        unfolding A_def using b0 by (simp add: field_simps)
       finally show ?thesis .
     qed
     have n2: "real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
@@ -9844,7 +9844,7 @@ proof -
       \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t" for j
   proof -
     have "max 0 (t - inverse (real (Suc j))) < t"
-      using t0 by (simp add: max_less_iff_conj)
+      using t0 by simp
     then show ?thesis
       using Rats_dense_in_real[of
           "max 0 (t - inverse (real (Suc j)))" t] by blast
@@ -10203,7 +10203,7 @@ proof -
         have "dist (fst (\<omega> s)) x \<le> rb"
           using pball_exit_stays_cball[OF c0' sdist cont, of s] s
           unfolding \<theta>_def by auto
-        then show ?thesis by (simp add: mem_cball dist_commute)
+        then show ?thesis by (simp add: dist_commute)
       qed
       have inside: "fst (\<omega> s) \<in> ball x rb"
         if s0: "0 \<le> s" and st: "s < \<theta>" for s
@@ -10223,7 +10223,7 @@ proof -
         have inc: "fst (\<omega> \<theta>) \<in> cball x rb"
           using stays[of \<theta>] th_pos by simp
         then have le: "dist (fst (\<omega> \<theta>)) x \<le> rb"
-          by (simp add: mem_cball dist_commute)
+          by (simp add: dist_commute)
         show ?thesis using ge le by linarith
       qed
       have grow: "\<theta> * cm / 2 \<le> q \<bullet> (fst (\<omega> \<theta>) - x)
@@ -10276,7 +10276,7 @@ lemma skewSF_cont:
 proof -
   have cpc: "continuous_on UNIV (closest_point (cball x r))"
     by (rule continuous_on_closest_point)
-      (use r0 in \<open>auto simp: convex_cball closed_cball\<close>)
+      (use r0 in \<open>auto\<close>)
   have gradc: "continuous_on UNIV (\<lambda>z :: real^'n.
       q + M *v (closest_point (cball x r) z - x))"
   proof -
@@ -10344,9 +10344,9 @@ theorem skewSF_package:
         ** transpose (skewSF lam f q M x r z)))"
 proof -
   have cin: "closest_point (cball x r) z \<in> cball x r" for z
-    by (rule closest_point_in_set) (use r0 in \<open>auto simp: closed_cball\<close>)
+    by (rule closest_point_in_set) (use r0 in \<open>auto\<close>)
   have zr: "dist (closest_point (cball x r) z) x \<le> r" for z
-    using cin[of z] by (simp add: mem_cball dist_commute)
+    using cin[of z] by (simp add: dist_commute)
   note props = skewfield_properties[OF B sp BpB cardBp lam_box lam_lb
       lam_orth m0 mL q0 tr zr r0 sm_ub[unfolded ec_def Cm_def]
       sm_lb[unfolded ec_def Cm_def] sm_tr[unfolded ec_def Cm_def]]
@@ -10415,7 +10415,7 @@ proof -
     by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
         left_diff_distrib)
   have e2: "(s *\<^sub>R mat 1) ** a = s *\<^sub>R a"
-    by (simp add: scaleR_matrix_mult matrix_mul_lid)
+    by (simp add: scaleR_matrix_mult)
   have e3: "trace (H ** a - s *\<^sub>R a) = trace (H ** a) - s * trace a"
     by (simp add: trace_def sum_subtractf sum_distrib_left)
   show ?thesis unfolding e1 e2 by (rule e3)
@@ -10427,14 +10427,14 @@ lemma quad_soften_split:
       = v \<bullet> ((H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1) *v v) + 2 * \<gamma> * (v \<bullet> v)"
 proof -
   have e1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
-    by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
-        matrix_vector_mul_lid)
+    by (simp add: matrix_vector_mult_diff_rdistrib
+        scaleR_matrix_vector)
   have e2: "(H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1) *v v
       = H *v v - (2 * \<gamma> + \<delta>) *\<^sub>R v"
-    by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
-        matrix_vector_mul_lid)
+    by (simp add: matrix_vector_mult_diff_rdistrib
+        scaleR_matrix_vector)
   show ?thesis unfolding e1 e2
-    by (simp add: inner_diff_right inner_scaleR_right algebra_simps)
+    by (simp add: algebra_simps)
 qed
 
 lemma small_radius_exists:
@@ -10543,10 +10543,10 @@ proof -
       using diff_chain_at[OF i1 i2] by (simp add: o_def)
     then show ?thesis unfolding h_def
       by (rule has_derivative_imp_has_field_derivative)
-        (simp add: inner_scaleR_right ac_simps)
+        (simp add: ac_simps)
   qed
   have gg0: "0 < g x \<bullet> g x"
-    using gx0 by (simp add: inner_gt_zero_iff)
+    using gx0 by simp
   have "((\<lambda>s. (h s - h 0) / (s - 0)) \<longlongrightarrow> g x \<bullet> g x) (at 0)"
     using hd by (simp add: has_field_derivative_iff)
   then have "\<forall>\<^sub>F s in at (0::real). 0 < (h s - h 0) / (s - 0)"
@@ -10583,10 +10583,10 @@ proof -
   qed
   define z where "z = x + s *\<^sub>R g x"
   have dz: "dist x z = s * norm (g x)"
-    unfolding z_def dist_norm using s0 by (simp add: abs_of_nonneg)
+    unfolding z_def dist_norm using s0 by simp
   have zK: "z \<in> K"
   proof -
-    have "z \<in> ball x eK" using dz sg_lt by (simp add: mem_ball)
+    have "z \<in> ball x eK" using dz sg_lt by simp
     then show ?thesis using eKK by blast
   qed
   have hgt: "\<phi> x < \<phi> z"
@@ -10755,11 +10755,11 @@ proof -
   have rr_phi: "rr < rphi" and rr_K: "rr < eK"
     using rrx rphi0 eK0 by auto
   have cb_phi: "cball x rr \<subseteq> ball x rphi"
-    using rr_phi by (auto simp: mem_cball mem_ball)
+    using rr_phi by auto
   have cb_K: "cball x rr \<subseteq> K"
   proof -
     have "cball x rr \<subseteq> ball x eK"
-      using rr_K by (auto simp: mem_cball mem_ball)
+      using rr_K by auto
     then show ?thesis using eKK by blast
   qed
   define SF where "SF = skewSF lam f (g x) M x rr"
@@ -10925,7 +10925,7 @@ proof -
           + (1/2) * ((fst (\<omega> cc) - x) \<bullet> (M *v (fst (\<omega> cc) - x)))"
         by (rule growall[OF cc0 ccT' inb])
       have nn: "0 \<le> \<gamma> * ((fst (\<omega> cc) - x) \<bullet> (fst (\<omega> cc) - x))"
-        using g0 inner_ge_zero by (simp add: mult_nonneg_nonneg)
+        using g0 inner_ge_zero by simp
       show ?thesis unfolding theq using gq nn False by simp
     qed
     have fun_ge: "tv x + mg \<le> FN \<omega>"
@@ -10987,13 +10987,13 @@ proof -
   have vfin: "ennreal (tv x) = paper_v k L T K x"
     unfolding tv_def
     using paper_v_neq_top[OF T0', of k L K x]
-    by (simp add: ennreal_enn2real less_top)
+    by (simp add: less_top)
   have chain: "ennreal (tv x + mg) \<le> paper_v k L T K x"
     by (rule order_trans[OF essge esle])
   have "ennreal (tv x + mg) \<le> ennreal (tv x)"
     using chain by (simp add: vfin)
   moreover have "0 \<le> tv x" unfolding tv_def by simp
-  ultimately have "tv x + mg \<le> tv x" by (simp add: ennreal_le_iff)
+  ultimately have "tv x + mg \<le> tv x" by simp
   then show False using mg0 by linarith
     qed
   qed
@@ -11068,7 +11068,7 @@ definition tanp :: "real^'n::finite \<Rightarrow> real^'n^'n"
 
 lemma tanp_mv: "tanp u *v w = w - (u \<bullet> w) *\<^sub>R u"
   unfolding tanp_def outerp_eq_outer_prod
-  by (simp add: matrix_vector_mult_diff_rdistrib matrix_vector_mul_lid)
+  by (simp add: matrix_vector_mult_diff_rdistrib)
 
 lemma tanp_sym: "transpose (tanp u) = tanp u"
 proof -
@@ -11081,7 +11081,7 @@ qed
 
 lemma tanp_quadform: "x \<bullet> (tanp u *v x) = x \<bullet> x - (u \<bullet> x)\<^sup>2"
   unfolding tanp_mv
-  by (simp add: inner_diff_right inner_scaleR_right
+  by (simp add: inner_diff_right
       power2_eq_square inner_commute)
 
 lemma tanp_psd:
@@ -11152,7 +11152,7 @@ lemma tanp_feasible:
   unfolding feasible_def
   using tanp_psd[OF u1] tanp_eigen_ub[OF L1, of u]
     tanp_eigen_lb[OF k1, of u]
-  by (simp add: matrix_vector_mult_0_right)
+  by simp
 
 lemma tanp_sconstraint:
   fixes u :: "real^'n::finite"
@@ -11192,7 +11192,7 @@ proof -
       = outerp u ** mat 1 - outerp u ** outerp u"
     unfolding tanp_def by (rule matrix_msub_ldistrib)
   also have "\<dots> = outerp u - outerp u"
-    by (simp add: matrix_mul_rid outerp_sq uu)
+    by (simp add: outerp_sq uu)
   finally show ?thesis by (simp add: tanp_def)
 qed
 
@@ -11219,7 +11219,7 @@ proof -
   have "u \<bullet> w = u \<bullet> ((norm w) *\<^sub>R u)"
     by (rule arg_cong[where f = "\<lambda>v. u \<bullet> v", OF par])
   also have "\<dots> = norm w * (u \<bullet> u)"
-    by (simp add: inner_scaleR_right)
+    by simp
   also have "\<dots> = norm w" using uu by simp
   finally have uw: "u \<bullet> w = norm w" .
   have "tanp u *v w = w - (u \<bullet> w) *\<^sub>R u" by (rule tanp_mv)
@@ -11298,11 +11298,11 @@ theorem tanSF_package:
         ** transpose (tanSF y\<^sub>0 \<rho> x rb z)) = real CARD('n) - 1"
 proof -
   have cin: "closest_point (cball x rb) z \<in> cball x rb" for z
-    by (rule closest_point_in_set) (use rb0 in \<open>auto simp: closed_cball\<close>)
+    by (rule closest_point_in_set) (use rb0 in \<open>auto\<close>)
   have far: "\<rho> \<le> norm (closest_point (cball x rb) z - y\<^sub>0)" for z
   proof -
     have "dist (closest_point (cball x rb) z) x \<le> rb"
-      using cin[of z] by (simp add: mem_cball dist_commute)
+      using cin[of z] by (simp add: dist_commute)
     moreover have "dist x y\<^sub>0
         \<le> dist x (closest_point (cball x rb) z)
           + dist (closest_point (cball x rb) z) y\<^sub>0"
@@ -11317,7 +11317,7 @@ proof -
   proof -
     have cpc: "continuous_on UNIV (closest_point (cball x rb))"
       by (rule continuous_on_closest_point)
-        (use rb0 in \<open>auto simp: convex_cball closed_cball\<close>)
+        (use rb0 in \<open>auto\<close>)
     have uc: "continuous_on UNIV
         (\<lambda>z. uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z))"
       by (rule continuous_on_compose2[OF uvec_cont[OF rho0] cpc]) auto
@@ -11349,7 +11349,7 @@ proof -
     have arg: "c *\<^sub>R (x - y\<^sub>0) + (c *\<^sub>R mat 1)
         *v (closest_point (cball x rb) z - x)
         = c *\<^sub>R (closest_point (cball x rb) z - y\<^sub>0)"
-      by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+      by (simp add: scaleR_matrix_vector
           scaleR_right_diff_distrib scaleR_add_right)
     have k0: "tanp (uvec y\<^sub>0 \<rho> (closest_point (cball x rb) z))
         *v (closest_point (cball x rb) z - y\<^sub>0) = 0"
@@ -12133,7 +12133,7 @@ proof -
       have tdh0: "0 \<le> t / h" using t0 h0 by simp
       have fl0: "0 \<le> \<lfloor>t / h\<rfloor>" using tdh0 by simp
       have mreal: "real m = real_of_int \<lfloor>t / h\<rfloor>"
-        unfolding m_def using fl0 by (simp add: of_nat_nat)
+        unfolding m_def using fl0 by simp
       have mh_le: "real m * h \<le> t"
       proof -
         have "real_of_int \<lfloor>t / h\<rfloor> \<le> t / h" by (rule of_int_floor_le)
@@ -12365,7 +12365,7 @@ proof -
             \<le> c * xiC M L * h / (\<beta> / 2)\<^sup>2"
           by (rule divide_right_mono[OF num]) simp
         also have "\<dots> = A * h"
-          unfolding A_def using b0 by (simp add: power_divide field_simps)
+          unfolding A_def using b0 by (simp add: field_simps)
         finally show ?thesis .
       qed
       have n2: "real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
@@ -12450,7 +12450,7 @@ proof -
       \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t" for j
   proof -
     have "max 0 (t - inverse (real (Suc j))) < t"
-      using t0 by (simp add: max_less_iff_conj)
+      using t0 by simp
     then show ?thesis
       using Rats_dense_in_real[of
           "max 0 (t - inverse (real (Suc j)))" t] by blast
@@ -12763,9 +12763,9 @@ proof -
     have e: "(tanp u *v v) \<bullet> (tanp u *v v)
         = v \<bullet> v - (2 - u \<bullet> u) * (u \<bullet> v)\<^sup>2"
       unfolding tanp_mv
-      by (simp add: inner_diff_left inner_diff_right
-          inner_scaleR_left inner_scaleR_right inner_commute
-          power2_eq_square algebra_simps)
+      by (simp add: inner_commute
+          power2_eq_square
+          algebra_simps)
     have uu1: "u \<bullet> u \<le> 1"
     proof -
       have "u \<bullet> u = (norm u)\<^sup>2" by (simp add: dot_square_norm)
@@ -12818,7 +12818,7 @@ proof -
   qed
   have "A \<in> feasible k L 0"
     unfolding feasible_def
-    using psdA ubA lbA by (simp add: matrix_vector_mult_0_right)
+    using psdA ubA lbA by simp
   then have "A \<in> sconstraint k L"
     using feasible_subset_sconstraint by blast
   then show ?thesis unfolding A_def tr .
@@ -12873,7 +12873,7 @@ proof -
   proof -
     fix z assume "z \<in> RO"
     then have "norm (z - y\<^sub>0) < rB"
-      unfolding RO_def by (simp add: mem_ball dist_norm norm_minus_commute)
+      unfolding RO_def by (simp add: dist_norm norm_minus_commute)
     moreover have "norm (z - x) \<le> norm (z - y\<^sub>0) + norm (y\<^sub>0 - x)"
     proof -
       have "z - x = (z - y\<^sub>0) + (y\<^sub>0 - x)" by simp
@@ -12894,7 +12894,7 @@ proof -
     have far: "\<rho> \<le> norm (z - y\<^sub>0)" using z unfolding RO_def by auto
     have arg: "c' *\<^sub>R (x - y\<^sub>0) + (c' *\<^sub>R mat 1) *v (z - x)
         = c' *\<^sub>R (z - y\<^sub>0)"
-      by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+      by (simp add: scaleR_matrix_vector
           scaleR_right_diff_distrib scaleR_add_right)
     have k0: "tanp (uvec y\<^sub>0 \<rho> z) *v (z - y\<^sub>0) = 0"
       by (rule tanp_kill[OF unitRO[OF z] uvec_par[OF rho0 far]])
@@ -12915,7 +12915,7 @@ proof -
   proof -
     have "(c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z))
         = c' *\<^sub>R (SF z ** transpose (SF z))"
-      by (simp add: scaleR_matrix_mult matrix_mul_lid)
+      by (simp add: scaleR_matrix_mult)
     then have "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
         = c' * trace (SF z ** transpose (SF z))"
       by (simp add: trace_scaleR)
@@ -12991,17 +12991,17 @@ proof -
           using elim t0 tT inb' by blast+
         define d where "d = fst (\<omega> t) - x"
         have e1: "(2 *\<^sub>R (x - y\<^sub>0)) \<bullet> d = 2 * ((x - y\<^sub>0) \<bullet> d)"
-          by (simp add: inner_scaleR_left)
+          by simp
         have e2: "((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> d = - 2 * ((x - y\<^sub>0) \<bullet> d)"
-          by (simp add: inner_scaleR_left)
+          by simp
         have e3: "d \<bullet> (((2::real) *\<^sub>R mat 1) *v d) = 2 * (d \<bullet> d)"
-          by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
-              inner_scaleR_right)
+          by (simp add: scaleR_matrix_vector)
+
         have negmv: "\<And>A :: real^'n^'n. (- A) *v d = - (A *v d)"
           by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
         have e4: "d \<bullet> (((-2::real) *\<^sub>R mat 1) *v d) = - 2 * (d \<bullet> d)"
-          by (simp add: negmv scaleR_matrix_vector matrix_vector_mul_lid
-              inner_scaleR_right inner_minus_right)
+          by (simp add: negmv scaleR_matrix_vector)
+
         have id1: "t * (2 * (real CARD('n) - 1)) / 2
             = t * (real CARD('n) - 1)" by simp
         have id2: "t * (- 2 * (real CARD('n) - 1)) / 2
@@ -13207,7 +13207,7 @@ proof -
       unfolding cn_def using elim(1) by blast
     have xRO: "x \<in> ?RO"
       using rho0 rr r00 unfolding \<rho>_def \<rho>\<^sub>0_def
-      by (auto simp: mem_ball dist_norm norm_minus_commute)
+      by (auto simp: dist_norm norm_minus_commute)
     have ROopen: "open ?RO"
     proof -
       have "open {w :: real^'n. \<rho> < norm (w - y\<^sub>0)}"
@@ -13257,7 +13257,7 @@ proof -
         have dichot: "norm (fst (\<omega> e) - y\<^sub>0) \<le> \<rho>
             \<or> rB \<le> norm (fst (\<omega> e) - y\<^sub>0)"
           using Xe
-          by (auto simp: mem_ball dist_norm norm_minus_commute)
+          by (auto simp: dist_norm norm_minus_commute)
         show False
         proof (cases rule: disjE[OF dichot])
           case 1
@@ -13267,7 +13267,7 @@ proof -
             unfolding \<rho>_def using r00 by (simp add: power_divide)
           moreover have "\<rho>\<^sub>0\<^sup>2 \<le> (norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2"
             unfolding esq \<rho>\<^sub>0_def using e0' cn0
-            by (simp add: mult_nonneg_nonneg)
+            by simp
           ultimately show False by linarith
         next
           case 2
@@ -13309,10 +13309,10 @@ proof -
           unfolding csq \<rho>\<^sub>0_def[symmetric] by linarith
       qed
       then have "norm (fst (\<omega> cc) - y\<^sub>0) < rB"
-        using rB0 by (metis norm_ge_zero power2_le_imp_le
+        using rB0 by (metis power2_le_imp_le
             linorder_not_less nless_le)
       then have "fst (\<omega> cc) \<in> ball y\<^sub>0 rB"
-        by (simp add: mem_ball dist_norm norm_minus_commute)
+        by (simp add: dist_norm norm_minus_commute)
       then show ?thesis unfolding seq .
     qed
     have inK: "fst (\<omega> s) \<in> K" if s0: "0 \<le> s" and sc: "s \<le> cc" for s
@@ -13506,7 +13506,7 @@ proof -
   from z obtain y where y: "y \<in> ball x \<delta>" and uy: "z = u y" by auto
   show ?thesis
   proof (rule that)
-    show "dist x y < \<delta>" using y by (simp add: mem_ball)
+    show "dist x y < \<delta>" using y by simp
     show "u y < lsc_env u x + \<epsilon>" using zlt unfolding uy .
   qed
 qed
@@ -13690,10 +13690,10 @@ proof -
       using diff_chain_at[OF i1 i2] by (simp add: o_def)
     then show ?thesis unfolding h_def
       by (rule has_derivative_imp_has_field_derivative)
-        (simp add: inner_scaleR_right ac_simps)
+        (simp add: ac_simps)
   qed
   have gg0: "0 < g x \<bullet> g x"
-    using gx0 by (simp add: inner_gt_zero_iff)
+    using gx0 by simp
   have "((\<lambda>s. (h s - h 0) / (s - 0)) \<longlongrightarrow> g x \<bullet> g x) (at 0)"
     using hd by (simp add: has_field_derivative_iff)
   then have "\<forall>\<^sub>F s in at (0::real). 0 < (h s - h 0) / (s - 0)"
@@ -13735,10 +13735,10 @@ proof -
   qed
   define z where "z = x + s *\<^sub>R g x"
   have dz: "dist x z = s * norm (g x)"
-    unfolding z_def dist_norm using s0 by (simp add: abs_of_nonneg)
+    unfolding z_def dist_norm using s0 by simp
   have zK: "z \<in> K"
   proof -
-    have "z \<in> ball x eK" using dz sg_lt by (simp add: mem_ball)
+    have "z \<in> ball x eK" using dz sg_lt by simp
     then show ?thesis using eKK by blast
   qed
   have zR: "dist x z < \<rho>" using dz sg_lt by simp
@@ -13904,11 +13904,11 @@ proof -
       have rr_phi: "rr < rphi" and rr_K: "rr < eK" and rr_rho: "rr < \<rho>"
         using rrx rphi0 eK0 rho0 by auto
       have cb_phi: "cball x rr \<subseteq> ball x rphi"
-        using rr_phi by (auto simp: mem_cball mem_ball)
+        using rr_phi by auto
       have cb_K: "cball x rr \<subseteq> K"
       proof -
         have "cball x rr \<subseteq> ball x eK"
-          using rr_K by (auto simp: mem_cball mem_ball)
+          using rr_K by auto
         then show ?thesis using eKK by blast
       qed
       define SF where "SF = skewSF lam f (g x) M x rr"
@@ -14023,7 +14023,7 @@ proof -
         proof -
           fix z :: "real^'n" assume "z \<in> ball x rr"
           then have nz: "norm (z - x) < rr"
-            by (simp add: mem_ball dist_norm norm_minus_commute)
+            by (simp add: dist_norm norm_minus_commute)
           have "z - y = (z - x) + (x - y)" by simp
           then have "norm (z - y) \<le> norm (z - x) + norm (x - y)"
             by (metis norm_triangle_ineq)
@@ -14104,7 +14104,7 @@ proof -
             using pball_exit_stays_cball[OF T0' sdist cont, of s] s
             unfolding \<tau>_def by auto
           then show "fst (\<omega> s) \<in> cball x rr"
-            by (simp add: mem_cball dist_commute)
+            by (simp add: dist_commute)
         qed
         have inside: "\<And>s. 0 \<le> s \<Longrightarrow> s < \<tau> \<Longrightarrow> fst (\<omega> s) \<in> ball x rr"
         proof -
@@ -14175,7 +14175,7 @@ proof -
         have XinR: "dist x (fst (\<omega> (\<theta> \<omega>))) < \<rho>"
         proof -
           have "dist x (fst (\<omega> (\<theta> \<omega>))) \<le> rr"
-            using Xcb by (simp add: mem_cball dist_commute)
+            using Xcb by (simp add: dist_commute)
           then show ?thesis using rr_rho by linarith
         qed
         have touch: "vs x + (\<phi> (fst (\<omega> (\<theta> \<omega>))) - \<phi> x)
@@ -14214,7 +14214,7 @@ proof -
             have inc: "fst (\<omega> \<tau>) \<in> cball x rr"
               using stays[of \<tau>] tau0 by simp
             then have "dist (fst (\<omega> \<tau>)) x \<le> rr"
-              by (simp add: mem_cball dist_commute)
+              by (simp add: dist_commute)
             then show ?thesis using ge by linarith
           qed
           have nrm: "norm (fst (\<omega> \<tau>) - x) = rr"
@@ -14232,7 +14232,7 @@ proof -
         next
           case False
           have nn: "0 \<le> \<gamma> * ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))"
-            using g0 inner_ge_zero by (simp add: mult_nonneg_nonneg)
+            using g0 inner_ge_zero by simp
           have "\<theta> \<omega> * (\<eta> - 2) / 2 + psiY
               \<le> \<psi>X + \<gamma> * ((fst (\<omega> (\<theta> \<omega>)) - x)
                   \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x))"
@@ -14306,12 +14306,12 @@ proof -
       have vfin: "ennreal (tv y) = paper_v k L T K y"
         unfolding tv_def
         using paper_v_neq_top[OF T0', of k L K y]
-        by (simp add: ennreal_enn2real less_top)
+        by (simp add: less_top)
       have chain: "ennreal (vs x + mg + psiY) \<le> ennreal (tv y)"
         using order_trans[OF essge esle] by (simp add: vfin)
       have nn: "0 \<le> tv y" by (rule tv0)
       have "vs x + mg + psiY \<le> tv y"
-        using chain nn by (simp add: ennreal_le_iff)
+        using chain nn by simp
       then show False using tvy psiY_small mg0 by linarith
     qed
   qed
@@ -14350,7 +14350,7 @@ next
     next
       fix z assume "z \<in> u ` ball x d"
       then obtain y where y: "y \<in> ball x d" and zy: "z = u y" by auto
-      have "dist y x < d" using y by (simp add: mem_ball dist_commute)
+      have "dist y x < d" using y by (simp add: dist_commute)
       then have "dist (u y) (u x) < e" by (rule dd)
       then show "u x - e \<le> z" unfolding zy by (simp add: dist_real_def)
     qed
@@ -14439,10 +14439,10 @@ proof -
     have sub: "ball y (e / 2) \<subseteq> ball z e"
     proof
       fix q assume "q \<in> ball y (e / 2)"
-      then have "dist y q < e / 2" by (simp add: mem_ball)
+      then have "dist y q < e / 2" by simp
       then have "dist z q < e"
         using dzy dist_triangle[of z q y] by (simp add: dist_commute)
-      then show "q \<in> ball z e" by (simp add: mem_ball)
+      then show "q \<in> ball z e" by simp
     qed
     have bdd: "bdd_below (u ` ball z e)"
       by (rule bdd_belowI[of _ B]) (use B in auto)
@@ -14704,12 +14704,12 @@ proof -
       + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> \<phi> z" if zr: "z \<in> ball x r" for z
   proof -
     have e1: "(H - \<epsilon> *\<^sub>R mat 1) *v (z - x) = H *v (z - x) - \<epsilon> *\<^sub>R (z - x)"
-      by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
-          matrix_vector_mul_lid)
+      by (simp add: matrix_vector_mult_diff_rdistrib
+          scaleR_matrix_vector)
     have e2: "(H - (\<epsilon>/2) *\<^sub>R mat 1) *v (z - x)
         = H *v (z - x) - (\<epsilon>/2) *\<^sub>R (z - x)"
-      by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
-          matrix_vector_mul_lid)
+      by (simp add: matrix_vector_mult_diff_rdistrib
+          scaleR_matrix_vector)
     have i1: "(z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))
         = (z - x) \<bullet> (H *v (z - x)) - \<epsilon> * ((z - x) \<bullet> (z - x))"
       unfolding e1 by (simp add: inner_diff_right)
@@ -14811,7 +14811,7 @@ proof -
       unfolding e cc_def pz ez by (simp add: field_simps)
   qed
   have g_eq: "(\<lambda>z :: real^'n. M *v (z - x) + \<eta>) = (\<lambda>z. p + M *v z)"
-    by (rule ext) (simp add: p_def matrix_vector_mult_diff_rdistrib algebra_simps)
+    by (rule ext) (simp add: p_def algebra_simps)
   show ?thesis
     unfolding f_eq g_eq by (rule test_fun_at_quadratic[OF sym])
 qed
@@ -15151,8 +15151,8 @@ proof -
     have t0: "0 \<le> t" unfolding t_def by simp
     have t1: "t \<le> 1" unfolding t_def using inn n0 by simp
     have conv: "a + t *\<^sub>R (b - a) = (1 - t) *\<^sub>R a + t *\<^sub>R b"
-      by (simp add: algebra_simps scaleR_left_diff_distrib
-          scaleR_right_diff_distrib)
+      by (simp add: algebra_simps)
+
     have "(1 - t) *\<^sub>R a + t *\<^sub>R b \<in> ball x r"
       by (rule convexD[OF convex_ball ab bb]) (use t0 t1 in auto)
     then show ?thesis unfolding t_def conv[unfolded t_def] .
@@ -15178,7 +15178,7 @@ proof -
     have h1: "W u - W w \<le> C * (dist u w * dist u w) / real n"
       by (rule half[OF ub wb n0])
     have h2: "C * (dist u w * dist u w) / real n < W u - W w"
-      using nn pos n0 by (simp add: pos_divide_less_eq field_simps)
+      using nn pos n0 by (simp add: field_simps)
     show False using h1 h2 by linarith
   qed
   show ?thesis using zero[OF yb xb] zero[OF xb yb] by linarith
@@ -15336,11 +15336,11 @@ lemma invertible_matrix_vector_inj:
 proof -
   obtain M' where M': "M' ** M = mat 1"
     using inv invertible_left_inverse by blast
-  have "a = (M' ** M) *v a" unfolding M' by (simp add: matrix_vector_mul_lid)
+  have "a = (M' ** M) *v a" unfolding M' by simp
   also have "\<dots> = M' *v (M *v a)" by (simp add: matrix_vector_mul_assoc)
   also have "\<dots> = M' *v (M *v b)" unfolding eq by (rule refl)
   also have "\<dots> = (M' ** M) *v b" by (simp add: matrix_vector_mul_assoc)
-  also have "\<dots> = b" unfolding M' by (simp add: matrix_vector_mul_lid)
+  also have "\<dots> = b" unfolding M' by simp
   finally show ?thesis .
 qed
 
@@ -15596,7 +15596,7 @@ proof -
   have ltop: "paper_v k L T K z < \<top>"
     using paper_v_neq_top[OF T0'] by (simp add: less_top)
   have eq: "ennreal (tv z) = paper_v k L T K z"
-    unfolding tvdef using ltop by (simp add: ennreal_enn2real)
+    unfolding tvdef using ltop by simp
   have "ennreal (\<theta> + lsc_env tv x) \<le> paper_v k L T K z"
   proof -
     have "ennreal (\<theta> + lsc_env tv x) \<le> ennreal (min (T / 2)
@@ -15608,7 +15608,7 @@ proof -
   then have "ennreal (\<theta> + lsc_env tv x) \<le> ennreal (tv z)"
     unfolding eq .
   then have ge: "\<theta> + lsc_env tv x \<le> tv z"
-    using tv0[of z] by (simp add: ennreal_le_iff)
+    using tv0[of z] by simp
   show False using ge vz th0 by linarith
 qed
 
@@ -15875,7 +15875,7 @@ proof -
       have r2K: "cball x r2 \<subseteq> K"
       proof -
         have "cball x r2 \<subseteq> cball x \<rho>"
-          unfolding r2_def using rho by (auto simp: mem_cball)
+          unfolding r2_def using rho by auto
         then show ?thesis using subK interior_subset by blast
       qed
       have contra: False
@@ -16085,10 +16085,10 @@ proof (cases "finite S")
   case True
   then show ?thesis
     by (induct S rule: finite_induct)
-      (simp_all add: matvec_add_right matrix_vector_mult_0_right)
+      (simp_all add: matvec_add_right)
 next
   case False
-  then show ?thesis by (simp add: matrix_vector_mult_0_right)
+  then show ?thesis by simp
 qed
 
 lemma trace_sum_matrix:
@@ -16096,7 +16096,7 @@ lemma trace_sum_matrix:
   shows "trace (\<Sum>x\<in>S. f x) = (\<Sum>x\<in>S. trace (f x))"
 proof -
   have "trace (\<Sum>x\<in>S. f x) = (\<Sum>i\<in>UNIV. \<Sum>x\<in>S. f x $ i $ i)"
-    unfolding trace_def by (simp add: sum_component)
+    unfolding trace_def by simp
   also have "\<dots> = (\<Sum>x\<in>S. \<Sum>i\<in>UNIV. f x $ i $ i)" by (rule sum.swap)
   also have "\<dots> = (\<Sum>x\<in>S. trace (f x))" unfolding trace_def by (rule refl)
   finally show ?thesis .
@@ -16214,7 +16214,7 @@ lemma projmat_span_fix:
 proof -
   have sub: "subspace {y :: real^'n. projmat b m *v y = y}"
     unfolding subspace_def
-    by (auto simp: matvec_add_right matvec_scaleR_right matrix_vector_mult_0_right)
+    by (auto simp: matvec_add_right matvec_scaleR_right)
   have "b ` {..<m} \<subseteq> {y :: real^'n. projmat b m *v y = y}"
     using projmat_fix[OF orth] by auto
   then have "span (b ` {..<m}) \<subseteq> {y :: real^'n. projmat b m *v y = y}"
@@ -16458,7 +16458,7 @@ proof (intro CollectI conjI)
   have Pidem: "projmat b m ** projmat b m = projmat b m"
     by (rule projmat_idem[OF orth])
   show "psd (tanpV (projmat b m) z)" by (rule tanpV_psd[OF Psym Pidem nz])
-  show "tanpV (projmat b m) z *v 0 = 0" by (simp add: matrix_vector_mult_0_right)
+  show "tanpV (projmat b m) z *v 0 = 0" by simp
   show "eigen_ub (tanpV (projmat b m) z) L"
     by (rule tanpV_eigen_ub[OF Psym Pidem L1])
   show "eigen_lb (tanpV (projmat b m) z) (CARD('n) - k)"
@@ -16699,8 +16699,8 @@ next
     also have "\<dots> = (P *v y) \<bullet> u" unfolding Psym by (rule refl)
     finally show ?thesis .
   qed
-  have uu: "u \<bullet> u \<le> 1" using u1 by (simp add: power2_norm_eq_inner[symmetric]
-      power_le_one_iff dot_square_norm)
+  have uu: "u \<bullet> u \<le> 1" using u1 by (simp add: power_le_one_iff
+      dot_square_norm)
   have "(u \<bullet> y)\<^sup>2 = ((P *v y) \<bullet> u)\<^sup>2" unfolding uy by (rule refl)
   also have "\<dots> \<le> ((P *v y) \<bullet> (P *v y)) * (u \<bullet> u)"
     by (rule Cauchy_Schwarz_ineq)
@@ -16807,7 +16807,7 @@ proof (intro CollectI conjI)
     by (rule projmat_idem[OF orth])
   show "psd (tanpU (projmat b m) u)"
     by (rule tanpU_psd[OF Psym Pidem u1 ufix])
-  show "tanpU (projmat b m) u *v 0 = 0" by (simp add: matrix_vector_mult_0_right)
+  show "tanpU (projmat b m) u *v 0 = 0" by simp
   show "eigen_ub (tanpU (projmat b m) u) L"
     by (rule tanpU_eigen_ub[OF Psym Pidem L1])
   show "eigen_lb (tanpU (projmat b m) u) (CARD('n) - k)"
@@ -16823,7 +16823,7 @@ lemma uvecV_cont:
   shows "continuous_on UNIV (uvecV P \<rho>)"
 proof -
   have pc: "continuous_on UNIV (\<lambda>z :: real^'n. P *v z)"
-    by (simp add: matrix_vector_mul_linear_gen linear_continuous_on
+    by (simp add: linear_continuous_on
         linear_linear)
   have nz: "\<And>w :: real^'n. max \<rho> (norm (P *v w)) \<noteq> 0" using rho0 by simp
   show ?thesis
@@ -16902,7 +16902,7 @@ proof -
     using tanpU_mv[of P u "P *v y"] unfolding PP uP by simp
   have onu: "tanpU P u *v u = (1 - a) *\<^sub>R u"
     using tanpU_mv[of P u u] unfolding ufix a_def[symmetric]
-    by (simp add: algebra_simps scaleR_diff_left)
+    by (simp add: algebra_simps)
   have coef: "(u \<bullet> y) + (u \<bullet> y) * (1 - a) = (2 - a) * (u \<bullet> y)" for y
     by (simp add: algebra_simps)
   have vec: "(u \<bullet> y) *\<^sub>R u + ((u \<bullet> y) * (1 - a)) *\<^sub>R u
@@ -17027,7 +17027,7 @@ proof -
   proof -
     have "u \<bullet> (P *v z) = u \<bullet> (norm (P *v z) *\<^sub>R u)"
       by (rule arg_cong[where f = "\<lambda>w. u \<bullet> w", OF par])
-    also have "\<dots> = norm (P *v z) * (u \<bullet> u)" by (simp add: inner_scaleR_right)
+    also have "\<dots> = norm (P *v z) * (u \<bullet> u)" by simp
     also have "\<dots> = norm (P *v z)" using un by (simp add: dot_square_norm)
     finally show ?thesis .
   qed
@@ -17081,7 +17081,7 @@ proof -
   have ROo: "open RO"
   proof -
     have mvc: "continuous_on UNIV (\<lambda>w :: real^'n. projmat b m *v w)"
-      by (simp add: matrix_vector_mul_linear_gen linear_continuous_on
+      by (simp add: linear_continuous_on
           linear_linear)
     have pc: "continuous_on UNIV (\<lambda>w :: real^'n. norm (projmat b m *v w))"
       using mvc by (rule continuous_on_norm)
@@ -17093,10 +17093,10 @@ proof -
   proof -
     fix z :: "real^'n" assume "z \<in> RO"
     then have "norm z < rB"
-      unfolding RO_def by (simp add: mem_ball dist_norm)
+      unfolding RO_def by (simp add: dist_norm)
     moreover have "norm (z - x) \<le> norm z + norm x"
-      by (metis norm_triangle_ineq4 norm_minus_commute
-          diff_0_right norm_triangle_ineq)
+      by (metis
+          norm_triangle_ineq4)
     ultimately show "norm (z - x) \<le> Rn" unfolding Rn_def by linarith
   qed
   have farRO: "\<rho> \<le> norm (projmat b m *v z)" if z: "z \<in> RO" for z
@@ -17128,7 +17128,7 @@ proof -
       + ((-2::real) *\<^sub>R mat 1) *v (z - x)) = 0" if z: "z \<in> RO" for z
   proof -
     have argc: "c' *\<^sub>R x + (c' *\<^sub>R mat 1) *v (z - x) = c' *\<^sub>R z" for c'
-      by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+      by (simp add: scaleR_matrix_vector
           scaleR_right_diff_distrib scaleR_add_right)
     have arg: "(-2) *\<^sub>R x + ((-2::real) *\<^sub>R mat 1) *v (z - x)
         = (-2) *\<^sub>R z"
@@ -17173,7 +17173,7 @@ proof -
   proof -
     have "(c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z))
         = c' *\<^sub>R (SF z ** transpose (SF z))"
-      by (simp add: scaleR_matrix_mult matrix_mul_lid)
+      by (simp add: scaleR_matrix_mult)
     then have step: "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
         = c' * trace (SF z ** transpose (SF z))"
       by (simp add: trace_scaleR)
@@ -17266,17 +17266,17 @@ proof -
           using elim t0 tT inb' by blast+
         define d where "d = fst (\<omega> t) - x"
         have e1: "(2 *\<^sub>R x) \<bullet> d = 2 * (x \<bullet> d)"
-          by (simp add: inner_scaleR_left)
+          by simp
         have e2: "((-2) *\<^sub>R x) \<bullet> d = - 2 * (x \<bullet> d)"
-          by (simp add: inner_scaleR_left)
+          by simp
         have e3: "d \<bullet> (((2::real) *\<^sub>R projmat b m) *v d)
             = 2 * (d \<bullet> (projmat b m *v d))"
-          by (simp add: scaleR_matrix_vector inner_scaleR_right)
+          by (simp add: scaleR_matrix_vector)
         have negmv: "\<And>A :: real^'n^'n. (- A) *v d = - (A *v d)"
           by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
         have e4: "d \<bullet> (((-2::real) *\<^sub>R mat 1) *v d) = - 2 * (d \<bullet> d)"
-          by (simp add: negmv scaleR_matrix_vector matrix_vector_mul_lid
-              inner_scaleR_right inner_minus_right)
+          by (simp add: negmv scaleR_matrix_vector)
+
         have id1: "t * (2 * (real m - 1)) / 2 = t * (real m - 1)" by simp
         have id2: "t * (- 2 * (real m - 1)) / 2 = - (t * (real m - 1))"
           by (simp add: field_simps)
@@ -17396,7 +17396,7 @@ next
       using Suc.hyps[OF mle m0'] by blast
     have dimlt: "dim (b ` {..<m}) < DIM(real^'n)"
     proof -
-      have "dim (b ` {..<m}) = dim (span (b ` {..<m}))" by (simp add: dim_span)
+      have "dim (b ` {..<m}) = dim (span (b ` {..<m}))" by simp
       also have "\<dots> = m" by (rule orthonormal_dim_span[OF bo])
       also have "\<dots> < CARD('n)" using Suc.prems by simp
       finally show ?thesis by simp
@@ -17688,7 +17688,7 @@ proof -
   have Pidem: "projmat b m ** projmat b m = projmat b m"
     by (rule projmat_idem[OF orth])
   have mvc: "continuous_on UNIV (\<lambda>w :: real^'n. projmat b m *v w)"
-    by (simp add: matrix_vector_mul_linear_gen linear_continuous_on
+    by (simp add: linear_continuous_on
         linear_linear)
   have Fpc: "continuous_on UNIV (\<lambda>w :: real^'n. (norm (projmat b m *v w))\<^sup>2)"
     by (intro continuous_intros mvc)
@@ -17737,7 +17737,7 @@ proof -
       have "norm (projmat b m *v x) = \<rho>\<^sub>0" unfolding xfix \<rho>\<^sub>0_def by (rule refl)
       then show ?thesis
         using rho0 rr r00 unfolding \<rho>_def \<rho>\<^sub>0_def
-        by (auto simp: mem_ball dist_norm)
+        by (auto simp: dist_norm)
     qed
     have ROopen: "open ?RO"
     proof -
@@ -17785,7 +17785,7 @@ proof -
           by (rule radial_sq_upto_gen[OF wm Fnc grown e0' eT' before])
         have dichot: "norm (projmat b m *v fst (\<omega> e)) \<le> \<rho>
             \<or> rB \<le> norm (fst (\<omega> e))"
-          using Xe by (auto simp: mem_ball dist_norm)
+          using Xe by (auto simp: dist_norm)
         show False
         proof (cases rule: disjE[OF dichot])
           case 1
@@ -17794,7 +17794,7 @@ proof -
           moreover have "\<rho>\<^sup>2 < \<rho>\<^sub>0\<^sup>2"
             unfolding \<rho>_def using r00 by (simp add: power_divide)
           moreover have "\<rho>\<^sub>0\<^sup>2 \<le> (norm (projmat b m *v fst (\<omega> e)))\<^sup>2"
-            unfolding esqp using e0' cn0 by (simp add: mult_nonneg_nonneg)
+            unfolding esqp using e0' cn0 by simp
           ultimately show False by linarith
         next
           case 2
@@ -17831,10 +17831,10 @@ proof -
         finally show ?thesis unfolding csq by linarith
       qed
       then have "norm (fst (\<omega> cc)) < rB"
-        using rB0 by (metis norm_ge_zero power2_le_imp_le
+        using rB0 by (metis power2_le_imp_le
             linorder_not_less nless_le)
       then have "fst (\<omega> cc) \<in> ball (0 :: real^'n) rB"
-        by (simp add: mem_ball dist_norm)
+        by (simp add: dist_norm)
       then show ?thesis unfolding seq .
     qed
     have inK: "fst (\<omega> s) \<in> K" if s0: "0 \<le> s" and sc: "s \<le> cc" for s

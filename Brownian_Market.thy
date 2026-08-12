@@ -174,7 +174,7 @@ proof -
       also have "\<dots> = ennreal (\<Prod>i\<in>I. measure (N i) (C i))"
         by (simp add: Ni.emeasure_eq_measure prod_ennreal)
       finally show ?thesis
-        by (simp add: P.emeasure_eq_measure measure_nonneg prod_nonneg)
+        by (simp add: P.emeasure_eq_measure prod_nonneg)
     qed
     have "P.prob (a \<inter> b) = (\<Prod>i\<in>I. measure (N i) (Cg i \<inter> Ch i))"
       unfolding ab_rect
@@ -527,7 +527,7 @@ proof -
     then have "has_bochner_integral
         (density lborel (normal_density 0 (sqrt v))) (\<lambda>y. y) 0"
       by (subst has_bochner_integral_density)
-        (auto simp: normal_density_nonneg mult_ac)
+        (auto simp: mult_ac)
     then have "has_bochner_integral (gauss_measure v) (\<lambda>y. y) 0"
       using v by (simp add: gauss_measure_pos)
     then show ?thesis
@@ -688,7 +688,7 @@ lemma measurable_vec_components [measurable]:
 proof (subst borel_measurable_euclidean_space, safe)
   fix b :: "real^'i" assume "b \<in> Basis"
   then obtain i where b: "b = axis i 1"
-    by (auto simp: Basis_vec_def Basis_real_def)
+    by (auto simp: Basis_vec_def)
   show "(\<lambda>x. ((\<chi> i. f i x) :: real^'i) \<bullet> b) \<in> borel_measurable M"
     unfolding b by (simp add: inner_axis assms)
 qed
@@ -789,7 +789,7 @@ lemma bm_compensator_const:
 proof -
   have "set_lebesgue_integral lborel {0..u}
       (\<lambda>_. trace (mat 1 :: real^'n^'n)) = u * trace (mat 1 :: real^'n^'n)"
-    using u by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+    using u by (subst set_integral_const) auto
   then show ?thesis
     by (simp add: trace_mat1 mult_ac)
 qed
@@ -1137,7 +1137,7 @@ proof -
         = (\<Sum>k\<in>(UNIV :: 'i set). if k = j then f k x else 0)"
       by (intro sum.cong refl) (simp add: axis_def)
     also have "\<dots> = f j x"
-      by (simp add: sum.delta)
+      by simp
     finally show ?thesis .
   qed
   have eq: "(\<lambda>x. (\<chi> i. f i x) :: real^'i)
@@ -2065,7 +2065,7 @@ proof -
   have "set_lebesgue_integral lborel {0..u}
       (\<lambda>_. (mat 1 :: real^'n^'n) $ i $ i)
       = u * ((mat 1 :: real^'n^'n) $ i $ i)"
-    using u by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+    using u by (subst set_integral_const) auto
   then show ?thesis by (simp add: mat_def)
 qed
 

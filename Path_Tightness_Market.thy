@@ -432,7 +432,7 @@ proof -
       have Lint: "set_integrable lborel {u<..v} (\<lambda>_. L)"
         unfolding set_integrable_def
         by (intro integrable_scaleR_left integrable_real_indicator)
-          (use uv in \<open>auto simp: emeasure_lborel_Ioc\<close>)
+          (use uv in \<open>auto\<close>)
       have upper: "set_lebesgue_integral lborel {u<..v}
           (\<lambda>s. aa i s \<omega> $ l $ l) \<le> L * (v - u)"
       proof -
@@ -442,7 +442,7 @@ proof -
         also have "set_lebesgue_integral lborel {u<..v} (\<lambda>_. L)
             = measure lborel {u<..v} *\<^sub>R L"
           by (intro set_integral_const)
-            (use uv in \<open>auto simp: emeasure_lborel_Ioc\<close>)
+            (use uv in \<open>auto\<close>)
         also have "measure lborel {u<..v} = v - u"
           using uv by simp
         finally show ?thesis by (simp add: mult.commute)

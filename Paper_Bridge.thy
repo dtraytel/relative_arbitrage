@@ -168,7 +168,7 @@ proof -
     proof -
       have "integrable lborel (indicat_real {s..t})"
         by (rule integrable_real_indicator)
-          (use st in \<open>auto simp: emeasure_lborel_Icc\<close>)
+          (use st in \<open>auto\<close>)
       then show ?thesis by simp
     qed
     show ?case
@@ -1039,7 +1039,7 @@ proof -
     let ?D = "density Q (\<lambda>\<omega>. ennreal (w \<omega>))"
     have sp: "space (distr ?D (borel_of ?PS) ?p) = space (borel_of ?PS)" by simp
     have pre: "?p -` space (borel_of ?PS) \<inter> space ?D = space Q"
-      using measurable_space[OF pdm[of w]] by (auto simp: space_density)
+      using measurable_space[OF pdm[of w]] by auto
     have "emeasure (distr ?D (borel_of ?PS) ?p)
         (space (distr ?D (borel_of ?PS) ?p))
         = emeasure ?D (?p -` space (borel_of ?PS) \<inter> space ?D)"
@@ -1072,7 +1072,7 @@ proof -
     have uagree: "?u y = u y" if y: "y \<in> mspace (path_metric s :: ('n pairpath) metric)"
       for y
     proof (rule rclamp_id)
-      have "\<bar>u y\<bar> \<le> B" using B y by (simp add: topspace_mtopology_of)
+      have "\<bar>u y\<bar> \<le> B" using B y by simp
       then show "\<bar>u y\<bar> \<le> B'" unfolding B'_def by simp
     qed
     have um: "u \<in> borel_measurable (borel_of ?PS)"
@@ -2387,7 +2387,7 @@ proof -
     by (rule continuous_map_path_eval[OF t])
   have Fm: "continuous_map (euclidean :: ((real^'n) \<times> (real^'n^'n)) topology)
       euclideanreal F"
-    using Fc by (simp add: continuous_map_iff_continuous2)
+    using Fc by simp
   show ?thesis
     using continuous_map_compose[OF ev Fm] by (simp add: o_def)
 qed
@@ -2867,7 +2867,7 @@ proof -
     let ?D = "density Q (\<lambda>\<omega>. ennreal (w \<omega>))"
     have sp: "space (distr ?D (borel_of ?PS) ?p) = space (borel_of ?PS)" by simp
     have pre: "?p -` space (borel_of ?PS) \<inter> space ?D = space Q"
-      using measurable_space[OF pdm[of w]] by (auto simp: space_density)
+      using measurable_space[OF pdm[of w]] by auto
     have "emeasure (distr ?D (borel_of ?PS) ?p)
         (space (distr ?D (borel_of ?PS) ?p))
         = emeasure ?D (?p -` space (borel_of ?PS) \<inter> space ?D)"
@@ -2900,7 +2900,7 @@ proof -
     have uagree: "?u y = u y"
       if y: "y \<in> mspace (path_metric s :: ('n pairpath) metric)" for y
     proof (rule rclamp_id)
-      have "\<bar>u y\<bar> \<le> B" using B y by (simp add: topspace_mtopology_of)
+      have "\<bar>u y\<bar> \<le> B" using B y by simp
       then show "\<bar>u y\<bar> \<le> B'" unfolding B'_def by simp
     qed
     have um: "u \<in> borel_measurable (borel_of ?PS)"
@@ -9997,7 +9997,7 @@ proof -
       "\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n" by (rule mQ0)
     have "integrable Q (\<lambda>\<omega>. fst (\<omega> (min r r)) :: real^'n)"
       by (rule MQ0.integrable[OF r])
-    then show ?thesis by (simp add: integrable_norm)
+    then show ?thesis by simp
   qed
   have cQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u r)) :: real^'n) - snd (\<omega> (min u r)))"
@@ -11962,7 +11962,7 @@ proof -
           and bR: "\<And>m. b < ?g (ym m) (Rm m)" by metis
         from Cscpt Rm obtain Rl a where Rl: "Rl \<in> Cs" and sm: "strict_mono a"
           and lim: "limitin MC.mtopology (Rm \<circ> a) Rl sequentially"
-          unfolding MC.compactin_sequentially by (metis image_subsetI rangeI)
+          unfolding MC.compactin_sequentially by (metis image_subsetI)
         have RlC: "Rl \<in> ?C" using Rl CsC by blast
         have RmC: "(Rm \<circ> a) m \<in> ?C" for m using Rm CsC by auto
         have wc: "weak_conv_on (Rm \<circ> a) Rl sequentially ?X" by (rule convC[OF lim])

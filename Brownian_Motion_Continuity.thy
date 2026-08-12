@@ -58,7 +58,7 @@ proof -
       case False
       then have "0 < dist t' s'" by simp
       then have "dist t' s' powr 2 = dist t' s' ^ 2"
-        by (simp add: powr_numeral)
+        by simp
       then show ?thesis
         using st' by (simp add: dist_real_def power2_eq_square abs_real_def)
     qed

@@ -119,7 +119,7 @@ proof -
         = (\<integral>\<^sup>+ x. ennreal (max 0 (\<bar>h x\<bar> - K)) \<partial>M)"
     by (rule nn_integral_eq_integral[symmetric, OF i]) simp
   also note bnd
-  finally show ?thesis using e by (simp add: ennreal_le_iff)
+  finally show ?thesis using e by simp
 qed
 subsection \<open>The limit of a uniformly integrable sequence is integrable\<close>
 
@@ -156,7 +156,7 @@ proof -
     have fin: "emeasure M (space M) < \<top>"
       using finite_emeasure_space less_top by blast
     have k: "(\<integral>\<^sup>+ x. ennreal K \<partial>M) < \<infinity>"
-      by (simp add: nn_integral_const ennreal_mult_less_top fin)    have t: "(\<integral>\<^sup>+ x. ennreal (max 0 (\<bar>g x\<bar> - K)) \<partial>M) < \<infinity>"
+      by (simp add: ennreal_mult_less_top fin)    have t: "(\<integral>\<^sup>+ x. ennreal (max 0 (\<bar>g x\<bar> - K)) \<partial>M) < \<infinity>"
       using gb by (simp add: le_less_trans)
     from k t show ?thesis by simp
   qed

@@ -146,11 +146,11 @@ proof (rule INF_greatest)
   have sub: "ball ((ps j, Ms j)) (e / 2) \<subseteq> ball ((p0, M0)) e"
   proof
     fix w assume "w \<in> ball ((ps j, Ms j)) (e / 2)"
-    then have "dist ((ps j, Ms j)) w < e / 2" by (simp add: mem_ball)
+    then have "dist ((ps j, Ms j)) w < e / 2" by simp
     then have "dist ((p0, M0)) w < e"
       using j dist_triangle[of "(p0, M0)" w "(ps j, Ms j)"]
       by (simp add: dist_commute)
-    then show "w \<in> ball ((p0, M0)) e" by (simp add: mem_ball)
+    then show "w \<in> ball ((p0, M0)) e" by simp
   qed
   have "(1 :: ereal) \<le> ell_op_usc k L (ps j) (Ms j)" by (rule ge)
   also have "\<dots> \<le> (SUP w \<in> ball ((ps j, Ms j)) (e / 2). ell_op_pair k L w)"
@@ -898,7 +898,7 @@ proof -
     also have "\<dots> = (x - k *\<^sub>R w) - (- k) *\<^sub>R w"
       unfolding h2 coeff by (rule refl)
     also have "\<dots> = x" by simp
-    finally show ?thesis by (simp add: matrix_vector_mul_lid)
+    finally show ?thesis by simp
   qed
   have "\<forall>x. (hh w ** hh w) *v x = mat 1 *v x" using key by blast
   then show ?thesis using matrix_eq[of "hh w ** hh w" "mat 1"] by blast
@@ -1503,7 +1503,7 @@ proof (rule ereal_le_epsilon)
     have hp: "0 < u \<bullet> p"
     proof -
       have "u \<bullet> p = u \<bullet> (norm p *\<^sub>R u)" using pu by simp
-      also have "\<dots> = norm p * (u \<bullet> u)" by (simp add: inner_scaleR_right)
+      also have "\<dots> = norm p * (u \<bullet> u)" by simp
       finally show ?thesis unfolding uu using np by simp
     qed
     obtain a where aF: "a \<in> feasible k L p"
@@ -1552,7 +1552,7 @@ proof (rule ereal_le_epsilon)
       also have "\<dots> = mat 1" by (rule rotv_self[OF u0])
       finally have R1: "Rm (p, M) = mat 1" .
       have "mat 1 ** a ** transpose (mat 1) = a"
-        by (simp add: matrix_mul_lid matrix_mul_rid)
+        by simp
       then show ?thesis unfolding G_def R1 by simp
     qed
     have isG: "isCont G (p, M)"
@@ -1570,13 +1570,13 @@ proof (rule ereal_le_epsilon)
       if zb: "z \<in> ball ((p, M) :: (real^'n) \<times> (real^'n^'n)) e" for z
     proof -
       have dz: "dist ((p, M) :: (real^'n) \<times> (real^'n^'n)) z < e"
-        using zb by (simp add: mem_ball)
+        using zb by simp
       have zW: "z \<in> W"
       proof -
         have "dist ((p, M) :: (real^'n) \<times> (real^'n^'n)) z < d1"
           using dz unfolding e_def by simp
         then have "z \<in> ball ((p, M) :: (real^'n) \<times> (real^'n^'n)) d1"
-          by (simp add: mem_ball)
+          by simp
         then show ?thesis using d1W by blast
       qed
       have Gle: "G z < G (p, M) + r / 2"
@@ -1700,7 +1700,7 @@ proof -
   proof -
     define v where "v = z - x"
     have nv: "norm v < r"
-      using z by (simp add: v_def mem_ball dist_norm norm_minus_commute)
+      using z by (simp add: v_def dist_norm norm_minus_commute)
     define A where "A = g x \<bullet> v"
     define B where "B = v \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v v)"
     define f where "f t = (\<phi> x + t * A + t\<^sup>2 * B / 2) - \<phi> (x + t *\<^sub>R v)" for t
@@ -1711,7 +1711,7 @@ proof -
       have ntv: "norm (t *\<^sub>R v) \<le> norm v"
         using t by (simp add: mult_left_le_one_le)
       have mem: "x + t *\<^sub>R v \<in> ball x e"
-        using ntv nv by (simp add: mem_ball dist_norm r_def)
+        using ntv nv by (simp add: dist_norm r_def)
       have d1: "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_field_derivative
           g (x + t *\<^sub>R v) \<bullet> v) (at t)"
       proof -
@@ -1724,7 +1724,7 @@ proof -
           using diff_chain_at[OF i1 i2] by (simp add: o_def)
         then show ?thesis
           by (rule has_derivative_imp_has_field_derivative)
-            (simp add: inner_scaleR_right ac_simps)
+            (simp add: ac_simps)
       qed
       have d2: "((\<lambda>t. \<phi> x + t * A + t\<^sup>2 * B / 2) has_field_derivative
           A + t * B) (at t)"
@@ -1738,13 +1738,13 @@ proof -
       proof -
         have m1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
           by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
-              matrix_vector_mul_lid)
+              )
         have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
           by (simp add: matrix_vector_mult_scaleR)
         show ?thesis
           unfolding A_def B_def m1 m2
-          by (simp add: inner_diff_left inner_add_right inner_scaleR_left
-              inner_scaleR_right inner_commute algebra_simps)
+          by (simp add: inner_commute
+              algebra_simps)
       qed
       have small: "- ((g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v)
           \<le> (\<delta> / 2) * (t * norm v) * norm v"
@@ -1767,7 +1767,7 @@ proof -
         also have "\<dots> \<le> ((\<delta> / 2) * norm (t *\<^sub>R v)) * norm v"
           by (rule mult_right_mono[OF nb norm_ge_zero])
         also have "\<dots> = (\<delta> / 2) * (t * norm v) * norm v"
-          using t by (simp add: abs_of_nonneg)
+          using t by simp
         finally show ?thesis .
       qed
       have vv: "v \<bullet> v = norm v * norm v"
@@ -1778,7 +1778,7 @@ proof -
       also have "\<dots> = - (\<delta> / 2) * t * (norm v * norm v)"
         by (simp add: field_simps)
       also have "\<dots> \<le> 0"
-        using d0 t by (simp add: mult_nonneg_nonneg)
+        using d0 t by simp
       finally show ?thesis using df by blast
     qed
     have "f 1 \<le> f 0"
@@ -1942,7 +1942,7 @@ proof -
   proof -
     define v where "v = z - x"
     have nv: "norm v < r"
-      using z by (simp add: v_def mem_ball dist_norm norm_minus_commute)
+      using z by (simp add: v_def dist_norm norm_minus_commute)
     define A where "A = g x \<bullet> v"
     define B where "B = v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)"
     define f where "f t = \<phi> (x + t *\<^sub>R v) - (\<phi> x + t * A + t\<^sup>2 * B / 2)" for t
@@ -1953,7 +1953,7 @@ proof -
       have ntv: "norm (t *\<^sub>R v) \<le> norm v"
         using t by (simp add: mult_left_le_one_le)
       have mem: "x + t *\<^sub>R v \<in> ball x e"
-        using ntv nv by (simp add: mem_ball dist_norm r_def)
+        using ntv nv by (simp add: dist_norm r_def)
       have d1: "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_field_derivative
           g (x + t *\<^sub>R v) \<bullet> v) (at t)"
       proof -
@@ -1966,7 +1966,7 @@ proof -
           using diff_chain_at[OF i1 i2] by (simp add: o_def)
         then show ?thesis
           by (rule has_derivative_imp_has_field_derivative)
-            (simp add: inner_scaleR_right ac_simps)
+            (simp add: ac_simps)
       qed
       have d2: "((\<lambda>t. \<phi> x + t * A + t\<^sup>2 * B / 2) has_field_derivative
           A + t * B) (at t)"
@@ -1979,13 +1979,13 @@ proof -
       proof -
         have m1: "(H + \<delta> *\<^sub>R mat 1) *v v = H *v v + \<delta> *\<^sub>R v"
           by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
-              matrix_vector_mul_lid)
+              )
         have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
           by (simp add: matrix_vector_mult_scaleR)
         show ?thesis
           unfolding A_def B_def m1 m2
-          by (simp add: inner_diff_left inner_add_right inner_scaleR_left
-              inner_scaleR_right inner_commute algebra_simps)
+          by (simp add: inner_commute
+              algebra_simps)
       qed
       have small: "(g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v
           \<le> (\<delta> / 2) * (t * norm v) * norm v"
@@ -2002,7 +2002,7 @@ proof -
         also have "\<dots> \<le> ((\<delta> / 2) * norm (t *\<^sub>R v)) * norm v"
           by (rule mult_right_mono[OF nb norm_ge_zero])
         also have "\<dots> = (\<delta> / 2) * (t * norm v) * norm v"
-          using t by (simp add: abs_of_nonneg)
+          using t by simp
         finally show ?thesis .
       qed
       have vv: "v \<bullet> v = norm v * norm v"
@@ -2013,7 +2013,7 @@ proof -
       also have "\<dots> = - (\<delta> / 2) * t * (norm v * norm v)"
         by (simp add: field_simps)
       also have "\<dots> \<le> 0"
-        using d0 t by (simp add: mult_nonneg_nonneg)
+        using d0 t by simp
       finally show ?thesis using df by blast
     qed
     have "f 1 \<le> f 0"
@@ -2677,7 +2677,7 @@ proof -
     have "transpose R ** (R ** a ** transpose R) ** R
         = (transpose R ** R) ** a ** (transpose R ** R)"
       by (simp add: matrix_mul_assoc)
-    also have "\<dots> = a" unfolding o1 by (simp add: matrix_mul_lid matrix_mul_rid)
+    also have "\<dots> = a" unfolding o1 by simp
     finally show ?thesis .
   qed
   have conj_id2: "R ** (transpose R ** a ** R) ** transpose R = a"
@@ -2686,7 +2686,7 @@ proof -
     have "R ** (transpose R ** a ** R) ** transpose R
         = (R ** transpose R) ** a ** (R ** transpose R)"
       by (simp add: matrix_mul_assoc)
-    also have "\<dots> = a" unfolding o2 by (simp add: matrix_mul_lid matrix_mul_rid)
+    also have "\<dots> = a" unfolding o2 by simp
     finally show ?thesis .
   qed
   have pback: "transpose R *v (R *v p) = p"
@@ -2717,7 +2717,7 @@ proof -
         = R ** M ** (transpose R ** R) ** a ** transpose R"
       by (simp add: matrix_mul_assoc)
     also have "\<dots> = R ** (M ** a) ** transpose R"
-      unfolding o1 by (simp add: matrix_mul_assoc matrix_mul_rid)
+      unfolding o1 by (simp add: matrix_mul_assoc)
     finally show ?thesis .
   qed
   have treq: "trace ((R ** M ** transpose R) ** (R ** a ** transpose R))
@@ -2730,7 +2730,7 @@ proof -
       by (rule trace_matrix_commute)
     also have "\<dots> = trace ((transpose R ** R) ** (M ** a))"
       by (simp add: matrix_mul_assoc)
-    also have "\<dots> = trace (M ** a)" unfolding o1 by (simp add: matrix_mul_lid)
+    also have "\<dots> = trace (M ** a)" unfolding o1 by simp
     finally show ?thesis .
   qed
   have "(\<lambda>a. - trace ((R ** M ** transpose R) ** a) / 2) ` feasible k L (R *v p)
@@ -2804,7 +2804,7 @@ proof -
   have "R ** (transpose R ** N ** R) ** transpose R
       = (R ** transpose R) ** N ** (R ** transpose R)"
     by (simp add: matrix_mul_assoc)
-  also have "\<dots> = N" unfolding o2 by (simp add: matrix_mul_lid matrix_mul_rid)
+  also have "\<dots> = N" unfolding o2 by simp
   finally show ?thesis .
 qed
 
@@ -2850,7 +2850,7 @@ proof -
   also have "\<dots> = R ** transpose M ** (transpose R ** R) ** M ** transpose R"
     by (simp add: matrix_mul_assoc)
   also have "\<dots> = R ** (transpose M ** M) ** transpose R"
-    unfolding o1 by (simp add: matrix_mul_assoc matrix_mul_rid)
+    unfolding o1 by (simp add: matrix_mul_assoc)
   finally have eq: "transpose (R ** M ** transpose R) ** (R ** M ** transpose R)
       = R ** (transpose M ** M) ** transpose R" .
   have "trace (R ** (transpose M ** M) ** transpose R)
@@ -2858,7 +2858,7 @@ proof -
     by (rule trace_matrix_commute)
   also have "\<dots> = trace ((transpose R ** R) ** (transpose M ** M))"
     by (simp add: matrix_mul_assoc)
-  also have "\<dots> = trace (transpose M ** M)" unfolding o1 by (simp add: matrix_mul_lid)
+  also have "\<dots> = trace (transpose M ** M)" unfolding o1 by simp
   finally have tr: "trace (R ** (transpose M ** M) ** transpose R)
       = trace (transpose M ** M)" .
   have sq: "(norm (R ** M ** transpose R))\<^sup>2 = (norm M)\<^sup>2"
@@ -3506,11 +3506,11 @@ proof -
       have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
         by (rule matrix_add_rdistrib)
       moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
-        by (simp add: scaleR_matrix_mult matrix_mul_lid)
+        by (simp add: scaleR_matrix_mult)
       ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
           = trace (H ** a + \<delta> *\<^sub>R a)" by simp
       have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"
-        by (simp add: trace_def sum.distrib vector_add_component)
+        by (simp add: trace_def sum.distrib)
       have e3: "trace (\<delta> *\<^sub>R a) = \<delta> * trace a" by (rule trace_scaleR)
       from e1 e2 e3 show ?thesis by simp
     qed

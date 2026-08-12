@@ -445,7 +445,7 @@ proof -
   have c_int: "set_integrable lborel {0..s} (\<lambda>_. c)"
     unfolding set_integrable_def using s
     by (intro integrable_scaleR_left integrable_real_indicator)
-      (auto simp: emeasure_lborel_Icc)
+      auto
   have zero_int: "set_integrable lborel {0..s} (\<lambda>_. 0 :: real)"
     unfolding set_integrable_def by simp
   have pt: "0 \<le> trace (acov \<sigma> \<omega>) \<and> trace (acov \<sigma> \<omega>) \<le> c"
@@ -503,7 +503,7 @@ proof eventually_elim
     fix s :: real
     assume s: "0 \<le> s" and su: "s \<le> u"
     have sq_nonneg: "0 \<le> X s \<omega> \<bullet> X s \<omega>"
-      by (simp add: inner_ge_zero)
+      by simp
     have sq_le: "X s \<omega> \<bullet> X s \<omega> \<le> r\<^sup>2"
       using w inK s by (rule sq_bounded)
     have comp: "0 \<le> set_lebesgue_integral lborel {0..s} (\<lambda>\<sigma>. trace (acov \<sigma> \<omega>))
@@ -754,7 +754,7 @@ proof -
       proof (cases "c \<le> s")
         case True
         have "{\<omega> \<in> space M. c \<le> s} = space (F s)"
-          using True s by (simp add: space_F)
+          using True s by simp
         moreover have "space (F s) \<in> sets (F s)" by (rule sets.top)
         ultimately show ?thesis by simp
       next

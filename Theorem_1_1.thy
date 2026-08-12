@@ -284,7 +284,7 @@ proof (rule antisym)
   define q where "q = x \<bullet> x"
   have xne: "x \<noteq> 0" using x0 by auto
   have qpos: "0 < q" unfolding q_def using xne
-    by (simp add: inner_gt_zero_iff)
+    by simp
   have nsq: "(norm x)\<^sup>2 = q"
     unfolding q_def by (simp add: power2_norm_eq_inner)
   have qr: "q \<le> r\<^sup>2"
@@ -476,7 +476,7 @@ proof -
     finally show ?thesis .
   qed
   have zlt: "paper_v k L T K z < ennreal cc"
-    using lt fin[of z] by (simp add: enn2real_less_iff)
+    using lt fin[of z] by simp
   have "eventually (\<lambda>y. paper_v k L T K y < ennreal cc) (nhds z)"
     by (rule paper_v_usc_unconditional[OF T L Kc zlt])
   then obtain U where opU: "open U" and zU: "z \<in> U"
@@ -488,7 +488,7 @@ proof -
   proof -
     have "y \<in> U" using eU dy by auto
     then have "paper_v k L T K y < ennreal cc" by (rule Uy)
-    then show ?thesis using fin[of y] cc0 by (simp add: enn2real_less_iff)
+    then show ?thesis using fin[of y] cc0 by simp
   qed
   then show ?thesis using e0 by blast
 qed
@@ -724,7 +724,7 @@ proof -
       have blo: "enn2real (paper_v k L T (cball 0 r) x) < b" using lt0 b2 by linarith
       have bhi: "b < r * r / nk" using lt0 b2 by linarith
       have "paper_v k L T (cball 0 r) x < ennreal b"
-        using blo paper_v_ball_fin[OF kn T0' L0] by (simp add: enn2real_less_iff)
+        using blo paper_v_ball_fin[OF kn T0' L0] by simp
       then have "eventually (\<lambda>y. paper_v k L T (cball 0 r) y < ennreal b) (nhds x)"
         by (rule paper_v_usc_unconditional[OF T0 L1 Kc])
       then obtain U where opU: "open U" and xU: "x \<in> U"
@@ -750,7 +750,7 @@ proof -
       qed
       have vylt: "enn2real (paper_v k L T (cball 0 r) y) < b"
         using Uy[OF yU] paper_v_ball_fin[OF kn T0' L0]
-        by (simp add: enn2real_less_iff)
+        by simp
       have "(r * r - y \<bullet> y) / nk \<le> enn2real (paper_v k L T (cball 0 r) y)"
         by (rule lower'[OF ylt ynz])
       then have vge: "(r * r - s * s) / nk < b"

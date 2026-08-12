@@ -500,7 +500,7 @@ proof -
     fix yi :: "nat \<Rightarrow> 'a" and Qi :: "nat \<Rightarrow> 'b"
     assume ly: "limitin (euclidean :: 'a topology) yi x sequentially"
       and lQ: "limitin Y Qi P sequentially" and inS: "\<And>i. Qi i \<in> S"
-    have "yi \<longlonglongrightarrow> x" using ly by (simp add: limitin_canonical_iff)
+    have "yi \<longlonglongrightarrow> x" using ly by simp
     from seq[OF this lQ inS]
     show "eventually (\<lambda>i. R (yi i) (Qi i)) sequentially" .
   qed

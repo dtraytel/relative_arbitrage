@@ -77,7 +77,7 @@ next
       using base by (rule has_derivative_scaleR_right)
     then show "((\<lambda>y. c * ball_v r k y) has_derivative
         (\<lambda>h. (b *\<^sub>R y) \<bullet> h)) (at y)"
-      by (simp add: b inner_scaleR_left mult.assoc)
+      by (simp add: b mult.assoc)
   qed
 next
   have lin: "((\<lambda>y :: real^'n. b *\<^sub>R y) has_derivative

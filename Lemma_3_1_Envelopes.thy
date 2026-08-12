@@ -26,11 +26,11 @@ begin
 section \<open>Eq. (3.6): the lower bound for \<open>F\<^sup>*(0, M)\<close>\<close>
 
 text \<open>The paper obtains Eq. (3.6) by evaluating \<open>F\<close> along the sequence
-  \<open>(q\<^sub>1/m, M)\<close>, with \<open>q\<^sub>1\<close> a top eigenvector of \<open>M\<close>.  In this development that
-  sequence is CONSTANT (\<open>ell_op_scaleR_dir\<close>: \<open>F\<close> depends on \<open>p\<close> only through its
-  direction), so no limit needs to be taken: every ball around \<open>(0, M)\<close>
-  contains a point \<open>(c q\<^sub>1, M)\<close> with the same value of \<open>F\<close>, and that value is
-  the right hand side of Eq. (3.6).\<close>
+  \<open>(q\<^sub>1/m, M)\<close>, with \<open>q\<^sub>1\<close> a top eigenvector of \<open>M\<close>.  Here that sequence is
+  constant, since \<open>F\<close> depends on \<open>p\<close> only through its direction
+  (\<open>ell_op_scaleR_dir\<close>): every ball around \<open>(0, M)\<close> contains a point
+  \<open>(c q\<^sub>1, M)\<close> with the same value of \<open>F\<close>, equal to the right-hand side of
+  Eq. (3.6).\<close>
 
 definition eq36_rhs :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "eq36_rhs k L M =
@@ -77,7 +77,7 @@ qed
 
 section \<open>Eq. (3.6): the pointwise upper bound\<close>
 
-text \<open>\<open>F(p, M) \<le> eq36_rhs k L M\<close> for EVERY \<open>p\<close>, including \<open>p = 0\<close>.  For \<open>p \<noteq> 0\<close>
+text \<open>\<open>F(p, M) \<le> eq36_rhs k L M\<close> for every \<open>p\<close>, including \<open>p = 0\<close>.  For \<open>p \<noteq> 0\<close>
   this is Eq. (3.5) combined with \<open>bracket_ge_shifted\<close> (which rests on the
   general Poincare separation inequality); for \<open>p = 0\<close> it follows because
   \<open>feasible k L p \<subseteq> feasible k L 0\<close>, so the infimum at \<open>0\<close> is the smaller one
@@ -129,8 +129,8 @@ qed
 
 section \<open>Eq. (3.6): the envelope upper bound, and the equality\<close>
 
-text \<open>The upper bound for the envelope.  Note that the nearby matrices \<open>snd w\<close>
-  need NOT be symmetric: the comparison is made against the symmetric \<open>M\<close> using
+text \<open>The upper bound for the envelope.  The nearby matrices \<open>snd w\<close> need not be
+  symmetric: the comparison is made against the symmetric \<open>M\<close> using
   \<open>ell_op_M_gap\<close>, and only \<open>M\<close> itself has to be symmetric for
   \<open>ell_op_le_eq36\<close>.  This mirrors \<open>ell_op_lsc_at_zero\<close> in Envelopes.thy.\<close>
 
@@ -490,12 +490,10 @@ section \<open>Towards Section 4: degenerate ellipticity of \<open>F\<close>\<cl
 text \<open>Theorem 4.2 of the paper reaches its contradiction through Eq. (4.3),
   \<open>F(p\<^sub>\<epsilon>, M\<^sub>\<epsilon>) \<ge> F(p\<^sub>\<epsilon>, N\<^sub>\<epsilon>)\<close>, which is the degenerate ellipticity of \<open>F\<close>:
   adding a positive semidefinite matrix to the Hessian argument can only
-  DECREASE \<open>F\<close>, since \<open>F\<close> is an infimum of \<open>-\<onehalf> tr(M a)\<close> over positive
-  semidefinite \<open>a\<close>.
-
-  \<open>ell_op_pointwise_elliptic\<close> (Relative_Arbitrage_PDE.thy) is the statement for
-  a single \<open>a\<close>; passing to the infimum is what Section 4 actually uses, and is
-  proved here.\<close>
+  decrease \<open>F\<close>, since \<open>F\<close> is an infimum of \<open>-\<onehalf> tr(M a)\<close> over positive
+  semidefinite \<open>a\<close>.  \<open>ell_op_pointwise_elliptic\<close> (Relative_Arbitrage_PDE.thy)
+  is the statement for a single \<open>a\<close>; passing to the infimum is what Section 4
+  actually uses, and is proved here.\<close>
 
 theorem ell_op_elliptic:
   fixes M Q :: "real^'n::finite^'n"
@@ -537,8 +535,8 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>And the same for the upper envelope, which is the form the viscosity
-  definitions of Section 4 are stated with.\<close>
+text \<open>The same holds for the upper envelope, the form used in Section 4's
+  viscosity definitions.\<close>
 
 corollary ell_op_usc_elliptic_le:
   fixes M N :: "real^'n::finite^'n"
@@ -582,12 +580,11 @@ proof -
 qed
 
 text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maximum
-  the Crandall-Ishii lemma produces a COMMON gradient \<open>p\<close> and Hessians
+  the Crandall-Ishii lemma produces a common gradient \<open>p\<close> and Hessians
   \<open>X \<preceq> Y\<close>, with \<open>u\<close> subsolution at the first point and \<open>w\<close> supersolution at the
   second.  Ellipticity then forces \<open>F(p,Y) \<le> F(p,X)\<close>, so the two operator
-  values are PINCHED between the sub- and supersolution inequalities; and any
-  strictness on the subsolution side is already a contradiction.  This is what
-  the penalty term in the doubling is arranged to supply.\<close>
+  values are pinched between the sub- and supersolution inequalities, and any
+  strictness on the subsolution side is already a contradiction.\<close>
 
 lemma ell_op_pinched:
   fixes X Y :: "real^'n::finite^'n"
@@ -622,8 +619,8 @@ proof -
     by simp
 qed
 
-text \<open>And in the envelope formulation of Definition 3.1, using the continuity
-  clause to replace \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> by \<open>F\<close> at a nonzero gradient.\<close>
+text \<open>The envelope formulation of Definition 3.1, obtained by using the
+  continuity clause to replace \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> by \<open>F\<close> at a nonzero gradient.\<close>
 
 corollary ell_op_strict_no_crossing_env:
   fixes X Y :: "real^'n::finite^'n"
@@ -640,24 +637,19 @@ proof -
     by (rule ell_op_strict_no_crossing[OF psd k(1) k(2) L sub])
 qed
 
-section \<open>Lemma 3.1, the clauses available so far\<close>
+section \<open>Lemma 3.1\<close>
 
-text \<open>Collecting what is proved:
+text \<open>Lemma 3.1 consists of:
   \<^item> \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close> always (\<open>ell_op_lsc_le_ell_op\<close>, \<open>ell_op_le_ell_op_usc\<close>,
     Envelopes.thy);
-  \<^item> \<open>F\<^sub>*(0, M) = F(0, M)\<close> (\<open>ell_op_lsc_at_zero\<close>, Envelopes.thy) -- the first
-    clause of Lemma 3.1;
+  \<^item> \<open>F\<^sub>*(0, M) = F(0, M)\<close> (\<open>ell_op_lsc_at_zero\<close>, Envelopes.thy);
   \<^item> \<open>F(p, M) = -\<onehalf> bracket (n-k) L M\<^sub>p\<close> for \<open>p \<noteq> 0\<close>, i.e. Eq. (3.5)
     (\<open>ell_op_eq_half_bracket\<close>, Poincare_Separation.thy);
-  \<^item> \<open>F\<^sup>*(0, M) \<ge> eq36_rhs\<close>, the lower bound of Eq. (3.6), above.
+  \<^item> \<open>F\<^sup>*(0, M) = eq36_rhs\<close>, i.e. Eq. (3.6) (\<open>eq36\<close>, above);
+  \<^item> \<open>F\<^sub>* = F\<^sup>* = F\<close> off the origin (\<open>ell_op_envelopes_eq_off_zero\<close>, above).
 
-  \<^item> \<open>F\<^sup>*(0, M) = eq36_rhs\<close>, i.e. Eq. (3.6) in full (\<open>eq36\<close>, above);
-  \<^item> \<open>F\<^sub>* = F\<^sup>* = F\<close> off the origin, the remaining clause of Lemma 3.1
-    (\<open>ell_op_envelopes_eq_off_zero\<close>, above).
-
-  So LEMMA 3.1 IS COMPLETE.  The general one-sided Poincare separation
-  inequality \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary \<open>p \<noteq> 0\<close>, which an earlier
-  version of this note listed as missing, is \<open>poincare_separation\<close>
+  The general one-sided Poincare separation inequality
+  \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary \<open>p \<noteq> 0\<close> is \<open>poincare_separation\<close>
   (Poincare_Separation.thy); for \<open>p\<close> an eigenvector it is an equality
   (\<open>eigval_Mp_top_eigenvector\<close>).\<close>
 
@@ -670,46 +662,38 @@ lemma ell_op_lsc_at_zero_eq:
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
 
-text \<open>STATE OF THE CRANDALL-ISHII INPUT.  Theorem 4.2(a) of the paper (the
-  maximum principle: for a subsolution \<open>u\<close> and a supersolution \<open>w\<close>, \<open>u - w\<close>
-  attains its maximum over the compact \<open>K\<close> on the BOUNDARY) is proved there by
-  doubling the variables and applying the Crandall-Ishii "theorem on sums",
-  which the paper CITES as [CI90] rather than proving.
+text \<open>Theorem 4.2(a) of the paper (the maximum principle: for a subsolution
+  \<open>u\<close> and a supersolution \<open>w\<close>, \<open>u - w\<close> attains its maximum over the compact
+  \<open>K\<close> on the boundary) is proved there by doubling the variables and applying
+  the Crandall-Ishii "theorem on sums", which the paper cites as [CI90] rather
+  than proving.  That theorem is not available here: \<open>comparison_principle\<close>
+  (Relative\_Arbitrage\_Uniqueness.thy) only assumes the comparison principle as
+  a locale axiom and is never interpreted; the AFP has nothing on viscosity
+  solutions; and the analytic prerequisites -- Alexandrov's theorem and a
+  Rademacher-type result -- are also absent from this HOL-Analysis, so building
+  it would mean an independent development (sup-convolutions, semiconvexity,
+  Alexandrov/Jensen, theorem on sums).
 
-  That theorem is not available:
-  \<^item> not in this development -- \<open>comparison_principle\<close>
-    (Relative_Arbitrage_Uniqueness.thy) merely ASSUMES the comparison principle
-    as a locale axiom, is never interpreted, and its single consumer takes it as
-    an explicit hypothesis; the unconditional ball result
-    \<open>ball_v_unique_solution_smooth\<close> deliberately avoids it;
-  \<^item> not in the AFP (nothing on viscosity solutions at all);
-  \<^item> and its analytic prerequisites are not in this HOL-Analysis either --
-    neither Alexandrov's theorem (a.e. twice differentiability of semiconvex
-    functions) nor a Rademacher-type result is present, so building it means
-    sup-convolutions -> semiconvexity -> Alexandrov/Jensen -> theorem on sums,
-    an independent development of its own.
+  Theorem 4.2(a) is therefore isolated as the predicate
+  \<open>max_principle_boundary\<close> below, and everything downstream of it -- 4.2(b),
+  Theorem 4.3, Proposition 4.1 -- is proved from it unconditionally, localising
+  the one genuine gap to a single named interface.
 
-  So 4.2(a) is isolated as the predicate \<open>max_principle_boundary\<close> below and
-  everything downstream of it -- 4.2(b), Theorem 4.3, Proposition 4.1 -- is
-  proved from it UNCONDITIONALLY.  This localises the one genuine gap to a
-  single named interface instead of letting it leak.
+  The interface carries continuity of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>, which cannot be
+  dropped: \<open>visc_subsol k L (interior K) u\<close> constrains only points of the open
+  set \<open>interior K\<close>, so the values of a sub- or supersolution on
+  \<open>K - interior K\<close> are free, and raising \<open>w\<close> there by a constant destroys every
+  boundary maximum -- without continuity the predicate is false, not merely
+  unproved.  The version without continuity is kept below as
+  \<open>max_principle_boundary_raw\<close>, refuted by
+  \<open>max_principle_boundary_counterexample\<close> (Comparison\_Assembly).
 
-  READ THIS BEFORE WEAKENING THE HYPOTHESES.  The interface carries CONTINUITY
-  of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>, and that is not decoration: without it the predicate is
-  FALSE, not merely unproved.  \<open>visc_subsol k L (interior K) u\<close> constrains only
-  points of \<open>interior K\<close>, and its local condition may always be shrunk into that
-  OPEN set, so the values of a sub- or supersolution on \<open>K - interior K\<close> are
-  completely free; raising \<open>w\<close> there by a constant destroys every boundary
-  maximum.  The version without continuity is kept below as
-  \<open>max_principle_boundary_raw\<close> precisely so that the refutation
-  (\<open>max_principle_boundary_counterexample\<close>, Comparison\_Assembly) has a target
-  and this cannot be quietly undone.
-
-  Continuity rather than the sharper "usc \<open>u\<close>, lsc \<open>w\<close>" because it is what the
-  rest of this development already carries (\<open>theorem_1_1_ball_fragment\<close> states
-  its uniqueness clause for \<open>continuous_on (cball 0 r) u\<close>) and this
-  HOL-Analysis has no semicontinuity library.  Only
-  \<open>max_principle_boundary_attains\<close> would need reproving to sharpen it.\<close>
+  Continuity rather than the sharper "usc \<open>u\<close>, lsc \<open>w\<close>" is used because it is
+  what the rest of this development already carries
+  (\<open>theorem_1_1_ball_fragment\<close> states its uniqueness clause for
+  \<open>continuous_on (cball 0 r) u\<close>) and this HOL-Analysis has no semicontinuity
+  library.  Only \<open>max_principle_boundary_attains\<close> would need reproving to
+  sharpen it.\<close>
 
 definition max_principle_boundary_raw ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
@@ -729,9 +713,9 @@ definition max_principle_boundary ::
         \<longrightarrow> (\<exists>x \<in> K - interior K.
                \<forall>y \<in> K. u y - w y \<le> u x - w x))"
 
-text \<open>The predicate is about WHERE the maximum sits, not whether there is one:
+text \<open>The predicate is about where the maximum sits, not whether there is one:
   under the added hypotheses \<open>u - w\<close> always attains its maximum on a compact
-  \<open>K\<close>.  The raw version silently presupposed this.\<close>
+  \<open>K\<close>, a fact the raw version presupposed.\<close>
 
 lemma max_principle_boundary_attains:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -745,9 +729,8 @@ proof -
     by (rule continuous_attains_sup[OF cK ne])
 qed
 
-text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and NONNEGATIVE boundary
-  data for \<open>w\<close>, the maximum principle gives \<open>u \<le> w\<close> on \<open>K\<close>.  This is the step
-  the paper obtains from (a), and it is pure bookkeeping once (a) is available.\<close>
+text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and nonnegative boundary
+  data for \<open>w\<close>, the maximum principle gives \<open>u \<le> w\<close> on \<open>K\<close>.\<close>
 
 theorem max_principle_le:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -794,11 +777,10 @@ proof -
 qed
 
 text \<open>Proposition 4.1 (uniqueness): two viscosity solutions with the same
-  boundary data agree.  Applying the comparison step in both directions.  Note
-  this needs the maximum principle for \<open>K\<close> only, and nothing about the
-  \<open>T\<^sub>\<iota>\<close> family -- the transformations enter the paper's Theorem 4.3 to handle
-  boundary data that is merely SEMICONTINUOUS, which is not needed for the
-  equal-boundary-data statement.\<close>
+  boundary data agree, by applying the comparison step in both directions.
+  This needs the maximum principle for \<open>K\<close> only, not the \<open>T\<^sub>\<iota>\<close> family, which
+  the paper's Theorem 4.3 uses to handle boundary data that is merely
+  semicontinuous -- unnecessary for the equal-boundary-data statement.\<close>
 
 theorem uniqueness_from_max_principle:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -823,11 +805,11 @@ proof -
     by simp
 qed
 
-text \<open>And the discharge obligation stated plainly: to remove the interface it
-  suffices to prove \<open>max_principle_boundary k L K\<close> for compact \<open>K\<close>, which is
-  Theorem 4.2(a).  Everything above then becomes unconditional.  Note the
-  obligation is the CONTINUOUS one; \<open>max_principle_boundary_raw\<close> is refutable
-  and must not be used as the target.\<close>
+text \<open>To remove the interface it suffices to prove
+  \<open>max_principle_boundary k L K\<close> for compact \<open>K\<close>, i.e. Theorem 4.2(a);
+  everything above then becomes unconditional.  The obligation is the
+  continuous version; \<open>max_principle_boundary_raw\<close> is refutable and is not a
+  valid target.\<close>
 
 lemma max_principle_boundary_intro:
   assumes "\<And>u w. visc_subsol_env k L K (interior K) u

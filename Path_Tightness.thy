@@ -1,16 +1,16 @@
 section \<open>Tightness of the path laws\<close>
 
 text \<open>
-  Plan step A5c (STATUS.md 25h), second half: the laws of processes satisfying
-  the uniform fourth-moment package of Eq. (2.7) form a tight family on the
-  path space \<open>C({0..T})\<close>. The chain: \<open>dyadic_bad_event_tail_mom\<close>
-  (Modulus\_Tails) bounds the probability that some dyadic increment at some
-  level \<open>j \<ge> n\<close> is large; on the complement, \<open>modulus_of_good_path\<close> plus
-  \<open>holder_of_dyadic_moduli\<close> (Holder\_Interpolation) place the path in an
-  explicit H\"older ball, which \<open>compactin_path_holder_ball\<close> (Path\_Space)
-  makes compact. Large levels \<open>n\<close> make the exceptional mass small, uniformly
-  over the family — which is exactly \<open>tight_on_set\<close>, the hypothesis of the
-  AFP's \<open>Prokhorov_theorem_LP\<close>.
+  The laws of processes satisfying the uniform fourth-moment package of
+  Eq. (2.7) form a tight family on the path space \<open>C({0..T})\<close>. The chain:
+  \<open>dyadic_bad_event_tail_mom\<close> (Modulus\_Tails) bounds the probability that
+  some dyadic increment at some level \<open>j \<ge> n\<close> is large; on the complement,
+  \<open>modulus_of_good_path\<close> plus \<open>holder_of_dyadic_moduli\<close>
+  (Holder\_Interpolation) place the path in an explicit H\"older ball, which
+  \<open>compactin_path_holder_ball\<close> (Path\_Space) makes compact. Large levels
+  \<open>n\<close> make the exceptional mass small, uniformly over the family, which is
+  exactly \<open>tight_on_set\<close>, the hypothesis of the AFP's
+  \<open>Prokhorov_theorem_LP\<close>.
 \<close>
 
 theory Path_Tightness
@@ -68,7 +68,7 @@ qed
 
 text \<open>
   The H\"older constant produced by the level-\<open>n\<close> modulus: explicit in
-  \<open>(\<gamma>, T, n)\<close> only, so the resulting compact ball is COMMON to every law
+  \<open>(\<gamma>, T, n)\<close> only, so the resulting compact ball is common to every law
   satisfying the moment package.
 \<close>
 
@@ -328,8 +328,8 @@ text \<open>
   \<open>tight_on_set_imp_convergent_subsequence\<close>: every sequence of laws whose
   processes satisfy the uniform Eq. (2.7) package has a weakly convergent
   subsequence on \<open>C({0..T})\<close>. This is the relative-compactness content of
-  Lemma 2.2 at a fixed horizon; the \<open>C([0,\<infinity>))\<close> statement is the remaining
-  architecture step (STATUS.md 25h, A5d).
+  Lemma 2.2 at a fixed horizon; the \<open>C([0,\<infinity>))\<close> statement extends it to
+  unbounded time.
 \<close>
 
 corollary path_laws_convergent_subsequence:
@@ -646,10 +646,9 @@ qed
 subsection \<open>The diagonal extraction over integer horizons\<close>
 
 text \<open>
-  Step (ii) of the A5d plan (STATUS.md 25m): from a horizon-uniform moment
-  package, ONE subsequence along which the path laws converge weakly at EVERY
-  integer horizon simultaneously. Built on HOL-Library's
-  \<open>Diagonal_Subsequence\<close> (locale \<open>subseqs\<close>, reachable through
+  From a horizon-uniform moment package, a single subsequence along which the
+  path laws converge weakly at every integer horizon simultaneously. Built on
+  HOL-Library's \<open>Diagonal_Subsequence\<close> (locale \<open>subseqs\<close>, reachable through
   HOL-Probability); subsequence-stability of weak convergence is
   \<open>limitin_subsequence\<close>, and the tail shift is absorbed by
   \<open>limitin_sequentially_offset_rev\<close>.
@@ -783,15 +782,15 @@ qed
 subsection \<open>Consistency of the diagonal limits across horizons\<close>
 
 text \<open>
-  The per-horizon limit laws of the diagonal subsequence form a PROJECTIVE
+  The per-horizon limit laws of the diagonal subsequence form a projective
   family: restricting the horizon-\<open>m'\<close> limit to \<open>{0..m}\<close> gives the
   horizon-\<open>m\<close> limit. Proof: the restriction map is continuous
   (\<open>Lipschitz_restrict_path_metric\<close>), so \<open>weak_conv_on_pushforward\<close> sends
   the horizon-\<open>m'\<close> convergence to convergence of the restricted laws, which
-  by \<open>path_law_restrict\<close> ARE the horizon-\<open>m\<close> laws; uniqueness of weak limits
+  by \<open>path_law_restrict\<close> are the horizon-\<open>m\<close> laws; uniqueness of weak limits
   (the weak topology is metrizable by \<open>metrizable_weak_conv_topology\<close>, hence
   Hausdorff) identifies the two candidate limits. This is the input for the
-  projective-limit assembly (step (iii) of STATUS.md 25m).
+  projective-limit assembly.
 \<close>
 
 theorem path_laws_diagonal_consistent:
@@ -942,7 +941,7 @@ proof -
   qed
 qed
 
-subsection \<open>The moment bound passes to the limit laws (plan item A1)\<close>
+subsection \<open>The moment bound passes to the limit laws\<close>
 
 text \<open>
   Coordinate increments of paths are continuous test functions
@@ -951,7 +950,7 @@ text \<open>
   Eq. (2.7) fourth-moment package from the approximating processes to any
   weak limit of their path laws. Applied to the diagonal limits of
   \<open>path_laws_diagonal_consistent\<close>, this is what lets the dyadic modulus
-  machinery run on the limit (plan item A3).
+  machinery run on the limit.
 \<close>
 
 lemma continuous_map_real_diff:
@@ -1042,21 +1041,21 @@ proof (rule weak_conv_on_nn_integral_le[OF wc])
     by simp
 qed
 
-subsection \<open>The projective-limit assembly (plan item A2)\<close>
+subsection \<open>The projective-limit assembly\<close>
 
 text \<open>
   From the horizon-consistent family of limit laws
-  (\<open>path_laws_diagonal_consistent\<close>) to ONE probability measure on the
+  (\<open>path_laws_diagonal_consistent\<close>) to a single probability measure on the
   full-time function space with the product sigma-algebra, via the
   Daniell-Kolmogorov theorem (\<open>HOL-Probability.Projective_Limit\<close>,
   locale \<open>polish_projective\<close>). The finite-dimensional marginals are the
   pushforwards of the \<open>N m\<close> under the (measurable, by evaluation continuity)
   restriction maps; the horizon choice is immaterial by the consistency
   identity, and the projective property is the restrict-restrict collapse.
-  NOTE: \<open>unfold_locales\<close> on \<open>polish_projective\<close> decomposes the
-  \<open>prob_space (P J)\<close> axiom into its three RAW ancestor axioms
-  (sigma-finite cover, finiteness, total mass one) — discharge those, not
-  the locale predicate.
+  \<open>unfold_locales\<close> on \<open>polish_projective\<close> decomposes the
+  \<open>prob_space (P J)\<close> axiom into its three ancestor axioms (sigma-finite
+  cover, finiteness, total mass one); discharge those, not the locale
+  predicate.
 \<close>
 
 lemma marginal_map_measurable:
@@ -1269,11 +1268,11 @@ proof -
   qed
 qed
 
-text \<open>First brick of plan item A3: the Eq. (2.7) package holds for the
-  COORDINATES of the projective limit — the increment moment is a function of
-  a two-point marginal, and marginals are inherited from the \<open>N m\<close>. This is
-  the input for running the dyadic modulus machinery on \<open>L\<close> and building the
-  continuous modification.\<close>
+text \<open>The Eq. (2.7) package holds for the coordinates of the projective
+  limit — the increment moment is a function of a two-point marginal, and
+  marginals are inherited from the \<open>N m\<close>. This is the input for running the
+  dyadic modulus machinery on \<open>L\<close> and building the continuous
+  modification.\<close>
 
 lemma lim_coordinate_moment_bound:
   fixes L :: "(real \<Rightarrow> real^'m::finite) measure"
@@ -1358,10 +1357,10 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>The dyadic extension operator (plan item A3, deterministic core)\<close>
+subsection \<open>The dyadic extension operator\<close>
 
 text \<open>
-  A path controlled only ON THE DYADICS extends to a continuous function:
+  A path controlled only on the dyadics extends to a continuous function:
   \<open>dyadic_pair_modulus\<close> is the continuity-free chaining bound for pairs of
   dyadics (any metric space, via \<open>dyadic_chaining\<close>); the anchor sequences
   \<open>danchor k t\<close> are then Cauchy, and \<open>dyadic_ext\<close> takes their limit. It
@@ -1626,14 +1625,13 @@ qed
 subsection \<open>The good-dyadics event of the projective limit is almost sure\<close>
 
 text \<open>
-  Plan item A3, probabilistic half, first pieces: the coordinates of the
-  projective limit are measurable, carry the Bochner form of the Eq. (2.7)
-  package (adapter from the \<open>nn_integral\<close> bound), and — via
-  \<open>dyadic_bad_event_tail_mom\<close> at every integer horizon and coordinate, with
-  the geometric level bounds forcing the intersection over levels to be null
-  — almost every \<open>\<omega>\<close> satisfies the dyadic moduli from some level on, at every
-  horizon and coordinate simultaneously. On this event \<open>dyadic_ext\<close> builds
-  the continuous modification.
+  The coordinates of the projective limit are measurable, carry the Bochner
+  form of the Eq. (2.7) package (adapter from the \<open>nn_integral\<close> bound), and
+  — via \<open>dyadic_bad_event_tail_mom\<close> at every integer horizon and
+  coordinate, with the geometric level bounds forcing the intersection over
+  levels to be null — almost every \<open>\<omega>\<close> satisfies the dyadic moduli from some
+  level on, at every horizon and coordinate simultaneously. On this event
+  \<open>dyadic_ext\<close> builds the continuous modification.
 \<close>
 
 lemma lim_coordinate_measurable:
@@ -1793,7 +1791,7 @@ proof -
   thus ?thesis .
 qed
 
-text \<open>Continuity of the extension on all of \<open>{0..}\<close> from PER-HORIZON good
+text \<open>Continuity of the extension on all of \<open>{0..}\<close> from per-horizon good
   bounds (each point sits inside some integer horizon, and \<open>dyadic_ext\<close> is
   horizon-free), plus the measurable good set of the projective limit —
   the strict-threshold bad events have the same countable-union structure,
@@ -1972,9 +1970,9 @@ proof -
     by (intro sets.Int sets.top iT)
 qed
 
-text \<open>Per-time measurability of the extension: \<open>dyadic_ext\<close> is
-  DEFINITIONALLY a \<open>lim\<close> along the (nonnegative, by \<open>danchor_nonneg\<close>) anchor
-  sequence, so \<open>borel_measurable_lim_metric\<close> applies directly.\<close>
+text \<open>Per-time measurability of the extension: \<open>dyadic_ext\<close> is definitionally
+  a \<open>lim\<close> along the (nonnegative, by \<open>danchor_nonneg\<close>) anchor sequence, so
+  \<open>borel_measurable_lim_metric\<close> applies directly.\<close>
 
 lemma lim_vector_coordinate_measurable:
   fixes L :: "(real \<Rightarrow> real^'m::finite) measure"
@@ -2004,7 +2002,7 @@ proof -
   thus ?thesis unfolding dyadic_ext_def .
 qed
 
-subsection \<open>The modification identity (plan item A3, final piece)\<close>
+subsection \<open>The modification identity\<close>
 
 text \<open>
   The extension agrees with the sample almost surely at every fixed time:
@@ -2012,7 +2010,7 @@ text \<open>
   \<open>dyadic_ext_tendsto\<close> with the vector bound assembled from per-coordinate
   levels), and to the sample in probability (Chebyshev at the fourth moment,
   \<open>lim_vector_increment_tail\<close>); the truncated-distance Fatou argument glues
-  the two. This makes \<open>dyadic_ext\<close> a CONTINUOUS MODIFICATION of the
+  the two. This makes \<open>dyadic_ext\<close> a continuous modification of the
   projective limit's coordinate process.
 \<close>
 
@@ -2306,11 +2304,11 @@ proof -
   qed
 qed
 
-subsection \<open>The continuous modification, assembled (plan item A3 complete)\<close>
+subsection \<open>The continuous modification, assembled\<close>
 
 text \<open>
   The bundle: from the moment package alone, the projective limit carries a
-  process \<open>Y\<close> with measurable time sections, EVERYWHERE-continuous paths on
+  process \<open>Y\<close> with measurable time sections, everywhere-continuous paths on
   \<open>{0..}\<close>, and \<open>Y t = \<omega> t\<close> almost surely at every time — a continuous
   modification of the coordinate process. \<open>Y\<close> is \<open>dyadic_ext\<close> gated on the
   measurable almost-sure good set.
@@ -2425,7 +2423,7 @@ proof -
   qed
 qed
 
-subsection \<open>Currying toward the \<open>P_x\<close> sample type (plan item A4, first piece)\<close>
+subsection \<open>Currying toward the \<open>P_x\<close> sample type\<close>
 
 text \<open>
   The flip map from time-indexed vector paths to coordinate-indexed real
@@ -2454,14 +2452,14 @@ proof (rule measurable_restrict)
 qed
 
 
-text \<open>RQ-A's final piece: weak convergence UPGRADED by uniform integrability.
+text \<open>Weak convergence upgraded by uniform integrability.
 
   \<open>weak_conv_on_nn_integral_le\<close> below handles a non-negative integrand and gives
-  an UPPER bound on the limit, by truncating at \<open>K\<close> and letting monotone
+  an upper bound on the limit, by truncating at \<open>K\<close> and letting monotone
   convergence do the work --- no integrability hypothesis at all.  That covers
   exactly the \<open>\<preceq> L\<cdot>I\<close> half of the covariation constraint.
 
-  It does NOT cover the other half.  The constraint set also carries LOWER
+  It does not cover the other half.  The constraint set also carries lower
   bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>), and for those the inequality runs the other way, where
   weak convergence gives only the Fatou direction \<open>liminf \<ge> lim\<close>.  Recovering
   \<open>limsup \<le>\<close> is exactly what uniform integrability buys, and this is the lemma

@@ -473,7 +473,7 @@ proof -
   have "{\<omega> \<in> space (F t). infdist (X r \<omega>) A < e} \<in> sets (F t)"
     using meas by measurable
   then show ?thesis
-    using r rt by (simp add: space_F)
+    using r rt by simp
 qed
 
 theorem etime_stopping_time:
@@ -560,7 +560,7 @@ next
   have "{\<omega> \<in> space M. etime T A X \<omega> \<le> t} = space M"
     using all_le by auto
   moreover have "space M \<in> sets (F t)"
-    using t sets.top[of "F t"] by (simp add: space_F)
+    using t sets.top[of "F t"] by simp
   ultimately show ?thesis by simp
 qed
 
@@ -602,7 +602,7 @@ proof -
     case True
     then have "norm (X s \<omega>) < r"
       using s by (intro strict) auto
-    then show ?thesis by (simp add: mem_cball dist_norm)
+    then show ?thesis by (simp add: dist_norm)
   next
     case False
     with sle have s_eq: "s = etime T {y. r \<le> norm y} X \<omega>" by simp
@@ -610,7 +610,7 @@ proof -
     proof (cases "s = 0")
       case True
       then show ?thesis
-        using start rad by (simp add: mem_cball dist_norm)
+        using start rad by (simp add: dist_norm)
     next
       case False
       then have spos: "0 < s"
@@ -655,7 +655,7 @@ proof -
       qed
       have "norm (X s \<omega>) \<le> r"
         using bnd by (intro tendsto_upperbound[OF lim]) auto
-      then show ?thesis by (simp add: mem_cball dist_norm)
+      then show ?thesis by (simp add: dist_norm)
     qed
   qed
 qed

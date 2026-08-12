@@ -105,7 +105,7 @@ proof -
   also have "\<dots> = trace (a ** mat 1)"
     by (simp add: onormal_complete[OF B])
   also have "\<dots> = trace a"
-    by (simp add: matrix_mul_rid)
+    by simp
   finally show ?thesis .
 qed
 
@@ -148,9 +148,9 @@ proof -
       by (rule matrix_matrix_mult_diff_right)
     also have "\<dots> = (mat 1 - outer_prod x x)
                   - (mat 1 ** outer_prod x x - outer_prod x x ** outer_prod x x)"
-      by (simp add: matrix_mul_rid matrix_matrix_mult_diff_left)
+      by (simp add: matrix_matrix_mult_diff_left)
     also have "\<dots> = (mat 1 - outer_prod x x :: real^'n^'n)"
-      by (simp add: matrix_mul_lid sq)
+      by (simp add: sq)
     finally show "(mat 1 - outer_prod x x :: real^'n^'n)
         ** (mat 1 - outer_prod x x) = mat 1 - outer_prod x x" .
   qed
@@ -162,7 +162,7 @@ proof -
   also have "\<dots> = real CARD('n) - 1"
     by (simp add: trace_I xx)
   also have "\<dots> = real (CARD('n) - 1)"
-    using pos by (simp add: of_nat_diff)
+    using pos by simp
   finally show "trace (mat 1 - outer_prod x x :: real^'n^'n)
       = real (CARD('n) - 1)" .
 qed
@@ -220,7 +220,7 @@ proof -
         = trace (a ** mat 1) - trace (a ** outer_prod x x)"
       by (simp add: matrix_matrix_mult_diff_right trace_diff_matrix)
     also have "\<dots> = trace a - x \<bullet> (a *v x)"
-      by (simp add: matrix_mul_rid trace_mult_rank1)
+      by (simp add: trace_mult_rank1)
     finally show ?thesis .
   qed
   have "eigval CARD('n) a = trace a - kyfan (CARD('n) - 1) a"
@@ -249,7 +249,7 @@ proof -
   have "rank1proj p *v y = inverse (p \<bullet> p) *\<^sub>R (outer_prod p p *v y)"
     unfolding rank1proj_def by (rule scaleR_matrix_vector_assoc[symmetric])
   also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R ((p \<bullet> y) *\<^sub>R p)"
-    by (simp add: outer_prod_mv)
+    by simp
   also have "\<dots> = 0"
     by (simp add: y)
   finally show ?thesis .
@@ -525,7 +525,7 @@ proof -
     by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
   also have "\<dots> = (\<Sum>v\<in>B. if v = u then g u *\<^sub>R u else 0)"
     by (intro sum.cong refl)
-      (use B u in \<open>auto dest: onormal_inner_distinct simp: onormal_inner_self\<close>)
+      (use B u in \<open>auto dest: onormal_inner_distinct\<close>)
   also have "\<dots> = g u *\<^sub>R u"
     using finB u by simp
   finally have "(\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v u = g u *\<^sub>R u" .
@@ -629,7 +629,7 @@ proof -
   proof
     assume "S \<inter> W \<subseteq> {0}"
     then have "dim (S \<inter> W) = 0"
-      by (simp add: dim_eq_0)
+      by simp
     with pos show False
       by simp
   qed
@@ -795,7 +795,7 @@ proof -
   obtain x where x: "x \<in> S" "x \<in> span U" "x \<noteq> 0"
     using subspace_inter_nonzero[OF S(1) subspace_span dims] by blast
   have xx: "0 < x \<bullet> x"
-    using x(3) by (simp add: inner_gt_zero_iff)
+    using x(3) by simp
   text \<open>Every eigenvalue occurring in \<open>U\<close> is dominated by \<open>eigval m a\<close>.\<close>
   have Ubound: "v \<bullet> (a *v v) \<le> eigval m a" if v: "v \<in> U" for v
   proof (cases "v = w")
@@ -1882,11 +1882,11 @@ lemma outer_prod_scaleR_right:
   shows "outer_prod u (c *\<^sub>R v) = c *\<^sub>R outer_prod u v"
 proof -
   have "outer_prod u (c *\<^sub>R v) = transpose (outer_prod (c *\<^sub>R v) u)"
-    by (simp add: transpose_outer_prod)
+    by simp
   also have "\<dots> = transpose (c *\<^sub>R outer_prod v u)"
     by (simp add: outer_prod_scaleR_left)
   also have "\<dots> = c *\<^sub>R outer_prod u v"
-    by (simp add: transpose_scaleR transpose_outer_prod)
+    by (simp add: transpose_scaleR)
   finally show ?thesis .
 qed
 
@@ -3040,7 +3040,7 @@ proof -
     using p' by simp
   have split: "p' /\<^sub>R norm p' - p /\<^sub>R norm p
       = (p' - p) /\<^sub>R norm p + (inverse (norm p') - inverse (norm p)) *\<^sub>R p'"
-    by (simp add: scaleR_left_diff_distrib scaleR_right_diff_distrib
+    by (simp add:
         algebra_simps)
   have t1: "norm ((p' - p) /\<^sub>R norm p) = norm (p' - p) / norm p"
     using np by (simp add: divide_inverse mult.commute)
@@ -3481,7 +3481,7 @@ proof (rule ccontr)
   obtain x where x: "x \<in> S" "x \<in> W" "x \<noteq> 0"
     using subspace_inter_nonzero[OF S(1) W dims] by blast
   have "0 < x \<bullet> x"
-    using x(3) by (simp add: inner_gt_zero_iff)
+    using x(3) by simp
   also have "x \<bullet> x \<le> x \<bullet> (a *v x)"
     by (rule quad[OF x(1)])
   also have "\<dots> \<le> 0"

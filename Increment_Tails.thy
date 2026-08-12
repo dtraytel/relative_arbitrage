@@ -1,12 +1,12 @@
 section \<open>Tail bounds from the fourth-moment estimate\<close>
 
 text \<open>
-  Plan step A4 (STATUS.md 25h), first tranche: the quantitative tail estimates
-  that turn Eq. (2.7) into tightness. The AFP's Kolmogorov-Chentsov theorem
-  produces a continuous MODIFICATION but not the tail bound on the modulus of
-  continuity that Lemma 2.2 of arXiv:2512.17702 needs; that bound is assembled
-  here from Markov's inequality and a union bound over one partition level.
-  The chaining over dyadic levels is the following step.
+  The quantitative tail estimates that turn Eq. (2.7) into tightness. The
+  AFP's Kolmogorov-Chentsov theorem produces a continuous modification but
+  not the tail bound on the modulus of continuity that Lemma 2.2 of
+  arXiv:2512.17702 needs; that bound is assembled here from Markov's
+  inequality and a union bound over one partition level. The chaining over
+  dyadic levels is the following step.
 \<close>
 
 theory Increment_Tails
@@ -89,9 +89,9 @@ qed
 subsection \<open>The tail bound at one partition level\<close>
 
 text \<open>
-  The union bound over the increments of the \<open>m\<close>-th uniform partition. The bound
-  DECAYS like \<open>1 / Suc m\<close>: refining the partition by a factor halves the tail,
-  which is what makes the dyadic chaining sum converge.
+  The union bound over the increments of the \<open>m\<close>-th uniform partition. The
+  bound decays like \<open>1 / Suc m\<close>: refining the partition by a factor halves
+  the tail, which is what makes the dyadic chaining sum converge.
 \<close>
 
 theorem partition_max_tail_bound:

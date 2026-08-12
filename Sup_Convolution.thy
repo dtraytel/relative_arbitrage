@@ -494,7 +494,7 @@ proof -
     by (rule supporting_hyperplane_rel_boundary[OF cvxE mem notrel]) blast
   have sup: "a \<bullet> (x, f x) \<le> a \<bullet> z"
     if "z \<in> closure (epigraph UNIV f)" for z
-    using supE0 that clE by (simp add: closure_closed)
+    using supE0 that clE by simp
   obtain p\<^sub>0 c where ac: "a = (p\<^sub>0, c)" by (cases a) auto
   have supE: "p\<^sub>0 \<bullet> x + c * f x \<le> p\<^sub>0 \<bullet> y + c * t" if "f y \<le> t" for y t
   proof -
@@ -5541,7 +5541,7 @@ proof -
     thus "a \<le> b + e * t" using h by simp
   qed
   show ?thesis
-    by (rule tendsto_lowerbound[OF lim ev]) (simp add: trivial_limit_at_right_real)
+    by (rule tendsto_lowerbound[OF lim ev]) simp
 qed
 
 text \<open>The second ingredient, and the reason the Minty resolvent keeps paying
@@ -5594,7 +5594,7 @@ proof -
       have "\<phi> (x + t *\<^sub>R v) + p \<bullet> (x + t *\<^sub>R v) \<le> \<phi> x + p \<bullet> x"
         by (rule xmax[OF inball[OF t]])
       hence mx: "\<phi> (x + t *\<^sub>R v) - \<phi> x \<le> - (t * (p \<bullet> v))"
-        by (simp add: inner_add_right algebra_simps)
+        by (simp add: algebra_simps)
       have sq: "(norm (x + t *\<^sub>R v))\<^sup>2 - (norm x)\<^sup>2
           = 2*t*(x \<bullet> v) + t\<^sup>2 * (norm v)\<^sup>2"
       proof -
@@ -5604,7 +5604,7 @@ proof -
         have e3: "(norm v)\<^sup>2 = v \<bullet> v" by (rule power2_norm_eq_inner)
         have e4: "(x + t *\<^sub>R v) \<bullet> (x + t *\<^sub>R v)
             = x \<bullet> x + 2*t*(x \<bullet> v) + (t*t)*(v \<bullet> v)"
-          by (simp add: inner_add_left inner_add_right inner_commute
+          by (simp add: inner_commute
               algebra_simps)
         show ?thesis unfolding e1 e4 e2 e3 by (simp add: power2_eq_square)
       qed
@@ -5612,7 +5612,7 @@ proof -
           \<le> - (t * (p \<bullet> v)) + (c/2) * (2*t*(x \<bullet> v) + t\<^sup>2 * (norm v)\<^sup>2)"
         using sd mx unfolding sq by linarith
       also have "\<dots> = t * ((c *\<^sub>R x - p) \<bullet> v + ((c/2) * (norm v)\<^sup>2) * t)"
-        by (simp add: inner_diff_left power2_eq_square algebra_simps)
+        by (simp add: power2_eq_square algebra_simps)
       finally show ?thesis using t by simp
     qed
     show ?thesis by (rule le_of_le_plus_small[OF t0pos ineq])
@@ -5664,7 +5664,7 @@ proof -
     have e2: "(norm x)\<^sup>2 = x \<bullet> x" by (rule power2_norm_eq_inner)
     have e3: "(norm (z - x))\<^sup>2 = (z - x) \<bullet> (z - x)" by (rule power2_norm_eq_inner)
     have e4: "z \<bullet> z = x \<bullet> x + 2 * (x \<bullet> (z - x)) + (z - x) \<bullet> (z - x)"
-      by (simp add: inner_diff_left inner_diff_right inner_commute algebra_simps)
+      by (simp add: inner_commute algebra_simps)
     show ?thesis unfolding e1 e2 e3 e4 by simp
   qed
   have lin: "(c *\<^sub>R x - p) \<bullet> (z - x) = c * (x \<bullet> (z - x)) - p \<bullet> (z - x)"
@@ -5746,7 +5746,7 @@ proof -
     using ub[OF ymem] unfolding qy nyx by simp
   have low: "\<psi> x' + q' \<bullet> (y - x') \<le> \<psi> y" by (rule subdiffD[OF q'])
   have split: "q' \<bullet> (y - x') = q' \<bullet> (x - x') - s * (q' \<bullet> w)"
-    unfolding y_def by (simp add: inner_diff_right algebra_simps)
+    unfolding y_def by (simp add: algebra_simps)
   have qq: "q \<bullet> w - q' \<bullet> w = (norm w)\<^sup>2"
     unfolding w_def[symmetric]
     by (simp add: w_def inner_diff_left[symmetric] power2_norm_eq_inner)
@@ -6016,7 +6016,7 @@ proof -
     have L2: "norm (Q x - Q x') \<le> (1/s) * norm (x - x')"
       using L1 s0 by (simp add: field_simps)
     have "norm (P x - P x') = norm (c *\<^sub>R (x - x') - (Q x - Q x'))"
-      unfolding P_def by (simp add: algebra_simps scaleR_diff_right)
+      unfolding P_def by (simp add: algebra_simps)
     also have "\<dots> \<le> norm (c *\<^sub>R (x - x')) + norm (Q x - Q x')"
       by (rule norm_triangle_ineq4)
     also have "\<dots> = c * norm (x - x') + norm (Q x - Q x')" using c by simp
@@ -6349,7 +6349,7 @@ proof -
     have lim3: "((\<lambda>t. R (t *\<^sub>R w) / t\<^sup>2) \<longlongrightarrow> 0) (at_right 0)"
       using prod unfolding rw by simp
     have lim4: "((\<lambda>t. (R (t *\<^sub>R w) / t\<^sup>2) * t) \<longlongrightarrow> 0 * 0) (at_right 0)"
-      by (rule tendsto_mult[OF lim3]) (simp add: tendsto_ident_at)
+      by (rule tendsto_mult[OF lim3]) simp
     have rw2: "(R (t *\<^sub>R w) / t\<^sup>2) * t = R (t *\<^sub>R w) / t" for t :: real
       by (cases "t = 0") (auto simp: power2_eq_square)
     have lim5: "((\<lambda>t. R (t *\<^sub>R w) / t) \<longlongrightarrow> 0) (at_right 0)"
@@ -6382,10 +6382,10 @@ proof -
     qed
     have c1: "((\<lambda>t. R (t *\<^sub>R w) / t + (q \<bullet> w) + t * (w \<bullet> X w)/2)
         \<longlongrightarrow> 0 + (q \<bullet> w) + 0 * (w \<bullet> X w)/2) (at_right 0)"
-      by (intro tendsto_intros lim5) (simp add: tendsto_ident_at)
+      by (intro tendsto_intros lim5) simp
     have qle: "q \<bullet> w \<le> 0"
       by (rule tendsto_upperbound[OF _ g1])
-        (use c1 in \<open>simp_all add: trivial_limit_at_right_real\<close>)
+        (use c1 in \<open>simp_all\<close>)
     have hess: "w \<bullet> X w \<le> 0" if qz: "q \<bullet> w = 0"
     proof -
       have g2: "\<forall>\<^sub>F t in at_right (0::real).
@@ -6408,7 +6408,7 @@ proof -
         by (intro tendsto_intros lim3)
       have "(w \<bullet> X w)/2 \<le> 0"
         by (rule tendsto_upperbound[OF _ g2])
-          (use c2 in \<open>simp_all add: trivial_limit_at_right_real\<close>)
+          (use c2 in \<open>simp_all\<close>)
       thus ?thesis by simp
     qed
     show ?thesis using qle hess by blast
@@ -6552,7 +6552,7 @@ proof (rule convex_onI[OF _ S])
     by (rule power2_norm_eq_inner)
   have expand: "((1 - t) *\<^sub>R x + t *\<^sub>R y) \<bullet> ((1 - t) *\<^sub>R x + t *\<^sub>R y)
       = (1-t)*(1-t)*(x \<bullet> x) + 2*(1-t)*t*(x \<bullet> y) + t*t*(y \<bullet> y)"
-    by (simp add: inner_add_left inner_add_right inner_commute algebra_simps)
+    by (simp add: inner_commute algebra_simps)
   have expand2: "(x - y) \<bullet> (x - y) = (x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y)"
     by (simp add: inner_diff_left inner_diff_right inner_commute)
   have ident: "(1 - t) * (x \<bullet> x) + t * (y \<bullet> y)
@@ -6799,7 +6799,7 @@ text \<open>The doubled functional PERTURBED by \<open>-\<delta>\<parallel>z - \
 lemma norm_sq_diff_shift:
   fixes z c :: "'a::euclidean_space"
   shows "(norm z)\<^sup>2 - (norm (z - c))\<^sup>2 = 2 * (z \<bullet> c) - (norm c)\<^sup>2"
-  by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
+  by (simp add: power2_norm_eq_inner
       inner_commute algebra_simps)
 
 theorem doubled_functional_semiconvex_shifted:
@@ -6837,7 +6837,7 @@ proof -
     have sh': "(norm (z - \<xi>))\<^sup>2 = (norm z)\<^sup>2 - 2 * (z \<bullet> \<xi>) + (norm \<xi>)\<^sup>2"
       using sh by linarith
     have iz: "inner z ((2*\<delta>) *\<^sub>R \<xi>) = 2 * \<delta> * (z \<bullet> \<xi>)"
-      by (simp add: inner_scaleR_right)    show "((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+      by simp    show "((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
             - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
           - \<delta> * (norm (z - \<xi>))\<^sup>2)
         + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2
@@ -7157,11 +7157,11 @@ proof -
         inner_commute)
   have e2: "(\<alpha> *\<^sub>R (fst zh - snd zh, - (fst zh - snd zh))) \<bullet> k
       = \<alpha> * ((fst zh - snd zh) \<bullet> (fst k - snd k))"
-    by (cases k) (simp add: inner_diff_right algebra_simps)
+    by (cases k) (simp add: algebra_simps)
   have e3: "k \<bullet> (\<alpha> *\<^sub>R (fst k - snd k, snd k - fst k))
       = \<alpha> * (norm (fst k - snd k))\<^sup>2"
-    by (cases k) (simp add: power2_norm_eq_inner inner_diff_left
-        inner_diff_right inner_commute algebra_simps)
+    by (cases k) (simp add: power2_norm_eq_inner
+        inner_commute algebra_simps)
   show ?thesis unfolding d1 e1 e2 e3 by (simp add: algebra_simps)
 qed
 
@@ -7550,7 +7550,7 @@ proof (rule linearI)
   show "fst (W (z1 + z2, 0) + \<alpha> *\<^sub>R ((z1 + z2) - 0, 0 - (z1 + z2)))
       = fst (W (z1, 0) + \<alpha> *\<^sub>R (z1 - 0, 0 - z1))
       + fst (W (z2, 0) + \<alpha> *\<^sub>R (z2 - 0, 0 - z2))"
-    unfolding wa by (simp add: scaleR_add_right algebra_simps)
+    unfolding wa by (simp add: algebra_simps)
 next
   fix c :: real and z :: 'a
   have ws: "W (c *\<^sub>R z, 0) = c *\<^sub>R W (z, 0)"
@@ -7562,7 +7562,7 @@ next
   qed
   show "fst (W (c *\<^sub>R z, 0) + \<alpha> *\<^sub>R ((c *\<^sub>R z) - 0, 0 - c *\<^sub>R z))
       = c *\<^sub>R fst (W (z, 0) + \<alpha> *\<^sub>R (z - 0, 0 - z))"
-    unfolding ws by (simp add: scaleR_add_right scaleR_diff_right algebra_simps)
+    unfolding ws by (simp add: algebra_simps)
 qed
 
 lemma linear_slice_snd:
@@ -7582,7 +7582,7 @@ proof (rule linearI)
   show "- snd (W (0, z1 + z2) + \<alpha> *\<^sub>R (0 - (z1 + z2), (z1 + z2) - 0))
       = - snd (W (0, z1) + \<alpha> *\<^sub>R (0 - z1, z1 - 0))
       + - snd (W (0, z2) + \<alpha> *\<^sub>R (0 - z2, z2 - 0))"
-    unfolding wa by (simp add: scaleR_add_right algebra_simps)
+    unfolding wa by (simp add: algebra_simps)
 next
   fix c :: real and z :: 'a
   have ws: "W (0, c *\<^sub>R z) = c *\<^sub>R W (0, z)"
@@ -7594,7 +7594,7 @@ next
   qed
   show "- snd (W (0, c *\<^sub>R z) + \<alpha> *\<^sub>R (0 - c *\<^sub>R z, (c *\<^sub>R z) - 0))
       = c *\<^sub>R (- snd (W (0, z) + \<alpha> *\<^sub>R (0 - z, z - 0)))"
-    unfolding ws by (simp add: scaleR_add_right scaleR_diff_right algebra_simps)
+    unfolding ws by (simp add: algebra_simps)
 qed
 
 text \<open>And the two SYMMETRY hypotheses. Pairing against \<open>(u, 0)\<close> turns

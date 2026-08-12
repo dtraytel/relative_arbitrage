@@ -51,7 +51,7 @@ proof (rule Brownian_market_sufficiently_volatile[OF k L])
       fix s :: real assume "0 \<le> s" "s \<le> 0"
       then have "s = 0" by simp
       with elim x0 show "cbmX x0 s \<omega> \<in> cball 0 r"
-        by (simp add: mem_cball dist_norm)
+        by (simp add: dist_norm)
     qed
   qed
 qed

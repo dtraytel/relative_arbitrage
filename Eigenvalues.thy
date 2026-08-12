@@ -316,8 +316,8 @@ proof -
     by (rule trace_mult_spectral_proj[OF B T(1) eig])
 qed
 
-text \<open>Ky Fan's maximum principle, in the form we need: the supremum
-  defining \<open>kyfan m a\<close> is ATTAINED at a spectral projection, i.e. it is a
+text \<open>Ky Fan's maximum principle, in the form needed here: the supremum
+  defining \<open>kyfan m a\<close> is attained at a spectral projection, i.e. it is a
   sum of \<open>m\<close> eigenvalues --- necessarily the \<open>m\<close> largest ones, since every
   other \<open>m\<close>-element subset of the eigenbasis competes in the same
   supremum.\<close>
@@ -644,12 +644,11 @@ qed
 section \<open>Monotonicity: \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>) \<ge> \<lambda>\<^sub>(\<^sub>2\<^sub>) \<ge> \<dots>\<close>\<close>
 
 text \<open>\<open>kyfan_attained\<close> produces a maximiser for each \<open>m\<close> separately, which is
-  not enough: monotonicity of the increments needs the maximisers to NEST.
-  Call \<open>T \<subseteq> B\<close> with \<open>card T = m\<close> a THRESHOLD set when every value inside
-  dominates every value outside.  Two purely combinatorial facts then do the
-  work: a threshold set is maximal, and deleting a minimal element of a
-  threshold set leaves a threshold set one size down.  Iterating the deletion
-  produces the nested chain.\<close>
+  not enough: monotonicity of the increments needs the maximisers to nest.
+  Call \<open>T \<subseteq> B\<close> with \<open>card T = m\<close> a \<^emph>\<open>threshold set\<close> when every value inside
+  dominates every value outside.  A threshold set is maximal, and deleting a
+  minimal element of a threshold set leaves a threshold set one size down;
+  iterating the deletion produces the nested chain.\<close>
 
 text \<open>A minimiser of a real-valued function on a finite nonempty set.\<close>
 
@@ -950,11 +949,11 @@ text \<open>Eq. (3.5)/(3.6) need two spectral sums:
 
     \<open>\<Sum>\<^sub>i\<^sub>\<le>\<^sub>m \<lambda>\<^sub>(\<^sub>i\<^sub>)\<^sup>+\<close>   and   \<open>\<Sum>\<^sub>i\<^sub>\<le>\<^sub>m min (\<lambda>\<^sub>(\<^sub>i\<^sub>), 0)\<close>.
 
-  Neither requires the positive/negative part of the MATRIX.  Since the
-  ordered eigenvalues DECREASE (\<open>eigval_antimono\<close>), the partial sum
+  Neither requires the positive/negative part of the matrix.  Since the
+  ordered eigenvalues decrease (\<open>eigval_antimono\<close>), the partial sum
   \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>) + \<dots> + \<lambda>\<^sub>(\<^sub>j\<^sub>)\<close> is largest exactly when \<open>j\<close> counts the positive
   eigenvalues, capped at \<open>m\<close>; so the first sum is the running maximum of the
-  Ky Fan sums, and the second is the remaining difference.  So everything stays
+  Ky Fan sums, and the second is the remaining difference.  Everything stays
   inside \<open>kyfan\<close>: no spectral functional calculus, and no new
   basis-independence obligation.\<close>
 
@@ -1097,10 +1096,10 @@ text \<open>Consequently the whole bracket of Eq. (3.5),
 
     \<open>L * possum n a + (kyfan m a - possum m a)\<close>.
 
-  What is still missing for Eq. (3.6) is therefore only the GEOMETRY: the
-  Poincare separation theorem relating the eigenvalues of the compression of
-  \<open>M\<close> to \<open>p\<^sup>\<bottom>\<close> with those of \<open>M\<close>, and the extremal computation identifying
-  the bracket with the supremum over the feasible set of Eq. (1.9).\<close>
+  What remains for Eq. (3.6) is the geometry: the Poincare separation
+  theorem relating the eigenvalues of the compression of \<open>M\<close> to \<open>p\<^sup>\<bottom>\<close> with
+  those of \<open>M\<close>, and the extremal computation identifying the bracket with the
+  supremum over the feasible set of Eq. (1.9).\<close>
 
 definition bracket :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "bracket m L a = L * possum CARD('n) a + (kyfan m a - possum m a)"
@@ -1122,7 +1121,7 @@ text \<open>For the extremal construction behind Eq. (3.5) one has to exhibit a
   over the eigenbasis rather than over the index range \<open>1..n\<close>.
 
   The set \<open>T = {u \<in> B. 0 < u \<bullet> M u}\<close> of positive directions is automatically
-  a THRESHOLD set --- everything inside is positive, everything outside is
+  a threshold set --- everything inside is positive, everything outside is
   not --- so \<open>kyfan_threshold\<close> evaluates \<open>kyfan (card T) M\<close> at it, and that
   value is already the maximum.\<close>
 
@@ -1206,20 +1205,20 @@ proof -
   qed
 qed
 
-text \<open>NOT proved here: the companion statement for the negative-part term,
+text \<open>The companion statement for the negative-part term,
 
     \<open>kyfan m a - possum m a = (\<Sum>u\<in>S. min (u \<bullet> a u) 0)\<close>  for a threshold set
     \<open>S \<subseteq> B\<close> of size \<open>m\<close>,
 
-  which would express \<open>bracket m L a\<close> entirely over an eigenbasis.  The
-  positive-part half above goes through because \<open>{u \<in> B. 0 < u \<bullet> a u}\<close> is
-  itself a threshold set of \<open>B\<close>, so \<open>kyfan_threshold\<close> evaluates it directly.
-  The restricted version is genuinely harder: identifying \<open>possum m a\<close> with
-  the positive-part sum INSIDE \<open>S\<close> needs, for every \<open>j \<le> m\<close>, a threshold
-  subset of \<open>S\<close> of size \<open>j\<close> --- i.e. that \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>m\<^sub>)\<close> are exactly the
-  \<open>S\<close>-eigenvalues in decreasing order.  That is true, and follows by
-  iterating \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but it is a separate
-  induction and is not carried out here.\<close>
+  which would express \<open>bracket m L a\<close> entirely over an eigenbasis, is not
+  established here.  The positive-part half above goes through because
+  \<open>{u \<in> B. 0 < u \<bullet> a u}\<close> is itself a threshold set of \<open>B\<close>, so
+  \<open>kyfan_threshold\<close> evaluates it directly.  The restricted version is
+  genuinely harder: identifying \<open>possum m a\<close> with the positive-part sum
+  inside \<open>S\<close> needs, for every \<open>j \<le> m\<close>, a threshold subset of \<open>S\<close> of size
+  \<open>j\<close> --- i.e. that \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>m\<^sub>)\<close> are exactly the \<open>S\<close>-eigenvalues in
+  decreasing order, which is true and follows by iterating
+  \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but is a separate induction.\<close>
 
 
 end

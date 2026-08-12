@@ -18434,7 +18434,7 @@ proof -
   have T0: "0 \<le> T" using S0 ST by simp
   have a: "ennreal (enn2real (paper_v k L S K y)) = paper_v k L S K y"
     using paper_v_neq_top[OF S0, of k L K y]
-    by (simp add: ennreal_enn2real less_top)
+    by (simp add: less_top)
   have b: "ennreal (min (enn2real (paper_v k L T K y)) S)
       = min (paper_v k L T K y) (ennreal S)"
   proof -
@@ -18443,7 +18443,7 @@ proof -
       by (rule ennreal_min_eq)
     also have "\<dots> = min (paper_v k L T K y) (ennreal S)"
       using paper_v_neq_top[OF T0, of k L K y]
-      by (simp add: ennreal_enn2real less_top)
+      by (simp add: less_top)
     finally show ?thesis .
   qed
   have "ennreal (enn2real (paper_v k L S K y))

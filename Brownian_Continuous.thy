@@ -39,7 +39,7 @@ lemma Bcont_cont: "continuous_on {0..} (\<lambda>t. Bcont t \<omega>)"
 
 lemma Bcont_source: "proc_source Bcont = wiener_pre"
   using modificationD(1)[OF Bcont_mod]
-  by (auto simp: compatible_source source_bm_coord)
+  by (auto simp: compatible_source)
 
 lemma Bcont_target: "sets (proc_target Bcont) = sets (borel :: real measure)"
   using modificationD(1)[OF Bcont_mod] compatible_target by fastforce

@@ -75,7 +75,7 @@ lemma gauss_measure_moment_even:
 proof -
   have veq: "fact (2 * k) / ((2 / v) ^ k * fact k)
       = fact (2 * k) / (2 ^ k * fact k) * (v ^ k :: real)"
-    using v by (simp add: power_divide field_simps)
+    using v by (simp add: field_simps)
   have "has_bochner_integral lborel
           (\<lambda>x. normal_density 0 (sqrt v) x * x ^ (2 * k))
           (fact (2 * k) / ((2 / v) ^ k * fact k))"
@@ -88,7 +88,7 @@ proof -
       (density lborel (normal_density 0 (sqrt v))) (\<lambda>x. x ^ (2 * k))
       (fact (2 * k) / (2 ^ k * fact k) * v ^ k)"
     by (subst has_bochner_integral_density)
-      (auto simp: normal_density_nonneg mult_ac)
+      (auto simp: mult_ac)
   then show ?thesis
     using v by (simp add: gauss_measure_pos)
 qed
@@ -193,12 +193,12 @@ next
         by simp
       show "(\<lambda>x. \<integral>\<^sup>+y. f (x + y) \<partial>gauss_measure b) \<in> borel_measurable lborel"
         by measurable
-    qed (auto simp: normal_density_nonneg)
+    qed auto
     also have "\<dots> = (\<integral>\<^sup>+x. ?ga x * (\<integral>\<^sup>+y. ?gb y * f (x + y) \<partial>lborel) \<partial>lborel)"
       unfolding gauss_measure_pos[OF b']
       by (intro nn_integral_cong arg_cong2[where f = "(*)"] refl
           nn_integral_density)
-        (auto simp: normal_density_nonneg)
+        auto
     also have "\<dots> = (\<integral>\<^sup>+x. ?ga x * (\<integral>\<^sup>+z. ?gb (z - x) * f z \<partial>lborel) \<partial>lborel)"
     proof (rule nn_integral_cong)
       fix x :: real
@@ -227,7 +227,7 @@ next
           = (\<integral>\<^sup>+x. ennreal (normal_density 0 (sqrt b) (z - x)
               * normal_density 0 (sqrt a) x) * f z \<partial>lborel)"
         by (intro nn_integral_cong)
-          (simp add: ennreal_mult normal_density_nonneg mult_ac)
+          (simp add: ennreal_mult mult_ac)
       also have "\<dots> = (\<integral>\<^sup>+x. ennreal (normal_density 0 (sqrt b) (z - x)
               * normal_density 0 (sqrt a) x) \<partial>lborel) * f z"
         by (rule nn_integral_multc) measurable
@@ -254,7 +254,7 @@ next
     also have "\<dots> = (\<integral>\<^sup>+z. f z \<partial>gauss_measure (a + b))"
       unfolding gauss_measure_pos[OF add_pos_nonneg[OF a' b]]
       by (rule nn_integral_density[symmetric])
-        (auto simp: normal_density_nonneg)
+        auto
     finally show ?thesis .
   qed
 qed
@@ -300,7 +300,7 @@ next
   also have "\<dots> = (\<integral>\<^sup>+z. indicator X z \<partial>gauss_measure (a + b))"
     by (rule gauss_measure_conv_nn[OF a b]) measurable
   also have "\<dots> = emeasure (gauss_measure (a + b)) X"
-    by (simp add: nn_integral_indicator)
+    by simp
   finally show "emeasure (distr (gauss_measure a \<Otimes>\<^sub>M gauss_measure b) borel
       (\<lambda>(x, y). x + y)) X = emeasure (gauss_measure (a + b)) X" .
 qed
@@ -411,7 +411,7 @@ proof (induction ps arbitrary: t x)
   interpret G: prob_space "gauss_measure (s - t)" by simp
   show ?case
     using G.emeasure_space_1
-    by (simp add: indicator_def nn_integral_const)
+    by (simp add: indicator_def)
 next
   case (Cons p ps)
   obtain u A where p [simp]: "p = (u, A)" by (cases p)
@@ -509,15 +509,15 @@ proof (induction J arbitrary: t x rule: finite_psubset_induct)
     interpret E: prob_space "inc_prod t J" by simp
     show ?thesis
       using E.emeasure_space_1
-      by (simp add: True nn_integral_const)
+      by (simp add: True)
   next
     case False
     define t0 where "t0 = Min J"
     define J' where "J' = J - {t0}"
     have t0J: "t0 \<in> J"
-      using False finJ by (simp add: t0_def Min_in)
+      using False finJ by (simp add: t0_def)
     have t0min: "\<And>s. s \<in> J \<Longrightarrow> t0 \<le> s"
-      using finJ by (simp add: t0_def Min_le)
+      using finJ by (simp add: t0_def)
     have Jins: "J = insert t0 J'"
       using t0J by (auto simp: J'_def)
     have finJ': "finite J'" and t0J': "t0 \<notin> J'"
@@ -731,7 +731,7 @@ next
   have "J \<union> insert s D = insert s (J \<union> D)" by auto
   then have "sorted_list_of_set (J \<union> insert s D)
       = insort s (sorted_list_of_set (J \<union> D))"
-    using finJD sJD by (simp add: sorted_list_of_set_insert)
+    using finJD sJD by simp
   then have "map (\<lambda>u. (u, B u)) (sorted_list_of_set (J \<union> insert s D))
       = ins s (map (\<lambda>u. (u, B u)) (sorted_list_of_set (J \<union> D)))"
     using sJD insert.prems
@@ -781,7 +781,7 @@ proof -
         = space (Pi\<^sub>M J (\<lambda>_. (borel :: real measure)))"
       by (auto simp: space_PiM)
     show "\<And>i::nat. emeasure (bm_fdd J) (Pi\<^sub>E J (\<lambda>_. UNIV)) \<noteq> \<infinity>"
-      by (simp add: PJ.emeasure_finite)
+      by simp
     fix A :: "real \<Rightarrow> real set"
     assume A: "\<And>i. i \<in> J \<Longrightarrow> A i \<in> sets borel"
     define A' where "A' s = (if s \<in> J then A s else (UNIV :: real set))" for s
@@ -1083,7 +1083,7 @@ proof -
     by (simp add: wiener_pre_increment[OF s st])
   also have "\<dots> = (\<integral>\<^sup>+y. ennreal (y ^ 4) \<partial>gauss_measure (t - s))"
     by (intro nn_integral_cong)
-      (simp add: powr_numeral power_abs abs_of_nonneg zero_le_even_power)
+      (simp add: power_abs zero_le_even_power)
   also have "\<dots> = ennreal (3 * (t - s)\<^sup>2)"
     using st by (intro gauss_measure_fourth_moment_nn) simp
   finally show ?thesis .
@@ -1140,7 +1140,7 @@ next
   have vj: "v = l ! j"
     using j(2) nth_take[OF jk, of l] by simp
   have "v \<in> set l"
-    using jl vj by (simp add: nth_mem)
+    using jl vj by simp
   moreover have "v < l ! k"
     using sorted_wrt_less_nth_iff[OF l k jl] jk vj by simp
   ultimately show "v \<in> {v \<in> set l. v < l ! k}" by blast
@@ -1161,7 +1161,7 @@ proof (induction xs)
       by (meson False Max_ge List.finite_set dual_order.trans hd
           hd_in_set less_imp_le)
     then have "Max (set (a # xs)) = Max (set xs)"
-      using False by (simp add: Max_insert max_absorb2)
+      using False by (simp add: max_absorb2)
     also have "\<dots> = last xs"
       using Cons False by simp
     finally show ?thesis using False by simp
@@ -1216,7 +1216,7 @@ proof -
     have "prevt 0 J (l ! k) = Max (insert 0 (set (take k l)))"
       by (simp add: prevt_def below[OF k])
     also have "\<dots> = max 0 (Max (set (take k l)))"
-      using take_ne[OF k] by (simp add: Max_insert)
+      using take_ne[OF k] by simp
     also have "\<dots> = l ! (k - 1)"
       using lk0[OF k] by (simp add: Max_take[OF k] max_absorb2)
     finally show "prevt 0 J (l ! k) = l ! (k - 1)" .

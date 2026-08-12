@@ -133,7 +133,7 @@ text \<open>
 \<close>
 
 lemma two_abs_prod_le_squares: "2 * \<bar>a\<bar> * \<bar>b\<bar> \<le> a\<^sup>2 + b\<^sup>2" for a b :: real
-  using sum_squares_bound[of "\<bar>a\<bar>" "\<bar>b\<bar>"] by (simp add: power2_abs)
+  using sum_squares_bound[of "\<bar>a\<bar>" "\<bar>b\<bar>"] by simp
 
 lemma abs_prod_le_half_squares: "\<bar>a * b\<bar> \<le> a\<^sup>2 / 2 + b\<^sup>2 / 2" for a b :: real
 proof -
@@ -1117,7 +1117,7 @@ proof -
     proof -
       have "\<bar>X (t (Suc k)) \<omega> - X (t k) \<omega>\<bar>\<^sup>2 \<le> (2*R)\<^sup>2"
         by (rule power_mono[OF habs abs_ge_zero])
-      thus ?thesis by (simp add: power2_abs)
+      thus ?thesis by simp
     qed
     have e1: "(X (t (Suc k)) \<omega> - X (t k) \<omega>)^4
         = (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2 * (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2"
@@ -1554,7 +1554,7 @@ proof -
             using tri b1 b2 by linarith
           have "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar>\<^sup>2 \<le> (2*R)\<^sup>2"
             by (rule power_mono[OF habs abs_ge_zero])
-          hence "x \<le> (2*R)\<^sup>2" using xk by (simp add: power2_abs)
+          hence "x \<le> (2*R)\<^sup>2" using xk by simp
           also have "(2*R)\<^sup>2 = 4*R\<^sup>2" by algebra
           finally show "x \<le> 4*R\<^sup>2" .
         qed
@@ -1621,7 +1621,7 @@ proof -
             have dabs: "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar> < e"
               using du by (simp add: dist_real_def)
             have "x = \<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar>\<^sup>2"
-              using xk by (simp add: power2_abs)
+              using xk by simp
             also have "\<dots> < e\<^sup>2"
               by (rule power_strict_mono[OF dabs abs_ge_zero]) simp
             also have "e\<^sup>2 \<le> r" by (rule e2r)
@@ -1663,7 +1663,7 @@ proof (rule Bochner_Integration.integrable_bound[of _ "\<lambda>_. R^4"])
     case (elim \<omega>)
     have le4: "\<bar>f \<omega>\<bar>^4 \<le> R^4" by (rule power_mono[OF elim abs_ge_zero])
     have e1: "\<bar>f \<omega>\<bar>^4 = (\<bar>f \<omega>\<bar>\<^sup>2)\<^sup>2" by algebra
-    have e2: "(\<bar>f \<omega>\<bar>\<^sup>2)\<^sup>2 = ((f \<omega>)\<^sup>2)\<^sup>2" by (simp add: power2_abs)
+    have e2: "(\<bar>f \<omega>\<bar>\<^sup>2)\<^sup>2 = ((f \<omega>)\<^sup>2)\<^sup>2" by simp
     have e3: "((f \<omega>)\<^sup>2)\<^sup>2 = (f \<omega>)^4" by algebra
     have le: "(f \<omega>)^4 \<le> R^4" using le4 e1 e2 e3 by linarith
     have nn: "0 \<le> (f \<omega>)^4" by (rule pow4_nonneg)
@@ -1844,7 +1844,7 @@ proof -
             using tri b1 b2 by linarith
           have "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar>\<^sup>2 \<le> (2*R)\<^sup>2"
             by (rule power_mono[OF habs abs_ge_zero])
-          hence "x \<le> (2*R)\<^sup>2" using xk by (simp add: power2_abs)
+          hence "x \<le> (2*R)\<^sup>2" using xk by simp
           also have "(2*R)\<^sup>2 = 4*R\<^sup>2" by algebra
           finally show "x \<le> 4*R\<^sup>2" .
         qed

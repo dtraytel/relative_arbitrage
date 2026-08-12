@@ -1,14 +1,14 @@
 section \<open>Deterministic dyadic chaining\<close>
 
 text \<open>
-  Plan step A4 (STATUS.md 25h), second tranche: the deterministic half of the
-  Kolmogorov tightness argument. Given per-level bounds \<open>c j\<close> on the dyadic
-  increments of a function at every level \<open>j \<ge> n\<close>, any two dyadic points at
-  distance \<open>\<le> 1/2^n\<close> have images at distance \<open>\<le> c n + 2 * sum of the higher-level
-  bounds\<close>. This is Klenke's step (21.8), but stated UNIFORMLY: the level \<open>n\<close> is a
-  parameter, not an \<open>\<omega>\<close>-dependent quantity as in the AFP's Kolmogorov-Chentsov
-  proof (whose constants depend on the sample point through \<open>n\<^sub>0\<close>, which is why
-  that entry yields a modification but not the tail bound tightness needs).
+  The deterministic half of the Kolmogorov tightness argument. Given
+  per-level bounds \<open>c j\<close> on the dyadic increments of a function at every
+  level \<open>j \<ge> n\<close>, any two dyadic points at distance \<open>\<le> 1/2^n\<close> have images at
+  distance \<open>\<le> c n + 2 * sum of the higher-level bounds\<close>. This is Klenke's
+  step (21.8), but stated uniformly: the level \<open>n\<close> is a parameter, not an
+  \<open>\<omega>\<close>-dependent quantity as in the AFP's Kolmogorov-Chentsov proof (whose
+  constants depend on the sample point through \<open>n\<^sub>0\<close>, which is why that
+  entry yields a modification but not the tail bound tightness needs).
 
   The argument: anchor each dyadic point \<open>u\<close> at every level \<open>j\<close> by
   \<open>\<lfloor>2^j u\<rfloor> / 2^j\<close>. Successive anchors differ by \<open>0\<close> or \<open>1/2^(j+1)\<close>, so the
@@ -248,11 +248,11 @@ subsection \<open>Extension from the dyadics to the interval by continuity\<clos
 
 text \<open>
   The consumer applies the chaining bound to a continuous path known to have
-  small dyadic increments at all levels \<open>\<ge> n\<close>. The dyadic bound extends to ALL
-  pairs in \<open>{0..T}\<close> at distance strictly below \<open>1/2^n\<close>: approximate both points
-  by their anchors, whose mutual distance eventually stays below \<open>1/2^n\<close>, and
-  pass to the limit. The strictness of the gap hypothesis is what absorbs the
-  anchor approximation error.
+  small dyadic increments at all levels \<open>\<ge> n\<close>. The dyadic bound extends to
+  all pairs in \<open>{0..T}\<close> at distance strictly below \<open>1/2^n\<close>: approximate both
+  points by their anchors, whose mutual distance eventually stays below
+  \<open>1/2^n\<close>, and pass to the limit. The strictness of the gap hypothesis is
+  what absorbs the anchor approximation error.
 \<close>
 
 lemma dyadic_modulus_extension:

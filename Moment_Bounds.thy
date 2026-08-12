@@ -7,16 +7,15 @@ text \<open>
   \<open>Z t = |X t - X s| ^ 2 - tr (qvar X t) + tr (qvar X s)\<close>
   -- a martingale, because \<open>X\<close> is -- and then bounding its second moment.
 
-  Note the test function is QUADRATIC. Lemma 2.2 does not need Ito's formula for
-  general \<open>C ^ 2\<close> functions, only for \<open>|x| ^ 2\<close>, which is exactly the shape of the
-  \<open>Z_martingale\<close> assumption of the locale \<open>ito_volatile_market\<close>. That narrows what
-  open task 15 has to deliver before Lemma 2.2 becomes reachable.
+  The test function is quadratic. Lemma 2.2 does not need Ito's formula for
+  general \<open>C ^ 2\<close> functions, only for \<open>|x| ^ 2\<close>, which is exactly the shape
+  of the \<open>Z_martingale\<close> assumption of the locale \<open>ito_volatile_market\<close>.
 
-  This theory isolates the ASSEMBLY step, which is pure integration theory and
-  needs no stochastic calculus: given a second-moment bound on the compensated
-  martingale and the rate bound on the trace of the covariation, the fourth
-  moment of the increment follows. The two inputs are task-15 items; everything
-  between them and Eq. (2.7) is proved here.
+  This theory isolates the assembly step, which is pure integration theory
+  and needs no stochastic calculus: given a second-moment bound on the
+  compensated martingale and the rate bound on the trace of the covariation,
+  the fourth moment of the increment follows; everything from those two
+  inputs to Eq. (2.7) is proved here.
 \<close>
 
 theory Moment_Bounds

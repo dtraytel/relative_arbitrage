@@ -353,7 +353,7 @@ proof -
   moreover have sndc:
     "continuous_map euclidean euclidean
        (snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)"
-    by (simp add: continuous_map_iff_continuous2 continuous_on_snd)
+    by (simp add: continuous_on_snd)
   ultimately have "continuous_map
       (mtopology_of (path_metric T :: ('n pairpath) metric)) euclidean
       (\<lambda>\<omega>. snd (\<omega> t) - snd (\<omega> s))"
@@ -361,8 +361,8 @@ proof -
       (auto intro: continuous_map_compose[OF _ sndc, unfolded o_def])
   moreover have scl: "continuous_map euclidean euclidean
       (\<lambda>v :: real^'n^'n. (1 / (t - s)) *\<^sub>R v)"
-    by (simp add: continuous_map_iff_continuous2
-        continuous_on_scaleR continuous_on_const continuous_on_id)
+    by (simp add:
+        continuous_on_scaleR)
   ultimately have "continuous_map
       (mtopology_of (path_metric T :: ('n pairpath) metric)) euclidean
       ((\<lambda>v :: real^'n^'n. (1 / (t - s)) *\<^sub>R v)
@@ -384,7 +384,7 @@ proof -
     by (intro closedin_continuous_map_preimage_gen[where Y = euclidean, simplified]
         continuous_map_diffquot[OF s t] closed_sconstraint closedin_topspace)
   then show ?thesis
-    by (simp add: topspace_mtopology_of)
+    by simp
 qed
 
 text \<open>The second half of NC-3: the weak limit only delivers the constraint
@@ -578,7 +578,7 @@ proof -
     have "(1 / (u n - x)) *\<^sub>R (Y (u n) - (Y x + (u n - x) *\<^sub>R D))
         = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x)
           - (1 / (u n - x)) *\<^sub>R ((u n - x) *\<^sub>R D)"
-      by (simp add: scaleR_diff_right algebra_simps)
+      by (simp add: algebra_simps)
     also have "\<dots> = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) - D"
       using inv by simp
     finally show ?thesis unfolding nrm .
@@ -689,7 +689,7 @@ proof (rule ccontr)
   proof -
     have "integrable lborel (indicat_real {s..t})"
       by (rule integrable_real_indicator)
-        (use st in \<open>auto simp: emeasure_lborel_Icc\<close>)
+        (use st in \<open>auto\<close>)
     then show "integrable lborel (\<lambda>u. indicat_real {s..t} u *\<^sub>R c)"
       by simp
   qed
@@ -773,10 +773,10 @@ lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
   unfolding psd_def
 proof (intro conjI allI)
   show "transpose (mat 1 :: real^'n^'n) = mat 1"
-    by (simp add: transpose_mat)
+    by simp
   fix x :: "real^'n"
   show "0 \<le> x \<bullet> (mat 1 *v x)"
-    by (simp add: matrix_vector_mul_lid)
+    by simp
 qed
 
 lemma Pi_proj_mat_1:
@@ -786,7 +786,7 @@ proof (rule Pi_proj_ge[OF m])
   fix P :: "real^'n^'n"
   assume P: "is_proj P" "trace P = real m"
   have "trace ((mat 1 :: real^'n^'n) ** P) = trace P"
-    by (simp add: matrix_mul_lid)
+    by simp
   then show "real m \<le> trace ((mat 1 :: real^'n^'n) ** P)"
     using P by simp
 qed
@@ -808,7 +808,7 @@ next
   proof (intro allI)
     fix x :: "real^'n"
     have "x \<bullet> ((mat 1 :: real^'n^'n) *v x) = x \<bullet> x"
-      by (simp add: matrix_vector_mul_lid)
+      by simp
     also have "\<dots> \<le> L * (x \<bullet> x)"
     proof -
       have "1 * (x \<bullet> x) \<le> L * (x \<bullet> x)"
@@ -1749,7 +1749,7 @@ lemma unif_integrable_of_L2_bound:
       \<and> (\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>N) \<le> e"
 proof -
   define R where "R = (C + 1) / e"
-  have R0: "0 < R" using C e unfolding R_def by (simp add: divide_pos_pos)
+  have R0: "0 < R" using C e unfolding R_def by simp
   have key: "(\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>M) \<le> e"
     if int: "integrable M (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
       and sq: "(\<integral>w. (f w)\<^sup>2 \<partial>M) \<le> C"
@@ -1885,7 +1885,7 @@ proof -
     by (intro closedin_continuous_map_preimage_gen
           [where Y = euclidean, simplified]
         continuous_map_path_eval[OF z] closed_singleton closedin_topspace)
-  then show ?thesis by (simp add: topspace_mtopology_of)
+  then show ?thesis by simp
 qed
 
 lemma paper_pair_class_start_full_mass:

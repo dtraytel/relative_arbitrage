@@ -1,13 +1,12 @@
 section \<open>The uniform modulus-of-continuity tail bound\<close>
 
 text \<open>
-  Plan step A4 (STATUS.md 25h), third and final tranche: combine the per-level
-  dyadic tail bounds (from Eq. (2.7) via \<open>Increment_Tails\<close>) with the
-  deterministic chaining of \<open>Dyadic_Chaining\<close> into the quantitative tail bound on
-  the modulus of continuity. Both the modulus threshold and the exceptional
-  probability are explicit in \<open>(C, T, \<gamma>, n)\<close> ONLY — uniformity over the family
-  of admissible laws is exactly what tightness in Lemma 2.2 of arXiv:2512.17702
-  consumes.
+  Combine the per-level dyadic tail bounds (from Eq. (2.7) via
+  \<open>Increment_Tails\<close>) with the deterministic chaining of \<open>Dyadic_Chaining\<close>
+  into the quantitative tail bound on the modulus of continuity. Both the
+  modulus threshold and the exceptional probability are explicit in
+  \<open>(C, T, \<gamma>, n)\<close> only — uniformity over the family of admissible laws is
+  exactly what tightness in Lemma 2.2 of arXiv:2512.17702 consumes.
 \<close>
 
 theory Modulus_Tails
@@ -17,10 +16,11 @@ begin
 subsection \<open>The bad event at one dyadic level\<close>
 
 text \<open>
-  The level bound in its ABSTRACT form: only measurability, integrability of the
-  fourth powers and the Eq. (2.7) moment bound itself are consumed. The paper's
-  Lemma 2.2 needs this for UNBOUNDED martingale laws, where (2.7) will be
-  obtained by localization + Fatou; the bounded package is a corollary below.
+  The level bound in its abstract form: only measurability, integrability of
+  the fourth powers and the Eq. (2.7) moment bound itself are consumed. The
+  paper's Lemma 2.2 needs this for unbounded martingale laws, where (2.7)
+  will be obtained by localization + Fatou; the bounded package is a
+  corollary below.
 \<close>
 
 lemma dyadic_level_tail_mom:
@@ -372,11 +372,12 @@ qed
 
 text \<open>
   The deterministic conclusion: a continuous path whose level-\<open>j\<close> dyadic
-  increments stay below \<open>2 powr (-\<gamma> j)\<close> for EVERY level \<open>j \<ge> n\<close> has modulus of
-  continuity at most \<open>3 \<cdot> 2 powr (-\<gamma> n) / (1 - 2 powr (-\<gamma>))\<close> at scale \<open>1/2^n\<close>,
-  on all of \<open>{0..T}\<close>. Together with \<open>dyadic_bad_event_tail\<close> this is the
-  quantitative Kolmogorov tail estimate: both the threshold and the exceptional
-  probability are explicit in \<open>(C, T, \<gamma>, n)\<close> and decay geometrically in \<open>n\<close>.
+  increments stay below \<open>2 powr (-\<gamma> j)\<close> for every level \<open>j \<ge> n\<close> has modulus
+  of continuity at most \<open>3 \<cdot> 2 powr (-\<gamma> n) / (1 - 2 powr (-\<gamma>))\<close> at scale
+  \<open>1/2^n\<close>, on all of \<open>{0..T}\<close>. Together with \<open>dyadic_bad_event_tail\<close> this is
+  the quantitative Kolmogorov tail estimate: both the threshold and the
+  exceptional probability are explicit in \<open>(C, T, \<gamma>, n)\<close> and decay
+  geometrically in \<open>n\<close>.
 \<close>
 
 theorem modulus_of_good_path:

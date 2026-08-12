@@ -202,7 +202,7 @@ proof -
   have xs: "x \<bullet> s = (\<Sum>u\<in>B. (u \<bullet> x)\<^sup>2)"
     by (simp add: s_def inner_sum_right power2_eq_square inner_commute)
   have "0 \<le> (x - s) \<bullet> (x - s)"
-    by (simp add: inner_ge_zero)
+    by simp
   also have "(x - s) \<bullet> (x - s) = x \<bullet> x - 2 * (x \<bullet> s) + s \<bullet> s"
     by (simp add: inner_diff_left inner_diff_right inner_commute)
   finally show ?thesis
@@ -222,7 +222,7 @@ proof -
     also have "\<dots> = x"
       by (rule onormal_expand[OF B]) (simp add: U)
     finally show ?thesis
-      by (simp add: matrix_vector_mul_lid)
+      by simp
   qed
   then show ?thesis
     by (auto simp: matrix_eq)
@@ -233,7 +233,7 @@ lemma trace_onormal_basis:
   shows "trace A = (\<Sum>u\<in>B. u \<bullet> (A *v u))"
 proof -
   have "trace A = trace (A ** (\<Sum>u\<in>B. outer_prod u u))"
-    by (simp add: onormal_complete[OF B U] matrix_mul_rid)
+    by (simp add: onormal_complete[OF B U])
   also have "\<dots> = (\<Sum>u\<in>B. trace (A ** outer_prod u u))"
     by (simp add: matrix_mult_sum_right trace_matrix_sum)
   also have "\<dots> = (\<Sum>u\<in>B. u \<bullet> (A *v u))"
@@ -448,7 +448,7 @@ proof -
     have "independent T"
       using onT by (intro pairwise_orthogonal_independent) (auto simp: onormal_def)
     then have "dim (span T) = card T"
-      by (simp add: dim_span dim_eq_card_independent)
+      by (simp add: dim_eq_card_independent)
     then show "CARD('n) - k \<le> dim (span T)"
       by (simp add: T(2))
     fix x assume x: "x \<in> span T"
@@ -466,7 +466,7 @@ proof -
     have "x \<bullet> (a *v x) \<le> x \<bullet> x"
       by (simp add: quad onormal_bessel[OF onT])
     also have "\<dots> \<le> L * (x \<bullet> x)"
-      using L by (simp add: inner_ge_zero mult_right_mono
+      using L by (simp add: mult_right_mono
           [of 1 L "x \<bullet> x", simplified])
     finally show "x \<bullet> (a *v x) \<le> L * (x \<bullet> x)" .
   qed
@@ -494,7 +494,7 @@ lemma neg_half_trace_ball_op:
 proof -
   have "((- (2 / c) *\<^sub>R mat 1) ** a) $ i $ i = - (2 / c) * a $ i $ i" for i
     by (simp add: matrix_matrix_mult_def mat_def if_distrib if_distribR
-        sum.delta cong: if_cong)
+        cong: if_cong)
   then have "trace ((- (2 / c) *\<^sub>R mat 1) ** a) = - ((2 / c) * trace a)"
     by (simp add: trace_def sum_distrib_left sum_negf)
   then show ?thesis
@@ -750,7 +750,7 @@ proof -
   qed
   have cont: "continuous_on K (\<lambda>x. x \<bullet> (a *v x))"
     by (intro continuous_intros linear_continuous_on)
-      (simp add: linear_linear[symmetric] matrix_vector_mul_linear)
+      (simp add: linear_linear[symmetric])
   obtain u where u: "u \<in> K" "\<And>v. v \<in> K \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
     using continuous_attains_sup[OF cptK Kne cont] by blast
   show thesis
@@ -782,7 +782,7 @@ proof -
       then have "(u + t *\<^sub>R v) \<bullet> (a *v (u + t *\<^sub>R v))
           = u \<bullet> (a *v u) + t * (u \<bullet> (a *v v)) + t * (v \<bullet> (a *v u))
             + t * t * (v \<bullet> (a *v v))"
-        by (simp add: inner_add_left inner_add_right algebra_simps)
+        by (simp add: algebra_simps)
       also have "u \<bullet> (a *v v) = v \<bullet> (a *v u)"
         by (rule sym_inner_swap[OF sym])
       finally show ?thesis
@@ -790,7 +790,7 @@ proof -
     qed
     have normsq: "(u + t *\<^sub>R v) \<bullet> (u + t *\<^sub>R v) = 1 + t\<^sup>2" for t
       using uu vv v(2)
-      by (simp add: inner_add_left inner_add_right inner_commute
+      by (simp add: inner_commute
           power2_eq_square algebra_simps)
     have ineq: "(u + t *\<^sub>R v) \<bullet> (a *v (u + t *\<^sub>R v)) \<le> l * (1 + t\<^sup>2)" for t
     proof -
@@ -818,7 +818,7 @@ proof -
       have "(w /\<^sub>R norm w) \<bullet> (a *v (w /\<^sub>R norm w)) \<le> l"
         unfolding l_def by (rule max[OF memS unit])
       then have "(inverse (norm w))\<^sup>2 * (w \<bullet> (a *v w)) \<le> l"
-        by (simp add: matrix_vector_mult_scaleR power2_eq_square algebra_simps)
+        by (simp add: power2_eq_square algebra_simps)
       then have "w \<bullet> (a *v w) \<le> l * (norm w)\<^sup>2"
         using wpos
         by (simp add: power2_eq_square field_simps)
@@ -843,17 +843,17 @@ proof -
     have unit: "norm (w /\<^sub>R norm w) = 1"
       using wnz by (simp add: sgn_div_norm[symmetric] norm_sgn)
     have orth: "u \<bullet> (w /\<^sub>R norm w) = 0"
-      using uw by (simp add: inner_scaleR_right)
+      using uw by simp
     from orth_zero[OF memS orth unit]
     have "(w /\<^sub>R norm w) \<bullet> (a *v u) = 0" .
     then have "w \<bullet> (a *v u) = 0"
-      using wnz by (simp add: inner_scaleR_left)
+      using wnz by simp
     then have au_w: "(a *v u) \<bullet> w = 0"
       by (simp add: inner_commute)
     have "w \<bullet> w = (a *v u) \<bullet> w - (l *\<^sub>R u) \<bullet> w"
       by (subst (1) w_def) (rule inner_diff_left)
     also have "\<dots> = 0"
-      using au_w uw by (simp add: inner_scaleR_left)
+      using au_w uw by simp
     finally have "w \<bullet> w = 0" .
     with wnz show False
       by simp
@@ -905,7 +905,7 @@ proof (induction "dim S" arbitrary: S rule: less_induct)
         have "u \<bullet> (a *v x) = x \<bullet> (a *v u)"
           by (rule sym_inner_swap[OF sym])
         also have "\<dots> = (u \<bullet> (a *v u)) * (x \<bullet> u)"
-          by (subst (1) eig_u) (simp add: inner_scaleR_right)
+          by (subst (1) eig_u) simp
         also have "\<dots> = 0"
           using xu by (simp add: inner_commute)
         finally show ?thesis .
@@ -960,7 +960,7 @@ proof (induction "dim S" arbitrary: S rule: less_induct)
           by (simp add: B'(3) S'_def)
         then show "x \<in> span B"
           unfolding B_def
-          by (metis span_breakdown_eq scalar_mult_eq_scaleR)
+          by (metis span_breakdown_eq)
       qed
       ultimately show ?thesis
         by blast
@@ -1005,7 +1005,7 @@ proof -
     also have "\<dots> = (b *v u) \<bullet> ((u \<bullet> (a *v u)) *\<^sub>R u)"
       by (subst (1) eig[OF uB]) simp
     also have "\<dots> = (u \<bullet> (a *v u)) * (u \<bullet> (b *v u))"
-      by (simp add: inner_scaleR_right inner_commute)
+      by (simp add: inner_commute)
     finally show ?thesis .
   qed
   moreover have "0 \<le> (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (b *v u)))"
@@ -1059,17 +1059,17 @@ proof -
     by (auto simp: feasible_def psd_def eigen_ub_def)
   have av_axis: "(a *v axis m 1) $ l = a $ l $ m" for l m
     by (simp add: matrix_vector_mult_def axis_def if_distrib if_distribR
-        sum.delta sum.delta' cong: if_cong)
+        cong: if_cong)
   have quad_entry: "(axis l 1) \<bullet> (a *v axis m 1) = a $ l $ m" for l m
     by (simp add: inner_axis' av_axis)
   have expand: "(y + z) \<bullet> (a *v (y + z))
       = y \<bullet> (a *v y) + 2 * (y \<bullet> (a *v z)) + z \<bullet> (a *v z)" for y z
-    by (simp add: matrix_vector_right_distrib inner_add_left inner_add_right
+    by (simp add:
         sym_inner_swap[OF sym] algebra_simps)
   have expand2: "(y - z) \<bullet> (a *v (y - z))
       = y \<bullet> (a *v y) - 2 * (y \<bullet> (a *v z)) + z \<bullet> (a *v z)" for y z
-    by (simp add: matrix_vector_mult_diff_distrib inner_diff_left
-        inner_diff_right sym_inner_swap[OF sym] algebra_simps)
+    by (simp add:
+        sym_inner_swap[OF sym] algebra_simps)
   show ?thesis
   proof (cases "i = j")
     case True
@@ -1277,7 +1277,7 @@ next
     also have "\<dots> = e"
       using nh_pos by (simp add: d_def)
     finally show ?thesis
-      by (simp add: mem_ball)
+      by simp
   qed
   have f_deriv: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_real_derivative
       (g (x + t *\<^sub>R h) \<bullet> h)) (at t)"
@@ -1292,7 +1292,7 @@ next
       using diff_chain_at[OF 1 2] by (simp add: o_def)
     then have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
         (\<lambda>s. s * (g (x + t *\<^sub>R h) \<bullet> h))) (at t)"
-      by (simp add: inner_scaleR_right mult_ac)
+      by (simp add: mult_ac)
     then show ?thesis
       unfolding has_field_derivative_def
       by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult_ac)
@@ -1333,7 +1333,7 @@ next
         using that nh_pos by simp
       have "E t = (g (x + t *\<^sub>R h) \<bullet> h - t * A) / (\<bar>t\<bar> * nh)"
         by (simp add: E_def A_def inner_diff_left inner_diff_right
-            inner_scaleR_left inner_scaleR_right inner_commute)
+            inner_commute)
       with nz show ?thesis
         by (simp add: field_simps)
     qed

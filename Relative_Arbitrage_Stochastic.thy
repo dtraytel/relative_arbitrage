@@ -213,7 +213,7 @@ proof -
       unfolding set_integrable_def
       using tt_nonneg
       by (intro integrable_scaleR_left integrable_real_indicator)
-        (auto simp: emeasure_lborel_Icc)
+        auto
     have mono: "c \<le> trace (acov s \<omega>)" if s: "s \<in> {0..tt}" for s
     proof -
       have "0 \<le> s" "s \<le> tau \<omega>"
@@ -226,7 +226,7 @@ proof -
       by (rule set_integral_mono[OF c_int f_int mono])
     moreover have "set_lebesgue_integral lborel {0..tt} (\<lambda>_. c) = tt * c"
       using tt_nonneg
-      by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+      by (subst set_integral_const) auto
     ultimately show ?case
       by (simp add: tt_def mult_ac)
   qed
@@ -267,7 +267,7 @@ proof -
     have "X (min t (tau \<omega>)) \<omega> \<in> K"
       using elim t by auto
     with Kball have "norm (X (min t (tau \<omega>)) \<omega>) \<le> r"
-      by (auto simp: mem_cball dist_norm)
+      by (auto simp: dist_norm)
     then have "(norm (X (min t (tau \<omega>)) \<omega>))\<^sup>2 \<le> r\<^sup>2"
       by (intro power_mono) auto
     then show ?case
@@ -296,7 +296,7 @@ proof -
   have x0r: "x0 \<bullet> x0 \<le> r\<^sup>2"
   proof -
     have "norm x0 \<le> r"
-      using x0_in_K by (simp add: K_def mem_cball dist_norm)
+      using x0_in_K by (simp add: K_def dist_norm)
     then have "(norm x0)\<^sup>2 \<le> r\<^sup>2"
       by (intro power_mono) auto
     then show ?thesis

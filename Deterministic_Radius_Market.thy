@@ -69,7 +69,7 @@ proof -
   also have "\<dots> = (CLINT x|lborel.
       normal_density 0 (sqrt v) x *\<^sub>R iexp (a * x))"
     by (intro integral_density borel_measurable_normal_density)
-      (auto simp: normal_density_nonneg)
+      auto
   also have "\<dots> = \<bar>sqrt v\<bar> *\<^sub>R (CLINT y|lborel.
       normal_density 0 (sqrt v) (sqrt v * y)
         *\<^sub>R iexp (a * (sqrt v * y)))"
@@ -87,7 +87,7 @@ proof -
         = std_normal_density y"
       using sv
       by (simp add: normal_density_def std_normal_density_def
-          power_mult_distrib abs_of_pos field_simps real_sqrt_mult)
+          abs_of_pos field_simps real_sqrt_mult)
     show "\<bar>sqrt v\<bar> *\<^sub>R (normal_density 0 (sqrt v) (sqrt v * y)
           *\<^sub>R iexp (a * (sqrt v * y)))
         = std_normal_density y *\<^sub>R iexp ((a * sqrt v) * y)"
@@ -944,7 +944,7 @@ proof -
   have expnn: "0 \<le> a\<^sup>2 * (t - s)"
     using st by (intro mult_nonneg_nonneg) auto
   have exple: "exp (- a\<^sup>2 * (t - s) / 2) \<le> 1"
-    using expnn by (simp add: exp_le_one_iff)
+    using expnn by simp
   have Dabs: "\<bar>?D \<omega>\<bar> \<le> 2" for \<omega>
   proof -
     have "\<bar>?D \<omega>\<bar> \<le> \<bar>cos (a * \<omega> i t + b)\<bar>
@@ -1038,7 +1038,7 @@ proof -
   have expnn: "0 \<le> a\<^sup>2 * (t - s)"
     using st by (intro mult_nonneg_nonneg) auto
   have exple: "exp (- a\<^sup>2 * (t - s) / 2) \<le> 1"
-    using expnn by (simp add: exp_le_one_iff)
+    using expnn by simp
   have Dabs: "\<bar>?D \<omega>\<bar> \<le> 2" for \<omega>
   proof -
     have "\<bar>?D \<omega>\<bar> \<le> \<bar>sin (a * \<omega> i t + b)\<bar>
@@ -1125,7 +1125,7 @@ proof -
   have expnn: "0 \<le> a\<^sup>2 * (t - s)"
     using st by (intro mult_nonneg_nonneg) auto
   have exple: "exp (- a\<^sup>2 * (t - s) / 2) \<le> 1"
-    using expnn by (simp add: exp_le_one_iff)
+    using expnn by simp
   have cwM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont u (\<omega> i))
       \<in> borel_measurable ?M" for u
     by (rule measurable_cbmX_coord)
@@ -1222,7 +1222,7 @@ proof -
   have expnn: "0 \<le> a\<^sup>2 * (t - s)"
     using st by (intro mult_nonneg_nonneg) auto
   have exple: "exp (- a\<^sup>2 * (t - s) / 2) \<le> 1"
-    using expnn by (simp add: exp_le_one_iff)
+    using expnn by simp
   have cwM: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. Bcont u (\<omega> i))
       \<in> borel_measurable ?M" for u
     by (rule measurable_cbmX_coord)
@@ -1312,7 +1312,7 @@ proof -
   have "1 + s / q \<le> 1 + t / q"
     using st q by (simp add: divide_right_mono)
   then show ?thesis
-    unfolding drc_def using ps pt by (simp add: ln_le_cancel_iff)
+    unfolding drc_def using ps pt by simp
 qed
 
 lemma drc_strict_mono:
@@ -1324,7 +1324,7 @@ proof -
   have "1 + s / q < 1 + t / q"
     using st q by (simp add: divide_strict_right_mono)
   then show ?thesis
-    unfolding drc_def using ps pt by (simp add: ln_less_cancel_iff)
+    unfolding drc_def using ps pt by simp
 qed
 
 lemma exp_neg_ln_half:
@@ -1883,7 +1883,7 @@ proof -
       by (auto simp: space_pair_measure mem_Times_iff)
     then have "isCont (\<lambda>u. f u (snd p)) (fst p)"
       using cont continuous_on_interior[of UNIV "\<lambda>u. f u (snd p)"]
-      by (simp add: interior_UNIV)
+      by simp
     then show "(\<lambda>n. f (g n (fst p)) (snd p)) \<longlonglongrightarrow> f (fst p) (snd p)"
       using g_lim[of "fst p"]
       by (rule isCont_tendsto_compose)
@@ -1944,7 +1944,7 @@ proof -
       have "emeasure M B < \<infinity>"
         by (simp add: emeasure_eq_measure)
       moreover have "emeasure lborel {a..b} < \<infinity>"
-        by (cases "a \<le> b") (auto simp: emeasure_lborel_Icc)
+        by (cases "a \<le> b") auto
       ultimately show ?thesis
         by (auto simp: ennreal_mult_less_top)
     qed
@@ -2006,7 +2006,7 @@ proof -
   have "exp (- (drc q t - drc q s)) = exp (ln (q + s) - ln (q + t))"
     unfolding * by simp
   also have "\<dots> = (q + s) / (q + t)"
-    using qs qt by (simp add: exp_diff exp_ln)
+    using qs qt by (simp add: exp_diff)
   finally show ?thesis .
 qed
 
@@ -2064,10 +2064,10 @@ definition drC2 :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 
 
 lemma drC2_eq:
   "0 \<le> u \<Longrightarrow> drC2 q \<phi> u \<omega> = cos (2 * Bcont (drc q u) (\<omega> 1) + 2 * \<phi>)"
-  by (simp add: drC2_def drW_def max.absorb1)
+  by (simp add: drC2_def drW_def)
 
 lemma drC2_abs: "\<bar>drC2 q \<phi> u \<omega>\<bar> \<le> 1"
-  by (simp add: drC2_def abs_cos_le_one)
+  by (simp add: drC2_def)
 
 lemma drC2_cont:
   assumes q: "0 < q"
@@ -2156,7 +2156,7 @@ proof -
     using drG_subalgebra_mono[OF q u us]
     by (auto intro: measurable_from_subalg)
   have "drC2 q \<phi> u = (\<lambda>\<omega>. cos (2 * drW (drc q u) \<omega> + 2 * \<phi>))"
-    unfolding drC2_def using u by (simp add: max.absorb1)
+    unfolding drC2_def using u by simp
   then show ?thesis
     using m by simp measurable
 qed
@@ -2256,7 +2256,7 @@ proof -
     using drC2_time_integrable[OF q, of a b \<phi> \<omega>]
     by (simp add: set_integrable_def)
   have int1: "integrable lborel (indicat_real {a..b})"
-    by (auto simp: integrable_indicator_iff emeasure_lborel_Icc ab)
+    by (auto simp: integrable_indicator_iff ab)
   have "\<bar>set_lebesgue_integral lborel {a..b} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>
       \<le> (\<integral>u. \<bar>indicat_real {a..b} u *\<^sub>R drC2 q \<phi> u \<omega>\<bar> \<partial>lborel)"
     unfolding set_lebesgue_integral_def
@@ -2265,7 +2265,7 @@ proof -
     by (intro integral_mono integrable_abs int int1)
       (use drC2_abs in \<open>auto simp: indicator_def abs_mult mult_le_one\<close>)
   also have "\<dots> = b - a"
-    using ab by (simp add: measure_lborel_Icc)
+    using ab by simp
   finally show ?thesis .
 qed
 
@@ -2731,7 +2731,7 @@ proof -
   also have "set_lebesgue_integral lborel {0..t} (\<lambda>_. 1 / 2 :: real)
       = t / 2"
     using t by (subst set_integral_const)
-      (auto simp: emeasure_lborel_Icc measure_lborel_Icc)
+      auto
   also have "set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2)
       = (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)) / 2"
     by (rule set_integral_divide_zero)
@@ -2765,7 +2765,7 @@ proof -
   also have "set_lebesgue_integral lborel {0..t} (\<lambda>_. 1 / 2 :: real)
       = t / 2"
     using t by (subst set_integral_const)
-      (auto simp: emeasure_lborel_Icc measure_lborel_Icc)
+      auto
   also have "set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega> / 2)
       = (set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)) / 2"
     by (rule set_integral_divide_zero)
@@ -3367,9 +3367,9 @@ proof -
         by (intro real_sqrt_le_mono) simp
       also have "\<dots> = r"
         unfolding drR_def qT0 using r0
-        by (simp add: real_sqrt_abs)
+        by simp
       finally show "drXs q \<phi> T0 s \<omega> \<in> cball 0 r"
-        by (simp add: mem_cball_0)
+        by simp
     qed
     show "AE \<omega> in ?M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T0 \<longrightarrow> psd (dras q \<phi> T0 s \<omega>)"
       by (intro AE_I2 allI impI) (simp add: dras_def dra_psd)
@@ -3420,7 +3420,7 @@ proof -
     qed
     show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
         (\<lambda>\<omega>. drXs q \<phi> T0 (min t T0) \<omega> \<bullet> drXs q \<phi> T0 (min t T0) \<omega>)"
-      by (subst sq_const) (simp_all add: BMP.integrable_const)
+      by (subst sq_const) simp_all
     have comp_const: "(\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t T0}
         (\<lambda>s. trace (dras q \<phi> T0 s \<omega>))) = (\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. min t T0)"
       if t: "0 \<le> t" for t
@@ -3434,19 +3434,19 @@ proof -
       also have "\<dots> = min t T0"
         using m0
         by (subst set_integral_const)
-          (auto simp: emeasure_lborel_Icc measure_lborel_Icc)
+          auto
       finally show "set_lebesgue_integral lborel {0..min t T0}
           (\<lambda>s. trace (dras q \<phi> T0 s \<omega>)) = min t T0" .
     qed
     show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M
         (\<lambda>\<omega>. set_lebesgue_integral lborel {0..min t T0}
           (\<lambda>s. trace (dras q \<phi> T0 s \<omega>)))"
-      by (subst comp_const) (simp_all add: BMP.integrable_const)
+      by (subst comp_const) simp_all
     have x0sq: "?x0 \<bullet> ?x0 = q"
     proof -
       have v1: "(\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)
           \<bullet> (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>) = 1"
-        by (simp add: inner_vec_def UNIV_2 sin_cos_squared_add3)
+        by (simp add: inner_vec_def UNIV_2)
       have "?x0 \<bullet> ?x0 = sqrt q * sqrt q *
           ((\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)
             \<bullet> (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>))"

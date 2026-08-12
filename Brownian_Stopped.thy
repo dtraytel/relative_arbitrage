@@ -456,7 +456,7 @@ proof -
     by (intro Bochner_Integration.integral_cong refl)
       (auto simp: trace_cbmA indicator_def)
   also have "\<dots> = min v (btau T r x0 \<omega>) * real CARD('n)"
-    using v tau by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+    using v tau by (subst set_integral_const) auto
   finally show ?thesis
     by (simp add: mult_ac)
 qed
@@ -719,7 +719,7 @@ proof -
     by (intro Bochner_Integration.integral_cong refl)
       (auto simp: entry indicator_def)
   also have "\<dots> = min v (btau T r x0 \<omega>) * 1"
-    using v tau by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+    using v tau by (subst set_integral_const) auto
   finally show ?thesis
     by simp
 qed

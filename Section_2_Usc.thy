@@ -1656,7 +1656,7 @@ proof -
       proof (intro ext)
         fix t :: real and \<omega>
         have comp: "(X t \<omega> - c) $ i = X t \<omega> $ i - c $ i"
-          by (simp add: vector_minus_component)
+          by simp
         show "coord_Z (\<lambda>s \<omega>. X s \<omega> - c) acov i t \<omega>
             = (coord_Z X acov i t \<omega>
                 - (2 * c $ i) *\<^sub>R (X t \<omega> $ i)) + (c $ i)\<^sup>2"
@@ -1857,12 +1857,12 @@ proof -
     unfolding mtopology_of_def by (rule PM.topspace_mtopology)
   have c0: "closedin ?X {f \<in> topspace ?X. f 0 \<in> {x0}}"
     by (rule closedin_continuous_map_preimage[OF continuous_map_path_eval])
-      (use T in \<open>auto simp: closed_closedin[symmetric]\<close>)
+      (use T in \<open>auto\<close>)
   have ct: "closedin ?X {f \<in> topspace ?X. f t \<in> K}"
     if t: "t \<in> {0..T}" for t
     by (rule closedin_continuous_map_preimage[OF
           continuous_map_path_eval[OF t]])
-      (simp add: closed_closedin[symmetric] K)
+      (simp add: K)
   have eq: "confined_paths T K x0
       = {f \<in> topspace ?X. f 0 \<in> {x0}}
         \<inter> (\<Inter>t\<in>{0..T}. {f \<in> topspace ?X. f t \<in> K})"
@@ -2157,7 +2157,7 @@ proof -
         continuous_map_compose[OF cmp_i] rclamp_cont)
   have part1: "continuous_map ?PT euclideanreal
       (\<lambda>f. rclamp c (f t $ i - f s $ i))"
-    using part1' by (simp add: o_def vector_minus_component)
+    using part1' by (simp add: o_def)
   have rc: "continuous_map ?PT
       (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
       (\<lambda>f. restrict f {0..s})"
@@ -2275,7 +2275,7 @@ proof -
   proof (intro borel_measurable_times ZM)
     have "continuous_on UNIV (rclamp (2 * r))"
       using rclamp_cont[of "2 * r"]
-      by (simp add: continuous_map_iff_continuous2)
+      by simp
     then have "rclamp (2 * r) \<in> borel_measurable borel"
       by (rule borel_measurable_continuous_onI)
     then show "(\<lambda>\<omega>. rclamp (2 * r) (X t \<omega> $ i - X s \<omega> $ i))
@@ -2466,7 +2466,7 @@ proof -
     have Lint: "set_integrable lborel {s<..t} (\<lambda>_. L)"
       unfolding set_integrable_def
       by (intro integrable_scaleR_left integrable_real_indicator)
-        (use ts in \<open>auto simp: emeasure_lborel_Ioc\<close>)
+        (use ts in \<open>auto\<close>)
     have upper: "set_lebesgue_integral lborel {s<..t}
         (\<lambda>v. acov v \<omega> $ i $ i) \<le> L * (t - s)"
     proof -
@@ -2476,7 +2476,7 @@ proof -
       also have "set_lebesgue_integral lborel {s<..t} (\<lambda>_. L)
           = measure lborel {s<..t} *\<^sub>R L"
         by (intro set_integral_const)
-          (use ts in \<open>auto simp: emeasure_lborel_Ioc\<close>)
+          (use ts in \<open>auto\<close>)
       also have "measure lborel {s<..t} = t - s"
         using ts by simp
       finally show ?thesis by (simp add: mult.commute)
@@ -2509,7 +2509,7 @@ proof -
   have t0: "0 \<le> t" using st ts by linarith
   have B0: "0 \<le> B" using Zpos[of undefined] Zb[of undefined] by linarith
   have Zabs: "\<And>\<omega>. \<bar>Z \<omega>\<bar> \<le> B"
-    using Zpos Zb by (auto simp: abs_of_nonneg)
+    using Zpos Zb by auto
   have prj: "(\<lambda>x :: real^'m. x $ i) \<in> borel_measurable borel"
     by (intro borel_measurable_continuous_onI linear_continuous_on
         bounded_linear_vec_nth)
@@ -2551,7 +2551,7 @@ proof -
       also have "\<dots> \<le> r\<^sup>2" by (intro power_mono absi) simp
       finally have sq: "(X u \<omega> $ i)\<^sup>2 \<le> r\<^sup>2" .
       have "\<bar>Z \<omega> * (X u \<omega> $ i)\<^sup>2\<bar> = Z \<omega> * (X u \<omega> $ i)\<^sup>2"
-        using Zpos by (simp add: abs_mult abs_of_nonneg)
+        using Zpos by (simp add: abs_mult)
       also have "\<dots> \<le> B * r\<^sup>2"
         by (intro mult_mono Zb sq) (use B0 in \<open>auto simp: Zpos\<close>)
       finally show ?case by simp
@@ -2599,7 +2599,7 @@ proof -
     proof eventually_elim
       case (elim \<omega>)
       have "\<bar>Z \<omega> * ?A u \<omega>\<bar> = Z \<omega> * ?A u \<omega>"
-        using Zpos elim by (simp add: abs_mult abs_of_nonneg)
+        using Zpos elim by (simp add: abs_mult)
       also have "\<dots> \<le> B * (L * u)"
         by (intro mult_mono Zb) (use elim B0 in \<open>auto simp: Zpos\<close>)
       finally show ?case by simp
@@ -2752,7 +2752,7 @@ proof -
         continuous_map_compose[OF cmp_i] rclamp_cont)
   have part1: "continuous_map ?PT euclideanreal
       (\<lambda>f. rclamp c (f t $ i - f s $ i))"
-    using part1' by (simp add: o_def vector_minus_component)
+    using part1' by (simp add: o_def)
   have part1sq: "continuous_map ?PT euclideanreal
       (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2)"
     using continuous_map_real_mult[OF part1 part1]
@@ -2882,7 +2882,7 @@ proof -
   proof -
     have "continuous_on UNIV (rclamp (2 * r))"
       using rclamp_cont[of "2 * r"]
-      by (simp add: continuous_map_iff_continuous2)
+      by simp
     then show ?thesis by (rule borel_measurable_continuous_onI)
   qed
   have mcl2: "(\<lambda>\<omega>. (rclamp (2 * r) (X t \<omega> $ i - X s \<omega> $ i))\<^sup>2 * Z \<omega>)
@@ -2970,7 +2970,7 @@ proof -
       by (simp add: abs_mult)
     also have "\<dots> \<le> (2 * r)\<^sup>2 * B"
       by (intro mult_mono sqb)
-        (use hpos hb B0 in \<open>auto simp: abs_of_nonneg\<close>)
+        (use hpos hb B0 in \<open>auto\<close>)
     finally show "\<bar>?G f\<bar> \<le> (2 * r)\<^sup>2 * B" .
   qed
   have Hcont: "continuous_map
@@ -2980,7 +2980,7 @@ proof -
   have Hbd: "\<exists>B'. \<forall>f\<in>topspace (mtopology_of
       (path_metric T :: (real \<Rightarrow> real^'m) metric)). \<bar>?H f\<bar> \<le> B'"
     by (intro exI[of _ B] ballI)
-      (use hpos hb in \<open>auto simp: abs_of_nonneg\<close>)
+      (use hpos hb in \<open>auto\<close>)
   have blimG: "(\<lambda>j. \<integral>f. ?G f \<partial>(\<sigma> j)) \<longlonglongrightarrow> (\<integral>f. ?G f \<partial>\<Lambda>)"
     using lim Gcont Gbd unfolding weak_conv_on_def by blast
   have blimH: "(\<lambda>j. \<integral>f. ?H f \<partial>(\<sigma> j)) \<longlonglongrightarrow> (\<integral>f. ?H f \<partial>\<Lambda>)"
@@ -3316,7 +3316,7 @@ proof -
     have sp: "space (distr ?D (borel_of ?PS) ?p) = space (borel_of ?PS)"
       by simp
     have pre: "?p -` space (borel_of ?PS) \<inter> space ?D = space \<Lambda>"
-      using measurable_space[OF pdm[of w]] by (auto simp: space_density)
+      using measurable_space[OF pdm[of w]] by auto
     have "emeasure (distr ?D (borel_of ?PS) ?p)
         (space (distr ?D (borel_of ?PS) ?p))
         = emeasure ?D (?p -` space (borel_of ?PS) \<inter> space ?D)"
@@ -3508,7 +3508,7 @@ proof -
       have "1 / Suc (Suc mm) \<le> 1 / Suc mm"
         by (simp add: frac_le)
       then show "Um (Suc mm) \<subseteq> Um mm"
-        unfolding Um_def by (auto simp: PM.in_mball)
+        unfolding Um_def by auto
     qed
     have Um_Int: "(\<Inter>mm. Um mm) = C"
     proof
@@ -3517,7 +3517,7 @@ proof -
       proof
         fix x assume x: "x \<in> (\<Inter>mm. Um mm)"
         then have xM: "x \<in> mspace m"
-          unfolding Um_def by (auto simp: PM.in_mball)
+          unfolding Um_def by auto
         show "x \<in> C"
         proof (rule ccontr)
           assume xC: "x \<notin> C"
@@ -3534,9 +3534,9 @@ proof -
           obtain a where a: "a \<in> C" "x \<in> PM.mball a (1 / Suc mm)"
             using x unfolding Um_def by blast
           have "mdist m a x < 1 / Suc mm" and aM: "a \<in> mspace m"
-            using a by (auto simp: PM.in_mball)
+            using a by auto
           then have "a \<in> PM.mball x r"
-            using mm xM by (auto simp: PM.in_mball PM.commute)
+            using mm xM by (auto simp: PM.commute)
           then have "a \<notin> C" using rsub by auto
           with a show False by simp
         qed
@@ -3556,7 +3556,7 @@ proof -
         assume "\<not> 1 / Suc mm \<le> mdist m x y"
         then have "mdist m x y < 1 / Suc mm" by simp
         then have "y \<in> PM.mball x (1 / Suc mm)"
-          using xy CM tsp by (auto simp: PM.in_mball)
+          using xy CM tsp by auto
         then have "y \<in> Um mm"
           unfolding Um_def using xy by blast
         with xy show False by simp
@@ -3739,7 +3739,7 @@ proof -
     have sp: "space (distr ?D (borel_of ?PS) ?p) = space (borel_of ?PS)"
       by simp
     have pre: "?p -` space (borel_of ?PS) \<inter> space ?D = space \<Lambda>"
-      using measurable_space[OF pdm[of w]] by (auto simp: space_density)
+      using measurable_space[OF pdm[of w]] by auto
     have "emeasure (distr ?D (borel_of ?PS) ?p)
         (space (distr ?D (borel_of ?PS) ?p))
         = emeasure ?D (?p -` space (borel_of ?PS) \<inter> space ?D)"
@@ -3886,7 +3886,7 @@ proof -
   have inc_cont: "continuous_map ?PT euclideanreal
       (\<lambda>f. f t $ i - f s $ i)"
     using continuous_map_compose[OF evdiff cmp_i]
-    by (simp add: o_def vector_minus_component)
+    by (simp add: o_def)
   have incM: "(\<lambda>f. f t $ i - f s $ i) \<in> borel_measurable \<Lambda>"
     using continuous_map_measurable[OF inc_cont]
       measurable_cong_sets[OF s\<Lambda> refl]
@@ -3896,7 +3896,7 @@ proof -
   proof -
     have "continuous_on UNIV (rclamp (2 * r))"
       using rclamp_cont[of "2 * r"]
-      by (simp add: continuous_map_iff_continuous2)
+      by simp
     then show ?thesis
       by (intro measurable_compose[OF incM
           borel_measurable_continuous_onI])
@@ -3979,7 +3979,7 @@ proof -
   have inc_cont: "continuous_map ?PT euclideanreal
       (\<lambda>f. f t $ i - f s $ i)"
     using continuous_map_compose[OF evdiff cmp_i]
-    by (simp add: o_def vector_minus_component)
+    by (simp add: o_def)
   have incM: "(\<lambda>f. f t $ i - f s $ i) \<in> borel_measurable \<Lambda>"
     using continuous_map_measurable[OF inc_cont]
       measurable_cong_sets[OF s\<Lambda> refl]
@@ -3989,7 +3989,7 @@ proof -
   proof -
     have "continuous_on UNIV (rclamp (2 * r))"
       using rclamp_cont[of "2 * r"]
-      by (simp add: continuous_map_iff_continuous2)
+      by simp
     then show ?thesis
       by (intro measurable_compose[OF incM
           borel_measurable_continuous_onI])

@@ -243,7 +243,7 @@ proof -
     qed
     have "(- p) \<bullet> (z - yh) + ((z - yh) \<bullet> ((- M) *v (z - yh))) / 2
         = - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (M *v (z - yh))) / 2)"
-      unfolding mv by (simp add: inner_minus_left inner_minus_right)
+      unfolding mv by simp
     then show ?thesis using B0[OF zK] by linarith
   qed
   show ?thesis by (rule that) (use main in blast)
@@ -668,7 +668,7 @@ proof -
   have "((\<lambda>x. (\<alpha>/2) * (norm (x - yh))\<^sup>2) has_derivative
       (\<lambda>h. (\<alpha>/2) * (2 * ((xh - yh) \<bullet> h)))) (at xh)"
     by (auto intro!: derivative_eq_intros
-        simp: power2_norm_eq_inner inner_diff_left inner_diff_right
+        simp: power2_norm_eq_inner
         inner_commute algebra_simps)
   moreover have "(\<lambda>h. (\<alpha>/2) * (2 * ((xh - yh) \<bullet> h)))
       = (\<lambda>h. (\<alpha> *\<^sub>R (xh - yh)) \<bullet> h)"
@@ -693,7 +693,7 @@ proof -
   have "((\<lambda>y. - ((\<alpha>/2) * (norm (xh - y))\<^sup>2)) has_derivative
       (\<lambda>h. - ((\<alpha>/2) * (- (2 * ((xh - yh) \<bullet> h)))))) (at yh)"
     by (auto intro!: derivative_eq_intros
-        simp: power2_norm_eq_inner inner_diff_left inner_diff_right
+        simp: power2_norm_eq_inner
         inner_commute algebra_simps)
   moreover have "(\<lambda>h. - ((\<alpha>/2) * (- (2 * ((xh - yh) \<bullet> h)))))
       = (\<lambda>h. (\<alpha> *\<^sub>R (xh - yh)) \<bullet> h)"
@@ -2227,7 +2227,7 @@ proof (rule SUP_least)
         = sqrt ((dist p p)\<^sup>2 + (dist (M + d *\<^sub>R mat 1) M)\<^sup>2)"
       by (rule dist_Pair_Pair)
     also have "\<dots> = dist (M + d *\<^sub>R mat 1) M"
-      by (simp add: real_sqrt_abs)
+      by simp
     also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
       by (simp add: dist_norm)
     also have "\<dots> = d * N"
@@ -2290,7 +2290,7 @@ proof (rule INF_greatest)
         = sqrt ((dist p p)\<^sup>2 + (dist (M - d *\<^sub>R mat 1) M)\<^sup>2)"
       by (rule dist_Pair_Pair)
     also have "\<dots> = dist (M - d *\<^sub>R mat 1) M"
-      by (simp add: real_sqrt_abs)
+      by simp
     also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
       by (simp add: dist_norm)
     also have "\<dots> = d * N"
@@ -2364,7 +2364,7 @@ proof (rule SUP_least)
         = sqrt ((dist p p)\<^sup>2 + (dist (M + d *\<^sub>R mat 1) M)\<^sup>2)"
       by (rule dist_Pair_Pair)
     also have "\<dots> = dist (M + d *\<^sub>R mat 1) M"
-      by (simp add: real_sqrt_abs)
+      by simp
     also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
       by (simp add: dist_norm)
     also have "\<dots> = d * N"
@@ -2424,7 +2424,7 @@ proof (rule INF_greatest)
         = sqrt ((dist p p)\<^sup>2 + (dist (M - d *\<^sub>R mat 1) M)\<^sup>2)"
       by (rule dist_Pair_Pair)
     also have "\<dots> = dist (M - d *\<^sub>R mat 1) M"
-      by (simp add: real_sqrt_abs)
+      by simp
     also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
       by (simp add: dist_norm)
     also have "\<dots> = d * N"
@@ -2691,7 +2691,7 @@ lemma quartic_pen_expand:
         + (\<beta> * (d \<bullet> d) * (h \<bullet> h) + 2 * \<beta> * (d \<bullet> h)\<^sup>2)/2
         + (\<beta> * (d \<bullet> h) * (h \<bullet> h) + (\<beta>/4) * (h \<bullet> h)\<^sup>2)"
   unfolding quartic_pen_def
-  by (simp add: inner_add_left inner_add_right inner_commute
+  by (simp add: inner_commute
       power2_eq_square algebra_simps)
 
 lemma quartic_pen_grad_zero_iff:
@@ -2703,7 +2703,7 @@ proof
   show "d = 0"
   proof (rule ccontr)
     assume nz: "d \<noteq> 0"
-    then have "0 < d \<bullet> d" by (simp add: inner_gt_zero_iff)
+    then have "0 < d \<bullet> d" by simp
     with b have "\<beta> * (d \<bullet> d) \<noteq> 0" by simp
     with z nz show False by simp
   qed
@@ -2756,7 +2756,7 @@ proof -
       = \<beta> * (d \<bullet> h) * (h \<bullet> h) + (\<beta>/4) * (h \<bullet> h)\<^sup>2" for h
   proof -
     have sc: "((\<beta> * (d \<bullet> d)) *\<^sub>R d) \<bullet> h = \<beta> * (d \<bullet> d) * (d \<bullet> h)"
-      by (simp add: inner_scaleR_left)
+      by simp
     show ?thesis
       unfolding sc quartic_pen_expand by simp
   qed
@@ -2832,7 +2832,7 @@ proof -
       by simp
     show ?thesis
       unfolding R_def e mvd
-      by (simp add: inner_prod_def inner_diff_left inner_diff_right
+      by (simp add: inner_prod_def
           algebra_simps)
   qed
   have main: "((\<lambda>k::(real^'n)\<times>(real^'n). R (fst k - snd k) / (norm k)\<^sup>2)
@@ -3332,7 +3332,7 @@ proof -
   have u: "0 < (norm d)\<^sup>2 + 1"
     by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
   have D: "(norm (d + h))\<^sup>2 = (norm d)\<^sup>2 + (2*(d \<bullet> h) + (h \<bullet> h))"
-    by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+    by (simp add: power2_norm_eq_inner
         inner_commute algebra_simps)
   have uD: "0 \<le> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))"
   proof -
@@ -3414,7 +3414,7 @@ proof -
   have "(\<bar>d \<bullet> h\<bar>)\<^sup>2 \<le> (norm d * norm h)\<^sup>2"
     by (rule power_mono[OF cs]) simp
   then show ?thesis
-    by (simp add: power_mult_distrib power2_abs)
+    by (simp add: power_mult_distrib)
 qed
 
 corollary inner_sq_quotient_bounded:
@@ -3593,7 +3593,7 @@ proof -
   have uDh: "0 \<le> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))" for h :: "real^'n"
   proof -
     have D: "(norm (d + h))\<^sup>2 = (norm d)\<^sup>2 + (2*(d \<bullet> h) + (h \<bullet> h))"
-      by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+      by (simp add: power2_norm_eq_inner
           inner_commute algebra_simps)
     have e: "((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)) = (norm (d + h))\<^sup>2 + 1"
       using D by simp
@@ -3784,7 +3784,7 @@ definition soft_grad :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'
 lemma soft_grad_inner:
   fixes d h :: "real^'n::finite"
   shows "soft_grad \<kappa> d \<bullet> h = \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)"
-  unfolding soft_grad_def by (simp add: inner_scaleR_left)
+  unfolding soft_grad_def by simp
 
 theorem soft_pen_jet_field:
   fixes d :: "real^'n::finite"
@@ -3903,7 +3903,7 @@ lemma norm_le_soft_R:
   fixes x :: "real^'n::finite"
   shows "norm x \<le> sqrt ((norm x)\<^sup>2 + 1)"
 proof -
-  have "norm x = sqrt ((norm x)\<^sup>2)" by (simp add: real_sqrt_abs)
+  have "norm x = sqrt ((norm x)\<^sup>2)" by simp
   also have "\<dots> \<le> sqrt ((norm x)\<^sup>2 + 1)" by (rule real_sqrt_le_mono) simp
   finally show ?thesis .
 qed
@@ -4023,7 +4023,7 @@ proof -
     finally show ?thesis unfolding soft_shrink_def .
   qed
   have decomp: "?t *\<^sub>R x - ?s *\<^sub>R y = ?t *\<^sub>R (x - y) + (?t - ?s) *\<^sub>R y"
-    by (simp add: scaleR_right_diff_distrib scaleR_left_diff_distrib
+    by (simp add:
           algebra_simps)
   \<comment> \<open>the triangle estimate\<close>
   have tri: "norm (?t *\<^sub>R (x - y) + (?t - ?s) *\<^sub>R y)
@@ -4079,7 +4079,7 @@ proof -
   let ?S = "soft_shrink x - soft_shrink y"
   have split: "soft_grad \<kappa> x - soft_grad \<kappa> y = \<kappa> *\<^sub>R (x - y) - \<kappa> *\<^sub>R ?S"
     unfolding soft_grad_split
-    by (simp add: scaleR_right_diff_distrib algebra_simps)
+    by (simp add: algebra_simps)
   have tri: "norm (\<kappa> *\<^sub>R (x - y) - \<kappa> *\<^sub>R ?S)
       \<le> norm (\<kappa> *\<^sub>R (x - y)) + norm (\<kappa> *\<^sub>R ?S)"
     by (rule norm_triangle_ineq4)
@@ -4161,7 +4161,7 @@ proof -
     by (rule soft_grad_coeff_pos[OF d k])
   then have cne: "\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) \<noteq> 0" by linarith
   show ?thesis
-    unfolding soft_grad_def using cne d by (simp add: scaleR_eq_0_iff)
+    unfolding soft_grad_def using cne d by simp
 qed
 
 lemma soft_grad_norm_pos:
@@ -4394,7 +4394,7 @@ proof -
     show "\<delta> * (2 * (((1 - t) *\<^sub>R x + t *\<^sub>R y) \<bullet> \<xi>) - (norm \<xi>)\<^sup>2)
         \<le> (1 - t) * (\<delta> * (2 * (x \<bullet> \<xi>) - (norm \<xi>)\<^sup>2))
           + t * (\<delta> * (2 * (y \<bullet> \<xi>) - (norm \<xi>)\<^sup>2))"
-      by (simp add: inner_add_left inner_scaleR_left algebra_simps)
+      by (simp add: algebra_simps)
   qed simp
   show ?thesis unfolding e by (rule convex_on_add[OF cvx aff])
 qed
@@ -4817,10 +4817,10 @@ proof -
     by (rule inner_matrix_sym[OF symZ])
   have l: "v \<bullet> (- (snd (W (0, z)) + Z *v z))
       = - (v \<bullet> snd (W (0, z))) - (v \<bullet> (Z *v z))"
-    by (simp add: inner_minus_right inner_add_right inner_diff_right)
+    by (simp add: inner_add_right inner_diff_right)
   have r: "z \<bullet> (- (snd (W (0, v)) + Z *v v))
       = - (z \<bullet> snd (W (0, v))) - (z \<bullet> (Z *v v))"
-    by (simp add: inner_minus_right inner_add_right inner_diff_right)
+    by (simp add: inner_add_right inner_diff_right)
   show ?thesis unfolding l r using wsym zsym by simp
 qed
 
@@ -5541,7 +5541,7 @@ proof -
   have eq: "(f (xh + h) - f xh - (p + c) \<bullet> h - (h \<bullet> X h)/2) / (norm h)\<^sup>2
       = ((f (xh + h) - c \<bullet> (xh + h)) - (f xh - c \<bullet> xh)
           - p \<bullet> h - (h \<bullet> X h)/2) / (norm h)\<^sup>2" for h
-    by (simp add: inner_add_left inner_add_right algebra_simps)
+    by (simp add: algebra_simps)
   show ?thesis unfolding eq by (rule lim)
 qed
 
@@ -5565,12 +5565,12 @@ proof -
     have sq: "(norm (xh + h - c))\<^sup>2
         = (norm (xh - c))\<^sup>2 + 2 * ((xh - c) \<bullet> h) + (norm h)\<^sup>2"
       unfolding re
-      by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+      by (simp add: power2_norm_eq_inner
           inner_commute algebra_simps)
     have ip: "(p + (2*\<delta>) *\<^sub>R (xh - c)) \<bullet> h = p \<bullet> h + 2*\<delta>*((xh - c) \<bullet> h)"
-      by (simp add: inner_add_left inner_scaleR_left)
+      by (simp add: inner_add_left)
     have hh: "h \<bullet> (X h + (2*\<delta>) *\<^sub>R h) = h \<bullet> X h + 2*\<delta>*(norm h)\<^sup>2"
-      by (simp add: inner_add_right inner_scaleR_right power2_norm_eq_inner)
+      by (simp add: inner_add_right power2_norm_eq_inner)
     show ?thesis
       unfolding sq ip hh by (simp add: algebra_simps)
   qed
@@ -6194,7 +6194,7 @@ proof -
   have "(norm (x + h - y))\<^sup>2 = (norm ((x - y) + h))\<^sup>2"
     by (simp add: algebra_simps)
   also have "\<dots> = (norm (x - y))\<^sup>2 + 2 * ((x - y) \<bullet> h) + (norm h)\<^sup>2"
-    by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+    by (simp add: power2_norm_eq_inner
         inner_commute algebra_simps)
   finally show ?thesis
     by (simp add: field_simps)
@@ -6261,7 +6261,7 @@ proof -
       = \<alpha> * ((fst zh - snd zh) \<bullet> h) + (\<alpha>/2) * (norm h)\<^sup>2"
     by (rule penalty_difference_identity)
   show ?thesis
-    using p by (simp add: inner_prod_def inner_add_left inner_commute
+    using p by (simp add: inner_prod_def inner_commute
         power2_norm_eq_inner algebra_simps)
 qed
 
@@ -6359,7 +6359,7 @@ proof -
       = a (fst zh + h) - a (fst zh)
           - (fst q + G) \<bullet> h
           - (h \<bullet> (fst (W (h, 0)) + Z *v h))/2"
-      by (simp add: inner_prod_def inner_add_left inner_add_right
+      by (simp add: inner_prod_def
           algebra_simps)
     show ?thesis
       unfolding np
@@ -6388,7 +6388,7 @@ proof -
     have "(norm (x - (y + h)))\<^sup>2 = (norm ((x - y) - h))\<^sup>2"
       by (simp add: algebra_simps)
     also have "\<dots> = (norm (x - y))\<^sup>2 - 2 * ((x - y) \<bullet> h) + (norm h)\<^sup>2"
-      by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
+      by (simp add: power2_norm_eq_inner
           inner_commute algebra_simps)
     finally show ?thesis .
   qed
@@ -6415,7 +6415,7 @@ proof -
       = - (\<alpha> * ((fst zh - snd zh) \<bullet> h)) + (\<alpha>/2) * (norm h)\<^sup>2"
     by (rule penalty_difference_identity_snd)
   show ?thesis
-    using p by (simp add: inner_prod_def inner_diff_left inner_commute
+    using p by (simp add: inner_prod_def inner_commute
         power2_norm_eq_inner algebra_simps)
 qed
 
@@ -6531,8 +6531,8 @@ proof -
       = b (snd zh + h) - b (snd zh)
           - (snd q - G) \<bullet> h
           - (h \<bullet> (snd (W (0, h)) + Z *v h))/2"
-      by (simp add: inner_prod_def inner_add_left inner_add_right
-          inner_diff_left algebra_simps)
+      by (simp add: inner_prod_def
+          algebra_simps)
     show ?thesis
       unfolding np
       using num by (simp add: add_divide_distrib[symmetric])
@@ -6825,7 +6825,7 @@ proof -
       \<le> w z - (p \<bullet> (z - ys)
           + ((z - ys) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - ys)))/2)"
       unfolding neg_shift_matrix_apply
-      by (simp add: inner_minus_right)
+      by simp
   qed
   have tf: "test_fun_at
       (\<lambda>z. p \<bullet> (z - ys)
@@ -7254,7 +7254,7 @@ proof -
     have eq: "((\<lambda>z. \<Psi> z + p \<bullet> z) (zh + k) - (\<lambda>z. \<Psi> z + p \<bullet> z) zh
         - (q + p) \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2
       = (\<Psi> (zh + k) - \<Psi> zh - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2" for k
-      by (simp add: inner_add_left inner_add_right algebra_simps)
+      by (simp add: algebra_simps)
     show ?thesis
       unfolding eq by (rule expPsi)
   qed
@@ -7417,8 +7417,8 @@ lemma parallelogram_norm:
   fixes u v :: "'a::euclidean_space"
   shows "(norm (u + v))\<^sup>2 + (norm (u - v))\<^sup>2
        = 2*(norm u)\<^sup>2 + 2*(norm v)\<^sup>2"
-  by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
-      inner_diff_left inner_diff_right inner_commute algebra_simps)
+  by (simp add: power2_norm_eq_inner
+      inner_commute algebra_simps)
 
 theorem symmetric_form_bound:
   fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -8099,7 +8099,7 @@ proof -
             + (dist (Mz M + d *\<^sub>R mat 1) (Mz M))\<^sup>2)"
       by (rule dist_Pair_Pair)
     also have "\<dots> = dist (Mz M + d *\<^sub>R mat 1) (Mz M)"
-      by (simp add: real_sqrt_abs)
+      by simp
     also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
       by (simp add: dist_norm)
     also have "\<dots> = d * N"
@@ -8171,7 +8171,7 @@ proof -
             + (dist (Mz M - d *\<^sub>R mat 1) (Mz M))\<^sup>2)"
       by (rule dist_Pair_Pair)
     also have "\<dots> = dist (Mz M - d *\<^sub>R mat 1) (Mz M)"
-      by (simp add: real_sqrt_abs)
+      by simp
     also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
       by (simp add: dist_norm)
     also have "\<dots> = d * N"
@@ -9840,7 +9840,7 @@ proof -
     then show ?thesis unfolding e by linarith
   qed
   have "sqrt (2*c + 1) < sqrt ((c + 1)\<^sup>2)" by (rule real_sqrt_less_mono[OF sq])
-  also have "sqrt ((c + 1)\<^sup>2) = c + 1" using p by (simp add: real_sqrt_abs)
+  also have "sqrt ((c + 1)\<^sup>2) = c + 1" using p by simp
   finally show ?thesis .
 qed
 
@@ -10954,8 +10954,8 @@ proof -
     using bnd[of "(0, k)"] by (simp add: inner_prod_def n0)
   have eqsum: "k \<bullet> (- (snd (W (0, k)) + \<alpha> *\<^sub>R k))
       = - (k \<bullet> snd (W (0, k)) + \<alpha> * (norm k)\<^sup>2)"
-    by (simp add: inner_diff_right inner_minus_right inner_add_right
-        inner_scaleR_right power2_norm_eq_inner)
+    by (simp add: inner_diff_right inner_add_right
+        power2_norm_eq_inner)
   have aa: "\<bar>\<alpha> * (norm k)\<^sup>2\<bar> = \<bar>\<alpha>\<bar> * (norm k)\<^sup>2"
     by (simp add: abs_mult)
   have "\<bar>k \<bullet> (- (snd (W (0, k)) + \<alpha> *\<^sub>R k))\<bar>
@@ -11066,7 +11066,7 @@ proof -
   have b2: "\<bar>k \<bullet> (Z *v k)\<bar> \<le> KZ * (norm k)\<^sup>2" by (rule bZ)
   have e: "k \<bullet> (- (snd (W (0, k)) + Z *v k))
       = - (k \<bullet> snd (W (0, k))) - (k \<bullet> (Z *v k))"
-    by (simp add: inner_minus_right inner_add_right inner_diff_right)
+    by (simp add: inner_add_right inner_diff_right)
   have "\<bar>k \<bullet> (- (snd (W (0, k)) + Z *v k))\<bar>
       \<le> \<bar>k \<bullet> snd (W (0, k))\<bar> + \<bar>k \<bullet> (Z *v k)\<bar>"
     unfolding e by simp
@@ -11240,7 +11240,7 @@ proof -
     finally show ?thesis using d by linarith
   qed  have eq: "\<alpha> *\<^sub>R (fst \<xi> - snd \<xi>) - \<alpha> *\<^sub>R (fst zh - snd zh)
       = \<alpha> *\<^sub>R ((fst \<xi> - fst zh) - (snd \<xi> - snd zh))"
-    by (simp add: scaleR_diff_right algebra_simps)
+    by (simp add: algebra_simps)
   have "norm (\<alpha> *\<^sub>R (fst \<xi> - snd \<xi>)) - norm (\<alpha> *\<^sub>R (fst zh - snd zh))
       \<le> norm (\<alpha> *\<^sub>R (fst \<xi> - snd \<xi>) - \<alpha> *\<^sub>R (fst zh - snd zh))"
     by (rule norm_triangle_ineq2)
@@ -11593,7 +11593,7 @@ proof -
           - P (fst (zh + k) - snd (zh + k)))
         - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
         - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2" for k
-    by (simp add: inner_add_left inner_add_right algebra_simps)
+    by (simp add: algebra_simps)
   have expT: "((\<lambda>k. (((a (fst (zh + k)) + b (snd (zh + k))
           - P (fst (zh + k) - snd (zh + k))) + pt \<bullet> (zh + k))
         - ((a (fst zh) + b (snd zh) - P (fst zh - snd zh)) + pt \<bullet> zh)
@@ -11643,7 +11643,7 @@ proof -
           - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2)
         - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
         - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2" for k
-    by (simp add: inner_add_left inner_add_right algebra_simps)
+    by (simp add: algebra_simps)
   have expT: "((\<lambda>k. (((a (fst (zh + k)) + b (snd (zh + k))
           - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2) + pt \<bullet> (zh + k))
         - ((a (fst zh) + b (snd zh)
@@ -11707,7 +11707,7 @@ proof -
           - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
         - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
         - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2" for hk
-    by (simp add: inner_prod_def inner_add_left inner_add_right algebra_simps)
+    by (simp add: inner_prod_def algebra_simps)
   have expAB: "((\<lambda>hk. (((a (fst (zh + hk)) + fst pt \<bullet> fst (zh + hk))
           + (b (snd (zh + hk)) + snd pt \<bullet> snd (zh + hk))
           - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
@@ -11782,7 +11782,7 @@ proof -
           - Pn (fst (zh + hk) - snd (zh + hk)))
         - (a (fst zh) + b (snd zh) - Pn (fst zh - snd zh))
         - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2" for hk
-    by (simp add: inner_prod_def inner_add_left inner_add_right algebra_simps)
+    by (simp add: inner_prod_def algebra_simps)
   have expAB: "((\<lambda>hk. (((a (fst (zh + hk)) + fst pt \<bullet> fst (zh + hk))
           + (b (snd (zh + hk)) + snd pt \<bullet> snd (zh + hk))
           - Pn (fst (zh + hk) - snd (zh + hk)))
@@ -11983,7 +11983,7 @@ proof -
   qed
   have eq: "\<alpha> *\<^sub>R (fst zh - snd zh) - \<alpha> *\<^sub>R (fst \<xi> - snd \<xi>)
       = \<alpha> *\<^sub>R ((fst zh - fst \<xi>) - (snd zh - snd \<xi>))"
-    by (simp add: scaleR_diff_right algebra_simps)
+    by (simp add: algebra_simps)
   have "norm (\<alpha> *\<^sub>R (fst zh - snd zh)) - norm (\<alpha> *\<^sub>R (fst \<xi> - snd \<xi>))
       \<le> norm (\<alpha> *\<^sub>R (fst zh - snd zh) - \<alpha> *\<^sub>R (fst \<xi> - snd \<xi>))"
     by (rule norm_triangle_ineq2)
@@ -14182,7 +14182,7 @@ lemma compact_frontier_nonempty:
 proof -
   have clK: "closed K" by (rule compact_imp_closed[OF cK])
   have fr: "frontier K = K - interior K"
-    using clK by (simp add: frontier_def closure_closed)
+    using clK by (simp add: frontier_def)
   have unb: "\<not> bounded (UNIV :: (real^'n) set)"
   proof -
     have "\<exists>x :: 'n. True" using dim by (simp add: card_gt_0_iff ex_in_conv)
@@ -14872,7 +14872,7 @@ proof (intro allI impI)
 
   define T where "T = (\<lambda>x :: real^'n. c *\<^sub>R (mat 1 *v x) + (1 - c) *\<^sub>R x0)"
   have Teq: "T x = x0 + c *\<^sub>R (x - x0)" for x
-    unfolding T_def by (simp add: matrix_vector_mul_lid algebra_simps)
+    unfolding T_def by (simp add: algebra_simps)
 
   text \<open>\<open>T\<close> is an affine homeomorphism, so it maps the interior into the
     interior of the image.\<close>
@@ -14892,7 +14892,7 @@ proof (intro allI impI)
       unfolding y_def
       using mem_interior_closure_convex_shrink[OF cvx x0, of x "1 - 1/c"]
         xK c1 closure_subset
-      by (auto simp: algebra_simps scaleR_diff_right scaleR_diff_left)
+      by (auto simp: algebra_simps)
     have Ty: "T y = x"
       unfolding Teq y_def using cne by (simp add: algebra_simps)
     show "x \<in> interior (T ` K)" using Tint yint Ty by force
@@ -14904,7 +14904,7 @@ proof (intro allI impI)
     fix x assume xK: "x \<in> K"
     have mv: "transpose (mat 1 :: real^'n^'n) *v (x - (1 - c) *\<^sub>R x0)
         = x - (1 - c) *\<^sub>R x0"
-      by (simp add: transpose_mat matrix_vector_mul_lid)
+      by simp
     have step1: "(1/c) *\<^sub>R (x - (1 - c) *\<^sub>R x0) - x = ((1/c) - 1) *\<^sub>R (x - x0)"
     proof -
       have sc: "(1/c) * (1 - c) = 1/c - 1" using cne by (simp add: field_simps)

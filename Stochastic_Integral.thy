@@ -298,7 +298,7 @@ proof -
     by (simp add: add_divide_distrib diff_divide_distrib)
   also have "\<dots> = qw r k y + grad_qw k y \<bullet> d - (d \<bullet> d) / c"
     unfolding qw_def grad_qw_def c_def
-    by (simp add: inner_scaleR_left)
+    by simp
   finally show ?thesis
     by (simp add: c_def)
 qed
@@ -404,7 +404,7 @@ proof eventually_elim
       have "X m \<omega> \<in> cball 0 r"
         using elim that by blast
       then have "norm (X m \<omega>) \<le> r"
-        by (simp add: mem_cball dist_norm)
+        by (simp add: dist_norm)
       then have "(norm (X m \<omega>))\<^sup>2 \<le> r\<^sup>2"
         by (intro power_mono) auto
       then show ?thesis

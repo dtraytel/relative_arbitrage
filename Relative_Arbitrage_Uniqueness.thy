@@ -88,7 +88,7 @@ proof -
   also have "transpose Q *v (Q *v x) = (transpose Q ** Q) *v x"
     by (simp add: matrix_vector_mul_assoc)
   also have "\<dots> = x"
-    using assms by (simp add: orth_mat_def matrix_vector_mul_lid)
+    using assms by (simp add: orth_mat_def)
   finally show ?thesis .
 qed
 
@@ -96,12 +96,12 @@ lemma orth_mat_surj:
   assumes "orth_mat Q"
   shows "Q *v (transpose Q *v x) = x"
   using assms
-  by (simp add: matrix_vector_mul_assoc orth_mat_def matrix_vector_mul_lid)
+  by (simp add: matrix_vector_mul_assoc orth_mat_def)
 
 lemma orth_mat_transpose:
   assumes "orth_mat Q"
   shows "orth_mat (transpose Q)"
-  using assms by (simp add: orth_mat_def transpose_transpose)
+  using assms by (simp add: orth_mat_def)
 
 text \<open>Conjugation preserves each defining condition of the feasible set.\<close>
 
@@ -115,7 +115,7 @@ proof -
       = transpose Q ** transpose a ** transpose (transpose Q)"
     by (simp add: matrix_transpose_mul matrix_mul_assoc)
   also have "\<dots> = transpose Q ** a ** Q"
-    by (simp add: sym transpose_transpose)
+    by (simp add: sym)
   finally have symc: "transpose (transpose Q ** a ** Q)
       = transpose Q ** a ** Q" .
   have quad: "0 \<le> x \<bullet> ((transpose Q ** a ** Q) *v x)" for x
@@ -124,7 +124,7 @@ proof -
         = x \<bullet> (transpose Q *v (a *v (Q *v x)))"
       by (simp add: matrix_vector_mul_assoc[symmetric] matrix_mul_assoc)
     also have "\<dots> = (Q *v x) \<bullet> (a *v (Q *v x))"
-      by (simp add: inner_transpose_matrix transpose_transpose)
+      by (simp add: inner_transpose_matrix)
     also have "\<dots> \<ge> 0"
       using a by (simp add: psd_def)
     finally show ?thesis .
@@ -168,7 +168,7 @@ proof -
         = x \<bullet> (transpose Q *v (a *v (Q *v x)))"
       by (simp add: matrix_vector_mul_assoc[symmetric] matrix_mul_assoc)
     also have "\<dots> = (Q *v x) \<bullet> (a *v (Q *v x))"
-      by (simp add: inner_transpose_matrix transpose_transpose)
+      by (simp add: inner_transpose_matrix)
     also have "\<dots> = y \<bullet> (a *v y)"
       by (simp add: Ox)
     also have "\<dots> \<ge> y \<bullet> y"
@@ -192,7 +192,7 @@ proof -
     have "x \<bullet> ((transpose Q ** a ** Q) *v x)
         = (Q *v x) \<bullet> (a *v (Q *v x))"
       by (simp add: matrix_vector_mul_assoc[symmetric] matrix_mul_assoc
-          inner_transpose_matrix transpose_transpose)
+          inner_transpose_matrix)
     also have "\<dots> \<le> L * ((Q *v x) \<bullet> (Q *v x))"
       using ub by (simp add: eigen_ub_def)
     also have "(Q *v x) \<bullet> (Q *v x) = x \<bullet> x"
@@ -254,11 +254,11 @@ next
       have "transpose Q ** a ** Q = (transpose Q ** Q) ** b ** (transpose Q ** Q)"
         by (simp add: a_def matrix_mul_assoc)
       also have "\<dots> = b"
-        using Q by (simp add: orth_mat_def matrix_mul_lid matrix_mul_rid)
+        using Q by (simp add: orth_mat_def)
       finally show ?thesis .
     qed
     have a_std: "a = transpose (transpose Q) ** b ** transpose Q"
-      by (simp add: a_def transpose_transpose)
+      by (simp add: a_def)
     have "a \<in> feasible k L p"
     proof -
       have psd_a: "psd a"
@@ -277,7 +277,7 @@ next
           using kernel_conjugate[OF OT, of b "transpose Q *v p"]
           by (simp add: a_std)
         moreover have "transpose (transpose Q) *v (transpose Q *v p) = p"
-          using orth_mat_surj[OF Q] by (simp add: transpose_transpose)
+          using orth_mat_surj[OF Q] by simp
         moreover have "b *v (transpose Q *v p) = 0"
           using b by (simp add: feasible_def)
         ultimately show ?thesis
@@ -332,7 +332,7 @@ proof -
             = (Q ** transpose Q) ** M ** (Q ** transpose Q)"
           by (simp add: matrix_mul_assoc)
         also have "\<dots> = M"
-          using Q by (simp add: orth_mat_def matrix_mul_lid matrix_mul_rid)
+          using Q by (simp add: orth_mat_def)
         finally show ?thesis
           by simp
       qed

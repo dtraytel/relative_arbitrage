@@ -513,7 +513,7 @@ proof -
     by (intro integral_nonneg_AE AE_I2) (simp add: maxabs_nonneg)
   have main: "(\<integral>\<omega>. (maxabs X n \<omega>)\<^sup>2 \<partial>M)
       \<le> (\<integral>\<omega>. 2 * (\<bar>X n \<omega>\<bar> * maxabs X n \<omega>) \<partial>M)"
-    using nn_le prod_nonneg unfolding e1 e2 by (simp add: ennreal_le_iff)
+    using nn_le prod_nonneg unfolding e1 e2 by simp
 
   text \<open>The elementary bound \<open>2ab \<le> 2a\<^sup>2 + b\<^sup>2/2\<close>.\<close>
   have amgm: "2 * (\<bar>X n \<omega>\<bar> * maxabs X n \<omega>)
@@ -760,7 +760,7 @@ lemma Dsup_eq_AE: "AE \<omega> in M. ennreal (Dsup \<omega>) = esup \<omega>"
 proof eventually_elim
   case (elim \<omega>)
   then show ?case
-    unfolding Dsup_def by (simp add: ennreal_enn2real less_top)
+    unfolding Dsup_def by (simp add: less_top)
 qed
 
 lemma Dsup_nonneg: "0 \<le> Dsup \<omega>"

@@ -426,7 +426,7 @@ proof -
       using Mg.integrable[OF i] by simp
   qed
   have ind_int: "integrable M (\<lambda>\<omega>. indicat_real A \<omega> * Y u \<omega>)"
-    if A: "A \<in> sets M" and Y: "integrable M (Y u)" for A Y u
+    if A: "A \<in> sets M" and Y: "integrable M (Y u)" for A and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and u :: real
   proof -
     have "integrable M (\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R Y u \<omega>)"
       by (intro integrable_mult_indicator A Y)
@@ -449,7 +449,7 @@ proof -
       then show ?thesis using A by blast
     qed
     have conv: "set_lebesgue_integral M C (Y u)
-        = (\<integral>\<omega>. indicat_real C \<omega> * Y u \<omega> \<partial>M)" for C Y u
+        = (\<integral>\<omega>. indicat_real C \<omega> * Y u \<omega> \<partial>M)" for C and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and u :: real
       unfolding set_lebesgue_integral_def by simp
     have zero: "(\<integral>\<omega>. indicat_real B \<omega> * (X j \<omega> - X i \<omega>) \<partial>M) = 0"
       if B: "B \<in> sets (natural_filtration M 0 X i)" for B
@@ -553,7 +553,7 @@ proof -
   qed
   have split_diff: "(\<integral>\<omega>. indicat_real C \<omega> *\<^sub>R (Y \<omega> - Z \<omega>) \<partial>M)
       = set_lebesgue_integral M C Y - set_lebesgue_integral M C Z"
-    if YZ: "set_integrable M C Y" "set_integrable M C Z" for C Y Z
+    if YZ: "set_integrable M C Y" "set_integrable M C Z" for C and Y :: "'a \<Rightarrow> real^'n" and Z :: "'a \<Rightarrow> real^'n"
   proof -
     have "(\<integral>\<omega>. indicat_real C \<omega> *\<^sub>R (Y \<omega> - Z \<omega>) \<partial>M)
         = (\<integral>\<omega>. indicat_real C \<omega> *\<^sub>R Y \<omega>

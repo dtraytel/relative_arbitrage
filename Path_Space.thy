@@ -102,7 +102,7 @@ proof -
       (mtopology_of (euclidean_metric :: 'b metric)) f"
     using f unfolding path_metric_def mspace_cfunspace by simp
   hence "continuous_map (top_of_set {0..T}) euclidean f" by simp
-  thus ?thesis by (simp add: continuous_map_iff_continuous2)
+  thus ?thesis by simp
 qed
 
 theorem compactin_path_holder_ball:

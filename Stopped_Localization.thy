@@ -1,15 +1,15 @@
 section \<open>Localization: stopping an \<open>L\<^sup>2\<close> martingale needs no domination hypothesis\<close>
 
 text \<open>
-  Plan step A3 (STATUS.md 25h), part (c'). The repository's continuous-time
-  \<open>optional_stopping\<close> (Optional\_Sampling.thy) carries an integrable
-  running-domination hypothesis. For an \<open>L\<^sup>2\<close> martingale that hypothesis is
-  DISCHARGEABLE: the \<open>horizon_sq_int_martingale\<close> locale of Doob\_Inequality.thy
-  produces, per horizon, an integrable function \<open>Dsup\<close> dominating \<open>\<bar>X s\<bar>\<close> on the
-  whole interval (Doob's \<open>L\<^sup>2\<close> inequality along dyadic grids + monotone
-  convergence + path continuity). This theory packages that discharge: stopping
-  an \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time yields a
-  martingale, unconditionally.
+  The repository's continuous-time \<open>optional_stopping\<close>
+  (Optional\_Sampling.thy) carries an integrable running-domination
+  hypothesis. For an \<open>L\<^sup>2\<close> martingale that hypothesis is dischargeable: the
+  \<open>horizon_sq_int_martingale\<close> locale of Doob\_Inequality.thy produces, per
+  horizon, an integrable function \<open>Dsup\<close> dominating \<open>\<bar>X s\<bar>\<close> on the whole
+  interval (Doob's \<open>L\<^sup>2\<close> inequality along dyadic grids + monotone
+  convergence + path continuity). This theory packages that discharge:
+  stopping an \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time
+  yields a martingale, unconditionally.
 \<close>
 
 theory Stopped_Localization
@@ -66,15 +66,15 @@ qed
 section \<open>Stopping the compensated square\<close>
 
 text \<open>
-  Plan step A3 (c''). The compensated square \<open>Z = X\<^sup>2 - A\<close> of an \<open>L\<^sup>2\<close> martingale
-  with a Lipschitz-rate compensator is generally NOT \<open>L\<^sup>2\<close>, so
-  @{thm [source] stopped_martingale_L2} does not apply to it directly. But it IS
-  dominated on \<open>[0,u]\<close>: \<open>\<bar>Z s\<bar> \<le> Dsup\<^sup>2 + C u\<close> where \<open>Dsup\<close> is the running-maximum
-  bound for \<open>X\<close>, and \<open>Dsup\<^sup>2\<close> is integrable by Doob's \<open>L\<^sup>2\<close> inequality
-  (\<open>Dsup_sq_integrable\<close>). So the domination hypothesis of \<open>optional_stopping\<close> is
-  again dischargeable. Stopping \<open>Z\<close> is what transfers the covariation package to
-  the stopped process: the martingale property of \<open>Z\<^sup>\<tau>\<close> IS the statement that
-  \<open>A(\<cdot> \<and> \<tau>)\<close> compensates \<open>(X\<^sup>\<tau>)\<^sup>2\<close>.
+  The compensated square \<open>Z = X\<^sup>2 - A\<close> of an \<open>L\<^sup>2\<close> martingale with a
+  Lipschitz-rate compensator is generally not \<open>L\<^sup>2\<close>, so
+  @{thm [source] stopped_martingale_L2} does not apply to it directly. But it
+  is dominated on \<open>[0,u]\<close>: \<open>\<bar>Z s\<bar> \<le> Dsup\<^sup>2 + C u\<close> where \<open>Dsup\<close> is the
+  running-maximum bound for \<open>X\<close>, and \<open>Dsup\<^sup>2\<close> is integrable by Doob's \<open>L\<^sup>2\<close>
+  inequality (\<open>Dsup_sq_integrable\<close>). So the domination hypothesis of
+  \<open>optional_stopping\<close> is again dischargeable. Stopping \<open>Z\<close> is what transfers
+  the covariation package to the stopped process: the martingale property of
+  \<open>Z\<^sup>\<tau>\<close> is the statement that \<open>A(\<cdot> \<and> \<tau>)\<close> compensates \<open>(X\<^sup>\<tau>)\<^sup>2\<close>.
 \<close>
 
 theorem stopped_compensated_square:
@@ -341,14 +341,14 @@ proof -
 qed
 
 text \<open>
-  The A3 deliverable (STATUS.md 25h): the paper's Eq. (2.7) with constant
-  \<open>8 C\<^sup>2\<close> for an UNBOUNDED \<open>L\<^sup>2\<close> martingale with deterministic start and a
-  Lipschitz-rate compensator for its square. Localize at the exit times of the
-  balls of radius \<open>\<bar>x\<^sub>0\<bar> + n + 1\<close>, apply the bounded estimate to each stopped
-  process — its martingale property, covariation package and boundedness come
-  from the three theorems above and the exit-time theory — and pass to the
-  limit by Fatou: continuous paths are bounded on compact intervals, so for
-  every \<open>\<omega>\<close> the stopped increments are EVENTUALLY EQUAL to the plain ones.
+  The paper's Eq. (2.7) with constant \<open>8 C\<^sup>2\<close> for an unbounded \<open>L\<^sup>2\<close>
+  martingale with deterministic start and a Lipschitz-rate compensator for
+  its square. Localize at the exit times of the balls of radius
+  \<open>\<bar>x\<^sub>0\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process — its
+  martingale property, covariation package and boundedness come from the
+  three theorems above and the exit-time theory — and pass to the limit by
+  Fatou: continuous paths are bounded on compact intervals, so for every
+  \<open>\<omega>\<close> the stopped increments are eventually equal to the plain ones.
 \<close>
 
 theorem fourth_moment_L2:

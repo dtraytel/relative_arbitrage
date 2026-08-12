@@ -191,7 +191,7 @@ next
         {f \<in> topspace (mtopology_of (path_metric T)). f r \<in> - K}"
       by (rule openin_continuous_map_preimage[OF cm op])
     then show ?thesis
-      by (simp add: topspace_mtopology_of)
+      by simp
   qed
   have "{f \<in> mspace (path_metric T). pexit T K f < c}
       = (\<Union>r \<in> {0..T} \<inter> {..<c}.
@@ -214,7 +214,7 @@ proof (rule borel_measurableI_less)
   have "{f \<in> space (borel_of (mtopology_of (path_metric T
         :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
       = {f \<in> mspace (path_metric T). pexit T K f < c}"
-    by (simp add: space_borel_of topspace_mtopology_of)
+    by (simp add: space_borel_of)
   then show "{f \<in> space (borel_of (mtopology_of (path_metric T
         :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
       \<in> sets (borel_of (mtopology_of (path_metric T)))"
@@ -241,7 +241,7 @@ proof -
     using meas by measurable
   have b: "norm (exp (- l * tau \<omega>)) \<le> 1" if w: "\<omega> \<in> space M" for \<omega>
     using nn[OF w] lam
-    by (simp add: exp_le_one_iff mult_nonneg_nonneg abs_of_pos)
+    by (simp add: abs_of_pos)
   show ?thesis
     by (rule integrable_const_bound[where B = 1])
       (use m b in \<open>auto intro!: AE_I2\<close>)
@@ -315,7 +315,7 @@ proof (rule Sup_least)
     then have "ennreal c' \<le> ennreal (tau \<omega>)"
       using cc' by simp
     then show ?case
-      using nn[OF elim(2)] by (simp add: ennreal_le_iff)
+      using nn[OF elim(2)] by simp
   qed
   have intg: "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
     by (rule exp_neg_time_integrable[OF M meas nn less_imp_le[OF lam]])
@@ -409,14 +409,14 @@ proof (rule antisym)
       then have "ennreal (e' + \<epsilon>) \<le> ess_inf_time M tau"
         unfolding ess_inf_time_def by (intro Sup_upper) simp
       then have "e' + \<epsilon> \<le> e'"
-        unfolding ee using e'0 by (simp add: ennreal_le_iff)
+        unfolding ee using e'0 by simp
       with \<epsilon> show False by simp
     qed
     have p1: "p \<le> 1" unfolding p_def by simp
     have lnp0: "0 \<le> - ln p"
     proof -
       have "ln p \<le> ln 1"
-        using p_pos p1 by (simp add: ln_le_cancel_iff)
+        using p_pos p1 by simp
       then show ?thesis by simp
     qed
     define l where "l = max 1 (- ln p / \<epsilon>)"
@@ -564,7 +564,7 @@ proof -
   have \<tau>0: "0 \<le> ?\<tau>" by (rule pexit_nonneg[OF T0])
   have \<tau>T: "?\<tau> \<le> T" by (rule pexit_le_T[OF T0])
   have err0: "0 \<le> 1 - exp (- l * (T / real N))"
-    using T l N by (simp add: mult_nonneg_nonneg)
+    using T l N by simp
   show ?thesis
   proof (cases "?\<tau> < T")
     case False
@@ -646,7 +646,7 @@ proof -
           using mmin[of "m - 1"] m1 by force
         moreover have "?s m = ?s (m - 1) + T / real N"
           using m1 N
-          by (simp add: field_simps of_nat_diff)
+          by (simp add: field_simps)
         ultimately show ?thesis by simp
       qed
       have "l * ?s m \<le> l * (?\<tau> + T / real N)"
@@ -661,7 +661,7 @@ proof -
       also have "\<dots> \<le> 1 * (1 - exp (- l * (T / real N)))"
         using \<tau>0 l err0
         by (intro mult_right_mono)
-          (auto simp: exp_le_one_iff mult_nonneg_nonneg)
+          auto
       finally show ?thesis unfolding pstep_eq by simp
     qed
     show ?thesis using lo hi by blast
@@ -686,7 +686,7 @@ proof -
   interpret finite_measure \<Lambda> by fact
   have sp\<Lambda>: "space \<Lambda> = mspace (path_metric T)"
     using sets_eq_imp_space_eq[OF s\<Lambda>]
-    by (simp add: space_borel_of topspace_mtopology_of)
+    by (simp add: space_borel_of)
   have setj: "{g. pexit T K g < real j * T / real N} \<inter> space \<Lambda>
       = {f \<in> mspace (path_metric T).
           pexit T K f < real j * T / real N}" for j
@@ -786,7 +786,7 @@ proof -
       using uniformly_continuous_imp_continuous_map[OF u]
       by (simp add: mtopology_of_def)
     show ?thesis
-      using wc' cg b by (auto simp: topspace_mtopology_of)
+      using wc' cg b by auto
   qed
   have cls: "Limsup sequentially (\<lambda>i. ereal (measure (\<Lambda>i i) A))
       \<le> ereal (measure \<Lambda> A)"
@@ -864,7 +864,7 @@ proof -
       using uniformly_continuous_imp_continuous_map[OF u]
       by (simp add: mtopology_of_def)
     show ?thesis
-      using wc' cg b by (auto simp: topspace_mtopology_of)
+      using wc' cg b by auto
   qed
   have A': "closedin PM.mtopology A"
     using A top by metis
@@ -957,7 +957,7 @@ proof -
       by (intro mult_left_mono l)
         (use T in \<open>auto intro!: divide_right_mono mult_right_mono\<close>)
     then show ?thesis
-      by (simp add: exp_le_cancel_iff)
+      by simp
   qed
   have eps: "ereal ((\<integral>f. pstep T K l N f \<partial>\<Lambda>) - e)
       \<le> Liminf sequentially (\<lambda>i. ereal (\<integral>f. pstep T K l N f \<partial>(\<Lambda>i i)))"
@@ -1072,7 +1072,7 @@ proof -
   proof -
     have sp\<Lambda>: "space \<Lambda> = mspace (path_metric T)"
       using sets_eq_imp_space_eq[OF s\<Lambda>]
-      by (simp add: space_borel_of topspace_mtopology_of)
+      by (simp add: space_borel_of)
     have eq: "{g. pexit T K g < real j * T / real N} \<inter> space \<Lambda>
         = {f \<in> mspace (path_metric T).
             pexit T K f < real j * T / real N}"
@@ -1127,7 +1127,7 @@ proof -
       using p by measurable
     have b: "norm (exp (- l * pexit T K f)) \<le> 1" for f
       using pexit_nonneg[OF T0, of K f] l
-      by (simp add: exp_le_one_iff mult_nonneg_nonneg)
+      by simp
     show ?thesis
       by (rule integrable_const_bound[where B = 1])
         (use m b in \<open>auto intro!: AE_I2\<close>)
@@ -1211,7 +1211,7 @@ proof -
     qed
     have "?E \<Lambda> \<le> r"
       by (intro LIMSEQ_le_const2[OF errlim])
-        (metis Nbound Suc_le_eq gr0I le0 zero_less_Suc)
+        (metis Nbound Suc_le_eq)
     then show ?thesis using real by simp
   next
     case PInf
@@ -1269,7 +1269,7 @@ proof -
           exp_neg_time_integrable[OF prob pm\<Lambda>
             pexit_nonneg[OF T0] less_imp_le[OF l]])
         (use pexit_nonneg[OF T0] l in
-          \<open>auto simp: exp_le_one_iff intro!: mult_nonneg_nonneg\<close>)
+          \<open>auto intro!: mult_nonneg_nonneg\<close>)
     then show ?thesis by (simp add: prob_space)
   qed
   have flnn: "0 \<le> - (1 / l) * ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)"
@@ -1277,7 +1277,7 @@ proof -
   proof -
     have "ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) \<le> ln 1"
       using Epos\<Lambda>[OF l] Ele1\<Lambda>[OF l]
-      by (simp add: ln_le_cancel_iff)
+      by simp
     then have "ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) \<le> 0" by simp
     then show ?thesis
       using l by (simp add: divide_nonpos_pos)
@@ -1295,7 +1295,7 @@ proof -
         < (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)"
     proof -
       have "exp (- l * \<epsilon>) < 1"
-        using l \<epsilon> by (simp add: mult_pos_pos)
+        using l \<epsilon> by simp
       then show ?thesis
         using Epos\<Lambda>[OF l] by (simp add: mult_less_cancel_left)
     qed
@@ -1335,7 +1335,7 @@ proof -
       proof -
         have "(0 :: real)
             < (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) * exp (- l * \<epsilon>)"
-          using Epos\<Lambda>[OF l] by (simp add: mult_pos_pos)
+          using Epos\<Lambda>[OF l] by simp
         also have "\<dots> < (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
           by (rule elim(1))
         finally show ?thesis .
@@ -1344,7 +1344,7 @@ proof -
           * exp (- l * \<epsilon>))
           \<le> ln (\<integral>f. exp (- l * pexit T K f) \<partial>(\<Lambda>i i))"
         using elim(1) pos_i Epos\<Lambda>[OF l]
-        by (subst ln_le_cancel_iff) (auto simp: mult_pos_pos)
+        by (subst ln_le_cancel_iff) auto
       have lnsplit: "ln ((\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>)
           * exp (- l * \<epsilon>))
           = ln (\<integral>f. exp (- l * pexit T K f) \<partial>\<Lambda>) + (- l * \<epsilon>)"

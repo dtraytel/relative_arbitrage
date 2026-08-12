@@ -165,7 +165,7 @@ proof -
         = (\<Sum>i\<le>N n. if i = idx n \<omega> then Z (dg n i) \<omega> else 0)"
       using w by (intro sum.cong refl) auto
     also have "\<dots> = Z (dg n (idx n \<omega>)) \<omega>"
-      using idx_le[of n \<omega>] by (simp add: sum.delta' cong: if_cong)
+      using idx_le[of n \<omega>] by (simp cong: if_cong)
     finally show ?thesis ..
   qed
   have grid_meas: "(\<lambda>\<omega>. Z (dg n (idx n \<omega>)) \<omega>) \<in> borel_measurable (F v)"

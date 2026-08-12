@@ -32,13 +32,13 @@ theory Threshold_Chain
   imports Eigenvalue_Continuity
 begin
 
-text \<open>The import is \<open>Eigenvalue_Continuity\<close> rather than \<open>Eigenvalues\<close> only to keep
-  the whole development a single LINEAR chain
+text \<open>The import is \<open>Eigenvalue_Continuity\<close> rather than \<open>Eigenvalues\<close> so that
+  the whole development forms a single chain
   \<open>Eigenvalues \<rightarrow> Eigenvalue_Continuity \<rightarrow> Threshold_Chain \<rightarrow> Lemma_3_1
    \<rightarrow> Poincare_Separation\<close>,
-  so that the Lipschitz facts (\<open>entrysum\<close>, \<open>kyfan_lipschitz\<close>,
-  \<open>eigval_lipschitz\<close>) are available downstream without creating a diamond that
-  PIDE cannot load.  Nothing in this theory uses them.\<close>
+  making the Lipschitz facts (\<open>entrysum\<close>, \<open>kyfan_lipschitz\<close>,
+  \<open>eigval_lipschitz\<close>) available downstream.  Nothing in this theory uses
+  them.\<close>
 
 lemma threshold_shrink_one:
   fixes lam :: "'a \<Rightarrow> real"
@@ -66,13 +66,7 @@ proof -
 qed
 
 text \<open>The descending chain, by induction on \<open>n = card S\<close>, where the measure
-  decreases visibly.  The step splits on whether \<open>j\<close> is already \<open>card S\<close>.
-
-  Every existential is introduced with \<open>rule exI\<close> and eliminated with
-  \<open>rule exE\<close>, and each conjunct is projected with a small \<open>simp\<close>.  Leaving
-  those steps to \<open>blast\<close> is what made this proof diverge: with the induction
-  hypothesis and all of \<open>Suc.prems\<close> in scope, \<open>blast\<close> searches instead of
-  just eliminating.\<close>
+  decreases visibly.  The step splits on whether \<open>j\<close> is already \<open>card S\<close>.\<close>
 
 lemma threshold_chain_aux:
   fixes lam :: "'a \<Rightarrow> real"
@@ -154,9 +148,9 @@ proof -
 qed
 
 text \<open>Specialised to an eigenbasis: for every \<open>j \<le> m\<close> the Ky Fan sum
-  \<open>kyfan j a\<close> is already computed inside a threshold set \<open>S\<close> of size \<open>m\<close>.
-  This is what step (c) of Lemma 3.1 needs in order to identify
-  \<open>possum m a\<close> with the positive-part sum over \<open>S\<close>.\<close>
+  \<open>kyfan j a\<close> is already computed inside a threshold set \<open>S\<close> of size \<open>m\<close>,
+  which lets \<open>possum m a\<close> be identified with the positive-part sum over
+  \<open>S\<close>.\<close>
 
 lemma kyfan_within_threshold:
   fixes a :: "real^'n::finite^'n"
@@ -197,12 +191,11 @@ qed
 
 section \<open>The positive-part sum inside a threshold set\<close>
 
-text \<open>This is the companion of \<open>possum_full_eq_sum_basis\<close> that step (c) of
-  Lemma 3.1 needs: on a threshold set \<open>S\<close> of size \<open>m\<close>, \<open>possum m a\<close> is the
-  sum of the POSITIVE eigenvalues occurring in \<open>S\<close>, and consequently
-  \<open>kyfan m a - possum m a\<close> is the sum of the nonpositive ones.  Those are
-  exactly the two terms of the bracket of Eq. (3.5) once \<open>M\<^sub>p\<close> is
-  diagonalised.
+text \<open>The companion of \<open>possum_full_eq_sum_basis\<close>: on a threshold set \<open>S\<close> of
+  size \<open>m\<close>, \<open>possum m a\<close> is the sum of the positive eigenvalues occurring in
+  \<open>S\<close>, and consequently \<open>kyfan m a - possum m a\<close> is the sum of the
+  nonpositive ones.  Those are exactly the two terms of the bracket of
+  Eq. (3.5) once \<open>M\<^sub>p\<close> is diagonalised.
 
   The \<open>\<le>\<close> half uses \<open>kyfan_within_threshold\<close> for each \<open>j \<le> m\<close>; the \<open>\<ge>\<close> half
   observes that the positive part of \<open>S\<close> is again a threshold set of \<open>B\<close>, so

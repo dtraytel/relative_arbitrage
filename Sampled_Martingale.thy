@@ -1,26 +1,25 @@
 section \<open>Sampling a continuous-time martingale along a partition\<close>
 
 text \<open>
-  Layer 2 of open task 15 (continuous-time stochastic integration). Neither the
-  Isabelle distribution nor the AFP contains any stochastic integral, Ito formula
-  or Doob-Meyer decomposition -- checked: no \<open>Ito\<close>, \<open>stochastic_integral\<close> or
-  \<open>Doob_Meyer\<close> in either, and the AFP's \<open>Stochastic_Matrices\<close> is linear algebra --
-  so this has to be built.
+  The Isabelle distribution and the AFP contain no stochastic integral, Ito
+  formula or Doob-Meyer decomposition -- checked: no \<open>Ito\<close>,
+  \<open>stochastic_integral\<close> or \<open>Doob_Meyer\<close> in either, and the AFP's
+  \<open>Stochastic_Matrices\<close> is linear algebra -- so this has to be built.
 
-  The observation that organises the construction: for a SIMPLE predictable
+  The observation that organises the construction: for a simple predictable
   integrand, subordinate to a monotone partition \<open>t :: nat => real\<close>, the
-  stochastic integral is literally a discrete martingale transform of the SAMPLED
-  process \<open>%k. X (t k)\<close> along the SAMPLED filtration \<open>%k. F (t k)\<close>. So the
-  discrete theory already developed in \<open>Quadratic_Variation\<close> and
-  \<open>Stochastic_Integral\<close> (\<open>mtrans\<close>, \<open>martingale_mtrans\<close>, \<open>qvar\<close>) can be reused
-  wholesale, provided we first know that sampling a martingale gives a
+  stochastic integral is literally a discrete martingale transform of the
+  sampled process \<open>%k. X (t k)\<close> along the sampled filtration \<open>%k. F (t k)\<close>.
+  So the discrete theory already developed in \<open>Quadratic_Variation\<close> and
+  \<open>Stochastic_Integral\<close> (\<open>mtrans\<close>, \<open>martingale_mtrans\<close>, \<open>qvar\<close>) can be
+  reused wholesale, once sampling a martingale is known to give a
   martingale. That bridge is what this theory supplies.
 
   AFP \<open>Martingales\<close> is index-generic: \<open>filtered_measure\<close> fixes an arbitrary
   order-topology index and the entry provides \<open>real_filtered_measure\<close>. That is
   what makes the statement expressible at all.
 
-  Note this text block sits BEFORE the theory header, so it must not use
+  This text block sits before the theory header, so it must not use
   antiquotations -- there is no theory context yet in which to elaborate them.
 \<close>
 theory Sampled_Martingale
@@ -98,24 +97,24 @@ text \<open>
   This is the shape of the \<open>Z_martingale\<close> assumption in
   \<open>locale ito_volatile_market\<close>: with \<open>S t = X t \<bullet> X t\<close> and
   \<open>A t = integral_{0..t} (trace o acov)\<close>, that assumption says exactly that
-  \<open>S - A\<close> is a martingale. It is NOT derivable from the other assumptions of that
-  locale, because \<open>acov\<close> enters as a free parameter constrained only by
-  positive-semidefiniteness, the eigenvalue bounds and integrability -- nothing
-  there ties it to the covariation of @{term X}. Confirmed against the paper: the
-  condition \<open>d<X_i,X_j>(t)/dt IN S\<close> is imposed as part of the DEFINITION of the
-  admissible family, so it is data rather than something to be constructed, and no
-  Doob-Meyer decomposition is involved.
+  \<open>S - A\<close> is a martingale. It is not derivable from the other assumptions of
+  that locale, because \<open>acov\<close> enters as a free parameter constrained only by
+  positive-semidefiniteness, the eigenvalue bounds and integrability --
+  nothing there ties it to the covariation of @{term X}. The condition
+  \<open>d<X_i,X_j>(t)/dt IN S\<close> is imposed as part of the definition of the
+  admissible family, so it is data rather than something to be constructed,
+  and no Doob-Meyer decomposition is involved.
 
   What can be done, and is done here, is to reduce that assumption to the
-  covariation condition in its primitive conditional form: \<open>S - A\<close> is a martingale
-  as soon as the conditional expectation of an increment of @{term S} agrees with
-  that of the corresponding increment of @{term A}. Combined with
-  \<open>cond_exp_increment_sq\<close> of \<open>Sampled_Quadratic_Variation\<close> (which cannot be cited
-  as an antiquotation here, since that theory sits ABOVE this one in the import
-  order), the increment of @{term Sq} is a
-  conditional VARIANCE, so the hypothesis below is precisely the statement that
-  @{term A} is the compensator -- i.e. the paper's own defining condition, with no
-  martingale property assumed of the compensated process itself.
+  covariation condition in its primitive conditional form: \<open>S - A\<close> is a
+  martingale as soon as the conditional expectation of an increment of
+  @{term S} agrees with that of the corresponding increment of @{term A}.
+  Combined with \<open>cond_exp_increment_sq\<close> of \<open>Sampled_Quadratic_Variation\<close>
+  (which cannot be cited as an antiquotation here, since that theory sits
+  above this one in the import order), the increment of @{term Sq} is a
+  conditional variance, so the hypothesis below is precisely the statement
+  that @{term A} is the compensator -- the paper's own defining condition,
+  with no martingale property assumed of the compensated process itself.
 \<close>
 
 theorem martingale_of_cond_increment:

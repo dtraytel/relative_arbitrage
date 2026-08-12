@@ -1,12 +1,12 @@
 section \<open>Quadratic variation of a continuous-time martingale along a partition\<close>
 
 text \<open>
-  Layer 3 of open task 15. The sampling bridge of \<open>Sampled_Martingale\<close> turns a
-  real-indexed martingale into a nat-indexed one; this theory uses that to
-  discharge the three obligations of the locale \<open>sq_int_martingale\<close> for the
-  sampled process, and thereby transfers the whole discrete quadratic-variation
-  theory of \<open>Quadratic_Variation\<close> to continuous time along an arbitrary monotone
-  partition.
+  The sampling bridge of \<open>Sampled_Martingale\<close> turns a real-indexed
+  martingale into a nat-indexed one; this theory uses that to discharge the
+  three obligations of the locale \<open>sq_int_martingale\<close> for the sampled
+  process, and thereby transfers the whole discrete quadratic-variation
+  theory of \<open>Quadratic_Variation\<close> to continuous time along an arbitrary
+  monotone partition.
 
   The two results that matter downstream are the discrete Ito formula for the
   square function (\<open>qvar_compensates\<close>) and the energy identity
@@ -15,11 +15,7 @@ text \<open>
   second moment grows exactly by the expected sum of squared increments. The
   latter is the second-moment input that Eq. (2.7) of arXiv:2512.17702 needs,
   and the former is the quadratic Ito formula that the \<open>Z_martingale\<close> assumption
-  of \<open>ito_volatile_market\<close> currently postulates.
-
-  Nothing here is assumed: no unproved placeholders, no new locale axiom. (This
-  sentence deliberately avoids the literal keyword, so the repository's
-  \<open>grep -cw\<close> audit for unproved placeholders is not poisoned by prose.)\<close>
+  of \<open>ito_volatile_market\<close> currently postulates.\<close>
 
 theory Sampled_Quadratic_Variation
   imports Quadratic_Variation Sampled_Martingale
@@ -103,11 +99,11 @@ qed
 subsection \<open>The conditional increment identity\<close>
 
 text \<open>
-  Specialising the partition to the TWO points @{term s} and @{term u} turns the
-  energy identity into its conditional form: the conditional variance of an
-  increment is the increment of the conditional second moment. This is the
-  identity that connects a martingale to its covariation without any reference to
-  a stochastic integral.
+  Specialising the partition to the two points @{term s} and @{term u} turns
+  the energy identity into its conditional form: the conditional variance of
+  an increment is the increment of the conditional second moment. This is
+  the identity that connects a martingale to its covariation without any
+  reference to a stochastic integral.
 \<close>
 
 theorem cond_exp_increment_sq:

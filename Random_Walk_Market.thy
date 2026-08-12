@@ -185,7 +185,7 @@ proof -
       finally show ?thesis .
     qed
     have "\<bar>(rw n s $ i)\<^sup>2\<bar> = \<bar>rw n s $ i\<bar>\<^sup>2"
-      by (simp add: power2_abs)
+      by simp
     also have "\<dots> \<le> (real n + 2)\<^sup>2"
       using le by (intro power_mono) simp_all
     finally show ?thesis .
@@ -348,7 +348,7 @@ proof (intro discrete_volatile_stopped_market.intro
     then have "norm (rw (min n (exitN m N s)) s) \<le> real m + 1"
       by (simp add: rw_def)
     then show "rw (min n (exitN m N s)) s \<in> cball 0 (real m + 1)"
-      by (simp add: mem_cball dist_norm)
+      by (simp add: dist_norm)
   qed
 qed
 

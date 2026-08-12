@@ -85,7 +85,7 @@ proof -
   have "trace (D ** P) = (\<Sum>u\<in>C. u \<bullet> (D *v u))"
     by (simp add: C(2) trace_mult_outer_sum)
   then have "\<bar>trace (D ** P)\<bar> \<le> (\<Sum>u\<in>C. \<bar>u \<bullet> (D *v u)\<bar>)"
-    by (simp add: sum_abs)
+    by simp
   also have "\<dots> \<le> (\<Sum>u\<in>C. entrysum D)"
   proof (rule sum_mono)
     fix u assume "u \<in> C"

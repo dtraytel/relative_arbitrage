@@ -480,7 +480,7 @@ proof -
     case (elim \<omega>)
     then have "x0 \<in> cball 0 r" by auto
     then have "norm x0 \<le> r"
-      by (simp add: mem_cball dist_norm)
+      by (simp add: dist_norm)
     then have "(norm x0)\<^sup>2 \<le> r\<^sup>2"
       by (intro power_mono) auto
     then show ?case
@@ -517,7 +517,7 @@ proof -
       case (elim \<omega>)
       then have "X N \<omega> \<in> cball 0 r" by auto
       then have "norm (X N \<omega>) \<le> r"
-        by (simp add: mem_cball dist_norm)
+        by (simp add: dist_norm)
       then have "(norm (X N \<omega>))\<^sup>2 \<le> r\<^sup>2"
         by (intro power_mono) auto
       then show ?case
@@ -599,7 +599,7 @@ proof -
     then have "x0 \<in> cball 0 r"
       using elim by simp
     then have "norm x0 \<le> r"
-      by (simp add: mem_cball dist_norm)
+      by (simp add: dist_norm)
     then have "(norm x0)\<^sup>2 \<le> r\<^sup>2"
       by (intro power_mono) auto
     then show ?case
@@ -640,7 +640,7 @@ proof -
       case (elim \<omega>)
       then have "X (min N (T \<omega>)) \<omega> \<in> cball 0 r" by auto
       then have "norm (X (min N (T \<omega>)) \<omega>) \<le> r"
-        by (simp add: mem_cball dist_norm)
+        by (simp add: dist_norm)
       then have "(norm (X (min N (T \<omega>)) \<omega>))\<^sup>2 \<le> r\<^sup>2"
         by (intro power_mono) auto
       then show ?case

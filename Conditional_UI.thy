@@ -1,20 +1,19 @@
 section \<open>Uniform integrability of conditional expectations\<close>
 
 text \<open>
-  Plan step A3 (STATUS.md 25h), part (a). Two classical facts absent from the
-  distribution and the AFP:
+  Two classical facts absent from the distribution and the AFP:
 
   1. Absolute continuity of the integral: for integrable \<open>f\<close> and \<open>e > 0\<close> there
      is \<open>\<delta> > 0\<close> such that \<open>\<integral>\<^bsub>A\<^esub> \<bar>f\<bar> \<le> e\<close> whenever \<open>measure A < \<delta>\<close>.
 
-  2. The family of conditional expectations \<open>cond_exp M (G n) Y\<close> of a FIXED
+  2. The family of conditional expectations \<open>cond_exp M (G n) Y\<close> of a fixed
      integrable \<open>Y\<close> is uniformly integrable (in the sense of
      \<open>Vitali_Convergence.unif_integrable\<close>), with a truncation level uniform in
      the sub-\<open>\<sigma>\<close>-algebra.
 
-  These feed the domination-free optional stopping theorem (A3 part (b)): in the
-  round-up sampling argument the sampled values are conditional expectations of
-  the horizon value, so Vitali's convergence theorem replaces dominated
+  These feed a domination-free optional stopping theorem: in the round-up
+  sampling argument the sampled values are conditional expectations of the
+  horizon value, so Vitali's convergence theorem replaces dominated
   convergence, eliminating the integrable-running-supremum hypothesis that an
   arbitrary \<open>L\<^sup>1\<close> martingale does not satisfy.
 \<close>
@@ -111,9 +110,10 @@ subsection \<open>Uniform integrability of a family of conditional expectations\
 
 text \<open>
   The truncation level \<open>K = E\<bar>Y\<bar>/\<delta> + 1\<close> works simultaneously for every
-  sub-\<open>\<sigma>\<close>-algebra: the exceedance set \<open>{cond_exp \<bar>Y\<bar> > K}\<close> is measurable in the
-  SUB-algebra, so the tail integral of the conditional expectation collapses to
-  a set integral of \<open>\<bar>Y\<bar>\<close> itself over a set of measure \<open>< \<delta>\<close>.
+  sub-\<open>\<sigma>\<close>-algebra: the exceedance set \<open>{cond_exp \<bar>Y\<bar> > K}\<close> is measurable in
+  the sub-algebra, so the tail integral of the conditional expectation
+  collapses to a set integral of \<open>\<bar>Y\<bar>\<close> itself over a set of measure
+  \<open>< \<delta>\<close>.
 \<close>
 
 lemma (in prob_space) cond_exp_family_unif_integrable:
@@ -264,10 +264,9 @@ proof (intro conjI allI impI gint)
 qed
 
 text \<open>
-  The form the optional-stopping rework consumes directly: a sequence that
-  AVERAGES a fixed integrable \<open>Y\<close> over sub-\<open>\<sigma>\<close>-algebras (the set-integral
-  identity of optional sampling) IS the corresponding family of conditional
-  expectations, hence uniformly integrable.
+  A sequence that averages a fixed integrable \<open>Y\<close> over sub-\<open>\<sigma>\<close>-algebras (the
+  set-integral identity of optional sampling) is the corresponding family of
+  conditional expectations, hence uniformly integrable.
 \<close>
 
 lemma (in prob_space) unif_integrable_of_averaging:

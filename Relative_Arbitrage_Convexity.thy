@@ -49,7 +49,7 @@ lemma onormal_card_dim_span:
   assumes "onormal B"
   shows "card B = dim (span B)"
   using onormal_independent[OF assms]
-  by (simp add: dim_span dim_eq_card_independent)
+  by (simp add: dim_eq_card_independent)
 
 lemma onormal_extension_within:
   assumes B: "onormal B" and W: "subspace W" and BW: "B \<subseteq> W"
@@ -68,7 +68,7 @@ proof -
     have "span (B \<union> D) \<subseteq> W"
       using BW D(1) W by (intro span_minimal) auto
     moreover have "W \<subseteq> span (B \<union> D)"
-      using D(6) by (metis Un_upper2 span_mono subset_trans)
+      using D(6) by (metis Un_upper2 span_mono)
     ultimately show ?thesis
       using U(2) by auto
   qed
@@ -179,7 +179,7 @@ proof -
   proof -
     obtain y z where yz: "y \<in> span B1"
       "\<And>w. w \<in> span B1 \<Longrightarrow> orthogonal z w" "x = y + z"
-      using orthogonal_subspace_decomp_exists[of B1 x] by (metis span_span)
+      using orthogonal_subspace_decomp_exists[of B1 x] by metis
     show ?thesis
       using act[OF B1 refl yz] act[OF B2 sp[symmetric] yz] by simp
   qed
@@ -260,7 +260,7 @@ proof -
     then have "\<mu> * (\<mu> - 1) = 0"
       by (simp add: algebra_simps)
     then show ?thesis
-      unfolding \<mu>_def[symmetric] by (auto simp: mult_eq_0_iff)
+      unfolding \<mu>_def[symmetric] by auto
   qed
   define C where "C = {u \<in> B. u \<bullet> (P *v u) = 1}"
   have CB: "C \<subseteq> B"
@@ -276,7 +276,7 @@ proof -
         by (simp add: matrix_vector_mult_sum)
       also have "\<dots> = (\<Sum>u\<in>C. if u = w then w else 0)"
         by (intro sum.cong refl)
-          (use B(1) CB w in \<open>auto dest: onormal_inner_distinct simp: onormal_inner_self\<close>)
+          (use B(1) CB w in \<open>auto dest: onormal_inner_distinct\<close>)
       also have "\<dots> = (if w \<in> C then w else 0)"
         using onC by (simp add: onormal_def)
       also have "\<dots> = P *v w"
@@ -358,7 +358,7 @@ lemma outer_prod_scaleR_left: "outer_prod (c *\<^sub>R u) v = c *\<^sub>R outer_
   by (simp add: outer_prod_def vec_eq_iff)
 
 lemma outer_prod_mult: "outer_prod u v ** outer_prod w z = (v \<bullet> w) *\<^sub>R outer_prod u z"
-  by (simp add: mult_outer_prod outer_prod_mv outer_prod_scaleR_left)
+  by (simp add: mult_outer_prod outer_prod_scaleR_left)
 
 lemma onormal_proj:
   assumes C: "onormal C"
@@ -378,7 +378,7 @@ proof -
     also have "\<dots> = (\<Sum>u\<in>C. \<Sum>v\<in>C. if v = u then outer_prod u u else 0)"
       by (intro sum.cong refl)
         (use C in \<open>auto dest: onormal_inner_distinct
-          simp: onormal_inner_self outer_prod_scaleR_left\<close>)
+          simp: outer_prod_scaleR_left\<close>)
     also have "\<dots> = (\<Sum>u\<in>C. outer_prod u u)"
       using C by (simp add: onormal_def)
     finally show "(\<Sum>u\<in>C. outer_prod u u) ** (\<Sum>u\<in>C. outer_prod u u)
@@ -387,7 +387,7 @@ proof -
   have "trace (\<Sum>u\<in>C. outer_prod u u) = (\<Sum>u\<in>C. u \<bullet> u)"
     by (simp add: trace_matrix_sum)
   also have "\<dots> = (\<Sum>u\<in>C. (1::real))"
-    by (intro sum.cong refl) (use C in \<open>simp add: onormal_inner_self\<close>)
+    by (intro sum.cong refl) (use C in \<open>simp\<close>)
   finally show "trace (\<Sum>u\<in>C. outer_prod u u) = real (card C)"
     by simp
 qed
@@ -405,7 +405,7 @@ proof -
     using onormal_extension[OF onormal_empty] by auto
   have "card B = CARD('n)"
     using onormal_card_dim_span[OF B(1)] B(2)
-    by (simp add: dim_UNIV)
+    by simp
   with m obtain T where T: "T \<subseteq> B" "card T = m" "finite T"
     by (metis obtain_subset_with_card_n)
   have onT: "onormal T"
@@ -525,7 +525,7 @@ proof -
     then have "u \<bullet> u \<le> u \<bullet> (a *v u)"
       by (rule S(3))
     moreover have "u \<bullet> u = 1"
-      using onB0 u by (simp add: onormal_inner_self)
+      using onB0 u by simp
     ultimately show "1 \<le> u \<bullet> (a *v u)"
       by simp
   qed
@@ -567,7 +567,7 @@ proof -
     have "x \<bullet> ((s *\<^sub>R a + (1 - s) *\<^sub>R b) *v x)
         = s * (x \<bullet> (a *v x)) + (1 - s) * (x \<bullet> (b *v x))"
       by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
-          inner_add_right inner_scaleR_right)
+          inner_add_right)
     also have "\<dots> \<ge> 0"
       using assms by (intro add_nonneg_nonneg mult_nonneg_nonneg)
         (auto simp: psd_def)
@@ -663,7 +663,7 @@ proof -
   finally have tm: "transpose m \<bullet> s = m \<bullet> s" .
   have "((1 / 2) *\<^sub>R (m + transpose m)) \<bullet> s
       = (1 / 2) * (m \<bullet> s + transpose m \<bullet> s)"
-    by (simp add: inner_scaleR_left inner_add_left)
+    by (simp add: inner_add_left)
   also have "\<dots> = m \<bullet> s"
     by (simp add: tm)
   finally show ?thesis ..
@@ -672,7 +672,7 @@ qed
 lemma transpose_sym_part:
   fixes m :: "real^'n^'n"
   shows "transpose ((1 / 2) *\<^sub>R (m + transpose m)) = (1 / 2) *\<^sub>R (m + transpose m)"
-  by (simp add: transpose_scaleR transpose_add transpose_transpose add_ac)
+  by (simp add: transpose_scaleR transpose_add add_ac)
 
 subsection \<open>Spectral decomposition as a sum of outer products\<close>
 
@@ -691,7 +691,7 @@ proof -
     also have "\<dots> = (\<Sum>u\<in>B. if u = w then (w \<bullet> (A *v w)) *\<^sub>R w else 0)"
       by (intro sum.cong refl)
         (use B(1) w in \<open>auto dest: onormal_inner_distinct
-          simp: onormal_inner_self\<close>)
+          \<close>)
     also have "\<dots> = (w \<bullet> (A *v w)) *\<^sub>R w"
       using B(1) w by (simp add: onormal_def)
     also have "\<dots> = A *v w"
@@ -749,7 +749,7 @@ proof -
     have "independent T"
       by (rule onormal_independent[OF T])
     then have "dim (span T) = card T"
-      by (simp add: dim_span dim_eq_card_independent)
+      by (simp add: dim_eq_card_independent)
     then show "CARD('n) - k \<le> dim (span T)"
       by (simp add: cardT)
     fix x assume x: "x \<in> span T"
@@ -774,7 +774,7 @@ proof -
   have quad_add: "x \<bullet> ((b + t *\<^sub>R outer_prod u u) *v x)
       = x \<bullet> (b *v x) + t * (u \<bullet> x)\<^sup>2" for x
     by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
-        inner_add_right inner_scaleR_right power2_eq_square
+        inner_add_right power2_eq_square
         inner_commute mult_ac)
   have psd': "psd (b + t *\<^sub>R outer_prod u u)"
     unfolding psd_def
@@ -783,7 +783,7 @@ proof -
       using psd_b by (simp add: transpose_add transpose_scaleR psd_def)
   next
     show "0 \<le> x \<bullet> ((b + t *\<^sub>R outer_prod u u) *v x)" for x
-      using psd_b t by (simp add: quad_add psd_def add_nonneg_nonneg)
+      using psd_b t by (simp add: quad_add psd_def)
   qed
   have lb': "eigen_lb (b + t *\<^sub>R outer_prod u u) (CARD('n) - k)"
   proof -
@@ -910,7 +910,7 @@ proof
       and sep2: "\<And>x. x \<in> closure (convex hull (suff_volatile k))
                   \<Longrightarrow> m \<bullet> x > c"
       using separating_hyperplane_closed_point[OF _ closed_closure not_in]
-      by (auto simp: convex_closure)
+      by auto
     have gens: "m \<bullet> b > c" if "b \<in> suff_volatile k" for b :: "real^'n^'n"
       by (intro sep2 subsetD[OF closure_subset] hull_subset[THEN subsetD] that)
     define Ms where "Ms = (1 / 2) *\<^sub>R (m + transpose m)"
@@ -924,7 +924,7 @@ proof
     define n where "n = CARD('n)"
     have cardB: "card B = n"
       using onormal_card_dim_span[OF B(1)] B(2)
-      by (simp add: n_def dim_UNIV)
+      by (simp add: n_def)
     have finB: "finite B"
       using B(1) by (simp add: onormal_def)
     obtain ws0 where ws0: "set ws0 = B" "distinct ws0"
@@ -975,7 +975,7 @@ proof
         by (intro gens suff_volatile_augment[OF b0_gen t])
       then have lin: "c < m \<bullet> b0 + t * \<nu>" if t: "0 \<le> t" for t
         using that
-        by (simp add: inner_add_right inner_scaleR_right m_outer)
+        by (simp add: inner_add_right m_outer)
       define t0 where "t0 = (m \<bullet> b0 - c) / (- \<nu>)"
       have t0_nonneg: "0 \<le> t0"
         using lin[of 0] nu_neg by (simp add: t0_def divide_nonneg_neg)
@@ -1050,7 +1050,7 @@ proof
       also have "\<dots> = (\<Sum>u\<in>B. (u \<bullet> (Ms *v u)) *\<^sub>R outer_prod u u) \<bullet> astar"
         using arg_cong[OF decomp, of "\<lambda>X. X \<bullet> astar"] by simp
       also have "\<dots> = (\<Sum>u\<in>B. (u \<bullet> (Ms *v u)) * (u \<bullet> (astar *v u)))"
-        by (simp add: inner_sum_left inner_scaleR_left outer_astar)
+        by (simp add: inner_sum_left outer_astar)
       also have "\<dots> = (\<Sum>i<n. \<mu> i * q i)"
       proof -
         have Bimg: "B = (!) ws ` {..<n}"

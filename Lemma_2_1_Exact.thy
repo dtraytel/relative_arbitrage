@@ -716,7 +716,7 @@ proof
   have th_pos: "0 < th"
     unfolding th_def using nk_pos S_pos by simp
   have th_le1: "th \<le> 1"
-    unfolding th_def using S_pos capsum by (simp add: divide_le_eq_1_pos)
+    unfolding th_def using S_pos capsum by simp
   define nu where "nu = (\<lambda>u :: real^'n. th * cap u)"
   have nu_nn: "0 \<le> nu u" for u
     unfolding nu_def using th_pos cap_nn by simp

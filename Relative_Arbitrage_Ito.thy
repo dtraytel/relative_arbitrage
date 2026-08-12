@@ -152,7 +152,7 @@ proof eventually_elim
       unfolding set_integrable_def
       using t
       by (intro integrable_scaleR_left integrable_real_indicator)
-        (auto simp: emeasure_lborel_Icc)
+        auto
     have mono: "real (CARD('n) - k) \<le> trace (acov s \<omega>)"
       if s: "s \<in> {0..t}" for s
     proof -
@@ -166,7 +166,7 @@ proof eventually_elim
       by (rule set_integral_mono[OF c_int f_int mono])
     moreover have "set_lebesgue_integral lborel {0..t}
         (\<lambda>_. real (CARD('n) - k)) = t * real (CARD('n) - k)"
-      using t by (subst set_integral_const) (auto simp: emeasure_lborel_Icc)
+      using t by (subst set_integral_const) auto
     ultimately show "real (CARD('n) - k) * t
         \<le> set_lebesgue_integral lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
       by (simp add: mult_ac)
