@@ -662,38 +662,23 @@ lemma ell_op_lsc_at_zero_eq:
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
 
-text \<open>Theorem 4.2(a) of the paper (the maximum principle: for a subsolution
-  \<open>u\<close> and a supersolution \<open>w\<close>, \<open>u - w\<close> attains its maximum over the compact
-  \<open>K\<close> on the boundary) is proved there by doubling the variables and applying
-  the Crandall-Ishii "theorem on sums", which the paper cites as [CI90] rather
-  than proving.  That theorem is not available here: \<open>comparison_principle\<close>
-  (Relative\_Arbitrage\_Uniqueness.thy) only assumes the comparison principle as
-  a locale axiom and is never interpreted; the AFP has nothing on viscosity
-  solutions; and the analytic prerequisites -- Alexandrov's theorem and a
-  Rademacher-type result -- are also absent from this HOL-Analysis, so building
-  it would mean an independent development (sup-convolutions, semiconvexity,
-  Alexandrov/Jensen, theorem on sums).
+text \<open>Theorem 4.2(a) -- the maximum principle: for a subsolution \<open>u\<close> and
+  supersolution \<open>w\<close>, \<open>u - w\<close> attains its maximum over compact \<open>K\<close> on the
+  boundary -- is proved in the paper via doubling and the Crandall--Ishii
+  "theorem on sums" [CI90], which needs sup-convolutions, semiconvexity and
+  Alexandrov/Jensen, none available in this HOL-Analysis or the AFP.  It is
+  isolated as the predicate \<open>max_principle_boundary\<close> below, from which
+  everything downstream -- 4.2(b), Theorem 4.3, Proposition 4.1 -- is proved
+  unconditionally.
 
-  Theorem 4.2(a) is therefore isolated as the predicate
-  \<open>max_principle_boundary\<close> below, and everything downstream of it -- 4.2(b),
-  Theorem 4.3, Proposition 4.1 -- is proved from it unconditionally, localising
-  the one genuine gap to a single named interface.
-
-  The interface carries continuity of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>, which cannot be
-  dropped: \<open>visc_subsol k L (interior K) u\<close> constrains only points of the open
-  set \<open>interior K\<close>, so the values of a sub- or supersolution on
-  \<open>K - interior K\<close> are free, and raising \<open>w\<close> there by a constant destroys every
-  boundary maximum -- without continuity the predicate is false, not merely
-  unproved.  The version without continuity is kept below as
-  \<open>max_principle_boundary_raw\<close>, refuted by
-  \<open>max_principle_boundary_counterexample\<close> (Comparison\_Assembly).
-
-  Continuity rather than the sharper "usc \<open>u\<close>, lsc \<open>w\<close>" is used because it is
-  what the rest of this development already carries
-  (\<open>theorem_1_1_ball_fragment\<close> states its uniqueness clause for
-  \<open>continuous_on (cball 0 r) u\<close>) and this HOL-Analysis has no semicontinuity
-  library.  Only \<open>max_principle_boundary_attains\<close> would need reproving to
-  sharpen it.\<close>
+  The interface needs continuity of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>:
+  \<open>visc_subsol k L (interior K) u\<close> constrains only \<open>interior K\<close>, so raising
+  \<open>w\<close> by a constant on \<open>K - interior K\<close> destroys every boundary maximum,
+  making the predicate genuinely false without continuity, as
+  \<open>max_principle_boundary_counterexample\<close> (Comparison\_Assembly) shows for
+  the continuity-free \<open>max_principle_boundary_raw\<close>.  Plain continuity,
+  rather than a usc/lsc split, matches the rest of the development and this
+  HOL-Analysis's lack of a semicontinuity library.\<close>
 
 definition max_principle_boundary_raw ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
@@ -805,11 +790,10 @@ proof -
     by simp
 qed
 
-text \<open>To remove the interface it suffices to prove
-  \<open>max_principle_boundary k L K\<close> for compact \<open>K\<close>, i.e. Theorem 4.2(a);
-  everything above then becomes unconditional.  The obligation is the
-  continuous version; \<open>max_principle_boundary_raw\<close> is refutable and is not a
-  valid target.\<close>
+text \<open>Removing the interface needs a proof of \<open>max_principle_boundary k L K\<close>
+  for compact \<open>K\<close>, i.e. Theorem 4.2(a); everything above then becomes
+  unconditional.  The continuous version is the target --
+  \<open>max_principle_boundary_raw\<close> is false and not one.\<close>
 
 lemma max_principle_boundary_intro:
   assumes "\<And>u w. visc_subsol_env k L K (interior K) u

@@ -102,11 +102,10 @@ proof -
     by (rule that[OF Tsub cardT thresh])
 qed
 
-text \<open>The linear program.  If \<open>0 \<le> t \<le> 1\<close> pointwise and \<open>\<Sum> t = m\<close>, then
-  \<open>\<Sum> f t\<close> is dominated by the sum of \<open>f\<close> over some \<open>m\<close>-element set: the
-  extreme points of that polytope are the \<open>0/1\<close> vectors of weight \<open>m\<close>.
-  The proof needs no vertex enumeration --- subtracting the threshold value
-  \<open>\<theta>\<close> makes both halves of the estimate one-line monotonicity steps.\<close>
+text \<open>The linear program: if \<open>0 \<le> t \<le> 1\<close> pointwise and \<open>\<Sum> t = m\<close>, then
+  \<open>\<Sum> f t\<close> is dominated by the sum of \<open>f\<close> over some \<open>m\<close>-element set. The
+  proof needs no vertex enumeration --- subtracting the threshold value
+  \<open>\<theta>\<close> makes both halves one-line monotonicity steps.\<close>
 
 lemma sum_weighted_le_top_subset:
   fixes f t :: "'a \<Rightarrow> real"
@@ -287,7 +286,7 @@ lemma proj_weights_sum:
 
 section \<open>Ky Fan partial sums: the sum of the \<open>m\<close> largest eigenvalues\<close>
 
-text \<open>The dual of \<open>Pi_proj\<close> of Eq. (2.1).  Like \<open>Pi_proj\<close> it is manifestly
+text \<open>The dual of \<open>Pi_proj\<close> of Eq. (2.1). Like \<open>Pi_proj\<close> it is manifestly
   independent of any choice of basis; unlike a definition by sorting a
   multiset of eigenvalues, it needs no well-definedness proof.\<close>
 
@@ -295,7 +294,7 @@ definition kyfan :: "nat \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" wh
   "kyfan m a = Sup {trace (a ** P) | P. is_proj P \<and> trace P = real m}"
 
 text \<open>The set of \<open>m\<close>-element subsets of the eigenbasis, and the largest
-  \<open>m\<close>-fold eigenvalue sum.  Both are used only inside the proof of
+  \<open>m\<close>-fold eigenvalue sum. Both are used only inside the proof of
   \<open>kyfan_attained\<close>; they are auxiliary to the basis-free \<open>kyfan\<close>.\<close>
 
 lemma spectral_proj_trace:
@@ -426,7 +425,7 @@ qed
 section \<open>Boundedness, and \<open>kyfan\<close> as a genuine supremum\<close>
 
 text \<open>The defining set is bounded above by \<open>\<Sum>\<^sub>u |\<lambda>\<^sub>u|\<close>, again by the weight
-  representation: the weights lie in \<open>[0,1]\<close>.  This is what licenses the
+  representation: the weights lie in \<open>[0,1]\<close>. This is what licenses the
   \<open>cSup\<close> rules below.\<close>
 
 lemma kyfan_bdd_above:
@@ -472,13 +471,13 @@ lemma kyfan_ge_trace_mult:
 
 section \<open>\<open>kyfan\<close> against the spectral constraints of Eq. (1.9)\<close>
 
-text \<open>The two bridges to \<open>eigen_lb\<close> / \<open>eigen_ub\<close>.  Together they say that on
+text \<open>The two bridges to \<open>eigen_lb\<close> / \<open>eigen_ub\<close>. Together they say that on
   the feasible set of Eq. (1.9) the \<open>m\<close>-fold eigenvalue sums are pinned
   between \<open>m\<close> and \<open>m L\<close> --- exactly the input the extremal computation
   behind Eq. (3.5) needs.\<close>
 
 text \<open>\<open>eigen_lb a m\<close> provides an \<open>m\<close>-dimensional subspace on which the form
-  dominates \<open>|x|²\<close>.  Testing the supremum at the orthogonal projection onto
+  dominates \<open>|x|²\<close>. Testing the supremum at the orthogonal projection onto
   it gives the lower bound; no eigenbasis of \<open>a\<close> is involved.\<close>
 
 lemma kyfan_ge_of_eigen_lb:
@@ -524,7 +523,7 @@ proof -
 qed
 
 text \<open>Dually, \<open>eigen_ub a L\<close> caps every eigenvalue, hence every \<open>m\<close>-fold
-  sum.  Here the bound holds for each competing projection separately, so
+  sum. Here the bound holds for each competing projection separately, so
   no eigenbasis and no symmetry assumption are needed.\<close>
 
 lemma kyfan_le_of_eigen_ub:
@@ -611,7 +610,7 @@ proof -
 qed
 
 text \<open>The \<open>i\<close>-th largest eigenvalue of a symmetric matrix, \<open>1 \<le> i \<le> n\<close>.
-  This is the \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)\<close> of the paper.  Being a difference of two basis-free
+  This is the \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)\<close> of the paper. Being a difference of two basis-free
   quantities it is itself basis-free, with no well-definedness obligation.\<close>
 
 definition eigval :: "nat \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
@@ -643,12 +642,11 @@ qed
 
 section \<open>Monotonicity: \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>) \<ge> \<lambda>\<^sub>(\<^sub>2\<^sub>) \<ge> \<dots>\<close>\<close>
 
-text \<open>\<open>kyfan_attained\<close> produces a maximiser for each \<open>m\<close> separately, which is
-  not enough: monotonicity of the increments needs the maximisers to nest.
-  Call \<open>T \<subseteq> B\<close> with \<open>card T = m\<close> a \<^emph>\<open>threshold set\<close> when every value inside
-  dominates every value outside.  A threshold set is maximal, and deleting a
-  minimal element of a threshold set leaves a threshold set one size down;
-  iterating the deletion produces the nested chain.\<close>
+text \<open>\<open>kyfan_attained\<close> produces a maximiser for each \<open>m\<close> separately, which
+  is not enough: monotonicity needs the maximisers to nest. Call
+  \<open>T \<subseteq> B\<close> with \<open>card T = m\<close> a \<^emph>\<open>threshold set\<close> when every value inside
+  dominates every value outside; deleting a minimal element leaves a
+  threshold set one size down, and iterating produces the nested chain.\<close>
 
 text \<open>A minimiser of a real-valued function on a finite nonempty set.\<close>
 
@@ -841,7 +839,7 @@ proof -
     unfolding eigval_Suc kSuc ki by simp
 qed
 
-text \<open>The ordered eigenvalues decrease.  Applying the previous lemma to a
+text \<open>The ordered eigenvalues decrease. Applying the previous lemma to a
   threshold set of size \<open>i+1\<close> and then to the same set with its minimum
   deleted exhibits \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)\<close> and \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)\<close> as the minima of a set and of a
   subset of it, and a minimum over a subset is larger.\<close>
@@ -949,13 +947,12 @@ text \<open>Eq. (3.5)/(3.6) need two spectral sums:
 
     \<open>\<Sum>\<^sub>i\<^sub>\<le>\<^sub>m \<lambda>\<^sub>(\<^sub>i\<^sub>)\<^sup>+\<close>   and   \<open>\<Sum>\<^sub>i\<^sub>\<le>\<^sub>m min (\<lambda>\<^sub>(\<^sub>i\<^sub>), 0)\<close>.
 
-  Neither requires the positive/negative part of the matrix.  Since the
+  Neither requires the positive/negative part of the matrix: since the
   ordered eigenvalues decrease (\<open>eigval_antimono\<close>), the partial sum
-  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>) + \<dots> + \<lambda>\<^sub>(\<^sub>j\<^sub>)\<close> is largest exactly when \<open>j\<close> counts the positive
-  eigenvalues, capped at \<open>m\<close>; so the first sum is the running maximum of the
-  Ky Fan sums, and the second is the remaining difference.  Everything stays
-  inside \<open>kyfan\<close>: no spectral functional calculus, and no new
-  basis-independence obligation.\<close>
+  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>) + \<dots> + \<lambda>\<^sub>(\<^sub>j\<^sub>)\<close> is largest when \<open>j\<close> counts the positive
+  eigenvalues, capped at \<open>m\<close>, so the first sum is the running maximum of
+  the Ky Fan sums and the second the remaining difference --- all inside
+  \<open>kyfan\<close>, with no spectral functional calculus.\<close>
 
 definition possum :: "nat \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "possum m a = Max ((\<lambda>j. kyfan j a) ` {..m})"
@@ -1068,7 +1065,7 @@ next
 qed
 
 text \<open>And the companion: the gap between the Ky Fan sum and its running
-  maximum is the sum of the negative parts.  This is the \<open>\<Sum> min (\<mu>\<^sub>i, 0)\<close> term
+  maximum is the sum of the negative parts. This is the \<open>\<Sum> min (\<mu>\<^sub>i, 0)\<close> term
   of the bracket in Eq. (3.5).\<close>
 
 corollary kyfan_minus_possum:
@@ -1115,15 +1112,14 @@ lemma bracket_eq_sum:
 
 section \<open>Evaluating \<open>possum\<close> in an eigenbasis\<close>
 
-text \<open>For the extremal construction behind Eq. (3.5) one has to exhibit a
-  concrete feasible \<open>a\<close>, built from an eigenbasis of \<open>M\<close>, and evaluate
-  \<open>trace (M ** a)\<close> on it.  That needs the full positive-part sum expressed
-  over the eigenbasis rather than over the index range \<open>1..n\<close>.
+text \<open>The extremal construction behind Eq. (3.5) needs a concrete feasible
+  \<open>a\<close>, built from an eigenbasis of \<open>M\<close>, evaluating \<open>trace (M ** a)\<close> ---
+  which needs the positive-part sum expressed over the eigenbasis rather
+  than the index range \<open>1..n\<close>.
 
-  The set \<open>T = {u \<in> B. 0 < u \<bullet> M u}\<close> of positive directions is automatically
-  a threshold set --- everything inside is positive, everything outside is
-  not --- so \<open>kyfan_threshold\<close> evaluates \<open>kyfan (card T) M\<close> at it, and that
-  value is already the maximum.\<close>
+  The set \<open>T = {u \<in> B. 0 < u \<bullet> M u}\<close> of positive directions is
+  automatically a threshold set, so \<open>kyfan_threshold\<close> evaluates
+  \<open>kyfan (card T) M\<close> at it, and that value is already the maximum.\<close>
 
 lemma possum_nonneg:
   fixes a :: "real^'n::finite^'n"
@@ -1211,14 +1207,12 @@ text \<open>The companion statement for the negative-part term,
     \<open>S \<subseteq> B\<close> of size \<open>m\<close>,
 
   which would express \<open>bracket m L a\<close> entirely over an eigenbasis, is not
-  established here.  The positive-part half above goes through because
-  \<open>{u \<in> B. 0 < u \<bullet> a u}\<close> is itself a threshold set of \<open>B\<close>, so
-  \<open>kyfan_threshold\<close> evaluates it directly.  The restricted version is
-  genuinely harder: identifying \<open>possum m a\<close> with the positive-part sum
-  inside \<open>S\<close> needs, for every \<open>j \<le> m\<close>, a threshold subset of \<open>S\<close> of size
-  \<open>j\<close> --- i.e. that \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>m\<^sub>)\<close> are exactly the \<open>S\<close>-eigenvalues in
-  decreasing order, which is true and follows by iterating
-  \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but is a separate induction.\<close>
+  established here. The positive-part half above goes through because
+  \<open>{u \<in> B. 0 < u \<bullet> a u}\<close> is itself a threshold set of \<open>B\<close>; the restricted
+  version is harder, needing for every \<open>j \<le> m\<close> a threshold subset of
+  \<open>S\<close> of size \<open>j\<close> --- i.e. that \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>m\<^sub>)\<close> are exactly the
+  \<open>S\<close>-eigenvalues in decreasing order, true by iterating
+  \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but a separate induction.\<close>
 
 
 end

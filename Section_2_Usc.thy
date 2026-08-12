@@ -1,18 +1,14 @@
 section \<open>Upper semicontinuity of the essential-infimum exit time\<close>
 
 text \<open>
-  Larsson--Ruf (EJP 29 (2024), Proposition 2.2(ii)) --- which arXiv:2512.17702
-  Proposition 2.4 defers to verbatim --- proves upper semicontinuity of the value
-  function by combining two facts: \<open>g(P) = P\<hyphen>essinf \<tau>\<^sub>K\<close> is usc on the set of
-  candidate laws, and Berge's maximum theorem turns a usc integrand into a usc
-  supremum. Berge is already available (\<open>Section_2_Compactness.usc_sup_over_compact\<close>);
-  this theory supplies the first fact.
-
-  It has to be a separate leaf. The argument needs \<open>Value_Function\<close> (for the
-  \<open>measure = 1\<close> characterisation of \<open>essinf\<close>) and \<open>Path_Tightness_Market\<close> (for the
-  usc of \<open>\<tau>\<^sub>K\<close> itself and the Portmanteau bridge), and no existing theory imports
-  both: \<open>Value_Function\<close> sits under the market/Ito branch while the path-topology
-  content sits under the AFP Prokhorov branch.
+  Larsson--Ruf (EJP 29 (2024), Prop. 2.2(ii)), which arXiv:2512.17702
+  Prop. 2.4 defers to verbatim, proves upper semicontinuity of the value
+  function from two facts: \<open>g(P) = P\<hyphen>essinf \<tau>\<^sub>K\<close> is usc on the
+  candidate laws, and Berge's maximum theorem turns a usc integrand into a
+  usc supremum. Berge is already available
+  (\<open>Section_2_Compactness.usc_sup_over_compact\<close>); this theory supplies
+  the first fact, as a separate leaf since no existing theory imports both
+  \<open>Value_Function\<close> and \<open>Path_Tightness_Market\<close>.
 \<close>
 
 theory Section_2_Usc
@@ -22,9 +18,9 @@ begin
 subsection \<open>Superlevel sets of the exit time are closed\<close>
 
 text \<open>
-  The \<open>ennreal\<close> threshold is what \<open>ess_inf_time\<close> works with, so the case split on
-  \<open>c\<close> is unavoidable. In the \<open>top\<close> branch \<open>{\<tau> \<ge> \<top>}\<close> is empty, because the exit
-  time is a genuine real capped at \<open>T\<close>, and the whole space is its complement.
+  The \<open>ennreal\<close> threshold of \<open>ess_inf_time\<close> forces a case split on
+  \<open>c\<close>: in the \<open>top\<close> branch \<open>{\<tau> \<ge> \<top>}\<close> is empty, since the exit time is a
+  real number capped at \<open>T\<close>, so the whole space is its complement.
 \<close>
 
 lemma etime_superlevel_closed:
@@ -71,11 +67,10 @@ qed
 subsection \<open>The essential infimum of the exit time is usc in the law\<close>
 
 text \<open>
-  This is the Portmanteau step. It is stated in the "superlevel sets are closed"
-  form rather than as a \<open>limsup\<close> inequality because that is precisely the shape
-  Berge's \<open>box\<close> hypothesis consumes downstream, and because it is what upper
-  semicontinuity means: \<open>{P. c \<le> g(P)}\<close> is closed under weak limits for every
-  threshold \<open>c\<close>.
+  The Portmanteau step, stated as "superlevel sets are closed" rather
+  than a \<open>limsup\<close> inequality, since that is the shape Berge's \<open>box\<close>
+  hypothesis consumes: \<open>{P. c \<le> g(P)}\<close> is closed under weak limits for
+  every threshold \<open>c\<close>.
 \<close>
 
 lemma essinf_etime_usc:
@@ -169,20 +164,17 @@ qed
 subsection \<open>A shift margin uniform over the sample space\<close>
 
 text \<open>
-  Larsson--Ruf get joint upper semicontinuity of \<open>f(x,P) = ((x + \<cdot>)\<^sub>*P)\<hyphen>essinf \<tau>\<^sub>K\<close>
-  by asserting that \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close> is continuous. Berge's \<open>box\<close> hypothesis
-  asks for much less --- only that \<open>f(x,P) < d\<close> persists on a product
-  neighbourhood --- and unfolding that is far cheaper than proving continuity of
-  the pushforward map.
+  Larsson--Ruf get joint upper semicontinuity of
+  \<open>f(x,P) = ((x + \<cdot>)\<^sub>*P)\<hyphen>essinf \<tau>\<^sub>K\<close> from continuity of
+  \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; Berge's \<open>box\<close> hypothesis needs only that
+  \<open>f(x,P) < d\<close> persists on a product neighbourhood, which is cheaper.
 
-  The obstruction is uniformity. \<open>f(x,P) < d\<close> says the event
-  \<open>{\<omega> : \<tau>\<^sub>K(x + \<omega>) < d}\<close> has positive mass, and by \<open>etime_less_iff\<close> each such \<open>\<omega>\<close>
-  is witnessed by a time \<open>r < d\<close> with \<open>x + \<omega>(r) \<in> A\<close>. Each \<omega> then has its own
-  room to move \<open>x\<close>, and a pointwise \<open>\<epsilon>(\<omega>)\<close> is worthless against a measure.
-
-  The erosion operator fixes exactly this: \<open>eroded \<delta> A\<close> is open, exhausts \<open>A\<close>, and
-  its margin \<open>\<delta>\<close> is the same at every point. Passing to an erosion costs only mass,
-  and \<open>positive_mass_at_some_erosion\<close> says some level retains it.
+  The obstruction is uniformity: \<open>f(x,P) < d\<close> means
+  \<open>{\<omega> : \<tau>\<^sub>K(x + \<omega>) < d}\<close> has positive mass, and each witnessing \<open>\<omega>\<close>
+  (via \<open>etime_less_iff\<close>) has its own room to move \<open>x\<close> --- worthless
+  pointwise against a measure. The erosion operator \<open>eroded \<delta> A\<close> fixes
+  this: open, exhausting \<open>A\<close>, with a margin \<open>\<delta>\<close> uniform over all points;
+  \<open>positive_mass_at_some_erosion\<close> says some level retains positive mass.
 \<close>
 
 lemma open_shifted_eval_preimage:
@@ -224,9 +216,9 @@ lemma etime_shift_le_of_eroded:
 proof -
   have "dist (x + \<omega> r) (y + \<omega> r) < \<delta>" using near by simp
   from eroded_shift[OF mem this] have inA: "y + \<omega> r \<in> A" .
-  text \<open>The conclusion has to drive the unification here. Chaining \<open>inA\<close> into the
-    rule instead leaves \<open>?X r \<omega> \<in> A\<close> to be solved higher-order, which has several
-    solutions and makes the step fail.\<close>
+  text \<open>The conclusion drives the unification here: chaining \<open>inA\<close> into the
+    rule instead leaves \<open>?X r \<omega> \<in> A\<close> to be solved higher-order, with
+    several solutions, so the step fails.\<close>
   show ?thesis
   proof (rule etime_le_of_mem)
     show "0 \<le> T" by (rule T)
@@ -236,10 +228,10 @@ proof -
   qed
 qed
 
-text \<open>The assembly. From a witness time \<open>r\<close> carrying positive mass, extract an
-  open set of paths, still of positive mass, on which the exit time stays below
-  \<open>d\<close> for every nearby starting point. Openness is what lets the second half of
-  Berge's \<open>box\<close> --- moving the measure --- go through by Portmanteau.\<close>
+text \<open>From a witness time \<open>r\<close> carrying positive mass, extract an open set of
+  paths, still of positive mass, on which the exit time stays below \<open>d\<close>
+  for every nearby starting point; openness lets the measure-moving half
+  of Berge's \<open>box\<close> go through by Portmanteau.\<close>
 
 lemma etime_shift_uniform_margin:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
@@ -289,11 +281,11 @@ proof -
   ultimately show ?thesis by blast
 qed
 
-text \<open>The countable reduction, at the level of measures. \<open>etime_less_iff_qtimes_open\<close>
-  turns the event into a union over \<open>qtimes T\<close>, which is countable, so
-  \<open>positive_of_countable_UN\<close> extracts a single witness time still carrying positive
-  mass. This must precede the erosion step, which needs a fixed time \<open>r\<close> to erode
-  around; no such extraction exists over the uncountable family of witness times.\<close>
+text \<open>The countable reduction, at the level of measures: \<open>etime_less_iff_qtimes_open\<close>
+  turns the event into a union over the countable \<open>qtimes T\<close>, so
+  \<open>positive_of_countable_UN\<close> extracts a single witness time of positive
+  mass --- needed before erosion, which requires a fixed time to erode
+  around.\<close>
 
 lemma positive_mass_at_some_qtime:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
@@ -319,9 +311,9 @@ proof -
   proof -
     have cont: "continuous_on {0..T} (\<lambda>s. x + \<omega> s)"
       by (intro continuous_intros mspace_path_metricD[OF w])
-    text \<open>\<open>etime\<close> only ever applies its process to the one path \<open>\<omega>\<close>, so freezing
-      the path inside the process changes nothing --- but it does change the
-      term, and the reduction lemma is stated for a frozen process.\<close>
+    text \<open>\<open>etime\<close> applies its process only to the one path \<open>\<omega>\<close>, so freezing
+      the path inside the process changes nothing mathematically, but the
+      reduction lemma is stated for a frozen process.\<close>
     have eq: "etime T A (\<lambda>s w. x + w s) \<omega> = etime T A (\<lambda>s w'. x + \<omega> s) \<omega>"
       unfolding etime_def by simp
     show ?thesis
@@ -349,9 +341,9 @@ proof -
     unfolding R_def by blast
 qed
 
-text \<open>Both halves of the \<open>x\<close>-perturbation, in one statement: from \<open>f(x,P) < d\<close>
-  alone --- no continuity of the pushforward map, no joint continuity --- there
-  is an open set of paths of positive \<open>P\<close>-mass on which the exit time stays
+text \<open>Both halves of the \<open>x\<close>-perturbation in one statement: from
+  \<open>f(x,P) < d\<close> alone, with no continuity of the pushforward map, there is
+  an open set of paths of positive \<open>P\<close>-mass on which the exit time stays
   below \<open>d\<close> for every starting point within \<open>\<delta>\<close> of \<open>x\<close>.\<close>
 
 theorem etime_shift_box_half:
@@ -422,17 +414,16 @@ qed
 subsection \<open>Berge's box hypothesis for the shifted exit time\<close>
 
 text \<open>
-  Both perturbations at once, in the sequential form the Lévy--Prokhorov
-  metrisation makes equivalent to the topological one. The strict inequality
-  \<open>f(x,P) < d\<close> --- read as ``the event \<open>\<tau>\<^sub>K(x + \<cdot>) < d\<close> has positive mass'' ---
-  persists when the starting point moves to any \<open>y\<^sub>i \<rightarrow> x\<close> and the law moves to any
-  \<open>Q\<^sub>i \<rightarrow> P\<close> weakly.
+  Both perturbations at once, in the sequential form Levy--Prokhorov
+  metrisation makes equivalent to the topological one: \<open>f(x,P) < d\<close>
+  persists when the starting point moves to any \<open>y\<^sub>i \<rightarrow> x\<close> and the law
+  moves to any \<open>Q\<^sub>i \<rightarrow> P\<close> weakly.
 
-  Larsson--Ruf get this from continuity of \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; no such theorem
-  is used here. The single set \<open>G\<close> does all the work: the erosion makes it survive
-  moving \<open>x\<close>, and its openness makes it survive moving \<open>P\<close>. The erosion must be
-  open rather than merely closed, since a closed eroded set would give the wrong
-  Portmanteau direction.
+  Larsson--Ruf get this from continuity of \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; no
+  such theorem is used here. A single open set \<open>G\<close> does all the work --- the
+  erosion makes it survive moving \<open>x\<close>, its openness makes it survive
+  moving \<open>P\<close> --- and must be open rather than closed, since a closed eroded
+  set would give the wrong Portmanteau direction.
 \<close>
 
 theorem etime_shift_box:
@@ -507,9 +498,10 @@ qed
 subsection \<open>Upper semicontinuity of the supremum over a compact family\<close>
 
 text \<open>
-  The value functional, real-valued. \<open>ess_inf_time\<close> is \<open>ennreal\<close>-valued and Berge's
-  supremum has to be a real number; the conversion is faithful because the exit
-  time is capped at \<open>T\<close>, so the essential infimum is never \<open>\<top>\<close>.
+  The value functional, real-valued: \<open>ess_inf_time\<close> is
+  \<open>ennreal\<close>-valued but Berge's supremum needs a real number; the
+  conversion is faithful since the exit time is capped at \<open>T\<close>, so the
+  essential infimum is never \<open>\<top>\<close>.
 \<close>
 
 definition vshift :: "real \<Rightarrow> 'b::{polish_space,real_normed_vector} set
@@ -569,12 +561,10 @@ proof -
 qed
 
 text \<open>
-  Granted Lemma 2.3, this gives clause (1) of Theorem 1.1: the supremum of
-  \<open>P \<mapsto> P\<hyphen>essinf \<tau>\<^sub>K(x + \<cdot>)\<close> over a weakly compact family of laws is upper
-  semicontinuous in the starting point \<open>x\<close>.
-
-  Every hypothesis of Berge is discharged here except compactness of the
-  family, which is Lemma 2.3 and is assumed.
+  Granted Lemma 2.3, this gives clause (1) of Theorem 1.1: the supremum
+  of \<open>P \<mapsto> P\<hyphen>essinf \<tau>\<^sub>K(x + \<cdot>)\<close> over a weakly compact family of laws is
+  upper semicontinuous in the starting point \<open>x\<close>. Every other hypothesis
+  of Berge is discharged here; compactness of the family is Lemma 2.3.
 \<close>
 
 theorem vshift_sup_usc:
@@ -610,11 +600,10 @@ next
       \<and> x \<in> U \<and> P \<in> V
       \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> C. vshift T A y Q < d)"
   proof (cases "T < d")
-    text \<open>Berge quantifies \<open>box\<close> over every threshold above \<open>vshift T A x P\<close>, and a
-      threshold beyond \<open>T\<close> is not excluded by anything --- \<open>vshift\<close> could be \<open>0\<close>
-      while \<open>d\<close> is huge. That branch is trivial rather than impossible: the exit
-      time never exceeds \<open>T\<close>, so the whole space works. It has to be split off
-      because the witness machinery above assumes \<open>\<not> T < d\<close> throughout.\<close>
+    text \<open>Berge quantifies \<open>box\<close> over every threshold above \<open>vshift T A x P\<close>,
+      including thresholds beyond \<open>T\<close> --- that branch is trivial since the
+      exit time never exceeds \<open>T\<close>, so the whole space works, and is split
+      off because the witness machinery above assumes \<open>\<not> T < d\<close>.\<close>
     case True
     have allQ: "vshift T A y Q < d" if "Q \<in> C" for y Q
     proof -
@@ -629,8 +618,8 @@ next
     have Ptop: "P \<in> topspace (weak_conv_topology
         (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
       using sC[OF P] prob_space.finite_measure[OF pC[OF P]] by simp
-    text \<open>The witnesses have to be handed over explicitly. Left to invent
-      \<open>U = UNIV\<close> and \<open>V = topspace\<close> for itself, \<open>blast\<close> does not terminate.\<close>
+    text \<open>The witnesses \<open>U = UNIV\<close> and \<open>V = topspace\<close> must be handed over
+      explicitly: left to invent them itself, \<open>blast\<close> does not terminate.\<close>
     have inst: "open (UNIV :: 'b set)
         \<and> openin (weak_conv_topology
             (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))
@@ -665,10 +654,10 @@ next
         and lQ: "limitin (weak_conv_topology
             (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) Qi P sequentially"
         and inC: "\<And>i. Qi i \<in> C"
-      text \<open>\<open>weak_conv_on\<close> is \<open>limitin (weak_conv_topology \<dots>)\<close> by definition. The
-        membership \<open>Qi i \<in> C\<close> is what cannot be dropped: \<open>etime_shift_box\<close> needs each
-        \<open>Qi i\<close> to be a probability measure, and an arbitrary measure near \<open>P\<close> in the
-        weak topology is only a finite one.\<close>
+      text \<open>\<open>weak_conv_on\<close> is \<open>limitin (weak_conv_topology \<dots>)\<close> by definition.
+        The membership \<open>Qi i \<in> C\<close> cannot be dropped: \<open>etime_shift_box\<close>
+        needs each \<open>Qi i\<close> to be a probability measure, while an arbitrary
+        measure near \<open>P\<close> in the weak topology is only finite.\<close>
       have wc: "weak_conv_on Qi P sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
         using lQ .
@@ -693,14 +682,11 @@ next
 qed
 
 text \<open>
-  The interface to Lemma 2.3, stated so that a proof of it has exactly one
-  obligation. Lemmas 2.2 and 2.3 of the paper together say precisely that
-  \<open>\<P>\<^sub>0\<close> is sequentially compact for weak convergence: 2.2 extracts a convergent
-  subsequence from any sequence of laws, 2.3 puts the limit back into the set.
-  That is the \<open>seq\<close> hypothesis below verbatim, and nothing else about \<open>\<P>\<^sub>0\<close> is
-  used. The family need not separately be assumed a subset of the weak
-  topology's carrier: a probability measure on the path \<open>\<sigma>\<close>-algebra is in
-  particular a finite measure with the right \<open>sets\<close>.
+  The interface to Lemma 2.3, with exactly one obligation. Lemmas 2.2
+  and 2.3 together say that \<open>\<P>\<^sub>0\<close> is sequentially compact for weak
+  convergence: 2.2 extracts a convergent subsequence, 2.3 puts the limit
+  back into the set --- the \<open>seq\<close> hypothesis below verbatim, and nothing
+  else about \<open>\<P>\<^sub>0\<close> is used.
 \<close>
 
 corollary vshift_sup_usc_of_seq_compact:
@@ -734,12 +720,11 @@ qed
 subsection \<open>From a market to its law: transferring the exit time\<close>
 
 text \<open>
-  \<open>vshift\<close> and everything above it speak about laws on the path space, while the
-  repository's value function \<open>Value_Function.val_fn\<close> is a supremum over markets
-  --- a measure, a filtration, a process and a covariation. \<open>Path_Space.path_law\<close>
-  is the bridge between the two, and these lemmas carry the essential infimum of
-  the exit time across it, connecting the semicontinuity results above to
-  \<open>\<P>\<^sub>x\<close>.
+  \<open>vshift\<close> speaks about laws on the path space, while
+  \<open>Value_Function.val_fn\<close> is a supremum over markets --- a measure,
+  filtration, process and covariation. \<open>Path_Space.path_law\<close> bridges the
+  two, and these lemmas carry the essential infimum of the exit time
+  across it, connecting the semicontinuity results above to \<open>\<P>\<^sub>x\<close>.
 \<close>
 
 lemma etime_shift_superlevel_closed:
@@ -861,21 +846,21 @@ qed
 section \<open>Lemma 2.3: the compact family of laws for clause (1)\<close>
 
 text \<open>The single obligation of \<open>vshift_sup_usc_of_seq_compact\<close> asks for a
-  family of laws in which every sequence has a weakly convergent subsequence
-  with limit in the family. Lemma 2.2 (the market form,
-  \<open>market_path_laws_convergent_subsequence\<close>) provides the subsequence for
-  sequences of market path laws; Lemma 2.3 must put the limit back. The
-  family below does this definitionally, by taking the weak closure of the
-  market path laws: sequential compactness of the closure needs only the
-  extraction property of the base set and metrizability of the weak topology
+  family of laws in which every sequence has a weakly convergent
+  subsequence with limit in the family. Lemma 2.2
+  (\<open>market_path_laws_convergent_subsequence\<close>) provides the subsequence
+  for market path laws; Lemma 2.3 must put the limit back. The family
+  below does this definitionally, as the weak closure of the market path
+  laws: sequential compactness of the closure needs only extraction on
+  the base set and metrizability of the weak topology
   (\<open>seq_compact_closure_of\<close>), and every closure point is a probability
-  measure with the right \<open>sets\<close> because total mass survives weak limits.
+  measure with the right \<open>sets\<close> since total mass survives weak limits.
 
-  Identifying \<open>Sup (vshift T A x ` mkt_law_closure \<dots>)\<close> with the market-form
-  value function \<open>val_fn\<close> is the separate pushforward analysis of
-  Larsson--Ruf Proposition 2.2. The theorem at the end of this section gives
-  clause (1) of Theorem 1.1 for the law-level value function of the closure,
-  with no compactness hypothesis left.\<close>
+  Identifying \<open>Sup (vshift T A x ` mkt_law_closure \<dots>)\<close> with the
+  market-form value function \<open>val_fn\<close> is the pushforward analysis of
+  Larsson--Ruf Prop. 2.2. The theorem at the end of this section gives
+  clause (1) of Theorem 1.1 for the law-level value function of the
+  closure, with no compactness hypothesis left.\<close>
 
 definition mkt_law_witness ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> real
@@ -1142,12 +1127,11 @@ qed
 
 subsection \<open>The family is nonempty: the immediate-stop market\<close>
 
-text \<open>The market that stops at time \<open>0\<close>: the state is the constant \<open>x0\<close>, the
-  horizon is \<open>0\<close>, and the covariance is \<open>mat 1\<close> at the single instant \<open>s = 0\<close>
-  and \<open>0\<close> afterwards.  The eigenvalue constraints are only imposed on
-  \<open>[0, tau]\<close> = \<open>{0}\<close>, where \<open>mat 1\<close> satisfies them; the compensator integrals
-  all vanish because the covariance is supported on a Lebesgue-null set.  The
-  filtration is the constant one.\<close>
+text \<open>The market stopping at time \<open>0\<close>: constant state \<open>x0\<close>, horizon \<open>0\<close>,
+  covariance \<open>mat 1\<close> at the single instant \<open>s = 0\<close> and \<open>0\<close> afterwards.
+  The eigenvalue constraints are imposed only on \<open>[0, tau] = {0}\<close>, where
+  \<open>mat 1\<close> satisfies them; the compensator integrals vanish since the
+  covariance is supported on a Lebesgue-null set.\<close>
 
 lemma set_integral_at_origin:
   fixes c t :: real
@@ -1349,12 +1333,11 @@ subsection \<open>Witness values are dominated by the law supremum\<close>
 
 text \<open>The pushforward half of Larsson--Ruf Prop.\ 2.2, in market form: a
   witness market for \<open>(K, x0)\<close> shifted by \<open>-x0\<close> is a witness market for
-  \<open>(K - x0, 0)\<close>; enlarging the domain moves it into the fixed family over
-  \<open>cball 0 (2r)\<close>; and its value \<open>ess_inf_time M tau\<close> is dominated by the
-  \<open>vshift\<close> of its shifted path law at \<open>x0\<close>, because the path avoids the
-  open target \<open>A\<close> (disjoint from \<open>K\<close>) up to \<open>tau\<close>.  Together: every
-  witness value for \<open>(K, x0)\<close> is at most the law-level supremum over
-  \<open>mkt_law_closure k L (cball 0 (2r)) 0 T\<close>.\<close>
+  \<open>(K - x0, 0)\<close>, enlarging into the fixed family over \<open>cball 0 (2r)\<close>;
+  its value \<open>ess_inf_time M tau\<close> is dominated by the \<open>vshift\<close> of its
+  shifted path law, since the path avoids the open target \<open>A\<close> up to
+  \<open>tau\<close>. Every witness value for \<open>(K, x0)\<close> is thus at most the supremum
+  over \<open>mkt_law_closure k L (cball 0 (2r)) 0 T\<close>.\<close>
 
 lemma mkt_law_witness_mono_K:
   fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
@@ -1812,12 +1795,11 @@ qed
 
 subsection \<open>Closure laws inherit start and confinement\<close>
 
-text \<open>Whatever a closure point turns out to be, it is supported on paths
-  that start at \<open>x0\<close> and stay in \<open>K\<close>. The set of such paths is closed in
-  the path topology (an arbitrary intersection of closed evaluation
-  preimages, no rational reduction needed), members of \<open>mkt_path_laws\<close>
-  carry full mass on it because their markets are stopped and confined, and
-  the closed-set Portmanteau (\<open>weak_conv_closed_full_measure\<close>) pushes full
+text \<open>Every closure point is supported on paths starting at \<open>x0\<close> and staying
+  in \<open>K\<close>: this set is closed in the path topology (an intersection of
+  closed evaluation preimages), members of \<open>mkt_path_laws\<close> carry full
+  mass on it since their markets are stopped and confined, and
+  closed-set Portmanteau (\<open>weak_conv_closed_full_measure\<close>) pushes full
   mass to every weak limit.\<close>
 
 definition confined_paths ::
@@ -2007,11 +1989,10 @@ qed
 subsection \<open>Integrated identities: the martingale property survives the limit\<close>
 
 text \<open>Members of \<open>mkt_path_laws\<close> satisfy the integrated martingale identity
-  \<open>E[(f t $ i - f s $ i) * g f] = 0\<close> against every bounded continuous test
-  function of the path up to time \<open>s\<close> --- and so does every closure point.
-  The increment factor is clamped at \<open>2r\<close> so that the functional is bounded
-  and continuous on the whole path space; on the members the clamp is
-  invisible because their markets are stopped and confined. The identity
+  \<open>E[(f t $ i - f s $ i) * g f] = 0\<close> against every bounded continuous
+  test function of the past, and so does every closure point. The
+  increment is clamped at \<open>2r\<close> so the functional is bounded on the whole
+  path space, invisibly so on stopped and confined members; the identity
   passes to the closure by the integral clause of weak convergence.\<close>
 
 definition rclamp :: "real \<Rightarrow> real \<Rightarrow> real"
@@ -2374,13 +2355,11 @@ qed
 subsection \<open>Integrated identities: the covariation upper bound\<close>
 
 text \<open>The covariation analogue: against a nonnegative bounded continuous
-  past-measurable test functional, the expected squared coordinate increment
-  is at most \<open>L * (t - s)\<close> times the expected test value.  On a witness
-  market this is the compensator identity for \<open>coord_Z\<close> together with the
-  pointwise bounds \<open>0 \<le> acov $ i $ i \<le> L\<close> (psd and the eigenvalue upper
-  bound before the horizon, \<open>acov = 0\<close> after); the clamped form passes to
-  closure points by weak convergence exactly as the martingale identity
-  did.\<close>
+  past-measurable test functional, the expected squared coordinate
+  increment is at most \<open>L \<cdot> (t - s)\<close> times the expected test value. On a
+  witness market this is the compensator identity for \<open>coord_Z\<close> with the
+  pointwise bounds \<open>0 \<le> acov $ i $ i \<le> L\<close>; the clamped form passes to
+  closure points as the martingale identity did.\<close>
 
 lemma witness_compensator_increment_bounds:
   fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
@@ -2994,19 +2973,17 @@ lemma covariation_test_nonneg:
 
 subsection \<open>The paper-class value function and its usc majorant\<close>
 
-text \<open>The class (1.7) of the paper consists of stopped markets: the process
-  is stopped at its horizon, the covariance vanishes after it, and its
-  diagonal entries are pathwise integrable --- exactly the witness
-  predicate without its path-law clause.  \<open>val_fn\<close> (Value\_Function)
-  quantifies over the bare locale; the value function of the paper class
-  is defined here, and the per-witness domination
-  \<open>witness_value_le_law_sup_ball\<close> lifts to its supremum: the paper-class
-  value function is dominated by the law-level value function, which
-  \<open>vshift_sup_usc_mkt\<close> proves usc.  The bare-locale \<open>val_fn\<close> dominates the
-  paper-class one by inclusion of the index sets; identifying the two is
-  Doob's optional stopping for the whole class, which needs integrability
-  of the unstopped process beyond its horizon --- information the locale
-  does not carry.\<close>
+text \<open>The paper's class (1.7) consists of stopped markets --- process stopped
+  at its horizon, covariance vanishing after it, diagonal entries
+  pathwise integrable --- the witness predicate without its path-law
+  clause. \<open>val_fn\<close> (Value\_Function) quantifies over the bare locale; the
+  paper-class value function defined here is dominated by the law-level
+  value function via \<open>witness_value_le_law_sup_ball\<close>, and
+  \<open>vshift_sup_usc_mkt\<close> proves the latter usc. The bare-locale \<open>val_fn\<close>
+  dominates the paper-class one by inclusion of index sets; identifying
+  the two needs Doob's optional stopping for the whole class, requiring
+  integrability of the unstopped process beyond its horizon, information
+  the locale does not carry.\<close>
 
 definition stopped_market ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m
@@ -3094,12 +3071,11 @@ subsection \<open>From continuous tests to the past \<open>\<sigma>\<close>-alge
 
 text \<open>A finite Borel measure on a metric space is determined by its
   integrals against bounded continuous functions: apply the closed-set
-  Portmanteau bound to the constant sequence in both directions, then
-  extend from closed sets (an intersection-stable generator of the Borel
-  \<open>\<sigma>\<close>-algebra, \<open>sets_borel_of_closed\<close>) by \<open>measure_eqI_generator_eq\<close>.
-  This is the monotone-class engine that upgrades the integrated
-  identities on closure points from continuous past functionals to
-  arbitrary past events.\<close>
+  Portmanteau bound to the constant sequence both ways, then extend from
+  closed sets (\<open>sets_borel_of_closed\<close>) by \<open>measure_eqI_generator_eq\<close>.
+  This monotone-class engine upgrades the integrated identities on
+  closure points from continuous past functionals to arbitrary past
+  events.\<close>
 
 lemma metric_measure_eqI_bounded_cts:
   fixes m :: "'a metric" and M1 M2 :: "'a measure"
@@ -3206,13 +3182,12 @@ proof -
 qed
 
 text \<open>The integrated martingale identity holds against every past event, not
-  just against continuous past functionals: split the clamped increment
-  into its positive and negative parts, push both through the restriction
-  map as densities, and observe that the two image measures integrate every
-  bounded continuous function identically --- so they are equal, and their
-  agreement on all Borel sets is exactly the identity against indicator
-  test functions.  This is the monotone-class step of the canonical-market
-  construction.\<close>
+  only continuous functionals: split the clamped increment into positive
+  and negative parts, push both through the restriction map as
+  densities, and observe the two image measures integrate every bounded
+  continuous function identically --- hence agree on all Borel sets, which
+  is the identity against indicator tests. The monotone-class step of the
+  canonical-market construction.\<close>
 
 theorem mkt_law_closure_martingale_event:
   fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure" and r :: real
@@ -3442,13 +3417,13 @@ proof -
 qed
 
 text \<open>The one-sided companion of \<open>metric_measure_eqI_bounded_cts\<close>: if one
-  finite Borel measure integrates every continuous \<open>[0,1]\<close>-valued function
-  below another, it is dominated on every Borel set.  Closed sets first,
-  by the Urysohn sandwich \<open>1\<^sub>C \<le> f\<^sub>m \<le> 1\<^bsub>U\<^sub>m\<^esub>\<close> with \<open>U\<^sub>m \<down> C\<close> and continuity
-  from above; general Borel sets by inner regularity
-  (\<open>finite_measure.inner_regular'\<close>, AFP Riesz--Representation).  One-sided
-  bounds cannot be extended from a generator by a Dynkin argument, so the
-  regularity detour is essential.\<close>
+  finite Borel measure integrates every continuous \<open>[0,1]\<close>-valued
+  function below another, it is dominated on every Borel set. Closed sets
+  first, via the Urysohn sandwich \<open>1\<^sub>C \<le> f\<^sub>m \<le> 1\<^bsub>U\<^sub>m\<^esub>\<close> with
+  \<open>U\<^sub>m \<down> C\<close>; general Borel sets by inner regularity
+  (\<open>finite_measure.inner_regular'\<close>, AFP Riesz--Representation), since a
+  one-sided bound cannot be extended from a generator by a Dynkin
+  argument.\<close>
 
 lemma metric_measure_mono_bounded_cts:
   fixes m :: "'a metric" and M1 M2 :: "'a measure"
@@ -3632,9 +3607,9 @@ qed
 
 text \<open>The covariation upper bound against every past event: push the
   squared clamped increment and the constant \<open>L \<cdot> (t - s)\<close> through the
-  restriction map as densities; the continuous-test inequality
-  \<open>mkt_law_closure_covariation_test\<close> and the domination lemma turn the
-  pair into measure domination on the whole past Borel \<open>\<sigma>\<close>-algebra.\<close>
+  restriction map as densities; \<open>mkt_law_closure_covariation_test\<close> and
+  the domination lemma turn this into measure domination on the whole
+  past Borel \<open>\<sigma>\<close>-algebra.\<close>
 
 theorem mkt_law_closure_covariation_event:
   fixes \<Lambda> :: "(real \<Rightarrow> real^'m::finite) measure" and r :: real
@@ -3823,7 +3798,7 @@ qed
 text \<open>For a closed confinement set the clamp is invisible: closure laws are
   supported on confined paths, so the raw coordinate increments satisfy
   the martingale identity and the covariation bound against every past
-  event.  These are the two integrated inputs of the canonical-market
+  event. These are the two integrated inputs of the canonical-market
   construction, in their final form.\<close>
 
 corollary mkt_law_closure_increment_event:

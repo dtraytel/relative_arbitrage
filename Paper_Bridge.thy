@@ -1,35 +1,20 @@
 (*
   Title:   Paper_Bridge.thy
-  Content: The bridge from the repo's market witnesses to the paper's
-           class (1.7) of arXiv:2512.17702.
+  Content: The bridge from the market witnesses of this development to the
+           class (1.7) of arXiv:2512.17702, and the compactness theory of
+           that class.
 
-           Per the paper's (1.7)-(1.8) the processes in P_x are NEVER
-           stopped: the covariation constraint holds for a.e. t >= 0 and
-           tau_K is merely a functional of the path.  A `stopped_market'
-           witness is therefore NOT a class member -- its volatility
-           vanishes after its stopping time, and 0 is not admissible.
-           The faithful bridge CONTINUES the witness past the stopping
-           time with an admissible volatility; `Paper_Class.acont' does
-           that, and `Paper_Class.mat_1_in_sconstraint' supplies the
-           value (legitimate exactly because the locale carries the
-           paper's standing assumption L >= 1).
+           By (1.7)-(1.8) the processes in P_x are never stopped: the
+           covariation constraint holds for a.e. t >= 0, and tau_K is merely
+           a functional of the path.  A stopped_market witness is therefore
+           not a class member, its volatility vanishing after its stopping
+           time.  The bridge continues the witness past the stopping time
+           with an admissible volatility (Paper_Class.acont), the value being
+           supplied by Paper_Class.mat_1_in_sconstraint, which is legitimate
+           because the locale carries the paper's standing assumption L >= 1.
 
-           This theory sits downstream of BOTH Paper_Class and the
-           market stack, so that neither has to import the other.
-
-  STATUS:  PIDE-verified (359 commands, overall_status ok).  Since
-           2026-08-05 the volatility side of the bridge is HYPOTHESIS-FREE:
-           the time-measurability of `acov' that the two integrability
-           results used to assume is now a locale assumption
-           (`acov_time_measurable', on {0..}), transported to the
-           continuation by `Paper_Class.acont_set_borel_measurable'.
-
-           HISTORY: registering this NEW theory in ROOT wedged the
-           running PIDE session -- the server snapshots ROOT at startup,
-           so afterwards every theory reported "Malformed theory", and
-           reverting the ROOT edit did NOT recover it.  A restart was
-           required.  To add a theory mid-session, prefer adding an
-           import to an existing theory instead.
+           This theory sits downstream of both Paper_Class and the market
+           stack, so that neither has to import the other.
 *)
 
 theory Paper_Bridge
@@ -691,7 +676,7 @@ proof -
         by (rule power_mono[OF hb abs_ge_zero])
       then show ?thesis by simp
     qed
-    \<comment> \<open>\<open>2(a²+b²) − (a−b)² = (a+b)² \<ge> 0\<close>: stated as an EQUATION between
+    \<comment> \<open>\<open>2(a²+b²) - (a-b)² = (a+b)² \<ge> 0\<close>: stated as an EQUATION between
         squares so that \<open>linarith\<close> sees only linear atoms.\<close>
     have e1: "2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2)
           - (fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2
@@ -1403,11 +1388,12 @@ corollary paper_pair_class_X_martingale_limit:
 subsection \<open>Lemma 2.3: three of the four clauses, at the limit\<close>
 
 text \<open>A weak limit of class members satisfies the start clause, the
-  covariation clause, and the \<open>X\<close>-martingale clause of (1.7).  What is
-  missing for \<open>Q \<in> paper_pair_class k L T x\<close> is the compensated clause
+  covariation clause, and the \<open>X\<close>-martingale clause of (1.7).  What
+  remains for \<open>Q \<in> paper_pair_class k L T x\<close> is the compensated clause
   \<open>outerp X - Y\<close>: carrying it through the weak limit needs an \<open>L\<^sup>2\<close> bound
   on \<open>X\<^sub>i X\<^sub>j\<close>, i.e. a uniform fourth moment, which the paper obtains from
-  Burkholder--Davis--Gundy, not available in the AFP.\<close>
+  Burkholder--Davis--Gundy -- not available in the AFP, and supplied
+  instead in the next section.\<close>
 
 theorem paper_pair_class_limit_three_clauses:
   fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -1437,7 +1423,7 @@ qed
 
 section \<open>The uniform fourth moment of the class, by localization\<close>
 
-text \<open>This bound unblocks the compensated clause of Lemma 2.3.  The
+text \<open>This bound supplies the compensated clause of Lemma 2.3.  The
   repo's estimate \<open>Increment_Moments.fourth_moment_bound_bounded\<close> wants a
   uniform sup bound on the process, which a class member does not have and
   which is structural to that estimate (it also fixes the constant of
@@ -3719,7 +3705,7 @@ proof -
   show ?thesis by (rule continuous_on_compose2[OF c2 c]) simp
 qed
 
-text \<open>The mass a class member puts outside a pair Hölder ball.  This is
+text \<open>The mass a class member puts outside a pair Hoelder ball.  This is
   \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close>'s argument, run natively
   on the pair path space.  Two things stop that theorem from being applied
   off the shelf: its conclusion is about the push-forward \<open>path_law M X T\<close>
@@ -3886,7 +3872,7 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Hence tightness.  The Hölder exponent may be any \<open>ga < 1/4\<close> --- the
+text \<open>Hence tightness.  The Hoelder exponent may be any \<open>ga < 1/4\<close> --- the
   fourth moment is what caps it --- and \<open>1/8\<close> is taken; the radius is what
   varies with \<open>e\<close>, through the dyadic level \<open>n\<close>, because
   \<open>2 powr (-(1-4\<sqdot>ga)) < 1\<close> makes the charge geometric in \<open>n\<close>.\<close>
@@ -5007,8 +4993,8 @@ text \<open>\<open>paper_v\<close> is Eq. (1.6): the supremum, over the class (1
   \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>.  Upper
   semicontinuity in \<open>x\<close> is exactly clause (1).  The class is sequentially
   compact and shift-equivariant (Prop. 2.2(ii)), so Berge applies through
-  \<open>Section_2_Usc.vshift_sup_usc_of_seq_compact\<close>.  The only hypothesis left
-  is nonemptiness of the class at \<open>0\<close>, which is a separate
+  \<open>Section_2_Usc.vshift_sup_usc_of_seq_compact\<close>, whose remaining
+  hypothesis, nonemptiness of the class at \<open>0\<close>, is supplied by a separate
   construction.\<close>
 
 theorem paper_v_usc:
@@ -5301,16 +5287,12 @@ qed
 
 section \<open>The off-diagonal covariation of Brownian motion\<close>
 
-text \<open>The one input the nonemptiness witness needs that the market locale
-  does not supply: it asserts only the diagonal compensator
-  (\<open>coord_Z_martingale\<close>), whereas the paper's class asks for the whole
-  matrix \<open>outerp X - Y\<close>.  Off the diagonal the compensator is \<open>0\<close>, so what
-  is needed is that \<open>W\<^sub>i W\<^sub>j\<close> is a martingale for \<open>i \<noteq> j\<close>.
-
-  \<open>bm_paths = Pi\<^sub>M UNIV (\<lambda>_. wiener_pre)\<close>, so the coordinates are
-  independent by construction --- that is
-  \<open>Kolmogorov_Chentsov_Extras.indep_vars_PiM_coordinate\<close>, and everything
-  else here is bookkeeping on top of it.\<close>
+text \<open>The market locale's \<open>coord_Z_martingale\<close> gives only the diagonal
+  compensator, but the paper's class needs the whole matrix \<open>outerp X - Y\<close>;
+  off the diagonal the compensator is \<open>0\<close>, so what is needed is that
+  \<open>W\<^sub>i W\<^sub>j\<close> is a martingale for \<open>i \<noteq> j\<close>.  This follows from independence of
+  the coordinates of \<open>bm_paths = Pi\<^sub>M UNIV (\<lambda>_. wiener_pre)\<close>, via
+  \<open>Kolmogorov_Chentsov_Extras.indep_vars_PiM_coordinate\<close>.\<close>
 
 lemma bm_coordinates_indep:
   "prob_space.indep_vars (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
@@ -5396,11 +5378,9 @@ proof -
   finally show "(\<integral>\<omega>. (\<omega> i t - \<omega> i s) * (\<omega> j t - \<omega> j s) \<partial>?M) = 0" .
 qed
 
-text \<open>\<open>Brownian_Market.bm_meas_increment_indep_var\<close> makes the past
-  independent of one coordinate of the increment.  Its argument never uses
-  more than that the second function factors through the vector increment,
-  so it generalises verbatim to any Borel function of it --- and \<open>v \<mapsto> v$i
-  \<sqdot> v$j\<close> is one.\<close>
+text \<open>\<open>Brownian_Market.bm_meas_increment_indep_var\<close> generalises verbatim to
+  any Borel function of the vector increment, since its argument only uses
+  that --- and \<open>v \<mapsto> v$i \<sqdot> v$j\<close> is one.\<close>
 
 lemma bm_meas_increment_fun_indep_var:
   fixes x0 :: "real^'n::finite"
@@ -5486,10 +5466,9 @@ proof -
   qed
 qed
 
-text \<open>Hence the set-integral form: over a past event the cross increment
-  has integral zero.  This is the off-diagonal analogue of
-  \<open>Brownian_Market.bm_set_integral_coord_sq_eq\<close>, and the compensator is
-  \<open>0\<close> rather than \<open>t - s\<close> precisely because the coordinates are
+text \<open>Hence over a past event the cross increment has integral zero --- the
+  off-diagonal analogue of \<open>Brownian_Market.bm_set_integral_coord_sq_eq\<close>,
+  with compensator \<open>0\<close> rather than \<open>t - s\<close> because the coordinates are
   independent.\<close>
 
 lemma bm_cross_set_integral_zero:
@@ -5538,11 +5517,10 @@ next
   finally show ?thesis .
 qed
 
-text \<open>The martingale identity for the off-diagonal product, in
-  set-integral form.  Writing \<open>X\<^sub>i(v)X\<^sub>j(v) - X\<^sub>i(u)X\<^sub>j(u)
-  = X\<^sub>i(u)\<Delta>\<^sub>j + X\<^sub>j(u)\<Delta>\<^sub>i + \<Delta>\<^sub>i\<Delta>\<^sub>j\<close>, the first two terms die by
-  \<open>Brownian_Market.bm_meas_increment_product_zero\<close> (the multiplier is
-  past-measurable) and the third by \<open>bm_cross_set_integral_zero\<close>.\<close>
+text \<open>The martingale identity for the off-diagonal product.  Splitting
+  \<open>X\<^sub>i(v)X\<^sub>j(v) - X\<^sub>i(u)X\<^sub>j(u) = X\<^sub>i(u)\<Delta>\<^sub>j + X\<^sub>j(u)\<Delta>\<^sub>i + \<Delta>\<^sub>i\<Delta>\<^sub>j\<close>, the first two
+  terms vanish by \<open>Brownian_Market.bm_meas_increment_product_zero\<close> and the
+  third by \<open>bm_cross_set_integral_zero\<close>.\<close>
 
 lemma bm_cross_increment_set_integral_zero:
   fixes x0 :: "real^'n::finite" and i j :: 'n
@@ -5736,10 +5714,9 @@ proof -
   qed
 qed
 
-text \<open>Transfer to the continuous modification, which is the process the
-  path space wants.  This is \<open>Modification_Transfer.martingale_of_modification_gen\<close>,
-  exactly as \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> does for the
-  diagonal.\<close>
+text \<open>Transfer to the continuous modification via
+  \<open>Modification_Transfer.martingale_of_modification_gen\<close>, as
+  \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> does for the diagonal.\<close>
 
 lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_measurable borel"
   by (intro borel_measurable_continuous_onI linear_continuous_on
@@ -5789,11 +5766,10 @@ proof -
   qed
 qed
 
-text \<open>The whole matrix, assembled from its entries by \<open>martingale_matI\<close>:
-  the diagonal is \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> (whose
-  compensator \<open>\<integral>\<^sub>0\<^sup>t (mat 1)\<^sub>i\<^sub>i\<close> is just \<open>t\<close>, so \<open>martingale_cong_ge\<close>
-  rewrites it), the off-diagonal is \<open>martingale_cbm_cross\<close> with compensator
-  \<open>0\<close>.\<close>
+text \<open>The whole matrix, assembled entrywise by \<open>martingale_matI\<close>: the
+  diagonal from \<open>martingale_cbm_coord_square\<close> (compensator \<open>t\<close>, via
+  \<open>martingale_cong_ge\<close>), the off-diagonal from \<open>martingale_cbm_cross\<close>
+  (compensator \<open>0\<close>).\<close>
 
 theorem martingale_cbm_outerp:
   fixes x0 :: "real^'n::finite"
@@ -6186,9 +6162,9 @@ corollary paper_pair_class_nonempty:
   shows "paper_pair_class k L T (0 :: real^'n::finite) \<noteq> {}"
   using bmpair_law_in_paper_pair_class[OF T L] by blast
 
-text \<open>Hence clause (1) of Theorem 1.1 for the paper's own value function,
-  with no hypothesis left beyond the paper's own standing ones: \<open>0 < T\<close>,
-  \<open>1 \<le> L\<close> (which is (1.5)) and \<open>K\<close> closed.\<close>
+text \<open>Hence clause (1) of Theorem 1.1 for the paper's value function, under
+  no hypothesis beyond the paper's own standing ones: \<open>0 < T\<close>, \<open>1 \<le> L\<close>
+  (Eq. (1.5)), and \<open>K\<close> closed.\<close>
 
 corollary paper_v_usc_unconditional:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and b :: ennreal
@@ -6204,10 +6180,9 @@ qed
 section \<open>Consolidating the clauses onto the paper's value function\<close>
 
 text \<open>Clause (0) for \<open>paper_v\<close>: the exit functional of Eq. (1.6) is capped
-  at the horizon, so the value is bounded by it outright.  (The sharp bound
-  \<open>paper_v \<le> ball_v\<close>, which also gives clause (3), needs the class-level
-  expected-exit-time estimate; \<open>sconstraint_trace_ge\<close> below is its first
-  input.)\<close>
+  at the horizon, so the value is bounded by it outright.  The sharp bound
+  \<open>paper_v \<le> ball_v\<close>, giving also clause (3), needs the class-level
+  expected-exit-time estimate below.\<close>
 
 theorem paper_v_le_T:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -6228,10 +6203,10 @@ proof (rule Sup_least)
 qed
 
 text \<open>The trace lower bound carried by the constraint set: the identity is a
-  rank-\<open>n\<close> projection, so \<open>Pi_proj a n \<le> trace a\<close>, and the constraint's
-  own bound at \<open>m = n\<close> is \<open>n - k\<close>.  This is what makes \<open>|X|\<^sup>2\<close> a
-  submartingale with rate at least \<open>n - k\<close>, hence the exit-time estimate
-  of Lemma 2.1 at the class level.\<close>
+  rank-\<open>n\<close> projection, so \<open>Pi_proj a n \<le> trace a\<close>, and the constraint's own
+  bound at \<open>m = n\<close> is \<open>n - k\<close>.  This makes \<open>|X|\<^sup>2\<close> a submartingale with rate
+  at least \<open>n - k\<close>, giving Lemma 2.1's exit-time estimate at the class
+  level.\<close>
 
 lemma sconstraint_trace_ge:
   fixes a :: "real^'n::finite^'n"
@@ -6248,10 +6223,9 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Tracing the compensated clause turns it into the submartingale
-  statement Lemma 2.1 runs on: \<open>|X|\<^sup>2 - trace Y\<close> is a martingale, and
-  \<open>trace Y\<close> grows at rate at least \<open>n - k\<close>.  Together these give
-  \<open>E[|X\<^sub>t|\<^sup>2] - |x|\<^sup>2 \<ge> (n-k)\<sqdot>t\<close>, which is what bounds the exit time.\<close>
+text \<open>Tracing the compensated clause gives the submartingale statement
+  Lemma 2.1 runs on: \<open>|X|\<^sup>2 - trace Y\<close> is a martingale and \<open>trace Y\<close> grows
+  at rate at least \<open>n - k\<close>, so \<open>E[|X\<^sub>t|\<^sup>2] - |x|\<^sup>2 \<ge> (n-k)\<sqdot>t\<close>.\<close>
 
 lemma bounded_linear_trace:
   "bounded_linear (trace :: real^'n::finite^'n \<Rightarrow> real)"
@@ -6325,8 +6299,8 @@ proof -
 qed
 
 text \<open>The class-level form of Lemma 2.1's estimate: the expected squared
-  norm grows at rate at least \<open>n - k\<close>.  No stopping and no optional
-  sampling --- the compensated clause is used at the fixed time \<open>t\<close>.\<close>
+  norm grows at rate at least \<open>n - k\<close>, using the compensated clause only at
+  the fixed time \<open>t\<close> --- no stopping, no optional sampling.\<close>
 
 theorem paper_pair_class_sq_norm_mean_ge:
   fixes Q :: "('n::finite pairpath) measure"
@@ -6388,12 +6362,11 @@ proof -
   finally show ?thesis unfolding mean .
 qed
 
-text \<open>Clause (3) for the paper's value function on the ball.  If a member
-  kept \<open>|X| \<le> r\<close> up to a positive time from a boundary start, its expected
-  squared norm at an interior time would be at most \<open>r\<^sup>2\<close> — but
-  \<open>paper_pair_class_sq_norm_mean_ge\<close> says it is at least
-  \<open>r\<^sup>2 + (n-k)t > r\<^sup>2\<close>.  So the essential infimum of the exit time is \<open>0\<close>
-  for every member, hence so is the supremum.\<close>
+text \<open>Clause (3) on the ball: a member starting on the boundary that kept
+  \<open>|X| \<le> r\<close> up to a positive time would have expected squared norm at most
+  \<open>r\<^sup>2\<close> at an interior time, but \<open>paper_pair_class_sq_norm_mean_ge\<close> forces
+  it to be at least \<open>r\<^sup>2 + (n-k)t > r\<^sup>2\<close>.  So the exit time's essential
+  infimum, and hence its supremum, is \<open>0\<close>.\<close>
 
 theorem paper_v_boundary_zero:
   fixes r :: real and x :: "real^'n::finite"
@@ -6496,17 +6469,13 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>Example 3.1, inequality (3.10), for the paper's value function: if the
-  target set fits inside a ball of radius \<open>r\<close>, then
-
-    \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / (n - k)\<close>.
-
-  The bound does not mention the horizon \<open>T\<close>, so it is the quantitative
-  form of clause (0), and it is the reason the horizon cap of the capped
-  path space is eventually invisible.  \<open>paper_v_boundary_zero\<close> is the case
-  \<open>|x| = r\<close>.  The paper derives (3.10) from Ito's formula; here it comes
-  from \<open>paper_pair_class_sq_norm_mean_ge\<close>, which is Lemma 2.1's estimate at
-  a fixed time and needs no stochastic calculus.\<close>
+text \<open>Example 3.1, inequality (3.10): if the target set fits inside a ball
+  of radius \<open>r\<close>, then \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / (n - k)\<close>, independent of the
+  horizon \<open>T\<close> --- the quantitative form of clause (0), and why the horizon
+  cap is eventually invisible.  \<open>paper_v_boundary_zero\<close> is the case
+  \<open>|x| = r\<close>.  The paper derives (3.10) from It\<open>\<^bold>o\<close>'s formula; here it
+  follows from \<open>paper_pair_class_sq_norm_mean_ge\<close>, Lemma 2.1's estimate at
+  a fixed time, with no stochastic calculus.\<close>
 
 theorem paper_v_le_ball_bound:
   fixes r :: real and x :: "real^'n::finite" and K :: "(real^'n) set"
@@ -6614,12 +6583,11 @@ qed
 
 section \<open>The class is closed under shortening the horizon\<close>
 
-text \<open>The conditioning-free half of the closure the weak DPP needs.  A
+text \<open>The conditioning-free half of the closure the weak DPP needs: a
   member on \<open>[0,T]\<close> restricted to \<open>[0,S]\<close> is a member on \<open>[0,S]\<close>.  Both
-  martingale clauses come out of \<open>martingale_pair_law\<close> with the restriction
-  as the path map: it is adapted for free, because \<open>pcut S \<omega> r = \<omega> r\<close> on
-  \<open>{0..S}\<close>, and \<open>martingale_stopped_const\<close> turns the \<open>T\<close>-clause into the
-  \<open>S\<close>-clause.\<close>
+  martingale clauses follow from \<open>martingale_pair_law\<close> with the restriction
+  as path map, adapted for free since \<open>pcut S \<omega> r = \<omega> r\<close> on \<open>{0..S}\<close>, and
+  \<open>martingale_stopped_const\<close> turns the \<open>T\<close>-clause into the \<open>S\<close>-clause.\<close>
 
 definition pcut :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
   where "pcut S \<omega> = restrict \<omega> {0..S}"
@@ -6665,11 +6633,10 @@ next
   then show ?thesis by simp
 qed
 
-text \<open>The rational reduction of the covariation clause, factored out: it is
-  needed once per construction of a class member (the Brownian witness, the
-  restricted law, and every later DPP construction), and the argument is
-  always the same — countably many pairs by \<open>AE_ball_countable'\<close>, then
-  \<open>diffquot_all_of_rational\<close> against path continuity.\<close>
+text \<open>The rational reduction of the covariation clause, factored out since
+  it recurs in every construction of a class member: countably many pairs
+  by \<open>AE_ball_countable'\<close>, then \<open>diffquot_all_of_rational\<close> against path
+  continuity.\<close>
 
 lemma paper_pair_class_diffquot_of_pairs:
   fixes Q :: "('n::finite pairpath) measure"
@@ -6724,12 +6691,11 @@ proof -
   qed
 qed
 
-text \<open>A member of the class at horizon \<open>T\<close>, cut back
-  to \<open>[0,S]\<close>, is a member of the class at horizon \<open>S\<close>.  All four clauses of
-  (1.7) survive: the two \<open>AE\<close> clauses because \<open>pcut\<close> is the identity on
-  \<open>[0,S]\<close>, and the two martingale clauses because stopping at \<open>S\<close> is
-  harmless (\<open>martingale_stopped_const\<close>) and transports along \<open>pcut\<close>
-  (\<open>martingale_pair_law\<close>).\<close>
+text \<open>A member of the class at horizon \<open>T\<close>, cut back to \<open>[0,S]\<close>, is a
+  member at horizon \<open>S\<close>: the \<open>AE\<close> clauses of (1.7) survive because \<open>pcut\<close>
+  is the identity on \<open>[0,S]\<close>, the martingale clauses because stopping at
+  \<open>S\<close> is harmless (\<open>martingale_stopped_const\<close>) and transports along
+  \<open>pcut\<close> (\<open>martingale_pair_law\<close>).\<close>
 
 theorem paper_pair_class_pcut:
   fixes Q :: "('n::finite pairpath) measure"
@@ -6874,13 +6840,12 @@ qed
 
 section \<open>Concatenation of pair paths\<close>
 
-text \<open>The other half of the dynamic programming principle needs the class to
-  be closed under pasting: run \<open>\<omega>\<close> up to a time \<open>r\<close>, then continue with an
-  independent path \<open>\<omega>'\<close> re-based at \<open>\<omega> r\<close>.  Both components of the pair
-  concatenate additively --- for \<open>X\<close> because the increments do, for
-  \<open>Y = \<langle>X\<rangle>\<close> because the covariation of a concatenation is the concatenation
-  of the covariations.  Here \<open>r\<close> is an arbitrary real; a stopping-time glue
-  is obtained by instantiating \<open>r\<close> with \<open>\<theta> \<omega>\<close>.\<close>
+text \<open>The other half of the dynamic programming principle needs the class
+  closed under pasting: run \<open>\<omega>\<close> to time \<open>r\<close>, then continue with an
+  independent path \<open>\<omega>'\<close> re-based at \<open>\<omega> r\<close>.  Both components concatenate
+  additively --- \<open>X\<close> because increments do, \<open>Y = \<langle>X\<rangle>\<close> because covariation
+  concatenates.  Here \<open>r\<close> is an arbitrary real; a stopping-time glue
+  instantiates \<open>r\<close> with \<open>\<theta> \<omega>\<close>.\<close>
 
 definition pglue :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath
     \<Rightarrow> 'n pairpath"
@@ -6970,11 +6935,11 @@ proof -
     using pathify_measurable[OF T0 Xm cont] unfolding pglue_def by simp
 qed
 
-text \<open>The eigenvalue constraint (1.7) survives concatenation.  Across the
-  glue point the difference quotient is a convex combination of one quotient
-  from each piece, which is why the constraint set had to be convexified
-  (Lemma 2.1, \<open>sconstraint_convex\<close>) --- the unconvexified set of (1.4) would
-  not do.\<close>
+text \<open>The eigenvalue constraint (1.7) survives concatenation: across the
+  glue point the difference quotient is a convex combination of one
+  quotient from each piece, which is why the constraint set had to be
+  convexified (Lemma 2.1, \<open>sconstraint_convex\<close>) --- the unconvexified set
+  of (1.4) would not do.\<close>
 
 lemma pglue_diffquot:
   fixes \<omega> \<omega>' :: "'n::finite pairpath"
@@ -7219,11 +7184,10 @@ qed
 section \<open>The horizon cap does not bind\<close>
 
 text \<open>\<open>paper_v\<close> caps the exit time at \<open>T\<close>, the paper's \<open>v\<close> does not.  Cutting
-  a member back to \<open>[0,S]\<close> (\<open>paper_pair_class_pcut\<close>) can only shorten its exit
-  time to \<open>min \<tau> S\<close>, so the value at horizon \<open>T\<close> is already visible at the
-  shorter horizon \<open>S\<close>, provided \<open>S\<close> is beyond the scale
-  \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> of \<open>paper_v_le_ball_bound\<close>, so that the cut does not
-  truncate anything.  No pasting is needed for this direction.\<close>
+  a member back to \<open>[0,S]\<close> (\<open>paper_pair_class_pcut\<close>) can only shorten its
+  exit time to \<open>min \<tau> S\<close>, so the value at horizon \<open>T\<close> is already visible
+  at horizon \<open>S\<close> once \<open>S\<close> exceeds the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> of
+  \<open>paper_v_le_ball_bound\<close>.  No pasting is needed here.\<close>
 
 definition pfst :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> (real \<Rightarrow> real^'n)"
   where "pfst S \<omega> = restrict (\<lambda>t. fst (\<omega> t)) {0..S}"
@@ -7380,14 +7344,14 @@ qed
 
 section \<open>Martingales on a product of two filtered measures\<close>
 
-text \<open>The pasting theorem needs three transfer results: a martingale of the
-  first factor, read as a process on the product, is a martingale for the
-  product filtration; likewise for the second factor; and so is the product
-  of a first-factor variable with a second-factor martingale.  All three come
-  out of Fubini plus a sectionwise use of the factor's set-integral identity:
-  a section of a set of \<open>F u \<Otimes>\<^sub>M G u\<close> is a set of \<open>F u\<close> (resp. \<open>G u\<close>), so
-  the factor's martingale property applies to it directly.  No conditional
-  expectation on the product, and no \<open>\<pi>\<close>-\<open>\<lambda>\<close> argument, is needed.\<close>
+text \<open>The pasting theorem needs three transfer results: a first-factor
+  martingale, a second-factor martingale, and the product of a
+  first-factor variable with a second-factor martingale, are all
+  martingales for the product filtration.  All three follow from Fubini
+  plus a sectionwise use of the factor's set-integral identity --- a
+  section of a set of \<open>F u \<Otimes>\<^sub>M G u\<close> is a set of \<open>F u\<close> (resp. \<open>G u\<close>).  No
+  conditional expectation on the product and no \<open>\<pi>\<close>-\<open>\<lambda>\<close> argument is
+  needed.\<close>
 
 lemma sets_pair_measure_mono:
   assumes A: "sets A \<subseteq> sets M" "space A = space M"
@@ -7520,12 +7484,11 @@ proof (intro measure_eqI)
   finally show "emeasure (distr (M \<Otimes>\<^sub>M N) N snd) A = emeasure N A" .
 qed simp
 
-text \<open>The second-factor lift in the form the DPP will need: the process may
-  depend on the first coordinate too, as long as it is a second-factor
-  martingale for each frozen value of it.  That is exactly what an
-  endpoint-dependent continuation looks like once the endpoint is frozen.
-  The section argument is unchanged --- for fixed \<open>\<omega>\<close> the section of \<open>A\<close> is a
-  set of \<open>G u\<close> and the frozen process is a martingale on it.\<close>
+text \<open>The second-factor lift the DPP needs: the process may depend on the
+  first coordinate too, as long as it is a second-factor martingale for
+  each frozen value --- exactly what an endpoint-dependent continuation
+  looks like once the endpoint is frozen.  The section argument is
+  unchanged.\<close>
 
 theorem martingale_pair_snd_param:
   fixes Z :: "real \<Rightarrow> 'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
@@ -7629,11 +7592,10 @@ proof -
   qed
 qed
 
-text \<open>Two more pieces of martingale algebra the assembly needs: passing to an
-  almost-everywhere equal (still adapted) process --- which is how the
-  \<open>\<omega>' 0 = 0\<close> clause of the second factor gets used --- and reparametrising
-  time by a nondecreasing map, which is how the second factor's clock
-  \<open>u \<mapsto> (u - r)\<^sup>+\<close> is installed.\<close>
+text \<open>Two more pieces of martingale algebra the assembly needs: passing to
+  an a.e. equal, still adapted, process --- used for the second factor's
+  \<open>\<omega>' 0 = 0\<close> clause --- and reparametrising time by a nondecreasing map,
+  installing the clock \<open>u \<mapsto> (u - r)\<^sup>+\<close>.\<close>
 
 lemma martingale_cong_AE:
   fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
@@ -7703,13 +7665,12 @@ proof -
   qed
 qed
 
-text \<open>The third transfer result, and the one the compensated clause needs: the
-  product of a first-factor martingale with a second-factor martingale is a
-  martingale for the product filtration.  This is where independence of the
-  two pieces is genuinely used --- it is what makes the cross term
-  \<open>X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r\<close> of \<open>outerp (X\<^sub>r + W)\<close> a martingale.  Again the proof is
-  Fubini twice: once in each variable, moving one factor's time index at a
-  time, using the other factor's set-integral identity on the section.\<close>
+text \<open>The third transfer result, needed for the compensated clause: the
+  product of a first-factor martingale with a second-factor martingale is
+  a martingale for the product filtration.  Independence of the two pieces
+  is genuinely used here --- it makes the cross term
+  \<open>X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r\<close> of \<open>outerp (X\<^sub>r + W)\<close> a martingale.  The proof is
+  Fubini twice, once per variable.\<close>
 
 theorem martingale_pair_mult:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and Y :: "real \<Rightarrow> 'b \<Rightarrow> real"
@@ -7851,11 +7812,11 @@ qed
 section \<open>The pasted law is a member of the class\<close>
 
 text \<open>The glued process splits as a first-factor martingale plus a
-  second-factor martingale run on the shifted clock \<open>u \<mapsto> (u - r)\<^sup>+\<close>: on
-  \<open>[0,r]\<close> only the first piece moves, after \<open>r\<close> the first piece is frozen at
-  \<open>X\<^sub>r\<close> and the second runs.  The identity holds only almost everywhere ---
-  it uses \<open>X'(0) = 0\<close> from the second factor's clause (i) --- which is what
-  \<open>martingale_cong_AE\<close> is for.\<close>
+  second-factor martingale on the shifted clock \<open>u \<mapsto> (u - r)\<^sup>+\<close>: on
+  \<open>[0,r]\<close> only the first piece moves, after \<open>r\<close> the first is frozen at
+  \<open>X\<^sub>r\<close> and the second runs.  The identity holds only a.e. --- it uses
+  \<open>X'(0) = 0\<close> from clause (i) --- which is what \<open>martingale_cong_AE\<close> is
+  for.\<close>
 
 lemma nat_filt_eval:
   fixes Q :: "('n::finite pairpath) measure"
@@ -8077,13 +8038,13 @@ lemma outerp_add:
 lemma outerp_zero: "outerp (0 :: real^'n::finite) = 0"
   by (simp add: outerp_def vec_eq_iff)
 
-text \<open>Clause (iv).  Beyond \<open>r\<close> the glued pair is
-  \<open>(X\<^sub>r + W, Y\<^sub>r + \<langle>W\<rangle>)\<close>, so its compensated process expands as
+text \<open>Clause (iv).  Beyond \<open>r\<close> the glued pair is \<open>(X\<^sub>r + W, Y\<^sub>r + \<langle>W\<rangle>)\<close>, so
+  its compensated process expands as
 
     \<open>(outerp X\<^sub>r - Y\<^sub>r) + (outerp W - \<langle>W\<rangle>) + (X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r)\<close>:
 
-  one compensated martingale from each factor, plus the cross term, which is
-  a martingale only because the two factors are independent
+  one compensated martingale from each factor, plus a cross term that is a
+  martingale only because the factors are independent
   (\<open>martingale_pair_mult\<close>, entrywise through \<open>martingale_matI\<close>).\<close>
 
 theorem pglue_law_comp_martingale:
@@ -8366,12 +8327,12 @@ theorem paper_pair_class_pglue_law:
     pglue_law_comp_martingale[OF r rT Q R]
   by blast
 
-text \<open>The immediate payoff: \<open>paper_v\<close> is nondecreasing in the horizon.  Paste
-  the Brownian witness onto the tail of a horizon-\<open>S\<close> member; the glued path
-  agrees with the original on \<open>[0,S]\<close>, so it cannot exit earlier.  Together
-  with \<open>paper_v_horizon_stable\<close> this makes \<open>paper_v k L T K x\<close> constant for
-  \<open>T\<close> beyond the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> --- the horizon cap of the capped
-  path space is invisible, and \<open>paper_v\<close> is the paper's uncapped \<open>v\<close>.\<close>
+text \<open>The immediate payoff: \<open>paper_v\<close> is nondecreasing in the horizon ---
+  paste the Brownian witness onto the tail of a horizon-\<open>S\<close> member, and the
+  glued path agrees with the original on \<open>[0,S]\<close> so cannot exit earlier.
+  With \<open>paper_v_horizon_stable\<close> this makes \<open>paper_v k L T K x\<close> constant
+  for \<open>T\<close> beyond the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close>: the horizon cap is
+  invisible, and \<open>paper_v\<close> is the paper's uncapped \<open>v\<close>.\<close>
 
 lemma pexit_pglue_ge:
   fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
@@ -8535,13 +8496,12 @@ qed
 section \<open>The pasting lower bound (Prop. 2.4)\<close>
 
 text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic programming principle
-  (2.9).  Pasting produces a member of the class, so the essential infimum of
-  its exit time is a lower bound for \<open>v(x)\<close>; and the exit time of a glued path
-  is at least \<open>r + c\<close> as soon as the first piece stays in \<open>K\<close> up to \<open>r\<close> and
-  the re-based continuation stays in \<open>K\<close> for a further \<open>c\<close>.  The continuation
-  is automatically re-based at the endpoint by \<open>pglue\<close>, so a single law
-  \<open>R\<close> started at \<open>0\<close> supplies a continuation from every endpoint; what the
-  full (2.9) needs on top is to choose that law depending on the endpoint.\<close>
+  (2.9): pasting produces a member of the class, so the essential infimum
+  of its exit time lower-bounds \<open>v(x)\<close>, and a glued path's exit time is at
+  least \<open>r + c\<close> once the first piece stays in \<open>K\<close> to \<open>r\<close> and the re-based
+  continuation stays in \<open>K\<close> for a further \<open>c\<close>.  A single law \<open>R\<close> started
+  at \<open>0\<close> supplies a continuation from every endpoint via \<open>pglue\<close>; the full
+  (2.9) needs that law chosen depending on the endpoint.\<close>
 
 lemma pexit_path_measurable:
   fixes K :: "(real^'n::finite) set" and N :: "('n pairpath) measure"
@@ -8671,13 +8631,13 @@ qed
 
 section \<open>Lifting a martingale to an infinite product\<close>
 
-text \<open>Pasting with a kernel --- a continuation chosen per endpoint --- uses as
-  its second factor the product \<open>\<Pi>\<^sub>M i. R i\<close> of all the candidate
-  continuations, from which the glue map picks the one the endpoint selects.
-  For that, the \<open>i\<close>-th coordinate process must be a martingale for the
-  product filtration.  The route is: split the coordinate off with the
-  library's \<open>distr_pair_PiM_eq_PiM\<close>, use \<open>martingale_pair_fst\<close> on the
-  resulting pair, and transport back along the \<open>distr\<close>.\<close>
+text \<open>Pasting with a kernel --- a continuation chosen per endpoint --- uses
+  as second factor the product \<open>\<Pi>\<^sub>M i. R i\<close> of all candidate
+  continuations, from which the glue picks the one the endpoint selects;
+  so the \<open>i\<close>-th coordinate process must be a martingale for the product
+  filtration.  The route: split the coordinate off with
+  \<open>distr_pair_PiM_eq_PiM\<close>, apply \<open>martingale_pair_fst\<close>, transport back
+  along the \<open>distr\<close>.\<close>
 
 lemma sets_PiM_mono:
   assumes S: "\<And>i. i \<in> I \<Longrightarrow> sets (A i) \<subseteq> sets (B i)"
@@ -8738,10 +8698,10 @@ next
   qed
 qed
 
-text \<open>Transport of the martingale property along a pushforward.  This is the
-  general form of what \<open>martingale_pair_law\<close> does for path spaces: if \<open>\<phi>\<close>
-  pulls the target filtration back into the source one, a source martingale
-  of the composed process is a target martingale.\<close>
+text \<open>Transport of the martingale property along a pushforward.  This is
+  the general form of what \<open>martingale_pair_law\<close> does for path spaces: if
+  \<open>\<phi>\<close> pulls the target filtration back into the source one, a source
+  martingale of the composed process is a target martingale.\<close>
 
 theorem martingale_distr:
   fixes Z :: "real \<Rightarrow> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
@@ -8914,13 +8874,13 @@ qed
 
 section \<open>Kernel pasting: a continuation chosen by the endpoint\<close>
 
-text \<open>The step from \<open>pglue_law\<close> (one continuation for every endpoint) to what
-  (2.9) needs: a countable family \<open>RR\<close> of candidate continuations and a
-  past-measurable index \<open>N\<close> selecting one of them.  The second factor is the
-  product \<open>\<Pi>\<^sub>M i. RR i\<close> of all candidates --- a probability space, from which
-  the glue picks the \<open>N \<omega>\<close>-th.  For a frozen first coordinate the index is a
-  constant, which is why \<open>martingale_pair_snd_param\<close> and
-  \<open>martingale_PiM_component\<close> are the two lemmas this construction rests on.\<close>
+text \<open>The step from \<open>pglue_law\<close> (one continuation for every endpoint) to
+  what (2.9) needs: a countable family \<open>RR\<close> of candidate continuations and
+  a past-measurable index \<open>N\<close> selecting one.  The second factor is the
+  product \<open>\<Pi>\<^sub>M i. RR i\<close>, from which the glue picks the \<open>N \<omega>\<close>-th;
+  freezing the first coordinate makes the index constant, so
+  \<open>martingale_pair_snd_param\<close> and \<open>martingale_PiM_component\<close> carry the
+  construction.\<close>
 
 definition kglue :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath \<Rightarrow> nat)
     \<Rightarrow> ('n pairpath \<times> (nat \<Rightarrow> 'n pairpath)) \<Rightarrow> 'n pairpath"
@@ -9179,11 +9139,10 @@ proof (rule paper_pair_class_diffquot_of_pairs[OF sets_kglue_law])
 qed
 
 text \<open>The decomposition for clauses (iii) and (iv) of the kernel glue is
-  pointwise, because the second summand explicitly subtracts the
-  continuation's initial value and is therefore literally \<open>0\<close> before \<open>r\<close>,
-  which is what makes it adapted there, since the index \<open>N\<close> is only
-  \<open>\<FF>\<^sub>r\<close>-measurable.  Freezing the first coordinate turns \<open>X\<^sub>r\<close> into a
-  constant, so even the cross term of clause (iv) is a second-factor
+  pointwise: the second summand subtracts the continuation's initial
+  value, so it is literally \<open>0\<close> before \<open>r\<close>, keeping it adapted since \<open>N\<close>
+  is only \<open>\<F>\<^sub>r\<close>-measurable.  Freezing the first coordinate turns \<open>X\<^sub>r\<close>
+  into a constant, so even clause (iv)'s cross term is a second-factor
   martingale (a bounded-linear image of one), and
   \<open>martingale_pair_snd_param\<close> carries everything.\<close>
 
@@ -9230,9 +9189,10 @@ proof -
 qed
 
 text \<open>The uniform first-moment bound the kernel glue's integrability needs:
-  the bound depends only on \<open>k\<close>, \<open>L\<close> and the horizon, not on the member --- so
-  it holds simultaneously for every candidate continuation in the family.
-  \<open>a \<le> 1 + a\<^sup>2\<close> avoids a square root, so no Cauchy--Schwarz is needed.\<close>
+  the bound depends only on \<open>k\<close>, \<open>L\<close> and the horizon, not on the member ---
+  so it holds simultaneously for every candidate continuation in the
+  family.  \<open>a \<le> 1 + a\<^sup>2\<close> avoids a square root, so no Cauchy--Schwarz is
+  needed.\<close>
 
 lemma paper_pair_class_norm_mean_le:
   fixes Q :: "('n::finite pairpath) measure"
@@ -9637,12 +9597,11 @@ proof -
         Zm[unfolded kglue_law_def] mgl])
 qed
 
-text \<open>The cross term of \<open>outerp (X\<^sub>r + W)\<close> is
-  \<open>X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r\<close>; once the first coordinate is frozen, \<open>X\<^sub>r\<close> is a
-  constant and the map \<open>v \<mapsto> c \<otimes> v + v \<otimes> c\<close> is linear --- hence bounded,
-  the space being finite-dimensional --- so the cross term is a
-  bounded-linear image of the second factor's martingale, not a product of
-  two martingales.\<close>
+text \<open>The cross term of \<open>outerp (X\<^sub>r + W)\<close> is \<open>X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r\<close>; once the
+  first coordinate is frozen, \<open>X\<^sub>r\<close> is constant and \<open>v \<mapsto> c \<otimes> v + v \<otimes> c\<close>
+  is linear, hence bounded on a finite-dimensional space --- so the cross
+  term is a bounded-linear image of the second factor's martingale, not a
+  product of two martingales.\<close>
 
 lemma norm_outer_prod:
   fixes a b :: "real^'n::finite"
@@ -10473,11 +10432,11 @@ proof -
 qed
 
 text \<open>The class is closed under concatenation with a continuation chosen by
-  the endpoint, along any countable past-measurable selector.  This is what
-  Proposition 2.4's \<open>\<ge>\<close> inequality needs on top of
-  \<open>paper_pair_class_pglue_law\<close>: with an \<open>\<epsilon>\<close>-optimal continuation attached to
-  each cell of a countable Borel partition of \<open>X(r)\<close>, the pasted law realises
-  \<open>r + v(X(r))\<close> up to \<open>\<epsilon>\<close>.\<close>
+  the endpoint along any countable past-measurable selector --- what
+  Prop. 2.4's \<open>\<ge>\<close> inequality needs beyond \<open>paper_pair_class_pglue_law\<close>:
+  with an \<open>\<epsilon>\<close>-optimal continuation attached to each cell of a countable
+  Borel partition of \<open>X(r)\<close>, the pasted law realises \<open>r + v(X(r))\<close> up to
+  \<open>\<epsilon>\<close>.\<close>
 
 theorem paper_pair_class_kglue_law:
   fixes Q :: "('n::finite pairpath) measure"
@@ -10524,15 +10483,15 @@ qed
 
 section \<open>The clauses of Theorem 1.1 proved for the paper's own \<open>v\<close>\<close>
 
-text \<open>The clauses of Theorem 1.1 that are proved for \<open>paper_v\<close> --- the
-  faithful rendering of Eq. (1.6) --- collected in one place.
+text \<open>The clauses of Theorem 1.1 proved for \<open>paper_v\<close> --- the faithful
+  rendering of Eq. (1.6) --- collected in one place.
 
-  Clause (2), the viscosity property, is not covered here: it needs the
-  dynamic programming principle of Proposition 2.4 and, on top of that,
-  Section 3's It\<open>\<^bold>o\<close>/SDE layer.  Clause (3) is here only for the ball; the
-  interior value for \<open>n - k \<ge> 2\<close> is open.  Clause (4), uniqueness, is
-  \<open>Theorem_1_1.theorem_1_1_uniqueness_general\<close> and is a statement about
-  viscosity solutions rather than about \<open>paper_v\<close>.\<close>
+  Clause (2), the viscosity property, needs the dynamic programming
+  principle of Proposition 2.4 and, on top of that, Section 3's
+  It\<open>\<^bold>o\<close>/SDE layer, and is not covered here.  Clause (3) is here only for
+  the ball; the interior value for \<open>n - k \<ge> 2\<close> remains unproved.
+  Clause (4), uniqueness, is \<open>Theorem_1_1.theorem_1_1_uniqueness_general\<close>,
+  a statement about viscosity solutions rather than about \<open>paper_v\<close>.\<close>
 
 theorem theorem_1_1_paper_v_fragment:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
@@ -10567,16 +10526,16 @@ qed
 
 section \<open>The supremum in (1.6) is attained\<close>
 
-text \<open>The pointwise half of Larsson--Ruf's Proposition 2.2(ii): the class is
-  sequentially compact and the essential infimum of the exit time is upper
-  semicontinuous along weak convergence, so the supremum defining \<open>paper_v\<close>
-  is a maximum.  The paper's Section 3.1 opens by fixing an optimizer, so
-  this is needed there independently of the dynamic programming principle.
+text \<open>The pointwise half of Larsson--Ruf's Proposition 2.2(ii): the class
+  is sequentially compact and the essential infimum of the exit time is
+  upper semicontinuous along weak convergence, so the supremum defining
+  \<open>paper_v\<close> is a maximum --- needed independently of the DPP, since the
+  paper's Section 3.1 opens by fixing an optimizer.
 
   The usc input (\<open>Exit_Semicontinuity.ess_inf_pexit_usc\<close>) lives on the
-  vector path space, so the functional is first transported along the
-  \<open>X\<close>-component map \<open>pfst\<close>, which is \<open>1\<close>-Lipschitz between the two path
-  metrics --- weak convergence then pushes forward.\<close>
+  vector path space, so the functional is transported along the
+  \<open>X\<close>-component map \<open>pfst\<close>, \<open>1\<close>-Lipschitz between the two path metrics, and
+  weak convergence pushes forward.\<close>
 
 lemma pfst_mspace:
   fixes \<omega> :: "'n::finite pairpath"
@@ -10798,12 +10757,12 @@ proof -
   show ?thesis using zM zd by blast
 qed
 
-text \<open>The greedy construction.  \<open>usc_sel_set Y dd z js\<close> is the set reached
-  by the index sequence \<open>js\<close> (most recent index first), \<open>usc_sel_good\<close> the
-  greedy criterion, \<open>usc_sel_code\<close> the index sequence chosen for the payoff
-  \<open>g\<close>, and \<open>usc_sel\<close> the point the nested sets shrink to.  Everything is
-  parametrized by the carrier, the distance and the dense sequence, so no
-  new locale is needed.\<close>
+text \<open>The greedy construction: \<open>usc_sel_set Y dd z js\<close> is the set reached
+  by the index sequence \<open>js\<close> (most recent first), \<open>usc_sel_good\<close> the
+  greedy criterion, \<open>usc_sel_code\<close> the index sequence chosen for payoff
+  \<open>g\<close>, and \<open>usc_sel\<close> the point the nested sets shrink to --- all
+  parametrized by the carrier, distance and dense sequence, so no new
+  locale is needed.\<close>
 
 definition usc_sel_set ::
     "'a set \<Rightarrow> ('a \<Rightarrow> 'a \<Rightarrow> real) \<Rightarrow> (nat \<Rightarrow> 'a) \<Rightarrow> nat list \<Rightarrow> 'a set" where
@@ -10875,10 +10834,10 @@ lemma usc_sel_set_compactin:
   by (rule closedin_compact_space[OF cpt usc_sel_set_closedin[OF z]])
 
 text \<open>The greedy step always succeeds: the balls of the current radius
-  cover the current compact set, so finitely many of them do, and the
-  supremum over a finite union is the maximum of the pieces' suprema.  No
-  semicontinuity is used here --- this holds for an arbitrary payoff \<open>g\<close>,
-  which is what makes \<open>usc_sel\<close> total.\<close>
+  cover the current compact set, so finitely many do, and the supremum
+  over a finite union is the maximum of the pieces' suprema.  No
+  semicontinuity is needed --- this holds for arbitrary \<open>g\<close>, making
+  \<open>usc_sel\<close> total.\<close>
 
 lemma usc_sel_good_ex:
   assumes cpt: "compact_space mtopology" and z: "\<And>j. z j \<in> M"
@@ -11381,14 +11340,13 @@ end
 
 section \<open>The paper's class is a compact metric space of measures\<close>
 
-text \<open>The AFP entry \<open>Levy_Prokhorov_Metric\<close> --- already a session
-  dependency --- makes the space of finite Borel measures on a separable
-  metric space a metric space for the L\'evy--Prokhorov distance, whose
-  topology is \<open>weak_conv_topology\<close>, the topology our \<open>weak_conv_on\<close> is a
-  \<open>limitin\<close> of.  Prokhorov's theorem turns tightness into relative
-  compactness, and weak closedness collapses the closure.  The result is
-  that the paper's class is a compact subset of a metric space --- exactly
-  the input @{thm [source] Metric_space.usc_measurable_selection} wants.\<close>
+text \<open>The AFP entry \<open>Levy_Prokhorov_Metric\<close> makes the space of finite
+  Borel measures on a separable metric space a metric space for the
+  L\'evy--Prokhorov distance, whose topology is \<open>weak_conv_topology\<close>, the
+  topology \<open>weak_conv_on\<close> is a \<open>limitin\<close> of.  Prokhorov's theorem turns
+  tightness into relative compactness, and weak closedness collapses the
+  closure: the paper's class is a compact subset of a metric space, the
+  input @{thm [source] Metric_space.usc_measurable_selection} wants.\<close>
 
 theorem paper_pair_class_compactin_weak:
   fixes x :: "real^'n::finite"
@@ -11461,17 +11419,15 @@ section \<open>Joint continuity of the shift\<close>
 
 text \<open>After @{thm [source] paper_pair_class_shift_image} the functional
   whose supremum is @{term paper_v} is a function of the starting point
-  and of a member of the fixed class at the origin.  The selection
-  theorem's measurability hypothesis --- that the supremum over each
-  closed set be measurable in the parameter --- comes from joint upper
-  semicontinuity, and that in turn from joint continuity of the shift.
-
-  The estimate is uniform: shifting a path by a constant vector moves it
-  by exactly that vector in the sup metric, so a uniformly continuous
-  test function is displaced uniformly over the whole path space.  Weak
+  and a member of the fixed class at the origin.  The selection theorem's
+  measurability hypothesis --- that the supremum over each closed set be
+  measurable in the parameter --- comes from joint upper semicontinuity,
+  in turn from joint continuity of the shift: shifting a path by a
+  constant vector moves it by exactly that vector in the sup metric, so a
+  uniformly continuous test function is displaced uniformly.  Weak
   convergence may be tested against bounded uniformly continuous
   functions (@{thm [source] mweak_conv_fin.mweak_conv_eq1}), so no
-  tightness is needed here.\<close>
+  tightness is needed.\<close>
 
 lemma mdist_pshift_pshift:
   fixes z y :: "real^'n::finite"
@@ -11789,9 +11745,9 @@ qed
 section \<open>A measurable optimizer: Larsson--Ruf Proposition 2.2(ii)\<close>
 
 text \<open>The optimizer of @{thm [source] paper_v_attained} can be chosen
-  measurably in the starting point.  The class at the origin is a compact
-  metric space (@{thm [source] paper_pair_class_compact_metric_space}), the
-  payoff is jointly upper semicontinuous
+  measurably in the starting point: the class at the origin is a compact
+  metric space (@{thm [source] paper_pair_class_compact_metric_space}),
+  the payoff is jointly upper semicontinuous
   (@{thm [source] ess_inf_pexit_pshift_usc}), and
   @{thm [source] Metric_space.usc_measurable_selection} does the rest.
 
@@ -11799,13 +11755,12 @@ text \<open>The optimizer of @{thm [source] paper_v_attained} can be chosen
   the law is the joint statement along a constant parameter sequence, and
   closedness in a metric topology is sequential closedness
   (@{thm [source] Metric_space.closure_of_sequentially}).  Second, the
-  supremum over a closed --- hence compact --- subset is upper
-  semicontinuous in the parameter: pick, for each parameter and each
-  \<open>b < c\<close>, a law beating \<open>b\<close>, extract a convergent subsequence by
+  supremum over a closed, hence compact, subset is upper semicontinuous
+  in the parameter: for each parameter and each \<open>b < c\<close>, pick a law
+  beating \<open>b\<close>, extract a convergent subsequence by
   @{thm [source] Metric_space.compactin_sequentially}, and let the joint
-  statement close the gap.  Attainment of the supremum is not needed for
-  that, only \<open>b < c\<close> for every \<open>b\<close> below \<open>c\<close>, which is where
-  @{thm [source] ennreal_strict_between} is used again.\<close>
+  statement close the gap --- attainment is not needed, only \<open>b < c\<close> for
+  every \<open>b\<close> below \<open>c\<close> (@{thm [source] ennreal_strict_between}).\<close>
 
 theorem paper_v_measurable_selector:
   fixes K :: "(real^'n::finite) set"
@@ -12053,18 +12008,17 @@ section \<open>Kernel pasting: the semidirect product\<close>
 
 text \<open>@{thm [source] paper_pair_class_kglue_law} glues with a countably
   valued index, which @{thm [source] Metric_space.usc_measurable_selection}
-  cannot supply --- see the note there.  The replacement is the Giry
-  monad's semidirect product: run \<open>Q\<close>, then continue with the law the
-  kernel picks at the endpoint reached.
+  cannot supply.  The replacement is the Giry monad's semidirect product:
+  run \<open>Q\<close>, then continue with the law the kernel picks at the endpoint
+  reached.
 
-  \<open>ksemi M N Kr\<close> is that product on \<open>'a \<times> 'b\<close>.  Everything the pasting
-  argument needs about it is here: its \<open>sets\<close> agree with the ordinary
-  product (so all the measurability already proved for \<open>Q \<Otimes>\<^sub>M R\<close>
+  \<open>ksemi M N Kr\<close> is that product on \<open>'a \<times> 'b\<close>: its \<open>sets\<close> agree with the
+  ordinary product (so measurability already proved for \<open>Q \<Otimes>\<^sub>M R\<close>
   transfers verbatim by @{thm [source] measurable_cong_sets}), it is a
-  probability space, and its almost-sure and nonnegative integrals
-  disintegrate.  What it does not satisfy is Fubini --- the order of
-  integration cannot be swapped --- which is exactly why the product
-  martingale machinery has to be redone rather than reused.\<close>
+  probability space, and its a.s. and nonnegative integrals disintegrate.
+  What it does not satisfy is Fubini --- the order of integration cannot
+  be swapped --- which is why the product martingale machinery has to be
+  redone rather than reused.\<close>
 
 definition ksemi :: "'a measure \<Rightarrow> 'b measure \<Rightarrow> ('a \<Rightarrow> 'b measure) \<Rightarrow> ('a \<times> 'b) measure"
   where "ksemi M N Kr = M \<bind> (\<lambda>\<omega>. distr (Kr \<omega>) (M \<Otimes>\<^sub>M N) (Pair \<omega>))"
@@ -12376,7 +12330,7 @@ qed
 subsection \<open>The glue is continuous, and the product is a Polish product\<close>
 
 text \<open>Proving clauses (iii) and (iv) directly for @{const ksemi} runs into
-  two obstructions: the distribution's \<open>integral_bind\<close> is only for
+  two obstructions: the distribution's \<open>integral_bind\<close> covers only
   bounded real integrands, and the first-factor martingale property is
   false for a semidirect product (the weight \<open>(Kr \<omega>)(A\<^sub>\<omega>)\<close> in the
   disintegrated set integral is only \<open>\<F>\<^sub>r\<close>-measurable).
@@ -12386,12 +12340,11 @@ text \<open>Proving clauses (iii) and (iv) directly for @{const ksemi} runs into
   valued index is already in it
   (@{thm [source] paper_pair_class_kglue_law}), and the class at the origin
   is a compact metric space
-  (@{thm [source] paper_pair_class_compact_metric_space}) --- so it is
-  separable, and any kernel into it is a pointwise limit of countably
-  valued ones.  If the semidirect products converge weakly, the glued laws
-  do too, and weak closedness finishes.  What that needs is exactly what
-  the martingale route did not: continuity of the glue, and the identity
-  of the two \<sigma>-algebras on the product.\<close>
+  (@{thm [source] paper_pair_class_compact_metric_space}), hence separable,
+  so any kernel into it is a pointwise limit of countably valued ones.  If
+  the semidirect products converge weakly, the glued laws do too, and weak
+  closedness finishes --- which needs continuity of the glue and the
+  identity of the two \<sigma>-algebras on the product.\<close>
 
 lemma second_countable_path_metric:
   "second_countable (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"

@@ -1,10 +1,9 @@
 section \<open>Sup-convolutions\<close>
 
 text \<open>
-  The sup-convolution \<open>u\<^sup>\<epsilon>(x) = SUP y. u y - |x - y|\<^sup>2/(2\<epsilon>)\<close> of a bounded
-  function \<open>u\<close> dominates \<open>u\<close> and shares its bound, and \<open>u\<^sup>\<epsilon> + |x|\<^sup>2/(2\<epsilon>)\<close>
-  is convex, being a supremum of affine functions of \<open>x\<close>. This
-  semiconvexity feeds Jensen's lemma and the theorem on sums below.
+  The sup-convolution \<open>u\<^sup>\<epsilon>(x) = SUP y. u y - |x - y|\<^sup>2/(2\<epsilon>)\<close> of a
+  bounded function is semiconvex; this feeds Jensen's lemma and the
+  theorem on sums below.
 \<close>
 
 theory Sup_Convolution
@@ -50,8 +49,8 @@ proof (rule cSUP_least)
   thus "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> B" using B[of y] by linarith
 qed
 
-text \<open>The sup-convolution inherits a Lipschitz constant of \<open>u\<close> exactly,
-  for every \<open>\<epsilon>\<close>.\<close>
+text \<open>The sup-convolution inherits \<open>u\<close>'s Lipschitz constant exactly, for
+  every \<open>\<epsilon>\<close>.\<close>
 
 lemma supconv_lipschitz_le:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -94,9 +93,8 @@ proof (rule abs_leI)
     by (simp add: norm_minus_commute)
 qed
 
-text \<open>A Lipschitz function is approximated by its sup-convolution at the
-  explicit rate \<open>supconv u \<epsilon> x \<le> u x + \<epsilon>*L\<^sup>2/2\<close>, uniformly in \<open>x\<close> and
-  needing no bound on \<open>u\<close>.\<close>
+text \<open>A Lipschitz function is approximated by its sup-convolution at rate
+  \<open>supconv u \<epsilon> x \<le> u x + \<epsilon>*L\<^sup>2/2\<close>.\<close>
 
 lemma supconv_le_of_lipschitz:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -246,9 +244,8 @@ proof -
     by (intro convex_on_cSUP convex_on_affine_inner bddx)
 qed
 
-text \<open>Continuity of the sup-convolution, with no Lipschitz computation: it
-  is the difference of a finite convex function (continuous by
-  \<open>convex_on_continuous\<close>) and the smooth \<open>|x|\<^sup>2/(2\<epsilon>)\<close>.\<close>
+text \<open>The sup-convolution is continuous: it is a finite convex function
+  (continuous by \<open>convex_on_continuous\<close>) minus the smooth \<open>|x|\<^sup>2/(2\<epsilon>)\<close>.\<close>
 
 theorem supconv_continuous:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -267,8 +264,7 @@ proof -
 qed
 
 text \<open>Near-optimizers of the sup-convolution lie within an explicit
-  \<open>\<epsilon>\<close>-dependent radius, controlled by the oscillation of \<open>u\<close>: this brings the
-  doubled points of the theorem on sums back together as \<open>\<epsilon> \<rightarrow> 0\<close>.\<close>
+  \<open>\<epsilon>\<close>-dependent radius controlled by the oscillation of \<open>u\<close>.\<close>
 
 lemma supconv_near_optimizer:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -295,9 +291,9 @@ proof -
   show thesis by (rule that[OF h1 h2])
 qed
 
-text \<open>At a point of continuity, the sup-convolution converges to the
-  function as \<open>\<epsilon> \<rightarrow> 0\<^sup>+\<close>: the near-optimizer localizes in a ball of radius
-  \<open>O(\<surd>\<epsilon>)\<close> around \<open>x\<close>, where continuity pins \<open>u\<close> near \<open>u x\<close>.\<close>
+text \<open>At a point of continuity, the sup-convolution converges to \<open>u\<close> as
+  \<open>\<epsilon> \<rightarrow> 0\<^sup>+\<close>, the near-optimizer localizing in a ball of radius
+  \<open>O(\<surd>\<epsilon>)\<close>.\<close>
 
 lemma supconv_tendsto:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -362,10 +358,9 @@ section \<open>Subgradients of convex functions\<close>
 
 text \<open>
   Convex-analytic foundations for the Crandall--Ishii development:
-  subgradients of finite convex functions, monotonicity of the
-  subdifferential, and nonemptiness via a supporting hyperplane to the
-  epigraph. These feed the proximal map and Minty resolvent below, which
-  reduce Alexandrov's theorem to Rademacher's.
+  subgradients, monotonicity of the subdifferential, and nonemptiness via
+  a supporting hyperplane, feeding the proximal map and Minty resolvent
+  below, which reduce Alexandrov's theorem to Rademacher's.
 \<close>
 
 definition subdiff :: "('a::euclidean_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> 'a set" where
@@ -377,7 +372,7 @@ lemma subdiffI: "(\<And>y. f x + p \<bullet> (y - x) \<le> f y) \<Longrightarrow
 lemma subdiffD: "p \<in> subdiff f x \<Longrightarrow> f x + p \<bullet> (y - x) \<le> f y"
   by (simp add: subdiff_def)
 
-text \<open>Monotonicity of the subdifferential map: the defining inequalities at
+text \<open>Monotonicity of the subdifferential: the defining inequalities at
   \<open>x\<close> and \<open>y\<close>, added crosswise, kill the function values.\<close>
 
 lemma subdiff_monotone:
@@ -390,10 +385,9 @@ proof -
   thus ?thesis by (simp add: algebra_simps)
 qed
 
-text \<open>The epigraph of a finite convex function is closed and convex, and
-  \<open>(x, f x)\<close> lies on its frontier; the supporting hyperplane there is not
-  vertical, and after normalization its horizontal part is a
-  subgradient.\<close>
+text \<open>The epigraph of a finite convex function is closed and convex; the
+  supporting hyperplane at its frontier point \<open>(x, f x)\<close> is non-vertical
+  and normalizes to a subgradient.\<close>
 
 lemma closed_epigraph_UNIV:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -441,9 +435,8 @@ proof -
     by (rule convex_epigraphI[OF cvx])
   have clE: "closed (epigraph UNIV f)"
     by (rule closed_epigraph_UNIV[OF cf])
-  text \<open>Uses \<open>supporting_hyperplane_rel_boundary\<close>: the epigraph has
-    nonempty interior, so relative interior equals interior, and
-    \<open>epigraph_frontier_point\<close> gives a relative-boundary point.\<close>
+  text \<open>Uses \<open>supporting_hyperplane_rel_boundary\<close> and
+  \<open>epigraph_frontier_point\<close>, since the epigraph has nonempty interior.\<close>
   have mem: "(x, f x) \<in> epigraph UNIV f"
     by (simp add: mem_epigraph)
   have neI: "interior (epigraph UNIV f) \<noteq> {}"
@@ -509,8 +502,7 @@ qed
 subsection \<open>The proximal map\<close>
 
 text \<open>For a finite convex function, \<open>y \<mapsto> f y + dist x y\<^sup>2/2\<close> attains a
-  unique minimum: the affine lower bound from a subgradient makes the
-  objective coercive.\<close>
+  unique minimum, coercive by an affine subgradient bound.\<close>
 
 lemma prox_attained:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -589,8 +581,8 @@ proof -
   thus ?thesis unfolding g_def by blast
 qed
 
-text \<open>Uniqueness of the proximal point, by strict convexity of the quadratic
-  penalty: the midpoint of two distinct minimizers would beat them both.\<close>
+text \<open>Uniqueness of the proximal point, by strict convexity of the
+  quadratic penalty.\<close>
 
 lemma midpoint_dist_identity:
   fixes x y\<^sub>1 y\<^sub>2 :: "'a::euclidean_space"
@@ -650,9 +642,8 @@ proof -
   thus ?thesis using y by simp
 qed
 
-text \<open>The proximal characterization: \<open>x - prox f x\<close> is a subgradient at the
-  proximal point. Convexity converts the quadratic minimality error into a
-  linear inequality via a \<open>t \<rightarrow> 0\<close> perturbation.\<close>
+text \<open>The proximal characterization: \<open>x - prox f x\<close> is a subgradient at
+  the proximal point.\<close>
 
 lemma prox_step_expand:
   fixes x y z :: "'a::euclidean_space"
@@ -717,10 +708,9 @@ lemma prox_subdiff:
   shows "x - prox f x \<in> subdiff f (prox f x)"
   by (rule minimizer_subdiff[OF cvx prox_min[OF cvx]])
 
-text \<open>Minty: \<open>id + subdiff f\<close> is surjective, witnessed by the proximal
-  point, and the resolvent \<open>prox f\<close> is nonexpansive, by monotonicity of
-  the subdifferential, giving the route to Alexandrov's theorem via
-  Rademacher's.\<close>
+text \<open>Minty: \<open>id + subdiff f\<close> is surjective (witnessed by the proximal
+  point), and \<open>prox f\<close> is nonexpansive --- the route to Alexandrov's
+  theorem via Rademacher's.\<close>
 
 theorem minty_surjective:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -760,10 +750,9 @@ subsection \<open>Rademacher, dimension one\<close>
 
 text \<open>The development of Rademacher's and Alexandrov's theorems below
   follows Evans--Gariepy, \<^emph>\<open>Measure Theory and Fine Properties of
-  Functions\<close>. A Lipschitz function on the line is differentiable almost
-  everywhere, via \<open>Lebesgue_differentiation_thm\<close> for functions of bounded
-  variation. The codomain may be any Euclidean space, needed for the
-  resolvent later.\<close>
+  Functions\<close>.  A Lipschitz function on the line is differentiable a.e.
+  (\<open>Lebesgue_differentiation_thm\<close>); the codomain may be any Euclidean
+  space, needed for the resolvent later.\<close>
 
 theorem lipschitz_differentiable_ae_1d:
   fixes f :: "real \<Rightarrow> 'a::euclidean_space"
@@ -796,9 +785,8 @@ proof -
     unfolding cover by (rule negligible_Union_nat) (use seg in auto)
 qed
 
-text \<open>Sections of a Lipschitz map along any line are Lipschitz curves, so
-  they are differentiable at almost every parameter: the slicing input to
-  the Fubini step of Rademacher's theorem.\<close>
+text \<open>Sections of a Lipschitz map along any line are Lipschitz curves,
+  differentiable a.e. --- the slicing input to Rademacher's Fubini step.\<close>
 
 lemma lipschitz_line_section_diff_ae:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::euclidean_space"
@@ -974,10 +962,8 @@ qed
 
 subsection \<open>From one-dimensional sections to null sets\<close>
 
-text \<open>A Borel set all of whose lines in a fixed basis direction are
-  negligible is itself negligible: Fubini for \<open>lborel\<close>, via \<open>lborel_eq\<close>
-  and \<open>product_nn_integral_insert\<close>. Borel-ness is essential: a set with
-  all sections null need not itself be null.\<close>
+text \<open>A Borel set with all lines in a fixed basis direction negligible is
+  itself negligible, by Fubini for \<open>lborel\<close>; Borel-ness is essential.\<close>
 
 lemma negligible_iff_null_lborel:
   fixes S :: "'a::euclidean_space set"
@@ -1090,9 +1076,8 @@ proof -
 qed
 subsection \<open>Directional derivatives exist almost everywhere\<close>
 
-text \<open>A differentiable curve has a difference quotient with a limit: the
-  derivative applied to \<open>1\<close>, since a bounded linear map on the line is
-  scaling.\<close>
+text \<open>A differentiable curve has a difference-quotient limit: the
+  derivative applied to \<open>1\<close>.\<close>
 
 lemma dquot_tendsto_vector_derivative:
   fixes phi :: "real \<Rightarrow> 'b::real_normed_vector"
@@ -1203,10 +1188,8 @@ proof (rule negligible_of_basis_sections[OF _ b])
     by (rule negligible_subset[OF _ sub])
 qed
 
-text \<open>Arbitrary directions: an orthogonal map carries a scaled basis
-  vector to any prescribed \<open>v \<noteq> 0\<close>, turning the \<open>v\<close>-quotient into a
-  basis-direction quotient, and negligibility is invariant under
-  invertible linear images.\<close>
+text \<open>Arbitrary directions reduce to the basis-direction case via an
+  orthogonal map carrying \<open>v \<noteq> 0\<close> to a scaled basis vector.\<close>
 
 lemma dlim_set_precompose:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1316,8 +1299,8 @@ qed
 subsection \<open>The directional derivative as a measurable function\<close>
 
 text \<open>The directional derivative is named by the sequential limit along
-  \<open>t = 1/(n+1)\<close>, agreeing with the filter limit where it exists, so that
-  measurability follows directly from \<open>borel_measurable_lim_metric\<close>.\<close>
+  \<open>t = 1/(n+1)\<close>, so measurability follows from
+  \<open>borel_measurable_lim_metric\<close>.\<close>
 
 definition ddir :: "('a::euclidean_space \<Rightarrow> 'b::banach) \<Rightarrow> 'a \<Rightarrow> 'a \<Rightarrow> 'b"
   where "ddir f v x = lim (\<lambda>n. dquot f v x (inverse (real (Suc n))))"
@@ -1348,8 +1331,8 @@ lemma borel_measurable_ddir:
   by (intro borel_measurable_lim_metric borel_measurable_continuous_onI
       continuous_on_dquot[OF cf])
 
-text \<open>The Lipschitz bound passes to the derivative: \<open>|D_v f| \<le> B |v|\<close>
-  wherever it exists, which makes \<open>ddir\<close> integrable on boxes.\<close>
+text \<open>The Lipschitz bound passes to the derivative, \<open>|D_v f| \<le> B |v|\<close>,
+  making \<open>ddir\<close> integrable on boxes.\<close>
 
 lemma norm_ddir_le:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1381,11 +1364,9 @@ qed
 
 subsection \<open>Fundamental theorem of calculus along a line\<close>
 
-text \<open>On a line, a Lipschitz function is absolutely continuous, and its
-  a.e. derivative is exactly \<open>ddir\<close>, so the fundamental theorem of calculus
-  for absolutely continuous functions integrates \<open>ddir\<close> back to increments
-  of \<open>f\<close>. This converts a statement about derivatives into one about
-  integrals, where Fubini can act.\<close>
+text \<open>On a line, a Lipschitz function is absolutely continuous with a.e.
+  derivative \<open>ddir\<close>, so the fundamental theorem of calculus recovers
+  increments of \<open>f\<close> as integrals of \<open>ddir\<close>.\<close>
 
 lemma ddir_line_eq:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1454,9 +1435,9 @@ qed
 
 subsection \<open>Structure of the direction map\<close>
 
-text \<open>What the direction map \<open>v \<mapsto> D_v f x\<close> satisfies before linearity
-  is known: positive homogeneity, and a Lipschitz estimate in \<open>v\<close> with the
-  same constant as \<open>f\<close>.\<close>
+text \<open>The direction map \<open>v \<mapsto> D_v f x\<close> is positively homogeneous and
+  Lipschitz in \<open>v\<close> with the same constant as \<open>f\<close>, before linearity is
+  known.\<close>
 
 lemma dquot_scale:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1546,8 +1527,8 @@ proof -
   thus ?thesis by (rule tendsto_upperbound[OF _ ev]) simp
 qed
 
-text \<open>A countable family of directions can be handled simultaneously: the
-  set where any of them fails is a countable union of negligible sets.\<close>
+text \<open>A countable family of directions is handled simultaneously, since a
+  countable union of negligible sets is negligible.\<close>
 
 theorem negligible_no_dderiv_countable:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::{euclidean_space,banach}"
@@ -1569,11 +1550,9 @@ qed
 
 subsection \<open>From directional to full differentiability\<close>
 
-text \<open>The last step of Rademacher's theorem: if the directional
-  derivatives at a point along a dense set of directions exist and agree
-  with a bounded linear map, the function is Fr\'echet differentiable
-  there, by compactness of the unit sphere upgrading pointwise control on
-  a dense set to the uniform \<open>o(\<bar>h\<bar>)\<close> estimate.\<close>
+text \<open>The last step of Rademacher's theorem: directional derivatives along
+  a dense set of directions that agree with a bounded linear map extend
+  to Fr\'echet differentiability, by compactness of the unit sphere.\<close>
 
 theorem differentiable_of_dense_linear_ddir:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1707,10 +1686,9 @@ qed
 
 subsection \<open>Additivity in the direction: reduction to a shifted limit\<close>
 
-text \<open>An exact algebraic split of the \<open>(u+v)\<close>-quotient into a
-  \<open>u\<close>-quotient at \<open>x\<close> and a \<open>v\<close>-quotient at the shifted point \<open>x + t u\<close>.
-  What remains is that the shifted \<open>v\<close>-quotient converges to \<open>D_v f x\<close>,
-  true only after integration since \<open>D_v f\<close> need not be continuous.\<close>
+text \<open>An exact split of the \<open>(u+v)\<close>-quotient into a \<open>u\<close>-quotient at \<open>x\<close>
+  and a \<open>v\<close>-quotient at \<open>x + t u\<close>, the latter converging to
+  \<open>D_v f x\<close> only after integration.\<close>
 
 lemma dquot_add_split:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1759,10 +1737,9 @@ qed
 
 subsection \<open>Boxes move continuously under translation\<close>
 
-text \<open>A box and its small translate overlap in almost all of their volume.
-  \<open>Int_interval\<close> makes the overlap a box again, so its content is an
-  explicit product; the \<open>max 0\<close> form below is valid whether or not the
-  overlap is degenerate, removing a case split from the limit argument.\<close>
+text \<open>A box and its small translate overlap in almost all of their volume;
+  \<open>Int_interval\<close> keeps the overlap a box, giving an explicit content
+  formula.\<close>
 
 lemma inner_sum_scaleR_Basis:
   fixes j :: "'a::euclidean_space"
@@ -1858,10 +1835,9 @@ qed
 
 subsection \<open>Vanishing integrals over boxes force a.e. vanishing\<close>
 
-text \<open>A bounded Borel function whose integral over every open box is
-  zero vanishes almost everywhere: the densities \<open>g\<^sup>+\<close> and \<open>g\<^sup>-\<close> define
-  finite measures agreeing on the \<open>\<inter>\<close>-stable generator of boxes, so
-  \<open>measure_eqI_generator_eq\<close> makes them agree everywhere.\<close>
+text \<open>A bounded Borel function with vanishing integral over every open box
+  vanishes a.e., since \<open>g\<^sup>+\<close> and \<open>g\<^sup>-\<close> agree as measures on the generator
+  of boxes.\<close>
 
 lemma AE_zero_of_box_integrals_zero:
   fixes g :: "'a::euclidean_space \<Rightarrow> real"
@@ -1959,9 +1935,9 @@ proof -
   show ?thesis using pos neg by eventually_elim linarith
 qed
 
-text \<open>Two reusable facts for the dominated-convergence step below: the
-  difference quotients are uniformly bounded by the Lipschitz constant, and
-  Borel measurable in \<open>x\<close> for each fixed \<open>t\<close>.\<close>
+text \<open>Two facts for the dominated-convergence step below: the difference
+  quotients are uniformly bounded and Borel measurable in \<open>x\<close> for fixed
+  \<open>t\<close>.\<close>
 
 lemma norm_dquot_le:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1984,9 +1960,8 @@ lemma borel_measurable_dquot:
 
 subsection \<open>Box integrals of difference quotients converge\<close>
 
-text \<open>Because \<open>ddir\<close> is defined as the limit along \<open>t = 1/(n+1)\<close>,
-  dominated convergence applies directly: the quotients converge a.e. and
-  are dominated by \<open>B |v|\<close> on a box of finite measure.\<close>
+text \<open>Since \<open>ddir\<close> is the limit along \<open>t = 1/(n+1)\<close>, dominated
+  convergence applies directly, bounded by \<open>B |v|\<close>.\<close>
 
 lemma ddir_LIMSEQ:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -2052,9 +2027,8 @@ qed
 
 subsection \<open>Translating the box instead of the integrand\<close>
 
-text \<open>The shifted quotient integrates over a shifted box, via
-  translation invariance of Lebesgue measure (\<open>lborel_distr_plus\<close>) and
-  \<open>integral_distr\<close>, moving the shift from the integrand onto the domain.\<close>
+text \<open>The shifted quotient integrates over a shifted box, by translation
+  invariance of Lebesgue measure.\<close>
 
 lemma indicator_box_translate:
   fixes x c l r :: "'a::euclidean_space"
@@ -2094,10 +2068,9 @@ qed
 
 subsection \<open>The additivity identity at the level of box integrals\<close>
 
-text \<open>Integrating the algebraic split over a box and moving the shift
-  onto the domain gives an exact identity for every \<open>t \<noteq> 0\<close>: the
-  \<open>(u+v)\<close>-quotient over a box equals the \<open>v\<close>-quotient over the translated
-  box plus the \<open>u\<close>-quotient over the original one.\<close>
+text \<open>Integrating the algebraic split over a box gives an exact identity:
+  the \<open>(u+v)\<close>-quotient equals the \<open>v\<close>-quotient over the translated box
+  plus the \<open>u\<close>-quotient over the original.\<close>
 
 lemma dquot_indicator_bound:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -2182,10 +2155,8 @@ qed
 
 subsection \<open>L1 convergence of the quotients\<close>
 
-text \<open>The quotients converge to \<open>ddir\<close> not merely pointwise a.e. but in L1
-  of any finite-measure set, which lets the domain wobble by \<open>t u\<close> without
-  breaking the limit; pointwise convergence alone would not survive a
-  moving domain.\<close>
+text \<open>The quotients converge to \<open>ddir\<close> in L1, not merely pointwise a.e.,
+  letting the domain wobble by \<open>t u\<close>.\<close>
 
 theorem L1_dquot_tendsto:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -2267,10 +2238,8 @@ qed
 
 subsection \<open>The defect of a translated box vanishes\<close>
 
-text \<open>Translating a box does not change its content, and the overlap
-  content is continuous, so the defect
-  \<open>2(content B - content (B \<inter> (B+w)))\<close>, which dominates the measure of the
-  symmetric difference, tends to \<open>0\<close>.\<close>
+text \<open>Translating a box preserves its content, so the overlap defect
+  \<open>2(content B - content (B \<inter> (B+w)))\<close> tends to \<open>0\<close>.\<close>
 
 lemma content_box_translate:
   fixes a b w :: "'a::euclidean_space"
@@ -2315,9 +2284,8 @@ lemma indicator_diff_abs:
   shows "\<bar>(indicator A x :: real) - indicator C x\<bar>
        = indicator A x + indicator C x - 2 * indicator (A \<inter> C) x"
   by (simp add: indicator_def)
-text \<open>Two small building blocks for the moving-domain bound: integrability of
-  a bounded function restricted to a finite-measure set, and the integral of
-  the symmetric-difference combination of indicators.\<close>
+text \<open>Two building blocks for the moving-domain bound: integrability on a
+  finite-measure set, and the symmetric-difference indicator integral.\<close>
 
 lemma integrable_bounded_indicator:
   fixes h :: "'a::euclidean_space \<Rightarrow> real"
@@ -2364,9 +2332,9 @@ proof -
     by simp
 qed
 
-text \<open>The moving-domain bound: replacing the domain of integration by
-  another set changes the integral of a bounded function by at most the bound
-  times the measure of the symmetric difference.\<close>
+text \<open>The moving-domain bound: swapping the domain of integration changes
+  the integral of a bounded function by at most the bound times the
+  symmetric difference's measure.\<close>
 
 theorem integral_domain_shift_bound:
   fixes h :: "'a::euclidean_space \<Rightarrow> real"
@@ -2438,10 +2406,8 @@ qed
 
 subsection \<open>Open and closed boxes, and the defect along a sequence\<close>
 
-text \<open>Two conveniences for the limit passage: integrals over an open box
-  and its closure agree, since they differ only on the frontier, which is
-  negligible; and the defect along the sequence \<open>w\<^sub>n = u/(n+1)\<close> tends to
-  zero.\<close>
+text \<open>Integrals over an open box and its closure agree (negligible
+  frontier), and the defect along \<open>w\<^sub>n = u/(n+1)\<close> tends to zero.\<close>
 
 lemma integral_box_cbox_eq:
   fixes h :: "'a::euclidean_space \<Rightarrow> real"
@@ -2492,9 +2458,8 @@ theorem defect_seq_tendsto:
 subsection \<open>The limit over a moving box\<close>
 
 text \<open>The quotient integrated over the translated box still converges to
-  the integral of \<open>ddir\<close> over the original one. The error splits into a
-  domain part, bounded by the uniform quotient bound times the defect, and
-  a fixed-domain part, which is ordinary dominated convergence.\<close>
+  the integral of \<open>ddir\<close> over the original, the error splitting into a
+  domain part and an ordinary dominated-convergence part.\<close>
 
 lemma content_cbox_translate:
   fixes a b w :: "'a::euclidean_space"
@@ -2601,10 +2566,8 @@ qed
 
 subsection \<open>Additivity of the box integrals of the derivative\<close>
 
-text \<open>Passing to the limit in the exact identity \<open>box_integral_add_split\<close>
-  turns it into additivity of the box integrals of \<open>ddir\<close> itself, its three
-  terms converging by \<open>box_integral_dquot_tendsto\<close> and
-  \<open>shifted_box_integral_tendsto\<close>.\<close>
+text \<open>Passing to the limit in \<open>box_integral_add_split\<close> gives additivity
+  of the box integrals of \<open>ddir\<close> itself.\<close>
 
 theorem box_integral_ddir_add:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -2661,10 +2624,8 @@ qed
 
 subsection \<open>From a vanishing integral to balanced positive and negative parts\<close>
 
-text \<open>Bridges the Bochner statement above and the ennreal statement
-  consumed by \<open>AE_zero_of_box_integrals_zero\<close>: for an integrable function
-  with vanishing integral, the positive and negative parts have equal
-  finite nonnegative integrals.\<close>
+text \<open>Bridges the Bochner and ennreal statements: an integrable function
+  with vanishing integral has equal positive and negative parts.\<close>
 
 lemma nn_integral_pos_neg_eq_of_integral_zero:
   fixes h :: "'a::euclidean_space \<Rightarrow> real"
@@ -2752,9 +2713,8 @@ proof (rule Bochner_Integration.integrable_bound)
   qed
 qed
 
-text \<open>The direction map of a Lipschitz function is additive almost
-  everywhere: every box integral of the defect vanishes, the defect is
-  a.e. bounded, and boxes generate the Borel sets.\<close>
+text \<open>The direction map of a Lipschitz function is additive a.e.: every
+  box integral of the defect vanishes and boxes generate the Borel sets.\<close>
 
 theorem ddir_add_AE:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -2863,10 +2823,9 @@ qed
 
 subsection \<open>Towards Rademacher: the candidate derivative\<close>
 
-text \<open>The candidate derivative at a good point: the linear map
-  determined by the directional derivatives along the basis vectors,
-  bounded linear for any coefficients. What remains is showing it agrees
-  with \<open>ddir\<close> on a dense set of directions.\<close>
+text \<open>The candidate derivative at a good point is the linear map from the
+  directional derivatives along the basis vectors; agreement with
+  \<open>ddir\<close> on a dense set of directions remains.\<close>
 
 lemma bounded_linear_coord_combination:
   fixes c :: "'a::euclidean_space \<Rightarrow> real"
@@ -2900,9 +2859,8 @@ qed
 
 subsection \<open>A countable dense set of directions\<close>
 
-text \<open>Rational combinations of the basis: countable since the basis is
-  finite and the rationals countable; dense since \<open>norm_le_l1\<close> reduces
-  the error to a finite sum of coordinate errors.\<close>
+text \<open>Rational combinations of the basis are countable and dense, by
+  \<open>norm_le_l1\<close>.\<close>
 
 definition rat_dirs :: "'a::euclidean_space set"
   where "rat_dirs = (\<lambda>c. \<Sum>b\<in>Basis. c b *\<^sub>R b) ` (Basis \<rightarrow>\<^sub>E \<rat>)"
@@ -2958,11 +2916,9 @@ qed
 
 subsection \<open>All countably many conditions hold at almost every point\<close>
 
-text \<open>\<open>AE_ball_countable\<close> turns the countably many separate a.e.
-  statements --- existence along each rational direction, additivity for
-  each pair, homogeneity for each rational scalar --- into a single a.e.
-  statement, making the pointwise argument of
-  \<open>differentiable_of_dense_linear_ddir\<close> available at almost every point.\<close>
+text \<open>\<open>AE_ball_countable\<close> collapses the countably many a.e. statements
+  --- existence, additivity, homogeneity along rational directions ---
+  into one.\<close>
 
 lemma AE_all_rat_dirs:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3039,11 +2995,8 @@ qed
 
 subsection \<open>Coordinates of partial basis combinations\<close>
 
-text \<open>What the final induction needs: a partial combination of basis
-  vectors has the expected coordinates, and vanishes only if all its
-  coefficients do. This keeps the partial sums in the induction nonzero
-  once zero coefficients are skipped, which matters because additivity of
-  \<open>ddir\<close> is only available for nonzero directions.\<close>
+text \<open>A partial basis combination has the expected coordinates and
+  vanishes only if all coefficients do, keeping induction sums nonzero.\<close>
 
 lemma inner_sum_scaleR_subset:
   fixes j :: "'a::euclidean_space"
@@ -3078,10 +3031,8 @@ qed
 
 subsection \<open>Membership facts for the rational directions\<close>
 
-text \<open>The induction over the basis needs its partial sums to be legitimate
-  rational directions, and needs the basis vectors themselves to be among
-  them. Both come from exhibiting the coefficient function explicitly and
-  extending it by zero outside the index set.\<close>
+text \<open>The induction needs its partial sums, and the basis vectors
+  themselves, to be legitimate rational directions.\<close>
 
 lemma partial_rat_dir_mem:
   fixes c :: "'a::euclidean_space \<Rightarrow> real"
@@ -3117,10 +3068,9 @@ qed
 
 subsection \<open>The direction map is linear at a good point\<close>
 
-text \<open>The induction that turns pairwise additivity and homogeneity into
-  the full coordinate formula. Zero coefficients are skipped so that every
-  partial sum stays nonzero, by \<open>coeffs_zero_of_sum_zero\<close>, keeping the
-  additivity hypothesis applicable.\<close>
+text \<open>The induction turning pairwise additivity and homogeneity into the
+  full coordinate formula, skipping zero coefficients to keep sums
+  nonzero.\<close>
 
 lemma ddir_rat_dir_sum:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3217,10 +3167,8 @@ qed
 subsection \<open>Rademacher's theorem\<close>
 
 text \<open>Rademacher's theorem: a Lipschitz function on a Euclidean space is
-  differentiable almost everywhere. At almost every point the directional
-  derivatives exist along all rational directions and depend linearly on
-  the direction there; that linear dependence extends to all directions by
-  density and uniform Lipschitz control, which is Fr\'echet
+  differentiable a.e.  Directional derivatives along dense rational
+  directions, depending linearly on them, extend by density to Fr\'echet
   differentiability.\<close>
 
 theorem rademacher_AE:
@@ -3295,10 +3243,9 @@ qed
 
 subsection \<open>Rademacher for vector-valued maps\<close>
 
-text \<open>Alexandrov's theorem will be obtained by differentiating the
-  resolvent, a map \<open>\<real>\<^sup>n \<rightarrow> \<real>\<^sup>n\<close>, so Rademacher is first lifted from
-  real-valued functions to vector-valued ones: each component is Lipschitz
-  with the same constant, and finitely many a.e. statements combine.\<close>
+text \<open>Alexandrov's theorem differentiates the resolvent
+  \<open>\<real>\<^sup>n \<rightarrow> \<real>\<^sup>n\<close>, so Rademacher is lifted componentwise to vector-valued
+  maps.\<close>
 
 lemma lipschitz_component:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'b::euclidean_space"
@@ -3346,12 +3293,10 @@ qed
 
 subsection \<open>The resolvent is differentiable almost everywhere\<close>
 
-text \<open>The proximal map of a finite convex function is 1-Lipschitz on all
-  of the space (\<open>prox_nonexpansive\<close>), so Rademacher applies to it verbatim.
-  Differentiability of the resolvent substitutes for second-order
-  differentiability of the convex function itself (Minty's device);
-  \<open>prox_subdiff\<close> is the bridge back, since \<open>x - prox f x\<close> is a subgradient
-  at \<open>prox f x\<close>.\<close>
+text \<open>The proximal map is 1-Lipschitz (\<open>prox_nonexpansive\<close>), so
+  Rademacher applies; its differentiability substitutes for second-order
+  differentiability of \<open>f\<close> (Minty's device), with \<open>prox_subdiff\<close> the
+  bridge back.\<close>
 
 lemma prox_lipschitz:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3369,20 +3314,15 @@ theorem prox_differentiable_AE:
   shows "AE x in lborel. (prox f) differentiable (at x)"
   by (rule rademacher_vec_AE[where B = 1]) (rule prox_lipschitz[OF cvx])
 
-text \<open>Together with \<open>minty_surjective\<close>, the resolvent of the
-  subdifferential is a globally defined, surjective, 1-Lipschitz map that
-  is differentiable almost everywhere. Alexandrov's theorem follows by
-  transporting that derivative back through \<open>prox_subdiff\<close>; what remains
-  is the symmetry and positivity of the transported derivative and the
-  second-order expansion it produces.\<close>
+text \<open>The resolvent is a globally defined, surjective, 1-Lipschitz map
+  differentiable a.e.; Alexandrov's theorem transports that derivative
+  back through \<open>prox_subdiff\<close>.\<close>
 
 subsection \<open>Firm nonexpansiveness and the derivative of the resolvent\<close>
 
-text \<open>Monotonicity of the subdifferential says more about the resolvent
-  than 1-Lipschitzness: it is firmly nonexpansive,
-  \<open>|R x - R y|\<^sup>2 \<le> (x - y) \<cdot> (R x - R y)\<close>. Differentiating this along a
-  line makes the derivative of the resolvent positive semidefinite with
-  norm at most one, the matrix structure Alexandrov's theorem needs.\<close>
+text \<open>The resolvent is firmly nonexpansive,
+  \<open>|R x - R y|\<^sup>2 \<le> (x - y) \<cdot> (R x - R y)\<close>; differentiating along a line
+  makes its derivative positive semidefinite with norm at most one.\<close>
 
 lemma prox_firm_nonexpansive:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3464,11 +3404,10 @@ next
   thus ?thesis by (simp add: Lim_null[symmetric])
 qed
 
-text \<open>Differentiating firm nonexpansiveness along a line: wherever the
-  resolvent is differentiable, its derivative \<open>DR\<close> satisfies
-  \<open>|DR h|\<^sup>2 \<le> h \<cdot> DR h\<close>. In particular \<open>DR\<close> is positive semidefinite and
-  \<open>\<parallel>DR\<parallel> \<le> 1\<close> \<comment> \<open>equivalently \<open>I - DR\<close> is positive semidefinite as well\<close>.
-  This is the matrix inequality that carries Alexandrov's theorem.\<close>
+text \<open>Wherever the resolvent is differentiable, its derivative \<open>DR\<close>
+  satisfies \<open>|DR h|\<^sup>2 \<le> h \<cdot> DR h\<close>, so \<open>DR\<close> is positive semidefinite with
+  \<open>\<parallel>DR\<parallel> \<le> 1\<close> \<comment> \<open>equivalently \<open>I - DR\<close> is positive semidefinite as
+  well\<close>.\<close>
 
 theorem prox_deriv_psd:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3518,12 +3457,10 @@ qed
 
 subsection \<open>The Moreau envelope and its gradient\<close>
 
-text \<open>The envelope \<open>e f x = min\<^sub>y (f y + |x - y|\<^sup>2/2)\<close> is differentiable
-  everywhere with gradient \<open>x - prox f x\<close>, and the error in that expansion
-  is quadratic, so the envelope is \<open>C\<^sup>1\<close> with a 1-Lipschitz gradient. Both
-  inequalities come from testing the minimum against the other point's
-  minimizer. This identifies the resolvent as \<open>id\<close> minus a gradient field,
-  which will make its derivative symmetric.\<close>
+text \<open>The envelope \<open>e f x = min\<^sub>y (f y + |x - y|\<^sup>2/2)\<close> is everywhere
+  differentiable with gradient \<open>x - prox f x\<close> and quadratic error, so
+  \<open>e\<close> is \<open>C\<^sup>1\<close> with a 1-Lipschitz gradient --- the resolvent is \<open>id\<close>
+  minus a gradient field.\<close>
 
 definition moreau :: "('a::euclidean_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> real"
   where "moreau f x = f (prox f x) + (dist x (prox f x))\<^sup>2 / 2"
@@ -3644,10 +3581,9 @@ qed
 subsection \<open>Second-order differentiability of the Moreau envelope\<close>
 
 text \<open>The Moreau envelope of a finite convex function is twice
-  differentiable almost everywhere, with positive semidefinite Hessian
-  \<open>I - DR\<close>: combine the everywhere-valid gradient formula with a.e.
-  differentiability of the resolvent, and get positivity from the
-  firm-nonexpansiveness inequality.\<close>
+  differentiable a.e., with positive semidefinite Hessian \<open>I - DR\<close>,
+  combining the everywhere-valid gradient formula with a.e.
+  differentiability of the resolvent.\<close>
 
 lemma prox_deriv_norm_le:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3716,11 +3652,10 @@ qed
 
 subsection \<open>Integral representation of the envelope's increments\<close>
 
-text \<open>The bridge from differentiability of the gradient at a point to a
-  genuine second-order Taylor expansion: since the envelope's gradient is
-  known everywhere, the increment along a segment is the integral of the
-  gradient, by the fundamental theorem of calculus. Feeding the
-  first-order expansion of the gradient into this integral produces the
+text \<open>The bridge to a genuine second-order Taylor expansion: since the
+  envelope's gradient is known everywhere, the increment along a segment
+  is its integral along the segment (fundamental theorem of calculus),
+  and feeding in the gradient's first-order expansion produces the
   quadratic term.\<close>
 
 lemma moreau_line_vector_derivative:
@@ -3758,8 +3693,8 @@ proof -
   thus ?thesis by simp
 qed
 
-text \<open>Integrating the first-order expansion of the gradient over the
-  segment produces \<open>h \<cdot> G x + (h \<cdot> A h)/2\<close>; the factor \<open>1/2\<close> is exactly
+text \<open>Integrating the gradient's first-order expansion over the segment
+  produces \<open>h \<cdot> G x + (h \<cdot> A h)/2\<close>, the factor \<open>1/2\<close> being exactly
   \<open>\<integral>\<^sub>0\<^sup>1 s ds\<close>.\<close>
 
 lemma has_integral_affine_unit:
@@ -3799,11 +3734,10 @@ qed
 
 subsection \<open>Second-order Taylor expansion of the envelope\<close>
 
-text \<open>The increment of the envelope equals the integral of its gradient,
-  the model quadratic equals the integral of the gradient's first-order
-  expansion, and the two integrands differ by at most \<open>\<epsilon>\<parallel>h\<parallel>\<close> once
-  \<open>\<parallel>h\<parallel>\<close> is small, uniformly in the segment parameter since
-  \<open>\<parallel>s h\<parallel> \<le> \<parallel>h\<parallel>\<close>. Integrating over the unit interval keeps the bound.\<close>
+text \<open>The envelope's increment and the model quadratic are both integrals
+  over the segment, differing pointwise by at most \<open>\<epsilon>\<parallel>h\<parallel>\<close> once
+  \<open>\<parallel>h\<parallel>\<close> is small, uniformly since \<open>\<parallel>s h\<parallel> \<le> \<parallel>h\<parallel>\<close>; integrating over the
+  unit interval keeps the bound.\<close>
 
 theorem moreau_second_order_taylor:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3919,11 +3853,10 @@ qed
 
 subsection \<open>Alexandrov's theorem for the Moreau envelope\<close>
 
-text \<open>At almost every point the envelope has a genuine second-order
-  Taylor expansion whose quadratic form is positive semidefinite: this is
-  Alexandrov's theorem for the \<open>C\<^sup>1\<^sup>,\<^sup>1\<close> envelope. What remains towards
-  Alexandrov for \<open>f\<close> itself is to transport the expansion along the
-  resolvent, whose derivative supplies the quadratic form.\<close>
+text \<open>Alexandrov's theorem for the \<open>C\<^sup>1\<^sup>,\<^sup>1\<close> envelope: almost every point
+  admits a second-order Taylor expansion with positive semidefinite
+  quadratic form.  Transporting the expansion to \<open>f\<close> itself along the
+  resolvent remains.\<close>
 
 theorem moreau_alexandrov_AE:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -3951,13 +3884,11 @@ qed
 
 subsection \<open>Second differences\<close>
 
-text \<open>The second difference
-  \<open>\<Delta>(u,v) = e(x+u+v) - e(x+u) - e(x+v) + e(x)\<close> is symmetric in \<open>u\<close> and
-  \<open>v\<close> for trivial reasons, while the fundamental theorem of calculus
-  expresses it as a difference of two integrals of the gradient along
-  parallel segments. Comparing the two, after inserting the first-order
-  expansion of the gradient, forces \<open>u \<cdot> A v = v \<cdot> A u\<close>: the symmetry of
-  the Hessian.\<close>
+text \<open>The second difference \<open>\<Delta>(u,v) = e(x+u+v) - e(x+u) - e(x+v) + e(x)\<close>
+  is trivially symmetric in \<open>u\<close> and \<open>v\<close>, while the fundamental theorem of
+  calculus expresses it as a difference of two gradient integrals along
+  parallel segments; comparing the two, after inserting the gradient's
+  first-order expansion, forces \<open>u \<cdot> A v = v \<cdot> A u\<close>.\<close>
 
 lemma second_difference_symmetric:
   fixes g :: "'a::ab_group_add \<Rightarrow> real"
@@ -3991,9 +3922,7 @@ qed
 
 text \<open>Along the two parallel segments the linear part of the gradient's
   increment is exactly \<open>t \<cdot> A v\<close>, independent of the segment parameter
-  \<open>s\<close>, which is why the second difference sees the unsymmetrized
-  \<open>u \<cdot> A v\<close> rather than its symmetrization; what is left over is a
-  difference of two first-order remainders.\<close>
+  \<open>s\<close>; what is left over is a difference of two first-order remainders.\<close>
 
 lemma linear_parallel_increment:
   fixes A :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -4021,12 +3950,9 @@ proof -
   thus ?thesis by simp
 qed
 
-text \<open>Pointwise on the segment, the integrand of the second difference
-  differs from \<open>t\<^sup>2 (u \<cdot> A v)\<close> by at most
-  \<open>\<epsilon> t\<^sup>2 \<parallel>u\<parallel>(\<parallel>v\<parallel> + 2\<parallel>u\<parallel>)\<close>. Integrating over the unit interval preserves
-  the bound, so the second difference divided by \<open>t\<^sup>2\<close> converges to
-  \<open>u \<cdot> A v\<close>, and \<open>second_difference_symmetric\<close> then forces
-  \<open>u \<cdot> A v = v \<cdot> A u\<close>.\<close>
+text \<open>Pointwise on the segment, the integrand differs from
+  \<open>t\<^sup>2 (u \<cdot> A v)\<close> by at most \<open>\<epsilon> t\<^sup>2 \<parallel>u\<parallel>(\<parallel>v\<parallel> + 2\<parallel>u\<parallel>)\<close>, so the second
+  difference divided by \<open>t\<^sup>2\<close> converges to \<open>u \<cdot> A v\<close>.\<close>
 
 lemma second_difference_integrand_bound:
   fixes G :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -4105,12 +4031,12 @@ qed
 
 subsection \<open>Symmetry of the Hessian\<close>
 
-text \<open>Integrating the pointwise bound over the unit interval gives the limit
-  \<open>\<Delta>(t)/t\<^sup>2 \<rightarrow> u \<cdot> A v\<close>, and the trivial symmetry of the second difference then
-  forces \<open>u \<cdot> A v = v \<cdot> A u\<close>.\<close>
-text \<open>The same bound in the left-associated form that \<open>moreau_ftc\<close>
-  actually produces, stated separately to keep simp from distributing the
-  inner product and losing the shape.\<close>
+text \<open>Integrating the pointwise bound gives the limit
+  \<open>\<Delta>(t)/t\<^sup>2 \<rightarrow> u \<cdot> A v\<close>, and trivial symmetry of the second difference
+  then forces \<open>u \<cdot> A v = v \<cdot> A u\<close>.\<close>
+text \<open>The same bound in the left-associated form \<open>moreau_ftc\<close> actually
+  produces, kept separate so \<open>simp\<close> does not distribute the inner
+  product and lose the shape.\<close>
 
 lemma second_difference_integrand_bound_left:
   fixes G :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -4130,8 +4056,8 @@ proof -
     unfolding assoc
     by (rule second_difference_integrand_bound[OF lin rem e2 w1 w2 s])
 qed
-text \<open>The second difference as a single integral, in exactly the shape the
-  pointwise bound expects. This is the last piece of glue before the limit.\<close>
+text \<open>The second difference as a single integral, in exactly the shape
+  the pointwise bound expects.\<close>
 
 lemma moreau_second_difference_has_integral:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4310,9 +4236,9 @@ proof (rule tendstoI)
   qed
 qed
 
-text \<open>Symmetry of the Hessian, at last: the second difference is symmetric in
-  \<open>u\<close> and \<open>v\<close> for trivial reasons, so the two limits computed from it must
-  agree.\<close>
+text \<open>Symmetry of the Hessian, at last: the second difference is symmetric
+  in \<open>u\<close> and \<open>v\<close> for trivial reasons, so the two limits computed from it
+  must agree.\<close>
 
 theorem moreau_hessian_symmetric:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4349,10 +4275,9 @@ proof -
   show ?thesis by (rule tendsto_unique[OF at_neq_bot l1' l2])
 qed
 
-text \<open>Alexandrov's theorem for the Moreau envelope, in its final form:
-  almost every point admits a second-order Taylor expansion whose
-  quadratic form is bounded, symmetric and positive semidefinite --- a
-  genuine Hessian.\<close>
+text \<open>Alexandrov's theorem for the Moreau envelope, final form: almost
+  every point admits a second-order Taylor expansion with bounded,
+  symmetric, positive semidefinite quadratic form --- a genuine Hessian.\<close>
 
 theorem moreau_alexandrov_sym_AE:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4384,10 +4309,9 @@ qed
 
 subsection \<open>Transporting Alexandrov from the envelope to the function\<close>
 
-text \<open>The envelope is a smoothed copy of \<open>f\<close>, reached through the resolvent
-  \<open>R = prox f\<close>. To move the second-order expansion back onto \<open>f\<close> we need the
-  resolvent's defining property in the reverse direction: \<open>R\<close> undoes
-  \<open>id + subdiff f\<close>.\<close>
+text \<open>The envelope is a smoothed copy of \<open>f\<close>, reached through the
+  resolvent \<open>R = prox f\<close>; transporting the expansion back needs \<open>R\<close>'s
+  defining property in reverse --- \<open>R\<close> undoes \<open>id + subdiff f\<close>.\<close>
 
 lemma subdiff_prox:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4498,10 +4422,10 @@ proof (rule subdiffI)
     unfolding e by (simp add: algebra_simps)
 qed
 
-text \<open>At a point where the resolvent's derivative is injective the
-  subdifferential downstream is a singleton: two distinct subgradients at
-  \<open>prox f x\<close> would make the resolvent constant along a whole segment
-  through \<open>x\<close>, so its derivative would kill that segment's direction.\<close>
+text \<open>Where the resolvent's derivative is injective, the subdifferential
+  downstream is a singleton: two distinct subgradients at \<open>prox f x\<close>
+  would make the resolvent constant along a segment, killing its
+  derivative's injectivity.\<close>
 
 lemma prox_deriv_inj_subdiff_singleton:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4554,9 +4478,9 @@ proof -
 qed
 
 
-text \<open>The resolvent is continuous; and its fibres over a bounded set are
-  bounded, because the displacement \<open>z - prox f z\<close> is a subgradient at
-  \<open>prox f z\<close> and subgradients are locally bounded.\<close>
+text \<open>The resolvent is continuous, and its fibres over a bounded set are
+  bounded, since \<open>z - prox f z\<close> is a subgradient at \<open>prox f z\<close> and
+  subgradients are locally bounded.\<close>
 
 lemma prox_lipschitz_on:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4623,10 +4547,10 @@ next
     by (rule closed_Collect_le[OF c1 continuous_on_const])
 qed
 
-text \<open>Local invertibility of the resolvent, by compactness rather than by an
-  inverse function theorem: on the compact fibre over a unit ball the map
-  \<open>z \<mapsto> dist (prox f z) y\<close> vanishes only at \<open>x\<close>, so outside any ball around
-  \<open>x\<close> it is bounded below by a positive constant.\<close>
+text \<open>Local invertibility of the resolvent, by compactness rather than an
+  inverse function theorem: on the compact fibre over a unit ball,
+  \<open>z \<mapsto> dist (prox f z) y\<close> vanishes only at \<open>x\<close>, so outside any ball
+  around \<open>x\<close> it is bounded below by a positive constant.\<close>
 
 lemma prox_local_inverse_continuous:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4685,12 +4609,11 @@ proof -
   qed
 qed
 
-text \<open>The exact identity behind the transport. Writing
-  \<open>G z = z - prox f z\<close> for the displacement, the increment of \<open>f\<close> between
-  two proximal points, measured against the subgradient \<open>G x\<close>, equals the
-  increment of the envelope measured against the same vector, minus half
-  the squared increment of \<open>G\<close>. The first-order terms in \<open>G\<close> cancel
-  exactly, which lets a second-order expansion survive the transport.\<close>
+text \<open>The exact identity behind the transport: writing
+  \<open>G z = z - prox f z\<close> for the displacement, the increment of \<open>f\<close>
+  between two proximal points, measured against \<open>G x\<close>, equals the
+  envelope's increment against the same vector minus half the squared
+  increment of \<open>G\<close>; the first-order terms cancel exactly.\<close>
 
 lemma f_increment_exact:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4719,8 +4642,8 @@ proof -
 qed
 
 text \<open>Three quantitative ingredients: the displacement's first-order
-  remainder, the envelope's second-order remainder, and a lower bound for an
-  injective linear map.\<close>
+  remainder, the envelope's second-order remainder, and a lower bound
+  for an injective linear map.\<close>
 
 lemma prox_remainder_small:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -4804,10 +4727,10 @@ proof -
   thus ?thesis by (intro exI[of _ "max K 1"]) auto
 qed
 
-text \<open>The algebraic heart of the transport. With \<open>A u = u - D u\<close> and
-  \<open>B u = D' u - u\<close>, the quadratic form seen by the envelope at \<open>h\<close> and the
-  one seen by \<open>f\<close> at \<open>k = D h - \<rho>\<close> differ only by terms carrying a factor
-  \<open>\<rho>\<close>: the leading terms \<open>D h \<cdot> A h\<close> cancel identically.\<close>
+text \<open>The algebraic heart of the transport: with \<open>A u = u - D u\<close> and
+  \<open>B u = D' u - u\<close>, the quadratic forms seen by the envelope at \<open>h\<close> and
+  by \<open>f\<close> at \<open>k = D h - \<rho>\<close> differ only by terms carrying a factor \<open>\<rho>\<close> ---
+  the leading terms \<open>D h \<cdot> A h\<close> cancel identically.\<close>
 
 lemma taylor_remainder_identity:
   fixes D D' :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -4825,12 +4748,12 @@ proof -
         inner_add_right inner_commute)
 qed
 
-text \<open>The transport: at a point where the resolvent is differentiable
-  with injective derivative, the convex function itself has a
-  second-order expansion at the corresponding proximal point, with
-  quadratic form \<open>B = D' - id\<close>. Every step of the passage from \<open>h\<close> to
-  \<open>k = D h - \<rho>\<close> is controlled by the single remainder \<open>\<rho>\<close>, and the
-  compactness lemma guarantees that \<open>h\<close> is small whenever \<open>k\<close> is.\<close>
+text \<open>The transport: where the resolvent is differentiable with injective
+  derivative, \<open>f\<close> itself has a second-order expansion at the
+  corresponding proximal point, with quadratic form \<open>B = D' - id\<close>;
+  every step from \<open>h\<close> to \<open>k = D h - \<rho>\<close> is controlled by the single
+  remainder \<open>\<rho>\<close>, and compactness guarantees \<open>h\<close> is small whenever \<open>k\<close>
+  is.\<close>
 
 theorem f_taylor_limit:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -5082,9 +5005,9 @@ proof -
   finally show ?thesis by simp
 qed
 
-text \<open>Packaging the local statement: at a point where the resolvent is
-  differentiable with injective derivative, \<open>f\<close> has a genuine second-order
-  expansion at the corresponding proximal point.\<close>
+text \<open>Packaging the local statement: where the resolvent is differentiable
+  with injective derivative, \<open>f\<close> has a genuine second-order expansion at
+  the corresponding proximal point.\<close>
 
 theorem f_alexandrov_at:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -5160,18 +5083,17 @@ qed
 
 subsection \<open>Alexandrov's theorem\<close>
 
-text \<open>Alexandrov's theorem: a finite convex function on a Euclidean
-  space is twice differentiable almost everywhere. Outside a negligible
-  set, every point admits a second-order Taylor expansion with a bounded,
-  symmetric, positive semidefinite quadratic form.
+text \<open>Alexandrov's theorem: a finite convex function on a Euclidean space
+  is twice differentiable almost everywhere, with a bounded, symmetric,
+  positive semidefinite second-order Taylor expansion outside a
+  negligible set.
 
-  The proof runs entirely through the Minty resolvent. Every point \<open>y\<close> is
-  \<open>prox f z\<close> for some \<open>z\<close> (surjectivity of \<open>id + subdiff f\<close>), and at every
-  \<open>z\<close> where the resolvent is differentiable with injective derivative the
-  expansion is available. The exceptional points form two negligible sets:
-  those where the resolvent fails to be differentiable (Rademacher, with
-  negligible Lipschitz image), and those where its derivative is singular
-  (Sard's lemma for the degenerate part).\<close>
+  The proof runs through the Minty resolvent: every point \<open>y\<close> is
+  \<open>prox f z\<close> for some \<open>z\<close> (surjectivity of \<open>id + subdiff f\<close>), and where
+  the resolvent is differentiable with injective derivative the
+  expansion is available.  The exceptional points --- where the
+  resolvent fails to be differentiable (Rademacher), or its derivative is
+  singular (Sard) --- form two negligible sets.\<close>
 
 theorem convex_alexandrov:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -5272,11 +5194,10 @@ proof -
   qed
 qed
 
-text \<open>The form consumed by Crandall--Ishii: a semiconvex function is
-  twice differentiable almost everywhere. Subtracting the quadratic shifts
-  the gradient by \<open>c *\<^sub>R y\<close> and the Hessian by \<open>c\<close> times the identity,
-  leaving the remainder untouched; positive semidefiniteness is of course
-  lost.\<close>
+text \<open>The form Crandall--Ishii consumes: a semiconvex function is twice
+  differentiable a.e.  Subtracting the quadratic shifts the gradient by
+  \<open>c *\<^sub>R y\<close> and the Hessian by \<open>c\<close> times the identity, leaving the
+  remainder untouched; positive semidefiniteness is lost.\<close>
 
 corollary semiconvex_alexandrov:
   fixes u :: "'a::euclidean_space \<Rightarrow> real" and c :: real
@@ -5343,12 +5264,11 @@ proof (rule negligible_subset[OF convex_alexandrov[OF cvx]])
   qed
 qed
 
-text \<open>The same statement, but propagating the psd clause that
-  \<open>convex_alexandrov\<close> establishes: the corollary above obtains a Hessian
-  \<open>B\<close> with \<open>\<forall>k. 0 \<le> k \<bullet> B k\<close>, forms \<open>W = \<lambda>w. B w - c *\<^sub>R w\<close>, and drops
-  any bound on \<open>W\<close>. Since \<open>k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c \<parallel>k\<parallel>\<^sup>2\<close>, the
-  discarded clause gives the lower bound \<open>-c \<parallel>k\<parallel>\<^sup>2 \<le> k \<bullet> W k\<close> for free,
-  which any compactness argument over a family of such Hessians needs.\<close>
+text \<open>The same statement, propagating the psd clause \<open>convex_alexandrov\<close>
+  establishes: with \<open>W = \<lambda>w. B w - c *\<^sub>R w\<close>, the identity
+  \<open>k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c \<parallel>k\<parallel>\<^sup>2\<close> gives the lower bound
+  \<open>-c \<parallel>k\<parallel>\<^sup>2 \<le> k \<bullet> W k\<close> for free, which a compactness argument over a
+  family of Hessians needs.\<close>
 
 corollary semiconvex_alexandrov_bounded:
   fixes u :: "'a::euclidean_space \<Rightarrow> real" and c :: real
@@ -5430,10 +5350,10 @@ subsection \<open>Towards Jensen's lemma\<close>
 
 text \<open>The development of Jensen's lemma below follows
   Crandall--Ishii--Lions, \<^emph>\<open>User's guide to viscosity solutions\<close>, Bull.
-  AMS 27 (1992). First ingredient: if the maximum at the centre beats the
-  boundary by more than the linear perturbation can recover, then every
+  AMS 27 (1992).  First ingredient: if the centre's maximum beats the
+  boundary by more than a linear perturbation can recover, every
   maximizer of the perturbed function is interior, so a first-order
-  condition is available there.\<close>
+  condition is available.\<close>
 
 lemma perturbed_maximiser_interior:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5484,11 +5404,11 @@ proof -
     by (rule tendsto_lowerbound[OF lim ev]) simp
 qed
 
-text \<open>The second ingredient: at an interior maximizer of \<open>\<phi> + p \<cdot> (-)\<close>
-  the convexified function \<open>\<psi> = \<phi> + (c/2) * (norm -)\<^sup>2\<close> has the explicit
-  subgradient \<open>c *\<^sub>R x - p\<close>. No differentiability of \<open>\<phi>\<close> is needed: the
-  subdifferential of \<open>\<psi>\<close> is nonempty by convexity, and maximality forces
-  its unique element.\<close>
+text \<open>Second ingredient: at an interior maximizer of \<open>\<phi> + p \<cdot> (-)\<close>, the
+  convexified \<open>\<psi> = \<phi> + (c/2) * (norm -)\<^sup>2\<close> has explicit subgradient
+  \<open>c *\<^sub>R x - p\<close> --- no differentiability of \<open>\<phi>\<close> needed, since \<open>\<psi>\<close>'s
+  subdifferential is nonempty by convexity and maximality forces its
+  unique element.\<close>
 
 lemma interior_max_subdiff_unique:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5581,11 +5501,10 @@ proof -
   with q show ?thesis by simp
 qed
 
-text \<open>The third ingredient: at a maximizer of \<open>\<phi> + p \<cdot> (-)\<close> the
-  convexified \<open>\<psi>\<close> also satisfies the reverse (semiconcavity) inequality
-  with the same vector \<open>c *\<^sub>R x - p\<close>. Together with convexity this pins the
-  Bregman divergence of \<open>\<psi>\<close> at \<open>x\<close> between \<open>0\<close> and
-  \<open>(c/2) * (norm (z - x))\<^sup>2\<close>, the two-sided bound that forces the
+text \<open>Third ingredient: at a maximizer of \<open>\<phi> + p \<cdot> (-)\<close>, \<open>\<psi>\<close> also
+  satisfies the reverse (semiconcavity) inequality with the same vector,
+  pinning its Bregman divergence at \<open>x\<close> between \<open>0\<close> and
+  \<open>(c/2) * (norm (z - x))\<^sup>2\<close> --- the two-sided bound forcing the
   resolvent's derivative into \<open>[1/(1+c), 1]\<close>.\<close>
 
 lemma max_semiconcave_bound:
@@ -5624,10 +5543,10 @@ proof -
 qed
 
 text \<open>A uniform interiority margin: bounding \<open>\<phi>\<close> on the whole annulus
-  \<open>\<rho> \<le> dist y \<xi> \<le> r\<close>, rather than only on the sphere, puts every
-  maximizer strictly inside \<open>ball \<xi> \<rho>\<close>, so all maximizers keep a common
-  distance \<open>r - \<rho>\<close> from the boundary, which is what makes the
-  co-coercivity argument below localizable.\<close>
+  \<open>\<rho> \<le> dist y \<xi> \<le> r\<close>, not just the sphere, puts every maximizer
+  strictly inside \<open>ball \<xi> \<rho>\<close>, keeping a common distance \<open>r - \<rho>\<close> from
+  the boundary --- what makes the co-coercivity argument below
+  localizable.\<close>
 
 lemma perturbed_maximiser_deep_interior:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5658,12 +5577,12 @@ proof (rule ccontr)
   ultimately show False by linarith
 qed
 
-text \<open>Co-coercivity, in the localized form. If \<open>\<psi>\<close> is convex and admits
-  at \<open>x\<close> the semiconcave upper bound with vector \<open>q\<close> on \<open>cball \<xi> r\<close>, then
-  for any step \<open>s\<close> with \<open>s * c \<le> 1\<close> whose test point stays in the ball,
-  \<open>(s/2) * norm (q - q')\<^sup>2\<close> is dominated by the Bregman divergence. The
-  textbook takes the optimal \<open>s = 1/c\<close>; a smaller \<open>s\<close> is what lets the
-  test point be kept inside \<open>cball \<xi> r\<close>.\<close>
+text \<open>Co-coercivity, localized: if \<open>\<psi>\<close> is convex with the semiconcave
+  upper bound at \<open>x\<close> on \<open>cball \<xi> r\<close>, then for any step \<open>s\<close> with
+  \<open>s * c \<le> 1\<close> keeping the test point in the ball,
+  \<open>(s/2) * norm (q - q')\<^sup>2\<close> is dominated by the Bregman divergence; the
+  textbook's optimal \<open>s = 1/c\<close> is replaced by a smaller \<open>s\<close> that keeps
+  the test point inside \<open>cball \<xi> r\<close>.\<close>
 
 lemma bregman_cocoercive_step:
   fixes \<psi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5709,11 +5628,10 @@ proof -
 qed
 
 text \<open>The reverse Baillon--Haddad implication, localized: adding the two
-  co-coercivity estimates makes the Bregman divergences collapse into
-  \<open>(q - q') \<cdot> (x - x')\<close>, and Cauchy--Schwarz then bounds
-  \<open>norm (q - q')\<close> by \<open>norm (x - x') / s\<close>. So a convex function that is
-  also \<open>c\<close>-semiconcave on a ball has a Lipschitz selection of subgradients
-  there.\<close>
+  co-coercivity estimates collapses the Bregman divergences into
+  \<open>(q - q') \<cdot> (x - x')\<close>, and Cauchy--Schwarz bounds \<open>norm (q - q')\<close> by
+  \<open>norm (x - x') / s\<close> --- a convex, \<open>c\<close>-semiconcave function on a ball
+  has a Lipschitz selection of subgradients there.\<close>
 
 lemma subdiff_lipschitz_of_semiconcave:
   fixes \<psi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5754,11 +5672,11 @@ proof -
   qed
 qed
 
-text \<open>Routine set-up for Jensen's lemma: a semiconvex function is continuous
-  (subtract the quadratic from the continuous convex \<open>\<psi>\<close>), hence the perturbed
-  function attains its maximum on the compact ball; and a ball of positive
-  radius is not negligible, which is the contradiction the argument runs
-  into.\<close>
+text \<open>Routine set-up for Jensen's lemma: a semiconvex function is
+  continuous (subtract the quadratic from the continuous convex \<open>\<psi>\<close>),
+  so the perturbed function attains its maximum on the compact ball; a
+  ball of positive radius is not negligible, which is the contradiction
+  the argument runs into.\<close>
 
 lemma semiconvex_continuous:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5799,20 +5717,20 @@ proof -
 qed
 
 text \<open>Jensen's lemma: for a semiconvex \<open>\<phi>\<close> whose maximum over
-  \<open>cball \<xi> r\<close> at the centre beats the surrounding annulus by more than the
-  perturbation can recover, the set of points that maximize some small
-  linear perturbation of \<open>\<phi>\<close> is not negligible.
+  \<open>cball \<xi> r\<close> at the centre beats the surrounding annulus by more than
+  the perturbation can recover, the set of points that maximize some
+  small linear perturbation of \<open>\<phi>\<close> is not negligible.
 
   The usual proof estimates the measure from below by a Jacobian
-  determinant, which would need Hadamard's inequality or a spectral
-  theorem, neither available in this HOL-Analysis. Only positivity is used
+  determinant, needing Hadamard's inequality or a spectral theorem,
+  neither available in this HOL-Analysis.  Only positivity is used
   downstream, and that needs no determinants: the map
-  \<open>P x = c *\<^sub>R x - grad \<psi> x\<close> is a genuine function on \<open>K\<close> (its
-  subdifferential is a singleton there, by \<open>interior_max_subdiff_unique\<close>),
-  it is Lipschitz there (by \<open>subdiff_lipschitz_of_semiconcave\<close>, localised
-  using the uniform interiority margin), and it maps \<open>K\<close> onto
-  \<open>cball 0 d\<close>. A negligible \<open>K\<close> would therefore have negligible image, yet
-  that image contains a ball.\<close>
+  \<open>P x = c *\<^sub>R x - grad \<psi> x\<close> is a genuine, Lipschitz function on \<open>K\<close>
+  (its subdifferential is a singleton there, by
+  \<open>interior_max_subdiff_unique\<close> and localized
+  \<open>subdiff_lipschitz_of_semiconcave\<close>), and it maps \<open>K\<close> onto
+  \<open>cball 0 d\<close>.  A negligible \<open>K\<close> would therefore have negligible image,
+  yet that image contains a ball.\<close>
 
 theorem jensen_lemma:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5999,13 +5917,11 @@ subsection \<open>Towards the theorem on sums: doubling of variables\<close>
 
 text \<open>The development of the theorem on sums below follows
   Crandall--Ishii--Lions, \<^emph>\<open>User's guide to viscosity solutions\<close>, Bull.
-  AMS 27 (1992), Lemma 3.1. The quantitative core, in purely algebraic
-  form: no semicontinuity, no compactness, only the two maximality
-  statements. Writing \<open>\<Phi>\<^sub>\<alpha>(x,y) = u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> and
-  \<open>M\<^sub>\<alpha> = max \<Phi>\<^sub>\<alpha>\<close>, testing \<open>\<Phi>\<^sub>\<beta>\<close> at the maximizer of \<open>\<Phi>\<^sub>\<alpha>\<close> gives at once
-  that \<open>M\<^sub>\<alpha>\<close> is nonincreasing in \<open>\<alpha>\<close> and that the penalty term is squeezed
-  between consecutive values, forcing \<open>\<alpha> * norm (x\<^sub>\<alpha> - y\<^sub>\<alpha>)\<^sup>2 \<longrightarrow> 0\<close> once
-  \<open>M\<^sub>\<alpha>\<close> is known to converge, which drives the two maximizers together.\<close>
+  AMS 27 (1992), Lemma 3.1.  The quantitative core is purely algebraic:
+  writing \<open>\<Phi>\<^sub>\<alpha>(x,y) = u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> and
+  \<open>M\<^sub>\<alpha> = max \<Phi>\<^sub>\<alpha>\<close>, testing \<open>\<Phi>\<^sub>\<beta>\<close> at the maximizer of \<open>\<Phi>\<^sub>\<alpha>\<close> shows
+  \<open>M\<^sub>\<alpha>\<close> nonincreasing and squeezes the penalty term, forcing
+  \<open>\<alpha> * norm (x\<^sub>\<alpha> - y\<^sub>\<alpha>)\<^sup>2 \<longrightarrow> 0\<close> once \<open>M\<^sub>\<alpha>\<close> is known to converge.\<close>
 
 lemma doubling_ge_diagonal:
   fixes u w :: "'a::euclidean_space \<Rightarrow> real"
@@ -6054,11 +5970,10 @@ proof -
   with sq show ?thesis by linarith
 qed
 
-text \<open>The limit half of Lemma 3.1: once \<open>M\<^sub>\<alpha>\<close> is known to converge,
-  applying the squeeze with \<open>\<beta> = \<alpha>/2\<close> traps \<open>(\<alpha>/4) * pen \<alpha>\<close> between \<open>0\<close>
-  and \<open>M\<^bsub>\<alpha>/2\<^esub> - M\<^sub>\<alpha>\<close>, and both ends go to \<open>0\<close>. So the penalty term
-  vanishes, not merely the distance, which is what makes the two
-  maximizers usable as a single point in the limit.\<close>
+text \<open>The limit half of Lemma 3.1: once \<open>M\<^sub>\<alpha>\<close> converges, the squeeze with
+  \<open>\<beta> = \<alpha>/2\<close> traps \<open>(\<alpha>/4) * pen \<alpha>\<close> between \<open>0\<close> and
+  \<open>M\<^bsub>\<alpha>/2\<^esub> - M\<^sub>\<alpha>\<close>, both tending to \<open>0\<close>: the penalty term vanishes,
+  letting the two maximizers merge in the limit.\<close>
 
 lemma doubling_penalty_tendsto_zero:
   fixes M pen :: "real \<Rightarrow> real"
@@ -6095,9 +6010,10 @@ proof -
   thus ?thesis by simp
 qed
 
-text \<open>And the hypothesis of the previous lemma is exactly what \<open>doubling_antitone\<close>
-  plus \<open>doubling_ge_diagonal\<close> supply: \<open>M\<^sub>\<alpha>\<close> is antitone and bounded below by any
-  diagonal value, hence convergent along \<open>at_top\<close>.\<close>
+text \<open>And the hypothesis of the previous lemma is exactly what
+  \<open>doubling_antitone\<close> plus \<open>doubling_ge_diagonal\<close> supply: \<open>M\<^sub>\<alpha>\<close> is
+  antitone and bounded below by any diagonal value, hence convergent
+  along \<open>at_top\<close>.\<close>
 
 lemma antitone_bdd_below_convergent_at_top:
   fixes M :: "real \<Rightarrow> real"
@@ -6136,9 +6052,9 @@ subsection \<open>Composing the three big theorems on the sup-convolution\<close
 
 text \<open>\<open>supconv_semiconvex\<close> delivers semiconvexity in the form
   \<open>(norm x)\<^sup>2 / (2*\<epsilon>)\<close>, while \<open>jensen_lemma\<close> and \<open>semiconvex_alexandrov\<close>
-  consume it in the form \<open>(c/2) * (norm x)\<^sup>2\<close>. The two agree with
-  \<open>c = 1/\<epsilon>\<close>; restating it once here lets the three theorems compose
-  without re-deriving anything.\<close>
+  consume it as \<open>(c/2) * (norm x)\<^sup>2\<close>.  The two agree with \<open>c = 1/\<epsilon>\<close>;
+  restating it once here lets the three theorems compose without
+  re-deriving anything.\<close>
 
 lemma supconv_semiconvex':
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -6158,8 +6074,9 @@ proof -
 qed
 
 text \<open>The sup-convolution of any bounded-above function is twice
-  differentiable almost everywhere: the fact that supplies genuine second
-  derivatives at the perturbed maximizer produced by Jensen's lemma.\<close>
+  differentiable almost everywhere: the fact that supplies genuine
+  second derivatives at the perturbed maximizer produced by Jensen's
+  lemma.\<close>
 
 corollary supconv_alexandrov:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -6169,11 +6086,10 @@ corollary supconv_alexandrov:
           / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))}"
   by (rule semiconvex_alexandrov[OF supconv_semiconvex'[OF B e]])
 
-text \<open>Jensen's lemma applies to it verbatim: the set of points
-  maximizing some small linear perturbation of the sup-convolution is not
-  negligible, so it meets the full-measure set of the previous corollary.
-  That intersection is exactly the point at which the theorem on sums
-  reads off its matrices.\<close>
+text \<open>Jensen's lemma applies verbatim: the set of points maximizing a
+  small linear perturbation of the sup-convolution is not negligible, so
+  it meets the full-measure set of the previous corollary --- exactly
+  where the theorem on sums reads off its matrices.\<close>
 
 corollary supconv_jensen:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -6190,13 +6106,12 @@ proof -
         bnd d small])
 qed
 
-text \<open>The engine of Crandall--Ishii: Jensen's lemma says the perturbed
-  maximizers form a set of positive measure; Alexandrov's says the twice
-  differentiable points form a set of full measure. A non-negligible set
-  cannot sit inside a negligible one, so the two meet: there is a single
-  point that is simultaneously a maximizer of a small linear perturbation
-  and a point of genuine second-order expansion, which is exactly how the
-  theorem on sums produces its matrices.\<close>
+text \<open>The engine of Crandall--Ishii: Jensen's lemma gives perturbed
+  maximizers positive measure, Alexandrov's gives twice differentiable
+  points full measure, so the two sets meet.  A single point is
+  simultaneously a perturbed maximizer and a point of genuine
+  second-order expansion, which is how the theorem on sums produces its
+  matrices.\<close>
 
 theorem supconv_jensen_alexandrov_point:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -6239,13 +6154,12 @@ proof -
   qed
 qed
 
-text \<open>Second-order conditions at an interior maximum: if a function has
-  a second-order expansion with data \<open>(q, X)\<close> at an interior maximizer,
-  then \<open>q = 0\<close> and the quadratic form is negative semidefinite. Both
-  follow from the same limit, \<open>R (t *\<^sub>R v) / t\<^sup>2 \<longrightarrow> 0\<close> along \<open>at_right 0\<close>:
-  dividing the maximality inequality by \<open>t\<close> gives the first, and by
-  \<open>t\<^sup>2\<close> the second. This upgrades the Alexandrov expansion at the Jensen
-  point into a genuine second-order jet.\<close>
+text \<open>Second-order conditions at an interior maximum: a second-order
+  expansion with data \<open>(q, X)\<close> at an interior maximizer forces \<open>q = 0\<close>
+  and \<open>X\<close> negative semidefinite, both from the same limit
+  \<open>R (t *\<^sub>R v) / t\<^sup>2 \<longrightarrow> 0\<close>, dividing the maximality inequality by \<open>t\<close> and
+  by \<open>t\<^sup>2\<close>.  This upgrades the Alexandrov expansion at the Jensen point
+  into a genuine second-order jet.\<close>
 
 lemma second_order_interior_max:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -6375,13 +6289,12 @@ qed
 subsection \<open>Block structure on the product space\<close>
 
 text \<open>The doubled function lives on \<open>'a \<times> 'b\<close>, itself a Euclidean space,
-  so every result above applies to it verbatim. Two things bring it back
-  down to the factors. First, the negative semidefiniteness delivered on
-  the product is tested on the diagonal: with \<open>w = v\<close> the penalty term
-  vanishes and only \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> survives, the matrix inequality of
-  the theorem on sums. Second, a second-order expansion on the product
-  restricts to each slice, letting the single product Hessian be read as
-  two separate matrices.\<close>
+  so every result above applies to it verbatim.  Testing the product's
+  negative semidefiniteness on the diagonal \<open>w = v\<close> kills the penalty
+  term and leaves \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>, the matrix inequality of the
+  theorem on sums; and a second-order expansion on the product restricts
+  to each slice, letting the single product Hessian be read as two
+  separate matrices.\<close>
 
 lemma block_diagonal_test:
   fixes X Y :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -6473,14 +6386,12 @@ qed
 
 subsection \<open>Semiconvexity calculus for the doubled functional\<close>
 
-text \<open>Before any of the machinery can be pointed at the doubled
-  functional \<open>(x,y) \<mapsto> u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close>, that functional
-  must be known semiconvex on the product. Three closure properties
-  suffice: semiconvexity adds (with the constants), it survives
-  composition with \<open>fst\<close> and \<open>snd\<close>, and the concave penalty is itself
-  semiconvex with constant \<open>2*\<alpha>\<close>, by the identity
-  \<open>-(\<alpha>/2) * norm (x-y)\<^sup>2 + \<alpha> * (norm x\<^sup>2 + norm y\<^sup>2) = (\<alpha>/2) * norm (x+y)\<^sup>2\<close>,
-  which turns it into a convex function outright.\<close>
+text \<open>The doubled functional
+  \<open>(x,y) \<mapsto> u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> must first be known
+  semiconvex on the product.  Three closure properties suffice:
+  semiconvexity adds (with the constants), it survives composition with
+  \<open>fst\<close> and \<open>snd\<close>, and the concave penalty is itself semiconvex with
+  constant \<open>2*\<alpha>\<close>.\<close>
 
 lemma convex_on_norm_sq:
   fixes S :: "'a::real_inner set"
@@ -6601,7 +6512,7 @@ lemma norm_prod_sq:
   shows "(norm z)\<^sup>2 = (norm (fst z))\<^sup>2 + (norm (snd z))\<^sup>2"
   by (simp add: norm_prod_def)
 
-text \<open>The concave penalty is semiconvex with constant \<open>2*\<alpha>\<close>. Adding
+text \<open>The concave penalty is semiconvex with constant \<open>2*\<alpha>\<close>.  Adding
   \<open>\<alpha> * (norm x\<^sup>2 + norm y\<^sup>2)\<close> to \<open>-(\<alpha>/2) * norm (x-y)\<^sup>2\<close> gives exactly
   \<open>(\<alpha>/2) * norm (x+y)\<^sup>2\<close>, a convex function outright.\<close>
 
@@ -6682,9 +6593,9 @@ proof -
 qed
 
 text \<open>The doubled functional is semiconvex, with constant
-  \<open>1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>\<close>: the hypothesis Rademacher, Alexandrov, Jensen and
-  \<open>supconv_jensen_alexandrov_point\<close> all need before being pointed at the
-  doubling of variables, and what opens the theorem on sums.\<close>
+  \<open>1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>\<close> --- the hypothesis Rademacher, Alexandrov and
+  Jensen need before being pointed at the doubling of variables, and
+  what opens the theorem on sums.\<close>
 
 theorem doubled_functional_semiconvex:
   fixes u v :: "'a::euclidean_space \<Rightarrow> real"
@@ -6727,16 +6638,13 @@ proof -
 qed
 
 text \<open>The doubled functional perturbed by \<open>-\<delta>\<parallel>z - \<xi>\<parallel>\<^sup>2\<close> is still
-  semiconvex, with the constant raised by \<open>2\<delta>\<close>. This turns a plain
-  maximizer of the doubled functional into a strict one, which is what
-  Jensen's lemma needs (\<open>\<Phi>(\<xi>) > m\<close> with \<open>m\<close> bounding \<open>\<Phi>\<close> on the annulus).
+  semiconvex, with the constant raised by \<open>2\<delta>\<close>, turning a plain
+  maximizer into a strict one, as Jensen's lemma needs.
 
-  This perturbation splits across the two blocks,
+  The perturbation splits across the two blocks,
   \<open>\<parallel>z - \<xi>\<parallel>\<^sup>2 = \<parallel>fst z - fst \<xi>\<parallel>\<^sup>2 + \<parallel>snd z - snd \<xi>\<parallel>\<^sup>2\<close>, so the perturbed
-  functional keeps the doubled form every lemma downstream expects; and
-  the cost is affine, since \<open>\<parallel>z\<parallel>\<^sup>2 - \<parallel>z - \<xi>\<parallel>\<^sup>2 = 2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2\<close> makes the
-  perturbation plus its compensating \<open>\<delta>\<parallel>z\<parallel>\<^sup>2\<close> affine in \<open>z\<close>, and convexity
-  is closed under adding one.\<close>
+  functional keeps the doubled form downstream lemmas expect, and the
+  cost is affine, since \<open>\<parallel>z\<parallel>\<^sup>2 - \<parallel>z - \<xi>\<parallel>\<^sup>2 = 2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2\<close>.\<close>
 
 lemma norm_sq_diff_shift:
   fixes z c :: "'a::euclidean_space"
@@ -6794,11 +6702,11 @@ proof -
 qed
 
 subsection \<open>The engine in general form\<close>
-text \<open>\<open>supconv_jensen_alexandrov_point\<close> was stated for a sup-convolution,
-  but the only property it used was semiconvexity, which the doubled
-  functional also has without being a sup-convolution. So the engine is
-  restated for an arbitrary semiconvex \<open>\<phi>\<close>, strengthened with the
-  interiority \<open>dist x \<xi> < \<rho>\<close> that \<open>second_order_interior_max\<close> needs.\<close>
+text \<open>\<open>supconv_jensen_alexandrov_point\<close> used only semiconvexity of the
+  sup-convolution, which the doubled functional also has without being a
+  sup-convolution.  So the engine is restated for an arbitrary semiconvex
+  \<open>\<phi>\<close>, strengthened with the interiority \<open>dist x \<xi> < \<rho>\<close> that
+  \<open>second_order_interior_max\<close> needs.\<close>
 
 theorem semiconvex_jensen_alexandrov_point:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -6852,16 +6760,15 @@ qed
 
 subsection \<open>Uniqueness of the second-order form, and block diagonality\<close>
 
-text \<open>The quadratic form in a second-order expansion is unique.
-  Restricting to a ray \<open>t \<mapsto> t *\<^sub>R v\<close> makes the difference quotient
-  constant in \<open>t\<close>, and a constant that tends to \<open>0\<close> is \<open>0\<close>.
+text \<open>The quadratic form in a second-order expansion is unique: restricting
+  to a ray \<open>t \<mapsto> t *\<^sub>R v\<close> makes the difference quotient constant in
+  \<open>t\<close>, and a constant that tends to \<open>0\<close> is \<open>0\<close>.
 
-  This is what makes the theorem on sums reachable here without the
-  \<open>A + \<epsilon> A\<^sup>2\<close> matrix argument of the textbook proof: for a function of the
-  form \<open>a (fst z) + b (snd z)\<close> the two slice expansions reassemble into a
-  block-diagonal quadratic form, and by uniqueness the product form must
-  equal it, so the off-diagonal blocks vanish exactly rather than only
-  after an \<open>\<epsilon>\<close>-perturbation.\<close>
+  This avoids the textbook's \<open>A + \<epsilon> A\<^sup>2\<close> matrix argument: for
+  \<open>a (fst z) + b (snd z)\<close> the two slice expansions reassemble into a
+  block-diagonal quadratic form, and by uniqueness the product form
+  equals it, so the off-diagonal blocks vanish exactly, not merely after
+  an \<open>\<epsilon>\<close>-perturbation.\<close>
 
 lemma second_order_form_unique:
   fixes g :: "'a::euclidean_space \<Rightarrow> real"
@@ -6932,11 +6839,10 @@ next
   thus ?thesis using nv by (simp add: field_simps)
 qed
 
-text \<open>The reusable ray step: along a fixed direction the second-order
-  expansion says exactly that \<open>F (t *\<^sub>R w) / t\<^sup>2\<close> converges to half the
-  quadratic form at \<open>w\<close>. Applying this to the product expansion and to the two
-  slice expansions, and adding the latter two, identifies the product form with
-  the block-diagonal one.\<close>
+text \<open>The reusable ray step: along a fixed direction, \<open>F (t *\<^sub>R w) / t\<^sup>2\<close>
+  converges to half the quadratic form at \<open>w\<close>.  Applying this to the
+  product expansion and to the two slice expansions, and adding the
+  latter two, identifies the product form with the block-diagonal one.\<close>
 
 lemma expansion_ray_limit:
   fixes F :: "'a::euclidean_space \<Rightarrow> real"
@@ -6992,12 +6898,12 @@ proof -
   thus ?thesis by simp
 qed
 
-text \<open>Block diagonality: for a function of the form
-  \<open>a (fst z) + b (snd z)\<close> the product quadratic form is exactly the sum of
-  the two slice forms, with off-diagonal blocks vanishing identically.
-  Along the ray \<open>t *\<^sub>R (h,g)\<close> the difference quotient of the product
-  splits as a sum of the two slice quotients, and the three ray limits
-  force the identity, with no \<open>\<epsilon>\<close>-perturbation and no spectral theory.\<close>
+text \<open>Block diagonality: for \<open>a (fst z) + b (snd z)\<close> the product quadratic
+  form is exactly the sum of the two slice forms, off-diagonal blocks
+  vanishing identically.  Along the ray \<open>t *\<^sub>R (h,g)\<close> the product's
+  difference quotient splits as a sum of the slice quotients, and the
+  three ray limits force the identity, with no \<open>\<epsilon>\<close>-perturbation and no
+  spectral theory.\<close>
 
 theorem product_form_block_diagonal:
   fixes a :: "'a::euclidean_space \<Rightarrow> real" and b :: "'b::euclidean_space \<Rightarrow> real"
@@ -7070,15 +6976,13 @@ proof -
   thus ?thesis by simp
 qed
 
-text \<open>The penalty is a quadratic, so its second-order expansion is
-  exact, with no remainder. Its gradient at \<open>zh\<close> is
-  \<open>\<alpha> *\<^sub>R (Dz, -Dz)\<close> and its quadratic form is
-  \<open>k \<mapsto> \<alpha> * norm (fst k - snd k)\<^sup>2\<close>, written as vectors and linear maps on
-  the product so they can be added to the expansion of \<open>\<Psi>\<close> to recover the
-  expansion of \<open>\<Psi> + pen\<close>, the separated form \<open>a (fst z) + b (snd z)\<close> that
-  \<open>product_form_block_diagonal\<close> needs. The quadratic form vanishes on the
-  diagonal \<open>(v,v)\<close>, which is exactly why testing there kills the penalty
-  and leaves only \<open>X \<preceq> Y\<close>.\<close>
+text \<open>The penalty is a quadratic, so its second-order expansion is exact,
+  with no remainder: gradient \<open>\<alpha> *\<^sub>R (Dz, -Dz)\<close>, quadratic form
+  \<open>k \<mapsto> \<alpha> * norm (fst k - snd k)\<^sup>2\<close>.  Added to the expansion of \<open>\<Psi>\<close> it
+  recovers the separated form \<open>a (fst z) + b (snd z)\<close> that
+  \<open>product_form_block_diagonal\<close> needs; the quadratic form vanishes on
+  the diagonal \<open>(v,v)\<close>, which is exactly why testing there kills the
+  penalty and leaves only \<open>X \<preceq> Y\<close>.\<close>
 
 lemma penalty_exact:
   fixes \<alpha> :: real and zh k :: "'a::euclidean_space \<times> 'a"
@@ -7106,8 +7010,8 @@ proof -
   show ?thesis unfolding d1 e1 e2 e3 by (simp add: algebra_simps)
 qed
 
-text \<open>And the penalty's quadratic form is linear in \<open>k\<close> and vanishes on the
-  diagonal.\<close>
+text \<open>And the penalty's quadratic form is linear in \<open>k\<close> and vanishes on
+  the diagonal.\<close>
 
 lemma penalty_form_scaleR:
   fixes \<alpha> s :: real and k :: "'a::euclidean_space \<times> 'a"
@@ -7123,19 +7027,18 @@ lemma penalty_form_diagonal:
 
 subsection \<open>The theorem on sums: matrix inequality\<close>
 
-text \<open>The theorem on sums, algebraic core. Suppose the doubled
-  functional \<open>a (fst z) + b (snd z) - (\<alpha>/2) * norm (fst z - snd z)\<^sup>2\<close> has a
-  second-order expansion at \<open>zh\<close> with a negative semidefinite form \<open>W\<close>
-  (what an interior maximum supplies). Adding the penalty's exact
-  expansion turns the form into \<open>WP\<close> and the functional into the
-  separated form \<open>a (fst z) + b (snd z)\<close>; block diagonality then splits
-  \<open>WP\<close> into its two slice matrices, and testing on the diagonal \<open>(v,v)\<close>
-  (where the penalty contributes nothing) leaves exactly the matrix
-  inequality.
+text \<open>The theorem on sums, algebraic core: if the doubled functional
+  \<open>a (fst z) + b (snd z) - (\<alpha>/2) * norm (fst z - snd z)\<^sup>2\<close> has a
+  second-order expansion at \<open>zh\<close> with negative semidefinite form \<open>W\<close>
+  (what an interior maximum supplies), adding the penalty's exact
+  expansion turns the functional into the separated form
+  \<open>a (fst z) + b (snd z)\<close> and, by block diagonality, splits \<open>W\<close> into its
+  two slice matrices; testing on the diagonal \<open>(v,v)\<close> (where the penalty
+  contributes nothing) leaves exactly the matrix inequality.
 
-  With \<open>b = - w\<close> the second slice matrix is \<open>- Y\<close>, so the conclusion reads
-  \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>, i.e. \<open>X \<preceq> Y\<close>: what the comparison principle feeds
-  to degenerate ellipticity.\<close>
+  With \<open>b = - w\<close> the second slice matrix is \<open>- Y\<close>, so the conclusion
+  reads \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>, i.e. \<open>X \<preceq> Y\<close>: what the comparison
+  principle feeds to degenerate ellipticity.\<close>
 
 theorem sums_matrix_inequality:
   fixes a b :: "'a::euclidean_space \<Rightarrow> real"
@@ -7195,15 +7098,13 @@ qed
 subsection \<open>The limit half of Lemma 3.1\<close>
 
 text \<open>The remaining half of Crandall--Ishii--Lions Lemma 3.1: the common
-  limit point of the two maximizers maximizes \<open>u - w\<close>. Upper
-  semicontinuity of \<open>u\<close> and lower semicontinuity of \<open>w\<close> enter only through
-  the two \<open>eventually\<close> statements below, so no semicontinuity predicate
-  has to be fixed here; a caller with any formulation of usc/lsc can
-  supply them.
+  limit point of the two maximizers maximizes \<open>u - w\<close>.  Upper/lower
+  semicontinuity of \<open>u\<close>/\<open>w\<close> enter only through two \<open>eventually\<close>
+  statements below, so no semicontinuity predicate has to be fixed here.
 
-  Combined with \<open>doubling_ge_diagonal\<close> (which gives \<open>S \<le> M\<^sub>\<alpha>\<close>) this pins
-  \<open>lim M\<^sub>\<alpha> = S\<close> and identifies the limit point as a maximizer, letting the
-  doubling argument start at an interior maximum of \<open>u - w\<close>.\<close>
+  Combined with \<open>doubling_ge_diagonal\<close> (which gives \<open>S \<le> M\<^sub>\<alpha>\<close>) this
+  pins \<open>lim M\<^sub>\<alpha> = S\<close>, letting the doubling argument start at an
+  interior maximum of \<open>u - w\<close>.\<close>
 
 lemma doubling_limit_maximises:
   fixes u w :: "'a::euclidean_space \<Rightarrow> real"
@@ -7234,13 +7135,13 @@ qed
 
 subsection \<open>Transferring jets back: the sup-convolution's magic property\<close>
 
-text \<open>\<^emph>\<open>Magic property\<close> of sup-convolutions, and the whole reason the
-  regularisation is harmless. If the supremum defining \<open>supconv u \<epsilon> x\<close> is
-  attained at \<open>ys\<close>, then shifting both arguments by the same \<open>k\<close> leaves
-  the penalty unchanged, so the increment of \<open>u\<close> at \<open>ys\<close> is dominated by
-  the increment of \<open>supconv u \<epsilon>\<close> at \<open>x\<close>. Consequently any second-order
-  upper bound enjoyed by the sup-convolution at \<open>x\<close> is inherited by \<open>u\<close>
-  itself at \<open>ys\<close>: the jet moves back with no loss and no limit needed.\<close>
+text \<open>\<^emph>\<open>Magic property\<close> of sup-convolutions, the reason the
+  regularisation is harmless: if the supremum defining
+  \<open>supconv u \<epsilon> x\<close> is attained at \<open>ys\<close>, shifting both arguments by the
+  same \<open>k\<close> leaves the penalty unchanged, so the increment of \<open>u\<close> at
+  \<open>ys\<close> is dominated by the increment of \<open>supconv u \<epsilon>\<close> at \<open>x\<close> ---
+  consequently any second-order upper bound at \<open>x\<close> is inherited by \<open>u\<close>
+  at \<open>ys\<close>, with no loss and no limit needed.\<close>
 
 lemma supconv_dominates_shift:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -7261,8 +7162,8 @@ proof -
 qed
 
 text \<open>In quotient form: the difference quotient for \<open>u\<close> at \<open>ys\<close> is
-  dominated by the one for \<open>supconv u \<epsilon>\<close> at \<open>x\<close>, which tends to \<open>0\<close>. That
-  is exactly the statement that \<open>(p, X)\<close> is a second-order superjet of
+  dominated by the one for \<open>supconv u \<epsilon>\<close> at \<open>x\<close>, which tends to \<open>0\<close> ---
+  exactly the statement that \<open>(p, X)\<close> is a second-order superjet of
   \<open>u\<close> at \<open>ys\<close>.\<close>
 
 lemma supconv_jet_transfer:
@@ -7281,12 +7182,12 @@ qed
 
 subsection \<open>From abstract forms to matrices\<close>
 
-text \<open>Viscosity-solution notions typically speak of a matrix \<open>H\<close> acting
-  by \<open>H *v h\<close> and require \<open>transpose H = H\<close>, while everything above
-  produces a bounded linear \<open>X\<close> with the abstract symmetry
-  \<open>v \<cdot> X w = w \<cdot> X v\<close>. The bridge is HOL-Analysis's \<open>matrix\<close>: it
-  represents \<open>X\<close> faithfully, and the abstract symmetry is exactly matrix
-  symmetry, because \<open>v \<cdot> (transpose A *v w) = w \<cdot> (A *v v)\<close>.\<close>
+text \<open>Viscosity-solution notions speak of a matrix \<open>H\<close> acting by
+  \<open>H *v h\<close> with \<open>transpose H = H\<close>, while the results above produce a
+  bounded linear \<open>X\<close> with the abstract symmetry \<open>v \<cdot> X w = w \<cdot> X v\<close>.
+  HOL-Analysis's \<open>matrix\<close> bridges the two: it represents \<open>X\<close> faithfully,
+  and the abstract symmetry is exactly matrix symmetry, since
+  \<open>v \<cdot> (transpose A *v w) = w \<cdot> (A *v v)\<close>.\<close>
 
 lemma matrix_vec_apply:
   fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)"
@@ -7320,7 +7221,7 @@ proof (subst matrix_eq, rule allI)
 qed
 
 text \<open>The other half of the bridge: a symmetric matrix gives a quadratic
-  test function. Symmetry makes the two cross terms of the derivative
+  test function.  Symmetry makes the two cross terms of the derivative
   equal, so the factor \<open>1/2\<close> leaves exactly \<open>h \<mapsto> h \<cdot> (H *v z)\<close>.\<close>
 
 lemma matrix_symmetric_swap:
@@ -7360,10 +7261,10 @@ qed
 
 
 text \<open>The quadratic test function attached to a jet \<open>(p, H)\<close> at \<open>x\<close>:
-  \<open>\<phi> z = p \<cdot> (z - x) + ((z - x) \<cdot> (H *v (z - x)))/2\<close>, with gradient field
-  \<open>g z = p + H *v (z - x)\<close>. The two derivative facts below, together with
-  the symmetry of \<open>matrix_of_symmetric\<close>, are exactly what a viscosity
-  test-function predicate requires of \<open>(\<phi>, g, H)\<close> at \<open>x\<close>.\<close>
+  \<open>\<phi> z = p \<cdot> (z - x) + ((z - x) \<cdot> (H *v (z - x)))/2\<close>, with gradient
+  field \<open>g z = p + H *v (z - x)\<close>.  These, together with the symmetry of
+  \<open>matrix_of_symmetric\<close>, are exactly what a viscosity test-function
+  predicate requires of \<open>(\<phi>, g, H)\<close> at \<open>x\<close>.\<close>
 
 lemma quadratic_test_derivative:
   fixes H :: "real^'n::finite^'n" and p x y :: "real^'n"
@@ -7408,12 +7309,11 @@ qed
 subsection \<open>Sign flip: superjets of \<open>- w\<close> are subjets of \<open>w\<close>\<close>
 
 text \<open>The doubling regularises \<open>u\<close> and \<open>- w\<close> by sup-convolution, since
-  \<open>supconv\<close> is what produces semiconvexity. A supersolution condition,
-  however, speaks about \<open>w\<close> and needs a subjet. The two are the same
+  \<open>supconv\<close> is what produces semiconvexity, but a supersolution
+  condition speaks about \<open>w\<close> and needs a subjet.  The two are the same
   statement with all signs reversed: the difference quotient for \<open>- w\<close>
   with data \<open>(p, X)\<close> is exactly minus the one for \<open>w\<close> with data
-  \<open>(- p, - X)\<close>. So an upper bound on the first is a lower bound on the
-  second.\<close>
+  \<open>(- p, - X)\<close>, so an upper bound on one is a lower bound on the other.\<close>
 
 lemma neg_jet_quotient:
   fixes w :: "'a::euclidean_space \<Rightarrow> real"
@@ -7450,7 +7350,7 @@ proof -
 qed
 
 text \<open>Reading the theorem on sums as an ordering hypothesis for a
-  comparison argument. \<open>sums_matrix_inequality\<close> concludes
+  comparison argument.  \<open>sums_matrix_inequality\<close> concludes
   \<open>v \<cdot> X v + v \<cdot> Yb v \<le> 0\<close> where \<open>Yb\<close> is the slice matrix of the second
   factor; since that factor carries \<open>- w\<close>, the matrix a supersolution
   needs is \<open>Y = - Yb\<close>, and the inequality becomes
@@ -7537,9 +7437,9 @@ next
 qed
 
 text \<open>The two symmetry hypotheses: pairing against \<open>(u, 0)\<close> turns
-  \<open>u \<cdot> fst P\<close> into an inner product on the product space, so the symmetry
-  of \<open>W\<close> transfers to each slice; the penalty contributes \<open>\<alpha> * (v \<cdot> w)\<close>,
-  which is symmetric on its own.\<close>
+  \<open>u \<cdot> fst P\<close> into an inner product on the product space, so the
+  symmetry of \<open>W\<close> transfers to each slice; the penalty contributes
+  \<open>\<alpha> * (v \<cdot> w)\<close>, symmetric on its own.\<close>
 
 lemma inner_fst_pair:
   fixes u :: "'a::euclidean_space" and P :: "'a \<times> 'a"
@@ -7593,9 +7493,9 @@ subsection \<open>From a superjet to a genuine local maximum\<close>
 
 text \<open>A second-order superjet does not by itself make \<open>u - \<phi>\<close> have a
   local maximum: the expansion only controls the remainder to
-  \<open>o(norm k\<^sup>2)\<close>, which can be positive. Adding a strictly convex
+  \<open>o(norm k\<^sup>2)\<close>, which can be positive.  Adding a strictly convex
   correction \<open>(\<delta>/2) * norm k\<^sup>2\<close> absorbs it, and then the maximum is
-  genuine. This is the standard jet-to-test-function step; the \<open>\<delta>\<close> it
+  genuine.  This is the standard jet-to-test-function step; the \<open>\<delta>\<close> it
   introduces is why the theorem on sums is normally stated for closed
   second-order jets, since removing \<open>\<delta>\<close> at the end needs lower
   semicontinuity of the operator.\<close>

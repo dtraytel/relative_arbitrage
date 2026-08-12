@@ -344,9 +344,9 @@ text \<open>
   The paper's Eq. (2.7) with constant \<open>8 C\<^sup>2\<close> for an unbounded \<open>L\<^sup>2\<close>
   martingale with deterministic start and a Lipschitz-rate compensator for
   its square. Localize at the exit times of the balls of radius
-  \<open>\<bar>x\<^sub>0\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process — its
+  \<open>\<bar>x\<^sub>0\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process --- its
   martingale property, covariation package and boundedness come from the
-  three theorems above and the exit-time theory — and pass to the limit by
+  three theorems above and the exit-time theory --- and pass to the limit by
   Fatou: continuous paths are bounded on compact intervals, so for every
   \<open>\<omega>\<close> the stopped increments are eventually equal to the plain ones.
 \<close>

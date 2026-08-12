@@ -197,12 +197,11 @@ proof -
   finally show ?thesis by simp
 qed
 
-text \<open>Every viscosity subsolution which is dominated by \<open>v\<close> on the
-  boundary is dominated by \<open>v\<close> everywhere.  The proof compares \<open>u\<close> with
-  the strict supersolution \<open>c * v\<close>, \<open>c > 1\<close>: at an interior maximum of
-  \<open>u - c * v\<close> the smooth function \<open>c * v\<close> is an admissible test function,
-  so the subsolution property forces \<open>c = ell_op \<dots> \<le> 1\<close>.  No doubling of
-  variables and hence no Crandall--Ishii lemma is needed.\<close>
+text \<open>Every viscosity subsolution dominated by \<open>v\<close> on the boundary is
+  dominated by \<open>v\<close> everywhere: comparing \<open>u\<close> with the strict supersolution
+  \<open>c \<cdot> v\<close>, \<open>c > 1\<close>, at an interior maximum of \<open>u - c \<cdot> v\<close> the smooth
+  \<open>c \<cdot> v\<close> is an admissible test function, forcing \<open>c = ell_op \<dots> \<le> 1\<close>.  No
+  doubling of variables, hence no Crandall--Ishii lemma.\<close>
 
 theorem visc_subsol_le_ball_v:
   fixes r :: real and u :: "real^'n::finite \<Rightarrow> real"
@@ -438,19 +437,17 @@ corollary ball_v_visc_sol_exists:
 
 section \<open>Section 4 for the ball, with no Crandall--Ishii input\<close>
 
-text \<open>Theorem 4.3 of the paper (comparison) and Proposition 4.1 (uniqueness) are
-  proved there for a general compact \<open>K\<close>, via Theorem 4.2(a), whose proof
-  doubles the variables and invokes the Crandall--Ishii theorem on sums --
-  cited in the paper as [CI90] and not formalized here (see
-  \<open>max_principle_boundary\<close> in Lemma_3_1_Envelopes.thy for where that
-  hypothesis is isolated).
+text \<open>Theorem 4.3 (comparison) and Proposition 4.1 (uniqueness) are proved in
+  the paper for general compact \<open>K\<close> via Theorem 4.2(a), whose proof doubles
+  the variables and invokes the Crandall--Ishii theorem on sums -- cited as
+  [CI90] and not formalized here (see \<open>max_principle_boundary\<close> in
+  Lemma\_3\_1\_Envelopes.thy for where that hypothesis is isolated).
 
-  For \<open>K\<close> a closed ball, the whole of Section 4's conclusion holds
-  unconditionally, because the explicit solution \<open>ball_v\<close> of Eq. (3.9) can be
-  interposed: a subsolution lies below it and a supersolution above it, each
-  by comparison with a strictly scaled copy of \<open>ball_v\<close> used as a test
-  function, with no doubling of variables.  This is exactly the case
-  Theorem 1.1 needs for Example 3.1.\<close>
+  For \<open>K\<close> a closed ball, Section 4's conclusion holds unconditionally: the
+  explicit solution \<open>ball_v\<close> of Eq. (3.9) is interposed, a subsolution
+  below it and a supersolution above it, each by comparison with a strictly
+  scaled copy of \<open>ball_v\<close> as a test function, with no doubling of variables
+  -- exactly the case Theorem 1.1 needs for Example 3.1.\<close>
 
 theorem comparison_ball:
   fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
@@ -533,20 +530,18 @@ qed
 
 section \<open>Theorem 4.2(a) when one function is smooth: no Crandall--Ishii\<close>
 
-text \<open>The mechanism of the ball argument, abstracted.  Theorem 4.2(a) of the
-  paper needs the Crandall--Ishii theorem on sums because both \<open>u\<close> and \<open>w\<close> are
-  merely semicontinuous, so neither can serve as a test function for the
-  other.  If, however, one of them is a smooth strict supersolution, the
-  maximum principle is elementary: at an interior maximum of \<open>u - \<psi>\<close> the
-  smooth \<open>\<psi>\<close> is an admissible test function, so the subsolution property
-  forces \<open>F(\<nabla>\<psi>, \<nabla>\<^sup>2\<psi>) \<le> 1\<close> there, contradicting strictness, so the maximum
-  sits on the boundary.
+text \<open>The mechanism of the ball argument, abstracted.  Theorem 4.2(a) needs
+  the Crandall--Ishii theorem on sums because both \<open>u\<close> and \<open>w\<close> are merely
+  semicontinuous, so neither can serve as a test function for the other.
+  If one is a smooth strict supersolution, the maximum principle is
+  elementary: at an interior maximum of \<open>u - \<psi>\<close> the smooth \<open>\<psi>\<close> is an
+  admissible test function, forcing \<open>F(\<nabla>\<psi>, \<nabla>\<^sup>2\<psi>) \<le> 1\<close> there,
+  contradicting strictness, so the maximum sits on the boundary.
 
-  This is the general form of what \<open>visc_subsol_le_ball_v\<close> does with
-  \<open>\<psi> = c \<cdot> ball_v\<close>, \<open>c > 1\<close>.  It applies on any compact \<open>K\<close> for which a smooth
-  strict supersolution is available, and needs nothing from Section 4's harder
-  half.  The gradient field is \<open>g\<close> and the Hessian field \<open>Hf\<close>, matching the shape
-  of \<open>test_fun_at\<close>.\<close>
+  This is the general form of \<open>visc_subsol_le_ball_v\<close> with
+  \<open>\<psi> = c \<cdot> ball_v\<close>, \<open>c > 1\<close>: it applies on any compact \<open>K\<close> with a smooth
+  strict supersolution, needing nothing from Section 4's harder half.  The
+  gradient field is \<open>g\<close> and the Hessian field \<open>Hf\<close>, matching \<open>test_fun_at\<close>.\<close>
 
 theorem visc_subsol_le_smooth_strict:
   fixes u \<psi> :: "real^'n::finite \<Rightarrow> real"

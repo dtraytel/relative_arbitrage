@@ -1,15 +1,14 @@
 section \<open>The Arzela--Ascoli step of Lemma 2.2\<close>
 
 text \<open>
-  The paper proves Lemma 2.2 -- relative compactness of the set of continuous
-  martingale laws with covariation rates in a bounded set @{text S} -- by the
-  chain
+  Lemma 2.2 -- relative compactness of continuous martingale laws with
+  covariation rates in a bounded set @{text S} -- follows the chain:
 
-  \<^item> Ito's formula and the Burkholder-Davis-Gundy inequality, giving the fourth
+  \<^item> Ito's formula and the Burkholder-Davis-Gundy inequality give the fourth
     moment bound of Eq. (2.7), @{text "E |X t - X s| ^ 4 \<le> 66 C\<^sup>2 (t - s)\<^sup>2"};
-  \<^item> Kolmogorov's continuity criterion, giving locally Holder paths;
-  \<^item> the Arzela-Ascoli theorem, giving compact sets of paths;
-  \<^item> Prokhorov's theorem, converting tightness into relative compactness.
+  \<^item> Kolmogorov's continuity criterion gives locally Holder paths;
+  \<^item> the Arzela-Ascoli theorem gives compact sets of paths;
+  \<^item> Prokhorov's theorem converts tightness into relative compactness.
 
   The last three are available in the AFP:
 
@@ -24,12 +23,11 @@ text \<open>
   \<^item> Prokhorov's theorem is @{text Levy_Prokhorov_Metric.Prokhorov_theorem_LP}.
 
   This theory supplies the Arzela-Ascoli step in the form the rest of the chain
-  needs it. The hypothesis is a Holder bound with a constant @{text c} common
-  to the whole family: @{text "\<gamma>-holder_on"} quantifies its constant
-  existentially per function, so a family each of whose members is Holder need
-  not admit a common constant, and Arzela-Ascoli genuinely requires one.
-  Producing that uniform constant from Eq. (2.7) is the remaining probabilistic
-  content of Lemma 2.2.
+  needs it: a Holder bound with a constant @{text c} common to the whole
+  family, since @{text "\<gamma>-holder_on"} quantifies its constant existentially per
+  function, and Arzela-Ascoli genuinely requires a common one. Producing that
+  uniform constant from Eq. (2.7) is the remaining probabilistic content of
+  Lemma 2.2.
 \<close>
 
 theory Section_2_Compactness
@@ -232,35 +230,28 @@ qed
 
 section \<open>Proposition 2.4: the upper semicontinuity half, without a selection theorem\<close>
 
-text \<open>Proposition 2.4 of the paper has no proof there --- it says only "It
-  suffices to repeat [Larsson--Ruf, proofs of Proposition 2.2(ii), (iii)] word by
-  word".  Following that reference, Larsson--Ruf argue:
+text \<open>Proposition 2.4 cites Larsson--Ruf's proof of their Proposition 2.2(ii),
+  (iii): \<open>\<P>\<^sub>x\<close> is the pushforward of \<open>\<P>\<^sub>0\<close> under \<open>x+\<cdot>\<close>, so
+  \<open>v(x) = sup\<^bsub>P \<in> \<P>\<^sub>0\<^esub> f(x,P)\<close> with \<open>f\<close> jointly upper semicontinuous and
+  \<open>\<P>\<^sub>0\<close> compact; a selection theorem (Bertsekas--Shreve, Prop. 7.33) then
+  gives both upper semicontinuity of \<open>v\<close> and a measurable optimiser.
 
-  \<^item> \<open>\<P>\<^sub>x\<close> consists of the pushforwards \<open>(x+\<cdot>)\<^sub>*P\<close> with \<open>P \<in> \<P>\<^sub>0\<close>, so
-    \<open>v(x) = sup\<^bsub>P \<in> \<P>\<^sub>0\<^esub> f(x,P)\<close> with \<open>f(x,P) = ((x+\<cdot>)\<^sub>*P)-essinf \<tau>\<^sub>K\<close>;
-  \<^item> \<open>f\<close> is jointly upper semicontinuous;
-  \<^item> \<open>\<P>\<^sub>0\<close> is compact;
-  \<^item> "A suitable selection theorem, see e.g. [Bertsekas--Shreve, Proposition
-    7.33], yields upper semicontinuity of \<open>v\<close> as well as a measurable map
-    \<open>x \<mapsto> Q\<^sub>x\<close> \<dots>".
+  Of those two conclusions only the measurable optimiser needs a selection
+  theorem: upper semicontinuity of a supremum of a jointly usc function over a
+  compact index set is the upper half of Berge's maximum theorem, needing no
+  measurable selection or descriptive set theory, and is proved directly here,
+  leaving Bertsekas--Shreve 7.33 needed only for the dynamic programming
+  principle's measurable optimiser.
 
-  The selection theorem is invoked there for two conclusions, but only the
-  measurable map needs it. Upper semicontinuity of a supremum of a jointly usc
-  function over a compact index set is the upper half of Berge's maximum
-  theorem, which needs no measurable selection, analytic sets, or descriptive
-  set theory. This theorem proves that half directly, leaving Bertsekas--Shreve
-  7.33 needed only for the measurable optimiser feeding the dynamic programming
-  principle.
+  The hypothesis \<open>box\<close> below is joint upper semicontinuity at \<open>(x,P)\<close>,
+  written via a product neighbourhood rather than \<open>nhds (x,P)\<close>, independent
+  of how the product topology is packaged.
 
-  The hypothesis \<open>box\<close> below is joint upper semicontinuity at \<open>(x,P)\<close>, written
-  out in terms of a product neighbourhood rather than via \<open>nhds (x,P)\<close>, which
-  keeps the proof independent of how the product topology is packaged.
-
-  The argument: pick \<open>c'\<close> strictly between the supremum and \<open>c\<close>; every \<open>P \<in> C\<close>
-  then has \<open>F x P < c'\<close>, so joint usc gives a box \<open>U\<^sub>P \<times> V\<^sub>P\<close> on which \<open>F < c'\<close>;
-  the \<open>V\<^sub>P\<close> cover the compact \<open>C\<close>, so finitely many suffice; and the
-  corresponding finite intersection of the \<open>U\<^sub>P\<close> is a neighbourhood of \<open>x\<close> on
-  which the whole supremum is at most \<open>c' < c\<close>.\<close>
+  Proof idea: pick \<open>c'\<close> strictly between the supremum and \<open>c\<close>; every
+  \<open>P \<in> C\<close> has \<open>F x P < c'\<close>, so joint usc gives a box \<open>U\<^sub>P \<times> V\<^sub>P\<close> with
+  \<open>F < c'\<close> there; the \<open>V\<^sub>P\<close> cover the compact \<open>C\<close>, so finitely many suffice,
+  and the matching finite intersection of the \<open>U\<^sub>P\<close> is a neighbourhood of
+  \<open>x\<close> on which the whole supremum is \<open>\<le> c' < c\<close>.\<close>
 
 theorem usc_sup_over_compact:
   fixes F :: "'a::topological_space \<Rightarrow> 'b::topological_space \<Rightarrow> real"
@@ -356,22 +347,19 @@ qed
 section \<open>Feeding \<open>box\<close> from a sequential statement\<close>
 
 text \<open>
-  \<open>usc_sup_over_compact\<close> above asks for \<open>box\<close> topologically: open \<open>U \<ni> x\<close> and
-  \<open>V \<ni> P\<close> on which the strict inequality persists. Weak convergence of measures,
-  however, is naturally a statement about sequences, and that is the form in
-  which the AFP's Portmanteau theorems come and in which \<open>Section_2_Usc.etime_shift_box\<close>
-  is proved.
+  \<open>usc_sup_over_compact\<close> asks for \<open>box\<close> topologically, but weak convergence
+  of measures is naturally a statement about sequences -- the form of the
+  AFP's Portmanteau theorems and of \<open>Section_2_Usc.etime_shift_box\<close>.
 
-  The two are equivalent when both spaces are metrizable --- for the law space
-  this is the Lévy--Prokhorov theorem, \<open>metrizable_weak_conv_topology\<close> in the AFP
-  entry, applicable because the path space is metrizable and separable. This
-  lemma is that equivalence, and nothing about measures enters it.
+  The two are equivalent when both spaces are metrizable, by the
+  Levy--Prokhorov theorem (\<open>metrizable_weak_conv_topology\<close>), applicable
+  since the path space is metrizable and separable. This lemma is that
+  equivalence; nothing about measures enters it.
 
-  The direction proved here is from sequences to neighbourhoods. Its
-  contrapositive picks, for each \<open>n\<close>, a counterexample inside the \<open>1/Suc n\<close>
-  balls, and those choices assemble into a pair of convergent sequences that
-  the hypothesis forbids: countable choice does the real work, which is why
-  metrizability (or at least first countability) cannot be dropped.
+  The direction proved is sequences to neighbourhoods. Its contrapositive
+  picks, for each \<open>n\<close>, a counterexample inside the \<open>1/Suc n\<close> balls, and
+  those assemble into convergent sequences the hypothesis forbids --
+  countable choice does the work, so metrizability cannot be dropped.
 \<close>
 
 lemma box_of_sequential:
@@ -465,12 +453,11 @@ proof (rule ccontr)
   thus False using yQ(4) by simp
 qed
 
-text \<open>The specialisation actually used: the first factor is a metric type, so
-  Berge's \<open>box\<close> wants the type-class \<open>open\<close> there rather than \<open>openin euclidean\<close>.
-  Since \<open>euclidean\<close> is the abbreviation \<open>topology open\<close>, \<open>unfolding open_openin\<close>
-  would rewrite the bare \<open>open\<close> inside \<open>euclidean\<close> and regenerate its own redex,
-  looping; the \<open>[symmetric]\<close> orientation is the safe declared simp rule, and
-  plain \<open>simp\<close> takes it.\<close>
+text \<open>The specialisation used: the first factor is a metric type, so Berge's
+  \<open>box\<close> wants type-class \<open>open\<close> rather than \<open>openin euclidean\<close>.  Since
+  \<open>euclidean\<close> abbreviates \<open>topology open\<close>, \<open>unfolding open_openin\<close> rewrites
+  the bare \<open>open\<close> inside \<open>euclidean\<close> and regenerates its own redex, looping;
+  the \<open>[symmetric]\<close> orientation is the safe declared simp rule.\<close>
 
 lemma box_of_sequential_euclidean:
   fixes Y :: "'b topology" and S :: "'b set" and x :: "'a::metric_space"
@@ -504,13 +491,13 @@ qed
 section \<open>Sequential compactness gives \<open>compactin\<close> in a metrizable space\<close>
 
 text \<open>
-  The glue between Lemmas 2.2/2.3 of the paper and Berge. Those two lemmas
-  deliver sequential compactness of the law set --- 2.2 extracts a weakly
-  convergent subsequence, 2.3 puts the limit back in the set --- whereas
-  \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the two
-  coincide, by \<open>Metric_space.compactin_sequentially\<close>; this lemma transports that
-  fact from a \<open>Metric_space\<close> locale to a \<open>topology\<close> value, giving the interface
-  that a proof of Lemma 2.3 needs to supply.
+  The glue between Lemmas 2.2/2.3 of the paper and Berge. Those lemmas
+  deliver sequential compactness of the law set -- 2.2 extracts a weakly
+  convergent subsequence, 2.3 puts the limit back in the set -- whereas
+  \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the
+  two coincide (\<open>Metric_space.compactin_sequentially\<close>); this lemma
+  transports that fact to a \<open>topology\<close> value, the interface Lemma 2.3 needs
+  to supply.
 \<close>
 
 lemma compactin_of_seq_compact:
@@ -538,13 +525,11 @@ proof -
   thus ?thesis unfolding tY .
 qed
 
-text \<open>Two closure companions of the lemma above, both for a metrizable
-  topology. First: a point of the closure of \<open>A\<close> is a sequential limit of
-  points of \<open>A\<close>. Second --- the form Lemma 2.3 consumes --- subsequence
-  extraction on \<open>A\<close> extends to the closure of \<open>A\<close>, with the limit again in
-  the closure, by approximating the given sequence with an \<open>A\<close>-sequence
-  within \<open>1/(n+1)\<close> and carrying the extracted limit across via the triangle
-  inequality.\<close>
+text \<open>Two closure companions, both for a metrizable topology: a point of the
+  closure of \<open>A\<close> is a sequential limit of points of \<open>A\<close>; and -- the form
+  Lemma 2.3 consumes -- subsequence extraction on \<open>A\<close> extends to its
+  closure, by approximating the given sequence within \<open>1/(n+1)\<close> and carrying
+  the extracted limit across via the triangle inequality.\<close>
 
 lemma closure_of_sequential_limit:
   fixes Y :: "'b topology" and A :: "'b set"
@@ -676,17 +661,16 @@ qed
 section \<open>Berge over a \<open>topology\<close>-valued index space\<close>
 
 text \<open>
-  \<open>usc_sup_over_compact\<close> is stated with type-class \<open>open\<close> and \<open>compact\<close> on both
-  factors. That is fine for the starting point \<open>x\<close>, which lives in \<open>real^'n\<close>, but
-  not for the laws: the weak topology is a \<open>topology\<close> value
-  (\<open>weak_conv_topology\<close>), not a type-class instance on \<open>'a measure\<close>, since the
-  type carries no canonical topology and different base spaces induce different
-  weak topologies on the same type.
+  \<open>usc_sup_over_compact\<close> is stated with type-class \<open>open\<close>/\<open>compact\<close> on both
+  factors -- fine for \<open>x\<close> in \<open>real^'n\<close>, but not for the laws: the weak
+  topology is a \<open>topology\<close> value (\<open>weak_conv_topology\<close>), not a type-class
+  instance, since different base spaces induce different weak topologies on
+  the same type \<open>'a measure\<close>.
 
-  So the second factor is re-stated with \<open>openin\<close>/\<open>compactin\<close>. Only the covering
-  argument changes: \<open>compactinD\<close> hands back a finite set of opens rather than a
-  finite index set, so the indices are recovered with \<open>finite_subset_image\<close>. The
-  conclusion still lives in the type class, because it is about \<open>nhds x\<close>.
+  So the second factor is re-stated with \<open>openin\<close>/\<open>compactin\<close>. Only the
+  covering argument changes: \<open>compactinD\<close> hands back a finite set of opens
+  rather than a finite index set, recovered via \<open>finite_subset_image\<close>. The
+  conclusion stays in the type class, being about \<open>nhds x\<close>.
 \<close>
 
 theorem usc_sup_over_compactin:

@@ -232,12 +232,10 @@ text \<open>
   simple integral of \<open>2 Y\<close> against \<open>X\<close> PLUS the accumulated discrepancy between the
   squared increments of \<open>X\<close> and the increments of the compensator \<open>A\<close>.
 
-  This localises exactly what is missing for Eq. (2.7) of arXiv:2512.17702: the
-  FIRST term is a simple integral, to which the isometry applies and whose
-  contribution is controlled by @{text increment_second_moment_bound}; the SECOND
-  term is what has to vanish as the mesh goes to zero, and it is the term whose
-  second moment involves a FOURTH moment of the increments -- which is why no
-  fixed-partition argument can close the gap. See STATUS.md 25f.
+  The first term is a simple integral, to which the isometry applies and whose
+  contribution is controlled by @{text increment_second_moment_bound}; the
+  second has to vanish as the mesh goes to zero, and its second moment involves
+  a fourth moment of the increments, so no fixed-partition argument bounds it.
 
   Note @{term A} is arbitrary: the identity is pure algebra and uses no property of
   either process.

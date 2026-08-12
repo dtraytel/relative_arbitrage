@@ -40,7 +40,7 @@ begin
 section \<open>The essential infimum of a nonnegative random time\<close>
 
 text \<open>\<open>P-ess inf tau\<close> of Eq. (1.6): the largest deterministic almost-sure
-  lower bound on \<open>tau\<close>.  In \<open>ennreal\<close> the supremum always exists.\<close>
+  lower bound on \<open>tau\<close>. In \<open>ennreal\<close> the supremum always exists.\<close>
 
 definition ess_inf_time :: "'a measure \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> ennreal" where
   "ess_inf_time M tau = Sup {c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}"
@@ -49,7 +49,7 @@ lemma ess_inf_time_ge_zero: "0 \<le> ess_inf_time M tau"
   by simp
 
 text \<open>Every almost-sure lower bound is dominated by the mean, so the
-  essential infimum is too.  This is what turns the expectation bound of
+  essential infimum is too. This is what turns the expectation bound of
   Relative\_Arbitrage\_Stochastic into a bound on Eq. (1.6).\<close>
 
 lemma ess_inf_time_le_nn_integral:
@@ -90,15 +90,14 @@ qed
 text \<open>
   Calculus for @{const ess_inf_time}, needed by Proposition 2.4: the
   dynamic programming principle of Eq. (2.9) is an identity between essential
-  infima, however the pasting of controls is eventually carried out.
+  infima, however the pasting of controls is carried out.
 
-  The workhorse is @{text ess_inf_time_AE}: the essential infimum is itself an
-  almost-sure lower bound. This is not immediate, since it is a supremum over
-  an uncountable family of almost-sure statements, and such a supremum need
-  not be almost sure. It works because @{const ess_inf_time} is a supremum
-  over a set of constants in @{typ ennreal}, and
+  The workhorse is @{text ess_inf_time_AE}: the essential infimum is itself
+  an almost-sure lower bound --- not immediate, since it is a supremum over
+  an uncountable family of almost-sure statements. It works because
+  @{const ess_inf_time} is a supremum over constants in @{typ ennreal}, and
   @{thm [source] ennreal_Sup_countable_SUP} extracts a countable cofinal
-  sequence, whose almost-sure statements can then be intersected.
+  sequence whose almost-sure statements can be intersected.
 \<close>
 
 lemma ess_inf_timeI:
@@ -124,20 +123,17 @@ qed
 
 text \<open>The characterisation the upper-semicontinuity argument runs on: the
   essential infimum is at least \<open>c\<close> exactly when \<open>c\<close> is an almost-sure lower
-  bound.  Both directions are already available --- \<open>ess_inf_timeI\<close> one way,
-  \<open>ess_inf_time_AE\<close> the other --- but the iff lets the weak convergence
-  argument work with the set \<open>{\<tau> \<ge> c}\<close> rather than with the essential infimum
-  itself.
+  bound (\<open>ess_inf_timeI\<close> / \<open>ess_inf_time_AE\<close>). The iff lets the weak
+  convergence argument work with \<open>{\<tau> \<ge> c}\<close> rather than the essential
+  infimum itself.
 
-  This gives a shorter route to Larsson--Ruf's Lemma 2.1 than theirs.  They
-  prove \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close> usc by writing it as \<open>inf\<^bsub>\<lambda>>0\<^esub> f\<^sub>\<lambda>\<close> with
-  \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) log E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close> and applying the Portmanteau theorem to each
-  \<open>f\<^sub>\<lambda>\<close>.  But upper semicontinuity is exactly closedness of every superlevel set
-  \<open>{P : c \<le> P-essinf \<tau>}\<close>, and by the iff below that set is
-  \<open>{P : P{\<tau> \<ge> c} = 1}\<close>.  Since \<open>\<tau>\<^sub>K\<close> is usc the set \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed, and the
-  closed-set form of Portmanteau --- \<open>limsup P\<^sub>m(A) \<le> P(A)\<close> for closed \<open>A\<close>, the
-  form the AFP's \<open>Levy_Prokhorov_Metric\<close> provides --- closes it in one step,
-  with no Laplace transform needed.\<close>
+  This gives a shorter route to Larsson--Ruf's Lemma 2.1 than theirs, who
+  prove \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close> usc via \<open>inf\<^bsub>\<lambda>>0\<^esub> f\<^sub>\<lambda>\<close> with
+  \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) log E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close> and Portmanteau on each \<open>f\<^sub>\<lambda>\<close>.
+  Since upper semicontinuity is closedness of
+  \<open>{P : c \<le> P-essinf \<tau>} = {P : P{\<tau> \<ge> c} = 1}\<close>, and \<open>\<tau>\<^sub>K\<close> being usc makes
+  \<open>{\<tau>\<^sub>K \<ge> c}\<close> closed, the closed-set form of Portmanteau closes it in one
+  step, with no Laplace transform needed.\<close>
 
 lemma ess_inf_time_ge_iff:
   "c \<le> ess_inf_time M tau \<longleftrightarrow> (AE \<omega> in M. c \<le> ennreal (tau \<omega>))"
@@ -155,12 +151,12 @@ next
   then show "c \<le> ess_inf_time M tau" by (rule ess_inf_timeI)
 qed
 
-text \<open>The form this is used in, in the AFP's own vocabulary: \<open>mweak_conv2\<close>
-  (\<open>Levy_Prokhorov_Metric.General_Weak_Convergence\<close>) states the closed-set
-  Portmanteau with \<open>measure\<close>, not \<open>emeasure\<close> and not \<open>AE\<close>, so the superlevel
-  set of the essential infimum has to be presented as a set of full measure:
-  \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed because \<open>\<tau>\<^sub>K\<close> is usc, every \<open>N\<^sub>i\<close> gives it measure 1, and
-  \<open>mweak_conv2\<close> yields \<open>1 = limsup N\<^sub>i(A) \<le> N(A) \<le> 1\<close>.\<close>
+text \<open>In the AFP's vocabulary: \<open>mweak_conv2\<close>
+  (\<open>Levy_Prokhorov_Metric.General_Weak_Convergence\<close>) states closed-set
+  Portmanteau with \<open>measure\<close>, not \<open>emeasure\<close> or \<open>AE\<close>, so the superlevel
+  set has to be presented as a set of full measure: \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed
+  since \<open>\<tau>\<^sub>K\<close> is usc, every \<open>N\<^sub>i\<close> gives it measure 1, and \<open>mweak_conv2\<close>
+  yields \<open>1 = limsup N\<^sub>i(A) \<le> N(A) \<le> 1\<close>.\<close>
 
 lemma ess_inf_time_ge_iff_measure:
   assumes P: "prob_space M"
@@ -180,7 +176,7 @@ qed
 
 text \<open>Portmanteau is a statement about measures of sets, so the essential
   infimum has to be traded for one: being strictly below \<open>d\<close> is exactly the
-  event \<open>{\<tau> < d}\<close> carrying positive mass.  This is \<open>ess_inf_time_ge_iff\<close>
+  event \<open>{\<tau> < d}\<close> carrying positive mass. This is \<open>ess_inf_time_ge_iff\<close>
   negated, with the almost-sure statement turned into an \<open>emeasure\<close> ---
   which is where measurability of the event is needed, and is the only
   hypothesis.\<close>
@@ -280,7 +276,7 @@ lemma val_fn_ge_zero: "0 \<le> val_fn k L K x0"
 
 text \<open>The index set is inhabited: the Brownian market started at \<open>x0\<close> and
   stopped at once never leaves a ball containing \<open>x0\<close>, so it belongs to
-  \<open>\<P>\<^sub>x\<^sub>0\<close>.  Hence \<open>val_fn\<close> is not the supremum of an empty set.\<close>
+  \<open>\<P>\<^sub>x\<^sub>0\<close>. Hence \<open>val_fn\<close> is not the supremum of an empty set.\<close>
 
 lemma mkt_exit_vals_nonempty:
   fixes x0 :: "real^'n::finite"
@@ -300,7 +296,7 @@ section \<open>Example 3.1 for the value function: the upper bound of Eq. (3.9)\
 text \<open>For every market of \<open>\<P>\<^sub>x\<^sub>0\<close> confined to the ball, the expected exit
   time is at most \<open>v\<close> of Eq. (3.9) (\<open>expected_exit_time_bound\<close>), hence so is
   every almost-sure lower bound on the exit time, hence so is their
-  supremum.  This is the \<open>\<le>\<close> half of Example 3.1, for the value function of
+  supremum. This is the \<open>\<le>\<close> half of Example 3.1, for the value function of
   Eq. (1.6) itself.\<close>
 
 theorem val_fn_le_ball_v:
@@ -324,7 +320,7 @@ proof (rule Sup_least)
 qed
 
 text \<open>On the sphere the bound is attained, because there \<open>v\<close> of Eq. (3.9)
-  vanishes and \<open>val_fn\<close> is nonnegative.  So for boundary starting points
+  vanishes and \<open>val_fn\<close> is nonnegative. So for boundary starting points
   Example 3.1 is proved exactly --- both inequalities --- for the value
   function of Eq. (1.6), with no assumption beyond \<open>|x0| = r\<close>.\<close>
 
@@ -344,18 +340,14 @@ qed
 
 section \<open>Monotonicity of the value function in the domain\<close>
 
-text \<open>The first structural property of \<open>val_fn\<close>, used repeatedly by the
-  dynamic programming work of Section 2.  Of the fourteen assumptions of
+text \<open>The first structural property of \<open>val_fn\<close>, used repeatedly by
+  Section 2's dynamic programming. Of the fourteen assumptions of
   \<open>sufficiently_volatile_market\<close> (Relative\_Arbitrage\_Stochastic.thy), the
-  domain \<open>K\<close> occurs in exactly one,
-  \<open>X_in_K: AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> X s \<omega> \<in> K\<close>, which is
-  monotone in \<open>K\<close>; every other assumption -- the martingale property, the
-  eigenvalue bounds on \<open>acov\<close>, the integrability conditions, Dynkin's identity
-  -- is untouched by enlarging the domain.  Hence enlarging \<open>K\<close> can only admit
-  more markets, so the index set of the supremum grows and the value function
-  increases: the locale half is \<open>sufficiently_volatile_market_mono_K\<close>, the
-  set-theoretic half is \<open>mkt_exit_vals_mono\<close>, and \<open>val_fn_mono\<close> is the
-  conclusion.\<close>
+  domain \<open>K\<close> occurs only in \<open>X_in_K\<close>, which is monotone in \<open>K\<close>; every
+  other assumption is untouched by enlarging the domain. So enlarging \<open>K\<close>
+  only admits more markets and \<open>val_fn\<close> increases: the locale half is
+  \<open>sufficiently_volatile_market_mono_K\<close>, the set-theoretic half
+  \<open>mkt_exit_vals_mono\<close>, the conclusion \<open>val_fn_mono\<close>.\<close>
 
 lemma sufficiently_volatile_market_mono_K:
   fixes M :: "'a measure" and X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite"
@@ -445,15 +437,13 @@ theorem val_fn_mono:
 
 section \<open>Two facts about \<open>val_fn\<close> that need no probability at all\<close>
 
-text \<open>Finiteness is clause (0) of Theorem 1.1: for \<open>v = enn2real \<circ> val_fn\<close> to
-  be a faithful real-valued function one needs \<open>val_fn < \<top>\<close>, and this is
-  free, since a bounded \<open>K\<close> sits inside some \<open>cball 0 a\<close>, \<open>val_fn\<close> is
-  monotone in \<open>K\<close>, and on a ball it is bounded by the explicit Example 3.1
-  value \<open>ball_v\<close>.
+text \<open>Finiteness is clause (0) of Theorem 1.1: \<open>v = enn2real \<circ> val_fn\<close>
+  needs \<open>val_fn < \<top>\<close>, free since a bounded \<open>K\<close> sits inside some
+  \<open>cball 0 a\<close>, \<open>val_fn\<close> is monotone in \<open>K\<close>, and on a ball it is bounded by
+  the Example 3.1 value \<open>ball_v\<close>.
 
-  \<open>val_fn\<close> vanishes off \<open>K\<close>: the market locale requires \<open>x0 \<in> K\<close>, so outside
-  \<open>K\<close> the index set of the supremum is empty and \<open>val_fn\<close> is
-  \<open>Sup {} = \<bottom> = 0\<close>.\<close>
+  \<open>val_fn\<close> vanishes off \<open>K\<close>: the market locale requires \<open>x0 \<in> K\<close>, so
+  outside \<open>K\<close> the index set is empty and \<open>val_fn\<close> is \<open>Sup {} = \<bottom> = 0\<close>.\<close>
 
 lemma val_fn_finite_bounded:
   fixes K :: "(real^'n::finite) set" and x0 :: "real^'n"
@@ -472,14 +462,14 @@ proof -
 qed
 
 text \<open>Clause (3) of Theorem 1.1, for the ball: \<open>ball_v r k x\<close> is
-  \<open>max (r\<^sup>2 - x \<bullet> x) 0 / (CARD('n) - k)\<close>, which vanishes exactly when
-  \<open>x \<bullet> x \<ge> r\<^sup>2\<close>, in particular on the sphere.  Combined with
-  \<open>val_fn_boundary\<close> this gives the zero boundary condition of Eq. (1.10) on
+  \<open>max (r\<^sup>2 - x \<bullet> x) 0 / (CARD('n) - k)\<close>, vanishing exactly when
+  \<open>x \<bullet> x \<ge> r\<^sup>2\<close>, in particular on the sphere. With \<open>val_fn_boundary\<close> this
+  gives the zero boundary condition of Eq. (1.10) on
   \<open>cball 0 r - interior (cball 0 r)\<close>.
 
-  For a general compact \<open>K\<close> this is Lemma 5.3 of the paper, which reuses the
-  measure constructed in Example 3.1 and is therefore behind the same weak
-  existence result as clauses (1) and (2).\<close>
+  For a general compact \<open>K\<close> this is Lemma 5.3 of the paper, reusing the
+  measure of Example 3.1 and behind the same weak existence result as
+  clauses (1) and (2).\<close>
 
 lemma ball_v_boundary_zero:
   fixes x0 :: "real^'n::finite"

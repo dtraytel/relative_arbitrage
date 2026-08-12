@@ -6,13 +6,13 @@ text \<open>
 
     \<open>E[(X u - X s)\<^sup>2] \<le> C * (u - s)\<close>
 
-  whenever the compensator of the square grows at rate at most \<open>C\<close> -- for the
-  paper's admissible family this is the hypothesis \<open>trace (acov) \<le> C\<close>, since the
-  compensator there is \<open>integral (trace o acov)\<close>.
+  whenever the compensator of the square grows at rate at most \<open>C\<close> --
+  for the paper's admissible family the hypothesis \<open>trace (acov) \<le> C\<close>,
+  since the compensator is \<open>integral (trace o acov)\<close>.
 
   The proof needs no stochastic integral: it combines the energy identity along a
-  two-point partition (\<open>expectation_sq_sampled\<close>) with the fact that a martingale
-  has constant expectation, applied to the compensated square.
+  two-point partition (\<open>expectation_sq_sampled\<close>) with a martingale's constant
+  expectation, applied to the compensated square.
 \<close>
 
 theory Increment_Moments
@@ -357,12 +357,11 @@ qed
 subsection \<open>Second moments along a partition, from per-interval covariation data\<close>
 
 text \<open>
-  A localised variant of @{thm [source] increment_second_moment_bound}: instead of
-  a globally compensated square, the data is per partition interval -- the
-  conditional expectation of the squared increment over \<open>[t k, t (Suc k)]\<close> agrees
-  with that of the compensator increment \<open>dA k\<close>, which grows at rate at most
-  @{term C}. This is the form in which the admissible laws of arXiv:2512.17702
-  supply their covariation constraint (\<open>dA k = \<integral> trace (acov)\<close> over the interval).
+  A localised variant of @{thm [source] increment_second_moment_bound}: the
+  conditional expectation of the squared increment over \<open>[t k, t (Suc k)]\<close>
+  agrees with that of the compensator increment \<open>dA k\<close>, growing at rate at
+  most @{term C} -- the form in which the admissible laws of arXiv:2512.17702
+  supply their covariation constraint.
 \<close>
 
 theorem second_moment_partition_bound:
@@ -505,12 +504,11 @@ subsection \<open>Fourth moments along a partition: Eq. (2.7) with an explicit r
 text \<open>
   The paper derives Eq. (2.7) through the Burkholder-Davis-Gundy inequality, which
   is absent from Isabelle and the AFP. The theorem below reaches the same bound by
-  expanding \<open>(Y + d)^4\<close> directly along the partition and using only conditional
+  expanding \<open>(Y + d)^4\<close> directly along the partition using only conditional
   pull-outs: with a common constant \<open>8 C\<^sup>2\<close> (the paper's route gives \<open>66 C\<^sup>2\<close>), the
   fourth moment of the increment is bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> plus three times the
-  accumulated fourth moments of the partition increments. The latter is an
-  explicit remainder that vanishes in the mesh limit for continuous paths; no
-  fixed-partition argument can remove it.
+  accumulated fourth moments of the partition increments, an explicit remainder
+  vanishing in the mesh limit for continuous paths.
 
   The fourth-moment integrability hypothesis is discharged in the intended
   application by localisation: up to the exit time the paths live in the compact
@@ -1151,12 +1149,11 @@ text \<open>
 
     \<open>E[(SUM_{k<n} d_k\<^sup>2)\<^sup>2] \<le> 4 R\<^sup>2 C (t n - t 0) + C\<^sup>2 (t n - t 0)\<^sup>2\<close>
 
-  holds for every partition. Expanding the square, the diagonal is controlled by
-  @{thm [source] interval_pow4_le} and each off-diagonal term by
-  @{thm [source] weighted_interval_bound} with the earlier increment as weight.
-  This makes \<open>SUM d\<^sup>2\<close> bounded in \<open>L\<^sup>2\<close> uniformly over partitions, which is what
-  lets the mesh limit of the remainder be taken by the \<open>K\<close>-split
-  \<open>W S \<le> K W + 4 R\<^sup>2 S\<^sup>2 / K\<close>.
+  holds for every partition, the diagonal controlled by @{thm [source]
+  interval_pow4_le} and each off-diagonal term by @{thm [source]
+  weighted_interval_bound}. This bounds \<open>SUM d\<^sup>2\<close> in \<open>L\<^sup>2\<close> uniformly over
+  partitions, letting the mesh limit of the remainder be taken by the
+  \<open>K\<close>-split \<open>W S \<le> K W + 4 R\<^sup>2 S\<^sup>2 / K\<close>.
 \<close>
 
 theorem sum_sq_squared_bound:
@@ -1665,7 +1662,7 @@ proof (rule Bochner_Integration.integrable_bound[of _ "\<lambda>_. R^4"])
 qed
 
 
-subsection \<open>Step 4: the remainder vanishes along the uniform partitions\<close>
+subsection \<open>The remainder vanishes along the uniform partitions\<close>
 
 text \<open>
   The hypotheses package the paper's setting: a global compensator @{term A}
@@ -2100,22 +2097,20 @@ text \<open>The closedness half of Lemma 2.3 needs to pass the covariation
 
     \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>
 
-  to weak limits, to avoid a Skorokhod representation. This does not work by
-  quantifying only over \<open>M \<succeq> 0\<close>: the set \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is the
-  downward closure of the constraint set \<open>S\<close> in the psd order, whereas \<open>S\<close>
-  carries lower bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and so is not downward closed --- \<open>0 \<preceq> a\<close>
-  for \<open>a \<in> S\<close> yet \<open>0 \<notin> S\<close>. For the lower constraints the required inequality runs
-  the other way, and weak convergence alone gives only the Fatou direction
-  \<open>liminf \<ge> lim\<close>.
+  to weak limits, avoiding a Skorokhod representation. Quantifying only
+  over \<open>M \<succeq> 0\<close> does not work: the set \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is
+  the downward closure of \<open>S\<close> in the psd order, whereas \<open>S\<close> carries lower
+  bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and is not downward closed. Weak convergence
+  alone gives only the Fatou direction \<open>liminf \<ge> lim\<close>, which runs the
+  wrong way for the lower constraints.
 
-  Uniform integrability is needed instead, and this is the lemma that supplies
-  it: the fourth-moment bound of Eq. (2.7) (\<open>fourth_moment_bound_bounded\<close>,
-  free of Ito and BDG) controls the tail of the squared increment uniformly
-  over the family, which is exactly the hypothesis \<open>unif_integrable\<close> of
-  \<open>Vitali_Convergence.vitali_convergence\<close>.
+  Uniform integrability supplies what is needed: the fourth-moment bound
+  of Eq. (2.7) (\<open>fourth_moment_bound_bounded\<close>, free of Ito and BDG)
+  controls the tail of the squared increment uniformly over the family,
+  the hypothesis \<open>unif_integrable\<close> of \<open>Vitali_Convergence.vitali_convergence\<close>.
 
-  The estimate itself is pointwise and elementary: on \<open>{Z\<^sup>2 > R}\<close> one has
-  \<open>Z\<^sup>2 = Z\<^sup>4/Z\<^sup>2 < Z\<^sup>4/R\<close>, and off that set the left-hand side vanishes.\<close>
+  The estimate is pointwise and elementary: on \<open>{Z\<^sup>2 > R}\<close>,
+  \<open>Z\<^sup>2 = Z\<^sup>4/Z\<^sup>2 < Z\<^sup>4/R\<close>, and off that set the left side vanishes.\<close>
 
 lemma sq_tail_le_fourth_moment_pointwise:
   fixes z R :: real
@@ -2163,23 +2158,24 @@ qed
 subsection \<open>Truncation: the other half of the \<open>3\<epsilon>\<close> argument\<close>
 
 text \<open>Weak convergence upgrades to convergence of unbounded continuous
-  integrals \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> when \<open>f\<close> has uniformly integrable tails: truncate
-  \<open>f\<close> at height \<open>R\<close> --- the truncation is bounded and continuous, so weak
-  convergence applies to it directly --- and control the two truncation errors
+  integrals \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> when \<open>f\<close> has uniformly integrable tails:
+  truncate \<open>f\<close> at height \<open>R\<close> --- bounded and continuous, so weak
+  convergence applies directly --- and control the two truncation errors
   by the tail bound above.
 
-  This is the error estimate: pointwise the clamped function differs from \<open>f\<close>
-  only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the whole error is
-  dominated by the tail integral that \<open>sq_tail_bound_of_fourth_moment\<close> bounds.\<close>
+  The error estimate: pointwise the clamped function differs from \<open>f\<close>
+  only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the error
+  is dominated by the tail integral that \<open>sq_tail_bound_of_fourth_moment\<close>
+  bounds.\<close>
 
-text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with all measure theory removed:
-  a sequence that is uniformly within \<open>e\<close> of some convergent sequence, whose
-  limit is itself within \<open>e\<close> of \<open>z\<close>, for every \<open>e\<close>, converges to \<open>z\<close>. This is
-  what truncating the integrand at height \<open>R\<close> and controlling the two
-  truncation errors via \<open>sq_tail_bound_of_fourth_moment\<close> leaves to prove.
+text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with the measure theory
+  removed: a sequence uniformly within \<open>e\<close> of some convergent sequence,
+  whose limit is itself within \<open>e\<close> of \<open>z\<close> for every \<open>e\<close>, converges to
+  \<open>z\<close> -- what truncating the integrand at height \<open>R\<close> and bounding the two
+  errors via \<open>sq_tail_bound_of_fourth_moment\<close> leaves to prove.
 
-  The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so that the three terms sum to
-  \<open>3\<epsilon>/4 < \<epsilon>\<close> strictly, which is what \<open>LIMSEQ_I\<close> wants.\<close>
+  The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so the three terms sum to
+  \<open>3\<epsilon>/4 < \<epsilon>\<close> strictly, as \<open>LIMSEQ_I\<close> wants.\<close>
 
 lemma tendsto_real_of_approximants:
   fixes x :: "nat \<Rightarrow> real" and z :: real

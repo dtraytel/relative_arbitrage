@@ -1,20 +1,13 @@
 (*
   Title:   Paper_Class.thy
-  Content: The class P_x of Eq. (1.7) of arXiv:2512.17702, encoded as
-           laws of the PAIR (X, <X>) on the path space, following the
-           paper's own proof of Lemma 2.3: the covariation is carried
-           as a second, uniformly Lipschitz path component whose
-           difference quotients lie in the compact convex constraint
-           set S = Pi_constraint k \<inter> {eigen_ub L} (Lemma 2.1 =
-           lemma_2_1_exact identifies S with the convex hull of the
-           unconvexified sufficient-volatility set (1.4)).
-
-           This file provides the DEFINITIONAL layer of plan item NC-1
-           (see PLAN_THEOREM_1_1.md \<section>NC); the closedness of the class
-           (NC-2/3/4) and the bridge to the stopped_market witnesses
-           build on it.
-
-  STATUS:  PIDE-green as of 2026-08-05.
+  Content: The class P_x of Eq. (1.7) of arXiv:2512.17702, encoded as laws of
+           the pair (X, <X>) on the path space, following the paper's own
+           proof of Lemma 2.3: the covariation is carried as a second,
+           uniformly Lipschitz path component whose difference quotients lie
+           in the compact convex constraint set
+           S = Pi_constraint k \<inter> {eigen_ub L}.  Lemma 2.1
+           (lemma_2_1_exact) identifies S with the convex hull of the
+           unconvexified sufficient-volatility set (1.4).
 *)
 
 theory Paper_Class
@@ -28,13 +21,9 @@ definition sconstraint :: "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite
   "sconstraint k L = Pi_constraint k \<inter> {a. eigen_ub a L}"
 
 text \<open>The constraint set is convex, closed and bounded, hence compact.
-  Convexity of the \<open>Pi_constraint\<close> part is \<open>Pi_constraint_convex\<close>; the
-  \<open>eigen_ub\<close> cap is an intersection of half-spaces in the matrix entries.
-  Closedness of \<open>Pi_constraint\<close> comes from the \<open>Pi_proj\<close>-as-infimum
-  characterisation: \<open>c \<le> Pi_proj a m\<close> iff \<open>c \<le> trace (a ** P)\<close> for every
-  rank-\<open>m\<close> projection \<open>P\<close>, an intersection of closed half-spaces.
-  Boundedness is the standard psd entry bound \<open>\<bar>a $ i $ j\<bar> \<le> L\<close> off the
-  diagonal cap.\<close>
+  Convexity comes from \<open>Pi_constraint_convex\<close> and the \<open>eigen_ub\<close>
+  half-spaces, closedness from the \<open>Pi_proj\<close> infimum characterisation,
+  boundedness from the standard psd entry bound.\<close>
 
 lemma quadform_convex_comb:
   fixes a b :: "real^'n::finite^'n"
@@ -76,7 +65,7 @@ subsection \<open>Closedness\<close>
 
 text \<open>\<open>Pi_proj a m\<close> is an infimum over the rank-\<open>m\<close> projections, so on the
   psd cone the condition \<open>c \<le> Pi_proj a m\<close> is exactly the family of linear
-  inequalities \<open>c \<le> trace (a ** P)\<close> — one closed half-space per \<open>P\<close>.\<close>
+  inequalities \<open>c \<le> trace (a ** P)\<close> --- one closed half-space per \<open>P\<close>.\<close>
 
 lemma Pi_proj_ge_iff:
   fixes a :: "real^'n::finite^'n"
@@ -158,7 +147,7 @@ subsection \<open>Boundedness, hence compactness\<close>
 
 text \<open>For a psd matrix the eigenvalue cap bounds every entry: the diagonal
   directly (test on \<open>axis i 1\<close>), the off-diagonal by the psd inequality on
-  \<open>axis i 1 \<plusminus> axis j 1\<close> (a two-sided form of Cauchy–Schwarz).\<close>
+  \<open>axis i 1 \<plusminus> axis j 1\<close> (a two-sided form of Cauchy--Schwarz).\<close>
 
 lemma psd_eigen_ub_diag:
   fixes a :: "real^'n::finite^'n"
@@ -246,7 +235,7 @@ theorem compact_sconstraint:
 section \<open>The pair path space and its coordinate processes\<close>
 
 text \<open>Paths take values in \<open>real^'n \<times> real^'n^'n\<close>: the process together
-  with its running covariation.  \<open>path_law\<close>, \<open>path_metric\<close> and the
+  with its running covariation. \<open>path_law\<close>, \<open>path_metric\<close> and the
   tightness machinery are polymorphic in the value type, so the whole
   Section-2 toolchain applies verbatim.\<close>
 
@@ -263,27 +252,18 @@ abbreviation pairY :: "real \<Rightarrow> ('n::finite) pairpath \<Rightarrow> re
 
 section \<open>The class \<open>P\<^sub>x\<close> of Eq. (1.7), capped at horizon \<open>T\<close>\<close>
 
-text \<open>Operational reading of (1.7), equivalent by compensator
-  uniqueness: a law of the pair \<open>(X, Y)\<close> under which \<open>X\<close> is a
-  martingale from \<open>x\<close>, \<open>Y\<close> starts at \<open>0\<close> with difference quotients in
-  the constraint set (hence \<open>Y\<close> is Lipschitz with a.e. derivative in
-  \<open>S\<close> by Lebesgue differentiation), and \<open>X X\<^sup>T - Y\<close> is a martingale, so
-  \<open>Y\<close> is the quadratic covariation.  The horizon cap at \<open>T\<close> is invisible
-  for \<open>T\<close> beyond the uniform exit-time bound (paper's Lemma 1.9 /
-  Eq. (3.10)).
+text \<open>Operational reading of (1.7), equivalent by compensator uniqueness: a
+  law of \<open>(X, Y)\<close> where \<open>X\<close> is a martingale from \<open>x\<close>, \<open>Y\<close> starts at \<open>0\<close>
+  with difference quotients in the constraint set (so \<open>Y\<close> is Lipschitz and
+  a.e. differentiable into \<open>S\<close>), and \<open>X X\<^sup>T - Y\<close> is a martingale, making
+  \<open>Y\<close> the quadratic covariation. The cap at \<open>T\<close> is invisible once \<open>T\<close>
+  exceeds the uniform exit-time bound (Lemma 1.9 / Eq. (3.10)).
 
-  The martingale clauses must stop the process at \<open>T\<close> (\<open>min t T\<close>), and
-  this is not cosmetic.  Points of \<^term>\<open>mspace (path_metric T)\<close> are
-  extensional on \<open>{0..T}\<close>, so \<open>\<omega> u = undefined\<close> for \<open>u > T\<close>; a martingale
-  clause quantified over all \<open>u \<ge> 0\<close> would compare \<open>X\<^sub>t\<close> with the
-  conditional expectation of the constant \<open>fst undefined\<close> and force the
-  coordinate process to be almost surely constant.  Combined with the
-  covariation clause excluding a vanishing \<open>Y\<close> (\<open>0 \<notin> sconstraint k L\<close>
-  for \<open>k < n\<close>), an unstopped class would be empty for every \<open>T > 0\<close>,
-  making every theorem about it vacuous.  Stopping at \<open>T\<close> says exactly
-  what (1.7) says on \<open>[0,T]\<close> and nothing beyond it.  The filtration needs
-  no cap: the evaluations past \<open>T\<close> are constant maps, so they generate
-  nothing.\<close>
+  The martingale clauses must stop the process at \<open>T\<close>: points of
+  \<^term>\<open>mspace (path_metric T)\<close> are extensional on \<open>{0..T}\<close>, so an
+  unstopped clause would force the coordinate process to be almost surely
+  constant, emptying the class for every \<open>T > 0\<close>. Stopping at \<open>T\<close>
+  captures exactly (1.7) on \<open>[0,T]\<close>.\<close>
 
 definition paper_pair_class ::
   "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n::finite
@@ -328,16 +308,13 @@ lemma space_of_path_sets:
 
 section \<open>The constraint passes to weak limits, without Skorokhod\<close>
 
-text \<open>The paper passes the covariation constraint to the limit law using
-  Skorokhod's representation theorem, which the AFP does not have.  This
-  instead uses the closed-set half of the portmanteau theorem
-  (\<open>weak_conv_closed_full_mass\<close>): for fixed times \<open>s < t\<close> the difference
-  quotient is a continuous function of the path, and the constraint set is
-  closed (\<open>closed_sconstraint\<close>), so
-  \<open>{\<omega>. (Y t \<omega> − Y s \<omega>)/(t − s) \<in> S}\<close> is a closed set of paths.  A closed set
-  of full mass under every approximating law has full mass in the limit.
-  Ranging over the countably many rational pairs and using path continuity
-  then gives the constraint for all real \<open>s < t\<close>.\<close>
+text \<open>The paper passes the covariation constraint to the limit law via
+  Skorokhod's representation theorem; this instead uses the closed-set half
+  of the portmanteau theorem (\<open>weak_conv_closed_full_mass\<close>). For fixed
+  times \<open>s < t\<close> the difference quotient is a continuous function of the
+  path and the constraint set is closed, so
+  \<open>{\<omega>. (Y t \<omega> - Y s \<omega>)/(t - s) \<in> S}\<close> is closed and has full mass under
+  every approximating law, hence under the limit.\<close>
 
 lemma continuous_map_diffquot:
   fixes s t :: real
@@ -388,12 +365,11 @@ proof -
     by simp
 qed
 
-text \<open>The weak limit only delivers the constraint for the countably many
-  rational pairs (one closed set per pair, all of full mass, intersected).
-  Path continuity and closedness of the constraint set upgrade that to all
-  real \<open>s < t\<close>: squeeze rationals \<open>p\<^sub>n \<down> s\<close>, \<open>q\<^sub>n \<up> t\<close> strictly inside
-  \<open>(s,t)\<close>, so every approximating quotient is constrained, and pass to the
-  limit.\<close>
+text \<open>The weak limit gives the constraint only for the countably many
+  rational pairs \<open>s < t\<close> (one closed set each, all of full mass,
+  intersected). Path continuity and closedness upgrade this to all real
+  \<open>s < t\<close>: squeeze rationals \<open>p\<^sub>n \<down> s\<close>, \<open>q\<^sub>n \<up> t\<close> strictly inside
+  \<open>(s,t)\<close> and pass to the limit.\<close>
 
 lemma diffquot_all_of_rational:
   fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
@@ -483,14 +459,10 @@ qed
 
 section \<open>From difference quotients to the density\<close>
 
-text \<open>Once the constraint holds for all \<open>s < t\<close>, two things follow with no
-  measure theory.  First, \<open>Y\<close> is Lipschitz, because the constraint set is
-  bounded — this is the modulus that makes the \<open>Y\<close>-side of the pair
-  tightness an Arzelà–Ascoli argument and, by Lebesgue differentiation,
-  gives a.e. differentiability.  Second, wherever the derivative exists it
-  lies in the constraint set, because it is a limit of constrained
-  difference quotients and the set is closed.  Together: \<open>dY/dt \<in> S\<close> a.e.,
-  which is the density statement of Eq. (1.7).\<close>
+text \<open>Once the constraint holds for all \<open>s < t\<close>, boundedness of the
+  constraint set makes \<open>Y\<close> Lipschitz, and closedness carries through to
+  the derivative wherever it exists: \<open>dY/dt \<in> S\<close> a.e., the density
+  statement of Eq. (1.7).\<close>
 
 lemma diffquot_lipschitz:
   fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
@@ -592,12 +564,10 @@ proof -
     by (rule closed_sequentially[OF S quot])
 qed
 
-text \<open>The density statement of Eq. (1.7).  The constraint on the difference
-  quotients makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence — by
-  Lebesgue's differentiation theorem for BV functions, which HOL-Analysis
-  has as \<open>Lebesgue_differentiation_thm\<close> — differentiable off a negligible
-  set; and at every point of differentiability the derivative lies in the
-  constraint set.  So \<open>dY/dt \<in> S\<close> for all but negligibly many \<open>t\<close>.\<close>
+text \<open>The density statement of Eq. (1.7): the difference-quotient constraint
+  makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence differentiable
+  off a negligible set by \<open>Lebesgue_differentiation_thm\<close>; at every point
+  of differentiability the derivative lies in the constraint set.\<close>
 
 theorem diffquot_density_ae:
   fixes Y :: "real \<Rightarrow> 'b :: {euclidean_space, real_normed_vector}"
@@ -630,7 +600,7 @@ qed
 
 text \<open>The weak-limit transfer itself: a single difference-quotient
   constraint, holding almost surely under every approximating law, holds
-  almost surely under the weak limit.  (The a.s. statements are read as
+  almost surely under the weak limit. (The a.s. statements are read as
   full mass of the closed set, which is how the class is phrased.)\<close>
 
 theorem diffquot_constraint_weak_limit:
@@ -651,18 +621,16 @@ theorem diffquot_constraint_weak_limit:
 
 subsection \<open>Averages of constrained densities stay constrained\<close>
 
-text \<open>The mathematical heart of the class's covariation condition, and the
-  place where the paper uses its Lemma 2.1: if a density takes values in a
-  closed convex constraint set, then so does its average over any interval —
-  which is exactly the difference quotient of the running covariation
-  \<open>Y t = \<integral>₀ᵗ a\<close>.  The proof is separation: were the average outside, a
-  hyperplane would separate it from \<open>S\<close>, but the same linear functional
-  applied under the integral sign cannot cross that hyperplane.
+text \<open>The mathematical heart of the covariation condition, using the
+  paper's Lemma 2.1: if a density takes values in a closed convex set, so
+  does its average over any interval --- the difference quotient of
+  \<open>Y t = \<integral>₀ᵗ a\<close>. The proof is separation: an average outside \<open>S\<close>
+  would be separated by a hyperplane, but the same linear functional under
+  the integral cannot cross it.
 
-  This holds for any closed convex set, so it is stated that way; the
-  application takes \<open>S = sconstraint k L\<close> (\<open>closed_sconstraint\<close>,
-  \<open>sconstraint_convex\<close>), whose members arrive as \<open>suff_volatile\<close> densities
-  through \<open>lemma_2_1_easy\<close>.\<close>
+  Stated for any closed convex set; the application takes
+  \<open>S = sconstraint k L\<close>, whose members arrive as \<open>suff_volatile\<close>
+  densities via \<open>lemma_2_1_easy\<close>.\<close>
 
 lemma average_in_closed_convex:
   fixes a :: "real \<Rightarrow> 'b :: {euclidean_space, real_inner, heine_borel}"
@@ -732,12 +700,10 @@ proof (rule ccontr)
   with eq show False by simp
 qed
 
-text \<open>The specialisation the bridge will consume.  A market witness carries
-  its volatility as a \<open>suff_volatile\<close> density with the \<open>eigen_ub\<close> cap;
-  \<open>lemma_2_1_easy\<close> puts each value in \<open>sconstraint k L\<close> (this is the easy
-  inclusion of Lemma 2.1 — the hard one, \<open>lemma_2_1_exact\<close>, is what makes
-  the two sets the same and is not needed here), and the average lemma then
-  puts the difference quotient of \<open>Y t = \<integral>₀ᵗ a\<close> there too.\<close>
+text \<open>A market witness's volatility is a \<open>suff_volatile\<close> density with the
+  \<open>eigen_ub\<close> cap; \<open>lemma_2_1_easy\<close> (the easy inclusion of Lemma 2.1)
+  puts each value in \<open>sconstraint k L\<close>, and the average lemma then puts
+  the difference quotient of \<open>Y t = \<integral>₀ᵗ a\<close> there too.\<close>
 
 lemma suff_volatile_cap_in_sconstraint:
   fixes a :: "real^'n::finite^'n"
@@ -760,15 +726,14 @@ proof (rule average_in_closed_convex[OF sconstraint_convex closed_sconstraint st
     using sv ub by (intro suff_volatile_cap_in_sconstraint) auto
 qed
 
-subsection \<open>The constraint set is inhabited — and why that matters\<close>
+subsection \<open>The constraint set is inhabited\<close>
 
-text \<open>The paper's standing assumption is \<open>L \<ge> 1\<close> (Theorem 1.1), and that is
-  exactly what makes the identity matrix admissible: \<open>\<Pi>\<^sub>m(I) = m \<ge> m − k\<close> and
-  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(I) = 1 \<le> L\<close>.  This is not a curiosity.  Per the paper's (1.7) the
-  constraint holds for a.e. \<open>t \<ge> 0\<close> — the process is never stopped, and
-  \<open>\<tau>\<^sub>K\<close> of (1.8) is merely a functional of the path — so the bridge from a
-  stopped market witness must continue its volatility past the stopping
-  time with some admissible value.  \<open>mat 1\<close> is that value.\<close>
+text \<open>The paper's standing assumption \<open>L \<ge> 1\<close> (Theorem 1.1) makes the
+  identity matrix admissible: \<open>\<Pi>\<^sub>m(I) = m \<ge> m - k\<close> and
+  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(I) = 1 \<le> L\<close>. Since (1.7)'s constraint holds for a.e.
+  \<open>t \<ge> 0\<close> with the process never stopped, the bridge from a stopped
+  market witness must continue its volatility past the stopping time with
+  an admissible value; \<open>mat 1\<close> serves that role.\<close>
 
 lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
   unfolding psd_def
@@ -827,12 +792,11 @@ corollary sconstraint_nonempty:
 
 subsection \<open>Continuing a stopped volatility past its stopping time\<close>
 
-text \<open>The faithful bridge, per (1.7)–(1.8): the paper's processes are never
-  stopped, so a market witness — whose volatility vanishes after its
-  stopping time — must be continued to become a class member.  Continue with
-  \<open>mat 1\<close>, admissible because \<open>L \<ge> 1\<close> (\<open>mat_1_in_sconstraint\<close>).  The exit
-  time is untouched: by (1.8) \<open>\<tau>\<^sub>K\<close> depends only on the path up to the first
-  exit from \<open>K\<close>, and the continuation acts only afterwards.\<close>
+text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a market
+  witness --- whose volatility vanishes after its stopping time --- must be
+  continued to become a class member, via \<open>mat 1\<close>, admissible since
+  \<open>L \<ge> 1\<close> (\<open>mat_1_in_sconstraint\<close>). The exit time \<open>\<tau>\<^sub>K\<close> is untouched:
+  by (1.8) it depends only on the path up to the first exit from \<open>K\<close>.\<close>
 
 definition acont :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n^'n"
   where "acont a tv s = (if s \<le> tv then a s else mat 1)"
@@ -843,19 +807,16 @@ lemma acont_before: "s \<le> tv \<Longrightarrow> acont a tv s = a s"
 lemma acont_after: "tv < s \<Longrightarrow> acont a tv s = mat 1"
   unfolding acont_def by simp
 
-text \<open>Time-measurability is inherited by the continuation.  The locale
-  assumption \<open>acov_time_measurable\<close> is stated on the nonnegative axis only
-  --- faithfully so, since (1.7) constrains the density for "a.e. \<open>t \<ge> 0\<close>"
-  --- and that is also all that is available here: for \<open>u < 0 \<le> tv\<close> the
-  continuation still reads off \<open>a u\<close>, about which nothing is known.
+text \<open>Time-measurability is inherited by the continuation: the locale
+  assumption \<open>acov_time_measurable\<close> is stated on the nonnegative axis
+  only, matching (1.7)'s "a.e. \<open>t \<ge> 0\<close>", and nothing more is available
+  since for \<open>u < 0 \<le> tv\<close> the continuation still reads \<open>a u\<close>.
 
-  A trap: \<^const>\<open>lborel\<close> is polymorphic, and \<^typ>\<open>real^'n^'n\<close> carries an
-  \<^class>\<open>ord\<close> instance, so an unannotated binder in a goal
-  \<open>(\<lambda>u. \<dots>) \<in> borel_measurable lborel\<close> silently elaborates at the matrix
-  type instead of at \<open>real\<close>, producing \<open>show\<close>s that fail to refine the
-  pending goal although they print identically, and a \<open>simp\<close> call unable
-  to prove \<open>open {..<0}\<close>.  Pin \<open>lborel :: real measure\<close> and annotate every
-  binder.\<close>
+  A trap: \<^const>\<open>lborel\<close> is polymorphic and \<^typ>\<open>real^'n^'n\<close> carries
+  an \<^class>\<open>ord\<close> instance, so an unannotated binder in
+  \<open>(\<lambda>u. \<dots>) \<in> borel_measurable lborel\<close> can silently elaborate at the
+  matrix type instead of \<open>real\<close>. Pin \<open>lborel :: real measure\<close> and
+  annotate every binder.\<close>
 
 lemma acont_set_borel_measurable:
   fixes a :: "real \<Rightarrow> real^'n::finite^'n"
@@ -905,7 +866,7 @@ next
 qed
 
 text \<open>Hence the continued volatility has all its difference quotients in the
-  constraint set — which is exactly the covariation condition of
+  constraint set --- which is exactly the covariation condition of
   \<open>paper_pair_class\<close>, holding for every \<open>0 \<le> s < t\<close> with no stopping
   caveat, as (1.7) demands.\<close>
 
@@ -927,11 +888,10 @@ qed
 
 subsection \<open>The running covariation built from a continued volatility\<close>
 
-text \<open>Packaging the volatility side of the bridge: \<open>Yint a t = \<integral>₀ᵗ a\<close> starts
-  at \<open>0\<close>, has increments given by the interval integrals, and — when \<open>a\<close> is
-  the continued density — difference quotients in the constraint set for
-  every \<open>0 \<le> s < t\<close>.  That is precisely the covariation half of
-  \<open>paper_pair_class\<close>.\<close>
+text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>₀ᵗ a\<close> starts at
+  \<open>0\<close>, has increments given by interval integrals, and --- for the
+  continued density --- difference quotients in the constraint set for every
+  \<open>0 \<le> s < t\<close>: the covariation half of \<open>paper_pair_class\<close>.\<close>
 
 definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
@@ -990,13 +950,12 @@ qed
 
 subsection \<open>What the class gives the tightness argument for free\<close>
 
-text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class already
-  asserts that the difference quotients of \<open>Y\<close> lie in \<open>sconstraint k L\<close>
-  almost surely, and every element of that set has norm at most \<open>n\<sqdot>L\<close>
-  (\<open>sconstraint_norm_le\<close>), so \<open>diffquot_lipschitz\<close> makes \<open>Y\<close> almost surely
-  \<open>n\<sqdot>L\<close>-Lipschitz.  That is the \<open>Y\<close>-event of \<open>pair_holder_charge_split\<close>,
-  with probability one — leaving the \<open>X\<close>-side Hölder estimate as the only
-  part of the tightness with content.\<close>
+text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class's
+  difference quotients lie a.s. in \<open>sconstraint k L\<close>, whose elements have
+  norm at most \<open>n\<sqdot>L\<close> (\<open>sconstraint_norm_le\<close>), so \<open>diffquot_lipschitz\<close>
+  makes \<open>Y\<close> a.s. \<open>n\<sqdot>L\<close>-Lipschitz --- the \<open>Y\<close>-event of
+  \<open>pair_holder_charge_split\<close> with probability one, leaving only the
+  \<open>X\<close>-side Hoelder estimate.\<close>
 
 theorem paper_pair_class_lipschitz_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -1030,7 +989,7 @@ qed
 
 text \<open>Combined with the difference-quotient-to-density transfer, the class
   member's \<open>Y\<close> is almost surely differentiable off a negligible set of
-  times with derivative in the constraint set — the density statement of
+  times with derivative in the constraint set --- the density statement of
   Eq. (1.7), stated for the class itself rather than for a bare path.\<close>
 
 theorem paper_pair_class_density_ae:
@@ -1079,10 +1038,10 @@ proof -
 qed
 
 text \<open>On the capped horizon the second component of a class member is
-  uniformly bounded, almost surely, by \<open>n\<sqdot>L\<sqdot>T\<close>.  It starts at \<open>0\<close> and is
-  \<open>n\<sqdot>L\<close>-Lipschitz, so no probabilistic input is needed.  This is what makes
-  \<open>X\<close> square-integrable under a class law: the martingale clause makes
-  \<open>outerp X - Y\<close> integrable, and \<open>Y\<close> being bounded transfers the
+  uniformly bounded, almost surely, by \<open>n\<sqdot>L\<sqdot>T\<close>: it starts at \<open>0\<close> and is
+  \<open>n\<sqdot>L\<close>-Lipschitz, so no probabilistic input is needed. This is what
+  makes \<open>X\<close> square-integrable under a class law: the martingale clause
+  makes \<open>outerp X - Y\<close> integrable, and \<open>Y\<close> being bounded transfers the
   integrability to \<open>outerp X\<close>.\<close>
 
 theorem paper_pair_class_Y_bounded_ae:
@@ -1119,9 +1078,9 @@ proof -
 qed
 
 text \<open>The diagonal form of the covariation clause, which is what a
-  compensator bound asks for: the \<open>(i,i)\<close> entry of \<open>Y\<close> increases, at rate
-  at most \<open>L\<close>.  Both halves come from the constraint set --- \<open>psd\<close> gives
-  the lower bound on a diagonal entry and \<open>eigen_ub\<close> the upper one
+  compensator bound asks for: the \<open>(i,i)\<close> entry of \<open>Y\<close> increases, at
+  rate at most \<open>L\<close>. Both halves come from the constraint set --- \<open>psd\<close>
+  gives the lower bound on a diagonal entry and \<open>eigen_ub\<close> the upper one
   (\<open>psd_eigen_ub_diag\<close>).\<close>
 
 lemma sconstraint_diag:
@@ -1189,13 +1148,11 @@ qed
 subsection \<open>Square integrability of the class member's process\<close>
 
 text \<open>Under a class law the coordinate process is square integrable on the
-  capped horizon --- and, unlike for the repo's market witnesses, this
-  cannot be read off a uniform bound on \<open>X\<close>: the paper's processes are
-  neither stopped nor confined ((1.7)--(1.8)).  It comes instead from the
-  second martingale clause: \<open>outerp X - Y\<close> is integrable by definition of a
-  martingale, \<open>Y\<close> is bounded (\<open>paper_pair_class_Y_bounded_ae\<close>), and the sum
-  of the two is \<open>outerp X\<close>, whose diagonal entries are the squared
-  coordinates.\<close>
+  capped horizon, though not from a uniform bound on \<open>X\<close> --- the paper's
+  processes are neither stopped nor confined ((1.7)--(1.8)). Instead:
+  \<open>outerp X - Y\<close> is integrable by the martingale clause, \<open>Y\<close> is bounded
+  (\<open>paper_pair_class_Y_bounded_ae\<close>), and their sum \<open>outerp X\<close> has the
+  squared coordinates as diagonal entries.\<close>
 
 lemma paper_pair_class_eval_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -1295,8 +1252,8 @@ lemma paper_pair_class_compensated_entry_integrable:
           paper_pair_class_compensated_integrable[OF Q t]]])
 
 text \<open>Squaring the coordinate is the diagonal entry of \<open>outerp\<close>, so the
-  split of \<open>(X\<^sub>t $ i)\<^sup>2\<close> into the compensated part plus \<open>Y\<close> is an identity of
-  functions, not an inequality.\<close>
+  split of \<open>(X\<^sub>t $ i)\<^sup>2\<close> into the compensated part plus \<open>Y\<close> is an
+  identity of functions, not an inequality.\<close>
 
 lemma sq_coord_split:
   fixes v :: "real^'n::finite" and w :: "real^'n^'n"
@@ -1322,12 +1279,11 @@ qed
 
 subsection \<open>The uniform \<open>L\<^sup>2\<close> bound on the class\<close>
 
-text \<open>The bound the weak-limit machinery needs.  Its proof needs no
-  conditioning and no tower property: a martingale has a constant mean, so
-  \<open>E[outerp X\<^sub>t - Y\<^sub>t] = E[outerp X\<^sub>0 - Y\<^sub>0] = outerp x\<close>, and the diagonal entry
-  of that is \<open>(x $ i)\<^sup>2 - E[Y\<^sub>t $ i $ i]\<close>.  Since \<open>Y\<close> is bounded by \<open>n\<sqdot>L\<sqdot>T\<close>
-  the second moments are bounded uniformly over the whole class --- which is
-  exactly the hypothesis of \<open>unif_integrable_of_L2_bound\<close> further down.\<close>
+text \<open>The uniform bound the weak-limit machinery needs, from a martingale's
+  constant mean: \<open>E[outerp X\<^sub>t - Y\<^sub>t] = outerp x\<close>, whose diagonal entry
+  is \<open>(x $ i)\<^sup>2 - E[Y\<^sub>t $ i $ i]\<close>. Since \<open>Y\<close> is bounded by \<open>n\<sqdot>L\<sqdot>T\<close>,
+  the second moments are bounded uniformly over the class --- the hypothesis
+  of \<open>unif_integrable_of_L2_bound\<close>.\<close>
 
 lemma integral_of_bounded_linear:
   fixes T :: "'b::{second_countable_topology,banach}
@@ -1339,12 +1295,11 @@ lemma integral_of_bounded_linear:
         [OF T has_bochner_integral_integrable[OF f]]])
 
 text \<open>A bounded linear map commutes with the Bochner integral, hence with
-  set integrals, hence it maps martingales to martingales.  The
-  set-integral characterisation \<open>martingale_of_set_integral_eq\<close> is the
-  right interface for this: no conditional expectation has to be moved.
-  This is what lets the argument descend from the class's vector
-  martingales to the real coordinate processes that the integrated
-  identities are stated for.\<close>
+  set integrals, hence maps martingales to martingales;
+  \<open>martingale_of_set_integral_eq\<close> is the right interface, avoiding any
+  move of conditional expectations. This descends from the class's vector
+  martingales to the real coordinate processes the integrated identities
+  are stated for.\<close>
 
 lemma set_integral_of_bounded_linear:
   fixes T :: "'b::{second_countable_topology,banach}
@@ -1511,17 +1466,15 @@ qed
 
 section \<open>Pair tightness from the two component moduli\<close>
 
-text \<open>The pair tightness does not need a matrix-valued Kolmogorov
-  criterion.  The two components carry moduli of different origins — the
-  \<open>X\<close>-side a stochastic Hölder estimate (\<open>Path_Tightness\<close>), the \<open>Y\<close>-side the
-  deterministic Lipschitz modulus of \<open>diffquot_lipschitz\<close> — and on a bounded
-  horizon a Lipschitz bound is itself a Hölder-\<open>ga\<close> bound.  Adding the two
-  through \<open>norm_Pair_le\<close> puts the whole pair path in a single Hölder ball of
-  the product type, and \<open>compactin_path_holder_ball\<close> (Path\_Space, the
-  Arzelà–Ascoli input) applies there verbatim: products of
-  \<open>polish_space\<close>/\<open>real_normed_vector\<close>/\<open>heine_borel\<close> spaces are again such.
-  So the compact set the tightness argument needs is a single pair-Hölder
-  ball.\<close>
+text \<open>Pair tightness needs no matrix-valued Kolmogorov criterion: the
+  \<open>X\<close>-side carries a stochastic Hoelder estimate (\<open>Path_Tightness\<close>), the
+  \<open>Y\<close>-side the deterministic Lipschitz modulus of \<open>diffquot_lipschitz\<close>,
+  and on a bounded horizon a Lipschitz bound is itself Hoelder-\<open>ga\<close>.
+  Adding the two via \<open>norm_Pair_le\<close> puts the pair path in a single
+  Hoelder ball of the product type, where \<open>compactin_path_holder_ball\<close>
+  applies since products of
+  \<open>polish_space\<close>/\<open>real_normed_vector\<close>/\<open>heine_borel\<close> spaces are again
+  such.\<close>
 
 lemma lipschitz_imp_holder_bound:
   fixes s t :: real
@@ -1568,12 +1521,12 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Hence the compact set: pair paths starting at \<open>(x, 0)\<close> whose \<open>X\<close>-part
-  obeys a Hölder-\<open>ga\<close> bound and whose \<open>Y\<close>-part is \<open>B\<close>-Lipschitz form a
-  subset of a compact pair-Hölder ball.  This is the set the tightness
-  estimate has to charge; the \<open>X\<close>-side probability bound is
-  \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close> and the \<open>Y\<close>-side holds
-  with probability one by \<open>diffquot_lipschitz\<close>.\<close>
+text \<open>Hence the compact set: pair paths starting at \<open>(x, 0)\<close> whose
+  \<open>X\<close>-part obeys a Hoelder-\<open>ga\<close> bound and whose \<open>Y\<close>-part is
+  \<open>B\<close>-Lipschitz form a subset of a compact pair-Hoelder ball. This is the
+  set the tightness estimate has to charge; the \<open>X\<close>-side probability
+  bound is \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close> and the
+  \<open>Y\<close>-side holds with probability one by \<open>diffquot_lipschitz\<close>.\<close>
 
 theorem compactin_pair_holder_ball:
   fixes x :: "real^'n::finite"
@@ -1600,10 +1553,10 @@ lemma pair_holder_ball_mem:
   using mem start
   by (auto intro!: pair_holder_of_components[OF T ga c B X Y])
 
-text \<open>The tightness criterion the pair laws are checked against.  Because
-  \<open>compactin_pair_holder_ball\<close> supplies the compact set outright, a family
-  of pair laws is tight as soon as, for every \<open>e\<close>, SOME Hölder ball carries
-  all but \<open>e\<close> of every law's mass.\<close>
+text \<open>The tightness criterion the pair laws are checked against: since
+  \<open>compactin_pair_holder_ball\<close> supplies the compact set outright, a
+  family of pair laws is tight as soon as, for every \<open>e\<close>, some Hoelder
+  ball carries all but \<open>e\<close> of every law's mass.\<close>
 
 theorem tight_on_set_pair_holder_charge:
   fixes \<Gamma> :: "(('n::finite) pairpath) measure set" and x :: "real^'n"
@@ -1646,12 +1599,11 @@ next
   qed
 qed
 
-text \<open>And the charge itself splits along the components: the \<open>X\<close>-side
-  Hölder event and the \<open>Y\<close>-side Lipschitz event intersect INSIDE a pair
-  Hölder ball (\<open>pair_holder_of_components\<close>), so their complements cover the
-  ball's complement and subadditivity finishes.  In the application the
-  \<open>Y\<close>-event has probability one (\<open>diffquot_lipschitz\<close>), so only the
-  \<open>X\<close>-side estimate carries content.\<close>
+text \<open>The charge splits along the components: the \<open>X\<close>-side Hoelder event and
+  the \<open>Y\<close>-side Lipschitz event intersect inside a pair Hoelder ball
+  (\<open>pair_holder_of_components\<close>), so their complements cover the ball's
+  complement and subadditivity finishes; here the \<open>Y\<close>-event has
+  probability one, so only the \<open>X\<close>-side estimate carries content.\<close>
 
 lemma pair_holder_charge_split:
   fixes N :: "(('n::finite) pairpath) measure" and x :: "real^'n"
@@ -1723,17 +1675,15 @@ proof -
   finally show ?thesis .
 qed
 
-section \<open>NC-3: passing the martingale identities through the weak limit\<close>
+section \<open>Passing the martingale identities through the weak limit\<close>
 
-text \<open>The integrated identities the class carries — \<open>E[Z\<sqdot>(X\<^sub>t − X\<^sub>s)] = 0\<close> for
-  a bounded continuous test \<open>Z\<close> of the past, and its covariation analogue —
-  are integrals of CONTINUOUS but UNBOUNDED functions of the path, so plain
-  weak convergence does not transfer them.  \<open>Path_Tightness\<close>'s
-  \<open>weak_conv_on_integral_unif_integrable\<close> closes exactly that gap, given
-  uniform integrability.  What the moment machinery actually produces is a
-  uniform \<open>L\<^sup>2\<close> bound, so the usable form is the specialisation below:
-  a uniform second moment implies the uniform-integrability hypothesis by
-  Chebyshev–Markov, \<open>\<integral>\<bar>f\<bar>\<sqdot>1\<^bsub>{\<bar>f\<bar>>R}\<^esub> \<le> (1/R)\<sqdot>\<integral>f\<^sup>2 \<le> C/R\<close>.\<close>
+text \<open>The class's integrated identities --- \<open>E[Z\<sqdot>(X\<^sub>t - X\<^sub>s)] = 0\<close> for a
+  bounded continuous test \<open>Z\<close> of the past, and its covariation analogue ---
+  are integrals of continuous but unbounded path functionals, so weak
+  convergence alone does not transfer them. \<open>Path_Tightness\<close>'s
+  \<open>weak_conv_on_integral_unif_integrable\<close> closes the gap given uniform
+  integrability, which a uniform \<open>L\<^sup>2\<close> bound supplies via
+  Chebyshev--Markov: \<open>\<integral>\<bar>f\<bar>\<sqdot>1\<^bsub>{\<bar>f\<bar>>R}\<^esub> \<le> (1/R)\<sqdot>\<integral>f\<^sup>2 \<le> C/R\<close>.\<close>
 
 lemma unif_integrable_of_L2_bound:
   fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
@@ -1793,12 +1743,12 @@ proof -
     by (intro exI[of _ R]) auto
 qed
 
-text \<open>Hence the transfer in the form the canonical-market construction uses:
-  a continuous path functional with a UNIFORM second-moment bound has its
-  integral pass to the weak limit.  Applied with
-  \<open>f \<omega> = Z \<omega> \<sqdot> ((X\<^sub>t − X\<^sub>s) \<bullet> e\<^sub>j)\<close> this carries the martingale identity of
-  the approximating laws to the limit law, and with the squared increment it
-  carries the covariation identity.\<close>
+text \<open>The transfer the canonical-market construction uses: a continuous
+  path functional with a uniform second-moment bound has its integral
+  pass to the weak limit. Applied with
+  \<open>f \<omega> = Z \<omega> \<sqdot> ((X\<^sub>t - X\<^sub>s) \<bullet> e\<^sub>j)\<close> this carries the martingale
+  identity to the limit law, and with the squared increment the
+  covariation identity.\<close>
 
 theorem weak_conv_integral_of_L2_bound:
   fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
@@ -1821,24 +1771,21 @@ theorem weak_conv_integral_of_L2_bound:
     (rule unif_integrable_of_L2_bound
       [OF C iTi iTN sqi sqN sqiI sqNI])
 
-section \<open>NC-3: the clauses of the class that survive a weak limit\<close>
+section \<open>The clauses of the class that survive a weak limit\<close>
 
-text \<open>Lemma 2.3 of the paper says the class is CLOSED, and its proof passes
-  each defining clause of (1.7) to the limit law.  The paper does that
-  through Prokhorov followed by Skorokhod's representation theorem; we
-  substitute the closed-set half of the portmanteau theorem
-  (\<open>weak_conv_closed_full_mass\<close>), which needs no almost-sure realisation and
-  is already available here.
+text \<open>Lemma 2.3 of the paper says the class is closed, passing each defining
+  clause of (1.7) to the limit law. The paper uses Prokhorov followed by
+  Skorokhod's representation theorem; this instead uses the closed-set
+  half of the portmanteau theorem (\<open>weak_conv_closed_full_mass\<close>), needing
+  no almost-sure realisation.
 
-  This section discharges the two clauses that are CLOSED CONDITIONS ON A
-  SINGLE PATH: the starting point \<open>(x, 0)\<close> and the covariation constraint of
-  (1.7).  Portmanteau gives them only for the countably many RATIONAL pairs
-  \<open>s < t\<close> --- one closed set per pair --- and path continuity upgrades that
-  to all real pairs (\<open>diffquot_all_of_rational\<close>), exactly as in the last
-  step of the paper's own argument.  The remaining two clauses of the class
-  are the martingale properties; those are not closed conditions on single
-  paths and go through the integrated identities instead
-  (\<open>weak_conv_integral_of_L2_bound\<close>).\<close>
+  This section discharges the two clauses that are closed conditions on
+  a single path: the starting point \<open>(x, 0)\<close> and the covariation
+  constraint of (1.7). Portmanteau gives them only for the countably many
+  rational pairs \<open>s < t\<close>, and path continuity upgrades that to all real
+  pairs (\<open>diffquot_all_of_rational\<close>), as in the paper's own argument. The
+  remaining two clauses are the martingale properties, which go through
+  the integrated identities instead (\<open>weak_conv_integral_of_L2_bound\<close>).\<close>
 
 subsection \<open>Full mass of the two closed clauses on a class member\<close>
 
@@ -1916,11 +1863,11 @@ qed
 
 subsection \<open>Both closed clauses pass to the weak limit\<close>
 
-text \<open>The start clause needs nothing beyond portmanteau.  The covariation
-  clause is available from portmanteau only pair by pair; the countable
-  conjunction over rational pairs is an almost-sure statement
-  (\<open>AE_ball_countable'\<close>), and \<open>diffquot_all_of_rational\<close> --- the paper's own
-  last step, "by continuity" --- extends it to every real pair.\<close>
+text \<open>The start clause needs nothing beyond portmanteau. The covariation
+  clause is available only pair by pair; the countable conjunction over
+  rational pairs is an almost-sure statement (\<open>AE_ball_countable'\<close>), and
+  \<open>diffquot_all_of_rational\<close> --- the paper's own last step, "by continuity"
+  --- extends it to every real pair.\<close>
 
 theorem paper_pair_class_start_limit:
   fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"

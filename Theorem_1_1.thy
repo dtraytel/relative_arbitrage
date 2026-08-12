@@ -1,53 +1,12 @@
-section \<open>Theorem 1.1: the assembly point\<close>
+section \<open>Theorem 1.1: the value function is the unique viscosity solution\<close>
 
 text \<open>
-  The join of the development (STATUS.md, task 28). Theorem 1.1 of
-  arXiv:2512.17702 asserts that the value function \<open>v\<close> of Eq. (1.6) is the
-  unique upper semicontinuous viscosity solution of Eq. (1.9)--(1.10) with
-  zero boundary values. Its full proof requires Section 2 (Lemmas 2.2/2.3 and
-  Proposition 2.4, task 25), Section 4's uniqueness (task 26) and Section 5's
-  continuity (task 27). This theory collects the parts provable TODAY, for
-  the ball \<open>K = cball 0 r\<close> where Section 4 is unconditional:
-
-  \<^item> the value-function upper bound \<open>v \<le> ball_v\<close> everywhere (the \<open>\<le>\<close> half of
-    the identification of \<open>v\<close>, via Example 3.1's optimal-boundary analysis);
-  \<^item> the boundary identification \<open>v = ball_v = 0\<close> on the sphere;
-  \<^item> the uniqueness clause: ANY continuous viscosity solution with \<open>ball_v\<close>'s
-    boundary data coincides with \<open>ball_v\<close> on the ball — so once the DPP
-    machinery of task 25 delivers that \<open>v\<close> is a viscosity solution with the
-    right boundary data and the matching lower bound, Theorem 1.1 for the
-    ball follows by instantiating the third clause at \<open>u = v\<close>.
-
-  What is missing, and where it comes from: upper semicontinuity of \<open>v\<close> and
-  the viscosity property (Prop 2.4 via Lemmas 2.2/2.3); the lower bound
-  \<open>ball_v \<le> v\<close> at interior points (the martingale construction of
-  Section 3.1, which needs weak existence for Eq. (3.11)); and general
-  compact \<open>K\<close> (Theorem 4.2(a), behind Crandall--Ishii).
-
-  STATUS OF THE THIRD ITEM (2026-07-31). \<open>Comparison_Assembly\<close> is now imported,
-  and it carries the Crandall--Ishii development: Rademacher, Alexandrov,
-  Jensen's lemma, the theorem on sums, the envelope calculus, and the closing
-  chain of Theorem 4.2(a). Its endpoint is
-  \<open>comparison_supconv_sequence_complete\<close>, which derives \<open>False\<close> from the two
-  viscosity properties together with a SEQUENCE of Jensen applications: for
-  each index, a doubled maximiser, its Alexandrov jet, and the point at which
-  each sup-convolution is attained, plus convergence of the four resulting
-  sequences and \<open>p \<noteq> 0\<close> at the limit.
-
-  What still blocks general \<open>K\<close> is therefore not the Crandall--Ishii analysis
-  but the CONSTRUCTION that feeds it: producing that sequence from the doubling
-  of \<open>\<theta> u\<close> against \<open>w\<close> on \<open>K \<times> K\<close>, with a shrinking Jensen tilt. The
-  existence ingredients for it are proved (\<open>doubling_maximiser_exists\<close>,
-  \<open>doubling_complete\<close>, \<open>doubled_supconv_jet_exists\<close>); what is not written is
-  their instantiation as a single indexed family.
-
-  NOTE on imports: Value\_Function (probabilistic chain) and
-  Relative\_Arbitrage\_Comparison (Envelopes chain) share draft ancestors, so
-  this theory is BATCH-ONLY, like Path\_Tightness\_Market. (Adding
-  \<open>Comparison_Assembly\<close> as a third import does NOT change that: it builds
-  green. Note also that the analogous "batch-only" claim once recorded for
-  \<open>Comparison_Assembly\<close> itself was simply WRONG -- PIDE holds that theory
-  fine -- so this note should be re-tested rather than trusted.)
+  Theorem 1.1 of arXiv:2512.17702 asserts that the value function \<open>v\<close> of
+  Eq. (1.6) is the unique bounded upper semicontinuous viscosity solution of
+  Eq. (1.9) satisfying the zero boundary condition of Eq. (1.10).  This theory
+  joins the two halves of that statement: the viscosity property, proved in
+  Paper\_Viscosity, and the comparison principle, proved in
+  Comparison\_Assembly.  It also derives Example 3.1 in closed form.
 \<close>
 
 theory Theorem_1_1
@@ -85,85 +44,40 @@ proof -
   from le ge show "u x0 = ball_v r k x0" by simp
 qed
 
-text \<open>UPDATE (2026-08-02).  Blocker (iii) above --- "general compact \<open>K\<close>,
-  behind Crandall--Ishii" --- is GONE.  Theorem 4.2(a) is proved, as
-  \<open>max_principle_boundary_holds\<close> in Comparison\_Assembly:
+section \<open>The clauses of Theorem 1.1 and where they are proved\<close>
 
-    \<open>compact K \<Longrightarrow> K \<noteq> {} \<Longrightarrow> 1 \<le> k \<Longrightarrow> k < CARD('n) \<Longrightarrow> 1 \<le> L
-       \<Longrightarrow> max_principle_boundary k L K\<close>
+text \<open>With \<open>v = enn2real \<circ> paper_v k L T K\<close>, Theorem 1.1 has five clauses.
 
-  so the uniqueness clause is no longer tied to the ball.  The third clause of
-  \<open>theorem_1_1_ball_fragment\<close> above reaches \<open>u = ball_v\<close> through Example 3.1's
-  explicit optimal-boundary formula; the theorem below reaches uniqueness for an
-  arbitrary compact \<open>K\<close> through comparison instead, and needs no formula at all.
+  \<^item> Finiteness, \<open>paper_v k L T K x < \<top>\<close>: \<open>paper_v_le_T\<close>, and sharply
+    \<open>paper_v_le_ball_bound\<close>.
+  \<^item> Upper semicontinuity: \<open>Paper_Bridge.paper_v_usc_unconditional\<close>.
+  \<^item> The viscosity property of Eq. (1.9): \<open>Paper_Viscosity.paper_v_visc_subsol\<close>
+    for the subsolution half, with the operator of Eq. (1.9) itself, and
+    \<open>Paper_Viscosity.paper_v_supersol_lsc\<close> for the supersolution half.
+  \<^item> The zero boundary condition of Eq. (1.10), in the viscosity sense of
+    Definition 3.1: \<open>Paper_Viscosity.paper_v_subsol_bc\<close> and
+    \<open>paper_v_supersol_bc\<close> below.
+  \<^item> Uniqueness: \<open>theorem_1_1_uniqueness_faithful\<close> below, via the paper's
+    Theorem 4.2(a), Theorem 4.2(b), Theorem 4.3 and Proposition 4.1.
 
-  What still blocks the FULL Theorem 1.1 is unchanged, and is not PDE work:
+  The boundary condition is a viscosity condition, not the pointwise identity
+  \<open>v = 0\<close> on \<open>K - interior K\<close>, which is false in general: by Lemma 5.3 of the
+  paper, a convex \<open>K\<close> has \<open>v x = 0\<close> exactly when the face containing \<open>x\<close> has
+  dimension at most \<open>n - k\<close>, so the cube in \<open>\<real>\<^sup>3\<close> with \<open>k = 2\<close> has \<open>v > 0\<close> on
+  the open two-dimensional faces of its boundary.  The pointwise identity is
+  proved here only for a ball, where it holds.\<close>
 
-  \<^item> upper semicontinuity of \<open>v\<close> and the viscosity property (Prop 2.4 via
-    Lemmas 2.2/2.3);
-  \<^item> the lower bound \<open>ball_v \<le> v\<close> at interior points --- the Section 3.1
-    martingale construction, which needs weak existence for Eq. (3.11).
+section \<open>A comparison principle without a regularity hypothesis is refutable\<close>
 
-  Both are stochastic analysis, not comparison.\<close>
-
-section \<open>Theorem 1.1: exactly which clauses are proved\<close>
-
-text \<open>Theorem 1.1 asserts that \<open>v\<close> of Eq. (1.6) is the unique upper
-  semicontinuous viscosity solution with zero boundary values.  In this
-  development's vocabulary, with \<open>v = enn2real \<circ> val_fn k L K\<close>, it has five
-  clauses.  Status as of 2026-08-02:
-
-  \<^item> (0) FINITENESS, \<open>val_fn k L K x < \<top>\<close> --- PROVED for every bounded \<open>K\<close>:
-    \<open>val_fn_finite_bounded\<close> (Value\_Function).
-  \<^item> (1) REGULARITY (the paper's usc; this development has no usc predicate and
-    uses continuity) --- OPEN.
-  \<^item> (2) \<open>visc_sol k L (interior K) v\<close>, Eq. (1.9) --- OPEN.
-  \<^item> (3) ZERO BOUNDARY VALUES, Eq. (1.10) --- PROVED for \<open>K = cball 0 r\<close>:
-    \<open>val_fn_zero_on_frontier_ball\<close> (Value\_Function).  OPEN for general \<open>K\<close>,
-    where it is Lemma 5.3 of the paper.
-  \<^item> (4) UNIQUENESS --- PROVED for every compact \<open>K\<close>:
-    \<open>theorem_1_1_uniqueness_general\<close> below, via Theorem 4.2(a).
-
-  WHAT BLOCKS (1), (2) AND (3)-for-general-\<open>K\<close>, and why it is not a matter of
-  assembly.  All three reduce to two things the paper does not supply:
-
-  \<^item> Proposition 2.4 --- which gives usc of \<open>v\<close>, the dynamic programming
-    principle AND attainment of the supremum --- has NO proof in the paper.  Its
-    entire proof is the sentence "It suffices to repeat [larsson\_minimum\_2022,
-    proofs of Proposition 2.2(ii), (iii)] word by word."  Discharging it without
-    assumption needs a universally measurable selection theorem over analytic
-    sets and a Skorokhod representation on \<open>C([0,\<infinity>))\<close>, NEITHER of which exists
-    in Isabelle/HOL, the AFP, or this repository.
-  \<^item> Example 3.1's lower bound \<open>ball_v \<le> v\<close> needs a global weak solution of
-    Eq. (3.11) --- a bounded, continuous, DEGENERATE, NON-LIPSCHITZ SDE on the
-    punctured space --- for which the paper cites no theorem by name.
-
-  Note the second point means even "Theorem 1.1 for the ball" is out of reach:
-  the \<open>\<le>\<close> half (\<open>val_fn_le_ball_v\<close>) has always been available; it is the \<open>\<ge>\<close>
-  half that is missing, and it is missing structurally.\<close>
-
-section \<open>A SECOND refutable interface, found by scoping Theorem 1.1\<close>
-
-text \<open>\<open>comparison_principle\<close> (Relative\_Arbitrage\_Uniqueness) axiomatises
-  comparison with NO continuity hypothesis on \<open>u\<close> and \<open>w\<close>.  That is the same
-  defect the project already found and repaired in \<open>max_principle_boundary_raw\<close>,
-  and it is fatal for the same reason: \<open>visc_subsol\<close>/\<open>visc_supersol\<close> are LOCAL
-  conditions on \<open>\<Omega>\<close>, so the values of a sub- or supersolution OUTSIDE \<open>\<Omega>\<close> are
-  completely unconstrained and can be moved to violate any boundary comparison.
-
-  Concretely: take \<open>u = ball_v + 1\<close> (a subsolution, since adding a constant
-  changes neither gradient nor Hessian of a test function) and \<open>w'\<close> equal to
-  \<open>ball_v\<close> INSIDE the ball and to \<open>ball_v + 1\<close> outside.  \<open>visc_supersol_cong_on\<close>
-  keeps \<open>w'\<close> a supersolution because it agrees with \<open>ball_v\<close> on the open ball;
-  on \<open>closure (ball 0 r) - ball 0 r\<close> the two functions are EQUAL, so the
-  locale's boundary hypothesis holds; and the locale then forces
-  \<open>ball_v + 1 \<le> ball_v\<close> at the centre.
-
-  CONSEQUENCE: \<open>ball_v_unique_solution\<close> (Relative\_Arbitrage\_Uniqueness:499),
-  which carries \<open>comparison_principle k L (ball 0 r)\<close> as a hypothesis, is
-  VACUOUS for every \<open>r > 0\<close>.  It should be restated against
-  \<open>comparison_compact\<close> or \<open>viscosity_uniqueness_compact\<close>, both of which are now
-  unconditional --- \<open>theorem_1_1_uniqueness_general\<close> below is the replacement.\<close>
+text \<open>\<open>comparison_principle\<close> (Relative\_Arbitrage\_Uniqueness) states comparison
+  with no regularity hypothesis on \<open>u\<close> and \<open>w\<close>.  It holds for no ball.
+  \<open>visc_subsol\<close> and \<open>visc_supersol\<close> are conditions local to \<open>\<Omega>\<close>, so the values
+  of a sub- or supersolution outside \<open>\<Omega>\<close> are unconstrained: \<open>u = ball_v + 1\<close> is
+  a subsolution, and \<open>w\<close> taken equal to \<open>ball_v\<close> inside the ball and to
+  \<open>ball_v + 1\<close> outside is a supersolution agreeing with \<open>u\<close> on the boundary,
+  yet \<open>u > w\<close> at the centre.  Hence \<open>ball_v_unique_solution\<close>, which carries
+  \<open>comparison_principle\<close> as a hypothesis, is vacuous;
+  \<open>theorem_1_1_uniqueness_general\<close> below replaces it.\<close>
 
 lemma visc_subsol_shift:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -232,7 +146,7 @@ theorem theorem_1_1_uniqueness_general:
   by (rule viscosity_uniqueness_compact
       [OF cK neK k(1) k(2) L cu cw subu supu subw supw bd x])
 
-section \<open>Example 3.1 realises the ball value exactly (clause (3), n − k = 1)\<close>
+section \<open>Example 3.1 realises the ball value exactly, for \<open>n - k = 1\<close>\<close>
 
 lemma ess_inf_time_const:
   assumes M: "prob_space M"
@@ -351,28 +265,19 @@ proof (rule antisym)
 qed
 
 
-section \<open>Clause (2) joined to uniqueness: \<open>paper_v\<close> IS the solution\<close>
+section \<open>The value function satisfies both clauses of Definition 3.1\<close>
 
-text \<open>The two halves of clause (2) live in Paper\_Viscosity and the
-  comparison principle in Comparison\_Assembly, and until now nothing saw
-  both.  They meet here.
+text \<open>Both halves of the viscosity property land in the envelope forms that
+  @{thm [source] viscosity_uniqueness_compact} consumes:
+  @{thm [source] visc_subsol_imp_env} on the subsolution side, the
+  envelope-free notion proved for \<open>paper_v\<close> being the stronger one, and
+  @{thm [source] visc_supersol_lsc_iff_env} on the supersolution side.  The
+  horizon hypothesis is discharged by @{thm [source] paper_v_cap_inert}.
 
-  Both halves land in the envelope forms that
-  @{thm [source] viscosity_uniqueness_compact} now consumes ---
-  @{thm [source] visc_subsol_imp_env} on the subsolution side, since the
-  envelope-free notion proved for \<open>paper_v\<close> is the STRONGER one, and
-  @{thm [source] visc_supersol_lsc_iff_env} on the supersolution side.
-  The horizon hypothesis is discharged by
-  @{thm [source] paper_v_cap_inert}, so the only thing assumed about
-  \<open>paper_v\<close> is CONTINUITY on \<open>K\<close>.
-
-  That continuity is the one genuine gap.  What is proved elsewhere in
-  this development is that \<open>paper_v\<close> is upper semicontinuous; lower
-  semicontinuity is not, and the paper's own Theorem 1.1 speaks of the
-  unique UPPER SEMICONTINUOUS solution, so closing the gap properly means
-  the paper's Theorem 4.3 (comparison with semicontinuous data), not
-  this theorem.  Stated with continuity as a hypothesis, the assembly is
-  honest and immediately usable the moment continuity is available.\<close>
+  The statement below assumes continuity of \<open>paper_v\<close> on \<open>K\<close>.  Theorem 1.1
+  speaks of the unique upper semicontinuous solution and needs no continuity;
+  \<open>theorem_1_1_uniqueness_faithful\<close> below is the faithful form, and
+  supersedes this one.\<close>
 
 theorem paper_v_unique_viscosity_solution:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
@@ -417,7 +322,7 @@ proof -
 qed
 
 
-section \<open>P7: Theorem 1.1 assembled\<close>
+section \<open>Theorem 1.1 assembled\<close>
 
 text \<open>\<open>paper_v\<close> as a real-valued function: nonnegative, globally bounded, and
   upper semicontinuous in the \<open>\<epsilon>\<close>-form the comparison machinery consumes.\<close>
@@ -494,10 +399,9 @@ proof -
 qed
 
 text \<open>The supersolution clause of Definition 3.1 for \<open>paper_v\<close>, with the
-  boundary gate included.  The gate is VACUOUS: \<open>paper_v \<ge> 0\<close>, hence so is its
-  lower envelope, so \<open>{x. lsc_env v x < 0} = {}\<close> and the \<open>\<Omega>\<close> of Definition 3.1(b)
-  collapses to \<open>interior K\<close>, which is what \<open>paper_v_supersol_lsc_bounded\<close>
-  already gives.\<close>
+  boundary gate included.  The gate is vacuous: \<open>paper_v \<ge> 0\<close>, hence so is its
+  lower envelope, so \<open>{x. lsc_env v x < 0} = {}\<close> and the \<open>\<Omega>\<close> of
+  Definition 3.1(b) collapses to \<open>interior K\<close>.\<close>
 
 theorem paper_v_supersol_bc:
   fixes K :: "(real^'n::finite) set"
@@ -539,13 +443,11 @@ proof -
   then show ?thesis unfolding v_def[symmetric] gate .
 qed
 
-text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  Every hypothesis about \<open>paper_v\<close> is
-  now discharged: it is usc (\<open>paper_v_real_usc\<close>), nonnegative, globally
-  bounded (\<open>paper_v_real_bounded\<close>), and satisfies BOTH clauses of
-  Definition 3.1 with their boundary gates --- \<open>paper_v_subsol_bc\<close> (P6) and
-  \<open>paper_v_supersol_bc\<close>.  The only thing the statement still rests on is
-  \<open>comparison_two_domain\<close> (P4), the paper's Theorem 4.2(b), which is the sole
-  admitted step in the development.\<close>
+text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>paper_v\<close> is upper semicontinuous
+  (\<open>paper_v_real_usc\<close>), nonnegative, globally bounded (\<open>paper_v_real_bounded\<close>)
+  and satisfies both clauses of Definition 3.1 with their boundary gates
+  (\<open>paper_v_subsol_bc\<close>, \<open>paper_v_supersol_bc\<close>); on an expandable \<open>K\<close> it is the
+  only such function.\<close>
 
 theorem theorem_1_1_uniqueness_faithful:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
@@ -585,36 +487,14 @@ proof -
   then show ?thesis unfolding v_def by simp
 qed
 
-text \<open>\<^bold>\<open>What is left: exactly one thing.\<close>  \<open>comparison_two_domain\<close> (P4) in
-  \<open>Comparison_Assembly\<close> --- the paper's Theorem 4.2(b) --- is the only admitted
-  step in the whole development.  Discharging it makes Theorem 1.1 complete:
-  \<open>paper_v\<close> is a bounded usc viscosity solution of \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> on \<open>K\<close> with
-  the zero boundary condition of Definition 3.1, and on an expandable \<open>K\<close> it is
-  the only one.
+section \<open>Example 3.1 from the interior lower bound\<close>
 
-  \<^bold>\<open>P6 was closed 2026-08-11\<close> (\<open>Paper_Viscosity.paper_v_subsol_bc\<close>), and the
-  audit predicted in this note came out the easy way, though not for the
-  reason predicted.  \<open>paper_v_visc_subsol\<close> turns out never to USE
-  \<open>x \<in> interior K\<close> at all --- it is assumed and then ignored, since
-  \<open>paper_v_touch_orth\<close> is indifferent to where \<open>x\<close> sits; hence
-  \<open>paper_v_visc_subsol_any\<close> for an arbitrary \<open>\<Omega>\<close>.  What the gate actually buys
-  is the upgrade from a touching that is global over \<open>K\<close> to a local one: off
-  \<open>K\<close> the value is \<open>0\<close> (\<open>paper_v_zero_outside\<close>, because the exit time of a
-  path starting outside \<open>K\<close> is \<open>0\<close>), while \<open>\<phi>\<close> is continuous, so for \<open>z\<close> near a
-  boundary \<open>x\<close> with \<open>v x > 0\<close> the needed \<open>0 - \<phi> z \<le> v x - \<phi> x\<close> follows from
-  \<open>\<phi> x - \<phi> z < v x\<close>.  No stochastic argument was involved.\<close>
-
-
-section \<open>E4: Example 3.1 assembled from the interior lower bound\<close>
-
-text \<open>PLAN \<open>\<section>2.2\<close>, package E4.  Everything of Example 3.1 EXCEPT the interior
-  lower bound at nonzero points (which is E2--E3, the subspace-tangential
-  field) is discharged here.  Four cases: outside the ball the value is \<open>0\<close>
-  because a path starting outside \<open>K\<close> has exit time \<open>0\<close>
-  (\<open>paper_v_zero_outside\<close>); on the sphere \<open>paper_v_boundary_zero\<close>; strictly
-  inside and nonzero, the hypothesis against \<open>paper_v_le_ball_bound\<close>; and at
-  the CENTRE by upper semicontinuity --- NOT by running the field from \<open>0\<close>,
-  where the clamp sits.\<close>
+text \<open>Everything of Example 3.1 except the interior lower bound at nonzero
+  points.  Four cases: outside the ball the value is \<open>0\<close>, since a path starting
+  outside \<open>K\<close> has exit time \<open>0\<close> (\<open>paper_v_zero_outside\<close>); on the sphere,
+  \<open>paper_v_boundary_zero\<close>; strictly inside and nonzero, the hypothesis against
+  \<open>paper_v_le_ball_bound\<close>; and at the centre by upper semicontinuity, rather
+  than by running the tangential field from \<open>0\<close>, where the clamp sits.\<close>
 
 lemma paper_v_ball_fin:
   fixes r :: real and y :: "real^'n::finite"
@@ -780,19 +660,17 @@ qed
 
 subsection \<open>Example 3.1 for general \<open>k\<close>\<close>
 
-text \<open>The interior lower bound is now available at the SHARP rate
-  \<open>CARD('n) - k\<close>: for \<open>y \<noteq> 0\<close> take the \<open>(CARD('n) - k + 1)\<close>-dimensional
-  subspace \<open>V\<close> spanned by an orthonormal family whose FIRST member is
-  \<open>y / |y|\<close> (@{thm [source] orthonormal_family_containing}), so that
-  \<open>y \<in> V\<close>, and run the subspace-tangential member of
-  @{thm [source] paper_v_ball_lower_sharp} inside \<open>V\<close>.  Its growth rate is
-  \<open>dim V - 1 = CARD('n) - k\<close>, which is exactly the constant in (3.1).
+text \<open>The interior lower bound holds at the sharp rate \<open>CARD('n) - k\<close>: for
+  \<open>y \<noteq> 0\<close> take the \<open>(CARD('n) - k + 1)\<close>-dimensional subspace \<open>V\<close> spanned by an
+  orthonormal family whose first member is \<open>y / |y|\<close>
+  (@{thm [source] orthonormal_family_containing}), so that \<open>y \<in> V\<close>, and run the
+  subspace-tangential member of @{thm [source] paper_v_ball_lower_sharp} inside
+  \<open>V\<close>.  Its growth rate is \<open>dim V - 1 = CARD('n) - k\<close>, the constant of (3.1).
 
-  The horizon hypothesis \<open>r\<^sup>2/(CARD('n) - k) \<le> T\<close> is NOT a weakening: the
-  value function of a finite-horizon problem is capped by its horizon
-  (@{thm [source] enn2real_paper_v_horizon_cap}), so without it the stated
-  identity would be false at the centre.  It says only that the horizon does
-  not bind.\<close>
+  The hypothesis \<open>r\<^sup>2/(CARD('n) - k) \<le> T\<close> says only that the horizon does not
+  bind: the value function of a finite-horizon problem is capped by its horizon
+  (@{thm [source] enn2real_paper_v_horizon_cap}), so without it the identity
+  would fail at the centre.\<close>
 
 theorem example_3_1:
   fixes r :: real and x :: "real^'n::finite"

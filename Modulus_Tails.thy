@@ -5,7 +5,7 @@ text \<open>
   \<open>Increment_Tails\<close>) with the deterministic chaining of \<open>Dyadic_Chaining\<close>
   into the quantitative tail bound on the modulus of continuity. Both the
   modulus threshold and the exceptional probability are explicit in
-  \<open>(C, T, \<gamma>, n)\<close> only — uniformity over the family of admissible laws is
+  \<open>(C, T, \<gamma>, n)\<close> only --- uniformity over the family of admissible laws is
   exactly what tightness in Lemma 2.2 of arXiv:2512.17702 consumes.
 \<close>
 
@@ -198,7 +198,7 @@ subsection \<open>The bad event over all levels at once\<close>
 text \<open>
   The union over levels \<open>j \<ge> n\<close> of the level-\<open>j\<close> bad events, with the geometric
   thresholds \<open>2 powr (-\<gamma> j)\<close>. For \<open>\<gamma> < 1/4\<close> the level bounds are geometric with
-  ratio \<open>q = 2 powr (-(1-4\<gamma>)) < 1\<close>, so the tail sum is \<open>q^n/(1-q)\<close> — decaying
+  ratio \<open>q = 2 powr (-(1-4\<gamma>)) < 1\<close>, so the tail sum is \<open>q^n/(1-q)\<close> --- decaying
   in \<open>n\<close>, uniformly over every law satisfying the hypotheses.
 \<close>
 

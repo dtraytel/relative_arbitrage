@@ -4,12 +4,12 @@ text \<open>
   The space the martingale laws of Lemma 2.2 of arXiv:2512.17702 live on:
   HOL-Analysis' set-based \<open>cfunspace\<close> (bounded continuous maps with the sup
   metric) over the compact interval \<open>{0..T}\<close>, valued in a Polish type.
-  Completeness is \<open>Metric_space.mcomplete_cfunspace\<close> (HOL-Analysis) and
-  separability is \<open>Metric_space.separable_space_cfunspace\<close> (AFP
-  Standard_Borel_Spaces); together with compactness and metrizability of the
-  domain, these are exactly the hypotheses of the AFP's
-  \<open>Prokhorov_theorem_LP\<close>, which converts tightness of the Lemma 2.2 laws
-  into relative compactness in the L\'evy-Prokhorov metric on this space.
+  Completeness is \<open>Metric_space.mcomplete_cfunspace\<close> and separability
+  \<open>Metric_space.separable_space_cfunspace\<close> (AFP Standard\_Borel\_Spaces);
+  with compactness and metrizability of the domain, these are the
+  hypotheses of the AFP's \<open>Prokhorov_theorem_LP\<close>, converting tightness of
+  the Lemma 2.2 laws into relative compactness in the L\'evy-Prokhorov
+  metric on this space.
 \<close>
 
 theory Path_Space
@@ -595,7 +595,7 @@ qed
 subsection \<open>The continuous-mapping theorem for weak convergence\<close>
 
 text \<open>
-  Pushforward along a continuous map preserves weak convergence — absent from
+  Pushforward along a continuous map preserves weak convergence --- absent from
   the AFP's L\'evy-Prokhorov development, proved here from
   \<open>weak_conv_on_def\<close>: bounded continuous test functions compose with the map,
   and \<open>integral_distr\<close> transfers the integrals. Used with the restriction
@@ -675,7 +675,7 @@ subsection \<open>Evaluation maps and moment bounds under weak limits\<close>
 
 text \<open>
   Evaluation at a time point is 1-Lipschitz on the path space, hence
-  continuous — so coordinate moments are (unbounded, nonnegative, continuous)
+  continuous --- so coordinate moments are (unbounded, nonnegative, continuous)
   test functions. The Fatou-type lemma below transfers uniform moment bounds
   to weak limits by truncation: the truncated integrands are bounded
   continuous, so their integrals converge, and monotone convergence recovers
@@ -719,13 +719,13 @@ lemma continuous_map_path_eval:
   by simp
 
 text \<open>The exit time is upper semicontinuous because "has already entered
-  \<open>A\<close> strictly before \<open>c\<close>" is an open condition on the path: it is witnessed
-  at a single time \<open>r\<close>, and evaluation at a fixed time is continuous
+  \<open>A\<close> strictly before \<open>c\<close>" is an open condition on the path: witnessed at a
+  single time \<open>r\<close>, with evaluation at a fixed time continuous
   (\<open>continuous_map_path_eval\<close>), so an open \<open>A\<close> pulls back to an open set of
-  paths; taking the union over the admissible witness times \<open>r\<close> keeps it
-  open.  This is stated here, purely about the path topology, because
-  \<open>Exit_Time.etime_less_iff\<close> --- which identifies this set with
-  \<open>{f. etime T A (\<lambda>s w. w s) f < c}\<close> whenever \<open>\<not> T < c\<close> --- lives on a
+  paths, and the union over admissible witness times \<open>r\<close> stays open.
+  Stated here, purely about the path topology, because
+  \<open>Exit_Time.etime_less_iff\<close> -- identifying this set with
+  \<open>{f. etime T A (\<lambda>s w. w s) f < c}\<close> when \<open>\<not> T < c\<close> -- lives on a
   different import branch.\<close>
 
 lemma open_hit_strictly_before:
@@ -927,16 +927,14 @@ qed
 subsection \<open>Portmanteau: a closed set of full measure survives the weak limit\<close>
 
 text \<open>The closed-set half of the Portmanteau theorem, in the shape needed
-  here.  The AFP proves the general statement as \<open>mweak_conv2\<close>, but inside
-  the \<open>mweak_conv_fin\<close> locale, whose parameters have to be discharged;
-  \<open>weak_conv_on_def\<close> supplies all four.
+  here.  The AFP proves the general statement as \<open>mweak_conv2\<close>, inside the
+  \<open>mweak_conv_fin\<close> locale, whose parameters \<open>weak_conv_on_def\<close> supplies.
 
   Only the \<open>measure = 1\<close> instance is needed: for the usc argument for
-  \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close>, the superlevel set \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed because
+  \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close>, the superlevel set \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed since
   \<open>\<tau>\<^sub>K\<close> is upper semicontinuous, and \<open>c \<le> P-essinf \<tau>\<^sub>K\<close> is by definition
-  \<open>P {\<tau>\<^sub>K \<ge> c} = 1\<close> --- see \<open>Value_Function.ess_inf_time_ge_iff_measure\<close>,
-  which is stated with \<open>measure\<close> rather than \<open>AE\<close> for precisely this
-  junction.\<close>
+  \<open>P {\<tau>\<^sub>K \<ge> c} = 1\<close> -- \<open>Value_Function.ess_inf_time_ge_iff_measure\<close> states
+  this with \<open>measure\<close> rather than \<open>AE\<close> for precisely this junction.\<close>
 
 lemma weak_conv_closed_full_measure:
   fixes m :: "'a metric" and Ni :: "nat \<Rightarrow> 'a measure"
@@ -993,19 +991,18 @@ qed
 
 subsection \<open>Portmanteau, open sets: positive mass survives a weak perturbation\<close>
 
-text \<open>The mirror of \<open>weak_conv_closed_full_measure\<close>, for open sets.  Here
-  it is the limit measure that is known to charge \<open>G\<close>, and the nearby
-  measures that inherit it --- exactly what Berge's \<open>box\<close> hypothesis wants,
-  a neighbourhood of the given \<open>P\<close> on which the strict inequality persists,
-  which needs the open-set half of Portmanteau rather than the closed-set
-  half.
+text \<open>The mirror of \<open>weak_conv_closed_full_measure\<close>, for open sets: here the
+  limit measure is known to charge \<open>G\<close>, and the nearby measures inherit it
+  -- exactly what Berge's \<open>box\<close> hypothesis wants, a neighbourhood of \<open>P\<close>
+  on which the strict inequality persists, needing the open-set half of
+  Portmanteau rather than the closed-set half.
 
-  The AFP's \<open>mweak_conv3\<close> asks for the closed-set half as a hypothesis plus
-  convergence of the total mass.  The first comes from \<open>mweak_conv2\<close> in the
-  same locale; the second is trivial here because every measure in sight is
-  a probability measure, so both sides are constantly one.  The \<open>sets\<close>
-  equation is therefore assumed at every index rather than eventually, since
-  the total-mass step needs \<open>space (Ni i) = mspace m\<close> with no exceptions.\<close>
+  The AFP's \<open>mweak_conv3\<close> asks for the closed-set half plus convergence of
+  the total mass. The first comes from \<open>mweak_conv2\<close> in the same locale;
+  the second is trivial since every measure in sight is a probability
+  measure. The \<open>sets\<close> equation is assumed at every index rather than
+  eventually, since the total-mass step needs \<open>space (Ni i) = mspace m\<close>
+  with no exceptions.\<close>
 
 lemma weak_conv_open_positive_eventually:
   fixes m :: "'a metric" and Ni :: "nat \<Rightarrow> 'a measure"

@@ -161,10 +161,9 @@ qed
 section \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
 
 text \<open>At \<open>p = 0\<close> the constraint \<open>a p = 0\<close> of Eq. (1.9) is vacuous, so the
-  feasible set is the largest one and \<open>F(0, \<sqdot>)\<close> is the smallest value of
-  \<open>F\<close>.  Since \<open>F\<close> is also Lipschitz in \<open>M\<close> uniformly in \<open>p\<close>, the infimum
-  over any neighbourhood of \<open>(0, M)\<close> is attained in the limit at
-  \<open>(0, M)\<close> itself, giving \<open>F\<^sub>*(0,M) = F(0,M)\<close>.\<close>
+  feasible set is largest and \<open>F(0, \<sqdot>)\<close> is smallest.  Since \<open>F\<close> is also
+  Lipschitz in \<open>M\<close> uniformly in \<open>p\<close>, the infimum near \<open>(0, M)\<close> is attained
+  there, giving \<open>F\<^sub>*(0,M) = F(0,M)\<close>.\<close>
 
 lemma feasible_zero_mono:
   fixes p :: "real^'n::finite"
@@ -348,14 +347,12 @@ qed
 
 subsection \<open>\<open>F\<close> and \<open>F\<^sup>*\<close> vanish with the Hessian, uniformly in the gradient\<close>
 
-text \<open>At \<open>M = 0\<close> the operator is \<open>0\<close> whatever the gradient, because every
-  feasible \<open>a\<close> gives \<open>- trace (0 a)/2 = 0\<close>.  Combined with the Lipschitz
-  bound @{thm [source] ell_op_M_gap}, this makes \<open>F\<close> small whenever \<open>M\<close> is
-  small, uniformly in \<open>p\<close>; a bound uniform in \<open>p\<close> survives the supremum
-  over a ball, so it passes to \<open>F\<^sup>*\<close> as well.  The paper's Theorem 4.2(a)
-  uses this to close the diagonal case: when the doubled maximiser has
-  \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close> the test function has a vanishing two-jet at \<open>y\<^sup>\<epsilon>\<close>, and
-  \<open>F\<^sup>*(0,0) = 0\<close> for the same reason \<open>F(0,0)\<close> is.\<close>
+text \<open>At \<open>M = 0\<close>, \<open>F\<close> vanishes for every gradient, since every feasible \<open>a\<close>
+  gives \<open>trace (0 a) = 0\<close>.  With the Lipschitz bound @{thm [source]
+  ell_op_M_gap}, \<open>F\<close> is small whenever \<open>M\<close> is, uniformly in \<open>p\<close>, and this
+  survives the supremum defining \<open>F\<^sup>*\<close>.  Theorem 4.2(a)'s diagonal case,
+  where the doubled maximiser has \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close>, uses \<open>F\<^sup>*(0,0) = 0\<close> for
+  this reason.\<close>
 
 lemma ell_op_zero_matrix:
   fixes p :: "real^'n::finite"
@@ -718,30 +715,25 @@ qed
 
 section \<open>The closed formula of Eq. (3.6)\<close>
 
-text \<open>Eq. (3.4) defines, for \<open>p \<noteq> 0\<close>, the \<open>n \<times> n\<close> matrix
-    \<open>M\<^sub>p = (I - p p\<^sup>T/|p|\<^sup>2) M (I - p p\<^sup>T/|p|\<^sup>2) + min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0) * p p\<^sup>T/|p|\<^sup>2\<close>
-  (and \<open>M\<^sub>0 = M\<close>), with the correction term chosen so that \<open>\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)\<close> sorts
-  to the bottom of the spectrum of \<open>M\<^sub>p\<close>.  Since \<open>trace (M ** a) =
-  trace (M\<^sub>p ** a)\<close> for psd \<open>a\<close> with \<open>a p = 0\<close>, diagonalising \<open>M\<^sub>p\<close> gives
-  \<open>F(p,M) = -(1/2) * bracket (n-k) L M\<^sub>p\<close> (Eq. (3.5)), and the paper
-  passes to the limit \<open>p \<rightarrow> 0\<close> using the one-sided Poincare separation
-  bound \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> together with Ky Fan's maximum principle
-  to obtain the index-shifted sum of Eq. (3.6).  This development instead
-  establishes \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close> by transporting a feasible
-  witness under orthogonal conjugation, below.\<close>
+text \<open>Eq. (3.4) defines, for \<open>p \<noteq> 0\<close>,
+  \<open>M\<^sub>p = (I - pp\<^sup>T/|p|\<^sup>2) M (I - pp\<^sup>T/|p|\<^sup>2) + min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M),0) \<cdot> pp\<^sup>T/|p|\<^sup>2\<close>
+  (and \<open>M\<^sub>0 = M\<close>), chosen so \<open>\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)\<close> sorts to the bottom of its
+  spectrum.  Diagonalising \<open>M\<^sub>p\<close> gives \<open>F(p,M) = -\<onehalf> bracket (n-k) L M\<^sub>p\<close>
+  (Eq. (3.5)); the paper passes to \<open>p \<rightarrow> 0\<close> via the one-sided Poincare
+  separation bound and Ky Fan's maximum principle, reaching Eq. (3.6).
+  Here \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close> is instead established by transporting
+  a feasible witness under orthogonal conjugation, below.\<close>
 
 subsection \<open>Householder reflections and the rotation between two directions\<close>
 
-text \<open>Towards \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close>: transporting a near-optimal
-  feasible witness for \<open>p\<close> to a nearby \<open>p'\<close> by orthogonal conjugation
-  needs an orthogonal map carrying \<open>p\<close>'s direction to \<open>p'\<close>'s and tending
-  to the identity as \<open>p' \<rightarrow> p\<close>.  A single Householder reflection carries
-  one direction to the other but does not tend to the identity, since its
-  axis \<open>u - v\<close> normalises to a unit vector with no limit; the composition
-  of two does: \<open>hh (u+v) \<circ> hh u\<close> sends \<open>u \<mapsto> -u \<mapsto> v\<close>, and at \<open>v = u\<close>
-  it is \<open>hh u ** hh u = 1\<close> exactly.  The reflection is defined without
-  normalising its axis, which keeps the computations division-free apart
-  from a single coefficient.\<close>
+text \<open>Transporting a near-optimal feasible witness for \<open>p\<close> to nearby \<open>p'\<close> by
+  orthogonal conjugation needs a rotation carrying \<open>p\<close>'s direction to
+  \<open>p'\<close>'s, continuous down to the identity as \<open>p' \<rightarrow> p\<close>.  A single
+  Householder reflection does the first but not the second, since its axis
+  \<open>u - v\<close> has no limit as \<open>v \<rightarrow> u\<close>; the composition of two,
+  \<open>hh (u+v) \<circ> hh u\<close>, does: it sends \<open>u \<mapsto> -u \<mapsto> v\<close> and is the identity
+  at \<open>v = u\<close>.  The reflection is defined without normalising its axis,
+  keeping the computation division-free.\<close>
 
 definition hh :: "real^'n::finite \<Rightarrow> real^'n^'n"
   where "hh w = mat 1 - (2 / (w \<bullet> w)) *\<^sub>R outer_prod w w"
@@ -946,15 +938,12 @@ qed
 
 subsection \<open>Feasibility is invariant under orthogonal conjugation\<close>
 
-text \<open>An orthogonal \<open>R\<close> carries the feasible set of \<open>p\<close> onto the feasible
-  set of \<open>R p\<close>.  Every clause is the change of variables \<open>x \<mapsto> R\<^sup>T x\<close>:
-  definiteness and the eigenvalue cap because the map is an isometry, the
-  annihilation because \<open>R\<^sup>T R = 1\<close>, and the eigenvalue floor by moving the
-  witnessing subspace along \<open>R\<close>.
-
-  For the dimension of the moved subspace only the inequality
-  @{thm [source] dim_image_le} is needed, applied to \<open>R\<^sup>T\<close>: since
-  \<open>S = R\<^sup>T(R(S))\<close>, it gives \<open>dim S \<le> dim (R(S))\<close>, the direction required.\<close>
+text \<open>An orthogonal \<open>R\<close> carries the feasible set of \<open>p\<close> onto that of \<open>Rp\<close>:
+  each clause is the change of variables \<open>x \<mapsto> R\<^sup>T x\<close>, using that \<open>R\<close> is
+  an isometry with \<open>R\<^sup>T R = 1\<close>, and moving the witnessing subspace along
+  \<open>R\<close> for the eigenvalue floor.  The dimension of the moved subspace needs
+  only @{thm [source] dim_image_le} applied to \<open>R\<^sup>T\<close>, since
+  \<open>S = R\<^sup>T(R(S))\<close> gives \<open>dim S \<le> dim (R(S))\<close>.\<close>
 
 lemma orth_preserves_inner:
   fixes R :: "real^'n::finite^'n"
@@ -1172,11 +1161,10 @@ qed
 
 subsection \<open>Continuity of the transport\<close>
 
-text \<open>The rotation, and hence the conjugated witness and its pairing
-  with the Hessian, depends continuously on the direction it is built
-  from.  The domain is the open half space \<open>{q. 0 < u \<bullet> q}\<close> containing
-  \<open>p\<close> when \<open>u\<close> is \<open>p\<close>'s direction, which rules out both \<open>q \<noteq> 0\<close> and
-  \<open>u + q/|q| \<noteq> 0\<close> at once, since the latter would force
+text \<open>The rotation, the conjugated witness, and its pairing with the Hessian
+  depend continuously on the direction they are built from, on the open
+  half space \<open>{q. 0 < u \<bullet> q}\<close> containing \<open>p\<close> when \<open>u\<close> is \<open>p\<close>'s direction
+  -- which rules out \<open>u + q/|q| = 0\<close> for \<open>q \<noteq> 0\<close>, since that would force
   \<open>u \<bullet> q/|q| = -1\<close>.\<close>
 
 lemma continuous_on_matrix_entry:
@@ -1331,12 +1319,11 @@ qed
 
 subsection \<open>\<open>F\<^sup>* = F\<close> away from the origin\<close>
 
-text \<open>Feasibility depends on the gradient only through its direction, so
-  the rotation carrying \<open>p\<close>'s direction to \<open>p'\<close>'s carries the whole
-  feasible set across; a near-optimal witness for \<open>(p, M)\<close> therefore
-  supplies a competitor for every nearby \<open>(p', M')\<close>, and continuity of the
-  pairing makes the competitor's value beat \<open>F(p, M) + \<epsilon>\<close> on a whole ball,
-  which bounds the supremum defining the upper envelope.\<close>
+text \<open>Feasibility depends on the gradient only through its direction, so the
+  rotation carrying \<open>p\<close>'s direction to \<open>p'\<close>'s carries the whole feasible
+  set across.  A near-optimal witness for \<open>(p, M)\<close> then supplies a
+  competitor for every nearby \<open>(p', M')\<close>, and continuity of the pairing
+  bounds the supremum defining the upper envelope by \<open>F(p, M) + \<epsilon>\<close>.\<close>
 
 lemma feasible_scale:
   fixes q :: "real^'n::finite"
@@ -1593,17 +1580,15 @@ qed
 
 subsection \<open>From a global touching over \<open>K\<close> to a local one\<close>
 
-text \<open>Definition 3.1 constrains only test functions whose touching is
-  global over \<open>K\<close>, while the Crandall--Ishii machinery produces local
-  touchings from jet data.  The gap is closed by subtracting a quartic:
-  \<open>\<psi> := \<phi> - C\<bar>z - x\<bar>\<^sup>4\<close> has the same two-jet at \<open>x\<close> (a quartic vanishes to
-  second order), it only deepens the touching inside the ball, and outside
-  the ball the quartic is bounded below by \<open>Cr\<^sup>4\<close>, which for large \<open>C\<close>
-  overwhelms the oscillation of \<open>w - \<phi>\<close> on \<open>K\<close>.  The two boundedness
-  hypotheses are exactly what a genuine \<open>C\<^sup>2\<close> test function on a compact
-  \<open>K\<close> supplies: without a bound on \<open>\<phi>\<close> over \<open>K\<close> one could truncate \<open>\<phi>\<close>
-  far from \<open>x\<close>, which \<^const>\<open>test_fun_at\<close> would tolerate but the paper's
-  \<open>C\<^sup>2(\<real>\<^sup>n)\<close> would not.\<close>
+text \<open>Definition 3.1 constrains only test functions with a global touching
+  over \<open>K\<close>, while Crandall--Ishii machinery produces local touchings from
+  jet data.  The gap closes by subtracting a quartic
+  \<open>\<psi> := \<phi> - C\<bar>z - x\<bar>\<^sup>4\<close>: it shares \<open>\<phi>\<close>'s two-jet at \<open>x\<close>, only deepens
+  the touching inside the ball, and outside it is bounded below by
+  \<open>Cr\<^sup>4\<close>, which for large \<open>C\<close> overwhelms the oscillation of \<open>w - \<phi>\<close> on
+  \<open>K\<close>.  The two boundedness hypotheses are what a genuine \<open>C\<^sup>2\<close> test
+  function on compact \<open>K\<close> supplies; \<^const>\<open>test_fun_at\<close> alone would
+  tolerate truncating \<open>\<phi>\<close> far from \<open>x\<close>.\<close>
 
 text \<open>A test function is minorised near \<open>x\<close> by its two-jet quadratic,
   once the Hessian is shifted down by any \<open>\<delta> > 0\<close>, which lets a touching
@@ -3277,13 +3262,13 @@ qed
 
 section \<open>A constant is a subsolution off \<open>K\<close>\<close>
 
-text \<open>If a test function touches from above at a local minimum of itself
-  --- which is what a touching of a locally constant function is --- then
-  the subsolution inequality holds for free.  This makes the extension of
-  \<open>u\<close> by a constant below its minimum a subsolution off \<open>K\<close>, and hence
-  turns Definition 3.1's gated \<open>\<Omega>\<close> into the open set \<open>UNIV - S\<close>, with
-  \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> compact, the shape on which the
-  Crandall--Ishii core can be run.\<close>
+text \<open>A test function touching from above at a local minimum of itself --
+  as any touching of a locally constant function is -- satisfies the
+  subsolution inequality for free.  So extending \<open>u\<close> by a constant below
+  its minimum is a subsolution off \<open>K\<close>, turning Definition 3.1's gated
+  \<open>\<Omega>\<close> into the open set \<open>UNIV - S\<close> with
+  \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> compact -- the shape the
+  Crandall--Ishii core needs.\<close>
 
 theorem visc_subsol_at_local_min:
   fixes x :: "real^'n::finite" and \<phi> :: "real^'n \<Rightarrow> real"

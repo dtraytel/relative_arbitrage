@@ -348,8 +348,8 @@ proof (rule Sup_least)
 qed
 
 text \<open>The transform attains the essential infimum in the limit \<open>\<lambda> \<rightarrow> \<infinity>\<close>:
-  the mass \<open>p\<close> near the essential infimum survives as \<open>e^{−\<lambda>(e'+\<epsilon>)} p\<close>
-  inside the expectation, and \<open>−ln p / \<lambda> \<rightarrow> 0\<close>.\<close>
+  the mass \<open>p\<close> near the essential infimum survives as \<open>e^{-\<lambda>(e'+\<epsilon>)} p\<close>
+  inside the expectation, and \<open>-ln p / \<lambda> \<rightarrow> 0\<close>.\<close>
 
 lemma ess_inf_time_eq_laplace_inf:
   fixes tau :: "'a \<Rightarrow> real" and T :: real

@@ -2632,8 +2632,8 @@ qed
 subsection \<open>The tangent covariance and the coordinate identities\<close>
 
 text \<open>The instantaneous covariance of the deterministic-radius market is
-  the projection onto the tangent direction \<open>v = (sin \<Theta>, −cos \<Theta>)\<close>:
-  \<open>a(X) = v vᵀ = I − X Xᵀ/|X|²\<close>.\<close>
+  the projection onto the tangent direction \<open>v = (sin \<Theta>, -cos \<Theta>)\<close>:
+  \<open>a(X) = v vᵀ = I - X Xᵀ/|X|²\<close>.\<close>
 
 definition dra :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2^2"
   where
@@ -2964,8 +2964,8 @@ lemma dras_measurable_time:
 proof -
   have c: "(\<lambda>u. dra q \<phi> (max u 0) \<omega>) \<in> borel_measurable lborel"
     using dra_cont[OF q] by (simp add: borel_measurable_continuous_onI)
-  \<comment> \<open>On the nonnegative axis — all the locale asks about, and all the
-      paper's (1.7) constrains — the truncation by \<open>max u 0\<close> is invisible,
+  \<comment> \<open>On the nonnegative axis --- all the locale asks about, and all the
+      paper's (1.7) constrains --- the truncation by \<open>max u 0\<close> is invisible,
       so the continuous representative may be used. Off it the claim
       fails: for \<open>u < 0\<close>, \<open>dras \<dots> u \<omega> = dra q \<phi> u \<omega>\<close>, not
       \<open>dra q \<phi> 0 \<omega>\<close>.\<close>

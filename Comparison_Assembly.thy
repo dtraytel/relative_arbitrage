@@ -4,11 +4,10 @@ theory Comparison_Assembly
   imports Sup_Convolution Lemma_3_1_Envelopes
 begin
 
-text \<open>\<open>Sup_Convolution.thy\<close> states its jet machinery in raw analytic form,
-  independent of any project import, so that it sits directly on
-  \<open>HOL-Analysis.Analysis\<close>. This theory combines it with
-  \<open>Lemma_3_1_Envelopes\<close> to package the derivative facts into the project's
-  \<open>test_fun_at\<close> predicate and discharge \<open>max_principle_boundary\<close>.\<close>
+text \<open>\<open>Sup_Convolution.thy\<close> develops the jet machinery independently of the
+  project, directly over \<open>HOL-Analysis.Analysis\<close>. This theory combines it
+  with \<open>Lemma_3_1_Envelopes\<close> to package the derivative facts into
+  \<open>test_fun_at\<close> and discharge \<open>max_principle_boundary\<close>.\<close>
 
 subsection \<open>A jet gives a test function\<close>
 
@@ -46,13 +45,10 @@ text \<open>The form used downstream has the jet matrix arrive as an abstract
 
 subsection \<open>The jet interface to Definition 3.1(b)\<close>
 
-text \<open>The supersolution property is used only through one shape: a quadratic
-  built from jet data touches \<open>w\<close> from below on a ball, and the operator
-  inequality is read off, over the upper envelope \<open>F\<^sup>*\<close>.
-  \<open>visc_supersol_env_imp_jet\<close> derives this from Definition 3.1(b), using that
-  \<open>K\<close> is compact and \<open>w\<close> is bounded on it; boundedness of the test function
-  itself is proved, not assumed, since a quadratic is bounded above on a
-  bounded set.\<close>
+text \<open>\<open>visc_supersol_env_imp_jet\<close> derives, from Definition 3.1(b), a quadratic
+  test function that touches \<open>w\<close> from below on a ball, with the operator
+  inequality read off over the upper envelope \<open>F\<^sup>*\<close>; boundedness of the
+  quadratic on the compact \<open>K\<close> is proved, not assumed.\<close>
 
 lemma quad_bdd_above_on_bounded:
   fixes p yh :: "real^'n::finite" and M :: "real^'n^'n"
@@ -238,12 +234,11 @@ proof -
   show ?thesis by (rule that) (use main in blast)
 qed
 
-text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<close>, landing on
-  the envelope-free notion rather than a jet predicate: since \<open>F\<^sub>* = F\<close>
-  everywhere (@{thm [source] ell_op_lsc_at_zero} at \<open>p = 0\<close>,
-  @{thm [source] ell_op_lsc_off_zero} elsewhere), there is no operator change
-  to carry downstream, only the touching to upgrade from global on \<open>K\<close> to
-  local, via @{thm [source] visc_subsol_env_local}.\<close>
+text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<close> lands on the
+  envelope-free notion, since \<open>F\<^sub>* = F\<close> everywhere (@{thm [source]
+  ell_op_lsc_at_zero} at \<open>p = 0\<close>, @{thm [source] ell_op_lsc_off_zero}
+  elsewhere); only the touching needs upgrading from global on \<open>K\<close> to local,
+  via @{thm [source] visc_subsol_env_local}.\<close>
 
 theorem visc_subsol_env_imp_visc_subsol:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
@@ -364,14 +359,11 @@ lemma test_grad_at_point:
   shows "(\<lambda>z. p + H *v (z - x)) x = p"
   by simp
 
-text \<open>The subsolution supplies \<open>F(p, X) \<le> 1\<close>, the supersolution
-  \<open>1 \<le> F(p, Y)\<close>, and the theorem on sums supplies \<open>X \<preceq> Y\<close>, whence degenerate
-  ellipticity (\<open>ell_op_elliptic_le\<close>) gives \<open>F(p, Y) \<le> F(p, X)\<close>; the three
-  together sandwich both values at \<open>1\<close>. Since the equation \<open>F = 1\<close> has no
-  zeroth-order term this is not yet a contradiction, so the closing step needs
-  a strict inequality at the test point, produced by perturbing the
-  subsolution; the second lemma below isolates exactly what strictness is
-  needed.\<close>
+text \<open>The subsolution gives \<open>F(p, X) \<le> 1\<close>, the supersolution \<open>1 \<le> F(p, Y)\<close>,
+  and the theorem on sums gives \<open>X \<preceq> Y\<close>, so degenerate ellipticity
+  (\<open>ell_op_elliptic_le\<close>) sandwiches both values at \<open>1\<close>. Since \<open>F = 1\<close>
+  carries no zeroth-order term, closing the argument needs a strict
+  inequality, obtained by perturbing the subsolution.\<close>
 
 lemma ell_op_sandwich:
   fixes X Y :: "real^'n::finite^'n"
@@ -400,13 +392,12 @@ qed
 
 subsection \<open>Where the strictness comes from\<close>
 
-text \<open>The operator \<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close> carries no
-  zeroth-order term, so a subsolution cannot be made strict by subtracting a
-  constant. But \<open>F\<close> is positively homogeneous in \<open>M\<close>, and the feasible set
-  does not depend on the length of \<open>p\<close>, since its only constraint on \<open>p\<close> is
-  \<open>a *v p = 0\<close>. Hence scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> sends the jet
-  \<open>(p, X)\<close> to \<open>(\<theta> p, \<theta> X)\<close> and the value \<open>F(p,X) \<le> 1\<close> to the strict
-  \<open>F(\<theta> p, \<theta> X) = \<theta> F(p,X) \<le> \<theta> < 1\<close>.\<close>
+text \<open>\<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close> has no zeroth-order term, so
+  a subsolution cannot be made strict by subtracting a constant. But \<open>F\<close> is
+  positively homogeneous in \<open>M\<close>, and the feasible set depends on \<open>p\<close> only
+  through \<open>a *v p = 0\<close>: scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> sends
+  \<open>(p, X)\<close> to \<open>(\<theta> p, \<theta> X)\<close> and \<open>F(p,X) \<le> 1\<close> to the strict
+  \<open>F(\<theta> p, \<theta> X) \<le> \<theta> < 1\<close>.\<close>
 
 lemma feasible_scaleR_p:
   fixes p :: "real^'n::finite"
@@ -460,9 +451,9 @@ proof -
   show ?thesis using ge le by simp
 qed
 
-text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument. Together with
-  \<open>feasible_scaleR_p\<close> this is the strict-perturbation mechanism: scaling a
-  subsolution by \<open>\<theta> \<in> (0,1)\<close> scales its jet to \<open>(\<theta> p, \<theta> X)\<close> and its value to
+text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument: with
+  \<open>feasible_scaleR_p\<close>, this is the strict-perturbation mechanism, scaling
+  a subsolution's jet to \<open>(\<theta> p, \<theta> X)\<close> and its value to
   \<open>\<theta> F(p,X) \<le> \<theta> < 1\<close>.\<close>
 
 lemma ell_op_scaleR_matrix:
@@ -492,9 +483,9 @@ lemma ell_op_scaleR_p:
   unfolding ell_op_def feasible_scaleR_p[OF t] ..
 
 text \<open>Scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> makes its operator inequality
-  strict, since \<open>F\<close> carries no zeroth-order term. Combined with
+  strict, since \<open>F\<close> has no zeroth-order term. With
   \<open>ell_op_strict_contradiction\<close>, a scaled subsolution and an unscaled
-  supersolution sharing a jet pair \<open>X \<preceq> Y\<close> are inconsistent, which is the
+  supersolution sharing a jet pair \<open>X \<preceq> Y\<close> are inconsistent -- the
   contradiction underlying Theorem 4.2(a).\<close>
 
 theorem ell_op_scaled_strict:
@@ -516,10 +507,8 @@ qed
 
 subsection \<open>Scaling a subsolution\<close>
 
-text \<open>Using the strict perturbation requires knowing that scaling the
-  function scales its test data: a test function scales, and consequently a
-  subsolution scaled by \<open>\<theta> \<in> (0,1)\<close> satisfies the strict operator inequality
-  at each of its test points.\<close>
+text \<open>A test function scales, so a subsolution scaled by \<open>\<theta> \<in> (0,1)\<close>
+  satisfies the strict operator inequality at each of its test points.\<close>
 
 lemma transpose_scaleR:
   fixes A :: "real^'n::finite^'n"
@@ -604,11 +593,10 @@ qed
 
 subsection \<open>Freezing one variable in the doubled maximum\<close>
 
-text \<open>Freezing one variable at the joint maximiser gives the two partial
-  conditions the doubling argument needs: freezing \<open>y = yh\<close> makes \<open>xh\<close> a
-  maximiser of \<open>u\<close> against the smooth quadratic
-  \<open>x \<mapsto> (\<alpha>/2) * norm (x - yh)\<^sup>2\<close>, and freezing \<open>x = xh\<close> makes \<open>yh\<close> a minimiser
-  of \<open>w\<close> against \<open>y \<mapsto> - (\<alpha>/2) * norm (xh - y)\<^sup>2\<close>. This converts the
+text \<open>Freezing one variable at the joint maximiser gives the two conditions
+  the doubling argument needs: freezing \<open>y = yh\<close> makes \<open>xh\<close> a maximiser of
+  \<open>u\<close> against \<open>x \<mapsto> (\<alpha>/2) \<parallel>x - yh\<parallel>\<^sup>2\<close>, and freezing \<open>x = xh\<close> makes \<open>yh\<close> a
+  minimiser of \<open>w\<close> against \<open>y \<mapsto> - (\<alpha>/2) \<parallel>xh - y\<parallel>\<^sup>2\<close>. This converts the
   two-variable maximum into the one-variable data \<open>visc_subsol\<close> and
   \<open>supersol_jet\<close> consume.\<close>
 
@@ -633,11 +621,11 @@ lemma doubling_partial_min_snd:
   using jmax[OF xh y] by simp
 
 text \<open>The two frozen penalties are smooth quadratics with the same gradient
-  \<open>\<alpha> *\<^sub>R (xh - yh)\<close> at the respective points, and Hessians \<open>\<alpha> *\<^sub>R mat 1\<close> and
-  \<open>- \<alpha> *\<^sub>R mat 1\<close>. The common gradient lets the subsolution and supersolution
-  inequalities be compared at a common \<open>p\<close>; the Hessians being ordered the
-  wrong way is why naive doubling fails and the theorem on sums is needed to
-  replace them by an ordered pair \<open>X \<preceq> Y\<close>.\<close>
+  \<open>\<alpha> *\<^sub>R (xh - yh)\<close> at their respective points, and Hessians
+  \<open>\<alpha> *\<^sub>R mat 1\<close> and \<open>- \<alpha> *\<^sub>R mat 1\<close>. The common gradient lets the two
+  viscosity inequalities be compared at a common \<open>p\<close>; the wrongly-ordered
+  Hessians are why the theorem on sums is needed to replace them by an
+  ordered pair \<open>X \<preceq> Y\<close>.\<close>
 
 lemma frozen_penalty_gradient_fst:
   fixes xh yh :: "real^'n::finite"
@@ -660,8 +648,8 @@ lemma scaleR_mat1_vec:
   shows "(\<alpha> *\<^sub>R mat 1) *v h = \<alpha> *\<^sub>R h"
   by (simp add: scaleR_matrix_vector_assoc[symmetric])
 
-text \<open>The same gradient at the other frozen point, which lets the
-  subsolution and supersolution inequalities be evaluated at a common vector
+text \<open>The same gradient at the other frozen point, letting the subsolution
+  and supersolution inequalities be evaluated at a common vector
   \<open>p = \<alpha> *\<^sub>R (xh - yh)\<close>.\<close>
 
 lemma frozen_penalty_gradient_snd:
@@ -680,8 +668,8 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>The two Hessians, \<open>\<alpha> I\<close> and \<open>- \<alpha> I\<close>, are ordered the wrong way, which
-  is the obstruction the theorem on sums removes.\<close>
+text \<open>The two Hessians, \<open>\<alpha> I\<close> and \<open>- \<alpha> I\<close>, are ordered the wrong way, the
+  obstruction the theorem on sums removes.\<close>
 
 lemma frozen_penalty_hessian_fst:
   fixes xh yh :: "real^'n::finite"
@@ -706,11 +694,10 @@ proof -
   show ?thesis using d unfolding eqf .
 qed
 
-text \<open>Packaging both frozen penalties as test functions in the project's
-  sense. Together with \<open>doubling_partial_max_fst\<close> and
-  \<open>doubling_partial_min_snd\<close> these supply exactly the hypotheses
-  \<open>visc_subsol\<close> and \<open>supersol_jet\<close> require, so the doubled maximum can be fed
-  into the two viscosity inequalities.\<close>
+text \<open>Packaging both frozen penalties as test functions supplies, with
+  \<open>doubling_partial_max_fst\<close> and \<open>doubling_partial_min_snd\<close>, exactly the
+  hypotheses \<open>visc_subsol\<close> and \<open>supersol_jet\<close> require, so the doubled
+  maximum feeds into the two viscosity inequalities.\<close>
 
 lemma frozen_penalty_test_fun_fst:
   fixes xh yh :: "real^'n::finite"
@@ -764,8 +751,8 @@ qed
 
 subsection \<open>What naive doubling delivers\<close>
 
-text \<open>Feeding the two frozen test functions into the two viscosity definitions
-  gives the two operator inequalities at the common vector
+text \<open>Feeding the two frozen test functions into the two viscosity
+  definitions gives the two operator inequalities at the common vector
   \<open>p = \<alpha> *\<^sub>R (xh - yh)\<close>, with Hessians \<open>\<alpha> I\<close> and \<open>- \<alpha> I\<close>.\<close>
 
 theorem doubling_viscosity_inequalities:
@@ -797,12 +784,11 @@ next
     by simp
 qed
 
-text \<open>Degenerate ellipticity would close the argument if the two Hessians
-  were ordered as \<open>X \<preceq> Y\<close>, i.e. if \<open>psd ((- \<alpha>) *\<^sub>R mat 1 - \<alpha> *\<^sub>R mat 1)\<close>.
-  For \<open>\<alpha> > 0\<close> that matrix is \<open>(- 2 * \<alpha>) *\<^sub>R mat 1\<close>, which is negative
-  definite, so naive doubling delivers the two inequalities at a common \<open>p\<close>
-  with the Hessians ordered the wrong way. Replacing \<open>(\<alpha> I, - \<alpha> I)\<close> by an
-  ordered pair \<open>X \<preceq> Y\<close> is the service the theorem on sums performs.\<close>
+text \<open>Degenerate ellipticity would close the argument if the Hessians were
+  ordered \<open>X \<preceq> Y\<close>, i.e. \<open>psd ((- \<alpha>) *\<^sub>R mat 1 - \<alpha> *\<^sub>R mat 1)\<close>; for
+  \<open>\<alpha> > 0\<close> that matrix is \<open>(- 2 * \<alpha>) *\<^sub>R mat 1\<close>, negative definite. So the
+  two inequalities arrive with Hessians ordered the wrong way, and replacing
+  \<open>(\<alpha> I, - \<alpha> I)\<close> by an ordered pair \<open>X \<preceq> Y\<close> is the theorem on sums' role.\<close>
 
 lemma frozen_hessians_not_ordered:
   fixes \<alpha> :: real
@@ -813,11 +799,10 @@ lemma frozen_hessians_not_ordered:
 
 subsection \<open>From the abstract matrix inequality to \<open>psd\<close>\<close>
 
-text \<open>\<open>sums_matrix_inequality\<close> delivers its conclusion in the abstract form
-  \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> for bounded linear \<open>X\<close>, \<open>Y\<close>, while \<open>ell_op_elliptic_le\<close>
-  wants \<open>psd (N - M)\<close> for matrices. Since \<open>psd\<close> is by definition symmetry
-  plus \<open>0 \<le> x \<cdot> (a *v x)\<close>, the two are the same statement once the abstract
-  maps are represented by \<open>matrix\<close>.\<close>
+text \<open>\<open>sums_matrix_inequality\<close> gives \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> for bounded linear
+  \<open>X\<close>, \<open>Y\<close>, while \<open>ell_op_elliptic_le\<close> wants \<open>psd (N - M)\<close> for matrices.
+  Since \<open>psd\<close> is symmetry plus \<open>0 \<le> x \<cdot> (a *v x)\<close>, the two are the same
+  statement once represented by \<open>matrix\<close>.\<close>
 
 lemma matrix_diff_vec:
   fixes X Y :: "(real^'n::finite) \<Rightarrow> (real^'n)"
@@ -859,14 +844,13 @@ qed
 
 subsection \<open>The closing chain of Theorem 4.2(a)\<close>
 
-text \<open>Given the data the doubling argument produces, a scaled subsolution
-  and a supersolution touching an ordered jet pair at a common \<open>p\<close> are
-  inconsistent: the scaling supplies strictness
+text \<open>A scaled subsolution and a supersolution touching an ordered jet pair
+  at a common \<open>p\<close> are inconsistent: scaling supplies strictness
   (\<open>visc_subsol_scaled_strict\<close>), the ordering supplies \<open>psd\<close>
   (\<open>psd_of_abstract_le\<close>), and degenerate ellipticity closes
-  (\<open>ell_op_strict_contradiction\<close>). This is Theorem 4.2(a) modulo producing
-  the hypotheses \<open>ord\<close>, \<open>subtest\<close> and \<open>suptest\<close>, supplied by the
-  Rademacher / Alexandrov / Jensen / theorem-on-sums development in
+  (\<open>ell_op_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
+  hypotheses \<open>ord\<close>, \<open>subtest\<close> and \<open>suptest\<close>, supplied by the
+  Rademacher/Alexandrov/Jensen/theorem-on-sums development in
   \<open>Sup_Convolution.thy\<close>.\<close>
 
 theorem comparison_contradiction:
@@ -920,11 +904,11 @@ qed
 subsection \<open>The envelope route for removing the jet correction\<close>
 
 text \<open>\<open>superjet_local_max\<close> introduces a strictly convex correction
-  \<open>(\<delta>/2) * norm k\<^sup>2\<close>, so the matrix that reaches the operator is \<open>X + \<delta> I\<close>
-  rather than \<open>X\<close>. Removing \<open>\<delta>\<close> is the passage to closed second-order jets,
-  carried by the envelopes: the two envelope inequalities sandwich the sharp
-  one, and \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (Envelopes.thy)
-  say the envelope-free notions already imply the envelope ones on an open
+  \<open>(\<delta>/2) * norm k\<^sup>2\<close>, so the matrix reaching the operator is \<open>X + \<delta> I\<close>
+  rather than \<open>X\<close>. Removing \<open>\<delta>\<close> passes to closed second-order jets via the
+  envelopes: the two envelope inequalities sandwich the sharp one, and
+  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (Envelopes.thy) show the
+  envelope-free notions already imply the envelope ones on an open
   \<open>\<Omega> \<subseteq> K\<close>.\<close>
 
 lemma ell_op_envelope_sandwich:
@@ -934,10 +918,9 @@ lemma ell_op_envelope_sandwich:
   by (rule ell_op_lsc_le_ell_op, rule ell_op_le_ell_op_usc)
 
 text \<open>The two envelope-form hypotheses in the shape the doubling produces:
-  on an open \<open>\<Omega>\<close> inside \<open>K\<close>, a subsolution and a supersolution in the
-  envelope-free sense are also envelope sub/supersolutions, so the doubling
-  argument may be run in the envelope setting where the \<open>\<delta> \<rightarrow> 0\<close> passage is
-  legitimate.\<close>
+  on an open \<open>\<Omega>\<close> inside \<open>K\<close>, a subsolution and supersolution in the
+  envelope-free sense are also envelope sub/supersolutions, letting the
+  doubling argument run where the \<open>\<delta> \<rightarrow> 0\<close> passage is legitimate.\<close>
 
 lemma ball_prod_shift_snd:
   fixes p :: "real^'n::finite" and M N :: "real^'n^'n"
@@ -996,9 +979,9 @@ proof (rule SUP_mono)
 qed
 
 text \<open>And the same for the upper envelope, by the dual argument: the same
-  translation carries \<open>ball (p, M) e\<close> onto \<open>ball (p, N) e\<close>, and the integrand
-  decreases along it, so the suprema compare and then the infima over the
-  radius do.\<close>
+  translation carries \<open>ball (p, M) e\<close> onto \<open>ball (p, N) e\<close>, and the
+  integrand decreases along it, so the suprema compare and then the infima
+  over the radius do.\<close>
 
 theorem ell_op_usc_envelope_elliptic_le:
   fixes M N :: "real^'n::finite^'n"
@@ -1043,12 +1026,11 @@ qed
 
 subsection \<open>The envelope-form contradiction\<close>
 
-text \<open>Ellipticity of the envelopes alone does not close the argument: it
-  gives \<open>F\<^sup>*(p, Y) \<le> F\<^sup>*(p, X)\<close>, but combined with the subsolution's
-  \<open>F\<^sub>*(p, X) < 1\<close> this is consistent whenever the two envelopes are separated
-  at \<open>(p, X)\<close>, i.e. whenever \<open>F\<close> is discontinuous there. The mixed-envelope
-  inequalities close only where the envelopes coincide with \<open>F\<close>, which by
-  Lemma 3.1's last clause is everywhere off the origin
+text \<open>Ellipticity of the envelopes alone gives \<open>F\<^sup>*(p, Y) \<le> F\<^sup>*(p, X)\<close>, but
+  combined with \<open>F\<^sub>*(p, X) < 1\<close> this is consistent wherever the two
+  envelopes separate at \<open>(p, X)\<close>, i.e. wherever \<open>F\<close> is discontinuous. The
+  mixed-envelope inequalities close only where the envelopes coincide with
+  \<open>F\<close>, which by Lemma 3.1's last clause is everywhere off the origin
   (\<open>ell_op_lsc_off_zero\<close>, \<open>ell_op_usc_off_zero\<close>), reducing the envelope
   contradiction to the envelope-free one.\<close>
 
@@ -1101,25 +1083,20 @@ proof -
     by (rule ell_op_sandwich(2)[OF psd ne subr supr])
 qed
 
-text \<open>The case \<open>p = 0\<close> is genuinely excluded, not an artefact of the proof:
-  at the origin the two envelopes disagree, since \<open>ell_op_lsc_at_zero\<close> gives
-  \<open>F\<^sub>*(0, M) = F(0, M)\<close> while \<open>eq36\<close> gives \<open>F\<^sup>*(0, M) = eq36_rhs k L M\<close>, whose
-  index range omits the eigenvalue \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> present in Eq. (3.5). So at
-  \<open>p = 0\<close> the supersolution inequality \<open>1 \<le> F\<^sup>*(0, Y)\<close> is strictly weaker
-  than \<open>1 \<le> F(0, Y)\<close>, and envelope ellipticity cannot close the gap, since it
-  moves only the matrix argument. This is the degeneracy the paper isolates
-  in Lemma 3.1, and why the doubling argument needs the shared gradient at
-  the doubled maximum to be nonzero.\<close>
+text \<open>At \<open>p = 0\<close> the two envelopes disagree: \<open>ell_op_lsc_at_zero\<close> gives
+  \<open>F\<^sub>*(0, M) = F(0, M)\<close>, while \<open>eq36\<close> gives \<open>F\<^sup>*(0, M) = eq36_rhs k L M\<close>,
+  whose index range omits the eigenvalue \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> of Eq. (3.5). So
+  \<open>1 \<le> F\<^sup>*(0, Y)\<close> is strictly weaker than \<open>1 \<le> F(0, Y)\<close>, and envelope
+  ellipticity cannot close the gap -- the degeneracy Lemma 3.1 isolates, and
+  why the doubling needs the shared gradient to be nonzero.\<close>
 
 
 subsection \<open>The dichotomy the side condition forces on the doubling\<close>
 
 text \<open>In the doubling, the shared gradient at the maximising pair
   \<open>(x\<hat>, y\<hat>)\<close> of \<open>\<Phi>(x,y) = u x - w y - (\<alpha>/2) \<bar>x - y\<bar>\<^sup>2\<close> is
-  \<open>p = \<alpha> (x\<hat> - y\<hat>)\<close>, so the side condition \<open>p \<noteq> 0\<close> is exactly the statement
-  that the maximising pair is off the diagonal, and this subsection proves the
-  resulting dichotomy. First the trivial half: for \<open>\<alpha> \<noteq> 0\<close> the gradient
-  vanishes precisely on the diagonal.\<close>
+  \<open>p = \<alpha> (x\<hat> - y\<hat>)\<close>, so \<open>p \<noteq> 0\<close> means the maximising pair is off the
+  diagonal. For \<open>\<alpha> \<noteq> 0\<close> the gradient vanishes precisely on the diagonal.\<close>
 
 lemma doubling_grad_zero_iff:
   fixes xh yh :: "real^'n::finite"
@@ -1128,11 +1105,10 @@ lemma doubling_grad_zero_iff:
   using a by simp
 
 text \<open>If the maximising pair is on the diagonal, the doubling degenerates:
-  its common point is a maximum of \<open>u - w\<close> over \<open>K\<close> itself, by comparing
-  \<open>\<Phi>\<close> against the diagonal, where the penalty vanishes on both sides. So
-  either the maximising pair is off the diagonal, and
-  \<open>ell_op_env_strict_contradiction\<close> applies, or \<open>u - w\<close> attains its maximum
-  over \<open>K\<close> at the common point.\<close>
+  its common point maximises \<open>u - w\<close> over \<open>K\<close> itself, by comparing \<open>\<Phi>\<close>
+  against the diagonal, where the penalty vanishes on both sides. So either
+  the maximising pair is off the diagonal and \<open>ell_op_env_strict_contradiction\<close>
+  applies, or \<open>u - w\<close> attains its maximum over \<open>K\<close> at the common point.\<close>
 
 lemma doubling_diagonal_max:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1182,14 +1158,13 @@ corollary doubling_grad_nonzero:
 
 subsection \<open>The penalty estimate\<close>
 
-text \<open>Every Crandall-Ishii comparison argument needs the estimate that the
-  penalty term at the maximising pair is bounded, and hence vanishes as
-  \<open>\<alpha> \<rightarrow> \<infinity>\<close>: it forces \<open>x\<hat>\<close> and \<open>y\<hat>\<close> together, and is why the doubled maximum
-  converges to the maximum of \<open>u - w\<close>. The proof compares \<open>\<Phi>\<close> at the
-  maximiser against \<open>\<Phi>\<close> at an arbitrary diagonal point \<open>(z,z)\<close>, where the
-  penalty vanishes: the penalty at the maximiser is then bounded by the gap
-  between the value of \<open>u - w\<close> at \<open>z\<close> and any upper bound for \<open>u x - w y\<close> on
-  \<open>K \<times> K\<close>.\<close>
+text \<open>Every Crandall-Ishii comparison argument needs the penalty term at the
+  maximising pair to be bounded, hence to vanish as \<open>\<alpha> \<rightarrow> \<infinity>\<close>, forcing
+  \<open>x\<hat>\<close> and \<open>y\<hat>\<close> together and driving the doubled maximum to the maximum of
+  \<open>u - w\<close>. The proof compares \<open>\<Phi>\<close> at the maximiser against \<open>\<Phi>\<close> at a
+  diagonal point \<open>(z,z)\<close>, where the penalty vanishes, bounding the penalty
+  at the maximiser by the gap between \<open>u(z) - w(z)\<close> and an upper bound for
+  \<open>u x - w y\<close> on \<open>K \<times> K\<close>.\<close>
 
 lemma doubling_penalty_bound:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1230,9 +1205,8 @@ proof -
 qed
 
 text \<open>Since the penalty is bounded, the doubled maximum is at least the
-  maximum of \<open>u - w\<close> along the diagonal; together with
-  \<open>doubling_diagonal_max\<close> this says the doubling can only improve on the
-  diagonal value.\<close>
+  maximum of \<open>u - w\<close> along the diagonal; with \<open>doubling_diagonal_max\<close> this
+  says the doubling can only improve on the diagonal value.\<close>
 
 lemma doubling_ge_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1254,11 +1228,11 @@ subsection \<open>The dichotomy for a general penalty\<close>
 
 text \<open>These four lemmas use the penalty only through \<open>Pn 0 = 0\<close>: each proof
   instantiates the maximiser inequality at a diagonal point, where the
-  penalty is \<open>Pn (z - z) = Pn 0\<close>. For \<open>soft_pen\<close> the hypothesis is
-  \<open>soft_pen_zero\<close>. \<open>doubling_off_diagonal_gen\<close> says the maximising pair is
-  off the diagonal whenever \<open>u - w\<close> beats its value at the common point,
-  which makes \<open>soft_grad_nonzero\<close> applicable and supplies the positive lower
-  bound \<open>c\<close>.\<close>
+  penalty is \<open>Pn (z - z) = Pn 0\<close> (\<open>soft_pen_zero\<close> for \<open>soft_pen\<close>).
+  \<open>doubling_off_diagonal_gen\<close> puts the maximising pair off the diagonal
+  whenever \<open>u - w\<close> beats its value at the common point, making
+  \<open>soft_grad_nonzero\<close> applicable and supplying the positive lower bound
+  \<open>c\<close>.\<close>
 
 lemma doubling_diagonal_max_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -1343,10 +1317,10 @@ subsection \<open>Monotonicity of the doubled maximum in the penalty parameter\<
 
 text \<open>The other ingredient of the \<open>\<alpha> \<rightarrow> \<infinity>\<close> passage: the doubled maximum is
   antimonotone in \<open>\<alpha>\<close>, since a larger penalty can only decrease the
-  supremum, the maximiser for the larger \<open>\<alpha>\<close> being an admissible competitor
-  for the smaller one. Combined with \<open>doubling_ge_diagonal\<close>, this pins the
-  family between two \<open>\<alpha>\<close>-independent bounds, so the limit exists without any
-  compactness argument.\<close>
+  supremum, the maximiser for larger \<open>\<alpha>\<close> being an admissible competitor for
+  smaller \<open>\<alpha>\<close>. With \<open>doubling_ge_diagonal\<close>, this pins the family between
+  two \<open>\<alpha>\<close>-independent bounds, so the limit exists without a compactness
+  argument.\<close>
 
 lemma doubling_max_antimono:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1372,8 +1346,8 @@ qed
 subsection \<open>The components of the maximiser merge, with no subsequences\<close>
 
 text \<open>Because \<open>doubling_dist_bound\<close> comes with an explicit constant,
-  \<open>x\<hat>\<^sub>\<alpha> - y\<hat>\<^sub>\<alpha> \<rightarrow> 0\<close> is a sandwich between \<open>0\<close> and \<open>2D/\<alpha>\<close>, needing neither
-  compactness of \<open>K\<close> nor extraction of a subsequence.\<close>
+  \<open>x\<hat>\<^sub>\<alpha> - y\<hat>\<^sub>\<alpha> \<rightarrow> 0\<close> is a sandwich between \<open>0\<close> and \<open>2D/\<alpha>\<close>, needing
+  neither compactness of \<open>K\<close> nor a subsequence.\<close>
 
 lemma tendsto_const_divide_at_top:
   fixes D :: real
@@ -1401,9 +1375,9 @@ qed
 subsection \<open>The diagonal branch \<open>p = 0\<close>\<close>
 
 text \<open>The dichotomy leaves the diagonal branch \<open>p = 0\<close>. Since \<open>eq36\<close>
-  identifies \<open>F\<^sup>*(0, M)\<close> with \<open>eq36_rhs k L M\<close>, the ellipticity of \<open>F\<^sup>*\<close>
-  transfers to \<open>eq36_rhs\<close> itself, a statement about the eigenvalue expression
-  of Eq. (3.6).\<close>
+  identifies \<open>F\<^sup>*(0, M)\<close> with \<open>eq36_rhs k L M\<close>, ellipticity of \<open>F\<^sup>*\<close>
+  transfers to \<open>eq36_rhs\<close>, a statement about the eigenvalue expression of
+  Eq. (3.6).\<close>
 
 theorem eq36_rhs_antitone:
   fixes M N :: "real^'n::finite^'n"
@@ -1422,8 +1396,8 @@ proof -
 qed
 
 text \<open>The gap between the two envelopes at the origin,
-  \<open>eq36_rhs k L M - F(0, M)\<close>, is nonnegative: this is \<open>ell_op_le_eq36\<close>
-  specialised to \<open>p = 0\<close>, combined with \<open>ell_op_lsc_at_zero\<close>.\<close>
+  \<open>eq36_rhs k L M - F(0, M)\<close>, is nonnegative: \<open>ell_op_le_eq36\<close> specialised
+  to \<open>p = 0\<close>, combined with \<open>ell_op_lsc_at_zero\<close>.\<close>
 
 lemma env_gap_at_zero_nonneg:
   fixes M :: "real^'n::finite^'n"
@@ -1431,18 +1405,11 @@ lemma env_gap_at_zero_nonneg:
   shows "ell_op k L (0 :: real^'n) M \<le> eq36_rhs k L M"
   by (rule ell_op_le_eq36[OF sym L k(1) k(2)])
 
-text \<open>Third, and this is the point: the diagonal branch closes IF AND ONLY IF
-  that gap vanishes at the subsolution's matrix.  This is not an assumption
-  about the problem, it is a checkable numeric condition on \<open>X\<close>, and the lemma
-  below discharges the branch whenever it holds.
-
-  The reason the branch does NOT close in general is now visible as an
-  inequality chain rather than a vague remark.  At \<open>p = 0\<close> one has
-  \<open>F\<^sub>*(0,X) = F(0,X)\<close> and \<open>F\<^sup>*(0,Y) = eq36_rhs k L Y\<close>, and \<open>eq36_rhs\<close> is
-  antitone, so the supersolution gives \<open>1 \<le> eq36_rhs k L X\<close>.  The subsolution
-  gives \<open>F(0,X) < 1\<close>.  These are consistent precisely because
-  \<open>F(0,X) \<le> eq36_rhs k L X\<close> with room to spare; only when the two coincide is
-  there a contradiction.\<close>
+text \<open>At \<open>p = 0\<close>, \<open>F\<^sub>*(0,X) = F(0,X)\<close> and \<open>F\<^sup>*(0,Y) = eq36_rhs k L Y\<close>, with
+  \<open>eq36_rhs\<close> antitone; the supersolution gives \<open>1 \<le> eq36_rhs k L X\<close> and
+  the subsolution \<open>F(0,X) < 1\<close>. These are consistent because
+  \<open>F(0,X) \<le> eq36_rhs k L X\<close> with room to spare, so the envelope gap at
+  \<open>p = 0\<close> does not vanish in general.\<close>
 
 theorem env_contradiction_at_zero:
   fixes X Y :: "real^'n::finite^'n"
@@ -1469,23 +1436,16 @@ proof -
   with subr show False by linarith
 qed
 
-text \<open>So the residual obligation for E6 is now a single, sharply stated one:
-  either arrange the doubling so that the maximising pair is off the diagonal
-  (\<open>doubling_grad_nonzero\<close> reduces this to \<open>x\<hat>\<close> not being a maximiser of
-  \<open>u - w\<close>), or establish the no-gap condition \<open>eq36_rhs k L X \<le> F(0, X)\<close> at the
-  subsolution's matrix.  Nothing else is missing from the closing chain.\<close>
-
 subsection \<open>The diagonal branch closes without further hypotheses\<close>
 
 text \<open>The \<open>p = 0\<close> branch closes without the envelopes, whose gap
-  \<open>F(0,M) < F\<^sup>*(0,M) = eq36_rhs k L M\<close> is real and unremovable, since the
-  constraint \<open>a p = 0\<close> of \<open>feasible\<close> drops a dimension as \<open>p \<rightarrow> 0\<close>.
+  \<open>F(0,M) < F\<^sup>*(0,M) = eq36_rhs k L M\<close> is real, since the constraint
+  \<open>a p = 0\<close> of \<open>feasible\<close> drops a dimension as \<open>p \<rightarrow> 0\<close>.
   \<open>subsol_shifted_bound\<close> and \<open>supersol_shifted_bound\<close> instead bound
   \<open>ell_op\<close> itself at the shifted matrices, and \<open>ell_op_M_gap\<close> bounds its
-  change under a shift by \<open>\<delta> I\<close> by \<open>\<delta>\<sqdot>n\<sqdot>L/2 \<rightarrow> 0\<close>, giving the one-line chain
-  \<open>1 \<le> F(p,Y) \<le> F(p,X) \<le> \<theta> < 1\<close>, which does not mention \<open>p\<close>. Consequently
-  the off-diagonal condition and the \<open>glb\<close>/\<open>rsmall\<close> hypotheses are
-  unnecessary for the contradiction.\<close>
+  change under a shift by \<open>\<delta> I\<close> by \<open>\<delta>\<sqdot>n\<sqdot>L/2 \<rightarrow> 0\<close>, giving
+  \<open>1 \<le> F(p,Y) \<le> F(p,X) \<le> \<theta> < 1\<close> without reference to \<open>p\<close>. The
+  off-diagonal condition is not needed.\<close>
 
 lemma small_multiple_exists:
   fixes C g :: real
@@ -1575,10 +1535,10 @@ qed
 
 subsection \<open>Existence of the maximising pair\<close>
 
-text \<open>Every lemma above about the doubling takes the maximising property of
-  \<open>(x\<hat>, y\<hat>)\<close> as a hypothesis; on a compact \<open>K\<close> with continuous \<open>u\<close> and \<open>w\<close> it
-  follows from attainment of a supremum by a continuous function on the
-  compact product \<open>K \<times> K\<close>.\<close>
+text \<open>Every doubling lemma above takes the maximising property of
+  \<open>(x\<hat>, y\<hat>)\<close> as a hypothesis; on a compact \<open>K\<close> with continuous \<open>u\<close> and
+  \<open>w\<close> it follows from attainment of a supremum by a continuous function on
+  the compact product \<open>K \<times> K\<close>.\<close>
 
 theorem doubling_maximiser_exists:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1625,10 +1585,10 @@ proof -
   with zf zs show ?thesis by blast
 qed
 
-text \<open>The same for a general penalty. The penalty enters the existence proof
-  in exactly one place, the continuity of \<open>cpen\<close>, so the general version
-  takes that continuity as a hypothesis; everything else is \<open>compact_Times\<close>
-  plus \<open>continuous_attains_sup\<close>.\<close>
+text \<open>The same for a general penalty: the penalty enters the existence proof
+  only through the continuity of \<open>cpen\<close>, so the general version takes that
+  as a hypothesis; the rest is \<open>compact_Times\<close> plus
+  \<open>continuous_attains_sup\<close>.\<close>
 
 theorem doubling_maximiser_exists_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -1703,9 +1663,9 @@ qed
 
 subsection \<open>Discharging the remaining bare hypothesis of the penalty estimate\<close>
 
-text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> still carry a
-  bare hypothesis \<open>u x\<hat> - w y\<hat> \<le> C\<close>; on a compact \<open>K\<close> with continuous data
-  it comes from the same attainment argument as the maximiser itself.\<close>
+text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> carry a bare
+  hypothesis \<open>u x\<hat> - w y\<hat> \<le> C\<close>; on a compact \<open>K\<close> with continuous data it
+  comes from the same attainment argument as the maximiser itself.\<close>
 
 lemma doubling_upper_bound_exists:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1738,10 +1698,10 @@ proof -
   then show ?thesis by blast
 qed
 
-text \<open>Putting the two attainment results together with the penalty
-  estimate: on a compact \<open>K\<close> with continuous data the doubling produces a
-  maximising pair whose penalty is bounded by an \<open>\<alpha>\<close>-independent constant,
-  and hence whose two components are within \<open>O(1/\<sqrt>\<alpha>)\<close> of each other.\<close>
+text \<open>Combining the two attainment results with the penalty estimate: on a
+  compact \<open>K\<close> with continuous data the doubling produces a maximising pair
+  whose penalty is bounded by an \<open>\<alpha>\<close>-independent constant, and whose two
+  components are within \<open>O(1/\<sqrt>\<alpha>)\<close> of each other.\<close>
 
 theorem doubling_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1770,12 +1730,11 @@ qed
 
 subsection \<open>Producing the local-max hypotheses of \<open>comparison_contradiction\<close>\<close>
 
-text \<open>\<open>comparison_contradiction\<close> takes \<open>subtest\<close> and \<open>suptest\<close> as
-  hypotheses: local max/min statements for the jet test function. These are
+text \<open>\<open>comparison_contradiction\<close> takes \<open>subtest\<close> and \<open>suptest\<close> -- local
+  max/min statements for the jet test function -- as hypotheses; these are
   exactly what \<open>superjet_local_max\<close> yields from an Alexandrov jet once the
-  test matrix is corrected by \<open>\<delta> I\<close>, since the \<open>(\<delta>/2)\<bar>k\<bar>\<^sup>2\<close> slack it leaves
-  is precisely the extra quadratic form contributed by \<open>\<delta> I\<close>. First the
-  algebraic identity that performs the absorption.\<close>
+  test matrix is corrected by \<open>\<delta> I\<close>, since the \<open>(\<delta>/2)\<bar>k\<bar>\<^sup>2\<close> slack it
+  leaves is precisely the extra quadratic form contributed by \<open>\<delta> I\<close>.\<close>
 
 lemma quad_form_shift_identity:
   fixes A :: "real^'n::finite^'n" and k :: "real^'n"
@@ -1792,8 +1751,8 @@ qed
 
 text \<open>The bridge itself: an Alexandrov jet of \<open>v\<close> at \<open>xh\<close> with data
   \<open>(p, A)\<close> gives, for every \<open>\<delta> > 0\<close>, the local-max statement for the jet
-  test function built from \<open>(p, A + \<delta> I)\<close>, which is the \<open>subtest\<close>
-  hypothesis \<open>comparison_contradiction\<close> requires.\<close>
+  test function built from \<open>(p, A + \<delta> I)\<close>, the \<open>subtest\<close> hypothesis
+  \<open>comparison_contradiction\<close> requires.\<close>
 
 theorem jet_imp_local_max_test:
   fixes v :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n^'n"
@@ -1857,19 +1816,19 @@ proof -
 qed
 
 text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<close> at \<open>yh\<close>
-  gives the local-min statement, with the correction \<open>- \<delta> I\<close>, following from
+  gives the local-min statement, with correction \<open>- \<delta> I\<close>, following from
   the same theorem applied to \<open>-v\<close>, whose jet data is \<open>(-p, -A)\<close>.\<close>
 
 subsection \<open>The jet hypothesis only ever needs one side\<close>
 
-text \<open>\<open>superjet_local_max\<close> (Sup\_Convolution) only uses one side of its
-  \<open>tendsto\<close> hypothesis, discarding the lower bound; nothing downstream needs
-  it, since the diagonal branch of Theorem 4.2(a) supplies only an upper
-  bound on the increment of \<open>B = supconv (-w) \<epsilon>\<close>. This subsection restates
-  the chain with a one-sided hypothesis; \<open>onesided_of_tendsto\<close> shows it is a
-  genuine weakening. The quantifier over the threshold \<open>c\<close> is necessary: in
-  \<open>supersol_no_vanishing_jet\<close> the bound is produced inside the proof by
-  \<open>small_multiple_exists\<close>, after the hypothesis has been fixed.\<close>
+text \<open>\<open>superjet_local_max\<close> (Sup_Convolution) only uses one side of its
+  \<open>tendsto\<close> hypothesis; the diagonal branch of Theorem 4.2(a) supplies only
+  an upper bound on the increment of \<open>B = supconv (-w) \<epsilon>\<close>. This
+  subsection restates the chain with a one-sided hypothesis;
+  \<open>onesided_of_tendsto\<close> shows it is a genuine weakening. The quantifier
+  over the threshold \<open>c\<close> is necessary: in \<open>supersol_no_vanishing_jet\<close> the
+  bound is produced inside the proof by \<open>small_multiple_exists\<close>, after the
+  hypothesis is fixed.\<close>
 
 lemma superjet_local_max_onesided:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -1920,10 +1879,9 @@ proof -
   show ?thesis by (rule eventually_mono[OF T]) (rule step)
 qed
 
-text \<open>The domination step the diagonal branch needs: if the increment of
-  \<open>B\<close> at \<open>p\<close> is eventually dominated by some \<open>D\<close> that is \<open>o(|h|^2)\<close>, then the
-  increment satisfies the one-sided hypothesis. Domination is exactly what a
-  diagonal maximiser supplies, with \<open>D\<close> the penalty; \<open>dom\<close> holds only
+text \<open>If the increment of \<open>B\<close> at \<open>p\<close> is eventually dominated by some \<open>D\<close>
+  that is \<open>o(|h|^2)\<close>, it satisfies the one-sided hypothesis -- exactly what
+  a diagonal maximiser supplies, with \<open>D\<close> the penalty; domination holds only
   eventually since the maximiser inequality needs \<open>p + h\<close> to stay in \<open>K\<close>.\<close>
 
 lemma onesided_of_tendsto_gen:
@@ -2058,16 +2016,13 @@ qed
 
 subsection \<open>Removing the jet correction\<close>
 
-text \<open>The \<open>\<delta>\<close> introduced by \<open>jet_imp_local_max_test\<close> cannot be cancelled
-  against the ordering \<open>X \<preceq> Y\<close>: after correcting the two matrices to
-  \<open>X + \<delta> I\<close> and \<open>Y - \<delta> I\<close> one would need \<open>Y - X \<succeq> 2\<delta> I\<close>, but the theorem on
-  sums gives only \<open>Y - X \<succeq> 0\<close>, so the correction must be removed by a limit
-  rather than absorbed. This is what the lower envelope is for: degenerate
-  ellipticity gives \<open>F(p, M + \<delta> I) \<le> F(p, M)\<close>, so \<open>F(p, M + \<delta> I) \<le> 1\<close> does
-  not directly give \<open>F(p, M) \<le> 1\<close>, but it does give a bound at points
-  arbitrarily close to \<open>(p, M)\<close>, which is precisely the content of \<open>F\<^sub>*\<close>:
-  since \<open>(p, M + \<delta> I) \<rightarrow> (p, M)\<close> as \<open>\<delta> \<rightarrow> 0\<close>, every inner infimum is \<open>\<le> 1\<close>
-  and hence so is their supremum.\<close>
+text \<open>The \<open>\<delta>\<close> from \<open>jet_imp_local_max_test\<close> cannot cancel against
+  \<open>X \<preceq> Y\<close>: correcting to \<open>X + \<delta> I\<close>, \<open>Y - \<delta> I\<close> would need
+  \<open>Y - X \<succeq> 2\<delta> I\<close>, but the theorem on sums gives only \<open>Y - X \<succeq> 0\<close>, so
+  \<open>\<delta>\<close> is removed by a limit instead. Degenerate ellipticity gives
+  \<open>F(p, M + \<delta> I) \<le> F(p, M)\<close>, and since \<open>F\<^sub>*\<close> is the limit over points near
+  \<open>(p, M)\<close>, \<open>F(p, M + \<delta> I) \<le> 1\<close> for all \<open>\<delta>\<close> already gives
+  \<open>F\<^sub>*(p, M) \<le> 1\<close>.\<close>
 
 theorem ell_op_lsc_le_one_of_shifts:
   fixes M :: "real^'n::finite^'n" and p :: "real^'n"
@@ -2194,13 +2149,13 @@ qed
 
 subsection \<open>Making the strictness survive the limit\<close>
 
-text \<open>The two shift theorems above are stated with the bound \<open>1\<close>, enough to
-  reach the sandwich but not the contradiction: passing to the limit turns
-  \<open>F(p, X + \<delta> I) < 1\<close> into \<open>F\<^sub>*(p, X) \<le> 1\<close>, losing the strict inequality the
-  closing argument needs. The fix is that the strictness produced by the
-  \<open>\<theta>\<close>-scaling is uniform, \<open>F(\<theta> p, \<theta> X) = \<theta> F(p, X) \<le> \<theta>\<close> with \<open>\<theta> < 1\<close>
-  independent of \<open>\<delta>\<close>, and a uniform bound does survive the limit, so the
-  shift theorems are restated with an arbitrary bound \<open>c\<close> in place of \<open>1\<close>.\<close>
+text \<open>The two shift theorems above are stated with bound \<open>1\<close>, enough for the
+  sandwich but not the contradiction: passing to the limit turns
+  \<open>F(p, X + \<delta> I) < 1\<close> into \<open>F\<^sub>*(p, X) \<le> 1\<close>, losing strictness. The fix:
+  the strictness from \<open>\<theta>\<close>-scaling is uniform,
+  \<open>F(\<theta> p, \<theta> X) = \<theta> F(p, X) \<le> \<theta>\<close> with \<open>\<theta> < 1\<close> independent of \<open>\<delta>\<close>, and a
+  uniform bound survives the limit, so the shift theorems are restated with
+  an arbitrary bound \<open>c\<close> in place of \<open>1\<close>.\<close>
 
 theorem ell_op_lsc_le_of_shifts:
   fixes M :: "real^'n::finite^'n" and p :: "real^'n"
@@ -2321,12 +2276,11 @@ proof (rule INF_greatest)
       \<le> (SUP w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)" .
 qed
 
-text \<open>The closing chain of Theorem 4.2(a) in the \<open>\<delta>\<close>-corrected form. The
-  hypotheses are exactly what the doubling delivers: a uniform strict bound
-  \<open>c < 1\<close> on the subsolution side at every corrected matrix \<open>X + \<delta> I\<close>, the
+text \<open>The closing chain of Theorem 4.2(a) in \<open>\<delta>\<close>-corrected form: a uniform
+  strict bound \<open>c < 1\<close> on the subsolution side at every \<open>X + \<delta> I\<close>, the
   supersolution bound at every \<open>Y - \<delta> I\<close>, the ordering \<open>X \<preceq> Y\<close> from the
-  theorem on sums, and the off-diagonal condition \<open>p \<noteq> 0\<close> supplied by
-  \<open>doubling_grad_nonzero\<close>. No \<open>\<delta>\<close> survives in the conclusion.\<close>
+  theorem on sums, and \<open>p \<noteq> 0\<close> from \<open>doubling_grad_nonzero\<close>. No \<open>\<delta>\<close>
+  survives in the conclusion.\<close>
 
 theorem env_strict_contradiction_of_shifts:
   fixes X Y :: "real^'n::finite^'n" and p :: "real^'n"
@@ -2356,10 +2310,9 @@ qed
 
 subsection \<open>The uniform strict bound, and the shifted families\<close>
 
-text \<open>\<open>visc_subsol_scaled_strict\<close> concludes \<open>F < 1\<close>, but its proof
-  actually establishes the stronger \<open>F \<le> \<theta>\<close> before weakening it; here is
-  the same argument stopped one step earlier, giving the bound that survives
-  the \<open>\<delta> \<rightarrow> 0\<close> limit.\<close>
+text \<open>\<open>visc_subsol_scaled_strict\<close> concludes \<open>F < 1\<close>, but its proof actually
+  gives the stronger \<open>F \<le> \<theta>\<close>; this is the same argument stopped one step
+  earlier, giving the bound that survives the \<open>\<delta> \<rightarrow> 0\<close> limit.\<close>
 
 theorem visc_subsol_scaled_uniform:
   fixes u :: "real^'n::finite \<Rightarrow> real" and H :: "real^'n^'n"
@@ -2400,14 +2353,14 @@ proof -
     unfolding c_def using t by (simp add: field_simps)
 qed
 
-text \<open>Symmetry of the corrected matrices, which the jet test function needs:
+text \<open>Symmetry of the corrected matrices, needed by the jet test function:
   transposition is additive entrywise, so both directions of the correction
   preserve symmetry.\<close>
 
-text \<open>The two producers: from an Alexandrov jet of \<open>\<theta> u\<close> at \<open>x\<hat>\<close> with data
-  \<open>(p, X)\<close> one gets, for every \<open>\<delta> > 0\<close>, the uniform bound
-  \<open>F(p, X + \<delta> I) \<le> \<theta>\<close>; dually on the supersolution side. These are the two
-  families \<open>env_strict_contradiction_of_shifts\<close> consumes.\<close>
+text \<open>The two producers: an Alexandrov jet of \<open>\<theta> u\<close> at \<open>x\<hat>\<close> with data
+  \<open>(p, X)\<close> gives, for every \<open>\<delta> > 0\<close>, the uniform bound
+  \<open>F(p, X + \<delta> I) \<le> \<theta>\<close>; dually on the supersolution side. These are the
+  two families \<open>env_strict_contradiction_of_shifts\<close> consumes.\<close>
 
 theorem subsol_shifted_bound:
   fixes u :: "real^'n::finite \<Rightarrow> real" and Xm :: "real^'n^'n"
@@ -2546,11 +2499,10 @@ subsection \<open>The quartic penalty and its exact second-order expansion\<clos
 text \<open>Writing \<open>s = d \<bullet> d\<close> and \<open>t = 2(d \<bullet> h) + h \<bullet> h\<close>, the exact expansion
   \<open>P(d+h) - P(d) = (\<beta>/4)((s+t)\<^sup>2 - s\<^sup>2) = (\<beta>/4)(2st + t\<^sup>2)\<close> gives gradient
   \<open>\<nabla>P(d) = \<beta>(d \<bullet> d) d\<close> and Hessian quadratic form
-  \<open>h \<mapsto> \<beta>(d \<bullet> d)(h \<bullet> h) + 2\<beta>(d \<bullet> h)\<^sup>2\<close>, i.e. matrix \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>, with
-  remainder \<open>\<beta>(d \<bullet> h)(h \<bullet> h) + (\<beta>/4)(h \<bullet> h)\<^sup>2 = o(\<parallel>h\<parallel>\<^sup>2)\<close>. Both the gradient
-  and the Hessian vanish only at \<open>d = 0\<close>, which is what gives the
-  supersolution a \<open>(0,0)\<close> jet on the diagonal and hence the contradiction of
-  \<open>supersol_no_vanishing_jet\<close>.\<close>
+  \<open>h \<mapsto> \<beta>(d \<bullet> d)(h \<bullet> h) + 2\<beta>(d \<bullet> h)\<^sup>2\<close>, matrix
+  \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>, with remainder \<open>o(\<parallel>h\<parallel>\<^sup>2)\<close>. Both vanish only at
+  \<open>d = 0\<close>, giving the supersolution a \<open>(0,0)\<close> jet on the diagonal and hence
+  the contradiction of \<open>supersol_no_vanishing_jet\<close>.\<close>
 
 definition quartic_pen :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real" where
   "quartic_pen \<beta> d = (\<beta>/4) * (d \<bullet> d)\<^sup>2"
@@ -2611,8 +2563,8 @@ proof -
 qed
 
 text \<open>The jet itself, in the shape the slice lemmas consume: gradient
-  \<open>\<beta>(d \<bullet> d) d\<close>, quadratic form \<open>h \<mapsto> \<beta>(d \<bullet> d)(h \<bullet> h) + 2\<beta>(d \<bullet> h)\<^sup>2\<close>. Exact, so
-  it holds at every \<open>d\<close> with no smallness hypothesis.\<close>
+  \<open>\<beta>(d \<bullet> d) d\<close>, quadratic form \<open>h \<mapsto> \<beta>(d \<bullet> d)(h \<bullet> h) + 2\<beta>(d \<bullet> h)\<^sup>2\<close>.
+  Exact, holding at every \<open>d\<close> with no smallness hypothesis.\<close>
 
 theorem quartic_pen_jet:
   fixes d :: "real^'n::finite"
@@ -2634,9 +2586,9 @@ proof -
   show ?thesis unfolding eq by (rule quartic_pen_remainder)
 qed
 
-text \<open>At \<open>d = 0\<close> both the gradient and the quadratic form vanish, so the
-  quartic penalty has a second-order jet \<open>(0, 0)\<close> there; feeding that to
-  \<open>supersol_no_vanishing_jet\<close> is the paper's \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
+text \<open>At \<open>d = 0\<close> both gradient and quadratic form vanish, so the quartic
+  penalty has second-order jet \<open>(0, 0)\<close> there; feeding this to
+  \<open>supersol_no_vanishing_jet\<close> gives the paper's \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
 
 corollary quartic_pen_vanishing_jet_at_zero:
   shows "((\<lambda>h. (quartic_pen \<beta> ((0::real^'n::finite) + h) - quartic_pen \<beta> 0)
@@ -2650,16 +2602,14 @@ qed
 
 subsection \<open>The doubled penalty's jet, for an arbitrary penalty\<close>
 
-text \<open>Every lemma below \<open>sums_matrix_inequality\<close> in the \<open>psd\<close> chain is
-  abstract in the two block maps; \<open>sums_matrix_inequality\<close> itself uses an
-  exact identity for the quadratic penalty, which for a general \<open>P\<close> becomes
-  asymptotic, and this lemma replaces it. Writing \<open>e k = fst k - snd k\<close>, the
-  doubled penalty \<open>z \<mapsto> P (fst z - snd z)\<close> has gradient \<open>(G, -G)\<close> and Hessian
-  operator \<open>k \<mapsto> (Z (e k), -Z (e k))\<close> at \<open>z\<hat>\<close>, with numerator collapsing
-  exactly to \<open>R (e k)\<close>, the numerator of \<open>P\<close>'s own jet. The limit is not a
-  plain composition, since \<open>e\<close> is not injective near \<open>0\<close>; what saves it is
-  that \<open>e\<close> is 2-Lipschitz and only kills the diagonal, where the numerator is
-  \<open>R 0 = 0\<close>.\<close>
+text \<open>Below \<open>sums_matrix_inequality\<close> the \<open>psd\<close> chain is abstract in the two
+  block maps; \<open>sums_matrix_inequality\<close> itself uses an exact identity for
+  the quadratic penalty, which for general \<open>P\<close> is only asymptotic, and this
+  lemma supplies it. Writing \<open>e k = fst k - snd k\<close>, the doubled penalty
+  \<open>z \<mapsto> P (fst z - snd z)\<close> has gradient \<open>(G, -G)\<close> and Hessian
+  \<open>k \<mapsto> (Z (e k), -Z (e k))\<close> at \<open>z\<hat>\<close>, with numerator collapsing to
+  \<open>R (e k)\<close>. Although \<open>e\<close> is not injective near \<open>0\<close>, the limit survives
+  because \<open>e\<close> is 2-Lipschitz and kills only the diagonal, where \<open>R 0 = 0\<close>.\<close>
 
 lemma matrix_vector_mult_diff_gen:
   fixes Z :: "real^'n::finite^'n"
@@ -2776,17 +2726,16 @@ qed
 
 subsection \<open>Semiconvexity of the doubled functional, for a general penalty\<close>
 
-text \<open>The Jensen/Alexandrov layer wants global semiconvexity of the doubled
-  functional, and in \<open>a(x) + b(y) - P(x - y)\<close> the penalty enters as \<open>-P\<close>, so
-  what is needed is that \<open>P\<close> be semiconcave (Hessian bounded above). A
-  quadratic gets this for free; a globally quartic penalty does not, since
-  its Hessian grows like \<open>\<beta>\<parallel>d\<parallel>\<^sup>2\<close>. The right abstraction is \<open>P\<close> semiconcave
-  with constant \<open>\<kappa>\<close>, via the identity
-  \<open>-P(x-y) + \<kappa>\<parallel>z\<parallel>\<^sup>2 = [(\<kappa>/2)\<parallel>x-y\<parallel>\<^sup>2 - P(x-y)] + (\<kappa>/2)\<parallel>x+y\<parallel>\<^sup>2\<close>, a sum of two
-  convex functions: the semiconcavity hypothesis composed with
-  \<open>z \<mapsto> fst z - snd z\<close>, and a norm-square composed with
-  \<open>z \<mapsto> fst z + snd z\<close>. For the quadratic \<open>P\<close> the first bracket vanishes
-  identically and this collapses to \<open>semiconvex_penalty\<close>.\<close>
+text \<open>The Jensen/Alexandrov layer needs global semiconvexity of
+  \<open>a(x) + b(y) - P(x - y)\<close>, i.e. \<open>P\<close> semiconcave (Hessian bounded above); a
+  quadratic gets this for free, a globally quartic penalty does not, since
+  its Hessian grows like \<open>\<beta>\<parallel>d\<parallel>\<^sup>2\<close>. For \<open>P\<close> semiconcave with constant
+  \<open>\<kappa>\<close>, the identity
+  \<open>-P(x-y) + \<kappa>\<parallel>z\<parallel>\<^sup>2 = [(\<kappa>/2)\<parallel>x-y\<parallel>\<^sup>2 - P(x-y)] + (\<kappa>/2)\<parallel>x+y\<parallel>\<^sup>2\<close> writes the
+  functional as a sum of two convex pieces, composed with
+  \<open>z \<mapsto> fst z - snd z\<close> and \<open>z \<mapsto> fst z + snd z\<close> respectively. For quadratic
+  \<open>P\<close> the first bracket vanishes identically, collapsing to
+  \<open>semiconvex_penalty\<close>.\<close>
 
 lemma convex_on_prod_diff:
   fixes g :: "'a::euclidean_space \<Rightarrow> real"
@@ -2865,16 +2814,13 @@ subsection \<open>A concrete penalty: semiconcave, with a vanishing 2-jet at the
 
 text \<open>\<open>semiconvex_penalty_gen\<close> reduces the question to exhibiting one
   penalty that is semiconcave with an explicit constant and has vanishing
-  gradient and Hessian at \<open>0\<close>. The pure quartic has the second property but
-  not the first; the closed form
-  \<open>P(d) = (\<kappa>/2)\<parallel>d\<parallel>\<^sup>2 - \<kappa>(\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) - 1)\<close> has both. Semiconcavity is free:
-  \<open>(\<kappa>/2)\<parallel>d\<parallel>\<^sup>2 - P(d) = \<kappa>(\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) - 1)\<close>, and
-  \<open>\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) = \<parallel>(d, 1)\<parallel>\<close> in \<open>'a \<times> real\<close>, the norm composed with the affine
-  map \<open>d \<mapsto> (d,1)\<close>. The 2-jet at \<open>0\<close> vanishes because
-  \<open>\<surd>(s+1) - 1 = s/(\<surd>(s+1)+1)\<close>, so
-  \<open>P(h)/\<parallel>h\<parallel>\<^sup>2 = \<kappa>/2 - \<kappa>/(\<surd>(\<parallel>h\<parallel>\<^sup>2+1)+1) \<rightarrow> 0\<close>: near \<open>0\<close> the penalty is
-  \<open>\<approx> (\<kappa>/8)\<parallel>d\<parallel>\<^sup>4\<close>, while far out it grows quadratically, which is what makes
-  it semiconcave where the quartic is not.\<close>
+  gradient and Hessian at \<open>0\<close>. The pure quartic fails semiconcavity;
+  \<open>P(d) = (\<kappa>/2)\<parallel>d\<parallel>\<^sup>2 - \<kappa>(\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) - 1)\<close> has both properties.
+  Semiconcavity is free since
+  \<open>(\<kappa>/2)\<parallel>d\<parallel>\<^sup>2 - P(d) = \<kappa>(\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) - 1) = \<kappa>(\<parallel>(d, 1)\<parallel> - 1)\<close>, a norm
+  composed with an affine map. The 2-jet at \<open>0\<close> vanishes because
+  \<open>\<surd>(s+1) - 1 = s/(\<surd>(s+1)+1)\<close>, so \<open>P(h)/\<parallel>h\<parallel>\<^sup>2 \<rightarrow> 0\<close>: near \<open>0\<close> the penalty
+  is \<open>\<approx> (\<kappa>/8)\<parallel>d\<parallel>\<^sup>4\<close>, while far out it grows quadratically.\<close>
 
 definition soft_pen :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real" where
   "soft_pen \<kappa> d = (\<kappa>/2) * (norm d)\<^sup>2 - \<kappa> * (sqrt ((norm d)\<^sup>2 + 1) - 1)"
@@ -3021,13 +2967,13 @@ qed
 
 subsection \<open>Second-order expansion of the square root\<close>
 
-text \<open>What \<open>soft_pen\<close>'s jet at a general \<open>d\<close> needs: the expansion is exact,
-  not asymptotic. Writing \<open>S = \<surd>(u+\<Delta>)\<close> and \<open>R = \<surd>u\<close>, the conjugate identity
-  gives \<open>S - R = \<Delta>/(S+R)\<close>, and then identically
-  \<open>S - R - \<Delta>/(2R) = \<Delta>(R - S)/(2R(S+R)) = -\<Delta>\<^sup>2/(2R(S+R)\<^sup>2)\<close>. So the
-  second-order remainder is a quotient, and the \<open>o(\<Delta>\<^sup>2)\<close> statement is just
-  continuity of \<open>\<Delta> \<mapsto> 1/(2R(S+R)\<^sup>2)\<close> at \<open>\<Delta> = 0\<close>, where it takes the value
-  \<open>1/(8R\<^sup>3)\<close>, the Taylor coefficient.\<close>
+text \<open>\<open>soft_pen\<close>'s jet at a general \<open>d\<close> needs an exact, not asymptotic,
+  expansion. Writing \<open>S = \<surd>(u+\<Delta>)\<close> and \<open>R = \<surd>u\<close>, the conjugate identity
+  gives \<open>S - R = \<Delta>/(S+R)\<close>, and identically
+  \<open>S - R - \<Delta>/(2R) = -\<Delta>\<^sup>2/(2R(S+R)\<^sup>2)\<close>. So the second-order remainder is a
+  quotient, and \<open>o(\<Delta>\<^sup>2)\<close> is just continuity of
+  \<open>\<Delta> \<mapsto> 1/(2R(S+R)\<^sup>2)\<close> at \<open>\<Delta> = 0\<close>, where it equals \<open>1/(8R\<^sup>3)\<close>, the
+  Taylor coefficient.\<close>
 
 lemma sqrt_diff_exact:
   fixes u D :: real
@@ -3097,11 +3043,9 @@ proof -
     by (rule second_order_algebra_aux[OF SR R D e])
 qed
 
-text \<open>The same thing without the quotient, the form the composition wants:
-  it holds for every \<open>\<Delta>\<close>, including \<open>\<Delta> = 0\<close>. The algebraic heart is
-  \<open>(S+R)\<^sup>2 - \<Delta> = S\<^sup>2 + 2SR + R\<^sup>2 - \<Delta> = (u+\<Delta>) + 2SR + u - \<Delta> = 2R(S+R)\<close>, after
-  which \<open>\<Delta>/(2R) - \<Delta>\<^sup>2/(2R(S+R)\<^sup>2) = \<Delta>((S+R)\<^sup>2 - \<Delta>)/(2R(S+R)\<^sup>2) = \<Delta>/(S+R)\<close>,
-  which is \<open>S - R\<close> by the conjugate identity.\<close>
+text \<open>The same identity without the quotient, holding for every \<open>\<Delta>\<close>
+  including \<open>0\<close>. The algebraic heart: \<open>(S+R)\<^sup>2 - \<Delta> = 2R(S+R)\<close>, whence
+  \<open>\<Delta>/(2R) - \<Delta>\<^sup>2/(2R(S+R)\<^sup>2) = \<Delta>/(S+R) = S - R\<close>.\<close>
 
 lemma sqrt_rhs_aux:
   fixes D R T :: real
@@ -3147,13 +3091,12 @@ proof -
   show ?thesis unfolding e rhs ..
 qed
 
-text \<open>\<open>soft_pen\<close>'s increment, exactly: the quadratic part expands exactly,
-  and the square-root part is handled by \<open>sqrt_second_order_exact\<close> at
-  \<open>u = \<parallel>d\<parallel>\<^sup>2 + 1\<close>, \<open>\<Delta> = 2(d \<bullet> h) + h \<bullet> h\<close>, since \<open>\<parallel>d+h\<parallel>\<^sup>2 + 1 = u + \<Delta>\<close>. Reading
-  off the orders in \<open>h\<close>: the \<open>O(h)\<close> part is \<open>\<kappa>(1 - 1/R)(d \<bullet> h)\<close>, the \<open>O(h\<^sup>2)\<close>
-  part is \<open>(\<kappa>/2)(1 - 1/R)(h \<bullet> h) + \<kappa>(d \<bullet> h)\<^sup>2/(2R\<^sup>3)\<close>, so the gradient is
+text \<open>\<open>soft_pen\<close>'s increment expands exactly: the quadratic part expands
+  exactly, and the square-root part follows from \<open>sqrt_second_order_exact\<close>
+  at \<open>u = \<parallel>d\<parallel>\<^sup>2 + 1\<close>, \<open>\<Delta> = 2(d \<bullet> h) + h \<bullet> h\<close>. The gradient is
   \<open>\<kappa>(1 - 1/R) d\<close> and the Hessian form is
-  \<open>\<kappa>(1 - 1/R)(h \<bullet> h) + \<kappa>(d \<bullet> h)\<^sup>2/R\<^sup>3\<close>, both vanishing at \<open>d = 0\<close> where \<open>R = 1\<close>.\<close>
+  \<open>\<kappa>(1 - 1/R)(h \<bullet> h) + \<kappa>(d \<bullet> h)\<^sup>2/R\<^sup>3\<close>, both vanishing at \<open>d = 0\<close> where
+  \<open>R = 1\<close>.\<close>
 
 theorem soft_pen_expand:
   fixes d h :: "real^'n::finite"
@@ -3196,10 +3139,9 @@ qed
 
 text \<open>Collecting the expansion into gradient + Hessian + remainder: with
   \<open>a = d \<bullet> h\<close>, \<open>b = h \<bullet> h\<close>, \<open>\<Delta> = 2a + b\<close> and \<open>R = \<surd>(\<parallel>d\<parallel>\<^sup>2+1)\<close>,
-  \<open>(\<kappa>/2)\<Delta> - \<kappa>\<Delta>/(2R) = \<kappa>(1 - 1/R) a + (\<kappa>/2)(1 - 1/R) b\<close>, exactly the gradient
-  term plus half the Hessian form; the remainder is the two quotient terms
-  and is an identity, not an estimate. Stated on bare reals first, since the
-  cancellation is pure field algebra.\<close>
+  \<open>(\<kappa>/2)\<Delta> - \<kappa>\<Delta>/(2R) = \<kappa>(1 - 1/R) a + (\<kappa>/2)(1 - 1/R) b\<close>, an identity
+  giving the gradient and half the Hessian term exactly; the remainder is
+  the two quotient terms.\<close>
 
 lemma soft_pen_rem_aux:
   fixes k R a b W :: real
@@ -3230,10 +3172,9 @@ proof -
     by (rule soft_pen_rem_aux[OF R])
 qed
 
-text \<open>One of the two inputs to the remainder limit: the factor
-  \<open>(d \<bullet> h)\<^sup>2/\<parallel>h\<parallel>\<^sup>2\<close> multiplying the vanishing bracket is bounded, uniformly in
-  \<open>h\<close>, by \<open>\<parallel>d\<parallel>\<^sup>2\<close> (Cauchy-Schwarz squared), which is what makes the
-  \<open>Lim_null_comparison\<close> step available.\<close>
+text \<open>One input to the remainder limit: \<open>(d \<bullet> h)\<^sup>2/\<parallel>h\<parallel>\<^sup>2\<close> is bounded,
+  uniformly in \<open>h\<close>, by \<open>\<parallel>d\<parallel>\<^sup>2\<close> (Cauchy-Schwarz squared), enabling
+  \<open>Lim_null_comparison\<close>.\<close>
 
 lemma inner_sq_over_norm_sq_le:
   fixes d h :: "real^'n::finite"
@@ -3259,9 +3200,8 @@ proof -
 qed
 
 text \<open>The other input: the denominator \<open>T h = \<surd>(u + \<Delta> h) + R\<close> tends to
-  \<open>2R\<close> as \<open>h \<rightarrow> 0\<close> by continuity, which makes the bracket
-  \<open>2/(R T\<^sup>2) - 1/(2R\<^sup>3)\<close> vanish, since \<open>R(2R)\<^sup>2 = 4R\<^sup>3\<close> and
-  \<open>2/(4R\<^sup>3) = 1/(2R\<^sup>3)\<close>.\<close>
+  \<open>2R\<close> as \<open>h \<rightarrow> 0\<close>, so \<open>2/(R T\<^sup>2) - 1/(2R\<^sup>3)\<close> vanishes, since
+  \<open>R(2R)\<^sup>2 = 4R\<^sup>3\<close>.\<close>
 
 lemma soft_pen_T_tendsto:
   fixes d :: "real^'n::finite"
@@ -3287,7 +3227,7 @@ proof -
 qed
 
 text \<open>The bracket itself vanishes: \<open>T h \<rightarrow> 2R\<close> gives \<open>R T h\<^sup>2 \<rightarrow> 4R\<^sup>3\<close>, so
-  \<open>2/(R T h\<^sup>2) \<rightarrow> 2/(4R\<^sup>3) = 1/(2R\<^sup>3)\<close>, exactly the constant subtracted.\<close>
+  \<open>2/(R T h\<^sup>2) \<rightarrow> 1/(2R\<^sup>3)\<close>, the constant subtracted.\<close>
 
 lemma soft_pen_bracket_tendsto:
   fixes d :: "real^'n::finite"
@@ -3332,8 +3272,8 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>The second summand of the remainder quotient: easier than the first,
-  just numerator \<open>\<rightarrow> 0\<close> over denominator \<open>\<rightarrow> 8R\<^sup>3 \<noteq> 0\<close>.\<close>
+text \<open>The second summand of the remainder quotient: numerator \<open>\<rightarrow> 0\<close> over
+  denominator \<open>\<rightarrow> 8R\<^sup>3 \<noteq> 0\<close>.\<close>
 
 lemma soft_pen_second_summand_tendsto:
   fixes d :: "real^'n::finite"
@@ -3372,10 +3312,10 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>The split of the remainder quotient into (bounded factor) x (vanishing
-  bracket) + (vanishing summand), via the numerator identity
-  \<open>\<Delta>\<^sup>2 = 4a\<^sup>2 + 4ab + b\<^sup>2\<close>: the \<open>4a\<^sup>2\<close> carries the bounded factor, and
-  \<open>4ab + b\<^sup>2\<close> divided by \<open>b\<close> is the \<open>4a + b\<close> of the second summand.\<close>
+text \<open>The remainder quotient splits into a bounded factor times a vanishing
+  bracket, plus a vanishing summand, via \<open>\<Delta>\<^sup>2 = 4a\<^sup>2 + 4ab + b\<^sup>2\<close>:
+  \<open>4a\<^sup>2\<close> carries the bounded factor, and \<open>(4ab + b\<^sup>2)/b\<close> is the second
+  summand.\<close>
 
 lemma rem_split_aux:
   fixes k R T a b :: real
@@ -3386,11 +3326,11 @@ lemma rem_split_aux:
   using R T b
   by (simp add: field_simps power2_eq_square power3_eq_cube)
 
-text \<open>The jet assembles the analysis above: rewrite the quotient by
-  \<open>soft_pen_rem\<close> and \<open>rem_split_aux\<close>, kill the first summand by
-  \<open>Lim_null_comparison\<close> against \<open>\<parallel>d\<parallel>\<^sup>2\<sqdot>\<bar>\<kappa>\<sqdot>bracket\<bar>\<close>, and add the second.
-  Stated with the Hessian as a quadratic form; the conversion to the matrix
-  \<open>\<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close> is a separate mechanical step.\<close>
+text \<open>The jet assembles the analysis above via \<open>soft_pen_rem\<close> and
+  \<open>rem_split_aux\<close>, killing the first summand by \<open>Lim_null_comparison\<close> and
+  adding the second. Stated with the Hessian as a quadratic form;
+  converting it to the matrix \<open>\<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close> is a separate
+  step.\<close>
 
 theorem soft_pen_jet_form:
   fixes d :: "real^'n::finite"
@@ -3490,12 +3430,10 @@ qed
 
 subsection \<open>The soft penalty's Hessian as a matrix\<close>
 
-text \<open>The chain consumes \<open>h \<bullet> (Z *v h)\<close>, not a quadratic form written out,
-  so the form is exhibited as a matrix, \<open>Z = \<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close>;
-  both that it reproduces the form and that it is symmetric are entrywise
-  computations. Symmetry is the extra hypothesis the general \<open>psd\<close> chain
-  carries that the quadratic version did not need, since there \<open>Z = \<alpha> I\<close> is
-  symmetric for free.\<close>
+text \<open>The chain consumes \<open>h \<bullet> (Z *v h)\<close> as a matrix,
+  \<open>Z = \<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close>; symmetry, needed by the general
+  \<open>psd\<close> chain but not by the quadratic case where \<open>Z = \<alpha> I\<close> is symmetric
+  for free, is an entrywise computation.\<close>
 
 definition outer_prod :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
   "outer_prod d e = (\<chi> i. \<chi> j. d $ i * e $ j)"
@@ -3588,15 +3526,12 @@ qed
 
 subsection \<open>The gradient field of \<open>soft_pen\<close>, and the two uniform bounds\<close>
 
-text \<open>\<open>soft_pen_jet_form\<close> gives the jet with the Hessian written out as a
-  quadratic expression, identified with @{term "h \<bullet> (soft_hess \<kappa> d *v h)"} by
-  \<open>soft_hess_quadform\<close>; packaging the gradient as the vector field
-  \<open>soft_grad\<close> puts the jet in the shape the \<open>_gen\<close> chain wants. For the
-  uniform Hessian bound: writing \<open>R = sqrt (norm d ^ 2 + 1) \<ge> 1\<close>, the first
-  summand of the quadratic form lies in \<open>[0, \<kappa>\<parallel>z\<parallel>\<^sup>2]\<close>, and Cauchy-Schwarz
-  gives \<open>(d \<bullet> z)\<^sup>2 \<le> \<parallel>d\<parallel>\<^sup>2 \<parallel>z\<parallel>\<^sup>2 = (R\<^sup>2-1)\<parallel>z\<parallel>\<^sup>2 \<le> R\<^sup>2\<parallel>z\<parallel>\<^sup>2\<close>, so the second summand
-  is at most \<open>\<kappa>\<parallel>z\<parallel>\<^sup>2/R \<le> \<kappa>\<parallel>z\<parallel>\<^sup>2\<close>. Both summands are nonnegative, so the form is
-  bounded by \<open>2\<kappa>\<parallel>z\<parallel>\<^sup>2\<close> in absolute value, uniformly in \<open>d\<close>.\<close>
+text \<open>\<open>soft_pen_jet_form\<close> writes the Hessian as a quadratic expression,
+  matched to \<open>soft_hess\<close> by \<open>soft_hess_quadform\<close>, with the gradient
+  packaged as \<open>soft_grad\<close>. Writing \<open>R = \<surd>(\<parallel>d\<parallel>\<^sup>2+1) \<ge> 1\<close>: the first
+  summand lies in \<open>[0, \<kappa>\<parallel>z\<parallel>\<^sup>2]\<close>, and Cauchy-Schwarz bounds the second by
+  \<open>\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, so the quadratic form is bounded by \<open>2\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, uniformly in
+  \<open>d\<close>.\<close>
 
 definition soft_grad :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n" where
   "soft_grad \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R d"
@@ -3699,17 +3634,15 @@ lemma soft_hess_bound:
   shows "\<bar>z \<bullet> (soft_hess \<kappa> d *v z)\<bar> \<le> (2*\<kappa>) * (norm z)\<^sup>2"
   using soft_hess_quadform_bounds[OF k, of z d] by linarith
 
-subsection \<open>\<open>soft_grad\<close> is Lipschitz --- elementarily, at a non-sharp constant\<close>
+subsection \<open>\<open>soft_grad\<close> is Lipschitz, at a non-sharp elementary constant\<close>
 
-text \<open>The gradient field of \<open>soft_pen \<kappa>\<close> is Lipschitz, at an elementary
-  (non-sharp) constant obtained purely algebraically, avoiding the mean value
-  inequality and a bound on the operator norm of \<open>soft_hess\<close>.
-
-  Write \<open>R d = sqrt (norm d ^ 2 + 1)\<close>, so \<open>R d \<ge> 1\<close> and \<open>norm d \<le> R d\<close>. The map
-  \<open>R\<close> is 1-Lipschitz: from \<open>R x ^ 2 - R y ^ 2 = norm x ^ 2 - norm y ^ 2\<close> and the
-  factorisation \<open>(R x - R y)(R x + R y) = R x ^ 2 - R y ^ 2\<close>, together with
-  \<open>|norm x - norm y| \<le> norm (x - y)\<close>, the claim follows after cancelling the
-  positive factor \<open>R x + R y\<close>.\<close>
+text \<open>The gradient field of \<open>soft_pen \<kappa>\<close> is Lipschitz at an elementary,
+  non-sharp constant, obtained algebraically without the mean value
+  inequality or a bound on the operator norm of \<open>soft_hess\<close>. Writing
+  \<open>R d = \<surd>(\<parallel>d\<parallel>\<^sup>2+1) \<ge> 1\<close>, \<open>R\<close> is 1-Lipschitz:
+  \<open>(R x - R y)(R x + R y) = \<parallel>x\<parallel>\<^sup>2 - \<parallel>y\<parallel>\<^sup>2\<close> together with
+  \<open>|\<parallel>x\<parallel> - \<parallel>y\<parallel>| \<le> \<parallel>x-y\<parallel>\<close> gives the bound after cancelling the positive
+  factor \<open>Rx+Ry\<close>.\<close>
 
 lemma norm_le_soft_R:
   fixes x :: "real^'n::finite"
@@ -3782,12 +3715,11 @@ proof -
   show ?thesis by (rule mult_right_le_imp_le[OF chain sum_pos])
 qed
 
-text \<open>The shrink map \<open>d \<mapsto> d / R d\<close> is 2-Lipschitz: with \<open>s = R x\<close>, \<open>t = R y\<close>,
-  clearing denominators gives \<open>s t (x/s - y/t) = t (x - y) + (t - s) y\<close>, and the
-  \<open>R\<close>-Lipschitz bound together with \<open>norm y \<le> t\<close> and \<open>s \<ge> 1\<close> yields the constant 2
-  (not sharp, but sufficient).
-
-  Since \<open>soft_grad \<kappa> d = \<kappa> d - \<kappa> (shrink d)\<close>, \<open>soft_grad \<kappa>\<close> is \<open>3\<kappa>\<close>-Lipschitz.\<close>
+text \<open>The shrink map \<open>d \<mapsto> d / R d\<close> is 2-Lipschitz: with \<open>s = R x\<close>,
+  \<open>t = R y\<close>, clearing denominators gives
+  \<open>st(x/s - y/t) = t(x-y) + (t-s)y\<close>, and the \<open>R\<close>-Lipschitz bound with
+  \<open>\<parallel>y\<parallel> \<le> t\<close>, \<open>s \<ge> 1\<close> yields the non-sharp constant 2. Since
+  \<open>soft_grad \<kappa> d = \<kappa> d - \<kappa>(shrink d)\<close>, \<open>soft_grad \<kappa>\<close> is \<open>3\<kappa>\<close>-Lipschitz.\<close>
 
 definition soft_shrink :: "real^'n::finite \<Rightarrow> real^'n" where
   "soft_shrink d = (1 / sqrt ((norm d)\<^sup>2 + 1)) *\<^sub>R d"
@@ -3900,13 +3832,12 @@ qed
 
 subsection \<open>The diagonal dichotomy for \<open>soft_pen\<close>\<close>
 
-text \<open>At \<open>d = 0\<close> the gradient and the Hessian of \<open>soft_pen\<close> both vanish, so a
+text \<open>At \<open>d = 0\<close> the gradient and Hessian of \<open>soft_pen\<close> both vanish, so a
   diagonal configuration would give the supersolution's test function a
-  vanishing jet \<open>(0,0)\<close>, which \<open>supersol_no_vanishing_jet\<close> forbids.
-
-  Off the diagonal, for \<open>\<kappa> > 0\<close> the gradient is nonzero because \<open>R d > 1\<close> for
-  \<open>d \<noteq> 0\<close>, making the scalar \<open>\<kappa>(1 - 1/R d)\<close> strictly positive; this supplies the
-  positive lower bound \<open>c\<close> needed elsewhere.\<close>
+  vanishing jet \<open>(0,0)\<close>, forbidden by \<open>supersol_no_vanishing_jet\<close>. Off
+  the diagonal, for \<open>\<kappa> > 0\<close> the gradient is nonzero since \<open>R d > 1\<close> for
+  \<open>d \<noteq> 0\<close>, making \<open>\<kappa>(1 - 1/R d)\<close> strictly positive, the positive lower
+  bound \<open>c\<close> needed elsewhere.\<close>
 
 lemma soft_grad_zero: "soft_grad \<kappa> (0 :: real^'n::finite) = 0"
   unfolding soft_grad_def by simp
@@ -3972,9 +3903,9 @@ lemma soft_grad_norm_pos:
   shows "0 < norm (soft_grad \<kappa> d)"
   using soft_grad_nonzero[OF d k] by simp
 
-text \<open>Taking \<open>c\<close> to be the actual norm of the gradient at the maximiser makes
-  \<open>\<kappa>\<close> cancel from the inequality \<open>(3\<kappa>)(2\<rho>) < norm (soft_grad \<kappa> d)\<close>, which reduces
-  to \<open>6\<rho> < (1 - 1/R d) * norm d\<close>. Since every other constraint on \<open>\<rho>\<close> in the
+text \<open>Taking \<open>c\<close> to be the actual gradient norm at the maximiser cancels
+  \<open>\<kappa>\<close> from \<open>(3\<kappa>)(2\<rho>) < \<parallel>soft_grad \<kappa> d\<parallel>\<close>, reducing to
+  \<open>6\<rho> < (1 - 1/R d) \<parallel>d\<parallel>\<close>. Since every other constraint on \<open>\<rho>\<close> in the
   chain is an upper bound, such a \<open>\<rho>\<close> always exists.\<close>
 
 lemma soft_grad_norm_eq:
@@ -4051,10 +3982,10 @@ lemma soft_rho_exists:
 
 subsection \<open>Jensen's semiconvexity input, for a general penalty\<close>
 
-text \<open>A transcription of \<open>doubled_functional_semiconvex\<close> for a general penalty
-  \<open>Pn\<close>, replacing the quadratic-specific semiconvexity step by the hypothesis
-  \<open>sc\<close>; the doubled constant becomes \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>, matching the quadratic case
-  at \<open>\<kappa> = \<alpha>\<close>.\<close>
+text \<open>\<open>doubled_functional_semiconvex\<close> transcribed for a general penalty
+  \<open>Pn\<close>, replacing the quadratic-specific semiconvexity step by the
+  hypothesis \<open>sc\<close>; the doubled constant becomes \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>,
+  matching the quadratic case at \<open>\<kappa> = \<alpha>\<close>.\<close>
 
 theorem doubled_functional_semiconvex_gen:
   fixes u v :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -4093,9 +4024,10 @@ proof -
   show ?thesis using ABC unfolding eq .
 qed
 
-text \<open>Jensen's lemma for the general doubled functional: as
-  \<open>doubled_supconv_jet_exists\<close>, with \<open>(\<alpha>/2)\<parallel>fst y - snd y\<parallel>\<^sup>2\<close> replaced by
-  \<open>Pn (fst y - snd y)\<close> and the semiconvexity constant by \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
+text \<open>Jensen's lemma for the general doubled functional, as
+  \<open>doubled_supconv_jet_exists\<close> with \<open>(\<alpha>/2)\<parallel>fst y - snd y\<parallel>\<^sup>2\<close> replaced by
+  \<open>Pn (fst y - snd y)\<close> and the semiconvexity constant by
+  \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
 
 theorem doubled_supconv_jet_exists_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -4138,9 +4070,10 @@ proof -
           bnd d small])
 qed
 
-text \<open>Subtracting \<open>\<delta>\<parallel>z - \<xi>\<parallel>\<^sup>2\<close> and adding back \<open>\<delta>\<parallel>z\<parallel>\<^sup>2\<close> leaves an affine term
-  \<open>\<delta>(2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2)\<close>, so a semiconvex \<open>\<Psi>\<close> stays semiconvex after this shift, with
-  its constant raised by \<open>2\<delta>\<close>; the argument is independent of the penalty.\<close>
+text \<open>Subtracting \<open>\<delta>\<parallel>z - \<xi>\<parallel>\<^sup>2\<close> and adding back \<open>\<delta>\<parallel>z\<parallel>\<^sup>2\<close> leaves an affine
+  term \<open>\<delta>(2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2)\<close>, so a semiconvex \<open>\<Psi>\<close> stays semiconvex after
+  this shift, with its constant raised by \<open>2\<delta>\<close>; the argument is
+  independent of the penalty.\<close>
 
 lemma semiconvex_shift_perturb:
   fixes \<Psi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -4175,10 +4108,10 @@ proof -
   show ?thesis unfolding e by (rule convex_on_add[OF cvx aff])
 qed
 
-text \<open>Jensen's lemma for the shifted general functional, the strict-gap version.
-  The perturbation splits across the blocks, so the shifted functional is
-  \<open>\<Phi> - \<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> with \<open>\<Phi>\<close> the general doubled functional, which is
-  semiconvex with constant raised by \<open>2\<delta>\<close> by \<open>semiconvex_shift_perturb\<close>.\<close>
+text \<open>Jensen's lemma for the shifted general functional, the strict-gap
+  version: the shifted functional \<open>\<Phi> - \<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close>, with \<open>\<Phi>\<close> the
+  general doubled functional, is semiconvex with constant raised by
+  \<open>2\<delta>\<close> by \<open>semiconvex_shift_perturb\<close>.\<close>
 
 theorem doubled_supconv_jet_exists_shifted_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -4254,10 +4187,10 @@ proof -
           bnd d small])
 qed
 
-text \<open>The annulus bound Jensen's strict-gap version needs. A plain maximiser of
-  \<open>\<Phi>\<close> over \<open>cball \<xi>\<^sub>0 r\<close> gives no strict gap, but subtracting \<open>\<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> costs
-  at least \<open>\<delta>\<rho>\<^sup>2\<close> on the annulus \<open>\<rho> \<le> \<parallel>y - \<xi>\<^sub>0\<parallel>\<close>, while at the centre it is
-  \<open>\<Phi>(\<xi>\<^sub>0)\<close> exactly.\<close>
+text \<open>The annulus bound Jensen's strict-gap version needs: a plain
+  maximiser of \<open>\<Phi>\<close> over \<open>cball \<xi>\<^sub>0 r\<close> gives no strict gap, but
+  subtracting \<open>\<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> costs at least \<open>\<delta>\<rho>\<^sup>2\<close> on the annulus
+  \<open>\<rho> \<le> \<parallel>y - \<xi>\<^sub>0\<parallel>\<close>, while the centre value \<open>\<Phi>(\<xi>\<^sub>0)\<close> is exact.\<close>
 
 lemma shifted_annulus_bound_split_gen:
   fixes A B :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -4296,11 +4229,11 @@ proof -
   show ?thesis unfolding e using mx pen by linarith
 qed
 
-text \<open>The matrix inequality for a general penalty: the penalty's jet is added to
-  \<open>expPsi\<close> rather than substituted via a fixed quadratic identity. The
+text \<open>The matrix inequality for a general penalty adds the penalty's jet to
+  \<open>expPsi\<close> rather than substituting a fixed quadratic identity; the
   block-diagonal identity and the vanishing of the penalty form on the
-  diagonal both rely only on \<open>P(x - y)\<close> being constant along \<open>(v,v)\<close>, which
-  holds for any \<open>P\<close>.\<close>
+  diagonal rely only on \<open>P(x - y)\<close> being constant along \<open>(v,v)\<close>, true
+  for any \<open>P\<close>.\<close>
 
 lemma matrix_vector_mult_scaleR_gen:
   fixes Z :: "real^'n::finite^'n"
@@ -4391,9 +4324,9 @@ proof -
   thus ?thesis unfolding WP_def Pop_def by simp
 qed
 
-text \<open>The ordering in \<open>\<le>\<close> form, then with the negativity hypothesis discharged
-  at the interior maximum, both with \<open>\<alpha> *\<^sub>R v\<close> replaced by \<open>Z *v v\<close> and the
-  penalty's jet \<open>Pjet\<close> threaded through.\<close>
+text \<open>The ordering in \<open>\<le>\<close> form, then with the negativity hypothesis
+  discharged at the interior maximum, both with \<open>\<alpha> *\<^sub>R v\<close> replaced by
+  \<open>Z *v v\<close> and the penalty's jet \<open>Pjet\<close> threaded through.\<close>
 
 theorem sums_gives_ordering_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -4458,10 +4391,11 @@ proof -
     by (rule sums_gives_ordering_gen[OF expPsi Pjet scW neg])
 qed
 
-text \<open>Block linearity and symmetry with \<open>Z *v v\<close> in place of \<open>\<alpha> *\<^sub>R v\<close>, proved
-  directly rather than through the penalty-specific \<open>linear_slice_fst\<close> /
-  \<open>sym_slice_fst\<close>. Symmetry requires \<open>Z\<close> symmetric, which holds for the quartic
-  penalty's Hessian \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>.\<close>
+text \<open>Block linearity and symmetry with \<open>Z *v v\<close> in place of
+  \<open>\<alpha> *\<^sub>R v\<close>, proved directly rather than through the penalty-specific
+  \<open>linear_slice_fst\<close> / \<open>sym_slice_fst\<close>; symmetry needs \<open>Z\<close> symmetric,
+  which holds for the quartic penalty's Hessian
+  \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>.\<close>
 
 lemma inner_matrix_sym:
   fixes Z :: "real^'n::finite^'n"
@@ -4617,22 +4551,20 @@ corollary sums_psd_at_interior_max_gen:
 
 subsection \<open>A supersolution has no vanishing second-order jet\<close>
 
-text \<open>A supersolution can never be tested at a vanishing second-order jet
-  \<open>(0, 0)\<close>, since the supersolution property would then read \<open>1 \<le> F\<^sup>*(0, 0) = 0\<close>.
-  This rules out the diagonal case of the paper's doubling, whose penalty is a
-  quartic in \<open>x - y\<close> (not the quadratic used elsewhere in this theory): at a
-  diagonal maximiser \<open>x\<^sub>\<epsilon> = y\<^sub>\<epsilon>\<close> a quartic penalty has vanishing gradient and
-  Hessian in \<open>y\<close>, giving exactly the jet \<open>(0, 0)\<close>. Off the diagonal, the common
-  gradient is then the penalty's gradient, which is nonzero automatically.
+text \<open>A supersolution is never tested at a vanishing second-order jet
+  \<open>(0, 0)\<close>, since the supersolution property would then read
+  \<open>1 \<le> F\<^sup>*(0, 0) = 0\<close>. This rules out the diagonal case of the paper's
+  quartic penalty in \<open>x - y\<close>: at a diagonal maximiser its gradient and
+  Hessian in \<open>y\<close> vanish, giving exactly \<open>(0, 0)\<close>; off the diagonal the
+  common gradient is the penalty's, automatically nonzero. Since
+  \<open>F(p, 0) = 0\<close> for every \<open>p\<close> (the feasible set is nonempty and
+  \<open>-trace(0 a)/2 = 0\<close> for every \<open>a\<close>), the \<open>\<delta>\<close>-removal argument of
+  \<open>strict_contradiction_of_shifts_any_p\<close> gives the contradiction:
+  \<open>1 \<le> F(0, -\<delta>I) \<le> F(0,0) + \<delta>nL/2\<close> fails for small \<open>\<delta>\<close>.\<close>
 
-  The key fact is \<open>F(p, 0) = 0\<close> for every \<open>p\<close>: the feasible set is nonempty and
-  every element \<open>a\<close> of it contributes \<open>-trace(0 a)/2 = 0\<close>. The contradiction
-  then follows the \<open>\<delta>\<close>-removal argument of \<open>strict_contradiction_of_shifts_any_p\<close>:
-  \<open>1 \<le> F(0, -\<delta>I) \<le> F(0,0) + \<delta>nL/2\<close> fails once \<open>\<delta>\<close> is small.\<close>
-
-text \<open>As \<open>supersol_no_vanishing_jet\<close>, but with the one-sided jet hypothesis
-  that the diagonal branch of Theorem 4.2(a) actually supplies: a maximiser
-  inequality bounds the increment from above only.\<close>
+text \<open>As \<open>supersol_no_vanishing_jet\<close>, but with the one-sided jet
+  hypothesis the diagonal branch of Theorem 4.2(a) actually supplies: a
+  maximiser inequality bounds the increment from above only.\<close>
 
 theorem supersol_no_vanishing_jet_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real"
@@ -4699,11 +4631,12 @@ qed
 
 subsection \<open>Theorem 4.2(a): the closing chain from jets\<close>
 
-text \<open>Theorem 4.2(a), from second-order jets for \<open>\<theta> u\<close> at \<open>xh\<close> and for \<open>-w\<close> at
-  \<open>yh\<close> with a common gradient \<open>p\<close>, the ordering \<open>psd (Ym - Xm)\<close>, symmetry of the
-  two matrices, and the off-diagonal condition \<open>p \<noteq> 0\<close>. The shift correction
-  \<open>\<delta>\<close> used internally to reach genuine local extrema is removed by the lower and
-  upper envelopes, and does not appear in the statement.\<close>
+text \<open>Theorem 4.2(a) from second-order jets for \<open>\<theta> u\<close> at \<open>xh\<close> and for
+  \<open>-w\<close> at \<open>yh\<close> with a common gradient \<open>p\<close>, the ordering
+  \<open>psd (Ym - Xm)\<close>, symmetry of both matrices, and the off-diagonal
+  condition \<open>p \<noteq> 0\<close>. The shift correction \<open>\<delta>\<close> used to reach genuine
+  local extrema is removed by the lower and upper envelopes and does not
+  appear in the statement.\<close>
 
 theorem comparison_env_from_jets:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
@@ -4732,9 +4665,9 @@ proof -
           zero_less_one t(2) subs sups])
 qed
 
-text \<open>The same conclusion with the off-diagonal condition \<open>p \<noteq> 0\<close> replaced by
-  the statement, via \<open>doubling_grad_nonzero\<close>, that \<open>xh\<close> fails to maximise
-  \<open>u - w\<close> over \<open>K\<close>.\<close>
+text \<open>The same conclusion with the off-diagonal condition \<open>p \<noteq> 0\<close>
+  replaced, via \<open>doubling_grad_nonzero\<close>, by the statement that \<open>xh\<close>
+  fails to maximise \<open>u - w\<close> over \<open>K\<close>.\<close>
 
 corollary comparison_env_from_jets_offdiag:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
@@ -4768,14 +4701,14 @@ qed
 
 subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
 
-text \<open>\<open>comparison_env_from_jets\<close> consumes \<open>psd (Ym - Xm)\<close>. The theorem on sums
-  (\<open>sums_matrix_inequality\<close>, Sup_Convolution.thy) delivers the ordering between
-  the two diagonal blocks
-  \<open>v \<cdot> fst (W (v,0) + \<alpha>(v,-v)) + v \<cdot> snd (W (0,v) + \<alpha>(-v,v)) \<le> 0\<close>. Writing
-  \<open>X v = fst (W (v,0)) + \<alpha> v\<close> and \<open>Y v = - (snd (W (0,v)) + \<alpha> v)\<close> (negated
-  because the supersolution enters the doubled functional as \<open>-w\<close>), this reads
-  \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>. The \<open>+ \<alpha> v\<close> term in each block is the second derivative of
-  the penalty \<open>-(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> restricted to that block.\<close>
+text \<open>\<open>comparison_env_from_jets\<close> consumes \<open>psd (Ym - Xm)\<close>. The theorem
+  on sums (\<open>sums_matrix_inequality\<close>, Sup_Convolution.thy) delivers the
+  ordering between the two diagonal blocks. Writing
+  \<open>X v = fst (W (v,0)) + \<alpha> v\<close> and
+  \<open>Y v = - (snd (W (0,v)) + \<alpha> v)\<close> (negated since the supersolution
+  enters the doubled functional as \<open>-w\<close>), this reads
+  \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>; the \<open>+ \<alpha> v\<close> term in each block is the penalty's
+  second derivative restricted to that block.\<close>
 
 theorem sums_gives_ordering:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -4812,8 +4745,8 @@ next
     unfolding neg_eq using h by linarith
 qed
 
-text \<open>With linearity and symmetry of the two blocks, which the Alexandrov jet
-  supplies since its Hessian is bounded linear and symmetric, the ordering
+text \<open>With linearity and symmetry of the two blocks, supplied by the
+  Alexandrov jet's bounded linear and symmetric Hessian, the ordering
   becomes the \<open>psd\<close> hypothesis \<open>comparison_env_from_jets\<close> wants.\<close>
 
 corollary sums_gives_psd:
@@ -4840,9 +4773,9 @@ corollary sums_gives_psd:
 subsection \<open>Discharging the negativity hypothesis at the doubled maximum\<close>
 
 text \<open>The hypothesis \<open>k \<cdot> W k \<le> 0\<close> of \<open>sums_gives_ordering\<close> is what
-  \<open>second_order_interior_max\<close> gives at an interior maximum, which the doubled
-  functional has by construction; discharging it leaves the ordering depending
-  only on the maximum property and the jet.\<close>
+  \<open>second_order_interior_max\<close> gives at an interior maximum, which the
+  doubled functional has by construction; the ordering then depends only
+  on the maximum property and the jet.\<close>
 
 theorem sums_ordering_at_interior_max:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -4876,10 +4809,10 @@ proof -
     by (rule sums_gives_ordering[OF expPsi scW neg])
 qed
 
-text \<open>The same conclusion in \<open>psd\<close> form, the hypothesis \<open>comparison_env_from_jets\<close>
-  consumes, depending only on the maximum property of the doubled functional,
-  its Alexandrov jet, and the linearity and symmetry of the two diagonal
-  blocks.\<close>
+text \<open>The same conclusion in \<open>psd\<close> form, consumed by
+  \<open>comparison_env_from_jets\<close>, depending only on the maximum property of
+  the doubled functional, its Alexandrov jet, and the linearity and
+  symmetry of the two diagonal blocks.\<close>
 
 corollary sums_psd_at_interior_max:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -4909,11 +4842,11 @@ corollary sums_psd_at_interior_max:
 
 subsection \<open>Instantiating at the doubled sup-convolutions\<close>
 
-text \<open>The doubled functional built from the sup-convolutions of \<open>u\<close> and \<open>w\<close> is
-  semiconvex (\<open>doubled_functional_semiconvex\<close>) with constant \<open>1/\<epsilon> + 1/\<epsilon> + 2\<alpha>\<close>,
-  one \<open>1/\<epsilon>\<close> from each sup-convolution and \<open>2\<alpha>\<close> from the penalty; this constant
-  is strictly positive as soon as \<open>\<epsilon> > 0\<close>, so Jensen's lemma applies and
-  produces a point carrying a genuine Alexandrov jet.\<close>
+text \<open>The doubled functional built from the sup-convolutions of \<open>u\<close> and
+  \<open>w\<close> is semiconvex (\<open>doubled_functional_semiconvex\<close>) with constant
+  \<open>1/\<epsilon> + 1/\<epsilon> + 2\<alpha>\<close>, one \<open>1/\<epsilon>\<close> from each sup-convolution and \<open>2\<alpha>\<close>
+  from the penalty; positive as soon as \<open>\<epsilon> > 0\<close>, so Jensen's lemma
+  applies and produces a point carrying a genuine Alexandrov jet.\<close>
 
 lemma doubled_semiconvexity_constant_pos:
   fixes \<epsilon> \<alpha> :: real
@@ -4966,11 +4899,11 @@ proof -
 qed
 
 text \<open>The shifted version of Jensen's lemma for the doubled sup-convolution
-  functional, which gives the strict inequality Jensen needs: subtracting
-  \<open>\<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> turns a plain maximiser \<open>\<xi>\<^sub>0\<close> into a strict one, with an explicit
-  gap \<open>\<delta>\<rho>\<^sup>2\<close> on the annulus. By \<open>norm_sq_prod_split\<close> the perturbation splits
-  across the two blocks, so the perturbed functional keeps the doubled form
-  \<open>a (fst z) + b (snd z) - penalty\<close>.\<close>
+  functional, giving the strict inequality Jensen needs: subtracting
+  \<open>\<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> turns a plain maximiser \<open>\<xi>\<^sub>0\<close> into a strict one, with
+  gap \<open>\<delta>\<rho>\<^sup>2\<close> on the annulus. By \<open>norm_sq_prod_split\<close> the perturbation
+  splits across the two blocks, so the perturbed functional keeps the
+  doubled form \<open>a (fst z) + b (snd z) - penalty\<close>.\<close>
 
 lemma norm_sq_prod_split:
   fixes z c :: "('a::euclidean_space) \<times> 'a"
@@ -5032,9 +4965,10 @@ proof -
           bnd d small])
 qed
 
-text \<open>Subtracting \<open>\<delta>\<parallel>y - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> costs at least \<open>\<delta>\<rho>\<^sup>2\<close> outside the \<open>\<rho>\<close>-ball and
-  nothing at the centre, turning a plain maximiser of \<open>\<Phi>\<close> into a strict one;
-  stated abstractly in \<open>\<Phi>\<close> since nothing about the doubling is used.\<close>
+text \<open>Subtracting \<open>\<delta>\<parallel>y - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> costs at least \<open>\<delta>\<rho>\<^sup>2\<close> outside the
+  \<open>\<rho>\<close>-ball and nothing at the centre, turning a plain maximiser of
+  \<open>\<Phi>\<close> into a strict one; stated abstractly in \<open>\<Phi>\<close> since nothing about
+  the doubling is used.\<close>
 
 lemma shifted_annulus_bound:
   fixes \<Phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5064,9 +4998,9 @@ proof -
 qed
 
 text \<open>With \<open>m = \<Phi> \<xi>\<^sub>0 - \<delta>\<rho>\<^sup>2\<close>, the smallness condition
-  \<open>doubled_supconv_jet_exists_shifted\<close> needs reduces to \<open>2 dd r < \<delta>\<rho>\<^sup>2\<close>, a
-  condition on \<open>dd\<close>, \<open>r\<close>, \<open>\<delta>\<close>, \<open>\<rho>\<close> alone, so \<open>dd\<close> can always be chosen after
-  \<open>\<delta>\<close> and \<open>\<rho>\<close>.\<close>
+  \<open>doubled_supconv_jet_exists_shifted\<close> needs reduces to
+  \<open>2 dd r < \<delta>\<rho>\<^sup>2\<close>, a condition on \<open>dd, r, \<delta>, \<rho>\<close> alone, so \<open>dd\<close> can
+  always be chosen after \<open>\<delta>\<close> and \<open>\<rho>\<close>.\<close>
 
 lemma shifted_jensen_smallness:
   fixes \<Phi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5087,10 +5021,11 @@ proof -
 qed
 
 text \<open>A doubling maximiser is naturally stated for the unsplit functional
-  \<open>A (fst y) + B (snd y) - penalty\<close>, whereas \<open>doubled_supconv_jet_exists_shifted\<close>
-  wants its annulus bound with the two per-block quadratics written out;
-  \<open>norm_sq_prod_split\<close> reconciles the two forms, and the centre value is
-  unchanged since both quadratics vanish at \<open>\<xi>\<^sub>0\<close>.\<close>
+  \<open>A (fst y) + B (snd y) - penalty\<close>, whereas
+  \<open>doubled_supconv_jet_exists_shifted\<close> wants its annulus bound with the
+  two per-block quadratics written out; \<open>norm_sq_prod_split\<close> reconciles
+  the two forms, and the centre value is unchanged since both quadratics
+  vanish at \<open>\<xi>\<^sub>0\<close>.\<close>
 
 lemma shifted_annulus_bound_split:
   fixes A B :: "real^'n::finite \<Rightarrow> real"
@@ -5129,18 +5064,18 @@ lemma shifted_centre_value:
   by simp
 
 text \<open>The slice lemmas applied to the perturbed functional give jets of
-  \<open>f - \<delta>\<parallel>\<cdot> - c\<parallel>\<^sup>2\<close>; this transfers a jet of \<open>f\<close> exactly, since a quadratic has an
-  exact second-order expansion, leaving the remainder unchanged and moving the
-  gradient and Hessian by \<open>2\<delta>(x\<hat> - c)\<close> and \<open>2\<delta> I\<close> respectively. The gradient
-  shift, bounded by \<open>2\<delta>\<rho>\<close>, does not vanish for fixed \<open>\<delta>\<close>.\<close>
+  \<open>f - \<delta>\<parallel>\<cdot> - c\<parallel>\<^sup>2\<close>; since a quadratic has an exact expansion, this
+  transfers a jet of \<open>f\<close> exactly, leaving the remainder unchanged and
+  shifting the gradient and Hessian by \<open>2\<delta>(x\<hat> - c)\<close> and \<open>2\<delta> I\<close>. The
+  gradient shift, bounded by \<open>2\<delta>\<rho>\<close>, does not vanish for fixed \<open>\<delta>\<close>.\<close>
 
 subsection \<open>The antisymmetric linear tilt of the doubling\<close>
 
 text \<open>An antisymmetric linear tilt of the doubling does not bound the
-  common gradient \<open>q = \<alpha>(x\<hat>-y\<hat>) + \<eta> e\<close> away from zero: comparing the tilted
-  functional at the maximiser against the diagonal shows the penalty bound
-  acquires an \<open>\<eta>\<parallel>x\<hat>-y\<hat>\<parallel>\<close> term, degrading by exactly what the tilt gains. The
-  two lemmas below are kept because they are reusable elsewhere.\<close>
+  common gradient \<open>q = \<alpha>(x\<hat>-y\<hat>) + \<eta> e\<close> away from zero: comparing the
+  tilted functional at the maximiser against the diagonal shows the
+  penalty bound acquires an \<open>\<eta>\<parallel>x\<hat>-y\<hat>\<parallel>\<close> term, degrading by exactly what
+  the tilt gains.\<close>
 
 lemma antisym_tilt_grad_lower_bound:
   fixes d e :: "real^'n::finite"
@@ -5191,9 +5126,9 @@ proof -
     using tri ad unfolding ee dd comm by linarith
 qed
 
-text \<open>The jet transfer for a linear shift: a jet of \<open>f - c \<bullet> \<cdot>\<close> is a jet of \<open>f\<close>
-  with the gradient moved by \<open>c\<close> and the Hessian untouched, by a direct
-  rewrite since the shift is already affine.\<close>
+text \<open>The jet transfer for a linear shift: a jet of \<open>f - c \<bullet> \<cdot>\<close> is a jet
+  of \<open>f\<close> with the gradient moved by \<open>c\<close> and the Hessian untouched, by
+  direct rewriting since the shift is affine.\<close>
 
 lemma jet_transfer_linear:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -5242,30 +5177,27 @@ proof -
     unfolding eq by (rule lim)
 qed
 
-text \<open>This delivers precisely the input of \<open>sums_psd_at_interior_max\<close>: a point
-  \<open>z\<hat>\<close>, a symmetric bounded-linear \<open>W\<close>, and the second-order expansion of the
-  doubled functional at \<open>z\<hat>\<close>. Together with \<open>supconv_dominates_shift\<close>, which
-  transfers the jet back from the sup-convolutions to \<open>u\<close> and \<open>w\<close> themselves,
-  and \<open>comparison_env_from_jets\<close>, this completes the closing chain of
-  Theorem 4.2(a).
-
-  The maximum property Jensen's lemma returns is a global maximum of the
-  tilted functional \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, with \<open>norm p \<le> dd\<close>; converting
-  it to the interior-max form \<open>sums_ordering_at_interior_max\<close> consumes only
-  needs restricting to a ball inside \<open>cball \<xi> r\<close> around \<open>z\<hat>\<close>, permitted by
+text \<open>This delivers precisely the input of \<open>sums_psd_at_interior_max\<close>: a
+  point \<open>z\<hat>\<close>, a symmetric bounded-linear \<open>W\<close>, and the second-order
+  expansion of the doubled functional at \<open>z\<hat>\<close>. With
+  \<open>supconv_dominates_shift\<close>, transferring the jet back to \<open>u\<close> and
+  \<open>w\<close>, and \<open>comparison_env_from_jets\<close>, this completes the chain of
+  Theorem 4.2(a). Jensen's lemma returns a global maximum of the tilted
+  functional \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, with \<open>norm p \<le> dd\<close>;
+  converting it to the interior-max form needed only requires restricting
+  to a ball inside \<open>cball \<xi> r\<close> around \<open>z\<hat>\<close>, permitted since
   \<open>dist z\<hat> \<xi> < \<rho> < r\<close>.\<close>
 
 
 subsection \<open>From Jensen's tilted global maximum to an interior maximum\<close>
 
 text \<open>Jensen's lemma returns a global maximum of the tilted functional
-  \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, whereas \<open>sums_ordering_at_interior_max\<close> wants a
-  plain interior maximum on a ball around the point. The tilt is harmless: it
-  splits as \<open>fst p \<cdot> fst z + snd p \<cdot> snd z\<close> and absorbs into the two summands
-  \<open>a\<close> and \<open>b\<close>, leaving the doubled block structure intact. A global maximum
-  over \<open>cball \<xi> r\<close> then restricts to an interior maximum on any contained ball
-  around \<open>z\<hat>\<close>, with positive radius \<open>r - dist z\<hat> \<xi>\<close> guaranteed by
-  \<open>dist z\<hat> \<xi> < r\<close>.\<close>
+  \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, whereas \<open>sums_ordering_at_interior_max\<close>
+  wants a plain interior maximum on a ball. The tilt is harmless: it
+  splits as \<open>fst p \<cdot> fst z + snd p \<cdot> snd z\<close> and absorbs into the two
+  summands \<open>a\<close> and \<open>b\<close>, leaving the doubled block structure intact, so
+  the global maximum restricts to an interior maximum on a ball of radius
+  \<open>r - dist z\<hat> \<xi> > 0\<close> around \<open>z\<hat>\<close>.\<close>
 
 lemma tilt_absorb:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -5334,8 +5266,9 @@ subsection \<open>The block hypotheses come from the jet itself\<close>
 
 text \<open>The linearity and symmetry of the two diagonal blocks that
   \<open>sums_psd_at_interior_max\<close> needs follow from the Alexandrov jet's
-  \<open>bounded_linear W\<close> and \<open>u \<cdot> W u' = u' \<cdot> W u\<close>, via \<open>linear_slice_fst\<close> /
-  \<open>linear_slice_snd\<close> / \<open>sym_slice_fst\<close> / \<open>sym_slice_snd\<close> (Sup_Convolution.thy).\<close>
+  \<open>bounded_linear W\<close> and \<open>u \<cdot> W u' = u' \<cdot> W u\<close>, via
+  \<open>linear_slice_fst\<close> / \<open>linear_slice_snd\<close> / \<open>sym_slice_fst\<close> /
+  \<open>sym_slice_snd\<close> (Sup_Convolution.thy).\<close>
 
 lemma linear_of_bounded_linear_prod:
   fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
@@ -5397,8 +5330,8 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>With those block properties, the \<open>psd\<close> ordering needs nothing beyond the
-  jet and the maximum property.\<close>
+text \<open>With those block properties, the \<open>psd\<close> ordering needs nothing beyond
+  the jet and the maximum property.\<close>
 
 theorem sums_psd_from_jet:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -5430,13 +5363,13 @@ qed
 
 subsection \<open>Transferring the jet back from the sup-convolution to \<open>u\<close>\<close>
 
-text \<open>The viscosity hypotheses are about \<open>u\<close> and \<open>w\<close>, not the sup-convolutions.
-  \<open>supconv_dominates_shift\<close> (Sup_Convolution.thy) bridges the two: if the
-  sup-convolution at \<open>x\<close> is attained at \<open>y\<^sub>s\<close>, increments of \<open>u\<close> at \<open>y\<^sub>s\<close> are
-  dominated by increments of \<open>supconv u \<epsilon>\<close> at \<open>x\<close>, with the same increment
-  vector \<open>k\<close>. Consequently a local quadratic upper bound for the
-  sup-convolution transfers verbatim to \<open>u\<close> at the attaining point, with the
-  same jet data \<open>(p, A)\<close>.\<close>
+text \<open>The viscosity hypotheses concern \<open>u\<close> and \<open>w\<close>, not the
+  sup-convolutions. \<open>supconv_dominates_shift\<close> (Sup_Convolution.thy)
+  bridges them: if the sup-convolution at \<open>x\<close> is attained at \<open>y\<^sub>s\<close>,
+  increments of \<open>u\<close> at \<open>y\<^sub>s\<close> are dominated by increments of
+  \<open>supconv u \<epsilon>\<close> at \<open>x\<close> with the same increment vector \<open>k\<close>. A local
+  quadratic upper bound for the sup-convolution thus transfers verbatim
+  to \<open>u\<close> at the attaining point, with the same jet data \<open>(p, A)\<close>.\<close>
 
 theorem supconv_bound_transfer:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -5450,10 +5383,10 @@ proof -
   with loc show ?thesis by linarith
 qed
 
-text \<open>A quadratic local upper bound for \<open>supconv u \<epsilon>\<close> at \<open>x\<close> becomes the same
-  quadratic local upper bound for \<open>u\<close> at \<open>y\<^sub>s\<close>, the hypothesis
-  \<open>jet_imp_local_max_test\<close> produces and \<open>subsol_shifted_bound\<close> consumes,
-  now stated for \<open>u\<close> itself.\<close>
+text \<open>A quadratic local upper bound for \<open>supconv u \<epsilon>\<close> at \<open>x\<close> becomes the
+  same bound for \<open>u\<close> at \<open>y\<^sub>s\<close>, the hypothesis \<open>jet_imp_local_max_test\<close>
+  produces and \<open>subsol_shifted_bound\<close> consumes, now stated for \<open>u\<close>
+  itself.\<close>
 
 theorem supconv_local_max_transfer:
   fixes u :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n^'n"
@@ -5471,8 +5404,8 @@ proof -
   then show ?thesis by linarith
 qed
 
-text \<open>The ball form, which \<open>visc_subsol\<close> and \<open>supersol_jet\<close> are stated with: the
-  local statement about \<open>supconv u \<epsilon>\<close> near \<open>x\<close> becomes a local statement about
+text \<open>The ball form used by \<open>visc_subsol\<close> and \<open>supersol_jet\<close>: the local
+  statement about \<open>supconv u \<epsilon>\<close> near \<open>x\<close> becomes a local statement about
   \<open>u\<close> near \<open>y\<^sub>s\<close>, on a ball of the same radius.\<close>
 
 corollary supconv_local_max_transfer_ball:
@@ -5505,14 +5438,14 @@ proof -
 qed
 
 
-subsection \<open>Step 3: descending the one-sided bound to the attainment point\<close>
+subsection \<open>Descending the one-sided bound to the attainment point\<close>
 
 text \<open>\<open>supconv_local_max_transfer_ball\<close> descends a local max for a fixed
-  quadratic; the \<open>o(|h|^2)\<close> version needed here applies it once per threshold
-  \<open>c\<close>: the one-sided bound at threshold \<open>c/2\<close> is a local max for the quadratic
-  \<open>c *\<^sub>R mat 1\<close> with zero gradient, and descent yields the one-sided bound at
-  threshold \<open>c\<close> for \<open>u\<close> at \<open>ys\<close>. Quantifying over \<open>c\<close> makes the Hessian
-  effectively zero without producing a vanishing second-order jet directly.\<close>
+  quadratic; the \<open>o(|h|^2)\<close> version needed here applies it once per
+  threshold \<open>c\<close>: the one-sided bound at threshold \<open>c/2\<close> is a local max
+  for \<open>c *\<^sub>R mat 1\<close> with zero gradient, and descent yields the one-sided
+  bound at threshold \<open>c\<close> for \<open>u\<close> at \<open>ys\<close>. Quantifying over \<open>c\<close> makes the
+  Hessian effectively zero without a vanishing second-order jet directly.\<close>
 
 lemma supconv_onesided_descent:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -5578,8 +5511,8 @@ qed
 
 subsection \<open>Symmetry of the two block matrices\<close>
 
-text \<open>The symmetry \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close> that
-  \<open>comparison_env_from_jets\<close> needs follows from the jet: \<open>matrix_of_symmetric\<close>
+text \<open>The symmetry \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close> needed by
+  \<open>comparison_env_from_jets\<close> follows from the jet: \<open>matrix_of_symmetric\<close>
   (Sup_Convolution.thy) converts an abstract symmetric linear map into a
   symmetric matrix, fed by the block lemmas above.\<close>
 
@@ -5602,8 +5535,8 @@ lemma transpose_matrix_block_snd:
         sym_block_snd[OF symW]])
 
 text \<open>The jet alone yields all three matrix hypotheses of
-  \<open>comparison_env_from_jets\<close>: both block matrices are symmetric, and they are
-  ordered.\<close>
+  \<open>comparison_env_from_jets\<close>: both block matrices are symmetric, and
+  they are ordered.\<close>
 
 theorem block_matrices_from_jet:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -5641,15 +5574,14 @@ qed
 
 subsection \<open>The gradient alignment\<close>
 
-text \<open>\<open>comparison_env_from_jets\<close> needs the jets of \<open>\<theta> u\<close> at \<open>x\<hat>\<close> and of \<open>-w\<close> at
-  \<open>y\<hat>\<close> to share a common gradient \<open>p\<close> (with sign \<open>p\<close>, \<open>-p\<close>). Writing
-  \<open>q = (q\<^sub>1, q\<^sub>2)\<close> for the gradient of the doubled functional at \<open>z\<hat>\<close>, and using
-  that the penalty \<open>-(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> contributes \<open>\<mp>\<alpha>(x - y)\<close> to the two blocks,
-  the gradients of \<open>a\<close> at \<open>x\<hat>\<close> and \<open>b\<close> at \<open>y\<hat>\<close> are \<open>p\<close> and \<open>-p\<close> exactly when
-  \<open>q\<^sub>1 + q\<^sub>2 = 0\<close>. This holds because the gradient vanishes outright at an
-  interior maximum (\<open>second_order_interior_max\<close> gives \<open>q \<cdot> v = 0\<close> for every
-  \<open>v\<close>, so \<open>q = 0\<close>), giving the common gradient \<open>p = \<alpha>(x\<hat> - y\<hat>)\<close>, the same
-  vector whose nonvanishing \<open>doubling_grad_nonzero\<close> establishes.\<close>
+text \<open>\<open>comparison_env_from_jets\<close> needs the jets of \<open>\<theta> u\<close> at \<open>x\<hat>\<close> and of
+  \<open>-w\<close> at \<open>y\<hat>\<close> to share a common gradient \<open>p\<close> (with sign \<open>p\<close>, \<open>-p\<close>).
+  Since the penalty \<open>-(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> contributes \<open>\<mp>\<alpha>(x - y)\<close> to the
+  two blocks, this holds exactly when the doubled gradient
+  \<open>q\<^sub>1 + q\<^sub>2 = 0\<close>, which is automatic since \<open>q = 0\<close> at an interior
+  maximum (\<open>second_order_interior_max\<close>). This gives the common gradient
+  \<open>p = \<alpha>(x\<hat> - y\<hat>)\<close>, whose nonvanishing \<open>doubling_grad_nonzero\<close>
+  establishes.\<close>
 
 theorem gradient_vanishes_at_interior_max:
   fixes \<Psi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5665,8 +5597,8 @@ proof -
     by simp
 qed
 
-text \<open>Consequently the jet at the doubled maximum has no first-order term at
-  all.\<close>
+text \<open>Consequently the jet at the doubled maximum has no first-order term
+  at all.\<close>
 
 corollary doubled_jet_no_gradient:
   fixes \<Psi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -5683,8 +5615,8 @@ proof -
     using expPsi unfolding q0 by simp
 qed
 
-text \<open>With \<open>q = 0\<close>, the first block's gradient is \<open>\<alpha>(x\<hat> - y\<hat>)\<close> and the second
-  block's is its negative, so a single \<open>p\<close> serves both jets, as
+text \<open>With \<open>q = 0\<close>, the first block's gradient is \<open>\<alpha>(x\<hat> - y\<hat>)\<close> and the
+  second block's is its negative, so a single \<open>p\<close> serves both jets, as
   \<open>comparison_env_from_jets\<close> requires.\<close>
 
 lemma common_gradient_split:
@@ -5697,11 +5629,11 @@ lemma common_gradient_split:
 subsection \<open>Theorem 4.2(a), end to end\<close>
 
 text \<open>Every matrix hypothesis is derived from the Alexandrov data of the
-  doubled functional, with shared gradient \<open>\<alpha>(x\<hat> - y\<hat>)\<close> on both sides. What
-  remains as hypotheses are the two viscosity properties, the scaling
-  parameter, the interior maximum of the doubled functional with its jet, the
-  off-diagonal condition, and the two jets of \<open>\<theta> u\<close> and \<open>-w\<close> at the two
-  component points.\<close>
+  doubled functional, with shared gradient \<open>\<alpha>(x\<hat> - y\<hat>)\<close> on both sides.
+  What remains as hypotheses: the two viscosity properties, the scaling
+  parameter, the interior maximum of the doubled functional with its
+  jet, the off-diagonal condition, and the two jets of \<open>\<theta> u\<close> and
+  \<open>-w\<close> at the two component points.\<close>
 
 theorem comparison_env_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -5748,10 +5680,9 @@ proof -
           psdXY nz kk(1) kk(2) LL jetu jetw])
 qed
 
-text \<open>And with the off-diagonal condition traded for the statement the
-  comparison argument actually produces, namely that \<open>x\<hat>\<close> fails to maximise
-  \<open>u - w\<close> over \<open>K\<close>.  By the gradient alignment this is the same condition as
-  \<open>p \<noteq> 0\<close>, so no separate hypothesis is being smuggled in.\<close>
+text \<open>The same, with the off-diagonal condition traded for the statement
+  that \<open>x\<hat>\<close> fails to maximise \<open>u - w\<close> over \<open>K\<close>; by the gradient
+  alignment this is the same condition as \<open>p \<noteq> 0\<close>.\<close>
 
 corollary comparison_env_complete_offdiag:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -5799,13 +5730,13 @@ qed
 
 subsection \<open>Deriving the component jets from the doubled jet\<close>
 
-text \<open>The two component jets \<open>comparison_env_complete\<close> takes as hypotheses
-  come from the doubled jet by restricting it to the two coordinate slices.
-  Moving the first argument by \<open>h\<close> and holding the second fixed changes
-  \<open>(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> by a linear term \<open>\<alpha> (x - y) \<cdot> h\<close> plus a quadratic term
-  \<open>(\<alpha>/2)\<bar>h\<bar>\<^sup>2\<close>, with no remainder, since the penalty's Taylor expansion is
-  exact. This is the source of both the \<open>\<alpha>(x\<hat> - y\<hat>)\<close> in the gradient and the
-  \<open>+ \<alpha> v\<close> in the Hessian block.\<close>
+text \<open>The two component jets \<open>comparison_env_complete\<close> takes as
+  hypotheses come from the doubled jet by restricting to the two
+  coordinate slices. Moving the first argument by \<open>h\<close> and holding the
+  second fixed changes \<open>(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> by a linear term
+  \<open>\<alpha>(x - y) \<cdot> h\<close> plus a quadratic term \<open>(\<alpha>/2)\<bar>h\<bar>\<^sup>2\<close>, exactly, since
+  the penalty's Taylor expansion is exact -- the source of both the
+  \<open>\<alpha>(x\<hat> - y\<hat>)\<close> in the gradient and the \<open>+ \<alpha> v\<close> in the Hessian block.\<close>
 
 lemma penalty_difference_identity:
   fixes x y h :: "real^'n::finite"
@@ -5821,10 +5752,10 @@ proof -
     by (simp add: field_simps)
 qed
 
-text \<open>The slice embedding is a legitimate change of filter: as \<open>h\<close> tends to
-  \<open>0\<close> in \<open>real^'n\<close> avoiding \<open>0\<close>, the pair \<open>(h, 0)\<close> tends to \<open>0\<close> in the product
-  avoiding \<open>0\<close>, letting a limit statement about the doubled functional be
-  evaluated along the slice.\<close>
+text \<open>The slice embedding is a legitimate change of filter: as \<open>h\<close> tends
+  to \<open>0\<close> in \<open>real^'n\<close> avoiding \<open>0\<close>, the pair \<open>(h, 0)\<close> tends to \<open>0\<close> in
+  the product avoiding \<open>0\<close>, letting a limit statement about the doubled
+  functional be evaluated along the slice.\<close>
 
 lemma filterlim_slice_fst:
   "filterlim (\<lambda>h::real^'n::finite. (h, 0::real^'n)) (at 0) (at 0)"
@@ -5846,8 +5777,8 @@ next
     by (simp add: eventually_at_filter zero_prod_def)
 qed
 
-text \<open>The norm of a slice vector is the norm of its nonzero component, which is
-  what makes the quotient in the jet transfer unchanged.\<close>
+text \<open>The norm of a slice vector is the norm of its nonzero component,
+  which keeps the quotient in the jet transfer unchanged.\<close>
 
 lemma norm_slice_fst:
   fixes h :: "real^'n::finite"
@@ -5860,10 +5791,11 @@ lemma norm_slice_snd:
   by (simp add: norm_Pair)
 
 
-text \<open>The doubled jet restricts to the first slice: the \<open>b\<close> terms cancel since
-  the second argument does not move, the penalty contributes \<open>\<alpha>(x\<hat> - y\<hat>) \<cdot> h\<close>
-  to the gradient and \<open>\<alpha> h\<close> to the Hessian, and \<open>W\<close> contributes its first
-  diagonal block, exactly the block \<open>X\<close> of the theorem on sums.\<close>
+text \<open>The doubled jet restricts to the first slice: the \<open>b\<close> terms cancel
+  since the second argument does not move, the penalty contributes
+  \<open>\<alpha>(x\<hat> - y\<hat>) \<cdot> h\<close> to the gradient and \<open>\<alpha> h\<close> to the Hessian, and
+  \<open>W\<close> contributes its first diagonal block, exactly the block \<open>X\<close> of
+  the theorem on sums.\<close>
 
 lemma doubled_slice_numerator_fst:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -5916,13 +5848,12 @@ proof -
   from comp[unfolded eq] show ?thesis .
 qed
 
-text \<open>The same restriction for an arbitrary penalty \<open>P\<close>, given by its jet:
-  where the quadratic penalty lets the numerator be rewritten by an exact
-  identity, a general \<open>P\<close> has a remainder, so the two limits are added instead
-  via \<open>tendsto_add\<close>, since \<open>P(d+h) - P(d)\<close> cancels between them (writing
-  \<open>d = x\<hat> - y\<hat>\<close>). The resulting jet has gradient \<open>fst q + G\<close> and Hessian
-  \<open>fst (W (h,0)) + Z h\<close>, the quadratic statement with \<open>\<alpha>(x\<hat> - y\<hat>)\<close> replaced by
-  \<open>G\<close> and \<open>\<alpha> h\<close> by \<open>Z h\<close>.\<close>
+text \<open>The same restriction for an arbitrary penalty \<open>P\<close> given by its jet: a
+  general \<open>P\<close> has a remainder rather than an exact identity, so the two
+  limits are added via \<open>tendsto_add\<close>, since \<open>P(d+h) - P(d)\<close> cancels
+  between them (\<open>d = x\<hat> - y\<hat>\<close>). The resulting jet has gradient
+  \<open>fst q + G\<close> and Hessian \<open>fst (W (h,0)) + Z h\<close>, the quadratic
+  statement with \<open>\<alpha>(x\<hat> - y\<hat>)\<close> replaced by \<open>G\<close> and \<open>\<alpha> h\<close> by \<open>Z h\<close>.\<close>
 
 theorem doubled_jet_slice_fst_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
@@ -5985,12 +5916,12 @@ qed
 
 
 
-text \<open>The mirror image on the second slice: the penalty now moves the second
-  argument, so its linear contribution changes sign, giving the gradient of
-  \<open>b\<close> at \<open>y\<hat>\<close> as \<open>q\<^sub>2 - \<alpha>(x\<hat> - y\<hat>)\<close>, while the quadratic contribution \<open>\<alpha> h\<close> to
-  the Hessian keeps the same sign in both slices. This asymmetry in the
-  gradient and symmetry in the Hessian is what makes the two jets share a
-  common \<open>p\<close> and \<open>-p\<close> while both blocks carry \<open>+ \<alpha> v\<close>.\<close>
+text \<open>The mirror image on the second slice: the penalty now moves the
+  second argument, so its linear contribution changes sign, giving the
+  gradient of \<open>b\<close> at \<open>y\<hat>\<close> as \<open>q\<^sub>2 - \<alpha>(x\<hat> - y\<hat>)\<close>, while the quadratic
+  contribution \<open>\<alpha> h\<close> to the Hessian keeps the same sign in both slices
+  -- this asymmetry is what makes the two jets share \<open>p\<close> and \<open>-p\<close> while
+  both blocks carry \<open>+ \<alpha> v\<close>.\<close>
 
 lemma penalty_difference_identity_snd:
   fixes x y h :: "real^'n::finite"
@@ -6065,13 +5996,12 @@ proof -
   from comp[unfolded eq] show ?thesis .
 qed
 
-text \<open>The mirror slice for a general penalty.  One extra step compared with the
-  first: the second slice moves \<open>y\<close>, so the penalty is evaluated at \<open>d - h\<close>, and
-  the jet hypothesis has to be transported along \<open>h \<mapsto> -h\<close>.  That map is a
-  filter isomorphism of \<open>at 0\<close> (\<open>negfilt\<close>), and both sign flips in
-  \<open>(-h) \<bullet> (Z (-h))\<close> cancel, so the transported remainder is the same \<open>o(\<parallel>h\<parallel>\<^sup>2)\<close>
-  with \<open>G \<bullet> h\<close> flipped --- which is exactly why the two slice gradients come out
-  as exact negatives.\<close>
+text \<open>The mirror slice for a general penalty: the second slice moves \<open>y\<close>,
+  so the penalty is evaluated at \<open>d - h\<close>, and the jet hypothesis is
+  transported along \<open>h \<mapsto> -h\<close>, a filter isomorphism of \<open>at 0\<close>
+  (\<open>negfilt\<close>); the sign flips in \<open>(-h) \<bullet> (Z (-h))\<close> cancel, so the
+  transported remainder is the same \<open>o(\<parallel>h\<parallel>\<^sup>2)\<close> with \<open>G \<bullet> h\<close> flipped,
+  exactly why the two slice gradients come out as negatives.\<close>
 
 theorem doubled_jet_slice_snd_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
@@ -6155,9 +6085,10 @@ proof -
   from sum0[unfolded eq] show ?thesis .
 qed
 
-text \<open>With \<open>q = 0\<close> at the doubled maximum (\<open>gradient_vanishes_at_interior_max\<close>)
-  the two gradients become \<open>\<alpha>(x\<hat> - y\<hat>)\<close> and \<open>-\<alpha>(x\<hat> - y\<hat>)\<close>, which is the shared
-  \<open>p\<close> and \<open>-p\<close> that \<open>comparison_env_complete\<close> requires.\<close>
+text \<open>With \<open>q = 0\<close> at the doubled maximum
+  (\<open>gradient_vanishes_at_interior_max\<close>) the two gradients become
+  \<open>\<alpha>(x\<hat> - y\<hat>)\<close> and \<open>-\<alpha>(x\<hat> - y\<hat>)\<close>, the shared \<open>p\<close> and \<open>-p\<close> that
+  \<open>comparison_env_complete\<close> requires.\<close>
 
 corollary doubled_jet_slices_at_max:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -6201,11 +6132,11 @@ qed
 
 subsection \<open>Matching the block Hessians against their matrices\<close>
 
-text \<open>The slice jets carry their Hessians as the FUNCTIONS
-  \<open>h \<mapsto> fst (W (h,0)) + \<alpha> h\<close> and \<open>h \<mapsto> snd (W (0,h)) + \<alpha> h\<close>, while the viscosity
-  machinery wants MATRICES.  \<open>matrix_works\<close> bridges them, but in this
-  HOL-Analysis it is stated for \<open>Vector_Spaces.linear\<close>, so the real-vector-space
-  \<open>linear\<close> has to be routed through \<open>linear_matrix_vector_mul_eq\<close> first.\<close>
+text \<open>The slice jets carry their Hessians as functions
+  \<open>h \<mapsto> fst (W (h,0)) + \<alpha> h\<close> and \<open>h \<mapsto> snd (W (0,h)) + \<alpha> h\<close>, while the
+  viscosity machinery wants matrices. \<open>matrix_works\<close> bridges them, but
+  is stated for \<open>Vector_Spaces.linear\<close>, so real-vector-space \<open>linear\<close>
+  must be routed through \<open>linear_matrix_vector_mul_eq\<close> first.\<close>
 
 lemma matrix_apply_eq:
   fixes X :: "real^'n::finite \<Rightarrow> real^'n"
@@ -6238,13 +6169,13 @@ qed
 
 subsection \<open>Theorem 4.2(a) from the doubled jet alone\<close>
 
-text \<open>The composition.  The component jets are no longer hypotheses: they are
-  produced from the doubled jet by \<open>doubled_jet_slices_at_max\<close> and matched to
-  their matrices by the two lemmas above.  What is assumed is only the doubled
-  data itself - an interior maximum of
-  \<open>\<theta> u(x) - w(y) - (\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> at \<open>z\<hat> = (x\<hat>, y\<hat>)\<close> together with its
-  Alexandrov jet - plus the two viscosity properties and the off-diagonal
-  condition.\<close>
+text \<open>The component jets are no longer hypotheses: they are produced from
+  the doubled jet by \<open>doubled_jet_slices_at_max\<close> and matched to their
+  matrices by the lemmas above. What remains assumed is the doubled data
+  itself -- an interior maximum of
+  \<open>\<theta> u(x) - w(y) - (\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> at \<open>z\<hat> = (x\<hat>, y\<hat>)\<close> with its
+  Alexandrov jet -- plus the two viscosity properties and the
+  off-diagonal condition.\<close>
 
 theorem comparison_from_doubled_jet:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -6298,17 +6229,15 @@ qed
 
 subsection \<open>The subsolution bound straight from a sup-convolution jet\<close>
 
-text \<open>The route actually taken by the comparison argument does not have jets of
-  \<open>\<theta> u\<close> to hand: the doubled functional is built from the SUP-CONVOLUTIONS,
-  because those are what is semiconvex and hence what Jensen's lemma applies
-  to.  So the jet produced at the doubled maximum is a jet of
-  \<open>supconv (\<theta> u) \<epsilon>\<close>, not of \<open>\<theta> u\<close>.
-
-  This theorem closes that last gap.  The \<open>\<delta>\<close>-corrected quadratic bound for the
-  sup-convolution at \<open>x\<close> transfers, by \<open>supconv_local_max_transfer_ball\<close>, to the
-  same bound for \<open>\<theta> u\<close> at the ATTAINING point \<open>y\<^sub>s\<close> - same \<open>p\<close>, same matrix -
-  and there the viscosity property applies.  Note that the base point moves
-  from \<open>x\<close> to \<open>y\<^sub>s\<close>, so it is \<open>y\<^sub>s\<close> that has to lie in \<open>\<Omega>\<close>.\<close>
+text \<open>The comparison argument's doubled functional is built from the
+  sup-convolutions of \<open>u\<close> and \<open>w\<close>, since those are what is semiconvex
+  and what Jensen's lemma applies to; the jet produced at the doubled
+  maximum is thus a jet of \<open>supconv (\<theta> u) \<epsilon>\<close>, not of \<open>\<theta> u\<close>. This
+  theorem closes that gap: the \<open>\<delta>\<close>-corrected quadratic bound for the
+  sup-convolution at \<open>x\<close> transfers, by \<open>supconv_local_max_transfer_ball\<close>,
+  to the same bound for \<open>\<theta> u\<close> at the attaining point \<open>y\<^sub>s\<close> -- same
+  \<open>p\<close>, same matrix -- where the viscosity property applies, with
+  \<open>y\<^sub>s\<close> now the point that must lie in \<open>\<Omega>\<close>.\<close>
 
 theorem subsol_shifted_bound_supconv:
   fixes u :: "real^'n::finite \<Rightarrow> real" and Xm :: "real^'n^'n"
@@ -6366,10 +6295,10 @@ proof -
   thus ?thesis unfolding g .
 qed
 
-text \<open>The supersolution mirror.  Here the sup-convolution is taken of \<open>-w\<close>,
-  which is the summand the doubled functional actually carries, and the
-  transferred bound becomes a local MINIMUM statement for \<open>w\<close> after negation.
-  The correction runs the other way, \<open>Ym - \<delta> I\<close>, for the reason recorded with
+text \<open>The supersolution mirror: the sup-convolution is taken of \<open>-w\<close>, the
+  summand the doubled functional carries, and the transferred bound
+  becomes a local minimum statement for \<open>w\<close> after negation. The
+  correction runs the other way, \<open>Ym - \<delta> I\<close>, as with
   \<open>jet_imp_local_min_test\<close>.\<close>
 
 lemma neg_shift_matrix_apply:
@@ -6476,15 +6405,14 @@ qed
 
 subsection \<open>Theorem 4.2(a) from sup-convolution jets\<close>
 
-text \<open>And the closing chain in the form the comparison argument actually
-  reaches: both bounds now come from jets of the SUP-CONVOLUTIONS, which is
-  what the doubled functional carries, and the two attaining points \<open>y\<^sub>s\<^sup>u\<close> and
-  \<open>y\<^sub>s\<^sup>w\<close> are where the viscosity properties are applied.
-
-  The uniform bound \<open>\<theta> < 1\<close> on the subsolution side is what survives the
-  \<open>\<delta> \<rightarrow> 0\<close> limit and yields the STRICT envelope inequality; the off-diagonal
-  condition \<open>p \<noteq> 0\<close> is what lets the two envelopes be identified with \<open>F\<close>
-  itself.  No \<open>\<delta>\<close> appears in the conclusion.\<close>
+text \<open>The closing chain in the form the comparison argument reaches: both
+  bounds come from jets of the sup-convolutions, which the doubled
+  functional carries, and the two attaining points \<open>y\<^sub>s\<^sup>u\<close> and
+  \<open>y\<^sub>s\<^sup>w\<close> are where the viscosity properties are applied. The uniform
+  bound \<open>\<theta> < 1\<close> on the subsolution side survives the \<open>\<delta> \<rightarrow> 0\<close>
+  limit and yields the strict envelope inequality; the off-diagonal
+  condition \<open>p \<noteq> 0\<close> identifies the two envelopes with \<open>F\<close> itself. No
+  \<open>\<delta>\<close> appears in the conclusion.\<close>
 
 theorem comparison_supconv_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
@@ -6523,17 +6451,16 @@ qed
 
 subsection \<open>Theorem 4.2(a) from the doubled sup-convolution jet alone\<close>
 
-text \<open>The full composition.  The two component jets are no longer hypotheses:
-  they are the two coordinate slices of the doubled jet, produced by
-  \<open>doubled_jet_slices_at_max\<close> with \<open>a\<close> and \<open>b\<close> instantiated at the two
-  sup-convolutions, and matched to their matrices by the block lemmas.  The
-  three matrix hypotheses come from \<open>block_matrices_from_jet\<close>.
-
-  What is assumed is only the genuine data of the argument: the two viscosity
-  properties, the scaling parameter \<open>\<theta>\<close>, an interior maximum of the doubled
-  sup-convolution functional together with its Alexandrov jet, the off-diagonal
-  condition, and the fact that each sup-convolution is ATTAINED at a point of
-  \<open>\<Omega>\<close>.\<close>
+text \<open>The full composition: the two component jets are no longer
+  hypotheses but the two coordinate slices of the doubled jet, produced
+  by \<open>doubled_jet_slices_at_max\<close> with \<open>a\<close> and \<open>b\<close> instantiated at the
+  two sup-convolutions, and matched to their matrices by the block
+  lemmas; the three matrix hypotheses come from
+  \<open>block_matrices_from_jet\<close>. What remains assumed is the two viscosity
+  properties, the scaling parameter \<open>\<theta>\<close>, an interior maximum of the
+  doubled sup-convolution functional with its Alexandrov jet, the
+  off-diagonal condition, and that each sup-convolution is attained at a
+  point of \<open>\<Omega>\<close>.\<close>
 
 theorem comparison_supconv_from_doubled_jet:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -6607,16 +6534,14 @@ qed
 
 subsection \<open>Absorbing Jensen's tilt: the general nearby-point form\<close>
 
-text \<open>The tilt obstacle recorded above needs the envelope bounds in a form
-  that perturbs the GRADIENT as well as the matrix.  The shift theorems proved
-  earlier only move the matrix, by \<open>\<delta> I\<close>; Jensen's tilt moves the gradient too,
-  by an amount \<open>\<le> dd\<close> that is at our disposal but not zero.
-
-  The right statement is not another shift lemma but the general one: a bound
-  holding at points ARBITRARILY CLOSE to \<open>(p, M)\<close> - however they are produced -
-  passes to the lower envelope.  This is exactly what \<open>F\<^sub>*\<close> means, and it
-  subsumes both the \<open>\<delta> I\<close> shifts and the tilt.  Crucially the nearby point may
-  depend on the radius, which is what lets \<open>dd\<close> be chosen AFTER the radius.\<close>
+text \<open>The tilt perturbs the gradient as well as the matrix, unlike the
+  earlier shift theorems, which move only the matrix by \<open>\<delta> I\<close>; Jensen's
+  tilt moves the gradient by an amount \<open>\<le> dd\<close> that is at our disposal
+  but not zero. The right statement is the general one: a bound holding
+  at points arbitrarily close to \<open>(p, M)\<close>, however produced, passes to
+  the lower envelope -- exactly the content of \<open>F\<^sub>*\<close>, subsuming both
+  the \<open>\<delta> I\<close> shifts and the tilt, with the nearby point allowed to
+  depend on the radius so that \<open>dd\<close> can be chosen after it.\<close>
 
 theorem ell_op_lsc_le_of_nearby:
   fixes M :: "real^'n::finite^'n" and p :: "real^'n"
@@ -6667,10 +6592,10 @@ proof (rule INF_greatest)
       \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)" .
 qed
 
-text \<open>And the closing contradiction in that generality.  Compare
-  \<open>env_strict_contradiction_of_shifts\<close>: the hypotheses no longer name the
-  \<open>\<delta> I\<close> shifts at all, only that suitable bounds hold arbitrarily near
-  \<open>(p, X)\<close> and \<open>(p, Y)\<close>.  This is the form the tilt-absorption argument needs,
+text \<open>The closing contradiction in that generality: compare
+  \<open>env_strict_contradiction_of_shifts\<close>, whose hypotheses no longer name
+  the \<open>\<delta> I\<close> shifts, only that suitable bounds hold arbitrarily near
+  \<open>(p, X)\<close> and \<open>(p, Y)\<close> -- the form the tilt-absorption argument needs,
   since there the nearby points are produced by re-running Jensen with a
   smaller \<open>dd\<close> rather than by a fixed algebraic shift.\<close>
 
@@ -6703,14 +6628,12 @@ qed
 
 subsection \<open>The quantitative input the tilt argument needs\<close>
 
-text \<open>The nearby-point hypothesis is discharged as soon as the perturbed data
-  approaches \<open>(p, M)\<close> at a CONTROLLED RATE in the tilt parameter.  This lemma
-  isolates exactly that requirement and discharges everything around it, so
-  the remaining analytic work is reduced to one statement: that the maximiser
-  and its jet move at most linearly in \<open>dd\<close>.
-
-  Note that no convergence of the jets themselves is needed, only the estimate
-  \<open>dist ((P dd, Mf dd)) (p, M) \<le> \<kappa> dd\<close>; and \<open>\<kappa>\<close> may be arbitrary, since the
+text \<open>The nearby-point hypothesis is discharged once the perturbed data
+  approaches \<open>(p, M)\<close> at a controlled rate in the tilt parameter; this
+  lemma isolates and discharges exactly that, reducing the remaining
+  work to one estimate: the maximiser and its jet move at most linearly
+  in \<open>dd\<close>. No convergence of the jets themselves is needed, only
+  \<open>dist ((P dd, Mf dd)) (p, M) \<le> \<kappa> dd\<close> for arbitrary \<open>\<kappa>\<close>, since the
   radius is chosen after it.\<close>
 
 theorem nearby_of_tilt_family:
@@ -6807,11 +6730,10 @@ proof -
   with d show ?thesis by blast
 qed
 
-text \<open>And the contradiction with the tilt families supplied directly.  This is
-  Theorem 4.2(a) reduced to a single quantitative hypothesis on each side: the
-  perturbed gradient/matrix pair produced at tilt \<open>dd\<close> lies within \<open>\<kappa> dd\<close> of
-  the limiting pair.  Everything else - the envelopes, the strictness, the
-  ordering, the off-diagonal condition - is already discharged.\<close>
+text \<open>Theorem 4.2(a) reduces to one quantitative hypothesis per side: the
+  perturbed gradient/matrix pair at tilt \<open>dd\<close> lies within \<open>\<kappa> dd\<close> of the
+  limiting pair; the envelopes, strictness, ordering and off-diagonal
+  condition are already established.\<close>
 
 theorem env_strict_contradiction_of_tilt_families:
   fixes X Y :: "real^'n::finite^'n" and p :: "real^'n"
@@ -6842,15 +6764,10 @@ qed
 
 subsection \<open>A tilt that needs no limit at all\<close>
 
-text \<open>The linear-rate route above is one way to absorb Jensen's tilt.  There is
-  a second, and it is worth recording because it removes the limit entirely
-  rather than controlling it.
-
-  First, what the tilt does to the gradient.  At an interior maximum of the
-  TILTED functional the jet of the UNTILTED one has gradient exactly \<open>-p\<close>: the
-  tilt contributes \<open>p \<bullet> k\<close> to every increment, so the two jets differ by
-  precisely that linear term and the vanishing-gradient argument applies to
-  their sum.\<close>
+text \<open>A second way to absorb Jensen's tilt, which removes the limit rather than
+  controlling it: at an interior maximum of the tilted functional, the
+  untilted jet has gradient exactly \<open>-p\<close>, since the tilt contributes
+  \<open>p \<bullet> k\<close> to every increment.\<close>
 
 theorem gradient_is_minus_tilt:
   fixes \<Psi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -6882,21 +6799,11 @@ proof -
     by (simp add: eq_neg_iff_add_eq_0)
 qed
 
-text \<open>Second, the observation that makes it useful.  If the tilt is
-  ANTISYMMETRIC, \<open>p = (p\<^sub>0, -p\<^sub>0)\<close>, then \<open>q = (-p\<^sub>0, p\<^sub>0)\<close> and the two block
-  gradients
-
-    \<open>fst q + \<alpha>(x̂ - ŷ)\<close>   and   \<open>snd q - \<alpha>(x̂ - ŷ)\<close>
-
-  are exact negatives of one another.  That is the alignment
-  \<open>comparison_supconv_complete\<close> requires, obtained with NO limit in \<open>dd\<close> and no
-  rate estimate: the tilt does not have to be small, only antisymmetric.
-
-  So the remaining question for this route is a different one from the linear
-  rate: not how fast the maximiser moves, but whether Jensen's lemma can be
-  arranged to deliver an antisymmetric tilt.  Recording both routes because
-  they are genuinely independent, and this one asks for a structural property
-  rather than an estimate.\<close>
+text \<open>If the tilt is antisymmetric, \<open>p = (p\<^sub>0,-p\<^sub>0)\<close>, the two block gradients
+  are exact negatives of each other, giving the alignment
+  \<open>comparison_supconv_complete\<close> needs with no limit and no rate estimate on
+  the tilt.  This route needs Jensen's lemma to deliver such an
+  antisymmetric tilt.\<close>
 
 lemma antisym_tilt_block_gradients:
   fixes p0 dv :: "real^'n::finite"
@@ -6923,30 +6830,13 @@ qed
 
 subsection \<open>The Hessians at the doubled maximum are two-sidedly bounded\<close>
 
-text \<open>Route (i) needs the perturbed data to stay in a bounded set as the tilt
-  shrinks.  For the gradients that is immediate (they differ from the limit by
-  at most the tilt plus the penalty term); for the Hessians it is the
-  two-sided bound below, and the striking thing is that the project ALREADY
-  PROVES the hard half and then throws it away.
-
-  \<open>convex_alexandrov\<close> (Sup_Convolution.thy) delivers a Hessian \<open>B\<close> with
-  \<open>\<forall>k. 0 \<le> k \<bullet> B k\<close> - the psd clause is right there in its statement.  Its
-  corollary \<open>semiconvex_alexandrov\<close> obtains exactly that \<open>B\<close>, sets
-  \<open>W = \<lambda>w. B w - c *\<^sub>R w\<close>, and states the conclusion WITHOUT the psd clause.
-  But \<open>k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c \<parallel>k\<parallel>²\<close>, so the discarded clause is one
-  rewrite away from the lower bound \<open>-c \<parallel>k\<parallel>² \<le> k \<bullet> W k\<close>.
-
-  Together with \<open>k \<bullet> W k \<le> 0\<close> from \<open>second_order_interior_max\<close>, that pins the
-  Hessian at a maximum of a semiconvex function between \<open>-c\<close> and \<open>0\<close> in the
-  quadratic-form order - which is precisely the compactness input route (i)
-  was missing.
-
-  That widening is DONE: \<open>semiconvex_alexandrov_bounded\<close> (Sup_Convolution.thy)
-  carries the clause, and \<open>norm_matrix_le_of_form_bound\<close> in the last section
-  turns it into the matrix-norm bound Bolzano-Weierstrass consumes.  The
-  superseded note read: restate \<open>semiconvex_alexandrov\<close> to carry the
-  clause \<open>\<forall>k. - (c * \<parallel>k\<parallel>²) \<le> k \<bullet> B k\<close>.  Its proof already has it in scope; only
-  the statement and the subset-inclusion in the proof need widening.\<close>
+text \<open>Route (i) needs the perturbed Hessians bounded as the tilt shrinks.
+  \<open>convex_alexandrov\<close> (Sup_Convolution.thy) supplies a Hessian \<open>B\<close> with
+  \<open>0 \<le> k \<bullet> Bk\<close>; combined with \<open>k \<bullet> Wk \<le> 0\<close> from
+  \<open>second_order_interior_max\<close>, this pins the Hessian \<open>W = B - cI\<close> at a
+  maximum of a semiconvex function between \<open>-c\<close> and \<open>0\<close>.
+  \<open>semiconvex_alexandrov_bounded\<close> carries this two-sided bound, and
+  \<open>norm_matrix_le_of_form_bound\<close> turns it into a matrix-norm bound.\<close>
 
 lemma hessian_lower_bound_of_psd:
   fixes B :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -6974,10 +6864,8 @@ proof -
     by (rule neg)
 qed
 
-text \<open>And the consequence in the form a compactness argument would consume:
-  the quadratic form of \<open>W\<close> is bounded in absolute value by \<open>c \<parallel>k\<parallel>²\<close>, uniformly
-  in whatever parameter produced \<open>W\<close>.  Nothing here depends on the tilt, so the
-  bound holds along the whole family.\<close>
+text \<open>The quadratic form of \<open>W\<close> is bounded in absolute value by \<open>c\<parallel>k\<parallel>\<^sup>2\<close>,
+  uniformly over the family and independent of the tilt.\<close>
 
 corollary semiconvex_hessian_abs_bound:
   fixes B W :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -6999,15 +6887,10 @@ qed
 
 subsection \<open>From the quadratic-form bound to a genuine operator bound\<close>
 
-text \<open>The two-sided bound above controls only the DIAGONAL of the Hessian,
-  \<open>k \<bullet> W k\<close>.  A compactness argument needs the whole operator bounded, and the
-  usual way to get that - "for a symmetric operator the norm is the sup of the
-  quadratic form" - is a spectral fact this HOL-Analysis does not have.
-
-  It is not needed.  POLARISATION recovers the off-diagonal entries from the
-  diagonal ones by pure algebra, and the parallelogram law turns the resulting
-  estimate into a bound uniform over the unit sphere.  Nothing here uses
-  eigenvalues.\<close>
+text \<open>The diagonal bound \<open>k \<bullet> Wk\<close> does not by itself bound the operator;
+  polarisation recovers the off-diagonal entries by pure algebra, and the
+  parallelogram law turns the result into a bound uniform over the unit
+  sphere, with no spectral theory.\<close>
 
 lemma polarization_symmetric:
   fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -7079,11 +6962,9 @@ proof -
   qed
 qed
 
-text \<open>On the unit sphere the bound is simply \<open>c\<close>.  So the family of Hessians
-  arising at the doubled maxima is bounded ENTRYWISE by the semiconvexity
-  constant, uniformly in the tilt parameter - which is the boundedness a
-  Bolzano-Weierstrass argument consumes, obtained without any spectral
-  machinery.\<close>
+text \<open>On the unit sphere the bound is simply \<open>c\<close>: the Hessians at the doubled
+  maxima are bounded entrywise by the semiconvexity constant, uniformly in
+  the tilt, giving the boundedness a Bolzano-Weierstrass argument needs.\<close>
 
 corollary symmetric_form_bound_unit:
   fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -7100,14 +6981,11 @@ qed
 
 subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
 
-text \<open>With the operator bound in hand the compactness step is available, and it
-  is short: the perturbed data live in a ball of a finite-dimensional space, so
-  Bolzano-Weierstrass applies directly.  \<open>cball\<close> is compact and compactness is
-  sequential compactness in a metric space; no more is needed.
-
-  Note this is stated for an arbitrary euclidean space, so it covers the PAIR
-  \<open>(gradient, Hessian)\<close> at once - the product of euclidean spaces is euclidean,
-  which is the same instance fact the doubled functional relies on.\<close>
+text \<open>With the operator bound, Bolzano-Weierstrass applies directly: the
+  perturbed data live in a ball of a finite-dimensional space, and
+  \<open>cball\<close> is (sequentially) compact.  Stated for an arbitrary euclidean
+  space, this covers the pair \<open>(gradient, Hessian)\<close> at once, since a
+  product of euclidean spaces is euclidean.\<close>
 
 theorem bounded_seq_limit_point:
   fixes Z :: "nat \<Rightarrow> 'a::euclidean_space"
@@ -7128,14 +7006,11 @@ proof -
   qed
 qed
 
-text \<open>And the bridge that consumes it: if a property holds along a sequence
-  converging to \<open>Z\<^sub>0\<close>, then it holds at points arbitrarily close to \<open>Z\<^sub>0\<close> - which
-  is exactly the hypothesis shape of \<open>ell_op_lsc_le_of_nearby\<close> and
-  \<open>ell_op_usc_ge_of_nearby\<close>.
-
-  This is deliberately stated for an arbitrary predicate \<open>P\<close>: nothing about the
-  operator is involved, so the same lemma serves both the subsolution and the
-  supersolution side.\<close>
+text \<open>If a property holds along a sequence converging to \<open>Z\<^sub>0\<close>, it holds at
+  points arbitrarily close to \<open>Z\<^sub>0\<close> - the hypothesis shape of
+  \<open>ell_op_lsc_le_of_nearby\<close> and \<open>ell_op_usc_ge_of_nearby\<close>.  Stated for an
+  arbitrary predicate, so it serves both the subsolution and supersolution
+  side.\<close>
 
 theorem nearby_of_convergent:
   fixes Z :: "nat \<Rightarrow> 'a::metric_space"
@@ -7152,17 +7027,12 @@ proof -
   from d p show ?thesis by blast
 qed
 
-text \<open>Composing the two: a BOUNDED family of perturbed data on which the
-  operator bound holds yields the nearby-point hypothesis at some limit point.
-  The limit point is produced, not assumed - which is the step that route (i)
-  was missing.
-
-  What this does NOT settle is that the limit point is the RIGHT one: the
-  closing argument also needs the ordering \<open>X ⪯ Y\<close>, the symmetry of both
-  matrices, and \<open>p \<noteq> 0\<close> AT THE LIMIT.  Symmetry and the ordering are closed
-  conditions and so pass to the limit; \<open>p \<noteq> 0\<close> is NOT closed and needs a
-  positive lower bound along the family.  That is the one remaining analytic
-  requirement on this route, and it is now isolated to a single statement.\<close>
+text \<open>A bounded family on which the operator bound holds yields the
+  nearby-point hypothesis at a produced limit point.  The closing argument
+  still needs, at that limit, the ordering \<open>X \<preceq> Y\<close>, symmetry of both
+  matrices, and \<open>p \<noteq> 0\<close>.  Symmetry and the ordering are closed conditions
+  and pass to the limit automatically; \<open>p \<noteq> 0\<close> is not closed and needs a
+  positive lower bound along the family.\<close>
 
 corollary nearby_of_bounded_family:
   fixes Z :: "nat \<Rightarrow> 'a::euclidean_space"
@@ -7181,23 +7051,12 @@ qed
 
 subsection \<open>A positive lower bound on the shared gradient\<close>
 
-text \<open>The last analytic requirement on route (i): \<open>p \<noteq> 0\<close> is not a closed
-  condition, so passing to a limit needs a POSITIVE LOWER BOUND on \<open>\<parallel>p\<parallel>\<close> along
-  the family, not merely nonvanishing at each member.
-
-  It follows from a value gap plus a modulus of continuity for \<open>w\<close>, and the
-  mechanism is worth stating because it is not the same as
-  \<open>doubling_grad_nonzero\<close>.  Suppose \<open>x̂\<close> misses the maximum of \<open>u - w\<close> by at
-  least \<open>\<gamma>\<close>.  Comparing \<open>\<Phi>\<close> at \<open>(x̂, ŷ)\<close> against the diagonal point \<open>z\<close> gives
-
-    \<open>\<gamma> + (\<alpha>/2)\<parallel>x̂ - ŷ\<parallel>² \<le> w x̂ - w ŷ\<close>,
-
-  so the VALUE gap forces a gap in \<open>w\<close> between the two components; a modulus of
-  continuity then converts that into a gap in position.  For Lipschitz \<open>w\<close> the
-  conversion is exact and the bound is \<open>\<gamma> / L\<^sub>w\<close>, independent of \<open>\<alpha>\<close>.
-
-  Note the penalty term helps rather than hinders: it appears on the left with
-  a positive sign, so discarding it only weakens the conclusion.\<close>
+text \<open>\<open>p \<noteq> 0\<close> needs a positive lower bound on \<open>\<parallel>p\<parallel>\<close> along the family, not
+  merely nonvanishing at each member.  If \<open>x̂\<close> misses the maximum of
+  \<open>u - w\<close> by at least \<open>\<gamma>\<close>, comparing \<open>\<Phi>\<close> at \<open>(x̂,ŷ)\<close> against the diagonal
+  point gives \<open>\<gamma> + (\<alpha>/2)\<parallel>x̂-ŷ\<parallel>\<^sup>2 \<le> w x̂ - w ŷ\<close>, so the value gap forces a
+  position gap via a modulus of continuity for \<open>w\<close>; for Lipschitz \<open>w\<close> the
+  bound is \<open>\<gamma>/L\<^sub>w\<close>, independent of \<open>\<alpha>\<close>.\<close>
 
 theorem doubling_grad_lower_bound:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -7226,10 +7085,9 @@ proof -
     using Lw by (simp add: field_simps)
 qed
 
-text \<open>And in the form the limit argument consumes: the shared gradient
-  \<open>p = \<alpha> (x̂ - ŷ)\<close> has norm at least \<open>\<alpha> \<gamma> / L\<^sub>w\<close>, a bound that does not degrade
-  along the family provided \<open>\<alpha>\<close> and \<open>\<gamma>\<close> are held fixed.  This is what makes
-  \<open>p \<noteq> 0\<close> survive the passage to the limit.\<close>
+text \<open>The shared gradient \<open>p = \<alpha>(x̂-ŷ)\<close> has norm at least \<open>\<alpha>\<gamma>/L\<^sub>w\<close>, a bound
+  holding fixed along the family, which is what lets \<open>p \<noteq> 0\<close> survive the
+  limit.\<close>
 
 corollary doubling_grad_norm_lower_bound:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -7259,19 +7117,13 @@ proof -
   show ?thesis unfolding nrm by (rule step)
 qed
 
-text \<open>And the same bound for the doubling that stage 10 actually runs, namely
-  the one on the SUP-CONVOLUTIONS.  The two hypotheses that had to be shown to
-  survive the sup-convolution are now both available:
-  \<open>supconv_lipschitz\<close> gives the modulus of continuity with the SAME constant, and
-  \<open>doubled_value_gap_supconv\<close> gives the value gap with the explicit loss
-  \<open>\<epsilon>(L\<^sub>u\<^sup>2 + L\<^sub>w\<^sup>2)/2\<close>.  Here the gap is taken as a hypothesis in its already-degraded
-  form, so this corollary is exactly the last link of the \<open>glb\<close> chain.
-
-  Note the sign bookkeeping: the doubled functional is
-  \<open>A(x) + B(y) - penalty\<close> with \<open>B = supconv (-w) \<epsilon>\<close>, whereas
-  \<open>doubling_grad_norm_lower_bound\<close> is stated for \<open>u x - w y - penalty\<close>.  So its
-  \<open>w\<close> is instantiated at \<open>-B\<close>, and the Lipschitz hypothesis transfers because
-  negation does not change \<open>\<bar>\<cdot>\<bar>\<close>.\<close>
+text \<open>The same bound for the doubling run on sup-convolutions:
+  \<open>supconv_lipschitz\<close> gives the modulus of continuity with the same
+  constant, and \<open>doubled_value_gap_supconv\<close> gives the value gap with
+  explicit loss \<open>\<epsilon>(L\<^sub>u\<^sup>2+L\<^sub>w\<^sup>2)/2\<close>.  The doubled functional is
+  \<open>A(x)+B(y)-\<close>penalty with \<open>B = supconv(-w)\<epsilon>\<close>, so \<open>w\<close> is instantiated at
+  \<open>-B\<close>, and the Lipschitz hypothesis transfers since negation preserves
+  \<open>\<bar>\<cdot>\<bar>\<close>.\<close>
 
 corollary doubling_grad_lower_bound_supconv:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -7305,12 +7157,9 @@ proof -
        (use mx zK xK yK a gap lipB Lwpos in simp_all)
 qed
 
-text \<open>The maximiser itself, for the doubling stage 10 runs.  Continuity of the
-  two sup-convolutions is free (\<open>supconv_continuous\<close> needs only an upper bound
-  and \<open>\<epsilon> > 0\<close>, and gives it on all of \<open>UNIV\<close>), so no regularity of \<open>u\<close> or \<open>w\<close> is
-  required here beyond boundedness --- which is where the sup-convolution earns
-  its keep: it manufactures the continuity the direct doubling would otherwise
-  have had to assume.\<close>
+text \<open>Continuity of the two sup-convolutions is free: \<open>supconv_continuous\<close>
+  needs only an upper bound and \<open>\<epsilon> > 0\<close>, giving continuity on all of
+  \<open>UNIV\<close> with no regularity of \<open>u\<close> or \<open>w\<close> beyond boundedness.\<close>
 
 corollary doubling_maximiser_supconv:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -7338,17 +7187,11 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>The \<open>\<theta>\<close>-step, which is where the top-level proof of Theorem 4.2(a) starts.
-  The comparison argument runs on \<open>\<theta>u\<close> with \<open>\<theta> < 1\<close> rather than on \<open>u\<close> --- that is
-  what makes the operator inequality strict and gives
-  \<open>ell_op_env_strict_contradiction\<close> something to bite on.  So the interior/boundary
-  gap for \<open>u - w\<close> has to be shown to survive the scaling.
-
-  It does, with an explicit threshold: \<open>\<theta>u - w\<close> differs from \<open>u - w\<close> by
-  \<open>(1-\<theta>)u\<close>, which is at most \<open>(1-\<theta>)B\<close> in absolute value, so a gap \<open>M - m\<close> survives
-  as long as \<open>2(1-\<theta>)B < M - m\<close>.  Nothing about viscosity solutions enters; this
-  is purely the observation that a uniform \<open>O(1-\<theta>)\<close> perturbation cannot close a
-  fixed gap.\<close>
+text \<open>Theorem 4.2(a)'s proof runs the comparison on \<open>\<theta>u\<close> with \<open>\<theta> < 1\<close>, making
+  the operator inequality strict for \<open>ell_op_env_strict_contradiction\<close>.
+  The interior/boundary gap for \<open>u-w\<close> survives this scaling explicitly:
+  \<open>\<theta>u-w\<close> differs from \<open>u-w\<close> by at most \<open>(1-\<theta>)B\<close>, so a gap \<open>M-m\<close> survives
+  whenever \<open>2(1-\<theta>)B < M-m\<close>.\<close>
 
 lemma theta_gap_preserved:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -7383,15 +7226,10 @@ qed
 
 subsection \<open>Symmetry and the ordering pass to the limit\<close>subsection \<open>Symmetry and the ordering pass to the limit\<close>
 
-text \<open>The remaining side conditions of the closing argument are CLOSED
-  conditions, so they survive the passage to a limit point.  Both are proved
-  entrywise: convergence in \<open>real^'n^'n\<close> is convergence of every entry
-  (\<open>tendsto_vec_nth\<close> twice), and symmetry and positive semidefiniteness are
-  each preserved by limits of reals.
-
-  This is the routine half of what route (i) still needed; the non-routine half
-  was \<open>p \<noteq> 0\<close>, which is NOT closed and was handled separately by
-  \<open>doubling_grad_norm_lower_bound\<close>.\<close>
+text \<open>Symmetry and positive semidefiniteness are closed conditions and so
+  survive the passage to a limit point, proved entrywise via
+  \<open>tendsto_vec_nth\<close>: convergence in \<open>real^'n^'n\<close> is convergence of every
+  entry.\<close>
 
 lemma tendsto_entry:
   fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
@@ -7459,9 +7297,8 @@ proof -
     unfolding psd_def using s0 q0 by blast
 qed
 
-text \<open>And the ordering, which is the statement the theorem on sums delivers:
-  \<open>psd (Y - X)\<close> is preserved when both sequences converge, since subtraction is
-  continuous and \<open>psd\<close> is closed.\<close>
+text \<open>\<open>psd (Y-X)\<close> is preserved when both sequences converge, since subtraction
+  is continuous and \<open>psd\<close> is a closed condition.\<close>
 
 corollary psd_diff_limit:
   fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n"
@@ -7476,20 +7313,12 @@ qed
 
 subsection \<open>The asymptotic ordering\<close>
 
-text \<open>What the SHIFTED construction actually delivers.  Perturbing the doubled
-  functional by \<open>-\<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close> raises BOTH block Hessians by \<open>2\<delta>\<close> --- \<open>X\<close> becomes
-  \<open>X + 2\<delta> I\<close> and \<open>Y\<close> becomes \<open>Y - 2\<delta> I\<close>, because \<open>Y\<close> enters the jets negated ---
-  so the difference picks up a defect:
-  \<open>(Y - 2\<delta> I) - (X + 2\<delta> I) = (Y - X) - 4\<delta> I\<close>, which is NOT psd even when \<open>Y - X\<close>
-  is.  The per-index ordering is therefore genuinely lost, and
-  \<open>comparison_supconv_bounded_family\<close>'s \<open>psdi\<close> hypothesis cannot be met by the
-  shifted family as it stands.
-
-  What survives is the ordering IN THE LIMIT, and that is all the closing
-  argument ever uses: \<open>psd\<close> is a closed condition and the defect vanishes with
-  \<open>\<delta>\<^sub>i\<close>.  So the right hypothesis for a shifted family is \<open>psd (Y\<^sub>i - X\<^sub>i + c\<^sub>i I)\<close>
-  with \<open>c\<^sub>i \<rightarrow> 0\<close>.  This is the same shape as the gradient shift: an \<open>O(\<delta>)\<close> error
-  that a fixed \<open>\<delta>\<close> cannot absorb but a shrinking \<open>\<delta>\<^sub>i\<close> can.\<close>
+text \<open>Perturbing the doubled functional by \<open>-\<delta>\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> shifts \<open>X\<close> to
+  \<open>X+2\<delta>I\<close> and \<open>Y\<close> to \<open>Y-2\<delta>I\<close>, so \<open>(Y-X)-4\<delta>I\<close> need not be psd even when
+  \<open>Y-X\<close> is: the per-index ordering is lost.  What survives is the
+  ordering in the limit, since \<open>psd\<close> is closed and the defect \<open>4\<delta>\<close>
+  vanishes; the right hypothesis for a shifted family is
+  \<open>psd(Y\<^sub>i-X\<^sub>i+c\<^sub>iI)\<close> with \<open>c\<^sub>i \<rightarrow> 0\<close>.\<close>
 
 corollary psd_diff_limit_shifted:
   fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n" and cs :: "nat \<Rightarrow> real"
@@ -7511,17 +7340,13 @@ qed
 
 subsection \<open>Route (i), threaded\<close>
 
-text \<open>The single theorem the chain was missing.  Everything is supplied as
-  SEQUENCES of perturbed data - which is what re-running Jensen with a shrinking
-  tilt produces - together with their limits.  Symmetry and the ordering are
-  needed only ALONG the sequence: \<open>transpose_limit\<close> and \<open>psd_diff_limit\<close> carry
-  them to the limit.  Only \<open>p \<noteq> 0\<close> is required at the limit itself, because it
-  is the one condition that is not closed; \<open>doubling_grad_norm_lower_bound\<close>
-  supplies it in the doubling setting.
-
-  Note the two gradient sequences must converge to the SAME \<open>p\<close>.  That is the
-  gradient alignment, and it is where the tilt has to have been dealt with -
-  either by the linear rate or by antisymmetry.\<close>
+text \<open>Everything is supplied as sequences of perturbed data, produced by
+  re-running Jensen with a shrinking tilt, together with their limits.
+  Symmetry and the ordering are needed only along the sequence
+  (\<open>transpose_limit\<close>, \<open>psd_diff_limit\<close>); only \<open>p \<noteq> 0\<close> is required at the
+  limit itself, supplied by \<open>doubling_grad_norm_lower_bound\<close>.  The two
+  gradient sequences must converge to the same \<open>p\<close> - the gradient
+  alignment.\<close>
 
 theorem env_strict_contradiction_of_limits:
   fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n" and Pu Pw :: "nat \<Rightarrow> real^'n"
@@ -7584,22 +7409,11 @@ qed
 
 subsection \<open>The gradient alignment along the family\<close>
 
-text \<open>The last hypothesis of \<open>env_strict_contradiction_of_limits\<close> is that the
-  two gradient sequences converge to the SAME limit.  In the doubling that is
-  not an extra assumption: it follows from the tilts shrinking to zero.
-
-  With tilt \<open>p\<^sub>i\<close> the jet of the untilted functional has gradient \<open>-p\<^sub>i\<close>
-  (\<open>gradient_is_minus_tilt\<close>), so the two block gradients are
-
-    \<open>-fst p\<^sub>i + \<alpha>(x̂\<^sub>i - ŷ\<^sub>i)\<close>   and   \<open>snd p\<^sub>i + \<alpha>(x̂\<^sub>i - ŷ\<^sub>i)\<close>.
-
-  Their DIFFERENCE is \<open>fst p\<^sub>i + snd p\<^sub>i\<close>, which is bounded by the tilt alone -
-  it does not involve the maximiser at all.  So as soon as the tilts vanish the
-  two sequences share a limit, whatever the penalty gradients do, provided only
-  that those converge.
-
-  This is why route (i) needs the tilt to shrink but NOT the maximisers to be
-  controlled: the alignment is insensitive to them.\<close>
+text \<open>The last hypothesis of \<open>env_strict_contradiction_of_limits\<close> - that the
+  two gradient sequences share a limit - follows from the tilts shrinking
+  to zero: with tilt \<open>p\<^sub>i\<close> the untilted jet has gradient \<open>-p\<^sub>i\<close>, so the two
+  block gradients differ by \<open>fst p\<^sub>i + snd p\<^sub>i\<close> alone, independent of the
+  maximiser.\<close>
 
 lemma tendsto_of_norm_bound:
   fixes Z :: "nat \<Rightarrow> 'a::real_normed_vector"
@@ -7626,9 +7440,8 @@ proof -
     using tendsto_add[OF s0 gconv] by simp
 qed
 
-text \<open>And in the form the doubling supplies its data: the tilts are bounded by
-  a sequence \<open>dd\<^sub>i \<rightarrow> 0\<close>, which is exactly what re-running Jensen with a
-  shrinking tilt parameter gives.\<close>
+text \<open>The doubling supplies tilts bounded by a sequence \<open>dd\<^sub>i \<rightarrow> 0\<close>, exactly
+  what re-running Jensen with a shrinking tilt parameter gives.\<close>
 
 corollary gradient_sequences_align_of_bound:
   fixes Pt :: "nat \<Rightarrow> (real^'n::finite) \<times> (real^'n)" and G :: "nat \<Rightarrow> real^'n"
@@ -7648,23 +7461,12 @@ qed
 
 subsection \<open>The diagonal step: two limits at once\<close>
 
-text \<open>One gluing step is still missing, and it is why
-  \<open>env_strict_contradiction_of_limits\<close> cannot be applied directly to what the
-  doubling produces.  That theorem wants the operator bound AT \<open>X\<^sub>i\<close>, whereas
-  \<open>subsol_shifted_bound_supconv\<close> only ever delivers it at the CORRECTED matrix
-  \<open>X\<^sub>i + \<delta> I\<close>.  So there are two limits, \<open>i \<rightarrow> \<infinity>\<close> and \<open>\<delta> \<rightarrow> 0\<close>, and they must be
-  taken together.
-
-  The nearby-point formulation makes that painless: for a given radius, choose
-  \<open>i\<close> large enough that the pair is within half the radius of the limit, then
-  \<open>\<delta>\<close> small enough that the shift costs less than the other half.  No relation
-  between \<open>i\<close> and \<open>\<delta>\<close> is needed, because the shift is bounded independently
-  of \<open>i\<close>.
-
-  The predicate is taken CURRIED, as \<open>Q p' M'\<close> rather than \<open>P (p', M')\<close>.  That
-  is not cosmetic: with an uncurried predicate the instantiated hypothesis
-  arrives as \<open>P (fst (Z i), snd (Z i) + \<delta> I)\<close> with the projections unreduced,
-  and \<open>OF\<close> then fails to unify against the natural statement of the bound.\<close>
+text \<open>\<open>env_strict_contradiction_of_limits\<close> wants the operator bound at
+  \<open>X\<^sub>i\<close>, but \<open>subsol_shifted_bound_supconv\<close> only delivers it at the
+  corrected matrix \<open>X\<^sub>i+\<delta>I\<close>, so the two limits \<open>i \<rightarrow> \<infinity>\<close> and \<open>\<delta> \<rightarrow> 0\<close>
+  must be taken together via the nearby-point formulation.  The predicate
+  is taken curried, as \<open>Q p' M'\<close> rather than \<open>P (p', M')\<close>, so that \<open>OF\<close>
+  unifies against the unreduced projections.\<close>
 
 theorem nearby_of_convergent_shifted:
   fixes Pz :: "nat \<Rightarrow> real^'n::finite" and Mz :: "nat \<Rightarrow> real^'n^'n"
@@ -7734,9 +7536,9 @@ proof -
   from near q show ?thesis by blast
 qed
 
-text \<open>The mirrored version, for the supersolution side.  The correction there
-  runs the other way, \<open>Y\<^sub>i - \<delta> I\<close>, so the sign flips; the estimate is identical
-  because the shift has the same norm either way.\<close>
+text \<open>The mirrored version for the supersolution side: the correction runs the
+  other way, \<open>Y\<^sub>i-\<delta>I\<close>, but the estimate is identical since the shift has
+  the same norm.\<close>
 
 theorem nearby_of_convergent_shifted_neg:
   fixes Pz :: "nat \<Rightarrow> real^'n::finite" and Mz :: "nat \<Rightarrow> real^'n^'n"
@@ -7806,9 +7608,9 @@ proof -
   from near q show ?thesis by blast
 qed
 
-text \<open>And the contradiction with both limits taken together.  This is the form
-  the doubling actually reaches: bounds at the \<open>\<delta>\<close>-corrected matrices along a
-  sequence of tilts, and nothing more.\<close>
+text \<open>The contradiction with both limits taken together: bounds at the
+  \<open>\<delta>\<close>-corrected matrices along a sequence of tilts is exactly what the
+  doubling reaches.\<close>
 
 theorem env_strict_contradiction_of_shifted_limits:
   fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n" and Pu Pw :: "nat \<Rightarrow> real^'n"
@@ -7856,16 +7658,12 @@ qed
 
 subsection \<open>Theorem 4.2(a) from a sequence of sup-convolution jets\<close>
 
-text \<open>The instantiation.  Everything is indexed by \<open>i\<close>, which is the index of
-  the Jensen application: each \<open>i\<close> supplies a maximiser, its jet, and the point
-  at which the sup-convolution is attained.  The per-index operator bounds come
-  from \<open>subsol_shifted_bound_supconv\<close> and \<open>supersol_shifted_bound_supconv\<close>, and
-  \<open>env_strict_contradiction_of_shifted_limits\<close> takes both limits.
-
-  Note what is NOT assumed: nothing about how the sequence was produced, no
-  rate, no relation between \<open>i\<close> and the correction \<open>\<delta>\<close>.  The convergence
-  hypotheses are exactly the four that the boundedness results and
-  \<open>gradient_sequences_align_of_bound\<close> supply.\<close>
+text \<open>Each index \<open>i\<close> of the Jensen application supplies a maximiser, its jet,
+  and the sup-convolution attainment point.  The per-index operator bounds
+  come from \<open>subsol_shifted_bound_supconv\<close> and
+  \<open>supersol_shifted_bound_supconv\<close>, and
+  \<open>env_strict_contradiction_of_shifted_limits\<close> takes both limits, with no
+  rate and no relation assumed between \<open>i\<close> and \<open>\<delta>\<close>.\<close>
 
 theorem comparison_supconv_sequence_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -7940,15 +7738,11 @@ qed
 
 subsection \<open>The shrinking tilt is always available\<close>
 
-text \<open>\<open>comparison_supconv_sequence_complete\<close> consumes a SEQUENCE of Jensen
-  applications with tilts shrinking to zero.  Two facts make that sequence
-  legitimate, and neither is about the doubling: Jensen's smallness condition
-  \<open>2 dd r < \<Phi>(\<xi>) - m\<close> is satisfied by every SUFFICIENTLY SMALL tilt as soon as
-  the centre beats the boundary value at all, and a sequence of admissible
-  tilts converging to zero then exists outright.
-
-  So "re-run Jensen with a smaller tilt" is not an extra hypothesis to be
-  discharged later; it is available whenever Jensen's lemma applies once.\<close>
+text \<open>\<open>comparison_supconv_sequence_complete\<close> consumes a sequence of Jensen
+  applications with tilts shrinking to zero.  Jensen's smallness condition
+  \<open>2 dd r < \<Phi>(\<xi>)-m\<close> holds for every sufficiently small tilt once the
+  centre beats the boundary value at all, so an admissible sequence
+  converging to zero always exists.\<close>
 
 lemma jensen_tilt_threshold_pos:
   fixes r m Psixi :: real
@@ -7973,9 +7767,8 @@ proof -
 qed
 
 
-text \<open>And an explicit admissible sequence.  Nothing about it is canonical; it
-  is recorded so that the family construction has a concrete witness rather
-  than an existence claim.\<close>
+text \<open>An explicit admissible sequence, not canonical, giving the family
+  construction a concrete witness rather than a bare existence claim.\<close>
 
 lemma tilt_sequence_pos:
   fixes D :: real
@@ -8023,22 +7816,13 @@ qed
 
 subsection \<open>Replacing the Lipschitz modulus by compactness\<close>
 
-text \<open>\<open>doubling_grad_lower_bound\<close> converts a VALUE gap in \<open>w\<close> into a POSITION
-  gap, and does it with a Lipschitz modulus.  That is strictly more than the top
-  level can supply: the corrected \<open>max_principle_boundary\<close> carries continuity of
-  \<open>u\<close> and \<open>w\<close> on \<open>K\<close> and nothing stronger, and a continuous function on a compact
-  set need not be Lipschitz.
-
-  Continuity plus compactness suffices, by a soft argument that gives no rate.
-  The set of pairs in \<open>K \<times> K\<close> realising a FIXED value gap \<open>\<gamma> > 0\<close> is bounded away
-  from the diagonal: otherwise a sequence of such pairs with \<open>\<parallel>p\<^sub>n - q\<^sub>n\<parallel> \<rightarrow> 0\<close> has,
-  by sequential compactness, a subsequence with \<open>p\<^sub>n \<rightarrow> l\<close>, hence \<open>q\<^sub>n \<rightarrow> l\<close> too, and
-  continuity forces \<open>\<gamma> \<le> v l - v l = 0\<close>.
-
-  The separation \<open>d\<close> it produces depends on \<open>\<gamma>\<close>, \<open>K\<close> and \<open>v\<close> but NOT on \<open>\<alpha>\<close> ---
-  which is exactly the uniformity the limit argument needs, and the only reason
-  the Lipschitz constant was there in the first place.  Stated for \<open>v\<close> rather
-  than \<open>w\<close> because at the point of use it is applied to a sup-convolution.\<close>
+text \<open>\<open>doubling_grad_lower_bound\<close> converts a value gap in \<open>w\<close> into a position
+  gap via a Lipschitz modulus, more than continuity on compact \<open>K\<close>
+  supplies.  Continuity plus compactness suffices instead: pairs in
+  \<open>K \<times> K\<close> realising a fixed gap \<open>\<gamma> > 0\<close> stay bounded away from the
+  diagonal, since a sequence with \<open>\<parallel>p\<^sub>n-q\<^sub>n\<parallel> \<rightarrow> 0\<close> would force \<open>\<gamma> \<le> 0\<close>
+  by continuity at the common limit.  The resulting separation depends on
+  \<open>\<gamma>\<close>, \<open>K\<close> and \<open>v\<close> but not \<open>\<alpha>\<close>.\<close>
 
 lemma positive_separation_of_value_gap:
   fixes v :: "'a::real_normed_vector \<Rightarrow> real"
@@ -8115,11 +7899,10 @@ proof (rule ccontr)
   then show False using g by simp
 qed
 
-text \<open>And the two consequences: \<open>doubling_grad_lower_bound\<close> with the Lipschitz
-  hypothesis replaced by an abstract separation, and the same for the norm of
-  the shared gradient.  Nothing else in the proof changes --- the Lipschitz
-  constant was only ever used to turn \<open>\<gamma> \<le> w x\<hat> - w y\<hat>\<close> into a bound on
-  \<open>\<parallel>x\<hat> - y\<hat>\<parallel>\<close>, which is precisely what the separation does.\<close>
+text \<open>Two consequences: \<open>doubling_grad_lower_bound\<close> with the Lipschitz
+  hypothesis replaced by an abstract separation, and the same for the
+  shared gradient's norm - the separation plays exactly the role the
+  Lipschitz constant did.\<close>
 
 theorem doubling_grad_lower_bound_sep:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -8168,16 +7951,11 @@ proof -
   show ?thesis unfolding nrm by (rule step)
 qed
 
-text \<open>And for the doubling that the assembly actually runs, on the
-  SUP-CONVOLUTIONS.  The separation is required of \<open>supconv (- w) \<epsilon>\<close> itself,
-  which \<open>positive_separation_of_value_gap\<close> supplies from compactness of \<open>K\<close> and
-  \<open>supconv_continuous\<close> --- so no regularity of \<open>w\<close> beyond boundedness enters,
-  and in particular no Lipschitz constant.
-
-  Sign bookkeeping as in \<open>doubling_grad_lower_bound_supconv\<close>: the doubled
-  functional is \<open>A(x) + B(y) - penalty\<close> with \<open>B = supconv (-w) \<epsilon>\<close>, so the \<open>w\<close> of
-  the general statement is \<open>-B\<close> and a gap \<open>\<gamma> \<le> (-B) p - (-B) q\<close> is a gap
-  \<open>\<gamma> \<le> B q - B p\<close>.\<close>
+text \<open>For the doubling run on sup-convolutions, the separation is required of
+  \<open>supconv(-w)\<epsilon>\<close> itself, supplied by \<open>positive_separation_of_value_gap\<close>
+  from compactness of \<open>K\<close> and \<open>supconv_continuous\<close> alone - no Lipschitz
+  constant enters.  The sign bookkeeping is as in
+  \<open>doubling_grad_lower_bound_supconv\<close>, with \<open>w\<close> instantiated at \<open>-B\<close>.\<close>
 
 corollary doubling_grad_lower_bound_supconv_sep:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -8203,16 +7981,10 @@ proof -
        (use mx zK xK yK a gap sep in simp_all)
 qed
 
-text \<open>The parameter choice for the SHIFTED family, packaged once.  That
-  construction runs TWO shrinking sequences --- the perturbation \<open>\<delta>\<^sub>i\<close> and Jensen's
-  tilt \<open>dd\<^sub>i\<close> --- and they are not independent: \<open>shifted_jensen_smallness\<close> needs
-  \<open>dd\<^sub>i < \<delta>\<^sub>i\<rho>\<^sup>2/(2r)\<close>.  Taking \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> and \<open>dd\<^sub>i = \<delta>\<^sub>i\<rho>\<^sup>2/(4r)\<close> satisfies it with
-  a factor of two to spare, and both sequences vanish --- which is what the
-  abstract alignment hypothesis of \<open>comparison_supconv_bounded_family\<close> needs,
-  since the perturbation's gradient shift is \<open>O(\<delta>\<^sub>i)\<close>.
-
-  Collected here so the arithmetic stays out of the assembly, where it would
-  otherwise be interleaved with the jet bookkeeping.\<close>
+text \<open>The parameter choice for the shifted family: the perturbation \<open>\<delta>\<^sub>i\<close> and
+  Jensen's tilt \<open>dd\<^sub>i\<close> must satisfy \<open>shifted_jensen_smallness\<close>'s
+  \<open>dd\<^sub>i < \<delta>\<^sub>i\<rho>\<^sup>2/(2r)\<close>; taking \<open>\<delta>\<^sub>i=D\<^sub>0/(2+i)\<close> and \<open>dd\<^sub>i=\<delta>\<^sub>i\<rho>\<^sup>2/(4r)\<close>
+  satisfies it with room to spare, and both sequences vanish.\<close>
 
 lemma shifted_family_parameters:
   fixes D\<^sub>0 \<rho> r :: real
@@ -8246,17 +8018,13 @@ qed
 
 subsection \<open>The sup-convolution is attained\<close>
 
-text \<open>\<open>comparison_supconv_sequence_complete\<close> also takes the ATTAINMENT of each
+text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment of each
   sup-convolution as a hypothesis - the points \<open>y\<^sub>s\<close> where
-  \<open>supconv u \<epsilon> x = u y\<^sub>s - dist(x,y\<^sub>s)²/(2\<epsilon>)\<close>.  Nothing in the project produced
-  them, which is the same gap class flagged repeatedly above.
-
-  For continuous \<open>u\<close> bounded above they exist, by a coercivity argument: beyond
-  a radius determined by the gap \<open>B\<^sub>u - u x\<close> the penalty already pushes the
-  competitor below the value at \<open>x\<close> itself, so the supremum over the whole space
-  equals the supremum over one compact ball, where continuity attains it.  The
-  radius is EXPLICIT - \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u - u x))) + 1\<close> - so no compactness of the
-  domain and no diagonal argument is involved.\<close>
+  \<open>supconv u \<epsilon> x = u y\<^sub>s - dist(x,y\<^sub>s)\<^sup>2/(2\<epsilon>)\<close>.  For continuous \<open>u\<close>
+  bounded above they exist by coercivity: beyond an explicit radius
+  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))+1\<close> the penalty already beats the value at \<open>x\<close>,
+  so the supremum over the whole space equals the supremum over one
+  compact ball, attained by continuity.\<close>
 
 theorem supconv_attained_ball:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -8338,11 +8106,9 @@ corollary supconv_attained:
   shows "\<exists>ys. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
   using supconv_attained_ball[OF B e cu] by blast
 
-text \<open>And as a FAMILY, which is the form
-  \<open>comparison_supconv_sequence_complete\<close> consumes: along any sequence of base
-  points the attaining points can be chosen simultaneously, by countable
-  choice.  No uniformity in \<open>i\<close> is needed, because the attainment at each base
-  point is unconditional.\<close>
+text \<open>As a family: along any sequence of base points the attaining points can
+  be chosen simultaneously by countable choice, with no uniformity in
+  \<open>i\<close> needed.\<close>
 
 theorem supconv_attained_family:
   fixes u :: "'a::euclidean_space \<Rightarrow> real" and xs :: "nat \<Rightarrow> 'a"
@@ -8355,14 +8121,11 @@ proof -
   then show ?thesis by (rule choice)
 qed
 
-text \<open>The attaining point is not merely somewhere: it lies in an EXPLICIT ball
-  around the base point, of radius \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u - u x))) + 1\<close>.  That radius is
-  \<open>O(\<surd>\<epsilon>)\<close>, which is what makes the \<open>y\<^sub>s \<in> \<Omega>\<close> hypothesis of the comparison
-  theorems dischargeable rather than an article of faith: for \<open>\<epsilon>\<close> small the ball
-  sits inside any fixed neighbourhood of the base point.
-
-  Stated as a separate corollary rather than folded into \<open>supconv_attained\<close>, so
-  that the existing consumers of that theorem are untouched.\<close>
+text \<open>The attaining point lies in an explicit ball of radius
+  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))+1\<close> around the base point, an \<open>O(\<surd>\<epsilon>)\<close> bound
+  that makes the \<open>y\<^sub>s \<in> \<Omega>\<close> hypothesis of the comparison theorems
+  dischargeable rather than assumed.  Stated as a separate corollary so
+  existing consumers of \<open>supconv_attained\<close> are untouched.\<close>
 
 corollary supconv_attained_in:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -8380,9 +8143,9 @@ proof -
   with v show ?thesis by blast
 qed
 
-text \<open>And the family form, which is what the assembly consumes: along any
-  sequence of base points all the attaining points can be chosen inside \<open>\<Omega>\<close>
-  simultaneously, provided each base point's ball is.\<close>
+text \<open>The family form: along any sequence of base points, the attaining points
+  can be chosen inside \<open>\<Omega>\<close> simultaneously, provided each base point's
+  ball is.\<close>
 
 corollary supconv_attained_family_in:
   fixes u :: "'a::euclidean_space \<Rightarrow> real" and xs :: "nat \<Rightarrow> 'a"
@@ -8401,17 +8164,12 @@ qed
 
 subsection \<open>The attainment radius as a parameter\<close>
 
-text \<open>The \<open>+1\<close> above is an artifact of a single strict inequality in the proof
-  of \<open>supconv_attained_ball\<close>, and it has to go before the top level can use any
-  of this.  With it, the hypothesis \<open>cball x R \<subseteq> \<Omega>\<close> asks \<open>\<Omega>\<close> to contain a ball
-  of radius ONE about the base point, which no bounded \<open>\<Omega>\<close> --- in particular no
-  \<open>interior K\<close> for compact \<open>K\<close> of small diameter --- ever does.
-
-  Any radius exceeding \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u - u x)))\<close> serves just as well, and then
-  the threshold really is \<open>O(\<surd>\<epsilon>)\<close>: \<open>cball x R \<subseteq> \<Omega>\<close> becomes a condition on the
-  geometry alone and \<open>\<surd>(\<dots>) < R\<close> a smallness condition on \<open>\<epsilon>\<close>.  The two are
-  separated deliberately, because at the top level they are discharged by
-  different arguments.\<close>
+text \<open>The \<open>+1\<close> in \<open>supconv_attained_ball\<close> is an artifact of a strict
+  inequality in its proof; with it, \<open>cball x R \<subseteq> \<Omega>\<close> asks \<open>\<Omega>\<close> for a ball
+  of radius one, which no bounded \<open>\<Omega>\<close> of small diameter has.  Any radius
+  exceeding \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> serves as well, separating the
+  hypothesis into a geometric condition on \<open>R\<close> and a smallness condition
+  on \<open>\<epsilon>\<close>, discharged separately at the top level.\<close>
 
 theorem supconv_attained_ball_rad:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -8516,12 +8274,11 @@ proof -
   then show ?thesis by (rule choice)
 qed
 
-text \<open>\<^bold>\<open>Every\<close> attainment point sits inside that radius, not just the one
-  produced by \<open>supconv_attained_ball\<close>: if \<open>z\<close> attains then
-  \<open>u z - dist\<^sup>2/(2\<epsilon>) = supconv u \<epsilon> x \<ge> u x\<close>, so \<open>dist\<^sup>2 \<le> 2\<epsilon>(u z - u x)
-  \<le> 2\<epsilon>(B\<^sub>u - u x)\<close>.  P4 needs the \<open>\<forall>\<close>-form, because there the membership of
-  the attainment point in \<open>\<Omega>\<close> comes from a GATE on \<open>u\<close>, not from a ball, and
-  the two must be interchangeable at the old call site.\<close>
+text \<open>Every attainment point, not just the one \<open>supconv_attained_ball\<close>
+  produces, lies inside that radius: if \<open>z\<close> attains then
+  \<open>u z - dist\<^sup>2/(2\<epsilon>) \<ge> u x\<close> gives \<open>dist\<^sup>2 \<le> 2\<epsilon>(B\<^sub>u-u x)\<close>.  The universal
+  form is needed where membership of the attainment point in \<open>\<Omega>\<close> comes
+  from a gate on \<open>u\<close> rather than from a ball.\<close>
 
 lemma supconv_attain_radius:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -8545,28 +8302,20 @@ qed
 
 subsection \<open>The sup-convolution converges to its function, with a rate\<close>
 
-text \<open>Locating the doubling maximiser needs to know that \<open>supconv u \<epsilon>\<close> is CLOSE
-  to \<open>u\<close>, not merely above it.  Both halves are already present in pieces:
-  \<open>supconv_ge\<close> gives \<open>u \<le> supconv u \<epsilon>\<close>, and \<open>supconv_attained_ball_rad\<close> says the
-  supremum is realised within an explicit radius of the base point --- so a
-  LOCAL upper bound for \<open>u\<close> on that radius bounds the sup-convolution.
+text \<open>Locating the doubling maximiser needs \<open>supconv u \<epsilon>\<close> close to \<open>u\<close>, not
+  merely above it: \<open>supconv_ge\<close> gives \<open>u \<le> supconv u \<epsilon>\<close>, and
+  \<open>supconv_attained_ball_rad\<close> bounds the attainment radius.  With a
+  global two-sided bound \<open>B\<^sub>l \<le> u \<le> B\<^sub>u\<close> that radius is \<open>O(\<surd>\<epsilon>)\<close>
+  uniformly in \<open>x\<close>, so with a modulus of continuity for \<open>u\<close>,
+  \<open>supconv u \<epsilon> \<le> u + \<sigma>\<close> for every sufficiently small \<open>\<epsilon>\<close>, with no
+  Lipschitz constant needed.\<close>
 
-  What turns this into a rate is that the radius is uniform: with a global
-  two-sided bound \<open>B\<^sub>l \<le> u \<le> B\<^sub>u\<close> the threshold \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u - u x)))\<close> is at
-  most \<open>\<surd>(2\<epsilon>(B\<^sub>u - B\<^sub>l))\<close>, which is \<open>O(\<surd>\<epsilon>)\<close> and does not depend on \<open>x\<close>.  Together
-  with a modulus of continuity for \<open>u\<close> this gives \<open>supconv u \<epsilon> \<le> u + \<sigma>\<close> for
-  every \<open>\<epsilon>\<close> below an explicit threshold.  No Lipschitz constant enters, which is
-  the point --- the top level has none.\<close>
-
-text \<open>\<^bold>\<open>The usc replacement for \<open>supconv_uniform_upper\<close>.\<close>  That lemma is FALSE
-  for merely usc data (see the counterexample recorded with P4), and it is used
-  only to push the doubling maximiser off \<open>\<partial>K\<close>.  What IS true for usc data, and
-  what the classical Crandall--Ishii argument actually uses, is a LOCAL upper
-  bound with no continuity and no attainment: if \<open>u \<le> M\<close> on \<open>cball x R\<close> and the
-  penalty already beats the global range outside that ball, then
-  \<open>supconv u \<epsilon> x \<le> M\<close> outright.  Compare \<open>supconv_le_of_local_bound\<close>
-  below, which needs \<open>continuous_on UNIV u\<close> because it goes through
-  attainment; this one splits the supremum by hand instead.\<close>
+text \<open>\<open>supconv_uniform_upper\<close> is false for merely usc data; what usc data
+  gives instead, matching the classical Crandall--Ishii argument, is a
+  local upper bound with no continuity and no attainment: if \<open>u \<le> M\<close> on
+  \<open>cball x R\<close> and the penalty already beats the global range outside it,
+  then \<open>supconv u \<epsilon> x \<le> M\<close>.  \<open>supconv_le_of_local_bound\<close> gets the same
+  conclusion via attainment, needing \<open>continuous_on UNIV u\<close>.\<close>
 
 lemma supconv_le_of_local_bound_usc:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -8594,12 +8343,10 @@ proof (rule cSUP_least)
   qed
 qed
 
-text \<open>The consequence P4 step 2 runs on: along ANY sequence of base points
-  converging to \<open>x\<^sub>0\<close> with \<open>\<epsilon>\<^sub>j \<longrightarrow> 0\<close>, the sup-convolutions are eventually below
-  any strict upper bound for \<open>u\<close> at \<open>x\<^sub>0\<close>.  This is the usc statement that
-  replaces uniform convergence in the localisation of the doubling maximiser:
-  the radius \<open>\<surd>(2\<epsilon>\<^sub>j(B\<^sub>u - B\<^sub>l))\<close> shrinks, so eventually the whole competing ball
-  sits inside the neighbourhood on which usc gives \<open>u < c\<close>.\<close>
+text \<open>Along any sequence of base points converging to \<open>x\<^sub>0\<close> with
+  \<open>\<epsilon>\<^sub>j \<rightarrow> 0\<close>, the sup-convolutions are eventually below any strict upper
+  bound for \<open>u\<close> at \<open>x\<^sub>0\<close>: the attainment radius \<open>\<surd>(2\<epsilon>\<^sub>j(B\<^sub>u-B\<^sub>l))\<close> shrinks
+  into the neighbourhood where usc gives \<open>u < c\<close>.\<close>
 
 lemma supconv_usc_eventually_below:
   fixes u :: "'a::euclidean_space \<Rightarrow> real" and xs :: "nat \<Rightarrow> 'a"
@@ -8642,12 +8389,12 @@ proof -
       by (rule supconv_le_of_local_bound_usc[OF B ep less_imp_le[OF R0] gj loc])
   qed
 qed
-subsection \<open>P4 step 2: shrinking the domain, and extending \<open>u\<close> off \<open>K\<close>\<close>
+subsection \<open>Shrinking the domain, and extending \<open>u\<close> off \<open>K\<close>\<close>
 
 text \<open>All three viscosity predicates quantify over \<open>x \<in> \<Omega>\<close>, so each is
-  ANTITONE in \<open>\<Omega>\<close>.  P4 needs this twice: to restrict the \<open>u\<close>-side from
-  Definition 3.1's gated set to \<open>{u > 0}\<close>, and to restrict the \<open>w\<close>-side from
-  \<open>interior K'\<close> to a small neighbourhood of the maximiser.\<close>
+  antitone in \<open>\<Omega>\<close>: this restricts the \<open>u\<close>-side from Definition 3.1's
+  gated set to \<open>{u>0}\<close>, and the \<open>w\<close>-side from \<open>interior K'\<close> to a small
+  neighbourhood of the maximiser.\<close>
 
 lemma visc_subsol_mono_dom:
   assumes s: "visc_subsol k L \<Omega> u" and sub: "\<Omega>' \<subseteq> \<Omega>"
@@ -8659,11 +8406,9 @@ lemma supersol_jet_mono_dom:
   shows "supersol_jet k L \<Omega>' w"
   using s sub unfolding supersol_jet_def by blast
 
-text \<open>\<open>visc_subsol_env k L K \<Omega> u\<close> reads \<open>u\<close> only on \<open>K\<close> --- the touching is
-  global over \<open>K\<close> and the touching point lies in \<open>\<Omega> \<subseteq> K\<close>.  So it is
-  insensitive to how \<open>u\<close> is defined OFF \<open>K\<close>, which is what makes the extension
-  below legitimate: Definition 3.1(a) transfers to the extended function for
-  free, and with it the whole envelope-to-local bridge.\<close>
+text \<open>\<open>visc_subsol_env k L K \<Omega> u\<close> reads \<open>u\<close> only on \<open>K\<close>, insensitive to its
+  values off \<open>K\<close>, which is what makes the extension below legitimate:
+  Definition 3.1(a) transfers to the extended function for free.\<close>
 
 lemma visc_subsol_env_agrees:
   fixes K :: "(real^'n::finite) set"
@@ -8689,10 +8434,10 @@ proof (intro ballI allI impI)
     using sub x tf gl' unfolding visc_subsol_env_def by blast
 qed
 
-text \<open>Extending an usc \<open>u\<close> off a CLOSED \<open>K\<close> by a constant at or below its
-  minimum on \<open>K\<close> keeps it usc.  (@{thm [source] usc_extension_bounded} in
-  \<open>Envelopes\<close> does the \<open>-B\<close> case; P4 needs the constant to be as negative as it
-  likes, so that the doubled functional cannot be maximised off \<open>K\<close>.)\<close>
+text \<open>Extending an usc \<open>u\<close> off a closed \<open>K\<close> by a constant at or below its
+  minimum on \<open>K\<close> keeps it usc; @{thm [source] usc_extension_bounded} in
+  \<open>Envelopes\<close> does the \<open>-B\<close> case, needed as negative as required so the
+  doubled functional cannot be maximised off \<open>K\<close>.\<close>
 
 lemma usc_extend_const_below:
   fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
@@ -8728,12 +8473,10 @@ next
   qed
 qed
 
-text \<open>And the point of the extension: far from \<open>K\<close> its sup-convolution is back
-  down at the constant, because the whole competing ball misses \<open>K\<close>.  This is
-  what confines the doubling maximiser to a bounded neighbourhood of \<open>K\<close>
-  WITHOUT any boundary avoidance --- the \<open>x\<close>-side maximiser may sit on \<open>\<partial>K\<close>,
-  and still has a genuine ball around it inside the region over which the
-  maximality holds.\<close>
+text \<open>Far from \<open>K\<close> the extended function's sup-convolution returns to the
+  constant, since the whole competing ball misses \<open>K\<close>: this confines the
+  doubling maximiser to a bounded neighbourhood of \<open>K\<close> without boundary
+  avoidance on the \<open>x\<close>-side.\<close>
 
 lemma supconv_extend_far_le:
   fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
@@ -8750,15 +8493,12 @@ proof (rule supconv_le_of_local_bound_usc[OF B e d0 gap])
   qed
   then show "\<theta> * (if y \<in> K then u y else C) \<le> \<theta>*C" by simp
 qed
-text \<open>\<^bold>\<open>Attainment for usc data.\<close>  The Crandall--Ishii core asks for
-  \<open>continuous_on UNIV\<close> in exactly ONE place: to know the sup-convolution's
-  supremum is attained, so that the subsolution property can be read off at the
-  attaining point.  Continuity is far more than that needs.  The competitor
-  \<open>y \<mapsto> u y - dist\<^sup>2/(2\<epsilon>)\<close> is usc as soon as \<open>u\<close> is (the penalty is continuous,
-  and \<open>usc_eps_add\<close> adds), it is bounded above, and outside an explicit ball it
-  is already below its value at \<open>x\<close> --- so \<open>usc_attains_sup_gen\<close> on that
-  compact ball gives a GLOBAL maximiser.  This is what lets P4 run the whole
-  chain on usc/lsc data, which is what Definition 3.1 supplies.\<close>
+text \<open>The Crandall--Ishii core needs \<open>continuous_on UNIV\<close> only to attain the
+  sup-convolution's supremum, more than necessary: the competitor
+  \<open>y \<mapsto> u y - dist\<^sup>2/(2\<epsilon>)\<close> is usc as soon as \<open>u\<close> is, bounded above, and
+  below its value at \<open>x\<close> outside an explicit ball, so \<open>usc_attains_sup_gen\<close>
+  on that compact ball gives a global maximiser - letting the chain run on
+  usc/lsc data directly.\<close>
 
 lemma supconv_attained_usc_ball:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -8885,18 +8625,14 @@ proof -
   then show ?thesis by (rule choice)
 qed
 
-text \<open>\<^bold>\<open>The two-domain localised maximiser.\<close>  This is what replaces
-  \<open>doubling_localised_maximiser_soft\<close>, and it is much simpler, because the
-  \<open>x\<close>-side boundary avoidance is GONE.  Maximise the doubled sup-convolved
-  functional over the compact \<open>Q \<times> K'\<close>; if the \<open>x\<close>-side sup-convolution is
-  already below \<open>\<beta>\<close> off \<open>Q\<close>, and the witness \<open>z\<close> beats \<open>\<beta> + B\<^sub>w\<close>, then the
-  maximiser maximises over all of \<open>UNIV \<times> K'\<close>.  Only the \<open>y\<close>-coordinate is then
-  constrained, and \<open>K \<subseteq> K'\<^sup>\<circ>\<close> gives it room --- which is exactly why the paper
-  runs Theorem 4.2(b) on two domains.
-
-  @{thm [source] supconv_extend_far_le} supplies \<open>out\<close> for the constant
-  extension of \<open>u\<close> off \<open>K\<close>, and \<open>supconv_continuous\<close> supplies the continuity
-  from an upper bound alone --- no regularity of \<open>u\<close> or \<open>w\<close> is used here.\<close>
+text \<open>The two-domain localised maximiser replaces
+  \<open>doubling_localised_maximiser_soft\<close> with the \<open>x\<close>-side boundary avoidance
+  gone: maximise the doubled sup-convolved functional over the compact
+  \<open>Q \<times> K'\<close>; if the \<open>x\<close>-side sup-convolution is below \<open>\<beta>\<close> off \<open>Q\<close> and a
+  witness beats \<open>\<beta>+B\<^sub>w\<close>, the maximiser maximises over all of
+  \<open>UNIV \<times> K'\<close>, leaving only the \<open>y\<close>-coordinate constrained - which
+  \<open>K \<subseteq> K'\<^sup>\<circ>\<close> gives room for.  This is why Theorem 4.2(b) runs on two
+  domains.\<close>
 
 lemma doubled_maximiser_over_UNIV_snd:
   fixes A Bfun Pn :: "real^'n::finite \<Rightarrow> real" and K' Q :: "(real^'n) set"
@@ -8949,8 +8685,8 @@ proof -
 qed
 
 text \<open>Maximality over \<open>UNIV \<times> K'\<close> restricts to the ball the Crandall--Ishii
-  core wants, as soon as the \<open>y\<close>-coordinate has room --- the \<open>x\<close>-coordinate is
-  unconstrained, so nothing is asked of it.\<close>
+  core wants as soon as the \<open>y\<close>-coordinate has room; the \<open>x\<close>-coordinate is
+  unconstrained.\<close>
 
 lemma mxK_of_UNIV_snd:
   fixes A Bfun Pn :: "real^'n::finite \<Rightarrow> real"
@@ -8968,17 +8704,13 @@ proof -
   then have "snd p \<in> K'" using ball by blast
   from mx[OF this] show ?thesis .
 qed
-text \<open>The other half of the two-domain interface: \<open>atu\<close>.  The core reads the
-  subsolution property at the ATTAINMENT point of \<open>supconv (\<theta>u) \<epsilon>\<close> over the
-  \<open>\<rho>\<close>-ball around \<open>x\<^sup>h\<close>, and Definition 3.1's gate puts that point in \<open>{u > 0}\<close>
-  as soon as the sup-convolution is positive there --- because the attained
-  value is the sup-convolution PLUS the (nonnegative) penalty.
-
-  Positivity on the whole \<open>\<rho>\<close>-ball, not just at \<open>x\<^sup>h\<close>, is free: \<open>\<rho>\<close> is a FREE
-  parameter of \<open>comparison_supconv_maximiser_complete_gen\<close> below (only
-  \<open>0 < \<rho>\<close>, \<open>\<rho> < r\<close> and \<open>\<rho> + R\<^sub>w \<le> \<kappa>\<close> are asked, all preserved by
-  shrinking), and \<open>supconv\<close> is continuous whenever its argument is bounded
-  above.\<close>
+text \<open>The other half of the two-domain interface: the core reads the
+  subsolution property at the attainment point of \<open>supconv(\<theta>u)\<epsilon>\<close> over the
+  \<open>\<rho>\<close>-ball around \<open>x\<^sup>h\<close>, and Definition 3.1's gate puts that point in
+  \<open>{u>0}\<close> whenever the sup-convolution is positive there, since the
+  attained value adds a nonnegative penalty.  Positivity on the whole
+  ball, not just at \<open>x\<^sup>h\<close>, is free since \<open>\<rho>\<close> is a free parameter
+  preserved by shrinking.\<close>
 
 lemma cont_pos_near:
   fixes A :: "real^'n::finite \<Rightarrow> real"
@@ -9013,9 +8745,8 @@ proof -
   then show ?thesis using t0 by (simp add: zero_less_mult_iff)
 qed
 
-text \<open>Packaged: on a \<open>\<rho>\<close>-ball where the sup-convolution stays positive, every
-  attainment point lies in the gated set --- which is precisely the core's
-  \<open>atu\<close> hypothesis.\<close>
+text \<open>On a \<open>\<rho>\<close>-ball where the sup-convolution stays positive, every attainment
+  point lies in the gated set - the core's \<open>atu\<close> hypothesis.\<close>
 
 lemma atu_of_positive_ball:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -9089,27 +8820,16 @@ qed
 
 subsection \<open>Locating the doubling maximiser away from the boundary\<close>
 
-text \<open>This is the step that makes \<open>interior K\<close> --- rather than \<open>K\<close> --- the domain
-  where the viscosity properties are used, and the last one on the route to
-  Theorem 4.2(a) that is not bookkeeping.
-
-  The assembly needs its geometric data (\<open>cball \<xi>\<^sub>0 r \<subseteq> K \<times> K\<close>,
-  \<open>cball x R\<^sub>u \<subseteq> interior K\<close>) at the doubling maximiser \<open>(x\<hat>, y\<hat>)\<close>, and by
-  \<open>cball_subset_interior_of_far_from_boundary\<close> all of it follows from ONE fact:
-  that \<open>x\<hat>\<close> and \<open>y\<hat>\<close> lie at distance more than \<open>\<kappa>\<close> from \<open>K - interior K\<close>.
-
-  That fact is where the interior/boundary gap of \<open>\<theta>u - w\<close> is spent.  The
-  doubled functional at \<open>(x\<hat>, y\<hat>)\<close> beats its value on the diagonal at the point
-  \<open>z\<close> where \<open>\<theta>u - w\<close> is largest; two sup-convolution errors \<open>\<sigma>\<close> and one modulus
-  \<open>\<tau>\<close> (to move \<open>y\<hat>\<close> to \<open>x\<hat>\<close>, which are within \<open>\<beta>\<close> of each other once \<open>\<alpha>\<close> is large)
-  turn that into \<open>(\<theta>u - w)(x\<hat>) \<ge> M - 2\<sigma> - \<tau>\<close>.  Were \<open>x\<hat>\<close> within \<open>\<kappa>\<close> of the
-  boundary, a third modulus \<open>\<tau>'\<close> would put it below \<open>m + \<tau>'\<close>.  So the whole
-  argument is the single inequality \<open>m + 2\<sigma> + \<tau> + \<tau>' < M\<close>, and each of the three
-  small quantities is at the disposal of a parameter: \<open>\<sigma>\<close> of \<open>\<epsilon>\<close>, \<open>\<tau>\<close> of \<open>\<alpha>\<close>,
-  \<open>\<tau>'\<close> of \<open>\<kappa>\<close>, while \<open>m < M\<close> is the gap being contradicted.
-
-  Stated for abstract \<open>f\<close>, \<open>g\<close> and abstract moduli, so that the sup-convolutions,
-  the \<open>\<theta>\<close>-scaling and the sign convention \<open>g = -w\<close> are all invisible here.\<close>
+text \<open>This step makes \<open>interior K\<close>, not \<open>K\<close>, the domain where the viscosity
+  properties are used.  The needed geometric data at the doubling
+  maximiser \<open>(x̂,ŷ)\<close> - \<open>cball \<xi>\<^sub>0 r \<subseteq> K \<times> K\<close> and
+  \<open>cball x R\<^sub>u \<subseteq> interior K\<close> - follows by
+  \<open>cball_subset_interior_of_far_from_boundary\<close> from \<open>x̂\<close> and \<open>ŷ\<close> lying more
+  than \<open>\<kappa>\<close> from \<open>K - interior K\<close>, which the interior/boundary gap of
+  \<open>\<theta>u-w\<close> forces via \<open>m + 2\<sigma> + \<tau> + \<tau>' < M\<close>, each small quantity
+  controlled by a free parameter (\<open>\<sigma>\<close> by \<open>\<epsilon>\<close>, \<open>\<tau>\<close> by \<open>\<alpha>\<close>, \<open>\<tau>'\<close> by
+  \<open>\<kappa>\<close>).  Stated for abstract \<open>f\<close>, \<open>g\<close> and moduli, so the sup-convolutions
+  and \<open>\<theta>\<close>-scaling stay invisible.\<close>
 
 lemma uniform_modulus_on_compact:
   fixes v :: "'a::heine_borel \<Rightarrow> real"
@@ -9193,20 +8913,13 @@ qed
 
 subsection \<open>The two penalty-carrying localisation helpers, generalised\<close>
 
-text \<open>Of the eleven lemmas in the localisation layer, only these two mention the
-  penalty at all --- and neither uses anything quadratic about it.
-
-  \<open>doubling_maximiser_value_transfer\<close> uses ONLY that the penalty vanishes on the
-  diagonal, i.e. \<open>Pn 0 = 0\<close>: the maximiser inequality is instantiated at
-  \<open>x = y = z\<close> and the penalty term there is \<open>Pn (z - z) = Pn 0\<close>.
-
-  \<open>norm_lt_of_penalty_bound\<close> uses ONLY coercivity, and in the general form it
-  does not even need monotonicity --- it is a one-line contraposition once the
-  hypothesis is phrased as "the penalty exceeds \<open>C\<close> outside radius \<open>\<beta>\<close>".
-
-  \<open>doubling_maximiser_far_from_boundary\<close> itself --- the theorem that PRODUCES
-  the \<open>farx\<close>/\<open>fary\<close> hypotheses of the assembly --- is already penalty-free: it
-  consumes the penalty only through the abstracted \<open>tr\<close> and \<open>near\<close>.\<close>
+text \<open>Of the eleven lemmas in the localisation layer, only two mention the
+  penalty, and neither uses anything quadratic about it:
+  \<open>doubling_maximiser_value_transfer\<close> uses only \<open>Pn 0 = 0\<close>, and
+  \<open>norm_lt_of_penalty_bound\<close> uses only coercivity, phrased as "the
+  penalty exceeds \<open>C\<close> outside radius \<open>\<beta>\<close>".
+  \<open>doubling_maximiser_far_from_boundary\<close> itself is penalty-free,
+  consuming the penalty only through the abstracted \<open>tr\<close> and \<open>near\<close>.\<close>
 
 lemma doubling_maximiser_value_transfer_gen:
   fixes A Bf f g :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -9240,11 +8953,10 @@ qed
 
 subsection \<open>\<open>soft_pen\<close> vanishes on the diagonal and is coercive\<close>
 
-text \<open>Both facts reduce to the radial profile \<open>h s = \<kappa>(s/2 - (sqrt (s+1) - 1))\<close>
-  evaluated at \<open>s = norm d ^ 2\<close>.  \<open>h 0 = 0\<close> is immediate.  Monotonicity of \<open>h\<close> is
-  the same difference-of-squares trick as \<open>soft_R_lipschitz\<close>: for \<open>0 \<le> s \<le> t\<close>,
-  \<open>(a - b)(a + b) = t - s\<close> with \<open>a = sqrt (t+1)\<close>, \<open>b = sqrt (s+1)\<close>, and \<open>a + b \<ge> 2\<close>
-  gives \<open>2(a - b) \<le> t - s\<close> --- which is exactly \<open>h\<close> nondecreasing.\<close>
+text \<open>Both facts reduce to the radial profile
+  \<open>h s = \<kappa>(s/2-(sqrt(s+1)-1))\<close> at \<open>s = norm d\<^sup>2\<close>: \<open>h 0 = 0\<close> is immediate,
+  and monotonicity follows the difference-of-squares trick of
+  \<open>soft_R_lipschitz\<close>.\<close>
 
 lemma soft_pen_zero: "soft_pen \<kappa> (0 :: real^'n::finite) = 0"
   unfolding soft_pen_def by simp
@@ -9293,10 +9005,9 @@ proof -
   then show ?thesis unfolding fact by (simp add: mult_ac)
 qed
 
-text \<open>NB the bound variables here are \<open>a\<close> and \<open>b\<close>, not \<open>s\<close> and \<open>t\<close>: with a
-  variable named \<open>s\<close>, the term \<open>(\<kappa>/2)*s\<close> lexes as the Cartesian scalar-vector
-  product token \<open>*s\<close> and the statement fails to type-check with a
-  \<open>Clash of types "vec" and "real"\<close>.\<close>
+text \<open>The bound variables are \<open>a\<close> and \<open>b\<close>, not \<open>s\<close> and \<open>t\<close>: with a variable
+  named \<open>s\<close>, \<open>(\<kappa>/2)*s\<close> lexes as the Cartesian scalar-vector product
+  token and fails to type-check.\<close>
 
 lemma soft_pen_radial_mono:
   fixes a b :: real
@@ -9354,9 +9065,8 @@ lemma soft_pen_little_o:
   using soft_pen_vanishing_jet_at_zero[where \<kappa> = \<kappa>]
   unfolding soft_pen_zero by simp
 
-text \<open>Step 2 of the diagonal wiring, complete: a diagonal maximiser's increment
-  bound is exactly the one-sided hypothesis that
-  \<open>supersol_no_vanishing_jet_onesided\<close> consumes.\<close>
+text \<open>A diagonal maximiser's increment bound is exactly the one-sided
+  hypothesis \<open>supersol_no_vanishing_jet_onesided\<close> consumes.\<close>
 
 lemma diagonal_increment_onesided:
   fixes B :: "real^'n::finite \<Rightarrow> real"
@@ -9370,11 +9080,9 @@ lemma soft_pen_neg:
   shows "soft_pen \<kappa> (- d) = soft_pen \<kappa> d"
   unfolding soft_pen_def by simp
 
-text \<open>What a DIAGONAL maximiser gives.  Note carefully that these are ONE-SIDED:
-  the maximiser inequality bounds the increment of each component ABOVE by the
-  penalty, and says nothing below.  Whether that suffices depends on whether
-  \<open>supersol_no_vanishing_jet\<close>'s two-sided hypothesis is genuinely two-sided ---
-  see the note in STATUS.  These two facts are true and needed either way.\<close>
+text \<open>A diagonal maximiser bounds the increment of each component above by
+  the penalty only; the maximiser inequality is one-sided and says
+  nothing below.\<close>
 
 lemma diagonal_max_increments:
   fixes A B :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -9427,19 +9135,12 @@ qed
 
 subsection \<open>Coercivity of \<open>soft_pen\<close>: recovering the norm bound\<close>
 
-text \<open>The quadratic penalty gets a bound on \<open>norm (xh - yh)\<close> for free, by
-  DIVIDING \<open>(\<alpha>/2)|d|^2 \<le> C\<^sub>0\<close> through by \<open>\<alpha>\<close>.  That inversion has no analogue for
-  a general penalty: \<open>doubling_penalty_bound_gen\<close> gives only \<open>Pn d \<le> C\<^sub>0\<close>, and
-  turning that into \<open>norm d < \<beta>\<close> needs coercivity --- which is exactly the shape
-  \<open>norm_lt_of_penalty_bound_gen\<close> asks for.
-
-  For \<open>soft_pen\<close> the mechanism is that it is LINEAR IN \<open>\<kappa>\<close>: at a fixed radius
-  \<open>\<beta>\<close> the penalty grows like \<open>\<kappa>\<close>, so for \<open>\<kappa>\<close> large it beats the fixed constant
-  \<open>C\<^sub>0\<close>.  This is the \<open>\<kappa> \<rightarrow> \<infinity>\<close> mechanism, exactly parallel to \<open>\<alpha> \<rightarrow> \<infinity>\<close>.
-
-  Positivity of the radial profile is elementary after the substitution
-  \<open>a = 2c\<close>: \<open>sqrt (2c+1) < c+1\<close> squares to \<open>2c+1 < c^2+2c+1\<close>, i.e. \<open>0 < c^2\<close>.
-  Substituting removes every division, which is what makes it go through here.\<close>
+text \<open>The quadratic penalty bounds \<open>norm(x̂-ŷ)\<close> by dividing
+  \<open>(\<alpha>/2)\<parallel>d\<parallel>\<^sup>2 \<le> C\<^sub>0\<close> through by \<open>\<alpha>\<close>; for a general penalty this needs
+  coercivity instead (\<open>norm_lt_of_penalty_bound_gen\<close>).  \<open>soft_pen\<close> is
+  linear in \<open>\<kappa>\<close>, so at fixed radius \<open>\<beta>\<close> its value eventually beats any
+  fixed \<open>C\<^sub>0\<close> as \<open>\<kappa> \<rightarrow> \<infinity>\<close>, parallel to the \<open>\<alpha> \<rightarrow> \<infinity>\<close> mechanism for
+  the quadratic case.\<close>
 
 lemma sqrt_lt_half_plus_one:
   fixes c :: real
@@ -9487,12 +9188,10 @@ proof -
     unfolding soft_pen_def by (rule soft_pen_radial_mono[OF k a0 ab])
 qed
 
-text \<open>And the packaged coercivity, in exactly the shape
-  \<open>norm_lt_of_penalty_bound_gen\<close> consumes.  The hypothesis \<open>big\<close> is the
-  \<open>\<kappa> \<rightarrow> \<infinity>\<close> requirement: it says \<open>\<kappa>\<close> has been taken large enough that the penalty
-  at radius \<open>\<beta>\<close> already exceeds the fixed constant \<open>C\<^sub>0\<close>.  Since the profile is
-  strictly positive (\<open>radial_profile_pos\<close>) and \<open>soft_pen\<close> is linear in \<open>\<kappa>\<close>, such
-  a \<open>\<kappa>\<close> always exists --- \<open>soft_pen_kappa_exists\<close>.\<close>
+text \<open>The packaged coercivity, in the shape \<open>norm_lt_of_penalty_bound_gen\<close>
+  consumes: hypothesis \<open>big\<close> says \<open>\<kappa>\<close> is large enough that the penalty at
+  radius \<open>\<beta>\<close> exceeds \<open>C\<^sub>0\<close>, and such \<open>\<kappa>\<close> always exists since the radial
+  profile is strictly positive and linear in \<open>\<kappa>\<close> (\<open>soft_pen_kappa_exists\<close>).\<close>
 
 lemma soft_pen_coercive_outside:
   fixes x :: "real^'n::finite"
@@ -9525,15 +9224,11 @@ proof -
     using lt unfolding scale[of \<kappa>] .
   from kpos final show ?thesis by blast
 qed
-text \<open>\<^bold>\<open>The \<open>y\<close>-side of the two-domain interface.\<close>  At the maximiser the
-  penalty is bounded by the range, so a large enough \<open>\<kappa>\<^sub>P\<close> pins \<open>y\<^sup>h\<close> to \<open>x\<^sup>h\<close>;
-  \<open>x\<^sup>h\<close> is near \<open>K\<close> (it lies in the confinement region \<open>Q\<close>), and
-  \<open>two_domain_gap\<close> below keeps \<open>K\<close> a positive distance from \<open>\<partial>K'\<close>.
-  Composing the three gives the \<open>fary\<close> the Crandall--Ishii chain wants ---
-  and \<^emph>\<open>only\<close> on the \<open>y\<close>-side, which is the whole point of two domains.
-
-  \<open>soft_pen_kappa_exists\<close> says such a \<open>\<kappa>\<^sub>P\<close> always exists, so \<open>big\<close> below costs
-  nothing.\<close>
+text \<open>The \<open>y\<close>-side of the two-domain interface: at the maximiser the penalty
+  is bounded by the range, so a large enough \<open>\<kappa>\<^sub>P\<close> pins \<open>y^h\<close> to \<open>x^h\<close>;
+  \<open>x^h\<close> is near \<open>K\<close>, and \<open>two_domain_gap\<close> keeps \<open>K\<close> a positive distance
+  from \<open>\<partial>K'\<close>.  Composing the three gives the \<open>fary\<close> hypothesis, needed
+  only on the \<open>y\<close>-side.\<close>
 
 lemma pin_of_penalty_bound:
   fixes A Bfun :: "real^'n::finite \<Rightarrow> real" and xh yh :: "real^'n"
@@ -9572,10 +9267,9 @@ proof -
 qed
 
 
-text \<open>Continuity of \<open>soft_pen\<close>, which is the single hypothesis
-  \<open>doubling_maximiser_exists_gen\<close> needs about the penalty, and the resulting
-  existence statement at the concrete penalty.  Note \<open>sqrt\<close> is total in
-  Isabelle, so no positivity side condition is needed here.\<close>
+text \<open>Continuity of \<open>soft_pen\<close> is the single hypothesis
+  \<open>doubling_maximiser_exists_gen\<close> needs about the penalty.  \<open>sqrt\<close> is
+  total in Isabelle, so no positivity side condition is needed.\<close>
 
 lemma soft_pen_continuous:
   "continuous_on UNIV (soft_pen \<kappa> :: real^'n::finite \<Rightarrow> real)"
@@ -9590,13 +9284,10 @@ theorem doubling_maximiser_exists_soft:
         \<le> u xh - w yh - soft_pen \<kappa> (xh - yh)"
   by (rule doubling_maximiser_exists_gen[OF cK neK cu cw soft_pen_continuous])
 
-text \<open>And the sup-convolution form, which is exactly the shape the top-level
-  \<open>mxKK\<close> hypothesis of \<open>comparison_from_localised_maximiser_soft\<close> wants.  This
-  is a transcription of \<open>doubling_maximiser_supconv\<close>: that proof copies the
-  penalty and touches nothing else, so the only change is which existence
-  theorem it calls.  Continuity of the two sup-convolutions is free ---
-  \<open>supconv_continuous\<close> needs only an upper bound and \<open>\<epsilon> > 0\<close> --- which is where
-  the sup-convolution earns its keep.\<close>
+text \<open>The sup-convolution form matches the \<open>mxKK\<close> hypothesis of
+  \<open>comparison_from_localised_maximiser_soft\<close>, a transcription of
+  \<open>doubling_maximiser_supconv\<close> with continuity of the two sup-convolutions
+  free from \<open>supconv_continuous\<close>.\<close>
 
 corollary doubling_maximiser_supconv_soft:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -9624,16 +9315,11 @@ qed
 
 subsection \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step for \<open>soft_pen\<close>: the maximiser closes up\<close>
 
-text \<open>This is the \<open>soft_pen\<close> analogue of \<open>doubling_dist_bound\<close>, and it is where
-  the coercivity earns its keep.  For the quadratic penalty one divides
-  \<open>(\<alpha>/2)|d|^2 \<le> C\<^sub>0\<close> by \<open>\<alpha>\<close>; here one instead uses that the penalty at radius \<open>\<beta>\<close>
-  grows linearly in \<open>\<kappa>\<close> and so eventually exceeds the FIXED constant \<open>C\<^sub>0\<close>, which
-  forces the maximiser inside radius \<open>\<beta>\<close>.
-
-  Note the quantifier order, which is the whole point: \<open>\<beta>\<close> is given FIRST, and
-  \<open>\<kappa>\<close> is chosen afterwards to match it.  The maximiser then depends on \<open>\<kappa>\<close>, so
-  the statement has to produce \<open>\<kappa>\<close> and the maximiser together --- one cannot fix
-  a maximiser and then ask for a \<open>\<kappa>\<close>.\<close>
+text \<open>The \<open>soft_pen\<close> analogue of \<open>doubling_dist_bound\<close>: the penalty at radius
+  \<open>\<beta>\<close> grows linearly in \<open>\<kappa>\<close> and eventually exceeds the fixed \<open>C\<^sub>0\<close>,
+  forcing the maximiser inside radius \<open>\<beta>\<close>.  The quantifier order matters:
+  \<open>\<beta>\<close> is given first, \<open>\<kappa>\<close> chosen afterwards, so the statement produces
+  \<open>\<kappa>\<close> and the maximiser together.\<close>
 
 lemma doubling_near_soft:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -9692,10 +9378,9 @@ proof -
   show ?thesis using kpos xh yh mx near by blast
 qed
 
-text \<open>And the \<open>\<kappa> \<rightarrow> \<infinity>\<close> step in the sup-convolution shape the assembly consumes.
-  Same sign flip as \<open>doubling_maximiser_supconv_soft\<close>: instantiate the general
-  form at \<open>u := supconv (\<theta>u) \<epsilon>\<close> and \<open>w := \<lambda>y. - supconv (-w) \<epsilon> y\<close>, so that
-  \<open>u x - w y\<close> becomes \<open>supconv (\<theta>u) \<epsilon> x + supconv (-w) \<epsilon> y\<close>.\<close>
+text \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step in the sup-convolution shape the assembly consumes,
+  with the same sign flip as \<open>doubling_maximiser_supconv_soft\<close>:
+  instantiate at \<open>u := supconv(\<theta>u)\<epsilon>\<close> and \<open>w := \<lambda>y. -supconv(-w)\<epsilon> y\<close>.\<close>
 
 theorem doubling_close_maximiser_supconv_soft:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -9738,20 +9423,12 @@ qed
 
 subsection \<open>The \<open>\<epsilon> \<rightarrow> 0\<close> step: the sup-convolution is uniformly close on \<open>K\<close>\<close>
 
-text \<open>\<open>supconv_sandwich\<close> is pointwise and needs a LOCAL modulus at the point,
-  valid on a ball that sticks out of \<open>K\<close>.  The assembly needs the bound at the
-  doubling maximiser, which is not known in advance, so it has to be uniform
-  over \<open>K\<close>.
-
-  The fix is to run \<open>uniform_modulus_on_compact\<close> not on \<open>K\<close> but on a closed ball
-  \<open>cball 0 R\<close> containing the 1-neighbourhood of \<open>K\<close>, and then to cap the modulus
-  radius at 1 so that the ball around any point of \<open>K\<close> stays inside \<open>cball 0 R\<close>.
-  This is where the earlier reduction to GLOBALLY continuous, globally bounded
-  data (\<open>continuous_extension_bounded\<close>, \<open>visc_subsol_extend\<close>) pays off: without
-  it there would be no modulus to take just outside \<open>K\<close>.
-
-  \<open>exists_eps_aux\<close> is again stated on abstract reals, so that no simp step ever
-  sees the quotient defining \<open>\<epsilon>\<close>.\<close>
+text \<open>\<open>supconv_sandwich\<close> needs a local modulus valid on a ball sticking out
+  of \<open>K\<close>, but the doubling maximiser's location is unknown, so the bound
+  must be uniform over \<open>K\<close>.  The fix runs \<open>uniform_modulus_on_compact\<close>
+  on \<open>cball 0 R\<close> containing the 1-neighbourhood of \<open>K\<close>, capping the
+  modulus radius at 1 - which relies on the earlier reduction to
+  globally continuous, globally bounded data.\<close>
 
 lemma exists_eps_aux:
   fixes H D :: real
@@ -9860,23 +9537,17 @@ qed
 
 subsection \<open>Threading the parameters: the localised maximiser for \<open>soft_pen\<close>\<close>
 
-text \<open>All five smallness steps now exist; this threads them.  The ORDER is the
-  whole content, and getting it wrong is the classic way this argument fails to
-  assemble --- the maximiser DEPENDS on \<open>\<kappa>\<^sub>P\<close>, so \<open>\<kappa>\<^sub>P\<close> must be fixed before the
-  maximiser exists, and \<open>\<beta>\<close> before \<open>\<kappa>\<^sub>P\<close>:
+text \<open>Threading the five smallness steps, in order (the maximiser depends on
+  \<open>\<kappa>\<^sub>P\<close>, which must be fixed before it, and \<open>\<beta>\<close> before \<open>\<kappa>\<^sub>P\<close>):
 
-    \<open>G = M - m > 0\<close>, split as \<open>\<sigma> = \<tau> = \<tau>' = G/8\<close>, so \<open>m + 2\<sigma> + \<tau> + \<tau>' = m + G/2 < M\<close>
+    \<open>G = M - m > 0\<close>, split as \<open>\<sigma> = \<tau> = \<tau>' = G/8\<close>
     \<open>\<tau>\<close>  fixes \<open>\<beta>\<^sub>0\<close>   (modulus of \<open>g\<close> on \<open>K\<close>)
     \<open>\<tau>'\<close> fixes \<open>\<kappa>\<^sub>0\<close>   (modulus of \<open>f + g\<close> on \<open>K\<close>)
-    \<open>\<kappa>\<^sub>g = \<kappa>\<^sub>0/2\<close> and \<open>\<beta> = min \<beta>\<^sub>0 (\<kappa>\<^sub>0/2)\<close>, so \<open>\<kappa>\<^sub>g + \<beta> \<le> \<kappa>\<^sub>0\<close>
-    \<open>\<sigma>\<close>  fixes \<open>\<epsilon>\<close>    (TWICE --- once per sup-convolution --- then the minimum)
-    \<open>\<beta>\<close>  fixes \<open>\<kappa>\<^sub>P\<close>   and with it the maximiser
-    finally \<open>doubling_maximiser_far_from_boundary\<close> at radius \<open>\<kappa>\<^sub>g + \<beta>\<close>
+    \<open>\<kappa>\<^sub>g = \<kappa>\<^sub>0/2\<close>, \<open>\<beta> = min \<beta>\<^sub>0 (\<kappa>\<^sub>0/2)\<close>
+    \<open>\<sigma>\<close>  fixes \<open>\<epsilon>\<close>, and \<open>\<beta>\<close> fixes \<open>\<kappa>\<^sub>P\<close> and the maximiser
 
-  The bound for \<open>ŷ\<close> comes free from the one for \<open>x̂\<close>: applying the boundary
-  theorem at radius \<open>\<kappa>\<^sub>g + \<beta>\<close> and using \<open>dist x̂ ŷ < \<beta>\<close> gives
-  \<open>dist ŷ b \<ge> dist x̂ b - dist x̂ ŷ > (\<kappa>\<^sub>g + \<beta>) - \<beta> = \<kappa>\<^sub>g\<close>.  That avoids needing a
-  second modulus, for \<open>f\<close>, which the quadratic development never had either.\<close>
+  The bound for \<open>ŷ\<close> comes free from the one for \<open>x̂\<close> via the triangle
+  inequality, avoiding a second modulus for \<open>f\<close>.\<close>
 
 theorem doubling_localised_maximiser_soft:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -10060,15 +9731,11 @@ qed
 
 subsection \<open>Skolemising a four-component existential over an index\<close>
 
-text \<open>The jet family needs the same step as \<open>supconv_attained_family\<close>, but
-  \<open>doubled_supconv_jet_exists\<close> produces FOUR objects at once - the maximiser,
-  the tilt, the gradient and the Hessian - so plain \<open>choice\<close> does not apply
-  directly.  This is the general form; it is pure skolemisation and has nothing
-  to do with the doubling.
-
-  Recording it separately because it is reusable: every "run the construction
-  at each index and collect the results into sequences" step in this
-  development has this shape.\<close>
+text \<open>\<open>doubled_supconv_jet_exists\<close> produces four objects at once - the
+  maximiser, the tilt, the gradient and the Hessian - so plain \<open>choice\<close>
+  does not apply directly; this is the general skolemisation form,
+  reusable wherever a construction is run at each index and collected
+  into sequences.\<close>
 
 lemma choice2:
   assumes "\<And>i. \<exists>a b. P i a b"
@@ -10086,16 +9753,11 @@ lemma choice4:
   using assms by metis
 
 
-text \<open>The family itself.  This is the shifted analogue of the family production
-  inside stage 10: run Jensen at the perturbation \<open>\<delta>\<^sub>i\<close> and tilt \<open>dd\<^sub>i\<close> of
-  \<open>shifted_family_parameters\<close>, and skolemise.  The two hypotheses Jensen needs
-  are now both automatic --- the annulus bound from
-  \<open>shifted_annulus_bound_split\<close> applied to the maximiser property, and the
-  smallness condition from the parameter choice, which after
-  \<open>shifted_centre_value\<close> has collapsed to \<open>2 dd\<^sub>i r < \<delta>\<^sub>i\<rho>\<^sup>2\<close>.
-
-  Only the MAXIMISER property over \<open>cball \<xi>\<^sub>0 r\<close> is assumed; everything else is
-  produced.\<close>
+text \<open>The shifted analogue: run Jensen at the perturbation \<open>\<delta>\<^sub>i\<close> and tilt
+  \<open>dd\<^sub>i\<close> of \<open>shifted_family_parameters\<close>, and skolemise.  Both hypotheses
+  Jensen needs are automatic, from \<open>shifted_annulus_bound_split\<close> and the
+  smallness condition \<open>2 dd\<^sub>i r < \<delta>\<^sub>i\<rho>\<^sup>2\<close>; only the maximiser property
+  over \<open>cball \<xi>\<^sub>0 r\<close> is assumed.\<close>
 
 theorem shifted_jensen_family:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -10226,12 +9888,10 @@ proof -
     using famP[unfolded P_def] by blast
 qed
 
-text \<open>The shifted Jensen FAMILY for a general penalty: run the shifted
-  construction at the tilts \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> and skolemise with \<open>choice4\<close>.  A
-  transcription of \<open>shifted_jensen_family\<close>, now that every lemma it calls has a
-  general form.  Placed HERE rather than with the other \<open>_gen\<close> lemmas because
-  \<open>choice4\<close> and \<open>shifted_family_parameters\<close> are declared further down the file
-  than they are.\<close>
+text \<open>The shifted Jensen family for a general penalty: run the shifted
+  construction at tilts \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> and skolemise with \<open>choice4\<close>, a
+  transcription of \<open>shifted_jensen_family\<close> now that every lemma it calls
+  has a general form.\<close>
 
 theorem shifted_jensen_family_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -10361,20 +10021,15 @@ proof -
   show ?thesis
     using famP[unfolded P_def] by blast
 qed
-subsection \<open>The family construction, abstracted over the construction\<close>
+subsection \<open>The family construction, abstracted over the produced predicate\<close>
 
-text \<open>And the instantiation step itself.  Stating it ABSTRACTLY over the
-  produced predicate \<open>Q\<close> is the right move: the conclusion of
-  \<open>doubled_supconv_jet_exists\<close> is some fifteen lines of jet statement, and
-  transcribing it into a family theorem would be fifteen lines of transcription
-  with fifteen chances to mistype a subscript.  Abstracted, the step is four
-  lines and applies verbatim.
-
-  Read \<open>Q dd zh p q W\<close> as "running the construction at tilt \<open>dd\<close> yields
-  maximiser \<open>zh\<close>, tilt vector \<open>p\<close>, gradient \<open>q\<close> and Hessian \<open>W\<close>".  The
-  hypothesis is exactly \<open>doubled_supconv_jet_exists\<close> with its \<open>dd\<close>-dependent
-  side conditions already discharged by \<open>jensen_tilt_small_enough\<close>; the
-  conclusion is exactly the indexed family that
+text \<open>Stated abstractly over the produced predicate \<open>Q\<close> rather than
+  transcribing \<open>doubled_supconv_jet_exists\<close>'s fifteen-line jet conclusion
+  directly.  Read \<open>Q dd zh p q W\<close> as "running the construction at tilt
+  \<open>dd\<close> yields maximiser \<open>zh\<close>, tilt vector \<open>p\<close>, gradient \<open>q\<close> and Hessian
+  \<open>W\<close>".  The hypothesis is \<open>doubled_supconv_jet_exists\<close> with its
+  \<open>dd\<close>-dependent side conditions discharged by \<open>jensen_tilt_small_enough\<close>;
+  the conclusion is the indexed family
   \<open>comparison_supconv_sequence_complete\<close> consumes.\<close>
 
 theorem family_of_tilt_construction:
@@ -10388,10 +10043,9 @@ proof -
     by (rule choice4)
 qed
 
-text \<open>With the admissible tilt sequence of \<open>tilt_sequence_admissible\<close> this
-  gives families indexed by \<open>i\<close> whose tilts converge to zero - which is what
-  \<open>gradient_sequences_align_of_bound\<close> needs to align the two gradients, and
-  hence what closes the alignment hypothesis of
+text \<open>With \<open>tilt_sequence_admissible\<close> this gives families indexed by \<open>i\<close>
+  whose tilts converge to zero, which \<open>gradient_sequences_align_of_bound\<close>
+  needs to align the two gradients and close the alignment hypothesis of
   \<open>env_strict_contradiction_of_shifted_limits\<close>.\<close>
 
 corollary family_of_tilt_construction_shrinking:
@@ -10408,45 +10062,26 @@ proof -
     using tilt_sequence_admissible(3)[OF D] by blast
 qed
 
-section \<open>From a BOUNDED family to the contradiction\<close>
+section \<open>From a bounded family to the contradiction\<close>
 
-text \<open>\<open>comparison_supconv_sequence_complete\<close> asks for four CONVERGENT sequences
-  and \<open>p \<noteq> 0\<close> at the limit.  The doubling never produces convergence: it
-  produces BOUNDS --- on the Hessians from \<open>semiconvex_alexandrov_bounded\<close> via
-  \<open>symmetric_form_bound\<close>, on the penalty gradients from the doubling estimate,
-  and on the tilts by construction.  This section closes that mismatch, and it
-  is the last structural step of the Theorem 4.2(a) chain.
-
-  Three observations do it.
-
-  First, simultaneous extraction is free.  A finite tuple of euclidean spaces is
-  a euclidean space, so ONE application of \<open>bounded_seq_limit_point\<close> to the
-  bundled sequence extracts a single subsequence along which every component
-  converges --- no diagonal argument, no iterated extraction.  This is the same
-  instance fact the doubled functional already relies on.
-
-  Second, the per-index hypotheses survive subsequencing for free, because they
-  are universally quantified in \<open>i\<close>: composing with any \<open>rr\<close> instantiates them.
-
-  Third --- and this is the only part that is not bookkeeping --- the two
-  gradient sequences must share a limit, and \<open>p \<noteq> 0\<close> must survive.  Neither is
-  automatic.  Sharing comes from \<open>gradient_sequences_align_of_bound\<close>: the two
-  block gradients are \<open>-fst p\<^sub>i + G\<^sub>i\<close> and \<open>snd p\<^sub>i + G\<^sub>i\<close>, differing by the tilt
-  alone, so a shrinking tilt aligns them whatever the maximisers do.  And
-  \<open>p \<noteq> 0\<close> is NOT a closed condition, so pointwise nonvanishing would be lost;
-  what passes to the limit is a UNIFORM POSITIVE LOWER BOUND \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close>, which
-  is exactly the shape \<open>doubling_grad_norm_lower_bound\<close> delivers (with
-  \<open>c = \<alpha>\<gamma>/L\<^sub>w\<close>, independent of the index).\<close>
+text \<open>\<open>comparison_supconv_sequence_complete\<close> asks for four convergent
+  sequences and \<open>p \<noteq> 0\<close> at the limit, but the doubling produces only
+  bounds - on the Hessians, the penalty gradients, and the tilts.  Three
+  facts close the gap: simultaneous extraction is free, since a finite
+  tuple of euclidean spaces is euclidean and one application of
+  \<open>bounded_seq_limit_point\<close> extracts a subsequence along which every
+  component converges; the per-index hypotheses survive subsequencing
+  since they are universally quantified; and the two gradient sequences
+  share a limit by \<open>gradient_sequences_align_of_bound\<close> (they differ only
+  by the shrinking tilt), while \<open>p \<noteq> 0\<close> survives as the uniform lower
+  bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close> from \<open>doubling_grad_norm_lower_bound\<close>.\<close>
 
 subsection \<open>The quadratic-form bound becomes a norm bound\<close>
 
-text \<open>\<open>symmetric_form_bound_unit\<close> ends the operator-bound chain at
-  \<open>\<bar>u \<bullet> W v\<bar> \<le> c\<close> for unit \<open>u\<close>, \<open>v\<close> --- an ENTRYWISE bound.  Bolzano-Weierstrass
-  wants \<open>\<parallel>matrix W\<parallel> \<le> B\<close>.  In a euclidean space the gap is closed by
-  \<open>norm_le_l1\<close> alone: the norm is at most the sum of the absolute coordinates, so
-  a uniform bound on the coordinates gives a norm bound with the constant
-  \<open>card Basis\<close>.  No spectral theory, and the constant is irrelevant --- only that
-  ONE bound exists for the whole family.\<close>
+text \<open>\<open>symmetric_form_bound_unit\<close> gives the entrywise bound
+  \<open>\<bar>u \<bullet> Wv\<bar> \<le> c\<close>; \<open>norm_le_l1\<close> closes the gap to
+  \<open>\<parallel>matrix W\<parallel> \<le> B\<close> with no spectral theory, since the operator norm is
+  at most the sum of absolute coordinates.\<close>
 
 lemma norm_le_card_Basis_bound:
   fixes M :: "'a::euclidean_space"
@@ -10511,16 +10146,10 @@ proof (rule norm_le_card_Basis_bound)
     unfolding e inner_matrix_axis[OF lin] .
 qed
 
-text \<open>And the whole way from the jet to \<open>\<parallel>X\<^sub>i\<parallel> \<le> BX\<close>.  The doubled jet lives on
-  the PRODUCT space, so the two block maps have to be bounded from the bound on
-  \<open>W\<close> itself.  Testing \<open>W\<close> against \<open>(k,0)\<close> and \<open>(0,k)\<close> does it --- the product
-  inner product kills the other component and \<open>\<parallel>(k,0)\<parallel> = \<parallel>k\<parallel>\<close> --- and the
-  penalty part \<open>\<alpha> *\<^sub>R k\<close> contributes exactly \<open>\<alpha>\<parallel>k\<parallel>\<^sup>2\<close>, so the block constant is
-  \<open>C + \<bar>\<alpha>\<bar>\<close>.
-
-  Note that the two-sided bound needs NO sign hypothesis on \<open>C\<close>: the lower bound
-  \<open>-C\<parallel>k\<parallel>\<^sup>2 \<le> k \<bullet> W k\<close> together with \<open>k \<bullet> W k \<le> 0\<close> already forces
-  \<open>0 \<le> C\<parallel>k\<parallel>\<^sup>2\<close>.\<close>
+text \<open>From the jet to \<open>\<parallel>X\<^sub>i\<parallel> \<le> BX\<close>: testing the product-space Hessian
+  \<open>W\<close> against \<open>(k,0)\<close> and \<open>(0,k)\<close> bounds the two block maps, with block
+  constant \<open>C+\<bar>\<alpha>\<bar>\<close>.  No sign hypothesis on \<open>C\<close> is needed:
+  \<open>-C\<parallel>k\<parallel>\<^sup>2 \<le> k \<bullet> Wk \<le> 0\<close> already forces \<open>0 \<le> C\<parallel>k\<parallel>\<^sup>2\<close>.\<close>
 
 lemma hessian_abs_bound_of_two_sided:
   fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -10607,15 +10236,12 @@ proof -
            block_form_bound_snd[OF bnd]])
 qed
 
-text \<open>The Hessian norm bounds for a general penalty.  The quadratic version's
-  \<open>\<bar>\<alpha>\<bar>\<close> becomes an operator bound for \<open>Z\<close>, and the library does have what is
-  needed: \<open>onorm_le_matrix_component_sum\<close> bounds \<open>onorm ((*v) Z)\<close> by the entry
-  sum, and \<open>onorm\<close> turns that into \<open>\<parallel>Z v\<parallel> \<le> (\<Sum>\<Sum>\<bar>Z\<^sub>i\<^sub>j\<bar>)\<parallel>v\<parallel>\<close>.  Cauchy-Schwarz then
-  gives the quadratic form bound.  Nothing had to be proved entrywise after all.
-
-  The block bounds take the constant abstractly (\<open>KZ\<close>), so a caller with a
-  sharper bound for its own \<open>Z\<close> --- the quartic's Hessian
-  \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close> has norm \<open>O(\<beta>\<parallel>d\<parallel>\<^sup>2)\<close> --- can supply it instead.\<close>
+text \<open>For a general penalty, \<open>onorm_le_matrix_component_sum\<close> bounds
+  \<open>onorm ((*v) Z)\<close> by the entry sum, and Cauchy-Schwarz gives the
+  quadratic form bound, replacing the quadratic version's \<open>\<bar>\<alpha>\<bar>\<close>.  The
+  block bounds take the constant abstractly (\<open>KZ\<close>), so a sharper bound -
+  e.g. the quartic's Hessian \<open>\<beta>((d \<bullet> d)I+2dd\<^sup>T)\<close> has norm
+  \<open>O(\<beta>\<parallel>d\<parallel>\<^sup>2)\<close> - can be supplied instead.\<close>
 
 lemma norm_matrix_vector_le:
   fixes Z :: "real^'n::finite^'n"
@@ -10719,12 +10345,10 @@ proof -
            block_form_bound_snd_gen[OF bnd bZ]])
 qed
 
-text \<open>What the \<open>\<delta>\<close>-perturbation does to the three matrix hypotheses.  Its effect
-  on both Hessians is the SAME shift \<open>2\<delta> I\<close>, so the ordering is untouched
-  (\<open>psd_shifted_diff\<close> --- the shifts cancel in the difference), symmetry is
-  preserved because \<open>\<delta> I\<close> is symmetric, and the norm bound degrades by exactly
-  \<open>\<bar>2\<delta>\<bar> \<parallel>I\<parallel>\<close>.  So none of stage 9's matrix work has to be redone for the shifted
-  family; it just carries a \<open>\<delta>\<close>-dependent constant that vanishes with \<open>\<delta>\<^sub>i\<close>.\<close>
+text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the same \<open>2\<delta>I\<close>, so the
+  ordering is untouched (the shifts cancel, \<open>psd_shifted_diff\<close>), symmetry
+  is preserved since \<open>\<delta>I\<close> is symmetric, and the norm bound degrades by
+  \<open>\<bar>2\<delta>\<bar>\<parallel>I\<parallel>\<close>, a constant vanishing with \<open>\<delta>\<^sub>i\<close>.\<close>
 
 lemma transpose_scaleR_matrix:
   fixes N :: "real^'n::finite^'n"
@@ -10762,13 +10386,11 @@ proof -
   then show ?thesis using p by simp
 qed
 
-text \<open>And the bridge between the two ways of writing the shift.  The jets come
-  out with the Hessian in OPERATOR form, \<open>\<lambda>v. f v + c *\<^sub>R v\<close>, while the family
-  theorem wants a MATRIX.  These two say the translation is the obvious one:
-  taking the matrix of the shifted operator adds \<open>c I\<close>, and applying a
-  matrix-plus-\<open>c I\<close> to a vector adds \<open>c\<close> times it.  With them, every shifted fact
-  reduces to its unshifted counterpart plus \<open>transpose_shifted_block\<close>,
-  \<open>psd_shifted_diff\<close> and \<open>norm_shifted_block\<close>.\<close>
+text \<open>The bridge between the jets' operator-form Hessian
+  \<open>\<lambda>v. f v + c *\<^sub>R v\<close> and the matrix form the family theorem wants:
+  taking the matrix of the shifted operator adds \<open>cI\<close>.  Every shifted
+  fact then reduces to its unshifted counterpart plus
+  \<open>transpose_shifted_block\<close>, \<open>psd_shifted_diff\<close> and \<open>norm_shifted_block\<close>.\<close>
 
 lemma matrix_add_scaleR_id:
   fixes f :: "real^'n::finite \<Rightarrow> real^'n"
@@ -10810,27 +10432,22 @@ proof -
   ultimately show ?thesis by linarith
 qed
 
-text \<open>And the cancellation that recovers the UNSHIFTED ordering: shifting \<open>Y\<close>
-  down by \<open>c I\<close> and \<open>X\<close> up by \<open>c I\<close> costs the difference exactly \<open>2c I\<close>, so
-  adding it back gives \<open>Y - X\<close>.  This is the equation behind the asymptotic
-  \<open>psdi\<close> hypothesis: the shifted family satisfies the ordering with defect
-  \<open>cs\<^sub>i = 2c\<^sub>i \<rightarrow> 0\<close>.\<close>
+text \<open>Shifting \<open>Y\<close> down by \<open>cI\<close> and \<open>X\<close> up by \<open>cI\<close> costs the difference
+  exactly \<open>2cI\<close>, recovering \<open>Y-X\<close> on cancellation; this is the equation
+  behind the asymptotic \<open>psdi\<close> hypothesis, with defect
+  \<open>cs\<^sub>i=2c\<^sub>i \<rightarrow> 0\<close>.\<close>
 
 lemma shift_cancel_matrix:
   fixes X Y :: "real^'n::finite^'n"
   shows "(Y - c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1) + (2*c) *\<^sub>R mat 1 = Y - X"
   by (simp add: vec_eq_iff mat_def axis_def algebra_simps)
 
-text \<open>The other uniform input is the lower bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close>.  It is NOT needed
-  at the Jensen point directly: \<open>doubling_grad_norm_lower_bound\<close> gives it at the
-  doubling maximiser, which is the CENTRE \<open>\<xi>\<close> of Jensen's ball, and Jensen's
-  point satisfies \<open>dist z\<hat> \<xi> < \<rho>\<close> with \<open>\<rho>\<close> at our disposal.  A triangle
-  inequality moves the bound across at a cost \<open>2\<bar>\<alpha>\<bar>\<rho>\<close>, uniformly in the index
-  --- so choosing \<open>\<rho>\<close> below \<open>c/(4\<bar>\<alpha>\<bar>)\<close> keeps half of it.
-
-  The estimate is stated with the cost explicit rather than with a choice of
-  \<open>\<rho>\<close> baked in, because \<open>\<rho>\<close> is also constrained from the other side (it must
-  exceed the region where the boundary bound \<open>bnd\<close> holds).\<close>
+text \<open>The lower bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close> is given by
+  \<open>doubling_grad_norm_lower_bound\<close> at the doubling maximiser (the centre
+  \<open>\<xi>\<close> of Jensen's ball); a triangle inequality moves it to Jensen's point
+  at cost \<open>2\<bar>\<alpha>\<bar>\<rho>\<close>, uniformly in the index, so \<open>\<rho> < c/(4\<bar>\<alpha>\<bar>)\<close> keeps
+  half of it.  The cost is left explicit since \<open>\<rho>\<close> is also constrained
+  from the boundary side.\<close>
 
 lemma penalty_gradient_nearby_bound:
   fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)"
@@ -10871,19 +10488,11 @@ proof -
   ultimately show ?thesis using c by linarith
 qed
 
-text \<open>And the last piece: the VALUE GAP transfers to the sup-convolutions with
-  an explicit loss.  \<open>doubling_grad_norm_lower_bound\<close> wants the gap for the
-  functions being doubled, and what is doubled here is
-  \<open>supconv (\<theta> u) \<epsilon>\<close> against \<open>-supconv (-w) \<epsilon>\<close>, not \<open>\<theta> u\<close> against \<open>w\<close>.
-
-  No uniformity argument is needed, because \<open>supconv_le_of_lipschitz\<close> gives the
-  approximation at an EXPLICIT rate: each sup-convolution sits between its
-  function and that function plus \<open>\<epsilon>L\<^sup>2/2\<close>.  Bounding the two terms at \<open>x\<hat>\<close> from
-  above and the two at \<open>z\<close> from below therefore costs exactly
-  \<open>\<epsilon>(L\<^sub>u\<^sup>2 + L\<^sub>w\<^sup>2)/2\<close>, so a gap \<open>\<gamma>\<close> for \<open>\<theta> u, w\<close> becomes a gap
-  \<open>\<gamma> - \<epsilon>(L\<^sub>u\<^sup>2 + L\<^sub>w\<^sup>2)/2\<close> for the sup-convolutions --- positive for every
-  sufficiently small \<open>\<epsilon>\<close>, and the threshold is computable from the two Lipschitz
-  constants alone.\<close>
+text \<open>The value gap transfers to the sup-convolutions with an explicit loss:
+  \<open>supconv_le_of_lipschitz\<close> sandwiches each sup-convolution between its
+  function and that function plus \<open>\<epsilon>L\<^sup>2/2\<close>, so a gap \<open>\<gamma>\<close> for
+  \<open>\<theta>u,w\<close> becomes \<open>\<gamma>-\<epsilon>(L\<^sub>u\<^sup>2+L\<^sub>w\<^sup>2)/2\<close> for the sup-convolutions,
+  positive for every sufficiently small \<open>\<epsilon>\<close>.\<close>
 
 theorem doubled_value_gap_supconv:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -10911,23 +10520,14 @@ qed
 
 subsection \<open>The per-index data from one Jensen application\<close>
 
-text \<open>The input side.  \<open>doubled_supconv_jet_exists\<close> returns, at each tilt, a
-  maximiser \<open>z\<hat>\<close> of the TILTED functional over \<open>cball \<xi> r\<close> together with an
-  Alexandrov jet of the UNTILTED one.  This lemma reads the two component jets
-  off that data, in exactly the gradient form the family theorem consumes.
-
-  The tilt costs nothing, and the reason is worth stating: one does NOT have to
-  absorb it into the two summands.  At an interior maximum of the tilted
-  functional the untilted jet has gradient exactly \<open>-p\<close> (\<open>gradient_is_minus_tilt\<close>),
-  so the slice lemmas apply to the untilted expansion as they stand, and the
-  tilt enters only through \<open>q = -p\<close>.  The two block gradients are then
-
-    \<open>-fst p + \<alpha>(x\<hat> - y\<hat>)\<close>   and   \<open>-(snd p + \<alpha>(x\<hat> - y\<hat>))\<close>,
-
-  which is \<open>Pu\<close> and \<open>-Pw\<close> for the \<open>Pu = -fst p + G\<close>, \<open>Pw = snd p + G\<close> of
-  \<open>comparison_supconv_bounded_family\<close>, with \<open>G = \<alpha>(x\<hat> - y\<hat>)\<close> the common penalty
-  gradient.  Nothing here is specific to the sup-convolutions: \<open>a\<close> and \<open>b\<close> are
-  arbitrary.\<close>
+text \<open>\<open>doubled_supconv_jet_exists\<close> returns, at each tilt, a maximiser of the
+  tilted functional together with an Alexandrov jet of the untilted one;
+  this reads off the two component jets.  The tilt costs nothing to
+  absorb: at an interior maximum of the tilted functional the untilted
+  jet has gradient exactly \<open>-p\<close> (\<open>gradient_is_minus_tilt\<close>), so the two
+  block gradients are \<open>-fst p+\<alpha>(x̂-ŷ)\<close> and \<open>-(snd p+\<alpha>(x̂-ŷ))\<close>, matching
+  \<open>Pu\<close> and \<open>-Pw\<close> of \<open>comparison_supconv_bounded_family\<close> with common
+  penalty gradient \<open>G = \<alpha>(x̂-ŷ)\<close>.\<close>
 
 theorem tilted_doubled_jet_slices:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -10998,14 +10598,10 @@ proof -
     using s2 unfolding eqs .
 qed
 
-text \<open>And the same for a general penalty.  Nothing here knew about the quadratic
-  either: \<open>global_max_imp_interior_max\<close> and \<open>gradient_is_minus_tilt\<close> are already
-  abstract in \<open>\<Psi>\<close>, so the only change is to route the two slices through the
-  \<open>_gen\<close> versions and to carry the penalty's jet \<open>(G, Z)\<close> along.
-
-  The conclusion is the quadratic one with \<open>\<alpha>(x\<hat> - y\<hat>)\<close> replaced by \<open>G\<close> and \<open>\<alpha> h\<close>
-  by \<open>Z h\<close>, and the two gradients \<open>-fst pt + G\<close> and \<open>-(snd pt + G)\<close> are exact
-  negatives up to the tilt exactly as before.\<close>
+text \<open>The same for a general penalty: \<open>global_max_imp_interior_max\<close> and
+  \<open>gradient_is_minus_tilt\<close> are already abstract in \<open>\<Psi>\<close>, so the
+  conclusion is the quadratic one with \<open>\<alpha>(x̂-ŷ)\<close> replaced by \<open>G\<close> and
+  \<open>\<alpha> h\<close> by \<open>Zh\<close>, carrying the penalty's jet \<open>(G,Z)\<close> along.\<close>
 
 theorem tilted_doubled_jet_slices_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
@@ -11073,15 +10669,12 @@ proof -
     using s2 unfolding eqs .
 qed
 
-text \<open>The two previous results composed, for the SHIFTED functional: run the
-  slice lemmas on \<open>a - \<delta>\<parallel>\<cdot> - fst \<xi>\<^sub>0\<parallel>\<^sup>2\<close> and \<open>b - \<delta>\<parallel>\<cdot> - snd \<xi>\<^sub>0\<parallel>\<^sup>2\<close> (which is what
-  Jensen's strict-gap version delivers), then \<open>jet_transfer_quadratic\<close> to land on
-  jets of \<open>a\<close> and \<open>b\<close> themselves.  The net effect on the two block gradients is a
-  shift by \<open>2\<delta>(x\<hat> - fst \<xi>\<^sub>0)\<close> and \<open>2\<delta>(y\<hat> - snd \<xi>\<^sub>0)\<close>, and on the Hessians by \<open>2\<delta> I\<close>.
-
-  Both shifts are \<open>O(\<delta>)\<close>, so along a family with \<open>\<delta>\<^sub>i \<rightarrow> 0\<close> they vanish --- which
-  is exactly what the abstract alignment hypothesis of
-  \<open>comparison_supconv_bounded_family\<close> now asks for.\<close>
+text \<open>For the shifted functional, running the slice lemmas on
+  \<open>a-\<delta>\<parallel>\<cdot>-fst \<xi>\<^sub>0\<parallel>\<^sup>2\<close> and \<open>b-\<delta>\<parallel>\<cdot>-snd \<xi>\<^sub>0\<parallel>\<^sup>2\<close> then
+  \<open>jet_transfer_quadratic\<close> shifts the two block gradients by
+  \<open>2\<delta>(x̂-fst \<xi>\<^sub>0)\<close> and \<open>2\<delta>(y̅-snd \<xi>\<^sub>0)\<close>, and the Hessians by \<open>2\<delta>I\<close> -
+  both \<open>O(\<delta>)\<close>, vanishing along \<open>\<delta>\<^sub>i \<rightarrow> 0\<close> as the alignment hypothesis
+  needs.\<close>
 
 theorem tilted_shifted_jet_slices:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -11157,24 +10750,17 @@ proof -
          OF s2])
 qed
 
-text \<open>And the upper half of the Hessian bound, from the SAME data.  A maximum
-  is a maximum in the second order too: \<open>second_order_interior_max\<close> reads
-  \<open>v \<bullet> W v \<le> 0\<close> off the tilted interior maximum, with no extra hypothesis.
-  Paired with the lower bound \<open>-c\<parallel>v\<parallel>\<^sup>2 \<le> v \<bullet> W v\<close> that semiconvexity supplies,
-  this is the two-sided bound \<open>semiconvex_hessian_abs_bound\<close> wants, and hence
-  --- through \<open>norm_matrix_le_of_form_bound\<close> --- the \<open>\<parallel>X\<^sub>i\<parallel> \<le> BX\<close> hypothesis of
-  \<open>comparison_supconv_bounded_family\<close>.
-
-  The LOWER half is now available too.  It used to be missing for the same
-  reason \<open>semiconvex_alexandrov\<close> was: \<open>semiconvex_jensen_alexandrov_point\<close>,
-  and hence \<open>doubled_supconv_jet_exists\<close>, stated its conclusion WITHOUT the
-  clause \<open>\<forall>k. - (c * \<parallel>k\<parallel>\<^sup>2) \<le> k \<bullet> W k\<close> that \<open>semiconvex_alexandrov_bounded\<close>
-  proves upstream.  Both have been widened to carry it, so the two halves meet
-  and \<open>norm_block_matrices_bounded\<close> closes the chain to \<open>\<parallel>X\<^sub>i\<parallel> \<le> BX\<close>.\<close>
-text \<open>The Hessian bound for a general penalty.  This one needs no jet of \<open>P\<close> at
-  all --- \<open>second_order_interior_max\<close> is about the FULL functional's Hessian \<open>W\<close>,
-  and the penalty only has to be there for the maximum to be a maximum.  So it
-  is a pure transcription.\<close>
+text \<open>\<open>second_order_interior_max\<close> reads \<open>v \<bullet> Wv \<le> 0\<close> off the tilted
+  interior maximum with no extra hypothesis; paired with the lower bound
+  \<open>-c\<parallel>v\<parallel>\<^sup>2 \<le> v \<bullet> Wv\<close> from semiconvexity, this is the two-sided bound
+  \<open>semiconvex_hessian_abs_bound\<close> wants, and through
+  \<open>norm_matrix_le_of_form_bound\<close> gives the \<open>\<parallel>X\<^sub>i\<parallel> \<le> BX\<close> hypothesis of
+  \<open>comparison_supconv_bounded_family\<close>.  \<open>semiconvex_jensen_alexandrov_point\<close>
+  and \<open>doubled_supconv_jet_exists\<close> carry both halves of this bound, so
+  \<open>norm_block_matrices_bounded\<close> closes the chain.\<close>
+text \<open>The Hessian bound for a general penalty needs no jet of \<open>P\<close> at all,
+  since \<open>second_order_interior_max\<close> concerns the full functional's
+  Hessian \<open>W\<close>; a pure transcription.\<close>
 
 theorem tilted_doubled_hessian_nonpositive_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
@@ -11274,14 +10860,11 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>And the ORDERING, from the same data.  This is the one place where the
-  tilt does have to be absorbed into the two summands: \<open>sums_psd_from_jet\<close> wants
-  a plain (untilted) doubled maximum, and \<open>doubled_tilted_interior_max\<close> supplies
-  exactly that for \<open>a + fst p \<bullet> \<cdot>\<close> and \<open>b + snd p \<bullet> \<cdot>\<close>.  The conclusion does not
-  mention \<open>a\<close> or \<open>b\<close> at all, so the absorption is invisible downstream.
-
-  (The earlier note that absorption is never needed was about the GRADIENTS,
-  where \<open>gradient_is_minus_tilt\<close> avoids it.  For the psd ordering it is needed.)\<close>
+text \<open>For the ordering, the tilt must be absorbed into the two summands:
+  \<open>sums_psd_from_jet\<close> wants a plain (untilted) doubled maximum, supplied
+  by \<open>doubled_tilted_interior_max\<close> for \<open>a+fst p \<bullet> \<cdot>\<close> and
+  \<open>b+snd p \<bullet> \<cdot>\<close>.  (Unlike the gradients, where \<open>gradient_is_minus_tilt\<close>
+  avoids absorption, the psd ordering needs it.)\<close>
 
 theorem tilted_doubled_psd_ordering:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -11337,16 +10920,11 @@ proof -
          OF blW symW dpos mxAB expAB])
 qed
 
-text \<open>The psd ordering for a general penalty.  Same shape as the quadratic one:
-  absorb the tilt into the two summands (which \<open>sums_psd_at_interior_max_gen\<close>
-  needs, since it wants an UNtilted maximum), then apply it.  The tilt
-  absorption is done inline here rather than through
-  \<open>doubled_tilted_interior_max\<close>, because that lemma has the quadratic penalty in
-  its statement and the absorption is one \<open>inner_prod_def\<close> step anyway.
-
-  Note the extra hypothesis \<open>transpose Z = Z\<close>, which the quadratic version did
-  not need (there \<open>Z = \<alpha> I\<close> is symmetric for free).  It holds for the quartic,
-  whose Hessian is \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>.\<close>
+text \<open>The psd ordering for a general penalty absorbs the tilt into the two
+  summands inline, since \<open>sums_psd_at_interior_max_gen\<close> wants an untilted
+  maximum.  It needs the extra hypothesis \<open>transpose Z = Z\<close>, unlike the
+  quadratic case where \<open>Z = \<alpha>I\<close> is symmetric for free; it holds for the
+  quartic's Hessian \<open>\<beta>((d \<bullet> d)I+2dd\<^sup>T)\<close>.\<close>
 
 theorem tilted_doubled_psd_ordering_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -11463,13 +11041,11 @@ qed
 
 subsection \<open>The contradiction from bounds alone\<close>
 
-text \<open>The replacement for \<open>comparison_supconv_sequence_complete\<close>.  Everything
-  that was a convergence hypothesis there is a BOUND here, and \<open>p \<noteq> 0\<close> has
-  become the uniform lower bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close>.  The per-index hypotheses are
-  unchanged --- they are the genuine data of the argument --- and the two
-  gradient sequences are no longer independent inputs: they are DEFINED from the
-  tilts and the penalty gradients by \<open>Pu\<^sub>i = -fst p\<^sub>i + G\<^sub>i\<close> and
-  \<open>Pw\<^sub>i = snd p\<^sub>i + G\<^sub>i\<close>, which is how the doubling produces them.\<close>
+text \<open>The replacement for \<open>comparison_supconv_sequence_complete\<close>: every
+  convergence hypothesis becomes a bound, \<open>p \<noteq> 0\<close> becomes the uniform
+  lower bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close>, and the two gradient sequences are defined
+  from the tilts and penalty gradients, \<open>Pu\<^sub>i=-fst p\<^sub>i+G\<^sub>i\<close> and
+  \<open>Pw\<^sub>i=snd p\<^sub>i+G\<^sub>i\<close>, matching how the doubling produces them.\<close>
 
 theorem comparison_supconv_bounded_family:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -11559,22 +11135,15 @@ qed
 
 section \<open>The instantiation: Theorem 4.2(a) from the doubling data alone\<close>
 
-text \<open>The assembly.  Every hypothesis below is data of the comparison argument
-  itself --- the two viscosity properties, the scaling \<open>\<theta>\<close>, the sup-convolution
+text \<open>The assembly's hypotheses are all data of the comparison argument - the
+  two viscosity properties, the scaling \<open>\<theta>\<close>, the sup-convolution
   parameter \<open>\<epsilon>\<close>, the penalty weight \<open>\<alpha>\<close>, and Jensen's geometric data
-  \<open>(\<xi>, r, \<rho>, m)\<close> --- plus two smallness conditions relating them.  Nothing about
-  the jets, the Hessians or the gradients is assumed: they are all produced.
-
-  The one hypothesis worth pointing at is \<open>subu\<close>/\<open>subw\<close>, the requirement that the
-  attaining balls of the sup-convolutions lie in \<open>\<Omega>\<close>.  It is stated for every
-  base point within \<open>\<rho>\<close> of the centre, which is exactly the region Jensen's
-  maximisers live in, and its radius is the EXPLICIT \<open>O(\<surd>\<epsilon>)\<close> one of
-  \<open>supconv_attained_ball\<close> --- so it is a genuine smallness condition on \<open>\<epsilon>\<close>, not
-  an unsuppliable side condition.
-
-  Also note \<open>rsmall\<close>: the gradient lower bound survives the move from the centre
-  to Jensen's maximiser only if \<open>\<rho>\<close> is small compared with \<open>c/(2\<bar>\<alpha>\<bar>)\<close>.  That is
-  the one place where the two smallness parameters interact.\<close>
+  \<open>(\<xi>,r,\<rho>,m)\<close> - plus two smallness conditions relating them; the jets,
+  Hessians and gradients are all produced.  \<open>subu\<close>/\<open>subw\<close> require the
+  sup-convolutions' attaining balls in \<open>\<Omega>\<close>, a genuine smallness condition
+  on \<open>\<epsilon>\<close> via the explicit \<open>O(\<surd>\<epsilon>)\<close> radius of \<open>supconv_attained_ball\<close>;
+  \<open>rsmall\<close> requires \<open>\<rho>\<close> small compared with \<open>c/(2\<bar>\<alpha>\<bar>)\<close> so the gradient
+  lower bound survives the move to Jensen's maximiser.\<close>
 
 lemma penalty_gradient_nearby_upper:
   fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)"
@@ -11809,19 +11378,14 @@ qed
 
 subsection \<open>Assembly 1 complete: the contradiction from the maximiser alone\<close>
 
-text \<open>The shifted analogue of stage 10, and the completion of assembly 1.  From
-  a PLAIN maximiser of the doubled sup-convolution functional at \<open>\<xi>\<^sub>0\<close> --- no
-  strict gap --- plus the gradient lower bound there and the attainment balls,
-  it derives \<open>False\<close>.  The strict gap is manufactured by the \<open>-\<delta>\<^sub>i\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close>
-  perturbation with \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> tending to \<open>0\<close> (\<open>shifted_jensen_family\<close>).
-
-  The three \<open>O(\<delta>\<^sub>i)\<close> costs land exactly where the generalised interfaces expect
-  them.  The jet gradients shift by \<open>2\<delta>\<^sub>i(\<cdot> - \<xi>\<^sub>0)\<close>, absorbed by the abstract
-  alignment \<open>au\<close>/\<open>aw\<close>.  The block Hessians shift by \<open>\<plusminus>2\<delta>\<^sub>i I\<close>, so the ordering
-  holds only with defect \<open>cs\<^sub>i = 4\<delta>\<^sub>i\<close>, absorbed by the asymptotic \<open>psdi\<close>
-  (\<open>shift_cancel_matrix\<close> is the cancellation).  And the Hessian NORMS shift by
-  at most \<open>2D\<^sub>0\<parallel>I\<parallel>\<close> --- the third cost, absorbed into the constants because
-  \<open>\<delta>\<^sub>i < D\<^sub>0\<close> uniformly, so no limit is needed there.\<close>
+text \<open>The completion: from a plain maximiser of the doubled sup-convolution
+  functional at \<open>\<xi>\<^sub>0\<close> - no strict gap - plus the gradient lower bound
+  there and the attainment balls, this derives \<open>False\<close>.  The strict gap
+  is manufactured by the \<open>-\<delta>\<^sub>i\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> perturbation with
+  \<open>\<delta>\<^sub>i=D\<^sub>0/(2+i) \<rightarrow> 0\<close> (\<open>shifted_jensen_family\<close>).  The three \<open>O(\<delta>\<^sub>i)\<close>
+  costs - gradient shift \<open>2\<delta>\<^sub>i(\<cdot>-\<xi>\<^sub>0)\<close>, Hessian shift \<open>\<plusminus>2\<delta>\<^sub>iI\<close> with
+  ordering defect \<open>4\<delta>\<^sub>i\<close>, and Hessian norm shift \<open>2D\<^sub>0\<parallel>I\<parallel>\<close> - land
+  exactly where the generalised interfaces expect them.\<close>
 
 theorem comparison_supconv_maximiser_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -12253,9 +11817,9 @@ proof -
         in blast)+
 qed
 
-text \<open>The four block-matrix helpers under a general Hessian block \<open>Z\<close>.  Each is
-  the corresponding non-general lemma with @{term "\<alpha> *\<^sub>R v"} replaced by
-  @{term "Z *v v"}; the symmetry pair additionally needs \<open>Z\<close> symmetric.\<close>
+text \<open>The four block-matrix helpers under a general Hessian block \<open>Z\<close>: each
+  is the corresponding lemma with \<open>\<alpha> *\<^sub>R v\<close> replaced by \<open>Z *v v\<close>, the
+  symmetry pair additionally needing \<open>Z\<close> symmetric.\<close>
 
 lemma block_fst_matrix_apply_gen:
   fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
@@ -12304,12 +11868,11 @@ lemma transpose_matrix_block_snd_gen:
   by (rule matrix_of_symmetric[OF linear_block_snd_gen[OF blW]
         sym_block_snd_gen[OF symW symZ]])
 
-text \<open>The two locality facts about the penalty gradient, for a general penalty.
-  For the quadratic penalty the gradient is @{term "\<alpha> *\<^sub>R d"}, which is
-  @{term "\<bar>\<alpha>\<bar>"}-Lipschitz in \<open>d\<close>; in general we simply assume a Lipschitz
-  bound \<open>KG\<close> on the gradient field \<open>Gf\<close>.  The displacement \<open>d\<close> moves by at most
-  \<open>2\<rho>\<close> when the base point moves by \<open>\<rho>\<close>, which is where the factor two comes
-  from --- exactly as in the quadratic case.\<close>
+text \<open>Two locality facts about the penalty gradient for a general penalty:
+  the quadratic penalty's gradient \<open>\<alpha> *\<^sub>R d\<close> is \<open>\<bar>\<alpha>\<bar>\<close>-Lipschitz; in
+  general a Lipschitz bound \<open>KG\<close> on the gradient field \<open>Gf\<close> is assumed
+  instead, with the displacement \<open>d\<close> moving by at most \<open>2\<rho>\<close> as in the
+  quadratic case.\<close>
 
 lemma diff_displacement_bound:
   fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)"
@@ -12367,21 +11930,13 @@ proof -
   then show ?thesis using c by linarith
 qed
 
-text \<open>Stage 10 under a general penalty.  This is
-  \<open>comparison_supconv_maximiser_complete\<close> with the quadratic penalty
-  @{term "(\<alpha>/2) * (norm d)\<^sup>2"} replaced by an arbitrary \<open>Pn\<close> that is
-  \<open>\<kappa>\<close>-semiconcave and twice differentiable with gradient field \<open>Gf\<close> and Hessian
-  field \<open>Zf\<close>.  Every occurrence of @{term "\<alpha> *\<^sub>R v"} becomes
-  @{term "Zf d *v v"} and every occurrence of
-  @{term "\<alpha> *\<^sub>R (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"} becomes @{term "Gf d"}, evaluated at the
-  displacement \<open>d = fst (zf i) - snd (zf i)\<close> of the \<open>i\<close>-th maximiser.
-
-  Note that the tilt @{term "- \<delta> * (norm (x - c))\<^sup>2"} introduced by Jensen's lemma
-  is genuinely quadratic and is NOT part of the penalty, so
-  \<open>jet_transfer_quadratic\<close> is still the right transfer lemma here.
-
-  The consumer \<open>comparison_supconv_bounded_family\<close> is penalty-agnostic --- its
-  hypotheses mention only jets, matrices and gradients --- so it is reused
+text \<open>\<open>comparison_supconv_maximiser_complete\<close> generalised: the quadratic
+  penalty \<open>(\<alpha>/2)(norm d)\<^sup>2\<close> becomes an arbitrary \<open>Pn\<close> that is
+  \<open>\<kappa>\<close>-semiconcave with gradient field \<open>Gf\<close> and Hessian field \<open>Zf\<close>,
+  evaluated at the displacement \<open>d\<close> of the \<open>i\<close>-th maximiser.  Jensen's
+  tilt is genuinely quadratic and not part of the penalty, so
+  \<open>jet_transfer_quadratic\<close> still applies; the consumer
+  \<open>comparison_supconv_bounded_family\<close> is penalty-agnostic and reused
   verbatim.\<close>
 
 theorem comparison_supconv_maximiser_complete_gen:
@@ -12868,28 +12423,15 @@ qed
 
 section \<open>The \<open>max_principle_boundary\<close> interface needs continuity: the raw version is refutable\<close>
 
-text \<open>Before assembling stage 10 into Theorem 4.2(a) proper, the target has to
-  be checked --- and it does not hold as stated.
-
-  \<open>max_principle_boundary k L K\<close> (Lemma\_3\_1\_Envelopes) quantifies over ALL
-  \<open>u\<close> and \<open>w\<close> satisfying \<open>visc_subsol k L (interior K)\<close> and
-  \<open>supersol_jet k L (interior K)\<close>, with no semicontinuity and no boundedness,
-  and asserts that \<open>u - w\<close> attains its maximum over \<open>K\<close> at a point of
-  \<open>K - interior K\<close>.
-
-  The defect is that \<open>visc_subsol k L (interior K) u\<close> says NOTHING about the
-  values of \<open>u\<close> on \<open>K - interior K\<close>: its quantifier ranges over \<open>x \<in> interior K\<close>
-  and the local condition may always be shrunk into \<open>interior K\<close>, which is open.
-  So the boundary values of a sub- or supersolution are entirely free, and can
-  be moved to destroy any boundary maximum.  \<open>visc_supersol_cong_on\<close> below is
-  that observation; \<open>max_principle_boundary_counterexample\<close> is the consequence.
-
-  What the paper's Theorem 4.2(a) actually assumes, and what the corrected
-  predicate needs, is \<open>u\<close> upper semicontinuous and \<open>w\<close> lower semicontinuous on
-  \<open>K\<close> --- which is also what makes \<open>u - w\<close> attain a maximum on compact \<open>K\<close> at
-  all.  Note the interface as written cannot be repaired by proving it: it is
-  refutable whenever a single sub/supersolution pair exists, and vacuous
-  otherwise.\<close>
+text \<open>\<open>max_principle_boundary k L K\<close> (Lemma_3_1_Envelopes) as originally
+  stated, quantifying over all \<open>u\<close>, \<open>w\<close> satisfying \<open>visc_subsol\<close>/
+  \<open>supersol_jet\<close> on \<open>interior K\<close> with no semicontinuity or boundedness,
+  is false: those local conditions say nothing about the boundary values
+  of \<open>u\<close> and \<open>w\<close>, which can be moved to destroy any boundary maximum of
+  \<open>u - w\<close> (\<open>visc_supersol_cong_on\<close>, \<open>max_principle_boundary_counterexample\<close>).
+  The paper's Theorem 4.2(a) needs \<open>u\<close> upper semicontinuous and \<open>w\<close>
+  lower semicontinuous on \<open>K\<close>, which is also what makes \<open>u-w\<close> attain a
+  maximum on compact \<open>K\<close> at all.\<close>
 
 lemma visc_subsol_cong_on:
   fixes u u' :: "real^'n::finite \<Rightarrow> real"
@@ -12975,10 +12517,10 @@ proof (intro ballI allI impI)
     unfolding supersol_jet_def by blast
 qed
 
-text \<open>And the refutation.  Given ANY sub/supersolution pair and a nonempty
-  interior, the boundary values of the supersolution can be raised uniformly by
-  enough to make every boundary point lose to a fixed interior point.  Nothing
-  about the operator, the dimension or the geometry of \<open>K\<close> is used.\<close>
+text \<open>The refutation: given any sub/supersolution pair and nonempty interior,
+  the supersolution's boundary values can be raised uniformly enough to
+  make every boundary point lose to a fixed interior point, independent
+  of the operator, dimension or geometry of \<open>K\<close>.\<close>
 
 theorem max_principle_boundary_counterexample:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -13005,36 +12547,25 @@ proof
   from mx[OF this] vx vy show False by simp
 qed
 
-text \<open>The repair itself now lives UPSTREAM, in Lemma\_3\_1\_Envelopes, where the
-  interface is declared: \<open>max_principle_boundary\<close> there carries
-  \<open>continuous_on K u\<close> and \<open>continuous_on K w\<close>, \<open>max_principle_boundary_attains\<close>
-  records that \<open>u - w\<close> then really does attain its maximum on a compact \<open>K\<close>
-  (what the raw predicate silently presupposed), and \<open>max_principle_le\<close>,
-  \<open>comparison_from_max_principle\<close> and \<open>uniqueness_from_max_principle\<close> are stated
-  with the two continuity hypotheses threaded through.  \<open>max_principle_boundary_raw\<close>
-  is kept there solely as the target of the refutation above.
-
-  So the discharge obligation for Theorem 4.2(a) is
-  \<open>max_principle_boundary k L K\<close> in its corrected form, and nothing downstream
-  of it -- 4.2(b), Theorem 4.3, Proposition 4.1 -- changed except for carrying
-  the continuity of the two functions it compares.\<close>
+text \<open>The repair lives in Lemma_3_1_Envelopes: the corrected
+  \<open>max_principle_boundary\<close> carries \<open>continuous_on K u\<close> and
+  \<open>continuous_on K w\<close>, \<open>max_principle_boundary_attains\<close> records that
+  \<open>u-w\<close> then attains its maximum on compact \<open>K\<close>, and \<open>max_principle_le\<close>,
+  \<open>comparison_from_max_principle\<close>, \<open>uniqueness_from_max_principle\<close>
+  thread the two continuity hypotheses through.  Everything downstream -
+  4.2(b), Theorem 4.3, Proposition 4.1 - is unchanged except for carrying
+  this continuity.\<close>
 
 section \<open>Reduction to globally bounded, globally continuous data\<close>
 
-text \<open>Everything in the chain above is stated for \<open>u\<close> and \<open>w\<close> defined, bounded
-  and continuous on ALL of \<open>real^'n\<close>: the sup-convolution is a supremum over the
-  whole space, so \<open>supconv_continuous\<close>, \<open>supconv_bdd_above\<close> and
-  \<open>supconv_attained_ball_rad\<close> all need global data.  The corrected
-  \<open>max_principle_boundary\<close> supplies only \<open>continuous_on K u\<close>, and says nothing at
-  all about the values off \<open>K\<close>.
-
-  The mismatch closes in one step, because both halves of it are harmless.
-  Tietze's extension theorem gives a global continuous representative with the
-  same sup-norm bound; and the viscosity properties do not see the change,
-  because \<open>visc_subsol k L (interior K)\<close> is a condition AT points of
-  \<open>interior K\<close> whose local test may always be shrunk into that open set.  That
-  is the same locality which made the raw interface refutable
-  (\<open>max_principle_boundary_counterexample\<close>) --- here it works for us.\<close>
+text \<open>The chain above needs \<open>u\<close> and \<open>w\<close> global, bounded and continuous on all
+  of \<open>real^'n\<close>, since the sup-convolution is a supremum over the whole
+  space; the corrected \<open>max_principle_boundary\<close> supplies only
+  \<open>continuous_on K\<close>.  Tietze's extension theorem gives a global
+  continuous representative with the same sup-norm bound, and the
+  viscosity properties are unaffected since \<open>visc_subsol\<close> is a local
+  condition at points of the open \<open>interior K\<close> - the same locality that
+  made the raw interface refutable now works in reverse.\<close>
 
 lemma continuous_extension_bounded:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -13080,10 +12611,9 @@ proof (rule supersol_jet_cong_on[OF s open_interior])
   then show "v y = w y" by (rule eq)
 qed
 
-text \<open>And the packaged form: a compact \<open>K\<close>, a function continuous on it, and out
-  comes a global representative that is bounded, continuous, agrees on \<open>K\<close>, and
-  carries the viscosity property unchanged.  The bound is the sup-norm on \<open>K\<close>,
-  which exists because \<open>K\<close> is compact.\<close>
+text \<open>Packaged: from a compact \<open>K\<close> and a function continuous on it comes a
+  global representative, bounded by the sup-norm on \<open>K\<close>, continuous,
+  agreeing on \<open>K\<close>, and carrying the viscosity property unchanged.\<close>
 
 lemma bounded_on_compact:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -13104,16 +12634,12 @@ qed
 
 subsection \<open>Distance to the boundary controls the balls\<close>
 
-text \<open>The three ball hypotheses of the assembly --- \<open>cball \<xi>\<^sub>0 r \<subseteq> K \<times> K\<close> for
-  Jensen, \<open>cball x R\<^sub>u \<subseteq> interior K\<close> for the attainment --- are all instances of
-  one geometric fact: a point of a closed \<open>K\<close> that is further than \<open>\<kappa>\<close> from
-  EVERY point of \<open>K - interior K\<close> has its whole \<open>\<kappa>\<close>-ball inside \<open>interior K\<close>.
-
-  The only content is that one cannot leave \<open>K\<close> without crossing its frontier:
-  a segment from an interior point to an exterior one is connected, meets \<open>K\<close>
-  and its complement, hence meets \<open>frontier K\<close>, which for closed \<open>K\<close> is exactly
-  \<open>K - interior K\<close>.  This is what turns the analytic statement "the doubling
-  maximiser sits well inside" into the hypotheses the assembly consumes.\<close>
+text \<open>The assembly's ball hypotheses - \<open>cball \<xi>\<^sub>0 r \<subseteq> K \<times> K\<close> for Jensen,
+  \<open>cball x R\<^sub>u \<subseteq> interior K\<close> for attainment - are instances of one
+  geometric fact: a point of closed \<open>K\<close> further than \<open>\<kappa>\<close> from every
+  point of \<open>K - interior K\<close> has its whole \<open>\<kappa>\<close>-ball inside
+  \<open>interior K\<close>, since a segment leaving \<open>K\<close> must cross
+  \<open>frontier K = K - interior K\<close>.\<close>
 
 lemma cball_subset_interior_of_far_from_boundary:
   fixes K :: "(real^'n::finite) set"
@@ -13178,24 +12704,14 @@ qed
 
 subsection \<open>From a localised maximiser straight to the contradiction\<close>
 
-text \<open>The bridge between the localisation and assembly 1: given the doubling
-  maximiser \<open>\<xi>\<^sub>0\<close> over \<open>K \<times> K\<close> TOGETHER with the one fact that both its
-  components are further than \<open>\<kappa>\<close> from \<open>K - interior K\<close>, every geometric
-  hypothesis of \<open>comparison_supconv_maximiser_complete\<close> is derivable, and the
-  contradiction follows.
-
-  Three derivations, one per hypothesis family.  \<open>mxK\<close> --- a maximiser over
-  \<open>K \<times> K\<close> is a maximiser over \<open>cball \<xi>\<^sub>0 r\<close> as soon as that ball sits in \<open>K \<times> K\<close>,
-  which \<open>cball_prod_subset_of_far_from_boundary\<close> gives for \<open>r \<le> \<kappa>\<close>.  \<open>radu\<close>,
-  \<open>radw\<close> --- the attainment radii are below \<open>R\<^sub>u\<close>, \<open>R\<^sub>w\<close> by
-  \<open>supconv_radius_uniform\<close>, uniformly in the base point, given the \<open>O(\<epsilon>)\<close>
-  smallness conditions.  \<open>subu\<close>, \<open>subw\<close> --- the attainment balls sit in
-  \<open>interior K\<close> because they sit in \<open>cball (fst \<xi>\<^sub>0) \<kappa>\<close>, by the triangle
-  inequality and \<open>\<rho> + R\<^sub>u \<le> \<kappa>\<close>.
-
-  So the only quantitative inputs left are the four inequalities \<open>r \<le> \<kappa>\<close>,
-  \<open>\<rho> + R\<^sub>u \<le> \<kappa>\<close>, \<open>\<rho> + R\<^sub>w \<le> \<kappa>\<close> and \<open>2\<bar>\<alpha>\<bar>\<rho> < c\<close>, and the two smallness conditions
-  on \<open>\<epsilon>\<close>.\<close>
+text \<open>The bridge between the localisation and the assembly: given the
+  doubling maximiser \<open>\<xi>\<^sub>0\<close> over \<open>K \<times> K\<close> with both components further
+  than \<open>\<kappa>\<close> from \<open>K - interior K\<close>, every geometric hypothesis of
+  \<open>comparison_supconv_maximiser_complete\<close> is derivable via
+  \<open>cball_subset_interior_of_far_from_boundary\<close> and
+  \<open>supconv_radius_uniform\<close>.  The remaining quantitative inputs are the
+  inequalities \<open>r \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>u \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>w \<le> \<kappa>\<close>, \<open>2\<bar>\<alpha>\<bar>\<rho> < c\<close> and two
+  smallness conditions on \<open>\<epsilon>\<close>.\<close>
 
 theorem comparison_from_localised_maximiser:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -13291,12 +12807,10 @@ proof -
        (use mxK radu radw subu subw glb rsmall in blast)+
 qed
 
-text \<open>The bridge under a general penalty.  Every geometric derivation here ---
-  \<open>mxK\<close>, \<open>radu\<close>, \<open>radw\<close>, \<open>subu\<close>, \<open>subw\<close> --- is untouched by the change of
-  penalty: the penalty appears only as the term that is carried along
-  unchanged from \<open>mxKK\<close> to \<open>mxK\<close>.  Only the gradient conditions \<open>glb\<close> and
-  \<open>rsmall\<close> refer to it, through the gradient field \<open>Gf\<close> and its Lipschitz
-  constant \<open>KG\<close>.\<close>
+text \<open>Under a general penalty every geometric derivation is untouched, since
+  the penalty only carries along unchanged from \<open>mxKK\<close> to \<open>mxK\<close>; only
+  the gradient conditions \<open>glb\<close> and \<open>rsmall\<close> refer to it, through \<open>Gf\<close>
+  and its Lipschitz constant \<open>KG\<close>.\<close>
 
 theorem comparison_from_localised_maximiser_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -13436,7 +12950,7 @@ qed
 
 subsection \<open>The chain at the concrete penalty \<open>soft_pen\<close>\<close>
 
-text \<open>Every abstract hypothesis of the \<open>_gen\<close> chain is now discharged at
+text \<open>Every abstract hypothesis of the \<open>_gen\<close> chain is discharged at
   \<open>Pn = soft_pen \<kappa>\<close>:
 
     \<open>sc\<close>    by \<open>soft_pen_semiconcave\<close>
@@ -13446,10 +12960,8 @@ text \<open>Every abstract hypothesis of the \<open>_gen\<close> chain is now di
     \<open>bZ\<close>    by \<open>soft_hess_bound\<close>       with \<open>KZ = 2\<kappa>\<close>
     \<open>lipG\<close>  by \<open>soft_grad_lipschitz\<close>   with \<open>KG = 3\<kappa>\<close>
 
-  so the theorem below mentions no penalty data at all beyond \<open>\<kappa>\<close> itself.  Note
-  \<open>2\<kappa>\<close> and \<open>3\<kappa>\<close> are not sharp (the true constants are \<open>2\<kappa>\<close> and \<open>\<kappa>\<close>); they do not
-  need to be, since \<open>KZ\<close> and \<open>KG\<close> are free parameters and the only place \<open>KG\<close> is
-  constrained is \<open>rsmall\<close>, which can always be restored by shrinking \<open>\<rho>\<close>.\<close>
+  so the theorem below mentions no penalty data beyond \<open>\<kappa>\<close> itself;
+  \<open>KZ\<close> and \<open>KG\<close> are free parameters, not sharp constants.\<close>
 
 theorem comparison_from_localised_maximiser_soft:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -13502,21 +13014,17 @@ qed
 
 subsection \<open>Branch (A): the off-diagonal case closes\<close>
 
-text \<open>Given the localised maximiser AND that it is off the diagonal, every
-  remaining parameter of \<open>comparison_from_localised_maximiser_soft\<close> is now
-  determined, and the contradiction follows.  The choices are
+text \<open>Given the localised maximiser off the diagonal, the remaining
+  parameters of \<open>comparison_from_localised_maximiser_soft\<close> are
+  determined:
 
-    \<open>R\<^sub>u = R\<^sub>w = \<kappa>\<^sub>g/4\<close>   (so \<open>smallu\<close>/\<open>smallw\<close> are exactly what
-                       \<open>doubling_localised_maximiser_soft\<close> delivers)
-    \<open>r = \<kappa>\<^sub>g\<close>
-    \<open>\<rho> < 3\<kappa>\<^sub>g/4\<close>       (so \<open>\<rho> + R\<^sub>u < \<kappa>\<^sub>g\<close> and \<open>\<rho> < r\<close>), and small enough that
-                       \<open>6\<rho> < (1 - 1/R d) norm d\<close>, by \<open>soft_rho_exists\<close>
-    \<open>c = norm (soft_grad \<kappa>\<^sub>P d)\<close>, positive by \<open>soft_grad_norm_pos\<close>
+    \<open>R\<^sub>u = R\<^sub>w = \<kappa>\<^sub>g/4\<close>, \<open>r = \<kappa>\<^sub>g\<close>, \<open>\<rho> < 3\<kappa>\<^sub>g/4\<close> small enough that
+    \<open>6\<rho> < (1 - 1/R d) norm d\<close> (\<open>soft_rho_exists\<close>),
+    \<open>c = norm (soft_grad \<kappa>\<^sub>P d)\<close> (positive by \<open>soft_grad_norm_pos\<close>),
     \<open>D\<^sub>0 = 1\<close>
 
-  \<open>rsmall\<close> is then \<open>soft_rsmall_of_rho\<close>, and \<open>glb\<close> holds by reflexivity because
-  \<open>c\<close> IS the gradient norm.  Recall \<open>\<kappa>\<^sub>P\<close> cancels in \<open>rsmall\<close>, which is why the
-  condition on \<open>\<rho>\<close> does not depend on it.\<close>
+  \<open>rsmall\<close> is \<open>soft_rsmall_of_rho\<close>, and \<open>glb\<close> holds by reflexivity
+  since \<open>c\<close> is the gradient norm; \<open>\<kappa>\<^sub>P\<close> cancels in \<open>rsmall\<close>.\<close>
 
 theorem comparison_soft_off_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -13590,13 +13098,12 @@ qed
 
 subsection \<open>Branch (A) in the two-domain setting\<close>
 
-text \<open>The same branch with the \<open>x\<close>-side boundary avoidance DELETED.  Its place
-  is taken by \<open>posb\<close> --- the sup-convolution is positive on a \<open>\<rho>\<^sub>u\<close>-ball around
-  \<open>x\<^sup>h\<close> --- which is what Definition 3.1's gate supplies, and which needs no
-  geometry at all.  The \<open>y\<close>-side keeps its ball, and \<open>K \<subseteq> K'\<^sup>\<circ>\<close> pays for it.
-  Note the maximality hypothesis \<open>mxU\<close> is over \<open>UNIV \<times> K'\<close>: the \<open>x\<close>-coordinate
-  ranges over everything, which is exactly what
-  \<open>doubled_maximiser_over_UNIV_snd\<close> delivers.\<close>
+text \<open>The same branch with the \<open>x\<close>-side boundary avoidance replaced by
+  \<open>posb\<close> - the sup-convolution is positive on a \<open>\<rho>\<^sub>u\<close>-ball around
+  \<open>x^h\<close>, supplied by Definition 3.1's gate with no geometry needed.  The
+  \<open>y\<close>-side keeps its ball, paid for by \<open>K \<subseteq> K'\<^sup>\<circ>\<close>; the maximality
+  hypothesis \<open>mxU\<close> ranges over \<open>UNIV \<times> K'\<close>, from
+  \<open>doubled_maximiser_over_UNIV_snd\<close>.\<close>
 
 theorem comparison_2dom_off_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K' :: "(real^'n) set"
@@ -13707,16 +13214,13 @@ qed
 
 subsection \<open>Branch (B): the diagonal case closes too\<close>
 
-text \<open>The four steps chained.  At a diagonal maximiser \<open>p\<close> (interior, which the
-  localisation already gives), the maximiser inequality bounds the increment of
-  \<open>B = supconv (-w) \<epsilon>\<close> above by the penalty; the penalty is \<open>o(|h|^2)\<close>; that
-  descends to \<open>-w\<close> at the attainment point; and a supersolution cannot have
-  such a flat point.
-
-  Note this uses NO property of the subsolution side at all --- only the \<open>B\<close>
-  half of the maximiser inequality is consumed.  That is why the diagonal case
-  is genuinely a different argument from the off-diagonal one, which needs the
-  full jet machinery on both sides.\<close>
+text \<open>The four steps chained: at a diagonal maximiser (interior, by the
+  localisation), the maximiser inequality bounds the increment of
+  \<open>B = supconv(-w)\<epsilon>\<close> above by the penalty, which is \<open>o(\<bar>h\<bar>^2)\<close>; that
+  descends to \<open>-w\<close> at the attainment point, and a supersolution cannot
+  have such a flat point.  This uses no property of the subsolution
+  side, so the diagonal case is a genuinely different argument from the
+  off-diagonal one.\<close>
 
 theorem comparison_soft_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n \<Rightarrow> real"
@@ -13740,7 +13244,7 @@ proof -
     using supconv_attained_usc_in_rad[OF Bw epos uw rad subw] by blast
   \<comment> \<open>\<open>p\<close> is interior, so \<open>p + hh\<close> stays in \<open>K\<close> for small \<open>hh\<close>\<close>
   \<comment> \<open>\<open>mem_interior\<close> already delivers the ball inside \<open>K\<close> itself, so no
-      subset-transitivity step is needed — routing it through
+      subset-transitivity step is needed --- routing it through
       \<open>interior_subset\<close> instead made \<open>blast\<close> search for seconds and PIDE flag it\<close>
   obtain r\<^sub>0 where r0: "0 < r\<^sub>0" and rb: "ball p r\<^sub>0 \<subseteq> K"
     using pint unfolding mem_interior by blast
@@ -13778,16 +13282,13 @@ qed
 
 subsection \<open>A nonempty compact set has a nonempty frontier\<close>
 
-text \<open>Needed by \<open>max_principle_boundary\<close>: the conclusion asserts a maximiser in
-  \<open>K - interior K\<close>, so that set had better be inhabited.  It is, for compact
-  nonempty \<open>K\<close>: if it were empty then \<open>K \<subseteq> interior K\<close>, hence \<open>K = interior K\<close>
-  is open as well as closed, and a nonempty proper clopen subset of the
-  (connected) whole space cannot exist.  \<open>K \<noteq> UNIV\<close> because \<open>K\<close> is bounded.
-
-  NOTE this also shows \<open>max_principle_boundary k L {}\<close> is FALSE: with \<open>K = {}\<close>
-  the hypotheses hold vacuously but the conclusion asserts membership in the
-  empty set.  So any proof of the predicate needs \<open>K \<noteq> {}\<close> as a side condition;
-  that is not a defect, just a fact about how the predicate is phrased.\<close>
+text \<open>\<open>max_principle_boundary\<close> asserts a maximiser in \<open>K - interior K\<close>,
+  which is inhabited for compact nonempty \<open>K\<close>: otherwise
+  \<open>K = interior K\<close> is clopen in the connected whole space, and
+  \<open>K \<noteq> UNIV\<close> since \<open>K\<close> is bounded.  With \<open>K = {}\<close> the predicate is
+  unprovable, since the hypotheses hold vacuously but the conclusion
+  asserts membership in the empty set; \<open>K \<noteq> {}\<close> is a genuine side
+  condition.\<close>
 
 lemma compact_frontier_nonempty:
   fixes K :: "(real^'n::finite) set"
@@ -13816,20 +13317,15 @@ qed
 
 subsection \<open>The two branches combined\<close>
 
-text \<open>The case split.  \<open>doubling_localised_maximiser_soft\<close> produces the
-  maximiser; if it is off the diagonal, branch (A) closes; if on, branch (B)
-  does.  The only work here is supplying branch (B)'s geometric hypotheses,
-  which the localisation already implies:
+text \<open>\<open>doubling_localised_maximiser_soft\<close> produces the maximiser; branch
+  (A) closes it off the diagonal, branch (B) on it.  Branch (B)'s
+  geometric hypotheses follow from the localisation:
 
-    \<open>xh \<in> interior K\<close> --- because \<open>farx\<close> gives \<open>\<kappa>\<^sub>g < dist xh b\<close> for every
-      boundary \<open>b\<close>, and if \<open>xh\<close> were a boundary point that would read
-      \<open>\<kappa>\<^sub>g < dist xh xh = 0\<close>.
-    \<open>cball xh R\<^sub>w \<subseteq> interior K\<close> --- from
-      \<open>cball_subset_interior_of_far_from_boundary\<close> at radius \<open>\<kappa>\<^sub>g\<close>, then
-      \<open>R\<^sub>w = \<kappa>\<^sub>g/4 \<le> \<kappa>\<^sub>g\<close>.
-    the attainment radius bound --- from \<open>supconv_radius_uniform\<close>, whose
-      smallness hypothesis is exactly the extra \<open>\<epsilon>\<close>-bound that
-      \<open>doubling_localised_maximiser_soft\<close> was strengthened to deliver.\<close>
+    \<open>xh \<in> interior K\<close> - \<open>farx\<close> gives \<open>\<kappa>\<^sub>g < dist xh b\<close> for every
+      boundary \<open>b\<close>, ruling out \<open>xh\<close> itself being one.
+    \<open>cball xh R\<^sub>w \<subseteq> interior K\<close> - from
+      \<open>cball_subset_interior_of_far_from_boundary\<close> at radius \<open>\<kappa>\<^sub>g\<close>.
+    the attainment radius bound - from \<open>supconv_radius_uniform\<close>.\<close>
 
 theorem comparison_soft_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -13922,14 +13418,12 @@ qed
 
 section \<open>Theorem 4.2(a): \<open>max_principle_boundary\<close>\<close>
 
-text \<open>The packaging.  \<open>comparison_soft_complete\<close> needs GLOBALLY bounded and
-  GLOBALLY continuous data, while the predicate supplies only \<open>continuous_on K\<close>;
-  the gap is closed by \<open>continuous_extension_bounded\<close> together with
-  \<open>visc_subsol_extend\<close> / \<open>supersol_jet_extend\<close>, which work precisely because
-  the viscosity conditions are LOCAL and \<open>interior K\<close> is open.
-
-  \<open>K \<noteq> {}\<close> is a genuine side condition, not an artefact: see
-  \<open>compact_frontier_nonempty\<close>.\<close>
+text \<open>\<open>comparison_soft_complete\<close> needs globally bounded, globally
+  continuous data; the gap from the predicate's \<open>continuous_on K\<close> is
+  closed by \<open>continuous_extension_bounded\<close> with \<open>visc_subsol_extend\<close>/
+  \<open>supersol_jet_extend\<close>, which work because the viscosity conditions
+  are local and \<open>interior K\<close> is open.  \<open>K \<noteq> {}\<close> is a genuine side
+  condition (\<open>compact_frontier_nonempty\<close>).\<close>
 
 lemma theta_exists_aux:
   fixes B G :: real
@@ -14126,23 +13620,17 @@ qed
 
 section \<open>Uniqueness on a general compact set\<close>
 
-text \<open>The first consequence of Theorem 4.2(a), and the one Theorem 1.1 wants:
-  two continuous viscosity solutions on a compact \<open>K\<close> that agree on
-  \<open>K - interior K\<close> agree everywhere on \<open>K\<close>.
+text \<open>The first consequence of Theorem 4.2(a): two continuous viscosity
+  solutions on compact \<open>K\<close> agreeing on \<open>K - interior K\<close> agree everywhere
+  on \<open>K\<close>.  Both directions swap the roles of sub- and supersolution,
+  putting the maximum of \<open>u - w\<close> on the boundary where it vanishes.
+  This generalises the third clause of \<open>theorem_1_1_ball_fragment\<close>,
+  previously available only for \<open>K = cball 0 r\<close> via the explicit
+  Example 3.1 formula \<open>ball_v\<close>.\<close>
 
-  Both directions are the same argument with the roles swapped.  \<open>u\<close> is a
-  subsolution and \<open>w\<close> a supersolution, so \<open>max_principle_boundary\<close> puts the
-  maximum of \<open>u - w\<close> on the boundary, where it is zero; hence \<open>u \<le> w\<close> on \<open>K\<close>.
-  Then \<open>w\<close> is a subsolution and \<open>u\<close> a supersolution, giving \<open>w \<le> u\<close>.
-
-  This generalises the third clause of \<open>theorem_1_1_ball_fragment\<close>, which was
-  available only for \<open>K = cball 0 r\<close> --- there via the explicit Example 3.1
-  optimal-boundary formula \<open>ball_v\<close> rather than via comparison.\<close>
-
-text \<open>The comparison principle proper, with ORDERED boundary data --- weaker
-  hypotheses than \<open>viscosity_uniqueness_compact\<close> below and the form most uses
-  want.  A subsolution below a supersolution on the boundary stays below it
-  throughout.\<close>
+text \<open>The comparison principle proper, with ordered boundary data: a
+  subsolution below a supersolution on the boundary stays below it
+  throughout \<open>K\<close>.\<close>
 
 theorem comparison_compact:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
@@ -14210,8 +13698,8 @@ text \<open>This theory is long enough that the order of the argument is not
 
   1. The operator and its envelopes: \<open>ell_op_lsc_elliptic_le\<close>,
   \<open>ell_op_env_strict_contradiction\<close> give degenerate ellipticity for both
-  envelopes and the closing contradiction off the origin; \<open>eq36_rhs_antitone\<close>
-  handles \<open>p = 0\<close>.
+  envelopes and the closing contradiction off the origin;
+  \<open>eq36_rhs_antitone\<close> handles \<open>p = 0\<close>.
 
   2. The doubling: \<open>doubling_maximiser_exists\<close>, \<open>doubling_dist_bound\<close>,
   \<open>doubling_grad_lower_bound\<close> give the maximising pair, the \<open>O(1/\<alpha>)\<close>
@@ -14221,34 +13709,31 @@ text \<open>This theory is long enough that the order of the argument is not
   \<open>doubled_supconv_jet_exists\<close>, \<open>doubled_jet_slices_at_max\<close>,
   \<open>jet_imp_local_max_test\<close>, \<open>visc_subsol_scaled_uniform\<close>.
 
-  4. Removing corrections, and compactness: \<open>ell_op_lsc_le_of_nearby\<close>
-  passes a bound at nearby points to the envelope, subsuming both the
-  \<open>\<delta> I\<close> shift and Jensen's tilt; \<open>symmetric_form_bound\<close> and
-  \<open>bounded_seq_limit_point\<close> turn quadratic-form bounds into a limiting
-  matrix pair without the spectral theorem.
+  4. Removing corrections, and compactness:
+  \<open>ell_op_lsc_le_of_nearby\<close> passes a bound at nearby points to the
+  envelope, subsuming both the \<open>\<delta> I\<close> shift and Jensen's tilt;
+  \<open>symmetric_form_bound\<close> and \<open>bounded_seq_limit_point\<close> turn
+  quadratic-form bounds into a limiting matrix pair without the spectral
+  theorem.
 
   5. Assembly from bounds rather than limits:
   \<open>comparison_supconv_bounded_family\<close>, \<open>tilted_doubled_psd_ordering\<close>.
 
-  6. The instantiation: \<open>comparison_supconv_doubling_complete\<close> runs Jensen
-  at shrinking tilts and discharges the geometric data, closing
+  6. The instantiation: \<open>comparison_supconv_doubling_complete\<close> runs
+  Jensen at shrinking tilts and discharges the geometric data, closing
   \<open>max_principle_boundary\<close>, which requires continuity of \<open>u\<close> and \<open>w\<close> on
-  \<open>K\<close>. What is not covered here: Theorem 4.2(a) applied to a specific \<open>K\<close>,
-  and everything downstream in Theorem 1.1 --- upper semicontinuity of the
-  value function, the viscosity property, and the lower bound
-  \<open>ball_v \<le> v\<close>, which belong to the probabilistic line.\<close>
+  \<open>K\<close>.\<close>
 
 
-section \<open>P2 + P3: boundary nonnegativity and the \<open>T\<^sub>\<iota>\<close> hypothesis\<close>
+section \<open>Boundary nonnegativity and the \<open>T\<^sub>\<iota>\<close> hypothesis\<close>
 
-subsection \<open>P2: a supersolution with the zero boundary condition is nonnegative\<close>
+subsection \<open>A supersolution with the zero boundary condition is nonnegative\<close>
 
-text \<open>Definition 3.1's boundary clause for the supersolution is active exactly
-  where \<open>u\<^sub>* < 0\<close>; that gate is what makes this work.  At a global minimum the
-  CONSTANT test function touches from below, so the supersolution inequality
-  reads \<open>1 \<le> F\<^sup>*(0,0) = 0\<close> --- the paper's diagonal-case contradiction.
-  Stated with \<open>w\<close> itself lsc, which is what Proposition 4.1 feeds (it passes
-  \<open>lsc_env\<close> of a solution).\<close>
+text \<open>Definition 3.1's boundary clause for the supersolution is active
+  exactly where \<open>u\<^sub>* < 0\<close>: at a global minimum the constant test function
+  touches from below, giving \<open>1 \<le> F^*(0,0) = 0\<close>, the paper's
+  diagonal-case contradiction.  Stated with \<open>w\<close> itself lsc, as
+  Proposition 4.1 feeds it.\<close>
 
 theorem supersol_bc_nonneg:
   fixes w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
@@ -14281,13 +13766,13 @@ proof -
   qed
 qed
 
-subsection \<open>P3: the \<open>T\<^sub>\<iota>\<close> hypothesis and its convex instance\<close>
+subsection \<open>The \<open>T\<^sub>\<iota>\<close> hypothesis and its convex instance\<close>
 
 text \<open>The paper's hypothesis on \<open>K\<close> for the uniqueness clause of Theorem 1.1:
-  a family \<open>T\<^sub>\<iota>\<close> of rotation-dilation-translations, indexed by \<open>\<iota> \<in> (1,2]\<close>,
-  with \<open>K \<subseteq> (T\<^sub>\<iota> ` K)\<degree>\<close> and \<open>T\<^sub>\<iota> \<rightarrow> id\<close>.  Phrased here as an \<open>\<epsilon>\<close>-statement,
-  which is all Theorem 4.3's limit needs, and with the inverse map written
-  out so that no invertibility side condition has to be carried.\<close>
+  a family \<open>T\<^sub>\<iota>\<close> of rotation-dilation-translations, \<open>\<iota> \<in> (1,2]\<close>, with
+  \<open>K \<subseteq> (T\<^sub>\<iota> \` K)^\<circ>\<close> and \<open>T\<^sub>\<iota> \<rightarrow> id\<close>, phrased as an \<open>\<epsilon>\<close>-statement with
+  the inverse map written out so no invertibility side condition is
+  carried.\<close>
 
 definition expandable :: "(real^'n::finite) set \<Rightarrow> bool" where
   "expandable K \<longleftrightarrow>
@@ -14318,8 +13803,8 @@ proof (intro allI impI)
     finally show ?thesis unfolding D_def .
   qed
 
-  text \<open>The dilation factor.  \<open>e / (2(D+1))\<close> rather than \<open>e / (D+1)\<close> so that
-    \<open>c < 1 + e\<close> is STRICT even when \<open>D = 0\<close>.\<close>
+  text \<open>The dilation factor is \<open>e/(2(D+1))\<close> rather than \<open>e/(D+1)\<close>, so
+  \<open>c < 1+e\<close> is strict even when \<open>D = 0\<close>.\<close>
   define A where "A = e / (2 * (D + 1))"
   have D1: "0 < D + 1" using D0 by linarith
   have A0: "0 < A" unfolding A_def using e0 D1 by simp
@@ -14454,9 +13939,10 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>The chain rule through \<open>A z = c \<cdot> R z + b\<close>.  The gradient picks up a
-  factor \<open>c\<close> and a transpose, the Hessian a factor \<open>c\<^sup>2\<close> and a conjugation ---
-  precisely the shape that the invariances of \<open>F\<close> (display (4.4)) undo.\<close>
+text \<open>The chain rule through \<open>A z = c \<cdot> Rz + b\<close>: the gradient picks up a
+  factor \<open>c\<close> and a transpose, the Hessian a factor \<open>c^2\<close> and a
+  conjugation - precisely what the invariances of \<open>F\<close> (display (4.4))
+  undo.\<close>
 
 theorem test_fun_at_affine:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -14578,11 +14064,11 @@ qed
 
 subsection \<open>The transformed supersolution --- Theorem 4.3's engine\<close>
 
-text \<open>The paper's display (4.4) run backwards: the factors that
-  \<open>test_fun_at_affine\<close> introduces are exactly the ones that \<open>ell_op_usc_scale\<close>
-  and \<open>ell_op_usc_conj_rot\<close> remove.  Note that the Hessian factor \<open>c\<^sup>2\<close> cancels
-  against the \<open>c\<^sup>2\<close> in \<open>w'\<close> BEFORE the operator is applied, so no scaling
-  invariance for the Hessian argument is needed here.\<close>
+text \<open>The paper's display (4.4) run backwards: the factors
+  \<open>test_fun_at_affine\<close> introduces are exactly what \<open>ell_op_usc_scale\<close>
+  and \<open>ell_op_usc_conj_rot\<close> remove.  The Hessian factor \<open>c^2\<close> cancels
+  against the \<open>c^2\<close> in \<open>w'\<close> before the operator is applied, so no
+  scaling invariance is needed for the Hessian argument.\<close>
 
 theorem visc_supersol_env_affine:
   fixes w :: "real^'n::finite \<Rightarrow> real" and K \<Omega> :: "(real^'n) set"
@@ -14673,22 +14159,24 @@ proof (intro ballI allI impI)
 qed
 
 
-section \<open>P4 + P5: two-domain comparison, Theorem 4.3, Proposition 4.1\<close>
+section \<open>Two-domain comparison, Theorem 4.3, Proposition 4.1\<close>
 
-subsection \<open>P4: the two-domain maximum principle (Theorem 4.2(b))\<close>
+subsection \<open>The two-domain maximum principle: Theorem 4.2(b)\<close>
 
-text \<open>Theorem 4.2(b): the two-domain comparison principle. For \<open>u\<close> usc and
-  bounded on \<open>K\<close>, \<open>w\<close> lsc and bounded on \<open>K' \<supseteq> K\<close> with \<open>K \<subseteq> interior K'\<close>, a
-  subsolution/supersolution pair with \<open>u \<le> 0\<close> on \<open>\<partial>K\<close> and \<open>w \<ge> 0\<close> on \<open>K'\<close>,
-  \<open>u \<le> w\<close> on \<open>K\<close>. The proof penalises with a quartic over the product,
-  \<open>\<Phi>\<^sup>\<epsilon>(x,y) = \<kappa> u x - w y - \<epsilon>\<^sup>-\<^sup>1\<bar>x-y\<bar>\<^sup>4\<close> with \<open>\<kappa> \<in> (0,1)\<close>, and splits on where
-  the maximiser converges as \<open>\<epsilon> \<rightarrow> 0\<close>: on the diagonal, Definition 3.1(b)
-  gives \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>; in the interior of \<open>K\<close>, Crandall--Ishii and
-  continuity of \<open>F\<close> off \<open>p = 0\<close> force \<open>\<kappa> \<ge> 1\<close>; on the boundary, the sign
-  conditions on \<open>u\<close> and \<open>w\<close> force \<open>\<Phi>\<^sup>\<epsilon> \<le> 0\<close>, and \<open>\<kappa> \<uparrow> 1\<close> gives the
-  conclusion. The two-domain setting makes the supersolution side's ball
-  requirement free, since \<open>K \<subseteq> interior K'\<close> gives every point of \<open>K\<close> a
-  neighbourhood inside \<open>K'\<close>.\<close>
+text \<open>Theorem 4.2(b): the two-domain comparison principle.  For \<open>u\<close> usc
+  bounded on \<open>K\<close>, \<open>w\<close> lsc bounded on \<open>K' \<supseteq> K\<close> with
+  \<open>K \<subseteq> interior K'\<close>, a subsolution/supersolution pair with \<open>u \<le> 0\<close> on
+  \<open>\<partial>K\<close> and \<open>w \<ge> 0\<close> on \<open>K'\<close> satisfies \<open>u \<le> w\<close> on \<open>K\<close>.  The proof
+  penalises with a quartic over the product,
+  \<open>\<Phi>\<^sup>\<epsilon>(x,y) = \<kappa> u x - w y - \<epsilon>\<^sup>-\<^sup>1\<bar>x-y\<bar>\<^sup>4\<close>, \<open>\<kappa> \<in> (0,1)\<close>, and splits on
+  where the maximiser converges as \<open>\<epsilon> \<rightarrow> 0\<close>: on the diagonal,
+  Definition 3.1(b) gives \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>; in the interior of \<open>K\<close>,
+  Crandall--Ishii and continuity of \<open>F\<close> off \<open>p = 0\<close> force \<open>\<kappa> \<ge> 1\<close>; on
+  the boundary, the sign conditions on \<open>u\<close>, \<open>w\<close> force \<open>\<Phi>\<^sup>\<epsilon> \<le> 0\<close>,
+  and \<open>\<kappa> \<uparrow> 1\<close> gives the conclusion.  The two-domain setting makes the
+  supersolution side's ball requirement free, since
+  \<open>K \<subseteq> interior K'\<close> gives every point of \<open>K\<close> a neighbourhood inside
+  \<open>K'\<close>.\<close>
 
 subsection \<open>The gate fact, verified\<close>
 
@@ -14712,10 +14200,10 @@ proof -
   show ?thesis by (rule that[OF t0 t1 key])
 qed
 
-text \<open>The gate of Definition 3.1(a) is open at every maximiser of the doubled
-  functional, boundary or not: no case-split on the sign of \<open>u\<close> is ever
-  needed.  Stated for an arbitrary nonnegative penalty, so it applies to the
-  quartic of the paper and to \<open>soft_pen\<close> alike.\<close>
+text \<open>Definition 3.1(a)'s gate is open at every maximiser of the doubled
+  functional, boundary or not, with no case-split on the sign of \<open>u\<close>.
+  Stated for an arbitrary nonnegative penalty, so it applies to the
+  paper's quartic and to \<open>soft_pen\<close> alike.\<close>
 
 lemma doubled_maximiser_gate_open:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and xh yh :: "real^'n"
@@ -14730,11 +14218,10 @@ proof -
   then show ?thesis using t0 by (simp add: zero_less_mult_iff)
 qed
 
-text \<open>The gate is inherited by the sup-convolution's attainment point.  This is
-  the second half of what P4 needs: the Jensen/sup-convolution step reads the
-  subsolution property off at the ATTAINMENT point, not at \<open>x\<^sup>h\<close>, and that point
-  is again in Definition 3.1's gated \<open>\<Omega>\<close> --- because the sup-convolution is
-  \<open>\<ge>\<close> the function, so the attained value is \<open>\<ge> \<theta> u x\<^sup>h > 0\<close>.\<close>
+text \<open>The gate is inherited by the sup-convolution's attainment point: the
+  Jensen step reads the subsolution property at that point, not at
+  \<open>x^h\<close>, and it lies in Definition 3.1's gated \<open>\<Omega>\<close> since the attained
+  value is \<open>\<ge> \<theta>u x^h > 0\<close>.\<close>
 
 lemma supconv_attain_gate_open:
   fixes u :: "real^'n::finite \<Rightarrow> real" and xh ys :: "real^'n"
@@ -14769,14 +14256,13 @@ proof -
   then show ?thesis using xhK by (cases "xh \<in> interior K") auto
 qed
 
-subsection \<open>P4's front end: the two-domain doubled maximiser\<close>
+subsection \<open>The two-domain doubled maximiser\<close>
 
-text \<open>Existence of the maximiser of \<open>\<theta>u(x) - w(y) - pen(x-y)\<close> over \<open>K \<times> K'\<close> for
-  USC \<open>u\<close> and LSC \<open>w\<close>.  This is the step the paper opens Theorem 4.2(b) with,
-  and it needs no continuity: the objective is usc on the compact product, by
-  the \<open>\<epsilon>\<close>-form calculus in \<open>Envelopes\<close> (\<open>usc_eps_add\<close>, \<open>usc_eps_scale\<close>,
-  \<open>usc_eps_of_continuous\<close>) and \<open>usc_attains_sup_gen\<close>, which is stated there for
-  an arbitrary metric space precisely so that it applies to the PRODUCT.\<close>
+text \<open>Existence of the maximiser of \<open>\<theta>u(x)-w(y)-pen(x-y)\<close> over \<open>K \<times> K'\<close>
+  for usc \<open>u\<close> and lsc \<open>w\<close>, needing no continuity: the objective is usc
+  on the compact product, by the \<open>\<epsilon>\<close>-form calculus in \<open>Envelopes\<close> and
+  \<open>usc_attains_sup_gen\<close>, stated there for an arbitrary metric space so
+  it applies to the product.\<close>
 
 theorem two_domain_doubled_maximiser:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"
@@ -14878,10 +14364,10 @@ proof -
   qed
 qed
 
-text \<open>The \<open>y\<close>-side avoidance, which the two-domain setting makes free: \<open>K\<close> sits a
-  positive distance inside \<open>K'\<close>, so once the penalty pins \<open>y\<^sup>h\<close> near \<open>K\<close> it is
-  interior to \<open>K'\<close> with room to spare.  (The \<open>x\<close>-side needs no analogue: the
-  gate lemmas above put \<open>x\<^sup>h\<close> in \<open>\<Omega>\<close> wherever it lands.)\<close>
+text \<open>The \<open>y\<close>-side avoidance is free in the two-domain setting: \<open>K\<close> sits a
+  positive distance inside \<open>K'\<close>, so once the penalty pins \<open>y^h\<close> near
+  \<open>K\<close> it is interior to \<open>K'\<close>.  The \<open>x\<close>-side needs no analogue, since the
+  gate lemmas put \<open>x^h\<close> in \<open>\<Omega>\<close> wherever it lands.\<close>
 
 lemma two_domain_gap:
   fixes K K' :: "(real^'n::finite) set"
@@ -15245,7 +14731,7 @@ proof (rule ccontr)
   qed
 qed
 
-subsection \<open>P5: Theorem 4.3, on top of P4\<close>
+subsection \<open>Theorem 4.3, on top of the two-domain principle\<close>
 
 text \<open>Two small facts about the inverse of the dilation, used to transfer
   lower semicontinuity and the bound to the transformed supersolution.\<close>
@@ -15287,10 +14773,10 @@ proof -
   finally show ?thesis unfolding dist_norm .
 qed
 
-text \<open>The paper's Theorem 4.3, in the form Proposition 4.1 consumes: for an
-  usc bounded subsolution \<open>u\<close> and an lsc bounded supersolution \<open>w\<close>, both
-  satisfying Definition 3.1's boundary condition on an expandable \<open>K\<close>,
-  \<open>u \<le> w\<^sup>*\<close> on \<open>K\<close>.  The \<open>\<iota> \<downarrow> 1\<close> limit is taken along \<open>e\<^sub>j = 1 / Suc j\<close>.\<close>
+text \<open>The paper's Theorem 4.3, in the form Proposition 4.1 consumes: for usc
+  bounded \<open>u\<close> and lsc bounded \<open>w\<close> both satisfying Definition 3.1's
+  boundary condition on an expandable \<open>K\<close>, \<open>u \<le> w^*\<close> on \<open>K\<close>.  The
+  \<open>\<iota> \<downarrow> 1\<close> limit is taken along \<open>e\<^sub>j = 1/Suc j\<close>.\<close>
 
 theorem comparison_expandable:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
@@ -15503,10 +14989,10 @@ qed
 
 subsection \<open>Proposition 4.1: uniqueness among bounded usc solutions\<close>
 
-text \<open>The paper's Proposition 4.1.  Both functions are assumed usc and bounded
-  GLOBALLY; a caller with data only on \<open>K\<close> extends first with
-  \<open>usc_extension_bounded\<close>, which changes nothing on \<open>K\<close> and hence preserves
-  both viscosity properties (they quantify only over \<open>K\<close>).\<close>
+text \<open>The paper's Proposition 4.1: both functions are assumed usc and
+  bounded globally; a caller with data only on \<open>K\<close> extends first with
+  \<open>usc_extension_bounded\<close>, which changes nothing on \<open>K\<close> and preserves
+  both viscosity properties.\<close>
 
 theorem uniqueness_expandable:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
