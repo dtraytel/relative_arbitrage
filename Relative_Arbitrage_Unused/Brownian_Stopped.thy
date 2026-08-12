@@ -10,7 +10,7 @@
 *)
 
 theory Brownian_Stopped
-  imports Brownian_Exit Stopped_Adaptedness
+  imports Brownian_Exit "Martingale_Sampling.Stopped_Adaptedness"
 begin
 
 section \<open>Components of the continuous state process\<close>

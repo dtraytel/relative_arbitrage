@@ -14,7 +14,7 @@
 
 theory Brownian_Market
   imports
-    Brownian_Motion
+    "Wiener_Measure.Brownian_Motion"
     Relative_Arbitrage_Stochastic
     "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras"
 begin

@@ -10,7 +10,7 @@
 *)
 
 theory Exit_Semicontinuity
-  imports Path_Space Exit_Time Value_Function
+  imports "Path_Space_Tightness.Path_Space" Exit_Time Value_Function
 begin
 
 section \<open>The path-space exit time\<close>

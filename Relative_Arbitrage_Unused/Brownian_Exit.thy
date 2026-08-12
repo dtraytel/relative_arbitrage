@@ -9,7 +9,7 @@
 *)
 
 theory Brownian_Exit
-  imports Brownian_Continuous Exit_Time
+  imports "Relative_Arbitrage.Brownian_Continuous" "Relative_Arbitrage.Exit_Time"
 begin
 
 section \<open>The exterior of an open ball\<close>

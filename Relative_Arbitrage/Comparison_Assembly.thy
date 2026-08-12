@@ -1,7 +1,7 @@
 section \<open>Theorem 4.2(a) via the Crandall-Ishii jet machinery\<close>
 
 theory Comparison_Assembly
-  imports Sup_Convolution Lemma_3_1_Envelopes
+  imports "Alexandrov_Sup_Convolution.Sup_Convolution" Lemma_3_1_Envelopes
 begin
 
 text \<open>\<open>Sup_Convolution.thy\<close> develops the jet machinery independently of the

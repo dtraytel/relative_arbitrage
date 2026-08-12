@@ -13,7 +13,7 @@
 *)
 
 theory Brownian_Continuous
-  imports Modification_Transfer Brownian_Motion_Continuity
+  imports Modification_Transfer "Wiener_Measure.Brownian_Motion_Continuity"
 begin
 
 section \<open>A continuous version of the coordinate process\<close>

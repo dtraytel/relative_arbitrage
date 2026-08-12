@@ -11,7 +11,7 @@
 *)
 
 theory Paper_Class
-  imports Path_Space Path_Tightness Exit_Semicontinuity Poincare_Separation
+  imports "Path_Space_Tightness.Path_Space" "Path_Space_Tightness.Path_Tightness" Exit_Semicontinuity Poincare_Separation
     Relative_Arbitrage_Comparison
 begin
 

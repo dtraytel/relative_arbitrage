@@ -19,7 +19,7 @@ text \<open>
 \<close>
 
 theory L2_Limits
-  imports Vitali_Convergence
+  imports "Martingale_Sampling.Vitali_Convergence"
 begin
 
 subsection \<open>The arithmetic-geometric bound\<close>

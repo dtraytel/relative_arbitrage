@@ -1,0 +1,21 @@
+session Relative_Arbitrage_Unused = Relative_Arbitrage +
+  description "
+    Material developed along the way that the main result does not use: a
+    discrete relative-arbitrage market, an L-squared stochastic integral, and
+    several measure-theoretic side results.  Kept for reference, not part of
+    any AFP entry.
+  "
+  sessions
+    Martingales
+  theories
+    Measure_Continuity_Sets
+    Stacking_Intervals
+    L2_Limits
+    Relative_Arbitrage_Discrete
+    Random_Walk_Market
+    Stochastic_Integral
+    Stochastic_Integral_Simple
+    Stochastic_Integral_L2
+    Ito_Covariation
+    Brownian_Exit
+    Brownian_Stopped

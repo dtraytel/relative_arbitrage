@@ -12,7 +12,7 @@ text \<open>
 \<close>
 
 theory Path_Tightness_Market
-  imports Path_Tightness Stopped_Localization
+  imports "Path_Space_Tightness.Path_Tightness" Stopped_Localization
 begin
 
 corollary path_laws_convergent_subsequence_market:

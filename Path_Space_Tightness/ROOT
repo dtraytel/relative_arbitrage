@@ -1,0 +1,21 @@
+session Path_Space_Tightness = Martingale_Sampling +
+  description "
+    The space of continuous paths on a compact interval as a Polish metric
+    space, moment bounds on the increments of a martingale with a controlled
+    compensator, and tightness of a family of path laws.
+  "
+  sessions
+    Kolmogorov_Chentsov
+    Levy_Prokhorov_Metric
+    Standard_Borel_Spaces
+    "HOL-Complex_Analysis"
+  theories
+    Increment_Moments
+    Increment_Tails
+    Dyadic_Chaining
+    Modulus_Tails
+    Holder_Interpolation
+    Conditional_UI
+    Section_2_Compactness
+    Path_Space
+    Path_Tightness

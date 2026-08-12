@@ -13,7 +13,7 @@ text \<open>
 \<close>
 
 theory Stopped_Localization
-  imports Stopped_Adaptedness Increment_Moments Exit_Time
+  imports "Martingale_Sampling.Stopped_Adaptedness" "Path_Space_Tightness.Increment_Moments" Exit_Time
 begin
 
 theorem stopped_martingale_L2:

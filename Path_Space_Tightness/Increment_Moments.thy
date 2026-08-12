@@ -16,7 +16,7 @@ text \<open>
 \<close>
 
 theory Increment_Moments
-  imports Sampled_Quadratic_Variation Moment_Bounds
+  imports "Martingale_Sampling.Sampled_Quadratic_Variation" "Martingale_Sampling.Moment_Bounds"
 begin
 
 subsection \<open>A martingale has constant expectation\<close>

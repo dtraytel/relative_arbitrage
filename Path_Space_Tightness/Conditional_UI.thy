@@ -19,7 +19,7 @@ text \<open>
 \<close>
 
 theory Conditional_UI
-  imports Vitali_Convergence Increment_Moments
+  imports "Martingale_Sampling.Vitali_Convergence" Increment_Moments
 begin
 
 subsection \<open>Absolute continuity of the integral\<close>

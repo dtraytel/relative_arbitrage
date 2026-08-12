@@ -23,7 +23,7 @@
 
 theory Ito_Market
   imports
-    Optional_Sampling
+    "Martingale_Sampling.Optional_Sampling"
     Brownian_Market
 begin
 

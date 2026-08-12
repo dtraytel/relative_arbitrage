@@ -1,5 +1,5 @@
 theory Paper_DPP
-  imports Paper_Bridge Conditional_UI "Disintegration.Disintegration"
+  imports Paper_Bridge "Path_Space_Tightness.Conditional_UI" "Disintegration.Disintegration"
 begin
 
 text \<open>The dynamic programming principle of Proposition 2.4 of

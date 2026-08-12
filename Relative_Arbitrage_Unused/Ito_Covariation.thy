@@ -30,7 +30,7 @@ text \<open>
 \<close>
 
 theory Ito_Covariation
-  imports Ito_Market Sampled_Martingale
+  imports "Relative_Arbitrage.Ito_Market" "Martingale_Sampling.Sampled_Martingale"
 begin
 
 text \<open>

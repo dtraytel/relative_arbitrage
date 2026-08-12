@@ -1,0 +1,18 @@
+session Martingale_Sampling = "HOL-Probability" +
+  description "
+    Doob's maximal inequality, optional sampling and optional stopping at a
+    bounded stopping time in continuous time, quadratic variation, uniform
+    integrability and Vitali's convergence theorem.
+  "
+  sessions
+    Martingales
+  theories
+    Quadratic_Variation
+    Time_Discretisation
+    Doob_Inequality
+    Optional_Sampling
+    Stopped_Adaptedness
+    Sampled_Martingale
+    Sampled_Quadratic_Variation
+    Moment_Bounds
+    Vitali_Convergence

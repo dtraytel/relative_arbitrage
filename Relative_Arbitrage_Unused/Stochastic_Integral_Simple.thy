@@ -23,7 +23,7 @@ text \<open>
 \<close>
 
 theory Stochastic_Integral_Simple
-  imports Stochastic_Integral Sampled_Martingale
+  imports Stochastic_Integral "Martingale_Sampling.Sampled_Martingale"
 begin
 
 subsection \<open>The sampled process is a square-integrable discrete martingale\<close>

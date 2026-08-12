@@ -1,0 +1,11 @@
+session Wiener_Measure = "HOL-Probability" +
+  description "
+    Wiener measure on the space of real paths, constructed as a projective
+    limit of Gaussian finite-dimensional distributions, and its continuous
+    modification.
+  "
+  sessions
+    Kolmogorov_Chentsov
+  theories
+    Brownian_Motion
+    Brownian_Motion_Continuity

@@ -25,8 +25,8 @@
 
 theory Relative_Arbitrage_Discrete
   imports
-    Quadratic_Variation
-    Relative_Arbitrage_Stochastic
+    "Martingale_Sampling.Quadratic_Variation"
+    "Relative_Arbitrage.Relative_Arbitrage_Stochastic"
 begin
 
 section \<open>Vector-valued quadratic variation\<close>
