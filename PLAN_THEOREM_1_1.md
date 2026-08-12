@@ -4,16 +4,15 @@ Single source of truth for **what is proved, what is left, and in what
 order**. Everything named here is machine-checked in PIDE with
 `commands_failed = 0`, and there is no `sorry` anywhere in the session.
 
-Last updated 2026-08-11, after **clause (2) was closed** — both viscosity
-inequalities (§1.10) — the comparison chain was **re-based on the paper's
-Definition 3.1** (§1.11), and the two were joined into
-`paper_v_unique_viscosity_solution`.  That emptied §2.1 and §2.1a; the queue
-is renumbered again and now opens at §2.0, continuity of `paper_v`.
-Restructured 2026-08-08, after **the DPP of Prop. 2.4 was proved at a
-STOPPING time** (§1.9), which emptied the §2.1 of that day.
+Last updated 2026-08-12, after **P4 was closed** — `comparison_two_domain`,
+the paper's Theorem 4.2(b) — which was the last admitted step.  **Theorem 1.1
+is now fully formalised: no `sorry` anywhere, all 53 theories green.**  §2 is
+therefore empty, and everything it used to queue has been moved into §1 as
+§1.12–§1.14.
+
 §1 is an INDEX of closed work — do not re-derive any of it, and do not expand
 it; construction narratives, dead ends and session logs live in
-`PLAN_HISTORY.md` and in `git log -p`. §2 is the queue.
+`PLAN_HISTORY.md` and in `git log -p`. §2 is empty.
 
 **Sources.** The paper (Lai/Shkolnikov/Soner, arXiv:2512.17702); its Section-2
 reference Larsson–Ruf, *Minimum curvature flow and martingale exit times*,
@@ -46,7 +45,12 @@ time from `K`.
 | (2) | `visc_sol k L (interior K) v` | **DONE — BOTH halves, 2026-08-11.**  Subsolution `Paper_Viscosity.paper_v_visc_subsol`, with the paper's own operator (1.9), orthogonality included, in the envelope-FREE form (STRONGER than Def. 3.1(a)).  Supersolution `Paper_Viscosity.paper_v_supersol_lsc`, Def. 3.1(b) verbatim, plus `paper_v_supersol_lsc_bounded` with the horizon hypothesis discharged for bounded `K`.  Gaps 1 and 2 CLOSED; no stochastic integration and no weak SDE solution anywhere — §1.10 |
 | (3) | zero boundary condition | **DONE, BOTH HALVES, 2026-08-11.**  Subsolution `Paper_Viscosity.paper_v_subsol_bc` (P6), supersolution `Theorem_1_1.paper_v_supersol_bc` (gate vacuous, since `paper_v ≥ 0`).  Target corrected 2026-08-11: the paper's clause is the VISCOSITY boundary condition, NOT pointwise `v = 0` on `K − interior K`, which is FALSE in general (cube, `k = 2`).  Ball instance `paper_v_boundary_zero` |
 | (4) | uniqueness | **DONE** — `Theorem_1_1.theorem_1_1_uniqueness_general`, and since 2026-08-11 stated over the paper's **Definition 3.1** rather than the repo's stronger envelope-free notions, so it is Theorem 4.2(a) as written — §1.11 |
-| (2)+(4) | `paper_v` IS the solution | **DONE modulo P4 alone** — `Theorem_1_1.theorem_1_1_uniqueness_faithful`: uniqueness among BOUNDED USC Definition-3.1-with-boundary-condition solutions on an expandable `K`.  Route: `uniqueness_expandable` (Prop 4.1) ← `comparison_expandable` (Thm 4.3) ← `comparison_two_domain` (P4).  Continuity is NOT part of Theorem 1.1; `paper_v_unique_viscosity_solution` is superseded |
+| (2)+(4) | `paper_v` IS the solution | **DONE, unconditionally, 2026-08-12** — `Theorem_1_1.theorem_1_1_uniqueness_faithful`: uniqueness among BOUNDED USC Definition-3.1-with-boundary-condition solutions on an expandable `K`.  Route: `uniqueness_expandable` (Prop 4.1) ← `comparison_expandable` (Thm 4.3) ← `comparison_two_domain` (P4, §1.14).  Continuity is NOT part of Theorem 1.1; `paper_v_unique_viscosity_solution` is superseded |
+
+**Example 3.1 is also done, for every `k`** (`Theorem_1_1.example_3_1`,
+§1.13): `enn2real (paper_v k L T (cball 0 r) x)
+= max ((r*r - x ∙ x) / real (CARD('n) - k)) 0` whenever the horizon does not
+bind.
 
 **Three value functions exist**, and the theorem must end up about ONE.
 `val_fn` (all `sufficiently_volatile_market` instances), `stopped_val_fn`
@@ -54,8 +58,8 @@ time from `K`.
 (the class (1.7) as pair laws). Clauses (0), (1), (2), (3)-ball and (4)
 are proved for `paper_v` itself. What still lives only on the market-side
 functions is the `n−k=1` realization inside clause (3)
-(`stopped_val_fn_ball_eq_2d`); transferring it is §2.3, and it is needed
-only if §2.2 turns out to want it.
+(`stopped_val_fn_ball_eq_2d`); transferring it is §2.3, and §1.13
+closed Example 3.1 without it, so nothing needs it.
 
 **Where the DPP stands — Prop. 2.4 IS PROVED, INCLUDING AT A STOPPING TIME.**
 At a deterministic time: `paper_v_dpp` (2026-08-07, §1.7), `≥` from the
@@ -65,19 +69,21 @@ and `paper_v_cond_time`. **The DPP is no longer a blocker for anything.** The
 alternative route through positive-measure conditioning is a dead end and stays
 one — see §1.7.
 
-**Remaining budget, roughly.**
+**Remaining budget: none.**  For the record, what the last three sessions
+actually cost, against the estimates this table used to carry:
 
-| item | § | lines | risk |
+| item | § | estimated | actual |
 |---|---|---|---|
-| **P4** `comparison_two_domain` (Thm 4.2(b)) | 2.0 | 1,500–3,000 | MODERATE — the enablers are proved (gate open at the maximiser, gate propagates through the sup-convolution, env→local is Ω-generic); the work is re-running the doubling over `K × K'` with the x-side boundary-avoidance replaced by the gate |
-| ~~**P6** boundary subsolution for `paper_v`~~ | 2.0 | — | **DONE** 2026-08-11 (`paper_v_subsol_bc`) |
-| ~~rest of §2.0 (P0, P2, P3, P5, P7)~~ | 2.0 | — | **DONE** 2026-08-11 |
-| Example 3.1 exact, all `k` | 2.2 | 1,500–2,500 | low-moderate — the subspace-tangential field mirrors a proven chain; no DPP needed |
-| `stopped_val_fn ≤ paper_v` | 2.3 | ? | only if §2.2 wants it |
+| old §2.0 packages P0–P7 (faithful Theorem 1.1) | 1.12 | 4,000–8,300 | closed 2026-08-11/12 |
+| Example 3.1 exact, all `k` (E1–E4) | 1.13 | 1,500–2,500 | closed 2026-08-12 |
+| **P4** `comparison_two_domain` (Thm 4.2(b)) | 1.14 | 1,500–3,000 | ~900 lines, closed 2026-08-12 |
+| `stopped_val_fn ≤ paper_v` | 2.3 | ? | not needed — §1.13 closed without it |
 
-Closed since this table was last priced, and moved into §1: the two viscosity
-inequalities (was §2.1, now §1.10 — and the weak SDE solution the table feared
-turned out not to be needed) and the uniqueness interface (now §1.11).
+P4 came in well under estimate because the Crandall–Ishii core needed no
+mathematical change at all: splitting its single `Ω` into `Ω⇩u`/`Ω⇩w` left
+every proof body untouched, and the boundary-maximiser obstruction dissolved
+under the constant extension rather than needing the predicted
+compactness/subsequence argument (§1.14).
 
 ---
 
@@ -822,26 +828,307 @@ solution in the sense of Definition 3.1 agreeing with `paper_v` on
 
 The one hypothesis it still carries is continuity of `paper_v` on `K`, and
 that hypothesis comes from the COMPARISON theorem's regularity assumptions,
-not from clause (2) — see **§2.0**, which locates it and says why continuity
-should be an output rather than an input.
+not from clause (2).  **§1.12** locates it and records the correction: continuity
+is NOT part of Theorem 1.1 at all, and Proposition 4.1 needs only bounded usc.
 
 ---
 
-## 2. What is LEFT
+### 1.12 Theorem 1.1 faithfully: the viscosity boundary condition and uniqueness among usc solutions (paper §4) — CLOSED 2026-08-12
 
-### THE OPEN LIST — EMPTY (2026-08-12)
+**ALL PACKAGES P0–P7 ARE DONE.**  Kept in full because it contains three
+corrections to what this plan previously believed; acting on the old
+beliefs produces false or unfaithful statements.
 
-**Theorem 1.1 is fully formalised.  The repository contains no `sorry`, and
-all 53 theories are green.**
+The paper is at `https://arxiv.org/html/2512.17702v1` (WebFetch it; the PDF
+`https://arxiv.org/pdf/2512.17702` if the HTML garbles a formula).  Read, at
+minimum: Definition 3.1 INCLUDING its boundary clauses, Theorem 4.2(a)(b),
+Theorem 4.3, Proposition 4.1, and the definition of the transformations
+`T_ι` (§4).  Quote them into your working notes before formalizing.
 
-`comparison_two_domain` (the paper's Theorem 4.2(b)) was the last admitted
-step; it was proved on 2026-08-12 (`36d09c6`).  With it,
-`comparison_expandable` (Theorem 4.3), `uniqueness_expandable`
-(Proposition 4.1) and `theorem_1_1_uniqueness_faithful` are unconditional,
-and §2.2's `Theorem_1_1.example_3_1` holds for every `1 ≤ k < CARD('n)`.
+#### Faithfulness corrections (established 2026-08-11 by reading §4–§5)
 
-The record of how P4 was closed is kept below, because several of its steps
-overturn earlier conclusions in this file.
+1. **The paper's "zero boundary condition" is a VISCOSITY condition, not
+   `v = 0` pointwise on the boundary.**  Definition 3.1 extends the sub- and
+   supersolution clauses to boundary points, GATED by the sign of the
+   envelope: at `x ∈ ∂K` with `u*(x) > 0`, a global touching from above
+   must still satisfy `F\<^sub>*(∇φ, ∇²φ) ≤ 1`; at `x ∈ ∂K` with `u\<^sub>*(x) < 0`,
+   a touching from below must satisfy `F*(∇φ, ∇²φ) ≥ 1`.  Pointwise
+   `v = 0` on `∂K` is FALSE in general: by the paper's Lemma 5.3 (`K`
+   convex: `v(x) = 0` iff `dim F\<^sub>x ≤ n - k`, `F\<^sub>x` the face containing `x`),
+   the cube in `ℝ\<^sup>3` with `k = 2` has `v > 0` on the open 2-faces of its
+   BOUNDARY.  The repo's `paper_v_boundary_zero` (ball) is the Example-3.1
+   instance, not the general clause.  The status-table row for clause (3)
+   has been corrected accordingly.
+2. **Continuity of `paper_v` is NOT part of Theorem 1.1 and is NOT needed for
+   uniqueness.**  Proposition 4.1 proves uniqueness among BOUNDED USC
+   solutions.  The paper proves continuity of `v` only in its §5, under
+   extra hypotheses (convex `K`; or polytope; or `k ≤ 2`), and never uses it
+   for Theorem 1.1.  The earlier §2.0 note "continuity should be an output
+   of comparison" is WRONG and is superseded by this section.  The
+   continuity-hypothesis join `paper_v_unique_viscosity_solution` will be
+   superseded by the faithful statement below; keep it as a corollary if
+   convenient, delete it if not.
+3. **The uniqueness clause of Theorem 1.1 carries a hypothesis on `K`**: a
+   family `T_ι : ℝ\<^sup>n → ℝ\<^sup>n`, `ι ∈ (1,2]`, each a composition of rotation,
+   dilation and translation, with `K ⊆ (T_ι ` K)°` and `T_ι → id` as
+   `ι ↓ 1`.  The paper notes every compact convex `K` with nonempty
+   interior satisfies it.  Formalize the hypothesis as a predicate and prove
+   the convex instance so it is visibly nonvacuous.
+
+#### Target statements
+
+* **T1 (definition).**  The paper's Definition 3.1 with boundary clauses.
+  The repo's `Ω`-parametric envelope definitions make this a Ω-CHOICE, not a
+  new definition shape: for usc `u` (so `u* = u`)
+
+      paper_bc_subsol  k L K u ≡
+        visc_subsol_env  k L K (interior K ∪ {x ∈ K - interior K. 0 < u x}) u
+      paper_bc_supersol k L K u ≡
+        visc_supersol_lsc k L K (interior K ∪ {x ∈ K - interior K. lsc_env u x < 0}) u
+      paper_solution k L K u ≡ (usc on K) ∧ (bounded on K)
+        ∧ paper_bc_subsol k L K u ∧ paper_bc_supersol k L K u
+
+  (`visc_supersol_lsc k L K Ω u` IS `visc_supersol_env k L K Ω (lsc_env u)`
+  definitionally — same formula, `lsc_env u` substituted.  Def 3.1 requires
+  `u` BOUNDED; carry it, the extension lemmas below need it.)
+* **T2 = Theorem 4.2(a), usc/lsc.**  `max_principle_boundary` weakened from
+  `continuous_on K` (both) to: `u` usc bounded, `w` lsc bounded.
+* **T3 = Theorem 4.2(b) + 4.3 + Prop 4.1.**  Under the `T_ι` hypothesis:
+  two `paper_solution`s agree on `K`.
+* **T4 = Theorem 1.1 assembled**: `paper_solution k L K (enn2real ∘ paper_v ...)`,
+  and it is the unique one.  (Sub-obligation: the boundary subsol clause for
+  `paper_v` — package B below.)
+
+#### Work packages, in execution order
+
+**P0 — DONE** (2026-08-11, `52946d8` + `f78b7e4`), INCLUDING the
+  `ell_op_usc` invariances that the first pass deferred:
+  `ell_op_usc_transfer` (a metric-free INF/SUP sandwich, so one lemma serves
+  both cases), `ell_op_usc_scale`, `ell_op_usc_conj_rot`.  Original scoping
+  note: general lemmas into Envelopes (one reprocess of the chain, ~10 min;
+place everything here FIRST so later packages never edit upstream again).
+  * MOVE `lsc_env` + its lemmas (`lsc_env_bdd_above`, `_le_self`, `_ge`,
+    `_approx`, `_lower`, `_attains_inf`, `lsc_env_eq_self`) from
+    Paper_Viscosity to Envelopes (same extraction procedure as the
+    2026-08-11 moves; Paper_Viscosity keeps using them unchanged).
+  * `usc_env u x = - lsc_env (λy. - u y) x` as a definition, with the
+    mirrored lemma set (each proof is 3 lines via the negation).
+  * `usc_attains_sup`: usc bounded-above on compact nonempty attains its
+    sup.  Mirror `lsc_attains_inf_gen` (Paper_Viscosity — move it too) via
+    negation.
+  * `usc_extension_bounded`: `u` usc on closed `K`, `|u| ≤ B` on `K` ⟹
+    `∃u'. usc on UNIV ∧ u' = u on K ∧ ∀y. |u' y| ≤ B`.  Take `u' = u` on
+    `K`, `u' = -B` off `K`.  Usc at `z ∉ K`: `K` closed so `u'` is locally
+    constant; at `x ∈ K`: `limsup ≤ max(u x, -B) = u x`.  (Extension by a
+    constant ≤ the min IS usc — extension by `0` is NOT, that error was
+    made and caught in this planning pass.)
+  * F-invariance (ingredients all present): from `feasible_scale`
+    (Envelopes 1398) and `feasible_conj` (Envelopes 1029) prove
+
+        ell_op_scale:  0 < c ⟹ ell_op k L (c *\<^sub>R p) M = ell_op k L p M
+        ell_op_conj:   orthogonal R ⟹
+          ell_op k L (R *v p) (R ** M ** transpose R) = ell_op k L p M
+        ell_op_hess_scale: 0 < c ⟹
+          ell_op k L p (c *\<^sub>R M) = c * ell_op k L p M   (trace is linear)
+
+    then the same three for `ell_op_usc` and `ell_op_lsc` (the map
+    `(p,M) ↦ (R *v c\<^sub>1 p, c\<^sub>2 R M R\<^sup>T)` is an invertible bounded-linear map of
+    the product, so it maps `ball z e` into `ball (f z) (k\<^sub>2 e)` both ways;
+    mirror the ball-translation trick of `ell_op_lsc_elliptic_le`,
+    Comparison_Assembly ~850).  This is the paper's display (4.4).
+* **P1 — usc/lsc maximum principle (T2), Comparison_Assembly tail.**
+  Audit protocol: `grep -n 'continuous_on K' Comparison_Assembly.thy`; per
+  the 2026-08-11 audit continuity of `u`,`w` themselves enters ONLY through
+  (i) `max_principle_boundary_attains` (13687) and friends built on
+  `continuous_attains_sup` — replace with `usc_attains_sup` (`u - w` is usc
+  when `u` usc and `w` lsc; that is the whole point of the pairing), and
+  (ii) `continuous_extension_bounded` (13727–13730) — replace with
+  `usc_extension_bounded` for `u` and its mirror for `w` (extend `-w`).
+  `supconv_continuous` needs only the BOUND (`Bu`), never continuity of the
+  input, so the supconv/Jensen/CI core is untouched — do not descend into
+  it.  One trap: the "attaining balls lie in `Ω`" smallness hypotheses
+  (comment near 6820) must be re-derived for the constant-extended
+  functions; the sup defining `supconv` is attained where `u` is large,
+  i.e. in `K`, because the extension value `-B` is ≤ every value on `K`.
+  Restate `max_principle_boundary` (Lemma_3_1_Envelopes 722) with usc/lsc +
+  bounded in place of the two `continuous_on`, and repair its four
+  consumers there (`max_principle_le`, `comparison_from_max_principle`,
+  `uniqueness_from_max_principle`, `max_principle_boundary_intro`) plus
+  `max_principle_boundary_holds`/`comparison_compact`/
+  `viscosity_uniqueness_compact` — usc+lsc versions; keep the old
+  continuity forms as corollaries (continuity ⟹ both).
+* **P2 — DONE** (`supersol_bc_nonneg`, `0887012`): `w ≥ 0` from the supersolution boundary condition (new, small,
+  Comparison_Assembly tail): `w` lsc bounded, `paper_bc_supersol`-style
+  hypotheses on compact `K` ⟹ `0 ≤ w` on `K`.  Proof: `lsc_env w = w`-min
+  attained (`lsc_attains_inf_gen`); if the min is `< 0` the gate is open at
+  the minimiser whether interior or boundary, the CONSTANT test function
+  touches from below, and `1 ≤ F*(0,0) = 0` is absurd —
+  `ell_op_usc k L 0 0 = 0` from `ell_op_usc_le_scaled_norm` (≤) and
+  `ell_op_le_ell_op_usc` + `ell_op_zero_matrix` (≥).
+* **P3 — DONE** (`expandable`, `convex_expandable`, `test_fun_at_affine`,
+  `visc_supersol_env_affine`; `0887012` + `f78b7e4`): the `T_ι` hypothesis and the transformed supersolution
+  (Comparison_Assembly tail).  Predicate (a SEQUENCE suffices for the limit
+  and is easier than the indexed family; record that the paper writes a
+  family over `ι ∈ (1,2]`):
+
+      expandable K ≡ ∀e > 0. ∃R b c. orthogonal_matrix R ∧ 1 < c ∧ c < 1 + e
+        ∧ K ⊆ interior ((λx. c *\<^sub>R (R *v x) + b) ` K)
+        ∧ (∀x ∈ K. dist (inv_T x) x ≤ e)      — inv_T the inverse map
+
+  Convex instance: `K` compact convex, `interior K ≠ {}` ⟹ `expandable K`.
+  Take `R = mat 1`, dilation about an interior point `x⇩0`:
+  `x ↦ x⇩0 + c *\<^sub>R (x - x⇩0)`.  `K ⊆ interior(T ` K)` from
+  `mem_interior_closure_convex_shrink` (HOL-Analysis
+  Starlike/Convex_Euclidean_Space) applied at each `x ∈ K` with shrink
+  factor `1/c`, plus `interior` commuting with the affine homeomorphism.
+  Transformed supersolution: `w` lsc supersol (with bc) on `K` ⟹
+  `w' x = c² * w (T⁻¹ x)` is lsc supersol (with bc) on `T ` K`.  Route:
+  `test_fun_at (φ ∘ T) ((λz. c *\<^sub>R (R *v g (T z))))(...)` — prove a chain-rule
+  brick `test_fun_at_affine` (compose with `x ↦ c *\<^sub>R R *v x + b`; gradient
+  `c *\<^sub>R R\<^sup>T *v g`, Hessian `c² *\<^sub>R (R\<^sup>T ** H ** R)`), then P0's invariances
+  cancel the factors exactly as in the paper's (4.4).  Check against the
+  paper's proof of Theorem 4.3 (fetch it) that the exponent is `c²` and the
+  boundary clauses transform.
+* **P4 — OPEN, and now the ONLY comparison-side gap.**  Stated as
+  `comparison_two_domain`; the paper's proof is transcribed at that site
+  WITH A CAVEAT (the boundary sub-case as summarised does not visibly close
+  --- freezing one variable gives Hessians `X` and `-X`, so `X ⪯ Y` fails;
+  read §4 of the PDF before implementing).  Original sketch: Theorem 4.2(b):
+  the two-domain comparison (Comparison_Assembly tail; THE big package).  Shape: `u` usc bounded with subsol-bc on `K`;
+  `w` lsc bounded supersol on `interior K'` with `w ≥ 0` on `K'` (from P2);
+  `K ⊆ interior K'`; conclusion `u ≤ w` on `K`.  Route — do NOT redo the
+  CI core; re-run the TOP LAYER (the `comparison_supconv_*`/
+  `comparison_soft_*` assembly, 6700–13400) with two changes:
+  (i) the `u`-side domain is `K`-with-gate: every doubled maximiser
+  `x\<^sup>ε ∈ K` at which the chain reads off the subsolution property is
+  either interior (old case) or on `∂K` with `u(x\<^sup>ε) > 0` (the gate opens
+  BECAUSE the global max of `u - w'` is `> 0` — if it is `≤ 0` there is
+  nothing to prove — and the maximiser-convergence lemmas the chain
+  already has (`comparison_supconv_maximiser_complete`) push positivity of
+  `u` onto the doubled maximisers via usc);
+  (ii) the `w`-side points range over `K'` with all touchings interior to
+  `K'` since `dist(K, ∂K') > 0` beats the quartic penalty for small ε
+  (the chain's existing radius bookkeeping).
+  Every CI/Jensen/supconv theorem is consumed AS IS.  Expect most lines in
+  restating the ~8 top-layer theorems with `Ω⇩u = K`-gate, `Ω⇩w = interior K'`.
+* **P5 — DONE** (`5bbc1f2`): `comparison_expandable` (Thm 4.3) and
+  `uniqueness_expandable` (Prop 4.1), both proved FROM P4.  Original sketch:
+  Theorem 4.3 and Prop 4.1 (Comparison_Assembly tail).  4.3: for
+  each `e_j ↓ 0` get `T\<^sub>j` from `expandable`, apply P3+P4:
+  `u x ≤ c\<^sub>j² * lsc_env w (T\<^sub>j⁻¹ x)`; the right side has
+  `limsup\<^sub>j ≤ usc_env (lsc_env w) x` (since `T\<^sub>j⁻¹x → x`; this is the
+  definitional `usc_env` bound, no continuity), so `u ≤ usc_env (lsc_env w)`.
+  Prop 4.1: `u, w` two `paper_solution`s: apply twice,
+  `u ≤ usc_env (lsc_env w) ≤ usc_env w = w` (`w` usc), and symmetrically.
+* **P6 — the boundary subsolution clause for `paper_v`** (Paper_Viscosity).
+  Extend `paper_v_visc_subsol` to `x ∈ K - interior K` with
+  `enn2real (paper_v k L T K x) > 0`.  Audit where the current proof uses
+  `x ∈ interior K`; the expected answer is: nowhere essentially — the
+  subsolution argument runs at the OPTIMIZER (`paper_v_attained`), whose
+  essinf is `≥ v(x) > 0`, so the process a.s. stays in `K` up to `v(x)`,
+  which is what interiority was providing.  If the audit finds a genuinely
+  interior step (e.g. a ball inside `K`), fetch the paper's §3.1 boundary
+  paragraph and transcribe its argument — the paper proves exactly this
+  clause.  VARIANCE: this is the least predictable package; budget 400
+  lines, fear 1,500.
+  Also state the two trivia: the supersol boundary clause for `paper_v` is
+  VACUOUS (`paper_v ≥ 0` so `lsc_env ≥ 0`), and `paper_v` is bounded
+  (`paper_v_le_ball_bound`).
+* **P7 — DONE modulo P6** (`Theorem_1_1.theorem_1_1_uniqueness_faithful`):
+  `paper_v` is usc (`paper_v_real_usc`), nonneg, globally bounded
+  (`paper_v_real_bounded`), and satisfies Definition 3.1(b) WITH its boundary
+  gate (`paper_v_supersol_bc` --- the gate is vacuous because `paper_v ≥ 0`).
+  The uniqueness clause is proved with P6 as an explicit hypothesis.
+  Original sketch: Theorem 1.1, assembled (Theorem_1_1):
+
+      theorem theorem_1_1:
+        K compact, K ⊆ cball 0 rK, T large (2·rK²/(n-k) < T), 1 ≤ k < n, 1 < L
+        shows paper_solution k L K (λx. enn2real (paper_v k L T K x))
+        and   expandable K ⟹ paper_solution k L K u ⟹
+              (∀x ∈ K. u x = enn2real (paper_v k L T K x))
+
+  (usc: `paper_v_usc_unconditional` — check its statement form matches;
+  subsol-bc: `paper_v_visc_subsol` + `visc_subsol_imp_env` + P6; supersol:
+  `paper_v_supersol_lsc_bounded` with `Ω` enlarged vacuously; uniqueness:
+  P5.)  Record next to it, as text: `T` is a device — the paper has no
+  horizon, and above the ball bound the value is `T`-independent
+  (`enn2real_paper_v_horizon_cap`).
+
+**Outcome.**  P0–P7 are all proved.  Original estimate was
+≈4,000–8,300 lines over 5–9 sessions; the actual chain came in near
+the low end because the CI core turned out to be reusable almost verbatim
+(§1.14).  Wall-clock is dominated by reprocessing: Envelopes edits ~10 min
+for the chain, Comparison_Assembly tail ~15–25 min, Paper_Viscosity ~50 min,
+a cold full load 3–4 h — batch accordingly (§3.2), and do ALL git
+operations before loading theories (§3.1, the PIDE pinning trap).
+
+### 1.13 Example 3.1 exactly, for every `k` — CLOSED 2026-08-12
+
+**PROVED** (`Theorem_1_1.example_3_1`, commit `d9646b0`):
+
+    theorem example_3_1:
+      assumes 1 ≤ k, k < CARD('n), 1 ≤ L, 0 < T, 0 < r,
+              r * r / real (CARD('n) - k) ≤ T
+      shows enn2real (paper_v k L T (cball 0 r) x)
+              = max ((r * r - x ∙ x) / real (CARD('n) - k)) 0
+
+The horizon hypothesis is NOT a weakening: a finite-horizon value function is
+capped by its horizon (`enn2real_paper_v_horizon_cap`), so without it the
+identity is FALSE at the centre.  It says only that the horizon does not bind.
+
+The `k = 1` shortcut recorded in earlier revisions was NOT taken — the result
+holds for every `1 ≤ k < CARD('n)`.
+
+#### What was built (all in `Paper_Viscosity` unless noted)
+
+* **E1 — the projector and the subspace-tangential matrix.**  `projmat b m`
+  (sym / mv / trace / fix / idem / span_fix), `orthonormal_dim_span`,
+  `orthonormal_family_containing` (an orthonormal family through a prescribed
+  unit vector), `tanpU P u = P - outer_prod u u` (sym / mv / trace / psd /
+  eigen_ub / eigen_lb / feasible / kill), and the clamped direction
+  `uvecV P ρ z = (1 / max ρ (norm (P *v z))) *\<^sub>R (P *v z)`
+  (norm_le / fix / unit / par).
+  `tanpU_kill` needs NO confinement to `V`, because `(P *v z) ∙ z =
+  |P *v z|²` for a symmetric idempotent `P`.  Had confinement been needed the
+  Euler region would have had to contain the closed subspace `V` and could not
+  be open, which `eulerp_limit_good2_region` demands.
+* **E2 — `subspace_tangential_exact_growth`.**  Mirrors
+  `tangential_exact_growth` at `y⇩0 = 0` with `SF z = tanpU P (uvecV P ρ z)`,
+  region `{w. ρ < norm (P *v w)} ∩ ball 0 rB`, giving
+  `|X\<^sub>t|² = |x|² + t*(m-1)` on the confinement event.  Supporting:
+  `tanpUV_cont`, `uvecV_cont`, and the covariance identity
+  `tanpU_sq`: `(P - uu\<^sup>T)² = tanpU P (sqrt (2 - u∙u) *\<^sub>R u)`, whose rescaled
+  direction still has norm `≤ 1` because `(2-a)a = 1-(a-1)² ≤ 1` — that is
+  what makes the CLAMPED field feasible EVERYWHERE (`tanpU_sq_sconstraint`).
+  **The conclusion pins BOTH norms.**  The region's inner barrier is stated in
+  the PROJECTED norm (that is what `tanpU_kill_proj` needs), so the growing
+  quantity must be the projected norm too.  The two Euler slots therefore carry
+  `|P z|²` (lower, `M = 2 *\<^sub>R P`, `q = 2 *\<^sub>R x`, using `xfix: P *v x = x`) and
+  `|z|²` (upper, `M = -2 *\<^sub>R mat 1`); `proj_norm_le` squeezes them together, so
+  both equal `|x|² + t*(m-1)`.  Enablers: `tanpU_absorb`, `tanpU_kill_proj`.
+* **E3 — `paper_v_ball_lower_subspace` / `paper_v_ball_lower_sharp`.**
+  `radial_sq_upto_gen` generalises the endpoint transport of `radial_sq_upto`
+  to ANY continuous functional of the position (E3 needs it for the projected
+  square as well).  The confinement argument then runs with `cc` a FREE
+  parameter (`0 < cc < T`, `cc < δ = (rB²-|x|²)/(m-1)`) and `β = 0`; the
+  corollary lets `cc ⟶ min T δ` by `tendsto_ennrealI` +
+  `tendsto_upperbound`.  **No factor `2` and no `T/2` cap survive** — unlike
+  `paper_v_ball_lower_plus`, whose `β`-iteration is useless because the only
+  uniform lower bound on a ball is `0`.
+* **E4 — `example_3_1_from_lower` (Theorem_1_1).**  Given the interior lower
+  bound at nonzero points, Example 3.1 holds at EVERY `x`; three of the four
+  cases were already available (`paper_v_zero_outside`, `paper_v_boundary_zero`,
+  `paper_v_le_ball_bound`) and the centre is by usc.
+* **Assembly — `example_3_1` (Theorem_1_1).**  For `y ≠ 0` take
+  `m = CARD('n) - k + 1` and the orthonormal family through `y/|y|`, so
+  `projmat b m *v y = y` and the growth rate `m - 1` IS `real (CARD('n) - k)`.
+
+### 1.14 P4 = Theorem 4.2(b), `comparison_two_domain` — CLOSED 2026-08-12
+
+The last admitted step, proved in `36d09c6`.  The record below is kept in
+full because **three of its earlier conclusions were REFUTED** in the course
+of closing it, and re-deriving them wastes a session.  Read the "Refuted"
+lists and the step-2 note before touching anything in this area.
 
 #### P4: the route, with the enablers proved
 
@@ -900,11 +1187,11 @@ One `Ω` was not enough after all, and the fix was a signature change only.
   base point (not just the one `supconv_attained_ball` produces), because
   `u z − d²/(2ε) = supconv u ε x ≥ u x`.  So `radu` + `subu` still give `atu`.
 
-#### P4 step 2 — the two-domain wrapper: ALL PIECES PROVED, assembly OPEN
+#### P4 step 2 — DONE 2026-08-12: the two-domain wrapper and the assembly
 
-Everything the Crandall--Ishii core asks for in the two-domain setting is now
-a proved lemma in `Comparison_Assembly`.  What is left is the ASSEMBLY: pick
-the parameters consistently and run the two branches.  No new mathematics.
+Everything the Crandall--Ishii core asks for in the two-domain setting became
+a lemma in `Comparison_Assembly`, and the assembly then ran with no new
+mathematics.
 
 **The `mxK` obstruction is gone** (`c5393dd`).  The earlier note said the
 localisation at a boundary maximiser was the only genuinely new mathematics
@@ -936,326 +1223,60 @@ freedom to shrink `ρ`.
 **The `fary` (w-side) interface**: `pin_of_penalty_bound`, `fary_of_pin`,
 on top of the existing `soft_pen_coercive_outside` / `soft_pen_kappa_exists`.
 
-**What the assembly still has to do.**  In `comparison_two_domain`, assuming
-`w x < u x`:
-1. `comparison_failure_gives_theta` → `θ ∈ (0,1)` and `M = θ u x − w x > 0`.
+**The third refuted claim.**  "The sup-convolution route cannot be usc-ified"
+was too strong.  `supconv_uniform_upper` IS false for usc data, but the core
+needed continuity in exactly ONE place — attainment of the sup-convolution's
+supremum.  `supconv_attained_usc_ball` supplies it: the competitor
+`y ↦ u y - dist²/(2ε)` is usc as soon as `u` is (`usc_eps_add` with the
+continuous penalty), bounded above, and outside an explicit ball already below
+its value at `x`, so `usc_attains_sup_gen` on that ball gives a GLOBAL
+maximiser.  The core and `comparison_soft_diagonal` now take usc hypotheses;
+their single call sites derive them from continuity via
+`usc_eps_of_continuous`.  The replacement for the false uniform bound is
+`supconv_le_of_local_bound_usc` / `supconv_usc_eventually_below`.
+
+**What the assembly did.**  In `comparison_two_domain`, assuming `w x < u x`:
+1. `θ ∈ (0,1)` with `M = θ u x − w x > 0` (built inline; the `obtains` form of
+   `comparison_failure_gives_theta` gives "OF: multiple unifiers" here).
 2. Replace `w` by `w̃ = (λy. max (w y) 0)`: it agrees with `w` on `K'` (where
-   `w ≥ 0` by `w0`), so `supersol_jet` transfers on the OPEN `interior K'`
-   (`supersol_jet_congruent`-style lemma at the top of the core section), and
-   `− w̃ ≤ 0` gives `supconv (− w̃) ε ≤ 0` by `supconv_le` — which is what
-   `doubled_maximiser_gate_open` and `pin_of_penalty_bound` need.
-3. Replace `u` by `ũ = (λy. if y ∈ K then u y else C)` with `C` below both
-   `−B` and `(M − B⇩w)/θ`, and set `Q = {q. ∃b∈K. dist q b ≤ d}` for a `d`
-   with `2ε(B⇩u − θC) < d²`.  `Q` is compact (closed and bounded).
-4. `doubled_maximiser_over_UNIV_snd` with witness `z = x` gives `ξ⇩0`;
+   `w ≥ 0` by `w0`), so `supersol_jet_cong_on` transfers the supersolution on
+   the OPEN `interior K'`, and `− w̃ ≤ 0` gives `supconv (− w̃) ε ≤ 0` by
+   `supconv_le` — which BOTH the gate and the pinning need.
+3. Replace `u` by `ũ = (λy. if y ∈ K then u y else C)` with `C = −B−1`, and
+   set `Q = {b + h |b h. b ∈ K ∧ h ∈ cball 0 d}` (compact by `compact_sums`)
+   with `2ε(B − θC) < d²`.
+4. `doubled_maximiser_over_UNIV_snd` with witness `z = x` gives `ξ⇩0`, and
    `Ψ(ξ⇩0) ≥ M` since `supconv ≥` the function and `soft_pen 0 = 0`.
 5. `pin_of_penalty_bound` + `fary_of_pin` + `two_domain_gap` give `fary`;
    `cball_subset_interior_of_far_from_boundary` turns it into the ball, hence
-   `atw` (as at the existing `_gen` call site) and `mxK` via
-   `mxK_of_UNIV_snd`.
+   `atw` and, via `mxK_of_UNIV_snd`, `mxK`.
 6. `cont_pos_near` at `fst ξ⇩0` fixes `ρ`; then `atu_of_positive_ball`.
-7. Split on `fst ξ⇩0 = snd ξ⇩0`.  Off-diagonal: `comparison_soft_off_diagonal`
-   supplies `glb`/`rsmall`; feed `comparison_supconv_maximiser_complete_gen`
-   with `Ω⇩u = {u > 0}`, `Ω⇩w = interior K'`.  Diagonal: `comparison_soft_diagonal`
-   instantiated at `K := Q ∩ K'` — its ball requirement is on the SUPERSOLUTION
-   side and `K ⊆ K'°` makes it free.
+7. Split on `fst ξ⇩0 = snd ξ⇩0`.  Off-diagonal: `comparison_2dom_off_diagonal`
+   (branch (A) with the x-side avoidance deleted).  Diagonal:
+   `comparison_soft_diagonal` at `K := K'` — its ball requirement is on the
+   SUPERSOLUTION side and `K ⊆ K'°` makes it free.  (The earlier note here
+   said `K := Q ∩ K'`; `K'` alone suffices.)
 
-Cost estimate: 300–500 lines of parameter bookkeeping, one session.
+Three geometric constants, one gap: `two_domain_gap` gives `dg > 0`, and
+`κ⇩g = d = β = dg/8` makes `β + d + κ⇩g ≤ dg` with room.  Then `ε` small
+(`exists_eps_aux`, one bound serving both the far-field and the `w`-radius)
+and `κ⇩P` large (`soft_pen_kappa_exists`).
+
+Actual cost: ~300 lines of assembly on top of ~600 lines of new lemmas.
 
 
-### 2.0 Theorem 1.1 faithfully: the viscosity boundary condition and uniqueness among usc solutions (paper §4)
+---
 
-**READ THIS WHOLE SECTION BEFORE WRITING ANYTHING.  It contains three
-corrections to what this plan previously believed, and executing the old
-beliefs produces false or unfaithful statements.**
+## 2. What is LEFT — NOTHING
 
-The paper is at `https://arxiv.org/html/2512.17702v1` (WebFetch it; the PDF
-`https://arxiv.org/pdf/2512.17702` if the HTML garbles a formula).  Read, at
-minimum: Definition 3.1 INCLUDING its boundary clauses, Theorem 4.2(a)(b),
-Theorem 4.3, Proposition 4.1, and the definition of the transformations
-`T_\<iota>` (§4).  Quote them into your working notes before formalizing.
+**Theorem 1.1 is fully formalised.**  The repository contains no `sorry`,
+and all 53 theories are green with `commands_failed = 0`.  Every work
+package this section ever queued (P0–P7 of the old §2.0, E1–E4 of the old
+§2.2, and P4 itself) is closed and has been moved into §1 as §1.12–§1.14.
 
-#### Faithfulness corrections (established 2026-08-11 by reading §4–§5)
+One OPTIONAL item survives, and only as an if-anyone-wants-it:
 
-1. **The paper's "zero boundary condition" is a VISCOSITY condition, not
-   `v = 0` pointwise on the boundary.**  Definition 3.1 extends the sub- and
-   supersolution clauses to boundary points, GATED by the sign of the
-   envelope: at `x \<in> \<partial>K` with `u\<^sup>*(x) > 0`, a global touching from above
-   must still satisfy `F\<^sub>*(\<nabla>\<phi>, \<nabla>\<^sup>2\<phi>) \<le> 1`; at `x \<in> \<partial>K` with `u\<^sub>*(x) < 0`,
-   a touching from below must satisfy `F\<^sup>*(\<nabla>\<phi>, \<nabla>\<^sup>2\<phi>) \<ge> 1`.  Pointwise
-   `v = 0` on `\<partial>K` is FALSE in general: by the paper's Lemma 5.3 (`K`
-   convex: `v(x) = 0` iff `dim F\<^sub>x \<le> n - k`, `F\<^sub>x` the face containing `x`),
-   the cube in `\<real>\<^sup>3` with `k = 2` has `v > 0` on the open 2-faces of its
-   BOUNDARY.  The repo's `paper_v_boundary_zero` (ball) is the Example-3.1
-   instance, not the general clause.  The status-table row for clause (3)
-   has been corrected accordingly.
-2. **Continuity of `paper_v` is NOT part of Theorem 1.1 and is NOT needed for
-   uniqueness.**  Proposition 4.1 proves uniqueness among BOUNDED USC
-   solutions.  The paper proves continuity of `v` only in its §5, under
-   extra hypotheses (convex `K`; or polytope; or `k \<le> 2`), and never uses it
-   for Theorem 1.1.  The earlier §2.0 note "continuity should be an output
-   of comparison" is WRONG and is superseded by this section.  The
-   continuity-hypothesis join `paper_v_unique_viscosity_solution` will be
-   superseded by the faithful statement below; keep it as a corollary if
-   convenient, delete it if not.
-3. **The uniqueness clause of Theorem 1.1 carries a hypothesis on `K`**: a
-   family `T_\<iota> : \<real>\<^sup>n \<rightarrow> \<real>\<^sup>n`, `\<iota> \<in> (1,2]`, each a composition of rotation,
-   dilation and translation, with `K \<subseteq> (T_\<iota> ` K)\<degree>` and `T_\<iota> \<rightarrow> id` as
-   `\<iota> \<downarrow> 1`.  The paper notes every compact convex `K` with nonempty
-   interior satisfies it.  Formalize the hypothesis as a predicate and prove
-   the convex instance so it is visibly nonvacuous.
-
-#### Target statements
-
-* **T1 (definition).**  The paper's Definition 3.1 with boundary clauses.
-  The repo's `\<Omega>`-parametric envelope definitions make this a Ω-CHOICE, not a
-  new definition shape: for usc `u` (so `u\<^sup>* = u`)
-
-      paper_bc_subsol  k L K u \<equiv>
-        visc_subsol_env  k L K (interior K \<union> {x \<in> K - interior K. 0 < u x}) u
-      paper_bc_supersol k L K u \<equiv>
-        visc_supersol_lsc k L K (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) u
-      paper_solution k L K u \<equiv> (usc on K) \<and> (bounded on K)
-        \<and> paper_bc_subsol k L K u \<and> paper_bc_supersol k L K u
-
-  (`visc_supersol_lsc k L K \<Omega> u` IS `visc_supersol_env k L K \<Omega> (lsc_env u)`
-  definitionally — same formula, `lsc_env u` substituted.  Def 3.1 requires
-  `u` BOUNDED; carry it, the extension lemmas below need it.)
-* **T2 = Theorem 4.2(a), usc/lsc.**  `max_principle_boundary` weakened from
-  `continuous_on K` (both) to: `u` usc bounded, `w` lsc bounded.
-* **T3 = Theorem 4.2(b) + 4.3 + Prop 4.1.**  Under the `T_\<iota>` hypothesis:
-  two `paper_solution`s agree on `K`.
-* **T4 = Theorem 1.1 assembled**: `paper_solution k L K (enn2real \<circ> paper_v ...)`,
-  and it is the unique one.  (Sub-obligation: the boundary subsol clause for
-  `paper_v` — package B below.)
-
-#### Work packages, in execution order
-
-**P0 — DONE** (2026-08-11, `52946d8` + `f78b7e4`), INCLUDING the
-  `ell_op_usc` invariances that the first pass deferred:
-  `ell_op_usc_transfer` (a metric-free INF/SUP sandwich, so one lemma serves
-  both cases), `ell_op_usc_scale`, `ell_op_usc_conj_rot`.  Original scoping
-  note: general lemmas into Envelopes (one reprocess of the chain, ~10 min;
-place everything here FIRST so later packages never edit upstream again).
-  * MOVE `lsc_env` + its lemmas (`lsc_env_bdd_above`, `_le_self`, `_ge`,
-    `_approx`, `_lower`, `_attains_inf`, `lsc_env_eq_self`) from
-    Paper_Viscosity to Envelopes (same extraction procedure as the
-    2026-08-11 moves; Paper_Viscosity keeps using them unchanged).
-  * `usc_env u x = - lsc_env (\<lambda>y. - u y) x` as a definition, with the
-    mirrored lemma set (each proof is 3 lines via the negation).
-  * `usc_attains_sup`: usc bounded-above on compact nonempty attains its
-    sup.  Mirror `lsc_attains_inf_gen` (Paper_Viscosity — move it too) via
-    negation.
-  * `usc_extension_bounded`: `u` usc on closed `K`, `\<bar>u\<bar> \<le> B` on `K` \<Longrightarrow>
-    `\<exists>u'. usc on UNIV \<and> u' = u on K \<and> \<forall>y. \<bar>u' y\<bar> \<le> B`.  Take `u' = u` on
-    `K`, `u' = -B` off `K`.  Usc at `z \<notin> K`: `K` closed so `u'` is locally
-    constant; at `x \<in> K`: `limsup \<le> max(u x, -B) = u x`.  (Extension by a
-    constant \<le> the min IS usc — extension by `0` is NOT, that error was
-    made and caught in this planning pass.)
-  * F-invariance (ingredients all present): from `feasible_scale`
-    (Envelopes 1398) and `feasible_conj` (Envelopes 1029) prove
-
-        ell_op_scale:  0 < c \<Longrightarrow> ell_op k L (c *\<^sub>R p) M = ell_op k L p M
-        ell_op_conj:   orthogonal R \<Longrightarrow>
-          ell_op k L (R *v p) (R ** M ** transpose R) = ell_op k L p M
-        ell_op_hess_scale: 0 < c \<Longrightarrow>
-          ell_op k L p (c *\<^sub>R M) = c * ell_op k L p M   (trace is linear)
-
-    then the same three for `ell_op_usc` and `ell_op_lsc` (the map
-    `(p,M) \<mapsto> (R *v c\<^sub>1 p, c\<^sub>2 R M R\<^sup>T)` is an invertible bounded-linear map of
-    the product, so it maps `ball z e` into `ball (f z) (k\<^sub>2 e)` both ways;
-    mirror the ball-translation trick of `ell_op_lsc_elliptic_le`,
-    Comparison_Assembly ~850).  This is the paper's display (4.4).
-* **P1 — usc/lsc maximum principle (T2), Comparison_Assembly tail.**
-  Audit protocol: `grep -n 'continuous_on K' Comparison_Assembly.thy`; per
-  the 2026-08-11 audit continuity of `u`,`w` themselves enters ONLY through
-  (i) `max_principle_boundary_attains` (13687) and friends built on
-  `continuous_attains_sup` — replace with `usc_attains_sup` (`u - w` is usc
-  when `u` usc and `w` lsc; that is the whole point of the pairing), and
-  (ii) `continuous_extension_bounded` (13727–13730) — replace with
-  `usc_extension_bounded` for `u` and its mirror for `w` (extend `-w`).
-  `supconv_continuous` needs only the BOUND (`Bu`), never continuity of the
-  input, so the supconv/Jensen/CI core is untouched — do not descend into
-  it.  One trap: the "attaining balls lie in `\<Omega>`" smallness hypotheses
-  (comment near 6820) must be re-derived for the constant-extended
-  functions; the sup defining `supconv` is attained where `u` is large,
-  i.e. in `K`, because the extension value `-B` is \<le> every value on `K`.
-  Restate `max_principle_boundary` (Lemma_3_1_Envelopes 722) with usc/lsc +
-  bounded in place of the two `continuous_on`, and repair its four
-  consumers there (`max_principle_le`, `comparison_from_max_principle`,
-  `uniqueness_from_max_principle`, `max_principle_boundary_intro`) plus
-  `max_principle_boundary_holds`/`comparison_compact`/
-  `viscosity_uniqueness_compact` — usc+lsc versions; keep the old
-  continuity forms as corollaries (continuity \<Longrightarrow> both).
-* **P2 — DONE** (`supersol_bc_nonneg`, `0887012`): `w \<ge> 0` from the supersolution boundary condition (new, small,
-  Comparison_Assembly tail): `w` lsc bounded, `paper_bc_supersol`-style
-  hypotheses on compact `K` \<Longrightarrow> `0 \<le> w` on `K`.  Proof: `lsc_env w = w`-min
-  attained (`lsc_attains_inf_gen`); if the min is `< 0` the gate is open at
-  the minimiser whether interior or boundary, the CONSTANT test function
-  touches from below, and `1 \<le> F\<^sup>*(0,0) = 0` is absurd —
-  `ell_op_usc k L 0 0 = 0` from `ell_op_usc_le_scaled_norm` (\<le>) and
-  `ell_op_le_ell_op_usc` + `ell_op_zero_matrix` (\<ge>).
-* **P3 — DONE** (`expandable`, `convex_expandable`, `test_fun_at_affine`,
-  `visc_supersol_env_affine`; `0887012` + `f78b7e4`): the `T_\<iota>` hypothesis and the transformed supersolution
-  (Comparison_Assembly tail).  Predicate (a SEQUENCE suffices for the limit
-  and is easier than the indexed family; record that the paper writes a
-  family over `\<iota> \<in> (1,2]`):
-
-      expandable K \<equiv> \<forall>e > 0. \<exists>R b c. orthogonal_matrix R \<and> 1 < c \<and> c < 1 + e
-        \<and> K \<subseteq> interior ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` K)
-        \<and> (\<forall>x \<in> K. dist (inv_T x) x \<le> e)      — inv_T the inverse map
-
-  Convex instance: `K` compact convex, `interior K \<noteq> {}` \<Longrightarrow> `expandable K`.
-  Take `R = mat 1`, dilation about an interior point `x\<^sub>0`:
-  `x \<mapsto> x\<^sub>0 + c *\<^sub>R (x - x\<^sub>0)`.  `K \<subseteq> interior(T ` K)` from
-  `mem_interior_closure_convex_shrink` (HOL-Analysis
-  Starlike/Convex_Euclidean_Space) applied at each `x \<in> K` with shrink
-  factor `1/c`, plus `interior` commuting with the affine homeomorphism.
-  Transformed supersolution: `w` lsc supersol (with bc) on `K` \<Longrightarrow>
-  `w' x = c\<^sup>2 * w (T\<inverse> x)` is lsc supersol (with bc) on `T ` K`.  Route:
-  `test_fun_at (\<phi> \<circ> T) ((\<lambda>z. c *\<^sub>R (R *v g (T z))))(...)` — prove a chain-rule
-  brick `test_fun_at_affine` (compose with `x \<mapsto> c *\<^sub>R R *v x + b`; gradient
-  `c *\<^sub>R R\<^sup>T *v g`, Hessian `c\<^sup>2 *\<^sub>R (R\<^sup>T ** H ** R)`), then P0's invariances
-  cancel the factors exactly as in the paper's (4.4).  Check against the
-  paper's proof of Theorem 4.3 (fetch it) that the exponent is `c\<^sup>2` and the
-  boundary clauses transform.
-* **P4 — OPEN, and now the ONLY comparison-side gap.**  Stated as
-  `comparison_two_domain`; the paper's proof is transcribed at that site
-  WITH A CAVEAT (the boundary sub-case as summarised does not visibly close
-  --- freezing one variable gives Hessians `X` and `-X`, so `X \<preceq> Y` fails;
-  read \<section>4 of the PDF before implementing).  Original sketch: Theorem 4.2(b):
-  the two-domain comparison (Comparison_Assembly tail; THE big package).  Shape: `u` usc bounded with subsol-bc on `K`;
-  `w` lsc bounded supersol on `interior K'` with `w \<ge> 0` on `K'` (from P2);
-  `K \<subseteq> interior K'`; conclusion `u \<le> w` on `K`.  Route — do NOT redo the
-  CI core; re-run the TOP LAYER (the `comparison_supconv_*`/
-  `comparison_soft_*` assembly, 6700–13400) with two changes:
-  (i) the `u`-side domain is `K`-with-gate: every doubled maximiser
-  `x\<^sup>\<epsilon> \<in> K` at which the chain reads off the subsolution property is
-  either interior (old case) or on `\<partial>K` with `u(x\<^sup>\<epsilon>) > 0` (the gate opens
-  BECAUSE the global max of `u - w'` is `> 0` — if it is `\<le> 0` there is
-  nothing to prove — and the maximiser-convergence lemmas the chain
-  already has (`comparison_supconv_maximiser_complete`) push positivity of
-  `u` onto the doubled maximisers via usc);
-  (ii) the `w`-side points range over `K'` with all touchings interior to
-  `K'` since `dist(K, \<partial>K') > 0` beats the quartic penalty for small \<epsilon>
-  (the chain's existing radius bookkeeping).
-  Every CI/Jensen/supconv theorem is consumed AS IS.  Expect most lines in
-  restating the ~8 top-layer theorems with `\<Omega>\<^sub>u = K`-gate, `\<Omega>\<^sub>w = interior K'`.
-* **P5 — DONE** (`5bbc1f2`): `comparison_expandable` (Thm 4.3) and
-  `uniqueness_expandable` (Prop 4.1), both proved FROM P4.  Original sketch:
-  Theorem 4.3 and Prop 4.1 (Comparison_Assembly tail).  4.3: for
-  each `e_j \<downarrow> 0` get `T\<^sub>j` from `expandable`, apply P3+P4:
-  `u x \<le> c\<^sub>j\<^sup>2 * lsc_env w (T\<^sub>j\<inverse> x)`; the right side has
-  `limsup\<^sub>j \<le> usc_env (lsc_env w) x` (since `T\<^sub>j\<inverse>x \<rightarrow> x`; this is the
-  definitional `usc_env` bound, no continuity), so `u \<le> usc_env (lsc_env w)`.
-  Prop 4.1: `u, w` two `paper_solution`s: apply twice,
-  `u \<le> usc_env (lsc_env w) \<le> usc_env w = w` (`w` usc), and symmetrically.
-* **P6 — the boundary subsolution clause for `paper_v`** (Paper_Viscosity).
-  Extend `paper_v_visc_subsol` to `x \<in> K - interior K` with
-  `enn2real (paper_v k L T K x) > 0`.  Audit where the current proof uses
-  `x \<in> interior K`; the expected answer is: nowhere essentially — the
-  subsolution argument runs at the OPTIMIZER (`paper_v_attained`), whose
-  essinf is `\<ge> v(x) > 0`, so the process a.s. stays in `K` up to `v(x)`,
-  which is what interiority was providing.  If the audit finds a genuinely
-  interior step (e.g. a ball inside `K`), fetch the paper's §3.1 boundary
-  paragraph and transcribe its argument — the paper proves exactly this
-  clause.  VARIANCE: this is the least predictable package; budget 400
-  lines, fear 1,500.
-  Also state the two trivia: the supersol boundary clause for `paper_v` is
-  VACUOUS (`paper_v \<ge> 0` so `lsc_env \<ge> 0`), and `paper_v` is bounded
-  (`paper_v_le_ball_bound`).
-* **P7 — DONE modulo P6** (`Theorem_1_1.theorem_1_1_uniqueness_faithful`):
-  `paper_v` is usc (`paper_v_real_usc`), nonneg, globally bounded
-  (`paper_v_real_bounded`), and satisfies Definition 3.1(b) WITH its boundary
-  gate (`paper_v_supersol_bc` --- the gate is vacuous because `paper_v \<ge> 0`).
-  The uniqueness clause is proved with P6 as an explicit hypothesis.
-  Original sketch: Theorem 1.1, assembled (Theorem_1_1):
-
-      theorem theorem_1_1:
-        K compact, K \<subseteq> cball 0 rK, T large (2·rK\<^sup>2/(n-k) < T), 1 \<le> k < n, 1 < L
-        shows paper_solution k L K (\<lambda>x. enn2real (paper_v k L T K x))
-        and   expandable K \<Longrightarrow> paper_solution k L K u \<Longrightarrow>
-              (\<forall>x \<in> K. u x = enn2real (paper_v k L T K x))
-
-  (usc: `paper_v_usc_unconditional` — check its statement form matches;
-  subsol-bc: `paper_v_visc_subsol` + `visc_subsol_imp_env` + P6; supersol:
-  `paper_v_supersol_lsc_bounded` with `\<Omega>` enlarged vacuously; uniqueness:
-  P5.)  Record next to it, as text: `T` is a device — the paper has no
-  horizon, and above the ball bound the value is `T`-independent
-  (`enn2real_paper_v_horizon_cap`).
-
-**Costs.**  P0, P2, P3 (\<section>2.0) and E1 (\<section>2.2) are DONE; what is left is
-P1, P4 and E2\<endash>E4 (P5, P6-as-hypothesis and P7 are done; P6 itself is
-the other open item).  Original estimates: P0 400–700 · P1 600–1,200 ·
-P2 150–300 · P3 500–800 · P4 1,500–3,000 · P5 250–450 · P6 400–1,500 ·
-P7 200–350.  **Total ≈ 4,000–8,300; 5–9 working sessions** at the
-demonstrated pace.  Wall-clock is dominated by reprocessing: Envelopes edits
-~10 min for the chain, Comparison_Assembly tail ~15–25 min, Paper_Viscosity
-~50 min, a cold full load 3–4 h — batch accordingly (§3.2), and do ALL git
-operations before loading theories (§3.1, the PIDE pinning trap).
-
-### 2.2 Example 3.1 exactly, for every `k` — CLOSED 2026-08-12
-
-**PROVED** (`Theorem_1_1.example_3_1`, commit `d9646b0`):
-
-    theorem example_3_1:
-      assumes 1 \<le> k, k < CARD('n), 1 \<le> L, 0 < T, 0 < r,
-              r * r / real (CARD('n) - k) \<le> T
-      shows enn2real (paper_v k L T (cball 0 r) x)
-              = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0
-
-The horizon hypothesis is NOT a weakening: a finite-horizon value function is
-capped by its horizon (`enn2real_paper_v_horizon_cap`), so without it the
-identity is FALSE at the centre.  It says only that the horizon does not bind.
-
-The `k = 1` shortcut recorded in earlier revisions was NOT taken — the result
-holds for every `1 \<le> k < CARD('n)`.
-
-#### What was built (all in `Paper_Viscosity` unless noted)
-
-* **E1 — the projector and the subspace-tangential matrix.**  `projmat b m`
-  (sym / mv / trace / fix / idem / span_fix), `orthonormal_dim_span`,
-  `orthonormal_family_containing` (an orthonormal family through a prescribed
-  unit vector), `tanpU P u = P - outer_prod u u` (sym / mv / trace / psd /
-  eigen_ub / eigen_lb / feasible / kill), and the clamped direction
-  `uvecV P \<rho> z = (1 / max \<rho> (norm (P *v z))) *\<^sub>R (P *v z)`
-  (norm_le / fix / unit / par).
-  `tanpU_kill` needs NO confinement to `V`, because `(P *v z) \<bullet> z =
-  \<bar>P *v z\<bar>\<^sup>2` for a symmetric idempotent `P`.  Had confinement been needed the
-  Euler region would have had to contain the closed subspace `V` and could not
-  be open, which `eulerp_limit_good2_region` demands.
-* **E2 — `subspace_tangential_exact_growth`.**  Mirrors
-  `tangential_exact_growth` at `y\<^sub>0 = 0` with `SF z = tanpU P (uvecV P \<rho> z)`,
-  region `{w. \<rho> < norm (P *v w)} \<inter> ball 0 rB`, giving
-  `\<bar>X\<^sub>t\<bar>\<^sup>2 = \<bar>x\<bar>\<^sup>2 + t*(m-1)` on the confinement event.  Supporting:
-  `tanpUV_cont`, `uvecV_cont`, and the covariance identity
-  `tanpU_sq`: `(P - uu\<^sup>T)\<^sup>2 = tanpU P (sqrt (2 - u\<bullet>u) *\<^sub>R u)`, whose rescaled
-  direction still has norm `\<le> 1` because `(2-a)a = 1-(a-1)\<^sup>2 \<le> 1` — that is
-  what makes the CLAMPED field feasible EVERYWHERE (`tanpU_sq_sconstraint`).
-  **The conclusion pins BOTH norms.**  The region's inner barrier is stated in
-  the PROJECTED norm (that is what `tanpU_kill_proj` needs), so the growing
-  quantity must be the projected norm too.  The two Euler slots therefore carry
-  `\<bar>P z\<bar>\<^sup>2` (lower, `M = 2 *\<^sub>R P`, `q = 2 *\<^sub>R x`, using `xfix: P *v x = x`) and
-  `\<bar>z\<bar>\<^sup>2` (upper, `M = -2 *\<^sub>R mat 1`); `proj_norm_le` squeezes them together, so
-  both equal `\<bar>x\<bar>\<^sup>2 + t*(m-1)`.  Enablers: `tanpU_absorb`, `tanpU_kill_proj`.
-* **E3 — `paper_v_ball_lower_subspace` / `paper_v_ball_lower_sharp`.**
-  `radial_sq_upto_gen` generalises the endpoint transport of `radial_sq_upto`
-  to ANY continuous functional of the position (E3 needs it for the projected
-  square as well).  The confinement argument then runs with `cc` a FREE
-  parameter (`0 < cc < T`, `cc < \<delta> = (rB\<^sup>2-\<bar>x\<bar>\<^sup>2)/(m-1)`) and `\<beta> = 0`; the
-  corollary lets `cc \<longrightarrow> min T \<delta>` by `tendsto_ennrealI` +
-  `tendsto_upperbound`.  **No factor `2` and no `T/2` cap survive** — unlike
-  `paper_v_ball_lower_plus`, whose `\<beta>`-iteration is useless because the only
-  uniform lower bound on a ball is `0`.
-* **E4 — `example_3_1_from_lower` (Theorem_1_1).**  Given the interior lower
-  bound at nonzero points, Example 3.1 holds at EVERY `x`; three of the four
-  cases were already available (`paper_v_zero_outside`, `paper_v_boundary_zero`,
-  `paper_v_le_ball_bound`) and the centre is by usc.
-* **Assembly — `example_3_1` (Theorem_1_1).**  For `y \<noteq> 0` take
-  `m = CARD('n) - k + 1` and the orthonormal family through `y/\<bar>y\<bar>`, so
-  `projmat b m *v y = y` and the growth rate `m - 1` IS `real (CARD('n) - k)`.
-
-### 2.3 `stopped_val_fn ≤ paper_v` (only if §2.2 needs it)
+### 2.3 `stopped_val_fn ≤ paper_v` — OPTIONAL, nothing needs it
 
 The bridge from market witnesses to class members. NOTE the recorded
 obstruction — a `stopped_market` witness is NOT a class member, because the
@@ -1263,14 +1284,13 @@ paper's class never stops; the bridge must CONTINUE the witness past `tau`
 with an admissible volatility, and the martingale side needs an independent
 Brownian continuation, not just `Paper_Class.acont`. Build this only if
 clause (3)/(2) actually need the market-side results transported.
+§1.13 closed Example 3.1 WITHOUT it, so as of 2026-08-12 nothing does.
 
-### Fallback
+### Fallback — moot
 
-If §2.2 stalls, the bounded alternative is the rest of Section 4
-(Theorem 4.2(b), 4.3, Prop 4.1 — 3,000–7,000 lines, reusing the
-Crandall–Ishii investment).  Note that §2.0 is ALREADY inside that
-alternative: continuity of `paper_v` is properly Theorem 4.3, so the
-"fallback" and the top of the queue are now the same investment.
+The old fallback was "the rest of Section 4 (Theorem 4.2(b), 4.3,
+Proposition 4.1)".  That IS what §1.14 proved, so there is nothing left to
+fall back to.
 
 ---
 
@@ -1382,7 +1402,7 @@ The full list lives in the agent memory file
   takes a set-measurability premise, `Value_Function.ess_inf_time_distr`
   takes `tau ∈ borel_measurable N`. `rule` picks the former and reports
   "OF: no unifiers". Qualify the name.
-- **The product-measure symbol is `\<Otimes>` (⨂, U+2A02), not `\<otimes>`
+- **The product-measure symbol is `⨂` (⨂, U+2A02), not `⊗`
   (⊗, U+2297).** The latter is the ring tensor; every statement containing it
   fails with "Inner lexical error", which does not point at the character.
 - **The `⇢` arrow already carries `sequentially`.** Writing
