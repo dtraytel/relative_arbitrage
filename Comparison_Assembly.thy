@@ -1861,24 +1861,6 @@ proof -
   show ?thesis using e main by blast
 qed
 
-lemma onesided_of_tendsto:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes lim: "((\<lambda>kk. (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2)
-      / (norm kk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and c: "0 < c"
-  shows "\<forall>\<^sub>F kk in at 0.
-      (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < c"
-proof -
-  \<comment> \<open>on an opaque \<open>q\<close> simp cannot push the \<open>\<bar>\<sqdot>\<bar>\<close> inside the quotient, which
-      is what defeats the direct \<open>simp add: dist_real_def\<close> here\<close>
-  have step: "q < c" if "dist q 0 < c" for q :: real
-    using that by (simp add: dist_real_def abs_less_iff)
-  have T: "\<forall>\<^sub>F kk in at 0. dist ((u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2)
-      / (norm kk)\<^sup>2) 0 < c"
-    by (rule tendstoD[OF lim c])
-  show ?thesis by (rule eventually_mono[OF T]) (rule step)
-qed
-
 text \<open>If the increment of \<open>B\<close> at \<open>p\<close> is eventually dominated by some \<open>D\<close>
   that is \<open>o(|h|^2)\<close>, it satisfies the one-sided hypothesis -- exactly what
   a diagonal maximiser supplies, with \<open>D\<close> the penalty; domination holds only
@@ -8852,40 +8834,6 @@ proof -
   then show ?thesis using main by blast
 qed
 
-lemma doubling_maximiser_value_transfer:
-  fixes A Bf f g :: "real^'n::finite \<Rightarrow> real"
-  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
-        A x + Bf y - (\<alpha>/2)*(norm (x - y))\<^sup>2
-          \<le> A xh + Bf yh - (\<alpha>/2)*(norm (xh - yh))\<^sup>2"
-    and zK: "z \<in> K"
-    and lowA: "f z \<le> A z" and lowB: "g z \<le> Bf z"
-    and upA: "A xh \<le> f xh + \<sigma>" and upB: "Bf yh \<le> g yh + \<sigma>"
-  shows "f z + g z + (\<alpha>/2)*(norm (xh - yh))\<^sup>2 \<le> f xh + g yh + 2*\<sigma>"
-proof -
-  have diag: "A z + Bf z - (\<alpha>/2)*(norm (z - z))\<^sup>2
-      \<le> A xh + Bf yh - (\<alpha>/2)*(norm (xh - yh))\<^sup>2"
-    by (rule mx[OF zK zK])
-  then have "A z + Bf z \<le> A xh + Bf yh - (\<alpha>/2)*(norm (xh - yh))\<^sup>2"
-    by simp
-  then show ?thesis using lowA lowB upA upB by linarith
-qed
-
-lemma norm_lt_of_penalty_bound:
-  fixes d :: "'a::real_normed_vector"
-  assumes p: "(\<alpha>/2)*(norm d)\<^sup>2 \<le> C" and a: "0 < \<alpha>" and b: "0 < \<beta>"
-    and small: "C < (\<alpha>/2)*\<beta>\<^sup>2"
-  shows "norm d < \<beta>"
-proof (rule ccontr)
-  assume "\<not> norm d < \<beta>"
-  then have ge: "\<beta> \<le> norm d" by linarith
-  have a2: "0 \<le> \<alpha>/2" using a by linarith
-  have "\<beta>\<^sup>2 \<le> (norm d)\<^sup>2"
-    by (rule power_mono[OF ge]) (use b in linarith)
-  then have "(\<alpha>/2)*\<beta>\<^sup>2 \<le> (\<alpha>/2)*(norm d)\<^sup>2"
-    by (rule mult_left_mono[OF _ a2])
-  with p small show False by linarith
-qed
-
 theorem doubling_maximiser_far_from_boundary:
   fixes f g :: "real^'n::finite \<Rightarrow> real"
   assumes xK: "xh \<in> K" and yK: "yh \<in> K"
@@ -12712,100 +12660,6 @@ text \<open>The bridge between the localisation and the assembly: given the
   \<open>supconv_radius_uniform\<close>.  The remaining quantitative inputs are the
   inequalities \<open>r \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>u \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>w \<le> \<kappa>\<close>, \<open>2\<bar>\<alpha>\<bar>\<rho> < c\<close> and two
   smallness conditions on \<open>\<epsilon>\<close>.\<close>
-
-theorem comparison_from_localised_maximiser:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-    and K :: "(real^'n) set"
-    and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
-    and D\<^sub>0 :: real
-  assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "supersol_jet k L (interior K) w"
-    and t: "0 < \<theta>" "\<theta> < 1"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
-    and cK: "compact K"
-    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
-    and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
-    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
-    and cw: "continuous_on UNIV (- w)"
-    and mxKK: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
-        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y
-          - (\<alpha>/2) * (norm (x - y))\<^sup>2
-        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst \<xi>\<^sub>0) + supconv (- w) \<epsilon> (snd \<xi>\<^sub>0)
-          - (\<alpha>/2) * (norm (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))\<^sup>2"
-    and xK: "fst \<xi>\<^sub>0 \<in> K" and yK: "snd \<xi>\<^sub>0 \<in> K"
-    and farx: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist (fst \<xi>\<^sub>0) b"
-    and fary: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist (snd \<xi>\<^sub>0) b"
-    and rho: "0 < \<rho>" "\<rho> < r" and rk: "r \<le> \<kappa>"
-    and Rup: "0 < R\<^sub>u" and Rwp: "0 < R\<^sub>w"
-    and smallu: "2*\<epsilon>*(Bu - Blu) < R\<^sub>u\<^sup>2"
-    and smallw: "2*\<epsilon>*(Bw - Blw) < R\<^sub>w\<^sup>2"
-    and fitu: "\<rho> + R\<^sub>u \<le> \<kappa>" and fitw: "\<rho> + R\<^sub>w \<le> \<kappa>"
-    and D0: "0 < D\<^sub>0"
-    and glb: "c \<le> norm (\<alpha> *\<^sub>R (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))"
-    and rsmall: "2 * \<bar>\<alpha>\<bar> * \<rho> < c"
-  shows False
-proof -
-  have clK: "closed K" by (rule compact_imp_closed[OF cK])
-  have k0: "0 \<le> \<kappa>" using rho rk by linarith
-  have coll: "(fst \<xi>\<^sub>0, snd \<xi>\<^sub>0) = \<xi>\<^sub>0" by simp
-  have insx: "cball (fst \<xi>\<^sub>0) \<kappa> \<subseteq> interior K"
-    by (rule cball_subset_interior_of_far_from_boundary[OF clK xK k0 farx])
-  have insy: "cball (snd \<xi>\<^sub>0) \<kappa> \<subseteq> interior K"
-    by (rule cball_subset_interior_of_far_from_boundary[OF clK yK k0 fary])
-  have mxK: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst z) + supconv (- w) \<epsilon> (snd z)
-        - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2
-      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst \<xi>\<^sub>0) + supconv (- w) \<epsilon> (snd \<xi>\<^sub>0)
-        - (\<alpha>/2) * (norm (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))\<^sup>2"
-    if z: "z \<in> cball \<xi>\<^sub>0 r" for z
-  proof -
-    have dz: "dist z (fst \<xi>\<^sub>0, snd \<xi>\<^sub>0) \<le> \<kappa>"
-      unfolding coll using z rk by (simp add: dist_commute)
-    have "fst z \<in> K \<and> snd z \<in> K"
-      by (rule cball_prod_subset_of_far_from_boundary
-          [OF clK xK yK k0 farx fary dz])
-    then show ?thesis using mxKK by blast
-  qed
-  have radu: "sqrt (max 0 (2*\<epsilon>*(Bu - \<theta> * u x))) < R\<^sub>u" for x
-    by (rule supconv_radius_uniform[OF lou e Rup smallu])
-  have radw: "sqrt (max 0 (2*\<epsilon>*(Bw - (- w) x))) < R\<^sub>w" for x
-    by (rule supconv_radius_uniform[OF low e Rwp smallw])
-  have subu: "cball x R\<^sub>u \<subseteq> interior K" if d: "dist x (fst \<xi>\<^sub>0) \<le> \<rho>" for x
-  proof -
-    have "cball x R\<^sub>u \<subseteq> cball (fst \<xi>\<^sub>0) \<kappa>"
-    proof
-      fix y assume "y \<in> cball x R\<^sub>u"
-      then have dy: "dist x y \<le> R\<^sub>u" by simp
-      have "dist (fst \<xi>\<^sub>0) y \<le> dist (fst \<xi>\<^sub>0) x + dist x y"
-        by (rule dist_triangle)
-      also have "\<dots> \<le> \<rho> + R\<^sub>u"
-        using d dy by (simp add: dist_commute)
-      finally show "y \<in> cball (fst \<xi>\<^sub>0) \<kappa>" using fitu by simp
-    qed
-    then show ?thesis using insx by blast
-  qed
-  have subw: "cball x R\<^sub>w \<subseteq> interior K" if d: "dist x (snd \<xi>\<^sub>0) \<le> \<rho>" for x
-  proof -
-    have "cball x R\<^sub>w \<subseteq> cball (snd \<xi>\<^sub>0) \<kappa>"
-    proof
-      fix y assume "y \<in> cball x R\<^sub>w"
-      then have dy: "dist x y \<le> R\<^sub>w" by simp
-      have "dist (snd \<xi>\<^sub>0) y \<le> dist (snd \<xi>\<^sub>0) x + dist x y"
-        by (rule dist_triangle)
-      also have "\<dots> \<le> \<rho> + R\<^sub>w"
-        using d dy by (simp add: dist_commute)
-      finally show "y \<in> cball (snd \<xi>\<^sub>0) \<kappa>" using fitw by simp
-    qed
-    then show ?thesis using insy by blast
-  qed
-  show False
-    by (rule comparison_supconv_maximiser_complete
-        [where u = u and w = w and \<xi>\<^sub>0 = \<xi>\<^sub>0 and D\<^sub>0 = D\<^sub>0 and \<Omega> = "interior K"
-           and \<theta> = \<theta> and \<epsilon> = \<epsilon> and \<alpha> = \<alpha> and \<rho> = \<rho> and r = r
-           and Bu = Bu and Bw = Bw and R\<^sub>u = R\<^sub>u and R\<^sub>w = R\<^sub>w and c = c,
-         OF sub sup t(1) t(2) kk(1) kk(2) LL e a rho(1) rho(2) D0 Bu Bw cu cw])
-       (use mxK radu radw subu subw glb rsmall in blast)+
-qed
 
 text \<open>Under a general penalty every geometric derivation is untouched, since
   the penalty only carries along unchanged from \<open>mxKK\<close> to \<open>mxK\<close>; only

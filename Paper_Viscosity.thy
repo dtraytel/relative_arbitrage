@@ -13372,28 +13372,6 @@ qed
 text \<open>The original ball bound is the case \<open>\<beta> = 0\<close>: the value at the
   exit point is simply dropped.\<close>
 
-corollary paper_v_ball_lower:
-  fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
-    and rB T :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
-    and kn: "k < CARD('n)"
-    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
-    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
-  shows "ennreal (min (T / 2)
-      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))))
-      \<le> paper_v k L T K x"
-proof -
-  have z: "(0 :: real) \<le> 0" by simp
-  have v0: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow>
-      (0 :: real) \<le> enn2real (paper_v k L T K w)" by simp
-  have "ennreal (min (T / 2)
-      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
-      + min 0 (T / 2))
-      \<le> paper_v k L T K x"
-    by (rule paper_v_ball_lower_plus[OF T0 L1 k1 kn Kc sub xy xin z v0])
-  then show ?thesis using T0 by simp
-qed
-
 section \<open>The paper's supersolution: touching the lower envelope\<close>
 
 text \<open>Definition 3.1(b) of the paper touches the lower semicontinuous

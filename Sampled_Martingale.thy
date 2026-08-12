@@ -81,16 +81,6 @@ text \<open>
   partition of mesh @{term dt}.
 \<close>
 
-corollary martingale_sampled_uniform:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
-  assumes X: "martingale M F (0::real) X" and dt: "0 \<le> dt"
-  shows "martingale M (\<lambda>k. F (real k * dt)) (0::nat) (\<lambda>k. X (real k * dt))"
-proof (rule martingale_sampled[OF X])
-  show "0 \<le> real k * dt" for k using dt by simp
-  show "mono (\<lambda>k::nat. real k * dt)"
-    using dt by (intro monoI mult_right_mono) auto
-qed
-
 subsection \<open>Reducing the compensated-square martingale property to the covariation hypothesis\<close>
 
 text \<open>
