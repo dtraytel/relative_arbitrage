@@ -2,7 +2,13 @@
   "mcpServers": {
     "isabelle-pide-mcp": {
       "command": "/Users/kfx532/isabelle/bin/isabelle",
-      "args": ["pide_mcp", "-d", "/Users/kfx532/experiment_arbitrage", "-R", "Arbitrage"]
+      "args": [
+        "pide_mcp",
+        "-d",
+        "/Users/kfx532/experiment_arbitrage",
+        "-R",
+        "Relative_Arbitrage_Statement"
+      ]
     }
   }
 }
