@@ -1,52 +1,54 @@
-(*
-  Title:   Operator_Envelopes.thy
-  Content: The semicontinuous envelopes F_* and F^* of Eq. (1.9), and
-           Definition 3.1 of arXiv:2512.17702 stated with them.
 
-  Definition 3.1 of the paper does NOT use F itself: a subsolution must
-  satisfy  F_*(grad phi, Hess phi) <= 1  and a supersolution
-  F^*(grad phi, Hess phi) >= 1,  where F_* and F^* are the lower and upper
-  semicontinuous envelopes of F in the pair (p, M).  The envelopes matter
-  precisely at p = 0, where F is discontinuous.
 
-  What is proved here:
-  * the envelopes exist as ereal-valued functions with no side conditions
-    (ereal is a complete lattice, so Sup/Inf are total);
-  * the sandwich  F_* <= F <= F^*  (ell_op_lsc_le, ell_op_le_usc);
-  * Definition 3.1 in envelope form, with the paper's GLOBAL touching
-    condition (max over K, not a local max on a small ball);
-  * that the envelope-free notions of Curvature_Operator imply the
-    envelope ones (visc_subsol_imp_env, visc_supersol_imp_env) -- both
-    because F_* <= F <= F^* and because a global max is a local max;
-  * hence Example 3.1 satisfies Definition 3.1 as the paper states it
-    (ball_v_visc_sol_env).
-
-  * the clause of Lemma 3.1 at the degenerate point:  F_* = F  on
-    {0} x S^n  (ell_op_lsc_at_zero).  This is the clause the paper states
-    separately, and it needs no eigenvalue theory: at p = 0 the constraint
-    a p = 0 is vacuous, so feasible 0 is the LARGEST feasible set and
-    F(0,.) the smallest value of F (ell_op_zero_le); and F is Lipschitz in
-    M uniformly in p because the feasible set is entrywise bounded by L
-    (trace_mult_feasible_bound, ell_op_M_gap, mgap_le_norm).  Together
-    these make the infimum over any neighbourhood of (0,M) converge to
-    F(0,M).
-
-  What is NOT proved: the OTHER two clauses of Lemma 3.1, i.e.
-  F_* = F^* = F on (R^n - {0}) x S^n, and the closed formula (3.6) for
-  F^*(0,M).  Both need ordered eigenvalues lambda_(i), which this
-  development has deliberately avoided in favour of the variational
-  conditions eigen_lb/eigen_ub, plus Ky Fan's maximum principle and the
-  Poincare separation theorem (Eq. (3.8)).  See the note at the end of
-  this theory for the reduction that makes (3.6) precise.  Consequently
-  the implication visc_sol --> visc_sol_env is still only one way on the
-  supersolution side; on the SUBSOLUTION side at p = 0 the two conditions
-  now provably coincide, by ell_op_lsc_at_zero.
-*)
-
+(*<*)
 theory Operator_Envelopes
   imports Viscosity_Solutions
 begin
 
+(*>*)
+
+text \<open>
+  The semicontinuous envelopes F_* and F^* of Eq. (1.9), and
+             Definition 3.1 of arXiv:2512.17702 stated with them.
+
+    Definition 3.1 of the paper does NOT use F itself: a subsolution must
+    satisfy  F_*(grad phi, Hess phi) <= 1  and a supersolution
+    F^*(grad phi, Hess phi) >= 1,  where F_* and F^* are the lower and upper
+    semicontinuous envelopes of F in the pair (p, M).  The envelopes matter
+    precisely at p = 0, where F is discontinuous.
+
+    What is proved here:
+    * the envelopes exist as ereal-valued functions with no side conditions
+      (ereal is a complete lattice, so Sup/Inf are total);
+    * the sandwich  F_* <= F <= F^*  (\<open>ell_op_lsc_le\<close>, \<open>ell_op_le_usc\<close>);
+    * Definition 3.1 in envelope form, with the paper's GLOBAL touching
+      condition (max over K, not a local max on a small ball);
+    * that the envelope-free notions of \<open>Curvature_Operator\<close> imply the
+      envelope ones (\<open>visc_subsol_imp_env\<close>, \<open>visc_supersol_imp_env\<close>) -- both
+      because F_* <= F <= F^* and because a global max is a local max;
+    * hence Example 3.1 satisfies Definition 3.1 as the paper states it
+      (\<open>ball_v_visc_sol_env\<close>).
+
+    * the clause of Lemma 3.1 at the degenerate point:  F_* = F  on
+      {0} x S^n  (\<open>ell_op_lsc_at_zero\<close>).  This is the clause the paper states
+      separately, and it needs no eigenvalue theory: at p = 0 the constraint
+      a p = 0 is vacuous, so feasible 0 is the LARGEST feasible set and
+      F(0,.) the smallest value of F (\<open>ell_op_zero_le\<close>); and F is Lipschitz in
+      M uniformly in p because the feasible set is entrywise bounded by L
+      (\<open>trace_mult_feasible_bound\<close>, \<open>ell_op_M_gap\<close>, \<open>mgap_le_norm\<close>).  Together
+      these make the infimum over any neighbourhood of (0,M) converge to
+      F(0,M).
+
+    What is NOT proved: the OTHER two clauses of Lemma 3.1, i.e.
+    F_* = F^* = F on (R^n - {0}) x S^n, and the closed formula (3.6) for
+    F^*(0,M).  Both need ordered eigenvalues lambda_(i), which this
+    development has deliberately avoided in favour of the variational
+    conditions \<open>eigen_lb\<close>/\<open>eigen_ub\<close>, plus Ky Fan's maximum principle and the
+    Poincare separation theorem (Eq. (3.8)).  See the note at the end of
+    this theory for the reduction that makes (3.6) precise.  Consequently
+    the implication \<open>visc_sol\<close> --> \<open>visc_sol_env\<close> is still only one way on the
+    supersolution side; on the SUBSOLUTION side at p = 0 the two conditions
+    now provably coincide, by \<open>ell_op_lsc_at_zero\<close>.\<close>
 unbundle inner_syntax
 
 section \<open>The operator of Eq. (1.9) on pairs\<close>
@@ -588,7 +590,7 @@ section \<open>Definition 3.1 in envelope form\<close>
 text \<open>The paper's touching condition is global: \<open>(u - \<phi>)(x)\<close> is the maximum
   of \<open>u - \<phi>\<close> over all of \<open>K\<close> (resp. the minimum, for supersolutions).  The
   test-function data \<open>(\<phi>, g, H)\<close> is the same as in
-  Curvature\_Operator, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
+  @{theory Relative_Arbitrage.Curvature_Operator}, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
 
 definition visc_subsol_env ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
@@ -3456,4 +3458,7 @@ proof -
   then show ?thesis by linarith
 qed
 
+
+(*<*)
 end
+(*>*)

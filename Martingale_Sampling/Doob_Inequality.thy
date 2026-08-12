@@ -1,26 +1,28 @@
-(*
-  Title:   Doob_Inequality.thy
-  Content: Doob's maximal inequality for discrete-time martingales.
 
-  Neither HOL-Probability nor the AFP entry Martingales contains Doob's
-  inequality, and every passage from a time grid to continuous time needs
-  it (to dominate sup of |X| when approximating a stopping time).  It is
-  therefore proved here from scratch:
 
-    l * P(max of |X_k|, k <= n, >= l)  <=  E[|X_n| on that event]  <=  E[|X_n|]
-
-  The proof is the classical first-passage decomposition: the event that the
-  running maximum reaches l is the disjoint union over k <= n of the events
-  "l is reached first at time k", each of which lies in F k, and on which
-  |X_k| >= l; the submartingale property of |X| on sets of F k -- itself a
-  consequence of conditional Jensen (cond_exp_contraction_real) -- replaces
-  |X_k| by |X_n|.
-*)
-
+(*<*)
 theory Doob_Inequality
   imports Time_Discretisation
 begin
 
+(*>*)
+
+text \<open>
+  Doob's maximal inequality for discrete-time martingales.
+
+    Neither HOL-Probability nor the AFP entry Martingales contains Doob's
+    inequality, and every passage from a time grid to continuous time needs
+    it (to dominate sup of |X| when approximating a stopping time).  It is
+    therefore proved here from scratch:
+
+      l * P(max of |\<open>X_k\<close>|, k <= n, >= l)  <=  E[|\<open>X_n\<close>| on that event]  <=  E[|\<open>X_n\<close>|]
+
+    The proof is the classical first-passage decomposition: the event that the
+    running maximum reaches l is the disjoint union over k <= n of the events
+    "l is reached first at time k", each of which lies in F k, and on which
+    |\<open>X_k\<close>| >= l; the submartingale property of |X| on sets of F k -- itself a
+    consequence of conditional Jensen (\<open>cond_exp_contraction_real\<close>) -- replaces
+    |\<open>X_k\<close>| by |\<open>X_n\<close>|.\<close>
 section \<open>The running maximum\<close>
 
 definition maxabs :: "(nat \<Rightarrow> 'a \<Rightarrow> real) \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> real" where
@@ -546,7 +548,7 @@ end
 section \<open>The maximal inequality for a continuous-time martingale on a grid\<close>
 
 text \<open>A continuous-time square-integrable martingale sampled along a grid is
-  a discrete one (Time\_Discretisation), so the inequality above applies to
+  a discrete one (@{theory Martingale_Sampling.Time_Discretisation}), so the inequality above applies to
   it verbatim.\<close>
 
 lemma (in sampled_martingale) grid_doob_L2:
@@ -1007,4 +1009,7 @@ qed
 
 end
 
+
+(*<*)
 end
+(*>*)

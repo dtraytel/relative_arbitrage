@@ -1,29 +1,31 @@
-(*
-  Title:   Viscosity_Solutions.thy
-  Content: Uniqueness of the ball solution of Eq. (3.9) without the
-           Crandall--Ishii comparison principle.
 
-  Viscosity_Comparison_Interface derives uniqueness from the locale
-  comparison_principle, i.e. from the comparison principle for two
-  arbitrary viscosity solutions -- that is the Crandall--Ishii theorem,
-  which needs sup-convolutions and Jensen's lemma.
 
-  For the paper's statement (Theorem 1.1, uniqueness, for Example 3.1)
-  none of that is needed: one of the two functions being compared is the
-  explicit smooth solution v of Eq. (3.9), so it can serve directly as a
-  test function.  Since the operator F is positively homogeneous in the
-  Hessian and invariant under scaling of the gradient, the scaled function
-  (1+e)v is a strict supersolution and (1-e)v a strict subsolution, which
-  turns the touching argument into a contradiction without any doubling of
-  variables.  The main result, ball_v_unique_solution_smooth, is that the
-  explicit v is the unique continuous viscosity solution with its boundary
-  data, proved from first principles.
-*)
-
+(*<*)
 theory Viscosity_Solutions
   imports Viscosity_Comparison_Interface
 begin
 
+(*>*)
+
+text \<open>
+  Uniqueness of the ball solution of Eq. (3.9) without the
+             Crandall--Ishii comparison principle.
+
+    \<open>Viscosity_Comparison_Interface\<close> derives uniqueness from the locale
+    \<open>comparison_principle\<close>, i.e. from the comparison principle for two
+    arbitrary viscosity solutions -- that is the Crandall--Ishii theorem,
+    which needs sup-convolutions and Jensen's lemma.
+
+    For the paper's statement (Theorem 1.1, uniqueness, for Example 3.1)
+    none of that is needed: one of the two functions being compared is the
+    explicit smooth solution v of Eq. (3.9), so it can serve directly as a
+    test function.  Since the operator F is positively homogeneous in the
+    Hessian and invariant under scaling of the gradient, the scaled function
+    (1+e)v is a strict supersolution and (1-e)v a strict subsolution, which
+    turns the touching argument into a contradiction without any doubling of
+    variables.  The main result, \<open>ball_v_unique_solution_smooth\<close>, is that the
+    explicit v is the unique continuous viscosity solution with its boundary
+    data, proved from first principles.\<close>
 section \<open>Continuity of the ball value function\<close>
 
 lemma continuous_on_ball_v:
@@ -825,4 +827,7 @@ proof (rule boundedI)
   finally show "norm a \<le> real CARD('n) * L" .
 qed
 
+
+(*<*)
 end
+(*>*)

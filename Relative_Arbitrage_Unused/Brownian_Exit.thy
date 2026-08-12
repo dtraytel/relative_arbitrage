@@ -1,17 +1,19 @@
-(*
-  Title:   Brownian_Exit.thy
-  Content: The exit time of the continuous Brownian state process from a ball.
 
-  The exit time of Exit_Time is applied to the continuous state process cbmX
-  of Brownian_Continuous: it is a stopping time for the natural filtration of
-  that process, and up to and including it the process stays in the closed
-  ball.  This is the data the exit-time market needs.
-*)
 
+(*<*)
 theory Brownian_Exit
   imports "Relative_Arbitrage.Brownian_Continuous" "Relative_Arbitrage.Exit_Time"
 begin
 
+(*>*)
+
+text \<open>
+  The exit time of the continuous Brownian state process from a ball.
+
+    The exit time of \<open>Exit_Time\<close> is applied to the continuous state process cbmX
+    of \<open>Brownian_Continuous\<close>: it is a stopping time for the natural filtration of
+    that process, and up to and including it the process stays in the closed
+    ball.  This is the data the exit-time market needs.\<close>
 section \<open>The exterior of an open ball\<close>
 
 lemma closed_norm_exterior:
@@ -158,4 +160,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

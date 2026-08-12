@@ -1,17 +1,6 @@
-(*
-  Title:   Brownian_Market.thy
-  Content: An n-dimensional Brownian market model discharging the locale
-           "sufficiently_volatile_market" of Volatile_Market.
 
-  The market is the product of CARD('n) independent copies of the Wiener
-  measure wiener_pre from Brownian_Motion, started at x0, with constant
-  instantaneous covariance mat 1 and a deterministic horizon.  For this
-  model every assumption of sufficiently_volatile_market --- including the
-  martingale property with respect to the natural filtration and the
-  martingale-problem identity dynkin_quadratic --- becomes a theorem,
-  showing that the axiomatization of the class \<P>\<^sub>x is non-vacuous.
-*)
 
+(*<*)
 theory Brownian_Market
   imports
     "Wiener_Measure.Brownian_Motion"
@@ -19,6 +8,19 @@ theory Brownian_Market
     "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras"
 begin
 
+(*>*)
+
+text \<open>
+  An n-dimensional Brownian market model discharging the locale
+             "\<open>sufficiently_volatile_market\<close>" of \<open>Volatile_Market\<close>.
+
+    The market is the product of CARD('n) independent copies of the Wiener
+    measure \<open>wiener_pre\<close> from \<open>Brownian_Motion\<close>, started at x0, with constant
+    instantaneous covariance mat 1 and a deterministic horizon.  For this
+    model every assumption of \<open>sufficiently_volatile_market\<close> --- including the
+    martingale property with respect to the natural filtration and the
+    martingale-problem identity \<open>dynkin_quadratic\<close> --- becomes a theorem,
+    \<open>showing that the axiomatization of the class \<P>\<^sub>x is non-vacuous.\<close>\<close>
 section \<open>Independence toolkit\<close>
 
 text \<open>Independence of a pair of random variables transports along a
@@ -1435,7 +1437,7 @@ section \<open>The Brownian market is sufficiently volatile\<close>
 text \<open>The martingale property \<open>martingale_bmX\<close> above, together with the
   martingale-problem identity \<open>dynkin_quadratic\<close> proved in the next
   section, assembles into an instance of \<open>sufficiently_volatile_market\<close>
-  from Volatile\_Market; the concrete instantiation, for the
+  from @{theory Relative_Arbitrage.Volatile_Market}; the concrete instantiation, for the
   continuous modification of the market, is carried out in
   \<open>Brownian_Continuous\<close>.thy.\<close>
 
@@ -2172,4 +2174,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

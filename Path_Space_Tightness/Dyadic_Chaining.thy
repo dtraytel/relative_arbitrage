@@ -1,5 +1,12 @@
 section \<open>Deterministic dyadic chaining\<close>
 
+(*<*)
+theory Dyadic_Chaining
+  imports "Kolmogorov_Chentsov.Dyadic_Interval"
+begin
+
+(*>*)
+
 text \<open>
   The deterministic half of the Kolmogorov tightness argument. Given
   per-level bounds \<open>c j\<close> on the dyadic increments of a function at every
@@ -16,11 +23,6 @@ text \<open>
   sum of the per-level bounds; the two level-\<open>n\<close> anchors of points at distance
   \<open>\<le> 1/2^n\<close> are equal or adjacent.
 \<close>
-
-theory Dyadic_Chaining
-  imports "Kolmogorov_Chentsov.Dyadic_Interval"
-begin
-
 subsection \<open>Floor anchor arithmetic\<close>
 
 lemma floor_double_bounds:
@@ -311,4 +313,7 @@ proof -
     by (rule tendsto_upperbound[OF flim bnd]) simp
 qed
 
+
+(*<*)
 end
+(*>*)

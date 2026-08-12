@@ -1,44 +1,46 @@
-(*
-  Title:   Curvature_Operator.thy
-  Content: The deterministic core of
 
-             J.-H. Lai, M. Shkolnikov, H. M. Soner:
-             "Relative arbitrage problem under eigenvalue lower bounds"
-             arXiv:2512.17702
 
-  The paper characterizes time horizons for relative arbitrage via the
-  fully nonlinear elliptic PDE  F(Dv, D^2 v) = 1  on a compact set K, where
-  (Eq. 1.9)
-
-    F(p, M) = inf { -1/2 tr(M a) :  a psd,  a p = 0,
-                                    lambda_(n-k)(a) >= 1,  lambda_(1)(a) <= L }
-
-  (lambda_(m) = m-th largest eigenvalue).  This theory formalizes the
-  constraint set of Eq. 1.9 -- with the spectral conditions expressed
-  through their Courant-Fischer variational characterizations, which
-  avoids developing the spectral theorem while remaining equivalent for
-  symmetric matrices -- and the operator F; the trace lower bound
-  tr(a) >= n - k for feasible a (the Ky Fan / Courant-Fischer argument
-  underlying the lower bound in Example 3.1) and its attainment by
-  rank-(n-k) orthogonal projections; Example 3.1 (Eq. 3.9), the explicit
-  solution on the ball B_r(0); the spectral theorem for real symmetric
-  matrices, nonnegativity of traces of products of psd matrices, and the
-  degenerate ellipticity of F; and viscosity sub-/supersolutions of
-  F(Du, D^2u) = 1 in the Crandall-Ishii-Lions test-function formulation,
-  together with first- and second-order conditions at interior minima and
-  the theorem that the explicit solution of Example 3.1 is a viscosity
-  solution on the open ball with zero boundary values.
-
-  The probabilistic side is formalized in the companion theories
-  Volatile_Market and Optimal_Exit_Time; the
-  comparison and uniqueness part of Theorem 1.1 in
-  Viscosity_Solutions and Viscosity_Comparison_Interface.
-*)
-
+(*<*)
 theory Curvature_Operator
   imports "HOL-Analysis.Analysis"
 begin
 
+(*>*)
+
+text \<open>
+  The deterministic core of
+
+               J.-H. Lai, M. Shkolnikov, H. M. Soner:
+               "Relative arbitrage problem under eigenvalue lower bounds"
+               arXiv:2512.17702
+
+    The paper characterizes time horizons for relative arbitrage via the
+    fully nonlinear elliptic PDE  F(Dv, D^2 v) = 1  on a compact set K, where
+    (Eq. 1.9)
+
+      F(p, M) = inf { -1/2 tr(M a) :  a psd,  a p = 0,
+                                      lambda_(n-k)(a) >= 1,  lambda_(1)(a) <= L }
+
+    (lambda_(m) = m-th largest eigenvalue).  This theory formalizes the
+    constraint set of Eq. 1.9 -- with the spectral conditions expressed
+    through their Courant-Fischer variational characterizations, which
+    avoids developing the spectral theorem while remaining equivalent for
+    symmetric matrices -- and the operator F; the trace lower bound
+    tr(a) >= n - k for feasible a (the Ky Fan / Courant-Fischer argument
+    underlying the lower bound in Example 3.1) and its attainment by
+    rank-(n-k) orthogonal projections; Example 3.1 (Eq. 3.9), the explicit
+    solution on the ball \<open>B_r\<close>(0); the spectral theorem for real symmetric
+    matrices, nonnegativity of traces of products of psd matrices, and the
+    degenerate ellipticity of F; and viscosity sub-/supersolutions of
+    F(Du, D^2u) = 1 in the Crandall-Ishii-Lions test-function formulation,
+    together with first- and second-order conditions at interior minima and
+    the theorem that the explicit solution of Example 3.1 is a viscosity
+    solution on the open ball with zero boundary values.
+
+    The probabilistic side is formalized in the companion theories
+    \<open>Volatile_Market\<close> and \<open>Optimal_Exit_Time\<close>; the
+    comparison and uniqueness part of Theorem 1.1 in
+    \<open>Viscosity_Solutions\<close> and \<open>Viscosity_Comparison_Interface\<close>.\<close>
 unbundle inner_syntax
 
 section \<open>Linear-algebra preliminaries\<close>
@@ -1634,4 +1636,7 @@ proof -
     by (rule ball_v_boundary)
 qed
 
+
+(*<*)
 end
+(*>*)

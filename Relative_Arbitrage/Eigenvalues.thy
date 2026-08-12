@@ -1,36 +1,38 @@
-(*
-  Title:   Eigenvalues.thy
-  Content: Ky Fan partial sums and ordered eigenvalues of a real symmetric
-           matrix, developed basis-free, towards Eq. (3.6) of
-           arXiv:2512.17702 (Lai/Shkolnikov/Soner).
 
-  Design.  Constraint_Set_Convexity already defines
 
-    Pi_proj a m = Inf {trace (a ** P) | is_proj P, trace P = m}
-
-  which is the sum of the m SMALLEST eigenvalues of a -- basis-free by
-  construction, so no well-definedness argument is needed.  Dually,
-
-    kyfan m a = Sup {trace (a ** P) | is_proj P, trace P = m}
-
-  is the sum of the m LARGEST, and the i-th largest eigenvalue is the
-  difference  lam i a = kyfan i a - kyfan (i-1) a.  This route avoids
-  defining eigenvalues by sorting a multiset and then having to prove
-  independence of the eigenbasis: here basis-independence is free, and the
-  Courant--Fischer / Ky Fan theorems become EVALUATION lemmas rather than
-  well-definedness obligations.
-
-  The one genuinely combinatorial ingredient is the linear program in
-  Section 1: maximising a linear functional over the vectors t with
-  0 <= t <= 1 and sum t = m puts the mass on the m largest coefficients.
-  That is what turns "trace (a ** P) for an arbitrary rank-m projection P"
-  into "a sum of m eigenvalues".
-*)
-
+(*<*)
 theory Eigenvalues
   imports Eigenvalue_Bound_Exact
 begin
 
+(*>*)
+
+text \<open>
+  Ky Fan partial sums and ordered eigenvalues of a real symmetric
+             matrix, developed basis-free, towards Eq. (3.6) of
+             arXiv:2512.17702 (Lai/Shkolnikov/Soner).
+
+    Design.  \<open>Constraint_Set_Convexity\<close> already defines
+
+      \<open>Pi_proj\<close> a m = Inf {trace (a ** P) | \<open>is_proj\<close> P, trace P = m}
+
+    which is the sum of the m SMALLEST eigenvalues of a -- basis-free by
+    construction, so no well-definedness argument is needed.  Dually,
+
+      kyfan m a = Sup {trace (a ** P) | \<open>is_proj\<close> P, trace P = m}
+
+    is the sum of the m LARGEST, and the i-th largest eigenvalue is the
+    difference  lam i a = kyfan i a - kyfan (i-1) a.  This route avoids
+    defining eigenvalues by sorting a multiset and then having to prove
+    independence of the eigenbasis: here basis-independence is free, and the
+    Courant--Fischer / Ky Fan theorems become EVALUATION lemmas rather than
+    well-definedness obligations.
+
+    The one genuinely combinatorial ingredient is the linear program in
+    Section 1: maximising a linear functional over the vectors t with
+    0 <= t <= 1 and sum t = m puts the mass on the m largest coefficients.
+    That is what turns "trace (a ** P) for an arbitrary rank-m projection P"
+    into "a sum of m eigenvalues".\<close>
 section \<open>The linear program on the simplex inside a box\<close>
 
 text \<open>Among the \<open>m\<close>-element subsets of a finite set there is one whose
@@ -1215,4 +1217,7 @@ text \<open>The companion statement for the negative-part term,
   \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but a separate induction.\<close>
 
 
+
+(*<*)
 end
+(*>*)

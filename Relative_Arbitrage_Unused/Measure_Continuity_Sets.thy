@@ -1,5 +1,12 @@
 section \<open>Continuity sets of a finite Borel measure\<close>
 
+(*<*)
+theory Measure_Continuity_Sets
+  imports "HOL-Probability.Probability"
+begin
+
+(*>*)
+
 text \<open>
   First layer of the Skorokhod representation development (open task 25, needed by
   Lemma 2.3 of arXiv:2512.17702). Skorokhod's representation theorem on a Polish
@@ -19,11 +26,6 @@ text \<open>
   Nothing here depends on stochastic integration, so this layer is independent of
   the deferred open task 15.
 \<close>
-
-theory Measure_Continuity_Sets
-  imports "HOL-Probability.Probability"
-begin
-
 subsection \<open>Spheres: disjointness, closedness, measurability\<close>
 
 lemma sphere_disjoint:
@@ -372,4 +374,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

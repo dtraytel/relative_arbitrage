@@ -1,5 +1,12 @@
 section \<open>From \<open>L\<^sup>2\<close>-Cauchy to an almost-everywhere limit\<close>
 
+(*<*)
+theory L2_Limits
+  imports "Martingale_Sampling.Vitali_Convergence"
+begin
+
+(*>*)
+
 text \<open>
   Machinery for the \<open>L\<^sup>2\<close> closure of the simple stochastic integrals (the last
   layer of open task 15).
@@ -17,11 +24,6 @@ text \<open>
   \<open>\<bar>\<bar>h\<bar>\<bar>\<^sub>1 \<le> e/2 + \<bar>\<bar>h\<bar>\<bar>\<^sub>2\<^sup>2/(2e)\<close>, and choosing \<open>e\<close> as the \<open>L\<^sup>2\<close> norm gives the
   usual bound.
 \<close>
-
-theory L2_Limits
-  imports "Martingale_Sampling.Vitali_Convergence"
-begin
-
 subsection \<open>The arithmetic-geometric bound\<close>
 
 lemma abs_le_am_gm:
@@ -184,5 +186,7 @@ proof -
   show thesis by (rule that[OF rmono gmeas conv])
 qed
 
-end
 
+(*<*)
+end
+(*>*)

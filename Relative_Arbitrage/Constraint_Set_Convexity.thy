@@ -1,37 +1,39 @@
-(*
-  Title:   Constraint_Set_Convexity.thy
-  Content: Lemma 2.1 of arXiv:2512.17702 (Lai/Shkolnikov/Soner):
-           the convexification of the eigenvalue constraint.
 
-  The operator Pi_m of Eq. (2.1),
-      Pi_m(a) = inf { tr(a P) : P^2 = P = P^T, tr P = m },
-  is formalized as Pi_proj below.  Lemma 2.1 states that the convex hull of
-      B_k = { a psd : lambda_(n-k)(a) >= 1 }
-  is  A_k = { a psd : Pi_m(a) >= m - k  for m = k+1, ..., n }.
 
-  This theory proves both inclusions in full, with no axiomatized
-  ingredients:
-    * conv B_k \<subseteq> A_k, via the Grassmann dimension formula and
-      basis-independent subspace traces (the spectral theorem of
-      Curvature_Operator diagonalizes orthogonal projections);
-    * A_k \<subseteq> closure (conv B_k), via hyperplane separation from the
-      closed convex hull, symmetrization and eigen-decomposition of the
-      separating functional, and an Abel-summation estimate against the
-      Pi_m-constraints along the sorted eigen-frame -- this route needs
-      no von Neumann trace inequality.
-  Together (theorem lemma_2_1):
-      conv B_k \<subseteq> A_k \<subseteq> closure (conv B_k),
-  i.e. A_k is the closed convex hull of B_k, the form in which the paper
-  uses Lemma 2.1.
-
-  As in Curvature_Operator, the spectral condition lambda_(n-k)(a) >= 1
-  is expressed by its Courant-Fischer characterization eigen_lb.
-*)
-
+(*<*)
 theory Constraint_Set_Convexity
   imports Curvature_Operator
 begin
 
+(*>*)
+
+text \<open>
+  Lemma 2.1 of arXiv:2512.17702 (Lai/Shkolnikov/Soner):
+             the convexification of the eigenvalue constraint.
+
+    The operator \<open>Pi_m\<close> of Eq. (2.1),
+        \<open>Pi_m\<close>(a) = inf { tr(a P) : P^2 = P = P^T, tr P = m },
+    is formalized as \<open>Pi_proj\<close> below.  Lemma 2.1 states that the convex hull of
+        \<open>B_k\<close> = { a psd : lambda_(n-k)(a) >= 1 }
+    is  \<open>A_k\<close> = { a psd : \<open>Pi_m\<close>(a) >= m - k  for m = k+1, ..., n }.
+
+    This theory proves both inclusions in full, with no axiomatized
+    ingredients:
+      * conv \<open>B_k\<close> \<open>\<subseteq>\<close> \<open>A_k\<close>, via the Grassmann dimension formula and
+        basis-independent subspace traces (the spectral theorem of
+        \<open>Curvature_Operator\<close> diagonalizes orthogonal projections);
+      * \<open>A_k\<close> \<open>\<subseteq>\<close> closure (conv \<open>B_k\<close>), via hyperplane separation from the
+        closed convex hull, symmetrization and eigen-decomposition of the
+        separating functional, and an Abel-summation estimate against the
+        \<open>Pi_m\<close>-constraints along the sorted eigen-frame -- this route needs
+        no von Neumann trace inequality.
+    Together (theorem \<open>lemma_2_1\<close>):
+        conv \<open>B_k\<close> \<open>\<subseteq>\<close> \<open>A_k\<close> \<open>\<subseteq>\<close> closure (conv \<open>B_k\<close>),
+    i.e. \<open>A_k\<close> is the closed convex hull of \<open>B_k\<close>, the form in which the paper
+    uses Lemma 2.1.
+
+    As in \<open>Curvature_Operator\<close>, the spectral condition lambda_(n-k)(a) >= 1
+    is expressed by its Courant-Fischer characterization \<open>eigen_lb\<close>.\<close>
 unbundle inner_syntax
 
 section \<open>Subspace traces\<close>
@@ -1179,4 +1181,7 @@ proof (rule ccontr)
   with strict[OF bS] show False by simp
 qed
 
+
+(*<*)
 end
+(*>*)

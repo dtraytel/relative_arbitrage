@@ -1,18 +1,20 @@
-(*
-  Title:   Brownian_Stopped.thy
-  Content: Stopping the continuous Brownian state process at the ball exit time.
 
-  Optional stopping is available for real-valued martingales, so the vector
-  state process is stopped componentwise and reassembled with martingale_vecI.
-  The domination hypothesis of optional_stopping concerns the unstopped
-  process, so it is discharged by the running-maximum bound Dsup of
-  Doob_Inequality.
-*)
 
+(*<*)
 theory Brownian_Stopped
   imports Brownian_Exit "Martingale_Sampling.Stopped_Adaptedness"
 begin
 
+(*>*)
+
+text \<open>
+  Stopping the continuous Brownian state process at the ball exit time.
+
+    Optional stopping is available for real-valued martingales, so the vector
+    state process is stopped componentwise and reassembled with \<open>martingale_vecI\<close>.
+    The domination hypothesis of \<open>optional_stopping\<close> concerns the unstopped
+    process, so it is discharged by the running-maximum bound Dsup of
+    \<open>Doob_Inequality\<close>.\<close>
 section \<open>Components of the continuous state process\<close>
 
 lemma cbmX_comp_measurable:
@@ -1044,4 +1046,7 @@ proof -
   then show ?thesis by simp
 qed
 
+
+(*<*)
 end
+(*>*)

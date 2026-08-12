@@ -1,31 +1,34 @@
-(*
-  Title:   Brownian_Motion.thy
-  Content: Construction of Brownian motion in Isabelle/HOL.
 
-  Strategy (maximal reuse):
-  \<^item> finite-dimensional distributions are pushforwards of finite products of
-    independent Gaussian increment measures under cumulative-sum maps;
-  \<^item> projectivity reduces to merging two adjacent increments, i.e. to the
-    convolution law for Gaussians (HOL-Probability's
-    conv_normal_density_zero_mean);
-  \<^item> the projective limit is Immler's Daniell--Kolmogorov theorem
-    (HOL-Probability, locale polish_projective);
-  \<^item> the continuous modification comes from the AFP entry
-    Kolmogorov_Chentsov (theorem Kolmogorov_Chentsov), whose moment
-    hypothesis is discharged by the Gaussian fourth moment
-    E|B_t - B_s|^4 = 3 |t-s|^2  (HOL-Probability's normal_moment_even).
 
-  This part provides the Gaussian increment measure gauss_measure,
-  parameterized by its variance (variance 0 degenerating to a point
-  mass), its moments, and the convolution law both in pushforward and in
-  iterated-integral form.
-*)
-
+(*<*)
 theory Brownian_Motion
   imports
     "HOL-Probability.Probability"
 begin
 
+(*>*)
+
+text \<open>
+  Construction of Brownian motion in Isabelle/HOL.
+
+    Strategy (maximal reuse):
+    \<^item> finite-dimensional distributions are pushforwards of finite products of
+      independent Gaussian increment measures under cumulative-sum maps;
+    \<^item> projectivity reduces to merging two adjacent increments, i.e. to the
+      convolution law for Gaussians (HOL-Probability's
+      \<open>conv_normal_density_zero_mean\<close>);
+    \<^item> the projective limit is Immler's Daniell--Kolmogorov theorem
+      (HOL-Probability, locale \<open>polish_projective\<close>);
+    \<^item> the continuous modification comes from the AFP entry
+      \<open>Kolmogorov_Chentsov\<close> (theorem \<open>Kolmogorov_Chentsov\<close>), whose moment
+      hypothesis is discharged by the Gaussian fourth moment
+      \<open>E \<bar>B t - B s\<bar>\<^sup>4 = 3 * \<bar>t - s\<bar>\<^sup>2\<close>
+      (HOL-Probability's \<open>normal_moment_even\<close>).
+
+    This part provides the Gaussian increment measure \<open>gauss_measure\<close>,
+    parameterized by its variance (variance 0 degenerating to a point
+    mass), its moments, and the convolution law both in pushforward and in
+    iterated-integral form.\<close>
 section \<open>The Gaussian increment measure\<close>
 
 definition gauss_measure :: "real \<Rightarrow> real measure" where
@@ -1352,4 +1355,7 @@ proof -
   then show ?thesis by (simp add: K_def n_def)
 qed
 
+
+(*<*)
 end
+(*>*)

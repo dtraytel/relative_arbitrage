@@ -1,20 +1,22 @@
-(*
-  Title:   Exit_Class.thy
-  Content: The class P_x of Eq. (1.7) of arXiv:2512.17702, encoded as laws of
-           the pair (X, <X>) on the path space, following the paper's own
-           proof of Lemma 2.3: the covariation is carried as a second,
-           uniformly Lipschitz path component whose difference quotients lie
-           in the compact convex constraint set
-           S = Pi_constraint k \<inter> {eigen_ub L}.  Lemma 2.1
-           (lemma_2_1_exact) identifies S with the convex hull of the
-           unconvexified sufficient-volatility set (1.4).
-*)
 
+
+(*<*)
 theory Exit_Class
   imports "Path_Space_Tightness.Path_Space" "Path_Space_Tightness.Path_Tightness" Exit_Semicontinuity Poincare_Separation
     Viscosity_Solutions
 begin
 
+(*>*)
+
+text \<open>
+  The class \<open>P_x\<close> of Eq. (1.7) of arXiv:2512.17702, encoded as laws of
+             the pair (X, <X>) on the path space, following the paper's own
+             proof of Lemma 2.3: the covariation is carried as a second,
+             uniformly Lipschitz path component whose difference quotients lie
+             in the compact convex constraint set
+             S = \<open>Pi_constraint\<close> k \<open>\<inter>\<close> {eigen_ub L}.  Lemma 2.1
+             (\<open>lemma_2_1_exact\<close>) identifies S with the convex hull of the
+             unconvexified sufficient-volatility set (1.4).\<close>
 section \<open>The constraint set of Eq. (1.5) with the technical cap\<close>
 
 definition sconstraint :: "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite^'n) set" where
@@ -1467,7 +1469,7 @@ qed
 section \<open>Pair tightness from the two component moduli\<close>
 
 text \<open>Pair tightness needs no matrix-valued Kolmogorov criterion: the
-  \<open>X\<close>-side carries a stochastic Hoelder estimate (\<open>Path_Tightness\<close>), the
+  \<open>X\<close>-side carries a stochastic Hoelder estimate (@{theory Path_Space_Tightness.Path_Tightness}), the
   \<open>Y\<close>-side the deterministic Lipschitz modulus of \<open>diffquot_lipschitz\<close>,
   and on a bounded horizon a Lipschitz bound is itself Hoelder-\<open>ga\<close>.
   Adding the two via \<open>norm_Pair_le\<close> puts the pair path in a single
@@ -1680,7 +1682,7 @@ section \<open>Passing the martingale identities through the weak limit\<close>
 text \<open>The class's integrated identities --- \<open>E[Z\<sqdot>(X\<^sub>t - X\<^sub>s)] = 0\<close> for a
   bounded continuous test \<open>Z\<close> of the past, and its covariation analogue ---
   are integrals of continuous but unbounded path functionals, so weak
-  convergence alone does not transfer them. \<open>Path_Tightness\<close>'s
+  convergence alone does not transfer them. @{theory Path_Space_Tightness.Path_Tightness}'s
   \<open>weak_conv_on_integral_unif_integrable\<close> closes the gap given uniform
   integrability, which a uniform \<open>L\<^sup>2\<close> bound supplies via
   Chebyshev--Markov: \<open>\<integral>\<bar>f\<bar>\<sqdot>1\<^bsub>{\<bar>f\<bar>>R}\<^esub> \<le> (1/R)\<sqdot>\<integral>f\<^sup>2 \<le> C/R\<close>.\<close>
@@ -1989,4 +1991,7 @@ definition exit_val ::
      Sup ((\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
        ` exit_class k L T x)"
 
+
+(*<*)
 end
+(*>*)

@@ -1,5 +1,12 @@
 section \<open>The fourth-moment bound of Eq. (2.7)\<close>
 
+(*<*)
+theory Moment_Bounds
+  imports "HOL-Probability.Probability"
+begin
+
+(*>*)
+
 text \<open>
   Lemma 2.2 of arXiv:2512.17702 rests on the estimate of Eq. (2.7),
   \<open>E |X t - X s| ^ 4 <= 66 * C ^ 2 * (t - s) ^ 2\<close>, which is derived there by
@@ -17,11 +24,6 @@ text \<open>
   the fourth moment of the increment follows; everything from those two
   inputs to Eq. (2.7) is proved here.
 \<close>
-
-theory Moment_Bounds
-  imports "HOL-Probability.Probability"
-begin
-
 subsection \<open>An elementary square inequality\<close>
 
 lemma square_add_le_two:
@@ -60,7 +62,7 @@ text \<open>
   Here @{term D} is the squared increment \<open>|X t - X s| ^ 2\<close>, split by Ito's
   formula as a compensated martingale @{term Z} plus the increment @{term T} of
   the trace of the covariation. The conclusion is the fourth-moment bound, since
-  @{term "(D w)\<^sup>2"} is \<open>|X t - X s| ^ 4\<close>.
+  \<open>@{term "(D w)\<^sup>2"} is\<close>\<open>|X t - X s| ^ 4\<close>.
 \<close>
 
 theorem (in prob_space) fourth_moment_of_compensated:
@@ -96,4 +98,7 @@ proof -
   finally show ?thesis .
 qed
 
+
+(*<*)
 end
+(*>*)

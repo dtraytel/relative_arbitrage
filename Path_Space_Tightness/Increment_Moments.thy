@@ -1,5 +1,12 @@
 section \<open>The second-moment bound on increments\<close>
 
+(*<*)
+theory Increment_Moments
+  imports "Martingale_Sampling.Sampled_Quadratic_Variation" "Martingale_Sampling.Moment_Bounds"
+begin
+
+(*>*)
+
 text \<open>
   This theory proves the second-moment bound on increments used in Lemma 2.2 of
   arXiv:2512.17702:
@@ -14,11 +21,6 @@ text \<open>
   two-point partition (\<open>expectation_sq_sampled\<close>) with a martingale's constant
   expectation, applied to the compensated square.
 \<close>
-
-theory Increment_Moments
-  imports "Martingale_Sampling.Sampled_Quadratic_Variation" "Martingale_Sampling.Moment_Bounds"
-begin
-
 subsection \<open>A martingale has constant expectation\<close>
 
 lemma martingale_expectation_eq:
@@ -2259,4 +2261,7 @@ proof -
   finally show ?thesis unfolding diff .
 qed
 
+
+(*<*)
 end
+(*>*)

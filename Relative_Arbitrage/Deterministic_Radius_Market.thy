@@ -1,23 +1,25 @@
-(*
-  Title:   Deterministic_Radius_Market.thy
-  Content: The deterministic-radius market of Example 3.1 of arXiv:2512.17702
-           (case n - k = 1): its explicit trigonometric representation and
-           the Gaussian toolkit underlying it.
 
-  The process X_t = sqrt(|x|^2 + t) (cos(W_c(t) + phi), sin(W_c(t) + phi)),
-  c(t) = ln(1 + t/|x|^2), is a martingale whose covariance is the sphere
-  projection a(X) = I - X X^T/|X|^2; its radius is deterministic, so with
-  the constant horizon tau = r^2 - |x|^2 it realises ball_v exactly and
-  witnesses stopped_val_fn = ball_v at nonzero interior points for
-  k = CARD('n) - 1.  This theory establishes the increment distribution of
-  the product Brownian model and the characteristic function of
-  gauss_measure.
-*)
 
+(*<*)
 theory Deterministic_Radius_Market
   imports Brownian_Continuous
 begin
 
+(*>*)
+
+text \<open>
+  The deterministic-radius market of Example 3.1 of arXiv:2512.17702
+             (case n - k = 1): its explicit trigonometric representation and
+             the Gaussian toolkit underlying it.
+
+    The process \<open>X_t\<close> = sqrt(|x|^2 + t) (cos(\<open>W_c\<close>(t) + phi), sin(\<open>W_c\<close>(t) + phi)),
+    c(t) = ln(1 + t/|x|^2), is a martingale whose covariance is the sphere
+    projection a(X) = I - X X^T/|X|^2; its radius is deterministic, so with
+    the constant horizon tau = r^2 - |x|^2 it realises \<open>ball_v\<close> exactly and
+    witnesses \<open>stopped_val_fn\<close> = \<open>ball_v\<close> at nonzero interior points for
+    k = CARD('n) - 1.  This theory establishes the increment distribution of
+    the product Brownian model and the characteristic function of
+    \<open>gauss_measure\<close>.\<close>
 section \<open>The coordinate increment of the product model is Gaussian\<close>
 
 lemma bm_increment_distr:
@@ -3502,4 +3504,7 @@ proof -
     unfolding set_integrable_def eq .
 qed
 
+
+(*<*)
 end
+(*>*)

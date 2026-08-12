@@ -1,29 +1,31 @@
-(*
-  Title:   Brownian_Optimal_Boundary.thy
-  Content: The optimality locale of Optimal_Exit_Time is consistent.
 
-  optimal_ball_market assumes the reverse inequality E[tau] >= v(x0) of
-  Eq. (3.11), whose proof needs the time-changed spherical martingale and
-  hence Ito calculus.  A locale that cannot be instantiated would make its
-  theorem optimal_exit_time_value vacuous, so this theory exhibits an
-  instance: the Brownian market started on the sphere and stopped
-  immediately.  There v(x0) = 0 and the optimal exit time is 0, so the
-  assumed inequality holds by ball_v_boundary; this is the boundary case
-  of Example 3.1.
 
-  A non-degenerate instance (Brownian motion stopped at the exit time of
-  the ball, where E[tau] = v(x0) > 0) needs continuous-time optional
-  sampling for the quadratic variation, i.e. exactly the Ito theory that
-  is unavailable; the discrete-time analogue is proved in
-  Random_Walk_Market.
-*)
-
+(*<*)
 theory Brownian_Optimal_Boundary
   imports
     Brownian_Continuous
     Optimal_Exit_Time
 begin
 
+(*>*)
+
+text \<open>
+  The optimality locale of \<open>Optimal_Exit_Time\<close> is consistent.
+
+    \<open>optimal_ball_market\<close> assumes the reverse inequality E[tau] >= v(x0) of
+    Eq. (3.11), whose proof needs the time-changed spherical martingale and
+    hence Ito calculus.  A locale that cannot be instantiated would make its
+    theorem \<open>optimal_exit_time_value\<close> vacuous, so this theory exhibits an
+    instance: the Brownian market started on the sphere and stopped
+    immediately.  There v(x0) = 0 and the optimal exit time is 0, so the
+    assumed inequality holds by \<open>ball_v_boundary\<close>; this is the boundary case
+    of Example 3.1.
+
+    A non-degenerate instance (Brownian motion stopped at the exit time of
+    the ball, where E[tau] = v(x0) > 0) needs continuous-time optional
+    sampling for the quadratic variation, i.e. exactly the Ito theory that
+    is unavailable; the discrete-time analogue is proved in
+    \<open>Random_Walk_Market\<close>.\<close>
 section \<open>A Brownian market confined to the closed ball\<close>
 
 text \<open>Stopped at time \<open>0\<close>, the Brownian market started at \<open>x0\<close> never
@@ -103,4 +105,7 @@ proof -
     by (rule optimal_ball_market.optimal_exit_time_value[OF inst])
 qed
 
+
+(*<*)
 end
+(*>*)

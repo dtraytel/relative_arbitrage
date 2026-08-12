@@ -1,32 +1,34 @@
-(*
-  Title:   Ito_Market.thy
-  Content: The martingale-problem identity of Volatile_Market
-           becomes a theorem.
 
-  The locale sufficiently_volatile_market assumes the identity
 
-    E[|X (t /\ tau)|^2] - E[int_0^(t /\ tau) tr(a s) ds] = |x0|^2   (dynkin_quadratic)
-
-  at every horizon t.  Ito's formula produces it in the process form
-
-    Z t = |X t|^2 - int_0^t tr(a s) ds   is a martingale,
-
-  from which the identity at a stopped time is exactly optional sampling.
-  The locale ito_volatile_market below assumes the process form together
-  with the regularity that optional sampling needs -- continuous paths and
-  an integrable bound on the horizon -- and proves
-  sufficiently_volatile_market.  So every result of the probabilistic part
-  of the paper (Lemma 2.1, the exit-time bound, the arbitrage and
-  optimality theorems) holds under the martingale property of Z instead of
-  the ad hoc identity.
-*)
-
+(*<*)
 theory Ito_Market
   imports
     "Martingale_Sampling.Optional_Sampling"
     Brownian_Market
 begin
 
+(*>*)
+
+text \<open>
+  The martingale-problem identity of \<open>Volatile_Market\<close>
+             becomes a theorem.
+
+    The locale \<open>sufficiently_volatile_market\<close> assumes the identity
+
+      E[|X (t /\ tau)|^2] - E[\<open>int_0\<close>^(t /\ tau) tr(a s) ds] = |x0|^2   (\<open>dynkin_quadratic\<close>)
+
+    at every horizon t.  Ito's formula produces it in the process form
+
+      Z t = |X t|^2 - \<open>int_0\<close>^t tr(a s) ds   is a martingale,
+
+    from which the identity at a stopped time is exactly optional sampling.
+    The locale \<open>ito_volatile_market\<close> below assumes the process form together
+    with the regularity that optional sampling needs -- continuous paths and
+    an integrable bound on the horizon -- and proves
+    \<open>sufficiently_volatile_market\<close>.  So every result of the probabilistic part
+    of the paper (Lemma 2.1, the exit-time bound, the arbitrage and
+    optimality theorems) holds under the martingale property of Z instead of
+    the ad hoc identity.\<close>
 section \<open>An auxiliary fact on Lebesgue integrals over singletons\<close>
 
 lemma set_integral_lborel_singleton [simp]:
@@ -915,4 +917,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

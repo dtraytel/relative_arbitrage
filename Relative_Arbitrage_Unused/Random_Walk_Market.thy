@@ -1,29 +1,31 @@
-(*
-  Title:   Random_Walk_Market.thy
-  Content: A concrete sufficiently volatile discrete market: the simple
-           symmetric random walk in the plane, stopped when it leaves a
-           ball.
 
-  Everything here is a theorem.  The market instantiates the locale
-  discrete_volatile_stopped_market of Relative_Arbitrage_Discrete, so the
-  discrete-time development of Example 3.1 is non-vacuous, and the
-  exit-time bound of Example 3.1 specializes to an assumption-free
-  statement about the random walk:
 
-    E[exit time from the ball of radius m+1, capped at N] <= (m+1)^2.
-
-  The coin-tossing probability space, the fortune process and its
-  martingale property are taken from the AFP entry Martingales
-  (Example_Coin_Toss); only the centring, the embedding into the plane
-  and the stopping time are new.
-*)
-
+(*<*)
 theory Random_Walk_Market
   imports
     Relative_Arbitrage_Discrete
     "Martingales.Example_Coin_Toss"
 begin
 
+(*>*)
+
+text \<open>
+  A concrete sufficiently volatile discrete market: the simple
+             symmetric random walk in the plane, stopped when it leaves a
+             ball.
+
+    Everything here is a theorem.  The market instantiates the locale
+    \<open>discrete_volatile_stopped_market\<close> of \<open>Relative_Arbitrage_Discrete\<close>, so the
+    discrete-time development of Example 3.1 is non-vacuous, and the
+    exit-time bound of Example 3.1 specializes to an assumption-free
+    statement about the random walk:
+
+      E[exit time from the ball of radius m+1, capped at N] <= (m+1)^2.
+
+    The coin-tossing probability space, the fortune process and its
+    martingale property are taken from the AFP entry Martingales
+    (\<open>Example_Coin_Toss\<close>); only the centring, the embedding into the plane
+    and the stopping time are new.\<close>
 section \<open>The centred fortune process\<close>
 
 abbreviation coin :: "bool stream measure" where
@@ -381,7 +383,7 @@ qed
 section \<open>Sharpness of the bound\<close>
 
 text \<open>Every step of the walk contributes exactly one to the quadratic
-  variation, so the stopped Dynkin identity of Relative\_Arbitrage\_Discrete
+  variation, so the stopped Dynkin identity of @{theory Relative_Arbitrage_Unused.Relative_Arbitrage_Discrete}
   turns into an EQUALITY between the expected exit time and the expected
   squared displacement.  Since the walk sits at distance at least \<open>m\<close> from
   the origin whenever it has left the ball, the bound \<open>v(0)\<close> of Example 3.1
@@ -498,4 +500,7 @@ proof -
     unfolding dV_eq[symmetric] .
 qed
 
+
+(*<*)
 end
+(*>*)

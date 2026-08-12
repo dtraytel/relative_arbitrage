@@ -1,7 +1,9 @@
+(*<*)
 theory Exit_Class_DPP
   imports Exit_Class_Compactness "Path_Space_Tightness.Conditional_UI" "Disintegration.Disintegration"
 begin
 
+(*>*)
 text \<open>The dynamic programming principle of Proposition 2.4 of
   arXiv:2512.17702, for the value function: the pasting bound, the
   \<open>\<ge>\<close> half of (2.9) at a deterministic time, the reduction of the
@@ -3871,7 +3873,7 @@ text \<open>Only countably many conditions survive the passage from "for each,
   family of conditional expectations of the single terminal value, so
   @{thm [source] prob_space.unif_integrable_of_averaging} applies verbatim
   and @{thm [source] finite_measure.vitali_convergence} finishes, both from
-  \<open>Conditional_UI\<close>.
+  @{theory Path_Space_Tightness.Conditional_UI}.
 
   Larsson--Ruf's argument instead uses a regular conditional distribution
   citing Stroock--Varadhan, Thm 1.3.4; their classical conditioning theorem
@@ -8935,7 +8937,7 @@ qed
 section \<open>The \<open>\<F>\<^sub>\<sigma>\<close> layer\<close>
 
 text \<open>Clause (iv) needs optional sampling at two stopping times, while
-  \<open>Optional_Sampling\<close>'s \<open>set_optional_sampling\<close> only samples one stopping
+  @{theory Martingale_Sampling.Optional_Sampling}'s \<open>set_optional_sampling\<close> only samples one stopping
   time at deterministic times.  The missing ingredient is the \<open>\<sigma>\<close>-algebra of
   the past at a stopping time, built here directly.\<close>
 
@@ -9287,7 +9289,7 @@ qed
 
 subsection \<open>Dyadic approximation from above\<close>
 
-text \<open>\<open>Optional_Sampling\<close>'s \<open>dceil\<close> is locale-bound, so here is a
+text \<open>@{theory Martingale_Sampling.Optional_Sampling}'s \<open>dceil\<close> is locale-bound, so here is a
   free-standing one.  Approximating a stopping time from above is what
   keeps \<open>\<F>\<^sub>\<sigma> \<subseteq> \<F>\<^sub>\<sigma>\<^sub>n\<close>, so the conditioning set stays legal all along the
   approximating sequence.\<close>
@@ -9844,7 +9846,7 @@ qed
 
 section \<open>The class's component martingale has a dominating function\<close>
 
-text \<open>\<open>Doob_Inequality\<close>'s \<open>horizon_sq_int_martingale\<close> locale already builds
+text \<open>@{theory Martingale_Sampling.Doob_Inequality}'s \<open>horizon_sq_int_martingale\<close> locale already builds
   the running supremum \<open>Dsup\<close>, proves it integrable, and proves it dominates
   the path (\<open>Dsup_dominates\<close>).  So the last hypothesis of
   @{thm [source] set_martingale_sampling} costs nothing more than an
@@ -9951,7 +9953,7 @@ text \<open>The assembly.  Every hypothesis of
   the martingale locale, the stopping-time events from
   @{thm [source] path_stopping_time_shift_event}, the convergence from
   @{thm [source] exit_component_dyceil_tendsto}, and the domination from
-  \<open>Doob_Inequality\<close>'s \<open>Dsup\<close> through
+  @{theory Martingale_Sampling.Doob_Inequality}'s \<open>Dsup\<close> through
   @{thm [source] exit_class_horizon_component}.\<close>
 
 theorem exit_class_stopped_increment:
@@ -18493,4 +18495,7 @@ proof (rule exit_val_dpp_sup_ge_time_of_const)
     by (rule exit_val_dpp_ge_const_time[OF T0 L1 Kc st thM P bnd])
 qed
 
+
+(*<*)
 end
+(*>*)

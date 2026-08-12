@@ -1,38 +1,40 @@
-(*
-  Title:   Value_Function_Viscosity.thy
-  Content: Towards clause (2) of Theorem 1.1 of arXiv:2512.17702 --- the two
-           viscosity inequalities for `exit_val`.  PLAN section 2.1.
 
-  Two facts shape everything here.
 
-  (a) The operator of Eq. (1.9) is an INFIMUM,
-
-        ell_op k L p M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p),
-
-      so a subsolution inequality needs only ONE witness, while a
-      supersolution inequality needs the whole family.
-
-  (b) The two halves of the DPP are not interchangeable.  The `<=` half is an
-      ALMOST SURE bound, and a.s. bounds survive integration; the `>=` half
-      bounds an essential infimum from below, which no mean can do.  So the
-      SUBSOLUTION half is the one an expectation argument reaches.
-
-  The class of (1.7) is a martingale-problem class, not an SDE class, so Ito's
-  formula is unavailable.  For QUADRATIC test functions it is also unnecessary:
-  z . (M *v z) = trace (M ** outerp z) is a linear functional of the
-  compensated clause, so the expansion is exact and elementary.  That is
-  exit_class_quadratic_mean, and exit_val_subsol_quadratic_global is the
-  subsolution inequality it yields, for the relaxed operator ell_op_s and a
-  globally touching quadratic.
-
-  The final section states precisely what separates that from visc_subsol,
-  including two localisation routes that were checked and provably do not work.
-*)
-
+(*<*)
 theory Value_Function_Viscosity
   imports Exit_Class_DPP Curvature_Operator Operator_Envelopes
 begin
 
+(*>*)
+
+text \<open>
+  Towards clause (2) of Theorem 1.1 of arXiv:2512.17702 --- the two
+             viscosity inequalities for `\<open>exit_val\<close>`.  PLAN section 2.1.
+
+    Two facts shape everything here.
+
+    (a) The operator of Eq. (1.9) is an INFIMUM,
+
+          \<open>ell_op\<close> k L p M = Inf ((\<open>\<lambda>\<close>a. - trace (M ** a) / 2) ` feasible k L p),
+
+        so a subsolution inequality needs only ONE witness, while a
+        supersolution inequality needs the whole family.
+
+    (b) The two halves of the DPP are not interchangeable.  The `<=` half is an
+        ALMOST SURE bound, and a.s. bounds survive integration; the `>=` half
+        bounds an essential infimum from below, which no mean can do.  So the
+        SUBSOLUTION half is the one an expectation argument reaches.
+
+    The class of (1.7) is a martingale-problem class, not an SDE class, so Ito's
+    formula is unavailable.  For QUADRATIC test functions it is also unnecessary:
+    z . (M *v z) = trace (M ** outerp z) is a linear functional of the
+    compensated clause, so the expansion is exact and elementary.  That is
+    \<open>exit_class_quadratic_mean\<close>, and \<open>exit_val_subsol_quadratic_global\<close> is the
+    subsolution inequality it yields, for the relaxed operator \<open>ell_op_s\<close> and a
+    globally touching quadratic.
+
+    The final section states precisely what separates that from \<open>visc_subsol\<close>,
+    including two localisation routes that were checked and provably do not work.\<close>
 section \<open>One witness suffices for the subsolution inequality\<close>
 
 text \<open>\<^const>\<open>ell_op\<close> is an infimum over the feasible set, and
@@ -13386,10 +13388,10 @@ text \<open>Definition 3.1(b) of the paper touches the lower semicontinuous
 
 subsection \<open>The lower semicontinuous envelope\<close>
 
-text \<open>\<open>lsc_env\<close> lives in \<open>Operator_Envelopes\<close>, together with \<open>usc_env\<close> and the
+text \<open>\<open>lsc_env\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes}, together with \<open>usc_env\<close> and the
   attainment/extension lemmas; what follows are the \<open>exit_val\<close>-facing
   consequences.  The three general lemmas below duplicate their
-  \<open>Operator_Envelopes\<close> twins so that the local proofs need no requalification.\<close>
+  @{theory Relative_Arbitrage.Operator_Envelopes} twins so that the local proofs need no requalification.\<close>
 
 lemma lsc_env_bdd_above:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -17801,4 +17803,7 @@ proof -
   then show ?thesis unfolding c0_def \<delta>f_def .
 qed
 
+
+(*<*)
 end
+(*>*)

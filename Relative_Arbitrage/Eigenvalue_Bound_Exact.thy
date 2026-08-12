@@ -1,33 +1,35 @@
-(*
-  Title:   Eigenvalue_Bound_Exact.thy
-  Content: Lemma 2.1 of arXiv:2512.17702 in its exact form, i.e. with the
-           convex hull rather than its closure.
 
-  Constraint_Set_Convexity proves conv B_k <= A_k <= closure (conv B_k),
-  so A_k is the closed convex hull of B_k; the paper states equality with
-  the convex hull itself, which this theory establishes in three steps:
 
-  A capped trace bound on A_k: for a in A_k with orthonormal eigenbasis B
-  and eigenvalues lambda_u = u . (a u), sum_u min(lambda_u,1) >= n-k.  This
-  needs only Pi_proj a m <= trace (a ** P) for the spectral projection P
-  onto the small-eigenvalue coordinates -- immediate since Pi_proj is an
-  infimum -- and not the identity "Pi_m = sum of the m smallest
-  eigenvalues".
-
-  A hypersimplex decomposition, carried out directly on matrices: a
-  combination sum_u c_u (u u^T) with coefficients in [0,1] summing to n-k
-  lies in conv B_k, by a Birkhoff-style swap induction on the number of
-  coefficients that are not already 0 or 1.
-
-  The assembly: cap the eigenvalues at 1, rescale so the sum is exactly
-  n-k, decompose, and add the nonnegative remainder back using
-  suff_volatile_augment.
-*)
-
+(*<*)
 theory Eigenvalue_Bound_Exact
   imports Constraint_Set_Convexity
 begin
 
+(*>*)
+
+text \<open>
+  Lemma 2.1 of arXiv:2512.17702 in its exact form, i.e. with the
+             convex hull rather than its closure.
+
+    \<open>Constraint_Set_Convexity\<close> proves conv \<open>B_k\<close> <= \<open>A_k\<close> <= closure (conv \<open>B_k\<close>),
+    so \<open>A_k\<close> is the closed convex hull of \<open>B_k\<close>; the paper states equality with
+    the convex hull itself, which this theory establishes in three steps:
+
+    A capped trace bound on \<open>A_k\<close>: for a in \<open>A_k\<close> with orthonormal eigenbasis B
+    and eigenvalues \<open>lambda_u\<close> = u . (a u), \<open>sum_u\<close> min(\<open>lambda_u\<close>,1) >= n-k.  This
+    needs only \<open>Pi_proj\<close> a m <= trace (a ** P) for the spectral projection P
+    onto the small-eigenvalue coordinates -- immediate since \<open>Pi_proj\<close> is an
+    infimum -- and not the identity "\<open>Pi_m\<close> = sum of the m smallest
+    eigenvalues".
+
+    A hypersimplex decomposition, carried out directly on matrices: a
+    combination \<open>sum_u\<close> \<open>c_u\<close> (u u^T) with coefficients in [0,1] summing to n-k
+    lies in conv \<open>B_k\<close>, by a Birkhoff-style swap induction on the number of
+    coefficients that are not already 0 or 1.
+
+    The assembly: cap the eigenvalues at 1, rescale so the sum is exactly
+    n-k, decompose, and add the nonnegative remainder back using
+    \<open>suff_volatile_augment\<close>.\<close>
 unbundle inner_syntax
 
 section \<open>Preliminaries on orthonormal families\<close>
@@ -793,4 +795,7 @@ corollary lemma_2_1_eq:
   shows "convex hull (suff_volatile k :: (real^'n^'n) set) = Pi_constraint k"
   by (rule subset_antisym[OF lemma_2_1_easy lemma_2_1_exact[OF k]])
 
+
+(*<*)
 end
+(*>*)

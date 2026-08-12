@@ -72,7 +72,7 @@ text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1
 
 section \<open>A comparison principle without a regularity hypothesis is refutable\<close>
 
-text \<open>\<open>comparison_principle\<close> (Viscosity\_Comparison\_Interface) states comparison
+text \<open>\<open>comparison_principle\<close> (@{theory Relative_Arbitrage.Viscosity_Comparison_Interface}) states comparison
   with no regularity hypothesis on \<open>u\<close> and \<open>w\<close>.  It holds for no ball.
   \<open>visc_subsol\<close> and \<open>visc_supersol\<close> are conditions local to \<open>\<Omega>\<close>, so the values
   of a sub- or supersolution outside \<open>\<Omega>\<close> are unconstrained: \<open>u = ball_v + 1\<close> is

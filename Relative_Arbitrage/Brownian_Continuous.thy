@@ -1,21 +1,23 @@
-(*
-  Title:   Brownian_Continuous.thy
-  Content: The continuous Brownian state process on the product path space,
-           and the transfer of its martingale property to its own natural
-           filtration.
 
-  The product model bm_paths of Brownian_Market has no continuous paths: its
-  sample points are arbitrary functions.  The Kolmogorov-Chentsov theorem
-  provides a continuous modification Bcont of the coordinate process, and
-  Modification_Transfer moves the martingale property of the state process
-  to the natural filtration of the modification.  The continuous state
-  process built here is what the exit-time market needs.
-*)
 
+(*<*)
 theory Brownian_Continuous
   imports Modification_Transfer "Wiener_Measure.Brownian_Motion_Continuity"
 begin
 
+(*>*)
+
+text \<open>
+  The continuous Brownian state process on the product path space,
+             and the transfer of its martingale property to its own natural
+             filtration.
+
+    The product model \<open>bm_paths\<close> of \<open>Brownian_Market\<close> has no continuous paths: its
+    sample points are arbitrary functions.  The Kolmogorov-Chentsov theorem
+    provides a continuous modification Bcont of the coordinate process, and
+    \<open>Modification_Transfer\<close> moves the martingale property of the state process
+    to the natural filtration of the modification.  The continuous state
+    process built here is what the exit-time market needs.\<close>
 section \<open>A continuous version of the coordinate process\<close>
 
 definition Bcont :: "(real, real \<Rightarrow> real, real) stochastic_process" where
@@ -428,7 +430,7 @@ text \<open>Specialising the theorem above to the planar market with
   \<open>k = L = 1\<close>, horizon \<open>1\<close> and start \<open>0\<close> discharges all its side
   conditions numerically, so the following statement has no hypotheses
   whatsoever: the axiomatised market class of
-  Volatile\_Market is non-vacuous.\<close>
+  @{theory Relative_Arbitrage.Volatile_Market} is non-vacuous.\<close>
 
 theorem sufficiently_volatile_market_nonvacuous:
   "sufficiently_volatile_market
@@ -597,4 +599,7 @@ theorem ito_const_horizon_market_nonvacuous:
     (\<lambda>_ _. mat 1) 1 1 UNIV 0 1"
   by (rule Brownian_ito_const_horizon_market) simp_all
 
+
+(*<*)
 end
+(*>*)

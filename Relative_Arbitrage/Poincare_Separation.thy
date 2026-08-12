@@ -1,36 +1,38 @@
-(*
-  Title:   Poincare_Separation.thy
-  Content: The eigenvalue comparison used in the proof of Lemma 3.1 of
-           arXiv:2512.17702, namely the Poincare separation inequality
 
-             lambda_(i)(M_p) >= lambda_(i+1)(M),   i = 1, ..., n-1,
 
-           together with the Rayleigh bounds it rests on.
-
-  The paper uses this in ONE direction only (the displayed inequality above),
-  and only two consequences of it are actually needed:
-
-  * for Eq. (3.5): the eigenvalue that M_p carries in the p-direction, namely
-    min(lambda_(n)(M), 0), is the SMALLEST of the spectrum of M_p.  For that
-    the weak form suffices -- every Rayleigh quotient of M is at least
-    lambda_(n)(M) -- and no interlacing is required.
-  * for Eq. (3.6): the limit p^m -> 0 along p^m = q_1/m, where the index shift
-    in (3.6) comes from the full separation inequality.
-
-  This theory is deliberately chained off Operator_Continuity (rather than importing
-  Eigenvalues in parallel with it) so that the import graph stays a single
-  chain that PIDE can hold; see the header of Operator_Continuity.thy.
-*)
-
+(*<*)
 theory Poincare_Separation
   imports Operator_Continuity
 begin
 
+(*>*)
+
+text \<open>
+  The eigenvalue comparison used in the proof of Lemma 3.1 of
+             arXiv:2512.17702, namely the Poincare separation inequality
+
+               lambda_(i)(\<open>M_p\<close>) >= lambda_(i+1)(M),   i = 1, ..., n-1,
+
+             together with the Rayleigh bounds it rests on.
+
+    The paper uses this in ONE direction only (the displayed inequality above),
+    and only two consequences of it are actually needed:
+
+    * for Eq. (3.5): the eigenvalue that \<open>M_p\<close> carries in the p-direction, namely
+      min(lambda_(n)(M), 0), is the SMALLEST of the spectrum of \<open>M_p\<close>.  For that
+      the weak form suffices -- every Rayleigh quotient of M is at least
+      lambda_(n)(M) -- and no interlacing is required.
+    * for Eq. (3.6): the limit p^m -> 0 along p^m = \<open>q_1\<close>/m, where the index shift
+      in (3.6) comes from the full separation inequality.
+
+    This theory is deliberately chained off \<open>Operator_Continuity\<close> (rather than importing
+    Eigenvalues in parallel with it) so that the import graph stays a single
+    chain that PIDE can hold; see the header of \<open>Operator_Continuity\<close>.thy.\<close>
 section \<open>Elementary matrix algebra, continued\<close>
 
 text \<open>The right-distributivity of \<open>**\<close> over subtraction and the additivity
   of \<open>trace\<close> over subtraction; neither is in this HOL-Analysis, and both are
-  proved exactly like \<open>matrix_vector_mult_diff\<close> in \<open>Operator_Continuity\<close>.thy.\<close>
+  proved exactly like \<open>matrix_vector_mult_diff\<close> in @{theory Relative_Arbitrage.Operator_Continuity}.\<close>
 
 lemma matrix_matrix_mult_diff_right:
   fixes A B C :: "real^'n::finite^'n"
@@ -1328,7 +1330,7 @@ section \<open>The objective of Eq. (3.5) in the adapted eigenbasis\<close>
 
 text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^sub>p a)\<close> for
   \<open>a \<succeq> 0\<close> with \<open>ap = 0\<close>, and writing symmetric \<open>M\<^sub>p\<close> as a linear
-  combination of outer products (\<open>trace_Mp\<close> in \<open>Operator_Continuity\<close>.thy gives the
+  combination of outer products (\<open>trace_Mp\<close> in @{theory Relative_Arbitrage.Operator_Continuity} gives the
   first fact).  This section carries out the expansion and its weight
   constraints.\<close>
 
@@ -1792,7 +1794,7 @@ text \<open>The two inequalities together.  This is Eq. (3.5) of the paper:
 
   in the equivalent closed form \<open>-\<onehalf> bracket (n-k) L M\<^sub>p\<close>, where
   \<open>bracket m L a = L * possum n a + (kyfan m a - possum m a)\<close>; the two agree by
-  \<open>bracket_eq_sum\<close> (Eigenvalues.thy), which rewrites \<open>possum\<close> and
+  \<open>bracket_eq_sum\<close> (@{theory Relative_Arbitrage.Eigenvalues}), which rewrites \<open>possum\<close> and
   \<open>kyfan - possum\<close> as the sums of positive and of nonpositive ordered
   eigenvalues respectively.\<close>
 
@@ -2145,7 +2147,7 @@ proof -
     by (rule onormal_span_card[OF B])
   have qq: "q \<bullet> q = 1"
     using q by (simp add: dot_square_norm)
-  text \<open>Eigenvalues: \<open>M\<^sub>q\<close> agrees with \<open>M\<close> off \<open>q\<close> and carries
+  text \<open>@{theory Relative_Arbitrage.Eigenvalues}: \<open>M\<^sub>q\<close> agrees with \<open>M\<close> off \<open>q\<close> and carries
     \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> at \<open>q\<close>.\<close>
   define lamM where "lamM = (\<lambda>u :: real^'n. u \<bullet> (M *v u))"
   define lamP where "lamP = (\<lambda>u :: real^'n. u \<bullet> (Mp q M *v u))"
@@ -3527,7 +3529,7 @@ text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<c
 
 text \<open>The estimate on \<open>F\<close> itself: for symmetric \<open>M\<close> and \<open>p \<noteq> 0\<close>,
   \<open>p' \<mapsto> F(p', M)\<close> is Lipschitz near \<open>p\<close>.  Combined with \<open>ell_op_M_gap\<close>
-  (\<open>Operator_Envelopes\<close>.thy), which absorbs the variation of the second argument, both
+  (\<open>Operator_Envelopes\<close>), which absorbs the variation of the second argument, both
   semicontinuous envelopes collapse onto \<open>F\<close> off the origin.\<close>
 
 theorem ell_op_lipschitz_in_p:
@@ -3687,7 +3689,7 @@ text \<open>
   continuous inequalities, closed outright; the eigenvalue lower bound is an
   existential over subspaces, but \<open>feasible_iff_eigval\<close> trades it for
   \<open>1 \<le> eigval (n-k) a\<close>, Lipschitz on symmetric matrices.  Combined with
-  boundedness (\<open>feasible_bounded\<close>, Viscosity\_Solutions) this
+  boundedness (\<open>feasible_bounded\<close>, \<open>Viscosity_Solutions\<close>) this
   gives compactness of the constraint set.
 \<close>
 
@@ -3800,4 +3802,7 @@ proof -
     by (intro closed_Int closed_psd closed_annihilator c3 closed_eigen_ub)
 qed
 
+
+(*<*)
 end
+(*>*)

@@ -1,41 +1,43 @@
-(*
-  Title:   Optimal_Exit_Time.thy
-  Content: The arbitrage side of arXiv:2512.17702 (Lai/Shkolnikov/Soner):
-           relative arbitrage beyond the critical horizon, and optimality
-           of the ball value function (Example 3.1).
 
-  Isabelle/HOL has no Ito integration theory.  Since Ito's formula for
-  the single C\<^sup>2 test function  w(y) = (r\<^sup>2 - |y|\<^sup>2)/(n-k)  determines the
-  stochastic integral  t \<mapsto> \<integral>\<^sub>0\<^sup>t \<nabla>w(X\<^sub>s) \<bullet> dX\<^sub>s  uniquely, that value is
-  taken as the definition of sint (see sint_def below), so no assumption
-  about stochastic integration is needed: the identity
-  ito_formula_quadratic is proved by unfolding the definition.  The only
-  side condition retained is the measurability of the compensator
-  \<omega> \<mapsto> \<integral>\<^sub>0\<^sup>t tr(acov\<^sub>s(\<omega>)) ds (a regularity condition on the data acov, not a
-  statement about stochastic integrals).  The identification of sint with
-  the stochastic integral of the gradient strategy is exactly Ito's formula
-  and remains outside the formalization; all results below hold for the
-  explicit process sint.
 
-  Main results:
-  \<^item> ball_relative_arbitrage: in every sufficiently volatile market on
-    K = cball 0 r whose volatility constraint holds on [0, T], the
-    gradient strategy \<theta>\<^sub>s = \<nabla>w(X\<^sub>s) realizes relative arbitrage
-    (Definition 1.1) on [0, T] whenever T > v(x\<^sub>0) --- the "if" half of
-    the critical-horizon characterization T\<^sup>* = v(x) of Section 1, for
-    Example 3.1.
-  \<^item> optimal_ball_market: the reverse inequality E[\<tau>] \<ge> v(x\<^sub>0) for the
-    optimal market is the output of the time-changed spherical martingale
-    construction of Eq. (3.11); constructing that process requires
-    Brownian motion and time changes, so it is axiomatized as the locale
-    assumption tau_optimal, and combined with the proved upper bound it
-    yields the exact value E[\<tau>] = v(x\<^sub>0) (optimal_exit_time_value).
-*)
-
+(*<*)
 theory Optimal_Exit_Time
   imports Volatile_Market
 begin
 
+(*>*)
+
+text \<open>
+  The arbitrage side of arXiv:2512.17702 (Lai/Shkolnikov/Soner):
+             relative arbitrage beyond the critical horizon, and optimality
+             of the ball value function (Example 3.1).
+
+    Isabelle/HOL has no Ito integration theory.  Since Ito's formula for
+    \<open>the single C\<^sup>2 test function  w(y) = (r\<^sup>2 - |y|\<^sup>2)/(n-k)  determines the\<close>
+    \<open>stochastic integral  t \<mapsto> \<integral>\<^sub>0\<^sup>t \<nabla>w(X\<^sub>s) \<bullet> dX\<^sub>s  uniquely, that value is\<close>
+    taken as the definition of sint (see \<open>sint_def\<close> below), so no assumption
+    about stochastic integration is needed: the identity
+    \<open>ito_formula_quadratic\<close> is proved by unfolding the definition.  The only
+    side condition retained is the measurability of the compensator
+    \<open>\<omega> \<mapsto> \<integral>\<^sub>0\<^sup>t tr(acov\<^sub>s(\<omega>)) ds (a regularity condition on the data acov, not a\<close>
+    statement about stochastic integrals).  The identification of sint with
+    the stochastic integral of the gradient strategy is exactly Ito's formula
+    and remains outside the formalization; all results below hold for the
+    explicit process sint.
+
+    Main results:
+    \<^item> \<open>ball_relative_arbitrage\<close>: in every sufficiently volatile market on
+      K = cball 0 r whose volatility constraint holds on [0, T], the
+      \<open>gradient strategy \<theta>\<^sub>s = \<nabla>w(X\<^sub>s) realizes relative arbitrage\<close>
+      \<open>(Definition 1.1) on [0, T] whenever T > v(x\<^sub>0) --- the "if" half of\<close>
+      \<open>the critical-horizon characterization T\<^sup>* = v(x) of Section 1, for\<close>
+      Example 3.1.
+    \<open>\<^item> optimal_ball_market: the reverse inequality E[\<tau>] \<ge> v(x\<^sub>0) for the\<close>
+      optimal market is the output of the time-changed spherical martingale
+      construction of Eq. (3.11); constructing that process requires
+      Brownian motion and time changes, so it is axiomatized as the locale
+      assumption \<open>tau_optimal\<close>, and combined with the proved upper bound it
+      \<open>yields the exact value E[\<tau>] = v(x\<^sub>0) (optimal_exit_time_value).\<close>\<close>
 section \<open>Measurability of the ball value function\<close>
 
 lemma borel_measurable_ball_v:
@@ -313,4 +315,7 @@ text \<open>Consequently, in the optimal market the value function of Theorem 1.
   critical horizon beyond which the gradient strategy is a relative
   arbitrage is \<open>T\<^sup>* = v(x\<^sub>0)\<close> --- the assertion of Example 3.1.\<close>
 
+
+(*<*)
 end
+(*>*)

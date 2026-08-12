@@ -1,5 +1,12 @@
 section \<open>Upper semicontinuity of the essential-infimum exit time\<close>
 
+(*<*)
+theory Exit_Time_Semicontinuity
+  imports Path_Tightness_Market Value_Function_Market
+begin
+
+(*>*)
+
 text \<open>
   Larsson--Ruf (EJP 29 (2024), Prop. 2.2(ii)), which arXiv:2512.17702
   Prop. 2.4 defers to verbatim, proves upper semicontinuity of the value
@@ -8,13 +15,8 @@ text \<open>
   usc supremum. Berge is already available
   (\<open>Equicontinuity.usc_sup_over_compact\<close>); this theory supplies
   the first fact, as a separate leaf since no existing theory imports both
-  \<open>Value_Function_Market\<close> and \<open>Path_Tightness_Market\<close>.
+  @{theory Relative_Arbitrage.Value_Function_Market} and @{theory Relative_Arbitrage.Path_Tightness_Market}.
 \<close>
-
-theory Exit_Time_Semicontinuity
-  imports Path_Tightness_Market Value_Function_Market
-begin
-
 subsection \<open>Superlevel sets of the exit time are closed\<close>
 
 text \<open>
@@ -2976,7 +2978,7 @@ subsection \<open>The paper-class value function and its usc majorant\<close>
 text \<open>The paper's class (1.7) consists of stopped markets --- process stopped
   at its horizon, covariance vanishing after it, diagonal entries
   pathwise integrable --- the witness predicate without its path-law
-  clause. \<open>val_fn\<close> (Value\_Function\_Market) quantifies over the bare locale; the
+  clause. \<open>val_fn\<close> (@{theory Relative_Arbitrage.Value_Function_Market}) quantifies over the bare locale; the
   paper-class value function defined here is dominated by the law-level
   value function via \<open>witness_value_le_law_sup_ball\<close>, and
   \<open>vshift_sup_usc_mkt\<close> proves the latter usc. The bare-locale \<open>val_fn\<close>
@@ -4065,4 +4067,7 @@ proof -
   finally show ?thesis by simp
 qed
 
+
+(*<*)
 end
+(*>*)

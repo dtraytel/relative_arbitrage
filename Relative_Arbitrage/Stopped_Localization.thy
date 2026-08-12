@@ -1,21 +1,23 @@
 section \<open>Localization: stopping an \<open>L\<^sup>2\<close> martingale needs no domination hypothesis\<close>
 
+(*<*)
+theory Stopped_Localization
+  imports "Martingale_Sampling.Stopped_Adaptedness" "Path_Space_Tightness.Increment_Moments" Exit_Time
+begin
+
+(*>*)
+
 text \<open>
   The repository's continuous-time \<open>optional_stopping\<close>
-  (Optional\_Sampling.thy) carries an integrable running-domination
+  (@{theory Martingale_Sampling.Optional_Sampling}) carries an integrable running-domination
   hypothesis. For an \<open>L\<^sup>2\<close> martingale that hypothesis is dischargeable: the
-  \<open>horizon_sq_int_martingale\<close> locale of Doob\_Inequality.thy produces, per
+  \<open>horizon_sq_int_martingale\<close> locale of @{theory Martingale_Sampling.Doob_Inequality} produces, per
   horizon, an integrable function \<open>Dsup\<close> dominating \<open>\<bar>X s\<bar>\<close> on the whole
   interval (Doob's \<open>L\<^sup>2\<close> inequality along dyadic grids + monotone
   convergence + path continuity). This theory packages that discharge:
   stopping an \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time
   yields a martingale, unconditionally.
 \<close>
-
-theory Stopped_Localization
-  imports "Martingale_Sampling.Stopped_Adaptedness" "Path_Space_Tightness.Increment_Moments" Exit_Time
-begin
-
 theorem stopped_martingale_L2:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and tau :: "'a \<Rightarrow> real"
   assumes P: "prob_space M"
@@ -864,4 +866,7 @@ qed
 
 end
 
+
+(*<*)
 end
+(*>*)

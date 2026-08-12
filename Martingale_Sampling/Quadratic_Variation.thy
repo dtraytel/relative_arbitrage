@@ -1,30 +1,32 @@
-(*
-  Title:   Quadratic_Variation.thy
-  Content: Quadratic variation of square-integrable discrete-time
-           martingales.
 
-  The AFP entry Martingales provides filtrations, adapted and
-  predictable processes, Banach-valued conditional expectation and
-  martingales, but no quadratic variation and no optional sampling; no
-  AFP entry covers stochastic integration.  This theory supplies the
-  first layer: for a square-integrable martingale X in discrete time,
 
-    [X]_n = sum of (X_{k+1} - X_k)^2 for k < n
-
-  compensates the square, i.e. X^2 - [X] is again a martingale (the
-  discrete Ito formula for the square function), whence the Dynkin
-  identity
-
-    E[X_n^2] = E[X_0^2] + E[[X]_n].
-
-  This is the discrete-time shape of the martingale-problem assumption
-  dynkin_quadratic of Volatile_Market.
-*)
-
+(*<*)
 theory Quadratic_Variation
   imports "Martingales.Martingale"
 begin
 
+(*>*)
+
+text \<open>
+  Quadratic variation of square-integrable discrete-time
+             martingales.
+
+    The AFP entry Martingales provides filtrations, adapted and
+    predictable processes, Banach-valued conditional expectation and
+    martingales, but no quadratic variation and no optional sampling; no
+    AFP entry covers stochastic integration.  This theory supplies the
+    first layer: for a square-integrable martingale X in discrete time,
+
+      [X]_n = sum of (X_{k+1} - \<open>X_k\<close>)^2 for k < n
+
+    compensates the square, i.e. X^2 - [X] is again a martingale (the
+    discrete Ito formula for the square function), whence the Dynkin
+    identity
+
+      E[\<open>X_n\<close>^2] = E[\<open>X_0\<close>^2] + E[[X]_n].
+
+    This is the discrete-time shape of the martingale-problem assumption
+    \<open>dynkin_quadratic\<close> of \<open>Volatile_Market\<close>.\<close>
 section \<open>Elementary square bounds\<close>
 
 lemma sq_diff_le:
@@ -629,4 +631,7 @@ corollary stopped_qvar_expectation_le:
 
 end
 
+
+(*<*)
 end
+(*>*)

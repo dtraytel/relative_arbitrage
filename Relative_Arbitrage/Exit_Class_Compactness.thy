@@ -1,27 +1,29 @@
-(*
-  Title:   Exit_Class_Compactness.thy
-  Content: The bridge from the market witnesses of this development to the
-           class (1.7) of arXiv:2512.17702, and the compactness theory of
-           that class.
 
-           By (1.7)-(1.8) the processes in P_x are never stopped: the
-           covariation constraint holds for a.e. t >= 0, and tau_K is merely
-           a functional of the path.  A stopped_market witness is therefore
-           not a class member, its volatility vanishing after its stopping
-           time.  The bridge continues the witness past the stopping time
-           with an admissible volatility (Exit_Class.acont), the value being
-           supplied by Exit_Class.mat_1_in_sconstraint, which is legitimate
-           because the locale carries the paper's standing assumption L >= 1.
 
-           This theory sits downstream of both Exit_Class and the market
-           stack, so that neither has to import the other.
-*)
-
+(*<*)
 theory Exit_Class_Compactness
   imports Exit_Class Exit_Time_Semicontinuity
     "Levy_Prokhorov_Metric.Space_of_Finite_Measures"
 begin
 
+(*>*)
+
+text \<open>
+  The bridge from the market witnesses of this development to the
+             class (1.7) of arXiv:2512.17702, and the compactness theory of
+             that class.
+
+             By (1.7)-(1.8) the processes in \<open>P_x\<close> are never stopped: the
+             covariation constraint holds for a.e. t >= 0, and \<open>tau_K\<close> is merely
+             a functional of the path.  A \<open>stopped_market\<close> witness is therefore
+             not a class member, its volatility vanishing after its stopping
+             time.  The bridge continues the witness past the stopping time
+             with an admissible volatility (\<open>Exit_Class\<close>.acont), the value being
+             supplied by \<open>Exit_Class\<close>.\<open>mat_1_in_sconstraint\<close>, which is legitimate
+             because the locale carries the paper's standing assumption L >= 1.
+
+             This theory sits downstream of both \<open>Exit_Class\<close> and the market
+             stack, so that neither has to import the other.\<close>
 section \<open>Extracting the pointwise constraint from a market witness\<close>
 
 text \<open>The locale's volatility hypotheses are stated as three separate
@@ -243,7 +245,7 @@ section \<open>The martingale clauses of Lemma 2.3\<close>
 
 text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
   limit of the paper's class, combining the class machinery of
-  \<open>Exit_Class\<close> with the law machinery of \<open>Exit_Time_Semicontinuity\<close>
+  @{theory Relative_Arbitrage.Exit_Class} with the law machinery of @{theory Relative_Arbitrage.Exit_Time_Semicontinuity}
   (\<open>martingale_bounded_test\<close>, \<open>metric_measure_eqI_bounded_cts\<close>).
 
   Unlike the two closed path conditions of (1.7), which pass to a weak
@@ -377,7 +379,7 @@ qed
 
 subsection \<open>The test functional is continuous on path space\<close>
 
-text \<open>Unlike the confined market laws of \<open>Exit_Time_Semicontinuity\<close>, the paper's
+text \<open>Unlike the confined market laws of @{theory Relative_Arbitrage.Exit_Time_Semicontinuity}, the paper's
   class admits no clamp: its processes are neither stopped nor bounded, so
   the test functional is continuous but unbounded, and the transfer runs
   through the uniform \<open>L\<^sup>2\<close> bound
@@ -3635,7 +3637,7 @@ qed
 section \<open>The paper's class is tight\<close>
 
 text \<open>The other consumer of the uniform fourth moment.  The Kolmogorov
-  chain in \<open>Path_Tightness\<close> wants the moment as a Bochner integral, so the
+  chain in @{theory Path_Space_Tightness.Path_Tightness} wants the moment as a Bochner integral, so the
   \<open>nn_integral\<close> bound is first converted; integrability is free, because a
   nonnegative function with a finite \<open>nn_integral\<close> is integrable.\<close>
 
@@ -5303,7 +5305,7 @@ proof -
       of a product is the product of its component distributions, which is
       exactly the criterion \<open>indep_vars_iff_distr_eq_PiM'\<close>.  \<open>BMC\<close> is the
       \<open>product_prob_space\<close> interpretation already present in
-      \<open>Brownian_Market\<close>.\<close>
+      @{theory Relative_Arbitrage.Brownian_Market}.\<close>
   let ?P = "Pi\<^sub>M (UNIV :: 'n set) (\<lambda>_ :: 'n. wiener_pre)"
   have rv: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> k) \<in> measurable ?P wiener_pre" for k
     by (rule measurable_component_singleton) simp
@@ -12995,4 +12997,7 @@ proof -
     by (rule exit_class_weak_closed[OF T0 L0 memm gconv pl]) simp
 qed
 
+
+(*<*)
 end
+(*>*)

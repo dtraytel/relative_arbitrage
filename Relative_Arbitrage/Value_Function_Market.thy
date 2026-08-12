@@ -1,42 +1,44 @@
-(*
-  Title:   Value_Function_Market.thy
-  Content: The value function of Eq. (1.6) of arXiv:2512.17702
-           (Lai/Shkolnikov/Soner), as an actual supremum over markets.
 
-  Eq. (1.6) reads   v(x) = sup {P-ess inf tau_K : P in P_x}.
 
-  Two design points force the shape of the definition.
-
-  * The paper's P_x is a set of measures on ONE fixed space,
-    Omega = C([0,oo), R^n).  A supremum over markets carried by varying
-    sample-space types cannot even be written in HOL, so the sample space
-    is pinned to the type 'n => real => real -- the type that carries
-    bm_paths, so that the constructed Brownian markets are members.
-
-  * The supremum is valued in ennreal.  Then Sup is total: no
-    nonemptiness or boundedness side conditions appear in the definition,
-    and Sup {} = 0 gives the correct value where no market exists.
-
-  Results:
-  * ess_inf_time_le_nn_integral: an almost-sure lower bound on tau is at
-    most E[tau] -- the step that lets the expectation bounds of
-    Volatile_Market speak about the essential infimum.
-  * val_fn_le_ball_v: v(x0) <= (r^2 - |x0|^2)^+/(n-k) for K = cball 0 r,
-    i.e. the "<=" half of Eq. (3.9) of Example 3.1, now as a statement
-    about the paper's value function rather than about one market.
-  * val_fn_boundary: on the sphere v(x0) = 0 = the value of Eq. (3.9),
-    i.e. Example 3.1 holds EXACTLY there, both inequalities.
-  * mkt_exit_vals_nonempty: the index set is inhabited, so val_fn is not
-    an artefact of an empty supremum.
-
-  Not proved (needs the optimal martingale of Eq. (3.11), i.e. Ito
-  calculus): the reverse inequality at interior points.
-*)
-
+(*<*)
 theory Value_Function_Market
   imports Brownian_Optimal_Boundary
 begin
 
+(*>*)
+
+text \<open>
+  The value function of Eq. (1.6) of arXiv:2512.17702
+             (Lai/Shkolnikov/Soner), as an actual supremum over markets.
+
+    Eq. (1.6) reads   v(x) = sup {P-ess inf \<open>tau_K\<close> : P in P_x}.
+
+    Two design points force the shape of the definition.
+
+    * The paper's \<open>P_x\<close> is a set of measures on ONE fixed space,
+      Omega = C([0,oo), R^n).  A supremum over markets carried by varying
+      sample-space types cannot even be written in HOL, so the sample space
+      is pinned to the type 'n => real => real -- the type that carries
+      \<open>bm_paths\<close>, so that the constructed Brownian markets are members.
+
+    * The supremum is valued in ennreal.  Then Sup is total: no
+      nonemptiness or boundedness side conditions appear in the definition,
+      and Sup {} = 0 gives the correct value where no market exists.
+
+    Results:
+    * \<open>ess_inf_time_le_nn_integral\<close>: an almost-sure lower bound on tau is at
+      most E[tau] -- the step that lets the expectation bounds of
+      \<open>Volatile_Market\<close> speak about the essential infimum.
+    * \<open>val_fn_le_ball_v\<close>: v(x0) <= (r^2 - |x0|^2)^+/(n-k) for K = cball 0 r,
+      i.e. the "<=" half of Eq. (3.9) of Example 3.1, now as a statement
+      about the paper's value function rather than about one market.
+    * \<open>val_fn_boundary\<close>: on the sphere v(x0) = 0 = the value of Eq. (3.9),
+      i.e. Example 3.1 holds EXACTLY there, both inequalities.
+    * \<open>mkt_exit_vals_nonempty\<close>: the index set is inhabited, so \<open>val_fn\<close> is not
+      an artefact of an empty supremum.
+
+    Not proved (needs the optimal martingale of Eq. (3.11), i.e. Ito
+    calculus): the reverse inequality at interior points.\<close>
 section \<open>The essential infimum of a nonnegative random time\<close>
 
 text \<open>\<open>P-ess inf tau\<close> of Eq. (1.6): the largest deterministic almost-sure
@@ -50,7 +52,7 @@ lemma ess_inf_time_ge_zero: "0 \<le> ess_inf_time M tau"
 
 text \<open>Every almost-sure lower bound is dominated by the mean, so the
   essential infimum is too. This is what turns the expectation bound of
-  Volatile\_Market into a bound on Eq. (1.6).\<close>
+  @{theory Relative_Arbitrage.Volatile_Market} into a bound on Eq. (1.6).\<close>
 
 lemma ess_inf_time_le_nn_integral:
   assumes M: "prob_space M"
@@ -342,7 +344,7 @@ section \<open>Monotonicity of the value function in the domain\<close>
 
 text \<open>The first structural property of \<open>val_fn\<close>, used repeatedly by
   Section 2's dynamic programming. Of the fourteen assumptions of
-  \<open>sufficiently_volatile_market\<close> (Volatile\_Market.thy), the
+  \<open>sufficiently_volatile_market\<close> (@{theory Relative_Arbitrage.Volatile_Market}), the
   domain \<open>K\<close> occurs only in \<open>X_in_K\<close>, which is monotone in \<open>K\<close>; every
   other assumption is untouched by enlarging the domain. So enlarging \<open>K\<close>
   only admits more markets and \<open>val_fn\<close> increases: the locale half is
@@ -507,4 +509,7 @@ text \<open>\<open>val_fn k L K x0 = 0\<close> for \<open>x0 \<notin> K\<close>,
   \<open>x0 \<in> K\<close> (\<open>sufficiently_volatile_market.x0_in_K\<close>), so the index set of the
   supremum is empty and \<open>Sup {} = \<bottom> = 0\<close>.\<close>
 
+
+(*<*)
 end
+(*>*)

@@ -1,5 +1,12 @@
 section \<open>Tail bounds from the fourth-moment estimate\<close>
 
+(*<*)
+theory Increment_Tails
+  imports Increment_Moments
+begin
+
+(*>*)
+
 text \<open>
   The quantitative tail estimates that turn Eq. (2.7) into tightness. The
   AFP's Kolmogorov-Chentsov theorem produces a continuous modification but
@@ -8,11 +15,6 @@ text \<open>
   inequality and a union bound over one partition level. The chaining over
   dyadic levels is the following step.
 \<close>
-
-theory Increment_Tails
-  imports Increment_Moments
-begin
-
 subsection \<open>Markov's inequality at the fourth power\<close>
 
 lemma abs_pow4: "\<bar>x::real\<bar>^4 = x^4"
@@ -203,4 +205,7 @@ proof -
   finally show ?thesis .
 qed
 
+
+(*<*)
 end
+(*>*)

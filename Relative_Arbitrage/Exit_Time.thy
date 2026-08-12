@@ -1,19 +1,21 @@
-(*
-  Title:   Exit_Time.thy
-  Content: The exit time of a closed set by a continuous adapted process is a
-           stopping time, and up to it the process stays in the closed ball.
-           This is the structural ingredient of Example 3.1 of the paper: the
-           horizon there is the first exit time of a ball, and the results of
-           Ito_Market ask for a stopping time whose stopped process stays in K.
 
-  Everything here is about an arbitrary adapted process with continuous
-  paths; nothing is Brownian-specific.
-*)
 
+(*<*)
 theory Exit_Time
   imports Ito_Market
 begin
 
+(*>*)
+
+text \<open>
+  The exit time of a closed set by a continuous adapted process is a
+             stopping time, and up to it the process stays in the closed ball.
+             This is the structural ingredient of Example 3.1 of the paper: the
+             horizon there is the first exit time of a ball, and the results of
+             \<open>Ito_Market\<close> ask for a stopping time whose stopped process stays in K.
+
+    Everything here is about an arbitrary adapted process with continuous
+    paths; nothing is Brownian-specific.\<close>
 section \<open>The capped exit time\<close>
 
 text \<open>The first time in \<open>[0,T]\<close> at which the process is in \<open>A\<close>, capped at
@@ -687,4 +689,7 @@ next
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

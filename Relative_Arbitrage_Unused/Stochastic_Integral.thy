@@ -1,40 +1,42 @@
-(*
-  Title:   Stochastic_Integral.thy
-  Content: Stochastic integration, layer 1: the integral against a
-           square-integrable martingale for predictable integrands in
-           discrete time (the martingale transform), and Ito's formula for
-           the quadratic test function of Example 3.1.
 
-  This is the first layer of the stochastic calculus that
-  arXiv:2512.17702 uses:
 
-    * Eq. (1.1) of the paper, V(t) = V(0) + \<integral>\<^sub>0\<^sup>t \<theta>(s) \<bullet> d\<mu>(s), becomes the
-      genuine integral mtrans_vec of the strategy \<theta> against the market
-      martingale, and is proved to be a martingale (theorem
-      martingale_mtrans_vec) -- no assumption about stochastic
-      integration is used;
-
-    * Ito's formula for the quadratic test function w of Example 3.1 is
-      the THEOREM ito_discrete_quadratic:
-
-        w(X\<^sub>n) = w(X\<^sub>0) + \<Sum>\<^sub>k<\<^sub>n \<nabla>w(X\<^sub>k) \<bullet> \<Delta>X\<^sub>k - [X]\<^sub>n/(n-k),
-
-      the discrete-time form of  dw(X) = \<nabla>w(X) \<bullet> dX + \<onehalf> tr(\<nabla>\<^sup>2w a) dt;
-
-    * consequently the relative value process dV of
-      Relative_Arbitrage_Discrete, which was DEFINED there, is now
-      identified as the value process of the gradient strategy in the
-      sense of Eq. (1.1) (theorem dV_eq_value_process).
-
-  Still missing for the continuous-time paper: the L\<^sup>2 closure of the
-  simple integrands, quadratic variation of a continuous martingale
-  (Doob--Meyer), and Ito's formula for general C\<^sup>2 functions.
-*)
-
+(*<*)
 theory Stochastic_Integral
   imports Relative_Arbitrage_Discrete
 begin
 
+(*>*)
+
+text \<open>
+  Stochastic integration, layer 1: the integral against a
+             square-integrable martingale for predictable integrands in
+             discrete time (the martingale transform), and Ito's formula for
+             the quadratic test function of Example 3.1.
+
+    This is the first layer of the stochastic calculus that
+    arXiv:2512.17702 uses:
+
+      \<open>* Eq. (1.1) of the paper, V(t) = V(0) + \<integral>\<^sub>0\<^sup>t \<theta>(s) \<bullet> d\<mu>(s), becomes the\<close>
+        genuine integral \<open>mtrans_vec\<close> of the strategy \<open>\<theta>\<close> against the market
+        martingale, and is proved to be a martingale (theorem
+        \<open>martingale_mtrans_vec\<close>) -- no assumption about stochastic
+        integration is used;
+
+      * Ito's formula for the quadratic test function w of Example 3.1 is
+        the THEOREM \<open>ito_discrete_quadratic\<close>:
+
+          \<open>w(X\<^sub>n) = w(X\<^sub>0) + \<Sum>\<^sub>k<\<^sub>n \<nabla>w(X\<^sub>k) \<bullet> \<Delta>X\<^sub>k - [X]\<^sub>n/(n-k),\<close>
+
+        \<open>the discrete-time form of  dw(X) = \<nabla>w(X) \<bullet> dX + \<onehalf> tr(\<nabla>\<^sup>2w a) dt;\<close>
+
+      * consequently the relative value process dV of
+        \<open>Relative_Arbitrage_Discrete\<close>, which was DEFINED there, is now
+        identified as the value process of the gradient strategy in the
+        sense of Eq. (1.1) (theorem \<open>dV_eq_value_process\<close>).
+
+    \<open>Still missing for the continuous-time paper: the L\<^sup>2 closure of the\<close>
+    simple integrands, quadratic variation of a continuous martingale
+    \<open>(Doob--Meyer), and Ito's formula for general C\<^sup>2 functions.\<close>\<close>
 section \<open>The integral of a predictable integrand (martingale transform)\<close>
 
 definition mtrans ::
@@ -382,7 +384,7 @@ theorem (in discrete_vec_martingale) martingale_gradient_strategy:
   "martingale M F 0 (mtrans_vec (\<lambda>m \<omega>. grad_qw k (X m \<omega>)) X)"
   by (rule G.martingale_mtrans_vec)
 
-text \<open>Consequently the process \<open>dV\<close> of Relative\_Arbitrage\_Discrete, which
+text \<open>Consequently the process \<open>dV\<close> of @{theory Relative_Arbitrage_Unused.Relative_Arbitrage_Discrete}, which
   was defined there by the right-hand side of Ito's formula, IS the value
   process of the gradient strategy of Eq. (1.1) as long as the market stays
   in the ball.  The relative-arbitrage theorem of that theory therefore
@@ -426,4 +428,7 @@ proof eventually_elim
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

@@ -1,30 +1,32 @@
-(*
-  Title:   Time_Discretisation.thy
-  Content: Stochastic integration, layer 2: sampling a continuous-time
-           martingale on a time grid.
 
-  Every result of the discrete-time calculus (Quadratic_Variation:
-  compensated square, optional sampling, stopped Dynkin identity) becomes
-  available for a CONTINUOUS-TIME martingale along an arbitrary increasing
-  grid of times, because the sampled process is a discrete-time
-  square-integrable martingale for the sampled filtration.
 
-  The payoff proved here:
-
-    E[Y(t\<^sub>n)\<^sup>2] - E[Y(t\<^sub>0)\<^sup>2] = E[\<Sum>\<^sub>k<\<^sub>n (Y(t\<^sub>k\<^sub>+\<^sub>1) - Y(t\<^sub>k))\<^sup>2],
-
-  i.e. the expected discrete quadratic variation of a continuous-time
-  martingale along a grid depends only on the end points of the grid, not
-  on the grid itself.  That is the first half of the construction of the
-  quadratic variation <Y> (whose existence as a process is layer 3, and is
-  what turns the martingale-problem assumption dynkin_quadratic of
-  Volatile_Market into a theorem).
-*)
-
+(*<*)
 theory Time_Discretisation
   imports Quadratic_Variation
 begin
 
+(*>*)
+
+text \<open>
+  Stochastic integration, layer 2: sampling a continuous-time
+             martingale on a time grid.
+
+    Every result of the discrete-time calculus (\<open>Quadratic_Variation\<close>:
+    compensated square, optional sampling, stopped Dynkin identity) becomes
+    available for a CONTINUOUS-TIME martingale along an arbitrary increasing
+    grid of times, because the sampled process is a discrete-time
+    square-integrable martingale for the sampled filtration.
+
+    The payoff proved here:
+
+      \<open>E[Y(t\<^sub>n)\<^sup>2] - E[Y(t\<^sub>0)\<^sup>2] = E[\<Sum>\<^sub>k<\<^sub>n (Y(t\<^sub>k\<^sub>+\<^sub>1) - Y(t\<^sub>k))\<^sup>2],\<close>
+
+    i.e. the expected discrete quadratic variation of a continuous-time
+    martingale along a grid depends only on the end points of the grid, not
+    on the grid itself.  That is the first half of the construction of the
+    quadratic variation <Y> (whose existence as a process is layer 3, and is
+    what turns the martingale-problem assumption \<open>dynkin_quadratic\<close> of
+    \<open>Volatile_Market\<close> into a theorem).\<close>
 section \<open>Time grids\<close>
 
 locale time_grid =
@@ -124,7 +126,7 @@ proof -
 qed
 
 text \<open>The compensated square along the grid is a martingale, and the
-  optional-sampling results of Quadratic\_Variation apply verbatim to the
+  optional-sampling results of @{theory Martingale_Sampling.Quadratic_Variation} apply verbatim to the
   sampled process.\<close>
 
 theorem grid_qvar_compensates:
@@ -163,4 +165,7 @@ proof -
   finally show ?thesis .
 qed
 
+
+(*<*)
 end
+(*>*)

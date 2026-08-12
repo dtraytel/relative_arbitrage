@@ -1,21 +1,23 @@
 section \<open>Tightness of the path laws\<close>
 
-text \<open>
-  Laws of processes satisfying the uniform fourth-moment package of
-  Eq. (2.7) form a tight family on \<open>C({0..T})\<close>: \<open>dyadic_bad_event_tail_mom\<close>
-  (Modulus\_Tails) bounds the probability some dyadic increment at level
-  \<open>j \<ge> n\<close> is large; on the complement, \<open>modulus_of_good_path\<close> and
-  \<open>holder_of_dyadic_moduli\<close> (Holder\_Interpolation) place the path in an
-  explicit H\"older ball, compact by \<open>compactin_path_holder_ball\<close>
-  (Path\_Space). Large \<open>n\<close> makes the exceptional mass uniformly small --
-  exactly \<open>tight_on_set\<close>, the hypothesis of the AFP's
-  \<open>Prokhorov_theorem_LP\<close>.
-\<close>
-
+(*<*)
 theory Path_Tightness
   imports Path_Space Holder_Interpolation
 begin
 
+(*>*)
+
+text \<open>
+  Laws of processes satisfying the uniform fourth-moment package of
+  Eq. (2.7) form a tight family on \<open>C({0..T})\<close>: \<open>dyadic_bad_event_tail_mom\<close>
+  (@{theory Path_Space_Tightness.Modulus_Tails}) bounds the probability some dyadic increment at level
+  \<open>j \<ge> n\<close> is large; on the complement, \<open>modulus_of_good_path\<close> and
+  \<open>holder_of_dyadic_moduli\<close> (@{theory Path_Space_Tightness.Holder_Interpolation}) place the path in an
+  explicit H\"older ball, compact by \<open>compactin_path_holder_ball\<close>
+  (@{theory Path_Space_Tightness.Path_Space}). Large \<open>n\<close> makes the exceptional mass uniformly small --
+  exactly \<open>tight_on_set\<close>, the hypothesis of the AFP's
+  \<open>Prokhorov_theorem_LP\<close>.
+\<close>
 subsection \<open>Measurability of the bad event\<close>
 
 lemma dyadic_bad_event_sets:
@@ -2521,4 +2523,7 @@ proof (rule tendsto_real_of_approximants)
                conjI allI errNi lim errN)
 qed
 
+
+(*<*)
 end
+(*>*)

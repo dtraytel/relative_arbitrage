@@ -1,5 +1,12 @@
 section \<open>The stochastic integral of a simple predictable integrand\<close>
 
+(*<*)
+theory Stochastic_Integral_Simple
+  imports Stochastic_Integral "Martingale_Sampling.Sampled_Martingale"
+begin
+
+(*>*)
+
 text \<open>
   The last construction layer of open task 15. A SIMPLE predictable integrand is
   one subordinate to a partition: constant on each partition interval, with the
@@ -13,19 +20,14 @@ text \<open>
   against a martingale is a martingale" follows for continuous time from the
   discrete \<open>martingale_mtrans\<close>, through the sampling bridge.
 
-  IMPORT NOTE: the imports are \<open>Stochastic_Integral\<close> and \<open>Sampled_Martingale\<close>,
+  IMPORT NOTE: the imports are @{theory Relative_Arbitrage_Unused.Stochastic_Integral} and @{theory Martingale_Sampling.Sampled_Martingale},
   whose only common ancestor is the session theory \<open>Martingales.Martingale\<close>.
   Importing \<open>Sampled_Quadratic_Variation\<close> instead would have created a diamond
-  over the DRAFT theory \<open>Quadratic_Variation\<close> (which \<open>Stochastic_Integral\<close> reaches
-  via \<open>Relative_Arbitrage_Discrete\<close>), and such diamonds break loading. The single
+  over the DRAFT theory @{theory Martingale_Sampling.Quadratic_Variation} (which @{theory Relative_Arbitrage_Unused.Stochastic_Integral} reaches
+  via @{theory Relative_Arbitrage_Unused.Relative_Arbitrage_Discrete}), and such diamonds break loading. The single
   bridge lemma that would have come from there is re-derived below instead; it is
   six lines.
 \<close>
-
-theory Stochastic_Integral_Simple
-  imports Stochastic_Integral "Martingale_Sampling.Sampled_Martingale"
-begin
-
 subsection \<open>The sampled process is a square-integrable discrete martingale\<close>
 
 lemma sq_int_martingale_of_sampled:
@@ -379,4 +381,7 @@ proof -
   thus ?thesis unfolding G_def by (simp add: simple_itg_diff)
 qed
 
+
+(*<*)
 end
+(*>*)

@@ -1,28 +1,30 @@
 section \<open>The \<open>L\<^sup>2\<close> closure of the simple stochastic integrals\<close>
 
+(*<*)
+theory Stochastic_Integral_L2
+  imports Stochastic_Integral_Simple L2_Limits
+begin
+
+(*>*)
+
 text \<open>
   The final layer of open task 15. Everything needed is now in place:
 
-  \<^item> \<open>ito_isometry_simple_diff\<close> (\<open>Stochastic_Integral_Simple\<close>) says the map from
+  \<^item> \<open>ito_isometry_simple_diff\<close> (@{theory Relative_Arbitrage_Unused.Stochastic_Integral_Simple}) says the map from
     integrands to integrals is an ISOMETRY, so a sequence of integrands that is
     Cauchy for the norm \<open>E[SUM H\<^sup>2 (dX)\<^sup>2]\<close> has integrals that are Cauchy in
     \<open>L\<^sup>2 M\<close>;
-  \<^item> \<open>L2_cauchy_ae_limit\<close> (\<open>L2_Limits\<close>) turns an \<open>L\<^sup>2\<close>-Cauchy sequence into an
+  \<^item> \<open>L2_cauchy_ae_limit\<close> (@{theory Relative_Arbitrage_Unused.L2_Limits}) turns an \<open>L\<^sup>2\<close>-Cauchy sequence into an
     almost-everywhere convergent subsequence, by Riesz-Fischer.
 
   Composing them gives the extension: the integral of an integrand in the closure
   exists as the almost-everywhere limit of the integrals of approximating simple
   integrands. That is the statement below.
 
-  Import note: \<open>Stochastic_Integral_Simple\<close> and \<open>L2_Limits\<close> meet only at session
+  Import note: @{theory Relative_Arbitrage_Unused.Stochastic_Integral_Simple} and @{theory Relative_Arbitrage_Unused.L2_Limits} meet only at session
   theories (\<open>Martingales.Martingale\<close> and \<open>HOL-Probability.Probability\<close>), so there is
   no diamond over a draft theory.
 \<close>
-
-theory Stochastic_Integral_L2
-  imports Stochastic_Integral_Simple L2_Limits
-begin
-
 subsection \<open>Integrability of the simple integral\<close>
 
 lemma simple_itg_integrable:
@@ -105,4 +107,7 @@ proof -
   show thesis using rg unfolding f_def by (rule that)
 qed
 
+
+(*<*)
 end
+(*>*)

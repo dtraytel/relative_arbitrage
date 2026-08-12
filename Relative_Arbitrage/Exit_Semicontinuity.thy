@@ -1,18 +1,20 @@
-(*
-  Title:   Exit_Semicontinuity.thy
-  Content: The value-side semicontinuity underlying Prop 2.4 of
-           arXiv:2512.17702, following LR (arXiv:2003.13611) Lemma 2.1:
-           the capped exit time is upper semicontinuous on the path
-           space, and the essential infimum of the exit time is upper
-           semicontinuous along weak convergence of path laws, via the
-           Laplace-transform representation
-           essinf tau = inf_{lambda>0} -(1/lambda) log E[exp(-lambda tau)].
-*)
 
+
+(*<*)
 theory Exit_Semicontinuity
   imports "Path_Space_Tightness.Path_Space" Exit_Time Value_Function_Market
 begin
 
+(*>*)
+
+text \<open>
+  The value-side semicontinuity underlying Prop 2.4 of
+             arXiv:2512.17702, following LR (arXiv:2003.13611) Lemma 2.1:
+             the capped exit time is upper semicontinuous on the path
+             space, and the essential infimum of the exit time is upper
+             semicontinuous along weak convergence of path laws, via the
+             Laplace-transform representation
+             essinf tau = inf_{lambda>0} -(1/lambda) log E[exp(-lambda tau)].\<close>
 section \<open>The path-space exit time\<close>
 text \<open>(The crowning theorem of this theory is \<open>ess_inf_pexit_usc\<close> at the
   end: the essential infimum of the exit time is upper semicontinuous
@@ -1396,4 +1398,7 @@ proof -
   finally show ?thesis .
 qed
 
+
+(*<*)
 end
+(*>*)

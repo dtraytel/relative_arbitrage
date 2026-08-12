@@ -1,41 +1,43 @@
-(*
-  Title:   Operator_Continuity.thy
-  Content: Eq. (3.4)-(3.6) of arXiv:2512.17702: the matrix M_p, the closed
-           formula (3.5) for F, and Lemma 3.1.
 
-  IMPORTS: this theory deliberately imports only Threshold_Chain (hence
-  Eigenvalues, Eigenvalue_Bound_Exact, Constraint_Set_Convexity,
-  Curvature_Operator) and NOT Operator_Envelopes.  ell_op and feasible already come
-  from Curvature_Operator, which the Eigenvalues chain reaches, so the only
-  thing the Operator_Envelopes side ever supplied here was `trace_conjugate` -- a
-  six-line trace identity, reproved locally below as `trace_conj`.
 
-  That matters for development, not just tidiness: PIDE cannot hold the
-  Operator_Envelopes chain and the Eigenvalues chain at the same time (it evicts one and
-  then queues forever), so a theory importing both can only be checked by a
-  batch build, with no per-command feedback.  With this import the whole of
-  Eq. (3.4)-(3.5) is PIDE-workable.  Only the final Eq. (3.6) statement, which
-  genuinely mentions F_* and F^*, needs the merged chain, and it lives in its
-  own theory.
-
-  Eq. (3.4) defines, for p /= 0,
-
-    M_p = (I - pp'/|p|^2) M (I - pp'/|p|^2) + min(lambda_(n)(M), 0) pp'/|p|^2
-
-  and M_0 = M.  Note this is an n x n MATRIX: no change of dimension is
-  involved.  The correction term in the p-direction is chosen so that this
-  eigenvalue sorts to the bottom of the spectrum of M_p, which is what makes
-  Eq. (3.5) a clean sum over i = 1..n.
-
-  The point of M_p is that it has the same trace pairing as M against every
-  feasible a (which is psd and annihilates p), so F(p, M) = F(p, M_p), while
-  M_p is diagonalisable in a way adapted to p.
-*)
-
+(*<*)
 theory Operator_Continuity
   imports Threshold_Chain
 begin
 
+(*>*)
+
+text \<open>
+  Eq. (3.4)-(3.6) of arXiv:2512.17702: the matrix \<open>M_p\<close>, the closed
+             formula (3.5) for F, and Lemma 3.1.
+
+    IMPORTS: this theory deliberately imports only \<open>Threshold_Chain\<close> (hence
+    Eigenvalues, \<open>Eigenvalue_Bound_Exact\<close>, \<open>Constraint_Set_Convexity\<close>,
+    \<open>Curvature_Operator\<close>) and NOT \<open>Operator_Envelopes\<close>.  \<open>ell_op\<close> and feasible already come
+    from \<open>Curvature_Operator\<close>, which the Eigenvalues chain reaches, so the only
+    thing the \<open>Operator_Envelopes\<close> side ever supplied here was `\<open>trace_conjugate\<close>` -- a
+    six-line trace identity, reproved locally below as `\<open>trace_conj\<close>`.
+
+    That matters for development, not just tidiness: PIDE cannot hold the
+    \<open>Operator_Envelopes\<close> chain and the Eigenvalues chain at the same time (it evicts one and
+    then queues forever), so a theory importing both can only be checked by a
+    batch build, with no per-command feedback.  With this import the whole of
+    Eq. (3.4)-(3.5) is PIDE-workable.  Only the final Eq. (3.6) statement, which
+    genuinely mentions F_* and F^*, needs the merged chain, and it lives in its
+    own theory.
+
+    Eq. (3.4) defines, for p /= 0,
+
+      \<open>M_p\<close> = (I - pp'/|p|^2) M (I - pp'/|p|^2) + min(lambda_(n)(M), 0) pp'/|p|^2
+
+    and \<open>M_0\<close> = M.  Note this is an n x n MATRIX: no change of dimension is
+    involved.  The correction term in the p-direction is chosen so that this
+    eigenvalue sorts to the bottom of the spectrum of \<open>M_p\<close>, which is what makes
+    Eq. (3.5) a clean sum over i = 1..n.
+
+    The point of \<open>M_p\<close> is that it has the same trace pairing as M against every
+    feasible a (which is psd and annihilates p), so F(p, M) = F(p, \<open>M_p\<close>), while
+    \<open>M_p\<close> is diagonalisable in a way adapted to p.\<close>
 section \<open>Elementary matrix algebra not already in the development\<close>
 
 text \<open>A local copy of \<open>trace_conjugate\<close> (\<open>Viscosity_Comparison_Interface\<close>), so
@@ -277,7 +279,7 @@ proof -
 qed
 
 text \<open>Consequently \<open>M\<^sub>p\<close> is symmetric whenever \<open>M\<close> is, which every
-  eigenvalue lemma in Eigenvalues.thy requires as a hypothesis.\<close>
+  eigenvalue lemma in @{theory Relative_Arbitrage.Eigenvalues} requires as a hypothesis.\<close>
 
 lemma transpose_Mp:
   fixes M :: "real^'n::finite^'n"
@@ -371,4 +373,7 @@ proof -
     by (simp add: ell_op_def)
 qed
 
+
+(*<*)
 end
+(*>*)

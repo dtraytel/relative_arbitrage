@@ -1,11 +1,18 @@
 section \<open>Quadratic variation of a continuous-time martingale along a partition\<close>
 
+(*<*)
+theory Sampled_Quadratic_Variation
+  imports Quadratic_Variation Sampled_Martingale
+begin
+
+(*>*)
+
 text \<open>
-  The sampling bridge of \<open>Sampled_Martingale\<close> turns a real-indexed
+  The sampling bridge of @{theory Martingale_Sampling.Sampled_Martingale} turns a real-indexed
   martingale into a nat-indexed one; this theory uses that to discharge the
   three obligations of the locale \<open>sq_int_martingale\<close> for the sampled
   process, and thereby transfers the whole discrete quadratic-variation
-  theory of \<open>Quadratic_Variation\<close> to continuous time along an arbitrary
+  theory of @{theory Martingale_Sampling.Quadratic_Variation} to continuous time along an arbitrary
   monotone partition.
 
   The two results that matter downstream are the discrete Ito formula for the
@@ -16,11 +23,6 @@ text \<open>
   latter is the second-moment input that Eq. (2.7) of arXiv:2512.17702 needs,
   and the former is the quadratic Ito formula that the \<open>Z_martingale\<close> assumption
   of \<open>ito_volatile_market\<close> currently postulates.\<close>
-
-theory Sampled_Quadratic_Variation
-  imports Quadratic_Variation Sampled_Martingale
-begin
-
 subsection \<open>The sampled process is a square-integrable discrete martingale\<close>
 
 theorem sq_int_martingale_sampled:
@@ -159,4 +161,7 @@ proof -
   from lhs split show ?thesis by auto
 qed
 
+
+(*<*)
 end
+(*>*)

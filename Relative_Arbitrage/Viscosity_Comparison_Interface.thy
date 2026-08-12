@@ -1,32 +1,34 @@
-(*
-  Title:   Viscosity_Comparison_Interface.thy
-  Content: The uniqueness side of Theorem 1.1 of arXiv:2512.17702
-           (Lai/Shkolnikov/Soner), and the structural pieces of Lemma 3.1.
 
-  Proved outright:
-  \<^item> gradient-scaling invariance of F: the feasible set of Eq. (1.9), hence
-    F itself, depends on the gradient argument p only through its kernel
-    constraint, so F(c p, M) = F(p, M) for c \<noteq> 0 (part of Lemma 3.1's
-    analysis of the p-dependence);
-  \<^item> orthogonal equivariance and the dilation identity
-        F(p, M) = c\<^sup>2 F(Q\<^sup>T p, c\<^sup>-\<^sup>2 Q\<^sup>T M Q)          (c \<noteq> 0, Q orthogonal)
-    used to conjugate the PDE under the transformations T\<^sub>\<iota> of the
-    uniqueness hypothesis of Theorem 1.1;
-  \<^item> given a comparison principle, uniqueness of viscosity solutions with
-    prescribed boundary values (the way Theorem 1.1's uniqueness statement
-    follows from comparison).
 
-  Axiomatized (as the locale assumption of comparison_principle):
-  the comparison half itself.  Its proof in the paper runs through the
-  Crandall--Ishii lemma (doubling of variables with quartic penalty and
-  second-order jets), a deep result of viscosity theory with no Isabelle
-  formalization, and is taken here as an interface assumption.
-*)
-
+(*<*)
 theory Viscosity_Comparison_Interface
   imports Constraint_Set_Convexity
 begin
 
+(*>*)
+
+text \<open>
+  The uniqueness side of Theorem 1.1 of arXiv:2512.17702
+             (Lai/Shkolnikov/Soner), and the structural pieces of Lemma 3.1.
+
+    Proved outright:
+    \<^item> gradient-scaling invariance of F: the feasible set of Eq. (1.9), hence
+      F itself, depends on the gradient argument p only through its kernel
+      constraint, so F(c p, M) = F(p, M) for c \<open>\<noteq>\<close> 0 (part of Lemma 3.1's
+      analysis of the p-dependence);
+    \<^item> orthogonal equivariance and the dilation identity
+          \<open>F(p, M) = c\<^sup>2 F(Q\<^sup>T p, c\<^sup>-\<^sup>2 Q\<^sup>T M Q)          (c \<noteq> 0, Q orthogonal)\<close>
+      \<open>used to conjugate the PDE under the transformations T\<^sub>\<iota> of the\<close>
+      uniqueness hypothesis of Theorem 1.1;
+    \<^item> given a comparison principle, uniqueness of viscosity solutions with
+      prescribed boundary values (the way Theorem 1.1's uniqueness statement
+      follows from comparison).
+
+    Axiomatized (as the locale assumption of \<open>comparison_principle\<close>):
+    the comparison half itself.  Its proof in the paper runs through the
+    Crandall--Ishii lemma (doubling of variables with quartic penalty and
+    second-order jets), a deep result of viscosity theory with no Isabelle
+    formalization, and is taken here as an interface assumption.\<close>
 unbundle inner_syntax
 
 text \<open>Keep matrix-vector products in \<open>*v\<close>-form: the default normalization
@@ -506,4 +508,7 @@ theorem ball_v_unique_solution:
   by (rule comparison_principle.viscosity_solution_unique[OF cp u _ bd])
     (use ball_v_solves_pde_viscosity(1)[OF k L] in auto)
 
+
+(*<*)
 end
+(*>*)

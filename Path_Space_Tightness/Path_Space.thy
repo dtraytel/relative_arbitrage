@@ -1,5 +1,14 @@
 section \<open>The path space \<open>C({0..T}, 'b)\<close> as a Polish metric space\<close>
 
+(*<*)
+theory Path_Space
+  imports "Levy_Prokhorov_Metric.Prokhorov_Theorem"
+    "Standard_Borel_Spaces.Set_Based_Metric_Space"
+    Equicontinuity
+begin
+
+(*>*)
+
 text \<open>
   The space the martingale laws of Lemma 2.2 of arXiv:2512.17702 live on:
   HOL-Analysis' set-based \<open>cfunspace\<close> (bounded continuous maps with the sup
@@ -11,13 +20,6 @@ text \<open>
   the Lemma 2.2 laws into relative compactness in the L\'evy-Prokhorov
   metric on this space.
 \<close>
-
-theory Path_Space
-  imports "Levy_Prokhorov_Metric.Prokhorov_Theorem"
-    "Standard_Borel_Spaces.Set_Based_Metric_Space"
-    Equicontinuity
-begin
-
 definition path_metric :: "real \<Rightarrow> (real \<Rightarrow> 'b::polish_space) metric" where
   "path_metric T = cfunspace (top_of_set {0..T::real}) (euclidean_metric :: 'b metric)"
 
@@ -66,7 +68,7 @@ text \<open>
   The Arzel\`a--Ascoli input for tightness: the set of paths starting at a fixed
   point with a uniform H\"older bound is sequentially compact in the sup metric.
   The subsequence extraction is the type-class \<open>holder_family_subsequence\<close>
-  (Equicontinuity); this theorem transports it into the set-based
+  (@{theory Path_Space_Tightness.Equicontinuity}); this theorem transports it into the set-based
   framework via \<open>compactin_sequentially\<close> and \<open>cfunspace_mdist_le\<close>.
 \<close>
 
@@ -1087,4 +1089,7 @@ proof (rule metrizable_weak_conv_topology)
     unfolding mtopology_of_def by (rule path_metric_polish(2))
 qed
 
+
+(*<*)
 end
+(*>*)

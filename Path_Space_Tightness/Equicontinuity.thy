@@ -1,11 +1,20 @@
 section \<open>The Arzela--Ascoli step of Lemma 2.2\<close>
 
+(*<*)
+theory Equicontinuity
+  imports
+    "HOL-Complex_Analysis.Great_Picard"
+    "Kolmogorov_Chentsov.Holder_Continuous"
+begin
+
+(*>*)
+
 text \<open>
   Lemma 2.2 -- relative compactness of continuous martingale laws with
   covariation rates in a bounded set @{text S} -- follows the chain:
 
   \<^item> Ito's formula and the Burkholder-Davis-Gundy inequality give the fourth
-    moment bound of Eq. (2.7), @{text "E |X t - X s| ^ 4 \<le> 66 C\<^sup>2 (t - s)\<^sup>2"};
+    \<open>moment bound of Eq. (2.7), @{text "E |X t - X s| ^ 4 \<le> 66 C\<^sup>2 (t - s)\<^sup>2"};\<close>
   \<^item> Kolmogorov's continuity criterion gives locally Holder paths;
   \<^item> the Arzela-Ascoli theorem gives compact sets of paths;
   \<^item> Prokhorov's theorem converts tightness into relative compactness.
@@ -14,7 +23,7 @@ text \<open>
 
   \<^item> Kolmogorov's criterion is @{text Kolmogorov_Chentsov.Kolmogorov_Chentsov},
     whose hypothesis is literally the moment bound of Eq. (2.7) with
-    @{text "a = 4"}, @{text "b = 1"}, @{text "C = 66 C\<^sup>2"}, and whose
+    \<open>@{text "a = 4"}, @{text "b = 1"}, @{text "C = 66 C\<^sup>2"}, and whose\<close>
     conclusion is a modification with all paths @{text "local_holder_on \<gamma>"} for
     @{text "\<gamma> < 1/4"};
   \<^item> @{text Kolmogorov_Chentsov.local_holder_compact_imp_holder} upgrades that to
@@ -29,13 +38,6 @@ text \<open>
   uniform constant from Eq. (2.7) is the remaining probabilistic content of
   Lemma 2.2.
 \<close>
-
-theory Equicontinuity
-  imports
-    "HOL-Complex_Analysis.Great_Picard"
-    "Kolmogorov_Chentsov.Holder_Continuous"
-begin
-
 subsection \<open>Uniform bounds and equicontinuity from a Holder bound\<close>
 
 text \<open>A Holder path on @{term "{0..T}"} is bounded in terms of its initial value.\<close>
@@ -765,4 +767,7 @@ proof -
     by (rule exI[of _ U]) (intro conjI openU xinU ballU)
 qed
 
+
+(*<*)
 end
+(*>*)

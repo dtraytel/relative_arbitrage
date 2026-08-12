@@ -1,16 +1,18 @@
-(*
-  Title:   Brownian_Motion_Continuity.thy
-  Content: The Kolmogorov-Chentsov continuous modification of the
-           coordinate process on the Wiener measure: existence of
-           Brownian motion with continuous paths.
-*)
 
+
+(*<*)
 theory Brownian_Motion_Continuity
   imports
     Brownian_Motion
     "Kolmogorov_Chentsov.Kolmogorov_Chentsov"
 begin
 
+(*>*)
+
+text \<open>
+  The Kolmogorov-Chentsov continuous modification of the
+             coordinate process on the Wiener measure: existence of
+             Brownian motion with continuous paths.\<close>
 section \<open>Brownian motion\<close>
 
 definition bm_coord :: "(real, real \<Rightarrow> real, real) stochastic_process" where
@@ -194,4 +196,7 @@ proof -
 qed
 
 
+
+(*<*)
 end
+(*>*)

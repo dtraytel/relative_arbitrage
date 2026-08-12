@@ -1,5 +1,13 @@
 section \<open>Uniform integrability and Vitali's convergence theorem\<close>
 
+(*<*)
+theory Vitali_Convergence
+  imports "HOL-Probability.Probability"
+begin
+
+
+(*>*)
+
 text \<open>
   Neither uniform integrability nor Vitali's convergence theorem exists
   anywhere in the Isabelle distribution or the AFP (@{text
@@ -10,14 +18,8 @@ text \<open>
 
   The classical statement: on a finite measure space, if a sequence is
   uniformly integrable and converges almost everywhere, then the limit is
-  integrable and the convergence also holds in @{text "L\<^sup>1"}.
+  \<open>integrable and the convergence also holds in @{text "L\<^sup>1"}.\<close>
 \<close>
-
-theory Vitali_Convergence
-  imports "HOL-Probability.Probability"
-begin
-
-
 definition unif_integrable :: "'a measure \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> real) \<Rightarrow> bool" where
   "unif_integrable M f \<longleftrightarrow>
      (\<forall>n. integrable M (f n)) \<and>
@@ -388,4 +390,7 @@ proof (intro conjI allI impI int)
     using K0 by (intro exI[of _ K] conjI) auto
 qed
 
+
+(*<*)
 end
+(*>*)

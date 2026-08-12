@@ -1,13 +1,16 @@
 section \<open>Theorem 4.2(a) via the Crandall-Ishii jet machinery\<close>
 
+(*<*)
 theory Comparison_Principle
   imports "Alexandrov_Sup_Convolution.Sup_Convolution" Operator_Envelope_Continuity
 begin
 
-text \<open>\<open>Sup_Convolution.thy\<close> develops the jet machinery independently of the
-  project, directly over \<open>HOL-Analysis.Analysis\<close>. This theory combines it
-  with \<open>Operator_Envelope_Continuity\<close> to package the derivative facts into
-  \<open>test_fun_at\<close> and discharge \<open>max_principle_boundary\<close>.\<close>
+(*>*)
+text \<open>@{theory Alexandrov_Sup_Convolution.Sup_Convolution} develops the jet machinery
+  independently of this development, directly over \<open>HOL-Analysis.Analysis\<close>.  This
+  theory combines it with @{theory Relative_Arbitrage.Operator_Envelope_Continuity}
+  to package the derivative facts into \<open>test_fun_at\<close> and discharge
+  \<open>max_principle_boundary\<close>.\<close>
 
 subsection \<open>A jet gives a test function\<close>
 
@@ -41,7 +44,8 @@ next
 qed
 
 text \<open>The form used downstream has the jet matrix arrive as an abstract
-  symmetric bounded linear map, as produced throughout \<open>Sup_Convolution.thy\<close>.\<close>
+  symmetric bounded linear map, as produced throughout
+  @{theory Alexandrov_Sup_Convolution.Sup_Convolution}.\<close>
 
 subsection \<open>The jet interface to Definition 3.1(b)\<close>
 
@@ -851,7 +855,7 @@ text \<open>A scaled subsolution and a supersolution touching an ordered jet pai
   (\<open>ell_op_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
   hypotheses \<open>ord\<close>, \<open>subtest\<close> and \<open>suptest\<close>, supplied by the
   Rademacher/Alexandrov/Jensen/theorem-on-sums development in
-  \<open>Sup_Convolution.thy\<close>.\<close>
+  @{theory Alexandrov_Sup_Convolution.Sup_Convolution}.\<close>
 
 theorem comparison_contradiction:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -907,7 +911,7 @@ text \<open>\<open>superjet_local_max\<close> introduces a strictly convex corre
   \<open>(\<delta>/2) * norm k\<^sup>2\<close>, so the matrix reaching the operator is \<open>X + \<delta> I\<close>
   rather than \<open>X\<close>. Removing \<open>\<delta>\<close> passes to closed second-order jets via the
   envelopes: the two envelope inequalities sandwich the sharp one, and
-  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (\<open>Operator_Envelopes\<close>.thy) show the
+  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}) show the
   envelope-free notions already imply the envelope ones on an open
   \<open>\<Omega> \<subseteq> K\<close>.\<close>
 
@@ -1821,7 +1825,7 @@ text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<c
 
 subsection \<open>The jet hypothesis only ever needs one side\<close>
 
-text \<open>\<open>superjet_local_max\<close> (\<open>Sup_Convolution\<close>) only uses one side of its
+text \<open>\<open>superjet_local_max\<close> (@{theory Alexandrov_Sup_Convolution.Sup_Convolution}) only uses one side of its
   \<open>tendsto\<close> hypothesis; the diagonal branch of Theorem 4.2(a) supplies only
   an upper bound on the increment of \<open>B = supconv (-w) \<epsilon>\<close>. This
   subsection restates the chain with a one-sided hypothesis;
@@ -4684,7 +4688,7 @@ qed
 subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
 
 text \<open>\<open>comparison_env_from_jets\<close> consumes \<open>psd (Ym - Xm)\<close>. The theorem
-  on sums (\<open>sums_matrix_inequality\<close>, \<open>Sup_Convolution\<close>.thy) delivers the
+  on sums (\<open>sums_matrix_inequality\<close>, @{theory Alexandrov_Sup_Convolution.Sup_Convolution}) delivers the
   ordering between the two diagonal blocks. Writing
   \<open>X v = fst (W (v,0)) + \<alpha> v\<close> and
   \<open>Y v = - (snd (W (0,v)) + \<alpha> v)\<close> (negated since the supersolution
@@ -5250,7 +5254,7 @@ text \<open>The linearity and symmetry of the two diagonal blocks that
   \<open>sums_psd_at_interior_max\<close> needs follow from the Alexandrov jet's
   \<open>bounded_linear W\<close> and \<open>u \<cdot> W u' = u' \<cdot> W u\<close>, via
   \<open>linear_slice_fst\<close> / \<open>linear_slice_snd\<close> / \<open>sym_slice_fst\<close> /
-  \<open>sym_slice_snd\<close> (\<open>Sup_Convolution\<close>.thy).\<close>
+  \<open>sym_slice_snd\<close> (@{theory Alexandrov_Sup_Convolution.Sup_Convolution}).\<close>
 
 lemma linear_of_bounded_linear_prod:
   fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
@@ -5346,7 +5350,7 @@ qed
 subsection \<open>Transferring the jet back from the sup-convolution to \<open>u\<close>\<close>
 
 text \<open>The viscosity hypotheses concern \<open>u\<close> and \<open>w\<close>, not the
-  sup-convolutions. \<open>supconv_dominates_shift\<close> (\<open>Sup_Convolution\<close>.thy)
+  sup-convolutions. \<open>supconv_dominates_shift\<close> (@{theory Alexandrov_Sup_Convolution.Sup_Convolution})
   bridges them: if the sup-convolution at \<open>x\<close> is attained at \<open>y\<^sub>s\<close>,
   increments of \<open>u\<close> at \<open>y\<^sub>s\<close> are dominated by increments of
   \<open>supconv u \<epsilon>\<close> at \<open>x\<close> with the same increment vector \<open>k\<close>. A local
@@ -5495,7 +5499,7 @@ subsection \<open>Symmetry of the two block matrices\<close>
 
 text \<open>The symmetry \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close> needed by
   \<open>comparison_env_from_jets\<close> follows from the jet: \<open>matrix_of_symmetric\<close>
-  (\<open>Sup_Convolution\<close>.thy) converts an abstract symmetric linear map into a
+  (@{theory Alexandrov_Sup_Convolution.Sup_Convolution}) converts an abstract symmetric linear map into a
   symmetric matrix, fed by the block lemmas above.\<close>
 
 lemma transpose_matrix_block_fst:
@@ -6813,7 +6817,7 @@ qed
 subsection \<open>The Hessians at the doubled maximum are two-sidedly bounded\<close>
 
 text \<open>Route (i) needs the perturbed Hessians bounded as the tilt shrinks.
-  \<open>convex_alexandrov\<close> (\<open>Sup_Convolution\<close>.thy) supplies a Hessian \<open>B\<close> with
+  \<open>convex_alexandrov\<close> (@{theory Alexandrov_Sup_Convolution.Sup_Convolution}) supplies a Hessian \<open>B\<close> with
   \<open>0 \<le> k \<bullet> Bk\<close>; combined with \<open>k \<bullet> Wk \<le> 0\<close> from
   \<open>second_order_interior_max\<close>, this pins the Hessian \<open>W = B - cI\<close> at a
   maximum of a semiconvex function between \<open>-c\<close> and \<open>0\<close>.
@@ -8418,7 +8422,7 @@ qed
 
 text \<open>Extending an usc \<open>u\<close> off a closed \<open>K\<close> by a constant at or below its
   minimum on \<open>K\<close> keeps it usc; @{thm [source] usc_extension_bounded} in
-  \<open>Operator_Envelopes\<close> does the \<open>-B\<close> case, needed as negative as required so the
+  @{theory Relative_Arbitrage.Operator_Envelopes} does the \<open>-B\<close> case, needed as negative as required so the
   doubled functional cannot be maximised off \<open>K\<close>.\<close>
 
 lemma usc_extend_const_below:
@@ -12371,7 +12375,7 @@ qed
 
 section \<open>The \<open>max_principle_boundary\<close> interface needs continuity: the raw version is refutable\<close>
 
-text \<open>\<open>max_principle_boundary k L K\<close> (\<open>Operator_Envelope_Continuity\<close>) as originally
+text \<open>\<open>max_principle_boundary k L K\<close> (@{theory Relative_Arbitrage.Operator_Envelope_Continuity}) as originally
   stated, quantifying over all \<open>u\<close>, \<open>w\<close> satisfying \<open>visc_subsol\<close>/
   \<open>supersol_jet\<close> on \<open>interior K\<close> with no semicontinuity or boundedness,
   is false: those local conditions say nothing about the boundary values
@@ -12495,7 +12499,7 @@ proof
   from mx[OF this] vx vy show False by simp
 qed
 
-text \<open>The repair lives in \<open>Operator_Envelope_Continuity\<close>: the corrected
+text \<open>The repair lives in @{theory Relative_Arbitrage.Operator_Envelope_Continuity}: the corrected
   \<open>max_principle_boundary\<close> carries \<open>continuous_on K u\<close> and
   \<open>continuous_on K w\<close>, \<open>max_principle_boundary_attains\<close> records that
   \<open>u-w\<close> then attains its maximum on compact \<open>K\<close>, and \<open>max_principle_le\<close>,
@@ -14114,7 +14118,7 @@ subsection \<open>The two-domain doubled maximiser\<close>
 
 text \<open>Existence of the maximiser of \<open>\<theta>u(x)-w(y)-pen(x-y)\<close> over \<open>K \<times> K'\<close>
   for usc \<open>u\<close> and lsc \<open>w\<close>, needing no continuity: the objective is usc
-  on the compact product, by the \<open>\<epsilon>\<close>-form calculus in \<open>Operator_Envelopes\<close> and
+  on the compact product, by the \<open>\<epsilon>\<close>-form calculus in @{theory Relative_Arbitrage.Operator_Envelopes} and
   \<open>usc_attains_sup_gen\<close>, stated there for an arbitrary metric space so
   it applies to the product.\<close>
 
@@ -14904,4 +14908,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

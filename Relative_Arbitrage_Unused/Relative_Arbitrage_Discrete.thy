@@ -1,34 +1,36 @@
-(*
-  Title:   Relative_Arbitrage_Discrete.thy
-  Content: The market bound of arXiv:2512.17702 (Example 3.1) in discrete
-           time, with NO martingale-problem assumption.
 
-  In continuous time the identity
 
-    E[|X (t \<sqinter> \<tau>)|\<^sup>2] - E[\<integral>\<^sub>0\<^sup>(t \<sqinter> \<tau>) tr(acov\<^sub>s) ds] = |x\<^sub>0|\<^sup>2
-
-  is Ito's formula plus optional sampling, and is the locale assumption
-  dynkin_quadratic of Volatile_Market.  Here the whole
-  development is redone in discrete time, where the corresponding
-  identity is a THEOREM: the compensator of |X|\<^sup>2 is the discrete
-  quadratic variation of Quadratic_Variation, summed over coordinates.
-  Consequently the horizon bound of Example 3.1,
-
-    N \<le> v(x\<^sub>0) = (r\<^sup>2 - |x\<^sub>0|\<^sup>2)/(n - k),
-
-  holds with no assumption about stochastic integration whatsoever: the
-  hypotheses are only that the coordinates of X are square-integrable
-  martingales, that X stays in the ball up to time N, and that each step
-  carries at least the volatility that the eigenvalue constraint (1.4)
-  of the paper forces on the trace.
-*)
-
+(*<*)
 theory Relative_Arbitrage_Discrete
   imports
     "Martingale_Sampling.Quadratic_Variation"
     "Relative_Arbitrage.Volatile_Market"
 begin
 
+(*>*)
+
+text \<open>
+  The market bound of arXiv:2512.17702 (Example 3.1) in discrete
+             time, with NO martingale-problem assumption.
+
+    In continuous time the identity
+
+      \<open>E[|X (t \<sqinter> \<tau>)|\<^sup>2] - E[\<integral>\<^sub>0\<^sup>(t \<sqinter> \<tau>) tr(acov\<^sub>s) ds] = |x\<^sub>0|\<^sup>2\<close>
+
+    is Ito's formula plus optional sampling, and is the locale assumption
+    \<open>dynkin_quadratic\<close> of \<open>Volatile_Market\<close>.  Here the whole
+    development is redone in discrete time, where the corresponding
+    \<open>identity is a THEOREM: the compensator of |X|\<^sup>2 is the discrete\<close>
+    quadratic variation of \<open>Quadratic_Variation\<close>, summed over coordinates.
+    Consequently the horizon bound of Example 3.1,
+
+      \<open>N \<le> v(x\<^sub>0) = (r\<^sup>2 - |x\<^sub>0|\<^sup>2)/(n - k),\<close>
+
+    holds with no assumption about stochastic integration whatsoever: the
+    hypotheses are only that the coordinates of X are square-integrable
+    martingales, that X stays in the ball up to time N, and that each step
+    carries at least the volatility that the eigenvalue constraint (1.4)
+    of the paper forces on the trace.\<close>
 section \<open>Vector-valued quadratic variation\<close>
 
 definition qvar_vec :: "(nat \<Rightarrow> 'a \<Rightarrow> real^'n) \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> real" where
@@ -571,7 +573,7 @@ end
 section \<open>The exit-time bound of Example 3.1, with a stopping time\<close>
 
 text \<open>The full discrete analogue of \<open>expected_stopped_time_ball_v\<close> of
-  Volatile\_Market: the market need only stay in the ball
+  @{theory Relative_Arbitrage.Volatile_Market}: the market need only stay in the ball
   up to the stopping time \<open>T\<close>, and the conclusion bounds the expected
   stopped horizon.  Unlike the continuous-time version, no
   martingale-problem assumption enters: the identity used is the stopped
@@ -686,4 +688,7 @@ qed
 
 end
 
+
+(*<*)
 end
+(*>*)

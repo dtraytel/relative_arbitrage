@@ -1,5 +1,12 @@
 section \<open>Uniform integrability of conditional expectations\<close>
 
+(*<*)
+theory Conditional_UI
+  imports "Martingale_Sampling.Vitali_Convergence" Increment_Moments
+begin
+
+(*>*)
+
 text \<open>
   Two classical facts absent from the distribution and the AFP:
 
@@ -17,11 +24,6 @@ text \<open>
   convergence, eliminating the integrable-running-supremum hypothesis that an
   arbitrary \<open>L\<^sup>1\<close> martingale does not satisfy.
 \<close>
-
-theory Conditional_UI
-  imports "Martingale_Sampling.Vitali_Convergence" Increment_Moments
-begin
-
 subsection \<open>Absolute continuity of the integral\<close>
 
 lemma (in finite_measure) integral_abs_small_sets:
@@ -282,4 +284,7 @@ proof (rule unif_integrable_cong_AE[OF cond_exp_family_unif_integrable[OF Y sub]
     by (rule sigma_finite_subalgebra.cond_exp_charact[OF sub ident Y int meas])
 qed
 
+
+(*<*)
 end
+(*>*)

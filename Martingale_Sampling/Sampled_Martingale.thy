@@ -1,5 +1,12 @@
 section \<open>Sampling a continuous-time martingale along a partition\<close>
 
+(*<*)
+theory Sampled_Martingale
+  imports "Martingales.Martingale"
+begin
+
+(*>*)
+
 text \<open>
   The Isabelle distribution and the AFP contain no stochastic integral, Ito
   formula or Doob-Meyer decomposition -- checked: no \<open>Ito\<close>,
@@ -22,10 +29,6 @@ text \<open>
   This text block sits before the theory header, so it must not use
   antiquotations -- there is no theory context yet in which to elaborate them.
 \<close>
-theory Sampled_Martingale
-  imports "Martingales.Martingale"
-begin
-
 theorem martingale_sampled:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
     and t :: "nat \<Rightarrow> real"
@@ -144,4 +147,7 @@ next
     unfolding rearr by auto
 qed
 
+
+(*<*)
 end
+(*>*)

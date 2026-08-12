@@ -1,36 +1,38 @@
-(*
-  Title:   Optional_Sampling.thy
-  Content: Stochastic integration, layer 3b: optional sampling in continuous
-           time.
 
-  The martingale-problem identity that the probabilistic part of arXiv:2512.17702
-  needs is
 
-    E[Z (t /\ tau)] = E[Z 0]                                          (star)
-
-  for the process Z t = |X t|^2 - int_0^t tr(a s) ds, which Ito's formula
-  makes a martingale.  Deriving (star) from "Z is a martingale" is exactly
-  optional sampling at the bounded stopping time t /\ tau, and that is what
-  is proved here, in three steps:
-
-    1. discrete time, arbitrary stopping time: the stopped process is the
-       martingale transform of Z by the indicators of {T > k}, so its
-       expectation is constant (no square integrability needed, unlike the
-       optional-sampling section of Quadratic_Variation);
-
-    2. a continuous-time martingale sampled on a grid is a discrete-time
-       martingale, so (star) holds for stopping times taking finitely many
-       values on the grid;
-
-    3. an arbitrary stopping time is approximated from above by the dyadic
-       stopping times of step 2, and right continuity of the paths plus an
-       integrable bound give (star) in general by dominated convergence.
-*)
-
+(*<*)
 theory Optional_Sampling
   imports Doob_Inequality
 begin
 
+(*>*)
+
+text \<open>
+  Stochastic integration, layer 3b: optional sampling in continuous
+             time.
+
+    The martingale-problem identity that the probabilistic part of arXiv:2512.17702
+    needs is
+
+      E[Z (t /\ tau)] = E[Z 0]                                          (star)
+
+    for the process Z t = |X t|^2 - \<open>int_0\<close>^t tr(a s) ds, which Ito's formula
+    makes a martingale.  Deriving (star) from "Z is a martingale" is exactly
+    optional sampling at the bounded stopping time t /\ tau, and that is what
+    is proved here, in three steps:
+
+      1. discrete time, arbitrary stopping time: the stopped process is the
+         martingale transform of Z by the indicators of {T > k}, so its
+         expectation is constant (no square integrability needed, unlike the
+         optional-sampling section of \<open>Quadratic_Variation\<close>);
+
+      2. a continuous-time martingale sampled on a grid is a discrete-time
+         martingale, so (star) holds for stopping times taking finitely many
+         values on the grid;
+
+      3. an arbitrary stopping time is approximated from above by the dyadic
+         stopping times of step 2, and right continuity of the paths plus an
+         integrable bound give (star) in general by dominated convergence.\<close>
 section \<open>Discrete-time optional sampling for integrable martingales\<close>
 
 locale nat_stopped_martingale = martingale M F "0 :: nat" Y
@@ -1153,4 +1155,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

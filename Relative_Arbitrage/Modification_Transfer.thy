@@ -1,17 +1,19 @@
-(*
-  Title:   Modification_Transfer.thy
-  Content: Transferring the vanishing of increment integrals to a modification,
-           the resulting martingale transfer theorems, and the reduction of
-           vector martingales to their components.  Together with
-           martingale_of_set_integral_eq this gives the martingale property of
-           a modification for its own natural filtration, which is what makes
-           the continuous Kolmogorov-Chentsov modification usable as a market.
-*)
 
+
+(*<*)
 theory Modification_Transfer
   imports Ito_Market
 begin
 
+(*>*)
+
+text \<open>
+  Transferring the vanishing of increment integrals to a modification,
+             the resulting martingale transfer theorems, and the reduction of
+             vector martingales to their components.  Together with
+             \<open>martingale_of_set_integral_eq\<close> this gives the martingale property of
+             a modification for its own natural filtration, which is what makes
+             the continuous Kolmogorov-Chentsov modification usable as a market.\<close>
 text \<open>A modification agrees with the process almost surely at each fixed
   time, but their natural filtrations agree only up to null sets, so
   adaptedness --- and with it the martingale property --- does not transfer
@@ -374,7 +376,7 @@ text \<open>Real-valued case, which is what the process form of the martingale
 
 section \<open>The vector-valued case, componentwise\<close>
 
-text \<open>The market processes of Ito\_Market take values in \<open>real^'n\<close>, so the
+text \<open>The market processes of @{theory Relative_Arbitrage.Ito_Market} take values in \<open>real^'n\<close>, so the
   transfer is needed there too.  The increments in
   set\_integral\_zero\_transfer are real-valued and independent of the value
   type of the process, so the vector case follows componentwise.\<close>
@@ -692,4 +694,7 @@ proof -
     using SP.subalgebra_natural_filtration by (simp add: subalgebra_def)
 qed
 
+
+(*<*)
 end
+(*>*)

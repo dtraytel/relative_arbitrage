@@ -1,15 +1,17 @@
 section \<open>Sup-convolutions\<close>
 
+(*<*)
+theory Sup_Convolution
+  imports "HOL-Analysis.Analysis"
+begin
+
+(*>*)
+
 text \<open>
   The sup-convolution \<open>u\<^sup>\<epsilon>(x) = SUP y. u y - |x - y|\<^sup>2/(2\<epsilon>)\<close> of a
   bounded function is semiconvex; this feeds Jensen's lemma and the
   theorem on sums below.
 \<close>
-
-theory Sup_Convolution
-  imports "HOL-Analysis.Analysis"
-begin
-
 definition supconv :: "('a::euclidean_space \<Rightarrow> real) \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real" where
   "supconv u \<epsilon> x = (SUP y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
 
@@ -7536,4 +7538,7 @@ proof -
   show ?thesis using e main by blast
 qed
 
+
+(*<*)
 end
+(*>*)

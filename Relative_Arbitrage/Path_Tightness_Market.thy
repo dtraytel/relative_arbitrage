@@ -1,8 +1,15 @@
 section \<open>Lemma 2.2, market form: subsequence extraction from the martingale package\<close>
 
+(*<*)
+theory Path_Tightness_Market
+  imports "Path_Space_Tightness.Path_Tightness" Stopped_Localization
+begin
+
+(*>*)
+
 text \<open>
-  The adapter between the stochastic layer (Stopped\_Localization) and the
-  topological layer (Path\_Tightness): the moment hypotheses of
+  The adapter between the stochastic layer (@{theory Relative_Arbitrage.Stopped_Localization}) and the
+  topological layer (@{theory Path_Space_Tightness.Path_Tightness}): the moment hypotheses of
   \<open>path_laws_convergent_subsequence_vec\<close> are discharged per coordinate by
   \<open>fourth_moment_L2_integrable\<close> / \<open>fourth_moment_L2_bochner\<close>, so the
   subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
@@ -10,11 +17,6 @@ text \<open>
   compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's
   admissibility conditions Eqs. (1.7)-(1.8).
 \<close>
-
-theory Path_Tightness_Market
-  imports "Path_Space_Tightness.Path_Tightness" Stopped_Localization
-begin
-
 corollary path_laws_convergent_subsequence_market:
   fixes MM :: "nat \<Rightarrow> 'a measure" and FF :: "nat \<Rightarrow> real \<Rightarrow> 'a measure"
     and XX :: "nat \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real^'m::finite"
@@ -81,7 +83,7 @@ text \<open>The join.  \<open>Exit_Time.etime_less_iff\<close> says being strict
   the exit time, which is what Larsson--Ruf's Lemma 2.1 needs.
 
   This is the only theory in the development that sees both halves:
-  \<open>Exit_Time\<close> sits under \<open>Ito_Market\<close> while \<open>Path_Space\<close> sits under the AFP
+  @{theory Relative_Arbitrage.Exit_Time} sits under @{theory Relative_Arbitrage.Ito_Market} while @{theory Path_Space_Tightness.Path_Space} sits under the AFP
   Prokhorov entry, and the two branches meet nowhere else.
 
   The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one:
@@ -129,7 +131,7 @@ text \<open>Lemma 2.2 of arXiv:2512.17702, at the market class itself: for any
   and confined to a ball, the path laws admit a weakly convergent
   subsequence.  The almost-sure hypotheses of the locale become the pointwise
   hypotheses of the adapter above by restricting each market to a
-  full-measure good event (the transfer package of Stopped\_Localization);
+  full-measure good event (the transfer package of @{theory Relative_Arbitrage.Stopped_Localization});
   the restriction is invisible to the path laws.  The per-coordinate
   compensator is the entrywise integral of \<open>acov\<close>, whose rate bound \<open>L\<close> comes
   from the eigenvalue constraint through the diagonal entries.\<close>
@@ -490,4 +492,7 @@ proof -
     using aN1 aN2 aN3 aN4 by blast
 qed
 
+
+(*<*)
 end
+(*>*)

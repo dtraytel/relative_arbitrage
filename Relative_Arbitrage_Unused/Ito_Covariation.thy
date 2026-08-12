@@ -1,5 +1,12 @@
 section \<open>The compensated-square martingale property from the covariation hypothesis\<close>
 
+(*<*)
+theory Ito_Covariation
+  imports "Relative_Arbitrage.Ito_Market" "Martingale_Sampling.Sampled_Martingale"
+begin
+
+(*>*)
+
 text \<open>
   This theory turns the \<open>Z_martingale\<close> assumption of \<open>locale ito_volatile_market\<close>
   into a THEOREM, derived from the paper's own defining hypothesis.
@@ -24,15 +31,10 @@ text \<open>
   a squared increment with a conditional variance -- the hypothesis below is
   exactly the paper's defining condition.
 
-  The import is \<open>Ito_Market\<close> together with \<open>Sampled_Martingale\<close>. Their only common
+  The import is @{theory Relative_Arbitrage.Ito_Market} together with @{theory Martingale_Sampling.Sampled_Martingale}. Their only common
   ancestor is the session theory \<open>Martingales.Martingale\<close>, so this is not a
   diamond over a draft theory.
 \<close>
-
-theory Ito_Covariation
-  imports "Relative_Arbitrage.Ito_Market" "Martingale_Sampling.Sampled_Martingale"
-begin
-
 text \<open>
   The covariation condition, in conditional form: the conditional expectation of an
   increment of \<open>|X|\<^sup>2\<close> agrees with that of the corresponding increment of
@@ -105,4 +107,7 @@ proof -
   thus ?thesis unfolding ito_Z_def .
 qed
 
+
+(*<*)
 end
+(*>*)

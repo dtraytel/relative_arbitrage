@@ -1,5 +1,12 @@
 section \<open>Stacking a mass sequence into consecutive intervals\<close>
 
+(*<*)
+theory Stacking_Intervals
+  imports "HOL-Probability.Probability"
+begin
+
+(*>*)
+
 text \<open>
   Layer 4 of the Skorokhod representation development (open task 25, needed by
   Lemma 2.3 of arXiv:2512.17702).
@@ -19,11 +26,6 @@ text \<open>
   \<open>[0, suminf p)\<close>. Nothing here is probabilistic, and nothing depends on
   stochastic integration (open task 15).
 \<close>
-
-theory Stacking_Intervals
-  imports "HOL-Probability.Probability"
-begin
-
 subsection \<open>Partial sums and the slabs they delimit\<close>
 
 definition psum :: "(nat \<Rightarrow> real) \<Rightarrow> nat \<Rightarrow> real" where
@@ -132,4 +134,7 @@ next
   ultimately have "x \<in> slab p j" unfolding slab_def by simp
   thus "x \<in> (\<Union>n. slab p n)" by (rule UN_I[OF UNIV_I])qed
 
+
+(*<*)
 end
+(*>*)

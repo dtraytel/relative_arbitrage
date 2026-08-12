@@ -1,18 +1,20 @@
 section \<open>From dyadic moduli to a H\"older bound\<close>
 
+(*<*)
+theory Holder_Interpolation
+  imports Modulus_Tails
+begin
+
+(*>*)
+
 text \<open>
-  The bridge from \<open>modulus_of_good_path\<close> (Modulus\_Tails) to the compact
+  The bridge from \<open>modulus_of_good_path\<close> (@{theory Path_Space_Tightness.Modulus_Tails}) to the compact
   H\"older balls of \<open>Path_Space\<close>: a path whose modulus at every dyadic scale
   \<open>1/2^m\<close>, \<open>m \<ge> n\<close>, is bounded by \<open>E * 2 powr (-g m)\<close> satisfies a global
   H\"older-\<open>g\<close> bound with a constant explicit in \<open>(E, g, n, T)\<close>. Small gaps use
   the matching dyadic level; large gaps telescope over an arithmetic grid of
   mesh below \<open>1/2^n\<close>.
 \<close>
-
-theory Holder_Interpolation
-  imports Modulus_Tails
-begin
-
 subsection \<open>The matching dyadic level of a small gap\<close>
 
 lemma exists_dyadic_level:
@@ -306,4 +308,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

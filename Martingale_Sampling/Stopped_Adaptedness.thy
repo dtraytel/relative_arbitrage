@@ -1,16 +1,18 @@
-(*
-  Title:   Stopped_Adaptedness.thy
-  Content: A continuous adapted process stopped at a stopping time is adapted.
 
-  This discharges the hypothesis stopped_adapted of theorem optional_stopping
-  (Optional_Sampling.thy).
-*)
 
+(*<*)
 theory Stopped_Adaptedness
   imports Optional_Sampling
 begin
 
 
+(*>*)
+
+text \<open>
+  A continuous adapted process stopped at a stopping time is adapted.
+
+    This discharges the hypothesis \<open>stopped_adapted\<close> of theorem \<open>optional_stopping\<close>
+    (\<open>Optional_Sampling\<close>.thy).\<close>
 section \<open>The stopped process is adapted\<close>
 
 text \<open>This is the hypothesis stopped\_adapted of the optional stopping
@@ -267,4 +269,7 @@ proof -
   qed
 qed
 
+
+(*<*)
 end
+(*>*)

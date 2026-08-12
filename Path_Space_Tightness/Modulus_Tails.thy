@@ -1,18 +1,20 @@
 section \<open>The uniform modulus-of-continuity tail bound\<close>
 
+(*<*)
+theory Modulus_Tails
+  imports Increment_Tails Dyadic_Chaining
+begin
+
+(*>*)
+
 text \<open>
   Combine the per-level dyadic tail bounds (from Eq. (2.7) via
-  \<open>Increment_Tails\<close>) with the deterministic chaining of \<open>Dyadic_Chaining\<close>
+  @{theory Path_Space_Tightness.Increment_Tails}) with the deterministic chaining of @{theory Path_Space_Tightness.Dyadic_Chaining}
   into the quantitative tail bound on the modulus of continuity. Both the
   modulus threshold and the exceptional probability are explicit in
   \<open>(C, T, \<gamma>, n)\<close> only --- uniformity over the family of admissible laws is
   exactly what tightness in Lemma 2.2 of arXiv:2512.17702 consumes.
 \<close>
-
-theory Modulus_Tails
-  imports Increment_Tails Dyadic_Chaining
-begin
-
 subsection \<open>The bad event at one dyadic level\<close>
 
 text \<open>
@@ -456,4 +458,7 @@ proof -
   thus ?thesis by (simp add: dist_real_def)
 qed
 
+
+(*<*)
 end
+(*>*)
