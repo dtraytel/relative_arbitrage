@@ -375,6 +375,79 @@ proof -
     using prob' sets_pair_law_of start' cov' mgX' mgC' by blast
 qed
 
+subsection \<open>The capped value dominates the capped uncapped value\<close>
+
+text \<open>Restricting a member of the uncapped class to \<open>[0,T]\<close> gives a competitor
+  for @{const exit_val} whose exit time is the uncapped one capped at \<open>T\<close>.
+  Hence \<open>min (v, T) \<le> v\<^sub>T\<close>, one half of the identification of the two value
+  functions.\<close>
+
+theorem iexit_val_cap_le:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 \<le> T" and Kc: "closed K"
+  shows "min (iexit_val k L K x) (ennreal T) \<le> exit_val k L T K x"
+proof -
+  have step: "min (ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
+      \<le> exit_val k L T K x"
+    if P: "P \<in> iexit_class k L x" for P :: "('n pairpath) measure"
+  proof -
+    let ?Q = "pair_law_of T (pcut T) P"
+    let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    have Q: "?Q \<in> exit_class k L T x" by (rule iexit_class_pcut[OF T P])
+    have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B"
+      by (rule ipcut_measurable[OF T iexit_class_sets[OF P]])
+    have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
+        \<in> borel_measurable ?B"
+      by (rule pexit_path_measurable[OF T Kc refl])
+    have "ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (pcut T \<omega> t)))"
+      unfolding pair_law_of_def
+    proof (rule ess_inf_time_distr[OF phim])
+      fix c :: ennreal
+      show "{\<omega> \<in> space ?B. c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?B"
+        using taum by measurable
+    qed
+    also have "\<dots> = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+      by (simp add: pexit_pcut)
+    also have "\<dots> = ess_inf_enn P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
+      by (rule ess_inf_enn_ennreal[symmetric])
+    also have "\<dots> = ess_inf_enn P
+        (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
+      by (simp add: iexit_cap[OF T])
+    finally have eq: "ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+        = ess_inf_enn P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))" .
+    have "min (ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
+        \<le> ess_inf_enn P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
+      by (rule ess_inf_enn_min_const)
+    also have "\<dots> = ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+      using eq by simp
+    also have "\<dots> \<le> exit_val k L T K x"
+      unfolding exit_val_def using Q by (intro Sup_upper) blast
+    finally show ?thesis .
+  qed
+  show ?thesis
+  proof (cases "ennreal T \<le> exit_val k L T K x")
+    case True
+    then show ?thesis using min.cobounded2 order_trans by blast
+  next
+    case False
+    then have lt: "exit_val k L T K x < ennreal T" by simp
+    have "iexit_val k L K x \<le> exit_val k L T K x"
+      unfolding iexit_val_def
+    proof (rule Sup_least)
+      fix v assume "v \<in> (\<lambda>Q. ess_inf_enn Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t))))
+          ` iexit_class k L x"
+      then obtain P :: "('n pairpath) measure"
+        where P: "P \<in> iexit_class k L x"
+          and v: "v = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))" by blast
+      have "min v (ennreal T) \<le> exit_val k L T K x" using step[OF P] v by simp
+      then show "v \<le> exit_val k L T K x"
+        using lt by (simp add: min_def split: if_splits)
+    qed
+    then show ?thesis using min.cobounded1 order_trans by blast
+  qed
+qed
+
 (*<*)
 end
 (*>*)
