@@ -448,6 +448,80 @@ proof -
   qed
 qed
 
+subsection \<open>The converse, from an extension of a capped law\<close>
+
+text \<open>The other half reduces to a single construction: every member of the
+  horizon-\<open>T\<close> class is the cut of a member of the uncapped class.  Given that,
+  the uncapped exit time dominates the capped one on the extension, and the
+  inequality follows.  The construction itself is an iterated application of
+  @{thm [source] exit_class_pglue_law}, whose continuation may be taken with
+  covariation the identity by @{thm [source] mat_1_in_sconstraint}.\<close>
+
+theorem iexit_val_ge_of_extension:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 \<le> T" and Kc: "closed K"
+    and ext: "\<And>Q :: ('n pairpath) measure. Q \<in> exit_class k L T x \<Longrightarrow>
+      \<exists>P \<in> iexit_class k L x. pair_law_of T (pcut T) P = Q"
+  shows "exit_val k L T K x \<le> iexit_val k L K x"
+  unfolding exit_val_def
+proof (rule Sup_least)
+  fix w assume "w \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+      ` exit_class k L T x"
+  then obtain Q :: "('n pairpath) measure"
+    where Q: "Q \<in> exit_class k L T x"
+      and w: "w = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
+  obtain P :: "('n pairpath) measure"
+    where P: "P \<in> iexit_class k L x" and cut: "pair_law_of T (pcut T) P = Q"
+    using ext[OF Q] by blast
+  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B"
+    by (rule ipcut_measurable[OF T iexit_class_sets[OF P]])
+  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable ?B"
+    by (rule pexit_path_measurable[OF T Kc refl])
+  have "w = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (pcut T \<omega> t)))"
+    unfolding w cut[symmetric] pair_law_of_def
+  proof (rule ess_inf_time_distr[OF phim])
+    fix c :: ennreal
+    show "{\<omega> \<in> space ?B. c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?B"
+      using taum by measurable
+  qed
+  also have "\<dots> = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+    by (simp add: pexit_pcut)
+  also have "\<dots> = ess_inf_enn P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
+    by (rule ess_inf_enn_ennreal[symmetric])
+  also have "\<dots> \<le> ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+    by (rule ess_inf_enn_mono) (simp add: pexit_le_iexit[OF T])
+  also have "\<dots> \<le> iexit_val k L K x"
+    unfolding iexit_val_def using P by (intro Sup_upper) blast
+  finally show "w \<le> iexit_val k L K x" .
+qed
+
+subsection \<open>The two value functions agree once the horizon does not bind\<close>
+
+text \<open>The hypothesis \<open>exit_val k L T K x < ennreal T\<close> is what the a priori
+  bound \<open>exit_val_le_ball_bound\<close> supplies for a bounded \<open>K\<close> and a horizon
+  above \<open>rK\<^sup>2 / (n - k)\<close>: the capped value is then strictly below the cap.  With both halves, the two value functions coincide, and every
+  statement about @{const exit_val} is a statement about the value function of
+  Eq. (1.6) as the paper writes it.\<close>
+
+theorem iexit_val_eq_of_extension:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 \<le> T" and Kc: "closed K"
+    and nobind: "exit_val k L T K x < ennreal T"
+    and ext: "\<And>Q :: ('n pairpath) measure. Q \<in> exit_class k L T x \<Longrightarrow>
+      \<exists>P \<in> iexit_class k L x. pair_law_of T (pcut T) P = Q"
+  shows "iexit_val k L K x = exit_val k L T K x"
+proof (rule antisym)
+  have le: "min (iexit_val k L K x) (ennreal T) \<le> exit_val k L T K x"
+    by (rule iexit_val_cap_le[OF T Kc])
+  show "iexit_val k L K x \<le> exit_val k L T K x"
+    using le nobind by (simp add: min_def split: if_splits)
+next
+  show "exit_val k L T K x \<le> iexit_val k L K x"
+    by (rule iexit_val_ge_of_extension[OF T Kc ext])
+qed
+
 (*<*)
 end
 (*>*)
