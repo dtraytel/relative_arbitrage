@@ -4431,7 +4431,7 @@ qed
 section \<open>The supersolution half: skew-symmetric covariance fields\<close>
 
 text \<open>The supersolution inequality is an essential-infimum statement, so it
-  needs pathwise control.  The paper (\<section>3.2, Case 1) gets it from a
+  needs pathwise control.  The paper (\<open>\<section>\<close>3.2, Case 1) gets it from a
   covariance field whose columns are \<open>S\<^sub>i \<nabla>\<phi>(y)\<close> with \<open>S\<^sub>i\<close> skew-symmetric:
   the field annihilates the gradient of the test function along the path,
   so no stochastic integral appears.  Here the field is fed to an Euler
@@ -12406,7 +12406,7 @@ text \<open>The region version of the almost-sure growth statement, carrying
   two quadratic packages against one field and one limit member: the
   weak-limit transfer serves every vanishing open event of a single
   member simultaneously, so both growth directions hold together.  For
-  the tangential field with \<open>\<pm>(2(x-y\<^sub>0), 2\<cdot>1)\<close> this pins
+  the tangential field with \<open>\<plusminus>(2(x-y\<^sub>0), 2\<cdot>1)\<close> this pins
   \<open>|X\<^sub>t - y\<^sub>0|\<^sup>2\<close> to the deterministic line \<open>|x - y\<^sub>0|\<^sup>2 + (n-1) t\<close>
   while the path stays in the region.\<close>
 
@@ -12715,7 +12715,7 @@ text \<open>The unclamped tangential field is admissible everywhere: even
   where the guarded radial is short, its square keeps a full
   \<open>(n-1)\<close>-dimensional unit eigenspace, and on the region where the guard
   is inactive it kills the radial exactly.  Feeding the two-quadratic
-  limit theorem with \<open>\<pm>(2(x-y\<^sub>0), 2\<cdot>1)\<close> pins the squared distance to
+  limit theorem with \<open>\<plusminus>(2(x-y\<^sub>0), 2\<cdot>1)\<close> pins the squared distance to
   \<open>y\<^sub>0\<close> to the deterministic line \<open>|x-y\<^sub>0|\<^sup>2 + (CARD('n)-1) t\<close> while the
   path stays in the region, so exit times of concentric balls are
   deterministic, as used in Example 3.1's lower bound.\<close>

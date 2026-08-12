@@ -1437,7 +1437,7 @@ text \<open>The martingale property \<open>martingale_bmX\<close> above, togethe
   section, assembles into an instance of \<open>sufficiently_volatile_market\<close>
   from Volatile\_Market; the concrete instantiation, for the
   continuous modification of the market, is carried out in
-  Brownian_Continuous.thy.\<close>
+  \<open>Brownian_Continuous\<close>.thy.\<close>
 
 
 

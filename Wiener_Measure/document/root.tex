@@ -1,0 +1,53 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Wiener Measure as a Projective Limit}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  Brownian motion is constructed in Isabelle/HOL as a measure on the space of
+  real-valued functions of time, together with a continuous modification.
+
+  The construction is the classical one.  The Gaussian increment measure of a
+  given variance is defined, with the degenerate variance giving a point
+  mass, and its moments and convolution law are established, the latter both
+  as a pushforward and in iterated-integral form.  Finite-dimensional
+  distributions are then pushforwards of finite products of independent
+  increment measures under cumulative-sum maps, and projectivity of that
+  family reduces to merging two adjacent increments, that is, to the
+  convolution law.  Wiener measure is the projective limit, obtained from the
+  Daniell--Kolmogorov theorem already available in \texttt{HOL-Probability}.
+  Its increments are shown independent and Gaussian, and the fourth moment
+  $\mathbb{E}\,|B_t - B_s|^{4} = 3\,(t-s)^{2}$ is computed.
+
+  That moment bound discharges the hypothesis of the Kolmogorov--Chentsov
+  theorem from the Archive entry of the same name, which yields a modification
+  of the coordinate process with continuous paths: Brownian motion in the
+  usual sense.  See Karatzas and Shreve~\cite{KaratzasShreve} for the
+  textbook account.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

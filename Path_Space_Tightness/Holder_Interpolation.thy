@@ -23,7 +23,7 @@ proof -
   have ex: "\<exists>k. 1 / 2 ^ Suc k \<le> d"
   proof -
     obtain B where B: "((1::real)/2) ^ B < d"
-      using arch_pow_inv[OF d0, of "1/2"] by auto
+      using reals_power_lt_ex[OF d0, of "2"] by auto
     have h: "(2::real) ^ B \<le> 2 ^ Suc B" by simp
     have "(1::real) / 2 ^ Suc B \<le> 1 / 2 ^ B"
       using h by (intro divide_left_mono) simp_all

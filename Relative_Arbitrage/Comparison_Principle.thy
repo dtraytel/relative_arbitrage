@@ -907,7 +907,7 @@ text \<open>\<open>superjet_local_max\<close> introduces a strictly convex corre
   \<open>(\<delta>/2) * norm k\<^sup>2\<close>, so the matrix reaching the operator is \<open>X + \<delta> I\<close>
   rather than \<open>X\<close>. Removing \<open>\<delta>\<close> passes to closed second-order jets via the
   envelopes: the two envelope inequalities sandwich the sharp one, and
-  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (Operator_Envelopes.thy) show the
+  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (\<open>Operator_Envelopes\<close>.thy) show the
   envelope-free notions already imply the envelope ones on an open
   \<open>\<Omega> \<subseteq> K\<close>.\<close>
 
@@ -1094,8 +1094,8 @@ text \<open>At \<open>p = 0\<close> the two envelopes disagree: \<open>ell_op_ls
 subsection \<open>The dichotomy the side condition forces on the doubling\<close>
 
 text \<open>In the doubling, the shared gradient at the maximising pair
-  \<open>(x\<hat>, y\<hat>)\<close> of \<open>\<Phi>(x,y) = u x - w y - (\<alpha>/2) \<bar>x - y\<bar>\<^sup>2\<close> is
-  \<open>p = \<alpha> (x\<hat> - y\<hat>)\<close>, so \<open>p \<noteq> 0\<close> means the maximising pair is off the
+  \<open>(x', y')\<close> of \<open>\<Phi>(x,y) = u x - w y - (\<alpha>/2) \<bar>x - y\<bar>\<^sup>2\<close> is
+  \<open>p = \<alpha> (x' - y')\<close>, so \<open>p \<noteq> 0\<close> means the maximising pair is off the
   diagonal. For \<open>\<alpha> \<noteq> 0\<close> the gradient vanishes precisely on the diagonal.\<close>
 
 lemma doubling_grad_zero_iff:
@@ -1160,7 +1160,7 @@ subsection \<open>The penalty estimate\<close>
 
 text \<open>Every Crandall-Ishii comparison argument needs the penalty term at the
   maximising pair to be bounded, hence to vanish as \<open>\<alpha> \<rightarrow> \<infinity>\<close>, forcing
-  \<open>x\<hat>\<close> and \<open>y\<hat>\<close> together and driving the doubled maximum to the maximum of
+  \<open>x'\<close> and \<open>y'\<close> together and driving the doubled maximum to the maximum of
   \<open>u - w\<close>. The proof compares \<open>\<Phi>\<close> at the maximiser against \<open>\<Phi>\<close> at a
   diagonal point \<open>(z,z)\<close>, where the penalty vanishes, bounding the penalty
   at the maximiser by the gap between \<open>u(z) - w(z)\<close> and an upper bound for
@@ -1185,7 +1185,7 @@ qed
 
 text \<open>In the form actually used: for \<open>\<alpha> > 0\<close> the squared distance between
   the two components of the maximiser is \<open>O(1/\<alpha>)\<close>, with an explicit
-  constant, driving \<open>x\<hat> - y\<hat> \<rightarrow> 0\<close>.\<close>
+  constant, driving \<open>x' - y' \<rightarrow> 0\<close>.\<close>
 
 corollary doubling_dist_bound:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1346,7 +1346,7 @@ qed
 subsection \<open>The components of the maximiser merge, with no subsequences\<close>
 
 text \<open>Because \<open>doubling_dist_bound\<close> comes with an explicit constant,
-  \<open>x\<hat>\<^sub>\<alpha> - y\<hat>\<^sub>\<alpha> \<rightarrow> 0\<close> is a sandwich between \<open>0\<close> and \<open>2D/\<alpha>\<close>, needing
+  \<open>x'\<^sub>\<alpha> - y'\<^sub>\<alpha> \<rightarrow> 0\<close> is a sandwich between \<open>0\<close> and \<open>2D/\<alpha>\<close>, needing
   neither compactness of \<open>K\<close> nor a subsequence.\<close>
 
 lemma tendsto_const_divide_at_top:
@@ -1536,7 +1536,7 @@ qed
 subsection \<open>Existence of the maximising pair\<close>
 
 text \<open>Every doubling lemma above takes the maximising property of
-  \<open>(x\<hat>, y\<hat>)\<close> as a hypothesis; on a compact \<open>K\<close> with continuous \<open>u\<close> and
+  \<open>(x', y')\<close> as a hypothesis; on a compact \<open>K\<close> with continuous \<open>u\<close> and
   \<open>w\<close> it follows from attainment of a supremum by a continuous function on
   the compact product \<open>K \<times> K\<close>.\<close>
 
@@ -1664,7 +1664,7 @@ qed
 subsection \<open>Discharging the remaining bare hypothesis of the penalty estimate\<close>
 
 text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> carry a bare
-  hypothesis \<open>u x\<hat> - w y\<hat> \<le> C\<close>; on a compact \<open>K\<close> with continuous data it
+  hypothesis \<open>u x' - w y' \<le> C\<close>; on a compact \<open>K\<close> with continuous data it
   comes from the same attainment argument as the maximiser itself.\<close>
 
 lemma doubling_upper_bound_exists:
@@ -1701,7 +1701,7 @@ qed
 text \<open>Combining the two attainment results with the penalty estimate: on a
   compact \<open>K\<close> with continuous data the doubling produces a maximising pair
   whose penalty is bounded by an \<open>\<alpha>\<close>-independent constant, and whose two
-  components are within \<open>O(1/\<sqrt>\<alpha>)\<close> of each other.\<close>
+  components are within \<open>O(1/\<surd>\<alpha>)\<close> of each other.\<close>
 
 theorem doubling_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -1821,7 +1821,7 @@ text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<c
 
 subsection \<open>The jet hypothesis only ever needs one side\<close>
 
-text \<open>\<open>superjet_local_max\<close> (Sup_Convolution) only uses one side of its
+text \<open>\<open>superjet_local_max\<close> (\<open>Sup_Convolution\<close>) only uses one side of its
   \<open>tendsto\<close> hypothesis; the diagonal branch of Theorem 4.2(a) supplies only
   an upper bound on the increment of \<open>B = supconv (-w) \<epsilon>\<close>. This
   subsection restates the chain with a one-sided hypothesis;
@@ -2339,7 +2339,7 @@ text \<open>Symmetry of the corrected matrices, needed by the jet test function:
   transposition is additive entrywise, so both directions of the correction
   preserve symmetry.\<close>
 
-text \<open>The two producers: an Alexandrov jet of \<open>\<theta> u\<close> at \<open>x\<hat>\<close> with data
+text \<open>The two producers: an Alexandrov jet of \<open>\<theta> u\<close> at \<open>x'\<close> with data
   \<open>(p, X)\<close> gives, for every \<open>\<delta> > 0\<close>, the uniform bound
   \<open>F(p, X + \<delta> I) \<le> \<theta>\<close>; dually on the supersolution side. These are the
   two families \<open>env_strict_contradiction_of_shifts\<close> consumes.\<close>
@@ -2589,7 +2589,7 @@ text \<open>Below \<open>sums_matrix_inequality\<close> the \<open>psd\<close> c
   the quadratic penalty, which for general \<open>P\<close> is only asymptotic, and this
   lemma supplies it. Writing \<open>e k = fst k - snd k\<close>, the doubled penalty
   \<open>z \<mapsto> P (fst z - snd z)\<close> has gradient \<open>(G, -G)\<close> and Hessian
-  \<open>k \<mapsto> (Z (e k), -Z (e k))\<close> at \<open>z\<hat>\<close>, with numerator collapsing to
+  \<open>k \<mapsto> (Z (e k), -Z (e k))\<close> at \<open>z'\<close>, with numerator collapsing to
   \<open>R (e k)\<close>. Although \<open>e\<close> is not injective near \<open>0\<close>, the limit survives
   because \<open>e\<close> is 2-Lipschitz and kills only the diagonal, where \<open>R 0 = 0\<close>.\<close>
 
@@ -4684,7 +4684,7 @@ qed
 subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
 
 text \<open>\<open>comparison_env_from_jets\<close> consumes \<open>psd (Ym - Xm)\<close>. The theorem
-  on sums (\<open>sums_matrix_inequality\<close>, Sup_Convolution.thy) delivers the
+  on sums (\<open>sums_matrix_inequality\<close>, \<open>Sup_Convolution\<close>.thy) delivers the
   ordering between the two diagonal blocks. Writing
   \<open>X v = fst (W (v,0)) + \<alpha> v\<close> and
   \<open>Y v = - (snd (W (0,v)) + \<alpha> v)\<close> (negated since the supersolution
@@ -5048,15 +5048,15 @@ lemma shifted_centre_value:
 text \<open>The slice lemmas applied to the perturbed functional give jets of
   \<open>f - \<delta>\<parallel>\<cdot> - c\<parallel>\<^sup>2\<close>; since a quadratic has an exact expansion, this
   transfers a jet of \<open>f\<close> exactly, leaving the remainder unchanged and
-  shifting the gradient and Hessian by \<open>2\<delta>(x\<hat> - c)\<close> and \<open>2\<delta> I\<close>. The
+  shifting the gradient and Hessian by \<open>2\<delta>(x' - c)\<close> and \<open>2\<delta> I\<close>. The
   gradient shift, bounded by \<open>2\<delta>\<rho>\<close>, does not vanish for fixed \<open>\<delta>\<close>.\<close>
 
 subsection \<open>The antisymmetric linear tilt of the doubling\<close>
 
 text \<open>An antisymmetric linear tilt of the doubling does not bound the
-  common gradient \<open>q = \<alpha>(x\<hat>-y\<hat>) + \<eta> e\<close> away from zero: comparing the
+  common gradient \<open>q = \<alpha>(x'-y') + \<eta> e\<close> away from zero: comparing the
   tilted functional at the maximiser against the diagonal shows the
-  penalty bound acquires an \<open>\<eta>\<parallel>x\<hat>-y\<hat>\<parallel>\<close> term, degrading by exactly what
+  penalty bound acquires an \<open>\<eta>\<parallel>x'-y'\<parallel>\<close> term, degrading by exactly what
   the tilt gains.\<close>
 
 lemma antisym_tilt_grad_lower_bound:
@@ -5160,15 +5160,15 @@ proof -
 qed
 
 text \<open>This delivers precisely the input of \<open>sums_psd_at_interior_max\<close>: a
-  point \<open>z\<hat>\<close>, a symmetric bounded-linear \<open>W\<close>, and the second-order
-  expansion of the doubled functional at \<open>z\<hat>\<close>. With
+  point \<open>z'\<close>, a symmetric bounded-linear \<open>W\<close>, and the second-order
+  expansion of the doubled functional at \<open>z'\<close>. With
   \<open>supconv_dominates_shift\<close>, transferring the jet back to \<open>u\<close> and
   \<open>w\<close>, and \<open>comparison_env_from_jets\<close>, this completes the chain of
   Theorem 4.2(a). Jensen's lemma returns a global maximum of the tilted
   functional \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, with \<open>norm p \<le> dd\<close>;
   converting it to the interior-max form needed only requires restricting
-  to a ball inside \<open>cball \<xi> r\<close> around \<open>z\<hat>\<close>, permitted since
-  \<open>dist z\<hat> \<xi> < \<rho> < r\<close>.\<close>
+  to a ball inside \<open>cball \<xi> r\<close> around \<open>z'\<close>, permitted since
+  \<open>dist z' \<xi> < \<rho> < r\<close>.\<close>
 
 
 subsection \<open>From Jensen's tilted global maximum to an interior maximum\<close>
@@ -5179,7 +5179,7 @@ text \<open>Jensen's lemma returns a global maximum of the tilted functional
   splits as \<open>fst p \<cdot> fst z + snd p \<cdot> snd z\<close> and absorbs into the two
   summands \<open>a\<close> and \<open>b\<close>, leaving the doubled block structure intact, so
   the global maximum restricts to an interior maximum on a ball of radius
-  \<open>r - dist z\<hat> \<xi> > 0\<close> around \<open>z\<hat>\<close>.\<close>
+  \<open>r - dist z' \<xi> > 0\<close> around \<open>z'\<close>.\<close>
 
 lemma tilt_absorb:
   fixes a b :: "real^'n::finite \<Rightarrow> real"
@@ -5250,7 +5250,7 @@ text \<open>The linearity and symmetry of the two diagonal blocks that
   \<open>sums_psd_at_interior_max\<close> needs follow from the Alexandrov jet's
   \<open>bounded_linear W\<close> and \<open>u \<cdot> W u' = u' \<cdot> W u\<close>, via
   \<open>linear_slice_fst\<close> / \<open>linear_slice_snd\<close> / \<open>sym_slice_fst\<close> /
-  \<open>sym_slice_snd\<close> (Sup_Convolution.thy).\<close>
+  \<open>sym_slice_snd\<close> (\<open>Sup_Convolution\<close>.thy).\<close>
 
 lemma linear_of_bounded_linear_prod:
   fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
@@ -5346,7 +5346,7 @@ qed
 subsection \<open>Transferring the jet back from the sup-convolution to \<open>u\<close>\<close>
 
 text \<open>The viscosity hypotheses concern \<open>u\<close> and \<open>w\<close>, not the
-  sup-convolutions. \<open>supconv_dominates_shift\<close> (Sup_Convolution.thy)
+  sup-convolutions. \<open>supconv_dominates_shift\<close> (\<open>Sup_Convolution\<close>.thy)
   bridges them: if the sup-convolution at \<open>x\<close> is attained at \<open>y\<^sub>s\<close>,
   increments of \<open>u\<close> at \<open>y\<^sub>s\<close> are dominated by increments of
   \<open>supconv u \<epsilon>\<close> at \<open>x\<close> with the same increment vector \<open>k\<close>. A local
@@ -5495,7 +5495,7 @@ subsection \<open>Symmetry of the two block matrices\<close>
 
 text \<open>The symmetry \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close> needed by
   \<open>comparison_env_from_jets\<close> follows from the jet: \<open>matrix_of_symmetric\<close>
-  (Sup_Convolution.thy) converts an abstract symmetric linear map into a
+  (\<open>Sup_Convolution\<close>.thy) converts an abstract symmetric linear map into a
   symmetric matrix, fed by the block lemmas above.\<close>
 
 lemma transpose_matrix_block_fst:
@@ -5556,13 +5556,13 @@ qed
 
 subsection \<open>The gradient alignment\<close>
 
-text \<open>\<open>comparison_env_from_jets\<close> needs the jets of \<open>\<theta> u\<close> at \<open>x\<hat>\<close> and of
-  \<open>-w\<close> at \<open>y\<hat>\<close> to share a common gradient \<open>p\<close> (with sign \<open>p\<close>, \<open>-p\<close>).
-  Since the penalty \<open>-(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> contributes \<open>\<mp>\<alpha>(x - y)\<close> to the
+text \<open>\<open>comparison_env_from_jets\<close> needs the jets of \<open>\<theta> u\<close> at \<open>x'\<close> and of
+  \<open>-w\<close> at \<open>y'\<close> to share a common gradient \<open>p\<close> (with sign \<open>p\<close>, \<open>-p\<close>).
+  Since the penalty \<open>-(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> contributes \<open>\<minusplus>\<alpha>(x - y)\<close> to the
   two blocks, this holds exactly when the doubled gradient
   \<open>q\<^sub>1 + q\<^sub>2 = 0\<close>, which is automatic since \<open>q = 0\<close> at an interior
   maximum (\<open>second_order_interior_max\<close>). This gives the common gradient
-  \<open>p = \<alpha>(x\<hat> - y\<hat>)\<close>, whose nonvanishing \<open>doubling_grad_nonzero\<close>
+  \<open>p = \<alpha>(x' - y')\<close>, whose nonvanishing \<open>doubling_grad_nonzero\<close>
   establishes.\<close>
 
 theorem gradient_vanishes_at_interior_max:
@@ -5597,7 +5597,7 @@ proof -
     using expPsi unfolding q0 by simp
 qed
 
-text \<open>With \<open>q = 0\<close>, the first block's gradient is \<open>\<alpha>(x\<hat> - y\<hat>)\<close> and the
+text \<open>With \<open>q = 0\<close>, the first block's gradient is \<open>\<alpha>(x' - y')\<close> and the
   second block's is its negative, so a single \<open>p\<close> serves both jets, as
   \<open>comparison_env_from_jets\<close> requires.\<close>
 
@@ -5611,7 +5611,7 @@ lemma common_gradient_split:
 subsection \<open>Theorem 4.2(a), end to end\<close>
 
 text \<open>Every matrix hypothesis is derived from the Alexandrov data of the
-  doubled functional, with shared gradient \<open>\<alpha>(x\<hat> - y\<hat>)\<close> on both sides.
+  doubled functional, with shared gradient \<open>\<alpha>(x' - y')\<close> on both sides.
   What remains as hypotheses: the two viscosity properties, the scaling
   parameter, the interior maximum of the doubled functional with its
   jet, the off-diagonal condition, and the two jets of \<open>\<theta> u\<close> and
@@ -5663,7 +5663,7 @@ proof -
 qed
 
 text \<open>The same, with the off-diagonal condition traded for the statement
-  that \<open>x\<hat>\<close> fails to maximise \<open>u - w\<close> over \<open>K\<close>; by the gradient
+  that \<open>x'\<close> fails to maximise \<open>u - w\<close> over \<open>K\<close>; by the gradient
   alignment this is the same condition as \<open>p \<noteq> 0\<close>.\<close>
 
 corollary comparison_env_complete_offdiag:
@@ -5718,7 +5718,7 @@ text \<open>The two component jets \<open>comparison_env_complete\<close> takes 
   second fixed changes \<open>(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> by a linear term
   \<open>\<alpha>(x - y) \<cdot> h\<close> plus a quadratic term \<open>(\<alpha>/2)\<bar>h\<bar>\<^sup>2\<close>, exactly, since
   the penalty's Taylor expansion is exact -- the source of both the
-  \<open>\<alpha>(x\<hat> - y\<hat>)\<close> in the gradient and the \<open>+ \<alpha> v\<close> in the Hessian block.\<close>
+  \<open>\<alpha>(x' - y')\<close> in the gradient and the \<open>+ \<alpha> v\<close> in the Hessian block.\<close>
 
 lemma penalty_difference_identity:
   fixes x y h :: "real^'n::finite"
@@ -5775,7 +5775,7 @@ lemma norm_slice_snd:
 
 text \<open>The doubled jet restricts to the first slice: the \<open>b\<close> terms cancel
   since the second argument does not move, the penalty contributes
-  \<open>\<alpha>(x\<hat> - y\<hat>) \<cdot> h\<close> to the gradient and \<open>\<alpha> h\<close> to the Hessian, and
+  \<open>\<alpha>(x' - y') \<cdot> h\<close> to the gradient and \<open>\<alpha> h\<close> to the Hessian, and
   \<open>W\<close> contributes its first diagonal block, exactly the block \<open>X\<close> of
   the theorem on sums.\<close>
 
@@ -5833,9 +5833,9 @@ qed
 text \<open>The same restriction for an arbitrary penalty \<open>P\<close> given by its jet: a
   general \<open>P\<close> has a remainder rather than an exact identity, so the two
   limits are added via \<open>tendsto_add\<close>, since \<open>P(d+h) - P(d)\<close> cancels
-  between them (\<open>d = x\<hat> - y\<hat>\<close>). The resulting jet has gradient
+  between them (\<open>d = x' - y'\<close>). The resulting jet has gradient
   \<open>fst q + G\<close> and Hessian \<open>fst (W (h,0)) + Z h\<close>, the quadratic
-  statement with \<open>\<alpha>(x\<hat> - y\<hat>)\<close> replaced by \<open>G\<close> and \<open>\<alpha> h\<close> by \<open>Z h\<close>.\<close>
+  statement with \<open>\<alpha>(x' - y')\<close> replaced by \<open>G\<close> and \<open>\<alpha> h\<close> by \<open>Z h\<close>.\<close>
 
 theorem doubled_jet_slice_fst_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
@@ -5900,7 +5900,7 @@ qed
 
 text \<open>The mirror image on the second slice: the penalty now moves the
   second argument, so its linear contribution changes sign, giving the
-  gradient of \<open>b\<close> at \<open>y\<hat>\<close> as \<open>q\<^sub>2 - \<alpha>(x\<hat> - y\<hat>)\<close>, while the quadratic
+  gradient of \<open>b\<close> at \<open>y'\<close> as \<open>q\<^sub>2 - \<alpha>(x' - y')\<close>, while the quadratic
   contribution \<open>\<alpha> h\<close> to the Hessian keeps the same sign in both slices
   -- this asymmetry is what makes the two jets share \<open>p\<close> and \<open>-p\<close> while
   both blocks carry \<open>+ \<alpha> v\<close>.\<close>
@@ -6069,7 +6069,7 @@ qed
 
 text \<open>With \<open>q = 0\<close> at the doubled maximum
   (\<open>gradient_vanishes_at_interior_max\<close>) the two gradients become
-  \<open>\<alpha>(x\<hat> - y\<hat>)\<close> and \<open>-\<alpha>(x\<hat> - y\<hat>)\<close>, the shared \<open>p\<close> and \<open>-p\<close> that
+  \<open>\<alpha>(x' - y')\<close> and \<open>-\<alpha>(x' - y')\<close>, the shared \<open>p\<close> and \<open>-p\<close> that
   \<open>comparison_env_complete\<close> requires.\<close>
 
 corollary doubled_jet_slices_at_max:
@@ -6155,7 +6155,7 @@ text \<open>The component jets are no longer hypotheses: they are produced from
   the doubled jet by \<open>doubled_jet_slices_at_max\<close> and matched to their
   matrices by the lemmas above. What remains assumed is the doubled data
   itself -- an interior maximum of
-  \<open>\<theta> u(x) - w(y) - (\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> at \<open>z\<hat> = (x\<hat>, y\<hat>)\<close> with its
+  \<open>\<theta> u(x) - w(y) - (\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> at \<open>z' = (x', y')\<close> with its
   Alexandrov jet -- plus the two viscosity properties and the
   off-diagonal condition.\<close>
 
@@ -6813,7 +6813,7 @@ qed
 subsection \<open>The Hessians at the doubled maximum are two-sidedly bounded\<close>
 
 text \<open>Route (i) needs the perturbed Hessians bounded as the tilt shrinks.
-  \<open>convex_alexandrov\<close> (Sup_Convolution.thy) supplies a Hessian \<open>B\<close> with
+  \<open>convex_alexandrov\<close> (\<open>Sup_Convolution\<close>.thy) supplies a Hessian \<open>B\<close> with
   \<open>0 \<le> k \<bullet> Bk\<close>; combined with \<open>k \<bullet> Wk \<le> 0\<close> from
   \<open>second_order_interior_max\<close>, this pins the Hessian \<open>W = B - cI\<close> at a
   maximum of a semiconvex function between \<open>-c\<close> and \<open>0\<close>.
@@ -12371,7 +12371,7 @@ qed
 
 section \<open>The \<open>max_principle_boundary\<close> interface needs continuity: the raw version is refutable\<close>
 
-text \<open>\<open>max_principle_boundary k L K\<close> (Operator_Envelope_Continuity) as originally
+text \<open>\<open>max_principle_boundary k L K\<close> (\<open>Operator_Envelope_Continuity\<close>) as originally
   stated, quantifying over all \<open>u\<close>, \<open>w\<close> satisfying \<open>visc_subsol\<close>/
   \<open>supersol_jet\<close> on \<open>interior K\<close> with no semicontinuity or boundedness,
   is false: those local conditions say nothing about the boundary values
@@ -12495,7 +12495,7 @@ proof
   from mx[OF this] vx vy show False by simp
 qed
 
-text \<open>The repair lives in Operator_Envelope_Continuity: the corrected
+text \<open>The repair lives in \<open>Operator_Envelope_Continuity\<close>: the corrected
   \<open>max_principle_boundary\<close> carries \<open>continuous_on K u\<close> and
   \<open>continuous_on K w\<close>, \<open>max_principle_boundary_attains\<close> records that
   \<open>u-w\<close> then attains its maximum on compact \<open>K\<close>, and \<open>max_principle_le\<close>,
@@ -14027,7 +14027,7 @@ text \<open>Theorem 4.2(b): the two-domain comparison principle.  For \<open>u\<
   Definition 3.1(b) gives \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>; in the interior of \<open>K\<close>,
   Crandall--Ishii and continuity of \<open>F\<close> off \<open>p = 0\<close> force \<open>\<kappa> \<ge> 1\<close>; on
   the boundary, the sign conditions on \<open>u\<close>, \<open>w\<close> force \<open>\<Phi>\<^sup>\<epsilon> \<le> 0\<close>,
-  and \<open>\<kappa> \<uparrow> 1\<close> gives the conclusion.  The two-domain setting makes the
+  and \<open>\<kappa> \<up> 1\<close> gives the conclusion.  The two-domain setting makes the
   supersolution side's ball requirement free, since
   \<open>K \<subseteq> interior K'\<close> gives every point of \<open>K\<close> a neighbourhood inside
   \<open>K'\<close>.\<close>
@@ -14287,7 +14287,7 @@ proof (rule ccontr)
   have M0: "0 < M" unfolding M_def by (rule Mp)
 
   \<comment> \<open>1.  the \<open>w\<close>-side replacement: clipping at \<open>0\<close> costs nothing on \<open>K'\<close>,
-      where \<open>w \<ge> 0\<close> already, and buys \<open>supconv (-w\<tilde>) \<epsilon> \<le> 0\<close> --- which is what
+      where \<open>w \<ge> 0\<close> already, and buys \<open>supconv (-w\<sim>) \<epsilon> \<le> 0\<close> --- which is what
       both the gate and the pinning need\<close>
   define wt where "wt = (\<lambda>y. max (w y) 0)"
   have wtnn: "0 \<le> wt y" for y unfolding wt_def by simp
@@ -14630,7 +14630,7 @@ qed
 text \<open>The paper's Theorem 4.3, in the form Proposition 4.1 consumes: for usc
   bounded \<open>u\<close> and lsc bounded \<open>w\<close> both satisfying Definition 3.1's
   boundary condition on an expandable \<open>K\<close>, \<open>u \<le> w^*\<close> on \<open>K\<close>.  The
-  \<open>\<iota> \<downarrow> 1\<close> limit is taken along \<open>e\<^sub>j = 1/Suc j\<close>.\<close>
+  \<open>\<iota> \<down> 1\<close> limit is taken along \<open>e\<^sub>j = 1/Suc j\<close>.\<close>
 
 theorem comparison_expandable:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
@@ -14747,7 +14747,7 @@ proof -
       by (rule exI[of _ "S x"], rule exI[of _ c]) (use dSx c1 ce uxw in blast)
   qed
 
-  text \<open>Let \<open>e \<downarrow> 0\<close> and read off the upper envelope.\<close>
+  text \<open>Let \<open>e \<down> 0\<close> and read off the upper envelope.\<close>
   have main: "d \<le> usc_env w x" if d: "d < u x" for d
   proof -
     have "\<forall>j. \<exists>p. dist (fst p) x \<le> 1 / real (Suc j) \<and> 1 < snd p

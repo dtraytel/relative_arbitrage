@@ -81,7 +81,7 @@ lemma etime_less_of_open_witness:
 subsection \<open>An open erosion of \<open>A\<close>: a uniformity device\<close>
 
 text \<open>For open \<open>A\<close>, the eroded sets \<open>{z. d < infdist z (-A)}\<close> are open,
-  increase to \<open>A\<close> as \<open>d \<downarrow> 0\<close>, and give a margin \<open>d\<close> that is uniform over all
+  increase to \<open>A\<close> as \<open>d \<down> 0\<close>, and give a margin \<open>d\<close> that is uniform over all
   points of the eroded set. This turns a pointwise perturbation bound into
   one usable with the open-set form of the Portmanteau theorem
   (\<open>liminf Q\<^sub>m(G) \<ge> Q(G)\<close>). \<open>shift_stays_off\<close> needs neither closedness nor

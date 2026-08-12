@@ -1111,7 +1111,7 @@ proof
   qed
 qed
 
-text \<open>Lemma 2.1 in full: together with lemma_2_1_easy, the convexified
+text \<open>Lemma 2.1 in full: together with \<open>lemma_2_1_easy\<close>, the convexified
   constraint set \<open>A\<^sub>k\<close> is wedged between the convex hull of the generator
   set and its closure:
   \<open>conv B\<^sub>k \<subseteq> A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close>, so \<open>A\<^sub>k\<close> is the closed convex hull

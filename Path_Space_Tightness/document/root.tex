@@ -1,0 +1,61 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{The Space of Continuous Paths, and Tightness from Increment Moments}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  Weak convergence of laws of continuous processes needs a Polish state space
+  and a tightness criterion.  This entry supplies both.
+
+  The space $C([0,T],\,'b)$ of continuous paths with the supremum metric is
+  built as a metric space in the set-based form of the
+  \texttt{Standard\_Borel\_Spaces} entry, and shown separable and complete.
+  H\"older balls in it are compact, which is Arzel\`a--Ascoli in the form
+  needed later.  The path map of a stochastic process is measurable into it,
+  so a process has a law on path space; these laws are consistent across
+  horizons.  The continuous mapping theorem and two portmanteau facts are
+  proved for weak convergence of such laws: a closed set of full measure
+  survives a weak limit, and an open set of positive mass survives a weak
+  perturbation.
+
+  The tightness criterion is a moment estimate.  For a martingale whose
+  compensator grows at a controlled rate, second and fourth moments of the
+  increments are bounded on a partition; a dyadic chaining argument turns the
+  fourth-moment bound into a tail bound for the modulus of continuity, and
+  H\"older interpolation converts that into a bound on a H\"older seminorm.
+  Since H\"older balls are compact, the family of laws is tight, hence
+  relatively compact by Prokhorov's theorem from the
+  \texttt{Levy\_Prokhorov\_Metric} entry.
+
+  The fourth-moment estimate is proved without the Burkholder--Davis--Gundy
+  inequality, by iterating Cauchy--Schwarz and the tower property; the
+  resulting constant is smaller than the one the usual route
+  gives~\cite{LaiShkolnikovSoner}.  Billingsley~\cite{Billingsley} is the
+  textbook reference for the tightness argument.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

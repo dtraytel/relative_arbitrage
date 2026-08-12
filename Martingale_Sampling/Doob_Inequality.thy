@@ -291,8 +291,7 @@ qed
 subsection \<open>Doob's \<open>L\<^sup>2\<close> maximal inequality\<close>
 
 text \<open>The weak inequality integrates over the levels to the strong one:
-
-    E[(max of |X_k|, k <= n)^2]  <=  4 E[X_n^2].
+  \<open>E[(MAX k \<le> n. \<bar>X k\<bar>)\<^sup>2] \<le> 4 * E[(X n)\<^sup>2]\<close>.
 
   The level integration is Tonelli's theorem on the product of the
   probability space with lborel, applied to the region

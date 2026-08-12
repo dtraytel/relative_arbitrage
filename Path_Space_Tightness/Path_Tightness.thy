@@ -1360,7 +1360,7 @@ text \<open>
   dyadics (\<open>dyadic_chaining\<close>, any metric space); the anchor sequences
   \<open>danchor k t\<close> are then Cauchy, and \<open>dyadic_ext\<close> takes their limit,
   agreeing with the original path at dyadic points, with the same modulus
-  at every level, continuous on \<open>{0..T}\<close>. Applied \<omega>-wise on the good
+  at every level, continuous on \<open>{0..T}\<close>. Applied pathwise on the good
   event of the projective limit, this builds the continuous modification.
 \<close>
 

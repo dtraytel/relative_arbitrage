@@ -1264,7 +1264,7 @@ proof -
   have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  \<comment> \<open>\<open>stochastic_process\<close> is shadowed by Kolmogorov_Chentsov's homonym;
+  \<comment> \<open>\<open>stochastic_process\<close> is shadowed by \<open>Kolmogorov_Chentsov's\<close> homonym;
       the Martingales one must be qualified by its theory name.\<close>
   have SP: "Stochastic_Process.stochastic_process Q (0::real)
       (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
@@ -5198,7 +5198,7 @@ proof -
     have v0: "0 \<le> v" using uv by simp
     have AB: "A \<in> sets ?B"
       using A SF.subalgebras[OF uv(1)] by (auto simp: subalgebra_def)
-    \<comment> \<open>\<open>adap\<close> has TWO \<And>-bound variables, so an \<open>OF\<close> against it produces
+    \<comment> \<open>\<open>adap\<close> has TWO \<open>\<And>\<close>-bound variables, so an \<open>OF\<close> against it produces
         "multiple unifiers"; let the conclusion drive the instantiation.\<close>
     have phiFm: "\<phi> \<in> FF u \<rightarrow>\<^sub>M ?G u"
     proof (rule phi_filtration_measurable[where T = T])
@@ -12300,7 +12300,7 @@ text \<open>Proving clauses (iii) and (iv) directly for @{const ksemi} runs into
   so any kernel into it is a pointwise limit of countably valued ones.  If
   the semidirect products converge weakly, the glued laws do too, and weak
   closedness finishes --- which needs continuity of the glue and the
-  identity of the two \<sigma>-algebras on the product.\<close>
+  identity of the two \<open>\<sigma>\<close>-algebras on the product.\<close>
 
 lemma second_countable_path_metric:
   "second_countable (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
@@ -12780,7 +12780,7 @@ proof (rule measure_eqI)
   fix A :: "('n pairpath) set"
   assume A: "A \<in> sets (kglue_law r T N Q RR)"
   then have AB: "A \<in> sets ?B" by simp
-  \<comment> \<open>the section of the pulled-back set, one \<omega> at a time\<close>
+  \<comment> \<open>the section of the pulled-back set, one \<open>\<omega>\<close> at a time\<close>
   have sec: "emeasure (RR (N \<omega>)) {\<omega>' \<in> space (RR (N \<omega>)). pglue r T \<omega> \<omega>' \<in> A}
       = emeasure ?S (Pair \<omega> -` (kglue r T N -` A \<inter> space ?P))"
     if w: "\<omega> \<in> space Q" for \<omega>

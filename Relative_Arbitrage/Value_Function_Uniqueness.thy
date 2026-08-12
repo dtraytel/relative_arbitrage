@@ -1,18 +1,21 @@
 section \<open>Theorem 1.1: the value function is the unique viscosity solution\<close>
 
+(*<*)
+theory Value_Function_Uniqueness
+  imports Value_Function_Market Viscosity_Solutions Comparison_Principle
+    Exit_Time_Semicontinuity Deterministic_Radius_Market Value_Function_Viscosity
+begin
+(*>*)
+
+
 text \<open>
   Theorem 1.1 of arXiv:2512.17702 asserts that the value function \<open>v\<close> of
   Eq. (1.6) is the unique bounded upper semicontinuous viscosity solution of
   Eq. (1.9) satisfying the zero boundary condition of Eq. (1.10).  This theory
   joins the two halves of that statement: the viscosity property, proved in
-  Value\_Function\_Market\_Viscosity, and the comparison principle, proved in
-  Comparison\_Principle.  It also derives Example 3.1 in closed form.
+  @{theory Relative_Arbitrage.Value_Function_Viscosity}, and the comparison principle, proved in
+  @{theory Relative_Arbitrage.Comparison_Principle}.  It also derives Example 3.1 in closed form.
 \<close>
-
-theory Value_Function_Uniqueness
-  imports Value_Function_Market Viscosity_Solutions Comparison_Principle
-    Exit_Time_Semicontinuity Deterministic_Radius_Market Value_Function_Viscosity
-begin
 
 theorem theorem_1_1_ball_fragment:
   fixes x0 :: "real^'n::finite" and u :: "real^'n \<Rightarrow> real"
@@ -752,4 +755,6 @@ proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
     unfolding enn2real_ennreal[OF nn] .
 qed
 
+(*<*)
 end
+(*>*)

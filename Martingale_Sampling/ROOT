@@ -16,3 +16,6 @@ session Martingale_Sampling = "HOL-Probability" +
     Sampled_Quadratic_Variation
     Moment_Bounds
     Vitali_Convergence
+  document_files
+    "root.tex"
+    "root.bib"

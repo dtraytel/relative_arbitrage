@@ -1,0 +1,64 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Sup-Convolutions, Alexandrov's Theorem and the Crandall--Ishii Theorem on Sums}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  This entry develops the second-order differentiability theory that
+  underlies comparison principles for viscosity solutions of fully nonlinear
+  degenerate elliptic equations.
+
+  The sup-convolution
+  $u^{\varepsilon}(x) = \sup_{y}\,(u(y) - |x-y|^{2}/2\varepsilon)$
+  and its convex counterpart, the Moreau envelope, are defined and their
+  calculus established: semiconvexity, the proximal map, and the transfer of
+  second-order jets between a function and its envelope.  Subgradients of a
+  finite convex function on a Euclidean space are shown nonempty by a
+  supporting hyperplane to the epigraph, and the proximal map is shown firmly
+  nonexpansive.
+
+  On that basis three classical theorems are proved.  \emph{Rademacher's
+  theorem}: a locally Lipschitz function on a Euclidean space is
+  differentiable almost everywhere, in a scalar and a vector-valued form.
+  \emph{Alexandrov's theorem}: a convex function is twice differentiable
+  almost everywhere; the proof follows Minty's device, applying Rademacher to
+  the resolvent of the subdifferential and transporting the expansion from
+  the Moreau envelope back to the function.  \emph{Jensen's lemma} for
+  semiconvex functions, and the \emph{Crandall--Ishii theorem on sums}: for a
+  local maximum of $u(x)+w(y)$ on a product, second-order jets exist whose
+  Hessians satisfy the block matrix inequality.  The development follows
+  Evans and Gariepy~\cite{EvansGariepy} for the differentiability theorems
+  and the User's Guide of Crandall, Ishii and Lions~\cite{CrandallIshiiLions}
+  for Jensen's lemma and the theorem on sums.
+
+  Nothing in the entry refers to any particular equation; it was extracted
+  from a formalisation of the uniqueness half of a relative-arbitrage
+  problem~\cite{LaiShkolnikovSoner}, where the theorem on sums is what makes
+  comparison for a degenerate elliptic operator work.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

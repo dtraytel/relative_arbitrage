@@ -9,3 +9,6 @@ session Wiener_Measure = "HOL-Probability" +
   theories
     Brownian_Motion
     Brownian_Motion_Continuity
+  document_files
+    "root.tex"
+    "root.bib"

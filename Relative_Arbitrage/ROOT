@@ -43,3 +43,6 @@ session Relative_Arbitrage = Path_Space_Tightness +
     Value_Function_Viscosity
     Comparison_Principle
     Value_Function_Uniqueness
+  document_files
+    "root.tex"
+    "root.bib"

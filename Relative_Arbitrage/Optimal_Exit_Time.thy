@@ -309,7 +309,7 @@ theorem optimal_exit_time_value:
 end
 
 text \<open>Consequently, in the optimal market the value function of Theorem 1.1
-  is exactly the expected exit time, and by ball_relative_arbitrage the
+  is exactly the expected exit time, and by \<open>ball_relative_arbitrage\<close> the
   critical horizon beyond which the gradient strategy is a relative
   arbitrage is \<open>T\<^sup>* = v(x\<^sub>0)\<close> --- the assertion of Example 3.1.\<close>
 

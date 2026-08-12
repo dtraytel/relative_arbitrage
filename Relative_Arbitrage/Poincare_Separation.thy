@@ -30,7 +30,7 @@ section \<open>Elementary matrix algebra, continued\<close>
 
 text \<open>The right-distributivity of \<open>**\<close> over subtraction and the additivity
   of \<open>trace\<close> over subtraction; neither is in this HOL-Analysis, and both are
-  proved exactly like \<open>matrix_vector_mult_diff\<close> in Operator_Continuity.thy.\<close>
+  proved exactly like \<open>matrix_vector_mult_diff\<close> in \<open>Operator_Continuity\<close>.thy.\<close>
 
 lemma matrix_matrix_mult_diff_right:
   fixes A B C :: "real^'n::finite^'n"
@@ -1328,7 +1328,7 @@ section \<open>The objective of Eq. (3.5) in the adapted eigenbasis\<close>
 
 text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^sub>p a)\<close> for
   \<open>a \<succeq> 0\<close> with \<open>ap = 0\<close>, and writing symmetric \<open>M\<^sub>p\<close> as a linear
-  combination of outer products (\<open>trace_Mp\<close> in Operator_Continuity.thy gives the
+  combination of outer products (\<open>trace_Mp\<close> in \<open>Operator_Continuity\<close>.thy gives the
   first fact).  This section carries out the expansion and its weight
   constraints.\<close>
 
@@ -3518,7 +3518,7 @@ qed
 section \<open>Continuity of \<open>F\<close> away from \<open>p = 0\<close>\<close>
 
 text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<close> here,
-  \<open>eq36\<close> in Operator_Envelope_Continuity.thy), as is the general Poincare separation
+  \<open>eq36\<close> in \<open>Operator_Envelope_Continuity\<close>.thy), as is the general Poincare separation
   inequality (\<open>poincare_separation\<close>).  The remaining clause of Lemma 3.1,
   \<open>F\<^sub>* = F\<^sup>* = F\<close> on \<open>(\<real>\<^sup>n \ {0}) \<times> \<S>\<^sup>n\<close>, is continuity of \<open>F\<close> away from
   \<open>p = 0\<close>.  Writing \<open>F(p, M) = -\<onehalf> bracket (n-k) L (M\<^sub>p)\<close> with \<open>M\<close> replaced
@@ -3527,7 +3527,7 @@ text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<c
 
 text \<open>The estimate on \<open>F\<close> itself: for symmetric \<open>M\<close> and \<open>p \<noteq> 0\<close>,
   \<open>p' \<mapsto> F(p', M)\<close> is Lipschitz near \<open>p\<close>.  Combined with \<open>ell_op_M_gap\<close>
-  (Operator_Envelopes.thy), which absorbs the variation of the second argument, both
+  (\<open>Operator_Envelopes\<close>.thy), which absorbs the variation of the second argument, both
   semicontinuous envelopes collapse onto \<open>F\<close> off the origin.\<close>
 
 theorem ell_op_lipschitz_in_p:

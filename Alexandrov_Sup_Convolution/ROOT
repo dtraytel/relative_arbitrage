@@ -6,3 +6,6 @@ session Alexandrov_Sup_Convolution = "HOL-Analysis" +
   "
   theories
     Sup_Convolution
+  document_files
+    "root.tex"
+    "root.bib"

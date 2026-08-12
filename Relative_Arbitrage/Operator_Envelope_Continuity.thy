@@ -132,7 +132,7 @@ section \<open>Eq. (3.6): the envelope upper bound, and the equality\<close>
 text \<open>The upper bound for the envelope.  The nearby matrices \<open>snd w\<close> need not be
   symmetric: the comparison is made against the symmetric \<open>M\<close> using
   \<open>ell_op_M_gap\<close>, and only \<open>M\<close> itself has to be symmetric for
-  \<open>ell_op_le_eq36\<close>.  This mirrors \<open>ell_op_lsc_at_zero\<close> in Operator_Envelopes.thy.\<close>
+  \<open>ell_op_le_eq36\<close>.  This mirrors \<open>ell_op_lsc_at_zero\<close> in \<open>Operator_Envelopes\<close>.thy.\<close>
 
 theorem ell_op_usc_at_zero_le:
   fixes M :: "real^'n::finite^'n"
@@ -491,7 +491,7 @@ text \<open>Theorem 4.2 of the paper reaches its contradiction through Eq. (4.3)
   \<open>F(p\<^sub>\<epsilon>, M\<^sub>\<epsilon>) \<ge> F(p\<^sub>\<epsilon>, N\<^sub>\<epsilon>)\<close>, which is the degenerate ellipticity of \<open>F\<close>:
   adding a positive semidefinite matrix to the Hessian argument can only
   decrease \<open>F\<close>, since \<open>F\<close> is an infimum of \<open>-\<onehalf> tr(M a)\<close> over positive
-  semidefinite \<open>a\<close>.  \<open>ell_op_pointwise_elliptic\<close> (Curvature_Operator.thy)
+  semidefinite \<open>a\<close>.  \<open>ell_op_pointwise_elliptic\<close> (\<open>Curvature_Operator\<close>.thy)
   is the statement for a single \<open>a\<close>; passing to the infimum is what Section 4
   actually uses, and is proved here.\<close>
 
@@ -553,7 +553,7 @@ text \<open>Consequence of the continuity clause, and the reason Section 4 can w
   with the envelope-free operator away from the origin: there the viscosity
   sub- and supersolution inequalities of Definition 3.1 are literally the same
   conditions as the envelope-free ones.  This is the off-origin companion of
-  \<open>ell_op_lsc_at_zero_iff\<close> (Operator_Envelopes.thy), which handles \<open>p = 0\<close>.\<close>
+  \<open>ell_op_lsc_at_zero_iff\<close> (\<open>Operator_Envelopes\<close>.thy), which handles \<open>p = 0\<close>.\<close>
 
 corollary ell_op_lsc_off_zero_iff:
   fixes M :: "real^'n::finite^'n"
@@ -641,16 +641,16 @@ section \<open>Lemma 3.1\<close>
 
 text \<open>Lemma 3.1 consists of:
   \<^item> \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close> always (\<open>ell_op_lsc_le_ell_op\<close>, \<open>ell_op_le_ell_op_usc\<close>,
-    Operator_Envelopes.thy);
-  \<^item> \<open>F\<^sub>*(0, M) = F(0, M)\<close> (\<open>ell_op_lsc_at_zero\<close>, Operator_Envelopes.thy);
+    \<open>Operator_Envelopes\<close>.thy);
+  \<^item> \<open>F\<^sub>*(0, M) = F(0, M)\<close> (\<open>ell_op_lsc_at_zero\<close>, \<open>Operator_Envelopes\<close>.thy);
   \<^item> \<open>F(p, M) = -\<onehalf> bracket (n-k) L M\<^sub>p\<close> for \<open>p \<noteq> 0\<close>, i.e. Eq. (3.5)
-    (\<open>ell_op_eq_half_bracket\<close>, Poincare_Separation.thy);
+    (\<open>ell_op_eq_half_bracket\<close>, \<open>Poincare_Separation\<close>.thy);
   \<^item> \<open>F\<^sup>*(0, M) = eq36_rhs\<close>, i.e. Eq. (3.6) (\<open>eq36\<close>, above);
   \<^item> \<open>F\<^sub>* = F\<^sup>* = F\<close> off the origin (\<open>ell_op_envelopes_eq_off_zero\<close>, above).
 
   The general one-sided Poincare separation inequality
   \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary \<open>p \<noteq> 0\<close> is \<open>poincare_separation\<close>
-  (Poincare_Separation.thy); for \<open>p\<close> an eigenvector it is an equality
+  (\<open>Poincare_Separation\<close>.thy); for \<open>p\<close> an eigenvector it is an equality
   (\<open>eigval_Mp_top_eigenvector\<close>).\<close>
 
 lemma ell_op_lsc_at_zero_eq:

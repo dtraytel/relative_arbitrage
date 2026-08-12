@@ -1,0 +1,70 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{The Relative Arbitrage Problem under Eigenvalue Lower Bounds}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  A formalisation of Theorem 1.1 of Lai, Shkolnikov and
+  Soner~\cite{LaiShkolnikovSoner}.  For a compact $K \subseteq \mathbb{R}^n$
+  and $1 \le k < n$, let $v(x)$ be the supremum, over all martingale laws
+  started at $x$ whose instantaneous covariation has its $k$ smallest
+  eigenvalues bounded below and its largest bounded above, of the essential
+  infimum of the exit time from $K$.  The theorem states that $v$ is the
+  unique bounded upper semicontinuous viscosity solution of the degenerate
+  elliptic equation $F(\nabla v, \nabla^{2} v) = 1$ on $K$, with the zero
+  boundary condition of the paper's Definition 3.1.
+
+  All five clauses are proved.  Finiteness and upper semicontinuity of $v$
+  come from tightness and sequential compactness of the class of admissible
+  laws, which is shown closed under weak limits by carrying the covariation as
+  a second, uniformly Lipschitz path coordinate.  The viscosity property
+  rests on the dynamic programming principle of the paper's Proposition 2.4,
+  which the paper defers to Larsson and Ruf~\cite{LarssonRuf} and which is
+  proved here in full, at a deterministic time and at a stopping time: the
+  lower half by pasting an optimal continuation onto a stopped law, the upper
+  half by conditioning through a regular conditional distribution.  The
+  measurable selection of an optimizer, for which Larsson and Ruf cite
+  Bertsekas and Shreve~\cite{BertsekasShreve}, is proved here by a greedy
+  nested bisection.  Uniqueness is the comparison principle of the paper's
+  Theorem 4.2, built on the Crandall--Ishii theorem on
+  sums~\cite{CrandallIshiiLions}.  Example 3.1, the explicit value on a ball,
+  is derived in closed form for every $k$.
+
+  Two remarks on the statement.  The zero boundary condition is a viscosity
+  condition and not the pointwise identity $v = 0$ on $\partial K$, which is
+  false in general: by the paper's own Lemma 5.3, the cube in $\mathbb{R}^3$
+  with $k = 2$ has $v > 0$ on the open two-dimensional faces of its boundary.
+  And continuity of $v$ is not part of the theorem; uniqueness holds among
+  bounded upper semicontinuous solutions.
+
+  The reusable parts of the development are separate entries: the
+  differentiability theory behind comparison, the construction of Wiener
+  measure, the martingale sampling toolbox, and the path-space tightness
+  machinery.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

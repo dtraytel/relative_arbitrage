@@ -17,7 +17,7 @@ text \<open>A modification agrees with the process almost surely at each fixed
   adaptedness --- and with it the martingale property --- does not transfer
   for free.  What does transfer is
 
-    int_A (X'_j - X'_i) = 0  for A in the natural filtration of X' at i,
+    \<open>int_A\<close> (\<open>X'_j\<close> - \<open>X'_i\<close>) = 0  for A in the natural filtration of X' at i,
 
   because a cylinder event of the modification has almost surely the same
   indicator as the corresponding cylinder event of the process, and cylinders

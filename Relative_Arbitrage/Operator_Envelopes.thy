@@ -2175,7 +2175,7 @@ proof -
   then show ?thesis unfolding usc_env_def by linarith
 qed
 
-text \<open>The limsup bound that Theorem 4.3's \<open>\<iota> \<downarrow> 1\<close> step consumes: a value
+text \<open>The limsup bound that Theorem 4.3's \<open>\<iota> \<down> 1\<close> step consumes: a value
   bounded below along a sequence tending to \<open>x\<close> is bounded by the upper
   envelope at \<open>x\<close>.  No continuity anywhere.\<close>
 

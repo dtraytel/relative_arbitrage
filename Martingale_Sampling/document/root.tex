@@ -1,0 +1,57 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Optional Sampling and Quadratic Variation for Continuous-Time Martingales}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  A toolbox of martingale results that the Archive's existing entries do not
+  provide, developed on top of the \texttt{Martingales} entry.
+
+  Doob's maximal inequality is proved for discrete-time martingales, and with
+  it a running-maximum bound usable as a dominating function.  Optional
+  sampling is proved first for integrable discrete-time martingales, then for
+  a continuous-time martingale sampled on a grid, then at a simple stopping
+  time, and finally at an arbitrary bounded stopping time, by approximating
+  the stopping time from above by its dyadic ceilings; the localised form,
+  over an event of the past, is proved along the way.  Optional stopping
+  follows: the stopped process is again a martingale.
+
+  Quadratic variation of a square-integrable martingale is defined together
+  with its compensator, and the sampled process on a partition is shown to be
+  a square-integrable discrete-time martingale whose compensator is the
+  sampled one, which is what lets a continuous-time statement be reduced to a
+  discrete one.
+
+  Finally, uniform integrability is defined and Vitali's convergence theorem
+  proved, together with the practical criterion that a uniform bound on a
+  higher moment suffices, and the uniform integrability of a family of
+  conditional expectations of a single integrable function.  See Karatzas and
+  Shreve~\cite{KaratzasShreve} and Williams~\cite{Williams} for the textbook
+  accounts.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

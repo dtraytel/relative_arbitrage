@@ -19,3 +19,6 @@ session Path_Space_Tightness = Martingale_Sampling +
     Equicontinuity
     Path_Space
     Path_Tightness
+  document_files
+    "root.tex"
+    "root.bib"

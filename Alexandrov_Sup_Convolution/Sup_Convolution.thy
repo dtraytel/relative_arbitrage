@@ -3406,8 +3406,8 @@ qed
 
 text \<open>Wherever the resolvent is differentiable, its derivative \<open>DR\<close>
   satisfies \<open>|DR h|\<^sup>2 \<le> h \<cdot> DR h\<close>, so \<open>DR\<close> is positive semidefinite with
-  \<open>\<parallel>DR\<parallel> \<le> 1\<close> \<comment> \<open>equivalently \<open>I - DR\<close> is positive semidefinite as
-  well\<close>.\<close>
+  \<open>\<parallel>DR\<parallel> \<le> 1\<close> \<comment> \<open>equivalently \<open>I - DR\<close> is positive
+  semidefinite as well\<close>\<close>
 
 theorem prox_deriv_psd:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"

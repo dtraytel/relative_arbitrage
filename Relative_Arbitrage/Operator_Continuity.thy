@@ -38,8 +38,8 @@ begin
 
 section \<open>Elementary matrix algebra not already in the development\<close>
 
-text \<open>A local copy of \<open>trace_conjugate\<close> (Viscosity_Comparison_Interface), so
-  that this theory need not import the Operator_Envelopes chain; see the header.\<close>
+text \<open>A local copy of \<open>trace_conjugate\<close> (\<open>Viscosity_Comparison_Interface\<close>), so
+  that this theory need not import the \<open>Operator_Envelopes\<close> chain; see the header.\<close>
 
 lemma trace_conj:
   fixes M Q a :: "real^'n::finite^'n"
