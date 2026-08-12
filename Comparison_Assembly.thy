@@ -9135,6 +9135,90 @@ proof (rule supconv_le_of_local_bound_usc[OF B e d0 gap])
   qed
   then show "\<theta> * (if y \<in> K then u y else C) \<le> \<theta>*C" by simp
 qed
+text \<open>\<^bold>\<open>The two-domain localised maximiser.\<close>  This is what replaces
+  \<open>doubling_localised_maximiser_soft\<close>, and it is much simpler, because the
+  \<open>x\<close>-side boundary avoidance is GONE.  Maximise the doubled sup-convolved
+  functional over the compact \<open>Q \<times> K'\<close>; if the \<open>x\<close>-side sup-convolution is
+  already below \<open>\<beta>\<close> off \<open>Q\<close>, and the witness \<open>z\<close> beats \<open>\<beta> + B\<^sub>w\<close>, then the
+  maximiser maximises over all of \<open>UNIV \<times> K'\<close>.  Only the \<open>y\<close>-coordinate is then
+  constrained, and \<open>K \<subseteq> K'\<^sup>\<circ>\<close> gives it room --- which is exactly why the paper
+  runs Theorem 4.2(b) on two domains.
+
+  @{thm [source] supconv_extend_far_le} supplies \<open>out\<close> for the constant
+  extension of \<open>u\<close> off \<open>K\<close>, and \<open>supconv_continuous\<close> supplies the continuity
+  from an upper bound alone --- no regularity of \<open>u\<close> or \<open>w\<close> is used here.\<close>
+
+lemma doubled_maximiser_over_UNIV_snd:
+  fixes A Bfun Pn :: "real^'n::finite \<Rightarrow> real" and K' Q :: "(real^'n) set"
+  assumes cQ: "compact Q" and cK': "compact K'"
+    and cA: "continuous_on UNIV A" and cB: "continuous_on UNIV Bfun"
+    and cP: "continuous_on UNIV Pn"
+    and zQ: "z \<in> Q" and zK': "z \<in> K'"
+    and Bw: "\<And>y. Bfun y \<le> Bw"
+    and Pnn: "\<And>d. 0 \<le> Pn d"
+    and out: "\<And>x. x \<notin> Q \<Longrightarrow> A x \<le> \<beta>"
+    and gapv: "\<beta> + Bw < A z + Bfun z - Pn (z - z)"
+  obtains xh yh where "xh \<in> Q" and "yh \<in> K'"
+    and "\<And>x y. y \<in> K' \<Longrightarrow>
+        A x + Bfun y - Pn (x - y) \<le> A xh + Bfun yh - Pn (xh - yh)"
+proof -
+  define S where "S = Q \<times> K'"
+  define F where "F = (\<lambda>p :: (real^'n) \<times> (real^'n).
+      A (fst p) + Bfun (snd p) - Pn (fst p - snd p))"
+  have cS: "compact S" unfolding S_def by (rule compact_Times[OF cQ cK'])
+  have zS: "(z, z) \<in> S" unfolding S_def using zQ zK' by simp
+  have neS: "S \<noteq> {}" using zS by blast
+  have cF: "continuous_on S F"
+    unfolding F_def
+    by (intro continuous_intros
+        continuous_on_compose2[OF cA continuous_on_fst[OF continuous_on_id]]
+        continuous_on_compose2[OF cB continuous_on_snd[OF continuous_on_id]]
+        continuous_on_compose2[OF cP])
+      auto
+  obtain \<xi> where xiS: "\<xi> \<in> S" and mxS: "\<And>p. p \<in> S \<Longrightarrow> F p \<le> F \<xi>"
+    using continuous_attains_sup[OF cS neS cF] by blast
+  have xhQ: "fst \<xi> \<in> Q" and yhK: "snd \<xi> \<in> K'"
+    using xiS unfolding S_def by auto
+  have base: "A z + Bfun z - Pn (z - z) \<le> F \<xi>"
+    using mxS[OF zS] unfolding F_def by simp
+  have all: "A x + Bfun y - Pn (x - y)
+      \<le> A (fst \<xi>) + Bfun (snd \<xi>) - Pn (fst \<xi> - snd \<xi>)" if y: "y \<in> K'" for x y
+  proof (cases "x \<in> Q")
+    case True
+    then have "(x, y) \<in> S" unfolding S_def using y by simp
+    from mxS[OF this] show ?thesis unfolding F_def by simp
+  next
+    case False
+    have "A x + Bfun y - Pn (x - y) \<le> \<beta> + Bw"
+      using out[OF False] Bw[of y] Pnn[of "x - y"] by linarith
+    also have "\<dots> < A z + Bfun z - Pn (z - z)" by (rule gapv)
+    also have "\<dots> \<le> F \<xi>" by (rule base)
+    finally show ?thesis unfolding F_def by simp
+  qed
+  show ?thesis by (rule that[OF xhQ yhK]) (use all in blast)
+qed
+
+text \<open>Maximality over \<open>UNIV \<times> K'\<close> restricts to the ball the Crandall--Ishii
+  core wants, as soon as the \<open>y\<close>-coordinate has room --- the \<open>x\<close>-coordinate is
+  unconstrained, so nothing is asked of it.\<close>
+
+lemma mxK_of_UNIV_snd:
+  fixes A Bfun Pn :: "real^'n::finite \<Rightarrow> real"
+  assumes mx: "\<And>x y. y \<in> K' \<Longrightarrow>
+      A x + Bfun y - Pn (x - y)
+      \<le> A (fst \<xi>\<^sub>0) + Bfun (snd \<xi>\<^sub>0) - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+    and ball: "cball (snd \<xi>\<^sub>0) r \<subseteq> K'"
+    and p: "p \<in> cball \<xi>\<^sub>0 r"
+  shows "A (fst p) + Bfun (snd p) - Pn (fst p - snd p)
+      \<le> A (fst \<xi>\<^sub>0) + Bfun (snd \<xi>\<^sub>0) - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
+proof -
+  have "dist (snd p) (snd \<xi>\<^sub>0) \<le> dist p \<xi>\<^sub>0" by (rule dist_snd_le)
+  also have "\<dots> \<le> r" using p by (simp add: dist_commute)
+  finally have "snd p \<in> cball (snd \<xi>\<^sub>0) r" by (simp add: dist_commute)
+  then have "snd p \<in> K'" using ball by blast
+  from mx[OF this] show ?thesis .
+qed
+
 
 
 lemma supconv_le_of_local_bound:
