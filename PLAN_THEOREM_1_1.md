@@ -829,35 +829,19 @@ should be an output rather than an input.
 
 ## 2. What is LEFT
 
-### THE OPEN LIST (2026-08-11, authoritative)
+### THE OPEN LIST — EMPTY (2026-08-12)
 
-Theorem 1.1 rests on **exactly one** admitted step.
+**Theorem 1.1 is fully formalised.  The repository contains no `sorry`, and
+all 53 theories are green.**
 
-| # | what | where | form |
-|---|---|---|---|
-| **P4** | `comparison_two_domain` — the paper's Theorem 4.2(b) | `Comparison_Assembly.thy` | **the only `sorry` in the repo** |
+`comparison_two_domain` (the paper's Theorem 4.2(b)) was the last admitted
+step; it was proved on 2026-08-12 (`36d09c6`).  With it,
+`comparison_expandable` (Theorem 4.3), `uniqueness_expandable`
+(Proposition 4.1) and `theorem_1_1_uniqueness_faithful` are unconditional,
+and §2.2's `Theorem_1_1.example_3_1` holds for every `1 ≤ k < CARD('n)`.
 
-**§2.2 (Example 3.1) is CLOSED for general `k`, 2026-08-12** — E1, E2, E3, E4
-are all proved and nothing there is open any more.  See §2.2 below.  The
-`k = 1` shortcut recorded there was NOT taken: `Theorem_1_1.example_3_1` holds
-for every `1 ≤ k < CARD('n)`.
-
-**P6 is CLOSED** (`Paper_Viscosity.paper_v_subsol_bc`, 2026-08-11), so
-`theorem_1_1_uniqueness_faithful` no longer carries it as a hypothesis.  The
-audit came out the easy way but not for the predicted reason:
-`paper_v_visc_subsol` never *uses* `x ∈ interior K` — it is assumed and
-ignored, since `paper_v_touch_orth` is indifferent to where `x` sits (hence
-`paper_v_visc_subsol_any`, the same proof for an arbitrary `Ω`).  What the
-gate actually buys is the upgrade from a touching global over `K` to a local
-one: off `K` the value is `0` (`paper_v_zero_outside`, because a path starting
-outside `K` has exit time `0`) while `φ` is continuous, so near a boundary `x`
-with `v x > 0` the needed `0 − φ z ≤ v x − φ x` follows from `φ x − φ z < v x`.
-No stochastic argument was involved.
-
-Discharging P4 turns `theorem_1_1_uniqueness_faithful` into Theorem 1.1 as the
-paper states it: `paper_v` is a bounded usc viscosity solution of
-`F(∇v, ∇²v) = 1` on `K` with the zero boundary condition of Definition 3.1,
-and on an expandable `K` it is the only one.
+The record of how P4 was closed is kept below, because several of its steps
+overturn earlier conclusions in this file.
 
 #### P4: the route, with the enablers proved
 
