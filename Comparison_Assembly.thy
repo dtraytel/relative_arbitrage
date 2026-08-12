@@ -8256,12 +8256,12 @@ theorem comparison_supconv_sequence_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and X Y :: "nat \<Rightarrow> real^'n^'n" and Pu Pw :: "nat \<Rightarrow> real^'n"
     and xu xw ysu ysw :: "nat \<Rightarrow> real^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega>\<^sub>u u" and sup: "supersol_jet k L \<Omega>\<^sub>w w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
-    and ysuO: "\<And>i. ysu i \<in> \<Omega>" and yswO: "\<And>i. ysw i \<in> \<Omega>"
+    and ysuO: "\<And>i. ysu i \<in> \<Omega>\<^sub>u" and yswO: "\<And>i. ysw i \<in> \<Omega>\<^sub>w"
     and symX: "\<And>i. transpose (X i) = X i"
     and symY: "\<And>i. transpose (Y i) = Y i"
     and p0: "psd (Y0 - X0)"
@@ -8899,6 +8899,33 @@ proof -
       \<and> supconv u \<epsilon> (xs i) = u y - (dist (xs i) y)\<^sup>2 / (2*\<epsilon>)"
     using supconv_attained_in_rad[OF B e cu R sub] by blast
   then show ?thesis by (rule choice)
+qed
+
+text \<open>\<^bold>\<open>Every\<close> attainment point sits inside that radius, not just the one
+  produced by \<open>supconv_attained_ball\<close>: if \<open>z\<close> attains then
+  \<open>u z - dist\<^sup>2/(2\<epsilon>) = supconv u \<epsilon> x \<ge> u x\<close>, so \<open>dist\<^sup>2 \<le> 2\<epsilon>(u z - u x)
+  \<le> 2\<epsilon>(B\<^sub>u - u x)\<close>.  P4 needs the \<open>\<forall>\<close>-form, because there the membership of
+  the attainment point in \<open>\<Omega>\<close> comes from a GATE on \<open>u\<close>, not from a ball, and
+  the two must be interchangeable at the old call site.\<close>
+
+lemma supconv_attain_radius:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
+    and opt: "supconv u \<epsilon> x = u z - (dist x z)\<^sup>2 / (2*\<epsilon>)"
+  shows "dist x z \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x)))"
+proof -
+  have ge: "u x \<le> supconv u \<epsilon> x" by (rule supconv_ge[OF B e])
+  have "u x \<le> u z - (dist x z)\<^sup>2 / (2*\<epsilon>)" using ge unfolding opt .
+  then have "(dist x z)\<^sup>2 / (2*\<epsilon>) \<le> u z - u x" by linarith
+  moreover have "u z - u x \<le> Bu - u x" using B[of z] by linarith
+  ultimately have "(dist x z)\<^sup>2 / (2*\<epsilon>) \<le> Bu - u x" by linarith
+  then have sq: "(dist x z)\<^sup>2 \<le> 2*\<epsilon>*(Bu - u x)"
+    using e by (simp add: pos_divide_le_eq mult.commute)
+  then have sq': "(dist x z)\<^sup>2 \<le> max 0 (2*\<epsilon>*(Bu - u x))" by simp
+  have "dist x z = sqrt ((dist x z)\<^sup>2)" by simp
+  also have "\<dots> \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x)))"
+    using sq' by (rule real_sqrt_le_mono)
+  finally show ?thesis .
 qed
 
 subsection \<open>The sup-convolution converges to its function, with a rate\<close>
@@ -11316,12 +11343,12 @@ theorem comparison_supconv_bounded_family:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and X Y :: "nat \<Rightarrow> real^'n^'n" and Pu Pw G :: "nat \<Rightarrow> real^'n"
     and xu xw ysu ysw :: "nat \<Rightarrow> real^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega>\<^sub>u u" and sup: "supersol_jet k L \<Omega>\<^sub>w w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
-    and ysuO: "\<And>i. ysu i \<in> \<Omega>" and yswO: "\<And>i. ysw i \<in> \<Omega>"
+    and ysuO: "\<And>i. ysu i \<in> \<Omega>\<^sub>u" and yswO: "\<And>i. ysw i \<in> \<Omega>\<^sub>w"
     and symX: "\<And>i. transpose (X i) = X i"
     and symY: "\<And>i. transpose (Y i) = Y i"
     and psdi: "\<And>i. psd (Y i - X i + (cs i) *\<^sub>R mat 1)"
@@ -11367,8 +11394,8 @@ proof -
   qed simp
   have pnz: "g \<noteq> 0"
     using cg cpos by auto
-  have ysuOr: "ysu (rr i) \<in> \<Omega>" for i by (rule ysuO)
-  have yswOr: "ysw (rr i) \<in> \<Omega>" for i by (rule yswO)
+  have ysuOr: "ysu (rr i) \<in> \<Omega>\<^sub>u" for i by (rule ysuO)
+  have yswOr: "ysw (rr i) \<in> \<Omega>\<^sub>w" for i by (rule yswO)
   have symXr: "transpose (X (rr i)) = X (rr i)" for i by (rule symX)
   have symYr: "transpose (Y (rr i)) = Y (rr i)" for i by (rule symY)
   have psdir: "psd (Y (rr i) - X (rr i) + (cs (rr i)) *\<^sub>R mat 1)" for i
@@ -11632,7 +11659,8 @@ proof -
     using tendsto_snd[OF pt0] by (simp add: zero_prod_def)
   show False
     by (rule comparison_supconv_bounded_family
-        [where u = u and w = w and \<Omega> = \<Omega> and \<theta> = \<theta> and \<epsilon> = \<epsilon>
+        [where u = u and w = w and \<Omega>\<^sub>u = \<Omega> and \<Omega>\<^sub>w = \<Omega>
+           and \<theta> = \<theta> and \<epsilon> = \<epsilon>
            and X = "\<lambda>i. matrix (\<lambda>v. fst (Wf i (v, 0)) + \<alpha> *\<^sub>R v)"
            and Y = "\<lambda>i. matrix (\<lambda>v. - (snd (Wf i (0, v)) + \<alpha> *\<^sub>R v))"
            and G = "\<lambda>i. \<alpha> *\<^sub>R (fst (zf i) - snd (zf i))"
@@ -12073,7 +12101,8 @@ proof -
   have cG: "0 < c - 2 * \<bar>\<alpha>\<bar> * \<rho>" using rsmall by linarith
   show False
     by (rule comparison_supconv_bounded_family
-        [where u = u and w = w and \<Omega> = \<Omega> and \<theta> = \<theta> and \<epsilon> = \<epsilon>
+        [where u = u and w = w and \<Omega>\<^sub>u = \<Omega> and \<Omega>\<^sub>w = \<Omega>
+           and \<theta> = \<theta> and \<epsilon> = \<epsilon>
            and X = "\<lambda>i. matrix (\<lambda>v. fst (Wf i (v, 0)) + \<alpha> *\<^sub>R v)
               + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1"
            and Y = "\<lambda>i. matrix (\<lambda>v. - (snd (Wf i (0, v)) + \<alpha> *\<^sub>R v))
@@ -12229,7 +12258,7 @@ theorem comparison_supconv_maximiser_complete_gen:
     and D\<^sub>0 :: real
     and Pn :: "real^'n \<Rightarrow> real"
     and Gf :: "real^'n \<Rightarrow> real^'n" and Zf :: "real^'n \<Rightarrow> real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
+  assumes sub: "visc_subsol k L \<Omega>\<^sub>u u" and sup: "supersol_jet k L \<Omega>\<^sub>w w"
     and t: "0 < \<theta>" "\<theta> < 1"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>"
@@ -12250,12 +12279,12 @@ theorem comparison_supconv_maximiser_complete_gen:
           - Pn (fst y - snd y)
         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst \<xi>\<^sub>0) + supconv (- w) \<epsilon> (snd \<xi>\<^sub>0)
           - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
-    and radu: "\<And>x. dist x (fst \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow>
-        sqrt (max 0 (2*\<epsilon>*(Bu - \<theta> * u x))) < R\<^sub>u"
-    and radw: "\<And>x. dist x (snd \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow>
-        sqrt (max 0 (2*\<epsilon>*(Bw - (- w) x))) < R\<^sub>w"
-    and subu: "\<And>x. dist x (fst \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow> cball x R\<^sub>u \<subseteq> \<Omega>"
-    and subw: "\<And>x. dist x (snd \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow> cball x R\<^sub>w \<subseteq> \<Omega>"
+    and atu: "\<And>x z. dist x (fst \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x = \<theta> * u z - (dist x z)\<^sup>2 / (2*\<epsilon>)
+        \<Longrightarrow> z \<in> \<Omega>\<^sub>u"
+    and atw: "\<And>x z. dist x (snd \<xi>\<^sub>0) \<le> \<rho> \<Longrightarrow>
+        supconv (- w) \<epsilon> x = (- w) z - (dist x z)\<^sup>2 / (2*\<epsilon>)
+        \<Longrightarrow> z \<in> \<Omega>\<^sub>w"
     and glb: "c \<le> norm (Gf (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))"
     and rsmall: "KG * (2*\<rho>) < c"
   shows False
@@ -12565,22 +12594,28 @@ proof -
         h2 bYun[of i] Cuni[of i] habs[of i]
       by linarith
   qed
-  obtain ysu where ysu: "\<forall>i. ysu i \<in> \<Omega>
+  obtain ysu0 where ysu0: "\<And>i. supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
+        = \<theta> * u (ysu0 i) - (dist (fst (zf i)) (ysu0 i))\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_family
+      [where u = "\<lambda>y. \<theta> * u y" and xs = "\<lambda>i. fst (zf i)"
+         and Bu = Bu and \<epsilon> = \<epsilon>, OF Bu e cu]
+    by blast
+  define ysu where "ysu = ysu0"
+  have ysu: "\<forall>i. ysu i \<in> \<Omega>\<^sub>u
       \<and> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
         = \<theta> * u (ysu i) - (dist (fst (zf i)) (ysu i))\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_family_in_rad
-      [where u = "\<lambda>y. \<theta> * u y" and xs = "\<lambda>i. fst (zf i)" and \<Omega> = \<Omega>
-         and Bu = Bu and \<epsilon> = \<epsilon> and R = R\<^sub>u,
-       OF Bu e cu radu[OF dfst] subu[OF dfst]]
+    unfolding ysu_def using ysu0 atu[OF dfst] by blast
+  obtain ysw0 where ysw0: "\<And>i. supconv (- w) \<epsilon> (snd (zf i))
+        = (- w) (ysw0 i) - (dist (snd (zf i)) (ysw0 i))\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_family
+      [where u = "- w" and xs = "\<lambda>i. snd (zf i)"
+         and Bu = Bw and \<epsilon> = \<epsilon>, OF Bw e cw]
     by blast
-  obtain ysw where ysw: "\<forall>i. ysw i \<in> \<Omega>
+  define ysw where "ysw = ysw0"
+  have ysw: "\<forall>i. ysw i \<in> \<Omega>\<^sub>w
       \<and> supconv (- w) \<epsilon> (snd (zf i))
         = (- w) (ysw i) - (dist (snd (zf i)) (ysw i))\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_family_in_rad
-      [where u = "- w" and xs = "\<lambda>i. snd (zf i)" and \<Omega> = \<Omega>
-         and Bu = Bw and \<epsilon> = \<epsilon> and R = R\<^sub>w,
-       OF Bw e cw radw[OF dsnd] subw[OF dsnd]]
-    by blast
+    unfolding ysw_def using ysw0 atw[OF dsnd] by blast
   have nfst: "norm (fst (pf i)) \<le> norm (pf i)" for i
     using norm_fst_le[of "fst (pf i)" "snd (pf i)"] by simp
   have nsnd: "norm (snd (pf i)) \<le> norm (pf i)" for i
@@ -12675,7 +12710,8 @@ proof -
   have cG: "0 < c - KG * (2*\<rho>)" using rsmall by linarith
   show False
     by (rule comparison_supconv_bounded_family
-        [where u = u and w = w and \<Omega> = \<Omega> and \<theta> = \<theta> and \<epsilon> = \<epsilon>
+        [where u = u and w = w and \<Omega>\<^sub>u = \<Omega>\<^sub>u and \<Omega>\<^sub>w = \<Omega>\<^sub>w
+           and \<theta> = \<theta> and \<epsilon> = \<epsilon>
            and X = "\<lambda>i. matrix (\<lambda>v. fst (Wf i (v, 0))
                 + Zf (fst (zf i) - snd (zf i)) *v v)
               + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1"
@@ -13221,15 +13257,37 @@ proof -
     qed
     then show ?thesis using insy by blast
   qed
+  have atu: "z \<in> interior K"
+    if d: "dist x (fst \<xi>\<^sub>0) \<le> \<rho>"
+      and o: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x
+          = \<theta> * u z - (dist x z)\<^sup>2 / (2*\<epsilon>)" for x z
+  proof -
+    have "dist x z \<le> sqrt (max 0 (2*\<epsilon>*(Bu - \<theta> * u x)))"
+      by (rule supconv_attain_radius[OF Bu e o])
+    also have "\<dots> < R\<^sub>u" by (rule radu)
+    finally have "z \<in> cball x R\<^sub>u" by (simp add: dist_commute)
+    then show ?thesis using subu[OF d] by blast
+  qed
+  have atw: "z \<in> interior K"
+    if d: "dist x (snd \<xi>\<^sub>0) \<le> \<rho>"
+      and o: "supconv (- w) \<epsilon> x = (- w) z - (dist x z)\<^sup>2 / (2*\<epsilon>)" for x z
+  proof -
+    have "dist x z \<le> sqrt (max 0 (2*\<epsilon>*(Bw - (- w) x)))"
+      by (rule supconv_attain_radius[OF Bw e o])
+    also have "\<dots> < R\<^sub>w" by (rule radw)
+    finally have "z \<in> cball x R\<^sub>w" by (simp add: dist_commute)
+    then show ?thesis using subw[OF d] by blast
+  qed
   show False
     by (rule comparison_supconv_maximiser_complete_gen
-        [where u = u and w = w and \<xi>\<^sub>0 = \<xi>\<^sub>0 and D\<^sub>0 = D\<^sub>0 and \<Omega> = "interior K"
+        [where u = u and w = w and \<xi>\<^sub>0 = \<xi>\<^sub>0 and D\<^sub>0 = D\<^sub>0
+           and \<Omega>\<^sub>u = "interior K" and \<Omega>\<^sub>w = "interior K"
            and \<theta> = \<theta> and \<epsilon> = \<epsilon> and \<kappa> = \<kappa>\<^sub>P and \<rho> = \<rho> and r = r
            and Pn = Pn and Gf = Gf and Zf = Zf and KZ = KZ and KG = KG
-           and Bu = Bu and Bw = Bw and R\<^sub>u = R\<^sub>u and R\<^sub>w = R\<^sub>w and c = c,
+           and Bu = Bu and Bw = Bw and c = c,
          OF sub sup t(1) t(2) kk(1) kk(2) LL e kap scP Pjet symZ bZ lipG
             KGnn rho(1) rho(2) D0 Bu Bw cu cw])
-       (use mxK radu radw subu subw glb rsmall in blast)+
+       (use mxK atu atw glb rsmall in blast)+
 qed
 
 subsection \<open>The chain at the concrete penalty \<open>soft_pen\<close>\<close>
