@@ -8,13 +8,14 @@ begin
 (*>*)
 
 text \<open>
-  The value-side semicontinuity underlying Prop 2.4 of
-             arXiv:2512.17702, following LR (arXiv:2003.13611) Lemma 2.1:
-             the capped exit time is upper semicontinuous on the path
-             space, and the essential infimum of the exit time is upper
-             semicontinuous along weak convergence of path laws, via the
-             Laplace-transform representation
-             essinf tau = inf_{lambda>0} -(1/lambda) log E[exp(-lambda tau)].\<close>
+  Establishes the value-side semicontinuity underlying Proposition 2.4 of
+  arXiv:2512.17702, following Larsson-Ruf (arXiv:2003.13611), Lemma 2.1.
+  It shows that the capped exit time is upper semicontinuous on the path
+  space, and that the essential infimum of the exit time is upper
+  semicontinuous along weak convergence of path laws, via the
+  Laplace-transform representation
+
+    \<open>essinf tau = Inf\<^bsub>lambda > 0\<^esub> - (1 / lambda) * ln (E [exp (- lambda * tau)])\<close>.\<close>
 section \<open>The path-space exit time\<close>
 text \<open>(The crowning theorem of this theory is \<open>ess_inf_pexit_usc\<close> at the
   end: the essential infimum of the exit time is upper semicontinuous

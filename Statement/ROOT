@@ -1,0 +1,11 @@
+session Relative_Arbitrage_Statement = Relative_Arbitrage +
+  description "
+    A single theory presenting Theorem 1.1 of arXiv:2512.17702 as formalised,
+    together with every definition its statement mentions.  Written for the
+    authors of the paper to check the formal statement against their own; not
+    part of any AFP entry.
+  "
+  theories
+    Theorem_1_1_Statement
+  document_files
+    "root.tex"

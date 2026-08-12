@@ -8,39 +8,24 @@ begin
 (*>*)
 
 text \<open>
-  The deterministic core of
+  Formalizes the deterministic core of J.-H. Lai, M. Shkolnikov and
+  H. M. Soner, Relative arbitrage problem under eigenvalue lower bounds
+  (arXiv:2512.17702): the operator \<open>F\<close> of Eq. (1.9),
 
-               J.-H. Lai, M. Shkolnikov, H. M. Soner:
-               "Relative arbitrage problem under eigenvalue lower bounds"
-               arXiv:2512.17702
+    \<open>F(p, M) = Inf {- trace (M ** a) / 2 | a. psd a \<and> a *v p = 0
+       \<and> eigen_lb a (n - k) \<and> eigen_ub a L}\<close>,
 
-    The paper characterizes time horizons for relative arbitrage via the
-    fully nonlinear elliptic PDE  F(Dv, D^2 v) = 1  on a compact set K, where
-    (Eq. 1.9)
-
-      F(p, M) = inf { -1/2 tr(M a) :  a psd,  a p = 0,
-                                      lambda_(n-k)(a) >= 1,  lambda_(1)(a) <= L }
-
-    (lambda_(m) = m-th largest eigenvalue).  This theory formalizes the
-    constraint set of Eq. 1.9 -- with the spectral conditions expressed
-    through their Courant-Fischer variational characterizations, which
-    avoids developing the spectral theorem while remaining equivalent for
-    symmetric matrices -- and the operator F; the trace lower bound
-    tr(a) >= n - k for feasible a (the Ky Fan / Courant-Fischer argument
-    underlying the lower bound in Example 3.1) and its attainment by
-    rank-(n-k) orthogonal projections; Example 3.1 (Eq. 3.9), the explicit
-    solution on the ball \<open>B_r\<close>(0); the spectral theorem for real symmetric
-    matrices, nonnegativity of traces of products of psd matrices, and the
-    degenerate ellipticity of F; and viscosity sub-/supersolutions of
-    F(Du, D^2u) = 1 in the Crandall-Ishii-Lions test-function formulation,
-    together with first- and second-order conditions at interior minima and
-    the theorem that the explicit solution of Example 3.1 is a viscosity
-    solution on the open ball with zero boundary values.
-
-    The probabilistic side is formalized in the companion theories
-    \<open>Volatile_Market\<close> and \<open>Optimal_Exit_Time\<close>; the
-    comparison and uniqueness part of Theorem 1.1 in
-    \<open>Viscosity_Solutions\<close> and \<open>Viscosity_Comparison_Interface\<close>.\<close>
+  with the spectral conditions expressed through their Courant-Fischer
+  variational characterizations \<open>eigen_lb\<close> and \<open>eigen_ub\<close> rather than
+  ordered eigenvalues. It proves the trace lower bound
+  \<open>trace a \<ge> n - k\<close> for feasible \<open>a\<close> and its attainment by
+  rank-\<open>(n - k)\<close> orthogonal projections, the fact behind Example 3.1,
+  together with the spectral theorem for real symmetric matrices and the
+  degenerate ellipticity of \<open>F\<close>. It also gives viscosity sub- and
+  supersolutions of \<open>F(Du, D\<^sup>2u) = 1\<close> in the Crandall-Ishii-Lions
+  test-function formulation, and shows that the explicit solution of
+  Example 3.1 (Eq. 3.9) is a viscosity solution on the open ball with
+  zero boundary values.\<close>
 unbundle inner_syntax
 
 section \<open>Linear-algebra preliminaries\<close>

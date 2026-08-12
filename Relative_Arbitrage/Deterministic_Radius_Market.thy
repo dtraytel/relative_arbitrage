@@ -8,18 +8,18 @@ begin
 (*>*)
 
 text \<open>
-  The deterministic-radius market of Example 3.1 of arXiv:2512.17702
-             (case n - k = 1): its explicit trigonometric representation and
-             the Gaussian toolkit underlying it.
+  Formalizes the deterministic-radius market of Example 3.1 for
+  \<open>n - k = 1\<close>. The process
 
-    The process \<open>X_t\<close> = sqrt(|x|^2 + t) (cos(\<open>W_c\<close>(t) + phi), sin(\<open>W_c\<close>(t) + phi)),
-    c(t) = ln(1 + t/|x|^2), is a martingale whose covariance is the sphere
-    projection a(X) = I - X X^T/|X|^2; its radius is deterministic, so with
-    the constant horizon tau = r^2 - |x|^2 it realises \<open>ball_v\<close> exactly and
-    witnesses \<open>stopped_val_fn\<close> = \<open>ball_v\<close> at nonzero interior points for
-    k = CARD('n) - 1.  This theory establishes the increment distribution of
-    the product Brownian model and the characteristic function of
-    \<open>gauss_measure\<close>.\<close>
+    \<open>X\<^sub>t = sqrt (\<bar>x\<bar>\<^sup>2 + t) \<bullet> (cos (W\<^sub>c(t) + phi), sin (W\<^sub>c(t) + phi))\<close>,
+    \<open>c(t) = ln (1 + t / \<bar>x\<bar>\<^sup>2)\<close>,
+
+  is a martingale whose covariation is the sphere projection
+  \<open>a(X) = I - X X\<^sup>T / \<bar>X\<bar>\<^sup>2\<close>; its radius is deterministic, so with the
+  constant horizon \<open>tau = r\<^sup>2 - \<bar>x\<bar>\<^sup>2\<close> it realizes \<open>ball_v\<close> exactly. The
+  theory establishes the increment distribution of the product Brownian
+  model and the characteristic function of \<open>gauss_measure\<close> that underlie
+  this construction.\<close>
 section \<open>The coordinate increment of the product model is Gaussian\<close>
 
 lemma bm_increment_distr:

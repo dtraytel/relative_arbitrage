@@ -8,19 +8,15 @@ begin
 (*>*)
 
 text \<open>
-  Lipschitz dependence of the Ky Fan sums, hence of the ordered
-             eigenvalues, on the matrix.
-
-    The paper's proof of Lemma 3.1 uses the continuity of
-    M |-> (lambda_(1)(M), ..., lambda_(n)(M)) twice: to pass to the limit in
-    (3.8), and for the continuity of F off p = 0.
-
-    In this development that is cheap.  Each kyfan m is a supremum of traces
-    against orthogonal projections, and the quadratic form of a unit vector
-    against D is bounded by the entrywise sum of |D|; so kyfan m moves by at
-    most m * entrysum (A - B) when M moves from B to A.  Since eigval is a
-    difference of two Ky Fan sums, it inherits the bound.  No eigenvalue
-    perturbation theory is needed.\<close>
+  Establishes Lipschitz dependence of the Ky Fan sums, and hence of the
+  ordered eigenvalues \<open>lambda\<^sub>1(M), ..., lambda\<^sub>n(M)\<close>, on the matrix
+  \<open>M\<close>. Each Ky Fan sum is a supremum of traces against orthogonal
+  projections and is controlled by the entrywise sum \<open>entrysum (A - B)\<close>,
+  so \<open>kyfan m\<close> moves by at most \<open>m * entrysum (A - B)\<close> between matrices
+  \<open>A\<close> and \<open>B\<close>, and \<open>eigval\<close>, a difference of two Ky Fan sums, inherits
+  the bound. This continuity is used twice in the paper's proof of
+  Lemma 3.1: to pass to the limit in Eq. (3.8), and for continuity of
+  \<open>F\<close> away from \<open>p = 0\<close>.\<close>
 section \<open>The entrywise sum\<close>
 
 definition entrysum :: "real^'n::finite^'n \<Rightarrow> real" where

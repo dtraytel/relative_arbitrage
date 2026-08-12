@@ -10,25 +10,20 @@ begin
 (*>*)
 
 text \<open>
-  The martingale-problem identity of \<open>Volatile_Market\<close>
-             becomes a theorem.
+  Turns the martingale-problem identity assumed by \<open>Volatile_Market\<close>
+  into a theorem. The locale \<open>sufficiently_volatile_market\<close> assumes, at
+  every horizon \<open>t\<close>,
 
-    The locale \<open>sufficiently_volatile_market\<close> assumes the identity
+    \<open>E [\<bar>X (t \<and> tau)\<bar>\<^sup>2] - E [\<integral>\<^sub>0\<^bsup>t \<and> tau\<^esup> trace (a s) ds] = \<bar>x0\<bar>\<^sup>2\<close>   (\<open>dynkin_quadratic\<close>).
 
-      E[|X (t /\ tau)|^2] - E[\<open>int_0\<close>^(t /\ tau) tr(a s) ds] = |x0|^2   (\<open>dynkin_quadratic\<close>)
-
-    at every horizon t.  Ito's formula produces it in the process form
-
-      Z t = |X t|^2 - \<open>int_0\<close>^t tr(a s) ds   is a martingale,
-
-    from which the identity at a stopped time is exactly optional sampling.
-    The locale \<open>ito_volatile_market\<close> below assumes the process form together
-    with the regularity that optional sampling needs -- continuous paths and
-    an integrable bound on the horizon -- and proves
-    \<open>sufficiently_volatile_market\<close>.  So every result of the probabilistic part
-    of the paper (Lemma 2.1, the exit-time bound, the arbitrage and
-    optimality theorems) holds under the martingale property of Z instead of
-    the ad hoc identity.\<close>
+  Ito's formula produces this identity in process form,
+  \<open>Z t = \<bar>X t\<bar>\<^sup>2 - \<integral>\<^sub>0\<^bsup>t\<^esup> trace (a s) ds\<close> a martingale, from which the
+  stopped identity is exactly optional sampling. The locale
+  \<open>ito_volatile_market\<close> assumes the process form together with the
+  regularity that optional sampling needs, continuous paths and an
+  integrable bound on the horizon, and derives
+  \<open>sufficiently_volatile_market\<close>, so every downstream result holds
+  under the martingale property of \<open>Z\<close> instead of the ad hoc identity.\<close>
 section \<open>An auxiliary fact on Lebesgue integrals over singletons\<close>
 
 lemma set_integral_lborel_singleton [simp]:

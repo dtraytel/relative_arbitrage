@@ -8,26 +8,17 @@ begin
 (*>*)
 
 text \<open>
-  The eigenvalue comparison used in the proof of Lemma 3.1 of
-             arXiv:2512.17702, namely the Poincare separation inequality
+  Formalizes the eigenvalue comparison used in the proof of Lemma 3.1 of
+  arXiv:2512.17702, the Poincare separation inequality
 
-               lambda_(i)(\<open>M_p\<close>) >= lambda_(i+1)(M),   i = 1, ..., n-1,
+    \<open>lambda\<^sub>i(M\<^sub>p) \<ge> lambda\<^bsub>i+1\<^esub>(M)\<close>,   \<open>i = 1, ..., n - 1\<close>,
 
-             together with the Rayleigh bounds it rests on.
-
-    The paper uses this in ONE direction only (the displayed inequality above),
-    and only two consequences of it are actually needed:
-
-    * for Eq. (3.5): the eigenvalue that \<open>M_p\<close> carries in the p-direction, namely
-      min(lambda_(n)(M), 0), is the SMALLEST of the spectrum of \<open>M_p\<close>.  For that
-      the weak form suffices -- every Rayleigh quotient of M is at least
-      lambda_(n)(M) -- and no interlacing is required.
-    * for Eq. (3.6): the limit p^m -> 0 along p^m = \<open>q_1\<close>/m, where the index shift
-      in (3.6) comes from the full separation inequality.
-
-    This theory is deliberately chained off \<open>Operator_Continuity\<close> (rather than importing
-    Eigenvalues in parallel with it) so that the import graph stays a single
-    chain that PIDE can hold; see the header of \<open>Operator_Continuity\<close>.thy.\<close>
+  together with the Rayleigh bounds it rests on. Two consequences are
+  used: for Eq. (3.5), that the eigenvalue \<open>M\<^sub>p\<close> carries in the
+  \<open>p\<close>-direction, \<open>min (lambda\<^sub>n(M), 0)\<close>, is the smallest of the
+  spectrum of \<open>M\<^sub>p\<close>, which needs only the weak Rayleigh bound; and for
+  Eq. (3.6), the limit as \<open>p\<^sup>m \<rightarrow> 0\<close> along \<open>p\<^sup>m = q\<^sub>1 / m\<close>, where the
+  index shift comes from the full separation inequality.\<close>
 section \<open>Elementary matrix algebra, continued\<close>
 
 text \<open>The right-distributivity of \<open>**\<close> over subtraction and the additivity

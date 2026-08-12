@@ -11,44 +11,23 @@ begin
 (*>*)
 
 text \<open>
-  Probabilistic side of
-
-               J.-H. Lai, M. Shkolnikov, H. M. Soner:
-               "Relative arbitrage problem under eigenvalue lower bounds"
-               arXiv:2512.17702
-
-    Contents:
-
-      * Definition 1.1 (relative arbitrage) for an abstract relative value
-        process V.  (The construction of V = V^theta via the stochastic
-        integral of Eq. (1.1) is not formalizable with current Isabelle/HOL
-        libraries: no Ito integration theory exists in HOL-Probability or
-        the AFP.)
-
-      * A locale "\<open>sufficiently_volatile_market\<close>" capturing the class of
-        \<open>measures P \<in> \<P>\<^sub>x of Section 1: the (transformed) market weight\<close>
-        process X is a continuous-time martingale (via the AFP entry
-        Martingales), started at x0, staying in the compact set K up to a
-        pre-exit time tau, whose instantaneous covariation acov satisfies
-        the eigenvalue constraints of Eqs. (1.4)/(1.5), expressed through
-        the Courant-Fischer characterizations \<open>eigen_lb\<close>/\<open>eigen_ub\<close> of the
-        accompanying theory \<open>Curvature_Operator\<close>.  Since Ito calculus is
-        unavailable, the dynamics are specified in martingale-problem form
-        (Stroock--Varadhan): Dynkin's formula for the quadratic test
-        function y \<open>\<mapsto>\<close> y \<open>\<bullet>\<close> y at stopped times is a locale assumption
-        (\<open>dynkin_quadratic\<close>); this is exactly what Ito's formula plus
-        optional sampling would yield and is the standard equivalent
-        formulation of "X is a martingale with covariation density acov".
-
-      * The quantitative content of Example 3.1 on the probabilistic side:
-        in every sufficiently volatile market on K \<open>\<subseteq>\<close> cball 0 r, the
-        expected (stopped) pre-exit time is bounded by
-        \<open>v(x0) = (r\<^sup>2 - |x0|\<^sup>2)/(n-k), i.e. the value function of\<close>
-        Theorem 1.1 dominates expected exit times.  This is the
-        "verification" half of Theorem 1.1/Example 3.1; the converse
-        (construction of the optimal time-changed spherical martingale,
-        Eq. (3.11), attaining the bound) requires constructing solutions of
-        martingale problems and is out of reach of current libraries.\<close>
+  Formalizes the probabilistic side of J.-H. Lai, M. Shkolnikov and
+  H. M. Soner, Relative arbitrage problem under eigenvalue lower bounds
+  (arXiv:2512.17702): Definition 1.1, relative arbitrage, for an
+  abstract relative value process \<open>V\<close>, and the locale
+  \<open>sufficiently_volatile_market\<close> capturing the class of measures
+  \<open>P \<in> P\<^sub>x\<close> of Section 1. In this locale \<open>X\<close> is a continuous-time
+  martingale started at \<open>x0\<close>, staying in the compact set \<open>K\<close> up to a
+  pre-exit time \<open>tau\<close>, whose instantaneous covariation \<open>acov\<close>
+  satisfies the eigenvalue constraints of Eqs. (1.4)-(1.5) via the
+  Courant-Fischer characterizations \<open>eigen_lb\<close> and \<open>eigen_ub\<close> of
+  \<open>Curvature_Operator\<close>; the dynamics are specified in
+  martingale-problem form through Dynkin's formula for the quadratic
+  test function \<open>y \<mapsto> y \<bullet> y\<close> at stopped times, the locale assumption
+  \<open>dynkin_quadratic\<close>. It proves the quantitative content of Example 3.1
+  on the probabilistic side: in every sufficiently volatile market on
+  \<open>K \<subseteq> cball 0 r\<close>, the expected stopped pre-exit time is bounded by
+  \<open>v(x0) = (r\<^sup>2 - \<bar>x0\<bar>\<^sup>2) / (n - k)\<close>, the value function of Theorem 1.1.\<close>
 section \<open>Relative arbitrage (Definition 1.1)\<close>
 
 text \<open>

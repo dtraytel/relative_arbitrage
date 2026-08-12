@@ -8,28 +8,15 @@ begin
 (*>*)
 
 text \<open>
-  Lemma 2.1 of arXiv:2512.17702 in its exact form, i.e. with the
-             convex hull rather than its closure.
-
-    \<open>Constraint_Set_Convexity\<close> proves conv \<open>B_k\<close> <= \<open>A_k\<close> <= closure (conv \<open>B_k\<close>),
-    so \<open>A_k\<close> is the closed convex hull of \<open>B_k\<close>; the paper states equality with
-    the convex hull itself, which this theory establishes in three steps:
-
-    A capped trace bound on \<open>A_k\<close>: for a in \<open>A_k\<close> with orthonormal eigenbasis B
-    and eigenvalues \<open>lambda_u\<close> = u . (a u), \<open>sum_u\<close> min(\<open>lambda_u\<close>,1) >= n-k.  This
-    needs only \<open>Pi_proj\<close> a m <= trace (a ** P) for the spectral projection P
-    onto the small-eigenvalue coordinates -- immediate since \<open>Pi_proj\<close> is an
-    infimum -- and not the identity "\<open>Pi_m\<close> = sum of the m smallest
-    eigenvalues".
-
-    A hypersimplex decomposition, carried out directly on matrices: a
-    combination \<open>sum_u\<close> \<open>c_u\<close> (u u^T) with coefficients in [0,1] summing to n-k
-    lies in conv \<open>B_k\<close>, by a Birkhoff-style swap induction on the number of
-    coefficients that are not already 0 or 1.
-
-    The assembly: cap the eigenvalues at 1, rescale so the sum is exactly
-    n-k, decompose, and add the nonnegative remainder back using
-    \<open>suff_volatile_augment\<close>.\<close>
+  States and proves Lemma 2.1 of arXiv:2512.17702 in its exact form, with
+  the convex hull itself rather than its closure. Building on
+  \<open>A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close> from \<open>Constraint_Set_Convexity\<close>, it
+  establishes equality with \<open>conv B\<^sub>k\<close> in three steps: a capped trace
+  bound \<open>(\<Sum>u. min (lambda\<^sub>u, 1)) \<ge> n - k\<close> for \<open>a \<in> A\<^sub>k\<close> with eigenbasis
+  values \<open>lambda\<^sub>u\<close>; a hypersimplex decomposition of any combination
+  \<open>\<Sum>u c\<^sub>u (u u\<^sup>T)\<close> with coefficients in \<open>[0,1]\<close> summing to \<open>n - k\<close> into
+  elements of \<open>conv B\<^sub>k\<close>; and an assembly step that caps the eigenvalues
+  at \<open>1\<close>, rescales, decomposes, and adds back the nonnegative remainder.\<close>
 unbundle inner_syntax
 
 section \<open>Preliminaries on orthonormal families\<close>

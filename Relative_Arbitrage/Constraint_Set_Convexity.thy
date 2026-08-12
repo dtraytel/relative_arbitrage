@@ -8,32 +8,20 @@ begin
 (*>*)
 
 text \<open>
-  Lemma 2.1 of arXiv:2512.17702 (Lai/Shkolnikov/Soner):
-             the convexification of the eigenvalue constraint.
+  Proves Lemma 2.1 of arXiv:2512.17702, the convexification of the
+  eigenvalue constraint. The operator \<open>Pi_m\<close> of Eq. (2.1) is formalized as
+  \<open>Pi_proj\<close>, and the theory establishes both inclusions
 
-    The operator \<open>Pi_m\<close> of Eq. (2.1),
-        \<open>Pi_m\<close>(a) = inf { tr(a P) : P^2 = P = P^T, tr P = m },
-    is formalized as \<open>Pi_proj\<close> below.  Lemma 2.1 states that the convex hull of
-        \<open>B_k\<close> = { a psd : lambda_(n-k)(a) >= 1 }
-    is  \<open>A_k\<close> = { a psd : \<open>Pi_m\<close>(a) >= m - k  for m = k+1, ..., n }.
+    \<open>conv B\<^sub>k \<subseteq> A\<^sub>k\<close>   and   \<open>A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close>,
 
-    This theory proves both inclusions in full, with no axiomatized
-    ingredients:
-      * conv \<open>B_k\<close> \<open>\<subseteq>\<close> \<open>A_k\<close>, via the Grassmann dimension formula and
-        basis-independent subspace traces (the spectral theorem of
-        \<open>Curvature_Operator\<close> diagonalizes orthogonal projections);
-      * \<open>A_k\<close> \<open>\<subseteq>\<close> closure (conv \<open>B_k\<close>), via hyperplane separation from the
-        closed convex hull, symmetrization and eigen-decomposition of the
-        separating functional, and an Abel-summation estimate against the
-        \<open>Pi_m\<close>-constraints along the sorted eigen-frame -- this route needs
-        no von Neumann trace inequality.
-    Together (theorem \<open>lemma_2_1\<close>):
-        conv \<open>B_k\<close> \<open>\<subseteq>\<close> \<open>A_k\<close> \<open>\<subseteq>\<close> closure (conv \<open>B_k\<close>),
-    i.e. \<open>A_k\<close> is the closed convex hull of \<open>B_k\<close>, the form in which the paper
-    uses Lemma 2.1.
-
-    As in \<open>Curvature_Operator\<close>, the spectral condition lambda_(n-k)(a) >= 1
-    is expressed by its Courant-Fischer characterization \<open>eigen_lb\<close>.\<close>
+  where \<open>B\<^sub>k = {a. psd a \<and> eigen_lb a (n - k)}\<close> is the unconvexified
+  sufficient-volatility set and \<open>A\<^sub>k = {a. psd a \<and> (\<forall>m \<in> {k+1..n}.
+  Pi_m a \<ge> m - k)}\<close>. The first inclusion rests on the Grassmann dimension
+  formula and basis-independent subspace traces; the second on hyperplane
+  separation from the closed convex hull together with an Abel-summation
+  estimate along the sorted eigen-frame. Together they identify \<open>A\<^sub>k\<close> as
+  the closed convex hull of \<open>B\<^sub>k\<close>, the form in which the paper applies
+  Lemma 2.1.\<close>
 unbundle inner_syntax
 
 section \<open>Subspace traces\<close>

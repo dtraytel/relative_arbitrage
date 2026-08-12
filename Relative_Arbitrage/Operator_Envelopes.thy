@@ -8,47 +8,19 @@ begin
 (*>*)
 
 text \<open>
-  The semicontinuous envelopes F_* and F^* of Eq. (1.9), and
-             Definition 3.1 of arXiv:2512.17702 stated with them.
-
-    Definition 3.1 of the paper does NOT use F itself: a subsolution must
-    satisfy  F_*(grad phi, Hess phi) <= 1  and a supersolution
-    F^*(grad phi, Hess phi) >= 1,  where F_* and F^* are the lower and upper
-    semicontinuous envelopes of F in the pair (p, M).  The envelopes matter
-    precisely at p = 0, where F is discontinuous.
-
-    What is proved here:
-    * the envelopes exist as ereal-valued functions with no side conditions
-      (ereal is a complete lattice, so Sup/Inf are total);
-    * the sandwich  F_* <= F <= F^*  (\<open>ell_op_lsc_le\<close>, \<open>ell_op_le_usc\<close>);
-    * Definition 3.1 in envelope form, with the paper's GLOBAL touching
-      condition (max over K, not a local max on a small ball);
-    * that the envelope-free notions of \<open>Curvature_Operator\<close> imply the
-      envelope ones (\<open>visc_subsol_imp_env\<close>, \<open>visc_supersol_imp_env\<close>) -- both
-      because F_* <= F <= F^* and because a global max is a local max;
-    * hence Example 3.1 satisfies Definition 3.1 as the paper states it
-      (\<open>ball_v_visc_sol_env\<close>).
-
-    * the clause of Lemma 3.1 at the degenerate point:  F_* = F  on
-      {0} x S^n  (\<open>ell_op_lsc_at_zero\<close>).  This is the clause the paper states
-      separately, and it needs no eigenvalue theory: at p = 0 the constraint
-      a p = 0 is vacuous, so feasible 0 is the LARGEST feasible set and
-      F(0,.) the smallest value of F (\<open>ell_op_zero_le\<close>); and F is Lipschitz in
-      M uniformly in p because the feasible set is entrywise bounded by L
-      (\<open>trace_mult_feasible_bound\<close>, \<open>ell_op_M_gap\<close>, \<open>mgap_le_norm\<close>).  Together
-      these make the infimum over any neighbourhood of (0,M) converge to
-      F(0,M).
-
-    What is NOT proved: the OTHER two clauses of Lemma 3.1, i.e.
-    F_* = F^* = F on (R^n - {0}) x S^n, and the closed formula (3.6) for
-    F^*(0,M).  Both need ordered eigenvalues lambda_(i), which this
-    development has deliberately avoided in favour of the variational
-    conditions \<open>eigen_lb\<close>/\<open>eigen_ub\<close>, plus Ky Fan's maximum principle and the
-    Poincare separation theorem (Eq. (3.8)).  See the note at the end of
-    this theory for the reduction that makes (3.6) precise.  Consequently
-    the implication \<open>visc_sol\<close> --> \<open>visc_sol_env\<close> is still only one way on the
-    supersolution side; on the SUBSOLUTION side at p = 0 the two conditions
-    now provably coincide, by \<open>ell_op_lsc_at_zero\<close>.\<close>
+  Defines the lower and upper semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>
+  of the operator \<open>F\<close> of Eq. (1.9), as ereal-valued functions with no
+  side conditions, and states Definition 3.1 of arXiv:2512.17702 in the
+  form the paper uses: a subsolution satisfies
+  \<open>F\<^sub>*(grad phi, Hess phi) \<le> 1\<close> and a supersolution
+  \<open>F\<^sup>*(grad phi, Hess phi) \<ge> 1\<close>, with the paper's global touching
+  condition, a maximum over \<open>K\<close> rather than on a small ball. It proves
+  the sandwich \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>, that the envelope-free viscosity
+  notions of \<open>Curvature_Operator\<close> imply the envelope ones, hence that
+  Example 3.1 satisfies Definition 3.1 as stated, and the clause of
+  Lemma 3.1 at the degenerate point, \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> S\<^sup>n\<close>, using
+  that at \<open>p = 0\<close> the constraint \<open>a p = 0\<close> is vacuous and that \<open>F\<close> is
+  Lipschitz in \<open>M\<close> uniformly in \<open>p\<close>.\<close>
 unbundle inner_syntax
 
 section \<open>The operator of Eq. (1.9) on pairs\<close>

@@ -8,23 +8,11 @@ begin
 (*>*)
 
 text \<open>
-  Lemma 3.1 of arXiv:2512.17702, the part that genuinely mentions the
-             semicontinuous envelopes F_* and F^*.
-
-    This is the ONLY theory that needs both halves of the development at once:
-    * \<open>Operator_Envelopes\<close>.thy supplies \<open>ell_op_lsc\<close> = F_* and \<open>ell_op_usc\<close> = F^*, and already
-      proves the clause F_* = F at p = 0 (theorem \<open>ell_op_lsc_at_zero\<close>);
-    * \<open>Poincare_Separation\<close>.thy supplies Eq. (3.5) and the index shift that makes
-      Eq. (3.6) what it is.
-
-    Because the import graph is a diamond over the draft theory
-    \<open>Constraint_Set_Convexity\<close>, PIDE reports a spurious "Malformed theory" at
-    the header of this file.  That is an artifact: check this theory with
-
-      ~/isabelle/bin/isabelle build -d . Arbitrage
-
-    which is ~22 s warm.  See the header of \<open>Operator_Continuity\<close>.thy for why everything else
-    was arranged to avoid this situation.\<close>
+  Proves the clause of Lemma 3.1 of arXiv:2512.17702 that mentions the
+  semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> of \<open>F\<close>. It combines
+  \<open>ell_op_lsc\<close> and \<open>ell_op_usc\<close> from \<open>Operator_Envelopes\<close>, together
+  with the clause \<open>F\<^sub>* = F\<close> at \<open>p = 0\<close> proved there, with Eq. (3.5) and
+  the index shift of Eq. (3.6) supplied by \<open>Poincare_Separation\<close>.\<close>
 section \<open>Eq. (3.6): the lower bound for \<open>F\<^sup>*(0, M)\<close>\<close>
 
 text \<open>The paper obtains Eq. (3.6) by evaluating \<open>F\<close> along the sequence

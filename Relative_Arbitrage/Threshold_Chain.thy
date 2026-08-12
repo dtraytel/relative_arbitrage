@@ -8,32 +8,14 @@ begin
 (*>*)
 
 text \<open>
-  Every threshold set contains threshold subsets of all smaller
-             sizes.  This is the missing ingredient for Eq. (3.5): it says
-             that the ordered eigenvalues lambda_(1), ..., lambda_(m) are
-             exactly the S-eigenvalues of a threshold set S of size m, listed
-             in decreasing order.
-
-    Recall (Eigenvalues.thy) that T is a THRESHOLD set of B when every value
-    inside dominates every value outside; \<open>threshold_remove_min\<close> says deleting a
-    minimal element of a threshold set leaves a threshold set.  Iterating that
-    deletion produces the whole descending chain.
-
-    Three Isabelle notes, all learned the hard way here.  Each of the first two
-    produced a NON-TERMINATING proof, invisible to `isabelle build` (which
-    reports nothing at all until it finishes) but pinpointed by PIDE in
-    milliseconds, so develop this file under PIDE.
-    * The shrinking step is stated as an EXISTENTIAL, not with `obtains`.  An
-      `obtains` rule with three conclusions, one of them a \<open>\<And>\<close>-statement, makes
-      `obtain ... by metis` fall back on metis (\<open>full_types\<close>) and diverge.
-    * But an existential is NOT enough on its own: discharging the resulting
-      `obtain` with `blast` also diverges here, because the induction
-      hypothesis and all of `Suc.prems` are in scope and `blast` searches
-      rather than just eliminating.  Every existential below is therefore
-      introduced with `rule exI` and eliminated with `rule exE`, and the
-      conjuncts are projected with small `simp` steps.
-    * `\<open>threshold_remove_min\<close>` must be instantiated explicitly (lam, T, B, w):
-      with those schematic, `OF` reports "multiple unifiers".\<close>
+  Proves that every threshold set contains threshold subsets of all
+  smaller sizes, the ingredient behind Eq. (3.5): the ordered eigenvalues
+  \<open>lambda\<^sub>1, ..., lambda\<^sub>m\<close> are exactly the \<open>S\<close>-eigenvalues of a
+  threshold set \<open>S\<close> of size \<open>m\<close>, listed in decreasing order. A set
+  \<open>T\<close> is a threshold set of \<open>B\<close> when every value inside dominates every
+  value outside; \<open>threshold_remove_min\<close> shows that deleting a minimal
+  element of a threshold set leaves a threshold set, and iterating the
+  deletion produces the whole descending chain.\<close>
 text \<open>The import is @{theory Relative_Arbitrage.Eigenvalue_Continuity} rather
   than @{theory Relative_Arbitrage.Eigenvalues}, so that the development forms a
   single chain \<open>Eigenvalues \<rightarrow> Eigenvalue_Continuity \<rightarrow>

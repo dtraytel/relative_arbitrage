@@ -8,37 +8,20 @@ begin
 (*>*)
 
 text \<open>
-  The value function of Eq. (1.6) of arXiv:2512.17702
-             (Lai/Shkolnikov/Soner), as an actual supremum over markets.
+  Formalizes the value function of Eq. (1.6) of arXiv:2512.17702,
 
-    Eq. (1.6) reads   v(x) = sup {P-ess inf \<open>tau_K\<close> : P in P_x}.
+    \<open>v(x) = Sup {essinf\<^bsub>P\<^esub> tau\<^sub>K | P. P \<in> P\<^sub>x}\<close>,
 
-    Two design points force the shape of the definition.
-
-    * The paper's \<open>P_x\<close> is a set of measures on ONE fixed space,
-      Omega = C([0,oo), R^n).  A supremum over markets carried by varying
-      sample-space types cannot even be written in HOL, so the sample space
-      is pinned to the type 'n => real => real -- the type that carries
-      \<open>bm_paths\<close>, so that the constructed Brownian markets are members.
-
-    * The supremum is valued in ennreal.  Then Sup is total: no
-      nonemptiness or boundedness side conditions appear in the definition,
-      and Sup {} = 0 gives the correct value where no market exists.
-
-    Results:
-    * \<open>ess_inf_time_le_nn_integral\<close>: an almost-sure lower bound on tau is at
-      most E[tau] -- the step that lets the expectation bounds of
-      \<open>Volatile_Market\<close> speak about the essential infimum.
-    * \<open>val_fn_le_ball_v\<close>: v(x0) <= (r^2 - |x0|^2)^+/(n-k) for K = cball 0 r,
-      i.e. the "<=" half of Eq. (3.9) of Example 3.1, now as a statement
-      about the paper's value function rather than about one market.
-    * \<open>val_fn_boundary\<close>: on the sphere v(x0) = 0 = the value of Eq. (3.9),
-      i.e. Example 3.1 holds EXACTLY there, both inequalities.
-    * \<open>mkt_exit_vals_nonempty\<close>: the index set is inhabited, so \<open>val_fn\<close> is not
-      an artefact of an empty supremum.
-
-    Not proved (needs the optimal martingale of Eq. (3.11), i.e. Ito
-    calculus): the reverse inequality at interior points.\<close>
+  as an actual supremum over markets. The sample space is pinned to the
+  single type \<open>'n \<Rightarrow> real \<Rightarrow> real\<close> carrying \<open>bm_paths\<close>, since a
+  supremum over varying sample-space types cannot be written in HOL, and
+  the supremum is valued in \<open>ennreal\<close> so that \<open>Sup\<close> is total and
+  \<open>Sup {} = 0\<close> gives the correct value where no market exists. It
+  proves \<open>ess_inf_time_le_nn_integral\<close>, bounding an almost-sure lower
+  bound on \<open>tau\<close> by \<open>E [tau]\<close>; the inequality \<open>val_fn_le_ball_v\<close>,
+  \<open>v(x0) \<le> max (r\<^sup>2 - \<bar>x0\<bar>\<^sup>2) 0 / (n - k)\<close> for \<open>K = cball 0 r\<close>; the
+  boundary identity \<open>val_fn_boundary\<close>, where Example 3.1 holds exactly;
+  and nonemptiness of the index set via \<open>mkt_exit_vals_nonempty\<close>.\<close>
 section \<open>The essential infimum of a nonnegative random time\<close>
 
 text \<open>\<open>P-ess inf tau\<close> of Eq. (1.6): the largest deterministic almost-sure

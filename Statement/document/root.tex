@@ -1,0 +1,37 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Theorem 1.1 of arXiv:2512.17702, as Formalised}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  The formal statement of Theorem 1.1 of Lai, Shkolnikov and Soner,
+  \emph{Relative arbitrage problem under eigenvalue lower bounds}
+  (arXiv:2512.17702), together with every definition it mentions, so that the
+  formal statement can be checked against the paper without reading the
+  proofs.  Nothing is proved here that is not proved in the accompanying
+  development: each clause is restated in full and discharged by a single
+  reference.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\end{document}

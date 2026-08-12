@@ -9,14 +9,13 @@ begin
 (*>*)
 
 text \<open>
-  The class \<open>P_x\<close> of Eq. (1.7) of arXiv:2512.17702, encoded as laws of
-             the pair (X, <X>) on the path space, following the paper's own
-             proof of Lemma 2.3: the covariation is carried as a second,
-             uniformly Lipschitz path component whose difference quotients lie
-             in the compact convex constraint set
-             S = \<open>Pi_constraint\<close> k \<open>\<inter>\<close> {eigen_ub L}.  Lemma 2.1
-             (\<open>lemma_2_1_exact\<close>) identifies S with the convex hull of the
-             unconvexified sufficient-volatility set (1.4).\<close>
+  Encodes the class \<open>P\<^sub>x\<close> of Eq. (1.7) as laws of the pair
+  \<open>(X, \<langle>X\<rangle>)\<close> on the path space, following the paper's own proof of
+  Lemma 2.3. The covariation is carried as a second, uniformly Lipschitz
+  path component whose difference quotients lie in the compact convex
+  constraint set \<open>S = Pi_constraint k \<inter> {eigen_ub L}\<close>. Lemma 2.1, in
+  the exact form \<open>lemma_2_1_exact\<close>, identifies \<open>S\<close> with the convex hull
+  of the unconvexified sufficient-volatility set of Eq. (1.4).\<close>
 section \<open>The constraint set of Eq. (1.5) with the technical cap\<close>
 
 definition sconstraint :: "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite^'n) set" where

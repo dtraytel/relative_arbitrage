@@ -8,36 +8,19 @@ begin
 (*>*)
 
 text \<open>
-  Eq. (3.4)-(3.6) of arXiv:2512.17702: the matrix \<open>M_p\<close>, the closed
-             formula (3.5) for F, and Lemma 3.1.
+  Formalizes Eqs. (3.4)-(3.6) of arXiv:2512.17702: the matrix \<open>M\<^sub>p\<close>,
+  the closed formula (3.5) for \<open>F\<close>, and Lemma 3.1. For \<open>p \<noteq> 0\<close>,
+  Eq. (3.4) defines
 
-    IMPORTS: this theory deliberately imports only \<open>Threshold_Chain\<close> (hence
-    Eigenvalues, \<open>Eigenvalue_Bound_Exact\<close>, \<open>Constraint_Set_Convexity\<close>,
-    \<open>Curvature_Operator\<close>) and NOT \<open>Operator_Envelopes\<close>.  \<open>ell_op\<close> and feasible already come
-    from \<open>Curvature_Operator\<close>, which the Eigenvalues chain reaches, so the only
-    thing the \<open>Operator_Envelopes\<close> side ever supplied here was `\<open>trace_conjugate\<close>` -- a
-    six-line trace identity, reproved locally below as `\<open>trace_conj\<close>`.
+    \<open>M\<^sub>p = (I - p p\<^sup>T / \<bar>p\<bar>\<^sup>2) M (I - p p\<^sup>T / \<bar>p\<bar>\<^sup>2)
+       + min (lambda\<^sub>n(M), 0) \<bullet> p p\<^sup>T / \<bar>p\<bar>\<^sup>2\<close>
 
-    That matters for development, not just tidiness: PIDE cannot hold the
-    \<open>Operator_Envelopes\<close> chain and the Eigenvalues chain at the same time (it evicts one and
-    then queues forever), so a theory importing both can only be checked by a
-    batch build, with no per-command feedback.  With this import the whole of
-    Eq. (3.4)-(3.5) is PIDE-workable.  Only the final Eq. (3.6) statement, which
-    genuinely mentions F_* and F^*, needs the merged chain, and it lives in its
-    own theory.
-
-    Eq. (3.4) defines, for p /= 0,
-
-      \<open>M_p\<close> = (I - pp'/|p|^2) M (I - pp'/|p|^2) + min(lambda_(n)(M), 0) pp'/|p|^2
-
-    and \<open>M_0\<close> = M.  Note this is an n x n MATRIX: no change of dimension is
-    involved.  The correction term in the p-direction is chosen so that this
-    eigenvalue sorts to the bottom of the spectrum of \<open>M_p\<close>, which is what makes
-    Eq. (3.5) a clean sum over i = 1..n.
-
-    The point of \<open>M_p\<close> is that it has the same trace pairing as M against every
-    feasible a (which is psd and annihilates p), so F(p, M) = F(p, \<open>M_p\<close>), while
-    \<open>M_p\<close> is diagonalisable in a way adapted to p.\<close>
+  and \<open>M\<^sub>0 = M\<close>; this is an \<open>n \<times> n\<close> matrix, with no change of dimension,
+  and the correction term is chosen so that this eigenvalue sorts to the
+  bottom of the spectrum of \<open>M\<^sub>p\<close>, which is what makes Eq. (3.5) a clean
+  sum over \<open>i = 1..n\<close>. Since \<open>M\<^sub>p\<close> has the same trace pairing as \<open>M\<close>
+  against every feasible \<open>a\<close>, \<open>F(p, M) = F(p, M\<^sub>p)\<close>, while \<open>M\<^sub>p\<close> is
+  diagonalisable in a way adapted to \<open>p\<close>.\<close>
 section \<open>Elementary matrix algebra not already in the development\<close>
 
 text \<open>A local copy of \<open>trace_conjugate\<close> (\<open>Viscosity_Comparison_Interface\<close>), so
