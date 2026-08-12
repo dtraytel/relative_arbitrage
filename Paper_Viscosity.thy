@@ -16970,6 +16970,222 @@ proof -
   then show ?thesis unfolding sq using feasible_subset_sconstraint by blast
 qed
 
+text \<open>\<^bold>\<open>E2 for general \<open>k\<close>.\<close>  The exact growth identity for the
+  SUBSPACE-tangential field: inside the region where the projection onto
+  \<open>V = span (b ` {..<m})\<close> is longer than the clamp \<open>\<rho>\<close>, the squared distance
+  from the origin grows at the exact rate \<open>m - 1\<close>.  Taking \<open>m = CARD('n)\<close>
+  recovers @{thm [source] tangential_exact_growth} at \<open>y\<^sub>0 = 0\<close>; taking
+  \<open>m = CARD('n) - k + 1\<close> gives the rate \<open>real (CARD('n) - k)\<close> that
+  Example 3.1 asks for.\<close>
+
+theorem subspace_tangential_exact_growth:
+  fixes b :: "nat \<Rightarrow> real^'n::finite" and x :: "real^'n" and \<rho> rB T :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L" and rho0: "0 < \<rho>"
+    and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and mk: "CARD('n) - k \<le> m - 1"
+  shows "\<exists>P \<in> paper_pair_class k L T x. AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (\<forall>s\<in>{0..t}. fst (\<omega> s)
+          \<in> {w. \<rho> < norm (projmat b m *v w)} \<inter> ball 0 rB) \<longrightarrow>
+      (norm (fst (\<omega> t)))\<^sup>2 = (norm x)\<^sup>2 + t * (real m - 1)"
+proof -
+  have Psym: "transpose (projmat b m) = projmat b m" by (rule projmat_sym)
+  have Pidem: "projmat b m ** projmat b m = projmat b m"
+    by (rule projmat_idem[OF orth])
+  define RO where
+    "RO = {w :: real^'n. \<rho> < norm (projmat b m *v w)} \<inter> ball 0 rB"
+  define SF where "SF = (\<lambda>z. tanpU (projmat b m) (uvecV (projmat b m) \<rho> z))"
+  define Rn where "Rn = rB + norm x"
+  have SFc: "continuous_on UNIV SF"
+    unfolding SF_def by (rule tanpUV_cont[OF rho0])
+  have SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    unfolding SF_def
+    by (rule tanpU_sq_sconstraint[OF orth uvecV_norm_le[OF rho0]
+          uvecV_fix[OF Pidem] mk L1])
+  have ROo: "open RO"
+  proof -
+    have mvc: "continuous_on UNIV (\<lambda>w :: real^'n. projmat b m *v w)"
+      by (simp add: matrix_vector_mul_linear_gen linear_continuous_on
+          linear_linear)
+    have pc: "continuous_on UNIV (\<lambda>w :: real^'n. norm (projmat b m *v w))"
+      using mvc by (rule continuous_on_norm)
+    have "open {w :: real^'n. \<rho> < norm (projmat b m *v w)}"
+      by (rule open_Collect_less[OF continuous_on_const pc])
+    then show ?thesis unfolding RO_def by (intro open_Int open_ball)
+  qed
+  have ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
+  proof -
+    fix z :: "real^'n" assume "z \<in> RO"
+    then have "norm z < rB"
+      unfolding RO_def by (simp add: mem_ball dist_norm)
+    moreover have "norm (z - x) \<le> norm z + norm x"
+      by (metis norm_triangle_ineq4 norm_minus_commute
+          diff_0_right norm_triangle_ineq)
+    ultimately show "norm (z - x) \<le> Rn" unfolding Rn_def by linarith
+  qed
+  have farRO: "\<rho> \<le> norm (projmat b m *v z)" if z: "z \<in> RO" for z
+    using z unfolding RO_def by auto
+  have unitRO: "norm (uvecV (projmat b m) \<rho> z) = 1" if z: "z \<in> RO" for z
+    by (rule uvecV_unit[OF rho0 farRO[OF z]])
+  have uuRO: "uvecV (projmat b m) \<rho> z \<bullet> uvecV (projmat b m) \<rho> z = 1"
+    if z: "z \<in> RO" for z
+    using unitRO[OF z] by (simp add: dot_square_norm)
+  have killRO: "transpose (SF z) *v (c' *\<^sub>R x + (c' *\<^sub>R mat 1) *v (z - x)) = 0"
+    if z: "z \<in> RO" for z c'
+  proof -
+    have arg: "c' *\<^sub>R x + (c' *\<^sub>R mat 1) *v (z - x) = c' *\<^sub>R z"
+      by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+          scaleR_right_diff_distrib scaleR_add_right)
+    have tsym: "transpose (SF z) = SF z"
+      unfolding SF_def by (rule tanpU_sym[OF Psym])
+    have k0: "SF z *v z = 0"
+      unfolding SF_def by (rule tanpU_kill[OF Psym Pidem rho0 farRO[OF z]])
+    have "transpose (SF z) *v (c' *\<^sub>R z) = c' *\<^sub>R (SF z *v z)"
+      unfolding tsym by (simp add: matrix_vector_mult_scaleR)
+    also have "\<dots> = 0" unfolding k0 by simp
+    finally show ?thesis unfolding arg .
+  qed
+  have sqRO: "SF z ** transpose (SF z)
+      = tanpU (projmat b m) (uvecV (projmat b m) \<rho> z)"
+    if z: "z \<in> RO" for z
+  proof -
+    define u where "u = uvecV (projmat b m) \<rho> z"
+    have uu: "u \<bullet> u = 1" unfolding u_def by (rule uuRO[OF z])
+    have ufix: "projmat b m *v u = u"
+      unfolding u_def by (rule uvecV_fix[OF Pidem])
+    have u1: "norm u \<le> 1" unfolding u_def by (rule uvecV_norm_le[OF rho0])
+    have tsym: "transpose (SF z) = SF z"
+      unfolding SF_def by (rule tanpU_sym[OF Psym])
+    have "SF z ** transpose (SF z)
+        = tanpU (projmat b m) u ** tanpU (projmat b m) u"
+      unfolding SF_def u_def tanpU_sym[OF Psym] by (rule refl)    also have "\<dots> = tanpU (projmat b m) (sqrt (2 - u \<bullet> u) *\<^sub>R u)"
+      by (rule tanpU_sq[OF Psym Pidem ufix u1])
+    also have "\<dots> = tanpU (projmat b m) u" unfolding uu by simp
+    finally show ?thesis unfolding u_def .
+  qed
+  have trRO: "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
+      = c' * (real m - 1)"
+    if z: "z \<in> RO" for z c'
+  proof -
+    have "(c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z))
+        = c' *\<^sub>R (SF z ** transpose (SF z))"
+      by (simp add: scaleR_matrix_mult matrix_mul_lid)
+    then have step: "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
+        = c' * trace (SF z ** transpose (SF z))"
+      by (simp add: trace_scaleR)
+    have "trace (SF z ** transpose (SF z))
+        = trace (projmat b m)
+          - uvecV (projmat b m) \<rho> z \<bullet> uvecV (projmat b m) \<rho> z"
+      unfolding sqRO[OF z] by (rule tanpU_trace)
+    also have "\<dots> = real m - 1"
+      by (simp only: projmat_trace[OF orth] uuRO[OF z])
+    finally have "trace (SF z ** transpose (SF z)) = real m - 1" .
+    then show ?thesis unfolding step by simp
+  qed
+  have sym1: "transpose ((2::real) *\<^sub>R mat 1 :: real^'n^'n)
+      = (2::real) *\<^sub>R mat 1"
+    by (simp add: transpose_scalar)
+  have sym2: "transpose ((-2::real) *\<^sub>R mat 1 :: real^'n^'n)
+      = (-2::real) *\<^sub>R mat 1"
+    by (simp add: transpose_def vec_eq_iff mat_def)
+  obtain P where P: "P \<in> paper_pair_class k L T x"
+    and AE2: "AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
+      (t * (2 * (real m - 1)) / 2
+        \<le> (2 *\<^sub>R x) \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x)
+              \<bullet> (((2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))
+      \<and> (t * (- 2 * (real m - 1)) / 2
+        \<le> ((-2) *\<^sub>R x) \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x)
+              \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))"
+  proof -
+    have kill1: "\<And>z. z \<in> RO \<Longrightarrow> transpose (SF z)
+        *v (2 *\<^sub>R x + ((2::real) *\<^sub>R mat 1) *v (z - x)) = 0"
+      using killRO by blast
+    have kill2: "\<And>z. z \<in> RO \<Longrightarrow> transpose (SF z)
+        *v ((-2) *\<^sub>R x + ((-2::real) *\<^sub>R mat 1) *v (z - x)) = 0"
+      using killRO by blast
+    have marg1: "\<And>z. z \<in> RO \<Longrightarrow> 2 * (real m - 1)
+        \<le> trace (((2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
+      using trRO by simp
+    have marg2: "\<And>z. z \<in> RO \<Longrightarrow> - 2 * (real m - 1)
+        \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
+    proof -
+      fix z :: "real^'n" assume zRO: "z \<in> RO"
+      show "- 2 * (real m - 1)
+          \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
+        using trRO[OF zRO, of "-2"] by simp
+    qed
+    show ?thesis
+      using eulerp_limit_good2_region[OF T0 L1 SFc SFs sym1 sym2
+          ROo ROb kill1 marg1 kill2 marg2] that by blast
+  qed
+  show ?thesis
+  proof (intro bexI[OF _ P])
+    show "AE \<omega> in P. \<forall>t.
+        0 < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (\<forall>s\<in>{0..t}. fst (\<omega> s)
+            \<in> {w. \<rho> < norm (projmat b m *v w)} \<inter> ball 0 rB)
+        \<longrightarrow> (norm (fst (\<omega> t)))\<^sup>2 = (norm x)\<^sup>2 + t * (real m - 1)"
+      using AE2
+    proof (eventually_elim)
+      case (elim \<omega>)
+      show ?case
+      proof (intro allI impI)
+        fix t assume t0: "0 < t" and tT: "t \<le> T"
+          and inb: "\<forall>s\<in>{0..t}. fst (\<omega> s)
+            \<in> {w. \<rho> < norm (projmat b m *v w)} \<inter> ball 0 rB"
+        have inb': "\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO"
+          using inb unfolding RO_def by blast
+        have g1: "t * (2 * (real m - 1)) / 2
+            \<le> (2 *\<^sub>R x) \<bullet> (fst (\<omega> t) - x)
+              + (1/2) * ((fst (\<omega> t) - x)
+                  \<bullet> (((2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x)))"
+          and g2: "t * (- 2 * (real m - 1)) / 2
+            \<le> ((-2) *\<^sub>R x) \<bullet> (fst (\<omega> t) - x)
+              + (1/2) * ((fst (\<omega> t) - x)
+                  \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x)))"
+          using elim t0 tT inb' by blast+
+        define d where "d = fst (\<omega> t) - x"
+        have e1: "(2 *\<^sub>R x) \<bullet> d = 2 * (x \<bullet> d)"
+          by (simp add: inner_scaleR_left)
+        have e2: "((-2) *\<^sub>R x) \<bullet> d = - 2 * (x \<bullet> d)"
+          by (simp add: inner_scaleR_left)
+        have e3: "d \<bullet> (((2::real) *\<^sub>R mat 1) *v d) = 2 * (d \<bullet> d)"
+          by (simp add: scaleR_matrix_vector matrix_vector_mul_lid
+              inner_scaleR_right)
+        have negmv: "\<And>A :: real^'n^'n. (- A) *v d = - (A *v d)"
+          by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
+        have e4: "d \<bullet> (((-2::real) *\<^sub>R mat 1) *v d) = - 2 * (d \<bullet> d)"
+          by (simp add: negmv scaleR_matrix_vector matrix_vector_mul_lid
+              inner_scaleR_right inner_minus_right)
+        have id1: "t * (2 * (real m - 1)) / 2 = t * (real m - 1)" by simp
+        have id2: "t * (- 2 * (real m - 1)) / 2 = - (t * (real m - 1))"
+          by (simp add: field_simps)
+        have both: "2 * (x \<bullet> d) + d \<bullet> d = t * (real m - 1)"
+          using g1[unfolded id1] g2[unfolded id2]
+          unfolding d_def[symmetric] e1 e2 e3 e4
+          by linarith
+        have split: "(norm (fst (\<omega> t)))\<^sup>2
+            = (norm x)\<^sup>2 + (2 * (x \<bullet> d) + d \<bullet> d)"
+        proof -
+          have dd: "fst (\<omega> t) = x + d" unfolding d_def by simp
+          have "(norm (fst (\<omega> t)))\<^sup>2 = (fst (\<omega> t)) \<bullet> (fst (\<omega> t))"
+            by (simp add: dot_square_norm)
+          also have "\<dots> = x \<bullet> x + 2 * (x \<bullet> d) + d \<bullet> d"
+            unfolding dd
+            by (simp add: inner_add_left inner_add_right inner_commute)
+          also have "x \<bullet> x = (norm x)\<^sup>2" by (simp add: dot_square_norm)
+          finally show ?thesis by simp
+        qed
+        show "(norm (fst (\<omega> t)))\<^sup>2 = (norm x)\<^sup>2 + t * (real m - 1)"
+          unfolding split both by (rule refl)
+      qed
+    qed
+  qed
+qed
+
 text \<open>\<^bold>\<open>E2 for \<open>k = 1\<close> is ALREADY AVAILABLE.\<close>  \<open>tangential_exact_growth\<close> above
   gives exact growth at rate \<open>real CARD('n) - 1\<close>, and for \<open>k = 1\<close> that IS
   \<open>real (CARD('n) - k)\<close>.  So for \<open>k = 1\<close> the subspace-tangential field is not
