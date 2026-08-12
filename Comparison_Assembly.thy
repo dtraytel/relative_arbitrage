@@ -9135,6 +9135,141 @@ proof (rule supconv_le_of_local_bound_usc[OF B e d0 gap])
   qed
   then show "\<theta> * (if y \<in> K then u y else C) \<le> \<theta>*C" by simp
 qed
+text \<open>\<^bold>\<open>Attainment for usc data.\<close>  The Crandall--Ishii core asks for
+  \<open>continuous_on UNIV\<close> in exactly ONE place: to know the sup-convolution's
+  supremum is attained, so that the subsolution property can be read off at the
+  attaining point.  Continuity is far more than that needs.  The competitor
+  \<open>y \<mapsto> u y - dist\<^sup>2/(2\<epsilon>)\<close> is usc as soon as \<open>u\<close> is (the penalty is continuous,
+  and \<open>usc_eps_add\<close> adds), it is bounded above, and outside an explicit ball it
+  is already below its value at \<open>x\<close> --- so \<open>usc_attains_sup_gen\<close> on that
+  compact ball gives a GLOBAL maximiser.  This is what lets P4 run the whole
+  chain on usc/lsc data, which is what Definition 3.1 supplies.\<close>
+
+lemma supconv_attained_usc_ball:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
+  obtains ys where "dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1"
+    and "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+proof -
+  define R where "R = sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1"
+  have R1: "1 \<le> R" unfolding R_def by simp
+  have R0: "0 < R" using R1 by linarith
+  define g where "g = (\<lambda>y :: real^'n. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
+  have ene: "2*\<epsilon> \<noteq> 0" using e by simp
+  have pc: "isCont (\<lambda>y :: real^'n. - ((dist x y)\<^sup>2 / (2*\<epsilon>))) z" for z
+    by (intro continuous_intros) (use ene in simp_all)
+  have p2: "\<exists>d>0. \<forall>y. dist zz y < d \<longrightarrow> - ((dist x y)\<^sup>2 / (2*\<epsilon>)) < cc"
+    if "- ((dist x zz)\<^sup>2 / (2*\<epsilon>)) < cc" for cc and zz :: "real^'n"
+    by (rule usc_eps_of_continuous[OF pc that])
+  have gusc: "\<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> g y < c" if lt: "g z < c"
+    for c and z :: "real^'n"
+  proof -
+    have lt': "u z + (- ((dist x z)\<^sup>2 / (2*\<epsilon>))) < c"
+      using lt unfolding g_def by simp
+    from usc_eps_add[OF uscu p2 lt'] obtain d where d0: "0 < d"
+      and h: "\<forall>y. dist z y < d \<longrightarrow> u y + (- ((dist x y)\<^sup>2 / (2*\<epsilon>))) < c"
+      by blast
+    show ?thesis
+    proof (rule exI[of _ d], intro conjI allI impI d0)
+      fix y assume "dist z y < d"
+      then show "g y < c" using h unfolding g_def by simp
+    qed
+  qed
+  have gB: "g y \<le> Bu" for y
+  proof -
+    have "0 \<le> (dist x y)\<^sup>2 / (2*\<epsilon>)" using e by simp
+    then show ?thesis unfolding g_def using B[of y] by linarith
+  qed
+  have neS: "cball x R \<noteq> {}" using R0 by auto
+  obtain ys where ysS: "ys \<in> cball x R"
+    and mxb: "\<And>y. y \<in> cball x R \<Longrightarrow> g y \<le> g ys"
+    using usc_attains_sup_gen[OF gusc _ compact_cball neS, of Bu] gB by blast
+  have xS: "x \<in> cball x R" using R0 by simp
+  have glob: "g y \<le> g ys" for y
+  proof (cases "dist x y \<le> R")
+    case True
+    then have "y \<in> cball x R" by (simp add: dist_commute)
+    then show ?thesis by (rule mxb)
+  next
+    case False
+    then have dR: "R < dist x y" by linarith
+    have s0: "0 \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x)))" by simp
+    have "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < dist x y"
+      using dR unfolding R_def by linarith
+    then have "(sqrt (max 0 (2*\<epsilon>*(Bu - u x))))\<^sup>2 < (dist x y)\<^sup>2"
+      using s0 by (intro power_strict_mono) simp_all
+    then have Rsq: "max 0 (2*\<epsilon>*(Bu - u x)) < (dist x y)\<^sup>2" by simp
+    then have "2*\<epsilon>*(Bu - u x) < (dist x y)\<^sup>2" by simp
+    then have "Bu - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
+      using e by (simp add: pos_less_divide_eq mult.commute)
+    then have "g y < u x" unfolding g_def using B[of y] by linarith
+    moreover have "u x = g x" unfolding g_def by simp
+    moreover have "g x \<le> g ys" by (rule mxb[OF xS])
+    ultimately show ?thesis by linarith
+  qed
+  have bdd: "bdd_above (range (\<lambda>y :: real^'n. u y - (dist x y)\<^sup>2 / (2*\<epsilon>)))"
+    by (rule supconv_bdd_above[OF B e])
+  have le: "supconv u \<epsilon> x \<le> g ys"
+    unfolding supconv_def
+  proof (rule cSUP_least)
+    show "(UNIV :: (real^'n) set) \<noteq> {}" by simp
+    fix y :: "real^'n"
+    show "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> g ys"
+      using glob[of y] unfolding g_def by simp
+  qed
+  have ge: "g ys \<le> supconv u \<epsilon> x"
+    unfolding supconv_def g_def by (rule cSUP_upper[OF UNIV_I bdd])
+  have eq: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+    using le ge unfolding g_def by linarith
+  have dR: "dist x ys \<le> R" using ysS by (simp add: dist_commute)
+  show ?thesis by (rule that[of ys]) (use dR eq in \<open>simp_all add: R_def\<close>)
+qed
+
+lemma supconv_attained_usc_ball_rad:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
+    and R: "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < R"
+  shows "\<exists>ys. dist x ys \<le> R
+      \<and> supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+proof -
+  obtain ys where v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_usc_ball[OF B e uscu] by blast
+  have "dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x)))"
+    by (rule supconv_attain_radius[OF B e v])
+  then have "dist x ys \<le> R" using R by linarith
+  with v show ?thesis by blast
+qed
+
+corollary supconv_attained_usc_in_rad:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
+    and R: "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < R"
+    and sub: "cball x R \<subseteq> \<Omega>"
+  shows "\<exists>ys \<in> \<Omega>. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+proof -
+  obtain ys where d: "dist x ys \<le> R"
+    and v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_usc_ball_rad[OF B e uscu R] by blast
+  have "ys \<in> cball x R" using d by (simp add: dist_commute)
+  with sub have "ys \<in> \<Omega>" by blast
+  with v show ?thesis by blast
+qed
+
+corollary supconv_attained_usc_family:
+  fixes u :: "real^'n::finite \<Rightarrow> real" and xs :: "nat \<Rightarrow> real^'n"
+  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
+  shows "\<exists>ys. \<forall>i. supconv u \<epsilon> (xs i)
+      = u (ys i) - (dist (xs i) (ys i))\<^sup>2 / (2*\<epsilon>)"
+proof -
+  have "\<forall>i. \<exists>y. supconv u \<epsilon> (xs i) = u y - (dist (xs i) y)\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_usc_ball[OF B e uscu] by blast
+  then show ?thesis by (rule choice)
+qed
+
 text \<open>\<^bold>\<open>The two-domain localised maximiser.\<close>  This is what replaces
   \<open>doubling_localised_maximiser_soft\<close>, and it is much simpler, because the
   \<open>x\<close>-side boundary avoidance is GONE.  Maximise the doubled sup-convolved
@@ -12654,8 +12789,10 @@ theorem comparison_supconv_maximiser_complete_gen:
     and rho: "0 < \<rho>" "\<rho> < r"
     and D0: "0 < D\<^sub>0"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
-    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
-    and cw: "continuous_on UNIV (- w)"
+    and uu: "\<And>c z. \<theta> * u z < c \<Longrightarrow>
+        \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> \<theta> * u y < c"
+    and uw: "\<And>c z. (- w) z < c \<Longrightarrow>
+        \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> (- w) y < c"
     and mxK: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow>
         supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst y) + supconv (- w) \<epsilon> (snd y)
           - Pn (fst y - snd y)
@@ -12978,9 +13115,9 @@ proof -
   qed
   obtain ysu0 where ysu0: "\<And>i. supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (zf i))
         = \<theta> * u (ysu0 i) - (dist (fst (zf i)) (ysu0 i))\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_family
+    using supconv_attained_usc_family
       [where u = "\<lambda>y. \<theta> * u y" and xs = "\<lambda>i. fst (zf i)"
-         and Bu = Bu and \<epsilon> = \<epsilon>, OF Bu e cu]
+         and Bu = Bu and \<epsilon> = \<epsilon>, OF Bu e uu]
     by blast
   define ysu where "ysu = ysu0"
   have ysu: "\<forall>i. ysu i \<in> \<Omega>\<^sub>u
@@ -12989,9 +13126,9 @@ proof -
     unfolding ysu_def using ysu0 atu[OF dfst] by blast
   obtain ysw0 where ysw0: "\<And>i. supconv (- w) \<epsilon> (snd (zf i))
         = (- w) (ysw0 i) - (dist (snd (zf i)) (ysw0 i))\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_family
+    using supconv_attained_usc_family
       [where u = "- w" and xs = "\<lambda>i. snd (zf i)"
-         and Bu = Bw and \<epsilon> = \<epsilon>, OF Bw e cw]
+         and Bu = Bw and \<epsilon> = \<epsilon>, OF Bw e uw]
     by blast
   define ysw where "ysw = ysw0"
   have ysw: "\<forall>i. ysw i \<in> \<Omega>\<^sub>w
@@ -13639,6 +13776,16 @@ proof -
     qed
     then show ?thesis using insy by blast
   qed
+  have icu: "isCont (\<lambda>y. \<theta> * u y) z" for z
+    using cu by (simp add: continuous_on_eq_continuous_at)
+  have icw: "isCont (- w) z" for z
+    using cw by (simp add: continuous_on_eq_continuous_at)
+  have uu: "\<And>c z. \<theta> * u z < c \<Longrightarrow>
+      \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> \<theta> * u y < c"
+    by (rule usc_eps_of_continuous[OF icu])
+  have uw: "\<And>c z. (- w) z < c \<Longrightarrow>
+      \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> (- w) y < c"
+    by (rule usc_eps_of_continuous[OF icw])
   have atu: "z \<in> interior K"
     if d: "dist x (fst \<xi>\<^sub>0) \<le> \<rho>"
       and o: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x
@@ -13668,7 +13815,7 @@ proof -
            and Pn = Pn and Gf = Gf and Zf = Zf and KZ = KZ and KG = KG
            and Bu = Bu and Bw = Bw and c = c,
          OF sub sup t(1) t(2) kk(1) kk(2) LL e kap scP Pjet symZ bZ lipG
-            KGnn rho(1) rho(2) D0 Bu Bw cu cw])
+            KGnn rho(1) rho(2) D0 Bu Bw uu uw])
        (use mxK atu atw glb rsmall in blast)+
 qed
 
@@ -13826,6 +13973,123 @@ proof -
             smu smw fitu D0 glb rsmall in blast)+
 qed
 
+subsection \<open>Branch (A) in the two-domain setting\<close>
+
+text \<open>The same branch with the \<open>x\<close>-side boundary avoidance DELETED.  Its place
+  is taken by \<open>posb\<close> --- the sup-convolution is positive on a \<open>\<rho>\<^sub>u\<close>-ball around
+  \<open>x\<^sup>h\<close> --- which is what Definition 3.1's gate supplies, and which needs no
+  geometry at all.  The \<open>y\<close>-side keeps its ball, and \<open>K \<subseteq> K'\<^sup>\<circ>\<close> pays for it.
+  Note the maximality hypothesis \<open>mxU\<close> is over \<open>UNIV \<times> K'\<close>: the \<open>x\<close>-coordinate
+  ranges over everything, which is exactly what
+  \<open>doubled_maximiser_over_UNIV_snd\<close> delivers.\<close>
+
+theorem comparison_2dom_off_diagonal:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and K' :: "(real^'n) set"
+  assumes sub: "visc_subsol k L {q. 0 < u q} u"
+    and sup: "supersol_jet k L (interior K') w"
+    and t: "0 < \<theta>" "\<theta> < 1"
+    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and low: "\<And>y. Blw \<le> (- w) y"
+    and uu: "\<And>c z. \<theta> * u z < c \<Longrightarrow>
+        \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> \<theta> * u y < c"
+    and uw: "\<And>c z. (- w) z < c \<Longrightarrow>
+        \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> (- w) y < c"
+    and epos: "0 < \<epsilon>" and kgpos: "0 < \<kappa>\<^sub>g" and kPpos: "0 < \<kappa>\<^sub>P"
+    and clK': "closed K'" and yhK': "yh \<in> K'"
+    and mxU: "\<And>a q. q \<in> K' \<Longrightarrow>
+        supconv (\<lambda>y. \<theta> * u y) \<epsilon> a + supconv (- w) \<epsilon> q - soft_pen \<kappa>\<^sub>P (a - q)
+        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
+          - soft_pen \<kappa>\<^sub>P (xh - yh)"
+    and fary: "\<And>b. b \<in> K' - interior K' \<Longrightarrow> \<kappa>\<^sub>g < dist yh b"
+    and smallw: "2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
+    and rupos: "0 < \<rho>\<^sub>u"
+    and posb: "\<And>a. dist a xh \<le> \<rho>\<^sub>u \<Longrightarrow> 0 < supconv (\<lambda>y. \<theta> * u y) \<epsilon> a"
+    and off: "xh \<noteq> yh"
+  shows False
+proof -
+  have kPnn: "0 \<le> \<kappa>\<^sub>P" using kPpos by linarith
+  have kgnn: "0 \<le> \<kappa>\<^sub>g" using kgpos by linarith
+  have dne: "xh - yh \<noteq> 0" using off by simp
+  define c where "c = norm (soft_grad \<kappa>\<^sub>P (xh - yh))"
+  have cpos: "0 < c" unfolding c_def by (rule soft_grad_norm_pos[OF dne kPpos])
+  define R\<^sub>w where "R\<^sub>w = \<kappa>\<^sub>g/4"
+  have Rwpos: "0 < R\<^sub>w" unfolding R\<^sub>w_def using kgpos by simp
+  have smallw': "2*\<epsilon>*(Bw - Blw) < R\<^sub>w\<^sup>2"
+    unfolding R\<^sub>w_def by (rule smallw)
+  have Bpos: "0 < min (3*\<kappa>\<^sub>g/4) \<rho>\<^sub>u" using kgpos rupos by simp
+  obtain \<rho> where rpos: "0 < \<rho>" and rlt: "\<rho> < min (3*\<kappa>\<^sub>g/4) \<rho>\<^sub>u"
+    and rgrad: "6 * \<rho>
+        < (1 - 1 / sqrt ((norm (xh - yh))\<^sup>2 + 1)) * norm (xh - yh)"
+    using soft_rho_exists[OF dne Bpos] by blast
+  have rlt1: "\<rho> < 3*\<kappa>\<^sub>g/4" using rlt by simp
+  have rltu: "\<rho> \<le> \<rho>\<^sub>u" using rlt by simp
+  have rltk: "\<rho> < \<kappa>\<^sub>g" using rlt1 kgpos by simp
+  have fitw: "\<rho> + R\<^sub>w \<le> \<kappa>\<^sub>g" unfolding R\<^sub>w_def using rlt1 by simp
+  have rsmall: "(3*\<kappa>\<^sub>P) * (2*\<rho>) < c"
+    unfolding c_def by (rule soft_rsmall_of_rho[OF kPpos rgrad])
+  have glb: "c \<le> norm (soft_grad \<kappa>\<^sub>P (fst (xh, yh) - snd (xh, yh)))"
+    unfolding c_def by simp
+  have insy: "cball yh \<kappa>\<^sub>g \<subseteq> interior K'"
+    by (rule cball_subset_interior_of_far_from_boundary[OF clK' yhK' kgnn fary])
+  have ballK': "cball (snd (xh, yh)) \<kappa>\<^sub>g \<subseteq> K'"
+    using insy interior_subset by auto
+  have mx': "\<And>a q. q \<in> K' \<Longrightarrow>
+      supconv (\<lambda>y. \<theta> * u y) \<epsilon> a + supconv (- w) \<epsilon> q - soft_pen \<kappa>\<^sub>P (a - q)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (xh, yh))
+        + supconv (- w) \<epsilon> (snd (xh, yh))
+        - soft_pen \<kappa>\<^sub>P (fst (xh, yh) - snd (xh, yh))"
+    using mxU by simp
+  have mxK: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst p) + supconv (- w) \<epsilon> (snd p)
+        - soft_pen \<kappa>\<^sub>P (fst p - snd p)
+      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> (fst (xh, yh))
+        + supconv (- w) \<epsilon> (snd (xh, yh))
+        - soft_pen \<kappa>\<^sub>P (fst (xh, yh) - snd (xh, yh))"
+    if p: "p \<in> cball (xh, yh) \<kappa>\<^sub>g" for p
+    by (rule mxK_of_UNIV_snd
+        [where A = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>" and Bfun = "supconv (- w) \<epsilon>"
+           and Pn = "soft_pen \<kappa>\<^sub>P" and K' = K' and \<xi>\<^sub>0 = "(xh, yh)"
+           and r = \<kappa>\<^sub>g and p = p,
+         OF mx' ballK' p])
+  have atw: "z \<in> interior K'"
+    if d: "dist a (snd (xh, yh)) \<le> \<rho>"
+      and o: "supconv (- w) \<epsilon> a = (- w) z - (dist a z)\<^sup>2 / (2*\<epsilon>)" for a z
+  proof -
+    have d1: "dist a z \<le> sqrt (max 0 (2*\<epsilon>*(Bw - (- w) a)))"
+      by (rule supconv_attain_radius[OF Bw epos o])
+    have d2: "sqrt (max 0 (2*\<epsilon>*(Bw - (- w) a))) < R\<^sub>w"
+      by (rule supconv_radius_uniform[OF low epos Rwpos smallw'])
+    have dz: "dist a z \<le> R\<^sub>w" using d1 d2 by linarith
+    have "dist yh z \<le> dist yh a + dist a z" by (rule dist_triangle)
+    also have "\<dots> \<le> \<rho> + R\<^sub>w" using d dz by (simp add: dist_commute)
+    finally have "z \<in> cball yh \<kappa>\<^sub>g" using fitw by simp
+    then show ?thesis using insy by blast
+  qed
+  have atu: "z \<in> {q. 0 < u q}"
+    if d: "dist a (fst (xh, yh)) \<le> \<rho>"
+      and o: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> a = \<theta> * u z - (dist a z)\<^sup>2 / (2*\<epsilon>)"
+    for a z
+  proof -
+    have du: "dist a xh \<le> \<rho>\<^sub>u" using d rltu by simp
+    show ?thesis by (rule atu_of_positive_ball[OF t(1) epos posb du o])
+  qed
+  have D0: "(0::real) < 1" by simp
+  have KGnn: "0 \<le> 3*\<kappa>\<^sub>P" using kPnn by linarith
+  show False
+    by (rule comparison_supconv_maximiser_complete_gen
+        [where u = u and w = w and \<xi>\<^sub>0 = "(xh, yh)" and D\<^sub>0 = 1
+           and \<Omega>\<^sub>u = "{q. 0 < u q}" and \<Omega>\<^sub>w = "interior K'"
+           and \<theta> = \<theta> and \<epsilon> = \<epsilon> and \<kappa> = \<kappa>\<^sub>P and \<rho> = \<rho> and r = \<kappa>\<^sub>g
+           and Pn = "soft_pen \<kappa>\<^sub>P" and Gf = "soft_grad \<kappa>\<^sub>P"
+           and Zf = "soft_hess \<kappa>\<^sub>P" and KZ = "2*\<kappa>\<^sub>P" and KG = "3*\<kappa>\<^sub>P"
+           and Bu = Bu and Bw = Bw and c = c,
+         OF sub sup t(1) t(2) kk(1) kk(2) LL epos kPnn
+            soft_pen_semiconcave[OF kPnn] soft_pen_jet_field soft_hess_sym
+            soft_hess_bound[OF kPnn] soft_grad_lipschitz[OF kPnn] KGnn
+            rpos rltk D0 Bu Bw uu uw])
+       (use mxK atu atw glb rsmall in blast)+
+qed
+
 subsection \<open>Branch (B): the diagonal case closes too\<close>
 
 text \<open>The four steps chained.  At a diagonal maximiser \<open>p\<close> (interior, which the
@@ -13844,7 +14108,8 @@ theorem comparison_soft_diagonal:
   assumes sup: "supersol_jet k L (interior K) w"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and Bw: "\<And>y. (- w) y \<le> Bw"
-    and cw: "continuous_on UNIV (- w)"
+    and uw: "\<And>c z. (- w) z < c \<Longrightarrow>
+        \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> (- w) y < c"
     and epos: "0 < \<epsilon>"
     and pK: "p \<in> K" and pint: "p \<in> interior K"
     and mxKK: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
@@ -13857,7 +14122,7 @@ proof -
   \<comment> \<open>the attainment point, and it is interior\<close>
   obtain ys where ysO: "ys \<in> interior K"
     and opt: "supconv (- w) \<epsilon> p = (- w) ys - (dist p ys)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_in_rad[OF Bw epos cw rad subw] by blast
+    using supconv_attained_usc_in_rad[OF Bw epos uw rad subw] by blast
   \<comment> \<open>\<open>p\<close> is interior, so \<open>p + hh\<close> stays in \<open>K\<close> for small \<open>hh\<close>\<close>
   \<comment> \<open>\<open>mem_interior\<close> already delivers the ball inside \<open>K\<close> itself, so no
       subset-transitivity step is needed — routing it through
@@ -14022,6 +14287,11 @@ proof -
     have subw: "cball xh (\<kappa>\<^sub>g/4) \<subseteq> interior K" using shrink insx by blast
     have rad: "sqrt (max 0 (2*\<epsilon>*(Bw - (- w) xh))) < \<kappa>\<^sub>g/4"
       by (rule supconv_radius_uniform[OF low epos Rwpos smallw])
+    have icwd: "isCont (- w) z" for z
+      using cw by (simp add: continuous_on_eq_continuous_at)
+    have uwd: "\<And>c z. (- w) z < c \<Longrightarrow>
+        \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> (- w) y < c"
+      by (rule usc_eps_of_continuous[OF icwd])
     have mxd: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y
           - soft_pen \<kappa>\<^sub>P (x - y)
         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> xh
@@ -14031,7 +14301,7 @@ proof -
       by (rule comparison_soft_diagonal
           [where w = w and K = K and A = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>"
              and \<epsilon> = \<epsilon> and \<kappa>\<^sub>P = \<kappa>\<^sub>P and p = xh and R\<^sub>w = "\<kappa>\<^sub>g/4" and Bw = Bw,
-           OF sup kk(1) kk(2) LL Bw cw epos xhK pint mxd rad subw])
+           OF sup kk(1) kk(2) LL Bw uwd epos xhK pint mxd rad subw])
   qed
 qed
 
