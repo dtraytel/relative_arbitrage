@@ -890,11 +890,69 @@ checked refutation, all at the `comparison_two_domain` site.
   so at `|x| = √ε` the gap is `≥ 1/2` for EVERY `ε`.  Sup-convolutions of usc
   functions decrease to them pointwise, never uniformly.
 
-**The CI core needs NO refactor.**  `comparison_supconv_maximiser_complete_gen`
-— the theorem the whole chain funnels into — is already stated with an
-ABSTRACT `Ω`, and `comparison_from_localised_maximiser_gen` instantiates
-`Ω := interior K` only at the call site.  So what has to be rebuilt is only
-the wrappers that manufacture its `mxK` / `subu` / `subw` hypotheses.
+**The CI core needs NO refactor** — *superseded 2026-08-12, see below.*
+`comparison_supconv_maximiser_complete_gen` was already stated with an
+ABSTRACT `Ω`, and `comparison_from_localised_maximiser_gen` instantiated
+`Ω := interior K` only at the call site.
+
+#### P4 step 1 — DONE 2026-08-12 (`4d14761`): two domains and a gate
+
+One `Ω` was not enough after all, and the fix was a signature change only.
+
+* `Ω` is used in the whole chain ONLY via `sub`/`ysuO` (the u-side) and
+  `sup`/`yswO` (the w-side), never jointly.  Split into `Ω⇩u` / `Ω⇩w` in
+  `comparison_supconv_sequence_complete`,
+  `comparison_supconv_bounded_family` and
+  `comparison_supconv_maximiser_complete_gen`.  **Every proof body is
+  unchanged.**  This is what the two-domain setting needs: `Ω⇩w = interior K'`
+  is free (`K ⊆ K'°`), while `Ω⇩u` must be the gated set.
+* The core's `subu`/`subw` (*the attainment BALL sits in `Ω`*) are replaced by
+  `atu`/`atw` (*any attainment point over the `ρ`-ball lies in `Ω⇩u`/`Ω⇩w`*).
+  That is the interface the gate needs: at a boundary `x⇧h` there is no ball
+  in `K`, but `supconv_attain_gate_open` still puts the attainment point in
+  `{u > 0}`.
+* `supconv_attain_radius` (new, `Comparison_Assembly`) keeps the OLD call site
+  working: EVERY attainment point is within `√(max 0 (2ε(B⇩u − u x)))` of the
+  base point (not just the one `supconv_attained_ball` produces), because
+  `u z − d²/(2ε) = supconv u ε x ≥ u x`.  So `radu` + `subu` still give `atu`.
+
+#### P4 step 2 — OPEN: the two-domain wrapper
+
+What is left is to manufacture `mxK` and `atu`/`atw` in the two-domain
+setting, i.e. to rebuild `doubling_localised_maximiser_soft` +
+`comparison_from_localised_maximiser_gen` over `K × K'`.  The pieces:
+
+1. **`atu` from the gate.**  `atu` needs `z ∈ Ω⇩u` for every attainment point
+   `z` of `supconv (θu) ε` at base points within `ρ` of `x⇧h`.  Take
+   `Ω⇩u := {z. 0 < u z}` and add the hypothesis `u ≤ 0 off K` (TRUE for
+   `paper_v`, by `paper_v_zero_outside`), so `Ω⇩u ⊆ K` and, with the gate,
+   `Ω⇩u ⊆ interior K ∪ {x ∈ K − interior K. 0 < u x}` — exactly the set
+   Definition 3.1(a) supplies.  `visc_subsol` is monotone in `Ω`, so
+   `visc_subsol k L Ω⇩u u` follows from `visc_subsol_env_imp_visc_subsol`.
+   By `supconv_attain_gate_open` it then suffices that
+   `supconv (θu) ε x > 0` for every `x` within `ρ` of `x⇧h`.  That is where
+   the FREE parameter `D⇩0 > 0` of the core earns its keep: the shifted-Jensen
+   maximality at `z⇩i` gives
+   `supconv (θu) ε (fst z⇩i) ≥ Φ(ξ⇩0) − |p⇩i| ρ ≥ M − |p⇩i| ρ` (using
+   `supconv (−w) ≤ 0`, which needs `w ≥ 0` globally, and `Pn ≥ 0`), and
+   `|p⇩i| ≤ D⇩0/(2+i) · ρ²/(4r)`, so choosing `D⇩0` small keeps it positive
+   for EVERY `i`.  `M > 0` is `comparison_failure_gives_theta` +
+   `two_domain_doubled_maximiser`.
+2. **`atw` on the y-side** is free: `two_domain_gap` gives
+   `dist(K, ∂K') > 0`, and the penalty pins `y⇧h` to `x⇧h ∈ K` — the standard
+   `Pn(x−y) ≥ c|x−y|⁴` + boundedness estimate `|x⇧h − y⇧h| ≤ (2B/c)^{1/4}`,
+   made smaller than the gap by taking the penalty coefficient large.
+3. **`mxK` is the REAL remaining obstruction.**  The core wants maximality of
+   the SUP-CONVOLVED functional over a genuine ball `cball ξ⇩0 r` in
+   `ℝⁿ × ℝⁿ`, and if `x⇧h ∈ ∂K` no such ball lies in `K × K'`.  The classical
+   fix is to extend `u` by a constant BELOW its minimum off `K` (legitimate:
+   `visc_subsol_at_local_min` makes the extension a subsolution off `K` for
+   free, and `usc_extension_bounded` keeps it usc), so that the doubled
+   functional has a GLOBAL max at `ξ⇩0`; then take a maximiser `ξ^ε` of the
+   sup-convolved functional over a fixed compact ball and show `ξ^ε → ξ⇩0`
+   along a subsequence by usc — the classical CI-for-usc argument, which does
+   NOT need `supconv_uniform_upper`.  This is the piece to build next, and it
+   is the only genuinely new mathematics left in the whole development.
 
 **Enablers, all proved.**
 * `visc_subsol_at_local_min` (`Envelopes`) — a test function touching from
