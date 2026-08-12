@@ -778,4 +778,100 @@ proof -
   qed
 qed
 
+subsection \<open>Example 3.1 for general \<open>k\<close>\<close>
+
+text \<open>The interior lower bound is now available at the SHARP rate
+  \<open>CARD('n) - k\<close>: for \<open>y \<noteq> 0\<close> take the \<open>(CARD('n) - k + 1)\<close>-dimensional
+  subspace \<open>V\<close> spanned by an orthonormal family whose FIRST member is
+  \<open>y / |y|\<close> (@{thm [source] orthonormal_family_containing}), so that
+  \<open>y \<in> V\<close>, and run the subspace-tangential member of
+  @{thm [source] paper_v_ball_lower_sharp} inside \<open>V\<close>.  Its growth rate is
+  \<open>dim V - 1 = CARD('n) - k\<close>, which is exactly the constant in (3.1).
+
+  The horizon hypothesis \<open>r\<^sup>2/(CARD('n) - k) \<le> T\<close> is NOT a weakening: the
+  value function of a finite-horizon problem is capped by its horizon
+  (@{thm [source] enn2real_paper_v_horizon_cap}), so without it the stated
+  identity would be false at the centre.  It says only that the horizon does
+  not bind.\<close>
+
+theorem example_3_1:
+  fixes r :: real and x :: "real^'n::finite"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+    and T0: "0 < T" and r0: "0 < r"
+    and Tbig: "r * r / real (CARD('n) - k) \<le> T"
+  shows "enn2real (paper_v k L T (cball 0 r) x)
+      = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
+proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
+  fix y :: "real^'n" assume ylt: "norm y < r" and ynz: "y \<noteq> 0"
+  define m where "m = CARD('n) - k + 1"
+  have nk0: "0 < real (CARD('n) - k)" using kn by simp
+  have m2: "2 \<le> m" unfolding m_def using kn by simp
+  have m0: "0 < m" using m2 by simp
+  have mn: "m \<le> CARD('n)" unfolding m_def using k1 kn by simp
+  have mk: "CARD('n) - k \<le> m - 1" unfolding m_def by simp
+  have cn: "real m - 1 = real (CARD('n) - k)" unfolding m_def by simp
+  have ny0: "0 < norm y" using ynz by simp
+  define x0 where "x0 = (1 / norm y) *\<^sub>R y"
+  have u: "x0 \<bullet> x0 = 1"
+  proof -
+    have "x0 \<bullet> x0 = (1 / norm y) * ((1 / norm y) * (y \<bullet> y))"
+      unfolding x0_def by simp
+    also have "\<dots> = 1" using ny0 by (simp add: dot_square_norm power2_eq_square)
+    finally show ?thesis .
+  qed
+  obtain b :: "nat \<Rightarrow> real^'n" where b0: "b 0 = x0"
+    and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow>
+        b i \<bullet> b j = (if i = j then 1 else 0)"
+    using orthonormal_family_containing[OF u mn m0] by blast
+  have yfix: "projmat b m *v y = y"
+  proof -
+    have yb: "y = norm y *\<^sub>R b 0"
+      unfolding b0 x0_def using ny0 by simp
+    have "projmat b m *v y = projmat b m *v (norm y *\<^sub>R b 0)"
+      by (rule arg_cong[where f = "\<lambda>w. projmat b m *v w", OF yb])
+    also have "\<dots> = norm y *\<^sub>R (projmat b m *v b 0)"
+      by (rule matvec_scaleR_right)
+    also have "\<dots> = norm y *\<^sub>R b 0"
+      by (simp add: projmat_fix[OF orth m0])
+    also have "\<dots> = y" by (rule yb[symmetric])
+    finally show ?thesis .
+  qed
+  have Kc: "closed (cball (0 :: real^'n) r)" by simp
+  have sub: "cball (0 :: real^'n) r \<subseteq> cball 0 r" by simp
+  have bound: "ennreal (min T ((r\<^sup>2 - (norm y)\<^sup>2) / (real m - 1)))
+      \<le> paper_v k L T (cball 0 r) y"
+    by (rule paper_v_ball_lower_sharp[OF T0 L1 Kc sub ynz ylt orth mk m2 yfix])
+  have sq: "(norm y)\<^sup>2 = y \<bullet> y" by (simp add: dot_square_norm)
+  have rsq: "r\<^sup>2 = r * r" by (simp add: power2_eq_square)
+  have nn: "0 \<le> (r * r - y \<bullet> y) / real (CARD('n) - k)"
+  proof -
+    have "norm y * norm y \<le> r * r"
+      by (rule mult_mono) (use ylt r0 in auto)
+    then have "y \<bullet> y \<le> r * r"
+      unfolding sq[symmetric] by (simp add: power2_eq_square)
+    then show ?thesis using nk0 by simp
+  qed
+  have dle: "(r * r - y \<bullet> y) / real (CARD('n) - k) \<le> T"
+  proof -
+    have "(r * r - y \<bullet> y) / real (CARD('n) - k)
+        \<le> (r * r) / real (CARD('n) - k)"
+      using nk0 by (intro divide_right_mono) simp_all
+    then show ?thesis using Tbig by (rule order_trans)  qed
+  have mineq: "min T ((r * r - y \<bullet> y) / real (CARD('n) - k))
+      = (r * r - y \<bullet> y) / real (CARD('n) - k)"
+    using dle by simp
+  have bound': "ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k))
+      \<le> paper_v k L T (cball 0 r) y"
+    using bound unfolding sq rsq cn mineq .
+  have fin: "paper_v k L T (cball 0 r) y < \<top>"
+    by (rule paper_v_ball_fin[OF kn]) (use T0 L1 in auto)
+  have ntop: "paper_v k L T (cball 0 r) y \<noteq> \<top>" using fin by simp
+  have "enn2real (ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k)))
+      \<le> enn2real (paper_v k L T (cball 0 r) y)"
+    by (rule enn2real_mono[OF bound' fin])
+  then show "(r * r - y \<bullet> y) / real (CARD('n) - k)
+      \<le> enn2real (paper_v k L T (cball 0 r) y)"
+    unfolding enn2real_ennreal[OF nn] .
+qed
+
 end
