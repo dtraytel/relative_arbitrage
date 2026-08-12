@@ -169,6 +169,27 @@ lemma iexit_class_start:
   "P \<in> iexit_class k L x \<Longrightarrow> AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
   unfolding iexit_class_def by blast
 
+subsection \<open>Restriction to a compact horizon\<close>
+
+text \<open>The cut of a law on the half-line is a law on the horizon-\<open>S\<close> path
+  space.  @{thm [source] pcut_adapted} needs nothing of the underlying space,
+  so the adaptedness of the cut coordinates carries over unchanged.\<close>
+
+lemma ipcut_measurable:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes S: "0 \<le> S"
+    and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
+  shows "pcut S \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric S :: ('n pairpath) metric))"
+  unfolding pcut_def measurable_cong_sets[OF setsP refl]
+  by (rule restrict_ipath_measurable[OF S])
+
+lemma iexit_class_pcut_measurable:
+  assumes S: "0 \<le> S" and P: "P \<in> iexit_class k L x"
+  shows "pcut S \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric S :: ('n::finite pairpath) metric))"
+  by (rule ipcut_measurable[OF S iexit_class_sets[OF P]])
+
 lemma iexit_class_diffquot:
   "P \<in> iexit_class k L x \<Longrightarrow>
      AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>

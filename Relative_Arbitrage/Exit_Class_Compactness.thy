@@ -6615,10 +6615,7 @@ qed
 
 lemma pcut_adapted:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and r: "0 \<le> r" and ru: "r \<le> u"
+  assumes S: "0 \<le> S" and r: "0 \<le> r" and ru: "r \<le> u"
   shows "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable
       (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u)"
 proof (cases "r \<in> {0..S}")
@@ -6717,7 +6714,7 @@ proof -
     unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
   have adap: "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable (?F u)"
     if "0 \<le> r" "r \<le> u" for r u
-    by (rule pcut_adapted[OF S setsQ that])
+    by (rule pcut_adapted[OF S that])
   have mT: "min u S \<le> T" for u
     using min.cobounded2[of u S] ST by linarith
 

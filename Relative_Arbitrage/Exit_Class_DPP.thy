@@ -3276,7 +3276,7 @@ proof -
   have adap: "(\<lambda>\<omega> :: 'n pairpath. pcut r \<omega> v)
       \<in> borel_measurable (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
     if "0 \<le> v" and "v \<le> u" for v
-    by (rule pcut_adapted[OF r setsP that])
+    by (rule pcut_adapted[OF r that])
   have spF: "space (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) u)
       = space P" by simp
   show ?thesis
