@@ -2,23 +2,16 @@
 theory Theorem_1_1_Statement
   imports "Relative_Arbitrage.Value_Function_Uniqueness"
 begin
+
+declare [[show_question_marks = false, names_short = true]]
 (*>*)
 
 text \<open>
-  This theory presents the formal statement of Theorem 1.1 of
-
-    J.-H. Lai, M. Shkolnikov, H. M. Soner, \<^emph>\<open>Relative arbitrage problem under
-    eigenvalue lower bounds\<close>, arXiv:2512.17702,
-
-  together with every definition its statement mentions, so that the formal
-  statement can be read against the paper without reading the proofs.  Nothing
-  is proved here that is not proved elsewhere in the development: each theorem
-  below is restated in full and discharged by a single reference.
-
   Throughout, \<open>'n\<close> is a finite index type, \<open>n = CARD('n)\<close>, and
   \<open>real^'n\<close> and \<open>real^'n^'n\<close> are vectors and matrices over it.  \<open>**\<close> is
   matrix multiplication, \<open>*v\<close> matrix-vector application, \<open>\<bullet>\<close> the inner
-  product and \<open>trace\<close> the trace.
+  product and \<open>trace\<close> the trace.  An underscore in an identifier is
+  typeset as a hyphen, so \<open>exit_val\<close> appears as \<open>exit-val\<close>.
 \<close>
 
 section \<open>The operator of Eq. (1.9)\<close>
