@@ -9027,6 +9027,115 @@ proof -
       by (rule supconv_le_of_local_bound_usc[OF B ep less_imp_le[OF R0] gj loc])
   qed
 qed
+subsection \<open>P4 step 2: shrinking the domain, and extending \<open>u\<close> off \<open>K\<close>\<close>
+
+text \<open>All three viscosity predicates quantify over \<open>x \<in> \<Omega>\<close>, so each is
+  ANTITONE in \<open>\<Omega>\<close>.  P4 needs this twice: to restrict the \<open>u\<close>-side from
+  Definition 3.1's gated set to \<open>{u > 0}\<close>, and to restrict the \<open>w\<close>-side from
+  \<open>interior K'\<close> to a small neighbourhood of the maximiser.\<close>
+
+lemma visc_subsol_mono_dom:
+  assumes s: "visc_subsol k L \<Omega> u" and sub: "\<Omega>' \<subseteq> \<Omega>"
+  shows "visc_subsol k L \<Omega>' u"
+  using s sub unfolding visc_subsol_def by blast
+
+lemma supersol_jet_mono_dom:
+  assumes s: "supersol_jet k L \<Omega> w" and sub: "\<Omega>' \<subseteq> \<Omega>"
+  shows "supersol_jet k L \<Omega>' w"
+  using s sub unfolding supersol_jet_def by blast
+
+text \<open>\<open>visc_subsol_env k L K \<Omega> u\<close> reads \<open>u\<close> only on \<open>K\<close> --- the touching is
+  global over \<open>K\<close> and the touching point lies in \<open>\<Omega> \<subseteq> K\<close>.  So it is
+  insensitive to how \<open>u\<close> is defined OFF \<open>K\<close>, which is what makes the extension
+  below legitimate: Definition 3.1(a) transfers to the extended function for
+  free, and with it the whole envelope-to-local bridge.\<close>
+
+lemma visc_subsol_env_agrees:
+  fixes K :: "(real^'n::finite) set"
+  assumes sub: "visc_subsol_env k L K \<Omega> u" and OK: "\<Omega> \<subseteq> K"
+    and eq: "\<And>y. y \<in> K \<Longrightarrow> u' y = u y"
+  shows "visc_subsol_env k L K \<Omega> u'"
+  unfolding visc_subsol_env_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+    and gl: "\<forall>y\<in>K. u' y - \<phi> y \<le> u' x - \<phi> x"
+  have xK: "x \<in> K" using x OK by blast
+  have gl': "\<forall>y\<in>K. u y - \<phi> y \<le> u x - \<phi> x"
+  proof
+    fix y assume y: "y \<in> K"
+    have "u y - \<phi> y = u' y - \<phi> y" using eq[OF y] by simp
+    also have "\<dots> \<le> u' x - \<phi> x" using gl y by blast
+    also have "\<dots> = u x - \<phi> x" using eq[OF xK] by simp
+    finally show "u y - \<phi> y \<le> u x - \<phi> x" .
+  qed
+  show "ell_op_lsc k L (g x) H \<le> 1"
+    using sub x tf gl' unfolding visc_subsol_env_def by blast
+qed
+
+text \<open>Extending an usc \<open>u\<close> off a CLOSED \<open>K\<close> by a constant at or below its
+  minimum on \<open>K\<close> keeps it usc.  (@{thm [source] usc_extension_bounded} in
+  \<open>Envelopes\<close> does the \<open>-B\<close> case; P4 needs the constant to be as negative as it
+  likes, so that the doubled functional cannot be maximised off \<open>K\<close>.)\<close>
+
+lemma usc_extend_const_below:
+  fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  assumes cl: "closed K"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and lo: "\<And>y. y \<in> K \<Longrightarrow> Bl \<le> u y" and CB: "C \<le> Bl"
+    and lt: "(if z \<in> K then u z else C) < c"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then u y else C) < c"
+proof (cases "z \<in> K")
+  case True
+  then have uz: "u z < c" using lt by simp
+  have Cc: "C < c" using CB lo[OF True] uz by linarith
+  obtain e where e0: "0 < e" and h: "\<And>y. dist z y < e \<Longrightarrow> u y < c"
+    using uscu[OF uz] by blast
+  show ?thesis
+  proof (rule exI[of _ e], intro conjI allI impI e0)
+    fix y assume "dist z y < e"
+    then show "(if y \<in> K then u y else C) < c" using h Cc by simp
+  qed
+next
+  case False
+  then have Cc: "C < c" using lt by simp
+  have opn: "open (- K)" using cl by (rule open_Compl)
+  have zin: "z \<in> - K" using False by simp
+  obtain e where e0: "0 < e" and bl: "ball z e \<subseteq> - K"
+    using opn zin unfolding open_contains_ball by blast
+  show ?thesis
+  proof (rule exI[of _ e], intro conjI allI impI e0)
+    fix y assume dy: "dist z y < e"
+    then have "y \<in> ball z e" by (simp add: dist_commute)
+    then have "y \<notin> K" using bl by blast
+    then show "(if y \<in> K then u y else C) < c" using Cc by simp
+  qed
+qed
+
+text \<open>And the point of the extension: far from \<open>K\<close> its sup-convolution is back
+  down at the constant, because the whole competing ball misses \<open>K\<close>.  This is
+  what confines the doubling maximiser to a bounded neighbourhood of \<open>K\<close>
+  WITHOUT any boundary avoidance --- the \<open>x\<close>-side maximiser may sit on \<open>\<partial>K\<close>,
+  and still has a genuine ball around it inside the region over which the
+  maximality holds.\<close>
+
+lemma supconv_extend_far_le:
+  fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  assumes B: "\<And>y. \<theta> * (if y \<in> K then u y else C) \<le> Bu" and e: "0 < \<epsilon>"
+    and d0: "0 \<le> d" and gap: "2*\<epsilon>*(Bu - \<theta>*C) < d\<^sup>2"
+    and far: "\<And>b. b \<in> K \<Longrightarrow> d < dist x b"
+  shows "supconv (\<lambda>y. \<theta> * (if y \<in> K then u y else C)) \<epsilon> x \<le> \<theta>*C"
+proof (rule supconv_le_of_local_bound_usc[OF B e d0 gap])
+  fix y assume dy: "dist x y \<le> d"
+  have "y \<notin> K"
+  proof
+    assume "y \<in> K"
+    from far[OF this] show False using dy by linarith
+  qed
+  then show "\<theta> * (if y \<in> K then u y else C) \<le> \<theta>*C" by simp
+qed
+
 
 lemma supconv_le_of_local_bound:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
