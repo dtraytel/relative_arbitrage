@@ -16815,6 +16815,161 @@ proof (intro CollectI conjI)
     unfolding eigen_lb_def by (meson le_trans)
 qed
 
+subsection \<open>E2: continuity and the covariance of the clamped field\<close>
+
+lemma uvecV_cont:
+  fixes P :: "real^'n::finite^'n"
+  assumes rho0: "0 < \<rho>"
+  shows "continuous_on UNIV (uvecV P \<rho>)"
+proof -
+  have pc: "continuous_on UNIV (\<lambda>z :: real^'n. P *v z)"
+    by (simp add: matrix_vector_mul_linear_gen linear_continuous_on
+        linear_linear)
+  have nz: "\<And>w :: real^'n. max \<rho> (norm (P *v w)) \<noteq> 0" using rho0 by simp
+  show ?thesis
+    unfolding uvecV_def
+    by (intro continuous_intros pc) (use nz in simp_all)
+qed
+
+lemma tanpUV_cont:
+  fixes P :: "real^'n::finite^'n"
+  assumes rho0: "0 < \<rho>"
+  shows "continuous_on UNIV (\<lambda>z. tanpU P (uvecV P \<rho> z))"
+proof -
+  have uc: "continuous_on UNIV (uvecV P \<rho>)" by (rule uvecV_cont[OF rho0])
+  have ci: "continuous_on UNIV (\<lambda>z. uvecV P \<rho> z $ i)" for i
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_vec_nth] uc]) auto
+  have eq: "(\<lambda>z. tanpU P (uvecV P \<rho> z)) = (\<lambda>z. \<chi> i j.
+      P $ i $ j - uvecV P \<rho> z $ i * uvecV P \<rho> z $ j)"
+    by (rule ext) (simp add: tanpU_def outer_prod_def vec_eq_iff)
+  show ?thesis unfolding eq
+    by (intro continuous_on_vec_lambda continuous_intros ci)
+qed
+
+text \<open>The square of the field is again a field of the same shape with the
+  direction rescaled, and the rescaled direction still has norm \<open>\<le> 1\<close> because
+  \<open>(2 - a) * a = 1 - (a-1)\<^sup>2 \<le> 1\<close>.  That is what makes the CLAMPED field
+  feasible EVERYWHERE, which \<open>eulerp_limit_good2_region\<close> demands.\<close>
+
+lemma tanpU_sq_norm_le:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u \<le> 1"
+  shows "norm (sqrt (2 - u \<bullet> u) *\<^sub>R u) \<le> 1"
+proof -
+  define a where "a = u \<bullet> u"
+  have a0: "0 \<le> a" unfolding a_def by simp
+  have anorm: "a = (norm u)\<^sup>2" unfolding a_def by (simp add: dot_square_norm)
+  have a1: "a \<le> 1" unfolding anorm using u1 by (simp add: power_le_one)
+  have a2: "0 \<le> 2 - a" using a1 by linarith
+  have e1: "norm (sqrt (2 - a) *\<^sub>R u) = sqrt (2 - a) * norm u"
+    using a2 by simp
+  have e2: "(sqrt (2 - a) * norm u)\<^sup>2 = (2 - a) * a"
+    using a2 anorm by (simp add: power_mult_distrib)
+  have le1: "(2 - a) * a \<le> 1"
+  proof -
+    have "0 \<le> (a - 1)\<^sup>2" by simp
+    then show ?thesis by (simp add: power2_eq_square algebra_simps)
+  qed
+  have nn: "0 \<le> sqrt (2 - a) * norm u" using a2 by simp
+  have "(sqrt (2 - a) * norm u)\<^sup>2 \<le> 1\<^sup>2" using e2 le1 by simp
+  then have "sqrt (2 - a) * norm u \<le> 1"
+    by (rule power2_le_imp_le) simp
+  then show ?thesis unfolding a_def[symmetric] e1 .
+qed
+
+lemma tanpU_sq:
+  fixes P :: "real^'n::finite^'n" and u :: "real^'n"
+  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
+    and ufix: "P *v u = u" and u1: "norm u \<le> 1"
+  shows "tanpU P u ** tanpU P u = tanpU P (sqrt (2 - u \<bullet> u) *\<^sub>R u)"
+proof -
+  define a where "a = u \<bullet> u"
+  have a0: "0 \<le> a" unfolding a_def by simp
+  have anorm: "a = (norm u)\<^sup>2" unfolding a_def by (simp add: dot_square_norm)
+  have a1: "a \<le> 1" unfolding anorm using u1 by (simp add: power_le_one)
+  have a2: "0 \<le> 2 - a" using a1 by linarith
+  have sq2: "sqrt (2 - a) * sqrt (2 - a) = 2 - a" using a2 by simp
+  have uP: "u \<bullet> (P *v y) = u \<bullet> y" for y
+  proof -
+    have "u \<bullet> (P *v y) = (transpose P *v u) \<bullet> y" by (rule inner_matrix_transpose)
+    also have "\<dots> = (P *v u) \<bullet> y" unfolding Psym by (rule refl)
+    finally show ?thesis unfolding ufix .
+  qed
+  have PP: "P *v (P *v y) = P *v y" for y
+    using Pidem by (metis matrix_vector_mul_assoc)
+  have onP: "tanpU P u *v (P *v y) = P *v y - (u \<bullet> y) *\<^sub>R u" for y
+    using tanpU_mv[of P u "P *v y"] unfolding PP uP by simp
+  have onu: "tanpU P u *v u = (1 - a) *\<^sub>R u"
+    using tanpU_mv[of P u u] unfolding ufix a_def[symmetric]
+    by (simp add: algebra_simps scaleR_diff_left)
+  have coef: "(u \<bullet> y) + (u \<bullet> y) * (1 - a) = (2 - a) * (u \<bullet> y)" for y
+    by (simp add: algebra_simps)
+  have vec: "(u \<bullet> y) *\<^sub>R u + ((u \<bullet> y) * (1 - a)) *\<^sub>R u
+      = ((2 - a) * (u \<bullet> y)) *\<^sub>R u" for y
+    unfolding scaleR_left_distrib[symmetric] coef by (rule refl)
+  have rhs: "(sqrt (2 - a) *\<^sub>R u \<bullet> y) *\<^sub>R (sqrt (2 - a) *\<^sub>R u)
+      = ((2 - a) * (u \<bullet> y)) *\<^sub>R u" for y
+  proof -
+    have c: "(sqrt (2 - a) * (u \<bullet> y)) * sqrt (2 - a) = (2 - a) * (u \<bullet> y)"
+    proof -
+      have "(sqrt (2 - a) * (u \<bullet> y)) * sqrt (2 - a)
+          = (sqrt (2 - a) * sqrt (2 - a)) * (u \<bullet> y)"
+        by (simp add: algebra_simps)
+      then show ?thesis unfolding sq2 .
+    qed
+    have "(sqrt (2 - a) *\<^sub>R u \<bullet> y) *\<^sub>R (sqrt (2 - a) *\<^sub>R u)
+        = ((sqrt (2 - a) * (u \<bullet> y)) * sqrt (2 - a)) *\<^sub>R u"
+      by (simp only: inner_scaleR_left scaleR_scaleR)
+    then show ?thesis unfolding c .
+  qed
+  have key: "tanpU P u *v (tanpU P u *v y)
+      = tanpU P (sqrt (2 - a) *\<^sub>R u) *v y" for y
+  proof -
+    have "tanpU P u *v (tanpU P u *v y)
+        = tanpU P u *v (P *v y - (u \<bullet> y) *\<^sub>R u)"
+      by (simp only: tanpU_mv)
+    also have "\<dots> = tanpU P u *v (P *v y) - (u \<bullet> y) *\<^sub>R (tanpU P u *v u)"
+      by (simp add: matvec_diff_right matvec_scaleR_right)
+    also have "\<dots> = (P *v y - (u \<bullet> y) *\<^sub>R u)
+        - ((u \<bullet> y) * (1 - a)) *\<^sub>R u"
+      unfolding onP onu scaleR_scaleR by (rule refl)
+    also have "\<dots> = P *v y - ((u \<bullet> y) *\<^sub>R u + ((u \<bullet> y) * (1 - a)) *\<^sub>R u)"
+      by (simp only: diff_diff_add)
+    also have "\<dots> = P *v y - ((2 - a) * (u \<bullet> y)) *\<^sub>R u"
+      unfolding vec by (rule refl)
+    also have "\<dots> = tanpU P (sqrt (2 - a) *\<^sub>R u) *v y"
+      unfolding tanpU_mv rhs by (rule refl)
+    finally show ?thesis .
+  qed  show ?thesis
+    unfolding a_def[symmetric] matrix_eq using key
+    by (metis matrix_vector_mul_assoc)
+qed
+
+theorem tanpU_sq_sconstraint:
+  fixes b :: "nat \<Rightarrow> real^'n::finite" and u :: "real^'n"
+  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and u1: "norm u \<le> 1" and ufix: "projmat b m *v u = u"
+    and mk: "CARD('n) - k \<le> m - 1" and L1: "1 \<le> L"
+  shows "tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u)
+      \<in> sconstraint k L"
+proof -
+  have Psym: "transpose (projmat b m) = projmat b m" by (rule projmat_sym)
+  have Pidem: "projmat b m ** projmat b m = projmat b m"
+    by (rule projmat_idem[OF orth])
+  have tsym: "transpose (tanpU (projmat b m) u) = tanpU (projmat b m) u"
+    by (rule tanpU_sym[OF Psym])
+  have sq: "tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u)
+      = tanpU (projmat b m) (sqrt (2 - u \<bullet> u) *\<^sub>R u)"
+    unfolding tsym by (rule tanpU_sq[OF Psym Pidem ufix u1])
+  have n1: "norm (sqrt (2 - u \<bullet> u) *\<^sub>R u) \<le> 1" by (rule tanpU_sq_norm_le[OF u1])
+  have f1: "projmat b m *v (sqrt (2 - u \<bullet> u) *\<^sub>R u) = sqrt (2 - u \<bullet> u) *\<^sub>R u"
+    by (simp add: matvec_scaleR_right ufix)
+  have "tanpU (projmat b m) (sqrt (2 - u \<bullet> u) *\<^sub>R u) \<in> feasible k L 0"
+    by (rule tanpU_feasible[OF orth n1 f1 mk L1])
+  then show ?thesis unfolding sq using feasible_subset_sconstraint by blast
+qed
+
 text \<open>\<^bold>\<open>E2 for \<open>k = 1\<close> is ALREADY AVAILABLE.\<close>  \<open>tangential_exact_growth\<close> above
   gives exact growth at rate \<open>real CARD('n) - 1\<close>, and for \<open>k = 1\<close> that IS
   \<open>real (CARD('n) - k)\<close>.  So for \<open>k = 1\<close> the subspace-tangential field is not
