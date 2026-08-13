@@ -352,6 +352,203 @@ definition visc_supersol_env2 ::
 text \<open>Fewer test functions means a weaker condition, so everything proved in the
   \<^const>\<open>test_fun_at\<close> form still delivers Definition 3.1 as the paper states it.\<close>
 
+section \<open>\<open>F\<close> reads only the symmetric part of \<open>M\<close>\<close>
+
+text \<open>Definition 3.1 takes the envelopes of \<open>F\<close> over \<open>\<real>\<^sup>n \<times> \<S>\<^sup>n\<close>, the paper's
+  symmetric matrices, whereas \<^const>\<open>ell_op_lsc\<close> and \<^const>\<open>ell_op_usc\<close> take them
+  over \<open>\<real>\<^sup>n \<times> \<real>\<^sup>n\<^sup>\<times>\<^sup>n\<close>.  Nothing changes: the feasible matrices are psd, hence
+  symmetric, so \<open>F\<close> factors through \<open>M \<mapsto> (M + M\<^sup>T)/2\<close>, and that map is a
+  contraction fixing \<open>\<S>\<^sup>n\<close> --- so every ball around a symmetric \<open>M\<close> realises the
+  same set of values as its symmetric part does.\<close>
+
+lemma trace_transpose_eq:
+  fixes N :: "real^'n::finite^'n"
+  shows "trace (transpose N) = trace N"
+  by (simp add: trace_def transpose_def)
+
+lemma trace_mul_comm:
+  fixes A B :: "real^'n::finite^'n"
+  shows "trace (A ** B) = trace (B ** A)"
+proof -
+  have "trace (A ** B) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. A$i$j * B$j$i)"
+    by (simp add: trace_def matrix_matrix_mult_def)
+  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A$i$j * B$j$i)" by (rule sum.swap)
+  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. B$j$i * A$i$j)" by (simp add: mult.commute)
+  also have "\<dots> = trace (B ** A)"
+    by (simp add: trace_def matrix_matrix_mult_def)
+  finally show ?thesis .
+qed
+
+lemma trace_mult_sym_right:
+  fixes M a :: "real^'n::finite^'n"
+  assumes sa: "transpose a = a"
+  shows "trace (M ** a) = trace (transpose M ** a)"
+proof -
+  have e1: "trace (transpose M ** a) = trace (a ** transpose M)"
+    by (rule trace_mul_comm)
+  have e2: "a ** transpose M = transpose (M ** a)"
+    by (simp add: matrix_transpose_mul sa)
+  have e3: "trace (transpose (M ** a)) = trace (M ** a)"
+    by (rule trace_transpose_eq)
+  show ?thesis using e1 e2 e3 by simp
+qed
+
+lemma trace_add_eq:
+  fixes A B :: "real^'n::finite^'n"
+  shows "trace (A + B) = trace A + trace B"
+  by (simp add: trace_def sum.distrib)
+
+lemma matrix_mult_scaleR_left:
+  fixes A B :: "real^'n::finite^'n"
+  shows "(c *\<^sub>R A) ** B = c *\<^sub>R (A ** B)"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff sum_distrib_left algebra_simps)
+
+lemma matrix_mult_add_left:
+  fixes A B C :: "real^'n::finite^'n"
+  shows "(A + B) ** C = A ** C + B ** C"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff sum.distrib algebra_simps)
+
+definition sym_part :: "real^'n::finite^'n \<Rightarrow> real^'n^'n" where
+  "sym_part M = (1/2) *\<^sub>R (M + transpose M)"
+
+lemma sym_part_sym: "transpose (sym_part M) = sym_part (M :: real^'n::finite^'n)"
+  by (simp add: sym_part_def transpose_def vec_eq_iff add.commute)
+
+lemma sym_part_id: "transpose M = M \<Longrightarrow> sym_part (M :: real^'n::finite^'n) = M"
+  by (simp add: sym_part_def scaleR_add_right vec_eq_iff)
+
+lemma sym_part_diff:
+  fixes A B :: "real^'n::finite^'n"
+  shows "sym_part (A - B) = sym_part A - sym_part B"
+  by (simp add: sym_part_def transpose_def vec_eq_iff algebra_simps)
+
+theorem ell_op_sym_part:
+  fixes M :: "real^'n::finite^'n"
+  shows "ell_op k L p M = ell_op k L p (sym_part M)"
+proof -
+  have obj: "- trace (sym_part M ** a) / 2 = - trace (M ** a) / 2"
+    if aF: "a \<in> feasible k L p" for a
+  proof -
+    have sa: "transpose a = a"
+      using aF unfolding feasible_def psd_def by blast
+    have "trace (sym_part M ** a) = (1/2) * trace ((M + transpose M) ** a)"
+      unfolding sym_part_def by (simp add: matrix_mult_scaleR_left trace_scaleR)
+    also have "\<dots> = (1/2) * (trace (M ** a) + trace (transpose M ** a))"
+      by (simp add: matrix_mult_add_left trace_add_eq)
+    also have "\<dots> = trace (M ** a)"
+      using trace_mult_sym_right[OF sa, of M] by simp
+    finally show ?thesis by simp
+  qed
+  have "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p
+      = (\<lambda>a. - trace (sym_part M ** a) / 2) ` feasible k L p"
+    using obj by (intro image_cong refl) simp
+  then show ?thesis unfolding ell_op_def by simp
+qed
+
+lemma norm_transpose_eq:
+  fixes P :: "real^'n::finite^'n"
+  shows "norm (transpose P) = norm P"
+proof -
+  have "inner (transpose P) (transpose P) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. P$j$i * P$j$i)"
+    by (simp add: inner_vec_def transpose_def)
+  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. P$j$i * P$j$i)" by (rule sum.swap)
+  also have "\<dots> = inner P P" by (simp add: inner_vec_def)
+  finally show ?thesis by (simp add: norm_eq_sqrt_inner)
+qed
+
+lemma norm_sym_part_le:
+  fixes P :: "real^'n::finite^'n"
+  shows "norm (sym_part P) \<le> norm P"
+proof -
+  have "norm (sym_part P) = (1/2) * norm (P + transpose P)"
+    unfolding sym_part_def by simp
+  also have "\<dots> \<le> (1/2) * (norm P + norm (transpose P))"
+    by (intro mult_left_mono norm_triangle_ineq) simp
+  also have "\<dots> = norm P" by (simp add: norm_transpose_eq)
+  finally show ?thesis .
+qed
+
+lemma ell_op_pair_sym_part:
+  fixes M' :: "real^'n::finite^'n"
+  shows "ell_op_pair k L (p', sym_part M') = ell_op_pair k L (p', M')"
+  unfolding ell_op_pair_def by (simp add: ell_op_sym_part[symmetric])
+
+lemma ell_op_image_sym:
+  fixes M :: "real^'n::finite^'n"
+  assumes symM: "transpose M = M" and e: "0 < e"
+  shows "ell_op_pair k L ` ball (p, M) e
+       = ell_op_pair k L ` {w \<in> ball (p, M) e. transpose (snd w) = snd w}"
+proof
+  show "ell_op_pair k L ` {w \<in> ball (p, M) e. transpose (snd w) = snd w}
+      \<subseteq> ell_op_pair k L ` ball (p, M) e" by blast
+next
+  show "ell_op_pair k L ` ball (p, M) e
+      \<subseteq> ell_op_pair k L ` {w \<in> ball (p, M) e. transpose (snd w) = snd w}"
+  proof
+    fix v assume "v \<in> ell_op_pair k L ` ball (p, M) e"
+    then obtain w where w: "w \<in> ball (p, M) e" and v: "v = ell_op_pair k L w"
+      by blast
+    obtain p' M' where wpm: "w = (p', M')" by (cases w)
+    have d: "dist (sym_part M') M \<le> dist M' M"
+    proof -
+      have "sym_part M' - M = sym_part (M' - M)"
+        using sym_part_diff[of M' M] sym_part_id[OF symM] by simp
+      then have "norm (sym_part M' - M) = norm (sym_part (M' - M))" by simp
+      also have "\<dots> \<le> norm (M' - M)" by (rule norm_sym_part_le)
+      finally show ?thesis by (simp add: dist_norm)
+    qed
+    have "dist (p', sym_part M') (p, M)
+        = sqrt ((dist p' p)\<^sup>2 + (dist (sym_part M') M)\<^sup>2)"
+      by (simp add: dist_Pair_Pair)
+    also have "\<dots> \<le> sqrt ((dist p' p)\<^sup>2 + (dist M' M)\<^sup>2)"
+      using d by (intro real_sqrt_le_mono add_left_mono power_mono) auto
+    also have "\<dots> = dist w (p, M)" unfolding wpm by (simp add: dist_Pair_Pair)
+    finally have dw: "dist (p', sym_part M') (p, M) \<le> dist w (p, M)" .
+    have "dist w (p, M) < e" using w by (simp add: dist_commute)
+    with dw have inb: "(p', sym_part M') \<in> ball (p, M) e"
+      by (simp add: dist_commute)
+    have "v = ell_op_pair k L (p', sym_part M')"
+      unfolding v wpm by (rule ell_op_pair_sym_part[symmetric])
+    moreover have "(p', sym_part M')
+        \<in> {w \<in> ball (p, M) e. transpose (snd w) = snd w}"
+      using inb by (simp add: sym_part_sym)
+    ultimately show "v \<in> ell_op_pair k L
+        ` {w \<in> ball (p, M) e. transpose (snd w) = snd w}" by blast
+  qed
+qed
+
+theorem ell_op_lsc_eq_over_sym:
+  fixes M :: "real^'n::finite^'n"
+  assumes symM: "transpose M = M"
+  shows "ell_op_lsc k L p M
+       = (SUP e \<in> {0<..}. INF w \<in> {w \<in> ball (p, M) e. transpose (snd w) = snd w}.
+            ell_op_pair k L w)"
+  unfolding ell_op_lsc_def
+proof (rule SUP_cong[OF refl])
+  fix e :: real assume "e \<in> {0<..}"
+  then have e: "0 < e" by simp
+  show "(INF w \<in> ball (p, M) e. ell_op_pair k L w)
+      = (INF w \<in> {w \<in> ball (p, M) e. transpose (snd w) = snd w}.
+           ell_op_pair k L w)"
+    by (rule arg_cong[where f = Inf]) (rule ell_op_image_sym[OF symM e])
+qed
+
+theorem ell_op_usc_eq_over_sym:
+  fixes M :: "real^'n::finite^'n"
+  assumes symM: "transpose M = M"
+  shows "ell_op_usc k L p M
+       = (INF e \<in> {0<..}. SUP w \<in> {w \<in> ball (p, M) e. transpose (snd w) = snd w}.
+            ell_op_pair k L w)"
+  unfolding ell_op_usc_def
+proof (rule INF_cong[OF refl])
+  fix e :: real assume "e \<in> {0<..}"
+  then have e: "0 < e" by simp
+  show "(SUP w \<in> ball (p, M) e. ell_op_pair k L w)
+      = (SUP w \<in> {w \<in> ball (p, M) e. transpose (snd w) = snd w}.
+           ell_op_pair k L w)"
+    by (rule arg_cong[where f = Sup]) (rule ell_op_image_sym[OF symM e])
+qed
+
 lemma visc_subsol_env2_cong:
   fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
   assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
