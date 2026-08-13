@@ -9,6 +9,10 @@ declare [[show_question_marks = false, names_short = true]]
 (*>*)
 
 text \<open>
+  Equation and result numbers throughout --- Eq. (1.5)--(1.10), Definition 3.1,
+  Lemma 3.1, Example 3.1, Theorem 1.1 --- are those of
+  \<^cite>\<open>LaiShkolnikovSoner\<close>, and ``the paper'' always means that one.
+
   Throughout, \<open>'n\<close> is a finite index type, \<open>n = CARD('n)\<close>, and
   \<open>real^'n\<close> and \<open>real^'n^'n\<close> are vectors and matrices over it.  \<open>**\<close> is
   matrix multiplication, \<open>*v\<close> matrix-vector application, \<open>\<bullet>\<close> the inner
@@ -50,7 +54,8 @@ text \<open>The covariation constraint of Eq. (1.5).  \<open>Pi_proj a m\<close>
 
 text \<open>@{thm [display] Pi_proj_def Pi_constraint_def sconstraint_def}\<close>
 
-text \<open>One reading had to be fixed here.  Eq. (1.5) writes the infimum over
+text \<open>One reading had to be fixed here.  Eq. (1.5) of \<^cite>\<open>LaiShkolnikovSoner\<close>
+  writes the infimum over
   \<open>P\<^sup>2 = P\<close>, \<open>tr(P) = m\<close>, without asking \<open>P\<close> to be symmetric; \<^const>\<open>is_proj\<close>
   does ask.  Taken literally the infimum is \<open>-\<infinity>\<close> for essentially every \<open>a\<close>: in
   three dimensions with \<open>k = 1\<close>, \<open>m = 2\<close>, take \<open>a = u u\<^sup>T\<close> with \<open>u = (1,0,1)\<close>
@@ -153,7 +158,7 @@ text \<open>The lower semicontinuous envelope.  Definition 3.1 reads it within \
 
 text \<open>@{thm [display] lsc_env_def lsc_envK_def}\<close>
 
-text \<open>The paper writes the envelopes as \<open>lim\<^sub>\<epsilon>\<^sub>\<down>\<^sub>0 inf\<^sub>{\<^sub>|\<^sub>y\<^sub>-\<^sub>x\<^sub>|\<^sub><\<^sub>\<epsilon>\<^sub>}\<close> without saying
+text \<open>\<^cite>\<open>LaiShkolnikovSoner\<close> writes the envelopes as \<open>lim\<^sub>\<epsilon>\<^sub>\<down>\<^sub>0 inf\<^sub>{\<^sub>|\<^sub>y\<^sub>-\<^sub>x\<^sub>|\<^sub><\<^sub>\<epsilon>\<^sub>}\<close> without saying
   whether \<open>y\<close> ranges over \<open>K\<close> or over \<open>\<real>\<^sup>n\<close>.  Since Definition 3.1 opens with a
   bounded \<open>u : K \<rightarrow> \<real>\<close>, only the within-\<open>K\<close> reading typechecks, and that is
   \<^const>\<open>lsc_envK\<close>.  Worth pinning down in the paper, as the two genuinely
@@ -226,7 +231,7 @@ text \<open>Stated for \<^const>\<open>iexit_val\<close>, the value function of 
   the radius is named only in clause (0), where it appears in the
   conclusion.\<close>
 
-text \<open>The paper's standing hypotheses are \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>.  Each clause
+text \<open>The standing hypotheses of \<^cite>\<open>LaiShkolnikovSoner\<close> are \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>.  Each clause
   below assumes only what its proof uses, so \<open>1 \<le> k\<close> appears on the
   supersolution and uniqueness clauses but not on (0), (1) and the subsolution
   halves, which hold at \<open>k = 0\<close> too.  That is a strengthening, not a gap: each
@@ -281,7 +286,7 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
   The standing assumption is \<open>1 \<le> L\<close>, the paper's own.  The value \<open>L = 1\<close> is
   included, and is the case of Remark 1.1(c), where the equation becomes the
   arrival time formulation of the Ambrosio--Soner co-dimension mean curvature
-  flow.  Case 1 of the paper's Section 3 does not reach it as written: it
+  flow.  Case 1 of Section 3 of \<^cite>\<open>LaiShkolnikovSoner\<close> does not reach it as written: it
   perturbs the eigenvalues of the witness into the open interval \<open>(1,L)\<close>,
   which is empty at \<open>L = 1\<close>.  What is used here instead is a covariance field
   of exact rotations, whose spectrum does not move at all, so no margin is
@@ -298,7 +303,7 @@ text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)
   sense of Definition 3.1.  Both halves hold with the boundary gate included.
 
   This is not the pointwise identity \<open>v = 0\<close> on \<open>K - interior K\<close>, which is false
-  in general: by Lemma 5.3 of the paper a convex \<open>K\<close> has \<open>v x = 0\<close> exactly when
+  in general: by Lemma 5.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> a convex \<open>K\<close> has \<open>v x = 0\<close> exactly when
   the face containing \<open>x\<close> has dimension at most \<open>n - k\<close>, so the cube in three
   dimensions with \<open>k = 2\<close> has \<open>v > 0\<close> on the open two-dimensional faces of its
   boundary.  On a ball the pointwise identity does hold, and is part of
