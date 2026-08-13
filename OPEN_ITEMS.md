@@ -1,6 +1,6 @@
 # Open items against the paper
 
-Two places where the formal statement and arXiv:2512.17702 do not yet line up.
+One place where the formal statement and arXiv:2512.17702 do not yet line up.
 Everything else in `Statement/Theorem_1_1_Statement.thy` matches; see
 `NOTES_FOR_AUTHORS.md` for the differences that are settled.
 
@@ -49,112 +49,75 @@ Plan (~150--250 lines):
 4. Restate clause (3) with `lsc_envK`; that direction weakens what is already
    proved, so it follows.
 
-## 2. Strictness in `L`
+## 2. Strictness in `L` --- CLOSED 2026-08-13
 
-The paper's standing assumption is `L >= 1`.  Clauses (2b), (3b) and (4) here
-assume `1 < L`.  The single consumer is
-`Value_Function_Viscosity.feasible_strict_eigendata`, whose own comment says
-so: it produces a margin `m > 0` with
+Clauses (2b), (3b) and (4) are now proved for every `1 <= L`, `L = 1`
+included, and `Statement/Theorem_1_1_Statement.thy` states them that way.
+What follows is the record of what the obstruction was and how it was removed;
+nothing here is open.
 
-    lam u <= L - m   for all u in the basis,      1 + m <= lam u   on Bp
+**What was blocking.**  `Value_Function_Viscosity.feasible_strict_eigendata`
+produced a margin `m > 0` with `lam u <= L - m` on the eigenbasis and
+`1 + m <= lam u` on the top `n - k` of it, so that
 
-so that the eigenvalue data survives perturbation along the path.  At `L = 1`
-the interval `[1 + m, L - m]` is empty and the lemma is false: `sconstraint k 1`
-forces the top `n - k` eigenvalues to equal `1` exactly (`>= 1` from the
-eigenvalue lower bound, `<= 1` from `eigen_ub a 1`), so the feasible set has no
-slack and there is no strictly interior witness to perturb.
+    feasible k L p = {a. psd a & a *v p = 0 & eigen_lb a (n-k) & eigen_ub a L}
 
-So at `L = 1`:
+had room to be perturbed.  At `L = 1` the interval `[1 + m, L - m]` is empty:
+`eigen_lb a (n-k)` puts the top `n - k` eigenvalues at `>= 1` and
+`eigen_ub a 1` puts all of them at `<= 1`, so they are pinned to `1` exactly
+and the witness sits on a corner of the feasible set.  This is the paper's own
+step --- Case 1 of Section 3 modifies `a` so that
+`lambda_(1)(a), ..., lambda_(n-k)(a)` lie in the OPEN interval `(1,L)`.  It is
+also exactly the case Remark 1.1(c) singles out, the arrival time formulation
+of the Ambrosio--Soner co-dimension mean curvature flow.
 
-* clause (0), clause (1), clause (2a), clause (3a) and Example 3.1 hold --- all
-  are proved under `1 <= L`;
-* clauses (2b), (3b) and (4) are NOT proved.
+**Why the margin was there.**  Not for the witness itself: `a` is already
+admissible for the class, since `feasible k L p` is contained in
+`sconstraint k L`.  It was there for the FIELD.  The paper's covariance field
+(3.24) has columns `S_i grad phi(y)` with `S_i` skew, so as `y` moves off the
+touching point the frame leaves the eigenframe of `a` and the eigenvalues
+drift by `O(|y - x|)`; the margin absorbs the drift.
 
-Whether they are FALSE at `L = 1` is not established here.
+**What removed it.**  A field of exact rotations.  Let `R(y)` carry the frozen
+gradient `q = grad phi(x)` to the current gradient `grad phi(y)`, as the
+product of two Householder reflections
 
-**This is the case the paper singles out.**  Remark 1.1(c) reads
+    hrefl v = mat 1 - (2 / (v . v)) *R outer_prod v v
+    rotm q w = hrefl (norm w *R q + norm q *R w) ** hrefl q
 
-> "When L=1, the partial differential equation F(grad v, grad^2 v)=1 with zero
-> boundary condition becomes the arrival time formulation of a co-dimension
-> mean curvature flow from [AS96]."
+which is orthogonal for every `q` and `w` (unconditionally --- the degenerate
+`v = 0` gives the identity, since division by zero is zero here), carries `q`
+onto the ray through `w` whenever the two are not opposed, and is the identity
+at `w = q`.  The field is `R(y) a R(y)^T`, and conjugation by an orthogonal
+matrix moves neither the spectrum of `a` nor its membership of the feasible
+set (`Operator_Envelopes.feasible_conj`, which was already there).  So
 
-and Theorem 1.1 assumes only `L >= 1`, so `L = 1` is inside its scope.  The
-strictness therefore sits exactly on the Ambrosio--Soner co-dimension mean
-curvature flow --- the geometric payoff of the paper --- and the uniqueness
-clause is unproved precisely there.  This is the most consequential of the two
-items and should be the first thing put to the authors.
+* it lies in `sconstraint k L` at every `y`, with no margin, hence at `L = 1`;
+* it annihilates `grad phi(y)`, because `a` annihilates `q` and
+  `R(y) q` is parallel to `grad phi(y)`;
+* the trace the DPP reads, `trace (M ** R a R^T)`, is continuous in `y` and
+  equals `trace (M ** a)` at `y = x`, so the trace margin comes from
+  continuity at the touching point instead of from three explicit smallness
+  estimates.
 
-**The paper's own proof appears to need `L > 1` at the same step.**  In Case 1
-of the supersolution argument (`grad phi(x) != 0`) the paper writes
+That is `rotSF_exists` (subsection "Exact rotations" of
+`Value_Function_Viscosity`), and it carries no hypothesis on `L` at all.  The
+two Case 1 arguments --- `exit_val_supersol_contradiction_case1` and its `_lsc`
+twin --- consume it in place of the strict eigendata, and `1 < L` was then
+weakened to `1 <= L` through the whole chain down to
+`Statement/Theorem_1_1_Statement.thy`.
 
-> "We can modify a such that lambda_(1)(a), lambda_(2)(a), ..., lambda_(n-k)(a)
-> in (1,L)"
+**Left over.**  The skew-field cluster of the section "The supersolution half:
+skew-symmetric covariance fields" (`skewv`, `skewfield`, `skewSF`,
+`skewfield_properties`, `skewSF_package`, `perturbed_columns_*`,
+`small_radius_exists`, `feasible_strict_eigendata`) is now dead: nothing
+outside it refers to it.  It is retained for now because it is the paper's own
+construction, and marked as superseded at `feasible_strict_eigendata`.
+Deleting it is a separate cleanup, and one worth doing before an AFP
+submission.
 
---- the OPEN interval `(1,L)`, empty when `L = 1`.  That is the same move as
-`feasible_strict_eigendata`, so the strictness here is not an artefact of the
-formalisation: it reproduces the paper's argument faithfully, dependence on
-`L > 1` included.  Theorem 1.1 is nevertheless stated for `L >= 1`, and no
-approximation `L \<down> 1` appears.
-
-CAVEAT: the quotation above and the claim that no approximation argument
-appears were obtained by automated extraction from the arXiv HTML, not by
-reading Section 3 through.  Verify against the paper before putting this to
-the authors --- an earlier conclusion in this project about what the paper says
-was wrong for exactly this reason.
-
-Adjacent, and explicitly open in the paper (Remark 1.1(c)):
-
-> "In view of the right-hand side of (1.6), it is natural to conjecture that
-> the value function v does not depend on L, at least when K is convex.  We
-> were not able to show this and leave it as a tantalizing open problem."
-
-That is a different question --- `L`-independence of `v`, not uniqueness at
-`L = 1` --- and it does not settle this one, since `F` itself depends on `L`.
-
-Nothing found shows (2b)/(3b)/(4) are FALSE at `L = 1`.  What is established is
-that the only known route to them, in the paper and here alike, breaks there.
-
-### Correction: which set is rigid at `L = 1`
-
-Two different sets are in play, and an earlier note in this project conflated
-them.
-
-* `feasible k L p = {a. psd a & a *v p = 0 & eigen_lb a (n-k) & eigen_ub a L}`
-  --- the OPERATOR's set, Eq. (1.9).  `eigen_lb a (n-k)` puts the `n-k` largest
-  eigenvalues at `>= 1`, `eigen_ub a L` puts all of them at `<= L`.  At `L = 1`
-  the `n-k` largest are pinned to `1` exactly.  THIS is what is rigid, and it
-  is what Case 1 of Section 3 and `feasible_strict_eigendata` both try to
-  perturb.
-* `sconstraint k L = Pi_constraint k Int {a. eigen_ub a L}` --- the CLASS's set,
-  Eq. (1.5), the convexified constraint.  This is NOT rigid at `L = 1`.  For
-  `n = 2, k = 1` the only condition is `m = 2`, so `trace a >= 1` with both
-  eigenvalues `<= 1`, and `0.6 * I` qualifies: the top eigenvalue is `0.6`, not
-  `1`.
-
-So at `L = 1` the admissible controls are still plentiful; only the operator's
-feasible set degenerates.  That is a reason to expect the clauses may well be
-true at `L = 1` and merely out of reach of this argument --- but it is an
-expectation, not evidence.
-
-### A test that could decide it
-
-Example 3.1 is proved here under `1 <= L`, so on a ball the value function is
-known in closed form AT `L = 1`:
-
-    v(x) = max((r^2 - |x|^2)/(n-k), 0).
-
-`F` depends on `L`, so being a supersolution for `L > 1` does not transfer.
-But the `L = 1` operator applied to this explicit `v` is a finite computation.
-Checking the supersolution inequality for it at interior points of the ball
-either produces a counterexample --- settling (2b) negatively at `L = 1` --- or
-gives the first real evidence that the clauses survive.  That is the cheapest
-next experiment, and it needs no new machinery.
-
-Two routes out, neither attempted:
-
-* a different witness at `L = 1`, since the rigidity means the perturbation
-  must move inside the pinned set rather than off it;
-* approximation `L \<down> 1`, which needs stability of the supersolution property
-  as `L` decreases to `1` --- note `sconstraint k L` shrinks as `L` does, so the
-  value functions are monotone in `L` and a limit argument is plausible, but
-  the viscosity property does not transfer for free.
+**Still open, and a different question.**  Remark 1.1(c) also conjectures that
+the value function does not depend on `L` when `K` is convex, and says the
+authors could not show it.  Nothing here bears on that: `F` itself depends on
+`L`, and what is proved above is that each `L >= 1` --- separately --- has its
+value function characterised.

@@ -4773,7 +4773,12 @@ subsection \<open>The strict blend\<close>
 text \<open>Blending the witness with the projection onto \<open>Bp\<close> pushes the top
   \<open>n - k\<close> eigenvalues strictly above \<open>1\<close> and all eigenvalues strictly
   below \<open>L\<close> --- the margins that survive perturbation along the path.
-  This is the only place the supersolution argument needs \<open>1 < L\<close>.\<close>
+  SUPERSEDED, and no longer used: the field of exact rotations built below,
+  in the subsection \<open>Exact rotations\<close>, needs no eigenvalue margin at all, and
+  it is that field the two Case 1 arguments consume.  The strict blend is the
+  only construction here that would need \<open>1 < L\<close>, and with it the whole
+  skew-field cluster of this section is now dead code, retained only because
+  it is the paper's own construction, Section 3.2 display (3.24).\<close>
 
 lemma feasible_strict_eigendata:
   fixes a :: "real^'n::finite^'n" and q :: "real^'n" and M :: "real^'n^'n"
@@ -10602,6 +10607,670 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>Exact rotations: a covariance field with no eigenvalue margin\<close>
+
+text \<open>The skew field above moves the witness off its own eigenframe, and the
+  margins that absorb that motion are what force \<open>1 < L\<close>: at \<open>L = 1\<close> the
+  feasible set of Eq. (1.9) is rigid, its top \<open>n - k\<close> eigenvalues pinned to
+  \<open>1\<close> from both sides, so no witness has slack to perturb.  A field of exact
+  rotations needs none.  Conjugating the witness by an orthogonal matrix
+  leaves its spectrum, and hence its membership of the feasible set,
+  untouched; and the rotation carrying the frozen gradient \<open>q\<close> to the current
+  gradient makes the conjugate annihilate the current gradient, which is all
+  the Euler construction asks of the field.  The package \<open>rotSF_exists\<close> below
+  therefore carries no hypothesis on \<open>L\<close> at all, and in particular is
+  available at \<open>L = 1\<close>, the Ambrosio-Soner flow case of Remark 1.1(c).
+
+  The rotation is a product of two Householder reflections.  In unnormalised
+  form the reflection in the hyperplane orthogonal to \<open>v\<close> is \<open>hrefl v\<close>; the
+  degenerate value \<open>v = 0\<close> gives the identity, since division by zero is zero
+  here, so the algebraic facts below are unconditional in \<open>v\<close>.  Their product
+  \<open>rotm q w\<close> carries \<open>q\<close> onto the ray through \<open>w\<close> as soon as the two are not
+  opposed, and is the identity at \<open>w = q\<close>, which is where the trace margin is
+  read off: by continuity at the touching point, in place of the three
+  explicit smallness estimates the skew field needs.\<close>
+
+definition hrefl :: "real^'n::finite \<Rightarrow> real^'n^'n" where
+  "hrefl v = mat 1 - (2 / (v \<bullet> v)) *\<^sub>R outer_prod v v"
+
+lemma hrefl_apply: "hrefl v *v z = z - (2 * (v \<bullet> z) / (v \<bullet> v)) *\<^sub>R v"
+proof -
+  have "hrefl v *v z = mat 1 *v z - ((2 / (v \<bullet> v)) *\<^sub>R outer_prod v v) *v z"
+    unfolding hrefl_def by (rule matrix_vector_mult_diff_rdistrib)
+  also have "mat 1 *v z = z" by (rule matrix_vector_mul_lid)
+  also have "((2 / (v \<bullet> v)) *\<^sub>R outer_prod v v) *v z
+      = (2 / (v \<bullet> v)) *\<^sub>R (outer_prod v v *v z)"
+    by (simp add: scaleR_matrix_vector)
+  also have "outer_prod v v *v z = (v \<bullet> z) *\<^sub>R v" by simp
+  finally show ?thesis by simp
+qed
+
+lemma hrefl_key:
+  fixes v :: "real^'n::finite"
+  shows "(2 / (v \<bullet> v)) * (2 / (v \<bullet> v)) * (v \<bullet> v) = 2 * (2 / (v \<bullet> v))"
+  by (cases "v \<bullet> v = 0") auto
+
+lemma hrefl_involution: "hrefl v *v (hrefl v *v z) = z"
+proof -
+  define c where "c = 2 / (v \<bullet> v)"
+  have step: "hrefl v *v y = y - (c * (v \<bullet> y)) *\<^sub>R v" for y
+    unfolding c_def hrefl_apply by simp
+  have vsplit: "(z - a *\<^sub>R v) - b *\<^sub>R v = z - (a + b) *\<^sub>R v" for a b :: real
+    by (simp add: scaleR_left_distrib)
+  have coef: "(c * (v \<bullet> z)) + (c * ((v \<bullet> z) - (c * (v \<bullet> z)) * (v \<bullet> v)))
+      = (2 * c - c * c * (v \<bullet> v)) * (v \<bullet> z)"
+    by (simp add: algebra_simps)
+  have "hrefl v *v (hrefl v *v z)
+      = (z - (c * (v \<bullet> z)) *\<^sub>R v)
+        - (c * (v \<bullet> (z - (c * (v \<bullet> z)) *\<^sub>R v))) *\<^sub>R v"
+    unfolding step[of z] step[of "z - (c * (v \<bullet> z)) *\<^sub>R v"] by (rule refl)
+  also have "v \<bullet> (z - (c * (v \<bullet> z)) *\<^sub>R v)
+      = (v \<bullet> z) - (c * (v \<bullet> z)) * (v \<bullet> v)"
+    by (simp add: inner_diff_right)
+  also have "(z - (c * (v \<bullet> z)) *\<^sub>R v)
+        - (c * ((v \<bullet> z) - (c * (v \<bullet> z)) * (v \<bullet> v))) *\<^sub>R v
+      = z - ((2 * c - c * c * (v \<bullet> v)) * (v \<bullet> z)) *\<^sub>R v"
+    unfolding vsplit coef by (rule refl)
+  also have "2 * c - c * c * (v \<bullet> v) = 0"
+    unfolding c_def using hrefl_key[of v] by simp
+  finally show ?thesis by simp
+qed
+
+lemma hrefl_inner: "(hrefl v *v y) \<bullet> (hrefl v *v z) = y \<bullet> z"
+proof -
+  define c where "c = 2 / (v \<bullet> v)"
+  have step: "hrefl v *v w = w - (c * (v \<bullet> w)) *\<^sub>R v" for w
+    unfolding c_def hrefl_apply by simp
+  have "(hrefl v *v y) \<bullet> (hrefl v *v z)
+      = (y - (c * (v \<bullet> y)) *\<^sub>R v) \<bullet> (z - (c * (v \<bullet> z)) *\<^sub>R v)"
+    unfolding step[of y] step[of z] by (rule refl)
+  also have "\<dots> = y \<bullet> z
+      + ((c * c * (v \<bullet> v) - 2 * c) * ((v \<bullet> y) * (v \<bullet> z)))"
+    by (simp add: inner_diff_right inner_diff_left algebra_simps
+        inner_commute)
+  also have "c * c * (v \<bullet> v) - 2 * c = 0"
+    unfolding c_def using hrefl_key[of v] by simp
+  finally show ?thesis by simp
+qed
+
+lemma orth_matI:
+  fixes Q :: "real^'n::finite^'n"
+  assumes inn: "\<And>y z. (Q *v y) \<bullet> (Q *v z) = y \<bullet> z"
+  shows "orth_mat Q"
+proof -
+  have step: "(transpose Q ** Q) *v z = mat 1 *v z" for z
+  proof -
+    have zero: "y \<bullet> ((transpose Q ** Q) *v z - z) = 0" for y
+    proof -
+      have "y \<bullet> ((transpose Q ** Q) *v z) = y \<bullet> (transpose Q *v (Q *v z))"
+        by (metis matrix_vector_mul_assoc)
+      also have "\<dots> = (transpose (transpose Q) *v y) \<bullet> (Q *v z)"
+        by (rule inner_transpose_matrix)
+      also have "\<dots> = (Q *v y) \<bullet> (Q *v z)" by (simp only: transpose_transpose)
+      also have "\<dots> = y \<bullet> z" by (rule inn)
+      finally show ?thesis by (simp add: inner_diff_right)
+    qed
+    have "((transpose Q ** Q) *v z - z) \<bullet> ((transpose Q ** Q) *v z - z) = 0"
+      by (rule zero)
+    then have "(transpose Q ** Q) *v z - z = 0" by simp
+    then show ?thesis by (simp add: matrix_vector_mul_lid)
+  qed
+  have T1: "transpose Q ** Q = mat 1" using step by (simp add: matrix_eq)
+  then have T2: "Q ** transpose Q = mat 1"
+    using matrix_left_right_inverse by blast
+  show ?thesis unfolding orth_mat_def using T1 T2 by blast
+qed
+
+lemma hrefl_orth: "orth_mat (hrefl v)"
+  by (rule orth_matI) (rule hrefl_inner)
+
+lemma hrefl_zero: "hrefl 0 *v z = z"
+  by (simp add: hrefl_apply)
+
+lemma hrefl_scale:
+  assumes c0: "c \<noteq> 0"
+  shows "hrefl (c *\<^sub>R v) *v z = hrefl v *v z"
+proof -
+  have inn1: "(c *\<^sub>R v) \<bullet> z = c * (v \<bullet> z)" by simp
+  have inn2: "(c *\<^sub>R v) \<bullet> (c *\<^sub>R v) = c * c * (v \<bullet> v)" by simp
+  have coef: "2 * (c * (v \<bullet> z)) / (c * c * (v \<bullet> v)) * c
+      = 2 * (v \<bullet> z) / (v \<bullet> v)"
+  proof (cases "v \<bullet> v = 0")
+    case True
+    then show ?thesis by simp
+  next
+    case False
+    then show ?thesis using c0 by (simp add: field_simps)
+  qed
+  have "hrefl (c *\<^sub>R v) *v z
+      = z - (2 * (c * (v \<bullet> z)) / (c * c * (v \<bullet> v))) *\<^sub>R (c *\<^sub>R v)"
+    unfolding hrefl_apply inn1 inn2 by (rule refl)
+  also have "(2 * (c * (v \<bullet> z)) / (c * c * (v \<bullet> v))) *\<^sub>R (c *\<^sub>R v)
+      = (2 * (v \<bullet> z) / (v \<bullet> v)) *\<^sub>R v"
+    unfolding scaleR_scaleR coef by (rule refl)
+  also have "z - (2 * (v \<bullet> z) / (v \<bullet> v)) *\<^sub>R v = hrefl v *v z"
+    unfolding hrefl_apply by (rule refl)
+  finally show ?thesis .
+qed
+
+lemma scaleR_self_diff:
+  fixes q :: "'a::real_vector"
+  shows "q - (c::real) *\<^sub>R q = (1 - c) *\<^sub>R q"
+proof -
+  have "(1 - c) *\<^sub>R q = 1 *\<^sub>R q - c *\<^sub>R q" by (rule scaleR_diff_left)
+  then show ?thesis by simp
+qed
+
+lemma hrefl_fix:
+  fixes q :: "real^'n::finite"
+  assumes q0: "q \<noteq> 0"
+  shows "hrefl q *v q = - q"
+proof -
+  have qq: "q \<bullet> q \<noteq> 0" using q0 by simp
+  have "hrefl q *v q = q - (2 * (q \<bullet> q) / (q \<bullet> q)) *\<^sub>R q"
+    by (rule hrefl_apply)
+  also have "\<dots> = (1 - 2 * (q \<bullet> q) / (q \<bullet> q)) *\<^sub>R q"
+    by (rule scaleR_self_diff)
+  also have "1 - 2 * (q \<bullet> q) / (q \<bullet> q) = - 1" using qq by simp
+  also have "(- 1 :: real) *\<^sub>R q = - q" by simp
+  finally show ?thesis .
+qed
+
+definition rotm :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
+  "rotm q w = hrefl (norm w *\<^sub>R q + norm q *\<^sub>R w) ** hrefl q"
+
+lemma rotm_vec:
+  "rotm q w *v z = hrefl (norm w *\<^sub>R q + norm q *\<^sub>R w) *v (hrefl q *v z)"
+  unfolding rotm_def by (metis matrix_vector_mul_assoc)
+
+lemma rotm_orth:
+  fixes q w :: "real^'n::finite"
+  shows "orth_mat (rotm q w)"
+proof (rule orth_matI)
+  fix y z :: "real^'n"
+  show "(rotm q w *v y) \<bullet> (rotm q w *v z) = y \<bullet> z"
+    unfolding rotm_vec by (simp only: hrefl_inner)
+qed
+
+lemma rotm_self: "rotm q q *v z = z"
+proof (cases "q = 0")
+  case True
+  then show ?thesis unfolding rotm_vec by (simp add: hrefl_zero)
+next
+  case False
+  then have ne: "norm q + norm q \<noteq> 0" by simp
+  have sum2: "norm q *\<^sub>R q + norm q *\<^sub>R q = (norm q + norm q) *\<^sub>R q"
+    by (rule scaleR_left_distrib[symmetric])
+  have "rotm q q *v z = hrefl ((norm q + norm q) *\<^sub>R q) *v (hrefl q *v z)"
+    unfolding rotm_vec sum2 by (rule refl)
+  also have "\<dots> = hrefl q *v (hrefl q *v z)" by (rule hrefl_scale[OF ne])
+  also have "\<dots> = z" by (rule hrefl_involution)
+  finally show ?thesis .
+qed
+
+lemma rotm_apply:
+  fixes q w :: "real^'n::finite"
+  assumes q0: "q \<noteq> 0" and w0: "w \<noteq> 0"
+    and pos: "0 < norm q * norm w + q \<bullet> w"
+  shows "rotm q w *v q = (norm q / norm w) *\<^sub>R w"
+proof -
+  define nq where "nq = norm q"
+  define nw where "nw = norm w"
+  define pp where "pp = q \<bullet> w"
+  have nq0: "0 < nq" unfolding nq_def using q0 by simp
+  have nw0: "0 < nw" unfolding nw_def using w0 by simp
+  have pos': "0 < nq * nw + pp" unfolding nq_def nw_def pp_def using pos .
+  have qq: "q \<bullet> q = nq * nq"
+    unfolding nq_def by (simp add: dot_square_norm power2_eq_square)
+  have ww: "w \<bullet> w = nw * nw"
+    unfolding nw_def by (simp add: dot_square_norm power2_eq_square)
+  have qw: "q \<bullet> w = pp" unfolding pp_def by (rule refl)
+  have wq: "w \<bullet> q = pp" unfolding pp_def by (rule inner_commute)
+  define v where "v = nw *\<^sub>R q + nq *\<^sub>R w"
+  have h1: "hrefl q *v q = - q" by (rule hrefl_fix[OF q0])
+  have vq: "v \<bullet> q = nq * (nq * nw + pp)"
+    unfolding v_def by (simp add: inner_add_left qq wq algebra_simps)
+  have vv: "v \<bullet> v = (2 * (nq * nw)) * (nq * nw + pp)"
+    unfolding v_def
+    by (simp add: inner_add_left inner_add_right qq ww qw wq algebra_simps)
+  have ratio: "2 * (v \<bullet> (- q)) / (v \<bullet> v) = - (1 / nw)"
+  proof -
+    have "2 * (v \<bullet> (- q)) / (v \<bullet> v)
+        = - (2 * (nq * (nq * nw + pp)) / ((2 * (nq * nw)) * (nq * nw + pp)))"
+      unfolding vv using vq by simp
+    also have "2 * (nq * (nq * nw + pp)) / ((2 * (nq * nw)) * (nq * nw + pp))
+        = 1 / nw"
+    proof -
+      have A: "nq * nw + pp \<noteq> 0" using pos' by simp
+      have B: "nq \<noteq> 0" using nq0 by simp
+      have C: "nw \<noteq> 0" using nw0 by simp
+      have D: "(2 * (nq * nw)) * (nq * nw + pp) \<noteq> 0" using A B C by simp
+      show ?thesis
+        unfolding frac_eq_eq[OF D C] by (simp add: algebra_simps)
+    qed
+    finally show ?thesis .
+  qed
+  have r1: "rotm q w *v q = hrefl v *v (- q)"
+    unfolding v_def nq_def nw_def rotm_vec h1 by (rule refl)
+  have "rotm q w *v q = - q - (2 * (v \<bullet> (- q)) / (v \<bullet> v)) *\<^sub>R v"
+    unfolding r1 by (rule hrefl_apply)
+  also have "\<dots> = - q + (1 / nw) *\<^sub>R v"
+    unfolding ratio by simp
+  also have "(1 / nw) *\<^sub>R v = q + (nq / nw) *\<^sub>R w"
+    unfolding v_def using nw0
+    by (simp add: scaleR_right_distrib field_simps)
+  finally show ?thesis unfolding nq_def nw_def by simp
+qed
+
+lemma rotm_refl_vec_norm:
+  fixes q w :: "real^'n::finite"
+  shows "(norm w *\<^sub>R q + norm q *\<^sub>R w) \<bullet> (norm w *\<^sub>R q + norm q *\<^sub>R w)
+       = 2 * (norm q * norm w) * (norm q * norm w + q \<bullet> w)"
+proof -
+  have qq: "q \<bullet> q = norm q * norm q"
+    by (simp add: dot_square_norm power2_eq_square)
+  have ww: "w \<bullet> w = norm w * norm w"
+    by (simp add: dot_square_norm power2_eq_square)
+  have wq: "w \<bullet> q = q \<bullet> w" by (rule inner_commute)
+  show ?thesis
+    by (simp add: inner_add_left inner_add_right qq ww wq algebra_simps)
+qed
+
+lemma rotm_refl_vec_nonzero:
+  fixes q w :: "real^'n::finite"
+  assumes q0: "q \<noteq> 0" and pos: "0 < norm q * norm w + q \<bullet> w"
+  shows "(norm w *\<^sub>R q + norm q *\<^sub>R w) \<bullet> (norm w *\<^sub>R q + norm q *\<^sub>R w) \<noteq> 0"
+proof -
+  have w0: "w \<noteq> 0"
+  proof
+    assume "w = 0"
+    then show False using pos by simp
+  qed
+  have pos2: "0 < (norm w *\<^sub>R q + norm q *\<^sub>R w) \<bullet> (norm w *\<^sub>R q + norm q *\<^sub>R w)"
+    unfolding rotm_refl_vec_norm using q0 w0 pos by simp
+  show ?thesis by (rule not_sym[OF less_imp_neq[OF pos2]])
+qed
+
+lemma rotm_vec_cont:
+  fixes q c :: "real^'n::finite" and A :: "(real^'n) set"
+  assumes q0: "q \<noteq> 0"
+    and ok: "\<And>w. w \<in> A \<Longrightarrow> 0 < norm q * norm w + q \<bullet> w"
+  shows "continuous_on A (\<lambda>w. rotm q w *v c)"
+proof -
+  define y0 where "y0 = hrefl q *v c"
+  define V where "V = (\<lambda>w::real^'n. norm w *\<^sub>R q + norm q *\<^sub>R w)"
+  have Vc: "continuous_on A V"
+    unfolding V_def by (intro continuous_intros)
+  have Vne: "V w \<bullet> V w \<noteq> 0" if w: "w \<in> A" for w
+    unfolding V_def by (rule rotm_refl_vec_nonzero[OF q0 ok[OF w]])
+  have eq: "rotm q w *v c = y0 - (2 * (V w \<bullet> y0) / (V w \<bullet> V w)) *\<^sub>R V w" for w
+    unfolding y0_def V_def rotm_vec hrefl_apply by (rule refl)
+  show ?thesis
+    unfolding eq by (intro continuous_intros Vc) (use Vne in auto)
+qed
+
+lemma colmat_matvec:
+  fixes R :: "real^'n::finite^'n" and c :: "'n \<Rightarrow> real^'n"
+  shows "(\<chi> i j. (R *v c j) $ i) = R ** (\<chi> i j. c j $ i)"
+  by (simp add: vec_eq_iff matrix_matrix_mult_def matrix_vector_mult_def)
+
+lemma outerp_scale_self:
+  fixes u :: "real^'n::finite"
+  shows "outerp (c *\<^sub>R u) = (c * c) *\<^sub>R outer_prod u u"
+  by (simp add: vec_eq_iff outerp_def outer_prod_def)
+
+definition rotSF ::
+  "(real^'n::finite \<Rightarrow> real) \<Rightarrow> ('n \<Rightarrow> real^'n) \<Rightarrow> real^'n
+     \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> real \<Rightarrow> real^'n \<Rightarrow> real^'n^'n"
+  where "rotSF lam f q M x r z
+    = (\<chi> i j. (rotm q (q + M *v (closest_point (cball x r) z - x))
+        *v (sqrt (lam (f j)) *\<^sub>R f j)) $ i)"
+
+lemma rotSF_cont:
+  fixes q x :: "real^'n::finite" and M :: "real^'n^'n" and r :: real
+  assumes r0: "0 \<le> r" and q0: "q \<noteq> 0"
+    and ok: "\<And>y. dist y x \<le> r \<Longrightarrow>
+      0 < norm q * norm (q + M *v (y - x)) + q \<bullet> (q + M *v (y - x))"
+  shows "continuous_on UNIV (rotSF lam f q M x r)"
+proof -
+  define cp where "cp = closest_point (cball x r)"
+  have cpc: "continuous_on UNIV cp"
+    unfolding cp_def by (rule continuous_on_closest_point) (use r0 in auto)
+  have cpin: "cp z \<in> cball x r" for z
+    unfolding cp_def by (rule closest_point_in_set) (use r0 in auto)
+  have gradc: "continuous_on UNIV (\<lambda>z::real^'n. q + M *v (cp z - x))"
+  proof -
+    have d: "continuous_on UNIV (\<lambda>z :: real^'n. cp z - x)"
+      by (intro continuous_intros cpc)
+    have mv: "continuous_on UNIV (\<lambda>z :: real^'n. M *v (cp z - x))"
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matvec_blin] d]) auto
+    show ?thesis by (intro continuous_intros mv)
+  qed
+  have Gin: "q + M *v (cp z - x) \<in> {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}"
+    for z
+  proof -
+    have "dist (cp z) x \<le> r" using cpin[of z] by (simp add: dist_commute)
+    then show ?thesis by (simp add: ok)
+  qed
+  have colc: "continuous_on UNIV
+      (\<lambda>z. rotm q (q + M *v (cp z - x)) *v (sqrt (lam (f j)) *\<^sub>R f j))" for j
+  proof (rule continuous_on_compose2[OF _ gradc])
+    show "continuous_on {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}
+        (\<lambda>w. rotm q w *v (sqrt (lam (f j)) *\<^sub>R f j))"
+      by (rule rotm_vec_cont[OF q0]) simp
+    show "(\<lambda>z::real^'n. q + M *v (cp z - x)) ` UNIV
+        \<subseteq> {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}"
+      using Gin by blast
+  qed
+  have entry: "continuous_on UNIV
+      (\<lambda>z. (rotm q (q + M *v (cp z - x)) *v (sqrt (lam (f j)) *\<^sub>R f j)) $ i)"
+    for i j
+    by (rule continuous_on_compose2[OF
+        linear_continuous_on[OF bounded_linear_vec_nth] colc]) auto
+  show ?thesis
+    unfolding rotSF_def cp_def[symmetric]
+    by (intro continuous_on_vec_lambda entry)
+qed
+
+lemma feasible_scale:
+  fixes p :: "real^'n::finite"
+  assumes c0: "c \<noteq> 0" and b: "b \<in> feasible k L (c *\<^sub>R p)"
+  shows "b \<in> feasible k L p"
+proof -
+  have z: "b *v (c *\<^sub>R p) = 0" using b unfolding feasible_def by blast
+  have "b *v (c *\<^sub>R p) = c *\<^sub>R (b *v p)"
+    by (simp add: matrix_scaleR_vector_ac scaleR_matrix_vector_assoc)
+  with z have "c *\<^sub>R (b *v p) = 0" by simp
+  then have "b *v p = 0" using c0 by simp
+  then show ?thesis using b unfolding feasible_def by blast
+qed
+
+lemma rot_cone_ok:
+  fixes q e :: "real^'n::finite"
+  assumes q0: "q \<noteq> 0" and lt: "norm e < norm q"
+  shows "0 < norm q * norm (q + e) + q \<bullet> (q + e)"
+proof -
+  have nq0: "0 < norm q" using q0 by simp
+  have cs: "\<bar>q \<bullet> e\<bar> \<le> norm q * norm e" by (rule Cauchy_Schwarz_ineq2)
+  have qq: "q \<bullet> q = norm q * norm q"
+    by (simp add: dot_square_norm power2_eq_square)
+  have expand: "q \<bullet> (q + e) = norm q * norm q + q \<bullet> e"
+    by (simp add: inner_add_right qq)
+  have "norm q * norm e < norm q * norm q"
+    by (rule mult_strict_left_mono[OF lt nq0])
+  then have "0 < q \<bullet> (q + e)" unfolding expand using cs by linarith
+  moreover have "0 \<le> norm q * norm (q + e)" by simp
+  ultimately show ?thesis by linarith
+qed
+
+lemma rot_col_cont:
+  fixes q x c :: "real^'n::finite" and M :: "real^'n^'n" and A :: "(real^'n) set"
+  assumes q0: "q \<noteq> 0"
+    and ok: "\<And>y. y \<in> A \<Longrightarrow>
+      0 < norm q * norm (q + M *v (y - x)) + q \<bullet> (q + M *v (y - x))"
+  shows "continuous_on A (\<lambda>y. rotm q (q + M *v (y - x)) *v c)"
+proof -
+  have gradc: "continuous_on A (\<lambda>y::real^'n. q + M *v (y - x))"
+  proof -
+    have d: "continuous_on A (\<lambda>y :: real^'n. y - x)"
+      by (intro continuous_intros)
+    have mv: "continuous_on A (\<lambda>y :: real^'n. M *v (y - x))"
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matvec_blin] d]) auto
+    show ?thesis by (intro continuous_intros mv)
+  qed
+  show ?thesis
+  proof (rule continuous_on_compose2[OF _ gradc])
+    show "continuous_on {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}
+        (\<lambda>w. rotm q w *v c)"
+      by (rule rotm_vec_cont[OF q0]) simp
+    show "(\<lambda>y::real^'n. q + M *v (y - x)) ` A
+        \<subseteq> {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}"
+      using ok by blast
+  qed
+qed
+
+definition colm :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> ('n \<Rightarrow> real^'n) \<Rightarrow> real^'n^'n"
+  where "colm lam f = (\<chi> i j. (sqrt (lam (f j)) *\<^sub>R f j) $ i)"
+
+lemma colm_square:
+  fixes a :: "real^'n::finite^'n" and B :: "(real^'n) set" and f :: "'n \<Rightarrow> real^'n"
+  assumes bij: "bij_betw f (UNIV :: 'n set) B"
+    and Bon: "onormal B" and sp: "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    and nn: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u"
+    and lamB: "\<And>u. u \<in> B \<Longrightarrow> lam u = u \<bullet> (a *v u)"
+  shows "colm lam f ** transpose (colm lam f) = a"
+proof -
+  have "colm lam f ** transpose (colm lam f)
+      = (\<Sum>j\<in>UNIV. outerp (sqrt (lam (f j)) *\<^sub>R f j))"
+    unfolding colm_def by (rule cols_mult_transpose)
+  also have "\<dots> = (\<Sum>u\<in>B. outerp (sqrt (lam u) *\<^sub>R u))"
+    by (rule sum.reindex_bij_betw[OF bij])
+  also have "\<dots> = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) *\<^sub>R outer_prod u u)"
+  proof (rule sum.cong[OF refl])
+    fix u assume u: "u \<in> B"
+    have sq: "sqrt (lam u) * sqrt (lam u) = lam u"
+    proof -
+      have "sqrt (lam u) * sqrt (lam u) = (sqrt (lam u))\<^sup>2"
+        by (rule power2_eq_square[symmetric])
+      also have "\<dots> = lam u" by (rule real_sqrt_pow2[OF nn[OF u]])
+      finally show ?thesis .
+    qed
+    have "outerp (sqrt (lam u) *\<^sub>R u)
+        = (sqrt (lam u) * sqrt (lam u)) *\<^sub>R outer_prod u u"
+      by (rule outerp_scale_self)
+    also have "\<dots> = lam u *\<^sub>R outer_prod u u" unfolding sq by (rule refl)
+    also have "\<dots> = (u \<bullet> (a *v u)) *\<^sub>R outer_prod u u"
+      unfolding lamB[OF u] by (rule refl)
+    finally show "outerp (sqrt (lam u) *\<^sub>R u)
+        = (u \<bullet> (a *v u)) *\<^sub>R outer_prod u u" .
+  qed
+  also have "\<dots> = a" by (rule spectral_decomposition[OF Bon sp eig, symmetric])
+  finally show ?thesis .
+qed
+
+lemma rotSF_matrix:
+  "rotSF lam f q M x r z
+     = rotm q (q + M *v (closest_point (cball x r) z - x)) ** colm lam f"
+  unfolding rotSF_def colm_def by (rule colmat_matvec)
+
+lemma rotSF_conj:
+  fixes a :: "real^'n::finite^'n"
+  assumes sq: "colm lam f ** transpose (colm lam f) = a"
+  shows "rotSF lam f q M x r z ** transpose (rotSF lam f q M x r z)
+       = rotm q (q + M *v (closest_point (cball x r) z - x)) ** a
+         ** transpose (rotm q (q + M *v (closest_point (cball x r) z - x)))"
+proof -
+  define R where
+    "R = rotm q (q + M *v (closest_point (cball x r) z - x))"
+  have "rotSF lam f q M x r z ** transpose (rotSF lam f q M x r z)
+      = (R ** colm lam f) ** transpose (R ** colm lam f)"
+    unfolding R_def rotSF_matrix by (rule refl)
+  also have "transpose (R ** colm lam f)
+      = transpose (colm lam f) ** transpose R"
+    by (rule matrix_transpose_mul)
+  also have "(R ** colm lam f) ** (transpose (colm lam f) ** transpose R)
+      = R ** (colm lam f ** transpose (colm lam f)) ** transpose R"
+    by (simp add: matrix_mul_assoc)
+  also have "\<dots> = R ** a ** transpose R" unfolding sq by (rule refl)
+  finally show ?thesis unfolding R_def .
+qed
+
+theorem rotSF_exists:
+  fixes a M :: "real^'n::finite^'n" and q x :: "real^'n"
+    and \<epsilon> r0 :: real
+  assumes aF: "a \<in> feasible k L q" and q0: "q \<noteq> 0"
+    and eps: "0 < \<epsilon>" and r00: "0 < r0"
+  obtains SF :: "real^'n \<Rightarrow> real^'n^'n" and r :: real where
+    "0 < r" and "r \<le> r0"
+    and "continuous_on UNIV SF"
+    and "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and "\<And>z. transpose (SF z)
+          *v (q + M *v (closest_point (cball x r) z - x)) = 0"
+    and "\<And>z. \<bar>trace (M ** (SF z ** transpose (SF z))) - trace (M ** a)\<bar> \<le> \<epsilon>"
+proof -
+  have psda: "psd a" using aF unfolding feasible_def by blast
+  have syma: "transpose a = a" using psda unfolding psd_def by blast
+  obtain B where Bon: "onormal B" and sp: "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF syma] by blast
+  have finB: "finite B" by (rule onormal_finite[OF Bon])
+  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF Bon sp])
+  obtain f :: "'n \<Rightarrow> real^'n" where bij: "bij_betw f (UNIV :: 'n set) B"
+    by (rule exists_enum_of_card[OF finB cardB])
+  define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
+  have lam_nn: "0 \<le> lam u" for u
+    using psda unfolding lam_def psd_def by blast
+  have sq: "colm lam f ** transpose (colm lam f) = a"
+  proof (rule colm_square[OF bij Bon sp eig])
+    show "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u" using lam_nn by blast
+    show "\<And>u. u \<in> B \<Longrightarrow> lam u = u \<bullet> (a *v u)" unfolding lam_def by (rule refl)
+  qed
+  define cc where "cc = (\<lambda>j. sqrt (lam (f j)) *\<^sub>R f j)"
+  \<comment> \<open>a radius on which the rotation is defined and continuous\<close>
+  obtain KM where KM0: "0 < KM" and KMb: "\<And>y. norm (M *v y) \<le> norm y * KM"
+    using bounded_linear.pos_bounded[OF matvec_blin] by blast
+  define d0 where "d0 = norm q / KM"
+  have d00: "0 < d0" unfolding d0_def using q0 KM0 by simp
+  have cone: "0 < norm q * norm (q + M *v (y - x)) + q \<bullet> (q + M *v (y - x))"
+    if yd: "dist y x < d0" for y
+  proof (rule rot_cone_ok[OF q0])
+    have "norm (M *v (y - x)) \<le> norm (y - x) * KM" by (rule KMb)
+    also have "\<dots> < d0 * KM"
+      using yd KM0 by (simp add: dist_norm mult_strict_right_mono)
+    also have "d0 * KM = norm q" unfolding d0_def using KM0 by simp
+    finally show "norm (M *v (y - x)) < norm q" .
+  qed
+  \<comment> \<open>the trace along the rotated frame, and its value at the centre\<close>
+  define TT where "TT = (\<lambda>y. \<Sum>j\<in>UNIV. (rotm q (q + M *v (y - x)) *v cc j)
+      \<bullet> (M *v (rotm q (q + M *v (y - x)) *v cc j)))"
+  have TTx: "TT x = trace (M ** a)"
+  proof -
+    have "TT x = (\<Sum>j\<in>UNIV. cc j \<bullet> (M *v cc j))"
+      unfolding TT_def by (simp add: rotm_self)
+    also have "\<dots> = trace (M ** (\<Sum>j\<in>UNIV. outerp (cc j)))"
+      by (simp add: trace_mult_outerp_sum)
+    also have "(\<Sum>j\<in>UNIV. outerp (cc j)) = colm lam f ** transpose (colm lam f)"
+      unfolding colm_def cc_def by (rule cols_mult_transpose[symmetric])
+    also have "\<dots> = a" by (rule sq)
+    finally show ?thesis .
+  qed
+  have TTc: "continuous_on (ball x d0) TT"
+    unfolding TT_def
+  proof (rule continuous_on_sum)
+    fix j :: 'n
+    have c1: "continuous_on (ball x d0)
+        (\<lambda>y. rotm q (q + M *v (y - x)) *v cc j)"
+      by (rule rot_col_cont[OF q0]) (use cone in \<open>auto simp: dist_commute\<close>)
+    have c2: "continuous_on (ball x d0)
+        (\<lambda>y. M *v (rotm q (q + M *v (y - x)) *v cc j))"
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matvec_blin] c1]) auto
+    show "continuous_on (ball x d0)
+        (\<lambda>y. (rotm q (q + M *v (y - x)) *v cc j)
+           \<bullet> (M *v (rotm q (q + M *v (y - x)) *v cc j)))"
+      by (intro continuous_intros c1 c2)
+  qed
+  have isc: "isCont TT x"
+  proof -
+    have "continuous_on (ball x d0) TT = (\<forall>y\<in>ball x d0. isCont TT y)"
+      by (rule continuous_on_eq_continuous_at[OF open_ball])
+    then have "\<forall>y\<in>ball x d0. isCont TT y" using TTc by blast
+    then show ?thesis using d00 by simp
+  qed
+  obtain d1 where d10: "0 < d1"
+    and d1b: "\<And>y. dist y x < d1 \<Longrightarrow> \<bar>TT y - TT x\<bar> < \<epsilon>"
+    using isc eps unfolding continuous_at_eps_delta dist_real_def by blast
+  define r where "r = min r0 (min (d0 / 2) (d1 / 2))"
+  have rpos: "0 < r" unfolding r_def using r00 d00 d10 by simp
+  have rr0: "r \<le> r0" unfolding r_def by simp
+  have rd0: "r < d0" unfolding r_def using d00 d10 r00 by simp
+  have rd1: "r < d1" unfolding r_def using d00 d10 r00 by simp
+  have okr: "0 < norm q * norm (q + M *v (y - x)) + q \<bullet> (q + M *v (y - x))"
+    if yd: "dist y x \<le> r" for y
+    using cone[of y] yd rd0 by simp
+  \<comment> \<open>the clamped point stays in the ball\<close>
+  have cpin: "dist (closest_point (cball x r) z) x \<le> r" for z
+  proof -
+    have "closest_point (cball x r) z \<in> cball x r"
+      by (rule closest_point_in_set) (use rpos in auto)
+    then show ?thesis by (simp add: dist_commute)
+  qed
+  define SF where "SF = rotSF lam f q M x r"
+  define GG where "GG = (\<lambda>z. q + M *v (closest_point (cball x r) z - x))"
+  have okG: "0 < norm q * norm (GG z) + q \<bullet> (GG z)" for z
+    unfolding GG_def by (rule okr[OF cpin])
+  have Gnz: "GG z \<noteq> 0" for z
+  proof
+    assume "GG z = 0"
+    then show False using okG[of z] by simp
+  qed
+  have cov: "SF z ** transpose (SF z)
+      = rotm q (GG z) ** a ** transpose (rotm q (GG z))" for z
+    unfolding SF_def GG_def by (rule rotSF_conj[OF sq])
+  have feas: "SF z ** transpose (SF z) \<in> feasible k L (GG z)" for z
+  proof -
+    have o1: "transpose (rotm q (GG z)) ** rotm q (GG z) = mat 1"
+      and o2: "rotm q (GG z) ** transpose (rotm q (GG z)) = mat 1"
+      using rotm_orth unfolding orth_mat_def by blast+
+    have inF: "rotm q (GG z) ** a ** transpose (rotm q (GG z))
+        \<in> feasible k L (rotm q (GG z) *v q)"
+      by (rule feasible_conj[OF o1 o2 aF])
+    have rq: "rotm q (GG z) *v q = (norm q / norm (GG z)) *\<^sub>R GG z"
+      by (rule rotm_apply[OF q0 Gnz okG])
+    have cne: "norm q / norm (GG z) \<noteq> 0" using q0 Gnz by simp
+    show ?thesis
+      unfolding cov by (rule feasible_scale[OF cne]) (use inF rq in simp)
+  qed
+  show ?thesis
+  proof (rule that[of r SF])
+    show "0 < r" by (rule rpos)
+    show "r \<le> r0" by (rule rr0)
+    show "continuous_on UNIV SF"
+      unfolding SF_def by (rule rotSF_cont[OF less_imp_le[OF rpos] q0 okr])
+    show "SF z ** transpose (SF z) \<in> sconstraint k L" for z
+      using feas[of z] feasible_subset_sconstraint by blast
+    show "transpose (SF z) *v (q + M *v (closest_point (cball x r) z - x)) = 0"
+      for z
+    proof -
+      have a0: "(SF z ** transpose (SF z)) *v GG z = 0"
+        using feas[of z] unfolding feasible_def by blast
+      have e1: "(transpose (SF z) *v GG z) \<bullet> (transpose (SF z) *v GG z)
+          = (transpose (transpose (SF z)) *v (transpose (SF z) *v GG z)) \<bullet> GG z"
+        by (rule inner_transpose_matrix)
+      have e2: "transpose (transpose (SF z)) *v (transpose (SF z) *v GG z)
+          = SF z *v (transpose (SF z) *v GG z)"
+        by (simp only: transpose_transpose)
+      have e3: "SF z *v (transpose (SF z) *v GG z)
+          = (SF z ** transpose (SF z)) *v GG z"
+        by (metis matrix_vector_mul_assoc)
+      have e4: "((SF z ** transpose (SF z)) *v GG z) \<bullet> GG z = 0"
+        using a0 by simp
+      have "(transpose (SF z) *v GG z) \<bullet> (transpose (SF z) *v GG z) = 0"
+        by (metis e1 e2 e3 e4)
+      then have "transpose (SF z) *v GG z = 0" by simp
+      then show ?thesis unfolding GG_def .
+    qed
+    show "\<bar>trace (M ** (SF z ** transpose (SF z))) - trace (M ** a)\<bar> \<le> \<epsilon>"
+      for z
+    proof -
+      have "SF z ** transpose (SF z)
+          = (\<Sum>j\<in>UNIV. outerp (rotm q (GG z) *v cc j))"
+        unfolding SF_def GG_def rotSF_def cc_def by (rule cols_mult_transpose)
+      then have teq: "trace (M ** (SF z ** transpose (SF z)))
+          = TT (closest_point (cball x r) z)"
+        unfolding TT_def GG_def by (simp add: trace_mult_outerp_sum)
+      have "dist (closest_point (cball x r) z) x < d1"
+        using cpin[of z] rd1 by simp
+      then have "\<bar>TT (closest_point (cball x r) z) - TT x\<bar> < \<epsilon>"
+        by (rule d1b)
+      then show ?thesis unfolding teq TTx[symmetric] by simp
+    qed
+  qed
+qed
+
 subsection \<open>Case 1: a nonzero gradient contradicts a failed supersolution
   inequality\<close>
 
@@ -10621,7 +11290,7 @@ theorem exit_val_supersol_contradiction_case1:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
     and kn: "k < CARD('n)" and Kc: "closed K"
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
@@ -10690,27 +11359,16 @@ proof -
     finally have "(2 * \<gamma> + \<delta>) * trace a \<le> \<eta>\<^sub>0" .
     then show ?thesis unfolding \<eta>_def using trH tr_eq h00 by linarith
   qed
-  show False
-  proof (rule feasible_strict_eigendata[OF aF kn L1 trM e0])
-    fix B Bp :: "(real^'n) set" and lam :: "real^'n \<Rightarrow> real" and m :: real
-    assume Bon: "onormal B" and Bsp: "span B = UNIV" and Bfin: "finite B"
-      and BpB: "Bp \<subseteq> B" and cBp: "card Bp = CARD('n) - k" and m0: "0 < m"
-      and lam_box: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u \<and> lam u \<le> L - m"
-      and lam_lb: "\<And>u. u \<in> Bp \<Longrightarrow> 1 + m \<le> lam u"
-      and lam_orth: "\<And>u. u \<in> B \<Longrightarrow> 0 < lam u \<Longrightarrow> u \<bullet> (g x) = 0"
-      and treig: "\<eta> \<le> 1 + trace (M **
-          (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2"
-    show False
-    proof -
-  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF Bon Bsp])
-  have mL: "m \<le> L"
+  have e3: "0 < 3 * \<eta>" using e0 by simp
+  have trMa: "4 * \<eta> - 2 \<le> trace (M ** a)"
   proof -
-    have "B \<noteq> {}" using cardB kn by auto
-    then obtain u where uB: "u \<in> B" by blast
-    from lam_box[OF uB] show ?thesis using m0 by linarith
+    have d2: "2 * (1 + trace (M ** a) / 2) = 2 + trace (M ** a)"
+      by (simp add: field_simps)
+    have "2 * (2 * \<eta>) \<le> 2 * (1 + trace (M ** a) / 2)"
+      by (rule mult_left_mono[OF trM]) simp
+    then have "4 * \<eta> \<le> 2 + trace (M ** a)" unfolding d2 by simp
+    then show ?thesis by linarith
   qed
-  obtain f where bijf: "bij_betw f (UNIV :: 'n set) B"
-    by (rule exists_enum_of_card[OF Bfin cardB])
   obtain rphi where rphi0: "0 < rphi"
     and mino: "\<And>z. z \<in> ball x rphi \<Longrightarrow>
       \<phi> x + g x \<bullet> (z - x)
@@ -10718,28 +11376,19 @@ proof -
     using test_fun_quadratic_minorates[OF tf d0] by metis
   obtain eK where eK0: "0 < eK" and eKK: "ball x eK \<subseteq> K"
     using xi mem_interior by blast
-  define Cm where "Cm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
-  define ec where "ec = 2 * sqrt L * Cm / norm (g x)"
-  define f1 where "f1 = (\<lambda>r. (1 + 1 / (m / (2 * L)))
-      * (real CARD('n) * (ec * r)\<^sup>2))"
-  define f2 where "f2 = (\<lambda>r. real CARD('n)
-      * (ec * r * (2 * sqrt L + ec * r))
-      + 2 * (1 + m) / m
-        * (real CARD('n) * (ec * r * (2 * sqrt L + ec * r)))\<^sup>2)"
-  define f3 where "f3 = (\<lambda>r. real CARD('n)
-      * (Cm * (ec * r * (2 * sqrt L + ec * r))))"
-  have c1: "isCont f1 0" unfolding f1_def by auto
-  have c2: "isCont f2 0" unfolding f2_def
-    using m0 by auto
-  have c3: "isCont f3 0" unfolding f3_def by auto
-  have z1: "f1 0 = 0" unfolding f1_def by simp
-  have z2: "f2 0 = 0" unfolding f2_def by simp
-  have z3: "f3 0 = 0" unfolding f3_def by simp
-  have m20: "0 < m / 2" using m0 by simp
   have rmx0: "0 < min (rphi / 2) (eK / 2)" using rphi0 eK0 by simp
-  obtain rr where rr0: "0 < rr" and rrx: "rr \<le> min (rphi / 2) (eK / 2)"
-    and s1: "f1 rr \<le> m / 2" and s2: "f2 rr \<le> m / 2" and s3: "f3 rr \<le> \<eta>"
-    by (rule small_radius_exists[OF c1 c2 c3 z1 z2 z3 m20 m20 e0 rmx0])
+  show False
+  proof (rule rotSF_exists[where M = M and x = x, OF aF gx0 e3 rmx0])
+    fix SF :: "real^'n \<Rightarrow> real^'n^'n" and rr :: real
+    assume rr0: "0 < rr" and rrx: "rr \<le> min (rphi / 2) (eK / 2)"
+      and SFc: "continuous_on UNIV SF"
+      and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+      and kill: "\<And>z. transpose (SF z)
+          *v (g x + M *v (closest_point (cball x rr) z - x)) = 0"
+      and trcl: "\<And>z. \<bar>trace (M ** (SF z ** transpose (SF z)))
+          - trace (M ** a)\<bar> \<le> 3 * \<eta>"
+    show False
+    proof -
   have rr_phi: "rr < rphi" and rr_K: "rr < eK"
     using rrx rphi0 eK0 by auto
   have cb_phi: "cball x rr \<subseteq> ball x rphi"
@@ -10750,21 +11399,13 @@ proof -
       using rr_K by auto
     then show ?thesis using eKK by blast
   qed
-  define SF where "SF = skewSF lam f (g x) M x rr"
-  have SFc: "continuous_on UNIV SF"
-    unfolding SF_def by (rule skewSF_cont[OF less_imp_le[OF rr0]])
-  note pack = skewSF_package[OF bijf Bon Bsp BpB cBp lam_box lam_lb
-      lam_orth m0 mL gx0 treig less_imp_le[OF rr0]
-      s1[unfolded f1_def ec_def Cm_def]
-      s2[unfolded f2_def ec_def Cm_def]
-      s3[unfolded f3_def ec_def Cm_def]]
-  have SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-    unfolding SF_def by (rule pack(1))
-  have kill: "\<And>z. transpose (SF z) *v
-      (g x + M *v (closest_point (cball x rr) z - x)) = 0"
-    unfolding SF_def by (rule pack(2))
-  have marg: "\<And>z. \<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))"
-    unfolding SF_def by (rule pack(3))
+  have marg: "\<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))" for z
+  proof -
+    have "- (trace (M ** (SF z ** transpose (SF z))) - trace (M ** a))
+        \<le> 3 * \<eta>"
+      by (rule abs_le_D2[OF trcl])
+    then show ?thesis using trMa by linarith
+  qed
   obtain P where Pc: "P \<in> exit_class k L T x"
     and AEpack: "AE \<omega> in P.
       0 < pball_exit T x rr \<omega>
@@ -10999,7 +11640,7 @@ theorem exit_val_supersol_env_case1:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
     and kn: "k < CARD('n)" and Kc: "closed K"
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
@@ -13712,7 +14353,7 @@ theorem exit_val_supersol_contradiction_case1_lsc:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
     and kn: "k < CARD('n)" and Kc: "closed K"
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
@@ -13800,61 +14441,40 @@ proof -
     finally have "(2 * \<gamma> + \<delta>) * trace a \<le> \<eta>\<^sub>0" .
     then show ?thesis unfolding \<eta>_def using trH tr_eq h00 by linarith
   qed
+  have e3: "0 < 3 * \<eta>" using e0 by simp
+  have trMa: "4 * \<eta> - 2 \<le> trace (M ** a)"
+  proof -
+    have d2: "2 * (1 + trace (M ** a) / 2) = 2 + trace (M ** a)"
+      by (simp add: field_simps)
+    have "2 * (2 * \<eta>) \<le> 2 * (1 + trace (M ** a) / 2)"
+      by (rule mult_left_mono[OF trM]) simp
+    then have "4 * \<eta> \<le> 2 + trace (M ** a)" unfolding d2 by simp
+    then show ?thesis by linarith
+  qed
+  obtain rphi where rphi0: "0 < rphi"
+    and mino: "\<And>z. z \<in> ball x rphi \<Longrightarrow>
+      \<phi> x + g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
+    using test_fun_quadratic_minorates[OF tf d0] by metis
+  obtain eK where eK0: "0 < eK" and eKK: "ball x eK \<subseteq> K"
+    using xi mem_interior by blast
+  have rmx0: "0 < min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
+    using rphi0 eK0 rho0 by simp
   show False
-  proof (rule feasible_strict_eigendata[OF aF kn L1 trM e0])
-    fix B Bp :: "(real^'n) set" and lam :: "real^'n \<Rightarrow> real" and m :: real
-    assume Bon: "onormal B" and Bsp: "span B = UNIV" and Bfin: "finite B"
-      and BpB: "Bp \<subseteq> B" and cBp: "card Bp = CARD('n) - k" and m0: "0 < m"
-      and lam_box: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> lam u \<and> lam u \<le> L - m"
-      and lam_lb: "\<And>u. u \<in> Bp \<Longrightarrow> 1 + m \<le> lam u"
-      and lam_orth: "\<And>u. u \<in> B \<Longrightarrow> 0 < lam u \<Longrightarrow> u \<bullet> (g x) = 0"
-      and treig: "\<eta> \<le> 1 + trace (M **
-          (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)) / 2"
+  proof (rule rotSF_exists[where M = M and x = x, OF aF gx0 e3 rmx0])
+    fix SF :: "real^'n \<Rightarrow> real^'n^'n" and rr :: real
+    assume rr0: "0 < rr"
+      and rrx: "rr \<le> min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
+      and SFc: "continuous_on UNIV SF"
+      and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+      and killc: "\<And>z. transpose (SF z)
+          *v (g x + M *v (closest_point (cball x rr) z - x)) = 0"
+      and trcl: "\<And>z. \<bar>trace (M ** (SF z ** transpose (SF z)))
+          - trace (M ** a)\<bar> \<le> 3 * \<eta>"
     show False
     proof -
-      have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF Bon Bsp])
-      have mL: "m \<le> L"
-      proof -
-        have "B \<noteq> {}" using cardB kn by auto
-        then obtain u where uB: "u \<in> B" by blast
-        from lam_box[OF uB] show ?thesis using m0 by linarith
-      qed
-      obtain f where bijf: "bij_betw f (UNIV :: 'n set) B"
-        by (rule exists_enum_of_card[OF Bfin cardB])
-      obtain rphi where rphi0: "0 < rphi"
-        and mino: "\<And>z. z \<in> ball x rphi \<Longrightarrow>
-          \<phi> x + g x \<bullet> (z - x)
-            + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> \<phi> z"
-        using test_fun_quadratic_minorates[OF tf d0] by metis
-      obtain eK where eK0: "0 < eK" and eKK: "ball x eK \<subseteq> K"
-        using xi mem_interior by blast
       define Cm where "Cm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
       have Cm0: "0 \<le> Cm" unfolding Cm_def by (intro sum_nonneg) simp_all
-      define ec where "ec = 2 * sqrt L * Cm / norm (g x)"
-      define f1 where "f1 = (\<lambda>r. (1 + 1 / (m / (2 * L)))
-          * (real CARD('n) * (ec * r)\<^sup>2))"
-      define f2 where "f2 = (\<lambda>r. real CARD('n)
-          * (ec * r * (2 * sqrt L + ec * r))
-          + 2 * (1 + m) / m
-            * (real CARD('n) * (ec * r * (2 * sqrt L + ec * r)))\<^sup>2)"
-      define f3 where "f3 = (\<lambda>r. real CARD('n)
-          * (Cm * (ec * r * (2 * sqrt L + ec * r))))"
-      have c1: "isCont f1 0" unfolding f1_def
-        by auto
-      have c2: "isCont f2 0" unfolding f2_def
-        using m0 by auto
-      have c3: "isCont f3 0" unfolding f3_def
-        by auto
-      have z1: "f1 0 = 0" unfolding f1_def by simp
-      have z2: "f2 0 = 0" unfolding f2_def by simp
-      have z3: "f3 0 = 0" unfolding f3_def by simp
-      have m20: "0 < m / 2" using m0 by simp
-      have rmx0: "0 < min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
-        using rphi0 eK0 rho0 by simp
-      obtain rr where rr0: "0 < rr"
-        and rrx: "rr \<le> min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
-        and s1: "f1 rr \<le> m / 2" and s2: "f2 rr \<le> m / 2" and s3: "f3 rr \<le> \<eta>"
-        by (rule small_radius_exists[OF c1 c2 c3 z1 z2 z3 m20 m20 e0 rmx0])
       have rr_phi: "rr < rphi" and rr_K: "rr < eK" and rr_rho: "rr < \<rho>"
         using rrx rphi0 eK0 rho0 by auto
       have cb_phi: "cball x rr \<subseteq> ball x rphi"
@@ -13865,21 +14485,13 @@ proof -
           using rr_K by auto
         then show ?thesis using eKK by blast
       qed
-      define SF where "SF = skewSF lam f (g x) M x rr"
-      have SFc: "continuous_on UNIV SF"
-        unfolding SF_def by (rule skewSF_cont[OF less_imp_le[OF rr0]])
-      note pack = skewSF_package[OF bijf Bon Bsp BpB cBp lam_box lam_lb
-          lam_orth m0 mL gx0 treig less_imp_le[OF rr0]
-          s1[unfolded f1_def ec_def Cm_def]
-          s2[unfolded f2_def ec_def Cm_def]
-          s3[unfolded f3_def ec_def Cm_def]]
-      have SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-        unfolding SF_def by (rule pack(1))
-      have killc: "\<And>z. transpose (SF z) *v
-          (g x + M *v (closest_point (cball x rr) z - x)) = 0"
-        unfolding SF_def by (rule pack(2))
-      have marg: "\<And>z. \<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))"
-        unfolding SF_def by (rule pack(3))
+      have marg: "\<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))" for z
+      proof -
+        have "- (trace (M ** (SF z ** transpose (SF z))) - trace (M ** a))
+            \<le> 3 * \<eta>"
+          by (rule abs_le_D2[OF trcl])
+        then show ?thesis using trMa by linarith
+      qed
       \<comment> \<open>on the ball the clamp is the identity, so the kill is the plain one\<close>
       have killR: "\<And>z. z \<in> ball x rr \<Longrightarrow>
           transpose (SF z) *v (g x + M *v (z - x)) = 0"
@@ -14934,7 +15546,7 @@ text \<open>Case 2's tilt step for the value function.  The minimiser \<open>y\<
 theorem exit_val_case2_tilt_step:
   fixes K :: "(real^'n::finite) set" and x \<eta> :: "real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and symH: "transpose H = H"
     and e0: "0 < \<epsilon>" and rho: "0 < \<rho>"
     and sub: "cball x \<rho> \<subseteq> interior K"
@@ -15571,7 +16183,7 @@ text \<open>Horn A at a given local minimiser.  \<open>exit_val_case2_tilt_step\
 lemma exit_val_case2_at_minimiser:
   fixes K :: "(real^'n::finite) set" and x y \<eta> :: "real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and symH: "transpose H = H"
     and rho: "0 < \<rho>" and sub: "cball x \<rho> \<subseteq> interior K"
     and dxy: "dist x y < \<rho>"
@@ -15634,7 +16246,7 @@ theorem exit_val_case2_eps:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
@@ -15854,7 +16466,7 @@ theorem exit_val_case2:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
@@ -15898,7 +16510,7 @@ text \<open>Definition 3.1(b) for the paper's own value function.  Case 1
 
 theorem exit_val_supersol_lsc:
   fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K"
     and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
       lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
@@ -15998,7 +16610,7 @@ text \<open>So on a bounded \<open>K\<close> the supersolution property is uncon
 
 corollary exit_val_supersol_lsc_bounded:
   fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
   shows "visc_supersol_lsc k L K (interior K)

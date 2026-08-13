@@ -114,16 +114,34 @@ through Burkholder–Davis–Gundy, with constant `66 C²`. Iterating
 Cauchy–Schwarz and the tower property gives the same bound with `8 C²`, and
 avoids BDG entirely.
 
-**The supersolution half seems to need `L > 1`, which Theorem 1.1 does not
-assume.** Case 1 of Section 3 modifies the witness so that
-`λ₍₁₎(a), …, λ₍ₙ₋ₖ₎(a) ∈ (1,L)`, an empty interval at `L = 1`, where the
-constraint set pins those eigenvalues to `1` exactly and has no slack. The
-formalisation needs the same strictness in the same place
-(`feasible_strict_eigendata`), so clauses (2b), (3b) and hence uniqueness are
-proved here only for `L > 1`. By Remark 1.1(c) `L = 1` is the Ambrosio–Soner
-co-dimension mean curvature flow case, so this is not a corner of the
-parameter range. We have no counterexample — only the observation that the
-route breaks.
+**Case 1 of the supersolution proof needs `L > 1`; the theorem does not.** As
+written, Case 1 of Section 3 modifies the witness so that
+`λ₍₁₎(a), …, λ₍ₙ₋ₖ₎(a) ∈ (1,L)` — an empty interval at `L = 1`, where the
+feasible set of Eq. (1.9) pins those eigenvalues to `1` exactly and leaves no
+slack. The margin is there to absorb the drift of the covariance field (3.24):
+its columns `Sᵢ∇φ(y)` leave the eigenframe of `a` as `y` moves off the
+touching point, so its eigenvalues move by `O(|y − x|)`. Since `L = 1` is by
+Remark 1.1(c) the Ambrosio–Soner co-dimension mean curvature flow, this is not
+a corner of the parameter range.
+
+The margin is avoidable, and the fix is short. Replace the skew field by a
+field of **exact rotations**: let `R(y)` be the rotation carrying the frozen
+gradient `q = ∇φ(x)` to the current gradient `∇φ(y)` — a product of two
+Householder reflections, hence smooth wherever the two are not opposed, and the
+identity at `y = x` — and use the covariance field `R(y) a R(y)ᵀ`. Conjugation
+by an orthogonal matrix changes neither the spectrum of `a` nor its membership
+in the feasible set, so
+
+* the field lies in `S` at every `y`, with no margin, hence also at `L = 1`;
+* it annihilates `∇φ(y)`, since `a` annihilates `q` and `R(y)q ∥ ∇φ(y)`;
+* the quantity the DPP sees, `tr(M R(y) a R(y)ᵀ)`, is continuous in `y` and
+  equals `tr(M a)` at `y = x`, so the trace margin follows from continuity at
+  the touching point instead of from three explicit smallness estimates.
+
+This is `rotSF_exists` in `Value_Function_Viscosity`, and it carries no
+hypothesis on `L` whatsoever. Clauses (2b), (3b) and (4) are therefore proved
+here for every `L ≥ 1`, `L = 1` included. The skew field of (3.24) is still
+formalised, but it no longer feeds any theorem.
 
 **Uniform convergence of sup-convolutions fails for usc data.** With `u = 1`
 at `0` and `u = 0` elsewhere on the unit ball, `uᵋ(x) ≥ max(1 − |x|²/2ε, 0)`,
@@ -143,7 +161,7 @@ and below its value at `x` outside an explicit ball.
 | regularity in the uniqueness clause | bounded usc | the same |
 | zero boundary condition | Definition 3.1, viscosity sense | the same; the pointwise identity `v = 0` on `∂K` is proved only on a ball, where Lemma 5.3 says it holds |
 | hypothesis on `K` for uniqueness | the `T_ι` family of Section 4 | an explicit predicate, proved to hold for every compact convex `K` with nonempty interior |
-| standing assumption on `L` | `L ≥ 1` | `L ≥ 1`, except that the supersolution half, and so uniqueness, consumes the strict `L > 1` — **so `L = 1`, the mean-curvature-flow case of Remark 1.1(c), is not covered by clause (4)** |
+| standing assumption on `L` | `L ≥ 1` | the same, `L = 1` included — but by the rotation field above, not by Case 1 as written |
 | Example 3.1 | `1 ≤ k < n` | the same |
 
 The finite horizon is not a restriction. Your class and your value function are

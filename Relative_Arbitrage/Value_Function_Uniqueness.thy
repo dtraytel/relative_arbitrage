@@ -286,7 +286,7 @@ text \<open>Both halves of the viscosity property land in the envelope forms tha
 theorem exit_val_unique_viscosity_solution:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 < L"
+    and k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
     and T0: "0 < T"
     and KB: "K \<subseteq> cball 0 rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
@@ -409,7 +409,7 @@ text \<open>The supersolution clause of Definition 3.1 for \<open>exit_val\<clos
 
 theorem exit_val_supersol_bc:
   fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
   shows "visc_supersol_env k L K
@@ -455,7 +455,7 @@ text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>exit_
 
 theorem theorem_1_1_uniqueness_faithful:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes T0: "0 < T" and L1: "1 < L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
     and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
@@ -869,7 +869,7 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
 
 theorem iexit_val_supersol_lsc:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and cK: "compact K"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k" and cK: "compact K"
   shows "visc_supersol_lsc k L K (interior K)
       (\<lambda>u. enn2real (iexit_val k L K u))"
 proof -
@@ -910,7 +910,7 @@ qed
 
 theorem iexit_val_supersol_bc:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and cK: "compact K"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k" and cK: "compact K"
   shows "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K.
          lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
@@ -934,7 +934,7 @@ text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>\<close>
 
 theorem iexit_val_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
     and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and bnd: "\<And>y. \<bar>u y\<bar> \<le> Bd"

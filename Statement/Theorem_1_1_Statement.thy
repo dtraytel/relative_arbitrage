@@ -179,11 +179,20 @@ theorem clause_2_subsolution:
   by (rule iexit_val_visc_subsol[OF assms])
 
 text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form of Definition 3.1(b), for
-  the lower semicontinuous envelope.\<close>
+  the lower semicontinuous envelope.
+
+  The standing assumption is \<open>1 \<le> L\<close>, the paper's own.  The value \<open>L = 1\<close> is
+  included, and is the case of Remark 1.1(c), where the equation becomes the
+  arrival time formulation of the Ambrosio--Soner co-dimension mean curvature
+  flow.  Case 1 of the paper's Section 3 does not reach it as written: it
+  perturbs the eigenvalues of the witness into the open interval \<open>(1,L)\<close>,
+  which is empty at \<open>L = 1\<close>.  What is used here instead is a covariance field
+  of exact rotations, whose spectrum does not move at all, so no margin is
+  needed --- see \<open>rotSF_exists\<close>.\<close>
 
 theorem clause_2_supersolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "compact K"
+  assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k" and "compact K"
   shows "visc_supersol_lsc k L K (interior K)
       (\<lambda>u. enn2real (iexit_val k L K u))"
   by (rule iexit_val_supersol_lsc[OF assms])
@@ -208,7 +217,7 @@ theorem clause_3_boundary_subsolution:
 
 theorem clause_3_boundary_supersolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "compact K"
+  assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k" and "compact K"
   shows "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K.
          lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
@@ -222,7 +231,7 @@ text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>  Any bounded upper se
 
 theorem clause_4_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k"
+  assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k"
     and "compact K" and "K \<noteq> {}" and "expandable K"
     and "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and "\<And>y. \<bar>u y\<bar> \<le> Bd"
@@ -252,8 +261,6 @@ text \<open>
   \<^item> Continuity of the value function is not proved.  It is not needed for
     Theorem 1.1, and the paper proves it only in its Section 5 under further
     hypotheses.
-  \<^item> The clause \<open>1 < L\<close> is used where the paper writes \<open>L \<ge> 1\<close>; the strict form
-    is what the supersolution argument consumes.
   \<^item> Clause (4) assumes the competitor \<open>u\<close> bounded, \<open>\<bar>u y\<bar> \<le> Bd\<close> uniformly in \<open>y\<close>.
     This is the paper's own hypothesis: Theorem 1.1 says only \<open>upper
     semicontinuous\<close>, but Definition 3.1 opens each of its three clauses with
