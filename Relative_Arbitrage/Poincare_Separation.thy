@@ -963,39 +963,6 @@ text \<open>The combinatorial heart of Eq. (3.5), stated without matrices.  Spli
   \<open>t \<le> 1\<close> and the negative part by \<open>sum_weighted_le_top_subset\<close>, whose "top
   subset" is the \<open>m\<close> least negative directions.\<close>
 
-lemma box_program_bound_exact:
-  fixes lam t :: "'a \<Rightarrow> real"
-  assumes finB: "finite B" and m: "m \<le> card B"
-    and t0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> t u" and t1: "\<And>u. u \<in> B \<Longrightarrow> t u \<le> 1"
-    and tsum: "(\<Sum>u\<in>B. t u) = real m"
-  shows "\<exists>T. T \<subseteq> B \<and> card T = m
-      \<and> (\<Sum>u\<in>B. lam u * t u)
-          \<le> (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)"
-proof -
-  obtain T where T: "T \<subseteq> B" "card T = m"
-    and neg: "(\<Sum>u\<in>B. min (lam u) 0 * t u) \<le> (\<Sum>u\<in>T. min (lam u) 0)"
-    using sum_weighted_le_top_subset[where f = "\<lambda>u. min (lam u) 0" and t = t,
-        OF finB m t0 t1 tsum] by metis
-  have pos: "(\<Sum>u\<in>B. max (lam u) 0 * t u) \<le> (\<Sum>u\<in>B. max (lam u) 0)"
-  proof (rule sum_mono)
-    fix u assume u: "u \<in> B"
-    have "max (lam u) 0 * t u \<le> max (lam u) 0 * 1"
-      using t1[OF u] by (intro mult_left_mono) auto
-    then show "max (lam u) 0 * t u \<le> max (lam u) 0"
-      by simp
-  qed
-  have split: "lam u * t u = max (lam u) 0 * t u + min (lam u) 0 * t u" for u
-    by (simp add: min_def max_def)
-  have "(\<Sum>u\<in>B. lam u * t u)
-      = (\<Sum>u\<in>B. max (lam u) 0 * t u) + (\<Sum>u\<in>B. min (lam u) 0 * t u)"
-    unfolding split by (rule sum.distrib)
-  also have "\<dots> \<le> (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)"
-    using pos neg by (rule add_mono)
-  finally have le: "(\<Sum>u\<in>B. lam u * t u)
-      \<le> (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)" .
-  show ?thesis
-    by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
-qed
 
 text \<open>\<open>sum_weighted_le_top_subset\<close> needs weights summing to \<open>m\<close> exactly,
   while the clipped-weight bound only gives \<open>\<ge> m\<close>.  Scaling down by
@@ -1357,68 +1324,6 @@ proof -
   finally show ?thesis .
 qed
 
-theorem trace_expand_adapted:
-  fixes M a :: "real^'n::finite^'n"
-  assumes sym: "transpose M = M" and p: "p \<noteq> 0"
-    and af: "a \<in> feasible k L p"
-  shows "\<exists>B. onormal B \<and> span B = UNIV \<and> p /\<^sub>R norm p \<in> B
-      \<and> (\<forall>u \<in> B - {p /\<^sub>R norm p}. p \<bullet> u = 0)
-      \<and> trace (M ** a) = (\<Sum>u\<in>B. (u \<bullet> (Mp p M *v u)) * (u \<bullet> (a *v u)))
-      \<and> (\<forall>u\<in>B. 0 \<le> u \<bullet> (a *v u) \<and> u \<bullet> (a *v u) \<le> L)
-      \<and> (p /\<^sub>R norm p) \<bullet> (a *v (p /\<^sub>R norm p)) = 0
-      \<and> (\<forall>u \<in> B - {p /\<^sub>R norm p}.
-            min (eigval CARD('n) M) 0 \<le> u \<bullet> (Mp p M *v u))"
-proof -
-  define q where "q = p /\<^sub>R norm p"
-  have symMp: "transpose (Mp p M) = Mp p M"
-    by (rule transpose_Mp[OF sym])
-  have syma: "transpose a = a"
-    using af by (simp add: feasible_def psd_def)
-  have ap: "a *v p = 0"
-    using af by (simp add: feasible_def)
-  obtain B where B: "onormal B" "span B = UNIV"
-    and eigB: "\<forall>u\<in>B. Mp p M *v u = (u \<bullet> (Mp p M *v u)) *\<^sub>R u"
-    and qB: "q \<in> B" and restperp: "\<forall>u \<in> B - {q}. p \<bullet> u = 0"
-    using Mp_eigenbasis_adapted[OF sym p] unfolding q_def by blast
-  have eigB': "Mp p M *v u = (u \<bullet> (Mp p M *v u)) *\<^sub>R u" if "u \<in> B" for u
-    using eigB that by blast
-  text \<open>The expansion: the paper's "writing the symmetric \<open>M\<^sub>p\<close> as a linear
-    combination of outer products".\<close>
-  have expand: "trace (M ** a) = (\<Sum>u\<in>B. (u \<bullet> (Mp p M *v u)) * (u \<bullet> (a *v u)))"
-  proof -
-    have "trace (M ** a) = trace (Mp p M ** a)"
-      by (rule trace_Mp[OF syma ap, symmetric])
-    also have "\<dots> = (\<Sum>u\<in>B. (u \<bullet> (Mp p M *v u)) * (u \<bullet> (a *v u)))"
-      by (rule trace_mult_eigen_weights[OF B symMp eigB'])
-    finally show ?thesis .
-  qed
-  have wbounds: "\<forall>u\<in>B. 0 \<le> u \<bullet> (a *v u) \<and> u \<bullet> (a *v u) \<le> L"
-  proof (intro ballI conjI)
-    fix u assume u: "u \<in> B"
-    show "0 \<le> u \<bullet> (a *v u)"
-      by (rule feasible_quadform_nonneg[OF af])
-    have "norm u = 1"
-      using u B(1) by (simp add: onormal_def)
-    then show "u \<bullet> (a *v u) \<le> L"
-      by (rule feasible_quadform_le[OF af])
-  qed
-  have wq: "q \<bullet> (a *v q) = 0"
-    unfolding q_def by (simp add: feasible_annihilates_unit[OF af])
-  have minperp: "\<forall>u \<in> B - {q}. min (eigval CARD('n) M) 0 \<le> u \<bullet> (Mp p M *v u)"
-  proof (intro ballI)
-    fix u assume u: "u \<in> B - {q}"
-    then have nu: "norm u = 1"
-      using B(1) by (simp add: onormal_def)
-    have pu: "p \<bullet> u = 0"
-      using u restperp by blast
-    show "min (eigval CARD('n) M) 0 \<le> u \<bullet> (Mp p M *v u)"
-      by (rule Mp_perp_quadform_ge[OF sym p pu nu])
-  qed
-  show ?thesis
-    unfolding q_def[symmetric]
-    by (rule exI[of _ B])
-      (intro conjI B(1) B(2) qB restperp expand wbounds wq minperp)
-qed
 
 section \<open>Feasibility of weighted outer-product sums\<close>
 
@@ -1801,25 +1706,6 @@ theorem ell_op_eq_half_bracket:
 text \<open>And in the paper's displayed form, as sums over the ordered
   eigenvalues.\<close>
 
-corollary ell_op_eq_eigval_sum:
-  fixes M :: "real^'n::finite^'n"
-  assumes sym: "transpose M = M" and p: "p \<noteq> 0" and L: "1 \<le> L"
-    and k: "1 \<le> k" "k < CARD('n)"
-  shows "ell_op k L p M
-       = - (1/2) * (L * (\<Sum>i\<in>{1..CARD('n)}. max (eigval i (Mp p M)) 0)
-           + (\<Sum>i\<in>{1..CARD('n) - k}. min (eigval i (Mp p M)) 0))"
-proof -
-  have symMp: "transpose (Mp p M) = Mp p M"
-    by (rule transpose_Mp[OF sym])
-  have mn: "CARD('n) - k \<le> CARD('n)"
-    by simp
-  have "bracket (CARD('n) - k) L (Mp p M)
-      = L * (\<Sum>i\<in>{1..CARD('n)}. max (eigval i (Mp p M)) 0)
-        + (\<Sum>i\<in>{1..CARD('n) - k}. min (eigval i (Mp p M)) 0)"
-    by (rule bracket_eq_sum[OF symMp mn])
-  then show ?thesis
-    using ell_op_eq_half_bracket[OF sym p L k(1) k(2)] by simp
-qed
 
 section \<open>Scale invariance: the paper's sequence is constant\<close>
 
@@ -2878,23 +2764,6 @@ qed
 text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
   with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
 
-corollary ell_op_eq_half_bracket_sym_part:
-  fixes M :: "real^'n::finite^'n"
-  assumes p: "p \<noteq> 0" and L: "1 \<le> L" and k: "1 \<le> k" "k < CARD('n)"
-  shows "ell_op k L p M
-       = - (1/2) * bracket (CARD('n) - k) L
-             (Mp p ((1/2) *\<^sub>R (M + transpose M)))"
-proof -
-  have sym: "transpose ((1/2) *\<^sub>R (M + transpose M) :: real^'n^'n)
-      = (1/2) *\<^sub>R (M + transpose M)"
-    by (rule transpose_sym_part)
-  have "ell_op k L p M = ell_op k L p ((1/2) *\<^sub>R (M + transpose M))"
-    by (rule ell_op_sym_part[symmetric])
-  also have "\<dots> = - (1/2) * bracket (CARD('n) - k) L
-      (Mp p ((1/2) *\<^sub>R (M + transpose M)))"
-    by (rule ell_op_eq_half_bracket[OF sym p L k(1) k(2)])
-  finally show ?thesis .
-qed
 
 section \<open>The norm of an outer product, and \<open>rank1proj\<close> as a unit outer product\<close>
 
@@ -3063,10 +2932,6 @@ proof -
   finally show ?thesis .
 qed
 
-lemma norm_transpose_matrix:
-  fixes A :: "real^'n::finite^'n"
-  shows "norm (transpose A) = norm A"
-  using inner_transpose_self[of A] by (simp add: norm_eq_sqrt_inner)
 
 lemma matrix_mult_entry_inner:
   fixes A B :: "real^'n::finite^'n"
@@ -3437,22 +3302,6 @@ proof
     using le kn dimW by simp
 qed
 
-corollary feasible_empty_of_large_degeneracy:
-  fixes W :: "(real^'n::finite) set"
-  assumes W: "subspace W" and dimW: "k < dim W"
-    and degen: "\<And>a x. a \<in> feasible k L p \<Longrightarrow> x \<in> W \<Longrightarrow> x \<bullet> (a *v x) \<le> 0"
-  shows "feasible k L p = ({} :: (real^'n^'n) set)"
-proof (rule ccontr)
-  assume "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-  then obtain a :: "real^'n^'n" where a: "a \<in> feasible k L p"
-    by blast
-  have lb: "eigen_lb a (CARD('n) - k)"
-    using a by (simp add: feasible_def)
-  have "\<not> eigen_lb a (CARD('n) - k)"
-    by (rule not_eigen_lb_of_large_degeneracy[OF W dimW]) (use a degen in blast)
-  with lb show False
-    by simp
-qed
 
 section \<open>From the Lipschitz bounds to the norm topology\<close>
 
@@ -3773,25 +3622,6 @@ proof -
   thus ?thesis by (rule lipschitz_on_continuous_on)
 qed
 
-theorem closed_feasible:
-  fixes p :: "real^'n::finite"
-  assumes k: "1 \<le> k" "k < CARD('n)"
-  shows "closed (feasible k L p)"
-proof -
-  have m: "CARD('n) - k \<le> CARD('n)" by simp
-  have eq: "feasible k L p
-      = {a. psd a} \<inter> {a. a *v p = 0}
-        \<inter> {a \<in> {a. transpose a = a}. 1 \<le> eigval (CARD('n) - k) a}
-        \<inter> {a. eigen_ub a L}"
-    using feasible_iff_eigval[OF k] by (auto simp: psd_def)
-  have c3: "closed {a \<in> {a :: real^'n^'n. transpose a = a}.
-      1 \<le> eigval (CARD('n) - k) a}"
-    by (rule continuous_on_closed_Collect_le[OF continuous_on_const
-          eigval_continuous_on_sym[OF m] closed_symmetric_matrices])
-  show ?thesis
-    unfolding eq
-    by (intro closed_Int closed_psd closed_annihilator c3 closed_eigen_ub)
-qed
 
 
 (*<*)

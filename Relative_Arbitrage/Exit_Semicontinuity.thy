@@ -152,15 +152,6 @@ proof -
   then show ?thesis unfolding ess_inf_time_def by simp
 qed
 
-theorem ess_inf_pexit_cap_invisible:
-  fixes \<Lambda> :: "(real \<Rightarrow> 'b :: polish_space) measure"
-  assumes T: "0 \<le> T" and TT: "T \<le> T'"
-    and ae: "AE f in \<Lambda>. pexit T K f < T"
-  shows "ess_inf_time \<Lambda> (pexit T' K) = ess_inf_time \<Lambda> (pexit T K)"
-proof (rule ess_inf_time_cong_AE)
-  show "AE f in \<Lambda>. pexit T' K f = pexit T K f"
-    using ae by eventually_elim (rule pexit_stable_above_T[OF T TT])
-qed
 
 text \<open>Upper semicontinuity, in sublevel-set form: strict sublevels of the
   exit time are open in the path topology. A path that exits before \<open>c\<close>

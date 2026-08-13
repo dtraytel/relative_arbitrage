@@ -258,33 +258,6 @@ proof (rule has_cond_expI')
   finally show "(\<integral>\<omega> \<in> A. g (?D \<omega>) \<partial>?M) = (\<integral>\<omega> \<in> A. ?c \<partial>?M)" .
 qed
 
-lemma bm_increment_cond_exp_AE:
-  fixes g :: "real \<Rightarrow> real" and i :: "'n::finite" and x0 :: "real^'n"
-  assumes s: "0 \<le> s" and st: "s < t"
-    and gm: "g \<in> borel_measurable borel" and gb: "\<And>y. \<bar>g y\<bar> \<le> C"
-  shows "AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
-      cond_exp bm_paths (natural_filtration bm_paths 0 (bmX x0) s)
-        (\<lambda>\<omega>. g (\<omega> i t - \<omega> i s)) \<omega>
-      = (\<integral>y. g y \<partial>gauss_measure (t - s))"
-proof -
-  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?F = "natural_filtration ?M 0 (bmX x0) s"
-  have SPfact: "Stochastic_Process.stochastic_process
-      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) 0 (bmX x0)"
-    by unfold_locales (intro measurable_bmX, simp)
-  have fm: "finite_measure ?M"
-    by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
-  have sfs: "sigma_finite_subalgebra ?M ?F"
-    by (intro finite_measure_subalgebra_is_sigma_finite
-        finite_measure_subalgebra.intro
-        finite_measure_subalgebra_axioms.intro fm
-        Stochastic_Process.stochastic_process.subalgebra_natural_filtration
-        [OF SPfact])
-  show ?thesis
-    using sigma_finite_subalgebra.has_cond_exp_charact(2)
-        [OF sfs bm_increment_has_cond_exp[OF s st gm gb]]
-    by eventually_elim simp
-qed
 
 
 text \<open>The indicator/increment independence generalized to any past-measurable
@@ -2307,42 +2280,6 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-lemma drN_event_integrable:
-  assumes q: "0 < q" and t: "0 \<le> t"
-    and B: "B \<in> sets (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
-  shows "integrable bm_paths (\<lambda>\<omega>. indicat_real B \<omega> * drN q \<phi> t \<omega>)"
-proof -
-  have m: "(\<lambda>\<omega>. indicat_real B \<omega> * drN q \<phi> t \<omega>)
-      \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
-    unfolding drN_def
-    using B drC2_meas drC2_time_integral_meas[OF q] by measurable
-  have bnd: "\<bar>indicat_real B \<omega> * drN q \<phi> t \<omega>\<bar> \<le> (q + t) + t" for \<omega>
-  proof -
-    have "\<bar>drN q \<phi> t \<omega>\<bar> \<le> \<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar>
-        + \<bar>set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>"
-      unfolding drN_def by (rule abs_triangle_ineq)
-    also have "\<dots> \<le> \<bar>q + t\<bar> * 1 + (t - 0)"
-    proof (intro add_mono)
-      have "\<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar> = \<bar>q + t\<bar> * \<bar>drC2 q \<phi> t \<omega>\<bar>"
-        by (simp add: abs_mult)
-      also have "\<dots> \<le> \<bar>q + t\<bar> * 1"
-        by (intro mult_left_mono drC2_abs abs_ge_zero)
-      finally show "\<bar>(q + t) * drC2 q \<phi> t \<omega>\<bar> \<le> \<bar>q + t\<bar> * 1" .
-      show "\<bar>set_lebesgue_integral lborel {0..t} (\<lambda>u. drC2 q \<phi> u \<omega>)\<bar>
-          \<le> t - 0"
-        by (rule drC2_time_integral_abs[OF q t])
-    qed
-    also have "\<dots> = \<bar>q + t\<bar> + t" by simp
-    also have "\<dots> = (q + t) + t" using q t by simp
-    finally have *: "\<bar>drN q \<phi> t \<omega>\<bar> \<le> (q + t) + t" .
-    have "\<bar>indicat_real B \<omega> * drN q \<phi> t \<omega>\<bar> \<le> \<bar>drN q \<phi> t \<omega>\<bar>"
-      by (simp add: abs_mult indicator_def)
-    with * show ?thesis by linarith
-  qed
-  show ?thesis
-    by (rule BMP.integrable_const_bound[where B = "(q + t) + t"])
-      (use m bnd in \<open>auto\<close>)
-qed
 
 lemma drN_set_integral_identity:
   fixes q \<phi> s t :: real
@@ -2682,10 +2619,6 @@ lemma dra_11: "dra q \<phi> u \<omega> $ 1 $ 1 = (sin (drW (drc q u) \<omega> + 
 lemma dra_22: "dra q \<phi> u \<omega> $ 2 $ 2 = (cos (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
   by (simp add: dra_def power2_eq_square)
 
-lemma drC2_cos2:
-  assumes u: "0 \<le> u"
-  shows "cos (2 * (drW (drc q u) \<omega> + \<phi>)) = drC2 q \<phi> u \<omega>"
-  unfolding drC2_eq[OF u] drW_def by (simp add: algebra_simps)
 
 lemma dra_diag_integrable:
   assumes q: "0 < q" and t: "0 \<le> t"

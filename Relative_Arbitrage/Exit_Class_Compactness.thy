@@ -31,39 +31,6 @@ text \<open>The locale's volatility hypotheses are stated as three separate
   and continued they give a single almost-sure statement holding for all
   times, which is the shape \<open>exit_class\<close> asks for.\<close>
 
-theorem stopped_market_acont_in_sconstraint:
-  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
-  assumes SM: "stopped_market k L K x0 M F X acov tau"
-  shows "AE \<omega> in M. \<forall>s. 0 \<le> s
-      \<longrightarrow> acont (\<lambda>u. acov u \<omega>) (tau \<omega>) s \<in> sconstraint k L"
-proof -
-  from SM have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
-    unfolding stopped_market_def by blast
-  interpret SV: sufficiently_volatile_market M F X acov k L K x0 tau
-    by (rule svm)
-  have L1: "1 \<le> L" by (rule SV.L_ge)
-  show ?thesis
-    using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub
-  proof eventually_elim
-    case (elim \<omega>)
-    then have pd: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
-      and lb: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega>
-          \<Longrightarrow> eigen_lb (acov u \<omega>) (CARD('n) - k)"
-      and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
-      by blast+
-    \<comment> \<open>\<open>pd\<close>, not \<open>psd\<close>: naming a local fact after the constant \<open>psd\<close>
-        is legal (facts and constants live in separate namespaces) but
-        invites misreading in the \<open>unfolding\<close> step just below.\<close>
-    have sv: "acov u \<omega> \<in> suff_volatile k" if "0 \<le> u" "u \<le> tau \<omega>" for u
-      unfolding suff_volatile_def using pd[OF that] lb[OF that] by simp
-    show ?case
-    proof (intro allI impI)
-      fix s :: real assume s: "0 \<le> s"
-      show "acont (\<lambda>u. acov u \<omega>) (tau \<omega>) s \<in> sconstraint k L"
-        by (rule acont_in_sconstraint[OF L1 sv ub s])
-    qed
-  qed
-qed
 
 text \<open>In particular the continued volatility of a market witness never
   leaves the constraint set, whereas the witness's own volatility does the
@@ -185,54 +152,6 @@ text \<open>For a market witness, the continued running covariation
   at no cost by (1.8), since \<open>\<tau>\<^sub>K\<close> only sees the path up to the first exit
   from \<open>K\<close>.\<close>
 
-theorem stopped_market_Yint_diffquot_in_sconstraint:
-  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
-  assumes SM: "stopped_market k L K x0 M F X acov tau"
-    and st: "0 \<le> s" "s < t"
-  shows "AE \<omega> in M.
-      (1 / (t - s)) *\<^sub>R (Yint (acont (\<lambda>r. acov r \<omega>) (tau \<omega>)) t
-          - Yint (acont (\<lambda>r. acov r \<omega>) (tau \<omega>)) s) \<in> sconstraint k L"
-proof -
-  from SM have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
-    unfolding stopped_market_def by blast
-  interpret SV: sufficiently_volatile_market M F X acov k L K x0 tau
-    by (rule svm)
-  have L1: "1 \<le> L" by (rule SV.L_ge)
-  have i1: "AE \<omega> in M.
-      set_integrable lborel {0..s} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
-    by (rule stopped_market_acont_integrable[OF SM]) (use st in auto)
-  have i2: "AE \<omega> in M.
-      set_integrable lborel {s..t} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
-    using st by (intro stopped_market_acont_integrable[OF SM]) auto
-  show ?thesis
-    using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub i1 i2
-  proof eventually_elim
-    case (elim \<omega>)
-    then have pd: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
-      and lb: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega>
-          \<Longrightarrow> eigen_lb (acov u \<omega>) (CARD('n) - k)"
-      and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
-      and j1: "set_integrable lborel {0..s} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
-      and j2: "set_integrable lborel {s..t} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
-      by blast+
-    have sv: "acov u \<omega> \<in> suff_volatile k" if "0 \<le> u" "u \<le> tau \<omega>" for u
-      unfolding suff_volatile_def using pd[OF that] lb[OF that] by simp
-    show ?case
-    proof (rule Yint_diffquot_in_sconstraint)
-      show "1 \<le> L" by (rule L1)
-      show "0 \<le> s" by (rule st(1))
-      show "s < t" by (rule st(2))
-      show "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> acov u \<omega> \<in> suff_volatile k"
-        by (rule sv)
-      show "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
-        by (rule ub)
-      show "set_integrable lborel {0..s} (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
-        by (rule j1)
-      show "set_integrable lborel {s..t} (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
-        by (rule j2)
-    qed
-  qed
-qed
 
 corollary stopped_market_acov_leaves_sconstraint:
   fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
@@ -1555,8 +1474,6 @@ lemma abs_ge_nonempty: "{y :: real. R \<le> \<bar>y\<bar>} \<noteq> {}"
 lemma ploc_nonneg: "0 \<le> T \<Longrightarrow> 0 \<le> ploc T i R \<omega>"
   unfolding ploc_def by (rule etime_nonneg)
 
-lemma ploc_le_T: "0 \<le> T \<Longrightarrow> ploc T i R \<omega> \<le> T"
-  unfolding ploc_def by (rule etime_le_T)
 
 lemma exit_class_cont_adapted:
   fixes Q :: "('n::finite pairpath) measure"
@@ -6239,19 +6156,6 @@ lemma trace_outerp:
   shows "trace (outerp v) = v \<bullet> v"
   by (simp add: outerp_def trace_def inner_vec_def)
 
-theorem exit_class_trace_martingale:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. fst (\<omega> (min u T)) \<bullet> fst (\<omega> (min u T))
-             - trace (snd (\<omega> (min u T))))"
-proof -
-  have "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. trace (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))))"
-    by (rule martingale_bounded_linear_image[OF bounded_linear_trace
-        exit_class_compensated_martingale[OF Q]])
-  then show ?thesis by (simp add: trace_diff_matrix trace_outerp)
-qed
 
 theorem exit_class_trace_rate:
   fixes Q :: "('n::finite pairpath) measure"
@@ -7008,10 +6912,6 @@ lemma sets_pglue_law[simp]:
          :: ('n::finite pairpath) metric)))"
   unfolding pglue_law_def by (rule sets_pair_law_of)
 
-lemma space_pglue_law:
-  "space (pglue_law r T Q R)
-     = mspace (path_metric T :: ('n::finite pairpath) metric)"
-  unfolding pglue_law_def by (rule space_pair_law_of)
 
 lemma prob_space_pair_measure:
   assumes M: "prob_space M" and N: "prob_space N"
@@ -8604,29 +8504,6 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-corollary exit_val_paste_lower:
-  fixes Q R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
-  assumes r: "0 \<le> r" and c: "0 \<le> c" and cT: "r + c \<le> T" and K: "closed K"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "R \<in> exit_class k L (T - r) 0"
-    and ae: "AE p in Q \<Otimes>\<^sub>M R. (\<forall>t\<in>{0..r}. fst (fst p t) \<in> K)
-        \<and> (\<forall>s\<in>{0..c}. fst (fst p r + (snd p s - snd p 0)) \<in> K)"
-  shows "ennreal (r + c) \<le> exit_val k L T K x"
-proof -
-  have rT: "r \<le> T" using c cT by simp
-  show ?thesis
-  proof (rule exit_val_paste_ge[OF r rT K Q R])
-    show "AE p in Q \<Otimes>\<^sub>M R.
-        r + c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
-    proof (rule eventually_mono[OF ae])
-      fix p :: "'n pairpath \<times> 'n pairpath"
-      assume "(\<forall>t\<in>{0..r}. fst (fst p t) \<in> K)
-          \<and> (\<forall>s\<in>{0..c}. fst (fst p r + (snd p s - snd p 0)) \<in> K)"
-      then show "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
-        by (intro pexit_pglue_split[OF r rT c cT]) auto
-    qed
-  qed
-qed
 
 section \<open>Lifting a martingale to an infinite product\<close>
 
@@ -8897,10 +8774,6 @@ lemma sets_kglue_law[simp]:
          :: ('n::finite pairpath) metric)))"
   unfolding kglue_law_def by (rule sets_pair_law_of)
 
-lemma space_kglue_law:
-  "space (kglue_law r T N Q RR)
-     = mspace (path_metric T :: ('n::finite pairpath) metric)"
-  unfolding kglue_law_def by (rule space_pair_law_of)
 
 lemma kglue_measurable:
   fixes Q :: "('n::finite pairpath) measure"
@@ -9655,12 +9528,6 @@ proof -
         continuous_intros)
 qed
 
-lemma cross_borel:
-  fixes c :: "real^'n::finite"
-  shows "(\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))
-      \<in> borel_measurable borel"
-  by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
-      continuous_intros)
 
 lemma kglue_param_comp_martingale:
   fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -10492,36 +10359,6 @@ text \<open>The clauses of Theorem 1.1 proved for \<open>exit_val\<close> --- th
   Clause (4), uniqueness, is \<open>Value_Function_Uniqueness.theorem_1_1_uniqueness_general\<close>,
   a statement about viscosity solutions rather than about \<open>exit_val\<close>.\<close>
 
-theorem theorem_1_1_paper_v_fragment:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
-  assumes k: "k < CARD('n)" and T: "0 < T" and L: "1 \<le> L"
-    and K: "closed K" and KB: "K \<subseteq> cball 0 r"
-  shows
-    \<comment> \<open>clause (0), in Example 3.1's sharp horizon-free form (3.10)\<close>
-    "exit_val k L T K x \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
-    \<comment> \<open>clause (1): upper semicontinuity in the starting point\<close>
-    and "exit_val k L T K x < b \<Longrightarrow>
-        eventually (\<lambda>y. exit_val k L T K y < b) (nhds x)"
-    \<comment> \<open>clause (3) on the ball: \<open>v\<close> vanishes on the boundary\<close>
-    and "K = cball 0 r \<Longrightarrow> norm x = r \<Longrightarrow> exit_val k L T K x = 0"
-    \<comment> \<open>and the horizon cap is invisible past the scale of (3.10), so this
-        IS the paper's uncapped \<open>v\<close>\<close>
-    and "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S \<Longrightarrow> 0 \<le> S \<Longrightarrow> S \<le> T
-        \<Longrightarrow> exit_val k L T K x = exit_val k L S K x"
-proof -
-  have T0: "0 \<le> T" using T by simp
-  have L0: "0 \<le> L" using L by simp
-  show "exit_val k L T K x \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
-    by (rule exit_val_le_ball_bound[OF k T0 L0 KB])
-  show "exit_val k L T K x < b \<Longrightarrow>
-      eventually (\<lambda>y. exit_val k L T K y < b) (nhds x)"
-    by (rule exit_val_usc_unconditional[OF T L K])
-  show "K = cball 0 r \<Longrightarrow> norm x = r \<Longrightarrow> exit_val k L T K x = 0"
-    by (simp add: exit_val_boundary_zero[OF k T L0])
-  show "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S \<Longrightarrow> 0 \<le> S \<Longrightarrow> S \<le> T
-      \<Longrightarrow> exit_val k L T K x = exit_val k L S K x"
-    by (rule exit_val_horizon_eq[OF k L K KB])
-qed
 
 section \<open>The supremum in (1.6) is attained\<close>
 
@@ -12078,10 +11915,6 @@ lemma sets_kglue_law'[simp]:
          :: ('n::finite pairpath) metric)))"
   unfolding kglue_law'_def by (rule sets_pair_law_of)
 
-lemma space_kglue_law':
-  "space (kglue_law' r T Kr Q)
-     = mspace (path_metric T :: ('n::finite pairpath) metric)"
-  unfolding kglue_law'_def by (rule space_pair_law_of)
 
 lemma kglue_law'_measurable:
   fixes Q :: "('n::finite pairpath) measure"
@@ -12202,85 +12035,12 @@ qed
 
 text \<open>Clause (i) of (1.7) for the kernel glue.\<close>
 
-lemma kglue_law'_start:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
-  shows "AE \<omega> in kglue_law' r T Kr Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
-    by (rule pair_law_eval_measurable[OF refl])
-  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
-  proof -
-    have "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-        fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
-        = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(x, 0)} \<inter> space ?B"
-      by (auto simp: prod_eq_iff space_borel_of)
-    then show ?thesis using measurable_sets[OF ev] by simp
-  qed
-  show ?thesis
-  proof (rule AE_kglue_law'[OF r rT exit_class_prob[OF Q]
-        exit_class_sets[OF Q] K mset])
-    show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-      using Q unfolding exit_class_def by blast
-    show "AE \<omega>' in Kr \<omega>. True" if "\<omega> \<in> space Q" for \<omega> by simp
-    fix \<omega> \<omega>' :: "'n pairpath"
-    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      and "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-      and st: "fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0" and "True"
-    from st show "fst (pglue r T \<omega> \<omega>' 0) = x \<and> snd (pglue r T \<omega> \<omega>' 0) = 0"
-      using r rT by (simp add: pglue_zero)
-  qed
-qed
 
 text \<open>Clause (ii): the covariation difference quotient.  The kernel's
   values have to lie in the class at the origin --- this is the first
   place where that is used, and it is where the almost-sure statement of
   the continuation enters, one \<open>\<omega>\<close> at a time.\<close>
 
-lemma kglue_law'_diffquot:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
-    and Kc: "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> Kr \<omega> \<in> exit_class k L (T - r) 0"
-  shows "AE \<omega> in kglue_law' r T Kr Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule exit_class_diffquot_of_pairs[OF sets_kglue_law'])
-  fix p q :: real
-  assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
-  show "AE \<omega> in kglue_law' r T Kr Q.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  proof (rule AE_kglue_law'[OF r rT exit_class_prob[OF Q]
-        exit_class_sets[OF Q] K mset])
-    show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      using Q unfolding exit_class_def by blast
-    show "AE \<omega>' in Kr \<omega>. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-      if w: "\<omega> \<in> space Q" for \<omega>
-      using Kc[OF w] unfolding exit_class_def by blast
-    fix \<omega> \<omega>' :: "'n pairpath"
-    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      and "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-      and Aw: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      and Bf: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-    show "(1 / (q - p)) *\<^sub>R (snd (pglue r T \<omega> \<omega>' q) - snd (pglue r T \<omega> \<omega>' p))
-        \<in> sconstraint k L"
-      using pq Aw Bf by (intro pglue_diffquot[OF r rT]) auto
-  qed
-qed
 
 subsection \<open>The glue is continuous, and the product is a Polish product\<close>
 
@@ -12307,12 +12067,6 @@ lemma second_countable_path_metric:
   by (rule Metric_space.separable_space_imp_second_countable
       [OF Metric_space_mspace_mdist path_metric_polish(2)])
 
-lemma borel_of_path_prod:
-  "borel_of (mtopology_of (path_metric r :: ('n::finite pairpath) metric))
-     \<Otimes>\<^sub>M borel_of (mtopology_of (path_metric s :: ('n pairpath) metric))
-   = borel_of (mtopology_of (prod_metric (path_metric r :: ('n pairpath) metric)
-        (path_metric s :: ('n pairpath) metric)))"
-  by (simp add: borel_of_prod second_countable_path_metric)
 
 lemma mdist_pglue_le:
   fixes w wt w' wt' :: "'n::finite pairpath"

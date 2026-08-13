@@ -545,17 +545,6 @@ text \<open>Consequence of the continuity clause, and the reason Section 4 can w
   conditions as the envelope-free ones.  This is the off-origin companion of
   \<open>ell_op_lsc_at_zero_iff\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}), which handles \<open>p = 0\<close>.\<close>
 
-corollary ell_op_lsc_off_zero_iff:
-  fixes M :: "real^'n::finite^'n"
-  assumes sym: "transpose M = M" and p: "p \<noteq> 0" and L: "1 \<le> L"
-    and k: "1 \<le> k" "k < CARD('n)"
-  shows "ell_op_lsc k L p M \<le> 1 \<longleftrightarrow> ell_op k L p M \<le> 1"
-proof -
-  have "ell_op_lsc k L p M = ereal (ell_op k L p M)"
-    by (rule ell_op_lsc_off_zero[OF sym p L k(1) k(2)])
-  then show ?thesis
-    by (simp add: one_ereal_def)
-qed
 
 corollary ell_op_usc_off_zero_iff:
   fixes M :: "real^'n::finite^'n"
@@ -576,21 +565,6 @@ text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maxim
   values are pinched between the sub- and supersolution inequalities, and any
   strictness on the subsolution side is already a contradiction.\<close>
 
-lemma ell_op_pinched:
-  fixes X Y :: "real^'n::finite^'n"
-  assumes psd: "psd (Y - X)"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and sub: "ell_op k L p X \<le> 1"
-    and sup: "1 \<le> ell_op k L p Y"
-  shows "ell_op k L p X = 1" and "ell_op k L p Y = 1"
-proof -
-  have mono: "ell_op k L p Y \<le> ell_op k L p X"
-    by (rule ell_op_usc_elliptic_le[OF psd k(1) k(2) L])
-  show "ell_op k L p X = 1"
-    using sub sup mono by simp
-  show "ell_op k L p Y = 1"
-    using sub sup mono by simp
-qed
 
 lemma ell_op_strict_no_crossing:
   fixes X Y :: "real^'n::finite^'n"
@@ -612,20 +586,6 @@ qed
 text \<open>The envelope formulation of Definition 3.1, obtained by using the
   continuity clause to replace \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> by \<open>F\<close> at a nonzero gradient.\<close>
 
-corollary ell_op_strict_no_crossing_env:
-  fixes X Y :: "real^'n::finite^'n"
-  assumes symX: "transpose X = X" and symY: "transpose Y = Y"
-    and p: "p \<noteq> 0" and psd: "psd (Y - X)"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and sub: "ell_op k L p X < 1"
-    and sup: "1 \<le> ell_op_usc k L p Y"
-  shows False
-proof -
-  have "1 \<le> ell_op k L p Y"
-    using sup ell_op_usc_off_zero_iff[OF symY p L k(1) k(2)] by simp
-  then show False
-    by (rule ell_op_strict_no_crossing[OF psd k(1) k(2) L sub])
-qed
 
 section \<open>Lemma 3.1\<close>
 
@@ -643,11 +603,6 @@ text \<open>Lemma 3.1 consists of:
   (@{theory Relative_Arbitrage.Poincare_Separation}); for \<open>p\<close> an eigenvector it is an equality
   (\<open>eigval_Mp_top_eigenvector\<close>).\<close>
 
-lemma ell_op_lsc_at_zero_eq:
-  fixes M :: "real^'n::finite^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op_lsc k L (0 :: real^'n) M = ereal (ell_op k L (0 :: real^'n) M)"
-  by (rule ell_op_lsc_at_zero[OF k L])
 
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
@@ -785,13 +740,6 @@ text \<open>Removing the interface needs a proof of \<open>max_principle_boundar
   unconditional.  The continuous version is the target --
   \<open>max_principle_boundary_raw\<close> is false and not one.\<close>
 
-lemma max_principle_boundary_intro:
-  assumes "\<And>u w. visc_subsol_env k L K (interior K) u
-      \<Longrightarrow> visc_supersol_env k L K (interior K) w
-      \<Longrightarrow> continuous_on K u \<Longrightarrow> continuous_on K w
-      \<Longrightarrow> \<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
-  shows "max_principle_boundary k L K"
-  unfolding max_principle_boundary_def using assms by blast
 
 
 (*<*)

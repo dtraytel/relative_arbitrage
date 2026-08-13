@@ -306,47 +306,6 @@ proof -
   finally show ?thesis .
 qed
 
-theorem ell_op_orth_equivariant:
-  fixes p :: "real^'n" and M Q :: "real^'n^'n"
-  assumes Q: "orth_mat Q"
-  shows "ell_op k L (transpose Q *v p) (transpose Q ** M ** Q)
-       = ell_op k L p M"
-proof -
-  have img: "(\<lambda>a. - trace ((transpose Q ** M ** Q) ** a) / 2)
-        ` feasible k L (transpose Q *v p)
-      = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-  proof -
-    have "(\<lambda>a. - trace ((transpose Q ** M ** Q) ** a) / 2)
-          ` feasible k L (transpose Q *v p)
-        = (\<lambda>a. - trace ((transpose Q ** M ** Q) ** a) / 2)
-          ` (\<lambda>a. transpose Q ** a ** Q) ` feasible k L p"
-      by (simp add: feasible_conjugate[OF Q])
-    also have "\<dots> = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-    proof (rule image_image[THEN trans])
-      have "- trace ((transpose Q ** M ** Q) ** (transpose Q ** a ** Q)) / 2
-          = - trace (M ** a) / 2" for a
-      proof -
-        have "trace ((transpose Q ** M ** Q) ** (transpose Q ** a ** Q))
-            = trace ((Q ** (transpose Q ** M ** Q) ** transpose Q) ** a)"
-          by (rule trace_conjugate)
-        also have "Q ** (transpose Q ** M ** Q) ** transpose Q
-            = (Q ** transpose Q) ** M ** (Q ** transpose Q)"
-          by (simp add: matrix_mul_assoc)
-        also have "\<dots> = M"
-          using Q by (simp add: orth_mat_def)
-        finally show ?thesis
-          by simp
-      qed
-      then show "(\<lambda>x. - trace ((transpose Q ** M ** Q) ** (transpose Q ** x ** Q)) / 2)
-          ` feasible k L p = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-        by (intro image_cong refl)
-    qed
-    finally show ?thesis .
-  qed
-  show ?thesis
-    unfolding ell_op_def
-    by (rule arg_cong[OF img])
-qed
 
 text \<open>The dilation identity: scaling the Hessian argument scales \<open>F\<close>.\<close>
 
@@ -443,21 +402,6 @@ qed
 
 text \<open>Eq. (1.10) of Remark 1.1(b): the nonlinearity \<open>F\<close> is geometric.\<close>
 
-theorem ell_op_geometric:
-  fixes p :: "real^'n" and M :: "real^'n^'n"
-  assumes c1: "0 < c1" and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-  shows "ell_op k L (c1 *\<^sub>R p) (c1 *\<^sub>R M + c2 *\<^sub>R outer_prod p p)
-       = c1 * ell_op k L p M"
-proof -
-  have "ell_op k L (c1 *\<^sub>R p) (c1 *\<^sub>R M + c2 *\<^sub>R outer_prod p p)
-      = ell_op k L p (c1 *\<^sub>R M + c2 *\<^sub>R outer_prod p p)"
-    using c1 by (intro ell_op_scale_p) simp
-  also have "\<dots> = ell_op k L p (c1 *\<^sub>R M)"
-    by (rule ell_op_add_outer)
-  also have "\<dots> = c1 * ell_op k L p M"
-    by (rule ell_op_dilation[OF c1 ne])
-  finally show ?thesis .
-qed
 
 section \<open>Comparison implies uniqueness (Theorem 1.1, uniqueness part)\<close>
 

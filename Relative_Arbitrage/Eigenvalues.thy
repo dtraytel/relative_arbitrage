@@ -482,85 +482,11 @@ text \<open>\<open>eigen_lb a m\<close> provides an \<open>m\<close>-dimensional
   dominates \<open>|x|²\<close>. Testing the supremum at the orthogonal projection onto
   it gives the lower bound; no eigenbasis of \<open>a\<close> is involved.\<close>
 
-lemma kyfan_ge_of_eigen_lb:
-  fixes a :: "real^'n::finite^'n"
-  assumes sym: "transpose a = a" and lb: "eigen_lb a m"
-  shows "real m \<le> kyfan m a"
-proof -
-  obtain S where S: "subspace S" "m \<le> dim S"
-    and quad: "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x \<le> x \<bullet> (a *v x)"
-    using lb by (auto simp: eigen_lb_def)
-  obtain B0 where B0: "B0 \<subseteq> S" "pairwise orthogonal B0"
-    "\<And>x. x \<in> B0 \<Longrightarrow> norm x = 1" "independent B0"
-    "card B0 = dim S" "span B0 = S"
-    using orthonormal_basis_subspace[OF S(1)] by metis
-  have onB0: "onormal B0"
-    using B0 by (auto simp: onormal_def intro: pairwise_orthogonal_imp_finite)
-  obtain C where C: "C \<subseteq> B0" "card C = m"
-    using S(2) B0(5) obtain_subset_with_card_n[of m B0] by metis
-  have onC: "onormal C"
-    by (rule onormal_subset[OF onB0 C(1)])
-  define P where "P = (\<Sum>u\<in>C. outer_prod u u)"
-  have Pproj: "is_proj P"
-    unfolding P_def by (rule onormal_proj(1)[OF onC])
-  have Ptr: "trace P = real m"
-    unfolding P_def using onormal_proj(2)[OF onC] C(2) by simp
-  have "real m = (\<Sum>u\<in>C. (1::real))"
-    using C(2) by simp
-  also have "\<dots> \<le> (\<Sum>u\<in>C. u \<bullet> (a *v u))"
-  proof (intro sum_mono)
-    fix u assume u: "u \<in> C"
-    then have uS: "u \<in> S"
-      using C(1) B0(1) by auto
-    have "u \<bullet> u = 1"
-      using onC u by simp
-    then show "1 \<le> u \<bullet> (a *v u)"
-      using quad[OF uS] by simp
-  qed
-  also have "\<dots> = trace (a ** P)"
-    unfolding P_def by (simp add: trace_mult_outer_sum)
-  also have "\<dots> \<le> kyfan m a"
-    by (rule kyfan_ge_trace_mult[OF sym Pproj Ptr])
-  finally show ?thesis .
-qed
 
 text \<open>Dually, \<open>eigen_ub a L\<close> caps every eigenvalue, hence every \<open>m\<close>-fold
   sum. Here the bound holds for each competing projection separately, so
   no eigenbasis and no symmetry assumption are needed.\<close>
 
-lemma kyfan_le_of_eigen_ub:
-  fixes a :: "real^'n::finite^'n"
-  assumes ub: "eigen_ub a L" and m: "m \<le> CARD('n)"
-  shows "kyfan m a \<le> real m * L"
-  unfolding kyfan_def
-proof (rule cSup_least)
-  show "{trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real m} \<noteq> {}"
-    using proj_with_trace_exists[OF m] by force
-next
-  fix x
-  assume "x \<in> {trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real m}"
-  then obtain P :: "real^'n^'n" where P: "is_proj P" "trace P = real m"
-    and x: "x = trace (a ** P)"
-    by blast
-  obtain C where C: "onormal C" "P = (\<Sum>u\<in>C. outer_prod u u)"
-    "real (card C) = trace P"
-    using is_proj_decomp[OF P(1)] by metis
-  have cardC: "card C = m"
-    using C(3) P(2) by simp
-  have "x = (\<Sum>u\<in>C. u \<bullet> (a *v u))"
-    unfolding x C(2) by (simp add: trace_mult_outer_sum)
-  also have "\<dots> \<le> (\<Sum>u\<in>C. L)"
-  proof (intro sum_mono)
-    fix u assume u: "u \<in> C"
-    have "u \<bullet> (a *v u) \<le> L * (u \<bullet> u)"
-      using ub by (simp add: eigen_ub_def)
-    then show "u \<bullet> (a *v u) \<le> L"
-      using C(1) u by simp
-  qed
-  also have "\<dots> = real m * L"
-    using cardC by simp
-  finally show "x \<le> real m * L" .
-qed
 
 section \<open>Ordered eigenvalues as differences of Ky Fan sums\<close>
 
@@ -1123,15 +1049,6 @@ text \<open>The extremal construction behind Eq. (3.5) needs a concrete feasible
   automatically a threshold set, so \<open>kyfan_threshold\<close> evaluates
   \<open>kyfan (card T) M\<close> at it, and that value is already the maximum.\<close>
 
-lemma possum_nonneg:
-  fixes a :: "real^'n::finite^'n"
-  shows "0 \<le> possum m a"
-proof -
-  have "kyfan 0 a \<le> possum m a"
-    by (rule possum_ge_kyfan) simp
-  then show ?thesis
-    by (simp add: kyfan_0)
-qed
 
 lemma possum_full_eq_sum_basis:
   fixes a :: "real^'n::finite^'n"

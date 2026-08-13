@@ -97,43 +97,6 @@ proof (intro ballI allI impI)
     unfolding visc_subsol_def by blast
 qed
 
-theorem comparison_principle_refuted:
-  fixes r :: real and k :: nat and L :: real
-  assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L" and r: "0 < r"
-  shows "\<not> comparison_principle k L (ball (0::real^'n) r)"
-proof
-  assume cp: "comparison_principle k L (ball (0::real^'n) r)"
-  have vs: "visc_sol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
-    by (rule ball_v_visc_sol_exists(2)[OF k L])
-  have subv: "visc_subsol k L (ball (0::real^'n) r) (ball_v r k)"
-    and supv: "visc_supersol k L (ball (0::real^'n) r) (ball_v r k)"
-    using vs by (auto simp: visc_sol_def)
-  \<comment> \<open>the raised subsolution\<close>
-  have subu: "visc_subsol k L (ball (0::real^'n) r) (\<lambda>y. ball_v r k y + 1)"
-    by (rule visc_subsol_shift[OF subv])
-  \<comment> \<open>the supersolution altered only OUTSIDE the ball\<close>
-  define w' :: "real^'n \<Rightarrow> real" where
-    "w' = (\<lambda>y. if y \<in> ball (0::real^'n) r then ball_v r k y else ball_v r k y + 1)"
-  have eqw: "w' y = ball_v r k y" if "y \<in> ball (0::real^'n) r" for y
-    unfolding w'_def using that by simp
-  have supw: "visc_supersol k L (ball (0::real^'n) r) w'"
-    by (rule visc_supersol_cong_on[OF supv open_ball eqw])
-  \<comment> \<open>on the boundary the two agree, so the locale's hypothesis holds\<close>
-  have bdy: "\<forall>y \<in> closure (ball (0::real^'n) r) - ball (0::real^'n) r.
-      ball_v r k y + 1 \<le> w' y"
-  proof
-    fix y assume y: "y \<in> closure (ball (0::real^'n) r) - ball (0::real^'n) r"
-    have "y \<notin> ball (0::real^'n) r" using y by simp
-    then show "ball_v r k y + 1 \<le> w' y" unfolding w'_def by simp
-  qed
-  have zin: "(0::real^'n) \<in> ball (0::real^'n) r" using r by simp
-  \<comment> \<open>and the locale then forces an absurdity at the centre\<close>
-  have lt: "ball_v r k (0::real^'n) + 1 \<le> w' 0"
-    by (rule comparison_principle.comparison[OF cp subu supw bdy zin])
-  have eq0: "w' (0::real^'n) = ball_v r k (0::real^'n)"
-    unfolding w'_def by (rule if_P[OF zin])
-  from lt[unfolded eq0] show False by simp
-qed
 
 theorem theorem_1_1_uniqueness_general:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
@@ -192,81 +155,6 @@ proof (intro conjI)
     by (intro AE_I2 allI impI dras_diag_time_integrable[OF q T0])
 qed
 
-theorem stopped_val_fn_ball_eq_2d:
-  fixes x :: "real^2" and r L :: real
-  assumes L: "1 \<le> L" and x0: "0 < norm x" and xr: "norm x \<le> r"
-  shows "stopped_val_fn 1 L (cball 0 r) x = ennreal (ball_v r 1 x)"
-proof (rule antisym)
-  show "stopped_val_fn 1 L (cball 0 r) x \<le> ennreal (ball_v r 1 x)"
-    by (rule stopped_val_fn_le_ball_v)
-  define q where "q = x \<bullet> x"
-  have xne: "x \<noteq> 0" using x0 by auto
-  have qpos: "0 < q" unfolding q_def using xne
-    by simp
-  have nsq: "(norm x)\<^sup>2 = q"
-    unfolding q_def by (simp add: power2_norm_eq_inner)
-  have qr: "q \<le> r\<^sup>2"
-    using power_mono[OF xr norm_ge_zero, of 2] nsq by simp
-  have r0: "0 \<le> r" using x0 xr by linarith
-  have sqn: "sqrt q = norm x"
-    using nsq by (metis norm_ge_zero real_sqrt_abs real_sqrt_pow2_iff
-        real_sqrt_power)
-  have unit: "(x $ 1 / norm x)\<^sup>2 + (x $ 2 / norm x)\<^sup>2 = 1"
-  proof -
-    have "x \<bullet> x = x $ 1 * x $ 1 + x $ 2 * x $ 2"
-      by (simp add: inner_vec_def UNIV_2)
-    then have "(x $ 1)\<^sup>2 + (x $ 2)\<^sup>2 = q"
-      unfolding q_def by (simp add: power2_eq_square)
-    then show ?thesis
-      using qpos nsq
-      by (simp add: power_divide add_divide_distrib [symmetric])
-  qed
-  obtain \<phi> where \<phi>1: "x $ 1 / norm x = cos \<phi>"
-    and \<phi>2: "x $ 2 / norm x = sin \<phi>"
-    by (rule sincos_total_2pi[OF unit]) blast
-  have xrep: "x = sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)"
-  proof -
-    have c1: "x $ 1 = norm x * cos \<phi>"
-      using \<phi>1 x0 by (simp add: field_simps)
-    have c2: "x $ 2 = norm x * sin \<phi>"
-      using \<phi>2 x0 by (simp add: field_simps)
-    have comp: "x $ i
-        = (sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)) $ i"
-      for i
-      using exhaust_2[of i] c1 c2 sqn by auto
-    show ?thesis
-      by (rule vec_eq_iff[THEN iffD2]) (simp add: comp)
-  qed
-  have SM: "stopped_market 1 L (cball 0 r) x
-      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      (drXs q \<phi> (r\<^sup>2 - q)) (dras q \<phi> (r\<^sup>2 - q)) (\<lambda>_. r\<^sup>2 - q)"
-    using deterministic_radius_stopped_market[OF qpos L qr r0, of \<phi>]
-    unfolding xrep[symmetric] .
-  have EI: "ess_inf_time (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>_. r\<^sup>2 - q) = ennreal (r\<^sup>2 - q)"
-    by (rule ess_inf_time_const) simp
-  have mem: "ennreal (r\<^sup>2 - q) \<in> stopped_exit_vals 1 L (cball 0 r) x"
-    unfolding stopped_exit_vals_def
-  proof (intro CollectI)
-    show "\<exists>M F X acov tau.
-        stopped_market 1 L (cball 0 r) x M F X acov tau
-        \<and> ennreal (r\<^sup>2 - q) = ess_inf_time M tau"
-      by (intro exI[where x = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"]
-          exI[where x = "\<lambda>t. natural_filtration bm_paths 0
-            (cbmX (0 :: real^2)) (drc q t)"]
-          exI[where x = "drXs q \<phi> (r\<^sup>2 - q)"]
-          exI[where x = "dras q \<phi> (r\<^sup>2 - q)"]
-          exI[where x = "\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. r\<^sup>2 - q"]
-          conjI SM EI[symmetric])
-  qed
-  have bv: "ball_v r 1 x = r\<^sup>2 - q"
-    unfolding ball_v_def q_def[symmetric]
-    using qr by (simp add: max_absorb1)
-  show "ennreal (ball_v r 1 x) \<le> stopped_val_fn 1 L (cball 0 r) x"
-    unfolding stopped_val_fn_def bv
-    by (rule Sup_upper[OF mem])
-qed
 
 
 section \<open>The value function satisfies both clauses of Definition 3.1\<close>
@@ -283,47 +171,6 @@ text \<open>Both halves of the viscosity property land in the envelope forms tha
   \<open>theorem_1_1_uniqueness_faithful\<close> below is the faithful form, and
   supersedes this one.\<close>
 
-theorem exit_val_unique_viscosity_solution:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
-    and T0: "0 < T"
-    and KB: "K \<subseteq> cball 0 rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    and cv: "\<And>y. y \<in> K \<Longrightarrow>
-      isCont (\<lambda>z. enn2real (exit_val k L T K z)) y"
-    and cu: "continuous_on K u"
-    and subu: "visc_subsol_env k L K (interior K) u"
-    and supu: "visc_supersol_env k L K (interior K) u"
-    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow>
-      u y = enn2real (exit_val k L T K y)"
-    and x: "x \<in> K"
-  shows "u x = enn2real (exit_val k L T K x)"
-proof -
-  have L1': "1 \<le> L" using L1 by linarith
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  have iK: "interior K \<subseteq> K" by (rule interior_subset)
-  have tv0: "\<And>y. (0 :: real) \<le> enn2real (exit_val k L T K y)" by simp
-  \<comment> \<open>continuity of the value function, in the two shapes needed\<close>
-  have cw: "continuous_on K (\<lambda>z. enn2real (exit_val k L T K z))"
-    by (rule continuous_at_imp_continuous_on) (use cv in blast)
-  \<comment> \<open>clause (2), subsolution half --- the envelope-free form is stronger\<close>
-  have sub0: "visc_subsol k L (interior K) (\<lambda>z. enn2real (exit_val k L T K z))"
-    by (rule exit_val_visc_subsol[OF T0 L1' Kc kn])
-  have subw: "visc_subsol_env k L K (interior K)
-      (\<lambda>z. enn2real (exit_val k L T K z))"
-    by (rule visc_subsol_imp_env[OF sub0 iK open_interior])
-  \<comment> \<open>clause (2), supersolution half --- Definition 3.1(b), horizon discharged\<close>
-  have sup0: "visc_supersol_lsc k L K (interior K)
-      (\<lambda>z. enn2real (exit_val k L T K z))"
-    by (rule exit_val_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
-  have supw: "visc_supersol_env k L K (interior K)
-      (\<lambda>z. enn2real (exit_val k L T K z))"
-    using sup0 visc_supersol_lsc_iff_env[OF tv0 iK cv] by blast
-  show ?thesis
-    by (rule viscosity_uniqueness_compact[OF cK neK k1 kn L1' cu cw
-          subu supu subw supw bd x])
-qed
 
 
 section \<open>Theorem 1.1 assembled\<close>
@@ -867,25 +714,6 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
   bind at interior points is discharged by the a priori bound, so it too is
   gone.\<close>
 
-theorem iexit_val_supersol_lsc:
-  fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k" and cK: "compact K"
-  shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (iexit_val k L K u))"
-proof -
-  have L: "1 \<le> L" using L1 by simp
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
-    using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
-    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
-  show ?thesis unfolding eq
-    by (rule exit_val_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB T2])
-qed
 
 text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)\<close>, in the
   viscosity sense of Definition 3.1, both halves with the boundary gate.\<close>
@@ -908,27 +736,6 @@ proof -
   show ?thesis unfolding eq by (rule exit_val_subsol_bc[OF T0 L Kc kn])
 qed
 
-theorem iexit_val_supersol_bc:
-  fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k" and cK: "compact K"
-  shows "visc_supersol_env k L K
-      (interior K \<union> {x \<in> K - interior K.
-         lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
-      (lsc_env (\<lambda>z. enn2real (iexit_val k L K z)))"
-proof -
-  have L: "1 \<le> L" using L1 by simp
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
-    using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
-    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
-  show ?thesis unfolding eq
-    by (rule exit_val_supersol_bc[OF T0 L1 k1 kn Kc KB T2])
-qed
 
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>\<close>
 

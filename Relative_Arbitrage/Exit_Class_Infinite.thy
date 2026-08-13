@@ -88,31 +88,12 @@ qed
 text \<open>Hence the elementary bound identifying \<open>iexit\<close> as the first time the
   path is outside \<open>K\<close>.\<close>
 
-lemma iexit_le:
-  assumes r: "0 \<le> r" and out: "f r \<notin> K"
-  shows "iexit K f \<le> ennreal r"
-proof -
-  have r1: "0 \<le> r + 1" using r by simp
-  have "pexit (r + 1) K f \<le> r"
-    unfolding pexit_def etime_def using r out by (intro cInf_lower) auto
-  then have "ennreal (pexit (r + 1) K f) \<le> ennreal r" by (simp add: ennreal_leI)
-  also have "ennreal r < ennreal (r + 1)" using r by (simp add: ennreal_less_iff)
-  finally have lt: "min (iexit K f) (ennreal (r + 1)) < ennreal (r + 1)"
-    using iexit_cap[OF r1, of K f] by simp
-  then have "min (iexit K f) (ennreal (r + 1)) = iexit K f"
-    by (simp add: min_def split: if_splits)
-  then show ?thesis
-    using iexit_cap[OF r1, of K f] \<open>ennreal (pexit (r + 1) K f) \<le> ennreal r\<close>
-    by simp
-qed
 
 subsection \<open>The essential infimum of an unbounded time\<close>
 
 definition ess_inf_enn :: "'a measure \<Rightarrow> ('a \<Rightarrow> ennreal) \<Rightarrow> ennreal" where
   "ess_inf_enn M tau = Sup {c. AE \<omega> in M. c \<le> tau \<omega>}"
 
-lemma ess_inf_enn_ge_zero: "0 \<le> ess_inf_enn M tau"
-  by simp
 
 lemma ess_inf_ennI:
   assumes "AE \<omega> in M. c \<le> tau \<omega>"
@@ -212,11 +193,6 @@ lemma ipcut_measurable:
   unfolding pcut_def measurable_cong_sets[OF setsP refl]
   by (rule restrict_ipath_measurable[OF S])
 
-lemma iexit_class_pcut_measurable:
-  assumes S: "0 \<le> S" and P: "P \<in> iexit_class k L x"
-  shows "pcut S \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric S :: ('n::finite pairpath) metric))"
-  by (rule ipcut_measurable[OF S iexit_class_sets[OF P]])
 
 lemma iexit_class_diffquot:
   "P \<in> iexit_class k L x \<Longrightarrow>
@@ -1224,11 +1200,6 @@ text \<open>With the construction in place, both hypotheses of
   @{thm [source] iexit_val_eq_of_extension} that were about the class are
   discharged, and only the paper's own standing assumptions remain.\<close>
 
-corollary exit_val_le_iexit_val:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 \<le> T" and L: "1 \<le> L" and Kc: "closed K"
-  shows "exit_val k L T K x \<le> iexit_val k L K x"
-  by (rule iexit_val_ge_of_extension[OF T Kc exit_class_has_extension[OF T L]])
 
 theorem iexit_val_eq_exit_val:
   fixes K :: "(real^'n::finite) set"

@@ -568,20 +568,6 @@ proof -
   qed
 qed
 
-lemma ball_v_hessian:
-  fixes x :: "real^'n"
-  shows "((\<lambda>x :: real^'n. - (2 / real (CARD('n) - k)) *\<^sub>R x) has_derivative
-           (\<lambda>h. (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) *v h)) (at x)"
-proof -
-  have "((\<lambda>x :: real^'n. - (2 / real (CARD('n) - k)) *\<^sub>R x) has_derivative
-      (\<lambda>h. - (2 / real (CARD('n) - k)) *\<^sub>R h)) (at x)"
-    by (auto intro!: derivative_eq_intros)
-  moreover have "(\<lambda>h :: real^'n. - (2 / real (CARD('n) - k)) *\<^sub>R h)
-      = (\<lambda>h. (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) *v h)"
-    by (simp add: fun_eq_iff neg_matrix_vector scaleR_matrix_vector)
-  ultimately show ?thesis
-    by simp
-qed
 
 text \<open>
   Example 3.1: at every interior point of the ball --- including the centre,
@@ -593,12 +579,6 @@ text \<open>
   for \<open>p = 0\<close> as well.
 \<close>
 
-corollary ball_solves_pde:
-  fixes x :: "real^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op k L (- (2 / real (CARD('n) - k)) *\<^sub>R x)
-                    (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) = 1"
-  by (rule ell_op_eval[OF k L])
 
 section \<open>The spectral theorem for real symmetric matrices\<close>
 

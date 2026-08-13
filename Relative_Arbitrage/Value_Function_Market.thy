@@ -30,8 +30,6 @@ text \<open>\<open>P-ess inf tau\<close> of Eq. (1.6): the largest deterministic
 definition ess_inf_time :: "'a measure \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> ennreal" where
   "ess_inf_time M tau = Sup {c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}"
 
-lemma ess_inf_time_ge_zero: "0 \<le> ess_inf_time M tau"
-  by simp
 
 text \<open>Every almost-sure lower bound is dominated by the mean, so the
   essential infimum is too. This is what turns the expectation bound of
@@ -199,24 +197,6 @@ text \<open>
   the part before the stopping time and the continuation value.
 \<close>
 
-lemma ess_inf_time_superadd:
-  assumes f: "\<And>\<omega>. 0 \<le> f \<omega>" and g: "\<And>\<omega>. 0 \<le> g \<omega>"
-  shows "ess_inf_time M f + ess_inf_time M g \<le> ess_inf_time M (\<lambda>\<omega>. f \<omega> + g \<omega>)"
-proof (rule ess_inf_timeI)
-  have af: "AE \<omega> in M. ess_inf_time M f \<le> ennreal (f \<omega>)" by (rule ess_inf_time_AE)
-  have ag: "AE \<omega> in M. ess_inf_time M g \<le> ennreal (g \<omega>)" by (rule ess_inf_time_AE)
-  from af ag
-  show "AE \<omega> in M. ess_inf_time M f + ess_inf_time M g \<le> ennreal (f \<omega> + g \<omega>)"
-  proof eventually_elim
-    fix \<omega>
-    assume "ess_inf_time M f \<le> ennreal (f \<omega>)" "ess_inf_time M g \<le> ennreal (g \<omega>)"
-    then have "ess_inf_time M f + ess_inf_time M g
-                 \<le> ennreal (f \<omega>) + ennreal (g \<omega>)" by (rule add_mono)
-    also have "\<dots> = ennreal (f \<omega> + g \<omega>)"
-      using f[of \<omega>] g[of \<omega>] by (rule ennreal_plus[symmetric])
-    finally show "ess_inf_time M f + ess_inf_time M g \<le> ennreal (f \<omega> + g \<omega>)" .
-  qed
-qed
 
 text \<open>The essential infimum transported along a pushforward: exit times of
   a law presented as a distr (e.g.\ a path law, or a member of \<open>\<P>\<^sub>x\<close>
@@ -256,8 +236,6 @@ definition val_fn ::
   where
   "val_fn k L K x0 = Sup (mkt_exit_vals k L K x0)"
 
-lemma val_fn_ge_zero: "0 \<le> val_fn k L K x0"
-  by simp
 
 text \<open>The index set is inhabited: the Brownian market started at \<open>x0\<close> and
   stopped at once never leaves a ball containing \<open>x0\<close>, so it belongs to
@@ -476,17 +454,6 @@ proof -
   finally show ?thesis by simp
 qed
 
-lemma val_fn_zero_on_frontier_ball:
-  fixes r :: real and x0 :: "real^'n::finite"
-  assumes x0: "x0 \<in> cball 0 r - interior (cball (0::real^'n) r)"
-  shows "val_fn k L (cball 0 r) x0 = 0"
-proof -
-  have le: "norm x0 \<le> r" using x0 by (simp add: dist_norm)
-  have nlt: "\<not> norm x0 < r"
-    using x0 unfolding interior_cball by (simp add: dist_norm)
-  have "norm x0 = r" using le nlt by linarith
-  then show ?thesis by (rule val_fn_boundary_zero)
-qed
 
 text \<open>\<open>val_fn k L K x0 = 0\<close> for \<open>x0 \<notin> K\<close>, since the market locale requires
   \<open>x0 \<in> K\<close> (\<open>sufficiently_volatile_market.x0_in_K\<close>), so the index set of the

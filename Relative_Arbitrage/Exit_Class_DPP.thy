@@ -1085,11 +1085,6 @@ lemma pfut_measurable_law:
 text \<open>The exit time of the future, expressed through \<open>pfut\<close>: re-basing at the
   endpoint and adding the endpoint back is the identity on the exit time.\<close>
 
-lemma pexit_pfut:
-  fixes K :: "(real^'n::finite) set" and \<omega> :: "'n pairpath"
-  shows "pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (pfut r T \<omega> s))
-      = pexit (T - r) K (\<lambda>s. fst (\<omega> (r + s)))"
-  by (rule pexit_cong_on) (simp add: pfut_fst)
 
 subsection \<open>Conditioning on an event of the past keeps martingales martingales\<close>
 
@@ -2046,95 +2041,6 @@ text \<open>\<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>
   \<open>\<F>\<^sub>r\<close>-measurable and can be used as the conditioning event \<open>A\<close> of
   @{thm [source] exit_class_future_of_past}.\<close>
 
-lemma survival_event_filtration:
-  fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and K: "closed K"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-  shows "{\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}
-      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
-proof -
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r"
-  let ?Qs = "{0..r} \<inter> (\<rat> :: real set)"
-  have spP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsP])
-  have clo: "closure ?Qs = {0..r}"
-  proof (rule antisym)
-    show "closure ?Qs \<subseteq> {0..r}" by (intro closure_minimal) auto
-    show "{0..r} \<subseteq> closure ?Qs" using r by (auto intro: Icc_rats_dense)
-  qed
-  have key: "(pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K)
-      \<longleftrightarrow> (\<forall>q \<in> ?Qs. fst (\<omega> q) \<in> K)" if w: "\<omega> \<in> space P" for \<omega>
-  proof
-    assume h: "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K"
-    show "\<forall>q \<in> ?Qs. fst (\<omega> q) \<in> K"
-    proof
-      fix q assume q: "q \<in> ?Qs"
-      show "fst (\<omega> q) \<in> K"
-      proof (rule ccontr)
-        assume nk: "fst (\<omega> q) \<notin> K"
-        have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> q"
-          unfolding pexit_def using r q nk by (intro etime_le_of_mem) auto
-        with h q have "q = r" by simp
-        then show False using nk h by simp
-      qed
-    qed
-  next
-    assume h: "\<forall>q \<in> ?Qs. fst (\<omega> q) \<in> K"
-    have cw: "continuous_on {0..T} \<omega>"
-      using w spP by (simp add: mspace_path_metric_continuous)
-    have c0: "continuous_on {0..r} \<omega>"
-      by (rule continuous_on_subset[OF cw]) (use r rT in auto)
-    have c1: "continuous_on (closure ?Qs) (\<lambda>t. fst (\<omega> t))"
-      unfolding clo by (rule continuous_on_fst[OF c0])
-    have sub: "(\<lambda>t. fst (\<omega> t)) ` ?Qs \<subseteq> K" using h by auto
-    have "(\<lambda>t. fst (\<omega> t)) ` closure ?Qs \<subseteq> K"
-      by (rule image_closure_subset[OF c1 K sub])
-    then have all: "fst (\<omega> t) \<in> K" if "t \<in> {0..r}" for t
-      using that clo by auto
-    have "pexit r K (\<lambda>t. fst (\<omega> t)) = r"
-    proof -
-      have emp: "{t. 0 \<le> t \<and> t \<le> r \<and> fst (\<omega> t) \<in> - K} = {}" using all by auto
-      have "pexit r K (\<lambda>t. fst (\<omega> t))
-          = Inf ({t. 0 \<le> t \<and> t \<le> r \<and> fst (\<omega> t) \<in> - K} \<union> {r})"
-        unfolding pexit_def etime_def ..
-      also have "\<dots> = r" unfolding emp by simp
-      finally show ?thesis .
-    qed
-    moreover have "fst (\<omega> r) \<in> K" using all r by simp
-    ultimately show "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K" by simp
-  qed
-  have coord: "{\<omega> \<in> space P. fst (\<omega> q) \<in> K} \<in> sets ?F" if q: "q \<in> ?Qs" for q
-  proof -
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> q) \<in> ?F \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use q in auto)
-    have m: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> q)) \<in> borel_measurable ?F"
-      by (rule measurable_compose[OF ev measurable_fst_borel])
-    have "{\<omega> \<in> space ?F. fst (\<omega> q) \<in> K} \<in> sets ?F"
-      using m borel_closed[OF K] by measurable
-    then show ?thesis by simp
-  qed
-  have zero: "(0::real) \<in> ?Qs" using r Rats_0 by simp
-  have ne: "?Qs \<noteq> {}" using zero by blast
-  have eq: "{\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}
-      = (\<Inter>q \<in> ?Qs. {\<omega> \<in> space P. fst (\<omega> q) \<in> K})"
-  proof (rule set_eqI, rule iffI)
-    fix \<omega> :: "'n pairpath"
-    assume "\<omega> \<in> {\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}"
-    then show "\<omega> \<in> (\<Inter>q \<in> ?Qs. {\<omega> \<in> space P. fst (\<omega> q) \<in> K})"
-      using key by auto
-  next
-    fix \<omega> :: "'n pairpath"
-    assume h: "\<omega> \<in> (\<Inter>q \<in> ?Qs. {\<omega> \<in> space P. fst (\<omega> q) \<in> K})"
-    have w: "\<omega> \<in> space P" using h zero by blast
-    show "\<omega> \<in> {\<omega> \<in> space P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K}"
-      using w h key[OF w] by blast
-  qed
-  have cnt: "countable ?Qs" using countable_rat by blast
-  show ?thesis
-    unfolding eq using cnt ne coord by (intro sets.countable_INT') auto
-qed
 
 subsection \<open>A set-integral criterion for the conditional law\<close>
 
@@ -3078,12 +2984,6 @@ text \<open>Two path-specific facts the instantiation needs.  First: an incremen
   cancelling, which is why the martingale property of \<open>P\<close> applies to it
   unchanged.\<close>
 
-lemma pfut_increment:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes u: "u \<in> {0..T - r}" and v: "v \<in> {0..T - r}"
-  shows "fst (pfut r T \<omega> v) - fst (pfut r T \<omega> u)
-      = fst (\<omega> (r + v)) - fst (\<omega> (r + u))"
-  using u v by (simp add: pfut_fst)
 
 text \<open>Second: \<open>pfut\<close> pulls the future's natural filtration back into \<open>P\<close>'s,
   with the clock shifted by \<open>r\<close>, which puts the conditioning set
@@ -5416,28 +5316,6 @@ text \<open>Two pathwise facts underlying the conditioning statement for the DPP
   which is exactly the object \<^const>\<open>pshift_law\<close> pushes into the class at
   that point.\<close>
 
-lemma pexit_split_pshift_pfut:
-  fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and surv: "pexit r K (\<lambda>t. fst (\<omega> t)) = r" and endK: "fst (\<omega> r) \<in> K"
-  shows "pexit T K (\<lambda>t. fst (\<omega> t))
-      = r + pexit (T - r) K
-          (\<lambda>s. fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s))"
-proof -
-  have "pexit (T - r) K
-        (\<lambda>s. fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s))
-      = pexit (T - r) K (\<lambda>s. fst (\<omega> (r + s)))"
-  proof (rule pexit_cong_on)
-    fix s :: real assume s: "0 \<le> s" "s \<le> T - r"
-    then have m: "s \<in> {0..T - r}" by simp
-    have "fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s)
-        = fst (\<omega> r) + fst (pfut r T \<omega> s)" using m by (simp add: pshift_apply)
-    also have "\<dots> = fst (\<omega> (r + s))" by (simp add: pfut_fst[OF m])
-    finally show "fst (pshift (T - r) (fst (\<omega> r)) (pfut r T \<omega>) s)
-        = fst (\<omega> (r + s))" .
-  qed
-  then show ?thesis using pexit_split_at_r[OF r rT surv endK] by simp
-qed
 
 text \<open>The class-level step: an almost-sure lower bound on the exit time of
   the shifted law is a lower bound for \<^const>\<open>exit_val\<close> at the shift.  The
@@ -5772,24 +5650,6 @@ text \<open>Proposition 2.4 of arXiv:2512.17702 at a deterministic \<open>\<thet
   \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>, exact for the capped exit time and
   needing no path continuity.\<close>
 
-theorem exit_val_dpp:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and Kc: "closed K"
-  shows "exit_val k L T K x
-      = (SUP P \<in> exit_class k L T x. ess_inf_time P
-          (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
-            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-               then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)))"
-proof (rule exit_val_dpp_eq_of_cond[OF r rT L1 Kc])
-  fix P :: "('n pairpath) measure" and c :: real
-  assume P: "P \<in> exit_class k L T x"
-    and c: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
-  have rT': "r \<le> T" using rT by simp
-  have L0: "0 \<le> L" using L1 by simp
-  show "AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-      \<longrightarrow> c \<le> r + enn2real (exit_val k L (T - r) K (fst (\<omega> r)))"
-    by (rule exit_val_cond[OF r rT' L0 Kc P c])
-qed
 
 section \<open>The conditioning statement at a random time\<close>
 
@@ -7026,60 +6886,6 @@ qed
 text \<open>Feeding that into @{thm [source] exit_val_dpp_sup_ge_time_of_const}
   gives the \<open>\<ge>\<close> half of (2.9) at the two-valued stopping time.\<close>
 
-corollary exit_val_dpp_sup_ge_two:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-    and \<theta> :: "'n pairpath \<Rightarrow> real"
-  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
-    and A: "A \<in> sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and th: "\<theta> = (\<lambda>\<omega>. if pcut r \<omega> \<in> A then r else T)"
-  shows "(SUP P \<in> exit_class k L T x. ess_inf_time P
-            (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-              + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-                 then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
-                 else 0)))
-      \<le> exit_val k L T K x"
-proof (rule exit_val_dpp_sup_ge_time_of_const)
-  show "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath" using r rT unfolding th by simp
-  show "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath" using rT unfolding th by simp
-next
-  fix P :: "('n pairpath) measure" and c :: real
-  assume P: "P \<in> exit_class k L T x"
-  assume ae: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-      + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-         then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
-  show "ennreal c \<le> exit_val k L T K x"
-  proof (rule exit_val_dpp_ge_const_two[OF r rT L1 K P A])
-    show "AE \<omega> in P.
-        (pcut r \<omega> \<in> A \<longrightarrow> c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
-            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-               then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))
-        \<and> (pcut r \<omega> \<notin> A \<longrightarrow> c \<le> pexit T K (\<lambda>t. fst (\<omega> t)))"
-    proof (rule eventually_mono[OF ae])
-      fix \<omega> :: "'n pairpath"
-      assume h: "c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-          + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-             then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
-      show "(pcut r \<omega> \<in> A \<longrightarrow> c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
-              + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-                 then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))
-          \<and> (pcut r \<omega> \<notin> A \<longrightarrow> c \<le> pexit T K (\<lambda>t. fst (\<omega> t)))"
-      proof (cases "pcut r \<omega> \<in> A")
-        case True
-        then have t: "\<theta> \<omega> = r" unfolding th by simp
-        show ?thesis using h True unfolding t by simp
-      next
-        case False
-        then have t: "\<theta> \<omega> = T" unfolding th by simp
-        have "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
-        proof -
-          have zz: "enn2real (exit_val k L (T - T) K (fst (\<omega> T))) = 0"            by (simp add: exit_val_horizon_zero)
-          show ?thesis using h unfolding t zz by simp
-        qed
-        with False show ?thesis by simp
-      qed    qed
-  qed
-qed
 
 subsection \<open>The induction step: one glue, with the rest left as a predicate\<close>
 
@@ -7403,133 +7209,6 @@ text \<open>The induction: iterate @{thm [source] exit_val_dpp_ge_step} down the
   implies that none of the remaining events fires, so no later glue touches
   those paths.\<close>
 
-theorem exit_val_dpp_ge_const_list:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-    and rs :: "(real \<times> ('n pairpath) set) list"
-  assumes L1: "1 \<le> L" and K: "closed K" and T0: "0 \<le> T"
-  shows "\<And>P D. (\<And>t A. (t, A) \<in> set rs \<Longrightarrow> 0 \<le> t \<and> t < T
-          \<and> A \<in> sets (borel_of (mtopology_of
-              (path_metric t :: ('n pairpath) metric))))
-      \<Longrightarrow> P \<in> exit_class k L T x
-      \<Longrightarrow> (\<And>\<omega>. D \<omega> \<Longrightarrow> c \<le> pexit T K (\<lambda>s. fst (\<omega> s)))
-      \<Longrightarrow> (\<And>\<omega> t A. D \<omega> \<Longrightarrow> (t, A) \<in> set rs \<Longrightarrow> pcut t \<omega> \<notin> A)
-      \<Longrightarrow> {\<omega> \<in> space (borel_of (mtopology_of
-            (path_metric T :: ('n pairpath) metric))). D \<omega>}
-          \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))
-      \<Longrightarrow> (\<And>\<omega>. dpp_disj rs \<omega>)
-      \<Longrightarrow> (AE \<omega> in P. D \<omega> \<or> dpp_chain k L T K c rs \<omega>)
-      \<Longrightarrow> ennreal c \<le> exit_val k L T K x"
-proof (induction rs)
-  case (Nil P D)
-  have all: "AE \<omega> in P. c \<le> pexit T K (\<lambda>s. fst (\<omega> s))"
-  proof (rule eventually_mono[OF Nil.prems(7)])
-    fix \<omega> :: "'n pairpath"
-    assume "D \<omega> \<or> dpp_chain k L T K c [] \<omega>"
-    then show "c \<le> pexit T K (\<lambda>s. fst (\<omega> s))"
-      using Nil.prems(3) by auto
-  qed
-  have "ennreal c \<le> ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>s. fst (\<omega> s)))"
-    unfolding ess_inf_time_ge_iff using all
-    by (auto elim: eventually_mono intro: ennreal_leI)
-  also have "\<dots> \<le> exit_val k L T K x"
-    unfolding exit_val_def by (rule SUP_upper[OF Nil.prems(2)])
-  finally show ?case .
-next
-  case (Cons p rs P D)
-  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?t = "fst p" and ?A = "snd p"
-  have mem: "(?t, ?A) \<in> set (p # rs)" by simp
-  have t0: "0 \<le> ?t" and tT: "?t < T"
-    and As: "?A \<in> sets (borel_of (mtopology_of
-        (path_metric (fst p) :: ('n pairpath) metric)))"
-    using Cons.prems(1)[OF mem] by auto
-  define \<Psi> where "\<Psi> \<omega> = (D \<omega> \<or> dpp_chain k L T K c rs \<omega>)" for \<omega> :: "'n pairpath"
-  have rsv: "0 \<le> t \<and> t < T
-      \<and> A \<in> sets (borel_of (mtopology_of
-          (path_metric t :: ('n pairpath) metric)))"
-    if "(t, A) \<in> set rs" for t A
-  proof -
-    have "(t, A) \<in> set (p # rs)" using that by simp
-    then show ?thesis by (rule Cons.prems(1))
-  qed  have chm: "{\<omega> \<in> space ?BT. dpp_chain k L T K c rs \<omega>} \<in> sets ?BT"
-    by (rule dpp_chain_measurable[OF T0 L1 K rsv])
-  have Psm: "{\<omega> \<in> space ?BT. \<Psi> \<omega>} \<in> sets ?BT"
-  proof -
-    have "{\<omega> \<in> space ?BT. \<Psi> \<omega>}
-        = {\<omega> \<in> space ?BT. D \<omega>} \<union> {\<omega> \<in> space ?BT. dpp_chain k L T K c rs \<omega>}"
-      unfolding \<Psi>_def by blast
-    then show ?thesis using Cons.prems(5) chm by simp
-  qed
-  have hyp: "AE \<omega> in P.
-      (pcut ?t \<omega> \<in> ?A \<longrightarrow> c \<le> pexit ?t K (\<lambda>s. fst (\<omega> s))
-          + (if pexit ?t K (\<lambda>s. fst (\<omega> s)) = ?t \<and> fst (\<omega> ?t) \<in> K
-             then enn2real (exit_val k L (T - ?t) K (fst (\<omega> ?t))) else 0))
-      \<and> (pcut ?t \<omega> \<notin> ?A \<longrightarrow> \<Psi> \<omega>)"
-  proof (rule eventually_mono[OF Cons.prems(7)])
-    fix \<omega> :: "'n pairpath"
-    assume h: "D \<omega> \<or> dpp_chain k L T K c (p # rs) \<omega>"
-    show "(pcut ?t \<omega> \<in> ?A \<longrightarrow> c \<le> pexit ?t K (\<lambda>s. fst (\<omega> s))
-          + (if pexit ?t K (\<lambda>s. fst (\<omega> s)) = ?t \<and> fst (\<omega> ?t) \<in> K
-             then enn2real (exit_val k L (T - ?t) K (fst (\<omega> ?t))) else 0))
-        \<and> (pcut ?t \<omega> \<notin> ?A \<longrightarrow> \<Psi> \<omega>)"
-    proof (cases "D \<omega>")
-      case True
-      then have "pcut ?t \<omega> \<notin> ?A" using mem by (rule Cons.prems(4))
-      then show ?thesis unfolding \<Psi>_def using True by simp
-    next
-      case False
-      then have "dpp_chain k L T K c (p # rs) \<omega>" using h by simp
-      then show ?thesis unfolding \<Psi>_def by simp
-    qed
-  qed
-  obtain R where RC: "R \<in> exit_class k L T x"
-    and Rae: "AE \<omega> in R.
-        (pcut ?t \<omega> \<in> ?A \<and> c \<le> pexit T K (\<lambda>s. fst (\<omega> s))) \<or> \<Psi> \<omega>"
-    by (rule exit_val_dpp_ge_step[OF t0 tT L1 K Cons.prems(2) As Psm hyp])
-  define D' where "D' \<omega> =
-      ((pcut ?t \<omega> \<in> ?A \<and> c \<le> pexit T K (\<lambda>s. fst (\<omega> s))) \<or> D \<omega>)"
-    for \<omega> :: "'n pairpath"
-  have D'0: "c \<le> pexit T K (\<lambda>s. fst (\<omega> s))" if "D' \<omega>" for \<omega> :: "'n pairpath"
-    using that Cons.prems(3) unfolding D'_def by auto
-  have D'1: "pcut t \<omega> \<notin> A" if dw: "D' \<omega>" and mm: "(t, A) \<in> set rs" for \<omega> t A
-  proof (cases "D \<omega>")
-    case True
-    have "(t, A) \<in> set (p # rs)" using mm by simp
-    then show ?thesis using True by (rule Cons.prems(4)[rotated])
-  next
-    case False
-    then have "pcut ?t \<omega> \<in> ?A" using dw unfolding D'_def by simp
-    then have "\<forall>q \<in> set rs. pcut (fst q) \<omega> \<notin> snd q"
-      using Cons.prems(6)[of \<omega>] by simp
-    then show ?thesis using mm by auto
-  qed
-  have D'm: "{\<omega> \<in> space ?BT. D' \<omega>} \<in> sets ?BT"
-  proof -
-    have pcm: "pcut ?t \<in> ?BT \<rightarrow>\<^sub>M borel_of (mtopology_of
-        (path_metric (fst p) :: ('n pairpath) metric))"
-      by (rule pcut_measurable[OF t0 less_imp_le[OF tT] refl])
-    have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>s. fst (\<omega> s)))
-        \<in> borel_measurable ?BT"
-      by (rule pexit_path_measurable[OF T0 K refl])
-    have "{\<omega> \<in> space ?BT. D' \<omega>}
-        = ((pcut ?t -` ?A \<inter> space ?BT)
-              \<inter> {\<omega> \<in> space ?BT. c \<le> pexit T K (\<lambda>s. fst (\<omega> s))})
-          \<union> {\<omega> \<in> space ?BT. D \<omega>}"
-      unfolding D'_def by blast
-    moreover have "pcut ?t -` ?A \<inter> space ?BT \<in> sets ?BT"
-      by (rule measurable_sets[OF pcm As])
-    moreover have "{\<omega> \<in> space ?BT. c \<le> pexit T K (\<lambda>s. fst (\<omega> s))} \<in> sets ?BT"
-      using tauT by measurable
-    ultimately show ?thesis using Cons.prems(5) by simp
-  qed
-  have Rae': "AE \<omega> in R. D' \<omega> \<or> dpp_chain k L T K c rs \<omega>"
-    using Rae unfolding D'_def \<Psi>_def by (auto elim: eventually_mono)
-  have dj: "dpp_disj rs \<omega>" for \<omega> :: "'n pairpath"
-    using Cons.prems(6)[of \<omega>] by simp
-  show ?case
-    by (rule Cons.IH[of R D'])
-       (use rsv RC D'0 D'1 D'm dj Rae' in blast)+
-qed
 
 subsection \<open>Splitting at a stopping time without re-clocking\<close>
 
@@ -7585,14 +7264,6 @@ text \<open>The future factor starts at \<open>0\<close> --- exactly the normali
   asks of a continuation --- and the two halves live on disjoint stretches of
   time.\<close>
 
-lemma pafter_zero:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes th0: "0 \<le> \<theta> \<omega>" and T0: "0 \<le> T"
-  shows "pafter T \<theta> \<omega> 0 = 0"
-proof -
-  have "max (0 :: real) (\<theta> \<omega>) = \<theta> \<omega>" using th0 by simp
-  then show ?thesis using T0 by (simp add: pafter_apply)
-qed
 
 lemma pafter_before:
   fixes \<omega> :: "'n::finite pairpath"
@@ -7600,11 +7271,6 @@ lemma pafter_before:
   shows "pafter T \<theta> \<omega> t = 0"
   using t le by (simp add: pafter_apply max_absorb2)
 
-lemma pstopped_after:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes t: "t \<in> {0..T}" and ge: "\<theta> \<omega> \<le> t"
-  shows "pstopped T \<theta> \<omega> t = \<omega> (\<theta> \<omega>)"
-  using t ge by (simp add: pstopped_apply min_absorb2)
 
 text \<open>Evaluating a path at a random time.  This is the one new measurability
   fact the additive split needs, and it is where the paths' continuity is
@@ -8090,38 +7756,6 @@ text \<open>The conditional law of the increments after \<open>\<theta>\<close> 
   at \<open>\<theta>\<close>.  Both factors live on the same \<open>T\<close>-path space, so this is
   @{thm [source] path_rcd_ksemi} at \<open>u = v = T\<close>.\<close>
 
-corollary exit_class_rcd_stopping:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes T0: "0 \<le> T" and PS: "prob_space P"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and th0: "\<And>\<omega> :: 'n pairpath. 0 \<le> \<theta> \<omega>"
-    and thT: "\<And>\<omega> :: 'n pairpath. \<theta> \<omega> \<le> T"
-  obtains \<kappa> where
-    "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-            (path_metric T :: ('n pairpath) metric)))"
-    and "distr P
-          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-            \<Otimes>\<^sub>M borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric)))
-          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
-        = ksemi (pair_law_of T (pstopped T \<theta>) P)
-            (borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric))) \<kappa>"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have m2: "pafter T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pafter_measurable[OF T0 thM th0 thT])
-  show ?thesis
-    by (rule path_rcd_ksemi[OF T0 PS m1 m2 that])
-qed
 
 subsection \<open>Identifying the class the conditional law lives in\<close>
 
@@ -8157,53 +7791,7 @@ lemma prebase_outside: "u \<notin> {0..T - s} \<Longrightarrow> prebase s T w u 
 text \<open>The two bridges: \<open>pafter\<close> is the delayed future, and the future is
   recovered from it by re-basing, so nothing is lost either way.\<close>
 
-lemma pafter_eq_pembed:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
-  shows "pafter T \<theta> \<omega> = pembed (\<theta> \<omega>) T (pfut (\<theta> \<omega>) T \<omega>)"
-proof (rule ext)
-  fix t :: real
-  show "pafter T \<theta> \<omega> t = pembed (\<theta> \<omega>) T (pfut (\<theta> \<omega>) T \<omega>) t"
-  proof (cases "t \<in> {0..T}")
-    case True
-    have mem: "max (t - \<theta> \<omega>) 0 \<in> {0..T - \<theta> \<omega>}" using True thT by simp
-    have "pembed (\<theta> \<omega>) T (pfut (\<theta> \<omega>) T \<omega>) t
-        = pfut (\<theta> \<omega>) T \<omega> (max (t - \<theta> \<omega>) 0)" by (rule pembed_apply[OF True])
-    also have "\<dots> = \<omega> (\<theta> \<omega> + max (t - \<theta> \<omega>) 0) - \<omega> (\<theta> \<omega>)"
-      by (rule pfut_apply[OF mem])
-    also have "\<theta> \<omega> + max (t - \<theta> \<omega>) 0 = max t (\<theta> \<omega>)" by simp
-    finally show ?thesis using True by (simp add: pafter_apply)
-  next
-    case False
-    then show ?thesis by (simp add: pafter_outside pembed_outside)
-  qed
-qed
 
-lemma prebase_pafter:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
-  shows "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) = pfut (\<theta> \<omega>) T \<omega>"
-proof (rule ext)
-  fix u :: real
-  show "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) u = pfut (\<theta> \<omega>) T \<omega> u"
-  proof (cases "u \<in> {0..T - \<theta> \<omega>}")
-    case True
-    then have mem: "\<theta> \<omega> + u \<in> {0..T}" using th0 by simp
-    have "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) u = pafter T \<theta> \<omega> (\<theta> \<omega> + u)"
-      by (rule prebase_apply[OF True])
-    also have "\<dots> = \<omega> (max (\<theta> \<omega> + u) (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)"
-      by (rule pafter_apply[OF mem])
-    also have "max (\<theta> \<omega> + u) (\<theta> \<omega>) = \<theta> \<omega> + u" using True by simp
-    finally show ?thesis using True by (simp add: pfut_apply)
-  next
-    case False
-    have "prebase (\<theta> \<omega>) T (pafter T \<theta> \<omega>) u = undefined"
-      by (rule prebase_outside[OF False])
-    moreover have "pfut (\<theta> \<omega>) T \<omega> u = undefined"
-      unfolding pfut_def restrict_def by (rule if_not_P[OF False])
-    ultimately show ?thesis by simp
-  qed
-qed
 
 subsection \<open>Where the stopping-time property enters\<close>
 
@@ -8314,26 +7902,6 @@ text \<open>And the future factor of a stopped path is trivial: stopping twice
   leaves nothing after \<open>\<theta>\<close>.  This is the pathwise seed of clause (ii) for
   the kernel --- the continuation starts at \<open>0\<close>.\<close>
 
-lemma pafter_pstopped:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes st: "path_stopping_time T \<theta>" and t: "t \<in> {0..T}"
-    and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
-  shows "pafter T \<theta> (pstopped T \<theta> \<omega>) t = 0"
-proof -
-  have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
-    by (rule path_stopping_time_stopped[OF st cw])
-  have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
-  have m: "max t (\<theta> \<omega>) \<in> {0..T}" using t th0 thT by simp
-  have m2: "\<theta> \<omega> \<in> {0..T}" using th0 thT by simp
-  have "pafter T \<theta> (pstopped T \<theta> \<omega>) t
-      = pstopped T \<theta> \<omega> (max t (\<theta> \<omega>)) - pstopped T \<theta> \<omega> (\<theta> \<omega>)"
-    unfolding pafter_apply[OF t] th ..
-  also have "\<dots> = \<omega> (min (max t (\<theta> \<omega>)) (\<theta> \<omega>)) - \<omega> (min (\<theta> \<omega>) (\<theta> \<omega>))"
-    by (simp only: pstopped_apply[OF m] pstopped_apply[OF m2])
-  also have "min (max t (\<theta> \<omega>)) (\<theta> \<omega>) = \<theta> \<omega>" by simp
-  finally show ?thesis by simp
-qed
 
 text \<open>The re-basing map at a fixed time is an ordinary path-space map, and
   that is all clause (i) of the kernel statement needs, since \<open>\<theta> \<omega>\<close> is a
@@ -8395,31 +7963,6 @@ qed
 text \<open>Hence clause (i) for the kernel: re-based, the conditional law is a
   probability measure on the \<open>(T - \<theta>)\<close>-path space.\<close>
 
-lemma prob_space_distr_prebase:
-  fixes \<mu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T"
-    and P: "prob_space \<mu>"
-    and sets\<mu>: "sets \<mu> = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-  shows "prob_space (distr \<mu> (borel_of (mtopology_of
-      (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))
-    \<and> sets (distr \<mu> (borel_of (mtopology_of
-        (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))
-      = sets (borel_of (mtopology_of
-          (path_metric (T - s) :: ('n pairpath) metric)))"
-proof
-  have m: "prebase s T \<in> \<mu> \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric (T - s) :: ('n pairpath) metric))"
-    unfolding measurable_cong_sets[OF sets\<mu> refl]
-    by (rule prebase_measurable[OF s0 sT])
-  show "prob_space (distr \<mu> (borel_of (mtopology_of
-      (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))"
-    by (rule prob_space.prob_space_distr[OF P m])
-  show "sets (distr \<mu> (borel_of (mtopology_of
-      (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T))
-    = sets (borel_of (mtopology_of
-        (path_metric (T - s) :: ('n pairpath) metric)))" by simp
-qed
 
 text \<open>Clause (ii) for the kernel.  The pathwise content is already there:
   @{thm [source] pafter_before} at \<open>t = \<theta> \<omega>\<close> says the future factor is still
@@ -8431,91 +7974,6 @@ text \<open>Clause (ii) for the kernel.  The pathwise content is already there:
   off that, and @{thm [source] path_stopping_time_stopped} says it is the
   same number.\<close>
 
-lemma AE_rcd_stopping_start_zero:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes T0: "0 \<le> T" and PS: "prob_space P"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-            (path_metric T :: ('n pairpath) metric)))"
-    and eq: "distr P
-          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-            \<Otimes>\<^sub>M borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric)))
-          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
-        = ksemi (pair_law_of T (pstopped T \<theta>) P)
-            (borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric))) \<kappa>"
-  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. AE w in \<kappa> p'. w (\<theta> p') = 0"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
-  interpret PP: prob_space P by (rule PS)
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_le[OF st])
-  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have m2: "pafter T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pafter_measurable[OF T0 thM th0 thT])
-  have mphi: "(\<lambda>\<omega> :: 'n pairpath. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
-      \<in> P \<rightarrow>\<^sub>M ?B \<Otimes>\<^sub>M ?B" using m1 m2 by simp
-  have setsQ: "sets ?Q = sets ?B" by (rule sets_pair_law_of)
-  have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
-  have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
-  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?B"
-    using Km measurable_cong_sets[OF setsQ refl] by blast
-
-  \<comment> \<open>the predicate is measurable on either product\<close>
-  have evm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p (\<theta> (fst p)))
-      \<in> borel_measurable (N \<Otimes>\<^sub>M ?B)"
-    if setsN: "sets N = sets ?B" for N :: "('n pairpath) measure"
-  proof (rule path_eval_at_measurable_time[OF T0])
-    show "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p) \<in> N \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
-      by (rule measurable_snd)
-  next
-    have "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p) \<in> N \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B"
-      unfolding measurable_cong_sets[OF refl setsN, symmetric]
-      by (rule measurable_fst)
-    then show "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. \<theta> (fst p))        \<in> borel_measurable (N \<Otimes>\<^sub>M ?B)"
-      by (rule measurable_compose) (rule thM)
-    show "0 \<le> \<theta> (fst p)" for p :: "'n pairpath \<times> 'n pairpath" by (rule th0)
-    show "\<theta> (fst p) \<le> T" for p :: "'n pairpath \<times> 'n pairpath" by (rule thT)
-  qed
-  have msetN: "{p \<in> space (N \<Otimes>\<^sub>M ?B). snd p (\<theta> (fst p)) = 0}
-      \<in> sets (N \<Otimes>\<^sub>M ?B)" if "sets N = sets ?B" for N :: "('n pairpath) measure"
-    using evm[OF that] by measurable
-
-  \<comment> \<open>pathwise: the future factor is still \<open>0\<close> when its clock starts\<close>
-  have path: "AE \<omega> in P. pafter T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>)) = 0"
-  proof -
-    have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
-    then show ?thesis
-    proof eventually_elim
-      case (elim \<omega>)
-      have cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
-        by (rule path_sets_fst_continuous[OF setsP]) (use elim in blast)
-      have "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
-        by (rule path_stopping_time_stopped[OF st cw])
-      moreover have "pafter T \<theta> \<omega> (\<theta> \<omega>) = 0"
-        by (rule pafter_before) (use th0[of \<omega>] thT[of \<omega>] in auto)
-      ultimately show ?case by simp
-    qed
-  qed
-  have joint: "AE p in distr P (?B \<Otimes>\<^sub>M ?B)
-      (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)). snd p (\<theta> (fst p)) = 0"
-    unfolding AE_distr_iff[OF mphi msetN[OF refl]] using path by simp
-  then have "AE p in ksemi ?Q ?B \<kappa>. snd p (\<theta> (fst p)) = 0" unfolding eq .
-  then show ?thesis unfolding AE_ksemi[OF KQ msetN[OF setsQ]] by simp
-qed
 
 text \<open>Clause (iii) at one pair of times.  This is the analogue of the \<open>one\<close>
   step inside @{thm [source] pfut_rcd_diffquot}, and the pathwise content is
@@ -8853,86 +8311,6 @@ text \<open>Clause (iii) for the kernel, closed: the rational pairs collected by
   themselves --- every point of the path space is continuous --- via
   @{thm [source] AE_space} on \<open>\<kappa> p'\<close>.\<close>
 
-theorem AE_rcd_stopping_diffquot:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes T0: "0 \<le> T" and PS: "prob_space P"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-            (path_metric T :: ('n pairpath) metric)))"
-    and eq: "distr P
-          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-            \<Otimes>\<^sub>M borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric)))
-          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
-        = ksemi (pair_law_of T (pstopped T \<theta>) P)
-            (borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric))) \<kappa>"
-    and cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. AE w in \<kappa> p'.
-      \<forall>s t. \<theta> p' \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> sconstraint k L"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
-  interpret PP: prob_space P by (rule PS)
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_le[OF st])
-  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have setsQ: "sets ?Q = sets ?B" by (rule sets_pair_law_of)
-  have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
-  have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?B"
-    using Km measurable_cong_sets[OF setsQ refl] by blast
-  have rat: "AE p' in ?Q. AE w in \<kappa> p'.
-      \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
-        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> \<theta> p' \<le> p \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
-    by (rule AE_rcd_stopping_diffquot_rat
-        [OF T0 PS setsP st thM Km eq cov])
-  have spQ: "AE p' in ?Q. p' \<in> space ?Q" by (rule AE_space)
-  from rat spQ show ?thesis
-  proof eventually_elim
-    case (elim p')
-    then have R: "AE w in \<kappa> p'. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
-        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> \<theta> p' \<le> p \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
-      and W: "p' \<in> space ?Q" by blast+
-    have sK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF KQ W])
-    have spK: "AE w in \<kappa> p'. w \<in> space (\<kappa> p')" by (rule AE_space)
-    from R spK show ?case
-    proof eventually_elim
-      case (elim w)
-      have mw: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
-        using elim(2) sets_eq_imp_space_eq[OF sK] by (simp add: space_borel_of)      have cont: "continuous_on {0..T} (\<lambda>u. snd (w u))"
-        using mspace_path_metricD[OF mw] by (intro continuous_intros)
-      show ?case
-      proof (intro allI impI)
-        fix s t :: real
-        assume s: "\<theta> p' \<le> s" and stlt: "s < t" and tT: "t \<le> T"
-        have s0: "0 \<le> s" using s th0[of p'] by simp
-        show "(1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> sconstraint k L"
-        proof (rule diffquot_all_of_rational_ge
-            [OF closed_sconstraint cont _ s s0 stlt tT])
-          fix p q :: real
-          assume "p \<in> \<rat>" "q \<in> \<rat>" "0 \<le> p" "p < q" "q \<le> T" "\<theta> p' \<le> p"
-          then show "(1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p))
-              \<in> sconstraint k L"
-            using elim(1) by auto
-        qed
-      qed
-    qed
-  qed
-qed
 
 section \<open>The \<open>\<F>\<^sub>\<sigma>\<close> layer\<close>
 
@@ -9031,32 +8409,6 @@ qed
 text \<open>And a deterministic time gives back the filtration itself, which is how
   the new layer connects to everything already proved.\<close>
 
-lemma pre_sigma_of_const:
-  assumes filt: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
-    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and v: "0 \<le> v"
-  shows "sets (F v) \<subseteq> pre_sigma_of M F (\<lambda>_. v)"
-proof
-  fix A assume A: "A \<in> sets (F v)"
-  show "A \<in> pre_sigma_of M F (\<lambda>_. v)"
-  proof (rule pre_sigma_ofI)
-    show "A \<in> sets M" using filt[OF v] A by (auto simp: subalgebra_def)
-    fix t :: real assume t: "0 \<le> t"
-    show "A \<inter> {\<omega> \<in> space M. v \<le> t} \<in> sets (F t)"
-    proof (cases "v \<le> t")
-      case True
-      have spF: "space (F t) = space M"
-        using filt[OF t] by (simp add: subalgebra_def)
-      have "A \<in> sets (F t)" using mono[OF v True] A by blast
-      then have "A \<inter> space (F t) \<in> sets (F t)" by simp
-      then show ?thesis using True spF by simp
-    next
-      case False
-      then have "A \<inter> {\<omega> \<in> space M. v \<le> t} = {}" by simp
-      then show ?thesis by simp
-    qed
-  qed
-qed
 
 text \<open>The slice lemma: an \<open>\<F>\<^sub>\<sigma>\<close>-set, cut down to a half-open band of values of
   \<open>\<sigma>\<close>, lands in the filtration at the top of the band.  This is the brick
@@ -9087,69 +8439,6 @@ text \<open>And the bottom band, \<open>\<sigma> \<le> t\<^sub>1\<close>, is @{t
   living in the filtration at its own value.  Stated as the partition it
   will be used as.\<close>
 
-lemma pre_sigma_of_simple_partition:
-  fixes n :: nat and ts :: "nat \<Rightarrow> real"
-  assumes mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and A: "A \<in> pre_sigma_of M F \<sigma>"
-    and ts: "\<And>i. i \<in> {..<n} \<Longrightarrow> 0 \<le> ts i"
-    and inc: "\<And>i j. i \<in> {..<n} \<Longrightarrow> j \<in> {..<n} \<Longrightarrow> i \<le> j \<Longrightarrow> ts i \<le> ts j"
-    and vals: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<exists>i \<in> {..<n}. \<sigma> \<omega> = ts i"
-    and i: "i \<in> {..<n}"
-  shows "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = ts i} \<in> sets (F (ts i))"
-proof (cases "\<exists>j \<in> {..<n}. ts j < ts i")
-  case True
-  define b where "b = Max (ts ` {j \<in> {..<n}. ts j < ts i})"
-  have fin: "finite (ts ` {j \<in> {..<n}. ts j < ts i})" by (rule finite_imageI, rule finite_subset[of _ "{..<n}"]) auto
-  have ne: "ts ` {j \<in> {..<n}. ts j < ts i} \<noteq> {}" using True by blast
-  have bmem: "b \<in> ts ` {j \<in> {..<n}. ts j < ts i}"
-    unfolding b_def by (rule Max_in[OF fin ne])
-  then obtain j where j: "j \<in> {..<n}" "ts j < ts i" "b = ts j" by blast
-  have b0: "0 \<le> b" using j ts by simp
-  have bi: "b \<le> ts i" using j by simp
-  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = ts i}
-      = A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i}"
-  proof -
-    have "\<sigma> \<omega> = ts i \<longleftrightarrow> (b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i)" if w: "\<omega> \<in> space M" for \<omega>
-    proof
-      assume "\<sigma> \<omega> = ts i"
-      then show "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i" using j by simp
-    next
-      assume h: "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i"
-      from vals[OF w] obtain l where l: "l \<in> {..<n}" "\<sigma> \<omega> = ts l" by blast
-      show "\<sigma> \<omega> = ts i"
-      proof (rule ccontr)
-        assume "\<sigma> \<omega> \<noteq> ts i"
-        then have "ts l < ts i" using l h by simp
-        then have "ts l \<in> ts ` {j \<in> {..<n}. ts j < ts i}" using l by blast
-        then have "ts l \<le> b" unfolding b_def by (rule Max_ge[OF fin])
-        then show False using h l by simp
-      qed
-    qed
-    then show ?thesis by auto
-  qed
-  moreover have "A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> ts i} \<in> sets (F (ts i))"
-    by (rule pre_sigma_of_band[OF mono A b0 bi])
-  ultimately show ?thesis by simp
-next
-  case False
-  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = ts i}
-      = A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> ts i}"
-  proof -
-    have "\<sigma> \<omega> = ts i \<longleftrightarrow> \<sigma> \<omega> \<le> ts i" if w: "\<omega> \<in> space M" for \<omega>
-    proof
-      assume "\<sigma> \<omega> = ts i" then show "\<sigma> \<omega> \<le> ts i" by simp
-    next
-      assume h: "\<sigma> \<omega> \<le> ts i"
-      from vals[OF w] obtain l where l: "l \<in> {..<n}" "\<sigma> \<omega> = ts l" by blast
-      have "\<not> ts l < ts i" using False l by blast
-      then show "\<sigma> \<omega> = ts i" using h l by simp
-    qed
-    then show ?thesis by auto
-  qed
-  moreover have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> ts i} \<in> sets (F (ts i))"
-    by (rule pre_sigma_of_cut[OF A ts[OF i]])
-  ultimately show ?thesis by simp
-qed
 
 text \<open>The value-set form of the slice, which is what the sampling theorem
   wants: the pieces indexed by the values of \<open>\<sigma>\<close> are genuinely disjoint,
@@ -9644,34 +8933,6 @@ qed
 text \<open>Hence the event is measurable with respect to the natural filtration at
   \<open>t\<close> --- the stopped path is, and \<open>\<theta>\<close> is Borel.\<close>
 
-lemma path_stopping_time_event:
-  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n::finite pairpath) metric)))"
-    and t: "0 \<le> t" and tT: "t \<le> T"
-  shows "{\<omega> \<in> space (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))). \<theta> \<omega> \<le> t}
-      \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  have cm: "pstopped T (\<lambda>_. t) \<in> ?B \<rightarrow>\<^sub>M ?B"
-    by (rule pstopped_measurable[OF T0 borel_measurable_const]) (use t tT in auto)
-  have thc: "(\<lambda>\<omega> :: 'n pairpath. \<theta> (pstopped T (\<lambda>_. t) \<omega>))
-      \<in> borel_measurable ?B"
-    using cm by (rule measurable_compose) (rule thM)
-  have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
-      = {\<omega> \<in> space ?B. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t}"
-  proof (rule Collect_cong, rule conj_cong[OF refl])
-    fix \<omega> :: "'n pairpath" assume w: "\<omega> \<in> space ?B"
-    have cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
-      by (rule path_sets_fst_continuous[OF refl w])
-    show "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
-      by (rule path_stopping_time_cut[OF st t tT cw])
-  qed
-  moreover have "{\<omega> \<in> space ?B. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t} \<in> sets ?B"
-    using thc by measurable
-  ultimately show ?thesis by simp
-qed
 
 text \<open>The times clause (iv) samples at are \<open>(\<theta> + i) \<and> T\<close>, and they are
   stopping times for the same reason \<open>\<theta>\<close> is: shifting forward and capping
@@ -9956,88 +9217,6 @@ text \<open>The assembly.  Every hypothesis of
   @{theory Martingale_Sampling.Doob_Inequality}'s \<open>Dsup\<close> through
   @{thm [source] exit_class_horizon_component}.\<close>
 
-theorem exit_class_stopped_increment:
-  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
-    and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and i: "0 \<le> i" and ij: "i \<le> j"
-    and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
-        (\<lambda>\<omega>. min (\<theta> \<omega> + i) T)"
-  shows "set_lebesgue_integral P A
-        (\<lambda>\<omega>. fst (\<omega> (min (min (\<theta> \<omega> + i) T) T)) $ c)
-      = set_lebesgue_integral P A
-        (\<lambda>\<omega>. fst (\<omega> (min (min (\<theta> \<omega> + j) T) T)) $ c)"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?Y = "\<lambda>t \<omega> :: 'n pairpath. fst (\<omega> (min t T)) $ c"
-  have T0': "0 \<le> T" using T0 by simp
-  have j0: "0 \<le> j" using i ij by simp
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
-    by (rule natural_filtration_cong_space[OF spP])
-  interpret H: horizon_sq_int_martingale P ?F ?Y T
-    by (rule exit_class_horizon_component[OF T0 L0 P])
-
-  have mg: "martingale P ?F 0 ?Y" by (rule H.martingale_axioms)
-  have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
-    by (rule sets_natural_filtration_mono[OF that(2)])
-  have sub: "subalgebra P (?F t)" if "0 \<le> t" for t
-    by (rule H.subalgebras[OF that])
-
-  \<comment> \<open>the two sampling times\<close>
-  have sig0: "0 \<le> min (\<theta> \<omega> + i) T" for \<omega> :: "'n pairpath"
-    using path_stopping_time_nonneg[OF st, of \<omega>] i T0' by simp
-  have sigU: "min (\<theta> \<omega> + i) T \<le> T" for \<omega> :: "'n pairpath" by simp
-  have rho0: "0 \<le> min (\<theta> \<omega> + j) T" for \<omega> :: "'n pairpath"
-    using path_stopping_time_nonneg[OF st, of \<omega>] j0 T0' by simp
-  have rhoU: "min (\<theta> \<omega> + j) T \<le> T" for \<omega> :: "'n pairpath" by simp
-  have le: "min (\<theta> \<omega> + i) T \<le> min (\<theta> \<omega> + j) T" for \<omega> :: "'n pairpath"
-    using ij by simp
-  have stops: "{\<omega> \<in> space P. min (\<theta> \<omega> + i) T \<le> t} \<in> sets (?F t)"
-    if t: "0 \<le> t" for t
-    unfolding FB spP
-    by (rule path_stopping_time_shift_event[OF T0' st thM i t])
-  have stopr: "{\<omega> \<in> space P. min (\<theta> \<omega> + j) T \<le> t} \<in> sets (?F t)"
-    if t: "0 \<le> t" for t
-    unfolding FB spP
-    by (rule path_stopping_time_shift_event[OF T0' st thM j0 t])
-
-  \<comment> \<open>convergence along the dyadic times\<close>
-  have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    if "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-    using that spP by (simp add: space_borel_of)
-  have conts: "(\<lambda>n. ?Y (dyceil n T (min (\<theta> \<omega> + i) T)) \<omega>)
-      \<longlonglongrightarrow> ?Y (min (\<theta> \<omega> + i) T) \<omega>" if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-    by (rule exit_component_dyceil_tendsto[OF T0' mw[OF w] sig0 sigU])
-  have contr: "(\<lambda>n. ?Y (dyceil n T (min (\<theta> \<omega> + j) T)) \<omega>)
-      \<longlonglongrightarrow> ?Y (min (\<theta> \<omega> + j) T) \<omega>" if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-    by (rule exit_component_dyceil_tendsto[OF T0' mw[OF w] rho0 rhoU])
-
-  \<comment> \<open>the dominating function is Doob's running supremum\<close>
-  have pathcont: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. ?Y s \<omega>)"
-  proof (rule AE_I2)
-    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"
-    then have m: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      by (rule mw)
-    have "continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
-      using mspace_path_metricD[OF m] by (intro continuous_intros)
-    moreover have "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ c)
-        = continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
-      by (rule continuous_on_cong[OF refl]) simp
-    ultimately show "continuous_on {0..T} (\<lambda>s. ?Y s \<omega>)" by simp  qed
-  have Dbd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>?Y s \<omega>\<bar> \<le> H.Dsup \<omega>"
-    by (rule H.Dsup_dominates[OF pathcont])
-  have Dint: "integrable P H.Dsup" by (rule H.Dsup_integrable)
-
-  show ?thesis
-    by (rule set_martingale_sampling_two
-        [OF mg mono sub A stops stopr sig0 sigU rho0 rhoU T0' le
-          conts contr Dbd Dint])
-qed
 
 text \<open>The same identity for an arbitrary real process that is a
   \<open>horizon_sq_int_martingale\<close> with continuous paths.  Both of the class's
@@ -10888,118 +10067,6 @@ text \<open>Clause (iv) for the \<open>X\<close> martingale: the additive split 
   across unchanged, since \<^term>\<open>pafter T \<theta> \<omega>\<close> is a difference of values of
   \<open>\<omega>\<close> and the constant \<^term>\<open>\<omega> (\<theta> \<omega>)\<close> cancels between the two times.\<close>
 
-corollary exit_class_rcd_X_increment_zero:
-  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
-    and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-            (path_metric T :: ('n pairpath) metric)))"
-    and eq: "distr P
-          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-            \<Otimes>\<^sub>M borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric)))
-          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
-        = ksemi (pair_law_of T (pstopped T \<theta>) P)
-            (borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric))) \<kappa>"
-    and i0: "0 \<le> i" and ij: "i \<le> j" and jT: "j \<le> T"
-    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) i)"
-  shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
-      (\<integral>w. indicator A' w * ((fst (w j) - fst (w i)) $ c) \<partial>(\<kappa> p')) = 0"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ c"
-  let ?h = "\<lambda>w :: 'n pairpath. (fst (w j) - fst (w i)) $ c"
-  have T0': "0 \<le> T" using T0 by simp
-  have j0: "0 \<le> j" using i0 ij by simp
-  have iT: "i \<le> T" using ij jT by simp
-  have i0T: "i \<in> {0..T}" using i0 iT by simp
-  have j0T: "j \<in> {0..T}" using j0 jT by simp
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_le[OF st])
-  have PS: "prob_space P" by (rule exit_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have H: "horizon_sq_int_martingale P
-      (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) ?Y T"
-    by (rule exit_class_horizon_component[OF T0 L0 P])
-  have Ycont: "continuous_on {0..T} (\<lambda>s. ?Y s \<omega>)"
-    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-  proof -
-    have m: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using w spP by (simp add: space_borel_of)
-    have "continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
-      using mspace_path_metricD[OF m] by (intro continuous_intros)
-    moreover have "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ c)
-        = continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
-      by (rule continuous_on_cong[OF refl]) simp
-    ultimately show ?thesis by simp
-  qed
-  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B" for u
-    by (rule pair_law_eval_measurable[OF refl])
-  have hvec: "(\<lambda>w :: 'n pairpath. fst (w j) - fst (w i)) \<in> borel_measurable ?B"
-    by (intro borel_measurable_diff measurable_compose[OF ev measurable_fst_borel])
-  have hm: "?h \<in> borel_measurable ?B"
-  proof -
-    have "(\<lambda>w :: 'n pairpath. (fst (w j) - fst (w i)) \<bullet> (axis c 1 :: real^'n))
-        \<in> borel_measurable ?B"
-      by (intro borel_measurable_inner hvec borel_measurable_const)
-    then show ?thesis by (simp add: inner_axis)
-  qed
-  have hP: "?h (pafter T \<theta> \<omega>) = ?Y (max j (\<theta> \<omega>)) \<omega> - ?Y (max i (\<theta> \<omega>)) \<omega>"
-    for \<omega> :: "'n pairpath"
-  proof -
-    have mi: "min (max i (\<theta> \<omega>)) T = max i (\<theta> \<omega>)" using iT thT[of \<omega>] by simp
-    have mj: "min (max j (\<theta> \<omega>)) T = max j (\<theta> \<omega>)" using jT thT[of \<omega>] by simp
-    show ?thesis
-      unfolding pafter_apply[OF i0T] pafter_apply[OF j0T] mi mj by simp
-  qed
-  have hPfun: "(\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>))
-      = (\<lambda>\<omega>. ?Y (max j (\<theta> \<omega>)) \<omega> - ?Y (max i (\<theta> \<omega>)) \<omega>)"
-    by (rule ext) (rule hP)
-  have sti: "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. max i (\<theta> \<omega>))"
-    by (rule path_stopping_time_max[OF st i0 iT])
-  have stj: "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. max j (\<theta> \<omega>))"
-    by (rule path_stopping_time_max[OF st j0 jT])
-  have sMi: "(\<lambda>\<omega> :: 'n pairpath. max i (\<theta> \<omega>)) \<in> borel_measurable ?B"
-    using thM by measurable
-  have sMj: "(\<lambda>\<omega> :: 'n pairpath. max j (\<theta> \<omega>)) \<in> borel_measurable ?B"
-    using thM by measurable
-  have inti: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?Y (max i (\<theta> \<omega>)) \<omega>)"
-    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont sti sMi])
-  have intj: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?Y (max j (\<theta> \<omega>)) \<omega>)"
-    by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont stj sMj])
-  have hi: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>))"
-    unfolding hPfun by (rule Bochner_Integration.integrable_diff[OF intj inti])
-  have lemax: "max i (\<theta> \<omega>) \<le> max j (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
-    using ij by simp
-  have inc: "set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>)) = 0"
-    if A: "A \<in> pre_sigma_of P ?F (\<lambda>\<omega>. max i (\<theta> \<omega>))" for A
-  proof -
-    have AP: "A \<in> sets P" by (rule pre_sigma_of_sets[OF A])
-    have sii: "set_integrable P A (\<lambda>\<omega> :: 'n pairpath. ?Y (max i (\<theta> \<omega>)) \<omega>)"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP inti])
-    have sij: "set_integrable P A (\<lambda>\<omega> :: 'n pairpath. ?Y (max j (\<theta> \<omega>)) \<omega>)"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP intj])
-    have "set_lebesgue_integral P A
-          (\<lambda>\<omega> :: 'n pairpath. ?Y (max j (\<theta> \<omega>)) \<omega> - ?Y (max i (\<theta> \<omega>)) \<omega>)
-        = set_lebesgue_integral P A (\<lambda>\<omega>. ?Y (max j (\<theta> \<omega>)) \<omega>)
-          - set_lebesgue_integral P A (\<lambda>\<omega>. ?Y (max i (\<theta> \<omega>)) \<omega>)"
-      using set_integral_diff(2)[OF sij sii] by simp
-    also have "\<dots> = 0"
-      using stopped_increment_of_horizon_gen
-        [OF T0 setsP H Ycont sti sMi stj sMj lemax A] by simp
-    finally show ?thesis unfolding hPfun .
-  qed
-  show ?thesis
-    by (rule pafter_rcd_increment_zero
-        [OF T0 PS setsP st thM Km eq hm hi inc i0 iT A'])
-qed
 
 
 section \<open>The cross term: an increment against a known factor\<close>
@@ -11236,320 +10303,6 @@ text \<open>The second, and last, clause-(iv) instance.  The pathwise identity i
   @{thm [source] set_integral_increment_times_known} kills.  The constants
   \<open>outerp b\<close> and \<open>\<langle>X\<rangle>\<^sub>\<theta>\<close> have already cancelled between the two times.\<close>
 
-corollary exit_class_rcd_comp_increment_zero:
-  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
-    and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Km: "\<kappa> \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-            (path_metric T :: ('n pairpath) metric)))"
-    and eq: "distr P
-          (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-            \<Otimes>\<^sub>M borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric)))
-          (\<lambda>\<omega>. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>))
-        = ksemi (pair_law_of T (pstopped T \<theta>) P)
-            (borel_of (mtopology_of
-              (path_metric T :: ('n pairpath) metric))) \<kappa>"
-    and i0: "0 \<le> i" and ij: "i \<le> j" and jT: "j \<le> T"
-    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) i)"
-  shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
-      (\<integral>w. indicator A' w * ((outerp (fst (w j)) - snd (w j)
-          - (outerp (fst (w i)) - snd (w i))) $ c $ d) \<partial>(\<kappa> p')) = 0"
-proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?Yc = "\<lambda>s \<omega> :: 'n pairpath. fst (\<omega> (min s T)) $ c"
-  let ?Yd = "\<lambda>s \<omega> :: 'n pairpath. fst (\<omega> (min s T)) $ d"
-  let ?Ym = "\<lambda>s \<omega> :: 'n pairpath.
-      (outerp (fst (\<omega> (min s T))) - snd (\<omega> (min s T))) $ c $ d"
-  let ?Zc = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta> \<omega>)) $ c"
-  let ?Zd = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta> \<omega>)) $ d"
-  let ?\<sigma> = "\<lambda>\<omega> :: 'n pairpath. max i (\<theta> \<omega>)"
-  let ?\<rho> = "\<lambda>\<omega> :: 'n pairpath. max j (\<theta> \<omega>)"
-  let ?h = "\<lambda>w :: 'n pairpath. (outerp (fst (w j)) - snd (w j)
-      - (outerp (fst (w i)) - snd (w i))) $ c $ d"
-  let ?f1 = "\<lambda>\<omega> :: 'n pairpath. ?Ym (?\<rho> \<omega>) \<omega> - ?Ym (?\<sigma> \<omega>) \<omega>"
-  let ?f2 = "\<lambda>\<omega> :: 'n pairpath. (?Yc (?\<rho> \<omega>) \<omega> - ?Yc (?\<sigma> \<omega>) \<omega>) * ?Zd \<omega>"
-  let ?f3 = "\<lambda>\<omega> :: 'n pairpath. (?Yd (?\<rho> \<omega>) \<omega> - ?Yd (?\<sigma> \<omega>) \<omega>) * ?Zc \<omega>"
-  have T0': "0 \<le> T" using T0 by simp
-  have j0: "0 \<le> j" using i0 ij by simp
-  have iT: "i \<le> T" using ij jT by simp
-  have i0T: "i \<in> {0..T}" using i0 iT by simp
-  have j0T: "j \<in> {0..T}" using j0 jT by simp
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_le[OF st])
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_nonneg[OF st])
-  have PS: "prob_space P" by (rule exit_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
-    by (rule natural_filtration_cong_space[OF spP])
-  have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    if "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-    using that spP by (simp add: space_borel_of)
-
-  \<comment> \<open>the three horizon martingales of the class and their path continuity\<close>
-  have Hc: "horizon_sq_int_martingale P ?F ?Yc T"
-    by (rule exit_class_horizon_component[OF T0 L0 P])
-  have Hd: "horizon_sq_int_martingale P ?F ?Yd T"
-    by (rule exit_class_horizon_component[OF T0 L0 P])
-  have Hm: "horizon_sq_int_martingale P ?F ?Ym T"
-    by (rule exit_class_horizon_compensated[OF T0 L0 P])
-  interpret Hc: horizon_sq_int_martingale P ?F ?Yc T by (rule Hc)
-  interpret Hd: horizon_sq_int_martingale P ?F ?Yd T by (rule Hd)
-  have Yccont: "continuous_on {0..T} (\<lambda>s. ?Yc s \<omega>)"
-    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-  proof -
-    have "continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
-      using mspace_path_metricD[OF mw[OF w]] by (intro continuous_intros)
-    moreover have "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ c)
-        = continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ c)"
-      by (rule continuous_on_cong[OF refl]) simp
-    ultimately show ?thesis by simp
-  qed
-  have Ydcont: "continuous_on {0..T} (\<lambda>s. ?Yd s \<omega>)"
-    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-  proof -
-    have "continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ d)"
-      using mspace_path_metricD[OF mw[OF w]] by (intro continuous_intros)
-    moreover have "continuous_on {0..T} (\<lambda>s. fst (\<omega> (min s T)) $ d)
-        = continuous_on {0..T} (\<lambda>s. fst (\<omega> s) $ d)"
-      by (rule continuous_on_cong[OF refl]) simp
-    ultimately show ?thesis by simp
-  qed
-  have Ymcont: "continuous_on {0..T} (\<lambda>s. ?Ym s \<omega>)"
-    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
-  proof -
-    have c0: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF mw[OF w]])
-    have e: "(\<lambda>s. (outerp (fst (\<omega> s)) - snd (\<omega> s)) $ c $ d)
-        = (\<lambda>s. fst (\<omega> s) $ c * fst (\<omega> s) $ d - snd (\<omega> s) $ c $ d)"
-      by (rule ext) (rule comp_entry_eq)
-    have "continuous_on {0..T} (\<lambda>s. (outerp (fst (\<omega> s)) - snd (\<omega> s)) $ c $ d)"
-      unfolding e using c0 by (intro continuous_intros)
-    moreover have "continuous_on {0..T} (\<lambda>s. ?Ym s \<omega>)
-        = continuous_on {0..T} (\<lambda>s. (outerp (fst (\<omega> s)) - snd (\<omega> s)) $ c $ d)"
-      by (rule continuous_on_cong[OF refl]) simp
-    ultimately show ?thesis by simp
-  qed
-
-  \<comment> \<open>the two sampling times\<close>
-  have sti: "path_stopping_time T ?\<sigma>" by (rule path_stopping_time_max[OF st i0 iT])
-  have stj: "path_stopping_time T ?\<rho>" by (rule path_stopping_time_max[OF st j0 jT])
-  have sMi: "?\<sigma> \<in> borel_measurable ?B" using thM by measurable
-  have sMj: "?\<rho> \<in> borel_measurable ?B" using thM by measurable
-  have lemax: "?\<sigma> \<omega> \<le> ?\<rho> \<omega>" for \<omega> :: "'n pairpath" using ij by simp
-  have stmax: "{\<omega> \<in> space P. ?\<sigma> \<omega> \<le> t} \<in> sets (?F t)" if t: "0 \<le> t" for t
-    unfolding FB spP
-    by (rule path_stopping_time_event_filtration_all[OF T0' sti sMi t])
-  have spA: "space P \<in> pre_sigma_of P ?F ?\<sigma>"
-    by (rule space_in_pre_sigma_of[OF stmax])
-
-  \<comment> \<open>the known factor: a function of the stopped path, and square integrable\<close>
-  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B" for u
-    by (rule pair_law_eval_measurable[OF refl])
-  have gcm: "(\<lambda>w :: 'n pairpath. fst (w T) $ c) \<in> borel_measurable ?B"
-  proof -
-    have "(\<lambda>w :: 'n pairpath. fst (w T) \<bullet> (axis c 1 :: real^'n))
-        \<in> borel_measurable ?B"
-      by (intro borel_measurable_inner borel_measurable_const
-          measurable_compose[OF ev measurable_fst_borel])
-    then show ?thesis by (simp add: inner_axis)
-  qed
-  have gdm: "(\<lambda>w :: 'n pairpath. fst (w T) $ d) \<in> borel_measurable ?B"
-  proof -
-    have "(\<lambda>w :: 'n pairpath. fst (w T) \<bullet> (axis d 1 :: real^'n))
-        \<in> borel_measurable ?B"
-      by (intro borel_measurable_inner borel_measurable_const
-          measurable_compose[OF ev measurable_fst_borel])
-    then show ?thesis by (simp add: inner_axis)
-  qed
-  have stopT: "pstopped T \<theta> \<omega> T = \<omega> (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
-  proof -
-    have "T \<in> {0..T}" using T0' by simp
-    then have "pstopped T \<theta> \<omega> T = \<omega> (min T (\<theta> \<omega>))" by (rule pstopped_apply)
-    also have "min T (\<theta> \<omega>) = \<theta> \<omega>" using thT[of \<omega>] by simp
-    finally show ?thesis .
-  qed
-  have ec: "?Zc = (\<lambda>\<omega> :: 'n pairpath.
-      (\<lambda>w :: 'n pairpath. fst (w T) $ c) (pstopped T \<theta> \<omega>))"
-    by (rule ext) (simp add: stopT)
-  have ed: "?Zd = (\<lambda>\<omega> :: 'n pairpath.
-      (\<lambda>w :: 'n pairpath. fst (w T) $ d) (pstopped T \<theta> \<omega>))"
-    by (rule ext) (simp add: stopT)
-  have Zcpre: "?Zc -` B \<inter> space P \<in> pre_sigma_of P ?F ?\<sigma>"
-    if B: "B \<in> sets borel" for B
-    unfolding ec
-    by (rule pstopped_comp_vimage_pre_sigma[OF T0' setsP st thM gcm i0 iT B])
-  have Zdpre: "?Zd -` B \<inter> space P \<in> pre_sigma_of P ?F ?\<sigma>"
-    if B: "B \<in> sets borel" for B
-    unfolding ed
-    by (rule pstopped_comp_vimage_pre_sigma[OF T0' setsP st thM gdm i0 iT B])
-  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pstopped_measurable[OF T0' thM th0 thT])
-  have ZcP: "?Zc \<in> borel_measurable P"
-    unfolding ec by (rule measurable_compose[OF m1 gcm])
-  have ZdP: "?Zd \<in> borel_measurable P"
-    unfolding ed by (rule measurable_compose[OF m1 gdm])
-  have Zcval: "?Zc \<omega> = ?Yc (\<theta> \<omega>) \<omega>" for \<omega> :: "'n pairpath"
-    using thT[of \<omega>] by simp
-  have Zdval: "?Zd \<omega> = ?Yd (\<theta> \<omega>) \<omega>" for \<omega> :: "'n pairpath"
-    using thT[of \<omega>] by simp
-  have Dbdc: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>?Yc s \<omega>\<bar> \<le> Hc.Dsup \<omega>"
-    by (rule Hc.Dsup_dominates) (rule AE_I2, rule Yccont)
-  have Dbdd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>?Yd s \<omega>\<bar> \<le> Hd.Dsup \<omega>"
-    by (rule Hd.Dsup_dominates) (rule AE_I2, rule Ydcont)
-  have Zcsq: "integrable P (\<lambda>\<omega> :: 'n pairpath. (?Zc \<omega>)\<^sup>2)"
-  proof (rule Bochner_Integration.integrable_bound
-      [where f = "\<lambda>\<omega> :: 'n pairpath. (Hc.Dsup \<omega>)\<^sup>2"])
-    show "integrable P (\<lambda>\<omega> :: 'n pairpath. (Hc.Dsup \<omega>)\<^sup>2)"
-      by (rule Hc.Dsup_sq_integrable)
-    show "(\<lambda>\<omega> :: 'n pairpath. (?Zc \<omega>)\<^sup>2) \<in> borel_measurable P" using ZcP by simp
-    show "AE \<omega> in P. norm ((?Zc \<omega>)\<^sup>2) \<le> norm ((Hc.Dsup \<omega>)\<^sup>2)"
-      using Dbdc
-    proof eventually_elim
-      case (elim \<omega>)
-      have b: "\<bar>?Zc \<omega>\<bar> \<le> Hc.Dsup \<omega>"
-        using elim th0[of \<omega>] thT[of \<omega>] Zcval[of \<omega>] by simp
-      have "(?Zc \<omega>)\<^sup>2 = \<bar>?Zc \<omega>\<bar>\<^sup>2" by simp
-      also have "\<dots> \<le> (Hc.Dsup \<omega>)\<^sup>2" by (rule power_mono[OF b abs_ge_zero])
-      finally show ?case by simp
-    qed
-  qed
-  have Zdsq: "integrable P (\<lambda>\<omega> :: 'n pairpath. (?Zd \<omega>)\<^sup>2)"
-  proof (rule Bochner_Integration.integrable_bound
-      [where f = "\<lambda>\<omega> :: 'n pairpath. (Hd.Dsup \<omega>)\<^sup>2"])
-    show "integrable P (\<lambda>\<omega> :: 'n pairpath. (Hd.Dsup \<omega>)\<^sup>2)"
-      by (rule Hd.Dsup_sq_integrable)
-    show "(\<lambda>\<omega> :: 'n pairpath. (?Zd \<omega>)\<^sup>2) \<in> borel_measurable P" using ZdP by simp
-    show "AE \<omega> in P. norm ((?Zd \<omega>)\<^sup>2) \<le> norm ((Hd.Dsup \<omega>)\<^sup>2)"
-      using Dbdd
-    proof eventually_elim
-      case (elim \<omega>)
-      have b: "\<bar>?Zd \<omega>\<bar> \<le> Hd.Dsup \<omega>"
-        using elim th0[of \<omega>] thT[of \<omega>] Zdval[of \<omega>] by simp
-      have "(?Zd \<omega>)\<^sup>2 = \<bar>?Zd \<omega>\<bar>\<^sup>2" by simp
-      also have "\<dots> \<le> (Hd.Dsup \<omega>)\<^sup>2" by (rule power_mono[OF b abs_ge_zero])
-      finally show ?case by simp
-    qed
-  qed
-
-  \<comment> \<open>the pathwise expansion\<close>
-  have hP: "?h (pafter T \<theta> \<omega>) = ?f1 \<omega> - ?f2 \<omega> - ?f3 \<omega>" for \<omega> :: "'n pairpath"
-  proof -
-    have mi: "min (max i (\<theta> \<omega>)) T = max i (\<theta> \<omega>)" using iT thT[of \<omega>] by simp
-    have mj: "min (max j (\<theta> \<omega>)) T = max j (\<theta> \<omega>)" using jT thT[of \<omega>] by simp
-    show ?thesis
-      unfolding pafter_apply[OF i0T] pafter_apply[OF j0T] mi mj
-      by (simp add: outerp_def algebra_simps)
-  qed
-  have hPfun: "(\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>))
-      = (\<lambda>\<omega>. ?f1 \<omega> - ?f2 \<omega> - ?f3 \<omega>)"
-    by (rule ext) (rule hP)
-
-  \<comment> \<open>integrability and vanishing of the three summands\<close>
-  have intmi: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?Ym (?\<sigma> \<omega>) \<omega>)"
-    by (rule integrable_at_path_stopping_time[OF T0 setsP Hm Ymcont sti sMi])
-  have intmj: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?Ym (?\<rho> \<omega>) \<omega>)"
-    by (rule integrable_at_path_stopping_time[OF T0 setsP Hm Ymcont stj sMj])
-  have int1: "integrable P ?f1"
-    by (rule Bochner_Integration.integrable_diff[OF intmj intmi])
-  have int2: "integrable P ?f2"
-    by (rule set_integral_increment_times_known(1)
-        [OF T0 PS setsP Hc Yccont sti sMi stj sMj lemax Zdpre Zdsq spA])
-  have int3: "integrable P ?f3"
-    by (rule set_integral_increment_times_known(1)
-        [OF T0 PS setsP Hd Ydcont sti sMi stj sMj lemax Zcpre Zcsq spA])
-  have hi: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>))"
-    unfolding hPfun
-    by (intro Bochner_Integration.integrable_diff int1 int2 int3)
-
-  have inc: "set_lebesgue_integral P A
-      (\<lambda>\<omega> :: 'n pairpath. ?h (pafter T \<theta> \<omega>)) = 0"
-    if A: "A \<in> pre_sigma_of P ?F ?\<sigma>" for A
-  proof -
-    have AP: "A \<in> sets P" by (rule pre_sigma_of_sets[OF A])
-    have s1: "set_integrable P A ?f1"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP int1])
-    have s2: "set_integrable P A ?f2"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP int2])
-    have s3: "set_integrable P A ?f3"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP int3])
-    have s12: "set_integrable P A (\<lambda>\<omega> :: 'n pairpath. ?f1 \<omega> - ?f2 \<omega>)"
-      by (rule set_integral_diff(1)[OF s1 s2])
-    have smi: "set_integrable P A (\<lambda>\<omega> :: 'n pairpath. ?Ym (?\<sigma> \<omega>) \<omega>)"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP intmi])
-    have smj: "set_integrable P A (\<lambda>\<omega> :: 'n pairpath. ?Ym (?\<rho> \<omega>) \<omega>)"
-      unfolding set_integrable_def by (rule integrable_mult_indicator[OF AP intmj])
-    have e1: "set_lebesgue_integral P A ?f1 = 0"
-    proof -
-      have "set_lebesgue_integral P A ?f1
-          = set_lebesgue_integral P A (\<lambda>\<omega>. ?Ym (?\<rho> \<omega>) \<omega>)
-            - set_lebesgue_integral P A (\<lambda>\<omega>. ?Ym (?\<sigma> \<omega>) \<omega>)"
-        by (rule set_integral_diff(2)[OF smj smi])
-      also have "\<dots> = 0"
-        using stopped_increment_of_horizon_gen
-          [OF T0 setsP Hm Ymcont sti sMi stj sMj lemax A] by simp
-      finally show ?thesis .
-    qed
-    have e2: "set_lebesgue_integral P A ?f2 = 0"
-      by (rule set_integral_increment_times_known(2)
-          [OF T0 PS setsP Hc Yccont sti sMi stj sMj lemax Zdpre Zdsq A])
-    have e3: "set_lebesgue_integral P A ?f3 = 0"
-      by (rule set_integral_increment_times_known(2)
-          [OF T0 PS setsP Hd Ydcont sti sMi stj sMj lemax Zcpre Zcsq A])
-    have "set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. ?f1 \<omega> - ?f2 \<omega> - ?f3 \<omega>)
-        = set_lebesgue_integral P A (\<lambda>\<omega>. ?f1 \<omega> - ?f2 \<omega>)
-          - set_lebesgue_integral P A ?f3"
-      by (rule set_integral_diff(2)[OF s12 s3])
-    also have "set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. ?f1 \<omega> - ?f2 \<omega>)
-        = set_lebesgue_integral P A ?f1 - set_lebesgue_integral P A ?f2"
-      by (rule set_integral_diff(2)[OF s1 s2])
-    finally have "set_lebesgue_integral P A
-        (\<lambda>\<omega> :: 'n pairpath. ?f1 \<omega> - ?f2 \<omega> - ?f3 \<omega>) = 0"
-      using e1 e2 e3 by simp
-    then show ?thesis unfolding hPfun .
-  qed
-
-  have fem: "(\<lambda>w :: 'n pairpath. fst (w u) $ e) \<in> borel_measurable ?B" for u e
-  proof -
-    have "(\<lambda>w :: 'n pairpath. fst (w u) \<bullet> (axis e 1 :: real^'n))
-        \<in> borel_measurable ?B"
-      by (intro borel_measurable_inner borel_measurable_const
-          measurable_compose[OF ev measurable_fst_borel])
-    then show ?thesis by (simp add: inner_axis)
-  qed
-  have sem: "(\<lambda>w :: 'n pairpath. snd (w u) $ e $ f) \<in> borel_measurable ?B"
-    for u e f
-  proof -
-    have "(\<lambda>w :: 'n pairpath. snd (w u) \<bullet> (axis e (axis f 1) :: real^'n^'n))
-        \<in> borel_measurable ?B"
-      by (intro borel_measurable_inner borel_measurable_const
-          measurable_compose[OF ev measurable_snd_borel])
-    then show ?thesis by (simp add: inner_axis)
-  qed
-  have hm: "?h \<in> borel_measurable ?B"
-  proof -
-    have "(\<lambda>w :: 'n pairpath.
-        fst (w j) $ c * fst (w j) $ d - snd (w j) $ c $ d
-        - (fst (w i) $ c * fst (w i) $ d - snd (w i) $ c $ d))
-        \<in> borel_measurable ?B"
-      by (intro borel_measurable_diff borel_measurable_times fem sem)
-    moreover have "?h = (\<lambda>w :: 'n pairpath.
-        fst (w j) $ c * fst (w j) $ d - snd (w j) $ c $ d
-        - (fst (w i) $ c * fst (w i) $ d - snd (w i) $ c $ d))"
-      by (rule ext) (simp add: outerp_def)
-    ultimately show ?thesis by simp
-  qed
-  show ?thesis
-    by (rule pafter_rcd_increment_zero
-        [OF T0 PS setsP st thM Km eq hm hi inc i0 iT A'])
-qed
 
 section \<open>The additive glue\<close>
 
@@ -11682,39 +10435,6 @@ text \<open>The glue inverts the split.  There is no membership hypothesis on
   unconditional and \<^const>\<open>padd\<close> restricts to \<open>{0..T}\<close>, where a member of
   the path space already lives.\<close>
 
-lemma padd_pstopped_pafter:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes st: "path_stopping_time T \<theta>"
-    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "padd T (pstopped T \<theta> \<omega>) (pafter T \<theta> \<omega>) = \<omega>"
-proof -
-  have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
-  have "padd T (pstopped T \<theta> \<omega>) (pafter T \<theta> \<omega>) = restrict \<omega> {0..T}"
-  proof (rule ext)
-    fix t :: real
-    show "padd T (pstopped T \<theta> \<omega>) (pafter T \<theta> \<omega>) t = restrict \<omega> {0..T} t"
-    proof (cases "t \<in> {0..T}")
-      case True
-      have s: "pstopped T \<theta> \<omega> t + pafter T \<theta> \<omega> t = \<omega> t"
-      proof (rule pstopped_add_pafter)
-        show "0 \<le> \<theta> \<omega>" by (rule th0)
-        show "\<theta> \<omega> \<le> T" by (rule thT)
-        show "t \<in> {0..T}" by (rule True)
-      qed
-      show ?thesis
-        unfolding padd_apply[OF True] restrict_apply'[OF True] using s .
-    next
-      case False
-      have r: "restrict \<omega> {0..T} t = undefined"
-        unfolding restrict_def by (rule if_not_P[OF False])
-      show ?thesis unfolding padd_outside[OF False] r ..
-    qed
-  qed
-  also have "restrict \<omega> {0..T} = \<omega>"
-    using w by (rule mspace_path_restrict_self)
-  finally show ?thesis .
-qed
 
 text \<open>The split inverts the glue, provided the continuation stands still up
   to \<open>\<theta>\<close> --- which is exactly clause (ii) of the kernel's membership in the
@@ -14232,29 +12952,6 @@ proof -
   qed
 qed
 
-lemma pembed_continuous_map:
-  fixes s T :: real
-  assumes s0: "0 \<le> s" and sT: "s \<le> T"
-  shows "continuous_map
-      (mtopology_of (path_metric (T - s) :: ('n::finite pairpath) metric))
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) (pembed s T)"
-proof -
-  have "Lipschitz_continuous_map (path_metric (T - s) :: ('n pairpath) metric)
-      (path_metric T :: ('n pairpath) metric) (pembed s T)"
-    unfolding Lipschitz_continuous_map_def
-  proof (intro conjI)
-    show "pembed s T \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)
-        \<rightarrow> mspace (path_metric T :: ('n pairpath) metric)"
-      using pembed_mspace[OF s0 sT] by blast
-    show "\<exists>B. \<forall>x\<in>mspace (path_metric (T - s) :: ('n pairpath) metric).
-        \<forall>y\<in>mspace (path_metric (T - s) :: ('n pairpath) metric).
-          mdist (path_metric T :: ('n pairpath) metric)
-            (pembed s T x) (pembed s T y)
-          \<le> B * mdist (path_metric (T - s) :: ('n pairpath) metric) x y"
-      using pembed_lipschitz[OF s0 sT] by (intro exI[of _ 1]) auto
-  qed
-  then show ?thesis by (rule Lipschitz_continuous_imp_continuous_map)
-qed
 definition pdelclass :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real
     \<Rightarrow> (('n::finite pairpath) measure) set"
   where "pdelclass k L T s =
@@ -16599,65 +15296,7 @@ text \<open>Three generic facts about \<^const>\<open>ksemi\<close>, all from
   uniform first moments of the delayed class these discharge every side
   condition of the additive glue.\<close>
 
-lemma integrable_ksemi_fst:
-  fixes f :: "'a \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
-    and fi: "integrable M f"
-  shows "integrable (ksemi M N Kr) (\<lambda>p. f (fst p))"
-proof -
-  have setsS: "sets (ksemi M N Kr) = sets (M \<Otimes>\<^sub>M N)"
-    by (rule sets_ksemi[OF K ne])
-  have fm: "f \<in> borel_measurable M"
-    using fi by (simp add: borel_measurable_integrable)
-  have gm: "(\<lambda>p. f (fst p)) \<in> borel_measurable (M \<Otimes>\<^sub>M N)" using fm by measurable
-  have gmS: "(\<lambda>p. f (fst p)) \<in> borel_measurable (ksemi M N Kr)"
-    using gm measurable_cong_sets[OF setsS refl] by blast
-  have gabs: "(\<lambda>p. ennreal (norm (f (fst p)))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
-    using gm by measurable
-  have "(\<integral>\<^sup>+p. ennreal (norm (f (fst p))) \<partial>(ksemi M N Kr))
-      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (f \<omega>)) \<partial>(Kr \<omega>)) \<partial>M)"
-    using nn_integral_ksemi[OF K gabs] by simp
-  also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal (norm (f \<omega>)) \<partial>M)"
-  proof (rule nn_integral_cong)
-    fix \<omega> assume w: "\<omega> \<in> space M"
-    interpret PK: prob_space "Kr \<omega>" by (rule ksemi_sets_kernel(2)[OF K w])
-    show "(\<integral>\<^sup>+\<omega>'. ennreal (norm (f \<omega>)) \<partial>(Kr \<omega>)) = ennreal (norm (f \<omega>))"
-      by (simp add: PK.emeasure_space_1)
-  qed
-  also have "\<dots> < \<top>" using fi by (simp add: integrable_iff_bounded)
-  finally show ?thesis using gmS by (simp add: integrable_iff_bounded)
-qed
 
-lemma integrable_ksemi_of_bound:
-  fixes g :: "'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and PM: "prob_space M"
-    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
-    and bnd: "\<And>\<omega>. \<omega> \<in> space M
-      \<Longrightarrow> (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal C"
-  shows "integrable (ksemi M N Kr) g"
-proof -
-  interpret PM: prob_space M by (rule PM)
-  have ne: "space M \<noteq> {}" by (rule PM.not_empty)
-  have setsS: "sets (ksemi M N Kr) = sets (M \<Otimes>\<^sub>M N)"
-    by (rule sets_ksemi[OF K ne])
-  have gmS: "g \<in> borel_measurable (ksemi M N Kr)"
-    using gm measurable_cong_sets[OF setsS refl] by blast
-  have gabs: "(\<lambda>p. ennreal (norm (g p))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
-    using gm by measurable
-  have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr))
-      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<partial>M)"
-    using nn_integral_ksemi[OF K gabs] by simp
-  also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>. ennreal C \<partial>M)"
-  proof (rule nn_integral_mono_AE)
-    show "AE \<omega> in M. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal C"
-      by (rule eventually_mono[OF AE_space]) (rule bnd)
-  qed
-  also have "\<dots> = ennreal C" by (simp add: PM.emeasure_space_1)
-  finally have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr)) \<le> ennreal C" .
-  then have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr)) < \<top>"
-    by (simp add: order.strict_trans1)
-  then show ?thesis using gmS by (simp add: integrable_iff_bounded)
-qed
 
 lemma integral_kernel_measurable:
   fixes g :: "'a \<Rightarrow> 'b \<Rightarrow> real"

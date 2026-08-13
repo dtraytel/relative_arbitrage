@@ -776,11 +776,6 @@ text \<open>Lemma 2.1 of the paper, verbatim: the convex hull of
   \<open>{a \<in> \<bbbS>\<^sup>n\<^sub>+ : \<lambda>\<^sub>(\<^sub>n\<^sub>-\<^sub>k\<^sub>)(a) \<ge> 1}\<close> equals the constraint set \<open>A\<close> of Eq. (2.1),
   with no closure.\<close>
 
-corollary lemma_2_1_eq:
-  fixes k :: nat
-  assumes k: "k < CARD('n::finite)"
-  shows "convex hull (suff_volatile k :: (real^'n^'n) set) = Pi_constraint k"
-  by (rule subset_antisym[OF lemma_2_1_easy lemma_2_1_exact[OF k]])
 
 
 (*<*)

@@ -89,20 +89,6 @@ proof -
   qed
 qed
 
-corollary optimal_exit_time_value_boundary:
-  fixes x0 :: "real^'n::finite" and L :: real
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and x0: "norm x0 = r"
-  shows "(\<integral>\<^sup>+\<omega>. ennreal 0 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-     = ennreal (ball_v r k x0)"
-proof -
-  have inst: "optimal_ball_market
-      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
-      (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0) r"
-    by (intro optimal_ball_market_boundary k L x0)
-  show ?thesis
-    by (rule optimal_ball_market.optimal_exit_time_value[OF inst])
-qed
 
 
 (*<*)

@@ -123,52 +123,6 @@ section \<open>The punctured ball is dense in the closed ball\<close>
 text \<open>Needed to identify the parabolic boundary \<open>closure \<Omega> - \<Omega>\<close> of
   \<open>\<Omega> = ball 0 r - {0}\<close> with the sphere together with the origin.\<close>
 
-lemma closure_ball_minus_zero:
-  fixes r :: real
-  assumes r: "0 < r"
-  shows "closure (ball (0::real^'n::finite) r - {0}) = cball 0 r"
-proof
-  show "closure (ball (0::real^'n) r - {0}) \<subseteq> cball 0 r"
-    using closure_mono[of "ball (0::real^'n) r - {0}" "ball 0 r"] r by simp
-next
-  have sub: "ball (0::real^'n) r \<subseteq> closure (ball 0 r - {0})"
-  proof
-    fix y :: "real^'n" assume y: "y \<in> ball 0 r"
-    show "y \<in> closure (ball 0 r - {0})"
-    proof (cases "y = 0")
-      case False
-      with y show ?thesis
-        using closure_subset[of "ball (0::real^'n) r - {0}"] by auto
-    next
-      case True
-      have "\<forall>e>0. \<exists>z \<in> ball (0::real^'n) r - {0}. dist z y < e"
-      proof (intro allI impI)
-        fix e :: real assume e: "0 < e"
-        define t where "t = min e r / 2"
-        have t_pos: "0 < t" and t_lt: "t < r" and t_lt_e: "t < e"
-          using e r by (auto simp: t_def)
-        define z where "z = t *\<^sub>R axis (undefined :: 'n) (1::real)"
-        have nz: "norm (z :: real^'n) = t"
-          using t_pos by (simp add: z_def)
-        have z_ne: "z \<noteq> (0 :: real^'n)"
-          using nz t_pos by auto
-        have "z \<in> ball (0::real^'n) r - {0}"
-          using nz t_lt z_ne by (simp add: dist_norm)
-        moreover have "dist z y < e"
-          using nz t_lt_e by (simp add: True dist_norm)
-        ultimately show "\<exists>z \<in> ball (0::real^'n) r - {0}. dist z y < e"
-          by blast
-      qed
-      then show ?thesis
-        by (simp add: closure_approachable)
-    qed
-  qed
-  have "cball (0::real^'n) r = closure (ball 0 r)"
-    using r by simp
-  also have "closure (ball (0::real^'n) r) \<subseteq> closure (ball 0 r - {0})"
-    by (rule closure_minimal[OF sub closed_closure])
-  finally show "cball (0::real^'n) r \<subseteq> closure (ball 0 r - {0})" .
-qed
 
 section \<open>Comparison with the explicit smooth solution\<close>
 
@@ -405,26 +359,6 @@ qed
 text \<open>On the whole closed ball -- interior points by the theorem above,
   boundary points by hypothesis.\<close>
 
-corollary ball_v_unique_on_cball:
-  fixes r :: real and u :: "real^'n::finite \<Rightarrow> real"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
-    and cont: "continuous_on (cball 0 r) u"
-    and u: "visc_sol k L (ball (0::real^'n) r) u"
-    and bd: "\<And>y :: real^'n. y \<in> closure (ball 0 r) - ball 0 r
-              \<Longrightarrow> u y = ball_v r k y"
-    and x: "x \<in> cball (0::real^'n) r"
-  shows "u x = ball_v r k x"
-proof (cases "x \<in> ball (0::real^'n) r")
-  case True
-  show ?thesis
-    by (rule ball_v_unique_solution_smooth[OF k L r cont u bd True])
-next
-  case False
-  have "x \<in> closure (ball (0::real^'n) r)"
-    unfolding closure_ball[OF r] by (rule x)
-  with False show ?thesis
-    by (intro bd) simp
-qed
 
 text \<open>The hypotheses are satisfiable: the explicit function itself is a
   continuous viscosity solution with those boundary values.  Hence the pair
@@ -476,59 +410,11 @@ text \<open>Boundary data given as an ordered pair on the sphere, which is the f
   Theorem 4.3 is stated in: \<open>u \<le> w\<close> on the sphere suffices, provided the
   common value is that of \<open>ball_v\<close>.\<close>
 
-corollary comparison_ball_zero_boundary:
-  fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
-    and cu: "continuous_on (cball 0 r) u"
-    and cw: "continuous_on (cball 0 r) w"
-    and sub: "visc_subsol k L (ball (0::real^'n) r) u"
-    and sup: "visc_supersol k L (ball (0::real^'n) r) w"
-    and bd: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
-               \<Longrightarrow> u y \<le> ball_v r k y \<and> ball_v r k y \<le> w y"
-    and x: "x \<in> ball (0::real^'n) r"
-  shows "u x \<le> w x"
-proof -
-  have bdu: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
-      \<Longrightarrow> u y \<le> ball_v r k y"
-    using bd by blast
-  have bdw: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
-      \<Longrightarrow> ball_v r k y \<le> w y"
-    using bd by blast
-  show ?thesis
-    by (rule comparison_ball[OF k L r cu cw sub sup bdu bdw x])
-qed
 
 text \<open>Proposition 4.1 for the ball: two viscosity solutions agreeing with
   \<open>ball_v\<close> on the sphere agree everywhere.  Both directions of
   \<open>comparison_ball\<close>.\<close>
 
-corollary uniqueness_ball:
-  fixes r :: real and u w :: "real^'n::finite \<Rightarrow> real"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
-    and cu: "continuous_on (cball 0 r) u"
-    and cw: "continuous_on (cball 0 r) w"
-    and u: "visc_sol k L (ball (0::real^'n) r) u"
-    and w: "visc_sol k L (ball (0::real^'n) r) w"
-    and bdu: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
-                \<Longrightarrow> u y = ball_v r k y"
-    and bdw: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r
-                \<Longrightarrow> w y = ball_v r k y"
-    and x: "x \<in> ball (0::real^'n) r"
-  shows "u x = w x"
-proof -
-  have su: "visc_subsol k L (ball (0::real^'n) r) u"
-    and pu: "visc_supersol k L (ball (0::real^'n) r) u"
-    using u by (auto simp: visc_sol_def)
-  have sw: "visc_subsol k L (ball (0::real^'n) r) w"
-    and pw: "visc_supersol k L (ball (0::real^'n) r) w"
-    using w by (auto simp: visc_sol_def)
-  have le1: "u x \<le> w x"
-    by (rule comparison_ball[OF k L r cu cw su pw _ _ x]) (simp_all add: bdu bdw)
-  have le2: "w x \<le> u x"
-    by (rule comparison_ball[OF k L r cw cu sw pu _ _ x]) (simp_all add: bdu bdw)
-  from le1 le2 show ?thesis
-    by simp
-qed
 
 section \<open>Theorem 4.2(a) when one function is smooth: no Crandall--Ishii\<close>
 
@@ -545,101 +431,10 @@ text \<open>The mechanism of the ball argument, abstracted.  Theorem 4.2(a) need
   strict supersolution, needing nothing from Section 4's harder half.  The
   gradient field is \<open>g\<close> and the Hessian field \<open>Hf\<close>, matching \<open>test_fun_at\<close>.\<close>
 
-theorem visc_subsol_le_smooth_strict:
-  fixes u \<psi> :: "real^'n::finite \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and Hf :: "real^'n \<Rightarrow> real^'n^'n"
-  assumes cpt: "compact K" and Kne: "K \<noteq> {}"
-    and cu: "continuous_on K u" and cpsi: "continuous_on K \<psi>"
-    and sub: "visc_subsol k L (interior K) u"
-    and test: "\<And>z. z \<in> interior K \<Longrightarrow> test_fun_at \<psi> g (Hf z) z"
-    and strict: "\<And>z. z \<in> interior K \<Longrightarrow> 1 < ell_op k L (g z) (Hf z)"
-    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> \<psi> y"
-    and x: "x \<in> K"
-  shows "u x \<le> \<psi> x"
-proof -
-  define \<Phi> where "\<Phi> = (\<lambda>y. u y - \<psi> y)"
-  have cont\<Phi>: "continuous_on K \<Phi>"
-    unfolding \<Phi>_def using cu cpsi by (intro continuous_intros)
-  obtain z where z: "z \<in> K" and zmax: "\<And>y. y \<in> K \<Longrightarrow> \<Phi> y \<le> \<Phi> z"
-    using continuous_attains_sup[OF cpt Kne cont\<Phi>] by blast
-  text \<open>The maximum cannot be interior: there \<open>\<psi>\<close> is a legitimate test function.\<close>
-  have zbd: "z \<in> K - interior K"
-  proof (rule ccontr)
-    assume "z \<notin> K - interior K"
-    then have zi: "z \<in> interior K"
-      using z by blast
-    obtain e where e: "0 < e" and eball: "ball z e \<subseteq> K"
-      using zi unfolding mem_interior by blast
-    have loc: "\<exists>e>0. \<forall>y \<in> ball z e. u y - \<psi> y \<le> u z - \<psi> z"
-    proof (intro exI[of _ e] conjI e ballI)
-      fix y assume "y \<in> ball z e"
-      then have "y \<in> K" using eball by blast
-      then show "u y - \<psi> y \<le> u z - \<psi> z"
-        using zmax unfolding \<Phi>_def by simp
-    qed
-    have "ell_op k L (g z) (Hf z) \<le> 1"
-      using sub zi test[OF zi] loc unfolding visc_subsol_def by blast
-    moreover have "1 < ell_op k L (g z) (Hf z)"
-      by (rule strict[OF zi])
-    ultimately show False
-      by simp
-  qed
-  have "\<Phi> z \<le> 0"
-    unfolding \<Phi>_def using bd[OF zbd] by simp
-  then have "\<Phi> x \<le> 0"
-    using zmax[OF x] by simp
-  then show ?thesis
-    unfolding \<Phi>_def by simp
-qed
 
 text \<open>The dual statement, for a smooth strict subsolution below a
   supersolution.\<close>
 
-theorem smooth_strict_le_visc_supersol:
-  fixes w \<psi> :: "real^'n::finite \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and Hf :: "real^'n \<Rightarrow> real^'n^'n"
-  assumes cpt: "compact K" and Kne: "K \<noteq> {}"
-    and cw: "continuous_on K w" and cpsi: "continuous_on K \<psi>"
-    and sup: "visc_supersol k L (interior K) w"
-    and test: "\<And>z. z \<in> interior K \<Longrightarrow> test_fun_at \<psi> g (Hf z) z"
-    and strict: "\<And>z. z \<in> interior K \<Longrightarrow> ell_op k L (g z) (Hf z) < 1"
-    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> \<psi> y \<le> w y"
-    and x: "x \<in> K"
-  shows "\<psi> x \<le> w x"
-proof -
-  define \<Phi> where "\<Phi> = (\<lambda>y. w y - \<psi> y)"
-  have cont\<Phi>: "continuous_on K \<Phi>"
-    unfolding \<Phi>_def using cw cpsi by (intro continuous_intros)
-  obtain z where z: "z \<in> K" and zmin: "\<And>y. y \<in> K \<Longrightarrow> \<Phi> z \<le> \<Phi> y"
-    using continuous_attains_inf[OF cpt Kne cont\<Phi>] by blast
-  have zbd: "z \<in> K - interior K"
-  proof (rule ccontr)
-    assume "z \<notin> K - interior K"
-    then have zi: "z \<in> interior K"
-      using z by blast
-    obtain e where e: "0 < e" and eball: "ball z e \<subseteq> K"
-      using zi unfolding mem_interior by blast
-    have loc: "\<exists>e>0. \<forall>y \<in> ball z e. w z - \<psi> z \<le> w y - \<psi> y"
-    proof (intro exI[of _ e] conjI e ballI)
-      fix y assume "y \<in> ball z e"
-      then have "y \<in> K" using eball by blast
-      then show "w z - \<psi> z \<le> w y - \<psi> y"
-        using zmin unfolding \<Phi>_def by simp
-    qed
-    have "1 \<le> ell_op k L (g z) (Hf z)"
-      using sup zi test[OF zi] loc unfolding visc_supersol_def by blast
-    moreover have "ell_op k L (g z) (Hf z) < 1"
-      by (rule strict[OF zi])
-    ultimately show False
-      by simp
-  qed
-  have "0 \<le> \<Phi> z"
-    unfolding \<Phi>_def using bd[OF zbd] by simp
-  then have "0 \<le> \<Phi> x"
-    using zmin[OF x] by simp
-  then show ?thesis
-    unfolding \<Phi>_def by simp
-qed
 
 section \<open>Towards Section 2: the feasible set is entrywise bounded\<close>
 
@@ -692,21 +487,6 @@ qed
 text \<open>Hence the trace is bounded on the feasible set, which is the quantitative
   form Lemma 2.2's hypothesis is used in.\<close>
 
-corollary feasible_trace_bound:
-  fixes a :: "real^'n::finite^'n"
-  assumes af: "a \<in> feasible k L p"
-  shows "0 \<le> trace a" and "trace a \<le> real CARD('n) * L"
-proof -
-  show "0 \<le> trace a"
-    unfolding trace_def
-    by (intro sum_nonneg ballI) (rule feasible_diag_bound(1)[OF af])
-  have "trace a \<le> (\<Sum>i\<in>(UNIV :: 'n set). L)"
-    unfolding trace_def
-    by (intro sum_mono) (rule feasible_diag_bound(2)[OF af])
-  also have "\<dots> = real CARD('n) * L"
-    by simp
-  finally show "trace a \<le> real CARD('n) * L" .
-qed
 
 
 text \<open>The off-diagonal entries are bounded too.  Testing the psd quadratic form

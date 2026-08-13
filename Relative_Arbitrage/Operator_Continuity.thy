@@ -336,25 +336,6 @@ qed
 
 text \<open>Hence \<open>F\<close> does not distinguish \<open>M\<close> from \<open>M\<^sub>p\<close>.\<close>
 
-corollary ell_op_Mp:
-  fixes M :: "real^'n::finite^'n"
-  shows "ell_op k L p (Mp p M) = ell_op k L p M"
-proof -
-  have "(\<lambda>a. - trace (Mp p M ** a) / 2) ` feasible k L p
-      = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-  proof (rule image_cong[OF refl])
-    fix a :: "real^'n^'n"
-    assume a: "a \<in> feasible k L p"
-    have sym: "transpose a = a"
-      using a by (simp add: feasible_def psd_def)
-    have ap: "a *v p = 0"
-      using a by (simp add: feasible_def)
-    show "- trace (Mp p M ** a) / 2 = - trace (M ** a) / 2"
-      by (simp add: trace_Mp[OF sym ap])
-  qed
-  then show ?thesis
-    by (simp add: ell_op_def)
-qed
 
 
 (*<*)

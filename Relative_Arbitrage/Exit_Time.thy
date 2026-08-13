@@ -153,10 +153,6 @@ next
   from shift_stays_off[OF this near] show ?thesis by simp
 qed
 
-lemma eroded_mono:
-  assumes "d' \<le> d"
-  shows "eroded d A \<subseteq> eroded d' A"
-  using assms unfolding eroded_def by auto
 
 text \<open>The erosions exhaust an open set. This is the half that fails for general
   \<open>A\<close>: a point of \<open>A\<close> needs interior room before any positive margin exists.\<close>

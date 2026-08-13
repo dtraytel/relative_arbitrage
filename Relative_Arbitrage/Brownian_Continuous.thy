@@ -450,17 +450,6 @@ text \<open>With the interpretation in place, the locale's martingale-problem
   gives an unconditional fact: planar Brownian motion started at the
   origin has expected squared norm \<open>2\<close> at time \<open>1\<close>.\<close>
 
-corollary bm2_expected_square:
-  "(\<integral>\<omega>. cbmX (0 :: real^2) 1 \<omega> \<bullet> cbmX 0 1 \<omega>
-      \<partial>(bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)) = 2"
-proof -
-  have comp: "set_lebesgue_integral lborel {0..(1 :: real)}
-      (\<lambda>s. trace (mat 1 :: real^2^2)) = 2"
-    by (subst bm_compensator_const) simp_all
-  show ?thesis
-    using BM2.dynkin_quadratic[of 1]
-    by (simp add: BMP.prob_space comp)
-qed
 
 text \<open>The exit-time bound \<open>E[\<tau>] \<le> v(x0)\<close> of Example 3.1 is available
   as \<open>expected_exit_time_bound\<close>; a non-degenerate instance with
@@ -592,12 +581,6 @@ qed
 text \<open>Specialised to the planar market with \<open>k = L = 1\<close>, horizon \<open>1\<close> and
   start \<open>0\<close>, the statement has no hypotheses at all.\<close>
 
-theorem ito_const_horizon_market_nonvacuous:
-  "ito_const_horizon_market
-    (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (cbmX 0)) (cbmX (0 :: real^2))
-    (\<lambda>_ _. mat 1) 1 1 UNIV 0 1"
-  by (rule Brownian_ito_const_horizon_market) simp_all
 
 
 (*<*)

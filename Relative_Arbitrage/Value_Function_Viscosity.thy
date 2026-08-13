@@ -55,11 +55,6 @@ proof -
   finally show ?thesis .
 qed
 
-corollary ell_op_le_one_of_witness:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes a: "a \<in> feasible k L p" and le: "- trace (M ** a) / 2 \<le> 1"
-  shows "ell_op k L p M \<le> 1"
-  by (rule ell_op_le_of_witness[OF a le])
 
 section \<open>The DPP at the exit time of a ball\<close>
 
@@ -657,25 +652,6 @@ proof -
   then show ?thesis by eventually_elim simp
 qed
 
-corollary exit_class_feasible_freezes_gradient:
-  fixes Q :: "('n::finite pairpath) measure" and q :: "real^'n"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x"
-    and t: "0 < t" and tT: "t \<le> T"
-    and a: "(1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q) \<in> feasible k L q"
-  shows "AE \<omega> in Q. q \<bullet> fst (\<omega> t) = q \<bullet> x"
-proof (rule exit_class_frozen_direction[OF T L Q _ ])
-  show "t \<in> {0..T}" using t tT by simp
-  have z: "((1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)) *v q = 0"
-    using a unfolding feasible_def by blast
-  have "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q
-      = (t *\<^sub>R ((1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))) *v q"
-    using t by simp
-  also have "\<dots> = t *\<^sub>R (((1 / t) *\<^sub>R (\<integral>\<omega>. snd (\<omega> t) \<partial>Q)) *v q)"
-    by (rule scaleR_matrix_vector)
-  also have "\<dots> = 0" unfolding z by simp
-  finally show "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q = 0" .
-qed
 
 section \<open>The relaxed operator, and the inequality the class really gives\<close>
 
@@ -750,21 +726,6 @@ proof
     by (rule suff_volatile_cap_in_sconstraint[OF sv ub])
 qed
 
-lemma ell_op_s_le_ell_op:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op_s k L M \<le> ell_op k L p M"
-proof -
-  have L0: "0 \<le> L" using L by simp
-  have ne: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p \<noteq> {}"
-    using feasible_nonempty[OF k L] by blast
-  have sub: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p
-      \<subseteq> (\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L"
-    by (rule image_mono[OF feasible_subset_sconstraint])
-  show ?thesis
-    unfolding ell_op_s_def ell_op_def
-    by (rule cInf_superset_mono[OF ne ell_op_s_bdd_below[OF L0] sub])
-qed
 
 text \<open>@{thm [source] exit_val_attained} supplies the optimizer, at which the
   exit time dominates the value almost surely --- the reason the
@@ -3091,14 +3052,6 @@ proof -
   finally show ?thesis .
 qed
 
-lemma trace_eq_sum_axis:
-  fixes a :: "real^'n::finite^'n"
-  shows "trace a = (\<Sum>i\<in>UNIV. axis i 1 \<bullet> (a *v axis i 1))"
-proof -
-  have e: "axis i 1 \<bullet> (a *v axis i 1) = a $ i $ i" for i :: 'n
-    by (simp add: axis1_inner matvec_axis1)
-  show ?thesis by (simp add: trace_def e)
-qed
 
 section \<open>Moments at a stopping time, assembled\<close>
 
@@ -5061,31 +5014,6 @@ text \<open>The Euler kernel varies only through the frozen matrix, so its
   metric (the Brownian path is bounded on \<open>[0,T]\<close>), and dominated
   convergence does the rest --- no tightness, no uniform estimates.\<close>
 
-lemma matrix_norm_le_sum_abs:
-  fixes A :: "real^'n::finite^'m::finite"
-  shows "norm A \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)"
-proof -
-  have row: "norm (A $ i) \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)" for i
-  proof -
-    have "(norm (A $ i))\<^sup>2 = (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>\<^sup>2)"
-      by (simp add: power2_norm_eq_inner inner_vec_def power2_eq_square[of "A $ _ $ _"])
-    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)\<^sup>2"
-      by (rule sum_sq_le_sq_sum) simp
-    finally have h: "(norm (A $ i))\<^sup>2 \<le> (\<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)\<^sup>2" .
-    show ?thesis
-      using h by (simp add: power2_le_iff_abs_le sum_nonneg)
-  qed
-  have "(norm A)\<^sup>2 = (\<Sum>i\<in>UNIV. (norm (A $ i))\<^sup>2)"
-    by (simp add: power2_norm_eq_inner inner_vec_def)
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. norm (A $ i))\<^sup>2"
-    by (rule sum_sq_le_sq_sum) simp
-  finally have h: "(norm A)\<^sup>2 \<le> (\<Sum>i\<in>UNIV. norm (A $ i))\<^sup>2" .
-  have "norm A \<le> (\<Sum>i\<in>UNIV. norm (A $ i))"
-    using h by (simp add: power2_le_iff_abs_le sum_nonneg)
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>A $ i $ j\<bar>)"
-    by (rule sum_mono) (rule row)
-  finally show ?thesis .
-qed
 
 lemma dist_pair_le:
   fixes a c :: "'a::metric_space" and b d :: "'b::metric_space"
@@ -6672,22 +6600,6 @@ qed
 
 subsection \<open>The increments are almost surely orthogonal to a killed field\<close>
 
-lemma transpose_kill:
-  fixes S :: "real^'n::finite^'n" and w :: "real^'n"
-  assumes z: "(S ** transpose S) *v w = 0"
-  shows "transpose S *v w = 0"
-proof -
-  have "(norm (transpose S *v w))\<^sup>2
-      = (transpose S *v w) \<bullet> (transpose S *v w)"
-    by (simp add: power2_norm_eq_inner)
-  also have "\<dots> = w \<bullet> (S *v (transpose S *v w))"
-    by (simp add: inner_transpose_matrix)
-  also have "S *v (transpose S *v w) = (S ** transpose S) *v w"
-    by (metis matrix_vector_mul_assoc)
-  also have "w \<bullet> ((S ** transpose S) *v w) = 0" by (simp add: z)
-  finally have "(norm (transpose S *v w))\<^sup>2 = 0" by simp
-  then show ?thesis by simp
-qed
 
 lemma sbm_orth_increment:
   fixes S :: "real^'n::finite^'n" and w :: "real^'n"
@@ -10010,29 +9922,6 @@ text \<open>The contradiction, read back as the positive statement the envelope
   \<open>F \<le> F\<^sup>*\<close> (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
   inequality into a failed plain one.\<close>
 
-theorem exit_val_supersol_env_case1:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
-    and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
-    and kn: "k < CARD('n)" and Kc: "closed K"
-    and xi: "x \<in> interior K"
-    and tf: "test_fun_at \<phi> g H x"
-    and tmin: "\<And>y. y \<in> K \<Longrightarrow>
-      enn2real (exit_val k L T K x) - \<phi> x
-        \<le> enn2real (exit_val k L T K y) - \<phi> y"
-    and gx0: "g x \<noteq> 0"
-  shows "1 \<le> ell_op_usc k L (g x) H"
-proof (rule ccontr)
-  assume nle: "\<not> 1 \<le> ell_op_usc k L (g x) H"
-  then have lt: "ell_op_usc k L (g x) H < 1" by simp
-  have "ereal (ell_op k L (g x) H) < 1"
-    using ell_op_le_ell_op_usc[of k L "g x" H] lt by (rule le_less_trans)
-  then have fail: "ell_op k L (g x) H < 1" by (simp add: one_ereal_def)
-  show False
-    by (rule exit_val_supersol_contradiction_case1[OF T0 L1 k1 kn Kc xi
-        tf tmin gx0 fail])
-qed
 
 subsection \<open>Bricks for Case 2: the envelope limit and the tangential field\<close>
 
@@ -13402,79 +13291,6 @@ proof -
   show ?thesis by (rule that[of "e / 2"]) (use e0 key in auto)+
 qed
 
-lemma lsc_env_attains_inf:
-  fixes u :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
-  assumes B: "\<And>y. B \<le> u y" and cS: "compact S" and neS: "S \<noteq> {}"
-  obtains z where "z \<in> S"
-    and "\<And>y. y \<in> S \<Longrightarrow> lsc_env u z \<le> lsc_env u y"
-proof -
-  define m where "m = (INF y \<in> S. lsc_env u y)"
-  have bdd: "bdd_below (lsc_env u ` S)"
-    by (rule bdd_belowI[of _ B]) (use lsc_env_ge[OF B] in auto)
-  have neI: "lsc_env u ` S \<noteq> {}" using neS by auto
-  have mlow: "\<And>y. y \<in> S \<Longrightarrow> m \<le> lsc_env u y"
-    unfolding m_def by (rule cInf_lower[OF _ bdd]) auto
-  have pick: "\<exists>zz \<in> S. lsc_env u zz < m + 1 / real (Suc j)" for j
-  proof -
-    have "m < m + 1 / real (Suc j)" by simp
-    then have "\<exists>t \<in> lsc_env u ` S. t < m + 1 / real (Suc j)"
-      unfolding m_def using cInf_less_iff[OF neI bdd] by blast
-    then show ?thesis by auto
-  qed
-  have "\<forall>j. \<exists>zz. zz \<in> S \<and> lsc_env u zz < m + 1 / real (Suc j)"
-    using pick by blast
-  then obtain zs where zsS: "\<And>j. zs j \<in> S"
-    and zsm: "\<And>j. lsc_env u (zs j) < m + 1 / real (Suc j)"
-    by metis
-  have sq: "seq_compact S" using cS by (simp add: compact_eq_seq_compact_metric)
-  obtain z r where zS: "z \<in> S" and rm: "strict_mono r"
-    and lim: "(zs \<circ> r) \<longlonglongrightarrow> z"
-    using sq[unfolded seq_compact_def] zsS by blast
-  have zle: "lsc_env u z \<le> m"
-  proof (rule ccontr)
-    assume "\<not> lsc_env u z \<le> m"
-    then have mlt: "m < lsc_env u z" by simp
-    define c where "c = (m + lsc_env u z) / 2"
-    have cm: "m < c" unfolding c_def using mlt by simp
-    have cz: "c < lsc_env u z" unfolding c_def using mlt by simp
-    obtain e where e0: "0 < e"
-      and enearA: "\<forall>y. dist z y < e \<longrightarrow> c < lsc_env u y"
-      by (rule lsc_env_lower[OF B cz])
-    have enear: "\<And>y. dist z y < e \<Longrightarrow> c < lsc_env u y"
-      using enearA by blast
-    have ev1: "\<forall>\<^sub>F l in sequentially. dist ((zs \<circ> r) l) z < e"
-      using lim e0 by (simp add: tendsto_iff)
-    have ev2: "\<forall>\<^sub>F l in sequentially. 1 / real (Suc (r l)) < c - m"
-    proof -
-      have "(\<lambda>l. 1 / real (Suc l)) \<longlonglongrightarrow> 0"
-        using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
-      then have "(\<lambda>l. 1 / real (Suc (r l))) \<longlonglongrightarrow> 0"
-        using LIMSEQ_subseq_LIMSEQ[OF _ rm] by (simp add: o_def)
-      then show ?thesis using cm by (simp add: order_tendstoD(2))
-    qed
-    from ev1 obtain N1 where N1: "\<And>l. N1 \<le> l \<Longrightarrow>
-        dist ((zs \<circ> r) l) z < e"
-      by (auto simp: eventually_sequentially)
-    from ev2 obtain N2 where N2: "\<And>l. N2 \<le> l \<Longrightarrow>
-        1 / real (Suc (r l)) < c - m"
-      by (auto simp: eventually_sequentially)
-    define l where "l = max N1 N2"
-    have dl: "dist z ((zs \<circ> r) l) < e"
-      using N1[of l] unfolding l_def by (simp add: dist_commute)
-    have gl: "1 / real (Suc (r l)) < c - m"
-      using N2[of l] unfolding l_def by simp
-    have "c < lsc_env u (zs (r l))"
-      using enear[OF dl] by (simp add: o_def)
-    moreover have "lsc_env u (zs (r l)) < m + 1 / real (Suc (r l))"
-      by (rule zsm)
-    ultimately show False using gl by linarith
-  qed
-  show ?thesis
-  proof (rule that[OF zS])
-    fix y assume yS: "y \<in> S"
-    show "lsc_env u z \<le> lsc_env u y" using zle mlow[OF yS] by linarith
-  qed
-qed
 
 subsection \<open>Case 2: minimisers of a tilted quadratic\<close>
 
@@ -15460,24 +15276,6 @@ proof -
   qed
 qed
 
-theorem tanpV_feasible:
-  fixes b :: "nat \<Rightarrow> real^'n::finite" and z :: "real^'n"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and nz: "projmat b m *v z \<noteq> 0"
-    and mk: "CARD('n) - k \<le> m - 1" and L1: "1 \<le> L"
-  shows "tanpV (projmat b m) z \<in> feasible k L 0"
-  unfolding feasible_def
-proof (intro CollectI conjI)
-  have Psym: "transpose (projmat b m) = projmat b m" by (rule projmat_sym)
-  have Pidem: "projmat b m ** projmat b m = projmat b m"
-    by (rule projmat_idem[OF orth])
-  show "psd (tanpV (projmat b m) z)" by (rule tanpV_psd[OF Psym Pidem nz])
-  show "tanpV (projmat b m) z *v 0 = 0" by simp
-  show "eigen_ub (tanpV (projmat b m) z) L"
-    by (rule tanpV_eigen_ub[OF Psym Pidem L1])
-  show "eigen_lb (tanpV (projmat b m) z) (CARD('n) - k)"
-    using tanpV_eigen_lb[OF orth nz] mk unfolding eigen_lb_def by (meson le_trans)
-qed
 
 text \<open>The field is a projector, which is what makes the Euler chain's
   covariance equal to it and the radial drift vanish --- the two facts
@@ -15498,73 +15296,11 @@ proof -
   finally show ?thesis unfolding u_def .
 qed
 
-lemma tanpV_idem:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P" and nz: "P *v z \<noteq> 0"
-  shows "tanpV P z ** tanpV P z = tanpV P z"
-proof -
-  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
-  have uu: "u \<bullet> u = 1" unfolding u_def by (rule unit_normalize[OF nz])
-  have ufix: "P *v u = u" unfolding u_def by (rule proj_dir_fix[OF Pidem])
-  have tv: "tanpV P z *v y = P *v y - (u \<bullet> y) *\<^sub>R u" for y
-    unfolding u_def by (rule tanpV_mv)
-  have uP: "u \<bullet> (P *v y) = u \<bullet> y" for y
-  proof -
-    have "u \<bullet> (P *v y) = (transpose P *v u) \<bullet> y"
-      by (rule inner_matrix_transpose)
-    also have "\<dots> = (P *v u) \<bullet> y" unfolding Psym by (rule refl)
-    finally show ?thesis unfolding ufix .
-  qed
-  have killu: "tanpV P z *v u = 0" unfolding tv ufix uu by simp
-  have onP: "tanpV P z *v (P *v y) = tanpV P z *v y" for y
-  proof -
-    have "tanpV P z *v (P *v y) = P *v (P *v y) - (u \<bullet> (P *v y)) *\<^sub>R u"
-      by (rule tv)
-    also have "P *v (P *v y) = P *v y"
-      using Pidem by (metis matrix_vector_mul_assoc)
-    also have "u \<bullet> (P *v y) = u \<bullet> y" by (rule uP)
-    finally show ?thesis unfolding tv by simp
-  qed
-  have key: "tanpV P z *v (tanpV P z *v y) = tanpV P z *v y" for y
-  proof -
-    have "tanpV P z *v (tanpV P z *v y)
-        = tanpV P z *v (P *v y - (u \<bullet> y) *\<^sub>R u)" by (simp only: tv)
-    also have "\<dots> = tanpV P z *v (P *v y) - (u \<bullet> y) *\<^sub>R (tanpV P z *v u)"
-      by (simp add: matvec_diff_right matvec_scaleR_right)
-    also have "\<dots> = tanpV P z *v y" unfolding onP killu by simp
-    finally show ?thesis .
-  qed
-  show ?thesis
-    unfolding matrix_eq using key by (metis matrix_vector_mul_assoc)
-qed
 
 text \<open>The radial direction is killed at the point itself: this is why the
   squared radius has no drift beyond the trace term, so the growth is exact
   rather than merely bounded.\<close>
 
-lemma tanpV_radial_kill:
-  fixes P :: "real^'n::finite^'n" and x :: "real^'n"
-  assumes Pfix: "P *v x = x" and xnz: "x \<noteq> 0"
-  shows "x \<bullet> (tanpV P x *v x) = 0"
-proof -
-  have n0: "norm x \<noteq> 0" using xnz by simp
-  define u :: "real^'n" where "u = x /\<^sub>R norm x"
-  have ueq: "(P *v x) /\<^sub>R norm (P *v x) = u" unfolding u_def Pfix by (rule refl)
-  have xx: "x \<bullet> x = norm x * norm x"
-    by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
-  have ux: "u \<bullet> x = norm x"
-  proof -
-    have "u \<bullet> x = inverse (norm x) * (x \<bullet> x)" unfolding u_def by simp
-    then show ?thesis unfolding xx using n0 by simp
-  qed
-  have xu: "x \<bullet> u = norm x" using ux by (simp add: inner_commute)
-  have mv: "tanpV P x *v x = P *v x - (u \<bullet> x) *\<^sub>R u"
-    using tanpV_mv[of P x x] unfolding ueq .
-  have e1: "x \<bullet> (tanpV P x *v x) = x \<bullet> (P *v x) - (u \<bullet> x) * (x \<bullet> u)"
-    unfolding mv by (simp add: inner_diff_right)
-  have e2: "x \<bullet> (P *v x) = norm x * norm x" unfolding Pfix by (rule xx)
-  show ?thesis unfolding e1 e2 ux xu by simp
-qed
 
 subsection \<open>The subspace-tangential field with a clamped direction\<close>
 
@@ -16369,12 +16105,6 @@ text \<open>@{thm [source] tangential_exact_growth} gives the unclamped tangenti
 
 text \<open>The trace of the field is exactly the growth rate \<open>n - k\<close> needed above.\<close>
 
-corollary tanpV_trace_projmat:
-  fixes b :: "nat \<Rightarrow> real^'n::finite" and z :: "real^'n"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and nz: "projmat b m *v z \<noteq> 0"
-  shows "trace (tanpV (projmat b m) z) = real m - 1"
-  using tanpV_trace[OF nz] projmat_trace[OF orth] by simp
 
 subsection \<open>An orthonormal family through a prescribed unit vector\<close>
 

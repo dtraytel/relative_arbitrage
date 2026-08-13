@@ -227,11 +227,6 @@ theorem bounded_sconstraint:
   shows "bounded (sconstraint k L :: (real^'n::finite^'n) set)"
   by (rule boundedI) (use sconstraint_norm_le[OF L] in blast)
 
-theorem compact_sconstraint:
-  assumes L: "0 \<le> L"
-  shows "compact (sconstraint k L :: (real^'n::finite^'n) set)"
-  by (intro compact_eq_bounded_closed[THEN iffD2] conjI
-      bounded_sconstraint[OF L] closed_sconstraint)
 
 section \<open>The pair path space and its coordinate processes\<close>
 
@@ -713,19 +708,6 @@ lemma suff_volatile_cap_in_sconstraint:
   unfolding sconstraint_def
   using sv ub hull_subset[of "suff_volatile k"] lemma_2_1_easy by auto
 
-theorem diffquot_of_density_in_sconstraint:
-  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
-  assumes st: "s < t"
-    and sv: "\<And>u. u \<in> {s..t} \<Longrightarrow> a u \<in> suff_volatile k"
-    and ub: "\<And>u. u \<in> {s..t} \<Longrightarrow> eigen_ub (a u) L"
-    and int: "set_integrable lborel {s..t} a"
-  shows "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} a)
-      \<in> sconstraint k L"
-proof (rule average_in_closed_convex[OF sconstraint_convex closed_sconstraint st _ int])
-  fix u assume "u \<in> {s..t}"
-  then show "a u \<in> sconstraint k L"
-    using sv ub by (intro suff_volatile_cap_in_sconstraint) auto
-qed
 
 subsection \<open>The constraint set is inhabited\<close>
 
@@ -786,10 +768,6 @@ next
   qed
 qed
 
-corollary sconstraint_nonempty:
-  assumes L: "1 \<le> L"
-  shows "(sconstraint k L :: (real^'n::finite^'n) set) \<noteq> {}"
-  using mat_1_in_sconstraint[OF L] by blast
 
 subsection \<open>Continuing a stopped volatility past its stopping time\<close>
 
@@ -897,15 +875,6 @@ text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>â‚€á
 definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
 
-lemma Yint_0: "Yint a 0 = 0"
-  unfolding Yint_def set_lebesgue_integral_def
-proof (rule integral_eq_zero_AE)
-  have "AE x in lborel. x \<notin> {0 :: real}"
-    using finite_imp_null_set_lborel[of "{0 :: real}"]
-    by (simp add: AE_iff_null_sets)
-  then show "AE x in lborel. indicat_real {0..0} x *\<^sub>R a x = 0"
-    by (rule eventually_mono) auto
-qed
 
 lemma Yint_increment:
   fixes a :: "real \<Rightarrow> real^'n::finite^'n"
@@ -993,50 +962,6 @@ text \<open>Combined with the difference-quotient-to-density transfer, the class
   times with derivative in the constraint set --- the density statement of
   Eq. (1.7), stated for the class itself rather than for a bare path.\<close>
 
-theorem exit_class_density_ae:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x"
-  shows "AE \<omega> in Q.
-      negligible {u \<in> {0..T}. \<not> (\<lambda>t. snd (\<omega> t)) differentiable (at u)}
-      \<and> (\<forall>u D. 0 \<le> u \<longrightarrow> u < T
-           \<longrightarrow> ((\<lambda>t. snd (\<omega> t)) has_vector_derivative D) (at u within {u..T})
-           \<longrightarrow> D \<in> sconstraint k L)"
-proof -
-  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding exit_class_def by blast
-  have B0: "0 \<le> real CARD('n) * L" using L by simp
-  show ?thesis
-  proof (rule AE_mp[OF dq], rule AE_I2, intro impI)
-    fix \<omega> :: "'n pairpath"
-    assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    have dqw: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      if "0 \<le> s" "s < t" "t \<le> T" for s t
-      using q that by blast
-    have nb: "norm a \<le> real CARD('n) * L" if "a \<in> sconstraint k L"
-      for a :: "real^'n^'n"
-      using that by (rule sconstraint_norm_le[OF L])
-    show "negligible {u \<in> {0..T}. \<not> (\<lambda>t. snd (\<omega> t)) differentiable (at u)}
-        \<and> (\<forall>u D. 0 \<le> u \<longrightarrow> u < T
-             \<longrightarrow> ((\<lambda>t. snd (\<omega> t)) has_vector_derivative D) (at u within {u..T})
-             \<longrightarrow> D \<in> sconstraint k L)"
-    proof -
-      have part1:
-        "negligible {u \<in> {0..T}. \<not> (\<lambda>t. snd (\<omega> t)) differentiable (at u)}"
-        by (rule diffquot_density_ae(1)[OF T closed_sconstraint B0 nb dqw])
-      have part2: "D \<in> sconstraint k L"
-        if u: "0 \<le> u" "u < T"
-          and Du: "((\<lambda>t. snd (\<omega> t)) has_vector_derivative D)
-            (at u within {u..T})"
-        for u D
-        by (rule diffquot_deriv_in_constraint
-            [OF closed_sconstraint dqw u(1) u(2) Du])
-      from part1 part2 show ?thesis by blast
-    qed
-  qed
-qed
 
 text \<open>On the capped horizon the second component of a class member is
   uniformly bounded, almost surely, by \<open>n\<sqdot>L\<sqdot>T\<close>: it starts at \<open>0\<close> and is

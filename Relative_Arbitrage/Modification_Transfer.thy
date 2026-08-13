@@ -34,8 +34,6 @@ definition cylset ::
   "cylset M X t = {space M \<inter> (\<Inter>p\<in>P. X (fst p) -` snd p) | P.
      finite P \<and> (\<forall>p\<in>P. fst p \<in> {0..t} \<and> snd p \<in> sets borel)}"
 
-lemma cylset_space [simp]: "space M \<in> cylset M X t"
-  unfolding cylset_def by (intro CollectI exI[of _ "{}"]) auto
 
 lemma cylset_single:
   assumes u: "u \<in> {0..t}" and B: "B \<in> sets borel"
@@ -672,16 +670,6 @@ qed
 text \<open>Two more facts that need the locale \<open>stochastic\_process\<close> and therefore
   have to live in a theory that does not import Kolmogorov-Chentsov.\<close>
 
-lemma adapted_process_natural_filtration_of:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"
-  assumes measX: "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
-  shows "adapted_process M (natural_filtration M 0 X) 0 X"
-proof -
-  interpret SP: stochastic_process M 0 X
-    by unfold_locales (auto intro: measX)
-  show ?thesis
-    by (rule SP.adapted_process_natural_filtration)
-qed
 
 lemma sets_natural_filtration_subset:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"

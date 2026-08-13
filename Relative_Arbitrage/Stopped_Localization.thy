@@ -647,11 +647,6 @@ lemma space_restrict_full: "space (restrict_space M G) = G"
 lemma sets_restrict_full: "G \<inter> space M \<in> sets M"
   using G by (simp add: sets.sets_into_space Int_absorb2)
 
-lemma AE_restrict_full:
-  assumes "AE \<omega> in M. \<phi> \<omega>"
-  shows "AE \<omega> in restrict_space M G. \<phi> \<omega>"
-  by (subst AE_restrict_space_iff[OF sets_restrict_full])
-    (use assms in auto)
 
 lemma emeasure_restrict_full:
   assumes S: "S \<in> sets M"
