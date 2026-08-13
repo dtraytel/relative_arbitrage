@@ -7443,14 +7443,14 @@ text \<open>\<open>visc_subsol_env k L K \<Omega> u\<close> reads \<open>u\<clos
 
 lemma visc_subsol_env_agrees:
   fixes K :: "(real^'n::finite) set"
-  assumes sub: "visc_subsol_env k L K \<Omega> u" and OK: "\<Omega> \<subseteq> K"
+  assumes sub: "visc_subsol_env2 k L K \<Omega> u" and OK: "\<Omega> \<subseteq> K"
     and eq: "\<And>y. y \<in> K \<Longrightarrow> u' y = u y"
-  shows "visc_subsol_env k L K \<Omega> u'"
-  unfolding visc_subsol_env_def
+  shows "visc_subsol_env2 k L K \<Omega> u'"
+  unfolding visc_subsol_env2_def
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_C2 \<phi> g H x"
     and gl: "\<forall>y\<in>K. u' y - \<phi> y \<le> u' x - \<phi> x"
   have xK: "x \<in> K" using x OK by blast
   have gl': "\<forall>y\<in>K. u y - \<phi> y \<le> u x - \<phi> x"
@@ -7462,7 +7462,7 @@ proof (intro ballI allI impI)
     finally show "u y - \<phi> y \<le> u x - \<phi> x" .
   qed
   show "ell_op_lsc k L (g x) H \<le> 1"
-    using sub x tf gl' unfolding visc_subsol_env_def by blast
+    using sub x tf gl' unfolding visc_subsol_env2_def by blast
 qed
 
 text \<open>Extending an usc \<open>u\<close> off a closed \<open>K\<close> by a constant at or below its
@@ -13084,13 +13084,14 @@ proof (rule ccontr)
     by (rule usc_eps_scale[OF uscut t0 that])
   have OmK: "interior K \<union> {q \<in> K - interior K. 0 < u q} \<subseteq> K"
     using interior_subset by blast
-  have subenv: "visc_subsol_env k L K
+  have subenv: "visc_subsol_env2 k L K
       (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
-    by (rule visc_subsol_env_agrees[OF subu OmK]) (simp add: ut_def)
+    by (rule visc_subsol_env_agrees[OF visc_subsol_env_imp_env2[OF subu] OmK])
+      (simp add: ut_def)
   have subloc: "visc_subsol k L
       (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
     by (rule visc_subsol_env_imp_visc_subsol
-        [OF visc_subsol_env_imp_env2[OF subenv] compact_imp_bounded[OF cK] _
+        [OF subenv compact_imp_bounded[OF cK] _
             kk(1) kk(2) LL, where Bu = B])
       (use utB in simp)
   have gateK: "{q. 0 < ut q}
