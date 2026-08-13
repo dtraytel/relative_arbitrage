@@ -960,6 +960,163 @@ proof -
           T2 usc bnd sub sups xK])
 qed
 
+text \<open>\<^bold>\<open>Clauses (3) and (4) with the paper's own envelope.\<close>  Definition 3.1
+  reads \<open>u\<^sub>*\<close> within \<open>K\<close>, which is @{const lsc_envK}; the clauses above read it
+  over balls of \<open>real^'n\<close>.  The two differ only on \<open>K - interior K\<close>, and there
+  the difference is real: on a cube with \<open>k = 2\<close> the value function is positive
+  on the open two-dimensional faces, so its liminf within \<open>K\<close> is positive
+  there while its liminf over balls of \<open>real^'n\<close> is \<open>0\<close>.  Both clauses are
+  therefore restated, not derived by a weakening.\<close>
+
+theorem exit_val_supersol_bc_K:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+  shows "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K.
+          lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
+      (lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)))"
+proof -
+  define v where "v = (\<lambda>z :: real^'n. enn2real (exit_val k L T K z))"
+  have v0: "0 \<le> v y" for y unfolding v_def by (rule exit_val_real_nonneg)
+  have gate: "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} = interior K"
+  proof
+    show "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} \<subseteq> interior K"
+    proof
+      fix y assume y: "y \<in> interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}"
+      show "y \<in> interior K"
+      proof (cases "y \<in> interior K")
+        case True then show ?thesis .
+      next
+        case False
+        then have yK: "y \<in> K" and neg: "lsc_envK K v y < 0" using y by auto
+        have "0 \<le> lsc_envK K v y" by (rule lsc_envK_ge[OF v0 yK])
+        then show ?thesis using neg by linarith
+      qed
+    qed
+    show "interior K \<subseteq> interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}"
+      by blast
+  qed
+  have cap: "lsc_env v y < T / 2" for y :: "real^'n"
+    unfolding v_def by (rule exit_val_cap_inert[OF kn _ _ KB Tbig]) (use L1 T0 in auto)
+  have main: "visc_supersol_env k L K (interior K) (lsc_envK K v)"
+    unfolding v_def
+    by (rule exit_val_supersol_envK[OF T0 L1 k1 kn Kc])
+      (use cap in \<open>simp add: v_def\<close>)
+  show ?thesis using main unfolding v_def[symmetric] gate .
+qed
+
+theorem iexit_val_supersol_bc_K:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k" and cK: "compact K"
+  shows "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K.
+         lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
+      (lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)))"
+proof -
+  have L: "1 \<le> L" using L1 by simp
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq
+    by (rule exit_val_supersol_bc_K[OF T0 L1 k1 kn Kc KB T2])
+qed
+
+text \<open>The interior clause on its own, which is Definition 3.1(b) for
+  \<^const>\<open>iexit_val\<close> with the paper's envelope: the boundary gate is empty,
+  since the value function is nonnegative and so is its liminf within \<open>K\<close>.\<close>
+
+theorem iexit_val_supersol_lsc_K:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k" and cK: "compact K"
+  shows "visc_supersol_env k L K (interior K)
+      (lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)))"
+proof -
+  define v where "v = (\<lambda>z :: real^'n. enn2real (iexit_val k L K z))"
+  have v0: "0 \<le> v y" for y unfolding v_def by simp
+  have gate: "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} = interior K"
+  proof
+    show "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} \<subseteq> interior K"
+    proof
+      fix y assume y: "y \<in> interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}"
+      show "y \<in> interior K"
+      proof (cases "y \<in> interior K")
+        case True then show ?thesis .
+      next
+        case False
+        then have yK: "y \<in> K" and neg: "lsc_envK K v y < 0" using y by auto
+        have "0 \<le> lsc_envK K v y" by (rule lsc_envK_ge[OF v0 yK])
+        then show ?thesis using neg by linarith
+      qed
+    qed
+    show "interior K \<subseteq> interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}"
+      by blast
+  qed
+  have main: "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}) (lsc_envK K v)"
+    unfolding v_def by (rule iexit_val_supersol_bc_K[OF kn L1 k1 cK])
+  show ?thesis using main unfolding v_def[symmetric] gate .
+qed
+
+theorem iexit_val_uniqueness_K:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+    and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
+      \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
+    and bnd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
+    and sub: "visc_subsol_env k L K
+        (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+    and sups: "visc_supersol_env k L K
+        (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0}) (lsc_envK K u)"
+    and xK: "x \<in> K"
+  shows "u x = enn2real (iexit_val k L K x)"
+proof -
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  have Bu: "u y \<le> Bd" if "y \<in> K" for y
+    using bnd[OF that] by (simp add: abs_le_iff)
+  have iK: "interior K \<subseteq> K" by (rule interior_subset)
+  define ubar where "ubar = Kext K u"
+  have eqK: "ubar y = u y" if "y \<in> K" for y
+    unfolding ubar_def by (rule Kext_eq_on_K[OF Kc neK Bu usc that])
+  have bnd': "\<bar>ubar y\<bar> \<le> Bd" for y
+    unfolding ubar_def by (rule Kext_bounded[OF Kc neK bnd])
+  have usc': "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> ubar y < c" if lt: "ubar z < c" for c z
+  proof -
+    have lt': "Kext K u z < c" using lt unfolding ubar_def .
+    have "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> Kext K u y < c"
+      by (rule Kext_usc[OF Kc neK Bu lt'])
+    then show ?thesis unfolding ubar_def .
+  qed
+  have lscK: "lsc_env ubar y = lsc_envK K u y" if "y \<in> K" for y
+    unfolding ubar_def by (rule lsc_env_Kext[OF Kc neK bnd usc that])
+  have gate1: "{z \<in> K - interior K. 0 < ubar z}
+      = {z \<in> K - interior K. 0 < u z}"
+    using eqK by auto
+  have gate2: "{z \<in> K - interior K. lsc_env ubar z < 0}
+      = {z \<in> K - interior K. lsc_envK K u z < 0}"
+    using lscK by auto
+  have sub': "visc_subsol_env k L K
+      (interior K \<union> {z \<in> K - interior K. 0 < ubar z}) ubar"
+    unfolding gate1 by (rule visc_subsol_env_cong[OF _ _ sub]) (use eqK iK in auto)
+  have sups': "visc_supersol_env k L K
+      (interior K \<union> {z \<in> K - interior K. lsc_env ubar z < 0}) (lsc_env ubar)"
+    unfolding gate2
+    by (rule visc_supersol_env_cong[OF _ _ sups]) (use lscK iK in auto)
+  have "ubar x = enn2real (iexit_val k L K x)"
+    by (rule iexit_val_uniqueness[OF kn L1 k1 cK neK expK usc' bnd' sub' sups' xK])
+  then show ?thesis using eqK[OF xK] by simp
+qed
+
+
+
 text \<open>\<^bold>\<open>Example 3.1\<close>, in closed form and with no horizon left in it.\<close>
 
 theorem example_3_1_uncapped:

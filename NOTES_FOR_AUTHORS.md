@@ -158,7 +158,8 @@ and below its value at `x` outside an explicit ball.
 | | paper | formalisation |
 |---|---|---|
 | time horizon | none; `C([0,∞))` | finite `T`, proved to give the same value function as yours on `C([0,∞))` |
-| regularity in the uniqueness clause | bounded usc | the same |
+| regularity in the uniqueness clause | bounded usc on `K` | the same, relative to `K` |
+| the envelope `u_*` of Definition 3.1 | liminf within `K` | the same (`lsc_envK`); the liminf over balls of `real^'n` is also formalised, and the two differ on `K \ int K` |
 | zero boundary condition | Definition 3.1, viscosity sense | the same; the pointwise identity `v = 0` on `∂K` is proved only on a ball, where Lemma 5.3 says it holds |
 | hypothesis on `K` for uniqueness | the `T_ι` family of Section 4 | an explicit predicate, proved to hold for every compact convex `K` with nonempty interior |
 | standing assumption on `L` | `L ≥ 1` | the same, `L = 1` included — but by the rotation field above, not by Case 1 as written |

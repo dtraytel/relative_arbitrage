@@ -1,53 +1,64 @@
-# Open items against the paper
+# Items against the paper --- both now closed
 
-One place where the formal statement and arXiv:2512.17702 do not yet line up.
-Everything else in `Statement/Theorem_1_1_Statement.thy` matches; see
-`NOTES_FOR_AUTHORS.md` for the differences that are settled.
+Nothing here is open.  This file is the record of the two places where the
+formal statement and arXiv:2512.17702 did not line up, and of how each was
+closed; `Statement/Theorem_1_1_Statement.thy` now states all five clauses of
+Theorem 1.1 in the paper's own terms.  See `NOTES_FOR_AUTHORS.md` for the
+differences that never were gaps.
 
-## 1. The envelope: `real^'n` versus `K`
+## 1. The envelope: `real^'n` versus `K` --- CLOSED 2026-08-13
 
 The paper's solutions are functions `u : K -> R` and its lower envelope `u_*`
-is the liminf **within K**.  Here they are `real^'n => real` and
-
-    lsc_env u x = (SUP e:{0<..}. INF y:ball x e. u y)
-
+is the liminf **within K**.  Here they are `real^'n => real` and `lsc_env`
 takes the liminf over balls of `real^'n`.  Always `lsc_env u <= u_*`, with
-equality at interior points of `K` (small balls stay inside), so the two
-differ exactly on `K - interior K` --- which is where the boundary gate of
-clause (3) is evaluated.
+equality at interior points of `K`, so the two differ exactly on
+`K - interior K` --- which is where the boundary gate of clause (3) is read.
 
-Direction of the gap, which is not uniform:
+**Both directions of the gap were real.**  An earlier note here said clause (3)
+was merely *stronger* than the paper's, because our gate `{lsc_env u < 0}`
+contains the paper's `{u_* < 0}`.  That reasoning only looked at the gate.  It
+misses that the FUNCTION being touched from below also changes: raising a
+function on part of `K` makes it easier for a test function to touch it there,
+so more test functions have to be checked, and the paper's clause (3) is in
+fact the stronger of the two.  On the value function the two gates are both
+empty (it is nonnegative), and the difference is entirely in the function ---
+by Lemma 5.3 the cube with `k = 2` has `v > 0` on the open two-dimensional
+faces, so its liminf within `K` is positive there while its liminf over balls
+of `real^'n` is `0`.  Neither clause implied the other; the paper's had to be
+proved.
 
-* clause (4): the envelope is a HYPOTHESIS on the competitor.  Our gate
-  `{x : dK. lsc_env u x < 0}` contains the paper's `{x : dK. u_* x < 0}`, so we
-  demand more.  Our uniqueness clause is WEAKER than Theorem 1.1.
-* clause (3): the envelope is a CONCLUSION.  We prove the inequality at more
-  points, so that clause is STRONGER than the paper's.
+**What closed it.**  `Operator_Envelopes` now carries the paper's envelope
 
-**It is reparable.**  A function `K -> R` reaches `real^'n` only through an
-extension, and extending by any constant `M >= sup_K u` makes the two agree on
-`K`.  The crux is proved (scratch theory, 0 errors):
+    lsc_envK K u x = (SUP e:{0<..}. INF (u ` (ball x e Int K)))
 
-    lemma INF_ball_eq_on_K:
-      assumes "bdd_below (range u)"
-        and "!!y. y : K ==> u y <= M" and "!!y. y ~: K ==> M <= u y"
-        and "x : K" and "0 < e"
-      shows "(INF y:ball x e. u y) = (INF y:(ball x e Int K). u y)"
+and a bridge to `lsc_env`, so the machinery, which is all phrased in terms of
+functions on `real^'n`, can be pointed at hypotheses that only speak about `K`.
 
-The points the larger ball adds are all `>= M >= u x`, and `u x` is already in
-the smaller one, so they never lower the infimum.
+* Clause (2b) and clause (3), where the envelope is a CONCLUSION, needed no
+  extension.  The touching in the supersolution proof is global over `K` but
+  the proof only ever uses it near the touching point, so the local form is the
+  one really proved (`exit_val_supersol_lsc_local`).  Stated locally, the
+  paper's envelope follows at once: the two envelopes agree at interior points,
+  and a small enough ball around an interior point meets `K` only in interior
+  points.
+* Clause (4), where the envelope is a HYPOTHESIS on the competitor, needed an
+  extension of `u : K -> R` to `real^'n`.  This is the delicate half, because
+  the extension has to do two things that pull against each other: stay high
+  enough off `K` not to lower the infimum over a ball (or the two envelopes
+  differ), and stay low enough at `K - interior K` for upper semicontinuity to
+  survive (or the comparison machinery does not apply).  Extending by the
+  constant `sup_K u` --- the plan recorded here previously --- does the first
+  and FAILS the second at every boundary point where `u < sup_K u`.
+  What works is `Kext K u = usc_env (u o closest_point K)`: off `K` the value
+  is a value of `u` at a point at most twice as far away, which is enough for
+  the infimum, and it tends to `u z` as one approaches `z` in `K`, which is
+  enough for semicontinuity; the outer `usc_env` repairs the one remaining
+  failure, at points outside `K` where the projection jumps, without touching
+  `K`.  Then `lsc_env (Kext K u) = lsc_envK K u` on `K` (`lsc_env_Kext`), and
+  the whole of clause (4) transports.
 
-Plan (~150--250 lines):
-
-1. Define `lsc_envK K u x = (SUP e:{0<..}. INF (u ` (ball x e Int K)))`.
-2. Move `INF_ball_eq_on_K` into `Operator_Envelopes` beside it, and derive
-   `lsc_env ubar x = lsc_envK K u x` for `x : K` under the extension
-   hypothesis, by a SUP congruence.
-3. Restate clause (4) for `u : K -> R` under the paper's hypotheses, applying
-   the present theorem to `ubar y = (if y : K then u y else Sup (u ` K))`; the
-   sup exists since `K` is compact and `u` bounded.
-4. Restate clause (3) with `lsc_envK`; that direction weakens what is already
-   proved, so it follows.
+Clause (4) is therefore now stated with every hypothesis about `K` alone: upper
+semicontinuity relative to `K`, boundedness on `K`, and the paper's envelope.
 
 ## 2. Strictness in `L` --- CLOSED 2026-08-13
 

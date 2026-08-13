@@ -14926,6 +14926,83 @@ proof (intro ballI allI impI)
 qed
 
 
+subsection \<open>The same inequality for the envelope taken within \<open>K\<close>\<close>
+
+text \<open>The touching in @{thm [source] exit_val_supersol_lsc} is global over \<open>K\<close>
+  but its proof only ever uses it near the touching point, so the local form
+  is the one actually proved; and once it is stated locally the paper's
+  envelope @{const lsc_envK} follows at once, since the two envelopes agree at
+  interior points and a small enough ball around an interior point meets \<open>K\<close>
+  only in interior points.\<close>
+
+theorem exit_val_supersol_lsc_local:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K"
+    and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+    and xi: "x \<in> interior K" and tf: "test_fun_at \<phi> g H x" and rho0: "0 < \<rho>"
+    and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+  shows "1 \<le> ell_op_usc k L (g x) H"
+proof (cases "g x = 0")
+  case False
+  have plain: "1 \<le> ell_op k L (g x) H"
+  proof (rule ccontr)
+    assume "\<not> 1 \<le> ell_op k L (g x) H"
+    then have flt: "ell_op k L (g x) H < 1" by simp
+    show False
+      by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc xi
+            tf rho0 tmin False flt])
+  qed
+  have "(1 :: ereal) \<le> ereal (ell_op k L (g x) H)" using plain by simp
+  also have "\<dots> \<le> ell_op_usc k L (g x) H" by (rule ell_op_le_ell_op_usc)
+  finally show ?thesis .
+next
+  case True
+  have "1 \<le> ell_op_usc k L 0 H"
+    by (rule exit_val_case2[OF T0 L1 k1 kn Kc xi tf True rho0 tmin cap])
+  then show ?thesis unfolding True .
+qed
+
+theorem exit_val_supersol_envK:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K"
+    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+  shows "visc_supersol_env k L K (interior K)
+      (lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)))"
+  unfolding visc_supersol_env_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x"
+    and tmin: "\<forall>y\<in>K. lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+      \<le> lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+  have v0: "(0 :: real) \<le> enn2real (exit_val k L T K y)" for y by simp
+  obtain \<rho> where rho0: "0 < \<rho>" and rsub: "ball x \<rho> \<subseteq> interior K"
+    using openE[OF open_interior xi] by blast
+  have eqI: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
+      = lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)) y"
+    if "y \<in> interior K" for y
+    by (rule lsc_env_eq_on_interior[OF v0 that])
+  have loc: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+    if yK: "y \<in> K" and dy: "dist x y < \<rho>" for y
+  proof -
+    have "y \<in> interior K" using rsub dy by auto
+    then show ?thesis using tmin yK eqI[OF xi] eqI[of y] by simp
+  qed
+  show "1 \<le> ell_op_usc k L (g x) H"
+    by (rule exit_val_supersol_lsc_local[OF T0 L1 k1 kn Kc cap[OF xi] xi tf
+          rho0 loc])
+qed
+
+
 subsection \<open>Discharging the horizon hypothesis\<close>
 
 text \<open>@{thm [source] exit_val_supersol_lsc} carries the assumption that the

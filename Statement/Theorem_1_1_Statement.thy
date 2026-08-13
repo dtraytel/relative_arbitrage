@@ -112,9 +112,12 @@ text \<open>A test function at \<open>x\<close> is differentiable near \<open>x\
 
 text \<open>@{thm [display] test_fun_at_def}\<close>
 
-text \<open>The lower semicontinuous envelope:\<close>
+text \<open>The lower semicontinuous envelope.  Definition 3.1 reads it within \<open>K\<close>,
+  which is \<^const>\<open>lsc_envK\<close>; \<^const>\<open>lsc_env\<close> is the same liminf over balls of
+  \<open>real^'n\<close>.  The two agree at interior points of \<open>K\<close> and differ in general on
+  \<open>K - interior K\<close>, so it is \<^const>\<open>lsc_envK\<close> that the clauses below use:\<close>
 
-text \<open>@{thm [display] lsc_env_def}\<close>
+text \<open>@{thm [display] lsc_env_def lsc_envK_def}\<close>
 
 text \<open>Definition 3.1, with the touching taken globally over \<open>K\<close> and the
   inequality demanded at the points of \<open>\<Omega>\<close>.  Instantiating \<open>\<Omega>\<close> at
@@ -193,9 +196,9 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
 theorem clause_2_supersolution:
   fixes K :: "(real^'n::finite) set"
   assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k" and "compact K"
-  shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (iexit_val k L K u))"
-  by (rule iexit_val_supersol_lsc[OF assms])
+  shows "visc_supersol_env k L K (interior K)
+      (lsc_envK K (\<lambda>u. enn2real (iexit_val k L K u)))"
+  by (rule iexit_val_supersol_lsc_K[OF assms])
 
 text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)\<close>, in the viscosity
   sense of Definition 3.1.  Both halves hold with the boundary gate included.
@@ -220,28 +223,36 @@ theorem clause_3_boundary_supersolution:
   assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k" and "compact K"
   shows "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K.
-         lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
-      (lsc_env (\<lambda>z. enn2real (iexit_val k L K z)))"
-  by (rule iexit_val_supersol_bc[OF assms])
+         lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
+      (lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)))"
+  by (rule iexit_val_supersol_bc_K[OF assms])
 
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>  Any bounded upper semicontinuous function that
   satisfies both clauses of Definition 3.1 with their boundary gates, on an
   expandable compact \<open>K\<close>, equals the value function on \<open>K\<close>.  Continuity is not
-  assumed, and is not part of Theorem 1.1.\<close>
+  assumed, and is not part of Theorem 1.1.
+
+  Every hypothesis is about \<open>K\<close> alone: semicontinuity and boundedness are
+  demanded only at and between points of \<open>K\<close>, and the envelope is the paper's
+  \<^const>\<open>lsc_envK\<close>.  The competitor is still typed \<open>real^'n \<Rightarrow> real\<close> --- there
+  are no partial functions here --- but its values off \<open>K\<close> are unconstrained
+  and unused.\<close>
 
 theorem clause_4_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
   assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k"
     and "compact K" and "K \<noteq> {}" and "expandable K"
-    and "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and "\<And>y. \<bar>u y\<bar> \<le> Bd"
+    and "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
+           \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
+    and "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
     and "visc_subsol_env k L K
            (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
     and "visc_supersol_env k L K
-           (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
+           (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0})
+           (lsc_envK K u)"
     and "x \<in> K"
   shows "u x = enn2real (iexit_val k L K x)"
-  by (rule iexit_val_uniqueness[OF assms])
+  by (rule iexit_val_uniqueness_K[OF assms])
 
 section \<open>Example 3.1\<close>
 
@@ -261,17 +272,19 @@ text \<open>
   \<^item> Continuity of the value function is not proved.  It is not needed for
     Theorem 1.1, and the paper proves it only in its Section 5 under further
     hypotheses.
-  \<^item> Clause (4) assumes the competitor \<open>u\<close> bounded, \<open>\<bar>u y\<bar> \<le> Bd\<close> uniformly in \<open>y\<close>.
+  \<^item> Clause (4) assumes the competitor \<open>u\<close> bounded on \<open>K\<close>, \<open>\<bar>u y\<bar> \<le> Bd\<close>.
     This is the paper's own hypothesis: Theorem 1.1 says only \<open>upper
     semicontinuous\<close>, but Definition 3.1 opens each of its three clauses with
     \<open>a bounded function u : K \<rightarrow> \<real>\<close>, so boundedness is inside the phrase
     \<open>viscosity solution\<close> rather than beside it.  It is the standard local
     boundedness that makes the envelope \<open>u\<^sub>*\<close> of clause (b) real-valued.
-  \<^item> The paper's solutions are functions \<open>K \<rightarrow> \<real>\<close>, and its envelopes are taken
-    within \<open>K\<close>; here they are functions \<open>real^'n \<rightarrow> \<real>\<close>, the bound is over all
-    of \<open>real^'n\<close>, and @{const lsc_env} takes the liminf over balls of
-    \<open>real^'n\<close>.  Inside \<open>K\<close> these agree; on \<open>K - interior K\<close>, where the boundary
-    gate of clause (3) is evaluated, they need not.
+  \<^item> The paper's solutions are functions \<open>K \<rightarrow> \<real>\<close>; here they are functions
+    \<open>real^'n \<Rightarrow> \<real>\<close>, since there are no partial functions.  Nothing is asked of
+    them off \<open>K\<close>: the hypotheses of clause (4) quantify over \<open>K\<close>, the touchings
+    of Definition 3.1 are over \<open>K\<close>, and the envelope is \<^const>\<open>lsc_envK\<close>,
+    taken within \<open>K\<close>.  The bridge is an extension by the nearest-point
+    projection, followed by its upper envelope; see \<open>Kext\<close> and
+    \<open>lsc_env_Kext\<close>.
 \<close>
 
 (*<*)
