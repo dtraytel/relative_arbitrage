@@ -1,6 +1,7 @@
 # Theorems reported unused by `unused_thms`
 
-Produced with Isabelle's own proof-term analysis, not a textual scan:
+From Isabelle's own proof-term analysis, not a textual scan. Run from a theory
+importing `Statement/Theorem_1_1_Statement.thy`:
 
 ```
 ML \<open>
@@ -10,21 +11,29 @@ ML \<open>
 \<close>
 ```
 
-run from a theory importing `Statement/Theorem_1_1_Statement.thy`, then
-filtered twice: to facts whose theory is one of this repository's, and to
-facts this repository actually declares (the rest are locale facts inherited
-through `interpretation`, which `unused_thms` reports under our theory names
-but which belong to the AFP sessions).
+That reports 3126 facts. Only the ones below are actionable, and the filtering
+matters:
 
-That leaves the list below: 339 facts, none of them a `definition`, that no
-proof in the development uses. Ten of them are in
-`Statement/Theorem_1_1_Statement.thy` and are unused *by construction* --- they
-are the five clauses of Theorem 1.1 and the statements around them, which
-nothing is supposed to consume. The rest are intermediate steps of routes that
-were superseded.
+* **Keep only theory-qualified names** (`Theory.fact`), where `Theory` is one
+  of ours and the fact is declared in that very file: 288 facts.
+* **Discard the locale-qualified ones** (`Theory.Locale.fact`): 1316 of them
+  sit under our theory names. Most are facts inherited through
+  `interpretation` and belong to the AFP sessions, not here. They cannot be
+  matched back to a declaration by short name --- a locale-inherited
+  `Foo.BM.trace_bound_pointwise` being unused says nothing about the
+  `trace_bound_pointwise` this repository declares, which is used. Acting on a
+  short-name match deletes live lemmas; that mistake was made once and
+  reverted.
 
-Deleting one can make its private helpers unused in turn, so the list has to be
-regenerated after each pass until it reaches a fixpoint.
+Ten of the entries are in `Statement/Theorem_1_1_Statement.thy` and are unused
+*by construction* --- they are the clauses of Theorem 1.1, which nothing is
+supposed to consume. The `Alexandrov_Sup_Convolution`, `Path_Space_Tightness`,
+`Martingale_Sampling` and `Wiener_Measure` entries are in general-purpose
+toolboxes, where an unused lemma is not obviously waste.
+
+Deleting one of these can make its private helpers unused in turn, so the list
+has to be regenerated after each pass until it reaches a fixpoint. Nothing on
+this list has been deleted.
 
 
 ## Relative_Arbitrage/Comparison_Principle.thy (77)
@@ -107,42 +116,7 @@ regenerated after each pass until it reaches a fixpoint.
 - `doubled_maximiser_in_gate` (line 14101)
 - `two_domain_doubled_maximiser` (line 14125)
 
-## Relative_Arbitrage/Exit_Class_Compactness.thy (32)
-
-- `stopped_market_acont_in_sconstraint` (line 34)
-- `stopped_market_Yint_diffquot_in_sconstraint` (line 188)
-- `stopped_market_acov_leaves_sconstraint` (line 237)
-- `ploc_le_T` (line 1558)
-- `exit_class_trace_martingale` (line 6242)
-- `space_pglue_law` (line 7011)
-- `exit_val_paste_lower` (line 8607)
-- `space_kglue_law` (line 8900)
-- `cross_borel` (line 9658)
-- `theorem_1_1_paper_v_fragment` (line 10495)
-- `compact_space_dense_seq` (line 10709)
-- `usc_sel_set_closedin` (line 10816)
-- `usc_sel_set_compactin` (line 10830)
-- `usc_sel_good_ex` (line 10841)
-- `usc_sel_code_set` (line 10944)
-- `usc_sel_code_set_ne` (line 10962)
-- `usc_sel_code_set_sup` (line 10968)
-- `usc_sel_code_mono` (line 10974)
-- `usc_sel_code_decseq` (line 10997)
-- `usc_sel_in_code_set` (line 11003)
-- `usc_sel_in_M` (line 11025)
-- `usc_sel_code_set_small` (line 11035)
-- `usc_sel_code_set_in_open` (line 11067)
-- `usc_sel_optimal` (line 11091)
-- `Least_nat_eq_iff` (line 11130)
-- `usc_measurable_selection` (line 11165)
-- `space_kglue_law'` (line 12081)
-- `kglue_law'_start` (line 12205)
-- `kglue_law'_diffquot` (line 12245)
-- `borel_of_path_prod` (line 12310)
-- `countably_valued_approx` (line 12675)
-- `limitin_of_dist_half` (line 12724)
-
-## Relative_Arbitrage/Exit_Class_DPP.thy (32)
+## Relative_Arbitrage/Exit_Class_DPP.thy (30)
 
 - `pexit_pfut` (line 1088)
 - `exit_class_future_of_past` (line 1984)
@@ -151,7 +125,6 @@ regenerated after each pass until it reaches a fixpoint.
 - `pexit_split_pshift_pfut` (line 5419)
 - `exit_val_dpp` (line 5775)
 - `kglue_law'_rcd_eq` (line 6131)
-- `pcut_pglue` (line 6302)
 - `exit_val_dpp_sup_ge_two` (line 7029)
 - `exit_val_dpp_ge_const_list` (line 7406)
 - `pafter_zero` (line 7588)
@@ -173,7 +146,6 @@ regenerated after each pass until it reaches a fixpoint.
 - `pstopped_padd` (line 11752)
 - `pafter_padd` (line 11789)
 - `pembed_continuous_map` (line 14235)
-- `ess_inf_time_mono` (line 14533)
 - `integrable_ksemi_fst` (line 16602)
 - `integrable_ksemi_of_bound` (line 16631)
 
@@ -205,6 +177,23 @@ regenerated after each pass until it reaches a fixpoint.
 - `doubling_limit_maximises` (line 7111)
 - `supconv_neg_jet_transfer` (line 7337)
 - `sums_ord_of_inequality` (line 7361)
+
+## Relative_Arbitrage/Exit_Class_Compactness.thy (14)
+
+- `stopped_market_acont_in_sconstraint` (line 34)
+- `stopped_market_Yint_diffquot_in_sconstraint` (line 188)
+- `stopped_market_acov_leaves_sconstraint` (line 237)
+- `ploc_le_T` (line 1558)
+- `exit_class_trace_martingale` (line 6242)
+- `space_pglue_law` (line 7011)
+- `exit_val_paste_lower` (line 8607)
+- `space_kglue_law` (line 8900)
+- `cross_borel` (line 9658)
+- `theorem_1_1_paper_v_fragment` (line 10495)
+- `space_kglue_law'` (line 12081)
+- `kglue_law'_start` (line 12205)
+- `kglue_law'_diffquot` (line 12245)
+- `borel_of_path_prod` (line 12310)
 
 ## Relative_Arbitrage/Value_Function_Viscosity.thy (14)
 
@@ -260,18 +249,6 @@ regenerated after each pass until it reaches a fixpoint.
 - `dyadic_ext_continuous_on` (line 1596)
 - `lim_continuous_modification` (line 2313)
 - `flip_measurable` (line 2430)
-
-## Relative_Arbitrage/Volatile_Market.thy (9)
-
-- `relative_arbitrage_prob_pos` (line 47)
-- `c_pos` (line 140)
-- `trace_bound_pointwise` (line 146)
-- `stopped_time_integrable` (line 160)
-- `compensator_lower` (line 170)
-- `x0_in_K` (line 221)
-- `expected_stopped_time_bound` (line 237)
-- `expected_stopped_time_ball_v` (line 270)
-- `expected_exit_time_bound` (line 299)
 
 ## Relative_Arbitrage/Exit_Time_Semicontinuity.thy (8)
 
@@ -334,34 +311,22 @@ regenerated after each pass until it reaches a fixpoint.
 - `exit_class_density_ae` (line 996)
 - `pair_holder_charge_split` (line 1609)
 
-## Relative_Arbitrage/Value_Function_Market.thy (5)
+## Relative_Arbitrage/Value_Function_Market.thy (6)
 
 - `ess_inf_time_ge_zero` (line 33)
+- `ess_inf_time_mono` (line 187)
 - `ess_inf_time_superadd` (line 202)
 - `val_fn_ge_zero` (line 259)
 - `mkt_exit_vals_nonempty` (line 266)
 - `val_fn_zero_on_frontier_ball` (line 479)
 
-## Martingale_Sampling/Optional_Sampling.thy (4)
+## Relative_Arbitrage/Exit_Class_Infinite.thy (5)
 
-- `indicator_times_integrable` (line 80)
-- `stopped_integrable` (line 172)
-- `dceil_grid` (line 646)
-- `dtime_eq_dceil` (line 649)
-
-## Martingale_Sampling/Vitali_Convergence.thy (4)
-
-- `integrable_clamp` (line 100)
-- `unif_integrable_limit_integrable` (line 127)
-- `vitali_convergence` (line 169)
-- `unif_integrable_of_moment_bound` (line 339)
-
-## Path_Space_Tightness/Increment_Moments.thy (4)
-
-- `increment_second_moment_bound` (line 78)
-- `pow4_binomial` (line 212)
-- `sq_times_sq` (line 892)
-- `sq_tail_bound_of_fourth_moment` (line 2137)
+- `iexit_le` (line 91)
+- `ess_inf_enn_ge_zero` (line 114)
+- `iexit_class_pcut_measurable` (line 215)
+- `pcut_pglue` (line 531)
+- `exit_val_le_iexit_val` (line 1227)
 
 ## Relative_Arbitrage/Deterministic_Radius_Market.thy (4)
 
@@ -370,36 +335,12 @@ regenerated after each pass until it reaches a fixpoint.
 - `drC2_cos2` (line 2685)
 - `coord_Z_drX_meas_neg` (line 2834)
 
-## Relative_Arbitrage/Exit_Class_Infinite.thy (4)
+## Path_Space_Tightness/Increment_Moments.thy (4)
 
-- `iexit_le` (line 91)
-- `ess_inf_enn_ge_zero` (line 114)
-- `iexit_class_pcut_measurable` (line 215)
-- `exit_val_le_iexit_val` (line 1227)
-
-## Martingale_Sampling/Quadratic_Variation.thy (3)
-
-- `qvar_nonneg` (line 102)
-- `Tgt_iff` (line 401)
-- `stopped_qvar_expectation_le` (line 626)
-
-## Martingale_Sampling/Time_Discretisation.thy (3)
-
-- `grid_qvar_compensates` (line 132)
-- `grid_expectation_sq_mono` (line 137)
-- `grid_expected_qvar_indep` (line 151)
-
-## Path_Space_Tightness/Conditional_UI.thy (3)
-
-- `integral_abs_small_sets` (line 29)
-- `cond_exp_family_unif_integrable` (line 121)
-- `unif_integrable_of_averaging` (line 274)
-
-## Path_Space_Tightness/Equicontinuity.thy (3)
-
-- `holder_family_subsequence_dist` (line 182)
-- `holder_onI_bound` (line 220)
-- `usc_sup_over_compact` (line 258)
+- `increment_second_moment_bound` (line 78)
+- `pow4_binomial` (line 212)
+- `sq_times_sq` (line 892)
+- `sq_tail_bound_of_fourth_moment` (line 2137)
 
 ## Relative_Arbitrage/Eigenvalues.thy (3)
 
@@ -407,11 +348,11 @@ regenerated after each pass until it reaches a fixpoint.
 - `kyfan_le_of_eigen_ub` (line 531)
 - `possum_nonneg` (line 1126)
 
-## Relative_Arbitrage/Ito_Market.thy (3)
+## Path_Space_Tightness/Equicontinuity.thy (3)
 
-- `ito_expected_stopped_time_bound` (line 267)
-- `const_dynkin_quadratic` (line 680)
-- `stopped_expected_time_bound` (line 774)
+- `holder_family_subsequence_dist` (line 182)
+- `holder_onI_bound` (line 220)
+- `usc_sup_over_compact` (line 258)
 
 ## Relative_Arbitrage/Viscosity_Comparison_Interface.thy (3)
 
@@ -419,30 +360,15 @@ regenerated after each pass until it reaches a fixpoint.
 - `ell_op_geometric` (line 446)
 - `ball_v_unique_solution` (line 500)
 
-## Martingale_Sampling/Doob_Inequality.thy (2)
-
-- `doob_maximal_inequality'` (line 262)
-- `maxabs_meas_X` (line 306)
-
-## Martingale_Sampling/Moment_Bounds.thy (2)
-
-- `integral_square_le_of_bound` (line 39)
-- `fourth_moment_of_compensated` (line 68)
-
-## Path_Space_Tightness/Modulus_Tails.thy (2)
-
-- `dyadic_level_tail` (line 127)
-- `dyadic_bad_event_tail` (line 304)
-
 ## Relative_Arbitrage/Brownian_Continuous.thy (2)
 
 - `bm2_expected_square` (line 453)
 - `ito_const_horizon_market_nonvacuous` (line 595)
 
-## Relative_Arbitrage/Brownian_Market.thy (2)
+## Wiener_Measure/Brownian_Motion.thy (2)
 
-- `indep_vars_cong_sets` (line 64)
-- `bm_compensator_coord` (line 2054)
+- `gauss_measure_conv` (line 267)
+- `bm_increments_indep` (line 1174)
 
 ## Relative_Arbitrage/Constraint_Set_Convexity.thy (2)
 
@@ -459,36 +385,19 @@ regenerated after each pass until it reaches a fixpoint.
 - `cylset_space` (line 37)
 - `adapted_process_natural_filtration_of` (line 675)
 
+## Path_Space_Tightness/Modulus_Tails.thy (2)
+
+- `dyadic_level_tail` (line 127)
+- `dyadic_bad_event_tail` (line 304)
+
 ## Relative_Arbitrage/Operator_Continuity.thy (2)
 
 - `transpose_mat_one` (line 66)
 - `ell_op_Mp` (line 339)
 
-## Relative_Arbitrage/Optimal_Exit_Time.thy (2)
+## Relative_Arbitrage/Brownian_Market.thy (1)
 
-- `sint_meas` (line 105)
-- `ball_relative_arbitrage` (line 223)
-
-## Wiener_Measure/Brownian_Motion.thy (2)
-
-- `gauss_measure_conv` (line 267)
-- `bm_increments_indep` (line 1174)
-
-## Martingale_Sampling/Sampled_Martingale.thy (1)
-
-- `martingale_of_cond_increment` (line 113)
-
-## Martingale_Sampling/Sampled_Quadratic_Variation.thy (1)
-
-- `qvar_compensates_sampled` (line 60)
-
-## Path_Space_Tightness/Increment_Tails.thy (1)
-
-- `partition_max_tail_bound` (line 99)
-
-## Path_Space_Tightness/Path_Space_Infinite.thy (1)
-
-- `sets_ipath_law` (line 100)
+- `bm_compensator_coord` (line 2054)
 
 ## Relative_Arbitrage/Brownian_Optimal_Boundary.thy (1)
 
@@ -506,6 +415,34 @@ regenerated after each pass until it reaches a fixpoint.
 
 - `eroded_mono` (line 156)
 
+## Path_Space_Tightness/Increment_Tails.thy (1)
+
+- `partition_max_tail_bound` (line 99)
+
+## Path_Space_Tightness/Path_Space_Infinite.thy (1)
+
+- `sets_ipath_law` (line 100)
+
+## Martingale_Sampling/Quadratic_Variation.thy (1)
+
+- `qvar_nonneg` (line 102)
+
+## Martingale_Sampling/Sampled_Martingale.thy (1)
+
+- `martingale_of_cond_increment` (line 113)
+
+## Martingale_Sampling/Sampled_Quadratic_Variation.thy (1)
+
+- `qvar_compensates_sampled` (line 60)
+
 ## Relative_Arbitrage/Stopped_Localization.thy (1)
 
 - `AE_restrict_full` (line 650)
+
+## Martingale_Sampling/Time_Discretisation.thy (1)
+
+- `grid_expected_qvar_indep` (line 151)
+
+## Martingale_Sampling/Vitali_Convergence.thy (1)
+
+- `unif_integrable_of_moment_bound` (line 339)
