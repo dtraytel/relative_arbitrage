@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  Formalizes the arbitrage side of arXiv:2512.17702: relative arbitrage
+  Formalizes the arbitrage side of \<^cite>\<open>LaiShkolnikovSoner\<close>: relative arbitrage
   beyond the critical horizon, and optimality of the ball value function
   of Example 3.1. Since Isabelle/HOL has no Ito integration theory, the
   stochastic integral against the gradient of the test function

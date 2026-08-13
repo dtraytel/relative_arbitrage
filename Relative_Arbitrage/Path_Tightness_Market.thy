@@ -89,7 +89,7 @@ text \<open>The join.  \<open>Exit_Time.etime_less_iff\<close> says being strict
   a path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close>
   every path qualifies and the set is the whole space.\<close>
 
-text \<open>Lemma 2.2 of arXiv:2512.17702, at the market class itself: for any
+text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the market class itself: for any
   sequence of sufficiently volatile markets that are stopped at their horizon
   and confined to a ball, the path laws admit a weakly convergent
   subsequence.  The almost-sure hypotheses of the locale become the pointwise

@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  Formalizes Eqs. (3.4)-(3.6) of arXiv:2512.17702: the matrix \<open>M\<^sub>p\<close>,
+  Formalizes Eqs. (3.4)-(3.6) of \<^cite>\<open>LaiShkolnikovSoner\<close>: the matrix \<open>M\<^sub>p\<close>,
   the closed formula (3.5) for \<open>F\<close>, and Lemma 3.1. For \<open>p \<noteq> 0\<close>,
   Eq. (3.4) defines
 

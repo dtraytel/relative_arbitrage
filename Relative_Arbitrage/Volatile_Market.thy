@@ -12,7 +12,7 @@ begin
 text \<open>
   Formalizes the probabilistic side of J.-H. Lai, M. Shkolnikov and
   H. M. Soner, Relative arbitrage problem under eigenvalue lower bounds
-  (arXiv:2512.17702): Definition 1.1, relative arbitrage, for an
+  (\<^cite>\<open>LaiShkolnikovSoner\<close>): Definition 1.1, relative arbitrage, for an
   abstract relative value process \<open>V\<close>, and the locale
   \<open>sufficiently_volatile_market\<close> capturing the class of measures
   \<open>P \<in> P\<^sub>x\<close> of Section 1. In this locale \<open>X\<close> is a continuous-time

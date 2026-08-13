@@ -10,3 +10,4 @@ session Relative_Arbitrage_Statement = Relative_Arbitrage +
     Theorem_1_1_Statement
   document_files
     "root.tex"
+    "root.bib"

@@ -9,7 +9,7 @@ begin
 text \<open>
   Formalizes the deterministic core of J.-H. Lai, M. Shkolnikov and
   H. M. Soner, Relative arbitrage problem under eigenvalue lower bounds
-  (arXiv:2512.17702): the operator \<open>F\<close> of Eq. (1.9),
+  (\<^cite>\<open>LaiShkolnikovSoner\<close>): the operator \<open>F\<close> of Eq. (1.9),
 
     \<open>F(p, M) = Inf {- trace (M ** a) / 2 | a. psd a \<and> a *v p = 0
        \<and> eigen_lb a (n - k) \<and> eigen_ub a L}\<close>,

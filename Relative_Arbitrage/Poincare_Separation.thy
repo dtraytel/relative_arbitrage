@@ -8,7 +8,7 @@ begin
 
 text \<open>
   Formalizes the eigenvalue comparison used in the proof of Lemma 3.1 of
-  arXiv:2512.17702, the Poincare separation inequality
+  \<^cite>\<open>LaiShkolnikovSoner\<close>, the Poincare separation inequality
 
     \<open>lambda\<^sub>i(M\<^sub>p) \<ge> lambda\<^bsub>i+1\<^esub>(M)\<close>,   \<open>i = 1, ..., n - 1\<close>,
 

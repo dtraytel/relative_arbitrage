@@ -5,7 +5,7 @@ begin
 
 (*>*)
 text \<open>The dynamic programming principle of Proposition 2.4 of
-  arXiv:2512.17702, for the value function: the pasting bound, the
+  \<^cite>\<open>LaiShkolnikovSoner\<close>, for the value function: the pasting bound, the
   \<open>\<ge>\<close> half of (2.9) at a deterministic time, the reduction of the
   \<open>\<le>\<close> half to a single conditioning statement, and the conditioning
   theory it rests on.\<close>
@@ -368,7 +368,7 @@ qed
 
 subsection \<open>The \<open>\<ge>\<close> half of the dynamic programming principle (2.9)\<close>
 
-text \<open>Proposition 2.4 of arXiv:2512.17702 states the dynamic programming
+text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> states the dynamic programming
   principle
     \<open>v x = (SUP P \<in> exit_class k L T x. P-ess-inf
       (\<theta> \<and> \<tau>\<^sub>K + v (X \<theta>) * 1\<^sub>{\<theta> \<le> \<tau>\<^sub>K}))\<close>.
@@ -5608,7 +5608,7 @@ qed
 
 section \<open>The dynamic programming principle at a deterministic time\<close>
 
-text \<open>Proposition 2.4 of arXiv:2512.17702 at a deterministic \<open>\<theta> = r\<close>,
+text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> at a deterministic \<open>\<theta> = r\<close>,
   unconditionally.  The \<open>\<ge>\<close> half is @{thm [source] exit_val_dpp_sup_ge}
   (kernel pasting); the \<open>\<le>\<close> half is @{thm [source] exit_val_dpp_le_of_cond}
   with its one hypothesis discharged by @{thm [source] exit_val_cond} via the

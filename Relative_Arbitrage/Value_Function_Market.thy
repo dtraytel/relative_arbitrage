@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  Formalizes the value function of Eq. (1.6) of arXiv:2512.17702,
+  Formalizes the value function of Eq. (1.6) of \<^cite>\<open>LaiShkolnikovSoner\<close>,
 
     \<open>v(x) = Sup {essinf\<^bsub>P\<^esub> tau\<^sub>K | P. P \<in> P\<^sub>x}\<close>,
 

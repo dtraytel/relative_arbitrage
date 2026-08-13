@@ -9,7 +9,7 @@ begin
 
 text \<open>
   The bridge from the market witnesses of this development to the
-             class (1.7) of arXiv:2512.17702, and the compactness theory of
+             class (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>, and the compactness theory of
              that class.
 
              By (1.7)-(1.8) the processes in \<open>P_x\<close> are never stopped: the

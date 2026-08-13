@@ -9,7 +9,7 @@ begin
 (*>*)
 
 text \<open>
-  Theorem 1.1 of arXiv:2512.17702 asserts that the value function \<open>v\<close> of
+  Theorem 1.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> asserts that the value function \<open>v\<close> of
   Eq. (1.6) is the unique bounded upper semicontinuous viscosity solution of
   Eq. (1.9) satisfying the zero boundary condition of Eq. (1.10).  This theory
   joins the two halves of that statement: the viscosity property, proved in

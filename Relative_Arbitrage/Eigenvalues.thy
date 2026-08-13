@@ -9,7 +9,7 @@ begin
 text \<open>
   Ky Fan partial sums and ordered eigenvalues of a real symmetric
              matrix, developed basis-free, towards Eq. (3.6) of
-             arXiv:2512.17702 (Lai/Shkolnikov/Soner).
+             \<^cite>\<open>LaiShkolnikovSoner\<close>.
 
     Design.  \<open>Constraint_Set_Convexity\<close> already defines
 

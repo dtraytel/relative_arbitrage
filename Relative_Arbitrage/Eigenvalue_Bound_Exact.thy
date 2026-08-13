@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  States and proves Lemma 2.1 of arXiv:2512.17702 in its exact form, with
+  States and proves Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> in its exact form, with
   the convex hull itself rather than its closure. Building on
   \<open>A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close> from \<open>Constraint_Set_Convexity\<close>, it
   establishes equality with \<open>conv B\<^sub>k\<close> in three steps: a capped trace

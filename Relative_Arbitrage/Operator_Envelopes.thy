@@ -9,8 +9,8 @@ begin
 text \<open>
   Defines the lower and upper semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>
   of the operator \<open>F\<close> of Eq. (1.9), as ereal-valued functions with no
-  side conditions, and states Definition 3.1 of arXiv:2512.17702 in the
-  form the paper uses: a subsolution satisfies
+  side conditions, and states Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>:
+  a subsolution satisfies
   \<open>F\<^sub>*(grad phi, Hess phi) \<le> 1\<close> and a supersolution
   \<open>F\<^sup>*(grad phi, Hess phi) \<ge> 1\<close>, with the paper's global touching
   condition, a maximum over \<open>K\<close> rather than on a small ball. It proves
@@ -19,7 +19,13 @@ text \<open>
   Example 3.1 satisfies Definition 3.1 as stated, and the clause of
   Lemma 3.1 at the degenerate point, \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> S\<^sup>n\<close>, using
   that at \<open>p = 0\<close> the constraint \<open>a p = 0\<close> is vacuous and that \<open>F\<close> is
-  Lipschitz in \<open>M\<close> uniformly in \<open>p\<close>.\<close>
+  Lipschitz in \<open>M\<close> uniformly in \<open>p\<close>.
+
+  The test functions here are the \<^const>\<open>test_fun_at\<close> ones, which are less
+  regular than Definition 3.1's \<open>C\<^sup>2\<close>; that makes these notions the stronger,
+  which is what the clauses \<^emph>\<open>asserting\<close> the viscosity property want.  The
+  uniqueness clause needs the paper's own class instead; \<open>Comparison_Principle\<close>
+  restates Definition 3.1 over it as \<open>visc_subsol_env2\<close> / \<open>visc_supersol_env2\<close>.\<close>
 unbundle inner_syntax
 
 section \<open>The operator of Eq. (1.9) on pairs\<close>

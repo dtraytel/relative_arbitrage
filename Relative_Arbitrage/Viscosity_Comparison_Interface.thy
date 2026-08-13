@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  The uniqueness side of Theorem 1.1 of arXiv:2512.17702
+  The uniqueness side of Theorem 1.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>
              (Lai/Shkolnikov/Soner), and the structural pieces of Lemma 3.1.
 
     Proved outright:

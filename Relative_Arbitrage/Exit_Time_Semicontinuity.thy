@@ -8,7 +8,7 @@ begin
 (*>*)
 
 text \<open>
-  Larsson--Ruf (EJP 29 (2024), Prop. 2.2(ii)), which arXiv:2512.17702
+  \<^cite>\<open>LarssonRuf\<close>, Prop. 2.2(ii), which \<^cite>\<open>LaiShkolnikovSoner\<close>
   Prop. 2.4 defers to verbatim, proves upper semicontinuity of the value
   function from two facts: \<open>g(P) = P\<hyphen>essinf \<tau>\<^sub>K\<close> is usc on the
   candidate laws, and Berge's maximum theorem turns a usc integrand into a

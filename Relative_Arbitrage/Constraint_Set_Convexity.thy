@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  Proves Lemma 2.1 of arXiv:2512.17702, the convexification of the
+  Proves Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>, the convexification of the
   eigenvalue constraint. The operator \<open>Pi_m\<close> of Eq. (2.1) is formalized as
   \<open>Pi_proj\<close>, and the theory establishes both inclusions
 

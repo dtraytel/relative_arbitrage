@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  Towards clause (2) of Theorem 1.1 of arXiv:2512.17702 --- the two
+  Towards clause (2) of Theorem 1.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> --- the two
              viscosity inequalities for `\<open>exit_val\<close>`.  PLAN section 2.1.
 
     Two facts shape everything here.

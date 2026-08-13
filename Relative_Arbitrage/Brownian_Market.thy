@@ -2039,7 +2039,7 @@ section \<open>The compensated square of a single coordinate is a martingale\<cl
 
 text \<open>\<open>martingale_bm_square\<close> compensates the squared norm by the trace,
   which is what \<open>ito_Z\<close> and \<open>dynkin_quadratic\<close> speak about. Lemma 2.2 of
-  arXiv:2512.17702 needs more: a fourth-moment bound on each coordinate
+  \<^cite>\<open>LaiShkolnikovSoner\<close> needs more: a fourth-moment bound on each coordinate
   separately, along the tightness chain
   \<open>Path_Tightness.tight_on_set_path_laws_vec \<leftarrow>
   Increment_Moments.fourth_moment_bound_bounded \<leftarrow>

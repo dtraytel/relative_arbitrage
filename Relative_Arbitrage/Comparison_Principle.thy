@@ -52,7 +52,9 @@ subsection \<open>The jet interface to Definition 3.1(b)\<close>
 text \<open>\<open>visc_supersol_env_imp_jet\<close> derives, from Definition 3.1(b), a quadratic
   test function that touches \<open>w\<close> from below on a ball, with the operator
   inequality read off over the upper envelope \<open>F\<^sup>*\<close>; boundedness of the
-  quadratic on the compact \<open>K\<close> is proved, not assumed.\<close>
+  quadratic on the compact \<open>K\<close> is proved, not assumed.  Its hypothesis is
+  \<open>visc_supersol_env2\<close>, over the paper's own \<open>C\<^sup>2\<close> test functions ---
+  the quadratic it builds is a polynomial, so nothing wider is ever needed.\<close>
 
 lemma quad_bdd_above_on_bounded:
   fixes p yh :: "real^'n::finite" and M :: "real^'n^'n"

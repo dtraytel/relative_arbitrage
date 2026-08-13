@@ -7,7 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  Proves the clause of Lemma 3.1 of arXiv:2512.17702 that mentions the
+  Proves the clause of Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> that mentions the
   semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> of \<open>F\<close>. It combines
   \<open>ell_op_lsc\<close> and \<open>ell_op_usc\<close> from \<open>Operator_Envelopes\<close>, together
   with the clause \<open>F\<^sub>* = F\<close> at \<open>p = 0\<close> proved there, with Eq. (3.5) and

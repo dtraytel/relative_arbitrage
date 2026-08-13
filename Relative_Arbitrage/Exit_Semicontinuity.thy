@@ -8,7 +8,7 @@ begin
 
 text \<open>
   Establishes the value-side semicontinuity underlying Proposition 2.4 of
-  arXiv:2512.17702, following Larsson-Ruf (arXiv:2003.13611), Lemma 2.1.
+  \<^cite>\<open>LaiShkolnikovSoner\<close>, following \<^cite>\<open>LarssonRuf\<close>, Lemma 2.1.
   It shows that the capped exit time is upper semicontinuous on the path
   space, and that the essential infimum of the exit time is upper
   semicontinuous along weak convergence of path laws, via the
@@ -40,7 +40,7 @@ lemma pexit_less_iff:
     \<longleftrightarrow> ((\<exists>r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K \<and> r < c) \<or> T < c)"
   unfolding pexit_def by (rule etime_less_iff)
 
-text \<open>The paper (arXiv:2512.17702, (1.6)--(1.8)) works on \<open>C([0,\<infinity>), \<real>\<^sup>n)\<close> and
+text \<open>The paper (\<^cite>\<open>LaiShkolnikovSoner\<close>, (1.6)--(1.8)) works on \<open>C([0,\<infinity>), \<real>\<^sup>n)\<close> and
   takes the essential infimum of the uncapped exit time
   \<open>\<tau>\<^sub>K = inf {t \<ge> 0 : X t \<notin> K}\<close>, whereas \<open>pexit T K\<close> caps at the horizon \<open>T\<close>.
   The cap is monotone in \<open>T\<close> and invisible once a path has exited before

@@ -6,7 +6,7 @@ theory Exit_Class_Infinite
 begin
 (*>*)
 
-text \<open>Eq. (1.6)--(1.7) of arXiv:2512.17702 without the horizon cap: the class
+text \<open>Eq. (1.6)--(1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> without the horizon cap: the class
   is a set of laws on the paths of @{theory Path_Space_Tightness.Path_Space_Infinite},
   the covariation constraint is required at every pair of times, and the
   martingale clauses carry no stopping.  The capped development is reached
