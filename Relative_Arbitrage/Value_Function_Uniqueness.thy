@@ -611,6 +611,43 @@ proof -
     using L by (intro exit_val_real_bounded[OF kn less_imp_le[OF T0] _ KB r0]) simp
 qed
 
+text \<open>The same bound in \<open>ennreal\<close>, which is the form of Eq. (3.10) and, unlike
+  the real-valued one above, also says that the value is finite: \<open>enn2real\<close> maps
+  \<open>\<top>\<close> to \<open>0\<close>, so the bound on \<open>\<bar>enn2real \<dots>\<bar>\<close> alone would hold vacuously at \<open>\<top>\<close>.
+  Every clause below reads the value function through \<open>enn2real\<close>, so this is
+  what makes those readings the paper's \<open>v\<close>.\<close>
+
+theorem iexit_val_le_ball_bound:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+  shows "iexit_val k L K x
+      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
+proof -
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K x = exit_val k L T K x"
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq
+    using L by (intro exit_val_le_ball_bound[OF kn less_imp_le[OF T0] _ KB]) simp
+qed
+
+corollary iexit_val_neq_top:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
+  shows "iexit_val k L K x \<noteq> \<top>"
+proof -
+  obtain rK :: real where KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
+  have "iexit_val k L K x
+      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
+    by (rule iexit_val_le_ball_bound[OF kn L compact_imp_closed[OF cK] KB])
+  then have "iexit_val k L K x < \<top>"
+    by (rule le_less_trans[OF _ ennreal_less_top])
+  then show ?thesis by simp
+qed
+
 text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
 
 theorem iexit_val_real_usc:

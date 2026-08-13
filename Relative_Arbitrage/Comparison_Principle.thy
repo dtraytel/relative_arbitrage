@@ -109,6 +109,263 @@ proof -
   show ?thesis by (rule that) (use main in blast)
 qed
 
+section \<open>Definition 3.1 with genuine \<open>C\<^sup>2\<close> test functions\<close>
+
+text \<open>\<^const>\<open>test_fun_at\<close> asks only that \<open>\<phi>\<close> be differentiable near \<open>x\<close> with
+  gradient field \<open>g\<close>, and that \<open>g\<close> be differentiable at \<open>x\<close>; away from \<open>x\<close> it
+  constrains \<open>\<phi>\<close> not at all.  Definition 3.1 quantifies over \<open>\<phi> \<in> C\<^sup>2(\<real>\<^sup>n)\<close>,
+  a strictly smaller class.  For the assertions that the value function is a
+  sub- or supersolution the larger class is the stronger statement, so nothing
+  is lost there; but the uniqueness clause \<^emph>\<open>assumes\<close> the property of a
+  competitor, and there the larger class would make the hypothesis stronger
+  than the paper's and the theorem correspondingly weaker.  So the class is
+  spelled out here: a gradient field defined everywhere, together with a
+  \<^emph>\<open>continuous\<close> symmetric Hessian field.\<close>
+
+definition test_fun_C2 ::
+  "(real^'n::finite \<Rightarrow> real) \<Rightarrow> (real^'n \<Rightarrow> real^'n) \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> bool"
+  where
+  "test_fun_C2 \<phi> g H x \<longleftrightarrow>
+     (\<exists>G. (\<forall>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)) \<and>
+          (\<forall>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)) \<and>
+          (\<forall>y. transpose (G y) = G y) \<and>
+          continuous_on UNIV G \<and> G x = H)"
+
+lemma test_fun_C2_imp_test_fun_at:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real"
+  assumes "test_fun_C2 \<phi> g H x"
+  shows "test_fun_at \<phi> g H x"
+proof -
+  obtain G where G: "\<And>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    "\<And>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)"
+    "\<And>y. transpose (G y) = G y" "G x = H"
+    using assms unfolding test_fun_C2_def by blast
+  show ?thesis
+    unfolding test_fun_at_def
+  proof (intro conjI)
+    show "transpose H = H" using G(3)[of x] G(4) by simp
+    show "\<exists>e>0. \<forall>y \<in> ball x e. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+      by (intro exI[of _ 1] conjI ballI) (auto simp: G(1))
+    show "(g has_derivative (\<lambda>h. H *v h)) (at x)" using G(2)[of x] G(4) by simp
+  qed
+qed
+
+text \<open>The affine gradient field of a quadratic has the same derivative at every
+  point, not just at the base point, which is what a Hessian \<^emph>\<open>field\<close> needs.\<close>
+
+lemma quadratic_grad_derivative_at:
+  fixes H :: "real^'n::finite^'n" and p x y :: "real^'n"
+  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
+proof -
+  have blH: "bounded_linear ((*v) H)" by (rule matrix_vector_mul_bounded_linear)
+  have shift: "((\<lambda>z::real^'n. z - x) has_derivative (\<lambda>h. h)) (at y)"
+    by (auto intro!: derivative_eq_intros)
+  have "((\<lambda>z. H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
+    using bounded_linear.has_derivative[OF blH shift] by simp
+  then show ?thesis by (auto intro!: derivative_eq_intros)
+qed
+
+text \<open>The three functions the comparison proof ever hands to the paper's
+  hypothesis: the quadratic 2-jet, a constant, and a quartic shift of either.\<close>
+
+lemma jet_test_fun_C2:
+  fixes H :: "real^'n::finite^'n" and p x :: "real^'n"
+  assumes symH: "transpose H = H"
+  shows "test_fun_C2 (\<lambda>z. p \<bullet> (z - x) + ((z - x) \<bullet> (H *v (z - x)))/2)
+      (\<lambda>z. p + H *v (z - x)) H x"
+  unfolding test_fun_C2_def
+proof (intro exI[of _ "\<lambda>_. H"] conjI allI)
+  fix y :: "real^'n"
+  show "((\<lambda>z. p \<bullet> (z - x) + ((z - x) \<bullet> (H *v (z - x)))/2)
+      has_derivative (\<lambda>h. (p + H *v (y - x)) \<bullet> h)) (at y)"
+    by (rule quadratic_test_derivative[OF symH])
+next
+  fix y :: "real^'n"
+  show "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
+    by (rule quadratic_grad_derivative_at)
+qed (use symH in \<open>auto intro: continuous_on_const\<close>)
+
+lemma test_fun_C2_const:
+  fixes x :: "real^'n::finite" and C :: real
+  shows "test_fun_C2 (\<lambda>y. C) (\<lambda>y. 0) 0 x"
+  unfolding test_fun_C2_def
+proof (intro exI[of _ "\<lambda>_. 0"] conjI allI)
+  fix y :: "real^'n"
+  have z1: "(\<lambda>h. (0 :: real^'n) \<bullet> h) = (\<lambda>h :: real^'n. 0)" by simp
+  show "((\<lambda>y. C) has_derivative (\<lambda>h. (0 :: real^'n) \<bullet> h)) (at y)"
+    unfolding z1 by (rule has_derivative_const)
+next
+  fix y :: "real^'n"
+  have z2: "(\<lambda>h. (0 :: real^'n^'n) *v h) = (\<lambda>h :: real^'n. 0)"
+    by (simp add: matrix_vector_mult_def vec_eq_iff fun_eq_iff)
+  show "((\<lambda>y :: real^'n. 0 :: real^'n) has_derivative
+      (\<lambda>h. (0 :: real^'n^'n) *v h)) (at y)"
+    unfolding z2 by (rule has_derivative_const)
+qed (auto simp: transpose_def vec_eq_iff)
+
+lemma test_fun_C2_add_const:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and c :: real
+  assumes tf: "test_fun_C2 \<phi> g H x"
+  shows "test_fun_C2 (\<lambda>z. c + \<phi> z) g H x"
+proof -
+  obtain G where G: "\<And>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    "\<And>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)"
+    "\<And>y. transpose (G y) = G y" "continuous_on UNIV G" "G x = H"
+    using tf unfolding test_fun_C2_def by blast
+  have "((\<lambda>z. c + \<phi> z) has_derivative (\<lambda>h. g y \<bullet> h)) (at y)" for y
+    using G(1)[of y] by (auto intro!: derivative_eq_intros)
+  then show ?thesis
+    unfolding test_fun_C2_def using G(2,3,4,5) by blast
+qed
+
+lemma op_matvec: "outer_prod u u *v h = (u \<bullet> h) *\<^sub>R (u :: real^'n::finite)"
+  by (simp add: outer_prod_def matrix_vector_mult_def vec_eq_iff inner_vec_def
+      sum_distrib_left mult.assoc mult.commute mult.left_commute)
+
+lemma op_transpose: "transpose (outer_prod u u) = outer_prod (u :: real^'n::finite) u"
+  by (simp add: outer_prod_def transpose_def vec_eq_iff mult.commute)
+
+lemma op_continuous:
+  "continuous_on UNIV (\<lambda>y :: real^'n::finite. outer_prod (y - x) (y - x))"
+  unfolding outer_prod_def
+  by (intro continuous_on_vec_lambda continuous_intros)
+
+text \<open>The Hessian field of the quartic \<open>C|z-x|\<^sup>4\<close>, which is what
+  \<^const>\<open>test_fun_at\<close> never had to record.\<close>
+
+lemma quartic_grad_derivative:
+  fixes x y :: "real^'n::finite" and C :: real
+  shows "((\<lambda>z. (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x)) has_derivative
+      (\<lambda>h. ((4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R mat 1
+            + (8 * C) *\<^sub>R outer_prod (y - x) (y - x)) *v h)) (at y)"
+proof -
+  have d: "((\<lambda>z. (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x)) has_derivative
+      (\<lambda>h. (4 * C * (2 * ((y - x) \<bullet> h))) *\<^sub>R (y - x)
+           + (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R h)) (at y)"
+    by (auto intro!: derivative_eq_intros simp: inner_commute)
+  have eq: "(\<lambda>h. (4 * C * (2 * ((y - x) \<bullet> h))) *\<^sub>R (y - x)
+           + (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R h)
+      = (\<lambda>h. ((4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R mat 1
+            + (8 * C) *\<^sub>R outer_prod (y - x) (y - x)) *v h)"
+  proof (rule ext)
+    fix h :: "real^'n"
+    have "((4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R mat 1
+            + (8 * C) *\<^sub>R outer_prod (y - x) (y - x)) *v h
+        = (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (mat 1 *v h)
+          + (8 * C) *\<^sub>R (outer_prod (y - x) (y - x) *v h)"
+      by (simp add: matrix_vector_mult_add_rdistrib
+          scaleR_matrix_vector_assoc[symmetric])
+    also have "\<dots> = (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R h
+          + (8 * C) *\<^sub>R (((y - x) \<bullet> h) *\<^sub>R (y - x))"
+      by (simp add: op_matvec)
+    finally show "(4 * C * (2 * ((y - x) \<bullet> h))) *\<^sub>R (y - x)
+           + (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R h
+        = ((4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R mat 1
+            + (8 * C) *\<^sub>R outer_prod (y - x) (y - x)) *v h"
+      by simp
+  qed
+  show ?thesis using d unfolding eq .
+qed
+
+lemma test_fun_C2_quartic_shift:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and C :: real
+  assumes tf: "test_fun_C2 \<phi> g H x"
+  shows "test_fun_C2 (\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2)
+      (\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x)) H x"
+proof -
+  obtain G where G: "\<And>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    "\<And>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)"
+    "\<And>y. transpose (G y) = G y" "continuous_on UNIV G" "G x = H"
+    using tf unfolding test_fun_C2_def by blast
+  define Q where "Q = (\<lambda>y :: real^'n. (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R mat 1
+      + (8 * C) *\<^sub>R outer_prod (y - x) (y - x))"
+  have Qsym: "transpose (Q y) = Q y" for y
+    unfolding Q_def
+    by (simp add: transpose_add transpose_scalar op_transpose)
+  have Qx: "Q x = 0"
+    unfolding Q_def by (simp add: outer_prod_def vec_eq_iff)
+  have Qcont: "continuous_on UNIV Q"
+    unfolding Q_def by (intro continuous_intros op_continuous)
+  show ?thesis
+    unfolding test_fun_C2_def
+  proof (intro exI[of _ "\<lambda>y. G y - Q y"] conjI allI)
+    fix y :: "real^'n"
+    have d2: "((\<lambda>z :: real^'n. C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
+        (\<lambda>h. C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h))))) (at y)"
+      by (auto intro!: derivative_eq_intros simp: inner_commute)
+    have d3: "((\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
+        (\<lambda>h. g y \<bullet> h
+          - C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h))))) (at y)"
+      by (rule has_derivative_diff[OF G(1) d2])
+    have d4: "(\<lambda>h. g y \<bullet> h
+          - C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h))))
+        = (\<lambda>h. (g y - (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (y - x)) \<bullet> h)"
+      by (rule ext) (simp only: quartic_coeff_assoc inner_scaleR_diff_eq)
+    show "((\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
+        (\<lambda>h. (g y - (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (y - x)) \<bullet> h)) (at y)"
+      using d3 unfolding d4 .
+  next
+    fix y :: "real^'n"
+    have e1: "((\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))
+        has_derivative (\<lambda>h. G y *v h - Q y *v h)) (at y)"
+      unfolding Q_def
+      by (rule has_derivative_diff[OF G(2) quartic_grad_derivative])
+    have e2: "(\<lambda>h. G y *v h - Q y *v h) = (\<lambda>h. (G y - Q y) *v h)"
+      by (rule ext) (simp add: matrix_vector_mult_diff_rdistrib)
+    show "((\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))
+        has_derivative (\<lambda>h. (G y - Q y) *v h)) (at y)"
+      using e1 unfolding e2 .
+  next
+    fix y :: "real^'n"
+    have "transpose (G y - Q y) = transpose (G y) - transpose (Q y)"
+      by (simp add: transpose_def vec_eq_iff)
+    also have "\<dots> = G y - Q y" by (simp add: G(3) Qsym)
+    finally show "transpose (G y - Q y) = G y - Q y" .
+  next
+    show "continuous_on UNIV (\<lambda>y. G y - Q y)"
+      by (intro continuous_intros G(4) Qcont)
+  next
+    show "G x - Q x = H" by (simp add: Qx G(5))
+  qed
+qed
+
+text \<open>Definition 3.1 itself, now with the paper's own test-function class.\<close>
+
+definition visc_subsol_env2 ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
+     \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "visc_subsol_env2 k L K \<Omega> u \<longleftrightarrow>
+     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_C2 \<phi> g H x \<longrightarrow>
+        (\<forall>y\<in>K. u y - \<phi> y \<le> u x - \<phi> x) \<longrightarrow>
+        ell_op_lsc k L (g x) H \<le> 1)"
+
+definition visc_supersol_env2 ::
+  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
+     \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
+  where
+  "visc_supersol_env2 k L K \<Omega> u \<longleftrightarrow>
+     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_C2 \<phi> g H x \<longrightarrow>
+        (\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y) \<longrightarrow>
+        1 \<le> ell_op_usc k L (g x) H)"
+
+text \<open>Fewer test functions means a weaker condition, so everything proved in the
+  \<^const>\<open>test_fun_at\<close> form still delivers Definition 3.1 as the paper states it.\<close>
+
+lemma visc_subsol_env_imp_env2:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes "visc_subsol_env k L K \<Omega> u"
+  shows "visc_subsol_env2 k L K \<Omega> u"
+  using assms test_fun_C2_imp_test_fun_at
+  unfolding visc_subsol_env_def visc_subsol_env2_def by blast
+
+lemma visc_supersol_env_imp_env2:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes "visc_supersol_env k L K \<Omega> u"
+  shows "visc_supersol_env2 k L K \<Omega> u"
+  using assms test_fun_C2_imp_test_fun_at
+  unfolding visc_supersol_env_def visc_supersol_env2_def by blast
+
 definition supersol_jet ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
   where
