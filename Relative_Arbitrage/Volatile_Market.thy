@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Volatile_Market
   imports
@@ -343,7 +342,6 @@ proof -
 qed
 
 end
-
 
 (*<*)
 end

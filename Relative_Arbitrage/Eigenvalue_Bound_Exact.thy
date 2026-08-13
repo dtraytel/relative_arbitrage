@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Eigenvalue_Bound_Exact
   imports Constraint_Set_Convexity
@@ -54,7 +53,6 @@ proof -
   finally show ?thesis .
 qed
 
-
 section \<open>The hypersimplex decomposition\<close>
 
 text \<open>Base case of the swap induction: if every coefficient is already \<open>0\<close>
@@ -96,7 +94,6 @@ proof -
     unfolding sum_eq
     by (rule onormal_sum_suff_volatile[OF onormal_subset[OF B T_sub] cardT])
 qed
-
 
 text \<open>Moving mass \<open>s\<close> from coordinate \<open>j\<close> to coordinate \<open>i\<close>.  Both swapped
   configurations of the induction step are of this form, so the arithmetic is
@@ -192,7 +189,6 @@ proof -
     qed
   qed
 qed
-
 
 text \<open>If one coefficient is strictly between \<open>0\<close> and \<open>1\<close> then so is a second
   one: otherwise the total would be that coefficient plus an integer, forcing
@@ -459,7 +455,6 @@ next
       by (rule convexD[OF convex_convex_hull hull1 hull2 wnn(1) wnn(2) wsum])
   qed
 qed
-
 
 text \<open>The hypersimplex decomposition, packaged: the measure is bounded by
   its own value.\<close>
@@ -775,8 +770,6 @@ qed
 text \<open>Lemma 2.1 of the paper, verbatim: the convex hull of
   \<open>{a \<in> \<bbbS>\<^sup>n\<^sub>+ : \<lambda>\<^sub>(\<^sub>n\<^sub>-\<^sub>k\<^sub>)(a) \<ge> 1}\<close> equals the constraint set \<open>A\<close> of Eq. (2.1),
   with no closure.\<close>
-
-
 
 (*<*)
 end

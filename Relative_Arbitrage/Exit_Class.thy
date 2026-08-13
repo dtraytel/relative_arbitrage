@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Exit_Class
   imports "Path_Space_Tightness.Path_Space" "Path_Space_Tightness.Path_Tightness" Exit_Semicontinuity Poincare_Separation
@@ -226,7 +225,6 @@ theorem bounded_sconstraint:
   assumes L: "0 \<le> L"
   shows "bounded (sconstraint k L :: (real^'n::finite^'n) set)"
   by (rule boundedI) (use sconstraint_norm_le[OF L] in blast)
-
 
 section \<open>The pair path space and its coordinate processes\<close>
 
@@ -503,12 +501,10 @@ proof (rule lipschitz_onI[OF _ B0])
   qed
 qed
 
-
 text \<open>The density statement of Eq. (1.7): the difference-quotient constraint
   makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence differentiable
   off a negligible set by \<open>Lebesgue_differentiation_thm\<close>; at every point
   of differentiability the derivative lies in the constraint set.\<close>
-
 
 text \<open>The weak-limit transfer itself: a single difference-quotient
   constraint, holding almost surely under every approximating law, holds
@@ -544,74 +540,6 @@ text \<open>The mathematical heart of the covariation condition, using the
   \<open>S = sconstraint k L\<close>, whose members arrive as \<open>suff_volatile\<close>
   densities via \<open>lemma_2_1_easy\<close>.\<close>
 
-lemma average_in_closed_convex:
-  fixes a :: "real \<Rightarrow> 'b :: {euclidean_space, real_inner, heine_borel}"
-    and S :: "'b set"
-  assumes S: "convex S" "closed S" and st: "s < t"
-    and mem: "\<And>u. u \<in> {s..t} \<Longrightarrow> a u \<in> S"
-    and int: "set_integrable lborel {s..t} a"
-  shows "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} a) \<in> S"
-proof (rule ccontr)
-  assume out: "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} a) \<notin> S"
-  obtain b c where bc: "inner b ((1 / (t - s))
-      *\<^sub>R (set_lebesgue_integral lborel {s..t} a)) < c"
-    and sep: "\<And>y. y \<in> S \<Longrightarrow> c < inner b y"
-    using separating_hyperplane_closed_point[OF S out] by blast
-  have ts: "0 < t - s" using st by simp
-  have iint: "set_integrable lborel {s..t} (\<lambda>u. inner (a u) b)"
-  proof -
-    have "integrable lborel (\<lambda>u. (indicat_real {s..t} u *\<^sub>R a u) \<bullet> b)"
-      using int unfolding set_integrable_def by (rule integrable_inner_left)
-    then show ?thesis
-      unfolding set_integrable_def by simp
-  qed
-  have icst: "set_integrable lborel {s..t} (\<lambda>_ :: real. c)"
-    unfolding set_integrable_def
-  proof -
-    have "integrable lborel (indicat_real {s..t})"
-      by (rule integrable_real_indicator)
-        (use st in \<open>auto\<close>)
-    then show "integrable lborel (\<lambda>u. indicat_real {s..t} u *\<^sub>R c)"
-      by simp
-  qed
-  have low: "c * (t - s)
-      \<le> set_lebesgue_integral lborel {s..t} (\<lambda>u. inner (a u) b)"
-  proof -
-    have pt: "c \<le> inner (a u) b" if "u \<in> {s..t}" for u
-      using sep[OF mem[OF that]] by (simp add: inner_commute)
-    have "set_lebesgue_integral lborel {s..t} (\<lambda>_. c)
-        \<le> set_lebesgue_integral lborel {s..t} (\<lambda>u. inner (a u) b)"
-      using pt by (intro set_integral_mono[OF icst iint]) auto
-    moreover have "set_lebesgue_integral lborel {s..t} (\<lambda>_. c) = c * (t - s)"
-      using st by (simp add: set_integral_const)
-    ultimately show ?thesis by simp
-  qed
-  have comm: "set_lebesgue_integral lborel {s..t} (\<lambda>u. inner (a u) b)
-      = inner (set_lebesgue_integral lborel {s..t} a) b"
-    using int unfolding set_lebesgue_integral_def
-    by (simp add: set_integrable_def flip: integral_inner_left)
-  have eq: "c * (t - s) \<le> inner (set_lebesgue_integral lborel {s..t} a) b"
-    using low unfolding comm .
-  have "inner (set_lebesgue_integral lborel {s..t} a) b < c * (t - s)"
-  proof -
-    have "inner b ((1 / (t - s))
-        *\<^sub>R (set_lebesgue_integral lborel {s..t} a))
-        = (1 / (t - s)) * inner (set_lebesgue_integral lborel {s..t} a) b"
-      by (simp add: inner_commute)
-    with bc have lt: "(1 / (t - s))
-        * inner (set_lebesgue_integral lborel {s..t} a) b < c"
-      by (simp add: inner_commute)
-    have "inner (set_lebesgue_integral lborel {s..t} a) b
-        = (t - s) * ((1 / (t - s))
-            * inner (set_lebesgue_integral lborel {s..t} a) b)"
-      using ts by simp
-    also have "\<dots> < (t - s) * c"
-      using lt ts by (intro mult_strict_left_mono)
-    finally show ?thesis by (simp add: mult.commute)
-  qed
-  with eq show False by simp
-qed
-
 text \<open>A market witness's volatility is a \<open>suff_volatile\<close> density with the
   \<open>eigen_ub\<close> cap; \<open>lemma_2_1_easy\<close> (the easy inclusion of Lemma 2.1)
   puts each value in \<open>sconstraint k L\<close>, and the average lemma then puts
@@ -623,7 +551,6 @@ lemma suff_volatile_cap_in_sconstraint:
   shows "a \<in> sconstraint k L"
   unfolding sconstraint_def
   using sv ub hull_subset[of "suff_volatile k"] lemma_2_1_easy by auto
-
 
 subsection \<open>The constraint set is inhabited\<close>
 
@@ -684,7 +611,6 @@ next
   qed
 qed
 
-
 subsection \<open>Continuing a stopped volatility past its stopping time\<close>
 
 text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a market
@@ -695,12 +621,6 @@ text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a marke
 
 definition acont :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n^'n"
   where "acont a tv s = (if s \<le> tv then a s else mat 1)"
-
-lemma acont_before: "s \<le> tv \<Longrightarrow> acont a tv s = a s"
-  unfolding acont_def by simp
-
-lemma acont_after: "tv < s \<Longrightarrow> acont a tv s = mat 1"
-  unfolding acont_def by simp
 
 text \<open>Time-measurability is inherited by the continuation: the locale
   assumption \<open>acov_time_measurable\<close> is stated on the nonnegative axis
@@ -741,30 +661,10 @@ proof -
   ultimately show ?thesis unfolding set_borel_measurable_def by simp
 qed
 
-lemma acont_in_sconstraint:
-  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
-  assumes L: "1 \<le> L"
-    and sv: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> a u \<in> suff_volatile k"
-    and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> eigen_ub (a u) L"
-    and s: "0 \<le> s"
-  shows "acont a tv s \<in> sconstraint k L"
-proof (cases "s \<le> tv")
-  case True
-  then have "acont a tv s = a s" by (rule acont_before)
-  then show ?thesis
-    using suff_volatile_cap_in_sconstraint[OF sv[OF s True] ub[OF s True]]
-    by simp
-next
-  case False
-  then have "acont a tv s = mat 1" by (simp add: acont_after)
-  then show ?thesis using mat_1_in_sconstraint[OF L] by simp
-qed
-
 text \<open>Hence the continued volatility has all its difference quotients in the
   constraint set --- which is exactly the covariation condition of
   \<open>exit_class\<close>, holding for every \<open>0 \<le> s < t\<close> with no stopping
   caveat, as (1.7) demands.\<close>
-
 
 subsection \<open>The running covariation built from a continued volatility\<close>
 
@@ -775,9 +675,6 @@ text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>â‚€á
 
 definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
-
-
-
 
 subsection \<open>What the class gives the tightness argument for free\<close>
 
@@ -822,7 +719,6 @@ text \<open>Combined with the difference-quotient-to-density transfer, the class
   member's \<open>Y\<close> is almost surely differentiable off a negligible set of
   times with derivative in the constraint set --- the density statement of
   Eq. (1.7), stated for the class itself rather than for a bare path.\<close>
-
 
 text \<open>On the capped horizon the second component of a class member is
   uniformly bounded, almost surely, by \<open>n\<sqdot>L\<sqdot>T\<close>: it starts at \<open>0\<close> and is
@@ -1775,7 +1671,6 @@ definition exit_val ::
   "exit_val k L T K x =
      Sup ((\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
        ` exit_class k L T x)"
-
 
 (*<*)
 end

@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Ito_Market
   imports
@@ -911,7 +910,6 @@ proof -
       by (simp add: vec_eq_iff)
   qed
 qed
-
 
 (*<*)
 end

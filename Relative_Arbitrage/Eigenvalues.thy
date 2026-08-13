@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Eigenvalues
   imports Eigenvalue_Bound_Exact
@@ -482,11 +481,9 @@ text \<open>\<open>eigen_lb a m\<close> provides an \<open>m\<close>-dimensional
   dominates \<open>|x|²\<close>. Testing the supremum at the orthogonal projection onto
   it gives the lower bound; no eigenbasis of \<open>a\<close> is involved.\<close>
 
-
 text \<open>Dually, \<open>eigen_ub a L\<close> caps every eigenvalue, hence every \<open>m\<close>-fold
   sum. Here the bound holds for each competing projection separately, so
   no eigenbasis and no symmetry assumption are needed.\<close>
-
 
 section \<open>Ordered eigenvalues as differences of Ky Fan sums\<close>
 
@@ -592,7 +589,6 @@ proof -
   show thesis
     by (rule that[OF w wmin])
 qed
-
 
 lemma threshold_sum_maximal:
   fixes lam :: "'a \<Rightarrow> real"
@@ -1049,7 +1045,6 @@ text \<open>The extremal construction behind Eq. (3.5) needs a concrete feasible
   automatically a threshold set, so \<open>kyfan_threshold\<close> evaluates
   \<open>kyfan (card T) M\<close> at it, and that value is already the maximum.\<close>
 
-
 lemma possum_full_eq_sum_basis:
   fixes a :: "real^'n::finite^'n"
   assumes B: "onormal B" "span B = UNIV"
@@ -1132,8 +1127,6 @@ text \<open>The companion statement for the negative-part term,
   \<open>S\<close> of size \<open>j\<close> --- i.e. that \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>m\<^sub>)\<close> are exactly the
   \<open>S\<close>-eigenvalues in decreasing order, true by iterating
   \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but a separate induction.\<close>
-
-
 
 (*<*)
 end

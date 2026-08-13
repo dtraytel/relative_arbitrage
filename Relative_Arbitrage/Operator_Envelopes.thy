@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Operator_Envelopes
   imports Viscosity_Solutions
@@ -55,7 +54,6 @@ definition ell_op_usc ::
 text \<open>Every ball around \<open>z\<close> contains \<open>z\<close>, which gives the sandwich
   \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>.  This is all that is needed to see that the
   envelope-free conditions are the stronger ones.\<close>
-
 
 lemma ell_op_lsc_le:
   fixes p :: "real^'n::finite"
@@ -462,8 +460,6 @@ proof -
   show ?thesis by (rule that[OF d0 d1]) (use key in blast)
 qed
 
-
-
 theorem ell_op_lsc_at_zero:
   fixes M :: "real^'n::finite^'n"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
@@ -644,13 +640,11 @@ proof (intro ballI allI impI)
     using ell_op_le_ell_op_usc[of k L "g x" H] by (rule order_trans)
 qed
 
-
 section \<open>Example 3.1 satisfies Definition 3.1 as stated in the paper\<close>
 
 text \<open>Putting \<open>K = cball 0 r\<close> and \<open>\<Omega> = ball 0 r = K\<^sup>\<circ>\<close>: the explicit
   function of Eq. (3.9) is a viscosity solution in the envelope sense of
   Definition 3.1, with zero boundary values on the sphere.\<close>
-
 
 section \<open>The closed formula of Eq. (3.6)\<close>
 
@@ -783,7 +777,6 @@ proof -
   have "\<forall>x. (hh w ** hh w) *v x = mat 1 *v x" using key by blast
   then show ?thesis using matrix_eq[of "hh w ** hh w" "mat 1"] by blast
 qed
-
 
 lemma hh_scale:
   fixes w :: "real^'n::finite"
@@ -1173,8 +1166,6 @@ proof -
 qed
 
 text \<open>The half space, and what it rules out.\<close>
-
-
 
 lemma halfspace_not_antipodal:
   fixes u q :: "real^'n::finite"
@@ -1937,7 +1928,6 @@ proof -
   then show ?thesis unfolding ggx .
 qed
 
-
 text \<open>The mirror for subsolutions: adding a quartic deepens a local
   maximum and, for a large enough coefficient, makes it global over \<open>K\<close>,
   reusing @{thm [source] test_fun_at_quartic_shift} with a negative
@@ -2017,7 +2007,6 @@ proof (rule antisym)
   show "ereal (ell_op k L p M) \<le> ell_op_usc k L p M"
     by (rule ell_op_le_ell_op_usc)
 qed
-
 
 section \<open>Semicontinuity toolbox and the invariances of \<open>F\<close>\<close>
 
@@ -2233,7 +2222,6 @@ proof (rule lsc_attains_inf_gen[OF lsc B cS neS])
   fix z assume zS: "z \<in> S" and zm: "\<And>y. y \<in> S \<Longrightarrow> f z \<le> f y"
   show ?thesis using zS zm by blast
 qed
-
 
 text \<open>The constant test function: the touching that Definition 3.1's boundary
   clause admits at a global minimum, and the one the paper's diagonal case
@@ -2476,8 +2464,6 @@ proof -
     by (simp add: trace_def matrix_matrix_mult_def)
   finally show ?thesis .
 qed
-
-
 
 lemma ell_op_conj_rot:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n" and R :: "real^'n^'n"
@@ -2917,14 +2903,12 @@ text \<open>The \<open>ell_op_lsc\<close> versions follow from \<open>ell_op_usc
   \<open>INF\<close> and \<open>SUP\<close> exchanged; they are not needed by Theorem 4.3, which reads the
   supersolution side only, so they are not stated.\<close>
 
-
 section \<open>Envelope monotonicity, the usc fixpoint, and affine images of open sets\<close>
 
 lemma visc_supersol_env_mono:
   assumes "visc_supersol_env k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
   shows "visc_supersol_env k L K \<Omega>' u"
   using assms unfolding visc_supersol_env_def by blast
-
 
 lemma lsc_env_mono:
   fixes u v :: "real^'n::finite \<Rightarrow> real"
@@ -3550,7 +3534,6 @@ proof
     unfolding T_def by (rule affine_interior_sub[OF orth cne])
 qed
 
-
 section \<open>A constant is a subsolution off \<open>K\<close>\<close>
 
 text \<open>A test function touching from above at a local minimum of itself --
@@ -3560,8 +3543,6 @@ text \<open>A test function touching from above at a local minimum of itself --
   \<open>\<Omega>\<close> into the open set \<open>UNIV - S\<close> with
   \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> compact -- the shape the
   Crandall--Ishii core needs.\<close>
-
-
 
 (*<*)
 end

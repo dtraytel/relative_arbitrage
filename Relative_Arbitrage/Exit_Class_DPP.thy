@@ -848,7 +848,6 @@ qed
 text \<open>Both halves together: Eq. (2.9) at a deterministic time, modulo the
   conditioning statement isolated above.\<close>
 
-
 section \<open>Conditioning on the past for the \<open>\<le>\<close> half\<close>
 
 text \<open>This section builds the ingredients for the conditioning statement
@@ -1058,7 +1057,6 @@ lemma pfut_measurable_law:
 
 text \<open>The exit time of the future, expressed through \<open>pfut\<close>: re-basing at the
   endpoint and adding the endpoint back is the identity on the exit time.\<close>
-
 
 subsection \<open>Conditioning on an event of the past keeps martingales martingales\<close>
 
@@ -2015,7 +2013,6 @@ text \<open>\<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>
   \<open>\<F>\<^sub>r\<close>-measurable and can be used as the conditioning event \<open>A\<close> of
   @{thm [source] exit_class_future_of_past}.\<close>
 
-
 subsection \<open>A set-integral criterion for the conditional law\<close>
 
 text \<open>Every condition defining the class is linear in the measure ---
@@ -2957,7 +2954,6 @@ text \<open>Two path-specific facts the instantiation needs.  First: an incremen
   of the rebased future is an increment of the original path, the base point
   cancelling, which is why the martingale property of \<open>P\<close> applies to it
   unchanged.\<close>
-
 
 text \<open>Second: \<open>pfut\<close> pulls the future's natural filtration back into \<open>P\<close>'s,
   with the clock shifted by \<open>r\<close>, which puts the conditioning set
@@ -5290,7 +5286,6 @@ text \<open>Two pathwise facts underlying the conditioning statement for the DPP
   which is exactly the object \<^const>\<open>pshift_law\<close> pushes into the class at
   that point.\<close>
 
-
 text \<open>The class-level step: an almost-sure lower bound on the exit time of
   the shifted law is a lower bound for \<^const>\<open>exit_val\<close> at the shift.  The
   starting point here is a single vector \<open>y\<close>, not a small ball, so the bound
@@ -5623,7 +5618,6 @@ text \<open>Proposition 2.4 of arXiv:2512.17702 at a deterministic \<open>\<thet
   capped at \<open>r\<close>, and the indicator \<open>1\<^bsub>{\<theta> \<le> \<tau>\<^sub>K}\<^esub>\<close> is
   \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>, exact for the capped exit time and
   needing no path continuity.\<close>
-
 
 section \<open>The conditioning statement at a random time\<close>
 
@@ -6860,7 +6854,6 @@ qed
 text \<open>Feeding that into @{thm [source] exit_val_dpp_sup_ge_time_of_const}
   gives the \<open>\<ge>\<close> half of (2.9) at the two-valued stopping time.\<close>
 
-
 subsection \<open>The induction step: one glue, with the rest left as a predicate\<close>
 
 text \<open>@{thm [source] exit_val_dpp_ge_const_two} is this lemma with
@@ -7060,9 +7053,6 @@ text \<open>The integrand at a fixed time is a random variable on the \<open>t\<
   @{thm [source] exit_val_dpp_ge_step} needs, pulled out so the chain's
   measurability induction can reuse them.\<close>
 
-
-
-
 text \<open>The events of a stopping time are pairwise exclusive along the list:
   once one fires, none of the later ones does.  That is what stops a glue at
   \<open>t\<^sub>j\<close> from undoing an earlier glue.\<close>
@@ -7079,7 +7069,6 @@ text \<open>The induction: iterate @{thm [source] exit_val_dpp_ge_step} down the
   invariant is \<open>D \<omega> \<or> dpp_chain rs \<omega>\<close>: \<open>D\<close> implies the bound, and \<open>D\<close>
   implies that none of the remaining events fires, so no later glue touches
   those paths.\<close>
-
 
 subsection \<open>Splitting at a stopping time without re-clocking\<close>
 
@@ -7135,13 +7124,11 @@ text \<open>The future factor starts at \<open>0\<close> --- exactly the normali
   asks of a continuation --- and the two halves live on disjoint stretches of
   time.\<close>
 
-
 lemma pafter_before:
   fixes \<omega> :: "'n::finite pairpath"
   assumes t: "t \<in> {0..T}" and le: "t \<le> \<theta> \<omega>"
   shows "pafter T \<theta> \<omega> t = 0"
   using t le by (simp add: pafter_apply max_absorb2)
-
 
 text \<open>Evaluating a path at a random time.  This is the one new measurability
   fact the additive split needs, and it is where the paths' continuity is
@@ -7627,7 +7614,6 @@ text \<open>The conditional law of the increments after \<open>\<theta>\<close> 
   at \<open>\<theta>\<close>.  Both factors live on the same \<open>T\<close>-path space, so this is
   @{thm [source] path_rcd_ksemi} at \<open>u = v = T\<close>.\<close>
 
-
 subsection \<open>Identifying the class the conditional law lives in\<close>
 
 text \<open>\<open>pafter T \<theta> \<omega>\<close> is frozen on \<open>[0,\<theta>]\<close>, so it is not a member of
@@ -7661,8 +7647,6 @@ lemma prebase_outside: "u \<notin> {0..T - s} \<Longrightarrow> prebase s T w u 
 
 text \<open>The two bridges: \<open>pafter\<close> is the delayed future, and the future is
   recovered from it by re-basing, so nothing is lost either way.\<close>
-
-
 
 subsection \<open>Where the stopping-time property enters\<close>
 
@@ -7773,7 +7757,6 @@ text \<open>And the future factor of a stopped path is trivial: stopping twice
   leaves nothing after \<open>\<theta>\<close>.  This is the pathwise seed of clause (ii) for
   the kernel --- the continuation starts at \<open>0\<close>.\<close>
 
-
 text \<open>The re-basing map at a fixed time is an ordinary path-space map, and
   that is all clause (i) of the kernel statement needs, since \<open>\<theta> \<omega>\<close> is a
   fixed number inside an almost-sure statement.\<close>
@@ -7834,7 +7817,6 @@ qed
 text \<open>Hence clause (i) for the kernel: re-based, the conditional law is a
   probability measure on the \<open>(T - \<theta>)\<close>-path space.\<close>
 
-
 text \<open>Clause (ii) for the kernel.  The pathwise content is already there:
   @{thm [source] pafter_before} at \<open>t = \<theta> \<omega>\<close> says the future factor is still
   \<open>0\<close> when the clock starts, so all that is needed is to push it through the
@@ -7844,7 +7826,6 @@ text \<open>Clause (ii) for the kernel.  The pathwise content is already there:
   where the kernel is indexed by the stopped path: the clock has to be read
   off that, and @{thm [source] path_stopping_time_stopped} says it is the
   same number.\<close>
-
 
 text \<open>Clause (iii) at one pair of times.  This is the analogue of the \<open>one\<close>
   step inside @{thm [source] pfut_rcd_diffquot}, and the pathwise content is
@@ -8182,7 +8163,6 @@ text \<open>Clause (iii) for the kernel, closed: the rational pairs collected by
   themselves --- every point of the path space is continuous --- via
   @{thm [source] AE_space} on \<open>\<kappa> p'\<close>.\<close>
 
-
 section \<open>The \<open>\<F>\<^sub>\<sigma>\<close> layer\<close>
 
 text \<open>Clause (iv) needs optional sampling at two stopping times, while
@@ -8280,7 +8260,6 @@ qed
 text \<open>And a deterministic time gives back the filtration itself, which is how
   the new layer connects to everything already proved.\<close>
 
-
 text \<open>The slice lemma: an \<open>\<F>\<^sub>\<sigma>\<close>-set, cut down to a half-open band of values of
   \<open>\<sigma>\<close>, lands in the filtration at the top of the band.  This is the brick
   the two-stopping-time sampling theorem runs on: for a simple \<open>\<sigma>\<close> with
@@ -8309,7 +8288,6 @@ text \<open>And the bottom band, \<open>\<sigma> \<le> t\<^sub>1\<close>, is @{t
   itself, so a simple \<open>\<sigma>\<close> gives a finite partition of \<open>A\<close> into pieces each
   living in the filtration at its own value.  Stated as the partition it
   will be used as.\<close>
-
 
 text \<open>The value-set form of the slice, which is what the sampling theorem
   wants: the pieces indexed by the values of \<open>\<sigma>\<close> are genuinely disjoint,
@@ -8804,7 +8782,6 @@ qed
 text \<open>Hence the event is measurable with respect to the natural filtration at
   \<open>t\<close> --- the stopped path is, and \<open>\<theta>\<close> is Borel.\<close>
 
-
 text \<open>The times clause (iv) samples at are \<open>(\<theta> + i) \<and> T\<close>, and they are
   stopping times for the same reason \<open>\<theta>\<close> is: shifting forward and capping
   only ever looks further back, so two paths agreeing up to the shifted time
@@ -9087,7 +9064,6 @@ text \<open>The assembly.  Every hypothesis of
   @{thm [source] exit_component_dyceil_tendsto}, and the domination from
   @{theory Martingale_Sampling.Doob_Inequality}'s \<open>Dsup\<close> through
   @{thm [source] exit_class_horizon_component}.\<close>
-
 
 text \<open>The same identity for an arbitrary real process that is a
   \<open>horizon_sq_int_martingale\<close> with continuous paths.  Both of the class's
@@ -9821,13 +9797,9 @@ text \<open>The stopping-time twin of @{thm [source] pfut_rcd_X_increment_zero},
   @{thm [source] stopped_increment_of_horizon_gen} instead of
   @{thm [source] martingale.set_integral_eq}.\<close>
 
-
-
 text \<open>Clause (iv) for the \<open>X\<close> martingale: the additive split carries it
   across unchanged, since \<^term>\<open>pafter T \<theta> \<omega>\<close> is a difference of values of
   \<open>\<omega>\<close> and the constant \<^term>\<open>\<omega> (\<theta> \<omega>)\<close> cancels between the two times.\<close>
-
-
 
 section \<open>The cross term: an increment against a known factor\<close>
 
@@ -10004,7 +9976,6 @@ qed
 text \<open>The known factor is a function of the stopped path, hence \<open>\<F>\<^sub>\<theta>\<close>- and a
   fortiori \<open>\<F>\<^sub>(\<^sub>u\<^sub> \<^sub>\<or>\<^sub> \<^sub>\<theta>\<^sub>)\<close>-measurable.\<close>
 
-
 section \<open>Clause (iv) for the compensated martingale\<close>
 
 text \<open>The second, and last, clause-(iv) instance.  The pathwise identity is
@@ -10017,7 +9988,6 @@ text \<open>The second, and last, clause-(iv) instance.  The pathwise identity i
   kills, and two cross terms, which
   @{thm [source] set_integral_increment_times_known} kills.  The constants
   \<open>outerp b\<close> and \<open>\<langle>X\<rangle>\<^sub>\<theta>\<close> have already cancelled between the two times.\<close>
-
 
 section \<open>The additive glue\<close>
 
@@ -10149,7 +10119,6 @@ text \<open>The glue inverts the split.  There is no membership hypothesis on
   \<open>\<omega>\<close> beyond being a path: @{thm [source] pstopped_add_pafter} is
   unconditional and \<^const>\<open>padd\<close> restricts to \<open>{0..T}\<close>, where a member of
   the path space already lives.\<close>
-
 
 text \<open>The split inverts the glue, provided the continuation stands still up
   to \<open>\<theta>\<close> --- which is exactly clause (ii) of the kernel's membership in the
@@ -12638,7 +12607,6 @@ text \<open>\<^const>\<open>pembed\<close> is 1-Lipschitz --- it only reindexes 
   the delayed class at a fixed \<open>s\<close> is a continuous image of the compact
   class at horizon \<open>T - s\<close>.\<close>
 
-
 definition pdelclass :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real
     \<Rightarrow> (('n::finite pairpath) measure) set"
   where "pdelclass k L T s =
@@ -14983,8 +14951,6 @@ text \<open>Three generic facts about \<^const>\<open>ksemi\<close>, all from
   uniform first moments of the delayed class these discharge every side
   condition of the additive glue.\<close>
 
-
-
 lemma integral_kernel_measurable:
   fixes g :: "'a \<Rightarrow> 'b \<Rightarrow> real"
   assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
@@ -16820,7 +16786,6 @@ proof (rule exit_val_dpp_sup_ge_time_of_const)
     for P c
     by (rule exit_val_dpp_ge_const_time[OF T0 L1 Kc st thM P bnd])
 qed
-
 
 (*<*)
 end

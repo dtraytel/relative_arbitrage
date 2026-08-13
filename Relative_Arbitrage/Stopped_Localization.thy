@@ -647,7 +647,6 @@ lemma space_restrict_full: "space (restrict_space M G) = G"
 lemma sets_restrict_full: "G \<inter> space M \<in> sets M"
   using G by (simp add: sets.sets_into_space Int_absorb2)
 
-
 lemma emeasure_restrict_full:
   assumes S: "S \<in> sets M"
   shows "emeasure (restrict_space M G) (S \<inter> G) = emeasure M S"
@@ -860,7 +859,6 @@ proof -
 qed
 
 end
-
 
 (*<*)
 end

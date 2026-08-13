@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Exit_Time
   imports Ito_Market
@@ -152,7 +151,6 @@ next
   have "d < infdist z (- A)" using z False unfolding eroded_def by simp
   from shift_stays_off[OF this near] show ?thesis by simp
 qed
-
 
 text \<open>The erosions exhaust an open set. This is the half that fails for general
   \<open>A\<close>: a point of \<open>A\<close> needs interior room before any positive margin exists.\<close>
@@ -684,7 +682,6 @@ next
     show "g q \<in> A" by (rule mem)
   qed
 qed
-
 
 (*<*)
 end

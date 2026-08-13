@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Exit_Semicontinuity
   imports "Path_Space_Tightness.Path_Space" Exit_Time Value_Function_Market
@@ -130,8 +129,6 @@ text \<open>The law-level form: the essential infimum only sees the almost-sure
   class of the exit time, so once the exit happens before \<open>T\<close> almost surely,
   every larger horizon gives the SAME value.  This is what licenses working
   at a fixed finite \<open>T\<close> in place of the paper's \<open>C([0,\<infinity>), \<real>ⁿ)\<close>.\<close>
-
-
 
 text \<open>Upper semicontinuity, in sublevel-set form: strict sublevels of the
   exit time are open in the path topology. A path that exits before \<open>c\<close>
@@ -1369,7 +1366,6 @@ proof -
         pexit_nonneg[OF T0] pexit_le_T[OF T0]])
   finally show ?thesis .
 qed
-
 
 (*<*)
 end

@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Viscosity_Solutions
   imports Viscosity_Comparison_Interface
@@ -122,7 +121,6 @@ section \<open>The punctured ball is dense in the closed ball\<close>
 
 text \<open>Needed to identify the parabolic boundary \<open>closure \<Omega> - \<Omega>\<close> of
   \<open>\<Omega> = ball 0 r - {0}\<close> with the sphere together with the origin.\<close>
-
 
 section \<open>Comparison with the explicit smooth solution\<close>
 
@@ -359,11 +357,9 @@ qed
 text \<open>On the whole closed ball -- interior points by the theorem above,
   boundary points by hypothesis.\<close>
 
-
 text \<open>The hypotheses are satisfiable: the explicit function itself is a
   continuous viscosity solution with those boundary values.  Hence the pair
   of results is an existence-and-uniqueness statement, with no axioms.\<close>
-
 
 section \<open>Section 4 for the ball, with no Crandall--Ishii input\<close>
 
@@ -404,11 +400,9 @@ text \<open>Boundary data given as an ordered pair on the sphere, which is the f
   Theorem 4.3 is stated in: \<open>u \<le> w\<close> on the sphere suffices, provided the
   common value is that of \<open>ball_v\<close>.\<close>
 
-
 text \<open>Proposition 4.1 for the ball: two viscosity solutions agreeing with
   \<open>ball_v\<close> on the sphere agree everywhere.  Both directions of
   \<open>comparison_ball\<close>.\<close>
-
 
 section \<open>Theorem 4.2(a) when one function is smooth: no Crandall--Ishii\<close>
 
@@ -425,10 +419,8 @@ text \<open>The mechanism of the ball argument, abstracted.  Theorem 4.2(a) need
   strict supersolution, needing nothing from Section 4's harder half.  The
   gradient field is \<open>g\<close> and the Hessian field \<open>Hf\<close>, matching \<open>test_fun_at\<close>.\<close>
 
-
 text \<open>The dual statement, for a smooth strict subsolution below a
   supersolution.\<close>
-
 
 section \<open>Towards Section 2: the feasible set is entrywise bounded\<close>
 
@@ -480,8 +472,6 @@ qed
 
 text \<open>Hence the trace is bounded on the feasible set, which is the quantitative
   form Lemma 2.2's hypothesis is used in.\<close>
-
-
 
 text \<open>The off-diagonal entries are bounded too.  Testing the psd quadratic form
   at \<open>axis i 1 \<plusminus> axis j 1\<close> gives \<open>a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<plusminus> 2 a\<^sub>i\<^sub>j \<ge> 0\<close>, i.e.
@@ -600,7 +590,6 @@ proof (rule boundedI)
     using L by simp
   finally show "norm a \<le> real CARD('n) * L" .
 qed
-
 
 (*<*)
 end

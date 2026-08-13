@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Operator_Envelope_Continuity
   imports Operator_Envelopes Poincare_Separation
@@ -528,14 +527,11 @@ qed
 text \<open>The same holds for the upper envelope, the form used in Section 4's
   viscosity definitions.\<close>
 
-
 text \<open>Consequence of the continuity clause, and the reason Section 4 can work
   with the envelope-free operator away from the origin: there the viscosity
   sub- and supersolution inequalities of Definition 3.1 are literally the same
   conditions as the envelope-free ones.  This is the off-origin companion of
   \<open>ell_op_lsc_at_zero_iff\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}), which handles \<open>p = 0\<close>.\<close>
-
-
 
 text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maximum
   the Crandall-Ishii lemma produces a common gradient \<open>p\<close> and Hessians
@@ -544,11 +540,8 @@ text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maxim
   values are pinched between the sub- and supersolution inequalities, and any
   strictness on the subsolution side is already a contradiction.\<close>
 
-
-
 text \<open>The envelope formulation of Definition 3.1, obtained by using the
   continuity clause to replace \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> by \<open>F\<close> at a nonzero gradient.\<close>
-
 
 section \<open>Lemma 3.1\<close>
 
@@ -565,8 +558,6 @@ text \<open>Lemma 3.1 consists of:
   \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary \<open>p \<noteq> 0\<close> is \<open>poincare_separation\<close>
   (@{theory Relative_Arbitrage.Poincare_Separation}); for \<open>p\<close> an eigenvector it is an equality
   (\<open>eigval_Mp_top_eigenvector\<close>).\<close>
-
-
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
 
@@ -702,8 +693,6 @@ text \<open>Removing the interface needs a proof of \<open>max_principle_boundar
   for compact \<open>K\<close>, i.e. Theorem 4.2(a); everything above then becomes
   unconditional.  The continuous version is the target --
   \<open>max_principle_boundary_raw\<close> is false and not one.\<close>
-
-
 
 (*<*)
 end

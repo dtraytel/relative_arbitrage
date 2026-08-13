@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Constraint_Set_Convexity
   imports Curvature_Operator
@@ -618,13 +617,6 @@ text \<open>Hyperplane separation from the closed convex hull, symmetrization of
 
 subsection \<open>Frobenius products of matrices\<close>
 
-lemma inner_matrix_eq:
-  "(A :: real^'n^'n) \<bullet> B = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. A $ i $ j * B $ i $ j)"
-  by (simp add: inner_vec_def)
-
-
-
-
 subsection \<open>Spectral decomposition as a sum of outer products\<close>
 
 lemma spectral_decomposition:
@@ -760,17 +752,13 @@ qed
 
 subsection \<open>Abel summation against the \<open>\<Pi>\<close>-constraints\<close>
 
-
 subsection \<open>The separation argument\<close>
-
 
 text \<open>Lemma 2.1 in full: together with \<open>lemma_2_1_easy\<close>, the convexified
   constraint set \<open>A\<^sub>k\<close> is wedged between the convex hull of the generator
   set and its closure:
   \<open>conv B\<^sub>k \<subseteq> A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close>, so \<open>A\<^sub>k\<close> is the closed convex hull
   of \<open>B\<^sub>k\<close> (the form in which the paper uses the lemma).\<close>
-
-
 
 section \<open>Support-function characterisation of a closed convex constraint set\<close>
 
@@ -783,8 +771,6 @@ text \<open>A closed convex set \<open>S\<close> of symmetric matrices is charac
   faithful.  The argument runs on the symmetrized separating functional,
   since the Frobenius inner product \<open>m \<bullet> x\<close> agrees with \<open>tr(mx)\<close> only on
   symmetric matrices.\<close>
-
-
 
 (*<*)
 end

@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Value_Function_Market
   imports Brownian_Optimal_Boundary
@@ -29,7 +28,6 @@ text \<open>\<open>P-ess inf tau\<close> of Eq. (1.6): the largest deterministic
 
 definition ess_inf_time :: "'a measure \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> ennreal" where
   "ess_inf_time M tau = Sup {c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}"
-
 
 text \<open>Every almost-sure lower bound is dominated by the mean, so the
   essential infimum is too. This is what turns the expectation bound of
@@ -197,7 +195,6 @@ text \<open>
   the part before the stopping time and the continuation value.
 \<close>
 
-
 text \<open>The essential infimum transported along a pushforward: exit times of
   a law presented as a distr (e.g.\ a path law, or a member of \<open>\<P>\<^sub>x\<close>
   reconstructed from a limit) can be computed on either side. Needed when
@@ -235,7 +232,6 @@ definition val_fn ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> real^'n \<Rightarrow> ennreal"
   where
   "val_fn k L K x0 = Sup (mkt_exit_vals k L K x0)"
-
 
 text \<open>The index set is inhabited: the Brownian market started at \<open>x0\<close> and
   stopped at once never leaves a ball containing \<open>x0\<close>, so it belongs to
@@ -299,7 +295,6 @@ proof -
   then show ?thesis
     by (simp add: z)
 qed
-
 
 section \<open>Monotonicity of the value function in the domain\<close>
 
@@ -397,7 +392,6 @@ theorem val_fn_mono:
   unfolding val_fn_def
   by (rule Sup_subset_mono[OF mkt_exit_vals_mono[OF KK]])
 
-
 section \<open>Two facts about \<open>val_fn\<close> that need no probability at all\<close>
 
 text \<open>Finiteness is clause (0) of Theorem 1.1: \<open>v = enn2real \<circ> val_fn\<close>
@@ -407,7 +401,6 @@ text \<open>Finiteness is clause (0) of Theorem 1.1: \<open>v = enn2real \<circ>
 
   \<open>val_fn\<close> vanishes off \<open>K\<close>: the market locale requires \<open>x0 \<in> K\<close>, so
   outside \<open>K\<close> the index set is empty and \<open>val_fn\<close> is \<open>Sup {} = \<bottom> = 0\<close>.\<close>
-
 
 text \<open>Clause (3) of Theorem 1.1, for the ball: \<open>ball_v r k x\<close> is
   \<open>max (r\<^sup>2 - x \<bullet> x) 0 / (CARD('n) - k)\<close>, vanishing exactly when
@@ -419,13 +412,9 @@ text \<open>Clause (3) of Theorem 1.1, for the ball: \<open>ball_v r k x\<close>
   measure of Example 3.1 and behind the same weak existence result as
   clauses (1) and (2).\<close>
 
-
-
-
 text \<open>\<open>val_fn k L K x0 = 0\<close> for \<open>x0 \<notin> K\<close>, since the market locale requires
   \<open>x0 \<in> K\<close> (\<open>sufficiently_volatile_market.x0_in_K\<close>), so the index set of the
   supremum is empty and \<open>Sup {} = \<bottom> = 0\<close>.\<close>
-
 
 (*<*)
 end

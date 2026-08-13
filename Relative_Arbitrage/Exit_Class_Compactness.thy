@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Exit_Class_Compactness
   imports Exit_Class Exit_Time_Semicontinuity
@@ -31,7 +30,6 @@ text \<open>The locale's volatility hypotheses are stated as three separate
   and continued they give a single almost-sure statement holding for all
   times, which is the shape \<open>exit_class\<close> asks for.\<close>
 
-
 text \<open>In particular the continued volatility of a market witness never
   leaves the constraint set, whereas the witness's own volatility does the
   moment it is stopped -- which is precisely the mismatch this theory
@@ -51,8 +49,6 @@ text \<open>The continued volatility \<open>acov\<close> is integrable on bounde
   continuation, and \<open>set_borel_measurable_subset\<close> cuts it down to the
   interval at hand.\<close>
 
-
-
 section \<open>The witness satisfies the class's covariation condition\<close>
 
 text \<open>For a market witness, the continued running covariation
@@ -63,7 +59,6 @@ text \<open>For a market witness, the continued running covariation
   (\<open>stopped_market_acov_leaves_sconstraint\<close>); the continuation repairs it
   at no cost by (1.8), since \<open>\<tau>\<^sub>K\<close> only sees the path up to the first exit
   from \<open>K\<close>.\<close>
-
 
 corollary stopped_market_acov_leaves_sconstraint:
   fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
@@ -1385,7 +1380,6 @@ lemma abs_ge_nonempty: "{y :: real. R \<le> \<bar>y\<bar>} \<noteq> {}"
 
 lemma ploc_nonneg: "0 \<le> T \<Longrightarrow> 0 \<le> ploc T i R \<omega>"
   unfolding ploc_def by (rule etime_nonneg)
-
 
 lemma exit_class_cont_adapted:
   fixes Q :: "('n::finite pairpath) measure"
@@ -6068,7 +6062,6 @@ lemma trace_outerp:
   shows "trace (outerp v) = v \<bullet> v"
   by (simp add: outerp_def trace_def inner_vec_def)
 
-
 theorem exit_class_trace_rate:
   fixes Q :: "('n::finite pairpath) measure"
   assumes k: "k < CARD('n)" and Q: "Q \<in> exit_class k L T x"
@@ -6823,7 +6816,6 @@ lemma sets_pglue_law[simp]:
      = sets (borel_of (mtopology_of (path_metric T
          :: ('n::finite pairpath) metric)))"
   unfolding pglue_law_def by (rule sets_pair_law_of)
-
 
 lemma prob_space_pair_measure:
   assumes M: "prob_space M" and N: "prob_space N"
@@ -8291,7 +8283,6 @@ text \<open>Horizon-cap invisibility, both halves.  Past the natural scale of
   Example 3.1 the horizon does not matter at all, so \<open>exit_val\<close> --- defined
   on the capped path space --- computes the paper's uncapped \<open>v\<close> of (1.6).\<close>
 
-
 section \<open>The pasting lower bound (Prop. 2.4)\<close>
 
 text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic programming principle
@@ -8403,7 +8394,6 @@ proof -
     by (intro cInf_greatest) (use lb in auto)
   ultimately show ?thesis by simp
 qed
-
 
 section \<open>Lifting a martingale to an infinite product\<close>
 
@@ -8673,7 +8663,6 @@ lemma sets_kglue_law[simp]:
      = sets (borel_of (mtopology_of (path_metric T
          :: ('n::finite pairpath) metric)))"
   unfolding kglue_law_def by (rule sets_pair_law_of)
-
 
 lemma kglue_measurable:
   fixes Q :: "('n::finite pairpath) measure"
@@ -9427,7 +9416,6 @@ proof -
     by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
         continuous_intros)
 qed
-
 
 lemma kglue_param_comp_martingale:
   fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -10258,7 +10246,6 @@ text \<open>The clauses of Theorem 1.1 proved for \<open>exit_val\<close> --- th
   the ball; the interior value for \<open>n - k \<ge> 2\<close> remains unproved.
   Clause (4), uniqueness, is \<open>Value_Function_Uniqueness.theorem_1_1_uniqueness_general\<close>,
   a statement about viscosity solutions rather than about \<open>exit_val\<close>.\<close>
-
 
 section \<open>The supremum in (1.6) is attained\<close>
 
@@ -11815,7 +11802,6 @@ lemma sets_kglue_law'[simp]:
          :: ('n::finite pairpath) metric)))"
   unfolding kglue_law'_def by (rule sets_pair_law_of)
 
-
 lemma kglue_law'_measurable:
   fixes Q :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -11935,12 +11921,10 @@ qed
 
 text \<open>Clause (i) of (1.7) for the kernel glue.\<close>
 
-
 text \<open>Clause (ii): the covariation difference quotient.  The kernel's
   values have to lie in the class at the origin --- this is the first
   place where that is used, and it is where the almost-sure statement of
   the continuation enters, one \<open>\<omega>\<close> at a time.\<close>
-
 
 subsection \<open>The glue is continuous, and the product is a Polish product\<close>
 
@@ -11966,7 +11950,6 @@ lemma second_countable_path_metric:
   unfolding mtopology_of_def
   by (rule Metric_space.separable_space_imp_second_countable
       [OF Metric_space_mspace_mdist path_metric_polish(2)])
-
 
 lemma mdist_pglue_le:
   fixes w wt w' wt' :: "'n::finite pairpath"
@@ -12647,7 +12630,6 @@ proof -
   show ?thesis
     by (rule exit_class_weak_closed[OF T0 L0 memm gconv pl]) simp
 qed
-
 
 (*<*)
 end

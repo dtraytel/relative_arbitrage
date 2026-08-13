@@ -8,7 +8,6 @@ theory Value_Function_Uniqueness
 begin
 (*>*)
 
-
 text \<open>
   Theorem 1.1 of arXiv:2512.17702 asserts that the value function \<open>v\<close> of
   Eq. (1.6) is the unique bounded upper semicontinuous viscosity solution of
@@ -83,8 +82,6 @@ text \<open>\<open>comparison_principle\<close> (@{theory Relative_Arbitrage.Vis
   \<open>comparison_principle\<close> as a hypothesis, is vacuous;
   \<open>theorem_1_1_uniqueness_general\<close> below replaces it.\<close>
 
-
-
 theorem theorem_1_1_uniqueness_general:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
@@ -102,10 +99,6 @@ theorem theorem_1_1_uniqueness_general:
 
 section \<open>Example 3.1 realises the ball value exactly, for \<open>n - k = 1\<close>\<close>
 
-
-
-
-
 section \<open>The value function satisfies both clauses of Definition 3.1\<close>
 
 text \<open>Both halves of the viscosity property land in the envelope forms that
@@ -119,8 +112,6 @@ text \<open>Both halves of the viscosity property land in the envelope forms tha
   speaks of the unique upper semicontinuous solution and needs no continuity;
   \<open>theorem_1_1_uniqueness_faithful\<close> below is the faithful form, and
   supersedes this one.\<close>
-
-
 
 section \<open>Theorem 1.1 assembled\<close>
 
@@ -663,7 +654,6 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
   bind at interior points is discharged by the a priori bound, so it too is
   gone.\<close>
 
-
 text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)\<close>, in the
   viscosity sense of Definition 3.1, both halves with the boundary gate.\<close>
 
@@ -684,7 +674,6 @@ proof -
     by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
   show ?thesis unfolding eq by (rule exit_val_subsol_bc[OF T0 L Kc kn])
 qed
-
 
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>\<close>
 
@@ -870,8 +859,6 @@ proof -
     by (rule iexit_val_uniqueness[OF kn L1 k1 cK neK expK usc' bnd' sub' sups' xK])
   then show ?thesis using eqK[OF xK] by simp
 qed
-
-
 
 text \<open>\<^bold>\<open>Example 3.1\<close>, in closed form and with no horizon left in it.\<close>
 

@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Eigenvalue_Continuity
   imports Eigenvalues
@@ -186,7 +185,6 @@ proof -
     by simp
   finally show ?thesis .
 qed
-
 
 (*<*)
 end

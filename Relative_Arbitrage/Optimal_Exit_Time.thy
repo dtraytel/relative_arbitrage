@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Optimal_Exit_Time
   imports Volatile_Market
@@ -302,7 +301,6 @@ text \<open>Consequently, in the optimal market the value function of Theorem 1.
   is exactly the expected exit time, and by \<open>ball_relative_arbitrage\<close> the
   critical horizon beyond which the gradient strategy is a relative
   arbitrage is \<open>T\<^sup>* = v(x\<^sub>0)\<close> --- the assertion of Example 3.1.\<close>
-
 
 (*<*)
 end

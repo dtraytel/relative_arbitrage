@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Brownian_Continuous
   imports Modification_Transfer "Wiener_Measure.Brownian_Motion_Continuity"
@@ -450,7 +449,6 @@ text \<open>With the interpretation in place, the locale's martingale-problem
   gives an unconditional fact: planar Brownian motion started at the
   origin has expected squared norm \<open>2\<close> at time \<open>1\<close>.\<close>
 
-
 text \<open>The exit-time bound \<open>E[\<tau>] \<le> v(x0)\<close> of Example 3.1 is available
   as \<open>expected_exit_time_bound\<close>; a non-degenerate instance with
   \<open>K = cball 0 r\<close> needs the ball's first exit time, a genuine stopping
@@ -466,11 +464,8 @@ text \<open>Ito's formula for the test function \<open>|x|\<^sup>2\<close> is a 
   for this instance, so the exit-time bound of Lemma 2.1 follows from the
   martingale problem in process form with nothing assumed.\<close>
 
-
 text \<open>Specialised to the planar market with \<open>k = L = 1\<close>, horizon \<open>1\<close> and
   start \<open>0\<close>, the statement has no hypotheses at all.\<close>
-
-
 
 (*<*)
 end

@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Brownian_Optimal_Boundary
   imports
@@ -64,9 +63,6 @@ text \<open>On the sphere the value function of Eq. (3.9) vanishes, so the
   assumed reverse inequality of \<open>optimal_ball_market\<close> is satisfied by the
   market that stops at once.  Hence that locale is consistent and its
   theorem \<open>optimal_exit_time_value\<close> is not vacuous.\<close>
-
-
-
 
 (*<*)
 end

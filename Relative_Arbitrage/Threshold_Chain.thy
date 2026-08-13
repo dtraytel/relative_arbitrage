@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Threshold_Chain
   imports Eigenvalue_Continuity
@@ -305,7 +304,6 @@ proof -
     using step by simp
   finally show ?thesis .
 qed
-
 
 (*<*)
 end

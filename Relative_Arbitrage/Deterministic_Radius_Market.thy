@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Deterministic_Radius_Market
   imports Brownian_Continuous
@@ -194,9 +193,6 @@ text \<open>A bounded measurable function of a coordinate increment has as its
   \<open>Stochastic_Process.stochastic_process\<close> is qualified because
   \<open>Kolmogorov_Chentsov\<close> shadows it in this import closure.\<close>
 
-
-
-
 text \<open>The indicator/increment independence generalized to any past-measurable
   real variable \<open>Z\<close>; the proof mirrors that of
   \<open>bm_indicator_increment_indep_var\<close> verbatim.\<close>
@@ -306,7 +302,6 @@ proof -
   qed
 qed
 
-
 lemma bm_past_increment_cond_exp:
   fixes g :: "real \<Rightarrow> real"
     and Z :: "('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real"
@@ -413,7 +408,6 @@ proof -
     by eventually_elim simp
 qed
 
-
 lemma bm_cos_cond_exp:
   fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
   assumes s: "0 \<le> s" and st: "s < t"
@@ -519,7 +513,6 @@ proof -
   with T1 T2 show ?thesis
     unfolding fun_eq by eventually_elim simp
 qed
-
 
 lemma bm_sin_cond_exp:
   fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
@@ -640,7 +633,6 @@ proof -
     unfolding fun_eq by eventually_elim simp
 qed
 
-
 text \<open>The centered set-integral form of the trig identities, the input to
   \<open>Modification_Transfer.set_integral_zero_transfer\<close>.\<close>
 
@@ -725,7 +717,6 @@ proof -
   finally show ?thesis .
 qed
 
-
 lemma bm_sin_set_integral:
   fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
   assumes s: "0 \<le> s" and st: "s < t"
@@ -806,7 +797,6 @@ proof -
     using e1 e2 by simp
   finally show ?thesis .
 qed
-
 
 text \<open>The transfer to the continuous modification's filtration.\<close>
 
@@ -903,7 +893,6 @@ proof -
   qed
 qed
 
-
 lemma cbm_sin_set_integral:
   fixes i :: "'n::finite" and x0 :: "real^'n" and a b :: real
   assumes s: "0 \<le> s" and st: "s < t"
@@ -996,7 +985,6 @@ proof -
       by (rule A)
   qed
 qed
-
 
 text \<open>Repackage the transferred identities as conditional expectations
   against the cbmX filtration.\<close>
@@ -1195,14 +1183,10 @@ proof -
     by eventually_elim simp
 qed
 
-
 text \<open>The deterministic layer: time change and radius.\<close>
 
 definition drc :: "real \<Rightarrow> real \<Rightarrow> real" where "drc q t = ln (1 + t / q)"
 definition drR :: "real \<Rightarrow> real \<Rightarrow> real" where "drR q t = sqrt (q + t)"
-
-lemma drc_zero [simp]: "drc q 0 = 0"
-  by (simp add: drc_def)
 
 lemma drR_pos: "0 < q \<Longrightarrow> 0 \<le> t \<Longrightarrow> 0 < drR q t"
   by (simp add: drR_def add_pos_nonneg)
@@ -1299,29 +1283,6 @@ definition drX :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \
   "drX q \<phi> t \<omega> = drR q t *\<^sub>R
      (\<chi> j. if j = 1 then cos (drW (drc q t) \<omega> + \<phi>)
            else sin (drW (drc q t) \<omega> + \<phi>))"
-
-lemma drX_norm:
-  assumes q: "0 < q" and t: "0 \<le> t"
-  shows "norm (drX q \<phi> t \<omega>) = drR q t"
-proof -
-  define c where "c = cos (drW (drc q t) \<omega> + \<phi>)"
-  define sn where "sn = sin (drW (drc q t) \<omega> + \<phi>)"
-  have cs: "c * c + sn * sn = 1"
-    unfolding c_def sn_def by (rule sin_cos_squared_add3)
-  have "drX q \<phi> t \<omega> \<bullet> drX q \<phi> t \<omega>
-      = (drR q t * c) * (drR q t * c) + (drR q t * sn) * (drR q t * sn)"
-    by (simp add: drX_def inner_vec_def UNIV_2 c_def sn_def)
-  also have "\<dots> = drR q t * drR q t * (c * c + sn * sn)"
-    by (simp add: algebra_simps)
-  also have "\<dots> = drR q t * drR q t"
-    unfolding cs by simp
-  finally have "norm (drX q \<phi> t \<omega>) = sqrt (drR q t * drR q t)"
-    by (simp add: norm_eq_sqrt_inner)
-  then show ?thesis
-    using drR_pos[OF q t]
-    by (simp add: power2_eq_square[symmetric])
-qed
-
 
 text \<open>The martingale property of the trig components, from the conditional
   trigonometric expectations and the decay law.\<close>
@@ -1472,7 +1433,6 @@ proof -
   qed
 qed
 
-
 lemma martingale_drX_sin:
   fixes q \<phi> :: real
   assumes q: "0 < q"
@@ -1619,35 +1579,6 @@ proof -
   qed
 qed
 
-theorem martingale_drX:
-  fixes q \<phi> :: real
-  assumes q: "0 < q"
-  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      0 (drX q \<phi>)"
-proof (rule martingale_vecI)
-  fix k :: 2
-  show "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      0 (\<lambda>t \<omega>. drX q \<phi> t \<omega> $ k)"
-  proof (cases "k = 1")
-    case True
-    have "(\<lambda>t \<omega>. drX q \<phi> t \<omega> $ k)
-        = (\<lambda>t \<omega>. drR q t * cos (drW (drc q t) \<omega> + \<phi>))"
-      by (simp add: drX_def fun_eq_iff True)
-    then show ?thesis
-      using martingale_drX_cos[OF q, of \<phi>] by simp
-  next
-    case False
-    then have k2: "k = 2" using exhaust_2 by auto
-    have "(\<lambda>t \<omega>. drX q \<phi> t \<omega> $ k)
-        = (\<lambda>t \<omega>. drR q t * sin (drW (drc q t) \<omega> + \<phi>))"
-      by (simp add: drX_def fun_eq_iff k2)
-    then show ?thesis
-      using martingale_drX_sin[OF q, of \<phi>] by simp
-  qed
-qed
-
 text \<open>Stopping a martingale at a deterministic time needs no optional
   stopping: below the horizon it is the base property, above it the
   stopped value is measurable at the earlier time.\<close>
@@ -1703,14 +1634,6 @@ proof -
     qed
   qed
 qed
-
-theorem martingale_drXs:
-  fixes q \<phi> T0 :: real
-  assumes q: "0 < q" and T0: "0 \<le> T0"
-  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      0 (\<lambda>t. drX q \<phi> (min t T0))"
-  by (rule martingale_stopped_deterministic[OF martingale_drX[OF q] T0])
 
 subsection \<open>Joint measurability of time-continuous processes\<close>
 
@@ -2217,7 +2140,6 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-
 lemma drN_set_integral_identity:
   fixes q \<phi> s t :: real
   assumes q: "0 < q" and s: "0 \<le> s" and st: "s \<le> t"
@@ -2527,35 +2449,11 @@ text \<open>Continuity of \<^const>\<open>dra\<close> in time, by the same route
   covariation density is an a.e. derivative and thus measurable by
   construction, whereas here it is primitive.\<close>
 
-lemma dra_cont:
-  assumes q: "0 < q"
-  shows "continuous_on UNIV (\<lambda>u. dra q \<phi> (max u 0) \<omega>)"
-proof -
-  have m1: "continuous_on UNIV (\<lambda>u :: real. max u 0)"
-    by (intro continuous_intros)
-  have m2: "continuous_on UNIV (\<lambda>u :: real. drc q (max u 0))"
-    by (rule continuous_on_compose2[OF drc_cont[OF q] m1]) auto
-  have img: "(\<lambda>u :: real. drc q (max u 0)) ` UNIV \<subseteq> {0..}"
-    by (auto intro!: drc_nonneg[OF q])
-  have m3: "continuous_on UNIV (\<lambda>u. Bcont (drc q (max u 0)) (\<omega> 1))"
-    by (rule continuous_on_compose2[OF Bcont_cont m2 img])
-  have ent: "continuous_on UNIV
-      (\<lambda>u. dra q \<phi> (max u 0) \<omega> $ j $ l)" for j l
-    unfolding dra_def drW_def
-    by (cases "j = 1"; cases "l = 1"; simp)
-      (intro continuous_intros m3)+
-  have "continuous_on UNIV
-      (\<lambda>u. \<chi> j. \<chi> l. dra q \<phi> (max u 0) \<omega> $ j $ l)"
-    by (intro continuous_on_vec_lambda ent)
-  then show ?thesis by simp
-qed
-
 lemma dra_11: "dra q \<phi> u \<omega> $ 1 $ 1 = (sin (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
   by (simp add: dra_def power2_eq_square)
 
 lemma dra_22: "dra q \<phi> u \<omega> $ 2 $ 2 = (cos (drW (drc q u) \<omega> + \<phi>))\<^sup>2"
   by (simp add: dra_def power2_eq_square)
-
 
 lemma dra_diag_integrable:
   assumes q: "0 < q" and t: "0 \<le> t"
@@ -2701,125 +2599,6 @@ qed
 
 subsection \<open>The compensated coordinate squares are martingales\<close>
 
-lemma coord_Z_drX_meas_neg:
-  fixes i :: 2
-  assumes q: "0 < q" and t: "t < 0"
-  shows "coord_Z (drX q \<phi>) (dra q \<phi>) i t \<in> borel_measurable
-      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
-proof -
-  have e: "{0..t} = ({} :: real set)" using t by auto
-  have z: "coord_Z (drX q \<phi>) (dra q \<phi>) i t = (\<lambda>\<omega>. (drX q \<phi> t \<omega> $ i)\<^sup>2)"
-    unfolding coord_Z_def e
-    by (simp add: fun_eq_iff set_lebesgue_integral_def)
-  have comp: "drX q \<phi> t \<omega> $ i
-      = drR q t * (if i = 1 then cos (drW (drc q t) \<omega> + \<phi>)
-          else sin (drW (drc q t) \<omega> + \<phi>))" for \<omega>
-    by (simp add: drX_def)
-  have m: "(\<lambda>\<omega>. drX q \<phi> t \<omega> $ i) \<in> borel_measurable
-      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
-  proof (cases "i = 1")
-    case True
-    have m1: "(\<lambda>\<omega> :: 2 \<Rightarrow> real \<Rightarrow> real.
-        drR q t * cos (Bcont (drc q t) (\<omega> 1) + \<phi>))
-        \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
-      using measurable_cbmX_coord[of "drc q t" "1 :: 2"] by measurable
-    have comp1: "(\<lambda>\<omega> :: 2 \<Rightarrow> real \<Rightarrow> real. drX q \<phi> t \<omega> $ i)
-        = (\<lambda>\<omega>. drR q t * cos (drW (drc q t) \<omega> + \<phi>))"
-      by (simp add: fun_eq_iff drX_def True)
-    show ?thesis
-      unfolding comp1 using m1 by (simp add: drW_def)
-  next
-    case False
-    have m2: "(\<lambda>\<omega> :: 2 \<Rightarrow> real \<Rightarrow> real.
-        drR q t * sin (Bcont (drc q t) (\<omega> 1) + \<phi>))
-        \<in> borel_measurable (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)"
-      using measurable_cbmX_coord[of "drc q t" "1 :: 2"] by measurable
-    show ?thesis
-      using m2 False by (simp add: comp[abs_def] drW_def)
-  qed
-  show ?thesis
-    unfolding z by (intro borel_measurable_power m)
-qed
-
-theorem martingale_coord_Z_drX:
-  fixes q \<phi> :: real and i :: 2
-  assumes q: "0 < q"
-  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      0 (coord_Z (drX q \<phi>) (dra q \<phi>) i)"
-proof -
-  let ?M = "bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?G = "\<lambda>t. natural_filtration ?M 0 (cbmX (0 :: real^2)) (drc q t)"
-  define d where "d = (if i = 1 then (1 :: real) else - 1)"
-  have ID: "coord_Z (drX q \<phi>) (dra q \<phi>) i t
-      = (\<lambda>\<omega>. q / 2 + d / 2 * drN q \<phi> t \<omega>)" if t: "0 \<le> t" for t
-    using exhaust_2[of i] coord_Z_drX_1[OF q t, of \<phi>]
-      coord_Z_drX_2[OF q t, of \<phi>]
-    by (auto simp: d_def fun_eq_iff)
-  have Gmono: "sets (?G s) \<subseteq> sets (?G t)" if "0 \<le> s" "s \<le> t" for s t
-    using drG_subalgebra_mono[OF q that]
-    by (auto simp: subalgebra_def)
-  have adaptedI: "coord_Z (drX q \<phi>) (dra q \<phi>) i t
-      \<in> borel_measurable (?G t)" if t: "0 \<le> t" for t
-    unfolding ID[OF t]
-    using drN_adapted[OF q t, of \<phi>] by measurable
-  have measI: "coord_Z (drX q \<phi>) (dra q \<phi>) i t \<in> borel_measurable ?M"
-    for t
-  proof (cases "0 \<le> t")
-    case True
-    show ?thesis
-      unfolding ID[OF True] using drN_meas[OF q, of \<phi> t] by measurable
-  next
-    case False
-    then show ?thesis by (intro coord_Z_drX_meas_neg[OF q]) simp
-  qed
-  have intI: "integrable ?M (coord_Z (drX q \<phi>) (dra q \<phi>) i t)"
-    if t: "0 \<le> t" for t
-    unfolding ID[OF t]
-    by (intro Bochner_Integration.integrable_add BMP.integrable_const
-        integrable_mult_right drN_integrable[OF q t])
-  show ?thesis
-  proof (intro martingale.intro martingale_axioms.intro)
-    show "sigma_finite_filtered_measure ?M ?G 0"
-      by (rule drG_sigma_finite_filtered[OF q])
-    show "adapted_process ?M ?G 0 (coord_Z (drX q \<phi>) (dra q \<phi>) i)"
-      by unfold_locales
-        (auto intro: drG_subalgebra adaptedI measI
-          dest: Gmono[THEN subsetD])
-    show "\<And>t. 0 \<le> t \<Longrightarrow> integrable ?M (coord_Z (drX q \<phi>) (dra q \<phi>) i t)"
-      by (rule intI)
-    fix s t :: real assume st: "0 \<le> s" "s \<le> t"
-    have t0: "0 \<le> t" using st by simp
-    have int_c: "integrable ?M (\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. q / 2)"
-      by (rule BMP.integrable_const)
-    have int_d: "integrable ?M (\<lambda>\<omega>. (d / 2) *\<^sub>R drN q \<phi> t \<omega>)"
-      by (intro integrable_scaleR_right drN_integrable[OF q t0])
-    have E_add: "AE \<omega> in ?M. cond_exp ?M (?G s)
-        (\<lambda>\<omega>. q / 2 + (d / 2) *\<^sub>R drN q \<phi> t \<omega>) \<omega>
-        = cond_exp ?M (?G s) (\<lambda>_. q / 2) \<omega>
-          + cond_exp ?M (?G s) (\<lambda>\<omega>. (d / 2) *\<^sub>R drN q \<phi> t \<omega>) \<omega>"
-      by (rule sigma_finite_subalgebra.cond_exp_add
-          [OF drG_sigma_finite_subalgebra int_c int_d])
-    have E_c: "AE \<omega> in ?M. cond_exp ?M (?G s)
-        (\<lambda>_ :: 2 \<Rightarrow> real \<Rightarrow> real. q / 2) \<omega> = q / 2"
-      by (rule sigma_finite_subalgebra.cond_exp_F_meas
-          [OF drG_sigma_finite_subalgebra int_c]) simp
-    have E_d: "AE \<omega> in ?M. cond_exp ?M (?G s)
-        (\<lambda>\<omega>. (d / 2) *\<^sub>R drN q \<phi> t \<omega>) \<omega>
-        = (d / 2) *\<^sub>R cond_exp ?M (?G s) (drN q \<phi> t) \<omega>"
-      by (rule sigma_finite_subalgebra.cond_exp_scaleR_right
-          [OF drG_sigma_finite_subalgebra drN_integrable[OF q t0]])
-    have P: "AE \<omega> in ?M. drN q \<phi> s \<omega>
-        = cond_exp ?M (?G s) (drN q \<phi> t) \<omega>"
-      by (rule martingale.martingale_property
-          [OF martingale_drN[OF q] st])
-    show "AE \<omega> in ?M. coord_Z (drX q \<phi>) (dra q \<phi>) i s \<omega>
-        = cond_exp ?M (?G s) (coord_Z (drX q \<phi>) (dra q \<phi>) i t) \<omega>"
-      unfolding ID[OF st(1)] ID[OF t0]
-      using E_add E_c E_d P by eventually_elim simp
-  qed
-qed
-
 subsection \<open>The stopped market\<close>
 
 definition drXs :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2"
@@ -2828,34 +2607,6 @@ definition drXs :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> rea
 definition dras ::
   "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2^2"
   where "dras q \<phi> T0 u \<omega> = (if u \<le> T0 then dra q \<phi> u \<omega> else 0)"
-
-lemma dras_measurable_time:
-  assumes q: "0 < q"
-  shows "set_borel_measurable lborel {0..} (\<lambda>u. dras q \<phi> T0 u \<omega>)"
-  unfolding set_borel_measurable_def
-proof -
-  have c: "(\<lambda>u. dra q \<phi> (max u 0) \<omega>) \<in> borel_measurable lborel"
-    using dra_cont[OF q] by (simp add: borel_measurable_continuous_onI)
-  \<comment> \<open>On the nonnegative axis --- all the locale asks about, and all the
-      paper's (1.7) constrains --- the truncation by \<open>max u 0\<close> is invisible,
-      so the continuous representative may be used. Off it the claim
-      fails: for \<open>u < 0\<close>, \<open>dras \<dots> u \<omega> = dra q \<phi> u \<omega>\<close>, not
-      \<open>dra q \<phi> 0 \<omega>\<close>.\<close>
-  have eq: "(\<lambda>u. indicat_real {0..} u *\<^sub>R dras q \<phi> T0 u \<omega>)
-      = (\<lambda>u. indicat_real {0..} u *\<^sub>R
-           (if u \<le> T0 then dra q \<phi> (max u 0) \<omega> else 0))"
-  proof
-    fix u :: real
-    show "indicat_real {0..} u *\<^sub>R dras q \<phi> T0 u \<omega>
-        = indicat_real {0..} u *\<^sub>R
-            (if u \<le> T0 then dra q \<phi> (max u 0) \<omega> else 0)"
-      by (cases "0 \<le> u") (simp_all add: dras_def)
-  qed
-  show "(\<lambda>u. indicat_real {0..} u *\<^sub>R dras q \<phi> T0 u \<omega>)
-      \<in> borel_measurable lborel"
-    unfolding eq using c
-    by (intro borel_measurable_scaleR measurable_If) auto
-qed
 
 lemma set_integral_stopped_split:
   fixes g :: "real \<Rightarrow> real" and T0 t :: real
@@ -2974,38 +2725,6 @@ proof -
     using int1 unfolding set_integrable_def eq .
 qed
 
-lemma coord_Z_drXs_eq:
-  fixes i :: 2
-  assumes q: "0 < q" and T0: "0 \<le> T0"
-  shows "coord_Z (drXs q \<phi> T0) (dras q \<phi> T0) i
-       = (\<lambda>t. coord_Z (drX q \<phi>) (dra q \<phi>) i (min t T0))"
-proof (intro ext)
-  fix t :: real and \<omega> :: "2 \<Rightarrow> real \<Rightarrow> real"
-  have "set_lebesgue_integral lborel {0..t}
-      (\<lambda>u. dras q \<phi> T0 u \<omega> $ i $ i)
-      = set_lebesgue_integral lborel {0..t}
-          (\<lambda>u. if u \<le> T0 then dra q \<phi> u \<omega> $ i $ i else 0)"
-    by (rule set_lebesgue_integral_cong)
-      (auto simp: dras_def zero_vec_def)
-  also have "\<dots> = set_lebesgue_integral lborel {0..min t T0}
-      (\<lambda>u. dra q \<phi> u \<omega> $ i $ i)"
-    by (rule set_integral_stopped_split[OF T0
-        dra_diag_set_integrable[OF q]])
-  finally show "coord_Z (drXs q \<phi> T0) (dras q \<phi> T0) i t \<omega>
-      = coord_Z (drX q \<phi>) (dra q \<phi>) i (min t T0) \<omega>"
-    unfolding coord_Z_def drXs_def by simp
-qed
-
-theorem martingale_coord_Z_drXs:
-  fixes q \<phi> T0 :: real and i :: 2
-  assumes q: "0 < q" and T0: "0 \<le> T0"
-  shows "martingale (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      0 (coord_Z (drXs q \<phi> T0) (dras q \<phi> T0) i)"
-  unfolding coord_Z_drXs_eq[OF q T0]
-  by (rule martingale_stopped_deterministic
-      [OF martingale_coord_Z_drX[OF q] T0])
-
 subsection \<open>Spectral facts of the tangent projection\<close>
 
 definition drv :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> (2 \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^2"
@@ -3017,160 +2736,7 @@ lemma dra_outer:
   "dra q \<phi> u \<omega> $ j $ l = drv q \<phi> u \<omega> $ j * drv q \<phi> u \<omega> $ l"
   by (simp add: dra_def drv_def)
 
-lemma drv_norm: "drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega> = 1"
-proof -
-  define sn where "sn = sin (drW (drc q u) \<omega> + \<phi>)"
-  define c where "c = cos (drW (drc q u) \<omega> + \<phi>)"
-  have "drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega> = sn * sn + c * c"
-    by (simp add: drv_def inner_vec_def UNIV_2 sn_def c_def)
-  also have "\<dots> = 1"
-    unfolding sn_def c_def
-    by (metis sin_cos_squared_add3 add.commute)
-  finally show ?thesis .
-qed
-
-lemma dra_mult_vec:
-  "dra q \<phi> u \<omega> *v x = (drv q \<phi> u \<omega> \<bullet> x) *\<^sub>R drv q \<phi> u \<omega>"
-  by (simp add: matrix_vector_mult_def dra_outer inner_vec_def
-      vec_eq_iff UNIV_2 algebra_simps)
-
-lemma dra_sym: "transpose (dra q \<phi> u \<omega>) = dra q \<phi> u \<omega>"
-  by (simp add: transpose_def vec_eq_iff dra_outer mult.commute)
-
-lemma dra_psd: "psd (dra q \<phi> u \<omega>)"
-proof -
-  have "0 \<le> x \<bullet> (dra q \<phi> u \<omega> *v x)" for x
-  proof -
-    have "x \<bullet> (dra q \<phi> u \<omega> *v x)
-        = (drv q \<phi> u \<omega> \<bullet> x) * (drv q \<phi> u \<omega> \<bullet> x)"
-      by (simp add: dra_mult_vec inner_commute)
-    then show ?thesis by simp
-  qed
-  then show ?thesis by (simp add: psd_def dra_sym)
-qed
-
-lemma dra_eigen_lb: "eigen_lb (dra q \<phi> u \<omega>) 1"
-  unfolding eigen_lb_def
-proof (intro exI[of _ "span {drv q \<phi> u \<omega>}"] conjI)
-  show "subspace (span {drv q \<phi> u \<omega>})" by (rule subspace_span)
-  have v0: "drv q \<phi> u \<omega> \<noteq> 0"
-    using drv_norm[of q \<phi> u \<omega>] by auto
-  have "drv q \<phi> u \<omega> \<in> span {drv q \<phi> u \<omega>}"
-    by (rule span_base) simp
-  with v0 have ne: "\<not> span {drv q \<phi> u \<omega>} \<subseteq> {0}" by auto
-  have "dim (span {drv q \<phi> u \<omega>}) \<noteq> 0"
-    using ne dim_eq_0 by blast
-  then show "1 \<le> dim (span {drv q \<phi> u \<omega>})" by linarith
-  show "\<forall>x \<in> span {drv q \<phi> u \<omega>}.
-      x \<bullet> x \<le> x \<bullet> (dra q \<phi> u \<omega> *v x)"
-  proof
-    fix x assume "x \<in> span {drv q \<phi> u \<omega>}"
-    then obtain c where x: "x = c *\<^sub>R drv q \<phi> u \<omega>"
-      by (auto simp: span_singleton)
-    have "x \<bullet> x = c * c"
-      unfolding x by (simp add: drv_norm)
-    moreover have "x \<bullet> (dra q \<phi> u \<omega> *v x) = c * c"
-      unfolding x by (simp add: dra_mult_vec drv_norm inner_commute)
-    ultimately show "x \<bullet> x \<le> x \<bullet> (dra q \<phi> u \<omega> *v x)" by simp
-  qed
-qed
-
-lemma dra_eigen_ub:
-  assumes L: "1 \<le> L"
-  shows "eigen_ub (dra q \<phi> u \<omega>) L"
-  unfolding eigen_ub_def
-proof
-  fix x :: "real^2"
-  have "x \<bullet> (dra q \<phi> u \<omega> *v x) = (drv q \<phi> u \<omega> \<bullet> x)\<^sup>2"
-    by (simp add: dra_mult_vec inner_commute power2_eq_square)
-  also have "\<dots> \<le> (drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega>) * (x \<bullet> x)"
-    by (rule Cauchy_Schwarz_ineq)
-  also have "\<dots> = x \<bullet> x" by (simp add: drv_norm)
-  also have "\<dots> \<le> L * (x \<bullet> x)"
-    using mult_right_mono[OF L inner_ge_zero] by simp
-  finally show "x \<bullet> (dra q \<phi> u \<omega> *v x) \<le> L * (x \<bullet> x)" .
-qed
-
-lemma dra_trace: "trace (dra q \<phi> u \<omega>) = 1"
-proof -
-  have "trace (dra q \<phi> u \<omega>) = drv q \<phi> u \<omega> \<bullet> drv q \<phi> u \<omega>"
-    by (simp add: trace_def dra_outer inner_vec_def)
-  then show ?thesis by (simp add: drv_norm)
-qed
-
 subsection \<open>Geometric facts of the stopped process\<close>
-
-lemma drXs_norm:
-  assumes q: "0 < q" and t: "0 \<le> t" and T0: "0 \<le> T0"
-  shows "norm (drXs q \<phi> T0 t \<omega>) = drR q (min t T0)"
-  unfolding drXs_def
-  by (rule drX_norm[OF q]) (use t T0 in auto)
-
-
-lemma drXs_start_AE:
-  fixes q \<phi> T0 :: real
-  assumes q: "0 < q" and T0: "0 \<le> T0"
-  shows "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
-      drXs q \<phi> T0 0 \<omega>
-      = sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>)"
-proof -
-  have "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
-      cbmX (0 :: real^2) 0 \<omega> = bmX (0 :: real^2) 0 \<omega>"
-    by (intro cbmX_ae_eq) simp
-  moreover have "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
-      bmX (0 :: real^2) 0 \<omega> = 0"
-    by (rule bmX_start)
-  ultimately have z: "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure).
-      Bcont 0 (\<omega> 1) = 0"
-  proof (eventually_elim)
-    case (elim \<omega>)
-    then have "cbmX (0 :: real^2) 0 \<omega> = 0" by simp
-    then have "cbmX (0 :: real^2) 0 \<omega> $ 1 = 0" by simp
-    then show ?case by (simp add: cbmX_def)
-  qed
-  show ?thesis
-    using z
-  proof (eventually_elim)
-    case (elim \<omega>)
-    have m0: "min 0 T0 = 0" using T0 by simp
-    show ?case
-      unfolding drXs_def m0
-      by (simp add: drX_def drW_def elim drR_def cong: if_cong)
-  qed
-qed
-
-lemma drX_cont:
-  assumes q: "0 < q"
-  shows "continuous_on {0..} (\<lambda>t. drX q \<phi> t \<omega>)"
-proof -
-  have cW: "continuous_on {0..} (\<lambda>t. Bcont (drc q t) (\<omega> 1))"
-    by (rule continuous_on_compose2[OF Bcont_cont drc_cont[OF q]])
-      (auto intro: drc_nonneg[OF q])
-  have cR: "continuous_on {0..} (\<lambda>t. drR q t)"
-    unfolding drR_def by (intro continuous_intros)
-  have comp: "continuous_on {0..}
-      (\<lambda>t. if i = (1 :: 2) then cos (drW (drc q t) \<omega> + \<phi>)
-           else sin (drW (drc q t) \<omega> + \<phi>))" for i
-  proof (cases "i = 1")
-    case True
-    show ?thesis
-      unfolding drW_def True if_True simp_thms by (intro continuous_intros cW)
-  next
-    case False
-    show ?thesis
-      unfolding drW_def False[THEN eq_False[THEN iffD2]] if_False
-      by (intro continuous_intros cW)
-  qed
-  show ?thesis
-    unfolding drX_def
-    by (intro continuous_intros cR comp)
-qed
-
-lemma drXs_cont:
-  assumes q: "0 < q" and T0: "0 \<le> T0"
-  shows "continuous_on {0..} (\<lambda>t. drXs q \<phi> T0 t \<omega>)"
-  unfolding drXs_def
-  by (intro continuous_on_compose2[OF drX_cont[OF q]] continuous_intros) (auto simp: T0)
 
 subsection \<open>The deterministic-radius market is sufficiently volatile\<close>
 
@@ -3180,10 +2746,6 @@ text \<open>The \<open>stopped_market\<close> packaging (which additionally reco
   theory's import closure; the three extra clauses are provided as
   standalone lemmas below and assembled where both theories are in
   scope.\<close>
-
-
-
-
 
 (*<*)
 end

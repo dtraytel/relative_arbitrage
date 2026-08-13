@@ -25,7 +25,6 @@ text \<open>
   real number capped at \<open>T\<close>, so the whole space is its complement.
 \<close>
 
-
 subsection \<open>The essential infimum of the exit time is usc in the law\<close>
 
 text \<open>
@@ -34,7 +33,6 @@ text \<open>
   hypothesis consumes: \<open>{P. c \<le> g(P)}\<close> is closed under weak limits for
   every threshold \<open>c\<close>.
 \<close>
-
 
 subsection \<open>A shift margin uniform over the sample space\<close>
 
@@ -902,7 +900,6 @@ lemma mkt_law_closure_sets:
       (path_metric T :: (real \<Rightarrow> real^'m::finite) metric)))"
   using closure_of_subset_topspace assms
   unfolding mkt_law_closure_def by fastforce
-
 
 text \<open>Total mass survives a weak limit: test against the constant \<open>1\<close>.\<close>
 
@@ -2832,7 +2829,6 @@ qed
 text \<open>The matching lower bound holds at any measure: the integrand is
   pointwise nonnegative for a nonnegative test functional.\<close>
 
-
 subsection \<open>The paper-class value function and its usc majorant\<close>
 
 text \<open>The paper's class (1.7) consists of stopped markets --- process stopped
@@ -2878,13 +2874,6 @@ definition stopped_val_fn ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> ennreal"
   where
   "stopped_val_fn k L K x0 = Sup (stopped_exit_vals k L K x0)"
-
-lemma stopped_exit_vals_subset:
-  "stopped_exit_vals k L K x0 \<subseteq> mkt_exit_vals k L K x0"
-  unfolding stopped_exit_vals_def mkt_exit_vals_def stopped_market_def
-  by blast
-
-
 
 theorem stopped_val_fn_le_law_sup:
   fixes x0 :: "real^'m::finite" and K :: "(real^'m) set"
@@ -3883,10 +3872,6 @@ text \<open>The bare-locale facts transfer to \<open>stopped_val_fn\<close> by t
   inclusion: finiteness on bounded confinement sets (clause (0)), the
   Lemma 2.1 upper bound on the ball, and the zero boundary values on the
   sphere (clause (3) for the ball).\<close>
-
-
-
-
 
 (*<*)
 end

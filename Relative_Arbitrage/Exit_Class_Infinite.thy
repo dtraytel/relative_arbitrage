@@ -88,12 +88,10 @@ qed
 text \<open>Hence the elementary bound identifying \<open>iexit\<close> as the first time the
   path is outside \<open>K\<close>.\<close>
 
-
 subsection \<open>The essential infimum of an unbounded time\<close>
 
 definition ess_inf_enn :: "'a measure \<Rightarrow> ('a \<Rightarrow> ennreal) \<Rightarrow> ennreal" where
   "ess_inf_enn M tau = Sup {c. AE \<omega> in M. c \<le> tau \<omega>}"
-
 
 lemma ess_inf_ennI:
   assumes "AE \<omega> in M. c \<le> tau \<omega>"
@@ -192,7 +190,6 @@ lemma ipcut_measurable:
       (path_metric S :: ('n pairpath) metric))"
   unfolding pcut_def measurable_cong_sets[OF setsP refl]
   by (rule restrict_ipath_measurable[OF S])
-
 
 lemma iexit_class_diffquot:
   "P \<in> iexit_class k L x \<Longrightarrow>
@@ -1199,7 +1196,6 @@ subsection \<open>The two value functions, unconditionally\<close>
 text \<open>With the construction in place, both hypotheses of
   @{thm [source] iexit_val_eq_of_extension} that were about the class are
   discharged, and only the paper's own standing assumptions remain.\<close>
-
 
 theorem iexit_val_eq_exit_val:
   fixes K :: "(real^'n::finite) set"

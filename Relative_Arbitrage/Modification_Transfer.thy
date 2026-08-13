@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Modification_Transfer
   imports Ito_Market
@@ -33,7 +32,6 @@ definition cylset ::
      \<Rightarrow> 'a set set" where
   "cylset M X t = {space M \<inter> (\<Inter>p\<in>P. X (fst p) -` snd p) | P.
      finite P \<and> (\<forall>p\<in>P. fst p \<in> {0..t} \<and> snd p \<in> sets borel)}"
-
 
 lemma cylset_single:
   assumes u: "u \<in> {0..t}" and B: "B \<in> sets borel"
@@ -670,7 +668,6 @@ qed
 text \<open>Two more facts that need the locale \<open>stochastic\_process\<close> and therefore
   have to live in a theory that does not import Kolmogorov-Chentsov.\<close>
 
-
 lemma sets_natural_filtration_subset:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"
   assumes measX: "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
@@ -681,7 +678,6 @@ proof -
   show ?thesis
     using SP.subalgebra_natural_filtration by (simp add: subalgebra_def)
 qed
-
 
 (*<*)
 end

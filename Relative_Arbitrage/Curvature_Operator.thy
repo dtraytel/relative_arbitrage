@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Curvature_Operator
   imports "HOL-Analysis.Analysis"
@@ -568,7 +567,6 @@ proof -
   qed
 qed
 
-
 text \<open>
   Example 3.1: at every interior point of the ball --- including the centre,
   where the gradient vanishes --- the gradient and Hessian of \<open>v\<close> satisfy the
@@ -578,7 +576,6 @@ text \<open>
   feasible \<open>a\<close> and is attained by a rank-\<open>(n-k)\<close> projection, which is feasible
   for \<open>p = 0\<close> as well.
 \<close>
-
 
 section \<open>The spectral theorem for real symmetric matrices\<close>
 
@@ -1600,7 +1597,6 @@ proof -
   show "\<And>x :: real^'n. norm x = r \<Longrightarrow> ball_v r k x = 0"
     by (rule ball_v_boundary)
 qed
-
 
 (*<*)
 end

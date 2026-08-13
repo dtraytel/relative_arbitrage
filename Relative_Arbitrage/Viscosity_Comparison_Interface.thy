@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Viscosity_Comparison_Interface
   imports Constraint_Set_Convexity
@@ -80,36 +79,7 @@ text \<open>Orthogonal conjugation \<open>a \<mapsto> Q\<^sup>T a Q\<close> maps
 definition orth_mat :: "real^'n^'n \<Rightarrow> bool" where
   "orth_mat Q \<longleftrightarrow> transpose Q ** Q = mat 1 \<and> Q ** transpose Q = mat 1"
 
-lemma orth_mat_inner:
-  assumes "orth_mat Q"
-  shows "(Q *v x) \<bullet> (Q *v y) = x \<bullet> y"
-proof -
-  have "(Q *v x) \<bullet> (Q *v y) = (transpose Q *v (Q *v x)) \<bullet> y"
-    by (simp add: inner_transpose_matrix)
-  also have "transpose Q *v (Q *v x) = (transpose Q ** Q) *v x"
-    by (simp add: matrix_vector_mul_assoc)
-  also have "\<dots> = x"
-    using assms by (simp add: orth_mat_def)
-  finally show ?thesis .
-qed
-
-lemma orth_mat_surj:
-  assumes "orth_mat Q"
-  shows "Q *v (transpose Q *v x) = x"
-  using assms
-  by (simp add: matrix_vector_mul_assoc orth_mat_def)
-
-lemma orth_mat_transpose:
-  assumes "orth_mat Q"
-  shows "orth_mat (transpose Q)"
-  using assms by (simp add: orth_mat_def)
-
 text \<open>Conjugation preserves each defining condition of the feasible set.\<close>
-
-
-
-
-
 
 lemma trace_conjugate:
   fixes M Q a :: "real^'n^'n"
@@ -124,7 +94,6 @@ proof -
     by (simp add: matrix_mul_assoc)
   finally show ?thesis .
 qed
-
 
 text \<open>The dilation identity: scaling the Hessian argument scales \<open>F\<close>.\<close>
 
@@ -184,10 +153,7 @@ text \<open>The remaining ingredient of Eq. (1.10): every feasible \<open>a\<clo
   \<open>p\<close>, so \<open>tr(p p\<^sup>\<top> a) = p \<bullet> (a p) = 0\<close> and adding a multiple of \<open>p p\<^sup>\<top>\<close> to the
   Hessian argument leaves the objective --- hence \<open>F\<close> --- unchanged.\<close>
 
-
-
 text \<open>Eq. (1.10) of Remark 1.1(b): the nonlinearity \<open>F\<close> is geometric.\<close>
-
 
 section \<open>Comparison implies uniqueness (Theorem 1.1, uniqueness part)\<close>
 
@@ -237,7 +203,6 @@ theorem ball_v_unique_solution:
   shows "\<And>x :: real^'n. x \<in> ball 0 r \<Longrightarrow> u x = ball_v r k x"
   by (rule comparison_principle.viscosity_solution_unique[OF cp u _ bd])
     (use ball_v_solves_pde_viscosity(1)[OF k L] in auto)
-
 
 (*<*)
 end

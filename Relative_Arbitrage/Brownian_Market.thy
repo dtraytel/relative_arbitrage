@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Brownian_Market
   imports
@@ -1441,8 +1440,6 @@ text \<open>The martingale property \<open>martingale_bmX\<close> above, togethe
   continuous modification of the market, is carried out in
   \<open>Brownian_Continuous\<close>.thy.\<close>
 
-
-
 section \<open>Ito's formula for the square: the compensated square is a martingale\<close>
 
 text \<open>The martingale-problem identity used above is the \<^emph>\<open>expectation\<close>
@@ -2173,7 +2170,6 @@ proof -
       unfolding split[OF u] split[OF v] vu by (simp add: algebra_simps)
   qed
 qed
-
 
 (*<*)
 end

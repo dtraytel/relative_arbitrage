@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Operator_Continuity
   imports Threshold_Chain
@@ -62,7 +61,6 @@ qed
 
 lemma transpose_diff_matrix: "transpose (A - B) = transpose A - transpose B"
   by (simp add: transpose_def vec_eq_iff)
-
 
 lemma scaleR_matrix_matrix_left:
   fixes A B :: "real^'n::finite^'n"
@@ -333,8 +331,6 @@ next
 qed
 
 text \<open>Hence \<open>F\<close> does not distinguish \<open>M\<close> from \<open>M\<^sub>p\<close>.\<close>
-
-
 
 (*<*)
 end

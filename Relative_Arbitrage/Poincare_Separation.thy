@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Poincare_Separation
   imports Operator_Continuity
@@ -963,7 +962,6 @@ text \<open>The combinatorial heart of Eq. (3.5), stated without matrices.  Spli
   \<open>t \<le> 1\<close> and the negative part by \<open>sum_weighted_le_top_subset\<close>, whose "top
   subset" is the \<open>m\<close> least negative directions.\<close>
 
-
 text \<open>\<open>sum_weighted_le_top_subset\<close> needs weights summing to \<open>m\<close> exactly,
   while the clipped-weight bound only gives \<open>\<ge> m\<close>.  Scaling down by
   \<open>real m / (\<Sum>t)\<close> repairs this without hurting the negative part, since
@@ -1291,10 +1289,6 @@ text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^su
   combination of outer products (\<open>trace_Mp\<close> in @{theory Relative_Arbitrage.Operator_Continuity} gives the
   first fact).  This section carries out the expansion and its weight
   constraints.\<close>
-
-
-
-
 
 section \<open>Feasibility of weighted outer-product sums\<close>
 
@@ -1676,7 +1670,6 @@ theorem ell_op_eq_half_bracket:
 
 text \<open>And in the paper's displayed form, as sums over the ordered
   eigenvalues.\<close>
-
 
 section \<open>Scale invariance: the paper's sequence is constant\<close>
 
@@ -2675,32 +2668,8 @@ text \<open>Every feasible \<open>a\<close> is symmetric, and against a symmetri
   only on \<open>sym M = \<onehalf>(M + M\<^sup>\<top>)\<close>, letting nearby non-symmetric matrices be
   handled by results assuming symmetry.\<close>
 
-lemma trace_transpose_matrix:
-  fixes A :: "real^'n::finite^'n"
-  shows "trace (transpose A) = trace A"
-  unfolding trace_def transpose_def by simp
-
-lemma trace_mult_transpose_left:
-  fixes M a :: "real^'n::finite^'n"
-  assumes a: "transpose a = a"
-  shows "trace (transpose M ** a) = trace (M ** a)"
-proof -
-  have "transpose (a ** M) = transpose M ** a"
-    using a by (simp add: matrix_transpose_mul)
-  then have "trace (transpose M ** a) = trace (transpose (a ** M))"
-    by simp
-  also have "\<dots> = trace (a ** M)"
-    by (rule trace_transpose_matrix)
-  also have "\<dots> = trace (M ** a)"
-    by (rule trace_mul_sym)
-  finally show ?thesis .
-qed
-
-
-
 text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
   with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
-
 
 section \<open>The norm of an outer product, and \<open>rank1proj\<close> as a unit outer product\<close>
 
@@ -2868,7 +2837,6 @@ proof -
     unfolding inner_vec_def by simp
   finally show ?thesis .
 qed
-
 
 lemma matrix_mult_entry_inner:
   fixes A B :: "real^'n::finite^'n"
@@ -3062,7 +3030,6 @@ proof -
   finally show ?thesis .
 qed
 
-
 text \<open>Assembling: \<open>M\<^sub>p\<close> is Lipschitz in \<open>p\<close> away from the origin.  The
   correction coefficient \<open>c = min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> is \<open>p\<close>-independent, so it
   contributes only \<open>\<bar>c\<bar> * norm D\<close>.\<close>
@@ -3194,11 +3161,8 @@ text \<open>Lemma 5.3 characterises \<open>v(x) = 0\<close>, for convex \<open>K
   \<open>eigen_lb a m\<close> unless \<open>m + dim W \<le> n\<close>; applied to \<open>F\<^sub>x\<close>'s normal
   directions this gives the \<open>v(x) = 0\<close> side.\<close>
 
-
 text \<open>The form used on a face: if the degeneracy subspace is more than
   \<open>k\<close>-dimensional, no feasible covariance exists at all.\<close>
-
-
 
 section \<open>From the Lipschitz bounds to the norm topology\<close>
 
@@ -3469,7 +3433,6 @@ proof -
     by (intro closed_Int closed_symmetric_matrices closed_INT) auto
 qed
 
-
 lemma closed_eigen_ub:
   "closed {a :: real^'n::finite^'n. eigen_ub a L}"
 proof -
@@ -3480,9 +3443,6 @@ proof -
     by (intro closed_Collect_le continuous_on_quadform continuous_on_const)
   thus ?thesis unfolding eq by (intro closed_INT) auto
 qed
-
-
-
 
 (*<*)
 end

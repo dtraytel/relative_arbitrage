@@ -1,5 +1,4 @@
 
-
 (*<*)
 theory Value_Function_Viscosity
   imports Exit_Class_DPP Curvature_Operator Operator_Envelopes
@@ -54,7 +53,6 @@ proof -
   also have "\<dots> \<le> c" by (rule le)
   finally show ?thesis .
 qed
-
 
 section \<open>The DPP at the exit time of a ball\<close>
 
@@ -582,8 +580,6 @@ lemma quadform_outerp:
   shows "z \<bullet> (outerp q *v z) = (q \<bullet> z)\<^sup>2"
   by (simp add: outerp_eq_outer_prod power2_eq_square inner_commute)
 
-
-
 section \<open>The relaxed operator, and the inequality the class really gives\<close>
 
 text \<open>Eq. (1.9) takes its infimum over \<^const>\<open>feasible\<close>, which carries the
@@ -656,7 +652,6 @@ proof
   show "a \<in> sconstraint k L"
     by (rule suff_volatile_cap_in_sconstraint[OF sv ub])
 qed
-
 
 text \<open>@{thm [source] exit_val_attained} supplies the optimizer, at which the
   exit time dominates the value almost surely --- the reason the
@@ -2983,7 +2978,6 @@ proof -
   finally show ?thesis .
 qed
 
-
 section \<open>Moments at a stopping time, assembled\<close>
 
 lemma exit_class_stopped_moments:
@@ -4945,7 +4939,6 @@ text \<open>The Euler kernel varies only through the frozen matrix, so its
   metric (the Brownian path is bounded on \<open>[0,T]\<close>), and dominated
   convergence does the rest --- no tightness, no uniform estimates.\<close>
 
-
 lemma dist_pair_le:
   fixes a c :: "'a::metric_space" and b d :: "'b::metric_space"
   shows "dist (a, b) (c, d) \<le> dist a c + dist b d"
@@ -6530,7 +6523,6 @@ next
 qed
 
 subsection \<open>The increments are almost surely orthogonal to a killed field\<close>
-
 
 lemma sbm_orth_increment:
   fixes S :: "real^'n::finite^'n" and w :: "real^'n"
@@ -9852,7 +9844,6 @@ text \<open>The contradiction, read back as the positive statement the envelope
   nonzero gradient the usc envelope of the operator is at least one, since
   \<open>F \<le> F\<^sup>*\<close> (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
   inequality into a failed plain one.\<close>
-
 
 subsection \<open>Bricks for Case 2: the envelope limit and the tangential field\<close>
 
@@ -13222,7 +13213,6 @@ proof -
   show ?thesis by (rule that[of "e / 2"]) (use e0 key in auto)+
 qed
 
-
 subsection \<open>Case 2: minimisers of a tilted quadratic\<close>
 
 text \<open>Case 2 of the supersolution proof perturbs the test function and
@@ -13453,7 +13443,6 @@ proof -
   qed
 qed
 
-
 text \<open>The tilted test function of Case 2 is the quadratic
   \<open>b + \<onehalf>(z - x)\<^sup>T M (z - x) + \<langle>\<eta>, z - x\<rangle>\<close>, centred at the touching point
   \<open>x\<close> but examined at a nearby point \<open>y\<close>.  Recentring it into the normal
@@ -13588,7 +13577,6 @@ proof -
       using loc[OF dw] by (simp add: \<psi>_def Q_def)
   qed
 qed
-
 
 text \<open>Assembling the separation for the value function.  On a small
   enough ball the touching hypothesis and the strict quadratic minorant
@@ -13745,7 +13733,6 @@ proof -
   show ?thesis by (rule that[OF dxy close]) (use gt in blast)
 qed
 
-
 subsection \<open>Case 2, second horn: quadratic pinching forces local constancy\<close>
 
 text \<open>The other horn of Case 2's dichotomy is that the tilted gradient
@@ -13867,7 +13854,6 @@ proof -
   qed
   show ?thesis using zero[OF yb xb] zero[OF xb yb] by linarith
 qed
-
 
 text \<open>Three ingredients for the second horn.
 
@@ -14004,7 +13990,6 @@ proof -
   show ?thesis by (rule that[OF lt]) (use nz in blast)
 qed
 
-
 text \<open>The sweep.  With \<open>M\<close> invertible the tilt \<open>\<eta> := -M(y - x)\<close> selects
   \<open>y\<close> itself as the tilted minimiser: whatever minimiser \<open>y'\<close> the
   machinery returns, the second horn says \<open>M(y' - x) + \<eta> = 0\<close>, i.e.
@@ -14136,7 +14121,6 @@ proof -
   qed
   show ?thesis by (rule that[OF r0']) (use const in blast)
 qed
-
 
 text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were constant \<open>= c\<close> on a
   ball around \<open>x\<close> whose closure lies in \<open>K\<close>.  The envelope's own defining
@@ -14296,7 +14280,6 @@ proof -
   show False using ge vz th0 by linarith
 qed
 
-
 text \<open>Horn A at a given local minimiser.  \<open>exit_val_case2_tilt_step\<close>
   produces its own minimiser; the assembly instead has one handed to it
   by the case split, so the last step of that proof is isolated here.\<close>
@@ -14346,7 +14329,6 @@ proof -
             tfy rp tminy gy flt])
   qed
 qed
-
 
 subsection \<open>Case 2 assembled at a fixed \<open>\<epsilon>\<close>\<close>
 
@@ -14576,7 +14558,6 @@ proof -
   qed
 qed
 
-
 subsection \<open>Case 2, and the supersolution property\<close>
 
 text \<open>Letting \<open>\<epsilon> \<rightarrow> 0\<close> along \<open>1/(j+1)\<close> moves the Hessian back to \<open>H\<close>,
@@ -14672,7 +14653,6 @@ proof (intro ballI allI impI)
   qed
 qed
 
-
 subsection \<open>The same inequality for the envelope taken within \<open>K\<close>\<close>
 
 text \<open>The touching in @{thm [source] exit_val_supersol_lsc} is global over \<open>K\<close>
@@ -14749,7 +14729,6 @@ proof (intro ballI allI impI)
           rho0 loc])
 qed
 
-
 subsection \<open>Discharging the horizon hypothesis\<close>
 
 text \<open>@{thm [source] exit_val_supersol_lsc} carries the assumption that the
@@ -14818,8 +14797,6 @@ proof (rule exit_val_supersol_lsc[OF T0 L1 k1 kn Kc])
   show "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
     by (rule exit_val_cap_inert[OF kn _ _ KB Tbig]) (use L1 T0 in linarith)+
 qed
-
-
 
 section \<open>The subspace-tangential field for Example 3.1, general \<open>k\<close>\<close>
 
@@ -15038,29 +15015,17 @@ definition tanpV :: "real^'n::finite^'n \<Rightarrow> real^'n \<Rightarrow> real
   "tanpV P z =
      P - outer_prod ((P *v z) /\<^sub>R norm (P *v z)) ((P *v z) /\<^sub>R norm (P *v z))"
 
-
-
-
-
-
-
-
 text \<open>The lower eigenvalue bound.  The witnessing subspace is the span of the
   family cut by the hyperplane orthogonal to the singled-out direction: the
   dimension drops by at most one, which is exactly what \<open>n - k\<close> needs.\<close>
-
-
 
 text \<open>The field is a projector, which is what makes the Euler chain's
   covariance equal to it and the radial drift vanish --- the two facts
   the construction below relies on.\<close>
 
-
-
 text \<open>The radial direction is killed at the point itself: this is why the
   squared radius has no drift beyond the trace term, so the growth is exact
   rather than merely bounded.\<close>
-
 
 subsection \<open>The subspace-tangential field with a clamped direction\<close>
 
@@ -15865,7 +15830,6 @@ text \<open>@{thm [source] tangential_exact_growth} gives the unclamped tangenti
 
 text \<open>The trace of the field is exactly the growth rate \<open>n - k\<close> needed above.\<close>
 
-
 subsection \<open>An orthonormal family through a prescribed unit vector\<close>
 
 lemma orthonormal_family_containing:
@@ -16355,7 +16319,6 @@ proof -
     by (rule tendsto_upperbound) (use le in auto)
   then show ?thesis unfolding c0_def \<delta>f_def .
 qed
-
 
 (*<*)
 end
