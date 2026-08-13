@@ -140,8 +140,8 @@ in the feasible set, so
 
 This is `rotSF_exists` in `Value_Function_Viscosity`, and it carries no
 hypothesis on `L` whatsoever. Clauses (2b), (3b) and (4) are therefore proved
-here for every `L ≥ 1`, `L = 1` included. The skew field of (3.24) is still
-formalised, but it no longer feeds any theorem.
+here for every `L ≥ 1`, `L = 1` included, and the skew field of (3.24) is no
+longer formalised at all — the rotation replaced it outright.
 
 **Uniform convergence of sup-convolutions fails for usc data.** With `u = 1`
 at `0` and `u = 0` elsewhere on the unit ball, `uᵋ(x) ≥ max(1 − |x|²/2ε, 0)`,

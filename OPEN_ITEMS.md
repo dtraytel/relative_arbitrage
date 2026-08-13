@@ -107,14 +107,16 @@ twin --- consume it in place of the strict eigendata, and `1 < L` was then
 weakened to `1 <= L` through the whole chain down to
 `Statement/Theorem_1_1_Statement.thy`.
 
-**Left over.**  The skew-field cluster of the section "The supersolution half:
-skew-symmetric covariance fields" (`skewv`, `skewfield`, `skewSF`,
-`skewfield_properties`, `skewSF_package`, `perturbed_columns_*`,
-`small_radius_exists`, `feasible_strict_eigendata`) is now dead: nothing
-outside it refers to it.  It is retained for now because it is the paper's own
-construction, and marked as superseded at `feasible_strict_eigendata`.
-Deleting it is a separate cleanup, and one worth doing before an AFP
-submission.
+**Left over: nothing.**  The skew-field cluster the rotation replaced --- 29
+entities, `skewv`, `skewfield`, `skewSF`, `skewfield_properties`,
+`skewSF_package`, `perturbed_columns_*`, `small_radius_exists`,
+`feasible_eigen_count`, `feasible_strict_eigendata` and their private helpers,
+about 1600 lines --- was dead once the two Case 1 arguments stopped calling it,
+and has been deleted.  The set was computed as a fixpoint (an entity is dead
+when nothing live, in any theory of the repository, names it) and diffed
+against the same computation on the previous commit, so exactly what the
+rotation killed came out, and nothing else.  Note the file had 58 dead entities
+BEFORE this change as well; those are untouched here.
 
 **Still open, and a different question.**  Remark 1.1(c) also conjectures that
 the value function does not depend on `L` when `K` is convex, and says the
