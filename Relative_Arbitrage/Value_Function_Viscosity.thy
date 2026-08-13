@@ -8897,8 +8897,7 @@ proof -
     unfolding step[of y] step[of z] by (rule refl)
   also have "\<dots> = y \<bullet> z
       + ((c * c * (v \<bullet> v) - 2 * c) * ((v \<bullet> y) * (v \<bullet> z)))"
-    by (simp add: inner_diff_right inner_diff_left algebra_simps
-        inner_commute)
+    by (simp add: algebra_simps inner_commute)
   also have "c * c * (v \<bullet> v) - 2 * c = 0"
     unfolding c_def using hrefl_key[of v] by simp
   finally show ?thesis by simp
@@ -8924,7 +8923,7 @@ proof -
     have "((transpose Q ** Q) *v z - z) \<bullet> ((transpose Q ** Q) *v z - z) = 0"
       by (rule zero)
     then have "(transpose Q ** Q) *v z - z = 0" by simp
-    then show ?thesis by (simp add: matrix_vector_mul_lid)
+    then show ?thesis by simp
   qed
   have T1: "transpose Q ** Q = mat 1" using step by (simp add: matrix_eq)
   then have T2: "Q ** transpose Q = mat 1"
@@ -9037,10 +9036,10 @@ proof -
   define v where "v = nw *\<^sub>R q + nq *\<^sub>R w"
   have h1: "hrefl q *v q = - q" by (rule hrefl_fix[OF q0])
   have vq: "v \<bullet> q = nq * (nq * nw + pp)"
-    unfolding v_def by (simp add: inner_add_left qq wq algebra_simps)
+    unfolding v_def by (simp add: qq wq algebra_simps)
   have vv: "v \<bullet> v = (2 * (nq * nw)) * (nq * nw + pp)"
     unfolding v_def
-    by (simp add: inner_add_left inner_add_right qq ww qw wq algebra_simps)
+    by (simp add: qq ww qw wq algebra_simps)
   have ratio: "2 * (v \<bullet> (- q)) / (v \<bullet> v) = - (1 / nw)"
   proof -
     have "2 * (v \<bullet> (- q)) / (v \<bullet> v)
@@ -9081,7 +9080,7 @@ proof -
     by (simp add: dot_square_norm power2_eq_square)
   have wq: "w \<bullet> q = q \<bullet> w" by (rule inner_commute)
   show ?thesis
-    by (simp add: inner_add_left inner_add_right qq ww wq algebra_simps)
+    by (simp add: qq ww wq algebra_simps)
 qed
 
 lemma rotm_refl_vec_nonzero:
