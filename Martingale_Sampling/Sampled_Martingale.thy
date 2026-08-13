@@ -17,10 +17,10 @@ text \<open>
   integrand, subordinate to a monotone partition \<open>t :: nat => real\<close>, the
   stochastic integral is literally a discrete martingale transform of the
   sampled process \<open>%k. X (t k)\<close> along the sampled filtration \<open>%k. F (t k)\<close>.
-  So the discrete theory already developed in \<open>Quadratic_Variation\<close> and
-  \<open>Stochastic_Integral\<close> (\<open>mtrans\<close>, \<open>martingale_mtrans\<close>, \<open>qvar\<close>) can be
-  reused wholesale, once sampling a martingale is known to give a
-  martingale. That bridge is what this theory supplies.
+  So the discrete theory already developed in \<open>Quadratic_Variation\<close>
+  (\<open>mtrans\<close>, \<open>martingale_mtrans\<close>, \<open>qvar\<close>) can be reused wholesale, once
+  sampling a martingale is known to give a martingale. That bridge is what
+  this theory supplies.
 
   AFP \<open>Martingales\<close> is index-generic: \<open>filtered_measure\<close> fixes an arbitrary
   order-topology index and the entry provides \<open>real_filtered_measure\<close>. That is
@@ -64,8 +64,8 @@ proof -
 qed
 text \<open>
   The sampled filtration is a @{term nat}-indexed filtered measure, which is the
-  interface the repository's discrete development (@{text Quadratic_Variation},
-  @{text Stochastic_Integral}) is stated over.
+  interface the repository's discrete development (@{text Quadratic_Variation})
+  is stated over.
 \<close>
 
 corollary nat_filtered_of_sampled:

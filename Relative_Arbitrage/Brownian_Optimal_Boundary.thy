@@ -24,8 +24,7 @@ text \<open>
     A non-degenerate instance (Brownian motion stopped at the exit time of
     the ball, where E[tau] = v(x0) > 0) needs continuous-time optional
     sampling for the quadratic variation, i.e. exactly the Ito theory that
-    is unavailable; the discrete-time analogue is proved in
-    \<open>Random_Walk_Market\<close>.\<close>
+    is unavailable here.\<close>
 section \<open>A Brownian market confined to the closed ball\<close>
 
 text \<open>Stopped at time \<open>0\<close>, the Brownian market started at \<open>x0\<close> never

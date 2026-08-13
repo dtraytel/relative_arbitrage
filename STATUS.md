@@ -10,6 +10,14 @@
 > The paper's own uncapped class and value function on `C([0,∞))` are
 > formalised in `Relative_Arbitrage/Exit_Class_Infinite.thy` and proved equal
 > to the horizon-capped ones used throughout the proofs.
+>
+> The `Relative_Arbitrage_Unused` session — the discrete market, the discrete
+> stochastic integral built on it, and layers 1-4 of an abandoned Skorokhod
+> representation — has been deleted; the diary below still describes it. None
+> of it was reachable from Theorem 1.1, and none of it stood on its own: the
+> integral is a martingale transform over this project's own locales, and the
+> Skorokhod development stops short of the theorem it was aiming at, which
+> Levy-Prokhorov from the AFP supplied instead. It is in the git history.
 
 ---
 
