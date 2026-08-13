@@ -144,15 +144,17 @@ section \<open>The five clauses of Theorem 1.1\<close>
 text \<open>Stated for \<^const>\<open>iexit_val\<close>, the value function of Eq. (1.6) itself.
   No horizon appears: each proof chooses one large enough not to bind and
   transports the corresponding capped clause along
-  \<^theory_text>\<open>uncapped_value_function_agrees\<close>.  Boundedness of \<open>K\<close>, which the paper
-  assumes anyway, is what fixes how large.\<close>
+  \<^theory_text>\<open>uncapped_value_function_agrees\<close>.  Compactness of \<open>K\<close> is what fixes how
+  large: on \<open>real^'n\<close> it is exactly closedness together with a ball bound, and
+  the radius is named only in clause (0), where it appears in the
+  conclusion.\<close>
 
 text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>  On a ball the value is bounded by the
   closed-form value of Example 3.1.\<close>
 
 theorem clause_0_finite:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
+  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
     and "K \<subseteq> cball 0 rK" and "0 \<le> rK"
   shows "\<bar>enn2real (iexit_val k L K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
   by (rule iexit_val_real_bounded[OF assms])
@@ -161,8 +163,7 @@ text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
 
 theorem clause_1_upper_semicontinuous:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
-    and "K \<subseteq> cball 0 rK"
+  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
     and "enn2real (iexit_val k L K z) < c"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (iexit_val k L K y) < c"
   by (rule iexit_val_real_usc[OF assms])
@@ -173,8 +174,7 @@ text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>  With the opera
 
 theorem clause_2_subsolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
-    and "K \<subseteq> cball 0 rK"
+  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
   shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (iexit_val k L K z))"
   by (rule iexit_val_visc_subsol[OF assms])
 
@@ -183,8 +183,7 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
 
 theorem clause_2_supersolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "closed K"
-    and "K \<subseteq> cball 0 rK"
+  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "compact K"
   shows "visc_supersol_lsc k L K (interior K)
       (\<lambda>u. enn2real (iexit_val k L K u))"
   by (rule iexit_val_supersol_lsc[OF assms])
@@ -201,8 +200,7 @@ text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)
 
 theorem clause_3_boundary_subsolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
-    and "K \<subseteq> cball 0 rK"
+  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
   shows "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < enn2real (iexit_val k L K x)})
       (\<lambda>z. enn2real (iexit_val k L K z))"
@@ -210,8 +208,7 @@ theorem clause_3_boundary_subsolution:
 
 theorem clause_3_boundary_supersolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "closed K"
-    and "K \<subseteq> cball 0 rK"
+  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "compact K"
   shows "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K.
          lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
@@ -227,9 +224,8 @@ theorem clause_4_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
   assumes "k < CARD('n)" and "1 < L" and "1 \<le> k"
     and "compact K" and "K \<noteq> {}" and "expandable K"
-    and "K \<subseteq> cball 0 rK" and "0 \<le> rK"
     and "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and "\<And>y. \<bar>u y\<bar> \<le> rK * rK / real (CARD('n) - k)"
+    and "\<And>y. \<bar>u y\<bar> \<le> Bd"
     and "visc_subsol_env k L K
            (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
     and "visc_supersol_env k L K
@@ -258,10 +254,12 @@ text \<open>
     hypotheses.
   \<^item> The clause \<open>1 < L\<close> is used where the paper writes \<open>L \<ge> 1\<close>; the strict form
     is what the supersolution argument consumes.
-  \<^item> The clauses above assume \<open>K\<close> bounded.  The paper's \<open>K\<close> is compact, so this
-    is not a restriction, but it is used: it is what makes a horizon large
-    enough to be inert exist, and it is what the a priori bound of Eq. (3.10)
-    needs.
+  \<^item> Clause (4) assumes the competitor \<open>u\<close> bounded --- \<open>\<bar>u y\<bar> \<le> Bd\<close> for some
+    \<open>Bd\<close>, uniformly in \<open>y\<close>.  That is not read off the paper's Theorem 1.1; it is
+    what the comparison principle behind Proposition 4.1 consumes, and it is
+    the one hypothesis of these clauses that may not appear in the paper's own
+    statement.  Until it was traced, this clause carried the stronger
+    \<open>\<bar>u y\<bar> \<le> r\<^sup>2/(n-k)\<close>, which was an artefact of the proof and is now gone.
 \<close>
 
 (*<*)

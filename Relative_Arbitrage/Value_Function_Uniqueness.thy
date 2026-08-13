@@ -460,7 +460,7 @@ theorem theorem_1_1_uniqueness_faithful:
     and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
     and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and Bu: "\<And>y. \<bar>u y\<bar> \<le> rK * rK / real (CARD('n) - k)"
+    and Bu: "\<And>y. \<bar>u y\<bar> \<le> Bd"
     and subu: "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
     and supu: "visc_supersol_env k L K
@@ -469,13 +469,19 @@ theorem theorem_1_1_uniqueness_faithful:
   shows "u x = enn2real (exit_val k L T K x)"
 proof -
   define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
-  define B where "B = rK * rK / real (CARD('n) - k)"
+  define B where "B = max Bd (rK * rK / real (CARD('n) - k))"
   have L0: "1 \<le> L" using L1 by simp
   have T0': "0 \<le> T" using T0 by simp
   have L0': "0 \<le> L" using L1 by simp
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   have Bv: "\<bar>v y\<bar> \<le> B" for y
-    unfolding v_def B_def by (rule exit_val_real_bounded[OF kn T0' L0' KB r0])
+  proof -
+    have "\<bar>v y\<bar> \<le> rK * rK / real (CARD('n) - k)"
+      unfolding v_def by (rule exit_val_real_bounded[OF kn T0' L0' KB r0])
+    then show ?thesis unfolding B_def by (simp add: le_max_iff_disj)
+  qed
+  have Bu': "\<bar>u y\<bar> \<le> B" for y
+    using Bu[of y] unfolding B_def by (simp add: le_max_iff_disj)
   have uscv: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c" if "v z < c" for c z
     using that unfolding v_def by (rule exit_val_real_usc[OF T0 L0 Kc kn KB])
   have supv: "visc_supersol_env k L K
@@ -486,8 +492,7 @@ proof -
     unfolding v_def by (rule exit_val_subsol_bc[OF T0 L0 Kc kn])
   have "u x = v x"
     by (rule uniqueness_expandable
-        [OF k1 kn L0 cK neK expK uscu uscv Bu[unfolded B_def[symmetric]] Bv
-            subu supu subv supv x])
+        [OF k1 kn L0 cK neK expK uscu uscv Bu' Bv subu supu subv supv x])
   then show ?thesis unfolding v_def by simp
 qed
 
@@ -765,6 +770,22 @@ text \<open>Everything above is stated at a finite horizon.  Since
   what follows is Theorem 1.1 for the value function of Eq. (1.6) as the paper
   writes it, on \<open>C([0,\<infinity>))\<close>.\<close>
 
+text \<open>On \<open>real^'n\<close> compactness is closedness together with a ball bound, so
+  one hypothesis supplies both of the ones the transfer needs.  The radius is
+  named only where it appears in a conclusion, which is clause (0).\<close>
+
+lemma compact_cball_bound:
+  fixes K :: "(real^'n::finite) set"
+  assumes cK: "compact K"
+  shows "\<exists>rK. 0 \<le> rK \<and> K \<subseteq> cball 0 rK"
+proof -
+  obtain a where a: "\<forall>x\<in>K. norm x \<le> a"
+    using compact_imp_bounded[OF cK] unfolding bounded_iff by blast
+  have "K \<subseteq> cball 0 (max a 0)" using a by (auto simp: dist_norm)
+  moreover have "0 \<le> max a 0" by simp
+  ultimately show ?thesis by blast
+qed
+
 lemma nonbinding_horizon_ex:
   fixes rK :: real
   assumes k: "k < CARD('n::finite)"
@@ -789,10 +810,11 @@ text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>\<close>
 
 theorem iexit_val_real_bounded:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
     and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
   shows "\<bar>enn2real (iexit_val k L K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
 proof -
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   obtain T :: real where T0: "0 < T"
     and T1: "rK * rK / real (CARD('n) - k) < T"
     using nonbinding_horizon_ex[OF kn] by blast
@@ -806,11 +828,13 @@ text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
 
 theorem iexit_val_real_usc:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
-    and KB: "K \<subseteq> cball 0 rK"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
     and lt: "enn2real (iexit_val k L K z) < c"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (iexit_val k L K y) < c"
 proof -
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
   obtain T :: real where T0: "0 < T"
     and T1: "rK * rK / real (CARD('n) - k) < T"
     using nonbinding_horizon_ex[OF kn] by blast
@@ -824,10 +848,12 @@ text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>\<close>
 
 theorem iexit_val_visc_subsol:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
-    and KB: "K \<subseteq> cball 0 rK"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
   shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (iexit_val k L K z))"
 proof -
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
   obtain T :: real where T0: "0 < T"
     and T1: "rK * rK / real (CARD('n) - k) < T"
     using nonbinding_horizon_ex[OF kn] by blast
@@ -843,12 +869,14 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
 
 theorem iexit_val_supersol_lsc:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and Kc: "closed K"
-    and KB: "K \<subseteq> cball 0 rK"
+  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and cK: "compact K"
   shows "visc_supersol_lsc k L K (interior K)
       (\<lambda>u. enn2real (iexit_val k L K u))"
 proof -
   have L: "1 \<le> L" using L1 by simp
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
   obtain T :: real where T0: "0 < T"
     and T1: "rK * rK / real (CARD('n) - k) < T"
     and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
@@ -864,12 +892,14 @@ text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)
 
 theorem iexit_val_subsol_bc:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
-    and KB: "K \<subseteq> cball 0 rK"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
   shows "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < enn2real (iexit_val k L K x)})
       (\<lambda>z. enn2real (iexit_val k L K z))"
 proof -
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
   obtain T :: real where T0: "0 < T"
     and T1: "rK * rK / real (CARD('n) - k) < T"
     using nonbinding_horizon_ex[OF kn] by blast
@@ -880,14 +910,16 @@ qed
 
 theorem iexit_val_supersol_bc:
   fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and Kc: "closed K"
-    and KB: "K \<subseteq> cball 0 rK"
+  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and cK: "compact K"
   shows "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K.
          lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
       (lsc_env (\<lambda>z. enn2real (iexit_val k L K z)))"
 proof -
   have L: "1 \<le> L" using L1 by simp
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
   obtain T :: real where T0: "0 < T"
     and T1: "rK * rK / real (CARD('n) - k) < T"
     and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
@@ -904,9 +936,8 @@ theorem iexit_val_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
   assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k"
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
-    and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
     and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and bnd: "\<And>y. \<bar>u y\<bar> \<le> rK * rK / real (CARD('n) - k)"
+    and bnd: "\<And>y. \<bar>u y\<bar> \<le> Bd"
     and sub: "visc_subsol_env k L K
         (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
     and sups: "visc_supersol_env k L K
@@ -916,6 +947,8 @@ theorem iexit_val_uniqueness:
 proof -
   have L: "1 \<le> L" using L1 by simp
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
   obtain T :: real where T0: "0 < T"
     and T1: "rK * rK / real (CARD('n) - k) < T"
     and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
