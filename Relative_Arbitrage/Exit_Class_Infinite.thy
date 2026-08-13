@@ -1055,6 +1055,189 @@ proof -
   qed
 qed
 
+subsection \<open>The extension lies in the uncapped class\<close>
+
+lemma pcut_pcut:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes ST: "S \<le> T"
+  shows "pcut S (pcut T \<omega>) = pcut S \<omega>"
+proof (rule ext)
+  fix t :: real
+  show "pcut S (pcut T \<omega>) t = pcut S \<omega> t" using ST by (auto simp: pcut_def)
+qed
+
+lemma iextend_pcut_in_class:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and S: "0 \<le> S" and L: "1 \<le> L"
+    and Q: "Q \<in> exit_class k L T x"
+  shows "pair_law_of S (pcut S) (iextend T Q) \<in> exit_class k L S x"
+proof (cases "T \<le> S")
+  case True
+  then show ?thesis by (rule iextend_cut_in_class[OF T _ L Q])
+next
+  case False
+  let ?B = "\<lambda>r. borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  have ST: "S \<le> T" using False by simp
+  have "pair_law_of S (pcut S) Q
+      = pair_law_of S (pcut S) (pair_law_of T (pcut T) (iextend T Q))"
+    unfolding pcut_law_iextend[OF T Q] ..
+  also have "\<dots> = distr (iextend T Q) (?B S) (pcut S \<circ> pcut T)"
+    unfolding pair_law_of_def
+    by (rule distr_distr[OF pcut_measurable[OF S ST refl]
+          ipcut_measurable[OF T sets_iextend]])
+  also have "\<dots> = pair_law_of S (pcut S) (iextend T Q)"
+    unfolding pair_law_of_def by (simp add: comp_def pcut_pcut[OF ST])
+  finally show ?thesis using exit_class_pcut[OF S ST Q] by simp
+qed
+
+theorem iextend_in_iexit_class:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "1 \<le> L" and Q: "Q \<in> exit_class k L T x"
+  shows "iextend T Q \<in> iexit_class k L x"
+proof -
+  let ?P = "iextend T Q"
+  let ?G = "natural_filtration ?P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  have prob: "prob_space ?P" by (rule prob_space_iextend[OF T Q])
+  have cutm: "pcut S \<in> ?P \<rightarrow>\<^sub>M borel_of (mtopology_of
+      (path_metric S :: ('n pairpath) metric))" if S: "0 \<le> S" for S
+    by (rule ipcut_measurable[OF S sets_iextend])
+  have cls: "pair_law_of S (pcut S) ?P \<in> exit_class k L S x" if S: "0 \<le> S" for S
+    by (rule iextend_pcut_in_class[OF T S L Q])
+
+  \<comment> \<open>clause (i): the initial condition\<close>
+  have start: "AE \<omega> in ?P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+  proof -
+    have "AE \<omega> in pair_law_of T (pcut T) ?P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+      using cls[OF T] unfolding exit_class_def by blast
+    then have "AE \<omega> in ?P. fst (pcut T \<omega> 0) = x \<and> snd (pcut T \<omega> 0) = 0"
+      unfolding pair_law_of_def by (rule AE_distrD[OF cutm[OF T]])
+    then show ?thesis using T by (simp add: pcut_def)
+  qed
+
+  \<comment> \<open>clause (ii): the covariation constraint, at every pair of times\<close>
+  have dq: "AE \<omega> in ?P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  proof -
+    have step: "AE \<omega> in ?P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T + real n \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L" for n :: nat
+    proof -
+      have S: "0 \<le> T + real n" using T by simp
+      have "AE \<omega> in pair_law_of (T + real n) (pcut (T + real n)) ?P.
+          \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T + real n \<longrightarrow>
+            (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+        using cls[OF S] unfolding exit_class_def by blast
+      then have "AE \<omega> in ?P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T + real n \<longrightarrow>
+          (1 / (t - s)) *\<^sub>R (snd (pcut (T + real n) \<omega> t)
+            - snd (pcut (T + real n) \<omega> s)) \<in> sconstraint k L"
+        unfolding pair_law_of_def by (rule AE_distrD[OF cutm[OF S]])
+      then show ?thesis by eventually_elim (auto simp: pcut_def)
+    qed
+    have "AE \<omega> in ?P. \<forall>n :: nat. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T + real n \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      using step by (subst AE_all_countable) blast
+    then show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      show ?case
+      proof (intro allI impI)
+        fix s t :: real assume st: "0 \<le> s" "s < t"
+        obtain n :: nat where "t < real n" using reals_Archimedean2 by blast
+        then have "t \<le> T + real n" using T by simp
+        then show "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+          using elim st by blast
+      qed
+    qed
+  qed
+
+  \<comment> \<open>clause (iii): the coordinate process is a martingale\<close>
+  have Xmg: "martingale ?P ?G 0 (\<lambda>u \<omega>. fst (\<omega> u) :: real^'n)"
+  proof (rule martingale_of_cuts[OF prob sets_iextend])
+    fix u :: real assume u: "0 \<le> u"
+    have fstB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p) \<in> borel_measurable borel"
+      by (intro borel_measurable_continuous_onI continuous_intros)
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u in auto)
+    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u)) \<in> borel_measurable (?G u)"
+      by (rule measurable_compose[OF ev fstB])
+  next
+    fix u S :: real and \<omega> :: "'n pairpath"
+    assume "0 \<le> u" "u \<le> S"
+    then show "fst (pcut S \<omega> u) = fst (\<omega> u)" by (auto simp: pcut_def)
+  next
+    fix S :: real assume S: "0 \<le> S"
+    show "martingale (pair_law_of S (pcut S) ?P)
+        (natural_filtration (pair_law_of S (pcut S) ?P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+        (\<lambda>u \<omega>. fst (\<omega> (min u S)) :: real^'n)"
+      by (rule exit_class_X_martingale[OF cls[OF S]])
+  qed
+
+  \<comment> \<open>clause (iv): the compensated process is a martingale\<close>
+  have Cmg: "martingale ?P ?G 0
+      (\<lambda>u \<omega>. outerp (fst (\<omega> u) :: real^'n) - snd (\<omega> u))"
+  proof (rule martingale_of_cuts[OF prob sets_iextend])
+    fix u :: real assume u: "0 \<le> u"
+    have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+        = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
+      by (rule ext) (simp add: outerp_def vec_eq_iff)
+    have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
+        \<in> borel_measurable borel"
+      unfolding e
+      by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
+          continuous_intros)
+    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?G u \<rightarrow>\<^sub>M borel"
+      unfolding natural_filtration_def
+      by (rule measurable_family_vimage_algebra) (use u in auto)
+    show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) - snd (\<omega> u))
+        \<in> borel_measurable (?G u)"
+      by (rule measurable_compose[OF ev cB])
+  next
+    fix u S :: real and \<omega> :: "'n pairpath"
+    assume "0 \<le> u" "u \<le> S"
+    then show "outerp (fst (pcut S \<omega> u) :: real^'n) - snd (pcut S \<omega> u)
+        = outerp (fst (\<omega> u)) - snd (\<omega> u)" by (auto simp: pcut_def)
+  next
+    fix S :: real assume S: "0 \<le> S"
+    show "martingale (pair_law_of S (pcut S) ?P)
+        (natural_filtration (pair_law_of S (pcut S) ?P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+        (\<lambda>u \<omega>. outerp (fst (\<omega> (min u S)) :: real^'n) - snd (\<omega> (min u S)))"
+      by (rule exit_class_compensated_martingale[OF cls[OF S]])
+  qed
+
+  show ?thesis
+    unfolding iexit_class_def mem_Collect_eq
+    using prob sets_iextend start dq Xmg Cmg by blast
+qed
+
+text \<open>The construction the bridge was reduced to: every member of the
+  horizon-\<open>T\<close> class is the restriction of a member of the uncapped class.\<close>
+
+theorem exit_class_has_extension:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "1 \<le> L" and Q: "Q \<in> exit_class k L T x"
+  shows "\<exists>P \<in> iexit_class k L x. pair_law_of T (pcut T) P = Q"
+  using iextend_in_iexit_class[OF T L Q] pcut_law_iextend[OF T Q] by blast
+
+subsection \<open>The two value functions, unconditionally\<close>
+
+text \<open>With the construction in place, both hypotheses of
+  @{thm [source] iexit_val_eq_of_extension} that were about the class are
+  discharged, and only the paper's own standing assumptions remain.\<close>
+
+corollary exit_val_le_iexit_val:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 \<le> T" and L: "1 \<le> L" and Kc: "closed K"
+  shows "exit_val k L T K x \<le> iexit_val k L K x"
+  by (rule iexit_val_ge_of_extension[OF T Kc exit_class_has_extension[OF T L]])
+
+theorem iexit_val_eq_exit_val:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 \<le> T" and L: "1 \<le> L" and Kc: "closed K"
+    and nobind: "exit_val k L T K x < ennreal T"
+  shows "iexit_val k L K x = exit_val k L T K x"
+  by (rule iexit_val_eq_of_extension[OF T Kc nobind
+        exit_class_has_extension[OF T L]])
+
 (*<*)
 end
 (*>*)
