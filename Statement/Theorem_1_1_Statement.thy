@@ -230,7 +230,9 @@ theorem clause_3_boundary_supersolution:
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>  Any bounded upper semicontinuous function that
   satisfies both clauses of Definition 3.1 with their boundary gates, on an
   expandable compact \<open>K\<close>, equals the value function on \<open>K\<close>.  Continuity is not
-  assumed, and is not part of Theorem 1.1.
+  assumed, and is not part of Theorem 1.1.  Boundedness is: it sits in
+  Definition 3.1, which opens each of its clauses with \<open>a bounded function
+  u : K \<rightarrow> \<real>\<close>, rather than beside the statement of Theorem 1.1.
 
   Every hypothesis is about \<open>K\<close> alone: semicontinuity and boundedness are
   demanded only at and between points of \<open>K\<close>, and the envelope is the paper's
@@ -265,27 +267,6 @@ theorem example_3_1_closed_form:
   shows "enn2real (iexit_val k L (cball 0 r) x)
       = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
   by (rule example_3_1_uncapped[OF assms])
-
-section \<open>What is not claimed\<close>
-
-text \<open>
-  \<^item> Continuity of the value function is not proved.  It is not needed for
-    Theorem 1.1, and the paper proves it only in its Section 5 under further
-    hypotheses.
-  \<^item> Clause (4) assumes the competitor \<open>u\<close> bounded on \<open>K\<close>, \<open>\<bar>u y\<bar> \<le> Bd\<close>.
-    This is the paper's own hypothesis: Theorem 1.1 says only \<open>upper
-    semicontinuous\<close>, but Definition 3.1 opens each of its three clauses with
-    \<open>a bounded function u : K \<rightarrow> \<real>\<close>, so boundedness is inside the phrase
-    \<open>viscosity solution\<close> rather than beside it.  It is the standard local
-    boundedness that makes the envelope \<open>u\<^sub>*\<close> of clause (b) real-valued.
-  \<^item> The paper's solutions are functions \<open>K \<rightarrow> \<real>\<close>; here they are functions
-    \<open>real^'n \<Rightarrow> \<real>\<close>, since there are no partial functions.  Nothing is asked of
-    them off \<open>K\<close>: the hypotheses of clause (4) quantify over \<open>K\<close>, the touchings
-    of Definition 3.1 are over \<open>K\<close>, and the envelope is \<^const>\<open>lsc_envK\<close>,
-    taken within \<open>K\<close>.  The bridge is an extension by the nearest-point
-    projection, followed by its upper envelope; see \<open>Kext\<close> and
-    \<open>lsc_env_Kext\<close>.
-\<close>
 
 (*<*)
 end
