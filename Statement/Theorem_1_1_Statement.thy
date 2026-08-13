@@ -1,6 +1,8 @@
 (*<*)
 theory Theorem_1_1_Statement
-  imports "Relative_Arbitrage.Value_Function_Uniqueness"
+  imports
+    "Relative_Arbitrage.Value_Function_Uniqueness"
+    "Relative_Arbitrage.Exit_Class_Infinite"
 begin
 
 declare [[show_question_marks = false, names_short = true]]
@@ -70,10 +72,39 @@ text \<open>The value function of Eq. (1.6) is then the supremum, over the class
 
 text \<open>@{thm [display] exit_val_def}\<close>
 
-text \<open>The horizon \<open>T\<close> is a device of the formalisation, not of the paper, which
-  works on \<open>C([0,\<infinity>))\<close>.  It is inert: raising it does not change the value once
-  the exit has occurred almost surely, and the hypothesis \<open>Tbig\<close> in the
-  theorems below says exactly that it does not bind.\<close>
+subsection \<open>The same class and value function without the horizon\<close>
+
+text \<open>The horizon \<open>T\<close> above is a device of the proofs, not of the statement.
+  The paper's own class and value function are formalised separately, on the
+  continuous paths of \<open>C([0,\<infinity>))\<close> --- so with the covariation constraint at
+  every pair of times and with no stopping in the martingale clauses --- and
+  the two value functions are then proved equal.\<close>
+
+text \<open>@{thm [display] ipath_def iexit_class_def}\<close>
+
+text \<open>The uncapped exit time takes values in \<open>[0,\<infinity>]\<close>, being the increasing
+  limit of the capped ones, and the value function of Eq. (1.6) is again the
+  supremum over the class of its essential infimum:\<close>
+
+text \<open>@{thm [display] iexit_def ess_inf_enn_def iexit_val_def}\<close>
+
+text \<open>The two agree.  The construction behind it glues an independent Brownian
+  continuation with covariation \<open>t \<sqdot> I\<close> onto a horizon-\<open>T\<close> law at time \<open>T\<close>,
+  producing a member of the uncapped class whose restriction to \<open>[0,T]\<close> is
+  the law one started from; the hypothesis is that the horizon does not bind,
+  which for a bounded \<open>K\<close> is the a priori bound of Eq. (3.10).\<close>
+
+theorem uncapped_value_function_agrees:
+  fixes K :: "(real^'n::finite) set" and r :: real
+  assumes "k < CARD('n)" and "1 \<le> L" and "0 < T" and "closed K"
+    and "K \<subseteq> cball 0 r"
+    and "(r * r - x \<bullet> x) / real (CARD('n) - k) < T"
+  shows "iexit_val k L K x = exit_val k L T K x"
+  using assms by (rule iexit_val_eq_exit_val_bounded)
+
+text \<open>Every clause below therefore holds verbatim for \<^const>\<open>iexit_val\<close>, the
+  paper's own \<open>v\<close>, under its own hypotheses; the hypothesis \<open>Tbig\<close> that
+  appears in them says exactly that the horizon does not bind.\<close>
 
 section \<open>Viscosity solutions in the sense of Definition 3.1\<close>
 
@@ -220,9 +251,11 @@ theorem example_3_1_closed_form:
 section \<open>What is not claimed\<close>
 
 text \<open>
-  \<^item> The horizon \<open>T\<close> is part of the formal statement; the paper has none.  It is
-    inert wherever the hypotheses above place it, but it is a difference in the
-    statement and is flagged as such.
+  \<^item> The horizon \<open>T\<close> is part of the clauses above; the paper has none.  It is
+    not a restriction --- the paper's own value function on \<open>C([0,\<infinity>))\<close> is
+    formalised and proved equal to it --- but the clauses are stated for the
+    capped one, and the identification carries the hypothesis that the horizon
+    does not bind.
   \<^item> Continuity of the value function is not proved.  It is not needed for
     Theorem 1.1, and the paper proves it only in its Section 5 under further
     hypotheses.

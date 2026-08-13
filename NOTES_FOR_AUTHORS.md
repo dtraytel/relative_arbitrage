@@ -128,16 +128,22 @@ and below its value at `x` outside an explicit ball.
 
 | | paper | formalisation |
 |---|---|---|
-| time horizon | none; `C([0,∞))` | finite `T`, kept inert by an explicit hypothesis saying it does not bind |
+| time horizon | none; `C([0,∞))` | finite `T`, proved to give the same value function as yours on `C([0,∞))` |
 | regularity in the uniqueness clause | bounded usc | the same |
 | zero boundary condition | Definition 3.1, viscosity sense | the same; the pointwise identity `v = 0` on `∂K` is proved only on a ball, where Lemma 5.3 says it holds |
 | hypothesis on `K` for uniqueness | the `T_ι` family of Section 4 | an explicit predicate, proved to hold for every compact convex `K` with nonempty interior |
 | standing assumption on `L` | `L ≥ 1` | `L ≥ 1`, except that the supersolution half consumes the strict `L > 1` |
 | Example 3.1 | `1 ≤ k < n` | the same |
 
-The finite horizon is the only genuine difference. It is inert wherever it
-appears: raising it does not change the value once the exit has occurred
-almost surely, and the optimizer is horizon-independent.
+The finite horizon is not a restriction. Your class and your value function are
+formalised as you write them — laws on `C([0,∞))`, the covariation constraint
+at every pair of times, no stopping in the martingale clauses — and the two
+value functions are proved equal: every member of the horizon-`T` class is the
+restriction of a member of your class, obtained by gluing an independent
+Brownian continuation with covariation `t·I` onto it at time `T`. For a `K`
+inside a ball of radius `r` the hypothesis is automatic once
+`T > (r² − |x|²)/(n − k)`, which is the a priori bound of Eq. (3.10) anyway.
+The finite horizon is therefore a device of the proof, not of the statement.
 
 ---
 

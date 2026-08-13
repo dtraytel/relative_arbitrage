@@ -1,3 +1,18 @@
+> **This file is a development diary and is out of date from here down.**
+> It predates the restructuring into sessions and the theory renames, so its
+> file names, session name (`Arbitrage`) and theory count no longer apply.
+>
+> Current state (2026-08-13): Theorem 1.1 of arXiv:2512.17702 is formalised in
+> full, with no `sorry` and no `axiomatization`; `isabelle build -d . <s>` is
+> green for every session in `ROOTS`. The formal statement of the theorem and
+> of every definition it mentions is `Statement/Theorem_1_1_Statement.thy`;
+> what the authors of the paper should read is `NOTES_FOR_AUTHORS.md`.
+> The paper's own uncapped class and value function on `C([0,∞))` are
+> formalised in `Relative_Arbitrage/Exit_Class_Infinite.thy` and proved equal
+> to the horizon-capped ones used throughout the proofs.
+
+---
+
 # HANDOVER (2026-08-02)
 
 # *** THEOREM 4.2(a) IS PROVED ***

@@ -3,7 +3,9 @@ session Relative_Arbitrage = Path_Space_Tightness +
     Theorem 1.1 of Lai, Shkolnikov and Soner, Relative arbitrage problem under
     eigenvalue lower bounds (arXiv:2512.17702): the value function of the
     minimum-exit-time problem is the unique bounded upper semicontinuous
-    viscosity solution of the associated degenerate elliptic equation.
+    viscosity solution of the associated degenerate elliptic equation.  The
+    proofs run at a finite horizon; the paper's own class and value function
+    on the half-line are formalised as well, and proved to agree with them.
   "
   sessions
     Alexandrov_Sup_Convolution
