@@ -70,10 +70,25 @@ So at `L = 1`:
   are proved under `1 <= L`;
 * clauses (2b), (3b) and (4) are NOT proved.
 
-Whether they are FALSE at `L = 1` is not established here.  Worth telling the
-authors, because `L = 1` is the rigid case where the covariation's top `n - k`
-eigenvalues are pinned to `1`, and the abstract singles out a special case in
-which the PDE becomes the arrival-time form of the Ambrosio--Soner
-co-dimension mean curvature flow.  If that special case is `L = 1`, the
-strictness sits exactly on the case the paper highlights, and the argument
-needs either a different witness or an approximation `L \<down> 1`.
+Whether they are FALSE at `L = 1` is not established here.
+
+**This is the case the paper singles out.**  Remark 1.1(c) reads
+
+> "When L=1, the partial differential equation F(grad v, grad^2 v)=1 with zero
+> boundary condition becomes the arrival time formulation of a co-dimension
+> mean curvature flow from [AS96]."
+
+and Theorem 1.1 assumes only `L >= 1`, so `L = 1` is inside its scope.  The
+strictness therefore sits exactly on the Ambrosio--Soner co-dimension mean
+curvature flow --- the geometric payoff of the paper --- and the uniqueness
+clause is unproved precisely there.  This is the most consequential of the two
+items and should be the first thing put to the authors.
+
+Two routes out, neither attempted:
+
+* a different witness at `L = 1`, since the rigidity means the perturbation
+  must move inside the pinned set rather than off it;
+* approximation `L \<down> 1`, which needs stability of the supersolution property
+  as `L` decreases to `1` --- note `sconstraint k L` shrinks as `L` does, so the
+  value functions are monotone in `L` and a limit argument is plausible, but
+  the viscosity property does not transfer for free.

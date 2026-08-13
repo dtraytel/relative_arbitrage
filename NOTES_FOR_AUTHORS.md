@@ -132,7 +132,7 @@ and below its value at `x` outside an explicit ball.
 | regularity in the uniqueness clause | bounded usc | the same |
 | zero boundary condition | Definition 3.1, viscosity sense | the same; the pointwise identity `v = 0` on `∂K` is proved only on a ball, where Lemma 5.3 says it holds |
 | hypothesis on `K` for uniqueness | the `T_ι` family of Section 4 | an explicit predicate, proved to hold for every compact convex `K` with nonempty interior |
-| standing assumption on `L` | `L ≥ 1` | `L ≥ 1`, except that the supersolution half consumes the strict `L > 1` |
+| standing assumption on `L` | `L ≥ 1` | `L ≥ 1`, except that the supersolution half, and so uniqueness, consumes the strict `L > 1` — **so `L = 1`, the mean-curvature-flow case of Remark 1.1(c), is not covered by clause (4)** |
 | Example 3.1 | `1 ≤ k < n` | the same |
 
 The finite horizon is not a restriction. Your class and your value function are
