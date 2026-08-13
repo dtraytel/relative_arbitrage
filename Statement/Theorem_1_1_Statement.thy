@@ -50,6 +50,17 @@ text \<open>The covariation constraint of Eq. (1.5).  \<open>Pi_proj a m\<close>
 
 text \<open>@{thm [display] Pi_proj_def Pi_constraint_def sconstraint_def}\<close>
 
+text \<open>One reading had to be fixed here.  Eq. (1.5) writes the infimum over
+  \<open>P\<^sup>2 = P\<close>, \<open>tr(P) = m\<close>, without asking \<open>P\<close> to be symmetric; \<^const>\<open>is_proj\<close>
+  does ask.  Taken literally the infimum is \<open>-\<infinity>\<close> for essentially every \<open>a\<close>: in
+  three dimensions with \<open>k = 1\<close>, \<open>m = 2\<close>, take \<open>a = u u\<^sup>T\<close> with \<open>u = (1,0,1)\<close>
+  and \<open>P\<close> the rank-2 idempotent with range \<open>span{e\<^sub>1,e\<^sub>2}\<close> and kernel
+  \<open>span{e\<^sub>3 + N e\<^sub>1}\<close>; then \<open>tr(P) = 2\<close>, \<open>P\<^sup>2 = P\<close> and \<open>tr(a P) = 1 - N\<close>.  So the
+  literal (1.5) would define the empty set whenever \<open>k \<le> n - 2\<close>, and every
+  \<open>P\<^sub>x\<close> would be empty.  The orthogonal reading is the one the paper's own
+  Lemma 2.1 proof uses --- \<open>\<Pi>\<^sub>m\<close> as the sum of the \<open>m\<close> smallest eigenvalues ---
+  and is what is formalised.\<close>
+
 text \<open>A member of the class of Eq. (1.7) is presented as a law on the space of
   continuous paths taking values in pairs: the first coordinate is the process
   \<open>X\<close>, the second its covariation \<open>\<langle>X\<rangle>\<close>, carried as a genuine path coordinate
@@ -81,6 +92,29 @@ text \<open>The horizon \<open>T\<close> above is a device of the proofs, not of
   the two value functions are then proved equal.\<close>
 
 text \<open>@{thm [display] ipath_def iexit_class_def}\<close>
+
+text \<open>Two readings to record here, since neither is forced by the text of
+  Eq. (1.7).
+
+  \<^item> \<^bold>\<open>The class is a set of laws of the pair \<close>\<open>(X, \<langle>X\<rangle>)\<close>\<^bold>\<open>, not of \<close>\<open>X\<close>\<^bold>\<open> alone.\<close>
+  \<open>P\<^sub>x\<close> is a set of laws on \<open>C([0,\<infinity>),\<real>\<^sup>n)\<close>; here the covariation is a second path
+  coordinate, which is what makes the class closed under weak limits and is the
+  encoding the paper's own Lemma 2.3 proof uses.  A consequence is that the
+  martingale clauses are stated for the natural filtration of the \<^emph>\<open>pair\<close>, a
+  priori larger than the filtration of \<open>X\<close> that Proposition 2.4 names.  That
+  direction is closed --- \<^theory_text>\<open>iexit_class_X_own_filtration\<close> shows \<open>X\<close> is a
+  martingale for its own filtration, so a member of the class does lie over a
+  member of \<open>P\<^sub>x\<close>.  The converse, that every \<open>P\<^sub>x\<close>-law lifts to a pair law, needs
+  \<open>\<langle>X\<rangle>\<close> as a path-measurable functional and is \<^emph>\<open>not\<close> formalised.
+
+  \<^item> \<^bold>\<open>The covariation constraint is read as Lipschitz-with-density.\<close>  Eq. (1.7)
+  constrains \<open>d\<langle>X\<rangle>(t)/dt\<close>, an almost-everywhere derivative; the clause above asks
+  every difference quotient \<open>(\<langle>X\<rangle>(t) - \<langle>X\<rangle>(s))/(t-s)\<close> to lie in \<open>S\<close>.  Since \<open>S\<close>
+  is compact and convex the two agree for absolutely continuous \<open>\<langle>X\<rangle>\<close>, and the
+  difference-quotient form is again what Lemma 2.3 uses (its display (2.8)).
+  They part company only if \<open>\<langle>X\<rangle>\<close> is allowed a singular part, which the
+  derivative notation arguably permits; such a part only makes \<open>X\<close> exit sooner,
+  so the value function is unaffected, but the choice is an interpretation.\<close>
 
 text \<open>The uncapped exit time takes values in \<open>[0,\<infinity>]\<close>, being the increasing
   limit of the capped ones, and the value function of Eq. (1.6) is again the
@@ -119,6 +153,12 @@ text \<open>The lower semicontinuous envelope.  Definition 3.1 reads it within \
 
 text \<open>@{thm [display] lsc_env_def lsc_envK_def}\<close>
 
+text \<open>The paper writes the envelopes as \<open>lim\<^sub>\<epsilon>\<^sub>\<down>\<^sub>0 inf\<^sub>{\<^sub>|\<^sub>y\<^sub>-\<^sub>x\<^sub>|\<^sub><\<^sub>\<epsilon>\<^sub>}\<close> without saying
+  whether \<open>y\<close> ranges over \<open>K\<close> or over \<open>\<real>\<^sup>n\<close>.  Since Definition 3.1 opens with a
+  bounded \<open>u : K \<rightarrow> \<real>\<close>, only the within-\<open>K\<close> reading typechecks, and that is
+  \<^const>\<open>lsc_envK\<close>.  Worth pinning down in the paper, as the two genuinely
+  differ on \<open>K - interior K\<close> --- exactly where the boundary clause bites.\<close>
+
 text \<open>Definition 3.1, with the touching taken globally over \<open>K\<close> and the
   inequality demanded at the points of \<open>\<Omega>\<close>.  Instantiating \<open>\<Omega>\<close> at
   \<open>interior K\<close> gives the interior clause; instantiating it at the union of
@@ -126,6 +166,18 @@ text \<open>Definition 3.1, with the touching taken globally over \<open>K\<clos
   gives the clause together with the zero boundary condition of Eq. (1.10).\<close>
 
 text \<open>@{thm [display] visc_subsol_env_def visc_supersol_env_def}\<close>
+
+text \<open>\<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> here are the semicontinuous envelopes of \<open>F\<close> in the pair
+  \<open>(p,M)\<close> jointly, as in the paper:\<close>
+
+text \<open>@{thm [display] ell_op_lsc_def ell_op_usc_def}\<close>
+
+text \<open>Definition 3.1 takes those envelopes over \<open>\<real>\<^sup>n \<times> \<bbbS>\<^sup>n\<close>, the symmetric
+  matrices, whereas the balls above range over all of \<open>\<real>\<^sup>n \<times> \<real>\<^sup>n\<^sup>\<times>\<^sup>n\<close>.  The two
+  agree, so this is not a widening: \<open>F\<close> factors through \<open>M \<mapsto> (M + M\<^sup>T)/2\<close>,
+  because the feasible matrices are positive semidefinite hence symmetric, and
+  that map is a contraction fixing \<open>\<bbbS>\<^sup>n\<close>.  See \<^theory_text>\<open>ell_op_lsc_eq_over_sym\<close> and
+  \<^theory_text>\<open>ell_op_usc_eq_over_sym\<close>.\<close>
 
 text \<open>The test function above is only asked to be differentiable near \<open>x\<close> with
   a gradient that is differentiable at \<open>x\<close>; away from \<open>x\<close> it is unconstrained.
@@ -143,6 +195,17 @@ text \<open>The hypothesis Theorem 4.3 and Proposition 4.1 place on \<open>K\<cl
   which expands \<open>K\<close> into its own interior.\<close>
 
 text \<open>@{thm [display] expandable_def}\<close>
+
+text \<open>Three small departures from the wording of Theorem 1.1, all in the
+  direction of a weaker hypothesis and hence a stronger uniqueness clause.  The
+  linear part is any \<^const>\<open>orthogonal_matrix\<close>, so reflections are allowed and
+  not just rotations.  The family is presented as \<open>\<forall>e>0. \<exists>\<dots>\<close> rather than indexed
+  by \<open>\<iota> \<in> (1,2]\<close>.  Closeness to the identity is measured on the inverse map over
+  \<open>K\<close>, which is what the comparison proof consumes; the dilation factor is asked
+  to exceed \<open>1\<close>, which \<open>K \<subseteq> interior (T ` K)\<close> forces anyway once \<open>K\<close> has
+  interior --- at \<open>c = 1\<close> the minimal enclosing ball of \<open>T\<^sup>-\<^sup>1 ` K\<close> would have to
+  coincide with that of \<open>K\<close>, putting a point of \<open>T\<^sup>-\<^sup>1 ` K\<close> on its boundary
+  sphere, which contradicts \<open>T\<^sup>-\<^sup>1 ` K \<subseteq> interior K\<close>.\<close>
 
 text \<open>Every compact convex set with nonempty interior satisfies it, so the
   hypothesis is not vacuous.\<close>
@@ -163,8 +226,20 @@ text \<open>Stated for \<^const>\<open>iexit_val\<close>, the value function of 
   the radius is named only in clause (0), where it appears in the
   conclusion.\<close>
 
+text \<open>The paper's standing hypotheses are \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>.  Each clause
+  below assumes only what its proof uses, so \<open>1 \<le> k\<close> appears on the
+  supersolution and uniqueness clauses but not on (0), (1) and the subsolution
+  halves, which hold at \<open>k = 0\<close> too.  That is a strengthening, not a gap: each
+  clause still implies its counterpart under Theorem 1.1's own hypotheses.  The
+  extra generality is thin --- at \<open>k = 0\<close> the set \<^const>\<open>feasible\<close> is empty at
+  every nonzero gradient, so \<^const>\<open>ell_op\<close> is an infimum of the empty set ---
+  but nothing is gained by hiding it.\<close>
+
 text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>  On a ball the value is bounded by the
-  closed-form value of Example 3.1.\<close>
+  closed-form value of Example 3.1.  In \<open>ennreal\<close>, so that it also says the
+  value is finite --- \<^const>\<open>enn2real\<close> sends \<open>\<top>\<close> to \<open>0\<close>, so a bound on
+  \<open>\<bar>enn2real \<dots>\<bar>\<close> alone would hold vacuously there, and every clause below
+  reads the value function through \<^const>\<open>enn2real\<close>.\<close>
 
 theorem clause_0_finite:
   fixes K :: "(real^'n::finite) set"
@@ -172,7 +247,8 @@ theorem clause_0_finite:
     and "K \<subseteq> cball 0 rK"
   shows "iexit_val k L K x
       \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
-  by (rule iexit_val_le_ball_bound[OF assms(1,2) compact_imp_closed[OF assms(3)] assms(4)])
+  by (rule iexit_val_le_ball_bound
+        [OF assms(1,2) compact_imp_closed[OF assms(3)] assms(4)])
 
 theorem clause_0_not_infinite:
   fixes K :: "(real^'n::finite) set"
@@ -273,6 +349,78 @@ theorem clause_4_uniqueness:
     and "x \<in> K"
   shows "u x = enn2real (iexit_val k L K x)"
   by (rule iexit_val_uniqueness_K[OF assms])
+
+section \<open>Theorem 1.1, assembled\<close>
+
+text \<open>The five clauses put back together into the shape of the paper's
+  statement: the value function of Eq. (1.6) is a bounded upper semicontinuous
+  viscosity solution of \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> on \<open>K\<close> with the zero boundary
+  condition, in the sense of Definition 3.1, and it is the only one.
+
+  The competitor is quantified over inside the statement, so the whole of
+  Theorem 1.1 is one formula.  Note the asymmetry that Definition 3.1 itself
+  has: \<^const>\<open>visc_subsol_env2\<close> is asked of \<open>u\<close>, \<^const>\<open>visc_supersol_env2\<close> of
+  its lower envelope \<^const>\<open>lsc_envK\<close>.\<close>
+
+theorem theorem_1_1:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+  defines "v \<equiv> (\<lambda>z. enn2real (iexit_val k L K z))"
+  shows "(\<exists>B. \<forall>y. \<bar>v y\<bar> \<le> B)
+       \<and> (\<forall>c z. v z < c \<longrightarrow> (\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c))
+       \<and> visc_subsol_env2 k L K
+           (interior K \<union> {x \<in> K - interior K. 0 < v x}) v
+       \<and> visc_supersol_env2 k L K
+           (interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0})
+           (lsc_envK K v)
+       \<and> (\<forall>u :: real^'n \<Rightarrow> real. \<forall>Bd.
+            (\<forall>c z. z \<in> K \<longrightarrow> u z < c \<longrightarrow>
+               (\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c))
+            \<longrightarrow> (\<forall>y\<in>K. \<bar>u y\<bar> \<le> Bd)
+            \<longrightarrow> visc_subsol_env2 k L K
+                 (interior K \<union> {x \<in> K - interior K. 0 < u x}) u
+            \<longrightarrow> visc_supersol_env2 k L K
+                 (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0})
+                 (lsc_envK K u)
+            \<longrightarrow> (\<forall>x\<in>K. u x = v x))"
+proof -
+  have bnd: "\<exists>B. \<forall>y. \<bar>v y\<bar> \<le> B"
+  proof -
+    obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+      using compact_cball_bound[OF cK] by blast
+    show ?thesis
+      unfolding v_def
+      by (intro exI[of _ "rK * rK / real (CARD('n) - k)"] allI)
+         (rule iexit_val_real_bounded[OF kn L1 cK KB r0])
+  qed
+  have usc: "\<forall>c z. v z < c \<longrightarrow> (\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c)"
+    unfolding v_def
+    by (intro allI impI clause_1_upper_semicontinuous[OF kn L1 cK])
+  have sub: "visc_subsol_env2 k L K
+      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
+    unfolding v_def
+    by (rule visc_subsol_env_imp_env2
+          [OF clause_3_boundary_subsolution[OF kn L1 cK]])
+  have sup: "visc_supersol_env2 k L K
+      (interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}) (lsc_envK K v)"
+    unfolding v_def
+    by (rule visc_supersol_env_imp_env2
+          [OF clause_3_boundary_supersolution[OF kn L1 k1 cK]])
+  have uniq: "\<forall>x\<in>K. u x = v x"
+    if "\<forall>c z. z \<in> K \<longrightarrow> u z < c \<longrightarrow> (\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c)"
+      and "\<forall>y\<in>K. \<bar>u y\<bar> \<le> Bd"
+      and "visc_subsol_env2 k L K
+             (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+      and "visc_supersol_env2 k L K
+             (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0})
+             (lsc_envK K u)"
+    for u :: "real^'n \<Rightarrow> real" and Bd
+    unfolding v_def
+    using that
+    by (intro ballI clause_4_uniqueness[OF kn L1 k1 cK neK expK]) blast+
+  from bnd usc sub sup uniq show ?thesis by blast
+qed
 
 section \<open>Example 3.1\<close>
 
