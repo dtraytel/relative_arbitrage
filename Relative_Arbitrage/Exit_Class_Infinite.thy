@@ -1238,6 +1238,23 @@ theorem iexit_val_eq_exit_val:
   by (rule iexit_val_eq_of_extension[OF T Kc nobind
         exit_class_has_extension[OF T L]])
 
-(*<*)
+text \<open>For a bounded \<open>K\<close> the a priori bound
+  @{thm [source] exit_val_le_ball_bound} makes the remaining hypothesis a
+  condition on the horizon alone, so the paper's value function of Eq. (1.6)
+  is the capped one at every horizon past the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close>.\<close>
+
+corollary iexit_val_eq_exit_val_bounded:
+  fixes K :: "(real^'n::finite) set" and r :: real
+  assumes k: "k < CARD('n)" and L: "1 \<le> L" and T: "0 < T"
+    and Kc: "closed K" and KB: "K \<subseteq> cball 0 r"
+    and big: "(r * r - x \<bullet> x) / real (CARD('n) - k) < T"
+  shows "iexit_val k L K x = exit_val k L T K x"
+proof (rule iexit_val_eq_exit_val[OF less_imp_le[OF T] L Kc])
+  have "exit_val k L T K x
+      \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+    using L by (intro exit_val_le_ball_bound[OF k less_imp_le[OF T] _ KB]) simp
+  also have "\<dots> < ennreal T" by (rule ennreal_lessI[OF T big])
+  finally show "exit_val k L T K x < ennreal T" .
+qed(*<*)
 end
 (*>*)
