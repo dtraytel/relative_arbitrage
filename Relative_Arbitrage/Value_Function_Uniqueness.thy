@@ -248,9 +248,9 @@ theorem theorem_1_1_uniqueness_faithful:
     and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
     and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and Bu: "\<And>y. \<bar>u y\<bar> \<le> Bd"
-    and subu: "visc_subsol_env k L K
+    and subu: "visc_subsol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and supu: "visc_supersol_env k L K
+    and supu: "visc_supersol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
     and x: "x \<in> K"
   shows "u x = enn2real (exit_val k L T K x)"
@@ -271,12 +271,15 @@ proof -
     using Bu[of y] unfolding B_def by (simp add: le_max_iff_disj)
   have uscv: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c" if "v z < c" for c z
     using that unfolding v_def by (rule exit_val_real_usc[OF T0 L0 Kc kn KB])
-  have supv: "visc_supersol_env k L K
+  have supv: "visc_supersol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
-    unfolding v_def by (rule exit_val_supersol_bc[OF T0 L1 k1 kn Kc KB Tbig])
-  have subv: "visc_subsol_env k L K
+    unfolding v_def
+    by (rule visc_supersol_env_imp_env2
+          [OF exit_val_supersol_bc[OF T0 L1 k1 kn Kc KB Tbig]])
+  have subv: "visc_subsol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-    unfolding v_def by (rule exit_val_subsol_bc[OF T0 L0 Kc kn])
+    unfolding v_def
+    by (rule visc_subsol_env_imp_env2[OF exit_val_subsol_bc[OF T0 L0 Kc kn]])
   have "u x = v x"
     by (rule uniqueness_expandable
         [OF k1 kn L0 cK neK expK uscu uscv Bu' Bv subu supu subv supv x])
@@ -720,9 +723,9 @@ theorem iexit_val_uniqueness:
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
     and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and bnd: "\<And>y. \<bar>u y\<bar> \<le> Bd"
-    and sub: "visc_subsol_env k L K
+    and sub: "visc_subsol_env2 k L K
         (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and sups: "visc_supersol_env k L K
+    and sups: "visc_supersol_env2 k L K
         (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
     and xK: "x \<in> K"
   shows "u x = enn2real (iexit_val k L K x)"
@@ -854,9 +857,9 @@ theorem iexit_val_uniqueness_K:
     and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
       \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
     and bnd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
-    and sub: "visc_subsol_env k L K
+    and sub: "visc_subsol_env2 k L K
         (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and sups: "visc_supersol_env k L K
+    and sups: "visc_supersol_env2 k L K
         (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0}) (lsc_envK K u)"
     and xK: "x \<in> K"
   shows "u x = enn2real (iexit_val k L K x)"
@@ -885,13 +888,13 @@ proof -
   have gate2: "{z \<in> K - interior K. lsc_env ubar z < 0}
       = {z \<in> K - interior K. lsc_envK K u z < 0}"
     using lscK by auto
-  have sub': "visc_subsol_env k L K
+  have sub': "visc_subsol_env2 k L K
       (interior K \<union> {z \<in> K - interior K. 0 < ubar z}) ubar"
-    unfolding gate1 by (rule visc_subsol_env_cong[OF _ _ sub]) (use eqK iK in auto)
-  have sups': "visc_supersol_env k L K
+    unfolding gate1 by (rule visc_subsol_env2_cong[OF _ _ sub]) (use eqK iK in auto)
+  have sups': "visc_supersol_env2 k L K
       (interior K \<union> {z \<in> K - interior K. lsc_env ubar z < 0}) (lsc_env ubar)"
     unfolding gate2
-    by (rule visc_supersol_env_cong[OF _ _ sups]) (use lscK iK in auto)
+    by (rule visc_supersol_env2_cong[OF _ _ sups]) (use lscK iK in auto)
   have "ubar x = enn2real (iexit_val k L K x)"
     by (rule iexit_val_uniqueness[OF kn L1 k1 cK neK expK usc' bnd' sub' sups' xK])
   then show ?thesis using eqK[OF xK] by simp

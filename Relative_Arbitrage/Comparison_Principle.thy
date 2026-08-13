@@ -352,6 +352,52 @@ definition visc_supersol_env2 ::
 text \<open>Fewer test functions means a weaker condition, so everything proved in the
   \<^const>\<open>test_fun_at\<close> form still delivers Definition 3.1 as the paper states it.\<close>
 
+lemma visc_subsol_env2_cong:
+  fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
+  assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
+    and h: "visc_subsol_env2 k L K \<Omega> f1"
+  shows "visc_subsol_env2 k L K \<Omega> f2"
+  unfolding visc_subsol_env2_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_C2 \<phi> g H x"
+    and gl: "\<forall>y\<in>K. f2 y - \<phi> y \<le> f2 x - \<phi> x"
+  have xK: "x \<in> K" using x OK by blast
+  have "\<forall>y\<in>K. f1 y - \<phi> y \<le> f1 x - \<phi> x"
+    using gl eq xK by (metis (no_types, lifting))
+  then show "ell_op_lsc k L (g x) H \<le> 1"
+    using h x tf unfolding visc_subsol_env2_def by blast
+qed
+
+lemma visc_supersol_env2_cong:
+  fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
+  assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
+    and h: "visc_supersol_env2 k L K \<Omega> f1"
+  shows "visc_supersol_env2 k L K \<Omega> f2"
+  unfolding visc_supersol_env2_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
+  assume x: "x \<in> \<Omega>" and tf: "test_fun_C2 \<phi> g H x"
+    and gl: "\<forall>y\<in>K. f2 x - \<phi> x \<le> f2 y - \<phi> y"
+  have xK: "x \<in> K" using x OK by blast
+  have "\<forall>y\<in>K. f1 x - \<phi> x \<le> f1 y - \<phi> y"
+    using gl eq xK by (metis (no_types, lifting))
+  then show "1 \<le> ell_op_usc k L (g x) H"
+    using h x tf unfolding visc_supersol_env2_def by blast
+qed
+
+lemma visc_subsol_env2_mono:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes "visc_subsol_env2 k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
+  shows "visc_subsol_env2 k L K \<Omega>' u"
+  using assms unfolding visc_subsol_env2_def by blast
+
+lemma visc_supersol_env2_mono:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes "visc_supersol_env2 k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
+  shows "visc_supersol_env2 k L K \<Omega>' u"
+  using assms unfolding visc_supersol_env2_def by blast
+
 lemma visc_subsol_env_imp_env2:
   fixes u :: "real^'n::finite \<Rightarrow> real"
   assumes "visc_subsol_env k L K \<Omega> u"
@@ -12470,7 +12516,7 @@ theorem supersol_bc_nonneg:
     and cK: "compact K" and neK: "K \<noteq> {}"
     and lscw: "\<And>c z. c < w z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < w y"
     and Bw: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
-    and sup: "visc_supersol_env k L K
+    and sup: "visc_supersol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. w x < 0}) w"
   shows "\<And>x. x \<in> K \<Longrightarrow> 0 \<le> w x"
 proof -
@@ -12483,10 +12529,10 @@ proof -
     have wz0: "w z < 0" using zmin[OF x0K] neg by linarith
     have zO: "z \<in> interior K \<union> {x \<in> K - interior K. w x < 0}"
       using zK wz0 by (cases "z \<in> interior K") auto
-    have tf: "test_fun_at (\<lambda>y. w z) (\<lambda>y. 0) 0 z" by (rule test_fun_at_const)
+    have tf: "test_fun_C2 (\<lambda>y. w z) (\<lambda>y. 0) 0 z" by (rule test_fun_C2_const)
     have touch: "\<forall>y\<in>K. w z - w z \<le> w y - w z" using zmin by simp
     have "1 \<le> ell_op_usc k L ((\<lambda>y. 0 :: real^'n) z) (0 :: real^'n^'n)"
-      using sup[unfolded visc_supersol_env_def] zO tf touch by blast
+      using sup[unfolded visc_supersol_env2_def] zO tf touch by blast
     then have one: "(1 :: ereal) \<le> ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n)"
       by simp
     have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) < 1"
@@ -12955,11 +13001,11 @@ theorem visc_supersol_env_affine:
   fixes w :: "real^'n::finite \<Rightarrow> real" and K \<Omega> :: "(real^'n) set"
     and R :: "real^'n^'n" and b :: "real^'n"
   assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-    and sup: "visc_supersol_env k L K \<Omega> w"
-  shows "visc_supersol_env k L ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` K)
+    and sup: "visc_supersol_env2 k L K \<Omega> w"
+  shows "visc_supersol_env2 k L ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` K)
       ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` \<Omega>)
       (\<lambda>X. c\<^sup>2 * w ((1/c) *\<^sub>R (transpose R *v (X - b))))"
-  unfolding visc_supersol_env_def
+  unfolding visc_supersol_env2_def
 proof (intro ballI allI impI)
   define T :: "real^'n \<Rightarrow> real^'n" where "T = (\<lambda>x. c *\<^sub>R (R *v x) + b)"
   define w' :: "real^'n \<Rightarrow> real"
@@ -12980,25 +13026,25 @@ proof (intro ballI allI impI)
 
   fix X assume XO: "X \<in> T ` \<Omega>"
   fix \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume tf: "test_fun_at \<phi> g H X"
+  assume tf: "test_fun_C2 \<phi> g H X"
   assume touch: "\<forall>Y \<in> T ` K. w' X - \<phi> X \<le> w' Y - \<phi> Y"
   from XO obtain x0 where x0: "x0 \<in> \<Omega>" and Xx: "X = T x0" by auto
 
   text \<open>Pull the test function back through \<open>T\<close> and divide by \<open>c\<^sup>2\<close>.\<close>
-  have tfA: "test_fun_at (\<lambda>z. \<phi> (T z))
+  have tfA: "test_fun_C2 (\<lambda>z. \<phi> (T z))
       (\<lambda>z. c *\<^sub>R (transpose R *v g (T z))) ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x0"
     unfolding T_def
-    using test_fun_at_affine[OF tf[unfolded Xx T_def] orth c0] .
-  have tfB: "test_fun_at (\<lambda>z. (1 / c\<^sup>2) * \<phi> (T z))
+    using test_fun_C2_affine[OF tf[unfolded Xx T_def] orth c0] .
+  have tfB: "test_fun_C2 (\<lambda>z. (1 / c\<^sup>2) * \<phi> (T z))
       (\<lambda>z. (1 / c\<^sup>2) *\<^sub>R (c *\<^sub>R (transpose R *v g (T z))))
       ((1 / c\<^sup>2) *\<^sub>R ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R))) x0"
-    by (rule test_fun_at_scaleR[OF tfA]) (use c2 in simp)
+    by (rule test_fun_C2_scaleR[OF tfA]) (use c2 in simp)
   have gsimp: "(\<lambda>z. (1 / c\<^sup>2) *\<^sub>R (c *\<^sub>R (transpose R *v g (T z))))
       = (\<lambda>z. (1/c) *\<^sub>R (transpose R *v g (T z)))"
     using cne by (simp add: power2_eq_square)
   have Hsimp: "(1 / c\<^sup>2) *\<^sub>R ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R))
       = transpose R ** H ** R" using c2 by simp
-  have tfC: "test_fun_at (\<lambda>z. (1 / c\<^sup>2) * \<phi> (T z))
+  have tfC: "test_fun_C2 (\<lambda>z. (1 / c\<^sup>2) * \<phi> (T z))
       (\<lambda>z. (1/c) *\<^sub>R (transpose R *v g (T z))) (transpose R ** H ** R) x0"
     using tfB unfolding gsimp Hsimp .
 
@@ -13021,7 +13067,7 @@ proof (intro ballI allI impI)
 
   have one: "1 \<le> ell_op_usc k L ((1/c) *\<^sub>R (transpose R *v g (T x0)))
       (transpose R ** H ** R)"
-    using sup[unfolded visc_supersol_env_def] x0 tfC touch' by blast
+    using sup[unfolded visc_supersol_env2_def] x0 tfC touch' by blast
 
   text \<open>Now undo both factors with the invariances of \<open>F\<close>.\<close>
   have orthT: "orthogonal_matrix (transpose R)"
@@ -13111,9 +13157,9 @@ theorem comparison_two_domain:
     and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and lscw: "\<And>c z. c < w z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < w y"
     and Bu: "\<And>y. \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. \<bar>w y\<bar> \<le> B"
-    and subu: "visc_subsol_env k L K
+    and subu: "visc_subsol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and supw: "visc_supersol_env k L K' (interior K') w"
+    and supw: "visc_supersol_env2 k L K' (interior K') w"
     and w0: "\<And>y. y \<in> K' \<Longrightarrow> 0 \<le> w y"
     and x: "x \<in> K"
   shows "u x \<le> w x"
@@ -13160,7 +13206,7 @@ proof (rule ccontr)
   have wlo: "\<And>y. y \<in> K' \<Longrightarrow> - B \<le> w y" using wloB by blast
   have supj0: "supersol_jet k L (interior K') w"
     by (rule visc_supersol_env_imp_jet
-        [OF visc_supersol_env_imp_env2[OF supw] compact_imp_bounded[OF cK'] wlo])
+        [OF supw compact_imp_bounded[OF cK'] wlo])
   have supj: "supersol_jet k L (interior K') wt"
   proof (rule supersol_jet_cong_on[OF supj0 open_interior])
     fix y assume "y \<in> interior K'"
@@ -13238,8 +13284,7 @@ proof (rule ccontr)
     using interior_subset by blast
   have subenv: "visc_subsol_env2 k L K
       (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
-    by (rule visc_subsol_env_agrees[OF visc_subsol_env_imp_env2[OF subu] OmK])
-      (simp add: ut_def)
+    by (rule visc_subsol_env_agrees[OF subu OmK]) (simp add: ut_def)
   have subloc: "visc_subsol k L
       (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
     by (rule visc_subsol_env_imp_visc_subsol
@@ -13501,9 +13546,9 @@ theorem comparison_expandable:
     and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and lscw: "\<And>c z. c < w z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < w y"
     and Bu: "\<And>y. \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. \<bar>w y\<bar> \<le> B"
-    and subu: "visc_subsol_env k L K
+    and subu: "visc_subsol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and supw: "visc_supersol_env k L K
+    and supw: "visc_supersol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. w x < 0}) w"
     and x: "x \<in> K"
   shows "u x \<le> usc_env w x"
@@ -13546,14 +13591,14 @@ proof -
     have KTK: "K \<subseteq> interior (T ` K)" using Ksub unfolding T_def .
 
     text \<open>The transformed supersolution, on the full interior of \<open>T ` K\<close>.\<close>
-    have supa: "visc_supersol_env k L (T ` K)
+    have supa: "visc_supersol_env2 k L (T ` K)
         (T ` (interior K \<union> {x \<in> K - interior K. w x < 0})) w'"
       unfolding T_def w'_def S_def
       by (rule visc_supersol_env_affine[OF orth c0 supw])
     have intTK: "interior (T ` K) = T ` interior K"
       unfolding T_def by (rule affine_interior_image[OF orth c0])
-    have supw': "visc_supersol_env k L (T ` K) (interior (T ` K)) w'"
-      by (rule visc_supersol_env_mono[OF supa]) (use intTK in blast)
+    have supw': "visc_supersol_env2 k L (T ` K) (interior (T ` K)) w'"
+      by (rule visc_supersol_env2_mono[OF supa]) (use intTK in blast)
 
     text \<open>Lower semicontinuity, bound and nonnegativity of \<open>w'\<close>.\<close>
     have lscw': "\<exists>ee>0. \<forall>Y. dist Z Y < ee \<longrightarrow> d < w' Y" if lt: "d < w' Z" for d Z
@@ -13717,13 +13762,13 @@ theorem uniqueness_expandable:
     and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and uscw: "\<And>c z. w z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> w y < c"
     and Bu: "\<And>y. \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. \<bar>w y\<bar> \<le> B"
-    and subu: "visc_subsol_env k L K
+    and subu: "visc_subsol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and supu: "visc_supersol_env k L K
+    and supu: "visc_supersol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
-    and subw: "visc_subsol_env k L K
+    and subw: "visc_subsol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. 0 < w x}) w"
-    and supw: "visc_supersol_env k L K
+    and supw: "visc_supersol_env2 k L K
       (interior K \<union> {x \<in> K - interior K. lsc_env w x < 0}) (lsc_env w)"
     and x: "x \<in> K"
   shows "u x = w x"
@@ -13733,9 +13778,9 @@ proof -
     if usca: "\<And>c z. a z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> a y < c"
       and uscb: "\<And>c z. bb z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> bb y < c"
       and Ba: "\<And>y. \<bar>a y\<bar> \<le> B" and Bb: "\<And>y. \<bar>bb y\<bar> \<le> B"
-      and suba: "visc_subsol_env k L K
+      and suba: "visc_subsol_env2 k L K
         (interior K \<union> {x \<in> K - interior K. 0 < a x}) a"
-      and supb: "visc_supersol_env k L K
+      and supb: "visc_supersol_env2 k L K
         (interior K \<union> {x \<in> K - interior K. lsc_env bb x < 0}) (lsc_env bb)"
     for a bb :: "real^'n \<Rightarrow> real"
   proof -
