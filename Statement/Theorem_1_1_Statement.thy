@@ -127,6 +127,17 @@ text \<open>Definition 3.1, with the touching taken globally over \<open>K\<clos
 
 text \<open>@{thm [display] visc_subsol_env_def visc_supersol_env_def}\<close>
 
+text \<open>The test function above is only asked to be differentiable near \<open>x\<close> with
+  a gradient that is differentiable at \<open>x\<close>; away from \<open>x\<close> it is unconstrained.
+  Definition 3.1 quantifies over \<open>\<phi> \<in> C\<^sup>2(\<real>\<^sup>n)\<close>, which is a smaller class, so for
+  the clauses that \<^emph>\<open>assert\<close> the sub- and supersolution property the form above is
+  the stronger one.  The uniqueness clause instead \<^emph>\<open>assumes\<close> the property of a
+  competitor, and there the paper's own class is what is wanted:\<close>
+
+text \<open>@{thm [display] test_fun_C2_def}\<close>
+
+text \<open>@{thm [display] visc_subsol_env2_def visc_supersol_env2_def}\<close>
+
 text \<open>The hypothesis Theorem 4.3 and Proposition 4.1 place on \<open>K\<close>: a family of
   rotations, dilations and translations shrinking to the identity, each of
   which expands \<open>K\<close> into its own interior.\<close>
@@ -158,9 +169,16 @@ text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>  On a ball the value 
 theorem clause_0_finite:
   fixes K :: "(real^'n::finite) set"
   assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
-    and "K \<subseteq> cball 0 rK" and "0 \<le> rK"
-  shows "\<bar>enn2real (iexit_val k L K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
-  by (rule iexit_val_real_bounded[OF assms])
+    and "K \<subseteq> cball 0 rK"
+  shows "iexit_val k L K x
+      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
+  by (rule iexit_val_le_ball_bound[OF assms(1,2) compact_imp_closed[OF assms(3)] assms(4)])
+
+theorem clause_0_not_infinite:
+  fixes K :: "(real^'n::finite) set"
+  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
+  shows "iexit_val k L K x \<noteq> \<top>"
+  by (rule iexit_val_neq_top[OF assms])
 
 text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
 
@@ -247,9 +265,9 @@ theorem clause_4_uniqueness:
     and "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
            \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
     and "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
-    and "visc_subsol_env k L K
+    and "visc_subsol_env2 k L K
            (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and "visc_supersol_env k L K
+    and "visc_supersol_env2 k L K
            (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0})
            (lsc_envK K u)"
     and "x \<in> K"
