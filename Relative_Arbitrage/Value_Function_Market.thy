@@ -408,21 +408,6 @@ text \<open>Finiteness is clause (0) of Theorem 1.1: \<open>v = enn2real \<circ>
   \<open>val_fn\<close> vanishes off \<open>K\<close>: the market locale requires \<open>x0 \<in> K\<close>, so
   outside \<open>K\<close> the index set is empty and \<open>val_fn\<close> is \<open>Sup {} = \<bottom> = 0\<close>.\<close>
 
-lemma val_fn_finite_bounded:
-  fixes K :: "(real^'n::finite) set" and x0 :: "real^'n"
-  assumes B: "bounded K"
-  shows "val_fn k L K x0 < \<top>"
-proof -
-  obtain a where a: "\<And>x. x \<in> K \<Longrightarrow> norm x \<le> a"
-    using B unfolding bounded_iff by blast
-  have sub: "K \<subseteq> cball 0 a"
-    using a by (simp add: subset_iff dist_norm)
-  have "val_fn k L K x0 \<le> val_fn k L (cball 0 a) x0"
-    by (rule val_fn_mono[OF sub])
-  also have "\<dots> \<le> ennreal (ball_v a k x0)" by (rule val_fn_le_ball_v)
-  also have "\<dots> < \<top>" by simp
-  finally show ?thesis .
-qed
 
 text \<open>Clause (3) of Theorem 1.1, for the ball: \<open>ball_v r k x\<close> is
   \<open>max (r\<^sup>2 - x \<bullet> x) 0 / (CARD('n) - k)\<close>, vanishing exactly when
@@ -434,25 +419,7 @@ text \<open>Clause (3) of Theorem 1.1, for the ball: \<open>ball_v r k x\<close>
   measure of Example 3.1 and behind the same weak existence result as
   clauses (1) and (2).\<close>
 
-lemma ball_v_boundary_zero:
-  fixes x0 :: "real^'n::finite"
-  assumes x0: "norm x0 = r"
-  shows "ball_v r k x0 = 0"
-proof -
-  have "x0 \<bullet> x0 = r\<^sup>2" using x0 by (simp add: power2_norm_eq_inner[symmetric])
-  then show ?thesis unfolding ball_v_def by simp
-qed
 
-lemma val_fn_boundary_zero:
-  fixes x0 :: "real^'n::finite"
-  assumes x0: "norm x0 = r"
-  shows "val_fn k L (cball 0 r) x0 = 0"
-proof -
-  have "val_fn k L (cball 0 r) x0 = ennreal (ball_v r k x0)"
-    by (rule val_fn_boundary[OF x0])
-  also have "\<dots> = ennreal 0" unfolding ball_v_boundary_zero[OF x0] ..
-  finally show ?thesis by simp
-qed
 
 
 text \<open>\<open>val_fn k L K x0 = 0\<close> for \<open>x0 \<notin> K\<close>, since the market locale requires

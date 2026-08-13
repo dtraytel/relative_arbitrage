@@ -503,96 +503,12 @@ proof (rule lipschitz_onI[OF _ B0])
   qed
 qed
 
-lemma diffquot_deriv_in_constraint:
-  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
-  assumes S: "closed S"
-    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
-        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
-    and x: "0 \<le> x" "x < T"
-    and D: "(Y has_vector_derivative D) (at x within {x..T})"
-  shows "D \<in> S"
-proof -
-  define h where "h = (\<lambda>n :: nat. min (T - x) (1 / real (Suc n)))"
-  have h0: "0 < h n" for n using x unfolding h_def by simp
-  have hT: "h n \<le> T - x" for n unfolding h_def by simp
-  have hlim: "h \<longlonglongrightarrow> 0"
-  proof (rule tendsto_sandwich[of "\<lambda>n. 0" h sequentially
-      "\<lambda>n. 1 / real (Suc n)"])
-    show "\<forall>\<^sub>F n in sequentially. 0 \<le> h n" using h0 by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. h n \<le> 1 / real (Suc n)" by (simp add: h_def)
-    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
-    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
-      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
-  qed
-  define u where "u = (\<lambda>n. x + h n)"
-  have umem: "u n \<in> {x..T} - {x}" for n
-    using h0[of n] hT[of n] unfolding u_def by auto
-  have ulim: "u \<longlonglongrightarrow> x"
-    using tendsto_add[OF tendsto_const hlim] unfolding u_def by simp
-  have quot: "(1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) \<in> S" for n
-    using x h0[of n] hT[of n] unfolding u_def by (intro dq) auto
-  have lim0: "((\<lambda>y. (1 / norm (y - x)) *\<^sub>R (Y y - (Y x + (y - x) *\<^sub>R D))) \<longlongrightarrow> 0)
-      (at x within {x..T})"
-    using D by (simp add: has_vector_derivative_def has_derivative_within)
-  have seq0: "(\<lambda>n. (1 / norm (u n - x))
-      *\<^sub>R (Y (u n) - (Y x + (u n - x) *\<^sub>R D))) \<longlonglongrightarrow> 0"
-    using lim0 umem ulim by (simp add: tendsto_at_iff_sequentially o_def)
-  have alg: "(1 / norm (u n - x)) *\<^sub>R (Y (u n) - (Y x + (u n - x) *\<^sub>R D))
-      = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) - D" for n
-  proof -
-    have pos: "0 < u n - x" using h0[of n] unfolding u_def by simp
-    then have nrm: "norm (u n - x) = u n - x" by simp
-    have inv: "(1 / (u n - x)) *\<^sub>R ((u n - x) *\<^sub>R D) = D"
-      using pos by simp
-    have "(1 / (u n - x)) *\<^sub>R (Y (u n) - (Y x + (u n - x) *\<^sub>R D))
-        = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x)
-          - (1 / (u n - x)) *\<^sub>R ((u n - x) *\<^sub>R D)"
-      by (simp add: algebra_simps)
-    also have "\<dots> = (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) - D"
-      using inv by simp
-    finally show ?thesis unfolding nrm .
-  qed
-  have "(\<lambda>n. (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x) - D) \<longlonglongrightarrow> 0"
-    using seq0 unfolding alg .
-  then have "(\<lambda>n. (1 / (u n - x)) *\<^sub>R (Y (u n) - Y x)) \<longlonglongrightarrow> D"
-    using LIM_zero_cancel by fastforce
-  then show ?thesis
-    by (rule closed_sequentially[OF S quot])
-qed
 
 text \<open>The density statement of Eq. (1.7): the difference-quotient constraint
   makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence differentiable
   off a negligible set by \<open>Lebesgue_differentiation_thm\<close>; at every point
   of differentiability the derivative lies in the constraint set.\<close>
 
-theorem diffquot_density_ae:
-  fixes Y :: "real \<Rightarrow> 'b :: {euclidean_space, real_normed_vector}"
-    and S :: "'b set"
-  assumes T: "0 < T" and S: "closed S"
-    and B0: "0 \<le> B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
-    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
-        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
-  shows "negligible {x \<in> {0..T}. \<not> Y differentiable (at x)}"
-    and "\<And>x D. 0 \<le> x \<Longrightarrow> x < T
-        \<Longrightarrow> (Y has_vector_derivative D) (at x within {x..T}) \<Longrightarrow> D \<in> S"
-proof -
-  have lip: "B-lipschitz_on {0..T} Y"
-    by (rule diffquot_lipschitz[OF B0 B dq])
-  have norm_le: "norm (Y u - Y v) \<le> B * norm (u - v)"
-    if "u \<in> {0..T}" "v \<in> {0..T}" for u v
-    using lipschitz_onD[OF lip that] by (simp add: dist_norm)
-  have bv: "has_bounded_variation_on Y {0..T}"
-    by (rule Lipschitz_imp_has_bounded_variation[where B = B])
-      (use norm_le in auto)
-  show "negligible {x \<in> {0..T}. \<not> Y differentiable (at x)}"
-    by (rule Lebesgue_differentiation_thm[OF is_interval_cc bv])
-next
-  fix x D
-  assume x: "0 \<le> x" "x < T"
-    and Dx: "(Y has_vector_derivative D) (at x within {x..T})"
-  show "D \<in> S"
-    by (rule diffquot_deriv_in_constraint[OF S dq x Dx])
-qed
 
 text \<open>The weak-limit transfer itself: a single difference-quotient
   constraint, holding almost surely under every approximating law, holds
@@ -849,21 +765,6 @@ text \<open>Hence the continued volatility has all its difference quotients in t
   \<open>exit_class\<close>, holding for every \<open>0 \<le> s < t\<close> with no stopping
   caveat, as (1.7) demands.\<close>
 
-theorem diffquot_of_continued_density:
-  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
-  assumes L: "1 \<le> L" and s0: "0 \<le> s" and st: "s < t"
-    and sv: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> a u \<in> suff_volatile k"
-    and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> eigen_ub (a u) L"
-    and int: "set_integrable lborel {s..t} (acont a tv)"
-  shows "(1 / (t - s)) *\<^sub>R (set_lebesgue_integral lborel {s..t} (acont a tv))
-      \<in> sconstraint k L"
-proof (rule average_in_closed_convex
-    [OF sconstraint_convex closed_sconstraint st _ int])
-  fix u assume u: "u \<in> {s..t}"
-  have u0: "0 \<le> u" using u s0 by simp
-  show "acont a tv u \<in> sconstraint k L"
-    by (rule acont_in_sconstraint[OF L sv ub u0])
-qed
 
 subsection \<open>The running covariation built from a continued volatility\<close>
 
@@ -876,47 +777,7 @@ definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
 
 
-lemma Yint_increment:
-  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
-  assumes st: "0 \<le> s" "s \<le> t"
-    and i1: "set_integrable lborel {0..s} a"
-    and i2: "set_integrable lborel {s..t} a"
-  shows "Yint a t - Yint a s = set_lebesgue_integral lborel {s..t} a"
-proof -
-  have ae: "AE u in lborel. \<not> (u \<in> {0..s} \<and> u \<in> {s..t})"
-  proof -
-    have "AE u in lborel. u \<notin> {s :: real}"
-      using finite_imp_null_set_lborel[of "{s :: real}"]
-      by (simp add: AE_iff_null_sets)
-    then show ?thesis
-      by (rule eventually_mono) auto
-  qed
-  have un: "{0..s} \<union> {s..t} = {0..t}" using st by auto
-  have "Yint a t = set_lebesgue_integral lborel ({0..s} \<union> {s..t}) a"
-    unfolding Yint_def un ..
-  also have "\<dots> = set_lebesgue_integral lborel {0..s} a
-      + set_lebesgue_integral lborel {s..t} a"
-    by (rule set_integral_Un_AE[OF ae _ _ i1 i2]) auto
-  finally show ?thesis
-    unfolding Yint_def[of a s] by simp
-qed
 
-theorem Yint_diffquot_in_sconstraint:
-  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
-  assumes L: "1 \<le> L" and s0: "0 \<le> s" and st: "s < t"
-    and sv: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> a u \<in> suff_volatile k"
-    and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> eigen_ub (a u) L"
-    and i1: "set_integrable lborel {0..s} (acont a tv)"
-    and i2: "set_integrable lborel {s..t} (acont a tv)"
-  shows "(1 / (t - s)) *\<^sub>R (Yint (acont a tv) t - Yint (acont a tv) s)
-      \<in> sconstraint k L"
-proof -
-  have "Yint (acont a tv) t - Yint (acont a tv) s
-      = set_lebesgue_integral lborel {s..t} (acont a tv)"
-    using st by (intro Yint_increment[OF s0 _ i1 i2]) simp
-  then show ?thesis
-    using diffquot_of_continued_density[OF L s0 st sv ub i2] by simp
-qed
 
 subsection \<open>What the class gives the tightness argument for free\<close>
 

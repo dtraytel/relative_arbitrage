@@ -131,26 +131,6 @@ text \<open>The law-level form: the essential infimum only sees the almost-sure
   every larger horizon gives the SAME value.  This is what licenses working
   at a fixed finite \<open>T\<close> in place of the paper's \<open>C([0,\<infinity>), \<real>ⁿ)\<close>.\<close>
 
-lemma ess_inf_time_cong_AE:
-  fixes tau tau' :: "'a \<Rightarrow> real"
-  assumes ae: "AE \<omega> in M. tau \<omega> = tau' \<omega>"
-  shows "ess_inf_time M tau = ess_inf_time M tau'"
-proof -
-  have "{c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}
-      = {c. AE \<omega> in M. c \<le> ennreal (tau' \<omega>)}"
-  proof (intro set_eqI iffI CollectI)
-    fix c assume "c \<in> {c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}"
-    then have "AE \<omega> in M. c \<le> ennreal (tau \<omega>)" by simp
-    then show "AE \<omega> in M. c \<le> ennreal (tau' \<omega>)"
-      using ae by eventually_elim simp
-  next
-    fix c assume "c \<in> {c. AE \<omega> in M. c \<le> ennreal (tau' \<omega>)}"
-    then have "AE \<omega> in M. c \<le> ennreal (tau' \<omega>)" by simp
-    then show "AE \<omega> in M. c \<le> ennreal (tau \<omega>)"
-      using ae by eventually_elim simp
-  qed
-  then show ?thesis unfolding ess_inf_time_def by simp
-qed
 
 
 text \<open>Upper semicontinuity, in sublevel-set form: strict sublevels of the

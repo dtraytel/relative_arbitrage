@@ -132,7 +132,7 @@ proof -
     unfolding is_proj_def
   proof (intro conjI)
     show "transpose (mat 1 - outer_prod x x :: real^'n^'n) = mat 1 - outer_prod x x"
-      by (simp add: transpose_diff_matrix transpose_mat_one)
+      by (simp add: transpose_diff_matrix)
     have "(mat 1 - outer_prod x x) ** (mat 1 - outer_prod x x)
         = (mat 1 - outer_prod x x) ** mat 1
           - (mat 1 - outer_prod x x) ** outer_prod x x"
@@ -1292,37 +1292,8 @@ text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^su
   first fact).  This section carries out the expansion and its weight
   constraints.\<close>
 
-lemma feasible_quadform_nonneg:
-  fixes a :: "real^'n::finite^'n"
-  assumes "a \<in> feasible k L p"
-  shows "0 \<le> u \<bullet> (a *v u)"
-  using assms by (simp add: feasible_def psd_def)
 
-lemma feasible_quadform_le:
-  fixes a :: "real^'n::finite^'n"
-  assumes a: "a \<in> feasible k L p" and u: "norm u = 1"
-  shows "u \<bullet> (a *v u) \<le> L"
-proof -
-  have "u \<bullet> (a *v u) \<le> L * (u \<bullet> u)"
-    using a by (simp add: feasible_def eigen_ub_def)
-  also have "\<dots> = L"
-    using u by (simp add: dot_square_norm)
-  finally show ?thesis .
-qed
 
-lemma feasible_annihilates_unit:
-  fixes a :: "real^'n::finite^'n"
-  assumes a: "a \<in> feasible k L p"
-  shows "a *v (p /\<^sub>R norm p) = 0"
-proof -
-  have ap: "a *v p = 0"
-    using a by (simp add: feasible_def)
-  have "a *v (inverse (norm p) *\<^sub>R p) = inverse (norm p) *\<^sub>R (a *v p)"
-    by (simp add: matrix_scaleR_vector_ac scaleR_matrix_vector_assoc)
-  also have "\<dots> = 0"
-    by (simp add: ap)
-  finally show ?thesis .
-qed
 
 
 section \<open>Feasibility of weighted outer-product sums\<close>
@@ -2725,41 +2696,7 @@ proof -
   finally show ?thesis .
 qed
 
-lemma trace_mult_sym_part:
-  fixes M a :: "real^'n::finite^'n"
-  assumes a: "transpose a = a"
-  shows "trace (((1/2) *\<^sub>R (M + transpose M)) ** a) = trace (M ** a)"
-proof -
-  have "trace (((1/2) *\<^sub>R (M + transpose M)) ** a)
-      = (1/2) * trace ((M + transpose M) ** a)"
-    by (simp add: scaleR_matrix_matrix_left trace_scaleR_matrix)
-  also have "\<dots> = (1/2) * (trace (M ** a) + trace (transpose M ** a))"
-    by (simp add: matrix_add_rdistrib trace_add)
-  also have "\<dots> = (1/2) * (trace (M ** a) + trace (M ** a))"
-    by (simp add: trace_mult_transpose_left[OF a])
-  also have "\<dots> = trace (M ** a)"
-    by simp
-  finally show ?thesis .
-qed
 
-theorem ell_op_sym_part:
-  fixes M :: "real^'n::finite^'n"
-  shows "ell_op k L p ((1/2) *\<^sub>R (M + transpose M)) = ell_op k L p M"
-proof -
-  have "(\<lambda>a. - trace (((1/2) *\<^sub>R (M + transpose M)) ** a) / 2) ` feasible k L p
-      = (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-  proof (rule image_cong[OF refl])
-    fix a :: "real^'n^'n"
-    assume "a \<in> feasible k L p"
-    then have syma: "transpose a = a"
-      by (simp add: feasible_def psd_def)
-    show "- trace (((1/2) *\<^sub>R (M + transpose M)) ** a) / 2
-        = - trace (M ** a) / 2"
-      by (simp add: trace_mult_sym_part[OF syma])
-  qed
-  then show ?thesis
-    by (simp add: ell_op_def)
-qed
 
 text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
   with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
@@ -3257,50 +3194,10 @@ text \<open>Lemma 5.3 characterises \<open>v(x) = 0\<close>, for convex \<open>K
   \<open>eigen_lb a m\<close> unless \<open>m + dim W \<le> n\<close>; applied to \<open>F\<^sub>x\<close>'s normal
   directions this gives the \<open>v(x) = 0\<close> side.\<close>
 
-theorem eigen_lb_dim_obstruction:
-  fixes a :: "real^'n::finite^'n"
-  assumes lb: "eigen_lb a m"
-    and W: "subspace W"
-    and degen: "\<And>x. x \<in> W \<Longrightarrow> x \<bullet> (a *v x) \<le> 0"
-  shows "m + dim W \<le> CARD('n)"
-proof (rule ccontr)
-  assume "\<not> m + dim W \<le> CARD('n)"
-  then have gt: "CARD('n) < m + dim W"
-    by simp
-  obtain S where S: "subspace S" "m \<le> dim S"
-    and quad: "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x \<le> x \<bullet> (a *v x)"
-    using lb by (auto simp: eigen_lb_def)
-  have dims: "CARD('n) < dim S + dim W"
-    using gt S(2) by simp
-  obtain x where x: "x \<in> S" "x \<in> W" "x \<noteq> 0"
-    using subspace_inter_nonzero[OF S(1) W dims] by blast
-  have "0 < x \<bullet> x"
-    using x(3) by simp
-  also have "x \<bullet> x \<le> x \<bullet> (a *v x)"
-    by (rule quad[OF x(1)])
-  also have "\<dots> \<le> 0"
-    by (rule degen[OF x(2)])
-  finally show False
-    by simp
-qed
 
 text \<open>The form used on a face: if the degeneracy subspace is more than
   \<open>k\<close>-dimensional, no feasible covariance exists at all.\<close>
 
-corollary not_eigen_lb_of_large_degeneracy:
-  fixes a :: "real^'n::finite^'n"
-  assumes W: "subspace W" and dimW: "k < dim W"
-    and degen: "\<And>x. x \<in> W \<Longrightarrow> x \<bullet> (a *v x) \<le> 0"
-  shows "\<not> eigen_lb a (CARD('n) - k)"
-proof
-  assume lb: "eigen_lb a (CARD('n) - k)"
-  have le: "CARD('n) - k + dim W \<le> CARD('n)"
-    by (rule eigen_lb_dim_obstruction[OF lb W degen])
-  have kn: "k \<le> CARD('n)"
-    using dimW dim_subset_UNIV_cart[of W] by simp
-  show False
-    using le kn dimW by simp
-qed
 
 
 section \<open>From the Lipschitz bounds to the norm topology\<close>
@@ -3572,18 +3469,6 @@ proof -
     by (intro closed_Int closed_symmetric_matrices closed_INT) auto
 qed
 
-lemma closed_annihilator:
-  fixes p :: "real^'n::finite"
-  shows "closed {a :: real^'n^'n. a *v p = 0}"
-proof -
-  have eq: "{a :: real^'n^'n. a *v p = 0}
-      = (\<Inter>i. {a. (\<Sum>j\<in>UNIV. a $ i $ j * p $ j) = 0})"
-    unfolding matrix_vector_mult_def vec_eq_iff by auto
-  have "closed {a :: real^'n^'n. (\<Sum>j\<in>UNIV. a $ i $ j * p $ j) = 0}" for i
-    by (intro closed_Collect_eq continuous_on_const continuous_intros
-          continuous_on_matrix_entry)
-  thus ?thesis unfolding eq by (intro closed_INT) auto
-qed
 
 lemma closed_eigen_ub:
   "closed {a :: real^'n::finite^'n. eigen_ub a L}"
@@ -3596,31 +3481,6 @@ proof -
   thus ?thesis unfolding eq by (intro closed_INT) auto
 qed
 
-lemma eigval_continuous_on_sym:
-  assumes m: "m \<le> CARD('n)"
-  shows "continuous_on {a :: real^'n::finite^'n. transpose a = a} (eigval m)"
-proof -
-  define C where "C = 2 * real m * real (CARD('n) * CARD('n))"
-  have C0: "0 \<le> C" unfolding C_def by simp
-  have lip: "dist (eigval m A) (eigval m B) \<le> C * dist A B"
-    if A: "A \<in> {a :: real^'n^'n. transpose a = a}"
-      and B: "B \<in> {a :: real^'n^'n. transpose a = a}" for A B
-  proof -
-    have symA: "transpose A = A" and symB: "transpose B = B"
-      using A B by auto
-    have "\<bar>eigval m A - eigval m B\<bar> \<le> 2 * real m * entrysum (A - B)"
-      by (rule eigval_lipschitz[OF symA symB m])
-    also have "\<dots> \<le> 2 * real m * (real (CARD('n) * CARD('n)) * norm (A - B))"
-      by (intro mult_left_mono entrysum_le_norm) simp
-    also have "\<dots> = C * norm (A - B)"
-      unfolding C_def by simp
-    finally show ?thesis
-      by (simp add: dist_real_def dist_norm)
-  qed
-  have "C-lipschitz_on {a :: real^'n^'n. transpose a = a} (eigval m)"
-    by (rule lipschitz_onI[OF lip C0])
-  thus ?thesis by (rule lipschitz_on_continuous_on)
-qed
 
 
 

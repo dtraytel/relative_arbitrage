@@ -364,12 +364,6 @@ text \<open>The hypotheses are satisfiable: the explicit function itself is a
   continuous viscosity solution with those boundary values.  Hence the pair
   of results is an existence-and-uniqueness statement, with no axioms.\<close>
 
-corollary ball_v_visc_sol_exists:
-  fixes r :: real
-  assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
-  shows "continuous_on (cball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
-    and "visc_sol k L (ball 0 r) (ball_v r k :: real^'n \<Rightarrow> real)"
-  by (rule continuous_on_ball_v, rule ball_v_solves_pde_viscosity(1)[OF k L])
 
 section \<open>Section 4 for the ball, with no Crandall--Ishii input\<close>
 

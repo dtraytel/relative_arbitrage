@@ -365,18 +365,6 @@ text \<open>The subsolution gives \<open>F(p, X) \<le> 1\<close>, the supersolut
   carries no zeroth-order term, closing the argument needs a strict
   inequality, obtained by perturbing the subsolution.\<close>
 
-lemma ell_op_sandwich:
-  fixes X Y :: "real^'n::finite^'n"
-  assumes psd: "psd (Y - X)"
-    and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-    and sub: "ell_op k L p X \<le> 1" and sup: "1 \<le> ell_op k L p Y"
-  shows "ell_op k L p X = 1" and "ell_op k L p Y = 1"
-proof -
-  have le: "ell_op k L p Y \<le> ell_op k L p X"
-    by (rule ell_op_elliptic_le[OF psd ne])
-  show "ell_op k L p X = 1" using le sub sup by linarith
-  show "ell_op k L p Y = 1" using le sub sup by linarith
-qed
 
 lemma ell_op_strict_contradiction:
   fixes X Y :: "real^'n::finite^'n"
@@ -611,21 +599,6 @@ text \<open>The two frozen penalties are smooth quadratics with the same gradien
   Hessians are why the theorem on sums is needed to replace them by an
   ordered pair \<open>X \<preceq> Y\<close>.\<close>
 
-lemma frozen_penalty_gradient_fst:
-  fixes xh yh :: "real^'n::finite"
-  shows "((\<lambda>x. (\<alpha>/2) * (norm (x - yh))\<^sup>2) has_derivative
-      (\<lambda>h. (\<alpha> *\<^sub>R (xh - yh)) \<bullet> h)) (at xh)"
-proof -
-  have "((\<lambda>x. (\<alpha>/2) * (norm (x - yh))\<^sup>2) has_derivative
-      (\<lambda>h. (\<alpha>/2) * (2 * ((xh - yh) \<bullet> h)))) (at xh)"
-    by (auto intro!: derivative_eq_intros
-        simp: power2_norm_eq_inner
-        inner_commute algebra_simps)
-  moreover have "(\<lambda>h. (\<alpha>/2) * (2 * ((xh - yh) \<bullet> h)))
-      = (\<lambda>h. (\<alpha> *\<^sub>R (xh - yh)) \<bullet> h)"
-    by (rule ext) simp
-  ultimately show ?thesis by simp
-qed
 
 lemma scaleR_mat1_vec:
   fixes h :: "real^'n::finite"
@@ -636,102 +609,18 @@ text \<open>The same gradient at the other frozen point, letting the subsolution
   and supersolution inequalities be evaluated at a common vector
   \<open>p = \<alpha> *\<^sub>R (xh - yh)\<close>.\<close>
 
-lemma frozen_penalty_gradient_snd:
-  fixes xh yh :: "real^'n::finite"
-  shows "((\<lambda>y. - ((\<alpha>/2) * (norm (xh - y))\<^sup>2)) has_derivative
-      (\<lambda>h. (\<alpha> *\<^sub>R (xh - yh)) \<bullet> h)) (at yh)"
-proof -
-  have "((\<lambda>y. - ((\<alpha>/2) * (norm (xh - y))\<^sup>2)) has_derivative
-      (\<lambda>h. - ((\<alpha>/2) * (- (2 * ((xh - yh) \<bullet> h)))))) (at yh)"
-    by (auto intro!: derivative_eq_intros
-        simp: power2_norm_eq_inner
-        inner_commute algebra_simps)
-  moreover have "(\<lambda>h. - ((\<alpha>/2) * (- (2 * ((xh - yh) \<bullet> h)))))
-      = (\<lambda>h. (\<alpha> *\<^sub>R (xh - yh)) \<bullet> h)"
-    by (rule ext) simp
-  ultimately show ?thesis by simp
-qed
 
 text \<open>The two Hessians, \<open>\<alpha> I\<close> and \<open>- \<alpha> I\<close>, are ordered the wrong way, the
   obstruction the theorem on sums removes.\<close>
 
-lemma frozen_penalty_hessian_fst:
-  fixes xh yh :: "real^'n::finite"
-  shows "((\<lambda>x. \<alpha> *\<^sub>R (x - yh)) has_derivative
-      (\<lambda>h. (\<alpha> *\<^sub>R mat 1) *v h)) (at xh)"
-proof -
-  have "((\<lambda>x. \<alpha> *\<^sub>R (x - yh)) has_derivative (\<lambda>h. \<alpha> *\<^sub>R h)) (at xh)"
-    by (auto intro!: derivative_eq_intros)
-  thus ?thesis by (simp add: scaleR_mat1_vec)
-qed
 
-lemma frozen_penalty_hessian_snd:
-  fixes xh yh :: "real^'n::finite"
-  shows "((\<lambda>y. \<alpha> *\<^sub>R (xh - y)) has_derivative
-      (\<lambda>h. ((- \<alpha>) *\<^sub>R mat 1) *v h)) (at yh)"
-proof -
-  have d: "((\<lambda>y. \<alpha> *\<^sub>R (xh - y)) has_derivative (\<lambda>h. (- \<alpha>) *\<^sub>R h)) (at yh)"
-    by (auto intro!: derivative_eq_intros simp: scaleR_diff_right)
-  have eqf: "(\<lambda>h::real^'n. (- \<alpha>) *\<^sub>R h)
-      = (\<lambda>h. ((- \<alpha>) *\<^sub>R mat 1) *v h)"
-    by (rule ext) (rule scaleR_mat1_vec[symmetric])
-  show ?thesis using d unfolding eqf .
-qed
 
 text \<open>Packaging both frozen penalties as test functions supplies, with
   \<open>doubling_partial_max_fst\<close> and \<open>doubling_partial_min_snd\<close>, exactly the
   hypotheses \<open>visc_subsol\<close> and \<open>supersol_jet\<close> require, so the doubled
   maximum feeds into the two viscosity inequalities.\<close>
 
-lemma frozen_penalty_test_fun_fst:
-  fixes xh yh :: "real^'n::finite"
-  shows "test_fun_at (\<lambda>x. (\<alpha>/2) * (norm (x - yh))\<^sup>2)
-      (\<lambda>x. \<alpha> *\<^sub>R (x - yh)) (\<alpha> *\<^sub>R mat 1) xh"
-  unfolding test_fun_at_def
-proof (intro conjI)
-  show "transpose (\<alpha> *\<^sub>R (mat 1 :: real^'n^'n)) = \<alpha> *\<^sub>R mat 1"
-    unfolding transpose_scaleR transpose_mat ..
-next
-  show "\<exists>e>0. \<forall>y \<in> ball xh e.
-      ((\<lambda>x. (\<alpha>/2) * (norm (x - yh))\<^sup>2) has_derivative
-        (\<lambda>h. (\<alpha> *\<^sub>R (y - yh)) \<bullet> h)) (at y)"
-  proof (rule exI[of _ 1], intro conjI ballI)
-    show "(0::real) < 1" by simp
-    fix y :: "real^'n" assume "y \<in> ball xh 1"
-    show "((\<lambda>x. (\<alpha>/2) * (norm (x - yh))\<^sup>2) has_derivative
-        (\<lambda>h. (\<alpha> *\<^sub>R (y - yh)) \<bullet> h)) (at y)"
-      by (rule frozen_penalty_gradient_fst)
-  qed
-next
-  show "((\<lambda>x. \<alpha> *\<^sub>R (x - yh)) has_derivative
-      (\<lambda>h. (\<alpha> *\<^sub>R mat 1) *v h)) (at xh)"
-    by (rule frozen_penalty_hessian_fst)
-qed
 
-lemma frozen_penalty_test_fun_snd:
-  fixes xh yh :: "real^'n::finite"
-  shows "test_fun_at (\<lambda>y. - ((\<alpha>/2) * (norm (xh - y))\<^sup>2))
-      (\<lambda>y. \<alpha> *\<^sub>R (xh - y)) ((- \<alpha>) *\<^sub>R mat 1) yh"
-  unfolding test_fun_at_def
-proof (intro conjI)
-  show "transpose ((- \<alpha>) *\<^sub>R (mat 1 :: real^'n^'n)) = (- \<alpha>) *\<^sub>R mat 1"
-    unfolding transpose_scaleR transpose_mat ..
-next
-  show "\<exists>e>0. \<forall>y \<in> ball yh e.
-      ((\<lambda>z. - ((\<alpha>/2) * (norm (xh - z))\<^sup>2)) has_derivative
-        (\<lambda>h. (\<alpha> *\<^sub>R (xh - y)) \<bullet> h)) (at y)"
-  proof (rule exI[of _ 1], intro conjI ballI)
-    show "(0::real) < 1" by simp
-    fix y :: "real^'n" assume "y \<in> ball yh 1"
-    show "((\<lambda>z. - ((\<alpha>/2) * (norm (xh - z))\<^sup>2)) has_derivative
-        (\<lambda>h. (\<alpha> *\<^sub>R (xh - y)) \<bullet> h)) (at y)"
-      by (rule frozen_penalty_gradient_snd)
-  qed
-next
-  show "((\<lambda>y. \<alpha> *\<^sub>R (xh - y)) has_derivative
-      (\<lambda>h. ((- \<alpha>) *\<^sub>R mat 1) *v h)) (at yh)"
-    by (rule frozen_penalty_hessian_snd)
-qed
 
 subsection \<open>What naive doubling delivers\<close>
 
@@ -1222,11 +1111,6 @@ text \<open>Because \<open>doubling_dist_bound\<close> comes with an explicit co
   \<open>x'\<^sub>\<alpha> - y'\<^sub>\<alpha> \<rightarrow> 0\<close> is a sandwich between \<open>0\<close> and \<open>2D/\<alpha>\<close>, needing
   neither compactness of \<open>K\<close> nor a subsequence.\<close>
 
-lemma tendsto_const_divide_at_top:
-  fixes D :: real
-  shows "((\<lambda>\<alpha>. D / \<alpha>) \<longlongrightarrow> 0) at_top"
-  by (rule tendsto_divide_0[OF tendsto_const
-        filterlim_at_top_imp_at_infinity[OF filterlim_ident]])
 
 
 
@@ -2144,44 +2028,8 @@ text \<open>Writing \<open>s = d \<bullet> d\<close> and \<open>t = 2(d \<bullet
 definition quartic_pen :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real" where
   "quartic_pen \<beta> d = (\<beta>/4) * (d \<bullet> d)\<^sup>2"
 
-lemma quartic_pen_expand:
-  fixes d h :: "real^'n::finite"
-  shows "quartic_pen \<beta> (d + h) - quartic_pen \<beta> d
-      = \<beta> * (d \<bullet> d) * (d \<bullet> h)
-        + (\<beta> * (d \<bullet> d) * (h \<bullet> h) + 2 * \<beta> * (d \<bullet> h)\<^sup>2)/2
-        + (\<beta> * (d \<bullet> h) * (h \<bullet> h) + (\<beta>/4) * (h \<bullet> h)\<^sup>2)"
-  unfolding quartic_pen_def
-  by (simp add: inner_commute
-      power2_eq_square algebra_simps)
 
 
-lemma quartic_pen_remainder:
-  fixes d :: "real^'n::finite"
-  shows "((\<lambda>h. (\<beta> * (d \<bullet> h) * (h \<bullet> h) + (\<beta>/4) * (h \<bullet> h)\<^sup>2) / (norm h)\<^sup>2)
-      \<longlongrightarrow> 0) (at 0)"
-proof -
-  have nz0: "\<forall>\<^sub>F h in at (0::real^'n). h \<noteq> 0"
-    by (simp add: eventually_at_filter)
-  have ev: "\<forall>\<^sub>F h in at (0::real^'n).
-      \<beta> * (d \<bullet> h) + (\<beta>/4) * (h \<bullet> h)
-        = (\<beta> * (d \<bullet> h) * (h \<bullet> h) + (\<beta>/4) * (h \<bullet> h)\<^sup>2) / (norm h)\<^sup>2"
-    using nz0
-  proof eventually_elim
-    case (elim h)
-    then have nz: "(norm h)\<^sup>2 \<noteq> 0" by simp
-    have hh: "h \<bullet> h = (norm h)\<^sup>2" by (simp add: power2_norm_eq_inner)
-    show ?case unfolding hh using nz
-      by (simp add: power2_eq_square field_simps)
-  qed
-  have lim: "((\<lambda>h. \<beta> * (d \<bullet> h) + (\<beta>/4) * (h \<bullet> h)) \<longlongrightarrow> 0) (at (0::real^'n))"
-  proof -
-    have "((\<lambda>h. \<beta> * (d \<bullet> h) + (\<beta>/4) * (h \<bullet> h))
-        \<longlongrightarrow> \<beta> * (d \<bullet> (0::real^'n)) + (\<beta>/4) * ((0::real^'n) \<bullet> 0)) (at 0)"
-      by (intro tendsto_intros)
-    then show ?thesis by simp
-  qed
-  show ?thesis by (rule Lim_transform_eventually[OF lim ev])
-qed
 
 text \<open>The jet itself, in the shape the slice lemmas consume: gradient
   \<open>\<beta>(d \<bullet> d) d\<close>, quadratic form \<open>h \<mapsto> \<beta>(d \<bullet> d)(h \<bullet> h) + 2\<beta>(d \<bullet> h)\<^sup>2\<close>.
@@ -2582,44 +2430,7 @@ proof -
     using pos prod by (simp add: nonzero_eq_divide_eq)
 qed
 
-lemma neg_div_cancel_aux:
-  fixes a c :: real
-  assumes a: "a \<noteq> 0"
-  shows "- (a / c) / a = - (1 / c)"
-  using a by (simp add: field_simps)
 
-lemma second_order_algebra_aux:
-  fixes S R D :: real
-  assumes SR: "0 < S + R" and R: "0 < R" and D: "D \<noteq> 0"
-    and e: "S - R = D / (S + R)"
-  shows "(S - R - D/(2*R)) / D\<^sup>2 = - (1/(2*R*(S+R)\<^sup>2))"
-proof -
-  have nz: "S + R \<noteq> 0" using SR by linarith
-  have rz: "R \<noteq> 0" using R by linarith
-  have step1: "S - R - D/(2*R) = D * (R - S) / (2*R*(S+R))"
-  proof -
-    have "S - R - D/(2*R) = D/(S+R) - D/(2*R)"
-      using e by simp
-    also have "\<dots> = (D*(2*R) - D*(S+R)) / ((S+R)*(2*R))"
-      using nz rz by (simp add: field_simps)
-    also have "\<dots> = D * (R - S) / (2*R*(S+R))"
-      by (simp add: algebra_simps)
-    finally show ?thesis .
-  qed
-  have step2: "R - S = - (D / (S + R))"
-    using e by simp
-  have step3: "S - R - D/(2*R) = - (D\<^sup>2 / (2*R*(S+R)\<^sup>2))"
-  proof -
-    have "D * (R - S) / (2*R*(S+R)) = D * (- (D/(S+R))) / (2*R*(S+R))"
-      unfolding step2 ..
-    also have "\<dots> = - (D\<^sup>2 / (2*R*(S+R)\<^sup>2))"
-      using nz rz by (simp add: power2_eq_square field_simps)
-    finally show ?thesis unfolding step1 .
-  qed
-  have dz: "D\<^sup>2 \<noteq> 0" using D by simp
-  show ?thesis
-    unfolding step3 by (rule neg_div_cancel_aux[OF dz])
-qed
 
 
 text \<open>The same identity without the quotient, holding for every \<open>\<Delta>\<close>
@@ -3419,8 +3230,6 @@ text \<open>At \<open>d = 0\<close> the gradient and Hessian of \<open>soft_pen\
   bound \<open>c\<close> needed elsewhere.\<close>
 
 
-lemma outer_prod_zero_left: "outer_prod (0 :: real^'n::finite) e = 0"
-  unfolding outer_prod_def by (simp add: vec_eq_iff)
 
 
 lemma soft_R_gt_one:
@@ -5848,99 +5657,7 @@ text \<open>The nearby-point hypothesis is discharged once the perturbed data
   \<open>dist ((P dd, Mf dd)) (p, M) \<le> \<kappa> dd\<close> for arbitrary \<open>\<kappa>\<close>, since the
   radius is chosen after it.\<close>
 
-theorem nearby_of_tilt_family:
-  fixes P :: "real \<Rightarrow> real^'n::finite" and Mf :: "real \<Rightarrow> real^'n^'n"
-    and p :: "real^'n" and M :: "real^'n^'n"
-  assumes kap: "0 \<le> \<kappa>" and D: "0 < D"
-    and near: "\<And>dd. 0 < dd \<Longrightarrow> dd < D \<Longrightarrow>
-        dist ((P dd, Mf dd) :: (real^'n) \<times> (real^'n^'n)) (p, M) \<le> \<kappa> * dd"
-    and bnd: "\<And>dd. 0 < dd \<Longrightarrow> dd < D \<Longrightarrow> ell_op k L (P dd) (Mf dd) \<le> c"
-    and e0: "0 < e"
-  shows "\<exists>p' M'. dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e
-      \<and> ell_op k L p' M' \<le> c"
-proof -
-  define dd where "dd = min (D/2) (e/(2*(\<kappa>+1)))"
-  have dd0: "0 < dd" unfolding dd_def using D e0 kap by simp
-  have ddD: "dd < D" unfolding dd_def using D by simp
-  have small: "\<kappa> * dd < e"
-  proof -
-    have dle: "dd \<le> e/(2*(\<kappa>+1))" unfolding dd_def by simp
-    have "\<kappa> * dd \<le> \<kappa> * (e/(2*(\<kappa>+1)))"
-      by (rule mult_left_mono[OF dle kap])
-    also have "\<kappa> * (e/(2*(\<kappa>+1))) = \<kappa> * e / (2*(\<kappa>+1))"
-      by simp
-    also have "\<dots> < e"
-    proof -
-      have "\<kappa> * e < e * (2*(\<kappa>+1))"
-      proof -
-        have ke: "0 \<le> \<kappa> * e"
-          by (rule mult_nonneg_nonneg[OF kap less_imp_le[OF e0]])
-        have "e * (2*(\<kappa>+1)) = \<kappa> * e + (\<kappa> * e + e * 2)"
-          by (simp add: algebra_simps)
-        then show ?thesis using ke e0 by linarith
-      qed
-      moreover have "0 < 2*(\<kappa>+1)"
-        using kap by simp
-      ultimately show ?thesis
-        by (simp add: divide_less_eq)
-    qed
-    finally show ?thesis .
-  qed
-  have "dist ((P dd, Mf dd) :: (real^'n) \<times> (real^'n^'n)) (p, M) \<le> \<kappa> * dd"
-    by (rule near[OF dd0 ddD])
-  with small have d: "dist ((P dd, Mf dd) :: (real^'n) \<times> (real^'n^'n)) (p, M) < e"
-    by linarith
-  have "ell_op k L (P dd) (Mf dd) \<le> c"
-    by (rule bnd[OF dd0 ddD])
-  with d show ?thesis by blast
-qed
 
-theorem nearby_of_tilt_family_ge:
-  fixes P :: "real \<Rightarrow> real^'n::finite" and Mf :: "real \<Rightarrow> real^'n^'n"
-    and p :: "real^'n" and M :: "real^'n^'n"
-  assumes kap: "0 \<le> \<kappa>" and D: "0 < D"
-    and near: "\<And>dd. 0 < dd \<Longrightarrow> dd < D \<Longrightarrow>
-        dist ((P dd, Mf dd) :: (real^'n) \<times> (real^'n^'n)) (p, M) \<le> \<kappa> * dd"
-    and bnd: "\<And>dd. 0 < dd \<Longrightarrow> dd < D \<Longrightarrow> c \<le> ell_op k L (P dd) (Mf dd)"
-    and e0: "0 < e"
-  shows "\<exists>p' M'. dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e
-      \<and> c \<le> ell_op k L p' M'"
-proof -
-  define dd where "dd = min (D/2) (e/(2*(\<kappa>+1)))"
-  have dd0: "0 < dd" unfolding dd_def using D e0 kap by simp
-  have ddD: "dd < D" unfolding dd_def using D by simp
-  have small: "\<kappa> * dd < e"
-  proof -
-    have dle: "dd \<le> e/(2*(\<kappa>+1))" unfolding dd_def by simp
-    have "\<kappa> * dd \<le> \<kappa> * (e/(2*(\<kappa>+1)))"
-      by (rule mult_left_mono[OF dle kap])
-    also have "\<kappa> * (e/(2*(\<kappa>+1))) = \<kappa> * e / (2*(\<kappa>+1))"
-      by simp
-    also have "\<dots> < e"
-    proof -
-      have "\<kappa> * e < e * (2*(\<kappa>+1))"
-      proof -
-        have ke: "0 \<le> \<kappa> * e"
-          by (rule mult_nonneg_nonneg[OF kap less_imp_le[OF e0]])
-        have "e * (2*(\<kappa>+1)) = \<kappa> * e + (\<kappa> * e + e * 2)"
-          by (simp add: algebra_simps)
-        then show ?thesis using ke e0 by linarith
-      qed
-      moreover have "0 < 2*(\<kappa>+1)"
-        using kap by simp
-      ultimately show ?thesis
-        by (simp add: divide_less_eq)
-    qed
-    finally show ?thesis .
-  qed
-  have "dist ((P dd, Mf dd) :: (real^'n) \<times> (real^'n^'n)) (p, M) \<le> \<kappa> * dd"
-    by (rule near[OF dd0 ddD])
-  with small have d: "dist ((P dd, Mf dd) :: (real^'n) \<times> (real^'n^'n)) (p, M) < e"
-    by linarith
-  have "c \<le> ell_op k L (P dd) (Mf dd)"
-    by (rule bnd[OF dd0 ddD])
-  with d show ?thesis by blast
-qed
 
 text \<open>Theorem 4.2(a) reduces to one quantitative hypothesis per side: the
   perturbed gradient/matrix pair at tilt \<open>dd\<close> lies within \<open>\<kappa> dd\<close> of the
@@ -5991,11 +5708,6 @@ text \<open>If the tilt is antisymmetric, \<open>p = (p\<^sub>0,-p\<^sub>0)\<clo
   the tilt.  This route needs Jensen's lemma to deliver such an
   antisymmetric tilt.\<close>
 
-lemma antisym_tilt_block_gradients:
-  fixes p0 dv :: "real^'n::finite"
-  shows "snd (- ((p0, - p0) :: (real^'n) \<times> (real^'n))) - dv
-       = - (fst (- ((p0, - p0) :: (real^'n) \<times> (real^'n))) + dv)"
-  by simp
 
 
 subsection \<open>The Hessians at the doubled maximum are two-sidedly bounded\<close>
@@ -7060,52 +6772,7 @@ text \<open>Two consequences: \<open>doubling_grad_lower_bound\<close> with the 
   shared gradient's norm - the separation plays exactly the role the
   Lipschitz constant did.\<close>
 
-theorem doubling_grad_lower_bound_sep:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
-        u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
-          \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
-    and zK: "z \<in> K" and xK: "xh \<in> K" and yK: "yh \<in> K"
-    and a: "0 \<le> \<alpha>"
-    and gap: "u xh - w xh + \<gamma> \<le> u z - w z"
-    and sep: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> \<gamma> \<le> w p - w q \<Longrightarrow> d \<le> norm (p - q)"
-  shows "d \<le> norm (xh - yh)"
-proof -
-  have diag: "u z - w z
-      \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
-    by (rule doubling_ge_diagonal[where u = u and w = w and K = K, OF mx zK])
-  have sq: "0 \<le> (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
-    using a by simp
-  have gw: "\<gamma> \<le> w xh - w yh"
-    using diag gap sq by linarith
-  show ?thesis by (rule sep[OF xK yK gw])
-qed
 
-corollary doubling_grad_norm_lower_bound_sep:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
-        u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
-          \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
-    and zK: "z \<in> K" and xK: "xh \<in> K" and yK: "yh \<in> K"
-    and a: "0 < \<alpha>"
-    and gap: "u xh - w xh + \<gamma> \<le> u z - w z"
-    and sep: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> \<gamma> \<le> w p - w q \<Longrightarrow> d \<le> norm (p - q)"
-  shows "\<alpha> * d \<le> norm (\<alpha> *\<^sub>R (xh - yh))"
-proof -
-  have base: "d \<le> norm (xh - yh)"
-    by (rule doubling_grad_lower_bound_sep[where u = u and w = w and K = K
-          and z = z and \<gamma> = \<gamma>, OF mx zK xK yK less_imp_le[OF a] gap sep])
-  have step: "\<alpha> * d \<le> \<alpha> * norm (xh - yh)"
-    by (rule mult_left_mono[OF base less_imp_le[OF a]])
-  have nrm: "norm (\<alpha> *\<^sub>R (xh - yh)) = \<alpha> * norm (xh - yh)"
-  proof -
-    have ab: "\<bar>\<alpha>\<bar> = \<alpha>" by (rule abs_of_pos[OF a])
-    have "norm (\<alpha> *\<^sub>R (xh - yh)) = \<bar>\<alpha>\<bar> * norm (xh - yh)"
-      by (rule norm_scaleR)
-    then show ?thesis unfolding ab .
-  qed
-  show ?thesis unfolding nrm by (rule step)
-qed
 
 text \<open>For the doubling run on sup-convolutions, the separation is required of
   \<open>supconv(-w)\<epsilon>\<close> itself, supplied by \<open>positive_separation_of_value_gap\<close>
@@ -9063,16 +8730,6 @@ text \<open>Stated abstractly over the produced predicate \<open>Q\<close> rathe
   the conclusion is the indexed family
   \<open>comparison_supconv_sequence_complete\<close> consumes.\<close>
 
-theorem family_of_tilt_construction:
-  assumes H: "\<And>dd. 0 < dd \<Longrightarrow> dd < D \<Longrightarrow> \<exists>zh p q W. Q dd zh p q W"
-    and dd0: "\<And>i. 0 < ddf i" and ddD: "\<And>i. ddf i < D"
-  shows "\<exists>zh p q W. \<forall>i. Q (ddf i) (zh i) (p i) (q i) (W i)"
-proof -
-  have "\<exists>a b c d. Q (ddf i) a b c d" for i
-    by (rule H[OF dd0 ddD])
-  then show ?thesis
-    by (rule choice4)
-qed
 
 text \<open>With \<open>tilt_sequence_admissible\<close> this gives families indexed by \<open>i\<close>
   whose tilts converge to zero, which \<open>gradient_sequences_align_of_bound\<close>
@@ -9261,19 +8918,6 @@ text \<open>For a general penalty, \<open>onorm_le_matrix_component_sum\<close> 
   e.g. the quartic's Hessian \<open>\<beta>((d \<bullet> d)I+2dd\<^sup>T)\<close> has norm
   \<open>O(\<beta>\<parallel>d\<parallel>\<^sup>2)\<close> - can be supplied instead.\<close>
 
-lemma norm_matrix_vector_le:
-  fixes Z :: "real^'n::finite^'n"
-  shows "norm (Z *v k) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>) * norm k"
-proof -
-  have o1: "norm (Z *v k) \<le> onorm ((*v) Z) * norm k"
-    by (rule onorm[OF matrix_vector_mul_bounded_linear])
-  have o2: "onorm ((*v) Z) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>)"
-    by (rule onorm_le_matrix_component_sum)
-  have "onorm ((*v) Z) * norm k
-      \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>Z $ i $ j\<bar>) * norm k"
-    by (rule mult_right_mono[OF o2]) simp
-  with o1 show ?thesis by linarith
-qed
 
 
 lemma block_form_bound_fst_gen:
@@ -13000,18 +12644,6 @@ text \<open>Definition 3.1(a)'s gate is open at every maximiser of the doubled
   Stated for an arbitrary nonnegative penalty, so it applies to the
   paper's quartic and to \<open>soft_pen\<close> alike.\<close>
 
-lemma doubled_maximiser_gate_open:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and xh yh :: "real^'n"
-  assumes t0: "0 < \<theta>"
-    and Mpos: "0 < M"
-    and wy: "0 \<le> w yh"
-    and pen: "0 \<le> pn"
-    and mx: "M \<le> \<theta> * u xh - w yh - pn"
-  shows "0 < u xh"
-proof -
-  have "0 < \<theta> * u xh" using Mpos wy pen mx by linarith
-  then show ?thesis using t0 by (simp add: zero_less_mult_iff)
-qed
 
 text \<open>The gate is inherited by the sup-convolution's attainment point: the
   Jensen step reads the subsolution property at that point, not at

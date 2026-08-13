@@ -582,75 +582,6 @@ lemma quadform_outerp:
   shows "z \<bullet> (outerp q *v z) = (q \<bullet> z)\<^sup>2"
   by (simp add: outerp_eq_outer_prod power2_eq_square inner_commute)
 
-theorem exit_class_frozen_direction:
-  fixes Q :: "('n::finite pairpath) measure" and q :: "real^'n"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-    and orth: "(\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q = 0"
-  shows "AE \<omega> in Q. q \<bullet> fst (\<omega> t) = q \<bullet> x"
-proof -
-  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) :: real^'n)"
-    by (rule exit_class_X_integrable[OF Q t])
-  have i1: "integrable Q (\<lambda>\<omega>. q \<bullet> fst (\<omega> t))"
-    by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
-  have i2': "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> (outerp q *v fst (\<omega> t)))"
-    by (rule exit_class_quadform_integrable[OF T L Q t])
-  have i2: "integrable Q (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2)"
-    using i2' by (simp add: quadform_outerp)
-  have m1: "(\<integral>\<omega>. q \<bullet> fst (\<omega> t) \<partial>Q) = q \<bullet> x"
-    using integral_of_bounded_linear[OF bounded_linear_inner_right iX]
-      exit_class_X_mean[OF Q t] by simp
-  have m2: "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q) = (q \<bullet> x)\<^sup>2"
-  proof -
-    have "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q)
-        = (\<integral>\<omega>. fst (\<omega> t) \<bullet> (outerp q *v fst (\<omega> t)) \<partial>Q)"
-      by (simp add: quadform_outerp)
-    also have "\<dots> = x \<bullet> (outerp q *v x)
-        + trace (outerp q ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))"
-      by (rule exit_class_quadform_mean[OF T L Q t])
-    also have "trace (outerp q ** (\<integral>\<omega>. snd (\<omega> t) \<partial>Q))
-        = q \<bullet> ((\<integral>\<omega>. snd (\<omega> t) \<partial>Q) *v q)"
-      by (rule trace_outerp_mult)
-    finally show ?thesis by (simp add: orth quadform_outerp)
-  qed
-  \<comment> \<open>the second moment equals the square of the mean, so the variance is zero\<close>
-  have iv: "integrable Q (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)"
-  proof -
-    have "(\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)
-        = (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 - 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t))
-              + (q \<bullet> x)\<^sup>2)"
-      by (rule ext) (simp add: power2_eq_square algebra_simps)
-    have bl: "bounded_linear (\<lambda>r :: real. 2 * (q \<bullet> x) * r)"
-      unfolding linear_conv_bounded_linear[symmetric]
-      by (intro linearI) (simp_all add: algebra_simps)
-    have i4: "integrable Q (\<lambda>\<omega>. 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t)))"
-      by (rule integrable_bounded_linear[OF bl i1])
-    show ?thesis
-      unfolding \<open>(\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)
-        = (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 - 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t))
-              + (q \<bullet> x)\<^sup>2)\<close>
-      by (intro Bochner_Integration.integrable_add
-          Bochner_Integration.integrable_diff i2 i4 P.integrable_const)
-  qed
-  have var: "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2 \<partial>Q) = 0"
-  proof -
-    have e: "(\<lambda>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2)
-        = (\<lambda>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 - 2 * (q \<bullet> x) * (q \<bullet> fst (\<omega> t))
-              + (q \<bullet> x)\<^sup>2)"
-      by (rule ext) (simp add: power2_eq_square algebra_simps)
-    have "(\<integral>\<omega>. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2 \<partial>Q)
-        = (\<integral>\<omega>. (q \<bullet> fst (\<omega> t))\<^sup>2 \<partial>Q)
-          - 2 * (q \<bullet> x) * (\<integral>\<omega>. q \<bullet> fst (\<omega> t) \<partial>Q) + (q \<bullet> x)\<^sup>2"
-      unfolding e using i1 i2 by (simp add: P.prob_space)
-    also have "\<dots> = 0" unfolding m1 m2 by (simp add: power2_eq_square)
-    finally show ?thesis .
-  qed
-  have nn: "AE \<omega> in Q. 0 \<le> (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2" by simp
-  have "AE \<omega> in Q. (q \<bullet> fst (\<omega> t) - q \<bullet> x)\<^sup>2 = 0"
-    using integral_nonneg_eq_0_iff_AE[OF iv nn] var by simp
-  then show ?thesis by eventually_elim simp
-qed
 
 
 section \<open>The relaxed operator, and the inequality the class really gives\<close>
@@ -15107,194 +15038,23 @@ definition tanpV :: "real^'n::finite^'n \<Rightarrow> real^'n \<Rightarrow> real
   "tanpV P z =
      P - outer_prod ((P *v z) /\<^sub>R norm (P *v z)) ((P *v z) /\<^sub>R norm (P *v z))"
 
-lemma tanpV_sym:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes P: "transpose P = P"
-  shows "transpose (tanpV P z) = tanpV P z"
-  unfolding tanpV_def by (simp add: transpose_matrix_diff P)
 
-lemma proj_dir_fix:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes Pidem: "P ** P = P"
-  shows "P *v ((P *v z) /\<^sub>R norm (P *v z)) = (P *v z) /\<^sub>R norm (P *v z)"
-proof -
-  have i2: "P *v (P *v z) = P *v z" using Pidem by (metis matrix_vector_mul_assoc)
-  show ?thesis by (simp add: matvec_scaleR_right i2)
-qed
 
-lemma tanpV_quadform:
-  fixes P :: "real^'n::finite^'n" and z y :: "real^'n"
-  shows "y \<bullet> (tanpV P z *v y)
-     = y \<bullet> (P *v y) - (((P *v z) /\<^sub>R norm (P *v z)) \<bullet> y)\<^sup>2"
-proof -
-  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
-  have mv: "tanpV P z *v y = P *v y - (u \<bullet> y) *\<^sub>R u"
-    unfolding tanpV_def u_def
-    by (simp add: matrix_vector_mult_diff_rdistrib)
-  have "y \<bullet> (tanpV P z *v y) = y \<bullet> (P *v y) - (u \<bullet> y) * (y \<bullet> u)"
-    unfolding mv by (simp add: inner_diff_right)
-  then show ?thesis
-    unfolding u_def by (simp add: power2_eq_square inner_commute)
-qed
 
-lemma proj_quadform:
-  fixes P :: "real^'n::finite^'n" and y :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
-  shows "y \<bullet> (P *v y) = (P *v y) \<bullet> (P *v y)"
-proof -
-  have "(P *v y) \<bullet> (P *v y) = (transpose P *v (P *v y)) \<bullet> y"
-    by (rule inner_matrix_transpose)
-  also have "transpose P *v (P *v y) = P *v (P *v y)" unfolding Psym by (rule refl)
-  also have "P *v (P *v y) = P *v y"
-    using Pidem by (metis matrix_vector_mul_assoc)
-  finally show ?thesis by (simp add: inner_commute)
-qed
 
-lemma tanpV_trace:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes nz: "P *v z \<noteq> 0"
-  shows "trace (tanpV P z) = trace P - 1"
-proof -
-  have u1: "((P *v z) /\<^sub>R norm (P *v z)) \<bullet> ((P *v z) /\<^sub>R norm (P *v z)) = 1"
-    by (rule unit_normalize[OF nz])
-  have "trace (tanpV P z)
-      = trace P - trace (outer_prod ((P *v z) /\<^sub>R norm (P *v z))
-                                    ((P *v z) /\<^sub>R norm (P *v z)))"
-    unfolding tanpV_def by (rule trace_matrix_diff)
-  then show ?thesis using u1 by simp
-qed
 
-lemma tanpV_psd:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P" and nz: "P *v z \<noteq> 0"
-  shows "psd (tanpV P z)"
-  unfolding psd_def
-proof (intro conjI allI)
-  show "transpose (tanpV P z) = tanpV P z" by (rule tanpV_sym[OF Psym])
-next
-  fix y :: "real^'n"
-  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
-  have uu: "u \<bullet> u = 1" unfolding u_def by (rule unit_normalize[OF nz])
-  have ufix: "P *v u = u" unfolding u_def by (rule proj_dir_fix[OF Pidem])
-  have uy: "u \<bullet> y = (P *v y) \<bullet> u"
-  proof -
-    have "u \<bullet> y = (P *v u) \<bullet> y" unfolding ufix by (rule refl)
-    also have "\<dots> = y \<bullet> (P *v u)" by (rule inner_commute)
-    also have "\<dots> = (transpose P *v y) \<bullet> u" by (rule inner_matrix_transpose)
-    also have "\<dots> = (P *v y) \<bullet> u" unfolding Psym by (rule refl)
-    finally show ?thesis .
-  qed
-  have "(u \<bullet> y)\<^sup>2 = ((P *v y) \<bullet> u)\<^sup>2" unfolding uy by (rule refl)
-  also have "\<dots> \<le> ((P *v y) \<bullet> (P *v y)) * (u \<bullet> u)"
-    by (rule Cauchy_Schwarz_ineq)
-  also have "\<dots> = (P *v y) \<bullet> (P *v y)" unfolding uu by simp
-  also have "\<dots> = y \<bullet> (P *v y)" by (rule proj_quadform[OF Psym Pidem, symmetric])
-  finally have le: "(u \<bullet> y)\<^sup>2 \<le> y \<bullet> (P *v y)" .
-  have "y \<bullet> (tanpV P z *v y) = y \<bullet> (P *v y) - (u \<bullet> y)\<^sup>2"
-    unfolding u_def by (rule tanpV_quadform)
-  then show "0 \<le> y \<bullet> (tanpV P z *v y)" using le by linarith
-qed
 
-lemma tanpV_eigen_ub:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P" and L1: "1 \<le> L"
-  shows "eigen_ub (tanpV P z) L"
-  unfolding eigen_ub_def
-proof
-  fix y :: "real^'n"
-  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
-  have q: "y \<bullet> (tanpV P z *v y) = y \<bullet> (P *v y) - (u \<bullet> y)\<^sup>2"
-    unfolding u_def by (rule tanpV_quadform)
-  have shrink: "y \<bullet> (P *v y) \<le> y \<bullet> y"
-  proof -
-    have pq: "y \<bullet> (P *v y) = (P *v y) \<bullet> (P *v y)"
-      by (rule proj_quadform[OF Psym Pidem])
-    have "(y - P *v y) \<bullet> (y - P *v y)
-        = y \<bullet> y - y \<bullet> (P *v y) - (P *v y) \<bullet> y + (P *v y) \<bullet> (P *v y)"
-      by (simp add: inner_diff_left inner_diff_right)
-    also have "(P *v y) \<bullet> y = y \<bullet> (P *v y)" by (rule inner_commute)
-    finally have "(y - P *v y) \<bullet> (y - P *v y) = y \<bullet> y - y \<bullet> (P *v y)"
-      using pq by simp
-    then show ?thesis using inner_ge_zero[of "y - P *v y"] by linarith
-  qed
-  have "y \<bullet> (tanpV P z *v y) \<le> y \<bullet> y"
-    unfolding q using shrink zero_le_power2[of "u \<bullet> y"] by linarith
-  also have "y \<bullet> y = 1 * (y \<bullet> y)" by simp
-  also have "\<dots> \<le> L * (y \<bullet> y)" by (rule mult_right_mono[OF L1 inner_ge_zero])
-  finally show "y \<bullet> (tanpV P z *v y) \<le> L * (y \<bullet> y)" .
-qed
 
 text \<open>The lower eigenvalue bound.  The witnessing subspace is the span of the
   family cut by the hyperplane orthogonal to the singled-out direction: the
   dimension drops by at most one, which is exactly what \<open>n - k\<close> needs.\<close>
 
-lemma tanpV_eigen_lb:
-  fixes b :: "nat \<Rightarrow> real^'n::finite" and z :: "real^'n"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and nz: "projmat b m *v z \<noteq> 0"
-  shows "eigen_lb (tanpV (projmat b m) z) (m - 1)"
-proof -
-  define u :: "real^'n"
-    where "u = (projmat b m *v z) /\<^sub>R norm (projmat b m *v z)"
-  define W :: "(real^'n) set" where "W = span (b ` {..<m})"
-  define S :: "(real^'n) set" where "S = W \<inter> {x. u \<bullet> x = 0}"
-  have subW: "subspace W" unfolding W_def by (rule subspace_span)
-  have subH: "subspace {x :: real^'n. u \<bullet> x = 0}" by (rule subspace_hyperplane)
-  have subS: "subspace S" unfolding S_def by (rule subspace_inter[OF subW subH])
-  have dimW: "dim W = m" unfolding W_def by (rule orthonormal_dim_span[OF orth])
-  have uu: "u \<bullet> u = 1" unfolding u_def by (rule unit_normalize[OF nz])
-  have u0: "u \<noteq> 0" using uu by auto
-  have dimH: "dim {x :: real^'n. u \<bullet> x = 0} = CARD('n) - 1"
-    using u0 by (simp add: dim_hyperplane)
-  have dimS: "m - 1 \<le> dim S"
-  proof -
-    have sums: "dim {x + y |x y. x \<in> W \<and> y \<in> {x :: real^'n. u \<bullet> x = 0}}
-        + dim S = dim W + dim {x :: real^'n. u \<bullet> x = 0}"
-      unfolding S_def by (rule dim_sums_Int[OF subW subH])
-    have le: "dim {x + y |x y. x \<in> W \<and> y \<in> {x :: real^'n. u \<bullet> x = 0}}
-        \<le> CARD('n)"
-      using dim_subset_UNIV[of
-        "{x + y |x y. x \<in> W \<and> y \<in> {x :: real^'n. u \<bullet> x = 0}}"] by simp
-    have n1: "1 \<le> CARD('n)" by simp
-    show ?thesis using sums le dimW dimH n1 by linarith
-  qed
-  show ?thesis
-    unfolding eigen_lb_def
-  proof (intro exI[of _ S] conjI ballI)
-    show "subspace S" by (rule subS)
-    show "m - 1 \<le> dim S" by (rule dimS)
-  next
-    fix x assume xS: "x \<in> S"
-    then have xW: "x \<in> span (b ` {..<m})" and xu: "u \<bullet> x = 0"
-      unfolding S_def W_def by auto
-    have Px: "projmat b m *v x = x" by (rule projmat_span_fix[OF orth xW])
-    have "x \<bullet> (tanpV (projmat b m) z *v x)
-        = x \<bullet> (projmat b m *v x) - (u \<bullet> x)\<^sup>2"
-      unfolding u_def by (rule tanpV_quadform)
-    also have "\<dots> = x \<bullet> x" unfolding Px xu by simp
-    finally show "x \<bullet> x \<le> x \<bullet> (tanpV (projmat b m) z *v x)" by simp
-  qed
-qed
 
 
 text \<open>The field is a projector, which is what makes the Euler chain's
   covariance equal to it and the radial drift vanish --- the two facts
   the construction below relies on.\<close>
 
-lemma tanpV_mv:
-  fixes P :: "real^'n::finite^'n" and z y :: "real^'n"
-  shows "tanpV P z *v y
-      = P *v y - (((P *v z) /\<^sub>R norm (P *v z)) \<bullet> y)
-          *\<^sub>R ((P *v z) /\<^sub>R norm (P *v z))"
-proof -
-  define u :: "real^'n" where "u = (P *v z) /\<^sub>R norm (P *v z)"
-  have "tanpV P z *v y = (P - outer_prod u u) *v y"
-    unfolding tanpV_def u_def by (rule refl)
-  also have "\<dots> = P *v y - (outer_prod u u) *v y"
-    by (simp add: matrix_vector_mult_diff_rdistrib)
-  also have "(outer_prod u u) *v y = (u \<bullet> y) *\<^sub>R u" by simp
-  finally show ?thesis unfolding u_def .
-qed
 
 
 text \<open>The radial direction is killed at the point itself: this is why the

@@ -90,41 +90,6 @@ text \<open>The join.  \<open>Exit_Time.etime_less_iff\<close> says being strict
   a path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close>
   every path qualifies and the set is the whole space.\<close>
 
-lemma etime_usc_on_paths:
-  fixes T c :: real and A :: "'b::polish_space set"
-  assumes T: "0 \<le> T" and A: "open A"
-  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         etime T A (\<lambda>s w. w s) f < c}"
-proof (cases "T < c")
-  case True
-  have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-        etime T A (\<lambda>s w. w s) f < c}
-      = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-  proof -
-    have "etime T A (\<lambda>s w. w s) f < c" for f :: "real \<Rightarrow> 'b"
-      using etime_le_T[OF T, of A "\<lambda>s w. w s" f] True by linarith
-    thus ?thesis by blast
-  qed
-  then show ?thesis
-    using openin_topspace[of
-        "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)"]
-    by simp
-next
-  case False
-  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-        etime T A (\<lambda>s w. w s) f < c}
-      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         \<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A}"
-  proof -
-    have "etime T A (\<lambda>s w. w s) f < c
-        \<longleftrightarrow> (\<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A)"
-      for f :: "real \<Rightarrow> 'b"
-      using etime_less_iff[OF T, of A "\<lambda>s w. w s" f c] False by auto
-    thus ?thesis by blast
-  qed
-  show ?thesis unfolding eq by (rule open_hit_strictly_before[OF A])
-qed
 
 text \<open>Lemma 2.2 of arXiv:2512.17702, at the market class itself: for any
   sequence of sufficiently volatile markets that are stopped at their horizon

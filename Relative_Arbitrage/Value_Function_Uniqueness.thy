@@ -83,19 +83,6 @@ text \<open>\<open>comparison_principle\<close> (@{theory Relative_Arbitrage.Vis
   \<open>comparison_principle\<close> as a hypothesis, is vacuous;
   \<open>theorem_1_1_uniqueness_general\<close> below replaces it.\<close>
 
-lemma visc_subsol_shift:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes s: "visc_subsol k L \<Omega> u"
-  shows "visc_subsol k L \<Omega> (\<lambda>y. u y + c)"
-  unfolding visc_subsol_def
-proof (intro ballI allI impI)
-  fix x \<phi> g H
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and lm: "\<exists>e>0. \<forall>y \<in> ball x e. (u y + c) - \<phi> y \<le> (u x + c) - \<phi> x"
-  from lm have "\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x" by auto
-  with s x tf show "ell_op k L (g x) H \<le> 1"
-    unfolding visc_subsol_def by blast
-qed
 
 
 theorem theorem_1_1_uniqueness_general:
@@ -115,45 +102,7 @@ theorem theorem_1_1_uniqueness_general:
 
 section \<open>Example 3.1 realises the ball value exactly, for \<open>n - k = 1\<close>\<close>
 
-lemma ess_inf_time_const:
-  assumes M: "prob_space M"
-  shows "ess_inf_time M (\<lambda>_. c) = ennreal c"
-proof (rule antisym)
-  show "ess_inf_time M (\<lambda>_. c) \<le> ennreal c"
-    by (rule ess_inf_time_le_const[OF M]) simp
-  have "AE \<omega> in M. ennreal c \<le> ennreal c" by simp
-  then show "ennreal c \<le> ess_inf_time M (\<lambda>_. c)"
-    unfolding ess_inf_time_def by (intro Sup_upper) simp
-qed
 
-theorem deterministic_radius_stopped_market:
-  fixes q \<phi> r L :: real
-  assumes q: "0 < q" and L: "1 \<le> L" and qr: "q \<le> r\<^sup>2" and r0: "0 \<le> r"
-  shows "stopped_market 1 L (cball 0 r)
-      (sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>))
-      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      (drXs q \<phi> (r\<^sup>2 - q)) (dras q \<phi> (r\<^sup>2 - q)) (\<lambda>_. r\<^sup>2 - q)"
-  unfolding stopped_market_def
-proof (intro conjI)
-  show "sufficiently_volatile_market
-      (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>t. natural_filtration bm_paths 0 (cbmX (0 :: real^2)) (drc q t))
-      (drXs q \<phi> (r\<^sup>2 - q)) (dras q \<phi> (r\<^sup>2 - q)) 1 L (cball 0 r)
-      (sqrt q *\<^sub>R (\<chi> j. if j = (1 :: 2) then cos \<phi> else sin \<phi>))
-      (\<lambda>_. r\<^sup>2 - q)"
-    by (rule deterministic_radius_sufficiently_volatile[OF assms])
-  show "\<forall>s \<omega>. \<omega> \<in> space (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) \<longrightarrow>
-      drXs q \<phi> (r\<^sup>2 - q) s \<omega> = drXs q \<phi> (r\<^sup>2 - q) (min s (r\<^sup>2 - q)) \<omega>"
-    using drXs_stopped by blast
-  show "\<forall>s \<omega>. \<omega> \<in> space (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure) \<longrightarrow>
-      r\<^sup>2 - q < s \<longrightarrow> dras q \<phi> (r\<^sup>2 - q) s \<omega> = 0"
-    using dras_killed by blast
-  have T0: "0 \<le> r\<^sup>2 - q" using qr by simp
-  show "AE \<omega> in (bm_paths :: (2 \<Rightarrow> real \<Rightarrow> real) measure). \<forall>l t. 0 \<le> t \<longrightarrow>
-      set_integrable lborel {0..t} (\<lambda>s. dras q \<phi> (r\<^sup>2 - q) s \<omega> $ l $ l)"
-    by (intro AE_I2 allI impI dras_diag_time_integrable[OF q T0])
-qed
 
 
 

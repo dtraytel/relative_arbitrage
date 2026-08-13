@@ -51,95 +51,7 @@ text \<open>The continued volatility \<open>acov\<close> is integrable on bounde
   continuation, and \<open>set_borel_measurable_subset\<close> cuts it down to the
   interval at hand.\<close>
 
-lemma acont_bounded:
-  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
-  assumes L1: "1 \<le> L"
-    and sv: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> acov u \<omega> \<in> suff_volatile k"
-    and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tv \<Longrightarrow> eigen_ub (acov u \<omega>) L"
-    and u: "0 \<le> u"
-  shows "norm (acont (\<lambda>r. acov r \<omega>) tv u) \<le> real CARD('n) * L"
-proof (rule sconstraint_norm_le)
-  show "0 \<le> L" using L1 by simp
-  show "acont (\<lambda>r. acov r \<omega>) tv u \<in> sconstraint k L"
-    by (rule acont_in_sconstraint[OF L1 sv ub u])
-qed
 
-theorem stopped_market_acont_integrable:
-  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
-  assumes SM: "stopped_market k L K x0 M F X acov tau"
-    and st: "0 \<le> s" "s \<le> t"
-  shows "AE \<omega> in M.
-      set_integrable lborel {s..t} (\<lambda>u. acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)"
-proof -
-  from SM have svm: "sufficiently_volatile_market M F X acov k L K x0 tau"
-    unfolding stopped_market_def by blast
-  interpret SV: sufficiently_volatile_market M F X acov k L K x0 tau
-    by (rule svm)
-  have L1: "1 \<le> L" by (rule SV.L_ge)
-  have Bnn: "0 \<le> real CARD('n) * L" using L1 by simp
-  show ?thesis
-    using SV.acov_psd SV.acov_eigen_lb SV.acov_eigen_ub
-      SV.acov_time_measurable
-  proof eventually_elim
-    case (elim \<omega>)
-    then have pd: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> psd (acov u \<omega>)"
-      and lb: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega>
-          \<Longrightarrow> eigen_lb (acov u \<omega>) (CARD('n) - k)"
-      and ub: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> tau \<omega> \<Longrightarrow> eigen_ub (acov u \<omega>) L"
-      and m0: "set_borel_measurable lborel {0..} (\<lambda>r. acov r \<omega>)"
-      by blast+
-    have m: "set_borel_measurable lborel {s..t}
-        (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
-    proof (rule set_borel_measurable_subset)
-      show "set_borel_measurable lborel {0..}
-          (acont (\<lambda>r. acov r \<omega>) (tau \<omega>))"
-        by (rule acont_set_borel_measurable[OF m0])
-      show "{s..t} \<in> sets lborel" by simp
-      show "{s..t} \<subseteq> {0..}" using st(1) by auto
-    qed
-    have sv: "acov u \<omega> \<in> suff_volatile k" if "0 \<le> u" "u \<le> tau \<omega>" for u
-      unfolding suff_volatile_def using pd[OF that] lb[OF that] by simp
-    \<comment> \<open>the conclusion must drive the unification here: an \<^verbatim>\<open>OF\<close> chain on
-        \<^verbatim>\<open>acont_bounded\<close> reports "multiple unifiers".\<close>
-    have bnd: "norm (acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u) \<le> real CARD('n) * L"
-      if u0: "0 \<le> u" for u
-      by (rule acont_bounded[where acov=acov, OF L1 sv ub u0])
-    have dom: "integrable lborel
-        (\<lambda>u. indicat_real {s..t} u * (real CARD('n) * L))"
-    proof -
-      have "integrable lborel (indicat_real {s..t})"
-        by (rule integrable_real_indicator)
-          (use st in \<open>auto\<close>)
-      then show ?thesis by simp
-    qed
-    show ?case
-      unfolding set_integrable_def
-    \<comment> \<open>\<^verbatim>\<open>Bochner_Integration.\<close> is required: the bare name resolves to the
-        Henstock lemma about \<^verbatim>\<open>integrable_on cbox\<close>, exactly as for
-        \<^verbatim>\<open>integrable_const\<close>.\<close>
-    proof (rule Bochner_Integration.integrable_bound[OF dom])
-      show "(\<lambda>u. indicat_real {s..t} u *\<^sub>R acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
-          \<in> borel_measurable lborel"
-        using m unfolding set_borel_measurable_def by simp
-      show "AE u in lborel.
-          norm (indicat_real {s..t} u *\<^sub>R acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
-          \<le> norm (indicat_real {s..t} u * (real CARD('n) * L))"
-      proof (intro AE_I2)
-        fix u :: real
-        show "norm (indicat_real {s..t} u *\<^sub>R acont (\<lambda>r. acov r \<omega>) (tau \<omega>) u)
-            \<le> norm (indicat_real {s..t} u * (real CARD('n) * L))"
-        proof (cases "u \<in> {s..t}")
-          case True
-          then have u0: "0 \<le> u" using st by simp
-          show ?thesis using bnd[OF u0] True Bnn by simp
-        next
-          case False
-          then show ?thesis by simp
-        qed
-      qed
-    qed
-  qed
-qed
 
 section \<open>The witness satisfies the class's covariation condition\<close>
 
@@ -8379,18 +8291,6 @@ text \<open>Horizon-cap invisibility, both halves.  Past the natural scale of
   Example 3.1 the horizon does not matter at all, so \<open>exit_val\<close> --- defined
   on the capped path space --- computes the paper's uncapped \<open>v\<close> of (1.6).\<close>
 
-corollary exit_val_horizon_eq:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
-  assumes k: "k < CARD('n)" and L: "1 \<le> L" and K: "closed K"
-    and KB: "K \<subseteq> cball 0 r" and S0: "0 \<le> S" and ST: "S \<le> T"
-    and big: "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S"
-  shows "exit_val k L T K x = exit_val k L S K x"
-proof (rule order.antisym)
-  show "exit_val k L T K x \<le> exit_val k L S K x"
-    using L by (intro exit_val_horizon_stable[OF k _ S0 ST K KB big]) simp
-  show "exit_val k L S K x \<le> exit_val k L T K x"
-    by (rule exit_val_horizon_mono[OF S0 ST L K])
-qed
 
 section \<open>The pasting lower bound (Prop. 2.4)\<close>
 

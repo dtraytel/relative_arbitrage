@@ -63,8 +63,6 @@ qed
 lemma transpose_diff_matrix: "transpose (A - B) = transpose A - transpose B"
   by (simp add: transpose_def vec_eq_iff)
 
-lemma transpose_mat_one: "transpose (mat c :: real^'n::finite^'n) = mat c"
-  by (auto simp: transpose_def mat_def vec_eq_iff)
 
 lemma scaleR_matrix_matrix_left:
   fixes A B :: "real^'n::finite^'n"
@@ -136,7 +134,7 @@ qed
 
 lemma symmetric_perp_proj:
   "transpose (mat 1 - rank1proj p :: real^'n::finite^'n) = mat 1 - rank1proj p"
-  by (simp add: transpose_diff_matrix transpose_mat_one transpose_rank1proj)
+  by (simp add: transpose_diff_matrix transpose_rank1proj)
 
 lemma proj_perp_right:
   fixes a :: "real^'n::finite^'n"

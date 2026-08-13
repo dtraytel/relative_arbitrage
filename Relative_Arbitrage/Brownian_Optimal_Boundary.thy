@@ -65,29 +65,6 @@ text \<open>On the sphere the value function of Eq. (3.9) vanishes, so the
   market that stops at once.  Hence that locale is consistent and its
   theorem \<open>optimal_exit_time_value\<close> is not vacuous.\<close>
 
-theorem optimal_ball_market_boundary:
-  fixes x0 :: "real^'n::finite"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and x0: "norm x0 = r"
-  shows "optimal_ball_market
-    (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
-    (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0) r"
-proof -
-  have svm: "sufficiently_volatile_market
-      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      (natural_filtration bm_paths 0 (cbmX x0)) (cbmX x0)
-      (\<lambda>_ _. mat 1) k L (cball 0 r) x0 (\<lambda>_. 0)"
-    using x0 by (intro Brownian_boundary_market k L) simp
-  show ?thesis
-  proof (intro optimal_ball_market.intro[OF svm]
-      optimal_ball_market_axioms.intro)
-    show "cball (0 :: real^'n) r = cball 0 r"
-      by (rule refl)
-    show "ennreal (ball_v r k x0)
-        \<le> (\<integral>\<^sup>+\<omega>. ennreal 0 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))"
-      using ball_v_boundary[OF x0, of k] by simp
-  qed
-qed
 
 
 

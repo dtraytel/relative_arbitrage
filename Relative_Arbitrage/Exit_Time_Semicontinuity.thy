@@ -25,46 +25,6 @@ text \<open>
   real number capped at \<open>T\<close>, so the whole space is its complement.
 \<close>
 
-lemma etime_superlevel_closed:
-  fixes T :: real and c :: ennreal and A :: "'b::polish_space set"
-  assumes T: "0 \<le> T" and A: "open A"
-  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         c \<le> ennreal (etime T A (\<lambda>s w. w s) f)}"
-proof -
-  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         ennreal (etime T A (\<lambda>s w. w s) f) < c}"
-  proof (cases c rule: ennreal_cases)
-    case top
-    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-           ennreal (etime T A (\<lambda>s w. w s) f) < c}
-        = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-      unfolding top by simp
-    then show ?thesis
-      using openin_topspace[of
-          "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)"]
-      by simp
-  next
-    case (real r)
-    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-           ennreal (etime T A (\<lambda>s w. w s) f) < c}
-        = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-           etime T A (\<lambda>s w. w s) f < r}"
-      unfolding real
-      using etime_nonneg[OF T, of A "\<lambda>s w. w s"]
-      by (auto simp: ennreal_less_iff)
-    then show ?thesis by (simp add: etime_usc_on_paths[OF T A])
-  qed
-  have compl: "topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-        - {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-             c \<le> ennreal (etime T A (\<lambda>s w. w s) f)}
-      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-           ennreal (etime T A (\<lambda>s w. w s) f) < c}"
-    by (auto simp: not_le)
-  show ?thesis
-    unfolding closedin_def using op unfolding compl by auto
-qed
 
 subsection \<open>The essential infimum of the exit time is usc in the law\<close>
 
@@ -2924,10 +2884,6 @@ lemma stopped_exit_vals_subset:
   unfolding stopped_exit_vals_def mkt_exit_vals_def stopped_market_def
   by blast
 
-lemma stopped_val_fn_le_val_fn:
-  "stopped_val_fn k L K x0 \<le> val_fn k L K x0"
-  unfolding stopped_val_fn_def val_fn_def
-  by (rule Sup_subset_mono[OF stopped_exit_vals_subset])
 
 
 theorem stopped_val_fn_le_law_sup:
@@ -3929,11 +3885,6 @@ text \<open>The bare-locale facts transfer to \<open>stopped_val_fn\<close> by t
   sphere (clause (3) for the ball).\<close>
 
 
-lemma stopped_val_fn_le_ball_v:
-  fixes x0 :: "real^'m::finite"
-  shows "stopped_val_fn k L (cball 0 r) x0 \<le> ennreal (ball_v r k x0)"
-  using stopped_val_fn_le_val_fn val_fn_le_ball_v
-  by (rule order_trans)
 
 
 

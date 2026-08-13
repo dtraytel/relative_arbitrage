@@ -644,19 +644,6 @@ proof (intro ballI allI impI)
     using ell_op_le_ell_op_usc[of k L "g x" H] by (rule order_trans)
 qed
 
-lemma visc_sol_imp_env:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes u: "visc_sol k L \<Omega> u" and sub_K: "\<Omega> \<subseteq> K" and op: "open \<Omega>"
-  shows "visc_sol_env k L K \<Omega> u"
-  unfolding visc_sol_env_def
-proof (intro conjI)
-  have s: "visc_subsol k L \<Omega> u" and t: "visc_supersol k L \<Omega> u"
-    using u by (simp_all add: visc_sol_def)
-  show "visc_subsol_env k L K \<Omega> u"
-    by (rule visc_subsol_imp_env[OF s sub_K op])
-  show "visc_supersol_env k L K \<Omega> u"
-    by (rule visc_supersol_imp_env[OF t sub_K op])
-qed
 
 section \<open>Example 3.1 satisfies Definition 3.1 as stated in the paper\<close>
 
@@ -2247,16 +2234,6 @@ proof (rule lsc_attains_inf_gen[OF lsc B cS neS])
   show ?thesis using zS zm by blast
 qed
 
-lemma usc_attains_sup_ex:
-  fixes f :: "'a::metric_space \<Rightarrow> real" and S :: "'a set"
-  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-    and B: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> B"
-    and cS: "compact S" and neS: "S \<noteq> {}"
-  shows "\<exists>z \<in> S. \<forall>y \<in> S. f y \<le> f z"
-proof (rule usc_attains_sup_gen[OF usc B cS neS])
-  fix z assume zS: "z \<in> S" and zm: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> f z"
-  show ?thesis using zS zm by blast
-qed
 
 text \<open>The constant test function: the touching that Definition 3.1's boundary
   clause admits at a global minimum, and the one the paper's diagonal case
@@ -2500,10 +2477,6 @@ proof -
   finally show ?thesis .
 qed
 
-lemma trace_mult_scaleR_left:
-  fixes M a :: "real^'n::finite^'n"
-  shows "trace ((c *\<^sub>R M) ** a) = c * trace (M ** a)"
-  by (simp add: trace_def matrix_matrix_mult_def sum_distrib_left mult.assoc)
 
 
 lemma ell_op_conj_rot:

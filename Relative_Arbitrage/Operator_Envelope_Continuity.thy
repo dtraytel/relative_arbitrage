@@ -528,16 +528,6 @@ qed
 text \<open>The same holds for the upper envelope, the form used in Section 4's
   viscosity definitions.\<close>
 
-corollary ell_op_usc_elliptic_le:
-  fixes M N :: "real^'n::finite^'n"
-  assumes psd: "psd (N - M)" and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op k L p N \<le> ell_op k L p M"
-proof -
-  have ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-    by (rule feasible_nonempty[OF k(1) k(2) L])
-  show ?thesis
-    by (rule ell_op_elliptic_le[OF psd ne])
-qed
 
 text \<open>Consequence of the continuity clause, and the reason Section 4 can work
   with the envelope-free operator away from the origin: there the viscosity
@@ -546,17 +536,6 @@ text \<open>Consequence of the continuity clause, and the reason Section 4 can w
   \<open>ell_op_lsc_at_zero_iff\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}), which handles \<open>p = 0\<close>.\<close>
 
 
-corollary ell_op_usc_off_zero_iff:
-  fixes M :: "real^'n::finite^'n"
-  assumes sym: "transpose M = M" and p: "p \<noteq> 0" and L: "1 \<le> L"
-    and k: "1 \<le> k" "k < CARD('n)"
-  shows "1 \<le> ell_op_usc k L p M \<longleftrightarrow> 1 \<le> ell_op k L p M"
-proof -
-  have "ell_op_usc k L p M = ereal (ell_op k L p M)"
-    by (rule ell_op_usc_off_zero[OF sym p L k(1) k(2)])
-  then show ?thesis
-    by (simp add: one_ereal_def)
-qed
 
 text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maximum
   the Crandall-Ishii lemma produces a common gradient \<open>p\<close> and Hessians
@@ -566,22 +545,6 @@ text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maxim
   strictness on the subsolution side is already a contradiction.\<close>
 
 
-lemma ell_op_strict_no_crossing:
-  fixes X Y :: "real^'n::finite^'n"
-  assumes psd: "psd (Y - X)"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and sub: "ell_op k L p X < 1"
-    and sup: "1 \<le> ell_op k L p Y"
-  shows False
-proof -
-  have "ell_op k L p Y \<le> ell_op k L p X"
-    by (rule ell_op_usc_elliptic_le[OF psd k(1) k(2) L])
-  also have "\<dots> < 1"
-    by (rule sub)
-  finally have "ell_op k L p Y < 1" .
-  with sup show False
-    by simp
-qed
 
 text \<open>The envelope formulation of Definition 3.1, obtained by using the
   continuity clause to replace \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> by \<open>F\<close> at a nonzero gradient.\<close>
