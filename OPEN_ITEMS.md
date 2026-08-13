@@ -114,6 +114,42 @@ That is a different question --- `L`-independence of `v`, not uniqueness at
 Nothing found shows (2b)/(3b)/(4) are FALSE at `L = 1`.  What is established is
 that the only known route to them, in the paper and here alike, breaks there.
 
+### Correction: which set is rigid at `L = 1`
+
+Two different sets are in play, and an earlier note in this project conflated
+them.
+
+* `feasible k L p = {a. psd a & a *v p = 0 & eigen_lb a (n-k) & eigen_ub a L}`
+  --- the OPERATOR's set, Eq. (1.9).  `eigen_lb a (n-k)` puts the `n-k` largest
+  eigenvalues at `>= 1`, `eigen_ub a L` puts all of them at `<= L`.  At `L = 1`
+  the `n-k` largest are pinned to `1` exactly.  THIS is what is rigid, and it
+  is what Case 1 of Section 3 and `feasible_strict_eigendata` both try to
+  perturb.
+* `sconstraint k L = Pi_constraint k Int {a. eigen_ub a L}` --- the CLASS's set,
+  Eq. (1.5), the convexified constraint.  This is NOT rigid at `L = 1`.  For
+  `n = 2, k = 1` the only condition is `m = 2`, so `trace a >= 1` with both
+  eigenvalues `<= 1`, and `0.6 * I` qualifies: the top eigenvalue is `0.6`, not
+  `1`.
+
+So at `L = 1` the admissible controls are still plentiful; only the operator's
+feasible set degenerates.  That is a reason to expect the clauses may well be
+true at `L = 1` and merely out of reach of this argument --- but it is an
+expectation, not evidence.
+
+### A test that could decide it
+
+Example 3.1 is proved here under `1 <= L`, so on a ball the value function is
+known in closed form AT `L = 1`:
+
+    v(x) = max((r^2 - |x|^2)/(n-k), 0).
+
+`F` depends on `L`, so being a supersolution for `L > 1` does not transfer.
+But the `L = 1` operator applied to this explicit `v` is a finite computation.
+Checking the supersolution inequality for it at interior points of the ball
+either produces a counterexample --- settling (2b) negatively at `L = 1` --- or
+gives the first real evidence that the clauses survive.  That is the cheapest
+next experiment, and it needs no new machinery.
+
 Two routes out, neither attempted:
 
 * a different witness at `L = 1`, since the rigidity means the perturbation
