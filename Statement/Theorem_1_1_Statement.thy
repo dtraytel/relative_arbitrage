@@ -254,12 +254,17 @@ text \<open>
     hypotheses.
   \<^item> The clause \<open>1 < L\<close> is used where the paper writes \<open>L \<ge> 1\<close>; the strict form
     is what the supersolution argument consumes.
-  \<^item> Clause (4) assumes the competitor \<open>u\<close> bounded --- \<open>\<bar>u y\<bar> \<le> Bd\<close> for some
-    \<open>Bd\<close>, uniformly in \<open>y\<close>.  That is not read off the paper's Theorem 1.1; it is
-    what the comparison principle behind Proposition 4.1 consumes, and it is
-    the one hypothesis of these clauses that may not appear in the paper's own
-    statement.  Until it was traced, this clause carried the stronger
-    \<open>\<bar>u y\<bar> \<le> r\<^sup>2/(n-k)\<close>, which was an artefact of the proof and is now gone.
+  \<^item> Clause (4) assumes the competitor \<open>u\<close> bounded, \<open>\<bar>u y\<bar> \<le> Bd\<close> uniformly in \<open>y\<close>.
+    This is the paper's own hypothesis: Theorem 1.1 says only \<open>upper
+    semicontinuous\<close>, but Definition 3.1 opens each of its three clauses with
+    \<open>a bounded function u : K \<rightarrow> \<real>\<close>, so boundedness is inside the phrase
+    \<open>viscosity solution\<close> rather than beside it.  It is the standard local
+    boundedness that makes the envelope \<open>u\<^sub>*\<close> of clause (b) real-valued.
+  \<^item> The paper's solutions are functions \<open>K \<rightarrow> \<real>\<close>, and its envelopes are taken
+    within \<open>K\<close>; here they are functions \<open>real^'n \<rightarrow> \<real>\<close>, the bound is over all
+    of \<open>real^'n\<close>, and @{const lsc_env} takes the liminf over balls of
+    \<open>real^'n\<close>.  Inside \<open>K\<close> these agree; on \<open>K - interior K\<close>, where the boundary
+    gate of clause (3) is evaluated, they need not.
 \<close>
 
 (*<*)
