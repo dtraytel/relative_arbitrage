@@ -545,6 +545,21 @@ proof (rule ext)
   qed
 qed
 
+text \<open>Members of the horizon-\<open>r\<close> path space are extensional on \<open>{0..r}\<close>, so
+  cutting there is the identity on them.  This is what turns
+  @{thm [source] pcut_pglue} into the statement that the extension of a law
+  restricts to that law.\<close>
+
+lemma pcut_id_on_mspace:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+  shows "pcut r \<omega> = \<omega>"
+proof -
+  have "\<omega> \<in> extensional {0..r}"
+    using assms unfolding path_metric_def mspace_cfunspace by simp
+  then show ?thesis unfolding pcut_def by (rule extensional_restrict)
+qed
+
 (*<*)
 end
 (*>*)
