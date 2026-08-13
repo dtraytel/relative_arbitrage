@@ -12799,6 +12799,158 @@ text \<open>The paper's display (4.4) run backwards: the factors
   against the \<open>c^2\<close> in \<open>w'\<close> before the operator is applied, so no
   scaling invariance is needed for the Hessian argument.\<close>
 
+text \<open>The \<open>C\<^sup>2\<close> counterparts of @{thm [source] test_fun_at_scaleR} and
+  @{thm [source] test_fun_at_affine}.  Precomposing with \<open>z \<mapsto> c\<cdot>(R z) + b\<close>
+  conjugates the Hessian field, \<open>G \<mapsto> c\<^sup>2 \<cdot> R\<^sup>T G(A \<cdot>) R\<close>, which stays symmetric
+  and stays continuous --- the latter because conjugation is a linear map of
+  matrices, hence bounded in finite dimension.\<close>
+
+lemma test_fun_C2_scaleR:
+  fixes H :: "real^'n::finite^'n"
+  assumes tf: "test_fun_C2 \<phi> g H x" and c: "0 < c"
+  shows "test_fun_C2 (\<lambda>z. c * \<phi> z) (\<lambda>z. c *\<^sub>R g z) (c *\<^sub>R H) x"
+proof -
+  obtain G where G: "\<And>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    "\<And>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)"
+    "\<And>y. transpose (G y) = G y" "continuous_on UNIV G" "G x = H"
+    using tf unfolding test_fun_C2_def by blast
+  show ?thesis
+    unfolding test_fun_C2_def
+  proof (intro exI[of _ "\<lambda>y. c *\<^sub>R G y"] conjI allI)
+    fix y :: "real^'n"
+    have "((\<lambda>z. c * \<phi> z) has_derivative (\<lambda>h. c * (g y \<bullet> h))) (at y)"
+      using G(1)[of y] by (auto intro!: derivative_eq_intros)
+    then show "((\<lambda>z. c * \<phi> z) has_derivative (\<lambda>h. (c *\<^sub>R g y) \<bullet> h)) (at y)"
+      by simp
+  next
+    fix y :: "real^'n"
+    have "((\<lambda>z. c *\<^sub>R g z) has_derivative (\<lambda>h. c *\<^sub>R (G y *v h))) (at y)"
+      using G(2)[of y] by (auto intro!: derivative_eq_intros)
+    then show "((\<lambda>z. c *\<^sub>R g z) has_derivative (\<lambda>h. (c *\<^sub>R G y) *v h)) (at y)"
+      by (simp add: scaleR_matrix_vector_assoc)
+  next
+    fix y :: "real^'n"
+    show "transpose (c *\<^sub>R G y) = c *\<^sub>R G y"
+      by (simp add: transpose_scaleR G(3))
+  next
+    show "continuous_on UNIV (\<lambda>y. c *\<^sub>R G y)"
+      by (intro continuous_intros G(4))
+  next
+    show "c *\<^sub>R G x = c *\<^sub>R H" by (simp add: G(5))
+  qed
+qed
+
+lemma conj_mat_continuous:
+  fixes R :: "real^'n::finite^'n"
+  assumes "continuous_on UNIV M"
+  shows "continuous_on UNIV (\<lambda>y. transpose R ** M y ** R)"
+proof -
+  have lin: "linear (\<lambda>N :: real^'n^'n. transpose R ** N ** R)"
+    unfolding linear_iff
+    by (auto simp: matrix_matrix_mult_def vec_eq_iff sum.distrib
+        sum_distrib_left sum_distrib_right algebra_simps)
+  have bl: "bounded_linear (\<lambda>N :: real^'n^'n. transpose R ** N ** R)"
+    using lin by (simp add: linear_conv_bounded_linear)
+  show ?thesis by (rule bounded_linear.continuous_on[OF bl assms])
+qed
+
+theorem test_fun_C2_affine:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n" and R :: "real^'n^'n" and b x :: "real^'n"
+  assumes tf: "test_fun_C2 \<phi> g H (c *\<^sub>R (R *v x) + b)"
+    and orth: "orthogonal_matrix R" and c0: "0 < c"
+  shows "test_fun_C2 (\<lambda>z. \<phi> (c *\<^sub>R (R *v z) + b))
+      (\<lambda>z. c *\<^sub>R (transpose R *v g (c *\<^sub>R (R *v z) + b)))
+      ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x"
+proof -
+  define A :: "real^'n \<Rightarrow> real^'n" where "A = (\<lambda>z. c *\<^sub>R (R *v z) + b)"
+  obtain G where G: "\<And>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    "\<And>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)"
+    "\<And>y. transpose (G y) = G y" "continuous_on UNIV G" "G (A x) = H"
+    using tf unfolding test_fun_C2_def A_def by blast
+  have dA: "(A has_derivative (\<lambda>h. c *\<^sub>R (R *v h))) (at y)" for y
+    unfolding A_def by (rule affine_has_derivative)
+  have Acont: "continuous_on UNIV A"
+    unfolding A_def by (intro continuous_intros)
+  have GA: "continuous_on UNIV (\<lambda>y. G (A y))"
+    by (rule continuous_on_compose2[OF G(4) Acont]) simp
+  have main: "test_fun_C2 (\<lambda>z. \<phi> (A z))
+      (\<lambda>z. c *\<^sub>R (transpose R *v g (A z)))
+      ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x"
+    unfolding test_fun_C2_def
+  proof (intro exI[of _ "\<lambda>y. (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)"] conjI allI)
+    fix y :: "real^'n"
+    have comp: "((\<lambda>z. \<phi> (A z)) has_derivative
+        (\<lambda>h. g (A y) \<bullet> (c *\<^sub>R (R *v h)))) (at y)"
+      by (rule has_derivative_compose[OF dA G(1)])
+    have eq: "(\<lambda>h. g (A y) \<bullet> (c *\<^sub>R (R *v h)))
+        = (\<lambda>h :: real^'n. (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h)"
+    proof (rule ext)
+      fix h :: "real^'n"
+      have "g (A y) \<bullet> (c *\<^sub>R (R *v h)) = c * (g (A y) \<bullet> (R *v h))"
+        by (rule inner_scaleR_right)
+      also have "g (A y) \<bullet> (R *v h) = (transpose R *v g (A y)) \<bullet> h"
+        by (rule inner_matrix_transpose)
+      also have "c * ((transpose R *v g (A y)) \<bullet> h)
+          = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h"
+        by (rule inner_scaleR_left[symmetric])
+      finally show "g (A y) \<bullet> (c *\<^sub>R (R *v h))
+          = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h" .
+    qed
+    show "((\<lambda>z. \<phi> (A z)) has_derivative
+        (\<lambda>h. (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h)) (at y)"
+      using comp unfolding eq .
+  next
+    fix y :: "real^'n"
+    have dgA: "((\<lambda>z. g (A z)) has_derivative
+        (\<lambda>h. G (A y) *v (c *\<^sub>R (R *v h)))) (at y)"
+      by (rule has_derivative_compose[OF dA G(2)])
+    have blT: "bounded_linear ((*v) (transpose R :: real^'n^'n))"
+      by (rule matrix_vector_mul_bounded_linear)
+    have d1: "((\<lambda>z. transpose R *v g (A z)) has_derivative
+        (\<lambda>h. transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))) (at y)"
+      by (rule bounded_linear.has_derivative[OF blT dgA])
+    have d2: "((\<lambda>z. c *\<^sub>R (transpose R *v g (A z))) has_derivative
+        (\<lambda>h. c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h)))))) (at y)"
+      using d1 by (auto intro!: derivative_eq_intros)
+    have eq2: "(\<lambda>h. c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h)))))
+        = (\<lambda>h. ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h)"
+    proof (rule ext)
+      fix h :: "real^'n"
+      have "c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))
+          = c *\<^sub>R (transpose R *v (c *\<^sub>R (G (A y) *v (R *v h))))"
+        by (simp add: matvec_scaleR_right')
+      also have "\<dots> = (c * c) *\<^sub>R (transpose R *v (G (A y) *v (R *v h)))"
+        by (simp add: matvec_scaleR_right')
+      also have "\<dots> = (c * c) *\<^sub>R ((transpose R ** G (A y) ** R) *v h)"
+        by (simp add: matrix_vector_mul_assoc matrix_mul_assoc)
+      also have "\<dots> = ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h"
+        by (simp add: power2_eq_square scaleR_matrix_vector_assoc)
+      finally show "c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))
+          = ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h" .
+    qed
+    show "((\<lambda>z. c *\<^sub>R (transpose R *v g (A z))) has_derivative
+        (\<lambda>h. ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h)) (at y)"
+      using d2 unfolding eq2 .
+  next
+    fix y :: "real^'n"
+    have "transpose (transpose R ** G (A y) ** R)
+        = transpose R ** transpose (G (A y)) ** transpose (transpose R)"
+      by (simp add: matrix_transpose_mul matrix_mul_assoc)
+    also have "\<dots> = transpose R ** G (A y) ** R" using G(3) by simp
+    finally show "transpose ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R))
+        = (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)"
+      by (simp add: transpose_scaleR)
+  next
+    show "continuous_on UNIV (\<lambda>y. (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R))"
+      using conj_mat_continuous[OF GA] by (intro continuous_intros)
+  next
+    show "(c\<^sup>2) *\<^sub>R (transpose R ** G (A x) ** R)
+        = (c\<^sup>2) *\<^sub>R (transpose R ** H ** R)" by (simp add: G(5))
+  qed
+  show ?thesis using main unfolding A_def .
+qed
+
 theorem visc_supersol_env_affine:
   fixes w :: "real^'n::finite \<Rightarrow> real" and K \<Omega> :: "(real^'n) set"
     and R :: "real^'n^'n" and b :: "real^'n"
