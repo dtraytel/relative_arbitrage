@@ -38,7 +38,6 @@ session Relative_Arbitrage = Path_Space_Tightness +
     Path_Tightness_Market
     Exit_Time_Semicontinuity
     Exit_Semicontinuity
-    Deterministic_Radius_Market
     Exit_Class
     Exit_Class_Compactness
     Exit_Class_DPP

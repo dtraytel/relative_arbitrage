@@ -5059,9 +5059,7 @@ qed
 
 text \<open>The other plumbing piece the witness needs: the class stops its
   processes at the horizon, so a martingale must be stopped at the
-  deterministic time \<open>T\<close>.  (The repo's
-  \<open>Deterministic_Radius_Market.martingale_stopped_deterministic\<close> is not
-  reachable from here.)\<close>
+  deterministic time \<open>T\<close>.\<close>
 
 lemma martingale_stopped_const:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
