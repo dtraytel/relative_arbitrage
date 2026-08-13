@@ -102,9 +102,8 @@ theorem uncapped_value_function_agrees:
   shows "iexit_val k L K x = exit_val k L T K x"
   using assms by (rule iexit_val_eq_exit_val_bounded)
 
-text \<open>Every clause below therefore holds verbatim for \<^const>\<open>iexit_val\<close>, the
-  paper's own \<open>v\<close>, under its own hypotheses; the hypothesis \<open>Tbig\<close> that
-  appears in them says exactly that the horizon does not bind.\<close>
+text \<open>The clauses of Theorem 1.1 below are stated for \<^const>\<open>iexit_val\<close>, so
+  no horizon appears in them at all.\<close>
 
 section \<open>Viscosity solutions in the sense of Definition 3.1\<close>
 
@@ -142,25 +141,31 @@ theorem convex_sets_are_expandable:
 
 section \<open>The five clauses of Theorem 1.1\<close>
 
-text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>  The value never exceeds the horizon, and on a
-  ball it is bounded by the closed-form value of Example 3.1.\<close>
+text \<open>Stated for \<^const>\<open>iexit_val\<close>, the value function of Eq. (1.6) itself.
+  No horizon appears: each proof chooses one large enough not to bind and
+  transports the corresponding capped clause along
+  \<^theory_text>\<open>uncapped_value_function_agrees\<close>.  Boundedness of \<open>K\<close>, which the paper
+  assumes anyway, is what fixes how large.\<close>
+
+text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>  On a ball the value is bounded by the
+  closed-form value of Example 3.1.\<close>
 
 theorem clause_0_finite:
   fixes K :: "(real^'n::finite) set"
-  assumes "0 \<le> T" and "0 \<le> L" and "K \<subseteq> cball 0 rK" and "0 \<le> rK"
-    and "k < CARD('n)"
-  shows "\<bar>enn2real (exit_val k L T K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
-  by (rule exit_val_real_bounded[OF assms(5,1,2,3,4)])
+  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
+    and "K \<subseteq> cball 0 rK" and "0 \<le> rK"
+  shows "\<bar>enn2real (iexit_val k L K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
+  by (rule iexit_val_real_bounded[OF assms])
 
 text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
 
 theorem clause_1_upper_semicontinuous:
   fixes K :: "(real^'n::finite) set"
-  assumes "0 < T" and "1 \<le> L" and "closed K" and "k < CARD('n)"
+  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
     and "K \<subseteq> cball 0 rK"
-    and "enn2real (exit_val k L T K z) < c"
-  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (exit_val k L T K y) < c"
-  by (rule exit_val_real_usc[OF assms])
+    and "enn2real (iexit_val k L K z) < c"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (iexit_val k L K y) < c"
+  by (rule iexit_val_real_usc[OF assms])
 
 text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>  With the operator of Eq. (1.9) itself,
   orthogonality constraint included, and with the touching taken locally, which
@@ -168,22 +173,21 @@ text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>  With the opera
 
 theorem clause_2_subsolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "0 < T" and "1 \<le> L" and "closed K" and "k < CARD('n)"
-  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (exit_val k L T K z))"
-  by (rule exit_val_visc_subsol[OF assms])
+  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
+    and "K \<subseteq> cball 0 rK"
+  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (iexit_val k L K z))"
+  by (rule iexit_val_visc_subsol[OF assms])
 
 text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form of Definition 3.1(b), for
-  the lower semicontinuous envelope.  The hypothesis says the horizon does not
-  bind at interior points.\<close>
+  the lower semicontinuous envelope.\<close>
 
 theorem clause_2_supersolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "0 < T" and "1 < L" and "1 \<le> k" and "k < CARD('n)" and "closed K"
-    and "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
-           lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "closed K"
+    and "K \<subseteq> cball 0 rK"
   shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (exit_val k L T K u))"
-  by (rule exit_val_supersol_lsc[OF assms])
+      (\<lambda>u. enn2real (iexit_val k L K u))"
+  by (rule iexit_val_supersol_lsc[OF assms])
 
 text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)\<close>, in the viscosity
   sense of Definition 3.1.  Both halves hold with the boundary gate included.
@@ -197,22 +201,22 @@ text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)
 
 theorem clause_3_boundary_subsolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "0 < T" and "1 \<le> L" and "closed K" and "k < CARD('n)"
+  assumes "k < CARD('n)" and "1 \<le> L" and "closed K"
+    and "K \<subseteq> cball 0 rK"
   shows "visc_subsol_env k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (exit_val k L T K x)})
-      (\<lambda>z. enn2real (exit_val k L T K z))"
-  by (rule exit_val_subsol_bc[OF assms])
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (iexit_val k L K x)})
+      (\<lambda>z. enn2real (iexit_val k L K z))"
+  by (rule iexit_val_subsol_bc[OF assms])
 
 theorem clause_3_boundary_supersolution:
   fixes K :: "(real^'n::finite) set"
-  assumes "0 < T" and "1 < L" and "1 \<le> k" and "k < CARD('n)" and "closed K"
+  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k" and "closed K"
     and "K \<subseteq> cball 0 rK"
-    and "2 * (rK * rK) / real (CARD('n) - k) < T"
   shows "visc_supersol_env k L K
       (interior K \<union> {x \<in> K - interior K.
-         lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
-      (lsc_env (\<lambda>z. enn2real (exit_val k L T K z)))"
-  by (rule exit_val_supersol_bc[OF assms])
+         lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
+      (lsc_env (\<lambda>z. enn2real (iexit_val k L K z)))"
+  by (rule iexit_val_supersol_bc[OF assms])
 
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>  Any bounded upper semicontinuous function that
   satisfies both clauses of Definition 3.1 with their boundary gates, on an
@@ -221,10 +225,9 @@ text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>  Any bounded upper se
 
 theorem clause_4_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes "0 < T" and "1 < L" and "1 \<le> k" and "k < CARD('n)"
+  assumes "k < CARD('n)" and "1 < L" and "1 \<le> k"
     and "compact K" and "K \<noteq> {}" and "expandable K"
     and "K \<subseteq> cball 0 rK" and "0 \<le> rK"
-    and "2 * (rK * rK) / real (CARD('n) - k) < T"
     and "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and "\<And>y. \<bar>u y\<bar> \<le> rK * rK / real (CARD('n) - k)"
     and "visc_subsol_env k L K
@@ -232,35 +235,33 @@ theorem clause_4_uniqueness:
     and "visc_supersol_env k L K
            (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
     and "x \<in> K"
-  shows "u x = enn2real (exit_val k L T K x)"
-  by (rule theorem_1_1_uniqueness_faithful[OF assms])
+  shows "u x = enn2real (iexit_val k L K x)"
+  by (rule iexit_val_uniqueness[OF assms])
 
 section \<open>Example 3.1\<close>
 
 text \<open>On a ball the value function is given in closed form, for every
-  \<open>1 \<le> k < n\<close>.  The hypothesis on \<open>T\<close> says that the horizon does not bind.\<close>
+  \<open>1 \<le> k < n\<close>.\<close>
 
 theorem example_3_1_closed_form:
   fixes r :: real and x :: "real^'n::finite"
-  assumes "1 \<le> k" and "k < CARD('n)" and "1 \<le> L" and "0 < T" and "0 < r"
-    and "r * r / real (CARD('n) - k) \<le> T"
-  shows "enn2real (exit_val k L T (cball 0 r) x)
+  assumes "1 \<le> k" and "k < CARD('n)" and "1 \<le> L" and "0 < r"
+  shows "enn2real (iexit_val k L (cball 0 r) x)
       = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
-  by (rule example_3_1[OF assms])
+  by (rule example_3_1_uncapped[OF assms])
 
 section \<open>What is not claimed\<close>
 
 text \<open>
-  \<^item> The horizon \<open>T\<close> is part of the clauses above; the paper has none.  It is
-    not a restriction --- the paper's own value function on \<open>C([0,\<infinity>))\<close> is
-    formalised and proved equal to it --- but the clauses are stated for the
-    capped one, and the identification carries the hypothesis that the horizon
-    does not bind.
   \<^item> Continuity of the value function is not proved.  It is not needed for
     Theorem 1.1, and the paper proves it only in its Section 5 under further
     hypotheses.
   \<^item> The clause \<open>1 < L\<close> is used where the paper writes \<open>L \<ge> 1\<close>; the strict form
     is what the supersolution argument consumes.
+  \<^item> The clauses above assume \<open>K\<close> bounded.  The paper's \<open>K\<close> is compact, so this
+    is not a restriction, but it is used: it is what makes a horizon large
+    enough to be inert exist, and it is what the a priori bound of Eq. (3.10)
+    needs.
 \<close>
 
 (*<*)

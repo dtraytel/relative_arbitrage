@@ -1255,6 +1255,29 @@ proof (rule iexit_val_eq_exit_val[OF less_imp_le[OF T] L Kc])
     using L by (intro exit_val_le_ball_bound[OF k less_imp_le[OF T] _ KB]) simp
   also have "\<dots> < ennreal T" by (rule ennreal_lessI[OF T big])
   finally show "exit_val k L T K x < ennreal T" .
-qed(*<*)
+qed
+
+text \<open>The bound is largest at the centre, so the hypothesis is uniform in
+  \<open>x\<close>: one horizon beyond \<open>r\<^sup>2/(n-k)\<close> identifies the two value functions
+  everywhere at once, which is what a clause quantified over points needs.\<close>
+
+corollary iexit_val_eq_exit_val_ball:
+  fixes K :: "(real^'n::finite) set" and rK :: real
+  assumes k: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+    and big: "rK * rK / real (CARD('n) - k) < T"
+  shows "iexit_val k L K x = exit_val k L T K x"
+proof (rule iexit_val_eq_exit_val_bounded[OF k L _ Kc KB])
+  have nk: "0 < real (CARD('n) - k)" using k by simp
+  have sq: "0 \<le> rK * rK" by simp
+  then have "0 \<le> rK * rK / real (CARD('n) - k)" using nk by simp
+  then show "0 < T" using big by (rule order.strict_trans1)
+  have "(rK * rK - x \<bullet> x) / real (CARD('n) - k)
+      \<le> rK * rK / real (CARD('n) - k)"
+    using nk by (intro divide_right_mono) auto
+  then show "(rK * rK - x \<bullet> x) / real (CARD('n) - k) < T" using big by simp
+qed
+
+(*<*)
 end
 (*>*)

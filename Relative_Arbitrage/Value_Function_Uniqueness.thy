@@ -4,6 +4,7 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 theory Value_Function_Uniqueness
   imports Value_Function_Market Viscosity_Solutions Comparison_Principle
     Exit_Time_Semicontinuity Deterministic_Radius_Market Value_Function_Viscosity
+    Exit_Class_Infinite
 begin
 (*>*)
 
@@ -753,6 +754,194 @@ proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
   then show "(r * r - y \<bullet> y) / real (CARD('n) - k)
       \<le> enn2real (exit_val k L T (cball 0 r) y)"
     unfolding enn2real_ennreal[OF nn] .
+qed
+
+section \<open>The clauses for the value function of Eq. (1.6)\<close>
+
+text \<open>Everything above is stated at a finite horizon.  Since
+  @{thm [source] iexit_val_eq_exit_val_ball} identifies the two value
+  functions uniformly in the point once the horizon exceeds \<open>r\<^sup>2/(n-k)\<close>, the
+  horizon can be chosen inside each proof and disappears from the statements:
+  what follows is Theorem 1.1 for the value function of Eq. (1.6) as the paper
+  writes it, on \<open>C([0,\<infinity>))\<close>.\<close>
+
+lemma nonbinding_horizon_ex:
+  fixes rK :: real
+  assumes k: "k < CARD('n::finite)"
+  shows "\<exists>T :: real. 0 < T \<and> rK * rK / real (CARD('n) - k) < T
+       \<and> 2 * (rK * rK) / real (CARD('n) - k) < T"
+proof -
+  have nk: "0 < real (CARD('n) - k)" using k by simp
+  define B :: real where "B = 2 * (rK * rK) / real (CARD('n) - k)"
+  have B0: "0 \<le> B" unfolding B_def using nk by simp
+  have le: "rK * rK / real (CARD('n) - k) \<le> B"
+    unfolding B_def using nk by (intro divide_right_mono) auto
+  show ?thesis
+  proof (intro exI[of _ "B + 1"] conjI)
+    show "0 < B + 1" using B0 by simp
+    show "rK * rK / real (CARD('n) - k) < B + 1" using le by simp
+    show "2 * (rK * rK) / real (CARD('n) - k) < B + 1"
+      unfolding B_def[symmetric] by simp
+  qed
+qed
+
+text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>\<close>
+
+theorem iexit_val_real_bounded:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
+  shows "\<bar>enn2real (iexit_val k L K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
+proof -
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq
+    using L by (intro exit_val_real_bounded[OF kn less_imp_le[OF T0] _ KB r0]) simp
+qed
+
+text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
+
+theorem iexit_val_real_usc:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+    and lt: "enn2real (iexit_val k L K z) < c"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (iexit_val k L K y) < c"
+proof -
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq
+    by (rule exit_val_real_usc[OF T0 L Kc kn KB lt[unfolded eq]])
+qed
+
+text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>\<close>
+
+theorem iexit_val_visc_subsol:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (iexit_val k L K z))"
+proof -
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq by (rule exit_val_visc_subsol[OF T0 L Kc kn])
+qed
+
+text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form of Definition 3.1(b) for
+  the lower semicontinuous envelope.  The hypothesis that the horizon does not
+  bind at interior points is discharged by the a priori bound, so it too is
+  gone.\<close>
+
+theorem iexit_val_supersol_lsc:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+  shows "visc_supersol_lsc k L K (interior K)
+      (\<lambda>u. enn2real (iexit_val k L K u))"
+proof -
+  have L: "1 \<le> L" using L1 by simp
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq
+    by (rule exit_val_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB T2])
+qed
+
+text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)\<close>, in the
+  viscosity sense of Definition 3.1, both halves with the boundary gate.\<close>
+
+theorem iexit_val_subsol_bc:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+  shows "visc_subsol_env k L K
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (iexit_val k L K x)})
+      (\<lambda>z. enn2real (iexit_val k L K z))"
+proof -
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq by (rule exit_val_subsol_bc[OF T0 L Kc kn])
+qed
+
+theorem iexit_val_supersol_bc:
+  fixes K :: "(real^'n::finite) set"
+  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+  shows "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K.
+         lsc_env (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
+      (lsc_env (\<lambda>z. enn2real (iexit_val k L K z)))"
+proof -
+  have L: "1 \<le> L" using L1 by simp
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq
+    by (rule exit_val_supersol_bc[OF T0 L1 k1 kn Kc KB T2])
+qed
+
+text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>\<close>
+
+theorem iexit_val_uniqueness:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes kn: "k < CARD('n)" and L1: "1 < L" and k1: "1 \<le> k"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+    and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
+    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and bnd: "\<And>y. \<bar>u y\<bar> \<le> rK * rK / real (CARD('n) - k)"
+    and sub: "visc_subsol_env k L K
+        (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+    and sups: "visc_supersol_env k L K
+        (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
+    and xK: "x \<in> K"
+  shows "u x = enn2real (iexit_val k L K x)"
+proof -
+  have L: "1 \<le> L" using L1 by simp
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain T :: real where T0: "0 < T"
+    and T1: "rK * rK / real (CARD('n) - k) < T"
+    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L K y = exit_val k L T K y" for y
+    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  show ?thesis unfolding eq
+    by (rule theorem_1_1_uniqueness_faithful[OF T0 L1 k1 kn cK neK expK KB r0
+          T2 usc bnd sub sups xK])
+qed
+
+text \<open>\<^bold>\<open>Example 3.1\<close>, in closed form and with no horizon left in it.\<close>
+
+theorem example_3_1_uncapped:
+  fixes r :: real and x :: "real^'n::finite"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L: "1 \<le> L" and r0: "0 < r"
+  shows "enn2real (iexit_val k L (cball 0 r) x)
+      = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
+proof -
+  obtain T :: real where T0: "0 < T"
+    and T1: "r * r / real (CARD('n) - k) < T"
+    using nonbinding_horizon_ex[OF kn] by blast
+  have eq: "iexit_val k L (cball 0 r) y = exit_val k L T (cball 0 r) y" for y :: "real^'n"
+    by (rule iexit_val_eq_exit_val_ball[OF kn L closed_cball subset_refl T1])
+  show ?thesis unfolding eq
+    by (rule example_3_1[OF k1 kn L T0 r0 less_imp_le[OF T1]])
 qed
 
 (*<*)
