@@ -114,6 +114,17 @@ through Burkholder–Davis–Gundy, with constant `66 C²`. Iterating
 Cauchy–Schwarz and the tower property gives the same bound with `8 C²`, and
 avoids BDG entirely.
 
+**The supersolution half seems to need `L > 1`, which Theorem 1.1 does not
+assume.** Case 1 of Section 3 modifies the witness so that
+`λ₍₁₎(a), …, λ₍ₙ₋ₖ₎(a) ∈ (1,L)`, an empty interval at `L = 1`, where the
+constraint set pins those eigenvalues to `1` exactly and has no slack. The
+formalisation needs the same strictness in the same place
+(`feasible_strict_eigendata`), so clauses (2b), (3b) and hence uniqueness are
+proved here only for `L > 1`. By Remark 1.1(c) `L = 1` is the Ambrosio–Soner
+co-dimension mean curvature flow case, so this is not a corner of the
+parameter range. We have no counterexample — only the observation that the
+route breaks.
+
 **Uniform convergence of sup-convolutions fails for usc data.** With `u = 1`
 at `0` and `u = 0` elsewhere on the unit ball, `uᵋ(x) ≥ max(1 − |x|²/2ε, 0)`,
 so at `|x| = √ε` the gap is at least `1/2` for every `ε`. Sup-convolutions of

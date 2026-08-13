@@ -84,6 +84,36 @@ curvature flow --- the geometric payoff of the paper --- and the uniqueness
 clause is unproved precisely there.  This is the most consequential of the two
 items and should be the first thing put to the authors.
 
+**The paper's own proof appears to need `L > 1` at the same step.**  In Case 1
+of the supersolution argument (`grad phi(x) != 0`) the paper writes
+
+> "We can modify a such that lambda_(1)(a), lambda_(2)(a), ..., lambda_(n-k)(a)
+> in (1,L)"
+
+--- the OPEN interval `(1,L)`, empty when `L = 1`.  That is the same move as
+`feasible_strict_eigendata`, so the strictness here is not an artefact of the
+formalisation: it reproduces the paper's argument faithfully, dependence on
+`L > 1` included.  Theorem 1.1 is nevertheless stated for `L >= 1`, and no
+approximation `L \<down> 1` appears.
+
+CAVEAT: the quotation above and the claim that no approximation argument
+appears were obtained by automated extraction from the arXiv HTML, not by
+reading Section 3 through.  Verify against the paper before putting this to
+the authors --- an earlier conclusion in this project about what the paper says
+was wrong for exactly this reason.
+
+Adjacent, and explicitly open in the paper (Remark 1.1(c)):
+
+> "In view of the right-hand side of (1.6), it is natural to conjecture that
+> the value function v does not depend on L, at least when K is convex.  We
+> were not able to show this and leave it as a tantalizing open problem."
+
+That is a different question --- `L`-independence of `v`, not uniqueness at
+`L = 1` --- and it does not settle this one, since `F` itself depends on `L`.
+
+Nothing found shows (2b)/(3b)/(4) are FALSE at `L = 1`.  What is established is
+that the only known route to them, in the paper and here alike, breaks there.
+
 Two routes out, neither attempted:
 
 * a different witness at `L = 1`, since the rigidity means the perturbation
