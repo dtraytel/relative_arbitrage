@@ -366,6 +366,136 @@ lemma visc_supersol_env_imp_env2:
   using assms test_fun_C2_imp_test_fun_at
   unfolding visc_supersol_env_def visc_supersol_env2_def by blast
 
+text \<open>The two places where the paper-facing hypothesis is actually consumed:
+  a local touching is deepened by a quartic into a global one over \<open>K\<close>.  The
+  \<open>C\<^sup>2\<close> versions are the originals with @{thm [source] test_fun_C2_quartic_shift}
+  in place of @{thm [source] test_fun_at_quartic_shift}; the quartic shift of a
+  \<open>C\<^sup>2\<close> function is again \<open>C\<^sup>2\<close>, so nothing else moves.\<close>
+
+theorem visc_supersol_env2_local:
+  fixes K :: "(real^'n::finite) set" and w \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assumes sup: "visc_supersol_env2 k L K \<Omega> w"
+    and x\<Omega>: "x \<in> \<Omega>"
+    and tf: "test_fun_C2 \<phi> g H x"
+    and wlo: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
+    and phi: "\<And>y. y \<in> K \<Longrightarrow> \<phi> y \<le> B\<phi>"
+    and r0: "0 < r"
+    and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
+  shows "1 \<le> ell_op_usc k L (g x) H"
+proof -
+  have r40: "0 < r ^ 4" using r0 by simp
+  define C where "C = max 0 ((w x - \<phi> x - Bw + B\<phi>) / r ^ 4)"
+  have C0: "0 \<le> C" unfolding C_def by simp
+  have Cbig: "w x - \<phi> x - Bw + B\<phi> \<le> C * r ^ 4"
+  proof -
+    have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 \<le> C" unfolding C_def by simp
+    then have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 * r ^ 4 \<le> C * r ^ 4"
+      by (rule mult_right_mono) (use r40 in linarith)
+    then show ?thesis using r40 by simp
+  qed
+  define \<psi> where "\<psi> = (\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2)"
+  define gg where
+    "gg = (\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))"
+  have tf': "test_fun_C2 \<psi> gg H x"
+    unfolding \<psi>_def gg_def by (rule test_fun_C2_quartic_shift[OF tf])
+  have ggx: "gg x = g x" unfolding gg_def by simp
+  have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
+  have glob: "w x - \<psi> x \<le> w y - \<psi> y" if yK: "y \<in> K" for y
+  proof (cases "y \<in> ball x r")
+    case True
+    have nn: "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_nonneg_nonneg[OF C0]) simp
+    show ?thesis using lm[OF True] nn unfolding \<psi>_def psix[unfolded \<psi>_def]
+      by simp
+  next
+    case False
+    then have dxy: "r \<le> dist x y" by simp
+    have sq: "r\<^sup>2 \<le> (y - x) \<bullet> (y - x)"
+    proof -
+      have "r \<le> norm (y - x)"
+        using dxy by (simp add: dist_norm norm_minus_commute)
+      then have "r\<^sup>2 \<le> (norm (y - x))\<^sup>2" using r0 by (intro power_mono) auto
+      then show ?thesis by (simp add: dot_square_norm)
+    qed
+    have q4: "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
+    proof -
+      have "(r\<^sup>2)\<^sup>2 \<le> ((y - x) \<bullet> (y - x))\<^sup>2" using sq by (intro power_mono) auto
+      then show ?thesis by (simp add: power_even_eq)
+    qed
+    have cq: "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_left_mono[OF q4 C0])
+    have lo: "Bw \<le> w y" by (rule wlo[OF yK])
+    have hi: "\<phi> y \<le> B\<phi>" by (rule phi[OF yK])
+    show ?thesis unfolding \<psi>_def using Cbig cq lo hi by simp
+  qed
+  have "1 \<le> ell_op_usc k L (gg x) H"
+    using sup[unfolded visc_supersol_env2_def] x\<Omega> tf' glob by blast
+  then show ?thesis unfolding ggx .
+qed
+
+theorem visc_subsol_env2_local:
+  fixes K :: "(real^'n::finite) set" and u \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assumes sub: "visc_subsol_env2 k L K \<Omega> u"
+    and x\<Omega>: "x \<in> \<Omega>"
+    and tf: "test_fun_C2 \<phi> g H x"
+    and uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
+    and phi: "\<And>y. y \<in> K \<Longrightarrow> B\<phi> \<le> \<phi> y"
+    and r0: "0 < r"
+    and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
+  shows "ell_op_lsc k L (g x) H \<le> 1"
+proof -
+  have r40: "0 < r ^ 4" using r0 by simp
+  define C where "C = max 0 ((Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4)"
+  have C0: "0 \<le> C" unfolding C_def by simp
+  have Cbig: "Bu - B\<phi> - (u x - \<phi> x) \<le> C * r ^ 4"
+  proof -
+    have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 \<le> C" unfolding C_def by simp
+    then have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 * r ^ 4 \<le> C * r ^ 4"
+      by (rule mult_right_mono) (use r40 in linarith)
+    then show ?thesis using r40 by simp
+  qed
+  define \<psi> where "\<psi> = (\<lambda>z. \<phi> z - (- C) * ((z - x) \<bullet> (z - x))\<^sup>2)"
+  define gg where
+    "gg = (\<lambda>z. g z - (4 * (- C) * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))"
+  have tf': "test_fun_C2 \<psi> gg H x"
+    unfolding \<psi>_def gg_def by (rule test_fun_C2_quartic_shift[OF tf])
+  have ggx: "gg x = g x" unfolding gg_def by simp
+  have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
+  have glob: "u y - \<psi> y \<le> u x - \<psi> x" if yK: "y \<in> K" for y
+  proof (cases "y \<in> ball x r")
+    case True
+    have nn: "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_nonneg_nonneg[OF C0]) simp
+    show ?thesis using lm[OF True] nn unfolding \<psi>_def psix[unfolded \<psi>_def]
+      by simp
+  next
+    case False
+    then have dxy: "r \<le> dist x y" by simp
+    have sq: "r\<^sup>2 \<le> (y - x) \<bullet> (y - x)"
+    proof -
+      have "r \<le> norm (y - x)"
+        using dxy by (simp add: dist_norm norm_minus_commute)
+      then have "r\<^sup>2 \<le> (norm (y - x))\<^sup>2" using r0 by (intro power_mono) auto
+      then show ?thesis by (simp add: dot_square_norm)
+    qed
+    have q4: "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
+    proof -
+      have "(r\<^sup>2)\<^sup>2 \<le> ((y - x) \<bullet> (y - x))\<^sup>2" using sq by (intro power_mono) auto
+      then show ?thesis by (simp add: power_even_eq)
+    qed
+    have cq: "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_left_mono[OF q4 C0])
+    have hi: "u y \<le> Bu" by (rule uhi[OF yK])
+    have lo: "B\<phi> \<le> \<phi> y" by (rule phi[OF yK])
+    show ?thesis unfolding \<psi>_def using Cbig cq hi lo by simp
+  qed
+  have "ell_op_lsc k L (gg x) H \<le> 1"
+    using sub[unfolded visc_subsol_env2_def] x\<Omega> tf' glob by blast
+  then show ?thesis unfolding ggx .
+qed
+
 definition supersol_jet ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
   where
@@ -376,7 +506,7 @@ definition supersol_jet ::
 
 theorem visc_supersol_env_imp_jet:
   fixes K :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real"
-  assumes sup: "visc_supersol_env k L K \<Omega> w"
+  assumes sup: "visc_supersol_env2 k L K \<Omega> w"
     and Kb: "bounded K"
     and wlo: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
   shows "supersol_jet k L \<Omega> w"
@@ -409,9 +539,9 @@ proof (intro ballI allI impI)
     define \<psi> where "\<psi> = (\<lambda>z. \<phi> x + (g x \<bullet> (z - x)
       + ((z - x) \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2))"
     define gg where "gg = (\<lambda>z. g x + (H - \<delta> *\<^sub>R mat 1) *v (z - x))"
-    have tfp: "test_fun_at \<psi> gg (H - \<delta> *\<^sub>R mat 1) x"
+    have tfp: "test_fun_C2 \<psi> gg (H - \<delta> *\<^sub>R mat 1) x"
       unfolding \<psi>_def gg_def
-      by (rule test_fun_at_add_const[OF jet_test_fun_at[OF symM]])
+      by (rule test_fun_C2_add_const[OF jet_test_fun_C2[OF symM]])
     have ggx: "gg x = g x" unfolding gg_def by simp
     have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
     obtain B where B: "\<And>z. z \<in> K \<Longrightarrow>
@@ -436,7 +566,7 @@ proof (intro ballI allI impI)
       then show ?thesis using lme[OF y2] unfolding psix by simp
     qed
     have "1 \<le> ell_op_usc k L (gg x) (H - \<delta> *\<^sub>R mat 1)"
-      by (rule visc_supersol_env_local[OF sup x tfp wlo Bp r0' lm'])
+      by (rule visc_supersol_env2_local[OF sup x tfp wlo Bp r0' lm'])
     then show ?thesis unfolding ggx .
   qed
   define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
@@ -502,7 +632,7 @@ text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<clo
 
 theorem visc_subsol_env_imp_visc_subsol:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes sub: "visc_subsol_env k L K \<Omega> u"
+  assumes sub: "visc_subsol_env2 k L K \<Omega> u"
     and Kb: "bounded K"
     and uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
@@ -535,9 +665,9 @@ proof (intro ballI allI impI)
     define \<psi> where "\<psi> = (\<lambda>z. \<phi> x + (g x \<bullet> (z - x)
       + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2))"
     define gg where "gg = (\<lambda>z. g x + (H + \<delta> *\<^sub>R mat 1) *v (z - x))"
-    have tfp: "test_fun_at \<psi> gg (H + \<delta> *\<^sub>R mat 1) x"
+    have tfp: "test_fun_C2 \<psi> gg (H + \<delta> *\<^sub>R mat 1) x"
       unfolding \<psi>_def gg_def
-      by (rule test_fun_at_add_const[OF jet_test_fun_at[OF symM]])
+      by (rule test_fun_C2_add_const[OF jet_test_fun_C2[OF symM]])
     have ggx: "gg x = g x" unfolding gg_def by simp
     have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
     obtain B where B: "\<And>z. z \<in> K \<Longrightarrow>
@@ -562,7 +692,7 @@ proof (intro ballI allI impI)
       then show ?thesis using lme[OF y2] unfolding psix by simp
     qed
     have lsc: "ell_op_lsc k L (gg x) (H + \<delta> *\<^sub>R mat 1) \<le> 1"
-      by (rule visc_subsol_env_local[OF sub x tfp uhi Bp r0' lm'])
+      by (rule visc_subsol_env2_local[OF sub x tfp uhi Bp r0' lm'])
     show ?thesis
     proof (cases "g x = 0")
       case True
@@ -12099,7 +12229,8 @@ proof -
       then show thesis by (rule that)
     qed
     have sup: "supersol_jet k L (interior K) w"
-      by (rule visc_supersol_env_imp_jet[OF supE Kb Bw])
+      by (rule visc_supersol_env_imp_jet
+            [OF visc_supersol_env_imp_env2[OF supE] Kb Bw])
     obtain Bu where Bu: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
     proof -
       have "bounded (u ` K)"
@@ -12115,8 +12246,8 @@ proof -
       then show thesis by (rule that)
     qed
     have sub: "visc_subsol k L (interior K) u"
-      by (rule visc_subsol_env_imp_visc_subsol[OF subE Kb Bu
-            kk(1) kk(2) LL])
+      by (rule visc_subsol_env_imp_visc_subsol
+            [OF visc_subsol_env_imp_env2[OF subE] Kb Bu kk(1) kk(2) LL])
     show "\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
     proof (rule ccontr)
       assume nb: "\<not> (\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x)"
@@ -12877,7 +13008,7 @@ proof (rule ccontr)
   have wlo: "\<And>y. y \<in> K' \<Longrightarrow> - B \<le> w y" using wloB by blast
   have supj0: "supersol_jet k L (interior K') w"
     by (rule visc_supersol_env_imp_jet
-        [OF supw compact_imp_bounded[OF cK'] wlo])
+        [OF visc_supersol_env_imp_env2[OF supw] compact_imp_bounded[OF cK'] wlo])
   have supj: "supersol_jet k L (interior K') wt"
   proof (rule supersol_jet_cong_on[OF supj0 open_interior])
     fix y assume "y \<in> interior K'"
@@ -12959,7 +13090,8 @@ proof (rule ccontr)
   have subloc: "visc_subsol k L
       (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
     by (rule visc_subsol_env_imp_visc_subsol
-        [OF subenv compact_imp_bounded[OF cK] _ kk(1) kk(2) LL, where Bu = B])
+        [OF visc_subsol_env_imp_env2[OF subenv] compact_imp_bounded[OF cK] _
+            kk(1) kk(2) LL, where Bu = B])
       (use utB in simp)
   have gateK: "{q. 0 < ut q}
       \<subseteq> interior K \<union> {q \<in> K - interior K. 0 < u q}"
