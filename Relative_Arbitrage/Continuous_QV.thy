@@ -845,6 +845,206 @@ qed
 
 end
 
+section \<open>T3: the matrix case, by polarisation\<close>
+
+text \<open>The scalar theory is applied to \<open>X\<^sub>i + c X\<^sub>j\<close> for \<open>c = 1\<close> and \<open>c = -1\<close>; the
+  difference of the two quadratic variations, divided by four, is the covariation
+  \<open>\<langle>X\<^sub>i, X\<^sub>j\<rangle>\<close>.  Nothing of T1 is redone.\<close>
+
+subsection \<open>The quadratic form at a two-index direction\<close>
+
+text \<open>The direction that polarisation needs is \<open>e\<^sub>i + c e\<^sub>j\<close>; the quadratic form of
+  a matrix there is the corresponding combination of four entries.  The formula
+  is stated so that it also holds when \<open>i = j\<close>, where it reads \<open>(1 + c)\<^sup>2 B\<^sub>i\<^sub>i\<close>.\<close>
+
+lemma inner_mv_axis:
+  fixes B :: "real^'n::finite^'n" and c :: real
+  shows "(axis i 1 + c *\<^sub>R axis j 1) \<bullet> (B *v (axis i 1 + c *\<^sub>R axis j 1))
+       = B $ i $ i + c * (B $ i $ j + B $ j $ i) + c\<^sup>2 * (B $ j $ j)"
+proof -
+  define y :: "real^'n" where "y = axis i 1 + c *\<^sub>R axis j 1"
+  have col: "(B *v axis m 1) $ k = B $ k $ m" for m k
+    by (simp add: matrix_vector_mult_basis column_def)
+  have mv: "(B *v y) $ k = B $ k $ i + c * (B $ k $ j)" for k
+    unfolding y_def
+    by (simp add: matrix_vector_right_distrib matrix_vector_mult_scaleR col)
+  have "y \<bullet> (B *v y) = (B *v y) $ i + c * ((B *v y) $ j)"
+    unfolding y_def by (simp add: inner_add_left inner_axis')
+  also have "\<dots> = B $ i $ i + c * (B $ i $ j + B $ j $ i) + c\<^sup>2 * (B $ j $ j)"
+    by (simp add: mv algebra_simps power2_eq_square)
+  finally show ?thesis unfolding y_def .
+qed
+
+subsection \<open>The matrix functional\<close>
+
+definition qvmat :: "(real \<Rightarrow> real^'n::finite) \<Rightarrow> real \<Rightarrow> real^'n^'n" where
+  "qvmat w t = (\<chi> i. \<chi> j. (qvps (\<lambda>s. w s $ i + w s $ j) t
+                            - qvps (\<lambda>s. w s $ i + (- 1) * (w s $ j)) t) / 4)"
+
+subsection \<open>Standing hypotheses, matrix version\<close>
+
+text \<open>Stated entrywise: the components of \<open>X\<close> are martingales, and so are the
+  compensated products \<open>X\<^sub>i X\<^sub>j - A\<^sub>i\<^sub>j\<close>.  The rate hypothesis splits into the two
+  halves polarisation needs --- the increments of \<open>A\<close> are positive semidefinite,
+  which gives the monotonicity of the scalar compensators, and their entries are
+  \<open>C\<close>-Lipschitz, which gives the upper bound.\<close>
+
+locale bounded_matrix_martingale_compensator =
+  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
+    and X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and A :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"
+    and C R :: real
+  assumes P: "prob_space M"
+    and Xcomp: "\<And>i. martingale M F (0::real) (\<lambda>v \<omega>. X v \<omega> $ i)"
+    and XAcomp: "\<And>i j. martingale M F (0::real)
+                    (\<lambda>v \<omega>. X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j)"
+    and C: "0 \<le> C" and R: "0 \<le> R"
+    and bnd: "\<And>v. 0 \<le> v \<Longrightarrow> AE \<omega> in M. \<forall>i. \<bar>X v \<omega> $ i\<bar> \<le> R"
+    and Apsd: "AE \<omega> in M. \<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                  (\<forall>y. 0 \<le> y \<bullet> ((A q \<omega> - A p \<omega>) *v y))"
+    and Arate: "AE \<omega> in M. \<forall>p q i j. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                  \<bar>A q \<omega> $ i $ j - A p \<omega> $ i $ j\<bar> \<le> C * (q - p)"
+    and A0: "AE \<omega> in M. A 0 \<omega> = 0"
+    and cont: "AE \<omega> in M. \<forall>i. continuous_on {0..} (\<lambda>p. X p \<omega> $ i)"
+begin
+
+text \<open>The polarised scalar process and its compensator.\<close>
+
+definition Xpol :: "real \<Rightarrow> real \<Rightarrow> 'n \<Rightarrow> 'n \<Rightarrow> 'a \<Rightarrow> real" where
+  "Xpol c v i j \<omega> = X v \<omega> $ i + c * (X v \<omega> $ j)"
+
+definition Apol :: "real \<Rightarrow> real \<Rightarrow> 'n \<Rightarrow> 'n \<Rightarrow> 'a \<Rightarrow> real" where
+  "Apol c v i j \<omega> = A v \<omega> $ i $ i + c * (A v \<omega> $ i $ j + A v \<omega> $ j $ i)
+                      + c\<^sup>2 * (A v \<omega> $ j $ j)"
+
+lemma Apol_eq_form:
+  "Apol c v i j \<omega> = (axis i 1 + c *\<^sub>R axis j 1) \<bullet> ((A v \<omega>) *v (axis i 1 + c *\<^sub>R axis j 1))"
+  by (simp add: Apol_def inner_mv_axis)
+
+lemma Apol_diff:
+  "Apol c q i j \<omega> - Apol c p i j \<omega>
+     = (axis i 1 + c *\<^sub>R axis j 1) \<bullet> ((A q \<omega> - A p \<omega>) *v (axis i 1 + c *\<^sub>R axis j 1))"
+proof -
+  have "(axis i 1 + c *\<^sub>R axis j 1) \<bullet> ((A q \<omega> - A p \<omega>) *v (axis i 1 + c *\<^sub>R axis j 1))
+      = (A q \<omega> - A p \<omega>) $ i $ i
+        + c * ((A q \<omega> - A p \<omega>) $ i $ j + (A q \<omega> - A p \<omega>) $ j $ i)
+        + c\<^sup>2 * ((A q \<omega> - A p \<omega>) $ j $ j)"
+    by (rule inner_mv_axis)
+  then show ?thesis by (simp add: Apol_def algebra_simps)
+qed
+
+text \<open>The scalar hypotheses hold for the polarised pair.  All four constants
+  degrade by the same factor: two copies of \<open>R\<close>, four entries of \<open>A\<close>.\<close>
+
+lemma polarised: 
+  assumes c: "\<bar>c\<bar> \<le> 1"
+  shows "bounded_martingale_compensator M F
+           (\<lambda>v \<omega>. Xpol c v i j \<omega>) (\<lambda>v \<omega>. Apol c v i j \<omega>) (4 * C) (2 * R)"
+proof (rule bounded_martingale_compensator.intro)
+  show "prob_space M" by (rule P)
+  show "0 \<le> 4 * C" using C by simp
+  show "0 \<le> 2 * R" using R by simp
+  show "martingale M F 0 (\<lambda>v \<omega>. Xpol c v i j \<omega>)"
+  proof -
+    have "martingale M F 0 (\<lambda>v \<omega>. X v \<omega> $ i + c *\<^sub>R (X v \<omega> $ j))"
+      by (intro martingale.add[OF Xcomp] martingale.scaleR_const[OF Xcomp])
+    then show ?thesis unfolding Xpol_def by simp
+  qed
+  show "martingale M F 0 (\<lambda>v \<omega>. (Xpol c v i j \<omega>)\<^sup>2 - Apol c v i j \<omega>)"
+  proof -
+    have eq: "(\<lambda>v \<omega>. (Xpol c v i j \<omega>)\<^sup>2 - Apol c v i j \<omega>)
+        = (\<lambda>v \<omega>. ((X v \<omega> $ i * X v \<omega> $ i - A v \<omega> $ i $ i)
+                    + c *\<^sub>R (X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j))
+                 + (c *\<^sub>R (X v \<omega> $ j * X v \<omega> $ i - A v \<omega> $ j $ i)
+                    + c\<^sup>2 *\<^sub>R (X v \<omega> $ j * X v \<omega> $ j - A v \<omega> $ j $ j)))"
+      by (rule ext)+ (simp add: Xpol_def Apol_def power2_eq_square algebra_simps)
+    have m1: "martingale M F 0 (\<lambda>v \<omega>. X v \<omega> $ i * X v \<omega> $ i - A v \<omega> $ i $ i)"
+      by (rule XAcomp)
+    have m2: "martingale M F 0 (\<lambda>v \<omega>. c *\<^sub>R (X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j))"
+      by (rule martingale.scaleR_const[OF XAcomp])
+    have m3: "martingale M F 0 (\<lambda>v \<omega>. c *\<^sub>R (X v \<omega> $ j * X v \<omega> $ i - A v \<omega> $ j $ i))"
+      by (rule martingale.scaleR_const[OF XAcomp])
+    have m4: "martingale M F 0 (\<lambda>v \<omega>. c\<^sup>2 *\<^sub>R (X v \<omega> $ j * X v \<omega> $ j - A v \<omega> $ j $ j))"
+      by (rule martingale.scaleR_const[OF XAcomp])
+    show ?thesis unfolding eq
+      by (rule martingale.add[OF martingale.add[OF m1 m2] martingale.add[OF m3 m4]])
+  qed
+  show "AE \<omega> in M. \<bar>Xpol c v i j \<omega>\<bar> \<le> 2 * R" if v: "0 \<le> v" for v
+    using bnd[OF v]
+  proof eventually_elim
+    case (elim \<omega>)
+    have "\<bar>Xpol c v i j \<omega>\<bar> \<le> \<bar>X v \<omega> $ i\<bar> + \<bar>c * (X v \<omega> $ j)\<bar>"
+      unfolding Xpol_def by (rule abs_triangle_ineq)
+    also have "\<dots> = \<bar>X v \<omega> $ i\<bar> + \<bar>c\<bar> * \<bar>X v \<omega> $ j\<bar>" by (simp add: abs_mult)
+    also have "\<dots> \<le> R + 1 * R"
+      using elim c R by (intro add_mono mult_mono) auto
+    finally show ?case by simp
+  qed
+  show "AE \<omega> in M. \<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+          0 \<le> Apol c q i j \<omega> - Apol c p i j \<omega>
+          \<and> Apol c q i j \<omega> - Apol c p i j \<omega> \<le> 4 * C * (q - p)"
+    using Apsd Arate
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (intro allI impI)
+      fix p q :: real assume pq: "0 \<le> p" "p \<le> q"
+      have nn: "0 \<le> Apol c q i j \<omega> - Apol c p i j \<omega>"
+        unfolding Apol_diff using elim(1) pq by blast
+      have e: "\<And>a b. \<bar>A q \<omega> $ a $ b - A p \<omega> $ a $ b\<bar> \<le> C * (q - p)"
+        using elim(2) pq by blast
+      have "Apol c q i j \<omega> - Apol c p i j \<omega>
+          = (A q \<omega> $ i $ i - A p \<omega> $ i $ i)
+            + c * ((A q \<omega> $ i $ j - A p \<omega> $ i $ j) + (A q \<omega> $ j $ i - A p \<omega> $ j $ i))
+            + c\<^sup>2 * (A q \<omega> $ j $ j - A p \<omega> $ j $ j)"
+        by (simp add: Apol_def algebra_simps)
+      also have "\<dots> \<le> C * (q - p) + 1 * (C * (q - p) + C * (q - p)) + 1 * (C * (q - p))"
+      proof (intro add_mono)
+        show "A q \<omega> $ i $ i - A p \<omega> $ i $ i \<le> C * (q - p)" using e by (simp add: abs_le_iff)
+        show "c * ((A q \<omega> $ i $ j - A p \<omega> $ i $ j) + (A q \<omega> $ j $ i - A p \<omega> $ j $ i))
+                \<le> 1 * (C * (q - p) + C * (q - p))"
+        proof -
+          have "c * ((A q \<omega> $ i $ j - A p \<omega> $ i $ j) + (A q \<omega> $ j $ i - A p \<omega> $ j $ i))
+              \<le> \<bar>c * ((A q \<omega> $ i $ j - A p \<omega> $ i $ j) + (A q \<omega> $ j $ i - A p \<omega> $ j $ i))\<bar>"
+            by simp
+          also have "\<dots> = \<bar>c\<bar> * \<bar>(A q \<omega> $ i $ j - A p \<omega> $ i $ j)
+                              + (A q \<omega> $ j $ i - A p \<omega> $ j $ i)\<bar>"
+            by (simp add: abs_mult)
+          also have "\<dots> \<le> 1 * (C * (q - p) + C * (q - p))"
+            using c e[of i j] e[of j i] C pq
+            by (intro mult_mono) (auto intro: order_trans[OF abs_triangle_ineq] add_mono)
+          finally show ?thesis .
+        qed
+        show "c\<^sup>2 * (A q \<omega> $ j $ j - A p \<omega> $ j $ j) \<le> 1 * (C * (q - p))"
+        proof -
+          have c2: "c\<^sup>2 \<le> 1" using sq_mono_abs[OF c] by simp
+          have ax: "axis j (1::real) \<bullet> ((A q \<omega> - A p \<omega>) *v axis j 1)
+              = (A q \<omega> - A p \<omega>) $ j $ j"
+            using inner_mv_axis[of j 0 j "A q \<omega> - A p \<omega>"] by simp
+          have "0 \<le> axis j (1::real) \<bullet> ((A q \<omega> - A p \<omega>) *v axis j 1)"
+            using elim(1) pq by blast
+          then have nnj: "0 \<le> A q \<omega> $ j $ j - A p \<omega> $ j $ j" using ax by simp
+          have le: "A q \<omega> $ j $ j - A p \<omega> $ j $ j \<le> C * (q - p)"
+            using e by (simp add: abs_le_iff)
+          show ?thesis
+            using c2 le nnj C pq by (intro mult_mono) auto
+        qed
+      qed
+      also have "\<dots> = 4 * C * (q - p)" by simp
+      finally show "0 \<le> Apol c q i j \<omega> - Apol c p i j \<omega>
+          \<and> Apol c q i j \<omega> - Apol c p i j \<omega> \<le> 4 * C * (q - p)"
+        using nn by simp
+    qed
+  qed
+  show "AE \<omega> in M. Apol c 0 i j \<omega> = 0"
+    using A0 by eventually_elim (simp add: Apol_def)
+  show "AE \<omega> in M. continuous_on {0..} (\<lambda>p. Xpol c p i j \<omega>)"
+    using cont by eventually_elim (simp add: Xpol_def continuous_intros)
+qed
+
+(*<*)
+end
+(*>*)
+
 (*<*)
 end
 (*>*)
