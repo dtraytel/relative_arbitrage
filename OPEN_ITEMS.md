@@ -106,10 +106,34 @@ deliver, and where the plan below was wrong:
   no special case at `t = 0`, where the index set is empty and both sides vanish.
   Bonus: the supremum uses only times `< t`, so adaptedness is immediate.
 
-Two hypotheses the plan did not name, both needed and both true in the class:
-the increments of `A` are positive semidefinite (this is what makes the polarised
-scalar compensators nondecreasing), and `X` is uniformly bounded (this is what
-discharges every integrability side condition, so the locale states none).
+Two hypotheses the plan did not name, both needed: the increments of `A` are
+positive semidefinite (this is what makes the polarised scalar compensators
+nondecreasing — polarisation at `e_i +- e_j` is exactly a quadratic form), and
+`X` is uniformly bounded (this discharges every integrability side condition, so
+the locale states none of them).
+
+**The boundedness one is FALSE in the class**, and that turned out to gate T5–T7.
+It is now removed, in `Relative_Arbitrage/Px_Bridge.thy`:
+
+* `qvps_eq_A_stopped` — the identification at one localisation level.
+* `qvps_eq_A_localised` — scalar, no uniform bound: an `L^2` continuous
+  martingale with a Lipschitz compensator suffices.
+* `qvmat_eq_A_localised` — the same for the matrix functional.
+
+The route is `tau_R = etime (Suc R) {y. B + Suc R <= norm y} X`: stopping makes
+the process bounded, `Stopped_Localization.stopped_martingale_L2` and
+`stopped_compensated_square` carry the martingale and compensator properties
+through unconditionally, `Exit_Time.etime_stopping_time` and
+`etime_stays_in_cball` supply the stopping time and the bound, and the three
+`qvp`/`qvps` congruences make stopping invisible to the functional below the
+stopping time. Levels are indexed by naturals, so one countable intersection
+serves all of them. Note the hypotheses are POINTWISE on `space M`, not a.e. —
+that is what the stopping arguments need; `Stopped_Localization`'s
+`restrict_full` package is the intended way to get there from an a.e. statement.
+
+**T5 is DONE**: `xclass` and `xval` in `Relative_Arbitrage/Px_Bridge.thy`, with
+the destructor lemmas `xclass_prob`/`_sets`/`_start`/`_martingale`/`_compensator`.
+The shape is as planned below, so the design note is kept for the record.
 
 **T5 --- the paper's class.**  Define
 
@@ -132,6 +156,11 @@ reading already recorded there.
   by `qvmat_measurable`; `qvmat = A` a.s. by `qvmat_eq_A_sym`, so all four
   clauses transfer.  The martingale clause is where `F^(X,qvmat) = F^X` earns
   its keep.
+
+  Both bullets need `qvmat_eq_A_localised`, not just the second: under the
+  pushforward the compensator has to be recovered as `qvmat w`, a functional of
+  the path, because the second coordinate is not one. So T6 is now unblocked in
+  both directions, and what is left is the pushforward bookkeeping.
 
   One step here is NOT covered by T1--T4 and should be planned for: the pair
   space is `C([0,inf), R^n x R^(nxn))`, so the pushforward needs `qvmat w` to be
