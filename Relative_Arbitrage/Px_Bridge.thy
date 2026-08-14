@@ -524,6 +524,35 @@ lemma sconstraint_psd_quadform:
   shows "0 \<le> y \<bullet> (a *v y)"
   using a by (simp add: sconstraint_def Pi_constraint_def psd_def)
 
+subsection \<open>T6: pulling a natural filtration back along a pushforward\<close>
+
+text \<open>The \<open>pull\<close> hypothesis of \<open>martingale_distr\<close> in the case that matters here:
+  the target filtration is the natural one of the coordinate process.  Then it
+  is enough that each coordinate of the composed map is measurable at the right
+  level --- the generator of a natural filtration is exactly the family of
+  preimages of the coordinates.\<close>
+
+lemma natural_filtration_pull:
+  fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> 'c :: {second_countable_topology, banach}"
+  assumes into: "\<And>\<omega>. \<omega> \<in> space (FF u) \<Longrightarrow> \<phi> \<omega> \<in> space N"
+    and comp: "\<And>v. 0 \<le> v \<Longrightarrow> v \<le> u \<Longrightarrow> (\<lambda>\<omega>. Y v (\<phi> \<omega>)) \<in> borel_measurable (FF u)"
+  shows "\<phi> \<in> FF u \<rightarrow>\<^sub>M natural_filtration N (0::real) Y u"
+proof (rule measurable_sigma_sets)
+  show "sets (natural_filtration N 0 Y u)
+      = sigma_sets (space N) (\<Union>v\<in>{0..u}. {Y v -` A \<inter> space N | A. A \<in> borel})"
+    by (rule sets_natural_filtration)
+  show "(\<Union>v\<in>{0..u}. {Y v -` A \<inter> space N | A. A \<in> borel}) \<subseteq> Pow (space N)" by blast
+  show "\<phi> \<in> space (FF u) \<rightarrow> space N" using into by blast
+  fix S assume "S \<in> (\<Union>v\<in>{0..u}. {Y v -` A \<inter> space N | A. A \<in> borel})"
+  then obtain v A where v: "0 \<le> v" "v \<le> u" and A: "A \<in> sets borel"
+    and S: "S = Y v -` A \<inter> space N" by auto
+  have "\<phi> -` S \<inter> space (FF u) = (\<lambda>\<omega>. Y v (\<phi> \<omega>)) -` A \<inter> space (FF u)"
+    unfolding S using into by auto
+  also have "\<dots> \<in> sets (FF u)"
+    using comp[OF v] A by (rule measurable_sets)
+  finally show "\<phi> -` S \<inter> space (FF u) \<in> sets (FF u)" .
+qed
+
 (*<*)
 end
 (*>*)
