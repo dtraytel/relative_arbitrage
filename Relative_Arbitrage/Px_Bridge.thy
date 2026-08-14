@@ -1767,6 +1767,380 @@ proof -
   with Gfull show ?thesis by eventually_elim blast
 qed
 
+subsection \<open>T6, first inclusion: the \<open>X\<close>-marginal of a pair law is a \<open>P\<^sub>x\<close>-law\<close>
+
+text \<open>
+  Push a member of the pair class forward along \<open>\<omega> \<mapsto> fst \<circ> \<omega>\<close>.  The compensator
+  witnessing membership of the paper's class cannot be the second coordinate ---
+  that is not a functional of the \<open>X\<close>-path --- so it has to be \<^const>\<open>qvmata\<close>,
+  which the identification says agrees with it almost surely.  This is where
+  being ADAPTED earns its keep: \<open>martingale_distr\<close> pulls the natural filtration
+  of the image back along the map, and the second component of the map is
+  \<^const>\<open>qvmata\<close>.
+\<close>
+
+lemma outerp_borel: "(outerp :: real^'n::finite \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
+proof -
+  have e: "(outerp :: real^'n \<Rightarrow> real^'n^'n) = (\<lambda>v. \<chi> i j. v $ i * v $ j)"
+    by (rule ext) (simp add: outerp_def)
+  show ?thesis unfolding e
+    by (intro borel_measurable_continuous_onI continuous_on_vec_lambda continuous_intros)
+qed
+
+text \<open>The evaluations of a natural filtration, in the two shapes the pushforward
+  needs them.\<close>
+
+lemma natural_filtration_eval:
+  fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> 'c :: {second_countable_topology, banach}"
+  assumes v: "0 \<le> v" and vu: "v \<le> u"
+  shows "Y v \<in> borel_measurable (natural_filtration N (0::real) Y u)"
+  unfolding natural_filtration_def
+  by (rule measurable_family_vimage_algebra) (use v vu in auto)
+
+lemma ipath_eval_measurable_sets:
+  fixes Q :: "(real \<Rightarrow> 'b::polish_space) measure"
+  assumes setsQ: "sets Q = sets (ipath_space :: ((real \<Rightarrow> 'b) measure))" and v: "0 \<le> v"
+  shows "(\<lambda>w. w v) \<in> borel_measurable Q"
+  unfolding measurable_cong_sets[OF setsQ refl] by (rule ipath_eval_measurable[OF v])
+
+theorem iexit_class_marginal_in_xclass:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes P: "P \<in> iexit_class k L x" and L: "0 \<le> L"
+  shows "ipath_law P (\<lambda>t \<omega>. fst (\<omega> t)) \<in> xclass k L x"
+proof -
+  interpret PP: prob_space P by (rule iexit_class_prob[OF P])
+  define C where "C = 4 * L"
+  have C0: "0 \<le> C" using L by (simp add: C_def)
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. restrict (\<lambda>t. fst (\<omega> t)) {0..}"
+  let ?Q = "distr P (ipath_space :: ((real \<Rightarrow> real^'n) measure)) ?\<phi>"
+  let ?F = "natural_filtration P 0 (\<lambda>t \<omega> :: 'n pairpath. \<omega> t)"
+  let ?G = "natural_filtration ?Q 0 (\<lambda>t w :: real \<Rightarrow> real^'n. w t)"
+
+  have spP: "space P = (ipath :: ('n pairpath) set)"
+    using iexit_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
+  have evP: "(\<lambda>\<omega> :: 'n pairpath. \<omega> v) \<in> borel_measurable P" if v: "0 \<le> v" for v
+    unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
+    by (rule ipath_eval_measurable[OF v])
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have XmP: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> v)) \<in> borel_measurable P" if v: "0 \<le> v" for v
+    by (rule measurable_compose[OF evP[OF v] fstB])
+  have contP: "continuous_on {0..} (\<lambda>t. fst (\<omega> t))" if w: "\<omega> \<in> space P" for \<omega>
+  proof -
+    have "\<omega> \<in> ipath" using w spP by simp
+    then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
+    show ?thesis by (rule continuous_on_compose2[OF _ c]) (auto intro: fstB
+        continuous_on_fst continuous_on_id)
+  qed
+  have phim: "?\<phi> \<in> P \<rightarrow>\<^sub>M (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+    by (rule ipathify_measurable[OF XmP contP])
+  have into: "?\<phi> \<omega> \<in> ipath" if "\<omega> \<in> space P" for \<omega>
+    using measurable_space[OF phim that] by simp
+
+  text \<open>The identification, and the two consequences it has for the image.\<close>
+  have keyq: "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> qvmata C (\<lambda>s. fst (\<omega> s)) t = snd (\<omega> t)"
+    unfolding C_def by (rule iexit_class_qvmat[OF P L])
+  have phicong: "qvmata C (?\<phi> \<omega>) t = qvmata C (\<lambda>s. fst (\<omega> s)) t" for \<omega> t
+    by (rule qvmata_cong) simp
+
+  text \<open>The two filtration facts that both martingale clauses need.\<close>
+  interpret MF: martingale P ?F 0 "\<lambda>t \<omega>. fst (\<omega> t) :: real^'n"
+    by (rule iexit_class_X_martingale[OF P])
+  have spF: "space (?F u) = space P" if "0 \<le> u" for u by (rule MF.space_F[OF that])
+  have GG: "filtered_measure ?Q ?G (0::real)"
+  proof -
+    interpret PQ: prob_space ?Q by (rule PP.prob_space_distr[OF phim])
+    have SQ: "Stochastic_Process.stochastic_process ?Q (0::real)
+        (\<lambda>t w :: real \<Rightarrow> real^'n. w t)"
+      by (unfold_locales) (rule ipath_eval_measurable_sets[OF sets_distr])
+    show ?thesis
+      by (rule Stochastic_Process.stochastic_process.filtered_measure_natural_filtration[OF SQ])
+  qed
+  have pull: "?\<phi> \<in> ?F u \<rightarrow>\<^sub>M ?G u" if u: "0 \<le> u" for u
+  proof (rule natural_filtration_pull)
+    fix \<omega> assume "\<omega> \<in> space (?F u)"
+    then have "\<omega> \<in> space P" using spF[OF u] by simp
+    then show "?\<phi> \<omega> \<in> space ?Q" using into by (simp add: space_distr)
+  next
+    fix v :: real assume v: "0 \<le> v" and vu: "v \<le> u"
+    have e: "(\<lambda>\<omega> :: 'n pairpath. ?\<phi> \<omega> v) = (\<lambda>\<omega>. fst (\<omega> v))" using v by simp
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> v) \<in> borel_measurable (?F u)"
+      by (rule natural_filtration_eval[OF v vu])
+    then show "(\<lambda>\<omega> :: 'n pairpath. ?\<phi> \<omega> v) \<in> borel_measurable (?F u)"
+      unfolding e by (rule measurable_compose[OF _ fstB])
+  qed
+  have SP: "Stochastic_Process.stochastic_process P (0::real)
+      (\<lambda>t \<omega> :: 'n pairpath. \<omega> t)"
+    by (unfold_locales) (rule evP)
+  have FM: "filtered_measure P ?F (0::real)"
+    by (rule Stochastic_Process.stochastic_process.filtered_measure_natural_filtration[OF SP])
+  have projB: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel" for i
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have entB: "(\<lambda>Z :: real^'n^'n. Z $ i $ j) \<in> borel_measurable borel" for i j
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have evF: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> v) $ i) \<in> borel_measurable (?F u)"
+    if v: "0 \<le> v" and vu: "v \<le> u" for u v i
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> v) \<in> borel_measurable (?F u)"
+      by (rule natural_filtration_eval[OF v vu])
+    from measurable_compose[OF this fstB] show ?thesis
+      by (rule measurable_compose[OF _ projB])
+  qed
+  have evG: "(\<lambda>w :: real \<Rightarrow> real^'n. w v $ i) \<in> borel_measurable (?G u)"
+    if v: "0 \<le> v" and vu: "v \<le> u" for u v i
+    by (rule measurable_compose[OF natural_filtration_eval[OF v vu] projB])
+
+  text \<open>Clause (i): the initial condition.\<close>
+  have predx: "Measurable.pred (ipath_space :: ((real \<Rightarrow> real^'n) measure))
+      (\<lambda>w. w 0 = x)"
+  proof -
+    have m: "(\<lambda>w :: real \<Rightarrow> real^'n. w 0) \<in> borel_measurable ipath_space"
+      by (rule ipath_eval_measurable) simp
+    have "{w \<in> space (ipath_space :: ((real \<Rightarrow> real^'n) measure)). w 0 = x}
+        = (\<lambda>w :: real \<Rightarrow> real^'n. w 0) -` {x} \<inter> space ipath_space" by auto
+    also have "\<dots> \<in> sets (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+      by (rule measurable_sets[OF m]) simp
+    finally show ?thesis unfolding pred_def by simp
+  qed
+  have startQ: "AE w in ?Q. w 0 = x"
+  proof (subst AE_distr_iff[OF phim predx[unfolded pred_def]])
+    show "AE \<omega> in P. ?\<phi> \<omega> 0 = x"
+      using iexit_class_start[OF P] by eventually_elim simp
+  qed
+
+  text \<open>Clause (ii): the coordinate process is a martingale.\<close>
+  have mgX: "martingale P ?F 0 (\<lambda>t \<omega>. fst (\<omega> t) :: real^'n)"
+    by (rule iexit_class_X_martingale[OF P])
+  have XmgQ: "martingale ?Q ?G 0 (\<lambda>t w :: real \<Rightarrow> real^'n. w t)"
+  proof (rule martingale_distr[OF PP.prob_space_axioms phim GG pull])
+    show "(\<lambda>w :: real \<Rightarrow> real^'n. w u) \<in> borel_measurable (?G u)" if "0 \<le> u" for u
+      by (rule natural_filtration_eval[OF that order_refl])
+    show "martingale P ?F 0 (\<lambda>u \<omega> :: 'n pairpath. ?\<phi> \<omega> u)"
+      by (rule martingale_cong_ge[OF mgX]) simp
+  qed
+
+  text \<open>Clause (iii): the compensator vanishes at \<open>0\<close>, for every path.\<close>
+  have A0Q: "AE w in ?Q. qvmata C (w :: real \<Rightarrow> real^'n) 0 = 0"
+    using C0 by simp
+
+  text \<open>Clause (iv): the compensated process is a martingale.  The composite is
+    a modification of the class's own compensated process, and it is adapted
+    because \<^const>\<open>qvmata\<close> is.\<close>
+  have mgXA: "martingale P ?F 0 (\<lambda>t \<omega>. outerp (fst (\<omega> t) :: real^'n) - snd (\<omega> t))"
+    by (rule iexit_class_comp_martingale[OF P])
+  have qmP: "(\<lambda>\<omega> :: 'n pairpath. qvmata C (\<lambda>s. fst (\<omega> s)) u) \<in> borel_measurable P"
+    if u: "0 \<le> u" for u
+    by (rule qvmata_measurable[OF _ C0])
+       (use XmP measurable_compose[OF _ projB] in blast)
+  have qmF: "(\<lambda>\<omega> :: 'n pairpath. qvmata C (\<lambda>s. fst (\<omega> s)) u) \<in> borel_measurable (?F u)"
+    if u: "0 \<le> u" for u
+    by (rule qvmata_measurable[OF _ C0]) (use evF in auto)
+  have mgcomp: "martingale P ?F 0
+      (\<lambda>u \<omega> :: 'n pairpath. outerp (?\<phi> \<omega> u) - qvmata C (?\<phi> \<omega>) u)"
+  proof -
+    have tgt: "martingale P ?F 0
+        (\<lambda>u \<omega> :: 'n pairpath. outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u)"
+    proof (rule martingale_matI)
+      fix i j :: 'n
+      show "martingale P ?F 0 (\<lambda>u \<omega> :: 'n pairpath.
+          (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)"
+      proof (rule martingale_of_modification_gen
+               [where X = "\<lambda>t \<omega> :: 'n pairpath. \<omega> t" and X' = "\<lambda>t \<omega> :: 'n pairpath. \<omega> t"
+                and Y = "\<lambda>u \<omega> :: 'n pairpath. (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j"])
+        show "prob_space P" by (rule PP.prob_space_axioms)
+        show "martingale P ?F 0
+            (\<lambda>u \<omega> :: 'n pairpath. (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)"
+          by (rule martingale_mat_nth[OF mgXA])
+        show "\<And>u. 0 \<le> u \<Longrightarrow> (\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable P"
+          by (rule evP)
+        show "\<And>u. 0 \<le> u \<Longrightarrow> (\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable P"
+          by (rule evP)
+        show "AE \<omega> in P. \<omega> u = \<omega> u" for u by simp
+        show "(\<lambda>\<omega> :: 'n pairpath.
+            (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)
+            \<in> borel_measurable P" if u: "0 \<le> u" for u
+        proof -
+          have "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) :: real^'n^'n)
+              \<in> borel_measurable P"
+            by (rule measurable_compose[OF XmP[OF u] outerp_borel])
+          then have "(\<lambda>\<omega> :: 'n pairpath.
+              outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) \<in> borel_measurable P"
+            using qmP[OF u] by simp
+          then show ?thesis by (rule measurable_compose[OF _ entB])
+        qed
+        show "AE \<omega> in P.
+            (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j
+              = (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j" if u: "0 \<le> u" for u
+          using keyq by eventually_elim (use u in simp)
+        show "adapted_process P ?F 0 (\<lambda>u \<omega> :: 'n pairpath.
+            (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)"
+        proof -
+          have ad: "(\<lambda>\<omega> :: 'n pairpath.
+              (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)
+              \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
+          proof -
+            have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) :: real^'n) \<in> borel_measurable (?F u)"
+            proof -
+              have "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable (?F u)"
+                by (rule natural_filtration_eval[OF u order_refl])
+              then show ?thesis by (rule measurable_compose[OF _ fstB])
+            qed
+            then have "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) :: real^'n^'n)
+                \<in> borel_measurable (?F u)"
+              by (rule measurable_compose[OF _ outerp_borel])
+            then have "(\<lambda>\<omega> :: 'n pairpath.
+                outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u)
+                \<in> borel_measurable (?F u)" using qmF[OF u] by simp
+            then show ?thesis by (rule measurable_compose[OF _ entB])
+          qed
+          show ?thesis
+            unfolding adapted_process_def adapted_process_axioms_def
+            using FM ad by blast
+        qed
+      qed
+    qed
+    show ?thesis by (rule martingale_cong_ge[OF tgt]) (simp add: phicong)
+  qed
+  have CmgQ: "martingale ?Q ?G 0
+      (\<lambda>t w :: real \<Rightarrow> real^'n. outerp (w t) - qvmata C w t)"
+  proof (rule martingale_distr[OF PP.prob_space_axioms phim GG pull])
+    show "(\<lambda>w :: real \<Rightarrow> real^'n. outerp (w u) - qvmata C w u)
+        \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
+    proof -
+      have "(\<lambda>w :: real \<Rightarrow> real^'n. outerp (w u) :: real^'n^'n)
+          \<in> borel_measurable (?G u)"
+        by (rule measurable_compose
+              [OF natural_filtration_eval[OF u order_refl] outerp_borel])
+      moreover have "(\<lambda>w :: real \<Rightarrow> real^'n. qvmata C w u) \<in> borel_measurable (?G u)"
+        by (rule qvmata_measurable[OF _ C0]) (use evG in auto)
+      ultimately show ?thesis by simp
+    qed
+    show "martingale P ?F 0
+        (\<lambda>u \<omega> :: 'n pairpath. outerp (?\<phi> \<omega> u) - qvmata C (?\<phi> \<omega>) u)"
+      by (rule mgcomp)
+  qed
+
+  text \<open>Clause (v): the difference quotients.  The cut-down functional is
+    continuous for EVERY path, so the condition over all real pairs is the
+    condition over the rational ones, which is countable, hence measurable ---
+    and that is what lets it be transferred along the pushforward.\<close>
+  have equiv: "(\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L)
+      \<longleftrightarrow> (\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
+        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
+          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L)"
+    for w :: "real \<Rightarrow> real^'n"
+  proof
+    assume A: "\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L"
+    show "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
+        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
+          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L"
+    proof (intro allI impI)
+      fix p q :: rat assume pq: "0 \<le> p" "p < q"
+      then have "(0 :: real) \<le> real_of_rat p" and "real_of_rat p < real_of_rat q"
+        by (simp_all add: of_rat_less)
+      with A show "(1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
+          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L"
+        by blast
+    qed
+  next
+    assume R: "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
+        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
+          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L"
+    show "\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L"
+    proof (intro allI impI)
+      fix s t :: real assume st: "0 \<le> s" "s < t"
+      show "(1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L"
+      proof (rule diffquot_all_of_rational[OF closed_sconstraint _ _ st order_refl])
+        show "continuous_on {0..t} (qvmata C w)"
+          by (rule continuous_on_subset[OF qvmata_continuous[OF C0]]) auto
+        fix p q :: real
+        assume pQ: "p \<in> \<rat>" and qQ: "q \<in> \<rat>" and p0: "0 \<le> p" and pq: "p < q"
+          and qt: "q \<le> t"
+        obtain p' :: rat where p': "p = real_of_rat p'" using pQ by (auto simp: Rats_def)
+        obtain q' :: rat where q': "q = real_of_rat q'" using qQ by (auto simp: Rats_def)
+        have "real_of_rat 0 \<le> real_of_rat p'" using p0 p' by simp
+        then have "0 \<le> p'" by (simp add: of_rat_less_eq)
+        moreover have "p' < q'" using pq p' q' by (simp add: of_rat_less)
+        ultimately show "(1 / (q - p)) *\<^sub>R (qvmata C w q - qvmata C w p)
+            \<in> sconstraint k L" using R p' q' by blast
+      qed
+    qed
+  qed
+  have predD: "Measurable.pred (ipath_space :: ((real \<Rightarrow> real^'n) measure))
+      (\<lambda>w. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L)"
+  proof (subst equiv, intro pred_intros_countable)
+    fix p q :: rat
+    show "Measurable.pred (ipath_space :: ((real \<Rightarrow> real^'n) measure))
+        (\<lambda>w. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
+          (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
+            (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p))
+              \<in> sconstraint k L)"
+    proof (cases "0 \<le> p \<and> p < q")
+      case False
+      then show ?thesis by simp
+    next
+      case True
+      have qm: "(\<lambda>w :: real \<Rightarrow> real^'n. qvmata C w r)
+          \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))" for r
+      proof (rule qvmata_measurable[OF _ C0])
+        fix s :: real and i assume s: "0 \<le> s"
+        show "(\<lambda>w :: real \<Rightarrow> real^'n. w s $ i)
+            \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+          by (rule measurable_compose[OF ipath_eval_measurable[OF s] projB])
+      qed
+      let ?g = "\<lambda>w :: real \<Rightarrow> real^'n. (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
+          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p))"
+      have gm: "?g \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+        using qm by simp
+      have "{w \<in> space (ipath_space :: ((real \<Rightarrow> real^'n) measure)). ?g w \<in> sconstraint k L}
+          = ?g -` (sconstraint k L) \<inter> space ipath_space" by auto
+      also have "\<dots> \<in> sets (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+        by (rule measurable_sets[OF gm]) (simp add: borel_closed closed_sconstraint)
+      finally have "Measurable.pred (ipath_space :: ((real \<Rightarrow> real^'n) measure))
+          (\<lambda>w. ?g w \<in> sconstraint k L)" unfolding pred_def by simp
+      then show ?thesis using True by simp
+    qed
+  qed
+  have dqP: "AE \<omega> in P. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (qvmata C (?\<phi> \<omega>) t - qvmata C (?\<phi> \<omega>) s) \<in> sconstraint k L"
+    using keyq iexit_class_diffquot[OF P]
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (intro allI impI)
+      fix s t :: real assume st: "0 \<le> s" "s < t"
+      have es: "qvmata C (?\<phi> \<omega>) s = snd (\<omega> s)" using phicong elim(1) st by simp
+      have et: "qvmata C (?\<phi> \<omega>) t = snd (\<omega> t)" using phicong elim(1) st by simp
+      show "(1 / (t - s)) *\<^sub>R (qvmata C (?\<phi> \<omega>) t - qvmata C (?\<phi> \<omega>) s)
+          \<in> sconstraint k L" unfolding es et using elim(2) st by blast
+    qed
+  qed
+  have dqQ: "AE w in ?Q. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L"
+    by (subst AE_distr_iff[OF phim predD[unfolded pred_def]]) (rule dqP)
+
+  text \<open>Assembling the five clauses.\<close>
+  have "?Q \<in> xclass k L x"
+    unfolding xclass_def mem_Collect_eq
+  proof (intro conjI)
+    show "prob_space ?Q" by (rule PP.prob_space_distr[OF phim])
+    show "sets ?Q = sets (ipath_space :: ((real \<Rightarrow> real^'n) measure))" by simp
+    show "AE w in ?Q. w 0 = x" by (rule startQ)
+    show "martingale ?Q ?G 0 (\<lambda>t w :: real \<Rightarrow> real^'n. w t)" by (rule XmgQ)
+    show "\<exists>A. (AE w in ?Q. A 0 w = 0)
+        \<and> martingale ?Q ?G 0 (\<lambda>t w :: real \<Rightarrow> real^'n. outerp (w t) - A t w)
+        \<and> (AE w in ?Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+             (1 / (t - s)) *\<^sub>R (A t w - A s w) \<in> sconstraint k L)"
+      by (intro exI[of _ "\<lambda>t w :: real \<Rightarrow> real^'n. qvmata C w t"] conjI)
+         (rule A0Q, rule CmgQ, rule dqQ)
+  qed
+  then show ?thesis unfolding ipath_law_def .
+qed
+
 (*<*)
 end
 (*>*)
