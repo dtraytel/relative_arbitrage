@@ -775,6 +775,251 @@ proof -
   with Gfull show ?thesis by eventually_elim blast
 qed
 
+subsection \<open>A continuous version of the scalar functional\<close>
+
+text \<open>
+  The pushforward into the pair space needs the second coordinate to be a
+  CONTINUOUS path for EVERY path, not merely almost every one, and transferring
+  an almost-everywhere statement along a pushforward needs the exceptional set
+  to be measurable.  Both are settled at once by cutting the functional down to
+  the event where its rational-time data is nondecreasing and Lipschitz.  That
+  event is a countable condition, hence measurable; and on it the \<open>limsup\<close>
+  extension --- a supremum over rationals below \<open>t\<close> --- inherits the two
+  properties, so it is Lipschitz on \<open>{0..}\<close> and therefore continuous.
+\<close>
+
+definition qvp_good :: "real \<Rightarrow> (real \<Rightarrow> real) \<Rightarrow> bool" where
+  "qvp_good C w \<longleftrightarrow> qvp w 0 = 0 \<and>
+     (\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+        0 \<le> qvp w (real_of_rat q) - qvp w (real_of_rat p) \<and>
+        qvp w (real_of_rat q) - qvp w (real_of_rat p)
+          \<le> C * (real_of_rat q - real_of_rat p))"
+
+lemma qvp_good_nonneg:
+  assumes g: "qvp_good C w" and q: "0 \<le> (q :: rat)"
+  shows "0 \<le> qvp w (real_of_rat q)"
+  using g q unfolding qvp_good_def by (metis diff_ge_0_iff_ge of_rat_0 order_refl)
+
+lemma qvp_good_ub:
+  assumes g: "qvp_good C w" and q: "0 \<le> (q :: rat)"
+  shows "qvp w (real_of_rat q) \<le> C * real_of_rat q"
+proof -
+  have "qvp w (real_of_rat q) - qvp w (real_of_rat 0)
+      \<le> C * (real_of_rat q - real_of_rat 0)"
+    using g q unfolding qvp_good_def by blast
+  then show ?thesis using g unfolding qvp_good_def by simp
+qed
+
+lemma qvps_as_Sup:
+  assumes g: "qvp_good C w" and C: "0 \<le> C" and t: "0 < t"
+  shows "qvps w t
+       = Sup ((\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < t})"
+proof -
+  define Q where "Q = {q :: rat. 0 \<le> q \<and> real_of_rat q < t}"
+  have ne: "Q \<noteq> {}"
+  proof -
+    obtain q :: rat where "0 < real_of_rat q" "real_of_rat q < t"
+      using t of_rat_dense[of 0 t] by auto
+    then show ?thesis unfolding Q_def by (auto simp: less_le)
+  qed
+  have ub: "qvp w (real_of_rat q) \<le> C * t" if "q \<in> Q" for q
+  proof -
+    have "qvp w (real_of_rat q) \<le> C * real_of_rat q"
+      using that qvp_good_ub[OF g] unfolding Q_def by simp
+    also have "\<dots> \<le> C * t" using that C unfolding Q_def by (intro mult_left_mono) auto
+    finally show ?thesis .
+  qed
+  have bdd: "bdd_above ((\<lambda>q :: rat. qvp w (real_of_rat q)) ` Q)"
+    using ub by (intro bdd_aboveI2) blast
+  have fin: "\<bar>SUP q \<in> Q. ereal (qvp w (real_of_rat q))\<bar> \<noteq> \<infinity>"
+  proof -
+    have le: "(SUP q \<in> Q. ereal (qvp w (real_of_rat q))) \<le> ereal (C * t)"
+      using ub by (intro SUP_least) simp
+    obtain q0 where q0: "q0 \<in> Q" using ne by blast
+    have ge: "ereal (qvp w (real_of_rat q0))
+        \<le> (SUP q \<in> Q. ereal (qvp w (real_of_rat q)))"
+      using q0 by (rule SUP_upper)
+    show ?thesis
+    proof (cases "SUP q \<in> Q. ereal (qvp w (real_of_rat q))" rule: ereal_cases)
+      case (real r) then show ?thesis by simp
+    next
+      case PInf then show ?thesis using le by simp
+    next
+      case MInf then show ?thesis using ge by simp
+    qed
+  qed
+  have E: "ereal (Sup ((\<lambda>q :: rat. qvp w (real_of_rat q)) ` Q))
+      = (SUP q \<in> Q. ereal (qvp w (real_of_rat q)))"
+    by (rule ereal_SUP[OF fin])
+  show ?thesis unfolding qvps_def Q_def[symmetric] by (simp add: E[symmetric])
+qed
+
+lemma qvps_mono_lip:
+  assumes g: "qvp_good C w" and C: "0 \<le> C" and s: "0 \<le> s" and st: "s \<le> t"
+  shows "0 \<le> qvps w t - qvps w s \<and> qvps w t - qvps w s \<le> C * (t - s)"
+proof (cases "0 < s")
+  case False
+  then have s0: "s = 0" using s by simp
+  then have qs: "qvps w s = 0" by simp
+  show ?thesis
+  proof (cases "0 < t")
+    case True
+    have img: "qvps w t
+        = Sup ((\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < t})"
+      by (rule qvps_as_Sup[OF g C True])
+    have ne: "{q :: rat. 0 \<le> q \<and> real_of_rat q < t} \<noteq> {}"
+    proof -
+      obtain q :: rat where "0 < real_of_rat q" "real_of_rat q < t"
+        using True of_rat_dense[of 0 t] by auto
+      then show ?thesis by (auto simp: less_le)
+    qed
+    have le: "qvp w (real_of_rat q) \<le> C * t"
+      if "q \<in> {q :: rat. 0 \<le> q \<and> real_of_rat q < t}" for q
+    proof -
+      have "qvp w (real_of_rat q) \<le> C * real_of_rat q"
+        using that qvp_good_ub[OF g] by simp
+      also have "\<dots> \<le> C * t" using that C by (intro mult_left_mono) auto
+      finally show ?thesis .
+    qed
+    have nn: "0 \<le> qvps w t"
+    proof -
+      obtain q0 :: rat where q0: "q0 \<in> {q. 0 \<le> q \<and> real_of_rat q < t}"
+        using ne by blast
+      have a: "0 \<le> qvp w (real_of_rat q0)"
+        using q0 qvp_good_nonneg[OF g] by simp
+      have b: "qvp w (real_of_rat q0) \<le> qvps w t"
+        unfolding img
+        by (rule cSup_upper[OF imageI[OF q0]]) (use le in \<open>auto intro!: bdd_aboveI2\<close>)
+      show ?thesis using a b by simp
+    qed
+    have ub: "qvps w t \<le> C * t"
+      unfolding img using ne le by (intro cSup_least) auto
+    show ?thesis using qs nn ub s0 by simp
+  next
+    case False
+    then show ?thesis using qs st s0 by simp
+  qed
+next
+  case True
+  then have t: "0 < t" using st by simp
+  have imgs: "qvps w s
+      = Sup ((\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < s})"
+    by (rule qvps_as_Sup[OF g C True])
+  have imgt: "qvps w t
+      = Sup ((\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < t})"
+    by (rule qvps_as_Sup[OF g C t])
+  have bddt: "bdd_above ((\<lambda>q :: rat. qvp w (real_of_rat q))
+      ` {q. 0 \<le> q \<and> real_of_rat q < t})"
+  proof (intro bdd_aboveI2)
+    fix q :: rat assume "q \<in> {q. 0 \<le> q \<and> real_of_rat q < t}"
+    then have "qvp w (real_of_rat q) \<le> C * real_of_rat q"
+      using qvp_good_ub[OF g] by simp
+    also have "\<dots> \<le> C * t"
+      using \<open>q \<in> _\<close> C by (intro mult_left_mono) auto
+    finally show "qvp w (real_of_rat q) \<le> C * t" .
+  qed
+  have nes: "{q :: rat. 0 \<le> q \<and> real_of_rat q < s} \<noteq> {}"
+  proof -
+    obtain q :: rat where "0 < real_of_rat q" "real_of_rat q < s"
+      using True of_rat_dense[of 0 s] by auto
+    then show ?thesis by (auto simp: less_le)
+  qed
+  have mono: "qvps w s \<le> qvps w t"
+    unfolding imgs imgt
+  proof (rule cSup_subset_mono)
+    show "(\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < s} \<noteq> {}"
+      using nes by blast
+    show "bdd_above ((\<lambda>q :: rat. qvp w (real_of_rat q))
+        ` {q. 0 \<le> q \<and> real_of_rat q < t})" by (rule bddt)
+    show "(\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < s}
+        \<subseteq> (\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < t}"
+      using st by auto
+  qed
+  have lip: "qvps w t \<le> qvps w s + C * (t - s)"
+    unfolding imgt
+  proof (intro cSup_least)
+    show "(\<lambda>q :: rat. qvp w (real_of_rat q)) ` {q. 0 \<le> q \<and> real_of_rat q < t} \<noteq> {}"
+      using t of_rat_dense[of 0 t] by (auto simp: less_le)
+    fix y assume "y \<in> (\<lambda>q :: rat. qvp w (real_of_rat q))
+        ` {q. 0 \<le> q \<and> real_of_rat q < t}"
+    then obtain q :: rat where q: "0 \<le> q" "real_of_rat q < t"
+      and y: "y = qvp w (real_of_rat q)" by auto
+    show "y \<le> qvps w s + C * (t - s)"
+    proof (cases "real_of_rat q < s")
+      case True
+      then have "q \<in> {q :: rat. 0 \<le> q \<and> real_of_rat q < s}" using q by simp
+      then have "y \<le> qvps w s"
+        unfolding y imgs
+        by (intro cSup_upper bdd_above_mono[OF bddt]) (use st in auto)
+      moreover have "0 \<le> C * (t - s)" using C st by simp
+      ultimately show ?thesis by simp
+    next
+      case False
+      then have sq: "s \<le> real_of_rat q" by simp
+      show ?thesis
+      proof (rule field_le_epsilon)
+        fix e :: real assume e: "0 < e"
+        have pos: "0 < e / (C + 1)" using e C by simp
+        obtain p :: rat where p1: "max 0 (s - e / (C + 1)) < real_of_rat p"
+          and p2: "real_of_rat p < s"
+          using of_rat_dense[of "max 0 (s - e / (C + 1))" s] pos \<open>0 < s\<close> by auto
+        have p0: "0 \<le> p"
+        proof -
+          have "0 < real_of_rat p" using p1 by simp
+          then show ?thesis by simp
+        qed
+        have pq: "p \<le> q"
+        proof -
+          have "real_of_rat p \<le> real_of_rat q" using p2 sq by simp
+          then show ?thesis by (simp add: of_rat_less_eq)
+        qed
+        have d1: "y - qvp w (real_of_rat p) \<le> C * (real_of_rat q - real_of_rat p)"
+          using g p0 pq unfolding qvp_good_def y by blast
+        have d2: "qvp w (real_of_rat p) \<le> qvps w s"
+          using p0 p2 unfolding imgs
+          by (intro cSup_upper bdd_above_mono[OF bddt]) (use st in auto)
+        have d3: "real_of_rat q - real_of_rat p \<le> (t - s) + e / (C + 1)"
+          using q p1 by simp
+        have d4: "C * (real_of_rat q - real_of_rat p) \<le> C * ((t - s) + e / (C + 1))"
+          by (rule mult_left_mono[OF d3 C])
+        have "y \<le> qvps w s + C * ((t - s) + e / (C + 1))"
+          using d1 d2 d4 by simp
+        moreover have "C * ((t - s) + e / (C + 1)) \<le> C * (t - s) + e"
+        proof -
+          have "C * (e / (C + 1)) \<le> (C + 1) * (e / (C + 1))"
+            using pos by (intro mult_right_mono) auto
+          also have "\<dots> = e" using C by simp
+          finally show ?thesis by (simp add: algebra_simps)
+        qed
+        ultimately show "y \<le> qvps w s + C * (t - s) + e" by simp
+      qed
+    qed
+  qed
+  show ?thesis using mono lip by simp
+qed
+
+lemma qvps_continuous:
+  assumes g: "qvp_good C w" and C: "0 \<le> C"
+  shows "continuous_on {0..} (qvps w)"
+proof -
+  have "C-lipschitz_on {0..} (qvps w)"
+  proof (rule lipschitz_onI)
+    show "0 \<le> C" by (rule C)
+    fix a b :: real assume ab: "a \<in> {0..}" "b \<in> {0..}"
+    show "dist (qvps w a) (qvps w b) \<le> C * dist a b"
+    proof (cases "a \<le> b")
+      case True
+      with qvps_mono_lip[OF g C, of a b] ab show ?thesis
+        by (simp add: dist_real_def abs_diff_le_iff) linarith?
+    next
+      case False
+      with qvps_mono_lip[OF g C, of b a] ab show ?thesis
+        by (simp add: dist_real_def abs_diff_le_iff) linarith?
+    qed
+  qed
+  then show ?thesis by (rule lipschitz_on_continuous_on)
+qed
+
 (*<*)
 end
 (*>*)
