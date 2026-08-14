@@ -38,15 +38,16 @@ section \<open>The class of Eq. (1.7)\<close>
 
 text \<open>The covariation constraint of Eq. (1.5).  \<open>Pi_proj a m\<close> is the infimum
   of \<open>trace (a ** P)\<close> over rank-\<open>m\<close> orthogonal projections; \<open>Pi_constraint k\<close>
-  asks it to be at least \<open>m - k\<close> for every \<open>m\<close>, and intersecting with the
-  eigenvalue upper bound gives \<open>S\<close>.\<close>
+  asks \<open>a\<close> to be positive semidefinite with that infimum at least \<open>m - k\<close> for
+  every \<open>m\<close> with \<open>k < m \<le> n\<close>, and intersecting with the eigenvalue upper bound
+  gives \<open>S\<close>.\<close>
 
 text \<open>@{thm [display] Pi_proj_def Pi_constraint_def sconstraint_def}\<close>
 
 text \<open>\<^bold>\<open>Orthogonality of \<close>\<open>P\<close>\<^bold>\<open> is required.\<close>  Eq. (1.5) writes the infimum
   over \<open>P\<^sup>2 = P\<close>, \<open>tr(P) = m\<close> without asking \<open>P\<close> to be symmetric.  Read
-  literally the infimum is \<open>-\<infinity>\<close> for essentially every \<open>a\<close>, so \<open>S\<close> and every
-  \<open>P\<^sub>x\<close> would be empty whenever \<open>k \<le> n - 2\<close>: in three dimensions with \<open>m = 2\<close>,
+  literally the infimum is unbounded below, so \<open>S\<close> and every \<open>P\<^sub>x\<close> would be
+  empty whenever \<open>k \<le> n - 2\<close>: in three dimensions with \<open>m = 2\<close>,
   \<open>a = u u\<^sup>T\<close> for \<open>u = (1,0,1)\<close> and \<open>P\<close> the rank-2 idempotent with range
   \<open>span{e\<^sub>1,e\<^sub>2}\<close> and kernel \<open>span{e\<^sub>3 + N e\<^sub>1}\<close> give \<open>tr(a P) = 1 - N\<close>.  The
   orthogonal reading is the one Lemma 2.1's own proof uses.\<close>
@@ -111,20 +112,22 @@ text \<open>The hypothesis Theorem 4.3 and Proposition 4.1 place on \<open>K\<cl
 
 text \<open>@{thm [display] expandable_def}\<close>
 
-text \<open>Three departures from Theorem 1.1's wording, all weakening the
-  hypothesis and so strengthening the uniqueness clause: the linear part is any
-  \<^const>\<open>orthogonal_matrix\<close>, so reflections are allowed; the family is
-  \<open>\<forall>e>0. \<exists>\<dots>\<close> rather than indexed by \<open>\<iota> \<in> (1,2]\<close>; and closeness to the identity is
-  measured on the inverse map over \<open>K\<close>.  Every compact convex set with nonempty
+text \<open>Three departures from Theorem 1.1's wording.  The linear part is any
+  \<^const>\<open>orthogonal_matrix\<close>, so reflections are allowed as well as rotations,
+  which weakens the hypothesis and so strengthens the uniqueness clause.  The
+  family is presented as \<open>\<forall>e>0. \<exists>\<dots>\<close> rather than indexed by \<open>\<iota> \<in> (1,2]\<close>, and
+  closeness to the identity is measured on the inverse map over \<open>K\<close>, which is
+  what the comparison argument consumes.  Every compact convex set with nonempty
   interior is expandable, so the hypothesis is not vacuous.\<close>
 
 section \<open>Theorem 1.1\<close>
 
 text \<open>The value function of Eq. (1.6) is a bounded upper semicontinuous
   viscosity solution of \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> on \<open>K\<close> with the zero boundary
-  condition, in the sense of Definition 3.1, and the only one.  The five clauses
-  are the five conjuncts; the paper's standing \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close> are
-  assumed.\<close>
+  condition, in the sense of Definition 3.1, and the only one.  The five
+  conjuncts below carry the five clauses, (2) and (3) together occupying the
+  sub- and supersolution halves; the paper's standing \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>
+  are assumed.\<close>
 
 theorem theorem_1_1:
   fixes K :: "(real^'n::finite) set"
