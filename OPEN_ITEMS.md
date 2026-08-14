@@ -199,6 +199,25 @@ reading already recorded there.
   So build the continuous version FIRST; it unblocks the constraint clause of
   direction 1 as well as the pushforward of direction 2.
 
+  **The continuity gate is now BUILT** (`Px_Bridge.thy`): `qvp_good C w` says the
+  rational-time data of `qvp w` is nondecreasing and `C`-Lipschitz and vanishes
+  at `0` — a condition over `rat x rat`, hence countable, hence measurable.
+  `qvps_mono_lip` shows the sup-over-rationals extension inherits both
+  properties, and `qvps_continuous` concludes `C`-Lipschitz, hence continuous, on
+  `{0..}`.  Note this works because the SCALAR functionals are monotone on the
+  good event (positive semidefiniteness of the compensator increments is what
+  makes the polarised scalars nondecreasing).  Trying to extend the MATRIX
+  functional directly does not work that way — off-diagonal entries are not
+  monotone — and would need a Cauchy/limit construction instead.  Polarise
+  first, regularise second.
+
+  Remaining for T6: (i) `qvmatc w t = (chi i j. (qvsc (\s. w s$i + w s$j) t -
+  qvsc (\s. w s$i - w s$j) t)/4)` with `qvsc C w = (if qvp_good C w then qvps w
+  else 0)`, continuous in `t` entrywise hence as a matrix; (ii) measurability of
+  `qvp_good` (countable intersection of preimages under `qvp_measurable`);
+  (iii) `qvmatc = qvmat` on the good event, so `iexit_class_qvmat` transfers;
+  (iv) the two inclusions, now pure pushforward bookkeeping.
+
   One step here is NOT covered by T1--T4 and should be planned for: the pair
   space is `C([0,inf), R^n x R^(nxn))`, so the pushforward needs `qvmat w` to be
   a CONTINUOUS path for EVERY `w`, not merely almost every one.  `qvmat` is a
