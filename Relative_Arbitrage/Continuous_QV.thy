@@ -881,6 +881,36 @@ definition qvmat :: "(real \<Rightarrow> real^'n::finite) \<Rightarrow> real \<R
   "qvmat w t = (\<chi> i. \<chi> j. (qvps (\<lambda>s. w s $ i + w s $ j) t
                             - qvps (\<lambda>s. w s $ i + (- 1) * (w s $ j)) t) / 4)"
 
+text \<open>A matrix-valued function is Borel as soon as its entries are: the inner
+  product with any fixed matrix is a finite sum of products of entries.\<close>
+
+lemma measurable_mat_entries:
+  fixes Z :: "'b \<Rightarrow> real^'n::finite^'n"
+  assumes ent: "\<And>i j. (\<lambda>\<omega>. Z \<omega> $ i $ j) \<in> borel_measurable N"
+  shows "Z \<in> borel_measurable N"
+proof (subst borel_measurable_euclidean_space, safe)
+  fix b :: "real^'n^'n"
+  have "(\<lambda>\<omega>. Z \<omega> \<bullet> b) = (\<lambda>\<omega>. \<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. Z \<omega> $ i $ j * b $ i $ j)"
+    by (simp add: inner_vec_def)
+  then show "(\<lambda>\<omega>. Z \<omega> \<bullet> b) \<in> borel_measurable N" using ent by simp
+qed
+
+lemma qvmat_measurable:
+  fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> real^'n::finite" and N :: "'b measure"
+  assumes Y: "\<And>s i. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> (\<lambda>\<omega>. Y s \<omega> $ i) \<in> borel_measurable N"
+  shows "(\<lambda>\<omega>. qvmat (\<lambda>s. Y s \<omega>) t) \<in> borel_measurable N"
+proof (rule measurable_mat_entries)
+  fix i j :: 'n
+  have p: "(\<lambda>\<omega>. qvps (\<lambda>s. Y s \<omega> $ i + c * (Y s \<omega> $ j)) t) \<in> borel_measurable N" for c
+    by (rule qvps_measurable) (use Y in simp)
+  have "(\<lambda>\<omega>. qvmat (\<lambda>s. Y s \<omega>) t $ i $ j)
+      = (\<lambda>\<omega>. (qvps (\<lambda>s. Y s \<omega> $ i + 1 * (Y s \<omega> $ j)) t
+              - qvps (\<lambda>s. Y s \<omega> $ i + (- 1) * (Y s \<omega> $ j)) t) / 4)"
+    by (simp add: qvmat_def)
+  then show "(\<lambda>\<omega>. qvmat (\<lambda>s. Y s \<omega>) t $ i $ j) \<in> borel_measurable N"
+    using p[of 1] p[of "- 1"] by simp
+qed
+
 subsection \<open>Standing hypotheses, matrix version\<close>
 
 text \<open>Stated entrywise: the components of \<open>X\<close> are martingales, and so are the
@@ -1041,9 +1071,67 @@ proof (rule bounded_martingale_compensator.intro)
     using cont by eventually_elim (simp add: Xpol_def continuous_intros)
 qed
 
-(*<*)
+subsection \<open>T3: the matrix identification\<close>
+
+text \<open>Two applications of T4, at \<open>c = 1\<close> and \<open>c = -1\<close>, and the difference of the
+  two compensators is \<open>4\<close> times the symmetric part of \<open>A\<close>.  For a symmetric \<open>A\<close>
+  --- which is what the covariation of a process is --- that is \<open>A\<close> itself.\<close>
+
+lemma qvps_pol:
+  assumes c: "\<bar>c\<bar> \<le> 1"
+  shows "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
+           qvps (\<lambda>s. Xpol c s i j \<omega>) t = Apol c t i j \<omega>"
+proof -
+  interpret S: bounded_martingale_compensator M F
+      "\<lambda>v \<omega>. Xpol c v i j \<omega>" "\<lambda>v \<omega>. Apol c v i j \<omega>" "4 * C" "2 * R"
+    by (rule polarised[OF c])
+  show ?thesis by (rule S.qvps_eq_A)
+qed
+
+theorem qvmat_eq_A:
+  "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
+     qvmat (\<lambda>s. X s \<omega>) t = (\<lambda>t \<omega>. (\<chi> i. \<chi> j. (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2)) t \<omega>"
+proof -
+  have all: "AE \<omega> in M. \<forall>i \<in> (UNIV :: 'n set). \<forall>j \<in> (UNIV :: 'n set). \<forall>t.
+      0 \<le> t \<longrightarrow> qvps (\<lambda>s. Xpol c s i j \<omega>) t = Apol c t i j \<omega>"
+    if c: "\<bar>c\<bar> \<le> 1" for c
+    by (intro AE_finite_allI) (auto intro: qvps_pol[OF c])
+  have pos: "AE \<omega> in M. \<forall>i j t. 0 \<le> t \<longrightarrow>
+      qvps (\<lambda>s. Xpol 1 s i j \<omega>) t = Apol 1 t i j \<omega>"
+    using all[of 1] by simp
+  have neg: "AE \<omega> in M. \<forall>i j t. 0 \<le> t \<longrightarrow>
+      qvps (\<lambda>s. Xpol (- 1) s i j \<omega>) t = Apol (- 1) t i j \<omega>"
+    using all[of "- 1"] by simp
+  from pos neg show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (intro allI impI)
+      fix t :: real assume t: "0 \<le> t"
+      have "qvmat (\<lambda>s. X s \<omega>) t $ i $ j = (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2" for i j
+      proof -
+        have "qvmat (\<lambda>s. X s \<omega>) t $ i $ j
+            = (qvps (\<lambda>s. Xpol 1 s i j \<omega>) t - qvps (\<lambda>s. Xpol (- 1) s i j \<omega>) t) / 4"
+          by (simp add: qvmat_def Xpol_def)
+        also have "\<dots> = (Apol 1 t i j \<omega> - Apol (- 1) t i j \<omega>) / 4"
+          using elim t by simp
+        also have "\<dots> = (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2"
+          by (simp add: Apol_def)
+        finally show ?thesis .
+      qed
+      then show "qvmat (\<lambda>s. X s \<omega>) t
+          = (\<lambda>t \<omega>. (\<chi> i. \<chi> j. (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2)) t \<omega>"
+        by (simp add: vec_eq_iff)
+    qed
+  qed
+qed
+
+corollary qvmat_eq_A_sym:
+  assumes sym: "AE \<omega> in M. \<forall>t i j. A t \<omega> $ i $ j = A t \<omega> $ j $ i"
+  shows "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow> qvmat (\<lambda>s. X s \<omega>) t = A t \<omega>"
+  using qvmat_eq_A sym by eventually_elim (simp add: vec_eq_iff)
+
 end
-(*>*)
 
 (*<*)
 end
