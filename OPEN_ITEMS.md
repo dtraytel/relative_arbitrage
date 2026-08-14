@@ -185,6 +185,20 @@ reading already recorded there.
   conclusion back — `AE` in `restrict_space P G` gives `AE` in `P` because `G` is
   full. This is the intended use of that package and is why it exists.
 
+  **Obligation (b) is now DONE**: `iexit_class_qvmat` in `Px_Bridge.thy` says
+  that for a member of the pair class, `qvmat` of the first coordinate equals
+  the second at every time, a.s. That is the theorem both inclusions consume.
+
+  **The continuous-version construction is needed by BOTH directions**, not just
+  the pushforward into the pair space as stated below. Reason: transferring an
+  a.e. statement along `distr` (`AE_distr_iff`) needs the exceptional set to be
+  MEASURABLE, and `xclass`'s difference-quotient clause quantifies over all real
+  pairs `s < t`. That is a countable condition only once `t |-> A t w` is known
+  continuous — which `qvmat w` is not, for an arbitrary `w`. Restricting the
+  clause to rational `s, t` does not help by itself, for the same reason.
+  So build the continuous version FIRST; it unblocks the constraint clause of
+  direction 1 as well as the pushforward of direction 2.
+
   One step here is NOT covered by T1--T4 and should be planned for: the pair
   space is `C([0,inf), R^n x R^(nxn))`, so the pushforward needs `qvmat w` to be
   a CONTINUOUS path for EVERY `w`, not merely almost every one.  `qvmat` is a
