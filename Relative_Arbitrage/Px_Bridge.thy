@@ -1140,6 +1140,58 @@ lemma qvmatc_eq_qvmat:
   shows "qvmatc C w t = qvmat w t"
   using assms by (simp add: qvmatc_def qvmat_def qvsc_def)
 
+subsection \<open>The good event has full measure\<close>
+
+text \<open>The cut-down functional is only useful if the cut discards nothing: under
+  the hypotheses of T1--T4 the rational-time data of \<open>qvp\<close> IS the compensator,
+  so it is nondecreasing and Lipschitz almost surely.  Stated inside the locale,
+  where \<open>qvp_eq_A\<close> identifies \<open>qvp\<close> at each fixed time; the rationals are
+  countable, so one intersection covers them all.\<close>
+
+lemma (in bounded_martingale_compensator) qvp_good_ae:
+  "AE \<omega> in M. qvp_good C (\<lambda>s. X s \<omega>)"
+proof -
+  have rat: "AE \<omega> in M. \<forall>q :: rat. 0 \<le> q \<longrightarrow>
+      qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+  proof (subst AE_all_countable, intro allI)
+    fix q :: rat
+    show "AE \<omega> in M. 0 \<le> q \<longrightarrow>
+        qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+    proof (cases "0 \<le> q")
+      case True
+      then have "(0::real) \<le> real_of_rat q" by simp
+      from qvp_eq_A[OF this] show ?thesis by eventually_elim simp
+    qed simp
+  qed
+  from rat A0 Arate show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have qeq: "\<And>q :: rat. 0 \<le> q \<Longrightarrow>
+        qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+      and z: "A 0 \<omega> = 0"
+      and rate: "\<And>p r. 0 \<le> p \<Longrightarrow> p \<le> r \<Longrightarrow>
+          0 \<le> A r \<omega> - A p \<omega> \<and> A r \<omega> - A p \<omega> \<le> C * (r - p)" by blast+
+    show ?case unfolding qvp_good_def
+    proof (intro conjI)
+      show "qvp (\<lambda>s. X s \<omega>) 0 = 0" using qeq[of 0] z by simp
+      show "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+          0 \<le> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+          \<and> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+              \<le> C * (real_of_rat q - real_of_rat p)"
+      proof (intro allI impI)
+      fix p q :: rat assume p: "0 \<le> p" and pq: "p \<le> q"
+      then have q: "0 \<le> q" by simp
+      have pr: "real_of_rat p \<le> real_of_rat q" using pq by (simp add: of_rat_less_eq)
+      have p0: "(0::real) \<le> real_of_rat p" using p by simp
+      show "0 \<le> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+          \<and> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+              \<le> C * (real_of_rat q - real_of_rat p)"
+        using rate[OF p0 pr] qeq[OF p] qeq[OF q] by simp
+      qed
+    qed
+  qed
+qed
+
 (*<*)
 end
 (*>*)
