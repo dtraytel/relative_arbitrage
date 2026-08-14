@@ -1,10 +1,162 @@
-# Items against the paper --- both now closed
+# Items against the paper
 
-Nothing here is open.  This file is the record of the two places where the
-formal statement and arXiv:2512.17702 did not line up, and of how each was
-closed; `Statement/Theorem_1_1_Statement.thy` now states all five clauses of
+One item is OPEN: the identification of the formal class with the paper's
+`P_x` (section 0 below).  Two further items, recorded in sections 1 and 2, are
+closed.  `Statement/Theorem_1_1_Statement.thy` states all five clauses of
 Theorem 1.1 in the paper's own terms.  See `NOTES_FOR_AUTHORS.md` for the
 differences that never were gaps.
+
+---
+
+## 0. The `P_x` bridge --- OPEN, plan below
+
+### What is missing, precisely
+
+`iexit_class k L x` is a set of laws of the PAIR `(X, <X>)` on
+`C([0,inf), R^n x R^(nxn))`; the paper's `P_x` is a set of laws of `X` alone on
+`C([0,inf), R^n)`, constrained through `d<X>(t)/dt`.  Theorem 1.1 is a statement
+about the value function built from `P_x`; every clause we prove is about the
+one built from `iexit_class`.  Until the two classes are identified, these are
+different objects that share a name.
+
+The identification is: *the `X`-marginals of `iexit_class k L x` are exactly
+`P_x`*.  Four obligations:
+
+| | |
+|---|---|
+| (a) `X` is a martingale for its OWN filtration, not the pair's | DONE, `iexit_class_X_own_filtration` |
+| (b) the second coordinate really IS `<X>` | open |
+| (c) `<X>` available as a MEASURABLE PATH FUNCTIONAL, to build a pair law from a `P_x`-law | open |
+| (d) the four clauses of `iexit_class` for that pushforward | routine once (c) holds |
+
+(b) and (c) are not two problems.  They are the same missing theorem, and it
+gates BOTH inclusions --- so the honest description is not "one direction is
+missing" but "one theorem is missing, and it is needed twice".
+
+Nothing to borrow: the AFP has `Martingales` (conditional expectation,
+general-index martingales) and `Kolmogorov_Chentsov` (modifications), but no
+continuous-time quadratic variation, and this repo's `qvar` is
+`(nat => 'a => real)` --- discrete-time and scalar.
+
+### The idea that makes it cheap
+
+Do NOT construct `<X>` by Doob--Meyer.  DEFINE it as the pathwise `limsup` of
+dyadic sums.  Two payoffs:
+
+* Each finite sum is a Borel function of the path, so measurability is free ---
+  which is exactly obligation (c).
+* The functional is `F^X`-adapted, so `F^(X,QV) = F^X` and the filtration
+  worry collapses.
+
+And do NOT use the classical `E[max_k |dX_k|^2 <X>]` argument, which needs a
+delicate uniform-continuity estimate.  In THIS setting `A` is Lipschitz and the
+fourth moment is already bounded, and those two facts give the convergence with
+a RATE by a three-line computation --- see T1.
+
+### The load-bearing theorem (T1)
+
+Let `X` be a square-integrable martingale, `A` continuous adapted with
+`A 0 = 0`, `X^2 - A` a martingale, and `0 <= A v - A u <= C * (v - u)`.  Write
+`S_n` for the sum of squared increments over the dyadic grid of `[0,u]`.  Put
+`M_k = (dX_k)^2 - dA_k`.  Then:
+
+1. `M_k` are MARTINGALE DIFFERENCES: `E[M_k | F_(t_k)] = 0`.  This is
+   `Sampled_Quadratic_Variation.cond_exp_increment_sq` combined with the
+   compensator relation --- and it is precisely the `covA` hypothesis that
+   `Increment_Moments.fourth_moment_bound_bounded` already takes.
+2. Hence the cross terms vanish and
+   `E[(S_n - (A_u - A_0))^2] = sum_k E[M_k^2] <= 2 sum_k (E[(dX_k)^4] + E[(dA_k)^2])`.
+3. `E[(dX_k)^4] <= 8 C^2 (dt)^2` by `fourth_moment_bound_bounded` (Eq. (2.7));
+   `E[(dA_k)^2] <= C^2 (dt)^2` by the Lipschitz bound.
+4. With `2^n` terms of width `u/2^n`: `E[(S_n - (A_u - A_0))^2] <= 18 C^2 u^2 / 2^n`.
+
+The RATE is the point.  It is summable, so Chebyshev plus Borel--Cantelli give
+a.s. convergence of the FULL dyadic sequence --- no subsequence, and therefore
+`limsup S_n` is the limit a.s., which is what makes the `limsup` definition in
+T2 legitimate.  Note also that path continuity is not needed for T1 itself.
+
+### Work items
+
+**T1 --- scalar convergence with a rate.**  As above.  Hypothesis bundle is
+deliberately the same as `fourth_moment_bound_bounded`'s so the two compose.
+The one real step is the orthogonality of martingale differences; the AFP
+conditional-expectation API and the tower patterns already used in
+`Exit_Class_DPP` are the model.
+
+**T2 --- the path functional.**  `qvp :: (real => real^'n) => real => real^'n^'n`,
+defined as a `limsup` of dyadic sums; Borel by composition of evaluations.
+Prove `qvp` is `F^X`-adapted (the grid of `[0,t]` uses only times `<= t`).
+
+**T3 --- matrix version by polarisation.**  Do NOT redo T1 for matrices.  Use
+`<X_i,X_j> = (<X_i+X_j> - <X_i-X_j>)/4`, so the scalar theory is applied
+`n(n+1)/2` times.  Watch the `outerp` bookkeeping.
+
+**T4 --- the process, all times at once.**  T1 gives `qvp t = A t` a.s. for each
+fixed `t`.  Intersect over rational `t` and extend by continuity of both sides
+--- the `rat:` pattern in `Exit_Class_DPP` (the `AE ... ALL p:Q. ALL q:Q` step)
+is the precedent.
+
+**T5 --- the paper's class.**  Define
+
+    xclass k L x = {Q. prob_space Q & sets Q = borel(ipath) & AE X 0 = x
+                     & martingale Q (natural_filtration of X) 0 X
+                     & (EX A. continuous, adapted, A 0 = 0,
+                          X X^T - A a martingale,
+                          ALL s<t. (A t - A s)/(t-s) : sconstraint k L)}
+
+Phrasing the covariation EXISTENTIALLY is the modelling choice that makes both
+inclusions fall out of T4, because such an `A` is forced to equal `<X>`, hence
+`qvp`.  It is faithful: the paper's `d<X>/dt : S` says exactly that `<X>` is
+such an `A`, and the compensator is unique up to indistinguishability.  Flag it
+in the statement document as a stated choice, next to the Lipschitz-vs-a.e.
+reading already recorded there.
+
+**T6 --- the two inclusions.**
+* `iexit_class -> xclass`: take `A` = second coordinate; (a) is already proved.
+* `xclass -> iexit_class`: push forward along `w |-> (w, qvp w)`.  Measurable by
+  T2; `qvp = A` a.s. by T4, so all four clauses transfer.  The martingale clause
+  is where `F^(X,qvp) = F^X` earns its keep.
+
+**T7 --- the value functions.**  `iexit_val = xval`, hence every clause of
+Theorem 1.1 is a statement about the paper's `v`.  Then rewrite the pair-law
+caveat in `Statement/Theorem_1_1_Statement.thy` (the bullet under
+`iexit_class_def`) from "not formalised" to the theorem name.
+
+### Placement and cost
+
+`fourth_moment_bound_bounded` lives in `Path_Space_Tightness.Increment_Moments`,
+which is ABOVE `Martingale_Sampling` --- so T1--T4 CANNOT go in
+`Martingale_Sampling` where `qvar` lives.  Put them in a new
+`Path_Space_Tightness/Continuous_QV.thy` importing `Increment_Moments`, which
+transitively has `qvar_compensates_sampled`, `cond_exp_increment_sq`, Doob and
+the dyadic grids of `horizon_sq_int_martingale`.  T5--T7 need `iexit_class`, so
+they go in a new `Relative_Arbitrage/Px_Bridge.thy` after `Exit_Class_Infinite`.
+
+Both ROOTs change, so both session heaps are invalidated: expect a full rebuild
+and a server restart before any of it can be checked.  Do the ROOT edits FIRST,
+in one go, and restart once --- PIDE snapshots ROOT at startup.
+
+Estimate: 2000--4000 lines.  Treat the lower end sceptically; the W3 threading
+in this same development was estimated at ~6 sites and turned out to be ~13
+lemmas, and the shape was the same --- a clean core with more plumbing around
+it than expected.
+
+### Risks, in the order they are likely to bite
+
+1. The martingale-difference orthogonality in T1.  Everything else is arithmetic.
+2. `F^(X,qvp) = F^X` in T6.  Intuitively immediate, fiddly in the API.
+3. Polarisation bookkeeping in T3 against `outerp`.
+4. The rational-intersection/continuity step in T4 --- routine but long.
+
+### If it stalls
+
+T1--T4 are worth having ALONE: they give the development a genuine
+continuous-time quadratic variation with a convergence rate, which is
+reusable and is the part with no AFP substitute.  T5--T7 are then bookkeeping.
+Stopping after T4 leaves the repo strictly better off and the caveat in the
+statement document still accurate.
+
+---
 
 ## 1. The envelope: `real^'n` versus `K` --- CLOSED 2026-08-13
 
