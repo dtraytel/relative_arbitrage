@@ -124,17 +124,21 @@ text \<open>The two classes correspond, in both directions, and the two value
   functional of the path alone --- an adapted, everywhere-continuous version of
   the pathwise limit of dyadic sums.\<close>
 
+(*<*)
 theorem paper_class_marginal:
   fixes P :: "('n::finite pairpath) measure"
   assumes "P \<in> iexit_class k L x" and "0 \<le> L"
   shows "ipath_law P (\<lambda>t \<omega>. fst (\<omega> t)) \<in> xclass k L x"
   using assms by (rule iexit_class_marginal_in_xclass)
+(*>*)
 
+(*<*)
 theorem paper_class_lift:
   fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)"
   assumes "Q \<in> xclass k L x" and "0 \<le> L"
   shows "ipath_law Q (\<lambda>t w. (w t, qvmata (4 * L) w t)) \<in> iexit_class k L x"
   using assms by (rule xclass_lift_in_iexit_class)
+(*>*)
 
 theorem paper_value_function_agrees:
   fixes K :: "(real^'n::finite) set"
@@ -142,23 +146,15 @@ theorem paper_value_function_agrees:
   shows "iexit_val k L K x = xval k L K x"
   using assms by (rule iexit_val_eq_xval)
 
-text \<open>So every clause of Theorem 1.1 below, though stated for
-  \<^const>\<open>iexit_val\<close>, is a statement about the paper's own value function
-  \<^const>\<open>xval\<close> of Eq. (1.6).\<close>
+text \<open>So Theorem 1.1 below, though stated for \<^const>\<open>iexit_val\<close>, is a
+  statement about the paper's own value function \<^const>\<open>xval\<close> of Eq. (1.6).\<close>
 
 section \<open>Viscosity solutions in the sense of Definition 3.1\<close>
 
-text \<open>A test function at \<open>x\<close> is differentiable near \<open>x\<close> with gradient \<open>g\<close>, and
-  \<open>g\<close> is differentiable at \<open>x\<close> with symmetric derivative \<open>H\<close>:\<close>
-
-text \<open>@{thm [display] test_fun_at_def}\<close>
-
 text \<open>The lower semicontinuous envelope.  Definition 3.1 reads it within \<open>K\<close>,
-  which is \<^const>\<open>lsc_envK\<close>; \<^const>\<open>lsc_env\<close> is the same liminf over balls of
-  \<open>real^'n\<close>.  The two agree at interior points of \<open>K\<close> and differ in general on
-  \<open>K - interior K\<close>, so it is \<^const>\<open>lsc_envK\<close> that the clauses below use:\<close>
+  which is \<^const>\<open>lsc_envK\<close>:\<close>
 
-text \<open>@{thm [display] lsc_env_def lsc_envK_def}\<close>
+text \<open>@{thm [display] lsc_envK_def}\<close>
 
 text \<open>\<^cite>\<open>LaiShkolnikovSoner\<close> writes the envelopes as \<open>lim\<^sub>\<epsilon>\<^sub>\<down>\<^sub>0 inf\<^sub>{\<^sub>|\<^sub>y\<^sub>-\<^sub>x\<^sub>|\<^sub><\<^sub>\<epsilon>\<^sub>}\<close> without saying
   whether \<open>y\<close> ranges over \<open>K\<close> or over \<open>\<real>\<^sup>n\<close>.  Since Definition 3.1 opens with a
@@ -166,15 +162,7 @@ text \<open>\<^cite>\<open>LaiShkolnikovSoner\<close> writes the envelopes as \<
   \<^const>\<open>lsc_envK\<close>.  Worth pinning down in the paper, as the two genuinely
   differ on \<open>K - interior K\<close> --- exactly where the boundary clause bites.\<close>
 
-text \<open>Definition 3.1, with the touching taken globally over \<open>K\<close> and the
-  inequality demanded at the points of \<open>\<Omega>\<close>.  Instantiating \<open>\<Omega>\<close> at
-  \<open>interior K\<close> gives the interior clause; instantiating it at the union of
-  \<open>interior K\<close> with the boundary points where the envelope has the right sign
-  gives the clause together with the zero boundary condition of Eq. (1.10).\<close>
-
-text \<open>@{thm [display] visc_subsol_env_def visc_supersol_env_def}\<close>
-
-text \<open>\<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> here are the semicontinuous envelopes of \<open>F\<close> in the pair
+text \<open>\<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> are the semicontinuous envelopes of \<open>F\<close> in the pair
   \<open>(p,M)\<close> jointly, as in the paper:\<close>
 
 text \<open>@{thm [display] ell_op_lsc_def ell_op_usc_def}\<close>
@@ -186,14 +174,21 @@ text \<open>Definition 3.1 takes those envelopes over \<open>\<real>\<^sup>n \<t
   that map is a contraction fixing \<open>\<bbbS>\<^sup>n\<close>.  See \<^theory_text>\<open>ell_op_lsc_eq_over_sym\<close> and
   \<^theory_text>\<open>ell_op_usc_eq_over_sym\<close>.\<close>
 
-text \<open>The test function above is only asked to be differentiable near \<open>x\<close> with
-  a gradient that is differentiable at \<open>x\<close>; away from \<open>x\<close> it is unconstrained.
-  Definition 3.1 quantifies over \<open>\<phi> \<in> C\<^sup>2(\<real>\<^sup>n)\<close>, which is a smaller class, so for
-  the clauses that \<^emph>\<open>assert\<close> the sub- and supersolution property the form above is
-  the stronger one.  The uniqueness clause instead \<^emph>\<open>assumes\<close> the property of a
-  competitor, and there the paper's own class is what is wanted:\<close>
+text \<open>Definition 3.1 quantifies over \<open>\<phi> \<in> C\<^sup>2(\<real>\<^sup>n)\<close>, and that is the class used
+  below.  The development also proves the sub- and supersolution properties for
+  the wider class of functions merely differentiable near \<open>x\<close> with a gradient
+  differentiable at \<open>x\<close>; for the conjuncts that \<^emph>\<open>assert\<close> those properties the
+  wider class is the stronger statement, but the uniqueness conjunct \<^emph>\<open>assumes\<close>
+  them of a competitor, and there the paper's own \<open>C\<^sup>2\<close> class is what is wanted,
+  so it is what appears throughout.\<close>
 
 text \<open>@{thm [display] test_fun_C2_def}\<close>
+
+text \<open>Definition 3.1 itself, with the touching taken globally over \<open>K\<close> and the
+  inequality demanded at the points of \<open>\<Omega>\<close>.  Instantiating \<open>\<Omega>\<close> at \<open>interior K\<close>
+  gives the interior clause; instantiating it at the union of \<open>interior K\<close> with
+  the boundary points where the envelope has the right sign gives that clause
+  together with the zero boundary condition of Eq. (1.10):\<close>
 
 text \<open>@{thm [display] visc_subsol_env2_def visc_supersol_env2_def}\<close>
 
@@ -217,34 +212,15 @@ text \<open>Three small departures from the wording of Theorem 1.1, all in the
 text \<open>Every compact convex set with nonempty interior satisfies it, so the
   hypothesis is not vacuous.\<close>
 
+(*<*)
 theorem convex_sets_are_expandable:
   fixes K :: "(real^'n::finite) set"
   assumes "convex K" and "compact K" and "interior K \<noteq> {}"
   shows "expandable K"
   by (rule convex_expandable[OF assms(2,1,3)])
+(*>*)
 
-section \<open>The five clauses of Theorem 1.1\<close>
-
-text \<open>Stated for \<^const>\<open>iexit_val\<close>, the value function of Eq. (1.6) itself,
-  hence by \<^theory_text>\<open>paper_value_function_agrees\<close> for the paper's \<open>P\<^sub>x\<close> value function
-  too.  Compactness of \<open>K\<close> enters as closedness together with a ball bound; the
-  radius is named only in clause (0), where it appears in the conclusion.\<close>
-
-text \<open>The standing hypotheses of \<^cite>\<open>LaiShkolnikovSoner\<close> are \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>.  Each clause
-  below assumes only what its proof uses, so \<open>1 \<le> k\<close> appears on the
-  supersolution and uniqueness clauses but not on (0), (1) and the subsolution
-  halves, which hold at \<open>k = 0\<close> too.  That is a strengthening, not a gap: each
-  clause still implies its counterpart under Theorem 1.1's own hypotheses.  The
-  extra generality is thin --- at \<open>k = 0\<close> the set \<^const>\<open>feasible\<close> is empty at
-  every nonzero gradient, so \<^const>\<open>ell_op\<close> is an infimum of the empty set ---
-  but nothing is gained by hiding it.\<close>
-
-text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>  On a ball the value is bounded by the
-  closed-form value of Example 3.1.  In \<open>ennreal\<close>, so that it also says the
-  value is finite --- \<^const>\<open>enn2real\<close> sends \<open>\<top>\<close> to \<open>0\<close>, so a bound on
-  \<open>\<bar>enn2real \<dots>\<bar>\<close> alone would hold vacuously there, and every clause below
-  reads the value function through \<^const>\<open>enn2real\<close>.\<close>
-
+(*<*)
 theorem clause_0_finite:
   fixes K :: "(real^'n::finite) set"
   assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
@@ -260,8 +236,6 @@ theorem clause_0_not_infinite:
   shows "iexit_val k L K x \<noteq> \<top>"
   by (rule iexit_val_neq_top[OF assms])
 
-text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
-
 theorem clause_1_upper_semicontinuous:
   fixes K :: "(real^'n::finite) set"
   assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
@@ -269,27 +243,11 @@ theorem clause_1_upper_semicontinuous:
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (iexit_val k L K y) < c"
   by (rule iexit_val_real_usc[OF assms])
 
-text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>  With the operator of Eq. (1.9) itself,
-  orthogonality constraint included, and with the touching taken locally, which
-  is stronger than Definition 3.1(a).\<close>
-
 theorem clause_2_subsolution:
   fixes K :: "(real^'n::finite) set"
   assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
   shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (iexit_val k L K z))"
   by (rule iexit_val_visc_subsol[OF assms])
-
-text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form of Definition 3.1(b), for
-  the lower semicontinuous envelope.
-
-  The standing assumption is \<open>1 \<le> L\<close>, the paper's own.  The value \<open>L = 1\<close> is
-  included, and is the case of Remark 1.1(c), where the equation becomes the
-  arrival time formulation of the Ambrosio--Soner co-dimension mean curvature
-  flow.  Case 1 of Section 3 of \<^cite>\<open>LaiShkolnikovSoner\<close> does not reach it as written: it
-  perturbs the eigenvalues of the witness into the open interval \<open>(1,L)\<close>,
-  which is empty at \<open>L = 1\<close>.  What is used here instead is a covariance field
-  of exact rotations, whose spectrum does not move at all, so no margin is
-  needed --- see \<open>rotSF_exists\<close>.\<close>
 
 theorem clause_2_supersolution:
   fixes K :: "(real^'n::finite) set"
@@ -297,16 +255,6 @@ theorem clause_2_supersolution:
   shows "visc_supersol_env k L K (interior K)
       (lsc_envK K (\<lambda>u. enn2real (iexit_val k L K u)))"
   by (rule iexit_val_supersol_lsc_K[OF assms])
-
-text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)\<close>, in the viscosity
-  sense of Definition 3.1.  Both halves hold with the boundary gate included.
-
-  This is not the pointwise identity \<open>v = 0\<close> on \<open>K - interior K\<close>, which is false
-  in general: by Lemma 5.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> a convex \<open>K\<close> has \<open>v x = 0\<close> exactly when
-  the face containing \<open>x\<close> has dimension at most \<open>n - k\<close>, so the cube in three
-  dimensions with \<open>k = 2\<close> has \<open>v > 0\<close> on the open two-dimensional faces of its
-  boundary.  On a ball the pointwise identity does hold, and is part of
-  Example 3.1 below.\<close>
 
 theorem clause_3_boundary_subsolution:
   fixes K :: "(real^'n::finite) set"
@@ -325,19 +273,6 @@ theorem clause_3_boundary_supersolution:
       (lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)))"
   by (rule iexit_val_supersol_bc_K[OF assms])
 
-text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>  Any bounded upper semicontinuous function that
-  satisfies both clauses of Definition 3.1 with their boundary gates, on an
-  expandable compact \<open>K\<close>, equals the value function on \<open>K\<close>.  Continuity is not
-  assumed, and is not part of Theorem 1.1.  Boundedness is: it sits in
-  Definition 3.1, which opens each of its clauses with \<open>a bounded function
-  u : K \<rightarrow> \<real>\<close>, rather than beside the statement of Theorem 1.1.
-
-  Every hypothesis is about \<open>K\<close> alone: semicontinuity and boundedness are
-  demanded only at and between points of \<open>K\<close>, and the envelope is the paper's
-  \<^const>\<open>lsc_envK\<close>.  The competitor is still typed \<open>real^'n \<Rightarrow> real\<close> --- there
-  are no partial functions here --- but its values off \<open>K\<close> are unconstrained
-  and unused.\<close>
-
 theorem clause_4_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
   assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k"
@@ -353,18 +288,19 @@ theorem clause_4_uniqueness:
     and "x \<in> K"
   shows "u x = enn2real (iexit_val k L K x)"
   by (rule iexit_val_uniqueness_K[OF assms])
+(*>*)
 
-section \<open>Theorem 1.1, assembled\<close>
+section \<open>Theorem 1.1\<close>
 
-text \<open>The five clauses put back together into the shape of the paper's
-  statement: the value function of Eq. (1.6) is a bounded upper semicontinuous
+text \<open>The value function of Eq. (1.6) is a bounded upper semicontinuous
   viscosity solution of \<open>F(\<nabla>v, \<nabla>\<^sup>2v) = 1\<close> on \<open>K\<close> with the zero boundary
-  condition, in the sense of Definition 3.1, and it is the only one.
+  condition, in the sense of Definition 3.1, and it is the only one.  The five
+  clauses are the five conjuncts below, annotated where a reading had to be
+  chosen.
 
-  The competitor is quantified over inside the statement, so the whole of
-  Theorem 1.1 is one formula.  Note the asymmetry that Definition 3.1 itself
-  has: \<^const>\<open>visc_subsol_env2\<close> is asked of \<open>u\<close>, \<^const>\<open>visc_supersol_env2\<close> of
-  its lower envelope \<^const>\<open>lsc_envK\<close>.\<close>
+  The standing hypotheses of \<^cite>\<open>LaiShkolnikovSoner\<close> are \<open>1 \<le> k < n\<close> and
+  \<open>1 \<le> L\<close>, and both are assumed here.  Several conjuncts are in fact proved
+  without \<open>1 \<le> k\<close>, which is a strengthening rather than a gap.\<close>
 
 theorem theorem_1_1:
   fixes K :: "(real^'n::finite) set"
@@ -372,12 +308,26 @@ theorem theorem_1_1:
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
   defines "v \<equiv> (\<lambda>z. enn2real (iexit_val k L K z))"
   shows "(\<exists>B. \<forall>y. \<bar>v y\<bar> \<le> B)
+         \<comment> \<open>clause (0): finiteness.  Read through \<^const>\<open>enn2real\<close>, so this also
+             says the value is finite; \<open>iexit_val\<close> itself is an \<^typ>\<open>ennreal\<close>
+             and on a ball is bounded by the closed form of Example 3.1.\<close>
        \<and> (\<forall>c z. v z < c \<longrightarrow> (\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c))
+         \<comment> \<open>clause (1): upper semicontinuity.\<close>
        \<and> visc_subsol_env2 k L K
            (interior K \<union> {x \<in> K - interior K. 0 < v x}) v
+         \<comment> \<open>clause (2), subsolution half, together with clause (3) for the
+             subsolution: the touching set is the interior together with the
+             boundary points where \<open>v\<close> is positive.\<close>
        \<and> visc_supersol_env2 k L K
            (interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0})
            (lsc_envK K v)
+         \<comment> \<open>clause (2), supersolution half, with clause (3) for the
+             supersolution.  Note the asymmetry Definition 3.1 itself has: the
+             subsolution property is asked of \<open>v\<close>, the supersolution property of
+             its lower envelope.  The paper's standing \<open>1 \<le> L\<close> is assumed; \<open>L = 1\<close>
+             is not excluded, though Case 1 of Section 3 does not reach it as
+             written --- it perturbs eigenvalues into the empty interval \<open>(1,L)\<close>
+             --- and an exact-rotation covariance field is used instead.\<close>
        \<and> (\<forall>u :: real^'n \<Rightarrow> real. \<forall>Bd.
             (\<forall>c z. z \<in> K \<longrightarrow> u z < c \<longrightarrow>
                (\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c))
@@ -387,7 +337,14 @@ theorem theorem_1_1:
             \<longrightarrow> visc_supersol_env2 k L K
                  (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0})
                  (lsc_envK K u)
-            \<longrightarrow> (\<forall>x\<in>K. u x = v x))"
+            \<longrightarrow> (\<forall>x\<in>K. u x = v x))
+         \<comment> \<open>clause (4): uniqueness.  The competitor is quantified over inside
+             the statement, so the whole of Theorem 1.1 is one formula.  Every
+             hypothesis on it is about \<open>K\<close> alone --- semicontinuity and
+             boundedness are demanded only at and between points of \<open>K\<close>, and the
+             envelope is the paper's \<^const>\<open>lsc_envK\<close>.  Continuity is not
+             assumed, and is not part of Theorem 1.1; boundedness is, sitting in
+             Definition 3.1.\<close>"
 proof -
   have bnd: "\<exists>B. \<forall>y. \<bar>v y\<bar> \<le> B"
   proof -
