@@ -129,6 +129,8 @@ text \<open>The value function of Eq. (1.6) is a bounded upper semicontinuous
   sub- and supersolution halves; the paper's standing \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>
   are assumed.\<close>
 
+text_raw \<open>\newpage\<close>
+
 theorem theorem_1_1:
   fixes K :: "(real^'n::finite) set"
   assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
