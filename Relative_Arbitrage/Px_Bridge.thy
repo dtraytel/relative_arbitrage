@@ -698,8 +698,8 @@ proof -
             using rQ by (auto simp: Rats_def)
           have p0: "0 \<le> p"
           proof -
-            have "(0 :: real) \<le> real_of_rat p" using r1 rp by simp
-            then show ?thesis by (simp add: of_rat_less_eq[where 'a = real, symmetric])
+            have "real_of_rat 0 \<le> real_of_rat p" using r1 rp by simp
+            then show ?thesis by (simp add: of_rat_less_eq)
           qed
           have ps: "real_of_rat p < s" using r2 rp by simp
           have pq: "p \<le> q"
@@ -900,10 +900,36 @@ lemma qvp_goodupto_cong:
   assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> w s = w' s"
   shows "qvp_goodupto C u w = qvp_goodupto C u w'"
 proof -
-  have "qvp w (real_of_rat r) = qvp w' (real_of_rat r)" if "0 \<le> (r :: rat)" for r
+  have e: "qvp w (real_of_rat r) = qvp w' (real_of_rat r)" if "0 \<le> (r :: rat)" for r
     by (rule qvp_cong) (use eq that in auto)
-  then show ?thesis unfolding qvp_goodupto_def
-    by (metis (no_types, lifting) order_trans)
+  have "(\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow> q \<le> u \<longrightarrow>
+      0 \<le> qvp w (real_of_rat q) - qvp w (real_of_rat p) \<and>
+      qvp w (real_of_rat q) - qvp w (real_of_rat p)
+        \<le> C * (real_of_rat q - real_of_rat p))
+    \<longleftrightarrow> (\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow> q \<le> u \<longrightarrow>
+      0 \<le> qvp w' (real_of_rat q) - qvp w' (real_of_rat p) \<and>
+      qvp w' (real_of_rat q) - qvp w' (real_of_rat p)
+        \<le> C * (real_of_rat q - real_of_rat p))"
+  proof (intro iff_allI)
+    fix p q :: rat
+    show "(0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow> q \<le> u \<longrightarrow>
+        0 \<le> qvp w (real_of_rat q) - qvp w (real_of_rat p) \<and>
+        qvp w (real_of_rat q) - qvp w (real_of_rat p)
+          \<le> C * (real_of_rat q - real_of_rat p))
+      \<longleftrightarrow> (0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow> q \<le> u \<longrightarrow>
+        0 \<le> qvp w' (real_of_rat q) - qvp w' (real_of_rat p) \<and>
+        qvp w' (real_of_rat q) - qvp w' (real_of_rat p)
+          \<le> C * (real_of_rat q - real_of_rat p))"
+    proof (cases "0 \<le> p \<and> p \<le> q")
+      case True
+      then have "0 \<le> p" and "0 \<le> q" by auto
+      then show ?thesis using e[of p] e[of q] by simp
+    next
+      case False
+      then show ?thesis by simp
+    qed
+  qed
+  then show ?thesis unfolding qvp_goodupto_def by simp
 qed
 
 lemma qvsa_cong:
@@ -969,10 +995,11 @@ lemma qvmata_cong:
   assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> w s = w' s"
   shows "qvmata C w t = qvmata C w' t"
 proof -
-  have "qvsa C (\<lambda>s. w s $ i + c * (w s $ j)) t
-      = qvsa C (\<lambda>s. w' s $ i + c * (w' s $ j)) t" for i j c
-    by (rule qvsa_cong) (use eq in simp)
-  then show ?thesis unfolding qvmata_def by (simp add: vec_eq_iff)
+  have p: "qvsa C (\<lambda>s. w s $ i + w s $ j) t = qvsa C (\<lambda>s. w' s $ i + w' s $ j) t"
+    for i j by (rule qvsa_cong) (use eq in simp)
+  have m: "qvsa C (\<lambda>s. w s $ i - w s $ j) t = qvsa C (\<lambda>s. w' s $ i - w' s $ j) t"
+    for i j by (rule qvsa_cong) (use eq in simp)
+  show ?thesis unfolding qvmata_def by (simp add: vec_eq_iff p m)
 qed
 
 lemma qvmata_eq_qvmat:
@@ -2647,6 +2674,271 @@ proof -
     unfolding iexit_class_def mem_Collect_eq
     using probP sets_distr start dq Xmg Cmg by blast
   then show ?thesis unfolding ipath_law_def C_def .
+qed
+
+subsection \<open>T7: the two value functions coincide\<close>
+
+text \<open>
+  The exit functional reads the path only on \<open>{0..}\<close> and is measurable there, so
+  the essential infimum transports along both pushforwards.  Together with the
+  two inclusions of T6 this identifies @{const iexit_val} with @{const xval} ---
+  and hence every clause of Theorem 1.1 with a statement about the paper's own
+  value function (1.6).
+\<close>
+
+lemma pexit_cong_nonneg:
+  assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> f s = g s" and T: "0 \<le> T"
+  shows "pexit T K f = pexit T K g"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K} = {r. 0 \<le> r \<and> r \<le> T \<and> g r \<in> - K}"
+    using eq by auto
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+lemma iexit_cong_nonneg:
+  assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> f s = g s"
+  shows "iexit K f = iexit K g"
+  unfolding iexit_def by (intro SUP_cong refl) (use pexit_cong_nonneg[OF eq] in auto)
+
+lemma pexit_restrict [simp]: "pexit T K (restrict f {0..T}) = pexit T K f"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> T \<and> restrict f {0..T} r \<in> - K}
+      = {r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K}" by auto
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+lemma iexit_nat_sup: "iexit K f = (SUP n :: nat. ennreal (pexit (real n) K f))"
+proof (rule antisym)
+  show "iexit K f \<le> (SUP n :: nat. ennreal (pexit (real n) K f))"
+    unfolding iexit_def
+  proof (rule SUP_least)
+    fix T :: real assume "T \<in> {0..}"
+    then have T: "0 \<le> T" by simp
+    obtain n :: nat where n: "T < real n" using reals_Archimedean2 by blast
+    have "pexit T K f \<le> pexit (real n) K f"
+      by (rule pexit_mono_T[OF T]) (use n in simp)
+    then have "ennreal (pexit T K f) \<le> ennreal (pexit (real n) K f)"
+      by (rule ennreal_leI)
+    also have "\<dots> \<le> (SUP n :: nat. ennreal (pexit (real n) K f))"
+      by (rule SUP_upper) simp
+    finally show "ennreal (pexit T K f) \<le> (SUP n :: nat. ennreal (pexit (real n) K f))" .
+  qed
+  show "(SUP n :: nat. ennreal (pexit (real n) K f)) \<le> iexit K f"
+    by (rule SUP_least) (auto intro: pexit_le_iexit)
+qed
+
+lemma iexit_measurable_gen:
+  fixes K :: "('b::polish_space) set" and N :: "'a measure"
+  assumes K: "closed K"
+    and Ym: "\<And>t. 0 \<le> t \<Longrightarrow> Y t \<in> borel_measurable N"
+    and cont: "\<And>\<omega>. \<omega> \<in> space N \<Longrightarrow> continuous_on {0..} (\<lambda>t. Y t \<omega>)"
+  shows "(\<lambda>\<omega>. iexit K (\<lambda>t. Y t \<omega>)) \<in> borel_measurable N"
+proof -
+  have step: "(\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. Y t \<omega>))) \<in> borel_measurable N"
+    if T: "0 \<le> T" for T
+  proof -
+    have p: "(\<lambda>\<omega>. restrict (\<lambda>t. Y t \<omega>) {0..T})
+        \<in> N \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    proof (rule pathify_measurable[OF T])
+      fix t assume "t \<in> {0..T}"
+      then show "Y t \<in> borel_measurable N" by (intro Ym) simp
+    next
+      fix \<omega> assume "\<omega> \<in> space N"
+      from cont[OF this] show "continuous_on {0..T} (\<lambda>t. Y t \<omega>)"
+        by (rule continuous_on_subset) auto
+    qed
+    have "(\<lambda>\<omega>. pexit T K (restrict (\<lambda>t. Y t \<omega>) {0..T})) \<in> borel_measurable N"
+      by (rule measurable_compose[OF p pexit_measurable[OF T K]])
+    then show ?thesis by simp
+  qed
+  have "(\<lambda>\<omega>. SUP n :: nat. ennreal (pexit (real n) K (\<lambda>t. Y t \<omega>)))
+      \<in> borel_measurable N"
+    by (intro borel_measurable_SUP[where I = UNIV]) (use step in auto)
+  then show ?thesis by (simp add: iexit_nat_sup)
+qed
+
+lemma iexit_measurable_ipath:
+  fixes K :: "('b::polish_space) set"
+  assumes K: "closed K"
+  shows "iexit K \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+proof -
+  have "(\<lambda>w :: real \<Rightarrow> 'b. iexit K (\<lambda>t. w t))
+      \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+  proof (rule iexit_measurable_gen[OF K])
+    show "\<And>t. 0 \<le> t \<Longrightarrow> (\<lambda>w :: real \<Rightarrow> 'b. w t)
+        \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+      by (rule ipath_eval_measurable)
+  next
+    fix w :: "real \<Rightarrow> 'b" assume "w \<in> space (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+    then show "continuous_on {0..} (\<lambda>t. w t)"
+      by (intro ipath_continuous_on) auto
+  qed
+  then show ?thesis by simp
+qed
+
+lemma iexit_fst_measurable_ipath:
+  fixes K :: "(real^'n::finite) set"
+  assumes K: "closed K"
+  shows "(\<lambda>\<omega> :: 'n pairpath. iexit K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable (ipath_space :: (('n pairpath) measure))"
+proof (rule iexit_measurable_gen[OF K])
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable ipath_space"
+    if "0 \<le> t" for t
+    by (rule measurable_compose[OF ipath_eval_measurable[OF that] fstB])
+next
+  fix \<omega> :: "'n pairpath"
+  assume "\<omega> \<in> space (ipath_space :: (('n pairpath) measure))"
+  then have "\<omega> \<in> ipath" by simp
+  then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
+  have g: "continuous_on UNIV (fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)"
+    by (intro continuous_intros)
+  show "continuous_on {0..} (\<lambda>t. fst (\<omega> t))"
+    by (rule continuous_on_compose2[OF g c]) auto
+qed
+
+lemma ess_inf_enn_distr:
+  assumes f: "f \<in> M \<rightarrow>\<^sub>M N"
+    and meas: "\<And>c :: ennreal. {y \<in> space N. c \<le> g y} \<in> sets N"
+  shows "ess_inf_enn (distr M N f) g = ess_inf_enn M (\<lambda>\<omega>. g (f \<omega>))"
+proof -
+  have "{c. AE y in distr M N f. c \<le> g y} = {c. AE \<omega> in M. c \<le> g (f \<omega>)}"
+    using AE_distr_iff[OF f meas] by simp
+  then show ?thesis unfolding ess_inf_enn_def by simp
+qed
+
+text \<open>The two pushforward maps, as measurable maps in their own right.\<close>
+
+lemma iexit_class_fstify_measurable:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes P: "P \<in> iexit_class k L x"
+  shows "(\<lambda>\<omega> :: 'n pairpath. restrict (\<lambda>t. fst (\<omega> t)) {0..})
+      \<in> P \<rightarrow>\<^sub>M (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+proof (rule ipathify_measurable)
+  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable P" if "0 \<le> t" for t
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_measurable P"
+      unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
+      by (rule ipath_eval_measurable[OF that])
+    then show ?thesis by (rule measurable_compose[OF _ fstB])
+  qed
+next
+  fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"
+  then have "\<omega> \<in> ipath"
+    using iexit_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
+  then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
+  have g: "continuous_on UNIV (fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)"
+    by (intro continuous_intros)
+  show "continuous_on {0..} (\<lambda>t. fst (\<omega> t))"
+    by (rule continuous_on_compose2[OF g c]) auto
+qed
+
+lemma xclass_liftify_measurable:
+  fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)"
+  assumes Q: "Q \<in> xclass k L x" and C: "0 \<le> C"
+  shows "(\<lambda>w :: real \<Rightarrow> real^'n. restrict (\<lambda>t. (w t, qvmata C w t)) {0..})
+      \<in> Q \<rightarrow>\<^sub>M (ipath_space :: (('n pairpath) measure))"
+proof (rule ipathify_measurable)
+  have projB: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel" for i
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have evQ: "(\<lambda>w :: real \<Rightarrow> real^'n. w v) \<in> borel_measurable Q" if "0 \<le> v" for v
+    by (rule ipath_eval_measurable_sets[OF xclass_sets[OF Q] that])
+  show "(\<lambda>w :: real \<Rightarrow> real^'n. (w t, qvmata C w t)) \<in> borel_measurable Q"
+    if t: "0 \<le> t" for t
+  proof (rule borel_measurable_Pair[OF evQ[OF t]])
+    show "(\<lambda>w :: real \<Rightarrow> real^'n. qvmata C w t) \<in> borel_measurable Q"
+      by (rule qvmata_measurable[OF _ C])
+         (use evQ measurable_compose[OF _ projB] in blast)
+  qed
+next
+  fix w :: "real \<Rightarrow> real^'n" assume "w \<in> space Q"
+  then have "w \<in> ipath" using xclass_sets[OF Q] by (simp add: sets_eq_imp_space_eq)
+  then have c: "continuous_on {0..} w" by (rule ipath_continuous_on) simp
+  show "continuous_on {0..} (\<lambda>t. (w t, qvmata C w t))"
+    by (intro continuous_on_Pair c qvmata_continuous[OF C])
+qed
+
+text \<open>The essential infimum of the exit time is the same on a pair law and on
+  its \<open>X\<close>-marginal, and on a \<open>P\<^sub>x\<close>-law and on its lift.\<close>
+
+lemma ess_inf_enn_fstify:
+  fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes P: "P \<in> iexit_class k L x" and K: "closed K"
+  shows "ess_inf_enn (ipath_law P (\<lambda>t \<omega>. fst (\<omega> t))) (iexit K)
+       = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+proof -
+  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. restrict (\<lambda>t. fst (\<omega> t)) {0..}"
+  have m: "\<And>c :: ennreal.
+      {w \<in> space (ipath_space :: ((real \<Rightarrow> real^'n) measure)). c \<le> iexit K w}
+        \<in> sets ipath_space"
+    using iexit_measurable_ipath[OF K] by measurable
+  have "ess_inf_enn (distr P (ipath_space :: ((real \<Rightarrow> real^'n) measure)) ?\<phi>) (iexit K)
+      = ess_inf_enn P (\<lambda>\<omega>. iexit K (?\<phi> \<omega>))"
+    by (rule ess_inf_enn_distr[OF iexit_class_fstify_measurable[OF P] m])
+  also have "\<dots> = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+    by (intro arg_cong[where f = "ess_inf_enn P"] ext iexit_cong_nonneg) simp
+  finally show ?thesis unfolding ipath_law_def .
+qed
+
+lemma ess_inf_enn_liftify:
+  fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)" and K :: "(real^'n) set"
+  assumes Q: "Q \<in> xclass k L x" and K: "closed K" and C: "0 \<le> C"
+  shows "ess_inf_enn (ipath_law Q (\<lambda>t w. (w t, qvmata C w t)))
+           (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))
+       = ess_inf_enn Q (iexit K)"
+proof -
+  let ?\<psi> = "\<lambda>w :: real \<Rightarrow> real^'n. restrict (\<lambda>t. (w t, qvmata C w t)) {0..}"
+  have m: "\<And>c :: ennreal. {\<omega> \<in> space (ipath_space :: (('n pairpath) measure)).
+      c \<le> iexit K (\<lambda>t. fst (\<omega> t))} \<in> sets ipath_space"
+    using iexit_fst_measurable_ipath[OF K] by measurable
+  have "ess_inf_enn (distr Q (ipath_space :: (('n pairpath) measure)) ?\<psi>)
+        (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))
+      = ess_inf_enn Q (\<lambda>w. iexit K (\<lambda>t. fst (?\<psi> w t)))"
+    by (rule ess_inf_enn_distr[OF xclass_liftify_measurable[OF Q C] m])
+  also have "\<dots> = ess_inf_enn Q (iexit K)"
+    by (intro arg_cong[where f = "ess_inf_enn Q"] ext iexit_cong_nonneg) simp
+  finally show ?thesis unfolding ipath_law_def .
+qed
+
+theorem iexit_val_eq_xval:
+  fixes K :: "(real^'n::finite) set"
+  assumes K: "closed K" and L: "0 \<le> L"
+  shows "iexit_val k L K x = (xval k L K x :: ennreal)"
+proof (rule antisym)
+  show "iexit_val k L K x \<le> xval k L K x"
+    unfolding iexit_val_def
+  proof (rule Sup_least)
+    fix v assume "v \<in> (\<lambda>Q. ess_inf_enn Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t))))
+        ` iexit_class k L x"
+    then obtain P :: "('n pairpath) measure"
+      where P: "P \<in> iexit_class k L x"
+        and v: "v = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))" by blast
+    let ?Q = "ipath_law P (\<lambda>t \<omega>. fst (\<omega> t))"
+    have Qx: "?Q \<in> xclass k L x" by (rule iexit_class_marginal_in_xclass[OF P L])
+    have "v = ess_inf_enn ?Q (iexit K)" using v ess_inf_enn_fstify[OF P K] by simp
+    also have "\<dots> \<le> xval k L K x"
+      unfolding xval_def using Qx by (intro Sup_upper) blast
+    finally show "v \<le> xval k L K x" .
+  qed
+next
+  show "xval k L K x \<le> iexit_val k L K x"
+    unfolding xval_def
+  proof (rule Sup_least)
+    fix v assume "v \<in> (\<lambda>Q. ess_inf_enn Q (iexit K)) ` xclass k L x"
+    then obtain Q :: "((real \<Rightarrow> real^'n) measure)"
+      where Q: "Q \<in> xclass k L x" and v: "v = ess_inf_enn Q (iexit K)" by blast
+    have L4: "0 \<le> 4 * L" using L by simp
+    let ?P = "ipath_law Q (\<lambda>t w. (w t, qvmata (4 * L) w t))"
+    have Pi: "?P \<in> iexit_class k L x" by (rule xclass_lift_in_iexit_class[OF Q L])
+    have "v = ess_inf_enn ?P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+      using v ess_inf_enn_liftify[OF Q K L4] by simp
+    also have "\<dots> \<le> iexit_val k L K x"
+      unfolding iexit_val_def using Pi by (intro Sup_upper) blast
+    finally show "v \<le> iexit_val k L K x" .
+  qed
 qed
 
 (*<*)
