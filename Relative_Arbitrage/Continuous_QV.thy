@@ -390,6 +390,48 @@ proof -
   then show ?thesis by (simp add: qvp_def)
 qed
 
+subsection \<open>T4: the left-regularised functional, for all times at once\<close>
+
+text \<open>\<open>qvp\<close> identifies the compensator at each FIXED time, so at all rational
+  times simultaneously; to reach every real time one regularises from the left
+  over the rationals.  Two payoffs: the supremum is over a countable set, so
+  measurability survives, and it uses only times \<open>< t\<close>, so adaptedness does too.
+  Off the convergence event the supremum is \<open>- \<infinity>\<close>, which \<open>real_of_ereal\<close> sends
+  to \<open>0\<close> --- in particular \<open>qvps w t = 0\<close> for \<open>t \<le> 0\<close>, where the index set is
+  empty.\<close>
+
+definition qvps :: "(real \<Rightarrow> real) \<Rightarrow> real \<Rightarrow> real" where
+  "qvps w t = real_of_ereal (SUP q \<in> {q :: rat. 0 \<le> q \<and> real_of_rat q < t}.
+                                ereal (qvp w (real_of_rat q)))"
+
+lemma qvps_nonpos [simp]:
+  assumes t: "t \<le> 0"
+  shows "qvps w t = 0"
+proof -
+  have e: "{q :: rat. 0 \<le> q \<and> real_of_rat q < t} = {}"
+  proof (intro equals0I, clarify)
+    fix q :: rat assume q: "0 \<le> q" and qt: "real_of_rat q < t"
+    have "(0::real) \<le> real_of_rat q" using q by simp
+    with qt t show False by simp
+  qed
+  show ?thesis unfolding qvps_def e by (simp add: bot_ereal_def)
+qed
+
+lemma qvps_measurable:
+  assumes Y: "\<And>s. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> Y s \<in> borel_measurable N"
+  shows "(\<lambda>\<omega>. qvps (\<lambda>s. Y s \<omega>) t) \<in> borel_measurable N"
+  unfolding qvps_def
+proof (intro borel_measurable_real_of_ereal borel_measurable_SUP borel_measurable_ereal)
+  show "countable {q :: rat. 0 \<le> q \<and> real_of_rat q < t}" by simp
+  fix q :: rat assume "q \<in> {q :: rat. 0 \<le> q \<and> real_of_rat q < t}"
+  then have q: "0 \<le> real_of_rat q" and qt: "real_of_rat q < t" by auto
+  show "(\<lambda>\<omega>. qvp (\<lambda>s. Y s \<omega>) (real_of_rat q)) \<in> borel_measurable N"
+  proof (rule qvp_measurable[OF q])
+    fix s assume "0 \<le> s" and "s \<le> real_of_rat q"
+    then show "Y s \<in> borel_measurable N" using qt by (intro Y) auto
+  qed
+qed
+
 subsection \<open>A locale for the standing hypotheses\<close>
 
 text \<open>Both halves of T1 run off the same bundle: a bounded continuous martingale
@@ -706,6 +748,99 @@ proof eventually_elim
     by (intro tendsto_add elim tendsto_const)
   then have "(\<lambda>n. dyadic_qsum (\<lambda>s. X s \<omega>) T n) \<longlonglongrightarrow> A T \<omega>" by simp
   then show ?case by (rule qvp_eq_limI)
+qed
+
+subsection \<open>T4: the identification at every time at once\<close>
+
+text \<open>The rational times are countably many, so \<open>qvp\<close> identifies \<open>A\<close> at all of
+  them on one event.  From there the Lipschitz rate does the rest: for \<open>q < t\<close>
+  we have \<open>A q \<omega> \<le> A t \<omega> \<le> A q \<omega> + C (t - q)\<close>, so the supremum over rationals
+  \<open>q < t\<close> is exactly \<open>A t \<omega>\<close> --- no continuity argument, and no separate
+  treatment of \<open>t = 0\<close>, where the index set is empty and both sides vanish.\<close>
+
+theorem qvps_eq_A:
+  shows "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega>) t = A t \<omega>"
+proof -
+  have rat: "AE \<omega> in M. \<forall>q :: rat. 0 \<le> q \<longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+  proof (subst AE_all_countable, intro allI)
+    fix q :: rat
+    show "AE \<omega> in M. 0 \<le> q \<longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+    proof (cases "0 \<le> q")
+      case True
+      then have "(0::real) \<le> real_of_rat q" by simp
+      from qvp_eq_A[OF this] show ?thesis by eventually_elim simp
+    qed simp
+  qed
+  from rat A0 Arate show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have qeq: "\<And>q :: rat. 0 \<le> q \<Longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+      and z: "A 0 \<omega> = 0"
+      and rate: "\<And>p r. 0 \<le> p \<Longrightarrow> p \<le> r \<Longrightarrow> 0 \<le> A r \<omega> - A p \<omega> \<and> A r \<omega> - A p \<omega> \<le> C * (r - p)"
+      by blast+
+    show ?case
+    proof (intro allI impI)
+      fix t :: real assume t: "0 \<le> t"
+      show "qvps (\<lambda>s. X s \<omega>) t = A t \<omega>"
+      proof (cases "0 < t")
+        case False
+        then have "t = 0" using t by simp
+        then show ?thesis using z by simp
+      next
+        case True
+        define Q where "Q = {q :: rat. 0 \<le> q \<and> real_of_rat q < t}"
+        have Qne: "Q \<noteq> {}"
+        proof -
+          obtain q :: rat where "0 < real_of_rat q" "real_of_rat q < t"
+            using True of_rat_dense[of 0 t] by auto
+          then show ?thesis unfolding Q_def by (auto simp: less_le)
+        qed
+        have img: "(SUP q \<in> Q. ereal (qvp (\<lambda>s. X s \<omega>) (real_of_rat q)))
+            = (SUP q \<in> Q. ereal (A (real_of_rat q) \<omega>))"
+          by (intro SUP_cong refl) (simp add: Q_def qeq)
+        have main: "(SUP q \<in> Q. ereal (A (real_of_rat q) \<omega>)) = ereal (A t \<omega>)"
+        proof (intro antisym)
+          show "(SUP q \<in> Q. ereal (A (real_of_rat q) \<omega>)) \<le> ereal (A t \<omega>)"
+          proof (intro SUP_least ereal_less_eq(3)[THEN iffD2])
+            fix q :: rat assume "q \<in> Q"
+            then have "0 \<le> real_of_rat q" and "real_of_rat q \<le> t"
+              unfolding Q_def by auto
+            then show "A (real_of_rat q) \<omega> \<le> A t \<omega>" using rate by simp
+          qed
+          show "ereal (A t \<omega>) \<le> (SUP q \<in> Q. ereal (A (real_of_rat q) \<omega>))"
+          proof (rule ereal_le_epsilon2)
+            fix e :: real assume e: "0 < e"
+            have pos: "0 < e / (C + 1)" using e C by simp
+            have lt: "max 0 (t - e / (C + 1)) < t" using pos True by simp
+            obtain q :: rat where q: "max 0 (t - e / (C + 1)) < real_of_rat q"
+              and qt: "real_of_rat q < t"
+              using of_rat_dense[OF lt] by blast
+            from q have q0: "0 < real_of_rat q" by simp
+            then have qQ: "q \<in> Q" using qt unfolding Q_def by simp
+            have "A t \<omega> - A (real_of_rat q) \<omega> \<le> C * (t - real_of_rat q)"
+              using rate[of "real_of_rat q" t] q0 qt by simp
+            also have "\<dots> \<le> C * (e / (C + 1))"
+              using q C by (intro mult_left_mono) auto
+            also have "\<dots> \<le> (C + 1) * (e / (C + 1))"
+              using pos by (intro mult_right_mono) auto
+            also have "\<dots> = e" using C by simp
+            finally have "A t \<omega> \<le> A (real_of_rat q) \<omega> + e" by simp
+            then have "ereal (A t \<omega>) \<le> ereal (A (real_of_rat q) \<omega>) + ereal e" by simp
+            also have "\<dots> \<le> (SUP q \<in> Q. ereal (A (real_of_rat q) \<omega>)) + ereal e"
+              by (intro add_right_mono SUP_upper qQ)
+            finally show "ereal (A t \<omega>) \<le> (SUP q \<in> Q. ereal (A (real_of_rat q) \<omega>)) + ereal e" .
+          qed
+        qed
+        have "qvps (\<lambda>s. X s \<omega>) t
+            = real_of_ereal (SUP q \<in> Q. ereal (qvp (\<lambda>s. X s \<omega>) (real_of_rat q)))"
+          by (simp add: qvps_def Q_def)
+        also have "\<dots> = real_of_ereal (SUP q \<in> Q. ereal (A (real_of_rat q) \<omega>))"
+          by (simp add: img)
+        also have "\<dots> = A t \<omega>" by (simp add: main)
+        finally show ?thesis .
+      qed
+    qed
+  qed
 qed
 
 end
