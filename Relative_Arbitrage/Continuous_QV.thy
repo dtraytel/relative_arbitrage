@@ -489,6 +489,61 @@ proof -
   qed
 qed
 
+subsection \<open>T1: the \<open>L\<^sup>2\<close> rate along a grid\<close>
+
+text \<open>Orthogonality turns the \<open>L\<^sup>2\<close> error into a sum of per-increment second
+  moments, and each of those is quadratic in the mesh.  So the total is the mesh
+  times the length of the interval --- summable along the dyadics.\<close>
+
+lemma qv_grid_L2:
+  assumes tz: "t 0 = 0" and t0: "\<And>k. 0 \<le> t k" and tmono: "mono t"
+  shows "(\<integral>\<omega>. (qvar (\<lambda>k. X (t k)) n \<omega> - A (t n) \<omega>)\<^sup>2 \<partial>M)
+       \<le> (\<Sum>k<n. 18 * C\<^sup>2 * (t (Suc k) - t k)\<^sup>2)"
+proof -
+  have le: "t k \<le> t (Suc k)" for k using tmono by (simp add: mono_def)
+  have "(\<integral>\<omega>. (qvar (\<lambda>k. X (t k)) n \<omega> - A (t n) \<omega>)\<^sup>2 \<partial>M)
+      = (\<Sum>k<n. \<integral>\<omega>. ((X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2
+                      - (A (t (Suc k)) \<omega> - A (t k) \<omega>))\<^sup>2 \<partial>M)"
+  proof (rule qv_orthogonality[OF X XA t0 tmono sqint_X])
+    show "AE \<omega> in M. A (t 0) \<omega> = 0" using A0 by (simp add: tz)
+    show "integrable M (\<lambda>\<omega>. (qvar (\<lambda>k. X (t k)) m \<omega> - A (t m) \<omega>)\<^sup>2)" for m
+      by (rule qvar_grid_sq_int[OF t0 tmono])
+    show "integrable M (\<lambda>\<omega>. ((X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2
+             - (A (t (Suc k)) \<omega> - A (t k) \<omega>))\<^sup>2)" for k
+      by (rule compsq_int[OF t0 le])
+  qed
+  also have "\<dots> \<le> (\<Sum>k<n. 18 * C\<^sup>2 * (t (Suc k) - t k)\<^sup>2)"
+    by (intro sum_mono increment_second_moment[OF t0 le])
+  finally show ?thesis .
+qed
+
+text \<open>On the uniform grid of mesh \<open>T / 2\<^sup>n\<close> the bound telescopes to \<open>18 C\<^sup>2 T\<^sup>2 / 2\<^sup>n\<close>:
+  the rate is summable, so the whole dyadic sequence converges almost surely and
+  no subsequence has to be extracted.\<close>
+
+lemma qv_dyadic_L2:
+  fixes T :: real
+  assumes T: "0 \<le> T"
+  shows "(\<integral>\<omega>. (qvar (\<lambda>k. X (T * real k / 2 ^ n)) (2 ^ n) \<omega> - A T \<omega>)\<^sup>2 \<partial>M)
+       \<le> 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n"
+proof -
+  define t where "t = (\<lambda>k::nat. T * real k / 2 ^ n)"
+  have tz: "t 0 = 0" by (simp add: t_def)
+  have t0: "0 \<le> t k" for k using T by (simp add: t_def)
+  have tmono: "mono t" using T by (simp add: t_def mono_def divide_right_mono mult_left_mono)
+  have tend: "t (2 ^ n) = T" by (simp add: t_def)
+  have inc: "t (Suc k) - t k = T / 2 ^ n" for k
+    by (simp add: t_def field_simps)
+  have "(\<integral>\<omega>. (qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega> - A T \<omega>)\<^sup>2 \<partial>M)
+      = (\<integral>\<omega>. (qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega> - A (t (2 ^ n)) \<omega>)\<^sup>2 \<partial>M)"
+    by (simp add: tend)
+  also have "\<dots> \<le> (\<Sum>k<(2::nat) ^ n. 18 * C\<^sup>2 * (t (Suc k) - t k)\<^sup>2)"
+    by (rule qv_grid_L2[OF tz t0 tmono])
+  also have "\<dots> = 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n"
+    by (simp add: inc power_divide power2_eq_square)
+  finally show ?thesis by (simp add: t_def)
+qed
+
 end
 
 (*<*)
