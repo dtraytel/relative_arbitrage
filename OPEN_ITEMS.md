@@ -25,13 +25,15 @@ The identification is: *the `X`-marginals of `iexit_class k L x` are exactly
 | | |
 |---|---|
 | (a) `X` is a martingale for its OWN filtration, not the pair's | DONE, `iexit_class_X_own_filtration` |
-| (b) the second coordinate really IS `<X>` | open |
-| (c) `<X>` available as a MEASURABLE PATH FUNCTIONAL, to build a pair law from a `P_x`-law | open |
-| (d) the four clauses of `iexit_class` for that pushforward | routine once (c) holds |
+| (b) the second coordinate really IS `<X>` | DONE, `qvmat_eq_A_sym` |
+| (c) `<X>` available as a MEASURABLE PATH FUNCTIONAL, to build a pair law from a `P_x`-law | DONE, `qvmat` / `qvmat_measurable` |
+| (d) the four clauses of `iexit_class` for that pushforward | open (T5--T7) |
 
-(b) and (c) are not two problems.  They are the same missing theorem, and it
-gates BOTH inclusions --- so the honest description is not "one direction is
-missing" but "one theorem is missing, and it is needed twice".
+(b) and (c) were not two problems.  They were the same missing theorem, gating
+BOTH inclusions --- so the honest description was not "one direction is missing"
+but "one theorem is missing, and it is needed twice".  That theorem is now
+proved (T1--T4, `Relative_Arbitrage/Continuous_QV.thy`); what is left of the
+bridge is the class-level bookkeeping (d), i.e. T5--T7 below.
 
 Nothing to borrow: the AFP has `Martingales` (conditional expectation,
 general-index martingales) and `Kolmogorov_Chentsov` (modifications), but no
@@ -77,24 +79,37 @@ T2 legitimate.  Note also that path continuity is not needed for T1 itself.
 
 ### Work items
 
-**T1 --- scalar convergence with a rate.**  As above.  Hypothesis bundle is
-deliberately the same as `fourth_moment_bound_bounded`'s so the two compose.
-The one real step is the orthogonality of martingale differences; the AFP
-conditional-expectation API and the tower patterns already used in
-`Exit_Class_DPP` are the model.
+**T1--T4 are DONE**, in `Relative_Arbitrage/Continuous_QV.thy`.  What they
+deliver, and where the plan below was wrong:
 
-**T2 --- the path functional.**  `qvp :: (real => real^'n) => real => real^'n^'n`,
-defined as a `limsup` of dyadic sums; Borel by composition of evaluations.
-Prove `qvp` is `F^X`-adapted (the grid of `[0,t]` uses only times `<= t`).
+* **T1** --- `qv_dyadic_L2`: `E[(S_n - A_T)^2] <= 18 C^2 T^2 / 2^n`, exactly as
+  planned.  The orthogonality step is `qv_orthogonality`, off
+  `Quadratic_Variation.expectation_sq_qvar`; `compensator_cond_increment` is the
+  bridge from "`X^2 - A` is a martingale" to the `covA` hypothesis that
+  `fourth_moment_bound_bounded` takes.  The AFP has no `martingale_diff`, but it
+  does have `martingale.add`/`.diff`/`.scaleR_const` --- locale-bound, so they
+  are invisible to `find_theorems` on the predicate.
+* **T2** --- `qvp` and `qvps`, plus `qvp_measurable`/`qvps_measurable`.  Scalar,
+  not `real^'n^'n`: the matrix functional is assembled in T3 instead, so the
+  scalar theory never has to know about matrices.
+* **T3** --- `qvmat` and `qvmat_eq_A`.  The polarisation is applied to
+  `X_i + c X_j` for `c = 1, -1` via the locale interpretation `polarised`.  There
+  is NO `outerp` bookkeeping: the matrix locale states the compensator relation
+  entrywise (`X_i X_j - A_ij` a martingale), which is what the class supplies
+  anyway and avoids importing `Exit_Class`.  `qvmat_eq_A` gives the SYMMETRIC
+  PART `(A_ij + A_ji)/2`; `qvmat_eq_A_sym` specialises to symmetric `A`.
+* **T4** --- `qvps_eq_A`.  The plan said "extend by continuity of both sides";
+  that is not what happens and could not be, since `t |-> qvp w t` has no
+  continuity off the convergence event.  Instead `qvps` is DEFINED as the
+  left-regularisation `SUP {qvp w q | q rational, 0 <= q < t}`, and the Lipschitz
+  rate on `A` makes that supremum exactly `A t` --- no continuity argument, and
+  no special case at `t = 0`, where the index set is empty and both sides vanish.
+  Bonus: the supremum uses only times `< t`, so adaptedness is immediate.
 
-**T3 --- matrix version by polarisation.**  Do NOT redo T1 for matrices.  Use
-`<X_i,X_j> = (<X_i+X_j> - <X_i-X_j>)/4`, so the scalar theory is applied
-`n(n+1)/2` times.  Watch the `outerp` bookkeeping.
-
-**T4 --- the process, all times at once.**  T1 gives `qvp t = A t` a.s. for each
-fixed `t`.  Intersect over rational `t` and extend by continuity of both sides
---- the `rat:` pattern in `Exit_Class_DPP` (the `AE ... ALL p:Q. ALL q:Q` step)
-is the precedent.
+Two hypotheses the plan did not name, both needed and both true in the class:
+the increments of `A` are positive semidefinite (this is what makes the polarised
+scalar compensators nondecreasing), and `X` is uniformly bounded (this is what
+discharges every integrability side condition, so the locale states none).
 
 **T5 --- the paper's class.**  Define
 
@@ -113,9 +128,20 @@ reading already recorded there.
 
 **T6 --- the two inclusions.**
 * `iexit_class -> xclass`: take `A` = second coordinate; (a) is already proved.
-* `xclass -> iexit_class`: push forward along `w |-> (w, qvp w)`.  Measurable by
-  T2; `qvp = A` a.s. by T4, so all four clauses transfer.  The martingale clause
-  is where `F^(X,qvp) = F^X` earns its keep.
+* `xclass -> iexit_class`: push forward along `w |-> (w, qvmat w)`.  Measurable
+  by `qvmat_measurable`; `qvmat = A` a.s. by `qvmat_eq_A_sym`, so all four
+  clauses transfer.  The martingale clause is where `F^(X,qvmat) = F^X` earns
+  its keep.
+
+  One step here is NOT covered by T1--T4 and should be planned for: the pair
+  space is `C([0,inf), R^n x R^(nxn))`, so the pushforward needs `qvmat w` to be
+  a CONTINUOUS path for EVERY `w`, not merely almost every one.  `qvmat` is a
+  supremum of limsups and is continuous only on the convergence event.  The fix
+  is the usual one --- redefine it to `0` off the (measurable) set where
+  `t |-> qvmat w t` is continuous, nondecreasing and vanishes at `0`; those
+  conditions are countable intersections of Borel conditions over rational
+  times, so the set is Borel and the redefinition keeps both measurability and
+  the a.s. identification.
 
 **T7 --- the value functions.**  `iexit_val = xval`, hence every clause of
 Theorem 1.1 is a statement about the paper's `v`.  Then rewrite the pair-law
@@ -126,15 +152,20 @@ caveat in `Statement/Theorem_1_1_Statement.thy` (the bullet under
 
 `fourth_moment_bound_bounded` lives in `Path_Space_Tightness.Increment_Moments`,
 which is ABOVE `Martingale_Sampling` --- so T1--T4 CANNOT go in
-`Martingale_Sampling` where `qvar` lives.  Put them in a new
-`Path_Space_Tightness/Continuous_QV.thy` importing `Increment_Moments`, which
-transitively has `qvar_compensates_sampled`, `cond_exp_increment_sq`, Doob and
-the dyadic grids of `horizon_sq_int_martingale`.  T5--T7 need `iexit_class`, so
-they go in a new `Relative_Arbitrage/Px_Bridge.thy` after `Exit_Class_Infinite`.
+`Martingale_Sampling` where `qvar` lives.  They went into
+`Relative_Arbitrage/Continuous_QV.thy`, importing only
+`Path_Space_Tightness.Increment_Moments`, which transitively has
+`qvar_compensates_sampled`, `cond_exp_increment_sq`, Doob and the dyadic grids
+of `horizon_sq_int_martingale`.  Placing it in `Relative_Arbitrage` rather than
+`Path_Space_Tightness` keeps the `Path_Space_Tightness` heap valid and leaves it
+editable under `-R Relative_Arbitrage`; it costs nothing, because nothing below
+`Relative_Arbitrage` needs it.  It deliberately does NOT import `Exit_Class`,
+which would drag most of the session into every PIDE load for the sake of
+`outerp` and `martingale_vec_nth`; the entrywise phrasing avoids both.
 
-Both ROOTs change, so both session heaps are invalidated: expect a full rebuild
-and a server restart before any of it can be checked.  Do the ROOT edits FIRST,
-in one go, and restart once --- PIDE snapshots ROOT at startup.
+T5--T7 need `iexit_class`, so they go in a new
+`Relative_Arbitrage/Px_Bridge.thy` after `Exit_Class_Infinite`.  Only the
+`Relative_Arbitrage` ROOT changes, and only that heap is invalidated.
 
 Estimate: 2000--4000 lines.  Treat the lower end sceptically; the W3 threading
 in this same development was estimated at ~6 sites and turned out to be ~13
