@@ -21,7 +21,7 @@ different objects that shared a name.
 
 The identification is: *the `X`-marginals of `iexit_class k L x` are exactly
 `P_x`*.  All four obligations are discharged, in
-`Relative_Arbitrage/Pathwise_Quadratic_Variation.thy` and `Relative_Arbitrage/Paper_Class_Equivalence.thy`:
+`Relative_Arbitrage/Pathwise_Quadratic_Variation.thy` and `Relative_Arbitrage/Exit_Class_Marginals.thy`:
 
 | | |
 |---|---|
@@ -121,7 +121,7 @@ which is ABOVE `Martingale_Sampling` --- so T1--T4 CANNOT go in
 `Martingale_Sampling` where `qvar` lives.  They went into
 `Relative_Arbitrage/Pathwise_Quadratic_Variation.thy`, which deliberately does NOT import
 `Exit_Class`; T5--T7 need `iexit_class` and went into
-`Relative_Arbitrage/Paper_Class_Equivalence.thy` after `Exit_Class_Infinite`.
+`Relative_Arbitrage/Exit_Class_Marginals.thy` after `Exit_Class_Infinite`.
 
 The estimate was 2000--4000 lines; the two theories together are about 4000.
 

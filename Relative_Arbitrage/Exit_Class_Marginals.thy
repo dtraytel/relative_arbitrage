@@ -1,7 +1,7 @@
-section \<open>The paper's class \<open>P\<^sub>x\<close> and the bridge to the pair class\<close>
+section \<open>The \<open>X\<close>-marginals of the exit class\<close>
 
 (*<*)
-theory Paper_Class_Equivalence
+theory Exit_Class_Marginals
   imports Exit_Class_Infinite Pathwise_Quadratic_Variation
 begin
 (*>*)
@@ -22,7 +22,7 @@ text \<open>
 subsection \<open>The functional reads the path only up to the current time\<close>
 
 text \<open>
-  T1--T4 assume \<open>X\<close> uniformly bounded, because Eq. (2.7)
+  The scalar theory assumes \<open>X\<close> uniformly bounded, because Eq. (2.7)
   (\<open>fourth_moment_bound_bounded\<close>) does.  A member of the class is not bounded,
   so the identification has to be localised --- which is what
   @{theory Relative_Arbitrage.Stopped_Localization} was built for: stopping an
@@ -322,7 +322,7 @@ qed
 subsection \<open>The good event has full measure\<close>
 
 text \<open>The cut-down functional is only useful if the cut discards nothing: under
-  the hypotheses of T1--T4 the rational-time data of \<open>qvp\<close> IS the compensator,
+  the hypotheses of the scalar theory the rational-time data of \<open>qvp\<close> IS the compensator,
   so it is nondecreasing and Lipschitz almost surely.  Stated inside the locale,
   where \<open>qvp_eq_A\<close> identifies \<open>qvp\<close> at each fixed time; the rationals are
   countable, so one intersection covers them all.\<close>
@@ -644,7 +644,7 @@ proof -
 qed
 
 text \<open>On the good event no value is discarded, so the running cut agrees with
-  the left-regularisation of T4.\<close>
+  the left-regularisation \<open>qvps\<close>.\<close>
 
 lemma qvsa_eq_qvps:
   assumes g: "qvp_good C w" and C: "0 \<le> C"
@@ -894,7 +894,7 @@ lemma qvmata_eq_qvmat:
 subsection \<open>The identification at one localisation level\<close>
 
 text \<open>Stopping at the exit time from a ball of radius \<open>r\<close> makes the process
-  bounded, which is the one hypothesis of T1--T4 that a class member fails.
+  bounded, which is the one hypothesis of the scalar theory that a class member fails.
   Everything else survives stopping: the martingale property by
   \<open>stopped_martingale_L2\<close>, the compensator relation by
   \<open>stopped_compensated_square\<close>, and the rate because \<open>min u tau \<le> min v tau\<close> with
@@ -967,7 +967,7 @@ lemma qvps_eq_A_stopped:
     with nn ub show ?thesis by simp
   qed
 
-  text \<open>The stopped pair satisfies the hypotheses of T1--T4.\<close>
+  text \<open>The stopped pair satisfies the hypotheses of the scalar theory.\<close>
   interpret S: bounded_martingale_compensator M F
       "\<lambda>v \<omega>. X (min v (tau \<omega>)) \<omega>" "\<lambda>v \<omega>. A (min v (tau \<omega>)) \<omega>" C r
   proof (rule bounded_martingale_compensator.intro)
@@ -1000,7 +1000,7 @@ lemma qvps_eq_A_stopped:
   show ?thesis using S.qvp_good_ae S.qvps_eq_A by eventually_elim blast
 qed
 
-subsection \<open>T4 without the boundedness hypothesis\<close>
+subsection \<open>The scalar identification without the boundedness hypothesis\<close>
 
 text \<open>Letting the radius and the horizon grow together.  For a fixed time the
   path is bounded on \<open>{0..t}\<close> by continuity, so some level is never reached
@@ -1133,9 +1133,9 @@ proof -
   qed
 qed
 
-subsection \<open>T3 without the boundedness hypothesis\<close>
+subsection \<open>The matrix identification without the boundedness hypothesis\<close>
 
-text \<open>The polarisation of T3, run through the localised scalar theorem.  The
+text \<open>The polarisation, run through the localised scalar theorem.  The
   hypotheses are pointwise on \<open>space M\<close> rather than almost everywhere, which is
   what the stopping arguments need; the intended application reaches that form
   through the \<open>restrict_full\<close> package of
@@ -1349,7 +1349,7 @@ proof -
   qed
 qed
 
-subsection \<open>T5: the paper's class and value function\<close>
+subsection \<open>The class \<open>P\<^sub>x\<close> and its value function\<close>
 
 text \<open>
   Eq. (1.6)--(1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> as the paper states them: laws of
@@ -1412,7 +1412,7 @@ lemma sconstraint_psd_quadform:
   shows "0 \<le> y \<bullet> (a *v y)"
   using a by (simp add: sconstraint_def Pi_constraint_def psd_def)
 
-subsection \<open>T6: pulling a natural filtration back along a pushforward\<close>
+subsection \<open>Pulling a natural filtration back along a pushforward\<close>
 
 text \<open>The \<open>pull\<close> hypothesis of \<open>martingale_distr\<close> in the case that matters here:
   the target filtration is the natural one of the coordinate process.  Then it
@@ -1675,7 +1675,7 @@ proof -
   with Gfull show ?thesis by eventually_elim blast
 qed
 
-subsection \<open>T6, first inclusion: the \<open>X\<close>-marginal of a pair law is a \<open>P\<^sub>x\<close>-law\<close>
+subsection \<open>First inclusion: the \<open>X\<close>-marginal of a pair law is a \<open>P\<^sub>x\<close>-law\<close>
 
 text \<open>
   Push a member of the pair class forward along \<open>\<omega> \<mapsto> fst \<circ> \<omega>\<close>.  The compensator
@@ -2049,7 +2049,7 @@ proof -
   then show ?thesis unfolding ipath_law_def .
 qed
 
-subsection \<open>T6, second inclusion: a \<open>P\<^sub>x\<close>-law lifts to a pair law\<close>
+subsection \<open>Second inclusion: a \<open>P\<^sub>x\<close>-law lifts to a pair law\<close>
 
 text \<open>
   The converse pushforward, along \<open>w \<mapsto> (w, qvmata w)\<close>.  The pair space is a
@@ -2557,12 +2557,12 @@ proof -
   then show ?thesis unfolding ipath_law_def C_def .
 qed
 
-subsection \<open>T7: the two value functions coincide\<close>
+subsection \<open>The two value functions coincide\<close>
 
 text \<open>
   The exit functional reads the path only on \<open>{0..}\<close> and is measurable there, so
   the essential infimum transports along both pushforwards.  Together with the
-  two inclusions of T6 this identifies @{const iexit_val} with @{const xval} ---
+  two inclusions this identifies @{const iexit_val} with @{const xval} ---
   and hence every clause of Theorem 1.1 with a statement about the paper's own
   value function (1.6).
 \<close>

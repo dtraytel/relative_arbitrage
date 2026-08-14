@@ -3,7 +3,7 @@ theory Theorem_1_1_Statement
   imports
     "Relative_Arbitrage.Value_Function_Uniqueness"
     "Relative_Arbitrage.Exit_Class_Infinite"
-    "Relative_Arbitrage.Paper_Class_Equivalence"
+    "Relative_Arbitrage.Exit_Class_Marginals"
 begin
 
 declare [[show_question_marks = false, names_short = true]]

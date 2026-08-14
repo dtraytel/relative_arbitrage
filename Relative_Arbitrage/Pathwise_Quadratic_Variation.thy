@@ -7,16 +7,16 @@ begin
 (*>*)
 
 text \<open>
-  Towards the \<open>P\<^sub>x\<close> bridge of \<open>OPEN_ITEMS.md\<close>: the covariation of a continuous
-  martingale, obtained not from Doob--Meyer but as the limit of sums of squared
-  increments along dyadic partitions.  Two payoffs over the abstract
-  construction: the limit is a Borel functional of the path, so it can be used
-  to build a law on the pair space, and it is adapted to the filtration of \<open>X\<close>
-  alone.
+  The covariation of a continuous martingale, obtained not from Doob--Meyer but
+  as the limit of sums of squared increments along dyadic partitions.  Two
+  payoffs over the abstract construction: the limit is a Borel functional of the
+  path, so it can be used to build a law on the pair space, and it is adapted to
+  the filtration of \<open>X\<close> alone.  Both are what
+  @{theory Relative_Arbitrage.Exit_Class_Marginals} consumes.
 
-  This theory is step T1 of that plan: the \<open>L\<^sup>2\<close> estimate with a rate.  The rate
-  is what matters --- it is summable, so the full dyadic sequence converges
-  almost surely and no subsequence is needed.
+  What carries the construction is the \<open>L\<^sup>2\<close> estimate with a rate.  The rate is
+  what matters --- it is summable, so the full dyadic sequence converges almost
+  surely and no subsequence is needed.
 \<close>
 
 subsection \<open>Martingales form a vector space\<close>
@@ -55,7 +55,7 @@ subsection \<open>The compensator relation, conditionally\<close>
 
 text \<open>\<open>fourth_moment_bound_bounded\<close> takes the compensator relation in
   conditional form (its \<open>covA\<close> hypothesis), while everything here says instead
-  that \<open>X\<^sup>2 - A\<close> is a martingale.  This bridges the two, so both halves of T1
+  that \<open>X\<^sup>2 - A\<close> is a martingale.  This bridges the two, so both halves of the estimate
   run off one bundle of assumptions.\<close>
 
 lemma compensator_cond_increment:
@@ -101,7 +101,7 @@ proof -
   from e1 e2 e3 e4 e5 show ?thesis by eventually_elim simp
 qed
 
-subsection \<open>T1a: the compensated sums, and the vanishing of the cross terms\<close>
+subsection \<open>The compensated sums, and the vanishing of the cross terms\<close>
 
 text \<open>Along a partition \<open>t\<close>, the sum of squared increments minus the
   compensator is a martingale.  Nothing here is quantitative --- no Lipschitz
@@ -132,7 +132,7 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>T1a proper: the compensated increments \<open>(dX)\<^sup>2 - dA\<close> are martingale
+text \<open>The compensated increments \<open>(dX)\<^sup>2 - dA\<close> are martingale
   differences, so the second moment of their sum is the sum of their second
   moments.  This is \<open>expectation_sq_qvar\<close> applied to the martingale above.\<close>
 
@@ -177,7 +177,7 @@ proof -
   finally show ?thesis unfolding D_def by simp
 qed
 
-subsection \<open>T1b: the per-increment bound\<close>
+subsection \<open>The per-increment bound\<close>
 
 text \<open>Each compensated increment has second moment at most \<open>18 C\<^sup>2 (dt)\<^sup>2\<close>: the
   fourth moment contributes \<open>8 C\<^sup>2 (dt)\<^sup>2\<close> by Eq. (2.7) and the compensator
@@ -291,7 +291,7 @@ qed
 
 subsection \<open>From a summable \<open>L\<^sup>2\<close> rate to almost sure convergence\<close>
 
-text \<open>The rate of T1 is summable, so the whole sequence converges almost surely
+text \<open>The rate above is summable, so the whole sequence converges almost surely
   --- Borel--Cantelli is not needed, the sum of the second moments being finite
   already forces the summands to vanish pointwise.\<close>
 
@@ -324,7 +324,7 @@ proof -
   qed
 qed
 
-subsection \<open>T2: the quadratic variation as a path functional\<close>
+subsection \<open>The quadratic variation as a path functional\<close>
 
 text \<open>The point of defining \<open>qvp\<close> as a \<open>limsup\<close> rather than by Doob--Meyer:
   each dyadic sum is a Borel function of the path by composition of evaluations,
@@ -390,7 +390,7 @@ proof -
   then show ?thesis by (simp add: qvp_def)
 qed
 
-subsection \<open>T4: the left-regularised functional, for all times at once\<close>
+subsection \<open>The left-regularised functional, for all times at once\<close>
 
 text \<open>\<open>qvp\<close> identifies the compensator at each FIXED time, so at all rational
   times simultaneously; to reach every real time one regularises from the left
@@ -434,7 +434,7 @@ qed
 
 subsection \<open>A locale for the standing hypotheses\<close>
 
-text \<open>Both halves of T1 run off the same bundle: a bounded continuous martingale
+text \<open>Both halves of the estimate run off the same bundle: a bounded continuous martingale
   with a Lipschitz compensator on a probability space.  Every integrability side
   condition either half needs is derivable from boundedness, so the locale states
   none of them.\<close>
@@ -575,7 +575,7 @@ proof eventually_elim
   then show ?case by (rule continuous_on_subset[OF elim])
 qed
 
-subsection \<open>T1a and T1b inside the locale\<close>
+subsection \<open>The two halves inside the locale\<close>
 
 text \<open>The two halves again, now with every side condition discharged.\<close>
 
@@ -632,7 +632,7 @@ proof -
   qed
 qed
 
-subsection \<open>T1: the \<open>L\<^sup>2\<close> rate along a grid\<close>
+subsection \<open>The \<open>L\<^sup>2\<close> rate along a grid\<close>
 
 text \<open>Orthogonality turns the \<open>L\<^sup>2\<close> error into a sum of per-increment second
   moments, and each of those is quadratic in the mesh.  So the total is the mesh
@@ -687,7 +687,7 @@ proof -
   finally show ?thesis by (simp add: t_def)
 qed
 
-subsection \<open>T2 at a fixed time: the path functional computes the compensator\<close>
+subsection \<open>At a fixed time: the path functional computes the compensator\<close>
 
 text \<open>The rate \<open>18 C\<^sup>2 T\<^sup>2 / 2\<^sup>n\<close> is summable, so the dyadic sums converge to
   \<open>A T\<close> almost surely, and \<open>qvp\<close> --- their \<open>limsup\<close> --- agrees with \<open>A T\<close>.\<close>
@@ -750,7 +750,7 @@ proof eventually_elim
   then show ?case by (rule qvp_eq_limI)
 qed
 
-subsection \<open>T4: the identification at every time at once\<close>
+subsection \<open>The identification at every time at once\<close>
 
 text \<open>The rational times are countably many, so \<open>qvp\<close> identifies \<open>A\<close> at all of
   them on one event.  From there the Lipschitz rate does the rest: for \<open>q < t\<close>
@@ -845,11 +845,11 @@ qed
 
 end
 
-section \<open>T3: the matrix case, by polarisation\<close>
+section \<open>The matrix case, by polarisation\<close>
 
 text \<open>The scalar theory is applied to \<open>X\<^sub>i + c X\<^sub>j\<close> for \<open>c = 1\<close> and \<open>c = -1\<close>; the
   difference of the two quadratic variations, divided by four, is the covariation
-  \<open>\<langle>X\<^sub>i, X\<^sub>j\<rangle>\<close>.  Nothing of T1 is redone.\<close>
+  \<open>\<langle>X\<^sub>i, X\<^sub>j\<rangle>\<close>.  Nothing of the scalar theory is redone.\<close>
 
 subsection \<open>The quadratic form at a two-index direction\<close>
 
@@ -1071,9 +1071,10 @@ proof (rule bounded_martingale_compensator.intro)
     using cont by eventually_elim (simp add: Xpol_def continuous_intros)
 qed
 
-subsection \<open>T3: the matrix identification\<close>
+subsection \<open>The matrix identification\<close>
 
-text \<open>Two applications of T4, at \<open>c = 1\<close> and \<open>c = -1\<close>, and the difference of the
+text \<open>Two applications of the scalar identification, at \<open>c = 1\<close> and
+  \<open>c = -1\<close>, and the difference of the
   two compensators is \<open>4\<close> times the symmetric part of \<open>A\<close>.  For a symmetric \<open>A\<close>
   --- which is what the covariation of a process is --- that is \<open>A\<close> itself.\<close>
 
