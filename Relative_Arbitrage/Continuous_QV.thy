@@ -194,6 +194,37 @@ qed
 text \<open>The same, with the first square already folded into a fourth power ---
   the form the two integral bounds are stated in.\<close>
 
+text \<open>Monotonicity of the even powers under an absolute bound; both directions of
+  the rewriting between \<open>x^4\<close> and \<open>(x\<^sup>2)\<^sup>2\<close> are needed downstream.\<close>
+
+lemma sq_mono_abs:
+  fixes x b :: real
+  assumes "\<bar>x\<bar> \<le> b"
+  shows "x\<^sup>2 \<le> b\<^sup>2"
+  using power_mono[OF assms abs_ge_zero, of 2] by simp
+
+lemma fourth_mono_abs:
+  fixes x b :: real
+  assumes "\<bar>x\<bar> \<le> b"
+  shows "x^4 \<le> b^4"
+proof -
+  have "(x\<^sup>2)\<^sup>2 \<le> (b\<^sup>2)\<^sup>2" by (rule power_mono[OF sq_mono_abs[OF assms]]) simp
+  moreover have "(x\<^sup>2)\<^sup>2 = x^4" and "(b\<^sup>2)\<^sup>2 = b^4" by algebra+
+  ultimately show ?thesis by simp
+qed
+
+lemma sq_abs_mono:
+  fixes x b :: real
+  assumes "\<bar>x\<bar> \<le> b"
+  shows "\<bar>x\<^sup>2\<bar> \<le> b\<^sup>2"
+  using sq_mono_abs[OF assms] by simp
+
+lemma fourth_abs_mono:
+  fixes x b :: real
+  assumes "\<bar>x\<bar> \<le> b"
+  shows "\<bar>x^4\<bar> \<le> b^4"
+  using power_mono[OF assms abs_ge_zero, of 4] by (simp add: power_abs)
+
 lemma sq_diff_le_fourth:
   fixes x a :: real
   shows "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * x^4 + 2 * a\<^sup>2"
@@ -257,6 +288,208 @@ proof -
     using m4 dA by simp
   finally show ?thesis by simp
 qed
+
+subsection \<open>A locale for the standing hypotheses\<close>
+
+text \<open>Both halves of T1 run off the same bundle: a bounded continuous martingale
+  with a Lipschitz compensator on a probability space.  Every integrability side
+  condition either half needs is derivable from boundedness, so the locale states
+  none of them.\<close>
+
+locale bounded_martingale_compensator =
+  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
+    and X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C R :: real
+  assumes P: "prob_space M"
+    and X: "martingale M F (0::real) X"
+    and XA: "martingale M F (0::real) (\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>)"
+    and C: "0 \<le> C" and R: "0 \<le> R"
+    and bnd: "\<And>v. 0 \<le> v \<Longrightarrow> AE \<omega> in M. \<bar>X v \<omega>\<bar> \<le> R"
+    and Arate: "AE \<omega> in M. \<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                   0 \<le> A q \<omega> - A p \<omega> \<and> A q \<omega> - A p \<omega> \<le> C * (q - p)"
+    and A0: "AE \<omega> in M. A 0 \<omega> = 0"
+    and cont: "AE \<omega> in M. continuous_on {0..} (\<lambda>p. X p \<omega>)"
+begin
+
+sublocale P: prob_space M by (rule P)
+sublocale MX: martingale M F "0::real" X by (rule X)
+sublocale MXA: martingale M F "0::real" "\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>" by (rule XA)
+
+lemma Xmeas: "0 \<le> v \<Longrightarrow> X v \<in> borel_measurable M"
+  by (rule MX.random_variable)
+
+lemma Ameas: "0 \<le> v \<Longrightarrow> A v \<in> borel_measurable M"
+proof -
+  assume v: "0 \<le> v"
+  have m1: "(\<lambda>\<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>) \<in> borel_measurable M"
+    by (rule MXA.random_variable[OF v])
+  have f1: "(\<lambda>\<omega>. (X v \<omega>)\<^sup>2) \<in> borel_measurable M" using Xmeas[OF v] by simp
+  have "(\<lambda>\<omega>. (X v \<omega>)\<^sup>2 - ((X v \<omega>)\<^sup>2 - A v \<omega>)) \<in> borel_measurable M"
+    by (rule borel_measurable_diff[OF f1 m1])
+  moreover have "(\<lambda>\<omega>. (X v \<omega>)\<^sup>2 - ((X v \<omega>)\<^sup>2 - A v \<omega>)) = A v" by (rule ext) simp
+  ultimately show ?thesis by simp
+qed
+
+lemma integrable_bounded:
+  fixes B :: real
+  assumes f: "f \<in> borel_measurable M" and b: "AE \<omega> in M. \<bar>f \<omega>\<bar> \<le> B"
+  shows "integrable M f"
+  using b by (intro P.integrable_const_bound[of _ B] f) simp
+
+text \<open>The compensator increments, read off the Lipschitz rate.\<close>
+
+lemma Ainc:
+  assumes "0 \<le> u" and "u \<le> v"
+  shows "AE \<omega> in M. 0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
+  using Arate by eventually_elim (use assms in blast)
+
+lemma Abnd:
+  assumes v: "0 \<le> v"
+  shows "AE \<omega> in M. \<bar>A v \<omega>\<bar> \<le> C * v"
+  using Ainc[OF order_refl v] A0 by eventually_elim simp
+
+lemma Aint:
+  assumes v: "0 \<le> v"
+  shows "integrable M (A v)"
+  by (rule integrable_bounded[OF Ameas[OF v] Abnd[OF v]])
+
+text \<open>The martingale increments, read off the uniform bound on \<open>X\<close>.\<close>
+
+lemma Xinc:
+  assumes u: "0 \<le> u" and v: "0 \<le> v"
+  shows "AE \<omega> in M. \<bar>X v \<omega> - X u \<omega>\<bar> \<le> 2 * R"
+  using bnd[OF u] bnd[OF v] by eventually_elim simp
+
+lemma sqint_X:
+  assumes v: "0 \<le> v"
+  shows "integrable M (\<lambda>\<omega>. (X v \<omega>)\<^sup>2)"
+proof (rule integrable_bounded[where B = "R\<^sup>2"])
+  show "(\<lambda>\<omega>. (X v \<omega>)\<^sup>2) \<in> borel_measurable M" using Xmeas[OF v] by simp
+  show "AE \<omega> in M. \<bar>(X v \<omega>)\<^sup>2\<bar> \<le> R\<^sup>2"
+    using bnd[OF v] by eventually_elim (simp add: sq_mono_abs)
+qed
+
+lemma fourth_int:
+  assumes u: "0 \<le> u" and v: "0 \<le> v"
+  shows "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
+proof (rule integrable_bounded[where B = "(2 * R)^4"])
+  show "(\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4) \<in> borel_measurable M"
+    using Xmeas[OF u] Xmeas[OF v] by simp
+  show "AE \<omega> in M. \<bar>(X v \<omega> - X u \<omega>)^4\<bar> \<le> (2 * R)^4"
+    using Xinc[OF u v] by eventually_elim (rule fourth_abs_mono)
+qed
+
+lemma dAsq_int:
+  assumes u: "0 \<le> u" and uv: "u \<le> v"
+  shows "integrable M (\<lambda>\<omega>. (A v \<omega> - A u \<omega>)\<^sup>2)"
+proof (rule integrable_bounded[where B = "C\<^sup>2 * (v - u)\<^sup>2"])
+  from u uv have v: "0 \<le> v" by simp
+  show "(\<lambda>\<omega>. (A v \<omega> - A u \<omega>)\<^sup>2) \<in> borel_measurable M"
+    using Ameas[OF u] Ameas[OF v] by simp
+  show "AE \<omega> in M. \<bar>(A v \<omega> - A u \<omega>)\<^sup>2\<bar> \<le> C\<^sup>2 * (v - u)\<^sup>2"
+    using Ainc[OF u uv]
+  proof eventually_elim
+    case (elim \<omega>)
+    then have "(A v \<omega> - A u \<omega>)\<^sup>2 \<le> (C * (v - u))\<^sup>2" by (intro power_mono) auto
+    then show ?case using elim by (simp add: power_mult_distrib)
+  qed
+qed
+
+lemma compsq_int:
+  assumes u: "0 \<le> u" and uv: "u \<le> v"
+  shows "integrable M (\<lambda>\<omega>. ((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2)"
+proof -
+  from u uv have v: "0 \<le> v" by simp
+  have m: "(\<lambda>\<omega>. ((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2) \<in> borel_measurable M"
+    using Xmeas[OF u] Xmeas[OF v] Ameas[OF u] Ameas[OF v] by simp
+  show ?thesis
+  proof (rule integrable_bounded[OF m, where B = "2 * (2 * R)^4 + 2 * (C * (v - u))\<^sup>2"])
+    show "AE \<omega> in M. \<bar>((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2\<bar>
+            \<le> 2 * (2 * R)^4 + 2 * (C * (v - u))\<^sup>2"
+      using Xinc[OF u v] Ainc[OF u uv]
+    proof eventually_elim
+      case (elim \<omega>)
+      have "((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2
+              \<le> 2 * (X v \<omega> - X u \<omega>)^4 + 2 * (A v \<omega> - A u \<omega>)\<^sup>2"
+        by (rule sq_diff_le_fourth)
+      moreover have "(X v \<omega> - X u \<omega>)^4 \<le> (2 * R)^4"
+        using elim by (intro fourth_mono_abs) simp
+      moreover have "(A v \<omega> - A u \<omega>)\<^sup>2 \<le> (C * (v - u))\<^sup>2"
+        using elim by (intro power_mono) auto
+      ultimately show ?case by simp
+    qed
+  qed
+qed
+
+text \<open>Continuity on any subinterval of \<open>{0..}\<close>.\<close>
+
+lemma cont_on:
+  assumes u: "0 \<le> u"
+  shows "AE \<omega> in M. continuous_on {u..v} (\<lambda>p. X p \<omega>)"
+  using cont
+proof eventually_elim
+  case (elim \<omega>)
+  have "{u..v} \<subseteq> {0..}" using u by auto
+  then show ?case by (rule continuous_on_subset[OF elim])
+qed
+
+subsection \<open>T1a and T1b inside the locale\<close>
+
+text \<open>The two halves again, now with every side condition discharged.\<close>
+
+lemma increment_second_moment:
+  assumes u: "0 \<le> u" and uv: "u \<le> v"
+  shows "(\<integral>\<omega>. ((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2 \<partial>M) \<le> 18 * C\<^sup>2 * (v - u)\<^sup>2"
+proof -
+  from u uv have v: "0 \<le> v" by simp
+  show ?thesis
+    by (rule compensated_increment_second_moment
+          [OF P X XA sqint_X Aint Arate C R bnd cont_on[OF u] fourth_int[OF u v]
+              dAsq_int[OF u uv] compsq_int[OF u uv] u uv])
+qed
+
+text \<open>The compensated sum along a grid is square integrable: \<open>qvar\<close> is a sum of
+  \<open>m\<close> squared increments, each bounded by \<open>(2R)\<^sup>2\<close>, and the compensator by \<open>C t\<^sub>m\<close>.\<close>
+
+lemma qvar_grid_sq_int:
+  assumes t0: "\<And>k. 0 \<le> t k" and tmono: "mono t"
+  shows "integrable M (\<lambda>\<omega>. (qvar (\<lambda>k. X (t k)) m \<omega> - A (t m) \<omega>)\<^sup>2)"
+proof -
+  have meas: "(\<lambda>\<omega>. (qvar (\<lambda>k. X (t k)) m \<omega> - A (t m) \<omega>)\<^sup>2) \<in> borel_measurable M"
+    unfolding qvar_def using Xmeas[OF t0] Ameas[OF t0] by simp
+  have qb: "AE \<omega> in M. \<bar>qvar (\<lambda>k. X (t k)) m \<omega>\<bar> \<le> real m * (2 * R)\<^sup>2"
+  proof -
+    have "AE \<omega> in M. \<forall>k<m. \<bar>X (t (Suc k)) \<omega> - X (t k) \<omega>\<bar> \<le> 2 * R"
+    proof (subst AE_all_countable, intro allI)
+      fix k show "AE \<omega> in M. k < m \<longrightarrow> \<bar>X (t (Suc k)) \<omega> - X (t k) \<omega>\<bar> \<le> 2 * R"
+        using Xinc[of "t k" "t (Suc k)", OF t0 t0] by eventually_elim simp
+    qed
+    then show ?thesis
+    proof eventually_elim
+      case (elim \<omega>)
+      have "\<bar>qvar (\<lambda>k. X (t k)) m \<omega>\<bar> = (\<Sum>k<m. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2)"
+        unfolding qvar_def by (simp add: sum_nonneg)
+      also have "\<dots> \<le> (\<Sum>k<m. (2 * R)\<^sup>2)"
+        using elim by (intro sum_mono sq_mono_abs) simp
+      finally show ?case by simp
+    qed
+  qed
+  have ab: "AE \<omega> in M. \<bar>A (t m) \<omega>\<bar> \<le> C * t m" by (rule Abnd[OF t0])
+  show ?thesis
+  proof (rule integrable_bounded[OF meas,
+           where B = "(real m * (2 * R)\<^sup>2 + C * t m)\<^sup>2"])
+    show "AE \<omega> in M. \<bar>(qvar (\<lambda>k. X (t k)) m \<omega> - A (t m) \<omega>)\<^sup>2\<bar>
+            \<le> (real m * (2 * R)\<^sup>2 + C * t m)\<^sup>2"
+      using qb ab
+    proof eventually_elim
+      case (elim \<omega>)
+      have "\<bar>qvar (\<lambda>k. X (t k)) m \<omega> - A (t m) \<omega>\<bar> \<le> real m * (2 * R)\<^sup>2 + C * t m"
+        using elim by simp
+      then show ?case by (rule sq_abs_mono)
+    qed
+  qed
+qed
+
+end
 
 (*<*)
 end
