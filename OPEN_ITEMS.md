@@ -1,290 +1,129 @@
 # Items against the paper
 
-One item is OPEN: the identification of the formal class with the paper's
-`P_x` (section 0 below).  Two further items, recorded in sections 1 and 2, are
-closed.  `Statement/Theorem_1_1_Statement.thy` states all five clauses of
-Theorem 1.1 in the paper's own terms.  See `NOTES_FOR_AUTHORS.md` for the
-differences that never were gaps.
+No item is open.  Section 0 below records the `P_x` bridge, which was the last
+one and is now closed; sections 1 and 2 record two further items, also closed.
+`Statement/Theorem_1_1_Statement.thy` states all five clauses of Theorem 1.1 in
+the paper's own terms.  See `NOTES_FOR_AUTHORS.md` for the differences that
+never were gaps.
 
 ---
 
-## 0. The `P_x` bridge --- OPEN, plan below
+## 0. The `P_x` bridge --- CLOSED 2026-08-14
 
-### What is missing, precisely
+### What was missing
 
 `iexit_class k L x` is a set of laws of the PAIR `(X, <X>)` on
 `C([0,inf), R^n x R^(nxn))`; the paper's `P_x` is a set of laws of `X` alone on
 `C([0,inf), R^n)`, constrained through `d<X>(t)/dt`.  Theorem 1.1 is a statement
 about the value function built from `P_x`; every clause we prove is about the
-one built from `iexit_class`.  Until the two classes are identified, these are
-different objects that share a name.
+one built from `iexit_class`.  Until the two classes were identified, these were
+different objects that shared a name.
 
 The identification is: *the `X`-marginals of `iexit_class k L x` are exactly
-`P_x`*.  Four obligations:
+`P_x`*.  All four obligations are discharged, in
+`Relative_Arbitrage/Continuous_QV.thy` and `Relative_Arbitrage/Px_Bridge.thy`:
 
 | | |
 |---|---|
-| (a) `X` is a martingale for its OWN filtration, not the pair's | DONE, `iexit_class_X_own_filtration` |
-| (b) the second coordinate really IS `<X>` | DONE, `qvmat_eq_A_sym` |
-| (c) `<X>` available as a MEASURABLE PATH FUNCTIONAL, to build a pair law from a `P_x`-law | DONE, `qvmat` / `qvmat_measurable` |
-| (d) the four clauses of `iexit_class` for that pushforward | open (T5--T7) |
+| (a) `X` is a martingale for its OWN filtration, not the pair's | `iexit_class_X_own_filtration` |
+| (b) the second coordinate really IS `<X>` | `qvmat_eq_A_sym`, `iexit_class_qvmat` |
+| (c) `<X>` available as a MEASURABLE PATH FUNCTIONAL | `qvmat` / `qvmata` and their measurability |
+| (d) the four clauses of `iexit_class` for the pushforwards | `iexit_class_marginal_in_xclass`, `xclass_lift_in_iexit_class` |
 
-(b) and (c) were not two problems.  They were the same missing theorem, gating
-BOTH inclusions --- so the honest description was not "one direction is missing"
-but "one theorem is missing, and it is needed twice".  That theorem is now
-proved (T1--T4, `Relative_Arbitrage/Continuous_QV.thy`); what is left of the
-bridge is the class-level bookkeeping (d), i.e. T5--T7 below.
+Headline results:
 
-Nothing to borrow: the AFP has `Martingales` (conditional expectation,
-general-index martingales) and `Kolmogorov_Chentsov` (modifications), but no
-continuous-time quadratic variation, and this repo's `qvar` is
-`(nat => 'a => real)` --- discrete-time and scalar.
+* `iexit_class_marginal_in_xclass` --- `ipath_law P (\t w. fst (w t))` lies in
+  `xclass k L x` for every `P` in the pair class.
+* `xclass_lift_in_iexit_class` --- `ipath_law Q (\t w. (w t, qvmata (4L) w t))`
+  lies in `iexit_class k L x` for every `Q` in the paper's class.
+* `iexit_val_eq_xval` --- the two value functions are equal, so every clause of
+  Theorem 1.1 is a statement about the paper's own `v` of Eq. (1.6).
 
-### The idea that makes it cheap
+`Statement/Theorem_1_1_Statement.thy` states `xclass`, `xval` and the three
+theorems above (`paper_class_marginal`, `paper_class_lift`,
+`paper_value_function_agrees`).
+
+### The idea that made it cheap
 
 Do NOT construct `<X>` by Doob--Meyer.  DEFINE it as the pathwise `limsup` of
-dyadic sums.  Two payoffs:
+dyadic sums.  Each finite sum is a Borel function of the path, so measurability
+is free; and the functional is `F^X`-adapted, so `F^(X,QV) = F^X` and the
+filtration worry collapses.
 
-* Each finite sum is a Borel function of the path, so measurability is free ---
-  which is exactly obligation (c).
-* The functional is `F^X`-adapted, so `F^(X,QV) = F^X` and the filtration
-  worry collapses.
+And do NOT use the classical `E[max_k |dX_k|^2 <X>]` argument.  Here `A` is
+Lipschitz and the fourth moment is already bounded, and those two facts give the
+convergence with a RATE (`qv_dyadic_L2`: `18 C^2 T^2 / 2^n`).  The rate is
+summable, so Chebyshev plus Borel--Cantelli give a.s. convergence of the FULL
+dyadic sequence --- no subsequence, which is what makes the `limsup` definition
+legitimate.
 
-And do NOT use the classical `E[max_k |dX_k|^2 <X>]` argument, which needs a
-delicate uniform-continuity estimate.  In THIS setting `A` is Lipschitz and the
-fourth moment is already bounded, and those two facts give the convergence with
-a RATE by a three-line computation --- see T1.
+### What T1--T4 delivered, and where the original plan was wrong
 
-### The load-bearing theorem (T1)
+* **T1** --- `qv_dyadic_L2`, orthogonality off `Quadratic_Variation`.
+* **T2** --- `qvp` and the left-regularisation `qvps`.  The plan said "extend by
+  continuity of both sides"; that is impossible, since `t |-> qvp w t` has no
+  continuity off the convergence event.  `qvps w t = SUP {qvp w q : q rational,
+  0 <= q < t}` instead, and the Lipschitz rate on `A` makes that supremum
+  exactly `A t`.  Bonus: it uses only times `< t`, so it is adapted.
+* **T3** --- `qvmat` and `qvmat_eq_A_sym`, by polarisation.  There is NO `outerp`
+  bookkeeping: the matrix locale states the compensator relation entrywise.
+* **T4** --- `qvps_eq_A`.
 
-Let `X` be a square-integrable martingale, `A` continuous adapted with
-`A 0 = 0`, `X^2 - A` a martingale, and `0 <= A v - A u <= C * (v - u)`.  Write
-`S_n` for the sum of squared increments over the dyadic grid of `[0,u]`.  Put
-`M_k = (dX_k)^2 - dA_k`.  Then:
-
-1. `M_k` are MARTINGALE DIFFERENCES: `E[M_k | F_(t_k)] = 0`.  This is
-   `Sampled_Quadratic_Variation.cond_exp_increment_sq` combined with the
-   compensator relation --- and it is precisely the `covA` hypothesis that
-   `Increment_Moments.fourth_moment_bound_bounded` already takes.
-2. Hence the cross terms vanish and
-   `E[(S_n - (A_u - A_0))^2] = sum_k E[M_k^2] <= 2 sum_k (E[(dX_k)^4] + E[(dA_k)^2])`.
-3. `E[(dX_k)^4] <= 8 C^2 (dt)^2` by `fourth_moment_bound_bounded` (Eq. (2.7));
-   `E[(dA_k)^2] <= C^2 (dt)^2` by the Lipschitz bound.
-4. With `2^n` terms of width `u/2^n`: `E[(S_n - (A_u - A_0))^2] <= 18 C^2 u^2 / 2^n`.
-
-The RATE is the point.  It is summable, so Chebyshev plus Borel--Cantelli give
-a.s. convergence of the FULL dyadic sequence --- no subsequence, and therefore
-`limsup S_n` is the limit a.s., which is what makes the `limsup` definition in
-T2 legitimate.  Note also that path continuity is not needed for T1 itself.
-
-### Work items
-
-**T1--T4 are DONE**, in `Relative_Arbitrage/Continuous_QV.thy`.  What they
-deliver, and where the plan below was wrong:
-
-* **T1** --- `qv_dyadic_L2`: `E[(S_n - A_T)^2] <= 18 C^2 T^2 / 2^n`, exactly as
-  planned.  The orthogonality step is `qv_orthogonality`, off
-  `Quadratic_Variation.expectation_sq_qvar`; `compensator_cond_increment` is the
-  bridge from "`X^2 - A` is a martingale" to the `covA` hypothesis that
-  `fourth_moment_bound_bounded` takes.  The AFP has no `martingale_diff`, but it
-  does have `martingale.add`/`.diff`/`.scaleR_const` --- locale-bound, so they
-  are invisible to `find_theorems` on the predicate.
-* **T2** --- `qvp` and `qvps`, plus `qvp_measurable`/`qvps_measurable`.  Scalar,
-  not `real^'n^'n`: the matrix functional is assembled in T3 instead, so the
-  scalar theory never has to know about matrices.
-* **T3** --- `qvmat` and `qvmat_eq_A`.  The polarisation is applied to
-  `X_i + c X_j` for `c = 1, -1` via the locale interpretation `polarised`.  There
-  is NO `outerp` bookkeeping: the matrix locale states the compensator relation
-  entrywise (`X_i X_j - A_ij` a martingale), which is what the class supplies
-  anyway and avoids importing `Exit_Class`.  `qvmat_eq_A` gives the SYMMETRIC
-  PART `(A_ij + A_ji)/2`; `qvmat_eq_A_sym` specialises to symmetric `A`.
-* **T4** --- `qvps_eq_A`.  The plan said "extend by continuity of both sides";
-  that is not what happens and could not be, since `t |-> qvp w t` has no
-  continuity off the convergence event.  Instead `qvps` is DEFINED as the
-  left-regularisation `SUP {qvp w q | q rational, 0 <= q < t}`, and the Lipschitz
-  rate on `A` makes that supremum exactly `A t` --- no continuity argument, and
-  no special case at `t = 0`, where the index set is empty and both sides vanish.
-  Bonus: the supremum uses only times `< t`, so adaptedness is immediate.
-
-Two hypotheses the plan did not name, both needed: the increments of `A` are
+Two hypotheses the plan never named, both needed: the increments of `A` are
 positive semidefinite (this is what makes the polarised scalar compensators
-nondecreasing — polarisation at `e_i +- e_j` is exactly a quadratic form), and
-`X` is uniformly bounded (this discharges every integrability side condition, so
-the locale states none of them).
+nondecreasing), and `X` is uniformly bounded.  **The boundedness one is FALSE in
+the class**, and gated BOTH inclusions; it is removed by localisation
+(`qvps_eq_A_stopped` -> `qvps_eq_A_localised` -> `qvmat_eq_A_localised`) along
+`tau_R = etime (Suc R) {y. B + Suc R <= norm y} X`.
 
-**The boundedness one is FALSE in the class**, and that turned out to gate T5–T7.
-It is now removed, in `Relative_Arbitrage/Px_Bridge.thy`:
+### The one design decision that had to be revisited
 
-* `qvps_eq_A_stopped` — the identification at one localisation level.
-* `qvps_eq_A_localised` — scalar, no uniform bound: an `L^2` continuous
-  martingale with a Lipschitz compensator suffices.
-* `qvmat_eq_A_localised` — the same for the matrix functional.
+The pushforward into the pair space needs the covariation functional to be a
+CONTINUOUS path for EVERY path, so a cut-down version is unavoidable.  The
+first version cut at the GLOBAL good event --- `qvp_good C w`, "the rational-time
+data of `qvp w` is nondecreasing, `C`-Lipschitz and vanishes at 0".  That is
+continuous for every path, and Borel, but it is
+**not adapted**: the good event reads the path at all times.  Adaptedness is
+exactly the `pull` hypothesis of `martingale_distr`, which BOTH inclusions go
+through, so the global cut is unusable there.
 
-The route is `tau_R = etime (Suc R) {y. B + Suc R <= norm y} X`: stopping makes
-the process bounded, `Stopped_Localization.stopped_martingale_L2` and
-`stopped_compensated_square` carry the martingale and compensator properties
-through unconditionally, `Exit_Time.etime_stopping_time` and
-`etime_stays_in_cball` supply the stopping time and the bound, and the three
-`qvp`/`qvps` congruences make stopping invisible to the functional below the
-stopping time. Levels are indexed by naturals, so one countable intersection
-serves all of them. Note the hypotheses are POINTWISE on `space M`, not a.e. —
-that is what the stopping arguments need; `Stopped_Localization`'s
-`restrict_full` package is the intended way to get there from an a.e. statement.
+The repair is to cut at a TIME rather than globally.  `qvpc C w t q` keeps the
+value `qvp w q` only when the rational data BELOW `q` is already nondecreasing
+and `C`-Lipschitz (`qvp_goodupto`), and `qvsa C w t` is the supremum of the kept
+values strictly below `t`.  It reads only times `< t`, so it is adapted; it is
+monotone and `C`-Lipschitz by an epsilon argument comparing a kept value beyond
+`s` with one kept just below `s`, hence continuous for EVERY path; and on the
+good event nothing is discarded, so `qvsa = qvps` there.  `qvmata` polarises it.
+`qvp_good` survives as the statement of that event; the global cut-down
+functional itself was deleted once it was clear it could not be used.
 
-**T5 is DONE**: `xclass` and `xval` in `Relative_Arbitrage/Px_Bridge.thy`, with
-the destructor lemmas `xclass_prob`/`_sets`/`_start`/`_martingale`/`_compensator`.
-The shape is as planned below, so the design note is kept for the record.
+The constant is `4L`, not `L`: polarisation at `e_i +- e_j` turns an
+`L`-Lipschitz matrix compensator into a `4L`-Lipschitz scalar one.
 
-**T5 --- the paper's class.**  Define
+### Two further things worth knowing
 
-    xclass k L x = {Q. prob_space Q & sets Q = borel(ipath) & AE X 0 = x
-                     & martingale Q (natural_filtration of X) 0 X
-                     & (EX A. continuous, adapted, A 0 = 0,
-                          X X^T - A a martingale,
-                          ALL s<t. (A t - A s)/(t-s) : sconstraint k L)}
+1. Transferring an almost-everywhere statement along `distr` needs the
+   exceptional set MEASURABLE, and the constraint clause quantifies over all
+   real pairs `s < t`.  That is a countable condition once the compensator is
+   continuous in `t` --- which `qvmata` is for every path, and on the pair path
+   space every point is a continuous path anyway.  `diffquot_all_of_rational`
+   and `closed_sconstraint` do the reduction.
+2. The compensated martingale clause is, in both directions, a MODIFICATION of
+   the one the source class supplies.  `martingale_of_modification_gen` is
+   real-valued, so it is applied entrywise and reassembled by
+   `martingale_matI`; adaptedness of the modification is where `qvmata` earns
+   its keep a second time.
 
-Phrasing the covariation EXISTENTIALLY is the modelling choice that makes both
-inclusions fall out of T4, because such an `A` is forced to equal `<X>`, hence
-`qvp`.  It is faithful: the paper's `d<X>/dt : S` says exactly that `<X>` is
-such an `A`, and the compensator is unique up to indistinguishability.  Flag it
-in the statement document as a stated choice, next to the Lipschitz-vs-a.e.
-reading already recorded there.
-
-**T6 --- the two inclusions.**
-* `iexit_class -> xclass`: take `A` = second coordinate; (a) is already proved.
-* `xclass -> iexit_class`: push forward along `w |-> (w, qvmat w)`.  Measurable
-  by `qvmat_measurable`; `qvmat = A` a.s. by `qvmat_eq_A_sym`, so all four
-  clauses transfer.  The martingale clause is where `F^(X,qvmat) = F^X` earns
-  its keep.
-
-  Both bullets need `qvmat_eq_A_localised`, not just the second: under the
-  pushforward the compensator has to be recovered as `qvmat w`, a functional of
-  the path, because the second coordinate is not one. So T6 is now unblocked in
-  both directions, and what is left is the pushforward bookkeeping.
-
-  **The recipe, with the machinery identified.** For the `iexit_class -> xclass`
-  direction, `Q = ipath_law P (\t w. fst (w t))`, i.e. `distr P ipath_space phi`
-  with `phi = \w. restrict (\t. fst (w t)) {0..}`:
-
-  * `phi` is measurable by `Path_Space_Infinite.ipathify_measurable` (its two
-    hypotheses are the componentwise measurability from the class martingale and
-    path continuity, the latter free since `space P = ipath`).
-  * The martingale clause is `Exit_Class_Compactness.martingale_distr`, whose
-    `pull` hypothesis is discharged by `natural_filtration_pull` (proved, in
-    `Px_Bridge.thy`). `martingale_pair_law` is NOT reusable here — it is
-    specialised to `pair_law_of` on the capped pair path metric.
-  * The compensator for `Q` must be `qvmat`, supplied by
-    `qvmat_eq_A_localised`.
-
-  **The one piece of plumbing this needs.** `qvmat_eq_A_localised` takes its
-  hypotheses POINTWISE on `space M`, but the class states the start value, `A 0 =
-  0` and the difference-quotient constraint only almost everywhere. Move to a
-  full-measure `G` and use the `restrict_full` locale of
-  `Stopped_Localization` (`prob_space_restrict_full`, `martingale_restrict_full`,
-  `distr_restrict_full`, `integrable_restrict_full`), then transfer the
-  conclusion back — `AE` in `restrict_space P G` gives `AE` in `P` because `G` is
-  full. This is the intended use of that package and is why it exists.
-
-  **Obligation (b) is now DONE**: `iexit_class_qvmat` in `Px_Bridge.thy` says
-  that for a member of the pair class, `qvmat` of the first coordinate equals
-  the second at every time, a.s. That is the theorem both inclusions consume.
-
-  **The continuous-version construction is needed by BOTH directions**, not just
-  the pushforward into the pair space as stated below. Reason: transferring an
-  a.e. statement along `distr` (`AE_distr_iff`) needs the exceptional set to be
-  MEASURABLE, and `xclass`'s difference-quotient clause quantifies over all real
-  pairs `s < t`. That is a countable condition only once `t |-> A t w` is known
-  continuous — which `qvmat w` is not, for an arbitrary `w`. Restricting the
-  clause to rational `s, t` does not help by itself, for the same reason.
-  So build the continuous version FIRST; it unblocks the constraint clause of
-  direction 1 as well as the pushforward of direction 2.
-
-  **The continuity gate is now BUILT** (`Px_Bridge.thy`): `qvp_good C w` says the
-  rational-time data of `qvp w` is nondecreasing and `C`-Lipschitz and vanishes
-  at `0` — a condition over `rat x rat`, hence countable, hence measurable.
-  `qvps_mono_lip` shows the sup-over-rationals extension inherits both
-  properties, and `qvps_continuous` concludes `C`-Lipschitz, hence continuous, on
-  `{0..}`.  Note this works because the SCALAR functionals are monotone on the
-  good event (positive semidefiniteness of the compensator increments is what
-  makes the polarised scalars nondecreasing).  Trying to extend the MATRIX
-  functional directly does not work that way — off-diagonal entries are not
-  monotone — and would need a Cauchy/limit construction instead.  Polarise
-  first, regularise second.
-
-  Steps (i)-(iii) of the assembly are now DONE:
-  `qvsc`/`qvmatc` with `qvsc_continuous`, `qvmatc_continuous` (continuous in `t`
-  for EVERY path), `qvp_good_measurable`, `qvsc_measurable`, `qvmatc_measurable`
-  (Borel), `qvmatc_eq_qvmat` (agreement on the good event), and `qvp_good_ae`
-  (the cut discards nothing: in the scalar locale the good event has full
-  measure, because `qvp_eq_A` identifies `qvp` at each rational time and `A`'s
-  rate is exactly the monotone-Lipschitz condition).
-
-  Remaining for T6:
-  * A LOCALISED `qvp_good_ae` — the one above lives in the bounded locale;
-    the class needs the unbounded form. Follow the same stopped-then-limit
-    pattern as `qvps_eq_A_localised`, using the locale's `qvp_eq_A` at fixed
-    times instead of `qvps_eq_A`, plus `qvp_cong` (already proved) to see that
-    stopping is invisible below the stopping time.
-  * Combine with `iexit_class_qvmat` and `qvmatc_eq_qvmat` to get
-    `AE w. qvmatc C (fst o w) t = snd (w t)` for a class member.
-  * The two inclusions, now pure pushforward bookkeeping:
-    `ipathify_measurable` for the map, `martingale_distr` +
-    `natural_filtration_pull` for the martingale clauses, `AE_distr_iff` for the
-    rest (whose exceptional sets are now measurable, `qvmatc` being Borel).
-
-  One step here is NOT covered by T1--T4 and should be planned for: the pair
-  space is `C([0,inf), R^n x R^(nxn))`, so the pushforward needs `qvmat w` to be
-  a CONTINUOUS path for EVERY `w`, not merely almost every one.  `qvmat` is a
-  supremum of limsups and is continuous only on the convergence event.  The fix
-  is the usual one --- redefine it to `0` off the (measurable) set where
-  `t |-> qvmat w t` is continuous, nondecreasing and vanishes at `0`; those
-  conditions are countable intersections of Borel conditions over rational
-  times, so the set is Borel and the redefinition keeps both measurability and
-  the a.s. identification.
-
-**T7 --- the value functions.**  `iexit_val = xval`, hence every clause of
-Theorem 1.1 is a statement about the paper's `v`.  Then rewrite the pair-law
-caveat in `Statement/Theorem_1_1_Statement.thy` (the bullet under
-`iexit_class_def`) from "not formalised" to the theorem name.
-
-### Placement and cost
+### Placement
 
 `fourth_moment_bound_bounded` lives in `Path_Space_Tightness.Increment_Moments`,
 which is ABOVE `Martingale_Sampling` --- so T1--T4 CANNOT go in
 `Martingale_Sampling` where `qvar` lives.  They went into
-`Relative_Arbitrage/Continuous_QV.thy`, importing only
-`Path_Space_Tightness.Increment_Moments`, which transitively has
-`qvar_compensates_sampled`, `cond_exp_increment_sq`, Doob and the dyadic grids
-of `horizon_sq_int_martingale`.  Placing it in `Relative_Arbitrage` rather than
-`Path_Space_Tightness` keeps the `Path_Space_Tightness` heap valid and leaves it
-editable under `-R Relative_Arbitrage`; it costs nothing, because nothing below
-`Relative_Arbitrage` needs it.  It deliberately does NOT import `Exit_Class`,
-which would drag most of the session into every PIDE load for the sake of
-`outerp` and `martingale_vec_nth`; the entrywise phrasing avoids both.
+`Relative_Arbitrage/Continuous_QV.thy`, which deliberately does NOT import
+`Exit_Class`; T5--T7 need `iexit_class` and went into
+`Relative_Arbitrage/Px_Bridge.thy` after `Exit_Class_Infinite`.
 
-T5--T7 need `iexit_class`, so they go in a new
-`Relative_Arbitrage/Px_Bridge.thy` after `Exit_Class_Infinite`.  Only the
-`Relative_Arbitrage` ROOT changes, and only that heap is invalidated.
-
-Estimate: 2000--4000 lines.  Treat the lower end sceptically; the W3 threading
-in this same development was estimated at ~6 sites and turned out to be ~13
-lemmas, and the shape was the same --- a clean core with more plumbing around
-it than expected.
-
-### Risks, in the order they are likely to bite
-
-1. The martingale-difference orthogonality in T1.  Everything else is arithmetic.
-2. `F^(X,qvp) = F^X` in T6.  Intuitively immediate, fiddly in the API.
-3. Polarisation bookkeeping in T3 against `outerp`.
-4. The rational-intersection/continuity step in T4 --- routine but long.
-
-### If it stalls
-
-T1--T4 are worth having ALONE: they give the development a genuine
-continuous-time quadratic variation with a convergence rate, which is
-reusable and is the part with no AFP substitute.  T5--T7 are then bookkeeping.
-Stopping after T4 leaves the repo strictly better off and the caveat in the
-statement document still accurate.
+The estimate was 2000--4000 lines; the two theories together are about 4000.
 
 ---
 

@@ -3,6 +3,7 @@ theory Theorem_1_1_Statement
   imports
     "Relative_Arbitrage.Value_Function_Uniqueness"
     "Relative_Arbitrage.Exit_Class_Infinite"
+    "Relative_Arbitrage.Px_Bridge"
 begin
 
 declare [[show_question_marks = false, names_short = true]]
@@ -106,11 +107,10 @@ text \<open>Two readings to record here, since neither is forced by the text of
   coordinate, which is what makes the class closed under weak limits and is the
   encoding the paper's own Lemma 2.3 proof uses.  A consequence is that the
   martingale clauses are stated for the natural filtration of the \<^emph>\<open>pair\<close>, a
-  priori larger than the filtration of \<open>X\<close> that Proposition 2.4 names.  That
-  direction is closed --- \<^theory_text>\<open>iexit_class_X_own_filtration\<close> shows \<open>X\<close> is a
-  martingale for its own filtration, so a member of the class does lie over a
-  member of \<open>P\<^sub>x\<close>.  The converse, that every \<open>P\<^sub>x\<close>-law lifts to a pair law, needs
-  \<open>\<langle>X\<rangle>\<close> as a path-measurable functional and is \<^emph>\<open>not\<close> formalised.
+  priori larger than the filtration of \<open>X\<close> that Proposition 2.4 names.  Both
+  directions are now closed --- \<^theory_text>\<open>iexit_class_X_own_filtration\<close> shows \<open>X\<close> is a
+  martingale for its own filtration, and the paper's class is identified with
+  the \<open>X\<close>-marginals of this one in the subsection below.
 
   \<^item> \<^bold>\<open>The covariation constraint is read as Lipschitz-with-density.\<close>  Eq. (1.7)
   constrains \<open>d\<langle>X\<rangle>(t)/dt\<close>, an almost-everywhere derivative; the clause above asks
@@ -143,6 +143,45 @@ theorem uncapped_value_function_agrees:
 
 text \<open>The clauses of Theorem 1.1 below are stated for \<^const>\<open>iexit_val\<close>, so
   no horizon appears in them at all.\<close>
+
+subsection \<open>The paper's own class \<open>P\<^sub>x\<close>, of laws of \<open>X\<close> alone\<close>
+
+text \<open>Eq. (1.6)--(1.7) with the covariation left implicit, as the paper writes
+  them: a law of the \<open>\<real>\<^sup>n\<close>-valued path alone, belonging to the class when
+  \<^emph>\<open>some\<close> continuous adapted \<open>A\<close> compensates \<open>X X\<^sup>T\<close> and has all its difference
+  quotients in \<open>S\<^sub>k\<^sup>L\<close>.  That existential reading is a stated choice, and it is
+  faithful: \<open>d\<langle>X\<rangle>/dt \<in> S\<^sub>k\<^sup>L\<close> says exactly that \<open>\<langle>X\<rangle>\<close> is such an \<open>A\<close>, and the
+  compensator is unique up to indistinguishability.\<close>
+
+text \<open>@{thm [display] xclass_def xval_def}\<close>
+
+text \<open>The two classes correspond, in both directions, and the two value
+  functions are equal.  The \<open>X\<close>-marginal of a pair law lies in \<open>P\<^sub>x\<close>; conversely a
+  \<open>P\<^sub>x\<close>-law lifts along \<open>w \<mapsto> (w, \<langle>w\<rangle>)\<close>, where the covariation is recovered as a
+  functional of the path alone --- an adapted, everywhere-continuous version of
+  the pathwise limit of dyadic sums.\<close>
+
+theorem paper_class_marginal:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes "P \<in> iexit_class k L x" and "0 \<le> L"
+  shows "ipath_law P (\<lambda>t \<omega>. fst (\<omega> t)) \<in> xclass k L x"
+  using assms by (rule iexit_class_marginal_in_xclass)
+
+theorem paper_class_lift:
+  fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)"
+  assumes "Q \<in> xclass k L x" and "0 \<le> L"
+  shows "ipath_law Q (\<lambda>t w. (w t, qvmata (4 * L) w t)) \<in> iexit_class k L x"
+  using assms by (rule xclass_lift_in_iexit_class)
+
+theorem paper_value_function_agrees:
+  fixes K :: "(real^'n::finite) set"
+  assumes "closed K" and "0 \<le> L"
+  shows "iexit_val k L K x = xval k L K x"
+  using assms by (rule iexit_val_eq_xval)
+
+text \<open>So every clause of Theorem 1.1 below, though stated for
+  \<^const>\<open>iexit_val\<close>, is a statement about the paper's own value function
+  \<^const>\<open>xval\<close> of Eq. (1.6).\<close>
 
 section \<open>Viscosity solutions in the sense of Definition 3.1\<close>
 

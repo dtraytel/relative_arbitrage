@@ -164,6 +164,7 @@ and below its value at `x` outside an explicit ball.
 | hypothesis on `K` for uniqueness | the `T_ι` family of Section 4 | an explicit predicate, proved to hold for every compact convex `K` with nonempty interior |
 | standing assumption on `L` | `L ≥ 1` | the same, `L = 1` included — but by the rotation field above, not by Case 1 as written |
 | Example 3.1 | `1 ≤ k < n` | the same |
+| the class `𝒫ₓ` of Eq. (1.7) | laws of `X` | your class verbatim, plus a second, equivalent encoding as laws of the pair `(X, ⟨X⟩)`, which is what the proofs use |
 
 The finite horizon is not a restriction. Your class and your value function are
 formalised as you write them — laws on `C([0,∞))`, the covariation constraint
@@ -174,6 +175,19 @@ Brownian continuation with covariation `t·I` onto it at time `T`. For a `K`
 inside a ball of radius `r` the hypothesis is automatic once
 `T > (r² − |x|²)/(n − k)`, which is the a priori bound of Eq. (3.10) anyway.
 The finite horizon is therefore a device of the proof, not of the statement.
+
+The second encoding needs a word. Proofs about `𝒫ₓ` — weak compactness, the
+dynamic programming principle, pasting — all want the covariation to be part of
+the sample path, so the development mostly works with laws of the *pair*
+`(X, ⟨X⟩)` on `C([0,∞), ℝⁿ × ℝⁿˣⁿ)`, exactly as your own Lemma 2.3 proof does.
+That is a different object from `𝒫ₓ`, and the two are proved to correspond: the
+`X`-marginal of a pair law lies in `𝒫ₓ`, every `𝒫ₓ`-law lifts to a pair law, and
+the two value functions are equal. The lift recovers `⟨X⟩` as a functional of
+the `X`-path alone, so that it is adapted — which is what the martingale clauses
+of Eq. (1.7) need on the image. One modelling choice is recorded there: `𝒫ₓ`
+asks that *some* continuous adapted `A` compensate `X Xᵀ` with all its
+difference quotients in `S`, which is what `d⟨X⟩/dt ∈ S` says once `⟨X⟩` is read
+as that compensator, and the compensator is unique up to indistinguishability.
 
 ---
 
@@ -187,6 +201,12 @@ each is packaged as a reusable entry.
 * Wiener measure as a projective limit, with independent increments.
 * Doob's maximal inequality; optional sampling at a bounded stopping time in
   continuous time; quadratic variation and its compensator.
+* Continuous-time quadratic variation as a *path functional*: the pathwise
+  limit of dyadic sums, with an `L²` rate (`18C²T²/2ⁿ`) that is summable, so the
+  full dyadic sequence converges almost surely and no subsequence is needed.
+  Regularised to a version that is adapted and continuous for **every** path,
+  which is what makes the lift `w ↦ (w, ⟨w⟩)` land in a space of continuous
+  paths without breaking the filtration.
 * Vitali's convergence theorem; uniform integrability of a family of
   conditional expectations.
 * `C([0,T], ℝⁿ)` as a Polish space, with the continuous mapping theorem and

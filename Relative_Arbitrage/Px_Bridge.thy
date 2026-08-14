@@ -319,126 +319,6 @@ proof -
   then show ?thesis by (rule lipschitz_on_continuous_on)
 qed
 
-subsection \<open>The cut-down functional, scalar and matrix\<close>
-
-text \<open>Off the good event the functional is set to \<open>0\<close>, which is continuous; on
-  it, \<open>qvps_continuous\<close> applies.  So \<open>qvsc\<close> is continuous in \<open>t\<close> for EVERY path,
-  which is what the pushforward into the pair space needs, and it stays Borel
-  because the good event is measurable.\<close>
-
-definition qvsc :: "real \<Rightarrow> (real \<Rightarrow> real) \<Rightarrow> real \<Rightarrow> real" where
-  "qvsc C w t = (if qvp_good C w then qvps w t else 0)"
-
-lemma qvsc_continuous:
-  assumes C: "0 \<le> C"
-  shows "continuous_on {0..} (qvsc C w)"
-proof (cases "qvp_good C w")
-  case True
-  then have "qvsc C w = qvps w" by (simp add: qvsc_def fun_eq_iff)
-  then show ?thesis using qvps_continuous[OF True C] by simp
-next
-  case False
-  then have "qvsc C w = (\<lambda>t. 0)" by (simp add: qvsc_def fun_eq_iff)
-  then show ?thesis by simp
-qed
-
-lemma qvp_good_measurable:
-  fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> real" and N :: "'b measure"
-  assumes Y: "\<And>s. 0 \<le> s \<Longrightarrow> Y s \<in> borel_measurable N"
-  shows "Measurable.pred N (\<lambda>\<omega>. qvp_good C (\<lambda>s. Y s \<omega>))"
-proof -
-  have m: "(\<lambda>\<omega>. qvp (\<lambda>s. Y s \<omega>) (real_of_rat r)) \<in> borel_measurable N"
-    if r: "0 \<le> (r :: rat)" for r
-  proof (rule qvp_measurable)
-    show "0 \<le> real_of_rat r" using r by simp
-    fix s assume s: "0 \<le> s" and "s \<le> real_of_rat r"
-    show "Y s \<in> borel_measurable N" by (rule Y[OF s])
-  qed
-  have m0 [measurable]: "(\<lambda>\<omega>. qvp (\<lambda>s. Y s \<omega>) 0) \<in> borel_measurable N"
-    using m[of 0] by simp
-  have inner: "Measurable.pred N (\<lambda>\<omega>. \<forall>p q :: rat. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
-      0 \<le> qvp (\<lambda>s. Y s \<omega>) (real_of_rat q) - qvp (\<lambda>s. Y s \<omega>) (real_of_rat p) \<and>
-      qvp (\<lambda>s. Y s \<omega>) (real_of_rat q) - qvp (\<lambda>s. Y s \<omega>) (real_of_rat p)
-        \<le> C * (real_of_rat q - real_of_rat p))"
-  proof (intro pred_intros_countable)
-    fix p q :: rat
-    show "Measurable.pred N (\<lambda>\<omega>. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
-        0 \<le> qvp (\<lambda>s. Y s \<omega>) (real_of_rat q) - qvp (\<lambda>s. Y s \<omega>) (real_of_rat p) \<and>
-        qvp (\<lambda>s. Y s \<omega>) (real_of_rat q) - qvp (\<lambda>s. Y s \<omega>) (real_of_rat p)
-          \<le> C * (real_of_rat q - real_of_rat p))"
-    proof (cases "0 \<le> p \<and> p \<le> q")
-      case True
-      then have p: "0 \<le> p" and pq: "p \<le> q" by auto
-      then have q: "0 \<le> q" by simp
-      note [measurable] = m[OF p] m[OF q]
-      show ?thesis by measurable
-    next
-      case False
-      then show ?thesis by simp
-    qed
-  qed
-  have "Measurable.pred N (\<lambda>\<omega>. qvp (\<lambda>s. Y s \<omega>) 0 = 0 \<and>
-      (\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
-         0 \<le> qvp (\<lambda>s. Y s \<omega>) (real_of_rat q) - qvp (\<lambda>s. Y s \<omega>) (real_of_rat p) \<and>
-         qvp (\<lambda>s. Y s \<omega>) (real_of_rat q) - qvp (\<lambda>s. Y s \<omega>) (real_of_rat p)
-           \<le> C * (real_of_rat q - real_of_rat p)))"
-    using inner by measurable
-  then show ?thesis unfolding qvp_good_def by simp
-qed
-
-lemma qvsc_measurable:
-  fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> real" and N :: "'b measure"
-  assumes Y: "\<And>s. 0 \<le> s \<Longrightarrow> Y s \<in> borel_measurable N"
-  shows "(\<lambda>\<omega>. qvsc C (\<lambda>s. Y s \<omega>) t) \<in> borel_measurable N"
-proof -
-  have g: "Measurable.pred N (\<lambda>\<omega>. qvp_good C (\<lambda>s. Y s \<omega>))"
-    by (rule qvp_good_measurable[OF Y])
-  have p: "(\<lambda>\<omega>. qvps (\<lambda>s. Y s \<omega>) t) \<in> borel_measurable N"
-    by (rule qvps_measurable) (use Y in simp)
-  show ?thesis unfolding qvsc_def using g p by simp
-qed
-
-text \<open>The matrix version, assembled by polarisation from the scalar one.  The
-  order matters: the SCALAR functionals are the monotone ones, so they are what
-  the regularisation of the previous subsection applies to.\<close>
-
-definition qvmatc ::
-  "real \<Rightarrow> (real \<Rightarrow> real^'n::finite) \<Rightarrow> real \<Rightarrow> real^'n^'n"
-  where
-  "qvmatc C w t = (\<chi> i. \<chi> j. (qvsc C (\<lambda>s. w s $ i + w s $ j) t
-                              - qvsc C (\<lambda>s. w s $ i + (- 1) * (w s $ j)) t) / 4)"
-
-lemma qvmatc_continuous:
-  assumes C: "0 \<le> C"
-  shows "continuous_on {0..} (qvmatc C w)"
-  unfolding qvmatc_def
-  by (intro continuous_on_vec_lambda continuous_intros qvsc_continuous[OF C]) simp
-
-lemma qvmatc_measurable:
-  fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> real^'n::finite" and N :: "'b measure"
-  assumes Y: "\<And>s i. 0 \<le> s \<Longrightarrow> (\<lambda>\<omega>. Y s \<omega> $ i) \<in> borel_measurable N"
-  shows "(\<lambda>\<omega>. qvmatc C (\<lambda>s. Y s \<omega>) t) \<in> borel_measurable N"
-proof (rule measurable_mat_entries)
-  fix i j :: 'n
-  have p: "(\<lambda>\<omega>. qvsc C (\<lambda>s. Y s \<omega> $ i + c * (Y s \<omega> $ j)) t) \<in> borel_measurable N"
-    for c by (rule qvsc_measurable) (use Y in simp)
-  have "(\<lambda>\<omega>. qvmatc C (\<lambda>s. Y s \<omega>) t $ i $ j)
-      = (\<lambda>\<omega>. (qvsc C (\<lambda>s. Y s \<omega> $ i + 1 * (Y s \<omega> $ j)) t
-              - qvsc C (\<lambda>s. Y s \<omega> $ i + (- 1) * (Y s \<omega> $ j)) t) / 4)"
-    by (simp add: qvmatc_def)
-  then show "(\<lambda>\<omega>. qvmatc C (\<lambda>s. Y s \<omega>) t $ i $ j) \<in> borel_measurable N"
-    using p[of 1] p[of "- 1"] by simp
-qed
-
-text \<open>On the event where every polarised scalar is good, the cut-down matrix
-  functional agrees with the original one.\<close>
-
-lemma qvmatc_eq_qvmat:
-  assumes "\<And>i j. qvp_good C (\<lambda>s. w s $ i + w s $ j)"
-    and "\<And>i j. qvp_good C (\<lambda>s. w s $ i + (- 1) * (w s $ j))"
-  shows "qvmatc C w t = qvmat w t"
-  using assms by (simp add: qvmatc_def qvmat_def qvsc_def)
-
 subsection \<open>The good event has full measure\<close>
 
 text \<open>The cut-down functional is only useful if the cut discards nothing: under
@@ -494,11 +374,12 @@ qed
 subsection \<open>An ADAPTED continuous version\<close>
 
 text \<open>
-  The cut-down functional \<open>qvsc\<close> is continuous for every path, but it is not
-  adapted: the good event reads the path at all times.  That is fatal for the
-  bridge --- both pushforwards go through \<open>martingale_distr\<close>, whose \<open>pull\<close>
-  hypothesis says exactly that the second coordinate of the map is measurable at
-  the current time.
+  Cutting the functional down to the GLOBAL good event of the previous
+  subsection makes it continuous for every path, but not adapted: that event
+  reads the path at all times.  That is fatal for the bridge --- both
+  pushforwards go through \<open>martingale_distr\<close>, whose \<open>pull\<close> hypothesis says
+  exactly that the second coordinate of the map is measurable at the current
+  time.
 
   The repair is to cut at a time rather than globally: keep the value
   \<open>qvp w q\<close> only when the rational data BELOW \<open>q\<close> is already nondecreasing and
@@ -2174,7 +2055,7 @@ text \<open>
   The converse pushforward, along \<open>w \<mapsto> (w, qvmata w)\<close>.  The pair space is a
   space of CONTINUOUS paths, so the second component must be continuous for
   every path, not merely almost every one --- which is what \<^const>\<open>qvmata\<close> is,
-  and what the good-event cut of \<^const>\<open>qvsc\<close> would not have given while staying
+  and what a cut at the global good event would not have given while staying
   adapted.
 \<close>
 
