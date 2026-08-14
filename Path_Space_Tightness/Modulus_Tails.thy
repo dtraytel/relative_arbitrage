@@ -13,7 +13,7 @@ text \<open>
   into the quantitative tail bound on the modulus of continuity. Both the
   modulus threshold and the exceptional probability are explicit in
   \<open>(C, T, \<gamma>, n)\<close> only --- uniformity over the family of admissible laws is
-  exactly what tightness in Lemma 2.2 of arXiv:2512.17702 consumes.
+  exactly what tightness in Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> consumes.
 \<close>
 subsection \<open>The bad event at one dyadic level\<close>
 

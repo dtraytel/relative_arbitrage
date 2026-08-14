@@ -493,7 +493,7 @@ qed
 section \<open>Sequential compactness gives \<open>compactin\<close> in a metrizable space\<close>
 
 text \<open>
-  The glue between Lemmas 2.2 and 2.3 of arXiv:2512.17702 and Berge's theorem. Those lemmas
+  The glue between Lemmas 2.2 and 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> and Berge's theorem. Those lemmas
   deliver sequential compactness of the law set -- 2.2 extracts a weakly
   convergent subsequence, 2.3 puts the limit back in the set -- whereas
   \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the

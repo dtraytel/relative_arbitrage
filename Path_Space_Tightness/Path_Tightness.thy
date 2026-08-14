@@ -372,7 +372,7 @@ qed
 subsection \<open>The vector-valued layer\<close>
 
 text \<open>
-  The paths of arXiv:2512.17702 are \<open>\<real>\<^sup>n\<close>-valued while the moment machinery above
+  The paths of \<^cite>\<open>LaiShkolnikovSoner\<close> are \<open>\<real>\<^sup>n\<close>-valued while the moment machinery above
   is real-valued; this layer closes the gap coordinatewise. The bad event
   is the union of the coordinate bad events (factor \<open>CARD('m)\<close> by the union
   bound); on its complement every coordinate is H\"older, so the vector path

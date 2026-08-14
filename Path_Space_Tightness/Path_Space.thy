@@ -10,7 +10,7 @@ begin
 (*>*)
 
 text \<open>
-  The space the martingale laws of Lemma 2.2 of arXiv:2512.17702 live on:
+  The space the martingale laws of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> live on:
   HOL-Analysis' set-based \<open>cfunspace\<close> (bounded continuous maps with the sup
   metric) over the compact interval \<open>{0..T}\<close>, valued in a Polish type.
   Completeness is \<open>Metric_space.mcomplete_cfunspace\<close> and separability

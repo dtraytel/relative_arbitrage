@@ -9,7 +9,7 @@ begin
 
 text \<open>
   This theory proves the second-moment bound on increments used in Lemma 2.2 of
-  arXiv:2512.17702:
+  \<^cite>\<open>LaiShkolnikovSoner\<close>:
 
     \<open>E[(X u - X s)\<^sup>2] \<le> C * (u - s)\<close>
 
@@ -362,7 +362,7 @@ text \<open>
   A localised variant of @{thm [source] increment_second_moment_bound}: the
   conditional expectation of the squared increment over \<open>[t k, t (Suc k)]\<close>
   agrees with that of the compensator increment \<open>dA k\<close>, growing at rate at
-  most @{term C} -- the form in which the admissible laws of arXiv:2512.17702
+  most @{term C} -- the form in which the admissible laws of \<^cite>\<open>LaiShkolnikovSoner\<close>
   supply their covariation constraint.
 \<close>
 
@@ -504,7 +504,7 @@ qed
 subsection \<open>Fourth moments along a partition: Eq. (2.7) with an explicit remainder\<close>
 
 text \<open>
-  Eq. (2.7) of arXiv:2512.17702 is derived there through the Burkholder-Davis-Gundy
+  Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> is derived there through the Burkholder-Davis-Gundy
   inequality, which
   is absent from Isabelle and the AFP. The theorem below reaches the same bound by
   expanding \<open>(Y + d)^4\<close> directly along the partition using only conditional
@@ -1668,7 +1668,7 @@ qed
 subsection \<open>The remainder vanishes along the uniform partitions\<close>
 
 text \<open>
-  The hypotheses package the setting of arXiv:2512.17702: a global compensator @{term A}
+  The hypotheses package the setting of \<^cite>\<open>LaiShkolnikovSoner\<close>: a global compensator @{term A}
   with rate at most @{term C} (in the application, \<open>A u = \<integral> trace (acov)\<close>
   over \<open>[0,u]\<close>), the conditional covariation identity per pair of times,
   boundedness by @{term R}, and almost-surely continuous paths on \<open>[s,T]\<close>.
@@ -2010,7 +2010,7 @@ qed
 subsection \<open>Eq. (2.7) for bounded continuous martingales\<close>
 
 text \<open>
-  The fourth-moment bound of Eq. (2.7) of arXiv:2512.17702, for a martingale
+  The fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>, for a martingale
   that is bounded and has almost-surely continuous paths on \<open>[s,T]\<close>, with
   covariation compensator of rate at most @{term C}. The constant is \<open>8 C\<^sup>2\<close>,
   against the \<open>66 C\<^sup>2\<close> obtained through the Burkholder-Davis-Gundy

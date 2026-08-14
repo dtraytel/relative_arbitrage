@@ -11,7 +11,7 @@ text \<open>
   The quantitative tail estimates that turn Eq. (2.7) into tightness. The
   AFP's Kolmogorov-Chentsov theorem produces a continuous modification but
   not the tail bound on the modulus of continuity that Lemma 2.2 of
-  arXiv:2512.17702 needs; that bound is assembled here from Markov's
+  \<^cite>\<open>LaiShkolnikovSoner\<close> needs; that bound is assembled here from Markov's
   inequality and a union bound over one partition level. The chaining over
   dyadic levels is the following step.
 \<close>
