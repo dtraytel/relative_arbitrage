@@ -260,6 +260,207 @@ proof -
   qed
 qed
 
+subsection \<open>T3 without the boundedness hypothesis\<close>
+
+text \<open>The polarisation of T3, run through the localised scalar theorem.  The
+  hypotheses are pointwise on \<open>space M\<close> rather than almost everywhere, which is
+  what the stopping arguments need; the intended application reaches that form
+  through the \<open>restrict_full\<close> package of
+  @{theory Relative_Arbitrage.Stopped_Localization}.\<close>
+
+theorem qvmat_eq_A_localised:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and A :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"
+  assumes P: "prob_space M"
+    and Xcomp: "\<And>i. martingale M F (0::real) (\<lambda>v \<omega>. X v \<omega> $ i)"
+    and XAcomp: "\<And>i j. martingale M F (0::real)
+                    (\<lambda>v \<omega>. X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j)"
+    and contX: "\<And>\<omega> i. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega> $ i)"
+    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
+    and Apsd: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                  (\<forall>y. 0 \<le> y \<bullet> ((A q \<omega> - A p \<omega>) *v y))"
+    and Arate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>p q i j. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                  \<bar>A q \<omega> $ i $ j - A p \<omega> $ i $ j\<bar> \<le> C * (q - p)"
+    and C0: "0 \<le> C"
+    and B0: "0 \<le> B" and X0: "\<And>\<omega> i. \<omega> \<in> space M \<Longrightarrow> \<bar>X 0 \<omega> $ i\<bar> \<le> B"
+  shows "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
+     qvmat (\<lambda>s. X s \<omega>) t = (\<chi> i. \<chi> j. (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2)"
+proof -
+  interpret P: prob_space M by (rule P)
+  have pol: "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow>
+      qvps (\<lambda>s. X s \<omega> $ i + c * (X s \<omega> $ j)) t
+        = A t \<omega> $ i $ i + c * (A t \<omega> $ i $ j + A t \<omega> $ j $ i)
+          + c\<^sup>2 * (A t \<omega> $ j $ j)"
+    if c: "\<bar>c\<bar> \<le> 1" for c i j
+  proof -
+    define Y where "Y = (\<lambda>v \<omega>. X v \<omega> $ i + c * (X v \<omega> $ j))"
+    define G where "G = (\<lambda>v \<omega>. A v \<omega> $ i $ i
+        + c * (A v \<omega> $ i $ j + A v \<omega> $ j $ i) + c\<^sup>2 * (A v \<omega> $ j $ j))"
+    have c2: "c\<^sup>2 \<le> 1" using sq_mono_abs[OF c] by simp
+
+    have mgY: "martingale M F 0 Y"
+    proof -
+      have "martingale M F 0 (\<lambda>v \<omega>. X v \<omega> $ i + c *\<^sub>R (X v \<omega> $ j))"
+        by (intro martingale.add[OF Xcomp] martingale.scaleR_const[OF Xcomp])
+      then show ?thesis unfolding Y_def by simp
+    qed
+    have mgZ: "martingale M F 0 (\<lambda>v \<omega>. (Y v \<omega>)\<^sup>2 - G v \<omega>)"
+    proof -
+      have eq: "(\<lambda>v \<omega>. (Y v \<omega>)\<^sup>2 - G v \<omega>)
+          = (\<lambda>v \<omega>. ((X v \<omega> $ i * X v \<omega> $ i - A v \<omega> $ i $ i)
+                      + c *\<^sub>R (X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j))
+                   + (c *\<^sub>R (X v \<omega> $ j * X v \<omega> $ i - A v \<omega> $ j $ i)
+                      + c\<^sup>2 *\<^sub>R (X v \<omega> $ j * X v \<omega> $ j - A v \<omega> $ j $ j)))"
+        unfolding Y_def G_def
+        by (rule ext)+ (simp add: power2_eq_square algebra_simps)
+      have m1: "martingale M F 0 (\<lambda>v \<omega>. X v \<omega> $ i * X v \<omega> $ i - A v \<omega> $ i $ i)"
+        by (rule XAcomp)
+      have m2: "martingale M F 0 (\<lambda>v \<omega>. c *\<^sub>R (X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j))"
+        by (rule martingale.scaleR_const[OF XAcomp])
+      have m3: "martingale M F 0 (\<lambda>v \<omega>. c *\<^sub>R (X v \<omega> $ j * X v \<omega> $ i - A v \<omega> $ j $ i))"
+        by (rule martingale.scaleR_const[OF XAcomp])
+      have m4: "martingale M F 0 (\<lambda>v \<omega>. c\<^sup>2 *\<^sub>R (X v \<omega> $ j * X v \<omega> $ j - A v \<omega> $ j $ j))"
+        by (rule martingale.scaleR_const[OF XAcomp])
+      show ?thesis unfolding eq
+        by (rule martingale.add[OF martingale.add[OF m1 m2] martingale.add[OF m3 m4]])
+    qed
+
+    text \<open>The polarised compensator inherits monotonicity from positive
+      semidefiniteness and the upper bound from the entrywise rate.\<close>
+    have Grate: "\<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+        0 \<le> G v \<omega> - G u \<omega> \<and> G v \<omega> - G u \<omega> \<le> (4 * C) * (v - u)"
+      if w: "\<omega> \<in> space M" for \<omega>
+    proof (intro allI impI)
+      fix u v :: real assume uv: "0 \<le> u" "u \<le> v"
+      have diff: "G v \<omega> - G u \<omega>
+          = (axis i 1 + c *\<^sub>R axis j 1) \<bullet> ((A v \<omega> - A u \<omega>) *v (axis i 1 + c *\<^sub>R axis j 1))"
+      proof -
+        have "(axis i 1 + c *\<^sub>R axis j 1)
+                \<bullet> ((A v \<omega> - A u \<omega>) *v (axis i 1 + c *\<^sub>R axis j 1))
+            = (A v \<omega> - A u \<omega>) $ i $ i
+              + c * ((A v \<omega> - A u \<omega>) $ i $ j + (A v \<omega> - A u \<omega>) $ j $ i)
+              + c\<^sup>2 * ((A v \<omega> - A u \<omega>) $ j $ j)"
+          by (rule inner_mv_axis)
+        then show ?thesis unfolding G_def by (simp add: algebra_simps)
+      qed
+      have nn: "0 \<le> G v \<omega> - G u \<omega>"
+        unfolding diff using Apsd[OF w] uv by blast
+      have e: "\<And>a b. \<bar>A v \<omega> $ a $ b - A u \<omega> $ a $ b\<bar> \<le> C * (v - u)"
+        using Arate[OF w] uv by blast
+      have "G v \<omega> - G u \<omega>
+          = (A v \<omega> $ i $ i - A u \<omega> $ i $ i)
+            + c * ((A v \<omega> $ i $ j - A u \<omega> $ i $ j) + (A v \<omega> $ j $ i - A u \<omega> $ j $ i))
+            + c\<^sup>2 * (A v \<omega> $ j $ j - A u \<omega> $ j $ j)"
+        unfolding G_def by (simp add: algebra_simps)
+      also have "\<dots> \<le> C * (v - u) + 1 * (C * (v - u) + C * (v - u)) + 1 * (C * (v - u))"
+      proof (intro add_mono)
+        show "A v \<omega> $ i $ i - A u \<omega> $ i $ i \<le> C * (v - u)"
+          using e by (simp add: abs_le_iff)
+        have "c * ((A v \<omega> $ i $ j - A u \<omega> $ i $ j) + (A v \<omega> $ j $ i - A u \<omega> $ j $ i))
+            \<le> \<bar>c\<bar> * \<bar>(A v \<omega> $ i $ j - A u \<omega> $ i $ j) + (A v \<omega> $ j $ i - A u \<omega> $ j $ i)\<bar>"
+          by (simp add: abs_mult flip: abs_mult)
+        also have "\<dots> \<le> 1 * (C * (v - u) + C * (v - u))"
+          using c e[of i j] e[of j i] C0 uv
+          by (intro mult_mono) (auto intro: order_trans[OF abs_triangle_ineq] add_mono)
+        finally show "c * ((A v \<omega> $ i $ j - A u \<omega> $ i $ j)
+                             + (A v \<omega> $ j $ i - A u \<omega> $ j $ i))
+            \<le> 1 * (C * (v - u) + C * (v - u))" .
+        have "0 \<le> A v \<omega> $ j $ j - A u \<omega> $ j $ j"
+        proof -
+          have ax: "axis j (1::real) \<bullet> ((A v \<omega> - A u \<omega>) *v axis j 1)
+              = (A v \<omega> - A u \<omega>) $ j $ j"
+            using inner_mv_axis[of j 0 j "A v \<omega> - A u \<omega>"] by simp
+          have "0 \<le> axis j (1::real) \<bullet> ((A v \<omega> - A u \<omega>) *v axis j 1)"
+            using Apsd[OF w] uv by blast
+          then show ?thesis using ax by simp
+        qed
+        moreover have "A v \<omega> $ j $ j - A u \<omega> $ j $ j \<le> C * (v - u)"
+          using e by (simp add: abs_le_iff)
+        ultimately show "c\<^sup>2 * (A v \<omega> $ j $ j - A u \<omega> $ j $ j) \<le> 1 * (C * (v - u))"
+          using c2 C0 uv by (intro mult_mono) auto
+      qed
+      also have "\<dots> = (4 * C) * (v - u)" by simp
+      finally show "0 \<le> G v \<omega> - G u \<omega> \<and> G v \<omega> - G u \<omega> \<le> (4 * C) * (v - u)"
+        using nn by simp
+    qed
+
+    text \<open>Square integrability, from the compensated square and the bound on
+      \<open>G\<close> --- there is no uniform bound on \<open>Y\<close> to appeal to.\<close>
+    have G0: "G 0 \<omega> = 0" if w: "\<omega> \<in> space M" for \<omega>
+      unfolding G_def using A0[OF w] by simp
+    have Gbnd: "\<bar>G s \<omega>\<bar> \<le> (4 * C) * s" if w: "\<omega> \<in> space M" and s: "0 \<le> s" for s \<omega>
+      using Grate[OF w] s G0[OF w] by (metis order_refl abs_of_nonneg diff_zero)
+    have Ymeas: "Y s \<in> borel_measurable M" if s: "0 \<le> s" for s
+      by (rule borel_measurable_integrable[OF martingale.integrable[OF mgY s]])
+    have Gmeas: "G s \<in> borel_measurable M" if s: "0 \<le> s" for s
+    proof -
+      have m: "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2 - G s \<omega>) \<in> borel_measurable M"
+        by (rule borel_measurable_integrable[OF martingale.integrable[OF mgZ s]])
+      have f1: "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2) \<in> borel_measurable M" using Ymeas[OF s] by simp
+      have "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2 - ((Y s \<omega>)\<^sup>2 - G s \<omega>)) \<in> borel_measurable M"
+        by (rule borel_measurable_diff[OF f1 m])
+      moreover have "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2 - ((Y s \<omega>)\<^sup>2 - G s \<omega>)) = G s" by (rule ext) simp
+      ultimately show ?thesis by simp
+    qed
+    have Gint: "integrable M (G s)" if s: "0 \<le> s" for s
+    proof (rule P.integrable_const_bound[of _ "(4 * C) * s"])
+      show "AE \<omega> in M. norm (G s \<omega>) \<le> (4 * C) * s"
+        using Gbnd[OF _ s] by (intro AE_I2) simp
+      show "G s \<in> borel_measurable M" by (rule Gmeas[OF s])
+    qed
+    have sqY: "integrable M (\<lambda>\<omega>. (Y s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
+    proof -
+      have "integrable M (\<lambda>\<omega>. ((Y s \<omega>)\<^sup>2 - G s \<omega>) + G s \<omega>)"
+        by (intro Bochner_Integration.integrable_add
+            martingale.integrable[OF mgZ s] Gint[OF s])
+      then show ?thesis by simp
+    qed
+    have contY: "continuous_on {0..} (\<lambda>s. Y s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
+      unfolding Y_def
+      by (intro continuous_on_add continuous_on_mult_left contX[OF w])
+    have Y0: "\<bar>Y 0 \<omega>\<bar> \<le> 2 * B" if w: "\<omega> \<in> space M" for \<omega>
+    proof -
+      have "\<bar>Y 0 \<omega>\<bar> \<le> \<bar>X 0 \<omega> $ i\<bar> + \<bar>c * (X 0 \<omega> $ j)\<bar>"
+        unfolding Y_def by (rule abs_triangle_ineq)
+      also have "\<dots> = \<bar>X 0 \<omega> $ i\<bar> + \<bar>c\<bar> * \<bar>X 0 \<omega> $ j\<bar>" by (simp add: abs_mult)
+      also have "\<dots> \<le> B + 1 * B"
+        using X0[OF w] c B0 by (intro add_mono mult_mono) auto
+      finally show ?thesis by simp
+    qed
+    have "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. Y s \<omega>) t = G t \<omega>"
+      by (rule qvps_eq_A_localised
+            [OF P mgY sqY contY mgZ G0 Grate _ _ Y0]) (use C0 B0 in auto)
+    then show ?thesis unfolding Y_def G_def .
+  qed
+  have c1: "\<bar>(1::real)\<bar> \<le> 1" by simp
+  have cm1: "\<bar>(- 1::real)\<bar> \<le> 1" by simp
+  have all1: "AE \<omega> in M. \<forall>i \<in> (UNIV :: 'n set). \<forall>j \<in> (UNIV :: 'n set). \<forall>t.
+      0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega> $ i + X s \<omega> $ j) t
+        = A t \<omega> $ i $ i + (A t \<omega> $ i $ j + A t \<omega> $ j $ i) + A t \<omega> $ j $ j"
+    by (intro AE_finite_allI; use pol[OF c1] in simp)
+  have all2: "AE \<omega> in M. \<forall>i \<in> (UNIV :: 'n set). \<forall>j \<in> (UNIV :: 'n set). \<forall>t.
+      0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega> $ i - X s \<omega> $ j) t
+        = A t \<omega> $ i $ i + (- A t \<omega> $ i $ j - A t \<omega> $ j $ i) + A t \<omega> $ j $ j"
+    by (intro AE_finite_allI; use pol[OF cm1] in simp)
+  from all1 all2 show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (intro allI impI)
+      fix t :: real assume t: "0 \<le> t"
+      have e1: "qvps (\<lambda>s. X s \<omega> $ i + X s \<omega> $ j) t
+          = A t \<omega> $ i $ i + (A t \<omega> $ i $ j + A t \<omega> $ j $ i) + A t \<omega> $ j $ j"
+        for i j using elim(1) t by blast
+      have e2: "qvps (\<lambda>s. X s \<omega> $ i - X s \<omega> $ j) t
+          = A t \<omega> $ i $ i + (- A t \<omega> $ i $ j - A t \<omega> $ j $ i) + A t \<omega> $ j $ j"
+        for i j using elim(2) t by blast
+      have ent: "qvmat (\<lambda>s. X s \<omega>) t $ i $ j = (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2"
+        for i j by (simp add: qvmat_def e1 e2)
+      show "qvmat (\<lambda>s. X s \<omega>) t = (\<chi> i. \<chi> j. (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2)"
+        by (simp add: vec_eq_iff ent)
+    qed
+  qed
+qed
+
 subsection \<open>T5: the paper's class and value function\<close>
 
 text \<open>
