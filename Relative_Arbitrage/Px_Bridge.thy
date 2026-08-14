@@ -625,6 +625,156 @@ next
   then show ?thesis using A0 by simp
 qed
 
+subsection \<open>The second coordinate of a class member IS the quadratic variation\<close>
+
+text \<open>Obligation (b) of the bridge.  The class states its side conditions almost
+  everywhere, while the localised identification wants them pointwise; the two
+  are reconciled by restricting to a full-measure event, which is what the
+  \<open>restrict_full\<close> package of @{theory Relative_Arbitrage.Stopped_Localization}
+  is for.  The event is built from null sets rather than from the conditions
+  themselves, so nothing has to be shown measurable --- in particular not the
+  difference-quotient condition, which quantifies over all real pairs.\<close>
+
+theorem iexit_class_qvmat:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes P: "P \<in> iexit_class k L x" and L: "0 \<le> L"
+  shows "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> qvmat (\<lambda>s. fst (\<omega> s)) t = snd (\<omega> t)"
+proof -
+  interpret PP: prob_space P by (rule iexit_class_prob[OF P])
+  let ?F = "natural_filtration P 0 (\<lambda>t \<omega> :: 'n pairpath. \<omega> t)"
+  have spP: "space P = (ipath :: ('n pairpath) set)"
+    using iexit_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
+  have mgX: "martingale P ?F 0 (\<lambda>t \<omega>. fst (\<omega> t) :: real^'n)"
+    by (rule iexit_class_X_martingale[OF P])
+  have mgXA: "martingale P ?F 0 (\<lambda>t \<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
+    using P unfolding iexit_class_def by blast
+
+  text \<open>A full-measure event on which the side conditions hold pointwise.\<close>
+  from iexit_class_start[OF P] obtain N1 where
+    N1: "{\<omega> \<in> space P. \<not> (fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0)} \<subseteq> N1"
+    and N1e: "emeasure P N1 = 0" and N1s: "N1 \<in> sets P" by (rule AE_E)
+  from iexit_class_diffquot[OF P] obtain N2 where
+    N2: "{\<omega> \<in> space P. \<not> (\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+            (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L)} \<subseteq> N2"
+    and N2e: "emeasure P N2 = 0" and N2s: "N2 \<in> sets P" by (rule AE_E)
+  have N1n: "N1 \<in> null_sets P" using N1e N1s by (simp add: null_sets_def)
+  have N2n: "N2 \<in> null_sets P" using N2e N2s by (simp add: null_sets_def)
+  define G where "G = space P - (N1 \<union> N2)"
+  have Nsets: "N1 \<union> N2 \<in> sets P" using N1s N2s by simp
+  have Gsets: "G \<in> sets P" unfolding G_def using Nsets by simp
+  have Gfull: "AE \<omega> in P. \<omega> \<in> G"
+  proof (rule AE_I[where N = "N1 \<union> N2"])
+    show "{\<omega> \<in> space P. \<omega> \<notin> G} \<subseteq> N1 \<union> N2" unfolding G_def by blast
+    show "emeasure P (N1 \<union> N2) = 0"
+      using N1n N2n by (simp add: null_sets_def emeasure_Un_null_set)
+    show "N1 \<union> N2 \<in> sets P" by (rule Nsets)
+  qed
+  have Gspace: "G \<subseteq> space P" unfolding G_def by blast
+  have Gstart: "fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0" if "\<omega> \<in> G" for \<omega>
+    using N1 that unfolding G_def by blast
+  have Gdq: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L" if "\<omega> \<in> G" for \<omega>
+    using N2 that unfolding G_def by blast
+
+  text \<open>On the restricted space every hypothesis of the localised matrix
+    identification holds pointwise.\<close>
+  let ?M = "restrict_space P G"
+  let ?FF = "\<lambda>t. restrict_space (?F t) G"
+  have spM: "space ?M = G"
+    by (rule space_restrict_full[OF PP.prob_space_axioms Gsets Gfull])
+  have Xc: "martingale ?M ?FF 0 (\<lambda>v \<omega>. fst (\<omega> v) $ i)" for i
+    by (rule martingale_restrict_full[OF PP.prob_space_axioms Gsets Gfull
+          martingale_vec_nth[OF mgX]])
+  have XAc: "martingale ?M ?FF 0 (\<lambda>v \<omega>. fst (\<omega> v) $ i * fst (\<omega> v) $ j
+      - snd (\<omega> v) $ i $ j)" for i j
+  proof -
+    have "martingale P ?F 0 (\<lambda>v \<omega>. (outerp (fst (\<omega> v)) - snd (\<omega> v)) $ i $ j)"
+      by (rule martingale_mat_nth[OF mgXA])
+    then have "martingale P ?F 0
+        (\<lambda>v \<omega>. fst (\<omega> v) $ i * fst (\<omega> v) $ j - snd (\<omega> v) $ i $ j)"
+      by (simp add: outerp_def)
+    then show ?thesis
+      by (rule martingale_restrict_full[OF PP.prob_space_axioms Gsets Gfull])
+  qed
+  have contc: "continuous_on {0..} (\<lambda>s. fst (\<omega> s) $ i)" if w: "\<omega> \<in> space ?M" for \<omega> i
+  proof -
+    have "\<omega> \<in> ipath" using w Gspace spM spP by auto
+    then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
+    have g: "continuous_on UNIV (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p $ i)"
+      by (intro continuous_intros)
+    show ?thesis by (rule continuous_on_compose2[OF g c]) auto
+  qed
+  have A0c: "snd (\<omega> 0) = 0" if "\<omega> \<in> space ?M" for \<omega>
+    using Gstart that spM by simp
+  have psdc: "\<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+      (\<forall>y. 0 \<le> y \<bullet> ((snd (\<omega> q) - snd (\<omega> p)) *v y))" if w: "\<omega> \<in> space ?M" for \<omega>
+  proof (intro allI impI)
+    fix p q :: real and y :: "real^'n"
+    assume pq: "0 \<le> p" "p \<le> q"
+    show "0 \<le> y \<bullet> ((snd (\<omega> q) - snd (\<omega> p)) *v y)"
+      using diffquot_psd[where A = "\<lambda>t. snd (\<omega> t)" and k = k and L = L
+              and p = p and q = q and y = y] Gdq[of \<omega>] w spM pq by simp
+  qed
+  have ratec: "\<forall>p q i j. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+      \<bar>snd (\<omega> q) $ i $ j - snd (\<omega> p) $ i $ j\<bar> \<le> L * (q - p)"
+    if w: "\<omega> \<in> space ?M" for \<omega>
+  proof (intro allI impI)
+    fix p q :: real and i j assume pq: "0 \<le> p" "p \<le> q"
+    show "\<bar>snd (\<omega> q) $ i $ j - snd (\<omega> p) $ i $ j\<bar> \<le> L * (q - p)"
+      using diffquot_entry[where A = "\<lambda>t. snd (\<omega> t)" and k = k and L = L
+              and p = p and q = q and i = i and j = j] Gdq[of \<omega>] w spM pq by simp
+  qed
+  have X0c: "\<bar>fst (\<omega> 0) $ i\<bar> \<le> norm x" if "\<omega> \<in> space ?M" for \<omega> i
+    using Gstart that spM by (simp add: component_le_norm_cart)
+
+  have key: "AE \<omega> in ?M. \<forall>t. 0 \<le> t \<longrightarrow>
+      qvmat (\<lambda>s. fst (\<omega> s)) t
+        = (\<chi> i. \<chi> j. (snd (\<omega> t) $ i $ j + snd (\<omega> t) $ j $ i) / 2)"
+  proof (rule qvmat_eq_A_localised[where M = ?M and F = ?FF
+           and X = "\<lambda>v \<omega>. fst (\<omega> v)" and A = "\<lambda>v \<omega>. snd (\<omega> v)"
+           and C = L and B = "norm x"])
+    show "prob_space ?M"
+      by (rule prob_space_restrict_full[OF PP.prob_space_axioms Gsets Gfull])
+    show "\<And>i. martingale ?M ?FF 0 (\<lambda>v \<omega>. fst (\<omega> v) $ i)" by (rule Xc)
+    show "\<And>i j. martingale ?M ?FF 0
+        (\<lambda>v \<omega>. fst (\<omega> v) $ i * fst (\<omega> v) $ j - snd (\<omega> v) $ i $ j)" by (rule XAc)
+    show "\<And>\<omega> i. \<omega> \<in> space ?M \<Longrightarrow> continuous_on {0..} (\<lambda>s. fst (\<omega> s) $ i)"
+      by (rule contc)
+    show "\<And>\<omega>. \<omega> \<in> space ?M \<Longrightarrow> snd (\<omega> 0) = 0" by (rule A0c)
+    show "\<And>\<omega>. \<omega> \<in> space ?M \<Longrightarrow> \<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+        (\<forall>y. 0 \<le> y \<bullet> ((snd (\<omega> q) - snd (\<omega> p)) *v y))" by (rule psdc)
+    show "\<And>\<omega>. \<omega> \<in> space ?M \<Longrightarrow> \<forall>p q i j. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+        \<bar>snd (\<omega> q) $ i $ j - snd (\<omega> p) $ i $ j\<bar> \<le> L * (q - p)" by (rule ratec)
+    show "0 \<le> L" by (rule L)
+    show "0 \<le> norm x" by simp
+    show "\<And>\<omega> i. \<omega> \<in> space ?M \<Longrightarrow> \<bar>fst (\<omega> 0) $ i\<bar> \<le> norm x" by (rule X0c)
+  qed
+
+  text \<open>Symmetry collapses the symmetric part back to \<open>A\<close> itself.\<close>
+  have spAE: "AE \<omega> in ?M. \<omega> \<in> space ?M" by (rule AE_I2) simp
+  have sym: "AE \<omega> in ?M. \<forall>t. 0 \<le> t \<longrightarrow> qvmat (\<lambda>s. fst (\<omega> s)) t = snd (\<omega> t)"
+    using key spAE
+  proof eventually_elim
+    case (elim \<omega>)
+    then have "\<omega> \<in> G" using spM by simp
+    then have s: "snd (\<omega> t) $ i $ j = snd (\<omega> t) $ j $ i" if "0 \<le> t" for t i j
+      using diffquot_sym[where A = "\<lambda>u. snd (\<omega> u)" and k = k and L = L
+              and t = t and i = i and j = j] Gdq[of \<omega>] Gstart[of \<omega>] that by simp
+    show ?case
+    proof (intro allI impI)
+      fix t :: real assume t: "0 \<le> t"
+      have "(\<chi> i. \<chi> j. (snd (\<omega> t) $ i $ j + snd (\<omega> t) $ j $ i) / 2) = snd (\<omega> t)"
+        by (simp add: vec_eq_iff s[OF t])
+      then show "qvmat (\<lambda>s. fst (\<omega> s)) t = snd (\<omega> t)" using elim t by simp
+    qed
+  qed
+
+  have "AE \<omega> in P. \<omega> \<in> G \<longrightarrow> (\<forall>t. 0 \<le> t \<longrightarrow> qvmat (\<lambda>s. fst (\<omega> s)) t = snd (\<omega> t))"
+    using sym Gsets Gspace
+    by (subst (asm) AE_restrict_space_iff) (auto simp: Int_absorb2)
+  with Gfull show ?thesis by eventually_elim blast
+qed
+
 (*<*)
 end
 (*>*)
