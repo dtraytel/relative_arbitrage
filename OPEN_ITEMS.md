@@ -162,6 +162,29 @@ reading already recorded there.
   the path, because the second coordinate is not one. So T6 is now unblocked in
   both directions, and what is left is the pushforward bookkeeping.
 
+  **The recipe, with the machinery identified.** For the `iexit_class -> xclass`
+  direction, `Q = ipath_law P (\t w. fst (w t))`, i.e. `distr P ipath_space phi`
+  with `phi = \w. restrict (\t. fst (w t)) {0..}`:
+
+  * `phi` is measurable by `Path_Space_Infinite.ipathify_measurable` (its two
+    hypotheses are the componentwise measurability from the class martingale and
+    path continuity, the latter free since `space P = ipath`).
+  * The martingale clause is `Exit_Class_Compactness.martingale_distr`, whose
+    `pull` hypothesis is discharged by `natural_filtration_pull` (proved, in
+    `Px_Bridge.thy`). `martingale_pair_law` is NOT reusable here — it is
+    specialised to `pair_law_of` on the capped pair path metric.
+  * The compensator for `Q` must be `qvmat`, supplied by
+    `qvmat_eq_A_localised`.
+
+  **The one piece of plumbing this needs.** `qvmat_eq_A_localised` takes its
+  hypotheses POINTWISE on `space M`, but the class states the start value, `A 0 =
+  0` and the difference-quotient constraint only almost everywhere. Move to a
+  full-measure `G` and use the `restrict_full` locale of
+  `Stopped_Localization` (`prob_space_restrict_full`, `martingale_restrict_full`,
+  `distr_restrict_full`, `integrable_restrict_full`), then transfer the
+  conclusion back — `AE` in `restrict_space P G` gives `AE` in `P` because `G` is
+  full. This is the intended use of that package and is why it exists.
+
   One step here is NOT covered by T1--T4 and should be planned for: the pair
   space is `C([0,inf), R^n x R^(nxn))`, so the pushforward needs `qvmat w` to be
   a CONTINUOUS path for EVERY `w`, not merely almost every one.  `qvmat` is a
