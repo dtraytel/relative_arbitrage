@@ -553,6 +553,78 @@ proof (rule measurable_sigma_sets)
   finally show "\<phi> -` S \<inter> space (FF u) \<in> sets (FF u)" .
 qed
 
+subsection \<open>What the constraint set gives the matrix hypotheses\<close>
+
+text \<open>Positive semidefiniteness of the difference quotients is the
+  monotonicity hypothesis, the eigenvalue upper bound is the Lipschitz one, and
+  symmetry --- part of \<open>psd\<close> --- is what turns the symmetric part delivered by
+  polarisation back into \<open>A\<close> itself.\<close>
+
+lemma diffquot_psd:
+  fixes A :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes dq: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> (1 / (t - s)) *\<^sub>R (A t - A s) \<in> sconstraint k L"
+    and p: "0 \<le> p" and pq: "p \<le> q"
+  shows "0 \<le> y \<bullet> ((A q - A p) *v y)"
+proof (cases "p < q")
+  case True
+  then have "(1 / (q - p)) *\<^sub>R (A q - A p) \<in> sconstraint k L" using dq p by blast
+  then have "psd ((1 / (q - p)) *\<^sub>R (A q - A p))"
+    by (simp add: sconstraint_def Pi_constraint_def)
+  then have nn: "0 \<le> y \<bullet> (((1 / (q - p)) *\<^sub>R (A q - A p)) *v y)" by (simp add: psd_def)
+  have eq: "y \<bullet> (((1 / (q - p)) *\<^sub>R (A q - A p)) *v y)
+      = (y \<bullet> ((A q - A p) *v y)) / (q - p)"
+    by (simp add: scaleR_matrix_vector_assoc[symmetric])
+  from nn have "0 \<le> (y \<bullet> ((A q - A p) *v y)) / (q - p)" unfolding eq .
+  then show ?thesis using True by (simp add: zero_le_divide_iff)
+next
+  case False
+  then have "p = q" using pq by simp
+  then show ?thesis by simp
+qed
+
+lemma diffquot_entry:
+  fixes A :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes dq: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> (1 / (t - s)) *\<^sub>R (A t - A s) \<in> sconstraint k L"
+    and p: "0 \<le> p" and pq: "p \<le> q"
+  shows "\<bar>A q $ i $ j - A p $ i $ j\<bar> \<le> L * (q - p)"
+proof (cases "p < q")
+  case True
+  then have mem: "(1 / (q - p)) *\<^sub>R (A q - A p) \<in> sconstraint k L" using dq p by blast
+  then have "psd ((1 / (q - p)) *\<^sub>R (A q - A p))"
+    and "eigen_ub ((1 / (q - p)) *\<^sub>R (A q - A p)) L"
+    by (auto simp: sconstraint_def Pi_constraint_def)
+  from psd_eigen_ub_entry_abs_le[OF this, of i j]
+  have "\<bar>(1 / (q - p)) * (A q $ i $ j - A p $ i $ j)\<bar> \<le> L" by simp
+  then have "(1 / (q - p)) * \<bar>A q $ i $ j - A p $ i $ j\<bar> \<le> L"
+    using True by (simp add: abs_mult)
+  then show ?thesis using True by (simp add: field_simps)
+next
+  case False
+  then have "p = q" using pq by simp
+  then show ?thesis by simp
+qed
+
+lemma diffquot_sym:
+  fixes A :: "real \<Rightarrow> real^'n::finite^'n"
+  assumes dq: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> (1 / (t - s)) *\<^sub>R (A t - A s) \<in> sconstraint k L"
+    and A0: "A 0 = 0" and t: "0 \<le> t"
+  shows "A t $ i $ j = A t $ j $ i"
+proof (cases "0 < t")
+  case True
+  then have "(1 / (t - 0)) *\<^sub>R (A t - A 0) \<in> sconstraint k L" using dq by blast
+  then have "psd ((1 / t) *\<^sub>R A t)" using A0 by (simp add: sconstraint_def Pi_constraint_def)
+  then have tr: "transpose ((1 / t) *\<^sub>R A t) = (1 / t) *\<^sub>R A t" by (simp add: psd_def)
+  have "transpose ((1 / t) *\<^sub>R A t) $ i $ j = ((1 / t) *\<^sub>R A t) $ i $ j"
+    by (simp add: tr)
+  then have "(1 / t) * (A t $ j $ i) = (1 / t) * (A t $ i $ j)"
+    by (simp add: transpose_def)
+  then show ?thesis using True by simp
+next
+  case False
+  then have "t = 0" using t by simp
+  then show ?thesis using A0 by simp
+qed
+
 (*<*)
 end
 (*>*)
