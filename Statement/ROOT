@@ -5,7 +5,8 @@ session Relative_Arbitrage_Statement = Relative_Arbitrage +
     authors of the paper to check the formal statement against their own; not
     part of any AFP entry.
   "
-  options [document = pdf, document_output = "output"]
+  options [document = pdf, document_output = "output",
+           document_variants = "document=/proof"]
   theories
     Theorem_1_1_Statement
   document_files

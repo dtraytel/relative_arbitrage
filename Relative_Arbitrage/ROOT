@@ -45,8 +45,8 @@ session Relative_Arbitrage = Path_Space_Tightness +
     Comparison_Principle
     Value_Function_Uniqueness
     Exit_Class_Infinite
-    Continuous_QV
-    Px_Bridge
+    Pathwise_Quadratic_Variation
+    Paper_Class_Equivalence
   document_files
     "root.tex"
     "root.bib"

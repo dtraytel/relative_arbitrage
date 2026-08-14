@@ -11,7 +11,7 @@
 > formalised in `Relative_Arbitrage/Exit_Class_Infinite.thy` and proved equal
 > to the horizon-capped ones used throughout the proofs. The paper's class
 > `P_x` itself — laws of `X` alone, not of the pair `(X, <X>)` — is
-> `Relative_Arbitrage/Px_Bridge.thy`, together with both inclusions and the
+> `Relative_Arbitrage/Paper_Class_Equivalence.thy`, together with both inclusions and the
 > equality of the two value functions (`iexit_val_eq_xval`), so no item is
 > open against the paper; see `OPEN_ITEMS.md`.
 >

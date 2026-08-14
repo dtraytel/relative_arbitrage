@@ -3,7 +3,7 @@ theory Theorem_1_1_Statement
   imports
     "Relative_Arbitrage.Value_Function_Uniqueness"
     "Relative_Arbitrage.Exit_Class_Infinite"
-    "Relative_Arbitrage.Px_Bridge"
+    "Relative_Arbitrage.Paper_Class_Equivalence"
 begin
 
 declare [[show_question_marks = false, names_short = true]]
@@ -67,15 +67,22 @@ text \<open>One reading had to be fixed here.  Eq. (1.5) of \<^cite>\<open>LaiSh
   Lemma 2.1 proof uses --- \<open>\<Pi>\<^sub>m\<close> as the sum of the \<open>m\<close> smallest eigenvalues ---
   and is what is formalised.\<close>
 
+text \<open>Three classes appear below, and only the last is the paper's.  The class
+  of this section carries a horizon \<open>T\<close>; dropping it gives \<^const>\<open>iexit_class\<close>,
+  for which every clause of Theorem 1.1 is stated; and \<^const>\<open>xclass\<close> is
+  Eq. (1.7) as the paper writes it, of laws of \<open>X\<close> alone.  All three value
+  functions are proved equal, so the reader who wants only the statement can
+  read \<^theory_text>\<open>paper_value_function_agrees\<close> and the five clauses; the first two
+  classes are how the proofs are organised.\<close>
+
 text \<open>A member of the class of Eq. (1.7) is presented as a law on the space of
   continuous paths taking values in pairs: the first coordinate is the process
   \<open>X\<close>, the second its covariation \<open>\<langle>X\<rangle>\<close>, carried as a genuine path coordinate
-  rather than as a derived object.  This is what makes the class closed under
-  weak limits, and is the encoding the paper's own proof of Lemma 2.3 uses.
-  The four clauses are: the law starts at \<open>x\<close> with zero covariation; the
-  difference quotients of the second coordinate lie in the constraint set; the
-  first coordinate is a martingale; and the compensated square is a
-  martingale.\<close>
+  rather than as a derived object.  The four clauses are: the law starts at \<open>x\<close>
+  with zero covariation; the difference quotients of the second coordinate lie
+  in the constraint set; the first coordinate is a martingale; and the
+  compensated square is a martingale.  Why the covariation is carried rather
+  than derived, and what that costs, is recorded below.\<close>
 
 text \<open>@{thm [display] exit_class_def}\<close>
 

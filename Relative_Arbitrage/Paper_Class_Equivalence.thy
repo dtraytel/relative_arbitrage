@@ -1,8 +1,8 @@
 section \<open>The paper's class \<open>P\<^sub>x\<close> and the bridge to the pair class\<close>
 
 (*<*)
-theory Px_Bridge
-  imports Exit_Class_Infinite Continuous_QV
+theory Paper_Class_Equivalence
+  imports Exit_Class_Infinite Pathwise_Quadratic_Variation
 begin
 (*>*)
 
@@ -1403,7 +1403,7 @@ lemma xclass_compensator:
   using assms unfolding xclass_def by blast
 
 text \<open>The constraint set supplies exactly the two hypotheses the matrix locale
-  of @{theory Relative_Arbitrage.Continuous_QV} needs and the plan never named:
+  of @{theory Relative_Arbitrage.Pathwise_Quadratic_Variation} needs and the plan never named:
   the increments of \<open>A\<close> are positive semidefinite, and their entries are
   Lipschitz in time.\<close>
 

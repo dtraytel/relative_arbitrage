@@ -1,7 +1,7 @@
 section \<open>Quadratic variation in continuous time, along dyadic partitions\<close>
 
 (*<*)
-theory Continuous_QV
+theory Pathwise_Quadratic_Variation
   imports "Path_Space_Tightness.Increment_Moments"
 begin
 (*>*)
