@@ -9,13 +9,13 @@
 % this should be the last package used
 \usepackage{pdfsetup}
 
-% Height only: the width is left at the class default.  The smallest increase
-% that pulls the references back onto page 5, so the five pages are full.
 \addtolength{\textheight}{0.5cm}
 \addtolength{\topmargin}{-0.25cm}
 
-\urlstyle{rm}
+\urlstyle{tt}
 \isabellestyle{it}
+
+\renewcommand{\isacharunderscore}{\_}
 
 \begin{document}
 
@@ -29,6 +29,8 @@ The formal statement of Theorem 1.1 from ``Relative arbitrage problem under eige
 \end{abstract}
 
 %\tableofcontents
+
+\bigskip
 
 \parindent 0pt\parskip 0.5ex
 

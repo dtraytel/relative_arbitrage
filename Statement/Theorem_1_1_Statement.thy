@@ -10,7 +10,7 @@ text \<open>
   All numbering is that of \<^cite>\<open>LaiShkolnikovSoner\<close>.  \<open>'n\<close> is a finite index
   type and \<open>n = CARD('n)\<close>; \<open>real^'n\<close> and \<open>real^'n^'n\<close> are vectors and matrices
   over it; \<open>**\<close> is matrix multiplication, \<open>*v\<close> matrix-vector application,
-  \<open>\<bullet>\<close> the inner product.  Underscores typeset as hyphens.
+  \<open>\<bullet>\<close> the inner product.
 \<close>
 
 section \<open>The operator of Eq. (1.9)\<close>
