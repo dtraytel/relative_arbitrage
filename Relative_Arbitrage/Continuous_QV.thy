@@ -289,6 +289,107 @@ proof -
   finally show ?thesis by simp
 qed
 
+subsection \<open>From a summable \<open>L\<^sup>2\<close> rate to almost sure convergence\<close>
+
+text \<open>The rate of T1 is summable, so the whole sequence converges almost surely
+  --- Borel--Cantelli is not needed, the sum of the second moments being finite
+  already forces the summands to vanish pointwise.\<close>
+
+lemma AE_tendsto_zero_of_summable_sq:
+  fixes Z :: "nat \<Rightarrow> 'a \<Rightarrow> real" and c :: "nat \<Rightarrow> real"
+  assumes m: "\<And>n. Z n \<in> borel_measurable M"
+    and b: "\<And>n. (\<integral>\<^sup>+\<omega>. ennreal ((Z n \<omega>)\<^sup>2) \<partial>M) \<le> ennreal (c n)"
+    and cn: "\<And>n. 0 \<le> c n" and s: "summable c"
+  shows "AE \<omega> in M. (\<lambda>n. Z n \<omega>) \<longlonglongrightarrow> 0"
+proof -
+  have mm [measurable]: "(\<lambda>\<omega>. ennreal ((Z n \<omega>)\<^sup>2)) \<in> borel_measurable M" for n
+    using m[of n] by simp
+  have "(\<integral>\<^sup>+\<omega>. (\<Sum>n. ennreal ((Z n \<omega>)\<^sup>2)) \<partial>M) = (\<Sum>n. \<integral>\<^sup>+\<omega>. ennreal ((Z n \<omega>)\<^sup>2) \<partial>M)"
+    by (rule nn_integral_suminf) (rule mm)
+  also have "\<dots> \<le> (\<Sum>n. ennreal (c n))" by (intro suminf_le b) auto
+  also have "\<dots> = ennreal (\<Sum>n. c n)" using s cn by (simp add: suminf_ennreal2)
+  finally have "(\<integral>\<^sup>+\<omega>. (\<Sum>n. ennreal ((Z n \<omega>)\<^sup>2)) \<partial>M) < \<top>"
+    by (rule le_less_trans) (rule ennreal_less_top)
+  then have fin: "(\<integral>\<^sup>+\<omega>. (\<Sum>n. ennreal ((Z n \<omega>)\<^sup>2)) \<partial>M) \<noteq> \<infinity>" by simp
+  have "AE \<omega> in M. (\<Sum>n. ennreal ((Z n \<omega>)\<^sup>2)) \<noteq> \<infinity>"
+    by (rule nn_integral_PInf_AE[OF _ fin]) measurable
+  then show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have "summable (\<lambda>n. (Z n \<omega>)\<^sup>2)" by (intro summable_suminf_not_top) auto
+    then have "(\<lambda>n. (Z n \<omega>)\<^sup>2) \<longlonglongrightarrow> 0" by (rule summable_LIMSEQ_zero)
+    then have "(\<lambda>n. sqrt ((Z n \<omega>)\<^sup>2)) \<longlonglongrightarrow> sqrt 0" by (rule tendsto_real_sqrt)
+    then have "(\<lambda>n. \<bar>Z n \<omega>\<bar>) \<longlonglongrightarrow> 0" by simp
+    then show ?case by (rule tendsto_rabs_zero_cancel)
+  qed
+qed
+
+subsection \<open>T2: the quadratic variation as a path functional\<close>
+
+text \<open>The point of defining \<open>qvp\<close> as a \<open>limsup\<close> rather than by Doob--Meyer:
+  each dyadic sum is a Borel function of the path by composition of evaluations,
+  so measurability is free, and the grid of \<open>{0..T}\<close> uses only times \<open>\<le> T\<close>, so
+  the functional is adapted to the filtration of the path alone.\<close>
+
+definition dyadic_qsum :: "(real \<Rightarrow> real) \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> real" where
+  "dyadic_qsum w T n =
+     (\<Sum>k<2 ^ n. (w (T * real (Suc k) / 2 ^ n) - w (T * real k / 2 ^ n))\<^sup>2)"
+
+definition qvp :: "(real \<Rightarrow> real) \<Rightarrow> real \<Rightarrow> real" where
+  "qvp w T = real_of_ereal (limsup (\<lambda>n. ereal (dyadic_qsum w T n)))"
+
+lemma dyadic_qsum_eq_qvar:
+  "dyadic_qsum (\<lambda>s. Y s \<omega>) T n = qvar (\<lambda>k \<omega>. Y (T * real k / 2 ^ n) \<omega>) (2 ^ n) \<omega>"
+  by (simp add: dyadic_qsum_def qvar_def)
+
+text \<open>Every grid point of \<open>{0..T}\<close> lies in \<open>{0..T}\<close>.\<close>
+
+lemma grid_bounds:
+  fixes T :: real
+  assumes T: "0 \<le> T" and k: "k \<le> 2 ^ n"
+  shows "0 \<le> T * real k / 2 ^ n" and "T * real k / 2 ^ n \<le> T"
+proof -
+  show "0 \<le> T * real k / 2 ^ n" using T by simp
+  have "T * real k \<le> T * 2 ^ n" using T k by (intro mult_left_mono) auto
+  then show "T * real k / 2 ^ n \<le> T" by (simp add: divide_le_eq)
+qed
+
+lemma dyadic_qsum_measurable:
+  assumes T: "0 \<le> T"
+    and Y: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Y s \<in> borel_measurable N"
+  shows "(\<lambda>\<omega>. dyadic_qsum (\<lambda>s. Y s \<omega>) T n) \<in> borel_measurable N"
+  unfolding dyadic_qsum_def
+proof (intro borel_measurable_sum borel_measurable_power borel_measurable_diff)
+  fix k :: nat assume "k \<in> {..<2 ^ n}"
+  then have k: "Suc k \<le> 2 ^ n" by simp
+  then have k': "k \<le> 2 ^ n" by simp
+  show "(\<lambda>\<omega>. Y (T * real (Suc k) / 2 ^ n) \<omega>) \<in> borel_measurable N"
+    by (rule Y[OF grid_bounds(1)[OF T k] grid_bounds(2)[OF T k]])
+  show "(\<lambda>\<omega>. Y (T * real k / 2 ^ n) \<omega>) \<in> borel_measurable N"
+    by (rule Y[OF grid_bounds(1)[OF T k'] grid_bounds(2)[OF T k']])
+qed
+
+lemma qvp_measurable:
+  assumes T: "0 \<le> T"
+    and Y: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Y s \<in> borel_measurable N"
+  shows "(\<lambda>\<omega>. qvp (\<lambda>s. Y s \<omega>) T) \<in> borel_measurable N"
+  unfolding qvp_def
+  by (intro borel_measurable_real_of_ereal borel_measurable_limsup
+        borel_measurable_ereal dyadic_qsum_measurable[OF T Y])
+
+text \<open>If the dyadic sums converge, the \<open>limsup\<close> is the limit.\<close>
+
+lemma qvp_eq_limI:
+  assumes "(\<lambda>n. dyadic_qsum w T n) \<longlonglongrightarrow> L"
+  shows "qvp w T = L"
+proof -
+  have "(\<lambda>n. ereal (dyadic_qsum w T n)) \<longlonglongrightarrow> ereal L"
+    using assms by (rule tendsto_ereal)
+  then have "limsup (\<lambda>n. ereal (dyadic_qsum w T n)) = ereal L"
+    by (rule lim_imp_Limsup[OF sequentially_bot])
+  then show ?thesis by (simp add: qvp_def)
+qed
+
 subsection \<open>A locale for the standing hypotheses\<close>
 
 text \<open>Both halves of T1 run off the same bundle: a bounded continuous martingale
@@ -542,6 +643,69 @@ proof -
   also have "\<dots> = 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n"
     by (simp add: inc power_divide power2_eq_square)
   finally show ?thesis by (simp add: t_def)
+qed
+
+subsection \<open>T2 at a fixed time: the path functional computes the compensator\<close>
+
+text \<open>The rate \<open>18 C\<^sup>2 T\<^sup>2 / 2\<^sup>n\<close> is summable, so the dyadic sums converge to
+  \<open>A T\<close> almost surely, and \<open>qvp\<close> --- their \<open>limsup\<close> --- agrees with \<open>A T\<close>.\<close>
+
+lemma dyadic_qsum_eq_grid:
+  "dyadic_qsum (\<lambda>s. X s \<omega>) T n = qvar (\<lambda>k. X (T * real k / 2 ^ n)) (2 ^ n) \<omega>"
+  by (simp add: dyadic_qsum_def qvar_def)
+
+lemma qvp_tendsto:
+  fixes T :: real
+  assumes T: "0 \<le> T"
+  shows "AE \<omega> in M. (\<lambda>n. dyadic_qsum (\<lambda>s. X s \<omega>) T n - A T \<omega>) \<longlonglongrightarrow> 0"
+proof (rule AE_tendsto_zero_of_summable_sq[where c = "\<lambda>n. 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n"])
+  fix n :: nat
+  define t where "t = (\<lambda>k::nat. T * real k / 2 ^ n)"
+  have t0: "0 \<le> t k" for k using T by (simp add: t_def)
+  have tmono: "mono t"
+    using T by (simp add: t_def mono_def divide_right_mono mult_left_mono)
+  have eq: "dyadic_qsum (\<lambda>s. X s \<omega>) T n = qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega>" for \<omega>
+    by (simp add: dyadic_qsum_eq_grid t_def)
+  show "(\<lambda>\<omega>. dyadic_qsum (\<lambda>s. X s \<omega>) T n - A T \<omega>) \<in> borel_measurable M"
+    unfolding eq qvar_def using Xmeas[OF t0] Ameas[OF T] by simp
+  have int: "integrable M (\<lambda>\<omega>. (qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega> - A T \<omega>)\<^sup>2)"
+  proof -
+    have "t (2 ^ n) = T" by (simp add: t_def)
+    then show ?thesis using qvar_grid_sq_int[OF t0 tmono, of "2 ^ n"] by simp
+  qed
+  have "(\<integral>\<^sup>+\<omega>. ennreal ((dyadic_qsum (\<lambda>s. X s \<omega>) T n - A T \<omega>)\<^sup>2) \<partial>M)
+      = ennreal (\<integral>\<omega>. (qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega> - A T \<omega>)\<^sup>2 \<partial>M)"
+    unfolding eq by (rule nn_integral_eq_integral[OF int]) simp
+  also have "\<dots> \<le> ennreal (18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n)"
+  proof (rule ennreal_leI)
+    have "t (2 ^ n) = T" by (simp add: t_def)
+    then show "(\<integral>\<omega>. (qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega> - A T \<omega>)\<^sup>2 \<partial>M)
+                 \<le> 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n"
+      using qv_dyadic_L2[OF T, of n] by (simp add: t_def)
+  qed
+  finally show "(\<integral>\<^sup>+\<omega>. ennreal ((dyadic_qsum (\<lambda>s. X s \<omega>) T n - A T \<omega>)\<^sup>2) \<partial>M)
+                  \<le> ennreal (18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n)" .
+next
+  show "0 \<le> 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n" for n :: nat by simp
+  have "summable (\<lambda>n::nat. 18 * C\<^sup>2 * T\<^sup>2 * (1 / 2) ^ n)"
+    by (intro summable_mult summable_geometric) simp
+  moreover have "(\<lambda>n::nat. 18 * C\<^sup>2 * T\<^sup>2 * (1 / 2) ^ n)
+      = (\<lambda>n. 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n)"
+    by (simp add: power_one_over)
+  ultimately show "summable (\<lambda>n::nat. 18 * C\<^sup>2 * T\<^sup>2 / 2 ^ n)" by simp
+qed
+
+theorem qvp_eq_A:
+  fixes T :: real
+  assumes T: "0 \<le> T"
+  shows "AE \<omega> in M. qvp (\<lambda>s. X s \<omega>) T = A T \<omega>"
+  using qvp_tendsto[OF T]
+proof eventually_elim
+  case (elim \<omega>)
+  have "(\<lambda>n. (dyadic_qsum (\<lambda>s. X s \<omega>) T n - A T \<omega>) + A T \<omega>) \<longlonglongrightarrow> 0 + A T \<omega>"
+    by (intro tendsto_add elim tendsto_const)
+  then have "(\<lambda>n. dyadic_qsum (\<lambda>s. X s \<omega>) T n) \<longlonglongrightarrow> A T \<omega>" by simp
+  then show ?case by (rule qvp_eq_limI)
 qed
 
 end
