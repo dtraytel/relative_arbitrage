@@ -18,7 +18,7 @@ text \<open>
   \<open>real^'n\<close> and \<open>real^'n^'n\<close> are vectors and matrices over it.  \<open>**\<close> is
   matrix multiplication, \<open>*v\<close> matrix-vector application, \<open>\<bullet>\<close> the inner
   product and \<open>trace\<close> the trace.  An underscore in an identifier is
-  typeset as a hyphen, so \<open>exit_val\<close> appears as \<open>exit-val\<close>.
+  typeset as a hyphen, so \<open>iexit_val\<close> appears as \<open>iexit-val\<close>.
 \<close>
 
 section \<open>The operator of Eq. (1.9)\<close>
@@ -67,42 +67,14 @@ text \<open>One reading had to be fixed here.  Eq. (1.5) of \<^cite>\<open>LaiSh
   Lemma 2.1 proof uses --- \<open>\<Pi>\<^sub>m\<close> as the sum of the \<open>m\<close> smallest eigenvalues ---
   and is what is formalised.\<close>
 
-text \<open>Three classes appear below, and only the last is the paper's.  The class
-  of this section carries a horizon \<open>T\<close>; dropping it gives \<^const>\<open>iexit_class\<close>,
-  for which every clause of Theorem 1.1 is stated; and \<^const>\<open>xclass\<close> is
-  Eq. (1.7) as the paper writes it, of laws of \<open>X\<close> alone.  All three value
-  functions are proved equal, so the reader who wants only the statement can
-  read \<^theory_text>\<open>paper_value_function_agrees\<close> and the five clauses; the first two
-  classes are how the proofs are organised.\<close>
-
-text \<open>A member of the class of Eq. (1.7) is presented as a law on the space of
-  continuous paths taking values in pairs: the first coordinate is the process
+text \<open>A member of the class of Eq. (1.7) is presented as a law on the continuous
+  paths of \<open>C([0,\<infinity>))\<close> taking values in pairs: the first coordinate is the process
   \<open>X\<close>, the second its covariation \<open>\<langle>X\<rangle>\<close>, carried as a genuine path coordinate
   rather than as a derived object.  The four clauses are: the law starts at \<open>x\<close>
   with zero covariation; the difference quotients of the second coordinate lie
   in the constraint set; the first coordinate is a martingale; and the
   compensated square is a martingale.  Why the covariation is carried rather
   than derived, and what that costs, is recorded below.\<close>
-
-text \<open>@{thm [display] exit_class_def}\<close>
-
-text \<open>The exit time of a path from \<open>K\<close>, capped at the horizon \<open>T\<close>, and the
-  essential infimum of a time under a law:\<close>
-
-text \<open>@{thm [display] etime_def pexit_def ess_inf_time_def}\<close>
-
-text \<open>The value function of Eq. (1.6) is then the supremum, over the class, of
-  the essential infimum of the exit time of the first coordinate:\<close>
-
-text \<open>@{thm [display] exit_val_def}\<close>
-
-subsection \<open>The same class and value function without the horizon\<close>
-
-text \<open>The horizon \<open>T\<close> above is a device of the proofs, not of the statement.
-  The paper's own class and value function are formalised separately, on the
-  continuous paths of \<open>C([0,\<infinity>))\<close> --- so with the covariation constraint at
-  every pair of times and with no stopping in the martingale clauses --- and
-  the two value functions are then proved equal.\<close>
 
 text \<open>@{thm [display] ipath_def iexit_class_def}\<close>
 
@@ -128,28 +100,12 @@ text \<open>Two readings to record here, since neither is forced by the text of
   derivative notation arguably permits; such a part only makes \<open>X\<close> exit sooner,
   so the value function is unaffected, but the choice is an interpretation.\<close>
 
-text \<open>The uncapped exit time takes values in \<open>[0,\<infinity>]\<close>, being the increasing
-  limit of the capped ones, and the value function of Eq. (1.6) is again the
-  supremum over the class of its essential infimum:\<close>
+text \<open>The exit time of a path from \<open>K\<close> before a time \<open>T\<close>, its increasing limit,
+  which takes values in \<open>[0,\<infinity>]\<close>, the essential infimum of such a time under a
+  law, and the value function of Eq. (1.6) as the supremum of those over the
+  class:\<close>
 
-text \<open>@{thm [display] iexit_def ess_inf_enn_def iexit_val_def}\<close>
-
-text \<open>The two agree.  The construction behind it glues an independent Brownian
-  continuation with covariation \<open>t \<sqdot> I\<close> onto a horizon-\<open>T\<close> law at time \<open>T\<close>,
-  producing a member of the uncapped class whose restriction to \<open>[0,T]\<close> is
-  the law one started from; the hypothesis is that the horizon does not bind,
-  which for a bounded \<open>K\<close> is the a priori bound of Eq. (3.10).\<close>
-
-theorem uncapped_value_function_agrees:
-  fixes K :: "(real^'n::finite) set" and r :: real
-  assumes "k < CARD('n)" and "1 \<le> L" and "0 < T" and "closed K"
-    and "K \<subseteq> cball 0 r"
-    and "(r * r - x \<bullet> x) / real (CARD('n) - k) < T"
-  shows "iexit_val k L K x = exit_val k L T K x"
-  using assms by (rule iexit_val_eq_exit_val_bounded)
-
-text \<open>The clauses of Theorem 1.1 below are stated for \<^const>\<open>iexit_val\<close>, so
-  no horizon appears in them at all.\<close>
+text \<open>@{thm [display] etime_def pexit_def iexit_def ess_inf_enn_def iexit_val_def}\<close>
 
 subsection \<open>The paper's own class \<open>P\<^sub>x\<close>, of laws of \<open>X\<close> alone\<close>
 
@@ -269,13 +225,10 @@ theorem convex_sets_are_expandable:
 
 section \<open>The five clauses of Theorem 1.1\<close>
 
-text \<open>Stated for \<^const>\<open>iexit_val\<close>, the value function of Eq. (1.6) itself.
-  No horizon appears: each proof chooses one large enough not to bind and
-  transports the corresponding capped clause along
-  \<^theory_text>\<open>uncapped_value_function_agrees\<close>.  Compactness of \<open>K\<close> is what fixes how
-  large: on \<open>real^'n\<close> it is exactly closedness together with a ball bound, and
-  the radius is named only in clause (0), where it appears in the
-  conclusion.\<close>
+text \<open>Stated for \<^const>\<open>iexit_val\<close>, the value function of Eq. (1.6) itself,
+  hence by \<^theory_text>\<open>paper_value_function_agrees\<close> for the paper's \<open>P\<^sub>x\<close> value function
+  too.  Compactness of \<open>K\<close> enters as closedness together with a ball bound; the
+  radius is named only in clause (0), where it appears in the conclusion.\<close>
 
 text \<open>The standing hypotheses of \<^cite>\<open>LaiShkolnikovSoner\<close> are \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>.  Each clause
   below assumes only what its proof uses, so \<open>1 \<le> k\<close> appears on the
