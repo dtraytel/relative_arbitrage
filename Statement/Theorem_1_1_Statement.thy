@@ -42,7 +42,7 @@ text \<open>The covariation constraint of Eq. (1.5).  \<open>Pi_proj a m\<close>
   every \<open>m\<close> with \<open>k < m \<le> n\<close>, and intersecting with the eigenvalue upper bound
   gives \<open>S\<close>.\<close>
 
-text \<open>@{thm [display] Pi_proj_def Pi_constraint_def sconstraint_def}\<close>
+text \<open>@{thm [display] is_proj_def Pi_proj_def Pi_constraint_def sconstraint_def}\<close>
 
 text \<open>\<^bold>\<open>Orthogonality of \<close>\<open>P\<close>\<^bold>\<open> is required.\<close>  Eq. (1.5) writes the infimum
   over \<open>P\<^sup>2 = P\<close>, \<open>tr(P) = m\<close> without asking \<open>P\<close> to be symmetric.  Read
@@ -58,7 +58,7 @@ text \<open>A member of the class of Eq. (1.7): a law on \<open>C([0,\<infinity>
   existential is faithful: \<open>d\<langle>X\<rangle>/dt \<in> S\<^sub>k\<^sup>L\<close> says exactly that \<open>\<langle>X\<rangle>\<close> is such an
   \<open>A\<close>, and the compensator is unique up to indistinguishability.\<close>
 
-text \<open>@{thm [display] ipath_def outerp_def xclass_def}\<close>
+text \<open>@{thm [display] ipath_def ipath_gen_def ipath_space_def outerp_def xclass_def}\<close>
 
 text \<open>\<^bold>\<open>The covariation constraint is read as Lipschitz-with-density.\<close>
   Eq. (1.7) constrains the almost-everywhere derivative \<open>d\<langle>X\<rangle>(t)/dt\<close>; above,
@@ -88,7 +88,7 @@ text \<open>\<^bold>\<open>The envelope is taken within \<close>\<open>K\<close>
 
 text \<open>\<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>, the semicontinuous envelopes of \<open>F\<close> in \<open>(p,M)\<close> jointly.\<close>
 
-text \<open>@{thm [display] ell_op_lsc_def ell_op_usc_def}\<close>
+text \<open>@{thm [display] ell_op_pair_def ell_op_lsc_def ell_op_usc_def}\<close>
 
 text \<open>Definition 3.1 takes these over the symmetric \<open>\<real>\<^sup>n \<times> \<bbbS>\<^sup>n\<close> where the balls
   above range over \<open>\<real>\<^sup>n \<times> \<real>\<^sup>n\<^sup>\<times>\<^sup>n\<close>.  Not a widening: \<open>F\<close> factors through
