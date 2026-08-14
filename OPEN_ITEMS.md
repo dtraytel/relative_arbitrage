@@ -211,12 +211,26 @@ reading already recorded there.
   monotone — and would need a Cauchy/limit construction instead.  Polarise
   first, regularise second.
 
-  Remaining for T6: (i) `qvmatc w t = (chi i j. (qvsc (\s. w s$i + w s$j) t -
-  qvsc (\s. w s$i - w s$j) t)/4)` with `qvsc C w = (if qvp_good C w then qvps w
-  else 0)`, continuous in `t` entrywise hence as a matrix; (ii) measurability of
-  `qvp_good` (countable intersection of preimages under `qvp_measurable`);
-  (iii) `qvmatc = qvmat` on the good event, so `iexit_class_qvmat` transfers;
-  (iv) the two inclusions, now pure pushforward bookkeeping.
+  Steps (i)-(iii) of the assembly are now DONE:
+  `qvsc`/`qvmatc` with `qvsc_continuous`, `qvmatc_continuous` (continuous in `t`
+  for EVERY path), `qvp_good_measurable`, `qvsc_measurable`, `qvmatc_measurable`
+  (Borel), `qvmatc_eq_qvmat` (agreement on the good event), and `qvp_good_ae`
+  (the cut discards nothing: in the scalar locale the good event has full
+  measure, because `qvp_eq_A` identifies `qvp` at each rational time and `A`'s
+  rate is exactly the monotone-Lipschitz condition).
+
+  Remaining for T6:
+  * A LOCALISED `qvp_good_ae` — the one above lives in the bounded locale;
+    the class needs the unbounded form. Follow the same stopped-then-limit
+    pattern as `qvps_eq_A_localised`, using the locale's `qvp_eq_A` at fixed
+    times instead of `qvps_eq_A`, plus `qvp_cong` (already proved) to see that
+    stopping is invisible below the stopping time.
+  * Combine with `iexit_class_qvmat` and `qvmatc_eq_qvmat` to get
+    `AE w. qvmatc C (fst o w) t = snd (w t)` for a class member.
+  * The two inclusions, now pure pushforward bookkeeping:
+    `ipathify_measurable` for the map, `martingale_distr` +
+    `natural_filtration_pull` for the martingale clauses, `AE_distr_iff` for the
+    rest (whose exceptional sets are now measurable, `qvmatc` being Borel).
 
   One step here is NOT covered by T1--T4 and should be planned for: the pair
   space is `C([0,inf), R^n x R^(nxn))`, so the pushforward needs `qvmat w` to be
