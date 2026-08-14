@@ -11,7 +11,7 @@ text \<open>
   Stochastic integration, layer 3b: optional sampling in continuous
              time.
 
-    The martingale-problem identity that the probabilistic part of arXiv:2512.17702
+    The martingale-problem identity that the probabilistic part of \<^cite>\<open>LaiShkolnikovSoner\<close>
     needs is
 
       E[Z (t /\ tau)] = E[Z 0]                                          (star)

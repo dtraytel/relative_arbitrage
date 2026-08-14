@@ -20,7 +20,7 @@ text \<open>
   (\<open>expectation_sq_qvar\<close>). Transferred, they say: along any partition of a
   continuous-time martingale, the compensated square is a martingale, and the
   second moment grows exactly by the expected sum of squared increments. The
-  latter is the second-moment input that Eq. (2.7) of arXiv:2512.17702 needs,
+  latter is the second-moment input that Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> needs,
   and the former is the quadratic Ito formula that the \<open>Z_martingale\<close> assumption
   of \<open>ito_volatile_market\<close> currently postulates.\<close>
 subsection \<open>The sampled process is a square-integrable discrete martingale\<close>

@@ -12,7 +12,7 @@ text \<open>
   Neither uniform integrability nor Vitali's convergence theorem exists
   anywhere in the Isabelle distribution or the AFP (@{text
   Vitali_Covering_Theorem} in HOL-Analysis is an unrelated result), so they are
-  developed here from scratch for the proof of Lemma 2.3 of arXiv:2512.17702,
+  developed here from scratch for the proof of Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close>,
   which invokes Vitali's theorem to pass the covariation constraint through a
   weak limit.
 

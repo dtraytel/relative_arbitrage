@@ -8,7 +8,7 @@ begin
 (*>*)
 
 text \<open>
-  Lemma 2.2 of arXiv:2512.17702 rests on the estimate of Eq. (2.7),
+  Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> rests on the estimate of Eq. (2.7),
   \<open>E |X t - X s| ^ 4 <= 66 * C ^ 2 * (t - s) ^ 2\<close>, which is derived there by
   applying Ito's formula to the auxiliary process
   \<open>Z t = |X t - X s| ^ 2 - tr (qvar X t) + tr (qvar X s)\<close>
