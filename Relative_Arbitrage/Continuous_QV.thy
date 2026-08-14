@@ -51,6 +51,56 @@ proof -
   qed
 qed
 
+subsection \<open>The compensator relation, conditionally\<close>
+
+text \<open>\<open>fourth_moment_bound_bounded\<close> takes the compensator relation in
+  conditional form (its \<open>covA\<close> hypothesis), while everything here says instead
+  that \<open>X\<^sup>2 - A\<close> is a martingale.  This bridges the two, so both halves of T1
+  run off one bundle of assumptions.\<close>
+
+lemma compensator_cond_increment:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes X: "martingale M F (0::real) X"
+    and XA: "martingale M F (0::real) (\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>)"
+    and sq: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (\<lambda>\<omega>. (X v \<omega>)\<^sup>2)"
+    and Aint: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (A v)"
+    and u: "0 \<le> u" and uv: "u \<le> v"
+  shows "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)\<^sup>2) \<omega>
+                      = cond_exp M (F u) (\<lambda>\<omega>. A v \<omega> - A u \<omega>) \<omega>"
+proof -
+  interpret MX: martingale M F "0::real" X by (rule X)
+  interpret MXA: martingale M F "0::real" "\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>" by (rule XA)
+  have v: "0 \<le> v" using u uv by simp
+  have sfs: "sigma_finite_subalgebra M (F u)"
+    by (rule MX.sigma_finite_subalgebra_F[OF u])
+  have Aadapt: "A u \<in> borel_measurable (F u)"
+  proof -
+    have Aeq: "(\<lambda>\<omega>. (X u \<omega>)\<^sup>2 - ((X u \<omega>)\<^sup>2 - A u \<omega>)) = A u" by (rule ext) simp
+    have f1: "(\<lambda>\<omega>. (X u \<omega>)\<^sup>2) \<in> borel_measurable (F u)"
+      using MX.adapted[OF u] by simp
+    have f2: "(\<lambda>\<omega>. (X u \<omega>)\<^sup>2 - A u \<omega>) \<in> borel_measurable (F u)"
+      using MXA.adapted[OF u] by simp
+    have "(\<lambda>\<omega>. (X u \<omega>)\<^sup>2 - ((X u \<omega>)\<^sup>2 - A u \<omega>)) \<in> borel_measurable (F u)"
+      by (rule borel_measurable_diff[OF f1 f2])
+    then show ?thesis unfolding Aeq .
+  qed
+  have e1: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)\<^sup>2) \<omega>
+      = cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2) \<omega> - (X u \<omega>)\<^sup>2"
+    by (rule cond_exp_increment_sq[OF X sq u uv])
+  have e2: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>) \<omega>
+      = cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2) \<omega> - cond_exp M (F u) (A v) \<omega>"
+    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs sq[OF v] Aint[OF v]])
+  have e3: "AE \<omega> in M. (X u \<omega>)\<^sup>2 - A u \<omega>
+      = cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>) \<omega>"
+    by (rule MXA.martingale_property[OF u uv])
+  have e4: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. A v \<omega> - A u \<omega>) \<omega>
+      = cond_exp M (F u) (A v) \<omega> - cond_exp M (F u) (A u) \<omega>"
+    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs Aint[OF v] Aint[OF u]])
+  have e5: "AE \<omega> in M. cond_exp M (F u) (A u) \<omega> = A u \<omega>"
+    by (rule sigma_finite_subalgebra.cond_exp_F_meas[OF sfs Aint[OF u] Aadapt])
+  from e1 e2 e3 e4 e5 show ?thesis by eventually_elim simp
+qed
+
 subsection \<open>T1a: the compensated sums, and the vanishing of the cross terms\<close>
 
 text \<open>Along a partition \<open>t\<close>, the sum of squared increments minus the
@@ -125,6 +175,87 @@ proof -
                       - (A (t (Suc k)) \<omega> - A (t k) \<omega>))\<^sup>2 \<partial>M)"
     unfolding qvar_def by (simp add: incD incsq)
   finally show ?thesis unfolding D_def by simp
+qed
+
+subsection \<open>T1b: the per-increment bound\<close>
+
+text \<open>Each compensated increment has second moment at most \<open>18 C\<^sup>2 (dt)\<^sup>2\<close>: the
+  fourth moment contributes \<open>8 C\<^sup>2 (dt)\<^sup>2\<close> by Eq. (2.7) and the compensator
+  increment \<open>C\<^sup>2 (dt)\<^sup>2\<close> by the Lipschitz rate, through \<open>(a - b)\<^sup>2 \<le> 2a\<^sup>2 + 2b\<^sup>2\<close>.\<close>
+
+lemma sq_diff_le_two:
+  fixes a b :: real
+  shows "(a - b)\<^sup>2 \<le> 2 * a\<^sup>2 + 2 * b\<^sup>2"
+proof -
+  have "0 \<le> (a + b)\<^sup>2" by simp
+  then show ?thesis by (simp add: power2_eq_square algebra_simps)
+qed
+
+text \<open>The same, with the first square already folded into a fourth power ---
+  the form the two integral bounds are stated in.\<close>
+
+lemma sq_diff_le_fourth:
+  fixes x a :: real
+  shows "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * x^4 + 2 * a\<^sup>2"
+proof -
+  have "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * (x\<^sup>2)\<^sup>2 + 2 * a\<^sup>2" by (rule sq_diff_le_two)
+  moreover have "(x\<^sup>2)\<^sup>2 = x^4" by algebra
+  ultimately show ?thesis by simp
+qed
+
+lemma compensated_increment_second_moment:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes P: "prob_space M"
+    and X: "martingale M F (0::real) X"
+    and XA: "martingale M F (0::real) (\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>)"
+    and sq: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (\<lambda>\<omega>. (X v \<omega>)\<^sup>2)"
+    and Aint: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (A v)"
+    and Arate: "AE \<omega> in M. \<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                   0 \<le> A q \<omega> - A p \<omega> \<and> A q \<omega> - A p \<omega> \<le> C * (q - p)"
+    and C: "0 \<le> C" and R: "0 \<le> R"
+    and bnd: "\<And>v. 0 \<le> v \<Longrightarrow> AE \<omega> in M. \<bar>X v \<omega>\<bar> \<le> R"
+    and cont: "AE \<omega> in M. continuous_on {u..v} (\<lambda>p. X p \<omega>)"
+    and fourth: "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
+    and dAsq: "integrable M (\<lambda>\<omega>. (A v \<omega> - A u \<omega>)\<^sup>2)"
+    and sqint: "integrable M (\<lambda>\<omega>. ((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2)"
+    and u: "0 \<le> u" and uv: "u \<le> v"
+  shows "(\<integral>\<omega>. ((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2 \<partial>M)
+           \<le> 18 * C\<^sup>2 * (v - u)\<^sup>2"
+proof -
+  interpret P: prob_space M by (rule P)
+  have covA: "\<And>p q. 0 \<le> p \<Longrightarrow> p \<le> q \<Longrightarrow> AE \<omega> in M.
+      cond_exp M (F p) (\<lambda>\<omega>. (X q \<omega> - X p \<omega>)\<^sup>2) \<omega>
+        = cond_exp M (F p) (\<lambda>\<omega>. A q \<omega> - A p \<omega>) \<omega>"
+    by (rule compensator_cond_increment[OF X XA sq Aint])
+  have m4: "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8 * C\<^sup>2 * (v - u)\<^sup>2"
+    by (rule fourth_moment_bound_bounded
+          [OF P X u uv Aint Arate covA C R bnd cont])
+  have dAle: "AE \<omega> in M. (A v \<omega> - A u \<omega>)\<^sup>2 \<le> C\<^sup>2 * (v - u)\<^sup>2"
+    using Arate
+  proof eventually_elim
+    case (elim \<omega>)
+    then have nn: "0 \<le> A v \<omega> - A u \<omega>" and le: "A v \<omega> - A u \<omega> \<le> C * (v - u)"
+      using u uv by blast+
+    have "(A v \<omega> - A u \<omega>)\<^sup>2 \<le> (C * (v - u))\<^sup>2" by (rule power_mono[OF le nn])
+    then show ?case by (simp add: power_mult_distrib)
+  qed
+  have dA: "(\<integral>\<omega>. (A v \<omega> - A u \<omega>)\<^sup>2 \<partial>M) \<le> C\<^sup>2 * (v - u)\<^sup>2"
+  proof -
+    have "(\<integral>\<omega>. (A v \<omega> - A u \<omega>)\<^sup>2 \<partial>M) \<le> (\<integral>\<omega>. C\<^sup>2 * (v - u)\<^sup>2 \<partial>M)"
+      by (rule integral_mono_AE[OF dAsq _ dAle]) simp
+    then show ?thesis by (simp add: P.prob_space)
+  qed
+  have int1: "integrable M (\<lambda>\<omega>. 2 * (X v \<omega> - X u \<omega>)^4 + 2 * (A v \<omega> - A u \<omega>)\<^sup>2)"
+    using fourth dAsq by simp
+  have "(\<integral>\<omega>. ((X v \<omega> - X u \<omega>)\<^sup>2 - (A v \<omega> - A u \<omega>))\<^sup>2 \<partial>M)
+      \<le> (\<integral>\<omega>. 2 * (X v \<omega> - X u \<omega>)^4 + 2 * (A v \<omega> - A u \<omega>)\<^sup>2 \<partial>M)"
+    by (rule integral_mono_AE[OF sqint int1])
+       (intro AE_I2 sq_diff_le_fourth)
+  also have "\<dots> = 2 * (\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) + 2 * (\<integral>\<omega>. (A v \<omega> - A u \<omega>)\<^sup>2 \<partial>M)"
+    using fourth dAsq by simp
+  also have "\<dots> \<le> 2 * (8 * C\<^sup>2 * (v - u)\<^sup>2) + 2 * (C\<^sup>2 * (v - u)\<^sup>2)"
+    using m4 dA by simp
+  finally show ?thesis by simp
 qed
 
 (*<*)
