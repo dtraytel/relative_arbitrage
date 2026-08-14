@@ -12,7 +12,7 @@ text \<open>
   payoffs over the abstract construction: the limit is a Borel functional of the
   path, so it can be used to build a law on the pair space, and it is adapted to
   the filtration of \<open>X\<close> alone.  Both are what
-  @{theory Relative_Arbitrage.Exit_Class_Marginals} consumes.
+  \<open>Exit_Class_Marginals\<close> consumes.
 
   What carries the construction is the \<open>L\<^sup>2\<close> estimate with a rate.  The rate is
   what matters --- it is summable, so the full dyadic sequence converges almost
