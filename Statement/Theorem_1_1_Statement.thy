@@ -1,9 +1,6 @@
 (*<*)
 theory Theorem_1_1_Statement
-  imports
-    "Relative_Arbitrage.Value_Function_Uniqueness"
-    "Relative_Arbitrage.Exit_Class_Infinite"
-    "Relative_Arbitrage.Exit_Class_Marginals"
+  imports Statement_Auxiliary
 begin
 
 declare [[show_question_marks = false, names_short = true]]
@@ -67,36 +64,22 @@ text \<open>One reading had to be fixed here.  Eq. (1.5) of \<^cite>\<open>LaiSh
   Lemma 2.1 proof uses --- \<open>\<Pi>\<^sub>m\<close> as the sum of the \<open>m\<close> smallest eigenvalues ---
   and is what is formalised.\<close>
 
-text \<open>A member of the class of Eq. (1.7) is presented as a law on the continuous
-  paths of \<open>C([0,\<infinity>))\<close> taking values in pairs: the first coordinate is the process
-  \<open>X\<close>, the second its covariation \<open>\<langle>X\<rangle>\<close>, carried as a genuine path coordinate
-  rather than as a derived object.  The four clauses are: the law starts at \<open>x\<close>
-  with zero covariation; the difference quotients of the second coordinate lie
-  in the constraint set; the first coordinate is a martingale; and the
-  compensated square is a martingale.  Why the covariation is carried rather
-  than derived, and what that costs, is recorded below.\<close>
+text \<open>A member of the class of Eq. (1.7) is a law on the continuous paths of
+  \<open>C([0,\<infinity>),\<real>\<^sup>n)\<close>, as the paper writes it: the law starts at \<open>x\<close>, the coordinate
+  process is a martingale, and \<^emph>\<open>some\<close> continuous adapted \<open>A\<close> compensates
+  \<open>X X\<^sup>T\<close> and has all its difference quotients in \<open>S\<^sub>k\<^sup>L\<close>.  The existential reading
+  of the covariation is a stated choice, and it is faithful: \<open>d\<langle>X\<rangle>/dt \<in> S\<^sub>k\<^sup>L\<close> says
+  exactly that \<open>\<langle>X\<rangle>\<close> is such an \<open>A\<close>, and the compensator is unique up to
+  indistinguishability.\<close>
 
-text \<open>@{thm [display] ipath_def iexit_class_def}\<close>
+text \<open>@{thm [display] ipath_def outerp_def xclass_def}\<close>
 
-text \<open>Two readings to record here, since neither is forced by the text of
-  Eq. (1.7).
-
-  \<^item> \<^bold>\<open>The class is a set of laws of the pair \<close>\<open>(X, \<langle>X\<rangle>)\<close>\<^bold>\<open>, not of \<close>\<open>X\<close>\<^bold>\<open> alone.\<close>
-  \<open>P\<^sub>x\<close> is a set of laws on \<open>C([0,\<infinity>),\<real>\<^sup>n)\<close>; here the covariation is a second path
-  coordinate, which is what makes the class closed under weak limits and is the
-  encoding the paper's own Lemma 2.3 proof uses.  A consequence is that the
-  martingale clauses are stated for the natural filtration of the \<^emph>\<open>pair\<close>, a
-  priori larger than the filtration of \<open>X\<close> that Proposition 2.4 names.  Both
-  directions are now closed --- \<^theory_text>\<open>iexit_class_X_own_filtration\<close> shows \<open>X\<close> is a
-  martingale for its own filtration, and the paper's class is identified with
-  the \<open>X\<close>-marginals of this one in the subsection below.
-
-  \<^item> \<^bold>\<open>The covariation constraint is read as Lipschitz-with-density.\<close>  Eq. (1.7)
-  constrains \<open>d\<langle>X\<rangle>(t)/dt\<close>, an almost-everywhere derivative; the clause above asks
-  every difference quotient \<open>(\<langle>X\<rangle>(t) - \<langle>X\<rangle>(s))/(t-s)\<close> to lie in \<open>S\<close>.  Since \<open>S\<close>
-  is compact and convex the two agree for absolutely continuous \<open>\<langle>X\<rangle>\<close>, and the
-  difference-quotient form is again what Lemma 2.3 uses (its display (2.8)).
-  They part company only if \<open>\<langle>X\<rangle>\<close> is allowed a singular part, which the
+text \<open>One further reading, since it is not forced by the text of Eq. (1.7).
+  Eq. (1.7) constrains \<open>d\<langle>X\<rangle>(t)/dt\<close>, an almost-everywhere derivative; the clause
+  above asks every difference quotient \<open>(\<langle>X\<rangle>(t) - \<langle>X\<rangle>(s))/(t-s)\<close> to lie in \<open>S\<close>.
+  Since \<open>S\<close> is compact and convex the two agree for absolutely continuous
+  \<open>\<langle>X\<rangle>\<close>, and the difference-quotient form is what Lemma 2.3 uses (its display
+  (2.8)).  They part company only if \<open>\<langle>X\<rangle>\<close> is allowed a singular part, which the
   derivative notation arguably permits; such a part only makes \<open>X\<close> exit sooner,
   so the value function is unaffected, but the choice is an interpretation.\<close>
 
@@ -105,49 +88,7 @@ text \<open>The exit time of a path from \<open>K\<close> before a time \<open>T
   law, and the value function of Eq. (1.6) as the supremum of those over the
   class:\<close>
 
-text \<open>@{thm [display] etime_def pexit_def iexit_def ess_inf_enn_def iexit_val_def}\<close>
-
-subsection \<open>The paper's own class \<open>P\<^sub>x\<close>, of laws of \<open>X\<close> alone\<close>
-
-text \<open>Eq. (1.6)--(1.7) with the covariation left implicit, as the paper writes
-  them: a law of the \<open>\<real>\<^sup>n\<close>-valued path alone, belonging to the class when
-  \<^emph>\<open>some\<close> continuous adapted \<open>A\<close> compensates \<open>X X\<^sup>T\<close> and has all its difference
-  quotients in \<open>S\<^sub>k\<^sup>L\<close>.  That existential reading is a stated choice, and it is
-  faithful: \<open>d\<langle>X\<rangle>/dt \<in> S\<^sub>k\<^sup>L\<close> says exactly that \<open>\<langle>X\<rangle>\<close> is such an \<open>A\<close>, and the
-  compensator is unique up to indistinguishability.\<close>
-
-text \<open>@{thm [display] xclass_def xval_def}\<close>
-
-text \<open>The two classes correspond, in both directions, and the two value
-  functions are equal.  The \<open>X\<close>-marginal of a pair law lies in \<open>P\<^sub>x\<close>; conversely a
-  \<open>P\<^sub>x\<close>-law lifts along \<open>w \<mapsto> (w, \<langle>w\<rangle>)\<close>, where the covariation is recovered as a
-  functional of the path alone --- an adapted, everywhere-continuous version of
-  the pathwise limit of dyadic sums.\<close>
-
-(*<*)
-theorem paper_class_marginal:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes "P \<in> iexit_class k L x" and "0 \<le> L"
-  shows "ipath_law P (\<lambda>t \<omega>. fst (\<omega> t)) \<in> xclass k L x"
-  using assms by (rule iexit_class_marginal_in_xclass)
-(*>*)
-
-(*<*)
-theorem paper_class_lift:
-  fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)"
-  assumes "Q \<in> xclass k L x" and "0 \<le> L"
-  shows "ipath_law Q (\<lambda>t w. (w t, qvmata (4 * L) w t)) \<in> iexit_class k L x"
-  using assms by (rule xclass_lift_in_iexit_class)
-(*>*)
-
-theorem paper_value_function_agrees:
-  fixes K :: "(real^'n::finite) set"
-  assumes "closed K" and "0 \<le> L"
-  shows "iexit_val k L K x = xval k L K x"
-  using assms by (rule iexit_val_eq_xval)
-
-text \<open>So Theorem 1.1 below, though stated for \<^const>\<open>iexit_val\<close>, is a
-  statement about the paper's own value function \<^const>\<open>xval\<close> of Eq. (1.6).\<close>
+text \<open>@{thm [display] etime_def pexit_def iexit_def ess_inf_enn_def xval_def}\<close>
 
 section \<open>Viscosity solutions in the sense of Definition 3.1\<close>
 
@@ -212,84 +153,6 @@ text \<open>Three small departures from the wording of Theorem 1.1, all in the
 text \<open>Every compact convex set with nonempty interior satisfies it, so the
   hypothesis is not vacuous.\<close>
 
-(*<*)
-theorem convex_sets_are_expandable:
-  fixes K :: "(real^'n::finite) set"
-  assumes "convex K" and "compact K" and "interior K \<noteq> {}"
-  shows "expandable K"
-  by (rule convex_expandable[OF assms(2,1,3)])
-(*>*)
-
-(*<*)
-theorem clause_0_finite:
-  fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
-    and "K \<subseteq> cball 0 rK"
-  shows "iexit_val k L K x
-      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
-  by (rule iexit_val_le_ball_bound
-        [OF assms(1,2) compact_imp_closed[OF assms(3)] assms(4)])
-
-theorem clause_0_not_infinite:
-  fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
-  shows "iexit_val k L K x \<noteq> \<top>"
-  by (rule iexit_val_neq_top[OF assms])
-
-theorem clause_1_upper_semicontinuous:
-  fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
-    and "enn2real (iexit_val k L K z) < c"
-  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (iexit_val k L K y) < c"
-  by (rule iexit_val_real_usc[OF assms])
-
-theorem clause_2_subsolution:
-  fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
-  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (iexit_val k L K z))"
-  by (rule iexit_val_visc_subsol[OF assms])
-
-theorem clause_2_supersolution:
-  fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k" and "compact K"
-  shows "visc_supersol_env k L K (interior K)
-      (lsc_envK K (\<lambda>u. enn2real (iexit_val k L K u)))"
-  by (rule iexit_val_supersol_lsc_K[OF assms])
-
-theorem clause_3_boundary_subsolution:
-  fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "compact K"
-  shows "visc_subsol_env k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (iexit_val k L K x)})
-      (\<lambda>z. enn2real (iexit_val k L K z))"
-  by (rule iexit_val_subsol_bc[OF assms])
-
-theorem clause_3_boundary_supersolution:
-  fixes K :: "(real^'n::finite) set"
-  assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k" and "compact K"
-  shows "visc_supersol_env k L K
-      (interior K \<union> {x \<in> K - interior K.
-         lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
-      (lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)))"
-  by (rule iexit_val_supersol_bc_K[OF assms])
-
-theorem clause_4_uniqueness:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes "k < CARD('n)" and "1 \<le> L" and "1 \<le> k"
-    and "compact K" and "K \<noteq> {}" and "expandable K"
-    and "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
-           \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
-    and "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
-    and "visc_subsol_env2 k L K
-           (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and "visc_supersol_env2 k L K
-           (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0})
-           (lsc_envK K u)"
-    and "x \<in> K"
-  shows "u x = enn2real (iexit_val k L K x)"
-  by (rule iexit_val_uniqueness_K[OF assms])
-(*>*)
-
 section \<open>Theorem 1.1\<close>
 
 text \<open>The value function of Eq. (1.6) is a bounded upper semicontinuous
@@ -306,7 +169,7 @@ theorem theorem_1_1:
   fixes K :: "(real^'n::finite) set"
   assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
-  defines "v \<equiv> (\<lambda>z. enn2real (iexit_val k L K z))"
+  defines "v \<equiv> (\<lambda>z. enn2real (xval k L K z))"
   shows "(\<exists>B. \<forall>y. \<bar>v y\<bar> \<le> B)
          \<comment> \<open>clause (0): finiteness.  Read through \<^const>\<open>enn2real\<close>, so this also
              says the value is finite; \<open>iexit_val\<close> itself is an \<^typ>\<open>ennreal\<close>
@@ -345,43 +208,15 @@ theorem theorem_1_1:
              envelope is the paper's \<^const>\<open>lsc_envK\<close>.  Continuity is not
              assumed, and is not part of Theorem 1.1; boundedness is, sitting in
              Definition 3.1.\<close>"
+  (*<*)
 proof -
-  have bnd: "\<exists>B. \<forall>y. \<bar>v y\<bar> \<le> B"
-  proof -
-    obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
-      using compact_cball_bound[OF cK] by blast
-    show ?thesis
-      unfolding v_def
-      by (intro exI[of _ "rK * rK / real (CARD('n) - k)"] allI)
-         (rule iexit_val_real_bounded[OF kn L1 cK KB r0])
-  qed
-  have usc: "\<forall>c z. v z < c \<longrightarrow> (\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c)"
+  have "v = (\<lambda>z. enn2real (iexit_val k L K z))"
     unfolding v_def
-    by (intro allI impI clause_1_upper_semicontinuous[OF kn L1 cK])
-  have sub: "visc_subsol_env2 k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-    unfolding v_def
-    by (rule visc_subsol_env_imp_env2
-          [OF clause_3_boundary_subsolution[OF kn L1 cK]])
-  have sup: "visc_supersol_env2 k L K
-      (interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}) (lsc_envK K v)"
-    unfolding v_def
-    by (rule visc_supersol_env_imp_env2
-          [OF clause_3_boundary_supersolution[OF kn L1 k1 cK]])
-  have uniq: "\<forall>x\<in>K. u x = v x"
-    if "\<forall>c z. z \<in> K \<longrightarrow> u z < c \<longrightarrow> (\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c)"
-      and "\<forall>y\<in>K. \<bar>u y\<bar> \<le> Bd"
-      and "visc_subsol_env2 k L K
-             (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-      and "visc_supersol_env2 k L K
-             (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0})
-             (lsc_envK K u)"
-    for u :: "real^'n \<Rightarrow> real" and Bd
-    unfolding v_def
-    using that
-    by (intro ballI clause_4_uniqueness[OF kn L1 k1 cK neK expK]) blast+
-  from bnd usc sub sup uniq show ?thesis by blast
+    using iexit_val_eq_xval[OF compact_imp_closed[OF cK]] L1 by simp
+  then show ?thesis
+    using theorem_1_1_iexit[OF kn L1 k1 cK neK expK] by simp
 qed
+  (*>*)
 
 section \<open>Example 3.1\<close>
 
@@ -390,10 +225,18 @@ text \<open>On a ball the value function is given in closed form, for every
 
 theorem example_3_1_closed_form:
   fixes r :: real and x :: "real^'n::finite"
-  assumes "1 \<le> k" and "k < CARD('n)" and "1 \<le> L" and "0 < r"
-  shows "enn2real (iexit_val k L (cball 0 r) x)
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L" and r0: "0 < r"
+  shows "enn2real (xval k L (cball 0 r) x)
       = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
-  by (rule example_3_1_uncapped[OF assms])
+  (*<*)
+proof -
+  have eq: "iexit_val k L (cball 0 r) x = xval k L (cball 0 r) x"
+    using L1 by (intro iexit_val_eq_xval[OF closed_cball]) simp
+  show ?thesis
+    unfolding eq[symmetric]
+    by (rule example_3_1_iexit[OF k1 kn L1 r0])
+qed
+  (*>*)
 
 (*<*)
 end

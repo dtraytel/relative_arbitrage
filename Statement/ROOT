@@ -6,7 +6,9 @@ session Relative_Arbitrage_Statement = Relative_Arbitrage +
     part of any AFP entry.
   "
   options [document = pdf, document_output = "output",
-           document_variants = "document=/proof"]
+           document_variants = "document=-proof"]
+  theories [document = false]
+    Statement_Auxiliary
   theories
     Theorem_1_1_Statement
   document_files
