@@ -52,7 +52,8 @@ prediction, not a measurement.** The rule when a prediction fails is in §7.
 
 Four bodies of reusable mathematics are already separated into their own
 sessions (`Alexandrov_Sup_Convolution`, `Wiener_Measure`, `Martingale_Sampling`,
-`Path_Space_Tightness`) and that separation was the right call. But a fifth,
+`Path_Space_Tightness` — §2.10 renames three of them) and that separation was
+the right call. But a fifth,
 sixth and seventh are still buried inside `Relative_Arbitrage`:
 
 | buried library | where it currently lives | size |
@@ -73,10 +74,10 @@ Determined by the placement probe: these use **no** constant from the
 
 | theory | uses only | currently imports | should be in |
 |---|---|---|---|
-| `Modification_Transfer` (684 lines) | nothing project-defined | `Ito_Market` | `Martingale_Sampling` |
-| `Exit_Time` (688 lines) | nothing project-defined | `Ito_Market` | `Martingale_Sampling` |
-| `Stopped_Localization` (865 lines) | `Martingale_Sampling` + `Exit_Time` + `Increment_Moments` | `Exit_Time` | `Path_Space_Tightness` |
-| `Pathwise_Quadratic_Variation` (1 139 lines) | `Martingale_Sampling` only | `Increment_Moments` | `Path_Space_Tightness` |
+| `Modification_Transfer` (684 lines) | nothing project-defined | `Ito_Market` | `Continuous_Time_Martingales` |
+| `Exit_Time` (688 lines) | nothing project-defined | `Ito_Market` | `Continuous_Time_Martingales` |
+| `Stopped_Localization` (865 lines) | `Martingale_Sampling` + `Exit_Time` + `Increment_Moments` | `Exit_Time` | `Continuous_Path_Spaces` |
+| `Pathwise_Quadratic_Variation` (1 139 lines) | `Martingale_Sampling` only | `Increment_Moments` | `Continuous_Path_Spaces` |
 
 `Exit_Time` importing `Ito_Market` — which drags in Brownian motion, the Wiener
 measure and the market locales — to state *"the exit time of a closed set by a
@@ -225,14 +226,14 @@ material; nothing is invented.
 
 ```
 ROOTS
-  Matrix_Spectral_Extras          (new)   base: HOL-Analysis
-  Semicontinuous_Analysis         (new)   base: HOL-Probability
-  Alexandrov_Sup_Convolution      (kept, split, extended)
-  Wiener_Measure                  (kept, split)
-  Martingale_Extras               (renamed from Martingale_Sampling, extended)
-  Path_Space_Tightness            (kept, extended)
-  Relative_Arbitrage              (kept, much smaller, re-layered)
-  Relative_Arbitrage_Statement    (kept)
+  Symmetric_Matrix_Spectra         (new)      base: HOL-Analysis
+  Semicontinuous_Analysis          (new)      base: HOL-Probability
+  Second_Order_Viscosity_Analysis  (renamed from Alexandrov_Sup_Convolution, split, extended)
+  Wiener_Measure                   (kept,      split)
+  Continuous_Time_Martingales      (renamed from Martingale_Sampling, extended)
+  Continuous_Path_Spaces           (renamed from Path_Space_Tightness, extended)
+  Relative_Arbitrage               (kept,      much smaller, re-layered)
+  Relative_Arbitrage_Statement     (kept)
 ```
 
 ### 2.0 Why each session exists
@@ -244,12 +245,12 @@ described without naming this paper, it does not belong outside
 
 | session | AFP? | why it exists |
 |---|---|---|
-| `Matrix_Spectral_Extras` | yes | The spectral theory of real symmetric matrices that HOL-Analysis stops short of — the spectral theorem, Ky Fan partial sums, the ordered eigenvalues as their differences, their Lipschitz dependence on the matrix, and Poincaré separation — for anyone who constrains a matrix through its spectrum rather than through its entries. |
+| `Symmetric_Matrix_Spectra` | yes | The spectral theory of real symmetric matrices that HOL-Analysis stops short of — the spectral theorem, Ky Fan partial sums, the ordered eigenvalues as their differences, their Lipschitz dependence on the matrix, and Poincaré separation — for anyone who constrains a matrix through its spectrum rather than through its entries. |
 | `Semicontinuous_Analysis` | yes | The semicontinuity toolkit that optimal control and viscosity-solution arguments all assume and Isabelle does not have: the ε-δ calculus, attainment on compacta, the semicontinuous envelopes, Berge's maximum theorem, and measurable selection of an upper semicontinuous payoff (Bertsekas–Shreve 7.33). |
-| `Alexandrov_Sup_Convolution` | yes | The complete second-order machinery for comparison proofs between viscosity solutions — Rademacher, Alexandrov, Jensen's lemma for semiconvex functions, the Crandall–Ishii theorem on sums, and the doubling-of-variables toolbox they exist to serve — without which no comparison principle can be formalised at all. |
+| `Second_Order_Viscosity_Analysis` | yes | The complete second-order machinery for comparison proofs between viscosity solutions — Rademacher, Alexandrov, Jensen's lemma for semiconvex functions, the Crandall–Ishii theorem on sums, and the doubling-of-variables toolbox they exist to serve — without which no comparison principle can be formalised at all. |
 | `Wiener_Measure` | yes | Brownian motion as the projective limit of its Gaussian finite-dimensional distributions, with independent increments and a continuous modification: the canonical construction, and the only one in Isabelle. |
-| `Martingale_Extras` | yes | What continuous-time martingale theory needs beyond the AFP's `Martingales`: Doob's maximal inequality, optional sampling and stopping at a bounded stopping time, quadratic variation and its compensator, Vitali's theorem, exit times as stopping times, and the algebra of transporting the martingale property along images, products, restrictions and modifications. |
-| `Path_Space_Tightness` | yes | Weak convergence of processes done properly: `C([0,T],'b)` as a Polish space with portmanteau and the continuous mapping theorem, tightness of a family of path laws from increment moments alone, and quadratic variation as an adapted, everywhere-continuous *path functional* with a summable `L²` rate. |
+| `Continuous_Time_Martingales` | yes | What continuous-time martingale theory needs beyond the AFP's `Martingales`: Doob's maximal inequality, optional sampling and stopping at a bounded stopping time, quadratic variation and its compensator, Vitali's theorem, exit times as stopping times, and the algebra of transporting the martingale property along images, products, restrictions and modifications. |
+| `Continuous_Path_Spaces` | yes | Weak convergence of processes done properly: `C([0,T],'b)` as a Polish space with portmanteau and the continuous mapping theorem, tightness of a family of path laws from increment moments alone, and quadratic variation as an adapted, everywhere-continuous *path functional* with a summable `L²` rate. |
 | `Relative_Arbitrage` | yes | Theorem 1.1 of Lai–Shkolnikov–Soner (arXiv:2512.17702): the value function of the minimum-exit-time problem under eigenvalue lower bounds is the unique bounded upper semicontinuous viscosity solution of the associated degenerate elliptic equation. Reusable only as a worked example of a stochastic-control verification argument; that is the point of the six sessions it stands on. |
 | `Relative_Arbitrage_Statement` | **no** | The formal statement of Theorem 1.1 with every definition it mentions and nothing else, written for the paper's authors to check against their own — a five-page document, not a library. |
 
@@ -260,14 +261,14 @@ development, and §6 does not schedule that work.
 Dependency order (each session may import anything above it):
 
 ```
-Matrix_Spectral_Extras  ─┐
-Semicontinuous_Analysis ─┼─→ Alexandrov_Sup_Convolution ─┐
-                         │                               │
-Wiener_Measure ──────────┤                               ├─→ Relative_Arbitrage ─→ Statement
-Martingale_Extras ───────┴─→ Path_Space_Tightness ───────┘
+Symmetric_Matrix_Spectra────┐
+Semicontinuous_Analysis─────┼─→ Second_Order_Viscosity_Analysis ─┐
+                            │                                    │
+Wiener_Measure ─────────────┤                                    ├─→ Relative_Arbitrage ─→ Statement
+Continuous_Time_Martingales─┴─→ Continuous_Path_Spaces ──────────┘
 ```
 
-### 2.1 `Matrix_Spectral_Extras` (new)
+### 2.1 `Symmetric_Matrix_Spectra` (new)
 
 Base `HOL-Analysis`. Purely linear algebra over `real^'n^'n`. Self-contained,
 AFP-submittable on its own, and the thing most likely to be wanted by others.
@@ -300,15 +301,15 @@ about `F`.
 |---|---|---|
 | `Semicontinuity.thy` | ε-δ usc/lsc predicates, closure under `+`, positive scaling, `max`, difference with a continuous function; usc/lsc from continuity; attainment of sup/inf on a nonempty compact set | Operator_Envelopes §"Semicontinuity toolbox" (2017–2412), Value_Function_Viscosity `lsc_diff_continuous` |
 | `Semicontinuous_Envelopes.thy` | `lsc_env`, `usc_env`, `lsc_envK` (envelope relative to a set), `Kext`, monotonicity, the usc fixpoint, boundedness, `usc_extension_bounded` | Operator_Envelopes 2912–3542, Value_Function_Viscosity duplicates deleted |
-| `Berge.thy` | `usc_sup_over_compact`, `usc_sup_over_compactin`, `box_of_sequential`, `box_of_sequential_euclidean`, `compactin_of_seq_compact`, `closure_of_sequential_limit`, `seq_compact_closure_of` | Path_Space_Tightness/Equicontinuity 233–773 |
+| `Berge.thy` | `usc_sup_over_compact`, `usc_sup_over_compactin`, `box_of_sequential`, `box_of_sequential_euclidean`, `compactin_of_seq_compact`, `closure_of_sequential_limit`, `seq_compact_closure_of` | Continuous_Path_Spaces/Equicontinuity 233–773 |
 | `Semicontinuous_Selection.thy` | `usc_sel_set`, `usc_sel_good`, `usc_sel_code`, `usc_sel`, `usc_measurable_selection` (Bertsekas–Shreve 7.33) | Exit_Class_Compactness §"A measurable selection theorem" (10400–11061) |
 
 `Semicontinuous_Selection` needs measure theory, so this session's base becomes
 `HOL-Probability`. That is acceptable; alternatively put `Semicontinuous_Selection` alone
-into `Martingale_Extras`. **Choose `HOL-Probability` as the base** — one
+into `Continuous_Time_Martingales`. **Choose `HOL-Probability` as the base** — one
 session boundary fewer.
 
-### 2.3 `Alexandrov_Sup_Convolution` (split and extended)
+### 2.3 `Second_Order_Viscosity_Analysis` (renamed from `Alexandrov_Sup_Convolution`, split and extended)
 
 Split the 7 544-line monolith at its existing subsection boundaries, and pull
 the abstract half of the Crandall–Ishii doubling machinery down from
@@ -342,9 +343,10 @@ Move `sorted_wrt_less_nth_iff`, `sorted_wrt_less_set_take`,
 `Wiener_Measure/Sorted_Lists.thy`, or upstream them — they are list lemmas with
 no Brownian content.
 
-### 2.5 `Martingale_Extras` (renamed from `Martingale_Sampling`, extended)
+### 2.5 `Continuous_Time_Martingales` (renamed from `Martingale_Sampling`, extended)
 
-The rename reflects what it will contain. Keep the existing theories; add:
+The rename is §2.10's: sampling was the method, continuous time is the subject.
+Keep the existing theories; add:
 
 | theory | content | drawn from |
 |---|---|---|
@@ -360,9 +362,9 @@ Also fold the four copies of `(a-b)² ≤ 2a² + 2b²` into one lemma in
 (`abs_prod_le_sq`, `sq_times_sq`, `pow4_*`, `abs_pow4`, `two_abs_prod_le_squares`,
 `prod_sq_le_half_pow4`, `four_prod_cube_le`, `pow4_binomial`, `sq_le_half_add_half_pow4`,
 `abs_cube_prod_le_pow4`, `abs_prod_cube_le_pow4`) into one
-`Martingale_Extras/Power_Inequalities.thy`.
+`Continuous_Time_Martingales/Power_Inequalities.thy`.
 
-### 2.6 `Path_Space_Tightness` (extended)
+### 2.6 `Continuous_Path_Spaces` (renamed from `Path_Space_Tightness`, extended)
 
 Keep as is, minus `Equicontinuity`'s topology half (to `Semicontinuous_Analysis`),
 plus:
@@ -378,7 +380,7 @@ plus:
   general construction (an adapted, everywhere-continuous version of the
   quadratic-variation functional) and the paper only consumes it.
 * `Stopped_Localization.thy` — moved from `Relative_Arbitrage`.
-* `Weak_Convergence_Extras.thy` — `weak_conv_on_pushforward`,
+* `Weak_Convergence_Transfer.thy` — `weak_conv_on_pushforward`,
   `weak_conv_on_nn_integral_le`, `weak_conv_on_prob_space`,
   `weak_conv_closed_full_measure`, `weak_conv_open_positive_eventually`,
   `weak_conv_on_integral_unif_integrable`, `weak_conv_integral_of_L2_bound`,
@@ -438,7 +440,7 @@ splits into:
 | `Dynamic_Programming_Pasting.thy` | the pasting bound | 13–850 |
 | `Dynamic_Programming_Conditioning.thy` | conditioning on the past, the four clauses for the conditional law | 851–5874 |
 | `Dynamic_Programming_Kernels.thy` | kernels into the class, measurability and repair | 5875–8165 |
-| `Dynamic_Programming_Optional_Sampling.thy` | optional sampling at two stopping times | 8166–8955 — *general material; test for a move to `Martingale_Extras`* |
+| `Dynamic_Programming_Optional_Sampling.thy` | optional sampling at two stopping times | 8166–8955 — *general material; test for a move to `Continuous_Time_Martingales`* |
 | `Dynamic_Programming_Stopping_Clauses.thy` | clause (iv) at a stopping time | 8956–9991 |
 | `Dynamic_Programming_Additive_Glue.thy` | the additive glue and its clauses | 9992–12497 |
 | `Dynamic_Programming_Delayed_Class.thy` | the delayed class, the horizon-parametrised selector | 12498–15656 |
@@ -457,7 +459,7 @@ splits into:
 
 `Exit_Class` and `Exit_Class_Infinite` stay as they are;
 `Exit_Class_Marginals` loses its first six subsections to
-`Path_Space_Tightness/Adapted_Quadratic_Variation.thy` and keeps the `xclass`
+`Continuous_Path_Spaces/Adapted_Quadratic_Variation.thy` and keeps the `xclass`
 identification.
 
 **L5 — the theorem**: `Value_Function_Uniqueness.thy`, unchanged.
@@ -470,24 +472,46 @@ document, the former does at line 61).
 
 ### 2.9 Naming rule for theories and sessions
 
-**Spell words out. No initialisms, no acronyms, no truncations.** A theory name
-is read far more often than it is typed, and it is what appears in `imports`,
-in `ROOT`, in the generated document's table of contents and in every
-`@{theory …}` antiquotation in the running commentary. `DPP`, `VF`, `QV`,
+Three rules, in order of how often they are broken.
+
+**(a) Spell words out. No initialisms, no acronyms, no truncations.** A theory
+name is read far more often than it is typed, and it is what appears in
+`imports`, in `ROOT`, in the generated document's table of contents and in
+every `@{theory …}` antiquotation in the running commentary. `DPP`, `VF`, `QV`,
 `FDD`, `Usc` and `Sc` are all forbidden; `Dynamic_Programming`,
-`Value_Function`, `Quadratic_Variation`,
-`Finite_Dimensional_Distributions`, `Semicontinuous` are what they abbreviate.
+`Value_Function`, `Quadratic_Variation`, `Finite_Dimensional_Distributions`,
+`Semicontinuous` are what they abbreviate.
+
+**(b) Name the subject, not the method or the headline theorem.** A session
+outgrows a name taken from whatever it was doing on the day it was created.
+`Martingale_Sampling` was accurate when sampling on dyadic grids was the whole
+content, and became wrong once stopping, transfer and modification joined it;
+`Path_Space_Tightness` names one theorem out of the eleven theories under it;
+`Alexandrov_Sup_Convolution` names two of the five ingredients and none of the
+purpose. The replacement names — `Continuous_Time_Martingales`,
+`Continuous_Path_Spaces`, `Second_Order_Viscosity_Analysis` — name what the
+session is *about*, which does not change when a theory is added.
+
+**(c) No filler nouns.** `Extras`, `Misc`, `Utils`, `Aux`, `Toolkit`,
+`Machinery`, `Support`, `Base` carry no information and postpone the naming
+problem rather than solving it. If the only honest name for a group of theories
+is `Extras`, the group is not a session — either it belongs inside an existing
+one, or it is two things that each deserve a name. (This is why the plan's
+earlier `Martingale_Extras` and `Matrix_Spectral_Extras` are gone.)
 
 Consequences already applied above, and to be applied to anything the executing
 agent invents later:
 
-* `Exit_Class_DPP` is the one existing theory whose name breaks the rule. It
+* `Exit_Class_DPP` is the one existing theory whose name breaks rule (a). It
   disappears in phase 12; no separate rename is needed.
 * Proper names are not abbreviations and stay: `Ky_Fan`, `Berge`, `Rademacher`,
   `Alexandrov`, `Moreau_Envelope`, `Poincare_Separation`, `Householder_Rotation`,
   `Brownian_Motion`, `Doob_Inequality`, `Vitali_Convergence`.
-* Ordinary English words that merely look short are fine: `Extras`, `Doubling`,
+* Ordinary English words that merely look short are fine, at *theory* level,
+  where the enclosing session already supplies the subject: `Doubling`,
   `Pasting`, `Kernels`, `Assembly`, `Witness`, `Tightness`, `Limits`, `Shift`.
+  Rule (b) binds sessions strictly and theories loosely, for exactly that
+  reason.
 * The paper's own numbering may be used as a suffix where it is the clearest
   label, spelled with an underscore: `Value_Function_Supersolution_Case_1`, not
   `Case1` and not `C1`.
@@ -497,6 +521,21 @@ agent invents later:
   `NOTES_FOR_AUTHORS.md`, and renaming them is a separate decision with a
   separate cost. Do not rename them as part of this refactor.
 
+### 2.10 Session renames, and the alternatives that were rejected
+
+Four sessions change name. The reasoning is recorded because the names are a
+judgement call and are cheap to revisit before phase 1, and impossible after.
+
+| from | to | why, and what else was considered |
+|---|---|---|
+| `Martingale_Sampling` | `Continuous_Time_Martingales` | Sampling was the *method*; the subject is the continuous-time layer that the AFP's `Martingales` does not provide. Rejected: `Martingale_Extras` (rule (c)); `Martingale_Sampling_and_Transfer` (accurate but names two methods rather than the subject, and grows again the next time something is added). **If the breadth of the name is uncomfortable**, the honest alternative is not a longer name but a split: `Martingale_Sampling` keeps grids, Doob, optional sampling, quadratic variation and stopping times, and a sibling `Martingale_Transfer` takes `Martingale_Algebra`, `Martingale_Transfer`, `Natural_Filtration`, `Modification_Transfer` and `Kernels` (≈ 3 000 lines, both over the AFP's `Martingales`, neither importing the other). That gives two precise names instead of one broad one, at the cost of a session boundary. |
+| `Path_Space_Tightness` | `Continuous_Path_Spaces` | Tightness is one theorem of eleven theories, and after absorbing pathwise quadratic variation and localisation it is not even the largest. Rejected: `Path_Space_Weak_Convergence` (excludes the pathwise-functional half). |
+| `Alexandrov_Sup_Convolution` | `Second_Order_Viscosity_Analysis` | Names the purpose rather than two of the five ingredients; "second-order" distinguishes it from first-order Hamilton–Jacobi theory, which needs none of this. Rejected: `Crandall_Ishii` (names the summit but hides Rademacher and Alexandrov, and says nothing about viscosity); `Viscosity_Comparison` (there is no comparison *theorem* in the session, only the machinery, and it would collide with `Comparison_Principle` in `Relative_Arbitrage`). Discoverability of the classical theorems is preserved by the theory names `Rademacher.thy`, `Alexandrov.thy`, `Jensen_Lemma.thy`, `Theorem_On_Sums.thy`. |
+| — (new) | `Symmetric_Matrix_Spectra` | Was `Matrix_Spectral_Extras` in an earlier draft of this plan; rule (c). The entry is about the spectrum of a real symmetric matrix and nothing else. |
+
+`Wiener_Measure`, `Semicontinuous_Analysis`, `Relative_Arbitrage` and
+`Relative_Arbitrage_Statement` keep their names: each already names its subject.
+
 ---
 
 ## 3. Extraction lists
@@ -505,7 +544,7 @@ These are the lemma names to move, by destination. The lists are derived from
 the genericity probe and are believed exhaustive for the categories named; the
 executing agent should re-run the probe after each batch and pick up stragglers.
 
-### 3.1 → `Matrix_Spectral_Extras/Matrix_Algebra.thy`
+### 3.1 → `Symmetric_Matrix_Spectra/Matrix_Algebra.thy`
 
 From **Comparison_Principle**: `trace_transpose_eq`, `trace_mul_comm`,
 `trace_mult_sym_right`, `trace_add_eq`, `matrix_mult_scaleR_left`,
@@ -590,7 +629,7 @@ same statement as `diag_eq_inner_axis`), `inner_mv_axis` (Pathwise_Quadratic_Var
 `compact_cball_bound` (Value_Function_Uniqueness),
 `continuous_on_vec_lambda` and `measurable_vec_components` and
 `integrable_vec_components` (Brownian_Continuous/Brownian_Market —
-these last three are measurability, so they go to `Martingale_Extras` instead).
+these last three are measurability, so they go to `Continuous_Time_Martingales` instead).
 
 **Deduplicate while moving**: of each group in §1.4 keep one name. Suggested
 canonical names, all following HOL-Analysis convention: `trace_mul_comm`,
@@ -599,7 +638,7 @@ canonical names, all following HOL-Analysis convention: `trace_mul_comm`,
 `inner_matrix_transpose`, `trace_conj`, `transpose_scaleR`, `transpose_add`,
 `trace_sum`.
 
-### 3.2 → `Alexandrov_Sup_Convolution/Doubling.thy`
+### 3.2 → `Second_Order_Viscosity_Analysis/Doubling.thy`
 
 The whole doubled-maximum apparatus, generalised to `'a::euclidean_space`
 (see §4.1). From **Comparison_Principle**:
@@ -662,12 +701,12 @@ The whole doubled-maximum apparatus, generalised to `'a::euclidean_space`
 Those whose statements mention `real^'n^'n` matrices (`norm_block_matrices_*`,
 `transpose_matrix_block_*`, `block_*_matrix_apply*`, `sums_matrix_inequality_gen`,
 `jet_imp_local_*_test`, `matrix`-valued ones) stay at `real^'n` and go into a
-companion `Doubling_Matrix.thy` in `Matrix_Spectral_Extras` — or, if that
+companion `Doubling_Matrix.thy` in `Symmetric_Matrix_Spectra` — or, if that
 creates an awkward dependency, keep them at the bottom of `Doubling.thy` and
-let `Alexandrov_Sup_Convolution` import `Matrix_Spectral_Extras`. **Prefer the
+let `Second_Order_Viscosity_Analysis` import `Symmetric_Matrix_Spectra`. **Prefer the
 latter**: one import edge is cheaper than a split file.
 
-### 3.3 → `Alexandrov_Sup_Convolution/Soft_Penalty.thy`
+### 3.3 → `Second_Order_Viscosity_Analysis/Soft_Penalty.thy`
 
 `soft_pen`, `soft_grad`, `soft_hess`, `soft_shrink` and everything named for
 them: `soft_pen_T_tendsto`, `soft_pen_bracket_tendsto`,
@@ -696,7 +735,7 @@ and usc-fixpoint sections).
 
 `Semicontinuous_Selection.thy`: as listed in §2.2, plus `Least_nat_eq_iff`.
 
-### 3.5 → `Martingale_Extras`
+### 3.5 → `Continuous_Time_Martingales`
 
 As listed in §2.5. Additionally the measure-theoretic odds and ends currently
 in paper theories: `integrable_of_sq_integrable`, `bounded_measurable_integrable`,
@@ -712,7 +751,7 @@ in paper theories: `integrable_of_sq_integrable`, `bounded_measurable_integrable
 `set_integral_of_bounded_linear`, `indep_var_distr_iff`,
 `indep_var_PiM_components`.
 
-### 3.6 → `Matrix_Spectral_Extras/Ky_Fan.thy`, from combinatorics currently scattered
+### 3.6 → `Symmetric_Matrix_Spectra/Ky_Fan.thy`, from combinatorics currently scattered
 
 `exists_top_subset`, `sum_weighted_le_top_subset`, `finite_arg_min_on`,
 `threshold_sum_maximal`, `threshold_remove_min` (Eigenvalues);
@@ -793,7 +832,7 @@ definition ess_inf :: "'a measure ⇒ ('a ⇒ ennreal) ⇒ ennreal"
   where "ess_inf M f = Sup {c. AE ω in M. c ≤ f ω}"
 ```
 
-in `Martingale_Extras`, then `ess_inf_time M τ ≡ ess_inf M (ennreal ∘ τ)` and
+in `Continuous_Time_Martingales`, then `ess_inf_time M τ ≡ ess_inf M (ennreal ∘ τ)` and
 `ess_inf_enn = ess_inf`. The lemmas `ess_inf_time_mono`,
 `ess_inf_time_ge_iff_measure` and their `enn` counterparts collapse to one copy
 each.
@@ -858,7 +897,7 @@ Do these first: they are pure deletions and they shrink everything else.
 
 | action | detail |
 |---|---|
-| delete `outer_prod` in `Comparison_Principle`:3406 | it shadows the identical `Curvature_Operator`:34; after the move both become `Matrix_Spectral_Extras.Outer_Products.outer_prod` |
+| delete `outer_prod` in `Comparison_Principle`:3406 | it shadows the identical `Curvature_Operator`:34; after the move both become `Symmetric_Matrix_Spectra.Outer_Products.outer_prod` |
 | delete `hh` (Operator_Envelopes:677) **or** `hrefl` (Value_Function_Viscosity:8844) | keep one, in `Householder_Rotation.thy`, named `hrefl`; port `hh_sym`, `hh_mv` and the `hrefl_*` lemmas into one set |
 | unify `rotv` and `rotm` | keep `rotm` (the normalised form the supersolution proof needs) and derive `rotv`'s uses from it, or keep both with one proved from the other — but prove orthogonality once |
 | delete `orth_mat` (Viscosity_Comparison_Interface:79) | replace by HOL-Analysis `orthogonal_matrix`; delete `orth_mat_inner`, `orth_mat_surj`, `orth_mat_transpose` if HOL-Analysis has them, else rename them to `orthogonal_matrix_*` |
@@ -906,7 +945,7 @@ identity at a deterministic and at a random horizon).
 
 ### 5.5 Elementary real inequalities
 
-One canonical home, `Martingale_Extras/Power_Inequalities.thy`, for
+One canonical home, `Continuous_Time_Martingales/Power_Inequalities.thy`, for
 `square_add_le_two` / `sq_diff_le` / `sq_diff_le_two` / `diff_sq_le_double`
 (one lemma), `abs_prod_le_sq`, `two_abs_prod_le_squares`,
 `abs_prod_le_half_squares`, `sq_le_half_add_half_pow4`, `prod_sq_le_half_pow4`,
@@ -936,17 +975,17 @@ done first because they shrink the input to everything after.
 | # | phase | risk | rough size |
 |---|---|---|---|
 | 1 | **Deduplicate.** §5.1–§5.5, in place, no files move. Delete same-name re-proofs, unify definitions, redirect uses. | low | −1 500 lines |
-| 2 | **Move the four misplaced theories.** `Modification_Transfer`, `Exit_Time`→`Stopping_Times` into `Martingale_Extras`; `Stopped_Localization`, `Pathwise_Quadratic_Variation` into `Path_Space_Tightness`. Rename the session `Martingale_Sampling` → `Martingale_Extras` and fix `ROOTS` and all `imports`. | low | 3 400 lines relocated |
-| 3 | **Create `Matrix_Spectral_Extras`.** Move §3.1 and §3.6, carve `Symmetric_Spectral`, `Ky_Fan`, `Eigenvalue_Continuity`, `Poincare_Separation`, `Householder_Rotation`, `Orthonormal_Families`, `Outer_Products` out of the paper session. Break the upside-down chain of §1.3 by leaving `feasible_iff_eigval` and the two `Pi_proj`/`feasible` sections of `Eigenvalues` behind in `Relative_Arbitrage`. | medium | ≈ 7 000 lines relocated |
+| 2 | **Rename the sessions and move the four misplaced theories.** Apply the three renames of §2.10 (`Martingale_Sampling` → `Continuous_Time_Martingales`, `Path_Space_Tightness` → `Continuous_Path_Spaces`, `Alexandrov_Sup_Convolution` → `Second_Order_Viscosity_Analysis`) across `ROOTS`, every `ROOT`, every `imports` and every `@{theory …}` antiquotation — do this *before* any content moves, so later diffs are content-only. Then move `Modification_Transfer` and `Exit_Time`→`Stopping_Times` into `Continuous_Time_Martingales`, and `Stopped_Localization`, `Pathwise_Quadratic_Variation` into `Continuous_Path_Spaces`. | low | 3 400 lines relocated |
+| 3 | **Create `Symmetric_Matrix_Spectra`.** Move §3.1 and §3.6, carve `Symmetric_Spectral`, `Ky_Fan`, `Eigenvalue_Continuity`, `Poincare_Separation`, `Householder_Rotation`, `Orthonormal_Families`, `Outer_Products` out of the paper session. Break the upside-down chain of §1.3 by leaving `feasible_iff_eigval` and the two `Pi_proj`/`feasible` sections of `Eigenvalues` behind in `Relative_Arbitrage`. | medium | ≈ 7 000 lines relocated |
 | 4 | **Create `Semicontinuous_Analysis`.** §3.4. | low | ≈ 1 800 lines |
 | 5 | **Extract the martingale toolbox.** §2.5, §3.5. Largest single win in the readability of `Exit_Class_Compactness` and `Exit_Class_DPP`. | medium | ≈ 3 000 lines |
 | 6 | **Split `Sup_Convolution`.** §2.3, textual split only. | low | 0 net |
-| 7 | **Extract `Doubling.thy` and `Soft_Penalty.thy`** from `Comparison_Principle` into `Alexandrov_Sup_Convolution`, at `real^'n` still. | medium | ≈ 5 500 lines relocated |
+| 7 | **Extract `Doubling.thy` and `Soft_Penalty.thy`** from `Comparison_Principle` into `Second_Order_Viscosity_Analysis`, at `real^'n` still. | medium | ≈ 5 500 lines relocated |
 | 8 | **Generalise the doubling toolbox** to `'a::euclidean_space` (§4.1). Do this *after* the move so the diff is one file. | medium | 0 net |
 | 9 | **Generalise the envelopes** (§4.2), the martingale index (§4.3), unify `ess_inf` (§4.4). | medium | −300 lines |
 | 10 | **Consolidate the viscosity definitions** into `Viscosity_Definitions.thy` (§2.7 L2) and split `Comparison_Principle`/`Comparison_Two_Domain`. | medium | 0 net |
 | 11 | **Split `Exit_Class_Compactness`** into six theories at the section boundaries of §2.7. | low | 0 net |
-| 12 | **Split `Exit_Class_DPP`** into eight; test whether `Dynamic_Programming_Optional_Sampling` moves to `Martingale_Extras`. | medium | 0 net |
+| 12 | **Split `Exit_Class_DPP`** into eight; test whether `Dynamic_Programming_Optional_Sampling` moves to `Continuous_Time_Martingales`. | medium | 0 net |
 | 13 | **Split `Value_Function_Viscosity`** into six; move `Adapted_Quadratic_Variation` out of `Exit_Class_Marginals`. | low | 0 net |
 | 14 | **Split `Wiener_Measure/Brownian_Motion`** (§2.4); re-run `unused_thms` across everything and delete the fourth-pass residue that `UNUSED_THMS.md` predicts; refresh `UNUSED_THMS.md`, `NOTES_FOR_AUTHORS.md` §"Infrastructure that had to be built" (it should now name the new sessions), and `ROOTS`. | low | −500 lines |
 
