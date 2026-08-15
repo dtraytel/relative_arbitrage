@@ -1,7 +1,7 @@
 
 (*<*)
-theory Exit_Time
-  imports Ito_Market
+theory Stopping_Times
+  imports "Martingales.Martingale"
 begin
 
 (*>*)

@@ -1260,7 +1260,7 @@ text \<open>This bound supplies the compensated clause of Lemma 2.3.  The
   the estimate there gives a bound uniform in \<open>R\<close>, and path continuity on
   the compact \<open>[0,T]\<close> makes \<open>\<tau>\<^sub>R > T\<close> for large \<open>R\<close> pathwise, so Fatou
   removes the localization.  This avoids Burkholder--Davis--Gundy, using
-  instead \<open>Exit_Time.etime_stopping_time\<close> for \<open>\<tau>\<^sub>R\<close>,
+  instead \<open>Stopping_Times.etime_stopping_time\<close> for \<open>\<tau>\<^sub>R\<close>,
   \<open>Doob_Inequality.horizon_sq_int_martingale\<close> for the integrable envelope
   that \<open>Optional_Sampling.optional_stopping\<close> asks for, and
   \<open>optional_stopping\<close> itself.\<close>
@@ -1362,7 +1362,7 @@ subsection \<open>The localizing stopping time\<close>
 
 text \<open>\<open>ploc T i R\<close> is the first time the \<open>i\<close>-th coordinate reaches level
   \<open>R\<close> in absolute value, capped at the horizon.  It is a stopping time by
-  \<open>Exit_Time.etime_stopping_time\<close> --- the set \<open>{y. R \<le> \<bar>y\<bar>}\<close> is closed and
+  \<open>Stopping_Times.etime_stopping_time\<close> --- the set \<open>{y. R \<le> \<bar>y\<bar>}\<close> is closed and
   nonempty and the paths are continuous --- and the process stopped at it
   is bounded, which is the whole point.\<close>
 
@@ -1425,7 +1425,7 @@ text \<open>The point of the localization: below the level the stopped path has
 
 text \<open>At the stopping time itself the path has value exactly \<open>R\<close>, not more,
   which is why the bound needs continuity and not just the definition of an
-  infimum.  \<open>Exit_Time.etime_stays_in_cball\<close> is precisely that
+  infimum.  \<open>Stopping_Times.etime_stays_in_cball\<close> is precisely that
   statement.\<close>
 
 lemma pcoord_stopped_bounded:
@@ -3460,7 +3460,7 @@ qed
 section \<open>The paper's class is tight\<close>
 
 text \<open>The other consumer of the uniform fourth moment.  The Kolmogorov
-  chain in @{theory Path_Space_Tightness.Path_Tightness} wants the moment as a Bochner integral, so the
+  chain in @{theory Continuous_Path_Spaces.Path_Tightness} wants the moment as a Bochner integral, so the
   \<open>nn_integral\<close> bound is first converted; integrability is free, because a
   nonnegative function with a finite \<open>nn_integral\<close> is integrable.\<close>
 

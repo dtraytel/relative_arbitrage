@@ -1,4 +1,4 @@
-session Path_Space_Tightness = Martingale_Sampling +
+session Continuous_Path_Spaces = Continuous_Time_Martingales +
   description "
     The space of continuous paths on a compact interval as a Polish metric
     space, moment bounds on the increments of a martingale with a controlled
@@ -20,6 +20,8 @@ session Path_Space_Tightness = Martingale_Sampling +
     Path_Space
     Path_Tightness
     Path_Space_Infinite
+    Stopped_Localization
+    Pathwise_Quadratic_Variation
   document_files
     "root.tex"
     "root.bib"

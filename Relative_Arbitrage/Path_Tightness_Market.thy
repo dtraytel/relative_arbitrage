@@ -2,14 +2,15 @@ section \<open>Lemma 2.2, market form: subsequence extraction from the martingal
 
 (*<*)
 theory Path_Tightness_Market
-  imports "Path_Space_Tightness.Path_Tightness" Stopped_Localization
+  imports "Continuous_Path_Spaces.Path_Tightness" "Continuous_Path_Spaces.Stopped_Localization"
+    Ito_Market
 begin
 
 (*>*)
 
 text \<open>
-  The adapter between the stochastic layer (@{theory Relative_Arbitrage.Stopped_Localization}) and the
-  topological layer (@{theory Path_Space_Tightness.Path_Tightness}): the moment hypotheses of
+  The adapter between the stochastic layer (@{theory Continuous_Path_Spaces.Stopped_Localization}) and the
+  topological layer (@{theory Continuous_Path_Spaces.Path_Tightness}): the moment hypotheses of
   \<open>path_laws_convergent_subsequence_vec\<close> are discharged per coordinate by
   \<open>fourth_moment_L2_integrable\<close> / \<open>fourth_moment_L2_bochner\<close>, so the
   subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
@@ -75,15 +76,11 @@ qed
 
 section \<open>The exit time is upper semicontinuous\<close>
 
-text \<open>The join.  \<open>Exit_Time.etime_less_iff\<close> says being strictly below \<open>c\<close>
+text \<open>The join.  \<open>Stopping_Times.etime_less_iff\<close> says being strictly below \<open>c\<close>
   is witnessed by a single time \<open>r < c\<close> at which the path is already in
   \<open>A\<close>; \<open>Path_Space.open_hit_strictly_before\<close> says the witnessed condition
   is open in the path topology.  Together they give upper semicontinuity of
   the exit time, which is what Larsson--Ruf's Lemma 2.1 needs.
-
-  This is the only theory in the development that sees both halves:
-  @{theory Relative_Arbitrage.Exit_Time} sits under @{theory Relative_Arbitrage.Ito_Market} while @{theory Path_Space_Tightness.Path_Space} sits under the AFP
-  Prokhorov entry, and the two branches meet nowhere else.
 
   The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one:
   a path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close>
@@ -94,7 +91,7 @@ text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the marke
   and confined to a ball, the path laws admit a weakly convergent
   subsequence.  The almost-sure hypotheses of the locale become the pointwise
   hypotheses of the adapter above by restricting each market to a
-  full-measure good event (the transfer package of @{theory Relative_Arbitrage.Stopped_Localization});
+  full-measure good event (the transfer package of @{theory Continuous_Path_Spaces.Stopped_Localization});
   the restriction is invisible to the path laws.  The per-coordinate
   compensator is the entrywise integral of \<open>acov\<close>, whose rate bound \<open>L\<close> comes
   from the eigenvalue constraint through the diagonal entries.\<close>

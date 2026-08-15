@@ -68,7 +68,7 @@ text \<open>
   The Arzel\`a--Ascoli input for tightness: the set of paths starting at a fixed
   point with a uniform H\"older bound is sequentially compact in the sup metric.
   The subsequence extraction is the type-class \<open>holder_family_subsequence\<close>
-  (@{theory Path_Space_Tightness.Equicontinuity}); this theorem transports it into the set-based
+  (@{theory Continuous_Path_Spaces.Equicontinuity}); this theorem transports it into the set-based
   framework via \<open>compactin_sequentially\<close> and \<open>cfunspace_mdist_le\<close>.
 \<close>
 
@@ -91,7 +91,7 @@ qed
 
 text \<open>The converse direction: a point of the path space \<^emph>\<open>is\<close> a continuous
   function on \<open>{0..T}\<close>, so the countable-witness reduction
-  \<open>Exit_Time.etime_less_iff_qtimes_open\<close> applies to it.\<close>
+  \<open>Stopping_Times.etime_less_iff_qtimes_open\<close> applies to it.\<close>
 
 lemma mspace_path_metricD:
   fixes f :: "real \<Rightarrow> 'b::polish_space"
@@ -726,7 +726,7 @@ text \<open>The exit time is upper semicontinuous because "has already entered
   (\<open>continuous_map_path_eval\<close>), so an open \<open>A\<close> pulls back to an open set of
   paths, and the union over admissible witness times \<open>r\<close> stays open.
   Stated here, purely about the path topology, because
-  \<open>Exit_Time.etime_less_iff\<close> -- identifying this set with
+  \<open>Stopping_Times.etime_less_iff\<close> -- identifying this set with
   \<open>{f. etime T A (\<lambda>s w. w s) f < c}\<close> when \<open>\<not> T < c\<close> -- lives on a
   different import branch.\<close>
 

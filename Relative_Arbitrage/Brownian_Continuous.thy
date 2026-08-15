@@ -1,7 +1,8 @@
 
 (*<*)
 theory Brownian_Continuous
-  imports Modification_Transfer "Wiener_Measure.Brownian_Motion_Continuity"
+  imports "Continuous_Time_Martingales.Modification_Transfer" "Wiener_Measure.Brownian_Motion_Continuity"
+    Brownian_Market
 begin
 
 (*>*)

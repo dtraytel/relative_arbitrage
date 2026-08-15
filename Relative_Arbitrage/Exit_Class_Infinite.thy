@@ -2,12 +2,12 @@ section \<open>The class and the value function on the half-line\<close>
 
 (*<*)
 theory Exit_Class_Infinite
-  imports Exit_Class_DPP "Path_Space_Tightness.Path_Space_Infinite"
+  imports Exit_Class_DPP "Continuous_Path_Spaces.Path_Space_Infinite"
 begin
 (*>*)
 
 text \<open>Eq. (1.6)--(1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> without the horizon cap: the class
-  is a set of laws on the paths of @{theory Path_Space_Tightness.Path_Space_Infinite},
+  is a set of laws on the paths of @{theory Continuous_Path_Spaces.Path_Space_Infinite},
   the covariation constraint is required at every pair of times, and the
   martingale clauses carry no stopping.  The capped development is reached
   through the restriction of a law to a compact horizon.\<close>

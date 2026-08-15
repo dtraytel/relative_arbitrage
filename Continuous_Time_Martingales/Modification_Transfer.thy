@@ -1,7 +1,7 @@
 
 (*<*)
 theory Modification_Transfer
-  imports Ito_Market
+  imports "Martingales.Martingale"
 begin
 
 (*>*)
@@ -372,7 +372,7 @@ text \<open>Real-valued case, which is what the process form of the martingale
 
 section \<open>The vector-valued case, componentwise\<close>
 
-text \<open>The market processes of @{theory Relative_Arbitrage.Ito_Market} take values in \<open>real^'n\<close>, so the
+text \<open>State processes commonly take values in \<open>real^'n\<close>, so the
   transfer is needed there too.  The increments in
   \<open>set\_integral\_zero\_transfer\<close> are real-valued and independent of the value
   type of the process, so the vector case follows componentwise.\<close>

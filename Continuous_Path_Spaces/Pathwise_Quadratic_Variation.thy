@@ -2,7 +2,7 @@ section \<open>Quadratic variation in continuous time, along dyadic partitions\<
 
 (*<*)
 theory Pathwise_Quadratic_Variation
-  imports "Path_Space_Tightness.Increment_Moments"
+  imports "Continuous_Path_Spaces.Increment_Moments"
 begin
 (*>*)
 
@@ -184,7 +184,7 @@ text \<open>Each compensated increment has second moment at most \<open>18 C\<^s
   increment \<open>C\<^sup>2 (dt)\<^sup>2\<close> by the Lipschitz rate, through \<open>(a - b)\<^sup>2 \<le> 2a\<^sup>2 + 2b\<^sup>2\<close>.\<close>
 
 text \<open>\<open>sq_diff_le_two\<close> is \<open>sq_diff_le\<close> from
-  @{theory Martingale_Sampling.Quadratic_Variation}.\<close>
+  @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
 
 text \<open>The same, with the first square already folded into a fourth power ---
   the form the two integral bounds are stated in.\<close>

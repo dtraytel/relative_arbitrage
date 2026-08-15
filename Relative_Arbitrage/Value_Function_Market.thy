@@ -52,7 +52,7 @@ qed
 text \<open>A deterministic ceiling passes to the essential infimum: the family of
   values \<open>{P\<hyphen>essinf \<tau>\<^sub>K : P \<in> \<P>\<^sub>0}\<close> needs to be bounded above by a real number
   for Berge's theorem, and \<open>ess_inf_time\<close> is \<open>ennreal\<close>-valued. The exit time is
-  capped at \<open>T\<close> by construction (\<open>Exit_Time.etime_le_T\<close>), so the ceiling is
+  capped at \<open>T\<close> by construction (\<open>Stopping_Times.etime_le_T\<close>), so the ceiling is
   available for free.\<close>
 
 lemma ess_inf_time_le_const:

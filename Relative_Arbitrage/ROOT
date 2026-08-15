@@ -1,4 +1,4 @@
-session Relative_Arbitrage = Path_Space_Tightness +
+session Relative_Arbitrage = Continuous_Path_Spaces +
   description "
     Theorem 1.1 of Lai, Shkolnikov and Soner, Relative arbitrage problem under
     eigenvalue lower bounds (arXiv:2512.17702): the value function of the
@@ -8,7 +8,7 @@ session Relative_Arbitrage = Path_Space_Tightness +
     on the half-line are formalised as well, and proved to agree with them.
   "
   sessions
-    Alexandrov_Sup_Convolution
+    Second_Order_Viscosity_Analysis
     Wiener_Measure
     Disintegration
     Levy_Prokhorov_Metric
@@ -29,12 +29,9 @@ session Relative_Arbitrage = Path_Space_Tightness +
     Operator_Envelope_Continuity
     Brownian_Market
     Ito_Market
-    Modification_Transfer
     Brownian_Continuous
     Brownian_Optimal_Boundary
     Value_Function_Market
-    Exit_Time
-    Stopped_Localization
     Path_Tightness_Market
     Exit_Time_Semicontinuity
     Exit_Semicontinuity
@@ -45,7 +42,6 @@ session Relative_Arbitrage = Path_Space_Tightness +
     Comparison_Principle
     Value_Function_Uniqueness
     Exit_Class_Infinite
-    Pathwise_Quadratic_Variation
     Exit_Class_Marginals
   document_files
     "root.tex"

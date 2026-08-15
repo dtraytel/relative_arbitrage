@@ -126,7 +126,7 @@ proof -
 qed
 
 text \<open>The compensated square along the grid is a martingale, and the
-  optional-sampling results of @{theory Martingale_Sampling.Quadratic_Variation} apply verbatim to the
+  optional-sampling results of @{theory Continuous_Time_Martingales.Quadratic_Variation} apply verbatim to the
   sampled process.\<close>
 
 theorem grid_qvar_compensates:

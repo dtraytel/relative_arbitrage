@@ -10,11 +10,11 @@ begin
 text \<open>
   Laws of processes satisfying the uniform fourth-moment package of
   Eq. (2.7) form a tight family on \<open>C({0..T})\<close>: \<open>dyadic_bad_event_tail_mom\<close>
-  (@{theory Path_Space_Tightness.Modulus_Tails}) bounds the probability some dyadic increment at level
+  (@{theory Continuous_Path_Spaces.Modulus_Tails}) bounds the probability some dyadic increment at level
   \<open>j \<ge> n\<close> is large; on the complement, \<open>modulus_of_good_path\<close> and
-  \<open>holder_of_dyadic_moduli\<close> (@{theory Path_Space_Tightness.Holder_Interpolation}) place the path in an
+  \<open>holder_of_dyadic_moduli\<close> (@{theory Continuous_Path_Spaces.Holder_Interpolation}) place the path in an
   explicit H\"older ball, compact by \<open>compactin_path_holder_ball\<close>
-  (@{theory Path_Space_Tightness.Path_Space}). Large \<open>n\<close> makes the exceptional mass uniformly small --
+  (@{theory Continuous_Path_Spaces.Path_Space}). Large \<open>n\<close> makes the exceptional mass uniformly small --
   exactly \<open>tight_on_set\<close>, the hypothesis of the AFP's
   \<open>Prokhorov_theorem_LP\<close>.
 \<close>

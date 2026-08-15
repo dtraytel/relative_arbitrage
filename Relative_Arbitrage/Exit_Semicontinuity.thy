@@ -1,7 +1,8 @@
 
 (*<*)
 theory Exit_Semicontinuity
-  imports "Path_Space_Tightness.Path_Space" Exit_Time Value_Function_Market
+  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Time_Martingales.Stopping_Times"
+    Value_Function_Market
 begin
 
 (*>*)

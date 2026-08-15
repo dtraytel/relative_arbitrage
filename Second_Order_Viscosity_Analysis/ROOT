@@ -1,4 +1,4 @@
-session Alexandrov_Sup_Convolution = "HOL-Analysis" +
+session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
   description "
     Sup-convolutions and Moreau envelopes, Rademacher's theorem, Alexandrov's
     theorem, Jensen's lemma for semiconvex functions, and the Crandall-Ishii

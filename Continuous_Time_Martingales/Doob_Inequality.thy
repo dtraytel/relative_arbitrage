@@ -548,7 +548,7 @@ end
 section \<open>The maximal inequality for a continuous-time martingale on a grid\<close>
 
 text \<open>A continuous-time square-integrable martingale sampled along a grid is
-  a discrete one (@{theory Martingale_Sampling.Time_Discretisation}), so the inequality above applies to
+  a discrete one (@{theory Continuous_Time_Martingales.Time_Discretisation}), so the inequality above applies to
   it verbatim.\<close>
 
 lemma (in sampled_martingale) grid_doob_L2:

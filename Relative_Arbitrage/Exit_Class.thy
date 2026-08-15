@@ -1,7 +1,7 @@
 
 (*<*)
 theory Exit_Class
-  imports "Path_Space_Tightness.Path_Space" "Path_Space_Tightness.Path_Tightness" Exit_Semicontinuity Poincare_Separation
+  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" Exit_Semicontinuity Poincare_Separation
     Viscosity_Solutions
 begin
 
@@ -1150,7 +1150,7 @@ qed
 section \<open>Pair tightness from the two component moduli\<close>
 
 text \<open>Pair tightness needs no matrix-valued Kolmogorov criterion: the
-  \<open>X\<close>-side carries a stochastic Hoelder estimate (@{theory Path_Space_Tightness.Path_Tightness}), the
+  \<open>X\<close>-side carries a stochastic Hoelder estimate (@{theory Continuous_Path_Spaces.Path_Tightness}), the
   \<open>Y\<close>-side the deterministic Lipschitz modulus of \<open>diffquot_lipschitz\<close>,
   and on a bounded horizon a Lipschitz bound is itself Hoelder-\<open>ga\<close>.
   Adding the two via \<open>norm_Pair_le\<close> puts the pair path in a single
@@ -1363,7 +1363,7 @@ section \<open>Passing the martingale identities through the weak limit\<close>
 text \<open>The class's integrated identities --- \<open>E[Z\<sqdot>(X\<^sub>t - X\<^sub>s)] = 0\<close> for a
   bounded continuous test \<open>Z\<close> of the past, and its covariation analogue ---
   are integrals of continuous but unbounded path functionals, so weak
-  convergence alone does not transfer them. @{theory Path_Space_Tightness.Path_Tightness}'s
+  convergence alone does not transfer them. @{theory Continuous_Path_Spaces.Path_Tightness}'s
   \<open>weak_conv_on_integral_unif_integrable\<close> closes the gap given uniform
   integrability, which a uniform \<open>L\<^sup>2\<close> bound supplies via
   Chebyshev--Markov: \<open>\<integral>\<bar>f\<bar>\<sqdot>1\<^bsub>{\<bar>f\<bar>>R}\<^esub> \<le> (1/R)\<sqdot>\<integral>f\<^sup>2 \<le> C/R\<close>.\<close>

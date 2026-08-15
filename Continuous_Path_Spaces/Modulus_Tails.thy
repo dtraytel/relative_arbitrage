@@ -9,7 +9,7 @@ begin
 
 text \<open>
   Combine the per-level dyadic tail bounds (from Eq. (2.7) via
-  @{theory Path_Space_Tightness.Increment_Tails}) with the deterministic chaining of @{theory Path_Space_Tightness.Dyadic_Chaining}
+  @{theory Continuous_Path_Spaces.Increment_Tails}) with the deterministic chaining of @{theory Continuous_Path_Spaces.Dyadic_Chaining}
   into the quantitative tail bound on the modulus of continuity. Both the
   modulus threshold and the exceptional probability are explicit in
   \<open>(C, T, \<gamma>, n)\<close> only --- uniformity over the family of admissible laws is

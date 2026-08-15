@@ -2,7 +2,7 @@ section \<open>The \<open>X\<close>-marginals of the exit class\<close>
 
 (*<*)
 theory Exit_Class_Marginals
-  imports Exit_Class_Infinite Pathwise_Quadratic_Variation
+  imports Exit_Class_Infinite "Continuous_Path_Spaces.Pathwise_Quadratic_Variation"
 begin
 (*>*)
 
@@ -25,7 +25,7 @@ text \<open>
   The scalar theory assumes \<open>X\<close> uniformly bounded, because Eq. (2.7)
   (\<open>fourth_moment_bound_bounded\<close>) does.  A member of the class is not bounded,
   so the identification has to be localised --- which is what
-  @{theory Relative_Arbitrage.Stopped_Localization} was built for: stopping an
+  @{theory Continuous_Path_Spaces.Stopped_Localization} was built for: stopping an
   \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time yields a
   martingale, unconditionally, and the same holds for the compensated square.
 
@@ -1139,7 +1139,7 @@ text \<open>The polarisation, run through the localised scalar theorem.  The
   hypotheses are pointwise on \<open>space M\<close> rather than almost everywhere, which is
   what the stopping arguments need; the intended application reaches that form
   through the \<open>restrict_full\<close> package of
-  @{theory Relative_Arbitrage.Stopped_Localization}.\<close>
+  @{theory Continuous_Path_Spaces.Stopped_Localization}.\<close>
 
 theorem qvmat_eq_A_localised:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and A :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"
@@ -1403,7 +1403,7 @@ lemma xclass_compensator:
   using assms unfolding xclass_def by blast
 
 text \<open>The constraint set supplies exactly the two hypotheses the matrix locale
-  of @{theory Relative_Arbitrage.Pathwise_Quadratic_Variation} needs and the plan never named:
+  of @{theory Continuous_Path_Spaces.Pathwise_Quadratic_Variation} needs and the plan never named:
   the increments of \<open>A\<close> are positive semidefinite, and their entries are
   Lipschitz in time.\<close>
 
@@ -1518,7 +1518,7 @@ subsection \<open>The second coordinate of a class member IS the quadratic varia
 text \<open>Obligation (b) of the bridge.  The class states its side conditions almost
   everywhere, while the localised identification wants them pointwise; the two
   are reconciled by restricting to a full-measure event, which is what the
-  \<open>restrict_full\<close> package of @{theory Relative_Arbitrage.Stopped_Localization}
+  \<open>restrict_full\<close> package of @{theory Continuous_Path_Spaces.Stopped_Localization}
   is for.  The event is built from null sets rather than from the conditions
   themselves, so nothing has to be shown measurable --- in particular not the
   difference-quotient condition, which quantifies over all real pairs.\<close>

@@ -2,7 +2,7 @@ section \<open>Uniform integrability of conditional expectations\<close>
 
 (*<*)
 theory Conditional_UI
-  imports "Martingale_Sampling.Vitali_Convergence" Increment_Moments
+  imports "Continuous_Time_Martingales.Vitali_Convergence" Increment_Moments
 begin
 
 (*>*)

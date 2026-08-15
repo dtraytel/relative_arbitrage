@@ -1,4 +1,4 @@
-session Martingale_Sampling = "HOL-Probability" +
+session Continuous_Time_Martingales = "HOL-Probability" +
   description "
     Doob's maximal inequality, optional sampling and optional stopping at a
     bounded stopping time in continuous time, quadratic variation, uniform
@@ -16,6 +16,8 @@ session Martingale_Sampling = "HOL-Probability" +
     Sampled_Quadratic_Variation
     Moment_Bounds
     Vitali_Convergence
+    Modification_Transfer
+    Stopping_Times
   document_files
     "root.tex"
     "root.bib"

@@ -2,7 +2,7 @@
 (*<*)
 theory Value_Function_Viscosity
   imports Exit_Class_DPP Curvature_Operator Operator_Envelopes
-    "Martingale_Sampling.Quadratic_Variation"
+    "Continuous_Time_Martingales.Quadratic_Variation"
 begin
 
 (*>*)
@@ -5725,7 +5725,7 @@ qed
 subsection \<open>The step increment: variance of order \<open>h\<^sup>2\<close>\<close>
 
 text \<open>\<open>diff_sq_le_double\<close> is \<open>sq_diff_le\<close> from
-  @{theory Martingale_Sampling.Quadratic_Variation}.\<close>
+  @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
 
 theorem sbm_xi_sq_bound:
   fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real

@@ -8,7 +8,7 @@ begin
 (*>*)
 
 text \<open>
-  The bridge from \<open>modulus_of_good_path\<close> (@{theory Path_Space_Tightness.Modulus_Tails}) to the compact
+  The bridge from \<open>modulus_of_good_path\<close> (@{theory Continuous_Path_Spaces.Modulus_Tails}) to the compact
   H\"older balls of \<open>Path_Space\<close>: a path whose modulus at every dyadic scale
   \<open>1/2^m\<close>, \<open>m \<ge> n\<close>, is bounded by \<open>E * 2 powr (-g m)\<close> satisfies a global
   H\"older-\<open>g\<close> bound with a constant explicit in \<open>(E, g, n, T)\<close>. Small gaps use

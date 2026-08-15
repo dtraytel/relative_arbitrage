@@ -2,7 +2,7 @@ section \<open>The second-moment bound on increments\<close>
 
 (*<*)
 theory Increment_Moments
-  imports "Martingale_Sampling.Sampled_Quadratic_Variation" "Martingale_Sampling.Moment_Bounds"
+  imports "Continuous_Time_Martingales.Sampled_Quadratic_Variation" "Continuous_Time_Martingales.Moment_Bounds"
 begin
 
 (*>*)

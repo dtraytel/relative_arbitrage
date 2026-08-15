@@ -2,16 +2,17 @@ section \<open>Localization: stopping an \<open>L\<^sup>2\<close> martingale nee
 
 (*<*)
 theory Stopped_Localization
-  imports "Martingale_Sampling.Stopped_Adaptedness" "Path_Space_Tightness.Increment_Moments" Exit_Time
+  imports "Continuous_Time_Martingales.Stopped_Adaptedness" "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Stopping_Times"
 begin
 
 (*>*)
 
 text \<open>
   The repository's continuous-time \<open>optional_stopping\<close>
-  (@{theory Martingale_Sampling.Optional_Sampling}) carries an integrable running-domination
+  (@{theory Continuous_Time_Martingales.Optional_Sampling}) carries an integrable running-domination
   hypothesis. For an \<open>L\<^sup>2\<close> martingale that hypothesis is dischargeable: the
-  \<open>horizon_sq_int_martingale\<close> locale of @{theory Martingale_Sampling.Doob_Inequality} produces, per
+  \<open>horizon_sq_int_martingale\<close> locale of @{theory Continuous_Time_Martingales.Doob_Inequality} produces, per
   horizon, an integrable function \<open>Dsup\<close> dominating \<open>\<bar>X s\<bar>\<close> on the whole
   interval (Doob's \<open>L\<^sup>2\<close> inequality along dyadic grids + monotone
   convergence + path continuity). This theory packages that discharge:

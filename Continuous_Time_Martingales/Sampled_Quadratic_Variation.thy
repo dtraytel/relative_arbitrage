@@ -8,11 +8,11 @@ begin
 (*>*)
 
 text \<open>
-  The sampling bridge of @{theory Martingale_Sampling.Sampled_Martingale} turns a real-indexed
+  The sampling bridge of @{theory Continuous_Time_Martingales.Sampled_Martingale} turns a real-indexed
   martingale into a nat-indexed one; this theory uses that to discharge the
   three obligations of the locale \<open>sq_int_martingale\<close> for the sampled
   process, and thereby transfers the whole discrete quadratic-variation
-  theory of @{theory Martingale_Sampling.Quadratic_Variation} to continuous time along an arbitrary
+  theory of @{theory Continuous_Time_Martingales.Quadratic_Variation} to continuous time along an arbitrary
   monotone partition.
 
   The two results that matter downstream are the discrete Ito formula for the

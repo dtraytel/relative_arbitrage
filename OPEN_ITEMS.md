@@ -116,9 +116,9 @@ The constant is `4L`, not `L`: polarisation at `e_i +- e_j` turns an
 
 ### Placement
 
-`fourth_moment_bound_bounded` lives in `Path_Space_Tightness.Increment_Moments`,
-which is ABOVE `Martingale_Sampling` --- so T1--T4 CANNOT go in
-`Martingale_Sampling` where `qvar` lives.  They went into
+`fourth_moment_bound_bounded` lives in `Continuous_Path_Spaces.Increment_Moments`,
+which is ABOVE `Continuous_Time_Martingales` --- so T1--T4 CANNOT go in
+`Continuous_Time_Martingales` where `qvar` lives.  They went into
 `Relative_Arbitrage/Pathwise_Quadratic_Variation.thy`, which deliberately does NOT import
 `Exit_Class`; T5--T7 need `iexit_class` and went into
 `Relative_Arbitrage/Exit_Class_Marginals.thy` after `Exit_Class_Infinite`.
