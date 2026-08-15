@@ -2,7 +2,7 @@ section \<open>The fourth-moment bound of Eq. (2.7)\<close>
 
 (*<*)
 theory Moment_Bounds
-  imports "HOL-Probability.Probability"
+  imports "HOL-Probability.Probability" Quadratic_Variation
 begin
 
 (*>*)
@@ -29,10 +29,7 @@ subsection \<open>An elementary square inequality\<close>
 lemma square_add_le_two:
   fixes a b :: real
   shows "(a + b)\<^sup>2 \<le> 2 * a\<^sup>2 + 2 * b\<^sup>2"
-proof -
-  have "0 \<le> (a - b)\<^sup>2" by simp
-  thus ?thesis by (simp add: power2_eq_square algebra_simps)
-qed
+  using sq_diff_le[of a "- b"] by simp
 
 subsection \<open>A bounded function has a bounded second moment\<close>
 

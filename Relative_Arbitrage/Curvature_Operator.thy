@@ -111,6 +111,21 @@ lemma neg_matrix_vector:
   shows "(- A) *v x = - (A *v x)"
   by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
 
+lemma matrix_mul_diff_right:
+  fixes A B C :: "real^'n::finite^'n"
+  shows "A ** (B - C) = A ** B - A ** C"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff algebra_simps sum_subtractf)
+
+lemma matrix_mul_diff_left:
+  fixes A B C :: "real^'n::finite^'n"
+  shows "(A - B) ** C = A ** C - B ** C"
+  by (simp add: matrix_matrix_mult_def vec_eq_iff algebra_simps sum_subtractf)
+
+lemma matvec_add_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (x + y) = A *v x + A *v y"
+  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum.distrib)
+
 subsection \<open>Orthonormal families\<close>
 
 definition onormal :: "(real^'n) set \<Rightarrow> bool" where

@@ -410,8 +410,8 @@ proof -
         [OF martingale_stopped_const[OF S iexit_class_X_martingale[OF P]]])
       fix u :: real assume u: "0 \<le> u"
       have mI: "min u S \<in> {0..S}" using u S by simp
-      show "(\<lambda>\<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)
-          = (\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u S)))"
+      show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u S)))
+          = (\<lambda>\<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
         by (rule ext) (simp add: pcut_apply[OF mI])
     qed
   qed
@@ -442,9 +442,9 @@ proof -
           [OF S iexit_class_comp_martingale[OF P]]])
       fix u :: real assume u: "0 \<le> u"
       have mI: "min u S \<in> {0..S}" using u S by simp
-      show "(\<lambda>\<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
-              - snd (pcut S \<omega> (min u S)))
-          = (\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u S))) - snd (\<omega> (min u S)))"
+      show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u S))) - snd (\<omega> (min u S)))
+          = (\<lambda>\<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
+              - snd (pcut S \<omega> (min u S)))"
         by (rule ext) (simp add: pcut_apply[OF mI])
     qed
   qed
@@ -605,24 +605,8 @@ subsection \<open>Towards the extension: cutting a glue back\<close>
 
 text \<open>Gluing a continuation onto a path at \<open>r\<close> and cutting back at \<open>r\<close>
   returns the original path, so an extension built by
-  @{thm [source] exit_class_pglue_law} restricts to the law it extends.\<close>
-
-lemma pcut_pglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-  shows "pcut r (pglue r T \<omega> \<omega>') = pcut r \<omega>"
-proof (rule ext)
-  fix t :: real
-  show "pcut r (pglue r T \<omega> \<omega>') t = pcut r \<omega> t"
-  proof (cases "t \<in> {0..r}")
-    case True
-    then have "t \<in> {0..T}" using rT by auto
-    then show ?thesis using True by (simp add: pcut_def pglue_def)
-  next
-    case False
-    then show ?thesis by (auto simp: pcut_def)
-  qed
-qed
+  @{thm [source] exit_class_pglue_law} restricts to the law it extends.
+  \<open>pcut_pglue\<close> lives in @{theory Relative_Arbitrage.Exit_Class_DPP}.\<close>
 
 text \<open>Members of the horizon-\<open>r\<close> path space are extensional on \<open>{0..r}\<close>, so
   cutting there is the identity on them.  This is what turns

@@ -2559,36 +2559,12 @@ lemma matvec_scaleR_right:
   shows "A *v (r *\<^sub>R x) = r *\<^sub>R (A *v x)"
   by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
 
-lemma matrix_mul_diff_right:
-  fixes A B C :: "real^'n::finite^'n"
-  shows "A ** (B - C) = A ** B - A ** C"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff algebra_simps sum_subtractf)
+text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
+  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
-lemma matrix_mul_diff_left:
-  fixes A B C :: "real^'n::finite^'n"
-  shows "(A - B) ** C = A ** C - B ** C"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff algebra_simps sum_subtractf)
-
-lemma inner_matrix_transpose:
-  fixes A :: "real^'n::finite^'n" and x y :: "real^'n"
-  shows "y \<bullet> (A *v x) = (transpose A *v y) \<bullet> x"
-proof -
-  have L: "y \<bullet> (A *v x) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
-    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
-  have R: "(transpose A *v y) \<bullet> x
-      = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
-  proof -
-    have "(transpose A *v y) \<bullet> x
-        = (\<Sum>j\<in>UNIV. (\<Sum>i\<in>UNIV. A $ i $ j * y $ i) * x $ j)"
-      by (simp add: inner_vec_def matrix_vector_mult_def transpose_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A $ i $ j * y $ i * x $ j)"
-      by (simp add: sum_distrib_right)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
-      by (intro sum.cong refl) (simp add: mult_ac)
-    finally show ?thesis .
-  qed
-  show ?thesis unfolding L R by (rule sum.swap)
-qed
+text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
+  from @{theory Relative_Arbitrage.Curvature_Operator}, general at
+  \<open>real^'m^'n\<close>.\<close>
 
 lemma matvec_orth_inv:
   fixes R :: "real^'n::finite^'n" and q :: "real^'n"
@@ -2622,7 +2598,7 @@ lemma norm_orthogonal_matrix_vector:
 proof -
   have o1: "transpose R ** R = mat 1" using orth unfolding orthogonal_matrix_def by blast
   have "(R *v v) \<bullet> (R *v v) = (transpose R *v (R *v v)) \<bullet> v"
-    by (rule inner_matrix_transpose)
+    by (rule inner_transpose_matrix)
   also have "transpose R *v (R *v v) = (transpose R ** R) *v v"
     by (metis matrix_vector_mul_assoc)
   also have "\<dots> = v" unfolding o1 by (rule matrix_vector_mul_lid)

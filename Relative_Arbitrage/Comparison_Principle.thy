@@ -368,18 +368,8 @@ lemma trace_transpose_eq:
   shows "trace (transpose N) = trace N"
   by (simp add: trace_def transpose_def)
 
-lemma trace_mul_comm:
-  fixes A B :: "real^'n::finite^'n"
-  shows "trace (A ** B) = trace (B ** A)"
-proof -
-  have "trace (A ** B) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. A$i$j * B$j$i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A$i$j * B$j$i)" by (rule sum.swap)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. B$j$i * A$i$j)" by (simp add: mult.commute)
-  also have "\<dots> = trace (B ** A)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  finally show ?thesis .
-qed
+text \<open>\<open>trace_mul_comm\<close> is \<open>trace_matrix_commute\<close> from
+  @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
 
 lemma trace_mult_sym_right:
   fixes M a :: "real^'n::finite^'n"
@@ -387,7 +377,7 @@ lemma trace_mult_sym_right:
   shows "trace (M ** a) = trace (transpose M ** a)"
 proof -
   have e1: "trace (transpose M ** a) = trace (a ** transpose M)"
-    by (rule trace_mul_comm)
+    by (rule trace_matrix_commute)
   have e2: "a ** transpose M = transpose (M ** a)"
     by (simp add: matrix_transpose_mul sa)
   have e3: "trace (transpose (M ** a)) = trace (M ** a)"
@@ -400,10 +390,8 @@ lemma trace_add_eq:
   shows "trace (A + B) = trace A + trace B"
   by (simp add: trace_def sum.distrib)
 
-lemma matrix_mult_scaleR_left:
-  fixes A B :: "real^'n::finite^'n"
-  shows "(c *\<^sub>R A) ** B = c *\<^sub>R (A ** B)"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff sum_distrib_left algebra_simps)
+text \<open>\<open>matrix_mult_scaleR_left\<close> is \<open>scaleR_matrix_mult\<close> from
+  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
 lemma matrix_mult_add_left:
   fixes A B C :: "real^'n::finite^'n"
@@ -434,7 +422,7 @@ proof -
     have sa: "transpose a = a"
       using aF unfolding feasible_def psd_def by blast
     have "trace (sym_part M ** a) = (1/2) * trace ((M + transpose M) ** a)"
-      unfolding sym_part_def by (simp add: matrix_mult_scaleR_left trace_scaleR)
+      unfolding sym_part_def by (simp add: scaleR_matrix_mult trace_scaleR)
     also have "\<dots> = (1/2) * (trace (M ** a) + trace (transpose M ** a))"
       by (simp add: matrix_mult_add_left trace_add_eq)
     also have "\<dots> = trace (M ** a)"
@@ -1030,42 +1018,8 @@ proof -
   show ?thesis unfolding feasible_def using iff by auto
 qed
 
-text \<open>Scaling a conditionally-complete infimum by a positive constant.\<close>
-
-lemma cInf_mult_pos:
-  fixes S :: "real set"
-  assumes t: "0 < \<theta>" and ne: "S \<noteq> {}" and bdd: "bdd_below S"
-  shows "Inf ((\<lambda>x. \<theta> * x) ` S) = \<theta> * Inf S"
-proof -
-  obtain B where B: "\<And>x. x \<in> S \<Longrightarrow> B \<le> x"
-    using bdd by (auto simp: bdd_below_def)
-  have bddI: "bdd_below ((\<lambda>x. \<theta> * x) ` S)"
-  proof (rule bdd_belowI[of _ "\<theta> * B"])
-    fix y assume "y \<in> (\<lambda>x. \<theta> * x) ` S"
-    then obtain x where x: "x \<in> S" and y: "y = \<theta> * x" by blast
-    show "\<theta> * B \<le> y" unfolding y using B[OF x] t by (intro mult_left_mono) auto
-  qed
-  have ge: "\<theta> * Inf S \<le> Inf ((\<lambda>x. \<theta> * x) ` S)"
-  proof (rule cInf_greatest)
-    show "(\<lambda>x. \<theta> * x) ` S \<noteq> {}" using ne by simp
-    fix y assume "y \<in> (\<lambda>x. \<theta> * x) ` S"
-    then obtain x where x: "x \<in> S" and y: "y = \<theta> * x" by blast
-    have "Inf S \<le> x" by (rule cInf_lower[OF x bdd])
-    thus "\<theta> * Inf S \<le> y" unfolding y using t by (intro mult_left_mono) auto
-  qed
-  have le: "Inf ((\<lambda>x. \<theta> * x) ` S) \<le> \<theta> * Inf S"
-  proof -
-    have "Inf ((\<lambda>x. \<theta> * x) ` S) / \<theta> \<le> Inf S"
-    proof (rule cInf_greatest[OF ne])
-      fix x assume x: "x \<in> S"
-      have "Inf ((\<lambda>x. \<theta> * x) ` S) \<le> \<theta> * x"
-        by (rule cInf_lower[OF _ bddI]) (use x in blast)
-      thus "Inf ((\<lambda>x. \<theta> * x) ` S) / \<theta> \<le> x" using t by (simp add: field_simps)
-    qed
-    thus ?thesis using t by (simp add: field_simps)
-  qed
-  show ?thesis using ge le by simp
-qed
+text \<open>Scaling a conditionally-complete infimum by a positive constant:
+  \<open>cInf_mult_pos\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
 
 text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument: with
   \<open>feasible_scaleR_p\<close>, this is the strict-perturbation mechanism, scaling
@@ -1081,7 +1035,7 @@ proof -
     for a :: "real^'n^'n"
   proof -
     have "(\<theta> *\<^sub>R M) ** a = \<theta> *\<^sub>R (M ** a)"
-      by (rule scaleR_matrix_matrix_left)
+      by (rule scaleR_matrix_mult)
     thus ?thesis by (simp add: trace_scaleR_matrix)
   qed
   have img: "(\<lambda>a. - trace ((\<theta> *\<^sub>R M) ** a) / 2) ` feasible k L p
@@ -1108,11 +1062,6 @@ subsection \<open>Scaling a subsolution\<close>
 
 text \<open>A test function scales, so a subsolution scaled by \<open>\<theta> \<in> (0,1)\<close>
   satisfies the strict operator inequality at each of its test points.\<close>
-
-lemma transpose_scaleR:
-  fixes A :: "real^'n::finite^'n"
-  shows "transpose (c *\<^sub>R A) = c *\<^sub>R transpose A"
-  by (simp add: transpose_def vec_eq_iff)
 
 lemma test_fun_at_scaleR:
   fixes H :: "real^'n::finite^'n"
@@ -3403,8 +3352,7 @@ text \<open>The chain consumes \<open>h \<bullet> (Z *v h)\<close> as a matrix,
   \<open>psd\<close> chain but not by the quadratic case where \<open>Z = \<alpha> I\<close> is symmetric
   for free, is an entrywise computation.\<close>
 
-definition outer_prod :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
-  "outer_prod d e = (\<chi> i. \<chi> j. d $ i * e $ j)"
+text \<open>\<open>outer_prod\<close> lives in @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
 definition soft_hess :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n^'n" where
   "soft_hess \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R mat 1
@@ -5824,18 +5772,15 @@ text \<open>The slice jets carry their Hessians as functions
   is stated for \<open>Vector_Spaces.linear\<close>, so real-vector-space \<open>linear\<close>
   must be routed through \<open>linear_matrix_vector_mul_eq\<close> first.\<close>
 
-lemma matrix_apply_eq:
-  fixes X :: "real^'n::finite \<Rightarrow> real^'n"
-  assumes lin: "linear X"
-  shows "matrix X *v h = X h"
-  using lin by (simp add: matrix_works linear_matrix_vector_mul_eq)
+text \<open>\<open>matrix_apply_eq\<close> is \<open>matrix_vec_apply\<close> from
+  @{theory Alexandrov_Sup_Convolution.Sup_Convolution}.\<close>
 
 lemma block_fst_matrix_apply:
   fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
   assumes blW: "bounded_linear W"
   shows "matrix (\<lambda>v. fst (W (v, 0)) + \<alpha> *\<^sub>R v) *v h
        = fst (W (h, 0)) + \<alpha> *\<^sub>R h"
-  by (rule matrix_apply_eq[OF linear_block_fst[OF blW]])
+  by (rule matrix_vec_apply[OF linear_block_fst[OF blW]])
 
 lemma block_snd_matrix_apply:
   fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
@@ -5849,7 +5794,7 @@ proof -
       = - (matrix (\<lambda>v. - (snd (W (0, v)) + \<alpha> *\<^sub>R v)) *v h)"
     by (rule matrix_vector_neg_left)
   also have "\<dots> = - (- (snd (W (0, h)) + \<alpha> *\<^sub>R h))"
-    using matrix_apply_eq[OF l] by simp
+    using matrix_vec_apply[OF l] by simp
   finally show ?thesis by simp
 qed
 
@@ -9518,15 +9463,8 @@ text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the
   is preserved since \<open>\<delta>I\<close> is symmetric, and the norm bound degrades by
   \<open>\<bar>2\<delta>\<bar>\<parallel>I\<parallel>\<close>, a constant vanishing with \<open>\<delta>\<^sub>i\<close>.\<close>
 
-lemma transpose_scaleR_matrix:
-  fixes N :: "real^'n::finite^'n"
-  shows "transpose (c *\<^sub>R N) = c *\<^sub>R transpose N"
-  by (simp add: vec_eq_iff transpose_def)
-
-lemma transpose_add_matrix:
-  fixes M N :: "real^'n::finite^'n"
-  shows "transpose (M + N) = transpose M + transpose N"
-  by (simp add: vec_eq_iff transpose_def)
+text \<open>\<open>transpose_scaleR\<close> and \<open>transpose_add\<close> live in
+  @{theory Relative_Arbitrage.Constraint_Set_Convexity}.\<close>
 
 lemma transpose_shifted_block:
   fixes M :: "real^'n::finite^'n"
@@ -9535,10 +9473,10 @@ lemma transpose_shifted_block:
 proof -
   have "transpose (M + c *\<^sub>R mat 1)
       = transpose M + transpose (c *\<^sub>R (mat 1 :: real^'n^'n))"
-    by (rule transpose_add_matrix)
+    by (rule transpose_add)
   also have "transpose (c *\<^sub>R (mat 1 :: real^'n^'n))
       = c *\<^sub>R transpose (mat 1 :: real^'n^'n)"
-    by (rule transpose_scaleR_matrix)
+    by (rule transpose_scaleR)
   also have "transpose (mat 1 :: real^'n^'n) = mat 1"
     by (rule transpose_mat)
   finally show ?thesis using s by simp
@@ -10916,7 +10854,7 @@ lemma block_fst_matrix_apply_gen:
   assumes blW: "bounded_linear W"
   shows "matrix (\<lambda>v. fst (W (v, 0)) + Z *v v) *v h
        = fst (W (h, 0)) + Z *v h"
-  by (rule matrix_apply_eq[OF linear_block_fst_gen[OF blW]])
+  by (rule matrix_vec_apply[OF linear_block_fst_gen[OF blW]])
 
 lemma block_snd_matrix_apply_gen:
   fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
@@ -10931,7 +10869,7 @@ proof -
       = - (matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v)) *v h)"
     by (rule matrix_vector_neg_left)
   also have "\<dots> = - (- (snd (W (0, h)) + Z *v h))"
-    using matrix_apply_eq[OF l] by simp
+    using matrix_vec_apply[OF l] by simp
   finally show ?thesis by simp
 qed
 
@@ -12880,22 +12818,18 @@ qed
 
 subsection \<open>Test functions compose with invertible affine maps\<close>
 
-lemma matvec_add_right':
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (x + y) = A *v x + A *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum.distrib)
+text \<open>\<open>matvec_add_right'\<close> is \<open>matvec_add_right\<close> from
+  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
-lemma matvec_scaleR_right':
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (r *\<^sub>R x) = r *\<^sub>R (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
+text \<open>\<open>matvec_scaleR_right'\<close> is \<open>matvec_scaleR_right\<close> from
+  @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
 
 lemma affine_linear:
   fixes R :: "real^'n::finite^'n"
   shows "bounded_linear (\<lambda>z :: real^'n. c *\<^sub>R (R *v z))"
 proof -
   have "linear (\<lambda>z :: real^'n. c *\<^sub>R (R *v z))"
-    by (simp add: linear_iff matvec_add_right' matvec_scaleR_right'
+    by (simp add: linear_iff matvec_add_right matvec_scaleR_right
         scaleR_right_distrib)
   then show ?thesis by (simp add: linear_conv_bounded_linear)
 qed
@@ -12976,7 +12910,7 @@ proof -
         have "g (A y) \<bullet> (c *\<^sub>R (R *v h)) = c * (g (A y) \<bullet> (R *v h))"
           by (rule inner_scaleR_right)
         also have "g (A y) \<bullet> (R *v h) = (transpose R *v g (A y)) \<bullet> h"
-          by (rule inner_matrix_transpose)
+          by (rule inner_transpose_matrix)
         also have "c * ((transpose R *v g (A y)) \<bullet> h)
             = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h"
           by (rule inner_scaleR_left[symmetric])
@@ -13010,10 +12944,10 @@ proof -
         = ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h" for h :: "real^'n"
     proof -
       have e1: "H *v (c *\<^sub>R (R *v h)) = c *\<^sub>R (H *v (R *v h))"
-        by (rule matvec_scaleR_right')
+        by (rule matvec_scaleR_right)
       have e2: "transpose R *v (c *\<^sub>R (H *v (R *v h)))
           = c *\<^sub>R (transpose R *v (H *v (R *v h)))"
-        by (rule matvec_scaleR_right')
+        by (rule matvec_scaleR_right)
       have e3: "transpose R *v (H *v (R *v h)) = (transpose R ** H ** R) *v h"
         by (metis matrix_vector_mul_assoc)
       have e4: "((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h
@@ -13135,7 +13069,7 @@ proof -
       have "g (A y) \<bullet> (c *\<^sub>R (R *v h)) = c * (g (A y) \<bullet> (R *v h))"
         by (rule inner_scaleR_right)
       also have "g (A y) \<bullet> (R *v h) = (transpose R *v g (A y)) \<bullet> h"
-        by (rule inner_matrix_transpose)
+        by (rule inner_transpose_matrix)
       also have "c * ((transpose R *v g (A y)) \<bullet> h)
           = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h"
         by (rule inner_scaleR_left[symmetric])
@@ -13164,9 +13098,9 @@ proof -
       fix h :: "real^'n"
       have "c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))
           = c *\<^sub>R (transpose R *v (c *\<^sub>R (G (A y) *v (R *v h))))"
-        by (simp add: matvec_scaleR_right')
+        by (simp add: matvec_scaleR_right)
       also have "\<dots> = (c * c) *\<^sub>R (transpose R *v (G (A y) *v (R *v h)))"
-        by (simp add: matvec_scaleR_right')
+        by (simp add: matvec_scaleR_right)
       also have "\<dots> = (c * c) *\<^sub>R ((transpose R ** G (A y) ** R) *v h)"
         by (simp add: matrix_vector_mul_assoc matrix_mul_assoc)
       also have "\<dots> = ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h"
@@ -13214,7 +13148,7 @@ proof (intro ballI allI impI)
   proof -
     have "T z - b = c *\<^sub>R (R *v z)" unfolding T_def by simp
     then have "transpose R *v (T z - b) = c *\<^sub>R (transpose R *v (R *v z))"
-      by (simp add: matvec_scaleR_right')
+      by (simp add: matvec_scaleR_right)
     also have "transpose R *v (R *v z) = z"
       using orth unfolding orthogonal_matrix_def
       by (metis matrix_vector_mul_assoc matrix_vector_mul_lid)

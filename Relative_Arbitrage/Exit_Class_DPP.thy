@@ -1200,10 +1200,7 @@ proof -
   qed
 qed
 
-lemma measurable_fst_borel:
-  "(fst :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-  using measurable_fst[of "borel :: (real^'n) measure"
-      "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+text \<open>\<open>pair_fst_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness}.\<close>
 
 theorem martingale_future_of_past:
   fixes P :: "('n::finite pairpath) measure"
@@ -1398,7 +1395,7 @@ proof -
   have Zm: "(\<lambda>w :: 'n pairpath. fst (w (min u ?S)))
       \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
     if u: "0 \<le> u" for u
-  proof (rule measurable_compose[OF _ measurable_fst_borel])
+  proof (rule measurable_compose[OF _ pair_fst_borel])
     show "(\<lambda>w :: 'n pairpath. w (min u ?S))
         \<in> natural_filtration ?Q 0 (\<lambda>v w. w v) u \<rightarrow>\<^sub>M borel"
       unfolding natural_filtration_def
@@ -1646,10 +1643,7 @@ qed
 
 subsection \<open>The shifted processes of a class member\<close>
 
-lemma measurable_snd_borel:
-  "(snd :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
-  using measurable_snd[of "borel :: (real^'n) measure"
-      "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
+text \<open>\<open>pair_snd_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness}.\<close>
 
 lemma exit_class_comp_martingale:
   fixes Q :: "('n::finite pairpath) measure"
@@ -1820,9 +1814,9 @@ proof -
   proof -
     have m1: "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> r))) \<in> borel_measurable (?FP 0)"
       by (rule measurable_compose
-          [OF measurable_compose[OF evr measurable_fst_borel] outerp_borel])
+          [OF measurable_compose[OF evr pair_fst_borel] outerp_borel])
     have m2: "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> r)) \<in> borel_measurable (?FP 0)"
-      by (rule measurable_compose[OF evr measurable_snd_borel])
+      by (rule measurable_compose[OF evr pair_snd_borel])
     show ?thesis by (rule borel_measurable_add[OF m1 m2])
   qed
   have CmeasP: "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> r)) + snd (\<omega> r))
@@ -1928,10 +1922,10 @@ proof -
     have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u ?S))))
         \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
       by (rule measurable_compose
-          [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
+          [OF measurable_compose[OF ev pair_fst_borel] outerp_borel])
     have m2: "(\<lambda>w :: 'n pairpath. snd (w (min u ?S)))
         \<in> borel_measurable (natural_filtration ?Q 0 (\<lambda>v w. w v) u)"
-      by (rule measurable_compose[OF ev measurable_snd_borel])
+      by (rule measurable_compose[OF ev pair_snd_borel])
     show ?thesis by (rule borel_measurable_diff[OF m1 m2])
   qed
 
@@ -3531,7 +3525,7 @@ proof -
   have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?Y" for u
     by (rule pair_law_eval_measurable[OF refl])
   have hvec: "(\<lambda>w :: 'n pairpath. fst (w j) - fst (w i)) \<in> borel_measurable ?Y"
-    by (intro borel_measurable_diff measurable_compose[OF ev measurable_fst_borel])
+    by (intro borel_measurable_diff measurable_compose[OF ev pair_fst_borel])
   have hm: "?h \<in> borel_measurable ?Y"
   proof -
     have "(\<lambda>w :: 'n pairpath. (fst (w j) - fst (w i)) \<bullet> (axis c 1 :: real^'n))
@@ -3706,7 +3700,7 @@ proof -
     by (rule pair_law_eval_measurable[OF refl])
   have gm: "?g \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?Y)"
     by (rule measurable_compose[OF measurable_snd
-        measurable_compose[OF ev measurable_fst_borel]])
+        measurable_compose[OF ev pair_fst_borel]])
   have gP: "(\<lambda>\<omega> :: 'n pairpath. ?g (?\<phi> \<omega>)) = (\<lambda>\<omega>. fst (\<omega> (r + u)) - fst (\<omega> r))"
     by (rule ext) (simp add: pfut_fst[OF u])
   have Xint: "integrable P (\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (r + v)))"
@@ -4316,7 +4310,7 @@ proof -
     unfolding natural_filtration_def
     by (rule measurable_family_vimage_algebra) (use S u in auto)
   have f1: "(\<lambda>w :: 'n pairpath. fst (w (min u S))) \<in> borel_measurable ?F"
-    by (rule measurable_compose[OF ev measurable_fst_borel])
+    by (rule measurable_compose[OF ev pair_fst_borel])
   have "(\<lambda>w :: 'n pairpath. fst (w (min u S)) \<bullet> (axis c 1 :: real^'n))
       \<in> borel_measurable ?F"
     by (intro borel_measurable_inner f1 borel_measurable_const)
@@ -4680,9 +4674,9 @@ proof -
   proof -
     have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w u))) \<in> borel_measurable ?Y"
       by (rule measurable_compose
-          [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
+          [OF measurable_compose[OF ev pair_fst_borel] outerp_borel])
     have m2: "(\<lambda>w :: 'n pairpath. snd (w u)) \<in> borel_measurable ?Y"
-      by (rule measurable_compose[OF ev measurable_snd_borel])
+      by (rule measurable_compose[OF ev pair_snd_borel])
     show ?thesis by (rule borel_measurable_diff[OF m1 m2])
   qed
   have entm: "(\<lambda>M :: real^'n^'n. M $ c $ d) \<in> borel_measurable borel"
@@ -4839,9 +4833,9 @@ proof -
   proof -
     have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w u))) \<in> borel_measurable ?Y"
       by (rule measurable_compose
-          [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
+          [OF measurable_compose[OF ev pair_fst_borel] outerp_borel])
     have m2: "(\<lambda>w :: 'n pairpath. snd (w u)) \<in> borel_measurable ?Y"
-      by (rule measurable_compose[OF ev measurable_snd_borel])
+      by (rule measurable_compose[OF ev pair_snd_borel])
     show ?thesis by (rule borel_measurable_diff[OF m1 m2])
   qed
   have gm: "?g \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?Y)"
@@ -4880,9 +4874,9 @@ proof -
   have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u S))))
       \<in> borel_measurable ?F"
     by (rule measurable_compose
-        [OF measurable_compose[OF ev measurable_fst_borel] outerp_borel])
+        [OF measurable_compose[OF ev pair_fst_borel] outerp_borel])
   have m2: "(\<lambda>w :: 'n pairpath. snd (w (min u S))) \<in> borel_measurable ?F"
-    by (rule measurable_compose[OF ev measurable_snd_borel])
+    by (rule measurable_compose[OF ev pair_snd_borel])
   have mm: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u S))) - snd (w (min u S)))
       \<in> borel_measurable ?F"
     by (rule borel_measurable_diff[OF m1 m2])
@@ -5394,7 +5388,7 @@ proof -
     by (rule pexit_path_measurable[OF r Kc refl])
   have em: "(\<lambda>p' :: 'n pairpath. fst (p' r)) \<in> borel_measurable ?X"
     by (rule measurable_compose
-        [OF pair_law_eval_measurable[OF refl] measurable_fst_borel])
+        [OF pair_law_eval_measurable[OF refl] pair_fst_borel])
   have s1: "{p' \<in> space ?X. pexit r K (\<lambda>t. fst (p' t)) = r} \<in> sets ?X"
     using pm by measurable
   have s2: "{p' \<in> space ?X. fst (p' r) \<in> K} \<in> sets ?X"
@@ -6256,7 +6250,7 @@ proof -
   define \<kappa>' where "\<kappa>' = (\<lambda>p'. if p' \<in> A then S (fst (p' r)) else \<kappa>0 p')"
   have evm: "(\<lambda>p' :: 'n pairpath. fst (p' r)) \<in> ?Q \<rightarrow>\<^sub>M borel"
     by (rule measurable_compose
-        [OF pair_law_eval_measurable[OF setsQ] measurable_fst_borel])
+        [OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
   have Smq: "(\<lambda>p' :: 'n pairpath. S (fst (p' r))) \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     by (rule measurable_compose[OF evm Sp])
   have K0q: "\<kappa>0 \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
@@ -10971,7 +10965,7 @@ proof -
           \<in> borel_measurable ?B"
         by (intro borel_measurable_inner borel_measurable_const
             measurable_compose[OF pair_law_eval_measurable[OF refl]
-              measurable_fst_borel])
+              pair_fst_borel])
       then show ?thesis by (simp add: inner_axis)
     qed
     have icm: "(\<lambda>w :: 'n pairpath. indicator B (pcut i (padd T p' w)) :: real)
@@ -11326,7 +11320,7 @@ proof -
     have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T)) \<bullet> (axis c 1 :: real^'n))
         \<in> borel_measurable ?B"
       by (intro borel_measurable_inner borel_measurable_const
-          measurable_compose[OF ev measurable_fst_borel])
+          measurable_compose[OF ev pair_fst_borel])
     then show ?thesis by (simp add: inner_axis)
   qed
   have AR: "A \<in> sets ?R"
@@ -11464,7 +11458,7 @@ proof -
           [OF sets_eq_imp_space_eq[OF setsR]])
     have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> borel_measurable (?G u)"
       unfolding Rb by (rule path_eval_measurable_natural_filtration'[OF m])
-    then show ?thesis by (rule measurable_compose) (rule measurable_fst_borel)
+    then show ?thesis by (rule measurable_compose) (rule pair_fst_borel)
   qed
   show ?thesis
   proof (rule SF.martingale_of_set_integral_eq)
@@ -11641,7 +11635,7 @@ proof -
       have "(\<lambda>w :: 'n pairpath. fst (w s) \<bullet> (axis e 1 :: real^'n))
           \<in> borel_measurable ?B"
         by (intro borel_measurable_inner borel_measurable_const
-            measurable_compose[OF evB measurable_fst_borel])
+            measurable_compose[OF evB pair_fst_borel])
       then show ?thesis by (simp add: inner_axis)
     qed
     have semB: "(\<lambda>w :: 'n pairpath. snd (w s) $ e $ f) \<in> borel_measurable ?B"
@@ -11650,7 +11644,7 @@ proof -
       have "(\<lambda>w :: 'n pairpath. snd (w s) \<bullet> (axis e (axis f 1) :: real^'n^'n))
           \<in> borel_measurable ?B"
         by (intro borel_measurable_inner borel_measurable_const
-            measurable_compose[OF evB measurable_snd_borel])
+            measurable_compose[OF evB pair_snd_borel])
       then show ?thesis by (simp add: inner_axis)
     qed
     have ZmB: "?Z v \<in> borel_measurable ?B" for v
@@ -12156,7 +12150,7 @@ proof -
     have "(\<lambda>w :: 'n pairpath. fst (w s) \<bullet> (axis e 1 :: real^'n))
         \<in> borel_measurable ?B"
       by (intro borel_measurable_inner borel_measurable_const
-          measurable_compose[OF ev measurable_fst_borel])
+          measurable_compose[OF ev pair_fst_borel])
     then show ?thesis by (simp add: inner_axis)
   qed
   have sem: "(\<lambda>w :: 'n pairpath. snd (w s) $ e $ f) \<in> borel_measurable ?B"
@@ -12165,7 +12159,7 @@ proof -
     have "(\<lambda>w :: 'n pairpath. snd (w s) \<bullet> (axis e (axis f 1) :: real^'n^'n))
         \<in> borel_measurable ?B"
       by (intro borel_measurable_inner borel_measurable_const
-          measurable_compose[OF ev measurable_snd_borel])
+          measurable_compose[OF ev pair_snd_borel])
     then show ?thesis by (simp add: inner_axis)
   qed
   have Zm: "?Z u \<in> borel_measurable ?B" for u
@@ -12316,10 +12310,10 @@ proof -
     have "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u T))))
         \<in> borel_measurable (?G u)"
       by (rule measurable_compose[OF evu measurable_compose
-            [OF measurable_fst_borel outerp_borel]])
+            [OF pair_fst_borel outerp_borel]])
     moreover have "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> (min u T)))
         \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF evu measurable_snd_borel])
+      by (rule measurable_compose[OF evu pair_snd_borel])
     ultimately show ?thesis by simp
   qed
   show ?thesis
@@ -14552,16 +14546,9 @@ proof -
   qed
 qed
 
-lemma martingale_cong_ge:
-  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes mg: "martingale M F (0::real) X"
-    and eq: "\<And>u :: real. 0 \<le> u \<Longrightarrow> Y u = X u"
-  shows "martingale M F 0 Y"
-proof -
-  have "martingale M (\<lambda>u. F ((\<lambda>u :: real. u) u)) 0 Y"
-    by (rule martingale_time_change_cong[OF mg]) (use eq in auto)
-  then show ?thesis by simp
-qed
+text \<open>\<open>martingale_cong_ge\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness},
+  general at any \<open>t\<^sub>0\<close> and with the equation oriented \<open>X u = Y u\<close> rather than
+  \<open>Y u = X u\<close>.\<close>
 
 subsection \<open>\<open>QH\<close> and \<open>QHC\<close> for the stopped past law\<close>
 
@@ -14645,11 +14632,11 @@ proof -
   have mgp: "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
   proof (rule martingale_cong_ge[OF mgs])
     fix u :: real assume u: "0 \<le> u"
-    show "(\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))
-        = (\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)"
+    show "(\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)
+        = (\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))"
     proof (rule ext)
       fix \<omega> :: "'n pairpath"
-      show "?Z u (pstopped T \<theta> \<omega>) = ?Z (min u (\<theta> \<omega>)) \<omega>"
+      show "?Z (min u (\<theta> \<omega>)) \<omega> = ?Z u (pstopped T \<theta> \<omega>)"
         using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
     qed
   qed
@@ -14786,11 +14773,11 @@ proof -
   have mgp: "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
   proof (rule martingale_cong_ge[OF mgs])
     fix u :: real assume u: "0 \<le> u"
-    show "(\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))
-        = (\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)"
+    show "(\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)
+        = (\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))"
     proof (rule ext)
       fix \<omega> :: "'n pairpath"
-      show "?Z u (pstopped T \<theta> \<omega>) = ?Z (min u (\<theta> \<omega>)) \<omega>"
+      show "?Z (min u (\<theta> \<omega>)) \<omega> = ?Z u (pstopped T \<theta> \<omega>)"
         using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
     qed
   qed

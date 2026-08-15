@@ -20,51 +20,8 @@ text \<open>
   index shift comes from the full separation inequality.\<close>
 section \<open>Elementary matrix algebra, continued\<close>
 
-text \<open>The right-distributivity of \<open>**\<close> over subtraction and the additivity
-  of \<open>trace\<close> over subtraction; neither is in this HOL-Analysis, and both are
-  proved exactly like \<open>matrix_vector_mult_diff\<close> in @{theory Relative_Arbitrage.Operator_Continuity}.\<close>
-
-lemma matrix_matrix_mult_diff_right:
-  fixes A B C :: "real^'n::finite^'n"
-  shows "A ** (B - C) = A ** B - A ** C"
-proof -
-  have "(A ** (B - C)) $ i $ j = (A ** B - A ** C) $ i $ j" for i j
-  proof -
-    have "(A ** (B - C)) $ i $ j = (\<Sum>k\<in>UNIV. A $ i $ k * (B $ k $ j - C $ k $ j))"
-      by (simp add: matrix_matrix_mult_def)
-    also have "\<dots> = (\<Sum>k\<in>UNIV. A $ i $ k * B $ k $ j - A $ i $ k * C $ k $ j)"
-      by (intro sum.cong refl) (simp add: right_diff_distrib)
-    also have "\<dots> = (\<Sum>k\<in>UNIV. A $ i $ k * B $ k $ j)
-                  - (\<Sum>k\<in>UNIV. A $ i $ k * C $ k $ j)"
-      by (rule sum_subtractf)
-    also have "\<dots> = (A ** B - A ** C) $ i $ j"
-      by (simp add: matrix_matrix_mult_def)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
-
-lemma matrix_matrix_mult_diff_left:
-  fixes A B C :: "real^'n::finite^'n"
-  shows "(A - B) ** C = A ** C - B ** C"
-proof -
-  have "((A - B) ** C) $ i $ j = (A ** C - B ** C) $ i $ j" for i j
-  proof -
-    have "((A - B) ** C) $ i $ j = (\<Sum>k\<in>UNIV. (A $ i $ k - B $ i $ k) * C $ k $ j)"
-      by (simp add: matrix_matrix_mult_def)
-    also have "\<dots> = (\<Sum>k\<in>UNIV. A $ i $ k * C $ k $ j - B $ i $ k * C $ k $ j)"
-      by (intro sum.cong refl) (simp add: left_diff_distrib)
-    also have "\<dots> = (\<Sum>k\<in>UNIV. A $ i $ k * C $ k $ j)
-                  - (\<Sum>k\<in>UNIV. B $ i $ k * C $ k $ j)"
-      by (rule sum_subtractf)
-    also have "\<dots> = (A ** C - B ** C) $ i $ j"
-      by (simp add: matrix_matrix_mult_def)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
+text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
+  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
 lemma trace_diff_matrix:
   fixes A B :: "real^'n::finite^'n"
@@ -135,10 +92,10 @@ proof -
     have "(mat 1 - outer_prod x x) ** (mat 1 - outer_prod x x)
         = (mat 1 - outer_prod x x) ** mat 1
           - (mat 1 - outer_prod x x) ** outer_prod x x"
-      by (rule matrix_matrix_mult_diff_right)
+      by (rule matrix_mul_diff_right)
     also have "\<dots> = (mat 1 - outer_prod x x)
                   - (mat 1 ** outer_prod x x - outer_prod x x ** outer_prod x x)"
-      by (simp add: matrix_matrix_mult_diff_left)
+      by (simp add: matrix_mul_diff_left)
     also have "\<dots> = (mat 1 - outer_prod x x :: real^'n^'n)"
       by (simp add: sq)
     finally show "(mat 1 - outer_prod x x :: real^'n^'n)
@@ -207,7 +164,7 @@ proof -
   proof -
     have "trace (a ** (mat 1 - outer_prod x x))
         = trace (a ** mat 1) - trace (a ** outer_prod x x)"
-      by (simp add: matrix_matrix_mult_diff_right trace_diff_matrix)
+      by (simp add: matrix_mul_diff_right trace_diff_matrix)
     also have "\<dots> = trace a - x \<bullet> (a *v x)"
       by (simp add: trace_mult_rank1)
     finally show ?thesis .
@@ -467,20 +424,23 @@ text \<open>The trace of a matrix written in an orthonormal basis as a weighted 
 
 lemma trace_sum_matrix:
   fixes f :: "'a \<Rightarrow> real^'n::finite^'n"
-  assumes "finite S"
   shows "trace (\<Sum>u\<in>S. f u) = (\<Sum>u\<in>S. trace (f u))"
-  using assms by (induct S) (simp_all add: trace_def sum.distrib)
+proof -
+  have "trace (\<Sum>u\<in>S. f u) = (\<Sum>i\<in>UNIV. \<Sum>u\<in>S. f u $ i $ i)"
+    unfolding trace_def by simp
+  also have "\<dots> = (\<Sum>u\<in>S. \<Sum>i\<in>UNIV. f u $ i $ i)" by (rule sum.swap)
+  also have "\<dots> = (\<Sum>u\<in>S. trace (f u))" unfolding trace_def by (rule refl)
+  finally show ?thesis .
+qed
 
 lemma trace_weighted_outer_sum:
   fixes g :: "real^'n::finite \<Rightarrow> real"
   assumes B: "onormal B"
   shows "trace (\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) = (\<Sum>v\<in>B. g v)"
 proof -
-  have finB: "finite B"
-    by (rule onormal_finite[OF B])
   have "trace (\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v)
       = (\<Sum>v\<in>B. trace (g v *\<^sub>R outer_prod v v))"
-    by (rule trace_sum_matrix[OF finB])
+    by (rule trace_sum_matrix)
   also have "\<dots> = (\<Sum>v\<in>B. g v * (v \<bullet> v))"
     by (intro sum.cong refl) (simp add: trace_scaleR_matrix)
   also have "\<dots> = (\<Sum>v\<in>B. g v)"
@@ -2964,13 +2924,13 @@ lemma conj_diff_expand:
        = Q ** M ** Q - Q ** M ** D - D ** M ** Q + D ** M ** D"
 proof -
   have "(Q - D) ** M = Q ** M - D ** M"
-    by (rule matrix_matrix_mult_diff_left)
+    by (rule matrix_mul_diff_left)
   then have "(Q - D) ** M ** (Q - D) = (Q ** M - D ** M) ** (Q - D)"
     by simp
   also have "\<dots> = (Q ** M) ** (Q - D) - (D ** M) ** (Q - D)"
-    by (rule matrix_matrix_mult_diff_left)
+    by (rule matrix_mul_diff_left)
   also have "\<dots> = (Q ** M ** Q - Q ** M ** D) - (D ** M ** Q - D ** M ** D)"
-    by (simp add: matrix_matrix_mult_diff_right)
+    by (simp add: matrix_mul_diff_right)
   also have "\<dots> = Q ** M ** Q - Q ** M ** D - D ** M ** Q + D ** M ** D"
     by simp
   finally show ?thesis .

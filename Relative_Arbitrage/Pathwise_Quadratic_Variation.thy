@@ -183,13 +183,8 @@ text \<open>Each compensated increment has second moment at most \<open>18 C\<^s
   fourth moment contributes \<open>8 C\<^sup>2 (dt)\<^sup>2\<close> by Eq. (2.7) and the compensator
   increment \<open>C\<^sup>2 (dt)\<^sup>2\<close> by the Lipschitz rate, through \<open>(a - b)\<^sup>2 \<le> 2a\<^sup>2 + 2b\<^sup>2\<close>.\<close>
 
-lemma sq_diff_le_two:
-  fixes a b :: real
-  shows "(a - b)\<^sup>2 \<le> 2 * a\<^sup>2 + 2 * b\<^sup>2"
-proof -
-  have "0 \<le> (a + b)\<^sup>2" by simp
-  then show ?thesis by (simp add: power2_eq_square algebra_simps)
-qed
+text \<open>\<open>sq_diff_le_two\<close> is \<open>sq_diff_le\<close> from
+  @{theory Martingale_Sampling.Quadratic_Variation}.\<close>
 
 text \<open>The same, with the first square already folded into a fourth power ---
   the form the two integral bounds are stated in.\<close>
@@ -229,7 +224,7 @@ lemma sq_diff_le_fourth:
   fixes x a :: real
   shows "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * x^4 + 2 * a\<^sup>2"
 proof -
-  have "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * (x\<^sup>2)\<^sup>2 + 2 * a\<^sup>2" by (rule sq_diff_le_two)
+  have "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * (x\<^sup>2)\<^sup>2 + 2 * a\<^sup>2" by (rule sq_diff_le)
   moreover have "(x\<^sup>2)\<^sup>2 = x^4" by algebra
   ultimately show ?thesis by simp
 qed

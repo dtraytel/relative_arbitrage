@@ -2,6 +2,7 @@
 (*<*)
 theory Value_Function_Viscosity
   imports Exit_Class_DPP Curvature_Operator Operator_Envelopes
+    "Martingale_Sampling.Quadratic_Variation"
 begin
 
 (*>*)
@@ -565,15 +566,13 @@ text \<open>A direction annihilated by the averaged covariation is frozen: the
   statement, obtained from a mean-zero variance, that the supersolution
   argument needs and the subsolution argument does not.\<close>
 
-lemma trace_mult_commute:
-  fixes A B :: "real^'n::finite^'n"
-  shows "trace (A ** B) = trace (B ** A)"
-  unfolding trace_mult_sum by (subst sum.swap) (simp add: mult.commute)
+text \<open>\<open>trace_mult_commute\<close> is \<open>trace_matrix_commute\<close> from
+  @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
 
 lemma trace_outerp_mult:
   fixes B :: "real^'n::finite^'n" and v :: "real^'n"
   shows "trace (outerp v ** B) = v \<bullet> (B *v v)"
-  by (subst trace_mult_commute) (rule trace_mult_outerp)
+  by (subst trace_matrix_commute) (rule trace_mult_outerp)
 
 lemma quadform_outerp:
   fixes q z :: "real^'n::finite"
@@ -4772,8 +4771,8 @@ proof -
         [OF matvec_blin martingale_stopped_const[OF T martingale_cbmX]]])
     fix u :: real assume u: "0 \<le> u"
     have mI: "min u T \<in> {0..T}" using u T by simp
-    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. fst (sbmpair S T \<omega> (min u T)))
-        = (\<lambda>\<omega>. S *v cbmX (0 :: real^'n) (min u T) \<omega>)"
+    show "(\<lambda>\<omega>. S *v cbmX (0 :: real^'n) (min u T) \<omega>)
+        = (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. fst (sbmpair S T \<omega> (min u T)))"
       by (rule ext) (simp add: sbmpair_apply[OF mI])
   qed
   show ?thesis
@@ -4818,11 +4817,11 @@ proof -
           martingale_stopped_const[OF T martingale_cbm_outerp]]])
     fix u :: real assume u: "0 \<le> u"
     have mI: "min u T \<in> {0..T}" using u T by simp
-    show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
+    show "(\<lambda>\<omega>. S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
+                - (min u T) *\<^sub>R mat 1) ** transpose S)
+        = (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
           outerp (fst (sbmpair S T \<omega> (min u T)))
-            - snd (sbmpair S T \<omega> (min u T)))
-        = (\<lambda>\<omega>. S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
-                - (min u T) *\<^sub>R mat 1) ** transpose S)"
+            - snd (sbmpair S T \<omega> (min u T)))"
     proof (rule ext)
       fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
       have "S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
@@ -4834,10 +4833,10 @@ proof -
       also have "\<dots> = outerp (S *v cbmX (0 :: real^'n) (min u T) \<omega>)
           - (min u T) *\<^sub>R (S ** transpose S)"
         by (simp add: outerp_matvec_image sandwich_mat1)
-      finally show "outerp (fst (sbmpair S T \<omega> (min u T)))
-            - snd (sbmpair S T \<omega> (min u T))
-          = S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
-                - (min u T) *\<^sub>R mat 1) ** transpose S"
+      finally show "S ** (outerp (cbmX (0 :: real^'n) (min u T) \<omega>)
+                - (min u T) *\<^sub>R mat 1) ** transpose S
+          = outerp (fst (sbmpair S T \<omega> (min u T)))
+            - snd (sbmpair S T \<omega> (min u T))"
         by (simp add: sbmpair_apply[OF mI])
     qed
   qed
@@ -5725,15 +5724,8 @@ qed
 
 subsection \<open>The step increment: variance of order \<open>h\<^sup>2\<close>\<close>
 
-lemma diff_sq_le_double:
-  fixes a c :: real
-  shows "(a - c)\<^sup>2 \<le> 2 * a\<^sup>2 + 2 * c\<^sup>2"
-proof -
-  have "2 * a\<^sup>2 + 2 * c\<^sup>2 - (a - c)\<^sup>2 = (a + c)\<^sup>2"
-    by (simp add: power2_diff power2_sum algebra_simps)
-  moreover have "0 \<le> (a + c)\<^sup>2" by simp
-  ultimately show ?thesis by linarith
-qed
+text \<open>\<open>diff_sq_le_double\<close> is \<open>sq_diff_le\<close> from
+  @{theory Martingale_Sampling.Quadratic_Variation}.\<close>
 
 theorem sbm_xi_sq_bound:
   fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real
@@ -5905,7 +5897,7 @@ proof -
     qed
     have step1: "(?\<xi> (sbmpair S h \<omega>))\<^sup>2
         \<le> 2 * ((S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>)))\<^sup>2 + 2 * (h * b)\<^sup>2"
-      unfolding xieq by (rule diff_sq_le_double)
+      unfolding xieq by (rule sq_diff_le)
     have step2: "((S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>)))\<^sup>2
         \<le> (Cmm * Cs\<^sup>2)\<^sup>2 * (?R \<omega>)\<^sup>2"
     proof -
@@ -9856,19 +9848,9 @@ text \<open>The sphere-tangential projector field.  The companion input, that th
   feeds the same Euler machinery as Case 1 and is the positivity input for
   the second horn of the dichotomy, and for Example 3.1's lower bound.\<close>
 
-text \<open>Matrix difference distributes over the product, entrywise.\<close>
-
-lemma matrix_msub_rdistrib:
-  fixes A B C :: "real^'n::finite^'n"
-  shows "(A - B) ** C = A ** C - B ** C"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
-      left_diff_distrib)
-
-lemma matrix_msub_ldistrib:
-  fixes A B C :: "real^'n::finite^'n"
-  shows "A ** (B - C) = A ** B - A ** C"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
-      right_diff_distrib)
+text \<open>Matrix difference distributes over the product, entrywise:
+  \<open>matrix_msub_rdistrib\<close> is \<open>matrix_mul_diff_left\<close> and \<open>matrix_msub_ldistrib\<close>
+  is \<open>matrix_mul_diff_right\<close>, both from @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
 
 subsubsection \<open>The tangential projector\<close>
 
@@ -9995,11 +9977,11 @@ proof -
     using u1 by (metis norm_eq_1)
   have "tanp u ** tanp u
       = mat 1 ** tanp u - outerp u ** tanp u"
-    unfolding tanp_def by (rule matrix_msub_rdistrib)
+    unfolding tanp_def by (rule matrix_mul_diff_left)
   also have "mat 1 ** tanp u = tanp u" by (rule matrix_mul_lid)
   also have "outerp u ** tanp u
       = outerp u ** mat 1 - outerp u ** outerp u"
-    unfolding tanp_def by (rule matrix_msub_ldistrib)
+    unfolding tanp_def by (rule matrix_mul_diff_right)
   also have "\<dots> = outerp u - outerp u"
     by (simp add: outerp_sq uu)
   finally show ?thesis by (simp add: tanp_def)
@@ -12213,56 +12195,10 @@ text \<open>Definition 3.1(b) of the paper touches the lower semicontinuous
 
 subsection \<open>The lower semicontinuous envelope\<close>
 
-text \<open>\<open>lsc_env\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes}, together with \<open>usc_env\<close> and the
+text \<open>\<open>lsc_env\<close>, \<open>lsc_env_bdd_above\<close>, \<open>lsc_env_le_self\<close> and \<open>lsc_env_ge\<close> live in
+  @{theory Relative_Arbitrage.Operator_Envelopes}, together with \<open>usc_env\<close> and the
   attainment/extension lemmas; what follows are the \<open>exit_val\<close>-facing
-  consequences.  The three general lemmas below duplicate their
-  @{theory Relative_Arbitrage.Operator_Envelopes} twins so that the local proofs need no requalification.\<close>
-
-lemma lsc_env_bdd_above:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y"
-  shows "bdd_above ((\<lambda>e. INF y \<in> ball x e. u y) ` {0<..})"
-proof (rule bdd_aboveI[of _ "u x"])
-  fix z assume "z \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
-  then obtain e where e: "0 < e" and z: "z = (INF y \<in> ball x e. u y)"
-    by auto
-  have bdd: "bdd_below (u ` ball x e)"
-    by (rule bdd_belowI[of _ B]) (use B in auto)
-  have "u x \<in> u ` ball x e" using e by auto
-  then show "z \<le> u x" unfolding z by (rule cInf_lower[OF _ bdd])
-qed
-
-lemma lsc_env_le_self:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y"
-  shows "lsc_env u x \<le> u x"
-  unfolding lsc_env_def
-proof (rule cSup_least)
-  show "(\<lambda>e. INF y \<in> ball x e. u y) ` {0<..} \<noteq> {}" by auto
-next
-  fix z assume "z \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
-  then obtain e where e: "0 < e" and z: "z = (INF y \<in> ball x e. u y)"
-    by auto
-  have bdd: "bdd_below (u ` ball x e)"
-    by (rule bdd_belowI[of _ B]) (use B in auto)
-  have "u x \<in> u ` ball x e" using e by auto
-  then show "z \<le> u x" unfolding z by (rule cInf_lower[OF _ bdd])
-qed
-
-lemma lsc_env_ge:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y"
-  shows "B \<le> lsc_env u x"
-proof -
-  have bdd: "bdd_below (u ` ball x 1)"
-    by (rule bdd_belowI[of _ B]) (use B in auto)
-  have "B \<le> (INF y \<in> ball x 1. u y)"
-    by (rule cInf_greatest) (use B in auto)
-  also have "\<dots> \<le> lsc_env u x"
-    unfolding lsc_env_def
-    by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) auto
-  finally show ?thesis .
-qed
+  consequences.\<close>
 
 text \<open>The property the envelope exists for: arbitrarily near \<open>x\<close> there
   are points where \<open>u\<close> is arbitrarily close to \<open>u\<^sub>*(x)\<close> from above.  This
@@ -13222,81 +13158,11 @@ text \<open>Case 2 of the supersolution proof perturbs the test function and
   First, an infimum-attainment statement for a lower semicontinuous
   function.  The envelope version proved above attains the infimum of
   \<open>lsc_env u\<close> itself, but what Case 2 minimises is \<open>lsc_env u\<close> minus a
-  quadratic, so the argument is redone with lower semicontinuity as a
-  hypothesis rather than as a property of the envelope.\<close>
-
-lemma lsc_attains_inf_gen:
-  fixes f :: "real^'n::finite \<Rightarrow> real" and S :: "(real^'n) set"
-  assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
-    and B: "\<And>y. y \<in> S \<Longrightarrow> B \<le> f y"
-    and cS: "compact S" and neS: "S \<noteq> {}"
-  obtains z where "z \<in> S" and "\<And>y. y \<in> S \<Longrightarrow> f z \<le> f y"
-proof -
-  define m where "m = (INF y \<in> S. f y)"
-  have bdd: "bdd_below (f ` S)"
-    by (rule bdd_belowI[of _ B]) (use B in auto)
-  have neI: "f ` S \<noteq> {}" using neS by auto
-  have mlow: "\<And>y. y \<in> S \<Longrightarrow> m \<le> f y"
-    unfolding m_def by (rule cInf_lower[OF _ bdd]) auto
-  have pick: "\<exists>zz \<in> S. f zz < m + 1 / real (Suc j)" for j
-  proof -
-    have "m < m + 1 / real (Suc j)" by simp
-    then have "\<exists>t \<in> f ` S. t < m + 1 / real (Suc j)"
-      unfolding m_def using cInf_less_iff[OF neI bdd] by blast
-    then show ?thesis by auto
-  qed
-  have "\<forall>j. \<exists>zz. zz \<in> S \<and> f zz < m + 1 / real (Suc j)"
-    using pick by blast
-  then obtain zs where zsS: "\<And>j. zs j \<in> S"
-    and zsm: "\<And>j. f (zs j) < m + 1 / real (Suc j)"
-    by metis
-  have sq: "seq_compact S" using cS by (simp add: compact_eq_seq_compact_metric)
-  obtain z r where zS: "z \<in> S" and rm: "strict_mono r"
-    and lim: "(zs \<circ> r) \<longlonglongrightarrow> z"
-    using sq[unfolded seq_compact_def] zsS by blast
-  have zle: "f z \<le> m"
-  proof (rule ccontr)
-    assume "\<not> f z \<le> m"
-    then have mlt: "m < f z" by simp
-    define c where "c = (m + f z) / 2"
-    have cm: "m < c" unfolding c_def using mlt by simp
-    have cz: "c < f z" unfolding c_def using mlt by simp
-    obtain e where e0: "0 < e"
-      and enear: "\<forall>y. dist z y < e \<longrightarrow> c < f y"
-      using lsc[OF cz] by blast
-    have ev1: "\<forall>\<^sub>F l in sequentially. dist ((zs \<circ> r) l) z < e"
-      using lim e0 by (simp add: tendsto_iff)
-    have ev2: "\<forall>\<^sub>F l in sequentially. 1 / real (Suc (r l)) < c - m"
-    proof -
-      have "(\<lambda>l. 1 / real (Suc l)) \<longlonglongrightarrow> 0"
-        using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
-      then have "(\<lambda>l. 1 / real (Suc (r l))) \<longlonglongrightarrow> 0"
-        using LIMSEQ_subseq_LIMSEQ[OF _ rm] by (simp add: o_def)
-      then show ?thesis using cm by (simp add: order_tendstoD(2))
-    qed
-    from ev1 obtain N1 where N1: "\<And>l. N1 \<le> l \<Longrightarrow>
-        dist ((zs \<circ> r) l) z < e"
-      by (auto simp: eventually_sequentially)
-    from ev2 obtain N2 where N2: "\<And>l. N2 \<le> l \<Longrightarrow>
-        1 / real (Suc (r l)) < c - m"
-      by (auto simp: eventually_sequentially)
-    define l where "l = max N1 N2"
-    have dl: "dist z ((zs \<circ> r) l) < e"
-      using N1[of l] unfolding l_def by (simp add: dist_commute)
-    have gl: "1 / real (Suc (r l)) < c - m"
-      using N2[of l] unfolding l_def by simp
-    have "c < f (zs (r l))"
-      using enear dl by (simp add: o_def)
-    moreover have "f (zs (r l)) < m + 1 / real (Suc (r l))"
-      by (rule zsm)
-    ultimately show False using gl by linarith
-  qed
-  show ?thesis
-  proof (rule that[OF zS])
-    fix y assume yS: "y \<in> S"
-    then show "f z \<le> f y" using zle mlow[OF yS] by linarith
-  qed
-qed
+  quadratic, so the argument needs lower semicontinuity as a
+  hypothesis rather than as a property of the envelope: this is exactly
+  \<open>lsc_attains_inf_gen\<close> from @{theory Relative_Arbitrage.Operator_Envelopes},
+  stated there at \<open>'a::metric_space\<close> and instantiated here at
+  \<open>real^'n::finite\<close>.\<close>
 
 text \<open>Second, lower semicontinuity is stable under subtracting a
   continuous function --- which is what turns the envelope into
@@ -14805,15 +14671,9 @@ text \<open>The \<open>tanp\<close> block above, generalised: the ambient identi
 
 subsection \<open>Small matrix, trace and inner-product facts\<close>
 
-lemma matvec_add_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (x + y) = A *v x + A *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum.distrib)
+text \<open>\<open>matvec_add_right\<close> lives in @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
-lemma matvec_scaleR_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (c *\<^sub>R x) = c *\<^sub>R (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
+text \<open>\<open>matvec_scaleR_right\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
 
 lemma matvec_sum_right:
   fixes A :: "real^'n::finite^'n"
@@ -14828,47 +14688,18 @@ next
   then show ?thesis by simp
 qed
 
-lemma trace_sum_matrix:
-  fixes f :: "'a \<Rightarrow> real^'n::finite^'n"
-  shows "trace (\<Sum>x\<in>S. f x) = (\<Sum>x\<in>S. trace (f x))"
-proof -
-  have "trace (\<Sum>x\<in>S. f x) = (\<Sum>i\<in>UNIV. \<Sum>x\<in>S. f x $ i $ i)"
-    unfolding trace_def by simp
-  also have "\<dots> = (\<Sum>x\<in>S. \<Sum>i\<in>UNIV. f x $ i $ i)" by (rule sum.swap)
-  also have "\<dots> = (\<Sum>x\<in>S. trace (f x))" unfolding trace_def by (rule refl)
-  finally show ?thesis .
-qed
+text \<open>\<open>trace_sum_matrix\<close> lives in @{theory Relative_Arbitrage.Poincare_Separation}.\<close>
 
 lemma transpose_matrix_diff:
   fixes A B :: "real^'n::finite^'n"
   shows "transpose (A - B) = transpose A - transpose B"
   by (simp add: transpose_def vec_eq_iff)
 
-lemma trace_matrix_diff:
-  fixes A B :: "real^'n::finite^'n"
-  shows "trace (A - B) = trace A - trace B"
-  by (simp add: trace_def sum_subtractf)
+text \<open>\<open>trace_matrix_diff\<close> is \<open>trace_diff_matrix\<close> from
+  @{theory Relative_Arbitrage.Poincare_Separation}.\<close>
 
-lemma inner_matrix_transpose:
-  fixes A :: "real^'n::finite^'n" and x y :: "real^'n"
-  shows "y \<bullet> (A *v x) = (transpose A *v y) \<bullet> x"
-proof -
-  have L: "y \<bullet> (A *v x) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
-    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
-  have R: "(transpose A *v y) \<bullet> x
-      = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
-  proof -
-    have "(transpose A *v y) \<bullet> x
-        = (\<Sum>j\<in>UNIV. (\<Sum>i\<in>UNIV. A $ i $ j * y $ i) * x $ j)"
-      by (simp add: inner_vec_def matrix_vector_mult_def transpose_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A $ i $ j * y $ i * x $ j)"
-      by (simp add: sum_distrib_right)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. y $ i * (A $ i $ j * x $ j))"
-      by (intro sum.cong refl) (simp add: mult_ac)
-    finally show ?thesis .
-  qed
-  show ?thesis unfolding L R by (rule sum.swap)
-qed
+text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
+  from @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
 lemma unit_normalize:
   fixes v :: "real^'n::finite"
@@ -15052,7 +14883,7 @@ lemma tanpU_mv:
 lemma tanpU_trace:
   fixes P :: "real^'n::finite^'n" and u :: "real^'n"
   shows "trace (tanpU P u) = trace P - u \<bullet> u"
-  unfolding tanpU_def by (simp add: trace_matrix_diff)
+  unfolding tanpU_def by (simp add: trace_diff_matrix)
 
 lemma uvecV_norm_le:
   fixes P :: "real^'n::finite^'n" and z :: "real^'n"
@@ -15107,7 +14938,7 @@ lemma proj_inner_self:
   shows "(P *v z) \<bullet> z = (P *v z) \<bullet> (P *v z)"
 proof -
   have "(P *v z) \<bullet> (P *v z) = (transpose P *v (P *v z)) \<bullet> z"
-    by (rule inner_matrix_transpose)
+    by (rule inner_transpose_matrix)
   also have "transpose P *v (P *v z) = P *v (P *v z)" unfolding Psym by (rule refl)
   also have "P *v (P *v z) = P *v z"
     using Pidem by (metis matrix_vector_mul_assoc)
@@ -15140,7 +14971,7 @@ proof -
   proof -
     have "u \<bullet> z = (P *v u) \<bullet> z" unfolding ufix by (rule refl)
     also have "\<dots> = z \<bullet> (P *v u)" by (rule inner_commute)
-    also have "\<dots> = (transpose P *v z) \<bullet> u" by (rule inner_matrix_transpose)
+    also have "\<dots> = (transpose P *v z) \<bullet> u" by (rule inner_transpose_matrix)
     also have "\<dots> = (P *v z) \<bullet> u" unfolding Psym by (rule refl)
     also have "\<dots> = (norm (P *v z) *\<^sub>R u) \<bullet> u"
       using par by (rule arg_cong[where f = "\<lambda>v. v \<bullet> u"])
@@ -15169,7 +15000,7 @@ next
   proof -
     have "u \<bullet> y = (P *v u) \<bullet> y" unfolding ufix by (rule refl)
     also have "\<dots> = y \<bullet> (P *v u)" by (rule inner_commute)
-    also have "\<dots> = (transpose P *v y) \<bullet> u" by (rule inner_matrix_transpose)
+    also have "\<dots> = (transpose P *v y) \<bullet> u" by (rule inner_transpose_matrix)
     also have "\<dots> = (P *v y) \<bullet> u" unfolding Psym by (rule refl)
     finally show ?thesis .
   qed
@@ -15366,7 +15197,7 @@ proof -
   have sq2: "sqrt (2 - a) * sqrt (2 - a) = 2 - a" using a2 by simp
   have uP: "u \<bullet> (P *v y) = u \<bullet> y" for y
   proof -
-    have "u \<bullet> (P *v y) = (transpose P *v u) \<bullet> y" by (rule inner_matrix_transpose)
+    have "u \<bullet> (P *v y) = (transpose P *v u) \<bullet> y" by (rule inner_transpose_matrix)
     also have "\<dots> = (P *v u) \<bullet> y" unfolding Psym by (rule refl)
     finally show ?thesis unfolding ufix .
   qed
@@ -15758,7 +15589,7 @@ proof -
         proof -
           have "x \<bullet> (projmat b m *v d)
               = (transpose (projmat b m) *v x) \<bullet> d"
-            by (rule inner_matrix_transpose)
+            by (rule inner_transpose_matrix)
           also have "\<dots> = (projmat b m *v x) \<bullet> d"
             unfolding Psym by (rule refl)
           finally show ?thesis unfolding xfix .

@@ -62,23 +62,8 @@ qed
 lemma transpose_diff_matrix: "transpose (A - B) = transpose A - transpose B"
   by (simp add: transpose_def vec_eq_iff)
 
-lemma scaleR_matrix_matrix_left:
-  fixes A B :: "real^'n::finite^'n"
-  shows "(c *\<^sub>R A) ** B = c *\<^sub>R (A ** B)"
-proof -
-  have "((c *\<^sub>R A) ** B) $ i $ j = (c *\<^sub>R (A ** B)) $ i $ j" for i j
-  proof -
-    have "((c *\<^sub>R A) ** B) $ i $ j = (\<Sum>k\<in>UNIV. c * (A $ i $ k * B $ k $ j))"
-      by (simp add: matrix_matrix_mult_def mult.assoc)
-    also have "\<dots> = c * (\<Sum>k\<in>UNIV. A $ i $ k * B $ k $ j)"
-      by (rule sum_distrib_left[symmetric])
-    also have "\<dots> = (c *\<^sub>R (A ** B)) $ i $ j"
-      by (simp add: matrix_matrix_mult_def)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
+text \<open>\<open>scaleR_matrix_matrix_left\<close> is \<open>scaleR_matrix_mult\<close> from
+  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
 lemma trace_scaleR_matrix:
   fixes A :: "real^'n::finite^'n"
@@ -166,7 +151,7 @@ proof -
     by (simp add: ap)
   finally have z: "trace (outer_prod p p ** a) = 0" .
   show ?thesis
-    by (simp add: rank1proj_def scaleR_matrix_matrix_left trace_scaleR_matrix z)
+    by (simp add: rank1proj_def scaleR_matrix_mult trace_scaleR_matrix z)
 qed
 
 section \<open>The matrix \<open>M\<^sub>p\<close> of Eq. (3.4)\<close>
@@ -320,7 +305,7 @@ next
       by (simp add: QaQ)
   qed
   have corr: "trace ((c *\<^sub>R rank1proj p) ** a) = 0"
-    by (simp add: scaleR_matrix_matrix_left trace_scaleR_matrix
+    by (simp add: scaleR_matrix_mult trace_scaleR_matrix
         trace_rank1proj_mult[OF ap])
   have "trace (Mp p M ** a)
       = trace ((Q ** M ** Q) ** a) + trace ((c *\<^sub>R rank1proj p) ** a)"

@@ -1687,13 +1687,7 @@ text \<open>
   \<^const>\<open>qvmata\<close>.
 \<close>
 
-lemma outerp_borel: "(outerp :: real^'n::finite \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
-proof -
-  have e: "(outerp :: real^'n \<Rightarrow> real^'n^'n) = (\<lambda>v. \<chi> i j. v $ i * v $ j)"
-    by (rule ext) (simp add: outerp_def)
-  show ?thesis unfolding e
-    by (intro borel_measurable_continuous_onI continuous_on_vec_lambda continuous_intros)
-qed
+text \<open>\<open>outerp_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness}.\<close>
 
 text \<open>The evaluations of a natural filtration, in the two shapes the pushforward
   needs them.\<close>

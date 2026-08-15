@@ -43,6 +43,42 @@ definition ito_Z ::
   "ito_Z X acov t \<omega> = X t \<omega> \<bullet> X t \<omega>
      - set_lebesgue_integral lborel {0..t} (\<lambda>s. trace (acov s \<omega>))"
 
+text \<open>The starting value of \<open>ito_Z\<close> is forced by \<open>X\<close>'s own starting value
+  alone, independently of which of the three market locales below supplies
+  the martingale property of \<open>ito_Z\<close>: this is the one fact literally
+  re-proved in both \<open>ito_volatile_market\<close> and \<open>ito_const_horizon_market\<close>,
+  so it is proved once here instead.\<close>
+
+lemma ito_Z_zero_expectation:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and acov :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"
+  assumes prob_space_M: "prob_space M"
+    and Zmg: "martingale M F 0 (ito_Z X acov)"
+    and X_start: "AE \<omega> in M. X 0 \<omega> = x0"
+  shows "(\<integral>\<omega>. ito_Z X acov 0 \<omega> \<partial>M) = x0 \<bullet> x0"
+proof -
+  interpret prob_space M by (rule prob_space_M)
+  interpret Mz: martingale M F 0 "ito_Z X acov" by (rule Zmg)
+  have ae: "AE \<omega> in M. ito_Z X acov 0 \<omega> = x0 \<bullet> x0"
+    using X_start
+  proof eventually_elim
+    case (elim \<omega>)
+    have z: "ito_Z X acov 0 \<omega> = X 0 \<omega> \<bullet> X 0 \<omega>
+        - set_lebesgue_integral lborel {0..0} (\<lambda>s. trace (acov s \<omega>))"
+      unfolding ito_Z_def ..
+    have i0: "set_lebesgue_integral lborel {0..0 :: real}
+        (\<lambda>s. trace (acov s \<omega>)) = 0"
+      by simp
+    show ?case
+      unfolding z i0 elim by (rule diff_zero)
+  qed
+  have meas: "ito_Z X acov 0 \<in> borel_measurable M"
+    using Mz.integrable[of 0] by (auto intro: borel_measurable_integrable)
+  have "(\<integral>\<omega>. ito_Z X acov 0 \<omega> \<partial>M) = (\<integral>\<omega>. x0 \<bullet> x0 \<partial>M)"
+    using meas ae by (intro integral_cong_AE) auto
+  then show ?thesis
+    by (simp add: prob_space)
+qed
+
 section \<open>Markets given by the martingale problem in process form\<close>
 
 locale ito_volatile_market =
@@ -116,27 +152,7 @@ proof -
 qed
 
 lemma Z_zero_expectation: "(\<integral>\<omega>. ito_Z X acov 0 \<omega> \<partial>M) = x0 \<bullet> x0"
-proof -
-  have ae: "AE \<omega> in M. ito_Z X acov 0 \<omega> = x0 \<bullet> x0"
-    using X_start
-  proof eventually_elim
-    case (elim \<omega>)
-    have z: "ito_Z X acov 0 \<omega> = X 0 \<omega> \<bullet> X 0 \<omega>
-        - set_lebesgue_integral lborel {0..0} (\<lambda>s. trace (acov s \<omega>))"
-      unfolding ito_Z_def ..
-    have i0: "set_lebesgue_integral lborel {0..0 :: real}
-        (\<lambda>s. trace (acov s \<omega>)) = 0"
-      by simp
-    show ?case
-      unfolding z i0 elim by (rule diff_zero)
-  qed
-  have meas: "ito_Z X acov 0 \<in> borel_measurable M"
-    using Mz.integrable[of 0] by (auto intro: borel_measurable_integrable)
-  have "(\<integral>\<omega>. ito_Z X acov 0 \<omega> \<partial>M) = (\<integral>\<omega>. x0 \<bullet> x0 \<partial>M)"
-    using meas ae by (intro integral_cong_AE) auto
-  then show ?thesis
-    by (simp add: prob_space)
-qed
+  by (rule ito_Z_zero_expectation[OF prob_space_M Z_martingale X_start])
 
 subsection \<open>Optional sampling gives the martingale-problem identity\<close>
 
@@ -654,27 +670,7 @@ proof -
 qed
 
 lemma Z_zero_expectation_const: "(\<integral>\<omega>. ito_Z X acov 0 \<omega> \<partial>M) = x0 \<bullet> x0"
-proof -
-  have ae: "AE \<omega> in M. ito_Z X acov 0 \<omega> = x0 \<bullet> x0"
-    using X_start
-  proof eventually_elim
-    case (elim \<omega>)
-    have z: "ito_Z X acov 0 \<omega> = X 0 \<omega> \<bullet> X 0 \<omega>
-        - set_lebesgue_integral lborel {0..0} (\<lambda>s. trace (acov s \<omega>))"
-      unfolding ito_Z_def ..
-    have i0: "set_lebesgue_integral lborel {0..0 :: real}
-        (\<lambda>s. trace (acov s \<omega>)) = 0"
-      by simp
-    show ?case
-      unfolding z i0 elim by (rule diff_zero)
-  qed
-  have meas: "ito_Z X acov 0 \<in> borel_measurable M"
-    using Mc.integrable[of 0] by (auto intro: borel_measurable_integrable)
-  have "(\<integral>\<omega>. ito_Z X acov 0 \<omega> \<partial>M) = (\<integral>\<omega>. x0 \<bullet> x0 \<partial>M)"
-    using meas ae by (intro integral_cong_AE) auto
-  then show ?thesis
-    by (simp add: prob_space)
-qed
+  by (rule ito_Z_zero_expectation[OF prob_space_M Z_martingale X_start])
 
 theorem const_dynkin_quadratic:
   assumes t: "0 \<le> t"
