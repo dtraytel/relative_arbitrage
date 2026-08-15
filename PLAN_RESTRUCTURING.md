@@ -107,32 +107,26 @@ Confirmed textual duplicates (identical statements, different names or files):
 
 | statement | copies |
 |---|---|
-| `trace (A ** B) = trace (B ** A)` | `trace_mul_comm` (CP), `trace_matrix_commute` (OE), `trace_mult_commute` (VFV) |
-| `A ** (B - C) = A ** B - A ** C` | `matrix_mul_diff_right` (OE), `matrix_matrix_mult_diff_right` (PS), `matrix_msub_ldistrib` (VFV) |
-| `(A - B) ** C = A ** C - B ** C` | `matrix_mul_diff_left` (OE), `matrix_matrix_mult_diff_left` (PS), `matrix_msub_rdistrib` (VFV) |
-| `(c *⇩R A) ** B = c *⇩R (A ** B)` | `matrix_mult_scaleR_left` (CP), `scaleR_matrix_matrix_left` (OC), `scaleR_matrix_mult` (CO — *rectangular, the most general of the three; keep this one*) |
-| `A *v (x + y) = A *v x + A *v y` | `matvec_add_right'` (CP), `matvec_add_right` (VFV) |
-| `A *v (r *⇩R x) = r *⇩R (A *v x)` | `matvec_scaleR_right'` (CP), `matvec_scaleR_right` (OE), `matrix_vector_mult_scaleR_gen` (CP) |
-| `trace (A - B) = trace A - trace B` | `trace_diff_matrix` (PS), `trace_matrix_diff` (VFV) |
-| `y ∙ (A *v x) = (transpose A *v y) ∙ x` | `inner_matrix_transpose` (OE **and** VFV, same name), `inner_transpose_matrix` (CO) |
-| `trace (M ** (Qᵀ ** a ** Q)) = trace ((Q ** M ** Qᵀ) ** a)` | `trace_conj` (OC), `trace_conjugate` (VCI) |
-| `transpose (c *⇩R A) = c *⇩R transpose A` | `transpose_scaleR` (CSC **and** CP), `transpose_scaleR_matrix` (CP) |
-| `transpose (A + B) = transpose A + transpose B` | `transpose_add` (CSC), `transpose_add_matrix` (CP) |
-| `trace (∑ f) = ∑ trace ∘ f` | `trace_matrix_sum` (CO), `trace_sum_matrix` (PS **and** VFV) |
-| `(a - b)² ≤ 2a² + 2b²` | `sq_diff_le` (QV), `sq_diff_le_two` (PQV), `square_add_le_two` (MB), `diff_sq_le_double` (VFV) |
-| `fst`/`snd` on `real^'n × real^'n^'n` is Borel | `pair_fst_borel`/`pair_snd_borel` (ECC), `measurable_fst_borel`/`measurable_snd_borel` (ECDPP) |
-
-*(CP = Comparison_Principle, OE = Operator_Envelopes, VFV = Value_Function_Viscosity,
-PS = Poincare_Separation, OC = Operator_Continuity, CO = Curvature_Operator,
-CSC = Constraint_Set_Convexity, VCI = Viscosity_Comparison_Interface,
-QV/MB = Martingale_Sampling, PQV = Pathwise_Quadratic_Variation,
-ECC/ECDPP = Exit_Class_Compactness/_DPP.)*
+| `trace (A ** B) = trace (B ** A)` | `trace_mul_comm` (Comparison_Principle), `trace_matrix_commute` (Operator_Envelopes), `trace_mult_commute` (Value_Function_Viscosity) |
+| `A ** (B - C) = A ** B - A ** C` | `matrix_mul_diff_right` (Operator_Envelopes), `matrix_matrix_mult_diff_right` (Poincare_Separation), `matrix_msub_ldistrib` (Value_Function_Viscosity) |
+| `(A - B) ** C = A ** C - B ** C` | `matrix_mul_diff_left` (Operator_Envelopes), `matrix_matrix_mult_diff_left` (Poincare_Separation), `matrix_msub_rdistrib` (Value_Function_Viscosity) |
+| `(c *⇩R A) ** B = c *⇩R (A ** B)` | `matrix_mult_scaleR_left` (Comparison_Principle), `scaleR_matrix_matrix_left` (Operator_Continuity), `scaleR_matrix_mult` (Curvature_Operator — *rectangular, the most general of the three; keep this one*) |
+| `A *v (x + y) = A *v x + A *v y` | `matvec_add_right'` (Comparison_Principle), `matvec_add_right` (Value_Function_Viscosity) |
+| `A *v (r *⇩R x) = r *⇩R (A *v x)` | `matvec_scaleR_right'` (Comparison_Principle), `matvec_scaleR_right` (Operator_Envelopes), `matrix_vector_mult_scaleR_gen` (Comparison_Principle) |
+| `trace (A - B) = trace A - trace B` | `trace_diff_matrix` (Poincare_Separation), `trace_matrix_diff` (Value_Function_Viscosity) |
+| `y ∙ (A *v x) = (transpose A *v y) ∙ x` | `inner_matrix_transpose` (Operator_Envelopes **and** Value_Function_Viscosity, same name), `inner_transpose_matrix` (Curvature_Operator) |
+| `trace (M ** (Qᵀ ** a ** Q)) = trace ((Q ** M ** Qᵀ) ** a)` | `trace_conj` (Operator_Continuity), `trace_conjugate` (Viscosity_Comparison_Interface) |
+| `transpose (c *⇩R A) = c *⇩R transpose A` | `transpose_scaleR` (Constraint_Set_Convexity **and** Comparison_Principle), `transpose_scaleR_matrix` (Comparison_Principle) |
+| `transpose (A + B) = transpose A + transpose B` | `transpose_add` (Constraint_Set_Convexity), `transpose_add_matrix` (Comparison_Principle) |
+| `trace (∑ f) = ∑ trace ∘ f` | `trace_matrix_sum` (Curvature_Operator), `trace_sum_matrix` (Poincare_Separation **and** Value_Function_Viscosity) |
+| `(a - b)² ≤ 2a² + 2b²` | `sq_diff_le` (Quadratic_Variation), `sq_diff_le_two` (Pathwise_Quadratic_Variation), `square_add_le_two` (Moment_Bounds), `diff_sq_le_double` (Value_Function_Viscosity) |
+| `fst`/`snd` on `real^'n × real^'n^'n` is Borel | `pair_fst_borel`/`pair_snd_borel` (Exit_Class_Compactness), `measurable_fst_borel`/`measurable_snd_borel` (Exit_Class_DPP) |
 
 Near-misses worth checking by hand while deduplicating, because they differ by
 one side of a distributive law and are easy to conflate:
-`matrix_vector_mult_add` (OC) is `(A + B) *v x = …`, *not* `A *v (x + y) = …`;
-`scaleR_matrix_vector` (CO) is `(r *⇩R A) *v x = …`, *not* `A *v (r *⇩R x) = …`;
-`matrix_mult_sum_left` (CSC) and `matrix_mult_sum_right` (CO) are the two sides
+`matrix_vector_mult_add` (Operator_Continuity) is `(A + B) *v x = …`, *not* `A *v (x + y) = …`;
+`scaleR_matrix_vector` (Curvature_Operator) is `(r *⇩R A) *v x = …`, *not* `A *v (r *⇩R x) = …`;
+`matrix_mult_sum_left` (Constraint_Set_Convexity) and `matrix_mult_sum_right` (Curvature_Operator) are the two sides
 of the same distributive law and should end up as a pair of adjacent lemmas.
 
 Six of these are re-proved **under the very same name** in a theory that already
@@ -259,8 +253,8 @@ AFP-submittable on its own, and the thing most likely to be wanted by others.
 | theory | content | drawn from |
 |---|---|---|
 | `Matrix_Algebra.thy` | trace/transpose/`**`/`*v` calculus, distributivity, `scaleR`, sums, `mat 1`, entries vs `axis`, `Basis` of `real^'n^'n`, Frobenius norm, submultiplicativity, continuity of the matrix operations, `closed {a. transpose a = a}` | the ~120 duplicated one-liners of §1.4 and §3.1 |
-| `Outer_Products.thy` | `outer_prod`, `outerp` as abbreviation, `rank1proj`, norms, `bounded_linear` facts, projector calculus (`proj_inner_self`, `proj_norm_le`, `projmat`) | Curvature_Operator, Operator_Continuity, Exit_Class, VFV |
-| `Orthonormal_Families.thy` | `onormal`, extension to a basis, completeness relation, traces in an orthonormal basis, `orthonormal_family_containing`, `orthonormal_dim_span` | Curvature_Operator §"Orthonormal families", VFV |
+| `Outer_Products.thy` | `outer_prod`, `outerp` as abbreviation, `rank1proj`, norms, `bounded_linear` facts, projector calculus (`proj_inner_self`, `proj_norm_le`, `projmat`) | Curvature_Operator, Operator_Continuity, Exit_Class, Value_Function_Viscosity |
+| `Orthonormal_Families.thy` | `onormal`, extension to a basis, completeness relation, traces in an orthonormal basis, `orthonormal_family_containing`, `orthonormal_dim_span` | Curvature_Operator §"Orthonormal families", Value_Function_Viscosity |
 | `Householder_Rotation.thy` | one Householder reflection `hrefl`, one rotation `rotm`, orthogonality, `R a Rᵀ` conjugation invariance, continuity of the transport | merge of `hh`/`hrefl`, `rotv`/`rotm` |
 | `Symmetric_Spectral.thy` | Rayleigh-quotient maximisers are eigenvectors, orthonormal eigenbases of invariant subspaces, the spectral theorem for real symmetric matrices, `psd`, degenerate ellipticity | Curvature_Operator §"The spectral theorem" (580–984) |
 | `Ky_Fan.thy` | `is_proj`, `kyfan`, `eigval`, `possum`, `bracket`, the LP on the simplex in a box, threshold subsets and the threshold chain, monotonicity of the ordered eigenvalues, positive/negative parts | Eigenvalues, Threshold_Chain, the LP part of Poincare_Separation |
@@ -282,13 +276,13 @@ about `F`.
 
 | theory | content | drawn from |
 |---|---|---|
-| `Semicontinuity.thy` | ε-δ usc/lsc predicates, closure under `+`, positive scaling, `max`, difference with a continuous function; usc/lsc from continuity; attainment of sup/inf on a nonempty compact set | Operator_Envelopes §"Semicontinuity toolbox" (2017–2412), VFV `lsc_diff_continuous` |
-| `Sc_Envelopes.thy` | `lsc_env`, `usc_env`, `lsc_envK` (envelope relative to a set), `Kext`, monotonicity, the usc fixpoint, boundedness, `usc_extension_bounded` | Operator_Envelopes 2912–3542, VFV duplicates deleted |
+| `Semicontinuity.thy` | ε-δ usc/lsc predicates, closure under `+`, positive scaling, `max`, difference with a continuous function; usc/lsc from continuity; attainment of sup/inf on a nonempty compact set | Operator_Envelopes §"Semicontinuity toolbox" (2017–2412), Value_Function_Viscosity `lsc_diff_continuous` |
+| `Semicontinuous_Envelopes.thy` | `lsc_env`, `usc_env`, `lsc_envK` (envelope relative to a set), `Kext`, monotonicity, the usc fixpoint, boundedness, `usc_extension_bounded` | Operator_Envelopes 2912–3542, Value_Function_Viscosity duplicates deleted |
 | `Berge.thy` | `usc_sup_over_compact`, `usc_sup_over_compactin`, `box_of_sequential`, `box_of_sequential_euclidean`, `compactin_of_seq_compact`, `closure_of_sequential_limit`, `seq_compact_closure_of` | Path_Space_Tightness/Equicontinuity 233–773 |
-| `Usc_Selection.thy` | `usc_sel_set`, `usc_sel_good`, `usc_sel_code`, `usc_sel`, `usc_measurable_selection` (Bertsekas–Shreve 7.33) | Exit_Class_Compactness §"A measurable selection theorem" (10400–11061) |
+| `Semicontinuous_Selection.thy` | `usc_sel_set`, `usc_sel_good`, `usc_sel_code`, `usc_sel`, `usc_measurable_selection` (Bertsekas–Shreve 7.33) | Exit_Class_Compactness §"A measurable selection theorem" (10400–11061) |
 
-`Usc_Selection` needs measure theory, so this session's base becomes
-`HOL-Probability`. That is acceptable; alternatively put `Usc_Selection` alone
+`Semicontinuous_Selection` needs measure theory, so this session's base becomes
+`HOL-Probability`. That is acceptable; alternatively put `Semicontinuous_Selection` alone
 into `Martingale_Extras`. **Choose `HOL-Probability` as the base** — one
 session boundary fewer.
 
@@ -317,7 +311,7 @@ the abstract half of the Crandall–Ishii doubling machinery down from
 | theory | content |
 |---|---|
 | `Gaussian_Increments.thy` | `gauss_measure`, its moments, translation invariance of `lborel`, the convolution law |
-| `Brownian_FDD.thy` | `prevt`, `inc_prod`, `csum`, `bm_fdd`, `wr`, `ins`, rectangle formula, projectivity |
+| `Brownian_Finite_Dimensional_Distributions.thy` | `prevt`, `inc_prod`, `csum`, `bm_fdd`, `wr`, `ins`, rectangle formula, projectivity |
 | `Brownian_Motion.thy` | `wiener_pre` as the projective limit, marginals, increments, the fourth-moment bound, independent increments |
 | `Brownian_Motion_Continuity.thy` | unchanged |
 
@@ -356,7 +350,7 @@ plus:
   Borel functional* with an `L²` rate, rather than by Doob–Meyer) is one of the
   more original pieces of infrastructure here, and it has nothing to do with the
   paper.
-* `Adapted_QV_Functional.thy` — `qvp_good`, `qvp_goodupto`, `qvpc`, `qvsa`,
+* `Adapted_Quadratic_Variation.thy` — `qvp_good`, `qvp_goodupto`, `qvpc`, `qvsa`,
   `qvmata` and their continuity/adaptedness lemmas, currently the first six
   subsections of `Exit_Class_Marginals` (lines 1–~1400). Same remark: this is a
   general construction (an adapted, everywhere-continuous version of the
@@ -403,31 +397,45 @@ After the extractions this session should be roughly 55 000 lines rather than
 
 **L4 — the class** (split of the two 12–17k-line files):
 
-`Exit_Class_Compactness` → `Exit_Class_Limits.thy` (Lemma 2.3, weak closure,
-lines 26–3459), `Exit_Class_Tight.thy` (tightness and sequential compactness,
-3460–3896), `Exit_Class_Shift.thy` (shift equivariance, usc of the value
-function, 3897–5110), `Exit_Class_Witness.thy` (concrete pair laws,
-nonemptiness, 5111–6392), `Exit_Class_Paste.thy` (horizon shortening,
-concatenation, Prop. 2.4, 6393–10235), `Exit_Class_Optimizer.thy`
-(attainment, Larsson–Ruf 2.2(ii), the Giry kernel, semidirect products,
-10236–end minus the selection theorem which moves out).
+`Exit_Class_Compactness` splits at its own `section` boundaries into:
 
-`Exit_Class_DPP` → `DPP_Pasting.thy` (13–850), `DPP_Conditioning.thy`
-(851–5874), `DPP_Kernels.thy` (5875–8165), `DPP_Optional_Sampling.thy`
-(8166–8955 — note this is *general* optional-sampling-at-two-stopping-times
-material and should be tested for a move to `Martingale_Extras`),
-`DPP_Stopping_Clauses.thy` (8956–9991), `DPP_Additive_Glue.thy` (9992–12497),
-`DPP_Delayed_Class.thy` (12498–15656), `DPP_Assembly.thy` (15657–end).
+| new theory | content | lines |
+|---|---|---|
+| `Exit_Class_Limits.thy` | Lemma 2.3, closure under weak limits | 26–3459 |
+| `Exit_Class_Tightness.thy` | tightness and sequential compactness | 3460–3896 |
+| `Exit_Class_Shift.thy` | shift equivariance, upper semicontinuity of the value function | 3897–5110 |
+| `Exit_Class_Witness.thy` | laws of concrete pair processes, nonemptiness | 5111–6392 |
+| `Exit_Class_Pasting.thy` | horizon shortening, concatenation, Proposition 2.4 | 6393–10235 |
+| `Exit_Class_Optimizer.thy` | attainment, Larsson–Ruf 2.2(ii), the Giry kernel, semidirect products | 10236–end, minus the selection theorem, which moves out |
 
-`Value_Function_Viscosity` → `VF_Subsolution.thy` (37–4310),
-`VF_Euler_Construction.thy` (4311–~9000: the Euler scheme, its weak limit and
-the exact quadratic lower bound), `VF_Supersolution_Case1.thy` (~9000–12201),
-`VF_Supersolution_Case2.thy` (12202–14799), `VF_Tangential_Field.thy`
-(14800–15905), `VF_Assembly.thy` (15906–end).
+`Exit_Class_DPP` — whose own name is one of the abbreviations §2.9 forbids —
+splits into:
+
+| new theory | content | lines |
+|---|---|---|
+| `Dynamic_Programming_Pasting.thy` | the pasting bound | 13–850 |
+| `Dynamic_Programming_Conditioning.thy` | conditioning on the past, the four clauses for the conditional law | 851–5874 |
+| `Dynamic_Programming_Kernels.thy` | kernels into the class, measurability and repair | 5875–8165 |
+| `Dynamic_Programming_Optional_Sampling.thy` | optional sampling at two stopping times | 8166–8955 — *general material; test for a move to `Martingale_Extras`* |
+| `Dynamic_Programming_Stopping_Clauses.thy` | clause (iv) at a stopping time | 8956–9991 |
+| `Dynamic_Programming_Additive_Glue.thy` | the additive glue and its clauses | 9992–12497 |
+| `Dynamic_Programming_Delayed_Class.thy` | the delayed class, the horizon-parametrised selector | 12498–15656 |
+| `Dynamic_Programming_Assembly.thy` | the pathwise bound, the exit bound, the `≥` half at a stopping time | 15657–end |
+
+`Value_Function_Viscosity` splits into:
+
+| new theory | content | lines |
+|---|---|---|
+| `Value_Function_Subsolution.thy` | Itô for quadratic test functions, the localised subsolution inequality, clause (2) subsolution half | 37–4310 |
+| `Value_Function_Euler_Construction.thy` | the Euler scheme, its weak limit, the exact quadratic lower bound | 4311–≈9000 |
+| `Value_Function_Supersolution_Case_1.thy` | the rotating covariance field, the nonzero-gradient case | ≈9000–12201 |
+| `Value_Function_Supersolution_Case_2.thy` | touching the lower envelope, the tilted-quadratic case | 12202–14799 |
+| `Value_Function_Tangential_Field.thy` | the subspace-tangential field for Example 3.1 at general `k` | 14800–15905 |
+| `Value_Function_Assembly.thy` | clause (2) assembled | 15906–end |
 
 `Exit_Class` and `Exit_Class_Infinite` stay as they are;
 `Exit_Class_Marginals` loses its first six subsections to
-`Path_Space_Tightness/Adapted_QV_Functional.thy` and keeps the `xclass`
+`Path_Space_Tightness/Adapted_Quadratic_Variation.thy` and keeps the `xclass`
 identification.
 
 **L5 — the theorem**: `Value_Function_Uniqueness.thy`, unchanged.
@@ -437,6 +445,35 @@ identification.
 Unchanged except for constants renamed by §4 (`outerp` → `outer_prod`,
 `orth_mat` → `orthogonal_matrix` — the latter does not appear in the statement
 document, the former does at line 61).
+
+### 2.9 Naming rule for theories and sessions
+
+**Spell words out. No initialisms, no acronyms, no truncations.** A theory name
+is read far more often than it is typed, and it is what appears in `imports`,
+in `ROOT`, in the generated document's table of contents and in every
+`@{theory …}` antiquotation in the running commentary. `DPP`, `VF`, `QV`,
+`FDD`, `Usc` and `Sc` are all forbidden; `Dynamic_Programming`,
+`Value_Function`, `Quadratic_Variation`,
+`Finite_Dimensional_Distributions`, `Semicontinuous` are what they abbreviate.
+
+Consequences already applied above, and to be applied to anything the executing
+agent invents later:
+
+* `Exit_Class_DPP` is the one existing theory whose name breaks the rule. It
+  disappears in phase 12; no separate rename is needed.
+* Proper names are not abbreviations and stay: `Ky_Fan`, `Berge`, `Rademacher`,
+  `Alexandrov`, `Moreau_Envelope`, `Poincare_Separation`, `Householder_Rotation`,
+  `Brownian_Motion`, `Doob_Inequality`, `Vitali_Convergence`.
+* Ordinary English words that merely look short are fine: `Extras`, `Doubling`,
+  `Pasting`, `Kernels`, `Assembly`, `Witness`, `Tightness`, `Limits`, `Shift`.
+* The paper's own numbering may be used as a suffix where it is the clearest
+  label, spelled with an underscore: `Value_Function_Supersolution_Case_1`, not
+  `Case1` and not `C1`.
+* This rule is about **theory and session names only**. Existing *constant*
+  names (`qvp`, `qvsa`, `qvmat`, `lsc_env`, `usc_sel`, `psd`, `kyfan`, `Mp`)
+  are out of scope: they appear in the `Statement` document and in
+  `NOTES_FOR_AUTHORS.md`, and renaming them is a separate decision with a
+  separate cost. Do not rename them as part of this refactor.
 
 ---
 
@@ -520,7 +557,7 @@ From **Exit_Class_Compactness**: `mat_inner_axis`, `mat_Basis_cases`,
 
 From elsewhere: `trace_mat1` (Brownian_Market), `diag_eq_inner_axis` and
 `trace_nonneg_psd` (Ito_Market), `diag_entry_quadform` (Path_Tightness_Market —
-same statement as `diag_eq_inner_axis`), `inner_mv_axis` (Pathwise_QV),
+same statement as `diag_eq_inner_axis`), `inner_mv_axis` (Pathwise_Quadratic_Variation),
 `quadform_convex_comb`, `continuous_on_trace_mult_right`,
 `closed_trace_proj_halfspace` (Exit_Class), `inner_diff_self_expand`
 (Exit_Time_Semicontinuity), `trace_conjugate` (Viscosity_Comparison_Interface),
@@ -628,14 +665,14 @@ expansion `sqrt_second_order_exact`, `sqrt_diff_exact`, `sqrt_rhs_aux`,
 `lsc_diff_continuous`, `usc_extension_bounded`, `max_principle_boundary_attains`
 (rename to `sup_diff_attained_on_compact`).
 
-`Sc_Envelopes.thy`: `lsc_env`, `usc_env`, `lsc_envK`, `Kext` and all their
+`Semicontinuous_Envelopes.thy`: `lsc_env`, `usc_env`, `lsc_envK`, `Kext` and all their
 lemmas (`lsc_env_bdd_above`, `lsc_env_bdd_below_ball`, `lsc_env_le_self`,
 `lsc_env_ge`, `Kext_proj_bound`, `Kext_proj_near`, the envelope-monotonicity
 and usc-fixpoint sections).
 
 `Berge.thy`: as listed in §2.2.
 
-`Usc_Selection.thy`: as listed in §2.2, plus `Least_nat_eq_iff`.
+`Semicontinuous_Selection.thy`: as listed in §2.2, plus `Least_nat_eq_iff`.
 
 ### 3.5 → `Martingale_Extras`
 
@@ -660,7 +697,7 @@ in paper theories: `integrable_of_sq_integrable`, `bounded_measurable_integrable
 `threshold_shrink_one`, `threshold_chain_aux`, `threshold_chain`
 (Threshold_Chain); `reduce_weights_to_exact`, `box_program_bound`,
 `lp_upper_bound`, `sum_min_le_threshold` (Poincare_Separation);
-`exists_min_subset` (VFV); `two_fractional` (Eigenvalue_Bound_Exact).
+`exists_min_subset` (Value_Function_Viscosity); `two_fractional` (Eigenvalue_Bound_Exact).
 
 These are statements about finite index sets and real weights with no matrix in
 sight; they could equally form a `Finite_Threshold_Sets.thy`. **Do that** — it
@@ -800,7 +837,7 @@ Do these first: they are pure deletions and they shrink everything else.
 | action | detail |
 |---|---|
 | delete `outer_prod` in `Comparison_Principle`:3406 | it shadows the identical `Curvature_Operator`:34; after the move both become `Matrix_Spectral_Extras.Outer_Products.outer_prod` |
-| delete `hh` (Operator_Envelopes:677) **or** `hrefl` (VFV:8844) | keep one, in `Householder_Rotation.thy`, named `hrefl`; port `hh_sym`, `hh_mv` and the `hrefl_*` lemmas into one set |
+| delete `hh` (Operator_Envelopes:677) **or** `hrefl` (Value_Function_Viscosity:8844) | keep one, in `Householder_Rotation.thy`, named `hrefl`; port `hh_sym`, `hh_mv` and the `hrefl_*` lemmas into one set |
 | unify `rotv` and `rotm` | keep `rotm` (the normalised form the supersolution proof needs) and derive `rotv`'s uses from it, or keep both with one proved from the other — but prove orthogonality once |
 | delete `orth_mat` (Viscosity_Comparison_Interface:79) | replace by HOL-Analysis `orthogonal_matrix`; delete `orth_mat_inner`, `orth_mat_surj`, `orth_mat_transpose` if HOL-Analysis has them, else rename them to `orthogonal_matrix_*` |
 | make `outerp` an abbreviation | `outerp x ≡ outer_prod x x`; keeps `Statement/Theorem_1_1_Statement.thy`:61 displaying something meaningful — **check the displayed definition still reads well and adjust the surrounding prose if not** |
@@ -810,11 +847,11 @@ Do these first: they are pure deletions and they shrink everything else.
 
 `inner_matrix_transpose`, `lsc_env_bdd_above`, `lsc_env_le_self`, `lsc_env_ge`
 (Value_Function_Viscosity, all present in Operator_Envelopes);
-`lsc_attains_inf_gen` (VFV copy is *less* general than the OE original — delete
-the VFV one); `outerp_borel` (Exit_Class_Marginals, present in
+`lsc_attains_inf_gen` (Value_Function_Viscosity copy is *less* general than the Operator_Envelopes original — delete
+the Value_Function_Viscosity one); `outerp_borel` (Exit_Class_Marginals, present in
 Exit_Class_Compactness); `pcut_pglue` (Exit_Class_Infinite, present in
 Exit_Class_DPP); `martingale_cong_ge` (Exit_Class_DPP, present in
-Exit_Class_Compactness); `trace_sum_matrix` (VFV, present in
+Exit_Class_Compactness); `trace_sum_matrix` (Value_Function_Viscosity, present in
 Poincare_Separation).
 
 Verified instances with line numbers, all of which shadow an already-imported
@@ -880,15 +917,15 @@ done first because they shrink the input to everything after.
 | 2 | **Move the four misplaced theories.** `Modification_Transfer`, `Exit_Time`→`Stopping_Times` into `Martingale_Extras`; `Stopped_Localization`, `Pathwise_Quadratic_Variation` into `Path_Space_Tightness`. Rename the session `Martingale_Sampling` → `Martingale_Extras` and fix `ROOTS` and all `imports`. | low | 3 400 lines relocated |
 | 3 | **Create `Matrix_Spectral_Extras`.** Move §3.1 and §3.6, carve `Symmetric_Spectral`, `Ky_Fan`, `Eigenvalue_Continuity`, `Poincare_Separation`, `Householder_Rotation`, `Orthonormal_Families`, `Outer_Products` out of the paper session. Break the upside-down chain of §1.3 by leaving `feasible_iff_eigval` and the two `Pi_proj`/`feasible` sections of `Eigenvalues` behind in `Relative_Arbitrage`. | medium | ≈ 7 000 lines relocated |
 | 4 | **Create `Semicontinuous_Analysis`.** §3.4. | low | ≈ 1 800 lines |
-| 5 | **Extract the martingale toolbox.** §2.5, §3.5. Largest single win in `Exit_Class_Compactness`/`_DPP` readability. | medium | ≈ 3 000 lines |
+| 5 | **Extract the martingale toolbox.** §2.5, §3.5. Largest single win in the readability of `Exit_Class_Compactness` and `Exit_Class_DPP`. | medium | ≈ 3 000 lines |
 | 6 | **Split `Sup_Convolution`.** §2.3, textual split only. | low | 0 net |
 | 7 | **Extract `Doubling.thy` and `Soft_Penalty.thy`** from `Comparison_Principle` into `Alexandrov_Sup_Convolution`, at `real^'n` still. | medium | ≈ 5 500 lines relocated |
 | 8 | **Generalise the doubling toolbox** to `'a::euclidean_space` (§4.1). Do this *after* the move so the diff is one file. | medium | 0 net |
 | 9 | **Generalise the envelopes** (§4.2), the martingale index (§4.3), unify `ess_inf` (§4.4). | medium | −300 lines |
 | 10 | **Consolidate the viscosity definitions** into `Viscosity_Definitions.thy` (§2.7 L2) and split `Comparison_Principle`/`Comparison_Two_Domain`. | medium | 0 net |
 | 11 | **Split `Exit_Class_Compactness`** into six theories at the section boundaries of §2.7. | low | 0 net |
-| 12 | **Split `Exit_Class_DPP`** into eight; test whether `DPP_Optional_Sampling` moves to `Martingale_Extras`. | medium | 0 net |
-| 13 | **Split `Value_Function_Viscosity`** into six; move `Adapted_QV_Functional` out of `Exit_Class_Marginals`. | low | 0 net |
+| 12 | **Split `Exit_Class_DPP`** into eight; test whether `Dynamic_Programming_Optional_Sampling` moves to `Martingale_Extras`. | medium | 0 net |
+| 13 | **Split `Value_Function_Viscosity`** into six; move `Adapted_Quadratic_Variation` out of `Exit_Class_Marginals`. | low | 0 net |
 | 14 | **Split `Wiener_Measure/Brownian_Motion`** (§2.4); re-run `unused_thms` across everything and delete the fourth-pass residue that `UNUSED_THMS.md` predicts; refresh `UNUSED_THMS.md`, `NOTES_FOR_AUTHORS.md` §"Infrastructure that had to be built" (it should now name the new sessions), and `ROOTS`. | low | −500 lines |
 
 After phase 14, re-run the three probes of §0 and put the numbers in the
@@ -896,6 +933,9 @@ completion note.
 
 ### 6.1 Mechanics
 
+* **Names.** Every new theory and session name obeys §2.9: words spelled out,
+  no initialisms. If a name proposed in §2 turns out to fit the content badly,
+  replace it with another *spelled-out* name rather than shortening it.
 * **Renames.** When a lemma changes name, do not leave an alias. Fix the uses.
   The build will find them. `grep -rn '\bold_name\b' --include=*.thy .` before
   each rename, so the count of expected edits is known in advance.
@@ -933,7 +973,9 @@ completion note.
    layout.
 6. **Preserve the `(*<*) … (*>*)` markers** and the `document = false` settings;
    they are what keeps the `Statement` document to five pages.
-7. **The four probes of §0 are the progress metric.** Report them at the start
+7. **No abbreviated theory or session names**, ever, including for scratch or
+   intermediate files that survive a phase. See §2.9.
+8. **The four probes of §0 are the progress metric.** Report them at the start
    and end: theory count, line count, lemma count, and the number of lemmas
    whose statements mention no project-defined constant *while sitting in a
    paper session*. That last number is currently **589**; the target is < 50.
