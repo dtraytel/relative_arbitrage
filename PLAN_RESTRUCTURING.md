@@ -220,13 +220,13 @@ State this explicitly so the executing agent does not "improve" it:
 
 ## 2. Target layout
 
-Nine sessions instead of six. The three new ones are carved out of existing
+Eight sessions instead of six. The two new ones are carved out of existing
 material; nothing is invented.
 
 ```
 ROOTS
   Matrix_Spectral_Extras          (new)   base: HOL-Analysis
-  Semicontinuous_Analysis         (new)   base: HOL-Analysis
+  Semicontinuous_Analysis         (new)   base: HOL-Probability
   Alexandrov_Sup_Convolution      (kept, split, extended)
   Wiener_Measure                  (kept, split)
   Martingale_Extras               (renamed from Martingale_Sampling, extended)
@@ -235,10 +235,32 @@ ROOTS
   Relative_Arbitrage_Statement    (kept)
 ```
 
+### 2.0 Why each session exists
+
+Every session must justify itself in one sentence, and that sentence is what its
+`ROOT` `description` and its AFP abstract should say. If a session cannot be
+described without naming this paper, it does not belong outside
+`Relative_Arbitrage`.
+
+| session | AFP? | why it exists |
+|---|---|---|
+| `Matrix_Spectral_Extras` | yes | The spectral theory of real symmetric matrices that HOL-Analysis stops short of — the spectral theorem, Ky Fan partial sums, the ordered eigenvalues as their differences, their Lipschitz dependence on the matrix, and Poincaré separation — for anyone who constrains a matrix through its spectrum rather than through its entries. |
+| `Semicontinuous_Analysis` | yes | The semicontinuity toolkit that optimal control and viscosity-solution arguments all assume and Isabelle does not have: the ε-δ calculus, attainment on compacta, the semicontinuous envelopes, Berge's maximum theorem, and measurable selection of an upper semicontinuous payoff (Bertsekas–Shreve 7.33). |
+| `Alexandrov_Sup_Convolution` | yes | The complete second-order machinery for comparison proofs between viscosity solutions — Rademacher, Alexandrov, Jensen's lemma for semiconvex functions, the Crandall–Ishii theorem on sums, and the doubling-of-variables toolbox they exist to serve — without which no comparison principle can be formalised at all. |
+| `Wiener_Measure` | yes | Brownian motion as the projective limit of its Gaussian finite-dimensional distributions, with independent increments and a continuous modification: the canonical construction, and the only one in Isabelle. |
+| `Martingale_Extras` | yes | What continuous-time martingale theory needs beyond the AFP's `Martingales`: Doob's maximal inequality, optional sampling and stopping at a bounded stopping time, quadratic variation and its compensator, Vitali's theorem, exit times as stopping times, and the algebra of transporting the martingale property along images, products, restrictions and modifications. |
+| `Path_Space_Tightness` | yes | Weak convergence of processes done properly: `C([0,T],'b)` as a Polish space with portmanteau and the continuous mapping theorem, tightness of a family of path laws from increment moments alone, and quadratic variation as an adapted, everywhere-continuous *path functional* with a summable `L²` rate. |
+| `Relative_Arbitrage` | yes | Theorem 1.1 of Lai–Shkolnikov–Soner (arXiv:2512.17702): the value function of the minimum-exit-time problem under eigenvalue lower bounds is the unique bounded upper semicontinuous viscosity solution of the associated degenerate elliptic equation. Reusable only as a worked example of a stochastic-control verification argument; that is the point of the six sessions it stands on. |
+| `Relative_Arbitrage_Statement` | **no** | The formal statement of Theorem 1.1 with every definition it mentions and nothing else, written for the paper's authors to check against their own — a five-page document, not a library. |
+
+The `yes` column is an intention, not a promise: submission would need each
+entry's `root.tex` written as an abstract rather than as a chapter of this
+development, and §6 does not schedule that work.
+
 Dependency order (each session may import anything above it):
 
 ```
-Matrix_Spectral_Extras ─┐
+Matrix_Spectral_Extras  ─┐
 Semicontinuous_Analysis ─┼─→ Alexandrov_Sup_Convolution ─┐
                          │                               │
 Wiener_Measure ──────────┤                               ├─→ Relative_Arbitrage ─→ Statement
@@ -942,9 +964,11 @@ completion note.
 * **Moves.** Move the `text ‹…›` block that precedes a lemma with it. The
   running commentary is a real asset of this development and must not be
   stranded.
-* **Session splits.** Add the new session to `ROOTS` and give it a `ROOT` with
-  a `description` in the same register as the existing ones, plus `root.tex` and
-  `root.bib` copied and trimmed from the nearest existing session.
+* **Session splits.** Add the new session to `ROOTS` and give it a `ROOT` whose
+  `description` is that session's line from §2.0, plus `root.tex` and
+  `root.bib` copied and trimmed from the nearest existing session. Update the
+  `description` of every session whose contents change — `Martingale_Sampling`'s
+  current one no longer describes what it will hold.
 * **Documents.** Each session's `root.tex` lists theories; update it in the same
   commit as the split, or the document build breaks silently.
 * **`Statement`.** Build it last, every phase. It is the acceptance test: if
