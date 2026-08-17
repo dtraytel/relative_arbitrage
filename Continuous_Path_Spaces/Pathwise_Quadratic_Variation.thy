@@ -152,7 +152,7 @@ qed
 subsection \<open>The per-increment bound\<close>
 
 text \<open>Each compensated increment has second moment at most \<open>18 C\<^sup>2 (dt)\<^sup>2\<close>: the
-  fourth moment contributes \<open>8 C\<^sup>2 (dt)\<^sup>2\<close> by Eq. (2.7) and the compensator
+  fourth moment contributes \<open>8 C\<^sup>2 (dt)\<^sup>2\<close> by Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> and the compensator
   increment \<open>C\<^sup>2 (dt)\<^sup>2\<close> by the Lipschitz rate, through \<open>(a - b)\<^sup>2 \<le> 2a\<^sup>2 + 2b\<^sup>2\<close>.\<close>
 
 text \<open>\<open>sq_diff_le_two\<close> is \<open>sq_diff_le\<close> from

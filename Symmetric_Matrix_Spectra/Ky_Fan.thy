@@ -535,7 +535,7 @@ lemma proj_weights_sum:
 
 section \<open>Ky Fan partial sums: the sum of the \<open>m\<close> largest eigenvalues\<close>
 
-text \<open>Like \<open>Pi_proj\<close> of the paper's own operator, \<open>kyfan\<close> is manifestly
+text \<open>Like a projection-infimum characterisation of the paper's own operator, \<open>kyfan\<close> is manifestly
   independent of any choice of basis; unlike a definition by sorting a
   multiset of eigenvalues, it needs no well-definedness proof.\<close>
 
@@ -1727,7 +1727,7 @@ proof -
     by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
 qed
 
-text \<open>The upper bound of Eq. (3.5): writing \<open>w = t + s\<close> with
+text \<open>The upper bound of Eq. (3.5) of \<^cite>\<open>LaiShkolnikovSoner\<close>: writing \<open>w = t + s\<close> with
   \<open>t u = min (w u) 1\<close> and \<open>s u = max (w u - 1) 0\<close>, the \<open>t\<close>-part is the box
   program and the \<open>s\<close>-part contributes \<open>\<le> (L-1) * (\<Sum> max (lam u) 0)\<close>,
   giving the bracket of Eq. (3.5).\<close>

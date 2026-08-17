@@ -11,7 +11,7 @@ subsection \<open>Towards the theorem on sums: doubling of variables\<close>
 
 text \<open>The development of the theorem on sums below follows
   Crandall--Ishii--Lions, \<^emph>\<open>User's guide to viscosity solutions\<close>, Bull.
-  AMS 27 (1992), Lemma 3.1.  The quantitative core is purely algebraic:
+  AMS 27 (1992), Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>.  The quantitative core is purely algebraic:
   writing \<open>\<Phi>\<^sub>\<alpha>(x,y) = u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> and
   \<open>M\<^sub>\<alpha> = max \<Phi>\<^sub>\<alpha>\<close>, testing \<open>\<Phi>\<^sub>\<beta>\<close> at the maximizer of \<open>\<Phi>\<^sub>\<alpha>\<close> shows
   \<open>M\<^sub>\<alpha>\<close> nonincreasing and squeezes the penalty term, forcing
@@ -64,7 +64,7 @@ proof -
   with sq show ?thesis by linarith
 qed
 
-text \<open>The limit half of Lemma 3.1: once \<open>M\<^sub>\<alpha>\<close> converges, the squeeze with
+text \<open>The limit half of Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: once \<open>M\<^sub>\<alpha>\<close> converges, the squeeze with
   \<open>\<beta> = \<alpha>/2\<close> traps \<open>(\<alpha>/4) * pen \<alpha>\<close> between \<open>0\<close> and
   \<open>M\<^bsub>\<alpha>/2\<^esub> - M\<^sub>\<alpha>\<close>, both tending to \<open>0\<close>: the penalty term vanishes,
   letting the two maximizers merge in the limit.\<close>
@@ -952,9 +952,9 @@ proof -
   thus ?thesis unfolding WP_def P_def by simp
 qed
 
-subsection \<open>The limit half of Lemma 3.1\<close>
+subsection \<open>The limit half of Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>\<close>
 
-text \<open>The remaining half of Crandall--Ishii--Lions Lemma 3.1: the common
+text \<open>The remaining half of Crandall--Ishii--Lions Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: the common
   limit point of the two maximizers maximizes \<open>u - w\<close>.  Upper/lower
   semicontinuity of \<open>u\<close>/\<open>w\<close> enter only through two \<open>eventually\<close>
   statements below, so no semicontinuity predicate has to be fixed here.

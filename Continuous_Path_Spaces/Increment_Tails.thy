@@ -57,7 +57,7 @@ proof -
   thus ?thesis by (simp add: seteq)
 qed
 
-subsection \<open>Eq. (2.7) on subintervals\<close>
+subsection \<open>Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> on subintervals\<close>
 
 corollary fourth_moment_bound_subinterval:
   fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"

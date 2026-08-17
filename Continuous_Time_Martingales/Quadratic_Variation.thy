@@ -26,7 +26,7 @@ text \<open>
       E[\<open>X_n\<close>\<open>^2]\<close> = E[\<open>X_0\<close>\<open>^2]\<close> + \<open>E[[X]_n].\<close>
 
     This is the discrete-time shape of the martingale-problem assumption
-    \<open>dynkin_quadratic\<close> of \<open>Volatile_Market\<close>.\<close>
+    the quadratic Dynkin identity of \<open>Volatile_Market\<close>.\<close>
 section \<open>Elementary square bounds\<close>
 
 lemma sq_diff_le:
@@ -277,7 +277,7 @@ subsection \<open>The Dynkin identity\<close>
 
 text \<open>Taking expectations in the martingale property of \<open>X\<^sup>2 - [X]\<close>
   gives the discrete-time analogue of the martingale-problem identity
-  \<open>dynkin_quadratic\<close>: the second moment grows exactly by the expected
+  the quadratic Dynkin identity: the second moment grows exactly by the expected
   quadratic variation.\<close>
 
 theorem expectation_sq_qvar:
@@ -603,7 +603,7 @@ qed
 subsection \<open>The stopped Dynkin identity\<close>
 
 text \<open>The exact discrete-time shape of the martingale-problem assumption
-  \<open>dynkin_quadratic\<close> of \<open>Volatile\_Market,\<close> now a theorem.\<close>
+  the quadratic Dynkin identity of \<open>Volatile\_Market,\<close> now a theorem.\<close>
 
 theorem stopped_expectation_sq_qvar:
   "(\<integral>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2 \<partial>M)

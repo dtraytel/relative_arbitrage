@@ -14,14 +14,14 @@ text \<open>
   current time -- and \<open>qvmata\<close> assembles the matrix-valued form.  The good
   events \<open>qvp_good\<close> and \<open>qvp_goodupto\<close> are where the repair is exact.
 
-  Nothing here mentions the paper; the construction is consumed by it and
-  not otherwise specific to it.
+  The construction is consumed by the relative-arbitrage development it was
+  extracted from, and is not otherwise specific to it.
 \<close>
 
 subsection \<open>The functional reads the path only up to the current time\<close>
 
 text \<open>
-  The scalar theory assumes \<open>X\<close> uniformly bounded, because Eq. (2.7)
+  The scalar theory assumes \<open>X\<close> uniformly bounded, because Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>
   (\<open>fourth_moment_bound_bounded\<close>) does.  A member of the class is not bounded,
   so the identification has to be localised --- which is what
   @{theory Continuous_Path_Spaces.Stopped_Localization} was built for: stopping an

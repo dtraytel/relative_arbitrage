@@ -49,7 +49,7 @@ lemma etime_le_of_mem:
   using etime_bdd_below[OF T] r mem by (intro cInf_lower) auto
 
 text \<open>The strict-inequality characterisation of \<open>etime\<close>, underlying upper
-  semicontinuity of the exit time along the lines of Larsson--Ruf's Lemma 2.1:
+  semicontinuity of the exit time along the lines of Larsson--Ruf's Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>:
   \<open>etime T A X \<omega> < c\<close> holds exactly when a witness time \<open>r < c\<close> has
   \<open>X r \<omega> \<in> A\<close>, or the cap \<open>T\<close> itself is below \<open>c\<close>.\<close>
 

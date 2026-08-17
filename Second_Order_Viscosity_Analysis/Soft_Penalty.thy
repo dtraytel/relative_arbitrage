@@ -305,8 +305,8 @@ definition soft_hess :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'
   "soft_hess \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R mat 1
       + (\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) *\<^sub>R outer_prod d d"
 
-text \<open>\<open>soft_pen_jet_form\<close> writes the Hessian as a quadratic expression,
-  matched to \<open>soft_hess\<close> by \<open>soft_hess_quadform\<close>, with the gradient
+text \<open>the jet form below writes the Hessian as a quadratic expression,
+  matched to \<open>soft_hess\<close> by the quadratic-form reading of the Hessian, with the gradient
   packaged as \<open>soft_grad\<close>. Writing \<open>R = \<surd>(\<parallel>d\<parallel>\<^sup>2+1) \<ge> 1\<close>: the first
   summand lies in \<open>[0, \<kappa>\<parallel>z\<parallel>\<^sup>2]\<close>, and Cauchy-Schwarz bounds the second by
   \<open>\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, so the quadratic form is bounded by \<open>2\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, uniformly in

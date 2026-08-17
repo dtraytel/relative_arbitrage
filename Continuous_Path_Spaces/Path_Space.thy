@@ -441,7 +441,7 @@ subsection \<open>The law of the path\<close>
 
 text \<open>
   The pushforward of a process with continuous paths along the path map: the
-  object the sets \<open>\<P>\<^sub>x\<close> of Lemma 2.2 consist of.
+  object the sets \<open>\<P>\<^sub>x\<close> of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> consist of.
 \<close>
 
 definition path_law ::
@@ -681,7 +681,7 @@ text \<open>
   test functions. The Fatou-type lemma below transfers uniform moment bounds
   to weak limits by truncation: the truncated integrands are bounded
   continuous, so their integrals converge, and monotone convergence recovers
-  the untruncated bound. This is how the Eq. (2.7) package passes to the
+  the untruncated bound. This is how the Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package passes to the
   limit laws of Lemma 2.2.
 \<close>
 
@@ -1088,7 +1088,6 @@ proof (rule metrizable_weak_conv_topology)
       (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
     unfolding mtopology_of_def by (rule path_metric_polish(2))
 qed
-
 
 (*<*)
 end

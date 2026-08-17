@@ -1,4 +1,4 @@
-section \<open>The fourth-moment bound of Eq. (2.7)\<close>
+section \<open>The fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>\<close>
 
 (*<*)
 theory Moment_Bounds
@@ -53,7 +53,7 @@ proof -
   also have "(\<integral> w. B\<^sup>2 \<partial>M) = B\<^sup>2" by (simp add: prob_space)  finally show ?thesis .
 qed
 
-subsection \<open>Assembling Eq. (2.7)\<close>
+subsection \<open>Assembling Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>\<close>
 
 text \<open>
   Here @{term D} is the squared increment \<open>|X t - X s| ^ 2\<close>, split by Ito's

@@ -9,7 +9,7 @@ begin
 
 text \<open>
   Laws of processes satisfying the uniform fourth-moment package of
-  Eq. (2.7) form a tight family on \<open>C({0..T})\<close>: \<open>dyadic_bad_event_tail_mom\<close>
+  Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> form a tight family on \<open>C({0..T})\<close>: \<open>dyadic_bad_event_tail_mom\<close>
   (@{theory Continuous_Path_Spaces.Modulus_Tails}) bounds the probability some dyadic increment at level
   \<open>j \<ge> n\<close> is large; on the complement, \<open>modulus_of_good_path\<close> and
   \<open>holder_of_dyadic_moduli\<close> (@{theory Continuous_Path_Spaces.Holder_Interpolation}) place the path in an
@@ -322,12 +322,12 @@ proof -
     unfolding tight_on_set_def using part1 part2 by blast
 qed
 
-subsection \<open>The subsequence extraction of Lemma 2.2, per horizon\<close>
+subsection \<open>The subsequence extraction of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, per horizon\<close>
 
 text \<open>
   Combining the tightness theorem with the AFP's
   \<open>tight_on_set_imp_convergent_subsequence\<close>: every sequence of laws whose
-  processes satisfy the uniform Eq. (2.7) package has a weakly convergent
+  processes satisfy the uniform Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package has a weakly convergent
   subsequence on \<open>C({0..T})\<close>. This is the relative-compactness content of
   Lemma 2.2 at a fixed horizon; the \<open>C([0,\<infinity>))\<close> statement extends it to
   unbounded time.
@@ -946,7 +946,7 @@ text \<open>
   Coordinate increments of paths are continuous test functions
   (\<open>continuous_map_path_eval_nth\<close>, composed through the missing-in-library
   \<open>continuous_map_real_diff\<close>), so \<open>weak_conv_on_nn_integral_le\<close> transfers the
-  Eq. (2.7) fourth-moment package from the approximating processes to any
+  Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> fourth-moment package from the approximating processes to any
   weak limit of their path laws. Applied to the diagonal limits of
   \<open>path_laws_diagonal_consistent\<close>, this is what lets the dyadic modulus
   machinery run on the limit.
@@ -1265,7 +1265,7 @@ proof -
   qed
 qed
 
-text \<open>The Eq. (2.7) package holds for the coordinates of the projective
+text \<open>The Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package holds for the coordinates of the projective
   limit --- the increment moment is a function of a two-point marginal, and
   marginals are inherited from the \<open>N m\<close>. This is the input for running the
   dyadic modulus machinery on \<open>L\<close> and building the continuous
@@ -1623,7 +1623,7 @@ subsection \<open>The good-dyadics event of the projective limit is almost sure\
 
 text \<open>
   The coordinates of the projective limit are measurable and carry the
-  Bochner form of the Eq. (2.7) package (adapted from the \<open>nn_integral\<close>
+  Bochner form of the Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package (adapted from the \<open>nn_integral\<close>
   bound). Via \<open>dyadic_bad_event_tail_mom\<close> at every integer horizon and
   coordinate, with geometric level bounds forcing the intersection over
   levels to be null, almost every \<open>\<omega>\<close> satisfies the dyadic moduli from
@@ -2424,7 +2424,7 @@ subsection \<open>Currying toward the \<open>P_x\<close> sample type\<close>
 text \<open>
   The flip map from time-indexed vector paths to coordinate-indexed real
   paths --- the direction along which the limit law will be transported to the
-  \<open>('n \<Rightarrow> real \<Rightarrow> real) measure\<close> sample type that \<open>mkt_exit_vals\<close> fixes.
+  \<open>('n \<Rightarrow> real \<Rightarrow> real) measure\<close> sample type that the application's sample type fixes.
 \<close>
 
 lemma flip_measurable:
@@ -2461,7 +2461,7 @@ text \<open>Weak convergence upgraded by uniform integrability.  \<open>weak_con
   hypothesis, using \<open>Increment_Moments.clamp_integral_error\<close>,
   \<open>Increment_Moments.tendsto_real_of_approximants\<close>, and
   \<open>Increment_Moments.sq_tail_bound_of_fourth_moment\<close> for uniform
-  integrability from the fourth-moment bound of Eq. (2.7).
+  integrability from the fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.
 
   The integrability side conditions are kept as hypotheses, since in the
   application they all come from the moment bounds.\<close>
@@ -2523,6 +2523,435 @@ proof (rule tendsto_real_of_approximants)
                conjI allI errNi lim errN)
 qed
 
+
+subsection \<open>Transfer along weak convergence, and equality of metric measures\<close>
+
+text \<open>Passing an integral to a weak limit when the family is uniformly
+  integrable --- which an \<open>L\<^sup>2\<close> bound supplies --- and recognising two
+  measures on a metric space as equal, or ordered, from their integrals
+  against bounded continuous functions alone.\<close>
+
+text \<open>Total mass survives a weak limit: test against the constant \<open>1\<close>.\<close>
+
+lemma weak_conv_on_prob_limit:
+  fixes X :: "'b topology"
+  assumes wc: "weak_conv_on Ni N sequentially X"
+    and P: "\<And>i. prob_space (Ni i)"
+  shows "prob_space N"
+proof -
+  have fin: "finite_measure N"
+    using wc unfolding weak_conv_on_def by blast
+  have cm: "continuous_map X euclideanreal (\<lambda>_. 1 :: real)"
+    by simp
+  have bd: "\<exists>B. \<forall>x\<in>topspace X. \<bar>(\<lambda>_. 1 :: real) x\<bar> \<le> B"
+    by (intro exI[of _ 1]) simp
+  have lim: "(\<lambda>i. \<integral>x. (1 :: real) \<partial>(Ni i)) \<longlonglongrightarrow> (\<integral>x. (1 :: real) \<partial>N)"
+    using wc cm bd unfolding weak_conv_on_def by blast
+  have one: "(\<integral>x. (1 :: real) \<partial>(Ni i)) = 1" for i
+    using prob_space.prob_space[OF P] by simp
+  have "(\<integral>x. (1 :: real) \<partial>N) = 1"
+    using LIMSEQ_unique[OF lim] one tendsto_const[of "1 :: real"] by simp
+  then have m1: "measure N (space N) = 1"
+    by simp
+  show ?thesis
+    by (intro prob_spaceI)
+      (simp add: finite_measure.emeasure_eq_measure[OF fin] m1)
+qed
+
+text \<open>A finite Borel measure on a metric space is determined by its
+  integrals against bounded continuous functions: apply the closed-set
+  Portmanteau bound to the constant sequence both ways, then extend from
+  closed sets (\<open>sets_borel_of_closed\<close>) by \<open>measure_eqI_generator_eq\<close>.
+  This monotone-class engine upgrades the integrated identities on
+  closure points from continuous past functionals to arbitrary past
+  events.\<close>
+
+lemma metric_measure_eqI_bounded_cts:
+  fixes m :: "'a metric" and M1 M2 :: "'a measure"
+  assumes s1: "sets M1 = sets (borel_of (mtopology_of m))"
+    and s2: "sets M2 = sets (borel_of (mtopology_of m))"
+    and f1: "finite_measure M1" and f2: "finite_measure M2"
+    and eq: "\<And>g. continuous_map (mtopology_of m) euclideanreal g \<Longrightarrow>
+        \<exists>B. \<forall>x\<in>topspace (mtopology_of m). \<bar>g x\<bar> \<le> B \<Longrightarrow>
+        (\<integral>x. g x \<partial>M1) = (\<integral>x. g x \<partial>M2)"
+  shows "M1 = M2"
+proof -
+  interpret PM: Metric_space "mspace m" "mdist m"
+    by (rule Metric_space_mspace_mdist)
+  have top: "PM.mtopology = mtopology_of m"
+    by (simp add: mtopology_of_def)
+  have tsp: "topspace (mtopology_of m) = mspace m"
+    using top PM.topspace_mtopology by simp
+  have le: "measure Ma A \<le> measure Mb A"
+    if sa: "sets Ma = sets (borel_of (mtopology_of m))"
+    and sb: "sets Mb = sets (borel_of (mtopology_of m))"
+    and fa: "finite_measure Ma" and fb: "finite_measure Mb"
+    and eqab: "\<And>g. continuous_map (mtopology_of m) euclideanreal g \<Longrightarrow>
+        \<exists>B. \<forall>x\<in>topspace (mtopology_of m). \<bar>g x\<bar> \<le> B \<Longrightarrow>
+        (\<integral>x. g x \<partial>Ma) = (\<integral>x. g x \<partial>Mb)"
+    and clA: "closedin (mtopology_of m) A"
+    for Ma Mb :: "'a measure" and A
+  proof -
+    interpret MW: mweak_conv_fin "mspace m" "mdist m" "\<lambda>_ :: nat. Ma"
+        Mb sequentially
+    proof
+      show "\<forall>\<^sub>F i in sequentially.
+          sets ((\<lambda>_ :: nat. Ma) i) = sets (borel_of PM.mtopology)"
+        using sa top by simp
+      show "sets Mb = sets (borel_of PM.mtopology)"
+        using sb top by simp
+      show "\<forall>\<^sub>F i in sequentially. finite_measure ((\<lambda>_ :: nat. Ma) i)"
+        using fa by simp
+      show "\<exists>A. countable A \<and> A \<subseteq> sets Mb \<and> \<Union> A = space Mb
+          \<and> (\<forall>a\<in>A. emeasure Mb a \<noteq> \<infinity>)"
+        by (intro exI[of _ "{space Mb}"])
+          (auto simp: finite_measure.emeasure_eq_measure[OF fb])
+      show "emeasure Mb (space Mb) \<noteq> \<top>"
+        by (simp add: finite_measure.emeasure_eq_measure[OF fb])
+    qed
+    have key: "Limsup sequentially (\<lambda>x. ereal (measure Ma A))
+        \<le> ereal (measure Mb A)"
+    proof (rule MW.mweak_conv2)
+      fix g :: "'a \<Rightarrow> real"
+      assume u: "uniformly_continuous_map PM.Self euclidean_metric g"
+        and b: "\<exists>B. \<forall>x\<in>mspace m. \<bar>g x\<bar> \<le> B"
+      have cg: "continuous_map (mtopology_of m) euclideanreal g"
+        using uniformly_continuous_imp_continuous_map[OF u]
+        by (simp add: mtopology_of_def)
+      have "(\<integral>x. g x \<partial>Ma) = (\<integral>x. g x \<partial>Mb)"
+        by (rule eqab[OF cg]) (use b in \<open>simp add: tsp\<close>)
+      then show "((\<lambda>i. \<integral>x. g x \<partial>((\<lambda>_ :: nat. Ma) i))
+          \<longlongrightarrow> (\<integral>x. g x \<partial>Mb)) sequentially"
+        by simp
+    next
+      show "closedin PM.mtopology A" using clA top by simp
+    qed
+    have "Limsup sequentially (\<lambda>x. ereal (measure Ma A))
+        = ereal (measure Ma A)"
+      by (simp add: Limsup_const)
+    with key show ?thesis by simp
+  qed
+  have eqC: "emeasure M1 C = emeasure M2 C"
+    if C: "closedin (mtopology_of m) C" for C
+  proof -
+    have "measure M1 C \<le> measure M2 C"
+      by (rule le[OF s1 s2 f1 f2 eq C])
+    moreover have "measure M2 C \<le> measure M1 C"
+      by (rule le[OF s2 s1 f2 f1 eq[symmetric] C])
+    ultimately have "measure M1 C = measure M2 C" by linarith
+    then show ?thesis
+      by (simp add: finite_measure.emeasure_eq_measure[OF f1]
+          finite_measure.emeasure_eq_measure[OF f2])
+  qed
+  show ?thesis
+  proof (rule measure_eqI_generator_eq[of "{C. closedin (mtopology_of m) C}"
+      "topspace (mtopology_of m)" M1 M2
+      "\<lambda>_ :: nat. topspace (mtopology_of m)"])
+    show "Int_stable {C. closedin (mtopology_of m) C}"
+      by (auto simp: Int_stable_def closedin_Int)
+    show "{C. closedin (mtopology_of m) C} \<subseteq> Pow (topspace (mtopology_of m))"
+      by (fastforce dest: closedin_subset)
+    show "\<And>X. X \<in> {C. closedin (mtopology_of m) C}
+        \<Longrightarrow> emeasure M1 X = emeasure M2 X"
+      using eqC by auto
+    show "sets M1 = sigma_sets (topspace (mtopology_of m))
+        {C. closedin (mtopology_of m) C}"
+      unfolding s1 by (rule sets_borel_of_closed)
+    show "sets M2 = sigma_sets (topspace (mtopology_of m))
+        {C. closedin (mtopology_of m) C}"
+      unfolding s2 by (rule sets_borel_of_closed)
+    show "range (\<lambda>_ :: nat. topspace (mtopology_of m))
+        \<subseteq> {C. closedin (mtopology_of m) C}"
+      using closedin_topspace[of "mtopology_of m"] by auto
+    show "(\<Union>i :: nat. topspace (mtopology_of m)) = topspace (mtopology_of m)"
+      by simp
+    show "\<And>i :: nat. emeasure M1 (topspace (mtopology_of m)) \<noteq> \<infinity>"
+      by (simp add: finite_measure.emeasure_eq_measure[OF f1])
+  qed
+qed
+
+text \<open>The one-sided companion of \<open>metric_measure_eqI_bounded_cts\<close>: if one
+  finite Borel measure integrates every continuous \<open>[0,1]\<close>-valued
+  function below another, it is dominated on every Borel set. Closed sets
+  first, via the Urysohn sandwich \<open>1\<^sub>C \<le> f\<^sub>m \<le> 1\<^bsub>U\<^sub>m\<^esub>\<close> with
+  \<open>U\<^sub>m \<down> C\<close>; general Borel sets by inner regularity
+  (\<open>finite_measure.inner_regular'\<close>, AFP Riesz--Representation), since a
+  one-sided bound cannot be extended from a generator by a Dynkin
+  argument.\<close>
+
+lemma metric_measure_mono_bounded_cts:
+  fixes m :: "'a metric" and M1 M2 :: "'a measure"
+  assumes s1: "sets M1 = sets (borel_of (mtopology_of m))"
+    and s2: "sets M2 = sets (borel_of (mtopology_of m))"
+    and f1: "finite_measure M1" and f2: "finite_measure M2"
+    and le: "\<And>g. continuous_map (mtopology_of m) euclideanreal g \<Longrightarrow>
+        (\<And>x. 0 \<le> g x) \<Longrightarrow> (\<And>x. g x \<le> 1) \<Longrightarrow>
+        (\<integral>x. g x \<partial>M1) \<le> (\<integral>x. g x \<partial>M2)"
+    and A: "A \<in> sets M1"
+  shows "measure M1 A \<le> measure M2 A"
+proof -
+  interpret PM: Metric_space "mspace m" "mdist m"
+    by (rule Metric_space_mspace_mdist)
+  have top: "PM.mtopology = mtopology_of m"
+    by (simp add: mtopology_of_def)
+  have tsp: "topspace (mtopology_of m) = mspace m"
+    using top PM.topspace_mtopology by simp
+  have leC: "measure M1 C \<le> measure M2 C"
+    if Ccl: "closedin (mtopology_of m) C" for C
+  proof (cases "C = {}")
+    case True
+    then show ?thesis by simp
+  next
+    case False
+    have CM: "C \<subseteq> mspace m"
+      using closedin_subset[OF Ccl] tsp by simp
+    have Csets1: "C \<in> sets M1" and Csets2: "C \<in> sets M2"
+      using borel_of_closed[OF Ccl] s1 s2 by simp_all
+    define Um where "Um = (\<lambda>mm :: nat. \<Union>a\<in>C. PM.mball a (1 / Suc mm))"
+    have Um_open: "openin (mtopology_of m) (Um mm)" for mm
+      unfolding Um_def top[symmetric] by auto
+    have Um_sets2: "Um mm \<in> sets M2" for mm
+      using borel_of_open[OF Um_open] s2 by simp
+    have C_Um: "C \<subseteq> Um mm" for mm
+      unfolding Um_def using CM
+      by (auto intro!: PM.centre_in_mball_iff[THEN iffD2])
+    have Um_dec: "decseq Um"
+    proof (rule decseq_SucI)
+      fix mm :: nat
+      have "1 / Suc (Suc mm) \<le> 1 / Suc mm"
+        by (simp add: frac_le)
+      then show "Um (Suc mm) \<subseteq> Um mm"
+        unfolding Um_def by auto
+    qed
+    have Um_Int: "(\<Inter>mm. Um mm) = C"
+    proof
+      show "C \<subseteq> (\<Inter>mm. Um mm)" using C_Um by blast
+      show "(\<Inter>mm. Um mm) \<subseteq> C"
+      proof
+        fix x assume x: "x \<in> (\<Inter>mm. Um mm)"
+        then have xM: "x \<in> mspace m"
+          unfolding Um_def by auto
+        show "x \<in> C"
+        proof (rule ccontr)
+          assume xC: "x \<notin> C"
+          have op: "openin (mtopology_of m) (topspace (mtopology_of m) - C)"
+            using Ccl unfolding closedin_def by blast
+          have xin: "x \<in> topspace (mtopology_of m) - C"
+            using xM xC tsp by simp
+          obtain r where r0: "0 < r"
+            and rsub: "PM.mball x r \<subseteq> topspace (mtopology_of m) - C"
+            using op[unfolded top[symmetric] PM.openin_mtopology] xin
+              top by auto
+          obtain mm where mm: "1 / Suc mm < r"
+            using reals_Archimedean[OF r0] by (auto simp: inverse_eq_divide)
+          obtain a where a: "a \<in> C" "x \<in> PM.mball a (1 / Suc mm)"
+            using x unfolding Um_def by blast
+          have "mdist m a x < 1 / Suc mm" and aM: "a \<in> mspace m"
+            using a by auto
+          then have "a \<in> PM.mball x r"
+            using mm xM by (auto simp: PM.commute)
+          then have "a \<notin> C" using rsub by auto
+          with a show False by simp
+        qed
+      qed
+    qed
+    have bound: "measure M1 C \<le> measure M2 (Um mm)" for mm
+    proof -
+      have cl2: "closedin (mtopology_of m)
+          (topspace (mtopology_of m) - Um mm)"
+        using Um_open[of mm] openin_subset[OF Um_open[of mm]]
+        by (auto simp: closedin_def Diff_Diff_Int Int_absorb1 tsp)
+      have disj: "C \<inter> (topspace (mtopology_of m) - Um mm) = {}"
+        using C_Um[of mm] by blast
+      have sep: "1 / Suc mm \<le> mdist m x y"
+        if xy: "x \<in> C" "y \<in> topspace (mtopology_of m) - Um mm" for x y
+      proof (rule ccontr)
+        assume "\<not> 1 / Suc mm \<le> mdist m x y"
+        then have "mdist m x y < 1 / Suc mm" by simp
+        then have "y \<in> PM.mball x (1 / Suc mm)"
+          using xy CM tsp by auto
+        then have "y \<in> Um mm"
+          unfolding Um_def using xy by blast
+        with xy show False by simp
+      qed
+      obtain fm :: "'a \<Rightarrow> real"
+        where fmU: "uniformly_continuous_map m euclidean_metric fm"
+        and fm0: "\<And>x. 0 \<le> fm x" and fm1: "\<And>x. fm x \<le> 1"
+        and fmC: "\<And>x. x \<in> C \<Longrightarrow> fm x = 1"
+        and fmZ: "\<And>x. x \<in> topspace (mtopology_of m) - Um mm \<Longrightarrow> fm x = 0"
+        using Urysohn_lemma_uniform[OF Ccl cl2 disj sep] by auto
+      have fmc: "continuous_map (mtopology_of m) euclideanreal fm"
+        using uniformly_continuous_imp_continuous_map[OF fmU]
+        by (simp add: mtopology_of_def)
+      have fmmeas: "fm \<in> borel_measurable (borel_of (mtopology_of m))"
+        using continuous_map_measurable[OF fmc]
+        by (simp add: borel_of_euclidean)
+      have fmm1: "fm \<in> borel_measurable M1"
+        using fmmeas measurable_cong_sets[OF s1 refl] by blast
+      have fmm2: "fm \<in> borel_measurable M2"
+        using fmmeas measurable_cong_sets[OF s2 refl] by blast
+      have int_fm1: "integrable M1 fm"
+        by (rule finite_measure.integrable_const_bound[OF f1, of _ 1])
+          (use fm0 fm1 fmm1 in auto)
+      have int_fm2: "integrable M2 fm"
+        by (rule finite_measure.integrable_const_bound[OF f2, of _ 1])
+          (use fm0 fm1 fmm2 in auto)
+      have int_indC: "integrable M1 (indicat_real C)"
+        by (intro integrable_real_indicator Csets1)
+          (simp add: finite_measure.emeasure_eq_measure[OF f1])
+      have "measure M1 C = (\<integral>x. indicat_real C x \<partial>M1)"
+        using Csets1 by simp
+      also have "\<dots> \<le> (\<integral>x. fm x \<partial>M1)"
+        by (intro integral_mono int_indC int_fm1)
+          (use fm0 fmC in \<open>auto simp: indicator_def\<close>)
+      also have "\<dots> \<le> (\<integral>x. fm x \<partial>M2)"
+        by (rule le[OF fmc fm0 fm1])
+      also have "\<dots> \<le> (\<integral>x. indicat_real (Um mm) x \<partial>M2)"
+      proof (rule integral_mono_AE[OF int_fm2])
+        show "integrable M2 (indicat_real (Um mm))"
+          by (intro integrable_real_indicator Um_sets2)
+            (simp add: finite_measure.emeasure_eq_measure[OF f2])
+        show "AE x in M2. fm x \<le> indicat_real (Um mm) x"
+        proof (intro AE_I2)
+          fix x assume x: "x \<in> space M2"
+          have xtop: "x \<in> topspace (mtopology_of m)"
+            using x
+            by (simp add: sets_eq_imp_space_eq[OF s2] space_borel_of)
+          show "fm x \<le> indicat_real (Um mm) x"
+          proof (cases "x \<in> Um mm")
+            case True then show ?thesis
+              using fm1 by (simp add: indicator_def)
+          next
+            case False then show ?thesis
+              using fmZ xtop by (simp add: indicator_def)
+          qed
+        qed
+      qed
+      also have "\<dots> = measure M2 (Um mm)"
+        using Um_sets2 by simp
+      finally show ?thesis .
+    qed
+    have lim: "(\<lambda>mm. measure M2 (Um mm)) \<longlonglongrightarrow> measure M2 C"
+      using finite_measure.finite_Lim_measure_decseq[OF f2 _ Um_dec]
+        Um_sets2 Um_Int by auto
+    show ?thesis
+      by (rule LIMSEQ_le_const[OF lim]) (use bound in auto)
+  qed
+  have mtz: "metrizable_space (mtopology_of m)"
+    using PM.metrizable_space_mtopology top by simp
+  have ir: "inner_regular (mtopology_of m) M1"
+    by (rule finite_measure.inner_regular'[OF f1 mtz s1[symmetric]])
+  have "measure M1 A
+      = (\<Squnion>C\<in>{C. closedin (mtopology_of m) C \<and> C \<subseteq> A}. measure M1 C)"
+    by (rule finite_measure.inner_regularD[OF f1 ir A])
+  also have "\<dots> \<le> measure M2 A"
+  proof (rule cSUP_least)
+    show "{C. closedin (mtopology_of m) C \<and> C \<subseteq> A} \<noteq> {}"
+      by (auto intro!: exI[of _ "{}"])
+    fix C assume "C \<in> {C. closedin (mtopology_of m) C \<and> C \<subseteq> A}"
+    then have Ccl: "closedin (mtopology_of m) C" and CA: "C \<subseteq> A" by auto
+    have "measure M1 C \<le> measure M2 C" by (rule leC[OF Ccl])
+    also have "\<dots> \<le> measure M2 A"
+      by (intro finite_measure.finite_measure_mono[OF f2 CA])
+        (use A s1 s2 in simp)
+    finally show "measure M1 C \<le> measure M2 A" .
+  qed
+  finally show ?thesis .
+qed
+
+text \<open>The class's integrated identities --- \<open>E[Z\<sqdot>(X\<^sub>t - X\<^sub>s)] = 0\<close> for a
+  bounded continuous test \<open>Z\<close> of the past, and its covariation analogue ---
+  are integrals of continuous but unbounded path functionals, so weak
+  convergence alone does not transfer them. \<open>Path_Tightness\<close>'s
+  \<open>weak_conv_on_integral_unif_integrable\<close> closes the gap given uniform
+  integrability, which a uniform \<open>L\<^sup>2\<close> bound supplies via
+  Chebyshev--Markov: \<open>\<integral>\<bar>f\<bar>\<sqdot>1\<^bsub>{\<bar>f\<bar>>R}\<^esub> \<le> (1/R)\<sqdot>\<integral>f\<^sup>2 \<le> C/R\<close>.\<close>
+
+lemma unif_integrable_of_L2_bound:
+  fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
+  assumes C: "0 \<le> C"
+    and iTi: "\<And>i R. integrable (Ni i)
+        (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and iTN: "\<And>R. integrable N (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and sqi: "\<And>i. (\<integral>w. (f w)\<^sup>2 \<partial>(Ni i)) \<le> C"
+    and sqN: "(\<integral>w. (f w)\<^sup>2 \<partial>N) \<le> C"
+    and sqiI: "\<And>i. integrable (Ni i) (\<lambda>w. (f w)\<^sup>2)"
+    and sqNI: "integrable N (\<lambda>w. (f w)\<^sup>2)"
+    and e: "0 < e"
+  shows "\<exists>R. 0 \<le> R
+      \<and> (\<forall>i. (\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>(Ni i)) \<le> e)
+      \<and> (\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>N) \<le> e"
+proof -
+  define R where "R = (C + 1) / e"
+  have R0: "0 < R" using C e unfolding R_def by simp
+  have key: "(\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>M) \<le> e"
+    if int: "integrable M (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+      and sq: "(\<integral>w. (f w)\<^sup>2 \<partial>M) \<le> C"
+      and sqI: "integrable M (\<lambda>w. (f w)\<^sup>2)"
+    for M :: "'b measure"
+  proof -
+    have pt: "\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<le> (1 / R) * (f w)\<^sup>2"
+      for w
+    proof (cases "R < \<bar>f w\<bar>")
+      case True
+      have "\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) = \<bar>f w\<bar>"
+        using True by (simp add: indicator_def)
+      also have "\<dots> = (1 / R) * (R * \<bar>f w\<bar>)" using R0 by simp
+      also have "\<dots> \<le> (1 / R) * (\<bar>f w\<bar> * \<bar>f w\<bar>)"
+        using True R0 by (intro mult_left_mono mult_right_mono) auto
+      also have "\<dots> = (1 / R) * (f w)\<^sup>2"
+        by (simp add: power2_eq_square flip: power2_abs)
+      finally show ?thesis .
+    next
+      case False
+      have "\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) = 0"
+        using False by (simp add: indicator_def)
+      also have "\<dots> \<le> (1 / R) * (f w)\<^sup>2"
+        using R0 by simp
+      finally show ?thesis .
+    qed
+    have "(\<integral>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w) \<partial>M)
+        \<le> (\<integral>w. (1 / R) * (f w)\<^sup>2 \<partial>M)"
+      using pt int sqI by (intro Bochner_Integration.integral_mono) auto
+    also have "\<dots> = (1 / R) * (\<integral>w. (f w)\<^sup>2 \<partial>M)" by simp
+    also have "\<dots> \<le> (1 / R) * C"
+      using sq R0 by (intro mult_left_mono) auto
+    also have "\<dots> \<le> e"
+      using C e R0 unfolding R_def by (simp add: field_simps)
+    finally show ?thesis .
+  qed
+  show ?thesis
+    using R0 key[OF iTi sqi sqiI] key[OF iTN sqN sqNI]
+    by (intro exI[of _ R]) auto
+qed
+
+text \<open>The transfer the canonical-market construction uses: a continuous
+  path functional with a uniform second-moment bound has its integral
+  pass to the weak limit. Applied with
+  \<open>f \<omega> = Z \<omega> \<sqdot> ((X\<^sub>t - X\<^sub>s) \<bullet> e\<^sub>j)\<close> this carries the martingale
+  identity to the limit law, and with the squared increment the
+  covariation identity.\<close>
+
+theorem weak_conv_integral_of_L2_bound:
+  fixes f :: "'b \<Rightarrow> real" and Ni :: "nat \<Rightarrow> 'b measure"
+  assumes wc: "weak_conv_on Ni N sequentially X"
+    and f: "continuous_map X euclideanreal f"
+    and fmi: "\<And>i. finite_measure (Ni i)" and fmN: "finite_measure N"
+    and iNi: "\<And>i. integrable (Ni i) f" and iN: "integrable N f"
+    and iCi: "\<And>i R. integrable (Ni i) (\<lambda>w. max (- R) (min R (f w)))"
+    and iCN: "\<And>R. integrable N (\<lambda>w. max (- R) (min R (f w)))"
+    and iTi: "\<And>i R. integrable (Ni i)
+        (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and iTN: "\<And>R. integrable N (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
+    and C: "0 \<le> C"
+    and sqi: "\<And>i. (\<integral>w. (f w)\<^sup>2 \<partial>(Ni i)) \<le> C" and sqN: "(\<integral>w. (f w)\<^sup>2 \<partial>N) \<le> C"
+    and sqiI: "\<And>i. integrable (Ni i) (\<lambda>w. (f w)\<^sup>2)"
+    and sqNI: "integrable N (\<lambda>w. (f w)\<^sup>2)"
+  shows "(\<lambda>i. \<integral>w. f w \<partial>(Ni i)) \<longlonglongrightarrow> (\<integral>w. f w \<partial>N)"
+  by (rule weak_conv_on_integral_unif_integrable
+      [OF wc f fmi fmN iNi iN iCi iCN iTi iTN])
+    (rule unif_integrable_of_L2_bound
+      [OF C iTi iTN sqi sqN sqiI sqNI])
 
 (*<*)
 end

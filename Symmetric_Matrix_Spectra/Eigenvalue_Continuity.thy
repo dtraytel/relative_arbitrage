@@ -14,7 +14,7 @@ text \<open>
   so \<open>kyfan m\<close> moves by at most \<open>m * entrysum (A - B)\<close> between matrices
   \<open>A\<close> and \<open>B\<close>, and \<open>eigval\<close>, a difference of two Ky Fan sums, inherits
   the bound. This continuity is used twice in the paper's proof of
-  Lemma 3.1: to pass to the limit in Eq. (3.8), and for continuity of
+  Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: to pass to the limit in Eq. (3.8), and for continuity of
   \<open>F\<close> away from \<open>p = 0\<close>.\<close>
 section \<open>The entrywise sum\<close>
 
@@ -155,7 +155,7 @@ qed
 
 text \<open>Hence each ordered eigenvalue is Lipschitz too, being a difference of
   two Ky Fan sums.  This is the continuity of
-  \<open>M \<mapsto> (\<lambda>\<^sub>(\<^sub>1\<^sub>)(M), \<dots>, \<lambda>\<^sub>(\<^sub>n\<^sub>)(M))\<close> that the proof of Lemma 3.1 needs.\<close>
+  \<open>M \<mapsto> (\<lambda>\<^sub>(\<^sub>1\<^sub>)(M), \<dots>, \<lambda>\<^sub>(\<^sub>n\<^sub>)(M))\<close> that the proof of Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> needs.\<close>
 
 corollary eigval_lipschitz:
   fixes A B :: "real^'n::finite^'n"

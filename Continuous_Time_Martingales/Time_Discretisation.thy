@@ -25,7 +25,7 @@ text \<open>
     martingale along a grid depends only on the end points of the grid, not
     on the grid itself.  That is the first half of the construction of the
     quadratic variation <Y> (whose existence as a process is layer 3, and is
-    what turns the martingale-problem assumption \<open>dynkin_quadratic\<close> of
+    what turns the martingale-problem assumption the quadratic Dynkin identity of
     \<open>Volatile_Market\<close> into a theorem).\<close>
 section \<open>Time grids\<close>
 

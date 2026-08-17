@@ -77,7 +77,7 @@ qed
 text \<open>
   The energy identity: along any partition, the second moment of a
   continuous-time martingale grows exactly by the expected sum of squared
-  increments. This is the second-moment input of Eq. (2.7).
+  increments. This is the second-moment input of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.
 \<close>
 
 theorem expectation_sq_sampled:

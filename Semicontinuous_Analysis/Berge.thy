@@ -6,9 +6,9 @@ begin
 
 (*>*)
 
-section \<open>Proposition 2.4: the upper semicontinuity half, without a selection theorem\<close>
+section \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close>: the upper semicontinuity half, without a selection theorem\<close>
 
-text \<open>Proposition 2.4 cites Larsson--Ruf's proof of their Proposition 2.2(ii),
+text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> cites Larsson--Ruf's proof of their Proposition 2.2(ii),
   (iii): \<open>\<P>\<^sub>x\<close> is the pushforward of \<open>\<P>\<^sub>0\<close> under \<open>x+\<cdot>\<close>, so
   \<open>v(x) = sup\<^bsub>P \<in> \<P>\<^sub>0\<^esub> f(x,P)\<close> with \<open>f\<close> jointly upper semicontinuous and
   \<open>\<P>\<^sub>0\<close> compact; a selection theorem (Bertsekas--Shreve, Prop. 7.33) then
@@ -305,7 +305,7 @@ qed
 
 text \<open>Two closure companions, both for a metrizable topology: a point of the
   closure of \<open>A\<close> is a sequential limit of points of \<open>A\<close>; and -- the form
-  Lemma 2.3 consumes -- subsequence extraction on \<open>A\<close> extends to its
+  Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> consumes -- subsequence extraction on \<open>A\<close> extends to its
   closure, by approximating the given sequence within \<open>1/(n+1)\<close> and carrying
   the extracted limit across via the triangle inequality.\<close>
 

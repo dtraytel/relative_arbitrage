@@ -329,7 +329,7 @@ proof -
   qed
 qed
 
-section \<open>Eq. (2.7) for unbounded \<open>L\<^sup>2\<close> martingales, by localization and Fatou\<close>
+section \<open>Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> for unbounded \<open>L\<^sup>2\<close> martingales, by localization and Fatou\<close>
 
 lemma etime_eq_T_of_no_hit:
   assumes T: "0 \<le> T" and nh: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> X s \<omega> \<notin> A"
@@ -344,7 +344,7 @@ proof -
 qed
 
 text \<open>
-  The paper's Eq. (2.7) with constant \<open>8 C\<^sup>2\<close> for an unbounded \<open>L\<^sup>2\<close>
+  The paper's Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with constant \<open>8 C\<^sup>2\<close> for an unbounded \<open>L\<^sup>2\<close>
   martingale with deterministic start and a Lipschitz-rate compensator for
   its square. Localize at the exit times of the balls of radius
   \<open>\<bar>x\<^sub>0\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process --- its

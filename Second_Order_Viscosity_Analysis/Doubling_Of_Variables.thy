@@ -279,7 +279,7 @@ text \<open>Since the penalty is bounded, the doubled maximum is at least the
 
 text \<open>These four lemmas use the penalty only through \<open>Pn 0 = 0\<close>: each proof
   instantiates the maximiser inequality at a diagonal point, where the
-  penalty is \<open>Pn (z - z) = Pn 0\<close> (\<open>soft_pen_zero\<close> for \<open>soft_pen\<close>).
+  penalty is \<open>Pn (z - z) = Pn 0\<close> (the concrete penalty vanishing at the origin for \<open>soft_pen\<close>).
   \<open>doubling_off_diagonal_gen\<close> puts the maximising pair off the diagonal
   whenever \<open>u - w\<close> beats its value at the common point, making
   \<open>soft_grad_nonzero\<close> applicable and supplying the positive lower bound
@@ -476,7 +476,7 @@ qed
 text \<open>The bridge itself: an Alexandrov jet of \<open>v\<close> at \<open>xh\<close> with data
   \<open>(p, A)\<close> gives, for every \<open>\<delta> > 0\<close>, the local-max statement for the jet
   test function built from \<open>(p, A + \<delta> I)\<close>, the \<open>subtest\<close> hypothesis
-  \<open>comparison_contradiction\<close> requires.\<close>
+  the comparison argument downstream requires.\<close>
 
 theorem jet_imp_local_max_test:
   fixes v :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n^'n"
@@ -1360,7 +1360,7 @@ proof -
 qed
 
 text \<open>With \<open>m = \<Phi> \<xi>\<^sub>0 - \<delta>\<rho>\<^sup>2\<close>, the smallness condition
-  \<open>doubled_supconv_jet_exists_shifted\<close> needs reduces to
+  the shifted doubled-jet package needs reduces to
   \<open>2 dd r < \<delta>\<rho>\<^sup>2\<close>, a condition on \<open>dd, r, \<delta>, \<rho>\<close> alone, so \<open>dd\<close> can
   always be chosen after \<open>\<delta>\<close> and \<open>\<rho>\<close>.\<close>
 
@@ -1384,7 +1384,7 @@ qed
 
 text \<open>A doubling maximiser is naturally stated for the unsplit functional
   \<open>A (fst y) + B (snd y) - penalty\<close>, whereas
-  \<open>doubled_supconv_jet_exists_shifted\<close> wants its annulus bound with the
+  the shifted doubled-jet package wants its annulus bound with the
   two per-block quadratics written out; \<open>norm_sq_prod_split\<close> reconciles
   the two forms, and the centre value is unchanged since both quadratics
   vanish at \<open>\<xi>\<^sub>0\<close>.\<close>
@@ -1525,7 +1525,7 @@ proof -
 qed
 
 text \<open>The linearity and symmetry of the two diagonal blocks that
-  \<open>sums_psd_at_interior_max\<close> needs follow from the Alexandrov jet's
+  the Hessian ordering at an interior maximum needs follow from the Alexandrov jet's
   \<open>bounded_linear W\<close> and \<open>u \<cdot> W u' = u' \<cdot> W u\<close>, via
   \<open>linear_slice_fst\<close> / \<open>linear_slice_snd\<close> / \<open>sym_slice_fst\<close> /
   \<open>sym_slice_snd\<close> (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}).\<close>
@@ -1638,7 +1638,7 @@ proof -
     by simp
 qed
 
-text \<open>The two component jets \<open>comparison_env_complete\<close> takes as
+text \<open>The two component jets the envelope-form comparison assembly takes as
   hypotheses come from the doubled jet by restricting to the two
   coordinate slices. Moving the first argument by \<open>h\<close> and holding the
   second fixed changes \<open>(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> by a linear term
@@ -1980,7 +1980,7 @@ qed
 text \<open>With \<open>q = 0\<close> at the doubled maximum
   (\<open>gradient_vanishes_at_interior_max\<close>) the two gradients become
   \<open>\<alpha>(x' - y')\<close> and \<open>-\<alpha>(x' - y')\<close>, the shared \<open>p\<close> and \<open>-p\<close> that
-  \<open>comparison_env_complete\<close> requires.\<close>
+  the envelope-form comparison assembly requires.\<close>
 
 corollary doubled_jet_slices_at_max:
   fixes a b :: "'a::euclidean_space \<Rightarrow> real"
@@ -2285,7 +2285,7 @@ proof -
   show ?thesis unfolding nrm by (rule step)
 qed
 
-text \<open>The last hypothesis of \<open>env_strict_contradiction_of_limits\<close> - that the
+text \<open>The last hypothesis of the strict-inequality contradiction at the limit - that the
   two gradient sequences share a limit - follows from the tilts shrinking
   to zero: with tilt \<open>p\<^sub>i\<close> the untilted jet has gradient \<open>-p\<^sub>i\<close>, so the two
   block gradients differ by \<open>fst p\<^sub>i + snd p\<^sub>i\<close> alone, independent of the
@@ -2334,8 +2334,8 @@ proof -
     by (rule gradient_sequences_align(2)[OF t0 gconv])
 qed
 
-text \<open>\<open>env_strict_contradiction_of_limits\<close> wants the operator bound at
-  \<open>X\<^sub>i\<close>, but \<open>subsol_shifted_bound_supconv\<close> only delivers it at the
+text \<open>the strict-inequality contradiction at the limit wants the operator bound at
+  \<open>X\<^sub>i\<close>, but the shifted subsolution bound only delivers it at the
   corrected matrix \<open>X\<^sub>i+\<delta>I\<close>, so the two limits \<open>i \<rightarrow> \<infinity>\<close> and \<open>\<delta> \<rightarrow> 0\<close>
   must be taken together via the nearby-point formulation.  The predicate
   is taken curried, as \<open>Q p' M'\<close> rather than \<open>P (p', M')\<close>, so that \<open>OF\<close>
@@ -2481,7 +2481,7 @@ proof -
   from near q show ?thesis by blast
 qed
 
-text \<open>\<open>comparison_supconv_sequence_complete\<close> consumes a sequence of Jensen
+text \<open>the sequential comparison assembly consumes a sequence of Jensen
   applications with tilts shrinking to zero.  Jensen's smallness condition
   \<open>2 dd r < \<Phi>(\<xi>)-m\<close> holds for every sufficiently small tilt once the
   centre beats the boundary value at all, so an admissible sequence
@@ -2986,7 +2986,7 @@ proof -
   then show ?thesis using g t1 fit by linarith
 qed
 
-text \<open>\<open>doubled_supconv_jet_exists\<close> produces four objects at once - the
+text \<open>the doubled-jet package produces four objects at once - the
   maximiser, the tilt, the gradient and the Hessian - so plain \<open>choice\<close>
   does not apply directly; this is the general skolemisation form,
   reusable wherever a construction is run at each index and collected
@@ -3234,13 +3234,13 @@ proof -
   ultimately show ?thesis using c by linarith
 qed
 
-text \<open>\<open>doubled_supconv_jet_exists\<close> returns, at each tilt, a maximiser of the
+text \<open>the doubled-jet package returns, at each tilt, a maximiser of the
   tilted functional together with an Alexandrov jet of the untilted one;
   this reads off the two component jets.  The tilt costs nothing to
   absorb: at an interior maximum of the tilted functional the untilted
   jet has gradient exactly \<open>-p\<close> (\<open>gradient_is_minus_tilt\<close>), so the two
   block gradients are \<open>-fst p+\<alpha>(x̂-ŷ)\<close> and \<open>-(snd p+\<alpha>(x̂-ŷ))\<close>, matching
-  \<open>Pu\<close> and \<open>-Pw\<close> of \<open>comparison_supconv_bounded_family\<close> with common
+  \<open>Pu\<close> and \<open>-Pw\<close> of the bounded-family comparison assembly with common
   penalty gradient \<open>G = \<alpha>(x̂-ŷ)\<close>.\<close>
 
 theorem tilted_doubled_jet_slices:
@@ -3537,7 +3537,7 @@ text \<open>The assembly's hypotheses are all data of the comparison argument - 
   \<open>(\<xi>,r,\<rho>,m)\<close> - plus two smallness conditions relating them; the jets,
   Hessians and gradients are all produced.  \<open>subu\<close>/\<open>subw\<close> require the
   sup-convolutions' attaining balls in \<open>\<Omega>\<close>, a genuine smallness condition
-  on \<open>\<epsilon>\<close> via the explicit \<open>O(\<surd>\<epsilon>)\<close> radius of \<open>supconv_attained_ball\<close>;
+  on \<open>\<epsilon>\<close> via the explicit \<open>O(\<surd>\<epsilon>)\<close> radius of attainment of the sup-convolution on a ball;
   \<open>rsmall\<close> requires \<open>\<rho>\<close> small compared with \<open>c/(2\<bar>\<alpha>\<bar>)\<close> so the gradient
   lower bound survives the move to Jensen's maximiser.\<close>
 
@@ -3811,7 +3811,7 @@ proof -
   ultimately show ?thesis using interior_subset by blast
 qed
 
-text \<open>\<open>max_principle_boundary\<close> asserts a maximiser in \<open>K - interior K\<close>,
+text \<open>a maximum-principle interface asserts a maximiser in \<open>K - interior K\<close>,
   which is inhabited for compact nonempty \<open>K\<close>: otherwise
   \<open>K = interior K\<close> is clopen in the connected whole space, and
   \<open>K \<noteq> UNIV\<close> since \<open>K\<close> is bounded.  With \<open>K = {}\<close> the predicate is

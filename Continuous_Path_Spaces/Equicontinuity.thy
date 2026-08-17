@@ -1,4 +1,4 @@
-section \<open>The Arzela--Ascoli step of Lemma 2.2\<close>
+section \<open>The Arzela--Ascoli step of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>\<close>
 
 (*<*)
 theory Equicontinuity
@@ -11,7 +11,7 @@ begin
 (*>*)
 
 text \<open>
-  Lemma 2.2 -- relative compactness of continuous martingale laws with
+  Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> -- relative compactness of continuous martingale laws with
   covariation rates in a bounded set @{text S} -- follows the chain:
 
   \<^item> Ito's formula and the Burkholder-Davis-Gundy inequality give the fourth
@@ -105,7 +105,7 @@ text \<open>
   A family of paths on @{term "{0..T}"} sharing an initial value and a Holder
   constant has a uniformly convergent subsequence, and the limit is a path with
   the same initial value and the same Holder bound. This is the form in which
-  Lemma 2.2's proof uses the Arzela-Ascoli theorem.
+  Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>'s proof uses the Arzela-Ascoli theorem.
 \<close>
 
 theorem holder_family_subsequence:

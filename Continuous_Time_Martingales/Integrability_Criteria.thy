@@ -343,7 +343,7 @@ proof -
     using integral_cong_AE[OF m borel_measurable_const ae] by simp
 qed
 
-text \<open>LR, proof of Lemma 2.1: with \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) ln E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close>, the
+text \<open>LR, proof of Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: with \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) ln E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close>, the
   essential infimum of a time bounded in \<open>[0, T]\<close> is \<open>inf\<^sub>\<lambda> f\<^sub>\<lambda>\<close>.  Each
   \<open>f\<^sub>\<lambda>\<close> dominates the essential infimum (Jensen-free: the a.s. lower
   bound passes through the decreasing exponential), and as \<open>\<lambda> \<rightarrow> \<infinity>\<close>
@@ -399,7 +399,7 @@ text \<open>The transfer theorem \<open>weak_conv_integral_of_L2_bound\<close> a
   battery of integrability facts under every approximating law and under
   the limit.  All of them follow from one input: a bound on the second
   moment of the coordinate, which the members have by
-  \<open>exit_class_sq_mean_le\<close> and which the limit inherits because
+  a second-moment bound in the application and which the limit inherits because
   \<open>\<omega> \<mapsto> (X\<^sub>u $ i)\<^sup>2\<close> is continuous and nonnegative
   (\<open>Path_Space.weak_conv_on_nn_integral_le\<close>).  This subsection therefore
   works with a bare pair law with an \<open>L\<^sup>2\<close> bound and never mentions the
@@ -518,7 +518,7 @@ qed
 
 text \<open>This section builds the ingredients for the conditioning statement
   isolated in \<open>d\<close>: the exit time splits at
-  \<open>r\<close> on the survival event, and the rebased future \<open>pfut\<close> is a measurable
+  \<open>r\<close> on the survival event, and the rebased future the rebased future is a measurable
   map of path spaces.\<close>
 
 lemma cInf_shift_real:

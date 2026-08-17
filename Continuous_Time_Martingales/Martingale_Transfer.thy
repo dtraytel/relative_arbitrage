@@ -487,7 +487,7 @@ next
 qed
 
 text \<open>Transport of the martingale property along a pushforward.  This is
-  the general form of what \<open>martingale_pair_law\<close> does for path spaces: if
+  the general form of what the corresponding path-space transport in the application does for path spaces: if
   \<open>\<phi>\<close> pulls the target filtration back into the source one, a source
   martingale of the composed process is a target martingale.\<close>
 

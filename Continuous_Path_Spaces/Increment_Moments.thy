@@ -501,7 +501,7 @@ proof -
   qed
 qed
 
-subsection \<open>Fourth moments along a partition: Eq. (2.7) with an explicit remainder\<close>
+subsection \<open>Fourth moments along a partition: Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with an explicit remainder\<close>
 
 text \<open>
   Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> is derived there through the Burkholder-Davis-Gundy
@@ -2007,7 +2007,7 @@ proof -
   qed
 qed
 
-subsection \<open>Eq. (2.7) for bounded continuous martingales\<close>
+subsection \<open>Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> for bounded continuous martingales\<close>
 
 text \<open>
   The fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>, for a martingale
@@ -2095,7 +2095,7 @@ qed
 
 section \<open>Uniform integrability of the squared increments\<close>
 
-text \<open>The closedness half of Lemma 2.3 needs to pass the covariation
+text \<open>The closedness half of Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> needs to pass the covariation
   constraint's linear inequalities
 
     \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>

@@ -124,7 +124,7 @@ qed
 text \<open>The two Rayleigh bounds.  The upper one is immediate from
   \<open>kyfan_ge_trace_mult\<close>; the lower one pairs \<open>a\<close> with the complementary
   projection, using that the full Ky Fan sum is the trace.  The weak form of
-  Poincare separation Eq. (3.5) needs.\<close>
+  Poincare separation Eq. (3.5) of \<^cite>\<open>LaiShkolnikovSoner\<close> needs.\<close>
 
 
 lemma quadform_le_eigval_1:

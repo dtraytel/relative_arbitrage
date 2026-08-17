@@ -9,7 +9,7 @@ begin
 text \<open>
   The semicontinuous envelopes of a general real-valued function: \<open>lsc_env\<close>
   and \<open>usc_env\<close> over all of \<open>real^'n\<close>, and \<open>lsc_envK\<close>/\<open>Kext\<close>, the envelope
-  taken relative to a closed set \<open>K\<close> -- the form Definition 3.1 of the paper
+  taken relative to a closed set \<open>K\<close> -- the form Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper
   actually reads, since it takes the liminf over points of \<open>K\<close> only.  Their
   monotonicity, and the fixpoint at points where the underlying function is
   already semicontinuous.
@@ -87,7 +87,7 @@ proof -
   then show ?thesis unfolding usc_env_def by linarith
 qed
 
-text \<open>The limsup bound that Theorem 4.3's \<open>\<iota> \<down> 1\<close> step consumes: a value
+text \<open>The limsup bound that Theorem 4.3 of \<^cite>\<open>LaiShkolnikovSoner\<close>'s \<open>\<iota> \<down> 1\<close> step consumes: a value
   bounded below along a sequence tending to \<open>x\<close> is bounded by the upper
   envelope at \<open>x\<close>.  No continuity anywhere.\<close>
 
@@ -278,7 +278,7 @@ next
 qed
 subsection \<open>The envelope taken within \<open>K\<close>\<close>
 
-text \<open>Definition 3.1 of the paper reads its lower envelope \<open>u\<^sub>*\<close> inside \<open>K\<close>:
+text \<open>Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper reads its lower envelope \<open>u\<^sub>*\<close> inside \<open>K\<close>:
   the liminf is over points of \<open>K\<close> only.  @{const lsc_env} takes it over balls
   of \<open>'a\<close>, so the two agree at interior points of \<open>K\<close> and can differ on
   \<open>K - interior K\<close>, which is exactly where the boundary gate of Eq. (1.10) is

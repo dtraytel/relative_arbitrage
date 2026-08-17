@@ -308,7 +308,7 @@ text \<open>
   The practical criterion, and the one a uniform higher-moment bound supplies: if the
   @{term p}-th moments are bounded uniformly for some @{term "p > 1"}, the family
   is uniformly integrable. This is the route by which a moment bound of the
-  shape of Eq. (2.7) feeds into Lemma 2.3.
+  shape of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> feeds into Lemma 2.3.
 \<close>
 
 lemma tail_le_moment:

@@ -607,7 +607,7 @@ proof -
   finally show ?thesis by simp
 qed
 
-text \<open>Lemma 2.2 of the paper assumes the set \<open>S\<close> of admissible covariances is
+text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper assumes the set \<open>S\<close> of admissible covariances is
   bounded.  For the paper's \<open>S\<close> that is a purely linear-algebraic fact,
   provable without any probability: \<open>psd a\<close> bounds the diagonal below by
   \<open>0\<close> and \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form
@@ -706,7 +706,7 @@ qed
 text \<open>\<open>p\<close> itself is an eigenvector of \<open>M\<^sub>p\<close>, with eigenvalue
   \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close>: the conjugation kills it and the correction term
   scales it.  This is the first half of the "sorts to the bottom of the
-  spectrum" claim after Eq. (3.4); the second half is the Poincare bound
+  spectrum" claim after Eq. (3.4) of \<^cite>\<open>LaiShkolnikovSoner\<close>; the second half is the Poincare bound
   \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close>, which is what still remains for Eq. (3.5).\<close>
 
 lemma matrix_vector_mult_add:
@@ -1104,8 +1104,8 @@ proof -
     by (simp add: trace_mat1 mult_ac)
 qed
 
-text \<open>\<open>martingale_bm_square\<close> compensates the squared norm by the trace,
-  which is what \<open>ito_Z\<close> and \<open>dynkin_quadratic\<close> speak about. Lemma 2.2 of
+text \<open>the compensated squared norm compensates the squared norm by the trace,
+  which is what the application's Ito functional and the quadratic Dynkin identity speak about. Lemma 2.2 of
   \<^cite>\<open>LaiShkolnikovSoner\<close> needs more: a fourth-moment bound on each coordinate
   separately, along the tightness chain
   \<open>Path_Tightness.tight_on_set_path_laws_vec \<leftarrow>
@@ -1129,7 +1129,7 @@ qed
 
 text \<open>Two-sided pointwise bounds on the trace, from the eigenvalue
   conditions: positive semidefiniteness makes the diagonal, hence the trace,
-  nonnegative, and the eigenvalue upper bound of Eq. (1.7) caps every
+  nonnegative, and the eigenvalue upper bound of Eq. (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> caps every
   diagonal entry by \<open>L\<close>.\<close>
 
 lemma diag_eq_inner_axis:
@@ -1172,8 +1172,8 @@ lemma inner_diff_self_expand:
   by (simp add: inner_diff_left inner_diff_right inner_commute)
 
 text \<open>The constraint set is convex, closed and bounded, hence compact.
-  Convexity comes from \<open>Pi_constraint_convex\<close> and the \<open>eigen_ub\<close>
-  half-spaces, closedness from the \<open>Pi_proj\<close> infimum characterisation,
+  Convexity comes from convexity of the constraint set and the an eigenvalue upper bound
+  half-spaces, closedness from the a projection-infimum characterisation infimum characterisation,
   boundedness from the standard psd entry bound.\<close>
 
 lemma quadform_convex_comb:
@@ -1209,7 +1209,7 @@ lemma bounded_linear_cross:
   by (intro linearI) (simp_all add: vec_eq_iff algebra_simps)
 
 text \<open>Tracing the compensated clause gives the submartingale statement
-  Lemma 2.1 runs on: \<open>|X|\<^sup>2 - trace Y\<close> is a martingale and \<open>trace Y\<close> grows
+  Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> runs on: \<open>|X|\<^sup>2 - trace Y\<close> is a martingale and \<open>trace Y\<close> grows
   at rate at least \<open>n - k\<close>, so \<open>E[|X\<^sub>t|\<^sup>2] - |x|\<^sup>2 \<ge> (n-k)\<sqdot>t\<close>.\<close>
 
 lemma bounded_linear_trace:
@@ -1451,7 +1451,7 @@ qed
 
 text \<open>The Euler analysis needs exactly two facts per step: the compensated
   quadratic increment has mean zero (an instance of
-  \<open>exit_class_quadform_mean\<close>, since the member's
+  a mean-zero compensated-increment fact in the application, since the member's
   second component is deterministic), and its variance is \<open>O(h\<^sup>2)\<close>.  The
   variance bound needs no Wick calculus and no coordinate independence:
   the pointwise AM--GM bound \<open>a\<^sup>2b\<^sup>2 \<le> (a\<^sup>4 + b\<^sup>4)/2\<close> reduces everything
@@ -1651,13 +1651,13 @@ qed
 
 text \<open>The skew field above moves the witness off its own eigenframe, and the
   margins that absorb that motion are what force \<open>1 < L\<close>: at \<open>L = 1\<close> the
-  feasible set of Eq. (1.9) is rigid, its top \<open>n - k\<close> eigenvalues pinned to
+  feasible set of Eq. (1.9) of \<^cite>\<open>LaiShkolnikovSoner\<close> is rigid, its top \<open>n - k\<close> eigenvalues pinned to
   \<open>1\<close> from both sides, so no witness has slack to perturb.  A field of exact
   rotations needs none.  Conjugating the witness by an orthogonal matrix
   leaves its spectrum, and hence its membership of the feasible set,
   untouched; and the rotation carrying the frozen gradient \<open>q\<close> to the current
   gradient makes the conjugate annihilate the current gradient, which is all
-  the Euler construction asks of the field.  The package \<open>rotSF_exists\<close> below
+  the Euler construction asks of the field.  The package the rotation-field package below
   therefore carries no hypothesis on \<open>L\<close> at all, and in particular is
   available at \<open>L = 1\<close>, the Ambrosio-Soner flow case of Remark 1.1(c).
 
@@ -1674,10 +1674,6 @@ lemma colmat_matvec:
   fixes R :: "real^'n::finite^'n" and c :: "'n \<Rightarrow> real^'n"
   shows "(\<chi> i j. (R *v c j) $ i) = R ** (\<chi> i j. c j $ i)"
   by (simp add: vec_eq_iff matrix_matrix_mult_def matrix_vector_mult_def)
-
-text \<open>\<open>feasible_scale\<close> lives in \<open>Operator_Envelopes\<close>,
-  as the set equality; this theory re-proved the membership direction under
-  the same name, shadowing it.\<close>
 
 lemma rot_cone_ok:
   fixes q e :: "real^'n::finite"
@@ -2266,7 +2262,7 @@ qed
 text \<open>The square of the field is again a field of the same shape with the
   direction rescaled, and the rescaled direction still has norm \<open>\<le> 1\<close> because
   \<open>(2 - a) * a = 1 - (a-1)\<^sup>2 \<le> 1\<close>.  That is what makes the clamped field
-  feasible everywhere, which \<open>eulerp_limit_good2_region\<close> demands.\<close>
+  feasible everywhere, which the Euler-limit argument in the application demands.\<close>
 
 lemma tanpU_sq_norm_le:
   fixes u :: "real^'n::finite"
@@ -2497,7 +2493,7 @@ text \<open>The bridge between the jets' operator-form Hessian
   \<open>\<lambda>v. f v + c *\<^sub>R v\<close> and the matrix form the family theorem wants:
   taking the matrix of the shifted operator adds \<open>cI\<close>.  Every shifted
   fact then reduces to its unshifted counterpart plus
-  \<open>transpose_shifted_block\<close>, \<open>psd_shifted_diff\<close> and \<open>norm_shifted_block\<close>.\<close>
+  \<open>transpose_shifted_block\<close>, the shifted positivity fact and \<open>norm_shifted_block\<close>.\<close>
 
 lemma matrix_shift_apply:
   fixes M :: "real^'n::finite^'n"
