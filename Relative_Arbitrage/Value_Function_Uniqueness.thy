@@ -3,7 +3,7 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 (*<*)
 theory Value_Function_Uniqueness
   imports Value_Function_Market Viscosity_Solutions Comparison_Two_Domain
-    Exit_Time_Semicontinuity Value_Function_Viscosity
+    Exit_Time_Semicontinuity Value_Function_Assembly
     Exit_Class_Infinite
 begin
 (*>*)
@@ -13,7 +13,7 @@ text \<open>
   Eq. (1.6) is the unique bounded upper semicontinuous viscosity solution of
   Eq. (1.9) satisfying the zero boundary condition of Eq. (1.10).  This theory
   joins the two halves of that statement: the viscosity property, proved in
-  @{theory Relative_Arbitrage.Value_Function_Viscosity}, and the comparison principle, proved in
+  @{theory Relative_Arbitrage.Value_Function_Assembly}, and the comparison principle, proved in
   @{theory Relative_Arbitrage.Comparison_Principle}.  It also derives Example 3.1 in closed form.
 \<close>
 
@@ -54,11 +54,11 @@ text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1
   \<^item> Finiteness, \<open>exit_val k L T K x < \<top>\<close>: \<open>exit_val_le_T\<close>, and sharply
     \<open>exit_val_le_ball_bound\<close>.
   \<^item> Upper semicontinuity: \<open>Exit_Class_Witness.exit_val_usc_unconditional\<close>.
-  \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Viscosity.exit_val_visc_subsol\<close>
+  \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Subsolution.exit_val_visc_subsol\<close>
     for the subsolution half, with the operator of Eq. (1.9) itself, and
-    \<open>Value_Function_Viscosity.exit_val_supersol_lsc\<close> for the supersolution half.
+    \<open>Value_Function_Supersolution_Case_2.exit_val_supersol_lsc\<close> for the supersolution half.
   \<^item> The zero boundary condition of Eq. (1.10), in the viscosity sense of
-    Definition 3.1: \<open>Value_Function_Viscosity.exit_val_subsol_bc\<close> and
+    Definition 3.1: \<open>Value_Function_Subsolution.exit_val_subsol_bc\<close> and
     \<open>exit_val_supersol_bc\<close> below.
   \<^item> Uniqueness: \<open>theorem_1_1_uniqueness_faithful\<close> below, via the paper's
     Theorem 4.2(a), Theorem 4.2(b), Theorem 4.3 and Proposition 4.1.

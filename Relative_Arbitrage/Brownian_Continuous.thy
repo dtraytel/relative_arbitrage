@@ -200,11 +200,9 @@ qed
 
 section \<open>Path continuity\<close>
 
-lemma continuous_on_vec_lambda:
-  fixes f :: "'a::topological_space \<Rightarrow> 'n::finite \<Rightarrow> 'b::topological_space"
-  assumes "\<And>i. continuous_on S (\<lambda>x. f x i)"
-  shows "continuous_on S (\<lambda>x. (\<chi> i. f x i) :: ('b, 'n) vec)"
-  using assms unfolding continuous_on_def by (auto intro: tendsto_vec_lambda)
+text \<open>\<open>continuous_on_vec_lambda\<close> is HOL-Analysis's, in
+  \<open>Cartesian_Euclidean_Space\<close>, and carries \<open>[continuous_intros]\<close>; this
+  theory re-proved it without the attribute, shadowing it.\<close>
 
 lemma cbmX_cont:
   fixes x0 :: "real^'n::finite"

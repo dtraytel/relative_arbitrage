@@ -23,6 +23,7 @@ session Continuous_Path_Spaces = Continuous_Time_Martingales +
     Path_Space_Infinite
     Stopped_Localization
     Pathwise_Quadratic_Variation
+    Adapted_Quadratic_Variation
   document_files
     "root.tex"
     "root.bib"
