@@ -33,11 +33,9 @@ section \<open>The operator of Eq. (1.9) on pairs\<close>
 
 text \<open>\<open>ell_op_pair\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
 
-
 section \<open>The semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>\<close>
 
 text \<open>\<open>ell_op_lsc\<close>, \<open>ell_op_usc\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
-
 
 text \<open>Every ball around \<open>z\<close> contains \<open>z\<close>, which gives the sandwich
   \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>.  This is all that is needed to see that the
@@ -542,7 +540,6 @@ corollary ell_op_lsc_at_zero_iff:
 section \<open>Definition 3.1 in envelope form\<close>
 
 text \<open>\<open>visc_subsol_env\<close>, \<open>visc_supersol_env\<close>, \<open>visc_sol_env\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
-
 
 section \<open>The envelope-free notions are the stronger ones\<close>
 
@@ -1262,28 +1259,6 @@ proof -
     using transpose_shift_add[OF s, of "- \<delta>"] by simp
 qed
 
-lemma test_fun_at_add_const:
-  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and c :: real
-  assumes tf: "test_fun_at \<phi> g H x"
-  shows "test_fun_at (\<lambda>z. c + \<phi> z) g H x"
-  unfolding test_fun_at_def
-proof (intro conjI)
-  show "transpose H = H" using tf unfolding test_fun_at_def by blast
-next
-  obtain e where e0: "0 < e"
-    and d: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    using tf unfolding test_fun_at_def by blast
-  have "((\<lambda>z. c + \<phi> z) has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    if y: "y \<in> ball x e" for y
-    using d[OF y] by (auto intro!: derivative_eq_intros)
-  then show "\<exists>e>0. \<forall>y \<in> ball x e.
-      ((\<lambda>z. c + \<phi> z) has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    using e0 by blast
-next
-  show "(g has_derivative (\<lambda>h. H *v h)) (at x)"
-    using tf unfolding test_fun_at_def by blast
-qed
-
 lemma test_fun_at_quartic_shift:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n" and x :: "real^'n" and C :: real
@@ -1451,70 +1426,6 @@ proof -
   show ?thesis by (rule that[OF r0 main])
 qed
 
-theorem visc_supersol_env_local:
-  fixes K :: "(real^'n::finite) set" and w \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assumes sup: "visc_supersol_env k L K \<Omega> w"
-    and x\<Omega>: "x \<in> \<Omega>"
-    and tf: "test_fun_at \<phi> g H x"
-    and wlo: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
-    and phi: "\<And>y. y \<in> K \<Longrightarrow> \<phi> y \<le> B\<phi>"
-    and r0: "0 < r"
-    and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
-  shows "1 \<le> ell_op_usc k L (g x) H"
-proof -
-  have r40: "0 < r ^ 4" using r0 by simp
-  define C where "C = max 0 ((w x - \<phi> x - Bw + B\<phi>) / r ^ 4)"
-  have C0: "0 \<le> C" unfolding C_def by simp
-  have Cbig: "w x - \<phi> x - Bw + B\<phi> \<le> C * r ^ 4"
-  proof -
-    have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 \<le> C" unfolding C_def by simp
-    then have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 * r ^ 4 \<le> C * r ^ 4"
-      by (rule mult_right_mono) (use r40 in linarith)
-    then show ?thesis using r40 by simp
-  qed
-  define \<psi> where "\<psi> = (\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2)"
-  define gg where
-    "gg = (\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))"
-  have tf': "test_fun_at \<psi> gg H x"
-    unfolding \<psi>_def gg_def by (rule test_fun_at_quartic_shift[OF tf])
-  have ggx: "gg x = g x" unfolding gg_def by simp
-  have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
-  have glob: "w x - \<psi> x \<le> w y - \<psi> y" if yK: "y \<in> K" for y
-  proof (cases "y \<in> ball x r")
-    case True
-    have nn: "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
-      by (rule mult_nonneg_nonneg[OF C0]) simp
-    show ?thesis using lm[OF True] nn unfolding \<psi>_def psix[unfolded \<psi>_def] by simp
-  next
-    case False
-    then have dxy: "r \<le> dist x y" by simp
-    have sq: "r\<^sup>2 \<le> (y - x) \<bullet> (y - x)"
-    proof -
-      have "r \<le> norm (y - x)"
-        using dxy by (simp add: dist_norm norm_minus_commute)
-      then have "r\<^sup>2 \<le> (norm (y - x))\<^sup>2"
-        using r0 by (intro power_mono) auto
-      then show ?thesis by (simp add: dot_square_norm)
-    qed
-    have q4: "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
-    proof -
-      have "(r\<^sup>2)\<^sup>2 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
-        using sq by (intro power_mono) auto
-      then show ?thesis by (simp add: power_even_eq)
-    qed
-    have cq: "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
-      by (rule mult_left_mono[OF q4 C0])
-    have lo: "Bw \<le> w y" by (rule wlo[OF yK])
-    have hi: "\<phi> y \<le> B\<phi>" by (rule phi[OF yK])
-    show ?thesis
-      unfolding \<psi>_def using Cbig cq lo hi by simp
-  qed
-  have "1 \<le> ell_op_usc k L (gg x) H"
-    using sup[unfolded visc_supersol_env_def] x\<Omega> tf' glob by blast
-  then show ?thesis unfolding ggx .
-qed
-
 text \<open>The mirror for subsolutions: adding a quartic deepens a local
   maximum and, for a large enough coefficient, makes it global over \<open>K\<close>,
   reusing @{thm [source] test_fun_at_quartic_shift} with a negative
@@ -1606,28 +1517,6 @@ text \<open>The semicontinuous envelopes of a general real-valued function, thei
 text \<open>The constant test function: the touching that Definition 3.1's boundary
   clause admits at a global minimum, and the one the paper's diagonal case
   uses to reach \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
-
-lemma test_fun_at_const:
-  fixes x :: "real^'n::finite" and C :: real
-  shows "test_fun_at (\<lambda>y. C) (\<lambda>y. 0) 0 x"
-  unfolding test_fun_at_def
-proof (intro conjI)
-  show "transpose (0 :: real^'n^'n) = 0"
-    by (simp add: transpose_def vec_eq_iff)
-next
-  have z1: "(\<lambda>h. (0 :: real^'n) \<bullet> h) = (\<lambda>h :: real^'n. 0)" by simp
-  have "((\<lambda>y. C) has_derivative (\<lambda>h. (0 :: real^'n) \<bullet> h)) (at y)"
-    for y :: "real^'n" unfolding z1 by (rule has_derivative_const)
-  then show "\<exists>e>0. \<forall>y \<in> ball x e.
-      ((\<lambda>y. C) has_derivative (\<lambda>h. (0 :: real^'n) \<bullet> h)) (at y)"
-    by (intro exI[of _ 1]) auto
-next
-  have z2: "(\<lambda>h. (0 :: real^'n^'n) *v h) = (\<lambda>h :: real^'n. 0)"
-    by (simp add: matrix_vector_mult_def vec_eq_iff fun_eq_iff)
-  show "((\<lambda>y :: real^'n. 0 :: real^'n) has_derivative
-      (\<lambda>h. (0 :: real^'n^'n) *v h)) (at x)"
-    unfolding z2 by (rule has_derivative_const)
-qed
 
 lemma ell_op_usc_zero_zero_lt_one:
   assumes kk: "1 \<le> k" "k < CARD('n::finite)" and LL: "1 \<le> L"
@@ -2145,47 +2034,6 @@ section \<open>Congruence of the envelope-free notions, and affine images of ope
 text \<open>Monotonicity of \<open>lsc_env\<close>/\<open>usc_env\<close> and the fixpoint at points where the
   underlying function is already semicontinuous live in
   @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes}.\<close>
-
-lemma visc_supersol_env_mono:
-  assumes "visc_supersol_env k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
-  shows "visc_supersol_env k L K \<Omega>' u"
-  using assms unfolding visc_supersol_env_def by blast
-
-lemma visc_subsol_env_cong:
-  fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
-  assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
-    and h: "visc_subsol_env k L K \<Omega> f1"
-  shows "visc_subsol_env k L K \<Omega> f2"
-  unfolding visc_subsol_env_def
-proof (intro ballI allI impI)
-  fix z and \<phi> :: "real^'n \<Rightarrow> real" and gr :: "real^'n \<Rightarrow> real^'n"
-    and H :: "real^'n^'n"
-  assume zO: "z \<in> \<Omega>" and tf: "test_fun_at \<phi> gr H z"
-    and touch: "\<forall>y\<in>K. f2 y - \<phi> y \<le> f2 z - \<phi> z"
-  have zK: "z \<in> K" using zO OK by blast
-  have "\<forall>y\<in>K. f1 y - \<phi> y \<le> f1 z - \<phi> z"
-    using touch eq zK by auto
-  then show "ell_op_lsc k L (gr z) H \<le> 1"
-    using h zO tf unfolding visc_subsol_env_def by blast
-qed
-
-lemma visc_supersol_env_cong:
-  fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
-  assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
-    and h: "visc_supersol_env k L K \<Omega> f1"
-  shows "visc_supersol_env k L K \<Omega> f2"
-  unfolding visc_supersol_env_def
-proof (intro ballI allI impI)
-  fix z and \<phi> :: "real^'n \<Rightarrow> real" and gr :: "real^'n \<Rightarrow> real^'n"
-    and H :: "real^'n^'n"
-  assume zO: "z \<in> \<Omega>" and tf: "test_fun_at \<phi> gr H z"
-    and touch: "\<forall>y\<in>K. f2 z - \<phi> z \<le> f2 y - \<phi> y"
-  have zK: "z \<in> K" using zO OK by blast
-  have "\<forall>y\<in>K. f1 z - \<phi> z \<le> f1 y - \<phi> y"
-    using touch eq zK by auto
-  then show "1 \<le> ell_op_usc k L (gr z) H"
-    using h zO tf unfolding visc_supersol_env_def by blast
-qed
 
 subsection \<open>Affine maps commute with \<open>interior\<close>\<close>
 

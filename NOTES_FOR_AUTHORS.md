@@ -193,25 +193,39 @@ as that compensator, and the compensator is unique up to indistinguishability.
 
 ## Infrastructure that had to be built
 
-None of the following existed in Isabelle/HOL or its Archive of Formal Proofs;
-each is packaged as a reusable entry.
+None of the following existed in Isabelle/HOL or its Archive of Formal Proofs.
+Each now sits in a session of its own, none of which mentions this paper, and
+each of which is independently submittable:
 
-* Rademacher's theorem, Alexandrov's theorem, Jensen's lemma for semiconvex
-  functions, and the Crandall–Ishii theorem on sums.
-* Wiener measure as a projective limit, with independent increments.
-* Doob's maximal inequality; optional sampling at a bounded stopping time in
-  continuous time; quadratic variation and its compensator.
-* Continuous-time quadratic variation as a *path functional*: the pathwise
-  limit of dyadic sums, with an `L²` rate (`18C²T²/2ⁿ`) that is summable, so the
-  full dyadic sequence converges almost surely and no subsequence is needed.
-  Regularised to a version that is adapted and continuous for **every** path,
-  which is what makes the lift `w ↦ (w, ⟨w⟩)` land in a space of continuous
-  paths without breaking the filtration.
-* Vitali's convergence theorem; uniform integrability of a family of
-  conditional expectations.
-* `C([0,T], ℝⁿ)` as a Polish space, with the continuous mapping theorem and
-  portmanteau; tightness from increment moments.
-* Measurable selection for upper semicontinuous payoffs on compact sets —
-  the Bertsekas–Shreve Proposition 7.33 that Larsson–Ruf appeal to. It is
-  proved here by a greedy nested bisection; a countably valued ε-selector does
-  not exist, so some such construction is forced.
+* **`Symmetric_Matrix_Spectra`** — the spectral theorem for real symmetric
+  matrices, Ky Fan partial sums, the ordered eigenvalues as their differences,
+  their Lipschitz dependence on the matrix, Poincaré separation, and the
+  Householder reflections and rotations that transport them.
+* **`Semicontinuous_Analysis`** — the ε–δ semicontinuity calculus, attainment
+  on compacta, the upper and lower envelopes (including the envelope relative
+  to a closed set), Berge's maximum theorem, and measurable selection for
+  upper semicontinuous payoffs on compact sets — the Bertsekas–Shreve
+  Proposition 7.33 that Larsson–Ruf appeal to. It is proved here by a greedy
+  nested bisection; a countably valued ε-selector does not exist, so some such
+  construction is forced.
+* **`Second_Order_Viscosity_Analysis`** — Rademacher's theorem, Alexandrov's
+  theorem, Jensen's lemma for semiconvex functions, the Crandall–Ishii theorem
+  on sums, and the doubling-of-variables toolbox they exist to serve, the last
+  stated at `'a::euclidean_space` rather than at `ℝⁿ`.
+* **`Wiener_Measure`** — Wiener measure as a projective limit of Gaussian
+  finite-dimensional distributions, with independent increments and a
+  continuous modification.
+* **`Continuous_Time_Martingales`** — Doob's maximal inequality; optional
+  sampling and stopping at a bounded stopping time in continuous time;
+  quadratic variation and its compensator; Vitali's convergence theorem and
+  uniform integrability of a family of conditional expectations; exit times as
+  stopping times; and the algebra of transporting the martingale property
+  along images, products, restrictions and modifications.
+* **`Continuous_Path_Spaces`** — `C([0,T], ℝⁿ)` as a Polish space, with the
+  continuous mapping theorem and portmanteau; tightness from increment moments
+  alone; and continuous-time quadratic variation as a *path functional*: the
+  pathwise limit of dyadic sums, with an `L²` rate (`18C²T²/2ⁿ`) that is
+  summable, so the full dyadic sequence converges almost surely and no
+  subsequence is needed. Regularised to a version that is adapted and
+  continuous for **every** path, which is what makes the lift `w ↦ (w, ⟨w⟩)`
+  land in a space of continuous paths without breaking the filtration.

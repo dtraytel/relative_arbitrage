@@ -49,9 +49,6 @@ definition test_fun_C2 ::
           (\<forall>y. transpose (G y) = G y) \<and>
           continuous_on UNIV G \<and> G x = H)"
 
-definition sym_part :: "real^'n::finite^'n \<Rightarrow> real^'n^'n" where
-  "sym_part M = (1/2) *\<^sub>R (M + transpose M)"
-
 text \<open>The paper's hypothesis on \<open>K\<close> for the uniqueness clause of Theorem 1.1:
   a family \<open>T\<^sub>\<iota>\<close> of rotation-dilation-translations, \<open>\<iota> \<in> (1,2]\<close>, with
   \<open>K \<subseteq> (T\<^sub>\<iota> \` K)^\<circ>\<close> and \<open>T\<^sub>\<iota> \<rightarrow> id\<close>, phrased as an \<open>\<epsilon>\<close>-statement with

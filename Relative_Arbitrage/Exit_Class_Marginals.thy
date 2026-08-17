@@ -19,7 +19,6 @@ text \<open>
   to agree with \<open>qvmat\<close>, which is a functional of the path alone.
 \<close>
 
-
 text \<open>The adapted continuous version of the quadratic-variation functional
   --- \<open>qvp_good\<close>, \<open>qvp_goodupto\<close>, \<open>qvpc\<close>, \<open>qvsa\<close> and \<open>qvmata\<close> ---
   lives in @{theory Continuous_Path_Spaces.Adapted_Quadratic_Variation}.\<close>
@@ -526,24 +525,10 @@ lemma xclass_martingale:
      martingale Q (natural_filtration Q 0 (\<lambda>t w. w t)) 0 (\<lambda>t w. w t)"
   unfolding xclass_def by blast
 
-lemma xclass_compensator:
-  assumes "Q \<in> xclass k L x"
-  obtains A where "AE w in Q. A 0 w = 0"
-    and "martingale Q (natural_filtration Q 0 (\<lambda>t w. w t)) 0
-           (\<lambda>t w. outerp (w t) - A t w)"
-    and "AE w in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-           (1 / (t - s)) *\<^sub>R (A t w - A s w) \<in> sconstraint k L"
-  using assms unfolding xclass_def by blast
-
 text \<open>The constraint set supplies exactly the two hypotheses the matrix locale
   of @{theory Continuous_Path_Spaces.Pathwise_Quadratic_Variation} needs and the plan never named:
   the increments of \<open>A\<close> are positive semidefinite, and their entries are
   Lipschitz in time.\<close>
-
-lemma sconstraint_psd_quadform:
-  assumes a: "a \<in> sconstraint k L"
-  shows "0 \<le> y \<bullet> (a *v y)"
-  using a by (simp add: sconstraint_def Pi_constraint_def psd_def)
 
 text \<open>\<open>natural_filtration_pull\<close> lives in
   @{theory Continuous_Time_Martingales.Natural_Filtration}: the \<open>pull\<close>

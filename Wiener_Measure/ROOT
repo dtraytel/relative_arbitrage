@@ -7,6 +7,9 @@ session Wiener_Measure = "HOL-Probability" +
   sessions
     Kolmogorov_Chentsov
   theories
+    Sorted_Lists
+    Gaussian_Increments
+    Brownian_Finite_Dimensional_Distributions
     Brownian_Motion
     Brownian_Motion_Continuity
   document_files

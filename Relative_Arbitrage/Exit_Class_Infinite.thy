@@ -217,67 +217,6 @@ text \<open>The class is a set of laws of the pair \<open>(X, \<langle>X\<rangle
   a martingale in the paper's sense, via \<open>martingale_coarser_filtration\<close> from
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-theorem iexit_class_X_own_filtration:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes P: "P \<in> iexit_class k L x"
-  shows "martingale P (natural_filtration P 0 (\<lambda>t \<omega>. fst (\<omega> t))) 0
-      (\<lambda>t \<omega>. fst (\<omega> t) :: real^'n)"
-proof -
-  let ?F = "natural_filtration P 0 (\<lambda>t \<omega> :: 'n pairpath. \<omega> t)"
-  let ?G = "natural_filtration P 0 (\<lambda>t \<omega> :: 'n pairpath. fst (\<omega> t) :: real^'n)"
-  interpret PP: prob_space P by (rule iexit_class_prob[OF P])
-  interpret MF: martingale P ?F 0 "\<lambda>t \<omega>. fst (\<omega> t) :: real^'n"
-    by (rule iexit_class_X_martingale[OF P])
-  have Xm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t) :: real^'n) \<in> borel_measurable P"
-    if t: "0 \<le> t" for t
-    by (rule measurable_from_subalg[OF MF.subalgebras[OF t] MF.adapted[OF t]])
-  have SP: "Stochastic_Process.stochastic_process P (0::real)
-      (\<lambda>t \<omega> :: 'n pairpath. fst (\<omega> t) :: real^'n)"
-    by (unfold_locales) (rule Xm)
-  have fin: "finite_measure P"
-    using PP.prob_space_axioms by (simp add: prob_space_def)
-  have ffm: "finite_filtered_measure P ?G 0"
-    by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
-          [OF SP fin])
-  have GF: "subalgebra (?F i) (?G i)" if i: "0 \<le> i" for i
-  proof -
-    have meas: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> s) :: real^'n) \<in> borel_measurable (?F i)"
-      if s: "0 \<le> s" "s \<le> i" for s
-      by (rule measurable_from_subalg
-            [OF MF.subalgebra_F[OF s(1) s(2)] MF.adapted[OF s(1)]])
-    have "sets (?G i) = sigma_sets (space P)
-        (\<Union>s\<in>{0..i}. {(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> s) :: real^'n) -` A \<inter> space P
-                     | A. A \<in> borel})"
-      by (rule sets_natural_filtration)
-    also have "\<dots> \<subseteq> sets (?F i)"
-    proof (rule sigma_algebra.sigma_sets_subset)
-      show "sigma_algebra (space P) (sets (?F i))"
-        using sets.sigma_algebra_axioms[of "?F i"] by simp
-      show "(\<Union>s\<in>{0..i}. {(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> s) :: real^'n) -` A \<inter> space P
-                         | A. A \<in> borel}) \<subseteq> sets (?F i)"
-      proof (clarsimp)
-        fix s :: real and A :: "(real^'n) set"
-        assume s: "0 \<le> s" "s \<le> i" and A: "A \<in> sets borel"
-        have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> s) :: real^'n) -` A \<inter> space (?F i)
-            \<in> sets (?F i)"
-          by (rule measurable_sets[OF meas[OF s] A])
-        then show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> s) :: real^'n) -` A \<inter> space P
-            \<in> sets (?F i)" by simp
-      qed
-    qed
-    finally have "sets (?G i) \<subseteq> sets (?F i)" .
-    then show ?thesis unfolding subalgebra_def by simp
-  qed
-  have adapt: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> i) :: real^'n) \<in> borel_measurable (?G i)"
-    if i: "0 \<le> i" for i
-    by (rule adapted_process.adapted
-          [OF Stochastic_Process.stochastic_process.adapted_process_natural_filtration
-              [OF SP] i])
-  show ?thesis
-    by (rule martingale_coarser_filtration
-          [OF iexit_class_X_martingale[OF P] ffm GF adapt])
-qed
-
 text \<open>The cut of a member of the uncapped class is a member of the capped one.
   Every clause transfers along @{const pcut}; the covariation and martingale
   clauses are simpler here than in @{thm [source] exit_class_pcut}, since the

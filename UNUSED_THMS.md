@@ -12,16 +12,31 @@ ML \<open>
 ```
 
 Deleting a theorem frees its private helpers, so the analysis has to be
-re-run after each pass. Three passes have been made:
+re-run after each pass. Four passes have been made:
 
 | pass | deletable | deleted | lines |
 |---|---|---|---|
 | 1 | 181 | 181 | ~4600 |
 | 2 |  59 |  59 | ~1700 |
 | 3 |  35 |  35 |  ~800 |
+| 4 |  24 |  24 |  ~373 |
 
-275 theorems, about 7100 lines. A fourth pass would find a further, smaller
-round; the list below is the state after the third.
+299 theorems, about 7470 lines. The fourth pass was run to **convergence**:
+it started with 12 candidates, and each deletion freed more until a fifth
+round found nothing. The cascade ran almost entirely through
+`Comparison_Principle`'s `sym_part` cluster, which one deletion
+(`ell_op_image_sym`) killed outright; the `sym_part` definition went with it,
+and definitions are the one thing `unused_thms` does not report.
+
+Six definitions are reachable from nothing and were **not** deleted, because
+none of them died as a consequence of this sweep and each is either named in
+the restructuring plan as intended API or is part of the paper's own
+presentation: `visc_sol_env`, `quartic_pen`, `Yint`, `pairX`, `pairY`,
+`tanpV`. Removing them is an editorial decision about what the development
+should still show, not a dead-code question.
+
+The list below is the state after the third pass and is therefore stale in its
+counts; the filters are what still matter.
 
 ## How the raw output has to be filtered
 
