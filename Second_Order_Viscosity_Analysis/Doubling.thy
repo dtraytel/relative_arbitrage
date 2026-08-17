@@ -127,7 +127,7 @@ text \<open>Freezing one variable at the joint maximiser gives the two condition
   \<open>supersol_jet\<close> consume.\<close>
 
 lemma doubling_partial_max_fst:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes jmax: "\<And>x y. x \<in> S \<Longrightarrow> y \<in> S \<Longrightarrow>
       u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
       \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -137,7 +137,7 @@ lemma doubling_partial_max_fst:
   using jmax[OF x yh] by simp
 
 lemma doubling_partial_min_snd:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes jmax: "\<And>x y. x \<in> S \<Longrightarrow> y \<in> S \<Longrightarrow>
       u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
       \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -153,7 +153,7 @@ text \<open>If the maximising pair is on the diagonal, the doubling degenerates:
   applies, or \<open>u - w\<close> attains its maximum over \<open>K\<close> at the common point.\<close>
 
 lemma doubling_diagonal_max:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
           \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -173,7 +173,7 @@ text \<open>Conversely, if \<open>u - w\<close> does not attain its maximum over
   gradient is nonzero and the envelope contradiction applies.\<close>
 
 lemma doubling_off_diagonal:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
           \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -187,7 +187,7 @@ proof
 qed
 
 corollary doubling_grad_nonzero:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
           \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -206,7 +206,7 @@ text \<open>Every Crandall-Ishii comparison argument needs the penalty term at t
   \<open>u x - w y\<close> on \<open>K \<times> K\<close>.\<close>
 
 lemma doubling_penalty_bound:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
           \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -227,7 +227,7 @@ text \<open>In the form actually used: for \<open>\<alpha> > 0\<close> the squar
   constant, driving \<open>x' - y' \<rightarrow> 0\<close>.\<close>
 
 corollary doubling_dist_bound:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'b::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
           \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -248,7 +248,7 @@ text \<open>Since the penalty is bounded, the doubled maximum is at least the
   says the doubling can only improve on the diagonal value.  That is
   \<open>doubling_ge_diagonal\<close> in @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums},
   already at \<open>'a::euclidean_space\<close>; this theory had its own copy specialised
-  to \<open>real^'n\<close> and to the value at a maximising pair, which shadowed it.\<close>
+  to \<open>'b\<close> and to the value at a maximising pair, which shadowed it.\<close>
 
 text \<open>These four lemmas use the penalty only through \<open>Pn 0 = 0\<close>: each proof
   instantiates the maximiser inequality at a diagonal point, where the
@@ -259,7 +259,7 @@ text \<open>These four lemmas use the penalty only through \<open>Pn 0 = 0\<clos
   \<open>c\<close>.\<close>
 
 lemma doubling_diagonal_max_gen:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
     and P0: "Pn 0 = 0"
@@ -269,8 +269,8 @@ lemma doubling_diagonal_max_gen:
 proof -
   have base: "u x - w x - Pn (x - x) \<le> u xh - w yh - Pn (xh - yh)"
     by (rule mx[OF x x])
-  have e1: "x - x = (0 :: real^'n)" by simp
-  have e2: "xh - yh = (0 :: real^'n)" using diag by simp
+  have e1: "x - x = (0 :: 'a)" by simp
+  have e2: "xh - yh = (0 :: 'a)" using diag by simp
   from base have "u x - w x - Pn 0 \<le> u xh - w yh - Pn 0"
     unfolding e1 e2 .
   then have "u x - w x \<le> u xh - w yh" unfolding P0 by simp
@@ -278,7 +278,7 @@ proof -
 qed
 
 lemma doubling_off_diagonal_gen:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
     and P0: "Pn 0 = 0"
@@ -293,7 +293,7 @@ proof
 qed
 
 lemma doubling_penalty_bound_gen:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - Pn (x - y) \<le> u xh - w yh - Pn (xh - yh)"
     and P0: "Pn 0 = 0"
@@ -303,7 +303,7 @@ lemma doubling_penalty_bound_gen:
 proof -
   have base: "u z - w z - Pn (z - z) \<le> u xh - w yh - Pn (xh - yh)"
     by (rule mx[OF z z])
-  have e: "z - z = (0 :: real^'n)" by simp
+  have e: "z - z = (0 :: 'a)" by simp
   from base have "u z - w z - Pn 0 \<le> u xh - w yh - Pn (xh - yh)"
     unfolding e .
   then have "u z - w z \<le> u xh - w yh - Pn (xh - yh)" unfolding P0 by simp
@@ -316,7 +316,7 @@ text \<open>Every doubling lemma above takes the maximising property of
   the compact product \<open>K \<times> K\<close>.\<close>
 
 theorem doubling_maximiser_exists:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
   shows "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
@@ -366,7 +366,7 @@ text \<open>The same for a general penalty: the penalty enters the existence pro
   \<open>continuous_attains_sup\<close>.\<close>
 
 theorem doubling_maximiser_exists_gen:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
     and cPn: "continuous_on UNIV Pn"
@@ -416,7 +416,7 @@ text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound
   comes from the same attainment argument as the maximiser itself.\<close>
 
 lemma doubling_upper_bound_exists:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
   shows "\<exists>C. \<forall>x\<in>K. \<forall>y\<in>K. u x - w y \<le> C"
@@ -905,7 +905,7 @@ text \<open>The annulus bound Jensen's strict-gap version needs: a plain
   \<open>\<rho> \<le> \<parallel>y - \<xi>\<^sub>0\<parallel>\<close>, while the centre value \<open>\<Phi>(\<xi>\<^sub>0)\<close> is exact.\<close>
 
 lemma shifted_annulus_bound_split_gen:
-  fixes A B :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes A B :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes mxK: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow>
         A (fst y) + B (snd y) - Pn (fst y - snd y)
         \<le> A (fst \<xi>\<^sub>0) + B (snd \<xi>\<^sub>0) - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
@@ -1206,8 +1206,8 @@ text \<open>\<open>comparison_env_from_jets\<close> consumes \<open>psd (Ym - Xm
   second derivative restricted to that block.\<close>
 
 theorem sums_gives_ordering:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes expPsi: "((\<lambda>k. ((a (fst (zh + k)) + b (snd (zh + k))
           - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2)
         - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
@@ -1246,8 +1246,8 @@ text \<open>The hypothesis \<open>k \<cdot> W k \<le> 0\<close> of \<open>sums_g
   on the maximum property and the jet.\<close>
 
 theorem sums_ordering_at_interior_max:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes blW: "bounded_linear W"
     and dpos: "0 < d"
     and mx: "\<And>k. norm k < d \<Longrightarrow>
@@ -1262,7 +1262,7 @@ theorem sums_ordering_at_interior_max:
   shows "v \<bullet> (fst (W (v, 0)) + \<alpha> *\<^sub>R v)
        \<le> v \<bullet> (- (snd (W (0, v)) + \<alpha> *\<^sub>R v))"
 proof -
-  define \<Psi> where "\<Psi> = (\<lambda>z::(real^'n) \<times> (real^'n).
+  define \<Psi> where "\<Psi> = (\<lambda>z::('a) \<times> ('a).
       a (fst z) + b (snd z) - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)"
   have mxP: "\<Psi> (zh + k) \<le> \<Psi> zh" if "norm k < d" for k
     unfolding \<Psi>_def by (rule mx[OF that])
@@ -1361,7 +1361,7 @@ text \<open>A doubling maximiser is naturally stated for the unsplit functional
   vanish at \<open>\<xi>\<^sub>0\<close>.\<close>
 
 lemma shifted_annulus_bound_split:
-  fixes A B :: "real^'n::finite \<Rightarrow> real"
+  fixes A B :: "'a::euclidean_space \<Rightarrow> real"
   assumes mxK: "\<And>y. y \<in> cball \<xi>\<^sub>0 r \<Longrightarrow>
         A (fst y) + B (snd y) - (\<alpha>/2) * (norm (fst y - snd y))\<^sup>2
         \<le> A (fst \<xi>\<^sub>0) + B (snd \<xi>\<^sub>0) - (\<alpha>/2) * (norm (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0))\<^sup>2"
@@ -1434,7 +1434,7 @@ text \<open>Jensen's lemma returns a global maximum of the tilted functional
   \<open>r - dist z' \<xi> > 0\<close> around \<open>z'\<close>.\<close>
 
 lemma tilt_absorb:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
   shows "(a (fst z) + b (snd z) - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + p \<bullet> z
        = (a (fst z) + fst p \<bullet> fst z) + (b (snd z) + snd p \<bullet> snd z)
          - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2"
@@ -1471,7 +1471,7 @@ text \<open>Jensen's output becomes exactly the interior-maximum hypothesis of
   summands.\<close>
 
 theorem doubled_tilted_interior_max:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow>
         (a (fst y) + b (snd y) - (\<alpha>/2) * (norm (fst y - snd y))\<^sup>2) + p \<bullet> y
         \<le> (a (fst zh) + b (snd zh)
@@ -1483,7 +1483,7 @@ theorem doubled_tilted_interior_max:
        \<le> (a (fst zh) + fst p \<bullet> fst zh) + (b (snd zh) + snd p \<bullet> snd zh)
          - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2"
 proof -
-  define \<Psi> where "\<Psi> = (\<lambda>z::(real^'n) \<times> (real^'n).
+  define \<Psi> where "\<Psi> = (\<lambda>z::('a) \<times> ('a).
       (a (fst z) + b (snd z) - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + p \<bullet> z)"
   have mxP: "\<Psi> y \<le> \<Psi> zh" if "y \<in> cball \<xi> r" for y
     unfolding \<Psi>_def by (rule mx[OF that])
@@ -1514,7 +1514,7 @@ next
 qed
 
 lemma linear_block_fst:
-  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes W :: "('a::euclidean_space) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes blW: "bounded_linear W"
   shows "linear (\<lambda>v. fst (W (v, 0)) + \<alpha> *\<^sub>R v)"
 proof -
@@ -1526,7 +1526,7 @@ proof -
 qed
 
 lemma linear_block_snd:
-  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes W :: "('a::euclidean_space) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes blW: "bounded_linear W"
   shows "linear (\<lambda>v. - (snd (W (0, v)) + \<alpha> *\<^sub>R v))"
 proof -
@@ -1538,7 +1538,7 @@ proof -
 qed
 
 lemma sym_block_fst:
-  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes W :: "('a::euclidean_space) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes symW: "\<And>u u'. u \<bullet> W u' = u' \<bullet> W u"
   shows "v \<bullet> (fst (W (z, 0)) + \<alpha> *\<^sub>R z)
        = z \<bullet> (fst (W (v, 0)) + \<alpha> *\<^sub>R v)"
@@ -1550,7 +1550,7 @@ proof -
 qed
 
 lemma sym_block_snd:
-  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes W :: "('a::euclidean_space) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes symW: "\<And>u u'. u \<bullet> W u' = u' \<bullet> W u"
   shows "v \<bullet> (- (snd (W (0, z)) + \<alpha> *\<^sub>R z))
        = z \<bullet> (- (snd (W (0, v)) + \<alpha> *\<^sub>R v))"
@@ -1616,7 +1616,7 @@ text \<open>The two component jets \<open>comparison_env_complete\<close> takes 
   \<open>\<alpha>(x' - y')\<close> in the gradient and the \<open>+ \<alpha> v\<close> in the Hessian block.\<close>
 
 lemma penalty_difference_identity:
-  fixes x y h :: "real^'n::finite"
+  fixes x y h :: "'a::euclidean_space"
   shows "(\<alpha>/2) * (norm (x + h - y))\<^sup>2 - (\<alpha>/2) * (norm (x - y))\<^sup>2
        = \<alpha> * ((x - y) \<bullet> h) + (\<alpha>/2) * (norm h)\<^sup>2"
 proof -
@@ -1630,27 +1630,27 @@ proof -
 qed
 
 text \<open>The slice embedding is a legitimate change of filter: as \<open>h\<close> tends
-  to \<open>0\<close> in \<open>real^'n\<close> avoiding \<open>0\<close>, the pair \<open>(h, 0)\<close> tends to \<open>0\<close> in
+  to \<open>0\<close> in \<open>'a\<close> avoiding \<open>0\<close>, the pair \<open>(h, 0)\<close> tends to \<open>0\<close> in
   the product avoiding \<open>0\<close>, letting a limit statement about the doubled
   functional be evaluated along the slice.\<close>
 
 lemma filterlim_slice_fst:
-  "filterlim (\<lambda>h::real^'n::finite. (h, 0::real^'n)) (at 0) (at 0)"
+  "filterlim (\<lambda>h::'a::euclidean_space. (h, 0::'a)) (at 0) (at 0)"
 proof (rule filterlim_atI)
-  show "((\<lambda>h::real^'n. (h, 0::real^'n)) \<longlongrightarrow> 0) (at 0)"
+  show "((\<lambda>h::'a. (h, 0::'a)) \<longlongrightarrow> 0) (at 0)"
     by (simp add: zero_prod_def tendsto_Pair)
 next
-  show "\<forall>\<^sub>F h in at (0 :: real^'n). (h, 0::real^'n) \<noteq> 0"
+  show "\<forall>\<^sub>F h in at (0 :: 'a). (h, 0::'a) \<noteq> 0"
     by (simp add: eventually_at_filter zero_prod_def)
 qed
 
 lemma filterlim_slice_snd:
-  "filterlim (\<lambda>h::real^'n::finite. (0::real^'n, h)) (at 0) (at 0)"
+  "filterlim (\<lambda>h::'a::euclidean_space. (0::'a, h)) (at 0) (at 0)"
 proof (rule filterlim_atI)
-  show "((\<lambda>h::real^'n. (0::real^'n, h)) \<longlongrightarrow> 0) (at 0)"
+  show "((\<lambda>h::'a. (0::'a, h)) \<longlongrightarrow> 0) (at 0)"
     by (simp add: zero_prod_def tendsto_Pair)
 next
-  show "\<forall>\<^sub>F h in at (0 :: real^'n). (0::real^'n, h) \<noteq> 0"
+  show "\<forall>\<^sub>F h in at (0 :: 'a). (0::'a, h) \<noteq> 0"
     by (simp add: eventually_at_filter zero_prod_def)
 qed
 
@@ -1661,8 +1661,8 @@ text \<open>The doubled jet restricts to the first slice: the \<open>b\<close> t
   the theorem on sums.\<close>
 
 lemma doubled_slice_numerator_fst:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   shows "((a (fst (zh + (h, 0))) + b (snd (zh + (h, 0)))
         - (\<alpha>/2) * (norm (fst (zh + (h, 0)) - snd (zh + (h, 0))))\<^sup>2)
       - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
@@ -1681,8 +1681,8 @@ proof -
 qed
 
 theorem doubled_jet_slice_fst:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
           - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
         - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
@@ -1785,7 +1785,7 @@ text \<open>The mirror image on the second slice: the penalty now moves the
   both blocks carry \<open>+ \<alpha> v\<close>.\<close>
 
 lemma penalty_difference_identity_snd:
-  fixes x y h :: "real^'n::finite"
+  fixes x y h :: "'a::euclidean_space"
   shows "(\<alpha>/2) * (norm (x - (y + h)))\<^sup>2 - (\<alpha>/2) * (norm (x - y))\<^sup>2
        = - (\<alpha> * ((x - y) \<bullet> h)) + (\<alpha>/2) * (norm h)\<^sup>2"
 proof -
@@ -1807,8 +1807,8 @@ proof -
 qed
 
 lemma doubled_slice_numerator_snd:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   shows "((a (fst (zh + (0, h))) + b (snd (zh + (0, h)))
         - (\<alpha>/2) * (norm (fst (zh + (0, h)) - snd (zh + (0, h))))\<^sup>2)
       - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
@@ -1827,8 +1827,8 @@ proof -
 qed
 
 theorem doubled_jet_slice_snd:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
           - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
         - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
@@ -1952,8 +1952,8 @@ text \<open>With \<open>q = 0\<close> at the doubled maximum
   \<open>comparison_env_complete\<close> requires.\<close>
 
 corollary doubled_jet_slices_at_max:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes blW: "bounded_linear W" and dpos: "0 < dd"
     and mx: "\<And>hk. norm hk < dd \<Longrightarrow>
         a (fst (zh + hk)) + b (snd (zh + hk))
@@ -2197,7 +2197,7 @@ text \<open>\<open>p \<noteq> 0\<close> needs a positive lower bound on \<open>\
   bound is \<open>\<gamma>/L\<^sub>w\<close>, independent of \<open>\<alpha>\<close>.\<close>
 
 theorem doubling_grad_lower_bound:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
           \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -2228,7 +2228,7 @@ text \<open>The shared gradient \<open>p = \<alpha>(x̂-ŷ)\<close> has norm at 
   limit.\<close>
 
 corollary doubling_grad_norm_lower_bound:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - (\<alpha>/2) * (norm (x - y))\<^sup>2
           \<le> u xh - w yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
@@ -2271,7 +2271,7 @@ proof (rule Lim_null_comparison[OF _ D])
 qed
 
 theorem gradient_sequences_align:
-  fixes Pt :: "nat \<Rightarrow> (real^'n::finite) \<times> (real^'n)" and G :: "nat \<Rightarrow> real^'n"
+  fixes Pt :: "nat \<Rightarrow> ('a::euclidean_space) \<times> ('a)" and G :: "nat \<Rightarrow> 'a"
   assumes tilt: "Pt \<longlonglongrightarrow> 0" and gconv: "G \<longlonglongrightarrow> g"
   shows "(\<lambda>i. - fst (Pt i) + G i) \<longlonglongrightarrow> g"
     and "(\<lambda>i. snd (Pt i) + G i) \<longlonglongrightarrow> g"
@@ -2290,7 +2290,7 @@ text \<open>The doubling supplies tilts bounded by a sequence \<open>dd\<^sub>i 
   what re-running Jensen with a shrinking tilt parameter gives.\<close>
 
 corollary gradient_sequences_align_of_bound:
-  fixes Pt :: "nat \<Rightarrow> (real^'n::finite) \<times> (real^'n)" and G :: "nat \<Rightarrow> real^'n"
+  fixes Pt :: "nat \<Rightarrow> ('a::euclidean_space) \<times> ('a)" and G :: "nat \<Rightarrow> 'a"
   assumes b: "\<And>i. norm (Pt i) \<le> dd i" and dd: "dd \<longlonglongrightarrow> 0"
     and gconv: "G \<longlonglongrightarrow> g"
   shows "(\<lambda>i. - fst (Pt i) + G i) \<longlonglongrightarrow> g"
@@ -2649,7 +2649,7 @@ text \<open>Extending an usc \<open>u\<close> off a closed \<open>K\<close> by a
   as required so the doubled functional cannot be maximised off \<open>K\<close>.\<close>
 
 lemma usc_extend_const_below:
-  fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real" and K :: "('a) set"
   assumes cl: "closed K"
     and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
     and lo: "\<And>y. y \<in> K \<Longrightarrow> Bl \<le> u y" and CB: "C \<le> Bl"
@@ -2692,7 +2692,7 @@ text \<open>The two-domain localised maximiser replaces
   domains.\<close>
 
 lemma doubled_maximiser_over_UNIV_snd:
-  fixes A Bfun Pn :: "real^'n::finite \<Rightarrow> real" and K' Q :: "(real^'n) set"
+  fixes A Bfun Pn :: "'a::euclidean_space \<Rightarrow> real" and K' Q :: "('a) set"
   assumes cQ: "compact Q" and cK': "compact K'"
     and cA: "continuous_on UNIV A" and cB: "continuous_on UNIV Bfun"
     and cP: "continuous_on UNIV Pn"
@@ -2706,7 +2706,7 @@ lemma doubled_maximiser_over_UNIV_snd:
         A x + Bfun y - Pn (x - y) \<le> A xh + Bfun yh - Pn (xh - yh)"
 proof -
   define S where "S = Q \<times> K'"
-  define F where "F = (\<lambda>p :: (real^'n) \<times> (real^'n).
+  define F where "F = (\<lambda>p :: ('a) \<times> ('a).
       A (fst p) + Bfun (snd p) - Pn (fst p - snd p))"
   have cS: "compact S" unfolding S_def by (rule compact_Times[OF cQ cK'])
   have zS: "(z, z) \<in> S" unfolding S_def using zQ zK' by simp
@@ -2746,7 +2746,7 @@ text \<open>Maximality over \<open>UNIV \<times> K'\<close> restricts to the bal
   unconstrained.\<close>
 
 lemma mxK_of_UNIV_snd:
-  fixes A Bfun Pn :: "real^'n::finite \<Rightarrow> real"
+  fixes A Bfun Pn :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. y \<in> K' \<Longrightarrow>
       A x + Bfun y - Pn (x - y)
       \<le> A (fst \<xi>\<^sub>0) + Bfun (snd \<xi>\<^sub>0) - Pn (fst \<xi>\<^sub>0 - snd \<xi>\<^sub>0)"
@@ -2771,7 +2771,7 @@ text \<open>The other half of the two-domain interface: the core reads the
   preserved by shrinking.\<close>
 
 lemma cont_pos_near:
-  fixes A :: "real^'n::finite \<Rightarrow> real"
+  fixes A :: "'a::euclidean_space \<Rightarrow> real"
   assumes cA: "continuous_on UNIV A" and pos: "0 < A p"
   obtains \<rho> where "0 < \<rho>" and "\<And>x. dist x p \<le> \<rho> \<Longrightarrow> 0 < A x"
 proof -
@@ -2848,7 +2848,7 @@ proof -
 qed
 
 theorem doubling_maximiser_far_from_boundary:
-  fixes f g :: "real^'n::finite \<Rightarrow> real"
+  fixes f g :: "'a::euclidean_space \<Rightarrow> real"
   assumes xK: "xh \<in> K" and yK: "yh \<in> K"
     and val: "M \<le> f z + g z"
     and tr: "f z + g z \<le> f xh + g yh + 2*\<sigma>"
@@ -2881,7 +2881,7 @@ text \<open>Of the eleven lemmas in the localisation layer, only two mention the
   consuming the penalty only through the abstracted \<open>tr\<close> and \<open>near\<close>.\<close>
 
 lemma doubling_maximiser_value_transfer_gen:
-  fixes A Bf f g :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes A Bf f g :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         A x + Bf y - Pn (x - y) \<le> A xh + Bf yh - Pn (xh - yh)"
     and zK: "z \<in> K"
@@ -2892,7 +2892,7 @@ lemma doubling_maximiser_value_transfer_gen:
 proof -
   have diag: "A z + Bf z - Pn (z - z) \<le> A xh + Bf yh - Pn (xh - yh)"
     by (rule mx[OF zK zK])
-  have zz: "z - z = (0 :: real^'n)" by simp
+  have zz: "z - z = (0 :: 'a)" by simp
   have "A z + Bf z \<le> A xh + Bf yh - Pn (xh - yh)"
     using diag unfolding zz P0 by simp
   then show ?thesis using lowA lowB upA upB by linarith
@@ -2915,7 +2915,7 @@ text \<open>A diagonal maximiser bounds the increment of each component above by
   nothing below.\<close>
 
 lemma diagonal_max_increments:
-  fixes A B :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes A B :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         A x + B y - Pn (x - y) \<le> A p + B p - Pn (p - p)"
     and P0: "Pn 0 = 0"
@@ -2923,7 +2923,7 @@ lemma diagonal_max_increments:
   shows "\<And>y. y \<in> K \<Longrightarrow> B y - B p \<le> Pn (p - y)"
     and "\<And>x. x \<in> K \<Longrightarrow> A x - A p \<le> Pn (x - p)"
 proof -
-  have e: "p - p = (0 :: real^'n)" by simp
+  have e: "p - p = (0 :: 'a)" by simp
   show "B y - B p \<le> Pn (p - y)" if y: "y \<in> K" for y
   proof -
     have "A p + B y - Pn (p - y) \<le> A p + B p - Pn 0"
@@ -2939,7 +2939,7 @@ proof -
 qed
 
 lemma fary_of_pin:
-  fixes K K' :: "(real^'n::finite) set" and xh yh q b :: "real^'n"
+  fixes K K' :: "('a::euclidean_space) set" and xh yh q b :: "'a"
   assumes gap: "\<And>x c. x \<in> K \<Longrightarrow> c \<in> K' - interior K' \<Longrightarrow> d < dist x c"
     and qK: "q \<in> K" and xQ: "dist xh q \<le> dQ"
     and pin: "norm (xh - yh) < \<beta>"
@@ -3005,11 +3005,11 @@ proof -
 qed
 
 lemma block_form_bound_fst:
-  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes W :: "('a::euclidean_space) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes bnd: "\<And>z. \<bar>z \<bullet> W z\<bar> \<le> C * (norm z)\<^sup>2"
   shows "\<bar>k \<bullet> (fst (W (k, 0)) + \<alpha> *\<^sub>R k)\<bar> \<le> (C + \<bar>\<alpha>\<bar>) * (norm k)\<^sup>2"
 proof -
-  have n0: "norm ((k, 0) :: (real^'n) \<times> (real^'n)) = norm k"
+  have n0: "norm ((k, 0) :: ('a) \<times> ('a)) = norm k"
     by (simp add: norm_Pair)
   have b1: "\<bar>k \<bullet> fst (W (k, 0))\<bar> \<le> C * (norm k)\<^sup>2"
     using bnd[of "(k, 0)"] by (simp add: inner_prod_def n0)
@@ -3029,11 +3029,11 @@ proof -
 qed
 
 lemma block_form_bound_snd:
-  fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
+  fixes W :: "('a::euclidean_space) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
   assumes bnd: "\<And>z. \<bar>z \<bullet> W z\<bar> \<le> C * (norm z)\<^sup>2"
   shows "\<bar>k \<bullet> (- (snd (W (0, k)) + \<alpha> *\<^sub>R k))\<bar> \<le> (C + \<bar>\<alpha>\<bar>) * (norm k)\<^sup>2"
 proof -
-  have n0: "norm ((0, k) :: (real^'n) \<times> (real^'n)) = norm k"
+  have n0: "norm ((0, k) :: ('a) \<times> ('a)) = norm k"
     by (simp add: norm_Pair)
   have b1: "\<bar>k \<bullet> snd (W (0, k))\<bar> \<le> C * (norm k)\<^sup>2"
     using bnd[of "(0, k)"] by (simp add: inner_prod_def n0)
@@ -3166,7 +3166,7 @@ text \<open>The lower bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<clos
   from the boundary side.\<close>
 
 lemma penalty_gradient_nearby_bound:
-  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)"
+  fixes zh \<xi> :: "('a::euclidean_space) \<times> ('a)"
   assumes c: "c \<le> norm (\<alpha> *\<^sub>R (fst \<xi> - snd \<xi>))"
     and d: "dist zh \<xi> \<le> \<rho>"
   shows "c - 2 * \<bar>\<alpha>\<bar> * \<rho> \<le> norm (\<alpha> *\<^sub>R (fst zh - snd zh))"
@@ -3214,9 +3214,9 @@ text \<open>\<open>doubled_supconv_jet_exists\<close> returns, at each tilt, a m
   penalty gradient \<open>G = \<alpha>(x̂-ŷ)\<close>.\<close>
 
 theorem tilted_doubled_jet_slices:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-    and zh \<xi> pt q :: "(real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
+    and zh \<xi> pt q :: "('a) \<times> ('a)"
   assumes blW: "bounded_linear W"
     and rz: "dist zh \<xi> < r"
     and mx: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow>
@@ -3358,9 +3358,9 @@ text \<open>The Hessian bound for a general penalty needs no jet of \<open>P\<cl
   Hessian \<open>W\<close>; a pure transcription.\<close>
 
 theorem tilted_doubled_hessian_nonpositive_gen:
-  fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-    and zh \<xi> pt q :: "(real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real" and P :: "'a \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
+    and zh \<xi> pt q :: "('a) \<times> ('a)"
   assumes blW: "bounded_linear W"
     and rz: "dist zh \<xi> < r"
     and mx: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow>
@@ -3404,9 +3404,9 @@ proof -
 qed
 
 theorem tilted_doubled_hessian_nonpositive:
-  fixes a b :: "real^'n::finite \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-    and zh \<xi> pt q :: "(real^'n) \<times> (real^'n)"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
+    and zh \<xi> pt q :: "('a) \<times> ('a)"
   assumes blW: "bounded_linear W"
     and rz: "dist zh \<xi> < r"
     and mx: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow>
@@ -3512,7 +3512,7 @@ text \<open>The assembly's hypotheses are all data of the comparison argument - 
   lower bound survives the move to Jensen's maximiser.\<close>
 
 lemma penalty_gradient_nearby_upper:
-  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)"
+  fixes zh \<xi> :: "('a::euclidean_space) \<times> ('a)"
   assumes d: "dist zh \<xi> \<le> \<rho>"
   shows "norm (\<alpha> *\<^sub>R (fst zh - snd zh))
       \<le> norm (\<alpha> *\<^sub>R (fst \<xi> - snd \<xi>)) + 2 * \<bar>\<alpha>\<bar> * \<rho>"
@@ -3607,7 +3607,7 @@ text \<open>Two locality facts about the penalty gradient for a general penalty:
   quadratic case.\<close>
 
 lemma diff_displacement_bound:
-  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)"
+  fixes zh \<xi> :: "('a::euclidean_space) \<times> ('a)"
   assumes d: "dist zh \<xi> \<le> \<rho>"
   shows "norm ((fst zh - snd zh) - (fst \<xi> - snd \<xi>)) \<le> 2*\<rho>"
 proof -
@@ -3624,7 +3624,7 @@ proof -
 qed
 
 lemma penalty_gradient_nearby_upper_gen:
-  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)" and Gf :: "real^'n \<Rightarrow> real^'n"
+  fixes zh \<xi> :: "('a::euclidean_space) \<times> ('a)" and Gf :: "'a \<Rightarrow> 'a"
   assumes d: "dist zh \<xi> \<le> \<rho>"
     and lip: "\<And>d d'. norm (Gf d - Gf d') \<le> KG * norm (d - d')"
     and KG: "0 \<le> KG"
@@ -3641,7 +3641,7 @@ proof -
 qed
 
 lemma penalty_gradient_nearby_bound_gen:
-  fixes zh \<xi> :: "(real^'n::finite) \<times> (real^'n)" and Gf :: "real^'n \<Rightarrow> real^'n"
+  fixes zh \<xi> :: "('a::euclidean_space) \<times> ('a)" and Gf :: "'a \<Rightarrow> 'a"
   assumes c: "c \<le> norm (Gf (fst \<xi> - snd \<xi>))"
     and d: "dist zh \<xi> \<le> \<rho>"
     and lip: "\<And>d d'. norm (Gf d - Gf d') \<le> KG * norm (d - d')"
@@ -3663,7 +3663,7 @@ proof -
 qed
 
 text \<open>The chain above needs \<open>u\<close> and \<open>w\<close> global, bounded and continuous on all
-  of \<open>real^'n\<close>, since the sup-convolution is a supremum over the whole
+  of \<open>'a\<close>, since the sup-convolution is a supremum over the whole
   space; the corrected \<open>max_principle_boundary\<close> supplies only
   \<open>continuous_on K\<close>.  Tietze's extension theorem gives a global
   continuous representative with the same sup-norm bound, and the
@@ -3672,7 +3672,7 @@ text \<open>The chain above needs \<open>u\<close> and \<open>w\<close> global, 
   made the raw interface refutable now works in reverse.\<close>
 
 lemma continuous_extension_bounded:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes cK: "closed K" and cu: "continuous_on K u"
     and B0: "0 \<le> B" and B: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B"
   shows "\<exists>v. continuous_on UNIV v \<and> (\<forall>y\<in>K. v y = u y) \<and> (\<forall>y. \<bar>v y\<bar> \<le> B)"
@@ -3682,7 +3682,7 @@ proof -
   have nB: "\<And>x. x \<in> K \<Longrightarrow> norm (u x) \<le> B" using B by simp
   show ?thesis
   proof (rule Tietze[OF cu cl B0 nB])
-    fix g :: "real^'n \<Rightarrow> real"
+    fix g :: "'a \<Rightarrow> real"
     assume cg: "continuous_on UNIV g"
       and geq: "\<And>x. x \<in> K \<Longrightarrow> g x = u x"
       and gB: "\<And>x. x \<in> UNIV \<Longrightarrow> norm (g x) \<le> B"
@@ -3698,7 +3698,7 @@ text \<open>Packaged: from a compact \<open>K\<close> and a function continuous 
   agreeing on \<open>K\<close>, and carrying the viscosity property unchanged.\<close>
 
 lemma bounded_on_compact:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes cK: "compact K" and cu: "continuous_on K u"
   shows "\<exists>B\<ge>0. \<forall>y\<in>K. \<bar>u y\<bar> \<le> B"
 proof (cases "K = {}")
@@ -3722,7 +3722,7 @@ text \<open>The assembly's ball hypotheses - \<open>cball \<xi>\<^sub>0 r \<subs
   \<open>frontier K = K - interior K\<close>.\<close>
 
 lemma cball_subset_interior_of_far_from_boundary:
-  fixes K :: "(real^'n::finite) set"
+  fixes K :: "('a::euclidean_space) set"
   assumes cK: "closed K" and xK: "x \<in> K"
     and k0: "0 \<le> \<kappa>"
     and far: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist x b"
@@ -3759,7 +3759,7 @@ proof
 qed
 
 lemma cball_prod_subset_of_far_from_boundary:
-  fixes K :: "(real^'n::finite) set"
+  fixes K :: "('a::euclidean_space) set"
   assumes cK: "closed K" and xK: "x \<in> K" and yK: "y \<in> K"
     and k0: "0 \<le> \<kappa>"
     and farx: "\<And>b. b \<in> K - interior K \<Longrightarrow> \<kappa> < dist x b"
@@ -3821,7 +3821,7 @@ text \<open>The \<open>y\<close>-side avoidance is free in the two-domain settin
   gate lemmas put \<open>x^h\<close> in \<open>\<Omega>\<close> wherever it lands.\<close>
 
 lemma two_domain_gap:
-  fixes K K' :: "(real^'n::finite) set"
+  fixes K K' :: "('a::euclidean_space) set"
   assumes cK: "compact K" and cK': "compact K'" and sub: "K \<subseteq> interior K'"
   obtains d where "0 < d"
     and "\<And>x b. x \<in> K \<Longrightarrow> b \<in> K' - interior K' \<Longrightarrow> d < dist x b"
