@@ -31,32 +31,13 @@ unbundle inner_syntax
 
 section \<open>The operator of Eq. (1.9) on pairs\<close>
 
-text \<open>The envelopes are taken in the pair \<open>(p, M)\<close> jointly, as in the
-  paper, so \<open>F\<close> is first packaged as a function on the product metric
-  space, with values in \<open>ereal\<close> so that the suprema and infima below are
-  unconditionally defined.\<close>
+text \<open>\<open>ell_op_pair\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
 
-definition ell_op_pair ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> ereal"
-  where
-  "ell_op_pair k L z = ereal (ell_op k L (fst z) (snd z))"
 
 section \<open>The semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>\<close>
 
-text \<open>\<open>F\<^sub>*(z) = lim\<^bsub>e\<down>0\<^esub> inf\<^bsub>|w-z|<e\<^esub> F(w)\<close> and dually; the limits are
-  monotone in \<open>e\<close>, so they are a supremum and an infimum respectively.\<close>
+text \<open>\<open>ell_op_lsc\<close>, \<open>ell_op_usc\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
 
-definition ell_op_lsc ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) \<Rightarrow> (real^'n^'n) \<Rightarrow> ereal"
-  where
-  "ell_op_lsc k L p M =
-     (SUP e \<in> {0<..}. INF w \<in> ball (p, M) e. ell_op_pair k L w)"
-
-definition ell_op_usc ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) \<Rightarrow> (real^'n^'n) \<Rightarrow> ereal"
-  where
-  "ell_op_usc k L p M =
-     (INF e \<in> {0<..}. SUP w \<in> ball (p, M) e. ell_op_pair k L w)"
 
 text \<open>Every ball around \<open>z\<close> contains \<open>z\<close>, which gives the sandwich
   \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>.  This is all that is needed to see that the
@@ -560,35 +541,8 @@ corollary ell_op_lsc_at_zero_iff:
 
 section \<open>Definition 3.1 in envelope form\<close>
 
-text \<open>The paper's touching condition is global: \<open>(u - \<phi>)(x)\<close> is the maximum
-  of \<open>u - \<phi>\<close> over all of \<open>K\<close> (resp. the minimum, for supersolutions).  The
-  test-function data \<open>(\<phi>, g, H)\<close> is the same as in
-  @{theory Relative_Arbitrage.Curvature_Operator}, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
+text \<open>\<open>visc_subsol_env\<close>, \<open>visc_supersol_env\<close>, \<open>visc_sol_env\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
 
-definition visc_subsol_env ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
-     \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
-  where
-  "visc_subsol_env k L K \<Omega> u \<longleftrightarrow>
-     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<forall>y\<in>K. u y - \<phi> y \<le> u x - \<phi> x) \<longrightarrow>
-        ell_op_lsc k L (g x) H \<le> 1)"
-
-definition visc_supersol_env ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
-     \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
-  where
-  "visc_supersol_env k L K \<Omega> u \<longleftrightarrow>
-     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y) \<longrightarrow>
-        1 \<le> ell_op_usc k L (g x) H)"
-
-definition visc_sol_env ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
-     \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
-  where
-  "visc_sol_env k L K \<Omega> u \<longleftrightarrow>
-     visc_subsol_env k L K \<Omega> u \<and> visc_supersol_env k L K \<Omega> u"
 
 section \<open>The envelope-free notions are the stronger ones\<close>
 

@@ -561,41 +561,8 @@ text \<open>Lemma 3.1 consists of:
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
 
-text \<open>Theorem 4.2(a) -- the maximum principle: for a subsolution \<open>u\<close> and
-  supersolution \<open>w\<close>, \<open>u - w\<close> attains its maximum over compact \<open>K\<close> on the
-  boundary -- is proved in the paper via doubling and the Crandall--Ishii
-  "theorem on sums" [CI90], which needs sup-convolutions, semiconvexity and
-  Alexandrov/Jensen, none available in this HOL-Analysis or the AFP.  It is
-  isolated as the predicate \<open>max_principle_boundary\<close> below, from which
-  everything downstream -- 4.2(b), Theorem 4.3, Proposition 4.1 -- is proved
-  unconditionally.
+text \<open>\<open>max_principle_boundary_raw\<close>, \<open>max_principle_boundary\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
 
-  The interface needs continuity of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>:
-  \<open>visc_subsol k L (interior K) u\<close> constrains only \<open>interior K\<close>, so raising
-  \<open>w\<close> by a constant on \<open>K - interior K\<close> destroys every boundary maximum,
-  making the predicate genuinely false without continuity, as
-  \<open>max_principle_boundary_counterexample\<close> \<open>(Comparison\_Principle)\<close> shows for
-  the continuity-free \<open>max_principle_boundary_raw\<close>.  Plain continuity,
-  rather than a usc/lsc split, matches the rest of the development and this
-  HOL-Analysis's lack of a semicontinuity library.\<close>
-
-definition max_principle_boundary_raw ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
-  where
-  "max_principle_boundary_raw k L K \<longleftrightarrow>
-     (\<forall>u w. visc_subsol k L (interior K) u \<longrightarrow> visc_supersol k L (interior K) w
-        \<longrightarrow> (\<exists>x \<in> K - interior K.
-               \<forall>y \<in> K. u y - w y \<le> u x - w x))"
-
-definition max_principle_boundary ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"
-  where
-  "max_principle_boundary k L K \<longleftrightarrow>
-     (\<forall>u w. visc_subsol_env k L K (interior K) u
-        \<longrightarrow> visc_supersol_env k L K (interior K) w
-        \<longrightarrow> continuous_on K u \<longrightarrow> continuous_on K w
-        \<longrightarrow> (\<exists>x \<in> K - interior K.
-               \<forall>y \<in> K. u y - w y \<le> u x - w x))"
 
 text \<open>The predicate is about where the maximum sits, not whether there is one:
   under the added hypotheses \<open>u - w\<close> always attains its maximum on a compact

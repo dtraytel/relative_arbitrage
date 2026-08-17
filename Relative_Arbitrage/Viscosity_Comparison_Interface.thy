@@ -1,7 +1,7 @@
 
 (*<*)
 theory Viscosity_Comparison_Interface
-  imports Constraint_Set_Convexity
+  imports Constraint_Set_Convexity Viscosity_Ball
 begin
 
 (*>*)

@@ -2,7 +2,7 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 
 (*<*)
 theory Value_Function_Uniqueness
-  imports Value_Function_Market Viscosity_Solutions Comparison_Principle
+  imports Value_Function_Market Viscosity_Solutions Comparison_Two_Domain
     Exit_Time_Semicontinuity Value_Function_Viscosity
     Exit_Class_Infinite
 begin

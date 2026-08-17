@@ -11928,18 +11928,8 @@ text \<open>\<open>lsc_env\<close>, \<open>usc_env\<close>, their attainment/ext
 
 subsection \<open>The faithful supersolution property\<close>
 
-text \<open>Definition 3.1(b), verbatim: the test function touches the lower
-  envelope from below, globally on \<open>K\<close>, and the conclusion is the
-  inequality for the upper envelope \<open>F\<^sup>*\<close> of the operator.\<close>
+text \<open>\<open>visc_supersol_lsc\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
 
-definition visc_supersol_lsc ::
-  "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
-     \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> bool"
-  where
-  "visc_supersol_lsc k L K \<Omega> u \<longleftrightarrow>
-     (\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y) \<longrightarrow>
-        1 \<le> ell_op_usc k L (g x) H)"
 
 subsection \<open>Recentring the quadratic\<close>
 

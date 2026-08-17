@@ -16,6 +16,8 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Levy_Prokhorov_Metric
   theories
     Curvature_Operator
+    Viscosity_Definitions
+    Viscosity_Ball
     Volatile_Market
     Constraint_Set_Convexity
     Viscosity_Comparison_Interface
@@ -39,6 +41,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Exit_Class_DPP
     Value_Function_Viscosity
     Comparison_Principle
+    Comparison_Two_Domain
     Value_Function_Uniqueness
     Exit_Class_Infinite
     Exit_Class_Marginals
