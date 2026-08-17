@@ -8,6 +8,7 @@ session Continuous_Path_Spaces = Continuous_Time_Martingales +
     Kolmogorov_Chentsov
     Levy_Prokhorov_Metric
     Standard_Borel_Spaces
+    Semicontinuous_Analysis
     "HOL-Complex_Analysis"
   theories
     Increment_Moments

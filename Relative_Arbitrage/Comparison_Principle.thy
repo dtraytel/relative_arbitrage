@@ -11576,7 +11576,8 @@ qed
 
 text \<open>The repair lives in @{theory Relative_Arbitrage.Operator_Envelope_Continuity}: the corrected
   \<open>max_principle_boundary\<close> carries \<open>continuous_on K u\<close> and
-  \<open>continuous_on K w\<close>, \<open>max_principle_boundary_attains\<close> records that
+  \<open>continuous_on K w\<close>, \<open>sup_diff_attained_on_compact\<close> (from
+  @{theory Semicontinuous_Analysis.Semicontinuity}) records that
   \<open>u-w\<close> then attains its maximum on compact \<open>K\<close>, and \<open>max_principle_le\<close>,
   \<open>comparison_from_max_principle\<close>, \<open>uniqueness_from_max_principle\<close>
   thread the two continuity hypotheses through.  Everything downstream -
@@ -12437,7 +12438,7 @@ proof -
       \<comment> \<open>the global maximiser\<close>
       obtain xs where xsK: "xs \<in> K"
         and xsmax: "\<And>y. y \<in> K \<Longrightarrow> u y - w y \<le> u xs - w xs"
-        using max_principle_boundary_attains[OF cK neK cu cw] by blast
+        using sup_diff_attained_on_compact[OF cK neK cu cw] by blast
       \<comment> \<open>the boundary is compact and nonempty\<close>
       have clS: "closed (K - interior K)"
         by (intro closed_Diff clK open_interior)

@@ -9,6 +9,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
   "
   sessions
     Symmetric_Matrix_Spectra
+    Semicontinuous_Analysis
     Second_Order_Viscosity_Analysis
     Wiener_Measure
     Disintegration

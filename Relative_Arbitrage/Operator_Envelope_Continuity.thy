@@ -1,7 +1,7 @@
 
 (*<*)
 theory Operator_Envelope_Continuity
-  imports Operator_Envelopes Operator_Formula
+  imports Operator_Envelopes Operator_Formula "Semicontinuous_Analysis.Semicontinuity"
 begin
 
 (*>*)
@@ -599,19 +599,8 @@ definition max_principle_boundary ::
 
 text \<open>The predicate is about where the maximum sits, not whether there is one:
   under the added hypotheses \<open>u - w\<close> always attains its maximum on a compact
-  \<open>K\<close>, a fact the raw version presupposed.\<close>
-
-lemma max_principle_boundary_attains:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes cK: "compact K" and ne: "K \<noteq> {}"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-  shows "\<exists>x \<in> K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
-proof -
-  have "continuous_on K (\<lambda>y. u y - w y)"
-    by (intro continuous_intros cu cw)
-  then show ?thesis
-    by (rule continuous_attains_sup[OF cK ne])
-qed
+  \<open>K\<close>, a fact the raw version presupposed --- \<open>sup_diff_attained_on_compact\<close>
+  from @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
 
 text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and nonnegative boundary
   data for \<open>w\<close>, the maximum principle gives \<open>u \<le> w\<close> on \<open>K\<close>.\<close>

@@ -1,0 +1,56 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Upper and Lower Semicontinuity}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  Everything about upper and lower semicontinuity that HOL-Analysis leaves
+  unproved, and that is not about any particular function.
+
+  The $\varepsilon$-$\delta$ predicates and their elementary calculus: closure
+  under addition, positive scaling, and subtracting a continuous function;
+  attainment of the supremum or infimum of a semicontinuous function on a
+  nonempty compact set; and bounded extension of an upper semicontinuous
+  function off a closed set. The semicontinuous envelopes of a general
+  real-valued function --- taken over all of the ambient space, or relative
+  to a closed set, the form Definition 3.1 of the paper below actually reads
+  --- together with their monotonicity and the fixpoint at points where the
+  underlying function is already semicontinuous. Berge's maximum theorem,
+  the upper semicontinuity of a supremum of a jointly upper semicontinuous
+  function over a compact index set, needing no measurable selection. And a
+  measurable selection theorem for upper semicontinuous payoffs on compact
+  sets, Bertsekas--Shreve (1978) Proposition 7.33, by a greedy nested
+  bisection along a countable dense sequence.
+
+  Nothing in the entry refers to any particular equation; it was extracted
+  from a formalisation of the uniqueness half of a relative-arbitrage
+  problem~\cite{LaiShkolnikovSoner}, where the value function is characterised
+  as the unique bounded upper semicontinuous viscosity solution of a
+  degenerate elliptic equation.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

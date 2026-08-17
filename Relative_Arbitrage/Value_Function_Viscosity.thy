@@ -9575,7 +9575,8 @@ text \<open>The sphere-tangential projector field.  The companion input, that th
 
 text \<open>Matrix difference distributes over the product, entrywise:
   \<open>matrix_msub_rdistrib\<close> is \<open>matrix_mul_diff_left\<close> and \<open>matrix_msub_ldistrib\<close>
-  is \<open>matrix_mul_diff_right\<close>, both from @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
+  is \<open>matrix_mul_diff_right\<close>, both from
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 subsubsection \<open>The tangential projector\<close>
 
@@ -11920,38 +11921,13 @@ text \<open>Definition 3.1(b) of the paper touches the lower semicontinuous
 
 subsection \<open>The lower semicontinuous envelope\<close>
 
-text \<open>\<open>lsc_env\<close>, \<open>lsc_env_bdd_above\<close>, \<open>lsc_env_le_self\<close> and \<open>lsc_env_ge\<close> live in
-  @{theory Relative_Arbitrage.Operator_Envelopes}, together with \<open>usc_env\<close> and the
-  attainment/extension lemmas; what follows are the \<open>exit_val\<close>-facing
-  consequences.\<close>
-
-text \<open>The property the envelope exists for: arbitrarily near \<open>x\<close> there
-  are points where \<open>u\<close> is arbitrarily close to \<open>u\<^sub>*(x)\<close> from above.  This
-  is what supplies the approximating sequence along which the
-  construction is run.\<close>
-
-lemma lsc_env_approx:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y" and d0: "0 < \<delta>" and e0: "0 < \<epsilon>"
-  obtains y where "dist x y < \<delta>" and "u y < lsc_env u x + \<epsilon>"
-proof -
-  have bdd: "bdd_below (u ` ball x \<delta>)"
-    by (rule bdd_belowI[of _ B]) (use B in auto)
-  have ne: "u ` ball x \<delta> \<noteq> {}" using d0 by auto
-  have le: "(INF y \<in> ball x \<delta>. u y) \<le> lsc_env u x"
-    unfolding lsc_env_def
-    by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use d0 in auto)
-  have "(INF y \<in> ball x \<delta>. u y) < lsc_env u x + \<epsilon>"
-    using le e0 by linarith
-  then obtain z where z: "z \<in> u ` ball x \<delta>" and zlt: "z < lsc_env u x + \<epsilon>"
-    using cInf_less_iff[OF ne bdd] by blast
-  from z obtain y where y: "y \<in> ball x \<delta>" and uy: "z = u y" by auto
-  show ?thesis
-  proof (rule that)
-    show "dist x y < \<delta>" using y by simp
-    show "u y < lsc_env u x + \<epsilon>" using zlt unfolding uy .
-  qed
-qed
+text \<open>\<open>lsc_env\<close>, \<open>usc_env\<close>, their attainment/extension lemmas, and
+  \<open>lsc_env_approx\<close> (arbitrarily near \<open>x\<close> there are points where \<open>u\<close> is
+  arbitrarily close to \<open>u\<^sub>*(x)\<close> from above, which supplies the
+  approximating sequence the construction below is run along) live in
+  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes} and
+  @{theory Semicontinuous_Analysis.Semicontinuity}; what follows are the
+  \<open>exit_val\<close>-facing consequences.\<close>
 
 subsection \<open>The faithful supersolution property\<close>
 
@@ -12737,37 +12713,9 @@ text \<open>The uniqueness theorem of \<open>Value_Function_Uniqueness\<close> w
   envelope costs nothing at the interface.  The interface also relies on
   \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close>, a separate analytic fact.\<close>
 
-lemma lsc_env_eq_self:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y" and c: "isCont u x"
-  shows "lsc_env u x = u x"
-proof (rule antisym)
-  show "lsc_env u x \<le> u x" by (rule lsc_env_le_self[OF B])
-next
-  show "u x \<le> lsc_env u x"
-  proof (rule field_le_epsilon)
-    fix e :: real assume e0: "0 < e"
-    obtain d where d0: "0 < d"
-      and dd: "\<And>z. dist z x < d \<Longrightarrow> dist (u z) (u x) < e"
-      using c[unfolded continuous_at_eps_delta] e0 by blast
-    have bdd: "bdd_below (u ` ball x d)"
-      by (rule bdd_belowI[of _ B]) (use B in auto)
-    have "u x - e \<le> (INF y \<in> ball x d. u y)"
-    proof (rule cInf_greatest)
-      show "u ` ball x d \<noteq> {}" using d0 by auto
-    next
-      fix z assume "z \<in> u ` ball x d"
-      then obtain y where y: "y \<in> ball x d" and zy: "z = u y" by auto
-      have "dist y x < d" using y by (simp add: dist_commute)
-      then have "dist (u y) (u x) < e" by (rule dd)
-      then show "u x - e \<le> z" unfolding zy by (simp add: dist_real_def)
-    qed
-    also have "\<dots> \<le> lsc_env u x"
-      unfolding lsc_env_def
-      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use d0 in auto)
-    finally show "u x \<le> lsc_env u x + e" by linarith
-  qed
-qed
+text \<open>\<open>lsc_env_eq_self\<close> (at a point of continuity the lower envelope is the
+  function itself) lives in
+  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes}.\<close>
 
 lemma visc_supersol_lsc_iff_env:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -12820,58 +12768,10 @@ text \<open>Case 2 tilts the test function and reads off a minimiser of
   \<open>v\<^sub>* - \<psi>\<close> over a small closed ball.  The minimiser exists because the
   lower envelope is lower semicontinuous --- which is the point of the
   envelope --- and an lsc function attains its infimum on a nonempty
-  compact set.  Neither fact is in the library for this setting, so both
-  are proved here.
-
-  Lower semicontinuity is immediate from the definition: if
-  \<open>c < lsc_env u z\<close> then some ball around \<open>z\<close> already has \<open>u > c\<close> on it,
-  and every point of the half-sized ball inherits that ball's infimum as
-  a lower bound for its own envelope.\<close>
-
-lemma lsc_env_lower:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y" and lt: "c < lsc_env u z"
-  obtains e where "0 < e"
-    and "\<forall>y. dist z y < e \<longrightarrow> c < lsc_env u y"
-proof -
-  have ne: "(\<lambda>e. INF y \<in> ball z e. u y) ` {0<..} \<noteq> {}" by auto
-  have "c < Sup ((\<lambda>e. INF y \<in> ball z e. u y) ` {0<..})"
-    using lt unfolding lsc_env_def .
-  then obtain w where wmem: "w \<in> (\<lambda>e. INF y \<in> ball z e. u y) ` {0<..}"
-    and wc: "c < w"
-    using less_cSup_iff[OF ne lsc_env_bdd_above[OF B]] by blast
-  from wmem obtain e where e0: "0 < e"
-    and we: "w = (INF y \<in> ball z e. u y)" by auto
-  have key: "c < lsc_env u y" if dzy: "dist z y < e / 2" for y
-  proof -
-    have sub: "ball y (e / 2) \<subseteq> ball z e"
-    proof
-      fix q assume "q \<in> ball y (e / 2)"
-      then have "dist y q < e / 2" by simp
-      then have "dist z q < e"
-        using dzy dist_triangle[of z q y] by (simp add: dist_commute)
-      then show "q \<in> ball z e" by simp
-    qed
-    have bdd: "bdd_below (u ` ball z e)"
-      by (rule bdd_belowI[of _ B]) (use B in auto)
-    have "(INF y \<in> ball z e. u y) \<le> (INF q \<in> ball y (e / 2). u q)"
-    proof (rule cInf_greatest)
-      show "u ` ball y (e / 2) \<noteq> {}" using e0 by auto
-    next
-      fix t assume "t \<in> u ` ball y (e / 2)"
-      then obtain q where q: "q \<in> ball y (e / 2)" and tq: "t = u q" by auto
-      have "q \<in> ball z e" using sub q by blast
-      then have "u q \<in> u ` ball z e" by blast
-      then show "(INF y \<in> ball z e. u y) \<le> t"
-        unfolding tq by (rule cInf_lower[OF _ bdd])
-    qed
-    also have "(INF q \<in> ball y (e / 2). u q) \<le> lsc_env u y"
-      unfolding lsc_env_def
-      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use e0 in auto)
-    finally show ?thesis using wc unfolding we by linarith
-  qed
-  show ?thesis by (rule that[of "e / 2"]) (use e0 key in auto)+
-qed
+  compact set.  The semicontinuity is \<open>lsc_env_lsc\<close> and the attainment is
+  \<open>lsc_attains_inf_gen\<close>/\<open>lsc_attains_inf_ex\<close>, both from
+  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes} and
+  @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
 
 subsection \<open>Case 2: minimisers of a tilted quadratic\<close>
 
@@ -12885,45 +12785,12 @@ text \<open>Case 2 of the supersolution proof perturbs the test function and
   \<open>lsc_env u\<close> itself, but what Case 2 minimises is \<open>lsc_env u\<close> minus a
   quadratic, so the argument needs lower semicontinuity as a
   hypothesis rather than as a property of the envelope: this is exactly
-  \<open>lsc_attains_inf_gen\<close> from @{theory Relative_Arbitrage.Operator_Envelopes},
+  \<open>lsc_attains_inf_gen\<close> from @{theory Semicontinuous_Analysis.Semicontinuity},
   stated there at \<open>'a::metric_space\<close> and instantiated here at
-  \<open>real^'n::finite\<close>.\<close>
-
-text \<open>Second, lower semicontinuity is stable under subtracting a
-  continuous function --- which is what turns the envelope into
-  something whose minimiser over a small closed ball exists.\<close>
-
-lemma lsc_diff_continuous:
-  fixes f \<psi> :: "real^'n::finite \<Rightarrow> real"
-  assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
-    and cont: "continuous_on UNIV \<psi>"
-    and lt: "c < f z - \<psi> z"
-  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y - \<psi> y"
-proof -
-  define d where "d = (f z - \<psi> z - c) / 2"
-  have d0: "0 < d" using lt unfolding d_def by simp
-  have cz: "continuous (at z) \<psi>"
-    using cont by (simp add: continuous_on_eq_continuous_at)
-  obtain s where s0: "0 < s"
-    and sd: "\<And>y. dist y z < s \<Longrightarrow> dist (\<psi> y) (\<psi> z) < d"
-    using cz d0 unfolding continuous_at_eps_delta by blast
-  have dd: "2 * d = f z - \<psi> z - c" unfolding d_def by simp
-  have big: "c + \<psi> z + d < f z" using lt dd d0 by linarith
-  obtain e where e0: "0 < e"
-    and en: "\<forall>y. dist z y < e \<longrightarrow> c + \<psi> z + d < f y"
-    using lsc[OF big] by blast
-  have "0 < min e s" using e0 s0 by simp
-  moreover have "\<forall>y. dist z y < min e s \<longrightarrow> c < f y - \<psi> y"
-  proof (intro allI impI)
-    fix y assume dy: "dist z y < min e s"
-    then have f1: "c + \<psi> z + d < f y" using en by simp
-    have "dist (\<psi> y) (\<psi> z) < d"
-      using dy by (intro sd) (simp add: dist_commute)
-    then have f2: "\<psi> y - \<psi> z < d" by (simp add: dist_real_def abs_less_iff)
-    show "c < f y - \<psi> y" using f1 f2 by linarith
-  qed
-  ultimately show ?thesis by blast
-qed
+  \<open>real^'n::finite\<close>.  Second, lower semicontinuity is stable under
+  subtracting a continuous function --- which is what turns the envelope
+  into something whose minimiser over a small closed ball exists; this is
+  \<open>lsc_diff_continuous\<close>, from the same theory.\<close>
 
 text \<open>The tilted test function of Case 2 is a quadratic plus a linear
   term, so it is continuous.\<close>
@@ -13267,12 +13134,7 @@ proof -
       a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) u"
     if lt: "a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
     for a and z :: "real^'n"
-  proof (rule lsc_env_lower[OF tv0 lt])
-    fix d assume "0 < d"
-      and "\<forall>u. dist z u < d \<longrightarrow>
-        a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) u"
-    then show ?thesis by blast
-  qed
+    by (rule lsc_env_lsc[OF tv0 lt])
   obtain y where dxy: "dist x y < \<rho>"
     and close: "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
     and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
@@ -13959,10 +13821,7 @@ proof -
   have tv0: "\<And>u. (0 :: real) \<le> enn2real (exit_val k L T K u)" by simp
   have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < ?W u"
     if lt: "a < ?W z" for a and z :: "real^'n"
-  proof (rule lsc_env_lower[OF tv0 lt])
-    fix d assume "0 < d" and "\<forall>u. dist z u < d \<longrightarrow> a < ?W u"
-    then show ?thesis by blast
-  qed
+    by (rule lsc_env_lsc[OF tv0 lt])
   obtain \<rho> where rho: "0 < \<rho>" and subK: "cball x \<rho> \<subseteq> interior K"
     and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
       ?W x + ((z - x) \<bullet> (?M *v (z - x))) / 2
