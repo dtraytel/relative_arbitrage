@@ -39,13 +39,17 @@
   bisection along a countable dense sequence; a countably valued
   $\varepsilon$-selector cannot exist, so some such construction is forced.
 
-  The Archive entry \texttt{Lower\_Semicontinuous} overlaps in one place: its
-  lower semicontinuous hull of an $\overline{\mathbb{R}}$-valued function is
-  the envelope defined here, and four of its basic properties recur.  That
-  entry is about convex functions to the extended reals and their epigraphs;
-  this one stays real-valued, carrying boundedness hypotheses instead of
-  admitting $\pm\infty$, and everything else here --- the relative envelope,
-  attainment, Berge, the selection theorem --- has no counterpart there.
+  The envelope defined here is the lower semicontinuous hull, which the
+  Archive entry \texttt{Lower\_Semicontinuous} already provides over
+  $\overline{\mathbb{R}}$ as \texttt{lsc\_hull}.  Rather than repeat it,
+  this entry proves the two agree --- the hull's \emph{liminf} form is
+  exactly the supremum of infima over balls used here --- and inherits the
+  four properties that follow: the envelope lies below the function, above
+  any lower bound, is monotone, and is itself lower semicontinuous.  The
+  boundedness hypotheses carried throughout are what keep the values finite,
+  which is the price of working in $\mathbb{R}$ rather than
+  $\overline{\mathbb{R}}$; that entry's own subject, convex functions and
+  their epigraphs, is disjoint from this one's.
 
   Extracted from a formalisation of the uniqueness half of a
   relative-arbitrage problem~\cite{LaiShkolnikovSoner}, whose value function

@@ -1,16 +1,24 @@
 
 (*<*)
 theory Semicontinuous_Envelopes
-  imports "HOL-Analysis.Analysis"
+  imports "HOL-Analysis.Analysis" "Lower_Semicontinuous.Lower_Semicontinuous"
 begin
+
+text \<open>The \<^session>\<open>Lower_Semicontinuous\<close> entry redefines \<open>convex_on\<close> at
+  \<open>ereal\<close>, which would shadow HOL-Analysis's for every theory below this
+  one.  Its short name is hidden again here; the entry's own results are
+  unaffected, and \<open>Lower_Semicontinuous.convex_on\<close> still names it.\<close>
+
+hide_const (open) Lower_Semicontinuous.convex_on
 
 (*>*)
 
 text \<open>
   The semicontinuous envelopes of a general real-valued function: \<open>lsc_env\<close>
-  and \<open>usc_env\<close> over all of \<open>real^'n\<close>, and \<open>lsc_envK\<close>/\<open>Kext\<close>, the envelope
-  taken relative to a closed set \<open>K\<close> -- the form Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper
-  actually reads, since it takes the liminf over points of \<open>K\<close> only.  Their
+  and \<open>usc_env\<close> over the whole space, and \<open>lsc_envK\<close>/\<open>Kext\<close>, the envelope
+  taken relative to a closed set \<open>K\<close> -- the form a boundary condition
+  stated in the viscosity sense actually reads, since it takes the liminf
+  over points of \<open>K\<close> only.  Their
   monotonicity, and the fixpoint at points where the underlying function is
   already semicontinuous.
 \<close>
@@ -39,19 +47,72 @@ proof (rule bdd_aboveI[of _ "u x"])
   then show "t \<le> u x" unfolding te .
 qed
 
+text \<open>\<open>lsc_env\<close> is the lower semicontinuous hull, and the Archive already has
+  that operator: \<open>lsc_hull\<close> of the \<^session>\<open>Lower_Semicontinuous\<close> entry, over
+  \<open>ereal\<close> and defined as the function whose epigraph is the closure of the
+  given one.  The two agree, because \<open>lsc_hull_liminf_at\<close> and \<open>min_Liminf_at\<close>
+  put that definition into exactly the supremum-of-infima shape used here.
+  Bridging once lets the four properties below be inherited rather than
+  proved again; the boundedness hypothesis is what keeps the values finite,
+  which is the price of working in \<open>real\<close> rather than \<open>ereal\<close>.\<close>
+
+lemma lsc_const_ereal: "lsc (\<lambda>_::'a::metric_space. (c :: ereal))"
+  unfolding lsc_def lsc_at_def
+proof (intro allI impI)
+  fix x0 :: 'a and X :: "nat \<Rightarrow> 'a" and l :: ereal
+  assume "X \<longlonglongrightarrow> x0 \<and> ((\<lambda>_. c) \<circ> X) \<longlonglongrightarrow> l"
+  then have "(\<lambda>_ :: nat. c) \<longlonglongrightarrow> l" by (simp add: comp_def)
+  then have "l = c" using LIMSEQ_unique tendsto_const by blast
+  then show "c \<le> l" by simp
+qed
+
+lemma lsc_env_ereal:
+  fixes u :: "'a::metric_space \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+  shows "ereal (lsc_env u x) = lsc_hull (\<lambda>y. ereal (u y)) x"
+proof -
+  have inner: "(INF y \<in> ball x e. ereal (u y)) = ereal (INF y \<in> ball x e. u y)"
+    if e: "0 < e" for e
+  proof -
+    have le: "(INF y \<in> ball x e. ereal (u y)) \<le> ereal (u x)"
+      by (rule INF_lower) (use e in auto)
+    have ge: "ereal B \<le> (INF y \<in> ball x e. ereal (u y))"
+      by (rule INF_greatest) (use B in auto)
+    have fin: "\<bar>INF y \<in> ball x e. ereal (u y)\<bar> \<noteq> \<infinity>"
+      using le ge by auto
+    show ?thesis by (rule ereal_INF[symmetric, OF fin])
+  qed
+  have rle: "(INF y \<in> ball x e. u y) \<le> u x" if e: "0 < e" for e
+    by (rule cInf_lower[OF _ lsc_env_bdd_below_ball[OF B]]) (use e in auto)
+  have rge: "B \<le> (INF y \<in> ball x e. u y)" if e: "0 < e" for e
+    by (rule cInf_greatest) (use B e in auto)
+  have finS: "\<bar>SUP e \<in> {0<..}. ereal (INF y \<in> ball x e. u y)\<bar> \<noteq> \<infinity>"
+  proof -
+    have "(SUP e \<in> {0<..}. ereal (INF y \<in> ball x e. u y)) \<le> ereal (u x)"
+      by (rule SUP_least) (use rle in auto)
+    moreover have "ereal B \<le> (SUP e \<in> {0<..}. ereal (INF y \<in> ball x e. u y))"
+      by (rule SUP_upper2[of 1]) (use rge in auto)
+    ultimately show ?thesis by auto
+  qed
+  have "lsc_hull (\<lambda>y. ereal (u y)) x
+      = (SUP e \<in> {0<..}. INF y \<in> ball x e. ereal (u y))"
+    using lsc_hull_liminf_at min_Liminf_at by metis
+  also have "\<dots> = (SUP e \<in> {0<..}. ereal (INF y \<in> ball x e. u y))"
+    by (intro SUP_cong refl) (use inner in auto)
+  also have "\<dots> = ereal (SUP e \<in> {0<..}. INF y \<in> ball x e. u y)"
+    by (rule ereal_SUP[symmetric, OF finS])
+  finally show ?thesis unfolding lsc_env_def by simp
+qed
+
 lemma lsc_env_le_self:
   fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y"
   shows "lsc_env u x \<le> u x"
-  unfolding lsc_env_def
-proof (rule cSup_least)
-  show "(\<lambda>e. INF y \<in> ball x e. u y) ` {0<..} \<noteq> {}" by auto
-next
-  fix t assume "t \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
-  then obtain e where e0: "0 < e" and te: "t = (INF y \<in> ball x e. u y)" by auto
-  show "t \<le> u x"
-    unfolding te
-    by (rule cInf_lower[OF _ lsc_env_bdd_below_ball[OF B]]) (use e0 in auto)
+proof -
+  have "ereal (lsc_env u x) = lsc_hull (\<lambda>y. ereal (u y)) x"
+    by (rule lsc_env_ereal[OF B])
+  also have "\<dots> \<le> ereal (u x)" by (rule lsc_hull_le)
+  finally show ?thesis by simp
 qed
 
 lemma lsc_env_ge:
@@ -59,12 +120,10 @@ lemma lsc_env_ge:
   assumes B: "\<And>y. B \<le> u y"
   shows "B \<le> lsc_env u x"
 proof -
-  have "B \<le> (INF y \<in> ball x 1. u y)"
-    by (rule cInf_greatest) (use B in auto)
-  also have "\<dots> \<le> lsc_env u x"
-    unfolding lsc_env_def
-    by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) auto
-  finally show ?thesis .
+  have "ereal B \<le> lsc_hull (\<lambda>y. ereal (u y)) x"
+    by (rule lsc_hull_greatest[OF lsc_const_ereal, rule_format]) (use B in auto)
+  also have "\<dots> = ereal (lsc_env u x)" by (rule lsc_env_ereal[OF B, symmetric])
+  finally show ?thesis by simp
 qed
 
 lemma usc_env_ge_self:
@@ -127,19 +186,12 @@ lemma lsc_env_mono:
   shows "lsc_env u x \<le> lsc_env v x"
 proof -
   have Bv: "\<And>y. B \<le> v y" using Bu le order_trans by blast
-  show ?thesis
-    unfolding lsc_env_def
-  proof (rule cSup_least)
-    show "(\<lambda>e. INF y \<in> ball x e. u y) ` {0<..} \<noteq> {}" by auto
-  next
-    fix t assume "t \<in> (\<lambda>e. INF y \<in> ball x e. u y) ` {0<..}"
-    then obtain e where e0: "0 < e" and te: "t = (INF y \<in> ball x e. u y)" by auto
-    have "(INF y \<in> ball x e. u y) \<le> (INF y \<in> ball x e. v y)"
-      by (rule cInf_mono) (use e0 le lsc_env_bdd_below_ball[OF Bu] in auto)
-    also have "\<dots> \<le> (SUP e \<in> {0<..}. INF y \<in> ball x e. v y)"
-      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF Bv]]) (use e0 in auto)
-    finally show "t \<le> (SUP e \<in> {0<..}. INF y \<in> ball x e. v y)" unfolding te .
-  qed
+  have "ereal (lsc_env u x) = lsc_hull (\<lambda>y. ereal (u y)) x"
+    by (rule lsc_env_ereal[OF Bu])
+  also have "\<dots> \<le> lsc_hull (\<lambda>y. ereal (v y)) x"
+    by (rule lsc_hull_mono[rule_format]) (use le in auto)
+  also have "\<dots> = ereal (lsc_env v x)" by (rule lsc_env_ereal[OF Bv, symmetric])
+  finally show ?thesis by simp
 qed
 
 lemma lsc_env_lsc:
@@ -147,33 +199,27 @@ lemma lsc_env_lsc:
   assumes B: "\<And>y. B \<le> u y" and lt: "c < lsc_env u z"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < lsc_env u y"
 proof -
-  have neA: "(\<lambda>e. INF y \<in> ball z e. u y) ` {0<..} \<noteq> {}" by auto
-  from lt obtain t where tmem: "t \<in> (\<lambda>e. INF y \<in> ball z e. u y) ` {0<..}"
-    and tc: "c < t"
-    unfolding lsc_env_def
-    using less_cSup_iff[OF neA lsc_env_bdd_above[OF B]] by auto
-  from tmem obtain e where e0: "0 < e" and te: "t = (INF y \<in> ball z e. u y)"
-    by auto
-  have key: "c < lsc_env u y" if dzy: "dist z y < e / 2" for y
-  proof -
-    have subb: "ball y (e/2) \<subseteq> ball z e"
-    proof
-      fix q assume "q \<in> ball y (e/2)"
-      then have "dist y q < e/2" by simp
-      have "dist z q \<le> dist z y + dist y q" by (rule dist_triangle)
-      also have "\<dots> < e/2 + e/2" using dzy \<open>dist y q < e/2\<close> by linarith
-      finally show "q \<in> ball z e" by simp
-    qed
-    have "t \<le> (INF q \<in> ball y (e/2). u q)"
-      unfolding te
-      by (rule cInf_superset_mono[OF _ _ image_mono[OF subb]])
-        (use e0 lsc_env_bdd_below_ball[OF B] in auto)
-    also have "\<dots> \<le> lsc_env u y"
-      unfolding lsc_env_def
-      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use e0 in auto)
-    finally show ?thesis using tc by linarith
+  have seteq: "{x. lsc_env u x \<le> c} = {x. lsc_hull (\<lambda>y. ereal (u y)) x \<le> ereal c}"
+  proof (rule Collect_cong)
+    fix x :: 'a
+    show "(lsc_env u x \<le> c) = (lsc_hull (\<lambda>y. ereal (u y)) x \<le> ereal c)"
+      unfolding lsc_env_ereal[OF B, symmetric] by simp
   qed
-  show ?thesis by (rule exI[of _ "e/2"]) (use e0 key in auto)
+  have "closed {x. lsc_hull (\<lambda>y. ereal (u y)) x \<le> ereal c}"
+    using lsc_lsc_hull lsc_iff[THEN conjunct1] by blast
+  then have cl: "closed {x. lsc_env u x \<le> c}" unfolding seteq .
+  have "{x. c < lsc_env u x} = - {x. lsc_env u x \<le> c}" by auto
+  then have op: "open {x. c < lsc_env u x}" using cl by (simp add: open_Compl)
+  have "z \<in> {x. c < lsc_env u x}" using lt by simp
+  then obtain e where e0: "0 < e" and sub: "ball z e \<subseteq> {x. c < lsc_env u x}"
+    using op open_contains_ball by blast
+  show ?thesis
+  proof (intro exI conjI allI impI)
+    show "0 < e" by (rule e0)
+    fix y assume "dist z y < e"
+    then have "y \<in> ball z e" by (simp add: dist_commute)
+    then show "c < lsc_env u y" using sub by blast
+  qed
 qed
 
 lemma usc_env_mono:
