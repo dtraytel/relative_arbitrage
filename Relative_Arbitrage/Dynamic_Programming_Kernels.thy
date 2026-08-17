@@ -293,7 +293,7 @@ text \<open>The almost-sure transfer through a glue, with the underlying measure
   \<open>Q\<close> left free, so that unfolding @{thm [source] pair_law_of_def} cannot
   also unfold a \<open>pair_law_of\<close> hiding inside \<open>Q\<close> itself.\<close>
 
-lemma AE_kglue_law':
+lemma AE_kglue_law_of_kernel:
   fixes Q :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and setsQ: "sets Q = sets (borel_of (mtopology_of
@@ -470,7 +470,7 @@ proof -
     have iff: "(AE \<omega> in kglue_law' r T \<kappa>' ?Q. pcut r \<omega> \<in> A \<or> \<Phi> \<omega>)
         = (AE p in ksemi ?Q ?Y \<kappa>'. pcut r (pglue r T (fst p) (snd p)) \<in> A
               \<or> \<Phi> (pglue r T (fst p) (snd p)))"
-      by (rule AE_kglue_law'[OF r rT' setsQ Kp ne mset2])
+      by (rule AE_kglue_law_of_kernel[OF r rT' setsQ Kp ne mset2])
     have msetg: "{p \<in> space (?X \<Otimes>\<^sub>M ?Y). \<Phi> (pglue r T (fst p) (snd p))}
         \<in> sets (?X \<Otimes>\<^sub>M ?Y)"
     proof -
@@ -565,7 +565,7 @@ proof -
     have iff: "(AE \<omega> in kglue_law' r T \<kappa>' ?Q. pcut r \<omega> \<notin> A \<or> \<Phi> \<omega>)
         = (AE p in ksemi ?Q ?Y \<kappa>'. pcut r (pglue r T (fst p) (snd p)) \<notin> A
               \<or> \<Phi> (pglue r T (fst p) (snd p)))"
-      by (rule AE_kglue_law'[OF r rT' setsQ Kp ne mset2])
+      by (rule AE_kglue_law_of_kernel[OF r rT' setsQ Kp ne mset2])
     have inner: "AE p' in ?Q. AE \<omega>' in \<kappa>' p'.
         pcut r (pglue r T p' \<omega>') \<notin> A \<or> \<Phi> (pglue r T p' \<omega>')"
     proof (rule eventually_mono[OF AE_space])

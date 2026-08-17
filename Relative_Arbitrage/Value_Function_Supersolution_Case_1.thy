@@ -286,18 +286,9 @@ proof -
     by (intro continuous_on_vec_lambda entry)
 qed
 
-lemma feasible_scale:
-  fixes p :: "real^'n::finite"
-  assumes c0: "c \<noteq> 0" and b: "b \<in> feasible k L (c *\<^sub>R p)"
-  shows "b \<in> feasible k L p"
-proof -
-  have z: "b *v (c *\<^sub>R p) = 0" using b unfolding feasible_def by blast
-  have "b *v (c *\<^sub>R p) = c *\<^sub>R (b *v p)"
-    by (simp add: matrix_scaleR_vector_ac scaleR_matrix_vector_assoc)
-  with z have "c *\<^sub>R (b *v p) = 0" by simp
-  then have "b *v p = 0" using c0 by simp
-  then show ?thesis using b unfolding feasible_def by blast
-qed
+text \<open>\<open>feasible_scale\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes},
+  as the set equality; this theory re-proved the membership direction under
+  the same name, shadowing it.\<close>
 
 lemma rot_cone_ok:
   fixes q e :: "real^'n::finite"
@@ -535,7 +526,7 @@ proof -
       by (rule rotm_apply[OF q0 Gnz okG])
     have cne: "norm q / norm (GG z) \<noteq> 0" using q0 Gnz by simp
     show ?thesis
-      unfolding cov by (rule feasible_scale[OF cne]) (use inF rq in simp)
+      unfolding cov using inF[unfolded rq feasible_scale[OF cne]] .
   qed
   show ?thesis
   proof (rule that[of r SF])
@@ -1556,7 +1547,7 @@ next
   qed
   show ?case
     unfolding Ee
-  proof (rule Exit_Class_Optimizer.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
+  proof (rule AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
     show "AE \<omega> in ?Q. \<forall>j<Suc N.
         transpose (SF (fst (\<omega> (real j * h))))
           *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>

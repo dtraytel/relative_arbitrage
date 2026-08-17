@@ -2432,7 +2432,7 @@ next
   qed
   show ?case
     unfolding Ee
-  proof (rule Exit_Class_Optimizer.AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
+  proof (rule AE_kglue_law'[OF r0 rleT PQ setsQ Kp msetP])
     show "AE \<omega> in ?Q. \<forall>j<Suc N. G (fst (\<omega> (real j * h))) \<bullet>
         (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0"
       by (rule Suc.IH)
