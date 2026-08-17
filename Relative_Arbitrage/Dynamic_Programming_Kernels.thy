@@ -3,6 +3,8 @@ section \<open>Kernels into the class: measurability and repair\<close>
 (*<*)
 theory Dynamic_Programming_Kernels
   imports Dynamic_Programming_Conditioning
+    "Continuous_Time_Martingales.Integrability_Criteria"
+    "Continuous_Path_Spaces.Increment_Moments"
 begin
 
 (*>*)
@@ -2189,101 +2191,8 @@ proof -
   qed
 qed
 
-text \<open>The rational-to-real step with a lower guard.  @{thm [source]
-  diffquot_all_of_rational} is the same argument at \<open>r = 0\<close>, and the guard
-  costs nothing: the rationals it picks satisfy \<open>p\<^sub>n > s\<close>, and \<open>s \<ge> r\<close>, so
-  \<open>r \<le> p\<^sub>n\<close> holds automatically, which is why the grid can stay in the
-  original time scale even though the interval starts at the random
-  \<open>\<theta> p'\<close>.\<close>
+text \<open>\<open>diffquot_all_of_rational_ge\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
 
-lemma diffquot_all_of_rational_ge:
-  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
-  assumes S: "closed S"
-    and cont: "continuous_on {0..T} Y"
-    and rat: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
-        \<Longrightarrow> r \<le> p \<Longrightarrow> (1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
-    and rs: "r \<le> s" and st: "0 \<le> s" "s < t" "t \<le> T"
-  shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
-proof -
-  define d where "d = (t - s) / 3"
-  have d0: "0 < d" using st unfolding d_def by simp
-  define e where "e = (\<lambda>n :: nat. min d (1 / real (Suc n)))"
-  have e0: "0 < e n" for n using d0 unfolding e_def by simp
-  have ed: "e n \<le> d" for n unfolding e_def by simp
-  have elim: "e \<longlonglongrightarrow> 0"
-  proof (rule tendsto_sandwich[of "\<lambda>n. 0" e sequentially
-      "\<lambda>n. 1 / real (Suc n)"])
-    show "\<forall>\<^sub>F n in sequentially. 0 \<le> e n"
-      using e0 by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. e n \<le> 1 / real (Suc n)"
-      by (simp add: e_def)
-    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
-    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
-      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
-  qed
-  have exp: "\<exists>z. z \<in> \<rat> \<and> s < z \<and> z < s + e n" for n
-  proof -
-    have "s < s + e n" using e0 by simp
-    from Rats_dense_in_real[OF this] show ?thesis by blast
-  qed
-  have exq: "\<exists>z. z \<in> \<rat> \<and> t - e n < z \<and> z < t" for n
-  proof -
-    have "t - e n < t" using e0 by simp
-    from Rats_dense_in_real[OF this] show ?thesis by blast
-  qed
-  obtain p where p: "\<And>n. p n \<in> \<rat>" "\<And>n. s < p n" "\<And>n. p n < s + e n"
-    using exp by metis
-  obtain q where q: "\<And>n. q n \<in> \<rat>" "\<And>n. t - e n < q n" "\<And>n. q n < t"
-    using exq by metis
-  have mid: "s + d < t - d" unfolding d_def using st by argo
-  have pq: "p n < q n" for n
-  proof -
-    have "p n < s + d" using p(3)[of n] ed[of n] by simp
-    also have "\<dots> < t - d" by (rule mid)
-    also have "\<dots> \<le> t - e n" using ed[of n] by simp
-    also have "\<dots> < q n" by (rule q(2))
-    finally show ?thesis .
-  qed
-  have pmem: "p n \<in> {0..T}" for n
-    using p(2)[of n] pq[of n] q(3)[of n] st by auto
-  have qmem: "q n \<in> {0..T}" for n
-    using q(3)[of n] p(2)[of n] pq[of n] st by auto
-  have inS: "(1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)) \<in> S" for n
-  proof (rule rat)
-    show "p n \<in> \<rat>" by (rule p(1))
-    show "q n \<in> \<rat>" by (rule q(1))
-    show "0 \<le> p n" using pmem[of n] by simp
-    show "p n < q n" by (rule pq)
-    show "q n \<le> T" using qmem[of n] by simp
-    show "r \<le> p n" using rs p(2)[of n] by simp
-  qed
-  have pl: "p \<longlonglongrightarrow> s"
-  proof (rule tendsto_sandwich[of "\<lambda>n. s" p sequentially "\<lambda>n. s + e n"])
-    show "\<forall>\<^sub>F n in sequentially. s \<le> p n" using p(2) by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. p n \<le> s + e n"
-      using p(3) by (simp add: less_imp_le)
-    show "(\<lambda>n. s) \<longlonglongrightarrow> s" by simp
-    show "(\<lambda>n. s + e n) \<longlonglongrightarrow> s"
-      using tendsto_add[OF tendsto_const elim] by simp
-  qed
-  have ql: "q \<longlonglongrightarrow> t"
-  proof (rule tendsto_sandwich[of "\<lambda>n. t - e n" q sequentially "\<lambda>n. t"])
-    show "\<forall>\<^sub>F n in sequentially. t - e n \<le> q n"
-      using q(2) by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. q n \<le> t" using q(3) by (simp add: less_imp_le)
-    show "(\<lambda>n. t - e n) \<longlonglongrightarrow> t"
-      using tendsto_diff[OF tendsto_const elim] by simp
-    show "(\<lambda>n. t) \<longlonglongrightarrow> t" by simp
-  qed
-  have Yp: "(\<lambda>n. Y (p n)) \<longlonglongrightarrow> Y s"
-    using st pmem by (intro continuous_on_tendsto_compose[OF cont pl]) auto
-  have Yq: "(\<lambda>n. Y (q n)) \<longlonglongrightarrow> Y t"
-    using st qmem by (intro continuous_on_tendsto_compose[OF cont ql]) auto
-  have "(\<lambda>n. (1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)))
-      \<longlonglongrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s)"
-    using st by (intro tendsto_intros Yp Yq ql pl) auto
-  then show ?thesis by (rule closed_sequentially[OF S inS])
-qed
 
 text \<open>Clause (iii) for the kernel, closed: the rational pairs collected by
   @{thm [source] AE_rcd_stopping_diffquot_rat}, extended to all real times by

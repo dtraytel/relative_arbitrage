@@ -3,6 +3,7 @@ section \<open>The \<open>X\<close>-marginals of the exit class\<close>
 (*<*)
 theory Exit_Class_Marginals
   imports Exit_Class_Infinite "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
+    "Continuous_Path_Spaces.Increment_Moments"
 begin
 (*>*)
 

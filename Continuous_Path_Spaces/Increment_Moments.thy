@@ -2262,6 +2262,374 @@ proof -
 qed
 
 
+subsection \<open>Elementary bounds used by the moment estimates\<close>
+
+text \<open>Pathwise the localization is eventually inactive: a path is
+  continuous on the compact \<open>{0..T}\<close>, hence bounded there, so once \<open>R\<close>
+  exceeds that bound the level is never reached and \<open>\<tau>\<^sub>R = T\<close>.  The stopped
+  increments are therefore eventually equal to the unstopped ones, and
+  Fatou turns the uniform bound above into the bound itself.\<close>
+
+lemma abs_diff_le_two:
+  fixes a b C :: real
+  assumes "\<bar>a\<bar> \<le> C" and "\<bar>b\<bar> \<le> C"
+  shows "\<bar>a - b\<bar> \<le> 2 * C"
+  using assms by (simp add: abs_le_iff)
+
+text \<open>This section instantiates the generic chain at
+  \<open>F\<^sub>2 p = (outerp (fst p) - snd p) $ i $ j\<close>.  The only new input is its
+  \<open>L\<^sup>2\<close> bound, which is where the fourth moment is spent:
+  \<open>(ab - c)\<^sup>2 \<le> a\<^sup>4 + b\<^sup>4 + 2c\<^sup>2\<close> pointwise, so a second moment of the
+  compensated functional costs a fourth moment of the coordinates.\<close>
+
+lemma prod_minus_sq_bound:
+  fixes a b c :: real
+  shows "(a * b - c)\<^sup>2 \<le> a^4 + b^4 + 2 * c\<^sup>2"
+proof -
+  have e1: "2 * (a*b)\<^sup>2 + 2 * c\<^sup>2 - (a*b - c)\<^sup>2 = (a*b + c)\<^sup>2"
+    by (simp add: power2_diff power2_sum)
+  have s1: "(a*b - c)\<^sup>2 \<le> 2 * (a*b)\<^sup>2 + 2 * c\<^sup>2"
+    using e1 zero_le_power2[of "a*b + c"] by linarith
+  have e2: "a^4 + b^4 - 2 * (a*b)\<^sup>2 = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
+    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
+  have s2: "2 * (a*b)\<^sup>2 \<le> a^4 + b^4"
+    using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
+  from s1 s2 show ?thesis by linarith
+qed
+
+lemma fourth_power_sum_bound:
+  fixes a b :: real
+  shows "(a + b)^4 \<le> 8 * (a^4 + b^4)"
+proof -
+  have e1: "2 * (a\<^sup>2 + b\<^sup>2) - (a + b)\<^sup>2 = (a - b)\<^sup>2"
+    by (simp add: power2_diff power2_sum)
+  have s1: "(a + b)\<^sup>2 \<le> 2 * (a\<^sup>2 + b\<^sup>2)"
+    using e1 zero_le_power2[of "a - b"] by linarith
+  have nn: "0 \<le> (a + b)\<^sup>2" by simp
+  have s2: "((a + b)\<^sup>2)\<^sup>2 \<le> (2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2"
+    by (rule power_mono[OF s1 nn])
+  have e2: "a^4 + b^4 - 2 * (a\<^sup>2 * b\<^sup>2) = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
+    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
+  have s3: "(a\<^sup>2 + b\<^sup>2)\<^sup>2 \<le> 2 * (a^4 + b^4)"
+  proof -
+    have s0: "2 * (a\<^sup>2 * b\<^sup>2) \<le> a^4 + b^4"
+      using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
+    have "(a\<^sup>2 + b\<^sup>2)\<^sup>2 = a^4 + 2 * (a\<^sup>2 * b\<^sup>2) + b^4"
+      by (simp add: power2_sum power2_eq_square power4_eq_xxxx algebra_simps)
+    \<comment> \<open>\<open>linarith\<close> balks here although the problem is linear in the atoms
+        \<open>(a²+b²)²\<close>, \<open>a⁴\<close>, \<open>b⁴\<close>, \<open>a²b²\<close>; \<open>argo\<close> is the documented fix.\<close>
+    then show ?thesis using s0 by argo
+  qed
+  have e3: "((a + b)\<^sup>2)\<^sup>2 = (a + b)^4"
+    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
+  have e4: "(2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2 = 4 * (a\<^sup>2 + b\<^sup>2)\<^sup>2"
+    by (simp add: power2_eq_square algebra_simps)
+  from s2 s3 show ?thesis unfolding e3 e4 by linarith
+qed
+
+lemma zero_le_fourth:
+  fixes a :: real
+  shows "0 \<le> a^4"
+proof -
+  have "a^4 = (a\<^sup>2)\<^sup>2"
+    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
+  then show ?thesis by simp
+qed
+
+subsection \<open>Difference quotients of a continuous path, tested at rationals\<close>
+
+text \<open>The weak limit gives the constraint only for the countably many
+  rational pairs \<open>s < t\<close> (one closed set each, all of full mass,
+  intersected). Path continuity and closedness upgrade this to all real
+  \<open>s < t\<close>: squeeze rationals \<open>p\<^sub>n \<down> s\<close>, \<open>q\<^sub>n \<up> t\<close> strictly inside
+  \<open>(s,t)\<close> and pass to the limit.\<close>
+
+lemma diffquot_all_of_rational:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes S: "closed S"
+    and cont: "continuous_on {0..T} Y"
+    and rat: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
+    and st: "0 \<le> s" "s < t" "t \<le> T"
+  shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+proof -
+  define d where "d = (t - s) / 3"
+  have d0: "0 < d" using st unfolding d_def by simp
+  define e where "e = (\<lambda>n :: nat. min d (1 / real (Suc n)))"
+  have e0: "0 < e n" for n using d0 unfolding e_def by simp
+  have ed: "e n \<le> d" for n unfolding e_def by simp
+  have elim: "e \<longlonglongrightarrow> 0"
+  proof (rule tendsto_sandwich[of "\<lambda>n. 0" e sequentially
+      "\<lambda>n. 1 / real (Suc n)"])
+    show "\<forall>\<^sub>F n in sequentially. 0 \<le> e n"
+      using e0 by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. e n \<le> 1 / real (Suc n)"
+      by (simp add: e_def)
+    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
+    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
+      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
+  qed
+  have exp: "\<exists>r. r \<in> \<rat> \<and> s < r \<and> r < s + e n" for n
+  proof -
+    have "s < s + e n" using e0 by simp
+    from Rats_dense_in_real[OF this] show ?thesis by blast
+  qed
+  have exq: "\<exists>r. r \<in> \<rat> \<and> t - e n < r \<and> r < t" for n
+  proof -
+    have "t - e n < t" using e0 by simp
+    from Rats_dense_in_real[OF this] show ?thesis by blast
+  qed
+  obtain p where p: "\<And>n. p n \<in> \<rat>" "\<And>n. s < p n" "\<And>n. p n < s + e n"
+    using exp by metis
+  obtain q where q: "\<And>n. q n \<in> \<rat>" "\<And>n. t - e n < q n" "\<And>n. q n < t"
+    using exq by metis
+  have mid: "s + d < t - d"
+    unfolding d_def using st by argo
+  have pq: "p n < q n" for n
+  proof -
+    have "p n < s + d" using p(3)[of n] ed[of n] by simp
+    also have "\<dots> < t - d" by (rule mid)
+    also have "\<dots> \<le> t - e n" using ed[of n] by simp
+    also have "\<dots> < q n" by (rule q(2))
+    finally show ?thesis .
+  qed
+  have pmem: "p n \<in> {0..T}" for n
+    using p(2)[of n] pq[of n] q(3)[of n] st by auto
+  have qmem: "q n \<in> {0..T}" for n
+    using q(3)[of n] p(2)[of n] pq[of n] st by auto
+  have inS: "(1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)) \<in> S" for n
+    using p q pq pmem qmem st by (intro rat) auto
+  have pl: "p \<longlonglongrightarrow> s"
+  proof (rule tendsto_sandwich[of "\<lambda>n. s" p sequentially "\<lambda>n. s + e n"])
+    show "\<forall>\<^sub>F n in sequentially. s \<le> p n"
+      using p(2) by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. p n \<le> s + e n"
+      using p(3) by (simp add: less_imp_le)
+    show "(\<lambda>n. s) \<longlonglongrightarrow> s" by simp
+    show "(\<lambda>n. s + e n) \<longlonglongrightarrow> s"
+      using tendsto_add[OF tendsto_const elim] by simp
+  qed
+  have ql: "q \<longlonglongrightarrow> t"
+  proof (rule tendsto_sandwich[of "\<lambda>n. t - e n" q sequentially "\<lambda>n. t"])
+    show "\<forall>\<^sub>F n in sequentially. t - e n \<le> q n"
+      using q(2) by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. q n \<le> t"
+      using q(3) by (simp add: less_imp_le)
+    show "(\<lambda>n. t - e n) \<longlonglongrightarrow> t"
+      using tendsto_diff[OF tendsto_const elim] by simp
+    show "(\<lambda>n. t) \<longlonglongrightarrow> t" by simp
+  qed
+  have Yp: "(\<lambda>n. Y (p n)) \<longlonglongrightarrow> Y s"
+    using st pmem by (intro continuous_on_tendsto_compose[OF cont pl]) auto
+  have Yq: "(\<lambda>n. Y (q n)) \<longlonglongrightarrow> Y t"
+    using st qmem by (intro continuous_on_tendsto_compose[OF cont ql]) auto
+  have "(\<lambda>n. (1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)))
+      \<longlonglongrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s)"
+    using st by (intro tendsto_intros Yp Yq ql pl) auto
+  then show ?thesis
+    by (rule closed_sequentially[OF S inS])
+qed
+
+text \<open>Once the constraint holds for all \<open>s < t\<close>, boundedness of the
+  constraint set makes \<open>Y\<close> Lipschitz, and closedness carries through to
+  the derivative wherever it exists: \<open>dY/dt \<in> S\<close> a.e., the density
+  statement of Eq. (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.\<close>
+
+lemma diffquot_lipschitz:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes B0: "0 \<le> B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
+        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+  shows "B-lipschitz_on {0..T} Y"
+proof (rule lipschitz_onI[OF _ B0])
+  fix u v :: real
+  assume uv: "u \<in> {0..T}" "v \<in> {0..T}"
+  have key: "dist (Y a) (Y b) \<le> B * dist a b"
+    if ab: "a \<in> {0..T}" "b \<in> {0..T}" "a < b" for a b
+  proof -
+    have ba: "0 < b - a" using ab by simp
+    have "(1 / (b - a)) *\<^sub>R (Y b - Y a) \<in> S"
+      using ab by (intro dq) auto
+    then have "norm ((1 / (b - a)) *\<^sub>R (Y b - Y a)) \<le> B" by (rule B)
+    then have "(1 / (b - a)) * norm (Y b - Y a) \<le> B"
+      using ba by simp
+    then have "norm (Y b - Y a) \<le> B * (b - a)"
+      using ba by (simp add: field_simps)
+    then show ?thesis
+      using ba by (simp add: dist_norm norm_minus_commute)
+  qed
+  show "dist (Y u) (Y v) \<le> B * dist u v"
+  proof (cases "u = v")
+    case True
+    then show ?thesis using B0 by simp
+  next
+    case ne: False
+    show ?thesis
+    proof (cases "u < v")
+      case True
+      show ?thesis by (rule key[OF uv True])
+    next
+      case False
+      with ne have vu: "v < u" by simp
+      have "dist (Y v) (Y u) \<le> B * dist v u"
+        by (rule key[OF uv(2) uv(1) vu])
+      then show ?thesis by (simp add: dist_commute)
+    qed
+  qed
+qed
+
+text \<open>The rational-to-real step with a lower guard.  \<open>l\<close> is the same argument at \<open>r = 0\<close>, and the guard
+  costs nothing: the rationals it picks satisfy \<open>p\<^sub>n > s\<close>, and \<open>s \<ge> r\<close>, so
+  \<open>r \<le> p\<^sub>n\<close> holds automatically, which is why the grid can stay in the
+  original time scale even though the interval starts at the random
+  \<open>\<theta> p'\<close>.\<close>
+
+lemma diffquot_all_of_rational_ge:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes S: "closed S"
+    and cont: "continuous_on {0..T} Y"
+    and rat: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> r \<le> p \<Longrightarrow> (1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
+    and rs: "r \<le> s" and st: "0 \<le> s" "s < t" "t \<le> T"
+  shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+proof -
+  define d where "d = (t - s) / 3"
+  have d0: "0 < d" using st unfolding d_def by simp
+  define e where "e = (\<lambda>n :: nat. min d (1 / real (Suc n)))"
+  have e0: "0 < e n" for n using d0 unfolding e_def by simp
+  have ed: "e n \<le> d" for n unfolding e_def by simp
+  have elim: "e \<longlonglongrightarrow> 0"
+  proof (rule tendsto_sandwich[of "\<lambda>n. 0" e sequentially
+      "\<lambda>n. 1 / real (Suc n)"])
+    show "\<forall>\<^sub>F n in sequentially. 0 \<le> e n"
+      using e0 by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. e n \<le> 1 / real (Suc n)"
+      by (simp add: e_def)
+    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
+    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
+      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
+  qed
+  have exp: "\<exists>z. z \<in> \<rat> \<and> s < z \<and> z < s + e n" for n
+  proof -
+    have "s < s + e n" using e0 by simp
+    from Rats_dense_in_real[OF this] show ?thesis by blast
+  qed
+  have exq: "\<exists>z. z \<in> \<rat> \<and> t - e n < z \<and> z < t" for n
+  proof -
+    have "t - e n < t" using e0 by simp
+    from Rats_dense_in_real[OF this] show ?thesis by blast
+  qed
+  obtain p where p: "\<And>n. p n \<in> \<rat>" "\<And>n. s < p n" "\<And>n. p n < s + e n"
+    using exp by metis
+  obtain q where q: "\<And>n. q n \<in> \<rat>" "\<And>n. t - e n < q n" "\<And>n. q n < t"
+    using exq by metis
+  have mid: "s + d < t - d" unfolding d_def using st by argo
+  have pq: "p n < q n" for n
+  proof -
+    have "p n < s + d" using p(3)[of n] ed[of n] by simp
+    also have "\<dots> < t - d" by (rule mid)
+    also have "\<dots> \<le> t - e n" using ed[of n] by simp
+    also have "\<dots> < q n" by (rule q(2))
+    finally show ?thesis .
+  qed
+  have pmem: "p n \<in> {0..T}" for n
+    using p(2)[of n] pq[of n] q(3)[of n] st by auto
+  have qmem: "q n \<in> {0..T}" for n
+    using q(3)[of n] p(2)[of n] pq[of n] st by auto
+  have inS: "(1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)) \<in> S" for n
+  proof (rule rat)
+    show "p n \<in> \<rat>" by (rule p(1))
+    show "q n \<in> \<rat>" by (rule q(1))
+    show "0 \<le> p n" using pmem[of n] by simp
+    show "p n < q n" by (rule pq)
+    show "q n \<le> T" using qmem[of n] by simp
+    show "r \<le> p n" using rs p(2)[of n] by simp
+  qed
+  have pl: "p \<longlonglongrightarrow> s"
+  proof (rule tendsto_sandwich[of "\<lambda>n. s" p sequentially "\<lambda>n. s + e n"])
+    show "\<forall>\<^sub>F n in sequentially. s \<le> p n" using p(2) by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. p n \<le> s + e n"
+      using p(3) by (simp add: less_imp_le)
+    show "(\<lambda>n. s) \<longlonglongrightarrow> s" by simp
+    show "(\<lambda>n. s + e n) \<longlonglongrightarrow> s"
+      using tendsto_add[OF tendsto_const elim] by simp
+  qed
+  have ql: "q \<longlonglongrightarrow> t"
+  proof (rule tendsto_sandwich[of "\<lambda>n. t - e n" q sequentially "\<lambda>n. t"])
+    show "\<forall>\<^sub>F n in sequentially. t - e n \<le> q n"
+      using q(2) by (simp add: less_imp_le)
+    show "\<forall>\<^sub>F n in sequentially. q n \<le> t" using q(3) by (simp add: less_imp_le)
+    show "(\<lambda>n. t - e n) \<longlonglongrightarrow> t"
+      using tendsto_diff[OF tendsto_const elim] by simp
+    show "(\<lambda>n. t) \<longlonglongrightarrow> t" by simp
+  qed
+  have Yp: "(\<lambda>n. Y (p n)) \<longlonglongrightarrow> Y s"
+    using st pmem by (intro continuous_on_tendsto_compose[OF cont pl]) auto
+  have Yq: "(\<lambda>n. Y (q n)) \<longlonglongrightarrow> Y t"
+    using st qmem by (intro continuous_on_tendsto_compose[OF cont ql]) auto
+  have "(\<lambda>n. (1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)))
+      \<longlonglongrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s)"
+    using st by (intro tendsto_intros Yp Yq ql pl) auto
+  then show ?thesis by (rule closed_sequentially[OF S inS])
+qed
+
+text \<open>The \<open>\<forall>\<close>-form of the freezing, which the additive glue's \<open>Kfr\<close> hypothesis
+  consumes.  The measurability of the frozen set is the only real content:
+  a continuous path vanishing at every rational point of \<open>[0,d]\<close> vanishes
+  there, so the set is a countable intersection of evaluation conditions.\<close>
+
+lemma vanishes_of_rational:
+  fixes w :: "real \<Rightarrow> 'b::real_normed_vector"
+  assumes d0: "0 \<le> d" and cont: "continuous_on {0..d} w"
+    and rat: "\<And>q. q \<in> (\<rat> :: real set) \<Longrightarrow> q \<in> {0..d} \<Longrightarrow> w q = 0"
+    and u: "u \<in> {0..d}"
+  shows "w u = 0"
+proof (cases "u = 0")
+  case True
+  show ?thesis unfolding True by (rule rat) (use d0 in auto)
+next
+  case False
+  then have u0: "0 < u" and ud: "u \<le> d" using u by auto
+  have "\<exists>q. q \<in> (\<rat> :: real set) \<and> max 0 (u - 1 / real (Suc n)) < q \<and> q < u"
+    for n
+  proof -
+    have "max 0 (u - 1 / real (Suc n)) < u" using u0 by simp
+    then show ?thesis using Rats_dense_in_real by blast
+  qed
+  then obtain q where q: "\<And>n. q n \<in> (\<rat> :: real set)"
+    and ql: "\<And>n. max 0 (u - 1 / real (Suc n)) < q n"
+    and qu: "\<And>n. q n < u" by metis
+  have qin: "q n \<in> {0..d}" for n using ql[of n] qu[of n] ud by auto
+  have qlim: "q \<longlonglongrightarrow> u"
+  proof (rule tendsto_sandwich[of "\<lambda>n. max 0 (u - 1 / real (Suc n))" q
+      sequentially "\<lambda>_. u"])
+    show "\<forall>\<^sub>F n in sequentially. max 0 (u - 1 / real (Suc n)) \<le> q n"
+    proof (intro always_eventually allI)
+      fix n show "max 0 (u - 1 / real (Suc n)) \<le> q n" using ql[of n] by simp
+    qed
+    show "\<forall>\<^sub>F n in sequentially. q n \<le> u"
+    proof (intro always_eventually allI)
+      fix n show "q n \<le> u" using qu[of n] by simp
+    qed
+    show "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> u"
+    proof -
+      have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u - 0"
+        by (intro tendsto_intros LIMSEQ_Suc[OF lim_1_over_n])
+      then have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u" by simp
+      then have "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> max 0 u"
+        by (intro tendsto_intros)
+      then show ?thesis using u0 by simp
+    qed
+    show "(\<lambda>_. u) \<longlonglongrightarrow> u" by simp
+  qed
+  have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> w u"
+    using cont qin qlim u unfolding continuous_on_sequentially
+    by (simp add: o_def)
+  moreover have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> 0"
+    using rat[OF q qin] by simp
+  ultimately show ?thesis by (rule LIMSEQ_unique)
+qed
+
 (*<*)
 end
 (*>*)

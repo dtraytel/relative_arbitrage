@@ -2,6 +2,7 @@
 (*<*)
 theory Viscosity_Comparison_Interface
   imports Constraint_Set_Convexity Viscosity_Ball
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)

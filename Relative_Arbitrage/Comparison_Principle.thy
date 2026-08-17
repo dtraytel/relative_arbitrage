@@ -4,6 +4,9 @@ section \<open>Theorem 4.2(a) via the Crandall-Ishii jet machinery\<close>
 theory Comparison_Principle
   imports "Second_Order_Viscosity_Analysis.Soft_Penalty" Operator_Envelope_Continuity
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
+    "Semicontinuous_Analysis.Semicontinuity"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)
@@ -854,21 +857,8 @@ text \<open>Degenerate ellipticity would close the argument if the Hessians were
 
 subsection \<open>From the abstract matrix inequality to \<open>psd\<close>\<close>
 
-text \<open>\<open>sums_matrix_inequality\<close> gives \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> for bounded linear
-  \<open>X\<close>, \<open>Y\<close>, while \<open>ell_op_elliptic_le\<close> wants \<open>psd (N - M)\<close> for matrices.
-  Since \<open>psd\<close> is symmetry plus \<open>0 \<le> x \<cdot> (a *v x)\<close>, the two are the same
-  statement once represented by \<open>matrix\<close>.\<close>
+text \<open>\<open>matrix_diff_vec\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matrix_diff_vec:
-  fixes X Y :: "(real^'n::finite) \<Rightarrow> (real^'n)"
-  assumes lX: "linear X" and lY: "linear Y"
-  shows "(matrix Y - matrix X) *v v = Y v - X v"
-proof -
-  have "(matrix Y - matrix X) *v v = matrix Y *v v - matrix X *v v"
-    by (simp add: matrix_vector_mult_diff_rdistrib)
-  thus ?thesis
-    unfolding matrix_vec_apply[OF lX] matrix_vec_apply[OF lY] .
-qed
 
 theorem psd_of_abstract_le:
   fixes X Y :: "(real^'n::finite) \<Rightarrow> (real^'n)"
@@ -1166,46 +1156,8 @@ text \<open>At \<open>p = 0\<close>, \<open>F\<^sub>*(0,X) = F(0,X)\<close> and 
 
 subsection \<open>The diagonal branch closes without further hypotheses\<close>
 
-text \<open>The \<open>p = 0\<close> branch closes without the envelopes, whose gap
-  \<open>F(0,M) < F\<^sup>*(0,M) = eq36_rhs k L M\<close> is real, since the constraint
-  \<open>a p = 0\<close> of \<open>feasible\<close> drops a dimension as \<open>p \<rightarrow> 0\<close>.
-  \<open>subsol_shifted_bound\<close> and \<open>supersol_shifted_bound\<close> instead bound
-  \<open>ell_op\<close> itself at the shifted matrices, and \<open>ell_op_M_gap\<close> bounds its
-  change under a shift by \<open>\<delta> I\<close> by \<open>\<delta>\<sqdot>n\<sqdot>L/2 \<rightarrow> 0\<close>, giving
-  \<open>1 \<le> F(p,Y) \<le> F(p,X) \<le> \<theta> < 1\<close> without reference to \<open>p\<close>. The
-  off-diagonal condition is not needed.\<close>
+text \<open>\<open>small_multiple_exists\<close>, \<open>shift_limit_absurd\<close>, \<open>shift_limit_absurd2\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-lemma small_multiple_exists:
-  fixes C g :: real
-  assumes C: "0 < C" and g: "0 < g"
-  shows "\<exists>\<delta>. 0 < \<delta> \<and> \<delta> < 1 \<and> \<delta> * C < g"
-proof -
-  define d where "d = min (1/2) (g/(2*C))"
-  have h1: "0 < g/(2*C)" using C g by simp
-  have d0: "0 < d" unfolding d_def using h1 by simp
-  have d1: "d < 1" unfolding d_def by simp
-  have "d * C \<le> (g/(2*C)) * C"
-    unfolding d_def
-    by (rule mult_right_mono[OF min.cobounded2 less_imp_le[OF C]])
-  also have "(g/(2*C)) * C = g/2" using C by simp
-  also have "g/2 < g" using g by simp
-  finally have "d * C < g" .
-  with d0 d1 show ?thesis by blast
-qed
-
-lemma shift_limit_absurd:
-  fixes a b m tt bnd :: real
-  assumes le1: "bnd \<le> a" and step: "a \<le> b + m" and meq: "m = tt"
-    and small: "tt < bnd - b"
-  shows False
-  using assms by linarith
-
-lemma shift_limit_absurd2:
-  fixes a cc m tt th :: real
-  assumes step: "a \<le> cc + m" and cle: "cc \<le> th" and meq: "m = tt"
-    and small: "tt < a - th"
-  shows False
-  using assms by linarith
 
 theorem strict_contradiction_of_shifts_any_p:
   fixes X Y :: "real^'n::finite^'n" and p :: "real^'n"
@@ -1299,43 +1251,8 @@ subsection \<open>The jet hypothesis only ever needs one side\<close>
 
 text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-text \<open>If the increment of \<open>B\<close> at \<open>p\<close> is eventually dominated by some \<open>D\<close>
-  that is \<open>o(|h|^2)\<close>, it satisfies the one-sided hypothesis -- exactly what
-  a diagonal maximiser supplies, with \<open>D\<close> the penalty; domination holds only
-  eventually since the maximiser inequality needs \<open>p + h\<close> to stay in \<open>K\<close>.\<close>
+text \<open>\<open>onesided_of_tendsto_gen\<close>, \<open>onesided_of_dominated\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-lemma onesided_of_tendsto_gen:
-  fixes D :: "'a::euclidean_space \<Rightarrow> real"
-  assumes lim: "((\<lambda>hh. D hh / (norm hh)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and c: "0 < c"
-  shows "\<forall>\<^sub>F hh in at 0. D hh / (norm hh)\<^sup>2 < c"
-proof -
-  have step: "q < c" if "dist q 0 < c" for q :: real
-    using that by (simp add: dist_real_def abs_less_iff)
-  have T: "\<forall>\<^sub>F hh in at 0. dist (D hh / (norm hh)\<^sup>2) 0 < c"
-    by (rule tendstoD[OF lim c])
-  show ?thesis by (rule eventually_mono[OF T]) (rule step)
-qed
-
-lemma onesided_of_dominated:
-  fixes B D :: "'a::euclidean_space \<Rightarrow> real"
-  assumes dom: "\<forall>\<^sub>F hh in at 0. B (p + hh) - B p \<le> D hh"
-    and lim: "((\<lambda>hh. D hh / (norm hh)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and c: "0 < c"
-  shows "\<forall>\<^sub>F hh in at 0. (B (p + hh) - B p) / (norm hh)\<^sup>2 < c"
-proof -
-  have T: "\<forall>\<^sub>F hh in at 0. D hh / (norm hh)\<^sup>2 < c"
-    by (rule onesided_of_tendsto_gen[OF lim c])
-  from eventually_conj[OF dom T] show ?thesis
-  proof (rule eventually_mono)
-    fix hh :: 'a
-    assume A: "B (p + hh) - B p \<le> D hh \<and> D hh / (norm hh)\<^sup>2 < c"
-    have le: "B (p + hh) - B p \<le> D hh" using A by simp
-    have "(B (p + hh) - B p) / (norm hh)\<^sup>2 \<le> D hh / (norm hh)\<^sup>2"
-      by (rule divide_right_mono[OF le]) simp
-    then show "(B (p + hh) - B p) / (norm hh)\<^sup>2 < c" using A by linarith
-  qed
-qed
 
 text \<open>\<open>jet_imp_local_min_test_onesided\<close>, \<open>jet_imp_local_min_test\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
@@ -4589,16 +4506,8 @@ proof -
   then show ?thesis unfolding soft_pen_neg .
 qed
 
-lemma gap_split_aux:
-  fixes G :: real
-  assumes G: "0 < G"
-  shows "\<exists>\<sigma> \<tau> \<tau>'. 0 < \<sigma> \<and> 0 < \<tau> \<and> 0 < \<tau>' \<and> 2*\<sigma> + \<tau> + \<tau>' < G"
-proof -
-  have p: "0 < G/8" using G by simp
-  have e: "G = 8*(G/8)" by simp
-  have "2*(G/8) + (G/8) + (G/8) < G" using p e by linarith
-  with p show ?thesis by blast
-qed
+text \<open>\<open>gap_split_aux\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+
 
 subsection \<open>Coercivity of \<open>soft_pen\<close>: recovering the norm bound\<close>
 
@@ -4812,49 +4721,8 @@ qed
 
 subsection \<open>The \<open>\<epsilon> \<rightarrow> 0\<close> step: the sup-convolution is uniformly close on \<open>K\<close>\<close>
 
-text \<open>\<open>supconv_sandwich\<close> needs a local modulus valid on a ball sticking out
-  of \<open>K\<close>, but the doubling maximiser's location is unknown, so the bound
-  must be uniform over \<open>K\<close>.  The fix runs \<open>uniform_modulus_on_compact\<close>
-  on \<open>cball 0 R\<close> containing the 1-neighbourhood of \<open>K\<close>, capping the
-  modulus radius at 1 - which relies on the earlier reduction to
-  globally continuous, globally bounded data.\<close>
+text \<open>\<open>exists_eps_aux\<close>, \<open>eps_mono_aux\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-lemma exists_eps_aux:
-  fixes H D :: real
-  assumes H: "0 < H" and D: "0 \<le> D"
-  shows "\<exists>\<epsilon>. 0 < \<epsilon> \<and> 2*\<epsilon>*D < H"
-proof -
-  have dp: "0 < 2*(D+1)" using D by simp
-  define e where "e = H/(2*(D+1))"
-  have epos: "0 < e" unfolding e_def by (rule divide_pos_pos[OF H dp])
-  have ne: "2*(D+1) \<noteq> 0" using dp by linarith
-  have key: "2*e*(D+1) = H"
-  proof -
-    have "2*e*(D+1) = (H/(2*(D+1))) * (2*(D+1))"
-      unfolding e_def by (simp add: mult_ac)
-    also have "\<dots> = H" using ne by simp
-    finally show ?thesis .
-  qed
-  have expd: "2*e*(D+1) = 2*e*D + 2*e" by (simp add: algebra_simps)
-  have "2*e*D < H" using key expd epos by linarith
-  with epos show ?thesis by blast
-qed
-
-lemma eps_mono_aux:
-  fixes \<epsilon> \<epsilon>\<^sub>0 D H :: real
-  assumes ep: "0 < \<epsilon>" and le: "\<epsilon> \<le> \<epsilon>\<^sub>0"
-    and lt: "2*\<epsilon>\<^sub>0*(max 0 D) < H"
-  shows "2*\<epsilon>*D < H"
-proof -
-  have Dnn: "0 \<le> max 0 D" by simp
-  have dle: "D \<le> max 0 D" by simp
-  have e2: "0 \<le> 2*\<epsilon>" using ep by linarith
-  have s1: "2*\<epsilon>*D \<le> 2*\<epsilon>*(max 0 D)" by (rule mult_left_mono[OF dle e2])
-  have le2: "2*\<epsilon> \<le> 2*\<epsilon>\<^sub>0" using le by linarith
-  have s2: "2*\<epsilon>*(max 0 D) \<le> 2*\<epsilon>\<^sub>0*(max 0 D)"
-    by (rule mult_right_mono[OF le2 Dnn])
-  from s1 s2 lt show ?thesis by linarith
-qed
 
 lemma supconv_uniform_upper:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -7625,33 +7493,8 @@ qed
 
 section \<open>Theorem 4.2(a): \<open>max_principle_boundary\<close>\<close>
 
-text \<open>\<open>comparison_soft_complete\<close> needs globally bounded, globally
-  continuous data; the gap from the predicate's \<open>continuous_on K\<close> is
-  closed by \<open>continuous_extension_bounded\<close> with \<open>visc_subsol_extend\<close>/
-  \<open>supersol_jet_extend\<close>, which work because the viscosity conditions
-  are local and \<open>interior K\<close> is open.  \<open>K \<noteq> {}\<close> is a genuine side
-  condition (\<open>compact_frontier_nonempty\<close>).\<close>
+text \<open>\<open>theta_exists_aux\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-lemma theta_exists_aux:
-  fixes B G :: real
-  assumes B: "0 \<le> B" and G: "0 < G"
-  shows "\<exists>\<theta>. 0 < \<theta> \<and> \<theta> < 1 \<and> (1-\<theta>)*(2*B) < G"
-proof -
-  obtain t where tpos: "0 < t" and tlt: "2*t*B < G"
-    using exists_eps_aux[OF G B] by blast
-  define t' where "t' = min t (1/2)"
-  have t'pos: "0 < t'" unfolding t'_def using tpos by simp
-  have t'le: "t' \<le> t" unfolding t'_def by simp
-  have t'half: "t' \<le> 1/2" unfolding t'_def by simp
-  have le2: "2*t' \<le> 2*t" using t'le by linarith
-  have "2*t'*B \<le> 2*t*B" by (rule mult_right_mono[OF le2 B])
-  then have lt: "2*t'*B < G" using tlt by linarith
-  have eq: "(1 - (1 - t'))*(2*B) = 2*t'*B" by (simp add: algebra_simps)
-  have th1: "0 < 1 - t'" using t'half by linarith
-  have th2: "1 - t' < 1" using t'pos by linarith
-  have final: "(1 - (1 - t'))*(2*B) < G" unfolding eq by (rule lt)
-  show ?thesis by (rule exI[of _ "1 - t'"]) (intro conjI th1 th2 final)
-qed
 
 theorem max_principle_boundary_holds:
   fixes K :: "(real^'n::finite) set"

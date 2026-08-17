@@ -3,6 +3,9 @@ section \<open>Concrete pair processes, and nonemptiness of the class\<close>
 (*<*)
 theory Exit_Class_Witness
   imports Exit_Class_Shift
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Continuous_Time_Martingales.Integrability_Criteria"
+    "Continuous_Path_Spaces.Increment_Moments"
 begin
 
 (*>*)
@@ -584,13 +587,8 @@ proof -
   qed
 qed
 
-text \<open>Transfer to the continuous modification via
-  \<open>Modification_Transfer.martingale_of_modification_gen\<close>, as
-  \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> does for the diagonal.\<close>
+text \<open>\<open>bm_prj_measurable\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_measurable borel"
-  by (intro borel_measurable_continuous_onI linear_continuous_on
-      bounded_linear_vec_nth)
 
 theorem martingale_cbm_cross:
   fixes x0 :: "real^'n::finite" and i j :: 'n

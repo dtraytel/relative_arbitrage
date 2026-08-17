@@ -7,6 +7,7 @@ theory Brownian_Market
     "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras"
     "Continuous_Time_Martingales.Martingale_Algebra"
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)
@@ -27,31 +28,8 @@ section \<open>Independence toolkit\<close>
 text \<open>\<open>indep_var_distr_iff\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
-text \<open>Independence is invariant under replacing the target measures by
-  ones with the same sets.\<close>
+text \<open>\<open>indep_vars_cong_sets\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma (in prob_space) indep_vars_cong_sets:
-  assumes eq: "\<And>i. i \<in> I \<Longrightarrow> sets (M' i) = sets (N' i)"
-    and ind: "indep_vars M' X I"
-  shows "indep_vars N' X I"
-proof -
-  have rv: "random_variable (N' i) (X i)" if i: "i \<in> I" for i
-  proof -
-    have "random_variable (M' i) (X i)"
-      using ind i by (auto simp: indep_vars_def)
-    then show ?thesis
-      using measurable_cong_sets[OF refl eq[OF i]] by blast
-  qed
-  have "indep_sets (\<lambda>i. sigma_sets (space M)
-      {X i -` A \<inter> space M |A. A \<in> sets (M' i)}) I"
-    using ind by (auto simp: indep_vars_def)
-  then have "indep_sets (\<lambda>i. sigma_sets (space M)
-      {X i -` A \<inter> space M |A. A \<in> sets (N' i)}) I"
-    by (rule indep_sets_cong[THEN iffD1, OF refl, rotated])
-      (simp add: eq)
-  with rv show ?thesis
-    by (auto simp: indep_vars_def)
-qed
 
 text \<open>\<open>indep_var_PiM_components\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 

@@ -4,6 +4,7 @@ section \<open>The delayed class and the horizon-parametrised selector\<close>
 theory Dynamic_Programming_Delayed_Class
   imports Dynamic_Programming_Additive_Glue
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Continuous_Path_Spaces.Increment_Moments"
 begin
 
 (*>*)
@@ -193,62 +194,9 @@ proof -
   qed
   then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
 qed
-text \<open>The \<open>\<forall>\<close>-form of the freezing, which the additive glue's \<open>Kfr\<close> hypothesis
-  consumes.  The measurability of the frozen set is the only real content:
-  a continuous path vanishing at every rational point of \<open>[0,d]\<close> vanishes
-  there, so the set is a countable intersection of evaluation conditions.\<close>
 
-lemma vanishes_of_rational:
-  fixes w :: "real \<Rightarrow> 'b::real_normed_vector"
-  assumes d0: "0 \<le> d" and cont: "continuous_on {0..d} w"
-    and rat: "\<And>q. q \<in> (\<rat> :: real set) \<Longrightarrow> q \<in> {0..d} \<Longrightarrow> w q = 0"
-    and u: "u \<in> {0..d}"
-  shows "w u = 0"
-proof (cases "u = 0")
-  case True
-  show ?thesis unfolding True by (rule rat) (use d0 in auto)
-next
-  case False
-  then have u0: "0 < u" and ud: "u \<le> d" using u by auto
-  have "\<exists>q. q \<in> (\<rat> :: real set) \<and> max 0 (u - 1 / real (Suc n)) < q \<and> q < u"
-    for n
-  proof -
-    have "max 0 (u - 1 / real (Suc n)) < u" using u0 by simp
-    then show ?thesis using Rats_dense_in_real by blast
-  qed
-  then obtain q where q: "\<And>n. q n \<in> (\<rat> :: real set)"
-    and ql: "\<And>n. max 0 (u - 1 / real (Suc n)) < q n"
-    and qu: "\<And>n. q n < u" by metis
-  have qin: "q n \<in> {0..d}" for n using ql[of n] qu[of n] ud by auto
-  have qlim: "q \<longlonglongrightarrow> u"
-  proof (rule tendsto_sandwich[of "\<lambda>n. max 0 (u - 1 / real (Suc n))" q
-      sequentially "\<lambda>_. u"])
-    show "\<forall>\<^sub>F n in sequentially. max 0 (u - 1 / real (Suc n)) \<le> q n"
-    proof (intro always_eventually allI)
-      fix n show "max 0 (u - 1 / real (Suc n)) \<le> q n" using ql[of n] by simp
-    qed
-    show "\<forall>\<^sub>F n in sequentially. q n \<le> u"
-    proof (intro always_eventually allI)
-      fix n show "q n \<le> u" using qu[of n] by simp
-    qed
-    show "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> u"
-    proof -
-      have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u - 0"
-        by (intro tendsto_intros LIMSEQ_Suc[OF lim_1_over_n])
-      then have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u" by simp
-      then have "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> max 0 u"
-        by (intro tendsto_intros)
-      then show ?thesis using u0 by simp
-    qed
-    show "(\<lambda>_. u) \<longlonglongrightarrow> u" by simp
-  qed
-  have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> w u"
-    using cont qin qlim u unfolding continuous_on_sequentially
-    by (simp add: o_def)
-  moreover have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> 0"
-    using rat[OF q qin] by simp
-  ultimately show ?thesis by (rule LIMSEQ_unique)
-qed
+text \<open>\<open>vanishes_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
+
 
 lemma frozen_set_measurable:
   fixes c T :: real

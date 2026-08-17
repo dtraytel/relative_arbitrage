@@ -4,6 +4,7 @@ section \<open>Lemma 2.2, market form: subsequence extraction from the martingal
 theory Path_Tightness_Market
   imports "Continuous_Path_Spaces.Path_Tightness" "Continuous_Path_Spaces.Stopped_Localization"
     Ito_Market "Continuous_Time_Martingales.Martingale_Transfer"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)

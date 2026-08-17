@@ -8,6 +8,8 @@ theory Exit_Class_Limits
     "Continuous_Time_Martingales.Semidirect_Kernels"
     "Continuous_Time_Martingales.Martingale_Transfer"
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Continuous_Path_Spaces.Increment_Moments"
+    "Semicontinuous_Analysis.Semicontinuity"
 begin
 
 (*>*)
@@ -992,20 +994,8 @@ qed
 
 subsection \<open>The limit law's process is a martingale\<close>
 
-text \<open>\<open>martingale_of_set_integral_eq\<close> is the right interface, because the
-  weak limit produces exactly a set-integral identity: every event of
-  \<open>\<FF>\<^sub>s\<close> is a past event (\<open>natural_filtration_eq_restrict_vimage\<close>), so the
-  indicator of \<open>A\<close> is the indicator of a Borel set of restricted paths.
-  The two-case split is on \<open>u \<le> T\<close>: beyond the horizon the stopped process
-  no longer moves and the identity is trivial.\<close>
+text \<open>\<open>fst_coord_borel\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma fst_coord_borel:
-  "(\<lambda>p :: (real^'n::finite) \<times> (real^'n^'n). fst p $ i) \<in> borel_measurable borel"
-proof -
-  have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  show ?thesis by (rule measurable_compose[OF f borel_measurable_nth])
-qed
 
 theorem exit_class_coord_martingale_limit:
   fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -1305,11 +1295,8 @@ definition pcoord :: "real \<Rightarrow> 'n::finite \<Rightarrow> real \<Rightar
 definition ploc :: "real \<Rightarrow> 'n::finite \<Rightarrow> real \<Rightarrow> ('n pairpath) \<Rightarrow> real"
   where "ploc T i R \<omega> = etime T {y. R \<le> \<bar>y\<bar>} (pcoord T i) \<omega>"
 
-lemma closed_abs_ge: "closed {y :: real. R \<le> \<bar>y\<bar>}"
-  by (intro closed_Collect_le continuous_intros)
+text \<open>\<open>closed_abs_ge\<close>, \<open>abs_ge_nonempty\<close> live in @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
 
-lemma abs_ge_nonempty: "{y :: real. R \<le> \<bar>y\<bar>} \<noteq> {}"
-  by (rule notI) (use abs_ge_self[of R] in blast)
 
 lemma ploc_nonneg: "0 \<le> T \<Longrightarrow> 0 \<le> ploc T i R \<omega>"
   unfolding ploc_def by (rule etime_nonneg)
@@ -1942,17 +1929,8 @@ qed
 
 subsection \<open>Fatou removes the localization\<close>
 
-text \<open>Pathwise the localization is eventually inactive: a path is
-  continuous on the compact \<open>{0..T}\<close>, hence bounded there, so once \<open>R\<close>
-  exceeds that bound the level is never reached and \<open>\<tau>\<^sub>R = T\<close>.  The stopped
-  increments are therefore eventually equal to the unstopped ones, and
-  Fatou turns the uniform bound above into the bound itself.\<close>
+text \<open>\<open>abs_diff_le_two\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
 
-lemma abs_diff_le_two:
-  fixes a b C :: real
-  assumes "\<bar>a\<bar> \<le> C" and "\<bar>b\<bar> \<le> C"
-  shows "\<bar>a - b\<bar> \<le> 2 * C"
-  using assms by (simp add: abs_le_iff)
 
 lemma ploc_eq_T_of_below:
   fixes \<omega> :: "'n::finite pairpath"
@@ -2853,65 +2831,8 @@ qed
 
 section \<open>The compensated clause of Lemma 2.3\<close>
 
-text \<open>This section instantiates the generic chain at
-  \<open>F\<^sub>2 p = (outerp (fst p) - snd p) $ i $ j\<close>.  The only new input is its
-  \<open>L\<^sup>2\<close> bound, which is where the fourth moment is spent:
-  \<open>(ab - c)\<^sup>2 \<le> a\<^sup>4 + b\<^sup>4 + 2c\<^sup>2\<close> pointwise, so a second moment of the
-  compensated functional costs a fourth moment of the coordinates.\<close>
+text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<close>, \<open>zero_le_fourth\<close> live in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
 
-lemma prod_minus_sq_bound:
-  fixes a b c :: real
-  shows "(a * b - c)\<^sup>2 \<le> a^4 + b^4 + 2 * c\<^sup>2"
-proof -
-  have e1: "2 * (a*b)\<^sup>2 + 2 * c\<^sup>2 - (a*b - c)\<^sup>2 = (a*b + c)\<^sup>2"
-    by (simp add: power2_diff power2_sum)
-  have s1: "(a*b - c)\<^sup>2 \<le> 2 * (a*b)\<^sup>2 + 2 * c\<^sup>2"
-    using e1 zero_le_power2[of "a*b + c"] by linarith
-  have e2: "a^4 + b^4 - 2 * (a*b)\<^sup>2 = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
-    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
-  have s2: "2 * (a*b)\<^sup>2 \<le> a^4 + b^4"
-    using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
-  from s1 s2 show ?thesis by linarith
-qed
-
-lemma fourth_power_sum_bound:
-  fixes a b :: real
-  shows "(a + b)^4 \<le> 8 * (a^4 + b^4)"
-proof -
-  have e1: "2 * (a\<^sup>2 + b\<^sup>2) - (a + b)\<^sup>2 = (a - b)\<^sup>2"
-    by (simp add: power2_diff power2_sum)
-  have s1: "(a + b)\<^sup>2 \<le> 2 * (a\<^sup>2 + b\<^sup>2)"
-    using e1 zero_le_power2[of "a - b"] by linarith
-  have nn: "0 \<le> (a + b)\<^sup>2" by simp
-  have s2: "((a + b)\<^sup>2)\<^sup>2 \<le> (2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2"
-    by (rule power_mono[OF s1 nn])
-  have e2: "a^4 + b^4 - 2 * (a\<^sup>2 * b\<^sup>2) = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
-    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
-  have s3: "(a\<^sup>2 + b\<^sup>2)\<^sup>2 \<le> 2 * (a^4 + b^4)"
-  proof -
-    have s0: "2 * (a\<^sup>2 * b\<^sup>2) \<le> a^4 + b^4"
-      using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
-    have "(a\<^sup>2 + b\<^sup>2)\<^sup>2 = a^4 + 2 * (a\<^sup>2 * b\<^sup>2) + b^4"
-      by (simp add: power2_sum power2_eq_square power4_eq_xxxx algebra_simps)
-    \<comment> \<open>\<open>linarith\<close> balks here although the problem is linear in the atoms
-        \<open>(a²+b²)²\<close>, \<open>a⁴\<close>, \<open>b⁴\<close>, \<open>a²b²\<close>; \<open>argo\<close> is the documented fix.\<close>
-    then show ?thesis using s0 by argo
-  qed
-  have e3: "((a + b)\<^sup>2)\<^sup>2 = (a + b)^4"
-    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
-  have e4: "(2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2 = 4 * (a\<^sup>2 + b\<^sup>2)\<^sup>2"
-    by (simp add: power2_eq_square algebra_simps)
-  from s2 s3 show ?thesis unfolding e3 e4 by linarith
-qed
-
-lemma zero_le_fourth:
-  fixes a :: real
-  shows "0 \<le> a^4"
-proof -
-  have "a^4 = (a\<^sup>2)\<^sup>2"
-    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
-  then show ?thesis by simp
-qed
 
 subsection \<open>The compensated functional\<close>
 

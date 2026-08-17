@@ -4,6 +4,8 @@ theory Operator_Envelopes
   imports Viscosity_Solutions "Symmetric_Matrix_Spectra.Householder_Rotation"
     "Semicontinuous_Analysis.Semicontinuity" "Semicontinuous_Analysis.Semicontinuous_Envelopes"
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)
@@ -1192,13 +1194,8 @@ proof -
   show ?thesis by (rule that[OF r0 main])
 qed
 
-text \<open>\<open>inner_scaleR_diff_eq\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>quartic_coeff_assoc\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-
-lemma quartic_coeff_assoc:
-  fixes c u w :: real
-  shows "c * (2 * u * (2 * w)) = 4 * c * u * w"
-  by (simp add: field_simps)
 
 text \<open>\<open>transpose_shift_add\<close>, \<open>transpose_shift_diff\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
@@ -1596,24 +1593,8 @@ text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left
 text \<open>\<open>matvec_orth_inv\<close>, \<open>conj_orth_inv\<close>, \<open>norm_orthogonal_matrix_vector\<close>, \<open>norm_matrix_sq_trace\<close>, \<open>norm_conj_orthogonal\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-text \<open>The transfer lemma: if \<open>\<Psi>\<close> leaves \<open>F\<close> invariant and distorts balls around
-  \<open>z\<close> by at most fixed factors in both directions, then it leaves the upper
-  envelope at \<open>z\<close> invariant.  Purely a statement about \<open>INF\<close>/\<open>SUP\<close> reindexing.\<close>
+text \<open>\<open>pos_image_scale\<close> lives in @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
 
-lemma pos_image_scale:
-  assumes r0: "0 < r"
-  shows "(\<lambda>e. e / r) ` {0<..} = {(0::real)<..}"
-proof
-  show "(\<lambda>e. e / r) ` {0<..} \<subseteq> {(0::real)<..}" using r0 by auto
-  show "{(0::real)<..} \<subseteq> (\<lambda>e. e / r) ` {0<..}"
-  proof
-    fix x :: real assume "x \<in> {0<..}"
-    then have x0: "0 < x" by simp
-    have xe: "x = (x * r) / r" using r0 by simp
-    have "x * r \<in> {0<..}" using x0 r0 by simp
-    then show "x \<in> (\<lambda>e. e / r) ` {0<..}" using xe by (metis image_eqI)
-  qed
-qed
 
 lemma ell_op_usc_transfer:
   fixes \<Psi> :: "((real^'n::finite) \<times> (real^'n^'n)) \<Rightarrow> ((real^'n) \<times> (real^'n^'n))"

@@ -4,6 +4,9 @@ section \<open>The Euler scheme, its weak limit, and the exact quadratic lower b
 theory Value_Function_Euler_Construction
   imports Value_Function_Subsolution
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Continuous_Path_Spaces.Increment_Moments"
 begin
 
 (*>*)
@@ -528,27 +531,8 @@ text \<open>\<open>exists_enum_of_card\<close> lives in @{theory Symmetric_Matri
 
 subsection \<open>Continuity of the Gaussian member in its volatility\<close>
 
-text \<open>The Euler kernel varies only through the frozen matrix, so its
-  measurability reduces to continuity of \<open>S \<mapsto> law (sbmpair S T)\<close> in the
-  weak topology: pathwise \<open>S \<mapsto> sbmpair S T \<omega>\<close> is continuous into the path
-  metric (the Brownian path is bounded on \<open>[0,T]\<close>), and dominated
-  convergence does the rest --- no tightness, no uniform estimates.\<close>
+text \<open>\<open>dist_pair_le\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-lemma dist_pair_le:
-  fixes a c :: "'a::metric_space" and b d :: "'b::metric_space"
-  shows "dist (a, b) (c, d) \<le> dist a c + dist b d"
-proof -
-  have "(dist a c + dist b d)\<^sup>2
-      = (dist a c)\<^sup>2 + 2 * dist a c * dist b d + (dist b d)\<^sup>2"
-    by (simp add: power2_sum)
-  moreover have "0 \<le> 2 * dist a c * dist b d"
-    by (intro mult_nonneg_nonneg) simp_all
-  ultimately have "(dist a c)\<^sup>2 + (dist b d)\<^sup>2 \<le> (dist a c + dist b d)\<^sup>2"
-    by linarith
-  then have "sqrt ((dist a c)\<^sup>2 + (dist b d)\<^sup>2) \<le> dist a c + dist b d"
-    by (metis real_le_lsqrt zero_le_dist add_nonneg_nonneg)
-  then show ?thesis by (simp add: dist_prod_def)
-qed
 
 lemma sbmpair_in_mspace:
   fixes \<omega> :: "'n::finite \<Rightarrow> real \<Rightarrow> real" and S :: "real^'n^'n"

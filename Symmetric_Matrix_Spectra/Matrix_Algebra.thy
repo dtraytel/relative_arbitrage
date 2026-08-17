@@ -2636,6 +2636,149 @@ proof -
   ultimately show ?thesis by blast
 qed
 
+subsection \<open>An abstract linear map read through its matrix\<close>
+
+text \<open>Viscosity-solution notions speak of a matrix \<open>H\<close> acting by
+  \<open>H *v h\<close> with \<open>transpose H = H\<close>, while the results above produce a
+  bounded linear \<open>X\<close> with the abstract symmetry \<open>v \<cdot> X w = w \<cdot> X v\<close>.
+  HOL-Analysis's \<open>matrix\<close> bridges the two: it represents \<open>X\<close> faithfully,
+  and the abstract symmetry is exactly matrix symmetry, since
+  \<open>v \<cdot> (transpose A *v w) = w \<cdot> (A *v v)\<close>.\<close>
+
+lemma matrix_vec_apply:
+  fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)"
+  assumes lin: "linear X"
+  shows "matrix X *v h = X h"
+  by (rule matrix_works[OF linear_matrix_vector_mul_eq[THEN iffD2, OF lin]])
+
+lemma matrix_of_symmetric:
+  fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)"
+  assumes lin: "linear X" and sym: "\<And>v w. v \<bullet> X w = w \<bullet> X v"
+  shows "transpose (matrix X) = matrix X"
+proof (subst matrix_eq, rule allI)
+  fix w :: "real^'n"
+  have pt: "v \<bullet> (transpose (matrix X) *v w) = v \<bullet> (matrix X *v w)"
+    for v :: "real^'n"
+  proof -
+    have "v \<bullet> (transpose (matrix X) *v w) = v \<bullet> (w v* matrix X)"
+      by simp
+    also have "\<dots> = (w v* matrix X) \<bullet> v" by (rule inner_commute)
+    also have "\<dots> = w \<bullet> (matrix X *v v)" by (rule dot_lmul_matrix)
+    also have "\<dots> = w \<bullet> X v" unfolding matrix_vec_apply[OF lin] ..
+    also have "\<dots> = v \<bullet> X w" by (rule sym[symmetric])
+    also have "\<dots> = v \<bullet> (matrix X *v w)" unfolding matrix_vec_apply[OF lin] ..
+    finally show ?thesis .
+  qed
+  have "((transpose (matrix X) *v w) - (matrix X *v w))
+      \<bullet> ((transpose (matrix X) *v w) - (matrix X *v w)) = 0"
+    using pt[of "(transpose (matrix X) *v w) - (matrix X *v w)"]
+    by (simp add: inner_diff_right)
+  thus "transpose (matrix X) *v w = matrix X *v w" by simp
+qed
+
+text \<open>The other half of the bridge: a symmetric matrix gives a quadratic
+  test function.  Symmetry makes the two cross terms of the derivative
+  equal, so the factor \<open>1/2\<close> leaves exactly \<open>h \<mapsto> h \<cdot> (H *v z)\<close>.\<close>
+
+lemma matrix_symmetric_swap:
+  fixes H :: "real^'n::finite^'n"
+  assumes symH: "transpose H = H"
+  shows "z \<bullet> (H *v h) = h \<bullet> (H *v z)"
+proof -
+  have "z \<bullet> (H *v h) = (z v* H) \<bullet> h" by (rule dot_lmul_matrix[symmetric])
+  also have "\<dots> = (transpose H *v z) \<bullet> h" by simp
+  also have "\<dots> = (H *v z) \<bullet> h" unfolding symH ..
+  also have "\<dots> = h \<bullet> (H *v z)" by (rule inner_commute)
+  finally show ?thesis .
+qed
+
+lemma has_derivative_quadratic_form:
+  fixes H :: "real^'n::finite^'n"
+  assumes symH: "transpose H = H"
+  shows "((\<lambda>z. (z \<bullet> (H *v z))/2) has_derivative (\<lambda>h. h \<bullet> (H *v z0))) (at z0)"
+proof -
+  have blH: "bounded_linear ((*v) H)" by (rule matrix_vector_mul_bounded_linear)
+  have dH: "(((*v) H) has_derivative ((*v) H)) (at z0)"
+    using bounded_linear.has_derivative[OF blH has_derivative_ident] by simp
+  have d1: "((\<lambda>z. z \<bullet> (H *v z)) has_derivative
+      (\<lambda>h. z0 \<bullet> (H *v h) + h \<bullet> (H *v z0))) (at z0)"
+    by (rule has_derivative_inner[OF has_derivative_ident dH])
+  have eqd: "(\<lambda>h. z0 \<bullet> (H *v h) + h \<bullet> (H *v z0))
+      = (\<lambda>h. 2 * (h \<bullet> (H *v z0)))"
+    by (rule ext) (simp add: matrix_symmetric_swap[OF symH])
+  have d2: "((\<lambda>z. z \<bullet> (H *v z)) has_derivative (\<lambda>h. 2 * (h \<bullet> (H *v z0))))
+      (at z0)"
+    using d1 unfolding eqd .
+  have "((\<lambda>z. (1/2) *\<^sub>R (z \<bullet> (H *v z))) has_derivative
+      (\<lambda>h. (1/2) *\<^sub>R (2 * (h \<bullet> (H *v z0))))) (at z0)"
+    by (rule has_derivative_scaleR_right[OF d2])
+  thus ?thesis by simp
+qed
+
+text \<open>The quadratic test function attached to a jet \<open>(p, H)\<close> at \<open>x\<close>:
+  \<open>\<phi> z = p \<cdot> (z - x) + ((z - x) \<cdot> (H *v (z - x)))/2\<close>, with gradient
+  field \<open>g z = p + H *v (z - x)\<close>.  These, together with the symmetry of
+  \<open>matrix_of_symmetric\<close>, are exactly what a viscosity test-function
+  predicate requires of \<open>(\<phi>, g, H)\<close> at \<open>x\<close>.\<close>
+
+lemma quadratic_test_derivative:
+  fixes H :: "real^'n::finite^'n" and p x y :: "real^'n"
+  assumes symH: "transpose H = H"
+  shows "((\<lambda>z. p \<bullet> (z - x) + ((z - x) \<bullet> (H *v (z - x)))/2)
+      has_derivative (\<lambda>h. (p + H *v (y - x)) \<bullet> h)) (at y)"
+proof -
+  have shift: "((\<lambda>z::real^'n. z - x) has_derivative (\<lambda>h. h)) (at y)"
+    by (auto intro!: derivative_eq_intros)
+  have dq0: "((\<lambda>w. (w \<bullet> (H *v w))/2) has_derivative
+      (\<lambda>h. h \<bullet> (H *v (y - x)))) (at (y - x))"
+    by (rule has_derivative_quadratic_form[OF symH])
+  have dq: "((\<lambda>z. ((z - x) \<bullet> (H *v (z - x)))/2) has_derivative
+      (\<lambda>h. h \<bullet> (H *v (y - x)))) (at y)"
+    using diff_chain_at[OF shift dq0] by (simp add: comp_def)
+  have dl: "((\<lambda>z::real^'n. p \<bullet> (z - x)) has_derivative (\<lambda>h. p \<bullet> h)) (at y)"
+    by (auto intro!: derivative_eq_intros)
+  have sum: "((\<lambda>z. p \<bullet> (z - x) + ((z - x) \<bullet> (H *v (z - x)))/2)
+      has_derivative (\<lambda>h. p \<bullet> h + h \<bullet> (H *v (y - x)))) (at y)"
+    by (rule has_derivative_add[OF dl dq])
+  have eqf: "(\<lambda>h. p \<bullet> h + h \<bullet> (H *v (y - x)))
+      = (\<lambda>h. (p + H *v (y - x)) \<bullet> h)"
+    by (rule ext) (simp add: inner_add_right inner_commute)
+  show ?thesis using sum unfolding eqf .
+qed
+
+lemma quadratic_test_grad_derivative:
+  fixes H :: "real^'n::finite^'n" and p x :: "real^'n"
+  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at x)"
+proof -
+  have blH: "bounded_linear ((*v) H)" by (rule matrix_vector_mul_bounded_linear)
+  have shift: "((\<lambda>z::real^'n. z - x) has_derivative (\<lambda>h. h)) (at x)"
+    by (auto intro!: derivative_eq_intros)
+  have dHl: "(((*v) H) has_derivative ((*v) H)) (at (x - x))"
+    using bounded_linear.has_derivative[OF blH has_derivative_ident] by simp
+  have inner_d: "((\<lambda>z. H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at x)"
+    using diff_chain_at[OF shift dHl] by (simp add: comp_def)
+  show ?thesis
+    using has_derivative_add[OF has_derivative_const inner_d] by simp
+qed
+
+subsection \<open>A difference of linear maps, read as a matrix\<close>
+
+text \<open>\<open>sums_matrix_inequality\<close> gives \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> for bounded linear
+  \<open>X\<close>, \<open>Y\<close>, while degenerate ellipticity of the operator in the application wants \<open>psd (N - M)\<close> for matrices.
+  Since \<open>psd\<close> is symmetry plus \<open>0 \<le> x \<cdot> (a *v x)\<close>, the two are the same
+  statement once represented by \<open>matrix\<close>.\<close>
+
+lemma matrix_diff_vec:
+  fixes X Y :: "(real^'n::finite) \<Rightarrow> (real^'n)"
+  assumes lX: "linear X" and lY: "linear Y"
+  shows "(matrix Y - matrix X) *v v = Y v - X v"
+proof -
+  have "(matrix Y - matrix X) *v v = matrix Y *v v - matrix X *v v"
+    by (simp add: matrix_vector_mult_diff_rdistrib)
+  thus ?thesis
+    unfolding matrix_vec_apply[OF lX] matrix_vec_apply[OF lY] .
+qed
+
 (*<*)
 end
 (*>*)

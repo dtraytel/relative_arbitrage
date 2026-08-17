@@ -2,6 +2,7 @@
 (*<*)
 theory Viscosity_Solutions
   imports Viscosity_Comparison_Interface
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)

@@ -2,6 +2,7 @@
 (*<*)
 theory Eigenvalue_Bound_Exact
   imports Constraint_Set_Convexity
+    "Symmetric_Matrix_Spectra.Ky_Fan"
 begin
 
 (*>*)

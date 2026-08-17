@@ -4,6 +4,7 @@ section \<open>Upper semicontinuity of the essential-infimum exit time\<close>
 theory Exit_Time_Semicontinuity
   imports Path_Tightness_Market Value_Function_Market
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)

@@ -3,6 +3,9 @@
 theory Exit_Class
   imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" Exit_Semicontinuity Operator_Formula
     Viscosity_Solutions "Continuous_Time_Martingales.Martingale_Algebra"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Continuous_Path_Spaces.Holder_Interpolation"
+    "Continuous_Path_Spaces.Increment_Moments"
 begin
 
 (*>*)
@@ -335,147 +338,13 @@ proof -
     by simp
 qed
 
-text \<open>The weak limit gives the constraint only for the countably many
-  rational pairs \<open>s < t\<close> (one closed set each, all of full mass,
-  intersected). Path continuity and closedness upgrade this to all real
-  \<open>s < t\<close>: squeeze rationals \<open>p\<^sub>n \<down> s\<close>, \<open>q\<^sub>n \<up> t\<close> strictly inside
-  \<open>(s,t)\<close> and pass to the limit.\<close>
+text \<open>\<open>diffquot_all_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
 
-lemma diffquot_all_of_rational:
-  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
-  assumes S: "closed S"
-    and cont: "continuous_on {0..T} Y"
-    and rat: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
-        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
-    and st: "0 \<le> s" "s < t" "t \<le> T"
-  shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
-proof -
-  define d where "d = (t - s) / 3"
-  have d0: "0 < d" using st unfolding d_def by simp
-  define e where "e = (\<lambda>n :: nat. min d (1 / real (Suc n)))"
-  have e0: "0 < e n" for n using d0 unfolding e_def by simp
-  have ed: "e n \<le> d" for n unfolding e_def by simp
-  have elim: "e \<longlonglongrightarrow> 0"
-  proof (rule tendsto_sandwich[of "\<lambda>n. 0" e sequentially
-      "\<lambda>n. 1 / real (Suc n)"])
-    show "\<forall>\<^sub>F n in sequentially. 0 \<le> e n"
-      using e0 by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. e n \<le> 1 / real (Suc n)"
-      by (simp add: e_def)
-    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
-    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
-      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
-  qed
-  have exp: "\<exists>r. r \<in> \<rat> \<and> s < r \<and> r < s + e n" for n
-  proof -
-    have "s < s + e n" using e0 by simp
-    from Rats_dense_in_real[OF this] show ?thesis by blast
-  qed
-  have exq: "\<exists>r. r \<in> \<rat> \<and> t - e n < r \<and> r < t" for n
-  proof -
-    have "t - e n < t" using e0 by simp
-    from Rats_dense_in_real[OF this] show ?thesis by blast
-  qed
-  obtain p where p: "\<And>n. p n \<in> \<rat>" "\<And>n. s < p n" "\<And>n. p n < s + e n"
-    using exp by metis
-  obtain q where q: "\<And>n. q n \<in> \<rat>" "\<And>n. t - e n < q n" "\<And>n. q n < t"
-    using exq by metis
-  have mid: "s + d < t - d"
-    unfolding d_def using st by argo
-  have pq: "p n < q n" for n
-  proof -
-    have "p n < s + d" using p(3)[of n] ed[of n] by simp
-    also have "\<dots> < t - d" by (rule mid)
-    also have "\<dots> \<le> t - e n" using ed[of n] by simp
-    also have "\<dots> < q n" by (rule q(2))
-    finally show ?thesis .
-  qed
-  have pmem: "p n \<in> {0..T}" for n
-    using p(2)[of n] pq[of n] q(3)[of n] st by auto
-  have qmem: "q n \<in> {0..T}" for n
-    using q(3)[of n] p(2)[of n] pq[of n] st by auto
-  have inS: "(1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)) \<in> S" for n
-    using p q pq pmem qmem st by (intro rat) auto
-  have pl: "p \<longlonglongrightarrow> s"
-  proof (rule tendsto_sandwich[of "\<lambda>n. s" p sequentially "\<lambda>n. s + e n"])
-    show "\<forall>\<^sub>F n in sequentially. s \<le> p n"
-      using p(2) by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. p n \<le> s + e n"
-      using p(3) by (simp add: less_imp_le)
-    show "(\<lambda>n. s) \<longlonglongrightarrow> s" by simp
-    show "(\<lambda>n. s + e n) \<longlonglongrightarrow> s"
-      using tendsto_add[OF tendsto_const elim] by simp
-  qed
-  have ql: "q \<longlonglongrightarrow> t"
-  proof (rule tendsto_sandwich[of "\<lambda>n. t - e n" q sequentially "\<lambda>n. t"])
-    show "\<forall>\<^sub>F n in sequentially. t - e n \<le> q n"
-      using q(2) by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. q n \<le> t"
-      using q(3) by (simp add: less_imp_le)
-    show "(\<lambda>n. t - e n) \<longlonglongrightarrow> t"
-      using tendsto_diff[OF tendsto_const elim] by simp
-    show "(\<lambda>n. t) \<longlonglongrightarrow> t" by simp
-  qed
-  have Yp: "(\<lambda>n. Y (p n)) \<longlonglongrightarrow> Y s"
-    using st pmem by (intro continuous_on_tendsto_compose[OF cont pl]) auto
-  have Yq: "(\<lambda>n. Y (q n)) \<longlonglongrightarrow> Y t"
-    using st qmem by (intro continuous_on_tendsto_compose[OF cont ql]) auto
-  have "(\<lambda>n. (1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)))
-      \<longlonglongrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s)"
-    using st by (intro tendsto_intros Yp Yq ql pl) auto
-  then show ?thesis
-    by (rule closed_sequentially[OF S inS])
-qed
 
 section \<open>From difference quotients to the density\<close>
 
-text \<open>Once the constraint holds for all \<open>s < t\<close>, boundedness of the
-  constraint set makes \<open>Y\<close> Lipschitz, and closedness carries through to
-  the derivative wherever it exists: \<open>dY/dt \<in> S\<close> a.e., the density
-  statement of Eq. (1.7).\<close>
+text \<open>\<open>diffquot_lipschitz\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
 
-lemma diffquot_lipschitz:
-  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
-  assumes B0: "0 \<le> B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
-    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
-        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
-  shows "B-lipschitz_on {0..T} Y"
-proof (rule lipschitz_onI[OF _ B0])
-  fix u v :: real
-  assume uv: "u \<in> {0..T}" "v \<in> {0..T}"
-  have key: "dist (Y a) (Y b) \<le> B * dist a b"
-    if ab: "a \<in> {0..T}" "b \<in> {0..T}" "a < b" for a b
-  proof -
-    have ba: "0 < b - a" using ab by simp
-    have "(1 / (b - a)) *\<^sub>R (Y b - Y a) \<in> S"
-      using ab by (intro dq) auto
-    then have "norm ((1 / (b - a)) *\<^sub>R (Y b - Y a)) \<le> B" by (rule B)
-    then have "(1 / (b - a)) * norm (Y b - Y a) \<le> B"
-      using ba by simp
-    then have "norm (Y b - Y a) \<le> B * (b - a)"
-      using ba by (simp add: field_simps)
-    then show ?thesis
-      using ba by (simp add: dist_norm norm_minus_commute)
-  qed
-  show "dist (Y u) (Y v) \<le> B * dist u v"
-  proof (cases "u = v")
-    case True
-    then show ?thesis using B0 by simp
-  next
-    case ne: False
-    show ?thesis
-    proof (cases "u < v")
-      case True
-      show ?thesis by (rule key[OF uv True])
-    next
-      case False
-      with ne have vu: "v < u" by simp
-      have "dist (Y v) (Y u) \<le> B * dist v u"
-        by (rule key[OF uv(2) uv(1) vu])
-      then show ?thesis by (simp add: dist_commute)
-    qed
-  qed
-qed
 
 text \<open>The density statement of Eq. (1.7): the difference-quotient constraint
   makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence differentiable
@@ -1041,36 +910,8 @@ qed
 
 section \<open>Pair tightness from the two component moduli\<close>
 
-text \<open>Pair tightness needs no matrix-valued Kolmogorov criterion: the
-  \<open>X\<close>-side carries a stochastic Hoelder estimate (@{theory Continuous_Path_Spaces.Path_Tightness}), the
-  \<open>Y\<close>-side the deterministic Lipschitz modulus of \<open>diffquot_lipschitz\<close>,
-  and on a bounded horizon a Lipschitz bound is itself Hoelder-\<open>ga\<close>.
-  Adding the two via \<open>norm_Pair_le\<close> puts the pair path in a single
-  Hoelder ball of the product type, where \<open>compactin_path_holder_ball\<close>
-  applies since products of
-  \<open>polish_space\<close>/\<open>real_normed_vector\<close>/\<open>heine_borel\<close> spaces are again
-  such.\<close>
+text \<open>\<open>lipschitz_imp_holder_bound\<close> lives in @{theory Continuous_Path_Spaces.Holder_Interpolation}.\<close>
 
-lemma lipschitz_imp_holder_bound:
-  fixes s t :: real
-  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and B: "0 \<le> B"
-    and st: "s \<in> {0..T}" "t \<in> {0..T}"
-  shows "B * \<bar>t - s\<bar> \<le> B * T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
-proof (cases "t = s")
-  case True
-  then show ?thesis using B ga T by simp
-next
-  case False
-  then have d: "0 < \<bar>t - s\<bar>" by simp
-  have dT: "\<bar>t - s\<bar> \<le> T" using st by auto
-  have "\<bar>t - s\<bar> = \<bar>t - s\<bar> powr (1 - ga) * \<bar>t - s\<bar> powr ga"
-    using d by (simp flip: powr_add)
-  also have "\<dots> \<le> T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
-    using d dT ga by (intro mult_right_mono powr_mono2) auto
-  finally have "\<bar>t - s\<bar> \<le> T powr (1 - ga) * \<bar>t - s\<bar> powr ga" .
-  then show ?thesis
-    using B by (simp add: mult_left_mono mult.assoc)
-qed
 
 lemma pair_holder_of_components:
   fixes \<omega> :: "'n::finite pairpath"

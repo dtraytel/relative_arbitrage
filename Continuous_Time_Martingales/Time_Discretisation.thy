@@ -166,6 +166,24 @@ proof -
 qed
 
 
+subsection \<open>Two facts about the dyadic floor grid\<close>
+
+lemma finite_dyceil_range:
+  "finite ((\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>})"
+  by (rule finite_imageI) simp
+
+lemma dyceil_grid_le:
+  assumes t: "0 \<le> t"
+  shows "real_of_int \<lfloor>2^n * t\<rfloor> / 2^n \<le> t" and "0 \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n"
+proof -
+  have p: "(0 :: real) < 2^n" by simp
+  have "real_of_int \<lfloor>2^n * t\<rfloor> \<le> 2^n * t" by (rule of_int_floor_le)
+  then show "real_of_int \<lfloor>2^n * t\<rfloor> / 2^n \<le> t" using p by (simp add: field_simps)
+  have "0 \<le> 2^n * t" using t by simp
+  then have "(0 :: int) \<le> \<lfloor>2^n * t\<rfloor>" by simp
+  then show "0 \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n" by simp
+qed
+
 (*<*)
 end
 (*>*)

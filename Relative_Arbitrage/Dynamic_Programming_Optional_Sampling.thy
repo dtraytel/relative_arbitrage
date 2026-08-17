@@ -3,6 +3,7 @@ section \<open>Optional sampling at two stopping times\<close>
 (*<*)
 theory Dynamic_Programming_Optional_Sampling
   imports Dynamic_Programming_Kernels
+    "Continuous_Time_Martingales.Time_Discretisation"
 begin
 
 (*>*)
@@ -138,9 +139,8 @@ proof -
   show ?thesis unfolding dyceil_def using lo hi by (intro image_eqI) auto
 qed
 
-lemma finite_dyceil_range:
-  "finite ((\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>})"
-  by (rule finite_imageI) simp
+text \<open>\<open>finite_dyceil_range\<close> lives in @{theory Continuous_Time_Martingales.Time_Discretisation}.\<close>
+
 
 text \<open>The key computation: below the horizon, \<open>dyceil\<close> is at most \<open>t\<close> exactly
   when the original time is at most the grid point just below \<open>t\<close>, which is
@@ -162,17 +162,8 @@ proof -
   finally show ?thesis .
 qed
 
-lemma dyceil_grid_le:
-  assumes t: "0 \<le> t"
-  shows "real_of_int \<lfloor>2^n * t\<rfloor> / 2^n \<le> t" and "0 \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n"
-proof -
-  have p: "(0 :: real) < 2^n" by simp
-  have "real_of_int \<lfloor>2^n * t\<rfloor> \<le> 2^n * t" by (rule of_int_floor_le)
-  then show "real_of_int \<lfloor>2^n * t\<rfloor> / 2^n \<le> t" using p by (simp add: field_simps)
-  have "0 \<le> 2^n * t" using t by simp
-  then have "(0 :: int) \<le> \<lfloor>2^n * t\<rfloor>" by simp
-  then show "0 \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n" by simp
-qed
+text \<open>\<open>dyceil_grid_le\<close> lives in @{theory Continuous_Time_Martingales.Time_Discretisation}.\<close>
+
 
 lemma dyceil_tendsto:
   assumes x: "0 \<le> x" and xU: "x \<le> U"

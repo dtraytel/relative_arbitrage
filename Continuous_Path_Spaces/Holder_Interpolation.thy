@@ -309,6 +309,39 @@ proof -
 qed
 
 
+subsection \<open>A Lipschitz bound is a Holder bound on a bounded interval\<close>
+
+text \<open>Pair tightness needs no matrix-valued Kolmogorov criterion: the
+  \<open>X\<close>-side carries a stochastic Hoelder estimate (\<open>Path_Tightness\<close>), the
+  \<open>Y\<close>-side the deterministic Lipschitz modulus of \<open>diffquot_lipschitz\<close>,
+  and on a bounded horizon a Lipschitz bound is itself Hoelder-\<open>ga\<close>.
+  Adding the two via \<open>norm_Pair_le\<close> puts the pair path in a single
+  Hoelder ball of the product type, where \<open>compactin_path_holder_ball\<close>
+  applies since products of
+  \<open>polish_space\<close>/\<open>real_normed_vector\<close>/\<open>heine_borel\<close> spaces are again
+  such.\<close>
+
+lemma lipschitz_imp_holder_bound:
+  fixes s t :: real
+  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and B: "0 \<le> B"
+    and st: "s \<in> {0..T}" "t \<in> {0..T}"
+  shows "B * \<bar>t - s\<bar> \<le> B * T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
+proof (cases "t = s")
+  case True
+  then show ?thesis using B ga T by simp
+next
+  case False
+  then have d: "0 < \<bar>t - s\<bar>" by simp
+  have dT: "\<bar>t - s\<bar> \<le> T" using st by auto
+  have "\<bar>t - s\<bar> = \<bar>t - s\<bar> powr (1 - ga) * \<bar>t - s\<bar> powr ga"
+    using d by (simp flip: powr_add)
+  also have "\<dots> \<le> T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
+    using d dT ga by (intro mult_right_mono powr_mono2) auto
+  finally have "\<bar>t - s\<bar> \<le> T powr (1 - ga) * \<bar>t - s\<bar> powr ga" .
+  then show ?thesis
+    using B by (simp add: mult_left_mono mult.assoc)
+qed
+
 (*<*)
 end
 (*>*)

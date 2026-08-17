@@ -290,6 +290,33 @@ proof -
     by (rule continuous_attains_sup[OF cK ne])
 qed
 
+subsection \<open>Three elementary sets and images\<close>
+
+text \<open>The transfer lemma: if \<open>\<Psi>\<close> leaves \<open>F\<close> invariant and distorts balls around
+  \<open>z\<close> by at most fixed factors in both directions, then it leaves the upper
+  envelope at \<open>z\<close> invariant.  Purely a statement about \<open>INF\<close>/\<open>SUP\<close> reindexing.\<close>
+
+lemma pos_image_scale:
+  assumes r0: "0 < r"
+  shows "(\<lambda>e. e / r) ` {0<..} = {(0::real)<..}"
+proof
+  show "(\<lambda>e. e / r) ` {0<..} \<subseteq> {(0::real)<..}" using r0 by auto
+  show "{(0::real)<..} \<subseteq> (\<lambda>e. e / r) ` {0<..}"
+  proof
+    fix x :: real assume "x \<in> {0<..}"
+    then have x0: "0 < x" by simp
+    have xe: "x = (x * r) / r" using r0 by simp
+    have "x * r \<in> {0<..}" using x0 r0 by simp
+    then show "x \<in> (\<lambda>e. e / r) ` {0<..}" using xe by (metis image_eqI)
+  qed
+qed
+
+lemma closed_abs_ge: "closed {y :: real. R \<le> \<bar>y\<bar>}"
+  by (intro closed_Collect_le continuous_intros)
+
+lemma abs_ge_nonempty: "{y :: real. R \<le> \<bar>y\<bar>} \<noteq> {}"
+  by (rule notI) (use abs_ge_self[of R] in blast)
+
 (*<*)
 end
 (*>*)

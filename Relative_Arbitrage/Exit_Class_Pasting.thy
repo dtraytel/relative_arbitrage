@@ -4,6 +4,7 @@ section \<open>Shortening the horizon, concatenation, and Proposition 2.4\<close
 theory Exit_Class_Pasting
   imports Exit_Class_Witness
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Continuous_Path_Spaces.Increment_Moments"
 begin
 
 (*>*)
@@ -2271,17 +2272,8 @@ proof -
   then show ?thesis by (simp add: norm_outer_prod)
 qed
 
-text \<open>\<open>bounded_linear_cross_pair\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>pair_fst_borel\<close>, \<open>pair_snd_borel\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-
-lemma pair_fst_borel:
-  "(fst :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-  by (intro borel_measurable_continuous_onI continuous_intros)
-
-lemma pair_snd_borel:
-  "(snd :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
-     \<in> borel_measurable borel"
-  by (intro borel_measurable_continuous_onI continuous_intros)
 
 lemma outerp_borel:
   "(outerp :: real^'n::finite \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"

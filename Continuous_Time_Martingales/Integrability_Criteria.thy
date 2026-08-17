@@ -693,6 +693,68 @@ proof -
   with lb ind_int show ?thesis by simp
 qed
 
+subsection \<open>Borel measurability of the projections, and independence up to sets\<close>
+
+text \<open>Independence is invariant under replacing the target measures by
+  ones with the same sets.\<close>
+
+lemma (in prob_space) indep_vars_cong_sets:
+  assumes eq: "\<And>i. i \<in> I \<Longrightarrow> sets (M' i) = sets (N' i)"
+    and ind: "indep_vars M' X I"
+  shows "indep_vars N' X I"
+proof -
+  have rv: "random_variable (N' i) (X i)" if i: "i \<in> I" for i
+  proof -
+    have "random_variable (M' i) (X i)"
+      using ind i by (auto simp: indep_vars_def)
+    then show ?thesis
+      using measurable_cong_sets[OF refl eq[OF i]] by blast
+  qed
+  have "indep_sets (\<lambda>i. sigma_sets (space M)
+      {X i -` A \<inter> space M |A. A \<in> sets (M' i)}) I"
+    using ind by (auto simp: indep_vars_def)
+  then have "indep_sets (\<lambda>i. sigma_sets (space M)
+      {X i -` A \<inter> space M |A. A \<in> sets (N' i)}) I"
+    by (rule indep_sets_cong[THEN iffD1, OF refl, rotated])
+      (simp add: eq)
+  with rv show ?thesis
+    by (auto simp: indep_vars_def)
+qed
+
+text \<open>\<open>martingale_of_set_integral_eq\<close> is the right interface, because the
+  weak limit produces exactly a set-integral identity: every event of
+  \<open>\<FF>\<^sub>s\<close> is a past event (the natural filtration as a restricted preimage), so the
+  indicator of \<open>A\<close> is the indicator of a Borel set of restricted paths.
+  The two-case split is on \<open>u \<le> T\<close>: beyond the horizon the stopped process
+  no longer moves and the identity is trivial.\<close>
+
+lemma fst_coord_borel:
+  "(\<lambda>p :: (real^'n::finite) \<times> (real^'n^'n). fst p $ i) \<in> borel_measurable borel"
+proof -
+  have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  show ?thesis by (rule measurable_compose[OF f borel_measurable_nth])
+qed
+
+text \<open>Transfer to the continuous modification via
+  \<open>Modification_Transfer.martingale_of_modification_gen\<close>, as
+  \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> does for the diagonal.\<close>
+
+lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI linear_continuous_on
+      bounded_linear_vec_nth)
+
+text \<open>\<open>bounded_linear_cross_pair\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
+
+lemma pair_fst_borel:
+  "(fst :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI continuous_intros)
+
+lemma pair_snd_borel:
+  "(snd :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
+     \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI continuous_intros)
+
 (*<*)
 end
 (*>*)

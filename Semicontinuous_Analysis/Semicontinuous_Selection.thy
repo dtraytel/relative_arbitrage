@@ -668,6 +668,81 @@ qed
 
 end
 
+subsection \<open>Countably valued approximation in a compact metric space\<close>
+
+text \<open>A measurable map into a compact metric space is a uniform limit of
+  countably valued measurable maps: round to the nearest point of a dense
+  sequence, taking the least admissible index so that the choice is
+  measurable.  The rounding is measurable for a cheap reason --- the set
+  where the distance to a fixed centre is small is an open ball, so its
+  preimage is measurable with no continuity argument at all.\<close>
+
+lemma (in Metric_space) countably_valued_approx:
+  fixes g :: "'b \<Rightarrow> 'a" and P :: "'b measure"
+  assumes cpt: "compact_space mtopology" and ne: "M \<noteq> {}"
+    and gm: "g \<in> P \<rightarrow>\<^sub>M borel_of mtopology" and rng: "\<And>x. g x \<in> M"
+  obtains z :: "nat \<Rightarrow> 'a" and Nx :: "nat \<Rightarrow> 'b \<Rightarrow> nat"
+    where "\<And>j. z j \<in> M"
+      and "\<And>m. Nx m \<in> P \<rightarrow>\<^sub>M count_space UNIV"
+      and "\<And>m x. d (z (Nx m x)) (g x) < (1/2)^m"
+proof -
+  obtain z :: "nat \<Rightarrow> 'a" where z0: "\<forall>j. z j \<in> M"
+    and zd0: "\<forall>y \<in> M. \<forall>e > 0. \<exists>j. d (z j) y < e"
+    using compact_space_dense_seq[OF cpt ne] by blast
+  have zM: "z j \<in> M" for j using z0 by blast
+  have ex: "\<exists>j. d (z j) (g x) < (1/2::real)^m" for m x
+    using zd0 rng[of x] by simp
+  define Nx :: "nat \<Rightarrow> 'b \<Rightarrow> nat"
+    where "Nx = (\<lambda>m x. LEAST j. d (z j) (g x) < (1/2::real)^m)"
+  have lt: "d (z (Nx m x)) (g x) < (1/2::real)^m" for m x
+    unfolding Nx_def by (rule LeastI_ex) (rule ex)
+  have fib: "(Nx m x = j) \<longleftrightarrow> (d (z j) (g x) < (1/2::real)^m
+      \<and> (\<forall>i<j. \<not> d (z i) (g x) < (1/2::real)^m))" for m x j
+    unfolding Nx_def by (rule Least_nat_eq_iff) (rule ex)
+  have ball: "{x \<in> space P. d (z i) (g x) < c} \<in> sets P" for i c
+  proof -
+    have "{x \<in> space P. d (z i) (g x) < c} = g -` mball (z i) c \<inter> space P"
+      using zM rng by auto
+    moreover have "mball (z i) c \<in> sets (borel_of mtopology)"
+      by (rule borel_of_open) simp
+    ultimately show ?thesis using measurable_sets[OF gm] by simp
+  qed
+  have Nm: "Nx m \<in> P \<rightarrow>\<^sub>M count_space UNIV" for m
+  proof -
+    have fibm: "Nx m -` {j} \<inter> space P \<in> sets P" for j
+    proof -
+      have "Nx m -` {j} \<inter> space P
+          = {x \<in> space P. d (z j) (g x) < (1/2::real)^m}
+            - (\<Union>i\<in>{..<j}. {x \<in> space P. d (z i) (g x) < (1/2::real)^m})"
+        using fib by auto
+      moreover have "(\<Union>i\<in>{..<j}. {x \<in> space P. d (z i) (g x)
+          < (1/2::real)^m}) \<in> sets P"
+        using ball by (intro sets.finite_UN) auto
+      ultimately show ?thesis using ball by (simp add: sets.Diff)
+    qed
+    show ?thesis
+      using fibm by (auto simp: measurable_count_space_eq2_countable)
+  qed
+  show ?thesis by (rule that[OF zM Nm lt])
+qed
+
+lemma (in Metric_space) limitin_of_dist_half:
+  assumes zz: "\<And>m. zz m \<in> M" and y: "y \<in> M"
+    and lt: "\<And>m. d (zz m) y < (1/2::real)^m"
+  shows "limitin mtopology zz y sequentially"
+  unfolding limitin_metric
+proof (intro conjI y allI impI)
+  fix e :: real assume e: "0 < e"
+  have "(\<lambda>m. (1/2::real)^m) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero) auto
+  then have "\<forall>\<^sub>F m in sequentially. (1/2::real)^m < e"
+    using e by (rule order_tendstoD(2))
+  then show "\<forall>\<^sub>F m in sequentially. zz m \<in> M \<and> d (zz m) y < e"
+  proof (rule eventually_mono)
+    fix m assume "(1/2::real)^m < e"
+    with lt[of m] zz[of m] show "zz m \<in> M \<and> d (zz m) y < e" by simp
+  qed
+qed
+
 (*<*)
 end
 (*>*)

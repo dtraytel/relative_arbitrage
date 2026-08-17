@@ -5,6 +5,8 @@ theory Value_Function_Subsolution
   imports Dynamic_Programming_Assembly Curvature_Operator Operator_Envelopes
     "Continuous_Time_Martingales.Quadratic_Variation"
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Symmetric_Matrix_Spectra.Ky_Fan"
 begin
 
 (*>*)
@@ -2251,58 +2253,8 @@ qed
 
 section \<open>Selecting a value-minimal index set: the threshold argument\<close>
 
-text \<open>The linear-programming core of the face argument, done by hand: given
-  weights \<open>c \<in> [0,1]\<close> with total mass \<open>\<ge> m\<close>, some set of \<open>\<ge> m\<close> indices
-  beats the weighted value.  No convexity and no induction on fractional
-  entries: one threshold comparison against the \<open>m\<close>-th smallest value
-  settles it.\<close>
+text \<open>\<open>exists_min_subset\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
-lemma exists_min_subset:
-  fixes w :: "'a \<Rightarrow> real"
-  assumes finB: "finite B"
-  shows "m \<le> card B \<Longrightarrow> \<exists>S. S \<subseteq> B \<and> card S = m
-      \<and> (\<forall>u\<in>S. \<forall>v\<in>B - S. w u \<le> w v)"
-proof (induction m)
-  case 0
-  then show ?case by (intro exI[of _ "{}"]) simp
-next
-  case (Suc m)
-  then obtain S where S: "S \<subseteq> B" "card S = m"
-    and least: "\<forall>u\<in>S. \<forall>v\<in>B - S. w u \<le> w v"
-    using Suc_leD by blast
-  have ne: "B - S \<noteq> {}"
-  proof
-    assume "B - S = {}"
-    then have "B \<subseteq> S" by blast
-    with S(1) have "S = B" by blast
-    with S(2) Suc.prems show False by simp
-  qed
-  have finD: "finite (B - S)" using finB by simp
-  have "Min (w ` (B - S)) \<in> w ` (B - S)"
-    by (intro Min_in finite_imageI finD) (use ne in blast)
-  then obtain v0 where v0: "v0 \<in> B - S" and v0min: "w v0 = Min (w ` (B - S))"
-    by auto
-  have v0le: "\<And>v. v \<in> B - S \<Longrightarrow> w v0 \<le> w v"
-    unfolding v0min by (intro Min_le finite_imageI finD) blast
-  have cS: "card (insert v0 S) = Suc m"
-    using S v0 finB by (simp add: finite_subset)
-  have sub: "insert v0 S \<subseteq> B" using S(1) v0 by blast
-  have prp: "\<forall>u\<in>insert v0 S. \<forall>v\<in>B - insert v0 S. w u \<le> w v"
-  proof (intro ballI)
-    fix u v assume u: "u \<in> insert v0 S" and v: "v \<in> B - insert v0 S"
-    have vBS: "v \<in> B - S" using v by blast
-    show "w u \<le> w v"
-    proof (cases "u = v0")
-      case True
-      then show ?thesis using v0le[OF vBS] by simp
-    next
-      case False
-      then have "u \<in> S" using u by simp
-      then show ?thesis using least vBS by blast
-    qed
-  qed
-  show ?case by (intro exI[of _ "insert v0 S"]) (use cS sub prp in blast)
-qed
 
 lemma weighted_min_value:
   fixes w c :: "'a \<Rightarrow> real"
