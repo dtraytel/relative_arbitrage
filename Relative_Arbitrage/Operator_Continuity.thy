@@ -22,22 +22,8 @@ text \<open>
   diagonalisable in a way adapted to \<open>p\<close>.\<close>
 section \<open>Elementary matrix algebra not already in the development\<close>
 
-text \<open>A local copy of \<open>trace_conjugate\<close> (\<open>Viscosity_Comparison_Interface\<close>), so
-  that this theory need not import the \<open>Operator_Envelopes\<close> chain; see the header.\<close>
+text \<open>\<open>trace_conj\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma trace_conj:
-  fixes M Q a :: "real^'n::finite^'n"
-  shows "trace (M ** (transpose Q ** a ** Q)) = trace ((Q ** M ** transpose Q) ** a)"
-proof -
-  have "trace (M ** (transpose Q ** a ** Q))
-      = trace ((M ** transpose Q ** a) ** Q)"
-    by (simp add: matrix_mul_assoc)
-  also have "\<dots> = trace (Q ** (M ** transpose Q ** a))"
-    using trace_mul_sym[of "M ** transpose Q ** a" Q] by simp
-  also have "\<dots> = trace ((Q ** M ** transpose Q) ** a)"
-    by (simp add: matrix_mul_assoc)
-  finally show ?thesis .
-qed
 
 text \<open>\<open>matrix_vector_mult_diff\<close> and \<open>transpose_diff_matrix\<close> live in
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
@@ -143,31 +129,8 @@ definition Mp :: "real^'n::finite \<Rightarrow> real^'n^'n \<Rightarrow> real^'n
 lemma Mp_zero [simp]: "Mp 0 M = M"
   by (simp add: Mp_def)
 
-text \<open>\<open>p\<close> itself is an eigenvector of \<open>M\<^sub>p\<close>, with eigenvalue
-  \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close>: the conjugation kills it and the correction term
-  scales it.  This is the first half of the "sorts to the bottom of the
-  spectrum" claim after Eq. (3.4); the second half is the Poincare bound
-  \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close>, which is what still remains for Eq. (3.5).\<close>
+text \<open>\<open>matrix_vector_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matrix_vector_mult_add:
-  fixes A B :: "real^'n::finite^'n"
-  shows "(A + B) *v x = A *v x + B *v x"
-proof -
-  have "((A + B) *v x) $ i = (A *v x) $ i + (B *v x) $ i" for i
-  proof -
-    have "((A + B) *v x) $ i = (\<Sum>j\<in>UNIV. (A $ i $ j + B $ i $ j) * x $ j)"
-      by (simp add: matrix_vector_mult_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j + B $ i $ j * x $ j)"
-      by (intro sum.cong refl) (simp add: distrib_right)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j) + (\<Sum>j\<in>UNIV. B $ i $ j * x $ j)"
-      by (rule sum.distrib)
-    also have "\<dots> = (A *v x) $ i + (B *v x) $ i"
-      by (simp add: matrix_vector_mult_def)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
 
 lemma rank1proj_apply_self:
   fixes p :: "real^'n::finite"

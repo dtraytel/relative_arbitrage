@@ -3,6 +3,7 @@ section \<open>The Euler scheme, its weak limit, and the exact quadratic lower b
 (*<*)
 theory Value_Function_Euler_Construction
   imports Value_Function_Subsolution
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -28,89 +29,16 @@ text \<open>The supersolution inequality is an essential-infimum statement, so i
 
 subsection \<open>A crude operator bound for matrices\<close>
 
-lemma sum_sq_le_sq_sum:
-  fixes f :: "'b \<Rightarrow> real"
-  assumes nn: "\<And>i. i \<in> F \<Longrightarrow> 0 \<le> f i"
-  shows "(\<Sum>i\<in>F. (f i)\<^sup>2) \<le> (\<Sum>i\<in>F. f i)\<^sup>2"
-proof (cases "finite F")
-  case True
-  then show ?thesis using nn
-  proof (induction F)
-    case empty
-    show ?case by simp
-  next
-    case (insert a F)
-    have fa: "0 \<le> f a" using insert.prems by simp
-    have sn: "0 \<le> (\<Sum>i\<in>F. f i)"
-      using insert.prems by (intro sum_nonneg) simp
-    have "(\<Sum>i\<in>insert a F. (f i)\<^sup>2) = (f a)\<^sup>2 + (\<Sum>i\<in>F. (f i)\<^sup>2)"
-      using insert.hyps by simp
-    also have "\<dots> \<le> (f a)\<^sup>2 + (\<Sum>i\<in>F. f i)\<^sup>2"
-      using insert by simp
-    also have "\<dots> \<le> (f a)\<^sup>2 + 2 * f a * (\<Sum>i\<in>F. f i) + (\<Sum>i\<in>F. f i)\<^sup>2"
-      using fa sn by simp
-    also have "\<dots> = (f a + (\<Sum>i\<in>F. f i))\<^sup>2"
-      by (simp add: power2_eq_square algebra_simps)
-    finally show ?case using insert.hyps by simp
-  qed
-next
-  case False
-  then show ?thesis by simp
-qed
+text \<open>\<open>sum_sq_le_sq_sum\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matvec_norm_le:
-  fixes M :: "real^'n::finite^'n"
-  shows "norm (M *v w) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w"
-proof -
-  let ?C = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
-  have comp: "\<bar>(M *v w) $ i\<bar> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w" for i
-  proof -
-    have "\<bar>(M *v w) $ i\<bar> = \<bar>\<Sum>j\<in>UNIV. M $ i $ j * w $ j\<bar>"
-      by (simp add: matrix_vector_mult_def)
-    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j * w $ j\<bar>)"
-      by (rule sum_abs)
-    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * norm w)"
-      by (intro sum_mono)
-        (simp add: abs_mult mult_left_mono component_le_norm_cart)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w"
-      by (simp add: sum_distrib_right)
-    finally show ?thesis .
-  qed
-  have rownn: "0 \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w" for i
-    by (intro mult_nonneg_nonneg sum_nonneg) simp_all
-  have "(norm (M *v w))\<^sup>2 = (M *v w) \<bullet> (M *v w)"
-    by (simp add: power2_norm_eq_inner)
-  also have "\<dots> = (\<Sum>i\<in>UNIV. ((M *v w) $ i)\<^sup>2)"
-    by (simp add: inner_vec_def power2_eq_square)
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2)"
-  proof (rule sum_mono)
-    fix i :: 'n
-    have "((M *v w) $ i)\<^sup>2 = \<bar>(M *v w) $ i\<bar>\<^sup>2" by simp
-    also have "\<dots> \<le> ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2"
-      using comp[of i] rownn[of i] by (intro power_mono) simp_all
-    finally show "((M *v w) $ i)\<^sup>2
-        \<le> ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2" .
-  qed
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2"
-    by (rule sum_sq_le_sq_sum) (rule rownn)
-  also have "\<dots> = (?C * norm w)\<^sup>2"
-    by (simp add: sum_distrib_right)
-  finally have h: "(norm (M *v w))\<^sup>2 \<le> (?C * norm w)\<^sup>2" .
-  have Cnn: "0 \<le> ?C * norm w"
-    by (intro mult_nonneg_nonneg sum_nonneg) simp_all
-  show ?thesis
-    using h Cnn by (simp add: power2_le_iff_abs_le)
-qed
+
+text \<open>\<open>matvec_norm_le\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 subsection \<open>The trace pairing for sums of column outer products\<close>
 
-text \<open>The covariance field is \<open>\<Sum>\<^sub>u outerp (w u)\<close> for columns \<open>w u\<close>, and the
-  Euler machinery reads it only through its trace against the Hessian.  That
-  pairing is exact, whatever the columns: the trace of \<open>M\<close> against the sum is
-  the sum of the quadratic forms \<open>w u \<bullet> (M *v w u)\<close>.\<close>
+text \<open>\<open>trace_mult_zero_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma trace_mult_zero_right: "trace (M ** (0 :: real^'n::finite^'n)) = 0"
-  by (simp add: matrix_matrix_mult_def trace_def vec_eq_iff)
 
 lemma trace_mult_outerp_sum:
   fixes M :: "real^'n::finite^'n" and w :: "'b \<Rightarrow> real^'n" and F :: "'b set"
@@ -154,25 +82,8 @@ lemma sbmpair_apply:
      = (S *v cbmX 0 t \<omega>, t *\<^sub>R (S ** transpose S))"
   by (simp add: sbmpair_def)
 
-lemma matvec_blin: "bounded_linear ((*v) (S :: real^'n::finite^'m::finite))"
-  using matrix_vector_mul_linear linear_conv_bounded_linear by blast
+text \<open>\<open>matvec_blin\<close>, \<open>matmul_sandwich_blin\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matmul_sandwich_blin:
-  fixes S :: "real^'n::finite^'n"
-  shows "bounded_linear (\<lambda>A :: real^'n^'n. S ** A ** transpose S)"
-  unfolding linear_conv_bounded_linear[symmetric]
-proof (intro linearI)
-  fix A B :: "real^'n^'n"
-  show "S ** (A + B) ** transpose S = S ** A ** transpose S
-      + S ** B ** transpose S"
-    by (simp add: matrix_matrix_mult_def vec_eq_iff
-        sum.distrib algebra_simps)
-next
-  fix c :: real and A :: "real^'n^'n"
-  show "S ** (c *\<^sub>R A) ** transpose S = c *\<^sub>R (S ** A ** transpose S)"
-    by (simp add: matrix_matrix_mult_def vec_eq_iff
-        sum_distrib_left algebra_simps)
-qed
 
 lemma outerp_matvec_image:
   fixes S :: "real^'n::finite^'n" and w :: "real^'n"
@@ -211,16 +122,8 @@ proof -
   ultimately show ?thesis by (simp add: vec_eq_iff)
 qed
 
-lemma matmul_scaleR_right:
-  fixes A B :: "real^'n::finite^'n"
-  shows "A ** (c *\<^sub>R B) = c *\<^sub>R (A ** B)"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff
-      sum_distrib_left algebra_simps)
+text \<open>\<open>matmul_scaleR_right\<close>, \<open>sandwich_mat1\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma sandwich_mat1:
-  fixes S :: "real^'n::finite^'n"
-  shows "S ** (c *\<^sub>R mat 1) ** transpose S = c *\<^sub>R (S ** transpose S)"
-  by (simp add: matmul_scaleR_right scaleR_matrix_mult)
 
 lemma continuous_on_sbmpair_path:
   fixes \<omega> :: "'n::finite \<Rightarrow> real \<Rightarrow> real" and S :: "real^'n^'n"
@@ -620,15 +523,8 @@ proof -
   ultimately show ?thesis by (simp add: vec_eq_iff)
 qed
 
-lemma exists_enum_of_card:
-  fixes B :: "(real^'n::finite) set"
-  assumes finB: "finite B" and cardB: "card B = CARD('n)"
-  obtains f :: "'n \<Rightarrow> real^'n" where "bij_betw f (UNIV :: 'n set) B"
-proof -
-  have "\<exists>f. bij_betw f (UNIV :: 'n set) B"
-    by (rule finite_same_card_bij) (use finB cardB in simp_all)
-  then show ?thesis using that by blast
-qed
+text \<open>\<open>exists_enum_of_card\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 subsection \<open>Continuity of the Gaussian member in its volatility\<close>
 
@@ -1109,20 +1005,8 @@ qed
 
 subsection \<open>Step moments of the Gaussian member\<close>
 
-text \<open>The Euler analysis needs exactly two facts per step: the compensated
-  quadratic increment has mean zero (an instance of
-  @{thm [source] exit_class_quadform_mean}, since the member's
-  second component is deterministic), and its variance is \<open>O(h\<^sup>2)\<close>.  The
-  variance bound needs no Wick calculus and no coordinate independence:
-  the pointwise AM--GM bound \<open>a\<^sup>2b\<^sup>2 \<le> (a\<^sup>4 + b\<^sup>4)/2\<close> reduces everything
-  to the fourth marginal moment \<open>3h\<^sup>2\<close> of one Brownian coordinate.\<close>
+text \<open>\<open>trace_mult_blin\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma trace_mult_blin:
-  fixes M :: "real^'n::finite^'n"
-  shows "bounded_linear (\<lambda>A :: real^'n^'n. trace (M ** A))"
-  unfolding linear_conv_bounded_linear[symmetric]
-  by (intro linearI)
-    (simp_all add: trace_mult_add matmul_scaleR_right trace_scaleR)
 
 lemma sconstraint_diag_le:
   fixes a :: "real^'n::finite^'n"
@@ -2739,55 +2623,8 @@ qed
 
 subsection \<open>The exact quadratic lower bound along the grid\<close>
 
-lemma quad_taylor_step:
-  fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n"
-  assumes sym: "transpose M = M"
-  shows "q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-       - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))
-     = (q + M *v (a - x)) \<bullet> (b - a)
-       + (1/2) * ((b - a) \<bullet> (M *v (b - a)))"
-proof -
-  define u where "u = a - x"
-  define d where "d = b - a"
-  have bx: "b - x = u + d" unfolding u_def d_def by simp
-  have swap: "d \<bullet> (M *v u) = u \<bullet> (M *v d)"
-  proof -
-    have "d \<bullet> (M *v u) = (transpose M *v d) \<bullet> u"
-      by (rule inner_transpose_matrix)
-    also have "\<dots> = (M *v d) \<bullet> u" by (simp add: sym)
-    also have "\<dots> = u \<bullet> (M *v d)" by (rule inner_commute)
-    finally show ?thesis .
-  qed
-  have e12: "(b - x) \<bullet> (M *v (b - x))
-      = u \<bullet> (M *v u) + 2 * (u \<bullet> (M *v d)) + d \<bullet> (M *v d)"
-  proof -
-    have "(b - x) \<bullet> (M *v (b - x)) = (u + d) \<bullet> (M *v (u + d))"
-      unfolding bx by (rule refl)
-    also have "\<dots> = u \<bullet> (M *v u) + u \<bullet> (M *v d)
-        + (d \<bullet> (M *v u) + d \<bullet> (M *v d))"
-      by (simp add: matrix_vector_right_distrib inner_add_left
-          inner_add_right)
-    also have "d \<bullet> (M *v u) = u \<bullet> (M *v d)" by (rule swap)
-    finally show ?thesis by simp
-  qed
-  have e0: "q \<bullet> (b - x) = q \<bullet> u + q \<bullet> d"
-    unfolding bx by (simp add: inner_add_right)
-  have e3: "q \<bullet> (a - x) = q \<bullet> u" unfolding u_def by (rule refl)
-  have e4: "(a - x) \<bullet> (M *v (a - x)) = u \<bullet> (M *v u)"
-    unfolding u_def by (rule refl)
-  have e5: "(q + M *v (a - x)) \<bullet> (b - a) = q \<bullet> d + u \<bullet> (M *v d)"
-  proof -
-    have "(q + M *v (a - x)) \<bullet> (b - a) = (q + M *v u) \<bullet> d"
-      unfolding u_def d_def by (rule refl)
-    also have "\<dots> = q \<bullet> d + (M *v u) \<bullet> d" by (simp add: inner_add_left)
-    also have "(M *v u) \<bullet> d = d \<bullet> (M *v u)" by (rule inner_commute)
-    also have "d \<bullet> (M *v u) = u \<bullet> (M *v d)" by (rule swap)
-    finally show ?thesis .
-  qed
-  have e6: "(b - a) \<bullet> (M *v (b - a)) = d \<bullet> (M *v d)"
-    unfolding d_def by (rule refl)
-  show ?thesis using e0 e12 e3 e4 e5 e6 by linarith
-qed
+text \<open>\<open>quad_taylor_step\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 theorem eulerp_quad_lower:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -3355,93 +3192,8 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The quadratic is Lipschitz on the ball, with explicit constant
-  \<open>norm q + 2 C\<^sub>M rb\<close>, via the one-step Taylor identity
-  @{thm [source] quad_taylor_step}.\<close>
+text \<open>\<open>quad_diff_bound\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma quad_diff_bound:
-  fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and rb :: real
-  assumes sym: "transpose M = M"
-    and a: "a \<in> cball x rb" and b: "b \<in> cball x rb"
-  shows "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-       - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
-      \<le> (norm q + 2 * (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * rb)
-          * norm (b - a)"
-proof -
-  let ?CM = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
-  have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
-  have ax: "norm (a - x) \<le> rb"
-    using a by (simp add: dist_norm norm_minus_commute)
-  have bx: "norm (b - x) \<le> rb"
-    using b by (simp add: dist_norm norm_minus_commute)
-  have dble: "norm (b - a) \<le> 2 * rb"
-  proof -
-    have deq: "b - a = (b - x) + (x - a)" by simp
-    have "norm (b - a) \<le> norm (b - x) + norm (x - a)"
-      by (subst deq) (rule norm_triangle_ineq)
-    moreover have "norm (x - a) \<le> rb"
-      using ax by (simp add: norm_minus_commute)
-    ultimately show ?thesis using bx by linarith
-  qed
-  have step: "q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))
-      = (q + M *v (a - x)) \<bullet> (b - a)
-        + (1/2) * ((b - a) \<bullet> (M *v (b - a)))"
-    by (rule quad_taylor_step[OF sym])
-  have t1: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-      \<le> (norm q + ?CM * rb) * norm (b - a)"
-  proof -
-    have cs: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-        \<le> norm (q + M *v (a - x)) * norm (b - a)"
-      by (rule Cauchy_Schwarz_ineq2)
-    have "norm (q + M *v (a - x)) \<le> norm q + ?CM * rb"
-    proof -
-      have "norm (q + M *v (a - x)) \<le> norm q + norm (M *v (a - x))"
-        by (rule norm_triangle_ineq)
-      moreover have "norm (M *v (a - x)) \<le> ?CM * norm (a - x)"
-        by (rule matvec_norm_le)
-      moreover have "?CM * norm (a - x) \<le> ?CM * rb"
-        by (rule mult_left_mono[OF ax CM0])
-      ultimately show ?thesis by linarith
-    qed
-    then have "norm (q + M *v (a - x)) * norm (b - a)
-        \<le> (norm q + ?CM * rb) * norm (b - a)"
-      by (rule mult_right_mono) simp
-    then show ?thesis using cs by linarith
-  qed
-  have t2: "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
-      \<le> ?CM * rb * norm (b - a)"
-  proof -
-    have "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
-        \<le> norm (b - a) * norm (M *v (b - a))"
-      by (rule Cauchy_Schwarz_ineq2)
-    also have "\<dots> \<le> norm (b - a) * (?CM * norm (b - a))"
-      by (rule mult_left_mono[OF matvec_norm_le norm_ge_zero])
-    finally have h: "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
-        \<le> ?CM * norm (b - a) * norm (b - a)"
-      by (simp add: mult_ac)
-    have h2: "?CM * norm (b - a) * norm (b - a)
-        \<le> ?CM * (2 * rb) * norm (b - a)"
-      by (rule mult_right_mono[OF mult_left_mono[OF dble CM0] norm_ge_zero])
-    have "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
-        = (1/2) * \<bar>(b - a) \<bullet> (M *v (b - a))\<bar>"
-      by (simp add: abs_mult)
-    also have "\<dots> \<le> (1/2) * (?CM * (2 * rb) * norm (b - a))"
-      using h h2 by linarith
-    also have "\<dots> = ?CM * rb * norm (b - a)" by simp
-    finally show ?thesis .
-  qed
-  have tri: "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
-      \<le> \<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-        + \<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>"
-    unfolding step by (rule abs_triangle_ineq)
-  have fin: "(norm q + ?CM * rb) * norm (b - a)
-      + ?CM * rb * norm (b - a)
-      = (norm q + 2 * ?CM * rb) * norm (b - a)"
-    by (simp add: algebra_simps)
-  show ?thesis using tri t1 t2 fin by linarith
-qed
 
 text \<open>The bad event is open: staying strictly inside the ball is
   @{thm [source] open_stay_inside} through the first projection, and the

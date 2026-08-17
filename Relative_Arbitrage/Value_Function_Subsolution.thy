@@ -4,6 +4,7 @@ section \<open>Clause (2): the subsolution half\<close>
 theory Value_Function_Subsolution
   imports Dynamic_Programming_Assembly Curvature_Operator Operator_Envelopes
     "Continuous_Time_Martingales.Quadratic_Variation"
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -149,69 +150,8 @@ lemma trace_mult_outerp:
   shows "trace (M ** outerp v) = v \<bullet> (M *v v)"
   by (simp add: outerp_eq_outer_prod mult_outer_prod inner_commute)
 
-lemma trace_mult_sum:
-  fixes M a :: "real^'n::finite^'n"
-  shows "trace (M ** a) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * a $ j $ i)"
-  by (simp add: trace_def matrix_matrix_mult_def)
+text \<open>\<open>trace_mult_sum\<close>, \<open>bounded_linear_trace_mult_left\<close>, \<open>bounded_linear_trace_mult_right\<close>, \<open>bounded_linear_quadform\<close>, \<open>trace_mult_diff\<close>, \<open>trace_mult_scaleR\<close>, \<open>bounded_linear_transpose\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma bounded_linear_trace_mult_left:
-  fixes M :: "real^'n::finite^'n"
-  shows "bounded_linear (\<lambda>a :: real^'n^'n. trace (M ** a))"
-  unfolding linear_conv_bounded_linear[symmetric]
-proof (rule linearI)
-  fix a b :: "real^'n^'n"
-  show "trace (M ** (a + b)) = trace (M ** a) + trace (M ** b)"
-    by (simp add: trace_mult_sum sum.distrib algebra_simps)
-next
-  fix r :: real and a :: "real^'n^'n"
-  show "trace (M ** (r *\<^sub>R a)) = r *\<^sub>R trace (M ** a)"
-    by (simp add: trace_mult_sum sum_distrib_left algebra_simps)
-qed
-
-lemma bounded_linear_trace_mult_right:
-  fixes P :: "real^'n::finite^'n"
-  shows "bounded_linear (\<lambda>a :: real^'n^'n. trace (a ** P))"
-  unfolding linear_conv_bounded_linear[symmetric]
-proof (rule linearI)
-  fix a b :: "real^'n^'n"
-  show "trace ((a + b) ** P) = trace (a ** P) + trace (b ** P)"
-    by (simp add: trace_mult_sum sum.distrib algebra_simps)
-next
-  fix r :: real and a :: "real^'n^'n"
-  show "trace ((r *\<^sub>R a) ** P) = r *\<^sub>R trace (a ** P)"
-    by (simp add: trace_mult_sum sum_distrib_left algebra_simps)
-qed
-
-lemma bounded_linear_quadform:
-  fixes z :: "real^'n::finite"
-  shows "bounded_linear (\<lambda>a :: real^'n^'n. z \<bullet> (a *v z))"
-  unfolding linear_conv_bounded_linear[symmetric]
-proof (rule linearI)
-  fix a b :: "real^'n^'n"
-  show "z \<bullet> ((a + b) *v z) = z \<bullet> (a *v z) + z \<bullet> (b *v z)"
-    by (simp add: matrix_vector_mult_def inner_vec_def sum.distrib
-        algebra_simps)
-next
-  fix r :: real and a :: "real^'n^'n"
-  show "z \<bullet> ((r *\<^sub>R a) *v z) = r *\<^sub>R (z \<bullet> (a *v z))"
-    by (simp add: matrix_vector_mult_def inner_vec_def sum_distrib_left
-        algebra_simps)
-qed
-
-lemma trace_mult_diff:
-  fixes M A B :: "real^'n::finite^'n"
-  shows "trace (M ** (A - B)) = trace (M ** A) - trace (M ** B)"
-  by (simp add: trace_mult_sum sum_subtractf right_diff_distrib)
-
-lemma trace_mult_scaleR:
-  fixes M A :: "real^'n::finite^'n"
-  shows "trace (M ** (r *\<^sub>R A)) = r * trace (M ** A)"
-  by (simp add: trace_mult_sum sum_distrib_left algebra_simps)
-
-lemma bounded_linear_transpose:
-  "bounded_linear (transpose :: real^'n::finite^'n \<Rightarrow> real^'n^'n)"
-  unfolding linear_conv_bounded_linear[symmetric]
-  by (intro linearI) (simp_all add: transpose_def vec_eq_iff)
 
 subsection \<open>The averaged covariation stays in the constraint set\<close>
 
@@ -1030,122 +970,8 @@ text \<open>So @{thm [source] exit_val_dpp_sup_ge_time} applies at the exit time
 
 section \<open>Scalar multiples through the Bochner integral\<close>
 
-text \<open>Two tiny facts used throughout the localisation: multiplying by a real
-  constant passes through integrability and the integral.\<close>
+text \<open>\<open>integrable_cmult\<close>, \<open>integral_cmult\<close>, \<open>integral_pos_of_AE_pos\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma integrable_cmult:
-  fixes g :: "'a \<Rightarrow> real"
-  assumes g: "integrable N g"
-  shows "integrable N (\<lambda>\<omega>. c * g \<omega>)"
-proof -
-  have bl: "bounded_linear (\<lambda>r :: real. c * r)"
-    unfolding linear_conv_bounded_linear[symmetric]
-    by (intro linearI) (auto simp: algebra_simps)
-  show ?thesis by (rule integrable_bounded_linear[OF bl g])
-qed
-
-lemma integral_cmult:
-  fixes g :: "'a \<Rightarrow> real"
-  assumes g: "integrable N g"
-  shows "(\<integral>\<omega>. c * g \<omega> \<partial>N) = c * (\<integral>\<omega>. g \<omega> \<partial>N)"
-proof -
-  have bl: "bounded_linear (\<lambda>r :: real. c * r)"
-    unfolding linear_conv_bounded_linear[symmetric]
-    by (intro linearI) (auto simp: algebra_simps)
-  show ?thesis by (rule integral_of_bounded_linear[OF bl g])
-qed
-
-lemma integral_pos_of_AE_pos:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes PP: "prob_space N" and im: "integrable N f"
-    and pos: "AE \<omega> in N. 0 < f \<omega>"
-  shows "0 < (\<integral>\<omega>. f \<omega> \<partial>N)"
-proof -
-  interpret prob_space N by (rule PP)
-  have fm: "f \<in> borel_measurable N" by (rule borel_measurable_integrable[OF im])
-  define A where "A n = {\<omega> \<in> space N. 1 / real (Suc n) < f \<omega>}" for n
-  have Am: "A n \<in> sets N" for n
-    unfolding A_def using fm by measurable
-  have un: "(\<Union>n. A n) = {\<omega> \<in> space N. 0 < f \<omega>}"
-  proof (rule set_eqI)
-    fix \<omega>
-    show "\<omega> \<in> (\<Union>n. A n) \<longleftrightarrow> \<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}"
-    proof
-      assume "\<omega> \<in> (\<Union>n. A n)"
-      then obtain n where an: "\<omega> \<in> A n" by blast
-      have h1: "\<omega> \<in> space N" and h2: "1 / real (Suc n) < f \<omega>"
-        using an unfolding A_def by auto
-      have p0: "0 < 1 / real (Suc n)" by simp
-      have "0 < f \<omega>" by (rule less_trans[OF p0 h2])
-      with h1 show "\<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}" by simp
-    next
-      assume "\<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}"
-      then obtain n where "inverse (real (Suc n)) < f \<omega>"
-        using reals_Archimedean[of "f \<omega>"] by auto
-      then show "\<omega> \<in> (\<Union>n. A n)"
-        using \<open>\<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}\<close>
-        unfolding A_def by (auto simp: inverse_eq_divide)
-    qed
-  qed
-  have Um: "{\<omega> \<in> space N. 0 < f \<omega>} \<in> sets N" using fm by measurable
-  have inA: "AE \<omega> in N. \<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}"
-    using pos AE_space by eventually_elim simp
-  have p1: "prob {\<omega> \<in> space N. 0 < f \<omega>} = 1"
-    using AE_in_set_eq_1[OF Um] inA by simp
-  have ex: "\<exists>n. 0 < prob (A n)"
-  proof (rule ccontr)
-    assume "\<not> (\<exists>n. 0 < prob (A n))"
-    then have z: "\<And>n. prob (A n) = 0"
-      using measure_nonneg[of N] by (metis order.antisym not_le)
-    have null: "A n \<in> null_sets N" for n
-      using z Am by (intro null_setsI) (simp add: emeasure_eq_measure)
-    have "(\<Union>n. A n) \<in> null_sets N" by (rule null_sets_UN) (rule null)
-    then have "prob (\<Union>n. A n) = 0"
-      by (simp add: measure_eq_0_null_sets)
-    with p1 un show False by simp
-  qed
-  then obtain n where pn: "0 < prob (A n)" by blast
-  have iind: "integrable N (\<lambda>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)))"
-  proof -
-    have "integrable N (indicat_real (A n))"
-      by (rule integrable_real_indicator[OF Am]) (simp add: emeasure_eq_measure)
-    then have "integrable N (\<lambda>\<omega>. (1 / real (Suc n)) * indicat_real (A n) \<omega>)"
-      by (rule integrable_cmult)
-    then show ?thesis by (simp add: ac_simps)
-  qed
-  have lb: "(\<integral>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<partial>N)
-      \<le> (\<integral>\<omega>. f \<omega> \<partial>N)"
-  proof (rule integral_mono_AE[OF iind im])
-    show "AE \<omega> in N. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<le> f \<omega>"
-      using pos
-    proof (rule eventually_mono)
-      fix \<omega> assume f0: "0 < f \<omega>"
-      show "indicat_real (A n) \<omega> * (1 / real (Suc n)) \<le> f \<omega>"
-      proof (cases "\<omega> \<in> A n")
-        case True
-        then have "1 / real (Suc n) < f \<omega>" unfolding A_def by simp
-        with True show ?thesis by (simp add: indicator_def)
-      next
-        case False
-        then show ?thesis using f0 by (simp add: indicator_def)
-      qed
-    qed
-  qed
-  have ind_int: "(\<integral>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<partial>N)
-      = prob (A n) * (1 / real (Suc n))"
-  proof -
-    have "(\<integral>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<partial>N)
-        = (1 / real (Suc n)) * (\<integral>\<omega>. indicat_real (A n) \<omega> \<partial>N)"
-      using integral_cmult[of N "indicat_real (A n)" "1 / real (Suc n)"]
-        integrable_real_indicator[OF Am]
-      by (simp add: ac_simps emeasure_eq_measure)
-    also have "(\<integral>\<omega>. indicat_real (A n) \<omega> \<partial>N) = prob (A n)"
-      using Am by simp
-    finally show ?thesis by (simp add: ac_simps)
-  qed
-  have "0 < prob (A n) * (1 / real (Suc n))" using pn by simp
-  with lb ind_int show ?thesis by simp
-qed
 
 section \<open>Measurability of the ball exit time\<close>
 
@@ -2388,10 +2214,8 @@ proof -
   finally show ?thesis .
 qed
 
-lemma trace_mult_add:
-  fixes M A B :: "real^'n::finite^'n"
-  shows "trace (M ** (A + B)) = trace (M ** A) + trace (M ** B)"
-  by (simp add: trace_mult_sum sum.distrib algebra_simps)
+text \<open>\<open>trace_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 lemma onormal_parseval:
   fixes B :: "(real^'n::finite) set"
@@ -2915,65 +2739,8 @@ qed
 
 section \<open>Small pointwise bounds\<close>
 
-lemma quadform_abs_le:
-  fixes M :: "real^'n::finite^'n" and v :: "real^'n"
-  shows "\<bar>v \<bullet> (M *v v)\<bar> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (norm v)\<^sup>2"
-proof -
-  have e: "v \<bullet> (M *v v) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. v $ i * (M $ i $ j * v $ j))"
-    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
-  have "\<bar>v \<bullet> (M *v v)\<bar> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>v $ i * (M $ i $ j * v $ j)\<bar>)"
-    unfolding e by (intro order_trans[OF sum_abs] sum_mono sum_abs)
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * (norm v)\<^sup>2)"
-  proof (intro sum_mono)
-    fix i j :: 'n
-    have vi: "\<bar>v $ i\<bar> \<le> norm v" by (rule component_le_norm_cart)
-    have vj: "\<bar>v $ j\<bar> \<le> norm v" by (rule component_le_norm_cart)
-    have "\<bar>v $ i * (M $ i $ j * v $ j)\<bar> = \<bar>M $ i $ j\<bar> * (\<bar>v $ i\<bar> * \<bar>v $ j\<bar>)"
-      by (simp add: abs_mult algebra_simps)
-    also have "\<dots> \<le> \<bar>M $ i $ j\<bar> * (norm v * norm v)"
-      by (intro mult_left_mono mult_mono vi vj) auto
-    finally show "\<bar>v $ i * (M $ i $ j * v $ j)\<bar>
-        \<le> \<bar>M $ i $ j\<bar> * (norm v)\<^sup>2"
-      by (simp add: power2_eq_square)
-  qed
-  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (norm v)\<^sup>2"
-    by (simp add: sum_distrib_right)
-  finally show ?thesis .
-qed
+text \<open>\<open>quadform_abs_le\<close>, \<open>axis1_inner\<close>, \<open>axis1_self\<close>, \<open>matvec_axis1\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma axis1_inner:
-  fixes w :: "real^'n::finite"
-  shows "axis i 1 \<bullet> w = w $ i"
-proof -
-  have "axis i 1 \<bullet> w = (\<Sum>l\<in>UNIV. axis i 1 $ l * w $ l)"
-    by (simp add: inner_vec_def)
-  also have "\<dots> = (\<Sum>l\<in>UNIV. if l = i then w $ l else 0)"
-    by (rule sum.cong[OF refl]) (simp add: axis_def)
-  also have "\<dots> = w $ i" by simp
-  finally show ?thesis .
-qed
-
-lemma axis1_self:
-  fixes i :: "'n::finite"
-  shows "axis i 1 \<bullet> (axis i 1 :: real^'n) = (1::real)"
-proof -
-  have "axis i 1 \<bullet> (axis i 1 :: real^'n) = axis i 1 $ i"
-    by (rule axis1_inner)
-  also have "\<dots> = 1" by (simp add: axis_def)
-  finally show ?thesis .
-qed
-
-lemma matvec_axis1:
-  fixes a :: "real^'n::finite^'n"
-  shows "(a *v axis i 1) $ l = a $ l $ i"
-proof -
-  have "(a *v axis i 1) $ l = (\<Sum>j\<in>UNIV. a $ l $ j * axis i 1 $ j)"
-    by (simp add: matrix_vector_mult_def)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
-    by (rule sum.cong[OF refl]) (simp add: axis_def)
-  also have "\<dots> = a $ l $ i" by simp
-  finally show ?thesis .
-qed
 
 section \<open>Moments at a stopping time, assembled\<close>
 

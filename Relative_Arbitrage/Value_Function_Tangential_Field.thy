@@ -17,47 +17,14 @@ subsection \<open>Small matrix, trace and inner-product facts\<close>
 
 text \<open>\<open>matvec_add_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>matvec_scaleR_right\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
+text \<open>\<open>matvec_sum_right\<close>, \<open>transpose_matrix_diff\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matvec_sum_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (\<Sum>i\<in>S. v i) = (\<Sum>i\<in>S. A *v v i)"
-proof (cases "finite S")
-  case True
-  then show ?thesis
-    by (induct S rule: finite_induct)
-      (simp_all add: matvec_add_right)
-next
-  case False
-  then show ?thesis by simp
-qed
-
-text \<open>\<open>trace_sum_matrix\<close> is \<open>trace_matrix_sum\<close> from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-lemma transpose_matrix_diff:
-  fixes A B :: "real^'n::finite^'n"
-  shows "transpose (A - B) = transpose A - transpose B"
-  by (simp add: transpose_def vec_eq_iff)
 
 text \<open>\<open>trace_matrix_diff\<close> is \<open>trace_diff_matrix\<close> from
   @{theory Relative_Arbitrage.Operator_Formula}.\<close>
 
-text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
-  from @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}.\<close>
+text \<open>\<open>unit_normalize\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma unit_normalize:
-  fixes v :: "real^'n::finite"
-  assumes v0: "v \<noteq> 0"
-  shows "(v /\<^sub>R norm v) \<bullet> (v /\<^sub>R norm v) = 1"
-proof -
-  have n0: "norm v \<noteq> 0" using v0 by simp
-  have e1: "(v /\<^sub>R norm v) \<bullet> (v /\<^sub>R norm v) = (v \<bullet> v) / (norm v * norm v)"
-    by (simp add: divide_inverse mult_ac)
-  have e2: "v \<bullet> v = norm v * norm v"
-    by (simp add: dot_square_norm power2_eq_square)
-  show ?thesis unfolding e1 e2 using n0 by simp
-qed
 
 subsection \<open>The projector onto an orthonormal family\<close>
 
@@ -135,54 +102,8 @@ proof -
   then show ?thesis using x by blast
 qed
 
-lemma orthonormal_inj:
-  fixes b :: "nat \<Rightarrow> real^'n::finite"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-  shows "inj_on b {..<m}"
-proof (rule inj_onI)
-  fix i j assume i: "i \<in> {..<m}" and j: "j \<in> {..<m}" and eq: "b i = b j"
-  have im: "i < m" and jm: "j < m" using i j by auto
-  show "i = j"
-  proof (rule ccontr)
-    assume ne: "i \<noteq> j"
-    have "b i \<bullet> b j = 0" using orth[OF im jm] ne by simp
-    moreover have "b i \<bullet> b j = b i \<bullet> b i" using eq by simp
-    moreover have "b i \<bullet> b i = 1" using orth[OF im im] by simp
-    ultimately show False by simp
-  qed
-qed
+text \<open>\<open>orthonormal_inj\<close>, \<open>orthonormal_dim_span\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma orthonormal_dim_span:
-  fixes b :: "nat \<Rightarrow> real^'n::finite"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-  shows "dim (span (b ` {..<m})) = m"
-proof (rule dim_unique[where B = "b ` {..<m}"])
-  show "b ` {..<m} \<subseteq> span (b ` {..<m})" by (rule span_superset)
-  show "span (b ` {..<m}) \<subseteq> span (b ` {..<m})" by (rule subset_refl)
-next
-  show "independent (b ` {..<m})"
-  proof (rule pairwise_orthogonal_independent)
-    show "pairwise orthogonal (b ` {..<m})"
-    proof (rule pairwiseI)
-      fix u v assume "u \<in> b ` {..<m}" and "v \<in> b ` {..<m}" and uv: "u \<noteq> v"
-      then obtain i j where i: "i < m" and j: "j < m"
-        and ui: "u = b i" and vj: "v = b j" by auto
-      have "i \<noteq> j" using uv ui vj by blast
-      then show "orthogonal u v"
-        unfolding orthogonal_def ui vj using orth[OF i j] by simp
-    qed
-    show "(0 :: real^'n) \<notin> b ` {..<m}"
-    proof (rule notI)
-      assume "(0 :: real^'n) \<in> b ` {..<m}"
-      then obtain i where i: "i < m" and z: "b i = 0" by auto
-      have "b i \<bullet> b i = 1" using orth[OF i i] by simp
-      then show False unfolding z by simp
-    qed
-  qed
-next
-  show "card (b ` {..<m}) = m"
-    using card_image[OF orthonormal_inj[OF orth]] by simp
-qed
 
 subsection \<open>The subspace-tangential field\<close>
 
@@ -273,32 +194,8 @@ proof -
   show ?thesis unfolding uvecV_def mx using n0 by simp
 qed
 
-text \<open>The kill condition, and it needs no confinement to the subspace: for any
-  \<open>z\<close> with \<open>P *v z \<noteq> 0\<close>, \<open>(P *v z) \<bullet> z = \<bar>P *v z\<bar>\<^sup>2\<close> because \<open>P\<close> is a symmetric
-  idempotent, so the clamped direction already sees the whole radial part.\<close>
+text \<open>\<open>proj_inner_self\<close>, \<open>proj_inner_self'\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma proj_inner_self:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
-  shows "(P *v z) \<bullet> z = (P *v z) \<bullet> (P *v z)"
-proof -
-  have "(P *v z) \<bullet> (P *v z) = (transpose P *v (P *v z)) \<bullet> z"
-    by (rule inner_transpose_matrix)
-  also have "transpose P *v (P *v z) = P *v (P *v z)" unfolding Psym by (rule refl)
-  also have "P *v (P *v z) = P *v z"
-    using Pidem by (metis matrix_vector_mul_assoc)
-  finally show ?thesis by (rule sym)
-qed
-
-lemma proj_inner_self':
-  fixes P :: "real^'n::finite^'n" and y :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
-  shows "y \<bullet> (P *v y) = (P *v y) \<bullet> (P *v y)"
-proof -
-  have "(P *v y) \<bullet> y = (P *v y) \<bullet> (P *v y)"
-    by (rule proj_inner_self[OF Psym Pidem])
-  then show ?thesis by (simp add: inner_commute)
-qed
 
 lemma tanpU_kill:
   fixes P :: "real^'n::finite^'n" and z :: "real^'n"
@@ -497,36 +394,8 @@ proof -
     by (intro continuous_on_vec_lambda continuous_intros ci)
 qed
 
-text \<open>The square of the field is again a field of the same shape with the
-  direction rescaled, and the rescaled direction still has norm \<open>\<le> 1\<close> because
-  \<open>(2 - a) * a = 1 - (a-1)\<^sup>2 \<le> 1\<close>.  That is what makes the clamped field
-  feasible everywhere, which \<open>eulerp_limit_good2_region\<close> demands.\<close>
+text \<open>\<open>tanpU_sq_norm_le\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma tanpU_sq_norm_le:
-  fixes u :: "real^'n::finite"
-  assumes u1: "norm u \<le> 1"
-  shows "norm (sqrt (2 - u \<bullet> u) *\<^sub>R u) \<le> 1"
-proof -
-  define a where "a = u \<bullet> u"
-  have a0: "0 \<le> a" unfolding a_def by simp
-  have anorm: "a = (norm u)\<^sup>2" unfolding a_def by (simp add: dot_square_norm)
-  have a1: "a \<le> 1" unfolding anorm using u1 by (simp add: power_le_one)
-  have a2: "0 \<le> 2 - a" using a1 by linarith
-  have e1: "norm (sqrt (2 - a) *\<^sub>R u) = sqrt (2 - a) * norm u"
-    using a2 by simp
-  have e2: "(sqrt (2 - a) * norm u)\<^sup>2 = (2 - a) * a"
-    using a2 anorm by (simp add: power_mult_distrib)
-  have le1: "(2 - a) * a \<le> 1"
-  proof -
-    have "0 \<le> (a - 1)\<^sup>2" by simp
-    then show ?thesis by (simp add: power2_eq_square algebra_simps)
-  qed
-  have nn: "0 \<le> sqrt (2 - a) * norm u" using a2 by simp
-  have "(sqrt (2 - a) * norm u)\<^sup>2 \<le> 1\<^sup>2" using e2 le1 by simp
-  then have "sqrt (2 - a) * norm u \<le> 1"
-    by (rule power2_le_imp_le) simp
-  then show ?thesis unfolding a_def[symmetric] e1 .
-qed
 
 lemma tanpU_sq:
   fixes P :: "real^'n::finite^'n" and u :: "real^'n"
@@ -620,28 +489,8 @@ proof -
   then show ?thesis unfolding sq using feasible_subset_sconstraint by blast
 qed
 
-lemma proj_norm_le:
-  fixes P :: "real^'n::finite^'n" and w :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
-  shows "norm (P *v w) \<le> norm w"
-proof -
-  have "(norm (P *v w))\<^sup>2 = (P *v w) \<bullet> (P *v w)" by (simp add: dot_square_norm)
-  also have "\<dots> = (P *v w) \<bullet> w"
-    by (rule proj_inner_self[OF Psym Pidem, symmetric])
-  also have "\<dots> \<le> norm (P *v w) * norm w" by (rule norm_cauchy_schwarz)
-  finally have key: "(norm (P *v w))\<^sup>2 \<le> norm (P *v w) * norm w" .
-  show ?thesis
-  proof (cases "norm (P *v w) = 0")
-    case True
-    then show ?thesis by simp
-  next
-    case False
-    then have pos: "0 < norm (P *v w)" using norm_ge_zero[of "P *v w"] by linarith
-    have "norm (P *v w) * norm (P *v w) \<le> norm (P *v w) * norm w"
-      using key by (simp add: power2_eq_square)
-    then show ?thesis using pos by simp
-  qed
-qed
+text \<open>\<open>proj_norm_le\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 lemma tanpU_absorb:
   fixes P :: "real^'n::finite^'n" and u :: "real^'n"
@@ -1007,77 +856,8 @@ text \<open>The trace of the field is exactly the growth rate \<open>n - k\<clos
 
 subsection \<open>An orthonormal family through a prescribed unit vector\<close>
 
-lemma orthonormal_family_containing:
-  fixes x0 :: "real^'n::finite"
-  assumes u: "x0 \<bullet> x0 = 1" and m: "m \<le> CARD('n)" and m0: "0 < m"
-  shows "\<exists>b :: nat \<Rightarrow> real^'n. b 0 = x0
-      \<and> (\<forall>i < m. \<forall>j < m. b i \<bullet> b j = (if i = j then 1 else 0))"
-  using m m0
-proof (induct m)
-  case 0
-  then show ?case by simp
-next
-  case (Suc m)
-  show ?case
-  proof (cases "m = 0")
-    case True
-    show ?thesis
-      by (rule exI[of _ "\<lambda>_. x0"]) (use True u in auto)
-  next
-    case False
-    then have m0': "0 < m" by simp
-    have mle: "m \<le> CARD('n)" using Suc.prems by simp
-    obtain b :: "nat \<Rightarrow> real^'n" where b0: "b 0 = x0"
-      and bo: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-      using Suc.hyps[OF mle m0'] by blast
-    have dimlt: "dim (b ` {..<m}) < DIM(real^'n)"
-    proof -
-      have "dim (b ` {..<m}) = dim (span (b ` {..<m}))" by simp
-      also have "\<dots> = m" by (rule orthonormal_dim_span[OF bo])
-      also have "\<dots> < CARD('n)" using Suc.prems by simp
-      finally show ?thesis by simp
-    qed
-    have ex: "\<exists>v :: real^'n. v \<noteq> 0
-        \<and> (\<forall>y \<in> span (b ` {..<m}). orthogonal v y)"
-    proof (rule orthogonal_to_subspace_exists[OF dimlt])
-      fix v :: "real^'n"
-      assume v0: "v \<noteq> 0"
-        and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y"
-      show ?thesis using v0 vo by blast
-    qed
-    obtain v :: "real^'n" where v0: "v \<noteq> 0"
-      and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y" using ex by blast
-    define w :: "real^'n" where "w = v /\<^sub>R norm v"
-    have ww: "w \<bullet> w = 1" unfolding w_def by (rule unit_normalize[OF v0])
-    have wo: "w \<bullet> b i = 0" if i: "i < m" for i
-    proof -
-      have "b i \<in> span (b ` {..<m})" using i by (intro span_base) auto
-      then have "orthogonal v (b i)" by (rule vo)
-      then show ?thesis unfolding w_def orthogonal_def by simp
-    qed
-    define b' :: "nat \<Rightarrow> real^'n" where "b' = (\<lambda>i. if i = m then w else b i)"
-    have b'0: "b' 0 = x0" unfolding b'_def using False b0 by simp
-    have b'o: "b' i \<bullet> b' j = (if i = j then 1 else 0)"
-      if i: "i < Suc m" and j: "j < Suc m" for i j
-    proof -
-      consider (both) "i = m" "j = m" | (im) "i = m" "j < m"
-        | (jm) "i < m" "j = m" | (nn) "i < m" "j < m"
-        using i j by fastforce
-      then show ?thesis
-      proof cases
-        case both then show ?thesis unfolding b'_def using ww by simp
-      next
-        case im then show ?thesis unfolding b'_def using wo[of j] by simp
-      next
-        case jm then show ?thesis
-          unfolding b'_def using wo[of i] by (simp add: inner_commute)
-      next
-        case nn then show ?thesis unfolding b'_def using bo by simp
-      qed
-    qed
-    show ?thesis by (rule exI[of _ b']) (use b'0 b'o in blast)
-  qed
-qed
+text \<open>\<open>orthonormal_family_containing\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 
 (*<*)

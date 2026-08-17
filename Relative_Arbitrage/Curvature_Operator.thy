@@ -155,27 +155,8 @@ qed
 
 subsection \<open>Main theorem: verification of Example 3.1 (Eq. 3.9)\<close>
 
-text \<open>
-  For the ball \<open>K = cball 0 r\<close> the candidate value function is
-  \<open>v x = max (r\<^sup>2 - \<bar>x\<bar>\<^sup>2) 0 / (n - k)\<close>, whose gradient at \<open>x\<close> is
-  \<open>- (2/(n-k)) *\<^sub>R x\<close> and whose Hessian is the constant matrix
-  \<open>- (2/(n-k)) *\<^sub>R mat 1\<close>.  Then \<open>F(\<nabla>v x, \<nabla>\<^sup>2 v x) = 1\<close> for all
-  interior points \<open>x \<noteq> 0\<close>.
-\<close>
+text \<open>\<open>neg_half_trace_ball_op\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma neg_half_trace_ball_op:
-  fixes a :: "real^'n^'n"
-  assumes c_pos: "0 < c"
-  shows "- trace ((- (2 / c) *\<^sub>R mat 1) ** a) / 2 = trace a / c"
-proof -
-  have "((- (2 / c) *\<^sub>R mat 1) ** a) $ i $ i = - (2 / c) * a $ i $ i" for i
-    by (simp add: matrix_matrix_mult_def mat_def if_distrib if_distribR
-        cong: if_cong)
-  then have "trace ((- (2 / c) *\<^sub>R mat 1) ** a) = - ((2 / c) * trace a)"
-    by (simp add: trace_def sum_distrib_left sum_negf)
-  then show ?thesis
-    using c_pos by (simp add: field_simps)
-qed
 
 lemma feasible_trace_lb:
   fixes a :: "real^'n^'n"
@@ -466,196 +447,8 @@ text \<open>\<open>test_fun_at\<close>, \<open>visc_subsol\<close>, \<open>visc_
 
 subsection \<open>First- and second-order conditions at interior minima\<close>
 
-lemma local_min_gradient_zero:
-  fixes \<psi> :: "real^'n \<Rightarrow> real"
-  assumes deriv: "(\<psi> has_derivative (\<lambda>h. g \<bullet> h)) (at x)"
-    and min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
-  shows "g = 0"
-proof -
-  have "(\<lambda>h. g \<bullet> h) = (\<lambda>h. 0)"
-    by (rule has_derivative_local_min[OF deriv min])
-  then have "g \<bullet> g = 0"
-    using fun_cong[of "(\<lambda>h. g \<bullet> h)" "(\<lambda>h. 0)" g] by simp
-  then show ?thesis
-    by simp
-qed
+text \<open>\<open>local_min_gradient_zero\<close>, \<open>local_min_hessian_psd\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma local_min_hessian_psd:
-  fixes \<psi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
-    and H :: "real^'n^'n"
-  assumes e_pos: "0 < e"
-    and deriv: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<psi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    and hess: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
-    and min: "\<And>y. y \<in> ball x e \<Longrightarrow> \<psi> x \<le> \<psi> y"
-  shows "0 \<le> h \<bullet> (H *v h)"
-proof (cases "h = 0")
-  case True
-  then show ?thesis
-    by simp
-next
-  case False
-  have x_mem: "x \<in> ball x e"
-    using e_pos by simp
-  have ev_min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
-    using min e_pos
-    by (auto simp: eventually_at dist_commute intro!: exI[of _ e])
-  have gx0: "g x = 0"
-    by (rule local_min_gradient_zero[OF deriv[OF x_mem] ev_min])
-  define A where "A = h \<bullet> (H *v h)"
-  define nh where "nh = norm h"
-  have nh_pos: "0 < nh"
-    using False by (simp add: nh_def)
-  define d where "d = e / nh"
-  have d_pos: "0 < d"
-    using e_pos nh_pos by (simp add: d_def)
-  have mem: "x + t *\<^sub>R h \<in> ball x e" if "\<bar>t\<bar> < d" for t
-  proof -
-    have "dist x (x + t *\<^sub>R h) = \<bar>t\<bar> * nh"
-      by (simp add: dist_norm nh_def)
-    also have "\<dots> < d * nh"
-      using that nh_pos by (simp add: mult_strict_right_mono)
-    also have "\<dots> = e"
-      using nh_pos by (simp add: d_def)
-    finally show ?thesis
-      by simp
-  qed
-  have f_deriv: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_real_derivative
-      (g (x + t *\<^sub>R h) \<bullet> h)) (at t)"
-    if t: "\<bar>t\<bar> < d" for t
-  proof -
-    have 1: "((\<lambda>s. x + s *\<^sub>R h) has_derivative (\<lambda>s. s *\<^sub>R h)) (at t)"
-      by (auto intro!: derivative_eq_intros)
-    have 2: "(\<psi> has_derivative (\<lambda>h'. g (x + t *\<^sub>R h) \<bullet> h')) (at (x + t *\<^sub>R h))"
-      by (rule deriv[OF mem[OF t]])
-    have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-        (\<lambda>s. g (x + t *\<^sub>R h) \<bullet> (s *\<^sub>R h))) (at t)"
-      using diff_chain_at[OF 1 2] by (simp add: o_def)
-    then have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-        (\<lambda>s. s * (g (x + t *\<^sub>R h) \<bullet> h))) (at t)"
-      by (simp add: mult_ac)
-    then show ?thesis
-      unfolding has_field_derivative_def
-      by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult_ac)
-  qed
-  show ?thesis
-  proof (rule ccontr)
-    assume "\<not> 0 \<le> h \<bullet> (H *v h)"
-    then have A_neg: "A < 0"
-      by (simp add: A_def)
-    have flim: "filterlim (\<lambda>t :: real. x + t *\<^sub>R h) (at x) (at 0)"
-    proof -
-      have "((\<lambda>t :: real. x + t *\<^sub>R h) \<longlongrightarrow> x) (at 0)"
-        by (auto intro!: tendsto_eq_intros)
-      moreover have "eventually (\<lambda>t :: real. x + t *\<^sub>R h \<noteq> x) (at 0)"
-        using False by (auto simp: eventually_at_filter)
-      ultimately show ?thesis
-        by (simp add: filterlim_at)
-    qed
-    have hd: "((\<lambda>y. (1 / norm (y - x)) *\<^sub>R (g y - (g x + H *v (y - x)))) \<longlongrightarrow> 0) (at x)"
-      using hess unfolding has_derivative_at2 by blast
-    have comp: "((\<lambda>t. (1 / norm ((x + t *\<^sub>R h) - x)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - (g x + H *v ((x + t *\<^sub>R h) - x)))) \<longlongrightarrow> 0) (at 0)"
-      by (rule filterlim_compose[OF hd flim])
-    then have comp2: "((\<lambda>t. (1 / (\<bar>t\<bar> * nh)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<longlongrightarrow> 0) (at 0)"
-      by (simp add: gx0 matrix_vector_mult_scaleR nh_def)
-    have inner_lim: "((\<lambda>t. ((1 / (\<bar>t\<bar> * nh)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<bullet> h) \<longlongrightarrow> 0) (at 0)"
-      using tendsto_inner[OF comp2 tendsto_const] by simp
-    define E where
-      "E = (\<lambda>t. ((1 / (\<bar>t\<bar> * nh)) *\<^sub>R (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<bullet> h)"
-    have E_lim: "(E \<longlongrightarrow> 0) (at 0)"
-      using inner_lim unfolding E_def .
-    have E_val: "g (x + t *\<^sub>R h) \<bullet> h = t * A + (\<bar>t\<bar> * nh) * E t"
-      if "t \<noteq> 0" for t
-    proof -
-      have nz: "\<bar>t\<bar> * nh \<noteq> 0"
-        using that nh_pos by simp
-      have "E t = (g (x + t *\<^sub>R h) \<bullet> h - t * A) / (\<bar>t\<bar> * nh)"
-        by (simp add: E_def A_def inner_diff_left inner_diff_right
-            inner_commute)
-      with nz show ?thesis
-        by (simp add: field_simps)
-    qed
-    define eps where "eps = - A / (2 * nh)"
-    have eps_pos: "0 < eps"
-      using A_neg nh_pos by (simp add: eps_def divide_neg_pos)
-    have "eventually (\<lambda>t. \<bar>E t\<bar> < eps) (at 0)"
-      using tendstoD[OF E_lim eps_pos] by (simp add: dist_real_def)
-    then obtain dd where dd_pos: "0 < dd"
-      and dd: "\<And>t. t \<noteq> 0 \<Longrightarrow> \<bar>t\<bar> < dd \<Longrightarrow> \<bar>E t\<bar> < eps"
-      by (auto simp: eventually_at dist_real_def)
-    define t0 where "t0 = min d dd / 2"
-    have t0_pos: "0 < t0"
-      using d_pos dd_pos by (simp add: t0_def)
-    have t0d: "t0 < d" and t0dd: "t0 < dd"
-      using d_pos dd_pos by (auto simp: t0_def)
-    have fneg: "g (x + s *\<^sub>R h) \<bullet> h < 0" if s: "0 < s" "s \<le> t0" for s
-    proof -
-      have s_ne: "s \<noteq> 0" and s_dd: "\<bar>s\<bar> < dd"
-        using s t0dd by auto
-      have Es: "\<bar>E s\<bar> < eps"
-        by (rule dd[OF s_ne s_dd])
-      have gsh: "g (x + s *\<^sub>R h) \<bullet> h = s * A + (s * nh) * E s"
-        using E_val[OF s_ne] s(1) by (simp add: abs_of_pos)
-      have snh_pos: "0 < s * nh"
-        using s(1) nh_pos by simp
-      have "(s * nh) * E s < (s * nh) * eps"
-        using Es snh_pos by (intro mult_strict_left_mono) auto
-      moreover have "(s * nh) * eps = s * (- A / 2)"
-        using nh_pos by (simp add: eps_def)
-      ultimately have "g (x + s *\<^sub>R h) \<bullet> h < s * A + s * (- A / 2)"
-        unfolding gsh by linarith
-      also have "\<dots> = s * (A / 2)"
-        by (simp add: algebra_simps)
-      also have "\<dots> < 0"
-        using s(1) A_neg by (intro mult_pos_neg) auto
-      finally show ?thesis .
-    qed
-    have cont: "continuous_on {0..t0} (\<lambda>s. \<psi> (x + s *\<^sub>R h))"
-    proof -
-      have "isCont (\<lambda>s. \<psi> (x + s *\<^sub>R h)) s" if "s \<in> {0..t0}" for s
-      proof -
-        have "\<bar>s\<bar> < d"
-          using that t0d by auto
-        from f_deriv[OF this] show ?thesis
-          by (rule DERIV_isCont)
-      qed
-      then show ?thesis
-        by (auto intro: continuous_at_imp_continuous_on)
-    qed
-    obtain \<xi> where xi: "0 < \<xi>" "\<xi> < t0"
-      and mvt_eq: "\<psi> (x + t0 *\<^sub>R h) - \<psi> (x + 0 *\<^sub>R h)
-        = (g (x + \<xi> *\<^sub>R h) \<bullet> h) * (t0 - 0)"
-    proof -
-      have derf: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-          (\<lambda>y. y * (g (x + s *\<^sub>R h) \<bullet> h))) (at s)"
-        if "0 < s" "s < t0" for s
-      proof -
-        have "\<bar>s\<bar> < d"
-          using that t0d by auto
-        from f_deriv[OF this, unfolded has_field_derivative_def]
-        show ?thesis
-          by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult_ac)
-      qed
-      from mvt[OF t0_pos cont derf] obtain \<xi>
-        where "0 < \<xi>" "\<xi> < t0"
-          "\<psi> (x + t0 *\<^sub>R h) - \<psi> (x + 0 *\<^sub>R h)
-            = (t0 - 0) * (g (x + \<xi> *\<^sub>R h) \<bullet> h)"
-        by blast
-      then show thesis
-        by (intro that[of \<xi>]) (auto simp: algebra_simps)
-    qed
-    have "\<psi> (x + 0 *\<^sub>R h) \<le> \<psi> (x + t0 *\<^sub>R h)"
-      using min[OF mem[of t0]] t0d t0_pos by simp
-    with mvt_eq have "0 \<le> (g (x + \<xi> *\<^sub>R h) \<bullet> h) * t0"
-      by simp
-    with t0_pos have "0 \<le> g (x + \<xi> *\<^sub>R h) \<bullet> h"
-      by (simp add: zero_le_mult_iff)
-    with fneg[of \<xi>] xi show False
-      by simp
-  qed
-qed
 
 subsection \<open>The explicit solution of Example 3.1 is a viscosity solution\<close>
 
@@ -674,13 +467,8 @@ proof -
     by (simp add: ball_v_def max_def)
 qed
 
-lemma quadratic_gradient:
-  fixes y :: "real^'n"
-  assumes c_pos: "0 < (c::real)"
-  shows "((\<lambda>y :: real^'n. (r\<^sup>2 - y \<bullet> y) / c) has_derivative
-      (\<lambda>h. (- (2 / c) *\<^sub>R y) \<bullet> h)) (at y)"
-  using c_pos
-  by (auto intro!: derivative_eq_intros simp: inner_commute divide_simps)
+text \<open>\<open>quadratic_gradient\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 text \<open>\<open>ball_v_viscosity_subsol\<close>, \<open>ball_v_viscosity_supersol\<close>, \<open>ball_v_solves_pde_viscosity\<close> live in \<open>Viscosity_Ball\<close>.\<close>
 

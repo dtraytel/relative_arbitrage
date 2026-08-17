@@ -3,6 +3,7 @@ section \<open>Shortening the horizon, concatenation, and Proposition 2.4\<close
 (*<*)
 theory Exit_Class_Pasting
   imports Exit_Class_Witness
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -635,16 +636,8 @@ next
     by (intro continuous_intros)
 qed
 
-lemma ennreal_min_eq: "ennreal (min a b) = min (ennreal a) (ennreal b)"
-proof (cases "a \<le> b")
-  case True
-  then have "ennreal a \<le> ennreal b" by (rule ennreal_leI)
-  with True show ?thesis by (simp add: min_def)
-next
-  case False
-  then have "ennreal b \<le> ennreal a" by (simp add: ennreal_leI)
-  with False show ?thesis by (simp add: min_def)
-qed
+text \<open>\<open>ennreal_min_eq\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+
 
 lemma pexit_pcut_ge:
   fixes K :: "(real^'n::finite) set" and \<omega> :: "'n pairpath"
@@ -2278,15 +2271,8 @@ proof -
   then show ?thesis by (simp add: norm_outer_prod)
 qed
 
-lemma bounded_linear_cross_pair:
-  fixes c :: "real^'n::finite"
-  shows "bounded_linear
-      (\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))"
-proof -
-  have "linear (\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))"
-    by (rule linearI) (auto simp: vec_eq_iff algebra_simps)
-  then show ?thesis by (simp add: linear_conv_bounded_linear)
-qed
+text \<open>\<open>bounded_linear_cross_pair\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 lemma pair_fst_borel:
   "(fst :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"

@@ -3,6 +3,7 @@ section \<open>Clause (iv) at a stopping time\<close>
 (*<*)
 theory Dynamic_Programming_Stopping_Clauses
   imports Dynamic_Programming_Optional_Sampling
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)

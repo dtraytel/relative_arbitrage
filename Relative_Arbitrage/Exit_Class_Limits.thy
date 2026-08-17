@@ -7,6 +7,7 @@ theory Exit_Class_Limits
     "Semicontinuous_Analysis.Semicontinuous_Selection"
     "Continuous_Time_Martingales.Semidirect_Kernels"
     "Continuous_Time_Martingales.Martingale_Transfer"
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -280,37 +281,8 @@ qed
 
 subsection \<open>Integrability from the \<open>L\<^sup>2\<close> bound, for members and for limits\<close>
 
-text \<open>The transfer theorem \<open>weak_conv_integral_of_L2_bound\<close> asks for a
-  battery of integrability facts under every approximating law and under
-  the limit.  All of them follow from one input: a bound on the second
-  moment of the coordinate, which the members have by
-  \<open>exit_class_sq_mean_le\<close> and which the limit inherits because
-  \<open>\<omega> \<mapsto> (X\<^sub>u $ i)\<^sup>2\<close> is continuous and nonnegative
-  (\<open>Path_Space.weak_conv_on_nn_integral_le\<close>).  This subsection therefore
-  works with a bare pair law with an \<open>L\<^sup>2\<close> bound and never mentions the
-  class.\<close>
+text \<open>\<open>integrable_of_sq_integrable\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma integrable_of_sq_integrable:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes fm: "finite_measure N" and m: "f \<in> borel_measurable N"
-    and sq: "integrable N (\<lambda>\<omega>. (f \<omega>)\<^sup>2)"
-  shows "integrable N f"
-proof (rule Bochner_Integration.integrable_bound)
-  show "integrable N (\<lambda>\<omega>. 1 + (f \<omega>)\<^sup>2)"
-    by (intro Bochner_Integration.integrable_add
-        finite_measure.integrable_const[OF fm] sq)
-  show "f \<in> borel_measurable N" by (rule m)
-  show "AE \<omega> in N. norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)"
-  proof (intro AE_I2)
-    fix \<omega>
-    have nn: "(0::real) \<le> (1 - \<bar>f \<omega>\<bar>)\<^sup>2" by simp
-    have exp: "(1 - \<bar>f \<omega>\<bar>)\<^sup>2 = 1 - 2 * \<bar>f \<omega>\<bar> + (f \<omega>)\<^sup>2"
-      by (simp add: power2_diff)
-    have "\<bar>f \<omega>\<bar> \<le> 1 + (f \<omega>)\<^sup>2"
-      using nn abs_ge_zero[of "f \<omega>"] unfolding exp by linarith
-    then show "norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)" by simp
-  qed
-qed
 
 lemma pair_law_coord_measurable:
   fixes N :: "('n::finite pairpath) measure"
@@ -382,51 +354,8 @@ qed
 
 subsection \<open>Generic integrability side conditions of the transfer theorem\<close>
 
-text \<open>\<open>weak_conv_integral_of_L2_bound\<close> asks, besides the \<open>L\<^sup>2\<close> bound
-  itself, for integrability of the clamped and of the tail-truncated
-  integrand under every law involved.  Neither depends on the path space:
-  a clamp is bounded, and a tail truncation is dominated by \<open>\<bar>f\<bar>\<close>.\<close>
+text \<open>\<open>bounded_measurable_integrable\<close>, \<open>clamp_integrable\<close>, \<open>tail_indicator_measurable\<close>, \<open>tail_integrable\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma bounded_measurable_integrable:
-  fixes g :: "'a \<Rightarrow> real"
-  assumes P: "finite_measure N" and m: "g \<in> borel_measurable N"
-    and b: "\<And>w. \<bar>g w\<bar> \<le> D"
-  shows "integrable N g"
-  by (rule finite_measure.integrable_const_bound[OF P _ m]) (use b in auto)
-
-lemma clamp_integrable:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes P: "finite_measure N" and m: "f \<in> borel_measurable N"
-  shows "integrable N (\<lambda>w. max (- R) (min R (f w)))"
-proof (rule bounded_measurable_integrable[OF P])
-  show "(\<lambda>w. max (- R) (min R (f w))) \<in> borel_measurable N"
-    using m by measurable
-  show "\<And>w. \<bar>max (- R) (min R (f w))\<bar> \<le> \<bar>R\<bar>" by auto
-qed
-
-lemma tail_indicator_measurable:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes m: "f \<in> borel_measurable N"
-  shows "(\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w)) \<in> borel_measurable N"
-proof -
-  have os: "open {z::real. R < \<bar>z\<bar>}"
-    by (intro open_Collect_less continuous_intros)
-  have "{z::real. R < \<bar>z\<bar>} \<in> sets borel" by (rule borel_open[OF os])
-  note this[measurable] m[measurable]
-  show ?thesis by measurable
-qed
-
-lemma tail_integrable:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes int: "integrable N f"
-  shows "integrable N (\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w))"
-proof (rule Bochner_Integration.integrable_bound
-    [OF Bochner_Integration.integrable_abs[OF int]])
-  show "(\<lambda>w. \<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w)) \<in> borel_measurable N"
-    by (rule tail_indicator_measurable[OF borel_measurable_integrable[OF int]])
-  show "AE w in N. norm (\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w)) \<le> norm \<bar>f w\<bar>"
-    by (intro AE_I2) (auto simp: indicator_def)
-qed
 
 subsection \<open>The test functional under a pair law with an \<open>L\<^sup>2\<close> bound\<close>
 

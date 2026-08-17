@@ -20,17 +20,8 @@ section \<open>The constraint set of Eq. (1.5) with the technical cap\<close>
 definition sconstraint :: "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite^'n) set" where
   "sconstraint k L = Pi_constraint k \<inter> {a. eigen_ub a L}"
 
-text \<open>The constraint set is convex, closed and bounded, hence compact.
-  Convexity comes from \<open>Pi_constraint_convex\<close> and the \<open>eigen_ub\<close>
-  half-spaces, closedness from the \<open>Pi_proj\<close> infimum characterisation,
-  boundedness from the standard psd entry bound.\<close>
+text \<open>\<open>quadform_convex_comb\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma quadform_convex_comb:
-  fixes a b :: "real^'n::finite^'n"
-  shows "x \<bullet> ((s *\<^sub>R a + t *\<^sub>R b) *v x)
-      = s * (x \<bullet> (a *v x)) + t * (x \<bullet> (b *v x))"
-  by (simp add: matrix_vector_mult_add_rdistrib
-      scaleR_matrix_vector_assoc[symmetric] inner_add_right)
 
 lemma convex_eigen_ub:
   "convex {a :: real^'n::finite^'n. eigen_ub a L}"
@@ -83,23 +74,8 @@ next
   then show "c \<le> Pi_proj a m" by (intro Pi_proj_ge[OF m]) blast
 qed
 
-lemma continuous_on_trace_mult_right:
-  fixes P :: "real^'n::finite^'n"
-  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. trace (a ** P))"
-proof -
-  have eq: "(\<lambda>a :: real^'n^'n. trace (a ** P))
-      = (\<lambda>a. \<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). a $ i $ j * P $ j $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  show ?thesis
-    unfolding eq
-    by (intro continuous_on_sum continuous_on_mult continuous_on_const
-        continuous_on_matrix_entry continuous_on_id)
-qed
+text \<open>\<open>continuous_on_trace_mult_right\<close>, \<open>closed_trace_proj_halfspace\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma closed_trace_proj_halfspace:
-  fixes P :: "real^'n::finite^'n"
-  shows "closed {a :: real^'n^'n. c \<le> trace (a ** P)}"
-  by (intro closed_Collect_le continuous_on_const continuous_on_trace_mult_right)
 
 lemma closed_Pi_constraint:
   "closed (Pi_constraint k :: (real^'n::finite^'n) set)"

@@ -3,6 +3,7 @@
 theory Operator_Envelopes
   imports Viscosity_Solutions "Symmetric_Matrix_Spectra.Householder_Rotation"
     "Semicontinuous_Analysis.Semicontinuity" "Semicontinuous_Analysis.Semicontinuous_Envelopes"
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -619,30 +620,8 @@ text \<open>Eq. (3.4) defines, for \<open>p \<noteq> 0\<close>,
 
 subsection \<open>Feasibility is invariant under orthogonal conjugation\<close>
 
-text \<open>An orthogonal \<open>R\<close> carries the feasible set of \<open>p\<close> onto that of \<open>Rp\<close>:
-  each clause is the change of variables \<open>x \<mapsto> R\<^sup>T x\<close>, using that \<open>R\<close> is
-  an isometry with \<open>R\<^sup>T R = 1\<close>, and moving the witnessing subspace along
-  \<open>R\<close> for the eigenvalue floor.  The dimension of the moved subspace needs
-  only @{thm [source] dim_image_le} applied to \<open>R\<^sup>T\<close>, since
-  \<open>S = R\<^sup>T(R(S))\<close> gives \<open>dim S \<le> dim (R(S))\<close>.\<close>
+text \<open>\<open>orth_preserves_inner\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma orth_preserves_inner:
-  fixes R :: "real^'n::finite^'n"
-  assumes orth: "transpose R ** R = mat 1"
-  shows "(R *v x) \<bullet> (R *v y) = x \<bullet> y"
-proof -
-  have e: "transpose R *v (R *v x) = x"
-  proof -
-    have "transpose R *v (R *v x) = (transpose R ** R) *v x"
-      by (metis matrix_vector_mul_assoc)
-    also have "\<dots> = mat 1 *v x" unfolding orth by (rule refl)
-    also have "\<dots> = x" by (rule matrix_vector_mul_lid)
-    finally show ?thesis .
-  qed
-  have "(R *v x) \<bullet> (R *v y) = (transpose R *v (R *v x)) \<bullet> y"
-    by (rule inner_transpose_matrix)
-  then show ?thesis unfolding e .
-qed
 
 theorem feasible_conj:
   fixes R a :: "real^'n::finite^'n" and p :: "real^'n"
@@ -1213,51 +1192,16 @@ proof -
   show ?thesis by (rule that[OF r0 main])
 qed
 
-lemma inner_scaleR_diff_eq:
-  fixes q v h :: "real^'n::finite" and c :: real
-  shows "q \<bullet> h - c * (v \<bullet> h) = (q - c *\<^sub>R v) \<bullet> h"
-  by (simp add: inner_diff_left)
+text \<open>\<open>inner_scaleR_diff_eq\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 lemma quartic_coeff_assoc:
   fixes c u w :: real
   shows "c * (2 * u * (2 * w)) = 4 * c * u * w"
   by (simp add: field_simps)
 
-text \<open>Shifting a symmetric matrix by a multiple of the identity keeps it
-  symmetric.\<close>
+text \<open>\<open>transpose_shift_add\<close>, \<open>transpose_shift_diff\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma transpose_shift_add:
-  fixes A :: "real^'n::finite^'n"
-  assumes s: "transpose A = A"
-  shows "transpose (A + \<delta> *\<^sub>R mat 1) = A + \<delta> *\<^sub>R mat 1"
-proof -
-  have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j = (A + \<delta> *\<^sub>R mat 1) $ i $ j"
-    for i j
-  proof -
-    have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j
-        = A $ j $ i + \<delta> * (if j = i then 1 else 0)"
-      by (simp add: transpose_def mat_def)
-    also have "A $ j $ i = transpose A $ i $ j"
-      by (simp add: transpose_def)
-    also have "transpose A $ i $ j = A $ i $ j"
-      using s by simp
-    finally show ?thesis
-      by (simp add: mat_def)
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
-
-lemma transpose_shift_diff:
-  fixes A :: "real^'n::finite^'n"
-  assumes s: "transpose A = A"
-  shows "transpose (A - \<delta> *\<^sub>R mat 1) = A - \<delta> *\<^sub>R mat 1"
-proof -
-  have "A - \<delta> *\<^sub>R mat 1 = A + (- \<delta>) *\<^sub>R mat 1"
-    by simp
-  then show ?thesis
-    using transpose_shift_add[OF s, of "- \<delta>"] by simp
-qed
 
 lemma test_fun_at_quartic_shift:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -1549,39 +1493,8 @@ qed
 
 subsection \<open>The invariances of \<open>F\<close> --- the paper's display (4.4)\<close>
 
-lemma cInf_mult_pos:
-  fixes A :: "real set"
-  assumes c0: "0 < c" and ne: "A \<noteq> {}" and bdd: "bdd_below A"
-  shows "Inf ((\<lambda>t. c * t) ` A) = c * Inf A"
-proof -
-  obtain m where m: "\<And>a. a \<in> A \<Longrightarrow> m \<le> a"
-    using bdd unfolding bdd_below_def by blast
-  have bddI: "bdd_below ((\<lambda>t. c * t) ` A)"
-  proof (rule bdd_belowI[of _ "c * m"])
-    fix t assume "t \<in> (\<lambda>t. c * t) ` A"
-    then obtain a where aA: "a \<in> A" and ta: "t = c * a" by auto
-    show "c * m \<le> t" unfolding ta using m[OF aA] c0 by (simp add: mult_left_mono)
-  qed
-  have neI: "(\<lambda>t. c * t) ` A \<noteq> {}" using ne by auto
-  have ge: "c * Inf A \<le> Inf ((\<lambda>t. c * t) ` A)"
-  proof (rule cInf_greatest[OF neI])
-    fix t assume "t \<in> (\<lambda>t. c * t) ` A"
-    then obtain a where aA: "a \<in> A" and ta: "t = c * a" by auto
-    have "Inf A \<le> a" by (rule cInf_lower[OF aA bdd])
-    then show "c * Inf A \<le> t" unfolding ta using c0 by (simp add: mult_left_mono)
-  qed
-  have "Inf ((\<lambda>t. c * t) ` A) / c \<le> Inf A"
-  proof (rule cInf_greatest[OF ne])
-    fix a assume aA: "a \<in> A"
-    have "Inf ((\<lambda>t. c * t) ` A) \<le> c * a"
-      by (rule cInf_lower[OF _ bddI]) (use aA in auto)
-    then show "Inf ((\<lambda>t. c * t) ` A) / c \<le> a"
-      using c0 by (simp add: divide_le_eq mult.commute)
-  qed
-  then have le: "Inf ((\<lambda>t. c * t) ` A) \<le> c * Inf A"
-    using c0 by (simp add: divide_le_eq mult.commute)
-  show ?thesis using ge le by linarith
-qed
+text \<open>\<open>cInf_mult_pos\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+
 
 lemma ell_op_scale:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n"
@@ -1593,20 +1506,8 @@ proof -
   then show ?thesis unfolding ell_op_def by simp
 qed
 
-lemma trace_matrix_commute:
-  fixes A B :: "real^'n::finite^'n"
-  shows "trace (A ** B) = trace (B ** A)"
-proof -
-  have "trace (A ** B) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. A $ i $ j * B $ j $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A $ i $ j * B $ j $ i)"
-    by (rule sum.swap)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. B $ j $ i * A $ i $ j)"
-    by (simp add: mult.commute)
-  also have "\<dots> = trace (B ** A)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  finally show ?thesis .
-qed
+text \<open>\<open>trace_matrix_commute\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 lemma ell_op_conj_rot:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n" and R :: "real^'n^'n"
@@ -1686,105 +1587,14 @@ qed
 
 subsection \<open>Transporting the envelopes along an \<open>F\<close>-preserving homeomorphism\<close>
 
-lemma matvec_diff_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (x - y) = A *v x - A *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum_subtractf)
+text \<open>\<open>matvec_diff_right\<close>, \<open>matvec_scaleR_right\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matvec_scaleR_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (r *\<^sub>R x) = r *\<^sub>R (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
 
 text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
-  from @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}, general at
-  \<open>real^'m^'n\<close>.\<close>
+text \<open>\<open>matvec_orth_inv\<close>, \<open>conj_orth_inv\<close>, \<open>norm_orthogonal_matrix_vector\<close>, \<open>norm_matrix_sq_trace\<close>, \<open>norm_conj_orthogonal\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matvec_orth_inv:
-  fixes R :: "real^'n::finite^'n" and q :: "real^'n"
-  assumes orth: "orthogonal_matrix R"
-  shows "R *v (transpose R *v q) = q"
-proof -
-  have o2: "R ** transpose R = mat 1" using orth unfolding orthogonal_matrix_def by blast
-  have "R *v (transpose R *v q) = (R ** transpose R) *v q"
-    by (metis matrix_vector_mul_assoc)
-  also have "\<dots> = q" unfolding o2 by (rule matrix_vector_mul_lid)
-  finally show ?thesis .
-qed
-
-lemma conj_orth_inv:
-  fixes R N :: "real^'n::finite^'n"
-  assumes orth: "orthogonal_matrix R"
-  shows "R ** (transpose R ** N ** R) ** transpose R = N"
-proof -
-  have o2: "R ** transpose R = mat 1" using orth unfolding orthogonal_matrix_def by blast
-  have "R ** (transpose R ** N ** R) ** transpose R
-      = (R ** transpose R) ** N ** (R ** transpose R)"
-    by (simp add: matrix_mul_assoc)
-  also have "\<dots> = N" unfolding o2 by simp
-  finally show ?thesis .
-qed
-
-lemma norm_orthogonal_matrix_vector:
-  fixes R :: "real^'n::finite^'n" and v :: "real^'n"
-  assumes orth: "orthogonal_matrix R"
-  shows "norm (R *v v) = norm v"
-proof -
-  have o1: "transpose R ** R = mat 1" using orth unfolding orthogonal_matrix_def by blast
-  have "(R *v v) \<bullet> (R *v v) = (transpose R *v (R *v v)) \<bullet> v"
-    by (rule inner_transpose_matrix)
-  also have "transpose R *v (R *v v) = (transpose R ** R) *v v"
-    by (metis matrix_vector_mul_assoc)
-  also have "\<dots> = v" unfolding o1 by (rule matrix_vector_mul_lid)
-  finally have "(R *v v) \<bullet> (R *v v) = v \<bullet> v" .
-  then show ?thesis by (metis norm_eq_sqrt_inner)
-qed
-
-lemma norm_matrix_sq_trace:
-  fixes M :: "real^'n::finite^'n"
-  shows "(norm M)\<^sup>2 = trace (transpose M ** M)"
-proof -
-  have "trace (transpose M ** M) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ j $ i * M $ j $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def transpose_def)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. M $ j $ i * M $ j $ i)"
-    by (rule sum.swap)
-  also have "\<dots> = (norm M)\<^sup>2"
-    by (simp add: power2_norm_eq_inner inner_vec_def)
-  finally show ?thesis by (rule sym)
-qed
-
-lemma norm_conj_orthogonal:
-  fixes R M :: "real^'n::finite^'n"
-  assumes orth: "orthogonal_matrix R"
-  shows "norm (R ** M ** transpose R) = norm M"
-proof -
-  have o1: "transpose R ** R = mat 1" using orth unfolding orthogonal_matrix_def by blast
-  have tt: "transpose (R ** M ** transpose R) = R ** transpose M ** transpose R"
-    by (simp add: matrix_transpose_mul matrix_mul_assoc)
-  have "transpose (R ** M ** transpose R) ** (R ** M ** transpose R)
-      = R ** transpose M ** transpose R ** (R ** M ** transpose R)"
-    unfolding tt by (rule refl)
-  also have "\<dots> = R ** transpose M ** (transpose R ** R) ** M ** transpose R"
-    by (simp add: matrix_mul_assoc)
-  also have "\<dots> = R ** (transpose M ** M) ** transpose R"
-    unfolding o1 by (simp add: matrix_mul_assoc)
-  finally have eq: "transpose (R ** M ** transpose R) ** (R ** M ** transpose R)
-      = R ** (transpose M ** M) ** transpose R" .
-  have "trace (R ** (transpose M ** M) ** transpose R)
-      = trace (transpose R ** (R ** (transpose M ** M)))"
-    by (rule trace_matrix_commute)
-  also have "\<dots> = trace ((transpose R ** R) ** (transpose M ** M))"
-    by (simp add: matrix_mul_assoc)
-  also have "\<dots> = trace (transpose M ** M)" unfolding o1 by simp
-  finally have tr: "trace (R ** (transpose M ** M) ** transpose R)
-      = trace (transpose M ** M)" .
-  have sq: "(norm (R ** M ** transpose R))\<^sup>2 = (norm M)\<^sup>2"
-    unfolding norm_matrix_sq_trace eq tr by (rule refl)
-  show ?thesis by (rule power2_eq_imp_eq[OF sq norm_ge_zero norm_ge_zero])
-qed
 
 text \<open>The transfer lemma: if \<open>\<Psi>\<close> leaves \<open>F\<close> invariant and distorts balls around
   \<open>z\<close> by at most fixed factors in both directions, then it leaves the upper
@@ -1873,61 +1683,8 @@ qed
 
 subsection \<open>The two envelope invariances that Theorem 4.3 consumes\<close>
 
-lemma dist_prod_scale_fst:
-  fixes v z :: "(real^'n::finite) \<times> (real^'n^'n)"
-  assumes c0: "0 < c"
-  shows "dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z) \<le> max c 1 * dist v z"
-    and "min c 1 * dist v z \<le> dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z)"
-proof -
-  define dp where "dp = dist (fst v) (fst z)"
-  define dm where "dm = dist (snd v) (snd z)"
-  have dp0: "0 \<le> dp" and dm0: "0 \<le> dm" unfolding dp_def dm_def by simp_all
-  have dv: "dist v z = sqrt (dp\<^sup>2 + dm\<^sup>2)"
-    unfolding dp_def dm_def by (simp add: dist_prod_def)
-  have dsp: "dist (c *\<^sub>R fst v) (c *\<^sub>R fst z) = c * dp"
-    unfolding dp_def dist_norm using c0
-    by (simp add: scaleR_right_diff_distrib[symmetric])
-  have ds: "dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z) = sqrt ((c * dp)\<^sup>2 + dm\<^sup>2)"
-    unfolding dm_def by (simp add: dist_prod_def dsp)
-  have mx0: "0 \<le> max c 1" using c0 by simp
-  have mn0: "0 < min c 1" using c0 by simp
-  show "dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z) \<le> max c 1 * dist v z"
-  proof -
-    have cle: "c\<^sup>2 \<le> (max c 1)\<^sup>2" using c0 by (simp add: power_mono)
-    have one: "(1::real) \<le> (max c 1)\<^sup>2" using c0 by (simp add: max_def)
-    have m1: "c\<^sup>2 * dp\<^sup>2 \<le> (max c 1)\<^sup>2 * dp\<^sup>2"
-      using cle by (simp add: mult_right_mono)
-    have m2: "dm\<^sup>2 \<le> (max c 1)\<^sup>2 * dm\<^sup>2"
-      using mult_right_mono[OF one zero_le_power2, of dm] by simp
-    have "(c * dp)\<^sup>2 + dm\<^sup>2 = c\<^sup>2 * dp\<^sup>2 + dm\<^sup>2" by (simp add: power_mult_distrib)
-    also have "\<dots> \<le> (max c 1)\<^sup>2 * dp\<^sup>2 + (max c 1)\<^sup>2 * dm\<^sup>2" using m1 m2 by linarith
-    also have "\<dots> = (max c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)" by (simp add: algebra_simps)
-    finally have "(c * dp)\<^sup>2 + dm\<^sup>2 \<le> (max c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)" .
-    then have "sqrt ((c * dp)\<^sup>2 + dm\<^sup>2) \<le> sqrt ((max c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2))"
-      by (rule real_sqrt_le_mono)
-    also have "\<dots> = max c 1 * sqrt (dp\<^sup>2 + dm\<^sup>2)"
-      using mx0 by (simp add: real_sqrt_mult)
-    finally show ?thesis unfolding ds dv .
-  qed
-  show "min c 1 * dist v z \<le> dist (c *\<^sub>R fst v, snd v) (c *\<^sub>R fst z, snd z)"
-  proof -
-    have cle: "(min c 1)\<^sup>2 \<le> c\<^sup>2" using c0 by (simp add: power_mono)
-    have one: "(min c 1)\<^sup>2 \<le> 1" using c0 by (simp add: min_def power_le_one)
-    have m1: "(min c 1)\<^sup>2 * dp\<^sup>2 \<le> c\<^sup>2 * dp\<^sup>2" using cle by (simp add: mult_right_mono)
-    have m2: "(min c 1)\<^sup>2 * dm\<^sup>2 \<le> dm\<^sup>2"
-      using mult_right_mono[OF one zero_le_power2, of dm] by simp
-    have "(min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2) = (min c 1)\<^sup>2 * dp\<^sup>2 + (min c 1)\<^sup>2 * dm\<^sup>2"
-      by (simp add: algebra_simps)
-    also have "\<dots> \<le> c\<^sup>2 * dp\<^sup>2 + dm\<^sup>2" using m1 m2 by linarith
-    also have "\<dots> = (c * dp)\<^sup>2 + dm\<^sup>2" by (simp add: power_mult_distrib)
-    finally have "(min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2) \<le> (c * dp)\<^sup>2 + dm\<^sup>2" .
-    then have step: "sqrt ((min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)) \<le> sqrt ((c * dp)\<^sup>2 + dm\<^sup>2)"
-      by (rule real_sqrt_le_mono)
-    have "sqrt ((min c 1)\<^sup>2 * (dp\<^sup>2 + dm\<^sup>2)) = min c 1 * sqrt (dp\<^sup>2 + dm\<^sup>2)"
-      using mn0 by (simp add: real_sqrt_mult)
-    then show ?thesis using step unfolding ds dv by simp
-  qed
-qed
+text \<open>\<open>dist_prod_scale_fst\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 theorem ell_op_usc_scale:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n"
@@ -2037,130 +1794,8 @@ text \<open>Monotonicity of \<open>lsc_env\<close>/\<open>usc_env\<close> and th
 
 subsection \<open>Affine maps commute with \<open>interior\<close>\<close>
 
-lemma open_orth_image:
-  fixes R :: "real^'n::finite^'n"
-  assumes orth: "orthogonal_matrix R" and op: "open S"
-  shows "open ((\<lambda>z. R *v z) ` S)"
-proof (rule openI)
-  fix w assume "w \<in> (\<lambda>z. R *v z) ` S"
-  then obtain z0 where z0: "z0 \<in> S" and wz: "w = R *v z0" by auto
-  obtain e where e0: "0 < e" and eb: "ball z0 e \<subseteq> S"
-    using op z0 unfolding open_contains_ball by blast
-  have "ball w e \<subseteq> (\<lambda>z. R *v z) ` S"
-  proof
-    fix y assume yb: "y \<in> ball w e"
-    define z where "z = transpose R *v y"
-    have Rz: "R *v z = y" unfolding z_def by (rule matvec_orth_inv[OF orth])
-    have rd: "R *v (z0 - z) = w - y"
-    proof -
-      have "R *v (z0 - z) = R *v z0 - R *v z" by (rule matvec_diff_right)
-      then show ?thesis unfolding wz Rz .
-    qed
-    have "dist z0 z = norm (z0 - z)" by (simp add: dist_norm)
-    also have "\<dots> = norm (R *v (z0 - z))"
-      by (rule norm_orthogonal_matrix_vector[OF orth, symmetric])
-    also have "\<dots> = norm (w - y)" unfolding rd by (rule refl)
-    finally have "dist z0 z = dist w y" by (simp add: dist_norm)
-    then have "z \<in> ball z0 e" using yb by simp
-    then show "y \<in> (\<lambda>z. R *v z) ` S" using eb Rz by force
-  qed
-  then show "\<exists>e>0. ball w e \<subseteq> (\<lambda>z. R *v z) ` S" using e0 by blast
-qed
+text \<open>\<open>open_orth_image\<close>, \<open>open_affine_image\<close>, \<open>affine_interior_sub\<close>, \<open>affine_inv_shape\<close>, \<open>affine_inv_left\<close>, \<open>affine_inv_right\<close>, \<open>affine_interior_image\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma open_affine_image:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "c \<noteq> 0" and op: "open S"
-  shows "open ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)"
-proof -
-  have eq: "(\<lambda>z. c *\<^sub>R (R *v z) + b) ` S
-      = (\<lambda>y. b + y) ` ((\<lambda>y. c *\<^sub>R y) ` ((\<lambda>z. R *v z) ` S))"
-    unfolding image_image by (rule image_cong[OF refl]) (simp add: add.commute)
-  show ?thesis
-    unfolding eq
-    by (rule open_translation, rule open_scaling[OF c0 open_orth_image[OF orth op]])
-qed
-
-lemma affine_interior_sub:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "c \<noteq> 0"
-  shows "(\<lambda>z. c *\<^sub>R (R *v z) + b) ` interior S
-       \<subseteq> interior ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)"
-  by (rule interior_maximal[OF image_mono[OF interior_subset]
-        open_affine_image[OF orth c0 open_interior]])
-
-text \<open>The inverse of \<open>z \<mapsto> c \<cdot> R z + b\<close> has the same shape, which upgrades the
-  inclusion above to an equality.\<close>
-
-lemma affine_inv_shape:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "(\<lambda>y. (1/c) *\<^sub>R (transpose R *v (y - b)))
-       = (\<lambda>y. (1/c) *\<^sub>R (transpose R *v y) + (- ((1/c) *\<^sub>R (transpose R *v b))))"
-  by (rule ext) (simp add: matvec_diff_right scaleR_right_diff_distrib)
-
-lemma affine_inv_left:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "(1/c) *\<^sub>R (transpose R *v ((c *\<^sub>R (R *v z) + b) - b)) = z"
-proof -
-  have "(c *\<^sub>R (R *v z) + b) - b = c *\<^sub>R (R *v z)" by simp
-  then have "transpose R *v ((c *\<^sub>R (R *v z) + b) - b)
-      = c *\<^sub>R (transpose R *v (R *v z))" by (simp add: matvec_scaleR_right)
-  also have "transpose R *v (R *v z) = z"
-    using orth unfolding orthogonal_matrix_def
-    by (metis matrix_vector_mul_assoc matrix_vector_mul_lid)
-  finally show ?thesis using c0 by simp
-qed
-
-lemma affine_inv_right:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "c *\<^sub>R (R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))) + b = y"
-proof -
-  have "R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))
-      = (1/c) *\<^sub>R (R *v (transpose R *v (y - b)))"
-    by (rule matvec_scaleR_right)
-  also have "R *v (transpose R *v (y - b)) = y - b"
-    by (rule matvec_orth_inv[OF orth])
-  finally have "c *\<^sub>R (R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))) = y - b"
-    using c0 by simp
-  then show ?thesis by simp
-qed
-
-lemma affine_interior_image:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "interior ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)
-       = (\<lambda>z. c *\<^sub>R (R *v z) + b) ` interior S"
-proof
-  define T where "T = (\<lambda>z :: real^'n. c *\<^sub>R (R *v z) + b)"
-  define S' where "S' = (\<lambda>y :: real^'n. (1/c) *\<^sub>R (transpose R *v (y - b)))"
-  have cne: "c \<noteq> 0" using c0 by simp
-  have orthT: "orthogonal_matrix (transpose R)"
-    using orth unfolding orthogonal_matrix_def by auto
-  have c1ne: "1 / c \<noteq> 0" using c0 by simp
-  have ST: "S' (T z) = z" for z unfolding S'_def T_def by (rule affine_inv_left[OF orth c0])
-  have TS: "T (S' y) = y" for y unfolding S'_def T_def by (rule affine_inv_right[OF orth c0])
-  have Seq: "S' = (\<lambda>y. (1/c) *\<^sub>R (transpose R *v y)
-      + (- ((1/c) *\<^sub>R (transpose R *v b))))"
-    unfolding S'_def by (rule affine_inv_shape[OF orth c0])
-  have opS': "open (S' ` A)" if "open A" for A
-    unfolding Seq by (rule open_affine_image[OF orthT c1ne that])
-  have STS: "S' ` (T ` S) = S" unfolding image_image ST by simp
-  show "interior (T ` S) \<subseteq> T ` interior S"
-  proof
-    fix y assume yi: "y \<in> interior (T ` S)"
-    have sub1: "S' ` interior (T ` S) \<subseteq> interior (S' ` (T ` S))"
-      by (rule interior_maximal[OF image_mono[OF interior_subset]])
-        (rule opS'[OF open_interior])
-    have "S' y \<in> S' ` interior (T ` S)" using yi by (rule imageI)
-    then have "S' y \<in> interior (S' ` (T ` S))" using sub1 by blast
-    then have "S' y \<in> interior S" unfolding STS .
-    then show "y \<in> T ` interior S" using TS[of y] by (metis imageI)
-  qed
-  show "T ` interior S \<subseteq> interior (T ` S)"
-    unfolding T_def by (rule affine_interior_sub[OF orth cne])
-qed
 
 section \<open>A constant is a subsolution off \<open>K\<close>\<close>
 

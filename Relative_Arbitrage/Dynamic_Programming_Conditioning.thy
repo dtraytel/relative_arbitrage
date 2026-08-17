@@ -3,44 +3,15 @@ section \<open>Conditioning on the past, and the conditional law\<close>
 (*<*)
 theory Dynamic_Programming_Conditioning
   imports Dynamic_Programming_Pasting
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
 
 section \<open>Conditioning on the past for the \<open>\<le>\<close> half\<close>
 
-text \<open>This section builds the ingredients for the conditioning statement
-  isolated in @{thm [source] exit_val_dpp_le_of_cond}: the exit time splits at
-  \<open>r\<close> on the survival event, and the rebased future \<open>pfut\<close> is a measurable
-  map of path spaces.\<close>
+text \<open>\<open>cInf_shift_real\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma cInf_shift_real:
-  fixes S :: "real set"
-  assumes ne: "S \<noteq> {}" and bdd: "bdd_below S"
-  shows "Inf ((\<lambda>s. r + s) ` S) = r + Inf S"
-proof -
-  obtain m where m: "\<And>s. s \<in> S \<Longrightarrow> m \<le> s" using bdd by (auto simp: bdd_below_def)
-  have neI: "(\<lambda>s. r + s) ` S \<noteq> {}" using ne by blast
-  have bddI: "bdd_below ((\<lambda>s. r + s) ` S)"
-    by (rule bdd_belowI[of _ "r + m"]) (use m in auto)
-  show ?thesis
-  proof (rule antisym)
-    have "Inf ((\<lambda>s. r + s) ` S) - r \<le> s" if s: "s \<in> S" for s
-    proof -
-      have "Inf ((\<lambda>s. r + s) ` S) \<le> r + s"
-        using s by (intro cInf_lower[OF _ bddI]) blast
-      then show ?thesis by simp
-    qed
-    then have "Inf ((\<lambda>s. r + s) ` S) - r \<le> Inf S" by (intro cInf_greatest[OF ne])
-    then show "Inf ((\<lambda>s. r + s) ` S) \<le> r + Inf S" by simp
-    show "r + Inf S \<le> Inf ((\<lambda>s. r + s) ` S)"
-    proof (rule cInf_greatest[OF neI])
-      fix z assume "z \<in> (\<lambda>s. r + s) ` S"
-      then obtain s where s: "s \<in> S" "z = r + s" by blast
-      then show "r + Inf S \<le> z" using cInf_lower[OF s(1) bdd] by simp
-    qed
-  qed
-qed
 
 text \<open>On the survival event the exit time splits exactly: the first piece
   contributes \<open>r\<close> and the rest is the exit time of the time-shifted path
@@ -496,32 +467,8 @@ text \<open>The martingale-level form of "pulling out what is known": the AFP's
   along it, or it is not adapted.  \<open>martingale_mult_measurable\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-text \<open>The two ingredients @{thm [source] martingale_mult_measurable} needs on
-  the way to clause (iv): a product is integrable as soon as both squares
-  are, and the cross term of @{thm [source] outerp_diff_compensated} is a
-  matrix martingale, entry by entry.\<close>
+text \<open>\<open>integrable_mult_of_sq\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma integrable_mult_of_sq:
-  fixes f g :: "'a \<Rightarrow> real"
-  assumes fm: "f \<in> borel_measurable M" and gm: "g \<in> borel_measurable M"
-    and f2: "integrable M (\<lambda>\<omega>. (f \<omega>)\<^sup>2)" and g2: "integrable M (\<lambda>\<omega>. (g \<omega>)\<^sup>2)"
-  shows "integrable M (\<lambda>\<omega>. f \<omega> * g \<omega>)"
-proof -
-  have b: "integrable M (\<lambda>\<omega>. ((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)" using f2 g2 by simp
-  have pm: "(\<lambda>\<omega>. f \<omega> * g \<omega>) \<in> borel_measurable M" using fm gm by simp
-  have ae: "AE \<omega> in M. norm (f \<omega> * g \<omega>) \<le> norm (((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)"
-  proof (rule AE_I2)
-    fix \<omega>
-    have "(0::real) \<le> (\<bar>f \<omega>\<bar> - \<bar>g \<omega>\<bar>)\<^sup>2" by simp
-    also have "(\<bar>f \<omega>\<bar> - \<bar>g \<omega>\<bar>)\<^sup>2 = (f \<omega>)\<^sup>2 - 2 * (\<bar>f \<omega>\<bar> * \<bar>g \<omega>\<bar>) + (g \<omega>)\<^sup>2"
-      by (simp add: power2_diff)
-    finally have le: "2 * (\<bar>f \<omega>\<bar> * \<bar>g \<omega>\<bar>) \<le> (f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2" by simp
-    have nn: "(0::real) \<le> ((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2" by simp
-    show "norm (f \<omega> * g \<omega>) \<le> norm (((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)"
-      using le nn by (simp add: abs_mult)
-  qed
-  show ?thesis by (rule Bochner_Integration.integrable_bound[OF b pm ae])
-qed
 
 text \<open>\<open>martingale_cross_measurable\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>

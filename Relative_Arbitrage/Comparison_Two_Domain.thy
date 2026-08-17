@@ -186,31 +186,8 @@ subsection \<open>Test functions compose with invertible affine maps\<close>
 text \<open>\<open>matvec_add_right'\<close> is \<open>matvec_add_right\<close> from
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>matvec_scaleR_right'\<close> is \<open>matvec_scaleR_right\<close> from
-  @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
+text \<open>\<open>affine_linear\<close>, \<open>affine_has_derivative\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma affine_linear:
-  fixes R :: "real^'n::finite^'n"
-  shows "bounded_linear (\<lambda>z :: real^'n. c *\<^sub>R (R *v z))"
-proof -
-  have "linear (\<lambda>z :: real^'n. c *\<^sub>R (R *v z))"
-    by (simp add: linear_iff matvec_add_right matvec_scaleR_right
-        scaleR_right_distrib)
-  then show ?thesis by (simp add: linear_conv_bounded_linear)
-qed
-
-lemma affine_has_derivative:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  shows "((\<lambda>z. c *\<^sub>R (R *v z) + b) has_derivative (\<lambda>h. c *\<^sub>R (R *v h))) (at y)"
-proof -
-  have lin: "((\<lambda>z :: real^'n. c *\<^sub>R (R *v z)) has_derivative
-      (\<lambda>h. c *\<^sub>R (R *v h))) (at y)"
-    by (rule bounded_linear.has_derivative[OF affine_linear has_derivative_ident])
-  have "((\<lambda>z. c *\<^sub>R (R *v z) + b) has_derivative
-      (\<lambda>h. c *\<^sub>R (R *v h) + 0)) (at y)"
-    by (rule has_derivative_add[OF lin has_derivative_const])
-  then show ?thesis by simp
-qed
 
 text \<open>The chain rule through \<open>A z = c \<cdot> Rz + b\<close>: the gradient picks up a
   factor \<open>c\<close> and a transpose, the Hessian a factor \<open>c^2\<close> and a
@@ -384,19 +361,8 @@ proof -
   qed
 qed
 
-lemma conj_mat_continuous:
-  fixes R :: "real^'n::finite^'n"
-  assumes "continuous_on UNIV M"
-  shows "continuous_on UNIV (\<lambda>y. transpose R ** M y ** R)"
-proof -
-  have lin: "linear (\<lambda>N :: real^'n^'n. transpose R ** N ** R)"
-    unfolding linear_iff
-    by (auto simp: matrix_matrix_mult_def vec_eq_iff sum.distrib
-        sum_distrib_left sum_distrib_right algebra_simps)
-  have bl: "bounded_linear (\<lambda>N :: real^'n^'n. transpose R ** N ** R)"
-    using lin by (simp add: linear_conv_bounded_linear)
-  show ?thesis by (rule bounded_linear.continuous_on[OF bl assms])
-qed
+text \<open>\<open>conj_mat_continuous\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 theorem test_fun_C2_affine:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -970,45 +936,8 @@ qed
 
 subsection \<open>Theorem 4.3, on top of the two-domain principle\<close>
 
-text \<open>Two small facts about the inverse of the dilation, used to transfer
-  lower semicontinuity and the bound to the transformed supersolution.\<close>
+text \<open>\<open>affine_inv_dist\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma affine_inv_dist:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "dist ((1/c) *\<^sub>R (transpose R *v (X - b)))
-             ((1/c) *\<^sub>R (transpose R *v (Y - b))) = (1/c) * dist X Y"
-proof -
-  have orthT: "orthogonal_matrix (transpose R)"
-    using orth unfolding orthogonal_matrix_def by auto
-  have e1: "transpose R *v (X - b) - transpose R *v (Y - b)
-      = transpose R *v (X - Y)"
-  proof -
-    have "transpose R *v (X - b) - transpose R *v (Y - b)
-        = transpose R *v ((X - b) - (Y - b))"
-      by (rule matvec_diff_right[symmetric])
-    also have "(X - b) - (Y - b) = X - Y" by simp
-    finally show ?thesis .
-  qed
-  have d: "(1/c) *\<^sub>R (transpose R *v (X - b)) - (1/c) *\<^sub>R (transpose R *v (Y - b))
-      = (1/c) *\<^sub>R (transpose R *v (X - Y))"
-  proof -
-    have "(1/c) *\<^sub>R (transpose R *v (X - b)) - (1/c) *\<^sub>R (transpose R *v (Y - b))
-        = (1/c) *\<^sub>R (transpose R *v (X - b) - transpose R *v (Y - b))"
-      by (rule scaleR_right_diff_distrib[symmetric])
-    also have "\<dots> = (1/c) *\<^sub>R (transpose R *v (X - Y))" unfolding e1 by (rule refl)
-    finally show ?thesis .
-  qed
-  have nn: "norm (transpose R *v (X - Y)) = norm (X - Y)"
-    by (rule norm_orthogonal_matrix_vector[OF orthT])
-  have "dist ((1/c) *\<^sub>R (transpose R *v (X - b)))
-      ((1/c) *\<^sub>R (transpose R *v (Y - b)))
-      = norm ((1/c) *\<^sub>R (transpose R *v (X - Y)))"
-    unfolding dist_norm d by (rule refl)
-  also have "\<dots> = \<bar>1/c\<bar> * norm (transpose R *v (X - Y))" by (rule norm_scaleR)
-  also have "\<dots> = (1/c) * norm (X - Y)" unfolding nn using c0 by simp
-  finally show ?thesis unfolding dist_norm .
-qed
 
 text \<open>The paper's Theorem 4.3, in the form Proposition 4.1 consumes: for usc
   bounded \<open>u\<close> and lsc bounded \<open>w\<close> both satisfying Definition 3.1's

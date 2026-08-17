@@ -3,6 +3,7 @@ section \<open>Theorem 4.2(a) via the Crandall-Ishii jet machinery\<close>
 (*<*)
 theory Comparison_Principle
   imports "Second_Order_Viscosity_Analysis.Soft_Penalty" Operator_Envelope_Continuity
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -967,25 +968,8 @@ text \<open>\<open>superjet_local_max\<close> introduces a strictly convex corre
   envelope-free notions already imply the envelope ones on an open
   \<open>\<Omega> \<subseteq> K\<close>.\<close>
 
-text \<open>The two envelope-form hypotheses in the shape the doubling produces:
-  on an open \<open>\<Omega>\<close> inside \<open>K\<close>, a subsolution and supersolution in the
-  envelope-free sense are also envelope sub/supersolutions, letting the
-  doubling argument run where the \<open>\<delta> \<rightarrow> 0\<close> passage is legitimate.\<close>
+text \<open>\<open>ball_prod_shift_snd\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma ball_prod_shift_snd:
-  fixes p :: "real^'n::finite" and M N :: "real^'n^'n"
-  assumes "w \<in> ball (p, M) e"
-  shows "w + (0, N - M) \<in> ball (p, N) e"
-proof -
-  have eq: "(w + (0, N - M)) - (p, N) = w - (p, M)"
-    by (simp add: prod_eq_iff)
-  have "dist (w + (0, N - M)) (p, N) = dist w (p, M)"
-    unfolding dist_norm eq ..
-  moreover have "dist w (p, M) < e"
-    using assms by (simp add: dist_commute)
-  ultimately show ?thesis
-    by (simp add: dist_commute)
-qed
 
 lemma ell_op_pair_shift_snd_le:
   fixes M N :: "real^'n::finite^'n"
@@ -3200,21 +3184,8 @@ proof -
   thus ?thesis unfolding g .
 qed
 
-text \<open>The supersolution mirror: the sup-convolution is taken of \<open>-w\<close>, the
-  summand the doubled functional carries, and the transferred bound
-  becomes a local minimum statement for \<open>w\<close> after negation. The
-  correction runs the other way, \<open>Ym - \<delta> I\<close>, as with
-  \<open>jet_imp_local_min_test\<close>.\<close>
+text \<open>\<open>neg_shift_matrix_apply\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma neg_shift_matrix_apply:
-  fixes B :: "real^'n::finite^'n"
-  shows "((- B) + \<delta> *\<^sub>R mat 1) *v h = - ((B - \<delta> *\<^sub>R mat 1) *v h)"
-proof -
-  have e: "(- B) + \<delta> *\<^sub>R mat 1 = - (B - \<delta> *\<^sub>R mat 1)"
-    by simp
-  show ?thesis
-    unfolding e by (rule matrix_vector_neg_left)
-qed
 
 theorem supersol_shifted_bound_supconv:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
@@ -3671,54 +3642,8 @@ qed
 
 subsection \<open>Symmetry and the ordering pass to the limit\<close>subsection \<open>Symmetry and the ordering pass to the limit\<close>
 
-text \<open>Symmetry and positive semidefiniteness are closed conditions and so
-  survive the passage to a limit point, proved entrywise via
-  \<open>tendsto_vec_nth\<close>: convergence in \<open>real^'n^'n\<close> is convergence of every
-  entry.\<close>
+text \<open>\<open>tendsto_entry\<close>, \<open>transpose_limit\<close>, \<open>tendsto_quadratic_form\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma tendsto_entry:
-  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes conv: "A \<longlonglongrightarrow> A0"
-  shows "(\<lambda>i. A i $ j $ k) \<longlonglongrightarrow> A0 $ j $ k"
-  by (rule tendsto_vec_nth[OF tendsto_vec_nth[OF conv]])
-
-lemma transpose_limit:
-  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes conv: "A \<longlonglongrightarrow> A0" and sym: "\<And>i. transpose (A i) = A i"
-  shows "transpose A0 = A0"
-proof -
-  have eq: "A0 $ j $ k = A0 $ k $ j" for j k
-  proof -
-    have f: "(\<lambda>i. A i $ j $ k) = (\<lambda>i. A i $ k $ j)"
-    proof (rule ext)
-      fix i
-      have "A i $ j $ k = (transpose (A i)) $ k $ j"
-        by (simp add: transpose_def)
-      also have "\<dots> = A i $ k $ j"
-        using sym by simp
-      finally show "A i $ j $ k = A i $ k $ j" .
-    qed
-    have "(\<lambda>i. A i $ j $ k) \<longlonglongrightarrow> A0 $ k $ j"
-      unfolding f by (rule tendsto_entry[OF conv])
-    from tendsto_entry[OF conv] this show ?thesis
-      by (rule LIMSEQ_unique)
-  qed
-  show ?thesis
-    by (simp add: vec_eq_iff transpose_def eq)
-qed
-
-lemma tendsto_quadratic_form:
-  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes conv: "A \<longlonglongrightarrow> A0"
-  shows "(\<lambda>i. x \<bullet> (A i *v x)) \<longlonglongrightarrow> x \<bullet> (A0 *v x)"
-proof -
-  have e: "y \<bullet> (B *v y) = (\<Sum>j\<in>UNIV. y $ j * (\<Sum>k\<in>UNIV. B $ j $ k * y $ k))"
-    for B :: "real^'n^'n" and y :: "real^'n"
-    by (simp add: inner_vec_def matrix_vector_mult_def)
-  show ?thesis
-    unfolding e
-    by (intro tendsto_sum tendsto_mult tendsto_const tendsto_entry[OF conv])
-qed
 
 theorem psd_limit:
   fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
@@ -5511,24 +5436,8 @@ text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the
   is preserved since \<open>\<delta>I\<close> is symmetric, and the norm bound degrades by
   \<open>\<bar>2\<delta>\<bar>\<parallel>I\<parallel>\<close>, a constant vanishing with \<open>\<delta>\<^sub>i\<close>.\<close>
 
-text \<open>\<open>transpose_scaleR\<close> and \<open>transpose_add\<close> live in
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>transpose_shifted_block\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma transpose_shifted_block:
-  fixes M :: "real^'n::finite^'n"
-  assumes s: "transpose M = M"
-  shows "transpose (M + c *\<^sub>R mat 1) = M + c *\<^sub>R mat 1"
-proof -
-  have "transpose (M + c *\<^sub>R mat 1)
-      = transpose M + transpose (c *\<^sub>R (mat 1 :: real^'n^'n))"
-    by (rule transpose_add)
-  also have "transpose (c *\<^sub>R (mat 1 :: real^'n^'n))
-      = c *\<^sub>R transpose (mat 1 :: real^'n^'n)"
-    by (rule transpose_scaleR)
-  also have "transpose (mat 1 :: real^'n^'n) = mat 1"
-    by (rule transpose_mat)
-  finally show ?thesis using s by simp
-qed
 
 lemma psd_shifted_diff:
   fixes X Y :: "real^'n::finite^'n"
@@ -5540,56 +5449,8 @@ proof -
   then show ?thesis using p by simp
 qed
 
-text \<open>The bridge between the jets' operator-form Hessian
-  \<open>\<lambda>v. f v + c *\<^sub>R v\<close> and the matrix form the family theorem wants:
-  taking the matrix of the shifted operator adds \<open>cI\<close>.  Every shifted
-  fact then reduces to its unshifted counterpart plus
-  \<open>transpose_shifted_block\<close>, \<open>psd_shifted_diff\<close> and \<open>norm_shifted_block\<close>.\<close>
+text \<open>\<open>matrix_shift_apply\<close>, \<open>norm_shifted_block\<close>, \<open>shift_cancel_matrix\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma matrix_shift_apply:
-  fixes M :: "real^'n::finite^'n"
-  shows "(M + c *\<^sub>R mat 1) *v h = M *v h + c *\<^sub>R h"
-proof -
-  have "((M + c *\<^sub>R mat 1) *v h) $ i = (M *v h + c *\<^sub>R h) $ i" for i
-  proof -
-    have "((M + c *\<^sub>R mat 1) *v h) $ i
-        = (\<Sum>j\<in>UNIV. (M $ i $ j + c * (if i = j then 1 else 0)) * h $ j)"
-      by (simp add: matrix_vector_mult_def mat_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. M $ i $ j * h $ j)
-        + (\<Sum>j\<in>UNIV. c * (if i = j then 1 else 0) * h $ j)"
-      by (simp add: algebra_simps sum.distrib)
-    also have "(\<Sum>j\<in>UNIV. c * (if i = j then 1 else 0) * h $ j)
-        = (\<Sum>j\<in>UNIV. if j = i then c * h $ j else 0)"
-      by (rule sum.cong) auto
-    also have "(\<Sum>j\<in>UNIV. if j = i then c * h $ j else 0) = c * h $ i"
-      by simp    finally show ?thesis
-      by (simp add: matrix_vector_mult_def)
-  qed
-  then show ?thesis by (simp add: vec_eq_iff)
-qed
-
-lemma norm_shifted_block:
-  fixes M :: "real^'n::finite^'n"
-  shows "norm (M + c *\<^sub>R mat 1)
-      \<le> norm M + \<bar>c\<bar> * norm (mat 1 :: real^'n^'n)"
-proof -
-  have "norm (M + c *\<^sub>R mat 1) \<le> norm M + norm (c *\<^sub>R (mat 1 :: real^'n^'n))"
-    by (rule norm_triangle_ineq)
-  moreover have "norm (c *\<^sub>R (mat 1 :: real^'n^'n))
-      = \<bar>c\<bar> * norm (mat 1 :: real^'n^'n)"
-    by simp
-  ultimately show ?thesis by linarith
-qed
-
-text \<open>Shifting \<open>Y\<close> down by \<open>cI\<close> and \<open>X\<close> up by \<open>cI\<close> costs the difference
-  exactly \<open>2cI\<close>, recovering \<open>Y-X\<close> on cancellation; this is the equation
-  behind the asymptotic \<open>psdi\<close> hypothesis, with defect
-  \<open>cs\<^sub>i=2c\<^sub>i \<rightarrow> 0\<close>.\<close>
-
-lemma shift_cancel_matrix:
-  fixes X Y :: "real^'n::finite^'n"
-  shows "(Y - c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1) + (2*c) *\<^sub>R mat 1 = Y - X"
-  by (simp add: vec_eq_iff mat_def axis_def algebra_simps)
 
 text \<open>\<open>penalty_gradient_nearby_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 

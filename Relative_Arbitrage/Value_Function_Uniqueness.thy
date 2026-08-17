@@ -560,21 +560,8 @@ text \<open>Everything above is stated at a finite horizon.  Since
   what follows is Theorem 1.1 for the value function of Eq. (1.6) as the paper
   writes it, on \<open>C([0,\<infinity>))\<close>.\<close>
 
-text \<open>On \<open>real^'n\<close> compactness is closedness together with a ball bound, so
-  one hypothesis supplies both of the ones the transfer needs.  The radius is
-  named only where it appears in a conclusion, which is clause (0).\<close>
+text \<open>\<open>compact_cball_bound\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma compact_cball_bound:
-  fixes K :: "(real^'n::finite) set"
-  assumes cK: "compact K"
-  shows "\<exists>rK. 0 \<le> rK \<and> K \<subseteq> cball 0 rK"
-proof -
-  obtain a where a: "\<forall>x\<in>K. norm x \<le> a"
-    using compact_imp_bounded[OF cK] unfolding bounded_iff by blast
-  have "K \<subseteq> cball 0 (max a 0)" using a by (auto simp: dist_norm)
-  moreover have "0 \<le> max a 0" by simp
-  ultimately show ?thesis by blast
-qed
 
 lemma nonbinding_horizon_ex:
   fixes rK :: real

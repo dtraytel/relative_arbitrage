@@ -21,6 +21,7 @@ session Continuous_Time_Martingales = "HOL-Probability" +
     Natural_Filtration
     Semidirect_Kernels
     Martingale_Algebra
+    Integrability_Criteria
     Martingale_Transfer
   document_files
     "root.tex"

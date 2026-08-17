@@ -98,17 +98,8 @@ text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the marke
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>
 
-lemma diag_entry_quadform:
-  fixes a :: "real^'m::finite^'m"
-  shows "axis l 1 \<bullet> (a *v axis l 1) = a $ l $ l"
-proof -
-  have col: "(a *v axis l 1) $ l = a $ l $ l"
-    by (simp add: matrix_vector_mult_def axis_def if_distrib
-        cong: if_cong)
-  have "axis l 1 \<bullet> (a *v axis l 1) = (a *v axis l 1) $ l"
-    by (metis cart_eq_inner_axis inner_commute)
-  with col show ?thesis by simp
-qed
+text \<open>\<open>diag_entry_quadform\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 lemma psd_diag_nonneg:
   fixes a :: "real^'m::finite^'m"

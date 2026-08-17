@@ -9,52 +9,8 @@ begin
 
 subsection \<open>Bricks for the Case-1 contradiction\<close>
 
-text \<open>Small independent pieces the contradiction assembles: algebra for the
-  softened Hessian, a generic small-radius chooser, the witness extraction
-  from a failed operator inequality, the value bound \<open>v(x) < T\<close> forced by a
-  nonzero touching gradient, and the exit-time identity on paths that never
-  leave \<open>K\<close>.\<close>
+text \<open>\<open>transpose_sub_smat\<close>, \<open>trace_msub_mat\<close>, \<open>quad_soften_split\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma transpose_sub_smat:
-  fixes H :: "real^'n::finite^'n" and s :: real
-  assumes symH: "transpose H = H"
-  shows "transpose (H - s *\<^sub>R mat 1) = H - s *\<^sub>R mat 1"
-proof -
-  have "transpose (H - s *\<^sub>R mat 1)
-      = transpose H - transpose (s *\<^sub>R mat 1)"
-    by (simp add: transpose_def vec_eq_iff)
-  then show ?thesis by (simp add: transpose_scalar symH)
-qed
-
-lemma trace_msub_mat:
-  fixes H a :: "real^'n::finite^'n" and s :: real
-  shows "trace ((H - s *\<^sub>R mat 1) ** a) = trace (H ** a) - s * trace a"
-proof -
-  have e1: "(H - s *\<^sub>R mat 1) ** a = H ** a - (s *\<^sub>R mat 1) ** a"
-    by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
-        left_diff_distrib)
-  have e2: "(s *\<^sub>R mat 1) ** a = s *\<^sub>R a"
-    by (simp add: scaleR_matrix_mult)
-  have e3: "trace (H ** a - s *\<^sub>R a) = trace (H ** a) - s * trace a"
-    by (simp add: trace_def sum_subtractf sum_distrib_left)
-  show ?thesis unfolding e1 e2 by (rule e3)
-qed
-
-lemma quad_soften_split:
-  fixes H :: "real^'n::finite^'n" and v :: "real^'n" and \<gamma> \<delta> :: real
-  shows "v \<bullet> ((H - \<delta> *\<^sub>R mat 1) *v v)
-      = v \<bullet> ((H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1) *v v) + 2 * \<gamma> * (v \<bullet> v)"
-proof -
-  have e1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
-    by (simp add: matrix_vector_mult_diff_rdistrib
-        scaleR_matrix_vector)
-  have e2: "(H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1) *v v
-      = H *v v - (2 * \<gamma> + \<delta>) *\<^sub>R v"
-    by (simp add: matrix_vector_mult_diff_rdistrib
-        scaleR_matrix_vector)
-  show ?thesis unfolding e1 e2
-    by (simp add: algebra_simps)
-qed
 
 lemma ell_op_lt_witness:
   fixes p :: "real^'n::finite" and H :: "real^'n^'n"
@@ -201,31 +157,8 @@ qed
 
 subsection \<open>Exact rotations: a covariance field with no eigenvalue margin\<close>
 
-text \<open>The skew field above moves the witness off its own eigenframe, and the
-  margins that absorb that motion are what force \<open>1 < L\<close>: at \<open>L = 1\<close> the
-  feasible set of Eq. (1.9) is rigid, its top \<open>n - k\<close> eigenvalues pinned to
-  \<open>1\<close> from both sides, so no witness has slack to perturb.  A field of exact
-  rotations needs none.  Conjugating the witness by an orthogonal matrix
-  leaves its spectrum, and hence its membership of the feasible set,
-  untouched; and the rotation carrying the frozen gradient \<open>q\<close> to the current
-  gradient makes the conjugate annihilate the current gradient, which is all
-  the Euler construction asks of the field.  The package \<open>rotSF_exists\<close> below
-  therefore carries no hypothesis on \<open>L\<close> at all, and in particular is
-  available at \<open>L = 1\<close>, the Ambrosio-Soner flow case of Remark 1.1(c).
+text \<open>\<open>colmat_matvec\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-  The rotation \<open>rotm q w\<close> is a product of two Householder reflections; it
-  carries \<open>q\<close> onto the ray through \<open>w\<close> as soon as the two are not opposed,
-  and is the identity at \<open>w = q\<close>, which is where the trace margin is read
-  off: by continuity at the touching point, in place of the three explicit
-  smallness estimates the skew field needs. \<open>hrefl\<close>, \<open>rotm\<close> and their
-  properties, including the continuity of \<open>w \<mapsto> rotm q w\<close>
-  (\<open>rotm_vec_cont\<close>), live in
-  @{theory Symmetric_Matrix_Spectra.Householder_Rotation}.\<close>
-
-lemma colmat_matvec:
-  fixes R :: "real^'n::finite^'n" and c :: "'n \<Rightarrow> real^'n"
-  shows "(\<chi> i j. (R *v c j) $ i) = R ** (\<chi> i j. c j $ i)"
-  by (simp add: vec_eq_iff matrix_matrix_mult_def matrix_vector_mult_def)
 
 lemma outerp_scale_self:
   fixes u :: "real^'n::finite"
@@ -286,27 +219,8 @@ proof -
     by (intro continuous_on_vec_lambda entry)
 qed
 
-text \<open>\<open>feasible_scale\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes},
-  as the set equality; this theory re-proved the membership direction under
-  the same name, shadowing it.\<close>
+text \<open>\<open>rot_cone_ok\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma rot_cone_ok:
-  fixes q e :: "real^'n::finite"
-  assumes q0: "q \<noteq> 0" and lt: "norm e < norm q"
-  shows "0 < norm q * norm (q + e) + q \<bullet> (q + e)"
-proof -
-  have nq0: "0 < norm q" using q0 by simp
-  have cs: "\<bar>q \<bullet> e\<bar> \<le> norm q * norm e" by (rule Cauchy_Schwarz_ineq2)
-  have qq: "q \<bullet> q = norm q * norm q"
-    by (simp add: dot_square_norm power2_eq_square)
-  have expand: "q \<bullet> (q + e) = norm q * norm q + q \<bullet> e"
-    by (simp add: inner_add_right qq)
-  have "norm q * norm e < norm q * norm q"
-    by (rule mult_strict_left_mono[OF lt nq0])
-  then have "0 < q \<bullet> (q + e)" unfolding expand using cs by linarith
-  moreover have "0 \<le> norm q * norm (q + e)" by simp
-  ultimately show ?thesis by linarith
-qed
 
 lemma rot_col_cont:
   fixes q x c :: "real^'n::finite" and M :: "real^'n^'n" and A :: "(real^'n) set"
@@ -1795,93 +1709,8 @@ qed
 
 subsection \<open>Region variants of the Lipschitz bound and the open event\<close>
 
-text \<open>The Lipschitz bound on a quadratic and the openness of its bad
-  event, re-stated with the confinement region decoupled from the
-  quadratic's centre: the Lipschitz bound needs only the two norm
-  bounds, and the bad event stays open for any open region, since the
-  stay-condition and the quadratic no longer share a centre.  These feed
-  the region versions of the vanishing-probability and limit theorems
-  below.\<close>
+text \<open>\<open>quad_diff_bound_gen\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma quad_diff_bound_gen:
-  fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and R :: real
-  assumes sym: "transpose M = M"
-    and na: "norm (a - x) \<le> R" and nb: "norm (b - x) \<le> R"
-  shows "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-       - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
-      \<le> (norm q + 2 * (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * R)
-          * norm (b - a)"
-proof -
-  let ?CM = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
-  have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
-  have dble: "norm (b - a) \<le> 2 * R"
-  proof -
-    have deq: "b - a = (b - x) + (x - a)" by simp
-    have "norm (b - a) \<le> norm (b - x) + norm (x - a)"
-      by (subst deq) (rule norm_triangle_ineq)
-    moreover have "norm (x - a) \<le> R"
-      using na by (simp add: norm_minus_commute)
-    ultimately show ?thesis using nb by linarith
-  qed
-  have step: "q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))
-      = (q + M *v (a - x)) \<bullet> (b - a)
-        + (1/2) * ((b - a) \<bullet> (M *v (b - a)))"
-    by (rule quad_taylor_step[OF sym])
-  have t1: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-      \<le> (norm q + ?CM * R) * norm (b - a)"
-  proof -
-    have cs: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-        \<le> norm (q + M *v (a - x)) * norm (b - a)"
-      by (rule Cauchy_Schwarz_ineq2)
-    have "norm (q + M *v (a - x)) \<le> norm q + ?CM * R"
-    proof -
-      have "norm (q + M *v (a - x)) \<le> norm q + norm (M *v (a - x))"
-        by (rule norm_triangle_ineq)
-      moreover have "norm (M *v (a - x)) \<le> ?CM * norm (a - x)"
-        by (rule matvec_norm_le)
-      moreover have "?CM * norm (a - x) \<le> ?CM * R"
-        by (rule mult_left_mono[OF na CM0])
-      ultimately show ?thesis by linarith
-    qed
-    then have "norm (q + M *v (a - x)) * norm (b - a)
-        \<le> (norm q + ?CM * R) * norm (b - a)"
-      by (rule mult_right_mono) simp
-    then show ?thesis using cs by linarith
-  qed
-  have t2: "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
-      \<le> ?CM * R * norm (b - a)"
-  proof -
-    have "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
-        \<le> norm (b - a) * norm (M *v (b - a))"
-      by (rule Cauchy_Schwarz_ineq2)
-    also have "\<dots> \<le> norm (b - a) * (?CM * norm (b - a))"
-      by (rule mult_left_mono[OF matvec_norm_le norm_ge_zero])
-    finally have h: "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
-        \<le> ?CM * norm (b - a) * norm (b - a)"
-      by (simp add: mult_ac)
-    have h2: "?CM * norm (b - a) * norm (b - a)
-        \<le> ?CM * (2 * R) * norm (b - a)"
-      by (rule mult_right_mono[OF mult_left_mono[OF dble CM0] norm_ge_zero])
-    have "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
-        = (1/2) * \<bar>(b - a) \<bullet> (M *v (b - a))\<bar>"
-      by (simp add: abs_mult)
-    also have "\<dots> \<le> (1/2) * (?CM * (2 * R) * norm (b - a))"
-      using h h2 by linarith
-    also have "\<dots> = ?CM * R * norm (b - a)" by simp
-    finally show ?thesis .
-  qed
-  have tri: "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
-      \<le> \<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-        + \<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>"
-    unfolding step by (rule abs_triangle_ineq)
-  have fin: "(norm q + ?CM * R) * norm (b - a)
-      + ?CM * R * norm (b - a)
-      = (norm q + 2 * ?CM * R) * norm (b - a)"
-    by (simp add: algebra_simps)
-  show ?thesis using tri t1 t2 fin by linarith
-qed
 
 lemma open_quad_bad_event_region:
   fixes x q :: "real^'n::finite" and M :: "real^'n^'n"

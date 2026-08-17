@@ -3,6 +3,7 @@
 theory Exit_Semicontinuity
   imports "Continuous_Path_Spaces.Path_Space" "Continuous_Time_Martingales.Stopping_Times"
     Value_Function_Market
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -194,57 +195,8 @@ qed
 
 section \<open>The Laplace representation of the essential infimum\<close>
 
-text \<open>LR, proof of Lemma 2.1: with \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) ln E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close>, the
-  essential infimum of a time bounded in \<open>[0, T]\<close> is \<open>inf\<^sub>\<lambda> f\<^sub>\<lambda>\<close>.  Each
-  \<open>f\<^sub>\<lambda>\<close> dominates the essential infimum (Jensen-free: the a.s. lower
-  bound passes through the decreasing exponential), and as \<open>\<lambda> \<rightarrow> \<infinity>\<close>
-  the transform concentrates at the essential infimum.\<close>
+text \<open>\<open>exp_neg_time_integrable\<close>, \<open>exp_neg_time_integral_lower\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma exp_neg_time_integrable:
-  fixes tau :: "'a \<Rightarrow> real" and l :: real
-  assumes M: "prob_space M" and meas: "tau \<in> borel_measurable M"
-    and nn: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
-    and lam: "0 \<le> l"
-  shows "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
-proof -
-  interpret prob_space M by fact
-  have m: "(\<lambda>\<omega>. exp (- l * tau \<omega>)) \<in> borel_measurable M"
-    using meas by measurable
-  have b: "norm (exp (- l * tau \<omega>)) \<le> 1" if w: "\<omega> \<in> space M" for \<omega>
-    using nn[OF w] lam
-    by (simp add: abs_of_pos)
-  show ?thesis
-    by (rule integrable_const_bound[where B = 1])
-      (use m b in \<open>auto\<close>)
-qed
-
-lemma exp_neg_time_integral_lower:
-  fixes tau :: "'a \<Rightarrow> real" and l T :: real
-  assumes M: "prob_space M" and meas: "tau \<in> borel_measurable M"
-    and nn: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
-    and le: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> tau \<omega> \<le> T"
-    and lam: "0 \<le> l"
-  shows "exp (- l * T) \<le> (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
-proof -
-  interpret prob_space M by fact
-  have "exp (- l * T) = (\<integral>\<omega>. exp (- l * T) \<partial>M)"
-    by (simp add: prob_space)
-  also have "\<dots> \<le> (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
-  proof (rule Bochner_Integration.integral_mono)
-    show "integrable M (\<lambda>\<omega>. exp (- l * T))"
-      by (rule integrable_const)
-    show "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
-      by (rule exp_neg_time_integrable[OF M meas nn lam])
-    show "exp (- l * T) \<le> exp (- l * tau \<omega>)"
-      if w: "\<omega> \<in> space M" for \<omega>
-    proof -
-      have "l * tau \<omega> \<le> l * T"
-        by (rule mult_left_mono[OF le[OF w] lam])
-      then show ?thesis by simp
-    qed
-  qed
-  finally show ?thesis .
-qed
 
 lemma ess_inf_time_le_laplace:
   fixes tau :: "'a \<Rightarrow> real" and T l :: real

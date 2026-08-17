@@ -3,6 +3,7 @@ section \<open>Shift equivariance, and upper semicontinuity of the value functio
 (*<*)
 theory Exit_Class_Shift
   imports Exit_Class_Tightness
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -449,12 +450,8 @@ lemma comp_shift_split:
        = outerp (x + v) - w"
   by (simp add: outerp_def vec_eq_iff algebra_simps)
 
-lemma bounded_linear_cross:
-  fixes x :: "real^'n::finite"
-  shows "bounded_linear
-      (\<lambda>v :: real^'n. (\<chi> i j. x $ i * v $ j + v $ i * x $ j) :: real^'n^'n)"
-  unfolding linear_conv_bounded_linear[symmetric]
-  by (intro linearI) (simp_all add: vec_eq_iff algebra_simps)
+text \<open>\<open>bounded_linear_cross\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 theorem exit_class_pshift:
   fixes Q :: "('n::finite pairpath) measure" and x x0 :: "real^'n"
@@ -755,37 +752,8 @@ qed
 
 subsection \<open>Turning a supremum of \<open>ennreal\<close>s into a supremum of reals\<close>
 
-lemma ennreal_Sup_image:
-  fixes S :: "real set" and B :: real
-  assumes ne: "S \<noteq> {}" and bnd: "\<And>s. s \<in> S \<Longrightarrow> 0 \<le> s \<and> s \<le> B"
-  shows "Sup (ennreal ` S) = ennreal (Sup S)"
-proof -
-  have bdd: "bdd_above S" using bnd by (intro bdd_aboveI[of _ B]) auto
-  have le1: "Sup (ennreal ` S) \<le> ennreal (Sup S)"
-  proof (rule Sup_least)
-    fix e assume "e \<in> ennreal ` S"
-    then obtain s where s: "s \<in> S" and e: "e = ennreal s" by blast
-    have "s \<le> Sup S" using s bdd by (rule cSup_upper)
-    then show "e \<le> ennreal (Sup S)" unfolding e by (rule ennreal_leI)
-  qed
-  have leB: "Sup (ennreal ` S) \<le> ennreal B"
-    by (rule Sup_least) (use bnd in \<open>auto intro: ennreal_leI\<close>)
-  have fin: "Sup (ennreal ` S) < \<top>"
-    using leB ennreal_less_top by (rule order_le_less_trans)
-  have "Sup S \<le> enn2real (Sup (ennreal ` S))"
-  proof (rule cSup_least[OF ne])
-    fix s assume s: "s \<in> S"
-    have "ennreal s \<le> Sup (ennreal ` S)" using s by (intro Sup_upper) auto
-    also have "\<dots> = ennreal (enn2real (Sup (ennreal ` S)))"
-      using fin by simp
-    finally show "s \<le> enn2real (Sup (ennreal ` S))" by simp
-  qed
-  then have "ennreal (Sup S) \<le> ennreal (enn2real (Sup (ennreal ` S)))"
-    by (rule ennreal_leI)
-  then have le2: "ennreal (Sup S) \<le> Sup (ennreal ` S)"
-    using fin by simp
-  from le1 le2 show ?thesis by simp
-qed
+text \<open>\<open>ennreal_Sup_image\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+
 
 subsection \<open>Eq. (1.6) as a shifted supremum over the class at \<open>0\<close>\<close>
 

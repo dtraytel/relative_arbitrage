@@ -1093,14 +1093,8 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Tracing the compensated clause gives the submartingale statement
-  Lemma 2.1 runs on: \<open>|X|\<^sup>2 - trace Y\<close> is a martingale and \<open>trace Y\<close> grows
-  at rate at least \<open>n - k\<close>, so \<open>E[|X\<^sub>t|\<^sup>2] - |x|\<^sup>2 \<ge> (n-k)\<sqdot>t\<close>.\<close>
+text \<open>\<open>bounded_linear_trace\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma bounded_linear_trace:
-  "bounded_linear (trace :: real^'n::finite^'n \<Rightarrow> real)"
-  unfolding linear_conv_bounded_linear[symmetric]
-  by (intro linearI) (simp_all add: trace_add trace_scaleR)
 
 lemma trace_outerp:
   fixes v :: "real^'n::finite"

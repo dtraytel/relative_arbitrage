@@ -4,6 +4,7 @@ theory Ito_Market
   imports
     "Continuous_Time_Martingales.Optional_Sampling"
     Brownian_Market
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -25,15 +26,8 @@ text \<open>
   under the martingale property of \<open>Z\<close> instead of the ad hoc identity.\<close>
 section \<open>An auxiliary fact on Lebesgue integrals over singletons\<close>
 
-lemma set_integral_lborel_singleton [simp]:
-  fixes f :: "real \<Rightarrow> real"
-  shows "set_lebesgue_integral lborel {c} f = 0"
-proof -
-  have "AE s in lborel. indicat_real {c} s *\<^sub>R f s = 0"
-    using AE_lborel_singleton[of c] by auto
-  then show ?thesis
-    unfolding set_lebesgue_integral_def by (rule integral_eq_zero_AE)
-qed
+text \<open>\<open>set_integral_lborel_singleton\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+
 
 section \<open>The process of Ito's formula\<close>
 
@@ -286,32 +280,8 @@ theorem (in ito_volatile_market) ito_expected_stopped_time_bound:
 
 section \<open>Removing the domination assumption for stopped markets\<close>
 
-text \<open>Two-sided pointwise bounds on the trace, from the eigenvalue
-  conditions: positive semidefiniteness makes the diagonal, hence the trace,
-  nonnegative, and the eigenvalue upper bound of Eq. (1.7) caps every
-  diagonal entry by \<open>L\<close>.\<close>
+text \<open>\<open>diag_eq_inner_axis\<close>, \<open>trace_nonneg_psd\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma diag_eq_inner_axis:
-  fixes a :: "real^'n^'n"
-  shows "a $ i $ i = axis i (1 :: real) \<bullet> (a *v axis i 1)"
-proof -
-  have "axis i (1 :: real) \<bullet> (a *v axis i 1) = (a *v axis i 1) $ i"
-    by (simp add: inner_axis')
-  also have "\<dots> = a $ i $ i"
-    by (simp add: matrix_vector_mult_basis column_def)
-  finally show ?thesis ..
-qed
-
-lemma trace_nonneg_psd:
-  fixes a :: "real^'n^'n"
-  assumes "\<And>x. 0 \<le> x \<bullet> (a *v x)"
-  shows "0 \<le> trace a"
-proof -
-  have "0 \<le> a $ i $ i" for i
-    unfolding diag_eq_inner_axis by (rule assms)
-  then show ?thesis
-    unfolding trace_def by (intro sum_nonneg) simp
-qed
 
 lemma trace_le_eigen_ub:
   fixes a :: "real^'n^'n"

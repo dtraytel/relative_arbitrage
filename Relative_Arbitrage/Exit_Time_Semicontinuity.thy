@@ -3,6 +3,7 @@ section \<open>Upper semicontinuity of the essential-infimum exit time\<close>
 (*<*)
 theory Exit_Time_Semicontinuity
   imports Path_Tightness_Market Value_Function_Market
+    "Continuous_Time_Martingales.Integrability_Criteria"
 begin
 
 (*>*)
@@ -994,33 +995,8 @@ qed
 
 subsection \<open>The family is nonempty: the immediate-stop market\<close>
 
-text \<open>The market stopping at time \<open>0\<close>: constant state \<open>x0\<close>, horizon \<open>0\<close>,
-  covariance \<open>mat 1\<close> at the single instant \<open>s = 0\<close> and \<open>0\<close> afterwards.
-  The eigenvalue constraints are imposed only on \<open>[0, tau] = {0}\<close>, where
-  \<open>mat 1\<close> satisfies them; the compensator integrals vanish since the
-  covariance is supported on a Lebesgue-null set.\<close>
+text \<open>\<open>set_integral_at_origin\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma set_integral_at_origin:
-  fixes c t :: real
-  shows "set_integrable lborel {0..t} (\<lambda>s. if s = 0 then c else 0)"
-    and "set_lebesgue_integral lborel {0..t} (\<lambda>s. if s = 0 then c else 0) = 0"
-proof -
-  have m: "(\<lambda>s :: real. indicator {0..t} s *\<^sub>R (if s = 0 then c else 0))
-      \<in> borel_measurable lborel"
-    by measurable
-  have ae: "AE s in lborel.
-      indicator {0..t} s *\<^sub>R (if s = 0 then c else 0) = (0 :: real)"
-    using AE_lborel_singleton[of 0] by eventually_elim auto
-  have "integrable lborel
-      (\<lambda>s :: real. indicator {0..t} s *\<^sub>R (if s = 0 then c else 0))"
-    using integrable_cong_AE[OF m borel_measurable_const ae] by simp
-  then show "set_integrable lborel {0..t} (\<lambda>s. if s = 0 then c else 0)"
-    unfolding set_integrable_def .
-  show "set_lebesgue_integral lborel {0..t}
-      (\<lambda>s. if s = 0 then c else 0) = 0"
-    unfolding set_lebesgue_integral_def
-    using integral_cong_AE[OF m borel_measurable_const ae] by simp
-qed
 
 theorem mkt_path_laws_nonempty:
   fixes x0 :: "real^'m::finite" and K :: "(real^'m) set"
@@ -1214,10 +1190,8 @@ lemma mkt_law_witness_mono_K:
   using W sufficiently_volatile_market_mono_K[OF _ KK]
   unfolding mkt_law_witness_def by blast
 
-lemma inner_diff_self_expand:
-  fixes a c :: "real^'m::finite"
-  shows "(a - c) \<bullet> (a - c) = a \<bullet> a - 2 * (c \<bullet> a) + c \<bullet> c"
-  by (simp add: inner_diff_left inner_diff_right inner_commute)
+text \<open>\<open>inner_diff_self_expand\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 lemma mkt_law_witness_shift:
   fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"

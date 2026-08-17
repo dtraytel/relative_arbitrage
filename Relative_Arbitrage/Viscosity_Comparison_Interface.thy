@@ -76,22 +76,8 @@ text \<open>Orthogonal conjugation \<open>a \<mapsto> Q\<^sup>T a Q\<close> maps
   identity \<open>F(p, M) = c\<^sup>2 F(Q\<^sup>T p, c\<^sup>-\<^sup>2 Q\<^sup>T M Q)\<close> behind the
   transformation hypothesis of Theorem 1.1.\<close>
 
-text \<open>Conjugation preserves each defining condition of the feasible set.
-  Orthogonality is HOL-Analysis's own \<open>orthogonal_matrix\<close>.\<close>
+text \<open>\<open>trace_conjugate\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma trace_conjugate:
-  fixes M Q a :: "real^'n^'n"
-  shows "trace (M ** (transpose Q ** a ** Q)) = trace ((Q ** M ** transpose Q) ** a)"
-proof -
-  have "trace (M ** (transpose Q ** a ** Q))
-      = trace ((M ** transpose Q ** a) ** Q)"
-    by (simp add: matrix_mul_assoc)
-  also have "\<dots> = trace (Q ** (M ** transpose Q ** a))"
-    using trace_mul_sym[of "M ** transpose Q ** a" Q] by simp
-  also have "\<dots> = trace ((Q ** M ** transpose Q) ** a)"
-    by (simp add: matrix_mul_assoc)
-  finally show ?thesis .
-qed
 
 text \<open>The dilation identity: scaling the Hessian argument scales \<open>F\<close>.\<close>
 

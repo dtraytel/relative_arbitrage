@@ -139,17 +139,8 @@ proof -
     by (simp add: ball_v_def)
 qed
 
-lemma norm_less_of_ball:
-  fixes z :: "real^'n::finite"
-  assumes z: "norm z < r" and y: "y \<in> ball z (r - norm z)"
-  shows "norm y < r"
-proof -
-  have "norm y \<le> norm (y - z) + norm z"
-    using norm_triangle_sub[of y z] by simp
-  also have "\<dots> < (r - norm z) + norm z"
-    using y by (simp add: dist_norm norm_minus_commute)
-  finally show ?thesis by simp
-qed
+text \<open>\<open>norm_less_of_ball\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
 
 text \<open>Every viscosity subsolution dominated by \<open>v\<close> on the boundary is
   dominated by \<open>v\<close> everywhere: comparing \<open>u\<close> with the strict supersolution
@@ -424,30 +415,8 @@ text \<open>The dual statement, for a smooth strict subsolution below a
 
 section \<open>Towards Section 2: the feasible set is entrywise bounded\<close>
 
-text \<open>Lemma 2.2 of the paper assumes the set \<open>S\<close> of admissible covariances is
-  bounded.  For the paper's \<open>S\<close> that is a purely linear-algebraic fact,
-  provable without any probability: \<open>psd a\<close> bounds the diagonal below by
-  \<open>0\<close> and \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form
-  at the coordinate vectors.\<close>
+text \<open>\<open>inner_axis_one\<close>, \<open>matrix_vector_axis_one\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma inner_axis_one:
-  fixes y :: "real^'n::finite"
-  shows "axis i (1 :: real) \<bullet> y = y $ i"
-  by (simp add: inner_axis')
-
-lemma matrix_vector_axis_one:
-  fixes a :: "real^'n::finite^'n"
-  shows "(a *v axis i (1 :: real)) $ l = a $ l $ i"
-proof -
-  have "(a *v axis i (1 :: real)) $ l
-      = (\<Sum>j\<in>UNIV. a $ l $ j * (if j = i then 1 else 0))"
-    unfolding matrix_vector_mult_def axis_def by simp
-  also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
-    by (intro sum.cong refl) simp
-  also have "\<dots> = a $ l $ i"
-    by simp
-  finally show ?thesis .
-qed
 
 lemma feasible_diag_bound:
   fixes a :: "real^'n::finite^'n"
@@ -473,59 +442,8 @@ qed
 text \<open>Hence the trace is bounded on the feasible set, which is the quantitative
   form Lemma 2.2's hypothesis is used in.\<close>
 
-text \<open>The off-diagonal entries are bounded too.  Testing the psd quadratic form
-  at \<open>axis i 1 \<plusminus> axis j 1\<close> gives \<open>a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<plusminus> 2 a\<^sub>i\<^sub>j \<ge> 0\<close>, i.e.
-  \<open>2 \<bar>a\<^sub>i\<^sub>j\<bar> \<le> a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<le> 2 L\<close>.  (For \<open>i = j\<close> the same bound is the diagonal
-  one.)\<close>
+text \<open>\<open>quadform_axis_pair\<close>, \<open>matrix_vector_mult_vec_diff\<close>, \<open>quadform_axis_pair_minus\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma quadform_axis_pair:
-  fixes a :: "real^'n::finite^'n"
-  assumes sym: "transpose a = a"
-  shows "(axis i (1::real) + axis j 1) \<bullet> (a *v (axis i (1::real) + axis j 1))
-       = a $ i $ i + a $ j $ j + 2 * a $ i $ j"
-proof -
-  have aji: "a $ j $ i = a $ i $ j"
-    by (metis sym transpose_def vec_lambda_beta)
-  have mv: "(a *v (axis i (1::real) + axis j 1))
-      = (a *v axis i (1::real)) + (a *v axis j 1)"
-    by (simp add: matrix_vector_right_distrib)
-  have "(axis i (1::real) + axis j 1) \<bullet> (a *v (axis i (1::real) + axis j 1))
-      = (a *v axis i (1::real)) $ i + (a *v axis j (1::real)) $ i
-        + ((a *v axis i (1::real)) $ j + (a *v axis j (1::real)) $ j)"
-    unfolding mv by (simp add: inner_add_left inner_axis_one)
-  also have "\<dots> = a $ i $ i + a $ i $ j + (a $ j $ i + a $ j $ j)"
-    by (simp add: matrix_vector_axis_one)
-  also have "\<dots> = a $ i $ i + a $ j $ j + 2 * a $ i $ j"
-    unfolding aji by simp
-  finally show ?thesis .
-qed
-
-lemma matrix_vector_mult_vec_diff:
-  fixes a :: "real^'n::finite^'n"
-  shows "a *v (x - y) = a *v x - a *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff right_diff_distrib sum_subtractf)
-
-lemma quadform_axis_pair_minus:
-  fixes a :: "real^'n::finite^'n"
-  assumes sym: "transpose a = a"
-  shows "(axis i (1::real) - axis j 1) \<bullet> (a *v (axis i (1::real) - axis j 1))
-       = a $ i $ i + a $ j $ j - 2 * a $ i $ j"
-proof -
-  have aji: "a $ j $ i = a $ i $ j"
-    by (metis sym transpose_def vec_lambda_beta)
-  have mv: "(a *v (axis i (1::real) - axis j 1))
-      = (a *v axis i (1::real)) - (a *v axis j 1)"
-    by (rule matrix_vector_mult_vec_diff)
-  have "(axis i (1::real) - axis j 1) \<bullet> (a *v (axis i (1::real) - axis j 1))
-      = (a *v axis i (1::real)) $ i - (a *v axis j (1::real)) $ i
-        - ((a *v axis i (1::real)) $ j - (a *v axis j (1::real)) $ j)"
-    unfolding mv by (simp add: inner_diff_left inner_axis_one)
-  also have "\<dots> = a $ i $ i - a $ i $ j - (a $ j $ i - a $ j $ j)"
-    by (simp add: matrix_vector_axis_one)
-  also have "\<dots> = a $ i $ i + a $ j $ j - 2 * a $ i $ j"
-    unfolding aji by simp
-  finally show ?thesis .
-qed
 
 lemma feasible_offdiag_abs_le:
   fixes a :: "real^'n::finite^'n"
