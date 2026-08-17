@@ -5,7 +5,13 @@ session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
     theorem on sums.
   "
   theories
+    Convex_Subgradients
+    Rademacher
+    Moreau_Envelope
+    Alexandrov
+    Jensen_Lemma
     Sup_Convolution
+    Theorem_On_Sums
   document_files
     "root.tex"
     "root.bib"

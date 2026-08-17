@@ -2,11 +2,12 @@ section \<open>Theorem 4.2(a) via the Crandall-Ishii jet machinery\<close>
 
 (*<*)
 theory Comparison_Principle
-  imports "Second_Order_Viscosity_Analysis.Sup_Convolution" Operator_Envelope_Continuity
+  imports "Second_Order_Viscosity_Analysis.Theorem_On_Sums" Operator_Envelope_Continuity
 begin
 
 (*>*)
-text \<open>@{theory Second_Order_Viscosity_Analysis.Sup_Convolution} develops the jet machinery
+text \<open>@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums} and the theories
+  below it develop the jet machinery
   independently of this development, directly over \<open>HOL-Analysis.Analysis\<close>.  This
   theory combines it with @{theory Relative_Arbitrage.Operator_Envelope_Continuity}
   to package the derivative facts into \<open>test_fun_at\<close> and discharge
@@ -45,7 +46,7 @@ qed
 
 text \<open>The form used downstream has the jet matrix arrive as an abstract
   symmetric bounded linear map, as produced throughout
-  @{theory Second_Order_Viscosity_Analysis.Sup_Convolution}.\<close>
+  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
 
 subsection \<open>The jet interface to Definition 3.1(b)\<close>
 
@@ -1252,8 +1253,10 @@ text \<open>A scaled subsolution and a supersolution touching an ordered jet pai
   (\<open>psd_of_abstract_le\<close>), and degenerate ellipticity closes
   (\<open>ell_op_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
   hypotheses \<open>ord\<close>, \<open>subtest\<close> and \<open>suptest\<close>, supplied by the
-  Rademacher/Alexandrov/Jensen/theorem-on-sums development in
-  @{theory Second_Order_Viscosity_Analysis.Sup_Convolution}.\<close>
+  development in @{theory Second_Order_Viscosity_Analysis.Rademacher},
+  @{theory Second_Order_Viscosity_Analysis.Alexandrov},
+  @{theory Second_Order_Viscosity_Analysis.Jensen_Lemma} and
+  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
 
 theorem comparison_contradiction:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -2034,7 +2037,7 @@ text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<c
 
 subsection \<open>The jet hypothesis only ever needs one side\<close>
 
-text \<open>\<open>superjet_local_max\<close> (@{theory Second_Order_Viscosity_Analysis.Sup_Convolution}) only uses one side of its
+text \<open>\<open>superjet_local_max\<close> (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) only uses one side of its
   \<open>tendsto\<close> hypothesis; the diagonal branch of Theorem 4.2(a) supplies only
   an upper bound on the increment of \<open>B = supconv (-w) \<epsilon>\<close>. This
   subsection restates the chain with a one-sided hypothesis;
@@ -4524,7 +4527,7 @@ text \<open>The same conclusion with the off-diagonal condition \<open>p \<noteq
 subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
 
 text \<open>\<open>comparison_env_from_jets\<close> consumes \<open>psd (Ym - Xm)\<close>. The theorem
-  on sums (\<open>sums_matrix_inequality\<close>, @{theory Second_Order_Viscosity_Analysis.Sup_Convolution}) delivers the
+  on sums (\<open>sums_matrix_inequality\<close>, @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) delivers the
   ordering between the two diagonal blocks. Writing
   \<open>X v = fst (W (v,0)) + \<alpha> v\<close> and
   \<open>Y v = - (snd (W (0,v)) + \<alpha> v)\<close> (negated since the supersolution
@@ -4985,7 +4988,7 @@ text \<open>The linearity and symmetry of the two diagonal blocks that
   \<open>sums_psd_at_interior_max\<close> needs follow from the Alexandrov jet's
   \<open>bounded_linear W\<close> and \<open>u \<cdot> W u' = u' \<cdot> W u\<close>, via
   \<open>linear_slice_fst\<close> / \<open>linear_slice_snd\<close> / \<open>sym_slice_fst\<close> /
-  \<open>sym_slice_snd\<close> (@{theory Second_Order_Viscosity_Analysis.Sup_Convolution}).\<close>
+  \<open>sym_slice_snd\<close> (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}).\<close>
 
 lemma linear_of_bounded_linear_prod:
   fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
@@ -5080,7 +5083,7 @@ qed
 subsection \<open>Transferring the jet back from the sup-convolution to \<open>u\<close>\<close>
 
 text \<open>The viscosity hypotheses concern \<open>u\<close> and \<open>w\<close>, not the
-  sup-convolutions. \<open>supconv_dominates_shift\<close> (@{theory Second_Order_Viscosity_Analysis.Sup_Convolution})
+  sup-convolutions. \<open>supconv_dominates_shift\<close> (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums})
   bridges them: if the sup-convolution at \<open>x\<close> is attained at \<open>y\<^sub>s\<close>,
   increments of \<open>u\<close> at \<open>y\<^sub>s\<close> are dominated by increments of
   \<open>supconv u \<epsilon>\<close> at \<open>x\<close> with the same increment vector \<open>k\<close>. A local
@@ -5228,7 +5231,7 @@ subsection \<open>Symmetry of the two block matrices\<close>
 
 text \<open>The symmetry \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close> needed by
   \<open>comparison_env_from_jets\<close> follows from the jet: \<open>matrix_of_symmetric\<close>
-  (@{theory Second_Order_Viscosity_Analysis.Sup_Convolution}) converts an abstract symmetric linear map into a
+  (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) converts an abstract symmetric linear map into a
   symmetric matrix, fed by the block lemmas above.\<close>
 
 lemma transpose_matrix_block_fst:
@@ -5773,7 +5776,7 @@ text \<open>The slice jets carry their Hessians as functions
   must be routed through \<open>linear_matrix_vector_mul_eq\<close> first.\<close>
 
 text \<open>\<open>matrix_apply_eq\<close> is \<open>matrix_vec_apply\<close> from
-  @{theory Second_Order_Viscosity_Analysis.Sup_Convolution}.\<close>
+  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
 
 lemma block_fst_matrix_apply:
   fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
@@ -6198,7 +6201,7 @@ text \<open>If the tilt is antisymmetric, \<open>p = (p\<^sub>0,-p\<^sub>0)\<clo
 subsection \<open>The Hessians at the doubled maximum are two-sidedly bounded\<close>
 
 text \<open>Route (i) needs the perturbed Hessians bounded as the tilt shrinks.
-  \<open>convex_alexandrov\<close> (@{theory Second_Order_Viscosity_Analysis.Sup_Convolution}) supplies a Hessian \<open>B\<close> with
+  \<open>convex_alexandrov\<close> (@{theory Second_Order_Viscosity_Analysis.Alexandrov}) supplies a Hessian \<open>B\<close> with
   \<open>0 \<le> k \<bullet> Bk\<close>; combined with \<open>k \<bullet> Wk \<le> 0\<close> from
   \<open>second_order_interior_max\<close>, this pins the Hessian \<open>W = B - cI\<close> at a
   maximum of a semiconvex function between \<open>-c\<close> and \<open>0\<close>.
