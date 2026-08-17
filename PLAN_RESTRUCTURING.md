@@ -1090,7 +1090,7 @@ All fourteen phases are done, each in its own commit, each ending with a green
 | lines | 115 987 | 116 086 | — |
 | top-level statements | 2 821 | 2 752 | — |
 | definitions | 204 | 201 | — |
-| **generic lemmas inside a paper session** | **597** | **200** | < 50 |
+| **generic lemmas inside a paper session** | **597** | **33** | < 50 |
 
 The line count is the one number that did not move, and that is what a
 refactor of moves and splits should look like: 24 theorems and one definition
@@ -1102,12 +1102,33 @@ predicted. The 21 000-line shortfall is almost exactly the material probe 4
 still counts: §3.1's extraction lists were written against the file layout of
 the time and were only ever partly executable.
 
-**Probe 4 stalls at 200 and phases 13–14 could not move it**, because from
-phase 8 onward the plan schedules generalisation, splitting and dead-code
-removal, none of which relocates a lemma out of the paper session. Reaching
-< 50 needs a further extraction pass, mostly out of `Operator_Envelopes` (23),
-`Comparison_Principle` (19) and the six `Value_Function_*` theories (about 60
-between them). That work is not in this plan.
+Probe 4 stalls at 200 at the end of phase 14, because from phase 8 onward the
+plan schedules generalisation, splitting and dead-code removal, none of which
+relocates a lemma. A further extraction pass — not scheduled here, and run
+afterwards — finished §3.1, §3.5 and §3.6 and took it to **33**, under the
+target. 167 lemmas moved in three rounds: 109 into
+`Symmetric_Matrix_Spectra/Matrix_Algebra`, 19 into a new
+`Continuous_Time_Martingales/Integrability_Criteria`, and 39 more spread over
+`Semicontinuous_Analysis`, `Doubling_Of_Variables`, `Path_Tightness`,
+`Increment_Moments`, `Holder_Interpolation`, `Time_Discretisation` and
+`Ky_Fan`.
+
+The 33 that remain are paper-bound, and a name-based probe cannot see it: 16
+depend on a locale's fixed variables (`X`, `tau`, `x0`, `k`, `CARD('n)`), 9 are
+stated over the paper's `pairpath`, 2 are locale-bound outright. Two of the
+rest — `wiener_pre_past_increment_indep`, `bm_paths_past_increment_indep` — are
+genuinely `Wiener_Measure` material but consume `indep_vars_cong_sets`, which
+went to `Continuous_Time_Martingales`, downstream of `Wiener_Measure`. Moving
+them means moving a session boundary.
+
+**Two lessons from that pass.** A lemma that cites nothing which *stays* may
+still cite something that *moves elsewhere*: `sum_sq_le_sq_sum` counted as no
+blocker and broke the build anyway. And library prose must be checked with an
+objective test — does a comment name an identifier declared only in
+`Relative_Arbitrage`? — because reading for paper references misses most of
+them. 28 blocks failed that test; all are rewritten, and numbered results of
+the paper now always carry `\<^cite>\<open>LaiShkolnikovSoner\<close>` so the
+provenance is followable.
 
 *Caution on measuring probe 4.* A comment stripper that counts `(*` depth goes
 unbalanced on `(*` inside Isabelle cartouches and silently eats most of a large
