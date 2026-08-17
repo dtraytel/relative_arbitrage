@@ -1,6 +1,7 @@
 (*<*)
 theory Exit_Class_DPP
   imports Exit_Class_Compactness "Continuous_Path_Spaces.Conditional_UI" "Disintegration.Disintegration"
+    "Continuous_Time_Martingales.Natural_Filtration"
 begin
 
 (*>*)
@@ -1058,147 +1059,11 @@ lemma pfut_measurable_law:
 text \<open>The exit time of the future, expressed through \<open>pfut\<close>: re-basing at the
   endpoint and adding the endpoint back is the identity on the exit time.\<close>
 
-subsection \<open>Conditioning on an event of the past keeps martingales martingales\<close>
-
-text \<open>Conditioning on an event \<open>A\<close> of the past rescales the measure by a
-  density that is measurable for the filtration at time \<open>0\<close>; a set integral
-  over \<open>C \<in> \<F>\<^sub>i\<close> then becomes one over \<open>C \<inter> A \<in> \<F>\<^sub>i\<close>, and the martingale
-  property applies unchanged, with no approximation or monotone-class
-  step.\<close>
-
-lemma uniform_measure_density_real:
-  assumes M: "prob_space M" and pos: "0 < measure M A"
-  shows "uniform_measure M A = density M (\<lambda>x. ennreal (indicator A x / measure M A))"
-proof -
-  interpret PM: prob_space M by (rule M)
-  have "(\<lambda>x. indicator A x / emeasure M A)
-      = (\<lambda>x. ennreal (indicator A x / measure M A))"
-  proof
-    fix x show "indicator A x / emeasure M A = ennreal (indicator A x / measure M A)"
-    proof (cases "x \<in> A")
-      case True
-      have "indicator A x / emeasure M A = ennreal 1 / ennreal (measure M A)"
-        using True by (simp add: PM.emeasure_eq_measure)
-      also have "\<dots> = ennreal (1 / measure M A)"
-        by (rule divide_ennreal[OF _ pos]) simp
-      finally show ?thesis using True by simp
-    next
-      case False
-      then show ?thesis by simp
-    qed
-  qed
-  then show ?thesis unfolding uniform_measure_def by simp
-qed
-
-lemma integral_uniform_measure_eq:
-  fixes f :: "'a \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes M: "prob_space M" and A: "A \<in> sets M" and pos: "0 < measure M A"
-    and f: "f \<in> borel_measurable M"
-  shows "(\<integral>x. f x \<partial>uniform_measure M A)
-      = (\<integral>x. (indicator A x / measure M A) *\<^sub>R f x \<partial>M)"
-proof -
-  have gm: "(\<lambda>x. indicator A x / measure M A) \<in> borel_measurable M"
-    using A by measurable
-  show ?thesis
-    unfolding uniform_measure_density_real[OF M pos]
-    by (rule integral_density[OF f gm]) (use pos in auto)
-qed
-
-lemma integrable_uniform_measureI:
-  fixes f :: "'a \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes M: "prob_space M" and A: "A \<in> sets M" and pos: "0 < measure M A"
-    and f: "integrable M f"
-  shows "integrable (uniform_measure M A) f"
-proof -
-  have fm: "f \<in> borel_measurable M" using f by simp
-  have gm: "(\<lambda>x. indicator A x / measure M A) \<in> borel_measurable M"
-    using A by measurable
-  have i1: "integrable M (\<lambda>x. indicator A x *\<^sub>R f x)"
-    by (rule integrable_mult_indicator[OF A f])
-  have i2: "integrable M (\<lambda>x. (1 / measure M A) *\<^sub>R (indicator A x *\<^sub>R f x))"
-    by (rule integrable_scaleR_right[OF i1])
-  have eq: "(\<lambda>x. (1 / measure M A) *\<^sub>R (indicator A x *\<^sub>R f x))
-      = (\<lambda>x. (indicator A x / measure M A) *\<^sub>R f x)"
-    by (rule ext) (simp add: field_simps)
-  have "integrable (uniform_measure M A) f
-      \<longleftrightarrow> integrable M (\<lambda>x. (indicator A x / measure M A) *\<^sub>R f x)"
-    unfolding uniform_measure_density_real[OF M pos]
-    by (rule integrable_density[OF fm gm]) (use pos in auto)
-  then show ?thesis using i2 eq by simp
-qed
-
-lemma set_integral_uniform_measure_eq:
-  fixes f :: "'a \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes M: "prob_space M" and A: "A \<in> sets M" and pos: "0 < measure M A"
-    and f: "f \<in> borel_measurable M" and C: "C \<in> sets M"
-  shows "set_lebesgue_integral (uniform_measure M A) C f
-      = (1 / measure M A) *\<^sub>R set_lebesgue_integral M (C \<inter> A) f"
-proof -
-  have cm: "(\<lambda>x. indicator C x *\<^sub>R f x) \<in> borel_measurable M" using f C by measurable
-  have "set_lebesgue_integral (uniform_measure M A) C f
-      = (\<integral>x. indicator C x *\<^sub>R f x \<partial>uniform_measure M A)"
-    unfolding set_lebesgue_integral_def ..
-  also have "\<dots> = (\<integral>x. (indicator A x / measure M A) *\<^sub>R (indicator C x *\<^sub>R f x) \<partial>M)"
-    by (rule integral_uniform_measure_eq[OF M A pos cm])
-  also have "\<dots> = (\<integral>x. (1 / measure M A) *\<^sub>R (indicator (C \<inter> A) x *\<^sub>R f x) \<partial>M)"
-    by (intro Bochner_Integration.integral_cong) (auto simp: indicator_def)
-  also have "\<dots> = (1 / measure M A) *\<^sub>R (\<integral>x. indicator (C \<inter> A) x *\<^sub>R f x \<partial>M)"
-    by (rule integral_scaleR_right)
-  finally show ?thesis unfolding set_lebesgue_integral_def .
-qed
-
-theorem martingale_uniform_measure:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes M: "prob_space M" and mg: "martingale M F (0::real) X"
-    and A: "A \<in> sets (F 0)" and pos: "0 < measure M A"
-  shows "martingale (uniform_measure M A) F 0 X"
-proof -
-  interpret PM: prob_space M by (rule M)
-  interpret MG: martingale M F "0::real" X by (rule mg)
-  have F0M: "sets (F 0) \<subseteq> sets M" by (rule MG.sets_F_subset[OF order_refl])
-  have AM: "A \<in> sets M" using A F0M by blast
-  have ea0: "emeasure M A \<noteq> 0" using pos by (simp add: PM.emeasure_eq_measure)
-  have eafin: "emeasure M A \<noteq> \<infinity>" by (simp add: PM.emeasure_eq_measure)
-  interpret PU: prob_space "uniform_measure M A"
-    by (rule prob_space_uniform_measure[OF ea0 eafin])
-  have FU: "filtered_measure (uniform_measure M A) F 0"
-  proof (unfold_locales)
-    show "subalgebra (uniform_measure M A) (F i)" if "0 \<le> i" for i :: real
-      using MG.subalgebras[OF that] by (simp add: subalgebra_def)
-    show "sets (F i) \<le> sets (F j)" if "0 \<le> i" "i \<le> j" for i j :: real
-      by (rule MG.sets_F_mono[OF that])
-  qed
-  interpret FU: finite_filtered_measure "uniform_measure M A" F "0::real"
-    unfolding finite_filtered_measure_def
-    using FU PU.finite_measure_axioms by blast
-  show ?thesis
-  proof (rule FU.martingale_of_set_integral_eq)
-    show "adapted_process (uniform_measure M A) F 0 X"
-      unfolding adapted_process_def adapted_process_axioms_def
-      using FU MG.adapted by blast
-    show "integrable (uniform_measure M A) (X i)" if "0 \<le> i" for i
-      by (rule integrable_uniform_measureI[OF M AM pos MG.integrable[OF that]])
-    fix C and i j :: real
-    assume ij: "0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
-    have CM: "C \<in> sets M" using C MG.sets_F_subset[OF ij(1)] by auto
-    have AFi: "A \<in> sets (F i)" using A MG.sets_F_mono[OF order_refl ij(1)] by auto
-    have CA: "C \<inter> A \<in> sets (F i)" using C AFi by (rule sets.Int)
-    have Xm: "X i \<in> borel_measurable M"
-      by (rule measurable_from_subalg[OF MG.subalgebras[OF ij(1)] MG.adapted[OF ij(1)]])
-    have j0: "0 \<le> j" using ij by simp
-    have Xmj: "X j \<in> borel_measurable M"
-      by (rule measurable_from_subalg[OF MG.subalgebras[OF j0] MG.adapted[OF j0]])
-    have "set_lebesgue_integral (uniform_measure M A) C (X i)
-        = (1 / measure M A) *\<^sub>R set_lebesgue_integral M (C \<inter> A) (X i)"
-      by (rule set_integral_uniform_measure_eq[OF M AM pos Xm CM])
-    also have "\<dots> = (1 / measure M A) *\<^sub>R set_lebesgue_integral M (C \<inter> A) (X j)"
-      using MG.set_integral_eq[OF CA ij(1) ij(2)] by simp
-    also have "\<dots> = set_lebesgue_integral (uniform_measure M A) C (X j)"
-      by (rule set_integral_uniform_measure_eq[OF M AM pos Xmj CM, symmetric])
-    finally show "set_lebesgue_integral (uniform_measure M A) C (X i)
-        = set_lebesgue_integral (uniform_measure M A) C (X j)" .
-  qed
-qed
+text \<open>Conditioning on an event of the past keeps martingales martingales:
+  \<open>uniform_measure_density_real\<close>, \<open>integral_uniform_measure_eq\<close>,
+  \<open>integrable_uniform_measureI\<close>, \<open>set_integral_uniform_measure_eq\<close> and
+  \<open>martingale_uniform_measure\<close> live in
+  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
 
 text \<open>\<open>pair_fst_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness}.\<close>
 
@@ -1470,61 +1335,8 @@ text \<open>The martingale-level form of "pulling out what is known": the AFP's
   conditional-expectation lemma \<open>cond_exp_measurable_mult\<close> feeds the
   cross term of @{thm [source] outerp_diff_compensated}.  The factor must be
   measurable for the filtration at the initial time, not merely somewhere
-  along it, or it is not adapted.\<close>
-
-lemma martingale_mult_measurable:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and v :: "'a \<Rightarrow> real"
-  assumes mg: "martingale M F (0::real) X"
-    and vm: "v \<in> borel_measurable (F 0)"
-    and int: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. v \<omega> * X u \<omega>)"
-  shows "martingale M F 0 (\<lambda>u \<omega>. v \<omega> * X u \<omega>)"
-proof -
-  interpret MG: martingale M F "0::real" X by (rule mg)
-  have FM: "filtered_measure M F (0::real)" by unfold_locales
-  have vFu: "v \<in> borel_measurable (F u)" if u: "0 \<le> u" for u
-  proof -
-    have "subalgebra (F u) (F 0)"
-      using MG.subalgebras[OF u] MG.subalgebras[OF order_refl]
-        MG.sets_F_mono[OF order_refl u]
-      by (simp add: subalgebra_def)
-    then show ?thesis by (rule measurable_from_subalg[OF _ vm])
-  qed
-  have pm: "(\<lambda>\<omega>. v \<omega> * X u \<omega>) \<in> borel_measurable (F u)" if u: "0 \<le> u" for u
-    using vFu[OF u] MG.adapted[OF u] by simp
-  show ?thesis
-  proof (rule MG.martingale_of_set_integral_eq)
-    show "adapted_process M F 0 (\<lambda>u \<omega>. v \<omega> * X u \<omega>)"
-      unfolding adapted_process_def adapted_process_axioms_def
-      using FM pm by blast
-    show "integrable M (\<lambda>\<omega>. v \<omega> * X i \<omega>)" if "0 \<le> i" for i by (rule int[OF that])
-    fix C and i j :: real
-    assume ij: "0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
-    have j0: "0 \<le> j" using ij by simp
-    interpret SF: sigma_finite_subalgebra M "F i" using ij(1) by blast
-    have CM: "C \<in> sets M" using C MG.sets_F_subset[OF ij(1)] by blast
-    have ae1: "AE \<omega> in M. cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<omega>
-        = v \<omega> * cond_exp M (F i) (X j) \<omega>"
-      by (rule SF.cond_exp_measurable_mult(2)
-          [OF int[OF j0] MG.integrable[OF j0] vFu[OF ij(1)]])
-    have ae2: "AE \<omega> in M. X i \<omega> = cond_exp M (F i) (X j) \<omega>"
-      by (rule MG.martingale_property[OF ij(1) ij(2)])
-    have ae: "AE \<omega> in M. cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<omega> = v \<omega> * X i \<omega>"
-      using ae1 ae2 by eventually_elim simp
-    have aeC: "AE \<omega>\<in>C in M. cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<omega> = v \<omega> * X i \<omega>"
-      using ae by (auto elim: eventually_mono)
-    have m1: "cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>) \<in> borel_measurable M"
-      by (rule SF.borel_measurable_cond_exp')
-    have m2: "(\<lambda>\<omega>. v \<omega> * X i \<omega>) \<in> borel_measurable M"
-      using int[OF ij(1)] by simp
-    have "set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X j \<omega>)
-        = set_lebesgue_integral M C (cond_exp M (F i) (\<lambda>\<omega>. v \<omega> * X j \<omega>))"
-      by (rule SF.cond_exp_set_integral[OF int[OF j0] C])
-    also have "\<dots> = set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X i \<omega>)"
-      by (rule set_lebesgue_integral_cong_AE[OF CM m1 m2 aeC])
-    finally show "set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X i \<omega>)
-        = set_lebesgue_integral M C (\<lambda>\<omega>. v \<omega> * X j \<omega>)" ..
-  qed
-qed
+  along it, or it is not adapted.  \<open>martingale_mult_measurable\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 text \<open>The two ingredients @{thm [source] martingale_mult_measurable} needs on
   the way to clause (iv): a product is integrable as soon as both squares
@@ -1553,93 +1365,11 @@ proof -
   show ?thesis by (rule Bochner_Integration.integrable_bound[OF b pm ae])
 qed
 
-lemma martingale_cross_measurable:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and v :: "'a \<Rightarrow> real^'n"
-  assumes mg: "\<And>i. martingale M F (0::real) (\<lambda>t \<omega>. X t \<omega> $ i)"
-    and vm: "\<And>j. (\<lambda>\<omega>. v \<omega> $ j) \<in> borel_measurable (F 0)"
-    and int: "\<And>u i j. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. v \<omega> $ j * X u \<omega> $ i)"
-  shows "martingale M F 0
-      (\<lambda>t \<omega>. (\<chi> i j. X t \<omega> $ i * v \<omega> $ j) + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j))"
-proof (rule martingale_matI)
-  fix p q :: 'n
-  have mgp: "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ p)" by (rule mg)
-  have mgq: "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ q)" by (rule mg)
-  have vmp: "(\<lambda>\<omega>. v \<omega> $ p) \<in> borel_measurable (F 0)" by (rule vm)
-  have vmq: "(\<lambda>\<omega>. v \<omega> $ q) \<in> borel_measurable (F 0)" by (rule vm)
-  have intqp: "integrable M (\<lambda>\<omega>. v \<omega> $ q * X u \<omega> $ p)" if "0 \<le> u" for u
-    by (rule int[OF that])
-  have intpq: "integrable M (\<lambda>\<omega>. v \<omega> $ p * X u \<omega> $ q)" if "0 \<le> u" for u
-    by (rule int[OF that])
-  have m1: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p)"
-    by (rule martingale_mult_measurable[OF mgp vmq intqp])
-  have m2: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ p * X t \<omega> $ q)"
-    by (rule martingale_mult_measurable[OF mgq vmp intpq])
-  have m: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q)"
-    by (rule martingale_add[OF m1 m2])
-  have eq: "(\<lambda>t \<omega>. ((\<chi> i j. X t \<omega> $ i * v \<omega> $ j)
-        + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j)) $ p $ q)
-      = (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q)"
-  proof (intro ext)
-    fix t :: real and \<omega>
-    show "((\<chi> i j. X t \<omega> $ i * v \<omega> $ j) + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j)) $ p $ q
-        = v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q"
-      by (simp add: mult.commute)
-  qed
-  show "martingale M F 0 (\<lambda>t \<omega>.
-      ((\<chi> i j. X t \<omega> $ i * v \<omega> $ j) + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j)) $ p $ q)"
-    unfolding eq by (rule m)
-qed
+text \<open>\<open>martingale_cross_measurable\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-text \<open>Differences of martingales: the subtractive companion to
-  @{thm [source] martingale_add}, needed by the decomposition of
-  @{thm [source] outerp_diff_compensated}.\<close>
-
-lemma martingale_diff:
-  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes mX: "martingale M F (0::real) X" and mY: "martingale M F 0 Y"
-  shows "martingale M F 0 (\<lambda>u \<omega>. X u \<omega> - Y u \<omega>)"
-proof -
-  interpret MX: martingale M F "0::real" X by (rule mX)
-  interpret MY: martingale M F "0::real" Y by (rule mY)
-  have FM: "filtered_measure M F (0::real)" by unfold_locales
-  show ?thesis
-  proof (rule MX.martingale_of_set_integral_eq)
-    have dm: "(\<lambda>\<omega>. X u \<omega> - Y u \<omega>) \<in> borel_measurable (F u)" if u: "0 \<le> u" for u
-      using MX.adapted[OF u] MY.adapted[OF u] by simp
-    show "adapted_process M F 0 (\<lambda>u \<omega>. X u \<omega> - Y u \<omega>)"
-      unfolding adapted_process_def adapted_process_axioms_def
-      using FM dm by blast
-    show "integrable M (\<lambda>\<omega>. X i \<omega> - Y i \<omega>)" if "0 \<le> i" for i
-      using MX.integrable[OF that] MY.integrable[OF that] by simp
-    fix C and i j :: real
-    assume ij: "0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
-    have j0: "0 \<le> j" using ij by simp
-    have CM: "C \<in> sets M" using C MX.sets_F_subset[OF ij(1)] by blast
-    have split: "set_lebesgue_integral M C (\<lambda>\<omega>. X u \<omega> - Y u \<omega>)
-        = set_lebesgue_integral M C (X u) - set_lebesgue_integral M C (Y u)"
-      if u: "0 \<le> u" for u
-    proof -
-      have iX: "integrable M (\<lambda>\<omega>. indicator C \<omega> *\<^sub>R X u \<omega>)"
-        by (rule integrable_mult_indicator[OF CM MX.integrable[OF u]])
-      have iY: "integrable M (\<lambda>\<omega>. indicator C \<omega> *\<^sub>R Y u \<omega>)"
-        by (rule integrable_mult_indicator[OF CM MY.integrable[OF u]])
-      have "(\<integral>\<omega>. indicator C \<omega> *\<^sub>R (X u \<omega> - Y u \<omega>) \<partial>M)
-          = (\<integral>\<omega>. indicator C \<omega> *\<^sub>R X u \<omega> - indicator C \<omega> *\<^sub>R Y u \<omega> \<partial>M)"
-        by (simp add: scaleR_diff_right)
-      also have "\<dots> = (\<integral>\<omega>. indicator C \<omega> *\<^sub>R X u \<omega> \<partial>M)
-          - (\<integral>\<omega>. indicator C \<omega> *\<^sub>R Y u \<omega> \<partial>M)"
-        by (rule Bochner_Integration.integral_diff[OF iX iY])
-      finally show ?thesis unfolding set_lebesgue_integral_def .
-    qed
-    have sX: "set_lebesgue_integral M C (X i) = set_lebesgue_integral M C (X j)"
-      by (rule MX.set_integral_eq[OF C ij(1) ij(2)])
-    have sY: "set_lebesgue_integral M C (Y i) = set_lebesgue_integral M C (Y j)"
-      by (rule MY.set_integral_eq[OF C ij(1) ij(2)])
-    show "set_lebesgue_integral M C (\<lambda>\<omega>. X i \<omega> - Y i \<omega>)
-        = set_lebesgue_integral M C (\<lambda>\<omega>. X j \<omega> - Y j \<omega>)"
-      using split[OF ij(1)] split[OF j0] sX sY by simp
-  qed
-qed
+text \<open>\<open>martingale_diff\<close>, the subtractive companion to \<open>martingale_add\<close>,
+  lives in @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 subsection \<open>The shifted processes of a class member\<close>
 
@@ -2016,54 +1746,8 @@ text \<open>Every condition defining the class is linear in the measure ---
   almost every \<open>\<omega>\<close>" needs only that a \<open>\<G>\<close>-measurable function all of whose
   \<open>\<G>\<close>-set integrals vanish is almost everywhere zero.\<close>
 
-lemma AE_nonpos_of_set_integral_zero:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes G: "subalgebra M G" and int: "integrable M f"
-    and fm: "f \<in> borel_measurable G"
-    and z: "\<And>A. A \<in> sets G \<Longrightarrow> set_lebesgue_integral M A f = 0"
-  shows "AE \<omega> in M. f \<omega> \<le> 0"
-proof -
-  have spG: "space G = space M" using G by (simp add: subalgebra_def)
-  let ?A = "{\<omega> \<in> space G. 0 < f \<omega>}"
-  have A: "?A \<in> sets G" using fm by measurable
-  have AM: "?A \<in> sets M" using A G by (auto simp: subalgebra_def)
-  have ii: "integrable M (\<lambda>\<omega>. indicator ?A \<omega> *\<^sub>R f \<omega>)"
-    by (rule integrable_mult_indicator[OF AM int])
-  have inn: "AE \<omega> in M. 0 \<le> indicator ?A \<omega> *\<^sub>R f \<omega>"
-    by (rule AE_I2) (auto simp: indicator_def)
-  have zi: "(\<integral>\<omega>. indicator ?A \<omega> *\<^sub>R f \<omega> \<partial>M) = 0"
-    using z[OF A] unfolding set_lebesgue_integral_def .
-  have "AE \<omega> in M. indicator ?A \<omega> *\<^sub>R f \<omega> = 0"
-    using ii inn zi by (simp add: integral_nonneg_eq_0_iff_AE)
-  moreover have "AE \<omega> in M. \<omega> \<in> space M" by (rule AE_I2) simp
-  ultimately show ?thesis
-    by eventually_elim (auto simp: indicator_def spG split: if_split_asm)
-qed
-
-lemma AE_zero_of_set_integral_zero:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes G: "subalgebra M G" and int: "integrable M f"
-    and fm: "f \<in> borel_measurable G"
-    and z: "\<And>A. A \<in> sets G \<Longrightarrow> set_lebesgue_integral M A f = 0"
-  shows "AE \<omega> in M. f \<omega> = 0"
-proof -
-  have up: "AE \<omega> in M. f \<omega> \<le> 0"
-    by (rule AE_nonpos_of_set_integral_zero[OF G int fm z])
-  have zn: "set_lebesgue_integral M A (\<lambda>\<omega>. - f \<omega>) = 0" if A: "A \<in> sets G" for A
-  proof -
-    have AM: "A \<in> sets M" using A G by (auto simp: subalgebra_def)
-    have "(\<integral>\<omega>. indicator A \<omega> *\<^sub>R (- f \<omega>) \<partial>M)
-        = (\<integral>\<omega>. - (indicator A \<omega> *\<^sub>R f \<omega>) \<partial>M)" by simp
-    also have "\<dots> = - (\<integral>\<omega>. indicator A \<omega> *\<^sub>R f \<omega> \<partial>M)"
-      by (rule Bochner_Integration.integral_minus)
-    also have "\<dots> = 0" using z[OF A] unfolding set_lebesgue_integral_def by simp
-    finally show ?thesis unfolding set_lebesgue_integral_def .
-  qed
-  have dn: "AE \<omega> in M. - f \<omega> \<le> 0"
-    by (rule AE_nonpos_of_set_integral_zero[OF G integrable_minus[OF int] _ zn])
-       (use fm in simp)
-  show ?thesis using up dn by eventually_elim simp
-qed
+text \<open>\<open>AE_nonpos_of_set_integral_zero\<close> and \<open>AE_zero_of_set_integral_zero\<close> live
+  in @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
 
 subsection \<open>The conditional law of the future given the past\<close>
 
@@ -2575,14 +2259,8 @@ text \<open>@{thm [source] AE_kernel_full} delivers \<open>emeasure (\<kappa> p)
   library's real-valued @{thm [source] prob_space.AE_prob_1} goes through
   @{thm [source] finite_measure.emeasure_eq_measure}.\<close>
 
-lemma AE_mem_of_emeasure_1:
-  assumes PS: "prob_space M" and one: "emeasure M C = 1"
-  shows "AE w in M. w \<in> C"
-proof -
-  interpret PM: prob_space M by (rule PS)
-  have "measure M C = 1" using one by (simp add: PM.emeasure_eq_measure)
-  then show ?thesis by (rule PM.AE_prob_1)
-qed
+text \<open>\<open>AE_mem_of_emeasure_1\<close> lives in
+  @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
 
 text \<open>Clause (ii) for the conditional law, at rational pairs only, since an
   almost-sure statement survives only countably many conditions, which is
@@ -2895,15 +2573,11 @@ text \<open>Two small facts used repeatedly in what follows: the map
   AE_zero_of_set_integral_zero} gets applied in, its \<open>\<G>\<close>-measurability
   supplied by the kernel rather than by a genuine sub-\<open>\<sigma>\<close>-algebra.\<close>
 
-lemma measurable_integral_kernel:
-  fixes h :: "'b \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and hm: "h \<in> borel_measurable N"
-  shows "(\<lambda>\<omega>. \<integral>\<omega>'. h \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
-  by (rule measurable_compose[OF measurable_prob_algebraD[OF K]
-      integral_measurable_subprob_algebra[OF hm]])
+text \<open>\<open>measurable_integral_kernel\<close> lives in
+  @{theory Continuous_Time_Martingales.Semidirect_Kernels}.\<close>
 
-lemma subalgebra_self: "subalgebra M M"
-  by (simp add: subalgebra_def)
+text \<open>\<open>subalgebra_self\<close> lives in
+  @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
 
 text \<open>At the \<open>ksemi\<close> level: if every rectangle integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close>
   vanishes, then the kernel's own integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes almost
@@ -3341,16 +3015,8 @@ text \<open>What @{thm [source] integral_ksemi_rect_of_set_integral} hands to th
   over the cut law's natural filtration, and the future factor is in
   \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> by @{thm [source] pfut_filtration_measurable}.\<close>
 
-lemma sets_natural_filtration_mono:
-  fixes i j :: "'b :: {second_countable_topology, order_topology}"
-  assumes ij: "i \<le> j"
-  shows "sets (natural_filtration M t\<^sub>0 X i) \<subseteq> sets (natural_filtration M t\<^sub>0 X j)"
-  unfolding sets_natural_filtration using ij by (intro sigma_sets_subseteq) force
-
-lemma natural_filtration_cong_space:
-  assumes "space M = space N"
-  shows "natural_filtration M t\<^sub>0 X t = natural_filtration N t\<^sub>0 X t"
-  unfolding natural_filtration_def using assms by simp
+text \<open>\<open>sets_natural_filtration_mono\<close> and \<open>natural_filtration_cong_space\<close> live
+  in @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
 
 lemma pcut_vimage_natural_filtration:
   fixes P :: "('n::finite pairpath) measure"
@@ -3917,58 +3583,10 @@ text \<open>The conditioning set \<open>A'\<close> of @{thm [source] pfut_rcd_X_
   lemma is stated for a general measure and generating \<open>\<pi>\<close>-system, and also
   serves clause (iv).\<close>
 
-lemma set_integral_zero_of_generator:
-  fixes g :: "'a \<Rightarrow> real"
-  assumes G: "subalgebra M G"
-    and gi: "integrable M g"
-    and Est: "Int_stable E"
-    and Epow: "E \<subseteq> Pow (space M)"
-    and Egen: "sets G = sigma_sets (space M) E"
-    and Esp: "space M \<in> E"
-    and z: "\<And>B. B \<in> E \<Longrightarrow> set_lebesgue_integral M B g = 0"
-    and A: "A \<in> sets G"
-  shows "set_lebesgue_integral M A g = 0"
-proof -
-  have GM: "sets G \<subseteq> sets M" using G by (simp add: subalgebra_def)
-  have inM: "B \<in> sets M" if "B \<in> sigma_sets (space M) E" for B
-    using that GM Egen by auto
-  have si: "set_integrable M B g" if "B \<in> sets M" for B
-    unfolding set_integrable_def by (rule integrable_mult_indicator[OF that gi])
-  have Asig: "A \<in> sigma_sets (space M) E" using A Egen by simp
-  from Est Epow Asig show ?thesis
-  proof (induction rule: sigma_sets_induct_disjoint)
-    case (basic B)
-    then show ?case by (rule z)
-  next
-    case empty
-    show ?case by (simp add: set_lebesgue_integral_def)
-  next
-    case (compl B)
-    have BM: "B \<in> sets M" by (rule inM[OF compl.hyps])
-    have CM: "space M - B \<in> sets M" using BM by (rule sets.compl_sets)
-    have "set_lebesgue_integral M ((space M - B) \<union> B) g
-        = set_lebesgue_integral M (space M - B) g
-          + set_lebesgue_integral M B g"
-      by (rule set_integral_Un[OF _ si[OF CM] si[OF BM]]) auto
-    moreover have "(space M - B) \<union> B = space M"
-      using sets.sets_into_space[OF BM] by auto
-    ultimately have "set_lebesgue_integral M (space M) g
-        = set_lebesgue_integral M (space M - B) g
-          + set_lebesgue_integral M B g" by simp
-    then show ?case using z[OF Esp] compl.IH by simp
-  next
-    case (union F)
-    have FM: "F i \<in> sets M" for i using union.hyps(2) inM by blast
-    have UM: "(\<Union>i. F i) \<in> sets M"
-      by (rule sets.countable_nat_UN) (use FM in auto)
-    have "set_lebesgue_integral M (\<Union>i. F i) g
-        = (\<Sum>i. set_lebesgue_integral M (F i) g)"
-      by (rule lebesgue_integral_countable_add[OF FM _ si[OF UM]])
-         (use union.hyps(1) in \<open>auto simp: disjoint_family_on_def\<close>)
-    also have "\<dots> = 0" using union.IH by simp
-    finally show ?case .
-  qed
-qed
+text \<open>\<open>set_integral_zero_of_generator\<close> lives in
+  @{theory Continuous_Time_Martingales.Natural_Filtration}: passing the
+  vanishing of set integrals from a generating \<open>\<pi>\<close>-system to the whole
+  generated \<open>\<sigma>\<close>-algebra.\<close>
 
 text \<open>The \<open>\<pi>\<close>-system for the previous lemma: \<open>\<F>\<^sub>s\<close> is the pullback of the
   \<open>s\<close>-path space's Borel sets along \<^const>\<open>pcut\<close>, via @{thm [source]
@@ -6094,14 +5712,8 @@ text \<open>The mixed kernel itself: optimal on a chosen event of the past, the
   @{thm [source] measurable_If}; the event has to be one the past can see,
   which for \<open>{\<theta> = t}\<close> is exactly the stopping-time property.\<close>
 
-lemma kernel_mix_measurable:
-  assumes A: "A \<in> sets G"
-    and K1: "\<kappa>1 \<in> G \<rightarrow>\<^sub>M prob_algebra N" and K2: "\<kappa>2 \<in> G \<rightarrow>\<^sub>M prob_algebra N"
-  shows "(\<lambda>p. if p \<in> A then \<kappa>1 p else \<kappa>2 p) \<in> G \<rightarrow>\<^sub>M prob_algebra N"
-proof (rule measurable_If[OF K1 K2])
-  have "{p \<in> space G. p \<in> A} = A" using A sets.sets_into_space by auto
-  then show "{p \<in> space G. p \<in> A} \<in> sets G" using A by simp
-qed
+text \<open>\<open>kernel_mix_measurable\<close> lives in
+  @{theory Continuous_Time_Martingales.Semidirect_Kernels}.\<close>
 
 text \<open>The one-step engine of the stopping-time construction: glue \<open>P\<close> at a
   fixed time \<open>r\<close> with a kernel that plays the optimal continuation on a
@@ -9062,59 +8674,9 @@ text \<open>The assembly.  Every hypothesis of
 text \<open>The same identity for an arbitrary real process that is a
   \<open>horizon_sq_int_martingale\<close> with continuous paths.  Both of the class's
   martingale clauses are of that shape --- the \<open>X\<close> one componentwise, the
-  compensated one entrywise --- so this is the form clause (iv) uses twice.\<close>
-
-text \<open>The matrix-entry analogue of
-  @{thm [source] martingale_vec_component}, which is typed for real entries
-  and so does not reach the compensated clause.  The repo already has the
-  three ingredients (@{thm [source] measurable_mat_entries},
-  @{thm [source] integrable_mat_entries},
-  @{thm [source] set_integral_mat_component}); this just assembles them.\<close>
-
-lemma martingale_mat_component:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite^'n"
-  assumes mg: "martingale M F 0 X"
-  shows "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ c $ d)"
-proof -
-  interpret Mg: martingale M F 0 X by (rule mg)
-  have A_M: "A \<in> sets M" if i: "0 \<le> i" and A: "A \<in> sets (F i)" for A i
-  proof -
-    have "sets (F i) \<subseteq> sets M"
-      using Mg.subalgebras[OF i] by (simp add: subalgebra_def)
-    then show ?thesis using A by blast
-  qed
-  have bl: "bounded_linear (\<lambda>Z :: real^'n^'n. Z $ c $ d)"
-    by (rule bounded_linear_compose[OF bounded_linear_vec_nth
-          bounded_linear_vec_nth])
-  have compmeas: "(\<lambda>\<omega>. X i \<omega> $ c $ d) \<in> borel_measurable (F i)"
-    if i: "0 \<le> i" for i
-  proof -
-    have "(\<lambda>\<omega>. X i \<omega> \<bullet> (axis c (axis d 1) :: real^'n^'n))
-        \<in> borel_measurable (F i)"
-      by (intro borel_measurable_inner borel_measurable_const Mg.adapted[OF i])
-    then show ?thesis by (simp add: inner_axis)
-  qed
-  have compint: "integrable M (\<lambda>\<omega>. X i \<omega> $ c $ d)" if i: "0 \<le> i" for i
-    by (rule integrable_bounded_linear[OF bl Mg.integrable[OF i]])
-  show ?thesis  proof (rule Mg.martingale_of_set_integral_eq)
-    show "adapted_process M F 0 (\<lambda>t \<omega>. X t \<omega> $ c $ d)"
-    proof (intro adapted_process.intro adapted_process_axioms.intro)
-      show "filtered_measure M F 0" by unfold_locales
-      show "\<And>i. 0 \<le> i \<Longrightarrow> (\<lambda>\<omega>. X i \<omega> $ c $ d) \<in> borel_measurable (F i)"
-        by (rule compmeas)
-    qed
-    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> $ c $ d)" by (rule compint)
-    fix A and i j :: real
-    assume i: "0 \<le> i" and ij: "i \<le> j" and A: "A \<in> sets (F i)"
-    have j: "0 \<le> j" using i ij by simp
-    have AM: "A \<in> sets M" by (rule A_M[OF i A])
-    show "set_lebesgue_integral M A (\<lambda>\<omega>. X i \<omega> $ c $ d)
-        = set_lebesgue_integral M A (\<lambda>\<omega>. X j \<omega> $ c $ d)"
-      unfolding set_integral_mat_component[OF AM Mg.integrable[OF i]]
-        set_integral_mat_component[OF AM Mg.integrable[OF j]]
-      using Mg.set_integral_eq[OF A i ij] by simp
-  qed
-qed
+  compensated one entrywise --- so this is the form clause (iv) uses twice.
+  \<open>martingale_mat_component\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 text \<open>Square-integrability of the compensated entry, from its
   nonnegative-integral bound.  This is the second half of what
@@ -13507,47 +13069,8 @@ text \<open>@{thm [source] exit_class_aglue} asks its continuation kernel for
   needs to push the martingale forward along \<^const>\<open>pembed\<close>.  A delayed
   path carries no extra information at time \<open>u\<close>, which is why the
   martingale property survives the delay; taking the base's own filtration
-  instead would make the statement false.\<close>
-
-lemma martingale_time_change_cong:
-  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes mg: "martingale M F (0::real) X"
-    and s0: "\<And>u :: real. 0 \<le> u \<Longrightarrow> 0 \<le> \<sigma> u"
-    and smono: "\<And>u v :: real. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> \<sigma> u \<le> \<sigma> v"
-    and eq: "\<And>u :: real. 0 \<le> u \<Longrightarrow> Y u = X (\<sigma> u)"
-  shows "martingale M (\<lambda>u. F (\<sigma> u)) 0 Y"
-proof -
-  interpret MG: martingale M F "0::real" X by (rule mg)
-  have FMs: "filtered_measure M (\<lambda>u. F (\<sigma> u)) (0::real)"
-  proof (unfold_locales)
-    show "subalgebra M (F (\<sigma> i))" if "0 \<le> i" for i :: real
-      by (rule MG.subalgebras[OF s0[OF that]])
-    show "sets (F (\<sigma> i)) \<le> sets (F (\<sigma> j))" if "0 \<le> i" "i \<le> j" for i j :: real
-      by (rule MG.sets_F_mono[OF s0[OF that(1)] smono[OF that]])
-  qed
-  interpret SF: sigma_finite_filtered_measure M "\<lambda>u. F (\<sigma> u)" "0::real"
-    unfolding sigma_finite_filtered_measure_def
-      sigma_finite_filtered_measure_axioms_def
-    using FMs MG.sigma_finite_subalgebra_F[OF s0[OF order_refl]] by blast
-  have adY: "Y i \<in> borel_measurable (F (\<sigma> i))" if i: "0 \<le> i" for i :: real
-    unfolding eq[OF i] by (rule MG.adapted[OF s0[OF i]])
-  show ?thesis
-  proof (rule SF.martingale_of_set_integral_eq)
-    show "adapted_process M (\<lambda>u. F (\<sigma> u)) 0 Y"
-      unfolding adapted_process_def adapted_process_axioms_def
-      using FMs adY by blast
-    show "integrable M (Y i)" if i: "0 \<le> i" for i :: real
-      unfolding eq[OF i] by (rule MG.integrable[OF s0[OF i]])
-    show "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (Y j)"
-      if ij: "0 \<le> i" "i \<le> j" and A: "A \<in> sets (F (\<sigma> i))" for A and i j :: real
-    proof -
-      have j0: "0 \<le> j" using ij by simp
-      show ?thesis
-        unfolding eq[OF ij(1)] eq[OF j0]
-        by (rule MG.set_integral_eq[OF A s0[OF ij(1)] smono[OF ij]])
-    qed
-  qed
-qed
+  instead would make the statement false.  \<open>martingale_time_change_cong\<close>
+  lives in @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 lemma path_eval_natural_filtration:
   fixes M :: "('n::finite pairpath) measure"
@@ -13863,32 +13386,8 @@ subsection \<open>Mean, integrability and the increment identity\<close>
 text \<open>A martingale that starts at \<open>0\<close> has mean \<open>0\<close> at every later time; the
   set-integral identity over the whole space is the case \<open>i = 0\<close> of the
   martingale property, and @{thm [source] pdelclass_frozen_at} supplies the
-  start.\<close>
-
-lemma martingale_mean_zero_of_start:
-  fixes M :: "'a measure"
-    and Z :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes mg: "martingale M F (0::real) Z"
-    and z0: "AE \<omega> in M. Z 0 \<omega> = 0" and u: "0 \<le> u"
-  shows "(\<integral>\<omega>. Z u \<omega> \<partial>M) = 0"
-proof -
-  interpret MG: martingale M F "0::real" Z by (rule mg)
-  have sub: "subalgebra M (F 0)" by (rule MG.subalgebras[OF order.refl])
-  have spF: "space (F 0) = space M" using sub by (simp add: subalgebra_def)
-  have top: "space M \<in> sets (F 0)" using sets.top[of "F 0"] spF by simp
-  have i0: "integrable M (Z 0)" by (rule MG.integrable[OF order.refl])
-  have iu: "integrable M (Z u)" by (rule MG.integrable[OF u])
-  have m0: "Z 0 \<in> borel_measurable M"
-    using i0 by (simp add: borel_measurable_integrable)
-  have "(\<integral>\<omega>. Z u \<omega> \<partial>M) = set_lebesgue_integral M (space M) (Z u)"
-    by (rule set_integral_space[OF iu, symmetric])
-  also have "\<dots> = set_lebesgue_integral M (space M) (Z 0)"
-    by (rule MG.set_integral_eq[OF top order.refl u, symmetric])
-  also have "\<dots> = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)" by (rule set_integral_space[OF i0])
-  also have "\<dots> = (\<integral>\<omega>. 0 \<partial>M)"
-    by (rule integral_cong_AE[OF m0 borel_measurable_const z0])
-  finally show ?thesis by simp
-qed
+  start.  \<open>martingale_mean_zero_of_start\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 lemma pdelclass_start_zero:
   fixes \<nu> :: "('n::finite pairpath) measure"
@@ -14938,78 +14437,11 @@ text \<open>Three generic facts about \<^const>\<open>ksemi\<close>, all from
   uniform first moments of the delayed class these discharge every side
   condition of the additive glue.\<close>
 
-lemma integral_kernel_measurable:
-  fixes g :: "'a \<Rightarrow> 'b \<Rightarrow> real"
-  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N"
-    and gm: "(\<lambda>p. g (fst p) (snd p)) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
-    and gi: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> integrable (Kr \<omega>) (g \<omega>)"
-  shows "(\<lambda>\<omega>. \<integral>\<omega>'. g \<omega> \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
-proof -
-  define A where "A \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (g \<omega> \<omega>') \<partial>(Kr \<omega>))" for \<omega>
-  define B where "B \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (- g \<omega> \<omega>') \<partial>(Kr \<omega>))" for \<omega>
-  have Ksub: "Kr \<in> M \<rightarrow>\<^sub>M subprob_algebra N"
-    by (rule measurable_prob_algebraD[OF K])
-  have mA: "A \<in> borel_measurable M"
-    unfolding A_def
-    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
-       (use gm in \<open>simp add: case_prod_unfold\<close>)
-  have mB: "B \<in> borel_measurable M"
-    unfolding B_def
-    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
-       (use gm in \<open>simp add: case_prod_unfold\<close>)
-  have mAB: "(\<lambda>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>)) \<in> borel_measurable M"
-    using mA mB by measurable
-  show ?thesis
-  proof (subst measurable_cong)
-    fix \<omega> assume w: "\<omega> \<in> space M"
-    show "(\<integral>\<omega>'. g \<omega> \<omega>' \<partial>(Kr \<omega>)) = enn2real (A \<omega>) - enn2real (B \<omega>)"
-      unfolding A_def B_def by (rule real_lebesgue_integral_def[OF gi[OF w]])
-  next
-    show "(\<lambda>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>)) \<in> borel_measurable M"
-      by (rule mAB)
-  qed
-qed
-
-text \<open>The workhorse: the inner bound may itself be a function of the past, as
-  long as that function is integrable.  This covers all three shapes the
-  glue produces --- a constant (the continuation's own moment),
-  \<open>norm (f \<omega>)\<close> (the past's), and \<open>norm (f \<omega>) * C\<close> (the cross term that
-  \<^const>\<open>outerp\<close> being quadratic creates).\<close>
-
-lemma integrable_ksemi_of_past_bound:
-  fixes g :: "'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes K: "Kr \<in> M \<rightarrow>\<^sub>M prob_algebra N" and ne: "space M \<noteq> {}"
-    and gm: "g \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
-    and hi: "integrable M h"
-    and bnd: "\<And>\<omega>. \<omega> \<in> space M
-      \<Longrightarrow> (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal (h \<omega>)"
-  shows "integrable (ksemi M N Kr) g"
-proof -
-  have setsS: "sets (ksemi M N Kr) = sets (M \<Otimes>\<^sub>M N)"
-    by (rule sets_ksemi[OF K ne])
-  have gmS: "g \<in> borel_measurable (ksemi M N Kr)"
-    using gm measurable_cong_sets[OF setsS refl] by blast
-  have gabs: "(\<lambda>p. ennreal (norm (g p))) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
-    using gm by measurable
-  have "(\<integral>\<^sup>+p. ennreal (norm (g p)) \<partial>(ksemi M N Kr))
-      = (\<integral>\<^sup>+\<omega>. (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<partial>M)"
-    using nn_integral_ksemi[OF K gabs] by simp
-  also have "\<dots> \<le> (\<integral>\<^sup>+\<omega>. ennreal (norm (h \<omega>)) \<partial>M)"
-  proof (rule nn_integral_mono_AE)
-    show "AE \<omega> in M.
-        (\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal (norm (h \<omega>))"
-    proof (rule eventually_mono[OF AE_space])
-      fix \<omega> assume w: "\<omega> \<in> space M"
-      have "(\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>)) \<le> ennreal (h \<omega>)"
-        by (rule bnd[OF w])
-      also have "\<dots> \<le> ennreal (norm (h \<omega>))" by (intro ennreal_leI) simp
-      finally show "(\<integral>\<^sup>+\<omega>'. ennreal (norm (g (\<omega>, \<omega>'))) \<partial>(Kr \<omega>))
-          \<le> ennreal (norm (h \<omega>))" .
-    qed
-  qed
-  also have "\<dots> < \<top>" using hi by (simp add: integrable_iff_bounded)
-  finally show ?thesis using gmS by (simp add: integrable_iff_bounded)
-qed
+text \<open>\<open>integral_kernel_measurable\<close> and \<open>integrable_ksemi_of_past_bound\<close> (the
+  workhorse: the inner bound may itself be a function of the past, as long
+  as that function is integrable --- covering all three shapes the glue
+  produces, a constant, \<open>norm (f \<omega>)\<close>, and \<open>norm (f \<omega>) * C\<close>) live in
+  @{theory Continuous_Time_Martingales.Semidirect_Kernels}.\<close>
 
 subsection \<open>\<open>RXint\<close> and \<open>RCint\<close>\<close>
 

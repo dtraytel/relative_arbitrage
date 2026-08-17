@@ -18,6 +18,10 @@ session Continuous_Time_Martingales = "HOL-Probability" +
     Vitali_Convergence
     Modification_Transfer
     Stopping_Times
+    Natural_Filtration
+    Semidirect_Kernels
+    Martingale_Algebra
+    Martingale_Transfer
   document_files
     "root.tex"
     "root.bib"

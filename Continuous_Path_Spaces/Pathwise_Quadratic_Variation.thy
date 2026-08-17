@@ -3,6 +3,7 @@ section \<open>Quadratic variation in continuous time, along dyadic partitions\<
 (*<*)
 theory Pathwise_Quadratic_Variation
   imports "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Martingale_Algebra"
 begin
 (*>*)
 
@@ -19,37 +20,8 @@ text \<open>
   surely and no subsequence is needed.
 \<close>
 
-subsection \<open>Martingales form a vector space\<close>
-
-text \<open>The AFP entry does not record the difference; both integrability side
-  conditions of \<open>cond_exp_diff\<close> come straight from the two locales.\<close>
-
-lemma martingale_diff:
-  fixes X Y :: "'b :: {second_countable_topology, order_topology, t2_space}
-    \<Rightarrow> 'a \<Rightarrow> 'c :: {second_countable_topology, banach}"
-  assumes MX: "martingale M F t0 X" and MY: "martingale M F t0 Y"
-  shows "martingale M F t0 (\<lambda>i \<omega>. X i \<omega> - Y i \<omega>)"
-proof -
-  interpret MX: martingale M F t0 X by (rule MX)
-  interpret MY: martingale M F t0 Y by (rule MY)
-  show ?thesis
-  proof (unfold_locales)
-    show "\<And>i. t0 \<le> i \<Longrightarrow> (\<lambda>\<omega>. X i \<omega> - Y i \<omega>) \<in> borel_measurable (F i)"
-      using MX.adapted MY.adapted by simp
-    show "\<And>i. t0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> - Y i \<omega>)"
-      using MX.integrable MY.integrable by simp
-    fix i j assume ij: "t0 \<le> i" "i \<le> j"
-    then have j: "t0 \<le> j" by simp
-    have "AE \<omega> in M. cond_exp M (F i) (\<lambda>\<omega>. X j \<omega> - Y j \<omega>) \<omega>
-        = cond_exp M (F i) (X j) \<omega> - cond_exp M (F i) (Y j) \<omega>"
-      by (rule sigma_finite_subalgebra.cond_exp_diff
-            [OF MX.sigma_finite_subalgebra_F[OF ij(1)]
-                MX.integrable[OF j] MY.integrable[OF j]])
-    then show "AE \<omega> in M. X i \<omega> - Y i \<omega>
-        = cond_exp M (F i) (\<lambda>\<omega>. X j \<omega> - Y j \<omega>) \<omega>"
-      using MX.martingale_property[OF ij] MY.martingale_property[OF ij] by force
-  qed
-qed
+text \<open>\<open>martingale_diff\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 subsection \<open>The compensator relation, conditionally\<close>
 
@@ -876,19 +848,8 @@ definition qvmat :: "(real \<Rightarrow> real^'n::finite) \<Rightarrow> real \<R
   "qvmat w t = (\<chi> i. \<chi> j. (qvps (\<lambda>s. w s $ i + w s $ j) t
                             - qvps (\<lambda>s. w s $ i + (- 1) * (w s $ j)) t) / 4)"
 
-text \<open>A matrix-valued function is Borel as soon as its entries are: the inner
-  product with any fixed matrix is a finite sum of products of entries.\<close>
-
-lemma measurable_mat_entries:
-  fixes Z :: "'b \<Rightarrow> real^'n::finite^'n"
-  assumes ent: "\<And>i j. (\<lambda>\<omega>. Z \<omega> $ i $ j) \<in> borel_measurable N"
-  shows "Z \<in> borel_measurable N"
-proof (subst borel_measurable_euclidean_space, safe)
-  fix b :: "real^'n^'n"
-  have "(\<lambda>\<omega>. Z \<omega> \<bullet> b) = (\<lambda>\<omega>. \<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. Z \<omega> $ i $ j * b $ i $ j)"
-    by (simp add: inner_vec_def)
-  then show "(\<lambda>\<omega>. Z \<omega> \<bullet> b) \<in> borel_measurable N" using ent by simp
-qed
+text \<open>\<open>measurable_mat_entries\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 lemma qvmat_measurable:
   fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> real^'n::finite" and N :: "'b measure"

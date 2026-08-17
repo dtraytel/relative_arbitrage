@@ -5,6 +5,7 @@ theory Brownian_Market
     "Wiener_Measure.Brownian_Motion"
     Volatile_Market
     "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras"
+    "Continuous_Time_Martingales.Martingale_Algebra"
 begin
 
 (*>*)
@@ -682,17 +683,8 @@ qed
 
 section \<open>The market process\<close>
 
-lemma measurable_vec_components [measurable]:
-  fixes f :: "'i::finite \<Rightarrow> 'a \<Rightarrow> real"
-  assumes "\<And>i. (\<lambda>x. f i x) \<in> borel_measurable M"
-  shows "(\<lambda>x. (\<chi> i. f i x) :: real^'i) \<in> borel_measurable M"
-proof (subst borel_measurable_euclidean_space, safe)
-  fix b :: "real^'i" assume "b \<in> Basis"
-  then obtain i where b: "b = axis i 1"
-    by (auto simp: Basis_vec_def)
-  show "(\<lambda>x. ((\<chi> i. f i x) :: real^'i) \<bullet> b) \<in> borel_measurable M"
-    unfolding b by (simp add: inner_axis assms)
-qed
+text \<open>\<open>measurable_vec_components\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 definition bmX :: "real^'n::finite \<Rightarrow> real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n"
   where "bmX x0 t \<omega> = x0 + (\<chi> i. \<omega> i t)"
@@ -1126,28 +1118,8 @@ proof -
       \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = 0" .
 qed
 
-lemma integrable_vec_components:
-  fixes f :: "'i::finite \<Rightarrow> 'a \<Rightarrow> real"
-  assumes f: "\<And>i. integrable M (f i)"
-  shows "integrable M (\<lambda>x. (\<chi> i. f i x) :: real^'i)"
-proof -
-  have comp: "(\<Sum>k\<in>(UNIV :: 'i set). f k x * axis k 1 $ j) = f j x"
-    for x j
-  proof -
-    have "(\<Sum>k\<in>(UNIV :: 'i set). f k x * axis k 1 $ j)
-        = (\<Sum>k\<in>(UNIV :: 'i set). if k = j then f k x else 0)"
-      by (intro sum.cong refl) (simp add: axis_def)
-    also have "\<dots> = f j x"
-      by simp
-    finally show ?thesis .
-  qed
-  have eq: "(\<lambda>x. (\<chi> i. f i x) :: real^'i)
-      = (\<lambda>x. \<Sum>i\<in>UNIV. f i x *\<^sub>R axis i 1)"
-    by (simp add: fun_eq_iff vec_eq_iff comp)
-  show ?thesis
-    unfolding eq
-    by (intro Bochner_Integration.integrable_sum integrable_scaleR_left f)
-qed
+text \<open>\<open>integrable_vec_components\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 lemma bmX_integrable:
   fixes x0 :: "real^'n::finite"

@@ -1908,62 +1908,8 @@ proof -
   qed
 qed
 
-lemma martingale_bounded_test:
-  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and Z :: "'a \<Rightarrow> real"
-  assumes mg: "martingale M F (0::real) Y"
-    and st: "0 \<le> s" and ts: "s \<le> t"
-    and Zm: "Z \<in> borel_measurable (F s)"
-    and int_t: "integrable M (\<lambda>\<omega>. Z \<omega> * Y t \<omega>)"
-    and int_s: "integrable M (\<lambda>\<omega>. Z \<omega> * Y s \<omega>)"
-  shows "(\<integral>\<omega>. Z \<omega> * Y t \<omega> \<partial>M) = (\<integral>\<omega>. Z \<omega> * Y s \<omega> \<partial>M)"
-proof -
-  interpret MY: martingale M F 0 Y by (rule mg)
-  have t0: "0 \<le> t" using st ts by linarith
-  interpret sfs: sigma_finite_subalgebra M "F s"
-    by (rule MY.sigma_finite_subalgebra_F[OF st])
-  have sp: "space M \<in> sets (F s)"
-    using sets.top[of "F s"] MY.space_F[OF st] by simp
-  have mp: "AE \<omega> in M. Y s \<omega> = cond_exp M (F s) (Y t) \<omega>"
-    by (rule MY.martingale_property[OF st ts])
-  have ZM: "Z \<in> borel_measurable M"
-    by (rule measurable_from_subalg[OF MY.subalgebras[OF st] Zm])
-  have cM: "cond_exp M (F s) (Y t) \<in> borel_measurable M"
-    by (rule measurable_from_subalg[OF MY.subalgebras[OF st]
-        borel_measurable_cond_exp])
-  have cPM: "cond_exp M (F s) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>) \<in> borel_measurable M"
-    by (rule measurable_from_subalg[OF MY.subalgebras[OF st]
-        borel_measurable_cond_exp])
-  have m1: "(\<lambda>\<omega>. Z \<omega> * Y s \<omega>) \<in> borel_measurable M"
-    by (rule borel_measurable_integrable[OF int_s])
-  have m2: "(\<lambda>\<omega>. Z \<omega> * cond_exp M (F s) (Y t) \<omega>) \<in> borel_measurable M"
-    by (intro borel_measurable_times ZM cM)
-  have e1: "(\<integral>\<omega>. Z \<omega> * Y s \<omega> \<partial>M)
-      = (\<integral>\<omega>. Z \<omega> * cond_exp M (F s) (Y t) \<omega> \<partial>M)"
-    using mp by (intro integral_cong_AE m1 m2) auto
-  have mult: "AE \<omega> in M. cond_exp M (F s) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>) \<omega>
-      = Z \<omega> * cond_exp M (F s) (Y t) \<omega>"
-    by (rule sfs.cond_exp_measurable_mult(2)[OF int_t MY.integrable[OF t0] Zm])
-  have e2: "(\<integral>\<omega>. Z \<omega> * cond_exp M (F s) (Y t) \<omega> \<partial>M)
-      = (\<integral>\<omega>. cond_exp M (F s) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>) \<omega> \<partial>M)"
-    using mult by (intro integral_cong_AE m2 cPM) auto
-  have e3: "(\<integral>\<omega>. cond_exp M (F s) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>) \<omega> \<partial>M)
-      = (\<integral>\<omega>. Z \<omega> * Y t \<omega> \<partial>M)"
-  proof -
-    have s1: "set_lebesgue_integral M (space M)
-        (cond_exp M (F s) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>))
-        = set_lebesgue_integral M (space M) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>)"
-      using sfs.cond_exp_set_integral[OF int_t sp] by simp
-    have s2: "set_lebesgue_integral M (space M)
-        (cond_exp M (F s) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>))
-        = (\<integral>\<omega>. cond_exp M (F s) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>) \<omega> \<partial>M)"
-      by (rule set_integral_space[OF integrable_cond_exp])
-    have s3: "set_lebesgue_integral M (space M) (\<lambda>\<omega>. Z \<omega> * Y t \<omega>)
-        = (\<integral>\<omega>. Z \<omega> * Y t \<omega> \<partial>M)"
-      by (rule set_integral_space[OF int_t])
-    show ?thesis using s1 s2 s3 by simp
-  qed
-  from e1 e2 e3 show ?thesis by simp
-qed
+text \<open>\<open>martingale_bounded_test\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 lemma martingale_test_functional_cont:
   fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
