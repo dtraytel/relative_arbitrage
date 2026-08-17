@@ -206,6 +206,120 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>Shifts by a multiple of the identity, and bounds from a basis\<close>
+
+text \<open>These arrived with the doubling toolbox, which needs the quadratic
+  form of a matrix shifted by \<open>\<delta> I\<close>, the entrywise reading of a linear
+  map through \<open>axis\<close>, and the crude operator bound that follows from a
+  uniform bound on the coordinates.\<close>
+
+lemma quad_form_shift_identity:
+  fixes A :: "real^'n::finite^'n" and k :: "real^'n"
+  shows "k \<bullet> ((A + \<delta> *\<^sub>R mat 1) *v k) = k \<bullet> (A *v k) + \<delta> * (norm k)\<^sup>2"
+proof -
+  have "(A + \<delta> *\<^sub>R mat 1) *v k = A *v k + \<delta> *\<^sub>R k"
+    by (simp add: matrix_vector_mult_add_rdistrib
+        scaleR_matrix_vector_assoc[symmetric])
+  then have "k \<bullet> ((A + \<delta> *\<^sub>R mat 1) *v k) = k \<bullet> (A *v k) + k \<bullet> (\<delta> *\<^sub>R k)"
+    by (simp add: inner_add_right)
+  then show ?thesis
+    by (simp add: dot_square_norm)
+qed
+
+lemma matrix_vector_neg_left:
+  fixes B :: "real^'n::finite^'n"
+  shows "(- B) *v x = - (B *v x)"
+  by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
+
+lemma quad_form_shift_identity_neg:
+  fixes A :: "real^'n::finite^'n" and k :: "real^'n"
+  shows "k \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v k) = k \<bullet> (A *v k) - \<delta> * (norm k)\<^sup>2"
+proof -
+  have "(A - \<delta> *\<^sub>R mat 1) *v k = A *v k - \<delta> *\<^sub>R k"
+    by (simp add: matrix_vector_mult_diff_rdistrib
+        scaleR_matrix_vector_assoc[symmetric])
+  then have "k \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v k) = k \<bullet> (A *v k) - k \<bullet> (\<delta> *\<^sub>R k)"
+    by (simp add: inner_diff_right)
+  then show ?thesis
+    by (simp add: dot_square_norm)
+qed
+
+lemma matrix_vector_mult_diff_gen:
+  fixes Z :: "real^'n::finite^'n"
+  shows "Z *v (u - v) = Z *v u - Z *v v"
+  by (simp add: matrix_vector_mult_def vec_eq_iff sum_subtractf algebra_simps)
+
+lemma matrix_vector_mult_scaleR_gen:
+  fixes Z :: "real^'n::finite^'n"
+  shows "Z *v (s *\<^sub>R u) = s *\<^sub>R (Z *v u)"
+  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left
+      algebra_simps)
+
+lemma inner_matrix_sym:
+  fixes Z :: "real^'n::finite^'n"
+  assumes s: "transpose Z = Z"
+  shows "v \<bullet> (Z *v z) = z \<bullet> (Z *v v)"
+proof -
+  have zij: "Z $ i $ j = Z $ j $ i" for i j
+  proof -
+    have "Z $ i $ j = (transpose Z) $ i $ j" using s by simp
+    also have "\<dots> = Z $ j $ i" by (simp add: transpose_def)
+    finally show ?thesis .
+  qed
+  have "v \<bullet> (Z *v z) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. v $ i * (Z $ i $ j * z $ j))"
+    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
+  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. v $ i * (Z $ i $ j * z $ j))"
+    by (rule sum.swap)
+  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. z $ j * (Z $ j $ i * v $ i))"
+    by (simp add: zij mult.commute mult.left_commute)
+  also have "\<dots> = z \<bullet> (Z *v v)"
+    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
+  finally show ?thesis .
+qed
+
+lemma norm_le_card_Basis_bound:
+  fixes M :: "'a::euclidean_space"
+  assumes b: "\<And>e. e \<in> Basis \<Longrightarrow> \<bar>M \<bullet> e\<bar> \<le> c"
+  shows "norm M \<le> real (card (Basis :: 'a set)) * c"
+proof -
+  have "norm M \<le> (\<Sum>e\<in>(Basis :: 'a set). \<bar>M \<bullet> e\<bar>)"
+    by (rule norm_le_l1)
+  also have "\<dots> \<le> (\<Sum>e\<in>(Basis :: 'a set). c)"
+    by (rule sum_mono) (rule b)
+  also have "\<dots> = real (card (Basis :: 'a set)) * c"
+    by simp
+  finally show ?thesis .
+qed
+
+lemma matrix_Basis_cases:
+  fixes e :: "real^'n::finite^'n"
+  assumes "e \<in> Basis"
+  shows "\<exists>i j. e = axis i (axis j 1)"
+proof -
+  from assms obtain i u where eu: "e = axis i u"
+    and uB: "u \<in> (Basis :: (real^'n) set)"
+    unfolding Basis_vec_def by blast
+  from uB obtain j v where uv: "u = axis j v"
+    and vB: "v \<in> (Basis :: real set)"
+    unfolding Basis_vec_def by blast
+  from vB have "v = 1" by simp
+  with eu uv show ?thesis by blast
+qed
+
+lemma inner_matrix_axis:
+  fixes W :: "real^'n::finite \<Rightarrow> real^'n"
+  assumes lin: "linear W"
+  shows "matrix W \<bullet> axis i (axis j 1) = (axis i 1 :: real^'n) \<bullet> W (axis j 1)"
+proof -
+  have "matrix W \<bullet> axis i (axis j 1) = matrix W $ i $ j"
+    by (simp add: inner_axis)
+  also have "\<dots> = (W (axis j 1)) $ i"
+    by (simp add: matrix_def)
+  also have "\<dots> = (axis i 1 :: real^'n) \<bullet> W (axis j 1)"
+    by (simp add: inner_axis')
+  finally show ?thesis .
+qed
+
 (*<*)
 end
 (*>*)
