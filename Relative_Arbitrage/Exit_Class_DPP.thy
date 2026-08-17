@@ -14590,7 +14590,8 @@ proof -
         \<le> norm (\<chi> i j. a $ i * b $ j) + norm (\<chi> i j. b $ i * a $ j)"
       by (rule norm_triangle_ineq)
     also have "\<dots> = norm a * norm b + norm b * norm a"
-      by (simp add: norm_outer_prod)
+      using norm_outer_prod[of a b] norm_outer_prod[of b a]
+      by (simp add: outer_prod_def)
     finally show ?thesis by (simp add: algebra_simps)
   qed
   show ?thesis unfolding e a_def[symmetric] A_def[symmetric]

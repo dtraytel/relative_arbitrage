@@ -2327,11 +2327,8 @@ qed
 
 section \<open>Sums of outer products: the toolkit\<close>
 
-lemma onormal_subset:
-  assumes B: "onormal B" and S: "S \<subseteq> B"
-  shows "onormal S"
-  using B S unfolding onormal_def
-  by (auto intro: finite_subset pairwise_subset)
+text \<open>\<open>onormal_subset\<close> lives in
+  @{theory Symmetric_Matrix_Spectra.Orthonormal_Families}.\<close>
 
 lemma matvec_sum_outer:
   fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"

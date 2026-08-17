@@ -33,19 +33,7 @@ text \<open>\<open>Pi_proj\<close> is the dual of \<open>kyfan\<close> from
 definition Pi_proj :: "real^'n^'n \<Rightarrow> nat \<Rightarrow> real" where
   "Pi_proj a m = Inf {trace (a ** P) | P. is_proj P \<and> trace P = real m}"
 
-lemma trace_proj_psd_nonneg:
-  assumes a: "psd a" and P: "is_proj P"
-  shows "0 \<le> trace (a ** P)"
-proof -
-  obtain C where C: "onormal C" "P = (\<Sum>u\<in>C. outer_prod u u)"
-    "real (card C) = trace P"
-    using is_proj_decomp[OF P] by metis
-  have "trace (a ** P) = (\<Sum>u\<in>C. u \<bullet> (a *v u))"
-    by (simp add: C(2) trace_mult_outer_sum)
-  also have "\<dots> \<ge> 0"
-    using a by (intro sum_nonneg) (auto simp: psd_def)
-  finally show ?thesis .
-qed
+text \<open>\<open>trace_proj_psd_nonneg\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 lemma Pi_proj_bdd_below:
   assumes a: "psd a"

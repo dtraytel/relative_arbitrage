@@ -8397,27 +8397,13 @@ text \<open>The cross term of \<open>outerp (X\<^sub>r + W)\<close> is \<open>X\
   term is a bounded-linear image of the second factor's martingale, not a
   product of two martingales.\<close>
 
-lemma norm_outer_prod:
-  fixes a b :: "real^'n::finite"
-  shows "norm (\<chi> i j. a $ i * b $ j) = norm a * norm b"
-proof -
-  have "(\<chi> i j. a $ i * b $ j) \<bullet> (\<chi> i j. a $ i * b $ j)
-      = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (a $ i * b $ j) * (a $ i * b $ j))"
-    by (simp add: inner_vec_def)
-  also have "\<dots> = (\<Sum>i\<in>UNIV. (a $ i * a $ i) * (\<Sum>j\<in>UNIV. b $ j * b $ j))"
-    by (simp add: sum_distrib_left) (simp add: algebra_simps)
-  also have "\<dots> = (a \<bullet> a) * (b \<bullet> b)"
-    by (simp add: inner_vec_def sum_distrib_right)
-  finally have e: "(\<chi> i j. a $ i * b $ j) \<bullet> (\<chi> i j. a $ i * b $ j)
-      = (a \<bullet> a) * (b \<bullet> b)" .
-  show ?thesis
-    unfolding norm_eq_sqrt_inner e
-    by (simp add: real_sqrt_mult)
-qed
+text \<open>\<open>norm_outer_prod\<close> lives in
+  @{theory Symmetric_Matrix_Spectra.Poincare_Separation}, stated through
+  \<open>outer_prod\<close>; \<open>outerp x\<close> is \<open>outer_prod x x\<close>.\<close>
 
 lemma norm_outerp: "norm (outerp (v :: real^'n::finite)) = norm v * norm v"
 proof -
-  have "outerp v = (\<chi> i j. v $ i * v $ j)" by (simp add: outerp_def)
+  have "outerp v = outer_prod v v" by (simp add: outerp_def outer_prod_def)
   then show ?thesis by (simp add: norm_outer_prod)
 qed
 
@@ -9087,9 +9073,9 @@ proof -
           also have "\<dots> = 2 * norm a * norm b"
           proof -
             have n1: "norm (\<chi> i j. a $ i * b $ j) = norm a * norm b"
-              by (rule norm_outer_prod)
+              using norm_outer_prod[of a b] by (simp add: outer_prod_def)
             have n2: "norm (\<chi> i j. b $ i * a $ j) = norm b * norm a"
-              by (rule norm_outer_prod)
+              using norm_outer_prod[of b a] by (simp add: outer_prod_def)
             show ?thesis unfolding n1 n2 by simp
           qed
           finally show ?thesis by simp
