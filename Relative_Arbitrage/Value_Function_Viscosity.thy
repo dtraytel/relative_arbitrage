@@ -1,7 +1,7 @@
 
 (*<*)
 theory Value_Function_Viscosity
-  imports Exit_Class_DPP Curvature_Operator Operator_Envelopes
+  imports Dynamic_Programming_Assembly Curvature_Operator Operator_Envelopes
     "Continuous_Time_Martingales.Quadratic_Variation"
 begin
 

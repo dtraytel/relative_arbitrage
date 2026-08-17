@@ -43,7 +43,14 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Exit_Class_Witness
     Exit_Class_Pasting
     Exit_Class_Optimizer
-    Exit_Class_DPP
+    Dynamic_Programming_Pasting
+    Dynamic_Programming_Conditioning
+    Dynamic_Programming_Kernels
+    Dynamic_Programming_Optional_Sampling
+    Dynamic_Programming_Stopping_Clauses
+    Dynamic_Programming_Additive_Glue
+    Dynamic_Programming_Delayed_Class
+    Dynamic_Programming_Assembly
     Value_Function_Viscosity
     Comparison_Principle
     Comparison_Two_Domain

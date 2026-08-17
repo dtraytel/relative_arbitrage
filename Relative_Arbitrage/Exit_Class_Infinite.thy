@@ -2,7 +2,7 @@ section \<open>The class and the value function on the half-line\<close>
 
 (*<*)
 theory Exit_Class_Infinite
-  imports Exit_Class_DPP "Continuous_Path_Spaces.Path_Space_Infinite"
+  imports Dynamic_Programming_Assembly "Continuous_Path_Spaces.Path_Space_Infinite"
 begin
 (*>*)
 
@@ -569,7 +569,7 @@ subsection \<open>Towards the extension: cutting a glue back\<close>
 text \<open>Gluing a continuation onto a path at \<open>r\<close> and cutting back at \<open>r\<close>
   returns the original path, so an extension built by
   @{thm [source] exit_class_pglue_law} restricts to the law it extends.
-  \<open>pcut_pglue\<close> lives in @{theory Relative_Arbitrage.Exit_Class_DPP}.\<close>
+  \<open>pcut_pglue\<close> lives in @{theory Relative_Arbitrage.Dynamic_Programming_Kernels}.\<close>
 
 text \<open>Members of the horizon-\<open>r\<close> path space are extensional on \<open>{0..r}\<close>, so
   cutting there is the identity on them.  This is what turns
