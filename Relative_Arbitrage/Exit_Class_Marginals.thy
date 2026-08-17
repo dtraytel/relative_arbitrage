@@ -1663,7 +1663,7 @@ text \<open>
   \<^const>\<open>qvmata\<close>.
 \<close>
 
-text \<open>\<open>outerp_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness}.\<close>
+text \<open>\<open>outerp_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Pasting}.\<close>
 
 text \<open>\<open>natural_filtration_eval\<close>, the evaluations of a natural filtration in
   the two shapes the pushforward needs them, lives in

@@ -37,7 +37,12 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Exit_Time_Semicontinuity
     Exit_Semicontinuity
     Exit_Class
-    Exit_Class_Compactness
+    Exit_Class_Limits
+    Exit_Class_Tightness
+    Exit_Class_Shift
+    Exit_Class_Witness
+    Exit_Class_Pasting
+    Exit_Class_Optimizer
     Exit_Class_DPP
     Value_Function_Viscosity
     Comparison_Principle

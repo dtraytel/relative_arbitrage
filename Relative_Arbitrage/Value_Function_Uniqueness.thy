@@ -53,7 +53,7 @@ text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1
 
   \<^item> Finiteness, \<open>exit_val k L T K x < \<top>\<close>: \<open>exit_val_le_T\<close>, and sharply
     \<open>exit_val_le_ball_bound\<close>.
-  \<^item> Upper semicontinuity: \<open>Exit_Class_Compactness.exit_val_usc_unconditional\<close>.
+  \<^item> Upper semicontinuity: \<open>Exit_Class_Witness.exit_val_usc_unconditional\<close>.
   \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Viscosity.exit_val_visc_subsol\<close>
     for the subsolution half, with the operator of Eq. (1.9) itself, and
     \<open>Value_Function_Viscosity.exit_val_supersol_lsc\<close> for the supersolution half.

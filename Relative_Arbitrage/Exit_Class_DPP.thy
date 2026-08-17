@@ -1,6 +1,6 @@
 (*<*)
 theory Exit_Class_DPP
-  imports Exit_Class_Compactness "Continuous_Path_Spaces.Conditional_UI" "Disintegration.Disintegration"
+  imports Exit_Class_Optimizer "Continuous_Path_Spaces.Conditional_UI" "Disintegration.Disintegration"
     "Continuous_Time_Martingales.Natural_Filtration"
 begin
 
@@ -1065,7 +1065,7 @@ text \<open>Conditioning on an event of the past keeps martingales martingales:
   \<open>martingale_uniform_measure\<close> live in
   @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
 
-text \<open>\<open>pair_fst_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness}.\<close>
+text \<open>\<open>pair_fst_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Pasting}.\<close>
 
 theorem martingale_future_of_past:
   fixes P :: "('n::finite pairpath) measure"
@@ -1373,7 +1373,7 @@ text \<open>\<open>martingale_diff\<close>, the subtractive companion to \<open>
 
 subsection \<open>The shifted processes of a class member\<close>
 
-text \<open>\<open>pair_snd_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness}.\<close>
+text \<open>\<open>pair_snd_borel\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Pasting}.\<close>
 
 lemma exit_class_comp_martingale:
   fixes Q :: "('n::finite pairpath) measure"
@@ -14032,7 +14032,8 @@ proof -
   qed
 qed
 
-text \<open>\<open>martingale_cong_ge\<close> lives in @{theory Relative_Arbitrage.Exit_Class_Compactness},
+text \<open>\<open>martingale_cong_ge\<close> lives in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra},
   general at any \<open>t\<^sub>0\<close> and with the equation oriented \<open>X u = Y u\<close> rather than
   \<open>Y u = X u\<close>.\<close>
 
