@@ -1,7 +1,7 @@
 
 (*<*)
 theory Operator_Envelope_Continuity
-  imports Operator_Envelopes Poincare_Separation
+  imports Operator_Envelopes Operator_Formula
 begin
 
 (*>*)
@@ -11,7 +11,7 @@ text \<open>
   semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> of \<open>F\<close>. It combines
   \<open>ell_op_lsc\<close> and \<open>ell_op_usc\<close> from \<open>Operator_Envelopes\<close>, together
   with the clause \<open>F\<^sub>* = F\<close> at \<open>p = 0\<close> proved there, with Eq. (3.5) and
-  the index shift of Eq. (3.6) supplied by \<open>Poincare_Separation\<close>.\<close>
+  the index shift of Eq. (3.6) supplied by \<open>Operator_Formula\<close>.\<close>
 section \<open>Eq. (3.6): the lower bound for \<open>F\<^sup>*(0, M)\<close>\<close>
 
 text \<open>The paper obtains Eq. (3.6) by evaluating \<open>F\<close> along the sequence
@@ -550,13 +550,13 @@ text \<open>Lemma 3.1 consists of:
     @{theory Relative_Arbitrage.Operator_Envelopes});
   \<^item> \<open>F\<^sub>*(0, M) = F(0, M)\<close> (\<open>ell_op_lsc_at_zero\<close>, @{theory Relative_Arbitrage.Operator_Envelopes});
   \<^item> \<open>F(p, M) = -\<onehalf> bracket (n-k) L M\<^sub>p\<close> for \<open>p \<noteq> 0\<close>, i.e. Eq. (3.5)
-    (\<open>ell_op_eq_half_bracket\<close>, @{theory Relative_Arbitrage.Poincare_Separation});
+    (\<open>ell_op_eq_half_bracket\<close>, @{theory Relative_Arbitrage.Operator_Formula});
   \<^item> \<open>F\<^sup>*(0, M) = eq36_rhs\<close>, i.e. Eq. (3.6) (\<open>eq36\<close>, above);
   \<^item> \<open>F\<^sub>* = F\<^sup>* = F\<close> off the origin (\<open>ell_op_envelopes_eq_off_zero\<close>, above).
 
   The general one-sided Poincare separation inequality
   \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary \<open>p \<noteq> 0\<close> is \<open>poincare_separation\<close>
-  (@{theory Relative_Arbitrage.Poincare_Separation}); for \<open>p\<close> an eigenvector it is an equality
+  (@{theory Relative_Arbitrage.Operator_Formula}); for \<open>p\<close> an eigenvector it is an equality
   (\<open>eigval_Mp_top_eigenvector\<close>).\<close>
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>

@@ -1,7 +1,7 @@
 
 (*<*)
 theory Operator_Continuity
-  imports Threshold_Chain
+  imports Eigenvalue_Bound_Exact
 begin
 
 (*>*)
@@ -39,36 +39,14 @@ proof -
   finally show ?thesis .
 qed
 
-lemma matrix_vector_mult_diff:
-  fixes A B :: "real^'n::finite^'n"
-  shows "(A - B) *v x = A *v x - B *v x"
-proof -
-  have "((A - B) *v x) $ i = (A *v x) $ i - (B *v x) $ i" for i
-  proof -
-    have "((A - B) *v x) $ i = (\<Sum>j\<in>UNIV. (A $ i $ j - B $ i $ j) * x $ j)"
-      by (simp add: matrix_vector_mult_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j - B $ i $ j * x $ j)"
-      by (intro sum.cong refl) (simp add: left_diff_distrib)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j) - (\<Sum>j\<in>UNIV. B $ i $ j * x $ j)"
-      by (rule sum_subtractf)
-    also have "\<dots> = (A *v x) $ i - (B *v x) $ i"
-      by (simp add: matrix_vector_mult_def)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
-
-lemma transpose_diff_matrix: "transpose (A - B) = transpose A - transpose B"
-  by (simp add: transpose_def vec_eq_iff)
+text \<open>\<open>matrix_vector_mult_diff\<close> and \<open>transpose_diff_matrix\<close> live in
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>\<open>scaleR_matrix_matrix_left\<close> is \<open>scaleR_matrix_mult\<close> from
-  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma trace_scaleR_matrix:
-  fixes A :: "real^'n::finite^'n"
-  shows "trace (c *\<^sub>R A) = c * trace A"
-  by (simp add: trace_def sum_distrib_left)
+text \<open>\<open>trace_scaleR_matrix\<close> is \<open>trace_scaleR\<close> from
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 section \<open>The rank-one projection onto \<open>span p\<close>\<close>
 
@@ -151,7 +129,7 @@ proof -
     by (simp add: ap)
   finally have z: "trace (outer_prod p p ** a) = 0" .
   show ?thesis
-    by (simp add: rank1proj_def scaleR_matrix_mult trace_scaleR_matrix z)
+    by (simp add: rank1proj_def scaleR_matrix_mult trace_scaleR z)
 qed
 
 section \<open>The matrix \<open>M\<^sub>p\<close> of Eq. (3.4)\<close>
@@ -243,7 +221,8 @@ proof -
 qed
 
 text \<open>Consequently \<open>M\<^sub>p\<close> is symmetric whenever \<open>M\<close> is, which every
-  eigenvalue lemma in @{theory Relative_Arbitrage.Eigenvalues} requires as a hypothesis.\<close>
+  eigenvalue lemma in @{theory Symmetric_Matrix_Spectra.Ky_Fan} requires as a
+  hypothesis.\<close>
 
 lemma transpose_Mp:
   fixes M :: "real^'n::finite^'n"
@@ -305,7 +284,7 @@ next
       by (simp add: QaQ)
   qed
   have corr: "trace ((c *\<^sub>R rank1proj p) ** a) = 0"
-    by (simp add: scaleR_matrix_mult trace_scaleR_matrix
+    by (simp add: scaleR_matrix_mult trace_scaleR
         trace_rank1proj_mult[OF ap])
   have "trace (Mp p M ** a)
       = trace ((Q ** M ** Q) ** a) + trace ((c *\<^sub>R rank1proj p) ** a)"

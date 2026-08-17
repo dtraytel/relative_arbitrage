@@ -8824,289 +8824,14 @@ text \<open>The skew field above moves the witness off its own eigenframe, and t
   therefore carries no hypothesis on \<open>L\<close> at all, and in particular is
   available at \<open>L = 1\<close>, the Ambrosio-Soner flow case of Remark 1.1(c).
 
-  The rotation is a product of two Householder reflections.  In unnormalised
-  form the reflection in the hyperplane orthogonal to \<open>v\<close> is \<open>hrefl v\<close>; the
-  degenerate value \<open>v = 0\<close> gives the identity, since division by zero is zero
-  here, so the algebraic facts below are unconditional in \<open>v\<close>.  Their product
-  \<open>rotm q w\<close> carries \<open>q\<close> onto the ray through \<open>w\<close> as soon as the two are not
-  opposed, and is the identity at \<open>w = q\<close>, which is where the trace margin is
-  read off: by continuity at the touching point, in place of the three
-  explicit smallness estimates the skew field needs.\<close>
-
-definition hrefl :: "real^'n::finite \<Rightarrow> real^'n^'n" where
-  "hrefl v = mat 1 - (2 / (v \<bullet> v)) *\<^sub>R outer_prod v v"
-
-lemma hrefl_apply: "hrefl v *v z = z - (2 * (v \<bullet> z) / (v \<bullet> v)) *\<^sub>R v"
-proof -
-  have "hrefl v *v z = mat 1 *v z - ((2 / (v \<bullet> v)) *\<^sub>R outer_prod v v) *v z"
-    unfolding hrefl_def by (rule matrix_vector_mult_diff_rdistrib)
-  also have "mat 1 *v z = z" by (rule matrix_vector_mul_lid)
-  also have "((2 / (v \<bullet> v)) *\<^sub>R outer_prod v v) *v z
-      = (2 / (v \<bullet> v)) *\<^sub>R (outer_prod v v *v z)"
-    by (simp add: scaleR_matrix_vector)
-  also have "outer_prod v v *v z = (v \<bullet> z) *\<^sub>R v" by simp
-  finally show ?thesis by simp
-qed
-
-lemma hrefl_key:
-  fixes v :: "real^'n::finite"
-  shows "(2 / (v \<bullet> v)) * (2 / (v \<bullet> v)) * (v \<bullet> v) = 2 * (2 / (v \<bullet> v))"
-  by (cases "v \<bullet> v = 0") auto
-
-lemma hrefl_involution: "hrefl v *v (hrefl v *v z) = z"
-proof -
-  define c where "c = 2 / (v \<bullet> v)"
-  have step: "hrefl v *v y = y - (c * (v \<bullet> y)) *\<^sub>R v" for y
-    unfolding c_def hrefl_apply by simp
-  have vsplit: "(z - a *\<^sub>R v) - b *\<^sub>R v = z - (a + b) *\<^sub>R v" for a b :: real
-    by (simp add: scaleR_left_distrib)
-  have coef: "(c * (v \<bullet> z)) + (c * ((v \<bullet> z) - (c * (v \<bullet> z)) * (v \<bullet> v)))
-      = (2 * c - c * c * (v \<bullet> v)) * (v \<bullet> z)"
-    by (simp add: algebra_simps)
-  have "hrefl v *v (hrefl v *v z)
-      = (z - (c * (v \<bullet> z)) *\<^sub>R v)
-        - (c * (v \<bullet> (z - (c * (v \<bullet> z)) *\<^sub>R v))) *\<^sub>R v"
-    unfolding step[of z] step[of "z - (c * (v \<bullet> z)) *\<^sub>R v"] by (rule refl)
-  also have "v \<bullet> (z - (c * (v \<bullet> z)) *\<^sub>R v)
-      = (v \<bullet> z) - (c * (v \<bullet> z)) * (v \<bullet> v)"
-    by (simp add: inner_diff_right)
-  also have "(z - (c * (v \<bullet> z)) *\<^sub>R v)
-        - (c * ((v \<bullet> z) - (c * (v \<bullet> z)) * (v \<bullet> v))) *\<^sub>R v
-      = z - ((2 * c - c * c * (v \<bullet> v)) * (v \<bullet> z)) *\<^sub>R v"
-    unfolding vsplit coef by (rule refl)
-  also have "2 * c - c * c * (v \<bullet> v) = 0"
-    unfolding c_def using hrefl_key[of v] by simp
-  finally show ?thesis by simp
-qed
-
-lemma hrefl_inner: "(hrefl v *v y) \<bullet> (hrefl v *v z) = y \<bullet> z"
-proof -
-  define c where "c = 2 / (v \<bullet> v)"
-  have step: "hrefl v *v w = w - (c * (v \<bullet> w)) *\<^sub>R v" for w
-    unfolding c_def hrefl_apply by simp
-  have "(hrefl v *v y) \<bullet> (hrefl v *v z)
-      = (y - (c * (v \<bullet> y)) *\<^sub>R v) \<bullet> (z - (c * (v \<bullet> z)) *\<^sub>R v)"
-    unfolding step[of y] step[of z] by (rule refl)
-  also have "\<dots> = y \<bullet> z
-      + ((c * c * (v \<bullet> v) - 2 * c) * ((v \<bullet> y) * (v \<bullet> z)))"
-    by (simp add: algebra_simps inner_commute)
-  also have "c * c * (v \<bullet> v) - 2 * c = 0"
-    unfolding c_def using hrefl_key[of v] by simp
-  finally show ?thesis by simp
-qed
-
-lemma orth_matI:
-  fixes Q :: "real^'n::finite^'n"
-  assumes inn: "\<And>y z. (Q *v y) \<bullet> (Q *v z) = y \<bullet> z"
-  shows "orth_mat Q"
-proof -
-  have step: "(transpose Q ** Q) *v z = mat 1 *v z" for z
-  proof -
-    have zero: "y \<bullet> ((transpose Q ** Q) *v z - z) = 0" for y
-    proof -
-      have "y \<bullet> ((transpose Q ** Q) *v z) = y \<bullet> (transpose Q *v (Q *v z))"
-        by (metis matrix_vector_mul_assoc)
-      also have "\<dots> = (transpose (transpose Q) *v y) \<bullet> (Q *v z)"
-        by (rule inner_transpose_matrix)
-      also have "\<dots> = (Q *v y) \<bullet> (Q *v z)" by (simp only: transpose_transpose)
-      also have "\<dots> = y \<bullet> z" by (rule inn)
-      finally show ?thesis by (simp add: inner_diff_right)
-    qed
-    have "((transpose Q ** Q) *v z - z) \<bullet> ((transpose Q ** Q) *v z - z) = 0"
-      by (rule zero)
-    then have "(transpose Q ** Q) *v z - z = 0" by simp
-    then show ?thesis by simp
-  qed
-  have T1: "transpose Q ** Q = mat 1" using step by (simp add: matrix_eq)
-  then have T2: "Q ** transpose Q = mat 1"
-    using matrix_left_right_inverse by blast
-  show ?thesis unfolding orth_mat_def using T1 T2 by blast
-qed
-
-lemma hrefl_zero: "hrefl 0 *v z = z"
-  by (simp add: hrefl_apply)
-
-lemma hrefl_scale:
-  assumes c0: "c \<noteq> 0"
-  shows "hrefl (c *\<^sub>R v) *v z = hrefl v *v z"
-proof -
-  have inn1: "(c *\<^sub>R v) \<bullet> z = c * (v \<bullet> z)" by simp
-  have inn2: "(c *\<^sub>R v) \<bullet> (c *\<^sub>R v) = c * c * (v \<bullet> v)" by simp
-  have coef: "2 * (c * (v \<bullet> z)) / (c * c * (v \<bullet> v)) * c
-      = 2 * (v \<bullet> z) / (v \<bullet> v)"
-  proof (cases "v \<bullet> v = 0")
-    case True
-    then show ?thesis by simp
-  next
-    case False
-    then show ?thesis using c0 by (simp add: field_simps)
-  qed
-  have "hrefl (c *\<^sub>R v) *v z
-      = z - (2 * (c * (v \<bullet> z)) / (c * c * (v \<bullet> v))) *\<^sub>R (c *\<^sub>R v)"
-    unfolding hrefl_apply inn1 inn2 by (rule refl)
-  also have "(2 * (c * (v \<bullet> z)) / (c * c * (v \<bullet> v))) *\<^sub>R (c *\<^sub>R v)
-      = (2 * (v \<bullet> z) / (v \<bullet> v)) *\<^sub>R v"
-    unfolding scaleR_scaleR coef by (rule refl)
-  also have "z - (2 * (v \<bullet> z) / (v \<bullet> v)) *\<^sub>R v = hrefl v *v z"
-    unfolding hrefl_apply by (rule refl)
-  finally show ?thesis .
-qed
-
-lemma scaleR_self_diff:
-  fixes q :: "'a::real_vector"
-  shows "q - (c::real) *\<^sub>R q = (1 - c) *\<^sub>R q"
-proof -
-  have "(1 - c) *\<^sub>R q = 1 *\<^sub>R q - c *\<^sub>R q" by (rule scaleR_diff_left)
-  then show ?thesis by simp
-qed
-
-lemma hrefl_fix:
-  fixes q :: "real^'n::finite"
-  assumes q0: "q \<noteq> 0"
-  shows "hrefl q *v q = - q"
-proof -
-  have qq: "q \<bullet> q \<noteq> 0" using q0 by simp
-  have "hrefl q *v q = q - (2 * (q \<bullet> q) / (q \<bullet> q)) *\<^sub>R q"
-    by (rule hrefl_apply)
-  also have "\<dots> = (1 - 2 * (q \<bullet> q) / (q \<bullet> q)) *\<^sub>R q"
-    by (rule scaleR_self_diff)
-  also have "1 - 2 * (q \<bullet> q) / (q \<bullet> q) = - 1" using qq by simp
-  also have "(- 1 :: real) *\<^sub>R q = - q" by simp
-  finally show ?thesis .
-qed
-
-definition rotm :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
-  "rotm q w = hrefl (norm w *\<^sub>R q + norm q *\<^sub>R w) ** hrefl q"
-
-lemma rotm_vec:
-  "rotm q w *v z = hrefl (norm w *\<^sub>R q + norm q *\<^sub>R w) *v (hrefl q *v z)"
-  unfolding rotm_def by (metis matrix_vector_mul_assoc)
-
-lemma rotm_orth:
-  fixes q w :: "real^'n::finite"
-  shows "orth_mat (rotm q w)"
-proof (rule orth_matI)
-  fix y z :: "real^'n"
-  show "(rotm q w *v y) \<bullet> (rotm q w *v z) = y \<bullet> z"
-    unfolding rotm_vec by (simp only: hrefl_inner)
-qed
-
-lemma rotm_self: "rotm q q *v z = z"
-proof (cases "q = 0")
-  case True
-  then show ?thesis unfolding rotm_vec by (simp add: hrefl_zero)
-next
-  case False
-  then have ne: "norm q + norm q \<noteq> 0" by simp
-  have sum2: "norm q *\<^sub>R q + norm q *\<^sub>R q = (norm q + norm q) *\<^sub>R q"
-    by (rule scaleR_left_distrib[symmetric])
-  have "rotm q q *v z = hrefl ((norm q + norm q) *\<^sub>R q) *v (hrefl q *v z)"
-    unfolding rotm_vec sum2 by (rule refl)
-  also have "\<dots> = hrefl q *v (hrefl q *v z)" by (rule hrefl_scale[OF ne])
-  also have "\<dots> = z" by (rule hrefl_involution)
-  finally show ?thesis .
-qed
-
-lemma rotm_apply:
-  fixes q w :: "real^'n::finite"
-  assumes q0: "q \<noteq> 0" and w0: "w \<noteq> 0"
-    and pos: "0 < norm q * norm w + q \<bullet> w"
-  shows "rotm q w *v q = (norm q / norm w) *\<^sub>R w"
-proof -
-  define nq where "nq = norm q"
-  define nw where "nw = norm w"
-  define pp where "pp = q \<bullet> w"
-  have nq0: "0 < nq" unfolding nq_def using q0 by simp
-  have nw0: "0 < nw" unfolding nw_def using w0 by simp
-  have pos': "0 < nq * nw + pp" unfolding nq_def nw_def pp_def using pos .
-  have qq: "q \<bullet> q = nq * nq"
-    unfolding nq_def by (simp add: dot_square_norm power2_eq_square)
-  have ww: "w \<bullet> w = nw * nw"
-    unfolding nw_def by (simp add: dot_square_norm power2_eq_square)
-  have qw: "q \<bullet> w = pp" unfolding pp_def by (rule refl)
-  have wq: "w \<bullet> q = pp" unfolding pp_def by (rule inner_commute)
-  define v where "v = nw *\<^sub>R q + nq *\<^sub>R w"
-  have h1: "hrefl q *v q = - q" by (rule hrefl_fix[OF q0])
-  have vq: "v \<bullet> q = nq * (nq * nw + pp)"
-    unfolding v_def by (simp add: qq wq algebra_simps)
-  have vv: "v \<bullet> v = (2 * (nq * nw)) * (nq * nw + pp)"
-    unfolding v_def
-    by (simp add: qq ww qw wq algebra_simps)
-  have ratio: "2 * (v \<bullet> (- q)) / (v \<bullet> v) = - (1 / nw)"
-  proof -
-    have "2 * (v \<bullet> (- q)) / (v \<bullet> v)
-        = - (2 * (nq * (nq * nw + pp)) / ((2 * (nq * nw)) * (nq * nw + pp)))"
-      unfolding vv using vq by simp
-    also have "2 * (nq * (nq * nw + pp)) / ((2 * (nq * nw)) * (nq * nw + pp))
-        = 1 / nw"
-    proof -
-      have A: "nq * nw + pp \<noteq> 0" using pos' by simp
-      have B: "nq \<noteq> 0" using nq0 by simp
-      have C: "nw \<noteq> 0" using nw0 by simp
-      have D: "(2 * (nq * nw)) * (nq * nw + pp) \<noteq> 0" using A B C by simp
-      show ?thesis
-        unfolding frac_eq_eq[OF D C] by (simp add: algebra_simps)
-    qed
-    finally show ?thesis .
-  qed
-  have r1: "rotm q w *v q = hrefl v *v (- q)"
-    unfolding v_def nq_def nw_def rotm_vec h1 by (rule refl)
-  have "rotm q w *v q = - q - (2 * (v \<bullet> (- q)) / (v \<bullet> v)) *\<^sub>R v"
-    unfolding r1 by (rule hrefl_apply)
-  also have "\<dots> = - q + (1 / nw) *\<^sub>R v"
-    unfolding ratio by simp
-  also have "(1 / nw) *\<^sub>R v = q + (nq / nw) *\<^sub>R w"
-    unfolding v_def using nw0
-    by (simp add: scaleR_right_distrib field_simps)
-  finally show ?thesis unfolding nq_def nw_def by simp
-qed
-
-lemma rotm_refl_vec_norm:
-  fixes q w :: "real^'n::finite"
-  shows "(norm w *\<^sub>R q + norm q *\<^sub>R w) \<bullet> (norm w *\<^sub>R q + norm q *\<^sub>R w)
-       = 2 * (norm q * norm w) * (norm q * norm w + q \<bullet> w)"
-proof -
-  have qq: "q \<bullet> q = norm q * norm q"
-    by (simp add: dot_square_norm power2_eq_square)
-  have ww: "w \<bullet> w = norm w * norm w"
-    by (simp add: dot_square_norm power2_eq_square)
-  have wq: "w \<bullet> q = q \<bullet> w" by (rule inner_commute)
-  show ?thesis
-    by (simp add: qq ww wq algebra_simps)
-qed
-
-lemma rotm_refl_vec_nonzero:
-  fixes q w :: "real^'n::finite"
-  assumes q0: "q \<noteq> 0" and pos: "0 < norm q * norm w + q \<bullet> w"
-  shows "(norm w *\<^sub>R q + norm q *\<^sub>R w) \<bullet> (norm w *\<^sub>R q + norm q *\<^sub>R w) \<noteq> 0"
-proof -
-  have w0: "w \<noteq> 0"
-  proof
-    assume "w = 0"
-    then show False using pos by simp
-  qed
-  have pos2: "0 < (norm w *\<^sub>R q + norm q *\<^sub>R w) \<bullet> (norm w *\<^sub>R q + norm q *\<^sub>R w)"
-    unfolding rotm_refl_vec_norm using q0 w0 pos by simp
-  show ?thesis by (rule not_sym[OF less_imp_neq[OF pos2]])
-qed
-
-lemma rotm_vec_cont:
-  fixes q c :: "real^'n::finite" and A :: "(real^'n) set"
-  assumes q0: "q \<noteq> 0"
-    and ok: "\<And>w. w \<in> A \<Longrightarrow> 0 < norm q * norm w + q \<bullet> w"
-  shows "continuous_on A (\<lambda>w. rotm q w *v c)"
-proof -
-  define y0 where "y0 = hrefl q *v c"
-  define V where "V = (\<lambda>w::real^'n. norm w *\<^sub>R q + norm q *\<^sub>R w)"
-  have Vc: "continuous_on A V"
-    unfolding V_def by (intro continuous_intros)
-  have Vne: "V w \<bullet> V w \<noteq> 0" if w: "w \<in> A" for w
-    unfolding V_def by (rule rotm_refl_vec_nonzero[OF q0 ok[OF w]])
-  have eq: "rotm q w *v c = y0 - (2 * (V w \<bullet> y0) / (V w \<bullet> V w)) *\<^sub>R V w" for w
-    unfolding y0_def V_def rotm_vec hrefl_apply by (rule refl)
-  show ?thesis
-    unfolding eq by (intro continuous_intros Vc) (use Vne in auto)
-qed
+  The rotation \<open>rotm q w\<close> is a product of two Householder reflections; it
+  carries \<open>q\<close> onto the ray through \<open>w\<close> as soon as the two are not opposed,
+  and is the identity at \<open>w = q\<close>, which is where the trace margin is read
+  off: by continuity at the touching point, in place of the three explicit
+  smallness estimates the skew field needs. \<open>hrefl\<close>, \<open>rotm\<close> and their
+  properties, including the continuity of \<open>w \<mapsto> rotm q w\<close>
+  (\<open>rotm_vec_cont\<close>), live in
+  @{theory Symmetric_Matrix_Spectra.Householder_Rotation}.\<close>
 
 lemma colmat_matvec:
   fixes R :: "real^'n::finite^'n" and c :: "'n \<Rightarrow> real^'n"
@@ -9413,7 +9138,7 @@ proof -
   proof -
     have o1: "transpose (rotm q (GG z)) ** rotm q (GG z) = mat 1"
       and o2: "rotm q (GG z) ** transpose (rotm q (GG z)) = mat 1"
-      using rotm_orth unfolding orth_mat_def by blast+
+      using rotm_orthogonal unfolding orthogonal_matrix_def by blast+
     have inF: "rotm q (GG z) ** a ** transpose (rotm q (GG z))
         \<in> feasible k L (rotm q (GG z) *v q)"
       by (rule feasible_conj[OF o1 o2 aF])
@@ -14671,7 +14396,7 @@ text \<open>The \<open>tanp\<close> block above, generalised: the ambient identi
 
 subsection \<open>Small matrix, trace and inner-product facts\<close>
 
-text \<open>\<open>matvec_add_right\<close> lives in @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+text \<open>\<open>matvec_add_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>\<open>matvec_scaleR_right\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
 
@@ -14688,7 +14413,8 @@ next
   then show ?thesis by simp
 qed
 
-text \<open>\<open>trace_sum_matrix\<close> lives in @{theory Relative_Arbitrage.Poincare_Separation}.\<close>
+text \<open>\<open>trace_sum_matrix\<close> is \<open>trace_matrix_sum\<close> from
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma transpose_matrix_diff:
   fixes A B :: "real^'n::finite^'n"
@@ -14696,10 +14422,10 @@ lemma transpose_matrix_diff:
   by (simp add: transpose_def vec_eq_iff)
 
 text \<open>\<open>trace_matrix_diff\<close> is \<open>trace_diff_matrix\<close> from
-  @{theory Relative_Arbitrage.Poincare_Separation}.\<close>
+  @{theory Relative_Arbitrage.Operator_Formula}.\<close>
 
 text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
-  from @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+  from @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}.\<close>
 
 lemma unit_normalize:
   fixes v :: "real^'n::finite"
@@ -14731,7 +14457,7 @@ lemma projmat_trace:
   shows "trace (projmat b m) = real m"
 proof -
   have "trace (projmat b m) = (\<Sum>i < m. trace (outer_prod (b i) (b i)))"
-    unfolding projmat_def by (rule trace_sum_matrix)
+    unfolding projmat_def by (rule trace_matrix_sum)
   also have "\<dots> = (\<Sum>i < m. b i \<bullet> b i)" by simp
   also have "\<dots> = (\<Sum>i < m. 1 :: real)" using orth by simp
   also have "\<dots> = real m" by simp

@@ -1,7 +1,7 @@
 
 (*<*)
 theory Eigenvalue_Continuity
-  imports Eigenvalues
+  imports Ky_Fan
 begin
 
 (*>*)

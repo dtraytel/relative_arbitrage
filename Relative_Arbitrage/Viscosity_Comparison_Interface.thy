@@ -76,10 +76,8 @@ text \<open>Orthogonal conjugation \<open>a \<mapsto> Q\<^sup>T a Q\<close> maps
   identity \<open>F(p, M) = c\<^sup>2 F(Q\<^sup>T p, c\<^sup>-\<^sup>2 Q\<^sup>T M Q)\<close> behind the
   transformation hypothesis of Theorem 1.1.\<close>
 
-definition orth_mat :: "real^'n^'n \<Rightarrow> bool" where
-  "orth_mat Q \<longleftrightarrow> transpose Q ** Q = mat 1 \<and> Q ** transpose Q = mat 1"
-
-text \<open>Conjugation preserves each defining condition of the feasible set.\<close>
+text \<open>Conjugation preserves each defining condition of the feasible set.
+  Orthogonality is HOL-Analysis's own \<open>orthogonal_matrix\<close>.\<close>
 
 lemma trace_conjugate:
   fixes M Q a :: "real^'n^'n"

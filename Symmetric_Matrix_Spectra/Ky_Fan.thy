@@ -1,37 +1,285 @@
 
 (*<*)
-theory Eigenvalues
-  imports Eigenvalue_Bound_Exact
+theory Ky_Fan
+  imports Symmetric_Spectral
 begin
 
 (*>*)
 
 text \<open>
-  Ky Fan partial sums and ordered eigenvalues of a real symmetric
-             matrix, developed basis-free, towards Eq. (3.6) of
-             \<^cite>\<open>LaiShkolnikovSoner\<close>.
+  Ky Fan partial sums and ordered eigenvalues of a real symmetric matrix,
+  developed basis-free.
 
-    Design.  \<open>Constraint_Set_Convexity\<close> already defines
+    Design.  For an orthogonal projection matrix \<open>P\<close>,
 
-      \<open>Pi_proj\<close> a m = Inf \<open>{trace\<close> (a ** P) | \<open>is_proj\<close> P, trace P = \<open>m}\<close>
+      \<open>kyfan m a = Sup {trace (a ** P) | is_proj P, trace P = m}\<close>
 
-    which is the sum of the m SMALLEST eigenvalues of a -- basis-free by
-    construction, so no well-definedness argument is needed.  Dually,
+    is the sum of the \<open>m\<close> LARGEST eigenvalues of \<open>a\<close> -- basis-free by
+    construction, so no well-definedness argument is needed. The \<open>i\<close>-th
+    largest eigenvalue is the difference \<open>eigval i a = kyfan i a - kyfan
+    (i-1) a\<close>. This route avoids defining eigenvalues by sorting a multiset
+    and then having to prove independence of the eigenbasis: here
+    basis-independence is free, and the Courant--Fischer / Ky Fan theorems
+    become EVALUATION lemmas rather than well-definedness obligations.
 
-      kyfan m a = Sup \<open>{trace\<close> (a ** P) | \<open>is_proj\<close> P, trace P = \<open>m}\<close>
+    The one genuinely combinatorial ingredient is the linear program of
+    Section 1: maximising a linear functional over the vectors \<open>t\<close> with
+    \<open>0 \<le> t \<le> 1\<close> and \<open>\<Sum> t = m\<close> puts the mass on the \<open>m\<close> largest
+    coefficients.  That is what turns "\<open>trace (a ** P)\<close> for an arbitrary
+    rank-\<open>m\<close> projection \<open>P\<close>" into "a sum of \<open>m\<close> eigenvalues".\<close>
 
-    is the sum of the m LARGEST, and the i-th largest eigenvalue is the
-    difference  lam i a = kyfan i a - kyfan (i-1) a.  This route avoids
-    defining eigenvalues by sorting a multiset and then having to prove
-    independence of the eigenbasis: here basis-independence is free, and the
-    Courant--Fischer / Ky Fan theorems become EVALUATION lemmas rather than
-    well-definedness obligations.
+unbundle inner_syntax
 
-    The one genuinely combinatorial ingredient is the linear program in
-    Section 1: maximising a linear functional over the vectors t with
-    0 <= t <= 1 and sum t = m puts the mass on the m largest coefficients.
-    That is what turns "trace (a ** P) for an arbitrary rank-m projection P"
-    into "a sum of m eigenvalues".\<close>
+section \<open>Orthogonal projections\<close>
+
+definition is_proj :: "real^'n^'n \<Rightarrow> bool" where
+  "is_proj P \<longleftrightarrow> transpose P = P \<and> P ** P = P"
+
+text \<open>Every orthogonal projection is the basis-projection onto its range.\<close>
+
+lemma is_proj_decomp:
+  assumes P: "is_proj P"
+  obtains C where "onormal C" "P = (\<Sum>u\<in>C. outer_prod u u)"
+    "real (card C) = trace P"
+proof -
+  have symP: "transpose P = P" and idem: "P ** P = P"
+    using P by (auto simp: is_proj_def)
+  obtain B where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> P *v u = (u \<bullet> (P *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF symP] by metis
+  have mu01: "u \<bullet> (P *v u) = 0 \<or> u \<bullet> (P *v u) = 1" if u: "u \<in> B" for u
+  proof -
+    define \<mu> where "\<mu> = u \<bullet> (P *v u)"
+    have Pu: "P *v u = \<mu> *\<^sub>R u"
+      unfolding \<mu>_def using eig[OF u] .
+    have "\<mu> *\<^sub>R u = P *v u"
+      by (simp add: Pu)
+    also have "\<dots> = (P ** P) *v u"
+      by (simp add: idem)
+    also have "\<dots> = P *v (P *v u)"
+      by (simp add: matrix_vector_mul_assoc)
+    also have "\<dots> = P *v (\<mu> *\<^sub>R u)"
+      by (simp add: Pu)
+    also have "\<dots> = (\<mu> * \<mu>) *\<^sub>R u"
+      by (simp add: matrix_vector_mult_scaleR Pu)
+    finally have "\<mu> *\<^sub>R u = (\<mu> * \<mu>) *\<^sub>R u" .
+    moreover have "u \<noteq> 0"
+      using B(1) u by (auto simp: onormal_def)
+    ultimately have "\<mu> * \<mu> = \<mu>"
+      by (metis scaleR_cancel_right)
+    then have "\<mu> * (\<mu> - 1) = 0"
+      by (simp add: algebra_simps)
+    then show ?thesis
+      unfolding \<mu>_def[symmetric] by auto
+  qed
+  define C where "C = {u \<in> B. u \<bullet> (P *v u) = 1}"
+  have CB: "C \<subseteq> B"
+    by (auto simp: C_def)
+  have onC: "onormal C"
+    using B(1) CB
+    by (auto simp: onormal_def intro: finite_subset elim: pairwise_subset)
+  have Peq: "P = (\<Sum>u\<in>C. outer_prod u u)"
+  proof -
+    have agree: "P *v w = (\<Sum>u\<in>C. outer_prod u u) *v w" if w: "w \<in> B" for w
+    proof -
+      have "(\<Sum>u\<in>C. outer_prod u u) *v w = (\<Sum>u\<in>C. (u \<bullet> w) *\<^sub>R u)"
+        by (simp add: matrix_vector_mult_sum)
+      also have "\<dots> = (\<Sum>u\<in>C. if u = w then w else 0)"
+        by (intro sum.cong refl)
+          (use B(1) CB w in \<open>auto dest: onormal_inner_distinct\<close>)
+      also have "\<dots> = (if w \<in> C then w else 0)"
+        using onC by (simp add: onormal_def)
+      also have "\<dots> = P *v w"
+      proof (cases "w \<in> C")
+        case True
+        then have "w \<bullet> (P *v w) = 1"
+          by (simp add: C_def)
+        then have "P *v w = w"
+          using eig[OF w] by simp
+        then show ?thesis
+          using True by simp
+      next
+        case False
+        with mu01[OF w] w have "w \<bullet> (P *v w) = 0"
+          by (auto simp: C_def)
+        then have "P *v w = 0"
+          using eig[OF w] by simp
+        then show ?thesis
+          using False by simp
+      qed
+      finally show ?thesis ..
+    qed
+    have "P *v x = (\<Sum>u\<in>C. outer_prod u u) *v x" for x
+    proof -
+      have x: "x \<in> span B"
+        by (simp add: B(2))
+      have "P *v x = P *v (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R w)"
+        by (simp add: onormal_expand[OF B(1) x])
+      also have "\<dots> = (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R (P *v w))"
+        by (simp add: matrix_vector_mult_vsum matrix_vector_mult_scaleR)
+      also have "\<dots> = (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R ((\<Sum>u\<in>C. outer_prod u u) *v w))"
+        by (simp add: agree)
+      also have "\<dots> = (\<Sum>u\<in>C. outer_prod u u) *v (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R w)"
+        by (simp add: matrix_vector_mult_vsum matrix_vector_mult_scaleR)
+      also have "\<dots> = (\<Sum>u\<in>C. outer_prod u u) *v x"
+        by (simp add: onormal_expand[OF B(1) x])
+      finally show ?thesis .
+    qed
+    then show ?thesis
+      by (auto simp: matrix_eq)
+  qed
+  have trP: "real (card C) = trace P"
+  proof -
+    have "trace P = (\<Sum>u\<in>B. u \<bullet> (P *v u))"
+      by (rule trace_onormal_basis[OF B])
+    also have "\<dots> = (\<Sum>u\<in>B. if u \<in> C then 1 else 0)"
+      by (intro sum.cong refl) (use mu01 in \<open>auto simp: C_def\<close>)
+    also have "\<dots> = real (card C)"
+    proof -
+      have BC_eq: "B \<inter> C = C"
+        using CB by auto
+      show ?thesis
+        using B(1) by (simp add: onormal_def sum.If_cases BC_eq)
+    qed
+    finally show ?thesis ..
+  qed
+  show thesis
+    by (rule that[OF onC Peq trP])
+qed
+
+text \<open>Conversely, basis projections are orthogonal projections.\<close>
+
+lemma onormal_proj:
+  assumes C: "onormal C"
+  shows "is_proj (\<Sum>u\<in>C. outer_prod u u)"
+    and "trace (\<Sum>u\<in>C. outer_prod u u) = real (card C)"
+proof -
+  show "is_proj (\<Sum>u\<in>C. outer_prod u u)"
+    unfolding is_proj_def
+  proof
+    show "transpose (\<Sum>u\<in>C. outer_prod u u) = (\<Sum>u\<in>C. outer_prod u u)"
+      by (simp add: transpose_matrix_sum)
+    have "(\<Sum>u\<in>C. outer_prod u u) ** (\<Sum>v\<in>C. outer_prod v v)
+        = (\<Sum>v\<in>C. \<Sum>u\<in>C. (u \<bullet> v) *\<^sub>R outer_prod u v)"
+      by (simp add: matrix_mult_sum_left matrix_mult_sum_right outer_prod_mult)
+    also have "\<dots> = (\<Sum>u\<in>C. \<Sum>v\<in>C. (u \<bullet> v) *\<^sub>R outer_prod u v)"
+      by (rule sum.swap)
+    also have "\<dots> = (\<Sum>u\<in>C. \<Sum>v\<in>C. if v = u then outer_prod u u else 0)"
+      by (intro sum.cong refl)
+        (use C in \<open>auto dest: onormal_inner_distinct
+          simp: outer_prod_scaleR_left\<close>)
+    also have "\<dots> = (\<Sum>u\<in>C. outer_prod u u)"
+      using C by (simp add: onormal_def)
+    finally show "(\<Sum>u\<in>C. outer_prod u u) ** (\<Sum>u\<in>C. outer_prod u u)
+        = (\<Sum>u\<in>C. outer_prod u u)" .
+  qed
+  have "trace (\<Sum>u\<in>C. outer_prod u u) = (\<Sum>u\<in>C. u \<bullet> u)"
+    by (simp add: trace_matrix_sum)
+  also have "\<dots> = (\<Sum>u\<in>C. (1::real))"
+    by (intro sum.cong refl) (use C in \<open>simp\<close>)
+  finally show "trace (\<Sum>u\<in>C. outer_prod u u) = real (card C)"
+    by simp
+qed
+
+lemma proj_with_trace_exists:
+  assumes m: "m \<le> CARD('n::finite)"
+  obtains P :: "real^'n^'n" where "is_proj P" "trace P = real m"
+proof -
+  obtain B :: "(real^'n) set" where B: "onormal B" "span B = UNIV"
+    using onormal_extension[OF onormal_empty] by auto
+  have "card B = CARD('n)"
+    using onormal_card_dim_span[OF B(1)] B(2)
+    by simp
+  with m obtain T where T: "T \<subseteq> B" "card T = m" "finite T"
+    by (metis obtain_subset_with_card_n)
+  have onT: "onormal T"
+    using T B(1) by (auto simp: onormal_def elim: pairwise_subset)
+  show thesis
+    using onormal_proj[OF onT] T(2) by (intro that[of "\<Sum>u\<in>T. outer_prod u u"]) auto
+qed
+
+lemma trace_proj_psd_nonneg:
+  assumes a: "psd a" and P: "is_proj P"
+  shows "0 \<le> trace (a ** P)"
+proof -
+  obtain C where C: "onormal C" "P = (\<Sum>u\<in>C. outer_prod u u)"
+    "real (card C) = trace P"
+    using is_proj_decomp[OF P] by metis
+  have "trace (a ** P) = (\<Sum>u\<in>C. u \<bullet> (a *v u))"
+    by (simp add: C(2) trace_mult_outer_sum)
+  also have "\<dots> \<ge> 0"
+    using a by (intro sum_nonneg) (auto simp: psd_def)
+  finally show ?thesis .
+qed
+
+text \<open>The trace of \<open>a\<close> against the spectral projection onto a subset of the
+  eigenbasis is the sum of the corresponding eigenvalues.\<close>
+
+lemma trace_mult_spectral_proj:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" and S: "S \<subseteq> B"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  shows "trace (a ** (\<Sum>u\<in>S. outer_prod u u)) = (\<Sum>u\<in>S. u \<bullet> (a *v u))"
+proof -
+  have finS: "finite S"
+    using B S by (auto simp: onormal_def elim: finite_subset)
+  have "trace (a ** (\<Sum>u\<in>S. outer_prod u u))
+      = (\<Sum>u\<in>S. trace (a ** outer_prod u u))"
+    by (simp add: matrix_mult_sum_right trace_matrix_sum)
+  also have "\<dots> = (\<Sum>u\<in>S. u \<bullet> (a *v u))"
+  proof (rule sum.cong[OF refl])
+    fix u assume "u \<in> S"
+    have "trace (a ** outer_prod u u) = trace (outer_prod (a *v u) u)"
+      by (simp add: mult_outer_prod)
+    also have "\<dots> = (a *v u) \<bullet> u"
+      by simp
+    finally show "trace (a ** outer_prod u u) = u \<bullet> (a *v u)"
+      by (simp add: inner_commute)
+  qed
+  finally show ?thesis .
+qed
+
+text \<open>If one coefficient is strictly between \<open>0\<close> and \<open>1\<close> then so is a second
+  one: otherwise the total would be that coefficient plus an integer, forcing
+  it to be an integer itself.\<close>
+
+lemma two_fractional:
+  fixes B :: "'a set" and c :: "'a \<Rightarrow> real"
+  assumes fin: "finite B" and i: "i \<in> B" and fi: "c i \<notin> {0, 1}"
+    and c0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> c u" and c1: "\<And>u. u \<in> B \<Longrightarrow> c u \<le> 1"
+    and isum: "(\<Sum>u\<in>B. c u) = real (N :: nat)"
+  shows "\<exists>j \<in> B. j \<noteq> i \<and> c j \<notin> {0, 1}"
+proof (rule ccontr)
+  assume "\<not> (\<exists>j \<in> B. j \<noteq> i \<and> c j \<notin> {0, 1})"
+  then have all01: "c u \<in> {0, 1}" if "u \<in> B" "u \<noteq> i" for u
+    using that by blast
+  define D where "D = B - {i}"
+  have finD: "finite D"
+    using fin by (simp add: D_def)
+  define M where "M = card {u \<in> D. c u = 1}"
+  have sumD: "(\<Sum>u\<in>D. c u) = real M"
+  proof -
+    have "(\<Sum>u\<in>D. c u) = (\<Sum>u\<in>{u \<in> D. c u = 1}. c u)"
+      by (rule sum.mono_neutral_right[OF finD])
+        (use all01 in \<open>auto simp: D_def\<close>)
+    also have "\<dots> = real M"
+      by (simp add: M_def)
+    finally show ?thesis .
+  qed
+  have "(\<Sum>u\<in>B. c u) = c i + (\<Sum>u\<in>D. c u)"
+    unfolding D_def using fin i by (simp add: sum.remove)
+  then have ci_eq: "c i = real N - real M"
+    using isum sumD by simp
+  have "0 < c i" and "c i < 1"
+    using fi c0[OF i] c1[OF i] by auto
+  then have "real M < real N" and "real N < real M + 1"
+    using ci_eq by simp_all
+  then have "M < N" and "N < M + 1"
+    by simp_all
+  then show False
+    by simp
+qed
+
 section \<open>The linear program on the simplex inside a box\<close>
 
 text \<open>Among the \<open>m\<close>-element subsets of a finite set there is one whose
@@ -287,7 +535,7 @@ lemma proj_weights_sum:
 
 section \<open>Ky Fan partial sums: the sum of the \<open>m\<close> largest eigenvalues\<close>
 
-text \<open>The dual of \<open>Pi_proj\<close> of Eq. (2.1). Like \<open>Pi_proj\<close> it is manifestly
+text \<open>Like \<open>Pi_proj\<close> of the paper's own operator, \<open>kyfan\<close> is manifestly
   independent of any choice of basis; unlike a definition by sorting a
   multiset of eigenvalues, it needs no well-definedness proof.\<close>
 
@@ -470,21 +718,6 @@ lemma kyfan_ge_trace_mult:
   unfolding kyfan_def
   by (intro cSup_upper kyfan_bdd_above[OF sym]) (use P in blast)
 
-section \<open>\<open>kyfan\<close> against the spectral constraints of Eq. (1.9)\<close>
-
-text \<open>The two bridges to \<open>eigen_lb\<close> / \<open>eigen_ub\<close>. Together they say that on
-  the feasible set of Eq. (1.9) the \<open>m\<close>-fold eigenvalue sums are pinned
-  between \<open>m\<close> and \<open>m L\<close> --- exactly the input the extremal computation
-  behind Eq. (3.5) needs.\<close>
-
-text \<open>\<open>eigen_lb a m\<close> provides an \<open>m\<close>-dimensional subspace on which the form
-  dominates \<open>|x|²\<close>. Testing the supremum at the orthogonal projection onto
-  it gives the lower bound; no eigenbasis of \<open>a\<close> is involved.\<close>
-
-text \<open>Dually, \<open>eigen_ub a L\<close> caps every eigenvalue, hence every \<open>m\<close>-fold
-  sum. Here the bound holds for each competing projection separately, so
-  no eigenbasis and no symmetry assumption are needed.\<close>
-
 section \<open>Ordered eigenvalues as differences of Ky Fan sums\<close>
 
 text \<open>Only the rank-\<open>0\<close> projection has trace \<open>0\<close>, so the \<open>0\<close>-th Ky Fan sum
@@ -535,8 +768,8 @@ proof -
 qed
 
 text \<open>The \<open>i\<close>-th largest eigenvalue of a symmetric matrix, \<open>1 \<le> i \<le> n\<close>.
-  This is the \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)\<close> of the paper. Being a difference of two basis-free
-  quantities it is itself basis-free, with no well-definedness obligation.\<close>
+  Being a difference of two basis-free quantities it is itself basis-free,
+  with no well-definedness obligation.\<close>
 
 definition eigval :: "nat \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "eigval i a = kyfan i a - kyfan (i - 1) a"
@@ -867,7 +1100,7 @@ qed
 
 section \<open>Positive and negative parts, with no functional calculus\<close>
 
-text \<open>Eq. (3.5)/(3.6) need two spectral sums:
+text \<open>Two spectral sums are of general interest:
 
     \<open>\<Sum>\<^sub>i\<^sub>\<le>\<^sub>m \<lambda>\<^sub>(\<^sub>i\<^sub>)\<^sup>+\<close>   and   \<open>\<Sum>\<^sub>i\<^sub>\<le>\<^sub>m min (\<lambda>\<^sub>(\<^sub>i\<^sub>), 0)\<close>.
 
@@ -989,8 +1222,7 @@ next
 qed
 
 text \<open>And the companion: the gap between the Ky Fan sum and its running
-  maximum is the sum of the negative parts. This is the \<open>\<Sum> min (\<mu>\<^sub>i, 0)\<close> term
-  of the bracket in Eq. (3.5).\<close>
+  maximum is the sum of the negative parts.\<close>
 
 corollary kyfan_minus_possum:
   fixes a :: "real^'n::finite^'n"
@@ -1009,18 +1241,13 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Consequently the whole bracket of Eq. (3.5),
+text \<open>Consequently the bracket
 
-    \<open>L * (\<Sum>\<^sub>i \<lambda>\<^sub>i\<^sup>+) + \<Sum>\<^sub>i\<^sub>\<le>\<^sub>m min (\<lambda>\<^sub>i, 0)\<close>,
+    \<open>L * (\<Sum>\<^sub>i \<lambda>\<^sub>i\<^sup>+) + \<Sum>\<^sub>i\<^sub>\<le>\<^sub>m min (\<lambda>\<^sub>i, 0)\<close>
 
   is a function of the Ky Fan sums alone:
 
-    \<open>L * possum n a + (kyfan m a - possum m a)\<close>.
-
-  What remains for Eq. (3.6) is the geometry: the Poincare separation
-  theorem relating the eigenvalues of the compression of \<open>M\<close> to \<open>p\<^sup>\<bottom>\<close> with
-  those of \<open>M\<close>, and the extremal computation identifying the bracket with the
-  supremum over the feasible set of Eq. (1.9).\<close>
+    \<open>L * possum n a + (kyfan m a - possum m a)\<close>.\<close>
 
 definition bracket :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "bracket m L a = L * possum CARD('n) a + (kyfan m a - possum m a)"
@@ -1036,10 +1263,9 @@ lemma bracket_eq_sum:
 
 section \<open>Evaluating \<open>possum\<close> in an eigenbasis\<close>
 
-text \<open>The extremal construction behind Eq. (3.5) needs a concrete feasible
-  \<open>a\<close>, built from an eigenbasis of \<open>M\<close>, evaluating \<open>trace (M ** a)\<close> ---
-  which needs the positive-part sum expressed over the eigenbasis rather
-  than the index range \<open>1..n\<close>.
+text \<open>A concrete feasible matrix built from an eigenbasis needs the
+  positive-part sum expressed over the eigenbasis rather than the index
+  range \<open>1..n\<close>.
 
   The set \<open>T = {u \<in> B. 0 < u \<bullet> M u}\<close> of positive directions is
   automatically a threshold set, so \<open>kyfan_threshold\<close> evaluates
@@ -1120,13 +1346,472 @@ text \<open>The companion statement for the negative-part term,
     \<open>kyfan m a - possum m a = (\<Sum>u\<in>S. min (u \<bullet> a u) 0)\<close>  for a threshold set
     \<open>S \<subseteq> B\<close> of size \<open>m\<close>,
 
-  which would express \<open>bracket m L a\<close> entirely over an eigenbasis, is not
-  established here. The positive-part half above goes through because
+  is not established here. The positive-part half above goes through because
   \<open>{u \<in> B. 0 < u \<bullet> a u}\<close> is itself a threshold set of \<open>B\<close>; the restricted
   version is harder, needing for every \<open>j \<le> m\<close> a threshold subset of
   \<open>S\<close> of size \<open>j\<close> --- i.e. that \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>m\<^sub>)\<close> are exactly the
   \<open>S\<close>-eigenvalues in decreasing order, true by iterating
   \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but a separate induction.\<close>
+
+section \<open>The positive-part sum inside a threshold set\<close>
+
+text \<open>On a threshold set \<open>S\<close> of size \<open>m\<close>, \<open>possum m a\<close> is the sum of the
+  positive eigenvalues occurring in \<open>S\<close>, and consequently
+  \<open>kyfan m a - possum m a\<close> is the sum of the nonpositive ones.
+
+  The \<open>\<le>\<close> half uses \<open>kyfan_within_threshold\<close> for each \<open>j \<le> m\<close>; the \<open>\<ge>\<close> half
+  observes that the positive part of \<open>S\<close> is again a threshold set of \<open>B\<close>, so
+  \<open>kyfan_threshold\<close> evaluates it, and its size is at most \<open>m\<close>.\<close>
+
+lemma threshold_shrink_one:
+  fixes lam :: "'a \<Rightarrow> real"
+  assumes finS: "finite S" and Sne: "S \<noteq> {}"
+    and thresh: "\<And>u v. u \<in> S \<Longrightarrow> v \<in> B - S \<Longrightarrow> lam v \<le> lam u"
+  shows "\<exists>T. T \<subseteq> S \<and> card T = card S - 1
+          \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. lam v \<le> lam u)"
+proof -
+  obtain w where w: "w \<in> S"
+    and wmin: "\<And>u. u \<in> S \<Longrightarrow> lam w \<le> lam u"
+    using finite_arg_min_on[where f = lam, OF finS Sne] by metis
+  have sub: "S - {w} \<subseteq> S"
+    by blast
+  have cardw: "card (S - {w}) = card S - 1"
+    using finS w by simp
+  have th: "\<forall>u \<in> S - {w}. \<forall>v \<in> B - (S - {w}). lam v \<le> lam u"
+  proof (intro ballI)
+    fix u v assume uv: "u \<in> S - {w}" "v \<in> B - (S - {w})"
+    show "lam v \<le> lam u"
+      by (rule threshold_remove_min[where lam = lam and T = S and B = B and w = w,
+            OF thresh wmin uv(1) uv(2)])
+  qed
+  show ?thesis
+    by (rule exI[of _ "S - {w}"]) (intro conjI sub cardw th)
+qed
+
+text \<open>The descending chain, by induction on \<open>n = card S\<close>, where the measure
+  decreases visibly.  The step splits on whether \<open>j\<close> is already \<open>card S\<close>.\<close>
+
+lemma threshold_chain_aux:
+  fixes lam :: "'a \<Rightarrow> real"
+  assumes finB: "finite B"
+  shows "\<And>S j. card S = n \<Longrightarrow> S \<subseteq> B
+     \<Longrightarrow> (\<forall>u \<in> S. \<forall>v \<in> B - S. lam v \<le> lam u) \<Longrightarrow> j \<le> n
+     \<Longrightarrow> \<exists>T. T \<subseteq> S \<and> card T = j
+             \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. lam v \<le> lam u)"
+proof (induction n)
+  case 0
+  then have j0: "j = 0" by simp
+  show ?case
+    by (rule exI[of _ "{}"]) (simp add: j0)
+next
+  case (Suc n)
+  have finS: "finite S"
+    using Suc.prems(2) finB by (rule finite_subset)
+  show ?case
+  proof (cases "j = Suc n")
+    case True
+    have c: "card S = j"
+      using Suc.prems(1) True by simp
+    show ?thesis
+      by (rule exI[of _ S]) (intro conjI subset_refl c Suc.prems(3))
+  next
+    case False
+    then have jn: "j \<le> n"
+      using Suc.prems(4) by simp
+    have Sne: "S \<noteq> {}"
+      using Suc.prems(1) by auto
+    have thr: "lam v \<le> lam u" if "u \<in> S" "v \<in> B - S" for u v
+      using Suc.prems(3) that by blast
+    have ex1: "\<exists>T. T \<subseteq> S \<and> card T = card S - 1
+            \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. lam v \<le> lam u)"
+      by (rule threshold_shrink_one[OF finS Sne thr])
+    obtain S' where S'P: "S' \<subseteq> S \<and> card S' = card S - 1
+            \<and> (\<forall>u \<in> S'. \<forall>v \<in> B - S'. lam v \<le> lam u)"
+      using ex1 by (rule exE)
+    have S'sub: "S' \<subseteq> S"
+      using S'P by simp
+    have S'card: "card S' = n"
+      using S'P Suc.prems(1) by simp
+    have S'th: "\<forall>u \<in> S'. \<forall>v \<in> B - S'. lam v \<le> lam u"
+      using S'P by simp
+    have S'B: "S' \<subseteq> B"
+      using S'sub Suc.prems(2) by blast
+    have ex2: "\<exists>T. T \<subseteq> S' \<and> card T = j
+            \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. lam v \<le> lam u)"
+      by (rule Suc.IH[OF S'card S'B S'th jn])
+    obtain T where TP: "T \<subseteq> S' \<and> card T = j
+            \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. lam v \<le> lam u)"
+      using ex2 by (rule exE)
+    have TS: "T \<subseteq> S"
+      using TP S'sub by auto
+    have Tcard: "card T = j"
+      using TP by simp
+    have Tth: "\<forall>u \<in> T. \<forall>v \<in> B - T. lam v \<le> lam u"
+      using TP by simp
+    show ?thesis
+      by (rule exI[of _ T]) (intro conjI TS Tcard Tth)
+  qed
+qed
+
+lemma threshold_chain:
+  fixes lam :: "'a \<Rightarrow> real"
+  assumes finB: "finite B" and S: "S \<subseteq> B"
+    and thresh: "\<And>u v. u \<in> S \<Longrightarrow> v \<in> B - S \<Longrightarrow> lam v \<le> lam u"
+    and j: "j \<le> card S"
+  shows "\<exists>T. T \<subseteq> S \<and> card T = j
+          \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. lam v \<le> lam u)"
+proof -
+  have th: "\<forall>u \<in> S. \<forall>v \<in> B - S. lam v \<le> lam u"
+  proof (intro ballI)
+    fix u v assume "u \<in> S" "v \<in> B - S"
+    then show "lam v \<le> lam u" by (rule thresh)
+  qed
+  show ?thesis
+    by (rule threshold_chain_aux[OF finB refl S th j])
+qed
+
+text \<open>Specialised to an eigenbasis: for every \<open>j \<le> m\<close> the Ky Fan sum
+  \<open>kyfan j a\<close> is already computed inside a threshold set \<open>S\<close> of size \<open>m\<close>,
+  which lets \<open>possum m a\<close> be identified with the positive-part sum over
+  \<open>S\<close>.\<close>
+
+lemma kyfan_within_threshold:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    and S: "S \<subseteq> B" "card S = m"
+    and thresh: "\<And>u v. u \<in> S \<Longrightarrow> v \<in> B - S \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+    and j: "j \<le> m"
+  shows "\<exists>T. T \<subseteq> S \<and> card T = j \<and> kyfan j a = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
+proof -
+  have finB: "finite B"
+    by (rule onormal_finite[OF B(1)])
+  have jc: "j \<le> card S"
+    using j S(2) by simp
+  have ex: "\<exists>T. T \<subseteq> S \<and> card T = j
+          \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. v \<bullet> (a *v v) \<le> u \<bullet> (a *v u))"
+    by (rule threshold_chain[where lam = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
+          OF finB S(1) thresh jc])
+  obtain T where TP: "T \<subseteq> S \<and> card T = j
+          \<and> (\<forall>u \<in> T. \<forall>v \<in> B - T. v \<bullet> (a *v v) \<le> u \<bullet> (a *v u))"
+    using ex by (rule exE)
+  have T1: "T \<subseteq> S"
+    using TP by simp
+  have T2: "card T = j"
+    using TP by simp
+  have thT: "\<forall>u \<in> T. \<forall>v \<in> B - T. v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+    using TP by simp
+  have TB: "T \<subseteq> B"
+    using T1 S(1) by blast
+  have thT': "v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)" if "u \<in> T" "v \<in> B - T" for u v
+    using thT that by blast
+  have kf: "kyfan j a = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
+    by (rule kyfan_threshold[OF B sym eig TB T2 thT'])
+  show ?thesis
+    by (rule exI[of _ T]) (intro conjI T1 T2 kf)
+qed
+
+lemma possum_within_threshold:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    and S: "S \<subseteq> B" "card S = m"
+    and thresh: "\<And>u v. u \<in> S \<Longrightarrow> v \<in> B - S \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+  shows "possum m a = (\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)"
+proof (rule antisym)
+  have finB: "finite B"
+    by (rule onormal_finite[OF B(1)])
+  have finS: "finite S"
+    using S(1) finB by (rule finite_subset)
+  have bound: "\<forall>x \<in> (\<lambda>j. kyfan j a) ` {..m}. x \<le> (\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)"
+  proof (intro ballI)
+    fix x assume "x \<in> (\<lambda>j. kyfan j a) ` {..m}"
+    then obtain j where j: "j \<le> m" and x: "x = kyfan j a"
+      by auto
+    have exj: "\<exists>T. T \<subseteq> S \<and> card T = j \<and> kyfan j a = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
+      by (rule kyfan_within_threshold[OF B sym eig S thresh j])
+    obtain T where TP: "T \<subseteq> S \<and> card T = j
+            \<and> kyfan j a = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
+      using exj by (rule exE)
+    have T1: "T \<subseteq> S"
+      using TP by simp
+    have kf: "kyfan j a = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
+      using TP by simp
+    have "(\<Sum>u\<in>T. u \<bullet> (a *v u)) \<le> (\<Sum>u\<in>T. max (u \<bullet> (a *v u)) 0)"
+      by (intro sum_mono) simp
+    also have "\<dots> \<le> (\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)"
+      using finS T1 by (intro sum_mono2) auto
+    finally show "x \<le> (\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)"
+      unfolding x kf .
+  qed
+  show "possum m a \<le> (\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)"
+    using bound unfolding possum_def by (subst Max_le_iff) auto
+next
+  have finB: "finite B"
+    by (rule onormal_finite[OF B(1)])
+  have finS: "finite S"
+    using S(1) finB by (rule finite_subset)
+  define P where "P = {u \<in> S. 0 < u \<bullet> (a *v u)}"
+  have Psub: "P \<subseteq> S"
+    by (auto simp: P_def)
+  have PB: "P \<subseteq> B"
+    using Psub S(1) by blast
+  have cardP: "card P \<le> m"
+    using S(2) card_mono[OF finS Psub] by simp
+  text \<open>The positive part of a threshold set is again a threshold set: a
+    point outside it is either inside \<open>S\<close> with a nonpositive value, or
+    outside \<open>S\<close> and hence dominated already.\<close>
+  have threshP: "v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)" if u: "u \<in> P" and v: "v \<in> B - P" for u v
+  proof -
+    have upos: "0 < u \<bullet> (a *v u)"
+      using u by (simp add: P_def)
+    have uS: "u \<in> S"
+      using u by (simp add: P_def)
+    show ?thesis
+    proof (cases "v \<in> S")
+      case True
+      then have "v \<bullet> (a *v v) \<le> 0"
+        using v by (auto simp: P_def)
+      then show ?thesis
+        using upos by simp
+    next
+      case False
+      then have "v \<in> B - S"
+        using v by blast
+      then show ?thesis
+        by (rule thresh[OF uS])
+    qed
+  qed
+  have kP: "kyfan (card P) a = (\<Sum>u\<in>P. u \<bullet> (a *v u))"
+    by (rule kyfan_threshold[OF B sym eig PB refl threshP])
+  have sumP: "(\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0) = (\<Sum>u\<in>P. u \<bullet> (a *v u))"
+  proof -
+    have split: "(\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)
+        = (\<Sum>u\<in>S - P. max (u \<bullet> (a *v u)) 0) + (\<Sum>u\<in>P. max (u \<bullet> (a *v u)) 0)"
+      using Psub finS by (rule sum.subset_diff)
+    have out: "(\<Sum>u\<in>S - P. max (u \<bullet> (a *v u)) 0) = 0"
+      by (intro sum.neutral ballI) (auto simp: P_def)
+    have inn: "(\<Sum>u\<in>P. max (u \<bullet> (a *v u)) 0) = (\<Sum>u\<in>P. u \<bullet> (a *v u))"
+      by (intro sum.cong refl) (auto simp: P_def)
+    show ?thesis
+      using split out inn by simp
+  qed
+  have "(\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0) = kyfan (card P) a"
+    using kP sumP by simp
+  also have "\<dots> \<le> possum m a"
+    by (rule possum_ge_kyfan[OF cardP])
+  finally show "(\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0) \<le> possum m a" .
+qed
+
+text \<open>And the negative-part companion.\<close>
+
+corollary kyfan_minus_possum_threshold:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    and S: "S \<subseteq> B" "card S = m"
+    and thresh: "\<And>u v. u \<in> S \<Longrightarrow> v \<in> B - S \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+  shows "kyfan m a - possum m a = (\<Sum>u\<in>S. min (u \<bullet> (a *v u)) 0)"
+proof -
+  have kS: "kyfan m a = (\<Sum>u\<in>S. u \<bullet> (a *v u))"
+    by (rule kyfan_threshold[OF B sym eig S thresh])
+  have pS: "possum m a = (\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)"
+    by (rule possum_within_threshold[OF B sym eig S thresh])
+  have step: "u \<bullet> (a *v u) - max (u \<bullet> (a *v u)) 0 = min (u \<bullet> (a *v u)) 0" for u
+    by (simp add: min_def max_def)
+  have "kyfan m a - possum m a
+      = (\<Sum>u\<in>S. u \<bullet> (a *v u)) - (\<Sum>u\<in>S. max (u \<bullet> (a *v u)) 0)"
+    unfolding kS pS by (rule refl)
+  also have "\<dots> = (\<Sum>u\<in>S. u \<bullet> (a *v u) - max (u \<bullet> (a *v u)) 0)"
+    by (simp add: sum_subtractf)
+  also have "\<dots> = (\<Sum>u\<in>S. min (u \<bullet> (a *v u)) 0)"
+    using step by simp
+  finally show ?thesis .
+qed
+
+section \<open>The linear program with an approximate weight sum\<close>
+
+lemma reduce_weights_to_exact:
+  fixes t :: "'a \<Rightarrow> real"
+  assumes finB: "finite B"
+    and t0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> t u"
+    and tsum: "real m \<le> (\<Sum>u\<in>B. t u)"
+  shows "\<exists>t'. (\<forall>u\<in>B. 0 \<le> t' u \<and> t' u \<le> t u) \<and> (\<Sum>u\<in>B. t' u) = real m"
+proof (cases "m = 0")
+  case True
+  show ?thesis
+    by (rule exI[of _ "\<lambda>_. 0"]) (simp add: True t0)
+next
+  case False
+  have mpos: "0 < real m"
+    using False by simp
+  have pos: "0 < (\<Sum>u\<in>B. t u)"
+    using mpos tsum by simp
+  define r where "r = real m / (\<Sum>u\<in>B. t u)"
+  have r0: "0 \<le> r"
+    unfolding r_def using mpos pos by simp
+  have r1: "r \<le> 1"
+    unfolding r_def using tsum pos by simp
+  have bounds: "0 \<le> r * t u \<and> r * t u \<le> t u" if u: "u \<in> B" for u
+  proof
+    show "0 \<le> r * t u"
+      using r0 t0[OF u] by simp
+    have "r * t u \<le> 1 * t u"
+      using r1 t0[OF u] by (intro mult_right_mono) auto
+    then show "r * t u \<le> t u"
+      by simp
+  qed
+  have "(\<Sum>u\<in>B. r * t u) = r * (\<Sum>u\<in>B. t u)"
+    by (rule sum_distrib_left[symmetric])
+  also have "\<dots> = real m"
+    unfolding r_def using pos by simp
+  finally have rsum: "(\<Sum>u\<in>B. r * t u) = real m" .
+  show ?thesis
+    by (rule exI[of _ "\<lambda>u. r * t u"]) (intro conjI ballI bounds rsum)
+qed
+
+text \<open>The box program with \<open>(\<Sum>t) \<ge> real m\<close> rather than equality: the
+  positive part uses \<open>t \<le> 1\<close> directly, and the negative part is pushed onto
+  the scaled-down weights before applying \<open>sum_weighted_le_top_subset\<close>.\<close>
+
+
+theorem box_program_bound:
+  fixes lam t :: "'a \<Rightarrow> real"
+  assumes finB: "finite B" and m: "m \<le> card B"
+    and t0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> t u" and t1: "\<And>u. u \<in> B \<Longrightarrow> t u \<le> 1"
+    and tsum: "real m \<le> (\<Sum>u\<in>B. t u)"
+  shows "\<exists>T. T \<subseteq> B \<and> card T = m
+      \<and> (\<Sum>u\<in>B. lam u * t u)
+          \<le> (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)"
+proof -
+  obtain t' where t': "\<forall>u\<in>B. 0 \<le> t' u \<and> t' u \<le> t u"
+    and t'sum: "(\<Sum>u\<in>B. t' u) = real m"
+    using reduce_weights_to_exact[OF finB t0 tsum] by blast
+  have t'0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> t' u"
+    using t' by blast
+  have t'1: "\<And>u. u \<in> B \<Longrightarrow> t' u \<le> 1"
+    using t' t1 by force
+  obtain T where T: "T \<subseteq> B" "card T = m"
+    and neg': "(\<Sum>u\<in>B. min (lam u) 0 * t' u) \<le> (\<Sum>u\<in>T. min (lam u) 0)"
+    using sum_weighted_le_top_subset[where f = "\<lambda>u. min (lam u) 0" and t = t',
+        OF finB m t'0 t'1 t'sum] by metis
+  have negmono: "(\<Sum>u\<in>B. min (lam u) 0 * t u) \<le> (\<Sum>u\<in>B. min (lam u) 0 * t' u)"
+  proof (rule sum_mono)
+    fix u assume u: "u \<in> B"
+    have "t' u \<le> t u"
+      using t' u by blast
+    then show "min (lam u) 0 * t u \<le> min (lam u) 0 * t' u"
+      by (intro mult_left_mono_neg) auto
+  qed
+  have pos: "(\<Sum>u\<in>B. max (lam u) 0 * t u) \<le> (\<Sum>u\<in>B. max (lam u) 0)"
+  proof (rule sum_mono)
+    fix u assume u: "u \<in> B"
+    have "max (lam u) 0 * t u \<le> max (lam u) 0 * 1"
+      using t1[OF u] by (intro mult_left_mono) auto
+    then show "max (lam u) 0 * t u \<le> max (lam u) 0"
+      by simp
+  qed
+  have split: "lam u * t u = max (lam u) 0 * t u + min (lam u) 0 * t u" for u
+    by (simp add: min_def max_def)
+  have "(\<Sum>u\<in>B. lam u * t u)
+      = (\<Sum>u\<in>B. max (lam u) 0 * t u) + (\<Sum>u\<in>B. min (lam u) 0 * t u)"
+    unfolding split by (rule sum.distrib)
+  also have "\<dots> \<le> (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)"
+    using pos negmono neg' by (intro add_mono) auto
+  finally have le: "(\<Sum>u\<in>B. lam u * t u)
+      \<le> (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)" .
+  show ?thesis
+    by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
+qed
+
+text \<open>The upper bound of Eq. (3.5): writing \<open>w = t + s\<close> with
+  \<open>t u = min (w u) 1\<close> and \<open>s u = max (w u - 1) 0\<close>, the \<open>t\<close>-part is the box
+  program and the \<open>s\<close>-part contributes \<open>\<le> (L-1) * (\<Sum> max (lam u) 0)\<close>,
+  giving the bracket of Eq. (3.5).\<close>
+
+
+theorem lp_upper_bound:
+  fixes lam w :: "'a \<Rightarrow> real"
+  assumes finB: "finite B" and m: "m \<le> card B" and L: "1 \<le> L"
+    and w0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> w u" and wL: "\<And>u. u \<in> B \<Longrightarrow> w u \<le> L"
+    and wsum: "real m \<le> (\<Sum>u\<in>B. min (w u) 1)"
+  shows "\<exists>T. T \<subseteq> B \<and> card T = m
+      \<and> (\<Sum>u\<in>B. lam u * w u)
+          \<le> L * (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)"
+proof -
+  have t0: "0 \<le> min (w u) 1" if u: "u \<in> B" for u
+    using w0[OF u] by simp
+  have t1: "min (w u) 1 \<le> 1" for u
+    by simp
+  obtain T where T: "T \<subseteq> B" "card T = m"
+    and tpart: "(\<Sum>u\<in>B. lam u * min (w u) 1)
+        \<le> (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)"
+    using box_program_bound[where lam = lam and t = "\<lambda>u. min (w u) 1",
+        OF finB m t0 t1 wsum] by blast
+  have spart: "(\<Sum>u\<in>B. lam u * (w u - min (w u) 1))
+      \<le> (L - 1) * (\<Sum>u\<in>B. max (lam u) 0)"
+  proof -
+    have "(\<Sum>u\<in>B. lam u * (w u - min (w u) 1))
+        \<le> (\<Sum>u\<in>B. max (lam u) 0 * (L - 1))"
+    proof (rule sum_mono)
+      fix u assume u: "u \<in> B"
+      have s0: "0 \<le> w u - min (w u) 1"
+        by simp
+      have sL: "w u - min (w u) 1 \<le> L - 1"
+        using wL[OF u] L by (simp add: min_def)
+      have "lam u * (w u - min (w u) 1) \<le> max (lam u) 0 * (w u - min (w u) 1)"
+        using s0 by (intro mult_right_mono) auto
+      also have "\<dots> \<le> max (lam u) 0 * (L - 1)"
+        using sL by (intro mult_left_mono) auto
+      finally show "lam u * (w u - min (w u) 1) \<le> max (lam u) 0 * (L - 1)" .
+    qed
+    also have "\<dots> = (L - 1) * (\<Sum>u\<in>B. max (lam u) 0)"
+      by (simp add: sum_distrib_left mult.commute)
+    finally show ?thesis .
+  qed
+  have decomp: "lam u * w u
+      = lam u * min (w u) 1 + lam u * (w u - min (w u) 1)" for u
+    by (simp add: algebra_simps)
+  have "(\<Sum>u\<in>B. lam u * w u)
+      = (\<Sum>u\<in>B. lam u * min (w u) 1) + (\<Sum>u\<in>B. lam u * (w u - min (w u) 1))"
+    unfolding decomp by (rule sum.distrib)
+  also have "\<dots> \<le> ((\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0))
+      + (L - 1) * (\<Sum>u\<in>B. max (lam u) 0)"
+    using tpart spart by (rule add_mono)
+  also have "\<dots> = L * (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)"
+    by (simp add: algebra_simps)
+  finally have le: "(\<Sum>u\<in>B. lam u * w u)
+      \<le> L * (\<Sum>u\<in>B. max (lam u) 0) + (\<Sum>u\<in>T. min (lam u) 0)" .
+  show ?thesis
+    by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
+qed
+
+text \<open>The box program returns an arbitrary size-\<open>m\<close> set \<open>T\<close>, whereas
+  \<open>kyfan m - possum m\<close> sums over a threshold set.  Since \<open>min (\<cdot>) 0\<close> is
+  monotone, a threshold set for \<open>lam\<close> is also one for
+  \<open>\<lambda>u. min (lam u) 0\<close>, and \<open>threshold_sum_maximal\<close> gives the inequality.\<close>
+
+
+lemma sum_min_le_threshold:
+  fixes lam :: "'a \<Rightarrow> real"
+  assumes finB: "finite B"
+    and T0: "T0 \<subseteq> B" "card T0 = m"
+    and thresh: "\<And>u v. u \<in> T0 \<Longrightarrow> v \<in> B - T0 \<Longrightarrow> lam v \<le> lam u"
+    and T: "T \<subseteq> B" "card T = m"
+  shows "(\<Sum>u\<in>T. min (lam u) 0) \<le> (\<Sum>u\<in>T0. min (lam u) 0)"
+proof -
+  have threshmin: "min (lam v) 0 \<le> min (lam u) 0"
+    if u: "u \<in> T0" and v: "v \<in> B - T0" for u v
+    using thresh[OF u v] by (simp add: min_def)
+  show ?thesis
+    by (rule threshold_sum_maximal[where lam = "\<lambda>u. min (lam u) 0",
+          OF finB T0(1) T0(2) threshmin T(1) T(2)])
+qed
+
+
 
 (*<*)
 end

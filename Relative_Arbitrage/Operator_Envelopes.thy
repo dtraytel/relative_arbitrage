@@ -1,7 +1,7 @@
 
 (*<*)
 theory Operator_Envelopes
-  imports Viscosity_Solutions
+  imports Viscosity_Solutions "Symmetric_Matrix_Spectra.Householder_Rotation"
 begin
 
 (*>*)
@@ -661,213 +661,9 @@ text \<open>Eq. (3.4) defines, for \<open>p \<noteq> 0\<close>,
   (Eq. (3.5)); the paper passes to \<open>p \<rightarrow> 0\<close> via the one-sided Poincare
   separation bound and Ky Fan's maximum principle, reaching Eq. (3.6).
   Here \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close> is instead established by transporting
-  a feasible witness under orthogonal conjugation, below.\<close>
-
-subsection \<open>Householder reflections and the rotation between two directions\<close>
-
-text \<open>Transporting a near-optimal feasible witness for \<open>p\<close> to nearby \<open>p'\<close> by
-  orthogonal conjugation needs a rotation carrying \<open>p\<close>'s direction to
-  \<open>p'\<close>'s, continuous down to the identity as \<open>p' \<rightarrow> p\<close>.  A single
-  Householder reflection does the first but not the second, since its axis
-  \<open>u - v\<close> has no limit as \<open>v \<rightarrow> u\<close>; the composition of two,
-  \<open>hh (u+v) \<circ> hh u\<close>, does: it sends \<open>u \<mapsto> -u \<mapsto> v\<close> and is the identity
-  at \<open>v = u\<close>.  The reflection is defined without normalising its axis,
-  keeping the computation division-free.\<close>
-
-definition hh :: "real^'n::finite \<Rightarrow> real^'n^'n"
-  where "hh w = mat 1 - (2 / (w \<bullet> w)) *\<^sub>R outer_prod w w"
-
-lemma matvec_minus_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (- x) = - (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
-
-lemma hh_sym: "transpose (hh w) = hh w"
-  unfolding hh_def
-  by (simp add: transpose_def outer_prod_def mat_def vec_eq_iff mult_ac)
-
-lemma hh_mv: "hh w *v x = x - (2 * (w \<bullet> x) / (w \<bullet> w)) *\<^sub>R w"
-proof -
-  have "hh w *v x = mat 1 *v x - ((2 / (w \<bullet> w)) *\<^sub>R outer_prod w w) *v x"
-    unfolding hh_def by (rule matrix_vector_mult_diff_rdistrib)
-  also have "mat 1 *v x = x" by (rule matrix_vector_mul_lid)
-  also have "((2 / (w \<bullet> w)) *\<^sub>R outer_prod w w) *v x
-      = (2 / (w \<bullet> w)) *\<^sub>R (outer_prod w w *v x)"
-    by (rule scaleR_matrix_vector)
-  also have "outer_prod w w *v x = (w \<bullet> x) *\<^sub>R w"
-    by (rule outer_prod_mv)
-  finally show ?thesis by simp
-qed
-
-lemma hh_self:
-  fixes w :: "real^'n::finite"
-  assumes w0: "w \<noteq> 0"
-  shows "hh w *v w = - w"
-proof -
-  have ww: "w \<bullet> w \<noteq> 0" using w0 by simp
-  have cw: "2 * (w \<bullet> w) / (w \<bullet> w) = 2" using ww by simp
-  have "hh w *v w = w - (2 * (w \<bullet> w) / (w \<bullet> w)) *\<^sub>R w" by (rule hh_mv)
-  also have "\<dots> = w - (2::real) *\<^sub>R w" unfolding cw by (rule refl)
-  also have "\<dots> = - w" by (simp add: vec_eq_iff)
-  finally show ?thesis .
-qed
-
-lemma hh_bisect:
-  fixes u v :: "real^'n::finite"
-  assumes u1: "norm u = 1" and v1: "norm v = 1" and ne: "u + v \<noteq> 0"
-  shows "hh (u + v) *v u = - v"
-proof -
-  have uu: "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
-  have vv: "v \<bullet> v = 1" using v1 by (metis norm_eq_1)
-  have s1: "(u + v) \<bullet> u = 1 + u \<bullet> v"
-  proof -
-    have a: "(u + v) \<bullet> u = u \<bullet> u + v \<bullet> u" by (rule inner_add_left)
-    have b: "v \<bullet> u = u \<bullet> v" by (rule inner_commute)
-    show ?thesis unfolding a b uu by (rule refl)
-  qed
-  have s2: "(u + v) \<bullet> (u + v) = 2 * (1 + u \<bullet> v)"
-  proof -
-    have a: "(u + v) \<bullet> (u + v) = u \<bullet> (u + v) + v \<bullet> (u + v)"
-      by (rule inner_add_left)
-    have b: "u \<bullet> (u + v) = u \<bullet> u + u \<bullet> v" by (rule inner_add_right)
-    have d: "v \<bullet> (u + v) = v \<bullet> u + v \<bullet> v" by (rule inner_add_right)
-    have e: "v \<bullet> u = u \<bullet> v" by (rule inner_commute)
-    show ?thesis unfolding a b d e uu vv by simp
-  qed
-  have nz: "(u + v) \<bullet> (u + v) \<noteq> 0" using ne by simp
-  have c1: "1 + u \<bullet> v \<noteq> 0" using nz unfolding s2 by simp
-  have "hh (u + v) *v u
-      = u - (2 * ((u + v) \<bullet> u) / ((u + v) \<bullet> (u + v))) *\<^sub>R (u + v)"
-    by (rule hh_mv)
-  also have "2 * ((u + v) \<bullet> u) / ((u + v) \<bullet> (u + v)) = 1"
-    unfolding s1 s2 using c1 by simp
-  finally show ?thesis by simp
-qed
-
-lemma hh_sq:
-  fixes w :: "real^'n::finite"
-  assumes w0: "w \<noteq> 0"
-  shows "hh w ** hh w = mat 1"
-proof -
-  have ww: "w \<bullet> w \<noteq> 0" using w0 by simp
-  have key: "(hh w ** hh w) *v x = mat 1 *v x" for x
-  proof -
-    define k where "k = 2 * (w \<bullet> x) / (w \<bullet> w)"
-    have h1: "hh w *v x = x - k *\<^sub>R w" unfolding k_def by (rule hh_mv)
-    have wk: "w \<bullet> (x - k *\<^sub>R w) = - (w \<bullet> x)"
-    proof -
-      have "w \<bullet> (x - k *\<^sub>R w) = w \<bullet> x - k * (w \<bullet> w)"
-        by (simp add: inner_diff_right)
-      also have "k * (w \<bullet> w) = 2 * (w \<bullet> x)"
-        unfolding k_def using ww by simp
-      finally show ?thesis by simp
-    qed
-    have coeff: "2 * (w \<bullet> (x - k *\<^sub>R w)) / (w \<bullet> w) = - k"
-    proof -
-      have "2 * (w \<bullet> (x - k *\<^sub>R w)) / (w \<bullet> w)
-          = 2 * (- (w \<bullet> x)) / (w \<bullet> w)" by (simp add: wk)
-      also have "\<dots> = - (2 * (w \<bullet> x) / (w \<bullet> w))" by simp
-      finally show ?thesis unfolding k_def .
-    qed
-    have h2: "hh w *v (x - k *\<^sub>R w)
-        = (x - k *\<^sub>R w) - (2 * (w \<bullet> (x - k *\<^sub>R w)) / (w \<bullet> w)) *\<^sub>R w"
-      by (rule hh_mv)
-    have "(hh w ** hh w) *v x = hh w *v (hh w *v x)"
-      by (metis matrix_vector_mul_assoc)
-    also have "\<dots> = hh w *v (x - k *\<^sub>R w)" unfolding h1 by (rule refl)
-    also have "\<dots> = (x - k *\<^sub>R w) - (- k) *\<^sub>R w"
-      unfolding h2 coeff by (rule refl)
-    also have "\<dots> = x" by simp
-    finally show ?thesis by simp
-  qed
-  have "\<forall>x. (hh w ** hh w) *v x = mat 1 *v x" using key by blast
-  then show ?thesis using matrix_eq[of "hh w ** hh w" "mat 1"] by blast
-qed
-
-lemma hh_scale:
-  fixes w :: "real^'n::finite"
-  assumes r0: "r \<noteq> 0"
-  shows "hh (r *\<^sub>R w) = hh w"
-proof -
-  have key: "hh (r *\<^sub>R w) *v x = hh w *v x" for x
-  proof -
-    have "hh (r *\<^sub>R w) *v x
-        = x - (2 * ((r *\<^sub>R w) \<bullet> x) / ((r *\<^sub>R w) \<bullet> (r *\<^sub>R w))) *\<^sub>R (r *\<^sub>R w)"
-      by (rule hh_mv)
-    also have "\<dots> = x - (2 * (w \<bullet> x) / (w \<bullet> w)) *\<^sub>R w"
-    proof (cases "w \<bullet> w = 0")
-      case True
-      then have "w = 0" by simp
-      then show ?thesis by simp
-    next
-      case False
-      have e1: "(2 * ((r *\<^sub>R w) \<bullet> x) / ((r *\<^sub>R w) \<bullet> (r *\<^sub>R w))) *\<^sub>R (r *\<^sub>R w)
-          = ((2 * (r * (w \<bullet> x)) / (r * r * (w \<bullet> w))) * r) *\<^sub>R w"
-        by (simp add: mult_ac)
-      have e2: "(2 * (r * (w \<bullet> x)) / (r * r * (w \<bullet> w))) * r
-          = 2 * (w \<bullet> x) / (w \<bullet> w)"
-        using r0 False by (simp add: field_simps)
-      show ?thesis unfolding e1 e2 by (rule refl)
-    qed
-    also have "\<dots> = hh w *v x" by (rule hh_mv[symmetric])
-    finally show ?thesis .
-  qed
-  have "\<forall>x. hh (r *\<^sub>R w) *v x = hh w *v x" using key by blast
-  then show ?thesis using matrix_eq[of "hh (r *\<^sub>R w)" "hh w"] by blast
-qed
-
-definition rotv :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n"
-  where "rotv u v = hh (u + v) ** hh u"
-
-lemma rotv_orth:
-  fixes u v :: "real^'n::finite"
-  assumes u0: "u \<noteq> 0" and ne: "u + v \<noteq> 0"
-  shows "transpose (rotv u v) ** rotv u v = mat 1"
-proof -
-  have s1: "transpose (rotv u v) ** rotv u v
-      = (hh u ** hh (u + v)) ** (hh (u + v) ** hh u)"
-    unfolding rotv_def matrix_transpose_mul hh_sym by (rule refl)
-  have mid: "(hh u ** hh (u + v)) ** hh (u + v) = hh u"
-  proof -
-    have "(hh u ** hh (u + v)) ** hh (u + v)
-        = hh u ** (hh (u + v) ** hh (u + v))"
-      by (rule matrix_mul_assoc[symmetric])
-    also have "\<dots> = hh u ** mat 1" using hh_sq[OF ne] by simp
-    also have "\<dots> = hh u" by (rule matrix_mul_rid)
-    finally show ?thesis .
-  qed
-  have "(hh u ** hh (u + v)) ** (hh (u + v) ** hh u)
-      = ((hh u ** hh (u + v)) ** hh (u + v)) ** hh u"
-    by (rule matrix_mul_assoc)
-  also have "\<dots> = hh u ** hh u" unfolding mid by (rule refl)
-  also have "\<dots> = mat 1" by (rule hh_sq[OF u0])
-  finally show ?thesis unfolding s1 .
-qed
-
-lemma rotv_apply:
-  fixes u v :: "real^'n::finite"
-  assumes u1: "norm u = 1" and v1: "norm v = 1" and ne: "u + v \<noteq> 0"
-  shows "rotv u v *v u = v"
-proof -
-  have u0: "u \<noteq> 0" using u1 by auto
-  have "rotv u v *v u = hh (u + v) *v (hh u *v u)"
-    unfolding rotv_def by (metis matrix_vector_mul_assoc)
-  also have "hh u *v u = - u" by (rule hh_self[OF u0])
-  also have "hh (u + v) *v (- u) = - (hh (u + v) *v u)"
-    by (rule matvec_minus_right)
-  also have "hh (u + v) *v u = - v" by (rule hh_bisect[OF u1 v1 ne])
-  finally show ?thesis by simp
-qed
-
-lemma rotv_self:
-  fixes u :: "real^'n::finite"
-  assumes u0: "u \<noteq> 0"
-  shows "rotv u u = mat 1"
-proof -
-  have e: "u + u = (2::real) *\<^sub>R u" by (simp add: vec_eq_iff)
-  have "hh (u + u) = hh u" unfolding e by (rule hh_scale) simp
-  then show ?thesis unfolding rotv_def by (simp add: hh_sq[OF u0])
-qed
+  a feasible witness under orthogonal conjugation, below.  The Householder
+  reflection \<open>hrefl\<close> and the rotations \<open>rotv\<close>, \<open>rotm\<close> built from it live in
+  @{theory Symmetric_Matrix_Spectra.Householder_Rotation}.\<close>
 
 subsection \<open>Feasibility is invariant under orthogonal conjugation\<close>
 
@@ -1066,174 +862,6 @@ proof -
   qed
   show ?thesis
     unfolding feasible_def using psdA killA lbA ubA by simp
-qed
-
-lemma rotv_orth':
-  fixes u v :: "real^'n::finite"
-  assumes u0: "u \<noteq> 0" and ne: "u + v \<noteq> 0"
-  shows "rotv u v ** transpose (rotv u v) = mat 1"
-proof -
-  have s1: "rotv u v ** transpose (rotv u v)
-      = (hh (u + v) ** hh u) ** (hh u ** hh (u + v))"
-    unfolding rotv_def matrix_transpose_mul hh_sym by (rule refl)
-  have mid: "(hh (u + v) ** hh u) ** hh u = hh (u + v)"
-  proof -
-    have "(hh (u + v) ** hh u) ** hh u = hh (u + v) ** (hh u ** hh u)"
-      by (rule matrix_mul_assoc[symmetric])
-    also have "\<dots> = hh (u + v) ** mat 1" using hh_sq[OF u0] by simp
-    also have "\<dots> = hh (u + v)" by (rule matrix_mul_rid)
-    finally show ?thesis .
-  qed
-  have "(hh (u + v) ** hh u) ** (hh u ** hh (u + v))
-      = ((hh (u + v) ** hh u) ** hh u) ** hh (u + v)"
-    by (rule matrix_mul_assoc)
-  also have "\<dots> = hh (u + v) ** hh (u + v)" unfolding mid by (rule refl)
-  also have "\<dots> = mat 1" by (rule hh_sq[OF ne])
-  finally show ?thesis unfolding s1 .
-qed
-
-subsection \<open>Continuity of the transport\<close>
-
-text \<open>The rotation, the conjugated witness, and its pairing with the Hessian
-  depend continuously on the direction they are built from, on the open
-  half space \<open>{q. 0 < u \<bullet> q}\<close> containing \<open>p\<close> when \<open>u\<close> is \<open>p\<close>'s direction
-  -- which rules out \<open>u + q/|q| = 0\<close> for \<open>q \<noteq> 0\<close>, since that would force
-  \<open>u \<bullet> q/|q| = -1\<close>.\<close>
-
-lemma continuous_on_matrix_entry:
-  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
-  assumes cF: "continuous_on S F"
-  shows "continuous_on S (\<lambda>z. F z $ i $ j)"
-proof -
-  have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ i $ j)"
-    using bounded_linear_vec_nth bounded_linear_compose by blast
-  show ?thesis
-    by (rule continuous_on_compose2[OF linear_continuous_on[OF bl] cF]) auto
-qed
-
-lemma continuous_on_matrix_mult:
-  fixes F G :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
-  assumes cF: "continuous_on S F" and cG: "continuous_on S G"
-  shows "continuous_on S (\<lambda>z. F z ** G z)"
-proof -
-  have eq: "(\<lambda>z. F z ** G z)
-      = (\<lambda>z. \<chi> i j. (\<Sum>l\<in>UNIV. F z $ i $ l * G z $ l $ j))"
-    by (rule ext) (simp add: matrix_matrix_mult_def)
-  show ?thesis unfolding eq
-    by (intro continuous_on_vec_lambda continuous_on_sum continuous_on_mult
-        continuous_on_matrix_entry cF cG)
-qed
-
-lemma continuous_on_matrix_transpose:
-  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
-  assumes cF: "continuous_on S F"
-  shows "continuous_on S (\<lambda>z. transpose (F z))"
-proof -
-  have eq: "(\<lambda>z. transpose (F z)) = (\<lambda>z. \<chi> i j. F z $ j $ i)"
-    by (rule ext) (simp add: transpose_def)
-  show ?thesis unfolding eq
-    by (intro continuous_on_vec_lambda continuous_on_matrix_entry cF)
-qed
-
-lemma continuous_on_hh:
-  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite"
-  assumes cF: "continuous_on S F" and nz: "\<And>z. z \<in> S \<Longrightarrow> F z \<noteq> 0"
-  shows "continuous_on S (\<lambda>z. hh (F z))"
-proof -
-  have entF: "continuous_on S (\<lambda>z. F z $ i)" for i
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_vec_nth] cF]) auto
-  have cip: "continuous_on S (\<lambda>z. F z \<bullet> F z)"
-    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner cF cF])
-  have nz': "F z \<bullet> F z \<noteq> 0" if "z \<in> S" for z using nz[OF that] by simp
-  have eq: "(\<lambda>z. hh (F z)) = (\<lambda>z. \<chi> i j. (if i = j then 1 else 0)
-      - 2 / (F z \<bullet> F z) * (F z $ i * F z $ j))"
-    by (rule ext) (simp add: hh_def mat_def outer_prod_def vec_eq_iff)
-  show ?thesis unfolding eq
-    by (intro continuous_on_vec_lambda continuous_on_diff continuous_on_const
-        continuous_on_mult continuous_on_divide cip entF)
-      (use nz' in auto)
-qed
-
-lemma continuous_on_rotv:
-  fixes u :: "real^'n::finite" and F :: "'a::topological_space \<Rightarrow> real^'n"
-  assumes cF: "continuous_on S F" and nz: "\<And>z. z \<in> S \<Longrightarrow> u + F z \<noteq> 0"
-  shows "continuous_on S (\<lambda>z. rotv u (F z))"
-proof -
-  have c1: "continuous_on S (\<lambda>z. hh (u + F z))"
-  proof (rule continuous_on_hh)
-    show "continuous_on S (\<lambda>z. u + F z)"
-      by (intro continuous_on_add continuous_on_const cF)
-    show "\<And>z. z \<in> S \<Longrightarrow> u + F z \<noteq> 0" by (rule nz)
-  qed
-  have c2: "continuous_on S (\<lambda>z :: 'a. hh u)" by (rule continuous_on_const)
-  show ?thesis unfolding rotv_def
-    by (rule continuous_on_matrix_mult[OF c1 c2])
-qed
-
-text \<open>The half space, and what it rules out.\<close>
-
-lemma halfspace_not_antipodal:
-  fixes u q :: "real^'n::finite"
-  assumes u1: "norm u = 1" and hq: "0 < u \<bullet> q"
-  shows "u + q /\<^sub>R norm q \<noteq> 0"
-proof
-  assume z: "u + q /\<^sub>R norm q = 0"
-  have q0: "q \<noteq> 0" using hq by auto
-  have nq: "0 < norm q" using q0 by simp
-  have "u \<bullet> (q /\<^sub>R norm q) = (u \<bullet> q) / norm q"
-    by (simp add: divide_inverse)
-  then have pos: "0 < u \<bullet> (q /\<^sub>R norm q)" using hq nq by simp
-  have "q /\<^sub>R norm q = - u" using z by (metis add_eq_0_iff)
-  then have "u \<bullet> (q /\<^sub>R norm q) = - (u \<bullet> u)" by simp
-  also have "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
-  finally have "u \<bullet> (q /\<^sub>R norm q) = - 1" by simp
-  then show False using pos by simp
-qed
-
-lemma continuous_on_rotv_dir:
-  fixes u :: "real^'n::finite"
-  assumes u1: "norm u = 1"
-  shows "continuous_on {q :: real^'n. 0 < u \<bullet> q}
-      (\<lambda>q. rotv u (q /\<^sub>R norm q))"
-proof (rule continuous_on_rotv)
-  show "continuous_on {q :: real^'n. 0 < u \<bullet> q} (\<lambda>q. q /\<^sub>R norm q)"
-  proof -
-    have nz: "norm q \<noteq> 0" if "q \<in> {q :: real^'n. 0 < u \<bullet> q}" for q
-      using that by auto
-    have "continuous_on {q :: real^'n. 0 < u \<bullet> q}
-        (\<lambda>q. (1 / norm q) *\<^sub>R q)"
-      by (intro continuous_on_scaleR continuous_on_divide continuous_on_const
-          continuous_on_norm continuous_on_id) (use nz in auto)
-    then show ?thesis by (simp add: divide_inverse)
-  qed
-next
-  show "\<And>q. q \<in> {q :: real^'n. 0 < u \<bullet> q} \<Longrightarrow> u + q /\<^sub>R norm q \<noteq> 0"
-    using halfspace_not_antipodal[OF u1] by blast
-qed
-
-text \<open>And the real-valued functional the assembly actually needs: the
-  Hessian paired with the conjugated witness.\<close>
-
-lemma continuous_on_conj_trace:
-  fixes a :: "real^'n::finite^'n"
-    and R M :: "'b::topological_space \<Rightarrow> real^'n^'n"
-  assumes cR: "continuous_on S R" and cM: "continuous_on S M"
-  shows "continuous_on S (\<lambda>z. trace (M z ** (R z ** a ** transpose (R z))))"
-proof -
-  have c1: "continuous_on S (\<lambda>z. R z ** a)"
-    by (rule continuous_on_matrix_mult[OF cR continuous_on_const])
-  have c2: "continuous_on S (\<lambda>z. transpose (R z))"
-    by (rule continuous_on_matrix_transpose[OF cR])
-  have c3: "continuous_on S (\<lambda>z. R z ** a ** transpose (R z))"
-    by (rule continuous_on_matrix_mult[OF c1 c2])
-  have c4: "continuous_on S (\<lambda>z. M z ** (R z ** a ** transpose (R z)))"
-    by (rule continuous_on_matrix_mult[OF cM c3])
-  have tr: "(\<lambda>B :: real^'n^'n. trace B) = (\<lambda>B. \<Sum>i\<in>UNIV. B $ i $ i)"
-    by (rule ext) (simp add: trace_def)
-  show ?thesis
-    unfolding tr
-    by (intro continuous_on_sum continuous_on_matrix_entry c4)
 qed
 
 subsection \<open>\<open>F\<^sup>* = F\<close> away from the origin\<close>
@@ -1446,10 +1074,8 @@ proof (rule ereal_le_epsilon)
       have neuv: "u + v \<noteq> 0"
         unfolding v_def by (rule halfspace_not_antipodal[OF u1 hp'])
       define R where "R = rotv u v"
-      have Rorth: "transpose R ** R = mat 1"
-        unfolding R_def by (rule rotv_orth[OF u0 neuv])
-      have Rorth': "R ** transpose R = mat 1"
-        unfolding R_def by (rule rotv_orth'[OF u0 neuv])
+      have Rorth: "transpose R ** R = mat 1" and Rorth': "R ** transpose R = mat 1"
+        using rotv_orthogonal[of u v] unfolding R_def orthogonal_matrix_def by blast+
       have Ru: "R *v u = v" unfolding R_def by (rule rotv_apply[OF u1 v1 neuv])
       have Rp: "R *v p = (norm p / norm p') *\<^sub>R p'"
       proof -
@@ -2560,10 +2186,10 @@ lemma matvec_scaleR_right:
   by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
 
 text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
-  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
-  from @{theory Relative_Arbitrage.Curvature_Operator}, general at
+  from @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}, general at
   \<open>real^'m^'n\<close>.\<close>
 
 lemma matvec_orth_inv:
@@ -2867,9 +2493,16 @@ proof -
   proof
     fix w assume wb: "w \<in> ball (\<Psi> (p, M)) (1 * e)"
     define v where "v = (transpose R *v fst w, transpose R ** snd w ** R)"
+    have fstv0: "fst v = transpose R *v fst w"
+      unfolding v_def by (rule fst_conv)
+    have sndv0: "snd v = transpose R ** snd w ** R"
+      unfolding v_def by (rule snd_conv)
+    have fstv: "R *v fst v = fst w"
+      unfolding fstv0 by (rule matvec_orth_inv[OF orth])
+    have sndv: "R ** snd v ** transpose R = snd w"
+      unfolding sndv0 by (rule conj_orth_inv[OF orth])
     have wv: "\<Psi> v = w"
-      unfolding \<Psi>_def v_def
-      by (simp add: matvec_orth_inv[OF orth] conj_orth_inv[OF orth])
+      unfolding \<Psi>_def using fstv sndv by simp
     have "dist (p, M) v = dist (\<Psi> (p, M)) (\<Psi> v)" by (rule isom[symmetric])
     also have "\<dots> < e" unfolding wv using wb by simp
     finally have "v \<in> ball (p, M) e" by simp

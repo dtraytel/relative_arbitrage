@@ -8,6 +8,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     on the half-line are formalised as well, and proved to agree with them.
   "
   sessions
+    Symmetric_Matrix_Spectra
     Second_Order_Viscosity_Analysis
     Wiener_Measure
     Disintegration
@@ -20,11 +21,8 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Viscosity_Solutions
     Optimal_Exit_Time
     Eigenvalue_Bound_Exact
-    Eigenvalues
-    Eigenvalue_Continuity
-    Threshold_Chain
     Operator_Continuity
-    Poincare_Separation
+    Operator_Formula
     Operator_Envelopes
     Operator_Envelope_Continuity
     Brownian_Market

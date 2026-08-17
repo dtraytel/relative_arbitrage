@@ -391,7 +391,7 @@ lemma trace_add_eq:
   by (simp add: trace_def sum.distrib)
 
 text \<open>\<open>matrix_mult_scaleR_left\<close> is \<open>scaleR_matrix_mult\<close> from
-  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma matrix_mult_add_left:
   fixes A B C :: "real^'n::finite^'n"
@@ -1036,7 +1036,7 @@ proof -
   proof -
     have "(\<theta> *\<^sub>R M) ** a = \<theta> *\<^sub>R (M ** a)"
       by (rule scaleR_matrix_mult)
-    thus ?thesis by (simp add: trace_scaleR_matrix)
+    thus ?thesis by (simp add: trace_scaleR)
   qed
   have img: "(\<lambda>a. - trace ((\<theta> *\<^sub>R M) ** a) / 2) ` feasible k L p
       = (\<lambda>x. \<theta> * x) ` ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
@@ -3352,7 +3352,7 @@ text \<open>The chain consumes \<open>h \<bullet> (Z *v h)\<close> as a matrix,
   \<open>psd\<close> chain but not by the quadratic case where \<open>Z = \<alpha> I\<close> is symmetric
   for free, is an entrywise computation.\<close>
 
-text \<open>\<open>outer_prod\<close> lives in @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+text \<open>\<open>outer_prod\<close> lives in @{theory Symmetric_Matrix_Spectra.Outer_Products}.\<close>
 
 definition soft_hess :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n^'n" where
   "soft_hess \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R mat 1
@@ -9464,7 +9464,7 @@ text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the
   \<open>\<bar>2\<delta>\<bar>\<parallel>I\<parallel>\<close>, a constant vanishing with \<open>\<delta>\<^sub>i\<close>.\<close>
 
 text \<open>\<open>transpose_scaleR\<close> and \<open>transpose_add\<close> live in
-  @{theory Relative_Arbitrage.Constraint_Set_Convexity}.\<close>
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma transpose_shifted_block:
   fixes M :: "real^'n::finite^'n"
@@ -12819,7 +12819,7 @@ qed
 subsection \<open>Test functions compose with invertible affine maps\<close>
 
 text \<open>\<open>matvec_add_right'\<close> is \<open>matvec_add_right\<close> from
-  @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>\<open>matvec_scaleR_right'\<close> is \<open>matvec_scaleR_right\<close> from
   @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>

@@ -1,0 +1,21 @@
+session Symmetric_Matrix_Spectra = "HOL-Analysis" +
+  description "
+    The spectral theory of real symmetric matrices that HOL-Analysis stops
+    short of -- the spectral theorem, Ky Fan partial sums, the ordered
+    eigenvalues as their differences, their Lipschitz dependence on the
+    matrix, Poincare separation, and the Householder reflections and
+    rotations used to transport them -- for anyone who constrains a matrix
+    through its spectrum rather than through its entries.
+  "
+  theories
+    Matrix_Algebra
+    Outer_Products
+    Orthonormal_Families
+    Symmetric_Spectral
+    Ky_Fan
+    Eigenvalue_Continuity
+    Poincare_Separation
+    Householder_Rotation
+  document_files
+    "root.tex"
+    "root.bib"

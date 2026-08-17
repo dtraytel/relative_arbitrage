@@ -1,7 +1,7 @@
 
 (*<*)
 theory Exit_Class
-  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" Exit_Semicontinuity Poincare_Separation
+  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" Exit_Semicontinuity Operator_Formula
     Viscosity_Solutions
 begin
 
@@ -93,7 +93,7 @@ proof -
   show ?thesis
     unfolding eq
     by (intro continuous_on_sum continuous_on_mult continuous_on_const
-        continuous_on_matrix_entry)
+        continuous_on_matrix_entry continuous_on_id)
 qed
 
 lemma closed_trace_proj_halfspace:

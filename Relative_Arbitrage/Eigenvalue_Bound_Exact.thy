@@ -18,41 +18,6 @@ text \<open>
   at \<open>1\<close>, rescales, decomposes, and adds back the nonnegative remainder.\<close>
 unbundle inner_syntax
 
-section \<open>Preliminaries on orthonormal families\<close>
-
-lemma onormal_subset:
-  assumes "onormal B" and "S \<subseteq> B"
-  shows "onormal S"
-  using assms unfolding onormal_def
-  by (auto elim: pairwise_subset intro: finite_subset)
-
-lemma onormal_finite:
-  assumes "onormal B"
-  shows "finite B"
-  using assms by (simp add: onormal_def)
-
-text \<open>An orthonormal spanning family is a basis, so it has \<open>n\<close> elements.
-  \<open>symmetric_eigenbasis\<close> supplies \<open>span B = UNIV\<close> but not the cardinality,
-  which \<open>Pi_constraint_capped_trace\<close> needs.\<close>
-
-lemma onormal_span_card:
-  fixes B :: "(real^'n::finite) set"
-  assumes B: "onormal B" and sp: "span B = UNIV"
-  shows "card B = CARD('n)"
-proof -
-  have nz: "0 \<notin> B"
-    using B by (auto simp: onormal_def)
-  have ind: "independent B"
-    using B nz by (intro pairwise_orthogonal_independent) (auto simp: onormal_def)
-  have "card B = dim B"
-    using ind by (simp add: dim_eq_card_independent)
-  also have "dim B = dim (UNIV :: (real^'n) set)"
-    using sp dim_span[of B] by simp
-  also have "\<dots> = CARD('n)"
-    by simp
-  finally show ?thesis .
-qed
-
 section \<open>The hypersimplex decomposition\<close>
 
 text \<open>Base case of the swap induction: if every coefficient is already \<open>0\<close>
@@ -190,46 +155,7 @@ proof -
   qed
 qed
 
-text \<open>If one coefficient is strictly between \<open>0\<close> and \<open>1\<close> then so is a second
-  one: otherwise the total would be that coefficient plus an integer, forcing
-  it to be an integer itself.\<close>
-
-lemma two_fractional:
-  fixes B :: "'a set" and c :: "'a \<Rightarrow> real"
-  assumes fin: "finite B" and i: "i \<in> B" and fi: "c i \<notin> {0, 1}"
-    and c0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> c u" and c1: "\<And>u. u \<in> B \<Longrightarrow> c u \<le> 1"
-    and isum: "(\<Sum>u\<in>B. c u) = real (N :: nat)"
-  shows "\<exists>j \<in> B. j \<noteq> i \<and> c j \<notin> {0, 1}"
-proof (rule ccontr)
-  assume "\<not> (\<exists>j \<in> B. j \<noteq> i \<and> c j \<notin> {0, 1})"
-  then have all01: "c u \<in> {0, 1}" if "u \<in> B" "u \<noteq> i" for u
-    using that by blast
-  define D where "D = B - {i}"
-  have finD: "finite D"
-    using fin by (simp add: D_def)
-  define M where "M = card {u \<in> D. c u = 1}"
-  have sumD: "(\<Sum>u\<in>D. c u) = real M"
-  proof -
-    have "(\<Sum>u\<in>D. c u) = (\<Sum>u\<in>{u \<in> D. c u = 1}. c u)"
-      by (rule sum.mono_neutral_right[OF finD])
-        (use all01 in \<open>auto simp: D_def\<close>)
-    also have "\<dots> = real M"
-      by (simp add: M_def)
-    finally show ?thesis .
-  qed
-  have "(\<Sum>u\<in>B. c u) = c i + (\<Sum>u\<in>D. c u)"
-    unfolding D_def using fin i by (simp add: sum.remove)
-  then have ci_eq: "c i = real N - real M"
-    using isum sumD by simp
-  have "0 < c i" and "c i < 1"
-    using fi c0[OF i] c1[OF i] by auto
-  then have "real M < real N" and "real N < real M + 1"
-    using ci_eq by simp_all
-  then have "M < N" and "N < M + 1"
-    by simp_all
-  then show False
-    by simp
-qed
+text \<open>\<open>two_fractional\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 text \<open>The swap induction.  The measure is the number of coefficients that are
   not yet \<open>0\<close> or \<open>1\<close>; each swap makes at least one of the two chosen
@@ -480,32 +406,8 @@ qed
 
 section \<open>The capped trace bound\<close>
 
-text \<open>The trace of \<open>a\<close> against the spectral projection onto a subset of the
-  eigenbasis is the sum of the corresponding eigenvalues.\<close>
-
-lemma trace_mult_spectral_proj:
-  fixes a :: "real^'n::finite^'n"
-  assumes B: "onormal B" and S: "S \<subseteq> B"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-  shows "trace (a ** (\<Sum>u\<in>S. outer_prod u u)) = (\<Sum>u\<in>S. u \<bullet> (a *v u))"
-proof -
-  have finS: "finite S"
-    using B S by (auto simp: onormal_def elim: finite_subset)
-  have "trace (a ** (\<Sum>u\<in>S. outer_prod u u))
-      = (\<Sum>u\<in>S. trace (a ** outer_prod u u))"
-    by (simp add: matrix_mult_sum_right trace_matrix_sum)
-  also have "\<dots> = (\<Sum>u\<in>S. u \<bullet> (a *v u))"
-  proof (rule sum.cong[OF refl])
-    fix u assume "u \<in> S"
-    have "trace (a ** outer_prod u u) = trace (outer_prod (a *v u) u)"
-      by (simp add: mult_outer_prod)
-    also have "\<dots> = (a *v u) \<bullet> u"
-      by simp
-    finally show "trace (a ** outer_prod u u) = u \<bullet> (a *v u)"
-      by (simp add: inner_commute)
-  qed
-  finally show ?thesis .
-qed
+text \<open>\<open>trace_mult_spectral_proj\<close> lives in
+  @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 lemma Pi_constraint_capped_trace:
   fixes a :: "real^'n::finite^'n"
