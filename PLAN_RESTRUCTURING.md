@@ -1074,3 +1074,118 @@ eigenvalue tower is stacked on top of the paper layer instead of under it
 and five files hold 60% of the development (§1.7). The layout of §2 fixes all
 four, and phases 1–5 of §6 deliver most of the benefit for a quarter of the
 work.
+
+---
+
+## 9. Completion note
+
+All fourteen phases are done, each in its own commit, each ending with a green
+`isabelle build` of all eight sessions and zero `sorry`.
+
+### The probes of §0, re-run
+
+| probe | before | after | target |
+|---|---|---|---|
+| theories | 58 | 103 | — |
+| lines | 115 987 | 116 086 | — |
+| top-level statements | 2 821 | 2 752 | — |
+| definitions | 204 | 201 | — |
+| **generic lemmas inside a paper session** | **597** | **200** | < 50 |
+
+The line count is the one number that did not move, and that is what a
+refactor of moves and splits should look like: 24 theorems and one definition
+went in the phase-14 sweep, and the seven new theory headers and roughly sixty
+pointer comments put the lines back.
+
+`Relative_Arbitrage` is 76 400 lines across 47 theories, not the ≈ 55 000 §2.7
+predicted. The 21 000-line shortfall is almost exactly the material probe 4
+still counts: §3.1's extraction lists were written against the file layout of
+the time and were only ever partly executable.
+
+**Probe 4 stalls at 200 and phases 13–14 could not move it**, because from
+phase 8 onward the plan schedules generalisation, splitting and dead-code
+removal, none of which relocates a lemma out of the paper session. Reaching
+< 50 needs a further extraction pass, mostly out of `Operator_Envelopes` (23),
+`Comparison_Principle` (19) and the six `Value_Function_*` theories (about 60
+between them). That work is not in this plan.
+
+*Caution on measuring probe 4.* A comment stripper that counts `(*` depth goes
+unbalanced on `(*` inside Isabelle cartouches and silently eats most of a large
+theory; one such run reported 144 when the figure was 371. Blank only the
+bodies of `text`/`section`/`subsection` cartouches, by `\<open>`/`\<close>`
+depth, and leave `(* *)` alone. The corrected script reproduces this plan's own
+stated 589 baseline as 597.
+
+### §1.7, closed
+
+All five oversized theories are gone. `Sup_Convolution` (7 544) became seven;
+`Exit_Class_Compactness` (12 634) six; `Exit_Class_DPP` (16 792) eight;
+`Value_Function_Viscosity` (16 324) six; `Comparison_Principle` (14 015) lost
+its doubling toolbox and its two-domain half and is 8 055, the largest theory
+in the development.
+
+### Predictions that were wrong
+
+Recorded per §7.5 rather than forced.
+
+* **§4.3 (martingale index) is refuted.** Those lemmas are pinned to `real` by
+  content, not by annotation: they fix `t0 = 0::real`, quantify over `0 ≤ i`,
+  and `martingale_sub_initial` subtracts `X 0`, so the index type needs a zero
+  that the AFP's index sort does not provide. Exactly one lemma survived the
+  type change and then failed to apply the one below it.
+* **§2.7 L2's `Viscosity_Definitions.thy` holds the definitions only.** The
+  implications between the variants cannot follow them: half are proved from
+  the `Operator_Envelopes` calculus, which is downstream of the only join point
+  where all nineteen definitions can sit. `ell_op_pair`, `ell_op_lsc` and
+  `ell_op_usc` had to move with them.
+* **`Dynamic_Programming_Optional_Sampling` does not move** to
+  `Continuous_Time_Martingales`. It is stated over `'n pairpath`, and so is the
+  `path_stopping_time`/`pstopped`/`pre_sigma_of` block it consumes.
+* **§3.2 assumed §3.1 was finished.** It was not; ten doubling lemmas depended
+  on nine matrix lemmas still in `Comparison_Principle`, so phase 7 had to
+  complete that part of §3.1 first.
+* **§3.3's list is incomplete** — `abs_norm_diff_le`, `soft_grad_nonzero` and
+  `exists_small_rho_aux` are needed by its own lemmas.
+
+By contrast §4.1 and §4.2 over-delivered: 59 doubling lemmas and 32
+semicontinuity lemmas widened on the statement line alone, 100% success, with
+no proof step and no call site edited.
+
+### Duplicates the catalogue missed
+
+§5.2 lists the same-name re-proofs known at the time. Nine more were found by
+sweeping every moved name after each phase, and every one of them survived a
+green build, because a green build proves that no name *collides*, not that
+nothing is duplicated — a later copy shadows an earlier one silently:
+
+`trace_proj_psd_nonneg`, `onormal_subset`, `norm_outer_prod` (left behind by
+phase 3); `martingale_diff`, `measurable_mat_entries` (phase 5);
+`doubling_ge_diagonal`, `ess_inf_time_mono`, `ess_inf_time_distr`,
+`feasible_scale`; and `AE_kglue_law'`, which was two different lemmas under one
+name and had to be renamed rather than deleted. `Brownian_Continuous` was also
+re-proving HOL-Analysis's own `continuous_on_vec_lambda`, without its
+`[continuous_intros]` attribute.
+
+The remaining repeated names — `Tgt`, `Tgt_sets_F`, `Tgt_sets_M`,
+`stopped_integrable` in `Continuous_Time_Martingales` — are locale-scoped and
+legitimate.
+
+### Left open
+
+* §1.4 group 9: `trace_conj` and `trace_conjugate`, same statement, both still
+  in `Relative_Arbitrage`; and `Matrix_Algebra` has no trace-commute lemma at
+  all, the group having collapsed onto the copy that stayed behind.
+* §2.5: `Power_Inequalities.thy` was never created, and `sq_diff_le` /
+  `square_add_le_two` are still two copies of `(a-b)² ≤ 2a² + 2b²`.
+* §3.1: `matrix_vec_apply`, `matrix_of_symmetric`, `matrix_symmetric_swap`,
+  `has_derivative_quadratic_form`, `quadratic_test_derivative`,
+  `quadratic_test_grad_derivative` are still in
+  `Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy`. Phase 7 added the
+  `Symmetric_Matrix_Spectra` edge, so the move is unblocked.
+* §1.5: `outerp` is still its own definition in `Exit_Class`.
+* Six definitions are reachable from nothing and were kept deliberately:
+  `visc_sol_env`, `quartic_pen`, `Yint`, `pairX`, `pairY`, `tanpV`.
+* `Doubling.thy` and `Soft_Penalty.thy` carry about twenty prose references to
+  Theorem 4.2, Definition 3.1 and `ell_op`. Harmless to the build, but they are
+  paper narrative inside a session §2.0 wants AFP-submittable. §2.0 says that
+  rewrite is deliberately not scheduled.
