@@ -622,7 +622,7 @@ text \<open>Existence of the maximiser of \<open>\<theta>u(x)-w(y)-pen(x-y)\<clo
   \<open>usc_attains_sup_gen\<close>, stated there for an arbitrary metric space so
   it applies to the product.\<close>
 
-text \<open>\<open>two_domain_gap\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>two_domain_gap\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
 theorem comparison_two_domain:

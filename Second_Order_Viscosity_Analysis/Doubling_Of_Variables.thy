@@ -1,18 +1,44 @@
 section \<open>Doubling of variables\<close>
 
 (*<*)
-theory Doubling
+theory Doubling_Of_Variables
   imports Theorem_On_Sums "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)
 
-text \<open>\<open>visc_supersol_env_imp_jet\<close> derives, from Definition 3.1(b), a quadratic
-  test function that touches \<open>w\<close> from below on a ball, with the operator
-  inequality read off over the upper envelope \<open>F\<^sup>*\<close>; boundedness of the
-  quadratic on the compact \<open>K\<close> is proved, not assumed.  Its hypothesis is
-  \<open>visc_supersol_env2\<close>, over the paper's own \<open>C\<^sup>2\<close> test functions ---
-  the quadratic it builds is a polynomial, so nothing wider is ever needed.\<close>
+text \<open>
+  \<^emph>\<open>Doubling of variables\<close> is the device that makes comparison between
+  viscosity solutions work.  To compare a subsolution \<open>u\<close> with a
+  supersolution \<open>w\<close> one cannot differentiate either, so instead one
+  maximises the \<^emph>\<open>doubled\<close> functional
+  \<open>\<Phi>(x,y) = u x - w y - P(x - y)\<close>
+  over a pair of variables, with a penalty \<open>P\<close> that punishes \<open>x \<noteq> y\<close>.
+  Freezing either variable at a maximising pair \<open>(x\<^sup>h, y\<^sup>h)\<close> turns the
+  two-variable maximum into a one-variable touching condition, which is
+  exactly what the definition of a viscosity solution can be applied to; and
+  as the penalty stiffens, the maximising pair collapses onto the diagonal
+  and recovers a bound on \<open>u - w\<close> itself.
+
+  This theory is the whole apparatus that argument needs, and nothing about
+  any particular equation: existence and location of the maximising pair,
+  the penalty and gradient estimates, the second-order jets of the doubled
+  functional and their slices in each variable, Jensen's tilt and its
+  removal, the block structure of the resulting Hessians and the bounds on
+  them, and the sequence lemmas used to pass to a limit.  It builds on
+  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}, which supplies
+  the matrix inequality between the two diagonal blocks.
+
+  Everything is at \<open>'a::euclidean_space\<close> except the 33 statements that
+  produce a matrix, which stay at \<open>real^'n\<close>.
+\<close>
+
+text \<open>A supersolution is usually tested against a quadratic touching it from
+  below on a ball.  The two bounds below say that such a quadratic is bounded
+  above and below on any bounded set, so the touching can be read off on a
+  compact domain without boundedness having to be assumed separately.  Every
+  test function built here is a polynomial, so no class wider than \<open>C\<^sup>2\<close>
+  is ever needed.\<close>
 
 lemma quad_bdd_above_on_bounded:
   fixes p yh :: "real^'n::finite" and M :: "real^'n^'n"
@@ -123,8 +149,8 @@ text \<open>Freezing one variable at the joint maximiser gives the two condition
   the doubling argument needs: freezing \<open>y = yh\<close> makes \<open>xh\<close> a maximiser of
   \<open>u\<close> against \<open>x \<mapsto> (\<alpha>/2) \<parallel>x - yh\<parallel>\<^sup>2\<close>, and freezing \<open>x = xh\<close> makes \<open>yh\<close> a
   minimiser of \<open>w\<close> against \<open>y \<mapsto> - (\<alpha>/2) \<parallel>xh - y\<parallel>\<^sup>2\<close>. This converts the
-  two-variable maximum into the one-variable data \<open>visc_subsol\<close> and
-  \<open>supersol_jet\<close> consume.\<close>
+  two-variable maximum into the one-variable touching conditions that the
+  sub- and supersolution definitions consume.\<close>
 
 lemma doubling_partial_max_fst:
   fixes u w :: "'a::euclidean_space \<Rightarrow> real"
@@ -148,9 +174,10 @@ lemma doubling_partial_min_snd:
 
 text \<open>If the maximising pair is on the diagonal, the doubling degenerates:
   its common point maximises \<open>u - w\<close> over \<open>K\<close> itself, by comparing \<open>\<Phi>\<close>
-  against the diagonal, where the penalty vanishes on both sides. So either
-  the maximising pair is off the diagonal and \<open>ell_op_env_strict_contradiction\<close>
-  applies, or \<open>u - w\<close> attains its maximum over \<open>K\<close> at the common point.\<close>
+  against the diagonal, where the penalty vanishes on both sides. This is where a
+  comparison argument splits: either the maximising pair is off the diagonal,
+  where a strict operator inequality applies, or \<open>u - w\<close> attains its maximum
+  over \<open>K\<close> at the common point.\<close>
 
 lemma doubling_diagonal_max:
   fixes u w :: "'a::euclidean_space \<Rightarrow> real"
@@ -494,14 +521,15 @@ proof -
   with e show ?thesis by blast
 qed
 
-text \<open>\<open>superjet_local_max\<close> (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) only uses one side of its
-  \<open>tendsto\<close> hypothesis; the diagonal branch of Theorem 4.2(a) supplies only
-  an upper bound on the increment of \<open>B = supconv (-w) \<epsilon>\<close>. This
-  subsection restates the chain with a one-sided hypothesis;
-  \<open>onesided_of_tendsto\<close> shows it is a genuine weakening. The quantifier
-  over the threshold \<open>c\<close> is necessary: in \<open>supersol_no_vanishing_jet\<close> the
-  bound is produced inside the proof by \<open>small_multiple_exists\<close>, after the
-  hypothesis is fixed.\<close>
+text \<open>\<open>superjet_local_max\<close>
+  (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) uses only one
+  side of its \<open>tendsto\<close> hypothesis, and a doubling argument that reaches the
+  diagonal typically supplies only an upper bound on the increment of
+  \<open>B = supconv (-w) \<epsilon>\<close>.  This subsection restates the chain with a
+  one-sided hypothesis; \<open>onesided_of_tendsto\<close> shows it is a genuine
+  weakening.  The quantifier over the threshold \<open>c\<close> is necessary, because a
+  caller produces that bound inside its own proof, after the hypothesis is
+  fixed.\<close>
 
 lemma superjet_local_max_onesided:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -1196,12 +1224,13 @@ proof -
   show ?thesis unfolding l r using wsym zsym by simp
 qed
 
-text \<open>\<open>comparison_env_from_jets\<close> consumes \<open>psd (Ym - Xm)\<close>. The theorem
-  on sums (\<open>sums_matrix_inequality\<close>, @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) delivers the
-  ordering between the two diagonal blocks. Writing
+text \<open>A comparison argument consumes the Hessian ordering \<open>psd (Ym - Xm)\<close>.
+  The theorem on sums (\<open>sums_matrix_inequality\<close>,
+  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) delivers the
+  ordering between the two diagonal blocks.  Writing
   \<open>X v = fst (W (v,0)) + \<alpha> v\<close> and
-  \<open>Y v = - (snd (W (0,v)) + \<alpha> v)\<close> (negated since the supersolution
-  enters the doubled functional as \<open>-w\<close>), this reads
+  \<open>Y v = - (snd (W (0,v)) + \<alpha> v)\<close> --- negated because the supersolution
+  enters the doubled functional as \<open>-w\<close> --- this reads
   \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>; the \<open>+ \<alpha> v\<close> term in each block is the penalty's
   second derivative restricted to that block.\<close>
 
@@ -1561,10 +1590,12 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>The symmetry \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close> needed by
-  \<open>comparison_env_from_jets\<close> follows from the jet: \<open>matrix_of_symmetric\<close>
-  (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) converts an abstract symmetric linear map into a
-  symmetric matrix, fed by the block lemmas above.\<close>
+text \<open>A comparison argument reads the two block Hessians as symmetric
+  matrices, so it needs \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close>.  Both
+  follow from the jet: \<open>matrix_of_symmetric\<close>
+  (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) converts an
+  abstract symmetric linear map into a symmetric matrix, fed by the block
+  lemmas above.\<close>
 
 lemma transpose_matrix_block_fst:
   fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
@@ -1584,7 +1615,7 @@ lemma transpose_matrix_block_snd:
   by (rule matrix_of_symmetric[OF linear_block_snd[OF blW]
         sym_block_snd[OF symW]])
 
-text \<open>\<open>comparison_env_from_jets\<close> needs the jets of \<open>\<theta> u\<close> at \<open>x'\<close> and of
+text \<open>A comparison argument needs the jets of \<open>\<theta> u\<close> at \<open>x'\<close> and of
   \<open>-w\<close> at \<open>y'\<close> to share a common gradient \<open>p\<close> (with sign \<open>p\<close>, \<open>-p\<close>).
   Since the penalty \<open>-(\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> contributes \<open>\<minusplus>\<alpha>(x - y)\<close> to the
   two blocks, this holds exactly when the doubled gradient
@@ -2169,10 +2200,9 @@ proof -
 qed
 
 text \<open>If a property holds along a sequence converging to \<open>Z\<^sub>0\<close>, it holds at
-  points arbitrarily close to \<open>Z\<^sub>0\<close> - the hypothesis shape of
-  \<open>ell_op_lsc_le_of_nearby\<close> and \<open>ell_op_usc_ge_of_nearby\<close>.  Stated for an
-  arbitrary predicate, so it serves both the subsolution and supersolution
-  side.\<close>
+  points arbitrarily close to \<open>Z\<^sub>0\<close> --- the hypothesis shape that estimates on a
+  semicontinuous envelope need.  Stated for an arbitrary predicate, so it
+  serves both the subsolution and the supersolution side.\<close>
 
 theorem nearby_of_convergent:
   fixes Z :: "nat \<Rightarrow> 'a::metric_space"
@@ -2682,14 +2712,14 @@ next
   qed
 qed
 
-text \<open>The two-domain localised maximiser replaces
-  \<open>doubling_localised_maximiser_soft\<close> with the \<open>x\<close>-side boundary avoidance
-  gone: maximise the doubled sup-convolved functional over the compact
+text \<open>The two-domain localised maximiser drops the \<open>x\<close>-side boundary
+  avoidance of the one-domain version: maximise the doubled sup-convolved
+  functional over the compact
   \<open>Q \<times> K'\<close>; if the \<open>x\<close>-side sup-convolution is below \<open>\<beta>\<close> off \<open>Q\<close> and a
   witness beats \<open>\<beta>+B\<^sub>w\<close>, the maximiser maximises over all of
   \<open>UNIV \<times> K'\<close>, leaving only the \<open>y\<close>-coordinate constrained - which
-  \<open>K \<subseteq> K'\<^sup>\<circ>\<close> gives room for.  This is why Theorem 4.2(b) runs on two
-  domains.\<close>
+  \<open>K \<subseteq> K'\<^sup>\<circ>\<close> gives room for.  This is the shape a two-domain
+  comparison principle needs.\<close>
 
 lemma doubled_maximiser_over_UNIV_snd:
   fixes A Bfun Pn :: "'a::euclidean_space \<Rightarrow> real" and K' Q :: "('a) set"
@@ -2764,8 +2794,8 @@ qed
 
 text \<open>The other half of the two-domain interface: the core reads the
   subsolution property at the attainment point of \<open>supconv(\<theta>u)\<epsilon>\<close> over the
-  \<open>\<rho>\<close>-ball around \<open>x\<^sup>h\<close>, and Definition 3.1's gate puts that point in
-  \<open>{u>0}\<close> whenever the sup-convolution is positive there, since the
+  \<open>\<rho>\<close>-ball around \<open>x\<^sup>h\<close>, and a definition gated on \<open>{u>0}\<close> admits
+  that point whenever the sup-convolution is positive there, since the
   attained value adds a nonnegative penalty.  Positivity on the whole
   ball, not just at \<open>x\<^sup>h\<close>, is free since \<open>\<rho>\<close> is a free parameter
   preserved by shrinking.\<close>
@@ -3664,12 +3694,11 @@ qed
 
 text \<open>The chain above needs \<open>u\<close> and \<open>w\<close> global, bounded and continuous on all
   of \<open>'a\<close>, since the sup-convolution is a supremum over the whole
-  space; the corrected \<open>max_principle_boundary\<close> supplies only
-  \<open>continuous_on K\<close>.  Tietze's extension theorem gives a global
-  continuous representative with the same sup-norm bound, and the
-  viscosity properties are unaffected since \<open>visc_subsol\<close> is a local
-  condition at points of the open \<open>interior K\<close> - the same locality that
-  made the raw interface refutable now works in reverse.\<close>
+  space, while a maximum-principle interface supplies only
+  \<open>continuous_on K\<close>.  Tietze's extension theorem gives a global continuous
+  representative with the same sup-norm bound, and the viscosity properties
+  are unaffected because they are local conditions at points of the open
+  \<open>interior K\<close>.\<close>
 
 lemma continuous_extension_bounded:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"

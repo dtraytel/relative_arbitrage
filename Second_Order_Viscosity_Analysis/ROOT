@@ -16,7 +16,7 @@ session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
     Jensen_Lemma
     Sup_Convolution
     Theorem_On_Sums
-    Doubling
+    Doubling_Of_Variables
     Soft_Penalty
   document_files
     "root.tex"

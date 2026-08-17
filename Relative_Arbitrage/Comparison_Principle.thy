@@ -50,7 +50,7 @@ text \<open>The form used downstream has the jet matrix arrive as an abstract
 
 subsection \<open>The jet interface to Definition 3.1(b)\<close>
 
-text \<open>\<open>quad_bdd_above_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>quad_bdd_above_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 section \<open>Definition 3.1 with genuine \<open>C\<^sup>2\<close> test functions\<close>
 
@@ -75,7 +75,7 @@ proof -
   qed
 qed
 
-text \<open>\<open>quadratic_grad_derivative_at\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>quadratic_grad_derivative_at\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The three functions the comparison proof ever hands to the paper's
   hypothesis: the quadratic 2-jet, a constant, and a quartic shift of either.\<close>
@@ -532,7 +532,7 @@ proof (intro ballI allI impI)
     by (rule ell_op_usc_ge_one_limit[OF ge lim])
 qed
 
-text \<open>\<open>quad_bdd_below_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>quad_bdd_below_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<close> lands on the
   envelope-free notion, since \<open>F\<^sub>* = F\<close> everywhere (@{thm [source]
@@ -818,7 +818,7 @@ qed
 
 subsection \<open>Freezing one variable in the doubled maximum\<close>
 
-text \<open>\<open>doubling_partial_max_fst\<close>, \<open>doubling_partial_min_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubling_partial_max_fst\<close>, \<open>doubling_partial_min_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The two frozen penalties are smooth quadratics with the same gradient
   \<open>\<alpha> *\<^sub>R (xh - yh)\<close> at their respective points, and Hessians
@@ -1122,15 +1122,15 @@ text \<open>In the doubling, the shared gradient at the maximising pair
   \<open>p = \<alpha> (x' - y')\<close>, so \<open>p \<noteq> 0\<close> means the maximising pair is off the
   diagonal. For \<open>\<alpha> \<noteq> 0\<close> the gradient vanishes precisely on the diagonal.\<close>
 
-text \<open>\<open>doubling_diagonal_max\<close>, \<open>doubling_off_diagonal\<close>, \<open>doubling_grad_nonzero\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubling_diagonal_max\<close>, \<open>doubling_off_diagonal\<close>, \<open>doubling_grad_nonzero\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The penalty estimate\<close>
 
-text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}; \<open>doubling_ge_diagonal\<close> in @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
+text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}; \<open>doubling_ge_diagonal\<close> in @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
 
 subsection \<open>The dichotomy for a general penalty\<close>
 
-text \<open>\<open>doubling_diagonal_max_gen\<close>, \<open>doubling_off_diagonal_gen\<close>, \<open>doubling_penalty_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubling_diagonal_max_gen\<close>, \<open>doubling_off_diagonal_gen\<close>, \<open>doubling_penalty_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Monotonicity of the doubled maximum in the penalty parameter\<close>
 
@@ -1278,7 +1278,7 @@ qed
 
 subsection \<open>Existence of the maximising pair\<close>
 
-text \<open>\<open>doubling_maximiser_exists\<close>, \<open>doubling_maximiser_exists_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubling_maximiser_exists\<close>, \<open>doubling_maximiser_exists_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The packaged form: on a compact \<open>K\<close> the doubling produces a
   maximising pair together with the penalty bound and the diagonal lower
@@ -1286,7 +1286,7 @@ text \<open>The packaged form: on a compact \<open>K\<close> the doubling produc
 
 subsection \<open>Discharging the remaining bare hypothesis of the penalty estimate\<close>
 
-text \<open>\<open>doubling_upper_bound_exists\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubling_upper_bound_exists\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Combining the two attainment results with the penalty estimate: on a
   compact \<open>K\<close> with continuous data the doubling produces a maximising pair
@@ -1303,7 +1303,7 @@ text \<open>\<open>comparison_contradiction\<close> takes \<open>subtest\<close>
 
 text \<open>\<open>quad_form_shift_identity\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>jet_imp_local_max_test\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>jet_imp_local_max_test\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>\<open>matrix_vector_neg_left\<close>, \<open>quad_form_shift_identity_neg\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
@@ -1313,7 +1313,7 @@ text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<c
 
 subsection \<open>The jet hypothesis only ever needs one side\<close>
 
-text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>If the increment of \<open>B\<close> at \<open>p\<close> is eventually dominated by some \<open>D\<close>
   that is \<open>o(|h|^2)\<close>, it satisfies the one-sided hypothesis -- exactly what
@@ -1353,7 +1353,7 @@ proof -
   qed
 qed
 
-text \<open>\<open>jet_imp_local_min_test_onesided\<close>, \<open>jet_imp_local_min_test\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>jet_imp_local_min_test_onesided\<close>, \<open>jet_imp_local_min_test\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Removing the jet correction\<close>
 
@@ -1723,17 +1723,17 @@ text \<open>Below \<open>sums_matrix_inequality\<close> the \<open>psd\<close> c
 
 text \<open>\<open>matrix_vector_mult_diff_gen\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>doubled_penalty_jet\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubled_penalty_jet\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Semiconvexity of the doubled functional, for a general penalty\<close>
 
-text \<open>\<open>convex_on_prod_diff\<close>, \<open>convex_on_prod_add\<close>, \<open>semiconvex_penalty_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>convex_on_prod_diff\<close>, \<open>convex_on_prod_add\<close>, \<open>semiconvex_penalty_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>A concrete penalty: semiconcave, with a vanishing 2-jet at the origin\<close>
 
 text \<open>\<open>soft_pen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Soft_Penalty}.\<close>
 
-text \<open>\<open>convex_on_norm_lift\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>convex_on_norm_lift\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 lemma soft_pen_gap:
   fixes d :: "real^'n::finite"
@@ -2392,7 +2392,7 @@ text \<open>Jensen's lemma for the general doubled functional, as
   \<open>Pn (fst y - snd y)\<close> and the semiconvexity constant by
   \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
 
-text \<open>\<open>semiconvex_shift_perturb\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>semiconvex_shift_perturb\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Jensen's lemma for the shifted general functional, the strict-gap
   version: the shifted functional \<open>\<Phi> - \<delta>\<parallel>z - \<xi>\<^sub>0\<parallel>\<^sup>2\<close>, with \<open>\<Phi>\<close> the
@@ -2473,7 +2473,7 @@ proof -
           bnd d small])
 qed
 
-text \<open>\<open>shifted_annulus_bound_split_gen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>shifted_annulus_bound_split_gen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The matrix inequality for a general penalty adds the penalty's jet to
   \<open>expPsi\<close> rather than substituting a fixed quadratic identity; the
@@ -2483,7 +2483,7 @@ text \<open>The matrix inequality for a general penalty adds the penalty's jet t
 
 text \<open>\<open>matrix_vector_mult_scaleR_gen\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>sums_matrix_inequality_gen\<close>, \<open>sums_gives_ordering_gen\<close>, \<open>sums_ordering_at_interior_max_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>sums_matrix_inequality_gen\<close>, \<open>sums_gives_ordering_gen\<close>, \<open>sums_ordering_at_interior_max_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Block linearity and symmetry with \<open>Z *v v\<close> in place of
   \<open>\<alpha> *\<^sub>R v\<close>, proved directly rather than through the penalty-specific
@@ -2493,7 +2493,7 @@ text \<open>Block linearity and symmetry with \<open>Z *v v\<close> in place of
 
 text \<open>\<open>inner_matrix_sym\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>linear_block_fst_gen\<close>, \<open>linear_block_snd_gen\<close>, \<open>sym_block_fst_gen\<close>, \<open>sym_block_snd_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>linear_block_fst_gen\<close>, \<open>linear_block_snd_gen\<close>, \<open>sym_block_fst_gen\<close>, \<open>sym_block_snd_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 corollary sums_psd_at_interior_max_gen:
   fixes a b :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -2641,7 +2641,7 @@ text \<open>The same conclusion with the off-diagonal condition \<open>p \<noteq
 
 subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
 
-text \<open>\<open>sums_gives_ordering\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>sums_gives_ordering\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>With linearity and symmetry of the two blocks, supplied by the
   Alexandrov jet's bounded linear and symmetric Hessian, the ordering
@@ -2649,7 +2649,7 @@ text \<open>With linearity and symmetry of the two blocks, supplied by the
 
 subsection \<open>Discharging the negativity hypothesis at the doubled maximum\<close>
 
-text \<open>\<open>sums_ordering_at_interior_max\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>sums_ordering_at_interior_max\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The same conclusion in \<open>psd\<close> form, consumed by
   \<open>comparison_env_from_jets\<close>, depending only on the maximum property of
@@ -2683,7 +2683,7 @@ corollary sums_psd_at_interior_max:
 
 subsection \<open>Instantiating at the doubled sup-convolutions\<close>
 
-text \<open>\<open>doubled_semiconvexity_constant_pos\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubled_semiconvexity_constant_pos\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 theorem doubled_supconv_jet_exists:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -2723,7 +2723,7 @@ proof -
           bnd d small])
 qed
 
-text \<open>\<open>norm_sq_prod_split\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>norm_sq_prod_split\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 theorem doubled_supconv_jet_exists_shifted:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -2779,7 +2779,7 @@ proof -
           bnd d small])
 qed
 
-text \<open>\<open>shifted_annulus_bound\<close>, \<open>shifted_jensen_smallness\<close>, \<open>shifted_annulus_bound_split\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>shifted_annulus_bound\<close>, \<open>shifted_jensen_smallness\<close>, \<open>shifted_annulus_bound_split\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The slice lemmas applied to the perturbed functional give jets of
   \<open>f - \<delta>\<parallel>\<cdot> - c\<parallel>\<^sup>2\<close>; since a quadratic has an exact expansion, this
@@ -2795,7 +2795,7 @@ text \<open>An antisymmetric linear tilt of the doubling does not bound the
   penalty bound acquires an \<open>\<eta>\<parallel>x'-y'\<parallel>\<close> term, degrading by exactly what
   the tilt gains.\<close>
 
-text \<open>\<open>jet_transfer_quadratic\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>jet_transfer_quadratic\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>This delivers precisely the input of \<open>sums_psd_at_interior_max\<close>: a
   point \<open>z'\<close>, a symmetric bounded-linear \<open>W\<close>, and the second-order
@@ -2810,11 +2810,11 @@ text \<open>This delivers precisely the input of \<open>sums_psd_at_interior_max
 
 subsection \<open>From Jensen's tilted global maximum to an interior maximum\<close>
 
-text \<open>\<open>tilt_absorb\<close>, \<open>global_max_imp_interior_max\<close>, \<open>interior_radius_pos\<close>, \<open>doubled_tilted_interior_max\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>tilt_absorb\<close>, \<open>global_max_imp_interior_max\<close>, \<open>interior_radius_pos\<close>, \<open>doubled_tilted_interior_max\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The block hypotheses come from the jet itself\<close>
 
-text \<open>\<open>linear_of_bounded_linear_prod\<close>, \<open>linear_block_fst\<close>, \<open>linear_block_snd\<close>, \<open>sym_block_fst\<close>, \<open>sym_block_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>linear_of_bounded_linear_prod\<close>, \<open>linear_block_fst\<close>, \<open>linear_block_snd\<close>, \<open>sym_block_fst\<close>, \<open>sym_block_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>With those block properties, the \<open>psd\<close> ordering needs nothing beyond
   the jet and the maximum property.\<close>
@@ -2995,7 +2995,7 @@ qed
 
 subsection \<open>Symmetry of the two block matrices\<close>
 
-text \<open>\<open>transpose_matrix_block_fst\<close>, \<open>transpose_matrix_block_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>transpose_matrix_block_fst\<close>, \<open>transpose_matrix_block_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The jet alone yields all three matrix hypotheses of
   \<open>comparison_env_from_jets\<close>: both block matrices are symmetric, and
@@ -3036,7 +3036,7 @@ qed
 
 subsection \<open>The gradient alignment\<close>
 
-text \<open>\<open>gradient_vanishes_at_interior_max\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>gradient_vanishes_at_interior_max\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Consequently the jet at the doubled maximum has no first-order term
   at all.\<close>
@@ -3105,12 +3105,12 @@ text \<open>The same, with the off-diagonal condition traded for the statement
 
 subsection \<open>Deriving the component jets from the doubled jet\<close>
 
-text \<open>\<open>penalty_difference_identity\<close>, \<open>filterlim_slice_fst\<close>, \<open>filterlim_slice_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>penalty_difference_identity\<close>, \<open>filterlim_slice_fst\<close>, \<open>filterlim_slice_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The norm of a slice vector is the norm of its nonzero component,
   which keeps the quotient in the jet transfer unchanged.\<close>
 
-text \<open>\<open>doubled_slice_numerator_fst\<close>, \<open>doubled_jet_slice_fst\<close>, \<open>doubled_jet_slice_fst_gen\<close>, \<open>penalty_difference_identity_snd\<close>, \<open>doubled_slice_numerator_snd\<close>, \<open>doubled_jet_slice_snd\<close>, \<open>doubled_jet_slice_snd_gen\<close>, \<open>doubled_jet_slices_at_max\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubled_slice_numerator_fst\<close>, \<open>doubled_jet_slice_fst\<close>, \<open>doubled_jet_slice_fst_gen\<close>, \<open>penalty_difference_identity_snd\<close>, \<open>doubled_slice_numerator_snd\<close>, \<open>doubled_jet_slice_snd\<close>, \<open>doubled_jet_slice_snd_gen\<close>, \<open>doubled_jet_slices_at_max\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Matching the block Hessians against their matrices\<close>
 
@@ -3120,7 +3120,7 @@ text \<open>The slice jets carry their Hessians as functions
   is stated for \<open>Vector_Spaces.linear\<close>, so real-vector-space \<open>linear\<close>
   must be routed through \<open>linear_matrix_vector_mul_eq\<close> first.\<close>
 
-text \<open>\<open>block_fst_matrix_apply\<close>, \<open>block_snd_matrix_apply\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>block_fst_matrix_apply\<close>, \<open>block_snd_matrix_apply\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Theorem 4.2(a) from the doubled jet alone\<close>
 
@@ -3478,7 +3478,7 @@ text \<open>Theorem 4.2(a) reduces to one quantitative hypothesis per side: the
 
 subsection \<open>A tilt that needs no limit at all\<close>
 
-text \<open>\<open>gradient_is_minus_tilt\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>gradient_is_minus_tilt\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>If the tilt is antisymmetric, \<open>p = (p\<^sub>0,-p\<^sub>0)\<close>, the two block gradients
   are exact negatives of each other, giving the alignment
@@ -3545,11 +3545,11 @@ qed
 
 subsection \<open>From the quadratic-form bound to a genuine operator bound\<close>
 
-text \<open>\<open>polarization_symmetric\<close>, \<open>parallelogram_norm\<close>, \<open>symmetric_form_bound\<close>, \<open>symmetric_form_bound_unit\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>polarization_symmetric\<close>, \<open>parallelogram_norm\<close>, \<open>symmetric_form_bound\<close>, \<open>symmetric_form_bound_unit\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
 
-text \<open>\<open>bounded_seq_limit_point\<close>, \<open>nearby_of_convergent\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>bounded_seq_limit_point\<close>, \<open>nearby_of_convergent\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>A bounded family on which the operator bound holds yields the
   nearby-point hypothesis at a produced limit point.  The closing argument
@@ -3560,7 +3560,7 @@ text \<open>A bounded family on which the operator bound holds yields the
 
 subsection \<open>A positive lower bound on the shared gradient\<close>
 
-text \<open>\<open>doubling_grad_lower_bound\<close>, \<open>doubling_grad_norm_lower_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubling_grad_lower_bound\<close>, \<open>doubling_grad_norm_lower_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The same bound for the doubling run on sup-convolutions:
   \<open>supconv_lipschitz\<close> gives the modulus of continuity with the same
@@ -3854,11 +3854,11 @@ qed
 
 subsection \<open>The gradient alignment along the family\<close>
 
-text \<open>\<open>tendsto_of_norm_bound\<close>, \<open>gradient_sequences_align\<close>, \<open>gradient_sequences_align_of_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>tendsto_of_norm_bound\<close>, \<open>gradient_sequences_align\<close>, \<open>gradient_sequences_align_of_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The diagonal step: two limits at once\<close>
 
-text \<open>\<open>nearby_of_convergent_shifted\<close>, \<open>nearby_of_convergent_shifted_neg\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>nearby_of_convergent_shifted\<close>, \<open>nearby_of_convergent_shifted_neg\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The contradiction with both limits taken together: bounds at the
   \<open>\<delta>\<close>-corrected matrices along a sequence of tilts is exactly what the
@@ -3990,11 +3990,11 @@ qed
 
 subsection \<open>The shrinking tilt is always available\<close>
 
-text \<open>\<open>jensen_tilt_threshold_pos\<close>, \<open>jensen_tilt_small_enough\<close>, \<open>tilt_sequence_pos\<close>, \<open>tilt_sequence_lt\<close>, \<open>tilt_sequence_tendsto\<close>, \<open>tilt_sequence_admissible\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>jensen_tilt_threshold_pos\<close>, \<open>jensen_tilt_small_enough\<close>, \<open>tilt_sequence_pos\<close>, \<open>tilt_sequence_lt\<close>, \<open>tilt_sequence_tendsto\<close>, \<open>tilt_sequence_admissible\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Replacing the Lipschitz modulus by compactness\<close>
 
-text \<open>\<open>positive_separation_of_value_gap\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>positive_separation_of_value_gap\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Two consequences: \<open>doubling_grad_lower_bound\<close> with the Lipschitz
   hypothesis replaced by an abstract separation, and the same for the
@@ -4007,7 +4007,7 @@ text \<open>For the doubling run on sup-convolutions, the separation is required
   constant enters.  The sign bookkeeping is as in
   \<open>doubling_grad_lower_bound_supconv\<close>, with \<open>w\<close> instantiated at \<open>-B\<close>.\<close>
 
-text \<open>\<open>shifted_family_parameters\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>shifted_family_parameters\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The sup-convolution is attained\<close>
 
@@ -4370,7 +4370,7 @@ proof (intro ballI allI impI)
     using sub x tf gl' unfolding visc_subsol_env2_def by blast
 qed
 
-text \<open>\<open>usc_extend_const_below\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>usc_extend_const_below\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Far from \<open>K\<close> the extended function's sup-convolution returns to the
   constant, since the whole competing ball misses \<open>K\<close>: this confines the
@@ -4524,7 +4524,7 @@ proof -
   then show ?thesis by (rule choice)
 qed
 
-text \<open>\<open>doubled_maximiser_over_UNIV_snd\<close>, \<open>mxK_of_UNIV_snd\<close>, \<open>cont_pos_near\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubled_maximiser_over_UNIV_snd\<close>, \<open>mxK_of_UNIV_snd\<close>, \<open>cont_pos_near\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 lemma attain_gate_of_positive:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -4568,7 +4568,7 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>\<open>supconv_radius_uniform\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>supconv_radius_uniform\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 theorem supconv_sandwich:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -4588,11 +4588,11 @@ qed
 
 subsection \<open>Locating the doubling maximiser away from the boundary\<close>
 
-text \<open>\<open>uniform_modulus_on_compact\<close>, \<open>doubling_maximiser_far_from_boundary\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>uniform_modulus_on_compact\<close>, \<open>doubling_maximiser_far_from_boundary\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The two penalty-carrying localisation helpers, generalised\<close>
 
-text \<open>\<open>doubling_maximiser_value_transfer_gen\<close>, \<open>norm_lt_of_penalty_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>doubling_maximiser_value_transfer_gen\<close>, \<open>norm_lt_of_penalty_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>\<open>soft_pen\<close> vanishes on the diagonal and is coercive\<close>
 
@@ -4648,7 +4648,7 @@ lemma soft_pen_neg:
   shows "soft_pen \<kappa> (- d) = soft_pen \<kappa> d"
   unfolding soft_pen_def by simp
 
-text \<open>\<open>diagonal_max_increments\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>diagonal_max_increments\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 lemma diagonal_max_increment_soft:
   fixes A B :: "real^'n::finite \<Rightarrow> real"
@@ -4729,7 +4729,7 @@ proof (rule ccontr)
   from lo hi show False by linarith
 qed
 
-text \<open>\<open>fary_of_pin\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>fary_of_pin\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Continuity of \<open>soft_pen\<close> is the single hypothesis
   \<open>doubling_maximiser_exists_gen\<close> needs about the penalty.  \<open>sqrt\<close> is
@@ -5195,7 +5195,7 @@ qed
 
 subsection \<open>Skolemising a four-component existential over an index\<close>
 
-text \<open>\<open>choice4\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>choice4\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The shifted analogue: run Jensen at the perturbation \<open>\<delta>\<^sub>i\<close> and tilt
   \<open>dd\<^sub>i\<close> of \<open>shifted_family_parameters\<close>, and skolemise.  Both hypotheses
@@ -5504,7 +5504,7 @@ text \<open>\<open>symmetric_form_bound_unit\<close> gives the entrywise bound
 
 text \<open>\<open>norm_le_card_Basis_bound\<close>, \<open>matrix_Basis_cases\<close>, \<open>inner_matrix_axis\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>norm_matrix_le_of_form_bound\<close>, \<open>hessian_abs_bound_of_two_sided\<close>, \<open>block_form_bound_fst\<close>, \<open>block_form_bound_snd\<close>, \<open>norm_block_matrices_bounded\<close>, \<open>block_form_bound_fst_gen\<close>, \<open>block_form_bound_snd_gen\<close>, \<open>norm_block_matrices_bounded_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>norm_matrix_le_of_form_bound\<close>, \<open>hessian_abs_bound_of_two_sided\<close>, \<open>block_form_bound_fst\<close>, \<open>block_form_bound_snd\<close>, \<open>norm_block_matrices_bounded\<close>, \<open>block_form_bound_fst_gen\<close>, \<open>block_form_bound_snd_gen\<close>, \<open>norm_block_matrices_bounded_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the same \<open>2\<delta>I\<close>, so the
   ordering is untouched (the shifts cancel, \<open>psd_shifted_diff\<close>), symmetry
@@ -5591,7 +5591,7 @@ lemma shift_cancel_matrix:
   shows "(Y - c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1) + (2*c) *\<^sub>R mat 1 = Y - X"
   by (simp add: vec_eq_iff mat_def axis_def algebra_simps)
 
-text \<open>\<open>penalty_gradient_nearby_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>penalty_gradient_nearby_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The value gap transfers to the sup-convolutions with an explicit loss:
   \<open>supconv_le_of_lipschitz\<close> sandwiches each sup-convolution between its
@@ -5625,7 +5625,7 @@ qed
 
 subsection \<open>The per-index data from one Jensen application\<close>
 
-text \<open>\<open>tilted_doubled_jet_slices\<close>, \<open>tilted_doubled_jet_slices_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>tilted_doubled_jet_slices\<close>, \<open>tilted_doubled_jet_slices_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>For the shifted functional, running the slice lemmas on
   \<open>a-\<delta>\<parallel>\<cdot>-fst \<xi>\<^sub>0\<parallel>\<^sup>2\<close> and \<open>b-\<delta>\<parallel>\<cdot>-snd \<xi>\<^sub>0\<parallel>\<^sup>2\<close> then
@@ -5643,7 +5643,7 @@ text \<open>\<open>second_order_interior_max\<close> reads \<open>v \<bullet> Wv
   and \<open>doubled_supconv_jet_exists\<close> carry both halves of this bound, so
   \<open>norm_block_matrices_bounded\<close> closes the chain.\<close>
 
-text \<open>\<open>tilted_doubled_hessian_nonpositive_gen\<close>, \<open>tilted_doubled_hessian_nonpositive\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>tilted_doubled_hessian_nonpositive_gen\<close>, \<open>tilted_doubled_hessian_nonpositive\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>For the ordering, the tilt must be absorbed into the two summands:
   \<open>sums_psd_from_jet\<close> wants a plain (untilted) doubled maximum, supplied
@@ -5778,7 +5778,7 @@ qed
 
 subsection \<open>Bundling: one subsequence for the whole family\<close>
 
-text \<open>\<open>norm_Pair_le\<close>, \<open>bounded_seq_limit_point_triple\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>norm_Pair_le\<close>, \<open>bounded_seq_limit_point_triple\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The contradiction from bounds alone\<close>
 
@@ -5876,7 +5876,7 @@ qed
 
 section \<open>The instantiation: Theorem 4.2(a) from the doubling data alone\<close>
 
-text \<open>\<open>penalty_gradient_nearby_upper\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>penalty_gradient_nearby_upper\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 theorem comparison_supconv_doubling_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -6512,7 +6512,7 @@ proof -
         in blast)+
 qed
 
-text \<open>\<open>block_fst_matrix_apply_gen\<close>, \<open>block_snd_matrix_apply_gen\<close>, \<open>transpose_matrix_block_fst_gen\<close>, \<open>transpose_matrix_block_snd_gen\<close>, \<open>diff_displacement_bound\<close>, \<open>penalty_gradient_nearby_upper_gen\<close>, \<open>penalty_gradient_nearby_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>block_fst_matrix_apply_gen\<close>, \<open>block_snd_matrix_apply_gen\<close>, \<open>transpose_matrix_block_fst_gen\<close>, \<open>transpose_matrix_block_snd_gen\<close>, \<open>diff_displacement_bound\<close>, \<open>penalty_gradient_nearby_upper_gen\<close>, \<open>penalty_gradient_nearby_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>\<open>comparison_supconv_maximiser_complete\<close> generalised: the quadratic
   penalty \<open>(\<alpha>/2)(norm d)\<^sup>2\<close> becomes an arbitrary \<open>Pn\<close> that is
@@ -7143,7 +7143,7 @@ text \<open>The repair lives in @{theory Relative_Arbitrage.Operator_Envelope_Co
 
 section \<open>Reduction to globally bounded, globally continuous data\<close>
 
-text \<open>\<open>continuous_extension_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>continuous_extension_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 lemma visc_subsol_extend:
   fixes u v :: "real^'n::finite \<Rightarrow> real"
@@ -7167,11 +7167,11 @@ proof (rule supersol_jet_cong_on[OF s open_interior])
   then show "v y = w y" by (rule eq)
 qed
 
-text \<open>\<open>bounded_on_compact\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>bounded_on_compact\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Distance to the boundary controls the balls\<close>
 
-text \<open>\<open>cball_subset_interior_of_far_from_boundary\<close>, \<open>cball_prod_subset_of_far_from_boundary\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>cball_subset_interior_of_far_from_boundary\<close>, \<open>cball_prod_subset_of_far_from_boundary\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>From a localised maximiser straight to the contradiction\<close>
 
@@ -7659,7 +7659,7 @@ qed
 
 subsection \<open>A nonempty compact set has a nonempty frontier\<close>
 
-text \<open>\<open>compact_frontier_nonempty\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling}.\<close>
+text \<open>\<open>compact_frontier_nonempty\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The two branches combined\<close>
 

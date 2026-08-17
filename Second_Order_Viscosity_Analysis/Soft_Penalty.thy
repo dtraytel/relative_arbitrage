@@ -2,18 +2,41 @@ section \<open>A soft penalty vanishing on the diagonal\<close>
 
 (*<*)
 theory Soft_Penalty
-  imports Doubling "Symmetric_Matrix_Spectra.Outer_Products"
+  imports Doubling_Of_Variables "Symmetric_Matrix_Spectra.Outer_Products"
 begin
 
 (*>*)
+
+text \<open>
+  Two concrete penalties for the doubling argument of
+  @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}, together
+  with their exact second-order expansions.
+
+  The plain quadratic penalty \<open>(\<alpha>/2)\<parallel>x - y\<parallel>\<^sup>2\<close> is the usual
+  choice, but it has a defect: its gradient \<open>\<alpha>(x - y)\<close> is the only thing
+  the comparison sees, and for a degenerate elliptic operator that is not
+  always enough.  What is wanted instead is a penalty that is still
+  \<^emph>\<open>coercive\<close> --- so the doubled maximum is attained --- but whose
+  gradient does not vanish anywhere off the diagonal, and whose full 2-jet
+  \<^emph>\<open>does\<close> vanish on it.
+
+  \<open>soft_pen \<kappa> d = (\<kappa>/2)\<parallel>d\<parallel>\<^sup>2 - \<kappa>(\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1) - 1)\<close>
+  is such a penalty: the subtracted square root softens the quadratic near
+  the origin, which is where the name comes from.  It grows quadratically at
+  infinity, its gradient \<open>\<kappa>(1 - 1/\<surd>(\<parallel>d\<parallel>\<^sup>2 + 1))\<sqdot>d\<close> is nonzero
+  for every \<open>d \<noteq> 0\<close>, and gradient and Hessian both vanish at \<open>d = 0\<close>.
+  \<open>quartic_pen \<beta> d = (\<beta>/4)(d \<bullet> d)\<^sup>2\<close> is the simpler penalty with the
+  same vanishing 2-jet, kept because its expansion is exact rather than
+  asymptotic.
+\<close>
 
 text \<open>Writing \<open>s = d \<bullet> d\<close> and \<open>t = 2(d \<bullet> h) + h \<bullet> h\<close>, the exact expansion
   \<open>P(d+h) - P(d) = (\<beta>/4)((s+t)\<^sup>2 - s\<^sup>2) = (\<beta>/4)(2st + t\<^sup>2)\<close> gives gradient
   \<open>\<nabla>P(d) = \<beta>(d \<bullet> d) d\<close> and Hessian quadratic form
   \<open>h \<mapsto> \<beta>(d \<bullet> d)(h \<bullet> h) + 2\<beta>(d \<bullet> h)\<^sup>2\<close>, matrix
   \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>, with remainder \<open>o(\<parallel>h\<parallel>\<^sup>2)\<close>. Both vanish only at
-  \<open>d = 0\<close>, giving the supersolution a \<open>(0,0)\<close> jet on the diagonal and hence
-  the contradiction of \<open>supersol_no_vanishing_jet\<close>.\<close>
+  \<open>d = 0\<close>, so on the diagonal this penalty contributes the zero 2-jet ---
+  the degenerate configuration a comparison argument has to exclude.\<close>
 
 definition quartic_pen :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real" where
   "quartic_pen \<beta> d = (\<beta>/4) * (d \<bullet> d)\<^sup>2"
@@ -391,8 +414,8 @@ definition soft_shrink :: "real^'n::finite \<Rightarrow> real^'n" where
   "soft_shrink d = (1 / sqrt ((norm d)\<^sup>2 + 1)) *\<^sub>R d"
 
 text \<open>At \<open>d = 0\<close> the gradient and Hessian of \<open>soft_pen\<close> both vanish, so a
-  diagonal configuration would give the supersolution's test function a
-  vanishing jet \<open>(0,0)\<close>, forbidden by \<open>supersol_no_vanishing_jet\<close>. Off
+  diagonal configuration would give the test function the vanishing jet
+  \<open>(0,0)\<close> --- the case a comparison argument must exclude.  Off
   the diagonal, for \<open>\<kappa> > 0\<close> the gradient is nonzero since \<open>R d > 1\<close> for
   \<open>d \<noteq> 0\<close>, making \<open>\<kappa>(1 - 1/R d)\<close> strictly positive, the positive lower
   bound \<open>c\<close> needed elsewhere.\<close>
