@@ -1,9 +1,12 @@
 session Continuous_Path_Spaces = Continuous_Time_Martingales +
   description "
-    The space of continuous paths on a compact interval as a Polish metric
-    space, moment bounds on the increments of a martingale with a controlled
-    compensator, and tightness of a family of path laws.
+    Weak convergence of processes done properly: C([0,T],'b) as a Polish
+    space with portmanteau and the continuous mapping theorem, tightness of a
+    family of path laws from increment moments alone, and quadratic variation
+    as an adapted, everywhere-continuous path functional with a summable L2
+    rate.
   "
+  options [document = pdf, document_output = "output"]
   sessions
     Kolmogorov_Chentsov
     Levy_Prokhorov_Metric

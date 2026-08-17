@@ -1,9 +1,13 @@
 session Continuous_Time_Martingales = "HOL-Probability" +
   description "
-    Doob's maximal inequality, optional sampling and optional stopping at a
-    bounded stopping time in continuous time, quadratic variation, uniform
-    integrability and Vitali's convergence theorem.
+    What continuous-time martingale theory needs beyond the AFP's
+    Martingales entry: Doob's maximal inequality, optional sampling and
+    stopping at a bounded stopping time, quadratic variation and its
+    compensator, Vitali's theorem, exit times as stopping times, and the
+    algebra of transporting the martingale property along images, products,
+    restrictions and modifications.
   "
+  options [document = pdf, document_output = "output"]
   sessions
     Martingales
   theories

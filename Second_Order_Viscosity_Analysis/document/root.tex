@@ -14,42 +14,54 @@
 
 \begin{document}
 
-\title{Sup-Convolutions, Alexandrov's Theorem and the Crandall--Ishii Theorem on Sums}
+\title{Sup-Convolutions, Alexandrov's Theorem, and Comparison of Viscosity Solutions}
 \author{Dmitriy Traytel}
 \maketitle
 
 \begin{abstract}
-  This entry develops the second-order differentiability theory that
-  underlies comparison principles for viscosity solutions of fully nonlinear
-  degenerate elliptic equations.
+  The complete second-order machinery a comparison proof between viscosity
+  solutions of a fully nonlinear degenerate elliptic equation runs on.
+  Neither Rademacher's nor Alexandrov's theorem was previously in the
+  Archive.
 
   The sup-convolution
-  $u^{\varepsilon}(x) = \sup_{y}\,(u(y) - |x-y|^{2}/2\varepsilon)$
-  and its convex counterpart, the Moreau envelope, are defined and their
-  calculus established: semiconvexity, the proximal map, and the transfer of
+  $u^{\varepsilon}(x) = \sup_{y}\,(u(y) - |x-y|^{2}/2\varepsilon)$ and its
+  convex counterpart, the Moreau envelope, are defined and their calculus
+  established: semiconvexity, the proximal map, and the transfer of
   second-order jets between a function and its envelope.  Subgradients of a
-  finite convex function on a Euclidean space are shown nonempty by a
-  supporting hyperplane to the epigraph, and the proximal map is shown firmly
-  nonexpansive.
+  finite convex function are shown nonempty by a supporting hyperplane to the
+  epigraph, and the proximal map firmly nonexpansive.
 
   On that basis three classical theorems are proved.  \emph{Rademacher's
   theorem}: a locally Lipschitz function on a Euclidean space is
   differentiable almost everywhere, in a scalar and a vector-valued form.
   \emph{Alexandrov's theorem}: a convex function is twice differentiable
-  almost everywhere; the proof follows Minty's device, applying Rademacher to
-  the resolvent of the subdifferential and transporting the expansion from
-  the Moreau envelope back to the function.  \emph{Jensen's lemma} for
-  semiconvex functions, and the \emph{Crandall--Ishii theorem on sums}: for a
-  local maximum of $u(x)+w(y)$ on a product, second-order jets exist whose
-  Hessians satisfy the block matrix inequality.  The development follows
-  Evans and Gariepy~\cite{EvansGariepy} for the differentiability theorems
-  and the User's Guide of Crandall, Ishii and Lions~\cite{CrandallIshiiLions}
-  for Jensen's lemma and the theorem on sums.
+  almost everywhere, by Minty's device --- apply Rademacher to the resolvent
+  of the subdifferential and transport the expansion from the Moreau envelope
+  back.  \emph{Jensen's lemma} for semiconvex functions, and the
+  \emph{Crandall--Ishii theorem on sums}: at a local maximum of $u(x)+w(y)$
+  on a product, second-order jets exist whose Hessians satisfy the block
+  matrix inequality.
 
-  Nothing in the entry refers to any particular equation; it was extracted
-  from a formalisation of the uniqueness half of a relative-arbitrage
-  problem~\cite{LaiShkolnikovSoner}, where the theorem on sums is what makes
-  comparison for a degenerate elliptic operator work.
+  The last two theories are the apparatus those results exist to serve.
+  \emph{Doubling of variables} maximises $u(x) - w(y) - P(x-y)$ over a pair
+  of variables and reads the result back on the diagonal: existence and
+  location of the maximising pair, the penalty and gradient estimates, the
+  jets of the doubled functional and their slices in each variable, Jensen's
+  tilt and its removal, the block structure of the Hessians, and the
+  sequence lemmas for passing to a limit --- at
+  \texttt{'a::euclidean\_space} except where a statement produces a matrix.
+  \emph{Soft penalties} are the alternative to the quadratic $P$ when the
+  operator is degenerate: coercive, so the doubled maximum is attained, with
+  a gradient that vanishes nowhere off the diagonal and a $2$-jet that
+  vanishes on it.
+
+  Following Evans and Gariepy~\cite{EvansGariepy} for the differentiability
+  theorems and the User's Guide of Crandall, Ishii and
+  Lions~\cite{CrandallIshiiLions} for Jensen's lemma, the theorem on sums and
+  the doubling method.  Extracted from a formalisation of the uniqueness half
+  of a relative-arbitrage problem~\cite{LaiShkolnikovSoner}; nothing in the
+  entry refers to that equation.
 \end{abstract}
 
 \tableofcontents

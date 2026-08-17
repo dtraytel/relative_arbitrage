@@ -14,13 +14,17 @@
 
 \begin{document}
 
-\title{Optional Sampling and Quadratic Variation for Continuous-Time Martingales}
+\title{Optional Sampling, Quadratic Variation and Transfer for Continuous-Time Martingales}
 \author{Dmitriy Traytel}
 \maketitle
 
 \begin{abstract}
-  A toolbox of martingale results that the Archive's existing entries do not
-  provide, developed on top of the \texttt{Martingales} entry.
+  What continuous-time martingale theory needs beyond the Archive's
+  \texttt{Martingales} entry, on which this one builds.  The Archive's
+  \texttt{Doob\_Convergence} proves the upcrossing inequality and the
+  convergence theorem; the maximal inequality proved here is a different
+  result, and optional sampling, quadratic variation and Vitali's theorem
+  have no counterpart in either.
 
   Doob's maximal inequality is proved for discrete-time martingales, and with
   it a running-maximum bound usable as a dominating function.  Optional
@@ -28,21 +32,29 @@
   a continuous-time martingale sampled on a grid, then at a simple stopping
   time, and finally at an arbitrary bounded stopping time, by approximating
   the stopping time from above by its dyadic ceilings; the localised form,
-  over an event of the past, is proved along the way.  Optional stopping
-  follows: the stopped process is again a martingale.
+  over an event of the past, comes along the way.  Optional stopping follows:
+  the stopped process is again a martingale.  Exit times of closed sets by
+  continuous adapted processes are shown to be stopping times.
 
-  Quadratic variation of a square-integrable martingale is defined together
-  with its compensator, and the sampled process on a partition is shown to be
-  a square-integrable discrete-time martingale whose compensator is the
-  sampled one, which is what lets a continuous-time statement be reduced to a
-  discrete one.
+  Quadratic variation of a square-integrable martingale is defined with its
+  compensator, and the sampled process on a partition shown to be a
+  square-integrable discrete-time martingale whose compensator is the sampled
+  one --- which is what reduces a continuous-time statement to a discrete
+  one.  Uniform integrability and Vitali's convergence theorem follow,
+  with the practical criterion that a uniform higher-moment bound suffices,
+  and the uniform integrability of a family of conditional expectations.
 
-  Finally, uniform integrability is defined and Vitali's convergence theorem
-  proved, together with the practical criterion that a uniform bound on a
-  higher moment suffices, and the uniform integrability of a family of
-  conditional expectations of a single integrable function.  See Karatzas and
-  Shreve~\cite{KaratzasShreve} and Williams~\cite{Williams} for the textbook
-  accounts.
+  A second half is algebraic.  The martingale property is closed under sums,
+  differences, constant shifts, congruence up to almost-sure or eventual
+  equality, time changes, coarser filtrations, and images under a bounded
+  linear map, hence componentwise for vector- and matrix-valued processes;
+  and it transports along image measures, products of two filtered measures,
+  infinite products, restriction to a full-measure event, conditioning on an
+  event of the past, and modification.  The natural filtration of a process,
+  the semidirect product of a measure with a kernel, and a battery of
+  integrability criteria complete the toolbox.  Karatzas and
+  Shreve~\cite{KaratzasShreve} and Williams~\cite{Williams} are the textbook
+  references.
 \end{abstract}
 
 \tableofcontents

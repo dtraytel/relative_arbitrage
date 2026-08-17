@@ -19,26 +19,27 @@
 \maketitle
 
 \begin{abstract}
-  Brownian motion is constructed in Isabelle/HOL as a measure on the space of
+  Brownian motion constructed in Isabelle/HOL as a measure on the space of
   real-valued functions of time, together with a continuous modification.
+  The Archive's \texttt{Kolmogorov\_Chentsov} entry supplies the continuity
+  criterion but no construction; this entry supplies the construction.
 
-  The construction is the classical one.  The Gaussian increment measure of a
-  given variance is defined, with the degenerate variance giving a point
-  mass, and its moments and convolution law are established, the latter both
-  as a pushforward and in iterated-integral form.  Finite-dimensional
+  The classical route is followed.  The Gaussian increment measure of a given
+  variance is defined, degenerating to a point mass at variance zero, and its
+  moments and convolution law are established, the latter both as a
+  pushforward and in iterated-integral form.  Finite-dimensional
   distributions are then pushforwards of finite products of independent
   increment measures under cumulative-sum maps, and projectivity of that
   family reduces to merging two adjacent increments, that is, to the
   convolution law.  Wiener measure is the projective limit, obtained from the
-  Daniell--Kolmogorov theorem already available in \texttt{HOL-Probability}.
-  Its increments are shown independent and Gaussian, and the fourth moment
+  Daniell--Kolmogorov theorem already in \texttt{HOL-Probability}.  Its
+  increments are shown independent and Gaussian, and the fourth moment
   $\mathbb{E}\,|B_t - B_s|^{4} = 3\,(t-s)^{2}$ is computed.
 
   That moment bound discharges the hypothesis of the Kolmogorov--Chentsov
-  theorem from the Archive entry of the same name, which yields a modification
-  of the coordinate process with continuous paths: Brownian motion in the
-  usual sense.  See Karatzas and Shreve~\cite{KaratzasShreve} for the
-  textbook account.
+  theorem, which yields a modification of the coordinate process with
+  continuous paths: Brownian motion in the usual sense.  See Karatzas and
+  Shreve~\cite{KaratzasShreve} for the textbook account.
 \end{abstract}
 
 \tableofcontents

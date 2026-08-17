@@ -14,34 +14,43 @@
 
 \begin{document}
 
-\title{Upper and Lower Semicontinuity}
+\title{Semicontinuity: Envelopes, Berge's Theorem and Measurable Selection}
 \author{Dmitriy Traytel}
 \maketitle
 
 \begin{abstract}
-  Everything about upper and lower semicontinuity that HOL-Analysis leaves
-  unproved, and that is not about any particular function.
+  Upper and lower semicontinuity as optimal control and viscosity-solution
+  arguments use them, for real-valued functions on a metric space.
 
-  The $\varepsilon$-$\delta$ predicates and their elementary calculus: closure
-  under addition, positive scaling, and subtracting a continuous function;
-  attainment of the supremum or infimum of a semicontinuous function on a
-  nonempty compact set; and bounded extension of an upper semicontinuous
-  function off a closed set. The semicontinuous envelopes of a general
-  real-valued function --- taken over all of the ambient space, or relative
-  to a closed set, the form Definition 3.1 of the paper below actually reads
-  --- together with their monotonicity and the fixpoint at points where the
-  underlying function is already semicontinuous. Berge's maximum theorem,
-  the upper semicontinuity of a supremum of a jointly upper semicontinuous
-  function over a compact index set, needing no measurable selection. And a
-  measurable selection theorem for upper semicontinuous payoffs on compact
-  sets, Bertsekas--Shreve (1978) Proposition 7.33, by a greedy nested
-  bisection along a countable dense sequence.
+  The $\varepsilon$-$\delta$ predicates come with their elementary calculus
+  --- closure under addition, positive scaling and subtracting a continuous
+  function --- and with the two facts such arguments actually consume:
+  attainment of the supremum or infimum on a nonempty compact set, and
+  bounded extension of an upper semicontinuous function off a closed set.
+  The semicontinuous envelopes are taken both over the whole space and
+  \emph{relative to a closed set}~$K$, the latter with a projection-based
+  extension to the ambient space; the relative form is what a boundary
+  condition stated in the viscosity sense actually reads.  Berge's maximum
+  theorem is proved in the form that needs no measurable selection: a
+  supremum of a jointly upper semicontinuous function over a compact index
+  set is upper semicontinuous.  Finally, a measurable selection theorem for
+  upper semicontinuous payoffs on compact sets, Bertsekas--Shreve
+  Proposition~7.33~\cite{BertsekasShreve}, proved by a greedy nested
+  bisection along a countable dense sequence; a countably valued
+  $\varepsilon$-selector cannot exist, so some such construction is forced.
 
-  Nothing in the entry refers to any particular equation; it was extracted
-  from a formalisation of the uniqueness half of a relative-arbitrage
-  problem~\cite{LaiShkolnikovSoner}, where the value function is characterised
-  as the unique bounded upper semicontinuous viscosity solution of a
-  degenerate elliptic equation.
+  The Archive entry \texttt{Lower\_Semicontinuous} overlaps in one place: its
+  lower semicontinuous hull of an $\overline{\mathbb{R}}$-valued function is
+  the envelope defined here, and four of its basic properties recur.  That
+  entry is about convex functions to the extended reals and their epigraphs;
+  this one stays real-valued, carrying boundedness hypotheses instead of
+  admitting $\pm\infty$, and everything else here --- the relative envelope,
+  attainment, Berge, the selection theorem --- has no counterpart there.
+
+  Extracted from a formalisation of the uniqueness half of a
+  relative-arbitrage problem~\cite{LaiShkolnikovSoner}, whose value function
+  is characterised as the unique bounded upper semicontinuous viscosity
+  solution of a degenerate elliptic equation.
 \end{abstract}
 
 \tableofcontents

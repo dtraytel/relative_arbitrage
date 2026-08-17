@@ -19,23 +19,30 @@
 \maketitle
 
 \begin{abstract}
-  The spectral theory of real symmetric matrices that HOL-Analysis stops
-  short of, for anyone who constrains a matrix through its spectrum rather
-  than through its entries.
+  The spectral theory of real symmetric matrices that \texttt{HOL-Analysis}
+  stops short of, for anyone who constrains a matrix through its spectrum
+  rather than through its entries.  The Archive has no diagonalisation of a
+  real symmetric matrix; \texttt{Jordan\_Normal\_Form} and
+  \texttt{Hilbert\_Space\_Tensor\_Product} address different settings.
 
-  The spectral theorem itself is proved by the variational argument:
-  a maximizer of the Rayleigh quotient on an invariant subspace is an
-  eigenvector, and induction on dimension peels off an orthonormal eigenbasis
-  of the whole space. On top of it, Ky Fan's theorem is developed in the form
-  needed to constrain a matrix by its ordered eigenvalues without ever naming
-  them individually: the sum of the $m$ largest eigenvalues is characterised
-  as a supremum of traces against orthogonal projections, the individual
-  ordered eigenvalues are recovered as differences of consecutive such sums,
-  and both are shown Lipschitz in the matrix. The Poincar\'e separation
-  inequality compares the spectrum of a matrix to that of its compression to
-  a subspace.
+  A calculus of trace, transpose and the two matrix products comes first,
+  together with outer products, orthonormal families and their completeness
+  relation, and the Householder reflections and the two-reflection rotation
+  used to transport a frame.  The spectral theorem itself is proved by the
+  variational argument: a maximiser of the Rayleigh quotient on an invariant
+  subspace is an eigenvector, and induction on dimension peels off an
+  orthonormal eigenbasis.
 
-  Nothing in the entry refers to any particular equation; it was extracted
+  On top of it, Ky Fan's theorem is developed in the form needed to constrain
+  a matrix by its ordered eigenvalues without ever naming them individually:
+  the sum of the $m$ largest eigenvalues is characterised as a supremum of
+  traces against orthogonal projections, the individual ordered eigenvalues
+  are recovered as differences of consecutive such sums, and both are shown
+  Lipschitz in the matrix.  The Poincar\'e separation inequality compares the
+  spectrum of a matrix with that of its compression to a subspace, via
+  Courant--Fischer.
+
+  Nothing in the entry refers to any particular equation.  It was extracted
   from a formalisation of the uniqueness half of a relative-arbitrage
   problem~\cite{LaiShkolnikovSoner}, where a lower bound on a sum of ordered
   eigenvalues is one of the two spectral constraints defining the problem's
