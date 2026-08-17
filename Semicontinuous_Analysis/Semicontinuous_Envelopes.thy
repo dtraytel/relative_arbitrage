@@ -15,20 +15,20 @@ text \<open>
   already semicontinuous.
 \<close>
 
-definition lsc_env :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real" where
+definition lsc_env :: "('a::metric_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> real" where
   "lsc_env u x = (SUP e \<in> {0<..}. INF y \<in> ball x e. u y)"
 
-definition usc_env :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real" where
+definition usc_env :: "('a::metric_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> real" where
   "usc_env u x = - lsc_env (\<lambda>y. - u y) x"
 
 lemma lsc_env_bdd_below_ball:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y"
   shows "bdd_below (u ` S)"
   by (rule bdd_belowI[of _ B]) (use B in auto)
 
 lemma lsc_env_bdd_above:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y"
   shows "bdd_above ((\<lambda>e. INF y \<in> ball x e. u y) ` {0<..})"
 proof (rule bdd_aboveI[of _ "u x"])
@@ -40,7 +40,7 @@ proof (rule bdd_aboveI[of _ "u x"])
 qed
 
 lemma lsc_env_le_self:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y"
   shows "lsc_env u x \<le> u x"
   unfolding lsc_env_def
@@ -55,7 +55,7 @@ next
 qed
 
 lemma lsc_env_ge:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y"
   shows "B \<le> lsc_env u x"
 proof -
@@ -68,7 +68,7 @@ proof -
 qed
 
 lemma usc_env_ge_self:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> B"
   shows "u x \<le> usc_env u x"
 proof -
@@ -78,7 +78,7 @@ proof -
 qed
 
 lemma usc_env_le:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> B"
   shows "usc_env u x \<le> B"
 proof -
@@ -92,7 +92,7 @@ text \<open>The limsup bound that Theorem 4.3's \<open>\<iota> \<down> 1\<close>
   envelope at \<open>x\<close>.  No continuity anywhere.\<close>
 
 lemma usc_env_limsup_bound:
-  fixes u :: "real^'n::finite \<Rightarrow> real" and zs :: "nat \<Rightarrow> real^'n"
+  fixes u :: "'a::metric_space \<Rightarrow> real" and zs :: "nat \<Rightarrow> 'a"
   assumes B: "\<And>y. u y \<le> B" and lim: "zs \<longlonglongrightarrow> x"
     and lo: "\<And>j. c \<le> u (zs j)"
   shows "c \<le> usc_env u x"
@@ -122,7 +122,7 @@ proof (rule ccontr)
 qed
 
 lemma lsc_env_mono:
-  fixes u v :: "real^'n::finite \<Rightarrow> real"
+  fixes u v :: "'a::metric_space \<Rightarrow> real"
   assumes le: "\<And>y. u y \<le> v y" and Bu: "\<And>y. B \<le> u y"
   shows "lsc_env u x \<le> lsc_env v x"
 proof -
@@ -143,7 +143,7 @@ proof -
 qed
 
 lemma lsc_env_lsc:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y" and lt: "c < lsc_env u z"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < lsc_env u y"
 proof -
@@ -177,7 +177,7 @@ proof -
 qed
 
 lemma usc_env_mono:
-  fixes u v :: "real^'n::finite \<Rightarrow> real"
+  fixes u v :: "'a::metric_space \<Rightarrow> real"
   assumes le: "\<And>y. u y \<le> v y" and Bv: "\<And>y. v y \<le> B"
   shows "usc_env u x \<le> usc_env v x"
 proof -
@@ -187,7 +187,7 @@ proof -
 qed
 
 lemma usc_env_eq_self:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> B"
     and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
   shows "usc_env u x = u x"
@@ -221,7 +221,7 @@ text \<open>The property the envelope exists for: arbitrarily near \<open>x\<clo
   built on the envelope is run.\<close>
 
 lemma lsc_env_approx:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y" and d0: "0 < \<delta>" and e0: "0 < \<epsilon>"
   obtains y where "dist x y < \<delta>" and "u y < lsc_env u x + \<epsilon>"
 proof -
@@ -246,7 +246,7 @@ qed
 text \<open>At a point of continuity the lower envelope is the function itself.\<close>
 
 lemma lsc_env_eq_self:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y" and c: "isCont u x"
   shows "lsc_env u x = u x"
 proof (rule antisym)
@@ -280,12 +280,12 @@ subsection \<open>The envelope taken within \<open>K\<close>\<close>
 
 text \<open>Definition 3.1 of the paper reads its lower envelope \<open>u\<^sub>*\<close> inside \<open>K\<close>:
   the liminf is over points of \<open>K\<close> only.  @{const lsc_env} takes it over balls
-  of \<open>real^'n\<close>, so the two agree at interior points of \<open>K\<close> and can differ on
+  of \<open>'a\<close>, so the two agree at interior points of \<open>K\<close> and can differ on
   \<open>K - interior K\<close>, which is exactly where the boundary gate of Eq. (1.10) is
   read.  \<open>lsc_envK\<close> is the paper's envelope.
 
   The bridge between them is an extension.  A function on \<open>K\<close> reaches
-  \<open>real^'n\<close> only through one, and the extension has to do two incompatible
+  \<open>'a\<close> only through one, and the extension has to do two incompatible
   looking things: stay high enough off \<open>K\<close> that it does not lower the
   infimum over a ball (or the two envelopes differ), and stay low enough at
   \<open>K - interior K\<close> that upper semicontinuity survives (or the comparison
@@ -295,11 +295,11 @@ text \<open>Definition 3.1 of the paper reads its lower envelope \<open>u\<^sub>
   the points outside \<open>K\<close> where the projection jumps, without touching \<open>K\<close>.\<close>
 
 definition lsc_envK ::
-  "(real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real"
+  "('a::metric_space) set \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> real"
   where "lsc_envK K u x = (SUP e \<in> {0<..}. INF y \<in> (ball x e \<inter> K). u y)"
 
 lemma lsc_envK_ge:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  fixes K :: "('a::metric_space) set" and u :: "'a \<Rightarrow> real"
   assumes B: "\<And>y. Bl \<le> u y" and x: "x \<in> K"
   shows "Bl \<le> lsc_envK K u x"
 proof -
@@ -328,14 +328,14 @@ proof -
 qed
 
 lemma lsc_env_eq_on_interior:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  fixes K :: "('a::metric_space) set" and u :: "'a \<Rightarrow> real"
   assumes B: "\<And>y. Bl \<le> u y" and x: "x \<in> interior K"
   shows "lsc_env u x = lsc_envK K u x"
 proof -
   have xK: "x \<in> K" using x interior_subset by blast
   obtain r where r0: "0 < r" and rK: "ball x r \<subseteq> K"
     using x mem_interior by blast
-  have bddb: "bdd_below (u ` S)" for S :: "(real^'n) set"
+  have bddb: "bdd_below (u ` S)" for S :: "('a) set"
     by (rule bdd_belowI[of _ Bl]) (use B in auto)
   have neI: "ball x e \<inter> K \<noteq> {}" if e: "0 < e" for e
   proof -
@@ -391,7 +391,7 @@ proof -
 qed
 
 lemma usc_env_usc:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> B"
     and lt: "usc_env u z < c"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> usc_env u y < c"
@@ -411,7 +411,7 @@ proof -
 qed
 
 lemma usc_env_eq_at:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> B"
     and usc: "\<And>c. u x < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> u y < c"
   shows "usc_env u x = u x"
@@ -439,18 +439,18 @@ proof (rule antisym)
 qed
 
 definition Kext ::
-  "(real^'n::finite) set \<Rightarrow> (real^'n \<Rightarrow> real) \<Rightarrow> real^'n \<Rightarrow> real"
+  "('a::euclidean_space) set \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> real"
   where "Kext K u = usc_env (\<lambda>y. u (closest_point K y))"
 
 lemma Kext_proj_bound:
-  fixes K :: "(real^'n::finite) set"
+  fixes K :: "('a::euclidean_space) set"
   assumes Kc: "closed K" and neK: "K \<noteq> {}"
     and B: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> B"
   shows "u (closest_point K y) \<le> B"
   by (rule B[OF closest_point_in_set[OF Kc neK]])
 
 lemma Kext_proj_near:
-  fixes K :: "(real^'n::finite) set"
+  fixes K :: "('a::euclidean_space) set"
   assumes Kc: "closed K" and x: "x \<in> K"
   shows "dist x (closest_point K y) \<le> 2 * dist x y"
 proof -
@@ -463,7 +463,7 @@ proof -
 qed
 
 lemma Kext_eq_on_K:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  fixes K :: "('a::euclidean_space) set" and u :: "'a \<Rightarrow> real"
   assumes Kc: "closed K" and neK: "K \<noteq> {}"
     and B: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> B"
     and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
@@ -501,7 +501,7 @@ proof -
 qed
 
 lemma Kext_bounded:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  fixes K :: "('a::euclidean_space) set" and u :: "'a \<Rightarrow> real"
   assumes Kc: "closed K" and neK: "K \<noteq> {}"
     and B: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
   shows "\<bar>Kext K u y\<bar> \<le> Bd"
@@ -526,7 +526,7 @@ proof -
 qed
 
 lemma Kext_usc:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  fixes K :: "('a::euclidean_space) set" and u :: "'a \<Rightarrow> real"
   assumes Kc: "closed K" and neK: "K \<noteq> {}"
     and B: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> B"
     and lt: "Kext K u z < c"
@@ -541,7 +541,7 @@ proof -
 qed
 
 lemma Kext_ge_proj:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  fixes K :: "('a::euclidean_space) set" and u :: "'a \<Rightarrow> real"
   assumes Kc: "closed K" and neK: "K \<noteq> {}"
     and B: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> B"
   shows "u (closest_point K y) \<le> Kext K u y"
@@ -550,7 +550,7 @@ lemma Kext_ge_proj:
     (rule Kext_proj_bound[OF Kc neK B])
 
 lemma lsc_env_Kext:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  fixes K :: "('a::euclidean_space) set" and u :: "'a \<Rightarrow> real"
   assumes Kc: "closed K" and neK: "K \<noteq> {}"
     and B: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
     and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>

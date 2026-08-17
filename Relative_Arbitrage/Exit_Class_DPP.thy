@@ -12438,22 +12438,9 @@ proof (rule order.antisym)
   ultimately show "min (pexit T K f) S \<le> pexit S K f" by simp
 qed
 
-lemma ess_inf_time_mono:
-  assumes le: "\<And>\<omega>. g \<omega> \<le> h \<omega>"
-  shows "ess_inf_time M g \<le> ess_inf_time M h"
-  unfolding ess_inf_time_def
-proof (rule Sup_subset_mono, rule subsetI)
-  fix e :: ennreal
-  assume e: "e \<in> {c. AE \<omega> in M. c \<le> ennreal (g \<omega>)}"
-  then have "AE \<omega> in M. e \<le> ennreal (g \<omega>)" by simp
-  then have "AE \<omega> in M. e \<le> ennreal (h \<omega>)"
-  proof (rule eventually_mono)
-    fix \<omega> assume "e \<le> ennreal (g \<omega>)"
-    also have "ennreal (g \<omega>) \<le> ennreal (h \<omega>)" by (intro ennreal_leI le)
-    finally show "e \<le> ennreal (h \<omega>)" .
-  qed
-  then show "e \<in> {c. AE \<omega> in M. c \<le> ennreal (h \<omega>)}" by simp
-qed
+text \<open>\<open>ess_inf_time_mono\<close> lives in @{theory Relative_Arbitrage.Value_Function_Market},
+  with an almost-sure rather than a pointwise hypothesis; this theory had a
+  pointwise copy that shadowed it.\<close>
 
 text \<open>Capping the integrand by a constant caps the essential infimum by the
   same constant.  Both halves are elementary, but the \<open>\<ge>\<close> half has to be

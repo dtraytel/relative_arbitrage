@@ -194,7 +194,7 @@ text \<open>Extension of a bounded usc function off a closed set.  The extension
   consumes.\<close>
 
 lemma usc_extension_bounded:
-  fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  fixes u :: "'a::metric_space \<Rightarrow> real" and K :: "('a) set"
   assumes cl: "closed K"
     and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
       \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
@@ -244,7 +244,7 @@ proof -
 qed
 
 lemma lsc_diff_continuous:
-  fixes f \<psi> :: "real^'n::finite \<Rightarrow> real"
+  fixes f \<psi> :: "'a::metric_space \<Rightarrow> real"
   assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
     and cont: "continuous_on UNIV \<psi>"
     and lt: "c < f z - \<psi> z"
@@ -279,7 +279,7 @@ text \<open>A continuous real-valued difference attains its supremum on a nonemp
   compact set.\<close>
 
 lemma sup_diff_attained_on_compact:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::metric_space \<Rightarrow> real"
   assumes cK: "compact K" and ne: "K \<noteq> {}"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
   shows "\<exists>x \<in> K. \<forall>y \<in> K. u y - w y \<le> u x - w x"

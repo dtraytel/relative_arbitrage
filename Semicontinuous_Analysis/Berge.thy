@@ -440,7 +440,7 @@ section \<open>Berge over a \<open>topology\<close>-valued index space\<close>
 
 text \<open>
   \<open>usc_sup_over_compact\<close> is stated with type-class \<open>open\<close>/\<open>compact\<close> on both
-  factors -- fine for \<open>x\<close> in \<open>real^'n\<close>, but not for the laws: the weak
+  factors -- fine for \<open>x\<close> in \<open>'c::metric_space\<close>, but not for the laws: the weak
   topology is a \<open>topology\<close> value (\<open>weak_conv_topology\<close>), not a type-class
   instance, since different base spaces induce different weak topologies on
   the same type \<open>'a measure\<close>.

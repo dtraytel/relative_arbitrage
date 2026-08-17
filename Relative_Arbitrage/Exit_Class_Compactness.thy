@@ -9346,7 +9346,7 @@ proof -
   have "ess_inf_time (distr Q (borel_of (mtopology_of
         (path_metric T :: (real \<Rightarrow> real^'n) metric))) (pfst T)) (pexit T K)
       = ess_inf_time Q (\<lambda>\<omega>. pexit T K (pfst T \<omega>))"
-    by (rule Value_Function_Market.ess_inf_time_distr
+    by (rule ess_inf_time_distr_measurable
         [OF pfst_measurable[OF T setsQ] pexit_measurable[OF T K]])
   then show ?thesis by (simp add: pexit_pfst)
 qed

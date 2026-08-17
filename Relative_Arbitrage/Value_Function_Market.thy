@@ -201,7 +201,7 @@ text \<open>The essential infimum transported along a pushforward: exit times of
   Lemma 2.3 exhibits weak limits as members of \<open>\<P>\<^sub>x\<close> and Proposition 2.4
   concatenates laws at stopping times.\<close>
 
-lemma ess_inf_time_distr:
+lemma ess_inf_time_distr_measurable:
   assumes g: "g \<in> M \<rightarrow>\<^sub>M N" and tau: "tau \<in> borel_measurable N"
   shows "ess_inf_time (distr M N g) tau = ess_inf_time M (\<lambda>\<omega>. tau (g \<omega>))"
 proof -
