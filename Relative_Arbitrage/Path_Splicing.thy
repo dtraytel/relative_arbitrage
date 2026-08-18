@@ -18,7 +18,7 @@ text \<open>\<open>cInf_shift_real\<close> lives in @{theory Continuous_Time_Mar
 
 
 
-definition pfut :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+definition pfut :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pfut r T \<omega> = restrict (\<lambda>s. \<omega> (r + s) - \<omega> r) {0..T - r}"
 
 text \<open>The conditioning-free half of the closure the weak DPP needs: a
@@ -27,7 +27,7 @@ text \<open>The conditioning-free half of the closure the weak DPP needs: a
   as path map, adapted for free since \<open>pcut S \<omega> r = \<omega> r\<close> on \<open>{0..S}\<close>, and
   \<open>martingale_stopped_const\<close> turns the \<open>T\<close>-clause into the \<open>S\<close>-clause.\<close>
 
-definition pcut :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+definition pcut :: "real \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pcut S \<omega> = restrict \<omega> {0..S}"
 
 text \<open>Every member started at \<open>x\<close> is the \<open>x\<close>-translate of a member started
@@ -53,7 +53,7 @@ text \<open>Reassembly of the split is addition (\<open>pstopped_add_pafter\<clo
   --- given that the continuation stands still until \<open>\<theta>\<close> --- is inverted by
   the split, so no information is lost in either direction.\<close>
 
-definition padd :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath \<Rightarrow> 'n pairpath"
+definition padd :: "real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "padd T p' w = restrict (\<lambda>t. p' t + w t) {0..T}"
 
 lemma pcut_apply: "r \<in> {0..S} \<Longrightarrow> pcut S \<omega> r = \<omega> r"
@@ -540,8 +540,8 @@ lemma pexit_pcut:
   shows "pexit U K (\<lambda>t. fst (pcut U \<omega> t)) = pexit U K (\<lambda>t. fst (\<omega> t))"
   by (rule pexit_cong_on) (simp add: pcut_apply)
 
-definition pglue :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath
-    \<Rightarrow> 'n pairpath"
+definition pglue :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b)
+    \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pglue r T \<omega> \<omega>' =
      restrict (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)) {0..T}"
 
@@ -554,7 +554,7 @@ lemma pglue_le: "t \<in> {0..T} \<Longrightarrow> t \<le> r \<Longrightarrow> pg
   by (simp add: pglue_def)
 
 lemma pcut_pglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "real \<Rightarrow> 'b::ab_group_add"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
   shows "pcut r (pglue r T \<omega> \<omega>') = pcut r \<omega>"
 proof (rule ext)
@@ -735,12 +735,12 @@ text \<open>The half-line analogue of \<open>pglue\<close>.  Cutting it at any h
   theory applies to every restriction of an extension without further
   work.\<close>
 
-definition iglue :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath \<Rightarrow> 'n pairpath"
+definition iglue :: "real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "iglue r \<omega> \<omega>' =
      restrict (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)) {0..}"
 
 lemma pcut_iglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "real \<Rightarrow> 'b::ab_group_add"
   assumes S: "0 \<le> S"
   shows "pcut S (iglue r \<omega> \<omega>') = pglue r S \<omega> \<omega>'"
   by (rule ext) (auto simp: pcut_def iglue_def pglue_def)
@@ -754,13 +754,13 @@ lemma pdel_clamp_hi:
   using assms by (intro max.boundedI) auto
 
 lemma pglue_pcut:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "real \<Rightarrow> 'b::ab_group_add"
   assumes r: "0 \<le> r" and rS: "r \<le> S"
   shows "pglue r S \<omega> (pcut (S - r) \<omega>') = pglue r S \<omega> \<omega>'"
   using r rS by (auto simp: pglue_def pcut_def)
 
 lemma pglue_self:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "real \<Rightarrow> 'b::ab_group_add"
   shows "pglue r r \<omega> \<omega>' = pcut r \<omega>"
   by (rule ext) (auto simp: pglue_def pcut_def)
 
@@ -815,7 +815,7 @@ proof -
 qed
 
 lemma pcut_padd_before:
-  fixes p' w :: "'n::finite pairpath"
+  fixes p' w :: "real \<Rightarrow> 'b::ab_group_add"
   assumes i0: "0 \<le> i" and iT: "i \<le> T"
     and w0: "\<And>u. u \<in> {0..T} \<Longrightarrow> u \<le> r \<Longrightarrow> w u = 0"
     and lt: "i < r"
@@ -831,14 +831,14 @@ proof (rule ext)
       unfolding pcut_apply[OF True] padd_apply[OF sT] by simp
   next
     case False
-    have out: "pcut i v s = undefined" for v :: "'n pairpath"
+    have out: "pcut i v s = undefined" for v :: "real \<Rightarrow> 'b"
       unfolding pcut_def restrict_def by (rule if_not_P[OF False])
     show ?thesis unfolding out ..
   qed
 qed
 
 lemma pcut_padd_section:
-  fixes p' w :: "'n::finite pairpath"
+  fixes p' w :: "real \<Rightarrow> 'b::ab_group_add"
   assumes i0: "0 \<le> i" and iT: "i \<le> T"
   shows "pcut i (padd T p' w) = padd i (pcut i p') (pcut i w)"
 proof (rule ext)
@@ -852,9 +852,9 @@ proof (rule ext)
         pcut_apply[OF True] ..
   next
     case False
-    have out1: "pcut i v s = undefined" for v :: "'n pairpath"
+    have out1: "pcut i v s = undefined" for v :: "real \<Rightarrow> 'b"
       unfolding pcut_def restrict_def by (rule if_not_P[OF False])
-    have out2: "padd i a b s = undefined" for a b :: "'n pairpath"
+    have out2: "padd i a b s = undefined" for a b :: "real \<Rightarrow> 'b"
       unfolding padd_def restrict_def by (rule if_not_P[OF False])
     show ?thesis unfolding out1 out2 ..
   qed
@@ -1062,7 +1062,7 @@ text \<open>\<open>ennreal_Sup_image\<close> lives in @{theory Continuous_Time_M
 subsection \<open>Eq. (1.6) as a shifted supremum over the class at \<open>0\<close>\<close>
 
 lemma pcut_pcut:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "real \<Rightarrow> 'b"
   assumes ST: "S \<le> T"
   shows "pcut S (pcut T \<omega>) = pcut S \<omega>"
 proof (rule ext)
@@ -1462,7 +1462,7 @@ text \<open>The step from \<open>pglue_law\<close> (one continuation for every e
   \<open>martingale_pair_snd_param\<close> and \<open>martingale_PiM_component\<close> carry the
   construction.\<close>
 
-definition pembed :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+definition pembed :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pembed s T w = restrict (\<lambda>t. w (max (t - s) 0)) {0..T}"
 
 text \<open>Stroock--Varadhan splice the continuation into the same
@@ -1511,7 +1511,7 @@ proof -
   then show ?thesis unfolding pembed_def by (rule mspace_path_metricI)
 qed
 
-definition pdel :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+definition pdel :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pdel s T = pembed (max 0 (min s T)) T"
 
 lemma pdel_eq_pembed: "0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> pdel s T = pembed s T"
@@ -1524,7 +1524,7 @@ lemma pdel_mspace:
   unfolding pdel_def
   by (rule pembed_mspace_full[OF pdel_clamp_lo pdel_clamp_hi[OF T0] w])
 
-definition prebase :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
+definition prebase :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "prebase s T w = restrict (\<lambda>u. w (s + u)) {0..T - s}"
 
 lemma pembed_apply: "t \<in> {0..T} \<Longrightarrow> pembed s T w t = w (max (t - s) 0)"
@@ -1534,7 +1534,7 @@ lemma pdel_eval: "t \<in> {0..T} \<Longrightarrow> pdel s T \<omega> t = \<omega
   unfolding pdel_def by (rule pembed_apply)
 
 lemma pembed_eval_min:
-  fixes w :: "'n::finite pairpath"
+  fixes w :: "real \<Rightarrow> 'b"
   assumes u: "0 \<le> u" and s0: "0 \<le> s" and sT: "s \<le> T"
   shows "pembed s T w (min u T) = w (min (max (u - s) 0) (T - s))"
 proof -
@@ -1650,7 +1650,7 @@ text \<open>\<^const>\<open>prebase\<close> inverts \<^const>\<open>pembed\<clos
   no weaker than selecting the rebased one.\<close>
 
 lemma pembed_pcut:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "real \<Rightarrow> 'b"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
   shows "pembed s T (pcut (T - s) \<omega>) = pembed s T \<omega>"
 proof (rule ext)

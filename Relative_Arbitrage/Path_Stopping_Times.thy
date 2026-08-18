@@ -170,12 +170,12 @@ text \<open>Sampling a process at a simple stopping time is measurable, because 
   result is a finite sum of pieces.  \<open>space M\<close> is itself an \<open>\<F>\<^sub>\<tau>\<close>-set, so the
   value slices come straight from \<open>pre_sigma_of_value_slice\<close>.\<close>
 
-definition pstopped :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> 'n pairpath
-    \<Rightarrow> 'n pairpath"
+definition pstopped :: "real \<Rightarrow> ((real \<Rightarrow> 'b) \<Rightarrow> real) \<Rightarrow> (real \<Rightarrow> 'b)
+    \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pstopped T \<theta> \<omega> = restrict (\<lambda>t. \<omega> (min t (\<theta> \<omega>))) {0..T}"
 
-definition pafter :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> 'n pairpath
-    \<Rightarrow> 'n pairpath"
+definition pafter :: "real \<Rightarrow> ((real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> real) \<Rightarrow> (real \<Rightarrow> 'b)
+    \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pafter T \<theta> \<omega> = restrict (\<lambda>t. \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)) {0..T}"
 
 lemma pstopped_apply: "t \<in> {0..T} \<Longrightarrow> pstopped T \<theta> \<omega> t = \<omega> (min t (\<theta> \<omega>))"
@@ -196,7 +196,7 @@ text \<open>The reassembly law.  This is the analogue of
   right-hand side.\<close>
 
 lemma pstopped_add_pafter:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "real \<Rightarrow> 'b::ab_group_add"
   assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T" and t: "t \<in> {0..T}"
   shows "pstopped T \<theta> \<omega> t + pafter T \<theta> \<omega> t = \<omega> t"
 proof (cases "t \<le> \<theta> \<omega>")
@@ -214,7 +214,7 @@ text \<open>The future factor starts at \<open>0\<close> --- exactly the normali
   time.\<close>
 
 lemma pafter_before:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "real \<Rightarrow> 'b::ab_group_add"
   assumes t: "t \<in> {0..T}" and le: "t \<le> \<theta> \<omega>"
   shows "pafter T \<theta> \<omega> t = 0"
   using t le by (simp add: pafter_apply max_absorb2)
@@ -1090,7 +1090,7 @@ text \<open>The re-basing map at a fixed time is an ordinary path-space map, and
   fixed number inside an almost-sure statement.\<close>
 
 lemma pstopped_eval_min_T:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "real \<Rightarrow> 'b"
   assumes T0: "0 \<le> T" and u: "0 \<le> u"
   shows "pstopped T \<theta> \<omega> (min u T) = \<omega> (min (min u (\<theta> \<omega>)) T)"
 proof -
