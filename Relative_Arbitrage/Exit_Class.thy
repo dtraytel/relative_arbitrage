@@ -1,7 +1,7 @@
 
 (*<*)
 theory Exit_Class
-  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" Exit_Semicontinuity Operator_Formula
+  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" "Continuous_Path_Spaces.Path_Exit_Times" Operator_Formula
     Viscosity_Solutions "Continuous_Time_Martingales.Martingale_Algebra"
     "Symmetric_Matrix_Spectra.Matrix_Algebra" "Symmetric_Matrix_Spectra.Outer_Products"
     "Continuous_Path_Spaces.Holder_Interpolation"

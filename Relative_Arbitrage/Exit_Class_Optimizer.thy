@@ -29,7 +29,7 @@ text \<open>The pointwise half of Larsson--Ruf's Proposition 2.2(ii): the class
   \<open>exit_val\<close> is a maximum --- needed independently of the DPP, since the
   paper's Section 3.1 opens by fixing an optimizer.
 
-  The usc input (\<open>Exit_Semicontinuity.ess_inf_pexit_usc\<close>) lives on the
+  The usc input (\<open>"Continuous_Path_Spaces.Path_Exit_Times".ess_inf_pexit_usc\<close>) lives on the
   vector path space, so the functional is transported along the
   \<open>X\<close>-component map \<open>pfst\<close>, \<open>1\<close>-Lipschitz between the two path metrics, and
   weak convergence pushes forward.\<close>

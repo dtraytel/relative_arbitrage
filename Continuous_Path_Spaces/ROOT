@@ -22,6 +22,7 @@ session Continuous_Path_Spaces = Continuous_Time_Martingales +
     Conditional_UI
     Equicontinuity
     Path_Space
+    Path_Exit_Times
     Path_Tightness
     Path_Space_Infinite
     Stopped_Localization

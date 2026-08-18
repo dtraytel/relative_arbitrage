@@ -1,8 +1,7 @@
 
 (*<*)
-theory Exit_Semicontinuity
-  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Time_Martingales.Stopping_Times"
-    Value_Function_Market
+theory Path_Exit_Times
+  imports Path_Space "Continuous_Time_Martingales.Stopping_Times"
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Time_Martingales.Essential_Infimum"
 begin
@@ -10,10 +9,10 @@ begin
 (*>*)
 
 text \<open>
-  Establishes the value-side semicontinuity underlying Proposition 2.4 of
-  \<^cite>\<open>LaiShkolnikovSoner\<close>, following \<^cite>\<open>LarssonRuf\<close>, Lemma 2.1.
-  It shows that the capped exit time is upper semicontinuous on the path
-  space, and that the essential infimum of the exit time is upper
+  The exit time of a closed set by a continuous path, and how it behaves
+  under weak convergence of path laws -- the shape in which Larsson and Ruf
+  use it (Lemma 2.1 of \<^cite>\<open>LarssonRuf\<close>).
+  The capped exit time is upper semicontinuous on the path space, and that the essential infimum of the exit time is upper
   semicontinuous along weak convergence of path laws, via the
   Laplace-transform representation
 
