@@ -2,7 +2,7 @@
 (*<*)
 theory Brownian_Optimal_Boundary
   imports
-    Brownian_Continuous
+    Brownian_Market
     Optimal_Exit_Time
 begin
 

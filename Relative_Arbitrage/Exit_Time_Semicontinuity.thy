@@ -984,7 +984,7 @@ proof -
     for s :: real and \<omega> :: "'m \<Rightarrow> real \<Rightarrow> real"
   proof (cases "s = 0")
     case True
-    then show ?thesis by (simp add: trace_mat1)
+    then show ?thesis by (simp add: trace_I)
   next
     case False
     then show ?thesis by (simp add: trace_def)

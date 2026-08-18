@@ -3,7 +3,8 @@
 theory Ito_Market
   imports
     "Continuous_Time_Martingales.Optional_Sampling"
-    Brownian_Market
+    "Wiener_Measure.Vector_Brownian_Martingales"
+    Volatile_Market
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin

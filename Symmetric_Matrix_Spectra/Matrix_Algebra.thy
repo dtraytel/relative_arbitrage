@@ -1042,49 +1042,7 @@ proof
     unfolding T_def by (rule affine_interior_sub[OF orth cne])
 qed
 
-lemma trace_mat1: "trace (mat 1 :: real^'n::finite^'n) = real CARD('n)"
-  by (simp add: trace_def mat_def)
 
-lemma bm_compensator_const:
-  assumes u: "0 \<le> u"
-  shows "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. trace (mat 1 :: real^'n::finite^'n))
-    = real CARD('n) * u"
-proof -
-  have "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. trace (mat 1 :: real^'n^'n)) = u * trace (mat 1 :: real^'n^'n)"
-    using u by (subst set_integral_const) auto
-  then show ?thesis
-    by (simp add: trace_mat1 mult_ac)
-qed
-
-text \<open>the compensated squared norm compensates the squared norm by the trace,
-  which is what the application's Ito functional and the quadratic Dynkin identity speak about. Lemma 2.2 of
-  \<^cite>\<open>LaiShkolnikovSoner\<close> needs more: a fourth-moment bound on each coordinate
-  separately, along the tightness chain
-  \<open>Path_Tightness.tight_on_set_path_laws_vec \<leftarrow>
-  Increment_Moments.fourth_moment_bound_bounded \<leftarrow>
-  Stopped_Localization.stopped_covariation\<close>, so the compensated square of
-  each coordinate must also be a martingale in its own right; a trace
-  identity alone does not give this. The per-coordinate compensator is
-  \<open>w\<close> rather than \<open>CARD('n) * w\<close>, since \<open>mat 1 $ i $ i = 1\<close>.\<close>
-
-lemma bm_compensator_coord:
-  assumes u: "0 \<le> u"
-  shows "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. (mat 1 :: real^'n::finite^'n) $ i $ i) = u"
-proof -
-  have "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. (mat 1 :: real^'n^'n) $ i $ i)
-      = u * ((mat 1 :: real^'n^'n) $ i $ i)"
-    using u by (subst set_integral_const) auto
-  then show ?thesis by (simp add: mat_def)
-qed
-
-text \<open>Two-sided pointwise bounds on the trace, from the eigenvalue
-  conditions: positive semidefiniteness makes the diagonal, hence the trace,
-  nonnegative, and the eigenvalue upper bound of Eq. (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> caps every
-  diagonal entry by \<open>L\<close>.\<close>
 
 lemma diag_eq_inner_axis:
   fixes a :: "real^'n^'n"

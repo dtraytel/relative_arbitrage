@@ -2,18 +2,24 @@ session Wiener_Measure = "HOL-Probability" +
   description "
     Brownian motion as the projective limit of its Gaussian
     finite-dimensional distributions, with independent increments and a
-    continuous modification: the canonical construction, and the only one in
-    Isabelle.
+    continuous modification -- the canonical construction, and the only one
+    in Isabelle -- and then the n-dimensional vector process it carries: its
+    increments independent of the natural filtration, its martingale
+    property, and the compensated square of the norm and of each coordinate.
   "
   options [document = pdf, document_output = "output"]
   sessions
     Kolmogorov_Chentsov
+    Continuous_Time_Martingales
   theories
     Sorted_Lists
     Gaussian_Increments
     Brownian_Finite_Dimensional_Distributions
     Brownian_Motion
     Brownian_Motion_Continuity
+    Product_Brownian_Motion
+    Vector_Brownian_Martingales
+    Continuous_Brownian_Motion
   document_files
     "root.tex"
     "root.bib"

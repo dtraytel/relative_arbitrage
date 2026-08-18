@@ -738,7 +738,7 @@ qed
 
 text \<open>Transfer to the continuous modification via
   \<open>Modification_Transfer.martingale_of_modification_gen\<close>, as
-  \<open>Brownian_Continuous.martingale_cbm_coord_square\<close> does for the diagonal.\<close>
+  \<open>Continuous_Brownian_Motion.martingale_cbm_coord_square\<close> does for the diagonal.\<close>
 
 lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_measurable borel"
   by (intro borel_measurable_continuous_onI linear_continuous_on

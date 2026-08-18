@@ -30,7 +30,6 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Operator_Envelope_Continuity
     Brownian_Market
     Ito_Market
-    Brownian_Continuous
     Brownian_Optimal_Boundary
     Value_Function_Market
     Path_Tightness_Market
