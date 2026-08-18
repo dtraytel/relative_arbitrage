@@ -16,9 +16,11 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Levy_Prokhorov_Metric
   theories
     Pair_Path_Space
+    Pair_Path_Laws
     Path_Splicing
     Path_Stopping_Times
     Path_Law_Pasting
+    Path_Law_Sampling
     Curvature_Operator
     Viscosity_Definitions
     Viscosity_Ball

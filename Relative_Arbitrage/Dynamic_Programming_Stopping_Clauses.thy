@@ -5,7 +5,7 @@ theory Dynamic_Programming_Stopping_Clauses
   imports Dynamic_Programming_Optional_Sampling
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Time_Martingales.Time_Discretisation"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

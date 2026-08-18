@@ -5,7 +5,7 @@ theory Value_Function_Assembly
   imports Value_Function_Tangential_Field
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

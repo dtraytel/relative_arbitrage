@@ -11,7 +11,7 @@ theory Exit_Class_Limits
     "Continuous_Path_Spaces.Increment_Moments"
     "Semicontinuous_Analysis.Semicontinuity"
     "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

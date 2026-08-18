@@ -5,7 +5,7 @@ theory Dynamic_Programming_Pasting
     "Continuous_Time_Martingales.Natural_Filtration"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

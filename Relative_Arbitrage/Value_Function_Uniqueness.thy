@@ -6,7 +6,7 @@ theory Value_Function_Uniqueness
     Exit_Time_Semicontinuity Value_Function_Assembly
     Exit_Class_Infinite
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 (*>*)
 

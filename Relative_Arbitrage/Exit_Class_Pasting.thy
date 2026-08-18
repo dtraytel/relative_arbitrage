@@ -7,7 +7,7 @@ theory Exit_Class_Pasting
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

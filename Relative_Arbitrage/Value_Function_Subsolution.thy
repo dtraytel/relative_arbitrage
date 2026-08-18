@@ -9,7 +9,7 @@ theory Value_Function_Subsolution
     "Symmetric_Matrix_Spectra.Ky_Fan"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

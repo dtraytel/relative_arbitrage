@@ -5,7 +5,7 @@ theory Path_Tightness_Market
   imports "Continuous_Path_Spaces.Path_Tightness" "Continuous_Path_Spaces.Stopped_Localization"
     Ito_Market "Continuous_Time_Martingales.Martingale_Transfer"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

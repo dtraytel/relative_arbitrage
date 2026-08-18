@@ -8,7 +8,7 @@ theory Value_Function_Euler_Construction
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

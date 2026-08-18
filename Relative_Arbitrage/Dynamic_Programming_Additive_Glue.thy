@@ -4,7 +4,7 @@ section \<open>The additive glue and its clauses\<close>
 theory Dynamic_Programming_Additive_Glue
   imports Dynamic_Programming_Stopping_Clauses
     "Continuous_Time_Martingales.Integrability_Criteria"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 
 (*>*)

@@ -5,7 +5,7 @@ theory Exit_Class_Infinite
   imports Dynamic_Programming_Assembly "Continuous_Path_Spaces.Path_Space_Infinite"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Pasting
+    Path_Law_Sampling
 begin
 (*>*)
 
