@@ -5,6 +5,7 @@ theory Exit_Time_Semicontinuity
   imports Path_Tightness_Market Value_Function_Market
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)
@@ -657,19 +658,6 @@ proof -
     unfolding closedin_def using op unfolding compl by auto
 qed
 
-lemma ess_inf_time_distr:
-  assumes fm: "f \<in> M \<rightarrow>\<^sub>M N"
-    and meas: "\<And>c :: ennreal. {\<omega> \<in> space N. c \<le> ennreal (tau \<omega>)} \<in> sets N"
-  shows "ess_inf_time (distr M N f) tau = ess_inf_time M (\<lambda>\<omega>. tau (f \<omega>))"
-  unfolding ess_inf_time_def
-proof (rule arg_cong[where f = Sup])
-  show "{c. AE \<omega> in distr M N f. c \<le> ennreal (tau \<omega>)}
-      = {c. AE \<omega> in M. c \<le> ennreal (tau (f \<omega>))}"
-    using AE_distr_iff[OF fm meas] by blast
-qed
-
-text \<open>The exit time does not notice the restriction to \<open>{0..T}\<close> that \<open>path_law\<close>
-  performs, because it only ever inspects times in \<open>[0,T]\<close>.\<close>
 
 lemma etime_shift_of_restrict:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,real_normed_vector}" and y :: 'b

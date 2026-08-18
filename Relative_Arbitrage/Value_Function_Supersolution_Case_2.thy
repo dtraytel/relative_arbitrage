@@ -5,6 +5,7 @@ theory Value_Function_Supersolution_Case_2
   imports Value_Function_Supersolution_Case_1
     "Semicontinuous_Analysis.Semicontinuity"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

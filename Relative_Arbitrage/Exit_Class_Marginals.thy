@@ -4,6 +4,7 @@ section \<open>The \<open>X\<close>-marginals of the exit class\<close>
 theory Exit_Class_Marginals
   imports Exit_Class_Infinite "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
     "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 (*>*)
 
@@ -509,7 +510,7 @@ definition xclass ::
 definition xval ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> real^'n \<Rightarrow> ennreal"
   where
-  "xval k L K x = Sup ((\<lambda>Q. ess_inf_enn Q (iexit K)) ` xclass k L x)"
+  "xval k L K x = Sup ((\<lambda>Q. ess_inf Q (iexit K)) ` xclass k L x)"
 
 lemma xclass_prob: "Q \<in> xclass k L x \<Longrightarrow> prob_space Q"
   unfolding xclass_def by blast
@@ -1762,17 +1763,6 @@ next
     by (rule continuous_on_compose2[OF g c]) auto
 qed
 
-lemma ess_inf_enn_distr:
-  assumes f: "f \<in> M \<rightarrow>\<^sub>M N"
-    and meas: "\<And>c :: ennreal. {y \<in> space N. c \<le> g y} \<in> sets N"
-  shows "ess_inf_enn (distr M N f) g = ess_inf_enn M (\<lambda>\<omega>. g (f \<omega>))"
-proof -
-  have "{c. AE y in distr M N f. c \<le> g y} = {c. AE \<omega> in M. c \<le> g (f \<omega>)}"
-    using AE_distr_iff[OF f meas] by simp
-  then show ?thesis unfolding ess_inf_enn_def by simp
-qed
-
-text \<open>The two pushforward maps, as measurable maps in their own right.\<close>
 
 lemma iexit_class_fstify_measurable:
   fixes P :: "('n::finite pairpath) measure"
@@ -1828,42 +1818,42 @@ qed
 text \<open>The essential infimum of the exit time is the same on a pair law and on
   its \<open>X\<close>-marginal, and on a \<open>P\<^sub>x\<close>-law and on its lift.\<close>
 
-lemma ess_inf_enn_fstify:
+lemma ess_inf_fstify:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
   assumes P: "P \<in> iexit_class k L x" and K: "closed K"
-  shows "ess_inf_enn (ipath_law P (\<lambda>t \<omega>. fst (\<omega> t))) (iexit K)
-       = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+  shows "ess_inf (ipath_law P (\<lambda>t \<omega>. fst (\<omega> t))) (iexit K)
+       = ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
 proof -
   let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. restrict (\<lambda>t. fst (\<omega> t)) {0..}"
   have m: "\<And>c :: ennreal.
       {w \<in> space (ipath_space :: ((real \<Rightarrow> real^'n) measure)). c \<le> iexit K w}
         \<in> sets ipath_space"
     using iexit_measurable_ipath[OF K] by measurable
-  have "ess_inf_enn (distr P (ipath_space :: ((real \<Rightarrow> real^'n) measure)) ?\<phi>) (iexit K)
-      = ess_inf_enn P (\<lambda>\<omega>. iexit K (?\<phi> \<omega>))"
-    by (rule ess_inf_enn_distr[OF iexit_class_fstify_measurable[OF P] m])
-  also have "\<dots> = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
-    by (intro arg_cong[where f = "ess_inf_enn P"] ext iexit_cong_nonneg) simp
+  have "ess_inf (distr P (ipath_space :: ((real \<Rightarrow> real^'n) measure)) ?\<phi>) (iexit K)
+      = ess_inf P (\<lambda>\<omega>. iexit K (?\<phi> \<omega>))"
+    by (rule ess_inf_distr[OF iexit_class_fstify_measurable[OF P] m])
+  also have "\<dots> = ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+    by (intro arg_cong[where f = "ess_inf P"] ext iexit_cong_nonneg) simp
   finally show ?thesis unfolding ipath_law_def .
 qed
 
-lemma ess_inf_enn_liftify:
+lemma ess_inf_liftify:
   fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)" and K :: "(real^'n) set"
   assumes Q: "Q \<in> xclass k L x" and K: "closed K" and C: "0 \<le> C"
-  shows "ess_inf_enn (ipath_law Q (\<lambda>t w. (w t, qvmata C w t)))
+  shows "ess_inf (ipath_law Q (\<lambda>t w. (w t, qvmata C w t)))
            (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))
-       = ess_inf_enn Q (iexit K)"
+       = ess_inf Q (iexit K)"
 proof -
   let ?\<psi> = "\<lambda>w :: real \<Rightarrow> real^'n. restrict (\<lambda>t. (w t, qvmata C w t)) {0..}"
   have m: "\<And>c :: ennreal. {\<omega> \<in> space (ipath_space :: (('n pairpath) measure)).
       c \<le> iexit K (\<lambda>t. fst (\<omega> t))} \<in> sets ipath_space"
     using iexit_fst_measurable_ipath[OF K] by measurable
-  have "ess_inf_enn (distr Q (ipath_space :: (('n pairpath) measure)) ?\<psi>)
+  have "ess_inf (distr Q (ipath_space :: (('n pairpath) measure)) ?\<psi>)
         (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))
-      = ess_inf_enn Q (\<lambda>w. iexit K (\<lambda>t. fst (?\<psi> w t)))"
-    by (rule ess_inf_enn_distr[OF xclass_liftify_measurable[OF Q C] m])
-  also have "\<dots> = ess_inf_enn Q (iexit K)"
-    by (intro arg_cong[where f = "ess_inf_enn Q"] ext iexit_cong_nonneg) simp
+      = ess_inf Q (\<lambda>w. iexit K (\<lambda>t. fst (?\<psi> w t)))"
+    by (rule ess_inf_distr[OF xclass_liftify_measurable[OF Q C] m])
+  also have "\<dots> = ess_inf Q (iexit K)"
+    by (intro arg_cong[where f = "ess_inf Q"] ext iexit_cong_nonneg) simp
   finally show ?thesis unfolding ipath_law_def .
 qed
 
@@ -1875,14 +1865,14 @@ proof (rule antisym)
   show "iexit_val k L K x \<le> xval k L K x"
     unfolding iexit_val_def
   proof (rule Sup_least)
-    fix v assume "v \<in> (\<lambda>Q. ess_inf_enn Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t))))
+    fix v assume "v \<in> (\<lambda>Q. ess_inf Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t))))
         ` iexit_class k L x"
     then obtain P :: "('n pairpath) measure"
       where P: "P \<in> iexit_class k L x"
-        and v: "v = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))" by blast
+        and v: "v = ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))" by blast
     let ?Q = "ipath_law P (\<lambda>t \<omega>. fst (\<omega> t))"
     have Qx: "?Q \<in> xclass k L x" by (rule iexit_class_marginal_in_xclass[OF P L])
-    have "v = ess_inf_enn ?Q (iexit K)" using v ess_inf_enn_fstify[OF P K] by simp
+    have "v = ess_inf ?Q (iexit K)" using v ess_inf_fstify[OF P K] by simp
     also have "\<dots> \<le> xval k L K x"
       unfolding xval_def using Qx by (intro Sup_upper) blast
     finally show "v \<le> xval k L K x" .
@@ -1891,14 +1881,14 @@ next
   show "xval k L K x \<le> iexit_val k L K x"
     unfolding xval_def
   proof (rule Sup_least)
-    fix v assume "v \<in> (\<lambda>Q. ess_inf_enn Q (iexit K)) ` xclass k L x"
+    fix v assume "v \<in> (\<lambda>Q. ess_inf Q (iexit K)) ` xclass k L x"
     then obtain Q :: "((real \<Rightarrow> real^'n) measure)"
-      where Q: "Q \<in> xclass k L x" and v: "v = ess_inf_enn Q (iexit K)" by blast
+      where Q: "Q \<in> xclass k L x" and v: "v = ess_inf Q (iexit K)" by blast
     have L4: "0 \<le> 4 * L" using L by simp
     let ?P = "ipath_law Q (\<lambda>t w. (w t, qvmata (4 * L) w t))"
     have Pi: "?P \<in> iexit_class k L x" by (rule xclass_lift_in_iexit_class[OF Q L])
-    have "v = ess_inf_enn ?P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
-      using v ess_inf_enn_liftify[OF Q K L4] by simp
+    have "v = ess_inf ?P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+      using v ess_inf_liftify[OF Q K L4] by simp
     also have "\<dots> \<le> iexit_val k L K x"
       unfolding iexit_val_def using Pi by (intro Sup_upper) blast
     finally show "v \<le> iexit_val k L K x" .

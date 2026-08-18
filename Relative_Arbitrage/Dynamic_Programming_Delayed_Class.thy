@@ -5,6 +5,7 @@ theory Dynamic_Programming_Delayed_Class
   imports Dynamic_Programming_Additive_Glue
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

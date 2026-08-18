@@ -3,6 +3,7 @@ section \<open>Clause (2): the value function is a viscosity solution\<close>
 (*<*)
 theory Value_Function_Assembly
   imports Value_Function_Tangential_Field
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

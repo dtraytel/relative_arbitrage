@@ -3,6 +3,7 @@ section \<open>The class and the value function on the half-line\<close>
 (*<*)
 theory Exit_Class_Infinite
   imports Dynamic_Programming_Assembly "Continuous_Path_Spaces.Path_Space_Infinite"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 (*>*)
 
@@ -90,59 +91,11 @@ text \<open>Hence the elementary bound identifying \<open>iexit\<close> as the f
 
 subsection \<open>The essential infimum of an unbounded time\<close>
 
-definition ess_inf_enn :: "'a measure \<Rightarrow> ('a \<Rightarrow> ennreal) \<Rightarrow> ennreal" where
-  "ess_inf_enn M tau = Sup {c. AE \<omega> in M. c \<le> tau \<omega>}"
 
-lemma ess_inf_ennI:
-  assumes "AE \<omega> in M. c \<le> tau \<omega>"
-  shows "c \<le> ess_inf_enn M tau"
-  unfolding ess_inf_enn_def using assms by (intro Sup_upper) simp
 
-lemma ess_inf_enn_mono:
-  assumes "AE \<omega> in M. tau \<omega> \<le> tau' \<omega>"
-  shows "ess_inf_enn M tau \<le> ess_inf_enn M tau'"
-  unfolding ess_inf_enn_def
-proof (rule Sup_least)
-  fix c assume "c \<in> {c. AE \<omega> in M. c \<le> tau \<omega>}"
-  then have "AE \<omega> in M. c \<le> tau \<omega>" by simp
-  with assms have "AE \<omega> in M. c \<le> tau' \<omega>" by eventually_elim simp
-  then show "c \<le> \<Squnion> {c. AE \<omega> in M. c \<le> tau' \<omega>}"
-    by (intro Sup_upper) simp
-qed
 
-lemma ess_inf_enn_AE: "AE \<omega> in M. ess_inf_enn M tau \<le> tau \<omega>"
-proof -
-  define S where "S = {c. AE \<omega> in M. c \<le> tau \<omega>}"
-  have "0 \<in> S" unfolding S_def by simp
-  then have ne: "S \<noteq> {}" by blast
-  obtain f :: "nat \<Rightarrow> ennreal"
-    where f: "range f \<subseteq> S" and sup: "Sup S = Sup (range f)"
-    using ennreal_Sup_countable_SUP[OF ne] by blast
-  have fS: "AE \<omega> in M. f n \<le> tau \<omega>" for n
-    using f unfolding S_def by blast
-  have "AE \<omega> in M. \<forall>n. f n \<le> tau \<omega>"
-    using fS by (subst AE_all_countable) blast
-  then have "AE \<omega> in M. Sup (range f) \<le> tau \<omega>"
-    by eventually_elim (auto intro: Sup_least)
-  thus ?thesis unfolding ess_inf_enn_def S_def[symmetric] using sup by simp
-qed
 
-lemma ess_inf_enn_min_const:
-  "min (ess_inf_enn M tau) c \<le> ess_inf_enn M (\<lambda>\<omega>. min (tau \<omega>) c)"
-proof (rule ess_inf_ennI)
-  have "AE \<omega> in M. ess_inf_enn M tau \<le> tau \<omega>" by (rule ess_inf_enn_AE)
-  then show "AE \<omega> in M. min (ess_inf_enn M tau) c \<le> min (tau \<omega>) c"
-  proof eventually_elim
-    case (elim \<omega>)
-    then show ?case by (rule min.mono[OF _ order_refl])
-  qed
-qed
 
-lemma ess_inf_enn_ennreal:
-  "ess_inf_enn M (\<lambda>\<omega>. ennreal (tau \<omega>)) = ess_inf_time M tau"
-  unfolding ess_inf_enn_def ess_inf_time_def by simp
-
-subsection \<open>The class of Eq. (1.7)\<close>
 
 definition iexit_class ::
   "nat \<Rightarrow> real \<Rightarrow> real^'n::finite \<Rightarrow> (('n pairpath) measure) set"
@@ -162,7 +115,7 @@ definition iexit_val ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> real^'n \<Rightarrow> ennreal"
   where
   "iexit_val k L K x =
-     Sup ((\<lambda>Q. ess_inf_enn Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) ` iexit_class k L x)"
+     Sup ((\<lambda>Q. ess_inf Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) ` iexit_class k L x)"
 
 lemma iexit_class_prob:
   "P \<in> iexit_class k L x \<Longrightarrow> prob_space P"
@@ -367,7 +320,7 @@ theorem iexit_val_cap_le:
   assumes T: "0 \<le> T" and Kc: "closed K"
   shows "min (iexit_val k L K x) (ennreal T) \<le> exit_val k L T K x"
 proof -
-  have step: "min (ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
+  have step: "min (ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
       \<le> exit_val k L T K x"
     if P: "P \<in> iexit_class k L x" for P :: "('n pairpath) measure"
   proof -
@@ -389,16 +342,16 @@ proof -
     qed
     also have "\<dots> = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
       by (simp add: pexit_pcut)
-    also have "\<dots> = ess_inf_enn P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
-      by (rule ess_inf_enn_ennreal[symmetric])
-    also have "\<dots> = ess_inf_enn P
+    also have "\<dots> = ess_inf P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
+      by (rule ess_inf_ennreal[symmetric])
+    also have "\<dots> = ess_inf P
         (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
       by (simp add: iexit_cap[OF T])
     finally have eq: "ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = ess_inf_enn P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))" .
-    have "min (ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
-        \<le> ess_inf_enn P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
-      by (rule ess_inf_enn_min_const)
+        = ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))" .
+    have "min (ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
+        \<le> ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
+      by (rule ess_inf_min_const)
     also have "\<dots> = ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
       using eq by simp
     also have "\<dots> \<le> exit_val k L T K x"
@@ -415,11 +368,11 @@ proof -
     have "iexit_val k L K x \<le> exit_val k L T K x"
       unfolding iexit_val_def
     proof (rule Sup_least)
-      fix v assume "v \<in> (\<lambda>Q. ess_inf_enn Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t))))
+      fix v assume "v \<in> (\<lambda>Q. ess_inf Q (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t))))
           ` iexit_class k L x"
       then obtain P :: "('n pairpath) measure"
         where P: "P \<in> iexit_class k L x"
-          and v: "v = ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))" by blast
+          and v: "v = ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))" by blast
       have "min v (ennreal T) \<le> exit_val k L T K x" using step[OF P] v by simp
       then show "v \<le> exit_val k L T K x"
         using lt by (simp add: min_def split: if_splits)
@@ -468,10 +421,10 @@ proof (rule Sup_least)
   qed
   also have "\<dots> = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
     by (simp add: pexit_pcut)
-  also have "\<dots> = ess_inf_enn P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
-    by (rule ess_inf_enn_ennreal[symmetric])
-  also have "\<dots> \<le> ess_inf_enn P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
-    by (rule ess_inf_enn_mono) (simp add: pexit_le_iexit[OF T])
+  also have "\<dots> = ess_inf P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
+    by (rule ess_inf_ennreal[symmetric])
+  also have "\<dots> \<le> ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
+    by (rule ess_inf_mono) (simp add: pexit_le_iexit[OF T])
   also have "\<dots> \<le> iexit_val k L K x"
     unfolding iexit_val_def using P by (intro Sup_upper) blast
   finally show "w \<le> iexit_val k L K x" .

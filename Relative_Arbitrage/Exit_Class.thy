@@ -6,6 +6,7 @@ theory Exit_Class
     "Symmetric_Matrix_Spectra.Matrix_Algebra" "Symmetric_Matrix_Spectra.Outer_Products"
     "Continuous_Path_Spaces.Holder_Interpolation"
     "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

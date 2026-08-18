@@ -4,6 +4,7 @@ section \<open>The supersolution, case 1: a nonzero gradient\<close>
 theory Value_Function_Supersolution_Case_1
   imports Value_Function_Euler_Construction
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

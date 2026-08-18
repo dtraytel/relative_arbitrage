@@ -12,6 +12,7 @@ session Continuous_Time_Martingales = "HOL-Probability" +
     Martingales
   theories
     Power_Inequalities
+    Essential_Infimum
     Quadratic_Variation
     Time_Discretisation
     Doob_Inequality

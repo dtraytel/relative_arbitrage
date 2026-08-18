@@ -4,6 +4,7 @@ theory Exit_Semicontinuity
   imports "Continuous_Path_Spaces.Path_Space" "Continuous_Time_Martingales.Stopping_Times"
     Value_Function_Market
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

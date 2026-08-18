@@ -5,6 +5,7 @@ theory Exit_Class_Shift
   imports Exit_Class_Tightness
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

@@ -5,6 +5,7 @@ theory Dynamic_Programming_Conditioning
   imports Dynamic_Programming_Pasting
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

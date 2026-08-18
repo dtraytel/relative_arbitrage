@@ -7,6 +7,7 @@ theory Value_Function_Subsolution
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Symmetric_Matrix_Spectra.Ky_Fan"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

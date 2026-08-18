@@ -6,6 +6,7 @@ theory Exit_Class_Witness
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)

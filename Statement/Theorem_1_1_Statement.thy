@@ -72,7 +72,7 @@ text \<open>The exit time from \<open>K\<close> before \<open>T\<close>, its inc
   essential infimum of a time under a law, and the value function of Eq. (1.6)
   as the supremum of those over the class.\<close>
 
-text \<open>@{thm [display] etime_def pexit_def iexit_def ess_inf_enn_def xval_def}\<close>
+text \<open>@{thm [display] etime_def pexit_def iexit_def ess_inf_def xval_def}\<close>
 
 section \<open>Viscosity solutions in the sense of Definition 3.1\<close>
 

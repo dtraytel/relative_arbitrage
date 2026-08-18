@@ -5,6 +5,7 @@ theory Exit_Class_Pasting
   imports Exit_Class_Witness
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Essential_Infimum"
 begin
 
 (*>*)
