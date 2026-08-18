@@ -1,5 +1,14 @@
 # Theorems reported unused by `unused_thms`
 
+> **Stale as of the second restructuring (2026-08-18).**  The theory names
+> below -- `Exit_Class_DPP`, `Value_Function_Viscosity`,
+> `Deterministic_Radius_Market`, `Exit_Class_Compactness`, `Eigenvalues`, and
+> a `Relative_Arbitrage` `Poincare_Separation` -- have not existed since the
+> first restructuring, and two further rounds of moves have happened since.
+> The **method** below is still correct and is still how to do it; the
+> **data** is not.  `python3 notes/restructuring_2/probes.py probe5` gives the
+> textual half of the analysis against the current tree.
+
 From Isabelle's own proof-term analysis, run from a theory importing
 `Statement/Theorem_1_1_Statement.thy`:
 

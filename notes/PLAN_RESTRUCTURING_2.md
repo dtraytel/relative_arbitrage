@@ -1059,3 +1059,131 @@ does not contain (`Curvature_Operator`), one argument is spread over three files
 (the ball solution), and one 42-character term is written out 330 times. The
 layout of §3 fixes all of it, and phases 1-6 deliver most of the benefit for
 about a third of the work.
+
+---
+
+## 10. Completion note
+
+Phases 1--13 were executed in order, each ending with a green
+`isabelle build -d . <sessions>` and one commit.  There is no `sorry`, and
+`Relative_Arbitrage_Statement` -- the acceptance test -- builds unchanged
+throughout.
+
+### The measurements of §7.2, re-run
+
+| metric | before | after | target |
+|---|---:|---:|---|
+| statements in `Relative_Arbitrage` whose statement names a constant of this paper | 767 | 709 | invariant |
+| statements in `Relative_Arbitrage` that do **not** | 571 | 425 | < 120 |
+| ...of which sit inside the new path-toolkit layer | 0 | 349 | — |
+| ...outside it | 571 | 76 | < 120 |
+| lines in `Relative_Arbitrage` | 72 592 | 64 445 | ≈ 47 000 |
+| largest theory | 7 731 | 4 023 | < 3 500 |
+| real duplicate statement groups (`probe4`) | 7 | 0 | 0 |
+| `sorry` | 0 | 0 | 0 |
+
+Sessions gained: `Second_Order_Viscosity_Analysis` 12 225 → 15 809,
+`Continuous_Path_Spaces` 11 355 → 13 506, `Wiener_Measure` 1 617 → 3 801,
+`Continuous_Time_Martingales` 8 741 → 9 280, `Symmetric_Matrix_Spectra`
+7 467 → 7 601.  111 theories in place of 104.
+
+The line target for `Relative_Arbitrage` was not met and could not be: it
+assumed the path toolkit would leave the session, and phase 8's gate says it
+should not, yet.  The number that matters is the fourth row: **76 statements
+outside the path layer still say nothing about the paper**, down from 571.
+
+### What each phase did
+
+1. Eight duplicated lemmas deleted, two of them re-proofs of HOL-Analysis
+   (`trace_mul_sym`, `transpose_scalar`).
+2. `path_borel` for the 332 spellings of the path Borel algebra; the
+   essential infimum given one definition in `Continuous_Time_Martingales`;
+   `Power_Inequalities` for 22 elementary real inequalities; the two one-line
+   re-exports in `Ito_Market` deleted.
+3. 71 statements (2 428 lines) of soft penalty, sup-convolution, doubling and
+   psd facts into `Second_Order_Viscosity_Analysis` and
+   `Symmetric_Matrix_Spectra`; `Comparison_Principle` split into four.
+4. `Wiener_Measure` re-based over `Continuous_Time_Martingales` and given the
+   n-dimensional Brownian motion (49 statements, 2 050 lines).
+5. `Path_Exit_Times` in `Continuous_Path_Spaces`: `Exit_Semicontinuity` whole,
+   plus 38 further statements.
+6. The path toolkit carved out of the class layer: 414 statements, 16 546
+   lines, four theories naming no constant of the paper.
+7. Ten path operations widened from `'n pairpath` to `real ⇒ 'b`.
+9. The test-function class moved into `Second_Order_Viscosity_Analysis`
+   (1 240 lines), and the viscosity notions stated there for an arbitrary
+   operator, with five bridge equations in the paper session.
+12. `Pair_Path_Space` and `Path_Law_Pasting` split at their section
+    boundaries.
+13. Section headers, `ROOT` descriptions, `dispositions.tsv` and this note.
+
+### Predictions that were wrong
+
+* **`outerp` cannot be an abbreviation** (§6.1 item 11).  It typechecks and
+  then breaks four proofs in `Value_Function_Subsolution` and one in
+  `Value_Function_Supersolution_Case_1`: an abbreviation is unfolded in every
+  simp set that mentions it, and the searches diverge -- reported as
+  `Interrupt_Breakdown`, the ML heap giving out, not as a failed step.  The
+  duplication is removed instead by `outerp_eq_outer_prod`.  The same
+  reasoning then applied to the viscosity predicates in phase 9, which is why
+  those got bridge equations rather than abbreviations.
+* **Phase 8's gate fails, and the session is not created.**  Of the 317
+  statements the plan wanted pair-free, 11 are.  `path_stopping_time` is the
+  obstruction G5 half-anticipated: its continuity clause asks for continuity
+  of the *first component* of the path, which is deliberate and is not
+  expressible at a general codomain without deciding what a first component
+  is.  Everything whose statement mentions it stays at the pair type.  The
+  four theories therefore remain inside `Relative_Arbitrage`, as its lowest
+  layer, which is where phase 6 put them.
+* **`ito_market_core` is not worth its price** (§6.1 item 9).  The two
+  locales share ten assumptions, but the entire yield of a shared ancestor is
+  two one-line wrappers, against rewriting three locale-instantiation proofs,
+  two of them fifty-line enumerations.  The wrappers were deleted instead.
+* **`Moment_Bounds` does not disappear** (§3.5).  What is left of it after
+  the inequality leaves is Eq. (2.7) of the paper: a named result, not a
+  fragment.
+
+### The mechanical lesson of the moves
+
+Moving a proof is easy; moving its prose is not.  A `text` block carries
+`@{theory ...}`, `@{const ...}` and `@{thm [source] ...}` antiquotations, and
+at the destination some name a theory that is no longer an ancestor, some
+name a fact declared *later in the same file*, and some are split across a
+line break so a line-based rewriter cannot see them.  All three failed a
+build in turn.  About 160 antiquotations are now plain prose.  Two further
+traps cost a build each: a block of moved lemmas must be topologically
+sorted against its new neighbours, and the sort must not sweep up the
+closing `end`.
+
+### The two gated items, measured and not started
+
+* **G10 (standing hypotheses as a locale).**  The pilot theory
+  `Operator_Formula` has 44 statements, of which 11 carry two or more of
+  `1 ≤ k`, `k < CARD('n)`, `1 ≤ L`, and 21 carry exactly one.  A locale would
+  delete about thirty hypothesis lines in the pilot, against fixing `'n` for
+  the whole layer and re-checking what `Statement` displays.  The ratio does
+  not justify starting; the count is the record.
+* **G11 (the class over an abstract constraint set).**  `Exit_Class` unfolds
+  `sconstraint_def` six times, and five of those are inside the proofs of
+  `sconstraint_convex`, `closed_sconstraint`, `sconstraint_norm_le`,
+  `bounded_sconstraint` and `sconstraint_diag` -- exactly the facts that would
+  become the locale's assumptions, so they leave the abstract layer rather
+  than blocking it.  That is more encouraging than §2.5 predicted.  The 16
+  remaining unfoldings are downstream, in `Exit_Class_Pasting`,
+  `Dynamic_Programming_*` and `Value_Function_*`.  Not started; the
+  measurement says the item deserves a serious attempt.
+
+### What is left
+
+* The 76 statements outside the path layer that still name no paper
+  constant, mostly in `Operator_Formula`, `Operator_Envelopes` and
+  `Exit_Time_Semicontinuity`.  Each needs a judgement rather than a rule.
+* The measure-theoretic half of G1: `path_borel`, `path_metric` and the
+  measurability statements at `'b::{polish_space,real_normed_vector}`.  Nine
+  were tried and reverted in phase 7 because their proofs use metric lemmas
+  that have not been widened; the order to do it in is bottom-up.
+* A fresh `unused_thms` pass (§6.3).  `probe5` gives the textual half; the
+  proof-term half needs the ML run described in `notes/UNUSED_THMS.md`.
+* The `find_theorems` sweep of §6.2, beyond the four library duplicates that
+  turned up by accident (`trace_mul_sym`, `transpose_scalar`, `trace_I`, and
+  `content_cbox_translate` inside the session).
