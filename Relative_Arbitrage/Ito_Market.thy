@@ -41,7 +41,7 @@ definition ito_Z ::
 text \<open>The starting value of \<open>ito_Z\<close> is forced by \<open>X\<close>'s own starting value
   alone, independently of which of the three market locales below supplies
   the martingale property of \<open>ito_Z\<close>: this is the one fact literally
-  re-proved in both \<open>ito_volatile_market\<close> and \<open>ito_const_horizon_market\<close>,
+  used in both \<open>ito_volatile_market\<close> and \<open>ito_const_horizon_market\<close>,
   so it is proved once here instead.\<close>
 
 lemma ito_Z_zero_expectation:
@@ -271,17 +271,10 @@ proof -
 qed
 
 text \<open>Consequently every theorem of the probabilistic part is available in
-  the process form of the martingale problem; for instance the exit-time
-  bound of Lemma 2.1.\<close>
+  the process form of the martingale problem -- for instance the exit-time
+  bound of Lemma 2.1, which is \<open>SV.expected_stopped_time_bound\<close> and needs
+  no restatement here.\<close>
 
-theorem (in ito_volatile_market) ito_expected_stopped_time_bound:
-  assumes Kball: "K \<subseteq> cball 0 r" and t: "0 \<le> t"
-  shows "real (CARD('n) - k) * (\<integral>\<omega>. min t (tau \<omega>) \<partial>M) \<le> r\<^sup>2 - x0 \<bullet> x0"
-  using assms by (rule SV.expected_stopped_time_bound)
-
-section \<open>Removing the domination assumption for stopped markets\<close>
-
-text \<open>\<open>diag_eq_inner_axis\<close>, \<open>trace_nonneg_psd\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 lemma trace_le_eigen_ub:
@@ -640,8 +633,6 @@ proof -
   with e0 ev show ?thesis by simp
 qed
 
-lemma Z_zero_expectation_const: "(\<integral>\<omega>. ito_Z X acov 0 \<omega> \<partial>M) = x0 \<bullet> x0"
-  by (rule ito_Z_zero_expectation[OF prob_space_M Z_martingale X_start])
 
 theorem const_dynkin_quadratic:
   assumes t: "0 \<le> t"
@@ -660,7 +651,8 @@ proof -
     by (intro Bochner_Integration.integral_diff stopped_sq_integrable[OF t]
         compensator_integrable[OF t])
   moreover have "(\<integral>\<omega>. ito_Z X acov (min t c) \<omega> \<partial>M) = x0 \<bullet> x0"
-    using Z_expectation_const[OF tc] Z_zero_expectation_const by simp
+    using Z_expectation_const[OF tc]
+      ito_Z_zero_expectation[OF prob_space_M Z_martingale X_start] by simp
   ultimately show ?thesis by simp
 qed
 
