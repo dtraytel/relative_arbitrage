@@ -19,34 +19,20 @@
 \maketitle
 
 \begin{abstract}
-  The spectral theory of real symmetric matrices that \texttt{HOL-Analysis}
-  stops short of, for anyone who constrains a matrix through its spectrum
-  rather than through its entries.  The Archive has no diagonalisation of a
-  real symmetric matrix; \texttt{Jordan\_Normal\_Form} and
-  \texttt{Hilbert\_Space\_Tensor\_Product} address different settings.
-
-  A calculus of trace, transpose and the two matrix products comes first,
-  together with outer products, orthonormal families and their completeness
-  relation, and the Householder reflections and the two-reflection rotation
-  used to transport a frame.  The spectral theorem itself is proved by the
-  variational argument: a maximiser of the Rayleigh quotient on an invariant
-  subspace is an eigenvector, and induction on dimension peels off an
-  orthonormal eigenbasis.
-
-  On top of it, Ky Fan's theorem is developed in the form needed to constrain
-  a matrix by its ordered eigenvalues without ever naming them individually:
-  the sum of the $m$ largest eigenvalues is characterised as a supremum of
-  traces against orthogonal projections, the individual ordered eigenvalues
-  are recovered as differences of consecutive such sums, and both are shown
-  Lipschitz in the matrix.  The Poincar\'e separation inequality compares the
-  spectrum of a matrix with that of its compression to a subspace, via
-  Courant--Fischer.
-
-  Nothing in the entry refers to any particular equation.  It was extracted
-  from a formalisation of the uniqueness half of a relative-arbitrage
-  problem~\cite{LaiShkolnikovSoner}, where a lower bound on a sum of ordered
-  eigenvalues is one of the two spectral constraints defining the problem's
-  elliptic operator.
+  Many optimisation and control problems constrain a real symmetric matrix
+  through its spectrum --- through a bound on a sum of its largest
+  eigenvalues, say --- rather than through its entries.  HOL-Analysis
+  diagonalises no symmetric matrix, and the existing matrix entries of the
+  Archive treat other settings, so such a constraint cannot even be stated.
+  We formalize the spectral theorem for real symmetric matrices by the
+  variational argument, together with the supporting calculus of trace,
+  transpose, outer products, orthonormal families and Householder rotations,
+  and develop Ky Fan's theorem: the sum of the $m$ largest eigenvalues as a
+  supremum of traces against orthogonal projections, the ordered eigenvalues
+  as differences of consecutive such sums, their Lipschitz dependence on the
+  matrix, and the Poincar\'e separation inequality via Courant--Fischer.
+  Characterising the eigenvalues in this way keeps them basis-free and avoids
+  any well-definedness argument about sorting a multiset.
 \end{abstract}
 
 \tableofcontents

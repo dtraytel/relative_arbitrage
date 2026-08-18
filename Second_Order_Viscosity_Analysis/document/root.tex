@@ -19,49 +19,23 @@
 \maketitle
 
 \begin{abstract}
-  The complete second-order machinery a comparison proof between viscosity
-  solutions of a fully nonlinear degenerate elliptic equation runs on.
-  Neither Rademacher's nor Alexandrov's theorem was previously in the
-  Archive.
-
-  The sup-convolution
-  $u^{\varepsilon}(x) = \sup_{y}\,(u(y) - |x-y|^{2}/2\varepsilon)$ and its
-  convex counterpart, the Moreau envelope, are defined and their calculus
-  established: semiconvexity, the proximal map, and the transfer of
-  second-order jets between a function and its envelope.  Subgradients of a
-  finite convex function are shown nonempty by a supporting hyperplane to the
-  epigraph, and the proximal map firmly nonexpansive.
-
-  On that basis three classical theorems are proved.  \emph{Rademacher's
-  theorem}: a locally Lipschitz function on a Euclidean space is
-  differentiable almost everywhere, in a scalar and a vector-valued form.
-  \emph{Alexandrov's theorem}: a convex function is twice differentiable
-  almost everywhere, by Minty's device --- apply Rademacher to the resolvent
-  of the subdifferential and transport the expansion from the Moreau envelope
-  back.  \emph{Jensen's lemma} for semiconvex functions, and the
-  \emph{Crandall--Ishii theorem on sums}: at a local maximum of $u(x)+w(y)$
-  on a product, second-order jets exist whose Hessians satisfy the block
-  matrix inequality.
-
-  The last two theories are the apparatus those results exist to serve.
-  \emph{Doubling of variables} maximises $u(x) - w(y) - P(x-y)$ over a pair
-  of variables and reads the result back on the diagonal: existence and
-  location of the maximising pair, the penalty and gradient estimates, the
-  jets of the doubled functional and their slices in each variable, Jensen's
-  tilt and its removal, the block structure of the Hessians, and the
-  sequence lemmas for passing to a limit --- at
-  \texttt{'a::euclidean\_space} except where a statement produces a matrix.
-  \emph{Soft penalties} are the alternative to the quadratic $P$ when the
-  operator is degenerate: coercive, so the doubled maximum is attained, with
-  a gradient that vanishes nowhere off the diagonal and a $2$-jet that
-  vanishes on it.
-
-  Following Evans and Gariepy~\cite{EvansGariepy} for the differentiability
-  theorems and the User's Guide of Crandall, Ishii and
-  Lions~\cite{CrandallIshiiLions} for Jensen's lemma, the theorem on sums and
-  the doubling method.  Extracted from a formalisation of the uniqueness half
-  of a relative-arbitrage problem~\cite{LaiShkolnikovSoner}; nothing in the
-  entry refers to that equation.
+  Comparison between a viscosity subsolution and a supersolution of a fully
+  nonlinear degenerate elliptic equation rests on second-order
+  differentiability of functions that are merely semiconvex.  Neither
+  Rademacher's theorem nor Alexandrov's theorem had been formalized in
+  Isabelle, placing any such comparison principle out of reach.  We formalize
+  both, together with Jensen's lemma for semiconvex functions and the
+  Crandall--Ishii theorem on sums, over a base of subgradients, the proximal
+  map, the Moreau envelope and the sup-convolution, and add the
+  doubling-of-variables apparatus these results exist to serve, along with
+  coercive penalties whose second-order jet vanishes on the diagonal.
+  Alexandrov's theorem is obtained by Minty's device, applying Rademacher to
+  the resolvent of the subdifferential and transporting the expansion back
+  from the Moreau envelope; the doubling toolbox is stated over an arbitrary
+  Euclidean space, matrices appearing only where a statement produces one.
+  We follow Evans and Gariepy~\cite{EvansGariepy} for the differentiability
+  theorems and Crandall, Ishii and Lions~\cite{CrandallIshiiLions} for the
+  rest.
 \end{abstract}
 
 \tableofcontents

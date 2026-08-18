@@ -19,42 +19,21 @@
 \maketitle
 
 \begin{abstract}
-  Weak convergence of laws of continuous processes needs a Polish state
-  space and a tightness criterion.  This entry supplies both, and a pathwise
-  construction of quadratic variation.
-
-  The space $C([0,T],\,'b)$ of continuous paths with the supremum metric is
-  built as a metric space in the set-based form of the Archive's
-  \texttt{Standard\_Borel\_Spaces} entry, and shown separable and complete.
-  H\"older balls in it are compact --- Arzel\`a--Ascoli in the form needed
-  later.  The path map of a stochastic process is measurable into it, so a
-  process has a law on path space, and these laws are consistent across
-  horizons.  The continuous mapping theorem and two portmanteau facts are
-  proved for weak convergence of such laws, on top of the weak convergence of
-  the \texttt{Levy\_Prokhorov\_Metric} entry.
-
-  The tightness criterion is a moment estimate.  For a martingale whose
-  compensator grows at a controlled rate, second and fourth moments of the
-  increments are bounded on a partition; a dyadic chaining argument turns the
-  fourth-moment bound into a tail bound for the modulus of continuity, and
-  H\"older interpolation converts that into a bound on a H\"older seminorm.
-  Since H\"older balls are compact, the family of laws is tight, hence
-  relatively compact by Prokhorov's theorem from that same entry.  The
-  fourth-moment estimate avoids the Burkholder--Davis--Gundy inequality,
-  iterating Cauchy--Schwarz and the tower property instead; the resulting
-  constant is smaller than the usual route gives~\cite{LaiShkolnikovSoner}.
-
-  Quadratic variation is then built as a \emph{path functional} rather than
-  by Doob--Meyer: the pathwise limit of dyadic sums, with an $L^{2}$ rate
-  that is summable, so the full dyadic sequence converges almost surely and
-  no subsequence is needed.  It is regularised to a version that is adapted
-  and continuous for \emph{every} path, which is what makes the lift
-  $w \mapsto (w, \langle w\rangle)$ land in a space of continuous paths
-  without breaking the filtration.  Localisation at a stopping time, needed
-  because members of a class of laws need not be bounded, is proved
-  unconditionally for $L^{2}$ martingales with continuous paths.
-  Billingsley~\cite{Billingsley} is the textbook reference for the tightness
-  argument.
+  Weak convergence of the laws of continuous stochastic processes takes place
+  on a space of continuous paths, and identifying a limit requires a
+  criterion for tightness.  The Archive entry
+  \texttt{Levy\_Prokhorov\_Metric} supplies weak convergence and Prokhorov's
+  theorem over an abstract Polish space, but neither that path space nor a
+  criterion applicable to path laws.  We build $C([0,T],\,'b)$ under the
+  supremum metric as a Polish space in which H\"older balls are compact,
+  derive tightness of a family of path laws from second and fourth moment
+  bounds on the increments by dyadic chaining and H\"older interpolation, and
+  construct quadratic variation as a pathwise Borel functional.  The
+  fourth-moment estimate is obtained by iterating Cauchy--Schwarz and the
+  tower property rather than from the Burkholder--Davis--Gundy inequality,
+  and the quadratic variation is regularised to a version that is adapted and
+  continuous along every path, its $L^{2}$ rate being summable enough to
+  converge without extracting a subsequence.
 \end{abstract}
 
 \tableofcontents

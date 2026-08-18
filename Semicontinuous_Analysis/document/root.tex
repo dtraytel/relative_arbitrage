@@ -19,42 +19,22 @@
 \maketitle
 
 \begin{abstract}
-  Upper and lower semicontinuity as optimal control and viscosity-solution
-  arguments use them, for real-valued functions on a metric space.
-
-  The $\varepsilon$-$\delta$ predicates come with their elementary calculus
-  --- closure under addition, positive scaling and subtracting a continuous
-  function --- and with the two facts such arguments actually consume:
-  attainment of the supremum or infimum on a nonempty compact set, and
-  bounded extension of an upper semicontinuous function off a closed set.
-  The semicontinuous envelopes are taken both over the whole space and
-  \emph{relative to a closed set}~$K$, the latter with a projection-based
-  extension to the ambient space; the relative form is what a boundary
-  condition stated in the viscosity sense actually reads.  Berge's maximum
-  theorem is proved in the form that needs no measurable selection: a
-  supremum of a jointly upper semicontinuous function over a compact index
-  set is upper semicontinuous.  Finally, a measurable selection theorem for
-  upper semicontinuous payoffs on compact sets, Bertsekas--Shreve
-  Proposition~7.33~\cite{BertsekasShreve}, proved by a greedy nested
-  bisection along a countable dense sequence; a countably valued
-  $\varepsilon$-selector cannot exist, so some such construction is forced.
-
-  The envelope defined here is the lower semicontinuous hull, which the
-  Archive entry \texttt{Lower\_Semicontinuous} already provides over
-  $\overline{\mathbb{R}}$ as \texttt{lsc\_hull}.  Rather than repeat it,
-  this entry proves the two agree --- the hull's \emph{liminf} form is
-  exactly the supremum of infima over balls used here --- and inherits the
-  four properties that follow: the envelope lies below the function, above
-  any lower bound, is monotone, and is itself lower semicontinuous.  The
-  boundedness hypotheses carried throughout are what keep the values finite,
-  which is the price of working in $\mathbb{R}$ rather than
-  $\overline{\mathbb{R}}$; that entry's own subject, convex functions and
-  their epigraphs, is disjoint from this one's.
-
-  Extracted from a formalisation of the uniqueness half of a
-  relative-arbitrage problem~\cite{LaiShkolnikovSoner}, whose value function
-  is characterised as the unique bounded upper semicontinuous viscosity
-  solution of a degenerate elliptic equation.
+  Arguments in optimal control and in the theory of viscosity solutions work
+  with functions that are only upper or lower semicontinuous, and repeatedly
+  need their extrema on compacta, their semicontinuous envelopes, and a
+  measurable choice of optimiser.  HOL-Analysis provides none of this, and
+  the Archive entry \texttt{Lower\_Semicontinuous} treats the extended-real
+  hull of a convex function.  We formalize the $\varepsilon$-$\delta$
+  calculus of semicontinuity for real-valued functions on a metric space,
+  attainment of extrema on nonempty compacta, bounded extension off a closed
+  set, the envelopes taken over the whole space and relative to a closed set,
+  Berge's maximum theorem, and measurable selection of an upper
+  semicontinuous payoff following Bertsekas and
+  Shreve~\cite{BertsekasShreve}.  The envelope is shown to be the hull of
+  \texttt{Lower\_Semicontinuous} transported to the reals, so its basic
+  theory is inherited rather than repeated, and the selection theorem is
+  proved by greedy nested bisection, no countably valued
+  $\varepsilon$-selector being available.
 \end{abstract}
 
 \tableofcontents

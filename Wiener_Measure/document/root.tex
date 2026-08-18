@@ -19,27 +19,19 @@
 \maketitle
 
 \begin{abstract}
-  Brownian motion constructed in Isabelle/HOL as a measure on the space of
-  real-valued functions of time, together with a continuous modification.
-  The Archive's \texttt{Kolmogorov\_Chentsov} entry supplies the continuity
-  criterion but no construction; this entry supplies the construction.
-
-  The classical route is followed.  The Gaussian increment measure of a given
-  variance is defined, degenerating to a point mass at variance zero, and its
-  moments and convolution law are established, the latter both as a
-  pushforward and in iterated-integral form.  Finite-dimensional
-  distributions are then pushforwards of finite products of independent
-  increment measures under cumulative-sum maps, and projectivity of that
-  family reduces to merging two adjacent increments, that is, to the
-  convolution law.  Wiener measure is the projective limit, obtained from the
-  Daniell--Kolmogorov theorem already in \texttt{HOL-Probability}.  Its
-  increments are shown independent and Gaussian, and the fourth moment
-  $\mathbb{E}\,|B_t - B_s|^{4} = 3\,(t-s)^{2}$ is computed.
-
-  That moment bound discharges the hypothesis of the Kolmogorov--Chentsov
-  theorem, which yields a modification of the coordinate process with
-  continuous paths: Brownian motion in the usual sense.  See Karatzas and
-  Shreve~\cite{KaratzasShreve} for the textbook account.
+  Brownian motion is the basic object of continuous-time stochastic analysis.
+  Isabelle had no construction of it: the Archive entry
+  \texttt{Kolmogorov\_Chentsov} supplies a criterion for the existence of a
+  continuous modification, but no measure to apply it to.  We construct
+  Wiener measure as the projective limit of finite-dimensional distributions
+  assembled from Gaussian increments, prove the increments independent and
+  Gaussian, compute the fourth moment
+  $\mathbb{E}\,|B_t - B_s|^{4} = 3\,(t-s)^{2}$, and obtain from it a
+  modification with continuous paths.  Projectivity is reduced to the
+  convolution law for Gaussian densities by merging two adjacent increments,
+  which brings the construction within reach of the Daniell--Kolmogorov
+  theorem already available in \texttt{HOL-Probability}.  We follow the
+  account of Karatzas and Shreve~\cite{KaratzasShreve}.
 \end{abstract}
 
 \tableofcontents

@@ -19,42 +19,20 @@
 \maketitle
 
 \begin{abstract}
-  What continuous-time martingale theory needs beyond the Archive's
-  \texttt{Martingales} entry, on which this one builds.  The Archive's
-  \texttt{Doob\_Convergence} proves the upcrossing inequality and the
-  convergence theorem; the maximal inequality proved here is a different
-  result, and optional sampling, quadratic variation and Vitali's theorem
-  have no counterpart in either.
-
-  Doob's maximal inequality is proved for discrete-time martingales, and with
-  it a running-maximum bound usable as a dominating function.  Optional
-  sampling is proved first for integrable discrete-time martingales, then for
-  a continuous-time martingale sampled on a grid, then at a simple stopping
-  time, and finally at an arbitrary bounded stopping time, by approximating
-  the stopping time from above by its dyadic ceilings; the localised form,
-  over an event of the past, comes along the way.  Optional stopping follows:
-  the stopped process is again a martingale.  Exit times of closed sets by
-  continuous adapted processes are shown to be stopping times.
-
-  Quadratic variation of a square-integrable martingale is defined with its
-  compensator, and the sampled process on a partition shown to be a
-  square-integrable discrete-time martingale whose compensator is the sampled
-  one --- which is what reduces a continuous-time statement to a discrete
-  one.  Uniform integrability and Vitali's convergence theorem follow,
-  with the practical criterion that a uniform higher-moment bound suffices,
-  and the uniform integrability of a family of conditional expectations.
-
-  A second half is algebraic.  The martingale property is closed under sums,
-  differences, constant shifts, congruence up to almost-sure or eventual
-  equality, time changes, coarser filtrations, and images under a bounded
-  linear map, hence componentwise for vector- and matrix-valued processes;
-  and it transports along image measures, products of two filtered measures,
-  infinite products, restriction to a full-measure event, conditioning on an
-  event of the past, and modification.  The natural filtration of a process,
-  the semidirect product of a measure with a kernel, and a battery of
-  integrability criteria complete the toolbox.  Karatzas and
-  Shreve~\cite{KaratzasShreve} and Williams~\cite{Williams} are the textbook
-  references.
+  Arguments about continuous-time martingales sample a process at a stopping
+  time, control it through its quadratic variation, and carry the martingale
+  property along maps between measures.  The Archive entry
+  \texttt{Martingales} supplies the definitions and conditional expectation,
+  and \texttt{Doob\_Convergence} the upcrossing and convergence theorems, but
+  none of these three.  We formalize Doob's maximal inequality, optional
+  sampling and optional stopping at a bounded stopping time, quadratic
+  variation together with its compensator, uniform integrability and Vitali's
+  convergence theorem, exit times of closed sets as stopping times, and a
+  calculus for transporting the martingale property.  Sampling at a bounded
+  stopping time is reduced to the discrete case by approximation through
+  dyadic ceilings, and the transfer calculus covers image measures, products
+  and infinite products, restriction to a full-measure event, conditioning on
+  an event of the past, and modification.
 \end{abstract}
 
 \tableofcontents
