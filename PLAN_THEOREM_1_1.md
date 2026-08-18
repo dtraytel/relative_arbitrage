@@ -11,8 +11,8 @@ therefore empty, and everything it used to queue has been moved into §1 as
 §1.12–§1.14.
 
 §1 is an INDEX of closed work — do not re-derive any of it, and do not expand
-it; construction narratives, dead ends and session logs live in
-`PLAN_HISTORY.md` and in `git log -p`. §2 is empty.
+it; construction narratives, dead ends and session logs are in the history
+(`git show 42bf1b0:PLAN_HISTORY.md`) and in `git log -p`. §2 is empty.
 
 **Sources.** The paper (Lai/Shkolnikov/Soner, arXiv:2512.17702); its Section-2
 reference Larsson–Ruf, *Minimum curvature flow and martingale exit times*,
@@ -203,9 +203,9 @@ no SDE theory (Gaussian conditional trig expectations only), and
 ### 1.6 Pasting, the measurable selector, and kernel pasting — ALL CLOSED
 
 The three layers Prop. 2.4's `≥` half is built from. **Construction
-narratives archived** to `PLAN_HISTORY.md` ("Archived 2026-08-07 (late):
-old §1.6–§1.8); what follows is the index plus the results that are
-warnings.
+narratives archived** to the history, `git show 42bf1b0:PLAN_HISTORY.md`
+("Archived 2026-08-07 (late): old §1.6–§1.8"); what follows is the index plus
+the results that are warnings.
 
 **(a) Shortening the horizon.** `paper_pair_class_pcut` (over `pcut`,
 `pcut_measurable`, `pcut_adapted`, `paper_pair_class_diffquot_of_pairs`).
@@ -315,8 +315,9 @@ citing Stroock–Varadhan Thm 1.3.4.
 | (b4) | `paper_v_cond` — the conditioning statement, hence `paper_v_dpp` |
 
 **Three things worth keeping.** Everything else — the route (a) analysis, the
-AFP `Disintegration` API map, the blow-by-blow of (b0)–(b4) — is in
-`PLAN_HISTORY.md` under "Archived 2026-08-07 (late)".
+AFP `Disintegration` API map, the blow-by-blow of (b0)–(b4) — is in the
+history, `git show 42bf1b0:PLAN_HISTORY.md`, under "Archived 2026-08-07
+(late)".
 
 1. **Route (a), conditioning on a positive-measure event, is a DEAD END, and
    route (b) is why that no longer matters.** Route (a) pins `X_r` only to a
