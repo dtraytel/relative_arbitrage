@@ -455,6 +455,217 @@ proof -
     unfolding matrix_eq by blast
 qed
 
+
+subsection \<open>Positive semidefiniteness under limits, shifts and two-sided bounds\<close>
+
+theorem psd_of_abstract_le:
+  fixes X Y :: "(real^'n::finite) \<Rightarrow> (real^'n)"
+  assumes lX: "linear X" and lY: "linear Y"
+    and symX: "\<And>v w. v \<bullet> X w = w \<bullet> X v"
+    and symY: "\<And>v w. v \<bullet> Y w = w \<bullet> Y v"
+    and le: "\<And>v. v \<bullet> X v \<le> v \<bullet> Y v"
+  shows "psd (matrix Y - matrix X)"
+  unfolding psd_def
+proof (intro conjI allI)
+  have sX: "transpose (matrix X) = matrix X"
+    by (rule matrix_of_symmetric[OF lX symX])
+  have sY: "transpose (matrix Y) = matrix Y"
+    by (rule matrix_of_symmetric[OF lY symY])
+  have td: "transpose (matrix Y - matrix X)
+      = transpose (matrix Y) - transpose (matrix X)"
+    by (simp add: transpose_def vec_eq_iff)
+  show "transpose (matrix Y - matrix X) = matrix Y - matrix X"
+    unfolding td sX sY ..
+next
+  fix v :: "real^'n"
+  have "v \<bullet> ((matrix Y - matrix X) *v v) = v \<bullet> (Y v - X v)"
+    unfolding matrix_diff_vec[OF lX lY] ..
+  also have "\<dots> = v \<bullet> Y v - v \<bullet> X v" by (simp add: inner_diff_right)
+  finally show "0 \<le> v \<bullet> ((matrix Y - matrix X) *v v)"
+    using le[of v] by simp
+qed
+
+subsection \<open>The closing chain of Theorem 4.2(a)\<close>
+
+text \<open>A scaled subsolution and a supersolution touching an ordered jet pair
+  at a common \<open>p\<close> are inconsistent: scaling supplies strictness
+  (\<open>visc_subsol_scaled_strict\<close>), the ordering supplies \<open>psd\<close>
+  (\<open>psd_of_abstract_le\<close>), and degenerate ellipticity closes
+  (\<open>ell_op_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
+  hypotheses \<open>ord\<close>, \<open>subtest\<close> and \<open>suptest\<close>, supplied by the
+  development in \<open>Rademacher\<close>,
+  \<open>Alexandrov\<close>,
+  \<open>Jensen_Lemma\<close> and
+  \<open>Theorem_On_Sums\<close>.\<close>
+
+lemma hessian_lower_bound_of_psd:
+  fixes B :: "'a::euclidean_space \<Rightarrow> 'a"
+  assumes psd: "\<And>v. 0 \<le> v \<bullet> B v"
+  shows "- (c * (norm k)\<^sup>2) \<le> k \<bullet> (B k - c *\<^sub>R k)"
+proof -
+  have "k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c * (norm k)\<^sup>2"
+    by (simp add: inner_diff_right power2_norm_eq_inner)
+  moreover have "0 \<le> k \<bullet> B k"
+    by (rule psd)
+  ultimately show ?thesis
+    by linarith
+qed
+
+theorem semiconvex_hessian_two_sided:
+  fixes B W :: "'a::euclidean_space \<Rightarrow> 'a"
+  assumes psd: "\<And>v. 0 \<le> v \<bullet> B v"
+    and neg: "\<And>v. v \<bullet> W v \<le> 0"
+    and Wdef: "\<And>v. W v = B v - c *\<^sub>R v"
+  shows "- (c * (norm k)\<^sup>2) \<le> k \<bullet> W k" and "k \<bullet> W k \<le> 0"
+proof -
+  show "- (c * (norm k)\<^sup>2) \<le> k \<bullet> W k"
+    unfolding Wdef by (rule hessian_lower_bound_of_psd[OF psd])
+  show "k \<bullet> W k \<le> 0"
+    by (rule neg)
+qed
+
+text \<open>The quadratic form of \<open>W\<close> is bounded in absolute value by \<open>c\<parallel>k\<parallel>\<^sup>2\<close>,
+  uniformly over the family and independent of the tilt.\<close>
+
+corollary semiconvex_hessian_abs_bound:
+  fixes B W :: "'a::euclidean_space \<Rightarrow> 'a"
+  assumes psd: "\<And>v. 0 \<le> v \<bullet> B v"
+    and neg: "\<And>v. v \<bullet> W v \<le> 0"
+    and Wdef: "\<And>v. W v = B v - c *\<^sub>R v"
+    and c0: "0 \<le> c"
+  shows "\<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
+proof -
+  have lo: "- (c * (norm k)\<^sup>2) \<le> k \<bullet> W k"
+    by (rule semiconvex_hessian_two_sided(1)[OF psd neg Wdef])
+  have hi: "k \<bullet> W k \<le> 0"
+    by (rule neg)
+  have "0 \<le> c * (norm k)\<^sup>2"
+    by (rule mult_nonneg_nonneg[OF c0]) simp
+  with lo hi show ?thesis
+    by (intro abs_leI) linarith+
+qed
+
+subsection \<open>From the quadratic-form bound to a genuine operator bound\<close>
+
+text \<open>\<open>polarization_symmetric\<close>, \<open>parallelogram_norm\<close>, \<open>symmetric_form_bound\<close>, \<open>symmetric_form_bound_unit\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+
+subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
+
+text \<open>\<open>bounded_seq_limit_point\<close>, \<open>nearby_of_convergent\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+
+text \<open>A bounded family on which the operator bound holds yields the
+  nearby-point hypothesis at a produced limit point.  The closing argument
+  still needs, at that limit, the ordering \<open>X \<preceq> Y\<close>, symmetry of both
+  matrices, and \<open>p \<noteq> 0\<close>.  Symmetry and the ordering are closed conditions
+  and pass to the limit automatically; \<open>p \<noteq> 0\<close> is not closed and needs a
+  positive lower bound along the family.\<close>
+
+subsection \<open>A positive lower bound on the shared gradient\<close>
+
+text \<open>\<open>doubling_grad_lower_bound\<close>, \<open>doubling_grad_norm_lower_bound\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+
+text \<open>The same bound for the doubling run on sup-convolutions:
+  \<open>supconv_lipschitz\<close> gives the modulus of continuity with the same
+  constant, and \<open>doubled_value_gap_supconv\<close> gives the value gap with
+  explicit loss \<open>\<epsilon>(L\<^sub>u\<^sup>2+L\<^sub>w\<^sup>2)/2\<close>.  The doubled functional is
+  \<open>A(x)+B(y)-\<close>penalty with \<open>B = supconv(-w)\<epsilon>\<close>, so \<open>w\<close> is instantiated at
+  \<open>-B\<close>, and the Lipschitz hypothesis transfers since negation preserves
+  \<open>\<bar>\<cdot>\<bar>\<close>.\<close>
+
+theorem psd_limit:
+  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
+  assumes conv: "A \<longlonglongrightarrow> A0" and p: "\<And>i. psd (A i)"
+  shows "psd A0"
+proof -
+  have sym: "transpose (A i) = A i" for i
+    using p[of i] unfolding psd_def by simp
+  have nn: "0 \<le> x \<bullet> (A i *v x)" for i and x :: "real^'n"
+    using p[of i] unfolding psd_def by simp
+  have s0: "transpose A0 = A0"
+    by (rule transpose_limit[OF conv sym])
+  have q0: "0 \<le> x \<bullet> (A0 *v x)" for x :: "real^'n"
+  proof -
+    have "(\<lambda>i. x \<bullet> (A i *v x)) \<longlonglongrightarrow> x \<bullet> (A0 *v x)"
+      by (rule tendsto_quadratic_form[OF conv])
+    then show ?thesis
+      by (rule LIMSEQ_le_const) (use nn in blast)
+  qed
+  show ?thesis
+    unfolding psd_def using s0 q0 by blast
+qed
+
+text \<open>\<open>psd (Y-X)\<close> is preserved when both sequences converge, since subtraction
+  is continuous and \<open>psd\<close> is a closed condition.\<close>
+
+corollary psd_diff_limit:
+  fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n"
+  assumes cX: "X \<longlonglongrightarrow> X0" and cY: "Y \<longlonglongrightarrow> Y0"
+    and p: "\<And>i. psd (Y i - X i)"
+  shows "psd (Y0 - X0)"
+proof -
+  have "(\<lambda>i. Y i - X i) \<longlonglongrightarrow> Y0 - X0"
+    by (rule tendsto_diff[OF cY cX])
+  from psd_limit[OF this p] show ?thesis .
+qed
+
+subsection \<open>The asymptotic ordering\<close>
+
+text \<open>Perturbing the doubled functional by \<open>-\<delta>\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> shifts \<open>X\<close> to
+  \<open>X+2\<delta>I\<close> and \<open>Y\<close> to \<open>Y-2\<delta>I\<close>, so \<open>(Y-X)-4\<delta>I\<close> need not be psd even when
+  \<open>Y-X\<close> is: the per-index ordering is lost.  What survives is the
+  ordering in the limit, since \<open>psd\<close> is closed and the defect \<open>4\<delta>\<close>
+  vanishes; the right hypothesis for a shifted family is
+  \<open>psd(Y\<^sub>i-X\<^sub>i+c\<^sub>iI)\<close> with \<open>c\<^sub>i \<rightarrow> 0\<close>.\<close>
+
+corollary psd_diff_limit_shifted:
+  fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n" and cs :: "nat \<Rightarrow> real"
+  assumes cX: "X \<longlonglongrightarrow> X0" and cY: "Y \<longlonglongrightarrow> Y0"
+    and cs0: "cs \<longlonglongrightarrow> 0"
+    and p: "\<And>i. psd (Y i - X i + (cs i) *\<^sub>R mat 1)"
+  shows "psd (Y0 - X0)"
+proof -
+  have s0: "(\<lambda>i. (cs i) *\<^sub>R (mat 1 :: real^'n^'n))
+      \<longlonglongrightarrow> (0::real) *\<^sub>R (mat 1 :: real^'n^'n)"
+    by (rule tendsto_scaleR[OF cs0 tendsto_const])
+  have "(\<lambda>i. Y i - X i + (cs i) *\<^sub>R mat 1)
+      \<longlonglongrightarrow> (Y0 - X0) + (0::real) *\<^sub>R (mat 1 :: real^'n^'n)"
+    by (rule tendsto_add[OF tendsto_diff[OF cY cX] s0])
+  then have "(\<lambda>i. Y i - X i + (cs i) *\<^sub>R mat 1) \<longlonglongrightarrow> Y0 - X0"
+    by simp
+  from psd_limit[OF this p] show ?thesis .
+qed
+
+subsection \<open>Route (i), threaded\<close>
+
+text \<open>Everything is supplied as sequences of perturbed data, produced by
+  re-running Jensen with a shrinking tilt, together with their limits.
+  Symmetry and the ordering are needed only along the sequence
+  (\<open>transpose_limit\<close>, \<open>psd_diff_limit\<close>); only \<open>p \<noteq> 0\<close> is required at the
+  limit itself, supplied by \<open>doubling_grad_norm_lower_bound\<close>.  The two
+  gradient sequences must converge to the same \<open>p\<close> - the gradient
+  alignment.\<close>
+
+lemma psd_shifted_diff:
+  fixes X Y :: "real^'n::finite^'n"
+  assumes p: "psd (Y - X)"
+  shows "psd ((Y + c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1))"
+proof -
+  have "(Y + c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1) = Y - X"
+    by simp
+  then show ?thesis using p by simp
+qed
+
+text \<open>\<open>matrix_shift_apply\<close>, \<open>norm_shifted_block\<close>, \<open>shift_cancel_matrix\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+
+
+text \<open>\<open>penalty_gradient_nearby_bound\<close> lives in \<open>Doubling_Of_Variables\<close>.\<close>
+
+text \<open>The value gap transfers to the sup-convolutions with an explicit loss:
+  \<open>supconv_le_of_lipschitz\<close> sandwiches each sup-convolution between its
+  function and that function plus \<open>\<epsilon>L\<^sup>2/2\<close>, so a gap \<open>\<gamma>\<close> for
+  \<open>\<theta>u,w\<close> becomes \<open>\<gamma>-\<epsilon>(L\<^sub>u\<^sup>2+L\<^sub>w\<^sup>2)/2\<close> for the sup-convolutions,
+  positive for every sufficiently small \<open>\<epsilon>\<close>.\<close>
+
 (*<*)
 end
 (*>*)

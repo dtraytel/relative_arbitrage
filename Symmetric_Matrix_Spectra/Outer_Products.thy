@@ -44,6 +44,24 @@ lemma trace_mult_outer_sum:
   by (simp add: matrix_mult_sum_right trace_matrix_sum mult_outer_prod
       inner_commute)
 
+
+subsection \<open>The projector \<open>u u\<^sup>T\<close> as an operator\<close>
+
+lemma op_matvec: "outer_prod u u *v h = (u \<bullet> h) *\<^sub>R (u :: real^'n::finite)"
+  by (simp add: outer_prod_def matrix_vector_mult_def vec_eq_iff inner_vec_def
+      sum_distrib_left mult.assoc mult.commute mult.left_commute)
+
+lemma op_transpose: "transpose (outer_prod u u) = outer_prod (u :: real^'n::finite) u"
+  by (simp add: outer_prod_def transpose_def vec_eq_iff mult.commute)
+
+lemma op_continuous:
+  "continuous_on UNIV (\<lambda>y :: real^'n::finite. outer_prod (y - x) (y - x))"
+  unfolding outer_prod_def
+  by (intro continuous_on_vec_lambda continuous_intros)
+
+text \<open>The Hessian field of the quartic \<open>C|z-x|\<^sup>4\<close>, which is what
+  \<open>test_fun_at\<close> never had to record.\<close>
+
 (*<*)
 end
 (*>*)
