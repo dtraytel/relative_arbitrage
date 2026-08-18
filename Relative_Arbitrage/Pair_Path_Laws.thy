@@ -116,7 +116,7 @@ proof -
           pair_test_sq_bound(1)[OF P setsN st ts tT hc hb C0 Cs Ct]])
 qed
 
-subsection \<open>The second moment bound of the class, in nn-integral form\<close>
+subsection \<open>A second-moment bound in nn-integral form\<close>
 
 lemma acont_set_borel_measurable:
   fixes a :: "real \<Rightarrow> real^'n::finite^'n"
@@ -229,7 +229,7 @@ text \<open>Eq. (1.9) takes its infimum over \<open>feasible\<close>, which carr
 definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
 
-subsection \<open>What the class gives the tightness argument for free\<close>
+subsection \<open>What a second-moment bound gives the tightness argument\<close>
 
 text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class's
   difference quotients lie a.s. in \<open>sconstraint k L\<close>, whose elements have
@@ -794,7 +794,7 @@ section \<open>Passing the martingale identities through the weak limit\<close>
 text \<open>\<open>unif_integrable_of_L2_bound\<close>, \<open>weak_conv_integral_of_L2_bound\<close> live in @{theory Continuous_Path_Spaces.Path_Tightness}.\<close>
 
 
-section \<open>The clauses of the class that survive a weak limit\<close>
+section \<open>Which clauses survive a weak limit\<close>
 
 text \<open>Lemma 2.3 of the paper says the class is closed, passing each defining
   clause of (1.7) to the limit law. The paper uses Prokhorov followed by

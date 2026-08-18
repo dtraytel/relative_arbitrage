@@ -976,7 +976,7 @@ text \<open>
 abbreviation pairY :: "real \<Rightarrow> ('n::finite) pairpath \<Rightarrow> real^'n^'n"
   where "pairY t \<omega> \<equiv> snd (\<omega> t)"
 
-section \<open>The class \<open>P\<^sub>x\<close> of Eq. (1.7), capped at horizon \<open>T\<close>\<close>
+section \<open>Laws on the capped path space\<close>
 
 text \<open>Operational reading of (1.7), equivalent by compensator uniqueness: a
   law of \<open>(X, Y)\<close> where \<open>X\<close> is a martingale from \<open>x\<close>, \<open>Y\<close> starts at \<open>0\<close>
@@ -1242,7 +1242,7 @@ proof -
   qed
 qed
 
-subsection \<open>The class \<open>P\<^sub>x\<close> and its value function\<close>
+subsection \<open>The value functional of a family of laws\<close>
 
 text \<open>
   Eq. (1.6)--(1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> as the paper states them: laws of
@@ -1304,7 +1304,7 @@ lemma past_test_measurable_natural_filtration:
   by (rule measurable_compose
       [OF restrict_measurable_natural_filtration[OF setsQ s sT] h])
 
-subsection \<open>The identity at a class member, against a bounded test\<close>
+subsection \<open>The identity at a law, against a bounded test\<close>
 
 lemma pair_law_coord_measurable:
   fixes N :: "('n::finite pairpath) measure"
@@ -1588,7 +1588,7 @@ text \<open>\<open>martingale_cross_measurable\<close> lives in
 text \<open>\<open>martingale_diff\<close>, the subtractive companion to \<open>martingale_add\<close>,
   lives in @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-subsection \<open>The shifted processes of a class member\<close>
+subsection \<open>The shifted processes of a law\<close>
 
 text \<open>\<open>pair_snd_borel\<close> lives in \<open>Exit_Class_Pasting\<close>.\<close>
 

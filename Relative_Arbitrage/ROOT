@@ -5,6 +5,13 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     minimum-exit-time problem under eigenvalue constraints on the covariation
     is the unique bounded upper semicontinuous viscosity solution of the
     associated degenerate elliptic equation.
+
+    The session is layered: the path toolkit (Pair_Path_Space through
+    Path_Law_Sampling) knows nothing of the constraint set or the value
+    function; the operator layer states Eq. (1.9) and its envelopes; the
+    comparison layer proves Theorem 4.2(a); the class and dynamic
+    programming layer builds the class of Eq. (1.7); and the value-function
+    layer proves the five clauses.
   "
   options [document = pdf, document_output = "output"]
   sessions

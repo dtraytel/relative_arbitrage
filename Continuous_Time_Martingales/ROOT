@@ -5,7 +5,9 @@ session Continuous_Time_Martingales = "HOL-Probability" +
     stopping at a bounded stopping time, quadratic variation and its
     compensator, Vitali's theorem, exit times as stopping times, and the
     algebra of transporting the martingale property along images, products,
-    restrictions and modifications.
+    restrictions and modifications -- together with the elementary power
+    inequalities every moment estimate runs on and the essential infimum of a
+    nonnegative payoff.
   "
   options [document = pdf, document_output = "output"]
   sessions

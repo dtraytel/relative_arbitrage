@@ -4,7 +4,8 @@ session Continuous_Path_Spaces = Continuous_Time_Martingales +
     space with portmanteau and the continuous mapping theorem, tightness of a
     family of path laws from increment moments alone, and quadratic variation
     as an adapted, everywhere-continuous path functional with a summable L2
-    rate.
+    rate -- and the exit time of a closed set by a continuous path, upper
+    semicontinuous along weak convergence of path laws.
   "
   options [document = pdf, document_output = "output"]
   sessions

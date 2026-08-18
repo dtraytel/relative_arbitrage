@@ -730,7 +730,7 @@ proof -
     unfolding eventually_ae_filter using sub Bn by blast
 qed
 
-subsection \<open>The class is shift-equivariant\<close>
+subsection \<open>Shift equivariance\<close>
 
 text \<open>The one algebraic input: translating \<open>X\<close> splits the compensated
   process into itself, a term linear in \<open>X\<close>, and a constant --- so it stays
@@ -2906,7 +2906,7 @@ text \<open>The conditional law of the increments after \<open>\<theta>\<close> 
   at \<open>\<theta>\<close>.  Both factors live on the same \<open>T\<close>-path space, so this is
   @{thm [source] path_rcd_ksemi} at \<open>u = v = T\<close>.\<close>
 
-subsection \<open>Identifying the class the conditional law lives in\<close>
+subsection \<open>Identifying where the conditional law lives\<close>
 
 text \<open>\<open>pafter T \<theta> \<omega>\<close> is frozen on \<open>[0,\<theta>]\<close>, so it is not a member of
   \<open>exit_class k L T 0\<close>: the covariation constraint fails while the

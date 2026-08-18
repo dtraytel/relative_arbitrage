@@ -1059,7 +1059,7 @@ subsection \<open>Turning a supremum of \<open>ennreal\<close>s into a supremum 
 text \<open>\<open>ennreal_Sup_image\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
-subsection \<open>Eq. (1.6) as a shifted supremum over the class at \<open>0\<close>\<close>
+subsection \<open>A value functional as a shifted supremum at \<open>0\<close>\<close>
 
 lemma pcut_pcut:
   fixes \<omega> :: "real \<Rightarrow> 'b"
@@ -1307,7 +1307,7 @@ next
   with le show ?thesis by simp
 qed
 
-subsection \<open>The selector as a kernel into the class\<close>
+subsection \<open>The selector as a kernel into a family of laws\<close>
 
 text \<open>\<open>exit_val_measurable_selector_kernel'\<close> below makes the selector
   a Giry-monad kernel, hypothesis \<^emph>\<open>Kp\<close> of \<open>exit_class_kglue_law'\<close>.  The other hypothesis, \<^emph>\<open>Kb\<close>

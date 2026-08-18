@@ -4,7 +4,9 @@ session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
     viscosity solutions: Rademacher's theorem, Alexandrov's theorem, Jensen's
     lemma for semiconvex functions, the Crandall-Ishii theorem on sums, and
     the doubling-of-variables and soft-penalty toolboxes they exist to
-    serve.
+    serve -- and, on top of them, the test-function class and the definition
+    of a viscosity sub- and supersolution for an arbitrary second-order
+    operator.
   "
   options [document = pdf, document_output = "output"]
   sessions
