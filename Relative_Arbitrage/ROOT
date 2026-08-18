@@ -25,7 +25,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Volatile_Market
     Constraint_Set_Convexity
     Viscosity_Comparison_Interface
-    Viscosity_Solutions
+    Ball_Solution
     Optimal_Exit_Time
     Eigenvalue_Bound_Exact
     Operator_Continuity

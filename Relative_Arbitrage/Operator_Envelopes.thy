@@ -1,7 +1,7 @@
 
 (*<*)
 theory Operator_Envelopes
-  imports Viscosity_Solutions "Symmetric_Matrix_Spectra.Householder_Rotation"
+  imports Ball_Solution "Symmetric_Matrix_Spectra.Householder_Rotation"
     "Semicontinuous_Analysis.Semicontinuity" "Semicontinuous_Analysis.Semicontinuous_Envelopes"
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"

@@ -20,6 +20,7 @@ session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
     Doubling_Of_Variables
     Soft_Penalty
     Test_Functions
+    Viscosity_Solutions
   document_files
     "root.tex"
     "root.bib"

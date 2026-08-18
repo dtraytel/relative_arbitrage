@@ -1,6 +1,6 @@
 
 (*<*)
-theory Viscosity_Solutions
+theory Ball_Solution
   imports Viscosity_Comparison_Interface
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin

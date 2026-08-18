@@ -2107,7 +2107,7 @@ text \<open>
   continuous inequalities, closed outright; the eigenvalue lower bound is an
   existential over subspaces, but \<open>feasible_iff_eigval\<close> trades it for
   \<open>1 \<le> eigval (n-k) a\<close>, Lipschitz on symmetric matrices.  Combined with
-  boundedness (\<open>feasible_bounded\<close>, \<open>Viscosity_Solutions\<close>) this
+  boundedness (\<open>feasible_bounded\<close>, \<open>Ball_Solution\<close>) this
   gives compactness of the constraint set.
 \<close>
 
