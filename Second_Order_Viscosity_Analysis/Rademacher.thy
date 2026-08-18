@@ -1502,20 +1502,6 @@ subsection \<open>The defect of a translated box vanishes\<close>
 text \<open>Translating a box preserves its content, so the overlap defect
   \<open>2(content B - content (B \<inter> (B+w)))\<close> tends to \<open>0\<close>.\<close>
 
-lemma content_box_translate:
-  fixes a b w :: "'a::euclidean_space"
-  shows "content (box (a + w) (b + w)) = content (box a b)"
-proof -
-  have cond: "(\<forall>i\<in>Basis. (a + w) \<bullet> i \<le> (b + w) \<bullet> i)
-      \<longleftrightarrow> (\<forall>i\<in>Basis. a \<bullet> i \<le> b \<bullet> i)"
-    by (simp add: inner_add_left)
-  have fac: "(\<Prod>i\<in>Basis. (b + w) \<bullet> i - (a + w) \<bullet> i)
-      = (\<Prod>i\<in>Basis. b \<bullet> i - a \<bullet> i)"
-    by (rule prod.cong[OF refl]) (simp add: inner_add_left)
-  show ?thesis
-    unfolding content_box_cases using cond fac by simp
-qed
-
 theorem box_translate_defect_tendsto:
   fixes a b :: "'a::euclidean_space"
   shows "((\<lambda>w. 2 * (content (cbox a b)

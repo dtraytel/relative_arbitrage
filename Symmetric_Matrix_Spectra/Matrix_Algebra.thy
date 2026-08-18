@@ -147,9 +147,6 @@ proof -
     by (simp add: vec_eq_iff)
 qed
 
-lemma transpose_scaleR: "transpose (c *\<^sub>R A) = c *\<^sub>R transpose A"
-  by (simp add: transpose_def vec_eq_iff)
-
 lemma transpose_add: "transpose (A + B) = transpose A + transpose B"
   by (simp add: transpose_def vec_eq_iff)
 
@@ -248,12 +245,6 @@ lemma matrix_vector_mult_diff_gen:
   fixes Z :: "real^'n::finite^'n"
   shows "Z *v (u - v) = Z *v u - Z *v v"
   by (simp add: matrix_vector_mult_def vec_eq_iff sum_subtractf algebra_simps)
-
-lemma matrix_vector_mult_scaleR_gen:
-  fixes Z :: "real^'n::finite^'n"
-  shows "Z *v (s *\<^sub>R u) = s *\<^sub>R (Z *v u)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left
-      algebra_simps)
 
 lemma inner_matrix_sym:
   fixes Z :: "real^'n::finite^'n"
@@ -659,10 +650,15 @@ proof -
   finally show ?thesis .
 qed
 
-lemma matrix_vector_mult_vec_diff:
-  fixes a :: "real^'n::finite^'n"
-  shows "a *v (x - y) = a *v x - a *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff right_diff_distrib sum_subtractf)
+lemma matvec_diff_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (x - y) = A *v x - A *v y"
+  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum_subtractf)
+
+lemma matvec_scaleR_right:
+  fixes A :: "real^'n::finite^'n"
+  shows "A *v (r *\<^sub>R x) = r *\<^sub>R (A *v x)"
+  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
 
 lemma quadform_axis_pair_minus:
   fixes a :: "real^'n::finite^'n"
@@ -674,7 +670,7 @@ proof -
     by (metis sym transpose_def vec_lambda_beta)
   have mv: "(a *v (axis i (1::real) - axis j 1))
       = (a *v axis i (1::real)) - (a *v axis j 1)"
-    by (rule matrix_vector_mult_vec_diff)
+    by (rule matvec_diff_right)
   have "(axis i (1::real) - axis j 1) \<bullet> (a *v (axis i (1::real) - axis j 1))
       = (a *v axis i (1::real)) $ i - (a *v axis j (1::real)) $ i
         - ((a *v axis i (1::real)) $ j - (a *v axis j (1::real)) $ j)"
@@ -683,23 +679,6 @@ proof -
     by (simp add: matrix_vector_axis_one)
   also have "\<dots> = a $ i $ i + a $ j $ j - 2 * a $ i $ j"
     unfolding aji by simp
-  finally show ?thesis .
-qed
-
-text \<open>A local copy of \<open>trace_conjugate\<close> (\<open>Viscosity_Comparison_Interface\<close>), so
-  that this theory need not import the \<open>Operator_Envelopes\<close> chain; see the header.\<close>
-
-lemma trace_conj:
-  fixes M Q a :: "real^'n::finite^'n"
-  shows "trace (M ** (transpose Q ** a ** Q)) = trace ((Q ** M ** transpose Q) ** a)"
-proof -
-  have "trace (M ** (transpose Q ** a ** Q))
-      = trace ((M ** transpose Q ** a) ** Q)"
-    by (simp add: matrix_mul_assoc)
-  also have "\<dots> = trace (Q ** (M ** transpose Q ** a))"
-    using trace_mul_sym[of "M ** transpose Q ** a" Q] by simp
-  also have "\<dots> = trace ((Q ** M ** transpose Q) ** a)"
-    by (simp add: matrix_mul_assoc)
   finally show ?thesis .
 qed
 
@@ -795,31 +774,6 @@ proof -
     using transpose_shift_add[OF s, of "- \<delta>"] by simp
 qed
 
-lemma trace_matrix_commute:
-  fixes A B :: "real^'n::finite^'n"
-  shows "trace (A ** B) = trace (B ** A)"
-proof -
-  have "trace (A ** B) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. A $ i $ j * B $ j $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. A $ i $ j * B $ j $ i)"
-    by (rule sum.swap)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. B $ j $ i * A $ i $ j)"
-    by (simp add: mult.commute)
-  also have "\<dots> = trace (B ** A)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  finally show ?thesis .
-qed
-
-lemma matvec_diff_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (x - y) = A *v x - A *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum_subtractf)
-
-lemma matvec_scaleR_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (r *\<^sub>R x) = r *\<^sub>R (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
-
 text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
   from \<open>Symmetric_Spectral\<close>, general at
   \<open>real^'m^'n\<close>.\<close>
@@ -896,7 +850,7 @@ proof -
       = R ** (transpose M ** M) ** transpose R" .
   have "trace (R ** (transpose M ** M) ** transpose R)
       = trace (transpose R ** (R ** (transpose M ** M)))"
-    by (rule trace_matrix_commute)
+    by (rule trace_mul_sym)
   also have "\<dots> = trace ((transpose R ** R) ** (transpose M ** M))"
     by (simp add: matrix_mul_assoc)
   also have "\<dots> = trace (transpose M ** M)" unfolding o1 by simp
@@ -1456,13 +1410,6 @@ text \<open>The Euler analysis needs exactly two facts per step: the compensated
   variance bound needs no Wick calculus and no coordinate independence:
   the pointwise AM--GM bound \<open>a\<^sup>2b\<^sup>2 \<le> (a\<^sup>4 + b\<^sup>4)/2\<close> reduces everything
   to the fourth marginal moment \<open>3h\<^sup>2\<close> of one Brownian coordinate.\<close>
-
-lemma trace_mult_blin:
-  fixes M :: "real^'n::finite^'n"
-  shows "bounded_linear (\<lambda>A :: real^'n^'n. trace (M ** A))"
-  unfolding linear_conv_bounded_linear[symmetric]
-  by (intro linearI)
-    (simp_all add: trace_mult_add matmul_scaleR_right trace_scaleR)
 
 lemma quad_taylor_step:
   fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n"
@@ -2470,8 +2417,8 @@ proof -
     by (intro tendsto_sum tendsto_mult tendsto_const tendsto_entry[OF conv])
 qed
 
-text \<open>\<open>transpose_scaleR\<close> and \<open>transpose_add\<close> live in
-  \<open>Matrix_Algebra\<close>.\<close>
+text \<open>\<open>transpose_scalar\<close> is HOL-Analysis's; \<open>transpose_add\<close> lives
+  further up in this theory.\<close>
 
 lemma transpose_shifted_block:
   fixes M :: "real^'n::finite^'n"
@@ -2483,7 +2430,7 @@ proof -
     by (rule transpose_add)
   also have "transpose (c *\<^sub>R (mat 1 :: real^'n^'n))
       = c *\<^sub>R transpose (mat 1 :: real^'n^'n)"
-    by (rule transpose_scaleR)
+    by (rule transpose_scalar)
   also have "transpose (mat 1 :: real^'n^'n) = mat 1"
     by (rule transpose_mat)
   finally show ?thesis using s by simp

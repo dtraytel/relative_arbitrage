@@ -509,13 +509,12 @@ text \<open>A direction annihilated by the averaged covariation is frozen: the
   statement, obtained from a mean-zero variance, that the supersolution
   argument needs and the subsolution argument does not.\<close>
 
-text \<open>\<open>trace_mult_commute\<close> is \<open>trace_matrix_commute\<close> from
-  @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
+text \<open>\<open>trace_mult_commute\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
 
 lemma trace_outerp_mult:
   fixes B :: "real^'n::finite^'n" and v :: "real^'n"
   shows "trace (outerp v ** B) = v \<bullet> (B *v v)"
-  by (subst trace_matrix_commute) (rule trace_mult_outerp)
+  by (subst trace_mul_sym) (rule trace_mult_outerp)
 
 lemma quadform_outerp:
   fixes q z :: "real^'n::finite"

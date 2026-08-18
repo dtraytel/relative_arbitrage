@@ -1503,7 +1503,7 @@ proof -
   then show ?thesis unfolding ell_op_def by simp
 qed
 
-text \<open>\<open>trace_matrix_commute\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>trace_mul_sym\<close> is HOL-Analysis's.\<close>
 
 
 lemma ell_op_conj_rot:
@@ -1569,7 +1569,7 @@ proof -
         = trace (R ** (M ** a) ** transpose R)"
       unfolding prodeq by (rule refl)
     also have "\<dots> = trace (transpose R ** (R ** (M ** a)))"
-      by (rule trace_matrix_commute)
+      by (rule trace_mul_sym)
     also have "\<dots> = trace ((transpose R ** R) ** (M ** a))"
       by (simp add: matrix_mul_assoc)
     also have "\<dots> = trace (M ** a)" unfolding o1 by simp

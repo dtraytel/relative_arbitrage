@@ -24,7 +24,7 @@ text \<open>
   diagonalisable in a way adapted to \<open>p\<close>.\<close>
 section \<open>Elementary matrix algebra not already in the development\<close>
 
-text \<open>\<open>trace_conj\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>trace_conjugate\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 text \<open>\<open>matrix_vector_mult_diff\<close> and \<open>transpose_diff_matrix\<close> live in
@@ -42,7 +42,7 @@ definition rank1proj :: "real^'n::finite \<Rightarrow> real^'n^'n" where
   "rank1proj p = outer_prod p p /\<^sub>R (p \<bullet> p)"
 
 lemma transpose_rank1proj: "transpose (rank1proj p) = rank1proj p"
-  by (simp add: rank1proj_def transpose_scaleR)
+  by (simp add: rank1proj_def transpose_scalar)
 
 text \<open>A symmetric \<open>a\<close> annihilating \<open>p\<close> also kills the range of the
   projection, in both orders.\<close>
@@ -205,7 +205,7 @@ next
     by (simp add: matrix_transpose_mul matrix_mul_assoc symQ sym)
   have corr: "transpose (min (eigval CARD('n) M) 0 *\<^sub>R rank1proj p)
       = min (eigval CARD('n) M) 0 *\<^sub>R rank1proj p"
-    by (simp add: transpose_scaleR transpose_rank1proj)
+    by (simp add: transpose_scalar transpose_rank1proj)
   show ?thesis
     unfolding Mp_def using False
     by (simp add: transpose_add conj corr)
@@ -242,7 +242,7 @@ next
   have conj: "trace ((Q ** M ** Q) ** a) = trace (M ** a)"
   proof -
     have "trace (M ** (transpose Q ** a ** Q)) = trace ((Q ** M ** transpose Q) ** a)"
-      by (rule trace_conj)
+      by (rule trace_conjugate)
     then have "trace (M ** (Q ** a ** Q)) = trace ((Q ** M ** Q) ** a)"
       by (simp add: symQ)
     then show ?thesis

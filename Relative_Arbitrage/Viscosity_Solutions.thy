@@ -56,7 +56,7 @@ lemma ball_v_scaled_test_fun:
   unfolding test_fun_at_def
 proof (intro conjI)
   show "transpose (b *\<^sub>R (mat 1 :: real^'n^'n)) = b *\<^sub>R mat 1"
-    by (simp add: transpose_scaleR)
+    by (simp add: transpose_scalar)
 next
   have e_pos: "0 < r - norm x"
     using x by simp
@@ -443,7 +443,7 @@ qed
 text \<open>Hence the trace is bounded on the feasible set, which is the quantitative
   form Lemma 2.2's hypothesis is used in.\<close>
 
-text \<open>\<open>quadform_axis_pair\<close>, \<open>matrix_vector_mult_vec_diff\<close>, \<open>quadform_axis_pair_minus\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>quadform_axis_pair\<close>, \<open>matvec_diff_right\<close>, \<open>quadform_axis_pair_minus\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 lemma feasible_offdiag_abs_le:

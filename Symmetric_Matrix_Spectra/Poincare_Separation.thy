@@ -421,7 +421,7 @@ lemma transpose_weighted_outer_sum:
   shows "transpose (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)
        = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)"
   using finB
-  by (simp add: transpose_sum_matrix transpose_scaleR)
+  by (simp add: transpose_sum_matrix transpose_scalar)
 
 
 lemma psd_weighted_outer_sum:
@@ -455,7 +455,7 @@ proof -
   also have "\<dots> = transpose (c *\<^sub>R outer_prod v u)"
     by (simp add: outer_prod_scaleR_left)
   also have "\<dots> = c *\<^sub>R outer_prod u v"
-    by (simp add: transpose_scaleR)
+    by (simp add: transpose_scalar)
   finally show ?thesis .
 qed
 

@@ -259,8 +259,7 @@ text \<open>Definition 3.1 takes the envelopes of \<open>F\<close> over \<open>\
   contraction fixing \<open>\<S>\<^sup>n\<close> --- so every ball around a symmetric \<open>M\<close> realises the
   same set of values as its symmetric part does.\<close>
 
-text \<open>\<open>trace_mul_comm\<close> is \<open>trace_matrix_commute\<close> from
-  @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
+text \<open>\<open>trace_mul_comm\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
 
 text \<open>\<open>matrix_mult_scaleR_left\<close> is \<open>scaleR_matrix_mult\<close> from
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
@@ -752,7 +751,7 @@ lemma test_fun_at_scaleR:
 proof (intro conjI)
   have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
   show "transpose (c *\<^sub>R H) = c *\<^sub>R H"
-    unfolding transpose_scaleR symH ..
+    unfolding transpose_scalar symH ..
 next
   obtain e where e: "0 < e"
     and d: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
@@ -1628,7 +1627,7 @@ text \<open>\<open>doubled_penalty_jet\<close> lives in @{theory Second_Order_Vi
 
 subsection \<open>Semiconvexity of the doubled functional, for a general penalty\<close>
 
-text \<open>\<open>convex_on_prod_diff\<close>, \<open>convex_on_prod_add\<close>, \<open>semiconvex_penalty_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>convex_on_prod_diff\<close>, \<open>convex_on_proj_sum\<close>, \<open>semiconvex_penalty_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>A concrete penalty: semiconcave, with a vanishing 2-jet at the origin\<close>
 
@@ -2382,7 +2381,7 @@ text \<open>The matrix inequality for a general penalty adds the penalty's jet t
   diagonal rely only on \<open>P(x - y)\<close> being constant along \<open>(v,v)\<close>, true
   for any \<open>P\<close>.\<close>
 
-text \<open>\<open>matrix_vector_mult_scaleR_gen\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>matvec_scaleR_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>\<open>sums_matrix_inequality_gen\<close>, \<open>sums_gives_ordering_gen\<close>, \<open>sums_ordering_at_interior_max_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 

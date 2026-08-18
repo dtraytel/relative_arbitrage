@@ -792,22 +792,6 @@ proof (rule convex_onI)
     by (rule convex_onD[OF g]) (use t in auto)
 qed simp
 
-lemma convex_on_prod_add:
-  fixes g :: "'a::euclidean_space \<Rightarrow> real"
-  assumes g: "convex_on UNIV g"
-  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a. g (fst z + snd z))"
-proof (rule convex_onI)
-  fix t :: real and x y :: "'a \<times> 'a"
-  assume t: "0 < t" "t < 1"
-  have L: "fst ((1 - t) *\<^sub>R x + t *\<^sub>R y) + snd ((1 - t) *\<^sub>R x + t *\<^sub>R y)
-      = (1 - t) *\<^sub>R (fst x + snd x) + t *\<^sub>R (fst y + snd y)"
-    by (simp add: algebra_simps)
-  show "g (fst ((1 - t) *\<^sub>R x + t *\<^sub>R y) + snd ((1 - t) *\<^sub>R x + t *\<^sub>R y))
-      \<le> (1 - t) * g (fst x + snd x) + t * g (fst y + snd y)"
-    unfolding L
-    by (rule convex_onD[OF g]) (use t in auto)
-qed simp
-
 theorem semiconvex_penalty_gen:
   fixes P :: "'a::euclidean_space \<Rightarrow> real"
   assumes k: "0 \<le> \<kappa>"
@@ -845,7 +829,7 @@ proof -
     then show ?thesis by (rule convex_on_cmul[OF k2])
   qed
   have c2: "convex_on UNIV (\<lambda>z::'a \<times> 'a. (\<kappa>/2) * (norm (fst z + snd z))\<^sup>2)"
-    by (rule convex_on_prod_add[OF cn])
+    by (rule convex_on_proj_sum[OF cn])
   show ?thesis unfolding eq by (rule convex_on_add[OF c1 c2])
 qed
 
@@ -991,7 +975,7 @@ proof -
   define g0 where "g0 = ((G, - G) :: (real^'n) \<times> (real^'n))"
   have scPop: "Pop (s *\<^sub>R u) = s *\<^sub>R Pop u" for s :: real and u
     unfolding Pop_def
-    by (simp add: scaleR_diff_right[symmetric] matrix_vector_mult_scaleR_gen)
+    by (simp add: scaleR_diff_right[symmetric] matvec_scaleR_right)
   have scWP: "WP (s *\<^sub>R u) = s *\<^sub>R WP u" for s :: real and u
     unfolding WP_def scW scPop by (simp add: scaleR_add_right)
   have penlim: "((\<lambda>k. (Pn (fst (zh + k) - snd (zh + k))

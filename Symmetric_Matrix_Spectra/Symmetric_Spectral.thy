@@ -386,7 +386,7 @@ lemma psd_convex_comb:
   shows "psd (s *\<^sub>R a + (1 - s) *\<^sub>R b)"
 proof -
   have "transpose (s *\<^sub>R a + (1 - s) *\<^sub>R b) = s *\<^sub>R a + (1 - s) *\<^sub>R b"
-    using assms by (simp add: transpose_add transpose_scaleR psd_def)
+    using assms by (simp add: transpose_add transpose_scalar psd_def)
   moreover have "0 \<le> x \<bullet> ((s *\<^sub>R a + (1 - s) *\<^sub>R b) *v x)" for x
   proof -
     have "x \<bullet> ((s *\<^sub>R a + (1 - s) *\<^sub>R b) *v x)

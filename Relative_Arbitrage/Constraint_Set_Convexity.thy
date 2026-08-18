@@ -261,7 +261,7 @@ proof -
     unfolding psd_def
   proof (intro conjI allI)
     show "transpose (b + t *\<^sub>R outer_prod u u) = b + t *\<^sub>R outer_prod u u"
-      using psd_b by (simp add: transpose_add transpose_scaleR psd_def)
+      using psd_b by (simp add: transpose_add transpose_scalar psd_def)
   next
     show "0 \<le> x \<bullet> ((b + t *\<^sub>R outer_prod u u) *v x)" for x
       using psd_b t by (simp add: quad_add psd_def)

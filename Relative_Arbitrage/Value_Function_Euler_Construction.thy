@@ -989,7 +989,7 @@ qed
 
 subsection \<open>Step moments of the Gaussian member\<close>
 
-text \<open>\<open>trace_mult_blin\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>bounded_linear_trace_mult_left\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 lemma sconstraint_diag_le:
@@ -1273,7 +1273,7 @@ proof -
       (\<lambda>\<omega>'. outerp (fst (\<omega>' h)) - snd (\<omega>' h))"
     by (rule exit_class_compensated_integrable[OF mem hI])
   have intg: "integrable ?\<mu> ?g"
-    by (rule integrable_bounded_linear[OF trace_mult_blin int_inner])
+    by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left int_inner])
   show "integrable ?\<mu> ?\<xi>"
     by (rule integrable_cong_AE[THEN iffD2, OF ximeas\<mu> gmeas\<mu> aeq intg])
   have op0: "outerp (0 :: real^'n) = 0"
@@ -1282,7 +1282,7 @@ proof -
     by (rule integral_cong_AE[OF ximeas\<mu> gmeas\<mu> aeq])
   also have "\<dots> = trace (M ** (\<integral>\<omega>'. outerp (fst (\<omega>' h)) - snd (\<omega>' h)
       \<partial>?\<mu>))"
-    by (rule integral_of_bounded_linear[OF trace_mult_blin int_inner])
+    by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left int_inner])
   also have "\<dots> = trace (M ** outerp (0 :: real^'n))"
     by (simp add: exit_class_compensated_mean[OF mem hI])
   also have "\<dots> = 0"
@@ -1673,7 +1673,7 @@ proof -
   qed
   show ?thesis
     by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF trace_mult_blin] inner]) auto
+        linear_continuous_on[OF bounded_linear_trace_mult_left] inner]) auto
 qed
 
 lemma euXi_measurable:

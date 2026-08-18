@@ -233,7 +233,7 @@ proof -
           = transpose R ** transpose H ** transpose (transpose R)"
         by (simp add: matrix_transpose_mul matrix_mul_assoc)
       also have "\<dots> = transpose R ** H ** R" unfolding symH by simp
-      finally show ?thesis by (simp add: transpose_scaleR)
+      finally show ?thesis by (simp add: transpose_scalar)
     qed
   next
     have main: "((\<lambda>z. \<phi> (A z)) has_derivative
@@ -354,7 +354,7 @@ proof -
   next
     fix y :: "real^'n"
     show "transpose (c *\<^sub>R G y) = c *\<^sub>R G y"
-      by (simp add: transpose_scaleR G(3))
+      by (simp add: transpose_scalar G(3))
   next
     show "continuous_on UNIV (\<lambda>y. c *\<^sub>R G y)"
       by (intro continuous_intros G(4))
@@ -452,7 +452,7 @@ proof -
     also have "\<dots> = transpose R ** G (A y) ** R" using G(3) by simp
     finally show "transpose ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R))
         = (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)"
-      by (simp add: transpose_scaleR)
+      by (simp add: transpose_scalar)
   next
     show "continuous_on UNIV (\<lambda>y. (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R))"
       using conj_mat_continuous[OF GA] by (intro continuous_intros)
