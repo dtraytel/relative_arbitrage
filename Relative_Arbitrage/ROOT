@@ -57,6 +57,9 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Value_Function_Supersolution_Case_2
     Value_Function_Tangential_Field
     Value_Function_Assembly
+    Comparison_Jets
+    Comparison_Strictness
+    Comparison_Localisation
     Comparison_Principle
     Comparison_Two_Domain
     Value_Function_Uniqueness
