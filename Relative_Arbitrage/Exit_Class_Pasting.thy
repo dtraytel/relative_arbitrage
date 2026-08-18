@@ -26,14 +26,12 @@ lemma pcut_apply: "r \<in> {0..S} \<Longrightarrow> pcut S \<omega> r = \<omega>
 lemma pcut_measurable:
   fixes Q :: "('n::finite pairpath) measure"
   assumes S: "0 \<le> S" and ST: "S \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-  shows "pcut S \<in> Q \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric S :: ('n pairpath) metric))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  shows "pcut S \<in> Q \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
 proof -
   have "(\<lambda>f :: 'n pairpath. restrict f {0..S})
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+      \<in> (path_borel T :: ('n pairpath) measure)
+        \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
     by (rule restrict_measurable_path_borel[OF S ST])
   then show ?thesis
     unfolding pcut_def using measurable_cong_sets[OF setsQ refl] by blast
@@ -65,8 +63,7 @@ text \<open>The rational reduction of the covariation clause, factored out since
 
 lemma exit_class_diffquot_of_pairs:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and one: "\<And>p q :: real. p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
       AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
@@ -128,11 +125,10 @@ theorem exit_class_pcut:
   shows "pair_law_of S (pcut S) Q \<in> exit_class k L S x"
 proof -
   let ?Q = "pair_law_of S (pcut S) Q"
-  let ?B = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?B = "(path_borel S :: ('n pairpath) measure)"
   let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   interpret P: prob_space Q by (rule exit_class_prob[OF Q])
   have phim: "pcut S \<in> Q \<rightarrow>\<^sub>M ?B" by (rule pcut_measurable[OF S ST setsQ])
@@ -326,12 +322,10 @@ lemma pglue_in_mspace:
 lemma pglue_measurable:
   fixes Q R :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and setsR: "sets R = sets (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
   shows "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M R \<rightarrow>\<^sub>M
-      borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      (path_borel T :: ('n pairpath) measure)"
 proof -
   have T0: "0 \<le> T" using r rT by simp
   have eQ: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
@@ -430,8 +424,7 @@ definition pglue_law :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairp
 
 lemma sets_pglue_law[simp]:
   "sets (pglue_law r T Q R)
-     = sets (borel_of (mtopology_of (path_metric T
-         :: ('n::finite pairpath) metric)))"
+     = sets (path_borel T :: ('n::finite pairpath) measure)"
   unfolding pglue_law_def by (rule sets_pair_law_of)
 
 text \<open>\<open>prob_space_pair_measure\<close> lives in
@@ -441,10 +434,8 @@ lemma prob_space_pglue_law:
   fixes Q R :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and PQ: "prob_space Q" and PR: "prob_space R"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and setsR: "sets R = sets (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
   shows "prob_space (pglue_law r T Q R)"
 proof -
   interpret PP: prob_space "Q \<Otimes>\<^sub>M R"
@@ -463,12 +454,10 @@ lemma AE_pglue_law:
   fixes Q R :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and PQ: "prob_space Q" and PR: "prob_space R"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and setsR: "sets R = sets (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
     and mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). P \<omega>}
-        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+        \<in> sets (path_borel T :: ('n pairpath) measure)"
     and A: "AE \<omega> in Q. A \<omega>" and B: "AE \<omega>' in R. B \<omega>'"
     and imp: "\<And>\<omega> \<omega>' :: 'n pairpath.
         \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric) \<Longrightarrow>
@@ -477,7 +466,7 @@ lemma AE_pglue_law:
   shows "AE \<omega> in pglue_law r T Q R. P \<omega>"
 proof -
   let ?M = "Q \<Otimes>\<^sub>M R"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue r T (fst p) (snd p)"
   interpret PQ: prob_space Q by (rule PQ)
   interpret PR: prob_space R by (rule PR)
@@ -528,7 +517,7 @@ lemma pglue_law_start:
     and R: "R \<in> exit_class k L (T - r) 0"
   shows "AE \<omega> in pglue_law r T Q R. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
     by (rule pair_law_eval_measurable[OF refl])
   have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
@@ -566,7 +555,7 @@ lemma pglue_law_diffquot:
 proof (rule exit_class_diffquot_of_pairs[OF sets_pglue_law])
   fix p q :: real
   assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
       (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
     by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
@@ -616,10 +605,8 @@ qed
 lemma pfst_measurable:
   fixes N :: "('n::finite pairpath) measure"
   assumes S: "0 \<le> S"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric S :: ('n pairpath) metric)))"
-  shows "pfst S \<in> N \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric S :: ((real \<Rightarrow> real^'n)) metric))"
+    and setsN: "sets N = sets (path_borel S :: ('n pairpath) measure)"
+  shows "pfst S \<in> N \<rightarrow>\<^sub>M (path_borel S :: ((real \<Rightarrow> real^'n)) measure)"
   unfolding pfst_def
 proof (rule pathify_measurable[OF S])
   have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
@@ -685,7 +672,7 @@ theorem exit_val_horizon_stable:
   shows "exit_val k L T K x \<le> exit_val k L S K x"
 proof -
   have T0: "0 \<le> T" using S ST by simp
-  let ?B = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?B = "(path_borel S :: ('n pairpath) measure)"
   let ?tau = "\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t))"
   have taum: "?tau \<in> borel_measurable ?B"
   proof -
@@ -794,15 +781,13 @@ proof -
   let ?FR = "natural_filtration R 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?s = "\<lambda>u :: real. max (u - r) 0"
   let ?FF = "\<lambda>u. ?FQ (min u r) \<Otimes>\<^sub>M ?FR (?s u)"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using r rT by simp
   have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
   have PR: "prob_space R" by (rule exit_class_prob[OF R])
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric r :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
-  have setsR: "sets R = sets (borel_of (mtopology_of
-      (path_metric (T - r) :: ('n pairpath) metric)))"
+  have setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
     by (rule exit_class_sets[OF R])
   have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
   have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
@@ -1021,11 +1006,9 @@ proof -
   have T0: "0 \<le> T" using r rT by simp
   have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
   have PR: "prob_space R" by (rule exit_class_prob[OF R])
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric r :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
-  have setsR: "sets R = sets (borel_of (mtopology_of
-      (path_metric (T - r) :: ('n pairpath) metric)))"
+  have setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
     by (rule exit_class_sets[OF R])
   have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
   have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
@@ -1358,17 +1341,15 @@ proof -
       by (rule exit_class_pglue_law[OF S ST Q R])
     let ?M = "Q \<Otimes>\<^sub>M R"
     let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue S T (fst p) (snd p)"
-    let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    let ?BT = "(path_borel T :: ('n pairpath) measure)"
     have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
     have PR: "prob_space R" by (rule exit_class_prob[OF R])
     interpret PP: pair_prob_space Q R
       by (simp add: pair_prob_space_def pair_sigma_finite_def PQ PR
           prob_space_imp_sigma_finite)
-    have setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric S :: ('n pairpath) metric)))"
+    have setsQ: "sets Q = sets (path_borel S :: ('n pairpath) measure)"
       by (rule exit_class_sets[OF Q])
-    have setsR: "sets R = sets (borel_of (mtopology_of
-        (path_metric (T - S) :: ('n pairpath) metric)))"
+    have setsR: "sets R = sets ((path_borel (T - S) :: ('n pairpath) measure))"
       by (rule exit_class_sets[OF R])
     have tauS: "(\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t)))
         \<in> borel_measurable Q"
@@ -1446,8 +1427,7 @@ text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic pr
 lemma pexit_path_measurable:
   fixes K :: "(real^'n::finite) set" and N :: "('n pairpath) measure"
   assumes T: "0 \<le> T" and K: "closed K"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
   shows "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))) \<in> borel_measurable N"
 proof -
   have "(\<lambda>\<omega> :: 'n pairpath. pexit T K (pfst T \<omega>)) \<in> borel_measurable N"
@@ -1466,7 +1446,7 @@ theorem exit_val_paste_ge:
   shows "ennreal c \<le> exit_val k L T K x"
 proof -
   have T0: "0 \<le> T" using r rT by simp
-  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?BT = "(path_borel T :: ('n pairpath) measure)"
   have G: "pglue_law r T Q R \<in> exit_class k L T x"
     by (rule exit_class_pglue_law[OF r rT Q R])
   have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
@@ -1571,21 +1551,18 @@ definition kglue_law :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairp
 
 lemma sets_kglue_law[simp]:
   "sets (kglue_law r T N Q RR)
-     = sets (borel_of (mtopology_of (path_metric T
-         :: ('n::finite pairpath) metric)))"
+     = sets (path_borel T :: ('n::finite pairpath) measure)"
   unfolding kglue_law_def by (rule sets_pair_law_of)
 
 lemma kglue_measurable:
   fixes Q :: "('n::finite pairpath) measure"
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and setsR: "\<And>j. sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))"
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
   shows "kglue r T N \<in> Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M
-      borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      (path_borel T :: ('n pairpath) measure)"
 proof -
   let ?M = "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
   have T0: "0 \<le> T" using r rT by simp
@@ -1635,10 +1612,8 @@ lemma prob_space_kglue_law:
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and setsR: "\<And>j. sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))"
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
   shows "prob_space (kglue_law r T N Q RR)"
 proof -
@@ -1655,13 +1630,11 @@ lemma AE_kglue_law:
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and setsR: "\<And>j. sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))"
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
     and mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). P \<omega>}
-        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+        \<in> sets (path_borel T :: ('n pairpath) measure)"
     and A: "AE \<omega> in Q. A \<omega>" and B: "AE f in Pi\<^sub>M UNIV RR. B f"
     and imp: "\<And>\<omega> f. \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric) \<Longrightarrow>
         f \<in> space (Pi\<^sub>M UNIV RR) \<Longrightarrow> A \<omega> \<Longrightarrow> B f \<Longrightarrow> P (kglue r T N (\<omega>, f))"
@@ -1669,7 +1642,7 @@ lemma AE_kglue_law:
 proof -
   let ?S = "Pi\<^sub>M UNIV RR"
   let ?M = "Q \<Otimes>\<^sub>M ?S"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   interpret PQ: prob_space Q by (rule PQ)
   interpret PS: prob_space ?S by (rule prob_space_PiM) (rule PR)
   interpret PP: pair_prob_space Q ?S by unfold_locales
@@ -1721,7 +1694,7 @@ lemma kglue_law_start:
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
   shows "AE \<omega> in kglue_law r T N Q RR. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
     by (rule pair_law_eval_measurable[OF refl])
   have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
@@ -1762,7 +1735,7 @@ lemma kglue_law_diffquot:
 proof (rule exit_class_diffquot_of_pairs[OF sets_kglue_law])
   fix p q :: real
   assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
       (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
     by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
@@ -1947,11 +1920,9 @@ proof -
   interpret PQi: prob_space Q by (rule PQ)
   interpret PS': pair_sigma_finite Q ?S
     by (simp add: pair_sigma_finite_def PQ PS prob_space_imp_sigma_finite)
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric r :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
-  have setsR: "sets (RR j) = sets (borel_of (mtopology_of
-      (path_metric (T - r) :: ('n pairpath) metric)))" for j
+  have setsR: "sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))" for j
     by (rule exit_class_sets[OF R])
   have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
       \<in> borel_measurable borel"
@@ -2506,11 +2477,9 @@ proof -
   interpret PQi: prob_space Q by (rule PQ)
   interpret PS': pair_sigma_finite Q ?S
     by (simp add: pair_sigma_finite_def PQ PS prob_space_imp_sigma_finite)
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric r :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
-  have setsR: "sets (RR j) = sets (borel_of (mtopology_of
-      (path_metric (T - r) :: ('n pairpath) metric)))" for j
+  have setsR: "sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))" for j
     by (rule exit_class_sets[OF R])
   have cB: "(\<lambda>q :: (real^'n) \<times> (real^'n^'n). outerp (fst q) - snd q)
       \<in> borel_measurable borel"
@@ -3085,8 +3054,7 @@ proof -
             exit_class_prob[OF R] exit_class_sets[OF Q]
             exit_class_sets[OF R] NmQ])
     show "sets (kglue_law r T N Q RR)
-        = sets (borel_of (mtopology_of (path_metric T
-            :: ('n pairpath) metric)))" by (rule sets_kglue_law)
+        = sets (path_borel T :: ('n pairpath) measure)" by (rule sets_kglue_law)
     show "AE \<omega> in kglue_law r T N Q RR. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
       by (rule kglue_law_start[OF r rT Q R NmQ])
     show "AE \<omega> in kglue_law r T N Q RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>

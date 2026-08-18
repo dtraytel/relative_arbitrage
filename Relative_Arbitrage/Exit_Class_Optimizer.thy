@@ -91,14 +91,11 @@ qed
 lemma ess_inf_time_pfst:
   fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
   assumes T: "0 \<le> T" and K: "closed K"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-  shows "ess_inf_time (distr Q (borel_of (mtopology_of
-        (path_metric T :: (real \<Rightarrow> real^'n) metric))) (pfst T)) (pexit T K)
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  shows "ess_inf_time (distr Q (path_borel T :: (real \<Rightarrow> real^'n) measure) (pfst T)) (pexit T K)
       = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
 proof -
-  have "ess_inf_time (distr Q (borel_of (mtopology_of
-        (path_metric T :: (real \<Rightarrow> real^'n) metric))) (pfst T)) (pexit T K)
+  have "ess_inf_time (distr Q (path_borel T :: (real \<Rightarrow> real^'n) measure) (pfst T)) (pexit T K)
       = ess_inf_time Q (\<lambda>\<omega>. pexit T K (pfst T \<omega>))"
     by (rule ess_inf_time_distr_measurable
         [OF pfst_measurable[OF T setsQ] pexit_measurable[OF T K]])
@@ -296,18 +293,16 @@ lemma pshift_law_weak_conv_joint:
   assumes T: "0 \<le> T"
     and yc: "ym \<longlonglongrightarrow> y"
     and prR: "\<And>m. prob_space (Rm m)"
-    and setsR: "\<And>m. sets (Rm m) = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsR: "\<And>m. sets (Rm m) = sets (path_borel T :: ('n pairpath) measure)"
     and prR': "prob_space R"
-    and setsR': "sets R = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsR': "sets R = sets (path_borel T :: ('n pairpath) measure)"
     and wc: "weak_conv_on Rm R sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
   shows "weak_conv_on (\<lambda>m. pshift_law T (ym m) (Rm m)) (pshift_law T y R)
       sequentially (mtopology_of (path_metric T :: ('n pairpath) metric))"
 proof -
   let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?S = "mspace (path_metric T :: ('n pairpath) metric)"
   have prS: "prob_space (pshift_law T z (Rm m))" for z m
     by (rule prob_space_pshift_law[OF T prR setsR])
@@ -481,11 +476,9 @@ lemma ess_inf_pexit_pshift_usc:
   assumes T: "0 < T" and K: "closed K"
     and yc: "ym \<longlonglongrightarrow> y"
     and prR: "\<And>m. prob_space (Rm m)"
-    and setsR: "\<And>m. sets (Rm m) = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsR: "\<And>m. sets (Rm m) = sets (path_borel T :: ('n pairpath) measure)"
     and prR': "prob_space R"
-    and setsR': "sets R = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsR': "sets R = sets (path_borel T :: ('n pairpath) measure)"
     and wc: "weak_conv_on Rm R sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
   shows "Limsup sequentially (\<lambda>m. ess_inf_time (pshift_law T (ym m) (Rm m))
@@ -517,8 +510,7 @@ proof -
   qed
   have eqS: "ess_inf_time (?p S) (pexit T K)
       = ess_inf_time S (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-    if "sets S = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    if "sets S = sets (path_borel T :: ('n pairpath) measure)"
     for S :: "('n pairpath) measure"
     by (rule ess_inf_time_pfst[OF T0 K that])
   show ?thesis using lim by (simp add: eqS)
@@ -613,7 +605,7 @@ theorem exit_val_measurable_selector:
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
 proof -
   let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
   let ?C = "exit_class k L T (0 :: real^'n)"
   let ?g = "\<lambda>(y :: real^'n) (R :: ('n pairpath) measure).
@@ -814,31 +806,26 @@ definition kglue_law' :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pair
     \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
   where "kglue_law' r T Kr Q
      = pair_law_of T (\<lambda>p. pglue r T (fst p) (snd p))
-         (ksemi Q (borel_of (mtopology_of
-             (path_metric (T - r) :: ('n pairpath) metric))) Kr)"
+         (ksemi Q ((path_borel (T - r) :: ('n pairpath) measure)) Kr)"
 
 lemma sets_kglue_law'[simp]:
   "sets (kglue_law' r T Kr Q)
-     = sets (borel_of (mtopology_of (path_metric T
-         :: ('n::finite pairpath) metric)))"
+     = sets (path_borel T :: ('n::finite pairpath) measure)"
   unfolding kglue_law'_def by (rule sets_pair_law_of)
 
 lemma kglue_law'_measurable:
   fixes Q :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
     and ne: "space Q \<noteq> {}"
   shows "(\<lambda>p. pglue r T (fst p) (snd p))
-      \<in> ksemi Q (borel_of (mtopology_of
-            (path_metric (T - r) :: ('n pairpath) metric))) Kr
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      \<in> ksemi Q ((path_borel (T - r) :: ('n pairpath) measure)) Kr
+        \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
   have "(\<lambda>p. pglue r T (fst p) (snd p))
-      \<in> Q \<Otimes>\<^sub>M borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      \<in> Q \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure)
+        \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
     by (rule pglue_measurable[OF r rT setsQ refl])
   then show ?thesis
     using measurable_cong_sets[OF sets_ksemi[OF K ne] refl] by blast
@@ -847,16 +834,13 @@ qed
 lemma prob_space_kglue_law':
   fixes Q :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
   shows "prob_space (kglue_law' r T Kr Q)"
 proof -
   interpret PQ: prob_space Q by (rule PQ)
   have ne: "space Q \<noteq> {}" by (rule PQ.not_empty)
-  interpret PK: prob_space "ksemi Q (borel_of (mtopology_of
-      (path_metric (T - r) :: ('n pairpath) metric))) Kr"
+  interpret PK: prob_space "ksemi Q ((path_borel (T - r) :: ('n pairpath) measure)) Kr"
     by (rule prob_space_ksemi[OF PQ K])
   show ?thesis
     unfolding kglue_law'_def pair_law_of_def
@@ -873,12 +857,10 @@ text \<open>The almost-sure transfer.  Note that the second-coordinate property
 lemma AE_kglue_law':
   fixes Q :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and K: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
     and mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). P \<omega>}
-        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+        \<in> sets (path_borel T :: ('n pairpath) measure)"
     and A: "AE \<omega> in Q. A \<omega>"
     and B: "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> AE \<omega>' in Kr \<omega>. B \<omega> \<omega>'"
     and imp: "\<And>\<omega> \<omega>'. \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric) \<Longrightarrow>
@@ -886,9 +868,9 @@ lemma AE_kglue_law':
         A \<omega> \<Longrightarrow> B \<omega> \<omega>' \<Longrightarrow> P (pglue r T \<omega> \<omega>')"
   shows "AE \<omega> in kglue_law' r T Kr Q. P \<omega>"
 proof -
-  let ?MR = "borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))"
+  let ?MR = "(path_borel (T - r) :: ('n pairpath) measure)"
   let ?S = "ksemi Q ?MR Kr"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   interpret PQ: prob_space Q by (rule PQ)
   have ne: "space Q \<noteq> {}" by (rule PQ.not_empty)
   have phim: "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> ?S \<rightarrow>\<^sub>M ?B"
@@ -1290,17 +1272,14 @@ lemma kglue_law_eq_kglue_law':
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
-    and setsR: "\<And>j. sets (RR j) = sets (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
+    and setsR: "\<And>j. sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))"
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
-    and K: "(\<lambda>\<omega>. RR (N \<omega>)) \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and K: "(\<lambda>\<omega>. RR (N \<omega>)) \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
   shows "kglue_law r T N Q RR = kglue_law' r T (\<lambda>\<omega>. RR (N \<omega>)) Q"
 proof (rule measure_eqI)
-  let ?MR = "borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?MR = "(path_borel (T - r) :: ('n pairpath) measure)"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?S = "Pi\<^sub>M UNIV RR"
   let ?P = "Q \<Otimes>\<^sub>M ?S"
   interpret PQ: prob_space Q by (rule PQ)
@@ -1429,8 +1408,7 @@ theorem exit_class_kglue_law':
   assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L"
     and T0: "0 < T"
     and Q: "Q \<in> exit_class k L r x"
-    and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
     and Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
         \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
             (exit_class k L (T - r) (0::real^'n))
@@ -1443,10 +1421,10 @@ proof -
   let ?C0 = "exit_class k L ?s (0::real^'n)"
   let ?dd = "Levy_Prokhorov.LPm (mspace (path_metric ?s :: ('n pairpath) metric))
       (mdist (path_metric ?s :: ('n pairpath) metric))"
-  let ?MR = "borel_of (mtopology_of (path_metric ?s :: ('n pairpath) metric))"
+  let ?MR = "(path_borel ?s :: ('n pairpath) measure)"
   let ?X = "mtopology_of (path_metric r :: ('n pairpath) metric)"
   let ?Y = "mtopology_of (path_metric ?s :: ('n pairpath) metric)"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have s0: "0 < ?s" using rT by simp
   have s0': "0 \<le> ?s" using s0 by simp
   have L0: "0 \<le> L" using L1 by simp

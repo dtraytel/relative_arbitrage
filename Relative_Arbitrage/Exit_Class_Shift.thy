@@ -138,8 +138,8 @@ lemma pshift_measurable:
   fixes x :: "real^'n::finite"
   assumes T: "0 \<le> T"
   shows "pshift T x
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      \<in> (path_borel T :: ('n pairpath) measure)
+        \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
   by (intro continuous_map_measurable Lipschitz_continuous_imp_continuous_map
       Lipschitz_pshift[OF T])
 
@@ -150,8 +150,7 @@ text \<open>The shift is measurable for the natural filtration too, at every
 
 lemma pshift_filtration_measurable:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "pshift T x \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u
       \<rightarrow>\<^sub>M natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u"
 proof -
@@ -231,12 +230,12 @@ subsection \<open>The shifted law\<close>
 definition pshift_law ::
   "real \<Rightarrow> real^'n::finite \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
   where "pshift_law T x Q = distr Q
-     (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))
+     (path_borel T :: ('n pairpath) measure)
      (pshift T x)"
 
 lemma sets_pshift_law[simp]:
   "sets (pshift_law T x Q)
-     = sets (borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric)))"
+     = sets (path_borel T :: ('n::finite pairpath) measure)"
   unfolding pshift_law_def by simp
 
 lemma space_pshift_law:
@@ -247,21 +246,18 @@ lemma space_pshift_law:
 lemma prob_space_pshift_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 \<le> T" and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "prob_space (pshift_law T x Q)"
 proof -
   interpret P: prob_space Q by (rule prob)
-  have m: "pshift T x \<in> Q \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric))"
+  have m: "pshift T x \<in> Q \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
     using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
   show ?thesis unfolding pshift_law_def by (rule P.prob_space_distr[OF m])
 qed
 
 lemma natural_filtration_pshift_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "natural_filtration (pshift_law T x Q) 0 (\<lambda>v \<omega>. \<omega> v)
        = natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)"
   unfolding natural_filtration_def
@@ -277,8 +273,7 @@ lemma martingale_pshift_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
     and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> 'b::{banach,second_countable_topology}"
   assumes T: "0 \<le> T" and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Zm: "\<And>u. 0 \<le> u \<Longrightarrow>
         Z u \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u)"
     and mg: "martingale Q (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)) 0
@@ -288,7 +283,7 @@ lemma martingale_pshift_law:
 proof -
   let ?Q' = "pshift_law T x Q"
   let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   interpret MG: martingale Q ?F 0 "\<lambda>u \<omega>. Z u (pshift T x \<omega>)" by (rule mg)
   have FF: "natural_filtration ?Q' 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) = ?F"
     by (rule natural_filtration_pshift_law[OF setsQ])
@@ -370,12 +365,11 @@ text \<open>The shift is a bijection of the path space with measurable inverse,
 lemma AE_pshift_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and ae: "AE \<omega> in Q. P (pshift T x \<omega>)"
   shows "AE \<omega> in pshift_law T x Q. P \<omega>"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have spQ': "space (pshift_law T x Q) = space Q"
@@ -462,8 +456,7 @@ proof -
   let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?cross = "\<lambda>v :: real^'n. (\<chi> i j. x $ i * v $ j + v $ i * x $ j) :: real^'n^'n"
   have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
   have SP: "Stochastic_Process.stochastic_process Q (0::real)
@@ -570,8 +563,7 @@ proof -
   proof (intro CollectI conjI)
     show "prob_space (pshift_law T x Q)"
       by (rule prob_space_pshift_law[OF T prob setsQ])
-    show "sets (pshift_law T x Q) = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))" by simp
+    show "sets (pshift_law T x Q) = sets (path_borel T :: ('n pairpath) measure)" by simp
     show "AE \<omega> in pshift_law T x Q. fst (\<omega> 0) = x + x0 \<and> snd (\<omega> 0) = 0"
       by (rule st')
     show "AE \<omega> in pshift_law T x Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
@@ -611,7 +603,7 @@ proof
   proof
     fix Q :: "('n pairpath) measure"
     assume Q: "Q \<in> exit_class k L T x"
-    let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    let ?B = "(path_borel T :: ('n pairpath) measure)"
     have setsQ: "sets Q = sets ?B" by (rule exit_class_sets[OF Q])
     have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
       by (rule space_of_path_sets[OF setsQ])
@@ -646,11 +638,10 @@ subsection \<open>The shift is an involution on laws\<close>
 lemma pshift_law_compose:
   fixes Q :: "('n::finite pairpath) measure" and x y :: "real^'n"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "pshift_law T y (pshift_law T x Q) = pshift_law T (y + x) Q"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have shx: "pshift T x \<in> Q \<rightarrow>\<^sub>M ?B"
     using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
   have shy: "pshift T y \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule pshift_measurable[OF T])
@@ -663,11 +654,10 @@ qed
 
 lemma pshift_law_zero:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "pshift_law T 0 Q = Q"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have "pshift_law T 0 Q = distr Q ?B (\<lambda>\<omega>. \<omega>)"
@@ -683,8 +673,7 @@ text \<open>Hence the almost-sure transfer is an equivalence, not just an
 lemma AE_pshift_law_iff:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "(AE \<omega> in pshift_law T x Q. P \<omega>)
        \<longleftrightarrow> (AE \<omega> in Q. P (pshift T x \<omega>))"
 proof
@@ -694,8 +683,7 @@ proof
 next
   let ?Q' = "pshift_law T x Q"
   assume h: "AE \<omega> in ?Q'. P \<omega>"
-  have setsQ': "sets ?Q' = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))" by simp
+  have setsQ': "sets ?Q' = sets (path_borel T :: ('n pairpath) measure)" by simp
   have spQ': "space ?Q' = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_pshift_law)
   have id': "AE \<omega> in ?Q'. pshift T x (pshift T (- x) \<omega>) = \<omega>"
@@ -721,8 +709,7 @@ qed
 lemma ess_inf_time_pshift_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "ess_inf_time (pshift_law T x Q) g
        = ess_inf_time Q (\<lambda>\<omega>. g (pshift T x \<omega>))"
 proof -
@@ -770,8 +757,7 @@ proof -
   let ?A = "{p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}"
   let ?C = "exit_class k L T 0"
   let ?g = "\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))"
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))" if "Q \<in> ?C" for Q
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)" if "Q \<in> ?C" for Q
     by (rule exit_class_sets[OF that])
   have probQ: "prob_space Q" if "Q \<in> ?C" for Q :: "('n pairpath) measure"
     by (rule exit_class_prob[OF that])
@@ -860,8 +846,7 @@ proof -
     if c: "?S x < c" for c :: real
   proof (rule vshift_sup_usc_of_seq_compact[OF T0 Aopen])
     show "?C \<noteq> {}" by (rule ne)
-    show "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))" if "Q \<in> ?C" for Q
+    show "sets Q = sets (path_borel T :: ('n pairpath) measure)" if "Q \<in> ?C" for Q
       by (rule exit_class_sets[OF that])
     show "prob_space Q" if "Q \<in> ?C" for Q by (rule probQ[OF that])
     show "\<exists>Lm r. Lm \<in> ?C \<and> strict_mono r \<and> weak_conv_on (\<sigma> \<circ> r) Lm sequentially

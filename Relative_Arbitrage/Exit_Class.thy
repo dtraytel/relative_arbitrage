@@ -244,8 +244,7 @@ definition exit_class ::
   where
   "exit_class k L T x = {Q.
      prob_space Q \<and>
-     sets Q = sets (borel_of (mtopology_of (path_metric T
-       :: ('n pairpath) metric))) \<and>
+     sets Q = sets (path_borel T :: ('n pairpath) measure) \<and>
      (AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0) \<and>
      (AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))
@@ -268,14 +267,12 @@ lemma exit_class_prob:
 lemma exit_class_sets:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x"
-  shows "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   using Q unfolding exit_class_def by blast
 
 lemma space_of_path_sets:
   fixes Q :: "(('n::finite) pairpath) measure"
-  assumes "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "space Q = mspace (path_metric T :: ('n pairpath) metric)"
   using sets_eq_imp_space_eq[OF assms] by (simp add: space_borel_of)
 
@@ -687,8 +684,7 @@ lemma exit_class_eval_measurable:
   assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
 proof -
-  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)) \<rightarrow>\<^sub>M borel"
+  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> (path_borel T :: ('n pairpath) measure) \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF continuous_map_path_eval[OF t]]
     by (simp add: borel_of_euclidean)
   then show ?thesis
@@ -978,8 +974,7 @@ theorem tight_on_set_pair_holder_charge:
   fixes \<Gamma> :: "(('n::finite) pairpath) measure set" and x :: "real^'n"
   assumes T: "0 \<le> T" and ga: "0 < ga"
     and fm: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> finite_measure N"
-    and st: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric))) = sets N"
+    and st: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> sets (path_borel T :: ('n pairpath) measure) = sets N"
     and charge: "\<And>e. 0 < e \<Longrightarrow> \<exists>c. 0 \<le> c \<and> (\<forall>N\<in>\<Gamma>. measure N (space N -
       {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
          \<omega> 0 = (x, 0)
@@ -988,8 +983,7 @@ theorem tight_on_set_pair_holder_charge:
   shows "tight_on_set (mtopology_of (path_metric T :: ('n pairpath) metric)) \<Gamma>"
   unfolding tight_on_set_def
 proof (intro conjI)
-  show "\<forall>M\<in>\<Gamma>. finite_measure M \<and> sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric))) = sets M"
+  show "\<forall>M\<in>\<Gamma>. finite_measure M \<and> sets (path_borel T :: ('n pairpath) measure) = sets M"
     using fm st by blast
 next
   show "\<forall>e>0. \<exists>K.
@@ -1122,8 +1116,7 @@ lemma exit_class_diffquot_full_mass:
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
 proof -
   interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
@@ -1169,8 +1162,7 @@ lemma exit_class_start_full_mass:
       \<omega> 0 = (x, 0)} = 1"
 proof -
   interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
@@ -1202,8 +1194,7 @@ theorem exit_class_start_limit:
     and wc: "weak_conv_on Qi Q sequentially
       (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
 proof -
   interpret P: prob_space Q by (rule prob)
@@ -1232,8 +1223,7 @@ theorem exit_class_diffquot_limit:
     and wc: "weak_conv_on Qi Q sequentially
       (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
 proof -

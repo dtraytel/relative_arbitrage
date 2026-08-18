@@ -186,8 +186,7 @@ lemma ipcut_measurable:
   fixes P :: "('n::finite pairpath) measure"
   assumes S: "0 \<le> S"
     and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
-  shows "pcut S \<in> P \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric S :: ('n pairpath) metric))"
+  shows "pcut S \<in> P \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
   unfolding pcut_def measurable_cong_sets[OF setsP refl]
   by (rule restrict_ipath_measurable[OF S])
 
@@ -228,7 +227,7 @@ theorem iexit_class_pcut:
   shows "pair_law_of S (pcut S) P \<in> exit_class k L S x"
 proof -
   let ?Q = "pair_law_of S (pcut S) P"
-  let ?B = "borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?B = "(path_borel S :: ('n pairpath) measure)"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   interpret P: prob_space P by (rule iexit_class_prob[OF P])
@@ -373,7 +372,7 @@ proof -
     if P: "P \<in> iexit_class k L x" for P :: "('n pairpath) measure"
   proof -
     let ?Q = "pair_law_of T (pcut T) P"
-    let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    let ?B = "(path_borel T :: ('n pairpath) measure)"
     have Q: "?Q \<in> exit_class k L T x" by (rule iexit_class_pcut[OF T P])
     have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B"
       by (rule ipcut_measurable[OF T iexit_class_sets[OF P]])
@@ -454,7 +453,7 @@ proof (rule Sup_least)
   obtain P :: "('n pairpath) measure"
     where P: "P \<in> iexit_class k L x" and cut: "pair_law_of T (pcut T) P = Q"
     using ext[OF Q] by blast
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B"
     by (rule ipcut_measurable[OF T iexit_class_sets[OF P]])
   have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
@@ -624,8 +623,7 @@ lemma pair_law_of_pcut_ibm_law:
       = pair_law_of S (bmpair S) bm_paths"
 proof -
   have "pair_law_of S (pcut S) (ibm_law :: ('n pairpath) measure)
-      = distr bm_paths (borel_of (mtopology_of
-          (path_metric S :: ('n pairpath) metric))) (pcut S \<circ> ibmpair)"
+      = distr bm_paths (path_borel S :: ('n pairpath) measure) (pcut S \<circ> ibmpair)"
     unfolding ibm_law_def pair_law_of_def
     by (rule distr_distr[OF ipcut_measurable[OF S refl] ibmpair_measurable])
   also have "\<dots> = pair_law_of S (bmpair S) bm_paths"
@@ -659,8 +657,7 @@ lemma pglue_self:
 lemma iglue_measurable:
   fixes Q R :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
     and setsR: "sets R = sets (ipath_space :: ('n pairpath) measure)"
   shows "(\<lambda>p. iglue r (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M R \<rightarrow>\<^sub>M ipath_space"
 proof -
@@ -719,8 +716,7 @@ lemma sets_iextend[simp]:
 lemma iextend_measurable:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "(\<lambda>p. iglue T (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M ibm_law \<rightarrow>\<^sub>M ipath_space"
   by (rule iglue_measurable[OF T setsQ sets_ibm_law])
 
@@ -750,7 +746,7 @@ lemma pair_law_of_pcut_iextend:
   shows "pair_law_of S (pcut S) (iextend T Q)
       = pglue_law T S Q (pair_law_of (S - T) (pcut (S - T)) ibm_law)"
 proof -
-  let ?B = "\<lambda>r. borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?B = "\<lambda>r. (path_borel r :: ('n pairpath) measure)"
   let ?R = "ibm_law :: ('n pairpath) measure"
   let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue T S (fst p) (snd p)"
   have S0: "0 \<le> S" using T TS by simp
@@ -834,7 +830,7 @@ theorem pcut_law_iextend:
   assumes T: "0 \<le> T" and Q: "Q \<in> exit_class k L T x"
   shows "pair_law_of T (pcut T) (iextend T Q) = Q"
 proof -
-  let ?B = "\<lambda>r. borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?B = "\<lambda>r. (path_borel r :: ('n pairpath) measure)"
   let ?R = "ibm_law :: ('n pairpath) measure"
   interpret PQ: prob_space Q by (rule exit_class_prob[OF Q])
   interpret PR: prob_space ?R by (rule prob_space_ibm_law)
@@ -937,7 +933,7 @@ lemma martingale_of_cuts:
   shows "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0 Z"
 proof -
   let ?G = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?B = "\<lambda>S. borel_of (mtopology_of (path_metric S :: ('n pairpath) metric))"
+  let ?B = "\<lambda>S. (path_borel S :: ('n pairpath) measure)"
   let ?Q = "\<lambda>S. pair_law_of S (pcut S) P"
   let ?H = "\<lambda>S. natural_filtration (?Q S) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   interpret PP: prob_space P by (rule prob)
@@ -1041,7 +1037,7 @@ proof (cases "T \<le> S")
   then show ?thesis by (rule iextend_cut_in_class[OF T _ L Q])
 next
   case False
-  let ?B = "\<lambda>r. borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?B = "\<lambda>r. (path_borel r :: ('n pairpath) measure)"
   have ST: "S \<le> T" using False by simp
   have "pair_law_of S (pcut S) Q
       = pair_law_of S (pcut S) (pair_law_of T (pcut T) (iextend T Q))"
@@ -1063,8 +1059,7 @@ proof -
   let ?P = "iextend T Q"
   let ?G = "natural_filtration ?P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have prob: "prob_space ?P" by (rule prob_space_iextend[OF T Q])
-  have cutm: "pcut S \<in> ?P \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric S :: ('n pairpath) metric))" if S: "0 \<le> S" for S
+  have cutm: "pcut S \<in> ?P \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)" if S: "0 \<le> S" for S
     by (rule ipcut_measurable[OF S sets_iextend])
   have cls: "pair_law_of S (pcut S) ?P \<in> exit_class k L S x" if S: "0 \<le> S" for S
     by (rule iextend_pcut_in_class[OF T S L Q])

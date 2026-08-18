@@ -500,8 +500,7 @@ proof -
           using eulerp_limit_good2_region[OF T0 L1' SFc SFs symM symM
               ROo ROb killy margy killy margy] that by blast
       qed
-      have setsP: "sets P = sets (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric)))"
+      have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
         by (rule exit_class_sets[OF Pc])
       have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
         by (rule space_of_path_sets[OF setsP])
@@ -514,8 +513,7 @@ proof -
         by (rule path_stopping_time_min[OF
               pball_exit_path_stopping_time[OF T0']
               less_imp_le[OF cc0] ccT'])
-      have thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric)))"
+      have thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
         unfolding \<theta>_def
         by (intro borel_measurable_min pball_exit_measurable[OF T0']
             borel_measurable_const)

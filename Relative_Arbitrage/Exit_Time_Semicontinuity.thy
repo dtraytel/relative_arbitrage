@@ -112,8 +112,7 @@ lemma etime_shift_uniform_margin:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
     and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A"
-    and sP: "sets P = sets (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and r: "0 \<le> r" "r \<le> T" "r < d"
     and pos: "emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> A} \<noteq> 0"
   shows "\<exists>\<delta>>0. \<exists>G. openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) G
@@ -166,8 +165,7 @@ lemma positive_mass_at_some_qtime:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
     and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
-    and sP: "sets P = sets (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and pos: "emeasure P
         {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
   shows "\<exists>r \<in> qtimes T. r < d
@@ -225,8 +223,7 @@ theorem etime_shift_box_half:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
     and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
-    and sP: "sets P = sets (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and pos: "emeasure P
         {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
   shows "\<exists>\<delta>>0. \<exists>G. openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) G
@@ -308,8 +305,7 @@ theorem etime_shift_box:
   assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
     and wc: "weak_conv_on Qi P sequentially
         (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
-    and sQ: "\<And>i. sets (Qi i) = sets (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and sQ: "\<And>i. sets (Qi i) = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and pQ: "\<And>i. prob_space (Qi i)" and pP: "prob_space P"
     and yconv: "yi \<longlonglongrightarrow> x"
     and pos: "emeasure P {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
@@ -317,8 +313,7 @@ theorem etime_shift_box:
       {\<omega> \<in> space (Qi i). etime T A (\<lambda>s w. yi i + w s) \<omega> < d} \<noteq> 0) sequentially"
 proof -
   interpret PP: prob_space P by (rule pP)
-  have sP: "sets P = sets (borel_of
-      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+  have sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     using wc[unfolded weak_conv_on_def] by blast
   obtain \<delta> G where d0: "0 < \<delta>"
     and Gopen: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) G"
@@ -403,8 +398,7 @@ lemma vshift_less_iff_positive_mass:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
     and Q :: "(real \<Rightarrow> 'b) measure"
   assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d" and d0: "0 \<le> d"
-    and sQ: "sets Q = sets (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and sQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and pQ: "prob_space Q"
   shows "vshift T A y Q < d
       \<longleftrightarrow> emeasure Q {\<omega> \<in> space Q. etime T A (\<lambda>s w. y + w s) \<omega> < d} \<noteq> 0"
@@ -449,8 +443,7 @@ theorem vshift_sup_usc:
     and cC: "compactin (weak_conv_topology
         (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))) C"
     and neC: "C \<noteq> {}"
-    and sC: "\<And>Q. Q \<in> C \<Longrightarrow> sets Q = sets (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and sC: "\<And>Q. Q \<in> C \<Longrightarrow> sets Q = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and pC: "\<And>Q. Q \<in> C \<Longrightarrow> prob_space Q"
     and lt: "Sup (vshift T A x ` C) < c"
   shows "eventually (\<lambda>y. Sup (vshift T A y ` C) < c) (nhds x)"
@@ -536,8 +529,7 @@ next
       have wc: "weak_conv_on Qi P sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
         using lQ .
-      have sQi: "sets (Qi i) = sets (borel_of
-          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))" for i
+      have sQi: "sets (Qi i) = sets (path_borel T :: (real \<Rightarrow> 'b) measure)" for i
         by (rule sC[OF inC])
       have pQi: "prob_space (Qi i)" for i by (rule pC[OF inC])
       have ev: "eventually (\<lambda>i. emeasure (Qi i)
@@ -568,8 +560,7 @@ corollary vshift_sup_usc_of_seq_compact:
   fixes T c :: real and A :: "'b::{polish_space,real_normed_vector} set"
     and C :: "(real \<Rightarrow> 'b) measure set" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A" and neC: "C \<noteq> {}"
-    and sC: "\<And>Q. Q \<in> C \<Longrightarrow> sets Q = sets (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and sC: "\<And>Q. Q \<in> C \<Longrightarrow> sets Q = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and pC: "\<And>Q. Q \<in> C \<Longrightarrow> prob_space Q"
     and seq: "\<And>\<sigma> :: nat \<Rightarrow> (real \<Rightarrow> 'b) measure. range \<sigma> \<subseteq> C \<Longrightarrow>
         \<exists>L r. L \<in> C \<and> strict_mono r \<and> weak_conv_on (\<sigma> \<circ> r) L sequentially
@@ -700,12 +691,11 @@ theorem vshift_path_law:
        = enn2real (ess_inf_time M (etime T A (\<lambda>s \<omega>'. y + X s \<omega>')))"
 proof -
   have pm: "(\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T})
-      \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+      \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
     by (rule pathify_measurable[OF T Xm cont])
-  have meas: "{\<omega> \<in> space (borel_of
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))).
+  have meas: "{\<omega> \<in> space (path_borel T :: (real \<Rightarrow> 'b) measure).
         c \<le> ennreal (etime T A (\<lambda>s w. y + w s) \<omega>)}
-      \<in> sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+      \<in> sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     for c :: ennreal
     using borel_of_closed[OF etime_shift_superlevel_closed[OF T A, of c y]]
     by (simp add: space_borel_of)
@@ -787,8 +777,7 @@ qed
 
 lemma mkt_path_laws_sets:
   assumes "Q \<in> mkt_path_laws k L K x0 T"
-  shows "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: (real \<Rightarrow> real^'m::finite) metric)))"
+  shows "sets Q = sets (path_borel T :: (real \<Rightarrow> real^'m::finite) measure)"
   using assms unfolding mkt_path_laws_def mkt_law_witness_def by auto
 
 lemma mkt_path_laws_topspace:
@@ -860,8 +849,7 @@ proof -
       set_integrable lborel {0..t} (\<lambda>s. aa i s \<omega> $ l $ l)"
     using Wi unfolding mkt_law_witness_def by blast
   obtain a N where aN1: "strict_mono a" and aN2: "finite_measure N"
-    and aN3: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    and aN3: "sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     and aN5: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N
         sequentially
         (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
@@ -898,8 +886,7 @@ lemma mkt_path_laws_subset_closure:
 
 lemma mkt_law_closure_sets:
   assumes "Q \<in> mkt_law_closure k L K x0 T"
-  shows "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: (real \<Rightarrow> real^'m::finite) metric)))"
+  shows "sets Q = sets (path_borel T :: (real \<Rightarrow> real^'m::finite) measure)"
   using closure_of_subset_topspace assms
   unfolding mkt_law_closure_def by fastforce
 
@@ -955,8 +942,7 @@ proof (rule vshift_sup_usc_of_seq_compact[OF T A])
   show "mkt_law_closure k L K x0 T \<noteq> {}"
     using mkt_path_laws_subset_closure[OF T] ne by blast
   show "\<And>Q. Q \<in> mkt_law_closure k L K x0 T \<Longrightarrow>
-      sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+      sets Q = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     by (rule mkt_law_closure_sets)
   show "\<And>Q. Q \<in> mkt_law_closure k L K x0 T \<Longrightarrow> prob_space Q"
     by (rule mkt_law_closure_prob[OF T])
@@ -1678,12 +1664,11 @@ proof -
   have cont: "continuous_on {0..T} (\<lambda>t. X t \<omega>)" if "\<omega> \<in> space M" for \<omega>
     by (rule continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
   have pm: "(\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T}) \<in> M \<rightarrow>\<^sub>M
-      borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+      (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     by (rule pathify_measurable[OF T Xm cont])
   interpret PQ: prob_space Q
     by (rule mkt_path_laws_prob[OF T Q])
-  have setB: "confined_paths T K x0 \<in> sets (borel_of
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+  have setB: "confined_paths T K x0 \<in> sets (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     by (rule borel_of_closed[OF closedin_confined_paths[OF T K]])
   then have setQ: "confined_paths T K x0 \<in> sets Q"
     using mkt_path_laws_sets[OF Q] by simp
@@ -1937,14 +1922,13 @@ proof -
   have cont: "continuous_on {0..T} (\<lambda>u. X u \<omega>)" if "\<omega> \<in> space M" for \<omega>
     by (rule continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
   have pm: "(\<lambda>\<omega>. restrict (\<lambda>u. X u \<omega>) {0..T}) \<in> M \<rightarrow>\<^sub>M
-      borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+      (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     by (rule pathify_measurable[OF T0 Xm cont])
   have Gcont: "continuous_map
       (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
       euclideanreal ?G"
     by (rule martingale_test_functional_cont[OF st sT tI hc])
-  have Gmeas: "?G \<in> borel_measurable (borel_of
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+  have Gmeas: "?G \<in> borel_measurable (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     using continuous_map_measurable[OF Gcont]
     by (simp add: borel_of_euclidean)
   have rr: "restrict (restrict g {0..T}) {0..s} = restrict g {0..s}"
@@ -1961,10 +1945,9 @@ proof -
       by (intro continuous_on_subset[OF sv.X_paths_cont]) auto
   qed
   have pms: "(\<lambda>\<omega>. restrict (\<lambda>u. X u \<omega>) {0..s}) \<in> (F s) \<rightarrow>\<^sub>M
-      borel_of (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))"
+      (path_borel s :: (real \<Rightarrow> real^'m) measure)"
     by (rule pathify_measurable[OF st Xm_Fs cont_Fs])
-  have hmeas: "h \<in> borel_measurable (borel_of
-      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+  have hmeas: "h \<in> borel_measurable (path_borel s :: (real \<Rightarrow> real^'m) measure)"
     using continuous_map_measurable[OF hc]
     by (simp add: borel_of_euclidean)
   have ZFs: "Z \<in> borel_measurable (F s)"
@@ -2526,22 +2509,20 @@ proof -
   have cont: "continuous_on {0..T} (\<lambda>u. X u \<omega>)" if "\<omega> \<in> space M" for \<omega>
     by (rule continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
   have pm: "(\<lambda>\<omega>. restrict (\<lambda>u. X u \<omega>) {0..T}) \<in> M \<rightarrow>\<^sub>M
-      borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+      (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     by (rule pathify_measurable[OF T0 Xm cont])
   have Gcont: "continuous_map
       (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
       euclideanreal ?G"
     by (rule covariation_test_functional_cont[OF st sT tI hc])
-  have Gmeas: "?G \<in> borel_measurable (borel_of
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+  have Gmeas: "?G \<in> borel_measurable (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     using continuous_map_measurable[OF Gcont]
     by (simp add: borel_of_euclidean)
   have Hcont: "continuous_map
       (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
       euclideanreal ?H"
     by (rule past_test_functional_cont[OF st sT hc])
-  have Hmeas: "?H \<in> borel_measurable (borel_of
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+  have Hmeas: "?H \<in> borel_measurable (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     using continuous_map_measurable[OF Hcont]
     by (simp add: borel_of_euclidean)
   have rr: "restrict (restrict g {0..T}) {0..s} = restrict g {0..s}"
@@ -2558,10 +2539,9 @@ proof -
       by (intro continuous_on_subset[OF sv.X_paths_cont]) auto
   qed
   have pms: "(\<lambda>\<omega>. restrict (\<lambda>u. X u \<omega>) {0..s}) \<in> (F s) \<rightarrow>\<^sub>M
-      borel_of (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))"
+      (path_borel s :: (real \<Rightarrow> real^'m) measure)"
     by (rule pathify_measurable[OF st Xm_Fs cont_Fs])
-  have hmeas: "h \<in> borel_measurable (borel_of
-      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+  have hmeas: "h \<in> borel_measurable (path_borel s :: (real \<Rightarrow> real^'m) measure)"
     using continuous_map_measurable[OF hc]
     by (simp add: borel_of_euclidean)
   have ZFs: "Z \<in> borel_measurable (F s)"
@@ -2814,8 +2794,7 @@ theorem mkt_law_closure_martingale_event:
   assumes T0: "0 \<le> T" and Kball: "K \<subseteq> cball 0 r" and r0: "0 \<le> r"
     and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    and B: "B \<in> sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
   shows "(\<integral>f. rclamp (2 * r) (f t $ i - f s $ i)
       * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>) = 0"
 proof -
@@ -2960,11 +2939,9 @@ proof -
   qed
   have N12: "N1 = N2"
   proof (rule metric_measure_eqI_bounded_cts[where m = "path_metric s"])
-    show "sets N1 = sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    show "sets N1 = sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
       by (rule sN1)
-    show "sets N2 = sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    show "sets N2 = sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
       by (rule sN2)
     show "finite_measure N1"
       unfolding N1_def by (rule finw[OF gpm gp0 gpb])
@@ -3050,8 +3027,7 @@ theorem mkt_law_closure_covariation_event:
   assumes T0: "0 \<le> T" and Kball: "K \<subseteq> cball 0 r" and r0: "0 \<le> r"
     and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    and B: "B \<in> sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
   shows "(\<integral>f. (rclamp (2 * r) (f t $ i - f s $ i))\<^sup>2
         * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)
       \<le> L * (t - s) * (\<integral>f. indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)"
@@ -3165,11 +3141,9 @@ proof -
   have BN1: "B \<in> sets N1" using B sN1 by simp
   have mono: "measure N1 B \<le> measure N2 B"
   proof (rule metric_measure_mono_bounded_cts[where m = "path_metric s"])
-    show "sets N1 = sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    show "sets N1 = sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
       by (rule sN1)
-    show "sets N2 = sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    show "sets N2 = sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
       by (rule sN2)
     show "finite_measure N1"
       unfolding N1_def by (rule finw[OF qmeasL q0 qb])
@@ -3241,8 +3215,7 @@ corollary mkt_law_closure_increment_event:
     and r0: "0 \<le> r"
     and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    and B: "B \<in> sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
   shows "(\<integral>f. (f t $ i - f s $ i)
       * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>) = 0"
 proof -
@@ -3333,8 +3306,7 @@ corollary mkt_law_closure_sq_increment_event:
     and r0: "0 \<le> r"
     and L: "\<Lambda> \<in> mkt_law_closure k L K x0 T"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)))"
+    and B: "B \<in> sets (path_borel s :: (real \<Rightarrow> real^'m) measure)"
   shows "(\<integral>f. (f t $ i - f s $ i)\<^sup>2
         * indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)
       \<le> L * (t - s) * (\<integral>f. indicat_real B (restrict f {0..s}) \<partial>\<Lambda>)"

@@ -491,7 +491,7 @@ lemma path_eval_measurable_natural_filtration':
   fixes U u v :: real
   assumes v: "v \<in> {0..u}"
   shows "(\<lambda>\<omega> :: 'n::finite pairpath. \<omega> v) \<in> borel_measurable (natural_filtration
-      (borel_of (mtopology_of (path_metric U :: ('n pairpath) metric)))
+      (path_borel U :: ('n pairpath) measure)
       0 (\<lambda>v \<omega>. \<omega> v) u)"
   unfolding natural_filtration_def
   by (rule measurable_family_vimage_algebra) (use v in auto)
@@ -500,11 +500,10 @@ lemma pstopped_const_measurable_filtration:
   fixes T t :: real
   assumes T0: "0 \<le> T" and t: "0 \<le> t" and tT: "t \<le> T"
   shows "pstopped T (\<lambda>_. t)
-      \<in> natural_filtration (borel_of (mtopology_of
-          (path_metric T :: ('n::finite pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t
-      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      \<in> natural_filtration (path_borel T :: ('n::finite pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t
+      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
   have spF: "space ?F = mspace (path_metric T :: ('n pairpath) metric)"
     by (simp add: space_borel_of)
@@ -542,15 +541,12 @@ qed
 
 lemma path_stopping_time_event_filtration:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n::finite pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n::finite pairpath) measure)"
     and t: "0 \<le> t" and tT: "t \<le> T"
-  shows "{\<omega> \<in> space (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))). \<theta> \<omega> \<le> t}
-      \<in> sets (natural_filtration (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure). \<theta> \<omega> \<le> t}
+      \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
   have spF: "space ?F = space ?B" by simp
   have cm: "pstopped T (\<lambda>_. t) \<in> ?F \<rightarrow>\<^sub>M ?B"

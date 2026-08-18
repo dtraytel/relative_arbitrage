@@ -23,8 +23,7 @@ lemma exit_class_fourth_moment_integrable:
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
   shows "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
 proof -
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have sI: "s \<in> {0..T}" using st stt ttT by simp
   have tI: "tt \<in> {0..T}" using st stt ttT by simp
@@ -55,8 +54,7 @@ lemma exit_class_fourth_moment_bochner:
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
   shows "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
 proof -
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have int: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
     by (rule exit_class_fourth_moment_integrable[OF T L Q st stt ttT])
@@ -118,8 +116,7 @@ proof -
              \<le> (?c + ?B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
   have T0: "0 \<le> T" using T by simp
   have ga1: "ga \<le> 1" using ga4 by simp
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
@@ -272,8 +269,7 @@ proof -
     show "finite_measure N" if "N \<in> \<Gamma>" for N
       using exit_class_prob[OF mem[OF that]]
       by (simp add: prob_space_def)
-    show "sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))) = sets N" if "N \<in> \<Gamma>" for N
+    show "sets (path_borel T :: ('n pairpath) measure) = sets N" if "N \<in> \<Gamma>" for N
       by (rule exit_class_sets[OF mem[OF that], symmetric])
     fix e :: real assume e: "0 < e"
     have lim: "(\<lambda>m :: nat. real CARD('n) * (8*L\<^sup>2*T * ?q^m / (1 - ?q)))
@@ -338,8 +334,7 @@ theorem exit_class_weak_limit_prob_space:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and fin: "finite_measure Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and le1: "emeasure Q (space Q) \<le> ennreal 1"
   shows "prob_space Q"
 proof -
@@ -366,8 +361,7 @@ proof -
     have mK: "1 - e < measure (Qm m) K" for m
     proof -
       interpret Pm: prob_space "Qm m" by (rule exit_class_prob[OF mem])
-      have setsm: "sets (Qm m) = sets (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric)))"
+      have setsm: "sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
         by (rule exit_class_sets[OF mem])
       have Km: "K \<in> sets (Qm m)"
         using borel_of_closed[OF Kcl] setsm by simp

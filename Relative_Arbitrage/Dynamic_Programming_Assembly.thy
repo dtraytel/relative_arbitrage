@@ -174,10 +174,8 @@ text \<open>The two pathwise lemmas compose into the law-level statement the
 theorem aglue_law_pexit_ge:
   fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and Kc: "closed K" and L1: "1 \<le> L"
     and st: "path_stopping_time T \<theta>"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
@@ -192,7 +190,7 @@ theorem aglue_law_pexit_ge:
               (\<lambda>u. fst (p' (\<theta> p')) + fst (prebase (\<theta> p') T w u))"
   shows "AE \<omega> in aglue_law T \<kappa> Q. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
@@ -284,18 +282,15 @@ lemma selector_value_AE:
   fixes \<nu> :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
   assumes s0: "0 \<le> s" and sT: "s \<le> T" and Kc: "closed K"
     and Pnu: "prob_space \<nu>"
-    and setsnu: "sets \<nu> = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsnu: "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)"
     and val: "ess_inf_time (pshift_law (T - s) y
-          (distr \<nu> (borel_of (mtopology_of
-            (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)))
+          (distr \<nu> ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)))
           (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t)))
         = exit_val k L (T - s) K y"
   shows "AE w in \<nu>. enn2real (exit_val k L (T - s) K y)
       \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))"
 proof -
-  let ?Bs = "borel_of (mtopology_of
-      (path_metric (T - s) :: ('n pairpath) metric))"
+  let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
   let ?\<mu> = "distr \<nu> ?Bs (prebase s T)"
   let ?v = "exit_val k L (T - s) K y"
   have Ts: "0 \<le> T - s" using sT by simp
@@ -386,18 +381,14 @@ definition selker ::
 lemma selker_measurable:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Sm: "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
-        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric)))"
-  shows "selker Sel \<theta> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+        \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
+  shows "selker Sel \<theta> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
@@ -434,11 +425,9 @@ text \<open>Every kernel hypothesis of @{thm [source] exit_class_aglue} is a
 theorem exit_class_aglue_selector:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T0: "0 < T" and L1: "1 \<le> L" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
@@ -455,11 +444,10 @@ theorem exit_class_aglue_selector:
         (\<lambda>p'. outerp (fst (p' (min u T))) - snd (p' (min u T)))"
     and Sc: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
     and Sm: "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
-        \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric)))"
+        \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
   shows "aglue_law T (selker Sel \<theta>) Q \<in> exit_class k L T x"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?\<kappa> = "selker Sel \<theta>"
   let ?CX = "1 + real CARD('n) * (real CARD('n) * L * T)"
   let ?CC = "real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
@@ -676,8 +664,7 @@ proof -
   have gintX: "integrable Q (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
         * (fst (padd T p' w (min u T)) $ e) \<partial>(?\<kappa> p'))"
     if u: "0 \<le> u" and uT: "u \<le> T"
-      and BB: "BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))"
+      and BB: "BB \<in> sets (path_borel i :: ('n pairpath) measure)"
       and i0: "0 \<le> i" and iT: "i \<le> T" for u BB e i
   proof (rule aglue_gint_X[OF T0' setsQ Kp i0 iT BB _ QXabs[of u e, OF u]])
     show "integrable (?\<kappa> p') (\<lambda>w. fst (padd T p' w (min u T)) $ e)"
@@ -690,8 +677,7 @@ proof -
         * ((outerp (fst (padd T p' w (min u T)))
             - snd (padd T p' w (min u T))) $ c $ d) \<partial>(?\<kappa> p'))"
     if u: "0 \<le> u" and uT: "u \<le> T"
-      and BB: "BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))"
+      and BB: "BB \<in> sets (path_borel i :: ('n pairpath) measure)"
       and i0: "0 \<le> i" and iT: "i \<le> T" for u BB c d i
   proof (rule aglue_gint_C[OF T0' setsQ Kp i0 iT BB _ QCabs[of u, OF u]])
     show "integrable (?\<kappa> p') (\<lambda>w. (outerp (fst (padd T p' w (min u T)))
@@ -751,11 +737,9 @@ theorem exit_val_ge_of_stopped_bound:
   fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
     and x :: "real^'n"
   assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
@@ -772,7 +756,7 @@ theorem exit_val_ge_of_stopped_bound:
            then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
   shows "ennreal c \<le> exit_val k L T K x"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0': "0 \<le> T" using T0 by simp
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
@@ -784,8 +768,7 @@ proof -
     and Sc: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
     and Sv: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
         ess_inf_time (pshift_law (T - s) y
-            (distr (Sel (s, y)) (borel_of (mtopology_of
-              (path_metric (T - s) :: ('n pairpath) metric))) (prebase s T)))
+            (distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)))
           (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = exit_val k L (T - s) K y"
     by (rule exit_val_measurable_selector_horizon[where k = k, OF T0 L1 Kc]) blast
   let ?\<kappa> = "selker Sel \<theta>"
@@ -906,16 +889,14 @@ lemma dpp_integrand_measurable_stopping:
   fixes K :: "(real^'n::finite) set"
   assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-  shows "{p' \<in> space (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))).
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+  shows "{p' \<in> space (path_borel T :: ('n pairpath) measure).
       c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
         + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
            then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)}
-    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    \<in> sets (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0': "0 \<le> T" using T0 by simp
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
@@ -1035,15 +1016,14 @@ theorem exit_val_dpp_ge_const_time:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and P :: "('n pairpath) measure"
   assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and P: "P \<in> exit_class k L T x"
     and bnd: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
            then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
   shows "ennreal c \<le> exit_val k L T K x"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Q = "pair_law_of T (pstopped T \<theta>) P"
   have T0': "0 \<le> T" using T0 by simp
   have L0: "0 \<le> L" using L1 by simp
@@ -1120,8 +1100,7 @@ corollary exit_val_dpp_sup_ge_time:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
   assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
   shows "(SUP P \<in> exit_class k L T x. ess_inf_time P
             (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
               + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K

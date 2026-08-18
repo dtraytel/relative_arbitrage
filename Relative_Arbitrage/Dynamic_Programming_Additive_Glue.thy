@@ -53,10 +53,10 @@ lemma padd_measurable_left:
   assumes T0: "0 \<le> T"
     and p: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
   shows "(\<lambda>w. padd T p' w)
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      \<in> (path_borel T :: ('n pairpath) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have into: "padd T p' w \<in> mspace (path_metric T :: ('n pairpath) metric)"
     if "w \<in> space ?B" for w
     using that p by (auto simp: space_borel_of intro: padd_mspace)
@@ -87,11 +87,11 @@ lemma padd_measurable:
   fixes T :: real
   assumes T0: "0 \<le> T"
   shows "(\<lambda>p. padd T (fst p) (snd p))
-      \<in> borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
-        \<Otimes>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      \<in> (path_borel T :: ('n::finite pairpath) measure)
+        \<Otimes>\<^sub>M (path_borel T :: ('n pairpath) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?M = "?B \<Otimes>\<^sub>M ?B"
   let ?f = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p)"
   have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
@@ -267,25 +267,24 @@ text \<open>The law of the reassembled path: run the past under \<open>Q\<close>
 definition aglue_law :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> ('n pairpath) measure)
     \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
   where "aglue_law T \<kappa> Q = distr
-      (ksemi Q (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))) \<kappa>)
-      (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (ksemi Q (path_borel T :: ('n pairpath) measure) \<kappa>)
+      (path_borel T :: ('n pairpath) measure)
       (\<lambda>p. padd T (fst p) (snd p))"
 
 lemma sets_aglue_law:
   "sets (aglue_law T \<kappa> Q)
-    = sets (borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric)))"
+    = sets (path_borel T :: ('n::finite pairpath) measure)"
   unfolding aglue_law_def by (rule sets_distr)
 
 lemma padd_measurable_ksemi:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
-      \<in> Q \<Otimes>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
-      \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+      \<in> Q \<Otimes>\<^sub>M (path_borel T :: ('n pairpath) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have s: "sets (Q \<Otimes>\<^sub>M ?B) = sets (?B \<Otimes>\<^sub>M ?B)"
     by (rule sets_pair_measure_cong[OF setsQ refl])
   show ?thesis
@@ -295,13 +294,11 @@ qed
 lemma prob_space_aglue_law:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
   shows "prob_space (aglue_law T \<kappa> Q)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have neQ: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have setsS: "sets (ksemi Q ?B \<kappa>) = sets (Q \<Otimes>\<^sub>M ?B)"
     by (rule sets_ksemi[OF Kp neQ])
@@ -322,17 +319,14 @@ text \<open>The transfer lemma: an almost-sure property of the glued law is an
 lemma AE_aglue_law:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Phi: "{\<omega> \<in> space (borel_of (mtopology_of
-            (path_metric T :: ('n pairpath) metric))). \<Phi> \<omega>}
-        \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
+    and Phi: "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure). \<Phi> \<omega>}
+        \<in> sets (path_borel T :: ('n pairpath) measure)"
   shows "(AE \<omega> in aglue_law T \<kappa> Q. \<Phi> \<omega>)
       \<longleftrightarrow> (AE p' in Q. AE w in \<kappa> p'. \<Phi> (padd T p' w))"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?g = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p)"
   have neQ: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have setsS: "sets (ksemi Q ?B \<kappa>) = sets (Q \<Otimes>\<^sub>M ?B)"
@@ -360,15 +354,13 @@ text \<open>Clause (ii) for the glue: the past starts at \<open>x\<close> and th
 lemma aglue_law_start:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and K0: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. w 0 = 0"
   shows "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have ev0: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
     by (rule pair_law_eval_measurable[OF refl])
   have Phi: "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
@@ -478,10 +470,8 @@ text \<open>Clause (iii) for the glued law.  @{thm [source] exit_class_diffquot_
 lemma aglue_law_diffquot:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
@@ -495,7 +485,7 @@ lemma aglue_law_diffquot:
 proof (rule exit_class_diffquot_of_pairs[OF sets_aglue_law])
   fix p q :: real
   assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
     by (simp add: space_borel_of)
   have mset: "{\<omega> \<in> space ?B.
@@ -622,10 +612,8 @@ text \<open>Assembled: clauses (i)--(iii) are discharged from the lemmas above;
 theorem exit_class_aglue_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
@@ -647,8 +635,7 @@ theorem exit_class_aglue_law:
 proof (intro CollectI conjI)
   show "prob_space (aglue_law T \<kappa> Q)"
     by (rule prob_space_aglue_law[OF T0 PQ setsQ Kp])
-  show "sets (aglue_law T \<kappa> Q) = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  show "sets (aglue_law T \<kappa> Q) = sets (path_borel T :: ('n pairpath) measure)"
     by (rule sets_aglue_law)
   show "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
     by (rule aglue_law_start[OF T0 PQ setsQ Kp Q0 K0])
@@ -672,18 +659,15 @@ text \<open>The set-integral transfer for the glue --- what a martingale identit
 lemma integral_aglue_law:
   fixes Q :: "('n::finite pairpath) measure" and h :: "'n pairpath \<Rightarrow> real"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and hm: "h \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
+    and hm: "h \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and hi: "integrable (aglue_law T \<kappa> Q) h"
     and msec: "(\<lambda>p'. \<integral>w. h (padd T p' w) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
   shows "(\<integral>\<omega>. h \<omega> \<partial>(aglue_law T \<kappa> Q))
       = (\<integral>p'. (\<integral>w. h (padd T p' w) \<partial>(\<kappa> p')) \<partial>Q)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?g = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p)"
   have neQ: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have setsS: "sets (ksemi Q ?B \<kappa>) = sets (Q \<Otimes>\<^sub>M ?B)"
@@ -777,15 +761,13 @@ text \<open>On \<open>{\<theta> > i}\<close> an \<open>\<F>\<^sub>i\<close>-set 
 lemma section_padd_in_filtration:
   fixes p' :: "'n::finite pairpath" and N :: "('n pairpath) measure"
   assumes i0: "0 \<le> i" and iT: "i \<le> T"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and pm: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric i :: ('n pairpath) metric)))"
+    and B: "B \<in> sets (path_borel i :: ('n pairpath) measure)"
   shows "{w \<in> space N. pcut i (padd T p' w) \<in> B}
       \<in> sets (natural_filtration N 0 (\<lambda>v w. w v) i)"
 proof -
-  let ?Bi = "borel_of (mtopology_of (path_metric i :: ('n pairpath) metric))"
+  let ?Bi = "(path_borel i :: ('n pairpath) measure)"
   have pc: "pcut i p' \<in> mspace (path_metric i :: ('n pairpath) metric)"
   proof -
     have "continuous_on {0..i} p'"
@@ -854,18 +836,15 @@ text \<open>The one set-theoretic step of the four-cell argument.  A \<open>pcut
 lemma pcut_after_in_pre_sigma:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and i0: "0 \<le> i" and iT: "i \<le> T"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric i :: ('n pairpath) metric)))"
+    and B: "B \<in> sets (path_borel i :: ('n pairpath) measure)"
   shows "(pcut i -` B \<inter> space Q) \<inter> {p' \<in> space Q. i < \<theta> p'}
       \<in> pre_sigma_of Q (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)) (\<lambda>p'. min i (\<theta> p'))"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?C = "(pcut i -` B \<inter> space Q) \<inter> {p' \<in> space Q. i < \<theta> p'}"
   have spQ: "space Q = space ?B" by (rule sets_eq_imp_space_eq[OF setsQ])
@@ -917,13 +896,10 @@ subsection \<open>Clause (iv): the inner-integral identity\<close>
 theorem aglue_inner_increment:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 < T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QH: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
@@ -941,8 +917,7 @@ theorem aglue_inner_increment:
       \<Longrightarrow> set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min u T)) $ c)
         = set_lebesgue_integral (\<kappa> p') C (\<lambda>w. fst (w (min v T)) $ c)"
     and i0: "0 \<le> i" and ij: "i \<le> j" and iT: "i \<le> T" and jT: "j \<le> T"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric i :: ('n pairpath) metric)))"
+    and B: "B \<in> sets (path_borel i :: ('n pairpath) measure)"
     and gint: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator B (pcut i (padd T p' w))
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
@@ -951,7 +926,7 @@ theorem aglue_inner_increment:
        = (\<integral>p'. (\<integral>w. indicator B (pcut i (padd T p' w))
             * (fst (padd T p' w (min j T)) $ c) \<partial>(\<kappa> p')) \<partial>Q)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?Y = "\<lambda>u p' :: 'n pairpath. fst (p' (min u T)) $ c"
   let ?g = "\<lambda>u p' :: 'n pairpath. \<integral>w. indicator B (pcut i (padd T p' w))
@@ -1287,13 +1262,10 @@ text \<open>The wrapper.  @{thm [source] sets_natural_filtration_eq_pcut_vimage}
 theorem aglue_law_X_increment:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 < T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QH: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
@@ -1318,16 +1290,15 @@ theorem aglue_law_X_increment:
       \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
     and gint: "\<And>u BB. 0 \<le> u \<Longrightarrow> u \<le> T
-      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> BB \<in> sets (path_borel i :: ('n pairpath) measure)
       \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
   shows "set_lebesgue_integral (aglue_law T \<kappa> Q) A (\<lambda>\<omega>. fst (\<omega> (min i T)) $ c)
        = set_lebesgue_integral (aglue_law T \<kappa> Q) A (\<lambda>\<omega>. fst (\<omega> (min j T)) $ c)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?Bi = "borel_of (mtopology_of (path_metric i :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?Bi = "(path_borel i :: ('n pairpath) measure)"
   let ?R = "aglue_law T \<kappa> Q"
   have T0': "0 \<le> T" using T0 by simp
   have j0: "0 \<le> j" using i0 ij by simp
@@ -1424,13 +1395,10 @@ text \<open>Assembly.  The componentwise identity is
 theorem aglue_law_X_martingale:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 < T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QH: "\<And>c. horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
@@ -1453,8 +1421,7 @@ theorem aglue_law_X_martingale:
       \<Longrightarrow> (\<lambda>p'. \<integral>w. indicator A (padd T p' w)
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
     and gint: "\<And>u BB c i. 0 \<le> u \<Longrightarrow> u \<le> T
-      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> BB \<in> sets (path_borel i :: ('n pairpath) measure)
       \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * (fst (padd T p' w (min u T)) $ c) \<partial>(\<kappa> p'))"
@@ -1462,7 +1429,7 @@ theorem aglue_law_X_martingale:
       (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?R = "aglue_law T \<kappa> Q"
   let ?G = "natural_filtration ?R 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?X = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T))"
@@ -1552,13 +1519,10 @@ text \<open>\<^const>\<open>outerp\<close> is quadratic, so on the product
 theorem aglue_inner_increment_comp:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 < T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QHC: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
@@ -1589,8 +1553,7 @@ theorem aglue_inner_increment_comp:
         = set_lebesgue_integral (\<kappa> p') C
             (\<lambda>w. (outerp (fst (w (min v T))) - snd (w (min v T))) $ c $ d)"
     and i0: "0 \<le> i" and ij: "i \<le> j" and iT: "i \<le> T" and jT: "j \<le> T"
-    and B: "B \<in> sets (borel_of (mtopology_of
-        (path_metric i :: ('n pairpath) metric)))"
+    and B: "B \<in> sets (path_borel i :: ('n pairpath) measure)"
     and gint: "\<And>u. 0 \<le> u \<Longrightarrow> u \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator B (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))
@@ -1602,7 +1565,7 @@ theorem aglue_inner_increment_comp:
             * ((outerp (fst (padd T p' w (min j T)))
                 - snd (padd T p' w (min j T))) $ c $ d) \<partial>(\<kappa> p')) \<partial>Q)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?Z = "\<lambda>u \<omega> :: 'n pairpath.
       (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ c $ d"
@@ -2097,13 +2060,10 @@ subsection \<open>Clause (iv): the compensated martingale for the glued law\<clo
 theorem aglue_law_comp_increment:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 < T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QHC: "horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
@@ -2144,8 +2104,7 @@ theorem aglue_law_comp_increment:
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
           \<in> borel_measurable Q"
     and gint: "\<And>u BB. 0 \<le> u \<Longrightarrow> u \<le> T
-      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> BB \<in> sets (path_borel i :: ('n pairpath) measure)
       \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))
@@ -2155,8 +2114,8 @@ theorem aglue_law_comp_increment:
       = set_lebesgue_integral (aglue_law T \<kappa> Q) A
         (\<lambda>\<omega>. (outerp (fst (\<omega> (min j T))) - snd (\<omega> (min j T))) $ c $ d)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?Bi = "borel_of (mtopology_of (path_metric i :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?Bi = "(path_borel i :: ('n pairpath) measure)"
   let ?R = "aglue_law T \<kappa> Q"
   let ?Z = "\<lambda>u \<omega> :: 'n pairpath.
       (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ c $ d"
@@ -2257,13 +2216,10 @@ qed
 theorem aglue_law_comp_martingale:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T0: "0 < T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and QHC: "\<And>c d. horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
@@ -2301,8 +2257,7 @@ theorem aglue_law_comp_martingale:
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
           \<in> borel_measurable Q"
     and gint: "\<And>u BB c d i. 0 \<le> u \<Longrightarrow> u \<le> T
-      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> BB \<in> sets (path_borel i :: ('n pairpath) measure)
       \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))
@@ -2311,7 +2266,7 @@ theorem aglue_law_comp_martingale:
       (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?R = "aglue_law T \<kappa> Q"
   let ?G = "natural_filtration ?R 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?X = "\<lambda>u \<omega> :: 'n pairpath. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
@@ -2409,13 +2364,10 @@ text \<open>All four clauses hold, with no martingale hypothesis left over.
 theorem exit_class_aglue:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T0: "0 < T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
@@ -2466,14 +2418,12 @@ theorem exit_class_aglue:
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))
           \<in> borel_measurable Q"
     and gintX: "\<And>u BB e i. 0 \<le> u \<Longrightarrow> u \<le> T
-      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> BB \<in> sets (path_borel i :: ('n pairpath) measure)
       \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * (fst (padd T p' w (min u T)) $ e) \<partial>(\<kappa> p'))"
     and gintC: "\<And>u BB c d i. 0 \<le> u \<Longrightarrow> u \<le> T
-      \<Longrightarrow> BB \<in> sets (borel_of (mtopology_of
-          (path_metric i :: ('n pairpath) metric)))
+      \<Longrightarrow> BB \<in> sets (path_borel i :: ('n pairpath) measure)
       \<Longrightarrow> 0 \<le> i \<Longrightarrow> i \<le> T \<Longrightarrow> integrable Q
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))

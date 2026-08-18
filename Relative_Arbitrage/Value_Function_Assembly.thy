@@ -173,8 +173,7 @@ proof -
     using subspace_tangential_exact_growth[OF T0 L1 rho0 orth mk xfix,
         where rB = rB]
     by blast
-  have setsP: "sets P = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF P])
   have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsP])

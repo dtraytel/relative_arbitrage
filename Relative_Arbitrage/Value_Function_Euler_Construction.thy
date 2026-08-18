@@ -145,14 +145,12 @@ qed
 lemma sbmpair_measurable:
   assumes T: "0 \<le> T"
   shows "(sbmpair S T :: ('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath)
-      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric))"
+      \<in> bm_paths \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
   have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict
           (\<lambda>t. (S *v cbmX (0 :: real^'n) t \<omega>,
                 t *\<^sub>R (S ** transpose S))) {0..T})
-      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric))"
+      \<in> bm_paths \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
   proof (rule pathify_measurable[OF T])
     fix t :: real assume "t \<in> {0..T}"
     have c: "(\<lambda>v :: real^'n. (S *v v, t *\<^sub>R (S ** transpose S)))
@@ -194,7 +192,7 @@ lemma sbmpair_law_start:
         fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "sbmpair S T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
   have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
     by (rule pair_law_eval_measurable[OF refl])
@@ -232,7 +230,7 @@ lemma sbmpair_law_diffquot:
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?Q = "pair_law_of T (sbmpair S T) ?M"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "sbmpair S T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
   have spQ: "space ?Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_pair_law_of)
@@ -464,7 +462,7 @@ proof (intro CollectI conjI)
     by (rule prob_space_sbmpair_law[OF T])
   show "sets (pair_law_of T (sbmpair S T)
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      = sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+      = sets (path_borel T :: ('n pairpath) measure)"
     by simp
   show "AE \<omega> in pair_law_of T (sbmpair S T)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
@@ -693,7 +691,7 @@ theorem sbm_law_weak_conv:
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?S = "mspace (path_metric T :: ('n pairpath) metric)"
   let ?law = "\<lambda>S'. pair_law_of T (sbmpair S' T) ?M"
   have fmS: "finite_measure (?law S')" for S' :: "real^'n^'n"
@@ -776,8 +774,7 @@ theorem sbm_kernel_package:
     and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
   shows "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      \<in> borel \<rightarrow>\<^sub>M prob_algebra (borel_of
-        (mtopology_of (path_metric T' :: ('n pairpath) metric)))"
+      \<in> borel \<rightarrow>\<^sub>M prob_algebra (path_borel T' :: ('n pairpath) measure)"
     and "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
@@ -790,7 +787,7 @@ theorem sbm_kernel_package:
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?X = "mtopology_of (path_metric T' :: ('n pairpath) metric)"
-  let ?B = "borel_of (mtopology_of (path_metric T' :: ('n pairpath) metric))"
+  let ?B = "(path_borel T' :: ('n pairpath) measure)"
   let ?W = "weak_conv_topology
       (mtopology_of (path_metric T' :: ('n pairpath) metric))"
   let ?C = "exit_class k L T' (0::real^'n)"
@@ -798,8 +795,7 @@ proof -
       (mspace (path_metric T' :: ('n pairpath) metric))
       (mdist (path_metric T' :: ('n pairpath) metric))"
   let ?P = "{N :: ('n pairpath) measure. prob_space N
-      \<and> sets N = sets (borel_of (mtopology_of
-          (path_metric T' :: ('n pairpath) metric)))}"
+      \<and> sets N = sets (path_borel T' :: ('n pairpath) measure)}"
   define KK where "KK = (\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)"
   have T0': "0 \<le> T'" using T by simp
   have L0: "0 \<le> L" using L by simp
@@ -919,8 +915,7 @@ next
   have T0: "0 < T'" unfolding T'_def using h0 by simp
   have Q: "eulerp SF x h j \<in> exit_class k L r x"
     using Suc unfolding r_def .
-  have setsQ: "sets (eulerp SF x h j) = sets (borel_of (mtopology_of
-      (path_metric r :: ('n pairpath) metric)))"
+  have setsQ: "sets (eulerp SF x h j) = sets (path_borel r :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have hpos: "0 < (h :: real)" by (rule h0)
   note pack = sbm_kernel_package[OF hpos L1 SFc SFs]
@@ -941,8 +936,7 @@ next
   qed
   have Kp: "(\<lambda>\<omega> :: 'n pairpath.
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
-      \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T' - r) :: ('n pairpath) metric)))"
+      \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra ((path_borel (T' - r) :: ('n pairpath) measure))"
     unfolding hT by (rule measurable_compose[OF eQ pack(1)])
   have Kb: "(\<lambda>\<omega> :: 'n pairpath.
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
@@ -967,8 +961,7 @@ next
     show "eulerp SF x h j \<in> exit_class k L r x" by (rule Q)
     show "(\<lambda>\<omega> :: 'n pairpath.
         pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
-        \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-          (path_metric (T' - r) :: ('n pairpath) metric)))"
+        \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra ((path_borel (T' - r) :: ('n pairpath) measure))"
       by (rule Kp)
     show "(\<lambda>\<omega> :: 'n pairpath.
         pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
@@ -1181,7 +1174,7 @@ theorem sbm_xi_mean0:
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?\<mu> = "pair_law_of h (sbmpair S h) ?M"
-  let ?B = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  let ?B = "(path_borel h :: ('n pairpath) measure)"
   let ?\<xi> = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
       (fst (\<omega>' h) - fst (\<omega>' 0)) - h *\<^sub>R (S ** transpose S)))"
   let ?g = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
@@ -1316,7 +1309,7 @@ theorem sbm_xi_sq_bound:
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?\<mu> = "pair_law_of h (sbmpair S h) ?M"
-  let ?B = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  let ?B = "(path_borel h :: ('n pairpath) measure)"
   let ?\<xi> = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
       (fst (\<omega>' h) - fst (\<omega>' 0)) - h *\<^sub>R (S ** transpose S)))"
   let ?V = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. (\<chi> i. \<omega> i h) :: real^'n"
@@ -1681,9 +1674,9 @@ lemma euXi_measurable:
     and h :: real
   assumes SFc: "continuous_on UNIV SF"
   shows "euXi SF M h m \<in> borel_measurable
-      (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+      (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have tm: "(\<lambda>\<omega> :: 'n pairpath. trace (M ** (outerp
       (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h)))
       - h *\<^sub>R (SF (fst (\<omega> (real j * h)))
@@ -1803,7 +1796,7 @@ proof (induction N)
   have h0': "(0::real) \<le> h" using h0 by simp
   let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
-  let ?Bh = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  let ?Bh = "(path_borel h :: ('n pairpath) measure)"
   note SFsx = SFs[of x]
   have E0: "eulerp SF x h 0 = pshift_law h x ?\<mu>0" by simp
   have sets\<mu>: "sets ?\<mu>0 = sets ?Bh" by simp
@@ -1873,10 +1866,9 @@ next
   define r where "r = real (Suc N) * h"
   define T' where "T' = real (Suc (Suc N)) * h"
   let ?Q = "eulerp SF x h N"
-  let ?Br = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
-  let ?Bt = "borel_of (mtopology_of (path_metric T' :: ('n pairpath) metric))"
-  let ?MR = "borel_of (mtopology_of
-      (path_metric (T' - r) :: ('n pairpath) metric))"
+  let ?Br = "(path_borel r :: ('n pairpath) measure)"
+  let ?Bt = "(path_borel T' :: ('n pairpath) measure)"
+  let ?MR = "(path_borel (T' - r) :: ('n pairpath) measure)"
   let ?K = "\<lambda>\<omega> :: 'n pairpath.
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
   let ?A = "euXi SF M h (Suc N)"
@@ -2092,7 +2084,7 @@ lemma sbm_orth_increment:
     w \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?B = "borel_of (mtopology_of (path_metric h :: ('n pairpath) metric))"
+  let ?B = "(path_borel h :: ('n pairpath) measure)"
   have phim: "sbmpair S h \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF h0])
   have evh: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' h) \<in> ?B \<rightarrow>\<^sub>M borel"
     by (rule pair_law_eval_measurable[OF refl])
@@ -2150,13 +2142,12 @@ qed
 lemma euOrth_mset:
   fixes G :: "real^'n::finite \<Rightarrow> real^'n" and h :: real
   assumes Gc: "continuous_on UNIV G"
-  shows "{\<omega> \<in> space (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric))).
+  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure).
       \<forall>j<m. G (fst (\<omega> (real j * h))) \<bullet>
         (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    \<in> sets (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have per: "{\<omega> \<in> space ?B. G (fst (\<omega> (real j * h))) \<bullet>
       (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
       \<in> sets ?B" for j
@@ -2233,8 +2224,7 @@ proof (induction N)
   let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
   have E0: "eulerp SF x h 0 = pshift_law h x ?\<mu>0" by simp
-  have sets\<mu>: "sets ?\<mu>0 = sets (borel_of (mtopology_of
-      (path_metric h :: ('n pairpath) metric)))" by simp
+  have sets\<mu>: "sets ?\<mu>0 = sets (path_borel h :: ('n pairpath) measure)" by simp
   have st: "AE \<omega> in ?\<mu>0. fst (\<omega> 0) = (0 :: real^'n)"
     using sbmpair_law_start[OF h0', of "SF x"]
     by (rule eventually_mono) simp
@@ -2259,9 +2249,8 @@ next
   define r where "r = real (Suc N) * h"
   define T' where "T' = real (Suc (Suc N)) * h"
   let ?Q = "eulerp SF x h N"
-  let ?Br = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
-  let ?MR = "borel_of (mtopology_of
-      (path_metric (T' - r) :: ('n pairpath) metric))"
+  let ?Br = "(path_borel r :: ('n pairpath) measure)"
+  let ?MR = "(path_borel (T' - r) :: ('n pairpath) measure)"
   let ?K = "\<lambda>\<omega> :: 'n pairpath.
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
   have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
@@ -2287,11 +2276,9 @@ next
   have msetP: "{\<omega> \<in> mspace (path_metric T' :: ('n pairpath) metric).
       \<forall>j<Suc (Suc N). G (fst (\<omega> (real j * h))) \<bullet>
         (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-      \<in> sets (borel_of (mtopology_of
-        (path_metric T' :: ('n pairpath) metric)))"
+      \<in> sets (path_borel T' :: ('n pairpath) measure)"
   proof -
-    have spB: "space (borel_of (mtopology_of
-        (path_metric T' :: ('n pairpath) metric)))
+    have spB: "space (path_borel T' :: ('n pairpath) measure)
         = mspace (path_metric T' :: ('n pairpath) metric)"
       by (rule space_of_path_sets[OF refl])
     show ?thesis
@@ -2443,12 +2430,9 @@ next
     define r where "r = real (Suc N) * h"
     define T' where "T' = real (Suc (Suc N)) * h"
     let ?Q = "eulerp SF x h N"
-    let ?Br = "borel_of (mtopology_of
-        (path_metric r :: ('n pairpath) metric))"
-    let ?Bt = "borel_of (mtopology_of
-        (path_metric T' :: ('n pairpath) metric))"
-    let ?MR = "borel_of (mtopology_of
-        (path_metric (T' - r) :: ('n pairpath) metric))"
+    let ?Br = "(path_borel r :: ('n pairpath) measure)"
+    let ?Bt = "(path_borel T' :: ('n pairpath) measure)"
+    let ?MR = "(path_borel (T' - r) :: ('n pairpath) measure)"
     let ?K = "\<lambda>\<omega> :: 'n pairpath.
         pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
     have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
@@ -3024,8 +3008,7 @@ lemma exit_class_increment_tail:
       l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
     \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l^4"
 proof -
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have int4: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
     by (rule exit_class_fourth_moment_integrable[OF T L Q st stt ttT])
@@ -3092,8 +3075,7 @@ lemma exit_class_increment_tail_norm:
     \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
 proof -
   let ?n = "real (CARD('n))"
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   interpret PQ: prob_space Q by (rule exit_class_prob[OF Q])
   have cpos: "0 < CARD('n)" by (simp add: card_gt_0_iff)
@@ -3296,8 +3278,7 @@ proof -
     let ?Q = "eulerp SF x h i"
     have Qc: "?Q \<in> exit_class k L c x"
       unfolding h_def by (rule eulerp_seq_in_class[OF c0 L1 SFc SFs])
-    have setsQ: "sets ?Q = sets (borel_of (mtopology_of
-        (path_metric c :: ('n pairpath) metric)))"
+    have setsQ: "sets ?Q = sets (path_borel c :: ('n pairpath) measure)"
       by (rule exit_class_sets[OF Qc])
     have spQ: "space ?Q = mspace (path_metric c :: ('n pairpath) metric)"
       by (rule space_of_path_sets[OF setsQ])

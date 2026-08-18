@@ -79,25 +79,22 @@ text \<open>And the \<open>stops\<close> hypothesis at the shifted time.  Above 
 
 lemma path_stopping_time_shift_event:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n::finite pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n::finite pairpath) measure)"
     and i: "0 \<le> i" and t: "0 \<le> t"
-  shows "{\<omega> \<in> space (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))). min (\<theta> \<omega> + i) T \<le> t}
-      \<in> sets (natural_filtration (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure). min (\<theta> \<omega> + i) T \<le> t}
+      \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
 proof (cases "t \<le> T")
   case True
   have st': "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. min (\<theta> \<omega> + i) T)"
     by (rule path_stopping_time_shift[OF st i])
   have m': "(\<lambda>\<omega> :: 'n pairpath. min (\<theta> \<omega> + i) T) \<in> borel_measurable
-      (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+      (path_borel T :: ('n pairpath) measure)"
     using thM by measurable
   show ?thesis
     by (rule path_stopping_time_event_filtration[OF T0 st' m' t True])
 next
   case False
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
   have "{\<omega> \<in> space ?B. min (\<theta> \<omega> + i) T \<le> t} = space ?B"
     using False by auto
@@ -318,19 +315,16 @@ text \<open>The event lemma with the horizon restriction removed: past \<open>T\
 
 lemma path_stopping_time_event_filtration_all:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n::finite pairpath) metric)))"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n::finite pairpath) measure)"
     and t: "0 \<le> t"
-  shows "{\<omega> \<in> space (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))). \<sigma> \<omega> \<le> t}
-      \<in> sets (natural_filtration (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure). \<sigma> \<omega> \<le> t}
+      \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
 proof (cases "t \<le> T")
   case True
   show ?thesis by (rule path_stopping_time_event_filtration[OF T0 st sM t True])
 next
   case False
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
   have lt: "\<sigma> \<omega> \<le> t" for \<omega> :: "'n pairpath"
     using path_stopping_time_le[OF st, of \<omega>] False by simp
@@ -393,17 +387,14 @@ text \<open>The first factor.  Below \<open>t\<close> the stopped path is read o
 lemma pstopped_vimage_pre_sigma:
   fixes P :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and A: "A \<in> sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and A: "A \<in> sets (path_borel T :: ('n pairpath) measure)"
   shows "pstopped T \<theta> -` A \<inter> space P
       \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<theta>"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
@@ -459,20 +450,17 @@ text \<open>The second factor.  An \<open>\<F>\<^sub>u\<close>-set of the path s
 lemma pafter_vimage_pre_sigma:
   fixes P :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and u: "0 \<le> u" and uT: "u \<le> T"
-    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) u)"
+    and A': "A' \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v w. w v) u)"
   shows "pafter T \<theta> -` A' \<inter> space P
       \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
           (\<lambda>\<omega>. max u (\<theta> \<omega>))"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?Bu = "borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?Bu = "(path_borel u :: ('n pairpath) measure)"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
@@ -549,22 +537,18 @@ text \<open>The rectangle itself --- the stopping-time analogue of
 lemma rect_vimage_pre_sigma_stopping:
   fixes P :: "('n::finite pairpath) measure"
   assumes T0: "0 \<le> T"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and u: "0 \<le> u" and uT: "u \<le> T"
-    and A: "A \<in> sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
-    and A': "A' \<in> sets (natural_filtration (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))) 0 (\<lambda>v w. w v) u)"
+    and A: "A \<in> sets (path_borel T :: ('n pairpath) measure)"
+    and A': "A' \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v w. w v) u)"
   shows "(\<lambda>\<omega> :: 'n pairpath. (pstopped T \<theta> \<omega>, pafter T \<theta> \<omega>)) -` (A \<times> A')
         \<inter> space P
       \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
           (\<lambda>\<omega>. max u (\<theta> \<omega>))"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
   have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
@@ -662,23 +646,20 @@ theorem stopped_increment_of_horizon_gen:
   fixes P :: "('n::finite pairpath) measure"
     and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and \<sigma> \<rho> :: "'n pairpath \<Rightarrow> real"
   assumes T0: "0 < T"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     and H: "horizon_sq_int_martingale P
         (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
     and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
     and sts: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and str: "path_stopping_time T \<rho>"
-    and rM: "\<rho> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and rM: "\<rho> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and le: "\<And>\<omega> :: 'n pairpath. \<sigma> \<omega> \<le> \<rho> \<omega>"
     and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
   shows "set_lebesgue_integral P A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
        = set_lebesgue_integral P A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have T0': "0 \<le> T" using T0 by simp
   have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
@@ -737,17 +718,15 @@ lemma integrable_at_path_stopping_time:
   fixes P :: "('n::finite pairpath) measure"
     and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and \<sigma> :: "'n pairpath \<Rightarrow> real"
   assumes T0: "0 < T"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     and H: "horizon_sq_int_martingale P
         (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
     and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
     and sts: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
   shows "integrable P (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have T0': "0 \<le> T" using T0 by simp
   have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
@@ -831,17 +810,14 @@ lemma set_integral_increment_times_known:
   fixes P :: "('n::finite pairpath) measure"
     and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and Z :: "'n pairpath \<Rightarrow> real"
   assumes T0: "0 < T" and PS: "prob_space P"
-    and setsP: "sets P = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     and H: "horizon_sq_int_martingale P
         (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
     and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
     and sts: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and str: "path_stopping_time T \<rho>"
-    and rM: "\<rho> \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and rM: "\<rho> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and le: "\<And>\<omega> :: 'n pairpath. \<sigma> \<omega> \<le> \<rho> \<omega>"
     and Zpre: "\<And>B. B \<in> sets borel \<Longrightarrow> Z -` B \<inter> space P
         \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
@@ -851,7 +827,7 @@ lemma set_integral_increment_times_known:
     and "set_lebesgue_integral P A
         (\<lambda>\<omega> :: 'n pairpath. (Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>) * Z \<omega>) = 0"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?D = "\<lambda>\<omega> :: 'n pairpath. Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>"
   let ?G = "sigma (space P) (pre_sigma_of P ?F \<sigma>)"

@@ -1702,7 +1702,7 @@ proof -
     if T: "0 \<le> T" for T
   proof -
     have p: "(\<lambda>\<omega>. restrict (\<lambda>t. Y t \<omega>) {0..T})
-        \<in> N \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+        \<in> N \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
     proof (rule pathify_measurable[OF T])
       fix t assume "t \<in> {0..T}"
       then show "Y t \<in> borel_measurable N" by (intro Ym) simp

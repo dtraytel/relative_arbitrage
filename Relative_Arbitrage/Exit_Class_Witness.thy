@@ -23,11 +23,11 @@ text \<open>A pair process on some filtered probability space pushes forward to
 definition pair_law_of ::
   "real \<Rightarrow> ('a \<Rightarrow> 'n::finite pairpath) \<Rightarrow> 'a measure \<Rightarrow> ('n pairpath) measure"
   where "pair_law_of T \<phi> M =
-     distr M (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))) \<phi>"
+     distr M (path_borel T :: ('n pairpath) measure) \<phi>"
 
 lemma sets_pair_law_of[simp]:
   "sets (pair_law_of T \<phi> M)
-     = sets (borel_of (mtopology_of (path_metric T :: ('n::finite pairpath) metric)))"
+     = sets (path_borel T :: ('n::finite pairpath) measure)"
   unfolding pair_law_of_def by simp
 
 lemma space_pair_law_of:
@@ -37,8 +37,7 @@ lemma space_pair_law_of:
 
 lemma phi_filtration_measurable:
   fixes M :: "'a measure" and \<phi> :: "'a \<Rightarrow> 'n::finite pairpath"
-  assumes phim: "\<phi> \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric))"
+  assumes phim: "\<phi> \<in> M \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
     and adap: "\<And>r. 0 \<le> r \<Longrightarrow> r \<le> u \<Longrightarrow> (\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)"
     and spF: "space (FF u) = space M"
   shows "\<phi> \<in> FF u \<rightarrow>\<^sub>M natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v) u"
@@ -69,8 +68,7 @@ theorem martingale_pair_law:
   fixes M :: "'a measure" and \<phi> :: "'a \<Rightarrow> 'n::finite pairpath"
     and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> 'b::{banach,second_countable_topology}"
   assumes prob: "prob_space M"
-    and phim: "\<phi> \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric))"
+    and phim: "\<phi> \<in> M \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
     and adap: "\<And>u r. 0 \<le> r \<Longrightarrow> r \<le> u \<Longrightarrow>
         (\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)"
     and Zm: "\<And>u. 0 \<le> u \<Longrightarrow> Z u \<in> borel_measurable
@@ -81,7 +79,7 @@ theorem martingale_pair_law:
 proof -
   let ?Q = "pair_law_of T \<phi> M"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   interpret MG: martingale M FF 0 "\<lambda>u \<omega>. Z u (\<phi> \<omega>)" by (rule mg)
   interpret P: prob_space M by (rule prob)
   have spF: "space (FF u) = space M" if u: "0 \<le> u" for u
@@ -709,16 +707,14 @@ qed
 lemma bmpair_measurable:
   assumes T: "0 \<le> T"
   shows "(bmpair T :: ('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath)
-      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric))"
+      \<in> bm_paths \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
   \<comment> \<open>the intermediate statement carries FULL type annotations; without them
       the obligations \<open>pathify_measurable\<close> generates elaborate at types the
       component lemmas no longer match.\<close>
   have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. restrict
           (\<lambda>t. (cbmX (0 :: real^'n) t \<omega>, t *\<^sub>R (mat 1 :: real^'n^'n))) {0..T})
-      \<in> bm_paths \<rightarrow>\<^sub>M borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric))"
+      \<in> bm_paths \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
   proof (rule pathify_measurable[OF T])
     fix t :: real assume "t \<in> {0..T}"
     have c: "(\<lambda>v :: real^'n. (v, t *\<^sub>R (mat 1 :: real^'n^'n)))
@@ -757,7 +753,7 @@ lemma bmpair_law_start:
         fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "bmpair T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule bmpair_measurable[OF T])
   have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
     by (rule pair_law_eval_measurable[OF refl])
@@ -794,7 +790,7 @@ lemma bmpair_law_diffquot:
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?Q = "pair_law_of T (bmpair T) ?M"
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "bmpair T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule bmpair_measurable[OF T])
   have spQ: "space ?Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_pair_law_of)
@@ -1002,7 +998,7 @@ proof (intro CollectI conjI)
     by (rule prob_space_bmpair_law[OF T])
   show "sets (pair_law_of T (bmpair T)
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      = sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+      = sets (path_borel T :: ('n pairpath) measure)"
     by simp
   show "AE \<omega> in pair_law_of T (bmpair T)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).

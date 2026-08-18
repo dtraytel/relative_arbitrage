@@ -652,8 +652,7 @@ proof -
     unfolding \<theta>_def
     by (rule path_stopping_time_min[OF pball_exit_path_stopping_time[OF T0']
         less_imp_le[OF cc0] ccT'])
-  have thM: "\<theta> \<in> borel_measurable (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     unfolding \<theta>_def
     by (intro borel_measurable_min pball_exit_measurable[OF T0']
         borel_measurable_const)
@@ -1195,15 +1194,14 @@ lemma euOrth_mset_cond:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n"
     and G :: "real^'n \<Rightarrow> real^'n" and h :: real
   assumes SFc: "continuous_on UNIV SF" and Gc: "continuous_on UNIV G"
-  shows "{\<omega> \<in> space (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric))).
+  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure).
       \<forall>j<m. transpose (SF (fst (\<omega> (real j * h))))
           *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
         G (fst (\<omega> (real j * h))) \<bullet>
           (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-    \<in> sets (borel_of (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    \<in> sets (path_borel T :: ('n pairpath) measure)"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   have evm: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?B \<rightarrow>\<^sub>M borel" for u
     by (rule pair_law_eval_measurable[OF refl])
   have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
@@ -1381,8 +1379,7 @@ proof (induction N)
   let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
   have E0: "eulerp SF x h 0 = pshift_law h x ?\<mu>0" by simp
-  have sets\<mu>: "sets ?\<mu>0 = sets (borel_of (mtopology_of
-      (path_metric h :: ('n pairpath) metric)))" by simp
+  have sets\<mu>: "sets ?\<mu>0 = sets (path_borel h :: ('n pairpath) measure)" by simp
   have st: "AE \<omega> in ?\<mu>0. fst (\<omega> 0) = (0 :: real^'n)"
     using sbmpair_law_start[OF h0', of "SF x"]
     by (rule eventually_mono) simp
@@ -1418,9 +1415,8 @@ next
   define r where "r = real (Suc N) * h"
   define T' where "T' = real (Suc (Suc N)) * h"
   let ?Q = "eulerp SF x h N"
-  let ?Br = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
-  let ?MR = "borel_of (mtopology_of
-      (path_metric (T' - r) :: ('n pairpath) metric))"
+  let ?Br = "(path_borel r :: ('n pairpath) measure)"
+  let ?MR = "(path_borel (T' - r) :: ('n pairpath) measure)"
   let ?K = "\<lambda>\<omega> :: 'n pairpath.
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
   have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
@@ -1448,11 +1444,9 @@ next
           *v G (fst (\<omega> (real j * h))) = 0 \<longrightarrow>
         G (fst (\<omega> (real j * h))) \<bullet>
           (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-      \<in> sets (borel_of (mtopology_of
-        (path_metric T' :: ('n pairpath) metric)))"
+      \<in> sets (path_borel T' :: ('n pairpath) measure)"
   proof -
-    have spB: "space (borel_of (mtopology_of
-        (path_metric T' :: ('n pairpath) metric)))
+    have spB: "space (path_borel T' :: ('n pairpath) measure)
         = mspace (path_metric T' :: ('n pairpath) metric)"
       by (rule space_of_path_sets[OF refl])
     show ?thesis
@@ -1849,8 +1843,7 @@ proof -
       let ?Q = "eulerp SF x h i"
       have Qc: "?Q \<in> exit_class k L c x"
         unfolding h_def by (rule eulerp_seq_in_class[OF c0 L1 SFc SFs])
-      have setsQ: "sets ?Q = sets (borel_of (mtopology_of
-          (path_metric c :: ('n pairpath) metric)))"
+      have setsQ: "sets ?Q = sets (path_borel c :: ('n pairpath) measure)"
         by (rule exit_class_sets[OF Qc])
       have spQ: "space ?Q = mspace (path_metric c :: ('n pairpath) metric)"
         by (rule space_of_path_sets[OF setsQ])
@@ -2903,8 +2896,7 @@ proof -
     using tangential_exact_growth[OF T0 L1 k1 kn rho0,
         where y\<^sub>0 = y\<^sub>0 and rB = rB and x = x]
     by blast
-  have setsP: "sets P = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF P])
   have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsP])

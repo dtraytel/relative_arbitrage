@@ -38,7 +38,7 @@ corollary path_laws_convergent_subsequence_market:
     and A_rate: "\<And>i l \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
         0 \<le> AA i l v \<omega> - AA i l u \<omega> \<and> AA i l v \<omega> - AA i l u \<omega> \<le> C * (v - u)"
   shows "\<exists>a N. strict_mono a \<and> finite_measure N
-      \<and> sets N = sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
@@ -139,8 +139,7 @@ theorem market_path_laws_convergent_subsequence:
         set_integrable lborel {0..t} (\<lambda>s. aa i s \<omega> $ l $ l)"
     and T0: "0 \<le> T"
   shows "\<exists>a N. strict_mono a \<and> finite_measure N
-      \<and> sets N = sets (borel_of (mtopology_of
-          (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
@@ -406,8 +405,7 @@ proof -
   have g0: "0 < (1/8 :: real)" by simp
   have g2: "(1/8 :: real) < 1/4" by simp
   obtain a N where aN1: "strict_mono a" and aN2: "finite_measure N"
-    and aN3: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+    and aN3: "sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     and aN4: "N (space N) \<le> ennreal 1"
     and aN5: "weak_conv_on ((\<lambda>i. path_law (?M' i) (XX i) T) \<circ> a) N
         sequentially
@@ -427,7 +425,7 @@ proof -
       if "\<omega> \<in> space (MM i)" for \<omega>
       by (rule continuous_on_subset[OF sv.X_paths_cont[OF that]]) auto
     have pm: "(\<lambda>\<omega>. restrict (\<lambda>t. XX i t \<omega>) {0..T}) \<in> measurable (MM i)
-        (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+        (path_borel T :: (real \<Rightarrow> real^'m) measure)"
       by (rule pathify_measurable[OF T0 Xm0 cont0])
     show ?thesis
       unfolding path_law_def

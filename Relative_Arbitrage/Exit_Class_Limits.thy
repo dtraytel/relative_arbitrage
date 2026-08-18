@@ -102,12 +102,11 @@ subsection \<open>The restriction map is measurable for the natural filtration\<
 
 lemma restrict_measurable_natural_filtration:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
   shows "(\<lambda>\<omega>. restrict \<omega> {0..s})
       \<in> natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric s :: ('n pairpath) metric))"
+        \<rightarrow>\<^sub>M (path_borel s :: ('n pairpath) measure)"
 proof -
   let ?F = "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s"
   have spF: "space ?F = mspace (path_metric T :: ('n pairpath) metric)"
@@ -129,11 +128,9 @@ qed
 
 lemma past_test_measurable_natural_filtration:
   fixes Q :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
-    and h: "h \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric s :: ('n pairpath) metric)))"
+    and h: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
   shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}))
       \<in> borel_measurable (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s)"
   by (rule measurable_compose
@@ -159,8 +156,7 @@ theorem exit_class_martingale_test:
   fixes Q :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
   assumes Q: "Q \<in> exit_class k L T x"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hm: "h \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric s :: ('n pairpath) metric)))"
+    and hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
     and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
   shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i) \<partial>Q) = 0"
 proof -
@@ -288,13 +284,12 @@ text \<open>\<open>integrable_of_sq_integrable\<close> lives in @{theory Continu
 
 lemma pair_law_coord_measurable:
   fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and u: "u \<in> {0..T}"
   shows "(\<lambda>\<omega>. fst (\<omega> u) $ i) \<in> borel_measurable N"
 proof -
   have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) $ i)
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<in> (path_borel T :: ('n pairpath) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF pair_eval_coord_cont[OF u]]
     by (simp add: borel_of_euclidean)
@@ -304,13 +299,12 @@ qed
 
 lemma pair_law_coord_sq_measurable:
   fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and u: "u \<in> {0..T}"
   shows "(\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2) \<in> borel_measurable N"
 proof -
   have "(\<lambda>\<omega> :: 'n pairpath. (fst (\<omega> u) $ i)\<^sup>2)
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<in> (path_borel T :: ('n pairpath) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF pair_eval_coord_sq_cont[OF u]]
     by (simp add: borel_of_euclidean)
@@ -320,8 +314,7 @@ qed
 
 lemma pair_law_sq_integrable_of_nn_bound:
   fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and u: "u \<in> {0..T}"
     and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
   shows "integrable N (\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2)"
@@ -340,8 +333,7 @@ qed
 
 lemma pair_law_coord_sq_nn_bound:
   fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and u: "u \<in> {0..T}"
     and int: "integrable N (\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2)"
     and le: "(\<integral>\<omega>. (fst (\<omega> u) $ i)\<^sup>2 \<partial>N) \<le> C"
@@ -376,8 +368,7 @@ qed
 
 lemma pair_test_measurable:
   fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes setsN: "sets N = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
         (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
@@ -388,7 +379,7 @@ proof -
   have tI: "t \<in> {0..T}" using st ts tT by simp
   have "(\<lambda>\<omega> :: 'n pairpath.
         h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<in> (path_borel T :: ('n pairpath) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable
       [OF pair_test_functional_cont[OF st sT tI hc, of i]]
@@ -399,8 +390,7 @@ qed
 lemma pair_test_sq_bound:
   fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
   assumes P: "prob_space N"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
         (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
@@ -485,8 +475,7 @@ qed
 lemma pair_test_integrable:
   fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
   assumes P: "prob_space N"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
         (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
@@ -537,8 +526,7 @@ theorem exit_class_martingale_test_limit:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
         (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
@@ -557,8 +545,7 @@ proof -
   have fmm: "finite_measure (Qm m)" for m
     using Pm by (simp add: prob_space_def)
   have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  have setsm: "sets (Qm m) = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))" for m
+  have setsm: "sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)" for m
     by (rule exit_class_sets[OF mem])
   have nnm: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>(Qm m)) \<le> ennreal ?C"
     if u: "u \<in> {0..T}" for u m
@@ -606,8 +593,7 @@ proof -
       by (rule pair_test_sq_bound(1)[OF prob setsQ st ts tT hc hb C0
             nnQ[OF sI] nnQ[OF tI]])
   qed
-  have hm: "h \<in> borel_measurable (borel_of (mtopology_of
-      (path_metric s :: ('n pairpath) metric)))"
+  have hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
     using continuous_map_measurable[OF hc] by (simp add: borel_of_euclidean)
   have zero: "(\<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) = 0" for m
     by (rule exit_class_martingale_test[OF mem st ts tT hm hb])
@@ -668,8 +654,7 @@ lemma exit_class_limit_increment_integrable:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
   shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) $ i - fst (\<omega> s) $ i)"
 proof -
@@ -697,11 +682,9 @@ theorem exit_class_martingale_event_limit:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and Bs: "Bs \<in> sets (borel_of (mtopology_of
-        (path_metric s :: ('n pairpath) metric)))"
+    and Bs: "Bs \<in> sets (path_borel s :: ('n pairpath) measure)"
   shows "(\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..s})
       * (fst (\<omega> t) $ i - fst (\<omega> s) $ i) \<partial>Q) = 0"
 proof -
@@ -917,13 +900,12 @@ text \<open>The converse of \<open>restrict_measurable_natural_filtration\<close
 
 lemma pair_law_eval_measurable:
   fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
   shows "(\<lambda>\<omega>. \<omega> u) \<in> borel_measurable N"
 proof (cases "u \<in> {0..T}")
   case True
   have "(\<lambda>\<omega> :: 'n pairpath. \<omega> u)
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<in> (path_borel T :: ('n pairpath) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF continuous_map_path_eval[OF True]]
     by (simp add: borel_of_euclidean)
@@ -948,13 +930,11 @@ qed
 
 lemma natural_filtration_eq_restrict_vimage:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
     and A: "A \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s)"
   obtains Bs where
-    "Bs \<in> sets (borel_of (mtopology_of
-        (path_metric s :: ('n pairpath) metric)))"
+    "Bs \<in> sets (path_borel s :: ('n pairpath) measure)"
     and "A = (\<lambda>\<omega>. restrict \<omega> {0..s}) -` Bs \<inter> space Q"
 proof -
   let ?PS = "mtopology_of (path_metric s :: ('n pairpath) metric)"
@@ -1005,8 +985,7 @@ theorem exit_class_coord_martingale_limit:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i)"
 proof -
@@ -1062,8 +1041,7 @@ proof -
       have tI: "min v T \<in> {0..T}" by (rule mI[OF v0])
       have tT: "min v T \<le> T" using tI by simp
       have ut: "u \<le> min v T" using True uv by simp
-      obtain Bs where Bs: "Bs \<in> sets (borel_of (mtopology_of
-            (path_metric u :: ('n pairpath) metric)))"
+      obtain Bs where Bs: "Bs \<in> sets (path_borel u :: ('n pairpath) measure)"
         and Aeq: "A = (\<lambda>\<omega>. restrict \<omega> {0..u}) -` Bs \<inter> space Q"
         using natural_filtration_eq_restrict_vimage[OF setsQ uv(1) True A]
         by blast
@@ -1077,7 +1055,7 @@ proof -
             * (fst (\<omega> (min v T)) $ i - fst (\<omega> u) $ i)) \<in> borel_measurable Q"
       proof -
         have rm: "(\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..u}) \<in> Q \<rightarrow>\<^sub>M
-            borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))"
+            (path_borel u :: ('n pairpath) measure)"
           using continuous_map_measurable
             [OF Lipschitz_continuous_imp_continuous_map
               [OF Lipschitz_restrict_path_metric[OF uv(1) True]]]
@@ -1129,8 +1107,7 @@ corollary exit_class_X_martingale_limit:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
   by (rule martingale_vecI)
@@ -1154,8 +1131,7 @@ theorem exit_class_limit_three_clauses:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
     and "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
@@ -1209,8 +1185,7 @@ text \<open>Continuity holds on the whole half-line, not just on \<open>{0..T}\<
 lemma exit_class_path_cont:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and w: "\<omega> \<in> space Q"
   shows "continuous_on {0..} (\<lambda>s. \<omega> (min s T))"
 proof -
@@ -1226,8 +1201,7 @@ qed
 lemma exit_class_coord_paths_cont:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and w: "\<omega> \<in> space Q"
   shows "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
 proof -
@@ -1241,8 +1215,7 @@ qed
 lemma exit_class_comp_paths_cont:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and w: "\<omega> \<in> space Q"
   shows "continuous_on {0..}
       (\<lambda>s. (fst (\<omega> (min s T)) $ i)\<^sup>2 - snd (\<omega> (min s T)) $ i $ i)"
@@ -1304,8 +1277,7 @@ lemma ploc_nonneg: "0 \<le> T \<Longrightarrow> 0 \<le> ploc T i R \<omega>"
 lemma exit_class_cont_adapted:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
   shows "cont_adapted_process Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u))
       (pcoord T i) T"
@@ -1323,8 +1295,7 @@ qed
 lemma exit_class_ploc_stopping:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
     and t: "0 \<le> t"
   shows "{\<omega> \<in> space Q. ploc T i R \<omega> \<le> t}
@@ -1380,8 +1351,7 @@ text \<open>\<open>Optional_Sampling.optional_stopping\<close> asks for an integ
 theorem exit_class_stopped_coord_martingale:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>v \<omega>. pcoord T i (min v (ploc T i R \<omega>)) \<omega>)"
@@ -1454,8 +1424,7 @@ text \<open>The compensated process is stopped by the same argument.  Its
 theorem exit_class_stopped_comp_martingale:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>v \<omega>. (fst (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i)\<^sup>2
@@ -1627,8 +1596,7 @@ text \<open>On the stopped process every moment is free: the starting
 lemma exit_class_stopped_abs_le:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
     and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R" and w: "0 \<le> w"
   shows "AE \<omega> in Q. \<bar>pcoord T i (min w (ploc T i R \<omega>)) \<omega>\<bar> \<le> R"
@@ -1690,8 +1658,7 @@ text \<open>\<open>E[(\<Delta>X\<^sup>\<tau>)\<^sup>2 | \<F>\<^sub>u] = E[\<Delt
 theorem exit_class_stopped_cond_exp:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
     and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R"
     and uv: "0 \<le> u" "u \<le> v"
@@ -1845,8 +1812,7 @@ subsection \<open>The bounded estimate at the stopped pair\<close>
 lemma pcoord_stopped_paths_cont:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and w: "\<omega> \<in> space Q"
   shows "continuous_on {0..} (\<lambda>s. pcoord T i (min s (ploc T i R \<omega>)) \<omega>)"
 proof -
@@ -1863,8 +1829,7 @@ qed
 theorem exit_class_stopped_fourth_moment:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
     and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R"
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
@@ -1946,8 +1911,7 @@ qed
 theorem exit_class_fourth_moment:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Q: "Q \<in> exit_class k L T x"
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
   shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
@@ -2133,13 +2097,12 @@ lemma pair_law_F_measurable:
   fixes N :: "('n::finite pairpath) measure"
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and u: "u \<in> {0..T}"
   shows "(\<lambda>\<omega>. F (\<omega> u)) \<in> borel_measurable N"
 proof -
   have "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> u))
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<in> (path_borel T :: ('n pairpath) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF pair_eval_F_cont[OF Fc u]]
     by (simp add: borel_of_euclidean)
@@ -2150,13 +2113,12 @@ lemma pair_law_F_sq_measurable:
   fixes N :: "('n::finite pairpath) measure"
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and u: "u \<in> {0..T}"
   shows "(\<lambda>\<omega>. (F (\<omega> u))\<^sup>2) \<in> borel_measurable N"
 proof -
   have "(\<lambda>\<omega> :: 'n pairpath. (F (\<omega> u))\<^sup>2)
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<in> (path_borel T :: ('n pairpath) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF pair_eval_F_sq_cont[OF Fc u]]
     by (simp add: borel_of_euclidean)
@@ -2167,8 +2129,7 @@ lemma pair_law_F_sq_integrable_of_nn_bound:
   fixes N :: "('n::finite pairpath) measure"
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and u: "u \<in> {0..T}"
     and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>N) \<le> ennreal C"
   shows "integrable N (\<lambda>\<omega>. (F (\<omega> u))\<^sup>2)"
@@ -2202,8 +2163,7 @@ lemma pair_test_F_measurable:
   fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
         (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
@@ -2213,7 +2173,7 @@ proof -
   have sT: "s \<le> T" using ts tT by simp
   have tI: "t \<in> {0..T}" using st ts tT by simp
   have "(\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))
-      \<in> borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))
+      \<in> (path_borel T :: ('n pairpath) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable
       [OF pair_test_F_functional_cont[OF Fc st sT tI hc]]
@@ -2225,8 +2185,7 @@ lemma pair_test_F_sq_bound:
   fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes P: "prob_space N" and Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
         (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
@@ -2302,8 +2261,7 @@ lemma pair_test_F_integrable:
   fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes P: "prob_space N" and Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
         (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
@@ -2326,13 +2284,11 @@ theorem martingale_test_F:
   fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes P: "prob_space N"
-    and setsN: "sets N = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
     and mgF: "martingale N (natural_filtration N 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hm: "h \<in> borel_measurable (borel_of (mtopology_of
-        (path_metric s :: ('n pairpath) metric)))"
+    and hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
     and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
   shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)) \<partial>N) = 0"
 proof -
@@ -2383,15 +2339,13 @@ theorem martingale_test_F_limit:
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
     and Pm: "\<And>m. prob_space (Qm m)"
-    and setsm: "\<And>m. sets (Qm m) = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
     and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and C0: "0 \<le> C"
     and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
         (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
@@ -2453,8 +2407,7 @@ proof -
       by (rule pair_test_F_sq_bound(1)[OF prob Fc setsQ st ts tT hc hb C0
             nnQ[OF sI] nnQ[OF tI]])
   qed
-  have hm: "h \<in> borel_measurable (borel_of (mtopology_of
-      (path_metric s :: ('n pairpath) metric)))"
+  have hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
     using continuous_map_measurable[OF hc] by (simp add: borel_of_euclidean)
   have zero: "(\<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) = 0" for m
     by (rule martingale_test_F[OF Pm setsm mgm st ts tT hm hb])
@@ -2471,21 +2424,18 @@ theorem martingale_event_F_limit:
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
     and Pm: "\<And>m. prob_space (Qm m)"
-    and setsm: "\<And>m. sets (Qm m) = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
     and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and C0: "0 \<le> C"
     and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
         (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and Bs: "Bs \<in> sets (borel_of (mtopology_of
-        (path_metric s :: ('n pairpath) metric)))"
+    and Bs: "Bs \<in> sets (path_borel s :: ('n pairpath) measure)"
   shows "(\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)) \<partial>Q)
       = 0"
 proof -
@@ -2700,15 +2650,13 @@ theorem martingale_F_limit:
     and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
   assumes T: "0 \<le> T" and Fc: "continuous_on UNIV F"
     and Pm: "\<And>m. prob_space (Qm m)"
-    and setsm: "\<And>m. sets (Qm m) = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
     and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and C0: "0 \<le> C"
     and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
         (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
@@ -2771,8 +2719,7 @@ proof -
       have tI: "min v T \<in> {0..T}" by (rule mI[OF v0])
       have tT: "min v T \<le> T" using tI by simp
       have ut: "u \<le> min v T" using True uv by simp
-      obtain Bs where Bs: "Bs \<in> sets (borel_of (mtopology_of
-            (path_metric u :: ('n pairpath) metric)))"
+      obtain Bs where Bs: "Bs \<in> sets (path_borel u :: ('n pairpath) measure)"
         and Aeq: "A = (\<lambda>\<omega>. restrict \<omega> {0..u}) -` Bs \<inter> space Q"
         using natural_filtration_eq_restrict_vimage[OF setsQ uv(1) True A]
         by blast
@@ -2786,7 +2733,7 @@ proof -
             * (F (\<omega> (min v T)) - F (\<omega> u))) \<in> borel_measurable Q"
       proof -
         have rm: "(\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..u}) \<in> Q \<rightarrow>\<^sub>M
-            borel_of (mtopology_of (path_metric u :: ('n pairpath) metric))"
+            (path_borel u :: ('n pairpath) measure)"
           using continuous_map_measurable
             [OF Lipschitz_continuous_imp_continuous_map
               [OF Lipschitz_restrict_path_metric[OF uv(1) True]]]
@@ -2864,8 +2811,7 @@ lemma exit_class_fourth_moment_abs:
       \<le> ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4))"
 proof -
   interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have T0: "0 \<le> T" using T by simp
   have z: "(0::real) \<in> {0..T}" using T0 by simp
@@ -2955,8 +2901,7 @@ lemma exit_class_comp_entry_sq_nn:
                + 2 * (real CARD('n) * L * T)\<^sup>2)"
 proof -
   interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric T :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have T0: "0 \<le> T" using T by simp
   have B0: "0 \<le> real CARD('n) * L * T" using L T0 by simp
@@ -3077,8 +3022,7 @@ theorem exit_class_comp_entry_martingale_limit:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ i $ j)"
 proof -
@@ -3100,8 +3044,7 @@ proof -
         (\<lambda>p :: (real^'n) \<times> (real^'n^'n). (outerp (fst p) - snd p) $ i $ j)"
       by (rule comp_entry_cont)
     show "prob_space (Qm m)" for m by (rule exit_class_prob[OF mem])
-    show "sets (Qm m) = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))" for m
+    show "sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)" for m
       by (rule exit_class_sets[OF mem])
     show "martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ i $ j)"
@@ -3111,8 +3054,7 @@ proof -
     show "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))" by (rule wc)
     show "prob_space Q" by (rule prob)
-    show "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))" by (rule setsQ)
+    show "sets Q = sets (path_borel T :: ('n pairpath) measure)" by (rule setsQ)
     show "0 \<le> ?C" by (rule C0)
     show "(\<integral>\<^sup>+\<omega>. ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
             \<partial>(Qm m)) \<le> ennreal ?C" if "u \<in> {0..T}" for m u
@@ -3128,8 +3070,7 @@ corollary exit_class_comp_martingale_limit:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
   by (rule martingale_matI)
@@ -3150,8 +3091,7 @@ theorem exit_class_weak_closed:
     and wc: "weak_conv_on Qm Q sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "Q \<in> exit_class k L T x"
 proof -
   have T0: "0 \<le> T" using T by simp
@@ -3159,8 +3099,7 @@ proof -
     unfolding exit_class_def
   proof (intro CollectI conjI)
     show "prob_space Q" by (rule prob)
-    show "sets Q = sets (borel_of (mtopology_of
-        (path_metric T :: ('n pairpath) metric)))" by (rule setsQ)
+    show "sets Q = sets (path_borel T :: ('n pairpath) measure)" by (rule setsQ)
     show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
       by (rule exit_class_limit_three_clauses(1)
           [OF T0 L mem wc prob setsQ])

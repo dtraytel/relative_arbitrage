@@ -76,7 +76,7 @@ theorem restrict_ipath_measurable:
   assumes T: "0 \<le> T"
   shows "(\<lambda>f. restrict f {0..T})
       \<in> (ipath_space :: (real \<Rightarrow> 'b::polish_space) measure)
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+        \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
 proof (rule pathify_measurable[OF T])
   fix t :: real assume "t \<in> {0..T}"
   then show "(\<lambda>f. f t) \<in> borel_measurable (ipath_space :: (real \<Rightarrow> 'b) measure)"

@@ -26,29 +26,26 @@ theorem exit_val_kpaste_ge:
   assumes r: "0 \<le> r" and rT: "r < T" and T0: "0 < T" and L1: "1 \<le> L"
     and K: "closed K"
     and Q: "Q \<in> exit_class k L r x"
-    and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric)))"
+    and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
     and Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
         \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
             (exit_class k L (T - r) (0::real^'n))
             (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
               (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
     and Kc: "\<And>\<omega>. Kr \<omega> \<in> exit_class k L (T - r) 0"
-    and stay: "AE p in ksemi Q (borel_of (mtopology_of
-        (path_metric (T - r) :: ('n pairpath) metric))) Kr.
+    and stay: "AE p in ksemi Q ((path_borel (T - r) :: ('n pairpath) measure)) Kr.
         c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
   shows "ennreal c \<le> exit_val k L T K x"
 proof -
-  let ?MR = "borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))"
-  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?MR = "(path_borel (T - r) :: ('n pairpath) measure)"
+  let ?BT = "(path_borel T :: ('n pairpath) measure)"
   let ?S = "ksemi Q ?MR Kr"
   have T0': "0 \<le> T" using T0 by simp
   have rT': "r \<le> T" using rT by simp
   have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
   interpret PQ: prob_space Q by (rule PQ)
   have ne: "space Q \<noteq> {}" by (rule PQ.not_empty)
-  have setsQ: "sets Q = sets (borel_of (mtopology_of
-      (path_metric r :: ('n pairpath) metric)))"
+  have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have G: "kglue_law' r T Kr Q \<in> exit_class k L T x"
     by (rule exit_class_kglue_law'[OF r rT L1 T0 Q Kp Kb Kc])
@@ -205,8 +202,7 @@ theorem exit_val_measurable_selector_kernel':
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
   obtains S where
-    "S \<in> borel \<rightarrow>\<^sub>M prob_algebra (borel_of
-        (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    "S \<in> borel \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
         (exit_class k L T (0::real^'n))
         (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
@@ -215,11 +211,10 @@ theorem exit_val_measurable_selector_kernel':
     and "\<And>y. ess_inf_time (pshift_law T y (S y))
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
 proof -
-  let ?B = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
   let ?P = "{N :: ('n pairpath) measure. prob_space N
-      \<and> sets N = sets (borel_of (mtopology_of
-          (path_metric T :: ('n pairpath) metric)))}"
+      \<and> sets N = sets (path_borel T :: ('n pairpath) measure)}"
   let ?C = "exit_class k L T (0::real^'n)"
   obtain S where Sm: "S \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
     and SC: "\<And>y. S y \<in> exit_class k L T 0"
@@ -395,9 +390,9 @@ theorem exit_val_dpp_ge_const:
            then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)"
   shows "ennreal c \<le> exit_val k L T K x"
 proof -
-  let ?MR = "borel_of (mtopology_of (path_metric (T - r) :: ('n pairpath) metric))"
-  let ?BT = "borel_of (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?BR = "borel_of (mtopology_of (path_metric r :: ('n pairpath) metric))"
+  let ?MR = "(path_borel (T - r) :: ('n pairpath) measure)"
+  let ?BT = "(path_borel T :: ('n pairpath) measure)"
+  let ?BR = "(path_borel r :: ('n pairpath) measure)"
   have T0: "0 < T" using r rT by simp
   have T0': "0 \<le> T" using T0 by simp
   have rT': "r \<le> T" using rT by simp

@@ -179,17 +179,14 @@ lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
   shows "pexit T K \<in> borel_measurable
-      (borel_of (mtopology_of (path_metric T
-        :: (real \<Rightarrow> 'b) metric)))"
+      (path_borel T :: (real \<Rightarrow> 'b) measure)"
 proof (rule borel_measurableI_less)
   fix c :: real
-  have "{f \<in> space (borel_of (mtopology_of (path_metric T
-        :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
+  have "{f \<in> space (path_borel T :: (real \<Rightarrow> 'b) measure). pexit T K f < c}
       = {f \<in> mspace (path_metric T). pexit T K f < c}"
     by (simp add: space_borel_of)
-  then show "{f \<in> space (borel_of (mtopology_of (path_metric T
-        :: (real \<Rightarrow> 'b) metric))). pexit T K f < c}
-      \<in> sets (borel_of (mtopology_of (path_metric T)))"
+  then show "{f \<in> space (path_borel T :: (real \<Rightarrow> 'b) measure). pexit T K f < c}
+      \<in> sets (path_borel T)"
     using borel_of_open[OF pexit_sublevel_open[OF T K]] by simp
 qed
 
@@ -594,8 +591,7 @@ lemma pstep_integral:
   fixes K :: "('b :: polish_space) set"
     and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
   assumes T: "0 \<le> T" and K: "closed K"
-    and s\<Lambda>: "sets \<Lambda> = sets (borel_of (mtopology_of
-      (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and s\<Lambda>: "sets \<Lambda> = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and fin: "finite_measure \<Lambda>"
   shows "(\<integral>f. pstep T K l N f \<partial>\<Lambda>)
       = exp (- l * T) * measure \<Lambda> (space \<Lambda>)
@@ -982,8 +978,7 @@ qed
 lemma pstep_integrable:
   fixes K :: "('b :: polish_space) set" and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
   assumes T: "0 \<le> T" and K: "closed K"
-    and s\<Lambda>: "sets \<Lambda> = sets (borel_of (mtopology_of
-      (path_metric T :: (real \<Rightarrow> 'b) metric)))"
+    and s\<Lambda>: "sets \<Lambda> = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
     and fin: "finite_measure \<Lambda>"
   shows "integrable \<Lambda> (pstep T K l N)"
 proof -
@@ -1000,7 +995,7 @@ proof -
       unfolding sp\<Lambda> by auto
     have "{f \<in> mspace (path_metric T).
         pexit T K f < real j * T / real N}
-        \<in> sets (borel_of (mtopology_of (path_metric T)))"
+        \<in> sets (path_borel T)"
       by (intro borel_of_open pexit_sublevel_open[OF T K])
     then show ?thesis
       unfolding eq s\<Lambda> .

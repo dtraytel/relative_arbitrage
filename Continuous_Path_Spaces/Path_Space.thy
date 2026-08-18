@@ -23,6 +23,14 @@ text \<open>
 definition path_metric :: "real \<Rightarrow> (real \<Rightarrow> 'b::polish_space) metric" where
   "path_metric T = cfunspace (top_of_set {0..T::real}) (euclidean_metric :: 'b metric)"
 
+text \<open>The Borel \<open>\<sigma>\<close>-algebra of that metric is what every path law lives on,
+  and writing it out is what makes statements about path laws unreadable.  As an
+  \<open>abbreviation\<close> it is unfolded at parse time, so nothing downstream changes
+  meaning.\<close>
+
+abbreviation path_borel :: "real \<Rightarrow> (real \<Rightarrow> 'b::polish_space) measure" where
+  "path_borel T \<equiv> borel_of (mtopology_of (path_metric T))"
+
 lemma mcomplete_path_metric:
   "mcomplete_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric)"
 proof -
@@ -314,7 +322,7 @@ theorem pathify_measurable:
     and Xm: "\<And>t. t \<in> {0..T} \<Longrightarrow> X t \<in> borel_measurable M"
     and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..T} (\<lambda>t. X t \<omega>)"
   shows "(\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T})
-      \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+      \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
 proof -
   interpret PM: Metric_space
     "mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
@@ -448,12 +456,12 @@ definition path_law ::
   "'a measure \<Rightarrow> (real \<Rightarrow> 'a \<Rightarrow> 'b::polish_space) \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b) measure"
   where
   "path_law M X T =
-     distr M (borel_of (mtopology_of (path_metric T)))
+     distr M (path_borel T)
        (\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T})"
 
 lemma sets_path_law[simp]:
   "sets (path_law M X T)
-     = sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric)))"
+     = sets (path_borel T :: (real \<Rightarrow> 'b::polish_space) measure)"
   unfolding path_law_def by simp
 
 lemma prob_space_path_law:
@@ -552,8 +560,8 @@ lemma restrict_measurable_path_borel:
   fixes m m' :: real
   assumes m0: "0 \<le> m" and mm: "m \<le> m'"
   shows "(\<lambda>f. restrict f {0..m})
-      \<in> borel_of (mtopology_of (path_metric m' :: (real \<Rightarrow> 'b::polish_space) metric))
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric m :: (real \<Rightarrow> 'b) metric))"
+      \<in> (path_borel m' :: (real \<Rightarrow> 'b::polish_space) measure)
+        \<rightarrow>\<^sub>M (path_borel m :: (real \<Rightarrow> 'b) measure)"
   by (intro continuous_map_measurable Lipschitz_continuous_imp_continuous_map
         Lipschitz_restrict_path_metric[OF m0 mm])
 
@@ -563,17 +571,17 @@ theorem path_law_restrict:
     and Xm: "\<And>t. t \<in> {0..m'} \<Longrightarrow> X t \<in> borel_measurable M"
     and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..m'} (\<lambda>t. X t \<omega>)"
   shows "distr (path_law M X m')
-           (borel_of (mtopology_of (path_metric m :: (real \<Rightarrow> 'b) metric)))
+           (path_borel m :: (real \<Rightarrow> 'b) measure)
            (\<lambda>f. restrict f {0..m})
        = path_law M X m"
 proof -
   have m'0: "0 \<le> m'" using m0 mm by linarith
   have pfm: "(\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..m'})
-      \<in> M \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric m' :: (real \<Rightarrow> 'b) metric))"
+      \<in> M \<rightarrow>\<^sub>M (path_borel m' :: (real \<Rightarrow> 'b) measure)"
     by (rule pathify_measurable[OF m'0 Xm cont])
   have rm: "(\<lambda>f. restrict f {0..m})
-      \<in> borel_of (mtopology_of (path_metric m' :: (real \<Rightarrow> 'b) metric))
-        \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric m :: (real \<Rightarrow> 'b) metric))"
+      \<in> (path_borel m' :: (real \<Rightarrow> 'b) measure)
+        \<rightarrow>\<^sub>M (path_borel m :: (real \<Rightarrow> 'b) measure)"
     by (rule restrict_measurable_path_borel[OF m0 mm])
   have comp: "((\<lambda>f. restrict f {0..m}) \<circ> (\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..m'}))
       = (\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..m})"
@@ -584,9 +592,9 @@ proof -
       using mm by (auto simp: restrict_def fun_eq_iff o_def)
   qed
   have "distr (path_law M X m')
-           (borel_of (mtopology_of (path_metric m :: (real \<Rightarrow> 'b) metric)))
+           (path_borel m :: (real \<Rightarrow> 'b) measure)
            (\<lambda>f. restrict f {0..m})
-      = distr M (borel_of (mtopology_of (path_metric m :: (real \<Rightarrow> 'b) metric)))
+      = distr M (path_borel m :: (real \<Rightarrow> 'b) measure)
           ((\<lambda>f. restrict f {0..m}) \<circ> (\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..m'}))"
     unfolding path_law_def by (rule distr_distr[OF rm pfm])
   also have "\<dots> = path_law M X m"

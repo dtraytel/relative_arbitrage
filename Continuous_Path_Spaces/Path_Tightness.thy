@@ -144,7 +144,7 @@ theorem path_law_holder_ball_bound:
     \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))"
 proof -
   interpret P: prob_space M by (rule P)
-  let ?PS = "borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
+  let ?PS = "(path_borel T :: (real \<Rightarrow> real) measure)"
   define K where "K = {f \<in> mspace (path_metric T :: (real \<Rightarrow> real) metric).
       f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
         norm (f t - f s) \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)}"
@@ -263,7 +263,7 @@ theorem tight_on_set_path_laws:
 proof -
   have part1: "\<forall>N\<in>(\<lambda>i. path_law (MM i) (XX i) T) ` I.
       finite_measure N
-      \<and> sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric)))
+      \<and> sets (path_borel T :: (real \<Rightarrow> real) measure)
         = sets N"
   proof
     fix N assume "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I"
@@ -273,11 +273,11 @@ proof -
     have PN: "prob_space N"
       unfolding Ni by (rule prob_space_path_law[OF P[OF i] T0 Xm' cont[OF i]])
     have fN: "finite_measure N" by (rule prob_space.axioms(1)[OF PN])
-    have sN: "sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric)))
+    have sN: "sets (path_borel T :: (real \<Rightarrow> real) measure)
         = sets N"
       unfolding Ni by (rule sets_path_law[symmetric])
     show "finite_measure N
-        \<and> sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric)))
+        \<and> sets (path_borel T :: (real \<Rightarrow> real) measure)
           = sets N"
       using fN sN by blast
   qed
@@ -346,7 +346,7 @@ corollary path_laws_convergent_subsequence:
     and mom: "\<And>i u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
         (\<integral>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
   shows "\<exists>a N. strict_mono a \<and> finite_measure N
-      \<and> sets N = sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric)))
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real) measure)
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
@@ -404,7 +404,7 @@ theorem path_law_holder_ball_bound_vec:
         * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
 proof -
   interpret P: prob_space M by (rule P)
-  let ?PS = "borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+  let ?PS = "(path_borel T :: (real \<Rightarrow> real^'m) measure)"
   define c where "c = real CARD('m) * holder_const \<gamma> T n"
   define K where "K = {f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
       f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
@@ -545,7 +545,7 @@ theorem tight_on_set_path_laws_vec:
 proof -
   have part1: "\<forall>N\<in>(\<lambda>i. path_law (MM i) (XX i) T) ` I.
       finite_measure N
-      \<and> sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
         = sets N"
   proof
     fix N assume "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I"
@@ -555,11 +555,11 @@ proof -
     have PN: "prob_space N"
       unfolding Ni by (rule prob_space_path_law[OF P[OF i] T0 Xm' cont[OF i]])
     have fN: "finite_measure N" by (rule prob_space.axioms(1)[OF PN])
-    have sN: "sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+    have sN: "sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
         = sets N"
       unfolding Ni by (rule sets_path_law[symmetric])
     show "finite_measure N
-        \<and> sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+        \<and> sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
           = sets N"
       using fN sN by blast
   qed
@@ -621,7 +621,7 @@ corollary path_laws_convergent_subsequence_vec:
     and mom: "\<And>i l u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
         (\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
   shows "\<exists>a N. strict_mono a \<and> finite_measure N
-      \<and> sets N = sets (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
@@ -669,16 +669,14 @@ theorem path_laws_diagonal_subsequence:
         (\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
   shows "\<exists>a. strict_mono a \<and> (\<forall>m::nat. \<exists>N.
       finite_measure N
-      \<and> sets N = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets N = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) N sequentially
           (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
 proof -
   define Q where "Q = (\<lambda>(m::nat) (s::nat \<Rightarrow> nat). \<exists>N.
       finite_measure N
-      \<and> sets N = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets N = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> s) N sequentially
           (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
@@ -686,8 +684,7 @@ proof -
     if s: "strict_mono s" for m and s :: "nat \<Rightarrow> nat"
   proof -
     have inst: "\<exists>a N. strict_mono a \<and> finite_measure N
-        \<and> sets N = sets (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        \<and> sets N = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
         \<and> N (space N) \<le> ennreal 1
         \<and> weak_conv_on ((\<lambda>i. path_law (MM (s i)) (XX (s i)) (real m)) \<circ> a) N
             sequentially
@@ -712,8 +709,7 @@ proof -
         by (rule mom)
     qed
     then obtain a N where a: "strict_mono a" and N1: "finite_measure N"
-      and N2: "sets N = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
+      and N2: "sets N = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))"
       and N3: "N (space N) \<le> ennreal 1"
       and N4: "weak_conv_on ((\<lambda>i. path_law (MM (s i)) (XX (s i)) (real m)) \<circ> a) N
           sequentially
@@ -732,8 +728,7 @@ proof -
     if r: "strict_mono r" and Qv: "Q n v" for r v :: "nat \<Rightarrow> nat" and n
   proof -
     from Qv obtain N where N1: "finite_measure N"
-      and N2: "sets N = sets (borel_of (mtopology_of
-          (path_metric (real n) :: (real \<Rightarrow> real^'m) metric)))"
+      and N2: "sets N = sets ((path_borel (real n) :: (real \<Rightarrow> real^'m) measure))"
       and N3: "N (space N) \<le> ennreal 1"
       and N4: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real n)) \<circ> v) N
           sequentially
@@ -750,8 +745,7 @@ proof -
     show ?thesis unfolding Q_def using N1 N2 N3 N4' by blast
   qed
   have final: "\<exists>N. finite_measure N
-      \<and> sets N = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets N = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> S.diagseq) N
           sequentially
@@ -760,8 +754,7 @@ proof -
     have "Q m (S.diagseq \<circ> ((+) (Suc m)))"
       by (rule S.diagseq_holds) (rule stable)
     then obtain N where N1: "finite_measure N"
-      and N2: "sets N = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
+      and N2: "sets N = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))"
       and N3: "N (space N) \<le> ennreal 1"
       and N4: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m))
             \<circ> (S.diagseq \<circ> ((+) (Suc m)))) N sequentially
@@ -806,21 +799,18 @@ theorem path_laws_diagonal_consistent:
         (\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
   shows "\<exists>a N. strict_mono a
       \<and> (\<forall>m::nat. finite_measure (N m)
-          \<and> sets (N m) = sets (borel_of (mtopology_of
-              (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+          \<and> sets (N m) = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
           \<and> N m (space (N m)) \<le> ennreal 1
           \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) (N m)
               sequentially
               (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
       \<and> (\<forall>m m'::nat. m \<le> m' \<longrightarrow>
-          distr (N m') (borel_of (mtopology_of
-              (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+          distr (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
             (\<lambda>f. restrict f {0..real m}) = N m)"
 proof -
   obtain a where aa: "strict_mono a \<and> (\<forall>m::nat. \<exists>Nm.
       finite_measure Nm
-      \<and> sets Nm = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets Nm = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       \<and> Nm (space Nm) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) Nm sequentially
           (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
@@ -829,29 +819,25 @@ proof -
   have a: "strict_mono a" by (rule conjunct1[OF aa])
   have all: "\<forall>m::nat. \<exists>Nm.
       finite_measure Nm
-      \<and> sets Nm = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets Nm = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       \<and> Nm (space Nm) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) Nm sequentially
           (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric))"
     by (rule conjunct2[OF aa])
   define N where "N = (\<lambda>m::nat. SOME Nm.
       finite_measure Nm
-      \<and> sets Nm = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets Nm = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       \<and> Nm (space Nm) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) Nm sequentially
           (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
   have Nm: "finite_measure (N m)
-      \<and> sets (N m) = sets (borel_of (mtopology_of
-          (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+      \<and> sets (N m) = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       \<and> N m (space (N m)) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) (N m)
           sequentially
           (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric))" for m
     unfolding N_def by (rule someI_ex) (use all in blast)
-  have consist: "distr (N m') (borel_of (mtopology_of
-        (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+  have consist: "distr (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
       (\<lambda>f. restrict f {0..real m}) = N m" if mm: "m \<le> m'" for m m' :: nat
   proof -
     have m0: "0 \<le> real m" by simp
@@ -868,18 +854,15 @@ proof -
       using Nm[of m'] by blast
     have push: "weak_conv_on
         (\<lambda>i. distr (((\<lambda>i. path_law (MM i) (XX i) (real m')) \<circ> a) i)
-            (borel_of (mtopology_of
-              (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+            ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
             (\<lambda>f. restrict f {0..real m}))
-        (distr (N m') (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        (distr (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
           (\<lambda>f. restrict f {0..real m}))
         sequentially
         (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric))"
       by (rule weak_conv_on_pushforward[OF rc wc'])
     have eq: "(\<lambda>i. distr (((\<lambda>i. path_law (MM i) (XX i) (real m')) \<circ> a) i)
-            (borel_of (mtopology_of
-              (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+            ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
             (\<lambda>f. restrict f {0..real m}))
         = ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a)"
     proof (rule ext)
@@ -891,15 +874,13 @@ proof -
         if "\<omega> \<in> space (MM (a i))" for \<omega>
         by (rule continuous_on_subset[OF cont[OF that]]) auto
       show "(\<lambda>i. distr (((\<lambda>i. path_law (MM i) (XX i) (real m')) \<circ> a) i)
-            (borel_of (mtopology_of
-              (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+            ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
             (\<lambda>f. restrict f {0..real m})) i
           = ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) i"
         using path_law_restrict[OF m0 mmr Xmi conti] by (simp add: o_def)
     qed
     have lim1: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a)
-        (distr (N m') (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        (distr (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
           (\<lambda>f. restrict f {0..real m}))
         sequentially
         (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric))"
@@ -925,16 +906,14 @@ proof -
   proof (intro exI[of _ a] exI[of _ N] conjI)
     show "strict_mono a" by (rule a)
     show "\<forall>m::nat. finite_measure (N m)
-        \<and> sets (N m) = sets (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        \<and> sets (N m) = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
         \<and> N m (space (N m)) \<le> ennreal 1
         \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) (real m)) \<circ> a) (N m)
             sequentially
             (mtopology_of (path_metric (real m) :: (real \<Rightarrow> real^'m) metric))"
       using Nm by blast
     show "\<forall>m m'::nat. m \<le> m' \<longrightarrow>
-        distr (N m') (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        distr (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
           (\<lambda>f. restrict f {0..real m}) = N m"
       using consist by blast
   qed
@@ -1013,15 +992,15 @@ proof (rule weak_conv_on_nn_integral_le[OF wc])
   fix i
   have T0: "0 \<le> T" using uv by linarith
   have pfm: "(\<lambda>\<omega>. restrict (\<lambda>t. XX i t \<omega>) {0..T})
-      \<in> MM i \<rightarrow>\<^sub>M borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+      \<in> MM i \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     by (rule pathify_measurable[OF T0 Xm cont])
   have hm: "(\<lambda>g. (g v $ l - g u $ l)^4) \<in> borel_measurable
-      (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+      (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     using continuous_map_measurable[OF continuous_map_path_moment[OF um vm]]
     by (simp add: borel_of_euclidean)
   note hm[measurable]
   have fm: "(\<lambda>g. ennreal ((g v $ l - g u $ l)^4)) \<in> borel_measurable
-      (borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)))"
+      (path_borel T :: (real \<Rightarrow> real^'m) measure)"
     by measurable
   have "(\<integral>\<^sup>+g. ennreal ((g v $ l - g u $ l)^4) \<partial>(path_law (MM i) (XX i) T))
       = (\<integral>\<^sup>+\<omega>. ennreal ((restrict (\<lambda>t. XX i t \<omega>) {0..T} v $ l
@@ -1059,11 +1038,10 @@ lemma marginal_map_measurable:
   fixes T :: real
   assumes J: "finite J" "J \<subseteq> {0..T}"
   shows "(\<lambda>g. restrict g J)
-      \<in> borel_of (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m::finite) metric))
+      \<in> (path_borel T :: (real \<Rightarrow> real^'m::finite) measure)
         \<rightarrow>\<^sub>M PiM J (\<lambda>_. borel :: (real^'m) measure)"
 proof -
-  have ev: "(\<lambda>g. g t) \<in> borel_of (mtopology_of
-      (path_metric T :: (real \<Rightarrow> real^'m) metric)) \<rightarrow>\<^sub>M borel"
+  have ev: "(\<lambda>g. g t) \<in> (path_borel T :: (real \<Rightarrow> real^'m) measure) \<rightarrow>\<^sub>M borel"
     if t: "t \<in> J" for t
     using continuous_map_measurable[OF continuous_map_path_eval[OF subsetD[OF J(2) t]]]
     by (simp add: borel_of_euclidean)
@@ -1074,11 +1052,9 @@ qed
 theorem projective_limit_of_consistent_path_laws:
   fixes N :: "nat \<Rightarrow> (real \<Rightarrow> real^'m::finite) measure"
   assumes PN: "\<And>m. prob_space (N m)"
-    and sN: "\<And>m. sets (N m) = sets (borel_of (mtopology_of
-        (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
+    and sN: "\<And>m. sets (N m) = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))"
     and consist: "\<And>m m'. m \<le> m' \<Longrightarrow>
-        distr (N m') (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        distr (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
           (\<lambda>f. restrict f {0..real m}) = N m"
   shows "\<exists>L :: (real \<Rightarrow> real^'m) measure. prob_space L
       \<and> sets L = sets (PiM ({0..} :: real set) (\<lambda>_. borel :: (real^'m) measure))
@@ -1110,8 +1086,7 @@ proof -
     if J: "finite J" "J \<subseteq> {0..real m}" for J m
   proof -
     have e: "measurable (N m) (PiM J (\<lambda>_. borel :: (real^'m) measure))
-        = measurable (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        = measurable ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
           (PiM J (\<lambda>_. borel))"
       by (rule measurable_cong_sets[OF sN refl])
     show ?thesis unfolding e by (rule marginal_map_measurable[OF J])
@@ -1123,22 +1098,17 @@ proof -
     have m0: "0 \<le> real m" by simp
     have mr: "real m \<le> real m'" using mle by simp
     have rm: "(\<lambda>f. restrict f {0..real m})
-        \<in> N m' \<rightarrow>\<^sub>M borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric))"
+        \<in> N m' \<rightarrow>\<^sub>M (path_borel (real m) :: (real \<Rightarrow> real^'m) measure)"
     proof -
-      have e: "measurable (N m') (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
-          = measurable (borel_of (mtopology_of
-              (path_metric (real m') :: (real \<Rightarrow> real^'m) metric)))
-            (borel_of (mtopology_of
-              (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
+      have e: "measurable (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
+          = measurable ((path_borel (real m') :: (real \<Rightarrow> real^'m) measure))
+            ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))"
         by (rule measurable_cong_sets[OF sN refl])
       show ?thesis
         unfolding e by (rule restrict_measurable_path_borel[OF m0 mr])
     qed
     have "distr (N m) (PiM J (\<lambda>_. borel :: (real^'m) measure)) (\<lambda>g. restrict g J)
-        = distr (distr (N m') (borel_of (mtopology_of
-              (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        = distr (distr (N m') ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
             (\<lambda>f. restrict f {0..real m}))
           (PiM J (\<lambda>_. borel)) (\<lambda>g. restrict g J)"
       unfolding consist[OF mle] by (rule refl)
@@ -1278,8 +1248,7 @@ lemma lim_coordinate_moment_bound:
     and marg: "\<And>m J. finite J \<Longrightarrow> J \<subseteq> {0..real m} \<Longrightarrow>
         distr L (PiM J (\<lambda>_. borel)) (\<lambda>f. restrict f J)
           = distr (N m) (PiM J (\<lambda>_. borel)) (\<lambda>f. restrict f J)"
-    and sN: "\<And>m. sets (N m) = sets (borel_of (mtopology_of
-        (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))"
+    and sN: "\<And>m. sets (N m) = sets ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))"
     and momN: "\<And>m. v \<le> real m \<Longrightarrow>
         (\<integral>\<^sup>+g. ennreal ((g v $ l - g u $ l)^4) \<partial>(N m))
           \<le> ennreal (8*C\<^sup>2*(v - u)\<^sup>2)"
@@ -1334,8 +1303,7 @@ proof -
   have rN: "(\<lambda>f. restrict f J) \<in> N m \<rightarrow>\<^sub>M PiM J (\<lambda>_. borel :: (real^'m) measure)"
   proof -
     have e: "measurable (N m) (PiM J (\<lambda>_. borel :: (real^'m) measure))
-        = measurable (borel_of (mtopology_of
-            (path_metric (real m) :: (real \<Rightarrow> real^'m) metric)))
+        = measurable ((path_borel (real m) :: (real \<Rightarrow> real^'m) measure))
           (PiM J (\<lambda>_. borel))"
       by (rule measurable_cong_sets[OF sN refl])
     show ?thesis unfolding e by (rule marginal_map_measurable[OF Jf Jm])
