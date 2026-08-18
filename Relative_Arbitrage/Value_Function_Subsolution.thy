@@ -665,66 +665,6 @@ qed
 
 subsection \<open>Quadratics are test functions, and the relaxed predicates\<close>
 
-lemma test_fun_at_quadratic:
-  fixes M :: "real^'n::finite^'n" and p x :: "real^'n" and c :: real
-  assumes sym: "transpose M = M"
-  shows "test_fun_at (\<lambda>z. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
-      (\<lambda>z. p + M *v z) M x"
-  unfolding test_fun_at_def
-proof (intro conjI)
-  show "transpose M = M" by (rule sym)
-next
-  have bl: "bounded_linear (\<lambda>z :: real^'n. M *v z)"
-    unfolding linear_conv_bounded_linear[symmetric]
-    by (rule matrix_vector_mul_linear)
-  have dM: "((\<lambda>z :: real^'n. M *v z) has_derivative (\<lambda>h. M *v h)) (at y)"
-    for y :: "real^'n"
-    by (rule bounded_linear.has_derivative[OF bl has_derivative_ident])
-  have d: "((\<lambda>z :: real^'n. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
-      has_derivative (\<lambda>h. (p + M *v y) \<bullet> h)) (at y)" for y :: "real^'n"
-  proof -
-    have "((\<lambda>z :: real^'n. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
-        has_derivative (\<lambda>h. p \<bullet> h + (h \<bullet> (M *v y) + y \<bullet> (M *v h)) / 2))
-        (at y)"
-      by (auto intro!: derivative_eq_intros dM)
-    moreover have "(\<lambda>h :: real^'n. p \<bullet> h + (h \<bullet> (M *v y) + y \<bullet> (M *v h)) / 2)
-        = (\<lambda>h. (p + M *v y) \<bullet> h)"
-    proof (rule ext)
-      fix h :: "real^'n"
-      have "y \<bullet> (M *v h) = (transpose M *v y) \<bullet> h"
-        by (rule inner_transpose_matrix)
-      then have "y \<bullet> (M *v h) = (M *v y) \<bullet> h" using sym by simp
-      then show "p \<bullet> h + (h \<bullet> (M *v y) + y \<bullet> (M *v h)) / 2
-          = (p + M *v y) \<bullet> h"
-        by (simp add: inner_commute inner_add_right)
-    qed
-    ultimately show ?thesis by simp
-  qed
-  show "\<exists>e>0. \<forall>y \<in> ball x e.
-      ((\<lambda>z. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2) has_derivative
-        (\<lambda>h. (p + M *v y) \<bullet> h)) (at y)"
-    using d by (intro exI[of _ 1]) auto
-next
-  have bl: "bounded_linear (\<lambda>z :: real^'n. M *v z)"
-    unfolding linear_conv_bounded_linear[symmetric]
-    by (rule matrix_vector_mul_linear)
-  show "((\<lambda>z. p + M *v z) has_derivative (\<lambda>h. M *v h)) (at x)"
-    using bounded_linear.has_derivative[OF bl has_derivative_ident]
-    by (auto intro!: derivative_eq_intros)
-qed
-
-section \<open>The ball exit time along a continuous path\<close>
-
-text \<open>Three pathwise facts about \<^const>\<open>pball_exit\<close>, all consumed by an
-  Ito-side supplier and none needing a law: they are statements about a
-  single continuous path.
-
-  The first is attainment.  With \<open>K\<close> open the target \<open>-K\<close> is closed, so
-  along a continuous path the infimum defining \<^const>\<open>pexit\<close> is a minimum
-  whenever it is below the horizon: the path really is outside \<open>K\<close> at the
-  exit time.  This is the single fact that fails for a general
-  discontinuous function, and every other clause below is a consequence
-  of it.\<close>
 
 
 

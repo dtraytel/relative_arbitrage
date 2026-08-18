@@ -406,24 +406,6 @@ proof (intro ballI allI impI)
   qed
 qed
 
-lemma jet_test_fun_at_abstract:
-  fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)" and p x :: "real^'n"
-  assumes lin: "linear X" and sym: "\<And>v w. v \<bullet> X w = w \<bullet> X v"
-  shows "test_fun_at
-      (\<lambda>z. p \<bullet> (z - x) + ((z - x) \<bullet> (matrix X *v (z - x)))/2)
-      (\<lambda>z. p + matrix X *v (z - x)) (matrix X) x"
-  by (rule jet_test_fun_at[OF matrix_of_symmetric[OF lin sym]])
-
-subsection \<open>The closing step of Theorem 4.2\<close>
-
-text \<open>At the test point the gradient field of the jet test function is just
-  \<open>p\<close>, which is what \<open>visc_subsol\<close> and \<open>supersol_jet\<close> feed to \<open>ell_op\<close>.\<close>
-
-text \<open>The subsolution gives \<open>F(p, X) \<le> 1\<close>, the supersolution \<open>1 \<le> F(p, Y)\<close>,
-  and the theorem on sums gives \<open>X \<preceq> Y\<close>, so degenerate ellipticity
-  (\<open>ell_op_elliptic_le\<close>) sandwiches both values at \<open>1\<close>. Since \<open>F = 1\<close>
-  carries no zeroth-order term, closing the argument needs a strict
-  inequality, obtained by perturbing the subsolution.\<close>
 
 lemma ell_op_strict_contradiction:
   fixes X Y :: "real^'n::finite^'n"
@@ -506,41 +488,6 @@ subsection \<open>Scaling a subsolution\<close>
 text \<open>A test function scales, so a subsolution scaled by \<open>\<theta> \<in> (0,1)\<close>
   satisfies the strict operator inequality at each of its test points.\<close>
 
-lemma test_fun_at_scaleR:
-  fixes H :: "real^'n::finite^'n"
-  assumes tf: "test_fun_at \<phi> g H x" and c: "0 < c"
-  shows "test_fun_at (\<lambda>z. c * \<phi> z) (\<lambda>z. c *\<^sub>R g z) (c *\<^sub>R H) x"
-  unfolding test_fun_at_def
-proof (intro conjI)
-  have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
-  show "transpose (c *\<^sub>R H) = c *\<^sub>R H"
-    unfolding transpose_scalar symH ..
-next
-  obtain e where e: "0 < e"
-    and d: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    using tf unfolding test_fun_at_def by blast
-  show "\<exists>e>0. \<forall>y \<in> ball x e.
-      ((\<lambda>z. c * \<phi> z) has_derivative (\<lambda>h. (c *\<^sub>R g y) \<bullet> h)) (at y)"
-  proof (rule exI[of _ e], intro conjI ballI)
-    show "0 < e" by (rule e)
-    fix y assume y: "y \<in> ball x e"
-    have "((\<lambda>z. c *\<^sub>R \<phi> z) has_derivative (\<lambda>h. c *\<^sub>R (g y \<bullet> h))) (at y)"
-      by (rule has_derivative_scaleR_right[OF d[OF y]])
-    moreover have "(\<lambda>h. c *\<^sub>R (g y \<bullet> h)) = (\<lambda>h. (c *\<^sub>R g y) \<bullet> h)"
-      by (rule ext) simp
-    ultimately show "((\<lambda>z. c * \<phi> z) has_derivative (\<lambda>h. (c *\<^sub>R g y) \<bullet> h)) (at y)"
-      by simp
-  qed
-next
-  have dg: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
-    using tf unfolding test_fun_at_def by blast
-  have "((\<lambda>z. c *\<^sub>R g z) has_derivative (\<lambda>h. c *\<^sub>R (H *v h))) (at x)"
-    by (rule has_derivative_scaleR_right[OF dg])
-  moreover have "(\<lambda>h. c *\<^sub>R (H *v h)) = (\<lambda>h. (c *\<^sub>R H) *v h)"
-    by (rule ext) (simp add: scaleR_matrix_vector_assoc)
-  ultimately show "((\<lambda>z. c *\<^sub>R g z) has_derivative (\<lambda>h. (c *\<^sub>R H) *v h)) (at x)"
-    by simp
-qed
 
 theorem visc_subsol_scaled_strict:
   fixes u :: "real^'n::finite \<Rightarrow> real" and H :: "real^'n^'n"

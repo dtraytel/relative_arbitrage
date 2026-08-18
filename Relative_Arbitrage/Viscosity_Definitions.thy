@@ -3,68 +3,13 @@ section \<open>The viscosity-solution predicates, in one place\<close>
 (*<*)
 theory Viscosity_Definitions
   imports Curvature_Operator "Semicontinuous_Analysis.Semicontinuous_Envelopes"
+    "Second_Order_Viscosity_Analysis.Test_Functions"
 begin
 
 (*>*)
 
-text \<open>
-  Every notion of viscosity sub- and supersolution the development uses, and
-  the test-function predicates they quantify over.  They were spread over
-  five theories, each defined where it was first needed; the implications
-  between them stay where their proofs' machinery is, but the definitions
-  are collected here so that the five variants can be read against each
-  other.
 
-  The envelope operators \<open>ell_op_lsc\<close> and \<open>ell_op_usc\<close> come along because
-  three of the predicates are stated through them, and their definitions
-  need nothing beyond \<open>ell_op\<close>.  Their calculus is in
-  \<open>Operator_Envelopes\<close>.
-\<close>
 
-definition test_fun_at ::
-  "(real^'n \<Rightarrow> real) \<Rightarrow> (real^'n \<Rightarrow> real^'n) \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> bool"
-  where
-  "test_fun_at \<phi> g H x \<longleftrightarrow>
-     transpose H = H \<and>
-     (\<exists>e>0. \<forall>y \<in> ball x e. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)) \<and>
-     (g has_derivative (\<lambda>h. H *v h)) (at x)"
-
-text \<open>\<^const>\<open>test_fun_at\<close> asks only that \<open>\<phi>\<close> be differentiable near \<open>x\<close> with
-  gradient field \<open>g\<close>, and that \<open>g\<close> be differentiable at \<open>x\<close>; away from \<open>x\<close> it
-  constrains \<open>\<phi>\<close> not at all.  Definition 3.1 quantifies over \<open>\<phi> \<in> C\<^sup>2(\<real>\<^sup>n)\<close>,
-  a strictly smaller class.  For the assertions that the value function is a
-  sub- or supersolution the larger class is the stronger statement, so nothing
-  is lost there; but the uniqueness clause \<^emph>\<open>assumes\<close> the property of a
-  competitor, and there the larger class would make the hypothesis stronger
-  than the paper's and the theorem correspondingly weaker.  So the class is
-  spelled out here: a gradient field defined everywhere, together with a
-  \<^emph>\<open>continuous\<close> symmetric Hessian field.\<close>
-
-definition test_fun_C2 ::
-  "(real^'n::finite \<Rightarrow> real) \<Rightarrow> (real^'n \<Rightarrow> real^'n) \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> bool"
-  where
-  "test_fun_C2 \<phi> g H x \<longleftrightarrow>
-     (\<exists>G. (\<forall>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)) \<and>
-          (\<forall>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)) \<and>
-          (\<forall>y. transpose (G y) = G y) \<and>
-          continuous_on UNIV G \<and> G x = H)"
-
-text \<open>The paper's hypothesis on \<open>K\<close> for the uniqueness clause of Theorem 1.1:
-  a family \<open>T\<^sub>\<iota>\<close> of rotation-dilation-translations, \<open>\<iota> \<in> (1,2]\<close>, with
-  \<open>K \<subseteq> (T\<^sub>\<iota> \` K)^\<circ>\<close> and \<open>T\<^sub>\<iota> \<rightarrow> id\<close>, phrased as an \<open>\<epsilon>\<close>-statement with
-  the inverse map written out so no invertibility side condition is
-  carried.\<close>
-
-definition expandable :: "(real^'n::finite) set \<Rightarrow> bool" where
-  "expandable K \<longleftrightarrow>
-     (\<forall>e > 0. \<exists>R b c. orthogonal_matrix R \<and> 1 < c \<and> c < 1 + e
-        \<and> K \<subseteq> interior ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` K)
-        \<and> (\<forall>x \<in> K. dist ((1/c) *\<^sub>R (transpose R *v (x - b))) x \<le> e))"
-
-text \<open>The envelopes are taken in the pair \<open>(p, M)\<close> jointly, as in the
-  paper, so \<open>F\<close> is first packaged as a function on the product metric
-  space, with values in \<open>ereal\<close> so that the suprema and infima below are
-  unconditionally defined.\<close>
 
 definition ell_op_pair ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> ereal"
