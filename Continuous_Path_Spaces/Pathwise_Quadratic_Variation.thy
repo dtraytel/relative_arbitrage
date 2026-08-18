@@ -164,42 +164,10 @@ text \<open>The same, with the first square already folded into a fourth power -
 text \<open>Monotonicity of the even powers under an absolute bound; both directions of
   the rewriting between \<open>x^4\<close> and \<open>(x\<^sup>2)\<^sup>2\<close> are needed downstream.\<close>
 
-lemma sq_mono_abs:
-  fixes x b :: real
-  assumes "\<bar>x\<bar> \<le> b"
-  shows "x\<^sup>2 \<le> b\<^sup>2"
-  using power_mono[OF assms abs_ge_zero, of 2] by simp
 
-lemma fourth_mono_abs:
-  fixes x b :: real
-  assumes "\<bar>x\<bar> \<le> b"
-  shows "x^4 \<le> b^4"
-proof -
-  have "(x\<^sup>2)\<^sup>2 \<le> (b\<^sup>2)\<^sup>2" by (rule power_mono[OF sq_mono_abs[OF assms]]) simp
-  moreover have "(x\<^sup>2)\<^sup>2 = x^4" and "(b\<^sup>2)\<^sup>2 = b^4" by algebra+
-  ultimately show ?thesis by simp
-qed
 
-lemma sq_abs_mono:
-  fixes x b :: real
-  assumes "\<bar>x\<bar> \<le> b"
-  shows "\<bar>x\<^sup>2\<bar> \<le> b\<^sup>2"
-  using sq_mono_abs[OF assms] by simp
 
-lemma fourth_abs_mono:
-  fixes x b :: real
-  assumes "\<bar>x\<bar> \<le> b"
-  shows "\<bar>x^4\<bar> \<le> b^4"
-  using power_mono[OF assms abs_ge_zero, of 4] by (simp add: power_abs)
 
-lemma sq_diff_le_fourth:
-  fixes x a :: real
-  shows "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * x^4 + 2 * a\<^sup>2"
-proof -
-  have "(x\<^sup>2 - a)\<^sup>2 \<le> 2 * (x\<^sup>2)\<^sup>2 + 2 * a\<^sup>2" by (rule sq_diff_le)
-  moreover have "(x\<^sup>2)\<^sup>2 = x^4" by algebra
-  ultimately show ?thesis by simp
-qed
 
 lemma compensated_increment_second_moment:
   fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"

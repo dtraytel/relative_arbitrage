@@ -2,7 +2,7 @@
 
 (*<*)
 theory Quadratic_Variation
-  imports "Martingales.Martingale"
+  imports "Martingales.Martingale" Power_Inequalities
 begin
 
 (*>*)
@@ -29,37 +29,7 @@ text \<open>
     the quadratic Dynkin identity of \<open>Volatile_Market\<close>.\<close>
 section \<open>Elementary square bounds\<close>
 
-lemma sq_diff_le:
-  fixes a b :: real
-  shows "(a - b)\<^sup>2 \<le> 2 * a\<^sup>2 + 2 * b\<^sup>2"
-proof -
-  have "2 * a * (- b) \<le> a\<^sup>2 + (- b)\<^sup>2"
-    by (rule sum_squares_bound)
-  then have bnd: "- (2 * (a * b)) \<le> a\<^sup>2 + b\<^sup>2"
-    by simp
-  have exp: "(a - b)\<^sup>2 = a\<^sup>2 - 2 * (a * b) + b\<^sup>2"
-    by (simp add: power2_diff)
-  show ?thesis
-    using bnd exp by linarith
-qed
 
-lemma abs_prod_le_sq:
-  fixes a b :: real
-  shows "\<bar>a * b\<bar> \<le> a\<^sup>2 + b\<^sup>2"
-proof (rule abs_leI)
-  have "2 * a * b \<le> a\<^sup>2 + b\<^sup>2"
-    by (rule sum_squares_bound)
-  moreover have "0 \<le> a\<^sup>2" and "0 \<le> b\<^sup>2"
-    by simp_all
-  ultimately show "a * b \<le> a\<^sup>2 + b\<^sup>2" by linarith
-next
-  have "2 * a * (- b) \<le> a\<^sup>2 + (- b)\<^sup>2"
-    by (rule sum_squares_bound)
-  then have "- (2 * (a * b)) \<le> a\<^sup>2 + b\<^sup>2" by simp
-  moreover have "0 \<le> a\<^sup>2" and "0 \<le> b\<^sup>2"
-    by simp_all
-  ultimately show "- (a * b) \<le> a\<^sup>2 + b\<^sup>2" by linarith
-qed
 
 lemma integrable_prod_of_squares:
   fixes u v :: "'b \<Rightarrow> real"

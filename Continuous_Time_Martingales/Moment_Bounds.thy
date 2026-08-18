@@ -24,14 +24,7 @@ text \<open>
   the fourth moment of the increment follows; everything from those two
   inputs to Eq. (2.7) is proved here.
 \<close>
-subsection \<open>An elementary square inequality\<close>
-
-lemma square_add_le_two:
-  fixes a b :: real
-  shows "(a + b)\<^sup>2 \<le> 2 * a\<^sup>2 + 2 * b\<^sup>2"
-  using sq_diff_le[of a "- b"] by simp
-
-subsection \<open>A bounded function has a bounded second moment\<close>
+subsection \<open>A second-moment bound from a pointwise bound\<close>
 
 lemma (in prob_space) integral_square_le_of_bound:
   fixes T :: "'a \<Rightarrow> real"

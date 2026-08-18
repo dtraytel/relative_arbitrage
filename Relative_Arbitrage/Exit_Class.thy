@@ -3,7 +3,7 @@
 theory Exit_Class
   imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" Exit_Semicontinuity Operator_Formula
     Viscosity_Solutions "Continuous_Time_Martingales.Martingale_Algebra"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    "Symmetric_Matrix_Spectra.Matrix_Algebra" "Symmetric_Matrix_Spectra.Outer_Products"
     "Continuous_Path_Spaces.Holder_Interpolation"
     "Continuous_Path_Spaces.Increment_Moments"
 begin
@@ -214,6 +214,15 @@ text \<open>Paths take values in \<open>real^'n \<times> real^'n^'n\<close>: the
 
 definition outerp :: "real^'n::finite \<Rightarrow> real^'n^'n" where
   "outerp x = (\<chi> i j. x $ i * x $ j)"
+
+text \<open>\<open>outerp\<close> is the rank-one projector \<open>x x\<^sup>T\<close> of the compensated
+  martingale clause.  It is HOL's own \<open>outer_prod\<close> at equal arguments
+  (\<open>outerp_eq_outer_prod\<close> below); it stays a definition of its own because
+  making it an abbreviation unfolds it in every simp set that mentions it,
+  and two proofs of the subsolution half then diverge.\<close>
+
+lemma outerp_eq_outer_prod: "outerp x = outer_prod x x"
+  by (simp add: outerp_def outer_prod_def)
 
 type_synonym 'n pairpath = "real \<Rightarrow> (real^'n) \<times> (real^'n^'n)"
 
