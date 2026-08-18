@@ -20,18 +20,18 @@
 
 \begin{abstract}
   Brownian motion is the basic object of continuous-time stochastic analysis.
-  Isabelle had no construction of it: the Archive entry
-  \texttt{Kolmogorov\_Chentsov} supplies a criterion for the existence of a
-  continuous modification, but no measure to apply it to.  We construct
-  Wiener measure as the projective limit of finite-dimensional distributions
-  assembled from Gaussian increments, prove the increments independent and
-  Gaussian, compute the fourth moment
-  $\mathbb{E}\,|B_t - B_s|^{4} = 3\,(t-s)^{2}$, and obtain from it a
-  modification with continuous paths.  Projectivity is reduced to the
-  convolution law for Gaussian densities by merging two adjacent increments,
-  which brings the construction within reach of the Daniell--Kolmogorov
-  theorem already available in \texttt{HOL-Probability}.  We follow the
-  account of Karatzas and Shreve~\cite{KaratzasShreve}.
+  This entry constructs it in Isabelle, with the Archive entry
+  \texttt{Kolmogorov\_Chentsov} supplying the criterion that turns the
+  construction into one with continuous paths.  We build Wiener measure as
+  the projective limit of finite-dimensional distributions assembled from
+  Gaussian increments, prove those increments independent and Gaussian, and
+  compute the fourth moment
+  $\mathbb{E}\,|B_t - B_s|^{4} = 3\,(t-s)^{2}$, which is exactly the
+  hypothesis the Kolmogorov--Chentsov theorem asks for.  Projectivity reduces
+  to the convolution law for Gaussian densities by merging two adjacent
+  increments, which brings the construction within reach of the
+  Daniell--Kolmogorov theorem already available in \texttt{HOL-Probability}.
+  We follow the account of Karatzas and Shreve~\cite{KaratzasShreve}.
 \end{abstract}
 
 \tableofcontents

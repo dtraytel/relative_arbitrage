@@ -19,53 +19,31 @@
 \maketitle
 
 \begin{abstract}
-  A formalisation of Theorem 1.1 of Lai, Shkolnikov and
-  Soner~\cite{LaiShkolnikovSoner}.  For a compact $K \subseteq \mathbb{R}^n$
+  In a relative-arbitrage problem one asks how quickly a diffusion can be
+  driven out of a region when only its instantaneous covariation is
+  controlled.  Lai, Shkolnikov and Soner~\cite{LaiShkolnikovSoner} identify
+  the answer as the solution of a degenerate elliptic equation; this entry
+  formalizes that identification.  For a compact $K \subseteq \mathbb{R}^n$
   and $1 \le k < n$, let $v(x)$ be the supremum, over all martingale laws
   started at $x$ whose instantaneous covariation has its $k$ smallest
   eigenvalues bounded below and its largest bounded above, of the essential
-  infimum of the exit time from $K$.  The theorem characterises $v$ as the
-  unique viscosity solution of the degenerate elliptic equation
-  $F(\nabla v, \nabla^{2} v) = 1$ on $K$, with the zero boundary condition of
-  the paper's Definition 3.1; uniqueness is established here among the
-  upper semicontinuous solutions that are bounded, which is what the
-  comparison principle consumes.
-
-  All five clauses are proved.  Finiteness and upper semicontinuity of $v$
-  come from tightness and sequential compactness of the class of admissible
-  laws, which is shown closed under weak limits by carrying the covariation as
-  a second, uniformly Lipschitz path coordinate.  The viscosity property
-  rests on the dynamic programming principle of the paper's Proposition 2.4,
-  which the paper defers to Larsson and Ruf~\cite{LarssonRuf} and which is
-  proved here in full, at a deterministic time and at a stopping time: the
-  lower half by pasting an optimal continuation onto a stopped law, the upper
-  half by conditioning through a regular conditional distribution.  The
-  measurable selection of an optimizer, for which Larsson and Ruf cite
-  Bertsekas and Shreve~\cite{BertsekasShreve}, is proved here by a greedy
-  nested bisection.  Uniqueness is the comparison principle of the paper's
-  Theorem 4.2, built on the Crandall--Ishii theorem on
-  sums~\cite{CrandallIshiiLions}.  Example 3.1, the explicit value on a ball,
-  is derived in closed form for every $k$.
-
-  The proofs run at a finite horizon, which keeps the paths in a compact
-  metric space and makes the class weakly compact.  The paper's own class and
-  value function, on the continuous paths of $C([0,\infty))$, are formalised
-  as well, and the two value functions are proved equal: a horizon-$T$ law
-  extends to a half-line law restricting back to it, by gluing an independent
-  Brownian continuation with covariation $t I$ onto it at time $T$.  For a
-  bounded $K$ the hypothesis this needs is the paper's own a priori bound.
-
-  Two remarks on the statement.  The zero boundary condition is a viscosity
-  condition and not the pointwise identity $v = 0$ on $\partial K$, which is
-  false in general: by the paper's own Lemma 5.3, the cube in $\mathbb{R}^3$
-  with $k = 2$ has $v > 0$ on the open two-dimensional faces of its boundary.
-  And continuity of $v$ is not part of the theorem; uniqueness holds among
-  bounded upper semicontinuous solutions.
-
-  The reusable parts of the development are separate entries: the
-  differentiability theory behind comparison, the construction of Wiener
-  measure, the martingale sampling toolbox, and the path-space tightness
-  machinery.
+  infimum of the exit time from $K$; we prove all five clauses of their
+  Theorem 1.1, that $v$ is finite and upper semicontinuous, that it is a
+  viscosity solution of $F(\nabla v, \nabla^{2} v) = 1$ on $K$ with the
+  boundary condition of their Definition 3.1, and that it is the only bounded
+  upper semicontinuous such solution.  The dynamic programming principle
+  their proof defers to Larsson and Ruf~\cite{LarssonRuf} is proved here in
+  full, at a deterministic time and at a stopping time, as is the measurable
+  selection of an optimizer; the argument runs at a finite horizon, where the
+  class of admissible laws is weakly compact, and the paper's own class on
+  $C([0,\infty))$ is then shown to have the same value function.  Two points
+  of the statement are worth isolating: the boundary condition holds in the
+  viscosity sense and not pointwise, since $v > 0$ on the open faces of the
+  cube in $\mathbb{R}^{3}$ at $k = 2$, and continuity of $v$ is not asserted
+  anywhere.  The reusable machinery --- the second-order differentiability
+  theory behind comparison, the construction of Wiener measure, the
+  martingale toolbox, and the path-space tightness argument --- is published
+  as separate entries.
 \end{abstract}
 
 \tableofcontents

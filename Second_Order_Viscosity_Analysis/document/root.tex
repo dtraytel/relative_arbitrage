@@ -21,21 +21,24 @@
 \begin{abstract}
   Comparison between a viscosity subsolution and a supersolution of a fully
   nonlinear degenerate elliptic equation rests on second-order
-  differentiability of functions that are merely semiconvex.  Neither
-  Rademacher's theorem nor Alexandrov's theorem had been formalized in
-  Isabelle, placing any such comparison principle out of reach.  We formalize
-  both, together with Jensen's lemma for semiconvex functions and the
-  Crandall--Ishii theorem on sums, over a base of subgradients, the proximal
-  map, the Moreau envelope and the sup-convolution, and add the
-  doubling-of-variables apparatus these results exist to serve, along with
+  differentiability of functions that are merely semiconvex.  This entry
+  brings that theory to Isabelle.  We formalize Rademacher's theorem, that a
+  locally Lipschitz function on a Euclidean space is differentiable at almost
+  every point, and Alexandrov's theorem, that a convex function has a
+  second-order Taylor expansion at almost every point, over a base of
+  subgradients, the proximal map, the Moreau envelope and the
+  sup-convolution; on them rest Jensen's lemma for semiconvex functions and
+  the Crandall--Ishii theorem on sums, which at a local maximum of
+  $u(x)+w(y)$ produces second-order jets for $u$ and $w$ whose Hessians
+  satisfy a matrix inequality.  Two further theories supply the
+  doubling-of-variables apparatus that consumes these results, together with
   coercive penalties whose second-order jet vanishes on the diagonal.
   Alexandrov's theorem is obtained by Minty's device, applying Rademacher to
   the resolvent of the subdifferential and transporting the expansion back
   from the Moreau envelope; the doubling toolbox is stated over an arbitrary
   Euclidean space, matrices appearing only where a statement produces one.
-  We follow Evans and Gariepy~\cite{EvansGariepy} for the differentiability
-  theorems and Crandall, Ishii and Lions~\cite{CrandallIshiiLions} for the
-  rest.
+  We follow Evans and Gariepy~\cite{EvansGariepy} and the User's Guide of
+  Crandall, Ishii and Lions~\cite{CrandallIshiiLions}.
 \end{abstract}
 
 \tableofcontents

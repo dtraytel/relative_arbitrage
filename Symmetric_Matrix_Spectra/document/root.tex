@@ -21,18 +21,20 @@
 \begin{abstract}
   Many optimisation and control problems constrain a real symmetric matrix
   through its spectrum --- through a bound on a sum of its largest
-  eigenvalues, say --- rather than through its entries.  HOL-Analysis
-  diagonalises no symmetric matrix, and the existing matrix entries of the
-  Archive treat other settings, so such a constraint cannot even be stated.
-  We formalize the spectral theorem for real symmetric matrices by the
-  variational argument, together with the supporting calculus of trace,
-  transpose, outer products, orthonormal families and Householder rotations,
-  and develop Ky Fan's theorem: the sum of the $m$ largest eigenvalues as a
-  supremum of traces against orthogonal projections, the ordered eigenvalues
-  as differences of consecutive such sums, their Lipschitz dependence on the
-  matrix, and the Poincar\'e separation inequality via Courant--Fischer.
-  Characterising the eigenvalues in this way keeps them basis-free and avoids
-  any well-definedness argument about sorting a multiset.
+  eigenvalues, say --- rather than through its entries.  HOL-Analysis carries
+  symmetric matrices as far as their quadratic forms; this entry takes them
+  to their eigenvalues.  We formalize the spectral theorem, that every real
+  symmetric matrix has an orthonormal basis of eigenvectors, by maximising
+  the Rayleigh quotient over invariant subspaces, and Ky Fan's theorem, that
+  the sum of the $m$ largest eigenvalues is the largest trace of the matrix
+  against a rank-$m$ orthogonal projection; the ordered eigenvalues follow as
+  differences of consecutive Ky Fan sums, are Lipschitz in the matrix, and
+  interlace with those of any compression to a subspace, which is Poincar\'e
+  separation.  Supporting all of this is a calculus of trace, transpose,
+  outer products, orthonormal families and Householder rotations.  Defining
+  the Ky Fan sums by maximisation over projections keeps the ordered
+  eigenvalues basis-free and avoids any well-definedness argument about
+  sorting a multiset.
 \end{abstract}
 
 \tableofcontents
