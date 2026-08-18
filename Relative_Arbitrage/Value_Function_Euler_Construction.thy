@@ -8,6 +8,7 @@ theory Value_Function_Euler_Construction
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    Path_Law_Pasting
 begin
 
 (*>*)
@@ -41,40 +42,6 @@ text \<open>\<open>matvec_norm_le\<close> lives in @{theory Symmetric_Matrix_Spe
 
 subsection \<open>The trace pairing for sums of column outer products\<close>
 
-text \<open>\<open>trace_mult_zero_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-lemma trace_mult_outerp_sum:
-  fixes M :: "real^'n::finite^'n" and w :: "'b \<Rightarrow> real^'n" and F :: "'b set"
-  assumes finF: "finite F"
-  shows "trace (M ** (\<Sum>u\<in>F. outerp (w u))) = (\<Sum>u\<in>F. w u \<bullet> (M *v w u))"
-  using finF
-proof (induction F)
-  case empty
-  show ?case by (simp add: trace_mult_zero_right trace_def)
-next
-  case (insert u F)
-  have "trace (M ** (\<Sum>v\<in>insert u F. outerp (w v)))
-      = trace (M ** (outerp (w u) + (\<Sum>v\<in>F. outerp (w v))))"
-    using insert.hyps by simp
-  also have "\<dots> = trace (M ** outerp (w u))
-      + trace (M ** (\<Sum>v\<in>F. outerp (w v)))"
-    by (rule trace_mult_add)
-  finally show ?case
-    using insert by (simp add: trace_mult_outerp)
-qed
-
-subsection \<open>The constant-volatility Gaussian member\<close>
-
-text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
-  so the building block is Brownian motion pushed through a constant
-  matrix \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>.  Class
-  membership mirrors @{thm [source] bmpair_law_in_paper_pair_class}: the
-  martingale clauses are bounded-linear images of the Brownian ones
-  (@{thm [source] martingale_bounded_linear_image}), the covariation
-  clause is deterministic, and an arbitrary start comes free from
-  @{thm [source] exit_class_pshift}.  The only hypothesis is
-  \<open>S S\<^sup>T \<in> sconstraint k L\<close>.\<close>
 
 definition sbmpair ::
   "real^'n::finite^'n \<Rightarrow> real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath"
@@ -89,44 +56,6 @@ lemma sbmpair_apply:
 text \<open>\<open>matvec_blin\<close>, \<open>matmul_sandwich_blin\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma outerp_matvec_image:
-  fixes S :: "real^'n::finite^'n" and w :: "real^'n"
-  shows "outerp (S *v w) = S ** outerp w ** transpose S"
-proof -
-  have "outerp (S *v w) $ i $ j
-      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
-    for i j
-  proof -
-    have "outerp (S *v w) $ i $ j
-        = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (\<Sum>l\<in>UNIV. S $ j $ l * w $ l)"
-      by (simp add: outerp_def matrix_vector_mult_def)
-    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * w $ k)
-        * (S $ j $ l * w $ l))"
-      by (rule sum_distrib_left)
-    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l))
-        * S $ j $ l)"
-    proof (rule sum.cong[OF refl])
-      fix l :: 'n
-      have "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
-          = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k * (S $ j $ l * w $ l))"
-        by (rule sum_distrib_right)
-      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l) * S $ j $ l)"
-        by (rule sum.cong[OF refl]) (simp only: mult_ac)
-      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l"
-        by (rule sum_distrib_right[symmetric])
-      finally show "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
-          = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l" .
-    qed
-    finally show ?thesis .
-  qed
-  moreover have "(S ** outerp w ** transpose S) $ i $ j
-      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
-    for i j
-    by (simp add: matrix_matrix_mult_def transpose_def outerp_def)
-  ultimately show ?thesis by (simp add: vec_eq_iff)
-qed
-
-text \<open>\<open>matmul_scaleR_right\<close>, \<open>sandwich_mat1\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 lemma continuous_on_sbmpair_path:
@@ -510,27 +439,6 @@ text \<open>\<open>sbmpair\<close> wants a volatility matrix \<open>S\<close> wi
   matrix whose columns are those columns, indexed through any enumeration
   of the eigenbasis.\<close>
 
-lemma cols_mult_transpose:
-  fixes w :: "'m::finite \<Rightarrow> real^'n::finite"
-  shows "(\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)
-       = (\<Sum>j\<in>UNIV. outerp (w j))"
-proof -
-  have "((\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)) $ i $ l
-      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
-    by (simp add: matrix_matrix_mult_def transpose_def)
-  moreover have "(\<Sum>j\<in>UNIV. outerp (w j)) $ i $ l
-      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
-    by (induction "UNIV :: 'm set" rule: infinite_finite_induct)
-      (simp_all add: outerp_def)
-  ultimately show ?thesis by (simp add: vec_eq_iff)
-qed
-
-text \<open>\<open>exists_enum_of_card\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>Continuity of the Gaussian member in its volatility\<close>
-
-text \<open>\<open>dist_pair_le\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
 lemma sbmpair_in_mspace:
@@ -1611,64 +1519,6 @@ definition euXi :: "(real^'n::finite \<Rightarrow> real^'n^'n) \<Rightarrow> rea
       - h *\<^sub>R (SF (fst (\<omega> (real j * h)))
           ** transpose (SF (fst (\<omega> (real j * h))))))))"
 
-lemma euXi_term_cont:
-  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
-    and h :: real
-  assumes SFc: "continuous_on UNIV SF"
-  shows "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-        \<times> ((real^'n) \<times> (real^'n^'n)).
-      trace (M ** (outerp (fst (fst ab) - fst (snd ab))
-        - h *\<^sub>R (SF (fst (snd ab)) ** transpose (SF (fst (snd ab)))))))"
-proof -
-  have entry: "continuous_on UNIV (\<lambda>z :: real^'n. SF z $ i $ j)" for i j
-  proof -
-    have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ i $ j)"
-      using bounded_linear_vec_nth bounded_linear_compose by blast
-    show ?thesis
-      by (rule continuous_on_compose2[OF linear_continuous_on[OF bl] SFc])
-        auto
-  qed
-  have proj2: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-      \<times> ((real^'n) \<times> (real^'n^'n)). fst (snd ab))"
-    by (intro continuous_on_fst continuous_on_snd continuous_on_id)
-  have proj1: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-      \<times> ((real^'n) \<times> (real^'n^'n)). fst (fst ab))"
-    by (intro continuous_on_fst continuous_on_id)
-  have SFcomp: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-      \<times> ((real^'n) \<times> (real^'n^'n)). SF (fst (snd ab)) $ i $ j)" for i j
-    by (rule continuous_on_compose2[OF entry proj2]) auto
-  have vcomp1: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-      \<times> ((real^'n) \<times> (real^'n^'n)). fst (fst ab) $ i)" for i
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_vec_nth] proj1]) auto
-  have vcomp2: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-      \<times> ((real^'n) \<times> (real^'n^'n)). fst (snd ab) $ i)" for i
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_vec_nth] proj2]) auto
-  have inner: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-      \<times> ((real^'n) \<times> (real^'n^'n)).
-      outerp (fst (fst ab) - fst (snd ab))
-        - h *\<^sub>R (SF (fst (snd ab)) ** transpose (SF (fst (snd ab)))))"
-  proof -
-    have e: "(\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-          \<times> ((real^'n) \<times> (real^'n^'n)).
-        outerp (fst (fst ab) - fst (snd ab))
-          - h *\<^sub>R (SF (fst (snd ab)) ** transpose (SF (fst (snd ab)))))
-        = (\<lambda>ab. \<chi> i j. (fst (fst ab) $ i - fst (snd ab) $ i)
-              * (fst (fst ab) $ j - fst (snd ab) $ j)
-            - h * (\<Sum>l\<in>UNIV. SF (fst (snd ab)) $ i $ l
-                * SF (fst (snd ab)) $ j $ l))"
-      by (rule ext) (simp add: outerp_def matrix_matrix_mult_def
-          transpose_def
-          vec_eq_iff)
-    show ?thesis unfolding e
-      by (intro continuous_on_vec_lambda continuous_intros
-          SFcomp vcomp1 vcomp2)
-  qed
-  show ?thesis
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_trace_mult_left] inner]) auto
-qed
 
 lemma euXi_measurable:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -2140,73 +1990,6 @@ proof -
     by (subst AE_distr_iff[OF phim mset]) (simp add: ptw)
 qed
 
-lemma euOrth_mset:
-  fixes G :: "real^'n::finite \<Rightarrow> real^'n" and h :: real
-  assumes Gc: "continuous_on UNIV G"
-  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure).
-      \<forall>j<m. G (fst (\<omega> (real j * h))) \<bullet>
-        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-    \<in> sets (path_borel T :: ('n pairpath) measure)"
-proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have per: "{\<omega> \<in> space ?B. G (fst (\<omega> (real j * h))) \<bullet>
-      (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-      \<in> sets ?B" for j
-  proof -
-    have evu: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real (Suc j) * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
-      by (rule pair_law_eval_measurable[OF refl])
-    have evv: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real j * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
-      by (rule pair_law_eval_measurable[OF refl])
-    have pairm: "(\<lambda>\<omega> :: 'n pairpath.
-        (\<omega> (real (Suc j) * h), \<omega> (real j * h))) \<in> ?B \<rightarrow>\<^sub>M borel"
-      using evu evv by (simp add: borel_prod[symmetric])
-    have contf: "(\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-          \<times> ((real^'n) \<times> (real^'n^'n)).
-        G (fst (snd ab)) \<bullet> (fst (fst ab) - fst (snd ab)))
-        \<in> borel_measurable borel"
-    proof (intro borel_measurable_continuous_onI)
-      have p1: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-          \<times> ((real^'n) \<times> (real^'n^'n)). fst (fst ab))"
-        by (intro continuous_on_fst continuous_on_id)
-      have p2: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-          \<times> ((real^'n) \<times> (real^'n^'n)). fst (snd ab))"
-        by (intro continuous_on_fst continuous_on_snd continuous_on_id)
-      have Gcomp: "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-          \<times> ((real^'n) \<times> (real^'n^'n)). G (fst (snd ab)))"
-        by (rule continuous_on_compose2[OF Gc p2]) auto
-      show "continuous_on UNIV (\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
-          \<times> ((real^'n) \<times> (real^'n^'n)).
-          G (fst (snd ab)) \<bullet> (fst (fst ab) - fst (snd ab)))"
-        by (intro continuous_intros Gcomp p1 p2)
-    qed
-    have fm: "(\<lambda>\<omega> :: 'n pairpath. G (fst (\<omega> (real j * h))) \<bullet>
-        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))))
-        \<in> borel_measurable ?B"
-      using measurable_compose[OF pairm contf] by simp
-    have "{\<omega> \<in> space ?B. G (fst (\<omega> (real j * h))) \<bullet>
-        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-        = (\<lambda>\<omega> :: 'n pairpath. G (fst (\<omega> (real j * h))) \<bullet>
-          (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))))
-          -` {0} \<inter> space ?B"
-      by auto
-    then show ?thesis using measurable_sets[OF fm] by simp
-  qed
-  show ?thesis
-  proof (induction m)
-    case 0
-    show ?case by simp
-  next
-    case (Suc m)
-    have eq: "{\<omega> \<in> space ?B. \<forall>j<Suc m. G (fst (\<omega> (real j * h))) \<bullet>
-        (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-        = {\<omega> \<in> space ?B. \<forall>j<m. G (fst (\<omega> (real j * h))) \<bullet>
-            (fst (\<omega> (real (Suc j) * h)) - fst (\<omega> (real j * h))) = 0}
-          \<inter> {\<omega> \<in> space ?B. G (fst (\<omega> (real m * h))) \<bullet>
-            (fst (\<omega> (real (Suc m) * h)) - fst (\<omega> (real m * h))) = 0}"
-      by (auto simp: less_Suc_eq)
-    show ?case unfolding eq by (intro sets.Int Suc.IH per)
-  qed
-qed
 
 theorem eulerp_orth_increments:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and G :: "real^'n \<Rightarrow> real^'n"
@@ -3090,65 +2873,6 @@ text \<open>The bad event is open: staying strictly inside the ball is
   strict quadratic drop is an open condition on the evaluation at \<open>t\<close>,
   via @{thm [source] open_eval_preimage}.\<close>
 
-lemma open_quad_bad_event:
-  fixes x q :: "real^'n::finite" and M :: "real^'n^'n"
-    and t T rb thr :: real
-  assumes t0: "0 \<le> t" and tT: "t \<le> T"
-  shows "openin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb)
-        \<and> q \<bullet> (fst (\<omega> t) - x)
-          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))) < thr}"
-proof -
-  have T0: "0 \<le> T" using t0 tT by linarith
-  let ?pm = "path_metric T :: ('n pairpath) metric"
-  have o1: "openin (mtopology_of ?pm)
-      {\<omega> \<in> mspace ?pm. \<forall>s\<in>{0..t}. \<omega> s \<in> fst -` ball x rb}"
-    by (rule open_stay_inside[OF T0 open_vimage_fst[OF open_ball] t0 tT])
-  have c0: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p - x)"
-    by (intro continuous_intros)
-  have c1: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF matvec_blin] c0]) auto
-  have cq: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_inner_right] c0]) auto
-  have cin: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        (fst p - x) \<bullet> (M *v (fst p - x)))"
-    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner c0 c1])
-  have contf: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
-    by (intro continuous_on_add continuous_on_mult
-        continuous_on_const cq cin)
-  have oU: "open {p :: (real^'n) \<times> (real^'n^'n).
-      q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}"
-    by (rule open_Collect_less[OF contf continuous_on_const])
-  have o2: "openin (mtopology_of ?pm)
-      {\<omega> \<in> mspace ?pm. \<omega> t \<in> {p. q \<bullet> (fst p - x)
-        + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}}"
-    by (rule open_eval_preimage[OF _ oU]) (use t0 tT in simp)
-  have eq: "{\<omega> \<in> mspace ?pm.
-      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rb)
-      \<and> q \<bullet> (fst (\<omega> t) - x)
-        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x))) < thr}
-      = {\<omega> \<in> mspace ?pm. \<forall>s\<in>{0..t}. \<omega> s \<in> fst -` ball x rb}
-        \<inter> {\<omega> \<in> mspace ?pm. \<omega> t \<in> {p. q \<bullet> (fst p - x)
-          + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}}"
-    by auto
-  show ?thesis unfolding eq by (rule openin_Int[OF o1 o2])
-qed
-
-text \<open>At mesh \<open>c / (i + 1)\<close> the bad-event probability is at most
-  \<open>A h + B h\<^sup>2\<close> once the mesh is fine enough, so it tends to zero.  At the
-  last grid point \<open>m h \<le> t\<close>, on the almost-sure event of
-  @{thm [source] eulerp_quad_lower}, staying in-ball through \<open>t\<close> together
-  with a quadratic drop forces either a large \<open>euXi\<close> (Chebyshev) or a large
-  one-step increment (the fourth-moment tail).\<close>
 
 theorem eulerp_bad_event_null:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -3507,129 +3231,7 @@ text \<open>Combining the weak-limit transfer with the vanishing bad events give
   open_quad_bad_event}; the upgrade to real \<open>t\<close> is pathwise, using only
   that members of the path space are continuous.\<close>
 
-lemma quad_eval_cont:
-  fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
-    and M :: "real^'n^'n" and c :: real
-  assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
-  shows "continuous_on {0..c} (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
-      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
-proof -
-  have wc: "continuous_on {0..c} \<omega>" by (rule mspace_path_metricD[OF wm])
-  have c0: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p - x)"
-    by (intro continuous_intros)
-  have c1: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF matvec_blin] c0]) auto
-  have cq: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_inner_right] c0]) auto
-  have cin: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        (fst p - x) \<bullet> (M *v (fst p - x)))"
-    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner c0 c1])
-  have contf: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
-    by (intro continuous_on_add continuous_on_mult
-        continuous_on_const cq cin)
-  show ?thesis
-    by (rule continuous_on_compose2[OF contf wc]) auto
-qed
 
-lemma quad_good_rat_to_real:
-  fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
-    and M :: "real^'n^'n" and c cm rb t :: real
-  assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
-    and rat: "\<And>r. r \<in> \<rat> \<Longrightarrow> 0 < r \<Longrightarrow> r \<le> c \<Longrightarrow>
-      (\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> ball x rb) \<Longrightarrow>
-      r * cm / 2 \<le> q \<bullet> (fst (\<omega> r) - x)
-        + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))"
-    and t0: "0 < t" and tc: "t \<le> c"
-    and inb: "\<And>s. s \<in> {0..t} \<Longrightarrow> fst (\<omega> s) \<in> ball x rb"
-  shows "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
-      + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
-proof -
-  define g where "g = (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
-      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
-  have gc: "continuous_on {0..c} g"
-    unfolding g_def by (rule quad_eval_cont[OF wm])
-  have exr: "\<exists>r. r \<in> \<rat>
-      \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t" for j
-  proof -
-    have "max 0 (t - inverse (real (Suc j))) < t"
-      using t0 by simp
-    then show ?thesis
-      using Rats_dense_in_real[of
-          "max 0 (t - inverse (real (Suc j)))" t] by blast
-  qed
-  have exr': "\<forall>j. \<exists>r. r \<in> \<rat>
-      \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t"
-    using exr by blast
-  obtain rj where rjprop: "\<forall>j. rj j \<in> \<rat>
-      \<and> max 0 (t - inverse (real (Suc j))) < rj j \<and> rj j < t"
-    using choice[OF exr'] by blast
-  have rjQ: "rj j \<in> \<rat>" for j using rjprop by blast
-  have rjl: "max 0 (t - inverse (real (Suc j))) < rj j" for j
-    using rjprop by blast
-  have rju: "rj j < t" for j using rjprop by blast
-  have rj0: "0 < rj j" for j
-  proof -
-    have "(0::real) \<le> max 0 (t - inverse (real (Suc j)))" by simp
-    then show ?thesis using rjl[of j] by linarith
-  qed
-  have rjc: "rj j \<le> c" for j using rju[of j] tc by linarith
-  have glow: "rj j * cm / 2 \<le> g (rj j)" for j
-    unfolding g_def
-  proof (rule rat)
-    show "rj j \<in> \<rat>" by (rule rjQ)
-    show "0 < rj j" by (rule rj0)
-    show "rj j \<le> c" by (rule rjc)
-    show "\<forall>s\<in>{0..rj j}. fst (\<omega> s) \<in> ball x rb"
-    proof
-      fix s assume "s \<in> {0..rj j}"
-      then have "s \<in> {0..t}" using rju[of j] by auto
-      then show "fst (\<omega> s) \<in> ball x rb" by (rule inb)
-    qed
-  qed
-  have rjlim: "rj \<longlonglongrightarrow> t"
-  proof (rule tendsto_sandwich[of
-      "\<lambda>j. t - inverse (real (Suc j))" rj sequentially "\<lambda>_. t"])
-    show "\<forall>\<^sub>F j in sequentially. t - inverse (real (Suc j)) \<le> rj j"
-    proof (intro always_eventually allI)
-      fix j
-      have "t - inverse (real (Suc j))
-          \<le> max 0 (t - inverse (real (Suc j)))"
-        by (rule max.cobounded2)
-      then show "t - inverse (real (Suc j)) \<le> rj j"
-        using rjl[of j] by linarith
-    qed
-    show "\<forall>\<^sub>F j in sequentially. rj j \<le> t"
-      by (intro always_eventually allI less_imp_le rju)
-    show "(\<lambda>j. t - inverse (real (Suc j))) \<longlonglongrightarrow> t"
-      using tendsto_diff[OF tendsto_const
-          LIMSEQ_inverse_real_of_nat, of t] by simp
-    show "(\<lambda>_. t) \<longlonglongrightarrow> t" by (rule tendsto_const)
-  qed
-  have gcomp: "(\<lambda>j. g (rj j)) \<longlonglongrightarrow> g t"
-  proof -
-    have inS: "\<forall>n. rj n \<in> {0..c}"
-      using rj0 rjc by (auto intro: less_imp_le)
-    have tS: "t \<in> {0..c}" using t0 tc by auto
-    have "(g \<circ> rj) \<longlonglongrightarrow> g t"
-      using continuous_on_sequentially[THEN iffD1, OF gc] inS tS rjlim
-      by blast
-    then show ?thesis by (simp add: o_def)
-  qed
-  have lim1: "(\<lambda>j. rj j * cm / 2) \<longlonglongrightarrow> t * cm / 2"
-    by (rule tendsto_divide[OF
-        tendsto_mult[OF rjlim tendsto_const] tendsto_const]) simp
-  have "t * cm / 2 \<le> g t"
-    by (rule LIMSEQ_le[OF lim1 gcomp]) (use glow in blast)
-  then show ?thesis unfolding g_def .
-qed
 
 theorem eulerp_limit_good:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -3764,82 +3366,6 @@ text \<open>The almost-sure growth statement, specialised to the exit time of th
   exit (@{thm [source] pball_exit_stays_cball}), and lands on the sphere
   whenever it happens before the cap (@{thm [source] pball_exit_outside}).\<close>
 
-lemma quad_good_upto:
-  fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
-    and M :: "real^'n^'n" and c cm rb t :: real
-  assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
-    and good: "\<And>t'. 0 < t' \<Longrightarrow> t' \<le> c \<Longrightarrow>
-      (\<forall>s\<in>{0..t'}. fst (\<omega> s) \<in> ball x rb) \<Longrightarrow>
-      t' * cm / 2 \<le> q \<bullet> (fst (\<omega> t') - x)
-        + (1/2) * ((fst (\<omega> t') - x) \<bullet> (M *v (fst (\<omega> t') - x)))"
-    and t0: "0 < t" and tc: "t \<le> c"
-    and inb: "\<And>s. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> fst (\<omega> s) \<in> ball x rb"
-  shows "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
-      + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
-proof -
-  define g where "g = (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
-      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
-  have gc: "continuous_on {0..c} g"
-    unfolding g_def by (rule quad_eval_cont[OF wm])
-  define tj where "tj = (\<lambda>j. t - t / (2 * real (Suc j)))"
-  have tjl: "0 < tj j" for j
-  proof -
-    have "t / (2 * real (Suc j)) \<le> t / 2"
-    proof (rule divide_left_mono)
-      show "2 \<le> 2 * real (Suc j)" by simp
-      show "0 \<le> t" using t0 by linarith
-      show "0 < 2 * real (Suc j) * 2" by simp
-    qed
-    then show ?thesis unfolding tj_def using t0 by linarith
-  qed
-  have tju: "tj j < t" for j
-  proof -
-    have "0 < t / (2 * real (Suc j))" using t0 by simp
-    then show ?thesis unfolding tj_def by linarith
-  qed
-  have tjc: "tj j \<le> c" for j using tju[of j] tc by linarith
-  have glow: "tj j * cm / 2 \<le> g (tj j)" for j
-    unfolding g_def
-  proof (rule good)
-    show "0 < tj j" by (rule tjl)
-    show "tj j \<le> c" by (rule tjc)
-    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> ball x rb"
-    proof
-      fix s assume s: "s \<in> {0..tj j}"
-      then have s0: "0 \<le> s" and st: "s < t" using tju[of j] by auto
-      show "fst (\<omega> s) \<in> ball x rb" by (rule inb[OF s0 st])
-    qed
-  qed
-  have tjlim: "tj \<longlonglongrightarrow> t"
-  proof -
-    have eq: "(\<lambda>j. (t / 2) * inverse (real (Suc j)))
-        = (\<lambda>j. t / (2 * real (Suc j)))"
-      by (rule ext) (simp add: field_simps)
-    have "(\<lambda>j. (t / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (t / 2) * 0"
-      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
-    then have "(\<lambda>j. t / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
-      unfolding eq by simp
-    then have "(\<lambda>j. t - t / (2 * real (Suc j))) \<longlonglongrightarrow> t - 0"
-      by (intro tendsto_diff tendsto_const)
-    then show ?thesis unfolding tj_def by simp
-  qed
-  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g t"
-  proof -
-    have inS: "\<forall>n. tj n \<in> {0..c}"
-      using tjl tjc by (auto intro: less_imp_le)
-    have tS: "t \<in> {0..c}" using t0 tc by auto
-    have "(g \<circ> tj) \<longlonglongrightarrow> g t"
-      using continuous_on_sequentially[THEN iffD1, OF gc] inS tS tjlim
-      by blast
-    then show ?thesis by (simp add: o_def)
-  qed
-  have lim1: "(\<lambda>j. tj j * cm / 2) \<longlonglongrightarrow> t * cm / 2"
-    by (rule tendsto_divide[OF
-        tendsto_mult[OF tjlim tendsto_const] tendsto_const]) simp
-  have "t * cm / 2 \<le> g t"
-    by (rule LIMSEQ_le[OF lim1 gcomp]) (use glow in blast)
-  then show ?thesis unfolding g_def .
-qed
 
 theorem eulerp_limit_exit:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"

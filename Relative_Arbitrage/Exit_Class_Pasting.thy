@@ -7,61 +7,16 @@ theory Exit_Class_Pasting
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    Path_Law_Pasting
 begin
 
 (*>*)
 
 section \<open>The class is closed under shortening the horizon\<close>
 
-text \<open>The conditioning-free half of the closure the weak DPP needs: a
-  member on \<open>[0,T]\<close> restricted to \<open>[0,S]\<close> is a member on \<open>[0,S]\<close>.  Both
-  martingale clauses follow from \<open>martingale_pair_law\<close> with the restriction
-  as path map, adapted for free since \<open>pcut S \<omega> r = \<omega> r\<close> on \<open>{0..S}\<close>, and
-  \<open>martingale_stopped_const\<close> turns the \<open>T\<close>-clause into the \<open>S\<close>-clause.\<close>
 
-definition pcut :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
-  where "pcut S \<omega> = restrict \<omega> {0..S}"
 
-lemma pcut_apply: "r \<in> {0..S} \<Longrightarrow> pcut S \<omega> r = \<omega> r"
-  by (simp add: pcut_def)
 
-lemma pcut_measurable:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S" and ST: "S \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "pcut S \<in> Q \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
-proof -
-  have "(\<lambda>f :: 'n pairpath. restrict f {0..S})
-      \<in> (path_borel T :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
-    by (rule restrict_measurable_path_borel[OF S ST])
-  then show ?thesis
-    unfolding pcut_def using measurable_cong_sets[OF setsQ refl] by blast
-qed
-
-lemma pcut_adapted:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S" and r: "0 \<le> r" and ru: "r \<le> u"
-  shows "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable
-      (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u)"
-proof (cases "r \<in> {0..S}")
-  case True
-  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u
-      \<rightarrow>\<^sub>M borel"
-    unfolding natural_filtration_def
-    by (rule measurable_family_vimage_algebra) (use r ru in auto)
-  then show ?thesis using True by (simp add: pcut_apply)
-next
-  case False
-  then have "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) = (\<lambda>\<omega>. undefined)"
-    by (auto simp: pcut_def)
-  then show ?thesis by simp
-qed
-
-text \<open>The rational reduction of the covariation clause, factored out since
-  it recurs in every construction of a class member: countably many pairs
-  by \<open>AE_ball_countable'\<close>, then \<open>diffquot_all_of_rational\<close> against path
-  continuity.\<close>
 
 lemma exit_class_diffquot_of_pairs:
   fixes Q :: "('n::finite pairpath) measure"
@@ -270,97 +225,12 @@ text \<open>The other half of the dynamic programming principle needs the class
   concatenates.  Here \<open>r\<close> is an arbitrary real; a stopping-time glue
   instantiates \<open>r\<close> with \<open>\<theta> \<omega>\<close>.\<close>
 
-definition pglue :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath
-    \<Rightarrow> 'n pairpath"
-  where "pglue r T \<omega> \<omega>' =
-     restrict (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)) {0..T}"
 
-lemma pglue_le: "t \<in> {0..T} \<Longrightarrow> t \<le> r \<Longrightarrow> pglue r T \<omega> \<omega>' t = \<omega> t"
-  by (simp add: pglue_def)
 
-lemma pglue_ge:
-  "t \<in> {0..T} \<Longrightarrow> r \<le> t \<Longrightarrow> pglue r T \<omega> \<omega>' t = \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
-  by (cases "t = r") (auto simp: pglue_def)
 
-lemma pglue_zero: "0 \<le> r \<Longrightarrow> 0 \<le> T \<Longrightarrow> pglue r T \<omega> \<omega>' 0 = \<omega> 0"
-  by (rule pglue_le) auto
 
-lemma continuous_on_pglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and c1: "continuous_on {0..r} \<omega>"
-    and c2: "continuous_on {0..T - r} \<omega>'"
-  shows "continuous_on {0..T}
-      (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
-proof -
-  let ?f = "\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
-  have U: "{0..T} = {0..r} \<union> {r..T}" using r rT by auto
-  have A: "continuous_on {0..r} ?f"
-    by (rule continuous_on_eq[OF c1]) simp
-  have B: "continuous_on {r..T} ?f"
-  proof (rule continuous_on_eq)
-    have "continuous_on {r..T} (\<lambda>t. \<omega>' (t - r))"
-      by (rule continuous_on_compose2[OF c2 continuous_on_diff
-            [OF continuous_on_id continuous_on_const]]) auto
-    then show "continuous_on {r..T} (\<lambda>t. \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
-      by (intro continuous_intros)
-  next
-    fix t :: real assume "t \<in> {r..T}"
-    then show "\<omega> r + (\<omega>' (t - r) - \<omega>' 0) = ?f t" by (cases "t = r") auto
-  qed
-  show ?thesis unfolding U by (rule continuous_on_closed_Un[OF _ _ A B]) auto
-qed
 
-lemma pglue_in_mspace:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-    and w': "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-  shows "pglue r T \<omega> \<omega>' \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  unfolding pglue_def
-  by (rule mspace_path_metricI[OF continuous_on_pglue[OF r rT
-        mspace_path_metricD[OF w] mspace_path_metricD[OF w']]])
 
-lemma pglue_measurable:
-  fixes Q R :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-  shows "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M R \<rightarrow>\<^sub>M
-      (path_borel T :: ('n pairpath) measure)"
-proof -
-  have T0: "0 \<le> T" using r rT by simp
-  have eQ: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
-    for v
-    by (rule measurable_compose[OF measurable_fst
-          pair_law_eval_measurable[OF setsQ]])
-  have eR: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
-    for v
-    by (rule measurable_compose[OF measurable_snd
-          pair_law_eval_measurable[OF setsR]])
-  have Xm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
-        if t \<le> r then fst p t else fst p r + (snd p (t - r) - snd p 0))
-      \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" for t
-    using eQ eR by simp
-  have cont: "continuous_on {0..T} (\<lambda>t. if t \<le> r then fst p t
-        else fst p r + (snd p (t - r) - snd p 0))"
-    if p: "p \<in> space (Q \<Otimes>\<^sub>M R)" for p :: "'n pairpath \<times> 'n pairpath"
-  proof (rule continuous_on_pglue[OF r rT])
-    have "fst p \<in> space Q" "snd p \<in> space R"
-      using p by (auto simp: space_pair_measure)
-    then show "continuous_on {0..r} (fst p)" "continuous_on {0..T - r} (snd p)"
-      using space_of_path_sets[OF setsQ] space_of_path_sets[OF setsR]
-      by (auto intro: mspace_path_metricD)
-  qed
-  show ?thesis
-    using pathify_measurable[OF T0 Xm cont] unfolding pglue_def by simp
-qed
-
-text \<open>The eigenvalue constraint (1.7) survives concatenation: across the
-  glue point the difference quotient is a convex combination of one
-  quotient from each piece, which is why the constraint set had to be
-  convexified (Lemma 2.1, \<open>sconstraint_convex\<close>) --- the unconvexified set
-  of (1.4) would not do.\<close>
 
 lemma pglue_diffquot:
   fixes \<omega> \<omega>' :: "'n::finite pairpath"
@@ -419,98 +289,9 @@ qed
 
 subsection \<open>The pasted law\<close>
 
-definition pglue_law :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath) measure
-    \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
-  where "pglue_law r T Q R
-     = pair_law_of T (\<lambda>p. pglue r T (fst p) (snd p)) (Q \<Otimes>\<^sub>M R)"
 
-lemma sets_pglue_law[simp]:
-  "sets (pglue_law r T Q R)
-     = sets (path_borel T :: ('n::finite pairpath) measure)"
-  unfolding pglue_law_def by (rule sets_pair_law_of)
 
-text \<open>\<open>prob_space_pair_measure\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
 
-lemma prob_space_pglue_law:
-  fixes Q R :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and PQ: "prob_space Q" and PR: "prob_space R"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-  shows "prob_space (pglue_law r T Q R)"
-proof -
-  interpret PP: prob_space "Q \<Otimes>\<^sub>M R"
-    by (rule prob_space_pair_measure[OF PQ PR])
-  show ?thesis
-    unfolding pglue_law_def pair_law_of_def
-    by (rule PP.prob_space_distr[OF pglue_measurable[OF r rT setsQ setsR]])
-qed
-
-text \<open>The transfer principle for almost-sure statements: a property of the
-  glued path holds \<open>pglue_law\<close>-a.s. as soon as it follows from one
-  \<open>Q\<close>-a.s. property of the first piece and one \<open>R\<close>-a.s. property of the
-  second.  Both \<open>AE\<close> clauses of (1.7) are of this shape.\<close>
-
-lemma AE_pglue_law:
-  fixes Q R :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and PQ: "prob_space Q" and PR: "prob_space R"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-    and mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). P \<omega>}
-        \<in> sets (path_borel T :: ('n pairpath) measure)"
-    and A: "AE \<omega> in Q. A \<omega>" and B: "AE \<omega>' in R. B \<omega>'"
-    and imp: "\<And>\<omega> \<omega>' :: 'n pairpath.
-        \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric) \<Longrightarrow>
-        \<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric) \<Longrightarrow>
-        A \<omega> \<Longrightarrow> B \<omega>' \<Longrightarrow> P (pglue r T \<omega> \<omega>')"
-  shows "AE \<omega> in pglue_law r T Q R. P \<omega>"
-proof -
-  let ?M = "Q \<Otimes>\<^sub>M R"
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue r T (fst p) (snd p)"
-  interpret PQ: prob_space Q by (rule PQ)
-  interpret PR: prob_space R by (rule PR)
-  interpret PP: pair_prob_space Q R by unfold_locales
-  have phim: "?g \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule pglue_measurable[OF r rT setsQ setsR])
-  have mset': "{\<omega> \<in> space ?B. P \<omega>} \<in> sets ?B"
-    using mset by (simp add: space_borel_of)
-  have iff: "(AE \<omega> in pglue_law r T Q R. P \<omega>) = (AE p in ?M. P (?g p))"
-    unfolding pglue_law_def pair_law_of_def by (rule AE_distr_iff[OF phim mset'])
-  have evm: "{p \<in> space ?M. P (?g p)} \<in> sets ?M"
-  proof -
-    have "{p \<in> space ?M. P (?g p)} = ?g -` {\<omega> \<in> space ?B. P \<omega>} \<inter> space ?M"
-      using measurable_space[OF phim] by auto
-    then show ?thesis using measurable_sets[OF phim mset'] by simp
-  qed
-  have inner: "AE \<omega> in Q. AE \<omega>' in R. P (?g (\<omega>, \<omega>'))"
-  proof -
-    have RB: "AE \<omega>' in R. B \<omega>'
-        \<and> \<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-      using B AE_space[of R] space_of_path_sets[OF setsR]
-      by (auto intro: eventually_conj)
-    have QA: "AE \<omega> in Q. A \<omega>
-        \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      using A AE_space[of Q] space_of_path_sets[OF setsQ]
-      by (auto intro: eventually_conj)
-    show ?thesis
-    proof (rule eventually_mono[OF QA])
-      fix \<omega> :: "'n pairpath"
-      assume w: "A \<omega> \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      show "AE \<omega>' in R. P (?g (\<omega>, \<omega>'))"
-      proof (rule eventually_mono[OF RB])
-        fix \<omega>' :: "'n pairpath"
-        assume "B \<omega>'
-            \<and> \<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-        with w show "P (?g (\<omega>, \<omega>'))" by (simp add: imp)
-      qed
-    qed
-  qed
-  have "AE p in ?M. P (?g p)"
-    using PP.AE_pair_measure[OF evm] inner by simp
-  then show ?thesis unfolding iff .
-qed
 
 lemma pglue_law_start:
   fixes Q R :: "('n::finite pairpath) measure"
@@ -593,78 +374,10 @@ text \<open>\<open>exit_val\<close> caps the exit time at \<open>T\<close>, the 
   at horizon \<open>S\<close> once \<open>S\<close> exceeds the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> of
   \<open>exit_val_le_ball_bound\<close>.  No pasting is needed here.\<close>
 
-definition pfst :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> (real \<Rightarrow> real^'n)"
-  where "pfst S \<omega> = restrict (\<lambda>t. fst (\<omega> t)) {0..S}"
-
-lemma pexit_pfst: "pexit S K (pfst S \<omega>) = pexit S K (\<lambda>t. fst (\<omega> t))"
-proof -
-  have "{r. 0 \<le> r \<and> r \<le> S \<and> pfst S \<omega> r \<in> - K}
-      = {r. 0 \<le> r \<and> r \<le> S \<and> fst (\<omega> r) \<in> - K}"
-    by (auto simp: pfst_def)
-  then show ?thesis unfolding pexit_def etime_def by simp
-qed
-
-lemma pfst_measurable:
-  fixes N :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S"
-    and setsN: "sets N = sets (path_borel S :: ('n pairpath) measure)"
-  shows "pfst S \<in> N \<rightarrow>\<^sub>M (path_borel S :: ((real \<Rightarrow> real^'n)) measure)"
-  unfolding pfst_def
-proof (rule pathify_measurable[OF S])
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-      \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  fix t :: real assume "t \<in> {0..S}"
-  show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable N"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsN] fstB])
-next
-  fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space N"
-  then have "\<omega> \<in> mspace (path_metric S :: ('n pairpath) metric)"
-    using space_of_path_sets[OF setsN] by simp
-  then have "continuous_on {0..S} \<omega>" by (rule mspace_path_metricD)
-  then show "continuous_on {0..S} (\<lambda>t. fst (\<omega> t))"
-    by (intro continuous_intros)
-qed
-
-text \<open>\<open>ennreal_min_eq\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
-lemma pexit_pcut_ge:
-  fixes K :: "(real^'n::finite) set" and \<omega> :: "'n pairpath"
-  assumes S: "0 \<le> S" and ST: "S \<le> T"
-  shows "min (pexit T K (\<lambda>t. fst (\<omega> t))) S
-      \<le> pexit S K (\<lambda>t. fst (pcut S \<omega> t))"
-proof -
-  have T0: "0 \<le> T" using S ST by simp
-  have lb: "min (pexit T K (\<lambda>t. fst (\<omega> t))) S \<le> z"
-    if z: "z \<in> {r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S}"
-    for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> S" "fst (pcut S \<omega> z) \<in> - K" | (cap) "z = S"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zT: "z \<le> T" using ST by simp
-      have notin: "fst (\<omega> z) \<in> - K"
-        using hit by (simp add: pcut_apply)
-      have "pexit T K (\<lambda>t. fst (\<omega> t)) \<le> z"
-        unfolding pexit_def
-        by (rule etime_le_of_mem[OF T0 hit(1) zT]) (use notin in simp)
-      then show ?thesis using hit(2) by simp
-    next
-      case cap
-      then show ?thesis by simp
-    qed
-  qed
-  have "pexit S K (\<lambda>t. fst (pcut S \<omega> t))
-      = Inf ({r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S})"
-    unfolding pexit_def etime_def ..
-  moreover have "min (pexit T K (\<lambda>t. fst (\<omega> t)))  S
-      \<le> Inf ({r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
+
+
 
 theorem exit_val_horizon_stable:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
@@ -760,13 +473,6 @@ text \<open>The glued process splits as a first-factor martingale plus a
   \<open>X'(0) = 0\<close> from clause (i) --- which is what \<open>martingale_cong_AE\<close> is
   for.\<close>
 
-lemma nat_filt_eval:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes b: "0 \<le> b" and ba: "b \<le> a"
-  shows "(\<lambda>\<omega> :: 'n pairpath. \<omega> b)
-      \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) a \<rightarrow>\<^sub>M borel"
-  unfolding natural_filtration_def
-  by (rule measurable_family_vimage_algebra) (use b ba in auto)
 
 theorem pglue_law_X_martingale:
   fixes Q R :: "('n::finite pairpath) measure"
@@ -969,23 +675,7 @@ proof -
         mgl])
 qed
 
-lemma outerp_add:
-  fixes a b :: "real^'n::finite"
-  shows "outerp (a + b) = outerp a + outerp b
-      + ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))"
-  by (simp add: outerp_def vec_eq_iff algebra_simps)
 
-lemma outerp_zero: "outerp (0 :: real^'n::finite) = 0"
-  by (simp add: outerp_def vec_eq_iff)
-
-text \<open>Clause (iv).  Beyond \<open>r\<close> the glued pair is \<open>(X\<^sub>r + W, Y\<^sub>r + \<langle>W\<rangle>)\<close>, so
-  its compensated process expands as
-
-    \<open>(outerp X\<^sub>r - Y\<^sub>r) + (outerp W - \<langle>W\<rangle>) + (X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r)\<close>:
-
-  one compensated martingale from each factor, plus a cross term that is a
-  martingale only because the factors are independent
-  (\<open>martingale_pair_mult\<close>, entrywise through \<open>martingale_matI\<close>).\<close>
 
 theorem pglue_law_comp_martingale:
   fixes Q R :: "('n::finite pairpath) measure"
@@ -1272,50 +962,6 @@ text \<open>The immediate payoff: \<open>exit_val\<close> is nondecreasing in th
   for \<open>T\<close> beyond the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close>: the horizon cap is
   invisible, and \<open>exit_val\<close> is the paper's uncapped \<open>v\<close>.\<close>
 
-lemma pexit_pglue_ge:
-  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
-  assumes S: "0 \<le> S" and ST: "S \<le> T"
-  shows "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))"
-proof -
-  have lb: "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue S T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      show ?thesis
-      proof (cases "z \<le> S")
-        case True
-        have zI: "z \<in> {0..T}" using hit by simp
-        have notin: "fst (\<omega> z) \<in> - K"
-          using hit True by (simp add: pglue_le[OF zI])
-        show ?thesis
-          unfolding pexit_def
-          by (rule etime_le_of_mem[OF S hit(1) True]) (use notin in simp)
-      next
-        case False
-        then show ?thesis
-          using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] by linarith
-      qed
-    next
-      case cap
-      then show ?thesis
-        using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] ST by linarith
-    qed
-  qed
-  have "pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "pexit S K (\<lambda>t. fst (\<omega> t))
-      \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
 
 theorem exit_val_horizon_mono:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -1426,17 +1072,6 @@ text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic pr
   at \<open>0\<close> supplies a continuation from every endpoint via \<open>pglue\<close>; the full
   (2.9) needs that law chosen depending on the endpoint.\<close>
 
-lemma pexit_path_measurable:
-  fixes K :: "(real^'n::finite) set" and N :: "('n pairpath) measure"
-  assumes T: "0 \<le> T" and K: "closed K"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
-  shows "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))) \<in> borel_measurable N"
-proof -
-  have "(\<lambda>\<omega> :: 'n pairpath. pexit T K (pfst T \<omega>)) \<in> borel_measurable N"
-    by (rule measurable_compose[OF pfst_measurable[OF T setsN]
-          pexit_measurable[OF T K]])
-  then show ?thesis by (simp add: pexit_pfst)
-qed
 
 theorem exit_val_paste_ge:
   fixes Q R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
@@ -1478,214 +1113,12 @@ proof -
   finally show ?thesis .
 qed
 
-lemma pexit_pglue_split:
-  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
-    and stay: "\<And>t. t \<in> {0..r} \<Longrightarrow> fst (\<omega> t) \<in> K"
-    and cont: "\<And>s. s \<in> {0..c} \<Longrightarrow> fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-  shows "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-proof -
-  have lb: "r + c \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue r T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zI: "z \<in> {0..T}" by simp
-      show ?thesis
-      proof (rule ccontr)
-        assume "\<not> r + c \<le> z"
-        then have zc: "z < r + c" by simp
-        show False
-        proof (cases "z \<le> r")
-          case True
-          have "fst (\<omega> z) \<in> K" using hit(1) True by (intro stay) simp
-          then show False using hit(3) by (simp add: pglue_le[OF zI True])
-        next
-          case False
-          then have rz: "r \<le> z" by simp
-          have "z - r \<in> {0..c}" using rz zc by simp
-          then have "fst (\<omega> r + (\<omega>' (z - r) - \<omega>' 0)) \<in> K" by (rule cont)
-          then show False using hit(3) by (simp add: pglue_ge[OF zI rz])
-        qed
-      qed
-    next
-      case cap
-      then show ?thesis using cT by simp
-    qed
-  qed
-  have "pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "r + c \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-      \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
 
-text \<open>\<open>sets_PiM_mono\<close>, \<open>filtered_measure_PiM\<close>, \<open>martingale_distr\<close> and
-  \<open>martingale_PiM_component\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
 
-section \<open>Kernel pasting: a continuation chosen by the endpoint\<close>
 
-text \<open>The step from \<open>pglue_law\<close> (one continuation for every endpoint) to
-  what (2.9) needs: a countable family \<open>RR\<close> of candidate continuations and
-  a past-measurable index \<open>N\<close> selecting one.  The second factor is the
-  product \<open>\<Pi>\<^sub>M i. RR i\<close>, from which the glue picks the \<open>N \<omega>\<close>-th;
-  freezing the first coordinate makes the index constant, so
-  \<open>martingale_pair_snd_param\<close> and \<open>martingale_PiM_component\<close> carry the
-  construction.\<close>
 
-definition kglue :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath \<Rightarrow> nat)
-    \<Rightarrow> ('n pairpath \<times> (nat \<Rightarrow> 'n pairpath)) \<Rightarrow> 'n pairpath"
-  where "kglue r T N p = pglue r T (fst p) (snd p (N (fst p)))"
 
-definition kglue_law :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath \<Rightarrow> nat)
-    \<Rightarrow> ('n pairpath) measure \<Rightarrow> (nat \<Rightarrow> ('n pairpath) measure)
-    \<Rightarrow> ('n pairpath) measure"
-  where "kglue_law r T N Q RR
-     = pair_law_of T (kglue r T N) (Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR)"
 
-lemma sets_kglue_law[simp]:
-  "sets (kglue_law r T N Q RR)
-     = sets (path_borel T :: ('n::finite pairpath) measure)"
-  unfolding kglue_law_def by (rule sets_pair_law_of)
-
-lemma kglue_measurable:
-  fixes Q :: "('n::finite pairpath) measure"
-    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "\<And>j. sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
-  shows "kglue r T N \<in> Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M
-      (path_borel T :: ('n pairpath) measure)"
-proof -
-  let ?M = "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
-  have T0: "0 \<le> T" using r rT by simp
-  have eQ: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). fst p v)
-      \<in> borel_measurable ?M" for v
-    by (rule measurable_compose[OF measurable_fst
-          pair_law_eval_measurable[OF setsQ]])
-  have Nfst: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). N (fst p))
-      \<in> ?M \<rightarrow>\<^sub>M count_space UNIV"
-    by (rule measurable_compose[OF measurable_fst Nm])
-  have eS: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p (N (fst p)) v)
-      \<in> borel_measurable ?M" for v
-  proof (rule measurable_compose_countable[OF _ Nfst])
-    fix j :: nat
-    have "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M RR j"
-      by (rule measurable_component_singleton) simp
-    from measurable_compose[OF measurable_snd this]
-    have "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p j) \<in> ?M \<rightarrow>\<^sub>M RR j" .
-    from measurable_compose[OF this pair_law_eval_measurable[OF setsR]]
-    show "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). snd p j v)
-        \<in> borel_measurable ?M" .
-  qed
-  have Xm: "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath). if t \<le> r then fst p t
-        else fst p r + (snd p (N (fst p)) (t - r) - snd p (N (fst p)) 0))
-      \<in> borel_measurable ?M" for t
-    using eQ eS by simp
-  have cont: "continuous_on {0..T} (\<lambda>t. if t \<le> r then fst p t
-        else fst p r + (snd p (N (fst p)) (t - r) - snd p (N (fst p)) 0))"
-    if p: "p \<in> space ?M" for p :: "'n pairpath \<times> (nat \<Rightarrow> 'n pairpath)"
-  proof (rule continuous_on_pglue[OF r rT])
-    have "fst p \<in> space Q" and sp: "snd p \<in> space (Pi\<^sub>M UNIV RR)"
-      using p by (auto simp: space_pair_measure)
-    then show "continuous_on {0..r} (fst p)"
-      using space_of_path_sets[OF setsQ] by (auto intro: mspace_path_metricD)
-    have "snd p (N (fst p)) \<in> space (RR (N (fst p)))"
-      using sp by (simp add: space_PiM PiE_iff)
-    then show "continuous_on {0..T - r} (snd p (N (fst p)))"
-      using space_of_path_sets[OF setsR] by (auto intro: mspace_path_metricD)
-  qed
-  show ?thesis
-    using pathify_measurable[OF T0 Xm cont]
-    unfolding kglue_def pglue_def by simp
-qed
-
-lemma prob_space_kglue_law:
-  fixes Q :: "('n::finite pairpath) measure"
-    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "\<And>j. sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
-  shows "prob_space (kglue_law r T N Q RR)"
-proof -
-  interpret PP: prob_space "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
-    by (rule prob_space_pair_measure[OF PQ prob_space_PiM]) (rule PR)
-  show ?thesis
-    unfolding kglue_law_def pair_law_of_def
-    by (rule PP.prob_space_distr
-        [OF kglue_measurable[OF r rT setsQ setsR Nm]])
-qed
-
-lemma AE_kglue_law:
-  fixes Q :: "('n::finite pairpath) measure"
-    and RR :: "nat \<Rightarrow> ('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and PQ: "prob_space Q" and PR: "\<And>j. prob_space (RR j)"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "\<And>j. sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-    and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
-    and mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). P \<omega>}
-        \<in> sets (path_borel T :: ('n pairpath) measure)"
-    and A: "AE \<omega> in Q. A \<omega>" and B: "AE f in Pi\<^sub>M UNIV RR. B f"
-    and imp: "\<And>\<omega> f. \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric) \<Longrightarrow>
-        f \<in> space (Pi\<^sub>M UNIV RR) \<Longrightarrow> A \<omega> \<Longrightarrow> B f \<Longrightarrow> P (kglue r T N (\<omega>, f))"
-  shows "AE \<omega> in kglue_law r T N Q RR. P \<omega>"
-proof -
-  let ?S = "Pi\<^sub>M UNIV RR"
-  let ?M = "Q \<Otimes>\<^sub>M ?S"
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  interpret PQ: prob_space Q by (rule PQ)
-  interpret PS: prob_space ?S by (rule prob_space_PiM) (rule PR)
-  interpret PP: pair_prob_space Q ?S by unfold_locales
-  have phim: "kglue r T N \<in> ?M \<rightarrow>\<^sub>M ?B"
-    by (rule kglue_measurable[OF r rT setsQ setsR Nm])
-  have mset': "{\<omega> \<in> space ?B. P \<omega>} \<in> sets ?B"
-    using mset by (simp add: space_borel_of)
-  have iff: "(AE \<omega> in kglue_law r T N Q RR. P \<omega>)
-      = (AE p in ?M. P (kglue r T N p))"
-    unfolding kglue_law_def pair_law_of_def by (rule AE_distr_iff[OF phim mset'])
-  have evm: "{p \<in> space ?M. P (kglue r T N p)} \<in> sets ?M"
-  proof -
-    have "{p \<in> space ?M. P (kglue r T N p)}
-        = kglue r T N -` {\<omega> \<in> space ?B. P \<omega>} \<inter> space ?M"
-      using measurable_space[OF phim] by auto
-    then show ?thesis using measurable_sets[OF phim mset'] by simp
-  qed
-  have inner: "AE \<omega> in Q. AE f in ?S. P (kglue r T N (\<omega>, f))"
-  proof -
-    have SB: "AE f in ?S. B f \<and> f \<in> space ?S"
-      using B AE_space[of ?S] by (auto intro: eventually_conj)
-    have QA: "AE \<omega> in Q. A \<omega>
-        \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      using A AE_space[of Q] space_of_path_sets[OF setsQ]
-      by (auto intro: eventually_conj)
-    show ?thesis
-    proof (rule eventually_mono[OF QA])
-      fix \<omega> :: "'n pairpath"
-      assume w: "A \<omega> \<and> \<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      show "AE f in ?S. P (kglue r T N (\<omega>, f))"
-      proof (rule eventually_mono[OF SB])
-        fix f :: "nat \<Rightarrow> 'n pairpath"
-        assume "B f \<and> f \<in> space ?S"
-        with w show "P (kglue r T N (\<omega>, f))" by (simp add: imp)
-      qed
-    qed
-  qed
-  have "AE p in ?M. P (kglue r T N p)"
-    using PP.AE_pair_measure[OF evm] inner by simp
-  then show ?thesis unfolding iff .
-qed
 
 lemma kglue_law_start:
   fixes Q :: "('n::finite pairpath) measure"
@@ -1796,37 +1229,6 @@ text \<open>The decomposition for clauses (iii) and (iv) of the kernel glue is
 text \<open>\<open>martingale_sub_initial\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-lemma kglue_param_martingale:
-  fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Z :: "nat \<Rightarrow> real \<Rightarrow> ('n pairpath)
-        \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes rT: "r \<le> T"
-    and mg: "\<And>j. martingale (RR j) (natural_filtration (RR j) 0 (\<lambda>v \<omega>. \<omega> v)) 0 (Z j)"
-    and PR: "\<And>j. prob_space (RR j)"
-  shows "martingale (Pi\<^sub>M UNIV RR)
-      (\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega>. \<omega> v) (max (u - r) 0)))
-      0 (\<lambda>u f. Z i (max (u - r) 0) (f i))"
-proof -
-  let ?GR = "\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  have FR: "filtered_measure (RR j) (?GR j) (0::real)" for j
-  proof -
-    interpret MJ: martingale "RR j" "?GR j" "0::real" "Z j" by (rule mg)
-    show ?thesis by unfold_locales
-  qed
-  have s0: "0 \<le> max (u - r) 0" for u :: real by simp
-  have smono: "max (u - r) 0 \<le> max (v - r) 0" if "0 \<le> u" "u \<le> v" for u v :: real
-    using that by simp
-  have "martingale (Pi\<^sub>M UNIV RR) (\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. ?GR j u)) 0
-      (\<lambda>u f. Z i u (f i))"
-    by (rule martingale_PiM_component[OF PR FR mg])
-  from martingale_time_change[OF this s0 smono] show ?thesis .
-qed
-
-text \<open>The uniform first-moment bound the kernel glue's integrability needs:
-  the bound depends only on \<open>k\<close>, \<open>L\<close> and the horizon, not on the member ---
-  so it holds simultaneously for every candidate continuation in the
-  family.  \<open>a \<le> 1 + a\<^sup>2\<close> avoids a square root, so no Cauchy--Schwarz is
-  needed.\<close>
 
 lemma exit_class_norm_mean_le:
   fixes Q :: "('n::finite pairpath) measure"
@@ -2239,24 +1641,8 @@ text \<open>\<open>norm_outer_prod\<close> lives in
   @{theory Symmetric_Matrix_Spectra.Poincare_Separation}, stated through
   \<open>outer_prod\<close>; \<open>outerp x\<close> is \<open>outer_prod x x\<close>.\<close>
 
-lemma norm_outerp: "norm (outerp (v :: real^'n::finite)) = norm v * norm v"
-proof -
-  have "outerp v = outer_prod v v" by (simp add: outerp_def outer_prod_def)
-  then show ?thesis by (simp add: norm_outer_prod)
-qed
-
-text \<open>\<open>pair_fst_borel\<close>, \<open>pair_snd_borel\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
-lemma outerp_borel:
-  "(outerp :: real^'n::finite \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
-proof -
-  have e: "(outerp :: real^'n \<Rightarrow> real^'n^'n) = (\<lambda>v. \<chi> i j. v $ i * v $ j)"
-    by (rule ext) (simp add: outerp_def)
-  show ?thesis unfolding e
-    by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
-        continuous_intros)
-qed
 
 lemma kglue_param_comp_martingale:
   fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"

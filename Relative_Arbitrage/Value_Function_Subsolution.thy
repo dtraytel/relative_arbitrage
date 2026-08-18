@@ -9,6 +9,7 @@ theory Value_Function_Subsolution
     "Symmetric_Matrix_Spectra.Ky_Fan"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    Path_Law_Pasting
 begin
 
 (*>*)
@@ -144,27 +145,7 @@ text \<open>The class of (1.7) is defined by martingale properties, not by an SD
 
 subsection \<open>Matrix functionals that are bounded linear\<close>
 
-lemma outerp_eq_outer_prod:
-  fixes v :: "real^'n::finite"
-  shows "outerp v = outer_prod v v"
-  by (simp add: outerp_def outer_prod_def)
 
-lemma trace_mult_outerp:
-  fixes M :: "real^'n::finite^'n" and v :: "real^'n"
-  shows "trace (M ** outerp v) = v \<bullet> (M *v v)"
-  by (simp add: outerp_eq_outer_prod mult_outer_prod inner_commute)
-
-text \<open>\<open>trace_mult_sum\<close>, \<open>bounded_linear_trace_mult_left\<close>, \<open>bounded_linear_trace_mult_right\<close>, \<open>bounded_linear_quadform\<close>, \<open>trace_mult_diff\<close>, \<open>trace_mult_scaleR\<close>, \<open>bounded_linear_transpose\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>The averaged covariation stays in the constraint set\<close>
-
-text \<open>Every condition defining \<^const>\<open>sconstraint\<close> is a linear (in)equality in
-  the matrix: \<^const>\<open>psd\<close> and \<^const>\<open>eigen_ub\<close> are conditions on the
-  quadratic form \<open>z \<bullet> (a *v z)\<close>, linear in \<open>a\<close>, and \<open>c \<le> Pi_proj a m\<close> is by
-  @{thm [source] Pi_proj_ge} an intersection of the half-spaces
-  \<open>c \<le> trace (a ** P)\<close>, again linear in \<open>a\<close>.  The set is an intersection of
-  closed half-spaces and passes through the integral.\<close>
 
 lemma exit_class_Y_integrable:
   fixes Q :: "('n::finite pairpath) measure"
@@ -513,29 +494,7 @@ text \<open>A direction annihilated by the averaged covariation is frozen: the
 
 text \<open>\<open>trace_mult_commute\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
 
-lemma trace_outerp_mult:
-  fixes B :: "real^'n::finite^'n" and v :: "real^'n"
-  shows "trace (outerp v ** B) = v \<bullet> (B *v v)"
-  by (subst trace_mul_sym) (rule trace_mult_outerp)
 
-lemma quadform_outerp:
-  fixes q z :: "real^'n::finite"
-  shows "z \<bullet> (outerp q *v z) = (q \<bullet> z)\<^sup>2"
-  by (simp add: outerp_eq_outer_prod power2_eq_square inner_commute)
-
-section \<open>The relaxed operator, and the inequality the class really gives\<close>
-
-text \<open>Eq. (1.9) takes its infimum over \<^const>\<open>feasible\<close>, which carries the
-  orthogonality constraint \<open>a *v p = 0\<close> on top of the spectral bounds; the
-  class of (1.7) carries no such constraint, its covariation directions
-  living in \<^const>\<open>sconstraint\<close>.  The two are related in one direction,
-
-    \<^const>\<open>feasible\<close> \<open>k L p\<close> \<open>\<subseteq>\<close> \<^const>\<open>sconstraint\<close> \<open>k L\<close>
-
-  (@{thm [source] suff_volatile_cap_in_sconstraint}), so the infimum over
-  the larger set is smaller: \<open>ell_op_s \<le> ell_op\<close>.  Naming the relaxed
-  operator keeps the missing ingredient --- orthogonality of the optimal
-  direction to the gradient --- visible instead of buried.\<close>
 
 definition ell_op_s :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "ell_op_s k L M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L)"
@@ -899,19 +858,6 @@ text \<open>\<open>pexit_path_measurable\<close> covers closed targets and the b
   \<open>[0,t]\<close> and \<open>t\<close> itself.  A countable intersection of countable unions of
   evaluation events remains measurable.\<close>
 
-lemma dist_eval_measurable:
-  fixes x :: "real^'n::finite"
-  shows "(\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x)
-      \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-proof -
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> borel_measurable
-      (path_borel T :: ('n pairpath) measure)"
-    by (rule pair_law_eval_measurable[OF refl])
-  have c: "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). dist (fst pr) x)
-      \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  show ?thesis by (rule measurable_compose[OF ev c])
-qed
 
 lemma pball_exit_le_iff_dense:
   fixes \<omega> :: "'n::finite pairpath"
@@ -1156,40 +1102,7 @@ text \<open>The optional-sampling content follows from the DPP:
   the horizon \<open>T\<close>, where the stopped path is the path at \<open>\<theta>\<close>, and
   transporting along \<open>pair_law_of\<close> (a \<open>distr\<close>) yields the sampled means.\<close>
 
-lemma X_eval_entry_measurable:
-  "(\<lambda>p' :: 'n::finite pairpath. fst (p' u) $ c) \<in> borel_measurable
-     (path_borel T :: ('n pairpath) measure)"
-proof (rule measurable_compose[OF pair_law_eval_measurable[OF refl]])
-  have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  show "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). fst pr $ c) \<in> borel_measurable borel"
-    by (rule measurable_compose[OF f borel_measurable_nth])
-qed
 
-lemma comp_eval_entry_measurable:
-  "(\<lambda>p' :: 'n::finite pairpath. (outerp (fst (p' u)) - snd (p' u)) $ cc $ dd)
-     \<in> borel_measurable
-       (path_borel T :: ('n pairpath) measure)"
-proof (rule measurable_compose[OF pair_law_eval_measurable[OF refl]])
-  have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  have s: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  have o: "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). outerp (fst pr))
-      \<in> borel_measurable borel"
-    by (rule measurable_compose[OF f outerp_borel])
-  have dm: "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). outerp (fst pr) - snd pr)
-      \<in> borel_measurable borel"
-    by (rule borel_measurable_diff[OF o s])
-  have n1: "(\<lambda>v :: real^'n^'n. v $ cc) \<in> borel_measurable borel"
-    by (rule borel_measurable_continuous_onI)
-      (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have n2: "(\<lambda>v :: real^'n. v $ dd) \<in> borel_measurable borel"
-    by (rule borel_measurable_nth)
-  show "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). (outerp (fst pr) - snd pr) $ cc $ dd)
-      \<in> borel_measurable borel"
-    by (rule measurable_compose[OF measurable_compose[OF dm n1] n2])
-qed
 
 lemma exit_class_X_entry_stopped:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -1997,317 +1910,14 @@ section \<open>Positive semidefinite forms kill their null directions\<close>
 text \<open>The Cauchy--Schwarz inequality for a psd form, in the shape needed
   later: if the form vanishes at \<open>q\<close> then \<open>q\<close> is in the kernel.\<close>
 
-lemma psd_kernel_eq:
-  fixes a :: "real^'n::finite^'n" and q :: "real^'n"
-  assumes a: "psd a" and z: "q \<bullet> (a *v q) = 0"
-  shows "a *v q = 0"
-proof -
-  have sym: "transpose a = a" using a by (simp add: psd_def)
-  have nn: "0 \<le> y \<bullet> (a *v y)" for y using a by (simp add: psd_def)
-  have cross: "z \<bullet> (a *v q) = 0" for z
-  proof (rule ccontr)
-    assume ne: "z \<bullet> (a *v q) \<noteq> 0"
-    define Bc where "Bc = z \<bullet> (a *v q)"
-    define Ac where "Ac = z \<bullet> (a *v z)"
-    have Bc0: "Bc \<noteq> 0" using ne by (simp add: Bc_def)
-    have Ac0: "0 \<le> Ac" by (simp add: Ac_def nn)
-    have qa: "q \<bullet> (a *v z) = Bc"
-    proof -
-      have "q \<bullet> (a *v z) = (transpose a *v q) \<bullet> z"
-        by (rule inner_transpose_matrix)
-      also have "\<dots> = (a *v q) \<bullet> z" using sym by simp
-      also have "\<dots> = z \<bullet> (a *v q)" by (rule inner_commute)
-      finally show ?thesis by (simp add: Bc_def)
-    qed
-    have expand: "(q + r *\<^sub>R z) \<bullet> (a *v (q + r *\<^sub>R z))
-        = 2 * r * Bc + r\<^sup>2 * Ac" for r
-    proof -
-      have lin: "a *v (q + r *\<^sub>R z) = a *v q + r *\<^sub>R (a *v z)"
-        by (simp add: matrix_vector_mult_def vec_eq_iff sum.distrib
-            sum_distrib_left algebra_simps)
-      show ?thesis
-        unfolding lin
-        by (simp add: z qa Bc_def Ac_def power2_eq_square
-            algebra_simps)
-    qed
-    show False
-    proof (cases "Ac = 0")
-      case True
-      have "0 \<le> 2 * (- Bc) * Bc + (- Bc)\<^sup>2 * Ac"
-        using nn[of "q + (- Bc) *\<^sub>R z"] expand[of "- Bc"] by simp
-      then have "Bc * Bc \<le> 0" using True by (simp add: power2_eq_square)
-      moreover have "0 < Bc * Bc"
-        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
-            simp: not_less le_less)
-      ultimately show False by linarith
-    next
-      case False
-      then have AcP: "0 < Ac" using Ac0 by simp
-      define r where "r = - Bc / Ac"
-      have "0 \<le> 2 * r * Bc + r\<^sup>2 * Ac"
-        using nn[of "q + r *\<^sub>R z"] expand[of r] by simp
-      also have "2 * r * Bc + r\<^sup>2 * Ac = - (Bc\<^sup>2 / Ac)"
-        unfolding r_def using AcP by (simp add: power2_eq_square field_simps)
-      finally have h: "Bc\<^sup>2 / Ac \<le> 0" by simp
-      have "0 < Bc * Bc"
-        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
-            simp: not_less le_less)
-      then have "0 < Bc\<^sup>2 / Ac"
-        using AcP by (simp add: power2_eq_square)
-      with h show False by linarith
-    qed
-  qed
-  have "(a *v q) \<bullet> (a *v q) = 0" using cross[of "a *v q"] by simp
-  then show ?thesis by simp
-qed
-
-section \<open>Sums of outer products: the toolkit\<close>
-
-text \<open>\<open>onormal_subset\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Orthonormal_Families}.\<close>
-
-lemma matvec_sum_outer:
-  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
-  assumes finS: "finite S"
-  shows "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
-proof -
-  have "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z
-      = (\<Sum>u\<in>S. (c u *\<^sub>R outer_prod u u) *v z)"
-    by (rule matrix_vector_mult_sum)
-  also have "\<dots> = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
-    by (rule sum.cong[OF refl])
-      (simp add: scaleR_matrix_vector)
-  finally show ?thesis .
-qed
-
-lemma quadform_sum_outer:
-  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
-  assumes finS: "finite S"
-  shows "z \<bullet> ((\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z) = (\<Sum>u\<in>S. c u * (u \<bullet> z)\<^sup>2)"
-proof -
-  have "z \<bullet> ((\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z)
-      = z \<bullet> (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
-    by (simp add: matvec_sum_outer[OF finS])
-  also have "\<dots> = (\<Sum>u\<in>S. z \<bullet> ((c u * (u \<bullet> z)) *\<^sub>R u))"
-    by (rule inner_sum_right)
-  also have "\<dots> = (\<Sum>u\<in>S. c u * (u \<bullet> z)\<^sup>2)"
-    by (rule sum.cong[OF refl])
-      (simp add: inner_commute power2_eq_square
-        algebra_simps)
-  finally show ?thesis .
-qed
-
-lemma traceM_sum_outer:
-  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
-    and M :: "real^'n^'n"
-  shows "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
-      = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
-proof -
-  have "M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u)
-      = (\<Sum>u\<in>S. M ** (c u *\<^sub>R outer_prod u u))"
-    by (rule matrix_mult_sum_right)
-  then have "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
-      = (\<Sum>u\<in>S. trace (M ** (c u *\<^sub>R outer_prod u u)))"
-    by (simp add: trace_matrix_sum)
-  also have "\<dots> = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
-  proof (rule sum.cong[OF refl])
-    fix u assume "u \<in> S"
-    have "trace (M ** (c u *\<^sub>R outer_prod u u))
-        = c u * trace (M ** outer_prod u u)"
-      by (rule trace_mult_scaleR)
-    also have "trace (M ** outer_prod u u) = u \<bullet> (M *v u)"
-      using trace_mult_outerp[of M u] by (simp add: outerp_eq_outer_prod)
-    finally show "trace (M ** (c u *\<^sub>R outer_prod u u))
-        = c u * (u \<bullet> (M *v u))" .
-  qed
-  finally show ?thesis .
-qed
-
-text \<open>\<open>trace_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma onormal_parseval:
-  fixes B :: "(real^'n::finite) set"
-  assumes B: "onormal B" and sp: "span B = UNIV"
-  shows "(\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) = z \<bullet> z"
-proof -
-  have finB: "finite B" by (rule onormal_finite[OF B])
-  have "(\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) = (\<Sum>u\<in>B. 1 * (u \<bullet> z)\<^sup>2)" by simp
-  also have "\<dots> = z \<bullet> ((\<Sum>u\<in>B. 1 *\<^sub>R outer_prod u u) *v z)"
-    by (rule quadform_sum_outer[OF finB, symmetric])
-  also have "(\<Sum>u\<in>B. (1::real) *\<^sub>R outer_prod u u) = (\<Sum>u\<in>B. outer_prod u u)"
-    by simp
-  also have "\<dots> = mat 1" by (rule onormal_complete[OF B sp])
-  also have "z \<bullet> (mat 1 *v z) = z \<bullet> z" by simp
-  finally show ?thesis .
-qed
-
-lemma onormal_span_parseval:
-  fixes S :: "(real^'n::finite) set"
-  assumes S: "onormal S" and x: "x \<in> span S"
-  shows "(\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2) = x \<bullet> x"
-proof -
-  have finS: "finite S" by (rule onormal_finite[OF S])
-  have "x \<bullet> x = x \<bullet> (\<Sum>u\<in>S. (u \<bullet> x) *\<^sub>R u)"
-    by (simp add: onormal_expand[OF S x])
-  also have "\<dots> = (\<Sum>u\<in>S. x \<bullet> ((u \<bullet> x) *\<^sub>R u))"
-    by (rule inner_sum_right)
-  also have "\<dots> = (\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2)"
-    by (rule sum.cong[OF refl])
-      (simp add: inner_commute power2_eq_square)
-  finally show ?thesis by simp
-qed
-
-section \<open>Selecting a value-minimal index set: the threshold argument\<close>
-
-text \<open>\<open>exists_min_subset\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 
-lemma weighted_min_value:
-  fixes w c :: "'a \<Rightarrow> real"
-  assumes finB: "finite B" and m1: "1 \<le> m" and mB: "m \<le> card B"
-    and c0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> c u" and c1: "\<And>u. u \<in> B \<Longrightarrow> c u \<le> 1"
-    and csum: "real m \<le> (\<Sum>u\<in>B. c u)"
-  obtains S where "S \<subseteq> B" and "m \<le> card S"
-    and "(\<Sum>u\<in>S. w u) \<le> (\<Sum>u\<in>B. c u * w u)"
-proof -
-  obtain S0 where S0: "S0 \<subseteq> B" and cS0: "card S0 = m"
-    and least: "\<forall>u\<in>S0. \<forall>v\<in>B - S0. w u \<le> w v"
-    using exists_min_subset[OF finB mB] by blast
-  have finS0: "finite S0" using S0 finB by (rule finite_subset)
-  have neS0: "S0 \<noteq> {}" using cS0 m1 by auto
-  define Neg where "Neg = {u \<in> B. w u < 0}"
-  have finNeg: "finite Neg" unfolding Neg_def using finB by simp
-  define \<tau> where "\<tau> = Max (w ` S0)"
-  have tauS0: "\<And>u. u \<in> S0 \<Longrightarrow> w u \<le> \<tau>"
-    unfolding \<tau>_def by (intro Max_ge finite_imageI finS0) blast
-  have tauout: "\<And>v. v \<in> B - S0 \<Longrightarrow> \<tau> \<le> w v"
-    unfolding \<tau>_def
-    by (intro Max.boundedI finite_imageI finS0)
-      (use neS0 least in blast)+
-  show ?thesis
-  proof (cases "Neg \<subseteq> S0")
-    case True
-    \<comment> \<open>the threshold is \<open>max \<tau> 0\<close>; every term is compared against it\<close>
-    define tp where "tp = max \<tau> 0"
-    have tp0: "0 \<le> tp" by (simp add: tp_def)
-    have key: "0 \<le> (\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S0. w u)"
-    proof -
-      have split: "(\<Sum>u\<in>B. c u * w u)
-          = (\<Sum>u\<in>S0. c u * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
-        using sum.subset_diff[OF S0 finB, of "\<lambda>u. c u * w u"] by simp
-      have inS: "\<And>u. u \<in> S0 \<Longrightarrow> (c u - 1) * tp \<le> (c u - 1) * w u"
-      proof -
-        fix u assume u: "u \<in> S0"
-        have wle: "w u \<le> tp" using tauS0[OF u] by (simp add: tp_def)
-        have cle: "c u - 1 \<le> 0" using c1 S0 u by auto
-        show "(c u - 1) * tp \<le> (c u - 1) * w u"
-          using mult_left_mono_neg[OF wle cle] by simp
-      qed
-      have outS: "\<And>u. u \<in> B - S0 \<Longrightarrow> c u * tp \<le> c u * w u"
-      proof -
-        fix u assume u: "u \<in> B - S0"
-        have w0: "0 \<le> w u" using True u unfolding Neg_def by auto
-        have wge: "tp \<le> w u"
-          using tauout[OF u] w0 by (simp add: tp_def)
-        have c0': "0 \<le> c u" using c0 u by auto
-        show "c u * tp \<le> c u * w u"
-          by (rule mult_left_mono[OF wge c0'])
-      qed
-      have "(\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S0. w u)
-          = (\<Sum>u\<in>S0. (c u - 1) * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
-        unfolding split by (simp add: sum_subtractf algebra_simps)
-      moreover have "(\<Sum>u\<in>S0. (c u - 1) * tp) + (\<Sum>u\<in>B - S0. c u * tp)
-          \<le> (\<Sum>u\<in>S0. (c u - 1) * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
-        by (intro add_mono sum_mono inS outS)
-      moreover have "(\<Sum>u\<in>S0. (c u - 1) * tp) + (\<Sum>u\<in>B - S0. c u * tp)
-          = tp * ((\<Sum>u\<in>B. c u) - real m)"
-      proof -
-        have h1: "(\<Sum>u\<in>S0. (c u - 1) * tp)
-            = (\<Sum>u\<in>S0. c u * tp) - real m * tp"
-          by (simp add: sum_subtractf cS0 algebra_simps)
-        have h2: "(\<Sum>u\<in>S0. c u * tp) + (\<Sum>u\<in>B - S0. c u * tp)
-            = (\<Sum>u\<in>B. c u * tp)"
-          using sum.subset_diff[OF S0 finB, of "\<lambda>u. c u * tp"] by simp
-        have h3: "(\<Sum>u\<in>B. c u * tp) = (\<Sum>u\<in>B. c u) * tp"
-          by (simp add: sum_distrib_right)
-        show ?thesis using h1 h2 h3 by (simp add: algebra_simps)
-      qed
-      moreover have "0 \<le> tp * ((\<Sum>u\<in>B. c u) - real m)"
-        using tp0 csum by simp
-      ultimately show ?thesis by linarith
-    qed
-    show ?thesis
-      by (rule that[of S0]) (use S0 cS0 key in auto)
-  next
-    case False
-    \<comment> \<open>a negative weight escaped the minimal set, so \<open>\<tau> < 0\<close> and taking all
-      negatives on top of \<open>S0\<close> costs nothing\<close>
-    obtain vn where vn: "vn \<in> Neg" "vn \<notin> S0" using False by blast
-    have tneg: "\<tau> < 0"
-    proof -
-      have "\<tau> \<le> w vn"
-        using tauout vn unfolding Neg_def by auto
-      also have "w vn < 0" using vn unfolding Neg_def by auto
-      finally show ?thesis .
-    qed
-    define S where "S = S0 \<union> Neg"
-    have SB: "S \<subseteq> B" unfolding S_def Neg_def using S0 by auto
-    have finS: "finite S" using SB finB by (rule finite_subset)
-    have cardS: "m \<le> card S"
-      unfolding S_def using cS0 card_mono[OF finS[unfolded S_def], of S0]
-      by simp
-    have inS: "\<And>u. u \<in> S \<Longrightarrow> w u \<le> 0"
-    proof -
-      fix u assume "u \<in> S"
-      then consider "u \<in> S0" | "u \<in> Neg" unfolding S_def by blast
-      then show "w u \<le> 0"
-      proof cases
-        case 1 then show ?thesis using tauS0 tneg by fastforce
-      next
-        case 2 then show ?thesis unfolding Neg_def by auto
-      qed
-    qed
-    have key: "0 \<le> (\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S. w u)"
-    proof -
-      have split: "(\<Sum>u\<in>B. c u * w u)
-          = (\<Sum>u\<in>S. c u * w u) + (\<Sum>u\<in>B - S. c u * w u)"
-        using sum.subset_diff[OF SB finB, of "\<lambda>u. c u * w u"] by simp
-      have t1: "0 \<le> (\<Sum>u\<in>S. (c u - 1) * w u)"
-      proof (rule sum_nonneg)
-        fix u assume u: "u \<in> S"
-        have c1': "c u - 1 \<le> 0" using c1 SB u by auto
-        have w0: "w u \<le> 0" by (rule inS[OF u])
-        show "0 \<le> (c u - 1) * w u" by (rule mult_nonpos_nonpos[OF c1' w0])
-      qed
-      have t2: "0 \<le> (\<Sum>u\<in>B - S. c u * w u)"
-      proof (rule sum_nonneg)
-        fix u assume u: "u \<in> B - S"
-        have "0 \<le> w u" using u unfolding S_def Neg_def by auto
-        then show "0 \<le> c u * w u" using c0 u by auto
-      qed
-      have "(\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S. w u)
-          = (\<Sum>u\<in>S. (c u - 1) * w u) + (\<Sum>u\<in>B - S. c u * w u)"
-        unfolding split by (simp add: sum_subtractf algebra_simps)
-      with t1 t2 show ?thesis by linarith
-    qed
-    show ?thesis
-      by (rule that[of S]) (use SB cardS key in auto)
-  qed
-qed
 
-section \<open>From the convexified constraint to a feasible witness\<close>
 
-text \<open>The step the paper never needs to make explicit: a matrix of the
-  convexified constraint set that kills \<open>q\<close> dominates, in any linear
-  value, a matrix of the original feasible set of Eq. (1.9).  The
-  construction is a capped spectral split: write \<open>b\<close> in its eigenbasis,
-  cut the eigenvalues at \<open>1\<close>, decompose the capped part by the threshold
-  selection --- its atoms are projections, so they carry eigenvalue cap
-  \<open>1\<close> --- and hand the excess, bounded by \<open>L - 1\<close>, to the chosen atom.
-  The cap closes at \<open>1 + (L-1) = L\<close>, exactly why the split must happen at
-  level \<open>1\<close> and nowhere else.  Orthogonality to \<open>q\<close> survives because every
-  eigendirection that carries weight is orthogonal to \<open>q\<close> already.\<close>
+
+
 
 theorem sconstraint_orth_feasible:
   fixes b M :: "real^'n::finite^'n" and q :: "real^'n"

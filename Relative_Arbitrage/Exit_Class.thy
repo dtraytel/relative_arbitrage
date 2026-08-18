@@ -7,6 +7,7 @@ theory Exit_Class
     "Continuous_Path_Spaces.Holder_Interpolation"
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
+    Path_Law_Pasting
 begin
 
 (*>*)
@@ -213,40 +214,12 @@ text \<open>Paths take values in \<open>real^'n \<times> real^'n^'n\<close>: the
   tightness machinery are polymorphic in the value type, so the whole
   Section-2 toolchain applies verbatim.\<close>
 
-definition outerp :: "real^'n::finite \<Rightarrow> real^'n^'n" where
-  "outerp x = (\<chi> i j. x $ i * x $ j)"
-
-text \<open>\<open>outerp\<close> is the rank-one projector \<open>x x\<^sup>T\<close> of the compensated
-  martingale clause.  It is HOL's own \<open>outer_prod\<close> at equal arguments
-  (\<open>outerp_eq_outer_prod\<close> below); it stays a definition of its own because
-  making it an abbreviation unfolds it in every simp set that mentions it,
-  and two proofs of the subsolution half then diverge.\<close>
 
 lemma outerp_eq_outer_prod: "outerp x = outer_prod x x"
   by (simp add: outerp_def outer_prod_def)
 
-type_synonym 'n pairpath = "real \<Rightarrow> (real^'n) \<times> (real^'n^'n)"
 
-abbreviation pairX :: "real \<Rightarrow> ('n::finite) pairpath \<Rightarrow> real^'n"
-  where "pairX t \<omega> \<equiv> fst (\<omega> t)"
 
-abbreviation pairY :: "real \<Rightarrow> ('n::finite) pairpath \<Rightarrow> real^'n^'n"
-  where "pairY t \<omega> \<equiv> snd (\<omega> t)"
-
-section \<open>The class \<open>P\<^sub>x\<close> of Eq. (1.7), capped at horizon \<open>T\<close>\<close>
-
-text \<open>Operational reading of (1.7), equivalent by compensator uniqueness: a
-  law of \<open>(X, Y)\<close> where \<open>X\<close> is a martingale from \<open>x\<close>, \<open>Y\<close> starts at \<open>0\<close>
-  with difference quotients in the constraint set (so \<open>Y\<close> is Lipschitz and
-  a.e. differentiable into \<open>S\<close>), and \<open>X X\<^sup>T - Y\<close> is a martingale, making
-  \<open>Y\<close> the quadratic covariation. The cap at \<open>T\<close> is invisible once \<open>T\<close>
-  exceeds the uniform exit-time bound (Lemma 1.9 / Eq. (3.10)).
-
-  The martingale clauses must stop the process at \<open>T\<close>: points of
-  \<^term>\<open>mspace (path_metric T)\<close> are extensional on \<open>{0..T}\<close>, so an
-  unstopped clause would force the coordinate process to be almost surely
-  constant, emptying the class for every \<open>T > 0\<close>. Stopping at \<open>T\<close>
-  captures exactly (1.7) on \<open>[0,T]\<close>.\<close>
 
 definition exit_class ::
   "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n::finite
@@ -280,54 +253,7 @@ lemma exit_class_sets:
   shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   using Q unfolding exit_class_def by blast
 
-lemma space_of_path_sets:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-  using sets_eq_imp_space_eq[OF assms] by (simp add: space_borel_of)
 
-section \<open>The constraint passes to weak limits, without Skorokhod\<close>
-
-text \<open>The paper passes the covariation constraint to the limit law via
-  Skorokhod's representation theorem; this instead uses the closed-set half
-  of the portmanteau theorem (\<open>weak_conv_closed_full_mass\<close>). For fixed
-  times \<open>s < t\<close> the difference quotient is a continuous function of the
-  path and the constraint set is closed, so
-  \<open>{\<omega>. (Y t \<omega> - Y s \<omega>)/(t - s) \<in> S}\<close> is closed and has full mass under
-  every approximating law, hence under the limit.\<close>
-
-lemma continuous_map_diffquot:
-  fixes s t :: real
-  assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}"
-  shows "continuous_map (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
-      euclidean (\<lambda>\<omega>. (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)))"
-proof -
-  have "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
-      euclidean (\<lambda>\<omega>. \<omega> t)"
-    by (rule continuous_map_path_eval[OF t])
-  moreover have "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
-      euclidean (\<lambda>\<omega>. \<omega> s)"
-    by (rule continuous_map_path_eval[OF s])
-  moreover have sndc:
-    "continuous_map euclidean euclidean
-       (snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)"
-    by (simp add: continuous_on_snd)
-  ultimately have "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclidean
-      (\<lambda>\<omega>. snd (\<omega> t) - snd (\<omega> s))"
-    by (intro continuous_map_diff)
-      (auto intro: continuous_map_compose[OF _ sndc, unfolded o_def])
-  moreover have scl: "continuous_map euclidean euclidean
-      (\<lambda>v :: real^'n^'n. (1 / (t - s)) *\<^sub>R v)"
-    by (simp add:
-        continuous_on_scaleR)
-  ultimately have "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclidean
-      ((\<lambda>v :: real^'n^'n. (1 / (t - s)) *\<^sub>R v)
-        \<circ> (\<lambda>\<omega>. snd (\<omega> t) - snd (\<omega> s)))"
-    by (intro continuous_map_compose)
-  then show ?thesis by (simp add: o_def)
-qed
 
 lemma closedin_diffquot_constraint:
   fixes s t :: real
@@ -413,15 +339,6 @@ text \<open>The paper's standing assumption \<open>L \<ge> 1\<close> (Theorem 1.
   market witness must continue its volatility past the stopping time with
   an admissible value; \<open>mat 1\<close> serves that role.\<close>
 
-lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
-  unfolding psd_def
-proof (intro conjI allI)
-  show "transpose (mat 1 :: real^'n^'n) = mat 1"
-    by simp
-  fix x :: "real^'n"
-  show "0 \<le> x \<bullet> (mat 1 *v x)"
-    by simp
-qed
 
 lemma Pi_proj_mat_1:
   assumes m: "m \<le> CARD('n::finite)"
@@ -471,71 +388,8 @@ text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a marke
   \<open>L \<ge> 1\<close> (\<open>mat_1_in_sconstraint\<close>). The exit time \<open>\<tau>\<^sub>K\<close> is untouched:
   by (1.8) it depends only on the path up to the first exit from \<open>K\<close>.\<close>
 
-definition acont :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n^'n"
-  where "acont a tv s = (if s \<le> tv then a s else mat 1)"
 
-text \<open>Time-measurability is inherited by the continuation: the locale
-  assumption \<open>acov_time_measurable\<close> is stated on the nonnegative axis
-  only, matching (1.7)'s "a.e. \<open>t \<ge> 0\<close>", and nothing more is available
-  since for \<open>u < 0 \<le> tv\<close> the continuation still reads \<open>a u\<close>.
 
-  A trap: \<^const>\<open>lborel\<close> is polymorphic and \<^typ>\<open>real^'n^'n\<close> carries
-  an \<^class>\<open>ord\<close> instance, so an unannotated binder in
-  \<open>(\<lambda>u. \<dots>) \<in> borel_measurable lborel\<close> can silently elaborate at the
-  matrix type instead of \<open>real\<close>. Pin \<open>lborel :: real measure\<close> and
-  annotate every binder.\<close>
-
-lemma acont_set_borel_measurable:
-  fixes a :: "real \<Rightarrow> real^'n::finite^'n"
-  assumes a: "set_borel_measurable lborel {0..} a"
-  shows "set_borel_measurable lborel {0..} (acont a tv)"
-proof -
-  have "(\<lambda>u::real. indicat_real {0..} u *\<^sub>R acont a tv u)
-      = (\<lambda>u::real. if u \<le> tv then indicat_real {0..} u *\<^sub>R a u
-             else (if u < 0 then 0 else (mat 1 :: real^'n^'n)))"
-    by (rule ext) (simp add: acont_def)
-  moreover have "(\<lambda>u::real. if u \<le> tv then indicat_real {0..} u *\<^sub>R a u
-             else (if u < 0 then 0 else (mat 1 :: real^'n^'n)))
-      \<in> borel_measurable (lborel :: real measure)"
-  proof (rule measurable_If)
-    show "(\<lambda>u::real. indicat_real {0..} u *\<^sub>R a u)
-        \<in> borel_measurable (lborel :: real measure)"
-      using a unfolding set_borel_measurable_def .
-    \<comment> \<open>the \<^verbatim>\<open>if u < 0\<close> form, not an indicator: the \<open>measurable\<close>
-        method reduces the branch condition to \<open>open {..<0}\<close>, whereas the
-        indicator form leaves the FALSE goal \<open>open {0..}\<close>.\<close>
-    show "(\<lambda>u::real. if u < 0 then 0 else (mat 1 :: real^'n^'n))
-        \<in> borel_measurable (lborel :: real measure)"
-      by measurable
-    show "{u \<in> space (lborel :: real measure). u \<le> tv} \<in> sets lborel"
-      by simp
-  qed
-  ultimately show ?thesis unfolding set_borel_measurable_def by simp
-qed
-
-text \<open>Hence the continued volatility has all its difference quotients in the
-  constraint set --- which is exactly the covariation condition of
-  \<open>exit_class\<close>, holding for every \<open>0 \<le> s < t\<close> with no stopping
-  caveat, as (1.7) demands.\<close>
-
-subsection \<open>The running covariation built from a continued volatility\<close>
-
-text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>₀ᵗ a\<close> starts at
-  \<open>0\<close>, has increments given by interval integrals, and --- for the
-  continued density --- difference quotients in the constraint set for every
-  \<open>0 \<le> s < t\<close>: the covariation half of \<open>exit_class\<close>.\<close>
-
-definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
-  where "Yint a t = set_lebesgue_integral lborel {0..t} a"
-
-subsection \<open>What the class gives the tightness argument for free\<close>
-
-text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class's
-  difference quotients lie a.s. in \<open>sconstraint k L\<close>, whose elements have
-  norm at most \<open>n\<sqdot>L\<close> (\<open>sconstraint_norm_le\<close>), so \<open>diffquot_lipschitz\<close>
-  makes \<open>Y\<close> a.s. \<open>n\<sqdot>L\<close>-Lipschitz --- the \<open>Y\<close>-event of
-  \<open>pair_holder_charge_split\<close> with probability one, leaving only the
-  \<open>X\<close>-side Hoelder estimate.\<close>
 
 theorem exit_class_lipschitz_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -789,10 +643,6 @@ text \<open>Squaring the coordinate is the diagonal entry of \<open>outerp\<clos
   split of \<open>(X\<^sub>t $ i)\<^sup>2\<close> into the compensated part plus \<open>Y\<close> is an
   identity of functions, not an inequality.\<close>
 
-lemma sq_coord_split:
-  fixes v :: "real^'n::finite" and w :: "real^'n^'n"
-  shows "(v $ i)\<^sup>2 = (outerp v - w) $ i $ i + w $ i $ i"
-  by (simp add: outerp_def power2_eq_square)
 
 theorem exit_class_sq_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -919,204 +769,10 @@ section \<open>Pair tightness from the two component moduli\<close>
 text \<open>\<open>lipschitz_imp_holder_bound\<close> lives in @{theory Continuous_Path_Spaces.Holder_Interpolation}.\<close>
 
 
-lemma pair_holder_of_components:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
-    and X: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
-        \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
-    and Y: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
-        \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
-    and st: "s \<in> {0..T}" "t \<in> {0..T}"
-  shows "norm (\<omega> t - \<omega> s) \<le> (c + B * T powr (1 - ga)) * \<bar>t - s\<bar> powr ga"
-proof -
-  have split: "\<omega> t - \<omega> s = (fst (\<omega> t) - fst (\<omega> s), snd (\<omega> t) - snd (\<omega> s))"
-    by (simp add: prod_eq_iff)
-  have "norm (\<omega> t - \<omega> s)
-      \<le> norm (fst (\<omega> t) - fst (\<omega> s)) + norm (snd (\<omega> t) - snd (\<omega> s))"
-    unfolding split by (rule norm_Pair_le)
-  also have "\<dots> \<le> c * \<bar>t - s\<bar> powr ga + B * \<bar>t - s\<bar>"
-    by (intro add_mono X[OF st] Y[OF st])
-  also have "\<dots> \<le> c * \<bar>t - s\<bar> powr ga + B * T powr (1 - ga) * \<bar>t - s\<bar> powr ga"
-    by (intro add_left_mono lipschitz_imp_holder_bound[OF T ga B st])
-  also have "\<dots> = (c + B * T powr (1 - ga)) * \<bar>t - s\<bar> powr ga"
-    by (simp add: algebra_simps)
-  finally show ?thesis .
-qed
-
-text \<open>Hence the compact set: pair paths starting at \<open>(x, 0)\<close> whose
-  \<open>X\<close>-part obeys a Hoelder-\<open>ga\<close> bound and whose \<open>Y\<close>-part is
-  \<open>B\<close>-Lipschitz form a subset of a compact pair-Hoelder ball. This is the
-  set the tightness estimate has to charge; the \<open>X\<close>-side probability
-  bound is \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close> and the
-  \<open>Y\<close>-side holds with probability one by \<open>diffquot_lipschitz\<close>.\<close>
-
-theorem compactin_pair_holder_ball:
-  fixes x :: "real^'n::finite"
-  assumes T: "0 \<le> T" and ga: "0 < ga" and c: "0 \<le> c"
-  shows "compactin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<omega> 0 = (x, 0)
-         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}. norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}"
-  by (rule compactin_path_holder_ball[OF T ga c])
-
-lemma pair_holder_ball_mem:
-  fixes \<omega> :: "'n::finite pairpath" and x :: "real^'n"
-  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
-    and mem: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    and start: "\<omega> 0 = (x, 0)"
-    and X: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
-        \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
-    and Y: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
-        \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
-  shows "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      \<omega> 0 = (x, 0)
-      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-           norm (\<omega> v - \<omega> u) \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
-  using mem start
-  by (auto intro!: pair_holder_of_components[OF T ga c B X Y])
-
-text \<open>The tightness criterion the pair laws are checked against: since
-  \<open>compactin_pair_holder_ball\<close> supplies the compact set outright, a
-  family of pair laws is tight as soon as, for every \<open>e\<close>, some Hoelder
-  ball carries all but \<open>e\<close> of every law's mass.\<close>
-
-theorem tight_on_set_pair_holder_charge:
-  fixes \<Gamma> :: "(('n::finite) pairpath) measure set" and x :: "real^'n"
-  assumes T: "0 \<le> T" and ga: "0 < ga"
-    and fm: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> finite_measure N"
-    and st: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> sets (path_borel T :: ('n pairpath) measure) = sets N"
-    and charge: "\<And>e. 0 < e \<Longrightarrow> \<exists>c. 0 \<le> c \<and> (\<forall>N\<in>\<Gamma>. measure N (space N -
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<omega> 0 = (x, 0)
-         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-              norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}) < e)"
-  shows "tight_on_set (mtopology_of (path_metric T :: ('n pairpath) metric)) \<Gamma>"
-  unfolding tight_on_set_def
-proof (intro conjI)
-  show "\<forall>M\<in>\<Gamma>. finite_measure M \<and> sets (path_borel T :: ('n pairpath) measure) = sets M"
-    using fm st by blast
-next
-  show "\<forall>e>0. \<exists>K.
-      compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) K
-      \<and> (\<forall>M\<in>\<Gamma>. measure M (space M - K) < e)"
-  proof (intro allI impI)
-    fix e :: real assume e: "0 < e"
-    obtain c where c: "0 \<le> c"
-      and ch: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> measure N (space N -
-        {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-           \<omega> 0 = (x, 0)
-           \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-                norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}) < e"
-      using charge[OF e] by blast
-    show "\<exists>K.
-        compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) K
-        \<and> (\<forall>M\<in>\<Gamma>. measure M (space M - K) < e)"
-      by (intro exI[of _ "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-             \<omega> 0 = (x, 0)
-             \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-                  norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}"] conjI ballI
-          compactin_pair_holder_ball[OF T ga c] ch)
-  qed
-qed
-
-text \<open>The charge splits along the components: the \<open>X\<close>-side Hoelder event and
-  the \<open>Y\<close>-side Lipschitz event intersect inside a pair Hoelder ball
-  (\<open>pair_holder_of_components\<close>), so their complements cover the ball's
-  complement and subadditivity finishes; here the \<open>Y\<close>-event has
-  probability one, so only the \<open>X\<close>-side estimate carries content.\<close>
-
-lemma pair_holder_charge_split:
-  fixes N :: "(('n::finite) pairpath) measure" and x :: "real^'n"
-    and T ga c B :: real
-    and AX :: "real \<Rightarrow> (('n) pairpath) set" and AY :: "(('n) pairpath) set"
-  assumes AX_def: "AX = (\<lambda>c. {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      fst (\<omega> 0) = x
-      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-           norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga)})"
-    and AY_def: "AY = {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      snd (\<omega> 0) = 0
-      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}. norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>)}"
-  assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
-    and fm: "finite_measure N"
-    and sp: "space N = mspace (path_metric T :: ('n pairpath) metric)"
-    and mX: "AX c \<in> sets N" and mY: "AY \<in> sets N"
-  shows "measure N (space N -
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<omega> 0 = (x, 0)
-         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-              norm (\<omega> v - \<omega> u)
-                \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)})
-      \<le> measure N (space N - AX c) + measure N (space N - AY)"
-proof -
-  interpret FM: finite_measure N by fact
-  have sub: "AX c \<inter> AY \<subseteq> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      \<omega> 0 = (x, 0)
-      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-           norm (\<omega> v - \<omega> u)
-             \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
-  proof
-    fix \<omega> assume w: "\<omega> \<in> AX c \<inter> AY"
-    then have mem: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      and x0: "fst (\<omega> 0) = x" and y0: "snd (\<omega> 0) = 0"
-      and Xb: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
-          \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
-      and Yb: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
-          \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
-      unfolding AX_def AY_def by auto
-    have "\<omega> 0 = (x, 0)" using x0 y0 by (simp add: prod_eq_iff)
-    then show "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-        \<omega> 0 = (x, 0)
-        \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-             norm (\<omega> v - \<omega> u)
-               \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
-      using mem
-      by (auto intro!: pair_holder_of_components[OF T ga c B Xb Yb])
-  qed
-  have "space N - {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      \<omega> 0 = (x, 0)
-      \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-           norm (\<omega> v - \<omega> u)
-             \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}
-      \<subseteq> (space N - AX c) \<union> (space N - AY)"
-    using sub by blast
-  then have "measure N (space N -
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<omega> 0 = (x, 0)
-         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-              norm (\<omega> v - \<omega> u)
-                \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)})
-      \<le> measure N ((space N - AX c) \<union> (space N - AY))"
-    using mX mY sp
-    by (intro FM.finite_measure_mono sets.Un sets.compl_sets) auto
-  also have "\<dots> \<le> measure N (space N - AX c) + measure N (space N - AY)"
-    using mX mY
-    by (intro measure_subadditive sets.compl_sets)
-      (auto simp: FM.emeasure_eq_measure)
-  finally show ?thesis .
-qed
-
-section \<open>Passing the martingale identities through the weak limit\<close>
-
-text \<open>\<open>unif_integrable_of_L2_bound\<close>, \<open>weak_conv_integral_of_L2_bound\<close> live in @{theory Continuous_Path_Spaces.Path_Tightness}.\<close>
 
 
-section \<open>The clauses of the class that survive a weak limit\<close>
 
-text \<open>Lemma 2.3 of the paper says the class is closed, passing each defining
-  clause of (1.7) to the limit law. The paper uses Prokhorov followed by
-  Skorokhod's representation theorem; this instead uses the closed-set
-  half of the portmanteau theorem (\<open>weak_conv_closed_full_mass\<close>), needing
-  no almost-sure realisation.
 
-  This section discharges the two clauses that are closed conditions on
-  a single path: the starting point \<open>(x, 0)\<close> and the covariation
-  constraint of (1.7). Portmanteau gives them only for the countably many
-  rational pairs \<open>s < t\<close>, and path continuity upgrades that to all real
-  pairs (\<open>diffquot_all_of_rational\<close>), as in the paper's own argument. The
-  remaining two clauses are the martingale properties, which go through
-  the integrated identities instead (\<open>weak_conv_integral_of_L2_bound\<close>).\<close>
-
-subsection \<open>Full mass of the two closed clauses on a class member\<close>
 
 lemma exit_class_diffquot_full_mass:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -1149,21 +805,6 @@ qed
 text \<open>The starting point is a closed condition too: evaluation at time \<open>0\<close>
   is continuous and \<open>{(x, 0)}\<close> is closed.\<close>
 
-lemma closedin_start_point:
-  fixes x :: "real^'n::finite"
-  assumes T: "0 \<le> T"
-  shows "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)}"
-proof -
-  have z: "(0::real) \<in> {0..T}" using T by simp
-  have "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> topspace (mtopology_of (path_metric T :: ('n pairpath) metric)).
-         \<omega> 0 \<in> {(x, 0)}}"
-    by (intro closedin_continuous_map_preimage_gen
-          [where Y = euclidean, simplified]
-        continuous_map_path_eval[OF z] closed_singleton closedin_topspace)
-  then show ?thesis by simp
-qed
 
 lemma exit_class_start_full_mass:
   fixes Q :: "(('n::finite) pairpath) measure"

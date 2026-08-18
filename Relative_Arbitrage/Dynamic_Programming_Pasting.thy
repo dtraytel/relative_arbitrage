@@ -5,6 +5,7 @@ theory Dynamic_Programming_Pasting
     "Continuous_Time_Martingales.Natural_Filtration"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    Path_Law_Pasting
 begin
 
 (*>*)
@@ -85,120 +86,7 @@ text \<open>A strict variant of @{thm [source] pexit_pglue_split}: the
   \<open>{0..<c}\<close>, matching what the essential infimum supplies, since
   \<open>c \<le> pexit\<close> says nothing about the path at time \<open>c\<close>.\<close>
 
-lemma pexit_pglue_split':
-  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
-    and stay: "\<And>t. t \<in> {0..r} \<Longrightarrow> fst (\<omega> t) \<in> K"
-    and cont: "\<And>s. 0 \<le> s \<Longrightarrow> s < c \<Longrightarrow> fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-  shows "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-proof -
-  have lb: "r + c \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue r T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zI: "z \<in> {0..T}" by simp
-      show ?thesis
-      proof (rule ccontr)
-        assume "\<not> r + c \<le> z"
-        then have zc: "z < r + c" by simp
-        show False
-        proof (cases "z \<le> r")
-          case True
-          have "fst (\<omega> z) \<in> K" using hit(1) True by (intro stay) simp
-          then show False using hit(3) by (simp add: pglue_le[OF zI True])
-        next
-          case False
-          then have rz: "r \<le> z" by simp
-          have "fst (\<omega> r + (\<omega>' (z - r) - \<omega>' 0)) \<in> K"
-            using rz zc by (intro cont) simp_all
-          then show False using hit(3) by (simp add: pglue_ge[OF zI rz])
-        qed
-      qed
-    next
-      case cap
-      then show ?thesis using cT by simp
-    qed
-  qed
-  have "pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "r + c \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-      \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
 
-text \<open>The pathwise dynamic programming bound at a deterministic time \<open>r\<close>.
-  The two summands are the paper's \<open>r \<and> \<tau>\<^sub>K\<close> and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>: the
-  first piece's exit time is a lower bound in all cases (@{thm [source]
-  pexit_pglue_ge}), and when it has not exited by \<open>r\<close> --- exactly
-  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close> --- the continuation adds its own
-  survival time on top.\<close>
-
-lemma pexit_pglue_dpp:
-  fixes K :: "(real^'n::finite) set" and \<omega> \<omega>' :: "'n pairpath"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
-    and z0: "fst (\<omega>' 0) = 0"
-    and cont: "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<Longrightarrow> fst (\<omega> r) \<in> K
-        \<Longrightarrow> c \<le> pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
-  shows "pexit r K (\<lambda>t. fst (\<omega> t))
-        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0)
-      \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-proof (cases "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K")
-  case True
-  then have full: "pexit r K (\<lambda>t. fst (\<omega> t)) = r" and endK: "fst (\<omega> r) \<in> K"
-    by simp_all
-  have cnt: "c \<le> pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
-    by (rule cont[OF full endK])
-  have "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-  proof (rule pexit_pglue_split'[OF r rT c cT])
-    fix t assume t: "t \<in> {0..r}"
-    show "fst (\<omega> t) \<in> K"
-    proof (rule ccontr)
-      assume nk: "fst (\<omega> t) \<notin> K"
-      have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> t"
-        unfolding pexit_def using r t nk by (intro etime_le_of_mem) auto
-      with full t have "t = r" by simp
-      then show False using nk endK by simp
-    qed
-  next
-    fix s :: real assume s: "0 \<le> s" and sc: "s < c"
-    have sTr: "s \<le> T - r" using sc c cT by simp
-    show "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-    proof (rule ccontr)
-      assume nk: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<notin> K"
-      have eq: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) = fst (\<omega> r) + fst (\<omega>' s)"
-        using z0 by simp
-      have "pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s)) \<le> s"
-        unfolding pexit_def using s sTr rT nk eq by (intro etime_le_of_mem) auto
-      with cnt sc show False by simp
-    qed
-  qed
-  then show ?thesis using True by simp
-next
-  case False
-  have le: "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-    by (rule pexit_pglue_ge[OF r rT])
-  have "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0) = 0"
-    using False by (rule if_not_P)
-  with le show ?thesis by simp
-qed
-
-subsection \<open>The selector as a kernel into the class\<close>
-
-text \<open>\<open>exit_val_measurable_selector_kernel'\<close> below makes the selector
-  a Giry-monad kernel, hypothesis \<^emph>\<open>Kp\<close> of @{thm [source]
-  exit_class_kglue_law'}.  The other hypothesis, \<^emph>\<open>Kb\<close>
-  (measurability into the class with its Levy-Prokhorov metric), is free:
-  the selector lands in the subspace, and @{thm [source]
-  exit_class_compact_metric_space} identifies the class's metric
-  topology with the subspace topology of weak convergence.\<close>
 
 theorem exit_val_measurable_selector_kernel':
   fixes K :: "(real^'n::finite) set"
@@ -268,15 +156,7 @@ text \<open>The capped exit time reads the path only on \<open>{0..U}\<close>, s
   shifting are transparent to it.\<close>
 
 
-lemma pexit_pcut:
-  fixes \<omega> :: "'n::finite pairpath"
-  shows "pexit U K (\<lambda>t. fst (pcut U \<omega> t)) = pexit U K (\<lambda>t. fst (\<omega> t))"
-  by (rule pexit_cong_on) (simp add: pcut_apply)
 
-lemma pexit_pshift:
-  fixes y :: "real^'n::finite" and \<omega> :: "'n pairpath"
-  shows "pexit U K (\<lambda>t. fst (pshift U y \<omega> t)) = pexit U K (\<lambda>t. y + fst (\<omega> t))"
-  by (rule pexit_cong_on) (simp add: pshift_fst)
 
 lemma exit_class_start:
   fixes Q :: "('n::finite pairpath) measure"

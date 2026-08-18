@@ -8,164 +8,17 @@ theory Exit_Class_Witness
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    Path_Law_Pasting
 begin
 
 (*>*)
 
 section \<open>Laws of concrete pair processes\<close>
 
-text \<open>A pair process on some filtered probability space pushes forward to
-  a pair law, and a martingale for the process's own filtration is a
-  martingale for the law's natural filtration --- the tower property, in
-  the set-integral form: the natural filtration of the law pulls back into
-  the process's filtration, because the process is adapted, and the
-  set-integral identity is then the one the process already satisfies over
-  the pulled-back event.\<close>
 
-definition pair_law_of ::
-  "real \<Rightarrow> ('a \<Rightarrow> 'n::finite pairpath) \<Rightarrow> 'a measure \<Rightarrow> ('n pairpath) measure"
-  where "pair_law_of T \<phi> M =
-     distr M (path_borel T :: ('n pairpath) measure) \<phi>"
 
-lemma sets_pair_law_of[simp]:
-  "sets (pair_law_of T \<phi> M)
-     = sets (path_borel T :: ('n::finite pairpath) measure)"
-  unfolding pair_law_of_def by simp
 
-lemma space_pair_law_of:
-  "space (pair_law_of T \<phi> M)
-     = mspace (path_metric T :: ('n::finite pairpath) metric)"
-  unfolding pair_law_of_def by (simp add: space_borel_of)
 
-lemma phi_filtration_measurable:
-  fixes M :: "'a measure" and \<phi> :: "'a \<Rightarrow> 'n::finite pairpath"
-  assumes phim: "\<phi> \<in> M \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
-    and adap: "\<And>r. 0 \<le> r \<Longrightarrow> r \<le> u \<Longrightarrow> (\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)"
-    and spF: "space (FF u) = space M"
-  shows "\<phi> \<in> FF u \<rightarrow>\<^sub>M natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v) u"
-proof -
-  let ?Q = "pair_law_of T \<phi> M"
-  have into: "\<phi> \<omega> \<in> space ?Q" if "\<omega> \<in> space M" for \<omega>
-    using measurable_space[OF phim that] by (simp add: pair_law_of_def)
-  show ?thesis
-  proof (rule measurable_sigma_sets[OF sets_natural_filtration])
-    show "(\<Union>i\<in>{0..u}.
-        {(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space ?Q | A. A \<in> sets borel})
-        \<subseteq> Pow (space ?Q)" by auto
-    show "\<phi> \<in> space (FF u) \<rightarrow> space ?Q" using spF into by auto
-    fix y
-    assume "y \<in> (\<Union>i\<in>{0..u}.
-        {(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space ?Q | A. A \<in> sets borel})"
-    then obtain i A where i: "i \<in> {0..u}" and A: "A \<in> sets borel"
-      and y: "y = (\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` A \<inter> space ?Q" by blast
-    have e: "\<phi> -` y \<inter> space (FF u) = (\<lambda>\<omega>. \<phi> \<omega> i) -` A \<inter> space (FF u)"
-      using y spF into by auto
-    have "(\<lambda>\<omega>. \<phi> \<omega> i) -` A \<inter> space (FF u) \<in> sets (FF u)"
-      using i A by (intro measurable_sets[OF adap]) auto
-    then show "\<phi> -` y \<inter> space (FF u) \<in> sets (FF u)" unfolding e .
-  qed
-qed
-
-theorem martingale_pair_law:
-  fixes M :: "'a measure" and \<phi> :: "'a \<Rightarrow> 'n::finite pairpath"
-    and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes prob: "prob_space M"
-    and phim: "\<phi> \<in> M \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
-    and adap: "\<And>u r. 0 \<le> r \<Longrightarrow> r \<le> u \<Longrightarrow>
-        (\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)"
-    and Zm: "\<And>u. 0 \<le> u \<Longrightarrow> Z u \<in> borel_measurable
-        (natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v) u)"
-    and mg: "martingale M FF 0 (\<lambda>u \<omega>. Z u (\<phi> \<omega>))"
-  shows "martingale (pair_law_of T \<phi> M)
-      (natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v)) 0 Z"
-proof -
-  let ?Q = "pair_law_of T \<phi> M"
-  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  interpret MG: martingale M FF 0 "\<lambda>u \<omega>. Z u (\<phi> \<omega>)" by (rule mg)
-  interpret P: prob_space M by (rule prob)
-  have spF: "space (FF u) = space M" if u: "0 \<le> u" for u
-    using MG.subalgebras[OF u] by (simp add: subalgebra_def)
-  have prob': "prob_space ?Q"
-    unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
-  have fin': "finite_measure ?Q" using prob' by (simp add: prob_space_def)
-  have SP: "Stochastic_Process.stochastic_process ?Q (0::real)
-      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-    by unfold_locales (rule pair_law_eval_measurable[OF sets_pair_law_of])
-  interpret SF: finite_filtered_measure ?Q ?G 0
-    by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
-        [OF SP fin'])
-  have ZB: "Z w \<in> borel_measurable ?B" if w: "0 \<le> w" for w
-  proof -
-    have "Z w \<in> borel_measurable ?Q"
-      by (rule measurable_from_subalg[OF SF.subalgebras[OF w] Zm[OF w]])
-    then show ?thesis using measurable_cong_sets[OF sets_pair_law_of refl] by blast
-  qed
-  show ?thesis
-  proof (rule SF.martingale_of_set_integral_eq)
-    show "adapted_process ?Q ?G 0 Z"
-    proof (unfold_locales)
-      fix u :: real assume u: "0 \<le> u"
-      show "Z u \<in> borel_measurable (?G u)" by (rule Zm[OF u])
-    qed
-    show "integrable ?Q (Z u)" if u: "0 \<le> u" for u
-    proof -
-      have "integrable ?Q (Z u) \<longleftrightarrow> integrable M (\<lambda>\<omega>. Z u (\<phi> \<omega>))"
-        unfolding pair_law_of_def by (rule integrable_distr_eq[OF phim ZB[OF u]])
-      then show ?thesis using MG.integrable[OF u] by simp
-    qed
-    fix A and u v :: real
-    assume A: "A \<in> ?G u" and uv: "0 \<le> u" "u \<le> v"
-    have v0: "0 \<le> v" using uv by simp
-    have AB: "A \<in> sets ?B"
-      using A SF.subalgebras[OF uv(1)] by (auto simp: subalgebra_def)
-    \<comment> \<open>\<open>adap\<close> has TWO \<open>\<And>\<close>-bound variables, so an \<open>OF\<close> against it produces
-        "multiple unifiers"; let the conclusion drive the instantiation.\<close>
-    have phiFm: "\<phi> \<in> FF u \<rightarrow>\<^sub>M ?G u"
-    proof (rule phi_filtration_measurable[where T = T])
-      show "\<phi> \<in> M \<rightarrow>\<^sub>M ?B" by (rule phim)
-      show "(\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)" if "0 \<le> r" "r \<le> u" for r
-        by (rule adap[OF that])
-      show "space (FF u) = space M" by (rule spF[OF uv(1)])
-    qed
-    have pA: "\<phi> -` A \<inter> space M \<in> FF u"
-      using measurable_sets[OF phiFm A] spF[OF uv(1)] by simp
-    have key: "set_lebesgue_integral ?Q A (Z w)
-        = set_lebesgue_integral M (\<phi> -` A \<inter> space M) (\<lambda>\<omega>. Z w (\<phi> \<omega>))"
-      if w: "0 \<le> w" for w
-    proof -
-      have gb: "(\<lambda>\<omega> :: 'n pairpath. indicat_real A \<omega> *\<^sub>R Z w \<omega>)
-          \<in> borel_measurable ?B"
-        using AB ZB[OF w] by measurable
-      have "set_lebesgue_integral ?Q A (Z w)
-          = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R Z w \<omega> \<partial>?Q)"
-        unfolding set_lebesgue_integral_def ..
-      also have "\<dots> = (\<integral>\<omega>. indicat_real A (\<phi> \<omega>) *\<^sub>R Z w (\<phi> \<omega>) \<partial>M)"
-        unfolding pair_law_of_def by (rule integral_distr[OF phim gb])
-      also have "\<dots> = (\<integral>\<omega>. indicat_real (\<phi> -` A \<inter> space M) \<omega>
-              *\<^sub>R Z w (\<phi> \<omega>) \<partial>M)"
-        by (rule Bochner_Integration.integral_cong) (auto simp: indicator_def)
-      finally show ?thesis unfolding set_lebesgue_integral_def .
-    qed
-    show "set_lebesgue_integral ?Q A (Z u) = set_lebesgue_integral ?Q A (Z v)"
-      unfolding key[OF uv(1)] key[OF v0]
-      by (rule MG.set_integral_eq[OF pA uv(1) uv(2)])
-  qed
-qed
-
-text \<open>The other plumbing piece the witness needs: the class stops its
-  processes at the horizon, so a martingale must be stopped at the
-  deterministic time \<open>T\<close>.  \<open>martingale_stopped_const\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
-section \<open>The off-diagonal covariation of Brownian motion\<close>
-
-text \<open>The market locale's \<open>coord_Z_martingale\<close> gives only the diagonal
-  compensator, but the paper's class needs the whole matrix \<open>outerp X - Y\<close>;
-  off the diagonal the compensator is \<open>0\<close>, so what is needed is that
-  \<open>W\<^sub>i W\<^sub>j\<close> is a martingale for \<open>i \<noteq> j\<close>.  This follows from independence of
-  the coordinates of \<open>bm_paths = Pi\<^sub>M UNIV (\<lambda>_. wiener_pre)\<close>, via
-  \<open>Kolmogorov_Chentsov_Extras.indep_vars_PiM_coordinate\<close>.\<close>
 
 lemma bm_coordinates_indep:
   "prob_space.indep_vars (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
@@ -1092,10 +945,6 @@ qed
 text \<open>\<open>bounded_linear_trace\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma trace_outerp:
-  fixes v :: "real^'n::finite"
-  shows "trace (outerp v) = v \<bullet> v"
-  by (simp add: outerp_def trace_def inner_vec_def)
 
 theorem exit_class_trace_rate:
   fixes Q :: "('n::finite pairpath) measure"

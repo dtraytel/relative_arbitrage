@@ -6,6 +6,7 @@ theory Value_Function_Uniqueness
     Exit_Time_Semicontinuity Value_Function_Assembly
     Exit_Class_Infinite
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    Path_Law_Pasting
 begin
 (*>*)
 
@@ -564,27 +565,6 @@ text \<open>Everything above is stated at a finite horizon.  Since
 text \<open>\<open>compact_cball_bound\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma nonbinding_horizon_ex:
-  fixes rK :: real
-  assumes k: "k < CARD('n::finite)"
-  shows "\<exists>T :: real. 0 < T \<and> rK * rK / real (CARD('n) - k) < T
-       \<and> 2 * (rK * rK) / real (CARD('n) - k) < T"
-proof -
-  have nk: "0 < real (CARD('n) - k)" using k by simp
-  define B :: real where "B = 2 * (rK * rK) / real (CARD('n) - k)"
-  have B0: "0 \<le> B" unfolding B_def using nk by simp
-  have le: "rK * rK / real (CARD('n) - k) \<le> B"
-    unfolding B_def using nk by (intro divide_right_mono) auto
-  show ?thesis
-  proof (intro exI[of _ "B + 1"] conjI)
-    show "0 < B + 1" using B0 by simp
-    show "rK * rK / real (CARD('n) - k) < B + 1" using le by simp
-    show "2 * (rK * rK) / real (CARD('n) - k) < B + 1"
-      unfolding B_def[symmetric] by simp
-  qed
-qed
-
-text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>\<close>
 
 theorem iexit_val_real_bounded:
   fixes K :: "(real^'n::finite) set"

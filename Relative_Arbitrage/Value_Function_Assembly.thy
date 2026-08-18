@@ -5,6 +5,7 @@ theory Value_Function_Assembly
   imports Value_Function_Tangential_Field
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    Path_Law_Pasting
 begin
 
 (*>*)
@@ -25,103 +26,6 @@ text \<open>\<open>enn2real \<circ> exit_val k L T K\<close> is a viscosity solu
 
 subsection \<open>The sharp ball lower bound at rate \<open>m - 1\<close>\<close>
 
-text \<open>@{thm [source] radial_sq_upto} transports the growth identity to the
-  endpoint of a half-open confinement interval.  Nothing in its proof is
-  specific to \<open>\<lambda>w. (norm (w - y\<^sub>0))\<^sup>2\<close> --- any continuous functional of the
-  position does --- and the sharp bound below needs it for the projected
-  square as well.\<close>
-
-lemma radial_sq_upto_gen:
-  fixes \<omega> :: "'n::finite pairpath" and TT e c0 cn :: real
-    and RO :: "(real^'n) set" and F :: "real^'n \<Rightarrow> real"
-  assumes wm: "\<omega> \<in> mspace (path_metric TT :: ('n pairpath) metric)"
-    and Fc: "continuous_on UNIV F"
-    and grow: "\<And>t. 0 < t \<Longrightarrow> t \<le> TT \<Longrightarrow>
-      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<Longrightarrow> F (fst (\<omega> t)) = c0 + t * cn"
-    and e0: "0 < e" and eT: "e \<le> TT"
-    and inside: "\<And>s. 0 \<le> s \<Longrightarrow> s < e \<Longrightarrow> fst (\<omega> s) \<in> RO"
-  shows "F (fst (\<omega> e)) = c0 + e * cn"
-proof -
-  define g where "g = (\<lambda>s. F (fst (\<omega> s)))"
-  have gc: "continuous_on {0..TT} g"
-  proof -
-    have wc: "continuous_on {0..TT} \<omega>"
-      by (rule mspace_path_metricD[OF wm])
-    have fc: "continuous_on {0..TT} (\<lambda>s. fst (\<omega> s))"
-      by (rule continuous_on_fst[OF wc])
-    show ?thesis
-      unfolding g_def by (rule continuous_on_compose2[OF Fc fc]) auto
-  qed
-  define tj where "tj = (\<lambda>j. e - e / (2 * real (Suc j)))"
-  have tjl: "0 < tj j" for j
-  proof -
-    have "e / (2 * real (Suc j)) \<le> e / 2"
-    proof (rule divide_left_mono)
-      show "2 \<le> 2 * real (Suc j)" by simp
-      show "0 \<le> e" using e0 by linarith
-      show "0 < 2 * real (Suc j) * 2" by simp
-    qed
-    then show ?thesis unfolding tj_def using e0 by linarith
-  qed
-  have tju: "tj j < e" for j
-  proof -
-    have "0 < e / (2 * real (Suc j))" using e0 by simp
-    then show ?thesis unfolding tj_def by linarith
-  qed
-  have tjT: "tj j \<le> TT" for j using tju[of j] eT by linarith
-  have glow: "g (tj j) = c0 + tj j * cn" for j
-    unfolding g_def
-  proof (rule grow)
-    show "0 < tj j" by (rule tjl)
-    show "tj j \<le> TT" by (rule tjT)
-    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> RO"
-    proof
-      fix s assume s: "s \<in> {0..tj j}"
-      then have "0 \<le> s" and "s < e" using tju[of j] by auto
-      then show "fst (\<omega> s) \<in> RO" by (rule inside)
-    qed
-  qed
-  have tjlim: "tj \<longlonglongrightarrow> e"
-  proof -
-    have eq: "(\<lambda>j. (e / 2) * inverse (real (Suc j)))
-        = (\<lambda>j. e / (2 * real (Suc j)))"
-      by (rule ext) (simp add: field_simps)
-    have "(\<lambda>j. (e / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (e / 2) * 0"
-      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
-    then have "(\<lambda>j. e / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
-      unfolding eq by simp
-    then have "(\<lambda>j. e - e / (2 * real (Suc j))) \<longlonglongrightarrow> e - 0"
-      by (intro tendsto_diff tendsto_const)
-    then show ?thesis unfolding tj_def by simp
-  qed
-  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g e"
-  proof -
-    have inS: "\<forall>n. tj n \<in> {0..TT}"
-      using tjl tjT by (auto intro: less_imp_le)
-    have eS: "e \<in> {0..TT}" using e0 eT by auto
-    have "(g \<circ> tj) \<longlonglongrightarrow> g e"
-      using continuous_on_sequentially[THEN iffD1, OF gc] inS eS tjlim
-      by blast
-    then show ?thesis by (simp add: o_def)
-  qed
-  have vlim: "(\<lambda>j. c0 + tj j * cn) \<longlonglongrightarrow> c0 + e * cn"
-    by (intro tendsto_add tendsto_const tendsto_mult tjlim)
-  have "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> c0 + e * cn"
-    using vlim unfolding glow by simp
-  then have "g e = c0 + e * cn"
-    using gcomp LIMSEQ_unique by blast
-  then show ?thesis unfolding g_def .
-qed
-
-text \<open>The subspace-tangential member confines the path to
-  \<open>cball 0 rB \<subseteq> K\<close> for any deterministic time \<open>cc\<close> strictly below
-  \<open>\<delta> = (rB\<^sup>2 - |x|\<^sup>2)/(m-1)\<close>.  The inner barrier is unreachable because the
-  projected square only grows, and the outer sphere pins the time exactly
-  because the full square grows at the same rate --- that is what the
-  upgraded @{thm [source] subspace_tangential_exact_growth} delivers.
-  Feeding the constant-time DPP gives \<open>cc \<le> v(x)\<close>, and \<open>cc\<close> is a free
-  parameter, so no factor \<open>2\<close> and no \<open>T/2\<close> cap survive: letting
-  \<open>cc \<longrightarrow> min T \<delta>\<close> is the corollary below.\<close>
 theorem exit_val_ball_lower_subspace:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and b :: "nat \<Rightarrow> real^'n" and rB T cc :: real

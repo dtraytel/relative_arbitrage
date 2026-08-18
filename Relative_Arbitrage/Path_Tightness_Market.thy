@@ -5,103 +5,14 @@ theory Path_Tightness_Market
   imports "Continuous_Path_Spaces.Path_Tightness" "Continuous_Path_Spaces.Stopped_Localization"
     Ito_Market "Continuous_Time_Martingales.Martingale_Transfer"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
+    Path_Law_Pasting
 begin
 
 (*>*)
 
-corollary path_laws_convergent_subsequence_market:
-  fixes MM :: "nat \<Rightarrow> 'a measure" and FF :: "nat \<Rightarrow> real \<Rightarrow> 'a measure"
-    and XX :: "nat \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real^'m::finite"
-    and AA :: "nat \<Rightarrow> 'm \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real"
-    and T C \<gamma> :: real and x :: "real^'m"
-  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4" and C0: "0 \<le> C"
-    and P: "\<And>i. prob_space (MM i)"
-    and Xm: "\<And>i u. 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
-    and mgX: "\<And>i l. martingale (MM i) (FF i) 0 (\<lambda>s \<omega>. XX i s \<omega> $ l)"
-    and sqX: "\<And>i l s. 0 \<le> s \<Longrightarrow> integrable (MM i) (\<lambda>\<omega>. (XX i s \<omega> $ l)\<^sup>2)"
-    and contX: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> continuous_on {0..} (\<lambda>s. XX i s \<omega>)"
-    and start: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
-    and mgZ: "\<And>i l. martingale (MM i) (FF i) 0
-        (\<lambda>t \<omega>. (XX i t \<omega> $ l)\<^sup>2 - AA i l t \<omega>)"
-    and Aad: "\<And>i l. adapted_process (MM i) (FF i) 0 (AA i l)"
-    and A0: "\<And>i l \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> AA i l 0 \<omega> = 0"
-    and A_rate: "\<And>i l \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-        0 \<le> AA i l v \<omega> - AA i l u \<omega> \<and> AA i l v \<omega> - AA i l u \<omega> \<le> C * (v - u)"
-  shows "\<exists>a N. strict_mono a \<and> finite_measure N
-      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
-      \<and> N (space N) \<le> ennreal 1
-      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
-          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0 g2])
-  show "\<And>i. prob_space (MM i)" by (rule P)
-  show "\<And>i u. 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)" by (rule Xm)
-  show "continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
-    if w: "\<omega> \<in> space (MM i)" for i \<omega>
-    by (rule continuous_on_subset[OF contX[OF w]]) auto
-  show "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x" by (rule start)
-  show "integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4)"
-    if u0: "0 \<le> u" and uv: "u \<le> v" and vT: "v \<le> T" for i l u v
-  proof -
-    have contl: "continuous_on {0..} (\<lambda>s. XX i s \<omega> $ l)"
-      if w: "\<omega> \<in> space (MM i)" for \<omega>
-      by (rule continuous_on_component[OF contX[OF w]])
-    have startl: "XX i 0 \<omega> $ l = x $ l" if w: "\<omega> \<in> space (MM i)" for \<omega>
-      using start[OF w] by simp
-    show ?thesis
-      by (rule fourth_moment_L2_integrable[OF P mgX sqX contl startl mgZ Aad A0
-            A_rate C0 u0 uv])
-  qed
-  show "(\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-    if u0: "0 \<le> u" and uv: "u \<le> v" and vT: "v \<le> T" for i l u v
-  proof -
-    have contl: "continuous_on {0..} (\<lambda>s. XX i s \<omega> $ l)"
-      if w: "\<omega> \<in> space (MM i)" for \<omega>
-      by (rule continuous_on_component[OF contX[OF w]])
-    have startl: "XX i 0 \<omega> $ l = x $ l" if w: "\<omega> \<in> space (MM i)" for \<omega>
-      using start[OF w] by simp
-    show ?thesis
-      by (rule fourth_moment_L2_bochner[OF P mgX sqX contl startl mgZ Aad A0
-            A_rate C0 u0 uv])
-  qed
-qed
-
-section \<open>The exit time is upper semicontinuous\<close>
-
-text \<open>The join.  \<open>Stopping_Times.etime_less_iff\<close> says being strictly below \<open>c\<close>
-  is witnessed by a single time \<open>r < c\<close> at which the path is already in
-  \<open>A\<close>; \<open>Path_Space.open_hit_strictly_before\<close> says the witnessed condition
-  is open in the path topology.  Together they give upper semicontinuity of
-  the exit time, which is what Larsson--Ruf's Lemma 2.1 needs.
-
-  The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one:
-  a path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close>
-  every path qualifies and the set is the whole space.\<close>
-
-text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the market class itself: for any
-  sequence of sufficiently volatile markets that are stopped at their horizon
-  and confined to a ball, the path laws admit a weakly convergent
-  subsequence.  The almost-sure hypotheses of the locale become the pointwise
-  hypotheses of the adapter above by restricting each market to a
-  full-measure good event (the transfer package of \<open>Stopped_Localization\<close>);
-  the restriction is invisible to the path laws.  The per-coordinate
-  compensator is the entrywise integral of \<open>acov\<close>, whose rate bound \<open>L\<close> comes
-  from the eigenvalue constraint through the diagonal entries.\<close>
-
-section \<open>Diagonal entries under the eigenvalue constraints\<close>
-
-text \<open>\<open>diag_entry_quadform\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
-
-(*<*)
-(*<*)
 
 
 
-lemma psd_diag_nonneg:
-  fixes a :: "real^'m::finite^'m"
-  assumes "psd a"
-  shows "0 \<le> a $ l $ l"
-  using assms diag_entry_quadform[where a = a and l = l]
-  by (auto simp: psd_def dest: spec[of _ "axis l 1"])
 
 lemma eigen_ub_diag:
   fixes a :: "real^'m::finite^'m"

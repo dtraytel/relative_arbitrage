@@ -5,6 +5,7 @@ theory Exit_Class_Infinite
   imports Dynamic_Programming_Assembly "Continuous_Path_Spaces.Path_Space_Infinite"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    Path_Law_Pasting
 begin
 (*>*)
 
@@ -63,13 +64,6 @@ text \<open>The cut of a law on the half-line is a law on the horizon-\<open>S\<
   space.  @{thm [source] pcut_adapted} needs nothing of the underlying space,
   so the adaptedness of the cut coordinates carries over unchanged.\<close>
 
-lemma ipcut_measurable:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S"
-    and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
-  shows "pcut S \<in> P \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
-  unfolding pcut_def measurable_cong_sets[OF setsP refl]
-  by (rule restrict_ipath_measurable[OF S])
 
 lemma iexit_class_diffquot:
   "P \<in> iexit_class k L x \<Longrightarrow>
@@ -395,65 +389,9 @@ text \<open>Members of the horizon-\<open>r\<close> path space are extensional o
   @{thm [source] pcut_pglue} into the statement that the extension of a law
   restricts to that law.\<close>
 
-lemma pcut_id_on_mspace:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-  shows "pcut r \<omega> = \<omega>"
-proof -
-  have "\<omega> \<in> extensional {0..r}"
-    using assms unfolding path_metric_def mspace_cfunspace by simp
-  then show ?thesis unfolding pcut_def by (rule extensional_restrict)
-qed
 
-subsection \<open>Gluing a continuation onto the half-line\<close>
 
-text \<open>The half-line analogue of @{const pglue}.  Cutting it at any horizon
-  beyond the glue point returns the compact glue, so the finite-horizon
-  theory applies to every restriction of an extension without further
-  work.\<close>
 
-definition iglue :: "real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath \<Rightarrow> 'n pairpath"
-  where "iglue r \<omega> \<omega>' =
-     restrict (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)) {0..}"
-
-lemma pcut_iglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  assumes S: "0 \<le> S"
-  shows "pcut S (iglue r \<omega> \<omega>') = pglue r S \<omega> \<omega>'"
-  by (rule ext) (auto simp: pcut_def iglue_def pglue_def)
-
-lemma continuous_on_iglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  assumes r: "0 \<le> r"
-    and c1: "continuous_on {0..r} \<omega>"
-    and c2: "continuous_on {0..} \<omega>'"
-  shows "continuous_on {0..}
-      (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
-proof -
-  let ?f = "\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
-  have U: "{0..} = {0..r} \<union> {r..}" using r by auto
-  have A: "continuous_on {0..r} ?f"
-    by (rule continuous_on_eq[OF c1]) simp
-  have B: "continuous_on {r..} ?f"
-  proof (rule continuous_on_eq)
-    have "continuous_on {r..} (\<lambda>t. \<omega>' (t - r))"
-      by (rule continuous_on_compose2[OF c2 continuous_on_diff
-            [OF continuous_on_id continuous_on_const]]) auto
-    then show "continuous_on {r..} (\<lambda>t. \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
-      by (intro continuous_intros)
-  next
-    fix t :: real assume "t \<in> {r..}"
-    then show "\<omega> r + (\<omega>' (t - r) - \<omega>' 0) = ?f t" by (cases "t = r") auto
-  qed
-  show ?thesis unfolding U by (rule continuous_on_closed_Un[OF _ _ A B]) auto
-qed
-
-subsection \<open>The Brownian continuation on the half-line\<close>
-
-text \<open>The witness of @{thm [source] bmpair_law_in_paper_pair_class} without
-  the horizon cap: Brownian motion paired with the covariation \<open>Y\<^sub>t = t \<sqdot> I\<close>.
-  Cutting it at \<open>S\<close> returns @{const bmpair} exactly, so every restriction of
-  its law is the horizon-\<open>S\<close> witness and lies in the class.\<close>
 
 definition ibmpair :: "('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath"
   where "ibmpair \<omega> = restrict (\<lambda>t. (cbmX 0 t \<omega>, t *\<^sub>R mat 1)) {0..}"
@@ -524,66 +462,8 @@ subsection \<open>The extension of a horizon law to the half-line\<close>
 text \<open>Only the values of the continuation on \<open>{0..S-r}\<close> reach the glue, and
   at the glue point itself the glue is the cut of the law it extends.\<close>
 
-lemma pglue_pcut:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  assumes r: "0 \<le> r" and rS: "r \<le> S"
-  shows "pglue r S \<omega> (pcut (S - r) \<omega>') = pglue r S \<omega> \<omega>'"
-  using r rS by (auto simp: pglue_def pcut_def)
 
-lemma pglue_self:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  shows "pglue r r \<omega> \<omega>' = pcut r \<omega>"
-  by (rule ext) (auto simp: pglue_def pcut_def)
 
-lemma iglue_measurable:
-  fixes Q R :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "sets R = sets (ipath_space :: ('n pairpath) measure)"
-  shows "(\<lambda>p. iglue r (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M R \<rightarrow>\<^sub>M ipath_space"
-proof -
-  have eQ: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
-    for v
-    by (rule measurable_compose[OF measurable_fst
-          pair_law_eval_measurable[OF setsQ]])
-  have eR: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
-    if v: "0 \<le> v" for v
-  proof -
-    have "(\<lambda>f :: 'n pairpath. f v) \<in> borel_measurable R"
-      unfolding measurable_cong_sets[OF setsR refl]
-      by (rule ipath_eval_measurable[OF v])
-    then show ?thesis by (rule measurable_compose[OF measurable_snd])
-  qed
-  have Xm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
-        if t \<le> r then fst p t else fst p r + (snd p (t - r) - snd p 0))
-      \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" if t: "0 \<le> t" for t
-  proof (cases "t \<le> r")
-    case True
-    then show ?thesis using eQ by simp
-  next
-    case False
-    have m2: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p (t - r))
-        \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" using False by (intro eR) simp
-    have m3: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p 0)
-        \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" by (rule eR) simp
-    show ?thesis unfolding if_not_P[OF False]
-      by (intro borel_measurable_add borel_measurable_diff eQ m2 m3)
-  qed
-  have cont: "continuous_on {0..} (\<lambda>t. if t \<le> r then fst p t
-        else fst p r + (snd p (t - r) - snd p 0))"
-    if p: "p \<in> space (Q \<Otimes>\<^sub>M R)" for p :: "'n pairpath \<times> 'n pairpath"
-  proof (rule continuous_on_iglue[OF r])
-    have "fst p \<in> space Q" "snd p \<in> space R"
-      using p by (auto simp: space_pair_measure)
-    moreover have "space R = ipath" using setsR
-      by (metis sets_eq_imp_space_eq space_ipath_space)
-    ultimately show "continuous_on {0..r} (fst p)" "continuous_on {0..} (snd p)"
-      using space_of_path_sets[OF setsQ]
-      by (auto intro: mspace_path_metricD ipath_continuous_on)
-  qed
-  show ?thesis
-    using ipathify_measurable[OF Xm cont] unfolding iglue_def by simp
-qed
 
 definition iextend ::
   "real \<Rightarrow> ('n::finite pairpath) measure \<Rightarrow> ('n pairpath) measure"
@@ -744,169 +624,8 @@ text \<open>Cutting at a horizon beyond \<open>u\<close> leaves the evaluations 
   event of the half-line filtration is the preimage of an event of the
   horizon one.\<close>
 
-lemma natural_filtration_pcut:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes u: "0 \<le> u" and uS: "u \<le> S"
-    and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
-  shows "{pcut S -` A \<inter> space P | A.
-        A \<in> sets (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)}
-      = sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) u)"
-proof -
-  let ?Q = "pair_law_of S (pcut S) P"
-  let ?g = "\<lambda>N. (\<Union>i\<in>{0..u}. {(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` B \<inter> N | B. B \<in> sets borel})"
-  have S0: "0 \<le> S" using u uS by simp
-  have spP: "space P = ipath"
-    using setsP by (metis sets_eq_imp_space_eq space_ipath_space)
-  have spQ: "space ?Q = mspace (path_metric S :: ('n pairpath) metric)"
-    by (rule space_pair_law_of)
-  have into': "pcut S \<omega> \<in> space ?Q" if "\<omega> \<in> space P" for \<omega>
-    using that spP spQ restrict_ipath_mspace[OF S0] by (simp add: pcut_def)
-  then have into: "pcut S \<in> space P \<rightarrow> space ?Q" by blast
-  have pre: "pcut S -` ((\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` B \<inter> space ?Q) \<inter> space P
-      = (\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` B \<inter> space P" if i: "i \<in> {0..u}" for i B
-  proof -
-    have iS: "i \<in> {0..S}" using i uS by auto
-    show ?thesis using into' by (auto simp: pcut_apply[OF iS])
-  qed
-  have geneq: "{pcut S -` A \<inter> space P | A. A \<in> ?g (space ?Q)} = ?g (space P)"
-  proof (rule set_eqI)
-    fix C :: "('n pairpath) set"
-    show "C \<in> {pcut S -` A \<inter> space P | A. A \<in> ?g (space ?Q)} \<longleftrightarrow> C \<in> ?g (space P)"
-    proof
-      assume "C \<in> {pcut S -` A \<inter> space P | A. A \<in> ?g (space ?Q)}"
-      then obtain i B where i: "i \<in> {0..u}" and B: "B \<in> sets borel"
-        and C: "C = pcut S -` ((\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` B \<inter> space ?Q) \<inter> space P"
-        by blast
-      show "C \<in> ?g (space P)" unfolding C pre[OF i] using i B by blast
-    next
-      assume "C \<in> ?g (space P)"
-      then obtain i B where i: "i \<in> {0..u}" and B: "B \<in> sets borel"
-        and C: "C = (\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` B \<inter> space P" by blast
-      have "C = pcut S -` ((\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` B \<inter> space ?Q) \<inter> space P"
-        unfolding C by (rule pre[OF i, symmetric])
-      moreover have "(\<lambda>\<omega> :: 'n pairpath. \<omega> i) -` B \<inter> space ?Q \<in> ?g (space ?Q)"
-        using i B by blast
-      ultimately show "C \<in> {pcut S -` A \<inter> space P | A. A \<in> ?g (space ?Q)}" by blast
-    qed
-  qed
-  have "{pcut S -` A \<inter> space P | A. A \<in> sets (natural_filtration ?Q 0 (\<lambda>v \<omega>. \<omega> v) u)}
-      = sigma_sets (space P) {pcut S -` A \<inter> space P | A. A \<in> ?g (space ?Q)}"
-    unfolding sets_natural_filtration by (rule sigma_sets_vimage_commute[OF into])
-  also have "\<dots> = sigma_sets (space P) (?g (space P))" unfolding geneq ..
-  finally show ?thesis unfolding sets_natural_filtration .
-qed
 
-text \<open>Hence a process whose restrictions are martingales at every horizon is
-  a martingale on the half-line: the set-integral identity at \<open>u \<le> v\<close> is the
-  one the restriction at \<open>v\<close> already satisfies.\<close>
 
-lemma martingale_of_cuts:
-  fixes P :: "('n::finite pairpath) measure"
-    and Z :: "real \<Rightarrow> 'n pairpath \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes prob: "prob_space P"
-    and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
-    and Zm: "\<And>u. 0 \<le> u \<Longrightarrow> Z u \<in> borel_measurable
-        (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
-    and Zloc: "\<And>u S \<omega>. 0 \<le> u \<Longrightarrow> u \<le> S \<Longrightarrow> Z u (pcut S \<omega>) = Z u \<omega>"
-    and mg: "\<And>S. 0 \<le> S \<Longrightarrow> martingale (pair_law_of S (pcut S) P)
-        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
-        (\<lambda>u \<omega>. Z (min u S) \<omega>)"
-  shows "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0 Z"
-proof -
-  let ?G = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?B = "\<lambda>S. (path_borel S :: ('n pairpath) measure)"
-  let ?Q = "\<lambda>S. pair_law_of S (pcut S) P"
-  let ?H = "\<lambda>S. natural_filtration (?Q S) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  interpret PP: prob_space P by (rule prob)
-  have SP: "Stochastic_Process.stochastic_process P (0::real)
-      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-  proof (unfold_locales)
-    fix i :: real assume i: "0 \<le> i"
-    show "(\<lambda>\<omega> :: 'n pairpath. \<omega> i) \<in> borel_measurable P"
-      unfolding measurable_cong_sets[OF setsP refl]
-      by (rule ipath_eval_measurable[OF i])
-  qed
-  have fin: "finite_measure P" using prob by (simp add: prob_space_def)
-  interpret SF: finite_filtered_measure P ?G 0
-    by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
-        [OF SP fin])
-  have cutm: "pcut S \<in> P \<rightarrow>\<^sub>M ?B S" if S: "0 \<le> S" for S
-    by (rule ipcut_measurable[OF S setsP])
-  have ZB: "Z w \<in> borel_measurable (?B S)" if w: "0 \<le> w" and wS: "w \<le> S" for w S
-  proof -
-    have S0: "0 \<le> S" using w wS by simp
-    interpret MS: martingale "?Q S" "?H S" 0 "\<lambda>u \<omega>. Z (min u S) \<omega>"
-      by (rule mg[OF S0])
-    have "(\<lambda>\<omega>. Z (min w S) \<omega>) \<in> borel_measurable (?H S w)" by (rule MS.adapted[OF w])
-    then have "Z w \<in> borel_measurable (?H S w)" using wS by simp
-    then have "Z w \<in> borel_measurable (?Q S)"
-      by (rule measurable_from_subalg[OF MS.subalgebras[OF w]])
-    then show ?thesis using measurable_cong_sets[OF sets_pair_law_of refl] by blast
-  qed
-  have integ: "integrable P (Z w)" if w: "0 \<le> w" for w
-  proof -
-    interpret MS: martingale "?Q w" "?H w" 0 "\<lambda>u \<omega>. Z (min u w) \<omega>" by (rule mg[OF w])
-    have "integrable (?Q w) (\<lambda>\<omega>. Z (min w w) \<omega>)" by (rule MS.integrable[OF w])
-    then have "integrable (?Q w) (Z w)" by simp
-    then have "integrable P (\<lambda>\<omega>. Z w (pcut w \<omega>))"
-      unfolding pair_law_of_def
-      using integrable_distr_eq[OF cutm[OF w] ZB[OF w order.refl]] by simp
-    then show ?thesis using Zloc[OF w order.refl] by simp
-  qed
-  show ?thesis
-  proof (rule SF.martingale_of_set_integral_eq)
-    show "adapted_process P ?G 0 Z"
-    proof (unfold_locales)
-      fix u :: real assume u: "0 \<le> u"
-      show "Z u \<in> borel_measurable (?G u)" by (rule Zm[OF u])
-    qed
-    show "integrable P (Z u)" if "0 \<le> u" for u by (rule integ[OF that])
-    fix A and u v :: real
-    assume A: "A \<in> ?G u" and uv: "0 \<le> u" "u \<le> v"
-    have v0: "0 \<le> v" using uv by simp
-    interpret MS: martingale "?Q v" "?H v" 0 "\<lambda>w \<omega>. Z (min w v) \<omega>" by (rule mg[OF v0])
-    obtain A' where A': "A' \<in> sets (?H v u)" and AA: "A = pcut v -` A' \<inter> space P"
-      using A natural_filtration_pcut[OF uv(1) uv(2) setsP] by blast
-    have key: "set_lebesgue_integral P A (Z w)
-        = set_lebesgue_integral (?Q v) A' (\<lambda>\<omega>. Z (min w v) \<omega>)"
-      if w: "0 \<le> w" and wv: "w \<le> v" for w
-    proof -
-      have AB: "A' \<in> sets (?B v)"
-        using A' MS.subalgebras[OF uv(1)] by (auto simp: subalgebra_def)
-      have gb: "(\<lambda>\<omega> :: 'n pairpath. indicat_real A' \<omega> *\<^sub>R Z w \<omega>)
-          \<in> borel_measurable (?B v)"
-        using AB ZB[OF w wv] by measurable
-      have "set_lebesgue_integral (?Q v) A' (\<lambda>\<omega>. Z (min w v) \<omega>)
-          = (\<integral>\<omega>. indicat_real A' \<omega> *\<^sub>R Z w \<omega> \<partial>(?Q v))"
-        unfolding set_lebesgue_integral_def using wv by simp
-      also have "\<dots> = (\<integral>\<omega>. indicat_real A' (pcut v \<omega>) *\<^sub>R Z w (pcut v \<omega>) \<partial>P)"
-        unfolding pair_law_of_def by (rule integral_distr[OF cutm[OF v0] gb])
-      also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R Z w \<omega> \<partial>P)"
-        using AA Zloc[OF w wv]
-        by (intro Bochner_Integration.integral_cong) (auto simp: indicator_def)
-      finally show ?thesis unfolding set_lebesgue_integral_def ..
-    qed
-    have "set_lebesgue_integral P A (Z u)
-        = set_lebesgue_integral (?Q v) A' (\<lambda>\<omega>. Z (min u v) \<omega>)"
-      by (rule key[OF uv(1) uv(2)])
-    also have "\<dots> = set_lebesgue_integral (?Q v) A' (\<lambda>\<omega>. Z (min v v) \<omega>)"
-      by (rule MS.set_integral_eq[OF A' uv(1) uv(2)])
-    also have "\<dots> = set_lebesgue_integral P A (Z v)"
-      by (rule key[OF v0 order.refl, symmetric])
-    finally show "set_lebesgue_integral P A (Z u) = set_lebesgue_integral P A (Z v)" .
-  qed
-qed
-
-subsection \<open>The extension lies in the uncapped class\<close>
-
-lemma pcut_pcut:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes ST: "S \<le> T"
-  shows "pcut S (pcut T \<omega>) = pcut S \<omega>"
-proof (rule ext)
-  fix t :: real
-  show "pcut S (pcut T \<omega>) t = pcut S \<omega> t" using ST by (auto simp: pcut_def)
-qed
 
 lemma iextend_pcut_in_class:
   fixes Q :: "('n::finite pairpath) measure"

@@ -5,6 +5,7 @@ theory Exit_Class_Tightness
   imports Exit_Class_Limits
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Path_Spaces.Increment_Moments"
+    Path_Law_Pasting
 begin
 
 (*>*)
@@ -68,28 +69,6 @@ proof -
   finally show ?thesis using B0 by simp
 qed
 
-lemma path_coord_cont_on:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "continuous_on {0..T} (\<lambda>t. fst (\<omega> t) $ i)"
-proof -
-  have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
-  have c2: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p $ i)"
-    by (intro continuous_intros)
-  show ?thesis by (rule continuous_on_compose2[OF c2 c]) simp
-qed
-
-text \<open>The mass a class member puts outside a pair Hoelder ball.  This is
-  \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close>'s argument, run natively
-  on the pair path space.  Two things stop that theorem from being applied
-  off the shelf: its conclusion is about the push-forward \<open>path_law M X T\<close>
-  of an abstract process, whereas a class member is already a law on paths;
-  and it wants the start condition \<open>X\<^sub>0 = x\<close> pointwise, whereas a class
-  member only has it almost surely.  Charging the failure of the
-  start-and-Lipschitz event to a null set handles both, and also removes
-  the need for the \<open>Y\<close>-event of \<open>pair_holder_charge_split\<close> to be
-  measurable, so the split lemma is not needed either.\<close>
 
 theorem exit_class_pair_holder_charge:
   fixes Q :: "('n::finite pairpath) measure"
