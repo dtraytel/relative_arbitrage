@@ -8,6 +8,7 @@ theory Value_Function_Subsolution
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Symmetric_Matrix_Spectra.Ky_Fan"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -766,96 +767,8 @@ text \<open>Three pathwise facts about \<^const>\<open>pball_exit\<close>, all c
   discontinuous function, and every other clause below is a consequence
   of it.\<close>
 
-lemma pexit_le_of_mem:
-  fixes f :: "real \<Rightarrow> 'b::polish_space"
-  assumes T0: "0 \<le> T" and r: "0 \<le> r" "r \<le> T" and mem: "f r \<notin> K"
-  shows "pexit T K f \<le> r"
-  unfolding pexit_def using T0 r mem by (intro etime_le_of_mem) auto
 
-lemma pexit_mem_of_less_T:
-  fixes f :: "real \<Rightarrow> 'b::polish_space"
-  assumes T0: "0 \<le> T" and Kop: "open K"
-    and cont: "continuous_on {0..T} f"
-    and lt: "pexit T K f < T"
-  shows "f (pexit T K f) \<notin> K"
-proof -
-  let ?S = "{r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K}"
-  have cK: "closed (- K)" unfolding closed_def using Kop by simp
-  have Sclosed: "closed ?S"
-  proof -
-    have "?S = f -` (- K) \<inter> {0..T}" by auto
-    then show ?thesis using cont cK by (simp add: continuous_on_closed_vimage)
-  qed
-  have Sbdd: "bdd_below ?S" by (intro bdd_belowI[of _ 0]) auto
-  have pe: "pexit T K f = Inf (?S \<union> {T})"
-    unfolding pexit_def etime_def by simp
-  have Sne: "?S \<noteq> {}"
-  proof (rule ccontr)
-    assume "\<not> ?S \<noteq> {}"
-    then have e: "?S = {}" by simp
-    have "pexit T K f = Inf ({} \<union> {T})" unfolding pe e ..
-    then have "pexit T K f = T" by simp
-    with lt show False by simp
-  qed
-  have SleT: "Inf ?S \<le> T"
-  proof -
-    from Sne obtain s where s: "s \<in> ?S" by blast
-    then have "Inf ?S \<le> s" using Sbdd by (intro cInf_lower)
-    also have "s \<le> T" using s by simp
-    finally show ?thesis .
-  qed
-  have "Inf (?S \<union> {T}) = inf (Inf ?S) (Inf {T})"
-    by (rule cInf_union_distrib[OF Sne Sbdd]) auto
-  then have "pexit T K f = Inf ?S" using pe SleT by (simp add: inf_min)
-  moreover have "Inf ?S \<in> ?S"
-    using Sne Sbdd Sclosed by (intro closed_contains_Inf) auto
-  ultimately show ?thesis by simp
-qed
 
-text \<open>The second is the congruence clause of a stopping time, restricted to
-  continuous paths.  The asymmetry: the \<open>\<ge>\<close> direction is unconditional (a
-  witness for \<open>g\<close> strictly below the exit time of \<open>f\<close> is a witness for \<open>f\<close>
-  too), and only the \<open>\<le>\<close> direction needs attainment.\<close>
-
-lemma pexit_cong_stopping:
-  fixes f g :: "real \<Rightarrow> 'b::polish_space"
-  assumes T0: "0 \<le> T" and Kop: "open K"
-    and cont: "continuous_on {0..T} f"
-    and eq: "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> pexit T K f \<Longrightarrow> f t = g t"
-  shows "pexit T K g = pexit T K f"
-proof -
-  have th0: "0 \<le> pexit T K f" by (rule pexit_nonneg[OF T0])
-  have thT: "pexit T K f \<le> T" by (rule pexit_le_T[OF T0])
-  have le: "pexit T K g \<le> pexit T K f"
-  proof (cases "pexit T K f < T")
-    case True
-    have "f (pexit T K f) \<notin> K"
-      by (rule pexit_mem_of_less_T[OF T0 Kop cont True])
-    then have m: "g (pexit T K f) \<notin> K"
-      using eq[OF th0 order_refl] by simp
-    show ?thesis
-      by (rule pexit_le_of_mem[of T "pexit T K f" g K, OF T0 th0 thT m])
-  next
-    case False
-    with thT have "pexit T K f = T" by simp
-    then show ?thesis using pexit_le_T[OF T0, of K g] by simp
-  qed
-  have ge: "pexit T K f \<le> pexit T K g"
-  proof (rule ccontr)
-    assume "\<not> pexit T K f \<le> pexit T K g"
-    then have lt: "pexit T K g < pexit T K f" by simp
-    have "(\<exists>r. 0 \<le> r \<and> r \<le> T \<and> g r \<in> - K \<and> r < pexit T K f)
-        \<or> T < pexit T K f"
-      using lt pexit_less_iff[OF T0] by blast
-    with thT obtain r where r: "0 \<le> r" "r \<le> T" "g r \<notin> K"
-      "r < pexit T K f" by auto
-    have "f r \<notin> K" using eq[OF r(1)] r(4) r(3) by simp
-    then have "pexit T K f \<le> r"
-      by (rule pexit_le_of_mem[OF T0 r(1) r(2)])
-    with r(4) show False by simp
-  qed
-  from le ge show ?thesis by simp
-qed
 
 lemma pball_exit_cong:
   fixes \<omega> \<omega>' :: "'n::finite pairpath"

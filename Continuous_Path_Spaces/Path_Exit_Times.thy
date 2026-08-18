@@ -1,7 +1,7 @@
 
 (*<*)
 theory Path_Exit_Times
-  imports Path_Space "Continuous_Time_Martingales.Stopping_Times"
+  imports Path_Space Path_Space_Infinite "Continuous_Time_Martingales.Stopping_Times"
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Time_Martingales.Essential_Infimum"
 begin
@@ -1313,6 +1313,866 @@ proof -
     by (rule ess_inf_time_eq_laplace_inf[OF prob pm\<Lambda>
         pexit_nonneg[OF T0] pexit_le_T[OF T0]])
   finally show ?thesis .
+qed
+
+
+section \<open>Shifted exit times, confinement, and test functionals\<close>
+
+lemma open_etime_shift_less:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set" and y :: 'b
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         etime T A (\<lambda>s w. y + w s) f < d}"
+proof -
+  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+        etime T A (\<lambda>s w. y + w s) f < d}
+      = (\<Union>r \<in> {r \<in> qtimes T. r < d}.
+           {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A})"
+  proof -
+    have "etime T A (\<lambda>s w. y + w s) f < d
+        \<longleftrightarrow> (\<exists>r \<in> {r \<in> qtimes T. r < d}. y + f r \<in> A)"
+      if w: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" for f
+    proof -
+      have cont: "continuous_on {0..T} (\<lambda>s. y + f s)"
+        by (intro continuous_intros mspace_path_metricD[OF w])
+      have e: "etime T A (\<lambda>s w. y + w s) f = etime T A (\<lambda>s w'. y + f s) f"
+        unfolding etime_def by simp
+      show ?thesis unfolding e
+        using etime_less_iff_qtimes_open[OF T A dT cont, of f] by auto
+    qed
+    thus ?thesis by blast
+  qed
+  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A}"
+    if r: "r \<in> {r \<in> qtimes T. r < d}" for r
+  proof -
+    have "r \<in> qtimes T" using r by simp
+    hence rT: "r \<in> {0..T}" using qtimes_subset[OF T] by blast
+    show ?thesis by (rule open_shifted_eval_preimage[OF rT A])
+  qed
+  show ?thesis unfolding eq by (rule openin_Union) (use op in blast)
+qed
+
+subsection \<open>Berge's box hypothesis for the shifted exit time\<close>
+
+text \<open>
+  Both perturbations at once, in the sequential form Levy--Prokhorov
+  metrisation makes equivalent to the topological one: \<open>f(x,P) < d\<close>
+  persists when the starting point moves to any \<open>y\<^sub>i \<rightarrow> x\<close> and the law
+  moves to any \<open>Q\<^sub>i \<rightarrow> P\<close> weakly.
+
+  Larsson--Ruf get this from continuity of \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; no
+  such theorem is used here. A single open set \<open>G\<close> does all the work --- the
+  erosion makes it survive moving \<open>x\<close>, its openness makes it survive
+  moving \<open>P\<close> --- and must be open rather than closed, since a closed eroded
+  set would give the wrong Portmanteau direction.
+\<close>
+
+lemma past_test_functional_cont:
+  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real"
+  assumes st: "0 \<le> s" and sT: "s \<le> T"
+    and hc: "continuous_map (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal (\<lambda>f. h (restrict f {0..s}))"
+proof -
+  have rc: "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
+      (\<lambda>f. restrict f {0..s})"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal (h \<circ> (\<lambda>f. restrict f {0..s}))"
+    by (rule continuous_map_compose[OF rc hc])
+  then show ?thesis by (simp add: o_def)
+qed
+
+text \<open>The exit time from \<open>K\<close> is the increasing limit of the capped exit times.
+  It takes the value \<open>\<top>\<close> exactly on the paths that never leave \<open>K\<close>.\<close>
+
+definition iexit :: "'b::polish_space set \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> ennreal" where
+  "iexit K f = (SUP T \<in> {0..}. ennreal (pexit T K f))"
+
+lemma pexit_le_iexit:
+  assumes T: "0 \<le> T"
+  shows "ennreal (pexit T K f) \<le> iexit K f"
+  unfolding iexit_def using T by (intro SUP_upper) simp
+
+text \<open>Hence the elementary bound identifying \<open>iexit\<close> as the first time the
+  path is outside \<open>K\<close>.\<close>
+
+subsection \<open>The essential infimum of an unbounded time\<close>
+
+lemma pexit_cong_nonneg:
+  assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> f s = g s" and T: "0 \<le> T"
+  shows "pexit T K f = pexit T K g"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K} = {r. 0 \<le> r \<and> r \<le> T \<and> g r \<in> - K}"
+    using eq by auto
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+lemma iexit_cong_nonneg:
+  assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> f s = g s"
+  shows "iexit K f = iexit K g"
+  unfolding iexit_def by (intro SUP_cong refl) (use pexit_cong_nonneg[OF eq] in auto)
+
+lemma pexit_restrict [simp]: "pexit T K (restrict f {0..T}) = pexit T K f"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> T \<and> restrict f {0..T} r \<in> - K}
+      = {r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K}" by auto
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+lemma iexit_nat_sup: "iexit K f = (SUP n :: nat. ennreal (pexit (real n) K f))"
+proof (rule antisym)
+  show "iexit K f \<le> (SUP n :: nat. ennreal (pexit (real n) K f))"
+    unfolding iexit_def
+  proof (rule SUP_least)
+    fix T :: real assume "T \<in> {0..}"
+    then have T: "0 \<le> T" by simp
+    obtain n :: nat where n: "T < real n" using reals_Archimedean2 by blast
+    have "pexit T K f \<le> pexit (real n) K f"
+      by (rule pexit_mono_T[OF T]) (use n in simp)
+    then have "ennreal (pexit T K f) \<le> ennreal (pexit (real n) K f)"
+      by (rule ennreal_leI)
+    also have "\<dots> \<le> (SUP n :: nat. ennreal (pexit (real n) K f))"
+      by (rule SUP_upper) simp
+    finally show "ennreal (pexit T K f) \<le> (SUP n :: nat. ennreal (pexit (real n) K f))" .
+  qed
+  show "(SUP n :: nat. ennreal (pexit (real n) K f)) \<le> iexit K f"
+    by (rule SUP_least) (auto intro: pexit_le_iexit)
+qed
+
+lemma iexit_measurable_gen:
+  fixes K :: "('b::polish_space) set" and N :: "'a measure"
+  assumes K: "closed K"
+    and Ym: "\<And>t. 0 \<le> t \<Longrightarrow> Y t \<in> borel_measurable N"
+    and cont: "\<And>\<omega>. \<omega> \<in> space N \<Longrightarrow> continuous_on {0..} (\<lambda>t. Y t \<omega>)"
+  shows "(\<lambda>\<omega>. iexit K (\<lambda>t. Y t \<omega>)) \<in> borel_measurable N"
+proof -
+  have step: "(\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. Y t \<omega>))) \<in> borel_measurable N"
+    if T: "0 \<le> T" for T
+  proof -
+    have p: "(\<lambda>\<omega>. restrict (\<lambda>t. Y t \<omega>) {0..T})
+        \<in> N \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
+    proof (rule pathify_measurable[OF T])
+      fix t assume "t \<in> {0..T}"
+      then show "Y t \<in> borel_measurable N" by (intro Ym) simp
+    next
+      fix \<omega> assume "\<omega> \<in> space N"
+      from cont[OF this] show "continuous_on {0..T} (\<lambda>t. Y t \<omega>)"
+        by (rule continuous_on_subset) auto
+    qed
+    have "(\<lambda>\<omega>. pexit T K (restrict (\<lambda>t. Y t \<omega>) {0..T})) \<in> borel_measurable N"
+      by (rule measurable_compose[OF p pexit_measurable[OF T K]])
+    then show ?thesis by simp
+  qed
+  have "(\<lambda>\<omega>. SUP n :: nat. ennreal (pexit (real n) K (\<lambda>t. Y t \<omega>)))
+      \<in> borel_measurable N"
+    by (intro borel_measurable_SUP[where I = UNIV]) (use step in auto)
+  then show ?thesis by (simp add: iexit_nat_sup)
+qed
+
+lemma iexit_measurable_ipath:
+  fixes K :: "('b::polish_space) set"
+  assumes K: "closed K"
+  shows "iexit K \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+proof -
+  have "(\<lambda>w :: real \<Rightarrow> 'b. iexit K (\<lambda>t. w t))
+      \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+  proof (rule iexit_measurable_gen[OF K])
+    show "\<And>t. 0 \<le> t \<Longrightarrow> (\<lambda>w :: real \<Rightarrow> 'b. w t)
+        \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+      by (rule ipath_eval_measurable)
+  next
+    fix w :: "real \<Rightarrow> 'b" assume "w \<in> space (ipath_space :: ((real \<Rightarrow> 'b) measure))"
+    then show "continuous_on {0..} (\<lambda>t. w t)"
+      by (intro ipath_continuous_on) auto
+  qed
+  then show ?thesis by simp
+qed
+
+text \<open>On the survival event the exit time splits exactly: the first piece
+  contributes \<open>r\<close> and the rest is the exit time of the time-shifted path
+  measured against the shortened horizon.  This is the identity that turns
+  the almost-sure bound \<open>\<tau>\<^sub>K \<ge> c\<close> into a bound on the future.\<close>
+
+lemma pexit_split_at_r:
+  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and surv: "pexit r K f = r" and endK: "f r \<in> K"
+  shows "pexit T K f = r + pexit (T - r) K (\<lambda>s. f (r + s))"
+proof -
+  have stay: "f t \<in> K" if t: "t \<in> {0..r}" for t
+  proof (rule ccontr)
+    assume nk: "f t \<notin> K"
+    have "pexit r K f \<le> t"
+      unfolding pexit_def using r t nk by (intro etime_le_of_mem) auto
+    with surv t have "t = r" by simp
+    then show False using nk endK by simp
+  qed
+  define B where "B = {s. 0 \<le> s \<and> s \<le> T - r \<and> f (r + s) \<in> - K} \<union> {T - r}"
+  have Beq: "{t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T} = (\<lambda>s. r + s) ` B"
+  proof (rule set_eqI, rule iffI)
+    fix t assume "t \<in> {t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T}"
+    then consider (hit) "0 \<le> t" "t \<le> T" "f t \<in> - K" | (cap) "t = T" by blast
+    then show "t \<in> (\<lambda>s. r + s) ` B"
+    proof cases
+      case hit
+      have rt: "r < t"
+      proof (rule ccontr)
+        assume "\<not> r < t"
+        then have "t \<in> {0..r}" using hit(1) by simp
+        then show False using stay hit(3) by simp
+      qed
+      show ?thesis
+      proof (rule image_eqI[where x = "t - r"])
+        show "t = r + (t - r)" by simp
+        show "t - r \<in> B" unfolding B_def using hit rt by simp
+      qed
+    next
+      case cap
+      show ?thesis
+      proof (rule image_eqI[where x = "T - r"])
+        show "t = r + (T - r)" using cap by simp
+        show "T - r \<in> B" unfolding B_def by simp
+      qed
+    qed
+  next
+    fix t assume "t \<in> (\<lambda>s. r + s) ` B"
+    then obtain s where s: "s \<in> B" "t = r + s" by blast
+    from s(1) consider (hit) "0 \<le> s" "s \<le> T - r" "f (r + s) \<in> - K" | (cap) "s = T - r"
+      unfolding B_def by blast
+    then show "t \<in> {t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T}"
+    proof cases
+      case hit
+      then show ?thesis using s(2) r by simp
+    next
+      case cap
+      then show ?thesis using s(2) by simp
+    qed
+  qed
+  have ne: "B \<noteq> {}" unfolding B_def by blast
+  have bdd: "bdd_below B"
+    unfolding B_def by (rule bdd_belowI[of _ 0]) (use rT in auto)
+  have "pexit T K f = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T})"
+    unfolding pexit_def etime_def ..
+  also have "\<dots> = Inf ((\<lambda>s. r + s) ` B)" unfolding Beq ..
+  also have "\<dots> = r + Inf B" by (rule cInf_shift_real[OF ne bdd])
+  also have "\<dots> = r + pexit (T - r) K (\<lambda>s. f (r + s))"
+    unfolding pexit_def etime_def B_def ..
+  finally show ?thesis .
+qed
+
+subsection \<open>The rebased future as a map of path spaces\<close>
+
+text \<open>\<open>pfut r T \<omega>\<close> is the path after \<open>r\<close>, re-based at its own starting point,
+  so that it starts at \<open>0\<close> no matter where \<open>\<omega>\<close> was at time \<open>r\<close>.  It is the
+  map along which the conditional law of the future is taken.  Like the glue,
+  it is Lipschitz --- with constant \<open>2\<close>, because the base point is subtracted
+  and so counts once more.\<close>
+
+lemma pexit_surv_of_less:
+  fixes f :: "real \<Rightarrow> 'a::polish_space" and K :: "'a set"
+  assumes T0: "0 \<le> T" and r: "0 \<le> r" and rT: "r \<le> T" and lt: "r < c"
+    and ge: "c \<le> pexit T K f"
+  shows "pexit r K f = r \<and> f r \<in> K"
+proof -
+  have stay: "f t \<in> K" if t: "t \<in> {0..r}" for t
+  proof (rule ccontr)
+    assume nk: "f t \<notin> K"
+    have "pexit T K f \<le> t"
+      unfolding pexit_def using T0 t rT nk by (intro etime_le_of_mem) auto
+    moreover have "t \<le> r" using t by simp
+    ultimately show False using ge lt by simp
+  qed
+  have empt: "{t. 0 \<le> t \<and> t \<le> r \<and> f t \<in> - K} \<union> {r} = {r}" using stay by auto
+  have "pexit r K f = r" unfolding pexit_def etime_def empt by simp
+  moreover have "f r \<in> K" using stay r by simp
+  ultimately show ?thesis by simp
+qed
+
+text \<open>The pointwise core: at a single path, the deterministic bound at
+  countably many rational times below \<open>c\<close> gives the bound at an arbitrary
+  time \<open>s\<close>, with no measure theory at all.\<close>
+
+lemma pexit_cong_on:
+  assumes "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> U \<Longrightarrow> f t = g t"
+  shows "pexit U K f = pexit U K g"
+proof -
+  have "{t. 0 \<le> t \<and> t \<le> U \<and> f t \<in> - K} = {t. 0 \<le> t \<and> t \<le> U \<and> g t \<in> - K}"
+    using assms by auto
+  then show ?thesis unfolding pexit_def etime_def by simp
+qed
+
+lemma pexit_cap_eq:
+  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and ex: "\<not> (pexit r K f = r \<and> f r \<in> K)"
+  shows "pexit T K f = pexit r K f"
+proof (cases "pexit r K f < r")
+  case True
+  then show ?thesis by (rule pexit_stable_above_T[OF r rT])
+next
+  case False
+  then have eqr: "pexit r K f = r" using pexit_le_T[OF r, of K f] by simp
+  with ex have nk: "f r \<in> - K" by simp
+  show ?thesis
+  proof (rule antisym)
+    have "pexit T K f \<le> r"
+      unfolding pexit_def using r rT nk by (intro etime_le_of_mem) auto
+    then show "pexit T K f \<le> pexit r K f" using eqr by simp
+    show "pexit r K f \<le> pexit T K f" by (rule pexit_mono_T[OF r rT])
+  qed
+qed
+
+text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a single statement about
+  conditioning, and no other property of the class is needed:
+
+  \<open>\begin{quote}\<close>
+  if the exit time of \<open>P \<in> \<P>\<^sub>x\<close> is almost surely at least \<open>c\<close>, then almost
+  surely on the survival event \<open>{r \<le> \<tau>\<^sub>K}\<close> the value at the position reached
+  is at least the time still to run, \<open>c - r\<close>.
+  \<open>\end{quote}\<close>
+
+  That is exactly the statement that the conditional law of the future given
+  \<open>\<F>\<^sub>r\<close> is, almost surely, a member of the class started at \<open>X\<^sub>r\<close>, so that its
+  own essential infimum is bounded by \<open>v(X\<^sub>r)\<close>; it is a regular conditional
+  distribution argument.  Off the survival event it is unconditional, by
+  @{thm [source] pexit_cap_eq}.\<close>
+
+lemma pexit_min_horizon:
+  fixes K :: "'b::polish_space set"
+  assumes S: "0 \<le> S" and ST: "S \<le> T"
+  shows "pexit S K f = min (pexit T K f) S"
+proof (rule order.antisym)
+  have T0: "0 \<le> T" using S ST by simp
+  show "pexit S K f \<le> min (pexit T K f) S"
+    using pexit_mono_T[OF S ST, of K f] pexit_le_T[OF S, of K f] by simp
+  have lb: "min (pexit T K f) S \<le> z"
+    if z: "z \<in> {r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S}" for z
+  proof -
+    consider (hit) "0 \<le> z" "z \<le> S" "f z \<in> - K" | (cap) "z = S" using z by blast
+    then show ?thesis
+    proof cases
+      case hit
+      then have zT: "z \<le> T" using ST by simp
+      have "pexit T K f \<le> z"
+        unfolding pexit_def
+        by (rule etime_le_of_mem[OF T0 hit(1) zT]) (use hit(3) in simp)
+      then show ?thesis by simp
+    next
+      case cap
+      then show ?thesis by simp
+    qed
+  qed
+  have "pexit S K f = Inf ({r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S})"
+    unfolding pexit_def etime_def ..
+  moreover have "min (pexit T K f) S
+      \<le> Inf ({r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S})"
+    by (intro cInf_greatest) (use lb in auto)
+  ultimately show "min (pexit T K f) S \<le> pexit S K f" by simp
+qed
+
+text \<open>\<open>ess_inf_time_mono\<close> lives in \<open>Value_Function_Market\<close>,
+  with an almost-sure rather than a pointwise hypothesis; this theory had a
+  pointwise copy that shadowed it.\<close>
+
+text \<open>Capping the integrand by a constant caps the essential infimum by the
+  same constant.  Both halves are elementary, but the \<open>\<ge>\<close> half has to be
+  run through \<open>ennreal_strict_between\<close>: the defining
+  supremum need not be attained.\<close>
+
+lemma positive_mass_at_some_qtime:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
+    and sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
+    and pos: "emeasure P
+        {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
+  shows "\<exists>r \<in> qtimes T. r < d
+      \<and> emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> A} \<noteq> 0"
+proof -
+  have spP: "space P = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    using sets_eq_imp_space_eq[OF sP] by (simp add: space_borel_of)
+  define R where "R = {r \<in> qtimes T. r < d}"
+  have cR: "countable R" unfolding R_def using countable_qtimes by simp
+
+  text \<open>The pointwise reduction, applied path by path. Continuity of the shifted
+    path is what \<open>mspace_path_metricD\<close> supplies.\<close>
+  have ptw: "etime T A (\<lambda>s w. x + w s) \<omega> < d
+      \<longleftrightarrow> (\<exists>r \<in> R. x + \<omega> r \<in> A)"
+    if w: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" for \<omega>
+  proof -
+    have cont: "continuous_on {0..T} (\<lambda>s. x + \<omega> s)"
+      by (intro continuous_intros mspace_path_metricD[OF w])
+    text \<open>\<open>etime\<close> applies its process only to the one path \<open>\<omega>\<close>, so freezing
+      the path inside the process changes nothing mathematically, but the
+      reduction lemma is stated for a frozen process.\<close>
+    have eq: "etime T A (\<lambda>s w. x + w s) \<omega> = etime T A (\<lambda>s w'. x + \<omega> s) \<omega>"
+      unfolding etime_def by simp
+    show ?thesis
+      unfolding eq R_def
+      using etime_less_iff_qtimes_open[OF T A dT cont, of \<omega>] by auto
+  qed
+  have split: "{\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d}
+      = (\<Union>r \<in> R. {\<omega> \<in> space P. x + \<omega> r \<in> A})"
+    using ptw unfolding spP by blast
+
+  text \<open>Measurability of each slice comes from openness of the shifted evaluation
+    preimage, exactly as in \<open>etime_shift_uniform_margin\<close>.\<close>
+  have meas: "{\<omega> \<in> space P. x + \<omega> r \<in> A} \<in> sets P" if r: "r \<in> R" for r
+  proof -
+    have "r \<in> qtimes T" using r unfolding R_def by simp
+    hence rT: "r \<in> {0..T}" using qtimes_subset[OF T] by blast
+    have "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+        {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> A}"
+      by (rule open_shifted_eval_preimage[OF rT A])
+    from borel_of_open[OF this] show ?thesis unfolding sP spP by simp
+  qed
+  have "emeasure P (\<Union>r \<in> R. {\<omega> \<in> space P. x + \<omega> r \<in> A}) \<noteq> 0"
+    using pos unfolding split .
+  from positive_of_countable_UN[OF cR meas this] show ?thesis
+    unfolding R_def by blast
+qed
+
+text \<open>Both halves of the \<open>x\<close>-perturbation in one statement: from
+  \<open>f(x,P) < d\<close> alone, with no continuity of the pushforward map, there is
+  an open set of paths of positive \<open>P\<close>-mass on which the exit time stays
+  below \<open>d\<close> for every starting point within \<open>\<delta>\<close> of \<open>x\<close>.\<close>
+
+definition vshift :: "real \<Rightarrow> 'b::{polish_space,real_normed_vector} set
+    \<Rightarrow> 'b \<Rightarrow> (real \<Rightarrow> 'b) measure \<Rightarrow> real" where
+  "vshift T A y Q = enn2real (ess_inf_time Q (etime T A (\<lambda>s w. y + w s)))"
+
+lemma vshift_le:
+  fixes A :: "'b::{polish_space,real_normed_vector} set"
+  assumes T: "0 \<le> T" and Q: "prob_space Q"
+  shows "vshift T A y Q \<le> T"
+proof -
+  have "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) \<le> ennreal T"
+    by (rule ess_inf_time_le_const[OF Q]) (rule etime_le_T[OF T])
+  from enn2real_mono[OF this] show ?thesis
+    unfolding vshift_def using T by simp
+qed
+
+text \<open>The bridge from the real-valued functional back to the positive-mass
+  statement. Both directions of the \<open>ennreal\<close> conversion need the ceiling:
+  without it \<open>enn2real\<close> could collapse \<open>\<top>\<close> to \<open>0\<close> and the strict inequality
+  would be an artefact.\<close>
+
+lemma vshift_less_iff_positive_mass:
+  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+    and Q :: "(real \<Rightarrow> 'b) measure"
+  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d" and d0: "0 \<le> d"
+    and sQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
+    and pQ: "prob_space Q"
+  shows "vshift T A y Q < d
+      \<longleftrightarrow> emeasure Q {\<omega> \<in> space Q. etime T A (\<lambda>s w. y + w s) \<omega> < d} \<noteq> 0"
+proof -
+  have spQ: "space Q = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    using sets_eq_imp_space_eq[OF sQ] by (simp add: space_borel_of)
+  have setseq: "{\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d}
+      = {\<omega> \<in> space Q. etime T A (\<lambda>s w. y + w s) \<omega> < d}"
+    using etime_nonneg[OF T, of A "\<lambda>s w. y + w s"]
+    by (auto simp: ennreal_less_iff)
+  have meas: "{\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d}
+      \<in> sets Q"
+    unfolding setseq
+    using borel_of_open[OF open_etime_shift_less[OF T A dT]]
+    unfolding sQ spQ by simp
+  have le: "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) \<le> ennreal T"
+    by (rule ess_inf_time_le_const[OF pQ]) (rule etime_le_T[OF T])
+  have fin: "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) < \<top>"
+    using le ennreal_less_top by (rule order_le_less_trans)
+  have "vshift T A y Q < d
+      \<longleftrightarrow> ennreal (vshift T A y Q) < ennreal d"
+    unfolding vshift_def by (simp add: ennreal_less_iff)
+  also have "\<dots> \<longleftrightarrow> ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) < ennreal d"
+    unfolding vshift_def by (simp add: ennreal_enn2real[OF fin])
+  also have "\<dots> \<longleftrightarrow> emeasure Q
+      {\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d} \<noteq> 0"
+    by (rule ess_inf_time_less_iff[OF meas])
+  finally show ?thesis unfolding setseq .
+qed
+
+text \<open>
+  Granted Lemma 2.3, this gives clause (1) of Theorem 1.1: the supremum
+  of \<open>P \<mapsto> P\<hyphen>essinf \<tau>\<^sub>K(x + \<cdot>)\<close> over a weakly compact family of laws is
+  upper semicontinuous in the starting point \<open>x\<close>. Every other hypothesis
+  of Berge is discharged here; compactness of the family is Lemma 2.3.
+\<close>
+
+lemma etime_shift_superlevel_closed:
+  fixes T :: real and c :: ennreal
+    and A :: "'b::{polish_space,real_normed_vector} set" and y :: 'b
+  assumes T: "0 \<le> T" and A: "open A"
+  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}"
+proof -
+  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
+  proof (cases "ennreal T < c")
+    text \<open>One split, on whether the threshold is beyond the cap, rather than the
+      two that \<open>ennreal_cases\<close> would give: above the cap every path qualifies,
+      and below it the threshold is automatically a real \<open>r\<close> with \<open>\<not> T < r\<close>,
+      which is exactly the hypothesis \<open>open_etime_shift_less\<close> wants.\<close>
+    case True
+    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
+        = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    proof -
+      have "ennreal (etime T A (\<lambda>s w. y + w s) f) < c" for f
+      proof -
+        have "etime T A (\<lambda>s w. y + w s) f \<le> T" by (rule etime_le_T[OF T])
+        hence "ennreal (etime T A (\<lambda>s w. y + w s) f) \<le> ennreal T"
+          by (rule ennreal_leI)
+        thus ?thesis using True by (rule order_le_less_trans)
+      qed
+      thus ?thesis by blast
+    qed
+    then show ?thesis
+      using openin_topspace[of
+          "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)"]
+      by simp
+  next
+    case False
+    hence cT: "c \<le> ennreal T" by simp
+    then obtain r where r: "0 \<le> r" "c = ennreal r"
+      by (cases c rule: ennreal_cases) (auto simp: top_unique)
+    have rT: "\<not> T < r"
+    proof
+      assume "T < r"
+      hence "ennreal T < ennreal r" using T by (simp add: ennreal_less_iff)
+      thus False using False r(2) by simp
+    qed
+    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
+        = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+          etime T A (\<lambda>s w. y + w s) f < r}"
+      unfolding r(2)
+      using etime_nonneg[OF T, of A "\<lambda>s w. y + w s"]
+      by (auto simp: ennreal_less_iff)
+    then show ?thesis by (simp add: open_etime_shift_less[OF T A rT])
+  qed
+  have compl: "topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+        - {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+             c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}
+      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+           ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
+    by (auto simp: not_le)
+  show ?thesis
+    unfolding closedin_def using op unfolding compl by auto
+qed
+
+definition confined_paths ::
+  "real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> (real \<Rightarrow> real^'m) set"
+  where
+  "confined_paths T K x0 =
+     {f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
+        f 0 = x0 \<and> (\<forall>t\<in>{0..T}. f t \<in> K)}"
+
+lemma closedin_confined_paths:
+  fixes K :: "(real^'m::finite) set"
+  assumes T: "0 \<le> T" and K: "closed K"
+  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      (confined_paths T K x0)"
+proof -
+  let ?X = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  interpret PM: Metric_space
+      "mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+      "mdist (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+    by (rule Metric_space_mspace_mdist)
+  have ts: "topspace ?X
+      = mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+    unfolding mtopology_of_def by (rule PM.topspace_mtopology)
+  have c0: "closedin ?X {f \<in> topspace ?X. f 0 \<in> {x0}}"
+    by (rule closedin_continuous_map_preimage[OF continuous_map_path_eval])
+      (use T in \<open>auto\<close>)
+  have ct: "closedin ?X {f \<in> topspace ?X. f t \<in> K}"
+    if t: "t \<in> {0..T}" for t
+    by (rule closedin_continuous_map_preimage[OF
+          continuous_map_path_eval[OF t]])
+      (simp add: K)
+  have eq: "confined_paths T K x0
+      = {f \<in> topspace ?X. f 0 \<in> {x0}}
+        \<inter> (\<Inter>t\<in>{0..T}. {f \<in> topspace ?X. f t \<in> K})"
+    using T unfolding confined_paths_def ts by auto
+  show ?thesis
+    unfolding eq
+    by (intro closedin_Int c0 closedin_INT ct) (use T in auto)
+qed
+
+definition rclamp :: "real \<Rightarrow> real \<Rightarrow> real"
+  where "rclamp c y = max (- c) (min c y)"
+
+lemma rclamp_bound: "0 \<le> c \<Longrightarrow> \<bar>rclamp c y\<bar> \<le> c"
+  by (simp add: rclamp_def abs_le_iff min_def max_def)
+
+lemma rclamp_id:
+  assumes "\<bar>y\<bar> \<le> c"
+  shows "rclamp c y = y"
+proof -
+  have "min c y = y"
+    using assms by (intro min_absorb2) (simp add: abs_le_iff)
+  moreover have "max (- c) y = y"
+    using assms by (intro max_absorb2) (simp add: abs_le_iff)
+  ultimately show ?thesis by (simp add: rclamp_def)
+qed
+
+lemma rclamp_cont: "continuous_map euclideanreal euclideanreal (rclamp c)"
+  unfolding continuous_map_iff_continuous2 rclamp_def
+  by (intro continuous_intros)
+
+lemma martingale_test_functional_cont:
+  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
+  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
+    and hc: "continuous_map (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal
+      (\<lambda>f. rclamp c (f t $ i - f s $ i) * h (restrict f {0..s}))"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  have sI: "s \<in> {0..T}" using st sT by simp
+  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
+    by (intro continuous_map_diff continuous_map_path_eval tI sI)
+  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
+      euclideanreal (\<lambda>v. v $ i)"
+    unfolding continuous_map_iff_continuous2
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have part1': "continuous_map ?PT euclideanreal
+      ((rclamp c \<circ> (\<lambda>v. v $ i)) \<circ> (\<lambda>f. f t - f s))"
+    by (intro continuous_map_compose[OF evdiff]
+        continuous_map_compose[OF cmp_i] rclamp_cont)
+  have part1: "continuous_map ?PT euclideanreal
+      (\<lambda>f. rclamp c (f t $ i - f s $ i))"
+    using part1' by (simp add: o_def)
+  have rc: "continuous_map ?PT
+      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
+      (\<lambda>f. restrict f {0..s})"
+    by (rule Lipschitz_continuous_imp_continuous_map
+        [OF Lipschitz_restrict_path_metric[OF st sT]])
+  have part2': "continuous_map ?PT euclideanreal
+      (h \<circ> (\<lambda>f. restrict f {0..s}))"
+    by (rule continuous_map_compose[OF rc hc])
+  have part2: "continuous_map ?PT euclideanreal
+      (\<lambda>f. h (restrict f {0..s}))"
+    using part2' by (simp add: o_def)
+  show ?thesis
+    by (rule continuous_map_real_mult[OF part1 part2])
+qed
+
+lemma covariation_test_functional_cont:
+  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
+  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
+    and hc: "continuous_map (mtopology_of
+        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
+  shows "continuous_map
+      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+      euclideanreal
+      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2 * h (restrict f {0..s}))"
+proof -
+  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
+  have sI: "s \<in> {0..T}" using st sT by simp
+  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
+    by (intro continuous_map_diff continuous_map_path_eval tI sI)
+  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
+      euclideanreal (\<lambda>v. v $ i)"
+    unfolding continuous_map_iff_continuous2
+    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  have part1': "continuous_map ?PT euclideanreal
+      ((rclamp c \<circ> (\<lambda>v. v $ i)) \<circ> (\<lambda>f. f t - f s))"
+    by (intro continuous_map_compose[OF evdiff]
+        continuous_map_compose[OF cmp_i] rclamp_cont)
+  have part1: "continuous_map ?PT euclideanreal
+      (\<lambda>f. rclamp c (f t $ i - f s $ i))"
+    using part1' by (simp add: o_def)
+  have part1sq: "continuous_map ?PT euclideanreal
+      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2)"
+    using continuous_map_real_mult[OF part1 part1]
+    by (simp add: power2_eq_square)
+  have part2: "continuous_map ?PT euclideanreal
+      (\<lambda>f. h (restrict f {0..s}))"
+    by (rule past_test_functional_cont[OF st sT hc])
+  show ?thesis
+    by (rule continuous_map_real_mult[OF part1sq part2])
+qed
+
+lemma pexit_le_of_mem:
+  fixes f :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T" and r: "0 \<le> r" "r \<le> T" and mem: "f r \<notin> K"
+  shows "pexit T K f \<le> r"
+  unfolding pexit_def using T0 r mem by (intro etime_le_of_mem) auto
+
+lemma pexit_mem_of_less_T:
+  fixes f :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T" and Kop: "open K"
+    and cont: "continuous_on {0..T} f"
+    and lt: "pexit T K f < T"
+  shows "f (pexit T K f) \<notin> K"
+proof -
+  let ?S = "{r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K}"
+  have cK: "closed (- K)" unfolding closed_def using Kop by simp
+  have Sclosed: "closed ?S"
+  proof -
+    have "?S = f -` (- K) \<inter> {0..T}" by auto
+    then show ?thesis using cont cK by (simp add: continuous_on_closed_vimage)
+  qed
+  have Sbdd: "bdd_below ?S" by (intro bdd_belowI[of _ 0]) auto
+  have pe: "pexit T K f = Inf (?S \<union> {T})"
+    unfolding pexit_def etime_def by simp
+  have Sne: "?S \<noteq> {}"
+  proof (rule ccontr)
+    assume "\<not> ?S \<noteq> {}"
+    then have e: "?S = {}" by simp
+    have "pexit T K f = Inf ({} \<union> {T})" unfolding pe e ..
+    then have "pexit T K f = T" by simp
+    with lt show False by simp
+  qed
+  have SleT: "Inf ?S \<le> T"
+  proof -
+    from Sne obtain s where s: "s \<in> ?S" by blast
+    then have "Inf ?S \<le> s" using Sbdd by (intro cInf_lower)
+    also have "s \<le> T" using s by simp
+    finally show ?thesis .
+  qed
+  have "Inf (?S \<union> {T}) = inf (Inf ?S) (Inf {T})"
+    by (rule cInf_union_distrib[OF Sne Sbdd]) auto
+  then have "pexit T K f = Inf ?S" using pe SleT by (simp add: inf_min)
+  moreover have "Inf ?S \<in> ?S"
+    using Sne Sbdd Sclosed by (intro closed_contains_Inf) auto
+  ultimately show ?thesis by simp
+qed
+
+text \<open>The second is the congruence clause of a stopping time, restricted to
+  continuous paths.  The asymmetry: the \<open>\<ge>\<close> direction is unconditional (a
+  witness for \<open>g\<close> strictly below the exit time of \<open>f\<close> is a witness for \<open>f\<close>
+  too), and only the \<open>\<le>\<close> direction needs attainment.\<close>
+
+lemma pexit_cong_stopping:
+  fixes f g :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T" and Kop: "open K"
+    and cont: "continuous_on {0..T} f"
+    and eq: "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> pexit T K f \<Longrightarrow> f t = g t"
+  shows "pexit T K g = pexit T K f"
+proof -
+  have th0: "0 \<le> pexit T K f" by (rule pexit_nonneg[OF T0])
+  have thT: "pexit T K f \<le> T" by (rule pexit_le_T[OF T0])
+  have le: "pexit T K g \<le> pexit T K f"
+  proof (cases "pexit T K f < T")
+    case True
+    have "f (pexit T K f) \<notin> K"
+      by (rule pexit_mem_of_less_T[OF T0 Kop cont True])
+    then have m: "g (pexit T K f) \<notin> K"
+      using eq[OF th0 order_refl] by simp
+    show ?thesis
+      by (rule pexit_le_of_mem[of T "pexit T K f" g K, OF T0 th0 thT m])
+  next
+    case False
+    with thT have "pexit T K f = T" by simp
+    then show ?thesis using pexit_le_T[OF T0, of K g] by simp
+  qed
+  have ge: "pexit T K f \<le> pexit T K g"
+  proof (rule ccontr)
+    assume "\<not> pexit T K f \<le> pexit T K g"
+    then have lt: "pexit T K g < pexit T K f" by simp
+    have "(\<exists>r. 0 \<le> r \<and> r \<le> T \<and> g r \<in> - K \<and> r < pexit T K f)
+        \<or> T < pexit T K f"
+      using lt pexit_less_iff[OF T0] by blast
+    with thT obtain r where r: "0 \<le> r" "r \<le> T" "g r \<notin> K"
+      "r < pexit T K f" by auto
+    have "f r \<notin> K" using eq[OF r(1)] r(4) r(3) by simp
+    then have "pexit T K f \<le> r"
+      by (rule pexit_le_of_mem[OF T0 r(1) r(2)])
+    with r(4) show False by simp
+  qed
+  from le ge show ?thesis by simp
+qed
+
+lemma pexit_eq_of_stays:
+  fixes f :: "real \<Rightarrow> 'b::polish_space"
+  assumes T0: "0 \<le> T'" and stays: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> T' \<Longrightarrow> f s \<in> K"
+  shows "pexit T' K f = T'"
+proof (rule order.antisym)
+  show "pexit T' K f \<le> T'" by (rule pexit_le_T[OF T0])
+  show "T' \<le> pexit T' K f"
+  proof (rule ccontr)
+    assume "\<not> T' \<le> pexit T' K f"
+    then have "pexit T' K f < T'" by simp
+    then have "(\<exists>r. 0 \<le> r \<and> r \<le> T' \<and> f r \<in> - K \<and> r < T') \<or> T' < T'"
+      using pexit_less_iff[OF T0] by blast
+    then show False using stays by auto
+  qed
+qed
+
+
+text \<open>Capping the uncapped exit time returns the capped one.  This is the
+  pathwise form of the statement that the horizon is a device: everything the
+  capped development says about \<open>pexit T\<close> is a statement about \<open>iexit\<close> below
+  the level \<open>T\<close>.\<close>
+
+theorem iexit_cap:
+  assumes T: "0 \<le> T"
+  shows "min (iexit K f) (ennreal T) = ennreal (pexit T K f)"
+proof (cases "iexit K f \<le> ennreal T")
+  case True
+  have eq: "pexit S K f = pexit T K f" if S: "T \<le> S" for S
+  proof -
+    have S0: "0 \<le> S" using T S by simp
+    have "ennreal (pexit S K f) \<le> ennreal T"
+      using True pexit_le_iexit[OF S0, of K f] by simp
+    then have "pexit S K f \<le> T" using T by simp
+    moreover have "pexit T K f = min (pexit S K f) T"
+      by (rule pexit_min_horizon[OF T S])
+    ultimately show ?thesis by simp
+  qed
+  have "iexit K f = ennreal (pexit T K f)"
+    unfolding iexit_def
+  proof (rule antisym)
+    show "(SUP S\<in>{0..}. ennreal (pexit S K f)) \<le> ennreal (pexit T K f)"
+    proof (rule SUP_least)
+      fix S :: real assume "S \<in> {0..}"
+      then have S0: "0 \<le> S" by simp
+      show "ennreal (pexit S K f) \<le> ennreal (pexit T K f)"
+      proof (cases "T \<le> S")
+        case True
+        then have "pexit S K f = pexit T K f" by (rule eq)
+        then show ?thesis by simp
+      next
+        case False
+        then have "pexit S K f = min (pexit T K f) S"
+          by (intro pexit_min_horizon[OF S0]) simp
+        then show ?thesis by (simp add: ennreal_leI)
+      qed
+    qed
+    show "ennreal (pexit T K f) \<le> (SUP S\<in>{0..}. ennreal (pexit S K f))"
+      using T by (intro SUP_upper) simp
+  qed
+  with True show ?thesis by simp
+next
+  case False
+  then have gt: "ennreal T < iexit K f" by simp
+  obtain S where S0: "0 \<le> S" and Sgt: "ennreal T < ennreal (pexit S K f)"
+    using gt unfolding iexit_def by (auto simp: less_SUP_iff)
+  have pS: "0 \<le> pexit S K f" by (rule pexit_nonneg[OF S0])
+  have TltS: "T < pexit S K f"
+    using Sgt pS T by (simp add: ennreal_less_iff)
+  have TS: "T \<le> S" using TltS pexit_le_T[OF S0, of K f] by simp
+  have "pexit T K f = min (pexit S K f) T"
+    by (rule pexit_min_horizon[OF T TS])
+  then have pT: "pexit T K f = T" using TltS by simp
+  have "min (iexit K f) (ennreal T) = ennreal T"
+    using gt by (simp add: min_absorb2 order_less_imp_le)
+  then show ?thesis using pT by simp
 qed
 
 (*<*)

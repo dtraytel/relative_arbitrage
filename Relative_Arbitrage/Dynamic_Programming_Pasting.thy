@@ -4,6 +4,7 @@ theory Dynamic_Programming_Pasting
   imports Exit_Class_Optimizer "Continuous_Path_Spaces.Conditional_UI" "Disintegration.Disintegration"
     "Continuous_Time_Martingales.Natural_Filtration"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -266,14 +267,6 @@ subsection \<open>Small transfer lemmas for the exit time\<close>
 text \<open>The capped exit time reads the path only on \<open>{0..U}\<close>, so cutting and
   shifting are transparent to it.\<close>
 
-lemma pexit_cong_on:
-  assumes "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> U \<Longrightarrow> f t = g t"
-  shows "pexit U K f = pexit U K g"
-proof -
-  have "{t. 0 \<le> t \<and> t \<le> U \<and> f t \<in> - K} = {t. 0 \<le> t \<and> t \<le> U \<and> g t \<in> - K}"
-    using assms by auto
-  then show ?thesis unfolding pexit_def etime_def by simp
-qed
 
 lemma pexit_pcut:
   fixes \<omega> :: "'n::finite pairpath"
@@ -687,41 +680,6 @@ text \<open>Off the survival event the horizon cap at \<open>r\<close> is invisi
   \<open>pexit r K f < r\<close>, since a path may exit exactly at \<open>r\<close>, a case
   @{thm [source] pexit_stable_above_T} does not cover.\<close>
 
-lemma pexit_cap_eq:
-  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and ex: "\<not> (pexit r K f = r \<and> f r \<in> K)"
-  shows "pexit T K f = pexit r K f"
-proof (cases "pexit r K f < r")
-  case True
-  then show ?thesis by (rule pexit_stable_above_T[OF r rT])
-next
-  case False
-  then have eqr: "pexit r K f = r" using pexit_le_T[OF r, of K f] by simp
-  with ex have nk: "f r \<in> - K" by simp
-  show ?thesis
-  proof (rule antisym)
-    have "pexit T K f \<le> r"
-      unfolding pexit_def using r rT nk by (intro etime_le_of_mem) auto
-    then show "pexit T K f \<le> pexit r K f" using eqr by simp
-    show "pexit r K f \<le> pexit T K f" by (rule pexit_mono_T[OF r rT])
-  qed
-qed
-
-text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a single statement about
-  conditioning, and no other property of the class is needed:
-
-  \<open>\begin{quote}\<close>
-  if the exit time of \<open>P \<in> \<P>\<^sub>x\<close> is almost surely at least \<open>c\<close>, then almost
-  surely on the survival event \<open>{r \<le> \<tau>\<^sub>K}\<close> the value at the position reached
-  is at least the time still to run, \<open>c - r\<close>.
-  \<open>\end{quote}\<close>
-
-  That is exactly the statement that the conditional law of the future given
-  \<open>\<F>\<^sub>r\<close> is, almost surely, a member of the class started at \<open>X\<^sub>r\<close>, so that its
-  own essential infimum is bounded by \<open>v(X\<^sub>r)\<close>; it is a regular conditional
-  distribution argument.  Off the survival event it is unconditional, by
-  @{thm [source] pexit_cap_eq}.\<close>
 
 theorem exit_val_dpp_le_of_cond:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"

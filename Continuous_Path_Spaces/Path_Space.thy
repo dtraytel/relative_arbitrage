@@ -1097,6 +1097,182 @@ proof (rule metrizable_weak_conv_topology)
     unfolding mtopology_of_def by (rule path_metric_polish(2))
 qed
 
+
+subsection \<open>The path space is Polish, and restriction is measurable\<close>
+
+lemma mspace_path_restrict_self:
+  fixes \<omega> :: "real \<Rightarrow> 'b::polish_space"
+  assumes w: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+  shows "restrict \<omega> {0..T} = \<omega>"
+proof -
+  \<comment> \<open>unfolding \<open>path_metric_def\<close> INSIDE a simp call does not terminate here;
+      the extensionality has to be extracted by hand.\<close>
+  have "\<omega> \<in> mspace (cfunspace (top_of_set {0..T}) (euclidean_metric :: 'b metric))"
+    using w unfolding path_metric_def .
+  then have "\<omega> \<in> extensional (topspace (top_of_set ({0..T} :: real set)))"
+    unfolding mspace_cfunspace by blast
+  then have e: "\<omega> \<in> extensional {0..T}" by simp
+  show ?thesis
+  proof (rule ext)
+    fix t :: real
+    show "restrict \<omega> {0..T} t = \<omega> t"
+    proof (cases "t \<in> {0..T}")
+      case True then show ?thesis by simp
+    next
+      case False
+      then have "\<omega> t = undefined" using extensional_arb[OF e] by simp
+      with False show ?thesis by simp
+    qed
+  qed
+qed
+
+lemma open_stay_inside:
+  fixes T t :: real and A :: "'b::{polish_space, heine_borel} set"
+  assumes T0: "0 \<le> T" and A: "open A" and t0: "0 \<le> t" and tT: "t \<le> T"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+        \<forall>s\<in>{0..t}. f s \<in> A}"
+proof -
+  interpret PM: Metric_space
+      "mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+      "mdist (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    by (rule Metric_space_mspace_mdist)
+  have topeq: "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)
+      = PM.mtopology"
+    by (simp add: mtopology_of_def)
+  let ?S = "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+      \<forall>s\<in>{0..t}. f s \<in> A}"
+  have ball: "\<exists>e>0. PM.mball f e \<subseteq> ?S" if f: "f \<in> ?S" for f
+  proof -
+    have fm: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+      using f by auto
+    have fc: "continuous_on {0..T} f"
+      by (rule mspace_path_metricD[OF fm])
+    have fc': "continuous_on {0..t} f"
+      using fc by (rule continuous_on_subset) (use t0 tT in auto)
+    have cK: "compact (f ` {0..t})"
+      by (intro compact_continuous_image fc' compact_Icc)
+    have KA: "f ` {0..t} \<subseteq> A" using f by auto
+    have dis: "f ` {0..t} \<inter> (- A) = {}" using KA by auto
+    have clA: "closed (- A)" using A by (simp add: closed_Compl)
+    obtain e where e0: "0 < e"
+      and esep: "\<forall>y\<in>f ` {0..t}. \<forall>z\<in>- A. e \<le> dist y z"
+      using separate_compact_closed[OF cK clA dis] by blast
+    have sub: "PM.mball f e \<subseteq> ?S"
+    proof
+      fix g assume g: "g \<in> PM.mball f e"
+      have gm: "g \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+        and dfg: "mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g < e"
+        using g by auto
+      have all: "\<forall>u\<in>{0..T}. dist (f u) (g u)
+          \<le> mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"
+        using path_mdist_le_iff_all[OF T0 fm gm,
+            of "mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"]
+        by simp
+      have inA: "g s \<in> A" if s: "s \<in> {0..t}" for s
+      proof (rule ccontr)
+        assume "g s \<notin> A"
+        then have "g s \<in> - A" by simp
+        then have "e \<le> dist (f s) (g s)"
+          using esep s by blast
+        moreover have "dist (f s) (g s)
+            \<le> mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"
+          using all s t0 tT by auto
+        ultimately show False using dfg by linarith
+      qed
+      show "g \<in> ?S" using gm inA by auto
+    qed
+    show ?thesis using e0 sub by blast
+  qed
+  have "openin PM.mtopology ?S"
+    unfolding PM.openin_mtopology
+  proof (intro conjI allI impI)
+    show "?S \<subseteq> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" by auto
+    fix f assume "f \<in> ?S"
+    then show "\<exists>e>0. PM.mball f e \<subseteq> ?S" by (rule ball)
+  qed
+  then show ?thesis by (simp add: topeq)
+qed
+
+text \<open>The transfer principle.  Sequential compactness of the class
+  extracts a convergent subsequence; membership clause (2) of
+  \<open>exit_class_compact_metric_space\<close> identifies the
+  limit as weak convergence, and the AFP portmanteau
+  (\<open>mweak_conv_fin.mweak_conv_eq2\<close>,
+  \<open>mweak_conv_fin.mweak_conv_eq3\<close>) turns it into the
+  open/closed set bounds.  Convergence along the full sequence pins the
+  Liminf and Limsup along any subsequence, so the subsequence never
+  appears in the statement.\<close>
+
+text \<open>
+  Larsson--Ruf get joint upper semicontinuity of
+  \<open>f(x,P) = ((x + \<cdot>)\<^sub>*P)\<hyphen>essinf \<tau>\<^sub>K\<close> from continuity of
+  \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; Berge's \<open>box\<close> hypothesis needs only that
+  \<open>f(x,P) < d\<close> persists on a product neighbourhood, which is cheaper.
+
+  The obstruction is uniformity: \<open>f(x,P) < d\<close> means
+  \<open>{\<omega> : \<tau>\<^sub>K(x + \<omega>) < d}\<close> has positive mass, and each witnessing \<open>\<omega>\<close>
+  (via \<open>etime_less_iff\<close>) has its own room to move \<open>x\<close> --- worthless
+  pointwise against a measure. The erosion operator \<open>eroded \<delta> A\<close> fixes
+  this: open, exhausting \<open>A\<close>, with a margin \<open>\<delta>\<close> uniform over all points;
+  \<open>positive_mass_at_some_erosion\<close> says some level retains positive mass.
+\<close>
+
+lemma open_shifted_eval_preimage:
+  fixes T r :: real
+    and U :: "'b::{polish_space,real_normed_vector} set" and x :: 'b
+  assumes rT: "r \<in> {0..T}" and U: "open U"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> U}"
+proof -
+  have eq: "{z. x + z \<in> U} = (\<lambda>w. (- x) + w) ` U"
+  proof
+    show "{z. x + z \<in> U} \<subseteq> (\<lambda>w. (- x) + w) ` U"
+    proof
+      fix z assume "z \<in> {z. x + z \<in> U}"
+      hence mem: "x + z \<in> U" by simp
+      have "z = (- x) + (x + z)" by simp
+      with mem show "z \<in> (\<lambda>w. (- x) + w) ` U" by blast
+    qed
+  next
+    show "(\<lambda>w. (- x) + w) ` U \<subseteq> {z. x + z \<in> U}" by auto
+  qed
+  have op: "open {z. x + z \<in> U}"
+    unfolding eq by (rule open_translation[OF U])
+  have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> U}
+      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> {z. x + z \<in> U}}"
+    by simp
+  thus ?thesis using open_eval_preimage[OF rT op] by simp
+qed
+
+text \<open>The margin itself: no property of \<open>\<omega>\<close> beyond the single evaluation
+  \<open>\<omega>(r)\<close> is used, and \<open>\<delta>\<close> does not depend on \<open>\<omega>\<close>.\<close>
+
+
+
+lemma Polish_space_path_metric:
+  "Polish_space (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
+  unfolding mtopology_of_def
+  by (rule Metric_space.Polish_space_mtopology
+      [OF Metric_space_mspace_mdist path_metric_polish(1) path_metric_polish(2)])
+
+section \<open>Kernel pasting: the semidirect product\<close>
+
+text \<open>\<open>exit_class_kglue_law\<close> glues with a countably
+  valued index, which \<open>Metric_space.usc_measurable_selection\<close>
+  cannot supply.  The replacement is the Giry monad's semidirect product:
+  run \<open>Q\<close>, then continue with the law the kernel picks at the endpoint
+  reached.  \<open>ksemi\<close> and its API live in
+  \<open>Semidirect_Kernels\<close>.\<close>
+
+subsection \<open>The glued law, and the two almost-sure clauses of (1.7)\<close>
+
+lemma second_countable_path_metric:
+  "second_countable (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
+  unfolding mtopology_of_def
+  by (rule Metric_space.separable_space_imp_second_countable
+      [OF Metric_space_mspace_mdist path_metric_polish(2)])
+
 (*<*)
 end
 (*>*)

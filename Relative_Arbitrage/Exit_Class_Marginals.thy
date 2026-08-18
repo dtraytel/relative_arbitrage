@@ -5,6 +5,7 @@ theory Exit_Class_Marginals
   imports Exit_Class_Infinite "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 (*>*)
 
@@ -1651,95 +1652,11 @@ text \<open>
   value function (1.6).
 \<close>
 
-lemma pexit_cong_nonneg:
-  assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> f s = g s" and T: "0 \<le> T"
-  shows "pexit T K f = pexit T K g"
-proof -
-  have "{r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K} = {r. 0 \<le> r \<and> r \<le> T \<and> g r \<in> - K}"
-    using eq by auto
-  then show ?thesis unfolding pexit_def etime_def by simp
-qed
 
-lemma iexit_cong_nonneg:
-  assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> f s = g s"
-  shows "iexit K f = iexit K g"
-  unfolding iexit_def by (intro SUP_cong refl) (use pexit_cong_nonneg[OF eq] in auto)
 
-lemma pexit_restrict [simp]: "pexit T K (restrict f {0..T}) = pexit T K f"
-proof -
-  have "{r. 0 \<le> r \<and> r \<le> T \<and> restrict f {0..T} r \<in> - K}
-      = {r. 0 \<le> r \<and> r \<le> T \<and> f r \<in> - K}" by auto
-  then show ?thesis unfolding pexit_def etime_def by simp
-qed
 
-lemma iexit_nat_sup: "iexit K f = (SUP n :: nat. ennreal (pexit (real n) K f))"
-proof (rule antisym)
-  show "iexit K f \<le> (SUP n :: nat. ennreal (pexit (real n) K f))"
-    unfolding iexit_def
-  proof (rule SUP_least)
-    fix T :: real assume "T \<in> {0..}"
-    then have T: "0 \<le> T" by simp
-    obtain n :: nat where n: "T < real n" using reals_Archimedean2 by blast
-    have "pexit T K f \<le> pexit (real n) K f"
-      by (rule pexit_mono_T[OF T]) (use n in simp)
-    then have "ennreal (pexit T K f) \<le> ennreal (pexit (real n) K f)"
-      by (rule ennreal_leI)
-    also have "\<dots> \<le> (SUP n :: nat. ennreal (pexit (real n) K f))"
-      by (rule SUP_upper) simp
-    finally show "ennreal (pexit T K f) \<le> (SUP n :: nat. ennreal (pexit (real n) K f))" .
-  qed
-  show "(SUP n :: nat. ennreal (pexit (real n) K f)) \<le> iexit K f"
-    by (rule SUP_least) (auto intro: pexit_le_iexit)
-qed
 
-lemma iexit_measurable_gen:
-  fixes K :: "('b::polish_space) set" and N :: "'a measure"
-  assumes K: "closed K"
-    and Ym: "\<And>t. 0 \<le> t \<Longrightarrow> Y t \<in> borel_measurable N"
-    and cont: "\<And>\<omega>. \<omega> \<in> space N \<Longrightarrow> continuous_on {0..} (\<lambda>t. Y t \<omega>)"
-  shows "(\<lambda>\<omega>. iexit K (\<lambda>t. Y t \<omega>)) \<in> borel_measurable N"
-proof -
-  have step: "(\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. Y t \<omega>))) \<in> borel_measurable N"
-    if T: "0 \<le> T" for T
-  proof -
-    have p: "(\<lambda>\<omega>. restrict (\<lambda>t. Y t \<omega>) {0..T})
-        \<in> N \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
-    proof (rule pathify_measurable[OF T])
-      fix t assume "t \<in> {0..T}"
-      then show "Y t \<in> borel_measurable N" by (intro Ym) simp
-    next
-      fix \<omega> assume "\<omega> \<in> space N"
-      from cont[OF this] show "continuous_on {0..T} (\<lambda>t. Y t \<omega>)"
-        by (rule continuous_on_subset) auto
-    qed
-    have "(\<lambda>\<omega>. pexit T K (restrict (\<lambda>t. Y t \<omega>) {0..T})) \<in> borel_measurable N"
-      by (rule measurable_compose[OF p pexit_measurable[OF T K]])
-    then show ?thesis by simp
-  qed
-  have "(\<lambda>\<omega>. SUP n :: nat. ennreal (pexit (real n) K (\<lambda>t. Y t \<omega>)))
-      \<in> borel_measurable N"
-    by (intro borel_measurable_SUP[where I = UNIV]) (use step in auto)
-  then show ?thesis by (simp add: iexit_nat_sup)
-qed
 
-lemma iexit_measurable_ipath:
-  fixes K :: "('b::polish_space) set"
-  assumes K: "closed K"
-  shows "iexit K \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
-proof -
-  have "(\<lambda>w :: real \<Rightarrow> 'b. iexit K (\<lambda>t. w t))
-      \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
-  proof (rule iexit_measurable_gen[OF K])
-    show "\<And>t. 0 \<le> t \<Longrightarrow> (\<lambda>w :: real \<Rightarrow> 'b. w t)
-        \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> 'b) measure))"
-      by (rule ipath_eval_measurable)
-  next
-    fix w :: "real \<Rightarrow> 'b" assume "w \<in> space (ipath_space :: ((real \<Rightarrow> 'b) measure))"
-    then show "continuous_on {0..} (\<lambda>t. w t)"
-      by (intro ipath_continuous_on) auto
-  qed
-  then show ?thesis by simp
-qed
 
 lemma iexit_fst_measurable_ipath:
   fixes K :: "(real^'n::finite) set"

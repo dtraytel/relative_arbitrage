@@ -6,6 +6,7 @@ theory Exit_Class_Shift
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -33,31 +34,6 @@ lemma pshift_snd: "t \<in> {0..T} \<Longrightarrow> snd (pshift T x \<omega> t) 
 lemma pshift_outside: "t \<notin> {0..T} \<Longrightarrow> pshift T x \<omega> t = undefined"
   by (auto simp: pshift_def)
 
-lemma mspace_path_restrict_self:
-  fixes \<omega> :: "real \<Rightarrow> 'b::polish_space"
-  assumes w: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-  shows "restrict \<omega> {0..T} = \<omega>"
-proof -
-  \<comment> \<open>unfolding \<open>path_metric_def\<close> INSIDE a simp call does not terminate here;
-      the extensionality has to be extracted by hand.\<close>
-  have "\<omega> \<in> mspace (cfunspace (top_of_set {0..T}) (euclidean_metric :: 'b metric))"
-    using w unfolding path_metric_def .
-  then have "\<omega> \<in> extensional (topspace (top_of_set ({0..T} :: real set)))"
-    unfolding mspace_cfunspace by blast
-  then have e: "\<omega> \<in> extensional {0..T}" by simp
-  show ?thesis
-  proof (rule ext)
-    fix t :: real
-    show "restrict \<omega> {0..T} t = \<omega> t"
-    proof (cases "t \<in> {0..T}")
-      case True then show ?thesis by simp
-    next
-      case False
-      then have "\<omega> t = undefined" using extensional_arb[OF e] by simp
-      with False show ?thesis by simp
-    qed
-  qed
-qed
 
 lemma pshift_in_mspace:
   fixes \<omega> :: "'n::finite pairpath"

@@ -4,6 +4,7 @@ section \<open>The class and the value function on the half-line\<close>
 theory Exit_Class_Infinite
   imports Dynamic_Programming_Assembly "Continuous_Path_Spaces.Path_Space_Infinite"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 (*>*)
 
@@ -15,81 +16,8 @@ text \<open>Eq. (1.6)--(1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> withou
 
 subsection \<open>The uncapped exit time\<close>
 
-text \<open>The exit time from \<open>K\<close> is the increasing limit of the capped exit times.
-  It takes the value \<open>\<top>\<close> exactly on the paths that never leave \<open>K\<close>.\<close>
 
-definition iexit :: "'b::polish_space set \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> ennreal" where
-  "iexit K f = (SUP T \<in> {0..}. ennreal (pexit T K f))"
 
-lemma pexit_le_iexit:
-  assumes T: "0 \<le> T"
-  shows "ennreal (pexit T K f) \<le> iexit K f"
-  unfolding iexit_def using T by (intro SUP_upper) simp
-
-text \<open>Capping the uncapped exit time returns the capped one.  This is the
-  pathwise form of the statement that the horizon is a device: everything the
-  capped development says about \<open>pexit T\<close> is a statement about \<open>iexit\<close> below
-  the level \<open>T\<close>.\<close>
-
-theorem iexit_cap:
-  assumes T: "0 \<le> T"
-  shows "min (iexit K f) (ennreal T) = ennreal (pexit T K f)"
-proof (cases "iexit K f \<le> ennreal T")
-  case True
-  have eq: "pexit S K f = pexit T K f" if S: "T \<le> S" for S
-  proof -
-    have S0: "0 \<le> S" using T S by simp
-    have "ennreal (pexit S K f) \<le> ennreal T"
-      using True pexit_le_iexit[OF S0, of K f] by simp
-    then have "pexit S K f \<le> T" using T by simp
-    moreover have "pexit T K f = min (pexit S K f) T"
-      by (rule pexit_min_horizon[OF T S])
-    ultimately show ?thesis by simp
-  qed
-  have "iexit K f = ennreal (pexit T K f)"
-    unfolding iexit_def
-  proof (rule antisym)
-    show "(SUP S\<in>{0..}. ennreal (pexit S K f)) \<le> ennreal (pexit T K f)"
-    proof (rule SUP_least)
-      fix S :: real assume "S \<in> {0..}"
-      then have S0: "0 \<le> S" by simp
-      show "ennreal (pexit S K f) \<le> ennreal (pexit T K f)"
-      proof (cases "T \<le> S")
-        case True
-        then have "pexit S K f = pexit T K f" by (rule eq)
-        then show ?thesis by simp
-      next
-        case False
-        then have "pexit S K f = min (pexit T K f) S"
-          by (intro pexit_min_horizon[OF S0]) simp
-        then show ?thesis by (simp add: ennreal_leI)
-      qed
-    qed
-    show "ennreal (pexit T K f) \<le> (SUP S\<in>{0..}. ennreal (pexit S K f))"
-      using T by (intro SUP_upper) simp
-  qed
-  with True show ?thesis by simp
-next
-  case False
-  then have gt: "ennreal T < iexit K f" by simp
-  obtain S where S0: "0 \<le> S" and Sgt: "ennreal T < ennreal (pexit S K f)"
-    using gt unfolding iexit_def by (auto simp: less_SUP_iff)
-  have pS: "0 \<le> pexit S K f" by (rule pexit_nonneg[OF S0])
-  have TltS: "T < pexit S K f"
-    using Sgt pS T by (simp add: ennreal_less_iff)
-  have TS: "T \<le> S" using TltS pexit_le_T[OF S0, of K f] by simp
-  have "pexit T K f = min (pexit S K f) T"
-    by (rule pexit_min_horizon[OF T TS])
-  then have pT: "pexit T K f = T" using TltS by simp
-  have "min (iexit K f) (ennreal T) = ennreal T"
-    using gt by (simp add: min_absorb2 order_less_imp_le)
-  then show ?thesis using pT by simp
-qed
-
-text \<open>Hence the elementary bound identifying \<open>iexit\<close> as the first time the
-  path is outside \<open>K\<close>.\<close>
-
-subsection \<open>The essential infimum of an unbounded time\<close>
 
 
 

@@ -9,16 +9,6 @@ begin
 
 (*>*)
 
-text \<open>
-  The adapter between the stochastic layer (@{theory Continuous_Path_Spaces.Stopped_Localization}) and the
-  topological layer (@{theory Continuous_Path_Spaces.Path_Tightness}): the moment hypotheses of
-  \<open>path_laws_convergent_subsequence_vec\<close> are discharged per coordinate by
-  \<open>fourth_moment_L2_integrable\<close> / \<open>fourth_moment_L2_bochner\<close>, so the
-  subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
-  per coordinate, an \<open>L\<^sup>2\<close> martingale with a compensated square whose adapted
-  compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's
-  admissibility conditions Eqs. (1.7)-(1.8).
-\<close>
 corollary path_laws_convergent_subsequence_market:
   fixes MM :: "nat \<Rightarrow> 'a measure" and FF :: "nat \<Rightarrow> real \<Rightarrow> 'a measure"
     and XX :: "nat \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real^'m::finite"
@@ -92,14 +82,18 @@ text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the marke
   and confined to a ball, the path laws admit a weakly convergent
   subsequence.  The almost-sure hypotheses of the locale become the pointwise
   hypotheses of the adapter above by restricting each market to a
-  full-measure good event (the transfer package of @{theory Continuous_Path_Spaces.Stopped_Localization});
+  full-measure good event (the transfer package of \<open>Stopped_Localization\<close>);
   the restriction is invisible to the path laws.  The per-coordinate
   compensator is the entrywise integral of \<open>acov\<close>, whose rate bound \<open>L\<close> comes
   from the eigenvalue constraint through the diagonal entries.\<close>
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>
 
-text \<open>\<open>diag_entry_quadform\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>diag_entry_quadform\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
+
+(*<*)
+(*<*)
+
 
 
 lemma psd_diag_nonneg:
@@ -442,6 +436,6 @@ proof -
     using aN1 aN2 aN3 aN4 by blast
 qed
 
-(*<*)
+
 end
 (*>*)

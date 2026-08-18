@@ -2921,6 +2921,18 @@ theorem weak_conv_integral_of_L2_bound:
     (rule unif_integrable_of_L2_bound
       [OF C iTi iTN sqi sqN sqiI sqNI])
 
-(*<*)
+
+subsection \<open>A convergent subsequence of path laws, in the vector case\<close>
+
+text \<open>
+  The adapter between the stochastic layer (\<open>Stopped_Localization\<close>) and the
+  topological layer (\<open>Path_Tightness\<close>): the moment hypotheses of
+  \<open>path_laws_convergent_subsequence_vec\<close> are discharged per coordinate by
+  \<open>fourth_moment_L2_integrable\<close> / \<open>fourth_moment_L2_bochner\<close>, so the
+  subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
+  per coordinate, an \<open>L\<^sup>2\<close> martingale with a compensated square whose adapted
+  compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's
+  admissibility conditions Eqs. (1.7)-(1.8).
+\<close>
 end
 (*>*)

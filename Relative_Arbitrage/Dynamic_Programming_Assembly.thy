@@ -5,6 +5,7 @@ theory Dynamic_Programming_Assembly
   imports Dynamic_Programming_Delayed_Class
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)

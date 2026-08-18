@@ -7,6 +7,7 @@ theory Value_Function_Euler_Construction
     "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -2765,83 +2766,6 @@ text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the co
   closer than that distance stays inside as well
   (@{thm [source] path_mdist_le_iff_all}).\<close>
 
-lemma open_stay_inside:
-  fixes T t :: real and A :: "'b::{polish_space, heine_borel} set"
-  assumes T0: "0 \<le> T" and A: "open A" and t0: "0 \<le> t" and tT: "t \<le> T"
-  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-        \<forall>s\<in>{0..t}. f s \<in> A}"
-proof -
-  interpret PM: Metric_space
-      "mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-      "mdist (path_metric T :: (real \<Rightarrow> 'b) metric)"
-    by (rule Metric_space_mspace_mdist)
-  have topeq: "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)
-      = PM.mtopology"
-    by (simp add: mtopology_of_def)
-  let ?S = "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-      \<forall>s\<in>{0..t}. f s \<in> A}"
-  have ball: "\<exists>e>0. PM.mball f e \<subseteq> ?S" if f: "f \<in> ?S" for f
-  proof -
-    have fm: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-      using f by auto
-    have fc: "continuous_on {0..T} f"
-      by (rule mspace_path_metricD[OF fm])
-    have fc': "continuous_on {0..t} f"
-      using fc by (rule continuous_on_subset) (use t0 tT in auto)
-    have cK: "compact (f ` {0..t})"
-      by (intro compact_continuous_image fc' compact_Icc)
-    have KA: "f ` {0..t} \<subseteq> A" using f by auto
-    have dis: "f ` {0..t} \<inter> (- A) = {}" using KA by auto
-    have clA: "closed (- A)" using A by (simp add: closed_Compl)
-    obtain e where e0: "0 < e"
-      and esep: "\<forall>y\<in>f ` {0..t}. \<forall>z\<in>- A. e \<le> dist y z"
-      using separate_compact_closed[OF cK clA dis] by blast
-    have sub: "PM.mball f e \<subseteq> ?S"
-    proof
-      fix g assume g: "g \<in> PM.mball f e"
-      have gm: "g \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-        and dfg: "mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g < e"
-        using g by auto
-      have all: "\<forall>u\<in>{0..T}. dist (f u) (g u)
-          \<le> mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"
-        using path_mdist_le_iff_all[OF T0 fm gm,
-            of "mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"]
-        by simp
-      have inA: "g s \<in> A" if s: "s \<in> {0..t}" for s
-      proof (rule ccontr)
-        assume "g s \<notin> A"
-        then have "g s \<in> - A" by simp
-        then have "e \<le> dist (f s) (g s)"
-          using esep s by blast
-        moreover have "dist (f s) (g s)
-            \<le> mdist (path_metric T :: (real \<Rightarrow> 'b) metric) f g"
-          using all s t0 tT by auto
-        ultimately show False using dfg by linarith
-      qed
-      show "g \<in> ?S" using gm inA by auto
-    qed
-    show ?thesis using e0 sub by blast
-  qed
-  have "openin PM.mtopology ?S"
-    unfolding PM.openin_mtopology
-  proof (intro conjI allI impI)
-    show "?S \<subseteq> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" by auto
-    fix f assume "f \<in> ?S"
-    then show "\<exists>e>0. PM.mball f e \<subseteq> ?S" by (rule ball)
-  qed
-  then show ?thesis by (simp add: topeq)
-qed
-
-text \<open>The transfer principle.  Sequential compactness of the class
-  extracts a convergent subsequence; membership clause (2) of
-  @{thm [source] exit_class_compact_metric_space} identifies the
-  limit as weak convergence, and the AFP portmanteau
-  (@{thm [source] mweak_conv_fin.mweak_conv_eq2},
-  @{thm [source] mweak_conv_fin.mweak_conv_eq3}) turns it into the
-  open/closed set bounds.  Convergence along the full sequence pins the
-  Liminf and Limsup along any subsequence, so the subsequence never
-  appears in the statement.\<close>
 
 theorem exit_class_weak_limit:
   fixes Pseq :: "nat \<Rightarrow> ('n::finite pairpath) measure" and x :: "real^'n"

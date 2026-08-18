@@ -6,6 +6,7 @@ theory Exit_Time_Semicontinuity
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -39,49 +40,6 @@ text \<open>
 
 subsection \<open>A shift margin uniform over the sample space\<close>
 
-text \<open>
-  Larsson--Ruf get joint upper semicontinuity of
-  \<open>f(x,P) = ((x + \<cdot>)\<^sub>*P)\<hyphen>essinf \<tau>\<^sub>K\<close> from continuity of
-  \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; Berge's \<open>box\<close> hypothesis needs only that
-  \<open>f(x,P) < d\<close> persists on a product neighbourhood, which is cheaper.
-
-  The obstruction is uniformity: \<open>f(x,P) < d\<close> means
-  \<open>{\<omega> : \<tau>\<^sub>K(x + \<omega>) < d}\<close> has positive mass, and each witnessing \<open>\<omega>\<close>
-  (via \<open>etime_less_iff\<close>) has its own room to move \<open>x\<close> --- worthless
-  pointwise against a measure. The erosion operator \<open>eroded \<delta> A\<close> fixes
-  this: open, exhausting \<open>A\<close>, with a margin \<open>\<delta>\<close> uniform over all points;
-  \<open>positive_mass_at_some_erosion\<close> says some level retains positive mass.
-\<close>
-
-lemma open_shifted_eval_preimage:
-  fixes T r :: real
-    and U :: "'b::{polish_space,real_normed_vector} set" and x :: 'b
-  assumes rT: "r \<in> {0..T}" and U: "open U"
-  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> U}"
-proof -
-  have eq: "{z. x + z \<in> U} = (\<lambda>w. (- x) + w) ` U"
-  proof
-    show "{z. x + z \<in> U} \<subseteq> (\<lambda>w. (- x) + w) ` U"
-    proof
-      fix z assume "z \<in> {z. x + z \<in> U}"
-      hence mem: "x + z \<in> U" by simp
-      have "z = (- x) + (x + z)" by simp
-      with mem show "z \<in> (\<lambda>w. (- x) + w) ` U" by blast
-    qed
-  next
-    show "(\<lambda>w. (- x) + w) ` U \<subseteq> {z. x + z \<in> U}" by auto
-  qed
-  have op: "open {z. x + z \<in> U}"
-    unfolding eq by (rule open_translation[OF U])
-  have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> U}
-      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> {z. x + z \<in> U}}"
-    by simp
-  thus ?thesis using open_eval_preimage[OF rT op] by simp
-qed
-
-text \<open>The margin itself: no property of \<open>\<omega>\<close> beyond the single evaluation
-  \<open>\<omega>(r)\<close> is used, and \<open>\<delta>\<close> does not depend on \<open>\<omega>\<close>.\<close>
 
 lemma etime_shift_le_of_eroded:
   fixes A :: "'b::{polish_space,real_normed_vector} set"
@@ -162,63 +120,6 @@ text \<open>The countable reduction, at the level of measures: \<open>etime_less
   mass --- needed before erosion, which requires a fixed time to erode
   around.\<close>
 
-lemma positive_mass_at_some_qtime:
-  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
-    and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
-  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
-    and sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
-    and pos: "emeasure P
-        {\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d} \<noteq> 0"
-  shows "\<exists>r \<in> qtimes T. r < d
-      \<and> emeasure P {\<omega> \<in> space P. x + \<omega> r \<in> A} \<noteq> 0"
-proof -
-  have spP: "space P = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-    using sets_eq_imp_space_eq[OF sP] by (simp add: space_borel_of)
-  define R where "R = {r \<in> qtimes T. r < d}"
-  have cR: "countable R" unfolding R_def using countable_qtimes by simp
-
-  text \<open>The pointwise reduction, applied path by path. Continuity of the shifted
-    path is what \<open>mspace_path_metricD\<close> supplies.\<close>
-  have ptw: "etime T A (\<lambda>s w. x + w s) \<omega> < d
-      \<longleftrightarrow> (\<exists>r \<in> R. x + \<omega> r \<in> A)"
-    if w: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" for \<omega>
-  proof -
-    have cont: "continuous_on {0..T} (\<lambda>s. x + \<omega> s)"
-      by (intro continuous_intros mspace_path_metricD[OF w])
-    text \<open>\<open>etime\<close> applies its process only to the one path \<open>\<omega>\<close>, so freezing
-      the path inside the process changes nothing mathematically, but the
-      reduction lemma is stated for a frozen process.\<close>
-    have eq: "etime T A (\<lambda>s w. x + w s) \<omega> = etime T A (\<lambda>s w'. x + \<omega> s) \<omega>"
-      unfolding etime_def by simp
-    show ?thesis
-      unfolding eq R_def
-      using etime_less_iff_qtimes_open[OF T A dT cont, of \<omega>] by auto
-  qed
-  have split: "{\<omega> \<in> space P. etime T A (\<lambda>s w. x + w s) \<omega> < d}
-      = (\<Union>r \<in> R. {\<omega> \<in> space P. x + \<omega> r \<in> A})"
-    using ptw unfolding spP by blast
-
-  text \<open>Measurability of each slice comes from openness of the shifted evaluation
-    preimage, exactly as in \<open>etime_shift_uniform_margin\<close>.\<close>
-  have meas: "{\<omega> \<in> space P. x + \<omega> r \<in> A} \<in> sets P" if r: "r \<in> R" for r
-  proof -
-    have "r \<in> qtimes T" using r unfolding R_def by simp
-    hence rT: "r \<in> {0..T}" using qtimes_subset[OF T] by blast
-    have "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-        {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). x + f r \<in> A}"
-      by (rule open_shifted_eval_preimage[OF rT A])
-    from borel_of_open[OF this] show ?thesis unfolding sP spP by simp
-  qed
-  have "emeasure P (\<Union>r \<in> R. {\<omega> \<in> space P. x + \<omega> r \<in> A}) \<noteq> 0"
-    using pos unfolding split .
-  from positive_of_countable_UN[OF cR meas this] show ?thesis
-    unfolding R_def by blast
-qed
-
-text \<open>Both halves of the \<open>x\<close>-perturbation in one statement: from
-  \<open>f(x,P) < d\<close> alone, with no continuity of the pushforward map, there is
-  an open set of paths of positive \<open>P\<close>-mass on which the exit time stays
-  below \<open>d\<close> for every starting point within \<open>\<delta>\<close> of \<open>x\<close>.\<close>
 
 theorem etime_shift_box_half:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
@@ -248,56 +149,6 @@ text \<open>The same decomposition, used for measurability rather than for extra
   the event \<open>{\<tau>\<^sub>K(y + \<cdot>) < d}\<close> is a countable union of open sets, hence open, hence
   Borel; the final monotonicity step below needs this set to be Borel.\<close>
 
-lemma open_etime_shift_less:
-  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set" and y :: 'b
-  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
-  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         etime T A (\<lambda>s w. y + w s) f < d}"
-proof -
-  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-        etime T A (\<lambda>s w. y + w s) f < d}
-      = (\<Union>r \<in> {r \<in> qtimes T. r < d}.
-           {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A})"
-  proof -
-    have "etime T A (\<lambda>s w. y + w s) f < d
-        \<longleftrightarrow> (\<exists>r \<in> {r \<in> qtimes T. r < d}. y + f r \<in> A)"
-      if w: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" for f
-    proof -
-      have cont: "continuous_on {0..T} (\<lambda>s. y + f s)"
-        by (intro continuous_intros mspace_path_metricD[OF w])
-      have e: "etime T A (\<lambda>s w. y + w s) f = etime T A (\<lambda>s w'. y + f s) f"
-        unfolding etime_def by simp
-      show ?thesis unfolding e
-        using etime_less_iff_qtimes_open[OF T A dT cont, of f] by auto
-    qed
-    thus ?thesis by blast
-  qed
-  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A}"
-    if r: "r \<in> {r \<in> qtimes T. r < d}" for r
-  proof -
-    have "r \<in> qtimes T" using r by simp
-    hence rT: "r \<in> {0..T}" using qtimes_subset[OF T] by blast
-    show ?thesis by (rule open_shifted_eval_preimage[OF rT A])
-  qed
-  show ?thesis unfolding eq by (rule openin_Union) (use op in blast)
-qed
-
-subsection \<open>Berge's box hypothesis for the shifted exit time\<close>
-
-text \<open>
-  Both perturbations at once, in the sequential form Levy--Prokhorov
-  metrisation makes equivalent to the topological one: \<open>f(x,P) < d\<close>
-  persists when the starting point moves to any \<open>y\<^sub>i \<rightarrow> x\<close> and the law
-  moves to any \<open>Q\<^sub>i \<rightarrow> P\<close> weakly.
-
-  Larsson--Ruf get this from continuity of \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; no
-  such theorem is used here. A single open set \<open>G\<close> does all the work --- the
-  erosion makes it survive moving \<open>x\<close>, its openness makes it survive
-  moving \<open>P\<close> --- and must be open rather than closed, since a closed eroded
-  set would give the wrong Portmanteau direction.
-\<close>
 
 theorem etime_shift_box:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
@@ -375,67 +226,8 @@ text \<open>
   essential infimum is never \<open>\<top>\<close>.
 \<close>
 
-definition vshift :: "real \<Rightarrow> 'b::{polish_space,real_normed_vector} set
-    \<Rightarrow> 'b \<Rightarrow> (real \<Rightarrow> 'b) measure \<Rightarrow> real" where
-  "vshift T A y Q = enn2real (ess_inf_time Q (etime T A (\<lambda>s w. y + w s)))"
 
-lemma vshift_le:
-  fixes A :: "'b::{polish_space,real_normed_vector} set"
-  assumes T: "0 \<le> T" and Q: "prob_space Q"
-  shows "vshift T A y Q \<le> T"
-proof -
-  have "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) \<le> ennreal T"
-    by (rule ess_inf_time_le_const[OF Q]) (rule etime_le_T[OF T])
-  from enn2real_mono[OF this] show ?thesis
-    unfolding vshift_def using T by simp
-qed
 
-text \<open>The bridge from the real-valued functional back to the positive-mass
-  statement. Both directions of the \<open>ennreal\<close> conversion need the ceiling:
-  without it \<open>enn2real\<close> could collapse \<open>\<top>\<close> to \<open>0\<close> and the strict inequality
-  would be an artefact.\<close>
-
-lemma vshift_less_iff_positive_mass:
-  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
-    and Q :: "(real \<Rightarrow> 'b) measure"
-  assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d" and d0: "0 \<le> d"
-    and sQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
-    and pQ: "prob_space Q"
-  shows "vshift T A y Q < d
-      \<longleftrightarrow> emeasure Q {\<omega> \<in> space Q. etime T A (\<lambda>s w. y + w s) \<omega> < d} \<noteq> 0"
-proof -
-  have spQ: "space Q = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-    using sets_eq_imp_space_eq[OF sQ] by (simp add: space_borel_of)
-  have setseq: "{\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d}
-      = {\<omega> \<in> space Q. etime T A (\<lambda>s w. y + w s) \<omega> < d}"
-    using etime_nonneg[OF T, of A "\<lambda>s w. y + w s"]
-    by (auto simp: ennreal_less_iff)
-  have meas: "{\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d}
-      \<in> sets Q"
-    unfolding setseq
-    using borel_of_open[OF open_etime_shift_less[OF T A dT]]
-    unfolding sQ spQ by simp
-  have le: "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) \<le> ennreal T"
-    by (rule ess_inf_time_le_const[OF pQ]) (rule etime_le_T[OF T])
-  have fin: "ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) < \<top>"
-    using le ennreal_less_top by (rule order_le_less_trans)
-  have "vshift T A y Q < d
-      \<longleftrightarrow> ennreal (vshift T A y Q) < ennreal d"
-    unfolding vshift_def by (simp add: ennreal_less_iff)
-  also have "\<dots> \<longleftrightarrow> ess_inf_time Q (etime T A (\<lambda>s w. y + w s)) < ennreal d"
-    unfolding vshift_def by (simp add: ennreal_enn2real[OF fin])
-  also have "\<dots> \<longleftrightarrow> emeasure Q
-      {\<omega> \<in> space Q. ennreal (etime T A (\<lambda>s w. y + w s) \<omega>) < ennreal d} \<noteq> 0"
-    by (rule ess_inf_time_less_iff[OF meas])
-  finally show ?thesis unfolding setseq .
-qed
-
-text \<open>
-  Granted Lemma 2.3, this gives clause (1) of Theorem 1.1: the supremum
-  of \<open>P \<mapsto> P\<hyphen>essinf \<tau>\<^sub>K(x + \<cdot>)\<close> over a weakly compact family of laws is
-  upper semicontinuous in the starting point \<open>x\<close>. Every other hypothesis
-  of Berge is discharged here; compactness of the family is Lemma 2.3.
-\<close>
 
 theorem vshift_sup_usc:
   fixes T c :: real and A :: "'b::{polish_space,real_normed_vector} set"
@@ -594,69 +386,6 @@ text \<open>
   across it, connecting the semicontinuity results above to \<open>\<P>\<^sub>x\<close>.
 \<close>
 
-lemma etime_shift_superlevel_closed:
-  fixes T :: real and c :: ennreal
-    and A :: "'b::{polish_space,real_normed_vector} set" and y :: 'b
-  assumes T: "0 \<le> T" and A: "open A"
-  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}"
-proof -
-  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
-  proof (cases "ennreal T < c")
-    text \<open>One split, on whether the threshold is beyond the cap, rather than the
-      two that \<open>ennreal_cases\<close> would give: above the cap every path qualifies,
-      and below it the threshold is automatically a real \<open>r\<close> with \<open>\<not> T < r\<close>,
-      which is exactly the hypothesis \<open>open_etime_shift_less\<close> wants.\<close>
-    case True
-    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
-        = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-    proof -
-      have "ennreal (etime T A (\<lambda>s w. y + w s) f) < c" for f
-      proof -
-        have "etime T A (\<lambda>s w. y + w s) f \<le> T" by (rule etime_le_T[OF T])
-        hence "ennreal (etime T A (\<lambda>s w. y + w s) f) \<le> ennreal T"
-          by (rule ennreal_leI)
-        thus ?thesis using True by (rule order_le_less_trans)
-      qed
-      thus ?thesis by blast
-    qed
-    then show ?thesis
-      using openin_topspace[of
-          "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)"]
-      by simp
-  next
-    case False
-    hence cT: "c \<le> ennreal T" by simp
-    then obtain r where r: "0 \<le> r" "c = ennreal r"
-      by (cases c rule: ennreal_cases) (auto simp: top_unique)
-    have rT: "\<not> T < r"
-    proof
-      assume "T < r"
-      hence "ennreal T < ennreal r" using T by (simp add: ennreal_less_iff)
-      thus False using False r(2) by simp
-    qed
-    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
-        = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-          etime T A (\<lambda>s w. y + w s) f < r}"
-      unfolding r(2)
-      using etime_nonneg[OF T, of A "\<lambda>s w. y + w s"]
-      by (auto simp: ennreal_less_iff)
-    then show ?thesis by (simp add: open_etime_shift_less[OF T A rT])
-  qed
-  have compl: "topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-        - {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-             c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}
-      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-           ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
-    by (auto simp: not_le)
-  show ?thesis
-    unfolding closedin_def using op unfolding compl by auto
-qed
 
 
 lemma etime_shift_of_restrict:
@@ -1594,43 +1323,7 @@ text \<open>Every closure point is supported on paths starting at \<open>x0\<clo
   closed-set Portmanteau (\<open>weak_conv_closed_full_measure\<close>) pushes full
   mass to every weak limit.\<close>
 
-definition confined_paths ::
-  "real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> (real \<Rightarrow> real^'m) set"
-  where
-  "confined_paths T K x0 =
-     {f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
-        f 0 = x0 \<and> (\<forall>t\<in>{0..T}. f t \<in> K)}"
 
-lemma closedin_confined_paths:
-  fixes K :: "(real^'m::finite) set"
-  assumes T: "0 \<le> T" and K: "closed K"
-  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      (confined_paths T K x0)"
-proof -
-  let ?X = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-  interpret PM: Metric_space
-      "mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-      "mdist (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-    by (rule Metric_space_mspace_mdist)
-  have ts: "topspace ?X
-      = mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-    unfolding mtopology_of_def by (rule PM.topspace_mtopology)
-  have c0: "closedin ?X {f \<in> topspace ?X. f 0 \<in> {x0}}"
-    by (rule closedin_continuous_map_preimage[OF continuous_map_path_eval])
-      (use T in \<open>auto\<close>)
-  have ct: "closedin ?X {f \<in> topspace ?X. f t \<in> K}"
-    if t: "t \<in> {0..T}" for t
-    by (rule closedin_continuous_map_preimage[OF
-          continuous_map_path_eval[OF t]])
-      (simp add: K)
-  have eq: "confined_paths T K x0
-      = {f \<in> topspace ?X. f 0 \<in> {x0}}
-        \<inter> (\<Inter>t\<in>{0..T}. {f \<in> topspace ?X. f t \<in> K})"
-    using T unfolding confined_paths_def ts by auto
-  show ?thesis
-    unfolding eq
-    by (intro closedin_Int c0 closedin_INT ct) (use T in auto)
-qed
 
 lemma mkt_path_laws_confined:
   fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
@@ -1786,26 +1479,9 @@ text \<open>Members of \<open>mkt_path_laws\<close> satisfy the integrated marti
   path space, invisibly so on stopped and confined members; the identity
   passes to the closure by the integral clause of weak convergence.\<close>
 
-definition rclamp :: "real \<Rightarrow> real \<Rightarrow> real"
-  where "rclamp c y = max (- c) (min c y)"
 
-lemma rclamp_bound: "0 \<le> c \<Longrightarrow> \<bar>rclamp c y\<bar> \<le> c"
-  by (simp add: rclamp_def abs_le_iff min_def max_def)
 
-lemma rclamp_id:
-  assumes "\<bar>y\<bar> \<le> c"
-  shows "rclamp c y = y"
-proof -
-  have "min c y = y"
-    using assms by (intro min_absorb2) (simp add: abs_le_iff)
-  moreover have "max (- c) y = y"
-    using assms by (intro max_absorb2) (simp add: abs_le_iff)
-  ultimately show ?thesis by (simp add: rclamp_def)
-qed
 
-lemma rclamp_cont: "continuous_map euclideanreal euclideanreal (rclamp c)"
-  unfolding continuous_map_iff_continuous2 rclamp_def
-  by (intro continuous_intros)
 
 lemma mkt_law_witness_bound:
   fixes Q :: "(real \<Rightarrow> real^'m::finite) measure" and r :: real
@@ -1835,45 +1511,6 @@ qed
 text \<open>\<open>martingale_bounded_test\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-lemma martingale_test_functional_cont:
-  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
-  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
-    and hc: "continuous_map (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal
-      (\<lambda>f. rclamp c (f t $ i - f s $ i) * h (restrict f {0..s}))"
-proof -
-  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
-    by (intro continuous_map_diff continuous_map_path_eval tI sI)
-  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
-      euclideanreal (\<lambda>v. v $ i)"
-    unfolding continuous_map_iff_continuous2
-    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have part1': "continuous_map ?PT euclideanreal
-      ((rclamp c \<circ> (\<lambda>v. v $ i)) \<circ> (\<lambda>f. f t - f s))"
-    by (intro continuous_map_compose[OF evdiff]
-        continuous_map_compose[OF cmp_i] rclamp_cont)
-  have part1: "continuous_map ?PT euclideanreal
-      (\<lambda>f. rclamp c (f t $ i - f s $ i))"
-    using part1' by (simp add: o_def)
-  have rc: "continuous_map ?PT
-      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
-      (\<lambda>f. restrict f {0..s})"
-    by (rule Lipschitz_continuous_imp_continuous_map
-        [OF Lipschitz_restrict_path_metric[OF st sT]])
-  have part2': "continuous_map ?PT euclideanreal
-      (h \<circ> (\<lambda>f. restrict f {0..s}))"
-    by (rule continuous_map_compose[OF rc hc])
-  have part2: "continuous_map ?PT euclideanreal
-      (\<lambda>f. h (restrict f {0..s}))"
-    using part2' by (simp add: o_def)
-  show ?thesis
-    by (rule continuous_map_real_mult[OF part1 part2])
-qed
 
 lemma mkt_path_laws_martingale_test:
   fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"
@@ -2404,63 +2041,7 @@ proof -
   finally show ?thesis .
 qed
 
-lemma past_test_functional_cont:
-  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real"
-  assumes st: "0 \<le> s" and sT: "s \<le> T"
-    and hc: "continuous_map (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal (\<lambda>f. h (restrict f {0..s}))"
-proof -
-  have rc: "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
-      (\<lambda>f. restrict f {0..s})"
-    by (rule Lipschitz_continuous_imp_continuous_map
-        [OF Lipschitz_restrict_path_metric[OF st sT]])
-  have "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal (h \<circ> (\<lambda>f. restrict f {0..s}))"
-    by (rule continuous_map_compose[OF rc hc])
-  then show ?thesis by (simp add: o_def)
-qed
 
-lemma covariation_test_functional_cont:
-  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
-  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
-    and hc: "continuous_map (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal
-      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2 * h (restrict f {0..s}))"
-proof -
-  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
-    by (intro continuous_map_diff continuous_map_path_eval tI sI)
-  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
-      euclideanreal (\<lambda>v. v $ i)"
-    unfolding continuous_map_iff_continuous2
-    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have part1': "continuous_map ?PT euclideanreal
-      ((rclamp c \<circ> (\<lambda>v. v $ i)) \<circ> (\<lambda>f. f t - f s))"
-    by (intro continuous_map_compose[OF evdiff]
-        continuous_map_compose[OF cmp_i] rclamp_cont)
-  have part1: "continuous_map ?PT euclideanreal
-      (\<lambda>f. rclamp c (f t $ i - f s $ i))"
-    using part1' by (simp add: o_def)
-  have part1sq: "continuous_map ?PT euclideanreal
-      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2)"
-    using continuous_map_real_mult[OF part1 part1]
-    by (simp add: power2_eq_square)
-  have part2: "continuous_map ?PT euclideanreal
-      (\<lambda>f. h (restrict f {0..s}))"
-    by (rule past_test_functional_cont[OF st sT hc])
-  show ?thesis
-    by (rule continuous_map_real_mult[OF part1sq part2])
-qed
 
 lemma mkt_path_laws_covariation_test:
   fixes Q :: "(real \<Rightarrow> real^'m::finite) measure"

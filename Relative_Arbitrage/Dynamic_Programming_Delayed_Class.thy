@@ -6,6 +6,7 @@ theory Dynamic_Programming_Delayed_Class
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -300,47 +301,6 @@ text \<open>A single identity reduces the horizon-parametrised selector to a
   the full horizon \<open>T\<close>, is optimal at every shorter horizon, and the
   parameter \<open>s\<close> is carried through only by a pushforward.\<close>
 
-lemma pexit_min_horizon:
-  fixes K :: "'b::polish_space set"
-  assumes S: "0 \<le> S" and ST: "S \<le> T"
-  shows "pexit S K f = min (pexit T K f) S"
-proof (rule order.antisym)
-  have T0: "0 \<le> T" using S ST by simp
-  show "pexit S K f \<le> min (pexit T K f) S"
-    using pexit_mono_T[OF S ST, of K f] pexit_le_T[OF S, of K f] by simp
-  have lb: "min (pexit T K f) S \<le> z"
-    if z: "z \<in> {r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> S" "f z \<in> - K" | (cap) "z = S" using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zT: "z \<le> T" using ST by simp
-      have "pexit T K f \<le> z"
-        unfolding pexit_def
-        by (rule etime_le_of_mem[OF T0 hit(1) zT]) (use hit(3) in simp)
-      then show ?thesis by simp
-    next
-      case cap
-      then show ?thesis by simp
-    qed
-  qed
-  have "pexit S K f = Inf ({r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S})"
-    unfolding pexit_def etime_def ..
-  moreover have "min (pexit T K f) S
-      \<le> Inf ({r. 0 \<le> r \<and> r \<le> S \<and> f r \<in> - K} \<union> {S})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show "min (pexit T K f) S \<le> pexit S K f" by simp
-qed
-
-text \<open>\<open>ess_inf_time_mono\<close> lives in @{theory Relative_Arbitrage.Value_Function_Market},
-  with an almost-sure rather than a pointwise hypothesis; this theory had a
-  pointwise copy that shadowed it.\<close>
-
-text \<open>Capping the integrand by a constant caps the essential infimum by the
-  same constant.  Both halves are elementary, but the \<open>\<ge>\<close> half has to be
-  run through @{thm [source] ennreal_strict_between}: the defining
-  supremum need not be attained.\<close>
 
 lemma ess_inf_time_min_const:
   fixes c :: real

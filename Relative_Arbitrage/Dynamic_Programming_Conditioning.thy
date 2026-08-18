@@ -6,6 +6,7 @@ theory Dynamic_Programming_Conditioning
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -15,85 +16,6 @@ section \<open>Conditioning on the past for the \<open>\<le>\<close> half\<close
 text \<open>\<open>cInf_shift_real\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
-text \<open>On the survival event the exit time splits exactly: the first piece
-  contributes \<open>r\<close> and the rest is the exit time of the time-shifted path
-  measured against the shortened horizon.  This is the identity that turns
-  the almost-sure bound \<open>\<tau>\<^sub>K \<ge> c\<close> into a bound on the future.\<close>
-
-lemma pexit_split_at_r:
-  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and surv: "pexit r K f = r" and endK: "f r \<in> K"
-  shows "pexit T K f = r + pexit (T - r) K (\<lambda>s. f (r + s))"
-proof -
-  have stay: "f t \<in> K" if t: "t \<in> {0..r}" for t
-  proof (rule ccontr)
-    assume nk: "f t \<notin> K"
-    have "pexit r K f \<le> t"
-      unfolding pexit_def using r t nk by (intro etime_le_of_mem) auto
-    with surv t have "t = r" by simp
-    then show False using nk endK by simp
-  qed
-  define B where "B = {s. 0 \<le> s \<and> s \<le> T - r \<and> f (r + s) \<in> - K} \<union> {T - r}"
-  have Beq: "{t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T} = (\<lambda>s. r + s) ` B"
-  proof (rule set_eqI, rule iffI)
-    fix t assume "t \<in> {t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T}"
-    then consider (hit) "0 \<le> t" "t \<le> T" "f t \<in> - K" | (cap) "t = T" by blast
-    then show "t \<in> (\<lambda>s. r + s) ` B"
-    proof cases
-      case hit
-      have rt: "r < t"
-      proof (rule ccontr)
-        assume "\<not> r < t"
-        then have "t \<in> {0..r}" using hit(1) by simp
-        then show False using stay hit(3) by simp
-      qed
-      show ?thesis
-      proof (rule image_eqI[where x = "t - r"])
-        show "t = r + (t - r)" by simp
-        show "t - r \<in> B" unfolding B_def using hit rt by simp
-      qed
-    next
-      case cap
-      show ?thesis
-      proof (rule image_eqI[where x = "T - r"])
-        show "t = r + (T - r)" using cap by simp
-        show "T - r \<in> B" unfolding B_def by simp
-      qed
-    qed
-  next
-    fix t assume "t \<in> (\<lambda>s. r + s) ` B"
-    then obtain s where s: "s \<in> B" "t = r + s" by blast
-    from s(1) consider (hit) "0 \<le> s" "s \<le> T - r" "f (r + s) \<in> - K" | (cap) "s = T - r"
-      unfolding B_def by blast
-    then show "t \<in> {t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T}"
-    proof cases
-      case hit
-      then show ?thesis using s(2) r by simp
-    next
-      case cap
-      then show ?thesis using s(2) by simp
-    qed
-  qed
-  have ne: "B \<noteq> {}" unfolding B_def by blast
-  have bdd: "bdd_below B"
-    unfolding B_def by (rule bdd_belowI[of _ 0]) (use rT in auto)
-  have "pexit T K f = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> f t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  also have "\<dots> = Inf ((\<lambda>s. r + s) ` B)" unfolding Beq ..
-  also have "\<dots> = r + Inf B" by (rule cInf_shift_real[OF ne bdd])
-  also have "\<dots> = r + pexit (T - r) K (\<lambda>s. f (r + s))"
-    unfolding pexit_def etime_def B_def ..
-  finally show ?thesis .
-qed
-
-subsection \<open>The rebased future as a map of path spaces\<close>
-
-text \<open>\<open>pfut r T \<omega>\<close> is the path after \<open>r\<close>, re-based at its own starting point,
-  so that it starts at \<open>0\<close> no matter where \<open>\<omega>\<close> was at time \<open>r\<close>.  It is the
-  map along which the conditional law of the future is taken.  Like the glue,
-  it is Lipschitz --- with constant \<open>2\<close>, because the base point is subtracted
-  and so counts once more.\<close>
 
 definition pfut :: "real \<Rightarrow> real \<Rightarrow> 'n::finite pairpath \<Rightarrow> 'n pairpath"
   where "pfut r T \<omega> = restrict (\<lambda>s. \<omega> (r + s) - \<omega> r) {0..T - r}"
@@ -4264,29 +4186,6 @@ text \<open>The conditioning half of the DPP holds at an arbitrary time function
     would not work: the horizon would grow and monotonicity would point the
     wrong way.\<close>
 
-lemma pexit_surv_of_less:
-  fixes f :: "real \<Rightarrow> 'a::polish_space" and K :: "'a set"
-  assumes T0: "0 \<le> T" and r: "0 \<le> r" and rT: "r \<le> T" and lt: "r < c"
-    and ge: "c \<le> pexit T K f"
-  shows "pexit r K f = r \<and> f r \<in> K"
-proof -
-  have stay: "f t \<in> K" if t: "t \<in> {0..r}" for t
-  proof (rule ccontr)
-    assume nk: "f t \<notin> K"
-    have "pexit T K f \<le> t"
-      unfolding pexit_def using T0 t rT nk by (intro etime_le_of_mem) auto
-    moreover have "t \<le> r" using t by simp
-    ultimately show False using ge lt by simp
-  qed
-  have empt: "{t. 0 \<le> t \<and> t \<le> r \<and> f t \<in> - K} \<union> {r} = {r}" using stay by auto
-  have "pexit r K f = r" unfolding pexit_def etime_def empt by simp
-  moreover have "f r \<in> K" using stay r by simp
-  ultimately show ?thesis by simp
-qed
-
-text \<open>The pointwise core: at a single path, the deterministic bound at
-  countably many rational times below \<open>c\<close> gives the bound at an arbitrary
-  time \<open>s\<close>, with no measure theory at all.\<close>
 
 lemma exit_val_cond_pointwise:
   fixes \<omega> :: "'n::finite pairpath" and K :: "(real^'n) set"

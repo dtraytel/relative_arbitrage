@@ -5,6 +5,7 @@ theory Value_Function_Supersolution_Case_1
   imports Value_Function_Euler_Construction
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -33,26 +34,6 @@ proof -
   show ?thesis by (rule that[OF a tr])
 qed
 
-lemma pexit_eq_of_stays:
-  fixes f :: "real \<Rightarrow> 'b::polish_space"
-  assumes T0: "0 \<le> T'" and stays: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> T' \<Longrightarrow> f s \<in> K"
-  shows "pexit T' K f = T'"
-proof (rule order.antisym)
-  show "pexit T' K f \<le> T'" by (rule pexit_le_T[OF T0])
-  show "T' \<le> pexit T' K f"
-  proof (rule ccontr)
-    assume "\<not> T' \<le> pexit T' K f"
-    then have "pexit T' K f < T'" by simp
-    then have "(\<exists>r. 0 \<le> r \<and> r \<le> T' \<and> f r \<in> - K \<and> r < T') \<or> T' < T'"
-      using pexit_less_iff[OF T0] by blast
-    then show False using stays by auto
-  qed
-qed
-
-text \<open>A nonzero touching gradient forces \<open>v(x) < T\<close>: the test function
-  strictly increases along its gradient, the global minimum of \<open>v - \<phi>\<close>
-  transfers the increase to \<open>v\<close>, and \<open>v \<le> T\<close> caps the other end.  This
-  is what neutralises the horizon cap in the Case-1 functional.\<close>
 
 lemma touching_grad_lt_horizon:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"

@@ -6,6 +6,7 @@ theory Value_Function_Supersolution_Case_2
     "Semicontinuous_Analysis.Semicontinuity"
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)

@@ -5,6 +5,7 @@ theory Exit_Class_Optimizer
   imports Exit_Class_Pasting
     "Semicontinuous_Analysis.Semicontinuous_Selection"
     "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
 begin
 
 (*>*)
@@ -786,22 +787,6 @@ text \<open>Kernel pasting glues with the Giry monad's @{term bind}, which wants
   right \<open>sets\<close> (@{thm [source] weak_conv_topology_eq_prob_algebra}), and
   that is where the selector lands anyway.\<close>
 
-lemma Polish_space_path_metric:
-  "Polish_space (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
-  unfolding mtopology_of_def
-  by (rule Metric_space.Polish_space_mtopology
-      [OF Metric_space_mspace_mdist path_metric_polish(1) path_metric_polish(2)])
-
-section \<open>Kernel pasting: the semidirect product\<close>
-
-text \<open>@{thm [source] exit_class_kglue_law} glues with a countably
-  valued index, which @{thm [source] Metric_space.usc_measurable_selection}
-  cannot supply.  The replacement is the Giry monad's semidirect product:
-  run \<open>Q\<close>, then continue with the law the kernel picks at the endpoint
-  reached.  \<open>ksemi\<close> and its API live in
-  @{theory Continuous_Time_Martingales.Semidirect_Kernels}.\<close>
-
-subsection \<open>The glued law, and the two almost-sure clauses of (1.7)\<close>
 
 definition kglue_law' :: "real \<Rightarrow> real \<Rightarrow> ('n::finite pairpath \<Rightarrow> ('n pairpath) measure)
     \<Rightarrow> ('n pairpath) measure \<Rightarrow> ('n pairpath) measure"
@@ -949,11 +934,6 @@ text \<open>Proving clauses (iii) and (iv) directly for @{const ksemi} runs into
   closedness finishes --- which needs continuity of the glue and the
   identity of the two \<open>\<sigma>\<close>-algebras on the product.\<close>
 
-lemma second_countable_path_metric:
-  "second_countable (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
-  unfolding mtopology_of_def
-  by (rule Metric_space.separable_space_imp_second_countable
-      [OF Metric_space_mspace_mdist path_metric_polish(2)])
 
 lemma mdist_pglue_le:
   fixes w wt w' wt' :: "'n::finite pairpath"
