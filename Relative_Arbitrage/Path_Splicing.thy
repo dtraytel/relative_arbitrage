@@ -96,10 +96,10 @@ lemma pshift_snd: "t \<in> {0..T} \<Longrightarrow> snd (pshift T x \<omega> t) 
   by (simp add: pshift_def)
 
 lemma padd_mspace:
-  fixes p' w :: "'n::finite pairpath"
-  assumes p: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    and w: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "padd T p' w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  fixes p' w :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  assumes p: "p' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and w: "w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "padd T p' w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
   have "continuous_on {0..T} (\<lambda>t. p' t + w t)"
     using mspace_path_metricD[OF p] mspace_path_metricD[OF w]
@@ -114,10 +114,10 @@ text \<open>The glue with the past fixed: the form the four-cell argument needs,
   pointwise, which needs both sides measurable in \<open>w\<close> alone.\<close>
 
 lemma pfut_in_mspace:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "pfut r T \<omega> \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "pfut r T \<omega> \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
   have cw: "continuous_on {0..T} \<omega>" by (rule mspace_path_metric_continuous[OF w])
   have sub: "(\<lambda>s. r + s) ` {0..T - r} \<subseteq> {0..T}" using r rT by auto
@@ -168,23 +168,23 @@ text \<open>The rational reduction of the covariation clause, factored out since
 
 lemma Lipschitz_pfut:
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-  shows "Lipschitz_continuous_map (path_metric T :: ('n::finite pairpath) metric)
-      (path_metric (T - r) :: ('n pairpath) metric) (pfut r T)"
+  shows "Lipschitz_continuous_map (path_metric T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) metric)
+      (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (pfut r T)"
   unfolding Lipschitz_continuous_map_def
 proof (intro conjI)
-  show "pfut r T \<in> mspace (path_metric T :: ('n pairpath) metric)
-      \<rightarrow> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+  show "pfut r T \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+      \<rightarrow> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (intro funcsetI pfut_in_mspace[OF r rT])
   have T0: "0 \<le> T" using r rT by simp
   have Tr: "0 \<le> T - r" using rT by simp
   have key: "mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
       \<le> 2 * mdist (path_metric T) f g"
-    if f: "f \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      and g: "g \<in> mspace (path_metric T :: ('n pairpath) metric)" for f g
+    if f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+      and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for f g
   proof -
-    have sf: "pfut r T f \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    have sf: "pfut r T f \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       by (rule pfut_in_mspace[OF r rT f])
-    have sg: "pfut r T g \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    have sg: "pfut r T g \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       by (rule pfut_in_mspace[OF r rT g])
     have pw: "\<forall>t\<in>{0..T}. dist (f t) (g t) \<le> mdist (path_metric T) f g"
       using path_mdist_le_iff_all[OF T0 f g] by blast
@@ -206,8 +206,8 @@ proof (intro conjI)
     qed
     show ?thesis using path_mdist_le_iff_all[OF Tr sf sg] pws by blast
   qed
-  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ('n pairpath) metric).
-      \<forall>g\<in>mspace (path_metric T :: ('n pairpath) metric).
+  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
+      \<forall>g\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
         mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
           \<le> B * mdist (path_metric T) f g"
     by (intro exI[of _ 2] ballI key)
@@ -271,10 +271,10 @@ lemma pshift_inverse:
   using pshift_pshift[of T "- x" x \<omega>] pshift_zero[OF w] by simp
 
 lemma ipcut_measurable:
-  fixes P :: "('n::finite pairpath) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes S: "0 \<le> S"
-    and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
-  shows "pcut S \<in> P \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (ipath_space :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "pcut S \<in> P \<rightarrow>\<^sub>M (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   unfolding pcut_def measurable_cong_sets[OF setsP refl]
   by (rule restrict_ipath_measurable[OF S])
 
@@ -385,16 +385,16 @@ text \<open>The split inverts the glue, provided the continuation stands still u
 lemma pfut_measurable:
   assumes r: "0 \<le> r" and rT: "r \<le> T"
   shows "pfut r T
-      \<in> (path_borel T :: ('n::finite pairpath) measure)
-        \<rightarrow>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure)"
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+        \<rightarrow>\<^sub>M (path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   by (intro continuous_map_measurable Lipschitz_continuous_imp_continuous_map
       Lipschitz_pfut[OF r rT])
 
 lemma pfut_measurable_law:
-  fixes Q :: "('n::finite pairpath) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "pfut r T \<in> Q \<rightarrow>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "pfut r T \<in> Q \<rightarrow>\<^sub>M (path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   using pfut_measurable[OF r rT] measurable_cong_sets[OF setsQ refl] by blast
 
 text \<open>The exit time of the future, expressed through \<open>pfut\<close>: re-basing at the
@@ -668,11 +668,11 @@ lemma pglue_zero: "0 \<le> r \<Longrightarrow> 0 \<le> T \<Longrightarrow> pglue
   by (rule pglue_le) auto
 
 lemma pglue_in_mspace:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-    and w': "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-  shows "pglue r T \<omega> \<omega>' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and w: "\<omega> \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and w': "\<omega>' \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "pglue r T \<omega> \<omega>' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   unfolding pglue_def
   by (rule mspace_path_metricI[OF continuous_on_pglue[OF r rT
         mspace_path_metricD[OF w] mspace_path_metricD[OF w']]])
@@ -719,8 +719,8 @@ text \<open>The eigenvalue constraint (1.7) survives concatenation: across the
   of (1.4) would not do.\<close>
 
 lemma pcut_id_on_mspace:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  assumes "\<omega> \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pcut r \<omega> = \<omega>"
 proof -
   have "\<omega> \<in> extensional {0..r}"
@@ -1482,10 +1482,10 @@ text \<open>Stroock--Varadhan splice the continuation into the same
   working with the delayed law instead of the rebased one.\<close>
 
 lemma pembed_mspace:
-  fixes w :: "'n::finite pairpath"
+  fixes w :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
-    and w: "w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
-  shows "pembed s T w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and w: "w \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "pembed s T w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
   have c: "continuous_on {0..T - s} w" by (rule mspace_path_metricD[OF w])
   have m: "continuous_on {0..T} (\<lambda>t. max (t - s) 0)"
@@ -1497,10 +1497,10 @@ proof -
 qed
 
 lemma pembed_mspace_full:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "pembed s T \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "pembed s T \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
   have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
   have m: "continuous_on {0..T} (\<lambda>t. max (t - s) 0)"
@@ -1518,9 +1518,9 @@ lemma pdel_eq_pembed: "0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> p
   unfolding pdel_def by simp
 
 lemma pdel_mspace:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes T0: "0 \<le> T" and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "pdel s T \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  assumes T0: "0 \<le> T" and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "pdel s T \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   unfolding pdel_def
   by (rule pembed_mspace_full[OF pdel_clamp_lo pdel_clamp_hi[OF T0] w])
 
@@ -1849,10 +1849,10 @@ proof -
 qed
 
 lemma prebase_mspace:
-  fixes w :: "'n::finite pairpath"
+  fixes w :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
-    and w: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "prebase s T w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+    and w: "w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "prebase s T w \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
   have c: "continuous_on {0..T} w" by (rule mspace_path_metricD[OF w])
   have "continuous_on {0..T - s} (\<lambda>u. w (s + u))"
