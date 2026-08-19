@@ -239,19 +239,29 @@ definition exit_class ::
        (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
        (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))}"
 
+text \<open>The class is the constrained-covariation class of
+  @{theory Relative_Arbitrage.Pair_Path_Laws} at the constraint set of
+  Eq. (1.5): the paper contributes \<open>sconstraint k L\<close> and nothing else to the
+  definition.  Everything below that reads only one clause of the class is
+  the generic statement specialised through this equation.\<close>
+
+theorem exit_class_eq_covariation:
+  "exit_class k L T x = covariation_class (sconstraint k L) T x"
+  by (simp add: exit_class_def covariation_class_def outerp_eq_outer_prod)
+
 text \<open>Projections out of the definition, used throughout.\<close>
 
 lemma exit_class_prob:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x"
   shows "prob_space Q"
-  using Q unfolding exit_class_def by blast
+  using Q unfolding exit_class_eq_covariation by (rule covariation_class_prob)
 
 lemma exit_class_sets:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x"
   shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  using Q unfolding exit_class_def by blast
+  using Q unfolding exit_class_eq_covariation by (rule covariation_class_sets)
 
 
 
@@ -396,81 +406,26 @@ theorem exit_class_lipschitz_ae:
   assumes T: "0 \<le> T" and L: "0 \<le> L"
     and Q: "Q \<in> exit_class k L T x"
   shows "AE \<omega> in Q. (real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
-proof -
-  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding exit_class_def by blast
-  have B0: "0 \<le> real CARD('n) * L" using L by simp
-  show ?thesis
-  proof (rule AE_mp[OF dq], rule AE_I2, intro impI)
-    fix \<omega> :: "'n pairpath"
-    assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    show "(real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
-    proof (rule diffquot_lipschitz[OF B0])
-      fix a :: "real^'n^'n"
-      assume "a \<in> sconstraint k L"
-      then show "norm a \<le> real CARD('n) * L"
-        by (rule sconstraint_norm_le[OF L])
-    next
-      fix s t :: real
-      assume "0 \<le> s" "s < t" "t \<le> T"
-      then show "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-        using q by blast
-    qed
-  qed
+proof (rule covariation_class_lipschitz_ae[OF T])
+  show "0 \<le> real CARD('n) * L" using L by simp
+  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
+    by (rule sconstraint_norm_le[OF L])
+  show "Q \<in> covariation_class (sconstraint k L) T x"
+    using Q unfolding exit_class_eq_covariation .
 qed
-
-text \<open>Combined with the difference-quotient-to-density transfer, the class
-  member's \<open>Y\<close> is almost surely differentiable off a negligible set of
-  times with derivative in the constraint set --- the density statement of
-  Eq. (1.7), stated for the class itself rather than for a bare path.\<close>
-
-text \<open>On the capped horizon the second component of a class member is
-  uniformly bounded, almost surely, by \<open>n\<sqdot>L\<sqdot>T\<close>: it starts at \<open>0\<close> and is
-  \<open>n\<sqdot>L\<close>-Lipschitz, so no probabilistic input is needed. This is what
-  makes \<open>X\<close> square-integrable under a class law: the martingale clause
-  makes \<open>outerp X - Y\<close> integrable, and \<open>Y\<close> being bounded transfers the
-  integrability to \<open>outerp X\<close>.\<close>
 
 theorem exit_class_Y_bounded_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
     and Q: "Q \<in> exit_class k L T x"
   shows "AE \<omega> in Q. \<forall>t\<in>{0..T}. norm (snd (\<omega> t)) \<le> real CARD('n) * L * T"
-proof -
-  have B0: "0 \<le> real CARD('n) * L" using L by simp
-  have z0: "(0::real) \<in> {0..T}" using T by simp
-  have lip: "AE \<omega> in Q. (real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
-    by (rule exit_class_lipschitz_ae[OF T L Q])
-  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Q unfolding exit_class_def by blast
-  from lip st show ?thesis
-  proof eventually_elim
-    case (elim \<omega>)
-    then have lp: "(real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
-      and z: "snd (\<omega> 0) = 0" by blast+
-    show ?case
-    proof (intro ballI)
-      fix t :: real assume t: "t \<in> {0..T}"
-      have "norm (snd (\<omega> t)) = dist (snd (\<omega> t)) (snd (\<omega> 0))"
-        using z by (simp add: dist_norm)
-      also have "\<dots> \<le> real CARD('n) * L * dist t 0"
-        by (rule lipschitz_onD[OF lp t z0])
-      also have "\<dots> = real CARD('n) * L * t"
-        using t by (simp add: dist_real_def)
-      also have "\<dots> \<le> real CARD('n) * L * T"
-        using t B0 by (intro mult_left_mono) auto
-      finally show "norm (snd (\<omega> t)) \<le> real CARD('n) * L * T" .
-    qed
-  qed
+proof (rule covariation_class_Y_bounded_ae[OF T])
+  show "0 \<le> real CARD('n) * L" using L by simp
+  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
+    by (rule sconstraint_norm_le[OF L])
+  show "Q \<in> covariation_class (sconstraint k L) T x"
+    using Q unfolding exit_class_eq_covariation .
 qed
-
-text \<open>The diagonal form of the covariation clause, which is what a
-  compensator bound asks for: the \<open>(i,i)\<close> entry of \<open>Y\<close> increases, at
-  rate at most \<open>L\<close>. Both halves come from the constraint set --- \<open>psd\<close>
-  gives the lower bound on a diagonal entry and \<open>eigen_ub\<close> the upper one
-  (\<open>psd_eigen_ub_diag\<close>).\<close>
 
 lemma sconstraint_diag:
   fixes a :: "real^'n::finite^'n"
@@ -489,59 +444,13 @@ theorem exit_class_Y_diag_increment:
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
       0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
       \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
-proof -
-  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding exit_class_def by blast
-  from dq show ?thesis
-  proof (rule eventually_mono)
-    fix \<omega> :: "'n pairpath"
-    assume h: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    show "\<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
-        0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-        \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
-    proof (intro allI impI)
-      fix s t :: real
-      assume s: "0 \<le> s" and st: "s \<le> t" and tT: "t \<le> T"
-      show "0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-          \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
-      proof (cases "s = t")
-        case True
-        then show ?thesis using L by simp
-      next
-        case False
-        then have lt: "s < t" using st by simp
-        have d0: "0 < t - s" using lt by simp
-        have mem: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-          using h s lt tT by blast
-        have ent: "((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))) $ i $ i
-            = (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
-          by simp
-        have nn: "0 \<le> (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
-          using sconstraint_diag(1)[OF mem] ent by simp
-        have ub: "(snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s) \<le> L"
-          using sconstraint_diag(2)[OF mem] ent by simp
-        have p1: "0 \<le> ((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
-            * (t - s)"
-          using nn d0 by (intro mult_nonneg_nonneg) auto
-        have p2: "((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
-            * (t - s) \<le> L * (t - s)"
-          using ub d0 by (intro mult_right_mono) auto
-        show ?thesis using p1 p2 d0 by simp
-      qed
-    qed
-  qed
+proof (rule covariation_class_Y_diag_increment[OF L])
+  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L
+      \<Longrightarrow> 0 \<le> a $ i $ i \<and> a $ i $ i \<le> L"
+    using sconstraint_diag by blast
+  show "Q \<in> covariation_class (sconstraint k L) T x"
+    using Q unfolding exit_class_eq_covariation .
 qed
-
-subsection \<open>Square integrability of the class member's process\<close>
-
-text \<open>Under a class law the coordinate process is square integrable on the
-  capped horizon, though not from a uniform bound on \<open>X\<close> --- the paper's
-  processes are neither stopped nor confined ((1.7)--(1.8)). Instead:
-  \<open>outerp X - Y\<close> is integrable by the martingale clause, \<open>Y\<close> is bounded
-  (\<open>exit_class_Y_bounded_ae\<close>), and their sum \<open>outerp X\<close> has the
-  squared coordinates as diagonal entries.\<close>
 
 lemma exit_class_eval_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -954,6 +863,14 @@ definition exit_val ::
   "exit_val k L T K x =
      Sup ((\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
        ` exit_class k L T x)"
+
+text \<open>Eq. (1.6) is the generic value functional at the constraint set of
+  Eq. (1.5); and it is monotone in that set, which is the shape in which a
+  reader can compare this problem with a differently constrained one.\<close>
+
+theorem exit_val_eq_covariation_val:
+  "exit_val k L T K x = covariation_val (sconstraint k L) T K x"
+  by (simp add: exit_val_def covariation_val_def exit_class_eq_covariation)
 
 (*<*)
 end

@@ -4018,6 +4018,246 @@ proof -
   then show ?thesis unfolding g_def .
 qed
 
+
+section \<open>Laws with a constrained covariation\<close>
+
+text \<open>
+  The object a stochastic-control argument in the martingale-problem
+  formulation actually works with: the set of laws \<open>Q\<close> of a pair path
+  \<open>(X, Y)\<close> on \<open>C([0,T])\<close> such that \<open>(X\<^sub>0, Y\<^sub>0) = (x, 0)\<close>, every difference
+  quotient of \<open>Y\<close> lies in a fixed set \<open>S\<close> of matrices, \<open>X\<close> is a martingale
+  for the pair's own filtration, and \<open>X X\<^sup>T - Y\<close> is one too -- so that \<open>Y\<close>
+  is the covariation of \<open>X\<close> and \<open>S\<close> constrains its density.
+
+  Only the third clause mentions \<open>S\<close>, and the results below say which
+  properties of \<open>S\<close> each consequence needs: a norm bound gives Lipschitz
+  paths for \<open>Y\<close>, and a bound on the diagonal entries gives the monotone
+  increments a compensator argument reads.  \<open>S\<close> itself is arbitrary.
+\<close>
+
+definition covariation_class ::
+  "(real^'n::finite^'n) set \<Rightarrow> real \<Rightarrow> real^'n
+     \<Rightarrow> (('n pairpath) measure) set"
+  where
+  "covariation_class S T x = {Q.
+     prob_space Q \<and>
+     sets Q = sets (path_borel T :: ('n pairpath) measure) \<and>
+     (AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0) \<and>
+     (AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S) \<and>
+     martingale Q
+       (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+       (\<lambda>t \<omega>. fst (\<omega> (min t T))) \<and>
+     martingale Q
+       (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+       (\<lambda>t \<omega>. outer_prod (fst (\<omega> (min t T))) (fst (\<omega> (min t T)))
+                - snd (\<omega> (min t T)))}"
+
+text \<open>The six clauses, projected out.\<close>
+
+lemma covariation_class_prob:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "Q \<in> covariation_class S T x" shows "prob_space Q"
+  using assms unfolding covariation_class_def by blast
+
+lemma covariation_class_sets:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "Q \<in> covariation_class S T x"
+  shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  using assms unfolding covariation_class_def by blast
+
+lemma covariation_class_start:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "Q \<in> covariation_class S T x"
+  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+  using assms unfolding covariation_class_def by blast
+
+lemma covariation_class_diffquot:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "Q \<in> covariation_class S T x"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+  using assms unfolding covariation_class_def by blast
+
+lemma covariation_class_martingale_fst:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "Q \<in> covariation_class S T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
+  using assms unfolding covariation_class_def by blast
+
+lemma covariation_class_martingale_compensated:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "Q \<in> covariation_class S T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+      (\<lambda>t \<omega>. outer_prod (fst (\<omega> (min t T))) (fst (\<omega> (min t T)))
+               - snd (\<omega> (min t T)))"
+  using assms unfolding covariation_class_def by blast
+
+lemma covariation_classI:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes "prob_space Q"
+    and "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    and "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    and "martingale Q (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
+    and "martingale Q (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
+        (\<lambda>t \<omega>. outer_prod (fst (\<omega> (min t T))) (fst (\<omega> (min t T)))
+                 - snd (\<omega> (min t T)))"
+  shows "Q \<in> covariation_class S T x"
+  using assms unfolding covariation_class_def by blast
+
+text \<open>Monotonicity in the constraint set: enlarging \<open>S\<close> enlarges the class.
+  This is the only structural fact that needs nothing of \<open>S\<close> at all.\<close>
+
+lemma covariation_class_mono:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes Q: "Q \<in> covariation_class S T x" and SS: "S \<subseteq> S'"
+  shows "Q \<in> covariation_class S' T x"
+proof (rule covariation_classI)
+  show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S'"
+    using covariation_class_diffquot[OF Q] by eventually_elim (use SS in blast)
+qed (rule covariation_class_prob[OF Q], rule covariation_class_sets[OF Q],
+     rule covariation_class_start[OF Q],
+     rule covariation_class_martingale_fst[OF Q],
+     rule covariation_class_martingale_compensated[OF Q])
+
+text \<open>A norm bound on \<open>S\<close> makes the covariation path Lipschitz, at the same
+  constant, and hence bounded on the horizon.\<close>
+
+theorem covariation_class_lipschitz_ae:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S T x"
+  shows "AE \<omega> in Q. B-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+proof -
+  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    by (rule covariation_class_diffquot[OF Q])
+  show ?thesis
+  proof (rule AE_mp[OF dq], rule AE_I2, intro impI)
+    fix \<omega> :: "'n pairpath"
+    assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    show "B-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+    proof (rule diffquot_lipschitz[OF B0])
+      fix a :: "real^'n^'n" assume "a \<in> S" then show "norm a \<le> B" by (rule B)
+    next
+      fix s t :: real assume "0 \<le> s" "s < t" "t \<le> T"
+      then show "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+        using q by blast
+    qed
+  qed
+qed
+
+theorem covariation_class_Y_bounded_ae:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S T x"
+  shows "AE \<omega> in Q. \<forall>t\<in>{0..T}. norm (snd (\<omega> t)) \<le> B * T"
+proof -
+  have z0: "(0::real) \<in> {0..T}" using T by simp
+  have lip: "AE \<omega> in Q. B-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+    by (rule covariation_class_lipschitz_ae[OF T B0 B Q])
+  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    by (rule covariation_class_start[OF Q])
+  from lip st show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have lp: "B-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
+      and z: "snd (\<omega> 0) = 0" by blast+
+    show ?case
+    proof (intro ballI)
+      fix t :: real assume t: "t \<in> {0..T}"
+      have "norm (snd (\<omega> t)) = dist (snd (\<omega> t)) (snd (\<omega> 0))"
+        using z by (simp add: dist_norm)
+      also have "\<dots> \<le> B * dist t 0" by (rule lipschitz_onD[OF lp t z0])
+      also have "\<dots> = B * t" using t by (simp add: dist_real_def)
+      also have "\<dots> \<le> B * T" using t B0 by (intro mult_left_mono) auto
+      finally show "norm (snd (\<omega> t)) \<le> B * T" .
+    qed
+  qed
+qed
+
+text \<open>A two-sided bound on the diagonal entries of \<open>S\<close> makes each diagonal
+  entry of the covariation nondecreasing, at rate at most \<open>B\<close>.\<close>
+
+theorem covariation_class_Y_diag_increment:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes B0: "0 \<le> B"
+    and D: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> 0 \<le> a $ i $ i \<and> a $ i $ i \<le> B"
+    and Q: "Q \<in> covariation_class S T x"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
+      0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+      \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> B * (t - s)"
+proof -
+  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    by (rule covariation_class_diffquot[OF Q])
+  from dq show ?thesis
+  proof (rule eventually_mono)
+    fix \<omega> :: "'n pairpath"
+    assume h: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    show "\<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
+        0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+        \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> B * (t - s)"
+    proof (intro allI impI)
+      fix s t :: real
+      assume s: "0 \<le> s" and st: "s \<le> t" and tT: "t \<le> T"
+      show "0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
+          \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> B * (t - s)"
+      proof (cases "s = t")
+        case True
+        then show ?thesis using B0 by simp
+      next
+        case False
+        then have lt: "s < t" using st by simp
+        have d0: "0 < t - s" using lt by simp
+        have mem: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+          using h s lt tT by blast
+        have ent: "((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))) $ i $ i
+            = (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
+          by simp
+        have nn: "0 \<le> (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
+          using D[OF mem] ent by simp
+        have ub: "(snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s) \<le> B"
+          using D[OF mem] ent by simp
+        have p1: "0 \<le> ((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
+            * (t - s)"
+          using nn d0 by (intro mult_nonneg_nonneg) auto
+        have p2: "((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
+            * (t - s) \<le> B * (t - s)"
+          using ub d0 by (intro mult_right_mono) auto
+        show ?thesis using p1 p2 d0 by simp
+      qed
+    qed
+  qed
+qed
+
+text \<open>The value of the minimum-exit-time problem over such a class: the
+  largest almost-sure lower bound on the exit time of \<open>K\<close>, optimised over
+  the laws.  \<open>K\<close> and \<open>S\<close> are both parameters; nothing here knows what they
+  are.\<close>
+
+definition covariation_val ::
+  "(real^'n::finite^'n) set \<Rightarrow> real \<Rightarrow> (real^'n) set \<Rightarrow> real^'n \<Rightarrow> ennreal"
+  where
+  "covariation_val S T K x =
+     Sup ((\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+       ` covariation_class S T x)"
+
+lemma covariation_val_mono_class:
+  assumes "S \<subseteq> S'"
+  shows "covariation_val S T K x \<le> covariation_val S' T K x"
+  unfolding covariation_val_def
+  by (rule Sup_subset_mono) (use assms covariation_class_mono in blast)
+
 (*<*)
 end
 (*>*)
