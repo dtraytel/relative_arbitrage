@@ -850,7 +850,7 @@ proof -
   then show ?thesis by (simp add: o_def)
 qed
 
-abbreviation pairX :: "real \<Rightarrow> ('n::finite) pairpath \<Rightarrow> real^'n"
+abbreviation pairX :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> 'a"
   where "pairX t \<omega> \<equiv> fst (\<omega> t)"
 
 theorem vshift_sup_usc:
@@ -973,7 +973,7 @@ text \<open>
   else about \<open>\<P>\<^sub>0\<close> is used.
 \<close>
 
-abbreviation pairY :: "real \<Rightarrow> ('n::finite) pairpath \<Rightarrow> real^'n^'n"
+abbreviation pairY :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> 'b"
   where "pairY t \<omega> \<equiv> snd (\<omega> t)"
 
 section \<open>Laws on the capped path space\<close>
@@ -1322,7 +1322,7 @@ proof -
 qed
 
 lemma continuous_on_pglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and c1: "continuous_on {0..r} \<omega>"
     and c2: "continuous_on {0..T - r} \<omega>'"

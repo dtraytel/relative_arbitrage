@@ -502,7 +502,7 @@ qed
 subsection \<open>The shifted law\<close>
 
 lemma padd_fst_continuous:
-  fixes p' w :: "'n::finite pairpath"
+  fixes p' w :: "real \<Rightarrow> 'a::topological_ab_group_add \<times> 'b::ab_group_add"
   assumes cp: "continuous_on {0..T} (\<lambda>t. fst (p' t))"
     and cw: "continuous_on {0..T} (\<lambda>t. fst (w t))"
   shows "continuous_on {0..T} (\<lambda>t. fst (padd T p' w t))"
@@ -1934,7 +1934,7 @@ proof -
 qed
 
 lemma padd_eval_split:
-  fixes p' w :: "'n::finite pairpath"
+  fixes p' w :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
   assumes t: "t \<in> {0..T}"
   shows "fst (padd T p' w t) = fst (p' t) + fst (w t)"
     and "snd (padd T p' w t) = snd (p' t) + snd (w t)"

@@ -565,7 +565,7 @@ text \<open>Hence \<open>\<theta>\<close> reads only the stopped path --- the fa
   alone.\<close>
 
 lemma padd_stopping_time:
-  fixes p' w :: "'n::finite pairpath"
+  fixes p' w :: "(real \<Rightarrow> 'a::topological_ab_group_add \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>"
     and idem: "pstopped T \<theta> p' = p'"
     and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
@@ -582,7 +582,7 @@ proof (rule path_stopping_time_cong[OF st cp padd_fst_continuous[OF cp cwv]])
 qed
 
 lemma pstopped_padd:
-  fixes p' w :: "'n::finite pairpath"
+  fixes p' w :: "(real \<Rightarrow> 'a::topological_ab_group_add \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>"
     and idem: "pstopped T \<theta> p' = p'"
     and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
@@ -619,7 +619,7 @@ proof (rule ext)
 qed
 
 lemma pafter_padd:
-  fixes p' w :: "'n::finite pairpath"
+  fixes p' w :: "(real \<Rightarrow> 'a::topological_ab_group_add \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>"
     and idem: "pstopped T \<theta> p' = p'"
     and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"

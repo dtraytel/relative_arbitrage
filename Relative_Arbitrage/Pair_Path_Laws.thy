@@ -49,7 +49,7 @@ lemma comp_shift_split:
 text \<open>\<open>bounded_linear_cross\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma continuous_on_iglue:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
   assumes r: "0 \<le> r"
     and c1: "continuous_on {0..r} \<omega>"
     and c2: "continuous_on {0..} \<omega>'"
@@ -447,7 +447,7 @@ proof -
 qed
 
 lemma pair_holder_of_components:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
   assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
     and X: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
         \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
