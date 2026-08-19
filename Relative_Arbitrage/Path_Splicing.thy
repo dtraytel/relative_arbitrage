@@ -143,20 +143,20 @@ proof -
 qed
 
 lemma pcut_adapted:
-  fixes Q :: "('n::finite pairpath) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes S: "0 \<le> S" and r: "0 \<le> r" and ru: "r \<le> u"
-  shows "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pcut S \<omega> r) \<in> borel_measurable
       (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u)"
 proof (cases "r \<in> {0..S}")
   case True
-  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> r) \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u
       \<rightarrow>\<^sub>M borel"
     unfolding natural_filtration_def
     by (rule measurable_family_vimage_algebra) (use r ru in auto)
   then show ?thesis using True by (simp add: pcut_apply)
 next
   case False
-  then have "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) = (\<lambda>\<omega>. undefined)"
+  then have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pcut S \<omega> r) = (\<lambda>\<omega>. undefined)"
     by (auto simp: pcut_def)
   then show ?thesis by simp
 qed
@@ -536,7 +536,7 @@ proof -
 qed
 
 lemma pexit_pcut:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   shows "pexit U K (\<lambda>t. fst (pcut U \<omega> t)) = pexit U K (\<lambda>t. fst (\<omega> t))"
   by (rule pexit_cong_on) (simp add: pcut_apply)
 
@@ -576,9 +576,9 @@ proof (rule ext)
 qed
 
 lemma pcut_pglue_self:
-  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+    and w: "\<omega> \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pcut r (pglue r T \<omega> \<omega>') = \<omega>"
 proof -
   have "pcut r (pglue r T \<omega> \<omega>') = pcut r \<omega>" by (rule pcut_pglue[OF r rT])
@@ -1755,9 +1755,9 @@ qed
 subsection \<open>Cutting a law commutes with shifting, and caps its value\<close>
 
 lemma pembed_eval_le:
-  fixes w :: "'n::finite pairpath"
+  fixes w :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes r0: "0 \<le> r" and ru: "r \<le> u" and s0: "0 \<le> s" and sT: "s \<le> T"
-  shows "(\<lambda>w :: 'n pairpath. pembed s T w r) \<in> borel_measurable
+  shows "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w r) \<in> borel_measurable
       (natural_filtration M 0 (\<lambda>v w. w v) (min (max (u - s) 0) (T - s)))"
 proof (cases "r \<le> T")
   case True
@@ -1765,14 +1765,14 @@ proof (cases "r \<le> T")
   have e2: "max (r - s) 0 \<le> min (max (u - s) 0) (T - s)"
     using r0 ru s0 sT True by (auto simp: min_def max_def)
   have mem: "r \<in> {0..T}" using r0 True by simp
-  have "(\<lambda>w :: 'n pairpath. w (max (r - s) 0)) \<in> borel_measurable
+  have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (max (r - s) 0)) \<in> borel_measurable
       (natural_filtration M 0 (\<lambda>v w. w v) (min (max (u - s) 0) (T - s)))"
     by (rule path_eval_natural_filtration[OF e1 e2])
   then show ?thesis by (simp add: pembed_apply[OF mem])
 next
   case False
   then have "r \<notin> {0..T}" by simp
-  then have "(\<lambda>w :: 'n pairpath. pembed s T w r) = (\<lambda>w. undefined)"
+  then have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w r) = (\<lambda>w. undefined)"
     by (simp add: pembed_outside)
   then show ?thesis by simp
 qed
@@ -1792,9 +1792,9 @@ text \<open>Everything so far used only Borel measurability of \<open>\<theta>\<
   stopped path, and hence makes the kernel a function of the past.\<close>
 
 lemma prebase_pembed:
-  fixes w :: "'n::finite pairpath"
+  fixes w :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
-    and w: "w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
+    and w: "w \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "prebase s T (pembed s T w) = w"
 proof (rule ext)
   fix u :: real
@@ -2084,9 +2084,9 @@ proof -
 qed
 
 lemma pglue_pcut_pfut:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pglue r T (pcut r \<omega>) (pfut r T \<omega>) = \<omega>"
 proof (rule ext)
   fix t :: real

@@ -231,10 +231,10 @@ text \<open>Evaluating a path at a random time.  This is the one new measurabili
   asks for continuity on all of \<open>{0..}\<close>.\<close>
 
 lemma pstopped_mspace:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
   have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
   have m: "continuous_on {0..T} (\<lambda>t. min t (\<theta> \<omega>))" by (intro continuous_intros)
@@ -248,50 +248,50 @@ lemma pstopped_const_measurable_filtration:
   fixes T t :: real
   assumes T0: "0 \<le> T" and t: "0 \<le> t" and tT: "t \<le> T"
   shows "pstopped T (\<lambda>_. t)
-      \<in> natural_filtration (path_borel T :: ('n::finite pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+      \<in> natural_filtration (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure) 0 (\<lambda>v \<omega>. \<omega> v) t
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
-  have spF: "space ?F = mspace (path_metric T :: ('n pairpath) metric)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t"
+  have spF: "space ?F = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_borel_of)
-  have into: "pstopped T (\<lambda>_. t) \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    if w: "\<omega> \<in> space ?F" for \<omega> :: "'n pairpath"
+  have into: "pstopped T (\<lambda>_. t) \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    if w: "\<omega> \<in> space ?F" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof -
-    have m: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    have m: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       using w spF by simp
     show ?thesis by (rule pstopped_mspace[OF t tT m])
   qed
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. pstopped T (\<lambda>_. t) \<omega> s) \<in> borel_measurable ?F"
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T (\<lambda>_. t) \<omega> s) \<in> borel_measurable ?F"
     for s
   proof (cases "s \<in> {0..T}")
     case True
     have mem: "min s t \<in> {0..t}" using True t by simp
-    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min s t)) \<in> borel_measurable ?F"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min s t)) \<in> borel_measurable ?F"
       by (rule path_eval_measurable_natural_filtration'[OF mem])
     then show ?thesis by (simp add: pstopped_apply[OF True])
   next
     case False
-    have "(\<lambda>\<omega> :: 'n pairpath. pstopped T (\<lambda>_. t) \<omega> s)
-        = (\<lambda>\<omega> :: 'n pairpath. undefined)"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T (\<lambda>_. t) \<omega> s)
+        = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). undefined)"
       by (rule ext) (rule pstopped_outside[OF False])
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    show "(\<lambda>\<omega>. mdist (path_metric T :: ('n pairpath) metric)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>\<omega>. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (pstopped T (\<lambda>_. t) \<omega>) a) \<in> borel_measurable ?F"
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
 qed
 
 lemma pafter_mspace:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-  shows "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
   have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
   have m: "continuous_on {0..T} (\<lambda>t. max t (\<theta> \<omega>))" by (intro continuous_intros)
@@ -312,104 +312,104 @@ text \<open>A criterion for landing in the path space.  The balls are a base, so
   handle on \<open>natural_filtration\<close>'s generators.\<close>
 
 lemma pstopped_measurable:
-  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector}) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
-    and thm': "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and thm': "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
-  shows "pstopped T \<theta> \<in> (path_borel T :: ('n pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+  shows "pstopped T \<theta> \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have sp: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  have sp: "space ?B = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_borel_of)
-  have into: "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  have into: "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "\<omega> \<in> space ?B" for \<omega>
     using that sp by (intro pstopped_mspace[OF th0 thT]) simp
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
   proof (cases "t \<in> {0..T}")
     case True
-    have base: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min t (\<theta> \<omega>))) \<in> borel_measurable ?B"
+    have base: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min t (\<theta> \<omega>))) \<in> borel_measurable ?B"
     proof (rule path_eval_at_measurable_time
-        [where X = "\<lambda>\<omega> :: 'n pairpath. \<omega>" and g = "\<lambda>\<omega>. min t (\<theta> \<omega>)", OF T0])
-      show "(\<lambda>\<omega> :: 'n pairpath. \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
-      show "(\<lambda>\<omega> :: 'n pairpath. min t (\<theta> \<omega>)) \<in> borel_measurable ?B"
+        [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>" and g = "\<lambda>\<omega>. min t (\<theta> \<omega>)", OF T0])
+      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
+      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min t (\<theta> \<omega>)) \<in> borel_measurable ?B"
         using thm' by measurable
-      show "0 \<le> min t (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
+      show "0 \<le> min t (\<theta> \<omega>)" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
         using True th0[of \<omega>] by simp
-      show "min t (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+      show "min t (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
         using thT[of \<omega>] by simp
     qed
-    have "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> t)
-        = (\<lambda>\<omega> :: 'n pairpath. \<omega> (min t (\<theta> \<omega>)))"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t)
+        = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min t (\<theta> \<omega>)))"
       by (rule ext) (rule pstopped_apply[OF True])
     then show ?thesis using base by simp
   next
     case False
-    have "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
       by (rule ext) (rule pstopped_outside[OF False])
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    show "(\<lambda>\<omega>. mdist (path_metric T :: ('n pairpath) metric)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>\<omega>. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (pstopped T \<theta> \<omega>) a) \<in> borel_measurable ?B"
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
 qed
 
 lemma pafter_measurable:
-  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector}) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
-    and thm': "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and thm': "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
-  shows "pafter T \<theta> \<in> (path_borel T :: ('n pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+  shows "pafter T \<theta> \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have sp: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  have sp: "space ?B = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_borel_of)
-  have into: "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  have into: "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "\<omega> \<in> space ?B" for \<omega>
     using that sp by (intro pafter_mspace[OF th0 thT]) simp
-  have base0: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (\<theta> \<omega>)) \<in> borel_measurable ?B"
+  have base0: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (\<theta> \<omega>)) \<in> borel_measurable ?B"
   proof (rule path_eval_at_measurable_time
-      [where X = "\<lambda>\<omega> :: 'n pairpath. \<omega>" and g = \<theta>, OF T0])
-    show "(\<lambda>\<omega> :: 'n pairpath. \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
+      [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>" and g = \<theta>, OF T0])
+    show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
     show "\<theta> \<in> borel_measurable ?B" by (rule thm')
-    show "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath" by (rule th0)
-    show "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath" by (rule thT)
+    show "0 \<le> \<theta> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" by (rule th0)
+    show "\<theta> \<omega> \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" by (rule thT)
   qed
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. pafter T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pafter T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
   proof (cases "t \<in> {0..T}")
     case True
-    have base: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (max t (\<theta> \<omega>))) \<in> borel_measurable ?B"
+    have base: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (max t (\<theta> \<omega>))) \<in> borel_measurable ?B"
     proof (rule path_eval_at_measurable_time
-        [where X = "\<lambda>\<omega> :: 'n pairpath. \<omega>" and g = "\<lambda>\<omega>. max t (\<theta> \<omega>)", OF T0])
-      show "(\<lambda>\<omega> :: 'n pairpath. \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
-      show "(\<lambda>\<omega> :: 'n pairpath. max t (\<theta> \<omega>)) \<in> borel_measurable ?B"
+        [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>" and g = "\<lambda>\<omega>. max t (\<theta> \<omega>)", OF T0])
+      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
+      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). max t (\<theta> \<omega>)) \<in> borel_measurable ?B"
         using thm' by measurable
-      show "0 \<le> max t (\<theta> \<omega>)" for \<omega> :: "'n pairpath"
+      show "0 \<le> max t (\<theta> \<omega>)" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
         using th0[of \<omega>] by simp
-      show "max t (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+      show "max t (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
         using True thT[of \<omega>] by simp
     qed
-    have "(\<lambda>\<omega> :: 'n pairpath. pafter T \<theta> \<omega> t)
-        = (\<lambda>\<omega> :: 'n pairpath. \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>))"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pafter T \<theta> \<omega> t)
+        = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>))"
       by (rule ext) (rule pafter_apply[OF True])
     then show ?thesis using base base0 by simp
   next
     case False
-    have "(\<lambda>\<omega> :: 'n pairpath. pafter T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pafter T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
       by (rule ext) (rule pafter_outside[OF False])
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    show "(\<lambda>\<omega>. mdist (path_metric T :: ('n pairpath) metric)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>\<omega>. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (pafter T \<theta> \<omega>) a) \<in> borel_measurable ?B"
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
@@ -465,25 +465,25 @@ text \<open>Continuity is available wherever it is needed: the space of a path l
 lemma pstopped_fixed_set_measurable:
   fixes T :: real
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n::finite pairpath) measure)"
-  shows "{p' \<in> space (path_borel T :: ('n pairpath) measure). pstopped T \<theta> p' = p'}
-      \<in> sets (path_borel T :: ('n pairpath) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
+  shows "{p' \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). pstopped T \<theta> p' = p'}
+      \<in> sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   let ?D = "{0..T} \<inter> \<rat>"
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_le[OF st])
   have pm: "pstopped T \<theta> \<in> ?B \<rightarrow>\<^sub>M ?B"
     by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+  have spB: "space ?B = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_borel_of)
   have single: "{p' \<in> space ?B. pstopped T \<theta> p' q = p' q} \<in> sets ?B" for q
   proof -
-    have m1: "(\<lambda>p' :: 'n pairpath. pstopped T \<theta> p' q) \<in> borel_measurable ?B"
+    have m1: "(\<lambda>p' :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> p' q) \<in> borel_measurable ?B"
       by (rule measurable_compose[OF pm pair_law_eval_measurable[OF refl]])
-    have m2: "(\<lambda>p' :: 'n pairpath. p' q) \<in> borel_measurable ?B"
+    have m2: "(\<lambda>p' :: (real \<Rightarrow> 'a \<times> 'b). p' q) \<in> borel_measurable ?B"
       by (rule pair_law_eval_measurable[OF refl])
     show ?thesis using m1 m2 by measurable
   qed
@@ -497,18 +497,18 @@ proof -
     show "(\<Inter>q \<in> ?D. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q})
         \<subseteq> {p' \<in> space ?B. pstopped T \<theta> p' = p'}"
     proof
-      fix p' :: "'n pairpath"
+      fix p' :: "(real \<Rightarrow> 'a \<times> 'b)"
       assume h: "p' \<in> (\<Inter>q \<in> ?D. {p' \<in> space ?B. pstopped T \<theta> p' q = p' q})"
       from h ne have sp: "p' \<in> space ?B" by blast
-      then have mw: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      then have mw: "p' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
         using spB by simp
       \<comment> \<open>\<open>OF\<close> against \<open>0 \<le> ?\<theta> ?\<omega>\<close> is not a higher-order PATTERN, so it has
           no unifiers; let the conclusion fix \<open>\<theta>\<close> and \<open>\<omega>\<close> first.\<close>
-      have ms: "pstopped T \<theta> p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      have ms: "pstopped T \<theta> p' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       proof (rule pstopped_mspace)
         show "0 \<le> \<theta> p'" by (rule th0)
         show "\<theta> p' \<le> T" by (rule thT)
-        show "p' \<in> mspace (path_metric T :: ('n pairpath) metric)" by (rule mw)
+        show "p' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" by (rule mw)
       qed
       have c1: "continuous_on {0..T} (pstopped T \<theta> p')"
         by (rule mspace_path_metricD[OF ms])
@@ -930,23 +930,23 @@ text \<open>The times clause (iv) samples at are \<open>(\<theta> + i) \<and> T\
 
 lemma path_stopping_time_event_filtration:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n::finite pairpath) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
     and t: "0 \<le> t" and tT: "t \<le> T"
-  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure). \<theta> \<omega> \<le> t}
-      \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+  shows "{\<omega> \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). \<theta> \<omega> \<le> t}
+      \<in> sets (natural_filtration (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t"
   have spF: "space ?F = space ?B" by simp
   have cm: "pstopped T (\<lambda>_. t) \<in> ?F \<rightarrow>\<^sub>M ?B"
     by (rule pstopped_const_measurable_filtration[OF T0 t tT])
-  have thc: "(\<lambda>\<omega> :: 'n pairpath. \<theta> (pstopped T (\<lambda>_. t) \<omega>)) \<in> borel_measurable ?F"
+  have thc: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<theta> (pstopped T (\<lambda>_. t) \<omega>)) \<in> borel_measurable ?F"
     using cm by (rule measurable_compose) (rule thM)
   have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
       = {\<omega> \<in> space ?F. \<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t}"
     unfolding spF
   proof (rule Collect_cong, rule conj_cong[OF refl])
-    fix \<omega> :: "'n pairpath" assume w: "\<omega> \<in> space ?B"
+    fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" assume w: "\<omega> \<in> space ?B"
     have cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
       by (rule path_sets_fst_continuous[OF refl w])
     show "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
@@ -965,23 +965,23 @@ text \<open>Comparing two stopping times: apply
 
 lemma path_stopping_time_shift_event:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n::finite pairpath) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
     and i: "0 \<le> i" and t: "0 \<le> t"
-  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure). min (\<theta> \<omega> + i) T \<le> t}
-      \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+  shows "{\<omega> \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). min (\<theta> \<omega> + i) T \<le> t}
+      \<in> sets (natural_filtration (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
 proof (cases "t \<le> T")
   case True
-  have st': "path_stopping_time T (\<lambda>\<omega> :: 'n pairpath. min (\<theta> \<omega> + i) T)"
+  have st': "path_stopping_time T (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min (\<theta> \<omega> + i) T)"
     by (rule path_stopping_time_shift[OF st i])
-  have m': "(\<lambda>\<omega> :: 'n pairpath. min (\<theta> \<omega> + i) T) \<in> borel_measurable
-      (path_borel T :: ('n pairpath) measure)"
+  have m': "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min (\<theta> \<omega> + i) T) \<in> borel_measurable
+      (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     using thM by measurable
   show ?thesis
     by (rule path_stopping_time_event_filtration[OF T0 st' m' t True])
 next
   case False
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t"
   have "{\<omega> \<in> space ?B. min (\<theta> \<omega> + i) T \<le> t} = space ?B"
     using False by auto
   moreover have "space ?B \<in> sets ?F"
@@ -1017,18 +1017,18 @@ text \<open>Square-integrability of the compensated entry, from its
 
 lemma path_stopping_time_event_filtration_all:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n::finite pairpath) measure)"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
     and t: "0 \<le> t"
-  shows "{\<omega> \<in> space (path_borel T :: ('n pairpath) measure). \<sigma> \<omega> \<le> t}
-      \<in> sets (natural_filtration (path_borel T :: ('n pairpath) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
+  shows "{\<omega> \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). \<sigma> \<omega> \<le> t}
+      \<in> sets (natural_filtration (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
 proof (cases "t \<le> T")
   case True
   show ?thesis by (rule path_stopping_time_event_filtration[OF T0 st sM t True])
 next
   case False
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t"
-  have lt: "\<sigma> \<omega> \<le> t" for \<omega> :: "'n pairpath"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t"
+  have lt: "\<sigma> \<omega> \<le> t" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     using path_stopping_time_le[OF st, of \<omega>] False by simp
   have "{\<omega> \<in> space ?B. \<sigma> \<omega> \<le> t} = space ?B" using lt by blast
   moreover have "space ?B \<in> sets ?F"
@@ -1151,23 +1151,23 @@ proof (rule pre_sigma_ofI[OF S])
 qed
 
 lemma pstopped_vimage_pre_sigma:
-  fixes P :: "('n::finite pairpath) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes T0: "0 \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-    and A: "A \<in> sets (path_borel T :: ('n pairpath) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and A: "A \<in> sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "pstopped T \<theta> -` A \<inter> space P
       \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<theta>"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v)"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_le[OF st])
   have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t" for t
     by (rule natural_filtration_cong_space[OF spP])
   have mono: "sets (?F s) \<subseteq> sets (?F t)" if "0 \<le> s" and "s \<le> t" for s t
     by (rule sets_natural_filtration_mono[OF that(2)])
@@ -1179,7 +1179,7 @@ proof -
   show ?thesis
   proof (rule pre_sigma_ofI_le[OF T0 mono thT S])
     fix t :: real assume t: "0 \<le> t" and tT: "t \<le> T"
-    let ?g = "\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>)"
+    let ?g = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>)"
     have mg: "?g \<in> ?F t \<rightarrow>\<^sub>M ?B"
       unfolding FB
       by (rule measurable_compose
@@ -1194,7 +1194,7 @@ proof -
         = (?g -` A \<inter> space P) \<inter> {\<omega> \<in> space P. \<theta> \<omega> \<le> t}"
     proof -
       have "pstopped T \<theta> \<omega> = ?g \<omega>"
-        if "\<theta> \<omega> \<le> t" and "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+        if "\<theta> \<omega> \<le> t" and "\<omega> \<in> space P" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
       proof -
         have cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
           by (rule path_sets_fst_continuous[OF setsP that(2)])
@@ -1737,27 +1737,27 @@ proof -
 qed
 
 theorem stopped_increment_of_horizon_gen:
-  fixes P :: "('n::finite pairpath) measure"
-    and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and \<sigma> \<rho> :: "'n pairpath \<Rightarrow> real"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+    and Y :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real" and \<sigma> \<rho> :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes T0: "0 < T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and H: "horizon_sq_int_martingale P
         (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
     and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
     and sts: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and str: "path_stopping_time T \<rho>"
-    and rM: "\<rho> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-    and le: "\<And>\<omega> :: 'n pairpath. \<sigma> \<omega> \<le> \<rho> \<omega>"
+    and rM: "\<rho> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and le: "\<And>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<sigma> \<omega> \<le> \<rho> \<omega>"
     and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
   shows "set_lebesgue_integral P A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
        = set_lebesgue_integral P A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v)"
   have T0': "0 \<le> T" using T0 by simp
   have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t" for t
     by (rule natural_filtration_cong_space[OF spP])
   interpret H: horizon_sq_int_martingale P ?F Y T by (rule H)
 
@@ -1766,13 +1766,13 @@ proof -
     by (rule sets_natural_filtration_mono[OF that(2)])
   have sub: "subalgebra P (?F t)" if "0 \<le> t" for t
     by (rule H.subalgebras[OF that])
-  have sig0: "0 \<le> \<sigma> \<omega>" for \<omega> :: "'n pairpath"
+  have sig0: "0 \<le> \<sigma> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_nonneg[OF sts])
-  have sigU: "\<sigma> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+  have sigU: "\<sigma> \<omega> \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_le[OF sts])
-  have rho0: "0 \<le> \<rho> \<omega>" for \<omega> :: "'n pairpath"
+  have rho0: "0 \<le> \<rho> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_nonneg[OF str])
-  have rhoU: "\<rho> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+  have rhoU: "\<rho> \<omega> \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_le[OF str])
   have stops: "{\<omega> \<in> space P. \<sigma> \<omega> \<le> t} \<in> sets (?F t)" if t: "0 \<le> t" for t
     unfolding FB spP
@@ -1790,10 +1790,10 @@ proof -
     show "s \<in> {0..T}" using s0 sT by simp
   qed
   have conts: "(\<lambda>n. Y (dyceil n T (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
-    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    if w: "\<omega> \<in> space P" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule conv[OF w sig0 sigU])
   have contr: "(\<lambda>n. Y (dyceil n T (\<rho> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<rho> \<omega>) \<omega>"
-    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    if w: "\<omega> \<in> space P" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule conv[OF w rho0 rhoU])
 
   have pathcont: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
@@ -1809,22 +1809,22 @@ proof -
 qed
 
 lemma integrable_at_path_stopping_time:
-  fixes P :: "('n::finite pairpath) measure"
-    and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and \<sigma> :: "'n pairpath \<Rightarrow> real"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+    and Y :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real" and \<sigma> :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes T0: "0 < T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and H: "horizon_sq_int_martingale P
         (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
     and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
     and sts: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "integrable P (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v)"
   have T0': "0 \<le> T" using T0 by simp
   have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t" for t
     by (rule natural_filtration_cong_space[OF spP])
   interpret H: horizon_sq_int_martingale P ?F Y T by (rule H)
 
@@ -1833,15 +1833,15 @@ proof -
     by (rule sets_natural_filtration_mono[OF that(2)])
   have sub: "subalgebra P (?F t)" if "0 \<le> t" for t
     by (rule H.subalgebras[OF that])
-  have sig0: "0 \<le> \<sigma> \<omega>" for \<omega> :: "'n pairpath"
+  have sig0: "0 \<le> \<sigma> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_nonneg[OF sts])
-  have sigU: "\<sigma> \<omega> \<le> T" for \<omega> :: "'n pairpath"
+  have sigU: "\<sigma> \<omega> \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_le[OF sts])
   have stops: "{\<omega> \<in> space P. \<sigma> \<omega> \<le> t} \<in> sets (?F t)" if t: "0 \<le> t" for t
     unfolding FB spP
     by (rule path_stopping_time_event_filtration_all[OF T0' sts sM t])
   have conts: "(\<lambda>n. Y (dyceil n T (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
-    if w: "\<omega> \<in> space P" for \<omega> :: "'n pairpath"
+    if w: "\<omega> \<in> space P" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof (rule continuous_on_tendsto_compose
       [OF Ycont[OF w] dyceil_tendsto[OF sig0 sigU]])
     show "\<forall>\<^sub>F n in sequentially. dyceil n T (\<sigma> \<omega>) \<in> {0..T}"
@@ -1901,35 +1901,35 @@ text \<open>The compensated clause does not ride along on the additive split,
   increment from Doob's \<open>Dsup_sq_integrable\<close>.\<close>
 
 lemma set_integral_increment_times_known:
-  fixes P :: "('n::finite pairpath) measure"
-    and Y :: "real \<Rightarrow> 'n pairpath \<Rightarrow> real" and Z :: "'n pairpath \<Rightarrow> real"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+    and Y :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real" and Z :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes T0: "0 < T" and PS: "prob_space P"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and H: "horizon_sq_int_martingale P
         (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) Y T"
     and Ycont: "\<And>\<omega>. \<omega> \<in> space P \<Longrightarrow> continuous_on {0..T} (\<lambda>s. Y s \<omega>)"
     and sts: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and str: "path_stopping_time T \<rho>"
-    and rM: "\<rho> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-    and le: "\<And>\<omega> :: 'n pairpath. \<sigma> \<omega> \<le> \<rho> \<omega>"
+    and rM: "\<rho> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and le: "\<And>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<sigma> \<omega> \<le> \<rho> \<omega>"
     and Zpre: "\<And>B. B \<in> sets borel \<Longrightarrow> Z -` B \<inter> space P
         \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
-    and Zsq: "integrable P (\<lambda>\<omega> :: 'n pairpath. (Z \<omega>)\<^sup>2)"
+    and Zsq: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (Z \<omega>)\<^sup>2)"
     and A: "A \<in> pre_sigma_of P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) \<sigma>"
-  shows "integrable P (\<lambda>\<omega> :: 'n pairpath. (Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>) * Z \<omega>)"
+  shows "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>) * Z \<omega>)"
     and "set_lebesgue_integral P A
-        (\<lambda>\<omega> :: 'n pairpath. (Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>) * Z \<omega>) = 0"
+        (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>) * Z \<omega>) = 0"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?D = "\<lambda>\<omega> :: 'n pairpath. Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v)"
+  let ?D = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Y (\<rho> \<omega>) \<omega> - Y (\<sigma> \<omega>) \<omega>"
   let ?G = "sigma (space P) (pre_sigma_of P ?F \<sigma>)"
   have T0': "0 \<le> T" using T0 by simp
   interpret PP: prob_space P by (rule PS)
   interpret H: horizon_sq_int_martingale P ?F Y T by (rule H)
   have spP: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t" for t
+  have FB: "?F t = natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t" for t
     by (rule natural_filtration_cong_space[OF spP])
   have subF: "subalgebra P (?F t)" if "0 \<le> t" for t
     by (rule H.subalgebras[OF that])
@@ -1953,9 +1953,9 @@ proof -
         finite_measure_subalgebra_axioms.intro fm subG)
 
   \<comment> \<open>the increment: integrable, and square integrable by Doob\<close>
-  have intr: "integrable P (\<lambda>\<omega> :: 'n pairpath. Y (\<rho> \<omega>) \<omega>)"
+  have intr: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Y (\<rho> \<omega>) \<omega>)"
     by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont str rM])
-  have ints: "integrable P (\<lambda>\<omega> :: 'n pairpath. Y (\<sigma> \<omega>) \<omega>)"
+  have ints: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Y (\<sigma> \<omega>) \<omega>)"
     by (rule integrable_at_path_stopping_time[OF T0 setsP H Ycont sts sM])
   have intD: "integrable P ?D"
     by (rule Bochner_Integration.integrable_diff[OF intr ints])
@@ -1963,12 +1963,12 @@ proof -
     by (rule AE_I2) (rule Ycont)
   have Dbd: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> H.Dsup \<omega>"
     by (rule H.Dsup_dominates[OF pathcont])
-  have Dsq: "integrable P (\<lambda>\<omega> :: 'n pairpath. (?D \<omega>)\<^sup>2)"
+  have Dsq: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (?D \<omega>)\<^sup>2)"
   proof (rule Bochner_Integration.integrable_bound
-      [where f = "\<lambda>\<omega> :: 'n pairpath. 4 * (H.Dsup \<omega>)\<^sup>2"])
-    show "integrable P (\<lambda>\<omega> :: 'n pairpath. 4 * (H.Dsup \<omega>)\<^sup>2)"
+      [where f = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). 4 * (H.Dsup \<omega>)\<^sup>2"])
+    show "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). 4 * (H.Dsup \<omega>)\<^sup>2)"
       using H.Dsup_sq_integrable by simp
-    show "(\<lambda>\<omega> :: 'n pairpath. (?D \<omega>)\<^sup>2) \<in> borel_measurable P"
+    show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (?D \<omega>)\<^sup>2) \<in> borel_measurable P"
       using intD by simp
     show "AE \<omega> in P. norm ((?D \<omega>)\<^sup>2) \<le> norm (4 * (H.Dsup \<omega>)\<^sup>2)"
       using Dbd
@@ -1991,16 +1991,16 @@ proof -
   \<comment> \<open>the known factor\<close>
   have ZG: "Z \<in> borel_measurable ?G"
   proof (rule measurableI)
-    show "Z \<omega> \<in> space borel" for \<omega> :: "'n pairpath" by simp
+    show "Z \<omega> \<in> space borel" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" by simp
     fix B :: "real set" assume B: "B \<in> sets borel"
     show "Z -` B \<inter> space ?G \<in> sets ?G" using Zpre[OF B] setsG spG by simp
   qed
   have ZP: "Z \<in> borel_measurable P"
     using ZG measurable_from_subalg[OF subG] by blast
   have Dm: "?D \<in> borel_measurable P" using intD by simp
-  have intZD: "integrable P (\<lambda>\<omega> :: 'n pairpath. Z \<omega> * ?D \<omega>)"
+  have intZD: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Z \<omega> * ?D \<omega>)"
     by (rule integrable_mult_of_sq[OF ZP Dm Zsq Dsq])
-  show int1: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?D \<omega> * Z \<omega>)"
+  show int1: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). ?D \<omega> * Z \<omega>)"
     using intZD by (simp add: mult.commute)
 
   \<comment> \<open>the increment conditions to zero\<close>
@@ -2012,9 +2012,9 @@ proof -
     fix C assume C: "C \<in> sets ?G"
     then have C': "C \<in> pre_sigma_of P ?F \<sigma>" using setsG by simp
     have CP: "C \<in> sets P" by (rule pre_sigma_of_sets[OF C'])
-    have sii: "set_integrable P C (\<lambda>\<omega> :: 'n pairpath. Y (\<sigma> \<omega>) \<omega>)"
+    have sii: "set_integrable P C (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Y (\<sigma> \<omega>) \<omega>)"
       unfolding set_integrable_def by (rule integrable_mult_indicator[OF CP ints])
-    have sij: "set_integrable P C (\<lambda>\<omega> :: 'n pairpath. Y (\<rho> \<omega>) \<omega>)"
+    have sij: "set_integrable P C (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Y (\<rho> \<omega>) \<omega>)"
       unfolding set_integrable_def by (rule integrable_mult_indicator[OF CP intr])
     have "set_lebesgue_integral P C (cond_exp P ?G ?D)
         = set_lebesgue_integral P C ?D"
@@ -2037,15 +2037,15 @@ proof -
   have AG: "A \<in> sets ?G" using A setsG by simp
   have aeA: "AE \<omega>\<in>A in P. cond_exp P ?G (\<lambda>\<omega>. Z \<omega> * ?D \<omega>) \<omega> = 0"
     using ae0 by (auto elim: eventually_mono)
-  have "set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. Z \<omega> * ?D \<omega>)
+  have "set_lebesgue_integral P A (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Z \<omega> * ?D \<omega>)
       = set_lebesgue_integral P A (cond_exp P ?G (\<lambda>\<omega>. Z \<omega> * ?D \<omega>))"
     by (rule SF.cond_exp_set_integral[OF intZD AG])
-  also have "\<dots> = set_lebesgue_integral P A (\<lambda>\<omega> :: 'n pairpath. 0)"
+  also have "\<dots> = set_lebesgue_integral P A (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). 0)"
     by (rule set_lebesgue_integral_cong_AE
         [OF AP SF.borel_measurable_cond_exp' borel_measurable_const aeA])
   also have "\<dots> = 0" by (simp add: set_lebesgue_integral_def)
   finally show "set_lebesgue_integral P A
-      (\<lambda>\<omega> :: 'n pairpath. ?D \<omega> * Z \<omega>) = 0"
+      (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). ?D \<omega> * Z \<omega>) = 0"
     by (simp add: mult.commute)
 qed
 

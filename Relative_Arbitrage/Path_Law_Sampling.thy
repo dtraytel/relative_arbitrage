@@ -83,24 +83,24 @@ qed
 subsection \<open>Clause (iv): the inner-integral identity\<close>
 
 lemma pstopped_eval_filtration:
-  fixes P :: "('n::finite pairpath) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes T0: "0 \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and r0: "0 \<le> r" and ru: "r \<le> u"
-  shows "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> r)
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> r)
       \<in> borel_measurable (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
 proof (cases "r \<le> T")
   case False
   then have "r \<notin> {0..T}" by simp
-  then have "(\<lambda>\<omega> :: 'n pairpath. pstopped T \<theta> \<omega> r) = (\<lambda>\<omega>. undefined)"
+  then have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> r) = (\<lambda>\<omega>. undefined)"
     by (simp add: pstopped_outside)
   then show ?thesis by simp
 next
   case True
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?G = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?G = "natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v)"
   define u' where "u' = min u T"
   have u'0: "0 \<le> u'" using r0 ru True unfolding u'_def by simp
   have u'T: "u' \<le> T" unfolding u'_def by simp
@@ -110,14 +110,14 @@ next
   have sp: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
   have spG: "space (?G v) = space P" for v
     unfolding natural_filtration_def by simp
-  have nf: "?G v = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) v" for v
+  have nf: "?G v = natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) v" for v
     by (rule natural_filtration_cong_space[OF sp])
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
+  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     by (rule path_stopping_time_nonneg[OF st])
-  let ?Bu = "(path_borel u' :: ('n pairpath) measure)"
+  let ?Bu = "(path_borel u' :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 
   \<comment> \<open>the truncated stopping time is measurable at level \<open>u'\<close>\<close>
-  have gm: "(\<lambda>\<omega> :: 'n pairpath. min r (\<theta> \<omega>)) \<in> borel_measurable (?G u')"
+  have gm: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min r (\<theta> \<omega>)) \<in> borel_measurable (?G u')"
   proof (rule borel_measurableI_le)
     fix t :: real
     show "{\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t} \<in> sets (?G u')"
@@ -135,7 +135,7 @@ next
         have eqs: "{\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t}
             = {\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}" using lt sp spG by auto
         have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t}
-            \<in> sets (natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) t)"
+            \<in> sets (natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t)"
           by (rule path_stopping_time_event_filtration_all[OF T0 st thM True])
         then have inG: "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> t} \<in> sets (?G t)" unfolding nf .
         have "sets (?G t) \<subseteq> sets (?G u')"
@@ -146,7 +146,7 @@ next
         then have tneg: "t < 0" by simp
         have e: "{\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t} = {}"
         proof (rule equals0I)
-          fix x :: "'n pairpath"
+          fix x :: "(real \<Rightarrow> 'a \<times> 'b)"
           assume "x \<in> {\<omega> \<in> space (?G u'). min r (\<theta> \<omega>) \<le> t}"
           then have le: "min r (\<theta> x) \<le> t" by blast
           have "0 \<le> min r (\<theta> x)" using r0 th0[of x] by simp
@@ -161,11 +161,11 @@ next
   have cutP: "pcut u' \<in> P \<rightarrow>\<^sub>M ?Bu" by (rule pcut_measurable[OF u'0 u'T setsP])
   have cutm: "pcut u' \<in> ?G u' \<rightarrow>\<^sub>M ?Bu"
   proof (rule measurableI)
-    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space (?G u')"
+    fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" assume "\<omega> \<in> space (?G u')"
     then have "\<omega> \<in> space P" using spG by simp
     then show "pcut u' \<omega> \<in> space ?Bu" by (rule measurable_space[OF cutP])
   next
-    fix A :: "('n pairpath) set" assume A: "A \<in> sets ?Bu"
+    fix A :: "((real \<Rightarrow> 'a \<times> 'b)) set" assume A: "A \<in> sets ?Bu"
     have "pcut u' -` A \<inter> space P \<in> sets (?G u')"
       unfolding sets_natural_filtration_eq_pcut_vimage[OF setsP u'0 u'T]
       using A by blast
@@ -173,17 +173,17 @@ next
       unfolding spG .
   qed
 
-  have g0: "0 \<le> min r (\<theta> \<omega>)" for \<omega> :: "'n pairpath" using r0 th0[of \<omega>] by simp
-  have gu: "min r (\<theta> \<omega>) \<le> u'" for \<omega> :: "'n pairpath" using ru' by simp
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. pcut u' \<omega> (min r (\<theta> \<omega>)))
+  have g0: "0 \<le> min r (\<theta> \<omega>)" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" using r0 th0[of \<omega>] by simp
+  have gu: "min r (\<theta> \<omega>) \<le> u'" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" using ru' by simp
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pcut u' \<omega> (min r (\<theta> \<omega>)))
       \<in> borel_measurable (?G u')"
     by (rule path_eval_at_measurable_time
-        [where X = "pcut u'" and g = "\<lambda>\<omega> :: 'n pairpath. min r (\<theta> \<omega>)",
+        [where X = "pcut u'" and g = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min r (\<theta> \<omega>)",
           OF u'0 cutm gm g0 gu])
-  have same: "(\<lambda>\<omega> :: 'n pairpath. pcut u' \<omega> (min r (\<theta> \<omega>)))
+  have same: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pcut u' \<omega> (min r (\<theta> \<omega>)))
       = (\<lambda>\<omega>. pstopped T \<theta> \<omega> r)"
   proof (rule ext)
-    fix \<omega> :: "'n pairpath"
+    fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     have m: "min r (\<theta> \<omega>) \<in> {0..u'}" using g0[of \<omega>] gu[of \<omega>] by simp
     have "pcut u' \<omega> (min r (\<theta> \<omega>)) = \<omega> (min r (\<theta> \<omega>))" by (rule pcut_apply[OF m])
     also have "\<dots> = pstopped T \<theta> \<omega> r" by (rule pstopped_apply[OF rmem, symmetric])
@@ -1371,57 +1371,57 @@ qed
 subsection \<open>Clause (iv): the compensated martingale for the glued law\<close>
 
 lemma pfut_vimage_natural_filtration:
-  fixes P :: "('n::finite pairpath) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and i: "0 \<le> i" and iS: "i \<le> T - r"
-    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: ('n pairpath) measure)) 0 (\<lambda>v w. w v) i)"
+    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)) 0 (\<lambda>v w. w v) i)"
   shows "pfut r T -` A' \<inter> space P
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
 proof -
-  let ?Y = "(path_borel (T - r) :: ('n pairpath) measure)"
+  let ?Y = "(path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   have sp: "space (pair_law_of (T - r) (pfut r T) P) = space ?Y"
     by (simp add: space_pair_law_of space_borel_of)
   have nfeq: "natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
-        (\<lambda>v w :: 'n pairpath. w v) i
+        (\<lambda>v w :: (real \<Rightarrow> 'a \<times> 'b). w v) i
       = natural_filtration ?Y 0 (\<lambda>v w. w v) i"
     by (rule natural_filtration_cong_space[OF sp])
   have AQ: "A' \<in> sets (natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
-      (\<lambda>v w :: 'n pairpath. w v) i)"
+      (\<lambda>v w :: (real \<Rightarrow> 'a \<times> 'b). w v) i)"
     unfolding nfeq using A' .
   have m: "pfut r T
-      \<in> natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min i (T - r))
+      \<in> natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + min i (T - r))
         \<rightarrow>\<^sub>M natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
             (\<lambda>v w. w v) i"
     by (rule pfut_filtration_measurable[OF r rT setsP])
   have mm: "min i (T - r) = i" using iS by simp
   have "pfut r T -` A' \<inter> space (natural_filtration P 0
-      (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))
+      (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + i))
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
     using measurable_sets[OF m AQ] unfolding mm .
   then show ?thesis by simp
 qed
 
 lemma rect_vimage_natural_filtration:
-  fixes P :: "('n::finite pairpath) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and i: "0 \<le> i" and iS: "i \<le> T - r"
-    and A: "A \<in> sets (path_borel r :: ('n pairpath) measure)"
-    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: ('n pairpath) measure)) 0 (\<lambda>v w. w v) i)"
-  shows "(\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
+    and A: "A \<in> sets (path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)) 0 (\<lambda>v w. w v) i)"
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
 proof -
   have c1: "pcut r -` A \<inter> space P
-      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) r)"
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) r)"
     by (rule pcut_vimage_natural_filtration[OF r rT setsP A])
   have c1': "pcut r -` A \<inter> space P
-      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))"
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + i))"
     using c1 sets_natural_filtration_mono[of r "r + i"] i by auto
   have c2: "pfut r T -` A' \<inter> space P
-      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))"
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + i))"
     by (rule pfut_vimage_natural_filtration[OF r rT setsP i iS A'])
-  have "(\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
       = (pcut r -` A \<inter> space P) \<inter> (pfut r T -` A' \<inter> space P)" by auto
   then show ?thesis using sets.Int[OF c1' c2] by simp
 qed

@@ -1269,24 +1269,24 @@ text \<open>The paper passes the covariation constraint to the limit law via
   every approximating law, hence under the limit.\<close>
 
 lemma restrict_measurable_natural_filtration:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
   shows "(\<lambda>\<omega>. restrict \<omega> {0..s})
       \<in> natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s
-        \<rightarrow>\<^sub>M (path_borel s :: ('n pairpath) measure)"
+        \<rightarrow>\<^sub>M (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
   let ?F = "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s"
-  have spF: "space ?F = mspace (path_metric T :: ('n pairpath) metric)"
+  have spF: "space ?F = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_of_path_sets[OF setsQ])
-  have evm: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable ?F"
+  have evm: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u) \<in> borel_measurable ?F"
     if u: "u \<in> {0..s}" for u
     unfolding natural_filtration_def
     by (rule measurable_family_vimage_algebra) (use u in auto)
   have cont: "continuous_on {0..s} (\<lambda>u. \<omega> u)"
-    if w: "\<omega> \<in> space ?F" for \<omega> :: "'n pairpath"
+    if w: "\<omega> \<in> space ?F" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof -
-    have "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    have "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       using w spF by simp
     from mspace_path_metricD[OF this] show ?thesis
       by (rule continuous_on_subset) (use sT s in auto)
@@ -1295,10 +1295,10 @@ proof -
 qed
 
 lemma past_test_measurable_natural_filtration:
-  fixes Q :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
+  assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
-    and h: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
+    and h: "h \<in> borel_measurable (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}))
       \<in> borel_measurable (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s)"
   by (rule measurable_compose
