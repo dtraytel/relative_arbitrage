@@ -225,35 +225,35 @@ proof -
 qed
 
 lemma padd_measurable_left:
-  fixes p' :: "'n::finite pairpath"
+  fixes p' :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes T0: "0 \<le> T"
-    and p: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and p: "p' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "(\<lambda>w. padd T p' w)
-      \<in> (path_borel T :: ('n pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have into: "padd T p' w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  have into: "padd T p' w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "w \<in> space ?B" for w
     using that p by (auto simp: space_borel_of intro: padd_mspace)
-  have ev: "(\<lambda>w :: 'n pairpath. padd T p' w t) \<in> borel_measurable ?B" for t
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) \<in> borel_measurable ?B" for t
   proof (cases "t \<in> {0..T}")
     case True
-    have "(\<lambda>w :: 'n pairpath. p' t + w t) \<in> borel_measurable ?B"
+    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). p' t + w t) \<in> borel_measurable ?B"
       by (intro borel_measurable_add borel_measurable_const
           pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: padd_apply[OF True])
   next
     case False
-    have "(\<lambda>w :: 'n pairpath. padd T p' w t) = (\<lambda>w. undefined)"
+    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) = (\<lambda>w. undefined)"
       by (rule ext) (rule padd_outside[OF False])
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    show "(\<lambda>w. mdist (path_metric T :: ('n pairpath) metric)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (padd T p' w) a) \<in> borel_measurable ?B"
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
@@ -325,48 +325,48 @@ lemma padd_measurable:
   fixes T :: real
   assumes T0: "0 \<le> T"
   shows "(\<lambda>p. padd T (fst p) (snd p))
-      \<in> (path_borel T :: ('n::finite pairpath) measure)
-        \<Otimes>\<^sub>M (path_borel T :: ('n pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+        \<Otimes>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   let ?M = "?B \<Otimes>\<^sub>M ?B"
-  let ?f = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p)"
-  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+  let ?f = "\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). padd T (fst p) (snd p)"
+  have spB: "space ?B = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_borel_of)
-  have into: "?f p \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  have into: "?f p \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if p: "p \<in> space ?M" for p
   proof -
     have "fst p \<in> space ?B" and "snd p \<in> space ?B"
       using p by (auto simp: space_pair_measure)
     then show ?thesis using spB by (auto intro: padd_mspace)
   qed
-  have ev: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?f p t) \<in> borel_measurable ?M"
+  have ev: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). ?f p t) \<in> borel_measurable ?M"
     for t
   proof (cases "t \<in> {0..T}")
     case True
-    have e1: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). fst p t) \<in> borel_measurable ?M"
+    have e1: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). fst p t) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_fst
             pair_law_eval_measurable[OF refl]])
-    have e2: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). snd p t) \<in> borel_measurable ?M"
+    have e2: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). snd p t) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_snd
             pair_law_eval_measurable[OF refl]])
-    have "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). fst p t + snd p t)
+    have "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). fst p t + snd p t)
         \<in> borel_measurable ?M"
       using e1 e2 by simp
     then show ?thesis by (simp add: padd_apply[OF True])
   next
     case False
-    have "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?f p t)
+    have "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). ?f p t)
         = (\<lambda>p. undefined)"
       by (rule ext) (rule padd_outside[OF False])
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    show "(\<lambda>p. mdist (path_metric T :: ('n pairpath) metric) (?f p) a)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>p. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (?f p) a)
         \<in> borel_measurable ?M"
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
@@ -591,14 +591,14 @@ text \<open>The almost-sure transfer through a glue, with the underlying measure
   also unfold a \<open>pair_law_of\<close> hiding inside \<open>Q\<close> itself.\<close>
 
 lemma padd_measurable_ksemi:
-  fixes Q :: "('n::finite pairpath) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes T0: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). padd T (fst p) (snd p))
-      \<in> Q \<Otimes>\<^sub>M (path_borel T :: ('n pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). padd T (fst p) (snd p))
+      \<in> Q \<Otimes>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   have s: "sets (Q \<Otimes>\<^sub>M ?B) = sets (?B \<Otimes>\<^sub>M ?B)"
     by (rule sets_pair_measure_cong[OF setsQ refl])
   show ?thesis
@@ -678,29 +678,29 @@ lemma pglue_in_mspace:
         mspace_path_metricD[OF w] mspace_path_metricD[OF w']]])
 
 lemma pglue_measurable:
-  fixes Q R :: "('n::finite pairpath) measure"
+  fixes Q R :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
+    and setsQ: "sets Q = sets (path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsR: "sets R = sets ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure))"
   shows "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M R \<rightarrow>\<^sub>M
-      (path_borel T :: ('n pairpath) measure)"
+      (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
   have T0: "0 \<le> T" using r rT by simp
-  have eQ: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
+  have eQ: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b). fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     for v
     by (rule measurable_compose[OF measurable_fst
           pair_law_eval_measurable[OF setsQ]])
-  have eR: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
+  have eR: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b). snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     for v
     by (rule measurable_compose[OF measurable_snd
           pair_law_eval_measurable[OF setsR]])
-  have Xm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
+  have Xm: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b).
         if t \<le> r then fst p t else fst p r + (snd p (t - r) - snd p 0))
       \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" for t
     using eQ eR by simp
   have cont: "continuous_on {0..T} (\<lambda>t. if t \<le> r then fst p t
         else fst p r + (snd p (t - r) - snd p 0))"
-    if p: "p \<in> space (Q \<Otimes>\<^sub>M R)" for p :: "'n pairpath \<times> 'n pairpath"
+    if p: "p \<in> space (Q \<Otimes>\<^sub>M R)" for p :: "(real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b)"
   proof (rule continuous_on_pglue[OF r rT])
     have "fst p \<in> space Q" "snd p \<in> space R"
       using p by (auto simp: space_pair_measure)
@@ -765,25 +765,25 @@ lemma pglue_self:
   by (rule ext) (auto simp: pglue_def pcut_def)
 
 lemma iglue_measurable:
-  fixes Q R :: "('n::finite pairpath) measure"
+  fixes Q R :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes r: "0 \<le> r"
-    and setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    and setsR: "sets R = sets (ipath_space :: ('n pairpath) measure)"
+    and setsQ: "sets Q = sets (path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsR: "sets R = sets (ipath_space :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "(\<lambda>p. iglue r (fst p) (snd p)) \<in> Q \<Otimes>\<^sub>M R \<rightarrow>\<^sub>M ipath_space"
 proof -
-  have eQ: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
+  have eQ: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b). fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     for v
     by (rule measurable_compose[OF measurable_fst
           pair_law_eval_measurable[OF setsQ]])
-  have eR: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
+  have eR: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b). snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     if v: "0 \<le> v" for v
   proof -
-    have "(\<lambda>f :: 'n pairpath. f v) \<in> borel_measurable R"
+    have "(\<lambda>f :: (real \<Rightarrow> 'a \<times> 'b). f v) \<in> borel_measurable R"
       unfolding measurable_cong_sets[OF setsR refl]
       by (rule ipath_eval_measurable[OF v])
     then show ?thesis by (rule measurable_compose[OF measurable_snd])
   qed
-  have Xm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath.
+  have Xm: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b).
         if t \<le> r then fst p t else fst p r + (snd p (t - r) - snd p 0))
       \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" if t: "0 \<le> t" for t
   proof (cases "t \<le> r")
@@ -791,16 +791,16 @@ proof -
     then show ?thesis using eQ by simp
   next
     case False
-    have m2: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p (t - r))
+    have m2: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b). snd p (t - r))
         \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" using False by (intro eR) simp
-    have m3: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p 0)
+    have m3: "(\<lambda>p :: (real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b). snd p 0)
         \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" by (rule eR) simp
     show ?thesis unfolding if_not_P[OF False]
       by (intro borel_measurable_add borel_measurable_diff eQ m2 m3)
   qed
   have cont: "continuous_on {0..} (\<lambda>t. if t \<le> r then fst p t
         else fst p r + (snd p (t - r) - snd p 0))"
-    if p: "p \<in> space (Q \<Otimes>\<^sub>M R)" for p :: "'n pairpath \<times> 'n pairpath"
+    if p: "p \<in> space (Q \<Otimes>\<^sub>M R)" for p :: "(real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b)"
   proof (rule continuous_on_iglue[OF r])
     have "fst p \<in> space Q" "snd p \<in> space R"
       using p by (auto simp: space_pair_measure)
@@ -1071,24 +1071,24 @@ proof (rule ext)
 qed
 
 lemma mdist_pglue_le:
-  fixes w wt w' wt' :: "'n::finite pairpath"
+  fixes w wt w' wt' :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and w: "w \<in> mspace (path_metric r :: ('n pairpath) metric)"
-    and wt: "wt \<in> mspace (path_metric r :: ('n pairpath) metric)"
-    and w': "w' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-    and wt': "wt' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-  shows "mdist (path_metric T :: ('n pairpath) metric)
+    and w: "w \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and wt: "wt \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and w': "w' \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and wt': "wt' \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  shows "mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (pglue r T w w') (pglue r T wt wt')
-      \<le> mdist (path_metric r :: ('n pairpath) metric) w wt
-        + 2 * mdist (path_metric (T - r) :: ('n pairpath) metric) w' wt'"
+      \<le> mdist (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric) w wt
+        + 2 * mdist (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) w' wt'"
 proof -
-  let ?d1 = "mdist (path_metric r :: ('n pairpath) metric) w wt"
-  let ?d2 = "mdist (path_metric (T - r) :: ('n pairpath) metric) w' wt'"
+  let ?d1 = "mdist (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric) w wt"
+  let ?d2 = "mdist (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) w' wt'"
   have T0: "0 \<le> T" using r rT by simp
   have Tr0: "0 \<le> T - r" using rT by simp
-  have g1: "pglue r T w w' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  have g1: "pglue r T w w' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule pglue_in_mspace[OF r rT w w'])
-  have g2: "pglue r T wt wt' \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  have g2: "pglue r T wt wt' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule pglue_in_mspace[OF r rT wt wt'])
   have pw1: "dist (w t) (wt t) \<le> ?d1" if "t \<in> {0..r}" for t
     using path_mdist_le_iff_all[OF r w wt] that by blast
@@ -1132,41 +1132,41 @@ lemma Lipschitz_pglue:
   fixes r T :: real
   assumes r: "0 \<le> r" and rT: "r \<le> T"
   shows "Lipschitz_continuous_map
-      (prod_metric (path_metric r :: ('n::finite pairpath) metric)
-        (path_metric (T - r) :: ('n pairpath) metric))
-      (path_metric T :: ('n pairpath) metric)
+      (prod_metric (path_metric r :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) metric)
+        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
+      (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
       (\<lambda>p. pglue r T (fst p) (snd p))"
   unfolding Lipschitz_continuous_map_def
 proof (intro conjI)
   show "(\<lambda>p. pglue r T (fst p) (snd p))
-      \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
-          (path_metric (T - r) :: ('n pairpath) metric))
-        \<rightarrow> mspace (path_metric T :: ('n pairpath) metric)"
+      \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
+        \<rightarrow> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     using pglue_in_mspace[OF r rT] by (intro funcsetI) auto
-  show "\<exists>B. \<forall>p \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
-          (path_metric (T - r) :: ('n pairpath) metric)).
-      \<forall>q \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
-          (path_metric (T - r) :: ('n pairpath) metric)).
-        mdist (path_metric T :: ('n pairpath) metric)
+  show "\<exists>B. \<forall>p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)).
+      \<forall>q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)).
+        mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
             ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
-          \<le> B * mdist (prod_metric (path_metric r :: ('n pairpath) metric)
-              (path_metric (T - r) :: ('n pairpath) metric)) p q"
+          \<le> B * mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+              (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
   proof (intro exI[of _ 3] ballI)
-    fix p q :: "'n pairpath \<times> 'n pairpath"
-    assume p: "p \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
-        (path_metric (T - r) :: ('n pairpath) metric))"
-      and q: "q \<in> mspace (prod_metric (path_metric r :: ('n pairpath) metric)
-        (path_metric (T - r) :: ('n pairpath) metric))"
-    from p have p1: "fst p \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      and p2: "snd p \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    fix p q :: "(real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b)"
+    assume p: "p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
+      and q: "q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
+    from p have p1: "fst p \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+      and p2: "snd p \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       by auto
-    from q have q1: "fst q \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      and q2: "snd q \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    from q have q1: "fst q \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+      and q2: "snd q \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       by auto
-    let ?a = "mdist (path_metric r :: ('n pairpath) metric) (fst p) (fst q)"
-    let ?b = "mdist (path_metric (T - r) :: ('n pairpath) metric) (snd p) (snd q)"
-    let ?pd = "mdist (prod_metric (path_metric r :: ('n pairpath) metric)
-        (path_metric (T - r) :: ('n pairpath) metric)) p q"
+    let ?a = "mdist (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (fst p) (fst q)"
+    let ?b = "mdist (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (snd p) (snd q)"
+    let ?pd = "mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
     have pdeq: "?pd = sqrt (?a\<^sup>2 + ?b\<^sup>2)"
       by (simp add: prod_dist_def case_prod_unfold)
     have c1: "?a \<le> ?pd"
@@ -1181,11 +1181,11 @@ proof (intro conjI)
       also have "\<dots> \<le> sqrt (?a\<^sup>2 + ?b\<^sup>2)" by (simp add: real_sqrt_le_mono)
       finally show ?thesis using pdeq by simp
     qed
-    have "mdist (path_metric T :: ('n pairpath) metric)
+    have "mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (pglue r T (fst p) (snd p)) (pglue r T (fst q) (snd q)) \<le> ?a + 2 * ?b"
       by (rule mdist_pglue_le[OF r rT p1 q1 p2 q2])
     also have "\<dots> \<le> 3 * ?pd" using c1 c2 by simp
-    finally show "mdist (path_metric T :: ('n pairpath) metric)
+    finally show "mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
         \<le> 3 * ?pd" by simp
   qed
@@ -1615,31 +1615,31 @@ lemma pembed_outside: "t \<notin> {0..T} \<Longrightarrow> pembed s T w t = unde
 lemma pembed_measurable:
   fixes s T :: real
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
-  shows "pembed s T \<in> (path_borel (T - s) :: ('n::finite pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+  shows "pembed s T \<in> (path_borel (T - s) :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
+  let ?Bs = "(path_borel (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
-  have into: "pembed s T w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+  have into: "pembed s T w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "w \<in> space ?Bs" for w
     using that by (auto simp: space_borel_of intro: pembed_mspace[OF s0 sT])
-  have ev: "(\<lambda>w :: 'n pairpath. pembed s T w t) \<in> borel_measurable ?Bs" for t
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) \<in> borel_measurable ?Bs" for t
   proof (cases "t \<in> {0..T}")
     case True
-    have "(\<lambda>w :: 'n pairpath. w (max (t - s) 0)) \<in> borel_measurable ?Bs"
+    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (max (t - s) 0)) \<in> borel_measurable ?Bs"
       by (rule pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: pembed_apply[OF True])
   next
     case False
-    have "(\<lambda>w :: 'n pairpath. pembed s T w t) = (\<lambda>w. undefined)"
+    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) = (\<lambda>w. undefined)"
       by (rule ext) (rule pembed_outside[OF False])
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    show "(\<lambda>w. mdist (path_metric T :: ('n pairpath) metric)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (pembed s T w) a) \<in> borel_measurable ?Bs"
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
@@ -1673,13 +1673,13 @@ qed
 lemma pembed_measurable_full:
   fixes s T :: real
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
-  shows "pembed s T \<in> (path_borel T :: ('n::finite pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+  shows "pembed s T \<in> (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   have a: "0 \<le> T - s" using sT by simp
   have b: "T - s \<le> T" using s0 by simp
-  have eq: "(\<lambda>\<omega> :: 'n pairpath. pembed s T (pcut (T - s) \<omega>)) = pembed s T"
+  have eq: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pembed s T (pcut (T - s) \<omega>)) = pembed s T"
     by (rule ext) (rule pembed_pcut[OF s0 sT])
   have "(\<lambda>\<omega>. pembed s T (pcut (T - s) \<omega>)) \<in> ?B \<rightarrow>\<^sub>M ?B"
     by (rule measurable_compose[OF pcut_measurable[OF a b refl]
@@ -1693,60 +1693,60 @@ text \<open>The clamped delayed embedding: total in \<open>s\<close>, and equal 
 
 lemma pdel_measurable:
   assumes T0: "0 \<le> T"
-  shows "pdel s T \<in> (path_borel T :: ('n::finite pairpath) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+  shows "pdel s T \<in> (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   unfolding pdel_def
   by (rule pembed_measurable_full[OF pdel_clamp_lo pdel_clamp_hi[OF T0]])
 
 lemma pdel_measurable_pair:
   assumes T0: "0 \<le> T"
   shows "(\<lambda>p. pdel (fst p) T (snd p))
-      \<in> (borel :: real measure) \<Otimes>\<^sub>M (path_borel T :: ('n::finite pairpath) measure)
-        \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+      \<in> (borel :: real measure) \<Otimes>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+        \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   let ?M = "(borel :: real measure) \<Otimes>\<^sub>M ?B"
-  have spM: "space ?M = UNIV \<times> mspace (path_metric T :: ('n pairpath) metric)"
+  have spM: "space ?M = UNIV \<times> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_pair_measure space_borel_of)
   have into: "pdel (fst p) T (snd p)
-      \<in> mspace (path_metric T :: ('n pairpath) metric)" if p: "p \<in> space ?M" for p
+      \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" if p: "p \<in> space ?M" for p
   proof -
-    have "p \<in> UNIV \<times> mspace (path_metric T :: ('n pairpath) metric)"
+    have "p \<in> UNIV \<times> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       using p unfolding spM .
-    then have "snd p \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    then have "snd p \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       by (simp add: mem_Times_iff)
     then show ?thesis by (rule pdel_mspace[OF T0])
   qed
-  have sndm: "(\<lambda>p :: real \<times> ('n pairpath). snd p) \<in> ?M \<rightarrow>\<^sub>M ?B"
+  have sndm: "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). snd p) \<in> ?M \<rightarrow>\<^sub>M ?B"
     by (rule measurable_snd)
   have ev: "(\<lambda>p. pdel (fst p) T (snd p) t) \<in> borel_measurable ?M" for t
   proof (cases "t \<in> {0..T}")
     case True
-    have gm: "(\<lambda>p :: real \<times> ('n pairpath). max (t - max 0 (min (fst p) T)) 0)
+    have gm: "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). max (t - max 0 (min (fst p) T)) 0)
         \<in> borel_measurable ?M" by measurable
     have g0: "0 \<le> max (t - max 0 (min (fst p) T)) 0"
-      for p :: "real \<times> ('n pairpath)" by simp
+      for p :: "real \<times> ((real \<Rightarrow> 'a \<times> 'b))" by simp
     have gT: "max (t - max 0 (min (fst p) T)) 0 \<le> T"
-      for p :: "real \<times> ('n pairpath)" using True by auto
-    have "(\<lambda>p :: real \<times> ('n pairpath).
+      for p :: "real \<times> ((real \<Rightarrow> 'a \<times> 'b))" using True by auto
+    have "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)).
         snd p (max (t - max 0 (min (fst p) T)) 0)) \<in> borel_measurable ?M"
       by (rule path_eval_at_measurable_time
-          [where X = "\<lambda>p :: real \<times> ('n pairpath). snd p"
-            and g = "\<lambda>p :: real \<times> ('n pairpath). max (t - max 0 (min (fst p) T)) 0",
+          [where X = "\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). snd p"
+            and g = "\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). max (t - max 0 (min (fst p) T)) 0",
             OF T0 sndm gm g0 gT])
     then show ?thesis using True by (simp add: pdel_eval)
   next
     case False
-    then have "(\<lambda>p :: real \<times> ('n pairpath). pdel (fst p) T (snd p) t)
+    then have "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). pdel (fst p) T (snd p) t)
         = (\<lambda>p. undefined)"
       unfolding pdel_def by (simp add: pembed_outside)
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    show "(\<lambda>p. mdist (path_metric T :: ('n pairpath) metric)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>p. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (pdel (fst p) T (snd p)) a) \<in> borel_measurable ?M"
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
@@ -1865,37 +1865,37 @@ qed
 
 lemma prebase_measurable:
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
-  shows "prebase s T \<in> (path_borel T :: ('n::finite pairpath) measure)
-    \<rightarrow>\<^sub>M (path_borel (T - s) :: ('n pairpath) measure)"
+  shows "prebase s T \<in> (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+    \<rightarrow>\<^sub>M (path_borel (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have sp: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
+  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  have sp: "space ?B = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (simp add: space_borel_of)
   have Ts: "0 \<le> T - s" using sT by simp
-  have into: "prebase s T w \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
-    if "w \<in> space ?B" for w :: "'n pairpath"
+  have into: "prebase s T w \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    if "w \<in> space ?B" for w :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof -
-    have m: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    have m: "w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       using that sp by simp
     show ?thesis by (rule prebase_mspace[OF s0 sT m])
   qed
-  have ev: "(\<lambda>w :: 'n pairpath. prebase s T w u) \<in> borel_measurable ?B" for u
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) \<in> borel_measurable ?B" for u
   proof (cases "u \<in> {0..T - s}")
     case True
-    have "(\<lambda>w :: 'n pairpath. w (s + u)) \<in> borel_measurable ?B"
+    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (s + u)) \<in> borel_measurable ?B"
       by (rule pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: prebase_apply[OF True])
   next
     case False
-    have "(\<lambda>w :: 'n pairpath. prebase s T w u) = (\<lambda>w :: 'n pairpath. undefined)"
+    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) = (\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). undefined)"
       by (rule ext) (rule prebase_outside[OF False])
     then show ?thesis by simp
   qed
   show ?thesis
   proof (rule measurable_into_path_metric[OF into])
-    fix a :: "'n pairpath"
-    assume am: "a \<in> mspace (path_metric (T - s) :: ('n pairpath) metric)"
-    show "(\<lambda>w. mdist (path_metric (T - s) :: ('n pairpath) metric)
+    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
+    assume am: "a \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    show "(\<lambda>w. mdist (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
         (prebase s T w) a) \<in> borel_measurable ?B"
       by (rule mdist_measurable_of_eval[OF Ts into am ev])
   qed

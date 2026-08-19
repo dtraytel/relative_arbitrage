@@ -339,13 +339,13 @@ text \<open>The time change itself: reading a delayed path at \<open>u\<close> i
   base path at \<open>\<rho> u\<close>.  Pure arithmetic, no membership.\<close>
 
 lemma pair_law_eval_measurable:
-  fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  assumes setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "(\<lambda>\<omega>. \<omega> u) \<in> borel_measurable N"
 proof (cases "u \<in> {0..T}")
   case True
-  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> u)
-      \<in> (path_borel T :: ('n pairpath) measure)
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u)
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF continuous_map_path_eval[OF True]]
     by (simp add: borel_of_euclidean)
@@ -354,17 +354,17 @@ next
   case False
   \<comment> \<open>off the horizon the coordinate is the constant \<open>undefined\<close>: points of
       the capped path space are extensional on \<open>{0..T}\<close>.\<close>
-  have spN: "space N = mspace (path_metric T :: ('n pairpath) metric)"
+  have spN: "space N = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule space_of_path_sets[OF setsN])
   show ?thesis
   proof (rule measurableI)
-    show "\<And>\<omega> :: 'n pairpath. \<omega> \<in> space N \<Longrightarrow> \<omega> u \<in> space borel" by simp
-    fix C :: "((real^'n) \<times> (real^'n^'n)) set"
+    show "\<And>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> \<in> space N \<Longrightarrow> \<omega> u \<in> space borel" by simp
+    fix C :: "('a \<times> 'b) set"
     assume "C \<in> sets borel"
-    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) -` C \<inter> space N
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u) -` C \<inter> space N
         = (if undefined \<in> C then space N else {})"
       using spN False by (auto simp: path_metric_def extensional_def)
-    then show "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) -` C \<inter> space N \<in> sets N" by simp
+    then show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u) -` C \<inter> space N \<in> sets N" by simp
   qed
 qed
 
@@ -1197,9 +1197,9 @@ qed
 
 lemma path_eval_at_measurable_time:
   fixes M :: "'a measure" and g :: "'a \<Rightarrow> real"
-    and X :: "'a \<Rightarrow> 'n::finite pairpath"
+    and X :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,real_normed_vector} \<times> 'x::{polish_space,real_normed_vector})"
   assumes T0: "0 \<le> T"
-    and Xm: "X \<in> M \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+    and Xm: "X \<in> M \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'b \<times> 'x)) measure)"
     and gm: "g \<in> borel_measurable M"
     and g0: "\<And>w. w \<in> space M \<Longrightarrow> 0 \<le> g w"
     and gT: "\<And>w. w \<in> space M \<Longrightarrow> g w \<le> T"
@@ -1228,7 +1228,7 @@ proof -
   proof -
     have cont: "continuous_on {0..T} (X w)"
     proof (rule mspace_path_metricD)
-      show "X w \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      show "X w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
         using measurable_space[OF Xm w] by (simp add: space_borel_of)
     qed
     have bnd: "\<bar>real_of_int \<lceil>2^n * g w\<rceil> / 2^n - g w\<bar> \<le> (1/2)^n" for n
@@ -1292,15 +1292,15 @@ proof -
 qed
 
 lemma measurable_into_path_metric:
-  fixes f :: "'a \<Rightarrow> 'n::finite pairpath"
+  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,real_normed_vector} \<times> 'x::{polish_space,real_normed_vector})"
   assumes into: "\<And>w. w \<in> space M
-      \<Longrightarrow> f w \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    and dm: "\<And>a. a \<in> mspace (path_metric T :: ('n pairpath) metric)
-      \<Longrightarrow> (\<lambda>w. mdist (path_metric T :: ('n pairpath) metric) (f w) a)
+      \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
+    and dm: "\<And>a. a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)
+      \<Longrightarrow> (\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a)
           \<in> borel_measurable M"
-  shows "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+  shows "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'b \<times> 'x)) measure)"
 proof -
-  let ?m = "path_metric T :: ('n pairpath) metric"
+  let ?m = "path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric"
   let ?B = "borel_of (mtopology_of ?m)"
   interpret MS: Metric_space "mspace ?m" "mdist ?m"
     by (rule Metric_space_mspace_mdist)
@@ -1321,7 +1321,7 @@ proof -
     then obtain a e where A: "A = MS.mball a e" and am: "a \<in> mspace ?m"
       and epos: "e > 0" by blast
     have ball: "(\<omega> \<in> MS.mball a e) = (\<omega> \<in> mspace ?m \<and> mdist ?m \<omega> a < e)"
-      for \<omega> :: "'n pairpath"
+      for \<omega> :: "(real \<Rightarrow> 'b \<times> 'x)"
       using am by (simp only: MS.in_mball MS.commute conj_commute simp_thms)
     have "f -` A \<inter> space M = {w \<in> space M. mdist ?m (f w) a < e}"
       unfolding A using into by (auto simp only: ball vimage_eq Int_iff)    then show "f -` A \<inter> space M \<in> sets M" using dm[OF am] by simp
@@ -1333,24 +1333,24 @@ text \<open>Hypothesis (ii) of the criterion: the distance to a fixed path is a
   hence a countable intersection.\<close>
 
 lemma mdist_measurable_of_eval:
-  fixes f :: "'a \<Rightarrow> 'n::finite pairpath"
+  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,real_normed_vector} \<times> 'x::{polish_space,real_normed_vector})"
   assumes T0: "0 \<le> T"
     and into: "\<And>w. w \<in> space M
-      \<Longrightarrow> f w \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    and am: "a \<in> mspace (path_metric T :: ('n pairpath) metric)"
+      \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
+    and am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
     and ev: "\<And>t. (\<lambda>w. f w t) \<in> borel_measurable M"
-  shows "(\<lambda>w. mdist (path_metric T :: ('n pairpath) metric) (f w) a)
+  shows "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a)
       \<in> borel_measurable M"
 proof (rule borel_measurable_iff_le[THEN iffD2], intro allI)
   fix q :: real
   have cnt: "countable ({0..T} \<inter> \<rat>)" by (simp add: countable_rat)
   have ne: "{0..T} \<inter> \<rat> \<noteq> {}" using T0 by auto
-  have eq: "{w \<in> space M. mdist (path_metric T :: ('n pairpath) metric) (f w) a \<le> q}
+  have eq: "{w \<in> space M. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a \<le> q}
       = (\<Inter>t \<in> {0..T} \<inter> \<rat>. {w \<in> space M. dist (f w t) (a t) \<le> q})"
     using ne by (auto simp: path_mdist_le_iff[OF T0 into am])
   have inner: "{w \<in> space M. dist (f w t) (a t) \<le> q} \<in> sets M" for t
     using ev[of t] by measurable
-  show "{w \<in> space M. mdist (path_metric T :: ('n pairpath) metric) (f w) a \<le> q}
+  show "{w \<in> space M. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a \<le> q}
       \<in> sets M"
     unfolding eq by (intro sets.countable_INT'[OF cnt ne]) (auto simp: inner)qed
 

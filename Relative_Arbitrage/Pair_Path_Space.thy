@@ -1253,9 +1253,9 @@ text \<open>
 \<close>
 
 lemma space_of_path_sets:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  assumes "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   using sets_eq_imp_space_eq[OF assms] by (simp add: space_borel_of)
 
 section \<open>The constraint passes to weak limits, without Skorokhod\<close>
