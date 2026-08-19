@@ -231,7 +231,7 @@ text \<open>Evaluating a path at a random time.  This is the one new measurabili
   asks for continuity on all of \<open>{0..}\<close>.\<close>
 
 lemma pstopped_mspace:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
     and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
@@ -248,7 +248,7 @@ lemma pstopped_const_measurable_filtration:
   fixes T t :: real
   assumes T0: "0 \<le> T" and t: "0 \<le> t" and tT: "t \<le> T"
   shows "pstopped T (\<lambda>_. t)
-      \<in> natural_filtration (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure) 0 (\<lambda>v \<omega>. \<omega> v) t
+      \<in> natural_filtration (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure) 0 (\<lambda>v \<omega>. \<omega> v) t
       \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
   let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -288,7 +288,7 @@ proof -
 qed
 
 lemma pafter_mspace:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
     and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
@@ -312,7 +312,7 @@ text \<open>A criterion for landing in the path space.  The balls are a base, so
   handle on \<open>natural_filtration\<close>'s generators.\<close>
 
 lemma pstopped_measurable:
-  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector}) \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
     and thm': "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
@@ -360,7 +360,7 @@ proof -
 qed
 
 lemma pafter_measurable:
-  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector}) \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
     and thm': "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
@@ -465,7 +465,7 @@ text \<open>Continuity is available wherever it is needed: the space of a path l
 lemma pstopped_fixed_set_measurable:
   fixes T :: real
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
   shows "{p' \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). pstopped T \<theta> p' = p'}
       \<in> sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
@@ -930,7 +930,7 @@ text \<open>The times clause (iv) samples at are \<open>(\<theta> + i) \<and> T\
 
 lemma path_stopping_time_event_filtration:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
     and t: "0 \<le> t" and tT: "t \<le> T"
   shows "{\<omega> \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). \<theta> \<omega> \<le> t}
       \<in> sets (natural_filtration (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
@@ -965,7 +965,7 @@ text \<open>Comparing two stopping times: apply
 
 lemma path_stopping_time_shift_event:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
     and i: "0 \<le> i" and t: "0 \<le> t"
   shows "{\<omega> \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). min (\<theta> \<omega> + i) T \<le> t}
       \<in> sets (natural_filtration (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
@@ -1017,7 +1017,7 @@ text \<open>Square-integrability of the compensated entry, from its
 
 lemma path_stopping_time_event_filtration_all:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<sigma>"
-    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
+    and sM: "\<sigma> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
     and t: "0 \<le> t"
   shows "{\<omega> \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). \<sigma> \<omega> \<le> t}
       \<in> sets (natural_filtration (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
@@ -1151,7 +1151,7 @@ proof (rule pre_sigma_ofI[OF S])
 qed
 
 lemma pstopped_vimage_pre_sigma:
-  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes T0: "0 \<le> T"
     and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "path_stopping_time T \<theta>"
@@ -1737,7 +1737,7 @@ proof -
 qed
 
 theorem stopped_increment_of_horizon_gen:
-  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and Y :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real" and \<sigma> \<rho> :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes T0: "0 < T"
     and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -1809,7 +1809,7 @@ proof -
 qed
 
 lemma integrable_at_path_stopping_time:
-  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and Y :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real" and \<sigma> :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes T0: "0 < T"
     and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -1901,7 +1901,7 @@ text \<open>The compensated clause does not ride along on the additive split,
   increment from Doob's \<open>Dsup_sq_integrable\<close>.\<close>
 
 lemma set_integral_increment_times_known:
-  fixes P :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and Y :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real" and Z :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes T0: "0 < T" and PS: "prob_space P"
     and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"

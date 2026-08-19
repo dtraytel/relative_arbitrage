@@ -747,11 +747,12 @@ lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_mea
 text \<open>\<open>bounded_linear_cross_pair\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
 
 lemma pair_fst_borel:
-  "(fst :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+  "(fst :: ('a::topological_space) \<times> ('b::topological_space) \<Rightarrow> 'a)
+     \<in> borel_measurable borel"
   by (intro borel_measurable_continuous_onI continuous_intros)
 
 lemma pair_snd_borel:
-  "(snd :: (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
+  "(snd :: ('a::topological_space) \<times> ('b::topological_space) \<Rightarrow> 'b)
      \<in> borel_measurable borel"
   by (intro borel_measurable_continuous_onI continuous_intros)
 

@@ -138,9 +138,9 @@ text \<open>\<open>radial_sq_upto\<close> transports the growth identity to the
   square as well.\<close>
 
 lemma radial_sq_upto_gen:
-  fixes \<omega> :: "'n::finite pairpath" and TT e c0 cn :: real
-    and RO :: "(real^'n) set" and F :: "real^'n \<Rightarrow> real"
-  assumes wm: "\<omega> \<in> mspace (path_metric TT :: ('n pairpath) metric)"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and TT e c0 cn :: real
+    and RO :: "('a) set" and F :: "'a \<Rightarrow> real"
+  assumes wm: "\<omega> \<in> mspace (path_metric TT :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     and Fc: "continuous_on UNIV F"
     and grow: "\<And>t. 0 < t \<Longrightarrow> t \<le> TT \<Longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<Longrightarrow> F (fst (\<omega> t)) = c0 + t * cn"
@@ -346,7 +346,7 @@ text \<open>Letting the radius and the horizon grow together.  For a fixed time 
   of them.\<close>
 
 lemma etime_shift_le_of_eroded:
-  fixes A :: "'b::{polish_space,real_normed_vector} set"
+  fixes A :: "'b::{polish_space,banach} set"
   assumes T: "0 \<le> T" and rr: "0 \<le> r" "r \<le> T"
     and mem: "x + \<omega> r \<in> eroded \<delta> A"
     and near: "dist x y < \<delta>"
@@ -372,7 +372,7 @@ text \<open>From a witness time \<open>r\<close> carrying positive mass, extract
   of Berge's \<open>box\<close> go through by Portmanteau.\<close>
 
 lemma etime_shift_uniform_margin:
-  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+  fixes T d :: real and A :: "'b::{polish_space,banach} set"
     and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A"
     and sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
@@ -455,7 +455,7 @@ lemma psd_diag_nonneg:
   by (auto simp: psd_def dest: spec[of _ "axis l 1"])
 
 theorem etime_shift_box_half:
-  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+  fixes T d :: real and A :: "'b::{polish_space,banach} set"
     and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
     and sP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
@@ -615,7 +615,7 @@ text \<open>The polarisation, run through the localised scalar theorem.  The
   @{theory Continuous_Path_Spaces.Stopped_Localization}.\<close>
 
 theorem etime_shift_box:
-  fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set"
+  fixes T d :: real and A :: "'b::{polish_space,banach} set"
     and P :: "(real \<Rightarrow> 'b) measure" and Qi :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure"
     and x :: 'b and yi :: "nat \<Rightarrow> 'b"
   assumes T: "0 \<le> T" and A: "open A" and dT: "\<not> T < d"
@@ -854,7 +854,7 @@ abbreviation pairX :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<
   where "pairX t \<omega> \<equiv> fst (\<omega> t)"
 
 theorem vshift_sup_usc:
-  fixes T c :: real and A :: "'b::{polish_space,real_normed_vector} set"
+  fixes T c :: real and A :: "'b::{polish_space,banach} set"
     and C :: "(real \<Rightarrow> 'b) measure set" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A"
     and cC: "compactin (weak_conv_topology
@@ -1253,7 +1253,7 @@ text \<open>
 \<close>
 
 lemma space_of_path_sets:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   using sets_eq_imp_space_eq[OF assms] by (simp add: space_borel_of)
@@ -1269,7 +1269,7 @@ text \<open>The paper passes the covariation constraint to the limit law via
   every approximating law, hence under the limit.\<close>
 
 lemma restrict_measurable_natural_filtration:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
   shows "(\<lambda>\<omega>. restrict \<omega> {0..s})
@@ -1295,7 +1295,7 @@ proof -
 qed
 
 lemma past_test_measurable_natural_filtration:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
   assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
     and h: "h \<in> borel_measurable (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -1489,7 +1489,7 @@ text \<open>\<open>bounded_measurable_integrable\<close>, \<open>clamp_integrabl
 subsection \<open>The test functional under a pair law with an \<open>L\<^sup>2\<close> bound\<close>
 
 corollary vshift_sup_usc_of_seq_compact:
-  fixes T c :: real and A :: "'b::{polish_space,real_normed_vector} set"
+  fixes T c :: real and A :: "'b::{polish_space,banach} set"
     and C :: "(real \<Rightarrow> 'b) measure set" and x :: 'b
   assumes T: "0 \<le> T" and A: "open A" and neC: "C \<noteq> {}"
     and sC: "\<And>Q. Q \<in> C \<Longrightarrow> sets Q = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
@@ -1593,7 +1593,7 @@ subsection \<open>The shifted processes of a law\<close>
 text \<open>\<open>pair_snd_borel\<close> lives in \<open>Exit_Class_Pasting\<close>.\<close>
 
 lemma etime_shift_of_restrict:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,real_normed_vector}" and y :: 'b
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,banach}" and y :: 'b
   shows "etime T A (\<lambda>s w. y + w s) (restrict (\<lambda>t. X t \<omega>) {0..T})
        = etime T A (\<lambda>s \<omega>'. y + X s \<omega>') \<omega>"
 proof -
@@ -1689,7 +1689,7 @@ proof -
 qed
 
 theorem vshift_path_law:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,real_normed_vector}" and y :: 'b
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,banach}" and y :: 'b
   assumes T: "0 \<le> T" and A: "open A"
     and Xm: "\<And>t. t \<in> {0..T} \<Longrightarrow> X t \<in> borel_measurable M"
     and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..T} (\<lambda>t. X t \<omega>)"

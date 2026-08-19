@@ -1284,13 +1284,64 @@ in `Continuous_Path_Spaces.Path_Space`, thirteen of the twenty-four
 metric-and-measurability lemmas in `Path_Splicing` widen with their proofs
 untouched, and the layer stands at **138 of 438 (32%)**.
 
-The gate asks for 69%, so the four theories stay in `Relative_Arbitrage`.
-What now blocks the rest is no longer a missing instance but a real
-dependency: the remaining measurability proofs feed a *pair* of paths to a
-product-metric argument (`pglue_measurable`, `iglue_measurable`,
-`padd_measurable`, `Lipschitz_pglue`) and read a metric relation between the
-two components off the concrete pair type.  Generalising those means
-restating the product-metric step, which is mathematics, not a move.
+The gate asks for 69%.
+
+**That last paragraph, as first written, was wrong, and the error is worth
+recording.**  It said the remaining measurability proofs (`pglue_measurable`,
+`iglue_measurable`, `padd_measurable`, `Lipschitz_pglue`) read a metric
+relation off the concrete pair type, so that widening them "means restating
+the product-metric step, which is mathematics, not a move".  The product in
+those proofs is not the pair `(x, A)` of a vector and a matrix; it is the
+product of the *past* and *future* path spaces, which is already generic in
+the codomain.  Nothing there is pair-specific.  What actually blocked the
+batch were four defects in the mechanical widener and one in the base image:
+
+* the dependency closure was not being computed, so consumers were widened
+  before their producers;
+* the type-rewriting regex did not match the spelling `('n::finite) pairpath`;
+* the fresh type variables clashed with `'a`/`'b` already bound to the
+  measure space in the same statement;
+* proof-local `pairpath` types were spelled out and had to be rewritten too.
+
+And one that produced 92 spurious "failures" in a single theory: **an earlier
+committed batch had widened to `{polish_space,real_normed_vector}` while the
+new batch used `{polish_space,banach}`, and the two sorts do not unify.**  The
+failures read as type errors deep inside proofs; they were a naming
+inconsistency at the *statements*.  Normalising the whole path layer to
+`{polish_space,banach}` turned six theories from 92 errors to zero without
+touching a proof.  When a widening pass is resumed later, first make the sort
+uniform across everything already widened; only then look at real failures.
+
+The one genuine dependency outside the layer was `pair_fst_borel` and
+`pair_snd_borel` in `Continuous_Time_Martingales.Integrability_Criteria`,
+stated at `(real^'n) × (real^'n^'n)`; a widened `fst` does not unify with
+them.  They hold at any topological spaces with the same proof, and are now
+stated that way.
+
+With those fixed, the layer stands at **297 of 407 statements (73%)** free of
+the pair type, and the three theories the gate is actually about at **219 of
+224 (98%)**:
+
+| theory | pair-free | total |
+|---|---:|---:|
+| `Path_Splicing` | 90 | 94 |
+| `Path_Stopping_Times` | 59 | 60 |
+| `Path_Law_Pasting` | 70 | 70 |
+| `Pair_Path_Space` | 16 | 39 |
+| `Pair_Path_Laws` | 53 | 119 |
+| `Path_Law_Sampling` | 9 | 25 |
+
+The gate (69%) therefore **passes**.  The five statements left in the gated
+three are pair-specific by their mathematics, not by accident:
+`pcoord_stopped_bounded` and `pcoord_stopped_paths_cont` read a matrix entry,
+`padd_comp_norm_le` and `exit_component_dyceil_tendsto` bound a coordinate
+norm, `ploc_eq_T_of_below` localises the first component.  The two `Pair_*`
+theories and `Path_Law_Sampling` are the pair layer proper and are not meant
+to leave it.
+
+Promotion to a `Path_Space_Operations` session is thus unblocked and is the
+next agent's first move; nothing in this plan changes because of it except
+that §3.7 is no longer gated.
 
 Two practical findings from the run, for whoever picks this up:
 

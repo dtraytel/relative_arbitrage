@@ -161,7 +161,7 @@ text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>â‚€á
 lemma path_eval_measurable_natural_filtration':
   fixes U u v :: real
   assumes v: "v \<in> {0..u}"
-  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector}). \<omega> v) \<in> borel_measurable (natural_filtration
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}). \<omega> v) \<in> borel_measurable (natural_filtration
       (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
       0 (\<lambda>v \<omega>. \<omega> v) u)"
   unfolding natural_filtration_def
@@ -226,7 +226,7 @@ text \<open>Eq. (1.9) takes its infimum over \<open>feasible\<close>, which carr
   operator keeps the missing ingredient --- orthogonality of the optimal
   direction to the gradient --- visible instead of buried.\<close>
 
-definition Yint :: "(real \<Rightarrow> real^'n::finite^'n) \<Rightarrow> real \<Rightarrow> real^'n^'n"
+definition Yint :: "(real \<Rightarrow> 'b::{polish_space,banach}) \<Rightarrow> real \<Rightarrow> 'b"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
 
 subsection \<open>What a second-moment bound gives the tightness argument\<close>
@@ -261,7 +261,7 @@ qed
 text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>\<close>
 
 lemma restrict_in_mspace:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes st: "0 \<le> s" and sT: "s \<le> T"
     and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "restrict \<omega> {0..s} \<in> mspace (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
@@ -275,7 +275,7 @@ proof -
 qed
 
 lemma nat_filt_eval:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes b: "0 \<le> b" and ba: "b \<le> a"
   shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> b)
       \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) a \<rightarrow>\<^sub>M borel"
@@ -283,14 +283,14 @@ lemma nat_filt_eval:
   by (rule measurable_family_vimage_algebra) (use b ba in auto)
 
 lemma standard_borel_path_metric:
-  "standard_borel (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
+  "standard_borel (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
   unfolding standard_borel_def
   by (intro exI[of _ "mtopology_of (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"]
       conjI Polish_space_path_metric refl)
 
 lemma mspace_path_metric_ne:
   assumes U: "0 \<le> U"
-  shows "mspace (path_metric U :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) metric) \<noteq> {}"
+  shows "mspace (path_metric U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) metric) \<noteq> {}"
 proof -
   have "continuous_on {0..U} (\<lambda>t. (0 :: 'a \<times> 'b))"
     by (rule continuous_on_const)
@@ -313,7 +313,7 @@ lemma ipath_eval_measurable_sets:
 
 lemma standard_borel_ne_path_metric:
   assumes U: "0 \<le> U"
-  shows "standard_borel_ne (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)"
+  shows "standard_borel_ne (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
 proof -
   have "space (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure) \<noteq> {}"
     using mspace_path_metric_ne[OF U] by (simp add: space_borel_of)
@@ -328,7 +328,7 @@ text \<open>The regular conditional distribution itself.  The AFP's
   forms are already proved.\<close>
 
 lemma path_eval_natural_filtration:
-  fixes M :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes M :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes t0: "0 \<le> t" and tu: "t \<le> u"
   shows "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w t)
       \<in> natural_filtration M 0 (\<lambda>v w. w v) u \<rightarrow>\<^sub>M borel"
@@ -339,7 +339,7 @@ text \<open>The time change itself: reading a delayed path at \<open>u\<close> i
   base path at \<open>\<rho> u\<close>.  Pure arithmetic, no membership.\<close>
 
 lemma pair_law_eval_measurable:
-  fixes N :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "(\<lambda>\<omega>. \<omega> u) \<in> borel_measurable N"
 proof (cases "u \<in> {0..T}")
@@ -371,7 +371,7 @@ qed
 lemma frozen_set_measurable:
   fixes c T :: real
   assumes T0: "0 \<le> T"
-  shows "{w \<in> space (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure).
+  shows "{w \<in> space (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure).
       \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> c \<longrightarrow> w u = 0}
     \<in> sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
@@ -433,14 +433,14 @@ proof -
 qed
 
 lemma dist_eval_measurable:
-  fixes x :: "real^'n::finite"
-  shows "(\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x)
-      \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+  fixes x :: "'a::{polish_space,banach}"
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b::{polish_space,banach}). dist (fst (\<omega> r)) x)
+      \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> borel_measurable
-      (path_borel T :: ('n pairpath) measure)"
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> r) \<in> borel_measurable
+      (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     by (rule pair_law_eval_measurable[OF refl])
-  have c: "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). dist (fst pr) x)
+  have c: "(\<lambda>pr :: 'a \<times> 'b. dist (fst pr) x)
       \<in> borel_measurable borel"
     by (intro borel_measurable_continuous_onI continuous_intros)
   show ?thesis by (rule measurable_compose[OF ev c])
@@ -478,7 +478,7 @@ text \<open>Hence the compact set: pair paths starting at \<open>(x, 0)\<close> 
   \<open>Y\<close>-side holds with probability one by \<open>diffquot_lipschitz\<close>.\<close>
 
 lemma natural_filtration_eq_restrict_vimage:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
     and A: "A \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s)"
@@ -552,15 +552,15 @@ proof -
 qed
 
 lemma pair_holder_ball_mem:
-  fixes \<omega> :: "'n::finite pairpath" and x :: "real^'n"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and x :: "'a"
   assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
-    and mem: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    and mem: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     and start: "\<omega> 0 = (x, 0)"
     and X: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
         \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
     and Y: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
         \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
-  shows "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+  shows "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
       \<omega> 0 = (x, 0)
       \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
            norm (\<omega> v - \<omega> u) \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
@@ -720,22 +720,22 @@ text \<open>The charge splits along the components: the \<open>X\<close>-side Ho
   probability one, so only the \<open>X\<close>-side estimate carries content.\<close>
 
 lemma pair_holder_charge_split:
-  fixes N :: "(('n::finite) pairpath) measure" and x :: "real^'n"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x :: "'a"
     and T ga c B :: real
-    and AX :: "real \<Rightarrow> (('n) pairpath) set" and AY :: "(('n) pairpath) set"
-  assumes AX_def: "AX = (\<lambda>c. {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+    and AX :: "real \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) set" and AY :: "((real \<Rightarrow> 'a \<times> 'b)) set"
+  assumes AX_def: "AX = (\<lambda>c. {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
       fst (\<omega> 0) = x
       \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
            norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga)})"
-    and AY_def: "AY = {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+    and AY_def: "AY = {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
       snd (\<omega> 0) = 0
       \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}. norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>)}"
   assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
     and fm: "finite_measure N"
-    and sp: "space N = mspace (path_metric T :: ('n pairpath) metric)"
+    and sp: "space N = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     and mX: "AX c \<in> sets N" and mY: "AY \<in> sets N"
   shows "measure N (space N -
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
          \<omega> 0 = (x, 0)
          \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
               norm (\<omega> v - \<omega> u)
@@ -743,14 +743,14 @@ lemma pair_holder_charge_split:
       \<le> measure N (space N - AX c) + measure N (space N - AY)"
 proof -
   interpret FM: finite_measure N by fact
-  have sub: "AX c \<inter> AY \<subseteq> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+  have sub: "AX c \<inter> AY \<subseteq> {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
       \<omega> 0 = (x, 0)
       \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
            norm (\<omega> v - \<omega> u)
              \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
   proof
     fix \<omega> assume w: "\<omega> \<in> AX c \<inter> AY"
-    then have mem: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
+    then have mem: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
       and x0: "fst (\<omega> 0) = x" and y0: "snd (\<omega> 0) = 0"
       and Xb: "\<And>u v. u \<in> {0..T} \<Longrightarrow> v \<in> {0..T}
           \<Longrightarrow> norm (fst (\<omega> v) - fst (\<omega> u)) \<le> c * \<bar>v - u\<bar> powr ga"
@@ -758,7 +758,7 @@ proof -
           \<Longrightarrow> norm (snd (\<omega> v) - snd (\<omega> u)) \<le> B * \<bar>v - u\<bar>"
       unfolding AX_def AY_def by auto
     have "\<omega> 0 = (x, 0)" using x0 y0 by (simp add: prod_eq_iff)
-    then show "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+    then show "\<omega> \<in> {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
         \<omega> 0 = (x, 0)
         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
              norm (\<omega> v - \<omega> u)
@@ -766,7 +766,7 @@ proof -
       using mem
       by (auto intro!: pair_holder_of_components[OF T ga c B Xb Yb])
   qed
-  have "space N - {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+  have "space N - {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
       \<omega> 0 = (x, 0)
       \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
            norm (\<omega> v - \<omega> u)
@@ -774,7 +774,7 @@ proof -
       \<subseteq> (space N - AX c) \<union> (space N - AY)"
     using sub by blast
   then have "measure N (space N -
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
          \<omega> 0 = (x, 0)
          \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
               norm (\<omega> v - \<omega> u)
@@ -818,14 +818,14 @@ lemma trace_outerp:
   by (simp add: outerp_def trace_def inner_vec_def)
 
 lemma closedin_start_point:
-  fixes x :: "real^'n::finite"
+  fixes x :: "'a::{polish_space,banach}"
   assumes T: "0 \<le> T"
-  shows "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)}"
+  shows "closedin (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) metric))
+      {\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric). \<omega> 0 = (x, 0)}"
 proof -
   have z: "(0::real) \<in> {0..T}" using T by simp
-  have "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> topspace (mtopology_of (path_metric T :: ('n pairpath) metric)).
+  have "closedin (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
+      {\<omega> \<in> topspace (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)).
          \<omega> 0 \<in> {(x, 0)}}"
     by (intro closedin_continuous_map_preimage_gen
           [where Y = euclidean, simplified]
@@ -1015,7 +1015,7 @@ proof -
 qed
 
 lemma exit_class_path_cont:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes T: "0 \<le> T"
     and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and w: "\<omega> \<in> space Q"
@@ -1197,7 +1197,7 @@ qed
 
 lemma path_eval_at_measurable_time:
   fixes M :: "'a measure" and g :: "'a \<Rightarrow> real"
-    and X :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,real_normed_vector} \<times> 'x::{polish_space,real_normed_vector})"
+    and X :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
   assumes T0: "0 \<le> T"
     and Xm: "X \<in> M \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'b \<times> 'x)) measure)"
     and gm: "g \<in> borel_measurable M"
@@ -1276,23 +1276,23 @@ text \<open>Both halves of the split are again capped paths.  Freezing and
   the extensionality --- both maps are \<open>restrict\<close>ed by construction.\<close>
 
 lemma pairpath_start_sets:
-  fixes x :: "real^'n::finite"
-  shows "{\<omega> \<in> space (ipath_space :: (('n pairpath) measure)).
+  fixes x :: "'a::{polish_space,banach}"
+  shows "{\<omega> \<in> space (ipath_space :: (((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure)).
       fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ipath_space"
 proof -
-  have m: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ipath_space"
+  have m: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> 0) \<in> borel_measurable ipath_space"
     by (rule ipath_eval_measurable) simp
-  have "{\<omega> \<in> space (ipath_space :: (('n pairpath) measure)).
+  have "{\<omega> \<in> space (ipath_space :: (((real \<Rightarrow> 'a \<times> 'b)) measure)).
       fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
-      = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(x, 0)} \<inter> space ipath_space"
+      = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> 0) -` {(x, 0)} \<inter> space ipath_space"
     by (auto simp: prod_eq_iff)
-  also have "\<dots> \<in> sets (ipath_space :: (('n pairpath) measure))"
+  also have "\<dots> \<in> sets (ipath_space :: (((real \<Rightarrow> 'a \<times> 'b)) measure))"
     by (rule measurable_sets[OF m]) simp
   finally show ?thesis .
 qed
 
 lemma measurable_into_path_metric:
-  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,real_normed_vector} \<times> 'x::{polish_space,real_normed_vector})"
+  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
   assumes into: "\<And>w. w \<in> space M
       \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
     and dm: "\<And>a. a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)
@@ -1333,7 +1333,7 @@ text \<open>Hypothesis (ii) of the criterion: the distance to a fixed path is a
   hence a countable intersection.\<close>
 
 lemma mdist_measurable_of_eval:
-  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,real_normed_vector} \<times> 'x::{polish_space,real_normed_vector})"
+  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
   assumes T0: "0 \<le> T"
     and into: "\<And>w. w \<in> space M
       \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
@@ -1419,22 +1419,22 @@ proof -
 qed
 
 lemma iexit_fst_measurable_ipath:
-  fixes K :: "(real^'n::finite) set"
+  fixes K :: "('a::{polish_space,banach}) set"
   assumes K: "closed K"
-  shows "(\<lambda>\<omega> :: 'n pairpath. iexit K (\<lambda>t. fst (\<omega> t)))
-      \<in> borel_measurable (ipath_space :: (('n pairpath) measure))"
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b::{polish_space,banach}). iexit K (\<lambda>t. fst (\<omega> t)))
+      \<in> borel_measurable (ipath_space :: (((real \<Rightarrow> 'a \<times> 'b)) measure))"
 proof (rule iexit_measurable_gen[OF K])
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+  have fstB: "(fst :: 'a \<times> 'b \<Rightarrow> 'a) \<in> borel_measurable borel"
     by (intro borel_measurable_continuous_onI continuous_intros)
-  show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable ipath_space"
+  show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). fst (\<omega> t)) \<in> borel_measurable ipath_space"
     if "0 \<le> t" for t
     by (rule measurable_compose[OF ipath_eval_measurable[OF that] fstB])
 next
-  fix \<omega> :: "'n pairpath"
-  assume "\<omega> \<in> space (ipath_space :: (('n pairpath) measure))"
+  fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
+  assume "\<omega> \<in> space (ipath_space :: (((real \<Rightarrow> 'a \<times> 'b)) measure))"
   then have "\<omega> \<in> ipath" by simp
   then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
-  have g: "continuous_on UNIV (fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)"
+  have g: "continuous_on UNIV (fst :: 'a \<times> 'b \<Rightarrow> 'a)"
     by (intro continuous_intros)
   show "continuous_on {0..} (\<lambda>t. fst (\<omega> t))"
     by (rule continuous_on_compose2[OF g c]) auto
@@ -1502,7 +1502,7 @@ text \<open>The vanishing-probability theorem \<open>eulerp_bad_event_null\<clos
   mesh is fine.\<close>
 
 lemma path_sets_fst_continuous:
-  fixes N :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and w: "\<omega> \<in> space N"
   shows "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
@@ -1615,7 +1615,7 @@ text \<open>Both clauses by the same three steps: stop the class's horizon
 lemma path_eval_measurable_natural_filtration:
   fixes U v :: real
   assumes v: "v \<in> {0..U}"
-  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector}). \<omega> v) \<in> borel_measurable (natural_filtration
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}). \<omega> v) \<in> borel_measurable (natural_filtration
       (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
       0 (\<lambda>v \<omega>. \<omega> v) U)"
   unfolding natural_filtration_def
@@ -1624,7 +1624,7 @@ lemma path_eval_measurable_natural_filtration:
 lemma sets_natural_filtration_path_subset:
   fixes U u :: real
   shows "sets (natural_filtration
-        (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+        (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)
         0 (\<lambda>v \<omega>. \<omega> v) u)
       \<subseteq> sets (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
@@ -1650,7 +1650,7 @@ text \<open>The metric half.  @{thm [source] path_mdist_le_iff} turns the sup
   one it would be the universe.\<close>
 
 lemma mdist_measurable_natural_filtration:
-  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "(\<lambda>\<omega>. mdist (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric) f \<omega>)
       \<in> borel_measurable (natural_filtration
@@ -1710,7 +1710,7 @@ qed
 text \<open>Hence every metric ball is a filtration event.\<close>
 
 lemma mball_in_natural_filtration:
-  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})"
+  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "Metric_space.mball (mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
         (mdist (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) f e
@@ -1751,7 +1751,7 @@ theorem sets_natural_filtration_path:
   fixes U :: real
   assumes U: "0 \<le> U"
   shows "sets (natural_filtration
-        (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure)
+        (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)
         0 (\<lambda>v \<omega>. \<omega> v) U)
       = sets (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
@@ -1864,16 +1864,16 @@ text \<open>\<open>onormal_subset\<close> lives in
   @{theory Symmetric_Matrix_Spectra.Orthonormal_Families}.\<close>
 
 lemma pair_eval_F_cont:
-  fixes F :: "(real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes F :: "'a::{polish_space,banach} \<times> 'b::{polish_space,banach} \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F" and t: "t \<in> {0..T}"
   shows "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric))
+      (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
       euclideanreal (\<lambda>\<omega>. F (\<omega> t))"
 proof -
-  have ev: "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+  have ev: "continuous_map (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
       euclidean (\<lambda>\<omega>. \<omega> t)"
     by (rule continuous_map_path_eval[OF t])
-  have Fm: "continuous_map (euclidean :: ((real^'n) \<times> (real^'n^'n)) topology)
+  have Fm: "continuous_map (euclidean :: ('a \<times> 'b) topology)
       euclideanreal F"
     using Fc by simp
   show ?thesis
@@ -1881,14 +1881,14 @@ proof -
 qed
 
 lemma pair_eval_F_sq_cont:
-  fixes F :: "(real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes F :: "'a::{polish_space,banach} \<times> 'b::{polish_space,banach} \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F" and t: "t \<in> {0..T}"
   shows "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric))
+      (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
       euclideanreal (\<lambda>\<omega>. (F (\<omega> t))\<^sup>2)"
 proof -
   have "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
+      (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) euclideanreal
       (\<lambda>\<omega>. F (\<omega> t) * F (\<omega> t))"
     by (rule continuous_map_real_mult[OF pair_eval_F_cont[OF Fc t]
           pair_eval_F_cont[OF Fc t]])
@@ -1910,22 +1910,22 @@ proof -
 qed
 
 lemma pair_test_F_functional_cont:
-  fixes F :: "(real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> real"
-    and h :: "('n pairpath) \<Rightarrow> real"
+  fixes F :: "'a::{polish_space,banach} \<times> 'b::{polish_space,banach} \<Rightarrow> real"
+    and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
     and st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
     and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+        (mtopology_of (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) euclideanreal h"
   shows "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
+      (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) euclideanreal
       (\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))"
 proof -
-  let ?PT = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  let ?PT = "mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   have sI: "s \<in> {0..T}" using st sT by simp
   have part1: "continuous_map ?PT euclideanreal (\<lambda>\<omega>. F (\<omega> t) - F (\<omega> s))"
     by (intro continuous_map_diff pair_eval_F_cont[OF Fc] tI sI)
   have rc: "continuous_map ?PT
-      (mtopology_of (path_metric s :: ('n pairpath) metric))
+      (mtopology_of (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
       (\<lambda>\<omega>. restrict \<omega> {0..s})"
     by (rule Lipschitz_continuous_imp_continuous_map
         [OF Lipschitz_restrict_path_metric[OF st sT]])
@@ -1952,15 +1952,15 @@ proof -
 qed
 
 lemma pair_law_F_measurable:
-  fixes N :: "('n::finite pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and u: "u \<in> {0..T}"
   shows "(\<lambda>\<omega>. F (\<omega> u)) \<in> borel_measurable N"
 proof -
-  have "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> u))
-      \<in> (path_borel T :: ('n pairpath) measure)
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). F (\<omega> u))
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF pair_eval_F_cont[OF Fc u]]
     by (simp add: borel_of_euclidean)
@@ -1996,15 +1996,15 @@ qed
 text \<open>\<open>trace_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma pair_law_F_sq_measurable:
-  fixes N :: "('n::finite pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and u: "u \<in> {0..T}"
   shows "(\<lambda>\<omega>. (F (\<omega> u))\<^sup>2) \<in> borel_measurable N"
 proof -
-  have "(\<lambda>\<omega> :: 'n pairpath. (F (\<omega> u))\<^sup>2)
-      \<in> (path_borel T :: ('n pairpath) measure)
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (F (\<omega> u))\<^sup>2)
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable[OF pair_eval_F_sq_cont[OF Fc u]]
     by (simp add: borel_of_euclidean)
@@ -2028,10 +2028,10 @@ proof -
 qed
 
 lemma pair_law_F_sq_integrable_of_nn_bound:
-  fixes N :: "('n::finite pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and u: "u \<in> {0..T}"
     and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>N) \<le> ennreal C"
   shows "integrable N (\<lambda>\<omega>. (F (\<omega> u))\<^sup>2)"
@@ -2137,8 +2137,8 @@ section \<open>Selecting a value-minimal index set: the threshold argument\<clos
 text \<open>\<open>exists_min_subset\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 lemma pair_law_F_sq_mean_of_nn_bound:
-  fixes N :: "('n::finite pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes int: "integrable N (\<lambda>\<omega>. (F (\<omega> u))\<^sup>2)" and C0: "0 \<le> C"
     and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>N) \<le> ennreal C"
   shows "(\<integral>\<omega>. (F (\<omega> u))\<^sup>2 \<partial>N) \<le> C"
@@ -2150,20 +2150,20 @@ proof -
 qed
 
 lemma pair_test_F_measurable:
-  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+        (mtopology_of (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) euclideanreal h"
   shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))
       \<in> borel_measurable N"
 proof -
   have sT: "s \<le> T" using ts tT by simp
   have tI: "t \<in> {0..T}" using st ts tT by simp
-  have "(\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))
-      \<in> (path_borel T :: ('n pairpath) measure)
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
         \<rightarrow>\<^sub>M borel"
     using continuous_map_measurable
       [OF pair_test_F_functional_cont[OF Fc st sT tI hc]]
@@ -2318,13 +2318,13 @@ text \<open>The step the paper never needs to make explicit: a matrix of the
   eigendirection that carries weight is orthogonal to \<open>q\<close> already.\<close>
 
 lemma pair_test_F_sq_bound:
-  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes P: "prob_space N" and Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+        (mtopology_of (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) euclideanreal h"
     and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
     and C0: "0 \<le> C"
     and Cs: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> s))\<^sup>2) \<partial>N) \<le> ennreal C"
@@ -2333,8 +2333,8 @@ lemma pair_test_F_sq_bound:
     and "(\<integral>\<omega>. (h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)))\<^sup>2 \<partial>N)
         \<le> 4 * B\<^sup>2 * C"
 proof -
-  let ?f = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s))"
-  let ?D = "\<lambda>\<omega> :: 'n pairpath. 2 * B\<^sup>2 * ((F (\<omega> t))\<^sup>2 + (F (\<omega> s))\<^sup>2)"
+  let ?f = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s))"
+  let ?D = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). 2 * B\<^sup>2 * ((F (\<omega> t))\<^sup>2 + (F (\<omega> s))\<^sup>2)"
   have sI: "s \<in> {0..T}" using st ts tT by simp
   have tI: "t \<in> {0..T}" using st ts tT by simp
   have B0: "0 \<le> B" by (rule order_trans[OF abs_ge_zero hb])
@@ -2373,7 +2373,7 @@ proof -
   proof (rule Bochner_Integration.integrable_bound[OF dom_int fsqm])
     show "AE \<omega> in N. norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)"
     proof (intro AE_I2)
-      fix \<omega> :: "'n pairpath"
+      fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
       have "0 \<le> ?D \<omega>" by simp
       then show "norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)" using ptwise[of \<omega>] by simp
     qed
@@ -2437,13 +2437,13 @@ proof (rule measurable_compose[OF pair_law_eval_measurable[OF refl]])
 qed
 
 lemma pair_test_F_integrable:
-  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes P: "prob_space N" and Fc: "continuous_on UNIV F"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+        (mtopology_of (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) euclideanreal h"
     and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
     and C0: "0 \<le> C"
     and Cs: "(\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> s))\<^sup>2) \<partial>N) \<le> ennreal C"
@@ -2460,20 +2460,20 @@ qed
 subsection \<open>The test identity and its weak limit, generically\<close>
 
 theorem martingale_test_F:
-  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes P: "prob_space N"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and mgF: "martingale N (natural_filtration N 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
+    and hm: "h \<in> borel_measurable (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
   shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)) \<partial>N) = 0"
 proof -
-  let ?FF = "natural_filtration N 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. F (\<omega> (min u T))"
-  let ?Z = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s})"
+  let ?FF = "natural_filtration N 0 (\<lambda>u \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u)"
+  let ?Y = "\<lambda>u \<omega> :: (real \<Rightarrow> 'a \<times> 'b). F (\<omega> (min u T))"
+  let ?Z = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). h (restrict \<omega> {0..s})"
   have sT: "s \<le> T" using ts tT by simp
   have t0: "0 \<le> t" using st ts by simp
   have mt: "min t T = t" using tT by simp
@@ -2494,7 +2494,7 @@ proof -
       by measurable
     show "AE \<omega> in N. norm (?Z \<omega> * ?Y u \<omega>) \<le> norm (\<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)"
     proof (intro AE_I2)
-      fix \<omega> :: "'n pairpath"
+      fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
       have "\<bar>?Z \<omega>\<bar> \<le> \<bar>B\<bar>" using hb[of "restrict \<omega> {0..s}"] by simp
       then have "\<bar>?Z \<omega> * ?Y u \<omega>\<bar> \<le> \<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>"
         by (simp add: abs_mult mult_right_mono)
@@ -2513,28 +2513,28 @@ proof -
 qed
 
 theorem martingale_test_F_limit:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes Qm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+    and Q :: "((real \<Rightarrow> 'a \<times> 'b)) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
     and Pm: "\<And>m. prob_space (Qm m)"
-    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
+    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+        (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and C0: "0 \<le> C"
     and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
         (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
     and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
+        (mtopology_of (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) euclideanreal h"
     and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
   shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)) \<partial>Q) = 0"
 proof -
-  let ?f = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s))"
+  let ?f = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). h (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s))"
   have sT: "s \<le> T" using ts tT by simp
   have sI: "s \<in> {0..T}" using st sT by simp
   have tI: "t \<in> {0..T}" using st ts tT by simp
@@ -2555,8 +2555,8 @@ proof -
   have lim: "(\<lambda>m. \<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) \<longlonglongrightarrow> (\<integral>\<omega>. ?f \<omega> \<partial>Q)"
   proof (rule weak_conv_integral_of_L2_bound)
     show "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))" by (rule wc)
-    show "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
+        (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))" by (rule wc)
+    show "continuous_map (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
         euclideanreal ?f"
       by (rule pair_test_F_functional_cont[OF Fc st sT tI hc])
     show "\<And>m. finite_measure (Qm m)" by (rule fmm)
@@ -2586,7 +2586,7 @@ proof -
       by (rule pair_test_F_sq_bound(1)[OF prob Fc setsQ st ts tT hc hb C0
             nnQ[OF sI] nnQ[OF tI]])
   qed
-  have hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
+  have hm: "h \<in> borel_measurable (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     using continuous_map_measurable[OF hc] by (simp add: borel_of_euclidean)
   have zero: "(\<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) = 0" for m
     by (rule martingale_test_F[OF Pm setsm mgm st ts tT hm hb])
@@ -2598,7 +2598,7 @@ subsection \<open>The set-integral identity and martingale reassembly,
   generically\<close>
 
 lemma subalgebra_natural_filtration_path:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes setsQ: "sets Q = sets (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "subalgebra Q (natural_filtration Q 0 (\<lambda>v w. w v) u)"
 proof -
@@ -2614,7 +2614,7 @@ proof -
 qed
 
 lemma sigma_finite_subalgebra_natural_filtration_path:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes PS: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "sigma_finite_subalgebra Q (natural_filtration Q 0 (\<lambda>v w. w v) u)"
@@ -2627,7 +2627,7 @@ proof (rule finite_measure_subalgebra_is_sigma_finite)
 qed
 
 theorem integrable_and_set_integral_eq_of_rational_times:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and Z :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes S: "0 \<le> S"
     and setsQ: "sets Q = sets (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -2775,29 +2775,29 @@ text \<open>The \<open>\<pi>\<close>-system for the previous lemma: \<open>\<F>\
   with no limit argument.\<close>
 
 theorem martingale_event_F_limit:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes Qm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+    and Q :: "((real \<Rightarrow> 'a \<times> 'b)) measure"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes Fc: "continuous_on UNIV F"
     and Pm: "\<And>m. prob_space (Qm m)"
-    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
+    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+        (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and C0: "0 \<le> C"
     and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
         (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
     and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and Bs: "Bs \<in> sets (path_borel s :: ('n pairpath) measure)"
+    and Bs: "Bs \<in> sets (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "(\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..s}) * (F (\<omega> t) - F (\<omega> s)) \<partial>Q)
       = 0"
 proof -
-  let ?PS = "mtopology_of (path_metric s :: ('n pairpath) metric)"
-  let ?g = "\<lambda>\<omega> :: 'n pairpath. F (\<omega> t) - F (\<omega> s)"
-  let ?p = "\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..s}"
+  let ?PS = "mtopology_of (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  let ?g = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). F (\<omega> t) - F (\<omega> s)"
+  let ?p = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). restrict \<omega> {0..s}"
   have sT: "s \<le> T" using ts tT by simp
   have sI: "s \<in> {0..T}" using st sT by simp
   have tI: "t \<in> {0..T}" using st ts tT by simp
@@ -2807,7 +2807,7 @@ proof -
     by (rule weak_conv_on_nn_integral_le
         [OF wc pair_eval_F_sq_cont[OF Fc u] _ C0 nnm[OF u]]) simp
   have onec: "continuous_map ?PS euclideanreal (\<lambda>_. 1 :: real)" by simp
-  have one_b: "\<And>g :: 'n pairpath. \<bar>(\<lambda>_. 1 :: real) g\<bar> \<le> 1" by simp
+  have one_b: "\<And>g :: (real \<Rightarrow> 'a \<times> 'b). \<bar>(\<lambda>_. 1 :: real) g\<bar> \<le> 1" by simp
   have gint: "integrable Q ?g"
   proof -
     have "integrable Q (\<lambda>\<omega>. (\<lambda>_. 1 :: real) (?p \<omega>) * (F (\<omega> t) - F (\<omega> s)))"
@@ -2818,14 +2818,14 @@ proof -
   have gmeasQ: "?g \<in> borel_measurable Q"
     by (rule borel_measurable_integrable[OF gint])
   have rc: "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) ?PS ?p"
+      (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) ?PS ?p"
     by (rule Lipschitz_continuous_imp_continuous_map
         [OF Lipschitz_restrict_path_metric[OF st sT]])
   have pimQ: "?p \<in> Q \<rightarrow>\<^sub>M borel_of ?PS"
     using continuous_map_measurable[OF rc] measurable_cong_sets[OF setsQ refl]
     by blast
-  define gp where "gp = (\<lambda>\<omega> :: 'n pairpath. max (?g \<omega>) 0)"
-  define gm where "gm = (\<lambda>\<omega> :: 'n pairpath. max (- ?g \<omega>) 0)"
+  define gp where "gp = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). max (?g \<omega>) 0)"
+  define gm where "gm = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). max (- ?g \<omega>) 0)"
   have gp0: "\<And>\<omega>. 0 \<le> gp \<omega>" and gm0: "\<And>\<omega>. 0 \<le> gm \<omega>"
     unfolding gp_def gm_def by simp_all
   have gdiff: "gp \<omega> - gm \<omega> = ?g \<omega>" for \<omega>
@@ -2891,7 +2891,7 @@ proof -
   have finN2: "finite_measure N2" unfolding N2_def by (rule finw[OF gmm gm0 gmi])
   have NEQ: "N1 = N2"
   proof (rule metric_measure_eqI_bounded_cts[OF sN1 sN2 finN1 finN2])
-    fix u :: "'n pairpath \<Rightarrow> real"
+    fix u :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
     assume uc: "continuous_map ?PS euclideanreal u"
     assume ub: "\<exists>B. \<forall>y\<in>topspace ?PS. \<bar>u y\<bar> \<le> B"
     then obtain B where B: "\<And>y. y \<in> topspace ?PS \<Longrightarrow> \<bar>u y\<bar> \<le> B" by blast
@@ -2902,7 +2902,7 @@ proof -
       using continuous_map_compose[OF uc rclamp_cont] by (simp add: o_def)
     have ubd: "\<And>y. \<bar>?u y\<bar> \<le> B'" by (rule rclamp_bound[OF B'0])
     have uagree: "?u y = u y"
-      if y: "y \<in> mspace (path_metric s :: ('n pairpath) metric)" for y
+      if y: "y \<in> mspace (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for y
     proof (rule rclamp_id)
       have "\<bar>u y\<bar> \<le> B" using B y by simp
       then show "\<bar>u y\<bar> \<le> B'" unfolding B'_def by simp
@@ -2918,7 +2918,7 @@ proof -
         using um measurable_cong_sets[OF sj refl] by blast
       show "?u \<in> borel_measurable Nj"
         using ucm measurable_cong_sets[OF sj refl] by blast
-      have "space Nj = mspace (path_metric s :: ('n pairpath) metric)"
+      have "space Nj = mspace (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
         using sets_eq_imp_space_eq[OF sj] by (simp add: space_borel_of)
       then show "AE y in Nj. u y = ?u y"
         by (intro AE_I2) (simp add: uagree)
@@ -3005,7 +3005,7 @@ lemma countable_Int_stable_generator_path:
   obtains D where
     "countable D"
     and "Int_stable D"
-    and "D \<subseteq> Pow (mspace (path_metric s :: ((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) metric))"
+    and "D \<subseteq> Pow (mspace (path_metric s :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) metric))"
     and "mspace (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<in> D"
     and "sets (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
         = sigma_sets (mspace (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) D"
@@ -3124,31 +3124,31 @@ text \<open>And its pullback: the countable \<open>\<pi>\<close>-system for \<op
   conditioning sets of clause (iii)/(iv) range over.\<close>
 
 theorem martingale_F_limit:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes Qm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+    and Q :: "((real \<Rightarrow> 'a \<times> 'b)) measure"
+    and F :: "'a \<times> 'b \<Rightarrow> real"
   assumes T: "0 \<le> T" and Fc: "continuous_on UNIV F"
     and Pm: "\<And>m. prob_space (Qm m)"
-    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
+    and setsm: "\<And>m. sets (Qm m) = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and mgm: "\<And>m. martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
         (\<lambda>u \<omega>. F (\<omega> (min u T)))"
     and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+        (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
     and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and C0: "0 \<le> C"
     and nnm: "\<And>m u. u \<in> {0..T} \<Longrightarrow>
         (\<integral>\<^sup>+\<omega>. ennreal ((F (\<omega> u))\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. F (\<omega> (min u T)))"
 proof -
-  let ?FF = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. F (\<omega> (min u T))"
-  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+  let ?FF = "natural_filtration Q 0 (\<lambda>u \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u)"
+  let ?Y = "\<lambda>u \<omega> :: (real \<Rightarrow> 'a \<times> 'b). F (\<omega> (min u T))"
+  have spQ: "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
   have SP: "Stochastic_Process.stochastic_process Q (0::real)
-      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+      (\<lambda>u \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u)"
     by unfold_locales (rule pair_law_eval_measurable[OF setsQ])
   interpret SF: finite_filtered_measure Q ?FF 0
     by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration[OF SP finQ])
@@ -3172,7 +3172,7 @@ proof -
     show "adapted_process Q ?FF 0 ?Y"
     proof (unfold_locales)
       fix u :: real assume u: "0 \<le> u"
-      have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?FF u \<rightarrow>\<^sub>M borel"
+      have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min u T)) \<in> ?FF u \<rightarrow>\<^sub>M borel"
         unfolding natural_filtration_def
         by (rule measurable_family_vimage_algebra) (use u T in auto)
       show "?Y u \<in> borel_measurable (?FF u)"
@@ -3198,7 +3198,7 @@ proof -
       have tI: "min v T \<in> {0..T}" by (rule mI[OF v0])
       have tT: "min v T \<le> T" using tI by simp
       have ut: "u \<le> min v T" using True uv by simp
-      obtain Bs where Bs: "Bs \<in> sets (path_borel u :: ('n pairpath) measure)"
+      obtain Bs where Bs: "Bs \<in> sets (path_borel u :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
         and Aeq: "A = (\<lambda>\<omega>. restrict \<omega> {0..u}) -` Bs \<inter> space Q"
         using natural_filtration_eq_restrict_vimage[OF setsQ uv(1) True A]
         by blast
@@ -3208,21 +3208,21 @@ proof -
           * (F (\<omega> (min v T)) - F (\<omega> u)) \<partial>Q) = 0"
         by (rule martingale_event_F_limit
             [OF Fc Pm setsm mgm wc prob setsQ C0 nnm uv(1) ut tT Bs])
-      have mR: "(\<lambda>\<omega> :: 'n pairpath. indicat_real Bs (restrict \<omega> {0..u})
+      have mR: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). indicat_real Bs (restrict \<omega> {0..u})
             * (F (\<omega> (min v T)) - F (\<omega> u))) \<in> borel_measurable Q"
       proof -
-        have rm: "(\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..u}) \<in> Q \<rightarrow>\<^sub>M
-            (path_borel u :: ('n pairpath) measure)"
+        have rm: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). restrict \<omega> {0..u}) \<in> Q \<rightarrow>\<^sub>M
+            (path_borel u :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
           using continuous_map_measurable
             [OF Lipschitz_continuous_imp_continuous_map
               [OF Lipschitz_restrict_path_metric[OF uv(1) True]]]
             measurable_cong_sets[OF setsQ refl] by blast
-        have im: "(\<lambda>\<omega> :: 'n pairpath. indicat_real Bs (restrict \<omega> {0..u}))
+        have im: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). indicat_real Bs (restrict \<omega> {0..u}))
             \<in> borel_measurable Q"
           by (rule measurable_compose[OF rm borel_measurable_indicator[OF Bs]])
-        have c1: "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> (min v T))) \<in> borel_measurable Q"
+        have c1: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). F (\<omega> (min v T))) \<in> borel_measurable Q"
           by (rule pair_law_F_measurable[OF Fc setsQ tI])
-        have c2: "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> u)) \<in> borel_measurable Q"
+        have c2: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). F (\<omega> u)) \<in> borel_measurable Q"
           using True uv(1) by (intro pair_law_F_measurable[OF Fc setsQ]) simp
         show ?thesis by (intro borel_measurable_times im
             borel_measurable_diff c1 c2)
@@ -3263,9 +3263,9 @@ text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<c
 subsection \<open>The compensated functional\<close>
 
 lemma radial_sq_upto:
-  fixes \<omega> :: "'n::finite pairpath" and y\<^sub>0 x :: "real^'n"
-    and TT e cn :: real and RO :: "(real^'n) set"
-  assumes wm: "\<omega> \<in> mspace (path_metric TT :: ('n pairpath) metric)"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and y\<^sub>0 x :: "'a"
+    and TT e cn :: real and RO :: "('a) set"
+  assumes wm: "\<omega> \<in> mspace (path_metric TT :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     and grow: "\<And>t. 0 < t \<Longrightarrow> t \<le> TT \<Longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<Longrightarrow>
       (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * cn"
@@ -3346,7 +3346,7 @@ proof -
 qed
 
 lemma martingale_of_rational_set_integral_eq:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and Z :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
   assumes S: "0 \<le> S"
     and setsQ: "sets Q = sets (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
