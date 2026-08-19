@@ -195,7 +195,7 @@ proof (intro ballI allI impI)
   have quadform: "0 \<le> h \<bullet> (((- (2 / c) *\<^sub>R mat 1) - H) *v h)" for h
     by (rule local_min_hessian_psd[OF e_pos \<psi>_deriv \<psi>_hess \<psi>_min])
   have symH': "H $ i $ j = H $ j $ i" for i j
-    using symH by (metis transpose_def vec_lambda_beta)
+    using symH by (metis axis1_inner inner_matrix_sym matrix_vector_axis_one)
   have symQ: "transpose ((- (2 / c) *\<^sub>R mat 1) - H)
       = (- (2 / c) *\<^sub>R mat 1) - H"
     by (simp add: transpose_def vec_eq_iff mat_def symH')
