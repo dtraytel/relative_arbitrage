@@ -1255,3 +1255,49 @@ rename — `exit_class k L T x` to `covariation_class S T x`, plus an
 `S`-hypothesis in a dozen places — but they sit in fifteen theories and have
 to be migrated bottom-up, one theory at a time.  The bridge equations mean
 that can now happen without touching anything else.
+
+### The gate, retried twice
+
+The first retry, after widening `pairX`, `pairY`, `padd_fst_continuous` and
+the three consumers that had been blocked on them, put the path layer at
+**125 of 438 statements (29%)** free of the pair path type.  Everything that
+came back was of one of two kinds, and only one of them was a real
+obstruction:
+
+* `pshift`, `pcoord` and `ploc` are genuinely pair-specific — `pshift` adds
+  a vector to the *first* component, `pcoord` reads a matrix entry — so
+  nothing that mentions them can or should leave the pair type;
+* everything about the path *metric* failed on a **sort**, not on the
+  mathematics: `Variable 'a::{polish_space,real_normed_vector} not of sort
+  euclidean_space`.
+
+The second is a one-line gap in the library.  `polish_space` is
+`complete_space + second_countable_topology`; HOL declares both product
+instances and not their conjunction, so a path space whose values are pairs
+could only be seen as Polish by going through `euclidean_space`.  With
+
+```isabelle
+instance prod :: (polish_space, polish_space) polish_space ..
+```
+
+in `Continuous_Path_Spaces.Path_Space`, thirteen of the twenty-four
+metric-and-measurability lemmas in `Path_Splicing` widen with their proofs
+untouched, and the layer stands at **138 of 438 (32%)**.
+
+The gate asks for 69%, so the four theories stay in `Relative_Arbitrage`.
+What now blocks the rest is no longer a missing instance but a real
+dependency: the remaining measurability proofs feed a *pair* of paths to a
+product-metric argument (`pglue_measurable`, `iglue_measurable`,
+`padd_measurable`, `Lipschitz_pglue`) and read a metric relation between the
+two components off the concrete pair type.  Generalising those means
+restating the product-metric step, which is mathematics, not a move.
+
+Two practical findings from the run, for whoever picks this up:
+
+* A widening can turn a terminating proof into a divergent search.  One
+  batch left a build running for thirty-five minutes on a proof that took
+  seconds before; `isabelle build -o timeout=900` bounds it, and a mechanical
+  widen-and-revert loop needs that bound to be usable at all.
+* The widened statements cost check time: with them the paper session takes
+  six minutes rather than one, because type inference at a general product
+  does more work at every use site.
