@@ -424,7 +424,8 @@ text \<open>\<open>exit_class_rcd\<close> and
   the stopping-time case is \<open>u := v := T\<close>, \<open>\<phi>\<^sub>1 := pstopped T \<theta>\<close>,
   \<open>\<phi>\<^sub>2 := pafter T \<theta>\<close>.\<close>
 
-definition path_stopping_time :: "real \<Rightarrow> ('n::finite pairpath \<Rightarrow> real) \<Rightarrow> bool"
+definition path_stopping_time ::
+  "real \<Rightarrow> ((real \<Rightarrow> 'a::topological_space \<times> 'b) \<Rightarrow> real) \<Rightarrow> bool"
   where "path_stopping_time T \<theta> \<longleftrightarrow>
      (\<forall>\<omega>. 0 \<le> \<theta> \<omega> \<and> \<theta> \<omega> \<le> T)
      \<and> (\<forall>\<omega> \<omega>'. continuous_on {0..T} (\<lambda>t. fst (\<omega> t)) \<longrightarrow>
@@ -432,7 +433,7 @@ definition path_stopping_time :: "real \<Rightarrow> ('n::finite pairpath \<Righ
           (\<forall>t \<in> {0..\<theta> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow> \<theta> \<omega>' = \<theta> \<omega>)"
 
 lemma pstopped_eval_min:
-  fixes p' :: "'n::finite pairpath"
+  fixes p' :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>" and idem: "pstopped T \<theta> p' = p'"
     and T0: "0 \<le> T" and u: "0 \<le> u"
   shows "p' (min u T) = p' (min (min u T) (\<theta> p'))"
@@ -673,17 +674,17 @@ text \<open>The law of the reassembled path: run the past under \<open>Q\<close>
   \<^const>\<open>padd\<close> replaces \<^const>\<open>pglue\<close>.\<close>
 
 lemma path_stopping_time_max:
-  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
   assumes st: "path_stopping_time T \<theta>" and u: "0 \<le> u" and uT: "u \<le> T"
   shows "path_stopping_time T (\<lambda>\<omega>. max u (\<theta> \<omega>))"
 proof -
-  have c1: "0 \<le> max u (\<theta> \<omega>) \<and> max u (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+  have c1: "0 \<le> max u (\<theta> \<omega>) \<and> max u (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     using u uT path_stopping_time_nonneg[OF st, of \<omega>]
       path_stopping_time_le[OF st, of \<omega>] by simp
   have c2: "max u (\<theta> \<omega>') = max u (\<theta> \<omega>)"
     if cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
       and cw': "continuous_on {0..T} (\<lambda>v. fst (\<omega>' v))"
-      and ag: "\<forall>s \<in> {0..max u (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
+      and ag: "\<forall>s \<in> {0..max u (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof -
     have "\<theta> \<omega>' = \<theta> \<omega>"
     proof (rule path_stopping_time_cong[OF st cw cw'])
@@ -700,12 +701,12 @@ text \<open>The event lemma with the horizon restriction removed: past \<open>T\
   nothing left to decide.\<close>
 
 lemma path_stopping_time_shift:
-  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
   assumes st: "path_stopping_time T \<theta>" and i: "0 \<le> i"
   shows "path_stopping_time T (\<lambda>\<omega>. min (\<theta> \<omega> + i) T)"
 proof -
   have c1: "0 \<le> min (\<theta> \<omega> + i) T \<and> min (\<theta> \<omega> + i) T \<le> T"
-    for \<omega> :: "'n pairpath"
+    for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof -
     have "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
     moreover have "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
@@ -715,7 +716,7 @@ proof -
     if cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
       and cw': "continuous_on {0..T} (\<lambda>u. fst (\<omega>' u))"
       and ag: "\<forall>s \<in> {0..min (\<theta> \<omega> + i) T}. \<omega> s = \<omega>' s"
-    for \<omega> \<omega>' :: "'n pairpath"
+    for \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof -
     have le: "\<theta> \<omega> \<le> min (\<theta> \<omega> + i) T"
       using i path_stopping_time_le[OF st, of \<omega>] by simp
@@ -742,17 +743,17 @@ text \<open>The stopping-time event is not merely Borel but lies in the natural
   its proof needs.\<close>
 
 lemma path_stopping_time_min:
-  fixes \<theta> :: "'n::finite pairpath \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
   assumes st: "path_stopping_time T \<theta>" and i: "0 \<le> i" and iT: "i \<le> T"
   shows "path_stopping_time T (\<lambda>\<omega>. min i (\<theta> \<omega>))"
 proof -
-  have c1: "0 \<le> min i (\<theta> \<omega>) \<and> min i (\<theta> \<omega>) \<le> T" for \<omega> :: "'n pairpath"
+  have c1: "0 \<le> min i (\<theta> \<omega>) \<and> min i (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
     using i iT path_stopping_time_nonneg[OF st, of \<omega>]
       path_stopping_time_le[OF st, of \<omega>] by simp
   have c2: "min i (\<theta> \<omega>') = min i (\<theta> \<omega>)"
     if cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
       and cw': "continuous_on {0..T} (\<lambda>v. fst (\<omega>' v))"
-      and ag: "\<forall>s \<in> {0..min i (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "'n pairpath"
+      and ag: "\<forall>s \<in> {0..min i (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof (cases "\<theta> \<omega> \<le> i")
     case True
     then have "min i (\<theta> \<omega>) = \<theta> \<omega>" by simp
@@ -784,7 +785,7 @@ text \<open>The stopped past, read at \<open>u \<and> T\<close>, is the past rea
   \<open>stopped_increment_of_horizon_gen\<close> samples at.\<close>
 
 lemma pstopped_fst_continuous:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
     and th0: "0 \<le> \<theta>' \<omega>" and thT: "\<theta>' \<omega> \<le> T"
   shows "continuous_on {0..T} (\<lambda>s. fst (pstopped T \<theta>' \<omega> s))"
@@ -799,7 +800,7 @@ proof -
 qed
 
 lemma path_stopping_time_cut_eq:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T" and le: "\<theta> \<omega> \<le> t"
     and cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
   shows "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
@@ -815,7 +816,7 @@ proof (rule path_stopping_time_cong[OF st cw
 qed
 
 lemma pstopped_cut_compose:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T" and le: "\<theta> \<omega> \<le> t"
     and cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
   shows "pstopped T \<theta> (pstopped T (\<lambda>_. t) \<omega>) = pstopped T \<theta> \<omega>"
@@ -844,7 +845,7 @@ text \<open>The second factor only agrees up to \<open>u\<close> --- exactly as 
   \<open>\<F>\<^sub>u\<close>-set can look, so composing with \<^const>\<open>pcut\<close> loses nothing.\<close>
 
 lemma pcut_pafter_cut_compose:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T"
     and u: "0 \<le> u" and ut: "u \<le> t" and le: "\<theta> \<omega> \<le> t"
     and cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
@@ -876,7 +877,7 @@ proof (rule ext)
     then show ?thesis by (simp add: pcut_apply[OF True])
   next
     case False
-    have out: "pcut u w s = undefined" for w :: "'n pairpath"
+    have out: "pcut u w s = undefined" for w :: "(real \<Rightarrow> 'a \<times> 'b)"
       unfolding pcut_def restrict_def by (rule if_not_P[OF False])
     show ?thesis unfolding out ..
   qed
@@ -887,7 +888,7 @@ text \<open>\<open>u \<or> \<theta>\<close> is a stopping time for the same reas
   than \<open>\<theta>\<close> does.\<close>
 
 lemma path_stopping_time_cut:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>" and t: "0 \<le> t" and tT: "t \<le> T"
     and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   shows "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
@@ -1042,7 +1043,7 @@ text \<open>A packaging lemma: for a stopping time bounded by \<open>T\<close> i
   check the \<open>\<F>\<^sub>\<sigma>\<close> condition at times below the horizon.\<close>
 
 lemma path_stopping_time_stopped:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>"
     and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   shows "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
@@ -1056,7 +1057,7 @@ proof (rule path_stopping_time_cong[OF st cw
 qed
 
 lemma pstopped_idem:
-  fixes \<omega> :: "'n::finite pairpath"
+  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
   assumes st: "path_stopping_time T \<theta>"
     and cw: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
   shows "pstopped T \<theta> (pstopped T \<theta> \<omega>) = pstopped T \<theta> \<omega>"
