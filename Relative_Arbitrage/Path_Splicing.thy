@@ -69,14 +69,14 @@ lemma padd_apply: "t \<in> {0..T} \<Longrightarrow> padd T p' w t = p' t + w t"
   by (simp add: padd_def)
 
 lemma pcut_measurable:
-  fixes Q :: "('n::finite pairpath) measure"
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,real_normed_vector} \<times> 'b::{polish_space,real_normed_vector})) measure"
   assumes S: "0 \<le> S" and ST: "S \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "pcut S \<in> Q \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "pcut S \<in> Q \<rightarrow>\<^sub>M (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  have "(\<lambda>f :: 'n pairpath. restrict f {0..S})
-      \<in> (path_borel T :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M (path_borel S :: ('n pairpath) measure)"
+  have "(\<lambda>f :: (real \<Rightarrow> 'a \<times> 'b). restrict f {0..S})
+      \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
+        \<rightarrow>\<^sub>M (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     by (rule restrict_measurable_path_borel[OF S ST])
   then show ?thesis
     unfolding pcut_def using measurable_cong_sets[OF setsQ refl] by blast
@@ -2136,6 +2136,7 @@ proof -
     by (rule measurable_compose[OF pglue_measurable[OF r rT refl refl]
         pexit_path_measurable[OF T0 Kc refl]])
 qed
+
 
 (*<*)
 end

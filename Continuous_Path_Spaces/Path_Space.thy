@@ -20,6 +20,15 @@ text \<open>
   the Lemma 2.2 laws into relative compactness in the L\'evy-Prokhorov
   metric on this space.
 \<close>
+text \<open>A product of Polish spaces is Polish.  The class is
+  \<open>complete_space + second_countable_topology\<close> and HOL declares both product
+  instances (\<open>Product_Vector\<close> and \<open>Elementary_Topology\<close>); it does not declare
+  their conjunction, so a path with a pair of values in it could only be
+  seen as Polish by going through \<open>euclidean_space\<close>.  That is what stops the
+  path space from being used at a general product codomain.\<close>
+
+instance prod :: (polish_space, polish_space) polish_space ..
+
 definition path_metric :: "real \<Rightarrow> (real \<Rightarrow> 'b::polish_space) metric" where
   "path_metric T = cfunspace (top_of_set {0..T::real}) (euclidean_metric :: 'b metric)"
 
