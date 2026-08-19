@@ -1187,3 +1187,71 @@ closing `end`.
 * The `find_theorems` sweep of §6.2, beyond the four library duplicates that
   turned up by accident (`trace_mul_sym`, `transpose_scalar`, `trace_I`, and
   `content_cbox_translate` inside the session).
+
+---
+
+## 11. G11 and the product codomain, after the fact
+
+Two items the completion note left open were taken up afterwards.
+
+### The path stopping time at a product codomain
+
+Phase 8's gate failed on `path_stopping_time`, whose continuity clause reads
+the *first component* of the path.  At a **product** codomain that clause has
+a meaning, and the definition is now
+
+```isabelle
+path_stopping_time :: "real ⇒ ((real ⇒ 'a::topological_space × 'b) ⇒ real) ⇒ bool"
+```
+
+with the whole session rebuilding and no proof edited.  Eleven statements
+about it widen with it, at
+`'a::{topological_space,ab_group_add} × 'b::ab_group_add`.
+
+Three do not, and they mark where the next wave starts: `padd_stopping_time`,
+`pstopped_padd` and `pafter_padd` go through `padd_fst_continuous`, which is
+still stated with `pairX` — the pair-typed abbreviation for `fst` — so the
+general `fst` does not unify with it.  The generalisation propagates
+bottom-up through the continuity and measurability helpers; they have to be
+widened before their consumers, not after.  The gate itself is unchanged
+until that is done.
+
+### G11: the class over an abstract constraint set
+
+The pilot measurement first, since it is what justified starting: **243
+statements in the paper session mention `exit_class` or `exit_val`, and 13
+of them use any property of `sconstraint k L`.**  Of the 6 `sconstraint_def`
+unfoldings in `Exit_Class`, 5 are inside the proofs of the very facts that
+become the abstract interface, so they leave the abstract layer rather than
+blocking it.  §2.5 expected the abstraction to be expensive; it is not.
+
+What is now in place, in the paper-free layer:
+
+* `covariation_class S T x` — the laws of a pair path `(X,Y)` started at
+  `(x,0)`, with every difference quotient of `Y` in `S`, `X` a martingale
+  and `X X⇧T - Y` a martingale — with its six projections, an introduction
+  rule, and monotonicity in `S`;
+* `covariation_val S T K x` — the value of the minimum-exit-time problem
+  over that class, monotone in `S`;
+* thirteen consequences, of which **eight need nothing of `S`** and five
+  need exactly one number: a norm bound (`covariation_class_lipschitz_ae`,
+  `_Y_bounded_ae`, `_Y_entry_bound_ae`, `_Y_entry_integrable`,
+  `_sq_integrable`, `_sq_mean_le`) or a two-sided bound on the diagonal
+  (`_Y_diag_increment`).
+
+and in the paper session, `exit_class_eq_covariation` and
+`exit_val_eq_covariation_val` identify Eq. (1.7) and Eq. (1.6) with the
+generic objects at `sconstraint k L`.  Fifteen lemmas of `Exit_Class` are
+now three-line specialisations; about 280 lines of proof moved down with
+them.
+
+**What is left of G11.**  Four lemmas resisted and were reverted:
+`exit_class_diffquot_full_mass`, `_start_full_mass`, `_start_limit` and
+`_diffquot_limit`.  They go through `closedin_diffquot_constraint`, whose
+generic form needs `closed S` threaded through two more layers, and through
+a full-mass argument whose `OF` chains did not survive the substitution.
+Beyond them, the remaining ~215 consumers of `exit_class` are a mechanical
+rename — `exit_class k L T x` to `covariation_class S T x`, plus an
+`S`-hypothesis in a dozen places — but they sit in fifteen theories and have
+to be migrated bottom-up, one theory at a time.  The bridge equations mean
+that can now happen without touching anything else.
