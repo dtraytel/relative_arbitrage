@@ -11,6 +11,7 @@ session Relative_Arbitrage_Statement = Relative_Arbitrage +
     Statement_Auxiliary
   theories
     Theorem_1_1_Statement
+    Paper_Readings
   document_files
     "root.tex"
     "root.bib"
