@@ -48,6 +48,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Path_Tightness_Market
     Exit_Time_Semicontinuity
     Exit_Class
+    Covariation_Density
     Exit_Class_Limits
     Exit_Class_Tightness
     Exit_Class_Shift

@@ -2,7 +2,8 @@ section \<open>The \<open>X\<close>-marginals of the exit class\<close>
 
 (*<*)
 theory Exit_Class_Marginals
-  imports Exit_Class_Infinite "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
+  imports Exit_Class_Infinite Covariation_Density
+    "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
@@ -43,8 +44,33 @@ definition xclass ::
      (\<exists>A. (AE w in Q. A 0 w = 0) \<and>
           martingale Q (natural_filtration Q 0 (\<lambda>t w. w t)) 0
             (\<lambda>t w. outerp (w t) - A t w) \<and>
+          (AE w in Q. density_cond (\<lambda>t. A t w) (sconstraint k L)))}"
+
+text \<open>The difference-quotient reading, which the development below works
+  with.  It is the same condition: see \<open>dq_iff_density\<close>.\<close>
+
+lemma xclass_eq_dq:
+  assumes L: "0 \<le> L"
+  shows "xclass k L x = {Q.
+     prob_space Q \<and>
+     sets Q = sets (ipath_space :: ((real \<Rightarrow> real^'n::finite) measure)) \<and>
+     (AE w in Q. w 0 = x) \<and>
+     martingale Q (natural_filtration Q 0 (\<lambda>t w. w t)) 0 (\<lambda>t w. w t) \<and>
+     (\<exists>A. (AE w in Q. A 0 w = 0) \<and>
+          martingale Q (natural_filtration Q 0 (\<lambda>t w. w t)) 0
+            (\<lambda>t w. outerp (w t) - A t w) \<and>
           (AE w in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
              (1 / (t - s)) *\<^sub>R (A t w - A s w) \<in> sconstraint k L))}"
+proof -
+  have iff: "density_cond g (sconstraint k L)
+      \<longleftrightarrow> (\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+             (1 / (t - s)) *\<^sub>R (g t - g s) \<in> sconstraint k L)"
+    for g :: "real \<Rightarrow> real^'n^'n"
+    using dq_iff_density[OF sconstraint_convex closed_sconstraint
+        bounded_sconstraint[OF L], of g]
+    unfolding dq_cond_def by blast
+  show ?thesis unfolding xclass_def by (simp add: iff)
+qed
 
 definition xval ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> real^'n \<Rightarrow> ennreal"
@@ -651,7 +677,7 @@ proof -
 
   text \<open>Assembling the five clauses.\<close>
   have "?Q \<in> xclass k L x"
-    unfolding xclass_def mem_Collect_eq
+    unfolding xclass_eq_dq[OF L] mem_Collect_eq
   proof (intro conjI)
     show "prob_space ?Q" by (rule PP.prob_space_distr[OF phim])
     show "sets ?Q = sets (ipath_space :: ((real \<Rightarrow> real^'n) measure))" by simp
@@ -962,7 +988,7 @@ proof -
     and mgA: "martingale Q ?F 0 (\<lambda>t w. outerp (w t) - A t w)"
     and dqA: "AE w in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
                 (1 / (t - s)) *\<^sub>R (A t w - A s w) \<in> sconstraint k L"
-    unfolding xclass_def by blast
+    unfolding xclass_eq_dq[OF L] by blast
   have keyq: "AE w in Q. \<forall>t. 0 \<le> t \<longrightarrow> qvmata C w t = A t w"
     unfolding C_def by (rule xclass_qvmata[OF Q L A0 mgA dqA])
 
