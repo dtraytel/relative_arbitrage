@@ -20,6 +20,7 @@ session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
     Sup_Convolution
     Theorem_On_Sums
     Doubling_Of_Variables
+    Crandall_Ishii_Sums
     Soft_Penalty
     Test_Functions
     Viscosity_Solutions
