@@ -28,5 +28,6 @@ section \<open>Optional sampling at two stopping times: the simple case\<close>
 
 
 
+(*<*)
 end
 (*>*)

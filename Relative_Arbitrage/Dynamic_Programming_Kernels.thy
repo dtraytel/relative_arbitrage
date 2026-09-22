@@ -1366,5 +1366,6 @@ text \<open>Clause (iv) needs optional sampling at two stopping times, while
 
 
 
+(*<*)
 end
 (*>*)

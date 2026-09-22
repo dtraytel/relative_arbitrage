@@ -133,5 +133,6 @@ text \<open>The deterministic case conditions on rectangles
 
 
 
+(*<*)
 end
 (*>*)

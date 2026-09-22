@@ -580,7 +580,6 @@ text \<open>Fewer test functions means a weaker condition, so everything proved 
   \<^const>\<open>test_fun_at\<close> form still delivers Definition 3.1 as the paper states it.\<close>
 
 
-(*<*)
 
 lemma test_fun_at_quartic_shift:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
