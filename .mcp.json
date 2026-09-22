@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "isabelle-pide-mcp": {
-      "command": "/Users/kfx532/isabelle/bin/isabelle",
+      "command": "/usr/local/bin/isabelle",
       "args": [
         "pide_mcp",
         "-d",
-        "/Users/kfx532/experiment_arbitrage",
+        "/home/user/relative_arbitrage",
         "-R",
         "Relative_Arbitrage"
       ]
