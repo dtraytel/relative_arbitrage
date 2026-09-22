@@ -6,7 +6,7 @@
         "pide_mcp",
         "-d",
         "/home/user/relative_arbitrage",
-        "-R",
+        "-l",
         "Relative_Arbitrage"
       ]
     }
