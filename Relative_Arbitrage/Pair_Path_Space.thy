@@ -128,8 +128,6 @@ section \<open>Diagonal entries under the eigenvalue constraints\<close>
 
 text \<open>\<open>diag_entry_quadform\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
 
-(*<*)
-(*<*)
 
 text \<open>\<open>radial_sq_upto\<close> transports the growth identity to the
   endpoint of a half-open confinement interval.  Nothing in its proof is

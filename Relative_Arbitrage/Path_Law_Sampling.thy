@@ -2578,7 +2578,6 @@ proof -
 qed
 
 
-(*<*)
 
 theorem pfut_rcd_X_martingale:
   fixes P :: "('n::finite pairpath) measure"

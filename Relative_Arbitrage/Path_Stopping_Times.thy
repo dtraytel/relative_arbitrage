@@ -1391,7 +1391,6 @@ next
 qed
 
 
-(*<*)
 
 text \<open>With the \<open>\<F>\<^sub>\<sigma>\<close> layer in place the simple case is the classical
   argument: split the conditioning set along the finitely many values of
@@ -1680,7 +1679,6 @@ proof -
 qed
 
 
-(*<*)
 
 lemma integrable_at_bounded_stopping_time:
   fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
@@ -2066,7 +2064,6 @@ text \<open>The second, and last, clause-(iv) instance.  The pathwise identity i
   \<open>outerp b\<close> and \<open>\<langle>X\<rangle>\<^sub>\<theta>\<close> have already cancelled between the two times.\<close>
 
 
-(*<*)
 
 (*<*)
 end

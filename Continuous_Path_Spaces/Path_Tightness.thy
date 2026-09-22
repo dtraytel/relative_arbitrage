@@ -2934,5 +2934,7 @@ text \<open>
   compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's
   admissibility conditions Eqs. (1.7)-(1.8).
 \<close>
+
+(*<*)
 end
 (*>*)
