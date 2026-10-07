@@ -661,8 +661,9 @@ table.t-index{border-collapse:collapse;width:100%;min-width:44rem;font-size:.86r
       The pair <span style="font-family:'IBM Plex Mono',monospace;font-size:.9em">1 &le; k</span> and
       <span style="font-family:'IBM Plex Mono',monospace;font-size:.9em">k &lt; CARD('n)</span> is exactly
       <em>k</em>&nbsp;&isin;&nbsp;{1,&hellip;,<em>n</em>&minus;1}, and it forces <em>n</em>&nbsp;&ge;&nbsp;2 on its own,
-      so the paper's dimension hypothesis needs no separate assumption. <em>K</em>&nbsp;&ne;&nbsp;&empty; is
-      required only by the uniqueness argument.
+      so the paper's dimension hypothesis needs no separate assumption. As in the paper, the
+      <code>T<sub>&iota;</sub></code> family is assumed for the uniqueness clause alone; no clause needs
+      <em>K</em>&nbsp;&ne;&nbsp;&empty;.
     </p>
   </section>
 
@@ -1406,7 +1407,7 @@ v: { name:'v', kind:'defines',
        + 'them says nothing else can be it.',
   paper:'The value function <code>v</code> of Eq. (1.6), read as a real number rather than an element '
        + 'of <code>[0,&infin;]</code>.',
-  src:'Statement/Theorem_1_1_Statement.thy:138' },
+  src:'Statement/Theorem_1_1_Statement.thy:149' },
 
 real: { name:'real', kind:'library',
   type:'nat &rArr; real   (and the type of the reals)',
@@ -1430,7 +1431,10 @@ var FLAGS = {
     title:'Orthogonality of <em>P</em> is the intended reading',
     body:'Equation (1.5) writes the infimum over <code>P&sup2; = P</code>, <code>tr(P) = m</code> '
        + 'without asking <code>P</code> to be symmetric. Read literally the infimum is unbounded '
-       + 'below, so <code>S</code> would be empty whenever <code>k &le; n &minus; 2</code>: in three '
+       + 'below for every symmetric <code>a</code> that is not a multiple of the identity once '
+       + '<code>k &lt; m &lt; n</code>, so for <code>k &le; n &minus; 2</code> the literal <code>S</code> '
+       + 'shrinks to the multiples <code>cI</code> with <code>1 &minus; k/n &le; c &le; L</code> (not empty: the '
+       + 'identity satisfies the literal constraint) and Lemma 2.1 fails. In three '
        + 'dimensions with <code>m = 2</code>, take <code>a = uu<sup>&#8868;</sup></code> for '
        + '<code>u = (1,0,1)</code> and <code>P</code> the rank-2 idempotent with range '
        + '<code>span{e<sub>1</sub>,e<sub>2</sub>}</code> and kernel '
@@ -1473,14 +1477,13 @@ var HYPS = [
   {f:'1 &le; k',        w:'and at least one'},
   {f:'1 &le; L',        w:'the eigenvalue ceiling'},
   {f:'compact K',       w:'K is compact'},
-  {f:'K &ne; {}',       w:'nonempty, for uniqueness'},
-  {f:R('expandable') + ' K', w:'the T&#8339; family'}
+  {f:R('expandable') + ' K', w:'the T&#8339; family, for clause 4 only'}
 ];
 
 /* ---------------- the five clauses ---------------- */
 var CLAUSES = [
   {
-    conj:'&and;<sub>0</sub>', thy:'Statement/Theorem_1_1_Statement.thy:139-143', claim:'Bounded',
+    conj:'&and;<sub>0</sub>', thy:'Statement/Theorem_1_1_Statement.thy:150-154', claim:'Bounded',
     paper:'Definition 3.1 speaks of a <em>bounded</em> function <code>u : K &rarr; &#8477;</code>. For the '
         + 'value function to be such a function at all, it must be finite &mdash; a priori it takes values '
         + 'in <code>[0,&infin;]</code>.',
@@ -1491,7 +1494,7 @@ var CLAUSES = [
        + 'masquerade as zero.'
   },
   {
-    conj:'&and;<sub>1</sub>', thy:'Statement/Theorem_1_1_Statement.thy:144-145', claim:'Upper semicontinuous',
+    conj:'&and;<sub>1</sub>', thy:'Statement/Theorem_1_1_Statement.thy:155-156', claim:'Upper semicontinuous',
     paper:'&ldquo;&hellip; the value function <em>v</em> of (1.6) is an <strong>upper semicontinuous</strong> '
         + 'viscosity solution of the fully nonlinear elliptic partial differential equation '
         + '<code>F(&nabla;v,&nabla;&sup2;v) = 1</code> on <em>K</em> &hellip;&rdquo;',
@@ -1501,7 +1504,7 @@ var CLAUSES = [
        + 'proved everywhere, which is the stronger statement.'
   },
   {
-    conj:'&and;<sub>2</sub>', thy:'Statement/Theorem_1_1_Statement.thy:146-149', claim:'Subsolution',
+    conj:'&and;<sub>2</sub>', thy:'Statement/Theorem_1_1_Statement.thy:157-160', claim:'Subsolution',
     paper:'&ldquo;&hellip; viscosity solution &hellip; with zero boundary condition (see Definition 3.1)&rdquo;. '
         + 'Definition 3.1(a) gives the subsolution property in <code>K&#778;</code>, and its second sentence '
         + 'the zero boundary condition at <code>x &isin; &part;K</code> with <code>u<sup>*</sup>(x) &gt; 0</code>.',
@@ -1513,7 +1516,7 @@ var CLAUSES = [
        + '3.1(a) can be dropped.'
   },
   {
-    conj:'&and;<sub>3</sub>', thy:'Statement/Theorem_1_1_Statement.thy:150-157', claim:'Supersolution',
+    conj:'&and;<sub>3</sub>', thy:'Statement/Theorem_1_1_Statement.thy:161-168', claim:'Supersolution',
     paper:'Definition 3.1(b), the mirror image: the supersolution property in <code>K&#778;</code>, plus the '
         + 'zero boundary condition at <code>x &isin; &part;K</code> with <code>u<sub>*</sub>(x) &lt; 0</code>. '
         + 'Note that (b) is stated for the <em>lower</em> envelope <code>u<sub>*</sub></code>.',
@@ -1526,11 +1529,12 @@ var CLAUSES = [
        + '<code>(1,L)</code>; an exact-rotation covariance field is used instead.'
   },
   {
-    conj:'&and;<sub>4</sub>', thy:'Statement/Theorem_1_1_Statement.thy:158-171', claim:'Unique',
+    conj:'&and;<sub>4</sub>', thy:'Statement/Theorem_1_1_Statement.thy:169-184', claim:'Unique',
     paper:'&ldquo;Then, the upper semicontinuous viscosity solution of <code>F(&nabla;v,&nabla;&sup2;v)=1</code> '
         + 'on <em>K</em> with zero boundary condition is <strong>unique</strong>.&rdquo; &mdash; under the '
         + 'additional <code>T<sub>&iota;</sub></code> hypothesis.',
-    formal:'&forall;u :: real^&#39;n &rArr; real. &forall;Bd.\n'
+    formal:R('expandable') + ' K &longrightarrow;\n'
+         + '(&forall;u :: real^&#39;n &rArr; real. &forall;Bd.\n'
          + '   (&forall;c z. z &isin; K &longrightarrow; u z &lt; c &longrightarrow;\n'
          + '      (&exist;e&gt;0. &forall;y&isin;K. dist z y &lt; e &longrightarrow; u y &lt; c))\n'
          + '   &longrightarrow; (&forall;y&isin;K. &brvbar;u y&brvbar; &le; Bd)\n'
@@ -1539,8 +1543,9 @@ var CLAUSES = [
          + '   &longrightarrow; ' + R('visc_supersol_env2') + ' k L K\n'
          + '        (' + R('interior') + ' K &cup; {x &isin; K - ' + R('interior') + ' K. ' + R('lsc_envK') + ' K u x &lt; 0})\n'
          + '        (' + R('lsc_envK') + ' K u)\n'
-         + '   &longrightarrow; (&forall;x&isin;K. u x = v x)',
-    note:'The competitor is quantified <em>inside</em> the statement, so the whole of Theorem 1.1 stays one '
+         + '   &longrightarrow; (&forall;x&isin;K. u x = v x))',
+    note:'As in the paper, the expandability hypothesis is attached to this clause alone: clauses 0&ndash;3 hold for '
+       + 'every compact <code>K</code>. The competitor is quantified <em>inside</em> the statement, so the whole of Theorem 1.1 stays one '
        + 'formula rather than becoming a pair of theorems. Every hypothesis placed on the competitor is about '
        + '<code>K</code> alone &mdash; semicontinuity and boundedness are demanded only at and between points '
        + 'of <code>K</code>. Continuity is <em>not</em> assumed, and is not part of Theorem 1.1; boundedness '

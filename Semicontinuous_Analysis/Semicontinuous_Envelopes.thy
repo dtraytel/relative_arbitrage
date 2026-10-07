@@ -327,7 +327,7 @@ subsection \<open>The envelope taken within \<open>K\<close>\<close>
 text \<open>Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper reads its lower envelope \<open>u\<^sub>*\<close> inside \<open>K\<close>:
   the liminf is over points of \<open>K\<close> only.  @{const lsc_env} takes it over balls
   of \<open>'a\<close>, so the two agree at interior points of \<open>K\<close> and can differ on
-  \<open>K - interior K\<close>, which is exactly where the boundary gate of Eq. (1.10) is
+  \<open>K - interior K\<close>, which is exactly where a boundary condition is
   read.  \<open>lsc_envK\<close> is the paper's envelope.
 
   The bridge between them is an extension.  A function on \<open>K\<close> reaches

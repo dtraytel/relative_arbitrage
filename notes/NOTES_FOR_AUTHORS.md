@@ -66,9 +66,9 @@ the paper and the interior lower bound `v ≥ ball_v`.
 No such existence theorem was formalised, and Example 3.1 is proved anyway,
 for every `1 ≤ k < n`:
 
-    v(x) = max((r² − |x|²)/(n − k), 0)   on the ball of radius r,
+    v(x) = max((r² − |x|²)/(n − k), 0)   on the ball of radius r.
 
-whenever the horizon does not bind. The route is a direct construction rather
+The route is a direct construction rather
 than a weak solution. For `y ≠ 0`, take the `(n − k + 1)`-dimensional subspace
 `V` spanned by an orthonormal family whose first member is `y/|y|`, so that
 `y ∈ V`, and run a subspace-tangential covariation field inside `V`. Its
@@ -138,7 +138,7 @@ in the feasible set, so
   equals `tr(M a)` at `y = x`, so the trace margin follows from continuity at
   the touching point instead of from three explicit smallness estimates.
 
-This is `rotSF_exists` in `Value_Function_Viscosity`, and it carries no
+This is `rotSF_exists` in `Value_Function_Supersolution_Case_1`, and it carries no
 hypothesis on `L` whatsoever. Clauses (2b), (3b) and (4) are therefore proved
 here for every `L ≥ 1`, `L = 1` included, and the skew field of (3.24) is no
 longer formalised at all — the rotation replaced it outright.
@@ -157,6 +157,7 @@ and below its value at `x` outside an explicit ball.
 
 | | paper | formalisation |
 |---|---|---|
+| hypotheses of Theorem 1.1 | compact `K`; the `T_ι` family "in addition" for uniqueness | the same: clauses (0)–(3) for every compact `K`, clause (4) under `expandable K` |
 | time horizon | none; `C([0,∞))` | finite `T`, proved to give the same value function as yours on `C([0,∞))` |
 | regularity in the uniqueness clause | bounded usc on `K` | the same, relative to `K` |
 | the envelope `u_*` of Definition 3.1 | liminf within `K` | the same (`lsc_envK`); the liminf over balls of `real^'n` is also formalised, and the two differ on `K \ int K` |
@@ -168,7 +169,7 @@ and below its value at `x` outside an explicit ball.
 
 The finite horizon is not a restriction. Your class and your value function are
 formalised as you write them — laws on `C([0,∞))`, the covariation constraint
-at every pair of times, no stopping in the martingale clauses — and the two
+as an almost-everywhere density, no stopping in the martingale clauses — and the two
 value functions are proved equal: every member of the horizon-`T` class is the
 restriction of a member of your class, obtained by gluing an independent
 Brownian continuation with covariation `t·I` onto it at time `T`. For a `K`
@@ -185,17 +186,20 @@ That is a different object from `𝒫ₓ`, and the two are proved to correspond:
 the two value functions are equal. The lift recovers `⟨X⟩` as a functional of
 the `X`-path alone, so that it is adapted — which is what the martingale clauses
 of Eq. (1.7) need on the image. One modelling choice is recorded there: `𝒫ₓ`
-asks that *some* continuous adapted `A` compensate `X Xᵀ` with all its
-difference quotients in `S`, which is what `d⟨X⟩/dt ∈ S` says once `⟨X⟩` is read
-as that compensator, and the compensator is unique up to indistinguishability.
+asks that *some* `A` compensate `X Xᵀ` and be absolutely continuous with an
+almost-everywhere derivative in `S` (`density_cond`), which is what
+`d⟨X⟩/dt ∈ S` says once `⟨X⟩` is read as that compensator. Since `S` is compact
+and convex this is equivalent to every difference quotient of `A` lying in `S`
+(`dq_iff_density`), the form the proofs use, and the compensator is unique up to indistinguishability.
 
 ---
 
 ## Infrastructure that had to be built
 
 None of the following existed in Isabelle/HOL or its Archive of Formal Proofs.
-Each now sits in a session of its own, none of which mentions this paper, and
-each of which is independently submittable:
+Each now sits in a session of its own, none of which depends on this paper, and
+each of which is independently submittable (a few of their texts still cite the
+paper; `notes/PLAN_RESTRUCTURING_3.md` phase 8 removes those):
 
 * **`Symmetric_Matrix_Spectra`** — the spectral theorem for real symmetric
   matrices, Ky Fan partial sums, the ordered eigenvalues as their differences,

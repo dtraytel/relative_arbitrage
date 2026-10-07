@@ -56,6 +56,25 @@ text \<open>The fully nonlinear operator \<open>F(p, M)\<close> of Eq. (1.9): \<
 definition ell_op :: "nat \<Rightarrow> real \<Rightarrow> real^'n \<Rightarrow> real^'n^'n \<Rightarrow> real" where
   "ell_op k L p M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
 
+text \<open>\<open>F\<close> reads only the symmetric part of \<open>M\<close>: every feasible \<open>a\<close> is symmetric,
+  and \<open>tr(M\<^sup>T a) = tr(M a)\<close> for symmetric \<open>a\<close>.  This is what lets the envelopes
+  \<open>F\<^sub>*\<close>, \<open>F\<^sup>*\<close> be taken over all matrices rather than over \<open>\<bbbS>\<^sup>n\<close>.\<close>
+
+theorem ell_op_sym_part:
+  fixes M :: "real^'n::finite^'n"
+  shows "ell_op k L p M = ell_op k L p ((1/2) *\<^sub>R (M + transpose M))"
+proof -
+  have "- trace (M ** a) / 2 = - trace (((1/2) *\<^sub>R (M + transpose M)) ** a) / 2"
+    if "a \<in> feasible k L p" for a
+  proof -
+    have sym: "transpose a = a" using that by (simp add: feasible_def psd_def)
+    show ?thesis
+      by (simp add: scaleR_matrix_mult matrix_add_rdistrib trace_add trace_scaleR
+            trace_transpose_mult_sym[OF sym])
+  qed
+  then show ?thesis unfolding ell_op_def by (intro arg_cong[where f = Inf] image_cong) auto
+qed
+
 subsection \<open>Feasibility: projections onto \<open>(n-k)\<close>-dimensional subspaces of \<open>p\<^sup>\<bottom>\<close>\<close>
 
 lemma feasible_witness:

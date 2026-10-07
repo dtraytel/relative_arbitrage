@@ -1,6 +1,12 @@
 (* Checked in PIDE on 2026-10-07 against the Relative_Arbitrage_Statement heap (0 errors,
-   0 sorries).  Not part of any session: these are the proposed additions of
-   notes/PLAN_RESTRUCTURING_3.md, phase 1 (statement and faithfulness evidence). *)
+   0 sorries).  Not part of any session: these were the proposed additions of
+   notes/PLAN_RESTRUCTURING_3.md, phase 1 (statement and faithfulness evidence).
+   Phase 1 has since moved them into the development: theorem_1_1_strong is
+   Theorem_1_1_Statement.theorem_1_1 (via Relative_Arbitrage.Theorem_1_1), the trace
+   lemmas are in Symmetric_Matrix_Spectra.Matrix_Algebra, ell_op_sym_part is in
+   Curvature_Operator, and the literal reading is in Paper_Readings.  Kept as the
+   record of what the review checked; it no longer loads against the current heap
+   because of the duplicate names. *)
 theory Faithfulness_Checks
   imports "Relative_Arbitrage_Statement.Paper_Readings"
 begin

@@ -831,6 +831,34 @@ proof -
   finally show ?thesis by (rule sym)
 qed
 
+lemma trace_transpose:
+  fixes A :: "'a::comm_ring_1^'n::finite^'n"
+  shows "trace (transpose A) = trace A"
+  by (simp add: trace_def transpose_def)
+
+lemma norm_transpose_matrix:
+  fixes M :: "real^'n::finite^'n"
+  shows "norm (transpose M) = norm M"
+proof -
+  have "(norm (transpose M))\<^sup>2 = trace (M ** transpose M)"
+    using norm_matrix_sq_trace[of "transpose M"] by simp
+  also have "\<dots> = trace (transpose M ** M)" by (rule trace_mul_sym)
+  also have "\<dots> = (norm M)\<^sup>2" by (rule norm_matrix_sq_trace[symmetric])
+  finally show ?thesis by simp
+qed
+
+lemma trace_transpose_mult_sym:
+  fixes M a :: "real^'n::finite^'n"
+  assumes "transpose a = a"
+  shows "trace (transpose M ** a) = trace (M ** a)"
+proof -
+  have "trace (transpose M ** a) = trace (transpose (transpose a ** M))"
+    by (simp add: matrix_transpose_mul)
+  also have "\<dots> = trace (transpose a ** M)" by (simp only: trace_transpose)
+  also have "\<dots> = trace (M ** a)" using assms trace_mul_sym[of a M] by simp
+  finally show ?thesis .
+qed
+
 lemma norm_conj_orthogonal:
   fixes R M :: "real^'n::finite^'n"
   assumes orth: "orthogonal_matrix R"

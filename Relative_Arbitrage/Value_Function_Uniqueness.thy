@@ -13,7 +13,7 @@ begin
 text \<open>
   Theorem 1.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> asserts that the value function \<open>v\<close> of
   Eq. (1.6) is the unique bounded upper semicontinuous viscosity solution of
-  Eq. (1.9) satisfying the zero boundary condition of Eq. (1.10).  This theory
+  Eq. (1.9) satisfying the zero boundary condition of Definition 3.1.  This theory
   joins the two halves of that statement: the viscosity property, proved in
   @{theory Relative_Arbitrage.Value_Function_Assembly}, and the comparison principle, proved in
   @{theory Relative_Arbitrage.Comparison_Principle}.  It also derives Example 3.1 in closed form.
@@ -59,7 +59,7 @@ text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1
   \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Subsolution.exit_val_visc_subsol\<close>
     for the subsolution half, with the operator of Eq. (1.9) itself, and
     \<open>Value_Function_Supersolution_Case_2.exit_val_supersol_lsc\<close> for the supersolution half.
-  \<^item> The zero boundary condition of Eq. (1.10), in the viscosity sense of
+  \<^item> The zero boundary condition, in the viscosity sense of
     Definition 3.1: \<open>Value_Function_Subsolution.exit_val_subsol_bc\<close> and
     \<open>exit_val_supersol_bc\<close> below.
   \<^item> Uniqueness: \<open>theorem_1_1_uniqueness_faithful\<close> below, via the paper's
@@ -662,7 +662,7 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
   bind at interior points is discharged by the a priori bound, so it too is
   gone.\<close>
 
-text \<open>\<^bold>\<open>Clause (3): the zero boundary condition of Eq. (1.10)\<close>, in the
+text \<open>\<^bold>\<open>Clause (3): the zero boundary condition\<close>, in the
   viscosity sense of Definition 3.1, both halves with the boundary gate.\<close>
 
 theorem iexit_val_subsol_bc:

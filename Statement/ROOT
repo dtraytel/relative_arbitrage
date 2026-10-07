@@ -7,8 +7,6 @@ session Relative_Arbitrage_Statement = Relative_Arbitrage +
   "
   options [document = pdf, document_output = "output",
            document_variants = "document=-proof"]
-  theories [document = false]
-    Statement_Auxiliary
   theories
     Theorem_1_1_Statement
     Paper_Readings
