@@ -1,0 +1,18 @@
+Curvature_Operator                   19/ 19
+Viscosity_Definitions                20/ 20
+Viscosity_Ball                        3/  3
+Constraint_Set_Convexity             12/ 12
+Viscosity_Comparison_Interface        8/  8
+Ball_Solution                        11/ 11
+Eigenvalue_Bound_Exact               13/ 13
+Operator_Continuity                  13/ 13
+Operator_Formula                     44/ 44
+Operator_Envelopes                   35/ 35
+Operator_Envelope_Continuity         16/ 16
+Comparison_Strictness                29/ 29
+Comparison_Localisation              33/ 33
+Comparison_Principle                 17/ 17
+Comparison_Two_Domain                 5/  5
+Value_Function_Tangential_Field      28/ 29
+Covariation_Density                   9/  9
+total RA facts placeable probability-free: 529

@@ -1,0 +1,13 @@
+Finished Continuous_Time_Martingales/document (0:00:03 elapsed time)
+Timing Continuous_Time_Martingales (3 threads, 67.326s elapsed time, 142.932s cpu time, 3.820s GC time, factor 2.12)
+Finished Continuous_Time_Martingales (0:01:37 elapsed time, 0:03:00 cpu time, factor 1.85)
+Finished Continuous_Path_Spaces/document (0:00:02 elapsed time)
+Timing Continuous_Path_Spaces (3 threads, 401.357s elapsed time, 910.153s cpu time, 55.521s GC time, factor 2.27)
+Finished Continuous_Path_Spaces (0:07:25 elapsed time, 0:16:06 cpu time, factor 2.17)
+Finished Relative_Arbitrage/document (0:00:21 elapsed time)
+Timing Relative_Arbitrage (3 threads, 472.695s elapsed time, 1005.212s cpu time, 61.088s GC time, factor 2.13)
+Finished Relative_Arbitrage (0:09:00 elapsed time, 0:18:16 cpu time, factor 2.03)
+Finished Relative_Arbitrage_Statement/document (0:00:00 elapsed time)
+Timing Relative_Arbitrage_Statement (3 threads, 4.534s elapsed time, 5.845s cpu time, 0.134s GC time, factor 1.29)
+Finished Relative_Arbitrage_Statement (0:00:41 elapsed time, 0:00:48 cpu time, factor 1.17)
+Finished at Wed Oct 7 11:22:34 GMT 2026

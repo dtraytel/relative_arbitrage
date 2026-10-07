@@ -1,0 +1,93 @@
+===== source imports vs. latest needed theories =====
+Adapted_Quadratic_Variation | 2 imports
+   needs at most: Pathwise_Quadratic_Variation
+   imports with nothing needed below them: Stopped_Localization
+Equicontinuity | 3 imports
+   needs at most: -
+   imports with nothing needed below them: Berge
+Holder_Interpolation | 1 imports
+   needs at most: -
+   imports with nothing needed below them: Modulus_Tails
+Increment_Moments | 2 imports
+   needs at most: Sampled_Quadratic_Variation
+   imports with nothing needed below them: Moment_Bounds
+Stopped_Localization | 4 imports
+   needs at most: Increment_Moments, Stopped_Adaptedness, Stopping_Times
+   imports with nothing needed below them: Martingale_Transfer
+Moment_Bounds | 2 imports
+   needs at most: Power_Inequalities
+   imports later than needed: Quadratic_Variation
+Optional_Sampling | 1 imports
+   needs at most: Time_Discretisation
+   imports later than needed: Doob_Inequality
+Stopped_Adaptedness | 1 imports
+   needs at most: -
+   imports with nothing needed below them: Optional_Sampling
+Brownian_Optimal_Boundary | 2 imports
+   needs at most: Brownian_Market
+   imports with nothing needed below them: Optimal_Exit_Time
+Comparison_Jets | 6 imports
+   needs at most: -
+   imports with nothing needed below them: Soft_Penalty, Operator_Envelope_Continuity, Integrability_Criteria, Doubling_Of_Variables, Semicontinuity, Matrix_Algebra
+Comparison_Strictness | 1 imports
+   needs at most: Operator_Envelope_Continuity
+   imports later than needed: Comparison_Jets
+Covariation_Density | 1 imports
+   needs at most: -
+   imports with nothing needed below them: Exit_Class
+Dynamic_Programming_Additive_Glue | 3 imports
+   needs at most: Exit_Class_Pasting
+   imports later than needed: Dynamic_Programming_Stopping_Clauses
+Dynamic_Programming_Delayed_Class | 6 imports
+   needs at most: Dynamic_Programming_Stopping_Clauses
+   imports later than needed: Dynamic_Programming_Additive_Glue
+Dynamic_Programming_Optional_Sampling | 2 imports
+   needs at most: -
+   imports with nothing needed below them: Dynamic_Programming_Kernels, Time_Discretisation
+Dynamic_Programming_Stopping_Clauses | 4 imports
+   needs at most: Exit_Class_Limits
+   imports later than needed: Dynamic_Programming_Optional_Sampling
+Exit_Class | 12 imports
+   needs at most: Operator_Formula, Pair_Path_Laws
+   imports later than needed: Path_Law_Sampling
+   imports with nothing needed below them: Ball_Solution
+Exit_Class_Infinite | 5 imports
+   needs at most: Exit_Class_Pasting
+   imports later than needed: Dynamic_Programming_Assembly
+Ito_Market | 5 imports
+   needs at most: Integrability_Criteria, Optional_Sampling, Volatile_Market
+   imports later than needed: Vector_Brownian_Martingales
+Operator_Continuity | 3 imports
+   needs at most: Ky_Fan
+   imports later than needed: Eigenvalue_Bound_Exact
+Operator_Envelopes | 7 imports
+   needs at most: Ball_Solution, Semicontinuity, Householder_Rotation
+   imports with nothing needed below them: Integrability_Criteria
+Pair_Path_Space | 37 imports
+   needs at most: Adapted_Quadratic_Variation, Path_Exit_Times, Path_Tightness, Semicontinuous_Selection, Householder_Rotation, Symmetric_Spectral
+   imports later than needed: Ky_Fan, Poincare_Separation, Doubling_Of_Variables
+   imports with nothing needed below them: Conditional_UI, Natural_Filtration, Semidirect_Kernels, Modification_Transfer, Vitali_Convergence, Semicontinuity, Sup_Convolution, Brownian_Finite_Dimensional_Distributions
+Path_Tightness_Market | 6 imports
+   needs at most: Pair_Path_Space, Volatile_Market
+   imports later than needed: Ito_Market, Path_Law_Sampling
+Value_Function_Tangential_Field | 2 imports
+   needs at most: Value_Function_Supersolution_Case_1
+   imports later than needed: Value_Function_Supersolution_Case_2
+Viscosity_Comparison_Interface | 3 imports
+   needs at most: Viscosity_Ball
+   imports with nothing needed below them: Constraint_Set_Convexity
+Paper_Readings | 1 imports
+   needs at most: Exit_Class_Marginals
+   imports later than needed: Theorem_1_1_Statement
+Jensen_Lemma | 1 imports
+   needs at most: Convex_Subgradients
+   imports later than needed: Alexandrov
+Rademacher | 1 imports
+   needs at most: -
+   imports with nothing needed below them: Convex_Subgradients
+Theorem_On_Sums | 2 imports
+   needs at most: Sup_Convolution
+   imports with nothing needed below them: Matrix_Algebra
+Gaussian_Increments | 1 imports
+   needs at most: -
+   imports with nothing needed below them: Sorted_Lists

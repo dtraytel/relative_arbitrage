@@ -1,0 +1,19 @@
+== Continuous_Path_Spaces build: CPU by originating session
+   Riesz_Representation                   3 theories    268.3s
+   HOL-Complex_Analysis                   6 theories    226.2s
+   Standard_Borel_Spaces                  5 theories    178.4s
+   Levy_Prokhorov_Metric                  5 theories    149.5s
+   Continuous_Path_Spaces                14 theories    129.2s
+   Kolmogorov_Chentsov                    2 theories     33.6s
+   Semicontinuous_Analysis                1 theories     25.9s
+== Relative_Arbitrage build: CPU by originating session
+   Relative_Arbitrage                    55 theories    625.9s
+   Symmetric_Matrix_Spectra               8 theories    107.4s
+   Second_Order_Viscosity_Analysis       11 theories    100.3s
+   Disintegration                         2 theories     90.2s
+   S_Finite_Measure_Monad                 2 theories     78.6s
+   Kolmogorov_Chentsov                    4 theories     76.4s
+   Wiener_Measure                         8 theories     40.3s
+   Lower_Semicontinuous                   1 theories     30.0s
+   Levy_Prokhorov_Metric                  1 theories     24.0s
+   Semicontinuous_Analysis                3 theories     13.9s

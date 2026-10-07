@@ -1,0 +1,36 @@
+Comparison_Two_Domain.uniqueness_expandable: closure 469 facts; operator-layer facts consumed directly: 23
+    Curvature_Operator.ell_op_bdd_below
+    Curvature_Operator.ell_op_def
+    Curvature_Operator.feasible_def
+    Curvature_Operator.feasible_nonempty
+    Operator_Envelope_Continuity.ell_op_elliptic_le
+    Operator_Envelope_Continuity.ell_op_lsc_off_zero
+    Operator_Envelope_Continuity.ell_op_usc_off_zero
+    Operator_Envelopes.ell_op_M_gap
+    Operator_Envelopes.ell_op_lsc_at_zero
+    Operator_Envelopes.ell_op_usc_conj_rot
+    Operator_Envelopes.ell_op_usc_eq_at_nonzero
+    Operator_Envelopes.ell_op_usc_ge_one_limit
+    Operator_Envelopes.ell_op_usc_scale
+    Operator_Envelopes.ell_op_usc_small_shift_lt_one
+    Operator_Envelopes.ell_op_usc_zero_zero_lt_one
+    Operator_Envelopes.mgap_shift_id
+    Viscosity_Definitions.ell_op_lsc_def
+    Viscosity_Definitions.ell_op_pair_def
+    Viscosity_Definitions.ell_op_usc_def
+    Viscosity_Definitions.supersol_jet_def
+    Viscosity_Definitions.visc_subsol_def
+    Viscosity_Definitions.visc_subsol_env2_def
+    Viscosity_Definitions.visc_supersol_env2_def
+
+Exit_Class facts about sconstraint used outside the operator/class-definition theories:
+   Exit_Class.exit_class_def  <- 15 theories: Dynamic_Programming_Additive_Glue, Dynamic_Programming_Assembly, Dynamic_Programming_Conditioning, Dynamic_Programming_Delayed_Class, Dynamic_Programm
+   Exit_Class.closedin_diffquot_constraint  <- 8 theories: Dynamic_Programming_Additive_Glue, Dynamic_Programming_Conditioning, Dynamic_Programming_Delayed_Class, Dynamic_Programming_Kernels, Exit_Class_Infini
+   Exit_Class.closed_sconstraint  <- 7 theories: Dynamic_Programming_Conditioning, Dynamic_Programming_Delayed_Class, Exit_Class_Marginals, Exit_Class_Pasting, Exit_Class_Witness, Value_Function_Eule
+   Exit_Class.sconstraint_def  <- 4 theories: Exit_Class_Marginals, Exit_Class_Witness, Value_Function_Euler_Construction, Value_Function_Subsolution
+   Exit_Class.sconstraint_convex  <- 3 theories: Dynamic_Programming_Additive_Glue, Exit_Class_Marginals, Exit_Class_Pasting
+   Exit_Class.bounded_sconstraint  <- 2 theories: Exit_Class_Marginals, Value_Function_Subsolution
+   Exit_Class.exit_class_diffquot_limit  <- 1 theories: Exit_Class_Limits
+   Exit_Class.mat_1_in_sconstraint  <- 1 theories: Exit_Class_Witness
+   Exit_Class.sconstraint_norm_le  <- 1 theories: Value_Function_Subsolution
+   Exit_Class.suff_volatile_cap_in_sconstraint  <- 1 theories: Value_Function_Subsolution

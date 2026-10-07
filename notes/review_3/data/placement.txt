@@ -1,0 +1,118 @@
+analytic base contains HOL-Probability theories? False
+RA theory                                  facts    SMS  SemiC   SOVA  ANLYT    CTM     WM    CPS  (#facts movable to each target)
+Ball_Solution                                 11     11     11     11     11     11     11     11
+Brownian_Market                              100      0      0      0      0      0    100      0
+Brownian_Optimal_Boundary                      1      0      0      0      0      0      1      0
+Comparison_Localisation                       33     33     33     33     33     33     33     33
+Comparison_Principle                          17     17     17     17     17     17     17     17
+Comparison_Strictness                         29     29     29     29     29     29     29     29
+Comparison_Two_Domain                          5      4      5      4      5      4      4      5
+Constraint_Set_Convexity                      12     12     12     12     12     12     12     12
+Covariation_Density                            9      9      9      9      9      9      9      9
+Curvature_Operator                            19     19     19     19     19     19     19     19
+Dynamic_Programming_Additive_Glue              4      1      1      1      1      1      1      4
+Dynamic_Programming_Assembly                  11      1      1      1      1      1      1      6
+Dynamic_Programming_Conditioning              15      0      0      0      0      0      0     12
+Dynamic_Programming_Delayed_Class             21      0      0      0      0      0      0     19
+Dynamic_Programming_Kernels                   13      0      0      0      0      0      0      7
+Dynamic_Programming_Pasting                   10      0      0      0      0      0      0      3
+Dynamic_Programming_Stopping_Clauses           3      0      0      0      0      0      0      3
+Eigenvalue_Bound_Exact                        13     13     13     13     13     13     13     13
+Exit_Class                                    40     15     15     15     15     15     15     40
+Exit_Class_Infinite                           33      0      0      0      0      8     14     19
+Exit_Class_Limits                             29      0      0      0      0      1      1     29
+Exit_Class_Marginals                          20      3      3      3      3     11     11     20
+Exit_Class_Optimizer                           5      0      0      0      0      0      0      2
+Exit_Class_Pasting                            20      1      1      1      1      1      1     19
+Exit_Class_Shift                               4      0      0      0      0      0      0      4
+Exit_Class_Tightness                           6      0      0      0      0      0      0      6
+Exit_Class_Witness                            33      1      1      1      1      1     18      9
+Exit_Time_Semicontinuity                      42      1      1      1      1      4      4     38
+Ito_Market                                    93      2      2      2      2     93     93     93
+Operator_Continuity                           13     13     13     13     13     13     13     13
+Operator_Envelope_Continuity                  16     16     16     16     16     16     16     16
+Operator_Envelopes                            35     35     35     35     35     35     35     35
+Operator_Formula                              44     44     44     44     44     44     44     44
+Optimal_Exit_Time                             31      5      5      5      5     31     31     31
+Pair_Path_Laws                               123     34     34     34     34     39     39    123
+Pair_Path_Space                               40     14     20     14     14     18     18     40
+Path_Law_Pasting                              77      1     24      1      1     11     11     73
+Path_Law_Sampling                             25      0      0      0      0      0      0     25
+Path_Splicing                                106     61     61     61     61     63     63    106
+Path_Stopping_Times                           65     44     47     44     44     51     51     65
+Path_Tightness_Market                          2      1      1      1      1      1      1      2
+Value_Function_Assembly                        2      0      0      0      0      0      0      0
+Value_Function_Euler_Construction             57      7      7      7      7      7     17     13
+Value_Function_Market                          8      0      0      0      0      7      8      7
+Value_Function_Subsolution                    48     16     17     16     16     17     17     39
+Value_Function_Supersolution_Case_1           41     32     33     32     32     33     33     33
+Value_Function_Supersolution_Case_2           13      0      1      0      1      0      0      3
+Value_Function_Tangential_Field               29     28     28     28     28     28     28     28
+Value_Function_Uniqueness                     23      1      1      1      1      2      2      6
+Viscosity_Ball                                 3      3      3      3      3      3      3      3
+Viscosity_Comparison_Interface                 8      8      8      8      8      8      8      8
+Viscosity_Definitions                         20     20     20     20     20     20     20     20
+Volatile_Market                               36      2      4      2      2     36     36     36
+TOTAL                                       1516    557    595    557    559    766    901   1250
+Continuous_Path_Spaces facts movable to Continuous_Time_Martingales: 286/353
+Second_Order_Viscosity_Analysis facts movable to Symmetric_Matrix_Spectra: 531/531
+Wiener_Measure facts movable to Continuous_Time_Martingales: 45/1477
+
+==== strict modes: only Relative_Arbitrage facts may move ====
+
+-- mode: with co-moved definitions
+RA theory                                  facts    SMS  SemiC   SOVA  ANLYT    CTM     WM    CPS
+Ball_Solution                                 11      6      2     11     11      2      2      2
+Comparison_Localisation                       33      4      1     23     27      1      1      1
+Comparison_Principle                          17      0      0      6      7      0      0      0
+Comparison_Strictness                         29     11      0     24     24      0      0      0
+Comparison_Two_Domain                          5      0      0      0      2      0      0      0
+Constraint_Set_Convexity                      12     12      0     12     12      0      0      0
+Covariation_Density                            9      9      9      9      9      9      9      9
+Curvature_Operator                            19     19      7     19     19      7      7      7
+Dynamic_Programming_Additive_Glue              4      1      0      1      1      0      0      0
+Dynamic_Programming_Assembly                  11      1      1      1      1      1      1      2
+Eigenvalue_Bound_Exact                        13     13      6     13     13      6      6      6
+Exit_Class                                    40     15      0     15     15      0      0      0
+Exit_Class_Infinite                           33      0      0      0      0      0      2      0
+Exit_Class_Marginals                          20      3      0      3      3      0      0      0
+Exit_Class_Pasting                            20      1      0      1      1      0      0      0
+Exit_Class_Witness                            33      1      0      1      1      0     17      0
+Exit_Time_Semicontinuity                      42      1      1      1      1      1      1      1
+Ito_Market                                    93      2      1      2      2      2      2      2
+Operator_Continuity                           13     13      0     13     13      0      0      0
+Operator_Envelope_Continuity                  16     13      1     16     16      1      1      1
+Operator_Envelopes                            35     29      3     32     35      3      3      3
+Operator_Formula                              44     44      0     44     44      0      0      0
+Optimal_Exit_Time                             31      5      5      5      5      5      5      5
+Pair_Path_Laws                               123     28     16     28     30     21     21     99
+Pair_Path_Space                               40     12      6     12     12      8      8     34
+Path_Law_Pasting                              77      1      1      1      1     11     11     73
+Path_Law_Sampling                             25      0      0      0      0      0      0     24
+Path_Splicing                                106     46     45     46     46     51     51    105
+Path_Stopping_Times                           65     44     46     44     44     51     51     65
+Path_Tightness_Market                          2      1      0      1      1      0      0      0
+Value_Function_Euler_Construction             57      7      5      7      7      5     13      5
+Value_Function_Subsolution                    48      7      0      7      7      0      0     10
+Value_Function_Supersolution_Case_1           41     32     11     32     32     11     11     11
+Value_Function_Supersolution_Case_2           13      0      0      0      1      0      0      0
+Value_Function_Tangential_Field               29     28      5     28     28      5      5      5
+Viscosity_Ball                                 3      0      0      3      3      0      0      0
+Viscosity_Comparison_Interface                 8      3      0      8      8      0      0      0
+Viscosity_Definitions                         20      3      0     19     20      0      0      0
+Volatile_Market                               36      2      4      2      2      4      4      4
+TOTAL                                       1516    417    176    490    504    205    232    474
+
+-- mode: LIBRARY-READY (statement names no paper-session constant)
+RA theory                                  facts    SMS  SemiC   SOVA  ANLYT    CTM     WM    CPS
+Comparison_Localisation                       33      1      1     12     16      1      1      1
+Constraint_Set_Convexity                      12      1      0      1      1      0      0      0
+Covariation_Density                            9      4      4      4      4      4      4      4
+Exit_Class_Witness                            33      0      0      0      0      0     13      0
+Operator_Formula                              44      3      0      3      3      0      0      0
+Pair_Path_Laws                               123     10      3     10     12      7      7     59
+Pair_Path_Space                               40      4      2      4      4      4      4     30
+Path_Law_Pasting                              77      0      0      0      0     10     10     11
+Path_Splicing                                106      2      2      2      2      2      2      2
+Value_Function_Euler_Construction             57      0      0      0      0      0      6      0
+TOTAL                                       1516     25     12     36     42     28     47    107
