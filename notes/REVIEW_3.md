@@ -153,6 +153,16 @@ Theorem 1.1. All matter for a faithful *library* of the paper:
   combination is short. `Relative_Arbitrage/document/root.tex` nevertheless says the DPP
   "is proved here in full".
 - **Lemma 2.1** (convex hull) is proved as `lemma_2_1_exact`, but no deliverable cites it.
+- **Section 5** (continuity of `v` for convex `K`: Propositions 5.1 and 5.2, Lemma 5.3, and
+  Propositions 5.4 and 5.5) is not formalised at all. No README or ROOT says so.
+  - Proposition 5.1 (continuity on the interior) is the dilation argument of Theorem 4.3
+    followed by Theorem 4.2(b). Both ingredients are formalised: `comparison_two_domain`
+    and the scaling lemmas of the operator. So Proposition 5.1 and its corollary 5.2 are
+    likely short.
+  - Lemma 5.3's deterministic core, `eigen_lb_dim_obstruction`, is listed as done in
+    `notes/STATUS.md`, but it no longer exists in any theory. It was removed before the
+    repository's history begins, and `notes/UNUSED_THMS.md` does not record it.
+  - Propositions 5.4 and 5.5 defer to another paper "word by word".
 
 **(f) Prose that is wrong (selection).**
 
