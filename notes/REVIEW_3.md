@@ -378,7 +378,7 @@ The lowest-legal-home fixpoint found that 529 of the 1 516 paper-session facts n
 beyond `Symmetric_Matrix_Spectra`, `Second_Order_Viscosity_Analysis` and the two
 HOL-Analysis-level theories of `Semicontinuous_Analysis`:
 
-- all of the operator layer (Eq. 1.9, Lemma 2.1, Lemma 3.2, the envelopes);
+- all of the operator layer (Eq. 1.9, Lemma 2.1, Lemma 3.1, the envelopes);
 - the viscosity predicates;
 - all of Section 4.
 

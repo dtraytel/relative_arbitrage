@@ -47,7 +47,7 @@ val proper_user = filter proper user_facts;
    fact of that theory.  Dead-code passes run against these roots only. *)
 val rootsfile = "/home/user/relative_arbitrage/notes/review_3/roots.txt";  (* ROOTS *)
 val root_lines = File.read_lines (Path.explode rootsfile)
-  |> map (fn l => hd (space_explode "#" l) |> Symbol.trim_blanks)
+  |> map (fn l => (case space_explode "#" l of [] => "" | x :: _ => x) |> Symbol.trim_blanks)
   |> filter (fn l => l <> "");
 fun expand l =
   if String.isSuffix ".*" l then
@@ -66,6 +66,11 @@ val cspace = Sign.const_space thy;
 fun const_thy c = #theory_long_name (Name_Space.the_entry cspace c) handle ERROR _ => "?";
 end;
 
+val _ = File.write (Path.explode (A1.outdir ^ "summary.txt"))
+  ("roots: " ^ string_of_int (length A1.roots) ^ "\n" ^
+   "oracles in the roots' proofs: " ^ string_of_int (length (Thm_Deps.all_oracles A1.roots)) ^ "\n" ^
+   "user facts: " ^ string_of_int (length A1.proper_user) ^ "\n" ^
+   "names in the closure of the roots: " ^ string_of_int (Symtab.size A1.used) ^ "\n");
 val _ = writeln ("all facts: " ^ string_of_int (length A1.all_facts) ^ ", user facts: " ^
   string_of_int (length A1.user_facts) ^ ", proper user facts: " ^ string_of_int (length A1.proper_user) ^
   ", names in closure: " ^ string_of_int (Symtab.size A1.used));

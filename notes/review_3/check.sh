@@ -19,6 +19,7 @@ isabelle build -b -v -d . -D . -o threads="${THREADS:-3}" -o timeout=1800 2>&1 |
 # /tmp/review_3_out/); keep OUT and that value in sync.
 isabelle build -d . -d notes/review_3 -o timeout=3600 Review_3_Analysis 2>&1 | tail -5
 
+cat "$OUT/summary.txt"
 python3 "$HERE/dead.py" "$OUT"
 python3 "$HERE/actual_imports.py" "$OUT"
 python3 "$HERE/critpath.py" "$OUT" "$LOG"
