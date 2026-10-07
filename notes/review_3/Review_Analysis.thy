@@ -42,10 +42,20 @@ val user_facts = filter (fn (n, _) => is_user_thyname (fact_thy n)) all_facts;
 fun proper (n, ths) = exists (fn th => #1 (Thm.derivation_name th) = n) ths;
 val proper_user = filter proper user_facts;
 
-val root_names = ["Theorem_1_1_Statement.theorem_1_1", "Theorem_1_1_Statement.example_3_1_closed_form",
-  "Paper_Readings.paper_expandable_imp_expandable", "Paper_Readings.lsc_env_not_determined_on_K",
-  "Paper_Readings.boundary_set_empty_K", "Paper_Readings.boundary_set_empty_global"];
-val roots = map (Global_Theory.get_thm thy) root_names;
+(* The roots: every line of roots.txt (next to this file) that is not blank and
+   does not start with '#' names a fact, or "Session.Theory.*" for every proper
+   fact of that theory.  Dead-code passes run against these roots only. *)
+val rootsfile = "/home/user/relative_arbitrage/notes/review_3/roots.txt";  (* ROOTS *)
+val root_lines = File.read_lines (Path.explode rootsfile)
+  |> map (fn l => hd (space_explode "#" l) |> Symbol.trim_blanks)
+  |> filter (fn l => l <> "");
+fun expand l =
+  if String.isSuffix ".*" l then
+    let val th = String.substring (l, 0, size l - 2)
+    in proper_user |> filter (fn (n, _) => fact_thy n = th) |> map #1 end
+  else [l];
+val root_names = maps expand root_lines |> distinct (op =);
+val roots = maps (Global_Theory.get_thms thy) root_names;
 val used = Proofterm.fold_body_thms
   (fn {thm_name = a, ...} => not (Thm_Name.is_empty a) ? Symtab.insert_set (#1 a))
   (Thm.proof_bodies_of roots) Symtab.empty;

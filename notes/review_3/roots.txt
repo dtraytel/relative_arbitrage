@@ -1,0 +1,12 @@
+# Roots of every dead-code pass (notes/PLAN_RESTRUCTURING_3.md section 3).
+# One fact per line, by its name in the fact name space (Theory.fact), or
+# "Session.Theory.*" for every proper fact of a theory.  '#' starts a comment.
+# A fact may be removed from this file only in a commit of its own, saying why.
+
+# --- the paper: the statement and every checked reading ---------------------
+Relative_Arbitrage_Statement.Theorem_1_1_Statement.*
+Relative_Arbitrage_Statement.Paper_Readings.*
+Relative_Arbitrage.Theorem_1_1.*
+
+# --- library and independent-interest roots: filled in from the
+# --- independent-interest review (notes/review_3/data/independent_interest.md)

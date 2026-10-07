@@ -1,3 +1,4 @@
 output/
 *.thy~
 *.md.bak
+__pycache__/

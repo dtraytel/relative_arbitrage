@@ -1,0 +1,9 @@
+(* Not part of the development: the measurements of notes/REVIEW_3.md.
+   Run with  isabelle build -d . -d notes/review_3 Review_3_Analysis
+   (from the repository root); see check.sh. *)
+session Review_3_Analysis = Relative_Arbitrage_Statement +
+  options [document = false]
+  sessions
+    Second_Order_Viscosity_Analysis
+  theories
+    Review_Analysis
