@@ -87,17 +87,7 @@ proof -
         by (simp add: algebra_simps)
       have sq: "(norm (x + t *\<^sub>R v))\<^sup>2 - (norm x)\<^sup>2
           = 2*t*(x \<bullet> v) + t\<^sup>2 * (norm v)\<^sup>2"
-      proof -
-        have e1: "(norm (x + t *\<^sub>R v))\<^sup>2 = (x + t *\<^sub>R v) \<bullet> (x + t *\<^sub>R v)"
-          by (rule power2_norm_eq_inner)
-        have e2: "(norm x)\<^sup>2 = x \<bullet> x" by (rule power2_norm_eq_inner)
-        have e3: "(norm v)\<^sup>2 = v \<bullet> v" by (rule power2_norm_eq_inner)
-        have e4: "(x + t *\<^sub>R v) \<bullet> (x + t *\<^sub>R v)
-            = x \<bullet> x + 2*t*(x \<bullet> v) + (t*t)*(v \<bullet> v)"
-          by (simp add: inner_commute
-              algebra_simps)
-        show ?thesis unfolding e1 e4 e2 e3 by (simp add: power2_eq_square)
-      qed
+        by (simp add: norm_sq_add_expand power_mult_distrib)
       have "t * (q \<bullet> v)
           \<le> - (t * (p \<bullet> v)) + (c/2) * (2*t*(x \<bullet> v) + t\<^sup>2 * (norm v)\<^sup>2)"
         using sd mx unfolding sq by linarith
@@ -133,30 +123,10 @@ lemma max_semiconcave_bound:
 proof -
   have mx: "\<phi> z - \<phi> x \<le> - (p \<bullet> (z - x))"
     using xmax[OF z] by (simp add: inner_diff_right)
-  have sq: "(norm z)\<^sup>2 - (norm x)\<^sup>2 = 2 * (x \<bullet> (z - x)) + (norm (z - x))\<^sup>2"
-  proof -
-    have e0: "z = x + (z - x)" by simp
-    have e1: "(norm z)\<^sup>2 = z \<bullet> z" by (rule power2_norm_eq_inner)
-    have e2: "(norm x)\<^sup>2 = x \<bullet> x" by (rule power2_norm_eq_inner)
-    have e3: "(norm (z - x))\<^sup>2 = (z - x) \<bullet> (z - x)" by (rule power2_norm_eq_inner)
-    have e4: "z \<bullet> z = x \<bullet> x + 2 * (x \<bullet> (z - x)) + (z - x) \<bullet> (z - x)"
-      by (simp add: inner_commute algebra_simps)
-    show ?thesis unfolding e1 e2 e3 e4 by simp
-  qed
-  have lin: "(c *\<^sub>R x - p) \<bullet> (z - x) = c * (x \<bullet> (z - x)) - p \<bullet> (z - x)"
-    by (simp add: inner_diff_left)
-  have half: "(c/2) * (norm z)\<^sup>2 - (c/2) * (norm x)\<^sup>2
-      = c * (x \<bullet> (z - x)) + (c/2) * (norm (z - x))\<^sup>2"
-  proof -
-    have "(c/2) * (norm z)\<^sup>2 - (c/2) * (norm x)\<^sup>2
-        = (c/2) * ((norm z)\<^sup>2 - (norm x)\<^sup>2)" by (simp add: algebra_simps)
-    also have "\<dots> = (c/2) * (2 * (x \<bullet> (z - x)) + (norm (z - x))\<^sup>2)"
-      unfolding sq ..
-    also have "\<dots> = c * (x \<bullet> (z - x)) + (c/2) * (norm (z - x))\<^sup>2"
-      by (simp add: algebra_simps)
-    finally show ?thesis .
-  qed
-  show ?thesis unfolding lin using mx half by argo
+  have sq: "(norm z)\<^sup>2 = (norm x)\<^sup>2 + 2 * (x \<bullet> (z - x)) + (norm (z - x))\<^sup>2"
+    using norm_sq_add_expand[of x "z - x"] by simp
+  show ?thesis
+    unfolding sq using mx by (simp add: inner_diff_left algebra_simps)
 qed
 
 text \<open>A uniform interiority margin: bounding \<open>\<phi>\<close> on the whole annulus
@@ -271,22 +241,10 @@ proof -
     by (simp add: inner_diff_left inner_diff_right)
   have sum: "s * (norm (q - q'))\<^sup>2 \<le> (q - q') \<bullet> (x - x')"
     using A B unfolding nq coll[symmetric] by argo
-  have cs: "(q - q') \<bullet> (x - x') \<le> norm (q - q') * norm (x - x')"
-    using Cauchy_Schwarz_ineq2[of "q - q'" "x - x'"] by linarith
-  have key: "s * (norm (q - q'))\<^sup>2 \<le> norm (q - q') * norm (x - x')"
-    using sum cs by linarith
-  show ?thesis
-  proof (cases "q = q'")
-    case True
-    thus ?thesis by simp
-  next
-    case False
-    hence pos: "0 < norm (q - q')" by simp
-    have "(s * norm (q - q')) * norm (q - q')
-        \<le> norm (x - x') * norm (q - q')"
-      using key by (simp add: power2_eq_square algebra_simps)
-    thus ?thesis using pos by (simp add: mult_le_cancel_right)
-  qed
+  have "(norm (s *\<^sub>R (q - q')))\<^sup>2 \<le> (x - x') \<bullet> (s *\<^sub>R (q - q'))"
+    using mult_left_mono[OF sum, of s] s(1)
+    by (simp add: power_mult_distrib power2_eq_square[of s] inner_commute mult.assoc)
+  from norm_le_of_sq_le_inner[OF this] s(1) show ?thesis by simp
 qed
 
 text \<open>Routine set-up for Jensen's lemma: a semiconvex function is

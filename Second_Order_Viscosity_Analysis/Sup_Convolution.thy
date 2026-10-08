@@ -129,32 +129,6 @@ proof (rule cSUP_least)
     using lipd key by linarith
 qed
 
-lemma cSUP_plus_const:
-  fixes g :: "'b \<Rightarrow> real" and c :: real
-  assumes bdd: "bdd_above (range g)"
-  shows "(SUP y. g y) + c = (SUP y. g y + c)"
-proof (rule antisym)
-  have ne: "(UNIV :: 'b set) \<noteq> {}" by simp
-  have bdd2: "bdd_above (range (\<lambda>y. g y + c))"
-  proof -
-    from bdd obtain M where M: "\<And>y. g y \<le> M" by (auto simp: bdd_above_def)
-    show ?thesis by (rule bdd_aboveI[of _ "M + c"]) (use M in auto)
-  qed
-  have up: "g y \<le> (SUP y. g y + c) - c" for y
-  proof -
-    have "g y + c \<le> (SUP y. g y + c)"
-      by (intro cSUP_upper bdd2 rangeI) simp
-    thus ?thesis by linarith
-  qed
-  have "(SUP y. g y) \<le> (SUP y. g y + c) - c"
-    by (intro cSUP_least ne up)
-  thus "(SUP y. g y) + c \<le> (SUP y. g y + c)" by linarith
-  have le2: "g y + c \<le> (SUP y. g y) + c" for y
-    by (intro add_right_mono cSUP_upper bdd rangeI) simp
-  show "(SUP y. g y + c) \<le> (SUP y. g y) + c"
-    by (intro cSUP_least ne le2)
-qed
-
 lemma convex_on_cSUP:
   fixes f :: "'b \<Rightarrow> 'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "\<And>y. convex_on UNIV (f y)"
@@ -196,17 +170,8 @@ lemma supconv_square_decomp:
   assumes e: "0 < \<epsilon>"
   shows "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) + (norm x)\<^sup>2 / (2*\<epsilon>)
       = (u y - (norm y)\<^sup>2 / (2*\<epsilon>)) + inner x (y /\<^sub>R \<epsilon>)"
-proof -
-  have "(dist x y)\<^sup>2 = (norm x)\<^sup>2 - 2 * inner x y + (norm y)\<^sup>2"
-    by (simp add: dist_norm power2_norm_eq_inner inner_diff_left inner_diff_right
-        inner_commute)
-  hence "(dist x y)\<^sup>2 / (2*\<epsilon>)
-      = (norm x)\<^sup>2 / (2*\<epsilon>) - inner x y / \<epsilon> + (norm y)\<^sup>2 / (2*\<epsilon>)"
-    using e by (simp add: field_simps)
-  moreover have "inner x (y /\<^sub>R \<epsilon>) = inner x y / \<epsilon>"
-    by (simp add: divide_inverse mult.commute)
-  ultimately show ?thesis by simp
-qed
+  using e norm_sq_diff_expand[of x y]
+  by (simp add: dist_norm field_simps)
 
 theorem supconv_semiconvex:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
@@ -220,7 +185,9 @@ proof -
         = (SUP y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>)) + (norm x)\<^sup>2 / (2*\<epsilon>)"
       unfolding supconv_def by (rule refl)
     also have "\<dots> = (SUP y. (u y - (dist x y)\<^sup>2 / (2*\<epsilon>)) + (norm x)\<^sup>2 / (2*\<epsilon>))"
-      by (rule cSUP_plus_const[OF supconv_bdd_above[OF B e]])
+      using Sup_add_eq[OF supconv_bdd_above[OF B e, where x = x] UNIV_not_empty,
+          of "(norm x)\<^sup>2 / (2*\<epsilon>)"]
+      by (simp add: add.commute)
     also have "\<dots> = (SUP y. (u y - (norm y)\<^sup>2 / (2*\<epsilon>)) + inner x (y /\<^sub>R \<epsilon>))"
       by (intro SUP_cong refl) (simp add: supconv_square_decomp[OF e])
     finally show ?thesis .

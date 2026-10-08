@@ -36,6 +36,32 @@ proof -
   thus ?thesis by (simp add: algebra_simps)
 qed
 
+text \<open>The squared-norm expansions, used throughout the session, and the
+  step from a quadratic bound by an inner product to a norm bound.\<close>
+
+lemma norm_sq_add_expand:
+  fixes a k :: "'a::real_inner"
+  shows "(norm (a + k))\<^sup>2 = (norm a)\<^sup>2 + 2 * (a \<bullet> k) + (norm k)\<^sup>2"
+  by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+      inner_commute)
+
+lemma norm_sq_diff_expand:
+  fixes a b :: "'a::real_inner"
+  shows "(norm (a - b))\<^sup>2 = (norm a)\<^sup>2 - 2 * (a \<bullet> b) + (norm b)\<^sup>2"
+  by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
+      inner_commute)
+
+lemma norm_le_of_sq_le_inner:
+  fixes a b :: "'a::real_inner"
+  assumes "(norm a)\<^sup>2 \<le> b \<bullet> a"
+  shows "norm a \<le> norm b"
+proof -
+  have "(norm a)\<^sup>2 \<le> norm b * norm a"
+    using assms Cauchy_Schwarz_ineq2[of b a] by linarith
+  then show ?thesis
+    by (cases "a = 0") (auto simp: power2_eq_square mult_le_cancel_right)
+qed
+
 text \<open>The epigraph of a finite convex function is closed and convex; the
   supporting hyperplane at its frontier point \<open>(x, f x)\<close> is non-vertical
   and normalizes to a subgradient.\<close>
@@ -369,33 +395,29 @@ theorem minty_surjective:
   shows "\<exists>y p. p \<in> subdiff f y \<and> y + p = x"
   using prox_subdiff[OF cvx, of x] by (intro exI) auto
 
+text \<open>The resolvent is firmly nonexpansive,
+  \<open>|R x - R y|\<^sup>2 \<le> (x - y) \<cdot> (R x - R y)\<close>, by monotonicity of the
+  subdifferential, and hence nonexpansive.\<close>
+
+lemma prox_firm_nonexpansive:
+  fixes f :: "'a::euclidean_space \<Rightarrow> real"
+  assumes cvx: "convex_on UNIV f"
+  shows "(norm (prox f x - prox f y))\<^sup>2 \<le> (x - y) \<bullet> (prox f x - prox f y)"
+proof -
+  have s1: "x - prox f x \<in> subdiff f (prox f x)" by (rule prox_subdiff[OF cvx])
+  have s2: "y - prox f y \<in> subdiff f (prox f y)" by (rule prox_subdiff[OF cvx])
+  have mono: "0 \<le> ((x - prox f x) - (y - prox f y)) \<bullet> (prox f x - prox f y)"
+    by (rule subdiff_monotone[OF s1 s2])
+  show ?thesis
+    using mono by (simp add: power2_norm_eq_inner inner_commute algebra_simps)
+qed
+
 theorem prox_nonexpansive:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV f"
   shows "dist (prox f x\<^sub>1) (prox f x\<^sub>2) \<le> dist x\<^sub>1 x\<^sub>2"
-proof -
-  define y\<^sub>1 where "y\<^sub>1 = prox f x\<^sub>1"
-  define y\<^sub>2 where "y\<^sub>2 = prox f x\<^sub>2"
-  have s1: "x\<^sub>1 - y\<^sub>1 \<in> subdiff f y\<^sub>1"
-    unfolding y\<^sub>1_def by (rule prox_subdiff[OF cvx])
-  have s2: "x\<^sub>2 - y\<^sub>2 \<in> subdiff f y\<^sub>2"
-    unfolding y\<^sub>2_def by (rule prox_subdiff[OF cvx])
-  have mono: "0 \<le> ((x\<^sub>1 - y\<^sub>1) - (x\<^sub>2 - y\<^sub>2)) \<bullet> (y\<^sub>1 - y\<^sub>2)"
-    by (rule subdiff_monotone[OF s1 s2])
-  have key: "(norm (y\<^sub>1 - y\<^sub>2))\<^sup>2 \<le> (x\<^sub>1 - x\<^sub>2) \<bullet> (y\<^sub>1 - y\<^sub>2)"
-    using mono by (simp add: power2_norm_eq_inner inner_commute algebra_simps)
-  show ?thesis
-  proof (cases "y\<^sub>1 = y\<^sub>2")
-    case True thus ?thesis by (simp add: y\<^sub>1_def[symmetric] y\<^sub>2_def[symmetric])
-  next
-    case False
-    have "(norm (y\<^sub>1 - y\<^sub>2))\<^sup>2 \<le> norm (x\<^sub>1 - x\<^sub>2) * norm (y\<^sub>1 - y\<^sub>2)"
-      using key Cauchy_Schwarz_ineq2[of "x\<^sub>1 - x\<^sub>2" "y\<^sub>1 - y\<^sub>2"] by linarith
-    hence "norm (y\<^sub>1 - y\<^sub>2) \<le> norm (x\<^sub>1 - x\<^sub>2)"
-      using False by (simp add: power2_eq_square mult_le_cancel_right)
-    thus ?thesis by (simp add: y\<^sub>1_def[symmetric] y\<^sub>2_def[symmetric] dist_norm)
-  qed
-qed
+  using norm_le_of_sq_le_inner[OF prox_firm_nonexpansive[OF cvx, of x\<^sub>1 x\<^sub>2]]
+  by (simp add: dist_norm)
 
 
 (*<*)

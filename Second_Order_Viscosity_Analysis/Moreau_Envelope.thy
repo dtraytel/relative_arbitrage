@@ -19,11 +19,7 @@ lemma prox_lipschitz:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV f"
   shows "norm (prox f y - prox f z) \<le> 1 * norm (y - z)"
-proof -
-  have "dist (prox f y) (prox f z) \<le> dist y z"
-    by (rule prox_nonexpansive[OF cvx])
-  thus ?thesis by (simp add: dist_norm)
-qed
+  using prox_nonexpansive[OF cvx, of y z] by (simp add: dist_norm)
 
 theorem prox_differentiable_AE:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -37,22 +33,9 @@ text \<open>The resolvent is a globally defined, surjective, 1-Lipschitz map
 
 subsection \<open>Firm nonexpansiveness and the derivative of the resolvent\<close>
 
-text \<open>The resolvent is firmly nonexpansive,
-  \<open>|R x - R y|\<^sup>2 \<le> (x - y) \<cdot> (R x - R y)\<close>; differentiating along a line
-  makes its derivative positive semidefinite with norm at most one.\<close>
-
-lemma prox_firm_nonexpansive:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV f"
-  shows "(norm (prox f x - prox f y))\<^sup>2 \<le> (x - y) \<bullet> (prox f x - prox f y)"
-proof -
-  have s1: "x - prox f x \<in> subdiff f (prox f x)" by (rule prox_subdiff[OF cvx])
-  have s2: "y - prox f y \<in> subdiff f (prox f y)" by (rule prox_subdiff[OF cvx])
-  have mono: "0 \<le> ((x - prox f x) - (y - prox f y)) \<bullet> (prox f x - prox f y)"
-    by (rule subdiff_monotone[OF s1 s2])
-  show ?thesis
-    using mono by (simp add: power2_norm_eq_inner inner_commute algebra_simps)
-qed
+text \<open>The resolvent is firmly nonexpansive (\<open>prox_firm_nonexpansive\<close>);
+  differentiating along a line makes its derivative positive semidefinite
+  with norm at most one.\<close>
 
 lemma has_derivative_dir_limit:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'b::real_normed_vector"
@@ -197,8 +180,8 @@ proof -
     by (rule moreau_le[OF cvx])
   moreover have "(dist (x + h) (prox f x))\<^sup>2
       = (dist x (prox f x))\<^sup>2 + 2 * (h \<bullet> (x - prox f x)) + (norm h)\<^sup>2"
-    unfolding dist_norm power2_norm_eq_inner
-    by (simp add: algebra_simps inner_commute)
+    using norm_sq_add_expand[of "x - prox f x" h]
+    by (simp add: dist_norm algebra_simps inner_commute)
   ultimately show ?thesis unfolding moreau_def by linarith
 qed
 
@@ -213,8 +196,8 @@ proof -
   moreover have "(dist x (prox f (x + h)))\<^sup>2
       = (dist (x + h) (prox f (x + h)))\<^sup>2
         - 2 * (h \<bullet> (x + h - prox f (x + h))) + (norm h)\<^sup>2"
-    unfolding dist_norm power2_norm_eq_inner
-    by (simp add: algebra_simps inner_commute)
+    using norm_sq_diff_expand[of "x + h - prox f (x + h)" h]
+    by (simp add: dist_norm algebra_simps inner_commute)
   ultimately show ?thesis unfolding moreau_def by linarith
 qed
 
@@ -307,14 +290,7 @@ lemma prox_deriv_norm_le:
   assumes cvx: "convex_on UNIV f"
     and D: "(prox f has_derivative D) (at x)"
   shows "norm (D h) \<le> norm h"
-proof -
-  have psd: "(norm (D h))\<^sup>2 \<le> h \<bullet> D h" by (rule prox_deriv_psd[OF cvx D])
-  have cs: "h \<bullet> D h \<le> norm h * norm (D h)"
-    using Cauchy_Schwarz_ineq2[of h "D h"] by linarith
-  have "(norm (D h))\<^sup>2 \<le> norm h * norm (D h)" using psd cs by linarith
-  thus ?thesis
-    by (cases "D h = 0") (auto simp: power2_eq_square mult_le_cancel_right)
-qed
+  by (rule norm_le_of_sq_le_inner[OF prox_deriv_psd[OF cvx D]])
 
 lemma moreau_hessian_psd:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -474,24 +450,12 @@ proof (rule tendstoI)
     unfolding G_def A_def by (rule moreau_grad_has_derivative[OF D])
   have blA: "bounded_linear A"
     by (rule has_derivative_bounded_linear[OF GA])
-  have "((\<lambda>u. norm (G (x + u) - G x - A u) / norm u) \<longlongrightarrow> 0) (at 0)"
-    using GA unfolding has_derivative_at by blast
-  from tendstoD[OF this e2] obtain \<delta> where \<delta>: "0 < \<delta>"
-    and db: "\<And>u. u \<noteq> 0 \<Longrightarrow> dist u 0 < \<delta>
-      \<Longrightarrow> dist (norm (G (x + u) - G x - A u) / norm u) 0 < e2"
-    unfolding eventually_at by blast
+  obtain \<delta> where \<delta>: "0 < \<delta>" and rem: "\<And>y. norm (y - x) < \<delta> \<Longrightarrow>
+      norm (G y - G x - A (y - x)) \<le> e2 * norm (y - x)"
+    using GA e2 unfolding has_derivative_at_alt by blast
   have small: "norm (G (x + u) - G x - A u) \<le> e2 * norm u"
-    if u: "norm u < \<delta>" for u
-  proof (cases "u = 0")
-    case True
-    have "A 0 = 0" using blA by (simp add: linear_simps(3))
-    thus ?thesis unfolding True by simp
-  next
-    case False
-    have "norm (G (x + u) - G x - A u) / norm u < e2"
-      using db[OF False] u by (simp add: dist_norm)
-    thus ?thesis using False by (simp add: divide_less_eq)
-  qed
+    if "norm u < \<delta>" for u
+    using rem[of "x + u"] that by simp
   have main: "\<bar>(moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
       - (h \<bullet> (h - D h)) / 2) / (norm h)\<^sup>2\<bar> \<le> e2"
     if h: "h \<noteq> 0" "norm h < \<delta>" for h
