@@ -2,7 +2,10 @@ section \<open>Clause (iv) at a stopping time\<close>
 
 (*<*)
 theory Dynamic_Programming_Stopping_Clauses
-  imports Dynamic_Programming_Optional_Sampling
+  imports Dynamic_Programming_Conditioning
+    "Continuous_Path_Spaces.Increment_Moments"
+    "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Path_Spaces.Path_Exit_Times"
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Time_Martingales.Time_Discretisation"
     Path_Law_Sampling

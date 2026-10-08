@@ -381,8 +381,8 @@ subsection \<open>Towards the extension: cutting a glue back\<close>
 
 text \<open>Gluing a continuation onto a path at \<open>r\<close> and cutting back at \<open>r\<close>
   returns the original path, so an extension built by
-  @{thm [source] exit_class_pglue_law} restricts to the law it extends.
-  \<open>pcut_pglue\<close> lives in @{theory Relative_Arbitrage.Dynamic_Programming_Kernels}.\<close>
+  @{thm [source] exit_class_pglue_law} restricts to the law it extends
+  (@{thm [source] pcut_pglue}).\<close>
 
 text \<open>Members of the horizon-\<open>r\<close> path space are extensional on \<open>{0..r}\<close>, so
   cutting there is the identity on them.  This is what turns

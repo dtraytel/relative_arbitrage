@@ -30,10 +30,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Path_Law_Sampling
     Curvature_Operator
     Viscosity_Definitions
-    Viscosity_Ball
     Constraint_Set_Convexity
-    Viscosity_Comparison_Interface
-    Ball_Solution
     Eigenvalue_Bound_Exact
     Operator_Continuity
     Operator_Formula
@@ -49,8 +46,6 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Exit_Class_Optimizer
     Dynamic_Programming_Pasting
     Dynamic_Programming_Conditioning
-    Dynamic_Programming_Kernels
-    Dynamic_Programming_Optional_Sampling
     Dynamic_Programming_Stopping_Clauses
     Dynamic_Programming_Additive_Glue
     Dynamic_Programming_Delayed_Class
@@ -61,7 +56,6 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Value_Function_Supersolution_Case_2
     Value_Function_Tangential_Field
     Value_Function_Assembly
-    Comparison_Jets
     Comparison_Strictness
     Comparison_Localisation
     Comparison_Principle

@@ -2106,9 +2106,8 @@ text \<open>
   The feasible set of Eq. (1.9) is closed.  Three of its four conditions are
   continuous inequalities, closed outright; the eigenvalue lower bound is an
   existential over subspaces, but \<open>feasible_iff_eigval\<close> trades it for
-  \<open>1 \<le> eigval (n-k) a\<close>, Lipschitz on symmetric matrices.  Combined with
-  boundedness (\<open>feasible_bounded\<close>, \<open>Ball_Solution\<close>) this
-  gives compactness of the constraint set.
+  \<open>1 \<le> eigval (n-k) a\<close>, Lipschitz on symmetric matrices.  The entrywise
+  bound \<open>feasible_entry_bound\<close> makes it bounded, hence compact.
 \<close>
 
 lemma closed_eigen_ub:

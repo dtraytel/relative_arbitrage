@@ -484,29 +484,6 @@ subsection \<open>First- and second-order conditions at interior minima\<close>
 text \<open>\<open>local_min_gradient_zero\<close>, \<open>local_min_hessian_psd\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-subsection \<open>The explicit solution of Example 3.1 is a viscosity solution\<close>
-
-lemma ball_v_eq_quadratic:
-  fixes y :: "real^'n"
-  assumes "y \<in> ball 0 r"
-  shows "ball_v r k y = (r\<^sup>2 - y \<bullet> y) / real (CARD('n) - k)"
-proof -
-  have "norm y < r"
-    using assms by (simp add: dist_norm)
-  then have "(norm y)\<^sup>2 < r\<^sup>2"
-    by (intro power_strict_mono) simp_all
-  then have "y \<bullet> y < r\<^sup>2"
-    by (simp add: dot_square_norm)
-  then show ?thesis
-    by (simp add: ball_v_def max_def)
-qed
-
-text \<open>\<open>quadratic_gradient\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>\<open>ball_v_viscosity_subsol\<close>, \<open>ball_v_viscosity_supersol\<close>, \<open>ball_v_solves_pde_viscosity\<close> live in \<open>Viscosity_Ball\<close>.\<close>
-
-
 (*<*)
 end
 (*>*)

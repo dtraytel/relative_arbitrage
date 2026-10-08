@@ -2,7 +2,7 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 
 (*<*)
 theory Value_Function_Uniqueness
-  imports Ball_Solution Comparison_Two_Domain
+  imports Comparison_Two_Domain
     Value_Function_Assembly
     Exit_Class_Infinite
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
@@ -44,15 +44,14 @@ text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1
 
 section \<open>A comparison principle without a regularity hypothesis is refutable\<close>
 
-text \<open>\<open>comparison_principle\<close> (@{theory Relative_Arbitrage.Viscosity_Comparison_Interface}) states comparison
-  with no regularity hypothesis on \<open>u\<close> and \<open>w\<close>.  It holds for no ball.
-  \<open>visc_subsol\<close> and \<open>visc_supersol\<close> are conditions local to \<open>\<Omega>\<close>, so the values
-  of a sub- or supersolution outside \<open>\<Omega>\<close> are unconstrained: \<open>u = ball_v + 1\<close> is
-  a subsolution, and \<open>w\<close> taken equal to \<open>ball_v\<close> inside the ball and to
-  \<open>ball_v + 1\<close> outside is a supersolution agreeing with \<open>u\<close> on the boundary,
-  yet \<open>u > w\<close> at the centre.  Hence \<open>ball_v_unique_solution\<close>, which carries
-  \<open>comparison_principle\<close> as a hypothesis, is vacuous;
-  \<open>theorem_1_1_uniqueness_general\<close> below replaces it.\<close>
+text \<open>Comparison with no regularity hypothesis on \<open>u\<close> and \<open>w\<close> holds for no
+  ball.  \<open>visc_subsol\<close> and \<open>visc_supersol\<close> are conditions local to \<open>\<Omega>\<close>, so
+  the values of a sub- or supersolution outside \<open>\<Omega>\<close> are unconstrained.  With
+  \<open>v\<close> the closed form of Example 3.1 on a ball, \<open>u = v + 1\<close> is a subsolution,
+  and \<open>w\<close> taken equal to \<open>v\<close> inside the ball and to \<open>v + 1\<close> outside is a
+  supersolution agreeing with \<open>u\<close> on the boundary, yet \<open>u > w\<close> at the centre.
+  \<open>theorem_1_1_uniqueness_general\<close> below therefore assumes continuity on
+  \<open>K\<close>.\<close>
 
 theorem theorem_1_1_uniqueness_general:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"

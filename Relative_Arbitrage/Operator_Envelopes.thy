@@ -1,7 +1,8 @@
 
 (*<*)
 theory Operator_Envelopes
-  imports Ball_Solution "Symmetric_Matrix_Spectra.Householder_Rotation"
+  imports Constraint_Set_Convexity Viscosity_Definitions
+    "Symmetric_Matrix_Spectra.Householder_Rotation"
     "Semicontinuous_Analysis.Semicontinuity" "Semicontinuous_Analysis.Semicontinuous_Envelopes"
     "Continuous_Time_Martingales.Integrability_Criteria"
     "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
@@ -847,7 +848,7 @@ proof (rule bdd_belowI[of _
       also have "\<dots> = \<bar>M $ i $ l\<bar> * \<bar>a $ l $ i\<bar>"
         by (simp add: abs_mult)
       also have "\<dots> \<le> \<bar>M $ i $ l\<bar> * L"
-        by (rule mult_left_mono[OF feasible_offdiag_abs_le[OF aF]]) simp
+        by (rule mult_left_mono[OF feasible_entry_bound[OF aF]]) simp
       finally show "M $ i $ l * a $ l $ i \<le> \<bar>M $ i $ l\<bar> * L" .
     qed
   qed

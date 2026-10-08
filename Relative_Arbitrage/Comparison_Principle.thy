@@ -2077,10 +2077,7 @@ section \<open>Uniqueness on a general compact set\<close>
 text \<open>The first consequence of Theorem 4.2(a): two continuous viscosity
   solutions on compact \<open>K\<close> agreeing on \<open>K - interior K\<close> agree everywhere
   on \<open>K\<close>.  Both directions swap the roles of sub- and supersolution,
-  putting the maximum of \<open>u - w\<close> on the boundary where it vanishes.
-  This generalises an earlier ball-only uniqueness statement,
-  previously available only for \<open>K = cball 0 r\<close> via the explicit
-  Example 3.1 formula \<open>ball_v\<close>.\<close>
+  putting the maximum of \<open>u - w\<close> on the boundary where it vanishes.\<close>
 
 text \<open>The comparison principle proper, with ordered boundary data: a
   subsolution below a supersolution on the boundary stays below it
