@@ -124,43 +124,6 @@ qed
 
 text \<open>The bounded package discharges the abstract hypotheses.\<close>
 
-lemma dyadic_level_tail:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
-  assumes P: "prob_space M"
-    and X: "martingale M F (0::real) X"
-    and T0: "0 \<le> T"
-    and A_int: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (A u)"
-    and A_rate: "AE \<omega> in M. \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
-    and covA: "\<And>u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> AE \<omega> in M.
-        cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)\<^sup>2) \<omega>
-          = cond_exp M (F u) (\<lambda>\<omega>. A v \<omega> - A u \<omega>) \<omega>"
-    and C: "0 \<le> C" and R: "0 \<le> R"
-    and bnd: "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in M. \<bar>X u \<omega>\<bar> \<le> R"
-    and cont: "AE \<omega> in M. continuous_on {0..T} (\<lambda>u. X u \<omega>)"
-    and l: "0 < l"
-  shows "measure M {\<omega> \<in> space M. \<exists>k\<in>{1..\<lfloor>2^j * T\<rfloor>}.
-            l \<le> \<bar>X (real_of_int k / 2^j) \<omega> - X (real_of_int (k - 1) / 2^j) \<omega>\<bar>}
-           \<le> 8*C\<^sup>2*T*(1/2^j) / l^4"
-proof -
-  interpret MX: martingale M F "0::real" X by (rule X)
-  have Xmeas: "X u \<in> borel_measurable M" if "0 \<le> u" for u
-    by (rule borel_measurable_integrable[OF MX.integrable[OF that]])
-  have q4: "integrable M (\<lambda>\<omega>. (X u \<omega>)^4)" if "0 \<le> u" for u
-    by (rule integrable_pow4_of_bounded[OF P Xmeas[OF that] R bnd[OF that]])
-  show ?thesis
-  proof (rule dyadic_level_tail_mom[OF P Xmeas _ _ T0 l])
-    fix u v :: real assume uv: "0 \<le> u" "u \<le> v" "v \<le> T"
-    have v0: "0 \<le> v" using uv by linarith
-    show "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
-      by (rule integrable_pow4_diff[OF q4[OF v0] q4[OF uv(1)]
-            Xmeas[OF v0] Xmeas[OF uv(1)]])
-    show "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-      by (rule fourth_moment_bound_subinterval[OF P X order.refl T0
-            A_int A_rate covA C R bnd cont uv])
-  qed
-qed
-
 subsection \<open>The geometric form of the level bound\<close>
 
 lemma powr_level_calc:
@@ -299,44 +262,6 @@ proof -
   finally have res: "measure M (\<Union>m. E (n + m))
       \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))" .
   show ?thesis unfolding s1 s2 by (rule res)
-qed
-
-corollary dyadic_bad_event_tail:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
-  assumes P: "prob_space M"
-    and X: "martingale M F (0::real) X"
-    and T0: "0 \<le> T"
-    and A_int: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (A u)"
-    and A_rate: "AE \<omega> in M. \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
-    and covA: "\<And>u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> AE \<omega> in M.
-        cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)\<^sup>2) \<omega>
-          = cond_exp M (F u) (\<lambda>\<omega>. A v \<omega> - A u \<omega>) \<omega>"
-    and C: "0 \<le> C" and R: "0 \<le> R"
-    and bnd: "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in M. \<bar>X u \<omega>\<bar> \<le> R"
-    and cont: "AE \<omega> in M. continuous_on {0..T} (\<lambda>u. X u \<omega>)"
-    and g2: "\<gamma> < 1/4"
-  shows "measure M {\<omega> \<in> space M. \<exists>j\<ge>n. \<exists>k\<in>{1..\<lfloor>2^j * T\<rfloor>}.
-            2 powr (-\<gamma>*real j)
-              \<le> \<bar>X (real_of_int k / 2^j) \<omega> - X (real_of_int (k - 1) / 2^j) \<omega>\<bar>}
-         \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))"
-proof -
-  interpret MX: martingale M F "0::real" X by (rule X)
-  have Xmeas: "X u \<in> borel_measurable M" if "0 \<le> u" for u
-    by (rule borel_measurable_integrable[OF MX.integrable[OF that]])
-  have q4: "integrable M (\<lambda>\<omega>. (X u \<omega>)^4)" if "0 \<le> u" for u
-    by (rule integrable_pow4_of_bounded[OF P Xmeas[OF that] R bnd[OF that]])
-  show ?thesis
-  proof (rule dyadic_bad_event_tail_mom[OF P Xmeas _ _ T0 g2])
-    fix u v :: real assume uv: "0 \<le> u" "u \<le> v" "v \<le> T"
-    have v0: "0 \<le> v" using uv by linarith
-    show "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
-      by (rule integrable_pow4_diff[OF q4[OF v0] q4[OF uv(1)]
-            Xmeas[OF v0] Xmeas[OF uv(1)]])
-    show "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-      by (rule fourth_moment_bound_subinterval[OF P X order.refl T0
-            A_int A_rate covA C R bnd cont uv])
-  qed
 qed
 
 subsection \<open>The modulus bound on the complement of the bad event\<close>

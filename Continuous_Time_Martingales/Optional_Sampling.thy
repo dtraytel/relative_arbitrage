@@ -77,14 +77,6 @@ proof -
     unfolding inc_def by simp
 qed
 
-lemma indicator_times_integrable:
-  "integrable M (\<lambda>\<omega>. indicat_real (Tgt k) \<omega> * Y j \<omega>)"
-proof -
-  have "integrable M (\<lambda>\<omega>. indicat_real (Tgt k) \<omega> *\<^sub>R Y j \<omega>)"
-    by (intro integrable_mult_indicator Tgt_sets_M Y_integrable)
-  then show ?thesis by simp
-qed
-
 lemma set_incr_integrable:
   assumes B: "B \<in> sets M"
   shows "integrable M (\<lambda>\<omega>. indicat_real B \<omega> * Y j \<omega>)"
@@ -642,9 +634,6 @@ definition dceil :: "nat \<Rightarrow> real \<Rightarrow> real" where
 
 lemma dcidx_le: "dcidx n x \<le> 2 ^ n"
   unfolding dcidx_def by simp
-
-lemma dceil_grid: "dceil n x = dgrid n (dcidx n x)"
-  unfolding dceil_def ..
 
 lemma dtime_eq_dceil: "dtime n \<omega> = dceil n (tau \<omega>)"
   unfolding dtime_def dceil_def didx_def dcidx_def ..

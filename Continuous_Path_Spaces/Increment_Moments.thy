@@ -2,7 +2,7 @@ section \<open>The second-moment bound on increments\<close>
 
 (*<*)
 theory Increment_Moments
-  imports "Continuous_Time_Martingales.Sampled_Quadratic_Variation" "Continuous_Time_Martingales.Moment_Bounds"
+  imports "Continuous_Time_Martingales.Sampled_Quadratic_Variation" "HOL-Probability.Probability"
 begin
 
 (*>*)
@@ -1996,49 +1996,6 @@ text \<open>The closedness half of Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSone
   The estimate is pointwise and elementary: on \<open>{Z\<^sup>2 > R}\<close>,
   \<open>Z\<^sup>2 = Z\<^sup>4/Z\<^sup>2 < Z\<^sup>4/R\<close>, and off that set the left side vanishes.\<close>
 
-lemma sq_tail_le_fourth_moment_pointwise:
-  fixes z R :: real
-  assumes R: "0 < R"
-  shows "z\<^sup>2 * indicat_real {w. R < w\<^sup>2} z \<le> z^4 / R"
-proof (cases "R < z\<^sup>2")
-  case True
-  have z2: "0 < z\<^sup>2" using True R by linarith
-  have "z\<^sup>2 * R \<le> z\<^sup>2 * z\<^sup>2"
-    by (rule mult_left_mono) (use True z2 in linarith)+
-  also have "z\<^sup>2 * z\<^sup>2 = z^4" by (simp add: power2_eq_square power4_eq_xxxx)
-  finally have "z\<^sup>2 * R \<le> z^4" .
-  then have "z\<^sup>2 \<le> z^4 / R" using R by (simp add: field_simps)
-  then show ?thesis using True by simp
-next
-  case False
-  have "0 \<le> z^4 / R" using R by simp
-  then show ?thesis using False by simp
-qed
-
-lemma sq_tail_bound_of_fourth_moment:
-  fixes Z :: "'a \<Rightarrow> real"
-  assumes M: "finite_measure M"
-    and i4: "integrable M (\<lambda>\<omega>. (Z \<omega>)^4)"
-    and i2: "integrable M (\<lambda>\<omega>. (Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>))"
-    and B: "(\<integral>\<omega>. (Z \<omega>)^4 \<partial>M) \<le> B"
-    and R: "0 < R"
-  shows "(\<integral>\<omega>. (Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>) \<partial>M) \<le> B / R"
-proof -
-  have ptw: "(Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>) \<le> (Z \<omega>)^4 / R" for \<omega>
-    by (rule sq_tail_le_fourth_moment_pointwise[OF R])
-  have idiv: "integrable M (\<lambda>\<omega>. (Z \<omega>)^4 / R)"
-    by (rule integrable_divide_zero[OF i4])
-  have "(\<integral>\<omega>. (Z \<omega>)\<^sup>2 * indicat_real {w. R < w\<^sup>2} (Z \<omega>) \<partial>M)
-      \<le> (\<integral>\<omega>. (Z \<omega>)^4 / R \<partial>M)"
-    by (rule integral_mono[OF i2 idiv]) (rule ptw)
-  also have "(\<integral>\<omega>. (Z \<omega>)^4 / R \<partial>M) = (\<integral>\<omega>. (Z \<omega>)^4 \<partial>M) / R"
-    by simp
-  also have "\<dots> \<le> B / R"
-    by (rule divide_right_mono[OF B]) (use R in linarith)
-  finally show ?thesis .
-qed
-
-
 subsection \<open>Truncation: the other half of the \<open>3\<epsilon>\<close> argument\<close>
 
 text \<open>Weak convergence upgrades to convergence of unbounded continuous
@@ -2162,7 +2119,6 @@ text \<open>This section instantiates the generic chain at
   \<open>L\<^sup>2\<close> bound, which is where the fourth moment is spent:
   \<open>(ab - c)\<^sup>2 \<le> a\<^sup>4 + b\<^sup>4 + 2c\<^sup>2\<close> pointwise, so a second moment of the
   compensated functional costs a fourth moment of the coordinates.\<close>
-
 
 
 lemma zero_le_fourth:

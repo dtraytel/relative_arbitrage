@@ -23,7 +23,6 @@ session Continuous_Time_Martingales = "HOL-Probability" +
     Expected_Exit_Times
     Sampled_Martingale
     Sampled_Quadratic_Variation
-    Moment_Bounds
     Vitali_Convergence
     Modification_Transfer
     Stopping_Times

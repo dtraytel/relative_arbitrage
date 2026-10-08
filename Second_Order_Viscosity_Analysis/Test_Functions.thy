@@ -476,14 +476,6 @@ section \<open>Definition 3.1 with genuine \<open>C\<^sup>2\<close> test functio
 
 text \<open>\<open>test_fun_C2\<close> lives in \<open>Viscosity_Definitions\<close>.\<close>
 
-lemma jet_test_fun_at_abstract:
-  fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)" and p x :: "real^'n"
-  assumes lin: "linear X" and sym: "\<And>v w. v \<bullet> X w = w \<bullet> X v"
-  shows "test_fun_at
-      (\<lambda>z. p \<bullet> (z - x) + ((z - x) \<bullet> (matrix X *v (z - x)))/2)
-      (\<lambda>z. p + matrix X *v (z - x)) (matrix X) x"
-  by (rule jet_test_fun_at[OF matrix_of_symmetric[OF lin sym]])
-
 subsection \<open>The closing step of Theorem 4.2\<close>
 
 text \<open>At the test point the gradient field of the jet test function is just
@@ -578,7 +570,6 @@ text \<open>\<open>visc_subsol_env2\<close>, \<open>visc_supersol_env2\<close> l
 
 text \<open>Fewer test functions means a weaker condition, so everything proved in the
   \<^const>\<open>test_fun_at\<close> form still delivers Definition 3.1 as the paper states it.\<close>
-
 
 
 lemma test_fun_at_quartic_shift:

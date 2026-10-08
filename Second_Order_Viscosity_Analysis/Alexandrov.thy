@@ -15,36 +15,6 @@ text \<open>The second difference \<open>\<Delta>(u,v) = e(x+u+v) - e(x+u) - e(x
   parallel segments; comparing the two, after inserting the gradient's
   first-order expansion, forces \<open>u \<cdot> A v = v \<cdot> A u\<close>.\<close>
 
-lemma second_difference_symmetric:
-  fixes g :: "'a::ab_group_add \<Rightarrow> real"
-  shows "g (x + u + v) - g (x + u) - g (x + v) + g x
-       = g (x + v + u) - g (x + v) - g (x + u) + g x"
-  by (simp add: add.commute add.left_commute)
-
-theorem moreau_second_difference_integral:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV f"
-  shows "moreau f (x + v + u) - moreau f (x + v)
-       - (moreau f (x + u) - moreau f x)
-       = integral {0..1} (\<lambda>s. u \<bullet> ((x + v + s *\<^sub>R u)
-           - prox f (x + v + s *\<^sub>R u)))
-       - integral {0..1} (\<lambda>s. u \<bullet> ((x + s *\<^sub>R u) - prox f (x + s *\<^sub>R u)))"
-proof -
-  have i1: "((\<lambda>s. u \<bullet> ((x + v + s *\<^sub>R u) - prox f (x + v + s *\<^sub>R u)))
-      has_integral (moreau f (x + v + u) - moreau f (x + v))) {0..1}"
-    by (rule moreau_ftc[OF cvx])
-  have i2: "((\<lambda>s. u \<bullet> ((x + s *\<^sub>R u) - prox f (x + s *\<^sub>R u)))
-      has_integral (moreau f (x + u) - moreau f x)) {0..1}"
-    by (rule moreau_ftc[OF cvx])
-  have e1: "integral {0..1} (\<lambda>s. u \<bullet> ((x + v + s *\<^sub>R u)
-      - prox f (x + v + s *\<^sub>R u))) = moreau f (x + v + u) - moreau f (x + v)"
-    by (rule integral_unique[OF i1])
-  have e2: "integral {0..1} (\<lambda>s. u \<bullet> ((x + s *\<^sub>R u) - prox f (x + s *\<^sub>R u)))
-      = moreau f (x + u) - moreau f x"
-    by (rule integral_unique[OF i2])
-  show ?thesis unfolding e1 e2 by simp
-qed
-
 text \<open>Along the two parallel segments the linear part of the gradient's
   increment is exactly \<open>t \<cdot> A v\<close>, independent of the segment parameter
   \<open>s\<close>; what is left over is a difference of two first-order remainders.\<close>

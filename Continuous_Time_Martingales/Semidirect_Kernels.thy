@@ -251,15 +251,6 @@ section \<open>Mixing two kernels on an event\<close>
 text \<open>Optimal on a chosen event, the other kernel elsewhere.  Measurability
   is @{thm [source] measurable_If}.\<close>
 
-lemma kernel_mix_measurable:
-  assumes A: "A \<in> sets G"
-    and K1: "\<kappa>1 \<in> G \<rightarrow>\<^sub>M prob_algebra N" and K2: "\<kappa>2 \<in> G \<rightarrow>\<^sub>M prob_algebra N"
-  shows "(\<lambda>p. if p \<in> A then \<kappa>1 p else \<kappa>2 p) \<in> G \<rightarrow>\<^sub>M prob_algebra N"
-proof (rule measurable_If[OF K1 K2])
-  have "{p \<in> space G. p \<in> A} = A" using A sets.sets_into_space by auto
-  then show "{p \<in> space G. p \<in> A} \<in> sets G" using A by simp
-qed
-
 (*<*)
 end
 (*>*)

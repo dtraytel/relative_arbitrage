@@ -17,131 +17,10 @@ text \<open>The development of the theorem on sums below follows
   \<open>M\<^sub>\<alpha>\<close> nonincreasing and squeezes the penalty term, forcing
   \<open>\<alpha> * norm (x\<^sub>\<alpha> - y\<^sub>\<alpha>)\<^sup>2 \<longrightarrow> 0\<close> once \<open>M\<^sub>\<alpha>\<close> is known to converge.\<close>
 
-lemma doubling_ge_diagonal:
-  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
-  assumes x: "x \<in> K"
-    and maxa: "\<And>z y. z \<in> K \<Longrightarrow> y \<in> K
-        \<Longrightarrow> u z - w y - (\<alpha>/2) * (norm (z - y))\<^sup>2 \<le> Ma"
-  shows "u x - w x \<le> Ma"
-  using maxa[OF x x] by simp
-
-lemma doubling_ring_identity:
-  fixes A N \<alpha> \<beta> :: real
-  shows "A - (\<beta>/2) * N = (A - (\<alpha>/2) * N) + ((\<alpha> - \<beta>)/2) * N"
-  by (simp add: field_simps)
-
-lemma doubling_penalty_squeeze:
-  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
-  assumes ab: "\<beta> \<le> \<alpha>"
-    and xa: "xa \<in> K" and ya: "ya \<in> K"
-    and atta: "u xa - w ya - (\<alpha>/2) * (norm (xa - ya))\<^sup>2 = Ma"
-    and maxb: "\<And>z y. z \<in> K \<Longrightarrow> y \<in> K
-        \<Longrightarrow> u z - w y - (\<beta>/2) * (norm (z - y))\<^sup>2 \<le> Mb"
-  shows "((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2 \<le> Mb - Ma"
-proof -
-  have step: "u xa - w ya - (\<beta>/2) * (norm (xa - ya))\<^sup>2 \<le> Mb"
-    by (rule maxb[OF xa ya])
-  have ring: "u xa - w ya - (\<beta>/2) * (norm (xa - ya))\<^sup>2
-      = (u xa - w ya - (\<alpha>/2) * (norm (xa - ya))\<^sup>2)
-        + ((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2"
-    by (rule doubling_ring_identity)
-  show ?thesis using step ring atta by linarith
-qed
-
-lemma doubling_antitone:
-  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
-  assumes ab: "\<beta> \<le> \<alpha>"
-    and xa: "xa \<in> K" and ya: "ya \<in> K"
-    and atta: "u xa - w ya - (\<alpha>/2) * (norm (xa - ya))\<^sup>2 = Ma"
-    and maxb: "\<And>z y. z \<in> K \<Longrightarrow> y \<in> K
-        \<Longrightarrow> u z - w y - (\<beta>/2) * (norm (z - y))\<^sup>2 \<le> Mb"
-  shows "Ma \<le> Mb"
-proof -
-  have sq: "((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2 \<le> Mb - Ma"
-    by (rule doubling_penalty_squeeze[OF ab xa ya atta maxb])
-  have "0 \<le> ((\<alpha> - \<beta>)/2) * (norm (xa - ya))\<^sup>2"
-    using ab by (intro mult_nonneg_nonneg) auto
-  with sq show ?thesis by linarith
-qed
-
 text \<open>The limit half of Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: once \<open>M\<^sub>\<alpha>\<close> converges, the squeeze with
   \<open>\<beta> = \<alpha>/2\<close> traps \<open>(\<alpha>/4) * pen \<alpha>\<close> between \<open>0\<close> and
   \<open>M\<^bsub>\<alpha>/2\<^esub> - M\<^sub>\<alpha>\<close>, both tending to \<open>0\<close>: the penalty term vanishes,
   letting the two maximizers merge in the limit.\<close>
-
-lemma doubling_penalty_tendsto_zero:
-  fixes M pen :: "real \<Rightarrow> real"
-  assumes conv: "(M \<longlongrightarrow> L) at_top"
-    and sq: "\<And>\<alpha>. 1 \<le> \<alpha> \<Longrightarrow> (\<alpha>/4) * pen \<alpha> \<le> M (\<alpha>/2) - M \<alpha>"
-    and nn: "\<And>\<alpha>. 0 \<le> pen \<alpha>"
-  shows "((\<lambda>\<alpha>. \<alpha> * pen \<alpha>) \<longlongrightarrow> 0) at_top"
-proof -
-  have half: "filterlim (\<lambda>\<alpha>::real. \<alpha>/2) at_top at_top"
-  proof (rule filterlim_at_top[THEN iffD2], rule allI)
-    fix Z :: real
-    show "\<forall>\<^sub>F \<alpha> in at_top. Z \<le> \<alpha>/2"
-      using eventually_ge_at_top[of "2*Z"] by (rule eventually_mono) simp
-  qed
-  have c2: "((\<lambda>\<alpha>. M (\<alpha>/2)) \<longlongrightarrow> L) at_top"
-    by (rule filterlim_compose[OF conv half])
-  have diff: "((\<lambda>\<alpha>. M (\<alpha>/2) - M \<alpha>) \<longlongrightarrow> 0) at_top"
-    using tendsto_diff[OF c2 conv] by simp
-  have lo: "\<forall>\<^sub>F \<alpha> in at_top. (0::real) \<le> (\<alpha>/4) * pen \<alpha>"
-  proof (rule eventually_mono[OF eventually_ge_at_top[of "0::real"]])
-    fix \<alpha> :: real assume "0 \<le> \<alpha>"
-    thus "0 \<le> (\<alpha>/4) * pen \<alpha>"
-      by (intro mult_nonneg_nonneg nn) simp
-  qed
-  have hi: "\<forall>\<^sub>F \<alpha> in at_top. (\<alpha>/4) * pen \<alpha> \<le> M (\<alpha>/2) - M \<alpha>"
-  proof (rule eventually_mono[OF eventually_ge_at_top[of "1::real"]])
-    fix \<alpha> :: real assume "1 \<le> \<alpha>"
-    thus "(\<alpha>/4) * pen \<alpha> \<le> M (\<alpha>/2) - M \<alpha>" by (rule sq)
-  qed
-  have "((\<lambda>\<alpha>. (\<alpha>/4) * pen \<alpha>) \<longlongrightarrow> 0) at_top"
-    by (rule tendsto_sandwich[OF lo hi tendsto_const diff])
-  hence "((\<lambda>\<alpha>. 4 * ((\<alpha>/4) * pen \<alpha>)) \<longlongrightarrow> 4 * 0) at_top"
-    by (rule tendsto_mult_left)
-  thus ?thesis by simp
-qed
-
-text \<open>And the hypothesis of the previous lemma is exactly what
-  \<open>doubling_antitone\<close> plus \<open>doubling_ge_diagonal\<close> supply: \<open>M\<^sub>\<alpha>\<close> is
-  antitone and bounded below by any diagonal value, hence convergent
-  along \<open>at_top\<close>.\<close>
-
-lemma antitone_bdd_below_convergent_at_top:
-  fixes M :: "real \<Rightarrow> real"
-  assumes anti: "\<And>\<beta> \<alpha>. 1 \<le> \<beta> \<Longrightarrow> \<beta> \<le> \<alpha> \<Longrightarrow> M \<alpha> \<le> M \<beta>"
-    and bdd: "\<And>\<alpha>. 1 \<le> \<alpha> \<Longrightarrow> B \<le> M \<alpha>"
-  shows "\<exists>L. (M \<longlongrightarrow> L) at_top"
-proof -
-  define S where "S = M ` {1..}"
-  have Sne: "S \<noteq> {}" unfolding S_def by auto
-  have Sbdd: "bdd_below S"
-    unfolding S_def by (rule bdd_belowI[of _ B]) (auto intro: bdd)
-  define L where "L = Inf S"
-  have Llow: "L \<le> M \<alpha>" if a: "1 \<le> \<alpha>" for \<alpha>
-    unfolding L_def by (rule cInf_lower[OF _ Sbdd]) (use a in \<open>auto simp: S_def\<close>)
-  have "(M \<longlongrightarrow> L) at_top"
-  proof (subst tendsto_iff, rule allI, rule impI)
-    fix e :: real assume e: "0 < e"
-    have "L < L + e" using e by simp
-    hence "\<exists>x \<in> S. x < L + e"
-      unfolding L_def using Sne Sbdd by (subst (asm) cInf_less_iff) auto
-    then obtain a where a1: "1 \<le> a" and aM: "M a < L + e"
-      unfolding S_def by auto
-    show "\<forall>\<^sub>F \<alpha> in at_top. dist (M \<alpha>) L < e"
-    proof (rule eventually_mono[OF eventually_ge_at_top[of a]])
-      fix \<alpha> :: real assume aa: "a \<le> \<alpha>"
-      hence a1': "1 \<le> \<alpha>" using a1 by simp
-      have "M \<alpha> \<le> M a" by (rule anti[OF a1 aa])
-      moreover have "L \<le> M \<alpha>" by (rule Llow[OF a1'])
-      ultimately show "dist (M \<alpha>) L < e" using aM by (simp add: dist_real_def)
-    qed
-  qed
-  thus ?thesis by blast
-qed
-
 
 subsection \<open>Block structure on the product space\<close>
 
@@ -152,12 +31,6 @@ text \<open>The doubled function lives on \<open>'a \<times> 'b\<close>, itself 
   theorem on sums; and a second-order expansion on the product restricts
   to each slice, letting the single product Hessian be read as two
   separate matrices.\<close>
-
-lemma block_diagonal_test:
-  fixes X Y :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes neg: "\<And>v w. v \<bullet> X v - w \<bullet> Y w - \<alpha> * (norm (v - w))\<^sup>2 \<le> 0"
-  shows "v \<bullet> X v \<le> v \<bullet> Y v"
-  using neg[of v v] by simp
 
 lemma norm_Pair_right_zero:
   fixes h :: "'a::euclidean_space"
@@ -1051,39 +924,7 @@ text \<open>The doubling regularises \<open>u\<close> and \<open>- w\<close> by 
   with data \<open>(p, X)\<close> is exactly minus the one for \<open>w\<close> with data
   \<open>(- p, - X)\<close>, so an upper bound on one is a lower bound on the other.\<close>
 
-lemma neg_jet_quotient:
-  fixes w :: "'a::euclidean_space \<Rightarrow> real"
-  shows "(((\<lambda>z. - w z) (ys + k)) - ((\<lambda>z. - w z) ys) - p \<bullet> k - (k \<bullet> X k)/2)
-      / (norm k)\<^sup>2
-      = - ((w (ys + k) - w ys - (- p) \<bullet> k
-          - (k \<bullet> ((\<lambda>v. - X v) k))/2) / (norm k)\<^sup>2)"
-proof -
-  have e1: "(- p) \<bullet> k = - (p \<bullet> k)" by simp
-  have e2: "k \<bullet> ((\<lambda>v. - X v) k) = - (k \<bullet> X k)" by simp
-  have num: "((\<lambda>z. - w z) (ys + k)) - ((\<lambda>z. - w z) ys) - p \<bullet> k - (k \<bullet> X k)/2
-      = - (w (ys + k) - w ys - (- p) \<bullet> k - (k \<bullet> ((\<lambda>v. - X v) k))/2)"
-    unfolding e1 e2 by simp
-  show ?thesis unfolding num by (rule minus_divide_left[symmetric])
-qed
-
 text \<open>Hence the transferred jet, in the form the supersolution needs.\<close>
-
-lemma supconv_neg_jet_transfer:
-  fixes w :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. - w y \<le> B" and e: "0 < \<epsilon>"
-    and opt: "supconv (\<lambda>z. - w z) \<epsilon> x = (- w ys) - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-  shows "- ((w (ys + k) - w ys - (- p) \<bullet> k
-          - (k \<bullet> ((\<lambda>v. - X v) k))/2) / (norm k)\<^sup>2)
-      \<le> (supconv (\<lambda>z. - w z) \<epsilon> (x + k) - supconv (\<lambda>z. - w z) \<epsilon> x
-          - p \<bullet> k - (k \<bullet> X k)/2) / (norm k)\<^sup>2"
-proof -
-  have "(((\<lambda>z. - w z) (ys + k)) - ((\<lambda>z. - w z) ys) - p \<bullet> k - (k \<bullet> X k)/2)
-      / (norm k)\<^sup>2
-      \<le> (supconv (\<lambda>z. - w z) \<epsilon> (x + k) - supconv (\<lambda>z. - w z) \<epsilon> x
-          - p \<bullet> k - (k \<bullet> X k)/2) / (norm k)\<^sup>2"
-    by (rule supconv_jet_transfer[OF B e opt])
-  thus ?thesis unfolding neg_jet_quotient[symmetric] .
-qed
 
 text \<open>Reading the theorem on sums as an ordering hypothesis for a
   comparison argument.  \<open>sums_matrix_inequality\<close> concludes
@@ -1091,19 +932,6 @@ text \<open>Reading the theorem on sums as an ordering hypothesis for a
   factor; since that factor carries \<open>- w\<close>, the matrix a supersolution
   needs is \<open>Y = - Yb\<close>, and the inequality becomes
   \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>.\<close>
-
-lemma sums_ord_of_inequality:
-  fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
-  assumes ineq: "v \<bullet> fst (W (v, 0) + \<alpha> *\<^sub>R (v - 0, 0 - v))
-      + v \<bullet> snd (W (0, v) + \<alpha> *\<^sub>R (0 - v, v - 0)) \<le> 0"
-  shows "v \<bullet> (\<lambda>z. fst (W (z, 0) + \<alpha> *\<^sub>R (z - 0, 0 - z))) v
-      \<le> v \<bullet> (\<lambda>z. - snd (W (0, z) + \<alpha> *\<^sub>R (0 - z, z - 0))) v"
-proof -
-  have neg: "v \<bullet> (- snd (W (0, v) + \<alpha> *\<^sub>R (0 - v, v - 0)))
-      = - (v \<bullet> snd (W (0, v) + \<alpha> *\<^sub>R (0 - v, v - 0)))"
-    by (rule inner_minus_right)
-  show ?thesis using ineq unfolding neg by simp
-qed
 
 text \<open>Linearity of the two slice maps, the remaining hypotheses of the
   comparison argument besides the ordering.\<close>

@@ -747,36 +747,6 @@ text \<open>The exit time is upper semicontinuous because "has already entered
   \<open>{f. etime T A (\<lambda>s w. w s) f < c}\<close> when \<open>\<not> T < c\<close> -- lives on a
   different import branch.\<close>
 
-lemma open_hit_strictly_before:
-  fixes T c :: real and A :: "'b::polish_space set"
-  assumes A: "open A"
-  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         \<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A}"
-proof -
-  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-        \<exists>r. 0 \<le> r \<and> r \<le> T \<and> r < c \<and> f r \<in> A}
-      = (\<Union>r \<in> {r. 0 \<le> r \<and> r \<le> T \<and> r < c}.
-           {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> A})"
-    by blast
-  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). f r \<in> A}"
-    if r: "r \<in> {r. 0 \<le> r \<and> r \<le> T \<and> r < c}" for r
-  proof -
-    have rT: "r \<in> {0..T}" using r by simp
-    have cm: "continuous_map
-        (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) euclidean (\<lambda>f. f r)"
-      by (rule continuous_map_path_eval[OF rT])
-    have "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-        {f \<in> topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)).
-           f r \<in> A}"
-      by (rule openin_continuous_map_preimage[OF cm]) (use A in simp)
-    then show ?thesis by simp
-  qed
-  show ?thesis unfolding eq
-    by (rule openin_Union) (use op in blast)
-qed
-
 text \<open>The brick the proof above used inline, now stated on its own:
   evaluation at a fixed admissible time is continuous, so an open target
   pulls back to an open set of paths.\<close>
@@ -1256,7 +1226,6 @@ qed
 
 text \<open>The margin itself: no property of \<open>\<omega>\<close> beyond the single evaluation
   \<open>\<omega>(r)\<close> is used, and \<open>\<delta>\<close> does not depend on \<open>\<omega>\<close>.\<close>
-
 
 
 lemma Polish_space_path_metric:

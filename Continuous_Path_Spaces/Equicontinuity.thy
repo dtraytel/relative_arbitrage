@@ -180,55 +180,11 @@ text \<open>
   its bound.
 \<close>
 
-corollary holder_family_subsequence_dist:
-  fixes F :: "nat \<Rightarrow> real \<Rightarrow> 'b::{real_normed_vector,heine_borel}"
-  assumes T: "0 \<le> T" and ga: "0 < ga" and c: "0 \<le> c"
-    and start: "\<And>m. F m 0 = x"
-    and hol: "\<And>m s t. s \<in> {0..T} \<Longrightarrow> t \<in> {0..T}
-                 \<Longrightarrow> dist (F m t) (F m s) \<le> c * dist t s powr ga"
-  obtains L and k :: "nat \<Rightarrow> nat"
-    where "strict_mono k" "continuous_on {0..T} L" "L 0 = x"
-    "\<And>s t. s \<in> {0..T} \<Longrightarrow> t \<in> {0..T}
-        \<Longrightarrow> dist (L t) (L s) \<le> c * dist t s powr ga"
-    "\<And>e. 0 < e \<Longrightarrow> \<exists>N. \<forall>m\<ge>N. \<forall>t\<in>{0..T}. dist (F (k m) t) (L t) < e"
-proof -
-  have hol': "\<And>m s t. s \<in> {0..T} \<Longrightarrow> t \<in> {0..T}
-                 \<Longrightarrow> norm (F m t - F m s) \<le> c * \<bar>t - s\<bar> powr ga"
-    using hol by (simp add: dist_norm dist_real_def)
-  show ?thesis
-  proof (rule holder_family_subsequence[OF T ga c start hol'])
-    fix L and k :: "nat \<Rightarrow> nat"
-    assume k: "strict_mono k" and Lc: "continuous_on {0..T} L" and L0: "L 0 = x"
-      and Lh: "\<And>s t. s \<in> {0..T} \<Longrightarrow> t \<in> {0..T}
-                   \<Longrightarrow> norm (L t - L s) \<le> c * \<bar>t - s\<bar> powr ga"
-      and Lu: "\<And>e. 0 < e \<Longrightarrow>
-          \<exists>N. \<forall>m\<ge>N. \<forall>t\<in>{0..T}. norm (F (k m) t - L t) < e"
-    have Lh': "\<And>s t. s \<in> {0..T} \<Longrightarrow> t \<in> {0..T}
-                   \<Longrightarrow> dist (L t) (L s) \<le> c * dist t s powr ga"
-      using Lh by (simp add: dist_norm dist_real_def)
-    have Lu': "\<And>e. 0 < e \<Longrightarrow>
-        \<exists>N. \<forall>m\<ge>N. \<forall>t\<in>{0..T}. dist (F (k m) t) (L t) < e"
-      using Lu by (simp add: dist_norm)
-    show thesis by (rule that[OF k Lc L0 Lh' Lu'])
-  qed
-qed
 text \<open>
   The limit produced above is itself @{term "ga-holder_on {0..T}"}, so the
   Arzela-Ascoli step stays inside the class delivered by Kolmogorov's
   criterion.
 \<close>
-
-lemma holder_onI_bound:
-  fixes L :: "real \<Rightarrow> 'b::metric_space"
-  assumes ga: "ga \<in> {0<..1}" and c: "0 \<le> c"
-    and bnd: "\<And>s t. s \<in> D \<Longrightarrow> t \<in> D \<Longrightarrow> dist (L t) (L s) \<le> c * dist t s powr ga"
-  shows "ga-holder_on D L"
-  unfolding holder_on_def
-proof (intro conjI ga exI[of _ c] conjI c ballI)
-  fix r s assume "r \<in> D" "s \<in> D"
-  thus "dist (L r) (L s) \<le> c * dist r s powr ga"
-    using bnd by (simp add: dist_commute)
-qed
 
 text \<open>Berge's maximum theorem and the sequential-limit facts it rests on
   live in @{theory Semicontinuous_Analysis.Berge}.\<close>

@@ -633,27 +633,29 @@ Both were dry-run *checked* (REVIEW_3 §6.1–6.2).
 **D2 — the market layer: deleted (done, `4d5f47e`).**
 - It was a second formalisation of the problem over abstract markets, and no deliverable used
   any fact of it (*measured*).
-- Its one result of independent interest is a bound on the expected exit time from a ball. It
-  is re-proved generically in `Continuous_Time_Martingales` (a pilot is running), stated for
-  a continuous martingale with a lower bound on the quadratic-variation rate. The repository
-  gets a corollary for the class in `Exit_Class_Witness`.
+- Its one result of independent interest is a bound on the expected exit time from a ball.
+  It is now re-proved generically (**done**, *checked*, independently re-checked as
+  faithful). `Continuous_Time_Martingales.Expected_Exit_Times` gives, for a continuous
+  martingale `Y − A` with `Y ≤ R` up to `τ` and `A` growing at rate at least `c`, the bound
+  `c E[τ ∧ t] ≤ R − E[Y₀]` and integrability of `τ`. `Exit_Class_Expected_Exit_Time` applies
+  it to the class: `E[τ_K] ≤ (r² − |x|²)/(n−k)` for closed `K ⊆ cball 0 r`.
 - `eigen_ub_diag`, the one fact a live theory needed, moved to `Curvature_Operator`.
 
-**D3 — Theorem 4.2(a): keep it, in the paper's form (independent interest).**
-- Today it is formalised with an extra continuity hypothesis (`max_principle_boundary_holds`)
-  through a quadratic-penalty route of ≈ 2 400 lines that nothing else uses.
-- The paper states it, so it stays whatever the pilot returns (owner's directive, §1.3).
-- Pilot (≤ 300 lines, running): derive the faithful statement (usc/lsc data, the `env2`
-  predicates) from the localisation that `comparison_two_domain` already uses. The paper
-  proves (a) and (b) in parallel from one doubling argument, so the shared steps exist:
-  - the `x^ε ≠ y^ε` contradiction from `F^*(0,0) = 0`;
-  - the Crandall–Ishii step.
-- If the pilot succeeds, the faithful theorem replaces the continuous-data one, which becomes
-  a corollary or goes. The quadratic route is deleted unless the faithful proof needs it.
-- If the pilot fails, the continuous-data theorem stays under a name that says so, and
-  `Paper_Map` records the gap. The quadratic route stays as its proof until the faithful
-  version is done.
-- `viscosity_uniqueness_compact` stays as a corollary of at most 10 lines.
+**D3 — Theorem 4.2(a): proved in the paper's form (pilot, *checked*; done).**
+- `max_principle_usc_lsc` (`Comparison_Principle`) has the following hypotheses:
+  - compact `K`;
+  - `u` usc and `w` lsc relative to `K`;
+  - `u` a viscosity subsolution and `w` a supersolution in the interior, in the
+    Definition 3.1 reading (`env2`).
+
+  It concludes that `u − w` attains its maximum over `K` at a boundary point.
+- The bounds `|u|, |w| ≤ B` on `K` are explicit. The paper's proof uses `‖u‖∞`, `‖w‖∞`
+  without saying so. `Paper_Map` records this.
+- A Lebesgue number replaces the paper's subsequential limit of maximisers, so only
+  semicontinuity is used.
+- The continuous-data `max_principle_boundary_holds` is now a corollary. The continuity-only
+  chain it used was deleted in phase 2.
+- `viscosity_uniqueness_compact` stays, as a corollary.
 
 **D4 — Proposition 2.4 (the DPP equality with attainment): proved (pilot, *checked*).**
 - 282 lines with no `sorry` (batch check OK). Every optimiser of the value function attains
@@ -673,6 +675,12 @@ Both were dry-run *checked* (REVIEW_3 §6.1–6.2).
   - a limit argument for unbounded `θ`.
 - `Paper_Map` states what is proved and names the gap. `root.tex`'s "proved here in full"
   changes to match.
+- Done as `Proposition_2_4` (`040c0c5`). The independent re-check confirmed the scope: the
+  statements are faithful for the horizon-`T` problem. It also points out that the
+  transfer to `v` for **bounded** `θ` should follow from existing bridges
+  (`exit_val_horizon_cap`, `iexit_val_eq_exit_val(_ball)`, `exit_class_has_extension`)
+  with `T ≥ sup θ + r_K²/(n−k)`. That is a follow-up pilot (≤ 300 lines, gated). Galmarino's
+  test and unbounded `θ` stay out of scope.
 
 **D4b — Section 5 (continuity of `v` for convex `K`): out of scope for this
 restructuring, with one cheap exception.**
@@ -789,5 +797,9 @@ PLAN_RESTRUCTURING_2 §8 applies, with these amendments:
 | 2026-10-07 | `bce6ac1` | analysis summary file with the oracle check | — |
 | 2026-10-08 | `4d5f47e` | Phase 2.1: market layer deleted (8 theories, 4 901 lines) | all sessions build |
 | 2026-10-08 | (this commit) | independent-interest review (§1.3), design panel (§1.4), roots extended to ≈ 520 entries, this revision | analysis re-run against the new roots |
-| 2026-10-08 | — | pilots: Proposition 2.4 **proved** (282 lines, D4); Theorem 4.2(a) and the expected-exit-time bound running | — |
+| 2026-10-08 | `61a7e9f` | Phase 2.2–2.4: empty theories, smooth ball strand (with the global `[simp del]`), `Dynamic_Programming_Kernels` | all sessions build |
+| 2026-10-08 | `040c0c5` | Proposition 2.4 for the horizon-`T` value (pilot, D4); Lemma 3.1 in `Paper_Readings` | all sessions build |
+| 2026-10-08 | `277512b` | roots: 23 COROLLARY verdicts that keep their name | — |
+| 2026-10-08 | (integration commit) | Theorem 4.2(a) for usc/lsc data (pilot, D3); `Expected_Exit_Times` in CTM and its class corollary (pilot, D2) | all sessions build |
+| 2026-10-08 | (this batch) | Phase 2.5–2.6: the dead blocks of 52 theories against the 552 roots, by script (`delete_dead`: lemma blocks with no live fact, texts that mention only deleted facts, emptied headers, unused definitions named nowhere else); `Moment_Bounds` emptied and deleted; `eigen_ub_diag` kept (FIX_THEN_KEEP); six facts the analysis called unused but live proofs still name are kept | see below |
 

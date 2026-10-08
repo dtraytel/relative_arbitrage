@@ -15,9 +15,6 @@ begin
 section \<open>The class is closed under shortening the horizon\<close>
 
 
-
-
-
 lemma exit_class_diffquot_of_pairs:
   fixes Q :: "('n::finite pairpath) measure"
   assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
@@ -226,12 +223,6 @@ text \<open>The other half of the dynamic programming principle needs the class
   instantiates \<open>r\<close> with \<open>\<theta> \<omega>\<close>.\<close>
 
 
-
-
-
-
-
-
 lemma pglue_diffquot:
   fixes \<omega> \<omega>' :: "'n::finite pairpath"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -288,9 +279,6 @@ proof -
 qed
 
 subsection \<open>The pasted law\<close>
-
-
-
 
 
 lemma pglue_law_start:
@@ -374,80 +362,6 @@ text \<open>\<open>exit_val\<close> caps the exit time at \<open>T\<close>, the 
   at horizon \<open>S\<close> once \<open>S\<close> exceeds the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> of
   \<open>exit_val_le_ball_bound\<close>.  No pasting is needed here.\<close>
 
-
-
-
-
-
-theorem exit_val_horizon_stable:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and r :: real
-  assumes k: "k < CARD('n)" and L: "0 \<le> L" and S: "0 \<le> S" and ST: "S \<le> T"
-    and K: "closed K" and KB: "K \<subseteq> cball 0 r"
-    and big: "(r * r - x \<bullet> x) / real (CARD('n) - k) \<le> S"
-  shows "exit_val k L T K x \<le> exit_val k L S K x"
-proof -
-  have T0: "0 \<le> T" using S ST by simp
-  let ?B = "(path_borel S :: ('n pairpath) measure)"
-  let ?tau = "\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t))"
-  have taum: "?tau \<in> borel_measurable ?B"
-  proof -
-    have "(\<lambda>\<omega> :: 'n pairpath. pexit S K (pfst S \<omega>)) \<in> borel_measurable ?B"
-      by (rule measurable_compose[OF pfst_measurable[OF S refl]
-            pexit_measurable[OF S K]])
-    then show ?thesis by (simp add: pexit_pfst)
-  qed
-  have "exit_val k L T K x
-      = Sup ((\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-          ` exit_class k L T x)"
-    unfolding exit_val_def ..
-  also have "\<dots> \<le> exit_val k L S K x"
-  proof (rule Sup_least)
-    fix e :: ennreal
-    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-        ` exit_class k L T x"
-    then obtain Q :: "('n pairpath) measure"
-      where Q: "Q \<in> exit_class k L T x"
-        and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
-    have eS: "e \<le> ennreal S"
-    proof -
-      have "e \<le> exit_val k L T K x"
-        unfolding exit_val_def e using Q by (intro Sup_upper imageI)
-      also have "\<dots> \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
-        by (rule exit_val_le_ball_bound[OF k T0 L KB])
-      also have "\<dots> \<le> ennreal S" using big by (rule ennreal_leI)
-      finally show ?thesis .
-    qed
-    have Q': "pair_law_of S (pcut S) Q \<in> exit_class k L S x"
-      by (rule exit_class_pcut[OF S ST Q])
-    have m1: "pcut S \<in> Q \<rightarrow>\<^sub>M ?B"
-      by (rule pcut_measurable[OF S ST exit_class_sets[OF Q]])
-    have mset: "{\<omega> \<in> space ?B. e \<le> ennreal (?tau \<omega>)} \<in> sets ?B"
-      using taum by measurable
-    have iff: "(AE \<omega> in pair_law_of S (pcut S) Q. e \<le> ennreal (?tau \<omega>))
-        = (AE \<omega> in Q. e \<le> ennreal (?tau (pcut S \<omega>)))"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF m1 mset])
-    have ae1: "AE \<omega> in Q. e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-      unfolding e by (rule ess_inf_time_AE)
-    have "AE \<omega> in Q. e \<le> ennreal (?tau (pcut S \<omega>))"
-    proof (rule eventually_mono[OF ae1])
-      fix \<omega> :: "'n pairpath"
-      assume "e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-      with eS have "e \<le> ennreal (min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
-        unfolding ennreal_min_eq by simp
-      also have "\<dots> \<le> ennreal (pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
-        by (intro ennreal_leI pexit_pcut_ge[OF S ST])
-      finally show "e \<le> ennreal (?tau (pcut S \<omega>))" by simp
-    qed
-    then have ae: "AE \<omega> in pair_law_of S (pcut S) Q. e \<le> ennreal (?tau \<omega>)"
-      unfolding iff .
-    have "e \<le> ess_inf_time (pair_law_of S (pcut S) Q) ?tau"
-      unfolding ess_inf_time_def using ae by (intro Sup_upper) simp
-    also have "\<dots> \<le> exit_val k L S K x"
-      unfolding exit_val_def using Q' by (intro Sup_upper imageI)
-    finally show "e \<le> exit_val k L S K x" .
-  qed
-  finally show ?thesis .
-qed
 
 text \<open>The pasting theorem needs three transfer results: a first-factor
   martingale, a second-factor martingale, and the product of a
@@ -674,7 +588,6 @@ proof -
         pglue_measurable[OF r rT setsQ setsR] gadap Zm[unfolded pglue_law_def]
         mgl])
 qed
-
 
 
 theorem pglue_law_comp_martingale:
@@ -1071,53 +984,6 @@ text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic pr
   continuation stays in \<open>K\<close> for a further \<open>c\<close>.  A single law \<open>R\<close> started
   at \<open>0\<close> supplies a continuation from every endpoint via \<open>pglue\<close>; the full
   (2.9) needs that law chosen depending on the endpoint.\<close>
-
-
-theorem exit_val_paste_ge:
-  fixes Q R :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and K: "closed K"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "R \<in> exit_class k L (T - r) 0"
-    and stay: "AE p in Q \<Otimes>\<^sub>M R.
-        c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
-  shows "ennreal c \<le> exit_val k L T K x"
-proof -
-  have T0: "0 \<le> T" using r rT by simp
-  let ?BT = "(path_borel T :: ('n pairpath) measure)"
-  have G: "pglue_law r T Q R \<in> exit_class k L T x"
-    by (rule exit_class_pglue_law[OF r rT Q R])
-  have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
-      \<in> borel_measurable ?BT"
-    by (rule pexit_path_measurable[OF T0 K refl])
-  have mset: "{\<omega> \<in> space ?BT.
-      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?BT"
-    using tauT by measurable
-  have iff: "(AE \<omega> in pglue_law r T Q R.
-        ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))
-      = (AE p in Q \<Otimes>\<^sub>M R. ennreal c
-          \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))))"
-    unfolding pglue_law_def pair_law_of_def
-    by (rule AE_distr_iff[OF pglue_measurable[OF r rT
-          exit_class_sets[OF Q] exit_class_sets[OF R]] mset])
-  have "AE p in Q \<Otimes>\<^sub>M R. ennreal c
-      \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t)))"
-    using stay by (auto intro: ennreal_leI elim: eventually_mono)
-  then have ae: "AE \<omega> in pglue_law r T Q R.
-      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-    unfolding iff .
-  have "ennreal c
-      \<le> ess_inf_time (pglue_law r T Q R) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-    unfolding ess_inf_time_def using ae by (intro Sup_upper) simp
-  also have "\<dots> \<le> exit_val k L T K x"
-    unfolding exit_val_def using G by (intro Sup_upper imageI)
-  finally show ?thesis .
-qed
-
-
-
-
-
-
 
 
 lemma kglue_law_start:
@@ -1640,8 +1506,6 @@ text \<open>The cross term of \<open>outerp (X\<^sub>r + W)\<close> is \<open>X\
 text \<open>\<open>norm_outer_prod\<close> lives in
   @{theory Symmetric_Matrix_Spectra.Poincare_Separation}, stated through
   \<open>outer_prod\<close>; \<open>outerp x\<close> is \<open>outer_prod x x\<close>.\<close>
-
-
 
 
 lemma kglue_param_comp_martingale:

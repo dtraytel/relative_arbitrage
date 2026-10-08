@@ -493,46 +493,6 @@ text \<open>A test function scales, so a subsolution scaled by \<open>\<theta> \
   satisfies the strict operator inequality at each of its test points.\<close>
 
 
-theorem visc_subsol_scaled_strict:
-  fixes u :: "real^'n::finite \<Rightarrow> real" and H :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u"
-    and t: "0 < \<theta>" "\<theta> < 1"
-    and x: "x \<in> \<Omega>"
-    and tf: "test_fun_at \<phi> g H x"
-    and ne: "feasible k L (g x) \<noteq> ({} :: (real^'n^'n) set)"
-    and maxloc: "\<exists>e>0. \<forall>y \<in> ball x e. \<theta> * u y - \<phi> y \<le> \<theta> * u x - \<phi> x"
-  shows "ell_op k L (g x) H < 1"
-proof -
-  define c where "c = 1/\<theta>"
-  have c0: "0 < c" unfolding c_def using t(1) by simp
-  have cn: "c \<noteq> 0" using c0 by simp
-  have tfc: "test_fun_at (\<lambda>z. c * \<phi> z) (\<lambda>z. c *\<^sub>R g z) (c *\<^sub>R H) x"
-    by (rule test_fun_at_scaleR[OF tf c0])
-  obtain e where e: "0 < e"
-    and m: "\<And>y. y \<in> ball x e \<Longrightarrow> \<theta> * u y - \<phi> y \<le> \<theta> * u x - \<phi> x"
-    using maxloc by blast
-  have mc: "\<exists>e>0. \<forall>y \<in> ball x e. u y - c * \<phi> y \<le> u x - c * \<phi> x"
-  proof (rule exI[of _ e], intro conjI ballI)
-    show "0 < e" by (rule e)
-    fix y assume y: "y \<in> ball x e"
-    have "(\<theta> * u y - \<phi> y) * c \<le> (\<theta> * u x - \<phi> x) * c"
-      using m[OF y] c0 by (intro mult_right_mono) auto
-    thus "u y - c * \<phi> y \<le> u x - c * \<phi> x"
-      unfolding c_def using t(1) by (simp add: field_simps)
-  qed
-  have "ell_op k L ((\<lambda>z. c *\<^sub>R g z) x) (c *\<^sub>R H) \<le> 1"
-    using sub x tfc mc unfolding visc_subsol_def by blast
-  hence step: "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) \<le> 1" by simp
-  have "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) = ell_op k L (g x) (c *\<^sub>R H)"
-    by (rule ell_op_scaleR_p[OF cn])
-  also have "\<dots> = c * ell_op k L (g x) H"
-    by (rule ell_op_scaleR_matrix[OF c0 ne])
-  finally have "c * ell_op k L (g x) H \<le> 1" using step by simp
-  hence "ell_op k L (g x) H \<le> \<theta>"
-    unfolding c_def using t(1) by (simp add: field_simps)
-  thus ?thesis using t(2) by linarith
-qed
-
 subsection \<open>Freezing one variable in the doubled maximum\<close>
 
 text \<open>\<open>doubling_partial_max_fst\<close>, \<open>doubling_partial_min_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
@@ -573,55 +533,6 @@ subsection \<open>From the abstract matrix inequality to \<open>psd\<close>\<clo
 text \<open>\<open>matrix_diff_vec\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-
-theorem comparison_contradiction:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-    and X Y :: "(real^'n) \<Rightarrow> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
-    and t: "0 < \<theta>" "\<theta> < 1"
-    and xh: "xh \<in> \<Omega>" and yh: "yh \<in> \<Omega>"
-    and lX: "linear X" and lY: "linear Y"
-    and symX: "\<And>v z. v \<bullet> X z = z \<bullet> X v"
-    and symY: "\<And>v z. v \<bullet> Y z = z \<bullet> Y v"
-    and ord: "\<And>v. v \<bullet> X v \<le> v \<bullet> Y v"
-    and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L" and pnz: "p \<noteq> 0"
-    and subtest: "\<exists>e>0. \<forall>z \<in> ball xh e.
-        \<theta> * u z - (p \<bullet> (z - xh) + ((z - xh) \<bullet> (matrix X *v (z - xh)))/2)
-        \<le> \<theta> * u xh
-        - (p \<bullet> (xh - xh) + ((xh - xh) \<bullet> (matrix X *v (xh - xh)))/2)"
-    and suptest: "\<exists>e>0. \<forall>z \<in> ball yh e.
-        w yh - (p \<bullet> (yh - yh) + ((yh - yh) \<bullet> (matrix Y *v (yh - yh)))/2)
-        \<le> w z - (p \<bullet> (z - yh) + ((z - yh) \<bullet> (matrix Y *v (z - yh)))/2)"
-  shows False
-proof -
-  have tfX: "test_fun_at
-      (\<lambda>z. p \<bullet> (z - xh) + ((z - xh) \<bullet> (matrix X *v (z - xh)))/2)
-      (\<lambda>z. p + matrix X *v (z - xh)) (matrix X) xh"
-    by (rule jet_test_fun_at_abstract[OF lX symX])
-  have gX: "(\<lambda>z. p + matrix X *v (z - xh)) xh = p" by simp
-  have neX: "feasible k L ((\<lambda>z. p + matrix X *v (z - xh)) xh)
-      \<noteq> ({} :: (real^'n^'n) set)"
-    unfolding gX by (rule ne)
-  have strict: "ell_op k L ((\<lambda>z. p + matrix X *v (z - xh)) xh) (matrix X) < 1"
-    by (rule visc_subsol_scaled_strict[OF sub t(1) t(2) xh tfX neX subtest])
-  hence strictp: "ell_op k L p (matrix X) < 1" unfolding gX .
-  have tfY: "test_fun_at
-      (\<lambda>z. p \<bullet> (z - yh) + ((z - yh) \<bullet> (matrix Y *v (z - yh)))/2)
-      (\<lambda>z. p + matrix Y *v (z - yh)) (matrix Y) yh"
-    by (rule jet_test_fun_at_abstract[OF lY symY])
-  have gY: "(\<lambda>z. p + matrix Y *v (z - yh)) yh = p" by simp
-  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + matrix Y *v (z - yh)) yh) (matrix Y)"
-    using sup yh tfY suptest unfolding supersol_jet_def by blast
-  hence "1 \<le> ell_op_usc k L p (matrix Y)" unfolding gY .
-  hence supp: "1 \<le> ell_op k L p (matrix Y)"
-    unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL pnz] by simp
-  have psdXY: "psd (matrix Y - matrix X)"
-    by (rule psd_of_abstract_le[OF lX lY symX symY ord])
-  show False
-    by (rule ell_op_strict_contradiction[OF psdXY ne strictp supp])
-qed
-
 subsection \<open>The envelope route for removing the jet correction\<close>
 
 text \<open>\<open>superjet_local_max\<close> introduces a strictly convex correction
@@ -635,91 +546,10 @@ text \<open>\<open>superjet_local_max\<close> introduces a strictly convex corre
 text \<open>\<open>ball_prod_shift_snd\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma ell_op_pair_shift_snd_le:
-  fixes M N :: "real^'n::finite^'n"
-  assumes psd: "psd (N - M)" and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op_pair k L (w + (0, N - M)) \<le> ell_op_pair k L w"
-proof -
-  have ne: "feasible k L (fst w) \<noteq> ({} :: (real^'n^'n) set)"
-    by (rule feasible_nonempty[OF k(1) k(2) L])
-  have psd': "psd ((snd w + (N - M)) - snd w)"
-    using psd by simp
-  have "ell_op k L (fst w) (snd w + (N - M)) \<le> ell_op k L (fst w) (snd w)"
-    by (rule ell_op_elliptic_le[OF psd' ne])
-  then show ?thesis
-    by (simp add: ell_op_pair_def)
-qed
-
-theorem ell_op_lsc_elliptic_le:
-  fixes M N :: "real^'n::finite^'n"
-  assumes psd: "psd (N - M)" and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op_lsc k L p N \<le> ell_op_lsc k L p M"
-  unfolding ell_op_lsc_def
-proof (rule SUP_mono)
-  fix e :: real
-  assume e: "e \<in> {0<..}"
-  have "(INF w \<in> ball ((p :: real^'n), N) e. ell_op_pair k L w)
-      \<le> (INF w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)"
-  proof (rule INF_mono)
-    fix w :: "(real^'n) \<times> (real^'n^'n)"
-    assume w: "w \<in> ball ((p :: real^'n), M) e"
-    have "w + (0, N - M) \<in> ball ((p :: real^'n), N) e"
-      by (rule ball_prod_shift_snd[OF w])
-    moreover have "ell_op_pair k L (w + (0, N - M)) \<le> ell_op_pair k L w"
-      by (rule ell_op_pair_shift_snd_le[OF psd k(1) k(2) L])
-    ultimately show "\<exists>v \<in> ball ((p :: real^'n), N) e.
-        ell_op_pair k L v \<le> ell_op_pair k L w"
-      by blast
-  qed
-  with e show "\<exists>e' \<in> {0<..}. (INF w \<in> ball ((p :: real^'n), N) e. ell_op_pair k L w)
-      \<le> (INF w \<in> ball ((p :: real^'n), M) e'. ell_op_pair k L w)"
-    by blast
-qed
-
 text \<open>And the same for the upper envelope, by the dual argument: the same
   translation carries \<open>ball (p, M) e\<close> onto \<open>ball (p, N) e\<close>, and the
   integrand decreases along it, so the suprema compare and then the infima
   over the radius do.\<close>
-
-theorem ell_op_usc_envelope_elliptic_le:
-  fixes M N :: "real^'n::finite^'n"
-  assumes psd: "psd (N - M)" and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op_usc k L p N \<le> ell_op_usc k L p M"
-  unfolding ell_op_usc_def
-proof (rule INF_mono)
-  fix e :: real
-  assume e: "e \<in> {0<..}"
-  have "(SUP w \<in> ball ((p :: real^'n), N) e. ell_op_pair k L w)
-      \<le> (SUP w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)"
-  proof (rule SUP_mono)
-    fix v :: "(real^'n) \<times> (real^'n^'n)"
-    assume v: "v \<in> ball ((p :: real^'n), N) e"
-    have vm: "v - (0, N - M) \<in> ball ((p :: real^'n), M) e"
-    proof -
-      have eq: "(v - (0, N - M)) - (p, M) = v - (p, N)"
-        by (simp add: prod_eq_iff)
-      have "dist (v - (0, N - M)) (p, M) = dist v (p, N)"
-        unfolding dist_norm eq ..
-      moreover have "dist v (p, N) < e"
-        using v by (simp add: dist_commute)
-      ultimately show ?thesis
-        by (simp add: dist_commute)
-    qed
-    have "ell_op_pair k L v \<le> ell_op_pair k L (v - (0, N - M))"
-    proof -
-      have "ell_op_pair k L ((v - (0, N - M)) + (0, N - M))
-          \<le> ell_op_pair k L (v - (0, N - M))"
-        by (rule ell_op_pair_shift_snd_le[OF psd k(1) k(2) L])
-      then show ?thesis by simp
-    qed
-    with vm show "\<exists>u \<in> ball ((p :: real^'n), M) e.
-        ell_op_pair k L v \<le> ell_op_pair k L u"
-      by blast
-  qed
-  with e show "\<exists>e' \<in> {0<..}. (SUP w \<in> ball ((p :: real^'n), N) e'. ell_op_pair k L w)
-      \<le> (SUP w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)"
-    by blast
-qed
 
 subsection \<open>The envelope-form contradiction\<close>
 
@@ -802,22 +632,6 @@ text \<open>The dichotomy leaves the diagonal branch \<open>p = 0\<close>. Since
   transfers to \<open>eq36_rhs\<close>, a statement about the eigenvalue expression of
   Eq. (3.6).\<close>
 
-theorem eq36_rhs_antitone:
-  fixes M N :: "real^'n::finite^'n"
-  assumes psd: "psd (N - M)"
-    and symM: "transpose M = M" and symN: "transpose N = N"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "eq36_rhs k L N \<le> eq36_rhs k L M"
-proof -
-  have "ereal (eq36_rhs k L N) = ell_op_usc k L (0 :: real^'n) N"
-    by (rule eq36[OF symN L k(1) k(2), symmetric])
-  also have "\<dots> \<le> ell_op_usc k L (0 :: real^'n) M"
-    by (rule ell_op_usc_envelope_elliptic_le[OF psd k(1) k(2) L])
-  also have "\<dots> = ereal (eq36_rhs k L M)"
-    by (rule eq36[OF symM L k(1) k(2)])
-  finally show ?thesis by simp
-qed
-
 text \<open>The gap between the two envelopes at the origin,
   \<open>eq36_rhs k L M - F(0, M)\<close>, is nonnegative: \<open>ell_op_le_eq36\<close> specialised
   to \<open>p = 0\<close>, combined with \<open>ell_op_lsc_at_zero\<close>.\<close>
@@ -832,59 +646,6 @@ subsection \<open>The diagonal branch closes without further hypotheses\<close>
 
 text \<open>\<open>small_multiple_exists\<close>, \<open>shift_limit_absurd\<close>, \<open>shift_limit_absurd2\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-
-theorem strict_contradiction_of_shifts_any_p:
-  fixes X Y :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes psd: "psd (Y - X)"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and t: "\<theta> < 1"
-    and subs: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < 1 \<Longrightarrow> ell_op k L p (X + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
-    and sups: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < 1 \<Longrightarrow> 1 \<le> ell_op k L p (Y - \<delta> *\<^sub>R mat 1)"
-  shows False
-proof -
-  have ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-    by (rule feasible_nonempty[OF k(1) k(2) L])
-  have C0: "0 < real CARD('n) * L / 2" using k L by simp
-  have cY: "1 \<le> ell_op k L p Y"
-  proof (rule ccontr)
-    assume "\<not> 1 \<le> ell_op k L p Y"
-    then have g: "0 < 1 - ell_op k L p Y" by linarith
-    obtain \<delta> where d0: "0 < \<delta>" and d1: "\<delta> < 1"
-      and dlt: "\<delta> * (real CARD('n) * L / 2) < 1 - ell_op k L p Y"
-      using small_multiple_exists[OF C0 g] by blast
-    have dN: "\<delta> * real CARD('n) * L / 2 < 1 - ell_op k L p Y"
-    proof -
-      have e1: "\<delta> * real CARD('n) * L / 2 = \<delta> * (real CARD('n) * L / 2)"
-        by simp
-      show ?thesis unfolding e1 by (rule dlt)
-    qed
-    show False
-      by (rule shift_limit_absurd
-          [OF sups[OF d0 d1] ell_op_M_gap[OF ne]
-             mgap_shift_id(2)[OF less_imp_le[OF d0]] dN])
-  qed
-  have cX: "ell_op k L p X \<le> \<theta>"
-  proof (rule ccontr)
-    assume "\<not> ell_op k L p X \<le> \<theta>"
-    then have g: "0 < ell_op k L p X - \<theta>" by linarith
-    obtain \<delta> where d0: "0 < \<delta>" and d1: "\<delta> < 1"
-      and dlt: "\<delta> * (real CARD('n) * L / 2) < ell_op k L p X - \<theta>"
-      using small_multiple_exists[OF C0 g] by blast
-    have dN: "\<delta> * real CARD('n) * L / 2 < ell_op k L p X - \<theta>"
-    proof -
-      have e1: "\<delta> * real CARD('n) * L / 2 = \<delta> * (real CARD('n) * L / 2)"
-        by simp
-      show ?thesis unfolding e1 by (rule dlt)
-    qed
-    show False
-      by (rule shift_limit_absurd2
-          [OF ell_op_M_gap[OF ne] subs[OF d0 d1]
-             mgap_shift_id(1)[OF less_imp_le[OF d0]] dN])
-  qed
-  have ell: "ell_op k L p Y \<le> ell_op k L p X"
-    by (rule ell_op_elliptic_le[OF psd ne])
-  from cY cX ell t show False by linarith
-qed
 
 subsection \<open>Existence of the maximising pair\<close>
 
@@ -954,155 +715,11 @@ text \<open>The two shift theorems above are stated with bound \<open>1\<close>,
   uniform bound survives the limit, so the shift theorems are restated with
   an arbitrary bound \<open>c\<close> in place of \<open>1\<close>.\<close>
 
-theorem ell_op_lsc_le_of_shifts:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes b: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < D \<Longrightarrow> ell_op k L p (M + \<delta> *\<^sub>R mat 1) \<le> c"
-    and D: "0 < D"
-  shows "ell_op_lsc k L p M \<le> ereal c"
-  unfolding ell_op_lsc_def
-proof (rule SUP_least)
-  fix e :: real
-  assume "e \<in> {0<..}"
-  then have e0: "0 < e" by simp
-  define N where "N = norm (mat 1 :: real^'n^'n)"
-  have N0: "0 \<le> N" unfolding N_def by simp
-  define d where "d = min (D/2) (e/(2*(N+1)))"
-  have d0: "0 < d" unfolding d_def using D e0 N0 by simp
-  have dD: "d < D" unfolding d_def using D by simp
-  have small: "d * N < e"
-  proof -
-    have dle: "d \<le> e/(2*(N+1))"
-      unfolding d_def by simp
-    have "d * N \<le> (e/(2*(N+1))) * N"
-      by (rule mult_right_mono[OF dle N0])
-    also have "(e/(2*(N+1))) * N = e * N / (2*(N+1))"
-      by simp
-    also have "\<dots> < e"
-    proof -
-      have "e * N < e * (2*(N+1))"
-        using e0 N0 by simp
-      moreover have "0 < 2*(N+1)"
-        using N0 by simp
-      ultimately show ?thesis
-        by (simp add: divide_less_eq)
-    qed
-    finally show ?thesis .
-  qed
-  have dp: "dist ((p, M + d *\<^sub>R mat 1) :: (real^'n) \<times> (real^'n^'n)) (p, M)
-      = d * N"
-  proof -
-    have "dist ((p, M + d *\<^sub>R mat 1) :: (real^'n) \<times> (real^'n^'n)) (p, M)
-        = sqrt ((dist p p)\<^sup>2 + (dist (M + d *\<^sub>R mat 1) M)\<^sup>2)"
-      by (rule dist_Pair_Pair)
-    also have "\<dots> = dist (M + d *\<^sub>R mat 1) M"
-      by simp
-    also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
-      by (simp add: dist_norm)
-    also have "\<dots> = d * N"
-      unfolding N_def using d0 by simp
-    finally show ?thesis .
-  qed
-  have mem: "((p, M + d *\<^sub>R mat 1) :: (real^'n) \<times> (real^'n^'n))
-      \<in> ball (p, M) e"
-    using dp small by (simp add: dist_commute)
-  have "(INF w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)
-      \<le> ell_op_pair k L (p, M + d *\<^sub>R mat 1)"
-    by (rule INF_lower[OF mem])
-  also have "\<dots> \<le> ereal c"
-    using b[OF d0 dD] by (simp add: ell_op_pair_def)
-  finally show "(INF w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)
-      \<le> ereal c" .
-qed
-
-theorem ell_op_usc_ge_of_shifts:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes b: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < D \<Longrightarrow> c \<le> ell_op k L p (M - \<delta> *\<^sub>R mat 1)"
-    and D: "0 < D"
-  shows "ereal c \<le> ell_op_usc k L p M"
-  unfolding ell_op_usc_def
-proof (rule INF_greatest)
-  fix e :: real
-  assume "e \<in> {0<..}"
-  then have e0: "0 < e" by simp
-  define N where "N = norm (mat 1 :: real^'n^'n)"
-  have N0: "0 \<le> N" unfolding N_def by simp
-  define d where "d = min (D/2) (e/(2*(N+1)))"
-  have d0: "0 < d" unfolding d_def using D e0 N0 by simp
-  have dD: "d < D" unfolding d_def using D by simp
-  have small: "d * N < e"
-  proof -
-    have dle: "d \<le> e/(2*(N+1))"
-      unfolding d_def by simp
-    have "d * N \<le> (e/(2*(N+1))) * N"
-      by (rule mult_right_mono[OF dle N0])
-    also have "(e/(2*(N+1))) * N = e * N / (2*(N+1))"
-      by simp
-    also have "\<dots> < e"
-    proof -
-      have "e * N < e * (2*(N+1))"
-        using e0 N0 by simp
-      moreover have "0 < 2*(N+1)"
-        using N0 by simp
-      ultimately show ?thesis
-        by (simp add: divide_less_eq)
-    qed
-    finally show ?thesis .
-  qed
-  have dp: "dist ((p, M - d *\<^sub>R mat 1) :: (real^'n) \<times> (real^'n^'n)) (p, M)
-      = d * N"
-  proof -
-    have "dist ((p, M - d *\<^sub>R mat 1) :: (real^'n) \<times> (real^'n^'n)) (p, M)
-        = sqrt ((dist p p)\<^sup>2 + (dist (M - d *\<^sub>R mat 1) M)\<^sup>2)"
-      by (rule dist_Pair_Pair)
-    also have "\<dots> = dist (M - d *\<^sub>R mat 1) M"
-      by simp
-    also have "\<dots> = norm (d *\<^sub>R (mat 1 :: real^'n^'n))"
-      by (simp add: dist_norm)
-    also have "\<dots> = d * N"
-      unfolding N_def using d0 by simp
-    finally show ?thesis .
-  qed
-  have mem: "((p, M - d *\<^sub>R mat 1) :: (real^'n) \<times> (real^'n^'n))
-      \<in> ball (p, M) e"
-    using dp small by (simp add: dist_commute)
-  have "ereal c \<le> ell_op_pair k L (p, M - d *\<^sub>R mat 1)"
-    using b[OF d0 dD] by (simp add: ell_op_pair_def)
-  also have "\<dots> \<le> (SUP w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)"
-    by (rule SUP_upper[OF mem])
-  finally show "ereal c
-      \<le> (SUP w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)" .
-qed
-
 text \<open>The closing chain of Theorem 4.2(a) in \<open>\<delta>\<close>-corrected form: a uniform
   strict bound \<open>c < 1\<close> on the subsolution side at every \<open>X + \<delta> I\<close>, the
   supersolution bound at every \<open>Y - \<delta> I\<close>, the ordering \<open>X \<preceq> Y\<close> from the
   theorem on sums, and \<open>p \<noteq> 0\<close> from \<open>doubling_grad_nonzero\<close>. No \<open>\<delta>\<close>
   survives in the conclusion.\<close>
-
-theorem env_strict_contradiction_of_shifts:
-  fixes X Y :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes psd: "psd (Y - X)"
-    and symX: "transpose X = X" and symY: "transpose Y = Y"
-    and p: "p \<noteq> 0" and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and D: "0 < D" and c1: "c < 1"
-    and subs: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < D
-        \<Longrightarrow> ell_op k L p (X + \<delta> *\<^sub>R mat 1) \<le> c"
-    and sups: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < D
-        \<Longrightarrow> 1 \<le> ell_op k L p (Y - \<delta> *\<^sub>R mat 1)"
-  shows False
-proof -
-  have lsc: "ell_op_lsc k L p X \<le> ereal c"
-    by (rule ell_op_lsc_le_of_shifts[OF subs D])
-  have c1e: "ereal c < 1"
-    using c1 by (simp add: one_ereal_def)
-  have sub: "ell_op_lsc k L p X < 1"
-    using lsc c1e by (rule le_less_trans)
-  have sup: "1 \<le> ell_op_usc k L p Y"
-    using ell_op_usc_ge_of_shifts[OF sups D] by (simp add: one_ereal_def)
-  show False
-    by (rule ell_op_env_strict_contradiction[OF psd symX symY p k(1) k(2) L
-          sub sup])
-qed
 
 subsection \<open>The uniform strict bound, and the shifted families\<close>
 
@@ -1153,47 +770,6 @@ text \<open>Symmetry of the corrected matrices, needed by the jet test function:
   transposition is additive entrywise, so both directions of the correction
   preserve symmetry.\<close>
 
-text \<open>The two producers: an Alexandrov jet of \<open>\<theta> u\<close> at \<open>x'\<close> with data
-  \<open>(p, X)\<close> gives, for every \<open>\<delta> > 0\<close>, the uniform bound
-  \<open>F(p, X + \<delta> I) \<le> \<theta>\<close>; dually on the supersolution side. These are the
-  two families \<open>env_strict_contradiction_of_shifts\<close> consumes.\<close>
-
-theorem subsol_shifted_bound:
-  fixes u :: "real^'n::finite \<Rightarrow> real" and Xm :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u"
-    and t: "0 < \<theta>"
-    and xh: "xh \<in> \<Omega>"
-    and Xs: "transpose Xm = Xm"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and jet: "((\<lambda>h. (\<theta> * u (xh + h) - \<theta> * u xh - p \<bullet> h
-        - (h \<bullet> (Xm *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and d: "0 < \<delta>"
-  shows "ell_op k L p (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
-proof -
-  have sym: "transpose (Xm + \<delta> *\<^sub>R mat 1) = Xm + \<delta> *\<^sub>R mat 1"
-    by (rule transpose_shift_add[OF Xs])
-  have tf: "test_fun_at
-      (\<lambda>z. p \<bullet> (z - xh)
-        + ((z - xh) \<bullet> ((Xm + \<delta> *\<^sub>R mat 1) *v (z - xh)))/2)
-      (\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - xh)) (Xm + \<delta> *\<^sub>R mat 1) xh"
-    by (rule jet_test_fun_at[OF sym])
-  have g: "(\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - xh)) xh = p"
-    by simp
-  have ne: "feasible k L ((\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - xh)) xh)
-      \<noteq> ({} :: (real^'n^'n) set)"
-    unfolding g by (rule feasible_nonempty[OF k(1) k(2) L])
-  have maxloc: "\<exists>e>0. \<forall>z \<in> ball xh e.
-      \<theta> * u z - (p \<bullet> (z - xh)
-          + ((z - xh) \<bullet> ((Xm + \<delta> *\<^sub>R mat 1) *v (z - xh)))/2)
-      \<le> \<theta> * u xh - (p \<bullet> (xh - xh)
-          + ((xh - xh) \<bullet> ((Xm + \<delta> *\<^sub>R mat 1) *v (xh - xh)))/2)"
-    by (rule jet_imp_local_max_test[OF jet d])
-  have "ell_op k L ((\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - xh)) xh)
-      (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
-    by (rule visc_subsol_scaled_uniform[OF sub t xh tf ne maxloc])
-  thus ?thesis unfolding g .
-qed
-
 theorem supersol_shifted_bound_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
   assumes sup: "supersol_jet k L \<Omega> w"
@@ -1225,54 +801,6 @@ proof -
     using sup yh tf minloc unfolding supersol_jet_def by blast
   thus ?thesis unfolding g .
 qed
-
-theorem supersol_shifted_bound:
-  fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "supersol_jet k L \<Omega> w"
-    and yh: "yh \<in> \<Omega>"
-    and Ys: "transpose Ym = Ym"
-    and jet: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- p) \<bullet> h
-        - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and d: "0 < \<delta>"
-  shows "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
-proof -
-  have sym: "transpose (Ym - \<delta> *\<^sub>R mat 1) = Ym - \<delta> *\<^sub>R mat 1"
-    by (rule transpose_shift_diff[OF Ys])
-  have tf: "test_fun_at
-      (\<lambda>z. p \<bullet> (z - yh)
-        + ((z - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)
-      (\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) (Ym - \<delta> *\<^sub>R mat 1) yh"
-    by (rule jet_test_fun_at[OF sym])
-  have g: "(\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh = p"
-    by simp
-  have minloc: "\<exists>e>0. \<forall>z \<in> ball yh e.
-      w yh - (p \<bullet> (yh - yh)
-          + ((yh - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (yh - yh)))/2)
-      \<le> w z - (p \<bullet> (z - yh)
-          + ((z - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
-    by (rule jet_imp_local_min_test[OF jet d])
-  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
-      (Ym - \<delta> *\<^sub>R mat 1)"
-    using sup yh tf minloc unfolding supersol_jet_def by blast
-  thus ?thesis unfolding g .
-qed
-
-corollary supersol_shifted_bound_ne:
-  fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "supersol_jet k L \<Omega> w" and yh: "yh \<in> \<Omega>"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and Ys: "transpose Ym = Ym"
-    and jet: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- p) \<bullet> h
-        - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and d: "0 < \<delta>" and p0: "p \<noteq> 0"
-  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
-proof -
-  have "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
-    by (rule supersol_shifted_bound[OF sup yh Ys jet d])
-  then show ?thesis
-    unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL p0] by simp
-qed
-
 
 (*<*)
 end

@@ -303,9 +303,6 @@ text \<open>The weak inequality integrates over the levels to the strong one:
   step at the end is replaced by the elementary bound
   \<open>2ab \<le> 2a^2 + b^2/2\<close>, which yields the same constant \<open>4\<close>.\<close>
 
-lemma maxabs_meas_X [measurable]: "maxabs X n \<in> borel_measurable M"
-  by (intro maxabs_measurable X_measurable)
-
 lemma maxabs_sq_le_sum: "(maxabs X n \<omega>)\<^sup>2 \<le> (\<Sum>k\<le>n. (X k \<omega>)\<^sup>2)"
 proof -
   obtain j where j: "j \<le> n" and eq: "maxabs X n \<omega> = \<bar>X j \<omega>\<bar>"

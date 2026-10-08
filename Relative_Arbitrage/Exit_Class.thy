@@ -219,8 +219,6 @@ lemma outerp_eq_outer_prod: "outerp x = outer_prod x x"
   by (simp add: outerp_def outer_prod_def)
 
 
-
-
 definition exit_class ::
   "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n::finite
      \<Rightarrow> (('n pairpath) measure) set"
@@ -262,7 +260,6 @@ lemma exit_class_sets:
   assumes Q: "Q \<in> exit_class k L T x"
   shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   using Q unfolding exit_class_eq_covariation by (rule covariation_class_sets)
-
 
 
 lemma closedin_diffquot_constraint:
@@ -399,8 +396,6 @@ text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a marke
   by (1.8) it depends only on the path up to the first exit from \<open>K\<close>.\<close>
 
 
-
-
 theorem exit_class_lipschitz_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
@@ -457,15 +452,6 @@ lemma exit_class_eval_measurable:
   assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
 proof (rule covariation_class_eval_measurable)
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
-
-lemma exit_class_Y_entry_measurable:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "(\<lambda>\<omega>. snd (\<omega> t) $ i $ j) \<in> borel_measurable Q"
-proof (rule covariation_class_Y_entry_measurable)
   show "Q \<in> covariation_class (sconstraint k L) T x"
     using Q unfolding exit_class_eq_covariation .
 qed (use assms in auto)
@@ -559,11 +545,6 @@ proof (rule covariation_class_sq_mean_le)
   show "Q \<in> covariation_class (sconstraint k L) T x"
     using Q unfolding exit_class_eq_covariation .
 qed (use assms in auto)
-
-
-
-
-
 
 
 lemma exit_class_diffquot_full_mass:

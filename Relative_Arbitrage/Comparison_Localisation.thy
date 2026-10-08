@@ -51,27 +51,6 @@ text \<open>\<open>soft_pen\<close> lives in @{theory Second_Order_Viscosity_Ana
 text \<open>\<open>convex_on_norm_lift\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 theorem supersol_no_vanishing_jet_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real"
   assumes sup: "supersol_jet k L \<Omega> w"
@@ -104,36 +83,6 @@ proof -
 
 qed
 
-theorem supersol_no_vanishing_jet:
-  fixes w :: "real^'n::finite \<Rightarrow> real"
-  assumes sup: "supersol_jet k L \<Omega> w"
-    and yh: "yh \<in> \<Omega>"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and jet: "((\<lambda>h. ((- w) (yh + h) - (- w) yh) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-  shows False
-proof -
-  obtain \<delta> :: real where d0: "0 < \<delta>"
-    and ltone: "\<And>q :: real^'n.
-      ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
-  proof (rule ell_op_usc_small_shift_lt_one[OF k(1) k(2) L])
-    fix dd :: real
-    assume a1: "0 < dd" and a2: "dd < 1"
-      and a3: "\<And>q :: real^'n.
-        ell_op_usc k L q ((0::real^'n^'n) - dd *\<^sub>R mat 1) < 1"
-    show thesis by (rule that[OF a1 a3])
-  qed
-  have Ys: "transpose (0::real^'n^'n) = 0"
-    by (simp add: transpose_def vec_eq_iff)
-  have jet0: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- (0::real^'n)) \<bullet> h
-      - (h \<bullet> ((- (0::real^'n^'n)) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    using jet by simp
-  have one: "1 \<le> ell_op_usc k L (0::real^'n)
-      ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)"
-    by (rule supersol_shifted_bound[OF sup yh Ys jet0 d0])
-  show False using one ltone[of "0::real^'n"] by simp
-
-qed
-
 subsection \<open>Theorem 4.2(a): the closing chain from jets\<close>
 
 text \<open>Theorem 4.2(a) from second-order jets for \<open>\<theta> u\<close> at \<open>xh\<close> and for
@@ -142,33 +91,6 @@ text \<open>Theorem 4.2(a) from second-order jets for \<open>\<theta> u\<close> 
   condition \<open>p \<noteq> 0\<close>. The shift correction \<open>\<delta>\<close> used to reach genuine
   local extrema is removed by the lower and upper envelopes and does not
   appear in the statement.\<close>
-
-theorem comparison_env_from_jets:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
-    and t: "0 < \<theta>" "\<theta> < 1"
-    and xh: "xh \<in> \<Omega>" and yh: "yh \<in> \<Omega>"
-    and Xs: "transpose Xm = Xm" and Ys: "transpose Ym = Ym"
-    and psd: "psd (Ym - Xm)"
-    and p: "p \<noteq> 0"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and jetu: "((\<lambda>h. (\<theta> * u (xh + h) - \<theta> * u xh - p \<bullet> h
-        - (h \<bullet> (Xm *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and jetw: "((\<lambda>h. ((- w) (yh + h) - (- w) yh - (- p) \<bullet> h
-        - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-  shows False
-proof -
-  have subs: "ell_op k L p (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
-    if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule subsol_shifted_bound[OF sub t(1) xh Xs k(1) k(2) L jetu that(1)])
-  have sups: "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
-    if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule supersol_shifted_bound_ne[OF sup yh k(1) k(2) L Ys jetw
-          that(1) p])
-  show False
-    by (rule env_strict_contradiction_of_shifts[OF psd Xs Ys p k(1) k(2) L
-          zero_less_one t(2) subs sups])
-qed
 
 text \<open>The same conclusion with the off-diagonal condition \<open>p \<noteq> 0\<close>
   replaced, via \<open>doubling_grad_nonzero\<close>, by the statement that \<open>xh\<close>
@@ -185,65 +107,6 @@ text \<open>With linearity and symmetry of the two blocks, supplied by the
 subsection \<open>Discharging the negativity hypothesis at the doubled maximum\<close>
 
 text \<open>\<open>sums_ordering_at_interior_max\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>The same conclusion in \<open>psd\<close> form, consumed by
-  \<open>comparison_env_from_jets\<close>, depending only on the maximum property of
-  the doubled functional, its Alexandrov jet, and the linearity and
-  symmetry of the two diagonal blocks.\<close>
-
-
-
-
-
-
-
-
-
-
-theorem comparison_env_complete:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-    and a b :: "real^'n \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
-    and t: "0 < \<theta>" "\<theta> < 1"
-    and xhO: "xh \<in> \<Omega>" and yhO: "yh \<in> \<Omega>"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and blW: "bounded_linear W"
-    and symW: "\<And>z z'. z \<bullet> W z' = z' \<bullet> W z"
-    and dpos: "0 < dd"
-    and mx: "\<And>hk. norm hk < dd \<Longrightarrow>
-        a (fst (zh + hk)) + b (snd (zh + hk))
-          - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2
-        \<le> a (fst zh) + b (snd zh)
-          - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2"
-    and expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
-          - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and nz: "\<alpha> *\<^sub>R (xh - yh) \<noteq> 0"
-    and jetu: "((\<lambda>h. (\<theta> * u (xh + h) - \<theta> * u xh
-        - (\<alpha> *\<^sub>R (xh - yh)) \<bullet> h
-        - (h \<bullet> (matrix (\<lambda>v. fst (W (v, 0)) + \<alpha> *\<^sub>R v) *v h))/2)
-        / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and jetw: "((\<lambda>h. ((- w) (yh + h) - (- w) yh
-        - (- (\<alpha> *\<^sub>R (xh - yh))) \<bullet> h
-        - (h \<bullet> ((- matrix (\<lambda>v. - (snd (W (0, v)) + \<alpha> *\<^sub>R v))) *v h))/2)
-        / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-  shows False
-proof -
-  have symX: "transpose (matrix (\<lambda>v. fst (W (v, 0)) + \<alpha> *\<^sub>R v))
-      = matrix (\<lambda>v. fst (W (v, 0)) + \<alpha> *\<^sub>R v)"
-    by (rule block_matrices_from_jet(1)[OF blW symW dpos mx expPsi])
-  have symY: "transpose (matrix (\<lambda>v. - (snd (W (0, v)) + \<alpha> *\<^sub>R v)))
-      = matrix (\<lambda>v. - (snd (W (0, v)) + \<alpha> *\<^sub>R v))"
-    by (rule block_matrices_from_jet(2)[OF blW symW dpos mx expPsi])
-  have psdXY: "psd (matrix (\<lambda>v. - (snd (W (0, v)) + \<alpha> *\<^sub>R v))
-          - matrix (\<lambda>v. fst (W (v, 0)) + \<alpha> *\<^sub>R v))"
-    by (rule block_matrices_from_jet(3)[OF blW symW dpos mx expPsi])
-  show False
-    by (rule comparison_env_from_jets[OF sub sup t(1) t(2) xhO yhO symX symY
-          psdXY nz kk(1) kk(2) LL jetu jetw])
-qed
 
 text \<open>The same, with the off-diagonal condition traded for the statement
   that \<open>x'\<close> fails to maximise \<open>u - w\<close> over \<open>K\<close>; by the gradient
@@ -452,41 +315,6 @@ text \<open>The closing chain in the form the comparison argument reaches: both
   condition \<open>p \<noteq> 0\<close> identifies the two envelopes with \<open>F\<close> itself. No
   \<open>\<delta>\<close> appears in the conclusion.\<close>
 
-theorem comparison_supconv_complete:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Xm Ym :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u" and sup: "supersol_jet k L \<Omega> w"
-    and t: "0 < \<theta>" "\<theta> < 1"
-    and ysuO: "ysu \<in> \<Omega>" and yswO: "ysw \<in> \<Omega>"
-    and Xs: "transpose Xm = Xm" and Ys: "transpose Ym = Ym"
-    and psd: "psd (Ym - Xm)"
-    and pnz: "p \<noteq> 0"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
-    and e: "0 < \<epsilon>"
-    and optu: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> xu
-        = \<theta> * u ysu - (dist xu ysu)\<^sup>2 / (2*\<epsilon>)"
-    and optw: "supconv (- w) \<epsilon> xw = (- w) ysw - (dist xw ysw)\<^sup>2 / (2*\<epsilon>)"
-    and jetu: "((\<lambda>h. (supconv (\<lambda>y. \<theta> * u y) \<epsilon> (xu + h)
-        - supconv (\<lambda>y. \<theta> * u y) \<epsilon> xu - p \<bullet> h
-        - (h \<bullet> (Xm *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and jetw: "((\<lambda>h. (supconv (- w) \<epsilon> (xw + h) - supconv (- w) \<epsilon> xw
-        - (- p) \<bullet> h - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2)
-      \<longlongrightarrow> 0) (at 0)"
-  shows False
-proof -
-  have subs: "ell_op k L p (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
-    if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule subsol_shifted_bound_supconv[OF sub t(1) ysuO Xs kk(1) kk(2) LL
-          Bu e optu jetu that(1)])
-  have sups: "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
-    if "0 < \<delta>" "\<delta> < 1" for \<delta>
-    by (rule supersol_shifted_bound_supconv_ne[OF sup yswO kk(1) kk(2) LL
-          Ys Bw e optw jetw that(1) pnz])
-  show False
-    by (rule env_strict_contradiction_of_shifts[OF psd Xs Ys pnz kk(1) kk(2) LL
-          zero_less_one t(2) subs sups])
-qed
-
 subsection \<open>Theorem 4.2(a) from the doubled sup-convolution jet alone\<close>
 
 text \<open>The full composition: the two component jets are no longer
@@ -630,10 +458,6 @@ text \<open>Route (i) needs the perturbed Hessians bounded as the tilt shrinks.
   \<open>norm_matrix_le_of_form_bound\<close> turns it into a matrix-norm bound.\<close>
 
 
-
-
-
-
 lemma theta_gap_preserved:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes bd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B"
@@ -669,68 +493,6 @@ subsection \<open>Symmetry and the ordering pass to the limit\<close>subsection 
 
 text \<open>\<open>tendsto_entry\<close>, \<open>transpose_limit\<close>, \<open>tendsto_quadratic_form\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-
-
-
-
-theorem env_strict_contradiction_of_limits:
-  fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n" and Pu Pw :: "nat \<Rightarrow> real^'n"
-  assumes cX: "X \<longlonglongrightarrow> X0" and cY: "Y \<longlonglongrightarrow> Y0"
-    and cPu: "Pu \<longlonglongrightarrow> p" and cPw: "Pw \<longlonglongrightarrow> p"
-    and symX: "\<And>i. transpose (X i) = X i"
-    and symY: "\<And>i. transpose (Y i) = Y i"
-    and psdi: "\<And>i. psd (Y i - X i)"
-    and pnz: "p \<noteq> 0"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and c1: "c < 1"
-    and bndu: "\<And>i. ell_op k L (Pu i) (X i) \<le> c"
-    and bndw: "\<And>i. 1 \<le> ell_op k L (Pw i) (Y i)"
-  shows False
-proof -
-  have sX0: "transpose X0 = X0"
-    by (rule transpose_limit[OF cX symX])
-  have sY0: "transpose Y0 = Y0"
-    by (rule transpose_limit[OF cY symY])
-  have p0: "psd (Y0 - X0)"
-    by (rule psd_diff_limit[OF cX cY psdi])
-  have subs: "\<exists>p' M'. dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, X0) < e
-      \<and> ell_op k L p' M' \<le> c" if e0: "0 < e" for e
-  proof -
-    have cZ: "(\<lambda>i. (Pu i, X i)) \<longlonglongrightarrow> ((p, X0) :: (real^'n) \<times> (real^'n^'n))"
-      by (rule tendsto_Pair[OF cPu cX])
-    have P: "ell_op k L (fst ((Pu i, X i) :: (real^'n) \<times> (real^'n^'n)))
-        (snd ((Pu i, X i) :: (real^'n) \<times> (real^'n^'n))) \<le> c" for i
-      using bndu[of i] by simp
-    obtain z where dz: "dist z ((p, X0) :: (real^'n) \<times> (real^'n^'n)) < e"
-      and pz: "ell_op k L (fst z) (snd z) \<le> c"
-      using nearby_of_convergent
-        [where P = "\<lambda>z. ell_op k L (fst z) (snd z) \<le> c", OF cZ P e0]
-      by blast
-    have zc: "(fst z, snd z) = z" by simp
-    from dz pz show ?thesis
-      by (intro exI[of _ "fst z"] exI[of _ "snd z"]) (simp add: zc)
-  qed
-  have sups: "\<exists>p' M'. dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, Y0) < e
-      \<and> 1 \<le> ell_op k L p' M'" if e0: "0 < e" for e
-  proof -
-    have cZ: "(\<lambda>i. (Pw i, Y i)) \<longlonglongrightarrow> ((p, Y0) :: (real^'n) \<times> (real^'n^'n))"
-      by (rule tendsto_Pair[OF cPw cY])
-    have P: "1 \<le> ell_op k L (fst ((Pw i, Y i) :: (real^'n) \<times> (real^'n^'n)))
-        (snd ((Pw i, Y i) :: (real^'n) \<times> (real^'n^'n)))" for i
-      using bndw[of i] by simp
-    obtain z where dz: "dist z ((p, Y0) :: (real^'n) \<times> (real^'n^'n)) < e"
-      and pz: "1 \<le> ell_op k L (fst z) (snd z)"
-      using nearby_of_convergent
-        [where P = "\<lambda>z. 1 \<le> ell_op k L (fst z) (snd z)", OF cZ P e0]
-      by blast
-    have zc: "(fst z, snd z) = z" by simp
-    from dz pz show ?thesis
-      by (intro exI[of _ "fst z"] exI[of _ "snd z"]) (simp add: zc)
-  qed
-  show False
-    by (rule env_strict_contradiction_of_nearby[OF p0 sX0 sY0 pnz kk(1) kk(2)
-          LL c1 subs sups])
-qed
 
 subsection \<open>The gradient alignment along the family\<close>
 
@@ -899,130 +661,13 @@ text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment
   so the supremum over the whole space equals the supremum over one
   compact ball, attained by continuity.\<close>
 
-theorem supconv_attained_ball:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-  shows "\<exists>ys. dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1
-      \<and> supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"proof -
-  define M where "M = max 0 (2*\<epsilon>*(Bu - u x))"
-  have M0: "0 \<le> M" unfolding M_def by simp
-  have s0: "0 \<le> sqrt M" using M0 by simp
-  define R where "R = sqrt M + 1"
-  have R0: "0 < R" unfolding R_def using s0 by linarith
-  have Rsq: "2*\<epsilon>*(Bu - u x) < R\<^sup>2"
-  proof -
-    have sq: "(sqrt M)\<^sup>2 = M" using M0 by simp
-    have exp: "R\<^sup>2 = (sqrt M)\<^sup>2 + 2 * sqrt M + 1"
-      unfolding R_def by (simp add: power2_eq_square algebra_simps)
-    have "M \<le> R\<^sup>2"
-      unfolding exp sq using s0 by linarith
-    moreover have "2*\<epsilon>*(Bu - u x) \<le> M"
-      unfolding M_def by simp
-    moreover have "M < R\<^sup>2"
-      unfolding exp sq using s0 by linarith
-    ultimately show ?thesis by linarith
-  qed
-  have cpt: "compact (cball x R)" by (rule compact_cball)
-  have ne: "cball x R \<noteq> {}" using R0 by auto
-  have cont: "continuous_on (cball x R) (\<lambda>y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
-    by (intro continuous_intros continuous_on_subset[OF cu subset_UNIV])
-       (use e in auto)
-  obtain ys where ysin: "ys \<in> cball x R"
-    and ysmax: "\<forall>y \<in> cball x R.
-        u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using continuous_attains_sup[OF cpt ne cont] by blast
-  have xin: "x \<in> cball x R" using R0 by simp
-  have key: "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)" for y
-  proof (cases "dist x y \<le> R")
-    case True
-    then have "y \<in> cball x R" by (simp add: dist_commute)
-    with ysmax show ?thesis by blast
-  next
-    case False
-    then have gt: "R < dist x y" by simp
-    have lt: "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) < u x"
-    proof -
-      have "R\<^sup>2 < (dist x y)\<^sup>2"
-        by (rule power_strict_mono[OF gt less_imp_le[OF R0]]) simp
-      then have big: "2*\<epsilon>*(Bu - u x) < (dist x y)\<^sup>2"
-        using Rsq by linarith
-      have c0: "0 < 2*\<epsilon>" using e by simp
-      have "(Bu - u x) * (2*\<epsilon>) < (dist x y)\<^sup>2"
-        using big by (simp add: algebra_simps)
-      then have "Bu - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
-        using c0 by (simp add: pos_less_divide_eq)
-      then show ?thesis using B[of y] by linarith
-    qed
-    have xval: "u x = u x - (dist x x)\<^sup>2 / (2*\<epsilon>)" by simp
-    have "u x - (dist x x)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-      using ysmax xin by blast
-    with lt xval show ?thesis by linarith
-  qed
-  have "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-  proof (rule antisym)
-    show "supconv u \<epsilon> x \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-      unfolding supconv_def by (rule cSUP_least) (auto simp: key)
-    show "u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>) \<le> supconv u \<epsilon> x"
-      unfolding supconv_def
-      by (intro cSUP_upper supconv_bdd_above[OF B e]) simp
-  qed
-  moreover have "dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1"
-    using ysin unfolding R_def M_def by (simp add: dist_commute)
-  ultimately show ?thesis by blast
-qed
-
-corollary supconv_attained:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-  shows "\<exists>ys. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-  using supconv_attained_ball[OF B e cu] by blast
-
 text \<open>As a family: along any sequence of base points the attaining points can
   be chosen simultaneously by countable choice, with no uniformity in
   \<open>i\<close> needed.\<close>
 
-text \<open>The attaining point lies in an explicit ball of radius
-  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))+1\<close> around the base point, an \<open>O(\<surd>\<epsilon>)\<close> bound
-  that makes the \<open>y\<^sub>s \<in> \<Omega>\<close> hypothesis of the comparison theorems
-  dischargeable rather than assumed.  Stated as a separate corollary so
-  existing consumers of \<open>supconv_attained\<close> are untouched.\<close>
-
-corollary supconv_attained_in:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and sub: "cball x (sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1) \<subseteq> \<Omega>"
-  shows "\<exists>ys \<in> \<Omega>. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-proof -
-  obtain ys where d: "dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1"
-    and v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_ball[OF B e cu] by blast
-  have "ys \<in> cball x (sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1)"
-    using d by (simp add: dist_commute)
-  with sub have "ys \<in> \<Omega>" by blast
-  with v show ?thesis by blast
-qed
-
 text \<open>The family form: along any sequence of base points, the attaining points
   can be chosen inside \<open>\<Omega>\<close> simultaneously, provided each base point's
   ball is.\<close>
-
-corollary supconv_attained_family_in:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real" and xs :: "nat \<Rightarrow> 'a"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and sub: "\<And>i. cball (xs i)
-        (sqrt (max 0 (2*\<epsilon>*(Bu - u (xs i)))) + 1) \<subseteq> \<Omega>"
-  shows "\<exists>ys. \<forall>i. ys i \<in> \<Omega>
-      \<and> supconv u \<epsilon> (xs i) = u (ys i) - (dist (xs i) (ys i))\<^sup>2 / (2*\<epsilon>)"
-proof -
-  have "\<forall>i. \<exists>y. y \<in> \<Omega>
-      \<and> supconv u \<epsilon> (xs i) = u y - (dist (xs i) y)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_in[OF B e cu sub] by blast
-  then show ?thesis by (rule choice)
-qed
 
 subsection \<open>The attainment radius as a parameter\<close>
 
@@ -1104,44 +749,11 @@ proof -
   ultimately show ?thesis by blast
 qed
 
-corollary supconv_attained_in_rad:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and R: "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < R"
-    and sub: "cball x R \<subseteq> \<Omega>"
-  shows "\<exists>ys \<in> \<Omega>. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-proof -
-  obtain ys where d: "dist x ys \<le> R"
-    and v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_ball_rad[OF B e cu R] by blast
-  have "ys \<in> cball x R"
-    using d by (simp add: dist_commute)
-  with sub have "ys \<in> \<Omega>" by blast
-  with v show ?thesis by blast
-qed
-
-corollary supconv_attained_family_in_rad:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real" and xs :: "nat \<Rightarrow> 'a"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and R: "\<And>i. sqrt (max 0 (2*\<epsilon>*(Bu - u (xs i)))) < R"
-    and sub: "\<And>i. cball (xs i) R \<subseteq> \<Omega>"
-  shows "\<exists>ys. \<forall>i. ys i \<in> \<Omega>
-      \<and> supconv u \<epsilon> (xs i) = u (ys i) - (dist (xs i) (ys i))\<^sup>2 / (2*\<epsilon>)"
-proof -
-  have "\<forall>i. \<exists>y. y \<in> \<Omega>
-      \<and> supconv u \<epsilon> (xs i) = u y - (dist (xs i) y)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_in_rad[OF B e cu R sub] by blast
-  then show ?thesis by (rule choice)
-qed
-
 text \<open>Every attainment point, not just the one \<open>supconv_attained_ball\<close>
   produces, lies inside that radius: if \<open>z\<close> attains then
   \<open>u z - dist\<^sup>2/(2\<epsilon>) \<ge> u x\<close> gives \<open>dist\<^sup>2 \<le> 2\<epsilon>(B\<^sub>u-u x)\<close>.  The universal
   form is needed where membership of the attainment point in \<open>\<Omega>\<close> comes
   from a gate on \<open>u\<close> rather than from a ball.\<close>
-
 
 
 lemma visc_subsol_mono_dom:
@@ -1313,7 +925,6 @@ qed
 text \<open>\<open>doubled_maximiser_over_UNIV_snd\<close>, \<open>mxK_of_UNIV_snd\<close>, \<open>cont_pos_near\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
-
 lemma supconv_le_of_local_bound:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
@@ -1363,22 +974,6 @@ text \<open>Both facts reduce to the radial profile
   \<open>h s = \<kappa>(s/2-(sqrt(s+1)-1))\<close> at \<open>s = norm d\<^sup>2\<close>: \<open>h 0 = 0\<close> is immediate,
   and monotonicity follows the difference-of-squares trick of
   \<open>soft_R_lipschitz\<close>.\<close>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 lemma supconv_uniform_upper:
@@ -1652,12 +1247,6 @@ text \<open>The shifted analogue: run Jensen at the perturbation \<open>\<delta>
   Jensen needs are automatic, from \<open>shifted_annulus_bound_split\<close> and the
   smallness condition \<open>2 dd\<^sub>i r < \<delta>\<^sub>i\<rho>\<^sup>2\<close>; only the maximiser property
   over \<open>cball \<xi>\<^sub>0 r\<close> is assumed.\<close>
-
-
-
-
-
-
 
 
 theorem comparison_supconv_bounded_family:

@@ -1369,28 +1369,6 @@ text \<open>
   set would give the wrong Portmanteau direction.
 \<close>
 
-lemma past_test_functional_cont:
-  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real"
-  assumes st: "0 \<le> s" and sT: "s \<le> T"
-    and hc: "continuous_map (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal (\<lambda>f. h (restrict f {0..s}))"
-proof -
-  have rc: "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
-      (\<lambda>f. restrict f {0..s})"
-    by (rule Lipschitz_continuous_imp_continuous_map
-        [OF Lipschitz_restrict_path_metric[OF st sT]])
-  have "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal (h \<circ> (\<lambda>f. restrict f {0..s}))"
-    by (rule continuous_map_compose[OF rc hc])
-  then show ?thesis by (simp add: o_def)
-qed
-
 text \<open>The exit time from \<open>K\<close> is the increasing limit of the capped exit times.
   It takes the value \<open>\<top>\<close> exactly on the paths that never leave \<open>K\<close>.\<close>
 
@@ -1872,44 +1850,6 @@ proof -
     unfolding closedin_def using op unfolding compl by auto
 qed
 
-definition confined_paths ::
-  "real \<Rightarrow> (real^'m::finite) set \<Rightarrow> real^'m \<Rightarrow> (real \<Rightarrow> real^'m) set"
-  where
-  "confined_paths T K x0 =
-     {f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
-        f 0 = x0 \<and> (\<forall>t\<in>{0..T}. f t \<in> K)}"
-
-lemma closedin_confined_paths:
-  fixes K :: "(real^'m::finite) set"
-  assumes T: "0 \<le> T" and K: "closed K"
-  shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      (confined_paths T K x0)"
-proof -
-  let ?X = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-  interpret PM: Metric_space
-      "mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-      "mdist (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-    by (rule Metric_space_mspace_mdist)
-  have ts: "topspace ?X
-      = mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-    unfolding mtopology_of_def by (rule PM.topspace_mtopology)
-  have c0: "closedin ?X {f \<in> topspace ?X. f 0 \<in> {x0}}"
-    by (rule closedin_continuous_map_preimage[OF continuous_map_path_eval])
-      (use T in \<open>auto\<close>)
-  have ct: "closedin ?X {f \<in> topspace ?X. f t \<in> K}"
-    if t: "t \<in> {0..T}" for t
-    by (rule closedin_continuous_map_preimage[OF
-          continuous_map_path_eval[OF t]])
-      (simp add: K)
-  have eq: "confined_paths T K x0
-      = {f \<in> topspace ?X. f 0 \<in> {x0}}
-        \<inter> (\<Inter>t\<in>{0..T}. {f \<in> topspace ?X. f t \<in> K})"
-    using T unfolding confined_paths_def ts by auto
-  show ?thesis
-    unfolding eq
-    by (intro closedin_Int c0 closedin_INT ct) (use T in auto)
-qed
-
 definition rclamp :: "real \<Rightarrow> real \<Rightarrow> real"
   where "rclamp c y = max (- c) (min c y)"
 
@@ -1930,82 +1870,6 @@ qed
 lemma rclamp_cont: "continuous_map euclideanreal euclideanreal (rclamp c)"
   unfolding continuous_map_iff_continuous2 rclamp_def
   by (intro continuous_intros)
-
-lemma martingale_test_functional_cont:
-  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
-  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
-    and hc: "continuous_map (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal
-      (\<lambda>f. rclamp c (f t $ i - f s $ i) * h (restrict f {0..s}))"
-proof -
-  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
-    by (intro continuous_map_diff continuous_map_path_eval tI sI)
-  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
-      euclideanreal (\<lambda>v. v $ i)"
-    unfolding continuous_map_iff_continuous2
-    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have part1': "continuous_map ?PT euclideanreal
-      ((rclamp c \<circ> (\<lambda>v. v $ i)) \<circ> (\<lambda>f. f t - f s))"
-    by (intro continuous_map_compose[OF evdiff]
-        continuous_map_compose[OF cmp_i] rclamp_cont)
-  have part1: "continuous_map ?PT euclideanreal
-      (\<lambda>f. rclamp c (f t $ i - f s $ i))"
-    using part1' by (simp add: o_def)
-  have rc: "continuous_map ?PT
-      (mtopology_of (path_metric s :: (real \<Rightarrow> real^'m) metric))
-      (\<lambda>f. restrict f {0..s})"
-    by (rule Lipschitz_continuous_imp_continuous_map
-        [OF Lipschitz_restrict_path_metric[OF st sT]])
-  have part2': "continuous_map ?PT euclideanreal
-      (h \<circ> (\<lambda>f. restrict f {0..s}))"
-    by (rule continuous_map_compose[OF rc hc])
-  have part2: "continuous_map ?PT euclideanreal
-      (\<lambda>f. h (restrict f {0..s}))"
-    using part2' by (simp add: o_def)
-  show ?thesis
-    by (rule continuous_map_real_mult[OF part1 part2])
-qed
-
-lemma covariation_test_functional_cont:
-  fixes h :: "(real \<Rightarrow> real^'m::finite) \<Rightarrow> real" and c :: real
-  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
-    and hc: "continuous_map (mtopology_of
-        (path_metric s :: (real \<Rightarrow> real^'m) metric)) euclideanreal h"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      euclideanreal
-      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2 * h (restrict f {0..s}))"
-proof -
-  let ?PT = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have evdiff: "continuous_map ?PT euclidean (\<lambda>f. f t - f s)"
-    by (intro continuous_map_diff continuous_map_path_eval tI sI)
-  have cmp_i: "continuous_map (euclidean :: (real^'m) topology)
-      euclideanreal (\<lambda>v. v $ i)"
-    unfolding continuous_map_iff_continuous2
-    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have part1': "continuous_map ?PT euclideanreal
-      ((rclamp c \<circ> (\<lambda>v. v $ i)) \<circ> (\<lambda>f. f t - f s))"
-    by (intro continuous_map_compose[OF evdiff]
-        continuous_map_compose[OF cmp_i] rclamp_cont)
-  have part1: "continuous_map ?PT euclideanreal
-      (\<lambda>f. rclamp c (f t $ i - f s $ i))"
-    using part1' by (simp add: o_def)
-  have part1sq: "continuous_map ?PT euclideanreal
-      (\<lambda>f. (rclamp c (f t $ i - f s $ i))\<^sup>2)"
-    using continuous_map_real_mult[OF part1 part1]
-    by (simp add: power2_eq_square)
-  have part2: "continuous_map ?PT euclideanreal
-      (\<lambda>f. h (restrict f {0..s}))"
-    by (rule past_test_functional_cont[OF st sT hc])
-  show ?thesis
-    by (rule continuous_map_real_mult[OF part1sq part2])
-qed
 
 lemma pexit_le_of_mem:
   fixes f :: "real \<Rightarrow> 'b::polish_space"

@@ -305,43 +305,11 @@ proof -
     using Gm Hm main by blast
 qed
 
-lemma set_integral_lborel_singleton [simp]:
-  fixes f :: "real \<Rightarrow> real"
-  shows "set_lebesgue_integral lborel {c} f = 0"
-proof -
-  have "AE s in lborel. indicat_real {c} s *\<^sub>R f s = 0"
-    using AE_lborel_singleton[of c] by auto
-  then show ?thesis
-    unfolding set_lebesgue_integral_def by (rule integral_eq_zero_AE)
-qed
-
 text \<open>The market stopping at time \<open>0\<close>: constant state \<open>x0\<close>, horizon \<open>0\<close>,
   covariance \<open>mat 1\<close> at the single instant \<open>s = 0\<close> and \<open>0\<close> afterwards.
   The eigenvalue constraints are imposed only on \<open>[0, tau] = {0}\<close>, where
   \<open>mat 1\<close> satisfies them; the compensator integrals vanish since the
   covariance is supported on a Lebesgue-null set.\<close>
-
-lemma set_integral_at_origin:
-  fixes c t :: real
-  shows "set_integrable lborel {0..t} (\<lambda>s. if s = 0 then c else 0)"
-    and "set_lebesgue_integral lborel {0..t} (\<lambda>s. if s = 0 then c else 0) = 0"
-proof -
-  have m: "(\<lambda>s :: real. indicator {0..t} s *\<^sub>R (if s = 0 then c else 0))
-      \<in> borel_measurable lborel"
-    by measurable
-  have ae: "AE s in lborel.
-      indicator {0..t} s *\<^sub>R (if s = 0 then c else 0) = (0 :: real)"
-    using AE_lborel_singleton[of 0] by eventually_elim auto
-  have "integrable lborel
-      (\<lambda>s :: real. indicator {0..t} s *\<^sub>R (if s = 0 then c else 0))"
-    using integrable_cong_AE[OF m borel_measurable_const ae] by simp
-  then show "set_integrable lborel {0..t} (\<lambda>s. if s = 0 then c else 0)"
-    unfolding set_integrable_def .
-  show "set_lebesgue_integral lborel {0..t}
-      (\<lambda>s. if s = 0 then c else 0) = 0"
-    unfolding set_lebesgue_integral_def
-    using integral_cong_AE[OF m borel_measurable_const ae] by simp
-qed
 
 text \<open>LR, proof of Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: with \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) ln E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close>, the
   essential infimum of a time bounded in \<open>[0, T]\<close> is \<open>inf\<^sub>\<lambda> f\<^sub>\<lambda>\<close>.  Each

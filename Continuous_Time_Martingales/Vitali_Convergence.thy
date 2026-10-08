@@ -97,17 +97,6 @@ proof (rule Bochner_Integration.integrable_bound[OF integrable_abs[OF h]])
   show "AE x in M. norm (max 0 (\<bar>h x\<bar> - K)) \<le> norm \<bar>h x\<bar>"
     using K by simp
 qed
-lemma (in finite_measure) integrable_clamp:
-  fixes h :: "'a \<Rightarrow> real"
-  assumes h: "h \<in> borel_measurable M" and K: "0 \<le> K"
-  shows "integrable M (\<lambda>x. max (- K) (min K (h x)))"
-proof (rule Bochner_Integration.integrable_bound[of _ "\<lambda>_. K"])
-  show "integrable M (\<lambda>_. K)" by (rule integrable_const)
-  show "(\<lambda>x. max (- K) (min K (h x))) \<in> borel_measurable M"
-    using h by measurable
-  show "AE x in M. norm (max (- K) (min K (h x))) \<le> norm K"
-    using clamp_abs_le[OF K] K by simp
-qed
 text \<open>Turning the tail bound from a nonnegative into a Bochner integral.\<close>
 
 lemma tail_bochner_le:

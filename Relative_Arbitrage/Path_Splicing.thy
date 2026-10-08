@@ -17,7 +17,6 @@ text \<open>The surgery: \<open>pcut\<close> truncates at a time, \<open>pglue\<
 text \<open>\<open>cInf_shift_real\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
-
 definition pfut :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pfut r T \<omega> = restrict (\<lambda>s. \<omega> (r + s) - \<omega> r) {0..T - r}"
 
@@ -1004,43 +1003,6 @@ proof -
   then show ?thesis by (simp add: pexit_pfst)
 qed
 
-lemma pexit_pcut_ge:
-  fixes K :: "('a::{polish_space,banach}) set" and \<omega> :: "(real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})"
-  assumes S: "0 \<le> S" and ST: "S \<le> T"
-  shows "min (pexit T K (\<lambda>t. fst (\<omega> t))) S
-      \<le> pexit S K (\<lambda>t. fst (pcut S \<omega> t))"
-proof -
-  have T0: "0 \<le> T" using S ST by simp
-  have lb: "min (pexit T K (\<lambda>t. fst (\<omega> t))) S \<le> z"
-    if z: "z \<in> {r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S}"
-    for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> S" "fst (pcut S \<omega> z) \<in> - K" | (cap) "z = S"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zT: "z \<le> T" using ST by simp
-      have notin: "fst (\<omega> z) \<in> - K"
-        using hit by (simp add: pcut_apply)
-      have "pexit T K (\<lambda>t. fst (\<omega> t)) \<le> z"
-        unfolding pexit_def
-        by (rule etime_le_of_mem[OF T0 hit(1) zT]) (use notin in simp)
-      then show ?thesis using hit(2) by simp
-    next
-      case cap
-      then show ?thesis by simp
-    qed
-  qed
-  have "pexit S K (\<lambda>t. fst (pcut S \<omega> t))
-      = Inf ({r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S})"
-    unfolding pexit_def etime_def ..
-  moreover have "min (pexit T K (\<lambda>t. fst (\<omega> t)))  S
-      \<le> Inf ({r. 0 \<le> r \<and> r \<le> S \<and> (\<lambda>t. fst (pcut S \<omega> t)) r \<in> - K} \<union> {S})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
-
 lemma pexit_pshift_eq_etime:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and K :: "('a) set" and x :: "'a"
   shows "pexit T K (\<lambda>t. fst (pshift T x \<omega> t))
@@ -1398,55 +1360,6 @@ text \<open>The conditioning statement itself, discharging the hypothesis of
 
   No localization and no \<open>K\<^sub>\<epsilon>\<close> are needed: the starting point is a single
   vector.\<close>
-
-lemma pexit_pglue_split:
-  fixes K :: "('a::{polish_space,banach}) set" and \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
-    and stay: "\<And>t. t \<in> {0..r} \<Longrightarrow> fst (\<omega> t) \<in> K"
-    and cont: "\<And>s. s \<in> {0..c} \<Longrightarrow> fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-  shows "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-proof -
-  have lb: "r + c \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue r T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zI: "z \<in> {0..T}" by simp
-      show ?thesis
-      proof (rule ccontr)
-        assume "\<not> r + c \<le> z"
-        then have zc: "z < r + c" by simp
-        show False
-        proof (cases "z \<le> r")
-          case True
-          have "fst (\<omega> z) \<in> K" using hit(1) True by (intro stay) simp
-          then show False using hit(3) by (simp add: pglue_le[OF zI True])
-        next
-          case False
-          then have rz: "r \<le> z" by simp
-          have "z - r \<in> {0..c}" using rz zc by simp
-          then have "fst (\<omega> r + (\<omega>' (z - r) - \<omega>' 0)) \<in> K" by (rule cont)
-          then show False using hit(3) by (simp add: pglue_ge[OF zI rz])
-        qed
-      qed
-    next
-      case cap
-      then show ?thesis using cT by simp
-    qed
-  qed
-  have "pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "r + c \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-      \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
 
 text \<open>\<open>sets_PiM_mono\<close>, \<open>filtered_measure_PiM\<close>, \<open>martingale_distr\<close> and
   \<open>martingale_PiM_component\<close> live in

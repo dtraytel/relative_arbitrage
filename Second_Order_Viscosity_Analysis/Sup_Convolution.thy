@@ -400,68 +400,12 @@ text \<open>Jensen's lemma applies verbatim: the set of points maximizing a
   it meets the full-measure set of the previous corollary --- exactly
   where the theorem on sums reads off its matrices.\<close>
 
-corollary supconv_jensen:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
-    and rho: "0 < \<rho>" "\<rho> < r"
-    and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi> \<Longrightarrow> supconv u \<epsilon> y \<le> m"
-    and d: "0 < d" and small: "2 * d * r < supconv u \<epsilon> \<xi> - m"
-  shows "\<not> negligible {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
-      \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x)}"
-proof -
-  have cpos: "0 < 1/\<epsilon>" using e by simp
-  show ?thesis
-    by (rule jensen_lemma[OF supconv_semiconvex'[OF B e] cpos rho(1) rho(2)
-        bnd d small])
-qed
-
 text \<open>The engine of Crandall--Ishii: Jensen's lemma gives perturbed
   maximizers positive measure, Alexandrov's gives twice differentiable
   points full measure, so the two sets meet.  A single point is
   simultaneously a perturbed maximizer and a point of genuine
   second-order expansion, which is how the theorem on sums produces its
   matrices.\<close>
-
-theorem supconv_jensen_alexandrov_point:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
-    and rho: "0 < \<rho>" "\<rho> < r"
-    and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi> \<Longrightarrow> supconv u \<epsilon> y \<le> m"
-    and d: "0 < d" and small: "2 * d * r < supconv u \<epsilon> \<xi> - m"
-  shows "\<exists>x \<in> cball \<xi> r.
-      (\<exists>p. norm p \<le> d
-         \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x))
-    \<and> (\<exists>q X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
-         \<and> ((\<lambda>k. (supconv u \<epsilon> (x + k) - supconv u \<epsilon> x - q \<bullet> k - (k \<bullet> X k)/2)
-             / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))"
-proof -
-  define J where "J = {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
-      \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x)}"
-  define N where "N = {y. \<not> (\<exists>q X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
-      \<and> ((\<lambda>k. (supconv u \<epsilon> (y + k) - supconv u \<epsilon> y - q \<bullet> k - (k \<bullet> X k)/2)
-          / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))}"
-  have nJ: "\<not> negligible J"
-    unfolding J_def by (rule supconv_jensen[OF B e rho(1) rho(2) bnd d small])
-  have nN: "negligible N"
-    unfolding N_def by (rule supconv_alexandrov[OF B e])
-  have "\<not> (J \<subseteq> N)"
-  proof
-    assume sub: "J \<subseteq> N"
-    have "negligible J" by (rule negligible_subset[OF nN sub])
-    with nJ show False ..
-  qed
-  then obtain x where xJ: "x \<in> J" and xN: "x \<notin> N" by blast
-  show ?thesis
-  proof (rule bexI)
-    show "x \<in> cball \<xi> r" using xJ unfolding J_def by blast
-    show "(\<exists>p. norm p \<le> d
-           \<and> (\<forall>y \<in> cball \<xi> r. supconv u \<epsilon> y + p \<bullet> y \<le> supconv u \<epsilon> x + p \<bullet> x))
-        \<and> (\<exists>q X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
-             \<and> ((\<lambda>k. (supconv u \<epsilon> (x + k) - supconv u \<epsilon> x - q \<bullet> k - (k \<bullet> X k)/2)
-                 / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))"
-      using xJ xN unfolding J_def N_def by blast
-  qed
-qed
 
 text \<open>Second-order conditions at an interior maximum: a second-order
   expansion with data \<open>(q, X)\<close> at an interior maximizer forces \<open>q = 0\<close>

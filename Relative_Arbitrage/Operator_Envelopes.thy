@@ -535,12 +535,6 @@ text \<open>At the degenerate gradient, the subsolution inequality of
   Definition 3.1 and the envelope-free one coincide: \<open>F\<^sub>*(0,H) \<le> 1\<close> and
   \<open>F(0,H) \<le> 1\<close> are the same condition.\<close>
 
-corollary ell_op_lsc_at_zero_iff:
-  fixes M :: "real^'n::finite^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op_lsc k L (0 :: real^'n) M \<le> 1 \<longleftrightarrow> ell_op k L (0 :: real^'n) M \<le> 1"
-  unfolding ell_op_lsc_at_zero[OF k L] by (simp add: one_ereal_def)
-
 section \<open>Definition 3.1 in envelope form\<close>
 
 text \<open>\<open>visc_subsol_env\<close>, \<open>visc_supersol_env\<close>, \<open>visc_sol_env\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
@@ -1073,9 +1067,6 @@ text \<open>A test function is minorised near \<open>x\<close> by its two-jet qu
   once the Hessian is shifted down by any \<open>\<delta> > 0\<close>, which lets a touching
   by an arbitrary test function be replaced by a touching by a genuine
   quadratic, bounded on a bounded set.\<close>
-
-
-
 
 
 theorem visc_subsol_env_local:

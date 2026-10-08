@@ -629,71 +629,6 @@ text \<open>On a line, a Lipschitz function is absolutely continuous with a.e.
   derivative \<open>ddir\<close>, so the fundamental theorem of calculus recovers
   increments of \<open>f\<close> as integrals of \<open>ddir\<close>.\<close>
 
-lemma ddir_line_eq:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
-  assumes d: "(\<lambda>s. f (z + s *\<^sub>R v)) differentiable (at t)"
-  shows "z + t *\<^sub>R v \<in> dlim_set f v"
-    and "ddir f v (z + t *\<^sub>R v)
-       = vector_derivative (\<lambda>s. f (z + s *\<^sub>R v)) (at t)"
-proof -
-  define phi where "phi = (\<lambda>s. f (z + s *\<^sub>R v))"
-  define x where "x = z + t *\<^sub>R v"
-  have shift: "z + (t + h) *\<^sub>R v = x + h *\<^sub>R v" for h
-    unfolding x_def by (simp add: algebra_simps)
-  have q: "dquot f v x = (\<lambda>h. (phi (t + h) - phi t) /\<^sub>R h)"
-    unfolding dquot_def phi_def x_def[symmetric] shift by (rule refl)
-  have L: "(dquot f v x \<longlongrightarrow> vector_derivative phi (at t)) (at 0)"
-    unfolding q using d unfolding phi_def
-    by (rule dquot_tendsto_vector_derivative)
-  thus mem: "x \<in> dlim_set f v" unfolding dlim_set_def by blast
-  have "(dquot f v x \<longlongrightarrow> ddir f v x) (at 0)" by (rule ddir_tendsto[OF mem])
-  from tendsto_unique[OF at_neq_bot this L]
-  show "ddir f v x = vector_derivative phi (at t)" .
-qed
-
-theorem ftc_along_line:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::{euclidean_space,banach}"
-  assumes lip: "\<And>x y. norm (f x - f y) \<le> B * norm (x - y)" and ac: "a \<le> c"
-  shows "((\<lambda>s. ddir f v (z + s *\<^sub>R v))
-      has_integral (f (z + c *\<^sub>R v) - f (z + a *\<^sub>R v))) {a..c}"
-proof -
-  define phi where "phi = (\<lambda>s. f (z + s *\<^sub>R v))"
-  define S where "S = {s. \<not> phi differentiable (at s)}"
-  have lipphi: "norm (phi s - phi s') \<le> (B * norm v) * \<bar>s - s'\<bar>" for s s'
-  proof -
-    have nrm: "norm (s *\<^sub>R v - s' *\<^sub>R v) = norm v * \<bar>s - s'\<bar>"
-    proof -
-      have "s *\<^sub>R v - s' *\<^sub>R v = (s - s') *\<^sub>R v"
-        by (simp add: scaleR_left_diff_distrib)
-      thus ?thesis by (simp add: mult.commute)
-    qed
-    have "norm (phi s - phi s') \<le> B * norm ((z + s *\<^sub>R v) - (z + s' *\<^sub>R v))"
-      unfolding phi_def by (rule lip)
-    also have "\<dots> = B * norm v * \<bar>s - s'\<bar>"
-      using nrm by (simp add: mult.assoc)
-    finally show ?thesis .
-  qed
-  have Sneg: "negligible S"
-    unfolding S_def phi_def
-    by (rule lipschitz_line_section_diff_ae[where B = B and f = f]) (rule lip)
-  have acphi: "absolutely_continuous_on {a..c} phi"
-    by (rule Lipschitz_imp_absolutely_continuous) (use lipphi in blast)
-  have vd: "(phi has_vector_derivative ddir f v (z + s *\<^sub>R v))
-      (at s within {a..c})" if s: "s \<in> {a..c} - S" for s
-  proof -
-    have ds: "phi differentiable (at s)" using s unfolding S_def by simp
-    have "ddir f v (z + s *\<^sub>R v) = vector_derivative phi (at s)"
-      unfolding phi_def by (rule ddir_line_eq(2)[OF ds[unfolded phi_def]])
-    moreover have "(phi has_vector_derivative vector_derivative phi (at s)) (at s)"
-      using ds by (simp add: vector_derivative_works)
-    ultimately show ?thesis by (simp add: has_vector_derivative_at_within)
-  qed
-  have "((\<lambda>s. ddir f v (z + s *\<^sub>R v)) has_integral (phi c - phi a)) {a..c}"
-    by (rule fundamental_theorem_of_calculus_absolutely_continuous
-        [OF Sneg ac acphi]) (use vd in blast)
-  thus ?thesis unfolding phi_def .
-qed
-
 subsection \<open>Structure of the direction map\<close>
 
 text \<open>The direction map \<open>v \<mapsto> D_v f x\<close> is positively homogeneous and
@@ -751,63 +686,8 @@ proof -
   show "ddir f (c *\<^sub>R v) x = c *\<^sub>R ddir f v x" .
 qed
 
-lemma ddir_lipschitz_in_direction:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
-  assumes lip: "\<And>x y. norm (f x - f y) \<le> B * norm (x - y)"
-    and xu: "x \<in> dlim_set f u" and xv: "x \<in> dlim_set f v"
-  shows "norm (ddir f u x - ddir f v x) \<le> B * norm (u - v)"
-proof -
-  have q: "norm (dquot f u x t - dquot f v x t) \<le> B * norm (u - v)"
-    if t: "t \<noteq> 0" for t
-  proof -
-    have "dquot f u x t - dquot f v x t
-        = (f (x + t *\<^sub>R u) - f (x + t *\<^sub>R v)) /\<^sub>R t"
-      unfolding dquot_def by (simp add: scaleR_diff_right)
-    hence "norm (dquot f u x t - dquot f v x t)
-        = norm (f (x + t *\<^sub>R u) - f (x + t *\<^sub>R v)) / \<bar>t\<bar>"
-      by (simp add: divide_inverse mult.commute)
-    also have "\<dots> \<le> (B * norm ((x + t *\<^sub>R u) - (x + t *\<^sub>R v))) / \<bar>t\<bar>"
-      using lip[of "x + t *\<^sub>R u" "x + t *\<^sub>R v"] t
-      by (intro divide_right_mono) auto
-    also have "(x + t *\<^sub>R u) - (x + t *\<^sub>R v) = t *\<^sub>R (u - v)"
-      by (simp add: scaleR_diff_right)
-    also have "(B * norm (t *\<^sub>R (u - v))) / \<bar>t\<bar> = B * norm (u - v)"
-      using t by simp
-    finally show ?thesis .
-  qed
-  have ev: "eventually (\<lambda>t. norm (dquot f u x t - dquot f v x t)
-      \<le> B * norm (u - v)) (at (0::real))"
-  proof -
-    have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
-      unfolding eventually_at by (intro exI[of _ 1]) auto
-    thus ?thesis by (eventually_elim) (use q in blast)
-  qed
-  have "((\<lambda>t. norm (dquot f u x t - dquot f v x t))
-      \<longlongrightarrow> norm (ddir f u x - ddir f v x)) (at 0)"
-    by (intro tendsto_norm tendsto_diff ddir_tendsto[OF xu] ddir_tendsto[OF xv])
-  thus ?thesis by (rule tendsto_upperbound[OF _ ev]) simp
-qed
-
 text \<open>A countable family of directions is handled simultaneously, since a
   countable union of negligible sets is negligible.\<close>
-
-theorem negligible_no_dderiv_countable:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::{euclidean_space,banach}"
-  assumes lip: "\<And>x y. norm (f x - f y) \<le> B * norm (x - y)"
-    and V: "countable V" and V0: "\<And>v. v \<in> V \<Longrightarrow> v \<noteq> 0"
-  shows "negligible (- (\<Inter>v\<in>V. dlim_set f v))"
-proof -
-  have "- (\<Inter>v\<in>V. dlim_set f v) = (\<Union>v\<in>V. - dlim_set f v)" by simp
-  moreover have "negligible (\<Union>v\<in>V. - dlim_set f v)"
-  proof (rule negligible_countable_Union)
-    show "countable ((\<lambda>v. - dlim_set f v) ` V)" using V by (rule countable_image)
-    fix S assume "S \<in> (\<lambda>v. - dlim_set f v) ` V"
-    then obtain v where v: "v \<in> V" and Seq: "S = - dlim_set f v" by blast
-    show "negligible S"
-      unfolding Seq using V0[OF v] by (intro negligible_no_dderiv[OF lip])
-  qed
-  ultimately show ?thesis by simp
-qed
 
 subsection \<open>From directional to full differentiability\<close>
 
@@ -968,32 +848,6 @@ proof -
   also have "\<dots> = (f (x + t *\<^sub>R (u + v)) - f x) /\<^sub>R t"
     unfolding tel by (rule refl)
   finally show ?thesis unfolding dquot_def by simp
-qed
-
-lemma ddir_add_of_shifted_limit:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
-  assumes xu: "x \<in> dlim_set f u"
-    and shift: "((\<lambda>t. dquot f v (x + t *\<^sub>R u) t) \<longlongrightarrow> ddir f v x) (at 0)"
-  shows "x \<in> dlim_set f (u + v)"
-    and "ddir f (u + v) x = ddir f u x + ddir f v x"
-proof -
-  have sum: "((\<lambda>t. dquot f v (x + t *\<^sub>R u) t + dquot f u x t)
-      \<longlongrightarrow> ddir f v x + ddir f u x) (at 0)"
-    by (intro tendsto_add shift ddir_tendsto[OF xu])
-  have ev: "eventually (\<lambda>t. dquot f v (x + t *\<^sub>R u) t + dquot f u x t
-      = dquot f (u + v) x t) (at (0::real))"
-  proof -
-    have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
-      unfolding eventually_at by (intro exI[of _ 1]) auto
-    thus ?thesis by (rule eventually_mono) (simp add: dquot_add_split)
-  qed
-  have lim: "(dquot f (u + v) x \<longlongrightarrow> ddir f v x + ddir f u x) (at 0)"
-    by (rule Lim_transform_eventually[OF sum ev])
-  thus mem: "x \<in> dlim_set f (u + v)" unfolding dlim_set_def by blast
-  have "(dquot f (u + v) x \<longlongrightarrow> ddir f (u + v) x) (at 0)"
-    by (rule ddir_tendsto[OF mem])
-  from tendsto_unique[OF at_neq_bot this lim]
-  show "ddir f (u + v) x = ddir f u x + ddir f v x" by simp
 qed
 
 subsection \<open>Boxes move continuously under translation\<close>
@@ -1419,84 +1273,6 @@ subsection \<open>L1 convergence of the quotients\<close>
 text \<open>The quotients converge to \<open>ddir\<close> in L1, not merely pointwise a.e.,
   letting the domain wobble by \<open>t u\<close>.\<close>
 
-theorem L1_dquot_tendsto:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)"
-    and v: "v \<noteq> 0" and S: "S \<in> sets borel" and Sfin: "emeasure lborel S < top"
-  shows "(\<lambda>n. (\<integral>x. \<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>
-      * indicator S x \<partial>lborel)) \<longlonglongrightarrow> 0"
-proof -
-  have cf: "continuous_on UNIV f" by (rule lipschitz_continuous_on_UNIV[OF lip])
-  have ae: "AE x in lborel. x \<in> dlim_set f v"
-  proof -
-    have cB: "- dlim_set f v \<in> sets borel"
-    proof -
-      have "space (borel :: 'a measure) - dlim_set f v \<in> sets borel"
-        by (rule sets.compl_sets[OF borel_dlim_set[OF cf]])
-      thus ?thesis by (simp add: Compl_eq_Diff_UNIV)
-    qed
-    have "negligible (- dlim_set f v)" by (rule negligible_no_dderiv[OF lip v])
-    hence "- dlim_set f v \<in> null_sets lborel"
-      using negligible_iff_null_lborel[OF cB] by simp
-    thus ?thesis by (simp add: eventually_ae_filter) blast
-  qed
-  define w where "w = (\<lambda>x. (2 * \<bar>B\<bar> * norm v) * indicator S x :: real)"
-  have wint: "integrable lborel w"
-    unfolding w_def using S Sfin by (intro integrable_mult_right) simp
-  have sm: "(\<lambda>x. \<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>
-      * indicator S x) \<in> borel_measurable lborel" for n
-    using borel_measurable_dquot[OF cf] borel_measurable_ddir[OF cf] S
-    by measurable
-  have lim: "AE x in lborel. (\<lambda>n. \<bar>dquot f v x (inverse (real (Suc n)))
-      - ddir f v x\<bar> * indicator S x) \<longlonglongrightarrow> 0 * indicator S x"
-  proof (rule eventually_mono[OF ae])
-    fix x assume x: "x \<in> dlim_set f v"
-    have h: "(\<lambda>n. dquot f v x (inverse (real (Suc n)))) \<longlonglongrightarrow> ddir f v x"
-      by (rule ddir_LIMSEQ[OF x])
-    have "(\<lambda>n. \<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>)
-        \<longlonglongrightarrow> \<bar>ddir f v x - ddir f v x\<bar>"
-      by (intro tendsto_rabs tendsto_diff h tendsto_const)
-    hence "(\<lambda>n. \<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>)
-        \<longlonglongrightarrow> 0" by simp
-    thus "(\<lambda>n. \<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>
-        * indicator S x) \<longlonglongrightarrow> 0 * indicator S x"
-      by (rule tendsto_mult[OF _ tendsto_const])
-  qed
-  have bound: "AE x in lborel. norm (\<bar>dquot f v x (inverse (real (Suc n)))
-      - ddir f v x\<bar> * indicator S x) \<le> w x" for n
-  proof (rule eventually_mono[OF ae])
-    fix x assume x: "x \<in> dlim_set f v"
-    have t: "inverse (real (Suc n)) \<noteq> 0" by simp
-    have q: "\<bar>dquot f v x (inverse (real (Suc n)))\<bar> \<le> \<bar>B\<bar> * norm v"
-    proof -
-      have "\<bar>dquot f v x (inverse (real (Suc n)))\<bar> \<le> B * norm v"
-        using norm_dquot_le[OF lip t, of v x] by simp
-      also have "\<dots> \<le> \<bar>B\<bar> * norm v" by (intro mult_right_mono) auto
-      finally show ?thesis .
-    qed
-    have d: "\<bar>ddir f v x\<bar> \<le> \<bar>B\<bar> * norm v"
-    proof -
-      have "\<bar>ddir f v x\<bar> \<le> B * norm v"
-        using norm_ddir_le[OF lip x] by simp
-      also have "\<dots> \<le> \<bar>B\<bar> * norm v" by (intro mult_right_mono) auto
-      finally show ?thesis .
-    qed
-    have "\<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>
-        \<le> 2 * \<bar>B\<bar> * norm v" using q d by linarith
-    hence "\<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>
-        * \<bar>indicator S x :: real\<bar> \<le> (2 * \<bar>B\<bar> * norm v)
-        * \<bar>indicator S x :: real\<bar>"
-      by (intro mult_right_mono) auto
-    thus "norm (\<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>
-        * indicator S x) \<le> w x"
-      unfolding w_def by (simp add: abs_mult indicator_def)
-  qed
-  have "(\<lambda>n. (\<integral>x. \<bar>dquot f v x (inverse (real (Suc n))) - ddir f v x\<bar>
-      * indicator S x \<partial>lborel)) \<longlonglongrightarrow> (\<integral>x. 0 * indicator S x \<partial>lborel)"
-    by (rule integral_dominated_convergence[OF _ sm wint lim bound]) simp
-  thus ?thesis by simp
-qed
-
 subsection \<open>The defect of a translated box vanishes\<close>
 
 text \<open>Translating a box preserves its content, so the overlap defect
@@ -1904,11 +1680,6 @@ proof -
     by (intro nn_integral_cong) (simp add: m_def max_def ennreal_neg)
   finally show ?thesis .
 qed
-
-lemma ennreal_mult_indicator_eq:
-  fixes g :: "'a \<Rightarrow> real"
-  shows "ennreal (g x * indicator S x) = ennreal (g x) * indicator S x"
-  by (simp add: indicator_def)
 
 subsection \<open>Almost-everywhere additivity in the direction\<close>
 

@@ -498,52 +498,8 @@ text \<open>A scaled subsolution and a supersolution touching an ordered jet pai
   \<open>Jensen_Lemma\<close> and
   \<open>Theorem_On_Sums\<close>.\<close>
 
-lemma hessian_lower_bound_of_psd:
-  fixes B :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes psd: "\<And>v. 0 \<le> v \<bullet> B v"
-  shows "- (c * (norm k)\<^sup>2) \<le> k \<bullet> (B k - c *\<^sub>R k)"
-proof -
-  have "k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c * (norm k)\<^sup>2"
-    by (simp add: inner_diff_right power2_norm_eq_inner)
-  moreover have "0 \<le> k \<bullet> B k"
-    by (rule psd)
-  ultimately show ?thesis
-    by linarith
-qed
-
-theorem semiconvex_hessian_two_sided:
-  fixes B W :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes psd: "\<And>v. 0 \<le> v \<bullet> B v"
-    and neg: "\<And>v. v \<bullet> W v \<le> 0"
-    and Wdef: "\<And>v. W v = B v - c *\<^sub>R v"
-  shows "- (c * (norm k)\<^sup>2) \<le> k \<bullet> W k" and "k \<bullet> W k \<le> 0"
-proof -
-  show "- (c * (norm k)\<^sup>2) \<le> k \<bullet> W k"
-    unfolding Wdef by (rule hessian_lower_bound_of_psd[OF psd])
-  show "k \<bullet> W k \<le> 0"
-    by (rule neg)
-qed
-
 text \<open>The quadratic form of \<open>W\<close> is bounded in absolute value by \<open>c\<parallel>k\<parallel>\<^sup>2\<close>,
   uniformly over the family and independent of the tilt.\<close>
-
-corollary semiconvex_hessian_abs_bound:
-  fixes B W :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes psd: "\<And>v. 0 \<le> v \<bullet> B v"
-    and neg: "\<And>v. v \<bullet> W v \<le> 0"
-    and Wdef: "\<And>v. W v = B v - c *\<^sub>R v"
-    and c0: "0 \<le> c"
-  shows "\<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
-proof -
-  have lo: "- (c * (norm k)\<^sup>2) \<le> k \<bullet> W k"
-    by (rule semiconvex_hessian_two_sided(1)[OF psd neg Wdef])
-  have hi: "k \<bullet> W k \<le> 0"
-    by (rule neg)
-  have "0 \<le> c * (norm k)\<^sup>2"
-    by (rule mult_nonneg_nonneg[OF c0]) simp
-  with lo hi show ?thesis
-    by (intro abs_leI) linarith+
-qed
 
 subsection \<open>From the quadratic-form bound to a genuine operator bound\<close>
 
@@ -597,17 +553,6 @@ qed
 text \<open>\<open>psd (Y-X)\<close> is preserved when both sequences converge, since subtraction
   is continuous and \<open>psd\<close> is a closed condition.\<close>
 
-corollary psd_diff_limit:
-  fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes cX: "X \<longlonglongrightarrow> X0" and cY: "Y \<longlonglongrightarrow> Y0"
-    and p: "\<And>i. psd (Y i - X i)"
-  shows "psd (Y0 - X0)"
-proof -
-  have "(\<lambda>i. Y i - X i) \<longlonglongrightarrow> Y0 - X0"
-    by (rule tendsto_diff[OF cY cX])
-  from psd_limit[OF this p] show ?thesis .
-qed
-
 subsection \<open>The asymptotic ordering\<close>
 
 text \<open>Perturbing the doubled functional by \<open>-\<delta>\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> shifts \<open>X\<close> to
@@ -636,24 +581,6 @@ proof -
 qed
 
 subsection \<open>Route (i), threaded\<close>
-
-text \<open>Everything is supplied as sequences of perturbed data, produced by
-  re-running Jensen with a shrinking tilt, together with their limits.
-  Symmetry and the ordering are needed only along the sequence
-  (\<open>transpose_limit\<close>, \<open>psd_diff_limit\<close>); only \<open>p \<noteq> 0\<close> is required at the
-  limit itself, supplied by \<open>doubling_grad_norm_lower_bound\<close>.  The two
-  gradient sequences must converge to the same \<open>p\<close> - the gradient
-  alignment.\<close>
-
-lemma psd_shifted_diff:
-  fixes X Y :: "real^'n::finite^'n"
-  assumes p: "psd (Y - X)"
-  shows "psd ((Y + c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1))"
-proof -
-  have "(Y + c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1) = Y - X"
-    by simp
-  then show ?thesis using p by simp
-qed
 
 text \<open>\<open>matrix_shift_apply\<close>, \<open>norm_shifted_block\<close>, \<open>shift_cancel_matrix\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 

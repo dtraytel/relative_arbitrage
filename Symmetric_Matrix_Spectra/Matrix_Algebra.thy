@@ -356,20 +356,6 @@ text \<open>
   interior points \<open>x \<noteq> 0\<close>.
 \<close>
 
-lemma neg_half_trace_ball_op:
-  fixes a :: "real^'n^'n"
-  assumes c_pos: "0 < c"
-  shows "- trace ((- (2 / c) *\<^sub>R mat 1) ** a) / 2 = trace a / c"
-proof -
-  have "((- (2 / c) *\<^sub>R mat 1) ** a) $ i $ i = - (2 / c) * a $ i $ i" for i
-    by (simp add: matrix_matrix_mult_def mat_def if_distrib if_distribR
-        cong: if_cong)
-  then have "trace ((- (2 / c) *\<^sub>R mat 1) ** a) = - ((2 / c) * trace a)"
-    by (simp add: trace_def sum_distrib_left sum_negf)
-  then show ?thesis
-    using c_pos by (simp add: field_simps)
-qed
-
 lemma local_min_gradient_zero:
   fixes \<psi> :: "real^'n \<Rightarrow> real"
   assumes deriv: "(\<psi> has_derivative (\<lambda>h. g \<bullet> h)) (at x)"
@@ -561,14 +547,6 @@ next
   qed
 qed
 
-lemma quadratic_gradient:
-  fixes y :: "real^'n"
-  assumes c_pos: "0 < (c::real)"
-  shows "((\<lambda>y :: real^'n. (r\<^sup>2 - y \<bullet> y) / c) has_derivative
-      (\<lambda>h. (- (2 / c) *\<^sub>R y) \<bullet> h)) (at y)"
-  using c_pos
-  by (auto intro!: derivative_eq_intros simp: inner_commute divide_simps)
-
 text \<open>Conjugation preserves each defining condition of the feasible set.
   Orthogonality is HOL-Analysis's own \<open>orthogonal_matrix\<close>.\<close>
 
@@ -584,18 +562,6 @@ proof -
   also have "\<dots> = trace ((Q ** M ** transpose Q) ** a)"
     by (simp add: matrix_mul_assoc)
   finally show ?thesis .
-qed
-
-lemma norm_less_of_ball:
-  fixes z :: "real^'n::finite"
-  assumes z: "norm z < r" and y: "y \<in> ball z (r - norm z)"
-  shows "norm y < r"
-proof -
-  have "norm y \<le> norm (y - z) + norm z"
-    using norm_triangle_sub[of y z] by simp
-  also have "\<dots> < (r - norm z) + norm z"
-    using y by (simp add: dist_norm norm_minus_commute)
-  finally show ?thesis by simp
 qed
 
 text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper assumes the set \<open>S\<close> of admissible covariances is
@@ -1071,7 +1037,6 @@ proof
 qed
 
 
-
 lemma diag_eq_inner_axis:
   fixes a :: "real^'n^'n"
   shows "a $ i $ i = axis i (1 :: real) \<bullet> (a *v axis i 1)"
@@ -1105,11 +1070,6 @@ proof -
     by (metis cart_eq_inner_axis inner_commute)
   with col show ?thesis by simp
 qed
-
-lemma inner_diff_self_expand:
-  fixes a c :: "real^'m::finite"
-  shows "(a - c) \<bullet> (a - c) = a \<bullet> a - 2 * (c \<bullet> a) + c \<bullet> c"
-  by (simp add: inner_diff_left inner_diff_right inner_commute)
 
 text \<open>The constraint set is convex, closed and bounded, hence compact.
   Convexity comes from convexity of the constraint set and the an eigenvalue upper bound
@@ -1450,90 +1410,6 @@ qed
 text \<open>The quadratic is Lipschitz on the ball, with explicit constant
   \<open>norm q + 2 C\<^sub>M rb\<close>, via the one-step Taylor identity
   \<open>quad_taylor_step\<close>.\<close>
-
-lemma quad_diff_bound:
-  fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and rb :: real
-  assumes sym: "transpose M = M"
-    and a: "a \<in> cball x rb" and b: "b \<in> cball x rb"
-  shows "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-       - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
-      \<le> (norm q + 2 * (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * rb)
-          * norm (b - a)"
-proof -
-  let ?CM = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
-  have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
-  have ax: "norm (a - x) \<le> rb"
-    using a by (simp add: dist_norm norm_minus_commute)
-  have bx: "norm (b - x) \<le> rb"
-    using b by (simp add: dist_norm norm_minus_commute)
-  have dble: "norm (b - a) \<le> 2 * rb"
-  proof -
-    have deq: "b - a = (b - x) + (x - a)" by simp
-    have "norm (b - a) \<le> norm (b - x) + norm (x - a)"
-      by (subst deq) (rule norm_triangle_ineq)
-    moreover have "norm (x - a) \<le> rb"
-      using ax by (simp add: norm_minus_commute)
-    ultimately show ?thesis using bx by linarith
-  qed
-  have step: "q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))
-      = (q + M *v (a - x)) \<bullet> (b - a)
-        + (1/2) * ((b - a) \<bullet> (M *v (b - a)))"
-    by (rule quad_taylor_step[OF sym])
-  have t1: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-      \<le> (norm q + ?CM * rb) * norm (b - a)"
-  proof -
-    have cs: "\<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-        \<le> norm (q + M *v (a - x)) * norm (b - a)"
-      by (rule Cauchy_Schwarz_ineq2)
-    have "norm (q + M *v (a - x)) \<le> norm q + ?CM * rb"
-    proof -
-      have "norm (q + M *v (a - x)) \<le> norm q + norm (M *v (a - x))"
-        by (rule norm_triangle_ineq)
-      moreover have "norm (M *v (a - x)) \<le> ?CM * norm (a - x)"
-        by (rule matvec_norm_le)
-      moreover have "?CM * norm (a - x) \<le> ?CM * rb"
-        by (rule mult_left_mono[OF ax CM0])
-      ultimately show ?thesis by linarith
-    qed
-    then have "norm (q + M *v (a - x)) * norm (b - a)
-        \<le> (norm q + ?CM * rb) * norm (b - a)"
-      by (rule mult_right_mono) simp
-    then show ?thesis using cs by linarith
-  qed
-  have t2: "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
-      \<le> ?CM * rb * norm (b - a)"
-  proof -
-    have "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
-        \<le> norm (b - a) * norm (M *v (b - a))"
-      by (rule Cauchy_Schwarz_ineq2)
-    also have "\<dots> \<le> norm (b - a) * (?CM * norm (b - a))"
-      by (rule mult_left_mono[OF matvec_norm_le norm_ge_zero])
-    finally have h: "\<bar>(b - a) \<bullet> (M *v (b - a))\<bar>
-        \<le> ?CM * norm (b - a) * norm (b - a)"
-      by (simp add: mult_ac)
-    have h2: "?CM * norm (b - a) * norm (b - a)
-        \<le> ?CM * (2 * rb) * norm (b - a)"
-      by (rule mult_right_mono[OF mult_left_mono[OF dble CM0] norm_ge_zero])
-    have "\<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>
-        = (1/2) * \<bar>(b - a) \<bullet> (M *v (b - a))\<bar>"
-      by (simp add: abs_mult)
-    also have "\<dots> \<le> (1/2) * (?CM * (2 * rb) * norm (b - a))"
-      using h h2 by linarith
-    also have "\<dots> = ?CM * rb * norm (b - a)" by simp
-    finally show ?thesis .
-  qed
-  have tri: "\<bar>q \<bullet> (b - x) + (1/2) * ((b - x) \<bullet> (M *v (b - x)))
-      - (q \<bullet> (a - x) + (1/2) * ((a - x) \<bullet> (M *v (a - x))))\<bar>
-      \<le> \<bar>(q + M *v (a - x)) \<bullet> (b - a)\<bar>
-        + \<bar>(1/2) * ((b - a) \<bullet> (M *v (b - a)))\<bar>"
-    unfolding step by (rule abs_triangle_ineq)
-  have fin: "(norm q + ?CM * rb) * norm (b - a)
-      + ?CM * rb * norm (b - a)
-      = (norm q + 2 * ?CM * rb) * norm (b - a)"
-    by (simp add: algebra_simps)
-  show ?thesis using tri t1 t2 fin by linarith
-qed
 
 text \<open>Small independent pieces the contradiction assembles: algebra for the
   softened Hessian, a generic small-radius chooser, the witness extraction
@@ -2322,21 +2198,6 @@ text \<open>The two envelope-form hypotheses in the shape the doubling produces:
   on an open \<open>\<Omega>\<close> inside \<open>K\<close>, a subsolution and supersolution in the
   envelope-free sense are also envelope sub/supersolutions, letting the
   doubling argument run where the \<open>\<delta> \<rightarrow> 0\<close> passage is legitimate.\<close>
-
-lemma ball_prod_shift_snd:
-  fixes p :: "real^'n::finite" and M N :: "real^'n^'n"
-  assumes "w \<in> ball (p, M) e"
-  shows "w + (0, N - M) \<in> ball (p, N) e"
-proof -
-  have eq: "(w + (0, N - M)) - (p, N) = w - (p, M)"
-    by (simp add: prod_eq_iff)
-  have "dist (w + (0, N - M)) (p, N) = dist w (p, M)"
-    unfolding dist_norm eq ..
-  moreover have "dist w (p, M) < e"
-    using assms by (simp add: dist_commute)
-  ultimately show ?thesis
-    by (simp add: dist_commute)
-qed
 
 text \<open>The supersolution mirror: the sup-convolution is taken of \<open>-w\<close>, the
   summand the doubled functional carries, and the transferred bound

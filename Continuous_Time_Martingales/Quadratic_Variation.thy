@@ -30,7 +30,6 @@ text \<open>
 section \<open>Elementary square bounds\<close>
 
 
-
 lemma integrable_prod_of_squares:
   fixes u v :: "'b \<Rightarrow> real"
   assumes usq: "integrable M (\<lambda>\<omega>. (u \<omega>)\<^sup>2)"
@@ -368,9 +367,6 @@ begin
 definition Tgt :: "nat \<Rightarrow> 'a set" where
   "Tgt n = {\<omega> \<in> space M. n < T \<omega>}"
 
-lemma Tgt_iff: "\<omega> \<in> space M \<Longrightarrow> \<omega> \<in> Tgt n \<longleftrightarrow> n < T \<omega>"
-  by (simp add: Tgt_def)
-
 lemma Tgt_sets_F: "Tgt n \<in> sets (F n)"
 proof -
   have eq: "Tgt n = space (F n) - {\<omega> \<in> space M. T \<omega> \<le> n}"
@@ -592,12 +588,6 @@ proof -
   then show ?thesis
     unfolding eq1 eq2 by simp
 qed
-
-corollary stopped_qvar_expectation_le:
-  assumes "(\<integral>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2 \<partial>M) \<le> B"
-  shows "(\<integral>\<omega>. qvar X (min n (T \<omega>)) \<omega> \<partial>M)
-      \<le> B - (\<integral>\<omega>. (X 0 \<omega>)\<^sup>2 \<partial>M)"
-  using assms stopped_expectation_sq_qvar[of n] by simp
 
 end
 

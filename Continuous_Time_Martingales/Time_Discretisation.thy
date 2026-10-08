@@ -103,41 +103,14 @@ begin
 
 text \<open>The discrete quadratic variation of the sampled process, written out.\<close>
 
-lemma qvar_sampled_fun:
-  "qvar (\<lambda>m. Y (t m)) n
-     = (\<lambda>\<omega>. \<Sum>k<n. (Y (t (Suc k)) \<omega> - Y (t k) \<omega>)\<^sup>2)"
-  by (rule ext) (simp add: qvar_def)
-
 text \<open>The Dynkin identity along the grid: for a continuous-time
   square-integrable martingale, the expected sum of squared increments over
   a grid equals the increase of the second moment between the end points.
   In particular it does not depend on the grid in between.\<close>
 
-theorem grid_expected_qvar:
-  "(\<integral>\<omega>. (\<Sum>k<n. (Y (t (Suc k)) \<omega> - Y (t k) \<omega>)\<^sup>2) \<partial>M)
-     = (\<integral>\<omega>. (Y (t n) \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (Y (t 0) \<omega>)\<^sup>2 \<partial>M)"
-proof -
-  have "(\<integral>\<omega>. (Y (t n) \<omega>)\<^sup>2 \<partial>M)
-      = (\<integral>\<omega>. (Y (t 0) \<omega>)\<^sup>2 \<partial>M)
-        + (\<integral>\<omega>. qvar (\<lambda>m. Y (t m)) n \<omega> \<partial>M)"
-    by (rule D.expectation_sq_qvar)
-  then show ?thesis
-    unfolding qvar_sampled_fun by simp
-qed
-
 text \<open>The compensated square along the grid is a martingale, and the
   optional-sampling results of @{theory Continuous_Time_Martingales.Quadratic_Variation} apply verbatim to the
   sampled process.\<close>
-
-theorem grid_qvar_compensates:
-  "martingale M (\<lambda>n. F (t n)) 0
-     (\<lambda>n \<omega>. (Y (t n) \<omega>)\<^sup>2 - qvar (\<lambda>m. Y (t m)) n \<omega>)"
-  by (rule D.qvar_compensates)
-
-theorem grid_expectation_sq_mono:
-  assumes "m \<le> n"
-  shows "(\<integral>\<omega>. (Y (t m) \<omega>)\<^sup>2 \<partial>M) \<le> (\<integral>\<omega>. (Y (t n) \<omega>)\<^sup>2 \<partial>M)"
-  by (rule D.expectation_sq_mono[OF assms])
 
 end
 
@@ -147,24 +120,6 @@ text \<open>Two grids with the same end points give the same expected sum of
   squared increments.  This is the statement that makes the quadratic
   variation of a continuous-time martingale well defined in expectation,
   before any limit is taken.\<close>
-
-theorem grid_expected_qvar_indep:
-  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> real"
-  assumes A: "sampled_martingale M F Y t" and B: "sampled_martingale M F Y t'"
-    and start: "t 0 = t' 0" and end_pt: "t n = t' n'"
-  shows "(\<integral>\<omega>. (\<Sum>k<n. (Y (t (Suc k)) \<omega> - Y (t k) \<omega>)\<^sup>2) \<partial>M)
-     = (\<integral>\<omega>. (\<Sum>k<n'. (Y (t' (Suc k)) \<omega> - Y (t' k) \<omega>)\<^sup>2) \<partial>M)"
-proof -
-  have "(\<integral>\<omega>. (\<Sum>k<n. (Y (t (Suc k)) \<omega> - Y (t k) \<omega>)\<^sup>2) \<partial>M)
-      = (\<integral>\<omega>. (Y (t n) \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (Y (t 0) \<omega>)\<^sup>2 \<partial>M)"
-    by (rule sampled_martingale.grid_expected_qvar[OF A])
-  also have "\<dots> = (\<integral>\<omega>. (Y (t' n') \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (Y (t' 0) \<omega>)\<^sup>2 \<partial>M)"
-    by (simp add: start end_pt)
-  also have "\<dots> = (\<integral>\<omega>. (\<Sum>k<n'. (Y (t' (Suc k)) \<omega> - Y (t' k) \<omega>)\<^sup>2) \<partial>M)"
-    by (rule sampled_martingale.grid_expected_qvar[OF B, symmetric])
-  finally show ?thesis .
-qed
-
 
 subsection \<open>Two facts about the dyadic floor grid\<close>
 

@@ -278,18 +278,6 @@ qed
 text \<open>A continuous real-valued difference attains its supremum on a nonempty
   compact set.\<close>
 
-lemma sup_diff_attained_on_compact:
-  fixes u w :: "'a::metric_space \<Rightarrow> real"
-  assumes cK: "compact K" and ne: "K \<noteq> {}"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-  shows "\<exists>x \<in> K. \<forall>y \<in> K. u y - w y \<le> u x - w x"
-proof -
-  have "continuous_on K (\<lambda>y. u y - w y)"
-    by (intro continuous_intros cu cw)
-  then show ?thesis
-    by (rule continuous_attains_sup[OF cK ne])
-qed
-
 subsection \<open>Three elementary sets and images\<close>
 
 text \<open>The transfer lemma: if \<open>\<Psi>\<close> leaves \<open>F\<close> invariant and distorts balls around

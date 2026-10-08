@@ -68,16 +68,6 @@ text \<open>The maximum principle as a predicate on the operator and the set,
   \<open>K\<close>, the difference \<open>u - w\<close> attains its maximum over \<open>K\<close> on the
   boundary.\<close>
 
-definition max_principle_boundary_gen ::
-  "(real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal) \<Rightarrow> (real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal)
-     \<Rightarrow> (real^'n) set \<Rightarrow> bool"
-  where
-  "max_principle_boundary_gen Fsub Fsuper K \<longleftrightarrow>
-     (\<forall>u w. visc_subsol_gen_env Fsub K (interior K) u
-        \<longrightarrow> visc_supersol_gen_env Fsuper K (interior K) w
-        \<longrightarrow> continuous_on K u \<longrightarrow> continuous_on K w
-        \<longrightarrow> (\<exists>x \<in> K - interior K. \<forall>y \<in> K. u y - w y \<le> u x - w x))"
-
 text \<open>Monotonicity in the operator: a smaller \<open>F\<close> has more subsolutions and
   fewer supersolutions.  This is the only fact stated here, and it is the
   one that lets a proof replace \<open>F\<close> by its lower or upper envelope.\<close>

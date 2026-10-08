@@ -192,103 +192,10 @@ subsection \<open>Main theorem: verification of Example 3.1 (Eq. 3.9)\<close>
 text \<open>\<open>neg_half_trace_ball_op\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma feasible_trace_lb:
-  fixes a :: "real^'n^'n"
-  assumes a: "a \<in> feasible k L p"
-  shows "real (CARD('n) - k) \<le> trace a"
-proof -
-  from a obtain S where S: "subspace S" "CARD('n) - k \<le> dim S"
-    "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x \<le> x \<bullet> (a *v x)"
-    by (auto simp: feasible_def eigen_lb_def)
-  have "real (CARD('n) - k) \<le> real (dim S)"
-    using S(2) by simp
-  also have "\<dots> \<le> trace a"
-    using a S by (intro trace_ge_dim) (auto simp: feasible_def psd_def)
-  finally show ?thesis .
-qed
-
-lemma feasible_value_ge_one:
-  fixes a :: "real^'n^'n"
-  assumes k: "k < CARD('n)" and a: "a \<in> feasible k L p"
-  shows "1 \<le> - trace ((- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) ** a) / 2"
-proof -
-  have c_pos: "0 < real (CARD('n) - k)"
-    using k by simp
-  from feasible_trace_lb[OF a] c_pos have "1 \<le> trace a / real (CARD('n) - k)"
-    by (simp add: pos_le_divide_eq)
-  then show ?thesis
-    unfolding neg_half_trace_ball_op[OF c_pos] .
-qed
-
-theorem ell_op_eval:
-  fixes p :: "real^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-  shows "ell_op k L p (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) = 1"
-proof -
-  define c where "c = real (CARD('n) - k)"
-  have c_pos: "0 < c"
-    using k by (simp add: c_def)
-  obtain a0 where a0: "a0 \<in> feasible k L p" "trace a0 = c"
-    unfolding c_def using k L by (rule feasible_witness)
-  have a0_val: "- trace ((- (2 / c) *\<^sub>R mat 1) ** a0) / 2 = 1"
-    unfolding neg_half_trace_ball_op[OF c_pos] using c_pos by (simp add: a0(2))
-  have "ell_op k L p (- (2 / c) *\<^sub>R mat 1) = 1"
-    unfolding ell_op_def
-    by (rule cInf_eq_minimum)
-      (use a0 a0_val feasible_value_ge_one[OF k(2)] c_def in \<open>force+\<close>)
-  then show ?thesis
-    by (simp add: c_def)
-qed
-
 subsection \<open>The candidate value function and its derivatives\<close>
 
 definition ball_v :: "real \<Rightarrow> nat \<Rightarrow> real^'n \<Rightarrow> real" where
   "ball_v r k x = max (r\<^sup>2 - x \<bullet> x) 0 / real (CARD('n) - k)"
-
-lemma ball_v_nonneg: "0 \<le> ball_v r k x"
-  by (simp add: ball_v_def)
-
-lemma ball_v_boundary: "norm x = r \<Longrightarrow> ball_v r k x = 0"
-  by (simp add: ball_v_def dot_square_norm)
-
-lemma ball_v_gradient:
-  fixes x :: "real^'n"
-  assumes x: "norm x < r" and k: "k < CARD('n)"
-  shows "((ball_v r k) has_derivative
-           (\<lambda>h. (- (2 / real (CARD('n) - k)) *\<^sub>R x) \<bullet> h)) (at x)"
-proof -
-  define c where "c = real (CARD('n) - k)"
-  have c_pos: "0 < c"
-    using k by (simp add: c_def)
-  have inner_deriv: "((\<lambda>y. (r\<^sup>2 - y \<bullet> y) / c) has_derivative
-      (\<lambda>h. (- (2 / c) *\<^sub>R x) \<bullet> h)) (at x)"
-    using c_pos
-    by (auto intro!: derivative_eq_intros simp: inner_commute divide_simps)
-  have eq: "(r\<^sup>2 - y \<bullet> y) / c = ball_v r k y" if "y \<in> ball (0::real^'n) r" for y
-  proof -
-    have "norm y < r"
-      using that by simp
-    then have "(norm y)\<^sup>2 < r\<^sup>2"
-      by (intro power_strict_mono) simp_all
-    then have "y \<bullet> y < r\<^sup>2"
-      by (simp add: dot_square_norm)
-    then show ?thesis
-      by (simp add: ball_v_def c_def max_def)
-  qed
-  show ?thesis
-    unfolding c_def[symmetric]
-  proof (rule has_derivative_transform_within_open)
-    show "((\<lambda>y. (r\<^sup>2 - y \<bullet> y) / c) has_derivative
-        (\<lambda>h. (- (2 / c) *\<^sub>R x) \<bullet> h)) (at x)"
-      by (fact inner_deriv)
-    show "open (ball (0::real^'n) r)"
-      by simp
-    show "x \<in> ball (0::real^'n) r"
-      using x by (simp add: dist_norm)
-    show "\<And>y. y \<in> ball (0::real^'n) r \<Longrightarrow> (r\<^sup>2 - y \<bullet> y) / c = ball_v r k y"
-      by (rule eq)
-  qed
-qed
 
 text \<open>
   Example 3.1: at every interior point of the ball --- including the centre,
@@ -409,70 +316,6 @@ lemma feasible_nonempty:
   assumes "1 \<le> k" "k < CARD('n)" "1 \<le> L"
   shows "feasible k L p \<noteq> {}"
   using feasible_witness[OF assms] by blast
-
-subsection \<open>Perturbation bounds for the operator\<close>
-
-lemma ell_op_le_one_of_psd_diff:
-  fixes p :: "real^'n" and H :: "real^'n^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and Q: "psd (H - (- (2 / real (CARD('n) - k)) *\<^sub>R mat 1))"
-  shows "ell_op k L p H \<le> 1"
-proof -
-  define c where "c = real (CARD('n) - k)"
-  have c_pos: "0 < c"
-    using k by (simp add: c_def)
-  obtain a0 where a0: "a0 \<in> feasible k L p" "trace a0 = c"
-    unfolding c_def using k L by (rule feasible_witness)
-  have Qc: "psd (H - (- (2 / c) *\<^sub>R mat 1))"
-    using Q by (simp add: c_def)
-  have "- trace ((- (2 / c) *\<^sub>R mat 1 + (H - (- (2 / c) *\<^sub>R mat 1))) ** a0) / 2
-      \<le> - trace ((- (2 / c) *\<^sub>R mat 1) ** a0) / 2"
-    by (rule ell_op_pointwise_elliptic[OF Qc a0(1)])
-  moreover have "- (2 / c) *\<^sub>R mat 1 + (H - (- (2 / c) *\<^sub>R mat 1)) = H"
-    by simp
-  ultimately have le1: "- trace (H ** a0) / 2 \<le> - trace ((- (2 / c) *\<^sub>R mat 1) ** a0) / 2"
-    by simp
-  have "- trace ((- (2 / c) *\<^sub>R mat 1) ** a0) / 2 = 1"
-    unfolding neg_half_trace_ball_op[OF c_pos] using c_pos by (simp add: a0(2))
-  with le1 have le1': "- trace (H ** a0) / 2 \<le> 1"
-    by simp
-  have "ell_op k L p H \<le> - trace (H ** a0) / 2"
-    unfolding ell_op_def
-    by (intro cInf_lower imageI a0(1) ell_op_bdd_below)
-  with le1' show ?thesis
-    by simp
-qed
-
-lemma ell_op_ge_one_of_psd_diff:
-  fixes p :: "real^'n" and H :: "real^'n^'n"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and Q: "psd ((- (2 / real (CARD('n) - k)) *\<^sub>R mat 1) - H)"
-  shows "1 \<le> ell_op k L p H"
-proof -
-  define c where "c = real (CARD('n) - k)"
-  have c_pos: "0 < c"
-    using k by (simp add: c_def)
-  have Qc: "psd ((- (2 / c) *\<^sub>R mat 1) - H)"
-    using Q by (simp add: c_def)
-  have per: "1 \<le> - trace (H ** a) / 2" if a: "a \<in> feasible k L p" for a
-  proof -
-    have "- trace ((H + ((- (2 / c) *\<^sub>R mat 1) - H)) ** a) / 2
-        \<le> - trace (H ** a) / 2"
-      by (rule ell_op_pointwise_elliptic[OF Qc a])
-    moreover have "H + ((- (2 / c) *\<^sub>R mat 1) - H) = - (2 / c) *\<^sub>R mat 1"
-      by simp
-    ultimately have "- trace ((- (2 / c) *\<^sub>R mat 1) ** a) / 2 \<le> - trace (H ** a) / 2"
-      by simp
-    moreover have "1 \<le> - trace ((- (2 / c) *\<^sub>R mat 1) ** a) / 2"
-      using feasible_value_ge_one[OF k(2) a] by (simp add: c_def)
-    ultimately show ?thesis
-      by simp
-  qed
-  show ?thesis
-    unfolding ell_op_def
-    by (intro cInf_greatest)
-      (use feasible_nonempty[OF k L] per in auto)
-qed
 
 subsection \<open>Test functions and viscosity sub-/supersolutions\<close>
 

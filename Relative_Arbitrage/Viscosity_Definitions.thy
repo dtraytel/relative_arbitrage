@@ -10,8 +10,6 @@ begin
 (*>*)
 
 
-
-
 definition ell_op_pair ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> ereal"
   where
@@ -161,33 +159,10 @@ definition max_principle_boundary ::
                \<forall>y \<in> K. u y - w y \<le> u x - w x))"
 
 
-
 text \<open>The four notions above are the generic ones of
   @{theory Second_Order_Viscosity_Analysis.Viscosity_Solutions} at this
   paper's operator; the equations below are the bridge, and are what lets a
   reader instantiate the machinery of that session at a different \<open>F\<close>.\<close>
-
-lemma visc_subsol_eq_gen:
-  "visc_subsol k L \<Omega> u = visc_subsol_gen (\<lambda>p M. ereal (ell_op k L p M)) \<Omega> u"
-  by (simp add: visc_subsol_def visc_subsol_gen_def)
-
-lemma visc_supersol_eq_gen:
-  "visc_supersol k L \<Omega> u = visc_supersol_gen (\<lambda>p M. ereal (ell_op k L p M)) \<Omega> u"
-  by (simp add: visc_supersol_def visc_supersol_gen_def)
-
-lemma visc_subsol_env_eq_gen:
-  "visc_subsol_env k L K \<Omega> u = visc_subsol_gen_env (ell_op_lsc k L) K \<Omega> u"
-  by (simp add: visc_subsol_env_def visc_subsol_gen_env_def)
-
-lemma visc_supersol_env_eq_gen:
-  "visc_supersol_env k L K \<Omega> u = visc_supersol_gen_env (ell_op_usc k L) K \<Omega> u"
-  by (simp add: visc_supersol_env_def visc_supersol_gen_env_def)
-
-lemma max_principle_boundary_eq_gen:
-  "max_principle_boundary k L K
-     = max_principle_boundary_gen (ell_op_lsc k L) (ell_op_usc k L) K"
-  by (simp add: max_principle_boundary_def max_principle_boundary_gen_def
-      visc_subsol_env_eq_gen visc_supersol_env_eq_gen)
 
 (*<*)
 end

@@ -642,7 +642,6 @@ proof -
 qed
 
 
-
 section \<open>The soft penalty's jet, Hessian and gradient field\<close>
 
 lemma quartic_grad_derivative:

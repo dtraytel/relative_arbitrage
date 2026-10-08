@@ -47,7 +47,6 @@ text \<open>\<open>quad_grad_shift\<close>, \<open>quad_shift\<close> live in @{
 subsection \<open>Growth up to a time, on a region\<close>
 
 
-
 theorem exit_val_supersol_contradiction_case1_lsc:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -682,8 +681,6 @@ text \<open>Third, the strict quadratic minorant.  This is what replaces the
   \<open>H - \<epsilon> \<cdot> 1\<close> is quadratic by construction and tends to \<open>H\<close>.\<close>
 
 
-
-
 lemma exit_val_case2_separation:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -750,86 +747,9 @@ text \<open>Case 2's tilt step for the value function.  The minimiser \<open>y\<
   hypothesis of the localised Case 1, which therefore applies at \<open>y\<close>
   whenever the tilted gradient there is nonzero.\<close>
 
-theorem exit_val_case2_tilt_step:
-  fixes K :: "(real^'n::finite) set" and x \<eta> :: "real^'n"
-    and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K" and symH: "transpose H = H"
-    and e0: "0 < \<epsilon>" and rho: "0 < \<rho>"
-    and sub: "cball x \<rho> \<subseteq> interior K"
-    and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
-        + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
-        + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
-    and hsm: "norm \<eta> < (\<epsilon> / 4) * \<rho>"
-  obtains y where "dist x y < \<rho>" and "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
-    and "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0 \<Longrightarrow>
-      1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1)"
-proof -
-  have symM: "transpose (H - \<epsilon> *\<^sub>R mat 1) = H - \<epsilon> *\<^sub>R mat 1"
-    by (rule transpose_sub_smat[OF symH])
-  have c0: "0 < \<epsilon> / 4" using e0 by simp
-  have tv0: "\<And>u. 0 \<le> enn2real (exit_val k L T K u)" by simp
-  have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow>
-      a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) u"
-    if lt: "a < lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
-    for a and z :: "real^'n"
-    by (rule lsc_env_lsc[OF tv0 lt])
-  obtain y where dxy: "dist x y < \<rho>"
-    and close: "norm (y - x) \<le> norm \<eta> / (\<epsilon> / 4)"
-    and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
-          - (((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
-          - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
-  proof (rule tilted_local_touching[OF lscW rho c0 sep hsm])
-    fix yy :: "real^'n"
-    assume a1: "dist x yy < \<rho>" and a2: "norm (yy - x) \<le> norm \<eta> / (\<epsilon> / 4)"
-      and a3: "\<And>w. dist yy w < \<rho> - dist x yy \<Longrightarrow>
-        lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) yy
-            - (((yy - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (yy - x))) / 2
-               + \<eta> \<bullet> (yy - x))
-          \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
-            - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2
-               + \<eta> \<bullet> (w - x))"
-    show thesis by (rule that[OF a1 a2 a3])
-  qed
-  have rp: "0 < \<rho> - dist x y" using dxy by simp
-  have yi: "y \<in> interior K"
-  proof -
-    have "y \<in> cball x \<rho>" using dxy by (auto simp: dist_commute)
-    then show ?thesis using sub by blast
-  qed
-  have tfy: "test_fun_at
-      (\<lambda>z. 0 + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
-      (\<lambda>z. (H - \<epsilon> *\<^sub>R mat 1) *v (z - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1) y"
-    by (rule test_fun_at_shifted_quadratic[OF symM])
-  have tminy: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
-        - (0 + ((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
-        - (0 + ((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
-    if wK: "w \<in> K" and dw: "dist y w < \<rho> - dist x y" for w
-    using loc[OF dw] by simp
-  have gt: "1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
-      (H - \<epsilon> *\<^sub>R mat 1)"
-    if gy: "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0"
-  proof (rule ccontr)
-    assume "\<not> 1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
-        (H - \<epsilon> *\<^sub>R mat 1)"
-    then have flt: "ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
-        (H - \<epsilon> *\<^sub>R mat 1) < 1" by simp
-    show False
-      by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
-            tfy rp tminy gy flt])
-  qed
-  show ?thesis by (rule that[OF dxy close]) (use gt in blast)
-qed
-
 subsection \<open>Case 2, second horn: quadratic pinching forces local constancy\<close>
 
 text \<open>\<open>pinch_segment_bound\<close>, \<open>pinch_implies_constant\<close>, \<open>quad_form_bounded_below\<close>, \<open>quad_minimality_pinch\<close>, \<open>singular_matrix_avoids_range\<close>, \<open>invertible_matrix_vector_inj\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 
 theorem exit_val_not_locally_constant:

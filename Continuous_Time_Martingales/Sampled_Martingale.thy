@@ -110,44 +110,6 @@ text \<open>
   with no martingale property assumed of the compensated process itself.
 \<close>
 
-theorem martingale_of_cond_increment:
-  fixes Sq A :: "real \<Rightarrow> 'a \<Rightarrow> real"
-  assumes sfm: "sigma_finite_filtered_measure M F (0::real)"
-    and adapted: "adapted_process M F (0::real) (\<lambda>t \<omega>. Sq t \<omega> - A t \<omega>)"
-    and Sint: "\<And>t. 0 \<le> t \<Longrightarrow> integrable M (Sq t)"
-    and Aint: "\<And>t. 0 \<le> t \<Longrightarrow> integrable M (A t)"
-    and cov: "\<And>s u. 0 \<le> s \<Longrightarrow> s \<le> u \<Longrightarrow>
-        AE \<omega> in M. cond_exp M (F s) (\<lambda>\<omega>. Sq u \<omega> - Sq s \<omega>) \<omega>
-                   = cond_exp M (F s) (\<lambda>\<omega>. A u \<omega> - A s \<omega>) \<omega>"
-  shows "martingale M F 0 (\<lambda>t \<omega>. Sq t \<omega> - A t \<omega>)"
-proof (rule sigma_finite_filtered_measure.martingale_of_cond_exp_diff_eq_zero
-             [OF sfm adapted])
-  show "integrable M (\<lambda>\<omega>. Sq i \<omega> - A i \<omega>)" if "0 \<le> i" for i
-    using Sint[OF that] Aint[OF that] by simp
-next
-  fix i j :: real assume ij: "0 \<le> i" "i \<le> j"
-  then have j: "0 \<le> j" by simp
-  have sfsub: "sigma_finite_subalgebra M (F i)"
-    using ij by (intro sigma_finite_filtered_measure.sigma_finite_subalgebra_F[OF sfm])
-  have iS: "integrable M (\<lambda>\<omega>. Sq j \<omega> - Sq i \<omega>)"
-    using Sint[OF j] Sint[OF ij(1)] by simp
-  have iA: "integrable M (\<lambda>\<omega>. A j \<omega> - A i \<omega>)"
-    using Aint[OF j] Aint[OF ij(1)] by simp
-  have rearr: "(\<lambda>\<omega>. (Sq j \<omega> - A j \<omega>) - (Sq i \<omega> - A i \<omega>))
-               = (\<lambda>\<omega>. (Sq j \<omega> - Sq i \<omega>) - (A j \<omega> - A i \<omega>))"
-    by (simp add: algebra_simps)
-  have "AE \<omega> in M.
-      cond_exp M (F i) (\<lambda>\<omega>. (Sq j \<omega> - Sq i \<omega>) - (A j \<omega> - A i \<omega>)) \<omega>
-        = cond_exp M (F i) (\<lambda>\<omega>. Sq j \<omega> - Sq i \<omega>) \<omega>
-          - cond_exp M (F i) (\<lambda>\<omega>. A j \<omega> - A i \<omega>) \<omega>"
-    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfsub iS iA])
-  with cov[OF ij]
-  show "AE \<omega> in M.
-      cond_exp M (F i) (\<lambda>\<xi>. (Sq j \<xi> - A j \<xi>) - (Sq i \<xi> - A i \<xi>)) \<omega> = 0"
-    unfolding rearr by auto
-qed
-
-
 (*<*)
 end
 (*>*)

@@ -175,10 +175,6 @@ proof -
   from a c d' e' show ?thesis by linarith
 qed
 
-lemma pow4_binomial:
-  "(y + d)^4 = y^4 + 4*(y^3*d) + 6*(y\<^sup>2*d\<^sup>2) + 4*(y*d^3) + d^4" for y d :: real
-  by algebra
-
 subsection \<open>Fourth powers\<close>
 
 lemma fourth_mono_abs:

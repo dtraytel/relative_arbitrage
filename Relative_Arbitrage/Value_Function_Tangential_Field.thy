@@ -108,10 +108,6 @@ text \<open>\<open>orthonormal_inj\<close>, \<open>orthonormal_dim_span\<close> 
 
 subsection \<open>The subspace-tangential field\<close>
 
-definition tanpV :: "real^'n::finite^'n \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
-  "tanpV P z =
-     P - outer_prod ((P *v z) /\<^sub>R norm (P *v z)) ((P *v z) /\<^sub>R norm (P *v z))"
-
 text \<open>The lower eigenvalue bound.  The witnessing subspace is the span of the
   family cut by the hyperplane orthogonal to the singled-out direction: the
   dimension drops by at most one, which is exactly what \<open>n - k\<close> needs.\<close>
@@ -858,7 +854,6 @@ text \<open>The trace of the field is exactly the growth rate \<open>n - k\<clos
 subsection \<open>An orthonormal family through a prescribed unit vector\<close>
 
 text \<open>\<open>orthonormal_family_containing\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 
 (*<*)

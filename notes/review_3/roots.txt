@@ -612,3 +612,4 @@ Theorem_On_Sums.second_order_form_unique    # COROLLARY
 Sup_Convolution.supconv_alexandrov    # COROLLARY
 Increment_Moments.expectation_increment_sq    # COROLLARY
 Path_Exit_Times.pexit_cap_eq    # COROLLARY
+Curvature_Operator.eigen_ub_diag    # FIX_THEN_KEEP (general form of three live lemmas)

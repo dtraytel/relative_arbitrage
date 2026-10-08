@@ -105,30 +105,6 @@ text \<open>And the stopping-time property survives: \<open>{dyceil \<circ> \<si
   \<open>{\<sigma> \<le> (grid point below t)}\<close>, an event of the filtration at that grid
   point, hence at \<open>t\<close>.\<close>
 
-lemma exit_component_dyceil_tendsto:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes T0: "0 \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-    and s0: "0 \<le> s" and sT: "s \<le> T"
-  shows "(\<lambda>n. fst (\<omega> (min (dyceil n T s) T)) $ c)
-      \<longlonglongrightarrow> fst (\<omega> (min s T)) $ c"
-proof -
-  have cont: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u) $ c)"
-    using mspace_path_metricD[OF w] by (intro continuous_intros)
-  have conv: "(\<lambda>n. dyceil n T s) \<longlonglongrightarrow> s" by (rule dyceil_tendsto[OF s0 sT])
-  have mem: "dyceil n T s \<in> {0..T}" for n
-    using dyceil_nonneg[OF s0 sT] dyceil_le_U[of n T s] by simp
-  have "(\<lambda>n. fst (\<omega> (dyceil n T s)) $ c) \<longlonglongrightarrow> fst (\<omega> s) $ c"
-  proof (rule continuous_on_tendsto_compose[OF cont conv])
-    show "\<forall>\<^sub>F n in sequentially. dyceil n T s \<in> {0..T}" using mem by simp
-    show "s \<in> {0..T}" using s0 sT by simp
-  qed
-  moreover have "min (dyceil n T s) T = dyceil n T s" for n
-    using dyceil_le_U[of n T s] by simp
-  moreover have "min s T = s" using sT by simp
-  ultimately show ?thesis by simp
-qed
-
 text \<open>And the \<open>stops\<close> hypothesis at the shifted time.  Above the horizon the
   event is everything, since \<open>(\<theta>+i) \<and> T \<le> T\<close>; below it,
   \<open>path_stopping_time_event_filtration\<close> applies to the shifted
@@ -181,43 +157,17 @@ definition pafter :: "real \<Rightarrow> ((real \<Rightarrow> 'b::ab_group_add) 
 lemma pstopped_apply: "t \<in> {0..T} \<Longrightarrow> pstopped T \<theta> \<omega> t = \<omega> (min t (\<theta> \<omega>))"
   by (simp add: pstopped_def)
 
-lemma pafter_apply:
-  "t \<in> {0..T} \<Longrightarrow> pafter T \<theta> \<omega> t = \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)"
-  by (simp add: pafter_def)
-
 lemma pstopped_outside: "t \<notin> {0..T} \<Longrightarrow> pstopped T \<theta> \<omega> t = undefined"
   unfolding pstopped_def restrict_def by (rule if_not_P)
 
-lemma pafter_outside: "t \<notin> {0..T} \<Longrightarrow> pafter T \<theta> \<omega> t = undefined"
-  unfolding pafter_def restrict_def by (rule if_not_P)
 text \<open>The reassembly law.  This is the analogue of
   @{thm [source] pglue_pcut_pfut} at a random time, and unlike that one it
   costs nothing: no membership hypothesis on \<open>\<omega>\<close>, and no \<open>\<theta>\<close> on the
   right-hand side.\<close>
 
-lemma pstopped_add_pafter:
-  fixes \<omega> :: "real \<Rightarrow> 'b::ab_group_add"
-  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T" and t: "t \<in> {0..T}"
-  shows "pstopped T \<theta> \<omega> t + pafter T \<theta> \<omega> t = \<omega> t"
-proof (cases "t \<le> \<theta> \<omega>")
-  case True
-  then have m1: "min t (\<theta> \<omega>) = t" and m2: "max t (\<theta> \<omega>) = \<theta> \<omega>" by simp_all
-  show ?thesis using t by (simp add: pstopped_apply pafter_apply m1 m2)
-next
-  case False
-  then have m1: "min t (\<theta> \<omega>) = \<theta> \<omega>" and m2: "max t (\<theta> \<omega>) = t" by simp_all
-  show ?thesis using t by (simp add: pstopped_apply pafter_apply m1 m2)
-qed
-
 text \<open>The future factor starts at \<open>0\<close> --- exactly the normalisation the class
   asks of a continuation --- and the two halves live on disjoint stretches of
   time.\<close>
-
-lemma pafter_before:
-  fixes \<omega> :: "real \<Rightarrow> 'b::ab_group_add"
-  assumes t: "t \<in> {0..T}" and le: "t \<le> \<theta> \<omega>"
-  shows "pafter T \<theta> \<omega> t = 0"
-  using t le by (simp add: pafter_apply max_absorb2)
 
 text \<open>Evaluating a path at a random time.  This is the one new measurability
   fact the additive split needs, and it is where the paths' continuity is
@@ -287,22 +237,6 @@ proof -
   qed
 qed
 
-lemma pafter_mspace:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
-  assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-proof -
-  have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
-  have m: "continuous_on {0..T} (\<lambda>t. max t (\<theta> \<omega>))" by (intro continuous_intros)
-  have im: "(\<lambda>t. max t (\<theta> \<omega>)) ` {0..T} \<subseteq> {0..T}" using th0 thT by auto
-  have "continuous_on {0..T} (\<lambda>t. \<omega> (max t (\<theta> \<omega>)))"
-    by (rule continuous_on_compose2[OF c m im])
-  then have "continuous_on {0..T} (\<lambda>t. \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>))"
-    by (intro continuous_intros)
-  then show ?thesis unfolding pafter_def by (rule mspace_path_metricI)
-qed
-
 text \<open>A criterion for landing in the path space.  The balls are a base, so
   Borel measurability into \<open>?B\<^sub>T\<close> reduces to measurability of the distance to
   each point, which the additive split can supply, since the distance is a
@@ -359,61 +293,6 @@ proof -
   qed
 qed
 
-lemma pafter_measurable:
-  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> real"
-  assumes T0: "0 \<le> T"
-    and thm': "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
-  shows "pafter T \<theta> \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-proof -
-  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  have sp: "space ?B = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    by (simp add: space_borel_of)
-  have into: "pafter T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    if "\<omega> \<in> space ?B" for \<omega>
-    using that sp by (intro pafter_mspace[OF th0 thT]) simp
-  have base0: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (\<theta> \<omega>)) \<in> borel_measurable ?B"
-  proof (rule path_eval_at_measurable_time
-      [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>" and g = \<theta>, OF T0])
-    show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
-    show "\<theta> \<in> borel_measurable ?B" by (rule thm')
-    show "0 \<le> \<theta> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" by (rule th0)
-    show "\<theta> \<omega> \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" by (rule thT)
-  qed
-  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pafter T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
-  proof (cases "t \<in> {0..T}")
-    case True
-    have base: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (max t (\<theta> \<omega>))) \<in> borel_measurable ?B"
-    proof (rule path_eval_at_measurable_time
-        [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>" and g = "\<lambda>\<omega>. max t (\<theta> \<omega>)", OF T0])
-      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
-      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). max t (\<theta> \<omega>)) \<in> borel_measurable ?B"
-        using thm' by measurable
-      show "0 \<le> max t (\<theta> \<omega>)" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-        using th0[of \<omega>] by simp
-      show "max t (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-        using True thT[of \<omega>] by simp
-    qed
-    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pafter T \<theta> \<omega> t)
-        = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (max t (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>))"
-      by (rule ext) (rule pafter_apply[OF True])
-    then show ?thesis using base base0 by simp
-  next
-    case False
-    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pafter T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
-      by (rule ext) (rule pafter_outside[OF False])
-    then show ?thesis by simp
-  qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>\<omega>. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pafter T \<theta> \<omega>) a) \<in> borel_measurable ?B"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
-qed
 subsection \<open>The regular conditional distribution, with both maps and horizons free\<close>
 
 text \<open>\<open>exit_class_rcd\<close> and
@@ -618,54 +497,6 @@ proof (rule ext)
   qed
 qed
 
-lemma pafter_padd:
-  fixes p' w :: "(real \<Rightarrow> 'a::topological_ab_group_add \<times> 'b::ab_group_add)"
-  assumes st: "path_stopping_time T \<theta>"
-    and idem: "pstopped T \<theta> p' = p'"
-    and w0: "\<And>t. t \<in> {0..\<theta> p'} \<Longrightarrow> w t = 0"
-    and wfr: "\<And>t. t \<in> {0..T} \<Longrightarrow> w t = w (max t (\<theta> p'))"
-    and wout: "\<And>t. t \<notin> {0..T} \<Longrightarrow> w t = undefined"
-    and cp: "continuous_on {0..T} (\<lambda>t. fst (p' t))"
-    and cwv: "continuous_on {0..T} (\<lambda>t. fst (w t))"
-  shows "pafter T \<theta> (padd T p' w) = w"
-proof (rule ext)
-  fix t :: real
-  have th: "\<theta> (padd T p' w) = \<theta> p'"
-    by (rule padd_stopping_time[OF st idem w0 cp cwv])
-  have th0: "0 \<le> \<theta> p'" by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> p' \<le> T" by (rule path_stopping_time_le[OF st])
-  show "pafter T \<theta> (padd T p' w) t = w t"
-  proof (cases "t \<in> {0..T}")
-    case True
-    have m1: "max t (\<theta> p') \<in> {0..T}" using True th0 thT by auto
-    have m2: "\<theta> p' \<in> {0..T}" using th0 thT by simp
-    have m2': "\<theta> p' \<in> {0..\<theta> p'}" using th0 by simp
-    have "pafter T \<theta> (padd T p' w) t
-        = padd T p' w (max t (\<theta> p')) - padd T p' w (\<theta> p')"
-      unfolding pafter_apply[OF True] th ..
-    also have "\<dots> = (p' (max t (\<theta> p')) + w (max t (\<theta> p')))
-        - (p' (\<theta> p') + w (\<theta> p'))"
-      by (simp only: padd_apply[OF m1] padd_apply[OF m2])
-    also have "\<dots> = p' (max t (\<theta> p')) - p' (\<theta> p') + w (max t (\<theta> p'))"
-      using w0[OF m2'] by simp
-    also have "p' (max t (\<theta> p')) = p' (\<theta> p')"
-    proof -
-      have "p' (max t (\<theta> p')) = pstopped T \<theta> p' (max t (\<theta> p'))"
-        unfolding idem ..
-      also have "\<dots> = p' (min (max t (\<theta> p')) (\<theta> p'))"
-        by (rule pstopped_apply[OF m1])
-      also have "min (max t (\<theta> p')) (\<theta> p') = \<theta> p'" by simp
-      finally show ?thesis .
-    qed
-    finally show ?thesis using wfr[OF True] by simp
-  next
-    case False
-    have "pafter T \<theta> (padd T p' w) t = undefined"
-      by (rule pafter_outside[OF False])
-    then show ?thesis using wout[OF False] by simp
-  qed
-qed
-
 subsection \<open>The glued law, and the clauses that come for free\<close>
 
 text \<open>The law of the reassembled path: run the past under \<open>Q\<close>, draw a
@@ -844,45 +675,6 @@ qed
 text \<open>The second factor only agrees up to \<open>u\<close> --- exactly as far as an
   \<open>\<F>\<^sub>u\<close>-set can look, so composing with \<^const>\<open>pcut\<close> loses nothing.\<close>
 
-lemma pcut_pafter_cut_compose:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
-  assumes st: "path_stopping_time T \<theta>" and tT: "t \<le> T"
-    and u: "0 \<le> u" and ut: "u \<le> t" and le: "\<theta> \<omega> \<le> t"
-    and cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
-  shows "pcut u (pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>)) = pcut u (pafter T \<theta> \<omega>)"
-proof (rule ext)
-  fix s :: real
-  show "pcut u (pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>)) s
-      = pcut u (pafter T \<theta> \<omega>) s"
-  proof (cases "s \<in> {0..u}")
-    case True
-    have th0: "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
-    have sT: "s \<in> {0..T}" using True u ut tT by auto
-    have th: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
-      by (rule path_stopping_time_cut_eq[OF st tT le cw])
-    have m1: "max s (\<theta> \<omega>) \<in> {0..T}"
-      using sT th0 path_stopping_time_le[OF st, of \<omega>] by auto
-    have m2: "\<theta> \<omega> \<in> {0..T}"
-      using th0 path_stopping_time_le[OF st, of \<omega>] by simp
-    have mx: "max s (\<theta> \<omega>) \<le> t" using True ut le by simp
-    have "pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>) s
-        = pstopped T (\<lambda>_. t) \<omega> (max s (\<theta> \<omega>))
-          - pstopped T (\<lambda>_. t) \<omega> (\<theta> \<omega>)"
-      unfolding pafter_apply[OF sT] th ..
-    also have "\<dots> = \<omega> (min (max s (\<theta> \<omega>)) t) - \<omega> (min (\<theta> \<omega>) t)"
-      by (simp only: pstopped_apply[OF m1] pstopped_apply[OF m2])
-    also have "\<dots> = \<omega> (max s (\<theta> \<omega>)) - \<omega> (\<theta> \<omega>)" using mx le by simp
-    finally have "pafter T \<theta> (pstopped T (\<lambda>_. t) \<omega>) s = pafter T \<theta> \<omega> s"
-      unfolding pafter_apply[OF sT] .
-    then show ?thesis by (simp add: pcut_apply[OF True])
-  next
-    case False
-    have out: "pcut u w s = undefined" for w :: "(real \<Rightarrow> 'a \<times> 'b)"
-      unfolding pcut_def restrict_def by (rule if_not_P[OF False])
-    show ?thesis unfolding out ..
-  qed
-qed
-
 text \<open>\<open>u \<or> \<theta>\<close> is a stopping time for the same reason \<open>(\<theta>+i) \<and> T\<close> is
   (@{thm [source] path_stopping_time_shift}): it never looks back less far
   than \<open>\<theta>\<close> does.\<close>
@@ -963,35 +755,6 @@ text \<open>Comparing two stopping times: apply
   \<open>pre_sigma_of_mono\<close> carries it up.  This is the form clause
   (iv) uses, at \<open>\<sigma> = (\<theta>+i) \<and> T\<close> and \<open>\<rho> = (\<theta>+j) \<and> T\<close>.\<close>
 
-lemma path_stopping_time_shift_event:
-  assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
-    and i: "0 \<le> i" and t: "0 \<le> t"
-  shows "{\<omega> \<in> space (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure). min (\<theta> \<omega> + i) T \<le> t}
-      \<in> sets (natural_filtration (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) 0 (\<lambda>v \<omega>. \<omega> v) t)"
-proof (cases "t \<le> T")
-  case True
-  have st': "path_stopping_time T (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min (\<theta> \<omega> + i) T)"
-    by (rule path_stopping_time_shift[OF st i])
-  have m': "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min (\<theta> \<omega> + i) T) \<in> borel_measurable
-      (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    using thM by measurable
-  show ?thesis
-    by (rule path_stopping_time_event_filtration[OF T0 st' m' t True])
-next
-  case False
-  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t"
-  have "{\<omega> \<in> space ?B. min (\<theta> \<omega> + i) T \<le> t} = space ?B"
-    using False by auto
-  moreover have "space ?B \<in> sets ?F"
-  proof -
-    have "space ?F = space ?B" by simp
-    then show ?thesis using sets.top[of ?F] by simp
-  qed
-  ultimately show ?thesis by simp
-qed
-
 section \<open>Clause (iv) at a stopping time: the increment identity\<close>
 
 text \<open>The assembly.  Every hypothesis of
@@ -999,8 +762,8 @@ text \<open>The assembly.  Every hypothesis of
   martingale from the class via @{thm [source] martingale_vec_component},
   the filtration facts from @{thm [source] sets_natural_filtration_mono} and
   the martingale locale, the stopping-time events from
-  @{thm [source] path_stopping_time_shift_event}, the convergence from
-  @{thm [source] exit_component_dyceil_tendsto}, and the domination from
+  \<open>path_stopping_time_shift_event\<close>, the convergence from
+  \<open>exit_component_dyceil_tendsto\<close>, and the domination from
   @{theory Continuous_Time_Martingales.Doob_Inequality}'s \<open>Dsup\<close> through
   \<open>exit_class_horizon_component\<close>.\<close>
 
@@ -1225,20 +988,6 @@ text \<open>It is a \<open>\<sigma>\<close>-algebra: the complement step is wher
   property of \<open>\<sigma>\<close> is spent, since \<open>{\<sigma> \<le> t}\<close> itself has to be in \<open>F t\<close> for
   the relative complement to stay there.\<close>
 
-lemma pre_sigma_of_Int:
-  assumes A: "A \<in> pre_sigma_of M F \<sigma>" and B: "B \<in> pre_sigma_of M F \<sigma>"
-  shows "A \<inter> B \<in> pre_sigma_of M F \<sigma>"
-proof (rule pre_sigma_ofI)
-  show "A \<inter> B \<in> sets M"
-    using pre_sigma_of_sets[OF A] pre_sigma_of_sets[OF B] by (rule sets.Int)
-  fix t :: real assume t: "0 \<le> t"
-  have "(A \<inter> B) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}
-      = (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) \<inter> (B \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t})" by auto
-  moreover have "\<dots> \<in> sets (F t)"
-    using pre_sigma_of_cut[OF A t] pre_sigma_of_cut[OF B t] by (rule sets.Int)
-  ultimately show "(A \<inter> B) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)" by simp
-qed
-
 text \<open>The first factor.  Below \<open>t\<close> the stopped path is read off the path
   stopped at \<open>t\<close> --- \<open>pstopped_cut_compose\<close> --- and that composite is
   \<open>\<F>\<^sub>t\<close>-measurable by \<open>pstopped_const_measurable_filtration\<close>.\<close>
@@ -1389,7 +1138,6 @@ next
     by (rule pre_sigma_of_cut[OF A Vnn[OF v]])
   ultimately show ?thesis by simp
 qed
-
 
 
 text \<open>With the \<open>\<F>\<^sub>\<sigma>\<close> layer in place the simple case is the classical
@@ -1677,7 +1425,6 @@ proof -
         [OF mg mono sub Ar stopr rho0 rhoU U0 contr Dbd Dint])
   show ?thesis using s r by simp
 qed
-
 
 
 lemma integrable_at_bounded_stopping_time:
@@ -2062,7 +1809,6 @@ text \<open>The second, and last, clause-(iv) instance.  The pathwise identity i
   kills, and two cross terms, which
   @{thm [source] set_integral_increment_times_known} kills.  The constants
   \<open>outerp b\<close> and \<open>\<langle>X\<rangle>\<^sub>\<theta>\<close> have already cancelled between the two times.\<close>
-
 
 
 (*<*)

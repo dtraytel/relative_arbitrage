@@ -16,38 +16,6 @@ text \<open>The development of Jensen's lemma below follows
   maximizer of the perturbed function is interior, so a first-order
   condition is available.\<close>
 
-lemma perturbed_maximiser_interior:
-  fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
-  assumes r: "0 < r"
-    and bnd: "\<And>y. y \<in> sphere \<xi> r \<Longrightarrow> \<phi> y \<le> m"
-    and d0: "0 \<le> d" and small: "2 * d * r < \<phi> \<xi> - m"
-    and p: "norm p \<le> d"
-    and xin: "x \<in> cball \<xi> r"
-    and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-  shows "x \<in> ball \<xi> r"
-proof (rule ccontr)
-  assume "x \<notin> ball \<xi> r"
-  hence "r \<le> dist x \<xi>" by (simp add: dist_commute)
-  moreover have "dist x \<xi> \<le> r" using xin by (simp add: dist_commute)
-  ultimately have dxr: "dist x \<xi> = r" by simp
-  hence "x \<in> sphere \<xi> r" by (simp add: dist_commute)
-  hence phix: "\<phi> x \<le> m" by (rule bnd)
-  have "\<xi> \<in> cball \<xi> r" using r by simp
-  hence "\<phi> \<xi> + p \<bullet> \<xi> \<le> \<phi> x + p \<bullet> x" by (rule xmax)
-  hence step: "\<phi> \<xi> - \<phi> x \<le> p \<bullet> (x - \<xi>)" by (simp add: inner_diff_right)
-  have "p \<bullet> (x - \<xi>) \<le> norm p * norm (x - \<xi>)"
-    using Cauchy_Schwarz_ineq2[of p "x - \<xi>"] by linarith
-  also have "\<dots> = norm p * r" using dxr by (simp add: dist_norm)
-  also have "\<dots> \<le> d * r" using p r by (intro mult_right_mono) auto
-  finally have "\<phi> \<xi> - \<phi> x \<le> d * r" using step by linarith
-  moreover have "\<phi> \<xi> - m \<le> \<phi> \<xi> - \<phi> x" using phix by simp
-  ultimately have "\<phi> \<xi> - m \<le> d * r" by linarith
-  hence "2 * d * r < d * r" using small by linarith
-  hence "d * r < 0" by linarith
-  moreover have "0 \<le> d * r" using d0 r by simp
-  ultimately show False by linarith
-qed
-
 lemma le_of_le_plus_small:
   fixes a b e t0 :: real
   assumes t0: "0 < t0" and h: "\<And>t. 0 < t \<Longrightarrow> t < t0 \<Longrightarrow> a \<le> b + e * t"
@@ -147,19 +115,6 @@ proof -
   have "(q - (c *\<^sub>R x - p)) \<bullet> (q - (c *\<^sub>R x - p)) = 0"
     using eq[of "q - (c *\<^sub>R x - p)"] by (simp add: inner_diff_left)
   thus ?thesis by simp
-qed
-
-lemma interior_max_subdiff:
-  fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)"
-    and x: "x \<in> ball \<xi> r"
-    and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-  shows "c *\<^sub>R x - p \<in> subdiff (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2) x"
-proof -
-  obtain q where q: "q \<in> subdiff (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2) x"
-    using subdiff_nonempty[OF cvx] by blast
-  have "q = c *\<^sub>R x - p" by (rule interior_max_subdiff_unique[OF x xmax q])
-  with q show ?thesis by simp
 qed
 
 text \<open>Third ingredient: at a maximizer of \<open>\<phi> + p \<cdot> (-)\<close>, \<open>\<psi>\<close> also

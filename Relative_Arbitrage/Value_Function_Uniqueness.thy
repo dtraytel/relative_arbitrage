@@ -42,34 +42,6 @@ text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1
   the open two-dimensional faces of its boundary.  The pointwise identity is
   proved here only for a ball, where it holds.\<close>
 
-section \<open>A comparison principle without a regularity hypothesis is refutable\<close>
-
-text \<open>Comparison with no regularity hypothesis on \<open>u\<close> and \<open>w\<close> holds for no
-  ball.  \<open>visc_subsol\<close> and \<open>visc_supersol\<close> are conditions local to \<open>\<Omega>\<close>, so
-  the values of a sub- or supersolution outside \<open>\<Omega>\<close> are unconstrained.  With
-  \<open>v\<close> the closed form of Example 3.1 on a ball, \<open>u = v + 1\<close> is a subsolution,
-  and \<open>w\<close> taken equal to \<open>v\<close> inside the ball and to \<open>v + 1\<close> outside is a
-  supersolution agreeing with \<open>u\<close> on the boundary, yet \<open>u > w\<close> at the centre.
-  \<open>theorem_1_1_uniqueness_general\<close> below therefore assumes continuity on
-  \<open>K\<close>.\<close>
-
-theorem theorem_1_1_uniqueness_general:
-  fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
-  assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and subu: "visc_subsol_env k L K (interior K) u"
-    and supu: "visc_supersol_env k L K (interior K) u"
-    and subw: "visc_subsol_env k L K (interior K) w"
-    and supw: "visc_supersol_env k L K (interior K) w"
-    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
-    and x: "x \<in> K"
-  shows "u x = w x"
-  by (rule viscosity_uniqueness_compact
-      [OF cK neK k(1) k(2) L cu cw subu supu subw supw bd x])
-
-section \<open>Example 3.1 realises the ball value exactly, for \<open>n - k = 1\<close>\<close>
-
 section \<open>The value function satisfies both clauses of Definition 3.1\<close>
 
 text \<open>Both halves of the viscosity property land in the envelope forms that
@@ -534,23 +506,6 @@ text \<open>Everything above is stated at a finite horizon.  Since
 text \<open>\<open>compact_cball_bound\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-
-theorem iexit_val_real_bounded:
-  fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
-    and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
-  shows "\<bar>enn2real (iexit_val k L K x)\<bar> \<le> rK * rK / real (CARD('n) - k)"
-proof -
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
-  show ?thesis unfolding eq
-    using L by (intro exit_val_real_bounded[OF kn less_imp_le[OF T0] _ KB r0]) simp
-qed
-
 text \<open>The same bound in \<open>ennreal\<close>, which is the form of Eq. (3.10) and, unlike
   the real-valued one above, also says that the value is finite: \<open>enn2real\<close> maps
   \<open>\<top>\<close> to \<open>0\<close>, so the bound on \<open>\<bar>enn2real \<dots>\<bar>\<close> alone would hold vacuously at \<open>\<top>\<close>.
@@ -571,21 +526,6 @@ proof -
     by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
   show ?thesis unfolding eq
     using L by (intro exit_val_le_ball_bound[OF kn less_imp_le[OF T0] _ KB]) simp
-qed
-
-corollary iexit_val_neq_top:
-  fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
-  shows "iexit_val k L K x \<noteq> \<top>"
-proof -
-  obtain rK :: real where KB: "K \<subseteq> cball 0 rK"
-    using compact_cball_bound[OF cK] by blast
-  have "iexit_val k L K x
-      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
-    by (rule iexit_val_le_ball_bound[OF kn L compact_imp_closed[OF cK] KB])
-  then have "iexit_val k L K x < \<top>"
-    by (rule le_less_trans[OF _ ennreal_less_top])
-  then show ?thesis by simp
 qed
 
 text \<open>\<^bold>\<open>Clause (1): upper semicontinuity.\<close>\<close>
@@ -609,22 +549,6 @@ proof -
 qed
 
 text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>\<close>
-
-theorem iexit_val_visc_subsol:
-  fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
-  shows "visc_subsol k L (interior K) (\<lambda>z. enn2real (iexit_val k L K z))"
-proof -
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
-    using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
-  show ?thesis unfolding eq by (rule exit_val_visc_subsol[OF T0 L Kc kn])
-qed
 
 text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form of Definition 3.1(b) for
   the lower semicontinuous envelope.  The hypothesis that the horizon does not
@@ -754,38 +678,6 @@ qed
 text \<open>The interior clause on its own, which is Definition 3.1(b) for
   \<^const>\<open>iexit_val\<close> with the paper's envelope: the boundary gate is empty,
   since the value function is nonnegative and so is its liminf within \<open>K\<close>.\<close>
-
-theorem iexit_val_supersol_lsc_K:
-  fixes K :: "(real^'n::finite) set"
-  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k" and cK: "compact K"
-  shows "visc_supersol_env k L K (interior K)
-      (lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)))"
-proof -
-  define v where "v = (\<lambda>z :: real^'n. enn2real (iexit_val k L K z))"
-  have v0: "0 \<le> v y" for y unfolding v_def by simp
-  have gate: "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} = interior K"
-  proof
-    show "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} \<subseteq> interior K"
-    proof
-      fix y assume y: "y \<in> interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}"
-      show "y \<in> interior K"
-      proof (cases "y \<in> interior K")
-        case True then show ?thesis .
-      next
-        case False
-        then have yK: "y \<in> K" and neg: "lsc_envK K v y < 0" using y by auto
-        have "0 \<le> lsc_envK K v y" by (rule lsc_envK_ge[OF v0 yK])
-        then show ?thesis using neg by linarith
-      qed
-    qed
-    show "interior K \<subseteq> interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}"
-      by blast
-  qed
-  have main: "visc_supersol_env k L K
-      (interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}) (lsc_envK K v)"
-    unfolding v_def by (rule iexit_val_supersol_bc_K[OF kn L1 k1 cK])
-  show ?thesis using main unfolding v_def[symmetric] gate .
-qed
 
 theorem iexit_val_uniqueness_K:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
