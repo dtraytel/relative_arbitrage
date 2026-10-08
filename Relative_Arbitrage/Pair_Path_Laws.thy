@@ -169,8 +169,6 @@ text \<open>\<open>exists_enum_of_card\<close> lives in @{theory Symmetric_Matri
 
 subsection \<open>Continuity of the Gaussian member in its volatility\<close>
 
-text \<open>\<open>dist_pair_le\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
 lemma trace_outerp_mult:
   fixes B :: "real^'n::finite^'n" and v :: "real^'n"
   shows "trace (outerp v ** B) = v \<bullet> (B *v v)"

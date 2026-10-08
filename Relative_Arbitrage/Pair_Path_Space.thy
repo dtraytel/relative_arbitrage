@@ -27,9 +27,6 @@ theory Pair_Path_Space
     "Symmetric_Matrix_Spectra.Householder_Rotation"
     "Semicontinuous_Analysis.Semicontinuity" "Semicontinuous_Analysis.Berge"
     "Semicontinuous_Analysis.Semicontinuous_Selection"
-    "Second_Order_Viscosity_Analysis.Sup_Convolution"
-    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
-    "Wiener_Measure.Brownian_Finite_Dimensional_Distributions"
     "Disintegration.Disintegration"
 begin
 
