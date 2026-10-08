@@ -582,3 +582,30 @@ Path_Space.sets_path_law    # KEEP_API
 Path_Space.prob_space_path_law    # KEEP_API
 Path_Space.path_law_restrict    # KEEP_API
 Path_Space_Infinite.sets_ipath_law    # KEEP_API
+
+# --- COROLLARY verdicts that keep their name (shortened in phase 4) ------------
+Exit_Class.exit_val_eq_covariation_val    # COROLLARY
+Comparison_Principle.viscosity_uniqueness_compact    # COROLLARY
+Adapted_Quadratic_Variation.qvps_mono_lip    # COROLLARY
+Adapted_Quadratic_Variation.qvps_continuous    # COROLLARY
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.qvmat_eq_A_sym    # COROLLARY
+Stopped_Localization.fourth_moment_L2_integrable    # COROLLARY
+Stopped_Localization.fourth_moment_L2_bochner    # COROLLARY
+Optional_Sampling.nat_stopped_martingale.stopped_expectation    # COROLLARY
+Sampled_Quadratic_Variation.expectation_sq_sampled    # COROLLARY
+Operator_Envelope_Continuity.max_principle_le    # COROLLARY
+Operator_Envelope_Continuity.uniqueness_from_max_principle    # COROLLARY
+Poincare_Separation.is_proj_rank1    # COROLLARY
+Doubling_Of_Variables.doubling_dist_bound    # COROLLARY
+Doubling_Of_Variables.penalty_difference_identity    # COROLLARY
+Doubling_Of_Variables.doubled_slice_numerator_fst    # COROLLARY
+Doubling_Of_Variables.doubled_jet_slice_fst    # COROLLARY
+Doubling_Of_Variables.penalty_difference_identity_snd    # COROLLARY
+Doubling_Of_Variables.doubled_slice_numerator_snd    # COROLLARY
+Doubling_Of_Variables.doubled_jet_slice_snd    # COROLLARY
+Doubling_Of_Variables.tilted_doubled_hessian_nonpositive    # COROLLARY
+Doubling_Of_Variables.doubled_supconv_jet_exists_shifted    # COROLLARY
+Theorem_On_Sums.second_order_form_unique    # COROLLARY
+Sup_Convolution.supconv_alexandrov    # COROLLARY
+Increment_Moments.expectation_increment_sq    # COROLLARY
+Path_Exit_Times.pexit_cap_eq    # COROLLARY
