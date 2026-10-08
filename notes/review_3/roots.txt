@@ -6,6 +6,7 @@
 # --- the paper: the statement and every checked reading ---------------------
 Relative_Arbitrage_Statement.Theorem_1_1_Statement.*
 Relative_Arbitrage_Statement.Paper_Readings.*
+Relative_Arbitrage_Statement.Paper_Map.*   # one theorem per numbered paper item (D8)
 Relative_Arbitrage.Theorem_1_1.*
 Relative_Arbitrage.Proposition_2_4.*   # Prop. 2.4 for the horizon-T value (D4)
 Comparison_Principle.max_principle_usc_lsc   # Theorem 4.2(a) for usc/lsc data (D3)
