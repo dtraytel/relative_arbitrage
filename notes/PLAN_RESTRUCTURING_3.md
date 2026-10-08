@@ -10,6 +10,25 @@ keeps that plan's §8 rules, with the amendments in §6 below.
 REVIEW_3 §0. Numbers marked *checked* come from a PIDE dry run or a PIDE proof. Everything
 else is an *estimate*, and every phase re-measures it.
 
+**Revision of 2026-10-08.** Three things changed the draft of 2026-10-07:
+
+1. **The owner's directive on independent interest** (§1.3). The draft deleted most of what
+   lies outside the closure of Theorem 1.1. The revision keeps every result of independent
+   interest: Crandall–Ishii, Theorem 4.2(a), the full Lemma 3.1, the Poincaré separation and
+   Courant–Fischer evidence, and natural library interface. The decision for each of the
+   ≈ 840 unused items is in `notes/review_3/data/independent_interest.md`, made by one
+   classifier and one adversarial verifier per cluster. The deletion estimate falls from
+   ≈ 25 000 lines to ≈ 17 000, the market layer included.
+2. **A design panel** of three independent session layouts and two judges (§1.4). Both
+   judges chose a paper-ordered layout with a `Paper_Map` theory. The grafts they asked for
+   are adopted here: a probability-free `Relative_Arbitrage_Equation` on
+   `Second_Order_Viscosity_Analysis`, `Continuous_Path_Spaces` on `Levy_Prokhorov_Metric`
+   with a local Arzelà–Ascoli, `Semicontinuous_Analysis` on `Lower_Semicontinuous`, the
+   generic viscosity layer reworked (G-G) rather than deleted, and mandatory re-homing of
+   library material before the toolkit is promoted.
+3. **Execution has started** (§7, progress log). Phases 0 and 1 are done, and phase 2 has
+   deleted the market layer. All sessions build after each step.
+
 ---
 
 ## 0. The answer in one page
@@ -51,7 +70,7 @@ section 2 the phases. Each phase ends with every session green.
 
 | metric | today (*measured*) | target (estimate) |
 |---|---:|---:|
-| lines | 120 625 | ≈ 95 000 |
+| lines | 120 625 | ≈ 100 000 (independent-interest keeps included; §1.3) |
 | facts outside the closure of the declared roots | 2 371 of 4 793 | < 5 % |
 | paper-session build, summed CPU | ≈ 1 190 s, of which ≈ 560 s re-checks | ≈ 480 s, of which ≈ 235 s re-checks |
 | rebuild after editing a Section 4 theory | whole paper session (≈ 1 190 s) | `Relative_Arbitrage_Equation` ≈ 90 s, then the paper session |
@@ -88,16 +107,33 @@ re-checked:
 | session | parent | `sessions` | scope (one sentence, no mention of the paper for library sessions) | est. lines | status |
 |---|---|---|---|---:|---|
 | `Symmetric_Matrix_Spectra` | HOL-Analysis | — | the spectral theory of real symmetric matrices that HOL-Analysis stops short of (unchanged) | ≈ 7 500 | existing; gains ≈ 30 matrix lemmas from the paper session, loses library re-proofs and unrooted dead code |
-| `Semicontinuous_Analysis` | **HOL-Analysis** (was HOL-Probability) | `Lower_Semicontinuous` | upper and lower semicontinuity on metric spaces: calculus, attainment, envelopes, Berge | ≈ 1 350 | re-parented; `Semicontinuous_Selection` leaves |
-| `Second_Order_Viscosity_Analysis` | **`Symmetric_Matrix_Spectra`** (was HOL-Analysis + sessions) | — | Rademacher, Alexandrov, Jensen, the Crandall–Ishii theorem on sums, doubling and penalty tools, test functions | ≈ 15 000 | re-parented; dead generic layer deleted (G-G may re-create it); CIS kept as a root (D1) |
+| `Semicontinuous_Analysis` | **`Lower_Semicontinuous`** (was HOL-Probability; panel graft) | — | upper and lower semicontinuity on metric spaces: calculus, attainment, envelopes, scaling of infima, Berge | ≈ 1 400 | re-parented; `Semicontinuous_Selection` leaves; gains `cInf_mult_pos` (panel graft) and the CIS copies of its lemmas |
+| `Second_Order_Viscosity_Analysis` | **`Symmetric_Matrix_Spectra`** (was HOL-Analysis + sessions) | `Semicontinuous_Analysis` | Rademacher, Alexandrov, Jensen, Minty, sup-convolution, the Crandall–Ishii theorem on sums with semijets, doubling and penalty tools, test functions, and viscosity sub/supersolutions for an arbitrary operator | ≈ 16 500 | re-parented; CIS a root (D1); the generic viscosity layer reworked (G-G, D9), not deleted |
 | `Continuous_Time_Martingales` | HOL-Probability | `Martingales` | what continuous-time martingale theory needs beyond `Martingales`, now including optional sampling at a stopping time, the dyadic ceiling, the fourth-moment estimate and stopped localisation | ≈ 11 000 | existing; gains from `Continuous_Path_Spaces` and `Path_Stopping_Times`; loses `Moment_Bounds` (paper, dead) and `cInf_mult_pos` |
 | `Wiener_Measure` | **`Continuous_Time_Martingales`** (was HOL-Probability + sessions) | `Kolmogorov_Chentsov` | Brownian motion and the n-dimensional process it carries, with independent increments relative to the natural filtration | ≈ 3 400 | re-parented; gains ≈ 540 Brownian lines from `Exit_Class_Witness` |
-| `Continuous_Path_Spaces` | `Continuous_Time_Martingales` | `Kolmogorov_Chentsov`, `Levy_Prokhorov_Metric`, `Standard_Borel_Spaces`, `Semicontinuous_Analysis` (**no `HOL-Complex_Analysis`**) | the Polish path space, weak convergence, tightness from increment moments, quadratic variation as a path functional, exit times, measurable selection of a usc payoff | ≈ 9 000 | existing; gains `Semicontinuous_Selection` and a local Arzelà–Ascoli; loses dead `Path_Tightness` blocks and the martingale material |
+| `Continuous_Path_Spaces` | **`Levy_Prokhorov_Metric`** (AFP heap holding Standard Borel and Riesz; panel graft) | `Continuous_Time_Martingales`, `Kolmogorov_Chentsov`, `Semicontinuous_Analysis` (**no `HOL-Complex_Analysis`**) | the Polish path space, weak convergence, tightness from increment moments, quadratic variation as a path functional, exit times, measurable selection of a usc payoff | ≈ 9 000 | existing; gains `Semicontinuous_Selection` and a local Arzelà–Ascoli; loses dead `Path_Tightness` blocks and the martingale material |
 | **`Path_Space_Operations`** | `Continuous_Path_Spaces` | `Symmetric_Matrix_Spectra`, `Disintegration` | cutting, restarting, stopping and gluing continuous paths and their laws, for a process and its matrix-valued covariation: the measurable infrastructure of a dynamic programming principle | ≈ 13 000 | **new**: the six toolkit theories `Pair_Path_Space` … `Path_Law_Sampling`, moved as a block (dry run *checked*) |
 | **`Relative_Arbitrage_Equation`** | `Second_Order_Viscosity_Analysis` | `Semicontinuous_Analysis` | (paper) the operator of Eq. (1.9) and its envelopes, Lemma 2.1, viscosity solutions of it, Example 3.1, and the comparison principle and uniqueness of Section 4 | ≈ 9 500 | **new**: 16 theories plus `Value_Function_Tangential_Field` (dry run *checked*) |
 | `Relative_Arbitrage` | **`Path_Space_Operations`** (was `Continuous_Path_Spaces`) | `Wiener_Measure`, `Relative_Arbitrage_Equation` | (paper) the class of Eq. (1.7), its compactness, the dynamic programming principle, the viscosity property of the value function, and `Theorem_1_1.thy` assembling the five clauses | ≈ 22 500 | shrinks from 64 967 |
-| `Relative_Arbitrage_Statement` | `Relative_Arbitrage` | — | the statement for the authors, with `Paper_Readings` holding every faithfulness theorem | ≈ 520 | `Statement_Auxiliary` removed |
-| *total* | | | | *≈ 93 000–97 000* | |
+| `Relative_Arbitrage_Statement` | `Relative_Arbitrage` | — | the statement for the authors, with `Paper_Readings` holding the checked readings | ≈ 900 | `Statement_Auxiliary` removed (done) |
+| *total* | | | | *≈ 100 000* | |
+
+**Inside the two paper sessions (panel winner, "paper-first").** Theories follow the paper's
+order. A theory is named after a paper result when it holds exactly that result
+(`Example_3_1`, `Proposition_2_4`, `Theorem_1_1`). A last theory `Paper_Map` holds one
+`theorem` per numbered item of the paper, proved by `rule` from the working lemma, with the
+deviations written beside it. `Paper_Map` is both the reader's index and the root set of
+every dead-code pass. `Paper_Readings` keeps the readings of the paper's wording. Planned
+renames and merges (phase 8):
+- `Curvature_Operator` → `Elliptic_Operator`;
+- `Comparison_Principle` → `Maximum_Principle`;
+- `Eigenvalue_Bound_Exact` into `Constraint_Set_Convexity`;
+- `Operator_Continuity` into `Operator_Formula`;
+- `Operator_Envelope_Continuity` into `Operator_Envelopes`;
+- a `Control_Problem` theory for Eqs. (1.5)–(1.7).
+
+Constant long names change with a theory rename, so the statement fingerprint is compared
+modulo the rename map.
 
 **The paper entry** is `Relative_Arbitrage_Equation` plus `Relative_Arbitrage` (plus
 `Relative_Arbitrage_Statement`, which stays out of the AFP as its ROOT says). The **library
@@ -111,7 +147,7 @@ and none mentions the paper (phase 8 removes the 119 lines that still do).
 | `Relative_Arbitrage` (`Curvature_Operator` … `Comparison_Two_Domain`, 16 theories) | operator, envelopes, viscosity predicates, Section 4 | `Relative_Arbitrage_Equation` | dry run *checked*: 0 errors, no forbidden ancestor; only `cInf_mult_pos` and 24 `@{theory}` antiquotations had to change |
 | `Relative_Arbitrage.Value_Function_Tangential_Field` | 28 of 29 facts, the tangential field | `Relative_Arbitrage_Equation` | placement *measured*; the 29th fact stays in the paper session |
 | `Relative_Arbitrage` (`Pair_Path_Space` … `Path_Law_Sampling`) | path toolkit | `Path_Space_Operations` | dry run *checked* without SOVA; `Vitali_Convergence` and `Brownian_Finite_Dimensional_Distributions` imports also unnecessary |
-| `Continuous_Time_Martingales.Integrability_Criteria` | `cInf_mult_pos` (used only by `Operator_Envelopes`, `Comparison_Strictness`) | `Relative_Arbitrage_Equation`, its first user | grep *measured* |
+| `Continuous_Time_Martingales.Integrability_Criteria` | `cInf_mult_pos` (used only by `Operator_Envelopes`, `Comparison_Strictness`) | `Semicontinuous_Analysis.Semicontinuous_Envelopes` (panel graft: a fact about real infima belongs in a library) | grep *measured* |
 | `Semicontinuous_Analysis.Semicontinuous_Selection` | measurable selection (users: `Pair_Path_Space`, `Path_Law_Pasting`, `Exit_Class_Limits`, `Exit_Class_Optimizer`) | `Continuous_Path_Spaces` | its imports are HOL-Probability + `Standard_Borel_Spaces`, both visible there |
 | `Relative_Arbitrage.Exit_Class_Witness` | ≈ 540 lines of Brownian-motion theory (18 of its 33 facts can live in `Wiener_Measure`, *measured* placement) | `Wiener_Measure` | reader + placement. The `sbmpair` package (into which `bmpair` collapses, *checked*) is typed at the toolkit's `pairpath`, so it stays in the paper session or goes to `Path_Space_Operations` |
 | `Relative_Arbitrage` (several) | ≈ 30 matrix lemmas: `outerp` family, psd, onormal, threshold selection, rotation continuity, `eigval_ge_of_subspace`, general Poincaré separation | `Symmetric_Matrix_Spectra` | reader (REVIEW_3 §6.3) |
@@ -124,22 +160,93 @@ and none mentions the paper (phase 8 removes the 119 lines that still do).
 
 ### 1.2 What is deleted
 
-Subject to the roots protocol (§3), which protects evidence and library deliverables:
+Every item below is DELETE in `notes/review_3/data/independent_interest.md`, and none is
+reachable from the roots of `roots.txt`. With the independent-interest keeps as roots, the
+dead code left after the market layer is ≈ 12 150 lines (*measured*, 520 roots).
 
 | what | lines | why |
 |---|---:|---|
-| market layer: `Volatile_Market`, `Ito_Market`, `Brownian_Market`, `Optimal_Exit_Time`, `Brownian_Optimal_Boundary`, `Value_Function_Market`, `Path_Tightness_Market`, `Exit_Time_Semicontinuity` | 4 901 | zero facts used (*measured*); twins of the class layer (REVIEW_3 §3.3) |
+| market layer, 8 theories | 4 901 | **done** (`4d5f47e`). A second formalisation over abstract markets with Itô's formula as a locale axiom. Only `eigen_ub_diag` was moved out; the expected-exit-time bound is re-proved generically (D2) |
 | `Comparison_Jets`, `Dynamic_Programming_Optional_Sampling` | 81 | no lemma at all |
-| smooth ball strand: `Viscosity_Ball`, `Viscosity_Comparison_Interface`, 9 of 11 facts of `Ball_Solution` | ≈ 670 | dead; superseded by Section 4 |
-| `Second_Order_Viscosity_Analysis.Viscosity_Solutions` and the five `_eq_gen` bridges | ≈ 170 | dead, and lacks the `env2` shape the statement uses (G-G re-creates it properly) |
-| abandoned constructions: the simple-stopping-time kernel route (`Dynamic_Programming_Kernels`), the ball Euler chain and the plain Case 1, the deterministic-time quadratic subsolution chain | ≈ 3 500 | dead |
-| Theorem 4.2(a) and its quadratic route (`Comparison_Principle`, parts of `_Localisation`, `_Strictness`) | ≈ 2 400 | dead and weaker than the paper; see decision D3 |
-| `Continuous_Time_Martingales.Moment_Bounds` | 94 | paper material (Eq. 2.7), dead |
-| `Path_Tightness`: projective limit, continuous modification (a twin of AFP `Kolmogorov_Chentsov`), scalar tightness | ≈ 2 350 | dead in this development; scope decision for `Continuous_Path_Spaces` (D6) |
-| `Quadratic_Variation`: the stopped section | 300 | dead; AFP `Fair_Games_Theorem` covers the submartingale case |
-| library re-proofs (REVIEW_3 §3.1) and statement-level clones (§3.2) | ≈ 950 | *checked* derivations |
-| `ess_inf_pexit_usc`'s Laplace route | 947 | *checked* 69-line replacement |
-| everything else outside the closure, iterated to convergence | ≈ 4 000 | measured per pass |
+| smooth ball strand: `Viscosity_Ball`, `Viscosity_Comparison_Interface`, 9 of 11 facts of `Ball_Solution` | ≈ 670 | superseded by Section 4. The refuted `comparison_principle` locale goes with it. The global `[simp del]` affects only these two theories, because simpset merges are unions; it is not replicated (panel) |
+| `Dynamic_Programming_Kernels` (12 of 13 facts) | ≈ 1 060 | abandoned simple-stopping-time kernel route |
+| value-function dead blocks | ≈ 2 350 | the ball Euler chain, plain Case 1, dead `tanp`/`tanSF` lemmas, the deterministic-time quadratic subsolution chain |
+| comparison dead blocks | ≈ 1 500 | the quadratic route, exact-jet closing, the diagonal `p = 0` explorations, VCI twins. **Theorem 4.2(a) and its chain stay** (D3) |
+| `Path_Tightness`: projective limit, continuous modification, scalar tightness | ≈ 1 590 | twins of AFP `Kolmogorov_Chentsov` and of HOL-Probability's Daniell–Kolmogorov. **The Kolmogorov–Chentsov tightness criterion stays** (FIX_THEN_KEEP: parameter instead of `8C²`) |
+| `Doubling_Of_Variables` | ≈ 1 180 | the abandoned quadratic-penalty Theorem 4.2(a) route; the `_gen` toolbox and what CIS needs stay |
+| the rest outside the new closure | ≈ 2 300 | iterated to a fixpoint |
+| library re-proofs and verified clones (phase 4) | ≈ 950 | *checked* derivations |
+| `ess_inf_pexit_usc`'s Laplace route (phase 4) | 947 | *checked* 69-line replacement |
+| COROLLARY items that keep their names | (≈ 4 000 → a few hundred) | rewritten as one- to five-line corollaries of the general result (phase 4) |
+
+### 1.3 Independent interest (owner's directive, 2026-10-07)
+
+> "You are keeping SOVA, in particular Crandall Ishii, as this is a theorem of independent
+> interest (even though only a specific instance is useful for the paper's main theorem).
+> Reconsider your deletions wrt such 'independent interest' considerations."
+
+**Rule.** A result outside the closure of Theorem 1.1 stays when it is any of the following:
+- a statement of the paper, in any section;
+- a classical or named theorem, or a genuinely general result that a library user would
+  look up and that the distribution and the AFP lack;
+- natural interface of a constant that a library keeps.
+
+It goes when it is any of the following:
+- a private helper of something that goes;
+- an abandoned proof route;
+- a twin of live or library code;
+- a paper-specific variant that the live route supersedes.
+
+Kept results become roots, so their helpers become live and no later pass removes them.
+
+**Result** (line estimates over the ≈ 31 000 unused lines):
+
+| verdict | lines | examples |
+|---|---:|---|
+| KEEP_ROOT | ≈ 2 100 | Lemma 2.1 exact; Lemma 3.1 in full (Eq. (3.6)); Minty's theorem; the hypersimplex decomposition; domination of finite Borel measures by continuous tests; Galmarino's half (`pstopped_vimage_pre_sigma`) |
+| KEEP_EVIDENCE | ≈ 200 | `eigen_lb_iff_eigval_ge`, `convex_expandable`, the class bridge |
+| FIX_THEN_KEEP | ≈ 6 800 | Crandall–Ishii (strengthen to the CIL (3.10) block inequality); Theorem 4.2(a) (usc/lsc data); Proposition 2.4 (from `exit_val_dpp_le_of_cond`); general Poincaré separation and Courant–Fischer (move to SMS); the Kolmogorov–Chentsov tightness criterion (parameter instead of `8C²`); the fourth-moment bound for L² martingales; the process-level Lemma 2.2 `path_laws_convergent_subsequence_market` (rename, move to CPS); the expected-exit-time bound (re-prove in CTM) |
+| KEEP_API | ≈ 2 200 | semijet monotonicity, sup-convolution Lipschitz/convergence facts, `covariation_class` introduction/elimination, measurability of `qvps`/`qvmat`, `psd_diag_nonneg` |
+| COROLLARY | ≈ 4 000 | special cases of live `_gen` lemmas: become one-liners or go |
+| DELETE | ≈ 15 400 | market layer, abandoned routes, twins |
+
+The review also found **six advertised library deliverables with no theorem behind them**
+(`notes/review_3/data/library_deliverables.md`):
+- general Poincaré separation and Courant–Fischer in SMS;
+- Rademacher for locally Lipschitz functions;
+- the theorem on sums with a general coupling at a local maximum;
+- Vitali for convergence in probability;
+- Doob's continuous-time weak inequality.
+
+Each is either delivered (FIX_THEN_KEEP above) or its description is corrected in phase 8.
+
+### 1.4 The design panel
+
+Three designers worked independently: **afp-first** (maximise submittable libraries),
+**build-first** (minimise build and iteration time) and **paper-first** (mirror the paper,
+minimise migration risk). Two judges then scored all three: one through engineering
+soundness, one through mathematical organisation.
+- The engineering judge chose paper-first: 8, against 7 for build-first and 6 for afp-first.
+- The mathematics judge ran twice, because a session limit cut off the first run. The first
+  run preferred afp-first 8 to 7, the second paper-first 8 to 7.
+- Both mathematics runs ask for the same synthesis: paper-first's paper side combined with
+  afp-first's library side.
+
+This plan is paper-first plus these grafts:
+
+| graft | from | adopted as |
+|---|---|---|
+| `Relative_Arbitrage_Equation` as a probability-free sibling on SOVA, not chained on the toolkit | build-first, both judges | §1, D5 |
+| `Continuous_Path_Spaces` on `Levy_Prokhorov_Metric` with a ≈ 180-line attributed Arzelà–Ascoli (drops `HOL-Complex_Analysis`, −226 s per build) | afp-first, build-first | §1, phase 5 |
+| `Semicontinuous_Analysis` on `Lower_Semicontinuous`; `cInf_mult_pos` into it | afp-first | §1, phase 5 |
+| G-G: rework `Viscosity_Solutions` (two generic predicates covering all six variants, bridge equations not abbreviations) instead of deleting it | afp-first, mathematics judge | D9 |
+| library re-homing mandatory before the toolkit is promoted: Poincaré/Courant–Fischer, the `outerp` family, the onormal/threshold toolkit and `projmat`/`rank1proj` to SMS; Brownian blocks to WM; martingale moments, `Conditional_UI`, `Stopped_Localization`, optional sampling, `Dyadic_Grids` to CTM | afp-first, mathematics judge | phase 5 |
+| check script: `-D .`, oracle check, paper-mention lint, ancestor checks, re-check whitelist from build logs | afp-first, build-first | phase 0 (`check.sh`), extended in phase 5 |
+| statement fingerprints compared modulo the constant-rename map | engineering judge | phases 2–8 |
+| `[simp del]`: delete VCI and `Ball_Solution`, put a proof-local `simp del` only into proofs moved out of them, never replicate the global declaration | engineering judge (measured: 46 of 48 RA theories already have the rule as simp) | phase 2 |
+
+The panel's full output (three designs, three judge verdicts, the errors each judge found)
+is in `notes/review_3/data/session_design_panel.md`.
 
 ---
 
@@ -157,7 +264,7 @@ Rules for every phase:
   - `Thm_Deps.all_oracles` is empty on the roots;
   - `Review_Analysis.thy` re-run, with the metrics of §5 appended to the completion note.
 
-### Phase 0 — tooling and roots (no theory changes)
+### Phase 0 — tooling and roots (no theory changes) — **done** (`562a95e`, `bce6ac1`)
 
 1. Write `notes/review_3/roots.txt`, one fact per line, `Session.Theory.fact`. It holds:
    - `theorem_1_1`, `example_3_1_closed_form` and every `Paper_Readings` theorem;
@@ -179,7 +286,7 @@ Rules for every phase:
 file in place of the six names. With library roots counted, the numbers will move. That is
 the point: the new baseline is "dead with respect to declared deliverables".
 
-### Phase 1 — the statement says what the paper says, and its evidence is a root
+### Phase 1 — the statement says what the paper says, and its evidence is a root — **done** (`0db486f`), except items 8–9, which are pilots (D3, D4)
 
 Edits are confined to `Statement/` and to the theories holding the cited lemmas. Each item
 is checked text: `notes/review_3/Faithfulness_Checks.thy`.
@@ -232,33 +339,28 @@ is checked text: `notes/review_3/Faithfulness_Checks.thy`.
 
 **Risk:** low. All new statements are checked in `Faithfulness_Checks.thy`.
 
-### Phase 2 — dead code, by the roots protocol (§3)
+### Phase 2 — dead code, by the roots protocol (§3) — **in progress**
 
-Order (each a commit, each with a full build):
+The roots are `roots.txt` with the independent-interest keeps (§1.3): ≈ 520 entries, each
+kept fact annotated with its verdict. Order (each a commit, each with a full build):
 
-1. **Re-home global declarations first.** The only one found is
-   `declare transpose_matrix_vector [simp del]` in `Viscosity_Comparison_Interface`
-   (line 38). Find the live theories whose proofs depend on it:
-   - delete the declaration;
-   - build;
-   - add `[simp del]` locally (`supply` / `using … by (simp del: …)`) where proofs break.
-
-   `Brownian_Market` has an `interpretation BM2`; it is dead with its theory.
-2. **Re-point the conduit importers** (table in §3). Then rewrite the antiquotations that name
-   a theory about to disappear. There are 5 in live theories (*measured*):
-   - `Exit_Class_Witness:32` (`Brownian_Market`);
-   - `Exit_Class_Limits:83,177` (`Exit_Time_Semicontinuity`);
-   - `Value_Function_Uniqueness:77` (`Viscosity_Comparison_Interface`);
-   - `Viscosity_Definitions:166` (`Viscosity_Solutions`).
-
-   Grep again for line-broken ones.
-3. Delete the market layer (8 theories), the 2 empty theories, the smooth ball strand and
-   `Viscosity_Solutions`.
-4. Delete the abandoned constructions in the paper session (§1.2), theory by theory, highest
-   line count first.
-5. Theorem 4.2(a) per D3.
+1. ~~Delete the market layer (8 theories)~~ — **done** (`4d5f47e`). The conduit importers
+   were re-pointed: `Exit_Class_Witness` now imports `Continuous_Brownian_Motion` directly,
+   the route it had lost (computed by an import-closure diff). The five stale
+   antiquotations were rewritten.
+2. Delete the 2 empty theories (`Comparison_Jets`, `Dynamic_Programming_Optional_Sampling`),
+   re-pointing their importers.
+3. Delete the smooth ball strand (`Viscosity_Ball`, `Viscosity_Comparison_Interface`,
+   `Ball_Solution`), after moving the two live `Ball_Solution` facts (`feasible_diag_bound`,
+   `feasible_offdiag_abs_le`) next to `feasible`. The global `[simp del]` goes with them.
+   Where a moved proof breaks, it gets a proof-local `simp del`; the declaration is never
+   replicated (§1.4).
+4. Delete `Dynamic_Programming_Kernels` after moving its one live fact
+   (`exit_val_dpp_sup_ge_time_of_const`).
+5. Delete the abandoned constructions in the paper session (§1.2), theory by theory,
+   largest block first. Theorem 4.2(a) and its chain stay (D3).
 6. Library dead code, only with the library roots in place. `Path_Tightness`'s dead blocks
-   are per D6.
+   are per D6. `Viscosity_Solutions` stays (D9).
 7. Re-run the closure, delete what has become dead, repeat until a pass finds nothing (the
    previous plan's `unused_thms` needed four rounds).
 
@@ -270,10 +372,11 @@ Order (each a commit, each with a full build):
 - The market layer, `Comparison_Jets` and `Dynamic_Programming_Optional_Sampling` no longer
   appear on the critical path.
 
-**Expected:** −20 000 to −24 000 lines. The paper-session build loses ≈ 57 s of market CPU
-and ≈ 40 s of abandoned constructions (*measured* per theory).
+**Expected:** ≈ −17 000 lines in total: 4 901 (done) plus ≈ 12 150 (*measured* against the
+new roots). The paper-session build loses ≈ 57 s of market CPU (done) and ≈ 40 s of
+abandoned constructions (*measured* per theory).
 
-**Risk:** medium, mechanical. The two known traps are the `[simp del]` declaration and the
+**Risk:** medium, mechanical. The known traps are the `[simp del]` declaration and the
 antiquotations. A third possible trap is a `lemmas` bundle or `[intro]`/`[measurable]`
 declaration on a dead fact that a live proof relies on implicitly. That trap is the reason
 for one commit per deletion.
@@ -348,14 +451,23 @@ Each move starts with a dry run: copy the theories, change the imports, load the
 and assert the ancestors with `Theory.nodes_of`, as in REVIEW_3 §6.2. Only then edit the
 repository.
 
-1. **`Semicontinuous_Analysis` → parent HOL-Analysis.**
+0. **Re-home library material first (mandatory; panel graft).** Nothing is promoted into a
+   new session while a library fact still sits in a paper theory:
+   - general Poincaré separation, Courant–Fischer, the `outerp` family, the
+     onormal/threshold toolkit, `projmat`/`rank1proj` → `Symmetric_Matrix_Spectra`;
+   - the Brownian blocks of `Exit_Class_Witness` → `Wiener_Measure` (item 3);
+   - martingale moments, `Conditional_UI`, `Stopped_Localization`, optional sampling,
+     `Dyadic_Grids` → `Continuous_Time_Martingales` (item 5);
+   - `path_laws_convergent_subsequence_market`, renamed for what it states (a process-level
+     Lemma 2.2), and `pstopped_vimage_pre_sigma` → `Continuous_Path_Spaces`.
+1. **`Semicontinuous_Analysis` → parent `Lower_Semicontinuous`** (AFP; panel graft).
    - `Semicontinuous_Selection` moves to `Continuous_Path_Spaces`, ahead of
      `Path_Exit_Times`.
-   - `cInf_mult_pos` moves to the paper's operator layer, whose two theories are its only
-     users.
-2. **`Second_Order_Viscosity_Analysis` → parent `Symmetric_Matrix_Spectra`.** It imports
-   only `Symmetric_Matrix_Spectra` (*measured*). If the `Crandall_Ishii_Sums` helpers are
-   de-duplicated against `Semicontinuity`, add `sessions Semicontinuous_Analysis`.
+   - `cInf_mult_pos` moves into `Semicontinuous_Envelopes`. It is a fact about real
+     infima, and the library is where a reader looks for it.
+2. **`Second_Order_Viscosity_Analysis` → parent `Symmetric_Matrix_Spectra`, with
+   `sessions Semicontinuous_Analysis`.** `Crandall_Ishii_Sums`' re-proofs of
+   `Semicontinuity` lemmas are replaced by the originals (phase 4).
 3. **`Wiener_Measure` → parent `Continuous_Time_Martingales`.** Move in the Brownian material
    of `Exit_Class_Witness`: 18 of its 33 facts, ≈ 540 lines. Fold the three
    increment-independence proofs into one there.
@@ -373,7 +485,9 @@ repository.
      them;
    - loses `Moment_Bounds`, `cInf_mult_pos` and `bm_prj_measurable` (= `borel_measurable_nth`);
    - the grab-bag `Integrability_Criteria` is split by subject or dissolved into its users.
-6. **`Continuous_Path_Spaces`**:
+6. **`Continuous_Path_Spaces` → parent `Levy_Prokhorov_Metric`** (AFP heap holding Standard
+   Borel and Riesz; panel graft), with `sessions Continuous_Time_Martingales
+   Kolmogorov_Chentsov Semicontinuous_Analysis`:
    - drops `HOL-Complex_Analysis`: `Equicontinuity` gets a local Arzelà–Ascoli (≈ 180
      lines, attributed to `HOL-Complex_Analysis.Great_Picard`), or the theorem is offered
      upstream to HOL-Analysis;
@@ -429,7 +543,7 @@ Both were dry-run *checked* (REVIEW_3 §6.1–6.2).
 | G-B, finishing PLAN_2's G11 | migrate the ≈ 215 `exit_class` consumers to `covariation_class S` bottom-up, one theory per commit, starting with the four reverted lemmas (`exit_class_diffquot_full_mass` …) and threading `closed S`. Then state Lemma 2.2 for bounded `S` and Lemma 2.3 for compact convex `S`, as the paper does, and the DPP for abstract `S` | after the first three theories, ≥ 80 % of their statements are `S`-generic with no proof grown by more than 20 % |
 | G-B, promotion | if the gate passes, move `covariation_class` and its compactness, pasting and DPP into a library session on top of `Path_Space_Operations` (name by subject, e.g. `Covariation_Constrained_Martingales`). The paper session keeps only `sconstraint`, `xclass`, `xval` and the bridge equations | the moved statements name no paper constant |
 | G-C | lift Section 4 to an abstract operator. The comparison chain consumes exactly 23 operator facts (`data/operator_and_class_interface.txt`): ellipticity, positive homogeneity, continuity off `p = 0`, `F^*(0,0) < 1`, a small-shift bound, rotation and dilation invariance. State them as a locale, prove `ell_op` an instance, and move the chain into a library session (`Geometric_Viscosity_Comparison`) | the two raw unfoldings (`ell_op_def`, `feasible_def`) inside the chain can be replaced by interface facts in ≤ 200 lines |
-| G-G | one viscosity predicate family, parametrised by test class and touching locality, covering the six used variants including `env2`. It lives in SOVA (re-creating the deleted `Viscosity_Solutions` in the shape that is used) | the six paper predicates become abbreviations or one-line definitions; `Statement` still displays what the authors expect |
+| G-G (D9) | rework SOVA's `Viscosity_Solutions` into two generic predicates, parametrised by the operator, the set and the touching locality, covering the six used variants including `env2` | the six paper predicates are joined to them by proved equations (not abbreviations); `Statement` still displays what the authors expect |
 | G-D | widen the ≈ 600 SOVA lines fixed to `real^'n` that mention no matrix, and the ≈ 110 toolkit statements typed at a product codomain they never inspect | uniform sort per layer first (PLAN_2 §11's lesson); `-o timeout=900` |
 | G-F | drop the avoidable hypotheses: `ess_inf_pexit_usc` (`probs`, `prob`; *checked*), `jensen_lemma`'s `0 < ρ` | none needed |
 
@@ -437,9 +551,14 @@ Both were dry-run *checked* (REVIEW_3 §6.1–6.2).
 
 1. Remove or rewrite the 168 "`X` lives in `Y`" pointer texts. Reattach the ≈ 60 orphaned
    text blocks and section headers to their lemmas. Delete the empty `section`s.
-2. Renames:
+2. Renames and merges (paper order, panel):
    - `Curvature_Operator` → `Elliptic_Operator` (it defines `eigen_lb`, `feasible` and
      `ell_op`, and no curvature operator);
+   - `Comparison_Principle` → `Maximum_Principle` (it holds Theorem 4.2);
+   - `Eigenvalue_Bound_Exact` into `Constraint_Set_Convexity`, `Operator_Continuity` into
+     `Operator_Formula`, `Operator_Envelope_Continuity` into `Operator_Envelopes`;
+   - new theories `Control_Problem` (Eqs. (1.5)–(1.7)), `Example_3_1`, `Proposition_2_4`;
+   - every rename is applied to the fingerprint check's rename map in the same commit;
    - `Theorem_On_Sums` → a name for what it holds (doubling algebra and semiconvexity
      calculus);
    - `Value_Function_Supersolution_Case_1`/`_Case_2` → names matching their content (the
@@ -493,44 +612,67 @@ Both were dry-run *checked* (REVIEW_3 §6.1–6.2).
 
 ## 4. Decisions
 
-**D1 — `Crandall_Ishii_Sums`: keep it, as a root of `Second_Order_Viscosity_Analysis`.**
-- It is the session's advertised headline.
+**D1 — `Crandall_Ishii_Sums`: keep it, as a root of `Second_Order_Viscosity_Analysis`
+(owner's directive).**
+- It is the session's advertised headline, and a theorem of independent interest even
+  though Theorem 1.1 needs only one instance of it.
 - It costs the paper build nothing: no paper theory imports it, and the paper session
   re-checks 11 of the 12 SOVA theories, all except this one (*measured*).
 - It was the largest dead block only because no root declared it.
 - What changes: its internal duplication (≈ 300 lines) and its re-proofs of `Semicontinuity`
   lemmas (≈ 120) go in phase 4. The quadratic-penalty lemmas it needs stay as roots, and
   the rest become instances of `_gen`.
+- FIX_THEN_KEEP (§1.3): the classifier and the verifier agree that the formal statement is
+  weaker than the classical one. It is strengthened to the block-matrix inequality of
+  Crandall–Ishii–Lions (3.10) (phase 7, gated). The weaker form stays as a corollary.
 - Rejected alternatives:
   - rebasing the comparison on it (*checked*: the live path grows);
   - deleting it (an AFP entry on second-order viscosity theory without the theorem on sums
     would be odd).
 
-**D2 — the market layer: delete it.**
-- It is a second formalisation of the problem over abstract markets, and no deliverable uses
+**D2 — the market layer: deleted (done, `4d5f47e`).**
+- It was a second formalisation of the problem over abstract markets, and no deliverable used
   any fact of it (*measured*).
-- Its paper-free fragments (an exit-time semicontinuity block, `pball_exit`) either already
-  have live twins in `Path_Exit_Times`, or are moved there in phase 2 before the deletion if
-  `Continuous_Path_Spaces`' roots name them.
+- Its one result of independent interest is a bound on the expected exit time from a ball. It
+  is re-proved generically in `Continuous_Time_Martingales` (a pilot is running), stated for
+  a continuous martingale with a lower bound on the quadratic-variation rate. The repository
+  gets a corollary for the class in `Exit_Class_Witness`.
+- `eigen_ub_diag`, the one fact a live theory needed, moved to `Curvature_Operator`.
 
-**D3 — Theorem 4.2(a).**
-- Today it is formalised with an extra continuity hypothesis (`max_principle_boundary_holds`),
+**D3 — Theorem 4.2(a): keep it, in the paper's form (independent interest).**
+- Today it is formalised with an extra continuity hypothesis (`max_principle_boundary_holds`)
   through a quadratic-penalty route of ≈ 2 400 lines that nothing else uses.
-- Pilot (≤ 300 lines): derive the faithful statement (usc/lsc data, the `env2` predicates)
-  from the localisation `comparison_two_domain` already uses. The paper proves (a) and (b)
-  in parallel from one doubling argument, so the shared steps exist:
+- The paper states it, so it stays whatever the pilot returns (owner's directive, §1.3).
+- Pilot (≤ 300 lines, running): derive the faithful statement (usc/lsc data, the `env2`
+  predicates) from the localisation that `comparison_two_domain` already uses. The paper
+  proves (a) and (b) in parallel from one doubling argument, so the shared steps exist:
   - the `x^ε ≠ y^ε` contradiction from `F^*(0,0) = 0`;
   - the Crandall–Ishii step.
+- If the pilot succeeds, the faithful theorem replaces the continuous-data one, which becomes
+  a corollary or goes. The quadratic route is deleted unless the faithful proof needs it.
+- If the pilot fails, the continuous-data theorem stays under a name that says so, and
+  `Paper_Map` records the gap. The quadratic route stays as its proof until the faithful
+  version is done.
+- `viscosity_uniqueness_compact` stays as a corollary of at most 10 lines.
 
-  If the pilot succeeds, display it in `Paper_Readings` and delete the quadratic route.
-- If it fails, delete `max_principle_boundary` and its route, and say in `Paper_Readings`
-  that 4.2(a) is not formalised (4.2(b), 4.3 and 4.1 are).
-- Either way, a weaker theorem under the paper's name does not stay.
-
-**D4 — Proposition 2.4 (the DPP equality with attainment).**
-- Pilot (≤ 150 lines) from the two halves in `Dynamic_Programming_*` and
-  `exit_val_measurable_selector`.
-- If it fails, change `root.tex`'s "proved here in full" to what is proved.
+**D4 — Proposition 2.4 (the DPP equality with attainment): proved (pilot, *checked*).**
+- 282 lines with no `sorry` (batch check OK). Every optimiser of the value function attains
+  the supremum of (2.9), at a deterministic time and at a path stopping time with values in
+  `[0,T]`.
+- It reuses `exit_val_cond_time` and `exit_val_dpp_sup_ge(_time)`. The `key` step of
+  `exit_val_dpp_le_of_cond` becomes an exported lemma, `exit_val_dpp_ess_inf_mono_time`.
+- It goes into a theory `Proposition_2_4` after `Dynamic_Programming_Assembly` and
+  `Dynamic_Programming_Conditioning`. The empty section in `Dynamic_Programming_Conditioning`
+  that announces it goes.
+- **What it is not.** It is (2.9) for the internal value `exit_val` (horizon `T`, pair laws,
+  path stopping times bounded by `T`). The paper states (2.9) for `v` on `[0,∞)` with
+  arbitrary stopping times of `X`. The pilot report sizes the transfer:
+  - ≈ 50 lines to identify `v` with `exit_val` at large horizons;
+  - 200–400 lines of essential-infimum transport between the classes;
+  - Galmarino's test for the coordinate filtration, not in the repository and genuinely hard;
+  - a limit argument for unbounded `θ`.
+- `Paper_Map` states what is proved and names the gap. `root.tex`'s "proved here in full"
+  changes to match.
 
 **D4b — Section 5 (continuity of `v` for convex `K`): out of scope for this
 restructuring, with one cheap exception.**
@@ -542,16 +684,15 @@ restructuring, with one cheap exception.**
   `OPEN_ITEMS.md`, not planned here. The stale "done" entry for `eigen_lb_dim_obstruction`
   in `STATUS.md` is corrected in phase 8.
 
-**D5 — where Section 4 lives: its own probability-free session, parented on SOVA.**
-- This is the paper's own seam, and it lets Section 4 be developed and checked in ≈ 90 s
-  without the probability stack.
-- *Build-time alternative*, if iteration speed on the paper session matters more than the
-  visible seam: parent `Relative_Arbitrage_Equation` on `Path_Space_Operations` instead,
-  and keep its theory imports probability-free.
-  - The ancestor-assertion theory (phase 6.4) still guards the seam.
-  - The paper session then extends it with no re-check: about 280 s instead of 480 s.
-- The theory files are identical under either choice, so this can be switched by editing
-  two ROOT lines.
+**D5 — where Section 4 lives: `Relative_Arbitrage_Equation`, a probability-free sibling
+on `Second_Order_Viscosity_Analysis` (panel graft; adopted).**
+- This is the paper's own seam. Section 4 is checked in ≈ 90 s without the probability stack,
+  and its probability-freeness holds by construction rather than by a regression test.
+- The price: the paper session re-checks it, ≈ 90 s per cold build. The chained alternative
+  (parent on `Path_Space_Operations`) saves that and costs ≈ 620 s of CPU per Section 4
+  edit, so it is rejected.
+- The theory files are the same under either choice, so it can be switched by editing two
+  ROOT lines.
 
 **D6 — the scope of `Continuous_Path_Spaces`.**
 - It keeps what its description promises: path space, weak convergence, tightness from
@@ -560,14 +701,42 @@ restructuring, with one cheap exception.**
 - `Path_Tightness`'s dead projective-limit and continuous-modification blocks are deleted,
   since AFP `Kolmogorov_Chentsov` has the continuous modification. The scalar tightness twin
   is deleted.
+- The Kolmogorov–Chentsov tightness criterion (moments of increments imply tightness of the
+  laws on path space) stays: it is a named theorem the AFP lacks. Its `8C²` becomes a
+  parameter (G-E).
 - If the author wants a projective-limit construction in the library, it belongs in
   `Wiener_Measure`, which already builds one.
 
-**D7 — no aggregating "base" session.**
+**D7 — no aggregating "base" session, and no "extras" leaf.**
 - An intermediate session holding every library theory would only move the re-checking:
   the join has to happen somewhere.
-- It also breaks PLAN_2 §8 rule 7 (no filler names).
-- The layout above already places the join on the cheap side.
+- It also breaks PLAN_2 §8 rule 7 (no filler names). The panel's build-first design proposed
+  one (`Relative_Arbitrage_Base`, legal and measured), and both judges rejected it on that
+  ground.
+- Results of independent interest stay where the paper or the library puts them, not in an
+  `Extras` leaf.
+
+**D8 — `Paper_Map` (panel graft).**
+- It is the last theory of `Relative_Arbitrage_Statement`. It has one `theorem` per numbered
+  item of Sections 1–4, proved by `rule` from the working lemma, and states each deviation
+  beside it. Section 5 is listed as not formalised.
+- It replaces the paper wildcards in `roots.txt`, so the reader's index and the dead-code
+  root set cannot drift apart.
+
+**D9 — the generic viscosity layer: rework it (G-G), do not delete it.**
+- `Second_Order_Viscosity_Analysis.Viscosity_Solutions` defines viscosity sub- and
+  supersolutions for an arbitrary operator. The paper session does not use it: it has six
+  variants of its own (plain, `env`, `env2`, `_K`, `_bc`, `_bc_K`).
+- Rework: two generic predicates in SOVA, parametrised by the operator and the set. The six
+  variants become instances, joined to them by proved equations rather than abbreviations.
+- Then Theorems 4.2 and 4.3 are about the generic predicates, and the session's description
+  ("viscosity solutions") becomes true. It is gated as phase 7 work; the fallback is to keep
+  the layer as KEEP_API with its description corrected.
+
+**D10 — the six undelivered library claims (§1.3).**
+- Each is delivered, or its description is corrected, in phase 7 or 8. Courant–Fischer and the
+  general Poincaré separation are delivered first: their evidence is now a root, and the
+  general statements are FIX_THEN_KEEP.
 
 ---
 
@@ -592,17 +761,33 @@ restructuring, with one cheap exception.**
 PLAN_RESTRUCTURING_2 §8 applies, with these amendments:
 
 1. **Rule 1 ("do not prove new mathematics") is relaxed for the items marked *checked*** in
-   phases 1 and 4, and for the gated pilots D3, D4, D4b and phase 7. Each of these is a
-   replacement whose statement is identical (`aconv`) or stronger. Nothing else gets a new
-   proof.
+   phases 1 and 4, for the gated pilots D2, D3, D4, D4b and phase 7, and for the
+   FIX_THEN_KEEP items of §1.3. Each of these is a replacement whose statement is identical
+   (`aconv`, modulo the rename map) or stronger, or a new statement of the paper. Nothing
+   else gets a new proof.
 2. **Rule 2 is extended:** never weaken `theorem_1_1` or any `Paper_Readings` statement, and
    never delete a fact named in `roots.txt`. If a deletion needs one gone, the roots file
    changes first, in its own commit, with the reason.
 3. **Build everything** (`-D .`), not only the Statement chain, after every commit.
 4. **A dry run precedes every move across a session boundary** (copy, load in PIDE, assert
-   the ancestors).
+   the ancestors). When PIDE is unavailable, a throwaway batch session on the target parent
+   heap does the same job.
 5. **Antiquotations are part of the move.** Grep for `@{theory`, `@{thm`, `@{const`,
    `@{locale` naming the moved or deleted entity across all sessions, including line-broken
    occurrences.
 6. **The completion note records refuted predictions.** If a number in this plan is wrong,
    the plan is wrong, not the development.
+
+---
+
+## 7. Progress log
+
+| date | commit | step | result |
+|---|---|---|---|
+| 2026-10-07 | `562a95e` | Phase 0: `roots.txt`, `Review_Analysis` reads it, `check.sh`, `.pyc` untracked | all sessions build; oracle check empty |
+| 2026-10-07 | `0db486f` | Phase 1: `theorem_1_1` with the paper's hypotheses (clauses 0–3 for compact `K`, clause 4 under `expandable K ⟶`, no `K ≠ {}`); `Theorem_1_1.thy`; `Statement_Auxiliary` deleted; `ell_op_sym_part`; `Paper_Readings` extended (F over symmetric matrices, spectral conditions, Lemma 2.1 as an equality, convex sets are expandable, the literal reading of (1.5) and its unboundedness); the wrong prose corrected | all sessions build |
+| 2026-10-07 | `bce6ac1` | analysis summary file with the oracle check | — |
+| 2026-10-08 | `4d5f47e` | Phase 2.1: market layer deleted (8 theories, 4 901 lines) | all sessions build |
+| 2026-10-08 | (this commit) | independent-interest review (§1.3), design panel (§1.4), roots extended to ≈ 520 entries, this revision | analysis re-run against the new roots |
+| 2026-10-08 | — | pilots: Proposition 2.4 **proved** (282 lines, D4); Theorem 4.2(a) and the expected-exit-time bound running | — |
+

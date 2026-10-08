@@ -11,6 +11,8 @@ theory Review_Analysis
     "Second_Order_Viscosity_Analysis.Crandall_Ishii_Sums"
 begin
 
+external_file "roots.txt"  \<comment> \<open>so that editing the roots re-runs this session\<close>
+
 thm theorem_1_1
 
 ML \<open>
@@ -55,7 +57,9 @@ fun expand l =
     in proper_user |> filter (fn (n, _) => fact_thy n = th) |> map #1 end
   else [l];
 val root_names = maps expand root_lines |> distinct (op =);
-val roots = maps (Global_Theory.get_thms thy) root_names;
+fun get_root n = SOME (Global_Theory.get_thms thy n) handle ERROR _ => NONE;
+val unknown_roots = filter (fn n => is_none (get_root n)) root_names;
+val roots = maps (fn n => the_default [] (get_root n)) root_names;
 val used = Proofterm.fold_body_thms
   (fn {thm_name = a, ...} => not (Thm_Name.is_empty a) ? Symtab.insert_set (#1 a))
   (Thm.proof_bodies_of roots) Symtab.empty;
@@ -70,7 +74,9 @@ val _ = File.write (Path.explode (A1.outdir ^ "summary.txt"))
   ("roots: " ^ string_of_int (length A1.roots) ^ "\n" ^
    "oracles in the roots' proofs: " ^ string_of_int (length (Thm_Deps.all_oracles A1.roots)) ^ "\n" ^
    "user facts: " ^ string_of_int (length A1.proper_user) ^ "\n" ^
-   "names in the closure of the roots: " ^ string_of_int (Symtab.size A1.used) ^ "\n");
+   "names in the closure of the roots: " ^ string_of_int (Symtab.size A1.used) ^ "\n" ^
+   "root names that do not resolve: " ^ string_of_int (length A1.unknown_roots) ^ "\n" ^
+   cat_lines (map (prefix "  ") A1.unknown_roots) ^ "\n");
 val _ = writeln ("all facts: " ^ string_of_int (length A1.all_facts) ^ ", user facts: " ^
   string_of_int (length A1.user_facts) ^ ", proper user facts: " ^ string_of_int (length A1.proper_user) ^
   ", names in closure: " ^ string_of_int (Symtab.size A1.used));

@@ -7,6 +7,577 @@
 Relative_Arbitrage_Statement.Theorem_1_1_Statement.*
 Relative_Arbitrage_Statement.Paper_Readings.*
 Relative_Arbitrage.Theorem_1_1.*
+Exit_Class_Marginals.iexit_class_marginal_in_xclass   # the class bridge (evidence)
+Exit_Class_Marginals.xclass_lift_in_iexit_class
 
-# --- library and independent-interest roots: filled in from the
-# --- independent-interest review (notes/review_3/data/independent_interest.md)
+
+# --- library deliverables: what each ROOT description advertises
+# (mapped by one agent per session; notes/review_3/data/library_deliverables.md)
+
+# --- Symmetric_Matrix_Spectra: advertised deliverables (ROOT description / root.tex)
+# a trace and transpose calculus
+Matrix_Algebra.trace_matrix_sum
+Matrix_Algebra.transpose_matrix_sum
+Matrix_Algebra.trace_conjugate
+# outer products (abstract: 'a calculus of trace, transpose, outer products, ...')
+Outer_Products.outer_prod_def
+Outer_Products.outer_prod_mult
+Outer_Products.trace_mult_outer_sum
+# orthonormal families
+Orthonormal_Families.onormal_def
+Orthonormal_Families.onormal_extension
+Orthonormal_Families.onormal_complete
+# Householder reflections
+Householder_Rotation.hrefl_def
+Householder_Rotation.hrefl_orthogonal
+Householder_Rotation.hrefl_bisect
+# Householder rotations
+Householder_Rotation.rotm_def
+Householder_Rotation.rotm_orthogonal
+Householder_Rotation.rotm_apply
+# the spectral theorem
+Symmetric_Spectral.symmetric_eigenbasis
+Symmetric_Spectral.spectral_decomposition
+# Ky Fan partial sums (abstract: the sum of the m largest eigenvalues is the largest trace against a rank-m orth
+Ky_Fan.kyfan_def
+Ky_Fan.kyfan_threshold
+Ky_Fan.kyfan_attained
+# the ordered eigenvalues as their (Ky Fan sums') differences
+Ky_Fan.eigval_def
+Ky_Fan.eigval_eq_min_of_threshold
+Ky_Fan.eigval_antimono_le
+# their (the ordered eigenvalues') Lipschitz dependence on the matrix
+Eigenvalue_Continuity.eigval_lipschitz
+Eigenvalue_Continuity.kyfan_lipschitz
+# Poincare separation (abstract: ordered eigenvalues interlace with those of any compression to a subspace) -- O
+Poincare_Separation.quadform_le_eigval_1
+Poincare_Separation.eigval_min_le_quadform
+
+# --- Semicontinuous_Analysis: advertised deliverables (ROOT description / root.tex)
+# Upper and lower semicontinuity for real-valued functions on a metric space: the epsilon-delta calculus
+Semicontinuity.usc_eps_add
+Semicontinuity.usc_eps_scale
+Semicontinuity.lsc_diff_continuous
+# attainment on compacta (attainment of extrema on nonempty compacta)
+Semicontinuity.usc_attains_sup_gen
+Semicontinuity.lsc_attains_inf_gen
+Semicontinuity.lsc_attains_inf_ex
+# bounded extension off a closed set
+Semicontinuity.usc_extension_bounded
+# the semicontinuous envelopes over the whole space (construction)
+Semicontinuous_Envelopes.lsc_env_def
+Semicontinuous_Envelopes.usc_env_def
+Semicontinuous_Envelopes.lsc_env_lsc
+Semicontinuous_Envelopes.usc_env_usc
+# the semicontinuous envelopes relative to a closed set (construction)
+Semicontinuous_Envelopes.lsc_envK_def
+Semicontinuous_Envelopes.Kext_def
+Semicontinuous_Envelopes.lsc_env_Kext
+# Berge's maximum theorem (abstract: the value of a maximisation depends upper semicontinuously on its parameter
+Berge.usc_sup_over_compact
+Berge.usc_sup_over_compactin
+# measurable selection of an upper semicontinuous payoff (abstract: theorem of Bertsekas and Shreve that a usc p
+Semicontinuous_Selection.Metric_space.usc_measurable_selection
+Semicontinuous_Selection.usc_sel_def
+# The envelope is the lower semicontinuous hull of the Lower_Semicontinuous entry, proved equal to it rather tha
+Semicontinuous_Envelopes.lsc_env_ereal
+
+# --- Second_Order_Viscosity_Analysis: advertised deliverables (ROOT description / root.tex)
+# Rademacher's theorem (ROOT); abstract: 'a locally Lipschitz function on a Euclidean space is differentiable at
+Rademacher.rademacher_AE
+Rademacher.rademacher_vec_AE
+# Alexandrov's theorem (ROOT); abstract: 'a convex function has a second-order Taylor expansion at almost every 
+Alexandrov.convex_alexandrov
+Alexandrov.semiconvex_alexandrov
+Alexandrov.semiconvex_alexandrov_bounded
+# Jensen's lemma for semiconvex functions
+Jensen_Lemma.jensen_lemma
+# The Crandall-Ishii theorem on sums (ROOT); abstract: 'at a local maximum of u(x)+w(y) produces second-order je
+Crandall_Ishii_Sums.theorem_on_sums_quadratic_closed
+Crandall_Ishii_Sums.theorem_on_sums_quadratic
+Theorem_On_Sums.sums_matrix_inequality
+# Second-order semijets and their closures (abstract: 'stated in the vocabulary of the literature')
+Crandall_Ishii_Sums.superjet_def
+Crandall_Ishii_Sums.subjet_def
+Crandall_Ishii_Sums.superjet_cl_def
+Crandall_Ishii_Sums.subjet_cl_def
+# The doubling-of-variables toolbox (ROOT); abstract: 'the doubling-of-variables apparatus ... stated over an ar
+Doubling_Of_Variables.doubling_maximiser_exists_gen
+Doubling_Of_Variables.doubled_jet_slices_at_max
+Doubling_Of_Variables.sums_psd_at_interior_max_gen
+# The soft-penalty toolbox (ROOT); abstract: 'coercive penalties whose second-order jet vanishes on the diagonal
+Soft_Penalty.soft_pen_def
+Soft_Penalty.soft_pen_vanishing_jet_at_zero
+Soft_Penalty.soft_pen_semiconcave
+Soft_Penalty.doubling_close_maximiser_soft
+# The test-function class
+Test_Functions.test_fun_at_def
+Test_Functions.test_fun_C2_def
+Test_Functions.test_fun_C2_imp_test_fun_at
+# The definition of a viscosity sub- and supersolution for an arbitrary second-order operator
+Viscosity_Solutions.visc_subsol_gen_def
+Viscosity_Solutions.visc_supersol_gen_def
+Viscosity_Solutions.visc_sol_gen_def
+# Base layer (abstract): subgradients and the proximal map
+Convex_Subgradients.subdiff_def
+Convex_Subgradients.prox_def
+Convex_Subgradients.minty_surjective
+# Base layer (abstract): the Moreau envelope
+Moreau_Envelope.moreau_def
+Moreau_Envelope.moreau_has_derivative
+Moreau_Envelope.moreau_alexandrov_AE
+# Base layer (abstract): the sup-convolution
+Sup_Convolution.supconv_def
+Sup_Convolution.supconv_semiconvex
+Sup_Convolution.supconv_lipschitz
+
+# --- Continuous_Time_Martingales: advertised deliverables (ROOT description / root.tex)
+# Doob's maximal inequality (abstract: bounding the chance that a martingale ever exceeds a level by its termina
+Doob_Inequality.prob_sq_int_martingale.doob_maximal_inequality
+Doob_Inequality.prob_sq_int_martingale.doob_maximal_inequality'
+Doob_Inequality.prob_sq_int_martingale.doob_L2_inequality
+# Optional sampling at a bounded stopping time (martingale sampled at a bounded stopping time; reduced to the di
+Optional_Sampling.stopped_cont_martingale.optional_sampling
+Optional_Sampling.stopped_cont_martingale.set_optional_sampling
+Optional_Sampling.simple_stopped_martingale.simple_optional_sampling
+# Optional stopping: a martingale stopped at a (bounded) stopping time is again a martingale
+Optional_Sampling.optional_stopping
+Stopped_Adaptedness.stopped_adapted_of_cont
+# Quadratic variation and its compensator
+Quadratic_Variation.qvar_def
+Quadratic_Variation.sq_int_martingale.qvar_compensates
+Sampled_Quadratic_Variation.qvar_compensates_sampled
+# Vitali's convergence theorem (abstract: a uniformly integrable sequence converging in probability converges in
+Vitali_Convergence.finite_measure.vitali_convergence
+Vitali_Convergence.unif_integrable_def
+Vitali_Convergence.unif_integrable_of_moment_bound
+# Exit times (of closed sets) as stopping times
+Stopping_Times.etime_def
+Stopping_Times.cont_adapted_process.etime_stopping_time
+# Transport of the martingale property along images (image measures / maps)
+Martingale_Transfer.martingale_distr
+Martingale_Algebra.martingale_bounded_linear_image
+# Transport of the martingale property along products and infinite products
+Martingale_Transfer.martingale_pair_fst
+Martingale_Transfer.martingale_pair_snd
+Martingale_Transfer.martingale_PiM_component
+# Transport of the martingale property along restrictions (restriction to a full-measure event)
+Martingale_Transfer.martingale_restrict_full
+# Conditioning on an event of the past preserves martingales (root.tex abstract)
+Martingale_Transfer.martingale_uniform_measure
+# Transport of the martingale property along modifications
+Modification_Transfer.martingale_of_modification_gen
+Modification_Transfer.martingale_of_modification_vec
+Modification_Transfer.set_integral_zero_transfer
+# Elementary power inequalities that every moment estimate runs on
+Power_Inequalities.sq_diff_le
+Power_Inequalities.fourth_power_sum_bound
+Power_Inequalities.prod_minus_sq_bound
+# The essential infimum of a nonnegative payoff
+Essential_Infimum.ess_inf_def
+Essential_Infimum.ess_inf_AE
+Essential_Infimum.ess_inf_time_ge_iff
+
+# --- Wiener_Measure: advertised deliverables (ROOT description / root.tex)
+# Brownian motion as the projective limit of its Gaussian finite-dimensional distributions (construction of Wien
+Brownian_Motion.wiener_pre_def
+Brownian_Finite_Dimensional_Distributions.bm_fdd_def
+Brownian_Finite_Dimensional_Distributions.bm_fdd_projective
+Brownian_Motion.wiener_pre_marginal
+# with independent increments
+Brownian_Motion.bm_increments_indep
+# and a continuous modification
+Brownian_Motion_Continuity.Brownian_motion_exists
+Brownian_Motion_Continuity.bm_coord_modification
+Continuous_Brownian_Motion.Bcont_def
+# the n-dimensional vector process it carries (construction)
+Product_Brownian_Motion.bm_paths_def
+Product_Brownian_Motion.bmX_def
+Continuous_Brownian_Motion.cbmX_def
+# its increments independent of the natural filtration
+Product_Brownian_Motion.bm_filtration_increment_indep
+# its martingale property
+Vector_Brownian_Martingales.martingale_bmX
+Continuous_Brownian_Motion.martingale_cbmX
+# the compensated square of the norm (is a martingale)
+Vector_Brownian_Martingales.martingale_bm_square
+Continuous_Brownian_Motion.martingale_cbmX_square
+# and (the compensated square) of each coordinate (is a martingale)
+Vector_Brownian_Martingales.martingale_bm_coord_square
+Continuous_Brownian_Motion.martingale_cbm_coord_square
+# (abstract) prove those increments independent and Gaussian
+Brownian_Motion.wiener_pre_increment
+Brownian_Motion.bm_increments_indep
+# (abstract) compute the fourth moment E|B_t - B_s|^4 = 3(t-s)^2
+Brownian_Motion.wiener_pre_moment4
+Gaussian_Increments.gauss_measure_fourth_moment
+# (abstract) projectivity reduces to the convolution law for Gaussian densities
+Gaussian_Increments.gauss_measure_conv
+Brownian_Finite_Dimensional_Distributions.bm_fdd_projective
+
+# --- Continuous_Path_Spaces: advertised deliverables (ROOT description / root.tex)
+# C([0,T],'b) as a Polish space (sup metric)
+Path_Space.path_metric_def
+Path_Space.path_metric_polish
+Path_Space.Polish_space_path_metric
+# Hölder balls are compact in C([0,T],'b) (from the abstract)
+Path_Space.compactin_path_holder_ball
+# portmanteau (weak convergence on the path space)
+Path_Exit_Times.weak_conv_closed_limsup
+Path_Exit_Times.weak_conv_open_liminf
+Path_Space.weak_conv_closed_full_measure
+# continuous mapping theorem for weak convergence
+Path_Space.weak_conv_on_pushforward
+# tightness of a family of path laws from increment moments alone
+Path_Tightness.tight_on_set_path_laws
+Path_Tightness.tight_on_set_path_laws_vec
+Path_Tightness.path_law_holder_ball_bound
+# tight, hence relatively compact (from the abstract)
+Path_Tightness.path_laws_convergent_subsequence
+Path_Tightness.path_laws_convergent_subsequence_vec
+# tightness proved by dyadic chaining and Hölder interpolation (method, from the abstract)
+Dyadic_Chaining.dyadic_chaining
+Holder_Interpolation.holder_of_dyadic_moduli
+Modulus_Tails.dyadic_bad_event_tail_mom
+# fourth-moment estimate by iterated Cauchy-Schwarz and the tower property, without Burkholder-Davis-Gundy (from
+Increment_Moments.fourth_moment_partition_bound
+Increment_Moments.fourth_moment_bound_bounded
+Stopped_Localization.fourth_moment_L2
+# quadratic variation as a pathwise Borel functional, the limit of dyadic sums along every path (from the abstra
+Pathwise_Quadratic_Variation.qvp_def
+Pathwise_Quadratic_Variation.qvp_measurable
+Pathwise_Quadratic_Variation.bounded_martingale_compensator.qvp_eq_A
+# quadratic variation as an adapted, everywhere-continuous path functional (abstract: regularised to a version a
+Adapted_Quadratic_Variation.qvsa_def
+Adapted_Quadratic_Variation.qvsa_continuous
+Adapted_Quadratic_Variation.qvsa_measurable
+Adapted_Quadratic_Variation.qvsa_eq_qvps
+# quadratic variation with a summable L2 rate, converging without extracting a subsequence
+Pathwise_Quadratic_Variation.bounded_martingale_compensator.qv_dyadic_L2
+Pathwise_Quadratic_Variation.bounded_martingale_compensator.qvp_tendsto
+Pathwise_Quadratic_Variation.AE_tendsto_zero_of_summable_sq
+# exit time of a closed set by a continuous path, upper semicontinuous along weak convergence of path laws
+Path_Exit_Times.pexit_def
+Path_Exit_Times.ess_inf_pexit_usc
+Path_Exit_Times.pexit_sublevel_open
+
+
+# --- kept for independent interest (notes/review_3/data/independent_interest.md):
+# KEEP_ROOT, KEEP_EVIDENCE, FIX_THEN_KEEP and KEEP_API items of the review.
+# class_dp
+Dynamic_Programming_Pasting.exit_val_dpp_le_of_cond    # FIX_THEN_KEEP
+Exit_Class_Witness.bm_increment_cross    # KEEP_API
+# comparison
+Comparison_Principle.max_principle_boundary_holds    # FIX_THEN_KEEP
+Comparison_Principle.comparison_soft_complete    # FIX_THEN_KEEP
+Comparison_Localisation.doubling_localised_maximiser_soft    # FIX_THEN_KEEP
+Comparison_Localisation.theta_gap_preserved    # FIX_THEN_KEEP
+Comparison_Localisation.supconv_sandwich    # FIX_THEN_KEEP
+Comparison_Localisation.supconv_uniform_upper    # FIX_THEN_KEEP
+# cps_tightness_qv
+Path_Tightness.path_law_holder_ball_bound_vec    # FIX_THEN_KEEP
+Path_Tightness.tight_on_set_path_laws_vec    # FIX_THEN_KEEP
+Path_Tightness.marginal_map_measurable    # KEEP_API
+Path_Tightness.dyadic_pair_modulus    # FIX_THEN_KEEP
+Path_Tightness.metric_measure_mono_bounded_cts    # KEEP_ROOT
+Stopped_Localization.rate_continuous_on    # FIX_THEN_KEEP
+Stopped_Localization.stopped_covariation    # FIX_THEN_KEEP
+Stopped_Localization.etime_eq_T_of_no_hit    # FIX_THEN_KEEP
+Stopped_Localization.fourth_moment_L2    # FIX_THEN_KEEP
+Pathwise_Quadratic_Variation.dyadic_qsum_eq_qvar    # KEEP_API
+Pathwise_Quadratic_Variation.qvps_measurable    # KEEP_API
+Pathwise_Quadratic_Variation.qvmat_measurable    # KEEP_API
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.Xpol_def    # FIX_THEN_KEEP
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.Xpol.cong    # FIX_THEN_KEEP
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.Apol_def    # FIX_THEN_KEEP
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.Apol.cong    # FIX_THEN_KEEP
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.Apol_eq_form    # FIX_THEN_KEEP
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.Apol_diff    # FIX_THEN_KEEP
+Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.polarised    # FIX_THEN_KEEP
+Adapted_Quadratic_Variation.qvp_good_nonneg    # KEEP_API
+# ctm
+Doob_Inequality.prob_sq_int_martingale.axioms    # KEEP_API
+Doob_Inequality.prob_sq_int_martingale.hits.cong    # KEEP_API
+Doob_Inequality.horizon_sq_int_martingale.axioms    # KEEP_API
+Doob_Inequality.horizon_sq_int_martingale.dy.cong    # KEEP_API
+Doob_Inequality.horizon_sq_int_martingale.gsup.cong    # KEEP_API
+Doob_Inequality.horizon_sq_int_martingale.esup.cong    # KEEP_API
+Doob_Inequality.horizon_sq_int_martingale.Dsup.cong    # KEEP_API
+Doob_Inequality.horizon_sq_int_martingale.dy_floor    # KEEP_API
+Essential_Infimum.ess_inf_time_ge_iff_measure    # KEEP_API
+Integrability_Criteria.measure_pmf.indep_vars_cong_sets    # KEEP_API
+Martingale_Algebra.martingale_coarser_filtration    # FIX_THEN_KEEP
+Martingale_Transfer.uniform_measure_density_real    # FIX_THEN_KEEP
+Martingale_Transfer.integral_uniform_measure_eq    # FIX_THEN_KEEP
+Martingale_Transfer.integrable_uniform_measureI    # FIX_THEN_KEEP
+Martingale_Transfer.set_integral_uniform_measure_eq    # FIX_THEN_KEEP
+Martingale_Transfer.martingale_uniform_measure    # FIX_THEN_KEEP
+Martingale_Transfer.distr_restrict_full    # KEEP_API
+Optional_Sampling.nat_stopped_martingale.axioms    # KEEP_API
+Optional_Sampling.nat_stopped_martingale.Tgt.cong    # KEEP_API
+Optional_Sampling.nat_stopped_martingale.inc.cong    # KEEP_API
+Optional_Sampling.sampled_cont_martingale.axioms    # KEEP_API
+Optional_Sampling.simple_stopped_martingale.axioms    # KEEP_API
+Optional_Sampling.simple_stopped_martingale.Tidx.cong    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.axioms    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.dgrid.cong    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.didx.cong    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.dtime.cong    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.dcidx.cong    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.dceil.cong    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.dtime_eq_dceil    # KEEP_API
+Optional_Sampling.stopped_cont_martingale.stopped_integrable    # KEEP_API
+Quadratic_Variation.qvar_nonneg    # KEEP_API
+Quadratic_Variation.qvar_mono    # KEEP_API
+Quadratic_Variation.sq_int_martingale.axioms    # KEEP_API
+Quadratic_Variation.sq_int_martingale.X_measurable    # KEEP_API
+Quadratic_Variation.sq_int_martingale.expectation_sq_mono    # KEEP_API
+Quadratic_Variation.stopped_def    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_0    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_incr    # FIX_THEN_KEEP
+Quadratic_Variation.qvar_stopped    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_sq_int_martingale.ind_Tgt_measurable_F    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_sq_int_martingale.stopped_incr_ind    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_sq_int_martingale.stopped_measurable_F    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_sq_int_martingale.stopped_measurable    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_sq_int_martingale.stopped_sq_integrable    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_sq_int_martingale.sq_int_martingale_stopped    # FIX_THEN_KEEP
+Quadratic_Variation.stopped_sq_int_martingale.stopped_expectation_sq_qvar    # FIX_THEN_KEEP
+Stopping_Times.cont_adapted_process.axioms    # KEEP_API
+Time_Discretisation.sampled_martingale.axioms    # KEEP_API
+Vitali_Convergence.measure_spmf.unif_integrable_limit_integrable    # KEEP_API
+Vitali_Convergence.measure_pmf.unif_integrable_limit_integrable    # KEEP_API
+Vitali_Convergence.measure_spmf.vitali_convergence    # KEEP_API
+Vitali_Convergence.measure_pmf.vitali_convergence    # KEEP_API
+Vitali_Convergence.tail_le_moment    # KEEP_ROOT
+Vitali_Convergence.unif_integrable_of_moment_bound    # KEEP_ROOT
+# operator
+Constraint_Set_Convexity.onormal_sum_suff_volatile    # KEEP_ROOT
+Constraint_Set_Convexity.suff_volatile_augment    # KEEP_ROOT
+Eigenvalue_Bound_Exact.diag_integral_suff_volatile    # KEEP_ROOT
+Eigenvalue_Bound_Exact.shift_def    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.shift_i    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.shift_j    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.shift_other    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.sum_shift    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.shift_convex_combination    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.diag_in_convex_hull_aux    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.diag_in_convex_hull    # FIX_THEN_KEEP
+Eigenvalue_Bound_Exact.convex_hull_augment    # KEEP_ROOT
+Eigenvalue_Bound_Exact.convex_hull_augment_sum    # KEEP_ROOT
+Eigenvalue_Bound_Exact.lemma_2_1_exact    # KEEP_ROOT
+Operator_Formula.rank1proj_scaleR    # KEEP_API
+Operator_Formula.Mp_eig_on_perp    # KEEP_ROOT
+Operator_Formula.Mp_eigenbasis_of_M_eigenvector    # KEEP_ROOT
+Operator_Formula.kyfan_Mp_top_eigenvector    # KEEP_ROOT
+Operator_Formula.eigval_Mp_top_eigenvector    # KEEP_ROOT
+Operator_Formula.eigval_Mp_last_nonpos    # KEEP_ROOT
+Operator_Formula.bracket_Mp_top_eigenvector    # KEEP_ROOT
+Operator_Formula.ell_op_at_top_eigenvector    # KEEP_ROOT
+Operator_Formula.poincare_separation    # FIX_THEN_KEEP
+Operator_Formula.eigval_Mp_ge_shift    # KEEP_ROOT
+Operator_Formula.bracket_ge_shifted    # KEEP_ROOT
+Operator_Formula.eigen_lb_iff_eigval_ge    # FIX_THEN_KEEP
+Operator_Formula.feasible_iff_eigval    # KEEP_EVIDENCE
+Operator_Envelopes.visc_subsol_imp_env    # FIX_THEN_KEEP
+Operator_Envelopes.visc_supersol_imp_env    # FIX_THEN_KEEP
+Operator_Envelopes.visc_subsol_env_local    # FIX_THEN_KEEP
+Operator_Envelope_Continuity.eq36_rhs_def    # KEEP_ROOT
+Operator_Envelope_Continuity.ell_op_usc_at_zero_ge    # KEEP_ROOT
+Operator_Envelope_Continuity.ell_op_le_eq36    # KEEP_ROOT
+Operator_Envelope_Continuity.ell_op_usc_at_zero_le    # KEEP_ROOT
+Operator_Envelope_Continuity.eq36    # KEEP_ROOT
+Operator_Envelope_Continuity.ell_op_envelopes_eq_off_zero    # KEEP_ROOT
+# sms_semic
+Eigenvalue_Continuity.eigval_lipschitz    # KEEP_ROOT
+Householder_Rotation.hrefl_orthogonal    # KEEP_API
+Ky_Fan.two_fractional    # KEEP_EVIDENCE
+Ky_Fan.is_proj_trace_zero    # KEEP_API
+Ky_Fan.kyfan_0    # KEEP_API
+Ky_Fan.eigval_1    # KEEP_API
+Ky_Fan.kyfan_eq_sum_eigval    # KEEP_API
+Ky_Fan.eigval_antimono    # KEEP_ROOT
+Ky_Fan.eigval_antimono_le    # KEEP_ROOT
+Ky_Fan.possum_0    # KEEP_API
+Ky_Fan.possum_Suc    # KEEP_API
+Ky_Fan.kyfan_mono_of_nonneg    # KEEP_API
+Ky_Fan.possum_eq_sum_pos    # KEEP_API
+Ky_Fan.kyfan_minus_possum    # KEEP_API
+Ky_Fan.bracket_eq_sum    # KEEP_EVIDENCE
+Matrix_Algebra.neg_matrix_vector    # KEEP_API
+Matrix_Algebra.local_min_gradient_zero    # FIX_THEN_KEEP
+Matrix_Algebra.local_min_hessian_psd    # FIX_THEN_KEEP
+Matrix_Algebra.diag_eq_inner_axis    # KEEP_API
+Matrix_Algebra.trace_nonneg_psd    # KEEP_API
+Orthonormal_Families.trace_ge_dim    # KEEP_API
+Poincare_Separation.quadform_le_eigval_1    # KEEP_API
+Poincare_Separation.eigenbasis_containing_eigenvector    # FIX_THEN_KEEP
+Poincare_Separation.exists_top_eigenvector    # FIX_THEN_KEEP
+Poincare_Separation.dim_inter_ge    # KEEP_ROOT
+Poincare_Separation.quadform_ge_on_span_threshold    # KEEP_ROOT
+Semicontinuity.usc_extension_bounded    # FIX_THEN_KEEP
+Semicontinuous_Envelopes.lsc_env_eq_self    # FIX_THEN_KEEP
+Metric_space.compact_space_dense_seq    # FIX_THEN_KEEP
+Metric_space.usc_sel_set_closedin    # KEEP_ROOT
+Metric_space.usc_sel_set_compactin    # KEEP_ROOT
+Metric_space.usc_sel_good_ex    # KEEP_ROOT
+Metric_space.usc_sel_code_set    # KEEP_ROOT
+Metric_space.usc_sel_code_set_ne    # KEEP_ROOT
+Metric_space.usc_sel_code_set_sup    # KEEP_ROOT
+Metric_space.usc_sel_code_mono    # KEEP_ROOT
+Metric_space.usc_sel_code_decseq    # KEEP_ROOT
+Metric_space.usc_sel_in_code_set    # KEEP_ROOT
+Metric_space.usc_sel_in_M    # KEEP_ROOT
+Metric_space.usc_sel_code_set_small    # KEEP_ROOT
+Metric_space.usc_sel_code_set_in_open    # KEEP_ROOT
+Metric_space.usc_sel_optimal    # KEEP_ROOT
+Metric_space.Least_nat_eq_iff    # KEEP_ROOT
+Metric_space.usc_measurable_selection    # KEEP_ROOT
+Metric_space.countably_valued_approx    # FIX_THEN_KEEP
+Metric_space.limitin_of_dist_half    # FIX_THEN_KEEP
+# sova_doubling
+Doubling_Of_Variables.doubling_diagonal_max_gen    # FIX_THEN_KEEP
+Doubling_Of_Variables.doubling_off_diagonal_gen    # FIX_THEN_KEEP
+Doubling_Of_Variables.doubling_penalty_bound_gen    # FIX_THEN_KEEP
+Doubling_Of_Variables.doubling_maximiser_exists_gen    # FIX_THEN_KEEP
+# sova_sums
+Crandall_Ishii_Sums.theorem_on_sums_quadratic_closed    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.superjet_def    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.subjet_def    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.superjet_cl_def    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.subjet_cl_def    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.linear_neg_iff    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.subjet_neg_superjet    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.superjet_mono    # KEEP_API
+Crandall_Ishii_Sums.superjet_subset_cl    # KEEP_API
+Crandall_Ishii_Sums.subjet_subset_cl    # KEEP_API
+Crandall_Ishii_Sums.usc_open_lt    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.usc_attains_sup_compact    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.supconv_attained_usc    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.quad_root_bound    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.doubled_supconv_pointwise_bound    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.usc_eventually_lt    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.norm_sq_add_expand    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.superjet_of_transfer    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.supconv_superjet_at_optimizer    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.sym_add_scaleR    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.theorem_on_sums_stage    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.norm_sq_diff_expand    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.deconv_sos_identity    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.deconv_moreau_bound    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.deconv_doubled_le    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.deconv_doubled_attains    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.superjet_supconv_form_lower    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.supconv_optimizer_location    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.superjet_supconv_transfer    # FIX_THEN_KEEP
+Crandall_Ishii_Sums.bounded_symmetric_forms_subseq    # FIX_THEN_KEEP
+Theorem_On_Sums.doubling_limit_maximises    # FIX_THEN_KEEP
+Theorem_On_Sums.supconv_jet_transfer    # FIX_THEN_KEEP
+# sova_tools
+Soft_Penalty.soft_grad_coeff_pos    # KEEP_API
+Soft_Penalty.soft_grad_nonzero    # KEEP_API
+Soft_Penalty.doubling_maximiser_exists_soft    # FIX_THEN_KEEP
+Soft_Penalty.doubling_maximiser_supconv_soft    # FIX_THEN_KEEP
+Soft_Penalty.doubling_near_soft    # FIX_THEN_KEEP
+Soft_Penalty.doubling_close_maximiser_soft    # FIX_THEN_KEEP
+Soft_Penalty.doubling_close_maximiser_supconv_soft    # FIX_THEN_KEEP
+Sup_Convolution.supconv_lipschitz_le    # KEEP_API
+Sup_Convolution.supconv_lipschitz    # KEEP_API
+Sup_Convolution.supconv_le_of_lipschitz    # KEEP_API
+Sup_Convolution.supconv_near_optimizer    # FIX_THEN_KEEP
+Sup_Convolution.supconv_tendsto    # FIX_THEN_KEEP
+Moreau_Envelope.moreau_hessian_psd    # FIX_THEN_KEEP
+Moreau_Envelope.moreau_twice_differentiable_AE    # FIX_THEN_KEEP
+Alexandrov.moreau_alexandrov_sym_AE    # FIX_THEN_KEEP
+Convex_Subgradients.minty_surjective    # KEEP_ROOT
+Test_Functions.test_fun_at_affine    # FIX_THEN_KEEP
+Test_Functions.test_fun_at_quartic_shift    # KEEP_API
+Test_Functions.convex_expandable    # KEEP_EVIDENCE
+Viscosity_Solutions.visc_subsol_gen_def    # FIX_THEN_KEEP
+Viscosity_Solutions.visc_supersol_gen_def    # FIX_THEN_KEEP
+Viscosity_Solutions.visc_sol_gen_def    # FIX_THEN_KEEP
+Viscosity_Solutions.visc_subsol_gen_env_def    # FIX_THEN_KEEP
+Viscosity_Solutions.visc_supersol_gen_env_def    # FIX_THEN_KEEP
+Viscosity_Solutions.visc_subsol_gen_mono    # KEEP_API
+Viscosity_Solutions.visc_supersol_gen_mono    # KEEP_API
+Viscosity_Solutions.visc_subsol_gen_env_imp    # KEEP_API
+Viscosity_Solutions.visc_supersol_gen_env_imp    # KEEP_API
+# toolkit
+Pair_Path_Space.path_laws_convergent_subsequence_market    # FIX_THEN_KEEP
+Pair_Path_Space.psd_diag_nonneg    # KEEP_API
+Pair_Path_Space.etime_shift_of_restrict    # KEEP_API
+Pair_Path_Space.vshift_path_law    # KEEP_API
+Pair_Path_Laws.covariation_class_martingale_fst    # KEEP_API
+Pair_Path_Laws.covariation_classI    # KEEP_API
+Pair_Path_Laws.covariation_class_mono    # KEEP_API
+Pair_Path_Laws.covariation_val_def    # FIX_THEN_KEEP
+Pair_Path_Laws.covariation_val_mono_class    # FIX_THEN_KEEP
+Path_Splicing.padd_fst_continuous    # KEEP_API
+Path_Splicing.pcut_pglue    # KEEP_API
+Path_Splicing.pcut_pglue_self    # KEEP_API
+Path_Stopping_Times.padd_stopping_time    # KEEP_API
+Path_Stopping_Times.pstopped_padd    # KEEP_API
+Path_Stopping_Times.path_stopping_time_max    # KEEP_API
+Path_Stopping_Times.path_stopping_time_shift    # KEEP_API
+Path_Stopping_Times.path_stopping_time_cut_eq    # KEEP_ROOT
+Path_Stopping_Times.pstopped_cut_compose    # KEEP_ROOT
+Path_Stopping_Times.pre_sigma_ofI_le    # KEEP_ROOT
+Path_Stopping_Times.pstopped_vimage_pre_sigma    # KEEP_ROOT
+Path_Stopping_Times.sigma_algebra_pre_sigma_of    # KEEP_API
+Path_Stopping_Times.integrable_at_bounded_stopping_time    # FIX_THEN_KEEP
+Path_Stopping_Times.set_integral_increment_times_known    # FIX_THEN_KEEP
+Path_Law_Pasting.kglue_law'_rcd_eq    # KEEP_API
+Path_Law_Pasting.AE_kglue_law_of_kernel    # KEEP_API
+Path_Law_Pasting.path_rcd    # KEEP_API
+Path_Law_Pasting.path_rcd_ksemi    # KEEP_API
+# value_function
+Value_Function_Subsolution.stopped_X_int    # KEEP_API
+Value_Function_Subsolution.stopped_X_mean    # KEEP_API
+Value_Function_Euler_Construction.bm_coordinate_pow4    # FIX_THEN_KEEP
+Value_Function_Euler_Construction.bm_R2_moment    # FIX_THEN_KEEP
+Value_Function_Euler_Construction.sbm_xi_mean0    # KEEP_API
+Value_Function_Supersolution_Case_2.visc_supersol_lsc_iff_env    # FIX_THEN_KEEP
+# wm_cps_small
+wr.elims    # KEEP_API
+wr.induct    # KEEP_API
+wr.pelims    # KEEP_API
+wr.psimps    # KEEP_API
+wr.cases    # KEEP_API
+ins.elims    # KEEP_API
+ins.induct    # KEEP_API
+ins.pelims    # KEEP_API
+ins.psimps    # KEEP_API
+ins.cases    # KEEP_API
+BM.P    # KEEP_API
+# (not a root: kept with its interpretation) BM.P.* (36 + 297 facts generated by `interpretation BM: polish_projective`)    # KEEP_API
+W.AE_E_prob    # KEEP_API
+# (not a root: kept with its interpretation) W.* (20 + 281 facts generated by `interpretation W: prob_space wiener_pre`)    # KEEP_API
+Brownian_Motion.bm_increments_indep    # FIX_THEN_KEEP
+Sorted_Lists.sorted_wrt_less_nth_iff    # FIX_THEN_KEEP
+Sorted_Lists.sorted_wrt_less_set_take    # FIX_THEN_KEEP
+Sorted_Lists.sorted_wrt_less_Max_last    # FIX_THEN_KEEP
+Gaussian_Increments.gauss_measure_conv    # FIX_THEN_KEEP
+BMP.AE_E_prob    # KEEP_API
+# (not a root: kept with its interpretation) BMP.* (18 + 275 generated facts)    # KEEP_API
+BMC.AE_component    # KEEP_API
+BMC.P    # KEEP_API
+# (not a root: kept with its interpretation) BMC.P.* (41 + 338 generated facts)    # KEEP_API
+Product_Brownian_Motion.gauss_measure_mean    # KEEP_API
+Product_Brownian_Motion.gauss_measure_snd_moment    # KEEP_API
+Product_Brownian_Motion.gauss_shifted_square    # KEEP_API
+Product_Brownian_Motion.bm_coordinate_sq    # KEEP_API
+Vector_Brownian_Martingales.bm_coordinate_mean    # KEEP_API
+Vector_Brownian_Martingales.bm_increment_component    # KEEP_API
+Vector_Brownian_Martingales.bm_meas_increment_product    # KEEP_API
+Vector_Brownian_Martingales.bm_increment_sq    # KEEP_API
+measure_spmf.integral_abs_small_sets    # KEEP_API
+measure_pmf.integral_abs_small_sets    # KEEP_API
+measure_pmf.cond_exp_family_unif_integrable    # KEEP_API
+measure_pmf.unif_integrable_of_averaging    # KEEP_API
+Increment_Moments.martingale_expectation_eq    # FIX_THEN_KEEP
+Increment_Moments.increment_second_moment_bound    # FIX_THEN_KEEP
+Path_Space.path_law_def    # KEEP_API
+Path_Space.sets_path_law    # KEEP_API
+Path_Space.prob_space_path_law    # KEEP_API
+Path_Space.path_law_restrict    # KEEP_API
+Path_Space_Infinite.sets_ipath_law    # KEEP_API
