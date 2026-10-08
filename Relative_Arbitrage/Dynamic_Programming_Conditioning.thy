@@ -227,7 +227,7 @@ proof -
       - ((\<chi> i j. fst (\<omega> (r + min u ?S)) $ i * fst (\<omega> r) $ j)
          + (\<chi> i j. fst (\<omega> r) $ i * fst (\<omega> (r + min u ?S)) $ j))
       + (outerp (fst (\<omega> r)) + snd (\<omega> r)))"
-    by (rule martingale_add[OF martingale_diff[OF mgA mgB] mgC])
+    by (rule martingale.add[OF martingale.diff[OF mgA mgB] mgC])
   show ?thesis
   proof (rule martingale_cong_ge[OF mgABC])
     fix u :: real assume u: "0 \<le> u"

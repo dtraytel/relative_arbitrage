@@ -13,8 +13,8 @@ text \<open>
   measurable function is integrable, when a clamped or tail-truncated one
   is, integrability and integrals under a scalar multiple, positivity of an
   integral from almost-everywhere positivity, two set integrals over
-  degenerate sets, the exponential time integral, and independence read
-  through a distribution or through the components of a product measure.
+  degenerate sets, and independence read through a distribution or
+  through the components of a product measure.
 
   Two facts about \<open>ennreal\<close> suprema and about shifting and scaling an
   infimum of reals come along, because the same arguments need them and
@@ -305,64 +305,6 @@ proof -
     using Gm Hm main by blast
 qed
 
-text \<open>The market stopping at time \<open>0\<close>: constant state \<open>x0\<close>, horizon \<open>0\<close>,
-  covariance \<open>mat 1\<close> at the single instant \<open>s = 0\<close> and \<open>0\<close> afterwards.
-  The eigenvalue constraints are imposed only on \<open>[0, tau] = {0}\<close>, where
-  \<open>mat 1\<close> satisfies them; the compensator integrals vanish since the
-  covariance is supported on a Lebesgue-null set.\<close>
-
-text \<open>LR, proof of Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: with \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) ln E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close>, the
-  essential infimum of a time bounded in \<open>[0, T]\<close> is \<open>inf\<^sub>\<lambda> f\<^sub>\<lambda>\<close>.  Each
-  \<open>f\<^sub>\<lambda>\<close> dominates the essential infimum (Jensen-free: the a.s. lower
-  bound passes through the decreasing exponential), and as \<open>\<lambda> \<rightarrow> \<infinity>\<close>
-  the transform concentrates at the essential infimum.\<close>
-
-lemma exp_neg_time_integrable:
-  fixes tau :: "'a \<Rightarrow> real" and l :: real
-  assumes M: "prob_space M" and meas: "tau \<in> borel_measurable M"
-    and nn: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
-    and lam: "0 \<le> l"
-  shows "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
-proof -
-  interpret prob_space M by fact
-  have m: "(\<lambda>\<omega>. exp (- l * tau \<omega>)) \<in> borel_measurable M"
-    using meas by measurable
-  have b: "norm (exp (- l * tau \<omega>)) \<le> 1" if w: "\<omega> \<in> space M" for \<omega>
-    using nn[OF w] lam
-    by (simp add: abs_of_pos)
-  show ?thesis
-    by (rule integrable_const_bound[where B = 1])
-      (use m b in \<open>auto\<close>)
-qed
-
-lemma exp_neg_time_integral_lower:
-  fixes tau :: "'a \<Rightarrow> real" and l T :: real
-  assumes M: "prob_space M" and meas: "tau \<in> borel_measurable M"
-    and nn: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
-    and le: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> tau \<omega> \<le> T"
-    and lam: "0 \<le> l"
-  shows "exp (- l * T) \<le> (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
-proof -
-  interpret prob_space M by fact
-  have "exp (- l * T) = (\<integral>\<omega>. exp (- l * T) \<partial>M)"
-    by (simp add: prob_space)
-  also have "\<dots> \<le> (\<integral>\<omega>. exp (- l * tau \<omega>) \<partial>M)"
-  proof (rule Bochner_Integration.integral_mono)
-    show "integrable M (\<lambda>\<omega>. exp (- l * T))"
-      by (rule integrable_const)
-    show "integrable M (\<lambda>\<omega>. exp (- l * tau \<omega>))"
-      by (rule exp_neg_time_integrable[OF M meas nn lam])
-    show "exp (- l * T) \<le> exp (- l * tau \<omega>)"
-      if w: "\<omega> \<in> space M" for \<omega>
-    proof -
-      have "l * tau \<omega> \<le> l * T"
-        by (rule mult_left_mono[OF le[OF w] lam])
-      then show ?thesis by simp
-    qed
-  qed
-  finally show ?thesis .
-qed
-
 text \<open>The transfer theorem \<open>weak_conv_integral_of_L2_bound\<close> asks for a
   battery of integrability facts under every approximating law and under
   the limit.  All of them follow from one input: a bound on the second
@@ -566,7 +508,7 @@ proof -
   have bl: "bounded_linear (\<lambda>r :: real. c * r)"
     unfolding linear_conv_bounded_linear[symmetric]
     by (intro linearI) (auto simp: algebra_simps)
-  show ?thesis by (rule integral_of_bounded_linear[OF bl g])
+  show ?thesis by (rule integral_bounded_linear[OF bl g])
 qed
 
 lemma integral_pos_of_AE_pos:
@@ -575,90 +517,15 @@ lemma integral_pos_of_AE_pos:
     and pos: "AE \<omega> in N. 0 < f \<omega>"
   shows "0 < (\<integral>\<omega>. f \<omega> \<partial>N)"
 proof -
-  interpret prob_space N by (rule PP)
-  have fm: "f \<in> borel_measurable N" by (rule borel_measurable_integrable[OF im])
-  define A where "A n = {\<omega> \<in> space N. 1 / real (Suc n) < f \<omega>}" for n
-  have Am: "A n \<in> sets N" for n
-    unfolding A_def using fm by measurable
-  have un: "(\<Union>n. A n) = {\<omega> \<in> space N. 0 < f \<omega>}"
-  proof (rule set_eqI)
-    fix \<omega>
-    show "\<omega> \<in> (\<Union>n. A n) \<longleftrightarrow> \<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}"
-    proof
-      assume "\<omega> \<in> (\<Union>n. A n)"
-      then obtain n where an: "\<omega> \<in> A n" by blast
-      have h1: "\<omega> \<in> space N" and h2: "1 / real (Suc n) < f \<omega>"
-        using an unfolding A_def by auto
-      have p0: "0 < 1 / real (Suc n)" by simp
-      have "0 < f \<omega>" by (rule less_trans[OF p0 h2])
-      with h1 show "\<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}" by simp
-    next
-      assume "\<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}"
-      then obtain n where "inverse (real (Suc n)) < f \<omega>"
-        using reals_Archimedean[of "f \<omega>"] by auto
-      then show "\<omega> \<in> (\<Union>n. A n)"
-        using \<open>\<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}\<close>
-        unfolding A_def by (auto simp: inverse_eq_divide)
-    qed
+  have nn: "AE \<omega> in N. 0 \<le> f \<omega>" using pos by eventually_elim simp
+  have "(\<integral>\<omega>. f \<omega> \<partial>N) \<noteq> 0"
+  proof
+    assume "(\<integral>\<omega>. f \<omega> \<partial>N) = 0"
+    with pos have "AE \<omega> in N. False"
+      unfolding integral_nonneg_eq_0_iff_AE[OF im nn] by eventually_elim simp
+    then show False using prob_space.AE_False[OF PP] by simp
   qed
-  have Um: "{\<omega> \<in> space N. 0 < f \<omega>} \<in> sets N" using fm by measurable
-  have inA: "AE \<omega> in N. \<omega> \<in> {\<omega> \<in> space N. 0 < f \<omega>}"
-    using pos AE_space by eventually_elim simp
-  have p1: "prob {\<omega> \<in> space N. 0 < f \<omega>} = 1"
-    using AE_in_set_eq_1[OF Um] inA by simp
-  have ex: "\<exists>n. 0 < prob (A n)"
-  proof (rule ccontr)
-    assume "\<not> (\<exists>n. 0 < prob (A n))"
-    then have z: "\<And>n. prob (A n) = 0"
-      using measure_nonneg[of N] by (metis order.antisym not_le)
-    have null: "A n \<in> null_sets N" for n
-      using z Am by (intro null_setsI) (simp add: emeasure_eq_measure)
-    have "(\<Union>n. A n) \<in> null_sets N" by (rule null_sets_UN) (rule null)
-    then have "prob (\<Union>n. A n) = 0"
-      by (simp add: measure_eq_0_null_sets)
-    with p1 un show False by simp
-  qed
-  then obtain n where pn: "0 < prob (A n)" by blast
-  have iind: "integrable N (\<lambda>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)))"
-  proof -
-    have "integrable N (indicat_real (A n))"
-      by (rule integrable_real_indicator[OF Am]) (simp add: emeasure_eq_measure)
-    then have "integrable N (\<lambda>\<omega>. (1 / real (Suc n)) * indicat_real (A n) \<omega>)"
-      by (rule integrable_cmult)
-    then show ?thesis by (simp add: ac_simps)
-  qed
-  have lb: "(\<integral>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<partial>N)
-      \<le> (\<integral>\<omega>. f \<omega> \<partial>N)"
-  proof (rule integral_mono_AE[OF iind im])
-    show "AE \<omega> in N. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<le> f \<omega>"
-      using pos
-    proof (rule eventually_mono)
-      fix \<omega> assume f0: "0 < f \<omega>"
-      show "indicat_real (A n) \<omega> * (1 / real (Suc n)) \<le> f \<omega>"
-      proof (cases "\<omega> \<in> A n")
-        case True
-        then have "1 / real (Suc n) < f \<omega>" unfolding A_def by simp
-        with True show ?thesis by (simp add: indicator_def)
-      next
-        case False
-        then show ?thesis using f0 by (simp add: indicator_def)
-      qed
-    qed
-  qed
-  have ind_int: "(\<integral>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<partial>N)
-      = prob (A n) * (1 / real (Suc n))"
-  proof -
-    have "(\<integral>\<omega>. indicat_real (A n) \<omega> * (1 / real (Suc n)) \<partial>N)
-        = (1 / real (Suc n)) * (\<integral>\<omega>. indicat_real (A n) \<omega> \<partial>N)"
-      using integral_cmult[of N "indicat_real (A n)" "1 / real (Suc n)"]
-        integrable_real_indicator[OF Am]
-      by (simp add: ac_simps emeasure_eq_measure)
-    also have "(\<integral>\<omega>. indicat_real (A n) \<omega> \<partial>N) = prob (A n)"
-      using Am by simp
-    finally show ?thesis by (simp add: ac_simps)
-  qed
-  have "0 < prob (A n) * (1 / real (Suc n))" using pn by simp
-  with lb ind_int show ?thesis by simp
+  with integral_nonneg_AE[OF nn] show ?thesis by simp
 qed
 
 subsection \<open>Borel measurability of the projections, and independence up to sets\<close>

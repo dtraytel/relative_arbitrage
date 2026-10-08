@@ -301,8 +301,9 @@ proof -
   qed
 qed
 
-text \<open>\<open>martingale_add\<close>, \<open>martingale_add_const\<close> and \<open>martingale_cong_ge\<close>
-  live in @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
+text \<open>\<open>martingale_add_const\<close> and \<open>martingale_cong_ge\<close> live in
+  @{theory Continuous_Time_Martingales.Martingale_Algebra}; sums are the AFP's
+  \<open>martingale.add\<close>.\<close>
 
 subsection \<open>Almost-sure statements transport through the shift\<close>
 

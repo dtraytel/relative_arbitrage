@@ -939,10 +939,11 @@ qed
 
 subsection \<open>The \<open>\<ge>\<close> half at a random time, reduced to a constant\<close>
 
-text \<open>The passage from a constant lower bound to the essential infimum does
-  not care whether the time is deterministic: it needs only that the
-  integrand lies between \<open>0\<close> and \<open>T\<close>, which holds for every
-  \<open>0 \<le> \<theta> \<omega> \<le> T\<close>, with no measurability and no stopping-time property.  So
+text \<open>The passage from a constant lower bound to the essential infimum
+  (@{thm [source] ess_inf_time_le_of_real_bounds}) does not care whether the
+  time is deterministic: it needs only that the integrand lies between \<open>0\<close>
+  and \<open>T\<close>, which holds for every \<open>0 \<le> \<theta> \<omega> \<le> T\<close>, with no measurability
+  and no stopping-time property.  So
   the whole \<open>\<ge>\<close> half at a random time reduces to the constant statement,
   exactly as @{thm [source] exit_val_dpp_sup_ge} reduces to
   @{thm [source] exit_val_dpp_ge_const}.\<close>
@@ -964,82 +965,25 @@ theorem exit_val_dpp_sup_ge_time_of_const:
 proof (rule SUP_least)
   fix P :: "('n pairpath) measure"
   assume P: "P \<in> exit_class k L T x"
-  define g :: "'n pairpath \<Rightarrow> real" where
-    "g \<omega> = pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)" for \<omega>
-  have geta: "g = (\<lambda>\<omega> :: 'n pairpath. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-      + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-         then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))"
-    by (rule ext) (simp add: g_def)
-  have vbnd: "(if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-      then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0) \<le> T - \<theta> \<omega>"
-    for \<omega> :: "'n pairpath"
-  proof -
-    have Tr': "0 \<le> T - \<theta> \<omega>" using thT[of \<omega>] by simp
-    show ?thesis
-    proof (cases "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K")
-      case True
-      have "ennreal (enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))))
-          = exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))"
-        using exit_val_neq_top[of "T - \<theta> \<omega>" k L K "fst (\<omega> (\<theta> \<omega>))"] Tr'
-        by (simp add: less_top)
-      also have "\<dots> \<le> ennreal (T - \<theta> \<omega>)" by (rule exit_val_le_T[OF Tr'])
-      finally have "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) \<le> T - \<theta> \<omega>"
-        using Tr' by simp
-      then show ?thesis using True by simp
-    next
-      case False
-      then have "(if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-          then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0) = 0"
-        by (rule if_not_P)
-      then show ?thesis using Tr' by simp
-    qed
-  qed
-  have gle: "g \<omega> \<le> T" for \<omega> :: "'n pairpath"
-  proof -
-    have "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) \<le> \<theta> \<omega>" by (rule pexit_le_T[OF th0])
-    with vbnd[of \<omega>] show ?thesis unfolding g_def by linarith
-  qed
-  have gnn: "0 \<le> g \<omega>" for \<omega> :: "'n pairpath"
-  proof -
-    have p: "0 \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))" by (rule pexit_nonneg[OF th0])
-    have q: "0 \<le> (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-        then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)" by simp
-    from p q show ?thesis unfolding g_def by linarith
-  qed
-  have PP: "prob_space P" by (rule exit_class_prob[OF P])
-  have fin: "ess_inf_time P g \<le> ennreal T"
-    by (rule ess_inf_time_le_const[OF PP gle])
-  have ntop: "ess_inf_time P g < \<top>"
-  proof -
-    have "(ennreal T :: ennreal) < \<top>" by simp
-    with fin show ?thesis by (rule order.strict_trans1)
-  qed
-  define c where "c = enn2real (ess_inf_time P g)"
-  have ceq: "ennreal c = ess_inf_time P g"
-    unfolding c_def by (rule ennreal_enn2real[OF ntop])
-  have aec0: "AE \<omega> in P. c \<le> g \<omega>"
-  proof (rule eventually_mono[OF ess_inf_time_AE[of P g]])
-    fix \<omega> :: "'n pairpath"
-    assume "ess_inf_time P g \<le> ennreal (g \<omega>)"
-    then have "ennreal c \<le> ennreal (g \<omega>)" using ceq by simp
-    then show "c \<le> g \<omega>" using gnn[of \<omega>] by simp
-  qed
-  have aec: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-      + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-         then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
-    using aec0 unfolding g_def .
-  have main: "ennreal c \<le> exit_val k L T K x" by (rule const[OF P aec])
-  have "ess_inf_time P (\<lambda>\<omega> :: 'n pairpath. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-      + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-         then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)) = ennreal c"
-    using ceq geta by simp
-  then show "ess_inf_time P (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+  show "ess_inf_time P (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
       + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
          then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))
       \<le> exit_val k L T K x"
-    using main by simp
+  proof (rule ess_inf_time_le_of_real_bounds[OF exit_class_prob[OF P], where T = T])
+    fix \<omega> :: "'n pairpath"
+    have p: "0 \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))" "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) \<le> \<theta> \<omega>"
+      by (rule pexit_nonneg[OF th0], rule pexit_le_T[OF th0])
+    have "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) \<le> T - \<theta> \<omega>"
+      using thT[of \<omega>] by (intro enn2real_leI exit_val_le_T) simp_all
+    with p thT[of \<omega>]
+    show "0 \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+      and "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0) \<le> T"
+      by auto
+  qed (rule const[OF P])
 qed
 
 corollary exit_val_dpp_sup_ge_time:

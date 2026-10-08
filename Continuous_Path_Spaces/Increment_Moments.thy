@@ -24,12 +24,12 @@ text \<open>
 subsection \<open>A martingale has constant expectation\<close>
 
 lemma martingale_expectation_eq:
-  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> real"
-  assumes Y: "martingale M F (0::real) Y" and ij: "0 \<le> i" "i \<le> j"
+  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes Y: "martingale M F t0 Y" and ij: "t0 \<le> i" "i \<le> j"
   shows "(\<integral>\<omega>. Y i \<omega> \<partial>M) = (\<integral>\<omega>. Y j \<omega> \<partial>M)"
 proof -
-  interpret Q: martingale M F "0::real" Y by (rule Y)
-  have j: "0 \<le> j" using ij by simp
+  interpret Q: martingale M F t0 Y by (rule Y)
+  have j: "t0 \<le> j" using ij by simp
   have sp: "space M \<in> sets (F i)"
     using sets.top[of "F i"] Q.space_F[OF ij(1)] by simp
   have eq: "set_lebesgue_integral M (space M) (Y i)

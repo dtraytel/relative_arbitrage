@@ -20,9 +20,6 @@ text \<open>
   surely and no subsequence is needed.
 \<close>
 
-text \<open>\<open>martingale_diff\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
 subsection \<open>The compensator relation, conditionally\<close>
 
 text \<open>\<open>fourth_moment_bound_bounded\<close> takes the compensator relation in
@@ -96,7 +93,7 @@ proof -
   have "martingale M (\<lambda>k. F (t k)) 0
       (\<lambda>n \<omega>. ((X (t n) \<omega>)\<^sup>2 - A (t n) \<omega>)
              - ((X (t n) \<omega>)\<^sup>2 - (\<Sum>k<n. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2)))"
-    by (rule martingale_diff[OF m2 m1])
+    by (rule martingale.diff[OF m2 m1])
   moreover have "(\<lambda>n \<omega>. ((X (t n) \<omega>)\<^sup>2 - A (t n) \<omega>)
              - ((X (t n) \<omega>)\<^sup>2 - (\<Sum>k<n. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2)))
       = (\<lambda>n \<omega>. qvar (\<lambda>k. X (t k)) n \<omega> - A (t n) \<omega>)"

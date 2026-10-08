@@ -759,7 +759,7 @@ section \<open>Clause (iv) at a stopping time: the increment identity\<close>
 
 text \<open>The assembly.  Every hypothesis of
   \<open>set_martingale_sampling_two\<close> now has a supplier: the
-  martingale from the class via @{thm [source] martingale_vec_component},
+  martingale from the class via @{thm [source] martingale_vec_nth},
   the filtration facts from @{thm [source] sets_natural_filtration_mono} and
   the martingale locale, the stopping-time events from
   \<open>path_stopping_time_event_filtration_all\<close>, the convergence from
@@ -771,7 +771,7 @@ text \<open>The same identity for an arbitrary real process that is a
   \<open>horizon_sq_int_martingale\<close> with continuous paths.  Both of the class's
   martingale clauses are of that shape --- the \<open>X\<close> one componentwise, the
   compensated one entrywise --- so this is the form clause (iv) uses twice.
-  \<open>martingale_mat_component\<close> lives in
+  \<open>martingale_mat_nth\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 text \<open>Square-integrability of the compensated entry, from its

@@ -1010,7 +1010,7 @@ proof -
   proof -
     have "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
         = trace (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q)"
-      by (rule integral_of_bounded_linear[OF bounded_linear_trace ci])
+      by (rule integral_bounded_linear[OF bounded_linear_trace ci])
     also have "\<dots> = trace (outerp x)"
       by (simp add: exit_class_compensated_mean[OF Q t])
     finally show ?thesis by (simp add: trace_outerp)
