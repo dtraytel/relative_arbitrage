@@ -489,10 +489,10 @@ subsection \<open>The closing chain of Theorem 4.2(a)\<close>
 
 text \<open>A scaled subsolution and a supersolution touching an ordered jet pair
   at a common \<open>p\<close> are inconsistent: scaling supplies strictness
-  (\<open>visc_subsol_scaled_strict\<close>), the ordering supplies \<open>psd\<close>
+  (\<open>visc_subsol_scaled_uniform\<close>), the ordering supplies \<open>psd\<close>
   (\<open>psd_of_abstract_le\<close>), and degenerate ellipticity closes
   (\<open>ell_op_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
-  hypotheses \<open>ord\<close>, \<open>subtest\<close> and \<open>suptest\<close>, supplied by the
+  ordered jet pair and the two touchings, supplied by the
   development in \<open>Rademacher\<close>,
   \<open>Alexandrov\<close>,
   \<open>Jensen_Lemma\<close> and
@@ -507,7 +507,7 @@ text \<open>\<open>polarization_symmetric\<close>, \<open>parallelogram_norm\<cl
 
 subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
 
-text \<open>\<open>bounded_seq_limit_point\<close>, \<open>nearby_of_convergent\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+text \<open>\<open>bounded_seq_limit_point\<close> lives in \<open>Doubling_Of_Variables\<close>.\<close>
 
 text \<open>A bounded family on which the operator bound holds yields the
   nearby-point hypothesis at a produced limit point.  The closing argument
@@ -515,18 +515,6 @@ text \<open>A bounded family on which the operator bound holds yields the
   matrices, and \<open>p \<noteq> 0\<close>.  Symmetry and the ordering are closed conditions
   and pass to the limit automatically; \<open>p \<noteq> 0\<close> is not closed and needs a
   positive lower bound along the family.\<close>
-
-subsection \<open>A positive lower bound on the shared gradient\<close>
-
-text \<open>\<open>doubling_grad_lower_bound\<close>, \<open>doubling_grad_norm_lower_bound\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
-
-text \<open>The same bound for the doubling run on sup-convolutions:
-  \<open>supconv_lipschitz\<close> gives the modulus of continuity with the same
-  constant, and \<open>doubled_value_gap_supconv\<close> gives the value gap with
-  explicit loss \<open>\<epsilon>(L\<^sub>u\<^sup>2+L\<^sub>w\<^sup>2)/2\<close>.  The doubled functional is
-  \<open>A(x)+B(y)-\<close>penalty with \<open>B = supconv(-w)\<epsilon>\<close>, so \<open>w\<close> is instantiated at
-  \<open>-B\<close>, and the Lipschitz hypothesis transfers since negation preserves
-  \<open>\<bar>\<cdot>\<bar>\<close>.\<close>
 
 theorem psd_limit:
   fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
@@ -584,8 +572,6 @@ subsection \<open>Route (i), threaded\<close>
 
 text \<open>\<open>matrix_shift_apply\<close>, \<open>norm_shifted_block\<close>, \<open>shift_cancel_matrix\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-
-text \<open>\<open>penalty_gradient_nearby_bound\<close> lives in \<open>Doubling_Of_Variables\<close>.\<close>
 
 text \<open>The value gap transfers to the sup-convolutions with an explicit loss:
   \<open>supconv_le_of_lipschitz\<close> sandwiches each sup-convolution between its

@@ -12,16 +12,14 @@ begin
 
 
 text \<open>
-  An n-dimensional Brownian market model discharging the locale
-             "\<open>sufficiently_volatile_market\<close>" of \<open>Volatile_Market\<close>.
+  An n-dimensional Brownian market model.
 
     The market is the product of CARD('n) independent copies of the Wiener
     measure \<open>wiener_pre\<close> from \<open>Brownian_Motion\<close>, started at x0, with constant
     instantaneous covariance mat 1 and a deterministic horizon.  For this
-    model every assumption of \<open>sufficiently_volatile_market\<close> --- including the
-    martingale property with respect to the natural filtration and the
-    martingale-problem identity \<open>dynkin_quadratic\<close> --- becomes a theorem,
-    \<open>showing that the axiomatization of the class \<P>\<^sub>x is non-vacuous.\<close>\<close>
+    model the martingale property with respect to the natural filtration
+    becomes a theorem, and the model witnesses that the class \<open>\<P>\<^sub>0\<close> is
+    non-empty (\<open>exit_class_nonempty\<close>).\<close>
 section \<open>Independence toolkit\<close>
 
 text \<open>\<open>indep_var_distr_iff\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>

@@ -324,25 +324,14 @@ proof -
   qed
 qed
 
-section \<open>The Brownian market is sufficiently volatile\<close>
-
-text \<open>The martingale property \<open>martingale_bmX\<close> above, together with the
-  martingale-problem identity \<open>dynkin_quadratic\<close> proved in the next
-  section, assembles into an instance of \<open>sufficiently_volatile_market\<close>
-  from \<open>Volatile_Market\<close>; the concrete instantiation, for the
-  continuous modification of the market, is carried out in
-  \<open>Continuous_Brownian_Motion\<close>.\<close>
-
 section \<open>Ito's formula for the square: the compensated square is a martingale\<close>
 
-text \<open>The martingale-problem identity used above is the \<^emph>\<open>expectation\<close>
+text \<open>The Dynkin identity \<open>bmX_sq\<close> is the \<^emph>\<open>expectation\<close>
   form of Ito's formula for the test function \<open>|x|\<^sup>2\<close>.  Its process form,
 
     \<open>Z t = |B t|\<^sup>2 - int_0^t tr(mat 1) ds\<close> is a martingale,
 
-  is proved in this section.  It is what the locales of \<open>Ito\_Market\<close> take as
-  their hypothesis, so it shows that the martingale problem in process form
-  is inhabited as well.  Everything rests on the independence of the
+  is proved in this section.  Everything rests on the independence of the
   increment from the past, generalised here from indicators of past events
   to arbitrary past-measurable factors.\<close>
 
@@ -920,13 +909,6 @@ proof -
       unfolding usplit vsplit vu by (simp add: algebra_simps)
   qed
 qed
-
-text \<open>Consequently the process form of the martingale problem is
-  inhabited: with \<open>acov = mat 1\<close> the process of \<open>ito_Z\<close> is exactly \<open>?Z\<close>
-  above, so \<open>martingale_bm_square\<close> discharges the hypothesis
-  \<open>Z_martingale\<close> of \<open>ito_const_horizon_market\<close>.  The instantiation
-  itself belongs to \<open>Ito\_Market,\<close> which imports this theory's ambient
-  definitions.\<close>
 
 section \<open>The compensated square of a single coordinate is a martingale\<close>
 

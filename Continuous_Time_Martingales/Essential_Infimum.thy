@@ -265,12 +265,6 @@ proof -
     unfolding ess_inf_time_def iff by (rule refl)
 qed
 
-section \<open>The class \<open>\<P>\<^sub>x\<close> and the value function of Eq. (1.6)\<close>
-
-text \<open>The set of values \<open>P-ess inf tau\<close> attained by the markets of
-  \<open>\<P>\<^sub>x\<close> --- the class of Eq. (1.7), in the martingale-problem form of
-  \<open>sufficiently_volatile_market\<close> --- started at \<open>x0\<close> and confined to \<open>K\<close>.\<close>
-
 lemma ess_inf_time_distr:
   assumes fm: "f \<in> M \<rightarrow>\<^sub>M N"
     and meas: "\<And>c :: ennreal. {\<omega> \<in> space N. c \<le> ennreal (tau \<omega>)} \<in> sets N"

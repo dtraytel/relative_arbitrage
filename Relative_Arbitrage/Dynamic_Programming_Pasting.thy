@@ -17,9 +17,8 @@ text \<open>The dynamic programming principle of Proposition 2.4 of
 
 section \<open>The pasting bound for the dynamic programming principle\<close>
 
-text \<open>The kernel analogue of \<open>exit_val_paste_ge\<close>: an
-  almost-sure lower bound on the exit time of the kernel glue is a lower
-  bound for @{term exit_val}, turning @{thm [source]
+text \<open>An almost-sure lower bound on the exit time of the kernel glue is a
+  lower bound for @{term exit_val}, turning @{thm [source]
   exit_class_kglue_law'} into an inequality about the value
   function.\<close>
 
@@ -81,10 +80,10 @@ qed
 
 subsection \<open>The pathwise form of the dynamic programming bound\<close>
 
-text \<open>A strict variant of \<open>pexit_pglue_split\<close>: the
-  continuation only has to stay in \<open>K\<close> on the half-open interval
-  \<open>{0..<c}\<close>, matching what the essential infimum supplies, since
-  \<open>c \<le> pexit\<close> says nothing about the path at time \<open>c\<close>.\<close>
+text \<open>In \<open>pexit_pglue_split'\<close> the continuation only has to stay in \<open>K\<close>
+  on the half-open interval \<open>{0..<c}\<close>, matching what the essential
+  infimum supplies, since \<open>c \<le> pexit\<close> says nothing about the path at
+  time \<open>c\<close>.\<close>
 
 
 

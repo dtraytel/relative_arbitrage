@@ -495,8 +495,6 @@ text \<open>A test function scales, so a subsolution scaled by \<open>\<theta> \
 
 subsection \<open>Freezing one variable in the doubled maximum\<close>
 
-text \<open>\<open>doubling_partial_max_fst\<close>, \<open>doubling_partial_min_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
 text \<open>The two frozen penalties are smooth quadratics with the same gradient
   \<open>\<alpha> *\<^sub>R (xh - yh)\<close> at their respective points, and Hessians
   \<open>\<alpha> *\<^sub>R mat 1\<close> and \<open>- \<alpha> *\<^sub>R mat 1\<close>. The common gradient lets the two
@@ -511,10 +509,11 @@ text \<open>The same gradient at the other frozen point, letting the subsolution
 text \<open>The two Hessians, \<open>\<alpha> I\<close> and \<open>- \<alpha> I\<close>, are ordered the wrong way, the
   obstruction the theorem on sums removes.\<close>
 
-text \<open>Packaging both frozen penalties as test functions supplies, with
-  \<open>doubling_partial_max_fst\<close> and \<open>doubling_partial_min_snd\<close>, exactly the
-  hypotheses \<open>visc_subsol\<close> and \<open>supersol_jet\<close> require, so the doubled
-  maximum feeds into the two viscosity inequalities.\<close>
+text \<open>Packaging both frozen penalties as test functions supplies exactly the
+  hypotheses \<open>visc_subsol\<close> and \<open>supersol_jet\<close> require: freezing one
+  variable of the doubled maximum leaves \<open>u\<close> minus the first penalty
+  maximal at \<open>xh\<close>, and \<open>w\<close> minus the second minimal at \<open>yh\<close>. So the
+  doubled maximum feeds into the two viscosity inequalities.\<close>
 
 subsection \<open>What naive doubling delivers\<close>
 
@@ -542,9 +541,6 @@ text \<open>\<open>superjet_local_max\<close> introduces a strictly convex corre
   \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}) show the
   envelope-free notions already imply the envelope ones on an open
   \<open>\<Omega> \<subseteq> K\<close>.\<close>
-
-text \<open>\<open>ball_prod_shift_snd\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 text \<open>And the same for the upper envelope, by the dual argument: the same
   translation carries \<open>ball (p, M) e\<close> onto \<open>ball (p, N) e\<close>, and the
@@ -600,11 +596,9 @@ text \<open>In the doubling, the shared gradient at the maximising pair
   \<open>p = \<alpha> (x' - y')\<close>, so \<open>p \<noteq> 0\<close> means the maximising pair is off the
   diagonal. For \<open>\<alpha> \<noteq> 0\<close> the gradient vanishes precisely on the diagonal.\<close>
 
-text \<open>\<open>doubling_diagonal_max\<close>, \<open>doubling_off_diagonal\<close>, \<open>doubling_grad_nonzero\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
 subsection \<open>The penalty estimate\<close>
 
-text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}; \<open>doubling_ge_diagonal\<close> in @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
+text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The dichotomy for a general penalty\<close>
 
@@ -615,8 +609,9 @@ subsection \<open>Monotonicity of the doubled maximum in the penalty parameter\<
 text \<open>The other ingredient of the \<open>\<alpha> \<rightarrow> \<infinity>\<close> passage: the doubled maximum is
   antimonotone in \<open>\<alpha>\<close>, since a larger penalty can only decrease the
   supremum, the maximiser for larger \<open>\<alpha>\<close> being an admissible competitor for
-  smaller \<open>\<alpha>\<close>. With \<open>doubling_ge_diagonal\<close>, this pins the family between
-  two \<open>\<alpha>\<close>-independent bounds, so the limit exists without a compactness
+  smaller \<open>\<alpha>\<close>. Since the doubled maximum is at least the value of
+  \<open>u - w\<close> at any diagonal point, this pins the family between two
+  \<open>\<alpha>\<close>-independent bounds, so the limit exists without a compactness
   argument.\<close>
 
 subsection \<open>The components of the maximiser merge, with no subsequences\<close>
@@ -642,14 +637,9 @@ text \<open>At \<open>p = 0\<close>, \<open>F\<^sub>*(0,X) = F(0,X)\<close> and 
   \<open>F(0,X) \<le> eq36_rhs k L X\<close> with room to spare, so the envelope gap at
   \<open>p = 0\<close> does not vanish in general.\<close>
 
-subsection \<open>The diagonal branch closes without further hypotheses\<close>
-
-text \<open>\<open>small_multiple_exists\<close>, \<open>shift_limit_absurd\<close>, \<open>shift_limit_absurd2\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-
 subsection \<open>Existence of the maximising pair\<close>
 
-text \<open>\<open>doubling_maximiser_exists\<close>, \<open>doubling_maximiser_exists_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>doubling_maximiser_exists_gen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The packaged form: on a compact \<open>K\<close> the doubling produces a
   maximising pair together with the penalty bound and the diagonal lower
@@ -664,17 +654,15 @@ text \<open>Combining the two attainment results with the penalty estimate: on a
   whose penalty is bounded by an \<open>\<alpha>\<close>-independent constant, and whose two
   components are within \<open>O(1/\<surd>\<alpha>)\<close> of each other.\<close>
 
-subsection \<open>Producing the local-max hypotheses of \<open>comparison_contradiction\<close>\<close>
+subsection \<open>Producing the local-max hypotheses from a jet\<close>
 
-text \<open>\<open>comparison_contradiction\<close> takes \<open>subtest\<close> and \<open>suptest\<close> -- local
-  max/min statements for the jet test function -- as hypotheses; these are
+text \<open>\<open>visc_subsol_scaled_uniform\<close> and \<open>supersol_jet\<close> take local max/min
+  statements for the jet test function as hypotheses; these are
   exactly what \<open>superjet_local_max\<close> yields from an Alexandrov jet once the
   test matrix is corrected by \<open>\<delta> I\<close>, since the \<open>(\<delta>/2)\<bar>k\<bar>\<^sup>2\<close> slack it
   leaves is precisely the extra quadratic form contributed by \<open>\<delta> I\<close>.\<close>
 
 text \<open>\<open>quad_form_shift_identity\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-text \<open>\<open>jet_imp_local_max_test\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>\<open>matrix_vector_neg_left\<close>, \<open>quad_form_shift_identity_neg\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
@@ -689,11 +677,11 @@ text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_
 text \<open>\<open>onesided_of_tendsto_gen\<close>, \<open>onesided_of_dominated\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
-text \<open>\<open>jet_imp_local_min_test_onesided\<close>, \<open>jet_imp_local_min_test\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>jet_imp_local_min_test_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Removing the jet correction\<close>
 
-text \<open>The \<open>\<delta>\<close> from \<open>jet_imp_local_max_test\<close> cannot cancel against
+text \<open>The \<open>\<delta>\<close> from \<open>superjet_local_max\<close> cannot cancel against
   \<open>X \<preceq> Y\<close>: correcting to \<open>X + \<delta> I\<close>, \<open>Y - \<delta> I\<close> would need
   \<open>Y - X \<succeq> 2\<delta> I\<close>, but the theorem on sums gives only \<open>Y - X \<succeq> 0\<close>, so
   \<open>\<delta>\<close> is removed by a limit instead. Degenerate ellipticity gives
@@ -715,17 +703,11 @@ text \<open>The two shift theorems above are stated with bound \<open>1\<close>,
   uniform bound survives the limit, so the shift theorems are restated with
   an arbitrary bound \<open>c\<close> in place of \<open>1\<close>.\<close>
 
-text \<open>The closing chain of Theorem 4.2(a) in \<open>\<delta>\<close>-corrected form: a uniform
-  strict bound \<open>c < 1\<close> on the subsolution side at every \<open>X + \<delta> I\<close>, the
-  supersolution bound at every \<open>Y - \<delta> I\<close>, the ordering \<open>X \<preceq> Y\<close> from the
-  theorem on sums, and \<open>p \<noteq> 0\<close> from \<open>doubling_grad_nonzero\<close>. No \<open>\<delta>\<close>
-  survives in the conclusion.\<close>
-
 subsection \<open>The uniform strict bound, and the shifted families\<close>
 
-text \<open>\<open>visc_subsol_scaled_strict\<close> concludes \<open>F < 1\<close>, but its proof actually
-  gives the stronger \<open>F \<le> \<theta>\<close>; this is the same argument stopped one step
-  earlier, giving the bound that survives the \<open>\<delta> \<rightarrow> 0\<close> limit.\<close>
+text \<open>A subsolution scaled by \<open>\<theta>\<close> satisfies \<open>F \<le> \<theta>\<close> at each of its test
+  points, which for \<open>\<theta> < 1\<close> is stronger than \<open>F < 1\<close>; this is the bound
+  that survives the \<open>\<delta> \<rightarrow> 0\<close> limit.\<close>
 
 theorem visc_subsol_scaled_uniform:
   fixes u :: "real^'n::finite \<Rightarrow> real" and H :: "real^'n^'n"

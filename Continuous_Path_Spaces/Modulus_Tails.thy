@@ -21,8 +21,7 @@ text \<open>
   The level bound in its abstract form: only measurability, integrability of
   the fourth powers and the Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> moment bound itself are consumed. The
   Lemma 2.2 there needs this for unbounded martingale laws, where (2.7)
-  will be obtained by localization + Fatou; the bounded package is a
-  corollary below.
+  will be obtained by localization + Fatou.
 \<close>
 
 lemma dyadic_level_tail_mom:
@@ -121,8 +120,6 @@ proof -
   qed
   finally show ?thesis .
 qed
-
-text \<open>The bounded package discharges the abstract hypotheses.\<close>
 
 subsection \<open>The geometric form of the level bound\<close>
 
@@ -301,7 +298,7 @@ text \<open>
   The deterministic conclusion: a continuous path whose level-\<open>j\<close> dyadic
   increments stay below \<open>2 powr (-\<gamma> j)\<close> for every level \<open>j \<ge> n\<close> has modulus
   of continuity at most \<open>3 \<cdot> 2 powr (-\<gamma> n) / (1 - 2 powr (-\<gamma>))\<close> at scale
-  \<open>1/2^n\<close>, on all of \<open>{0..T}\<close>. Together with \<open>dyadic_bad_event_tail\<close> this is
+  \<open>1/2^n\<close>, on all of \<open>{0..T}\<close>. Together with \<open>dyadic_bad_event_tail_mom\<close> this is
   the quantitative Kolmogorov tail estimate: both the threshold and the
   exceptional probability are explicit in \<open>(C, T, \<gamma>, n)\<close> and decay
   geometrically in \<open>n\<close>.

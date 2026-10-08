@@ -644,42 +644,13 @@ proof (rule tight_on_set_imp_convergent_subsequence)
     by (simp add: prob_space.emeasure_space_1)
 qed
 
-subsection \<open>The diagonal extraction over integer horizons\<close>
+subsection \<open>The finite-dimensional marginal maps\<close>
 
 text \<open>
-  From a horizon-uniform moment package, a single subsequence along which the
-  path laws converge weakly at every integer horizon simultaneously. Built on
-  HOL-Library's \<open>Diagonal_Subsequence\<close> (locale \<open>subseqs\<close>, reachable through
-  HOL-Probability); subsequence-stability of weak convergence is
-  \<open>limitin_subsequence\<close>, and the tail shift is absorbed by
-  \<open>limitin_sequentially_offset_rev\<close>.
-\<close>
-
-subsection \<open>Consistency of the diagonal limits across horizons\<close>
-
-text \<open>
-  The per-horizon limit laws of the diagonal subsequence form a projective
-  family: restricting the horizon-\<open>m'\<close> limit to \<open>{0..m}\<close> gives the
-  horizon-\<open>m\<close> limit. The restriction map is continuous
-  (\<open>Lipschitz_restrict_path_metric\<close>), so \<open>weak_conv_on_pushforward\<close>
-  carries the horizon-\<open>m'\<close> convergence to the restricted laws, identified
-  with the horizon-\<open>m\<close> limit by uniqueness of weak limits (the weak
-  topology is metrizable, hence Hausdorff).
-\<close>
-
-subsection \<open>The projective-limit assembly\<close>
-
-text \<open>
-  From the horizon-consistent family of limit laws
-  (\<open>path_laws_diagonal_consistent\<close>) to a single probability measure on the
-  full-time function space with the product sigma-algebra, via the
-  Daniell--Kolmogorov theorem (\<open>HOL-Probability.Projective_Limit\<close>, locale
-  \<open>polish_projective\<close>). The finite-dimensional marginals are pushforwards
-  of the \<open>N m\<close> under the (measurable) restriction maps, immaterial to
-  horizon choice by the consistency identity. \<open>unfold_locales\<close> on
-  \<open>polish_projective\<close> decomposes \<open>prob_space (P J)\<close> into its three
-  ancestor axioms (sigma-finite cover, finiteness, total mass one) --
-  discharge those, not the locale predicate.
+  Restricting a path to a finite set of times \<open>J \<subseteq> {0..T}\<close> is
+  measurable from \<open>path_borel T\<close> to the product space on \<open>J\<close>; the
+  finite-dimensional marginals of a path law are its pushforwards under
+  these maps.
 \<close>
 
 lemma marginal_map_measurable:
@@ -697,22 +668,12 @@ proof -
     by (rule measurable_restrict) (rule ev)
 qed
 
-text \<open>The Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package holds for the coordinates of the projective
-  limit --- the increment moment is a function of a two-point marginal, and
-  marginals are inherited from the \<open>N m\<close>. This is the input for running the
-  dyadic modulus machinery on \<open>L\<close> and building the continuous
-  modification.\<close>
-
 subsection \<open>The dyadic extension operator\<close>
 
 text \<open>
-  A path controlled only on the dyadics extends to a continuous function:
   \<open>dyadic_pair_modulus\<close> is the continuity-free chaining bound for pairs of
-  dyadics (\<open>dyadic_chaining\<close>, any metric space); the anchor sequences
-  \<open>danchor k t\<close> are then Cauchy, and \<open>dyadic_ext\<close> takes their limit,
-  agreeing with the original path at dyadic points, with the same modulus
-  at every level, continuous on \<open>{0..T}\<close>. Applied pathwise on the good
-  event of the projective limit, this builds the continuous modification.
+  dyadics (\<open>dyadic_chaining\<close>, any metric space), and \<open>dyadic_ext\<close> takes
+  the limit along the anchor sequences \<open>danchor k t\<close>.
 \<close>
 
 lemma dyadic_pair_modulus:
@@ -793,49 +754,11 @@ qed
 definition dyadic_ext :: "(real \<Rightarrow> 'b) \<Rightarrow> real \<Rightarrow> 'b::complete_space" where
   "dyadic_ext f t = lim (\<lambda>k. f (danchor k t))"
 
-subsection \<open>The good-dyadics event of the projective limit is almost sure\<close>
+subsection \<open>Weak convergence upgraded by uniform integrability\<close>
 
-text \<open>
-  The coordinates of the projective limit are measurable and carry the
-  Bochner form of the Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package (adapted from the \<open>nn_integral\<close>
-  bound). Via \<open>dyadic_bad_event_tail_mom\<close> at every integer horizon and
-  coordinate, with geometric level bounds forcing the intersection over
-  levels to be null, almost every \<open>\<omega>\<close> satisfies the dyadic moduli from
-  some level on, everywhere simultaneously; on this event \<open>dyadic_ext\<close>
-  builds the continuous modification.
-\<close>
-
-text \<open>Continuity of the extension on all of \<open>{0..}\<close> from per-horizon good
-  bounds (each point sits inside some integer horizon, and \<open>dyadic_ext\<close> is
-  horizon-free), plus the measurable good set of the projective limit ---
-  the strict-threshold bad events have the same countable-union structure,
-  and the good set is the complement assembled by \<open>countable_INT'\<close>/UN.\<close>
-
-text \<open>Per-time measurability of the extension: \<open>dyadic_ext\<close> is definitionally
-  a \<open>lim\<close> along the (nonnegative, by \<open>danchor_nonneg\<close>) anchor sequence, so
-  \<open>borel_measurable_lim_metric\<close> applies directly.\<close>
-
-subsection \<open>The continuous modification, assembled\<close>
-
-text \<open>
-  The bundle: from the moment package alone, the projective limit carries a
-  process \<open>Y\<close> with measurable time sections, everywhere-continuous paths on
-  \<open>{0..}\<close>, and \<open>Y t = \<omega> t\<close> almost surely at every time --- a continuous
-  modification of the coordinate process. \<open>Y\<close> is \<open>dyadic_ext\<close> gated on the
-  measurable almost-sure good set.
-\<close>
-
-subsection \<open>Currying toward the \<open>P_x\<close> sample type\<close>
-
-text \<open>
-  The flip map from time-indexed vector paths to coordinate-indexed real
-  paths --- the direction along which the limit law will be transported to the
-  \<open>('n \<Rightarrow> real \<Rightarrow> real) measure\<close> sample type that the application's sample type fixes.
-\<close>
-
-text \<open>Weak convergence upgraded by uniform integrability.  \<open>weak_conv_on_nn_integral_le\<close>
-  handles a non-negative integrand and bounds the limit above by truncating
-  at \<open>K\<close> and using monotone convergence, with no integrability hypothesis --
+text \<open>\<open>weak_conv_on_nn_integral_le\<close> handles a non-negative integrand and
+  bounds the limit above by truncating at \<open>K\<close> and using monotone
+  convergence, with no integrability hypothesis --
   covering the \<open>\<preceq> L \<cdot> I\<close> half of the covariation constraint.
 
   The lower bounds \<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close> run the other way, where weak
@@ -843,10 +766,11 @@ text \<open>Weak convergence upgraded by uniform integrability.  \<open>weak_con
   \<open>limsup \<le>\<close> is what uniform integrability buys, via the \<open>3\<epsilon>\<close> argument:
   truncate \<open>f\<close> at height \<open>R\<close> (bounded and continuous, so weak convergence
   applies directly) and control both truncation errors by the tail
-  hypothesis, using \<open>Increment_Moments.clamp_integral_error\<close>,
-  \<open>Increment_Moments.tendsto_real_of_approximants\<close>, and
-  \<open>Increment_Moments.sq_tail_bound_of_fourth_moment\<close> for uniform
-  integrability from the fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.
+  hypothesis, using \<open>Increment_Moments.clamp_integral_error\<close> and
+  \<open>Increment_Moments.tendsto_real_of_approximants\<close>;
+  \<open>unif_integrable_of_L2_bound\<close> supplies the tail hypothesis from an
+  \<open>L\<^sup>2\<close> bound on \<open>f\<close>, which for the squared increment is the
+  fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.
 
   The integrability side conditions are kept as hypotheses, since in the
   application they all come from the moment bounds.\<close>
@@ -915,8 +839,6 @@ text \<open>Passing an integral to a weak limit when the family is uniformly
   integrable --- which an \<open>L\<^sup>2\<close> bound supplies --- and recognising two
   measures on a metric space as equal, or ordered, from their integrals
   against bounded continuous functions alone.\<close>
-
-text \<open>Total mass survives a weak limit: test against the constant \<open>1\<close>.\<close>
 
 text \<open>A finite Borel measure on a metric space is determined by its
   integrals against bounded continuous functions: apply the closed-set

@@ -870,10 +870,7 @@ theorem exit_class_pglue_law:
 
 text \<open>The immediate payoff: \<open>exit_val\<close> is nondecreasing in the horizon ---
   paste the Brownian witness onto the tail of a horizon-\<open>S\<close> member, and the
-  glued path agrees with the original on \<open>[0,S]\<close> so cannot exit earlier.
-  With \<open>exit_val_horizon_stable\<close> this makes \<open>exit_val k L T K x\<close> constant
-  for \<open>T\<close> beyond the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close>: the horizon cap is
-  invisible, and \<open>exit_val\<close> is the paper's uncapped \<open>v\<close>.\<close>
+  glued path agrees with the original on \<open>[0,S]\<close> so cannot exit earlier.\<close>
 
 
 theorem exit_val_horizon_mono:

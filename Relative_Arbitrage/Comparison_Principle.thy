@@ -7,30 +7,25 @@ begin
 
 (*>*)
 
-
-text \<open>\<open>penalty_gradient_nearby_upper\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
 subsection \<open>Assembly 1 complete: the contradiction from the maximiser alone\<close>
 
 text \<open>The completion: from a plain maximiser of the doubled sup-convolution
   functional at \<open>\<xi>\<^sub>0\<close> - no strict gap - plus the gradient lower bound
   there and the attainment balls, this derives \<open>False\<close>.  The strict gap
   is manufactured by the \<open>-\<delta>\<^sub>i\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> perturbation with
-  \<open>\<delta>\<^sub>i=D\<^sub>0/(2+i) \<rightarrow> 0\<close> (\<open>shifted_jensen_family\<close>).  The three \<open>O(\<delta>\<^sub>i)\<close>
+  \<open>\<delta>\<^sub>i=D\<^sub>0/(2+i) \<rightarrow> 0\<close> (\<open>shifted_jensen_family_gen\<close>).  The three \<open>O(\<delta>\<^sub>i)\<close>
   costs - gradient shift \<open>2\<delta>\<^sub>i(\<cdot>-\<xi>\<^sub>0)\<close>, Hessian shift \<open>\<plusminus>2\<delta>\<^sub>iI\<close> with
   ordering defect \<open>4\<delta>\<^sub>i\<close>, and Hessian norm shift \<open>2D\<^sub>0\<parallel>I\<parallel>\<close> - land
   exactly where the generalised interfaces expect them.\<close>
 
 text \<open>\<open>block_fst_matrix_apply_gen\<close>, \<open>block_snd_matrix_apply_gen\<close>, \<open>transpose_matrix_block_fst_gen\<close>, \<open>transpose_matrix_block_snd_gen\<close>, \<open>diff_displacement_bound\<close>, \<open>penalty_gradient_nearby_upper_gen\<close>, \<open>penalty_gradient_nearby_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-text \<open>\<open>comparison_supconv_maximiser_complete\<close> generalised: the quadratic
-  penalty \<open>(\<alpha>/2)(norm d)\<^sup>2\<close> becomes an arbitrary \<open>Pn\<close> that is
-  \<open>\<kappa>\<close>-semiconcave with gradient field \<open>Gf\<close> and Hessian field \<open>Zf\<close>,
-  evaluated at the displacement \<open>d\<close> of the \<open>i\<close>-th maximiser.  Jensen's
-  tilt is genuinely quadratic and not part of the penalty, so
-  \<open>jet_transfer_quadratic\<close> still applies; the consumer
-  \<open>comparison_supconv_bounded_family\<close> is penalty-agnostic and reused
-  verbatim.\<close>
+text \<open>The penalty is not the quadratic \<open>(\<alpha>/2)(norm d)\<^sup>2\<close> but an arbitrary
+  \<open>Pn\<close> that is \<open>\<kappa>\<close>-semiconcave with gradient field \<open>Gf\<close> and Hessian
+  field \<open>Zf\<close>, evaluated at the displacement \<open>d\<close> of the \<open>i\<close>-th
+  maximiser.  Jensen's tilt is genuinely quadratic and not part of the
+  penalty, so \<open>jet_transfer_quadratic\<close> applies; the consumer
+  \<open>comparison_supconv_bounded_family\<close> is penalty-agnostic.\<close>
 
 theorem comparison_supconv_maximiser_complete_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -551,17 +546,13 @@ text \<open>The refutation: given any sub/supersolution pair and nonempty interi
 
 text \<open>The repair lives in @{theory Relative_Arbitrage.Operator_Envelope_Continuity}: the corrected
   \<open>max_principle_boundary\<close> carries \<open>continuous_on K u\<close> and
-  \<open>continuous_on K w\<close>, \<open>sup_diff_attained_on_compact\<close> (from
-  @{theory Semicontinuous_Analysis.Semicontinuity}) records that
-  \<open>u-w\<close> then attains its maximum on compact \<open>K\<close>, and \<open>max_principle_le\<close>,
+  \<open>continuous_on K w\<close>, and \<open>max_principle_le\<close>,
   \<open>comparison_from_max_principle\<close>, \<open>uniqueness_from_max_principle\<close>
   thread the two continuity hypotheses through.  Everything downstream -
   4.2(b), Theorem 4.3, Proposition 4.1 - is unchanged except for carrying
   this continuity.\<close>
 
 section \<open>Reduction to globally bounded, globally continuous data\<close>
-
-text \<open>\<open>continuous_extension_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>\<open>bounded_on_compact\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
@@ -574,10 +565,10 @@ subsection \<open>From a localised maximiser straight to the contradiction\<clos
 text \<open>The bridge between the localisation and the assembly: given the
   doubling maximiser \<open>\<xi>\<^sub>0\<close> over \<open>K \<times> K\<close> with both components further
   than \<open>\<kappa>\<close> from \<open>K - interior K\<close>, every geometric hypothesis of
-  \<open>comparison_supconv_maximiser_complete\<close> is derivable via
+  \<open>comparison_supconv_maximiser_complete_gen\<close> is derivable via
   \<open>cball_subset_interior_of_far_from_boundary\<close> and
   \<open>supconv_radius_uniform\<close>.  The remaining quantitative inputs are the
-  inequalities \<open>r \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>u \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>w \<le> \<kappa>\<close>, \<open>2\<bar>\<alpha>\<bar>\<rho> < c\<close> and two
+  inequalities \<open>r \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>u \<le> \<kappa>\<close>, \<open>\<rho>+R\<^sub>w \<le> \<kappa>\<close>, \<open>KG * (2*\<rho>) < c\<close> and two
   smallness conditions on \<open>\<epsilon>\<close>.\<close>
 
 text \<open>Under a general penalty every geometric derivation is untouched, since
@@ -1781,18 +1772,17 @@ section \<open>Map of the Theorem 4.2(a) chain\<close>
 text \<open>This theory is long enough that the order of the argument is not
   visible from the section headings; the chain in dependency order:
 
-  1. The operator and its envelopes: \<open>ell_op_lsc_elliptic_le\<close>,
-  \<open>ell_op_env_strict_contradiction\<close> give degenerate ellipticity for both
-  envelopes and the closing contradiction off the origin;
-  \<open>eq36_rhs_antitone\<close> handles \<open>p = 0\<close>.
+  1. The operator and its envelopes: \<open>ell_op_env_strict_contradiction\<close>
+  gives the closing contradiction off the origin.
 
-  2. The doubling: \<open>doubling_maximiser_exists\<close>, \<open>doubling_dist_bound\<close>,
-  \<open>doubling_grad_lower_bound\<close> give the maximising pair, the \<open>O(1/\<alpha>)\<close>
-  penalty estimate, and a positive lower bound on the shared gradient.
+  2. The doubling: \<open>doubling_maximiser_exists_gen\<close>, \<open>doubling_near_soft\<close>,
+  \<open>soft_grad_norm_pos\<close> give the maximising pair, the closeness of its
+  components once \<open>\<kappa>\<close> is large, and a positive lower bound on the shared
+  gradient.
 
   3. Doubled jet to component jets to operator bounds:
-  \<open>doubled_supconv_jet_exists\<close>, \<open>doubled_jet_slices_at_max\<close>,
-  \<open>jet_imp_local_max_test\<close>, \<open>visc_subsol_scaled_uniform\<close>.
+  \<open>doubled_supconv_jet_exists_shifted_gen\<close>, \<open>tilted_doubled_jet_slices_gen\<close>,
+  \<open>superjet_local_max\<close>, \<open>visc_subsol_scaled_uniform\<close>.
 
   4. Removing corrections, and compactness:
   \<open>ell_op_lsc_le_of_nearby\<close> passes a bound at nearby points to the
@@ -1802,10 +1792,11 @@ text \<open>This theory is long enough that the order of the argument is not
   theorem.
 
   5. Assembly from bounds rather than limits:
-  \<open>comparison_supconv_bounded_family\<close>, \<open>tilted_doubled_psd_ordering\<close>.
+  \<open>comparison_supconv_bounded_family\<close>, \<open>tilted_doubled_psd_ordering_gen\<close>.
 
   6. The instantiation: \<open>max_principle_usc_lsc\<close> closes Theorem 4.2(a)
-  for semicontinuous data; \<open>max_principle_boundary_holds\<close> is its
+  for semicontinuous data, with \<open>comparison_soft_diagonal\<close> closing the
+  diagonal branch, where \<open>p = 0\<close>; \<open>max_principle_boundary_holds\<close> is its
   continuous-data form.\<close>
 
 

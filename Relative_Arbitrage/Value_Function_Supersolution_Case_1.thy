@@ -505,9 +505,8 @@ text \<open>The Euler increments annihilate a continuous field wherever the fiel
   hypothesis into the conclusion, checked at each grid point.  This lets a
   field be tangential only away from its singular centre, since the growth
   telescope only ever uses orthogonality at grid points inside the good
-  region, where the kill holds.  The proof is the committed induction of
-  \<open>eulerp_orth_increments\<close> with the implication carried
-  through the glue.\<close>
+  region, where the kill holds.  The proof is an induction on the number
+  of steps, with the implication carried through the glue.\<close>
 
 
 theorem eulerp_orth_increments_cond:
@@ -688,8 +687,7 @@ qed
 
 subsection \<open>The growth telescope on an arbitrary region\<close>
 
-text \<open>The quadratic lower bound of \<open>eulerp_quad_lower\<close>,
-  decoupled from the start-centred clamp: the kill and the trace margin
+text \<open>The quadratic lower bound along the grid: the kill and the trace margin
   are assumed only on the confinement region, and the conclusion holds
   on the event that the grid stays there.  The conditional orthogonality
   @{thm [source] eulerp_orth_increments_cond} checks the kill at each

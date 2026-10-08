@@ -134,11 +134,9 @@ text \<open>Theorem 4.2(a) -- the maximum principle: for a subsolution \<open>u\
   The interface needs continuity of \<open>u\<close> and \<open>w\<close> on \<open>K\<close>:
   \<open>visc_subsol k L (interior K) u\<close> constrains only \<open>interior K\<close>, so raising
   \<open>w\<close> by a constant on \<open>K - interior K\<close> destroys every boundary maximum,
-  making the predicate genuinely false without continuity, as
-  \<open>max_principle_boundary_counterexample\<close> \<open>(Comparison\_Principle)\<close> shows for
-  the continuity-free \<open>max_principle_boundary_raw\<close>.  Plain continuity,
-  rather than a usc/lsc split, matches the rest of the development and this
-  HOL-Analysis's lack of a semicontinuity library.\<close>
+  making the continuity-free \<open>max_principle_boundary_raw\<close> genuinely
+  false.  Plain continuity, rather than a usc/lsc split, matches the rest of
+  the development and this HOL-Analysis's lack of a semicontinuity library.\<close>
 
 definition max_principle_boundary_raw ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> bool"

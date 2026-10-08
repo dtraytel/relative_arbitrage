@@ -2203,7 +2203,7 @@ text \<open>The supersolution mirror: the sup-convolution is taken of \<open>-w\
   summand the doubled functional carries, and the transferred bound
   becomes a local minimum statement for \<open>w\<close> after negation. The
   correction runs the other way, \<open>Ym - \<delta> I\<close>, as with
-  \<open>jet_imp_local_min_test\<close>.\<close>
+  \<open>jet_imp_local_min_test_onesided\<close>.\<close>
 
 lemma neg_shift_matrix_apply:
   fixes B :: "real^'n::finite^'n"

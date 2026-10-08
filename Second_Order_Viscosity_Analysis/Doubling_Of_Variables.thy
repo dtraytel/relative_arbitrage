@@ -210,13 +210,6 @@ proof -
     using a by (simp add: field_simps)
 qed
 
-text \<open>Since the penalty is bounded, the doubled maximum is at least the
-  maximum of \<open>u - w\<close> along the diagonal; with \<open>doubling_diagonal_max\<close> this
-  says the doubling can only improve on the diagonal value.  That is
-  \<open>doubling_ge_diagonal\<close> in @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums},
-  already at \<open>'a::euclidean_space\<close>; this theory had its own copy specialised
-  to \<open>'b\<close> and to the value at a maximising pair, which shadowed it.\<close>
-
 text \<open>These four lemmas use the penalty only through \<open>Pn 0 = 0\<close>: each proof
   instantiates the maximiser inequality at a diagonal point, where the
   penalty is \<open>Pn (z - z) = Pn 0\<close> (the concrete penalty vanishing at the origin for \<open>soft_pen\<close>).
@@ -1253,8 +1246,8 @@ text \<open>A comparison argument needs the jets of \<open>\<theta> u\<close> at
   two blocks, this holds exactly when the doubled gradient
   \<open>q\<^sub>1 + q\<^sub>2 = 0\<close>, which is automatic since \<open>q = 0\<close> at an interior
   maximum (\<open>second_order_interior_max\<close>). This gives the common gradient
-  \<open>p = \<alpha>(x' - y')\<close>, whose nonvanishing \<open>doubling_grad_nonzero\<close>
-  establishes.\<close>
+  \<open>p = \<alpha>(x' - y')\<close>, whose nonvanishing follows from
+  \<open>doubling_off_diagonal_gen\<close>.\<close>
 
 theorem gradient_vanishes_at_interior_max:
   fixes \<Psi> :: "'a::euclidean_space \<Rightarrow> real"
@@ -2028,8 +2021,9 @@ proof -
 qed
 
 text \<open>The parameter choice for the shifted family: the perturbation \<open>\<delta>\<^sub>i\<close> and
-  Jensen's tilt \<open>dd\<^sub>i\<close> must satisfy \<open>shifted_jensen_smallness\<close>'s
-  \<open>dd\<^sub>i < \<delta>\<^sub>i\<rho>\<^sup>2/(2r)\<close>; taking \<open>\<delta>\<^sub>i=D\<^sub>0/(2+i)\<close> and \<open>dd\<^sub>i=\<delta>\<^sub>i\<rho>\<^sup>2/(4r)\<close>
+  Jensen's tilt \<open>dd\<^sub>i\<close> must satisfy \<open>dd\<^sub>i < \<delta>\<^sub>i\<rho>\<^sup>2/(2r)\<close>, to which the
+  smallness hypothesis of \<open>doubled_supconv_jet_exists_shifted_gen\<close> reduces;
+  taking \<open>\<delta>\<^sub>i=D\<^sub>0/(2+i)\<close> and \<open>dd\<^sub>i=\<delta>\<^sub>i\<rho>\<^sup>2/(4r)\<close>
   satisfies it with room to spare, and both sequences vanish.\<close>
 
 lemma shifted_family_parameters:
@@ -3212,11 +3206,12 @@ proof -
   from s1 s2 lt show ?thesis by linarith
 qed
 
-text \<open>the comparison assembly at the soft penalty needs globally bounded, globally
-  continuous data; the gap from the predicate's \<open>continuous_on K\<close> is
-  closed by \<open>continuous_extension_bounded\<close> with the subsolution extension/
-  the supersolution-jet extension, which work because the viscosity conditions
-  are local and \<open>interior K\<close> is open.  \<open>K \<noteq> {}\<close> is a genuine side
+text \<open>The comparison assembly at the soft penalty needs \<open>\<theta>u\<close> and \<open>-w\<close>
+  bounded and upper semicontinuous on the whole space, while
+  \<open>max_principle_usc_lsc\<close> assumes both only on \<open>K\<close>.  It closes the gap by
+  extending \<open>u\<close> and \<open>-w\<close> off \<open>K\<close> by a constant below the data, which
+  leaves the viscosity conditions intact: they depend only on the values
+  on \<open>K\<close>, and \<open>interior K\<close> is open.  \<open>K \<noteq> {}\<close> is a genuine side
   condition (\<open>compact_frontier_nonempty\<close>).\<close>
 
 lemma theta_exists_aux:
@@ -3279,11 +3274,6 @@ proof -
     by (rule ext) simp
   show ?thesis using ABC unfolding eq .
 qed
-
-text \<open>Jensen's lemma for the general doubled functional, as
-  \<open>doubled_supconv_jet_exists\<close> with \<open>(\<alpha>/2)\<parallel>fst y - snd y\<parallel>\<^sup>2\<close> replaced by
-  \<open>Pn (fst y - snd y)\<close> and the semiconvexity constant by
-  \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
 
 text \<open>\<open>semiconvex_shift_perturb\<close> lives in \<open>Doubling_Of_Variables\<close>.\<close>
 
@@ -3422,13 +3412,14 @@ text \<open>A supersolution is never tested at a vanishing second-order jet
   Hessian in \<open>y\<close> vanish, giving exactly \<open>(0, 0)\<close>; off the diagonal the
   common gradient is the penalty's, automatically nonzero. Since
   \<open>F(p, 0) = 0\<close> for every \<open>p\<close> (the feasible set is nonempty and
-  \<open>-trace(0 a)/2 = 0\<close> for every \<open>a\<close>), the \<open>\<delta>\<close>-removal argument of
-  \<open>strict_contradiction_of_shifts_any_p\<close> gives the contradiction:
+  \<open>-trace(0 a)/2 = 0\<close> for every \<open>a\<close>), the \<open>\<delta>\<close>-removal argument
+  gives the contradiction:
   \<open>1 \<le> F(0, -\<delta>I) \<le> F(0,0) + \<delta>nL/2\<close> fails for small \<open>\<delta>\<close>.\<close>
 
-text \<open>As \<open>supersol_no_vanishing_jet\<close>, but with the one-sided jet
-  hypothesis the diagonal branch of Theorem 4.2(a) actually supplies: a
-  maximiser inequality bounds the increment from above only.\<close>
+text \<open>\<open>supersol_no_vanishing_jet_onesided\<close> in \<open>Comparison_Localisation\<close>
+  states this with the one-sided jet hypothesis the diagonal branch of
+  Theorem 4.2(a) actually supplies: a maximiser inequality bounds the
+  increment from above only.\<close>
 
 subsection \<open>Instantiating at the doubled sup-convolutions\<close>
 
@@ -3490,8 +3481,6 @@ proof -
           bnd d small])
 qed
 
-text \<open>\<open>shifted_annulus_bound\<close>, \<open>shifted_jensen_smallness\<close>, \<open>shifted_annulus_bound_split\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
-
 text \<open>The slice lemmas applied to the perturbed functional give jets of
   \<open>f - \<delta>\<parallel>\<cdot> - c\<parallel>\<^sup>2\<close>; since a quadratic has an exact expansion, this
   transfers a jet of \<open>f\<close> exactly, leaving the remainder unchanged and
@@ -3508,20 +3497,20 @@ text \<open>An antisymmetric linear tilt of the doubling does not bound the
 
 text \<open>\<open>jet_transfer_quadratic\<close> lives in \<open>Doubling_Of_Variables\<close>.\<close>
 
-text \<open>This delivers precisely the input of \<open>sums_psd_at_interior_max\<close>: a
+text \<open>This delivers the input of \<open>sums_psd_at_interior_max_gen\<close>: a
   point \<open>z'\<close>, a symmetric bounded-linear \<open>W\<close>, and the second-order
   expansion of the doubled functional at \<open>z'\<close>. With
   \<open>supconv_dominates_shift\<close>, transferring the jet back to \<open>u\<close> and
-  \<open>w\<close>, and \<open>comparison_env_from_jets\<close>, this completes the chain of
-  Theorem 4.2(a). Jensen's lemma returns a global maximum of the tilted
-  functional \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, with \<open>norm p \<le> dd\<close>;
+  \<open>w\<close>, and \<open>ell_op_env_strict_contradiction\<close>, this completes the chain
+  of Theorem 4.2(a), \<open>max_principle_usc_lsc\<close>. Jensen's lemma returns a global maximum of
+  the tilted functional \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, with \<open>norm p \<le> dd\<close>;
   converting it to the interior-max form needed only requires restricting
   to a ball inside \<open>cball \<xi> r\<close> around \<open>z'\<close>, permitted since
   \<open>dist z' \<xi> < \<rho> < r\<close>.\<close>
 
 subsection \<open>From Jensen's tilted global maximum to an interior maximum\<close>
 
-text \<open>\<open>tilt_absorb\<close>, \<open>global_max_imp_interior_max\<close>, \<open>interior_radius_pos\<close>, \<open>doubled_tilted_interior_max\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+text \<open>\<open>global_max_imp_interior_max\<close>, \<open>interior_radius_pos\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
 
 subsection \<open>The block hypotheses come from the jet itself\<close>
 
@@ -3553,9 +3542,10 @@ proof -
 qed
 
 text \<open>A quadratic local upper bound for \<open>supconv u \<epsilon>\<close> at \<open>x\<close> becomes the
-  same bound for \<open>u\<close> at \<open>y\<^sub>s\<close>, the hypothesis \<open>jet_imp_local_max_test\<close>
-  produces and \<open>subsol_shifted_bound\<close> consumes, now stated for \<open>u\<close>
-  itself.\<close>
+  same bound for \<open>u\<close> at \<open>y\<^sub>s\<close>.  Through its ball form
+  \<open>supconv_local_max_transfer_ball\<close>, \<open>subsol_shifted_bound_supconv\<close>
+  uses it to carry the bound \<open>superjet_local_max\<close> gives for the
+  sup-convolution over to \<open>u\<close> itself.\<close>
 
 theorem supconv_local_max_transfer:
   fixes u :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n^'n"
@@ -3679,11 +3669,9 @@ qed
 
 subsection \<open>Symmetry of the two block matrices\<close>
 
-text \<open>\<open>transpose_matrix_block_fst\<close>, \<open>transpose_matrix_block_snd\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
-
 text \<open>The jet alone yields all three matrix hypotheses of
-  \<open>comparison_env_from_jets\<close>: both block matrices are symmetric, and
-  they are ordered.\<close>
+  \<open>ell_op_env_strict_contradiction\<close>: both block matrices are symmetric,
+  and they are ordered.\<close>
 
 subsection \<open>The gradient alignment\<close>
 
@@ -3694,7 +3682,7 @@ text \<open>Consequently the jet at the doubled maximum has no first-order term
 
 text \<open>With \<open>q = 0\<close>, the first block's gradient is \<open>\<alpha>(x' - y')\<close> and the
   second block's is its negative, so a single \<open>p\<close> serves both jets, as
-  \<open>comparison_env_from_jets\<close> requires.\<close>
+  \<open>ell_op_env_strict_contradiction\<close> requires.\<close>
 
 subsection \<open>Theorem 4.2(a), end to end\<close>
 
@@ -3838,9 +3826,7 @@ lemma atu_of_positive_ball:
   using attain_gate_of_positive[OF t0 e posb[OF dx] opt] by simp
 
 text \<open>The shifted Jensen family for a general penalty: run the shifted
-  construction at tilts \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> and skolemise with \<open>choice4\<close>, a
-  transcription of \<open>shifted_jensen_family\<close> now that every lemma it calls
-  has a general form.\<close>
+  construction at tilts \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> and skolemise with \<open>choice4\<close>.\<close>
 
 theorem shifted_jensen_family_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
@@ -3970,21 +3956,6 @@ proof -
   show ?thesis
     using famP[unfolded P_def] by blast
 qed
-subsection \<open>The family construction, abstracted over the produced predicate\<close>
-
-text \<open>Stated abstractly over the produced predicate \<open>Q\<close> rather than
-  transcribing \<open>doubled_supconv_jet_exists\<close>'s fifteen-line jet conclusion
-  directly.  Read \<open>Q dd zh p q W\<close> as "running the construction at tilt
-  \<open>dd\<close> yields maximiser \<open>zh\<close>, tilt vector \<open>p\<close>, gradient \<open>q\<close> and Hessian
-  \<open>W\<close>".  The hypothesis is \<open>doubled_supconv_jet_exists\<close> with its
-  \<open>dd\<close>-dependent side conditions discharged by \<open>jensen_tilt_small_enough\<close>;
-  the conclusion is the indexed family
-  \<open>comparison_supconv_sequence_complete\<close> consumes.\<close>
-
-text \<open>With \<open>tilt_sequence_admissible\<close> this gives families indexed by \<open>i\<close>
-  whose tilts converge to zero, which \<open>gradient_sequences_align_of_bound\<close>
-  needs to align the two gradients and close the alignment hypothesis of
-  \<open>env_strict_contradiction_of_shifted_limits\<close>.\<close>
 
 section \<open>From a bounded family to the contradiction\<close>
 
@@ -3996,9 +3967,8 @@ text \<open>\<open>comparison_supconv_sequence_complete\<close> asks for four co
   \<open>bounded_seq_limit_point\<close> extracts a subsequence along which every
   component converges; the per-index hypotheses survive subsequencing
   since they are universally quantified; and the two gradient sequences
-  share a limit by \<open>gradient_sequences_align_of_bound\<close> (they differ only
-  by the shrinking tilt), while \<open>p \<noteq> 0\<close> survives as the uniform lower
-  bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close> from \<open>doubling_grad_norm_lower_bound\<close>.\<close>
+  share a limit since they differ only by the shrinking tilt, while
+  \<open>p \<noteq> 0\<close> survives as the uniform lower bound \<open>c \<le> \<parallel>G\<^sub>i\<parallel>\<close>.\<close>
 
 subsection \<open>The quadratic-form bound becomes a norm bound\<close>
 
@@ -4009,10 +3979,10 @@ text \<open>\<open>symmetric_form_bound_unit\<close> gives the entrywise bound
 
 text \<open>\<open>norm_le_card_Basis_bound\<close>, \<open>matrix_Basis_cases\<close>, \<open>inner_matrix_axis\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>norm_matrix_le_of_form_bound\<close>, \<open>hessian_abs_bound_of_two_sided\<close>, \<open>block_form_bound_fst\<close>, \<open>block_form_bound_snd\<close>, \<open>norm_block_matrices_bounded\<close>, \<open>block_form_bound_fst_gen\<close>, \<open>block_form_bound_snd_gen\<close>, \<open>norm_block_matrices_bounded_gen\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+text \<open>\<open>norm_matrix_le_of_form_bound\<close>, \<open>hessian_abs_bound_of_two_sided\<close>, \<open>block_form_bound_fst_gen\<close>, \<open>block_form_bound_snd_gen\<close>, \<open>norm_block_matrices_bounded_gen\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
 
 text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the same \<open>2\<delta>I\<close>, so the
-  ordering is untouched (the shifts cancel, \<open>psd_shifted_diff\<close>), symmetry
+  ordering is untouched (the shifts cancel), symmetry
   is preserved since \<open>\<delta>I\<close> is symmetric, and the norm bound degrades by
   \<open>\<bar>2\<delta>\<bar>\<parallel>I\<parallel>\<close>, a constant vanishing with \<open>\<delta>\<^sub>i\<close>.\<close>
 
@@ -4032,19 +4002,17 @@ text \<open>For the shifted functional, running the slice lemmas on
 text \<open>\<open>second_order_interior_max\<close> reads \<open>v \<bullet> Wv \<le> 0\<close> off the tilted
   interior maximum with no extra hypothesis; paired with the lower bound
   \<open>-c\<parallel>v\<parallel>\<^sup>2 \<le> v \<bullet> Wv\<close> from semiconvexity, this is the two-sided bound
-  \<open>semiconvex_hessian_abs_bound\<close> wants, and through
+  \<open>hessian_abs_bound_of_two_sided\<close> wants, and through
   \<open>norm_matrix_le_of_form_bound\<close> gives the \<open>\<parallel>X\<^sub>i\<parallel> \<le> BX\<close> hypothesis of
   \<open>comparison_supconv_bounded_family\<close>.  \<open>semiconvex_jensen_alexandrov_point\<close>
-  and \<open>doubled_supconv_jet_exists\<close> carry both halves of this bound, so
-  \<open>norm_block_matrices_bounded\<close> closes the chain.\<close>
+  and \<open>doubled_supconv_jet_exists_shifted_gen\<close> carry both halves of this
+  bound, so \<open>norm_block_matrices_bounded_gen\<close> closes the chain.\<close>
 
 text \<open>\<open>tilted_doubled_hessian_nonpositive_gen\<close>, \<open>tilted_doubled_hessian_nonpositive\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
 
-text \<open>For the ordering, the tilt must be absorbed into the two summands:
-  \<open>sums_psd_from_jet\<close> wants a plain (untilted) doubled maximum, supplied
-  by \<open>doubled_tilted_interior_max\<close> for \<open>a+fst p \<bullet> \<cdot>\<close> and
-  \<open>b+snd p \<bullet> \<cdot>\<close>.  (Unlike the gradients, where \<open>gradient_is_minus_tilt\<close>
-  avoids absorption, the psd ordering needs it.)\<close>
+text \<open>For the ordering, the tilt must be absorbed into the two summands
+  \<open>a+fst p \<bullet> \<cdot>\<close> and \<open>b+snd p \<bullet> \<cdot>\<close>.  (Unlike the gradients, where
+  \<open>gradient_is_minus_tilt\<close> avoids absorption, the psd ordering needs it.)\<close>
 
 text \<open>The psd ordering for a general penalty absorbs the tilt into the two
   summands inline, since \<open>sums_psd_at_interior_max_gen\<close> wants an untilted

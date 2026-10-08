@@ -15,12 +15,6 @@ begin
 section \<open>Conditioning on the past for the \<open>\<le>\<close> half\<close>
 
 
-text \<open>Clause (iii): the coordinate martingale.  Shift the clock by \<open>r\<close>
-  (@{thm [source] martingale_time_change}), subtract the value at \<open>r\<close>
-  (@{thm [source] martingale_sub_initial}), and hand the result to
-  \<open>martingale_future_of_past\<close>, which conditions on the past
-  event and pushes along \<open>pfut\<close>.\<close>
-
 text \<open>Clause (iv) needs a separate argument, because \<^const>\<open>outerp\<close> is
   quadratic: the compensated process of the rebased future is not the
   increment of the compensated process.  Expanding
@@ -266,23 +260,12 @@ proof -
   qed
 qed
 
-text \<open>Clause (iv) for the conditioned future law, by the same decomposition
-  @{thm [source] outerp_diff_compensated}: the class's own clause (iv)
-  restarted at \<open>r\<close>, the cross term (@{thm [source]
-  martingale_cross_measurable}), and an \<open>\<F>\<^sub>r\<close>-measurable constant.\<close>
-
-text \<open>All four clauses together: \<^emph>\<open>conditioning on an event of the past
-  leaves the future in the class, started at the origin.\<close>  This is the
-  structural fact the \<open>\<le>\<close> half of (2.9) turns on, and it needs no regular
-  conditional distribution.\<close>
-
 subsection \<open>The survival event belongs to the past\<close>
 
 text \<open>\<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close> says exactly that the path never
   leaves \<open>K\<close> on \<open>{0..r}\<close>, and for a continuous path against a closed \<open>K\<close>
   that is decided by the rational times alone, so the survival event is
-  \<open>\<F>\<^sub>r\<close>-measurable and can be used as the conditioning event \<open>A\<close> of
-  \<open>exit_class_future_of_past\<close>.\<close>
+  \<open>\<F>\<^sub>r\<close>-measurable.\<close>
 
 subsection \<open>A set-integral criterion for the conditional law\<close>
 

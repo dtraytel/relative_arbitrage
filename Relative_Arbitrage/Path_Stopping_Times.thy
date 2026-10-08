@@ -762,8 +762,8 @@ text \<open>The assembly.  Every hypothesis of
   martingale from the class via @{thm [source] martingale_vec_component},
   the filtration facts from @{thm [source] sets_natural_filtration_mono} and
   the martingale locale, the stopping-time events from
-  \<open>path_stopping_time_shift_event\<close>, the convergence from
-  \<open>exit_component_dyceil_tendsto\<close>, and the domination from
+  \<open>path_stopping_time_event_filtration_all\<close>, the convergence from
+  \<open>dyceil_tendsto\<close> and continuity of the paths, and the domination from
   @{theory Continuous_Time_Martingales.Doob_Inequality}'s \<open>Dsup\<close> through
   \<open>exit_class_horizon_component\<close>.\<close>
 
@@ -1616,7 +1616,7 @@ text \<open>The stopping-time twin of \<open>pfut_rcd_X_increment_zero\<close>,
   The chain follows the deterministic one --- \<open>AE_kernel_integral_zero\<close>
   to rectangles, \<open>integral_ksemi_rect_of_set_integral\<close> to a set
   integral over \<open>P\<close> --- with the conditioning set landing in
-  \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<or>\<^sub> \<^sub>\<theta>\<^sub>)\<close> via \<open>rect_vimage_pre_sigma_stopping\<close> instead of a
+  \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<or>\<^sub> \<^sub>\<theta>\<^sub>)\<close> instead of a
   deterministic \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, closed by
   @{thm [source] stopped_increment_of_horizon_gen} instead of
   \<open>martingale.set_integral_eq\<close>.\<close>

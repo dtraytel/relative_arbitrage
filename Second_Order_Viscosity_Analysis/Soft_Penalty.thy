@@ -1433,9 +1433,8 @@ theorem doubling_maximiser_exists_soft:
   by (rule doubling_maximiser_exists_gen[OF cK neK cu cw soft_pen_continuous])
 
 text \<open>The sup-convolution form matches the \<open>mxKK\<close> hypothesis of
-  \<open>comparison_from_localised_maximiser_soft\<close>, a transcription of
-  \<open>doubling_maximiser_supconv\<close> with continuity of the two sup-convolutions
-  free from \<open>supconv_continuous\<close>.\<close>
+  \<open>comparison_from_localised_maximiser_soft\<close>, with continuity of the two
+  sup-convolutions free from \<open>supconv_continuous\<close>.\<close>
 
 corollary doubling_maximiser_supconv_soft:
   fixes u w :: "real^'n::finite \<Rightarrow> real"

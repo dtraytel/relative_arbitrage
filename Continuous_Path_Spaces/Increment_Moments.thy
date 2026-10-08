@@ -2002,18 +2002,19 @@ text \<open>Weak convergence upgrades to convergence of unbounded continuous
   integrals \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> when \<open>f\<close> has uniformly integrable tails:
   truncate \<open>f\<close> at height \<open>R\<close> --- bounded and continuous, so weak
   convergence applies directly --- and control the two truncation errors
-  by the tail bound above.
+  by the tail integral of \<open>|f|\<close> over \<open>{|f| > R}\<close>.
 
   The error estimate: pointwise the clamped function differs from \<open>f\<close>
   only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the error
-  is dominated by the tail integral that \<open>sq_tail_bound_of_fourth_moment\<close>
-  bounds.\<close>
+  is dominated by that tail integral (\<open>clamp_integral_error\<close>), which
+  \<open>Path_Tightness.unif_integrable_of_L2_bound\<close> makes uniformly small
+  under an \<open>L\<^sup>2\<close> bound.\<close>
 
 text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with the measure theory
   removed: a sequence uniformly within \<open>e\<close> of some convergent sequence,
   whose limit is itself within \<open>e\<close> of \<open>z\<close> for every \<open>e\<close>, converges to
   \<open>z\<close> -- what truncating the integrand at height \<open>R\<close> and bounding the two
-  errors via \<open>sq_tail_bound_of_fourth_moment\<close> leaves to prove.
+  errors by the tail integral leaves to prove.
 
   The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so the three terms sum to
   \<open>3\<epsilon>/4 < \<epsilon>\<close> strictly, as \<open>LIMSEQ_I\<close> wants.\<close>

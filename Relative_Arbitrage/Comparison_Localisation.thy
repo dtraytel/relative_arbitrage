@@ -23,7 +23,7 @@ text \<open>The jet itself, in the shape the slice lemmas consume: gradient
 
 text \<open>At \<open>d = 0\<close> both gradient and quadratic form vanish, so the quartic
   penalty has second-order jet \<open>(0, 0)\<close> there; feeding this to
-  \<open>supersol_no_vanishing_jet\<close> gives the paper's \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
+  \<open>supersol_no_vanishing_jet_onesided\<close> gives the paper's \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
 
 subsection \<open>The doubled penalty's jet, for an arbitrary penalty\<close>
 
@@ -83,34 +83,13 @@ proof -
 
 qed
 
-subsection \<open>Theorem 4.2(a): the closing chain from jets\<close>
-
-text \<open>Theorem 4.2(a) from second-order jets for \<open>\<theta> u\<close> at \<open>xh\<close> and for
-  \<open>-w\<close> at \<open>yh\<close> with a common gradient \<open>p\<close>, the ordering
-  \<open>psd (Ym - Xm)\<close>, symmetry of both matrices, and the off-diagonal
-  condition \<open>p \<noteq> 0\<close>. The shift correction \<open>\<delta>\<close> used to reach genuine
-  local extrema is removed by the lower and upper envelopes and does not
-  appear in the statement.\<close>
-
-text \<open>The same conclusion with the off-diagonal condition \<open>p \<noteq> 0\<close>
-  replaced, via \<open>doubling_grad_nonzero\<close>, by the statement that \<open>xh\<close>
-  fails to maximise \<open>u - w\<close> over \<open>K\<close>.\<close>
-
 subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
 
 text \<open>\<open>sums_gives_ordering\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>With linearity and symmetry of the two blocks, supplied by the
   Alexandrov jet's bounded linear and symmetric Hessian, the ordering
-  becomes the \<open>psd\<close> hypothesis \<open>comparison_env_from_jets\<close> wants.\<close>
-
-subsection \<open>Discharging the negativity hypothesis at the doubled maximum\<close>
-
-text \<open>\<open>sums_ordering_at_interior_max\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>The same, with the off-diagonal condition traded for the statement
-  that \<open>x'\<close> fails to maximise \<open>u - w\<close> over \<open>K\<close>; by the gradient
-  alignment this is the same condition as \<open>p \<noteq> 0\<close>.\<close>
+  becomes a \<open>psd\<close> ordering of the two block matrices.\<close>
 
 subsection \<open>Deriving the component jets from the doubled jet\<close>
 
@@ -128,18 +107,6 @@ text \<open>The slice jets carry their Hessians as functions
   viscosity machinery wants matrices. \<open>matrix_works\<close> bridges them, but
   is stated for \<open>Vector_Spaces.linear\<close>, so real-vector-space \<open>linear\<close>
   must be routed through \<open>linear_matrix_vector_mul_eq\<close> first.\<close>
-
-text \<open>\<open>block_fst_matrix_apply\<close>, \<open>block_snd_matrix_apply\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>Theorem 4.2(a) from the doubled jet alone\<close>
-
-text \<open>The component jets are no longer hypotheses: they are produced from
-  the doubled jet by \<open>doubled_jet_slices_at_max\<close> and matched to their
-  matrices by the lemmas above. What remains assumed is the doubled data
-  itself -- an interior maximum of
-  \<open>\<theta> u(x) - w(y) - (\<alpha>/2)\<bar>x - y\<bar>\<^sup>2\<close> at \<open>z' = (x', y')\<close> with its
-  Alexandrov jet -- plus the two viscosity properties and the
-  off-diagonal condition.\<close>
 
 subsection \<open>The subsolution bound straight from a sup-convolution jet\<close>
 
@@ -304,30 +271,6 @@ proof -
     unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL p0] by simp
 qed
 
-subsection \<open>Theorem 4.2(a) from sup-convolution jets\<close>
-
-text \<open>The closing chain in the form the comparison argument reaches: both
-  bounds come from jets of the sup-convolutions, which the doubled
-  functional carries, and the two attaining points \<open>y\<^sub>s\<^sup>u\<close> and
-  \<open>y\<^sub>s\<^sup>w\<close> are where the viscosity properties are applied. The uniform
-  bound \<open>\<theta> < 1\<close> on the subsolution side survives the \<open>\<delta> \<rightarrow> 0\<close>
-  limit and yields the strict envelope inequality; the off-diagonal
-  condition \<open>p \<noteq> 0\<close> identifies the two envelopes with \<open>F\<close> itself. No
-  \<open>\<delta>\<close> appears in the conclusion.\<close>
-
-subsection \<open>Theorem 4.2(a) from the doubled sup-convolution jet alone\<close>
-
-text \<open>The full composition: the two component jets are no longer
-  hypotheses but the two coordinate slices of the doubled jet, produced
-  by \<open>doubled_jet_slices_at_max\<close> with \<open>a\<close> and \<open>b\<close> instantiated at the
-  two sup-convolutions, and matched to their matrices by the block
-  lemmas; the three matrix hypotheses come from
-  \<open>block_matrices_from_jet\<close>. What remains assumed is the two viscosity
-  properties, the scaling parameter \<open>\<theta>\<close>, an interior maximum of the
-  doubled sup-convolution functional with its Alexandrov jet, the
-  off-diagonal condition, and that each sup-convolution is attained at a
-  point of \<open>\<Omega>\<close>.\<close>
-
 subsection \<open>Absorbing Jensen's tilt: the general nearby-point form\<close>
 
 text \<open>The tilt perturbs the gradient as well as the matrix, unlike the
@@ -388,9 +331,8 @@ proof (rule INF_greatest)
       \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)" .
 qed
 
-text \<open>The closing contradiction in that generality: compare
-  \<open>env_strict_contradiction_of_shifts\<close>, whose hypotheses no longer name
-  the \<open>\<delta> I\<close> shifts, only that suitable bounds hold arbitrarily near
+text \<open>The closing contradiction in that generality. Its hypotheses do not
+  name the \<open>\<delta> I\<close> shifts, only that suitable bounds hold arbitrarily near
   \<open>(p, X)\<close> and \<open>(p, Y)\<close> -- the form the tilt-absorption argument needs,
   since there the nearby points are produced by re-running Jensen with a
   smaller \<open>dd\<close> rather than by a fixed algebraic shift.\<close>
@@ -442,10 +384,9 @@ subsection \<open>A tilt that needs no limit at all\<close>
 text \<open>\<open>gradient_is_minus_tilt\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>If the tilt is antisymmetric, \<open>p = (p\<^sub>0,-p\<^sub>0)\<close>, the two block gradients
-  are exact negatives of each other, giving the alignment
-  \<open>comparison_supconv_complete\<close> needs with no limit and no rate estimate on
-  the tilt.  This route needs Jensen's lemma to deliver such an
-  antisymmetric tilt.\<close>
+  are exact negatives of each other, an alignment that needs no limit and
+  no rate estimate on the tilt.  This route needs Jensen's lemma to
+  deliver such an antisymmetric tilt.\<close>
 
 subsection \<open>The Hessians at the doubled maximum are two-sidedly bounded\<close>
 
@@ -496,7 +437,7 @@ text \<open>\<open>tendsto_entry\<close>, \<open>transpose_limit\<close>, \<open
 
 subsection \<open>The gradient alignment along the family\<close>
 
-text \<open>\<open>tendsto_of_norm_bound\<close>, \<open>gradient_sequences_align\<close>, \<open>gradient_sequences_align_of_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>tendsto_of_norm_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The diagonal step: two limits at once\<close>
 
@@ -632,22 +573,7 @@ qed
 
 subsection \<open>The shrinking tilt is always available\<close>
 
-text \<open>\<open>jensen_tilt_threshold_pos\<close>, \<open>jensen_tilt_small_enough\<close>, \<open>tilt_sequence_pos\<close>, \<open>tilt_sequence_lt\<close>, \<open>tilt_sequence_tendsto\<close>, \<open>tilt_sequence_admissible\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>Replacing the Lipschitz modulus by compactness\<close>
-
-text \<open>\<open>positive_separation_of_value_gap\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>Two consequences: \<open>doubling_grad_lower_bound\<close> with the Lipschitz
-  hypothesis replaced by an abstract separation, and the same for the
-  shared gradient's norm - the separation plays exactly the role the
-  Lipschitz constant did.\<close>
-
-text \<open>For the doubling run on sup-convolutions, the separation is required of
-  \<open>supconv(-w)\<epsilon>\<close> itself, supplied by \<open>positive_separation_of_value_gap\<close>
-  from compactness of \<open>K\<close> and \<open>supconv_continuous\<close> alone - no Lipschitz
-  constant enters.  The sign bookkeeping is as in
-  \<open>doubling_grad_lower_bound_supconv\<close>, with \<open>w\<close> instantiated at \<open>-B\<close>.\<close>
+text \<open>\<open>tilt_sequence_pos\<close>, \<open>tilt_sequence_lt\<close>, \<open>tilt_sequence_tendsto\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>\<open>shifted_family_parameters\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
@@ -661,21 +587,13 @@ text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment
   so the supremum over the whole space equals the supremum over one
   compact ball, attained by continuity.\<close>
 
-text \<open>As a family: along any sequence of base points the attaining points can
-  be chosen simultaneously by countable choice, with no uniformity in
-  \<open>i\<close> needed.\<close>
-
-text \<open>The family form: along any sequence of base points, the attaining points
-  can be chosen inside \<open>\<Omega>\<close> simultaneously, provided each base point's
-  ball is.\<close>
-
 subsection \<open>The attainment radius as a parameter\<close>
 
-text \<open>The \<open>+1\<close> in \<open>supconv_attained_ball\<close> is an artifact of a strict
-  inequality in its proof; with it, \<open>cball x R \<subseteq> \<Omega>\<close> asks \<open>\<Omega>\<close> for a ball
-  of radius one, which no bounded \<open>\<Omega>\<close> of small diameter has.  Any radius
-  exceeding \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> serves as well, separating the
-  hypothesis into a geometric condition on \<open>R\<close> and a smallness condition
+text \<open>The \<open>+1\<close> margin is not needed: any radius \<open>R\<close> exceeding
+  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> serves. With the margin,
+  \<open>cball x R \<subseteq> \<Omega>\<close> would ask \<open>\<Omega>\<close> for a ball of radius one, which no
+  bounded \<open>\<Omega>\<close> of small diameter has; with \<open>R\<close> free, the hypothesis
+  separates into a geometric condition on \<open>R\<close> and a smallness condition
   on \<open>\<epsilon>\<close>, discharged separately at the top level.\<close>
 
 theorem supconv_attained_ball_rad:
@@ -749,7 +667,7 @@ proof -
   ultimately show ?thesis by blast
 qed
 
-text \<open>Every attainment point, not just the one \<open>supconv_attained_ball\<close>
+text \<open>Every attainment point, not just the one \<open>supconv_attained_ball_rad\<close>
   produces, lies inside that radius: if \<open>z\<close> attains then
   \<open>u z - dist\<^sup>2/(2\<epsilon>) \<ge> u x\<close> gives \<open>dist\<^sup>2 \<le> 2\<epsilon>(B\<^sub>u-u x)\<close>.  The universal
   form is needed where membership of the attainment point in \<open>\<Omega>\<close> comes
@@ -1242,9 +1160,10 @@ subsection \<open>Skolemising a four-component existential over an index\<close>
 
 text \<open>\<open>choice4\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
-text \<open>The shifted analogue: run Jensen at the perturbation \<open>\<delta>\<^sub>i\<close> and tilt
-  \<open>dd\<^sub>i\<close> of \<open>shifted_family_parameters\<close>, and skolemise.  Both hypotheses
-  Jensen needs are automatic, from \<open>shifted_annulus_bound_split\<close> and the
+text \<open>The shifted analogue, \<open>shifted_jensen_family_gen\<close> in
+  \<open>Doubling_Of_Variables\<close>, runs Jensen at the perturbation \<open>\<delta>\<^sub>i\<close> and tilt
+  \<open>dd\<^sub>i\<close> of \<open>shifted_family_parameters\<close> and skolemises.  Both hypotheses
+  Jensen needs are automatic, from \<open>shifted_annulus_bound_split_gen\<close> and the
   smallness condition \<open>2 dd\<^sub>i r < \<delta>\<^sub>i\<rho>\<^sup>2\<close>; only the maximiser property
   over \<open>cball \<xi>\<^sub>0 r\<close> is assumed.\<close>
 

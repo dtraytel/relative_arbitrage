@@ -175,8 +175,8 @@ qed
 section \<open>Clause (iv) for the glue: the two collapses\<close>
 
 text \<open>The martingale clauses do not need the weak-closedness detour that the
-  deterministic pasting theorem takes, because the additive split is
-  invertible (@{thm [source] pstopped_padd}, \<open>pafter_padd\<close>)
+  deterministic pasting theorem takes, because stopping the glue gives back
+  the past (@{thm [source] pstopped_padd})
   and the conditioning set collapses on each half of \<open>{\<theta> \<le> i}\<close>.
 
   \<^item> On \<open>{\<theta> > i}\<close> the continuation has not started, so the glued path agrees

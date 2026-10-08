@@ -432,10 +432,10 @@ proof -
 qed
 
 subsection \<open>The engine in general form\<close>
-text \<open>\<open>supconv_jensen_alexandrov_point\<close> used only semiconvexity of the
-  sup-convolution, which the doubled functional also has without being a
-  sup-convolution.  So the engine is restated for an arbitrary semiconvex
-  \<open>\<phi>\<close>, strengthened with the interiority \<open>dist x \<xi> < \<rho>\<close> that
+text \<open>The engine, Jensen's lemma combined with Alexandrov's theorem, uses
+  only semiconvexity, which the doubled functional has without being a
+  sup-convolution.  So it is stated for an arbitrary
+  semiconvex \<open>\<phi>\<close>, with the interiority \<open>dist x \<xi> < \<rho>\<close> that
   \<open>second_order_interior_max\<close> needs.\<close>
 
 theorem semiconvex_jensen_alexandrov_point:
@@ -832,7 +832,7 @@ text \<open>The remaining half of Crandall--Ishii--Lions Lemma 3.1 of \<^cite>\<
   semicontinuity of \<open>u\<close>/\<open>w\<close> enter only through two \<open>eventually\<close>
   statements below, so no semicontinuity predicate has to be fixed here.
 
-  Combined with \<open>doubling_ge_diagonal\<close> (which gives \<open>S \<le> M\<^sub>\<alpha>\<close>) this
+  Combined with \<open>S \<le> M\<^sub>\<alpha>\<close> (on the diagonal the penalty vanishes) this
   pins \<open>lim M\<^sub>\<alpha> = S\<close>, letting the doubling argument start at an
   interior maximum of \<open>u - w\<close>.\<close>
 

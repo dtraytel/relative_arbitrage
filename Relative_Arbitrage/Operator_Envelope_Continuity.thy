@@ -531,7 +531,7 @@ text \<open>Consequence of the continuity clause, and the reason Section 4 can w
   with the envelope-free operator away from the origin: there the viscosity
   sub- and supersolution inequalities of Definition 3.1 are literally the same
   conditions as the envelope-free ones.  This is the off-origin companion of
-  \<open>ell_op_lsc_at_zero_iff\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}), which handles \<open>p = 0\<close>.\<close>
+  \<open>ell_op_lsc_at_zero\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}), which handles \<open>p = 0\<close>.\<close>
 
 text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maximum
   the Crandall-Ishii lemma produces a common gradient \<open>p\<close> and Hessians
@@ -566,8 +566,7 @@ text \<open>\<open>max_principle_boundary_raw\<close>, \<open>max_principle_boun
 
 text \<open>The predicate is about where the maximum sits, not whether there is one:
   under the added hypotheses \<open>u - w\<close> always attains its maximum on a compact
-  \<open>K\<close>, a fact the raw version presupposed --- \<open>sup_diff_attained_on_compact\<close>
-  from @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
+  \<open>K\<close>, a fact the raw version presupposed.\<close>
 
 text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and nonnegative boundary
   data for \<open>w\<close>, the maximum principle gives \<open>u \<le> w\<close> on \<open>K\<close>.\<close>

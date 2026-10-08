@@ -41,16 +41,15 @@ definition pshift :: "real \<Rightarrow> 'a::{polish_space,banach} \<Rightarrow>
 lemma pfut_apply: "s \<in> {0..T - r} \<Longrightarrow> pfut r T \<omega> s = \<omega> (r + s) - \<omega> r"
   by (simp add: pfut_def)
 
-text \<open>Reassembly of the split is addition (\<open>pstopped_add_pafter\<close>),
-  so the kernel is pushed through the glue map \<^term>\<open>padd T p' w\<close>, not
-  \<open>pglue\<close>.  It is defined on the same pair of \<open>T\<close>-path spaces the
-  r.c.d. lives on, and needs no \<open>\<theta>\<close> --- the reason the additive split was
-  chosen over freeze-and-rebase.
+text \<open>Reassembly of the split is addition, so the kernel is pushed
+  through the glue map \<^term>\<open>padd T p' w\<close>, not \<open>pglue\<close>.  It is defined
+  on the same pair of \<open>T\<close>-path spaces the r.c.d. lives on, and needs no
+  \<open>\<theta>\<close> --- the reason the additive split was chosen over freeze-and-rebase.
 
   The facts below form the foundation layer: the glue lands in the path
-  space, is measurable as a map out of the product, inverts the split, and
-  --- given that the continuation stands still until \<open>\<theta>\<close> --- is inverted by
-  the split, so no information is lost in either direction.\<close>
+  space and is measurable as a map out of the product; given that the
+  continuation stands still until \<open>\<theta>\<close>, stopping the glued path returns
+  the stopped factor (\<open>pstopped_padd\<close>).\<close>
 
 definition padd :: "real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "padd T p' w = restrict (\<lambda>t. p' t + w t) {0..T}"
@@ -370,11 +369,6 @@ proof -
       by (rule mdist_measurable_of_eval[OF T0 into am ev])
   qed
 qed
-
-text \<open>The glue inverts the split.  There is no membership hypothesis on
-  \<open>\<omega>\<close> beyond being a path: \<open>pstopped_add_pafter\<close> is
-  unconditional and \<^const>\<open>padd\<close> restricts to \<open>{0..T}\<close>, where a member of
-  the path space already lives.\<close>
 
 text \<open>The split inverts the glue, provided the continuation stands still up
   to \<open>\<theta>\<close> --- which is exactly clause (ii) of the kernel's membership in the
@@ -1817,14 +1811,13 @@ text \<open>Hence clause (i) for the kernel: re-based, the conditional law is a
   probability measure on the \<open>(T - \<theta>)\<close>-path space.\<close>
 
 text \<open>Clause (ii) for the kernel.  The pathwise content is already there:
-  \<open>pafter_before\<close> at \<open>t = \<theta> \<omega>\<close> says the future factor is still
-  \<open>0\<close> when the clock starts, so all that is needed is to push it through the
-  r.c.d., the same chain as the mixed glue's transfer:
-  \<open>AE_distr_iff\<close> into the joint law, the r.c.d. equation, and
-  @{thm [source] AE_ksemi} back out.  The stopping-time property is spent
-  where the kernel is indexed by the stopped path: the clock has to be read
-  off that, and \<open>path_stopping_time_stopped\<close> says it is the
-  same number.\<close>
+  at \<open>t = \<theta> \<omega>\<close>, when the clock starts, the future factor is still \<open>0\<close>,
+  so all that is needed is to push it through the r.c.d., the same chain
+  as the mixed glue's transfer: \<open>AE_distr_iff\<close> into the joint law, the
+  r.c.d. equation, and @{thm [source] AE_ksemi} back out.  The
+  stopping-time property is spent where the kernel is indexed by the
+  stopped path: the clock has to be read off that, and
+  \<open>path_stopping_time_stopped\<close> says it is the same number.\<close>
 
 text \<open>Clause (iii) at one pair of times.  This is the analogue of the \<open>one\<close>
   step inside \<open>pfut_rcd_diffquot\<close>, and the pathwise content is

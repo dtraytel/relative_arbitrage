@@ -103,9 +103,11 @@ section \<open>The exit time is upper semicontinuous\<close>
 
 text \<open>The join.  \<open>Stopping_Times.etime_less_iff\<close> says being strictly below \<open>c\<close>
   is witnessed by a single time \<open>r < c\<close> at which the path is already in
-  \<open>A\<close>; \<open>Path_Space.open_hit_strictly_before\<close> says the witnessed condition
-  is open in the path topology.  Together they give upper semicontinuity of
-  the exit time, which is what Larsson--Ruf's Lemma 2.1 needs.
+  \<open>A\<close>; \<open>Path_Space.open_eval_preimage\<close> makes the condition at each
+  witness time open in the path topology, so the witnessed condition, a
+  union over witness times, is open too.  Together they give upper
+  semicontinuity of the exit time, which is what Larsson--Ruf's Lemma 2.1
+  needs.
 
   The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one:
   a path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close>
@@ -438,9 +440,7 @@ text \<open>The mass a class member puts outside a pair Hoelder ball.  This is
   of an abstract process, whereas a class member is already a law on paths;
   and it wants the start condition \<open>X\<^sub>0 = x\<close> pointwise, whereas a class
   member only has it almost surely.  Charging the failure of the
-  start-and-Lipschitz event to a null set handles both, and also removes
-  the need for the \<open>Y\<close>-event of \<open>pair_holder_charge_split\<close> to be
-  measurable, so the split lemma is not needed either.\<close>
+  start-and-Lipschitz event to a null set handles both.\<close>
 
 lemma psd_diag_nonneg:
   fixes a :: "real^'m::finite^'m"
@@ -1513,11 +1513,11 @@ qed
 subsection \<open>From a market to its law: transferring the exit time\<close>
 
 text \<open>
-  \<open>vshift\<close> speaks about laws on the path space, while
-  \<open>Value_Function_Market.val_fn\<close> is a supremum over markets --- a measure,
-  filtration, process and covariation. \<open>Path_Space.path_law\<close> bridges the
-  two, and these lemmas carry the essential infimum of the exit time
-  across it, connecting the semicontinuity results above to \<open>\<P>\<^sub>x\<close>.
+  \<open>vshift\<close> speaks about laws on the path space, while a market is a
+  measure, filtration, process and covariation.  \<open>Path_Space.path_law\<close>
+  bridges the two, and these lemmas carry the essential infimum of the
+  exit time across it, connecting the semicontinuity results above to
+  \<open>\<P>\<^sub>x\<close>.
 \<close>
 
 lemma pair_law_sq_mean_of_nn_bound:

@@ -12,24 +12,6 @@ text \<open>Laws of pair paths as a family: the second-moment bounds that make a
   Brownian continuation on the half-line, and the transfer of the exit
   functional to a limit law.\<close>
 
-
-text \<open>The single obligation of \<open>vshift_sup_usc_of_seq_compact\<close> asks for a
-  family of laws in which every sequence has a weakly convergent
-  subsequence with limit in the family. Lemma 2.2
-  (\<open>market_path_laws_convergent_subsequence\<close>) provides the subsequence
-  for market path laws; Lemma 2.3 must put the limit back. The family
-  below does this definitionally, as the weak closure of the market path
-  laws: sequential compactness of the closure needs only extraction on
-  the base set and metrizability of the weak topology
-  (\<open>seq_compact_closure_of\<close>), and every closure point is a probability
-  measure with the right \<open>sets\<close> since total mass survives weak limits.
-
-  Identifying \<open>Sup (vshift T A x ` mkt_law_closure \<dots>)\<close> with the
-  market-form value function \<open>val_fn\<close> is the pushforward analysis of
-  Larsson--Ruf Prop. 2.2. The theorem at the end of this section gives
-  clause (1) of Theorem 1.1 for the law-level value function of the
-  closure, with no compactness hypothesis left.\<close>
-
 lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
   unfolding psd_def
 proof (intro conjI allI)
@@ -201,8 +183,7 @@ subsection \<open>What a second-moment bound gives the tightness argument\<close
 text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class's
   difference quotients lie a.s. in \<open>sconstraint k L\<close>, whose elements have
   norm at most \<open>n\<sqdot>L\<close> (\<open>sconstraint_norm_le\<close>), so \<open>diffquot_lipschitz\<close>
-  makes \<open>Y\<close> a.s. \<open>n\<sqdot>L\<close>-Lipschitz --- the \<open>Y\<close>-event of
-  \<open>pair_holder_charge_split\<close> with probability one, leaving only the
+  makes \<open>Y\<close> a.s. \<open>n\<sqdot>L\<close>-Lipschitz, leaving only the
   \<open>X\<close>-side Hoelder estimate.\<close>
 
 lemma nonbinding_horizon_ex:
@@ -1392,11 +1373,11 @@ qed
 
 subsection \<open>The bad event vanishes on a region\<close>
 
-text \<open>The vanishing-probability theorem \<open>eulerp_bad_event_null\<close>, over an arbitrary bounded open stay-region:
-  the kill and the trace margin hold on the region, which is contained
-  in a ball of radius \<open>Rn\<close> around the quadratic's centre, and the same
-  Chebyshev-plus-gap dissection gives the \<open>A h + B h\<^sup>2\<close> bound once the
-  mesh is fine.\<close>
+text \<open>The vanishing-probability theorem over an arbitrary bounded
+  stay-region, \<open>eulerp_bad_event_null_region\<close>: the kill and the trace
+  margin hold on the region, which is contained in a ball of radius
+  \<open>Rn\<close> around the quadratic's centre, and a Chebyshev-plus-gap
+  dissection gives the \<open>A h + B h\<^sup>2\<close> bound once the mesh is fine.\<close>
 
 lemma path_sets_fst_continuous:
   fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -3335,13 +3316,6 @@ text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
   \<^item> @{thm [source] martingale_vecI}, putting the finitely many components
     back together.\<close>
 
-text \<open>At mesh \<open>c / (i + 1)\<close> the bad-event probability is at most
-  \<open>A h + B h\<^sup>2\<close> once the mesh is fine enough, so it tends to zero.  At the
-  last grid point \<open>m h \<le> t\<close>, on the almost-sure event of
-  \<open>eulerp_quad_lower\<close>, staying in-ball through \<open>t\<close> together
-  with a quadratic drop forces either a large \<open>euXi\<close> (Chebyshev) or a large
-  one-step increment (the fourth-moment tail).\<close>
-
 lemma comp_entry_measurable_nf:
   fixes Q :: "('n::finite pairpath) measure"
   assumes S: "0 \<le> S" and u: "0 \<le> u"
@@ -3437,9 +3411,11 @@ proof -
     by (rule continuous_on_compose2[OF contf wc]) auto
 qed
 
-text \<open>\<open>quad_good_upto\<close> with the confinement region and the
-  quadratic's centre both free.  Only reachability from below is used,
-  so the proof is the same sequence-and-continuity passage.\<close>
+text \<open>The quadratic lower bound extends from the times through which the
+  path stays in the confinement region \<open>RO\<close> to the endpoint of a
+  half-open stay \<open>[0, t)\<close>; the region and the quadratic's centre are both
+  free.  Only reachability from below is used, so the proof is a
+  sequence-and-continuity passage.\<close>
 
 lemma quad_good_upto_region:
   fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
@@ -3520,14 +3496,13 @@ qed
 
 subsection \<open>Case 1 for the lower envelope\<close>
 
-text \<open>The touching-point argument at the envelope.  Two things change
-  relative to \<open>exit_val_supersol_contradiction_case1\<close>.
-  First, the horizon lemma is applied to the envelope, so it is stated
-  for an arbitrary touching function with an explicit cap.  Second, the
-  value at the touching point need not be attained there, so the
-  construction is run at an approximating point \<open>y\<close> supplied by
-  \<open>lsc_env_approx\<close>, with the quadratic still centred at
-  \<open>x\<close>.  @{thm [source] quad_shift} and @{thm [source] quad_grad_shift}
+text \<open>The touching-point argument at the envelope, for
+  \<open>exit_val_supersol_contradiction_case1_lsc\<close>.  The horizon lemma is
+  applied to the envelope, so it is stated for an arbitrary touching
+  function with an explicit cap.  The value at the touching point need
+  not be attained there, so the construction is run at an approximating
+  point \<open>y\<close> supplied by \<open>lsc_env_approx\<close>, with the quadratic still
+  centred at \<open>x\<close>.  @{thm [source] quad_shift} and @{thm [source] quad_grad_shift}
   make the verified machinery serve that configuration unchanged: the
   gradient field and the kill hypothesis are the same, and the only
   trace of the displacement is the additive constant \<open>\<psi>(y)\<close>, which the

@@ -187,11 +187,6 @@ proof -
       (use psd_a ap lb_a ub_a tr_a in \<open>auto simp: feasible_def\<close>)
 qed
 
-subsection \<open>Main theorem: verification of Example 3.1 (Eq. 3.9)\<close>
-
-text \<open>\<open>neg_half_trace_ball_op\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
 subsection \<open>The candidate value function and its derivatives\<close>
 
 definition ball_v :: "real \<Rightarrow> nat \<Rightarrow> real^'n \<Rightarrow> real" where

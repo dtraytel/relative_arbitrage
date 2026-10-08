@@ -2241,9 +2241,9 @@ text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the co
   weakly to a class member \<open>P\<close>.  The portmanteau bound --- if the
   measures of an open set converge to \<open>b\<close>, the limit member gives the set
   at most \<open>b\<close>, and dually for closed sets --- applies to the event that a
-  path stays inside the ball while the quadratic drops below its
+  path stays inside a region while the quadratic drops below its
   guaranteed growth, whose probability vanishes with the mesh by
-  @{thm [source] eulerp_Xi_chebyshev} and \<open>eulerp_quad_lower\<close>.
+  @{thm [source] eulerp_Xi_chebyshev} and \<open>eulerp_quad_lower_region\<close>.
 
   Staying strictly inside an open set through time \<open>t\<close> is an open
   condition on the path: the image of \<open>{0..t}\<close> is compact, so it sits at
@@ -2398,14 +2398,15 @@ qed
 
 subsection \<open>The bad event vanishes with the mesh\<close>
 
-text \<open>The open bad event --- the path stays strictly inside the ball
-  through time \<open>t\<close> yet the quadratic drops below its guaranteed
-  growth --- has vanishing probability under the Euler laws.  Three
-  estimates feed the proof: the grid functional's Chebyshev bound
+text \<open>The bad event --- the path stays inside a bounded region through
+  time \<open>t\<close> yet the quadratic drops below its guaranteed growth --- has
+  vanishing probability under the Euler laws
+  (\<open>eulerp_bad_event_null_region\<close>).  Three estimates feed the proof:
+  the grid functional's Chebyshev bound
   (@{thm [source] eulerp_Xi_chebyshev}), the pathwise lower bound at the
-  nearest grid point (\<open>eulerp_quad_lower\<close>), and a
+  nearest grid point (\<open>eulerp_quad_lower_region\<close>), and a
   fourth-moment tail for the one-step gap between the grid point and
-  \<open>t\<close>, derived first from
+  \<open>t\<close>, derived below from
   @{thm [source] exit_class_fourth_moment}.\<close>
 
 lemma exit_class_increment_tail:
@@ -2568,36 +2569,11 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>\<open>quad_diff_bound\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>The bad event is open: staying strictly inside the ball is
+text \<open>The bad event is open when the region is open
+  (\<open>open_quad_bad_event_region\<close>): staying inside the region is
   @{thm [source] open_stay_inside} through the first projection, and the
   strict quadratic drop is an open condition on the evaluation at \<open>t\<close>,
   via @{thm [source] open_eval_preimage}.\<close>
-
-
-subsection \<open>The limit member grows along the quadratic, almost surely\<close>
-
-text \<open>Combining the weak-limit transfer with the vanishing bad events gives a
-  class member \<open>P\<close> that, almost surely, for every time \<open>t\<close> and not just
-  rational ones, has: staying strictly inside the ball through \<open>t\<close> forces
-  the quadratic to grow at rate \<open>cm/2\<close>.  The countable skeleton (rational
-  \<open>t\<close>, margins \<open>1/(n+1)\<close>) comes from @{thm [source] eulerp_weak_limit},
-  \<open>eulerp_bad_event_null\<close> and \<open>open_quad_bad_event\<close>; the upgrade to real \<open>t\<close> is pathwise, using only
-  that members of the path space are continuous.\<close>
-
-
-subsection \<open>The limit member at the exit time\<close>
-
-text \<open>The almost-sure growth statement, specialised to the exit time of the
-  ball.  Before the exit the path is strictly inside
-  (@{thm [source] pexit_le_of_mem}), so the growth bound holds at every
-  earlier time and passes to the exit by continuity; the exit is strictly
-  positive because the path starts at the centre
-  (@{thm [source] pball_exit_pos}), stays in the closed ball through the
-  exit (@{thm [source] pball_exit_stays_cball}), and lands on the sphere
-  whenever it happens before the cap (@{thm [source] pball_exit_outside}).\<close>
 
 
 (*<*)

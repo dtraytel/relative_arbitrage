@@ -13,7 +13,7 @@ begin
 section \<open>Clause (2): the value function is a viscosity solution\<close>
 
 text \<open>\<open>enn2real \<circ> exit_val k L T K\<close> is a viscosity solution of Eq. (1.9) on
-  \<open>interior K\<close>: an ordinary subsolution (\<open>exit_val_visc_subsol\<close>)
+  \<open>interior K\<close>: an ordinary subsolution (\<open>exit_val_visc_subsol_any\<close>)
   and, in the enveloped sense of Definition 3.1(b), a supersolution
   (@{thm [source] exit_val_supersol_lsc}), where the lower semicontinuous
   envelope replaces \<open>v\<close> because the plain supersolution property fails

@@ -892,9 +892,8 @@ proof -
   show False using ge vz th0 by linarith
 qed
 
-text \<open>Horn A at a given local minimiser.  \<open>exit_val_case2_tilt_step\<close>
-  produces its own minimiser; the assembly instead has one handed to it
-  by the case split, so the last step of that proof is isolated here.\<close>
+text \<open>Horn A at a local minimiser handed over by the case split of the
+  assembly.\<close>
 
 lemma exit_val_case2_at_minimiser:
   fixes K :: "(real^'n::finite) set" and x y \<eta> :: "real^'n"

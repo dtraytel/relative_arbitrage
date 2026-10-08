@@ -35,13 +35,11 @@ text \<open>
     The class of (1.7) is a martingale-problem class, not an SDE class, so Ito's
     formula is unavailable.  For QUADRATIC test functions it is also unnecessary:
     z . (M *v z) = trace (M ** outerp z) is a linear functional of the
-    compensated clause, so the expansion is exact and elementary.  That is
-    \<open>exit_class_quadratic_mean\<close>, and \<open>exit_val_subsol_quadratic_global\<close> is the
-    subsolution inequality it yields, for the relaxed operator \<open>ell_op_s\<close> and a
-    globally touching quadratic.
-
-    The final section states precisely what separates that from \<open>visc_subsol\<close>,
-    including two localisation routes that were checked and provably do not work.\<close>
+    compensated clause, so the expansion is exact and elementary, also at a
+    bounded stopping time.  \<open>exit_val_subsol_quadratic_ball\<close> is the
+    subsolution inequality it yields for a quadratic touching on a closed
+    ball, in witness form for the relaxed operator \<open>ell_op_s\<close>: some \<open>b\<close> in
+    the constraint set has \<open>- trace (M ** b) / 2 \<le> 1\<close>.\<close>
 section \<open>One witness suffices for the subsolution inequality\<close>
 
 text \<open>\<^const>\<open>ell_op\<close> is an infimum over the feasible set, and
@@ -835,7 +833,7 @@ qed
 
 section \<open>The averaged covariation at a stopping time\<close>
 
-text \<open>The weighted analogue of \<open>exit_class_Y_mean_sconstraint\<close>:
+text \<open>At a stopping time \<open>\<theta>\<close>,
   \<open>E[Y\<^sub>\<theta>] / E[\<theta>]\<close> lies in the constraint set.  Pathwise, \<open>(1/\<theta>) Y\<^sub>\<theta>\<close> is in
   the set (the diffquot clause at \<open>(0, \<theta>]\<close>); every defining condition is a
   linear inequality in the matrix, so it integrates against the weight
@@ -2709,7 +2707,7 @@ text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9)
 
 section \<open>The boundary subsolution clause for \<open>exit_val\<close>\<close>
 
-text \<open>The proof of \<open>exit_val_visc_subsol\<close> does not use \<open>x \<in> interior K\<close>: it
+text \<open>The subsolution proof does not use \<open>x \<in> interior K\<close>: it
   is driven by the local touching, and \<open>exit_val_touch_orth\<close> is indifferent
   to where \<open>x\<close> sits.  So the subsolution property holds locally on any \<open>\<Omega>\<close>.\<close>
 
