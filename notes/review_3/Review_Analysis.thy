@@ -9,6 +9,9 @@
 theory Review_Analysis
   imports "Relative_Arbitrage_Statement.Paper_Readings"
     "Second_Order_Viscosity_Analysis.Crandall_Ishii_Sums"
+    (* every leaf theory, so that every theory of the development is analysed *)
+    "Relative_Arbitrage.Proposition_2_4"
+    "Relative_Arbitrage.Exit_Class_Expected_Exit_Time"
 begin
 
 external_file "roots.txt"  \<comment> \<open>so that editing the roots re-runs this session\<close>
