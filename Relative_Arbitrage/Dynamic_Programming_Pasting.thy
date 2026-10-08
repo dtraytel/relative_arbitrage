@@ -7,10 +7,9 @@ begin
 
 (*>*)
 text \<open>The dynamic programming principle of Proposition 2.4 of
-  \<^cite>\<open>LaiShkolnikovSoner\<close>, for the value function: the pasting bound, the
-  \<open>\<ge>\<close> half of (2.9) at a deterministic time, the reduction of the
-  \<open>\<le>\<close> half to a single conditioning statement, and the conditioning
-  theory it rests on.\<close>
+  \<^cite>\<open>LaiShkolnikovSoner\<close>, for the value function: the pasting bound and
+  the \<open>\<ge>\<close> half of (2.9) at a deterministic time.  The \<open>\<le>\<close> half is
+  proved in \<open>Proposition_2_4\<close>.\<close>
 
 section \<open>The pasting bound for the dynamic programming principle\<close>
 
@@ -146,19 +145,29 @@ proof -
   qed
 qed
 
-subsection \<open>Small transfer lemmas for the exit time\<close>
+subsection \<open>An optimal law, as an almost-sure bound\<close>
 
-text \<open>The capped exit time reads the path only on \<open>{0..U}\<close>, so cutting and
-  shifting are transparent to it.\<close>
+text \<open>What a selector's optimality gives, in the form the pasting arguments
+  consume: an \<^const>\<open>ess_inf_time\<close> equality under the shifted law, turned
+  by @{thm [source] ess_inf_time_AE} into the almost-sure bound
+  \<open>v(y) \<le> \<tau>\<^sub>K\<close> on the unshifted paths.\<close>
 
-
-
-
-lemma exit_class_start:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-  using Q unfolding exit_class_def by blast
+lemma exit_val_le_pexit_AE:
+  fixes \<mu> :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes S0: "0 \<le> S"
+    and setsmu: "sets \<mu> = sets (path_borel S :: ('n pairpath) measure)"
+    and val: "ess_inf_time (pshift_law S y \<mu>) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+        = exit_val k L S K y"
+  shows "AE \<omega> in \<mu>. enn2real (exit_val k L S K y) \<le> pexit S K (\<lambda>t. y + fst (\<omega> t))"
+proof -
+  have "AE \<omega> in pshift_law S y \<mu>.
+      exit_val k L S K y \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))"
+    unfolding val[symmetric] by (rule ess_inf_time_AE)
+  then have "AE \<omega> in \<mu>. exit_val k L S K y \<le> ennreal (pexit S K (\<lambda>t. y + fst (\<omega> t)))"
+    unfolding AE_pshift_law_iff[OF S0 setsmu] pexit_pshift .
+  then show ?thesis
+    by (rule eventually_mono) (rule enn2real_leI[OF pexit_nonneg[OF S0]])
+qed
 
 subsection \<open>The value function is Borel measurable\<close>
 
@@ -269,9 +278,6 @@ proof -
   have Tr: "0 < T - r" using rT by simp
   have Tr': "0 \<le> T - r" using Tr by simp
   have Kbor: "K \<in> sets borel" by (rule borel_closed[OF K])
-  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    using measurable_fst[of "borel :: (real^'n) measure"
-        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
 
   \<comment> \<open>the optimal continuation from every endpoint, as a kernel\<close>
   obtain S where Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?MR"
@@ -293,16 +299,12 @@ proof -
   have ne: "space Q \<noteq> {}" by (rule PQ.not_empty)
   define Kr where "Kr = (\<lambda>\<omega> :: 'n pairpath. S (fst (\<omega> r)))"
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable Q"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
   have Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR"
     unfolding Kr_def by (rule measurable_compose[OF eQ Sk])
   have eF: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
       \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
-  proof (rule measurable_compose[OF _ mfst])
-    show "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use r in auto)
-  qed
+    by (rule measurable_compose[OF natural_filtration_eval[OF r order_refl] pair_fst_borel])
   have Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
       \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
           (exit_class k L (T - r) (0::real^'n))
@@ -320,7 +322,7 @@ proof -
   have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit r K (\<lambda>t. fst (\<omega> t))) \<in> borel_measurable ?BR"
     by (rule pexit_path_measurable[OF r K refl])
   have endm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?BR"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] mfst])
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] pair_fst_borel])
   have vm: "(\<lambda>\<omega> :: 'n pairpath. enn2real (exit_val k L (T - r) K (fst (\<omega> r))))
       \<in> borel_measurable ?BR"
     by (rule measurable_compose[OF endm exit_val_borel_measurable[OF Tr L1 K]])
@@ -344,16 +346,8 @@ proof -
   proof -
     define v where "v = enn2real (exit_val k L (T - r) K (fst (\<omega> r)))"
     have vnn: "0 \<le> v" by (simp add: v_def)
-    have vfin: "exit_val k L (T - r) K (fst (\<omega> r)) < \<top>"
-      using exit_val_neq_top[of "T - r" k L K "fst (\<omega> r)"] Tr' by (simp add: less_top)
-    have veq: "ennreal v = exit_val k L (T - r) K (fst (\<omega> r))"
-      unfolding v_def by (rule ennreal_enn2real[OF vfin])
     have vle: "v \<le> T - r"
-    proof -
-      have "ennreal v \<le> ennreal (T - r)"
-        unfolding veq by (rule exit_val_le_T[OF Tr'])
-      then show ?thesis using Tr' by simp
-    qed
+      unfolding v_def by (rule enn2real_leI[OF Tr' exit_val_le_T[OF Tr']])
     have gw': "c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
         + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then v else 0)"
       using gw unfolding g_def v_def .
@@ -361,41 +355,8 @@ proof -
     have z0: "AE \<omega>' in Kr \<omega>. fst (\<omega>' 0) = 0"
       using exit_class_start[OF Kcw] by (auto elim: eventually_mono)
     have opt: "AE \<omega>' in Kr \<omega>. v \<le> pexit (T - r) K (\<lambda>t. fst (\<omega> r) + fst (\<omega>' t))"
-    proof -
-      have ae1: "AE w in pshift_law (T - r) (fst (\<omega> r)) (S (fst (\<omega> r))).
-          exit_val k L (T - r) K (fst (\<omega> r))
-            \<le> ennreal (pexit (T - r) K (\<lambda>t. fst (w t)))"
-        unfolding Sval[symmetric] by (rule ess_inf_time_AE)
-      have setsSy: "sets (S (fst (\<omega> r))) = sets ?MR"
-        by (rule exit_class_sets[OF SC])
-      have shm: "pshift (T - r) (fst (\<omega> r)) \<in> S (fst (\<omega> r)) \<rightarrow>\<^sub>M ?MR"
-        using pshift_measurable[OF Tr'] measurable_cong_sets[OF setsSy refl] by blast
-      have m1: "(\<lambda>w :: 'n pairpath. ennreal (pexit (T - r) K (\<lambda>t. fst (w t))))
-          \<in> borel_measurable ?MR"
-        using pexit_path_measurable[OF Tr' K refl] by measurable
-      have mset: "{w \<in> space ?MR. exit_val k L (T - r) K (fst (\<omega> r))
-          \<le> ennreal (pexit (T - r) K (\<lambda>t. fst (w t)))} \<in> sets ?MR"
-        using m1 by measurable
-      have ae2: "AE \<omega>' in S (fst (\<omega> r)). exit_val k L (T - r) K (fst (\<omega> r))
-          \<le> ennreal (pexit (T - r) K (\<lambda>t. fst (pshift (T - r) (fst (\<omega> r)) \<omega>' t)))"
-        using ae1 unfolding pshift_law_def AE_distr_iff[OF shm mset] .
-      have ae3: "AE \<omega>' in S (fst (\<omega> r)). exit_val k L (T - r) K (fst (\<omega> r))
-          \<le> ennreal (pexit (T - r) K (\<lambda>t. fst (\<omega> r) + fst (\<omega>' t)))"
-        using ae2 by (simp add: pexit_pshift)
-      have ae4: "AE \<omega>' in S (fst (\<omega> r)).
-          v \<le> pexit (T - r) K (\<lambda>t. fst (\<omega> r) + fst (\<omega>' t))"
-      proof (rule eventually_mono[OF ae3])
-        fix \<omega>' :: "'n pairpath"
-        assume "exit_val k L (T - r) K (fst (\<omega> r))
-            \<le> ennreal (pexit (T - r) K (\<lambda>t. fst (\<omega> r) + fst (\<omega>' t)))"
-        then have "ennreal v
-            \<le> ennreal (pexit (T - r) K (\<lambda>t. fst (\<omega> r) + fst (\<omega>' t)))"
-          using veq by simp
-        then show "v \<le> pexit (T - r) K (\<lambda>t. fst (\<omega> r) + fst (\<omega>' t))"
-          using pexit_nonneg[OF Tr', of K "\<lambda>t. fst (\<omega> r) + fst (\<omega>' t)"] by simp
-      qed
-      then show ?thesis unfolding Kr_def .
-    qed
+      unfolding Kr_def v_def
+      by (rule exit_val_le_pexit_AE[OF Tr' exit_class_sets[OF SC] Sval])
     show ?thesis
     proof (rule eventually_mono[OF eventually_conj[OF z0 opt]])
       fix \<omega>' :: "'n pairpath"
@@ -469,23 +430,7 @@ proof -
   have vbnd: "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
       then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0) \<le> T - r"
     for \<omega> :: "'n pairpath"
-  proof (cases "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K")
-    case True
-    have "ennreal (enn2real (exit_val k L (T - r) K (fst (\<omega> r))))
-        = exit_val k L (T - r) K (fst (\<omega> r))"
-      using exit_val_neq_top[of "T - r" k L K "fst (\<omega> r)"] Tr'
-      by (simp add: less_top)
-    also have "\<dots> \<le> ennreal (T - r)" by (rule exit_val_le_T[OF Tr'])
-    finally have "enn2real (exit_val k L (T - r) K (fst (\<omega> r))) \<le> T - r"
-      using Tr' by simp
-    then show ?thesis using True by simp
-  next
-    case False
-    then have "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-        then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0) = 0"
-      by (rule if_not_P)
-    then show ?thesis using Tr' by simp
-  qed
+    using enn2real_leI[OF Tr' exit_val_le_T[OF Tr']] Tr' by auto
   have gle: "g \<omega> \<le> T" for \<omega> :: "'n pairpath"
   proof -
     have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> r" by (rule pexit_le_T[OF r])
@@ -546,140 +491,6 @@ proof (rule SUP_least)
       \<le> exit_val k L T K x"
     by (rule exit_val_dpp_ge[OF r rT L1 K])
 qed
-
-subsection \<open>The \<open>\<le>\<close> half of (2.9), reduced to conditioning\<close>
-
-text \<open>Off the survival event the horizon cap at \<open>r\<close> is invisible: a path
-  that has already left \<open>K\<close> by time \<open>r\<close> has the same exit time whichever
-  horizon it is measured against.  The event
-  \<open>\<not> (pexit r K f = r \<and> f r \<in> K)\<close> is genuinely weaker than
-  \<open>pexit r K f < r\<close>, since a path may exit exactly at \<open>r\<close>, a case
-  @{thm [source] pexit_stable_above_T} does not cover.\<close>
-
-
-theorem exit_val_dpp_le_of_cond:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
-    and cond: "\<And>P c. P \<in> exit_class k L T x \<Longrightarrow>
-        (AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))) \<Longrightarrow>
-        (AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-            \<longrightarrow> c \<le> r + enn2real (exit_val k L (T - r) K (fst (\<omega> r))))"
-  shows "exit_val k L T K x
-      \<le> (SUP P \<in> exit_class k L T x. ess_inf_time P
-          (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
-            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-               then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)))"
-proof -
-  have rT': "r \<le> T" using rT by simp
-  have T0': "0 \<le> T" using r rT by simp
-  have key: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-      \<le> ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
-          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-             then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))"
-    if P: "P \<in> exit_class k L T x" for P :: "('n pairpath) measure"
-  proof -
-    have PP: "prob_space P" by (rule exit_class_prob[OF P])
-    have taule: "pexit T K (\<lambda>t. fst (\<omega> t)) \<le> T" for \<omega> :: "'n pairpath"
-      by (rule pexit_le_T[OF T0'])
-    have fin: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) < \<top>"
-    proof -
-      have "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) \<le> ennreal T"
-        by (rule ess_inf_time_le_const[OF PP taule])
-      moreover have "(ennreal T :: ennreal) < \<top>" by simp
-      ultimately show ?thesis by (rule order.strict_trans1)
-    qed
-    define c where
-      "c = enn2real (ess_inf_time P (\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))))"
-    have ceq: "ennreal c = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-      unfolding c_def by (rule ennreal_enn2real[OF fin])
-    have aeT: "AE \<omega> in P. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
-    proof (rule eventually_mono[OF ess_inf_time_AE
-        [of P "\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))"]])
-      fix \<omega> :: "'n pairpath"
-      assume "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-          \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-      then have "ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))" using ceq by simp
-      then show "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
-        using pexit_nonneg[OF T0', of K "\<lambda>t. fst (\<omega> t)"] by simp
-    qed
-    have aeS: "AE \<omega> in P. pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-        \<longrightarrow> c \<le> r + enn2real (exit_val k L (T - r) K (fst (\<omega> r)))"
-      by (rule cond[OF P aeT])
-    have aeg: "AE \<omega> in P. c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
-        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-           then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)"
-    proof (rule eventually_mono[OF eventually_conj[OF aeT aeS]])
-      fix \<omega> :: "'n pairpath"
-      assume h: "c \<le> pexit T K (\<lambda>t. fst (\<omega> t))
-          \<and> (pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-             \<longrightarrow> c \<le> r + enn2real (exit_val k L (T - r) K (fst (\<omega> r))))"
-      show "c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
-          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-             then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)"
-      proof (cases "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K")
-        case True
-        then have "pexit r K (\<lambda>t. fst (\<omega> t)) = r" by simp
-        moreover have "c \<le> r + enn2real (exit_val k L (T - r) K (fst (\<omega> r)))"
-          using h True by simp
-        ultimately show ?thesis using True by simp
-      next
-        case False
-        have eq: "pexit T K (\<lambda>t. fst (\<omega> t)) = pexit r K (\<lambda>t. fst (\<omega> t))"
-          by (rule pexit_cap_eq[OF r rT' False])
-        have z: "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-            then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0) = 0"
-          using False by (rule if_not_P)
-        show ?thesis using h eq z by simp
-      qed
-    qed
-    have aeE: "AE \<omega> in P. ennreal c \<le> ennreal (pexit r K (\<lambda>t. fst (\<omega> t))
-        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-           then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))"
-    proof (rule eventually_mono[OF aeg])
-      fix \<omega> :: "'n pairpath"
-      assume "c \<le> pexit r K (\<lambda>t. fst (\<omega> t))
-          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-             then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)"
-      then show "ennreal c \<le> ennreal (pexit r K (\<lambda>t. fst (\<omega> t))
-          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-             then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))"
-        by (rule ennreal_leI)
-    qed
-    have "ennreal c \<le> ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
-        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-           then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))"
-      by (rule ess_inf_timeI[OF aeE])
-    then show ?thesis unfolding ceq .
-  qed
-  have pv: "exit_val k L T K x = (SUP Q \<in> exit_class k L T x.
-      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))"
-    unfolding exit_val_def ..
-  show ?thesis
-    unfolding pv
-  proof (rule SUP_least)
-    fix P :: "('n pairpath) measure"
-    assume P: "P \<in> exit_class k L T x"
-    have "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        \<le> ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
-            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-               then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))"
-      by (rule key[OF P])
-    also have "\<dots> \<le> (SUP Q \<in> exit_class k L T x. ess_inf_time Q
-        (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
-          + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-             then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)))"
-      using P by (rule SUP_upper)
-    finally show "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        \<le> (SUP Q \<in> exit_class k L T x. ess_inf_time Q
-            (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
-              + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-                 then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)))" .
-  qed
-qed
-
-text \<open>Both halves together: Eq. (2.9) at a deterministic time, modulo the
-  conditioning statement isolated above.\<close>
-
 
 (*<*)
 end

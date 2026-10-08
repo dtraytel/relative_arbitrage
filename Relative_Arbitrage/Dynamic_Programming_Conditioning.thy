@@ -27,13 +27,6 @@ text \<open>Clause (iv) needs a separate argument, because \<^const>\<open>outer
   exit_class_fourth_moment}).\<close>
 
 
-lemma exit_class_comp_martingale:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-  using Q unfolding exit_class_def by blast
-
 text \<open>Both coordinate processes of a class member, restarted at \<open>r\<close>: the
   clock is shifted by @{thm [source] martingale_time_change} and the horizon
   cap becomes invisible, since \<open>r + min u (T-r) \<le> T\<close> always.\<close>
@@ -78,7 +71,7 @@ proof -
   have Tr: "0 \<le> ?S" using rT by simp
   have MGY: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-    by (rule exit_class_comp_martingale[OF P])
+    by (rule exit_class_compensated_martingale[OF P])
   have s0: "0 \<le> r + min u ?S" if "0 \<le> u" for u :: real using r Tr that by simp
   have smono: "r + min u ?S \<le> r + min v ?S" if "0 \<le> u" "u \<le> v" for u v :: real
     using that by simp
@@ -188,8 +181,7 @@ proof -
 
   \<comment> \<open>(C) the \<open>\<F>\<^sub>r\<close>-measurable constant\<close>
   have evr: "(\<lambda>\<omega> :: 'n pairpath. \<omega> r) \<in> ?FP 0 \<rightarrow>\<^sub>M borel"
-    unfolding natural_filtration_def
-    by (rule measurable_family_vimage_algebra) (use r Tr in auto)
+    by (rule natural_filtration_eval) (use r Tr in auto)
   have Cmeas: "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> r)) + snd (\<omega> r))
       \<in> borel_measurable (?FP 0)"
   proof -
@@ -545,7 +537,7 @@ text \<open>Two pathwise facts underlying the conditioning statement for the DPP
   at a deterministic time.  On the survival event the exit time splits at
   \<open>r\<close> (@{thm [source] pexit_split_at_r}), and the second piece is the exit
   time of the rebased future shifted back to where the path actually was,
-  which is exactly the object \<^const>\<open>pshift_law\<close> pushes into the class at
+  which is exactly the object \<open>pshift_law\<close> pushes into the class at
   that point.\<close>
 
 text \<open>The class-level step: an almost-sure lower bound on the exit time of

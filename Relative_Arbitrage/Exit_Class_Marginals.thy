@@ -369,15 +369,13 @@ proof -
   have evP: "(\<lambda>\<omega> :: 'n pairpath. \<omega> v) \<in> borel_measurable P" if v: "0 \<le> v" for v
     unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
     by (rule ipath_eval_measurable[OF v])
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have XmP: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> v)) \<in> borel_measurable P" if v: "0 \<le> v" for v
-    by (rule measurable_compose[OF evP[OF v] fstB])
+    by (rule measurable_compose[OF evP[OF v] pair_fst_borel])
   have contP: "continuous_on {0..} (\<lambda>t. fst (\<omega> t))" if w: "\<omega> \<in> space P" for \<omega>
   proof -
     have "\<omega> \<in> ipath" using w spP by simp
     then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
-    show ?thesis by (rule continuous_on_compose2[OF _ c]) (auto intro: fstB
+    show ?thesis by (rule continuous_on_compose2[OF _ c]) (auto intro: pair_fst_borel
         continuous_on_fst continuous_on_id)
   qed
   have phim: "?\<phi> \<in> P \<rightarrow>\<^sub>M (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
@@ -415,7 +413,7 @@ proof -
     have "(\<lambda>\<omega> :: 'n pairpath. \<omega> v) \<in> borel_measurable (?F u)"
       by (rule natural_filtration_eval[OF v vu])
     then show "(\<lambda>\<omega> :: 'n pairpath. ?\<phi> \<omega> v) \<in> borel_measurable (?F u)"
-      unfolding e by (rule measurable_compose[OF _ fstB])
+      unfolding e by (rule measurable_compose[OF _ pair_fst_borel])
   qed
   have SP: "Stochastic_Process.stochastic_process P (0::real)
       (\<lambda>t \<omega> :: 'n pairpath. \<omega> t)"
@@ -431,7 +429,7 @@ proof -
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. \<omega> v) \<in> borel_measurable (?F u)"
       by (rule natural_filtration_eval[OF v vu])
-    from measurable_compose[OF this fstB] show ?thesis
+    from measurable_compose[OF this pair_fst_borel] show ?thesis
       by (rule measurable_compose[OF _ projB])
   qed
   have evG: "(\<lambda>w :: real \<Rightarrow> real^'n. w v $ i) \<in> borel_measurable (?G u)"
@@ -531,7 +529,7 @@ proof -
             proof -
               have "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable (?F u)"
                 by (rule natural_filtration_eval[OF u order_refl])
-              then show ?thesis by (rule measurable_compose[OF _ fstB])
+              then show ?thesis by (rule measurable_compose[OF _ pair_fst_borel])
             qed
             then have "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) :: real^'n^'n)
                 \<in> borel_measurable (?F u)"
@@ -863,11 +861,9 @@ lemma pairpath_diffquot_sets:
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}
     \<in> sets ipath_space"
 proof -
-  have sndB: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have ev: "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> v)) \<in> borel_measurable ipath_space"
     if v: "0 \<le> v" for v
-    by (rule measurable_compose[OF ipath_eval_measurable[OF v] sndB])
+    by (rule measurable_compose[OF ipath_eval_measurable[OF v] pair_snd_borel])
   have cont: "continuous_on {0..} (\<lambda>t. snd (\<omega> t))"
     if w: "\<omega> \<in> (ipath :: (('n pairpath) set))" for \<omega>
   proof -
@@ -1079,29 +1075,17 @@ proof -
     by (subst AE_distr_iff[OF psim pairpath_diffquot_sets]) (rule dqQ)
 
   text \<open>Clause (iii): the first coordinate is a martingale.\<close>
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have Xmg: "martingale ?P ?G 0 (\<lambda>t \<omega> :: 'n pairpath. fst (\<omega> t) :: real^'n)"
   proof (rule martingale_distr[OF PQ.prob_space_axioms psim GG pull])
     show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) :: real^'n) \<in> borel_measurable (?G u)"
       if u: "0 \<le> u" for u
-      by (rule measurable_compose[OF natural_filtration_eval[OF u order_refl] fstB])
+      by (rule measurable_compose[OF natural_filtration_eval[OF u order_refl] pair_fst_borel])
     show "martingale Q ?F 0 (\<lambda>u w :: real \<Rightarrow> real^'n. fst (?\<psi> w u) :: real^'n)"
       by (rule martingale_cong_ge[OF mgX]) simp
   qed
 
   text \<open>Clause (iv): the compensated process is a martingale, again a
     modification of the one the paper's class supplies.\<close>
-  have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-      \<in> borel_measurable borel"
-  proof -
-    have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-        = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
-      by (rule ext) (simp add: outerp_def vec_eq_iff)
-    show ?thesis unfolding e
-      by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
-          continuous_intros)
-  qed
   have entB: "(\<lambda>Z :: real^'n^'n. Z $ i $ j) \<in> borel_measurable borel" for i j
     by (intro borel_measurable_continuous_onI continuous_intros)
   have SQ: "Stochastic_Process.stochastic_process Q (0::real)
@@ -1170,7 +1154,8 @@ proof -
   proof (rule martingale_distr[OF PQ.prob_space_axioms psim GG pull])
     show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u) :: real^'n) - snd (\<omega> u))
         \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
-      by (rule measurable_compose[OF natural_filtration_eval[OF u order_refl] cB])
+      by (rule measurable_compose[OF natural_filtration_eval[OF u order_refl]
+            compensated_map_borel])
     show "martingale Q ?F 0
         (\<lambda>u w :: real \<Rightarrow> real^'n. outerp (fst (?\<psi> w u) :: real^'n) - snd (?\<psi> w u))"
       by (rule mgcomp)
@@ -1206,14 +1191,12 @@ lemma iexit_class_fstify_measurable:
   shows "(\<lambda>\<omega> :: 'n pairpath. restrict (\<lambda>t. fst (\<omega> t)) {0..})
       \<in> P \<rightarrow>\<^sub>M (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
 proof (rule ipathify_measurable)
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable P" if "0 \<le> t" for t
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_measurable P"
       unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
       by (rule ipath_eval_measurable[OF that])
-    then show ?thesis by (rule measurable_compose[OF _ fstB])
+    then show ?thesis by (rule measurable_compose[OF _ pair_fst_borel])
   qed
 next
   fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"

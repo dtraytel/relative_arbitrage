@@ -112,7 +112,7 @@ lemma aglue_law_diffquot:
         \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
   shows "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T
       \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule exit_class_diffquot_of_pairs[OF sets_aglue_law])
+proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
   fix p q :: real
   assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
   let ?B = "(path_borel T :: ('n pairpath) measure)"
@@ -218,7 +218,7 @@ proof (intro CollectI conjI)
   show "prob_space (aglue_law T \<kappa> Q)"
     by (rule prob_space_aglue_law[OF T0 PQ setsQ Kp])
   show "sets (aglue_law T \<kappa> Q) = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule sets_aglue_law)
+    by (rule sets_pair_law_of)
   show "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
     by (rule aglue_law_start[OF T0 PQ setsQ Kp Q0 K0])
   show "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T
@@ -233,7 +233,7 @@ proof (intro CollectI conjI)
 qed
 
 text \<open>The set-integral transfer for the glue --- what a martingale identity
-  for \<^const>\<open>aglue_law\<close> has to be pushed through.  Same two steps as
+  for \<open>aglue_law\<close> has to be pushed through.  Same two steps as
   @{thm [source] AE_aglue_law}: @{thm [source] integral_distr} to the
   semidirect product, then @{thm [source] integral_ksemi_real} to the past
   and the continuation.\<close>

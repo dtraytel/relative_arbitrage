@@ -150,8 +150,7 @@ proof (cases "r \<in> {0..S}")
   case True
   have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> r) \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) u
       \<rightarrow>\<^sub>M borel"
-    unfolding natural_filtration_def
-    by (rule measurable_family_vimage_algebra) (use r ru in auto)
+    by (rule natural_filtration_eval) (use r ru in auto)
   then show ?thesis using True by (simp add: pcut_apply)
 next
   case False
@@ -712,16 +711,6 @@ text \<open>The eigenvalue constraint (1.7) survives concatenation: across the
   convexified (Lemma 2.1, \<open>sconstraint_convex\<close>) --- the unconvexified set
   of (1.4) would not do.\<close>
 
-lemma pcut_id_on_mspace:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
-  assumes "\<omega> \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "pcut r \<omega> = \<omega>"
-proof -
-  have "\<omega> \<in> extensional {0..r}"
-    using assms unfolding path_metric_def mspace_cfunspace by simp
-  then show ?thesis unfolding pcut_def by (rule extensional_restrict)
-qed
-
 subsection \<open>Gluing a continuation onto the half-line\<close>
 
 text \<open>The half-line analogue of \<open>pglue\<close>.  Cutting it at any horizon
@@ -967,12 +956,9 @@ lemma pfst_measurable:
   shows "pfst S \<in> N \<rightarrow>\<^sub>M (path_borel S :: ((real \<Rightarrow> 'a)) measure)"
   unfolding pfst_def
 proof (rule pathify_measurable[OF S])
-  have fstB: "(fst :: 'a \<times> 'b \<Rightarrow> 'a)
-      \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   fix t :: real assume "t \<in> {0..S}"
   show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). fst (\<omega> t)) \<in> borel_measurable N"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsN] fstB])
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsN] pair_fst_borel])
 next
   fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" assume "\<omega> \<in> space N"
   then have "\<omega> \<in> mspace (path_metric S :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
@@ -1340,9 +1326,9 @@ proof -
   then show ?thesis using sets.Int[OF s1 s2] by simp
 qed
 
-text \<open>The conditioning statement itself, discharging the hypothesis of
-  \<open>exit_val_dpp_le_of_cond\<close> and hence the DPP at a deterministic
-  time.  The chain is:
+text \<open>The conditioning statement itself (\<open>exit_val_cond\<close> and
+  \<open>exit_val_cond_time\<close>), the key step of the \<open>\<le>\<close> half of the DPP
+  in \<open>Proposition_2_4\<close>.  The chain is:
 
   \<^item> the hypothesis becomes a measurable property of the pair
     \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, by \<open>pglue_pcut_pfut\<close>;
@@ -1389,35 +1375,30 @@ text \<open>Stroock--Varadhan splice the continuation into the same
   and that \<open>prebase\<close> inverts it on the left, so nothing is lost by
   working with the delayed law instead of the rebased one.\<close>
 
+lemma pembed_mspace_of_cont:
+  fixes w :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and U: "T - s \<le> U"
+    and c: "continuous_on {0..U} w"
+  shows "pembed s T w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+proof -
+  have "continuous_on {0..T} (\<lambda>t. w (max (t - s) 0))"
+    by (rule continuous_on_compose2[OF c]) (use s0 sT U in \<open>auto intro!: continuous_intros\<close>)
+  then show ?thesis unfolding pembed_def by (rule mspace_path_metricI)
+qed
+
 lemma pembed_mspace:
   fixes w :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
     and w: "w \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pembed s T w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-proof -
-  have c: "continuous_on {0..T - s} w" by (rule mspace_path_metricD[OF w])
-  have m: "continuous_on {0..T} (\<lambda>t. max (t - s) 0)"
-    by (intro continuous_intros)
-  have im: "(\<lambda>t. max (t - s) 0) ` {0..T} \<subseteq> {0..T - s}" using s0 sT by auto
-  have "continuous_on {0..T} (\<lambda>t. w (max (t - s) 0))"
-    by (rule continuous_on_compose2[OF c m im])
-  then show ?thesis unfolding pembed_def by (rule mspace_path_metricI)
-qed
+  by (rule pembed_mspace_of_cont[OF s0 sT order_refl mspace_path_metricD[OF w]])
 
 lemma pembed_mspace_full:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
     and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pembed s T \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-proof -
-  have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
-  have m: "continuous_on {0..T} (\<lambda>t. max (t - s) 0)"
-    by (intro continuous_intros)
-  have im: "(\<lambda>t. max (t - s) 0) ` {0..T} \<subseteq> {0..T}" using s0 sT by auto
-  have "continuous_on {0..T} (\<lambda>t. \<omega> (max (t - s) 0))"
-    by (rule continuous_on_compose2[OF c m im])
-  then show ?thesis unfolding pembed_def by (rule mspace_path_metricI)
-qed
+  by (rule pembed_mspace_of_cont[OF s0 sT _ mspace_path_metricD[OF w]]) (use s0 in simp)
 
 definition pdel :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pdel s T = pembed (max 0 (min s T)) T"
@@ -1675,7 +1656,7 @@ proof (cases "r \<le> T")
   have mem: "r \<in> {0..T}" using r0 True by simp
   have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (max (r - s) 0)) \<in> borel_measurable
       (natural_filtration M 0 (\<lambda>v w. w v) (min (max (u - s) 0) (T - s)))"
-    by (rule path_eval_natural_filtration[OF e1 e2])
+    by (rule natural_filtration_eval[OF e1 e2])
   then show ?thesis by (simp add: pembed_apply[OF mem])
 next
   case False

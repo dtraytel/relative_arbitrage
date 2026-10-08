@@ -34,32 +34,6 @@ lemma comp_shift_split:
 
 text \<open>\<open>bounded_linear_cross\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-lemma continuous_on_iglue:
-  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
-  assumes r: "0 \<le> r"
-    and c1: "continuous_on {0..r} \<omega>"
-    and c2: "continuous_on {0..} \<omega>'"
-  shows "continuous_on {0..}
-      (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
-proof -
-  let ?f = "\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
-  have U: "{0..} = {0..r} \<union> {r..}" using r by auto
-  have A: "continuous_on {0..r} ?f"
-    by (rule continuous_on_eq[OF c1]) simp
-  have B: "continuous_on {r..} ?f"
-  proof (rule continuous_on_eq)
-    have "continuous_on {r..} (\<lambda>t. \<omega>' (t - r))"
-      by (rule continuous_on_compose2[OF c2 continuous_on_diff
-            [OF continuous_on_id continuous_on_const]]) auto
-    then show "continuous_on {r..} (\<lambda>t. \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
-      by (intro continuous_intros)
-  next
-    fix t :: real assume "t \<in> {r..}"
-    then show "\<omega> r + (\<omega>' (t - r) - \<omega>' 0) = ?f t" by (cases "t = r") auto
-  qed
-  show ?thesis unfolding U by (rule continuous_on_closed_Un[OF _ _ A B]) auto
-qed
-
 subsection \<open>The Brownian continuation on the half-line\<close>
 
 text \<open>The witness of \<open>bmpair_law_in_paper_pair_class\<close> without
@@ -112,15 +86,6 @@ text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>â‚€á
   \<open>0\<close>, has increments given by interval integrals, and --- for the
   continued density --- difference quotients in the constraint set for every
   \<open>0 \<le> s < t\<close>: the covariation half of \<open>exit_class\<close>.\<close>
-
-lemma path_eval_measurable_natural_filtration':
-  fixes U u v :: real
-  assumes v: "v \<in> {0..u}"
-  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}). \<omega> v) \<in> borel_measurable (natural_filtration
-      (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-      0 (\<lambda>v \<omega>. \<omega> v) u)"
-  unfolding natural_filtration_def
-  by (rule measurable_family_vimage_algebra) (use v in auto)
 
 lemma pair_law_limit_sq_nn_bound:
   fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -210,30 +175,6 @@ proof -
   qed
 qed
 
-text \<open>\<^bold>\<open>Clause (0): finiteness.\<close>\<close>
-
-lemma restrict_in_mspace:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
-  assumes st: "0 \<le> s" and sT: "s \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "restrict \<omega> {0..s} \<in> mspace (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-proof -
-  have "(\<lambda>f :: (real \<Rightarrow> 'a \<times> 'b). restrict f {0..s})
-      \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        \<rightarrow> mspace (path_metric s :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    using Lipschitz_restrict_path_metric[OF st sT]
-    unfolding Lipschitz_continuous_map_def by blast
-  then show ?thesis using w by blast
-qed
-
-lemma nat_filt_eval:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-  assumes b: "0 \<le> b" and ba: "b \<le> a"
-  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> b)
-      \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) a \<rightarrow>\<^sub>M borel"
-  unfolding natural_filtration_def
-  by (rule measurable_family_vimage_algebra) (use b ba in auto)
-
 lemma standard_borel_path_metric:
   "standard_borel (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
   unfolding standard_borel_def
@@ -274,22 +215,6 @@ proof -
     using standard_borel_path_metric by blast
 qed
 
-text \<open>The regular conditional distribution itself.  The AFP's
-  \<open>disintegration\<close> constrains rectangles only, which suffices because the
-  next step converts it to \<open>ksemi\<close>, for which the almost-sure and integral
-  forms are already proved.\<close>
-
-lemma path_eval_natural_filtration:
-  fixes M :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-  assumes t0: "0 \<le> t" and tu: "t \<le> u"
-  shows "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w t)
-      \<in> natural_filtration M 0 (\<lambda>v w. w v) u \<rightarrow>\<^sub>M borel"
-  unfolding natural_filtration_def
-  by (rule measurable_family_vimage_algebra) (use t0 tu in auto)
-
-text \<open>The time change itself: reading a delayed path at \<open>u\<close> is reading the
-  base path at \<open>\<rho> u\<close>.  Pure arithmetic, no membership.\<close>
-
 lemma pair_law_eval_measurable:
   fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -318,6 +243,21 @@ next
       using spN False by (auto simp: path_metric_def extensional_def)
     then show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u) -` C \<inter> space N \<in> sets N" by simp
   qed
+qed
+
+text \<open>The start clause of a class, as an event.\<close>
+
+lemma start_set_sets:
+  fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+  assumes setsN: "sets N = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "{\<omega> \<in> space N. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = y} \<in> sets N"
+proof -
+  have "{\<omega> \<in> space N. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = y}
+      = (\<lambda>\<omega>. \<omega> 0) -` {(x, y)} \<inter> space N"
+    by (auto simp: prod_eq_iff)
+  also have "\<dots> \<in> sets N"
+    by (rule measurable_sets[OF pair_law_eval_measurable[OF setsN]]) simp
+  finally show ?thesis .
 qed
 
 lemma frozen_set_measurable:
@@ -444,7 +384,7 @@ proof -
   have spQ: "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have pin: "?p \<in> space Q \<rightarrow> space (borel_of ?PS)"
-    using restrict_in_mspace[OF s sT] spQ by (auto simp: space_borel_of)
+    using restrict_mspace_path_metric[OF s sT] spQ by (auto simp: space_borel_of)
   have pV: "?p \<in> ?V \<rightarrow>\<^sub>M borel_of ?PS"
     by (rule measurable_vimage_algebra1[OF pin])
   have evV: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u) \<in> ?V \<rightarrow>\<^sub>M borel" if u: "u \<in> {0..s}" for u
@@ -719,10 +659,8 @@ lemma X_eval_entry_measurable:
   "(\<lambda>p' :: 'n::finite pairpath. fst (p' u) $ c) \<in> borel_measurable
      (path_borel T :: ('n pairpath) measure)"
 proof (rule measurable_compose[OF pair_law_eval_measurable[OF refl]])
-  have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   show "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). fst pr $ c) \<in> borel_measurable borel"
-    by (rule measurable_compose[OF f borel_measurable_nth])
+    by (rule measurable_compose[OF pair_fst_borel borel_measurable_nth])
 qed
 
 lemma euOrth_mset_cond:
@@ -739,12 +677,8 @@ proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have evm: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?B \<rightarrow>\<^sub>M borel" for u
     by (rule pair_law_eval_measurable[OF refl])
-  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-      \<in> borel_measurable borel"
-    by (rule borel_measurable_continuous_onI[OF
-        continuous_on_fst[OF continuous_on_id]])
   have evf: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u)) \<in> ?B \<rightarrow>\<^sub>M borel" for u
-    by (rule measurable_compose[OF evm mfst])
+    by (rule measurable_compose[OF evm pair_fst_borel])
   have condm: "(\<lambda>\<omega> :: 'n pairpath.
       transpose (SF (fst (\<omega> (real j * h))))
         *v G (fst (\<omega> (real j * h)))) \<in> ?B \<rightarrow>\<^sub>M borel" for j
@@ -1306,11 +1240,9 @@ lemma iexit_fst_measurable_ipath:
   shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b::{polish_space,banach}). iexit K (\<lambda>t. fst (\<omega> t)))
       \<in> borel_measurable (ipath_space :: (((real \<Rightarrow> 'a \<times> 'b)) measure))"
 proof (rule iexit_measurable_gen[OF K])
-  have fstB: "(fst :: 'a \<times> 'b \<Rightarrow> 'a) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). fst (\<omega> t)) \<in> borel_measurable ipath_space"
     if "0 \<le> t" for t
-    by (rule measurable_compose[OF ipath_eval_measurable[OF that] fstB])
+    by (rule measurable_compose[OF ipath_eval_measurable[OF that] pair_fst_borel])
 next
   fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
   assume "\<omega> \<in> space (ipath_space :: (((real \<Rightarrow> 'a \<times> 'b)) measure))"
@@ -1494,14 +1426,12 @@ text \<open>Both clauses by the same three steps: stop the class's horizon
   carry the square-integrability across with
   \<open>integrable_distr_eq\<close>.\<close>
 
-lemma path_eval_measurable_natural_filtration:
-  fixes U v :: real
-  assumes v: "v \<in> {0..U}"
-  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}). \<omega> v) \<in> borel_measurable (natural_filtration
-      (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-      0 (\<lambda>v \<omega>. \<omega> v) U)"
-  unfolding natural_filtration_def
-  by (rule measurable_family_vimage_algebra) (use v in auto)
+lemma subalgebra_natural_filtration_path:
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+  assumes setsQ: "sets Q = sets (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "subalgebra Q (natural_filtration Q 0 (\<lambda>v w. w v) u)"
+  by (rule stochastic_process.subalgebra_natural_filtration, unfold_locales)
+    (rule pair_law_eval_measurable[OF setsQ])
 
 lemma sets_natural_filtration_path_subset:
   fixes U u :: real
@@ -1509,21 +1439,7 @@ lemma sets_natural_filtration_path_subset:
         (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)
         0 (\<lambda>v \<omega>. \<omega> v) u)
       \<subseteq> sets (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-proof -
-  let ?m = "path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
-  have "(\<Union>i\<in>{0..u}.
-      {(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> i) -` A \<inter> space ?B | A. A \<in> sets borel})
-      \<subseteq> sets ?B"
-  proof clarsimp
-    fix i :: real and A :: "('a \<times> 'b) set"
-    assume "A \<in> sets borel"
-    then show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> i) -` A \<inter> space ?B \<in> sets ?B"
-      by (rule measurable_sets[OF pair_law_eval_measurable[OF refl]])
-  qed
-  then show ?thesis
-    unfolding sets_natural_filtration by (rule sets.sigma_sets_subset)
-qed
+  using subalgebra_natural_filtration_path[OF refl] unfolding subalgebra_def by blast
 
 text \<open>The metric half.  @{thm [source] path_mdist_le_iff} turns the sup
   distance into a condition at the rational times only, countably many, so
@@ -1557,7 +1473,7 @@ proof -
       if t: "t \<in> {0..U} \<inter> \<rat>" for t
     proof -
       have m: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). dist (f t) (\<omega> t)) \<in> borel_measurable ?F"
-        using path_eval_measurable_natural_filtration[of t U] t
+        using natural_filtration_eval[where Y = "\<lambda>v \<omega>. \<omega> v" and N = ?B, of t U] t
         by (intro borel_measurable_dist) auto
       show ?thesis using iffD1[OF borel_measurable_iff_le m] by blast
     qed
@@ -2225,30 +2141,29 @@ proof -
         continuous_intros)
 qed
 
+lemma compensated_map_borel:
+  "(\<lambda>p :: (real^'n::finite) \<times> (real^'n^'n). outerp (fst p) - snd p)
+     \<in> borel_measurable borel"
+  using measurable_compose[OF pair_fst_borel outerp_borel] pair_snd_borel
+  by (rule borel_measurable_diff)
+
+lemma compensated_entry_borel:
+  "(\<lambda>z :: (real^'n::finite) \<times> (real^'n^'n). (outerp (fst z) - snd z) $ c $ d)
+     \<in> borel_measurable borel"
+proof -
+  have n1: "(\<lambda>v :: real^'n^'n. v $ c) \<in> borel_measurable borel"
+    by (rule borel_measurable_continuous_onI)
+      (rule linear_continuous_on[OF bounded_linear_vec_nth])
+  show ?thesis
+    by (rule measurable_compose[OF measurable_compose[OF compensated_map_borel n1]
+          borel_measurable_nth])
+qed
+
 lemma comp_eval_entry_measurable:
   "(\<lambda>p' :: 'n::finite pairpath. (outerp (fst (p' u)) - snd (p' u)) $ cc $ dd)
      \<in> borel_measurable
        (path_borel T :: ('n pairpath) measure)"
-proof (rule measurable_compose[OF pair_law_eval_measurable[OF refl]])
-  have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  have s: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  have o: "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). outerp (fst pr))
-      \<in> borel_measurable borel"
-    by (rule measurable_compose[OF f outerp_borel])
-  have dm: "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). outerp (fst pr) - snd pr)
-      \<in> borel_measurable borel"
-    by (rule borel_measurable_diff[OF o s])
-  have n1: "(\<lambda>v :: real^'n^'n. v $ cc) \<in> borel_measurable borel"
-    by (rule borel_measurable_continuous_onI)
-      (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have n2: "(\<lambda>v :: real^'n. v $ dd) \<in> borel_measurable borel"
-    by (rule borel_measurable_nth)
-  show "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). (outerp (fst pr) - snd pr) $ cc $ dd)
-      \<in> borel_measurable borel"
-    by (rule measurable_compose[OF measurable_compose[OF dm n1] n2])
-qed
+  by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] compensated_entry_borel])
 
 lemma pair_test_F_integrable:
   fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
@@ -2411,34 +2326,14 @@ qed
 subsection \<open>The set-integral identity and martingale reassembly,
   generically\<close>
 
-lemma subalgebra_natural_filtration_path:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-  assumes setsQ: "sets Q = sets (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  shows "subalgebra Q (natural_filtration Q 0 (\<lambda>v w. w v) u)"
-proof -
-  let ?B = "(path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  have "natural_filtration Q 0 (\<lambda>v w :: (real \<Rightarrow> 'a \<times> 'b). w v) u
-      = natural_filtration ?B 0 (\<lambda>v w. w v) u"
-    by (rule natural_filtration_cong_space)
-       (simp add: sets_eq_imp_space_eq[OF setsQ])
-  then have "sets (natural_filtration Q 0 (\<lambda>v w :: (real \<Rightarrow> 'a \<times> 'b). w v) u)
-      \<subseteq> sets Q"
-    using sets_natural_filtration_path_subset[of S u] setsQ by simp
-  then show ?thesis unfolding subalgebra_def by simp
-qed
-
 lemma sigma_finite_subalgebra_natural_filtration_path:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes PS: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   shows "sigma_finite_subalgebra Q (natural_filtration Q 0 (\<lambda>v w. w v) u)"
-proof (rule finite_measure_subalgebra_is_sigma_finite)
-  show "finite_measure_subalgebra Q
-      (natural_filtration Q 0 (\<lambda>v w :: (real \<Rightarrow> 'a \<times> 'b). w v) u)"
-    by (simp add: finite_measure_subalgebra_def
-        finite_measure_subalgebra_axioms_def prob_space.finite_measure[OF PS]
-        subalgebra_natural_filtration_path[OF setsQ])
-qed
+  by (rule finite_measure_subalgebra_is_sigma_finite)
+    (simp add: finite_measure_subalgebra_def finite_measure_subalgebra_axioms_def
+      prob_space.finite_measure[OF PS] subalgebra_natural_filtration_path[OF setsQ])
 
 theorem integrable_and_set_integral_eq_of_rational_times:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -2987,8 +2882,7 @@ proof -
     proof (unfold_locales)
       fix u :: real assume u: "0 \<le> u"
       have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min u T)) \<in> ?FF u \<rightarrow>\<^sub>M borel"
-        unfolding natural_filtration_def
-        by (rule measurable_family_vimage_algebra) (use u T in auto)
+        by (rule natural_filtration_eval) (use u T in auto)
       show "?Y u \<in> borel_measurable (?FF u)"
         by (rule measurable_compose[OF ev Fb])
     qed
@@ -3279,8 +3173,7 @@ lemma eval_component_measurable_nf:
 proof -
   let ?F = "natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
   have ev: "(\<lambda>w :: 'n pairpath. w (min u S)) \<in> borel_measurable ?F"
-    unfolding natural_filtration_def
-    by (rule measurable_family_vimage_algebra) (use S u in auto)
+    by (rule natural_filtration_eval) (use S u in auto)
   have f1: "(\<lambda>w :: 'n pairpath. fst (w (min u S))) \<in> borel_measurable ?F"
     by (rule measurable_compose[OF ev pair_fst_borel])
   have "(\<lambda>w :: 'n pairpath. fst (w (min u S)) \<bullet> (axis c 1 :: real^'n))
@@ -3294,14 +3187,10 @@ lemma eval_component_continuous:
   assumes w: "w \<in> mspace (path_metric S :: ('n pairpath) metric)"
   shows "continuous_on {0..S} (\<lambda>u. fst (w (min u S)) $ c)"
 proof -
-  have "continuous_on {0..S} w" by (rule mspace_path_metricD[OF w])
-  then have "continuous_on {0..S} (\<lambda>u. fst (w u))" by (rule continuous_on_fst)
-  then have c1: "continuous_on {0..S} (\<lambda>u. fst (w u) $ c)"
-    by (rule bounded_linear.continuous_on[OF bounded_linear_vec_nth])
   have "continuous_on {0..S} (\<lambda>u. fst (w (min u S)) $ c)
       = continuous_on {0..S} (\<lambda>u. fst (w u) $ c)"
     by (rule continuous_on_cong[OF refl]) simp
-  then show ?thesis using c1 by simp
+  then show ?thesis using path_coord_cont_on[OF w] by simp
 qed
 
 text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
@@ -3329,8 +3218,7 @@ lemma comp_entry_measurable_nf:
 proof -
   let ?F = "natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
   have ev: "(\<lambda>w :: 'n pairpath. w (min u S)) \<in> borel_measurable ?F"
-    unfolding natural_filtration_def
-    by (rule measurable_family_vimage_algebra) (use S u in auto)
+    by (rule natural_filtration_eval) (use S u in auto)
   have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u S))))
       \<in> borel_measurable ?F"
     by (rule measurable_compose
@@ -3822,26 +3710,11 @@ proof -
   qed
 qed
 
-lemma covariation_class_eval_measurable:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> covariation_class S T x" and t: "t \<in> {0..T}"
-  shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
-proof -
-  have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> (path_borel T :: ('n pairpath) measure) \<rightarrow>\<^sub>M borel"
-    using continuous_map_measurable[OF continuous_map_path_eval[OF t]]
-    by (simp add: borel_of_euclidean)
-  then show ?thesis
-    using measurable_cong_sets[OF covariation_class_sets[OF Q] refl] by blast
-qed
-
 lemma covariation_class_Y_entry_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> covariation_class S T x" and t: "t \<in> {0..T}"
   shows "(\<lambda>\<omega>. snd (\<omega> t) $ i $ j) \<in> borel_measurable Q"
-proof (rule measurable_compose[OF covariation_class_eval_measurable[OF Q t]])
-  have s: "(snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)
-      \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
+proof (rule measurable_compose[OF pair_law_eval_measurable[OF covariation_class_sets[OF Q]]])
   \<comment> \<open>\<^verbatim>\<open>borel_measurable_nth\<close> is only the REAL-valued instance
       \<open>real^'n \<Rightarrow> real\<close>; the matrix row map needs the linear-continuity
       route.\<close>
@@ -3852,7 +3725,7 @@ proof (rule measurable_compose[OF covariation_class_eval_measurable[OF Q t]])
     by (rule borel_measurable_nth)
   show "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). snd p $ i $ j)
       \<in> borel_measurable borel"
-    by (rule measurable_compose[OF measurable_compose[OF s n1] n2])
+    by (rule measurable_compose[OF measurable_compose[OF pair_snd_borel n1] n2])
 qed
 
 lemma covariation_class_Y_entry_bound_ae:
@@ -3890,13 +3763,6 @@ proof -
             covariation_class_Y_entry_measurable[OF Q t]])
 qed
 
-lemma covariation_class_compensated_martingale:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> covariation_class S T x"
-  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-  using Q unfolding covariation_class_def by blast
-
 lemma covariation_class_compensated_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> covariation_class S T x" and t: "t \<in> {0..T}"
@@ -3904,7 +3770,7 @@ lemma covariation_class_compensated_integrable:
 proof -
   interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
       "\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
-    by (rule covariation_class_compensated_martingale[OF Q])
+    by (rule covariation_class_martingale_compensated[OF Q])
   have "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
     using t by (intro MG.integrable) simp
   then show ?thesis using t by simp
@@ -3917,10 +3783,6 @@ lemma covariation_class_compensated_entry_integrable:
   by (rule integrable_bounded_linear[OF bounded_linear_vec_nth,
         OF integrable_bounded_linear[OF bounded_linear_vec_nth
           covariation_class_compensated_integrable[OF Q t]]])
-
-text \<open>Squaring the coordinate is the diagonal entry of \<open>outerp\<close>, so the
-  split of \<open>(X\<^sub>t $ i)\<^sup>2\<close> into the compensated part plus \<open>Y\<close> is an
-  identity of functions, not an inequality.\<close>
 
 text \<open>Squaring the coordinate is the diagonal entry of \<open>outerp\<close>, so the
   split of \<open>(X\<^sub>t $ i)\<^sup>2\<close> into the compensated part plus \<open>Y\<close> is an
@@ -3957,11 +3819,6 @@ text \<open>\<open>integral_of_bounded_linear\<close>, \<open>set_integral_of_bo
   \<open>martingale_mat_nth\<close> live in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-text \<open>\<open>integral_of_bounded_linear\<close>, \<open>set_integral_of_bounded_linear\<close>,
-  \<open>martingale_bounded_linear_image\<close>, \<open>martingale_vec_nth\<close> and
-  \<open>martingale_mat_nth\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
 theorem covariation_class_compensated_mean:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> covariation_class S T x" and t: "t \<in> {0..T}"
@@ -3970,7 +3827,7 @@ proof -
   interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
   interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
       "\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
-    by (rule covariation_class_compensated_martingale[OF Q])
+    by (rule covariation_class_martingale_compensated[OF Q])
   have t0: "0 \<le> t" and tT: "t \<le> T" using t by simp_all
   have z: "(0::real) \<in> {0..T}" using t by simp
   have i0: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0))"

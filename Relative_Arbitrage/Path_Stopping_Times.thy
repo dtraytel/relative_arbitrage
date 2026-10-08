@@ -216,9 +216,8 @@ proof -
     for s
   proof (cases "s \<in> {0..T}")
     case True
-    have mem: "min s t \<in> {0..t}" using True t by simp
     have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min s t)) \<in> borel_measurable ?F"
-      by (rule path_eval_measurable_natural_filtration'[OF mem])
+      by (rule natural_filtration_eval) (use True t in auto)
     then show ?thesis by (simp add: pstopped_apply[OF True])
   next
     case False
@@ -504,29 +503,44 @@ text \<open>The law of the reassembled path: run the past under \<open>Q\<close>
   \<open>kglue_law'\<close>, and the only structural difference is that
   \<^const>\<open>padd\<close> replaces \<^const>\<open>pglue\<close>.\<close>
 
-lemma path_stopping_time_max:
+text \<open>Postponing a stopping time by a map \<open>f\<close> of \<open>[0,T]\<close> into itself with
+  \<open>x \<le> f x\<close> keeps it a stopping time: two paths agreeing up to the later
+  time agree up to the earlier one, which then coincides.\<close>
+
+lemma path_stopping_time_comp_ge:
   fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
-  assumes st: "path_stopping_time T \<theta>" and u: "0 \<le> u" and uT: "u \<le> T"
-  shows "path_stopping_time T (\<lambda>\<omega>. max u (\<theta> \<omega>))"
+  assumes st: "path_stopping_time T \<theta>"
+    and ge: "\<And>x. 0 \<le> x \<Longrightarrow> x \<le> T \<Longrightarrow> x \<le> f x"
+    and into: "\<And>x. 0 \<le> x \<Longrightarrow> x \<le> T \<Longrightarrow> 0 \<le> f x \<and> f x \<le> T"
+  shows "path_stopping_time T (\<lambda>\<omega>. f (\<theta> \<omega>))"
 proof -
-  have c1: "0 \<le> max u (\<theta> \<omega>) \<and> max u (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-    using u uT path_stopping_time_nonneg[OF st, of \<omega>]
-      path_stopping_time_le[OF st, of \<omega>] by simp
-  have c2: "max u (\<theta> \<omega>') = max u (\<theta> \<omega>)"
+  have c1: "0 \<le> f (\<theta> \<omega>) \<and> f (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
+    using into path_stopping_time_nonneg[OF st, of \<omega>]
+      path_stopping_time_le[OF st, of \<omega>] by blast
+  have c2: "f (\<theta> \<omega>') = f (\<theta> \<omega>)"
     if cw: "continuous_on {0..T} (\<lambda>v. fst (\<omega> v))"
       and cw': "continuous_on {0..T} (\<lambda>v. fst (\<omega>' v))"
-      and ag: "\<forall>s \<in> {0..max u (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b)"
+      and ag: "\<forall>s \<in> {0..f (\<theta> \<omega>)}. \<omega> s = \<omega>' s" for \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b)"
   proof -
+    have le: "\<theta> \<omega> \<le> f (\<theta> \<omega>)"
+      using ge path_stopping_time_nonneg[OF st, of \<omega>]
+        path_stopping_time_le[OF st, of \<omega>] by blast
     have "\<theta> \<omega>' = \<theta> \<omega>"
     proof (rule path_stopping_time_cong[OF st cw cw'])
       fix s assume "s \<in> {0..\<theta> \<omega>}"
-      then have "s \<in> {0..max u (\<theta> \<omega>)}" by auto
+      then have "s \<in> {0..f (\<theta> \<omega>)}" using le by auto
       then show "\<omega> s = \<omega>' s" using ag by blast
     qed
     then show ?thesis by simp
   qed
   show ?thesis unfolding path_stopping_time_def using c1 c2 by blast
 qed
+
+lemma path_stopping_time_max:
+  fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
+  assumes st: "path_stopping_time T \<theta>" and u: "0 \<le> u" and uT: "u \<le> T"
+  shows "path_stopping_time T (\<lambda>\<omega>. max u (\<theta> \<omega>))"
+  by (rule path_stopping_time_comp_ge[OF st, where f = "\<lambda>x. max u x"]) (use u uT in auto)
 
 text \<open>The event lemma with the horizon restriction removed: past \<open>T\<close> there is
   nothing left to decide.\<close>
@@ -535,32 +549,7 @@ lemma path_stopping_time_shift:
   fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
   assumes st: "path_stopping_time T \<theta>" and i: "0 \<le> i"
   shows "path_stopping_time T (\<lambda>\<omega>. min (\<theta> \<omega> + i) T)"
-proof -
-  have c1: "0 \<le> min (\<theta> \<omega> + i) T \<and> min (\<theta> \<omega> + i) T \<le> T"
-    for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-  proof -
-    have "0 \<le> \<theta> \<omega>" by (rule path_stopping_time_nonneg[OF st])
-    moreover have "\<theta> \<omega> \<le> T" by (rule path_stopping_time_le[OF st])
-    ultimately show ?thesis using i by simp
-  qed
-  have c2: "min (\<theta> \<omega>' + i) T = min (\<theta> \<omega> + i) T"
-    if cw: "continuous_on {0..T} (\<lambda>u. fst (\<omega> u))"
-      and cw': "continuous_on {0..T} (\<lambda>u. fst (\<omega>' u))"
-      and ag: "\<forall>s \<in> {0..min (\<theta> \<omega> + i) T}. \<omega> s = \<omega>' s"
-    for \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b)"
-  proof -
-    have le: "\<theta> \<omega> \<le> min (\<theta> \<omega> + i) T"
-      using i path_stopping_time_le[OF st, of \<omega>] by simp
-    have "\<theta> \<omega>' = \<theta> \<omega>"
-    proof (rule path_stopping_time_cong[OF st cw cw'])
-      fix s assume "s \<in> {0..\<theta> \<omega>}"
-      then have "s \<in> {0..min (\<theta> \<omega> + i) T}" using le by auto
-      then show "\<omega> s = \<omega>' s" using ag by blast
-    qed
-    then show ?thesis by simp
-  qed
-  show ?thesis unfolding path_stopping_time_def using c1 c2 by blast
-qed
+  by (rule path_stopping_time_comp_ge[OF st, where f = "\<lambda>x. min (x + i) T"]) (use i in auto)
 
 text \<open>They are also ordered in \<open>i\<close>, which is what lets
   \<open>pre_sigma_of_mono\<close> carry the conditioning set from the
@@ -569,9 +558,7 @@ text \<open>They are also ordered in \<open>i\<close>, which is what lets
 
 text \<open>The stopping-time event is not merely Borel but lies in the natural
   filtration at \<open>t\<close>, which is what \<open>set_martingale_sampling\<close>
-  consumes.  @{thm [source] path_eval_measurable_natural_filtration} ties
-  the filtration index to the horizon; decoupling them is the only change
-  its proof needs.\<close>
+  consumes.\<close>
 
 lemma path_stopping_time_min:
   fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
@@ -686,17 +673,8 @@ lemma path_stopping_time_cut:
   shows "(\<theta> \<omega> \<le> t) = (\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t)"
 proof
   assume h: "\<theta> \<omega> \<le> t"
-  have cs0: "continuous_on {0..T} (\<lambda>s. fst (pstopped T (\<lambda>_. t) \<omega> s))"
-    by (rule pstopped_fst_continuous[OF cw]) (use t tT in auto)
-  have "\<theta> (pstopped T (\<lambda>_. t) \<omega>) = \<theta> \<omega>"
-  proof (rule path_stopping_time_cong[OF st cw cs0])
-    fix s assume s: "s \<in> {0..\<theta> \<omega>}"
-    then have sT: "s \<in> {0..T}" using h tT by auto
-    have "min s t = s" using s h by simp
-    then show "\<omega> s = pstopped T (\<lambda>_. t) \<omega> s"
-      by (simp add: pstopped_apply[OF sT])
-  qed
-  then show "\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t" using h by simp
+  then show "\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t"
+    using path_stopping_time_cut_eq[OF st tT h cw] by simp
 next
   assume h: "\<theta> (pstopped T (\<lambda>_. t) \<omega>) \<le> t"
   have cs: "continuous_on {0..T} (\<lambda>s. fst (pstopped T (\<lambda>_. t) \<omega> s))"
