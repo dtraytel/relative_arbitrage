@@ -114,6 +114,20 @@ val _ =
     val _ = File.write (Path.explode (outdir ^ "user_consts.tsv"))
       (cat_lines (map (fn c => c ^ "\t" ^ const_thy c ^ "\t" ^
          (if member (op =) closure_consts c then "USED" else "unused")) user_consts) ^ "\n")
+    (* statement fingerprints, modulo the theory qualifiers of constants, types and
+       classes, so that they survive moves and renames of theories (phases 5, 6, 8) *)
+    val base = Long_Name.base_name
+    fun nS S = map base S
+    fun nT (Type (a, Ts)) = Type (base a, map nT Ts)
+      | nT (TFree (a, S)) = TFree (a, nS S)
+      | nT (TVar (a, S)) = TVar (a, nS S)
+    fun fp th = Thm.prop_of th |> Term.map_types nT
+      |> Term.map_aterms (fn Const (c, T) => Const (base c, T) | a => a)
+      |> ML_Syntax.print_term |> SHA1.digest |> Message_Digest.rep
+    val fps = proper_user |> maps (fn (n, ths) =>
+      map_index (fn (i, th) => space_implode "\t"
+        [n, space_implode "." (tl (Long_Name.explode n)), string_of_int i, fp th]) ths)
+    val _ = File.write (Path.explode (outdir ^ "fingerprints.tsv")) (cat_lines fps ^ "\n")
   in writeln ("wrote facts.tsv: " ^ string_of_int (length lines) ^ " rows; user consts " ^
        string_of_int (length user_consts)) end
 end

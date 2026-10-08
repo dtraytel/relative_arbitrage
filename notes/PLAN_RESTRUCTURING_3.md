@@ -796,7 +796,7 @@ PLAN_RESTRUCTURING_2 §8 applies, with these amendments:
 | 2026-10-07 | `0db486f` | Phase 1: `theorem_1_1` with the paper's hypotheses (clauses 0–3 for compact `K`, clause 4 under `expandable K ⟶`, no `K ≠ {}`); `Theorem_1_1.thy`; `Statement_Auxiliary` deleted; `ell_op_sym_part`; `Paper_Readings` extended (F over symmetric matrices, spectral conditions, Lemma 2.1 as an equality, convex sets are expandable, the literal reading of (1.5) and its unboundedness); the wrong prose corrected | all sessions build |
 | 2026-10-07 | `bce6ac1` | analysis summary file with the oracle check | — |
 | 2026-10-08 | `4d5f47e` | Phase 2.1: market layer deleted (8 theories, 4 901 lines) | all sessions build |
-| 2026-10-08 | (this commit) | independent-interest review (§1.3), design panel (§1.4), roots extended to ≈ 520 entries, this revision | analysis re-run against the new roots |
+| 2026-10-08 | `90472c1` | independent-interest review (§1.3), design panel (§1.4), roots extended to ≈ 520 entries, this revision | analysis re-run against the new roots |
 | 2026-10-08 | `61a7e9f` | Phase 2.2–2.4: empty theories, smooth ball strand (with the global `[simp del]`), `Dynamic_Programming_Kernels` | all sessions build |
 | 2026-10-08 | `040c0c5` | Proposition 2.4 for the horizon-`T` value (pilot, D4); Lemma 3.1 in `Paper_Readings` | all sessions build |
 | 2026-10-08 | `277512b` | roots: 23 COROLLARY verdicts that keep their name | — |
@@ -806,7 +806,9 @@ PLAN_RESTRUCTURING_2 §8 applies, with these amendments:
 | 2026-10-08 | `643de89` | analysis loads every leaf theory (483 theories, 575 roots; dead lines unchanged) | — |
 | 2026-10-08 | `980b6fe` | Phase 2.8: 152 mentions of deleted lemmas in the prose of 31 theories rewritten (six writers on disjoint files, six reviewers) | all sessions build |
 
-| 2026-10-08 | (this commit) | Phase 3.3: every theory imports exactly the maximal theories it needs (`minimize_imports.py`: needs are named facts and constants used in proofs, locales used by name, facts, constants and theories named in antiquotations, and every current HOL/AFP ancestor, kept for notation). 59 theories changed. Critical path through user theories: **280 s over 25 theories** (baseline 577 s over 35; acceptance ≤ 418 s; bound with needed dependencies only: 274 s) | all sessions build |
+| 2026-10-08 | `4188265` | Phase 3.3: every theory imports exactly the maximal theories it needs (`minimize_imports.py`: needs are named facts and constants used in proofs, locales used by name, facts, constants and theories named in antiquotations, and every current HOL/AFP ancestor, kept for notation). 59 theories changed. Critical path through user theories: **280 s over 25 theories** (baseline 577 s over 35; acceptance ≤ 418 s; bound with needed dependencies only: 274 s) | all sessions build |
+
+| 2026-10-08 | `34e6d91` | D8: `Paper_Map` (one theorem per numbered paper item, deviations stated; written by one agent, reviewed adversarially by another against the LaTeX source); its theorems are roots | Statement builds |
 
 **State after phase 2:** 104 811 lines (baseline 120 586 at `41fca32`), of which RA 53 206
 (was 64 995), SOVA 16 687 (18 461), CPS 11 352 (13 503). Dead code: 196 lines, all kept on
