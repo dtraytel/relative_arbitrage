@@ -50,6 +50,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Dynamic_Programming_Additive_Glue
     Dynamic_Programming_Delayed_Class
     Dynamic_Programming_Assembly
+    Proposition_2_4
     Value_Function_Subsolution
     Value_Function_Euler_Construction
     Value_Function_Supersolution_Case_1

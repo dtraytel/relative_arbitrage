@@ -1073,19 +1073,6 @@ proof -
   qed
 qed
 
-section \<open>The dynamic programming principle at a deterministic time\<close>
-
-text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> at a deterministic \<open>\<theta> = r\<close>,
-  unconditionally.  The \<open>\<ge>\<close> half is @{thm [source] exit_val_dpp_sup_ge}
-  (kernel pasting); the \<open>\<le>\<close> half is @{thm [source] exit_val_dpp_le_of_cond}
-  with its one hypothesis discharged by @{thm [source] exit_val_cond} via the
-  regular conditional distribution.
-
-  Both summands are read off the first piece: \<open>\<theta> \<and> \<tau>\<^sub>K\<close> is the exit time
-  capped at \<open>r\<close>, and the indicator \<open>1\<^bsub>{\<theta> \<le> \<tau>\<^sub>K}\<^esub>\<close> is
-  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>, exact for the capped exit time and
-  needing no path continuity.\<close>
-
 section \<open>The conditioning statement at a random time\<close>
 
 text \<open>The conditioning half of the DPP holds at an arbitrary time function

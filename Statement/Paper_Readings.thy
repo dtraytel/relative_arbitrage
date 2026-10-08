@@ -383,6 +383,31 @@ theorem eq_3_5:
   by simp
 
 
+section \<open>Lemma 3.1: the envelopes of \<open>F\<close>\<close>
+
+text \<open>Away from \<open>p = 0\<close> both envelopes agree with \<open>F\<close>; at \<open>p = 0\<close> the lower
+  one still does, and the upper one is given by Eq. (3.6), whose right-hand
+  side, in terms of the ordered eigenvalues \<open>eigval i M\<close>, is\<close>
+
+text \<open>@{thm [display] eq36_rhs_def}\<close>
+
+theorem lemma_3_1:
+  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
+  assumes sym: "transpose M = M" and L: "1 \<le> L" and k: "1 \<le> k" "k < CARD('n)"
+  shows "p \<noteq> 0 \<Longrightarrow> ell_op_lsc k L p M = ereal (ell_op k L p M)
+                 \<and> ell_op_usc k L p M = ereal (ell_op k L p M)"
+    and "ell_op_lsc k L (0 :: real^'n) M = ereal (ell_op k L 0 M)"
+    and "ell_op_usc k L (0 :: real^'n) M = ereal (eq36_rhs k L M)"
+proof -
+  show "p \<noteq> 0 \<Longrightarrow> ell_op_lsc k L p M = ereal (ell_op k L p M)
+                 \<and> ell_op_usc k L p M = ereal (ell_op k L p M)"
+    using ell_op_envelopes_eq_off_zero(1,2)[OF sym _ L k] by blast
+  show "ell_op_lsc k L (0 :: real^'n) M = ereal (ell_op k L 0 M)"
+    by (rule ell_op_lsc_at_zero[OF k L])
+  show "ell_op_usc k L (0 :: real^'n) M = ereal (eq36_rhs k L M)"
+    by (rule eq36[OF sym L k])
+qed
+
 section \<open>Lemma 2.1\<close>
 
 text \<open>The constraint set of Eq. (1.5) is the convex hull of the sufficiently
