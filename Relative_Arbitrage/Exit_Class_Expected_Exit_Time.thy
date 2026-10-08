@@ -2,8 +2,8 @@ section \<open>Application: the expected exit time of the class \<open>P\<^sub>x
 
 (*<*)
 theory Exit_Class_Expected_Exit_Time
-  imports Exit_Class_Marginals Exit_Class_Witness
-    "Continuous_Time_Martingales.Expected_Exit_Times"
+  imports
+    "Continuous_Time_Martingales.Expected_Exit_Times" Exit_Class_Marginals
 begin
 (*>*)
 

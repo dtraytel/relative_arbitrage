@@ -2,11 +2,8 @@ section \<open>Strictness, scaling, and the envelope route\<close>
 
 (*<*)
 theory Comparison_Strictness
-  imports "Second_Order_Viscosity_Analysis.Soft_Penalty" Operator_Envelope_Continuity
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
-    "Semicontinuous_Analysis.Semicontinuity"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+  imports
+    Operator_Envelope_Continuity
 begin
 
 (*>*)

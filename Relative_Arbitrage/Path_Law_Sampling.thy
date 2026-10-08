@@ -2,7 +2,8 @@ section \<open>Sampling a path law at a stopping time\<close>
 
 (*<*)
 theory Path_Law_Sampling
-  imports Path_Law_Pasting
+  imports
+    "Continuous_Time_Martingales.Modification_Transfer" Path_Law_Pasting
 begin
 
 (*>*)

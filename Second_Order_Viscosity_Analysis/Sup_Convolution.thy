@@ -2,7 +2,8 @@ section \<open>Sup-convolutions\<close>
 
 (*<*)
 theory Sup_Convolution
-  imports Jensen_Lemma
+  imports
+    Alexandrov
 begin
 
 (*>*)

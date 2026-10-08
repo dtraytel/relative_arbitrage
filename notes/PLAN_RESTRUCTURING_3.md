@@ -800,6 +800,15 @@ PLAN_RESTRUCTURING_2 §8 applies, with these amendments:
 | 2026-10-08 | `61a7e9f` | Phase 2.2–2.4: empty theories, smooth ball strand (with the global `[simp del]`), `Dynamic_Programming_Kernels` | all sessions build |
 | 2026-10-08 | `040c0c5` | Proposition 2.4 for the horizon-`T` value (pilot, D4); Lemma 3.1 in `Paper_Readings` | all sessions build |
 | 2026-10-08 | `277512b` | roots: 23 COROLLARY verdicts that keep their name | — |
-| 2026-10-08 | (integration commit) | Theorem 4.2(a) for usc/lsc data (pilot, D3); `Expected_Exit_Times` in CTM and its class corollary (pilot, D2) | all sessions build |
-| 2026-10-08 | (this batch) | Phase 2.5–2.6: the dead blocks of 52 theories against the 552 roots, by script (`delete_dead`: lemma blocks with no live fact, texts that mention only deleted facts, emptied headers, unused definitions named nowhere else); `Moment_Bounds` emptied and deleted; `eigen_ub_diag` kept (FIX_THEN_KEEP); six facts the analysis called unused but live proofs still name are kept | see below |
+| 2026-10-08 | `518daa6` | Theorem 4.2(a) for usc/lsc data (pilot, D3); `Expected_Exit_Times` in CTM and its class corollary (pilot, D2) | all sessions build |
+| 2026-10-08 | `d00dc3b` | Phase 2.5–2.7: the dead blocks of 52 theories against the 552 roots, by script (`delete_dead`: lemma blocks with no live fact and no remaining mention in code, texts that mention only deleted facts, emptied headers, unused definitions named nowhere else); `Moment_Bounds` emptied and deleted; `eigen_ub_diag` kept (FIX_THEN_KEEP); six facts the analysis called unused but live proofs still name are kept. A second pass found 196 dead lines left, all kept on purpose (interpretation-generated facts, facts named in proofs): fixpoint reached | all sessions build |
+| 2026-10-08 | `ad9add6` | Phase 3a: `Pair_Path_Space` no longer imports SOVA (`Sup_Convolution`, `Doubling_Of_Variables`) or WM's finite-dimensional distributions; its one use was a copy of HOL's `norm_Pair_le`. `Exit_Class_Infinite` imports `Exit_Class_Pasting` | all sessions build |
+| 2026-10-08 | `643de89` | analysis loads every leaf theory (483 theories, 575 roots; dead lines unchanged) | — |
+| 2026-10-08 | `980b6fe` | Phase 2.8: 152 mentions of deleted lemmas in the prose of 31 theories rewritten (six writers on disjoint files, six reviewers) | all sessions build |
+
+| 2026-10-08 | (this commit) | Phase 3.3: every theory imports exactly the maximal theories it needs (`minimize_imports.py`: needs are named facts and constants used in proofs, locales used by name, facts, constants and theories named in antiquotations, and every current HOL/AFP ancestor, kept for notation). 59 theories changed. Critical path through user theories: **280 s over 25 theories** (baseline 577 s over 35; acceptance ≤ 418 s; bound with needed dependencies only: 274 s) | all sessions build |
+
+**State after phase 2:** 104 811 lines (baseline 120 586 at `41fca32`), of which RA 53 206
+(was 64 995), SOVA 16 687 (18 461), CPS 11 352 (13 503). Dead code: 196 lines, all kept on
+purpose. Oracles on the roots: none.
 

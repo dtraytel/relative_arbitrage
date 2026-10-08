@@ -2,7 +2,8 @@ section \<open>Cutting, glueing, shifting and delaying a path\<close>
 
 (*<*)
 theory Path_Splicing
-  imports Pair_Path_Laws
+  imports
+    "Continuous_Time_Martingales.Semidirect_Kernels" Pair_Path_Laws
 begin
 
 (*>*)

@@ -2,11 +2,8 @@ section \<open>Attainment, the measurable optimizer, and the semidirect product\
 
 (*<*)
 theory Exit_Class_Optimizer
-  imports Exit_Class_Pasting
-    "Semicontinuous_Analysis.Semicontinuous_Selection"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    Exit_Class_Pasting
 begin
 
 (*>*)

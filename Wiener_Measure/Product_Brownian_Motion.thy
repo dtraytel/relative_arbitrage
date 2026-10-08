@@ -2,10 +2,9 @@ section \<open>The product Brownian model and its increments\<close>
 
 (*<*)
 theory Product_Brownian_Motion
-  imports Brownian_Motion
-    "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras"
-    "Continuous_Time_Martingales.Martingale_Algebra"
+  imports
     "Continuous_Time_Martingales.Integrability_Criteria"
+    "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras" Brownian_Motion
 begin
 
 (*>*)

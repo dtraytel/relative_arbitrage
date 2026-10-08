@@ -2,7 +2,8 @@ section \<open>The Moreau envelope\<close>
 
 (*<*)
 theory Moreau_Envelope
-  imports Rademacher
+  imports
+    Convex_Subgradients Rademacher
 begin
 
 (*>*)

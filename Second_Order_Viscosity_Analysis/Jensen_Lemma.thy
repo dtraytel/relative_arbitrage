@@ -2,7 +2,8 @@ section \<open>Jensen's lemma for semiconvex functions\<close>
 
 (*<*)
 theory Jensen_Lemma
-  imports Alexandrov
+  imports
+    Convex_Subgradients
 begin
 
 (*>*)

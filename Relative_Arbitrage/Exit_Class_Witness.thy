@@ -2,14 +2,8 @@ section \<open>Concrete pair processes, and nonemptiness of the class\<close>
 
 (*<*)
 theory Exit_Class_Witness
-  imports Exit_Class_Shift
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Path_Spaces.Increment_Moments"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    "Wiener_Measure.Continuous_Brownian_Motion"
-    Path_Law_Sampling
+  imports
+    Exit_Class_Shift "Wiener_Measure.Continuous_Brownian_Motion"
 begin
 
 (*>*)

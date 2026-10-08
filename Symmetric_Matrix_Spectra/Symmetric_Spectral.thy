@@ -1,7 +1,8 @@
 
 (*<*)
 theory Symmetric_Spectral
-  imports Orthonormal_Families Matrix_Algebra
+  imports
+    Orthonormal_Families
 begin
 
 (*>*)

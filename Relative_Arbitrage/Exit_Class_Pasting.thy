@@ -2,12 +2,8 @@ section \<open>Shortening the horizon, concatenation, and Proposition 2.4\<close
 
 (*<*)
 theory Exit_Class_Pasting
-  imports Exit_Class_Witness
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Path_Spaces.Increment_Moments"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    Exit_Class_Witness
 begin
 
 (*>*)

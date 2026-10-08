@@ -1,8 +1,8 @@
 
 (*<*)
 theory Curvature_Operator
-  imports "Symmetric_Matrix_Spectra.Symmetric_Spectral"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+  imports
+    "Symmetric_Matrix_Spectra.Symmetric_Spectral"
 begin
 
 (*>*)

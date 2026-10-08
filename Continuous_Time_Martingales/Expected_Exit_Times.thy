@@ -2,7 +2,8 @@ section \<open>Expected exit times from optional sampling\<close>
 
 (*<*)
 theory Expected_Exit_Times
-  imports Stopped_Adaptedness
+  imports
+    Doob_Inequality Optional_Sampling Stopped_Adaptedness
 begin
 (*>*)
 

@@ -1,7 +1,8 @@
 
 (*<*)
 theory Operator_Envelope_Continuity
-  imports Operator_Envelopes Operator_Formula "Semicontinuous_Analysis.Semicontinuity"
+  imports
+    Operator_Envelopes Operator_Formula
 begin
 
 (*>*)

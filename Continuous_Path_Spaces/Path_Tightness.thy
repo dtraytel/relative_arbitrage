@@ -2,7 +2,8 @@ section \<open>Tightness of the path laws\<close>
 
 (*<*)
 theory Path_Tightness
-  imports Path_Space Holder_Interpolation
+  imports
+    Holder_Interpolation Increment_Moments Path_Space
 begin
 
 (*>*)

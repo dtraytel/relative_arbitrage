@@ -2,10 +2,8 @@ section \<open>The class and the value function on the half-line\<close>
 
 (*<*)
 theory Exit_Class_Infinite
-  imports Exit_Class_Pasting "Continuous_Path_Spaces.Path_Space_Infinite"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    Exit_Class_Pasting
 begin
 (*>*)
 

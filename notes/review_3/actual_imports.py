@@ -1,5 +1,5 @@
 import collections, sys, re, os
-OUT=sys.argv[1]; REPO='/home/user/relative_arbitrage'
+OUT=sys.argv[1]; REPO=os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..'))
 par={}
 for l in open(OUT+'/thy_parents.tsv'):
     a=l.rstrip('\n').split('\t'); par[a[0]]=a[1].split() if len(a)>1 and a[1] else []

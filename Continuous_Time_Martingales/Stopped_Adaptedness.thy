@@ -2,7 +2,8 @@
 
 (*<*)
 theory Stopped_Adaptedness
-  imports Optional_Sampling
+  imports
+    "Martingales.Martingale"
 begin
 
 

@@ -2,13 +2,9 @@ section \<open>The Euler scheme, its weak limit, and the exact quadratic lower b
 
 (*<*)
 theory Value_Function_Euler_Construction
-  imports Value_Function_Subsolution
-    "Continuous_Time_Martingales.Integrability_Criteria"
+  imports
+    "Lower_Semicontinuous.Lower_Semicontinuous" Dynamic_Programming_Pasting
     "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    "Continuous_Path_Spaces.Increment_Moments"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
 begin
 
 (*>*)

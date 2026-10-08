@@ -2,16 +2,8 @@ section \<open>Lemma 2.3: the class is closed under weak limits\<close>
 
 (*<*)
 theory Exit_Class_Limits
-  imports Exit_Class
-    "Levy_Prokhorov_Metric.Space_of_Finite_Measures"
-    "Semicontinuous_Analysis.Semicontinuous_Selection"
-    "Continuous_Time_Martingales.Semidirect_Kernels"
-    "Continuous_Time_Martingales.Martingale_Transfer"
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Path_Spaces.Increment_Moments"
-    "Semicontinuous_Analysis.Semicontinuity"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    "Levy_Prokhorov_Metric.Space_of_Finite_Measures" Exit_Class Path_Splicing
 begin
 
 (*>*)

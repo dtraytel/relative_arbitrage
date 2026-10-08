@@ -2,11 +2,8 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 
 (*<*)
 theory Value_Function_Uniqueness
-  imports Comparison_Two_Domain
-    Value_Function_Assembly
-    Exit_Class_Infinite
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    Path_Law_Sampling
+  imports
+    Comparison_Two_Domain Exit_Class_Infinite Value_Function_Assembly
 begin
 (*>*)
 

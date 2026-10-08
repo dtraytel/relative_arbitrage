@@ -2,10 +2,8 @@ section \<open>Clause (2): the value function is a viscosity solution\<close>
 
 (*<*)
 theory Value_Function_Assembly
-  imports Value_Function_Tangential_Field
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    Value_Function_Supersolution_Case_2 Value_Function_Tangential_Field
 begin
 
 (*>*)

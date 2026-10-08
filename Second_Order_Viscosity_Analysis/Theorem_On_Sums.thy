@@ -2,7 +2,8 @@ section \<open>The Crandall--Ishii theorem on sums\<close>
 
 (*<*)
 theory Theorem_On_Sums
-  imports Sup_Convolution "Symmetric_Matrix_Spectra.Matrix_Algebra"
+  imports
+    Jensen_Lemma Sup_Convolution "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)

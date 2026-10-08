@@ -2,8 +2,8 @@ section \<open>The subspace-tangential field for Example 3.1, general \<open>k\<
 
 (*<*)
 theory Value_Function_Tangential_Field
-  imports Value_Function_Supersolution_Case_2
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+  imports
+    Value_Function_Supersolution_Case_1
 begin
 
 (*>*)

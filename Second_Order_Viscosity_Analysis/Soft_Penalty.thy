@@ -2,7 +2,8 @@ section \<open>A soft penalty vanishing on the diagonal\<close>
 
 (*<*)
 theory Soft_Penalty
-  imports Doubling_Of_Variables "Symmetric_Matrix_Spectra.Outer_Products"
+  imports
+    Doubling_Of_Variables
 begin
 
 (*>*)

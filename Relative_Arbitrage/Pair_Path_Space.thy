@@ -3,31 +3,11 @@ section \<open>The pair path space\<close>
 (*<*)
 theory Pair_Path_Space
   imports
-    "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Space_Infinite"
-    "Continuous_Path_Spaces.Path_Exit_Times" "Continuous_Path_Spaces.Path_Tightness"
-    "Continuous_Path_Spaces.Pathwise_Quadratic_Variation"
     "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
-    "Continuous_Path_Spaces.Stopped_Localization"
-    "Continuous_Path_Spaces.Increment_Moments" "Continuous_Path_Spaces.Holder_Interpolation"
-    "Continuous_Path_Spaces.Conditional_UI"
-    "Continuous_Time_Martingales.Doob_Inequality" "Continuous_Time_Martingales.Optional_Sampling"
-    "Continuous_Time_Martingales.Stopping_Times" "Continuous_Time_Martingales.Natural_Filtration"
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Time_Martingales.Semidirect_Kernels"
-    "Continuous_Time_Martingales.Martingale_Algebra"
-    "Continuous_Time_Martingales.Martingale_Transfer"
-    "Continuous_Time_Martingales.Modification_Transfer"
-    "Continuous_Time_Martingales.Time_Discretisation"
-    "Continuous_Time_Martingales.Vitali_Convergence"
-    "Continuous_Time_Martingales.Stopped_Adaptedness"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra" "Symmetric_Matrix_Spectra.Ky_Fan"
-    "Symmetric_Matrix_Spectra.Orthonormal_Families" "Symmetric_Matrix_Spectra.Outer_Products"
-    "Symmetric_Matrix_Spectra.Poincare_Separation" "Symmetric_Matrix_Spectra.Symmetric_Spectral"
+    "Continuous_Path_Spaces.Path_Exit_Times" "Continuous_Path_Spaces.Path_Tightness"
+    "Disintegration.Disintegration" "Semicontinuous_Analysis.Semicontinuous_Selection"
     "Symmetric_Matrix_Spectra.Householder_Rotation"
-    "Semicontinuous_Analysis.Semicontinuity" "Semicontinuous_Analysis.Berge"
-    "Semicontinuous_Analysis.Semicontinuous_Selection"
-    "Disintegration.Disintegration"
+    "Symmetric_Matrix_Spectra.Symmetric_Spectral"
 begin
 
 (*>*)

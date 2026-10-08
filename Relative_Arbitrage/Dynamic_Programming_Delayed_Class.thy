@@ -2,12 +2,9 @@ section \<open>The delayed class and the horizon-parametrised selector\<close>
 
 (*<*)
 theory Dynamic_Programming_Delayed_Class
-  imports Dynamic_Programming_Additive_Glue
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Path_Spaces.Increment_Moments"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    Dynamic_Programming_Additive_Glue Dynamic_Programming_Conditioning
+    Dynamic_Programming_Stopping_Clauses
 begin
 
 (*>*)

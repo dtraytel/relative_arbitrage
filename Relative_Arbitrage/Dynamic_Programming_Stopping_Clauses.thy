@@ -2,13 +2,8 @@ section \<open>Clause (iv) at a stopping time\<close>
 
 (*<*)
 theory Dynamic_Programming_Stopping_Clauses
-  imports Dynamic_Programming_Conditioning
-    "Continuous_Path_Spaces.Increment_Moments"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Time_Martingales.Time_Discretisation"
-    Path_Law_Sampling
+  imports
+    "Kolmogorov_Chentsov.Kolmogorov_Chentsov" Exit_Class_Limits Path_Law_Sampling
 begin
 
 (*>*)

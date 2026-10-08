@@ -2,7 +2,8 @@
 
 (*<*)
 theory Gaussian_Increments
-  imports Sorted_Lists
+  imports
+    "HOL-Probability.Probability"
 begin
 
 (*>*)

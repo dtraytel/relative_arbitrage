@@ -2,7 +2,8 @@ section \<open>Elementary power inequalities\<close>
 
 (*<*)
 theory Power_Inequalities
-  imports Complex_Main
+  imports
+    "Complex_Main"
 begin
 
 (*>*)

@@ -1,9 +1,10 @@
 
 (*<*)
 theory Path_Exit_Times
-  imports Path_Space Path_Space_Infinite "Continuous_Time_Martingales.Stopping_Times"
+  imports
+    Path_Space_Infinite "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Time_Martingales.Essential_Infimum"
+    "Continuous_Time_Martingales.Stopping_Times"
 begin
 
 (*>*)

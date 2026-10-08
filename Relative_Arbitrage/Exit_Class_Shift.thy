@@ -2,12 +2,8 @@ section \<open>Shift equivariance, and upper semicontinuity of the value functio
 
 (*<*)
 theory Exit_Class_Shift
-  imports Exit_Class_Tightness
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    Exit_Class_Tightness Path_Law_Pasting
 begin
 
 (*>*)

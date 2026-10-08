@@ -2,8 +2,8 @@ section \<open>Doubling of variables\<close>
 
 (*<*)
 theory Doubling_Of_Variables
-  imports Theorem_On_Sums "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    "Symmetric_Matrix_Spectra.Symmetric_Spectral"
+  imports
+    Theorem_On_Sums "Symmetric_Matrix_Spectra.Symmetric_Spectral"
 begin
 
 (*>*)

@@ -1,7 +1,8 @@
 
 (*<*)
 theory Orthonormal_Families
-  imports Outer_Products Matrix_Algebra
+  imports
+    Outer_Products
 begin
 
 (*>*)

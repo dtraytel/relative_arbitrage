@@ -2,7 +2,8 @@ section \<open>The finite-dimensional distributions and their projectivity\<clos
 
 (*<*)
 theory Brownian_Finite_Dimensional_Distributions
-  imports Gaussian_Increments
+  imports
+    Gaussian_Increments Sorted_Lists
 begin
 
 (*>*)

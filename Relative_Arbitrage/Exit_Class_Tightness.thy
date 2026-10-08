@@ -2,10 +2,8 @@ section \<open>Tightness and sequential compactness\<close>
 
 (*<*)
 theory Exit_Class_Tightness
-  imports Exit_Class_Limits
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Continuous_Path_Spaces.Increment_Moments"
-    Path_Law_Sampling
+  imports
+    Exit_Class_Limits
 begin
 
 (*>*)

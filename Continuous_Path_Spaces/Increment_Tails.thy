@@ -2,7 +2,9 @@ section \<open>Tail bounds from the fourth-moment estimate\<close>
 
 (*<*)
 theory Increment_Tails
-  imports Increment_Moments
+  imports
+    "Continuous_Time_Martingales.Power_Inequalities" "HOL-Probability.Probability"
+    "Martingales.Martingale"
 begin
 
 (*>*)

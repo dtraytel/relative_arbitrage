@@ -2,7 +2,8 @@ section \<open>The Crandall--Ishii theorem on sums, assembled\<close>
 
 (*<*)
 theory Crandall_Ishii_Sums
-  imports Theorem_On_Sums Doubling_Of_Variables
+  imports
+    Doubling_Of_Variables
 begin
 
 (*>*)

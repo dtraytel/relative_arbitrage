@@ -2,14 +2,8 @@ section \<open>Clause (2): the subsolution half\<close>
 
 (*<*)
 theory Value_Function_Subsolution
-  imports Dynamic_Programming_Assembly Curvature_Operator Operator_Envelopes
-    "Continuous_Time_Martingales.Quadratic_Variation"
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    "Symmetric_Matrix_Spectra.Ky_Fan"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Path_Spaces.Path_Exit_Times"
-    Path_Law_Sampling
+  imports
+    Dynamic_Programming_Assembly Eigenvalue_Bound_Exact Operator_Envelopes
 begin
 
 (*>*)

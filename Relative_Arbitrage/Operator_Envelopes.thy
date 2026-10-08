@@ -1,12 +1,10 @@
 
 (*<*)
 theory Operator_Envelopes
-  imports Constraint_Set_Convexity Viscosity_Definitions
+  imports
+    "Continuous_Time_Martingales.Integrability_Criteria" Viscosity_Definitions
+    "Semicontinuous_Analysis.Semicontinuity"
     "Symmetric_Matrix_Spectra.Householder_Rotation"
-    "Semicontinuous_Analysis.Semicontinuity" "Semicontinuous_Analysis.Semicontinuous_Envelopes"
-    "Continuous_Time_Martingales.Integrability_Criteria"
-    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin
 
 (*>*)

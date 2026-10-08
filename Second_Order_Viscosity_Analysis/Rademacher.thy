@@ -2,7 +2,8 @@ section \<open>Rademacher's theorem\<close>
 
 (*<*)
 theory Rademacher
-  imports Convex_Subgradients
+  imports
+    "HOL-Analysis.Analysis"
 begin
 
 (*>*)

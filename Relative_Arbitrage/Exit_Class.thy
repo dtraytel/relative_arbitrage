@@ -1,13 +1,8 @@
 
 (*<*)
 theory Exit_Class
-  imports "Continuous_Path_Spaces.Path_Space" "Continuous_Path_Spaces.Path_Tightness" "Continuous_Path_Spaces.Path_Exit_Times" Operator_Formula
-    "Continuous_Time_Martingales.Martingale_Algebra"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra" "Symmetric_Matrix_Spectra.Outer_Products"
-    "Continuous_Path_Spaces.Holder_Interpolation"
-    "Continuous_Path_Spaces.Increment_Moments"
-    "Continuous_Time_Martingales.Essential_Infimum"
-    Path_Law_Sampling
+  imports
+    Constraint_Set_Convexity Operator_Formula Pair_Path_Laws
 begin
 
 (*>*)

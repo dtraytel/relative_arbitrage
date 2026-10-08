@@ -1,9 +1,8 @@
 
 (*<*)
 theory Operator_Formula
-  imports Operator_Continuity "Symmetric_Matrix_Spectra.Poincare_Separation"
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
-    "Symmetric_Matrix_Spectra.Ky_Fan"
+  imports
+    Curvature_Operator Operator_Continuity "Symmetric_Matrix_Spectra.Poincare_Separation"
 begin
 
 (*>*)

@@ -2,9 +2,9 @@ section \<open>The viscosity-solution predicates, in one place\<close>
 
 (*<*)
 theory Viscosity_Definitions
-  imports Curvature_Operator "Semicontinuous_Analysis.Semicontinuous_Envelopes"
-    "Second_Order_Viscosity_Analysis.Test_Functions"
-    "Second_Order_Viscosity_Analysis.Viscosity_Solutions"
+  imports
+    Curvature_Operator "Second_Order_Viscosity_Analysis.Viscosity_Solutions"
+    "Semicontinuous_Analysis.Semicontinuous_Envelopes"
 begin
 
 (*>*)

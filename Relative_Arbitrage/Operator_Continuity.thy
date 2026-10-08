@@ -1,8 +1,7 @@
 
 (*<*)
 theory Operator_Continuity
-  imports Eigenvalue_Bound_Exact
-    "Symmetric_Matrix_Spectra.Matrix_Algebra"
+  imports
     "Symmetric_Matrix_Spectra.Ky_Fan"
 begin
 

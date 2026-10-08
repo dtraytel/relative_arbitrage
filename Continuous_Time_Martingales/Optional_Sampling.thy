@@ -2,7 +2,8 @@
 
 (*<*)
 theory Optional_Sampling
-  imports Doob_Inequality
+  imports
+    Time_Discretisation
 begin
 
 (*>*)

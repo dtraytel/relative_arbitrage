@@ -2,8 +2,12 @@ section \<open>Localization: stopping an \<open>L\<^sup>2\<close> martingale nee
 
 (*<*)
 theory Stopped_Localization
-  imports "Continuous_Time_Martingales.Stopped_Adaptedness" "Continuous_Path_Spaces.Increment_Moments"
-    "Continuous_Time_Martingales.Stopping_Times" "Continuous_Time_Martingales.Martingale_Transfer"
+  imports
+    Increment_Moments "Continuous_Time_Martingales.Doob_Inequality"
+    "Continuous_Time_Martingales.Martingale_Transfer"
+    "Continuous_Time_Martingales.Optional_Sampling"
+    "Continuous_Time_Martingales.Stopped_Adaptedness"
+    "Continuous_Time_Martingales.Stopping_Times"
 begin
 
 (*>*)
