@@ -8,6 +8,7 @@ theory Exit_Class_Witness
     "Continuous_Path_Spaces.Increment_Moments"
     "Continuous_Time_Martingales.Essential_Infimum"
     "Continuous_Path_Spaces.Path_Exit_Times"
+    "Wiener_Measure.Continuous_Brownian_Motion"
     Path_Law_Sampling
 begin
 
@@ -28,8 +29,7 @@ proof -
       here, so its six-line argument is repeated: the identity distribution
       of a product is the product of its component distributions, which is
       exactly the criterion \<open>indep_vars_iff_distr_eq_PiM'\<close>.  \<open>BMC\<close> is the
-      \<open>product_prob_space\<close> interpretation already present in
-      @{theory Relative_Arbitrage.Brownian_Market}.\<close>
+      \<open>product_prob_space\<close> interpretation of the Wiener-measure library.\<close>
   let ?P = "Pi\<^sub>M (UNIV :: 'n set) (\<lambda>_ :: 'n. wiener_pre)"
   have rv: "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> k) \<in> measurable ?P wiener_pre" for k
     by (rule measurable_component_singleton) simp

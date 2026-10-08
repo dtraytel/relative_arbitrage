@@ -2078,7 +2078,7 @@ text \<open>The first consequence of Theorem 4.2(a): two continuous viscosity
   solutions on compact \<open>K\<close> agreeing on \<open>K - interior K\<close> agree everywhere
   on \<open>K\<close>.  Both directions swap the roles of sub- and supersolution,
   putting the maximum of \<open>u - w\<close> on the boundary where it vanishes.
-  This generalises the third clause of \<open>theorem_1_1_ball_fragment\<close>,
+  This generalises an earlier ball-only uniqueness statement,
   previously available only for \<open>K = cball 0 r\<close> via the explicit
   Example 3.1 formula \<open>ball_v\<close>.\<close>
 

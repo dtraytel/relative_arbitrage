@@ -2,7 +2,7 @@ section \<open>Lemma 2.3: the class is closed under weak limits\<close>
 
 (*<*)
 theory Exit_Class_Limits
-  imports Exit_Class Exit_Time_Semicontinuity
+  imports Exit_Class
     "Levy_Prokhorov_Metric.Space_of_Finite_Measures"
     "Semicontinuous_Analysis.Semicontinuous_Selection"
     "Continuous_Time_Martingales.Semidirect_Kernels"
@@ -16,72 +16,12 @@ begin
 
 (*>*)
 
-text \<open>
-  The bridge from the market witnesses of this development to the
-             class (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>, and the compactness theory of
-             that class.
-
-             By (1.7)-(1.8) the processes in \<open>P_x\<close> are never stopped: the
-             covariation constraint holds for a.e. t >= 0, and \<open>tau_K\<close> is merely
-             a functional of the path.  A \<open>stopped_market\<close> witness is therefore
-             not a class member, its volatility vanishing after its stopping
-             time.  The bridge continues the witness past the stopping time
-             with an admissible volatility (\<open>Exit_Class\<close>.acont), the value being
-             supplied by \<open>Exit_Class\<close>.\<open>mat_1_in_sconstraint\<close>, which is legitimate
-             because the locale carries the paper's standing assumption L >= 1.
-
-             This theory sits downstream of both \<open>Exit_Class\<close> and the market
-             stack, so that neither has to import the other.\<close>
-section \<open>Extracting the pointwise constraint from a market witness\<close>
-
-text \<open>The locale's volatility hypotheses are stated as three separate
-  almost-sure facts, each valid only up to the stopping time.  Combined
-  and continued they give a single almost-sure statement holding for all
-  times, which is the shape \<open>exit_class\<close> asks for.\<close>
-
-text \<open>In particular the continued volatility of a market witness never
-  leaves the constraint set, whereas the witness's own volatility does the
-  moment it is stopped -- which is precisely the mismatch this theory
-  exists to repair.\<close>
-
-section \<open>Integrability of the continued volatility\<close>
-
-text \<open>The continued volatility \<open>acov\<close> is integrable on bounded intervals.
-  Boundedness follows on \<open>[0, tau \<omega>]\<close> from the locale's \<open>psd\<close> and
-  \<open>eigen_ub L\<close> bounds via \<open>sconstraint_norm_le\<close>, and after \<open>tau \<omega>\<close> the
-  continuation is the constant \<open>mat 1\<close>.  Measurability of \<open>acov\<close> in the
-  time variable is the locale assumption \<open>acov_time_measurable\<close>, stated on
-  the nonnegative axis --- faithful rather than a strengthening, since the
-  paper's (1.7) constrains \<open>d\<langle>X\<^sub>i,X\<^sub>j\<rangle>(t)/dt\<close> and so presupposes the
-  covariation density exists as a measurable object in \<open>t\<close>.
-  \<open>Exit_Class.acont_set_borel_measurable\<close> transports this fact to the
-  continuation, and \<open>set_borel_measurable_subset\<close> cuts it down to the
-  interval at hand.\<close>
-
-section \<open>The witness satisfies the class's covariation condition\<close>
-
-text \<open>For a market witness, the continued running covariation
-  \<open>Yint (acont \<dots>)\<close> has all its difference quotients in the constraint set
-  almost surely, which is the covariation clause of \<open>exit_class\<close>
-  with no stopping caveat, as (1.7) requires.  The witness's own
-  covariation does not have this property
-  (\<open>stopped_market_acov_leaves_sconstraint\<close>); the continuation repairs it
-  at no cost by (1.8), since \<open>\<tau>\<^sub>K\<close> only sees the path up to the first exit
-  from \<open>K\<close>.\<close>
-
-corollary stopped_market_acov_leaves_sconstraint:
-  fixes acov :: "real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n::finite^'n"
-  assumes SM: "stopped_market k L K x0 M F X acov tau"
-    and s: "\<omega> \<in> space M" "tau \<omega> < s"
-  shows "acov s \<omega> = 0"
-  using SM s unfolding stopped_market_def by blast
-
 section \<open>The martingale clauses of Lemma 2.3\<close>
 
 text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
   limit of the paper's class, combining the class machinery of
-  @{theory Relative_Arbitrage.Exit_Class} with the law machinery of @{theory Relative_Arbitrage.Exit_Time_Semicontinuity}
-  (\<open>martingale_bounded_test\<close>, \<open>metric_measure_eqI_bounded_cts\<close>).
+  @{theory Relative_Arbitrage.Exit_Class} with the law machinery of the path-space
+  libraries (\<open>martingale_bounded_test\<close>, \<open>metric_measure_eqI_bounded_cts\<close>).
 
   Unlike the two closed path conditions of (1.7), which pass to a weak
   limit directly (\<open>Exit_Class.exit_class_start_limit\<close>,
@@ -174,8 +114,7 @@ qed
 
 subsection \<open>The test functional is continuous on path space\<close>
 
-text \<open>Unlike the confined market laws of @{theory Relative_Arbitrage.Exit_Time_Semicontinuity}, the paper's
-  class admits no clamp: its processes are neither stopped nor bounded, so
+text \<open>The paper's class admits no clamp: its processes are neither stopped nor bounded, so
   the test functional is continuous but unbounded, and the transfer runs
   through the uniform \<open>L\<^sup>2\<close> bound
   (\<open>Exit_Class.exit_class_sq_mean_le\<close>) rather than through
@@ -293,7 +232,7 @@ text \<open>The monotone-class step splits the increment into positive and
   negative parts, pushes each forward through the restriction map as a
   density, and uses that the limit identity says the two image measures
   integrate every bounded continuous function alike.
-  \<open>Exit_Time_Semicontinuity.metric_measure_eqI_bounded_cts\<close> then makes the two
+  \<open>Path_Tightness.metric_measure_eqI_bounded_cts\<close> then makes the two
   measures equal, so they agree on every past event.
 
   That engine supplies tests bounded only on the topspace, whereas

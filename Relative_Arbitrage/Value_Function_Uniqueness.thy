@@ -2,8 +2,8 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 
 (*<*)
 theory Value_Function_Uniqueness
-  imports Value_Function_Market Ball_Solution Comparison_Two_Domain
-    Exit_Time_Semicontinuity Value_Function_Assembly
+  imports Ball_Solution Comparison_Two_Domain
+    Value_Function_Assembly
     Exit_Class_Infinite
     "Symmetric_Matrix_Spectra.Matrix_Algebra"
     Path_Law_Sampling
@@ -18,36 +18,6 @@ text \<open>
   @{theory Relative_Arbitrage.Value_Function_Assembly}, and the comparison principle, proved in
   @{theory Relative_Arbitrage.Comparison_Principle}.  It also derives Example 3.1 in closed form.
 \<close>
-
-theorem theorem_1_1_ball_fragment:
-  fixes x0 :: "real^'n::finite" and u :: "real^'n \<Rightarrow> real"
-  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L" and r: "0 < r"
-  shows "val_fn k L (cball 0 r) x0 \<le> ennreal (ball_v r k x0)"
-    and "norm x0 = r \<Longrightarrow> val_fn k L (cball 0 r) x0 = ennreal (ball_v r k x0)"
-    and "continuous_on (cball 0 r) u \<Longrightarrow>
-         visc_sol k L (ball (0::real^'n) r) u \<Longrightarrow>
-         (\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r \<Longrightarrow>
-            u y = ball_v r k y) \<Longrightarrow>
-         x0 \<in> ball (0::real^'n) r \<Longrightarrow> u x0 = ball_v r k x0"
-proof -
-  show "val_fn k L (cball 0 r) x0 \<le> ennreal (ball_v r k x0)"
-    by (rule val_fn_le_ball_v)
-  show "norm x0 = r \<Longrightarrow> val_fn k L (cball 0 r) x0 = ennreal (ball_v r k x0)"
-    by (rule val_fn_boundary)
-  assume cu: "continuous_on (cball 0 r) u"
-    and u: "visc_sol k L (ball (0::real^'n) r) u"
-    and bd: "\<And>y :: real^'n. y \<in> cball 0 r \<Longrightarrow> y \<notin> ball 0 r \<Longrightarrow>
-        u y = ball_v r k y"
-    and x0: "x0 \<in> ball (0::real^'n) r"
-  have sub: "visc_subsol k L (ball (0::real^'n) r) u"
-    and sup: "visc_supersol k L (ball (0::real^'n) r) u"
-    using u by (auto simp: visc_sol_def)
-  have le: "u x0 \<le> ball_v r k x0"
-    by (rule visc_subsol_le_ball_v[OF k L r cu sub _ x0]) (simp add: bd)
-  have ge: "ball_v r k x0 \<le> u x0"
-    by (rule ball_v_le_visc_supersol[OF k L r cu sup _ x0]) (simp add: bd)
-  from le ge show "u x0 = ball_v r k x0" by simp
-qed
 
 section \<open>The clauses of Theorem 1.1 and where they are proved\<close>
 

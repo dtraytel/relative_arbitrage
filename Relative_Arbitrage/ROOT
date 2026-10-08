@@ -31,22 +31,14 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Curvature_Operator
     Viscosity_Definitions
     Viscosity_Ball
-    Volatile_Market
     Constraint_Set_Convexity
     Viscosity_Comparison_Interface
     Ball_Solution
-    Optimal_Exit_Time
     Eigenvalue_Bound_Exact
     Operator_Continuity
     Operator_Formula
     Operator_Envelopes
     Operator_Envelope_Continuity
-    Brownian_Market
-    Ito_Market
-    Brownian_Optimal_Boundary
-    Value_Function_Market
-    Path_Tightness_Market
-    Exit_Time_Semicontinuity
     Exit_Class
     Covariation_Density
     Exit_Class_Limits

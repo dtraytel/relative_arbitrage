@@ -75,6 +75,20 @@ proof -
   then show ?thesis unfolding ell_op_def by (intro arg_cong[where f = Inf] image_cong) auto
 qed
 
+text \<open>The upper eigenvalue bound bounds every diagonal entry.\<close>
+
+lemma eigen_ub_diag:
+  fixes a :: "real^'m::finite^'m"
+  assumes "eigen_ub a L"
+  shows "a $ l $ l \<le> L"
+proof -
+  have ax: "axis l 1 \<bullet> (axis l 1 :: real^'m) = 1"
+    by (simp add: inner_vec_def axis_def if_distrib cong: if_cong)
+  show ?thesis
+    using assms diag_entry_quadform[where a = a and l = l] ax
+    by (auto simp: eigen_ub_def dest: spec[of _ "axis l 1"])
+qed
+
 subsection \<open>Feasibility: projections onto \<open>(n-k)\<close>-dimensional subspaces of \<open>p\<^sup>\<bottom>\<close>\<close>
 
 lemma feasible_witness:
