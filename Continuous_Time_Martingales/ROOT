@@ -20,6 +20,7 @@ session Continuous_Time_Martingales = "HOL-Probability" +
     Doob_Inequality
     Optional_Sampling
     Stopped_Adaptedness
+    Expected_Exit_Times
     Sampled_Martingale
     Sampled_Quadratic_Variation
     Moment_Bounds

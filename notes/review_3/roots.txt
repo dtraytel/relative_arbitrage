@@ -8,6 +8,9 @@ Relative_Arbitrage_Statement.Theorem_1_1_Statement.*
 Relative_Arbitrage_Statement.Paper_Readings.*
 Relative_Arbitrage.Theorem_1_1.*
 Relative_Arbitrage.Proposition_2_4.*   # Prop. 2.4 for the horizon-T value (D4)
+Comparison_Principle.max_principle_usc_lsc   # Theorem 4.2(a) for usc/lsc data (D3)
+Relative_Arbitrage.Exit_Class_Expected_Exit_Time.*   # the class bound on E[tau] (D2)
+Continuous_Time_Martingales.Expected_Exit_Times.*   # expected exit times from optional sampling (D2)
 Exit_Class_Marginals.iexit_class_marginal_in_xclass   # the class bridge (evidence)
 Exit_Class_Marginals.xclass_lift_in_iexit_class
 

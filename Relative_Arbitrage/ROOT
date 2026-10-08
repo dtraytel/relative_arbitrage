@@ -64,6 +64,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Value_Function_Uniqueness
     Exit_Class_Infinite
     Exit_Class_Marginals
+    Exit_Class_Expected_Exit_Time
     Theorem_1_1
   document_files
     "root.tex"

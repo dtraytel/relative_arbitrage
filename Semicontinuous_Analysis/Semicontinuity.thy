@@ -317,6 +317,52 @@ lemma closed_abs_ge: "closed {y :: real. R \<le> \<bar>y\<bar>}"
 lemma abs_ge_nonempty: "{y :: real. R \<le> \<bar>y\<bar>} \<noteq> {}"
   by (rule notI) (use abs_ge_self[of R] in blast)
 
+subsection \<open>Relative upper semicontinuity: extension and sublevel sets\<close>
+
+text \<open>Extending a function that is usc relative to a closed \<open>K\<close> by a
+  constant below its values on \<open>K\<close> gives a globally usc function.\<close>
+
+lemma usc_extend_rel:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes cl: "closed K"
+    and usc: "\<And>c z. z \<in> K \<Longrightarrow> f z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> f y < c"
+    and lo: "\<And>y. y \<in> K \<Longrightarrow> C \<le> f y"
+    and lt: "(if z \<in> K then f z else C) < c"
+  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then f y else C) < c"
+proof (cases "z \<in> K")
+  case True
+  then have fz: "f z < c" using lt by simp
+  obtain e where e0: "0 < e" and h: "\<forall>y\<in>K. dist z y < e \<longrightarrow> f y < c"
+    using usc[OF True fz] by blast
+  have Cc: "C < c" using lo[OF True] fz by linarith
+  show ?thesis
+    by (rule exI[of _ e]) (use e0 h Cc in auto)
+next
+  case False
+  then have Cc: "C < c" using lt by simp
+  have "open (- K)" by (rule open_Compl[OF cl])
+  then have "\<exists>e>0. \<forall>y. dist y z < e \<longrightarrow> y \<in> - K"
+    using False unfolding open_dist by blast
+  then obtain e where e0: "0 < e" and b: "\<forall>y. dist y z < e \<longrightarrow> y \<in> - K"
+    by blast
+  show ?thesis
+    by (rule exI[of _ e]) (use e0 b Cc in \<open>auto simp: dist_commute\<close>)
+qed
+
+lemma open_usc_sublevel:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+  shows "open {y. f y < a}"
+  unfolding open_dist
+proof
+  fix x assume "x \<in> {y. f y < a}"
+  then have "f x < a" by simp
+  from usc[OF this] obtain e where e0: "0 < e" and h: "\<forall>y. dist x y < e \<longrightarrow> f y < a"
+    by blast
+  show "\<exists>e>0. \<forall>y. dist y x < e \<longrightarrow> y \<in> {y. f y < a}"
+    using e0 h by (auto simp: dist_commute)
+qed
+
 (*<*)
 end
 (*>*)
