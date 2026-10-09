@@ -120,7 +120,7 @@ proof -
   have sum2: "martingale Q ?F 0 (\<lambda>u \<omega>. outerp x
       + ((outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
          + ?cross (fst (\<omega> (min u T)))))"
-    by (rule martingale_add_const[OF ffm martingale_add[OF mC mCross]])
+    by (rule martingale_add_const[OF ffm martingale.add[OF mC mCross]])
   have ZmC: "(\<lambda>\<omega> :: 'n pairpath.
       outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
         \<in> borel_measurable (?F u)"

@@ -263,31 +263,13 @@ corollary doob_maximal_inequality':
   assumes l: "0 < l"
   shows "l * P.prob {\<omega> \<in> space M. l \<le> maxabs X n \<omega>} \<le> (\<integral>x. \<bar>X n x\<bar> \<partial>M)"
 proof -
-  have setM: "{\<omega> \<in> space M. l \<le> maxabs X n \<omega>} \<in> sets M"
-  proof -
-    have "(\<Union>k\<le>n. hits l k) \<in> sets M"
-      by (intro sets.finite_UN) (auto intro: hits_sets_M)
-    then show ?thesis
-      unfolding hits_Union .
-  qed
-  have le: "(LINT x:{\<omega> \<in> space M. l \<le> maxabs X n \<omega>}|M. \<bar>X n x\<bar>)
-      \<le> (\<integral>x. \<bar>X n x\<bar> \<partial>M)"
-    unfolding set_lebesgue_integral_def
-  proof (intro integral_mono)
-    show "integrable M (\<lambda>x. indicat_real {\<omega> \<in> space M. l \<le> maxabs X n \<omega>} x
-        *\<^sub>R \<bar>X n x\<bar>)"
-      using set_integrable_abs_X[OF setM]
-      by (simp add: set_integrable_def)
-    show "integrable M (\<lambda>x. \<bar>X n x\<bar>)"
-      by (intro integrable_abs X_integrable)
-    show "indicat_real {\<omega> \<in> space M. l \<le> maxabs X n \<omega>} x *\<^sub>R \<bar>X n x\<bar>
-        \<le> \<bar>X n x\<bar>" if "x \<in> space M" for x
-      by (simp add: indicator_def)
-  qed
-  have "l * P.prob {\<omega> \<in> space M. l \<le> maxabs X n \<omega>}
-      \<le> (LINT x:{\<omega> \<in> space M. l \<le> maxabs X n \<omega>}|M. \<bar>X n x\<bar>)"
-    by (rule doob_maximal_inequality[OF l])
-  with le show ?thesis by simp
+  have sM: "{\<omega> \<in> space M. l \<le> maxabs X n \<omega>} \<in> sets M"
+    unfolding hits_Union[symmetric] by (intro sets.finite_UN) (auto intro: hits_sets_M)
+  have "(LINT x:{\<omega> \<in> space M. l \<le> maxabs X n \<omega>}|M. \<bar>X n x\<bar>) \<le> (\<integral>x. \<bar>X n x\<bar> \<partial>M)"
+    using set_integrable_abs_X[OF sM, of n]
+    unfolding set_lebesgue_integral_def set_integrable_def
+    by (intro integral_mono integrable_abs X_integrable) (auto simp: indicator_def)
+  with doob_maximal_inequality[OF l] show ?thesis by (rule order_trans)
 qed
 
 subsection \<open>Doob's \<open>L\<^sup>2\<close> maximal inequality\<close>

@@ -1177,7 +1177,7 @@ proof -
     by (rule integral_cong_AE[OF ximeas\<mu> gmeas\<mu> aeq])
   also have "\<dots> = trace (M ** (\<integral>\<omega>'. outerp (fst (\<omega>' h)) - snd (\<omega>' h)
       \<partial>?\<mu>))"
-    by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left int_inner])
+    by (rule integral_bounded_linear[OF bounded_linear_trace_mult_left int_inner])
   also have "\<dots> = trace (M ** outerp (0 :: real^'n))"
     by (simp add: exit_class_compensated_mean[OF mem hI])
   also have "\<dots> = 0"

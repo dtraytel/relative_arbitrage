@@ -340,11 +340,7 @@ lemma etime_eq_T_of_no_hit:
   shows "etime T A X \<omega> = T"
 proof -
   have e: "{s. 0 \<le> s \<and> s \<le> T \<and> X s \<omega> \<in> A} = {}" using nh by auto
-  have "etime T A X \<omega> = Inf ({s. 0 \<le> s \<and> s \<le> T \<and> X s \<omega> \<in> A} \<union> {T})"
-    unfolding etime_def by (rule refl)
-  also have "\<dots> = Inf {T}" unfolding e by simp
-  also have "\<dots> = T" by (rule cInf_singleton)
-  finally show ?thesis .
+  show ?thesis unfolding etime_def e by simp
 qed
 
 text \<open>

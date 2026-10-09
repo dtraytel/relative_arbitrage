@@ -1560,9 +1560,6 @@ text \<open>\<open>integrable_mult_of_sq\<close> lives in @{theory Continuous_Ti
 text \<open>\<open>martingale_cross_measurable\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-text \<open>\<open>martingale_diff\<close>, the subtractive companion to \<open>martingale_add\<close>,
-  lives in @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
 subsection \<open>The shifted processes of a law\<close>
 
 text \<open>\<open>pair_snd_borel\<close> lives in \<open>Exit_Class_Pasting\<close>.\<close>

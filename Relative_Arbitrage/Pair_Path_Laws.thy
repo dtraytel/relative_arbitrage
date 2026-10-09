@@ -3952,14 +3952,8 @@ text \<open>The uniform bound the weak-limit machinery needs, from a martingale'
   the second moments are bounded uniformly over the class --- the hypothesis
   of \<open>unif_integrable_of_L2_bound\<close>.\<close>
 
-text \<open>\<open>integral_of_bounded_linear\<close>, \<open>set_integral_of_bounded_linear\<close>,
-  \<open>martingale_bounded_linear_image\<close>, \<open>martingale_vec_nth\<close> and
-  \<open>martingale_mat_nth\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
-text \<open>\<open>integral_of_bounded_linear\<close>, \<open>set_integral_of_bounded_linear\<close>,
-  \<open>martingale_bounded_linear_image\<close>, \<open>martingale_vec_nth\<close> and
-  \<open>martingale_mat_nth\<close> live in
+text \<open>\<open>set_integral_of_bounded_linear\<close>, \<open>martingale_bounded_linear_image\<close>,
+  \<open>martingale_vec_nth\<close> and \<open>martingale_mat_nth\<close> live in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 theorem covariation_class_compensated_mean:
@@ -3968,24 +3962,14 @@ theorem covariation_class_compensated_mean:
   shows "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
 proof -
   interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
-  interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
-      "\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
-    by (rule covariation_class_compensated_martingale[OF Q])
   have t0: "0 \<le> t" and tT: "t \<le> T" using t by simp_all
   have z: "(0::real) \<in> {0..T}" using t by simp
   have i0: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0))"
     by (rule covariation_class_compensated_integrable[OF Q z])
-  have it: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-    by (rule covariation_class_compensated_integrable[OF Q t])
-  \<comment> \<open>the whole space is in the filtration at time \<open>0\<close>, so the martingale's
-      set-integral identity there IS constancy of the mean.\<close>
-  have top: "space Q \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0)"
-    using sets.top[of "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) 0"]
-    by simp
   have const: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q)
       = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q)"
-    using MG.set_integral_eq[OF top order.refl t0] t0 tT
-    by (simp add: set_integral_space[OF i0] set_integral_space[OF it])
+    using martingale_expectation_eq[OF covariation_class_compensated_martingale[OF Q]
+        order.refl t0] t0 tT by simp
   have start: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q) = outerp x"
   proof -
     have ae: "AE \<omega> in Q. outerp (fst (\<omega> 0)) - snd (\<omega> 0) = outerp x"
@@ -4028,12 +4012,12 @@ proof -
   proof -
     have "(\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ i \<partial>Q)
         = (\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q) $ i"
-      by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth]
+      by (rule integral_bounded_linear[OF bounded_linear_vec_nth]
           , rule integrable_bounded_linear[OF bounded_linear_vec_nth])
         (rule covariation_class_compensated_integrable[OF Q t])
     also have "(\<integral>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i \<partial>Q)
         = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) $ i"
-      by (rule integral_of_bounded_linear[OF bounded_linear_vec_nth
+      by (rule integral_bounded_linear[OF bounded_linear_vec_nth
             covariation_class_compensated_integrable[OF Q t]])
     also have "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
       by (rule covariation_class_compensated_mean[OF Q t])

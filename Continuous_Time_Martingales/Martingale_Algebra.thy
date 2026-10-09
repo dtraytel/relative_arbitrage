@@ -7,54 +7,16 @@ begin
 (*>*)
 
 text \<open>
-  Elementary closure properties the AFP's \<open>Martingales\<close> entry does not
-  record: sums, differences, constant shifts, congruence up to an almost-sure
-  or eventual equality, time changes, coarser filtrations, images under a
-  bounded linear map (hence componentwise vector and matrix martingales),
-  multiplying by an initial-time-measurable factor, subtracting the start,
-  and stopping at a deterministic time.
+  Elementary closure properties of martingales beyond the AFP's
+  \<open>Martingales\<close> entry, which already records sums and differences
+  (\<open>martingale.add\<close>, \<open>martingale.diff\<close>): constant shifts, congruence up
+  to an almost-sure or eventual equality, time changes, coarser filtrations,
+  images under a bounded linear map (hence componentwise vector and matrix
+  martingales), multiplying by an initial-time-measurable factor,
+  subtracting the start, and stopping at a deterministic time.
 \<close>
 
-section \<open>Sums, differences and constant shifts\<close>
-
-lemma martingale_add:
-  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
-  assumes mX: "martingale M F t0 X" and mY: "martingale M F t0 Y"
-  shows "martingale M F t0 (\<lambda>u \<omega>. X u \<omega> + Y u \<omega>)"
-proof -
-  interpret MX: martingale M F t0 X by (rule mX)
-  interpret MY: martingale M F t0 Y by (rule mY)
-  show ?thesis
-  proof (rule MX.martingale_of_set_integral_eq)
-    show "adapted_process M F t0 (\<lambda>u \<omega>. X u \<omega> + Y u \<omega>)"
-    proof (unfold_locales)
-      fix i :: real assume i: "t0 \<le> i"
-      show "(\<lambda>\<omega>. X i \<omega> + Y i \<omega>) \<in> borel_measurable (F i)"
-        using MX.adapted[OF i] MY.adapted[OF i] by simp
-    qed
-    show "\<And>i. t0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> + Y i \<omega>)"
-      by (intro Bochner_Integration.integrable_add MX.integrable MY.integrable)
-    fix A and i j :: real
-    assume A: "A \<in> F i" and ij: "t0 \<le> i" "i \<le> j"
-    have j: "t0 \<le> j" using ij by simp
-    have Ai: "A \<in> sets M"
-      using A MX.subalgebras[OF ij(1)] by (auto simp: subalgebra_def)
-    have siX: "set_integrable M A (X w)" if w: "t0 \<le> w" for w
-      unfolding set_integrable_def
-      by (rule integrable_mult_indicator[OF Ai MX.integrable[OF w]])
-    have siY: "set_integrable M A (Y w)" if w: "t0 \<le> w" for w
-      unfolding set_integrable_def
-      by (rule integrable_mult_indicator[OF Ai MY.integrable[OF w]])
-    have split: "set_lebesgue_integral M A (\<lambda>\<omega>. X w \<omega> + Y w \<omega>)
-        = set_lebesgue_integral M A (X w) + set_lebesgue_integral M A (Y w)"
-      if w: "t0 \<le> w" for w
-      by (rule set_integral_add(2)[OF siX[OF w] siY[OF w]])
-    show "set_lebesgue_integral M A (\<lambda>\<omega>. X i \<omega> + Y i \<omega>)
-        = set_lebesgue_integral M A (\<lambda>\<omega>. X j \<omega> + Y j \<omega>)"
-      unfolding split[OF ij(1)] split[OF j]
-      using MX.set_integral_eq[OF A ij] MY.set_integral_eq[OF A ij] by simp
-  qed
-qed
+section \<open>Constant shifts and subtracting the start\<close>
 
 lemma martingale_add_const:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
@@ -63,40 +25,10 @@ lemma martingale_add_const:
 proof -
   interpret FM: finite_filtered_measure M F t0 by (rule ffm)
   have "martingale M F t0 (\<lambda>_ _. c)" by (rule FM.martingale_const)
-  from martingale_add[OF this mg] show ?thesis .
+  from martingale.add[OF this mg] show ?thesis .
 qed
 
-text \<open>The AFP entry does not record the difference; both integrability side
-  conditions of \<open>cond_exp_diff\<close> come straight from the two locales.\<close>
-
-lemma martingale_diff:
-  fixes X Y :: "'b :: {second_countable_topology, order_topology, t2_space}
-    \<Rightarrow> 'a \<Rightarrow> 'c :: {second_countable_topology, banach}"
-  assumes MX: "martingale M F t0 X" and MY: "martingale M F t0 Y"
-  shows "martingale M F t0 (\<lambda>i \<omega>. X i \<omega> - Y i \<omega>)"
-proof -
-  interpret MX: martingale M F t0 X by (rule MX)
-  interpret MY: martingale M F t0 Y by (rule MY)
-  show ?thesis
-  proof (unfold_locales)
-    show "\<And>i. t0 \<le> i \<Longrightarrow> (\<lambda>\<omega>. X i \<omega> - Y i \<omega>) \<in> borel_measurable (F i)"
-      using MX.adapted MY.adapted by simp
-    show "\<And>i. t0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> - Y i \<omega>)"
-      using MX.integrable MY.integrable by simp
-    fix i j assume ij: "t0 \<le> i" "i \<le> j"
-    then have j: "t0 \<le> j" by simp
-    have "AE \<omega> in M. cond_exp M (F i) (\<lambda>\<omega>. X j \<omega> - Y j \<omega>) \<omega>
-        = cond_exp M (F i) (X j) \<omega> - cond_exp M (F i) (Y j) \<omega>"
-      by (rule sigma_finite_subalgebra.cond_exp_diff
-            [OF MX.sigma_finite_subalgebra_F[OF ij(1)]
-                MX.integrable[OF j] MY.integrable[OF j]])
-    then show "AE \<omega> in M. X i \<omega> - Y i \<omega>
-        = cond_exp M (F i) (\<lambda>\<omega>. X j \<omega> - Y j \<omega>) \<omega>"
-      using MX.martingale_property[OF ij] MY.martingale_property[OF ij] by force
-  qed
-qed
-
-text \<open>The subtractive companion to \<open>martingale_add\<close>, but with the summand
+text \<open>The subtractive companion to \<open>martingale.add\<close>, but with the summand
   frozen at the start.\<close>
 
 lemma martingale_sub_initial:
@@ -111,7 +43,7 @@ proof -
     show "(\<lambda>\<omega>. - X 0 \<omega>) \<in> borel_measurable (F 0)" using MG.adapted[of 0] by simp
   qed
   have "martingale M F 0 (\<lambda>u \<omega>. X u \<omega> + (- X 0 \<omega>))"
-    by (rule martingale_add[OF mg c])
+    by (rule martingale.add[OF mg c])
   then show ?thesis by simp
 qed
 
@@ -302,15 +234,6 @@ qed
 
 section \<open>Images under a bounded linear map\<close>
 
-lemma integral_of_bounded_linear:
-  fixes T :: "'b::{second_countable_topology,banach}
-      \<Rightarrow> 'c::{second_countable_topology,banach}"
-  assumes T: "bounded_linear T" and f: "integrable M f"
-  shows "(\<integral>\<omega>. T (f \<omega>) \<partial>M) = T (\<integral>\<omega>. f \<omega> \<partial>M)"
-  by (rule has_bochner_integral_integral_eq
-      [OF has_bochner_integral_bounded_linear
-        [OF T has_bochner_integral_integrable[OF f]]])
-
 text \<open>A bounded linear map commutes with the Bochner integral, hence with
   set integrals, hence maps martingales to martingales;
   \<open>martingale_of_set_integral_eq\<close> is the right interface, avoiding any
@@ -330,7 +253,7 @@ proof -
       = (\<integral>\<omega>. T (indicat_real A \<omega> *\<^sub>R f \<omega>) \<partial>M)"
     unfolding set_lebesgue_integral_def by (simp only: fe)
   also have "\<dots> = T (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R f \<omega> \<partial>M)"
-    using f by (intro integral_of_bounded_linear[OF T])
+    using f by (intro integral_bounded_linear[OF T])
       (simp add: set_integrable_def)
   finally show ?thesis unfolding set_lebesgue_integral_def .
 qed
@@ -402,65 +325,8 @@ lemma set_integral_vec_component:
   assumes A: "A \<in> sets M" and int: "integrable M X"
   shows "set_lebesgue_integral M A (\<lambda>\<omega>. X \<omega> $ k)
     = set_lebesgue_integral M A X $ k"
-proof -
-  have si: "integrable M (\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R X \<omega>)"
-    by (intro integrable_mult_indicator A int)
-  have "set_lebesgue_integral M A (\<lambda>\<omega>. X \<omega> $ k)
-      = (\<integral>\<omega>. (indicat_real A \<omega> *\<^sub>R X \<omega>) $ k \<partial>M)"
-    unfolding set_lebesgue_integral_def by simp
-  also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R X \<omega> \<partial>M) $ k"
-    by (rule integral_bounded_linear[OF bounded_linear_vec_nth si])
-  finally show ?thesis
-    unfolding set_lebesgue_integral_def .
-qed
-
-lemma martingale_vec_component:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite"
-  assumes mg: "martingale M F 0 X"
-  shows "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ k)"
-proof -
-  interpret Mg: martingale M F 0 X
-    by (rule mg)
-  have A_M: "A \<in> sets M" if i: "0 \<le> i" and A: "A \<in> sets (F i)" for A i
-  proof -
-    have "sets (F i) \<subseteq> sets M"
-      using Mg.subalgebras[OF i] by (simp add: subalgebra_def)
-    then show ?thesis using A by blast
-  qed
-  have compmeas: "(\<lambda>\<omega>. X i \<omega> $ k) \<in> borel_measurable (F i)"
-    if i: "0 \<le> i" for i
-  proof -
-    have "(\<lambda>\<omega>. X i \<omega> \<bullet> (axis k 1 :: real^'n))
-        \<in> borel_measurable (F i)"
-      by (intro borel_measurable_inner borel_measurable_const Mg.adapted[OF i])
-    then show ?thesis
-      by (simp add: inner_axis)
-  qed
-  have compint: "integrable M (\<lambda>\<omega>. X i \<omega> $ k)" if i: "0 \<le> i" for i
-    by (intro integrable_bounded_linear[OF bounded_linear_vec_nth]
-        Mg.integrable i)
-  show ?thesis
-  proof (rule Mg.martingale_of_set_integral_eq)
-    show "adapted_process M F 0 (\<lambda>t \<omega>. X t \<omega> $ k)"
-    proof (intro adapted_process.intro adapted_process_axioms.intro)
-      show "filtered_measure M F 0"
-        by unfold_locales
-      show "\<And>i. 0 \<le> i \<Longrightarrow> (\<lambda>\<omega>. X i \<omega> $ k) \<in> borel_measurable (F i)"
-        by (rule compmeas)
-    qed
-    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> $ k)"
-      by (rule compint)
-    fix A and i j :: real
-    assume i: "0 \<le> i" and ij: "i \<le> j" and A: "A \<in> sets (F i)"
-    have j: "0 \<le> j" using i ij by simp
-    have AM: "A \<in> sets M" by (rule A_M[OF i A])
-    show "set_lebesgue_integral M A (\<lambda>\<omega>. X i \<omega> $ k)
-        = set_lebesgue_integral M A (\<lambda>\<omega>. X j \<omega> $ k)"
-      unfolding set_integral_vec_component[OF AM Mg.integrable[OF i]]
-        set_integral_vec_component[OF AM Mg.integrable[OF j]]
-      using Mg.set_integral_eq[OF A i ij] by simp
-  qed
-qed
+  using A int by (intro set_integral_of_bounded_linear[OF bounded_linear_vec_nth])
+    (simp add: set_integrable_def integrable_mult_indicator)
 
 lemma measurable_vec_components [measurable]:
   fixes f :: "'i::finite \<Rightarrow> 'a \<Rightarrow> real"
@@ -621,21 +487,9 @@ lemma set_integral_mat_component:
   assumes A: "A \<in> sets M" and int: "integrable M X"
   shows "set_lebesgue_integral M A (\<lambda>\<omega>. X \<omega> $ i $ j)
       = set_lebesgue_integral M A X $ i $ j"
-proof -
-  have bl: "bounded_linear (\<lambda>A :: real^'n^'n. A $ i $ j)"
-    by (rule bounded_linear_compose[OF bounded_linear_vec_nth bounded_linear_vec_nth])
-  have si: "integrable M (\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R X \<omega>)"
-    by (intro integrable_mult_indicator A int)
-  have "set_lebesgue_integral M A (\<lambda>\<omega>. X \<omega> $ i $ j)
-      = (\<integral>\<omega>. (indicat_real A \<omega> *\<^sub>R X \<omega>) $ i $ j \<partial>M)"
-    unfolding set_lebesgue_integral_def by simp
-  also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R X \<omega> \<partial>M) $ i $ j"
-    by (rule has_bochner_integral_integral_eq
-        [OF has_bochner_integral_bounded_linear
-          [OF bl has_bochner_integral_integrable[OF si]]])
-  finally show ?thesis
-    unfolding set_lebesgue_integral_def .
-qed
+  using set_integral_of_bounded_linear[OF bounded_linear_compose[OF bounded_linear_vec_nth
+      bounded_linear_vec_nth], of M A X i j] A int
+  by (simp add: set_integrable_def integrable_mult_indicator)
 
 lemma martingale_matI:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite^'n"
@@ -692,55 +546,6 @@ proof -
     qed
     then show "set_lebesgue_integral M A (X u) = set_lebesgue_integral M A (X v)"
       by (simp add: vec_eq_iff)
-  qed
-qed
-
-text \<open>The matrix-entry analogue of \<open>martingale_vec_component\<close>, which is
-  typed for real entries and so does not reach a matrix-valued process;
-  this just assembles the three ingredients above.\<close>
-
-lemma martingale_mat_component:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite^'n"
-  assumes mg: "martingale M F 0 X"
-  shows "martingale M F 0 (\<lambda>t \<omega>. X t \<omega> $ c $ d)"
-proof -
-  interpret Mg: martingale M F 0 X by (rule mg)
-  have A_M: "A \<in> sets M" if i: "0 \<le> i" and A: "A \<in> sets (F i)" for A i
-  proof -
-    have "sets (F i) \<subseteq> sets M"
-      using Mg.subalgebras[OF i] by (simp add: subalgebra_def)
-    then show ?thesis using A by blast
-  qed
-  have bl: "bounded_linear (\<lambda>Z :: real^'n^'n. Z $ c $ d)"
-    by (rule bounded_linear_compose[OF bounded_linear_vec_nth
-          bounded_linear_vec_nth])
-  have compmeas: "(\<lambda>\<omega>. X i \<omega> $ c $ d) \<in> borel_measurable (F i)"
-    if i: "0 \<le> i" for i
-  proof -
-    have "(\<lambda>\<omega>. X i \<omega> \<bullet> (axis c (axis d 1) :: real^'n^'n))
-        \<in> borel_measurable (F i)"
-      by (intro borel_measurable_inner borel_measurable_const Mg.adapted[OF i])
-    then show ?thesis by (simp add: inner_axis)
-  qed
-  have compint: "integrable M (\<lambda>\<omega>. X i \<omega> $ c $ d)" if i: "0 \<le> i" for i
-    by (rule integrable_bounded_linear[OF bl Mg.integrable[OF i]])
-  show ?thesis  proof (rule Mg.martingale_of_set_integral_eq)
-    show "adapted_process M F 0 (\<lambda>t \<omega>. X t \<omega> $ c $ d)"
-    proof (intro adapted_process.intro adapted_process_axioms.intro)
-      show "filtered_measure M F 0" by unfold_locales
-      show "\<And>i. 0 \<le> i \<Longrightarrow> (\<lambda>\<omega>. X i \<omega> $ c $ d) \<in> borel_measurable (F i)"
-        by (rule compmeas)
-    qed
-    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (\<lambda>\<omega>. X i \<omega> $ c $ d)" by (rule compint)
-    fix A and i j :: real
-    assume i: "0 \<le> i" and ij: "i \<le> j" and A: "A \<in> sets (F i)"
-    have j: "0 \<le> j" using i ij by simp
-    have AM: "A \<in> sets M" by (rule A_M[OF i A])
-    show "set_lebesgue_integral M A (\<lambda>\<omega>. X i \<omega> $ c $ d)
-        = set_lebesgue_integral M A (\<lambda>\<omega>. X j \<omega> $ c $ d)"
-      unfolding set_integral_mat_component[OF AM Mg.integrable[OF i]]
-        set_integral_mat_component[OF AM Mg.integrable[OF j]]
-      using Mg.set_integral_eq[OF A i ij] by simp
   qed
 qed
 
@@ -830,7 +635,7 @@ proof (rule martingale_matI)
   have m2: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ p * X t \<omega> $ q)"
     by (rule martingale_mult_measurable[OF mgq vmp intpq])
   have m: "martingale M F 0 (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q)"
-    by (rule martingale_add[OF m1 m2])
+    by (rule martingale.add[OF m1 m2])
   have eq: "(\<lambda>t \<omega>. ((\<chi> i j. X t \<omega> $ i * v \<omega> $ j)
         + (\<chi> i j. v \<omega> $ i * X t \<omega> $ j)) $ p $ q)
       = (\<lambda>t \<omega>. v \<omega> $ q * X t \<omega> $ p + v \<omega> $ p * X t \<omega> $ q)"

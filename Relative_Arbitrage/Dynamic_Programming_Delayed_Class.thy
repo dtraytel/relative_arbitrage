@@ -720,7 +720,7 @@ corollary pdelclass_X_int:
     and u: "0 \<le> u"
   shows "integrable \<nu> (\<lambda>w. fst (w (min u T)) $ e)"
   by (rule martingale.integrable
-      [OF martingale_vec_component[OF pdelclass_X_martingale[OF s0 sT m]] u])
+      [OF martingale_vec_nth[OF pdelclass_X_martingale[OF s0 sT m]] u])
 
 corollary pdelclass_comp_int:
   fixes \<nu> :: "('n::finite pairpath) measure"
@@ -729,7 +729,7 @@ corollary pdelclass_comp_int:
   shows "integrable \<nu>
       (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)"
   by (rule martingale.integrable
-      [OF martingale_mat_component[OF pdelclass_comp_martingale[OF s0 sT m]] u])
+      [OF martingale_mat_nth[OF pdelclass_comp_martingale[OF s0 sT m]] u])
 
 corollary pdelclass_X_increment:
   fixes \<nu> :: "('n::finite pairpath) measure"
@@ -739,7 +739,7 @@ corollary pdelclass_X_increment:
   shows "set_lebesgue_integral \<nu> C (\<lambda>w. fst (w (min u T)) $ e)
       = set_lebesgue_integral \<nu> C (\<lambda>w. fst (w (min v T)) $ e)"
   by (rule martingale.set_integral_eq
-      [OF martingale_vec_component[OF pdelclass_X_martingale[OF s0 sT m]]
+      [OF martingale_vec_nth[OF pdelclass_X_martingale[OF s0 sT m]]
         C u uv])
 
 corollary pdelclass_comp_increment:
@@ -752,7 +752,7 @@ corollary pdelclass_comp_increment:
       = set_lebesgue_integral \<nu> C
         (\<lambda>w. (outerp (fst (w (min v T))) - snd (w (min v T))) $ c $ d)"
   by (rule martingale.set_integral_eq
-      [OF martingale_mat_component[OF pdelclass_comp_martingale[OF s0 sT m]]
+      [OF martingale_mat_nth[OF pdelclass_comp_martingale[OF s0 sT m]]
         C u uv])
 
 corollary pdelclass_X_mean:
@@ -761,7 +761,7 @@ corollary pdelclass_X_mean:
     and u: "0 \<le> u"
   shows "(\<integral>w. fst (w (min u T)) $ e \<partial>\<nu>) = 0"
 proof (rule martingale_mean_zero_of_start
-    [OF martingale_vec_component[OF pdelclass_X_martingale[OF s0 sT m]] _ u])
+    [OF martingale_vec_nth[OF pdelclass_X_martingale[OF s0 sT m]] _ u])
   show "AE w in \<nu>. fst (w (min (0::real) T)) $ e = 0"
     using pdelclass_start_zero[OF s0 sT m] by (rule eventually_mono) simp
 qed
@@ -773,7 +773,7 @@ corollary pdelclass_comp_mean:
   shows "(\<integral>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d \<partial>\<nu>)
       = 0"
 proof (rule martingale_mean_zero_of_start
-    [OF martingale_mat_component[OF pdelclass_comp_martingale[OF s0 sT m]] _ u])
+    [OF martingale_mat_nth[OF pdelclass_comp_martingale[OF s0 sT m]] _ u])
   show "AE w in \<nu>. (outerp (fst (w (min (0::real) T)))
       - snd (w (min (0::real) T))) $ c $ d = 0"
     using pdelclass_start_zero[OF s0 sT m]

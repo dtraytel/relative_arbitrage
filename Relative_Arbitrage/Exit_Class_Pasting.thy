@@ -448,7 +448,7 @@ proof -
   \<comment> \<open>lift both to the product and add\<close>
   have msum: "martingale ?M ?FF 0
       (\<lambda>u p. fst (fst p (min u r)) + fst (snd p (min (?s u) (T - r))) :: real^'n)"
-    by (rule martingale_add[OF martingale_pair_fst[OF PQ PR mQ FR]
+    by (rule martingale.add[OF martingale_pair_fst[OF PQ PR mQ FR]
           martingale_pair_snd[OF PQ PR FQ mR]])
 
   \<comment> \<open>evaluation measurability on the product filtration\<close>
@@ -693,10 +693,10 @@ proof -
             + (outerp (?Bp u p) - snd (snd p (?t u))))
           + ((\<chi> i j. ?A u p $ i * ?Bp u p $ j)
             + (\<chi> i j. ?Bp u p $ i * ?A u p $ j)))"
-    by (rule martingale_add[OF martingale_add
+    by (rule martingale.add[OF martingale.add
           [OF martingale_pair_fst[OF PQ PR cQ FR]
               martingale_pair_snd[OF PQ PR FQ cR]]
-          martingale_add[OF cross1 cross2]])
+          martingale.add[OF cross1 cross2]])
 
   \<comment> \<open>adaptedness of the glued compensated process\<close>
   have cB: "(\<lambda>q :: (real^'n) \<times> (real^'n^'n). outerp (fst q) - snd q)
@@ -1401,7 +1401,7 @@ proof -
     by (rule martingale_pair_fst[OF PQ PS mQ FSf])
   have mgl: "martingale ?M ?FF 0
       (\<lambda>u p. fst (kglue r T N p (min u T)) :: real^'n)"
-  proof (rule martingale_cong_ge[OF martingale_add[OF mA mB]])
+  proof (rule martingale_cong_ge[OF martingale.add[OF mA mB]])
     fix u :: real assume u: "0 \<le> u"
     have muI: "min u T \<in> {0..T}" using u T0 by simp
     show "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).
@@ -1805,7 +1805,7 @@ proof -
       + ((\<chi> p q. c $ p * (fst (f i (?t u)) - fst (f i 0)) $ q)
           + (\<chi> p q. (fst (f i (?t u)) - fst (f i 0)) $ p * c $ q)))"
     for i and c :: "real^'n"
-    by (rule martingale_add[OF mCi martingale_bounded_linear_image
+    by (rule martingale.add[OF mCi martingale_bounded_linear_image
           [OF bounded_linear_cross_pair mBj]])
 
   \<comment> \<open>evaluation measurability on the product filtration\<close>
@@ -2161,7 +2161,7 @@ proof -
   have mgl: "martingale ?M ?FF 0
       (\<lambda>u p. outerp (fst (kglue r T N p (min u T)) :: real^'n)
           - snd (kglue r T N p (min u T)))"
-  proof (rule martingale_cong_ge[OF martingale_add[OF mCQ mD]])
+  proof (rule martingale_cong_ge[OF martingale.add[OF mCQ mD]])
     fix u :: real assume u: "0 \<le> u"
     have muI: "min u T \<in> {0..T}" using u T0 by simp
     show "(\<lambda>p :: 'n pairpath \<times> (nat \<Rightarrow> 'n pairpath).

@@ -15,7 +15,7 @@ text \<open>@{theory Continuous_Time_Martingales.Doob_Inequality}'s \<open>horiz
   the path (\<open>Dsup_dominates\<close>).  So the last hypothesis of
   @{thm [source] set_martingale_sampling} costs nothing more than an
   interpretation: the class supplies the martingale
-  (@{thm [source] martingale_vec_component} for the component) and the
+  (@{thm [source] martingale_vec_nth} for the component) and the
   square-integrability (@{thm [source] exit_class_sq_integrable}).\<close>
 
 lemma exit_class_horizon_component:
@@ -29,7 +29,7 @@ proof -
     using P unfolding exit_class_def by blast
   have mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
       (\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c)"
-    by (rule martingale_vec_component[OF mgv])
+    by (rule martingale_vec_nth[OF mgv])
   interpret Mg: martingale P "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" 0
     "\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c" by (rule mg)
   interpret PS: prob_space P by (rule exit_class_prob[OF P])
@@ -87,7 +87,7 @@ proof -
     by (rule exit_class_compensated_martingale[OF P])
   have mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
       (\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d)"
-    by (rule martingale_mat_component[OF mgm])
+    by (rule martingale_mat_nth[OF mgm])
   interpret Mg: martingale P "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" 0
     "\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d"
     by (rule mg)

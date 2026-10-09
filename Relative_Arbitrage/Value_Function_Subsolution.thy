@@ -968,7 +968,7 @@ proof -
   \<comment> \<open>integrate the four facts\<close>
   have lin: "(\<integral>\<omega>. F (?Y \<omega>) \<partial>P) = F EY"
     if F: "bounded_linear (F :: real^'n^'n \<Rightarrow> real)" for F
-    unfolding EY_def by (rule integral_of_bounded_linear[OF F iY])
+    unfolding EY_def by (rule integral_bounded_linear[OF F iY])
   have linI: "integrable P (\<lambda>\<omega>. F (?Y \<omega>))"
     if F: "bounded_linear (F :: real^'n^'n \<Rightarrow> real)" for F
     by (rule integrable_bounded_linear[OF F iY])
@@ -991,7 +991,7 @@ proof -
             integrable_bounded_linear[OF blc ith]])
         (use memQ in \<open>auto elim: eventually_mono\<close>)
     also have "\<dots> = (\<integral>\<omega>. \<theta> \<omega> \<partial>P) * (L * (z \<bullet> z))"
-      by (rule integral_of_bounded_linear[OF blc ith])
+      by (rule integral_bounded_linear[OF blc ith])
     also have "\<dots> = et * (L * (z \<bullet> z))" by (simp add: et_def)
     finally show ?thesis .
   qed
@@ -999,7 +999,7 @@ proof -
   proof -
     have "transpose EY = (\<integral>\<omega>. transpose (?Y \<omega>) \<partial>P)"
       unfolding EY_def
-      by (rule integral_of_bounded_linear[OF bounded_linear_transpose iY, symmetric])
+      by (rule integral_bounded_linear[OF bounded_linear_transpose iY, symmetric])
     also have "\<dots> = (\<integral>\<omega>. ?Y \<omega> \<partial>P)"
     proof (rule integral_cong_AE[OF _ _ memT])
       show "(\<lambda>\<omega>. transpose (?Y \<omega>)) \<in> borel_measurable P"
@@ -1018,7 +1018,7 @@ proof -
       unfolding linear_conv_bounded_linear[symmetric]
       by (intro linearI) (auto simp: algebra_simps)
     have "real (m - k) * et = (\<integral>\<omega>. real (m - k) * \<theta> \<omega> \<partial>P)"
-      using integral_of_bounded_linear[OF blc ith] by (simp add: et_def)
+      using integral_bounded_linear[OF blc ith] by (simp add: et_def)
     also have "\<dots> \<le> (\<integral>\<omega>. trace (?Y \<omega> ** Pm) \<partial>P)"
       by (rule integral_mono_AE[OF integrable_bounded_linear[OF blc ith]
             linI[OF bounded_linear_trace_mult_right]])
@@ -1212,7 +1212,7 @@ proof -
   have EX: "(\<integral>\<omega>. ?Xf \<omega> \<partial>P) = x"
   proof -
     have "(\<integral>\<omega>. ?Xf \<omega> \<partial>P) $ c = x $ c" for c
-      using integral_of_bounded_linear[OF bounded_linear_vec_nth iX] EXc[of c]
+      using integral_bounded_linear[OF bounded_linear_vec_nth iX] EXc[of c]
       by simp
     then show ?thesis by (simp add: vec_eq_iff)
   qed
@@ -1220,7 +1220,7 @@ proof -
   have ig1: "integrable P (\<lambda>\<omega>. q \<bullet> ?Xf \<omega>)"
     by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
   have Eg1: "(\<integral>\<omega>. q \<bullet> ?Xf \<omega> \<partial>P) = q \<bullet> x"
-    using integral_of_bounded_linear[OF bounded_linear_inner_right iX] EX by simp
+    using integral_bounded_linear[OF bounded_linear_inner_right iX] EX by simp
   have blM: "bounded_linear (\<lambda>w :: real^'n. M *v w)"
     unfolding linear_conv_bounded_linear[symmetric]
     by (rule matrix_vector_mul_linear)
@@ -1228,12 +1228,12 @@ proof -
     by (rule integrable_bounded_linear[OF bounded_linear_compose
           [OF bounded_linear_inner_right blM] iX])
   have Eg2: "(\<integral>\<omega>. x \<bullet> (M *v ?Xf \<omega>) \<partial>P) = x \<bullet> (M *v x)"
-    using integral_of_bounded_linear[OF bounded_linear_compose
+    using integral_bounded_linear[OF bounded_linear_compose
         [OF bounded_linear_inner_right blM] iX] EX by simp
   have ig3: "integrable P (\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v x))"
     by (rule integrable_bounded_linear[OF bounded_linear_inner_left iX])
   have Eg3: "(\<integral>\<omega>. ?Xf \<omega> \<bullet> (M *v x) \<partial>P) = x \<bullet> (M *v x)"
-    using integral_of_bounded_linear[OF bounded_linear_inner_left iX] EX by simp
+    using integral_bounded_linear[OF bounded_linear_inner_left iX] EX by simp
   \<comment> \<open>the quadratic term, through the compensated entries\<close>
   have icomp: "integrable P (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)))"
     unfolding trace_mult_sum
@@ -1274,7 +1274,7 @@ proof -
     by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left iY])
   have EtrY: "(\<integral>\<omega>. trace (M ** ?Yf \<omega>) \<partial>P) = trace (M ** EY)"
     unfolding EY_def
-    by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left iY])
+    by (rule integral_bounded_linear[OF bounded_linear_trace_mult_left iY])
   have g4eq: "(\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>))
       = (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) + trace (M ** ?Yf \<omega>))"
     by (rule ext) (simp add: trace_mult_diff trace_mult_outerp)
@@ -1345,7 +1345,7 @@ proof -
           - ?Xf \<omega> \<bullet> (M *v x) + x \<bullet> (M *v x)) / 2 \<partial>P)
           = (\<integral>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>) - x \<bullet> (M *v ?Xf \<omega>)
             - ?Xf \<omega> \<bullet> (M *v x) + x \<bullet> (M *v x) \<partial>P) / 2"
-        by (rule integral_of_bounded_linear[OF bl2 iq2])
+        by (rule integral_bounded_linear[OF bl2 iq2])
       then show ?thesis using Eq2 by simp
     qed
     finally show ?thesis .
@@ -1742,14 +1742,14 @@ proof -
   show EX: "(\<integral>\<omega>. ?Xf \<omega> \<partial>P) = x"
   proof -
     have "(\<integral>\<omega>. ?Xf \<omega> \<partial>P) $ c = x $ c" for c
-      using integral_of_bounded_linear[OF bounded_linear_vec_nth iX] EXc[of c]
+      using integral_bounded_linear[OF bounded_linear_vec_nth iX] EXc[of c]
       by simp
     then show ?thesis by (simp add: vec_eq_iff)
   qed
   have ig1: "integrable P (\<lambda>\<omega>. q \<bullet> ?Xf \<omega>)"
     by (rule integrable_bounded_linear[OF bounded_linear_inner_right iX])
   have Eg1: "(\<integral>\<omega>. q \<bullet> ?Xf \<omega> \<partial>P) = q \<bullet> x"
-    using integral_of_bounded_linear[OF bounded_linear_inner_right iX] EX
+    using integral_bounded_linear[OF bounded_linear_inner_right iX] EX
     by simp
   have lin_eq: "(\<lambda>\<omega>. q \<bullet> (?Xf \<omega> - x)) = (\<lambda>\<omega>. q \<bullet> ?Xf \<omega> - q \<bullet> x)"
     by (simp add: fun_eq_iff inner_diff_right)
@@ -1768,12 +1768,12 @@ proof -
     by (rule integrable_bounded_linear[OF bounded_linear_compose
           [OF bounded_linear_inner_right blM] iX])
   have Eg2: "(\<integral>\<omega>. x \<bullet> (M *v ?Xf \<omega>) \<partial>P) = x \<bullet> (M *v x)"
-    using integral_of_bounded_linear[OF bounded_linear_compose
+    using integral_bounded_linear[OF bounded_linear_compose
         [OF bounded_linear_inner_right blM] iX] EX by simp
   have ig3: "integrable P (\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v x))"
     by (rule integrable_bounded_linear[OF bounded_linear_inner_left iX])
   have Eg3: "(\<integral>\<omega>. ?Xf \<omega> \<bullet> (M *v x) \<partial>P) = x \<bullet> (M *v x)"
-    using integral_of_bounded_linear[OF bounded_linear_inner_left iX] EX
+    using integral_bounded_linear[OF bounded_linear_inner_left iX] EX
     by simp
   have icomp: "integrable P (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)))"
     unfolding trace_mult_sum
@@ -1817,7 +1817,7 @@ proof -
     by (rule integrable_bounded_linear[OF bounded_linear_trace_mult_left iY])
   have EtrY: "(\<integral>\<omega>. trace (M ** ?Yf \<omega>) \<partial>P)
       = trace (M ** (\<integral>\<omega>. ?Yf \<omega> \<partial>P))"
-    by (rule integral_of_bounded_linear[OF bounded_linear_trace_mult_left iY])
+    by (rule integral_bounded_linear[OF bounded_linear_trace_mult_left iY])
   have g4eq: "(\<lambda>\<omega>. ?Xf \<omega> \<bullet> (M *v ?Xf \<omega>))
       = (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) + trace (M ** ?Yf \<omega>))"
     by (rule ext) (simp add: trace_mult_diff trace_mult_outerp)
@@ -2101,7 +2101,7 @@ next
     by (rule integrable_bounded_linear[OF bl2 iquad])
   have Ehalf: "(\<integral>\<omega>. ((?V \<omega>) \<bullet> (M *v (?V \<omega>))) / 2 \<partial>P)
       = trace (M ** EY) / 2"
-    using integral_of_bounded_linear[OF bl2 iquad] Equad by simp
+    using integral_bounded_linear[OF bl2 iquad] Equad by simp
   have w: "- trace (M ** b) / 2 \<le> 1"
   proof -
     have iA: "integrable P (\<lambda>\<omega>. \<theta>' \<omega> + q \<bullet> (?V \<omega>))"
@@ -2364,7 +2364,7 @@ next
     proof -
       have "trace EY = (\<integral>\<omega>. trace (?Yf \<omega>) \<partial>P)"
         unfolding EY_def
-        by (rule integral_of_bounded_linear[OF bounded_linear_trace iY,
+        by (rule integral_bounded_linear[OF bounded_linear_trace iY,
               symmetric])
       also have "\<dots> \<le> (\<integral>\<omega>. n' * n' * L * \<theta>' \<omega> \<partial>P)"
         by (rule integral_mono_AE[OF itrY integrable_cmult[OF ith] trYbnd])
