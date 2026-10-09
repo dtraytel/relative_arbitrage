@@ -63,31 +63,15 @@ proof -
       unfolding split using B[OF late stlt tT] by simp
   next
     case mid
-    let ?a = "(1 / (r - s)) *\<^sub>R (snd (p' r) - snd (p' s))"
-    let ?b = "(1 / (t - r)) *\<^sub>R (snd (w t) - snd (w r))"
-    have rI: "r \<in> {0..T}" using r0 rT by simp
-    have aA: "?a \<in> sconstraint k L" by (rule A[OF s mid(1) order_refl])
-    have bB: "?b \<in> sconstraint k L" by (rule B[OF order_refl mid(2) tT])
-    have pos: "0 < r - s" "0 < t - r" "0 < t - s" using mid stlt by auto
-    have sum1: "(r - s) / (t - s) + (t - r) / (t - s) = 1"
-      by (subst add_divide_distrib[symmetric]) (use pos(3) in simp)
-    have cc: "((r - s) / (t - s)) *\<^sub>R ?a + ((t - r) / (t - s)) *\<^sub>R ?b
-        \<in> sconstraint k L"
-      using pos by (intro convexD[OF sconstraint_convex aA bB] sum1) auto
-    have e1: "((r - s) / (t - s)) *\<^sub>R ?a
-        = (1 / (t - s)) *\<^sub>R (snd (p' r) - snd (p' s))"
-      using pos by simp
-    have e2: "((t - r) / (t - s)) *\<^sub>R ?b
-        = (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w r))"
-      using pos by simp
     have pt: "p' t = p' r" using idem[OF tI] mid(2) by simp
     have ws: "w s = 0" by (rule w0[OF sT]) (use mid(1) in simp)
-    have wr: "w r = 0" by (rule w0[OF rI]) simp
-    have "snd (padd T p' w t) - snd (padd T p' w s)
+    have wr: "w r = 0" by (rule w0) (use r0 rT in simp_all)
+    have eq: "snd (padd T p' w t) - snd (padd T p' w s)
         = (snd (p' r) - snd (p' s)) + (snd (w t) - snd (w r))"
       unfolding split pt using ws wr by simp
-    then show ?thesis
-      using cc unfolding e1 e2 by (simp add: scaleR_right_distrib)
+    show ?thesis
+      unfolding eq by (rule diffquot_convex_split[OF sconstraint_convex mid
+          A[OF s mid(1) order_refl] B[OF order_refl mid(2) tT]])
   qed
 qed
 

@@ -89,6 +89,41 @@ proof -
     by (auto simp: eigen_ub_def dest: spec[of _ "axis l 1"])
 qed
 
+text \<open>For a psd matrix the eigenvalue cap bounds every entry: the diagonal
+  by @{thm [source] eigen_ub_diag}, the off-diagonal by the psd inequality on
+  \<open>axis i 1 \<plusminus> axis j 1\<close> (a two-sided form of Cauchy--Schwarz).  Hence
+  it bounds the norm by \<open>n\<sqdot>L\<close>.\<close>
+
+lemma psd_eigen_ub_entry_abs_le:
+  fixes a :: "real^'n::finite^'n"
+  assumes a: "psd a" and ub: "eigen_ub a L"
+  shows "\<bar>a $ i $ j\<bar> \<le> L"
+proof -
+  have sym: "transpose a = a" using a by (simp add: psd_def)
+  have psda: "0 \<le> x \<bullet> (a *v x)" for x using a by (simp add: psd_def)
+  have "0 \<le> a $ i $ i + a $ j $ j + 2 * a $ i $ j"
+    "0 \<le> a $ i $ i + a $ j $ j - 2 * a $ i $ j"
+    using psda[of "axis i 1 + axis j 1"] psda[of "axis i 1 - axis j 1"]
+    unfolding quadform_axis_pair[OF sym] quadform_axis_pair_minus[OF sym] .
+  moreover have "a $ i $ i \<le> L" "a $ j $ j \<le> L" by (rule eigen_ub_diag[OF ub])+
+  ultimately show ?thesis by linarith
+qed
+
+lemma psd_eigen_ub_norm_le:
+  fixes a :: "real^'n::finite^'n"
+  assumes a: "psd a" and ub: "eigen_ub a L" and L: "0 \<le> L"
+  shows "norm a \<le> real CARD('n) * L"
+proof -
+  have "a \<bullet> a = (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). \<bar>a $ i $ j\<bar> * \<bar>a $ i $ j\<bar>)"
+    unfolding inner_vec_def by (simp add: abs_mult[symmetric])
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). L * L)"
+    using psd_eigen_ub_entry_abs_le[OF a ub] L by (intro sum_mono mult_mono) auto
+  also have "\<dots> = (real CARD('n) * L)\<^sup>2"
+    by (simp add: power2_eq_square algebra_simps)
+  finally show ?thesis
+    using L by (simp add: norm_eq_sqrt_inner real_sqrt_le_iff')
+qed
+
 subsection \<open>Feasibility: projections onto \<open>(n-k)\<close>-dimensional subspaces of \<open>p\<^sup>\<bottom>\<close>\<close>
 
 lemma feasible_witness:
@@ -236,55 +271,7 @@ lemma feasible_entry_bound:
   fixes a :: "real^'n^'n"
   assumes a: "a \<in> feasible k L p"
   shows "\<bar>a $ i $ j\<bar> \<le> L"
-proof -
-  from a have sym: "transpose a = a" and pos: "\<And>x. 0 \<le> x \<bullet> (a *v x)"
-    and ub: "\<And>x. x \<bullet> (a *v x) \<le> L * (x \<bullet> x)"
-    by (auto simp: feasible_def psd_def eigen_ub_def)
-  have av_axis: "(a *v axis m 1) $ l = a $ l $ m" for l m
-    by (simp add: matrix_vector_mult_def axis_def if_distrib if_distribR
-        cong: if_cong)
-  have quad_entry: "(axis l 1) \<bullet> (a *v axis m 1) = a $ l $ m" for l m
-    by (simp add: inner_axis' av_axis)
-  have expand: "(y + z) \<bullet> (a *v (y + z))
-      = y \<bullet> (a *v y) + 2 * (y \<bullet> (a *v z)) + z \<bullet> (a *v z)" for y z
-    by (simp add:
-        sym_inner_swap[OF sym] algebra_simps)
-  have expand2: "(y - z) \<bullet> (a *v (y - z))
-      = y \<bullet> (a *v y) - 2 * (y \<bullet> (a *v z)) + z \<bullet> (a *v z)" for y z
-    by (simp add:
-        sym_inner_swap[OF sym] algebra_simps)
-  show ?thesis
-  proof (cases "i = j")
-    case True
-    have "0 \<le> a $ i $ i"
-      using pos[of "axis i 1"] by (simp add: quad_entry)
-    moreover have "a $ i $ i \<le> L"
-      using ub[of "axis i 1"] by (simp add: quad_entry inner_axis_axis)
-    ultimately show ?thesis
-      using True by simp
-  next
-    case False
-    have nn: "(axis i 1 :: real^'n) \<bullet> axis j 1 = 0"
-      using False by (simp add: inner_axis_axis)
-    have nsq: "(axis i 1 + axis j 1) \<bullet> ((axis i 1 :: real^'n) + axis j 1) = 2"
-      "(axis i 1 - axis j 1) \<bullet> ((axis i 1 :: real^'n) - axis j 1) = 2"
-      using False
-      by (auto simp: inner_add_left inner_add_right inner_diff_left
-          inner_diff_right inner_axis_axis)
-    have plus0: "0 \<le> a $ i $ i + 2 * a $ i $ j + a $ j $ j"
-      using pos[of "axis i 1 + axis j 1"] by (simp add: expand quad_entry)
-    have plusL: "a $ i $ i + 2 * a $ i $ j + a $ j $ j \<le> 2 * L"
-      using ub[of "axis i 1 + axis j 1"] by (simp add: expand quad_entry nsq)
-    have minus0: "0 \<le> a $ i $ i - 2 * a $ i $ j + a $ j $ j"
-      using pos[of "axis i 1 - axis j 1"] by (simp add: expand2 quad_entry)
-    have minusL: "a $ i $ i - 2 * a $ i $ j + a $ j $ j \<le> 2 * L"
-      using ub[of "axis i 1 - axis j 1"] by (simp add: expand2 quad_entry nsq)
-    have dii: "0 \<le> a $ i $ i" and djj: "0 \<le> a $ j $ j"
-      using pos[of "axis i 1"] pos[of "axis j 1"] by (simp_all add: quad_entry)
-    show ?thesis
-      using plus0 plusL minus0 minusL dii djj by linarith
-  qed
-qed
+  using a by (auto simp: feasible_def intro: psd_eigen_ub_entry_abs_le)
 
 lemma ell_op_bdd_below:
   fixes M :: "real^'n^'n"

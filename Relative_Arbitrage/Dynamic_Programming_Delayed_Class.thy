@@ -20,6 +20,24 @@ definition pdelclass :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow>
      (\<lambda>\<nu>. distr \<nu> (path_borel T :: ('n pairpath) measure) (pembed s T))
        ` exit_class k L (T - s) (0::real^'n)"
 
+lemma pdelclassE:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  obtains \<mu> where "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
+    and "sets \<mu> = sets (path_borel (T - s) :: ('n pairpath) measure)"
+    and "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+proof -
+  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
+    unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets (path_borel (T - s) :: ('n pairpath) measure)"
+    by (rule exit_class_sets[OF mu])
+  show ?thesis
+    by (rule that[OF mu nu setsmu]) (simp add: measurable_cong_sets[OF setsmu refl]
+        pembed_measurable[OF s0 sT])
+qed
+
 text \<open>A delayed law is a probability law on the \<open>T\<close>-space, it stands still on
   \<open>[0,s]\<close>, and re-basing recovers the original --- which is what makes
   \<^const>\<open>pdelclass\<close> the right object for the additive glue to consume.\<close>
@@ -30,55 +48,15 @@ lemma pdelclass_prob:
   shows "prob_space \<nu>"
     and "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)"
 proof -
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> (path_borel T :: ('n pairpath) measure) (pembed s T)"
-    unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ((path_borel (T - s) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
+    and setsmu: "sets \<mu> = sets (path_borel (T - s))"
+    and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T)"
+    by (rule pdelclassE[OF s0 sT m])
   show "prob_space \<nu>"
     unfolding nu
     by (rule prob_space.prob_space_distr[OF exit_class_prob[OF mu] pm])
   show "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)" unfolding nu by simp
-qed
-
-lemma pdelclass_frozen_at:
-  fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
-    and u: "u \<in> {0..T}" and us: "u \<le> s"
-  shows "AE w in \<nu>. w u = 0"
-proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
-    unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ((path_borel (T - s) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
-  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
-    by (rule pair_law_eval_measurable[OF refl])
-  have Phi: "{w \<in> space ?B. w u = 0} \<in> sets ?B"
-  proof -
-    have "{w \<in> space ?B. w u = 0}
-        = (\<lambda>w :: 'n pairpath. w u) -` {0} \<inter> space ?B" by auto
-    then show ?thesis
-      using measurable_sets[OF ev borel_closed[OF closed_singleton]] by simp
-  qed
-  have start: "AE v in \<mu>. fst (v 0) = 0 \<and> snd (v 0) = 0"
-    by (rule exit_class_start[OF mu])
-  have "AE v in \<mu>. pembed s T v u = 0"
-    using start
-  proof eventually_elim
-    case (elim v)
-    have "max (u - s) 0 = 0" using us by simp
-    then have "pembed s T v u = v 0" unfolding pembed_apply[OF u] by simp
-    then show ?case using elim by (simp add: prod_eq_iff)
-  qed
-  then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
 qed
 
 text \<open>\<open>vanishes_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
@@ -92,14 +70,10 @@ lemma pdelclass_frozen:
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
-    unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ((path_borel (T - s) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+    and setsmu: "sets \<mu> = sets (path_borel (T - s))" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have Phi: "{w \<in> space ?B. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> w u = 0} \<in> sets ?B"
     by (rule frozen_set_measurable[OF T0])
   have start: "AE v in \<mu>. fst (v 0) = 0 \<and> snd (v 0) = 0"
@@ -387,9 +361,8 @@ section \<open>The delayed class supplies the additive glue's kernel clauses\<cl
 text \<open>@{thm [source] exit_class_aglue} asks its continuation kernel for
   nine facts.  Four are already in hand for \<^const>\<open>pdelclass\<close> --- \<open>Kp\<close>
   (the selector's own measurability), \<open>prob_space\<close>/\<open>sets\<close>
-  (@{thm [source] pdelclass_prob}), \<open>K0\<close>
-  (@{thm [source] pdelclass_frozen_at} at \<open>u = 0\<close>) and \<open>Kfr\<close>
-  (@{thm [source] pdelclass_frozen}).  The rest follow from one structural
+  (@{thm [source] pdelclass_prob}), and \<open>Kfr\<close> and \<open>K0\<close>
+  (@{thm [source] pdelclass_frozen}, at \<open>u = 0\<close> for \<open>K0\<close>).  The rest follow from one structural
   statement: a delayed law's two class processes are still martingales on
   the fixed \<open>T\<close>-space, in the delayed law's own natural filtration.
 
@@ -418,13 +391,11 @@ proof -
   let ?rho = "\<lambda>u :: real. min (max (u - s) 0) (T - s)"
   have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have Pmu: "prob_space \<mu>" by (rule exit_class_prob[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
   have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
     unfolding nu pair_law_of_def ..
   let ?F = "natural_filtration \<mu> 0 (\<lambda>v w :: 'n pairpath. w v)"
@@ -481,13 +452,11 @@ proof -
   let ?rho = "\<lambda>u :: real. min (max (u - s) 0) (T - s)"
   have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have Pmu: "prob_space \<mu>" by (rule exit_class_prob[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
   have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
     unfolding nu pair_law_of_def ..
   let ?F = "natural_filtration \<mu> 0 (\<lambda>v w :: 'n pairpath. w v)"
@@ -560,12 +529,10 @@ proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have setsnu: "sets \<nu> = sets ?B" unfolding nu by simp
   have cov: "AE w in \<mu>. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T - s \<longrightarrow>
       (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
@@ -663,7 +630,7 @@ subsection \<open>Mean, integrability and the increment identity\<close>
 
 text \<open>A martingale that starts at \<open>0\<close> has mean \<open>0\<close> at every later time; the
   set-integral identity over the whole space is the case \<open>i = 0\<close> of the
-  martingale property, and @{thm [source] pdelclass_frozen_at} supplies the
+  martingale property, and @{thm [source] pdelclass_frozen} supplies the
   start.  \<open>martingale_mean_zero_of_start\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
@@ -673,10 +640,7 @@ lemma pdelclass_start_zero:
   shows "AE w in \<nu>. w (min (0::real) T) = 0"
 proof -
   have T0: "0 \<le> T" using s0 sT by simp
-  have z: "(0::real) \<in> {0..T}" using T0 by simp
-  have "AE w in \<nu>. w (0::real) = 0"
-    by (rule pdelclass_frozen_at[OF s0 sT m z s0])
-  then show ?thesis using T0 by simp
+  show ?thesis using pdelclass_frozen[OF s0 sT m] by eventually_elim (use T0 s0 in auto)
 qed
 
 corollary pdelclass_X_int:
@@ -1170,12 +1134,10 @@ proof -
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have nb: "(\<lambda>w :: 'n pairpath. norm (fst (w u))) \<in> borel_measurable ?B"
   proof -
     have e: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
@@ -1210,12 +1172,10 @@ proof -
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have nb: "(\<lambda>w :: 'n pairpath. norm (outerp (fst (w u)) - snd (w u)))
       \<in> borel_measurable ?B"
   proof -

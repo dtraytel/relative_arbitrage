@@ -100,32 +100,14 @@ lemma exit_val_real_usc:
     and lt: "enn2real (exit_val k L T K z) < cc"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (exit_val k L T K y) < cc"
 proof -
-  have L0: "0 \<le> L" using L by simp
-  have T0: "0 \<le> T" using T by simp
-  have cc0: "0 < cc" using lt exit_val_real_nonneg[of k L T K z] by linarith
   have fin: "exit_val k L T K y < \<top>" for y
-  proof -
-    have "exit_val k L T K y
-        \<le> ennreal ((rK * rK - y \<bullet> y) / real (CARD('n) - k))"
-      by (rule exit_val_le_ball_bound[OF kn T0 L0 KB])
-    also have "\<dots> < \<top>" by simp
-    finally show ?thesis .
-  qed
-  have zlt: "exit_val k L T K z < ennreal cc"
-    using lt fin[of z] by simp
-  have "eventually (\<lambda>y. exit_val k L T K y < ennreal cc) (nhds z)"
-    by (rule exit_val_usc_unconditional[OF T L Kc zlt])
-  then obtain U where opU: "open U" and zU: "z \<in> U"
-    and Uy: "\<And>y. y \<in> U \<Longrightarrow> exit_val k L T K y < ennreal cc"
-    unfolding eventually_nhds by blast
-  obtain e where e0: "0 < e" and eU: "ball z e \<subseteq> U"
-    using opU zU unfolding open_contains_ball by blast
-  have "enn2real (exit_val k L T K y) < cc" if dy: "dist z y < e" for y
-  proof -
-    have "y \<in> U" using eU dy by auto
-    then have "exit_val k L T K y < ennreal cc" by (rule Uy)
-    then show ?thesis using fin[of y] cc0 by simp
-  qed
+    using exit_val_neq_top[of T k L K y] T by (simp add: less_top)
+  have cc0: "0 < cc" using lt exit_val_real_nonneg[of k L T K z] by linarith
+  have "z \<in> {y. exit_val k L T K y < ennreal cc}" using lt fin[of z] by simp
+  then obtain e where e0: "0 < e" and eU: "ball z e \<subseteq> {y. exit_val k L T K y < ennreal cc}"
+    using exit_val_open_less[OF T L Kc] unfolding open_contains_ball by blast
+  have "enn2real (exit_val k L T K y) < cc" if "dist z y < e" for y
+    using eU that fin[of y] cc0 by auto
   then show ?thesis using e0 by blast
 qed
 

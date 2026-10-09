@@ -676,8 +676,6 @@ proof -
   let ?dd = "Levy_Prokhorov.LPm
       (mspace (path_metric T' :: ('n pairpath) metric))
       (mdist (path_metric T' :: ('n pairpath) metric))"
-  let ?P = "{N :: ('n pairpath) measure. prob_space N
-      \<and> sets N = sets (path_borel T' :: ('n pairpath) measure)}"
   define KK where "KK = (\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)"
   have T0': "0 \<le> T'" using T by simp
   have L0: "0 \<le> L" using L by simp
@@ -736,21 +734,11 @@ proof -
   have SmB: "KK \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
     using continuous_map_measurable[OF contW]
     by (simp add: borel_of_euclidean)
-  have SP: "KK z \<in> ?P" for z
-    using exit_class_prob[OF KCk] exit_class_sets[OF KCk]
-    by simp
-  have polish: "Polish_space
-      (mtopology_of (path_metric T' :: ('n pairpath) metric))"
-    by (rule Polish_space_path_metric)
-  have setsPA: "sets (borel_of (subtopology ?W ?P)) = sets (prob_algebra ?B)"
-    by (rule weak_conv_topology_eq_prob_algebra[OF polish])
-  have r1: "KK \<in> borel \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?P"
-    by (rule measurable_restrict_space2[OF _ SmB]) (use SP in auto)
-  have r2: "KK \<in> borel \<rightarrow>\<^sub>M borel_of (subtopology ?W ?P)"
-    using r1 by (simp add: borel_of_subtopology)
-  show "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)
-      \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
-    using r2 measurable_cong_sets[OF refl setsPA] unfolding KK_def by blast
+  have "KK \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
+    by (rule measurable_prob_algebra_weak_conv[OF Polish_space_path_metric SmB])
+      (use exit_class_prob[OF KCk] exit_class_sets[OF KCk] in simp)
+  then show "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)
+      \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B" unfolding KK_def .
 qed
 
 subsection \<open>The Euler process\<close>
@@ -858,25 +846,6 @@ subsection \<open>Step moments of the Gaussian member\<close>
 text \<open>\<open>bounded_linear_trace_mult_left\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma sconstraint_diag_le:
-  fixes a :: "real^'n::finite^'n"
-  assumes a: "a \<in> sconstraint k L"
-  shows "a $ i $ i \<le> L"
-proof -
-  have ub: "eigen_ub a L"
-    using a unfolding sconstraint_def by blast
-  have gen: "\<And>u :: real^'n. u \<bullet> (a *v u) \<le> L * (u \<bullet> u)"
-    using ub unfolding eigen_ub_def by blast
-  have inst: "axis i 1 \<bullet> (a *v axis i 1)
-      \<le> L * ((axis i 1 :: real^'n) \<bullet> axis i 1)"
-    using gen by blast
-  have e1: "axis i 1 \<bullet> (a *v axis i 1) = a $ i $ i"
-    using axis1_inner[of i "a *v axis i 1"] matvec_axis1[of a i i] by simp
-  have e2: "(axis i 1 :: real^'n) \<bullet> axis i 1 = 1"
-    by (rule axis1_self)
-  show ?thesis using inst unfolding e1 e2 by simp
-qed
-
 lemma sbm_entry_bound:
   fixes S :: "real^'n::finite^'n"
   assumes SST: "S ** transpose S \<in> sconstraint k L"
@@ -887,7 +856,7 @@ proof -
   have "(S $ i $ j)\<^sup>2 \<le> (\<Sum>l\<in>UNIV. (S $ i $ l)\<^sup>2)"
     by (rule member_le_sum) simp_all
   also have "\<dots> \<le> L"
-    using sconstraint_diag_le[OF SST, of i] diag by simp
+    using sconstraint_diag(2)[OF SST, of i] diag by simp
   finally have "(S $ i $ j)\<^sup>2 \<le> L" .
   then have "sqrt ((S $ i $ j)\<^sup>2) \<le> sqrt L"
     by (rule real_sqrt_le_mono)

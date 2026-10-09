@@ -199,6 +199,25 @@ text \<open>The other half of the dynamic programming principle needs the class
   instantiates \<open>r\<close> with \<open>\<theta> \<omega>\<close>.\<close>
 
 
+text \<open>A difference quotient over \<open>[s, t]\<close> is the convex combination of
+  those over \<open>[s, r]\<close> and \<open>[r, t]\<close>, with weights \<open>(r - s)/(t - s)\<close> and
+  \<open>(t - r)/(t - s)\<close>.\<close>
+
+lemma diffquot_convex_split:
+  fixes u v :: "'a::real_vector"
+  assumes S: "convex S" and sr: "s < r" and rt: "r < t"
+    and u: "(1 / (r - s)) *\<^sub>R u \<in> S" and v: "(1 / (t - r)) *\<^sub>R v \<in> S"
+  shows "(1 / (t - s)) *\<^sub>R (u + v) \<in> S"
+proof -
+  have "(r - s) / (t - s) + (t - r) / (t - s) = 1"
+    using sr rt by (simp add: add_divide_distrib[symmetric])
+  then have "((r - s) / (t - s)) *\<^sub>R ((1 / (r - s)) *\<^sub>R u)
+      + ((t - r) / (t - s)) *\<^sub>R ((1 / (t - r)) *\<^sub>R v) \<in> S"
+    using sr rt by (intro convexD[OF S u v]) auto
+  then show ?thesis
+    using sr rt by (simp add: scaleR_add_right)
+qed
+
 lemma pglue_diffquot:
   fixes \<omega> \<omega>' :: "'n::finite pairpath"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -228,29 +247,14 @@ proof -
       by (simp add: pglue_ge[OF sT late] pglue_ge[OF tI rt])
   next
     case mid
-    let ?a = "(1 / (r - s)) *\<^sub>R (snd (\<omega> r) - snd (\<omega> s))"
-    let ?b = "(1 / (t - r)) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' 0))"
-    have aA: "?a \<in> sconstraint k L" by (rule A[OF s mid(1) order_refl])
-    have bB: "?b \<in> sconstraint k L"
-      using B[of 0 "t - r"] mid(2) tT by simp
-    have pos: "0 < r - s" "0 < t - r" "0 < t - s" using mid st by auto
-    have sum1: "(r - s) / (t - s) + (t - r) / (t - s) = 1"
-      by (subst add_divide_distrib[symmetric]) (use pos(3) in simp)
-    have cc: "((r - s) / (t - s)) *\<^sub>R ?a + ((t - r) / (t - s)) *\<^sub>R ?b
-        \<in> sconstraint k L"
-      using pos by (intro convexD[OF sconstraint_convex aA bB] sum1) auto
-    have e1: "((r - s) / (t - s)) *\<^sub>R ?a
-        = (1 / (t - s)) *\<^sub>R (snd (\<omega> r) - snd (\<omega> s))"
-      using pos by simp
-    have e2: "((t - r) / (t - s)) *\<^sub>R ?b
-        = (1 / (t - s)) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' 0))"
-      using pos by simp
-    have "snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)
+    have eq: "snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)
         = (snd (\<omega> r) - snd (\<omega> s)) + (snd (\<omega>' (t - r)) - snd (\<omega>' 0))"
       using mid(1) less_imp_le[OF mid(2)]
       by (simp add: pglue_le[OF sT] pglue_ge[OF tI])
-    then show ?thesis
-      using cc unfolding e1 e2 by (simp add: scaleR_right_distrib)
+    have "(1 / (t - r)) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' 0)) \<in> sconstraint k L"
+      using B[of 0 "t - r"] mid(2) tT by simp
+    from diffquot_convex_split[OF sconstraint_convex mid A[OF s mid(1) order_refl] this]
+    show ?thesis unfolding eq .
   qed
 qed
 

@@ -1382,23 +1382,11 @@ lemma sconstraint_trace_le:
   assumes L0: "0 \<le> L" and b: "b \<in> sconstraint k L"
   shows "trace b \<le> real CARD('n) * (real CARD('n) * L)"
 proof -
-  have entry: "b $ i $ i \<le> real CARD('n) * L" for i
-  proof -
-    have "b $ i $ i \<le> \<bar>b $ i $ i\<bar>" by simp
-    also have "\<bar>b $ i $ i\<bar> = norm (b $ i $ i)" by simp
-    also have "\<dots> \<le> norm (b $ i)"
-      by (rule Finite_Cartesian_Product.norm_nth_le)
-    also have "\<dots> \<le> norm b"
-      by (rule Finite_Cartesian_Product.norm_nth_le)
-    also have "\<dots> \<le> real CARD('n) * L"
-      by (rule sconstraint_norm_le[OF L0 b])
-    finally show ?thesis .
-  qed
-  have "trace b = (\<Sum>i\<in>UNIV. b $ i $ i)" by (simp add: trace_def)
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). real CARD('n) * L)"
-    by (rule sum_mono) (rule entry)
-  also have "\<dots> = real CARD('n) * (real CARD('n) * L)"
+  have "trace b \<le> real CARD('n) * L"
+    unfolding trace_def using sum_mono[of UNIV "\<lambda>i. b $ i $ i" "\<lambda>_. L"] sconstraint_diag(2)[OF b]
     by simp
+  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L)"
+    using L0 mult_right_mono[of 1 "real CARD('n)" L] by (intro mult_left_mono) auto
   finally show ?thesis .
 qed
 
@@ -2684,11 +2672,8 @@ lemma feasible_trace_le:
   assumes a: "a \<in> feasible k L p"
   shows "trace a \<le> real CARD('n) * L"
 proof -
-  have "a $ i $ i \<le> L" for i
-    using feasible_entry_bound[OF a, of i i] by simp
-  then have "trace a \<le> (\<Sum>i\<in>(UNIV :: 'n set). L)"
-    unfolding trace_def by (rule sum_mono)
-  then show ?thesis by simp
+  have "a $ i $ i \<le> L" for i using a eigen_ub_diag by (auto simp: feasible_def)
+  then show ?thesis unfolding trace_def using sum_mono[of UNIV "\<lambda>i. a $ i $ i" "\<lambda>_. L"] by simp
 qed
 
 text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9)

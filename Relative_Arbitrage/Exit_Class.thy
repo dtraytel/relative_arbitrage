@@ -121,81 +121,17 @@ theorem closed_sconstraint: "closed (sconstraint k L :: (real^'n::finite^'n) set
 
 subsection \<open>Boundedness, hence compactness\<close>
 
-text \<open>For a psd matrix the eigenvalue cap bounds every entry: the diagonal
-  directly (test on \<open>axis i 1\<close>), the off-diagonal by the psd inequality on
-  \<open>axis i 1 \<plusminus> axis j 1\<close> (a two-sided form of Cauchy--Schwarz).\<close>
-
 lemma psd_eigen_ub_diag:
   fixes a :: "real^'n::finite^'n"
   assumes a: "psd a" and ub: "eigen_ub a L"
   shows "0 \<le> a $ i $ i" and "a $ i $ i \<le> L"
-proof -
-  have q: "axis i (1 :: real) \<bullet> (a *v axis i (1 :: real)) = a $ i $ i"
-    by (simp add: inner_axis_one matrix_vector_axis_one)
-  have nn: "axis i (1 :: real) \<bullet> axis i (1 :: real) = 1"
-    unfolding inner_axis_one by (simp add: axis_def)
-  show "0 \<le> a $ i $ i"
-    using a[unfolded psd_def, THEN conjunct2, rule_format, of "axis i 1"] q
-    by simp
-  have "a $ i $ i \<le> L * (axis i (1 :: real) \<bullet> axis i (1 :: real))"
-    using ub[unfolded eigen_ub_def, rule_format, of "axis i 1"] q by simp
-  then show "a $ i $ i \<le> L" unfolding nn by simp
-qed
-
-lemma psd_eigen_ub_entry_abs_le:
-  fixes a :: "real^'n::finite^'n"
-  assumes a: "psd a" and ub: "eigen_ub a L"
-  shows "\<bar>a $ i $ j\<bar> \<le> L"
-proof -
-  have sym: "transpose a = a" using a by (simp add: psd_def)
-  have psda: "0 \<le> x \<bullet> (a *v x)" for x using a by (simp add: psd_def)
-  have dii: "a $ i $ i \<le> L" and djj: "a $ j $ j \<le> L"
-    by (rule psd_eigen_ub_diag(2)[OF a ub])+
-  have plus: "0 \<le> a $ i $ i + a $ j $ j + 2 * a $ i $ j"
-    using psda[of "axis i 1 + axis j 1"]
-    unfolding quadform_axis_pair[OF sym] .
-  have minus: "0 \<le> a $ i $ i + a $ j $ j - 2 * a $ i $ j"
-    using psda[of "axis i 1 - axis j 1"]
-    unfolding quadform_axis_pair_minus[OF sym] .
-  have "2 * \<bar>a $ i $ j\<bar> \<le> a $ i $ i + a $ j $ j"
-    using plus minus by (simp add: abs_le_iff)
-  also have "\<dots> \<le> 2 * L" using dii djj by simp
-  finally show ?thesis by simp
-qed
+  by (rule psd_diag_nonneg[OF a]) (rule eigen_ub_diag[OF ub])
 
 theorem sconstraint_norm_le:
   fixes a :: "real^'n::finite^'n"
   assumes L: "0 \<le> L" and as: "a \<in> sconstraint k L"
   shows "norm a \<le> real CARD('n) * L"
-proof -
-  have a: "psd a" and ub: "eigen_ub a L"
-    using as by (auto simp: sconstraint_def Pi_constraint_def)
-  have entry: "\<bar>a $ i $ j\<bar> \<le> L" for i j
-    by (rule psd_eigen_ub_entry_abs_le[OF a ub])
-  have sq: "a \<bullet> a \<le> (real CARD('n) * L)^2"
-  proof -
-    have "a \<bullet> a = (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). a $ i $ j * a $ i $ j)"
-      unfolding inner_vec_def by simp
-    also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). L * L)"
-    proof (intro sum_mono)
-      fix i j :: 'n
-      have "a $ i $ j * a $ i $ j = \<bar>a $ i $ j\<bar> * \<bar>a $ i $ j\<bar>"
-        by (simp add: abs_mult[symmetric])
-      also have "\<dots> \<le> L * L"
-        using entry[of i j] by (intro mult_mono) auto
-      finally show "a $ i $ j * a $ i $ j \<le> L * L" .
-    qed
-    also have "\<dots> = (real CARD('n) * L)^2"
-      by (simp add: power2_eq_square algebra_simps)
-    finally show ?thesis .
-  qed
-  have "norm a = sqrt (a \<bullet> a)" by (simp add: norm_eq_sqrt_inner)
-  also have "\<dots> \<le> sqrt ((real CARD('n) * L)^2)"
-    using sq by (intro real_sqrt_le_mono)
-  also have "\<dots> = real CARD('n) * L"
-    using L by simp
-  finally show "norm a \<le> real CARD('n) * L" .
-qed
+  using as psd_eigen_ub_norm_le[OF _ _ L] by (auto simp: sconstraint_def Pi_constraint_def)
 
 theorem bounded_sconstraint:
   assumes L: "0 \<le> L"
@@ -209,9 +145,6 @@ text \<open>Paths take values in \<open>real^'n \<times> real^'n^'n\<close>: the
   tightness machinery are polymorphic in the value type, so the whole
   Section-2 toolchain applies verbatim.\<close>
 
-
-lemma outerp_eq_outer_prod: "outerp x = outer_prod x x"
-  by (simp add: outerp_def outer_prod_def)
 
 
 definition exit_class ::

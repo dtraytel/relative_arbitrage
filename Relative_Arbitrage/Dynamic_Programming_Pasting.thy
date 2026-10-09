@@ -83,6 +83,24 @@ text \<open>In \<open>pexit_pglue_split'\<close> the continuation only has to st
 
 
 
+text \<open>A map into the weak-convergence Borel space whose values are
+  probability measures on \<open>borel_of X\<close> is a kernel: it is measurable into
+  the probability algebra, by @{thm [source] weak_conv_topology_eq_prob_algebra}.\<close>
+
+lemma measurable_prob_algebra_weak_conv:
+  assumes X: "Polish_space X" and f: "f \<in> M \<rightarrow>\<^sub>M borel_of (weak_conv_topology X)"
+    and P: "\<And>x. x \<in> space M \<Longrightarrow> prob_space (f x) \<and> sets (f x) = sets (borel_of X)"
+  shows "f \<in> M \<rightarrow>\<^sub>M prob_algebra (borel_of X)"
+proof -
+  have "f \<in> M \<rightarrow>\<^sub>M restrict_space (borel_of (weak_conv_topology X))
+      {N. prob_space N \<and> sets N = sets (borel_of X)}" (is "_ \<in> M \<rightarrow>\<^sub>M ?R")
+    by (rule measurable_restrict_space2[OF _ f]) (use P in auto)
+  moreover have "M \<rightarrow>\<^sub>M ?R = M \<rightarrow>\<^sub>M prob_algebra (borel_of X)"
+    using measurable_cong_sets[OF refl weak_conv_topology_eq_prob_algebra[OF X]]
+    by (simp add: borel_of_subtopology)
+  ultimately show ?thesis by simp
+qed
+
 theorem exit_val_measurable_selector_kernel':
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
@@ -98,28 +116,15 @@ theorem exit_val_measurable_selector_kernel':
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?P = "{N :: ('n pairpath) measure. prob_space N
-      \<and> sets N = sets (path_borel T :: ('n pairpath) measure)}"
   let ?C = "exit_class k L T (0::real^'n)"
   obtain S where Sm: "S \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
     and SC: "\<And>y. S y \<in> exit_class k L T 0"
     and Sval: "\<And>y. ess_inf_time (pshift_law T y (S y))
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
     by (rule exit_val_measurable_selector[where k = k, OF T L K]) blast
-  have SP: "S y \<in> ?P" for y
-    using exit_class_prob[OF SC] exit_class_sets[OF SC] by simp
-  have polish: "Polish_space (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    by (rule Polish_space_path_metric)
-  have setsPA: "sets (borel_of (subtopology ?W ?P)) = sets (prob_algebra ?B)"
-    by (rule weak_conv_topology_eq_prob_algebra[OF polish])
   have Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
-  proof -
-    have r1: "S \<in> borel \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?P"
-      by (rule measurable_restrict_space2[OF _ Sm]) (use SP in auto)
-    have r2: "S \<in> borel \<rightarrow>\<^sub>M borel_of (subtopology ?W ?P)"
-      using r1 by (simp add: borel_of_subtopology)
-    show ?thesis using r2 measurable_cong_sets[OF refl setsPA] by blast
-  qed
+    by (rule measurable_prob_algebra_weak_conv[OF Polish_space_path_metric Sm])
+      (use exit_class_prob[OF SC] exit_class_sets[OF SC] in simp)
   have Ssub: "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology ?C
       (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
         (mdist (path_metric T :: ('n pairpath) metric))))"
@@ -172,9 +177,9 @@ qed
 subsection \<open>The value function is Borel measurable\<close>
 
 text \<open>Clause (1) --- upper semicontinuity --- makes every sublevel set
-  \<open>{y. v y < b}\<close> open, and the horizon bound makes \<open>v\<close> finite, so the real
-  version \<open>enn2real \<circ> v\<close> is Borel measurable, as needed to state the
-  dynamic programming principle's integrand as a random variable.\<close>
+  \<open>{y. v y < b}\<close> open, so \<open>v\<close> and its real version \<open>enn2real \<circ> v\<close> are
+  Borel measurable, as needed to state the dynamic programming principle's
+  integrand as a random variable.\<close>
 
 lemma exit_val_open_less:
   fixes K :: "(real^'n::finite) set" and b :: ennreal
@@ -203,44 +208,8 @@ lemma exit_val_borel_measurable:
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
   shows "(\<lambda>y :: real^'n. enn2real (exit_val k L T K y)) \<in> borel_measurable borel"
-proof (subst borel_measurable_iff_less, intro allI)
-  fix a :: real
-  show "{w \<in> space (borel :: (real^'n) measure).
-      enn2real (exit_val k L T K w) < a} \<in> sets (borel :: (real^'n) measure)"
-  proof (cases "0 < a")
-    case True
-    have key: "(enn2real (exit_val k L T K y) < a)
-        = (exit_val k L T K y < ennreal a)" for y :: "real^'n"
-    proof -
-      have fin: "exit_val k L T K y < \<top>"
-        using exit_val_neq_top[of T k L K y] T by (simp add: less_top)
-      have "(exit_val k L T K y < ennreal a)
-          = (ennreal (enn2real (exit_val k L T K y)) < ennreal a)"
-        by (simp add: ennreal_enn2real[OF fin])
-      also have "\<dots> = (enn2real (exit_val k L T K y) < a)"
-        using True by (simp add: ennreal_less_iff)
-      finally show ?thesis ..
-    qed
-    have "{w \<in> space (borel :: (real^'n) measure).
-        enn2real (exit_val k L T K w) < a}
-        = {y :: real^'n. exit_val k L T K y < ennreal a}"
-      by (simp add: key)
-    then show ?thesis
-      using exit_val_open_less[OF T L K, of k "ennreal a"] by simp
-  next
-    case False
-    have "{w \<in> space (borel :: (real^'n) measure).
-        enn2real (exit_val k L T K w) < a} = {}"
-    proof (rule equals0I)
-      fix w assume "w \<in> {w \<in> space (borel :: (real^'n) measure).
-          enn2real (exit_val k L T K w) < a}"
-      then have "enn2real (exit_val k L T K w) < a" by simp
-      moreover have "0 \<le> enn2real (exit_val k L T K w)" by simp
-      ultimately show False using False by simp
-    qed
-    then show ?thesis by simp
-  qed
-qed
+  by (intro borel_measurable_enn2real borel_measurableI_less)
+    (simp add: borel_open exit_val_open_less[OF T L K])
 
 subsection \<open>The \<open>\<ge>\<close> half of the dynamic programming principle (2.9)\<close>
 
