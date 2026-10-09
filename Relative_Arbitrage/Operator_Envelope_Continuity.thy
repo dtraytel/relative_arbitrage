@@ -218,7 +218,7 @@ text \<open>\<open>mgap\<close> is symmetric in its two matrix arguments, so \<o
 lemma mgap_commute:
   fixes M N :: "real^'n::finite^'n"
   shows "mgap L M N = mgap L N M"
-  unfolding mgap_def by (simp add: abs_minus_commute)
+  using entrysum_sym[of M N] by simp
 
 lemma ell_op_M_gap_abs:
   fixes M N :: "real^'n::finite^'n"
@@ -229,8 +229,9 @@ proof -
     by (rule ell_op_M_gap[OF ne])
   have b: "ell_op k L p N \<le> ell_op k L p M + mgap L N M"
     by (rule ell_op_M_gap[OF ne])
+  have c: "mgap L N M = mgap L M N" by (rule mgap_commute)
   show ?thesis
-    using a b by (simp add: mgap_commute[of L N M])
+    using a b unfolding c abs_le_iff by linarith
 qed
 
 text \<open>The two variations combine: on a ball around \<open>(p, M)\<close> of radius smaller
@@ -562,93 +563,9 @@ text \<open>Lemma 3.1 consists of:
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
 
-text \<open>\<open>max_principle_boundary_raw\<close>, \<open>max_principle_boundary\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
-
-
-text \<open>The predicate is about where the maximum sits, not whether there is one:
-  under the added hypotheses \<open>u - w\<close> always attains its maximum on a compact
-  \<open>K\<close>, a fact the raw version presupposed.\<close>
-
-text \<open>Theorem 4.2(b): with zero boundary data for \<open>u\<close> and nonnegative boundary
-  data for \<open>w\<close>, the maximum principle gives \<open>u \<le> w\<close> on \<open>K\<close>.\<close>
-
-theorem max_principle_le:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes mp: "max_principle_boundary k L K"
-    and sub: "visc_subsol_env k L K (interior K) u"
-    and sup: "visc_supersol_env k L K (interior K) w"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
-    and wbd: "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 \<le> w y"
-  shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
-proof -
-  fix y assume y: "y \<in> K"
-  obtain x where x: "x \<in> K - interior K"
-    and mx: "\<And>z. z \<in> K \<Longrightarrow> u z - w z \<le> u x - w x"
-    using mp sub sup cu cw unfolding max_principle_boundary_def by blast
-  have "u x - w x \<le> 0"
-    using ubd[OF x] wbd[OF x] by simp
-  then have "u y - w y \<le> 0"
-    using mx[OF y] by simp
-  then show "u y \<le> w y"
-    by simp
-qed
-
-text \<open>Theorem 4.3 (comparison) in the form the paper uses it: a subsolution with
-  zero boundary data is dominated by a supersolution with zero boundary data.
-  Here \<open>w\<^sub>+\<close> of the paper is \<open>max (w y) 0\<close>, which has nonnegative boundary data
-  by construction and is still a supersolution wherever \<open>w\<close> is nonnegative --
-  so the hypothesis is carried explicitly rather than silently assumed.\<close>
-
-theorem comparison_from_max_principle:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes mp: "max_principle_boundary k L K"
-    and sub: "visc_subsol_env k L K (interior K) u"
-    and sup: "visc_supersol_env k L K (interior K) w"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
-    and wbd: "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
-  shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
-proof -
-  have wbd': "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 \<le> w y"
-    using wbd by simp
-  show "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
-    by (rule max_principle_le[OF mp sub sup cu cw ubd wbd'])
-qed
-
-text \<open>Proposition 4.1 (uniqueness): two viscosity solutions with the same
-  boundary data agree, by applying the comparison step in both directions.
-  This needs the maximum principle for \<open>K\<close> only, not the \<open>T\<^sub>\<iota>\<close> family, which
-  the paper's Theorem 4.3 uses to handle boundary data that is merely
-  semicontinuous -- unnecessary for the equal-boundary-data statement.\<close>
-
-theorem uniqueness_from_max_principle:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes mp: "max_principle_boundary k L K"
-    and su: "visc_subsol_env k L K (interior K) u"
-    and pu: "visc_supersol_env k L K (interior K) u"
-    and sw: "visc_subsol_env k L K (interior K) w"
-    and pw: "visc_supersol_env k L K (interior K) w"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = 0"
-    and bd': "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
-  shows "\<And>y. y \<in> K \<Longrightarrow> u y = w y"
-proof -
-  fix y assume y: "y \<in> K"
-  have le1: "u y \<le> w y"
-    by (rule comparison_from_max_principle[OF mp su pw cu cw _ bd' y])
-       (simp add: bd)
-  have le2: "w y \<le> u y"
-    by (rule comparison_from_max_principle[OF mp sw pu cw cu _ bd y])
-       (simp add: bd')
-  from le1 le2 show "u y = w y"
-    by simp
-qed
-
-text \<open>Removing the interface needs a proof of \<open>max_principle_boundary k L K\<close>
-  for compact \<open>K\<close>, i.e. Theorem 4.2(a); everything above then becomes
-  unconditional.  The continuous version is the target --
-  \<open>max_principle_boundary_raw\<close> is false and not one.\<close>
+text \<open>Theorem 4.2(a) is \<open>max_principle_usc_lsc\<close> in \<open>Comparison_Principle\<close>;
+  Theorem 4.2(b) and Proposition 4.1 follow from it there, as
+  \<open>max_principle_le\<close> and \<open>uniqueness_from_max_principle\<close>.\<close>
 
 (*<*)
 end

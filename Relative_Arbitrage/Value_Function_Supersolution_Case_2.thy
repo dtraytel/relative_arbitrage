@@ -3,7 +3,7 @@ section \<open>The supersolution, case 2: touching the lower envelope\<close>
 (*<*)
 theory Value_Function_Supersolution_Case_2
   imports
-    Value_Function_Supersolution_Case_1
+    Value_Function_Tangential_Field
 begin
 
 (*>*)
@@ -86,8 +86,10 @@ proof -
     show "vs y \<le> T" using vs_le[of y] tvT[of y] by linarith
   qed
   obtain a where aF: "a \<in> feasible k L (g x)"
-    and aTr: "- trace (H ** a) / 2 < 1"
-    by (rule ell_op_lt_witness[OF k1 kn L1' fail])
+    and "- trace (H ** a) / 2 < ell_op k L (g x) H + (1 - ell_op k L (g x) H)"
+    by (rule ell_op_approx[OF k1 kn L1', where \<epsilon> = "1 - ell_op k L (g x) H"])
+      (use fail in simp)
+  then have aTr: "- trace (H ** a) / 2 < 1" by simp
   define \<eta>\<^sub>0 where "\<eta>\<^sub>0 = (1 - (- trace (H ** a) / 2)) / 2"
   have h00: "0 < \<eta>\<^sub>0" unfolding \<eta>\<^sub>0_def using aTr by simp
   have trH: "2 * \<eta>\<^sub>0 \<le> 1 + trace (H ** a) / 2"
@@ -273,10 +275,8 @@ proof -
       obtain P where Pc: "P \<in> exit_class k L T y"
         and AEg: "AE \<omega> in P. \<forall>t.
           0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rr) \<longrightarrow>
-          (t * (\<eta> - 2) / 2 \<le> qy \<bullet> (fst (\<omega> t) - y)
-            + (1/2) * ((fst (\<omega> t) - y) \<bullet> (M *v (fst (\<omega> t) - y))))
-          \<and> (t * (\<eta> - 2) / 2 \<le> qy \<bullet> (fst (\<omega> t) - y)
-            + (1/2) * ((fst (\<omega> t) - y) \<bullet> (M *v (fst (\<omega> t) - y))))"
+          t * (\<eta> - 2) / 2 \<le> qy \<bullet> (fst (\<omega> t) - y)
+            + (1/2) * ((fst (\<omega> t) - y) \<bullet> (M *v (fst (\<omega> t) - y)))"
       proof -
         have ROo: "open (ball x rr)" by (rule open_ball)
         have ROb: "\<And>z. z \<in> ball x rr \<Longrightarrow> norm (z - y) \<le> 2 * rr"
@@ -304,8 +304,8 @@ proof -
             \<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))"
           using marg by blast
         show ?thesis
-          using eulerp_limit_good2_region[OF T0 L1' SFc SFs symM symM
-              ROo ROb killy margy killy margy] that by blast
+          using eulerp_limit_good_region[OF T0 L1' SFc SFs symM
+              ROo ROb killy margy] that by blast
       qed
       have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
         by (rule exit_class_sets[OF Pc])
@@ -330,11 +330,7 @@ proof -
                 \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
              then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
              else 0))"
-      have dpp: "(SUP P' \<in> exit_class k L T y. ess_inf_time P' FN)
-          \<le> exit_val k L T K y"
-        unfolding FN_def
-        by (rule exit_val_dpp_sup_ge_time[OF T0 L1' Kc st thM])
-      have AEfun: "AE \<omega> in P. ennreal (vs x + mg + psiY) \<le> ennreal (FN \<omega>)"
+      have AEfun: "AE \<omega> in P. vs x + mg + psiY \<le> FN \<omega>"
         using AEg start sp
       proof (eventually_elim)
         case (elim \<omega>)
@@ -549,24 +545,16 @@ proof -
           also have "\<dots> \<le> T" by (rule mgT)
           finally show ?thesis unfolding fT .
         qed
-        show ?case by (rule ennreal_leI[OF fun_ge])
+        show ?case by (rule fun_ge)
       qed
-      have essge: "ennreal (vs x + mg + psiY) \<le> ess_inf_time P FN"
-        unfolding ess_inf_time_def
-        by (rule Sup_upper) (use AEfun in blast)
-      have esle: "ess_inf_time P FN \<le> exit_val k L T K y"
-      proof -
-        have "ess_inf_time P FN
-            \<le> (SUP P' \<in> exit_class k L T y. ess_inf_time P' FN)"
-          by (rule SUP_upper[OF Pc])
-        then show ?thesis using dpp by (rule order_trans)
-      qed
+      have dpp: "ennreal (vs x + mg + psiY) \<le> exit_val k L T K y"
+        by (rule exit_val_dpp_ge_const_time[OF T0 L1' Kc st thM Pc AEfun[unfolded FN_def]])
       have vfin: "ennreal (tv y) = exit_val k L T K y"
         unfolding tv_def
         using exit_val_neq_top[OF T0', of k L K y]
         by (simp add: less_top)
       have chain: "ennreal (vs x + mg + psiY) \<le> ennreal (tv y)"
-        using order_trans[OF essge esle] by (simp add: vfin)
+        using dpp by (simp add: vfin)
       have nn: "0 \<le> tv y" by (rule tv0)
       have "vs x + mg + psiY \<le> tv y"
         using chain nn by simp
@@ -1205,66 +1193,14 @@ qed
 text \<open>Definition 3.1(b) for the paper's own value function.  Case 1
   (\<open>\<nabla>\<phi>(x) \<noteq> 0\<close>) is the skew-trick contradiction, lifted from
   \<open>ell_op\<close> to \<open>ell_op_usc\<close>; Case 2 (\<open>\<nabla>\<phi>(x) = 0\<close>) is the dichotomy
-  above.  A global touching over \<open>K\<close> is in particular a local one, which
-  is all either case consumes.
+  above.  Both cases consume the touching only on a ball around \<open>x\<close>, so
+  the inequality is stated for a local touching.
 
   The hypothesis \<open>cap\<close> says the horizon never binds on the interior.  It
   is needed only by Case 2 --- Case 1 derives it from the nonvanishing
   gradient --- and it is faithful to the paper, which has no horizon at
   all.  For a bounded \<open>K\<close> it follows from
   @{thm [source] exit_val_le_ball_bound}.\<close>
-
-theorem exit_val_supersol_lsc:
-  fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K"
-    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
-  shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (exit_val k L T K u))"
-  unfolding visc_supersol_lsc_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume xi: "x \<in> interior K"
-    and tf: "test_fun_at \<phi> g H x"
-    and tmin: "\<forall>y\<in>K. lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-  have loc: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-    if yK: "y \<in> K" and dy: "dist x y < 1" for y
-    using tmin yK by blast
-  show "1 \<le> ell_op_usc k L (g x) H"
-  proof (cases "g x = 0")
-    case False
-    have plain: "1 \<le> ell_op k L (g x) H"
-    proof (rule ccontr)
-      assume "\<not> 1 \<le> ell_op k L (g x) H"
-      then have flt: "ell_op k L (g x) H < 1" by simp
-      show False
-        by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc xi
-              tf zero_less_one loc False flt])
-    qed
-    have "(1 :: ereal) \<le> ereal (ell_op k L (g x) H)" using plain by simp
-    also have "\<dots> \<le> ell_op_usc k L (g x) H" by (rule ell_op_le_ell_op_usc)
-    finally show ?thesis .
-  next
-    case True
-    have "1 \<le> ell_op_usc k L 0 H"
-      by (rule exit_val_case2[OF T0 L1 k1 kn Kc xi tf True zero_less_one loc
-            cap[OF xi]])
-    then show ?thesis unfolding True .
-  qed
-qed
-
-subsection \<open>The same inequality for the envelope taken within \<open>K\<close>\<close>
-
-text \<open>The touching in @{thm [source] exit_val_supersol_lsc} is global over \<open>K\<close>
-  but its proof only ever uses it near the touching point, so the local form
-  is the one actually proved; and once it is stated locally the paper's
-  envelope @{const lsc_envK} follows at once, since the two envelopes agree at
-  interior points and a small enough ball around an interior point meets \<open>K\<close>
-  only in interior points.\<close>
 
 theorem exit_val_supersol_lsc_local:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -1297,6 +1233,36 @@ next
     by (rule exit_val_case2[OF T0 L1 k1 kn Kc xi tf True rho0 tmin cap])
   then show ?thesis unfolding True .
 qed
+
+text \<open>A touching over all of \<open>K\<close> is in particular a local one (with
+  \<open>\<rho> = 1\<close>), so the global form follows.\<close>
+
+theorem exit_val_supersol_lsc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K"
+    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+  shows "visc_supersol_lsc k L K (interior K)
+      (\<lambda>u. enn2real (exit_val k L T K u))"
+  unfolding visc_supersol_lsc_def
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume xi: "x \<in> interior K" and tf: "test_fun_at \<phi> g H x"
+    and tmin: "\<forall>y\<in>K. lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+  show "1 \<le> ell_op_usc k L (g x) H"
+    by (rule exit_val_supersol_lsc_local[OF T0 L1 k1 kn Kc cap[OF xi] xi tf
+          zero_less_one]) (use tmin in blast)
+qed
+
+subsection \<open>The same inequality for the envelope taken within \<open>K\<close>\<close>
+
+text \<open>The local form also gives the inequality for the paper's envelope
+  @{const lsc_envK}, since the two envelopes agree at interior points and a
+  small enough ball around an interior point meets \<open>K\<close> only in interior
+  points.\<close>
 
 theorem exit_val_supersol_envK:
   fixes K :: "(real^'n::finite) set"

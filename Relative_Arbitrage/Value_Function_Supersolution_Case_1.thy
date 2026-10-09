@@ -13,26 +13,6 @@ subsection \<open>Bricks for the Case-1 contradiction\<close>
 text \<open>\<open>transpose_sub_smat\<close>, \<open>trace_msub_mat\<close>, \<open>quad_soften_split\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-lemma ell_op_lt_witness:
-  fixes p :: "real^'n::finite" and H :: "real^'n^'n"
-  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
-    and lt: "ell_op k L p H < 1"
-  obtains a where "a \<in> feasible k L p" and "- trace (H ** a) / 2 < 1"
-proof -
-  have L0: "0 \<le> L" using L1 by linarith
-  have ne: "(\<lambda>a. - trace (H ** a) / 2) ` feasible k L p \<noteq> {}"
-    using feasible_nonempty[OF k1 kn L1] by blast
-  have bdd: "bdd_below ((\<lambda>a. - trace (H ** a) / 2) ` feasible k L p)"
-    by (rule bdd_below_mono[OF ell_op_s_bdd_below[OF L0]
-        image_mono[OF feasible_subset_sconstraint]])
-  have "\<exists>v \<in> (\<lambda>a. - trace (H ** a) / 2) ` feasible k L p. v < 1"
-    using lt unfolding ell_op_def using cInf_less_iff[OF ne bdd] by blast
-  then obtain a where a: "a \<in> feasible k L p"
-    and tr: "- trace (H ** a) / 2 < 1" by blast
-  show ?thesis by (rule that[OF a tr])
-qed
-
-
 subsection \<open>Exact rotations: a covariance field with no eigenvalue margin\<close>
 
 text \<open>\<open>colmat_matvec\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
@@ -358,142 +338,6 @@ text \<open>The contradiction, read back as the positive statement the envelope
   nonzero gradient the usc envelope of the operator is at least one, since
   \<open>F \<le> F\<^sup>*\<close> (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
   inequality into a failed plain one.\<close>
-
-subsection \<open>Bricks for Case 2: the envelope limit and the tangential field\<close>
-
-text \<open>The sphere-tangential projector field.  The companion input, that the
-  usc envelope passes \<open>\<ge> 1\<close> through limits in \<open>(p, M)\<close> and so turns the
-  Case-1 conclusions at perturbed touching points into
-  \<open>1 \<le> F\<^sup>*(0, H)\<close>, is @{thm [source] ell_op_usc_ge_one_limit}.  Clamped
-  to a ball separated from its centre \<open>y\<^sub>0\<close>, the field is an admissible
-  volatility that kills the radial direction exactly, so the squared
-  distance to \<open>y\<^sub>0\<close> moves at the deterministic rate \<open>CARD('n) - 1\<close>; this
-  feeds the same Euler machinery as Case 1 and is the positivity input for
-  the second horn of the dichotomy, and for Example 3.1's lower bound.\<close>
-
-text \<open>Matrix difference distributes over the product, entrywise:
-  \<open>matrix_msub_rdistrib\<close> is \<open>matrix_mul_diff_left\<close> and \<open>matrix_msub_ldistrib\<close>
-  is \<open>matrix_mul_diff_right\<close>, both from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-subsubsection \<open>The tangential projector\<close>
-
-definition tanp :: "real^'n::finite \<Rightarrow> real^'n^'n"
-  where "tanp u = mat 1 - outerp u"
-
-lemma tanp_mv: "tanp u *v w = w - (u \<bullet> w) *\<^sub>R u"
-  unfolding tanp_def outerp_eq_outer_prod
-  by (simp add: matrix_vector_mult_diff_rdistrib)
-
-lemma tanp_sym: "transpose (tanp u) = tanp u"
-proof -
-  have "transpose (tanp u) = transpose (mat 1) - transpose (outerp u)"
-    unfolding tanp_def by (simp add: transpose_def vec_eq_iff)
-  also have "transpose (outerp u) = outerp u"
-    by (simp add: transpose_def outerp_def vec_eq_iff mult_ac)
-  finally show ?thesis by (simp add: tanp_def)
-qed
-
-lemma tanp_sq:
-  fixes u :: "real^'n::finite"
-  assumes u1: "norm u = 1"
-  shows "tanp u ** tanp u = tanp u"
-proof -
-  have uu: "u \<bullet> u = 1"
-    using u1 by (metis norm_eq_1)
-  have "tanp u ** tanp u
-      = mat 1 ** tanp u - outerp u ** tanp u"
-    unfolding tanp_def by (rule matrix_mul_diff_left)
-  also have "mat 1 ** tanp u = tanp u" by (rule matrix_mul_lid)
-  also have "outerp u ** tanp u
-      = outerp u ** mat 1 - outerp u ** outerp u"
-    unfolding tanp_def by (rule matrix_mul_diff_right)
-  also have "\<dots> = outerp u - outerp u"
-    by (simp add: outerp_sq uu)
-  finally show ?thesis by (simp add: tanp_def)
-qed
-
-lemma tanp_trace:
-  fixes u :: "real^'n::finite"
-  assumes u1: "norm u = 1"
-  shows "trace (tanp u) = real CARD('n) - 1"
-proof -
-  have uu: "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
-  have tm: "trace (mat 1 :: real^'n^'n) = real CARD('n)"
-    by (simp add: trace_def mat_def)
-  have td: "trace (tanp u :: real^'n^'n)
-      = trace (mat 1 :: real^'n^'n) - trace (outerp u)"
-    unfolding tanp_def by (simp add: trace_def sum_subtractf)
-  show ?thesis unfolding td tm trace_outerp uu by simp
-qed
-
-lemma tanp_kill:
-  fixes u :: "real^'n::finite"
-  assumes u1: "norm u = 1" and par: "w = (norm w) *\<^sub>R u"
-  shows "tanp u *v w = 0"
-proof -
-  have uu: "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
-  have "u \<bullet> w = u \<bullet> ((norm w) *\<^sub>R u)"
-    by (rule arg_cong[where f = "\<lambda>v. u \<bullet> v", OF par])
-  also have "\<dots> = norm w * (u \<bullet> u)"
-    by simp
-  also have "\<dots> = norm w" using uu by simp
-  finally have uw: "u \<bullet> w = norm w" .
-  have "tanp u *v w = w - (u \<bullet> w) *\<^sub>R u" by (rule tanp_mv)
-  also have "\<dots> = w - (norm w) *\<^sub>R u" using uw by simp
-  also have "\<dots> = 0" using par by simp
-  finally show ?thesis .
-qed
-
-subsubsection \<open>The guarded unit radial and the clamped field\<close>
-
-definition uvec :: "real^'n::finite \<Rightarrow> real \<Rightarrow> real^'n \<Rightarrow> real^'n"
-  where "uvec y\<^sub>0 \<rho> w = (1 / max \<rho> (norm (w - y\<^sub>0))) *\<^sub>R (w - y\<^sub>0)"
-
-lemma uvec_unit:
-  assumes rho0: "0 < \<rho>" and far: "\<rho> \<le> norm (w - y\<^sub>0)"
-  shows "norm (uvec y\<^sub>0 \<rho> w) = 1"
-proof -
-  have mx: "max \<rho> (norm (w - y\<^sub>0)) = norm (w - y\<^sub>0)"
-    using far by (simp add: max_def)
-  have n0: "norm (w - y\<^sub>0) \<noteq> 0" using rho0 far by linarith
-  show ?thesis unfolding uvec_def mx using n0 by simp
-qed
-
-lemma uvec_norm_le:
-  assumes rho0: "0 < \<rho>"
-  shows "norm (uvec y\<^sub>0 \<rho> w) \<le> 1"
-proof -
-  have mx0: "0 < max \<rho> (norm (w - y\<^sub>0))" using rho0 by simp
-  have le: "norm (w - y\<^sub>0) \<le> max \<rho> (norm (w - y\<^sub>0))" by simp
-  have "norm (uvec y\<^sub>0 \<rho> w)
-      = norm (w - y\<^sub>0) / max \<rho> (norm (w - y\<^sub>0))"
-    unfolding uvec_def using mx0 by simp
-  also have "\<dots> \<le> 1" using mx0 le by (simp add: divide_le_eq_1)
-  finally show ?thesis .
-qed
-
-lemma uvec_par:
-  assumes rho0: "0 < \<rho>" and far: "\<rho> \<le> norm (w - y\<^sub>0)"
-  shows "w - y\<^sub>0 = norm (w - y\<^sub>0) *\<^sub>R uvec y\<^sub>0 \<rho> w"
-proof -
-  have mx: "max \<rho> (norm (w - y\<^sub>0)) = norm (w - y\<^sub>0)"
-    using far by (simp add: max_def)
-  have n0: "norm (w - y\<^sub>0) \<noteq> 0" using rho0 far by linarith
-  show ?thesis unfolding uvec_def mx using n0 by simp
-qed
-
-lemma uvec_cont:
-  fixes y\<^sub>0 :: "real^'n::finite"
-  assumes rho0: "0 < \<rho>"
-  shows "continuous_on UNIV (uvec y\<^sub>0 \<rho>)"
-proof -
-  have nz: "\<And>w :: real^'n. max \<rho> (norm (w - y\<^sub>0)) \<noteq> 0"
-    using rho0 by simp
-  show ?thesis
-    unfolding uvec_def
-    by (intro continuous_intros) (use nz in simp_all)
-qed
 
 subsection \<open>Conditional orthogonality: the kill checked at the point\<close>
 
@@ -1220,16 +1064,157 @@ proof -
   qed
 qed
 
-subsection \<open>One limit member, two quadratics, one region\<close>
+subsection \<open>One limit member, one or two quadratics, one region\<close>
 
-text \<open>The region version of the almost-sure growth statement, carrying
-  two quadratic packages against one field and one limit member: the
-  weak-limit transfer serves every vanishing open event of a single
-  member simultaneously, so both growth directions hold together.  For
-  the tangential field with \<open>\<plusminus>(2(x-y\<^sub>0), 2\<cdot>1)\<close> this pins
-  \<open>|X\<^sub>t - y\<^sub>0|\<^sup>2\<close> to the deterministic line \<open>|x - y\<^sub>0|\<^sup>2 + (n-1) t\<close>
-  while the path stays in the region.\<close>
+text \<open>The region version of the almost-sure growth statement: a limit member
+  of the Euler laws gives every quadratic package against the field its
+  growth, almost surely, while the path stays in the region.  The weak-limit
+  transfer serves every vanishing open event of a single member
+  simultaneously, so several growth directions hold together.  For the
+  tangential field with \<open>\<plusminus>(2(x-y\<^sub>0), 2\<cdot>1)\<close> this pins \<open>|X\<^sub>t - y\<^sub>0|\<^sup>2\<close> to the
+  deterministic line \<open>|x - y\<^sub>0|\<^sup>2 + (n-1) t\<close> while the path stays in the
+  region.\<close>
 
+lemma eulerp_limit_member_good_region:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and q x :: "real^'n" and c cm Rn :: real
+    and RO :: "(real^'n) set" and P :: "('n pairpath) measure"
+  assumes c0: "0 < c" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and sym: "transpose M = M"
+    and ROo: "open RO"
+    and ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
+    and kill: "\<And>z. z \<in> RO \<Longrightarrow>
+        transpose (SF z) *v (q + M *v (z - x)) = 0"
+    and marg: "\<And>z. z \<in> RO \<Longrightarrow>
+        cm \<le> trace (M ** (SF z ** transpose (SF z)))"
+    and P: "P \<in> exit_class k L c x"
+    and Praw: "\<forall>U b'. openin (mtopology_of (path_metric c :: ('n pairpath) metric)) U \<longrightarrow>
+      (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U) \<longlonglongrightarrow> b' \<longrightarrow>
+      measure P U \<le> b'"
+  shows "AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
+      t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+proof -
+  let ?pm = "path_metric c :: ('n pairpath) metric"
+  define U1 where "U1 = (\<lambda>r \<beta> :: real. {\<omega> \<in> mspace ?pm.
+      (\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> RO)
+      \<and> q \<bullet> (fst (\<omega> r) - x)
+        + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))
+        < r * cm / 2 - \<beta>})"
+  interpret FP: prob_space P by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
+    by (rule exit_class_sets[OF P])
+  have spaceP: "space P = mspace ?pm"
+    by (rule space_of_path_sets[OF setsP])
+  have AErn1: "AE \<omega> in P. \<omega> \<notin> U1 r (inverse (real (Suc n)))"
+    if r0: "0 < r" and rc: "r \<le> c" for r and n :: nat
+  proof -
+    have inv0: "(0::real) < inverse (real (Suc n))" by simp
+    have opn: "openin (mtopology_of ?pm) (U1 r (inverse (real (Suc n))))"
+      unfolding U1_def
+      by (rule open_quad_bad_event_region[OF less_imp_le[OF r0] rc ROo])
+    have tnd: "(\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i)
+        (U1 r (inverse (real (Suc n))))) \<longlonglongrightarrow> 0"
+      unfolding U1_def
+      by (rule eulerp_bad_event_null_region[OF c0 L1 SFc SFs sym
+          ROb kill marg r0 rc inv0])
+    have le0: "measure P (U1 r (inverse (real (Suc n)))) \<le> 0"
+      using Praw opn tnd by blast
+    have m0: "measure P (U1 r (inverse (real (Suc n)))) = 0"
+      using le0 measure_nonneg[of P "U1 r (inverse (real (Suc n)))"]
+      by linarith
+    have Uset: "U1 r (inverse (real (Suc n))) \<in> sets P"
+      using borel_of_open[OF opn] by (simp add: setsP)
+    have "U1 r (inverse (real (Suc n))) \<in> null_sets P"
+    proof (rule null_setsI)
+      show "emeasure P (U1 r (inverse (real (Suc n)))) = 0"
+        using m0 by (simp add: FP.emeasure_eq_measure)
+      show "U1 r (inverse (real (Suc n))) \<in> sets P" by (rule Uset)
+    qed
+    then show ?thesis by (rule AE_not_in)
+  qed
+  define I where "I = {r. r \<in> \<rat> \<and> 0 < r \<and> r \<le> c}"
+  have cI: "countable I"
+    unfolding I_def by (rule countable_subset[OF _ countable_rat]) auto
+  have AEall1: "AE \<omega> in P. \<forall>r\<in>I. \<forall>n::nat.
+      \<omega> \<notin> U1 r (inverse (real (Suc n)))"
+    unfolding AE_ball_countable[OF cI]
+  proof
+    fix r assume "r \<in> I"
+    then have r0: "0 < r" and rc: "r \<le> c" unfolding I_def by auto
+    show "AE \<omega> in P. \<forall>n::nat. \<omega> \<notin> U1 r (inverse (real (Suc n)))"
+      unfolding AE_all_countable by (intro allI AErn1[OF r0 rc])
+  qed
+  have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+  show ?thesis
+    using AEall1 sp
+  proof (eventually_elim)
+    case (elim \<omega>)
+    have wm: "\<omega> \<in> mspace ?pm" using elim(2) by (simp add: spaceP)
+    have notin1: "\<And>r n. r \<in> I \<Longrightarrow>
+        \<omega> \<notin> U1 r (inverse (real (Suc n)))"
+      using elim(1) by blast
+    show ?case
+    proof (intro allI impI)
+      fix t assume t0: "0 < t" and tc: "t \<le> c"
+        and inb: "\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO"
+      have rat1: "r * cm / 2 \<le> q \<bullet> (fst (\<omega> r) - x)
+          + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))"
+        if rQ: "r \<in> \<rat>" and r0: "0 < r" and rc: "r \<le> c"
+          and rball: "\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> RO" for r
+      proof (rule ccontr)
+        assume nle: "\<not> r * cm / 2 \<le> q \<bullet> (fst (\<omega> r) - x)
+            + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))"
+        have pos: "0 < r * cm / 2 - (q \<bullet> (fst (\<omega> r) - x)
+            + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x))))"
+          using nle by simp
+        obtain n where nsm: "inverse (real (Suc n))
+            < r * cm / 2 - (q \<bullet> (fst (\<omega> r) - x)
+              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x))))"
+          using reals_Archimedean[OF pos] by auto
+        have drop: "q \<bullet> (fst (\<omega> r) - x)
+            + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))
+            < r * cm / 2 - inverse (real (Suc n))"
+          using nsm by linarith
+        have "\<omega> \<in> U1 r (inverse (real (Suc n)))"
+          unfolding U1_def using wm rball drop by auto
+        moreover have "r \<in> I" unfolding I_def using rQ r0 rc by simp
+        ultimately show False using notin1 by blast
+      qed
+      show "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+      proof (rule quad_good_rat_to_real_region[OF wm rat1 t0 tc])
+        fix s assume "s \<in> {0..t}"
+        then show "fst (\<omega> s) \<in> RO" using inb by blast
+      qed
+    qed
+  qed
+qed
+
+theorem eulerp_limit_good_region:
+  fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
+    and q x :: "real^'n" and c cm Rn :: real
+    and RO :: "(real^'n) set"
+  assumes c0: "0 < c" and L1: "1 \<le> L"
+    and SFc: "continuous_on UNIV SF"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and sym: "transpose M = M"
+    and ROo: "open RO"
+    and ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
+    and kill: "\<And>z. z \<in> RO \<Longrightarrow>
+        transpose (SF z) *v (q + M *v (z - x)) = 0"
+    and marg: "\<And>z. z \<in> RO \<Longrightarrow>
+        cm \<le> trace (M ** (SF z ** transpose (SF z)))"
+  shows "\<exists>P \<in> exit_class k L c x. AE \<omega> in P. \<forall>t.
+      0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
+      t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
+  using eulerp_weak_limit[OF c0 L1 SFc SFs, of x]
+    eulerp_limit_member_good_region[OF c0 L1 SFc SFs sym ROo ROb kill marg]
+  by blast
 
 theorem eulerp_limit_good2_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M1 M2 :: "real^'n^'n"
@@ -1256,768 +1241,22 @@ theorem eulerp_limit_good2_region:
       \<and> (t * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M2 *v (fst (\<omega> t) - x))))"
 proof -
-  let ?pm = "path_metric c :: ('n pairpath) metric"
-  define U1 where "U1 = (\<lambda>r \<beta> :: real. {\<omega> \<in> mspace ?pm.
-      (\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> RO)
-      \<and> q1 \<bullet> (fst (\<omega> r) - x)
-        + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M1 *v (fst (\<omega> r) - x)))
-        < r * cm1 / 2 - \<beta>})"
-  define U2 where "U2 = (\<lambda>r \<beta> :: real. {\<omega> \<in> mspace ?pm.
-      (\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> RO)
-      \<and> q2 \<bullet> (fst (\<omega> r) - x)
-        + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M2 *v (fst (\<omega> r) - x)))
-        < r * cm2 / 2 - \<beta>})"
   obtain P where P: "P \<in> exit_class k L c x"
-    and Praw: "\<forall>U b'. openin (mtopology_of ?pm) U \<longrightarrow>
+    and Praw: "\<forall>U b'. openin (mtopology_of (path_metric c :: ('n pairpath) metric)) U \<longrightarrow>
       (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U) \<longlonglongrightarrow> b' \<longrightarrow>
       measure P U \<le> b'"
     using eulerp_weak_limit[OF c0 L1 SFc SFs] by blast
-  interpret FP: prob_space P by (rule exit_class_prob[OF P])
-  have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
-    by (rule exit_class_sets[OF P])
-  have spaceP: "space P = mspace ?pm"
-    by (rule space_of_path_sets[OF setsP])
-  have AErn1: "AE \<omega> in P. \<omega> \<notin> U1 r (inverse (real (Suc n)))"
-    if r0: "0 < r" and rc: "r \<le> c" for r and n :: nat
-  proof -
-    have inv0: "(0::real) < inverse (real (Suc n))" by simp
-    have opn: "openin (mtopology_of ?pm) (U1 r (inverse (real (Suc n))))"
-      unfolding U1_def
-      by (rule open_quad_bad_event_region[OF less_imp_le[OF r0] rc ROo])
-    have tnd: "(\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i)
-        (U1 r (inverse (real (Suc n))))) \<longlonglongrightarrow> 0"
-      unfolding U1_def
-      by (rule eulerp_bad_event_null_region[OF c0 L1 SFc SFs sym1
-          ROb kill1 marg1 r0 rc inv0])
-    have le0: "measure P (U1 r (inverse (real (Suc n)))) \<le> 0"
-      using Praw opn tnd by blast
-    have m0: "measure P (U1 r (inverse (real (Suc n)))) = 0"
-      using le0 measure_nonneg[of P "U1 r (inverse (real (Suc n)))"]
-      by linarith
-    have Uset: "U1 r (inverse (real (Suc n))) \<in> sets P"
-      using borel_of_open[OF opn] by (simp add: setsP)
-    have "U1 r (inverse (real (Suc n))) \<in> null_sets P"
-    proof (rule null_setsI)
-      show "emeasure P (U1 r (inverse (real (Suc n)))) = 0"
-        using m0 by (simp add: FP.emeasure_eq_measure)
-      show "U1 r (inverse (real (Suc n))) \<in> sets P" by (rule Uset)
-    qed
-    then show ?thesis by (rule AE_not_in)
-  qed
-  have AErn2: "AE \<omega> in P. \<omega> \<notin> U2 r (inverse (real (Suc n)))"
-    if r0: "0 < r" and rc: "r \<le> c" for r and n :: nat
-  proof -
-    have inv0: "(0::real) < inverse (real (Suc n))" by simp
-    have opn: "openin (mtopology_of ?pm) (U2 r (inverse (real (Suc n))))"
-      unfolding U2_def
-      by (rule open_quad_bad_event_region[OF less_imp_le[OF r0] rc ROo])
-    have tnd: "(\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i)
-        (U2 r (inverse (real (Suc n))))) \<longlonglongrightarrow> 0"
-      unfolding U2_def
-      by (rule eulerp_bad_event_null_region[OF c0 L1 SFc SFs sym2
-          ROb kill2 marg2 r0 rc inv0])
-    have le0: "measure P (U2 r (inverse (real (Suc n)))) \<le> 0"
-      using Praw opn tnd by blast
-    have m0: "measure P (U2 r (inverse (real (Suc n)))) = 0"
-      using le0 measure_nonneg[of P "U2 r (inverse (real (Suc n)))"]
-      by linarith
-    have Uset: "U2 r (inverse (real (Suc n))) \<in> sets P"
-      using borel_of_open[OF opn] by (simp add: setsP)
-    have "U2 r (inverse (real (Suc n))) \<in> null_sets P"
-    proof (rule null_setsI)
-      show "emeasure P (U2 r (inverse (real (Suc n)))) = 0"
-        using m0 by (simp add: FP.emeasure_eq_measure)
-      show "U2 r (inverse (real (Suc n))) \<in> sets P" by (rule Uset)
-    qed
-    then show ?thesis by (rule AE_not_in)
-  qed
-  define I where "I = {r. r \<in> \<rat> \<and> 0 < r \<and> r \<le> c}"
-  have cI: "countable I"
-    unfolding I_def by (rule countable_subset[OF _ countable_rat]) auto
-  have AEall1: "AE \<omega> in P. \<forall>r\<in>I. \<forall>n::nat.
-      \<omega> \<notin> U1 r (inverse (real (Suc n)))"
-    unfolding AE_ball_countable[OF cI]
-  proof
-    fix r assume "r \<in> I"
-    then have r0: "0 < r" and rc: "r \<le> c" unfolding I_def by auto
-    show "AE \<omega> in P. \<forall>n::nat. \<omega> \<notin> U1 r (inverse (real (Suc n)))"
-      unfolding AE_all_countable by (intro allI AErn1[OF r0 rc])
-  qed
-  have AEall2: "AE \<omega> in P. \<forall>r\<in>I. \<forall>n::nat.
-      \<omega> \<notin> U2 r (inverse (real (Suc n)))"
-    unfolding AE_ball_countable[OF cI]
-  proof
-    fix r assume "r \<in> I"
-    then have r0: "0 < r" and rc: "r \<le> c" unfolding I_def by auto
-    show "AE \<omega> in P. \<forall>n::nat. \<omega> \<notin> U2 r (inverse (real (Suc n)))"
-      unfolding AE_all_countable by (intro allI AErn2[OF r0 rc])
-  qed
-  have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
+  have A1: "AE \<omega> in P. \<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
+      t * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M1 *v (fst (\<omega> t) - x)))"
+    by (rule eulerp_limit_member_good_region[OF c0 L1 SFc SFs sym1 ROo ROb kill1 marg1 P Praw])
+  have A2: "AE \<omega> in P. \<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
+      t * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> t) - x)
+        + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M2 *v (fst (\<omega> t) - x)))"
+    by (rule eulerp_limit_member_good_region[OF c0 L1 SFc SFs sym2 ROo ROb kill2 marg2 P Praw])
   show ?thesis
-  proof (intro bexI[OF _ P])
-    show "AE \<omega> in P. \<forall>t.
-        0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
-        (t * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> t) - x)
-          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M1 *v (fst (\<omega> t) - x))))
-        \<and> (t * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> t) - x)
-          + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M2 *v (fst (\<omega> t) - x))))"
-      using AEall1 AEall2 sp
-    proof (eventually_elim)
-      case (elim \<omega>)
-      have wm: "\<omega> \<in> mspace ?pm" using elim(3) by (simp add: spaceP)
-      have notin1: "\<And>r n. r \<in> I \<Longrightarrow>
-          \<omega> \<notin> U1 r (inverse (real (Suc n)))"
-        using elim(1) by blast
-      have notin2: "\<And>r n. r \<in> I \<Longrightarrow>
-          \<omega> \<notin> U2 r (inverse (real (Suc n)))"
-        using elim(2) by blast
-      show ?case
-      proof (intro allI impI conjI)
-        fix t assume t0: "0 < t" and tc: "t \<le> c"
-          and inb: "\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO"
-        have rat1: "r * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> r) - x)
-            + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M1 *v (fst (\<omega> r) - x)))"
-          if rQ: "r \<in> \<rat>" and r0: "0 < r" and rc: "r \<le> c"
-            and rball: "\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> RO" for r
-        proof (rule ccontr)
-          assume nle: "\<not> r * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> r) - x)
-              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M1 *v (fst (\<omega> r) - x)))"
-          have pos: "0 < r * cm1 / 2 - (q1 \<bullet> (fst (\<omega> r) - x)
-              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M1 *v (fst (\<omega> r) - x))))"
-            using nle by simp
-          obtain n where nsm: "inverse (real (Suc n))
-              < r * cm1 / 2 - (q1 \<bullet> (fst (\<omega> r) - x)
-                + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M1 *v (fst (\<omega> r) - x))))"
-            using reals_Archimedean[OF pos] by auto
-          have drop: "q1 \<bullet> (fst (\<omega> r) - x)
-              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M1 *v (fst (\<omega> r) - x)))
-              < r * cm1 / 2 - inverse (real (Suc n))"
-            using nsm by linarith
-          have "\<omega> \<in> U1 r (inverse (real (Suc n)))"
-            unfolding U1_def using wm rball drop by auto
-          moreover have "r \<in> I" unfolding I_def using rQ r0 rc by simp
-          ultimately show False using notin1 by blast
-        qed
-        have rat2: "r * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> r) - x)
-            + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M2 *v (fst (\<omega> r) - x)))"
-          if rQ: "r \<in> \<rat>" and r0: "0 < r" and rc: "r \<le> c"
-            and rball: "\<forall>s\<in>{0..r}. fst (\<omega> s) \<in> RO" for r
-        proof (rule ccontr)
-          assume nle: "\<not> r * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> r) - x)
-              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M2 *v (fst (\<omega> r) - x)))"
-          have pos: "0 < r * cm2 / 2 - (q2 \<bullet> (fst (\<omega> r) - x)
-              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M2 *v (fst (\<omega> r) - x))))"
-            using nle by simp
-          obtain n where nsm: "inverse (real (Suc n))
-              < r * cm2 / 2 - (q2 \<bullet> (fst (\<omega> r) - x)
-                + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M2 *v (fst (\<omega> r) - x))))"
-            using reals_Archimedean[OF pos] by auto
-          have drop: "q2 \<bullet> (fst (\<omega> r) - x)
-              + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M2 *v (fst (\<omega> r) - x)))
-              < r * cm2 / 2 - inverse (real (Suc n))"
-            using nsm by linarith
-          have "\<omega> \<in> U2 r (inverse (real (Suc n)))"
-            unfolding U2_def using wm rball drop by auto
-          moreover have "r \<in> I" unfolding I_def using rQ r0 rc by simp
-          ultimately show False using notin2 by blast
-        qed
-        show "t * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> t) - x)
-            + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M1 *v (fst (\<omega> t) - x)))"
-        proof (rule quad_good_rat_to_real_region[OF wm rat1 t0 tc])
-          fix s assume "s \<in> {0..t}"
-          then show "fst (\<omega> s) \<in> RO" using inb by blast
-        qed
-        show "t * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> t) - x)
-            + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M2 *v (fst (\<omega> t) - x)))"
-        proof (rule quad_good_rat_to_real_region[OF wm rat2 t0 tc])
-          fix s assume "s \<in> {0..t}"
-          then show "fst (\<omega> s) \<in> RO" using inb by blast
-        qed
-      qed
-    qed
-  qed
+    by (intro bexI[OF _ P] eventually_mono[OF AE_conjI[OF A1 A2]]) blast
 qed
-
-subsection \<open>The tangential member: exact radial growth\<close>
-
-text \<open>The unclamped tangential field is admissible everywhere: even
-  where the guarded radial is short, its square keeps a full
-  \<open>(n-1)\<close>-dimensional unit eigenspace, and on the region where the guard
-  is inactive it kills the radial exactly.  Feeding the two-quadratic
-  limit theorem with \<open>\<plusminus>(2(x-y\<^sub>0), 2\<cdot>1)\<close> pins the squared distance to
-  \<open>y\<^sub>0\<close> to the deterministic line \<open>|x-y\<^sub>0|\<^sup>2 + (CARD('n)-1) t\<close> while the
-  path stays in the region, so exit times of concentric balls are
-  deterministic, as used in Example 3.1's lower bound.\<close>
-
-lemma tanp_sq_sconstraint:
-  fixes u :: "real^'n::finite"
-  assumes u1: "norm u \<le> 1" and k1: "1 \<le> k" and L1: "1 \<le> L"
-  shows "tanp u ** transpose (tanp u) \<in> sconstraint k L"
-proof -
-  have tr: "transpose (tanp u) = tanp u" by (rule tanp_sym)
-  define A where "A = tanp u ** tanp u"
-  have symA: "transpose A = A"
-    unfolding A_def by (simp add: matrix_transpose_mul tanp_sym)
-  have qf: "v \<bullet> (A *v v) = (tanp u *v v) \<bullet> (tanp u *v v)" for v
-  proof -
-    have assoc: "A *v v = tanp u *v (tanp u *v v)"
-      unfolding A_def by (metis matrix_vector_mul_assoc)
-    have "v \<bullet> (tanp u *v (tanp u *v v))
-        = (transpose (tanp u) *v v) \<bullet> (tanp u *v v)"
-      by (rule inner_transpose_matrix)
-    then show ?thesis unfolding assoc tr .
-  qed
-  have contract: "(tanp u *v v) \<bullet> (tanp u *v v) \<le> v \<bullet> v" for v
-  proof -
-    have e: "(tanp u *v v) \<bullet> (tanp u *v v)
-        = v \<bullet> v - (2 - u \<bullet> u) * (u \<bullet> v)\<^sup>2"
-      unfolding tanp_mv
-      by (simp add: inner_commute
-          power2_eq_square
-          algebra_simps)
-    have uu1: "u \<bullet> u \<le> 1"
-    proof -
-      have "u \<bullet> u = (norm u)\<^sup>2" by (simp add: dot_square_norm)
-      also have "\<dots> \<le> 1"
-        using u1 norm_ge_zero[of u] by (simp add: power_le_one)
-      finally show ?thesis .
-    qed
-    have "0 \<le> (2 - u \<bullet> u) * (u \<bullet> v)\<^sup>2"
-      using uu1 by (intro mult_nonneg_nonneg) simp_all
-    then show ?thesis unfolding e by linarith
-  qed
-  have psdA: "psd A"
-    unfolding psd_def
-  proof (intro conjI allI)
-    show "transpose A = A" by (rule symA)
-    show "0 \<le> v \<bullet> (A *v v)" for v
-      unfolding qf by (rule inner_ge_zero)
-  qed
-  have ubA: "eigen_ub A L"
-    unfolding eigen_ub_def
-  proof
-    fix v :: "real^'n"
-    have "v \<bullet> (A *v v) \<le> v \<bullet> v" unfolding qf by (rule contract)
-    also have "\<dots> = 1 * (v \<bullet> v)" by simp
-    also have "\<dots> \<le> L * (v \<bullet> v)"
-      by (rule mult_right_mono[OF L1 inner_ge_zero])
-    finally show "v \<bullet> (A *v v) \<le> L * (v \<bullet> v)" .
-  qed
-  have lbA: "eigen_lb A (CARD('n) - k)"
-    unfolding eigen_lb_def
-  proof (intro exI[of _ "{v :: real^'n. u \<bullet> v = 0}"] conjI ballI)
-    show "subspace {v :: real^'n. u \<bullet> v = 0}"
-      by (rule subspace_hyperplane)
-    show "CARD('n) - k \<le> dim {v :: real^'n. u \<bullet> v = 0}"
-    proof (cases "u = 0")
-      case True
-      then have "{v :: real^'n. u \<bullet> v = 0} = UNIV" by simp
-      then show ?thesis by simp
-    next
-      case False
-      then have "dim {v :: real^'n. u \<bullet> v = 0} = CARD('n) - 1"
-        by (simp add: dim_hyperplane)
-      then show ?thesis using k1 by simp
-    qed
-  next
-    fix v :: "real^'n" assume "v \<in> {v. u \<bullet> v = 0}"
-    then have uv: "u \<bullet> v = 0" by simp
-    have "tanp u *v v = v" unfolding tanp_mv uv by simp
-    then show "v \<bullet> v \<le> v \<bullet> (A *v v)" unfolding qf by simp
-  qed
-  have "A \<in> feasible k L 0"
-    unfolding feasible_def
-    using psdA ubA lbA by simp
-  then have "A \<in> sconstraint k L"
-    using feasible_subset_sconstraint by blast
-  then show ?thesis unfolding A_def tr .
-qed
-
-lemma tanRF_cont:
-  fixes y\<^sub>0 :: "real^'n::finite"
-  assumes rho0: "0 < \<rho>"
-  shows "continuous_on UNIV (\<lambda>z. tanp (uvec y\<^sub>0 \<rho> z))"
-proof -
-  have uc: "continuous_on UNIV (uvec y\<^sub>0 \<rho>)"
-    by (rule uvec_cont[OF rho0])
-  have ci: "continuous_on UNIV (\<lambda>z. uvec y\<^sub>0 \<rho> z $ i)" for i
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_vec_nth] uc]) auto
-  have eq: "(\<lambda>z. tanp (uvec y\<^sub>0 \<rho> z)) = (\<lambda>z. \<chi> i j.
-      (if i = j then 1 else 0)
-      - uvec y\<^sub>0 \<rho> z $ i * uvec y\<^sub>0 \<rho> z $ j)"
-    by (rule ext) (simp add: tanp_def outerp_def mat_def vec_eq_iff)
-  show ?thesis unfolding eq
-    by (intro continuous_on_vec_lambda continuous_intros ci)
-qed
-
-theorem tangential_exact_growth:
-  fixes y\<^sub>0 x :: "real^'n::finite" and \<rho> rB T :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
-    and kn: "k < CARD('n)"
-    and rho0: "0 < \<rho>"
-  shows "\<exists>P \<in> exit_class k L T x. AE \<omega> in P. \<forall>t.
-      0 < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB) \<longrightarrow>
-      (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
-        = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
-proof -
-  define RO where "RO = {w :: real^'n. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
-  define SF where "SF = (\<lambda>z. tanp (uvec y\<^sub>0 \<rho> z))"
-  define Rn where "Rn = rB + norm (y\<^sub>0 - x)"
-  have SFc: "continuous_on UNIV SF"
-    unfolding SF_def by (rule tanRF_cont[OF rho0])
-  have SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-    unfolding SF_def
-    by (rule tanp_sq_sconstraint[OF uvec_norm_le[OF rho0] k1 L1])
-  have ROo: "open RO"
-  proof -
-    have "open {w :: real^'n. \<rho> < norm (w - y\<^sub>0)}"
-      by (intro open_Collect_less continuous_intros
-          continuous_on_const)
-    then show ?thesis unfolding RO_def
-      by (intro open_Int open_ball)
-  qed
-  have ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
-  proof -
-    fix z assume "z \<in> RO"
-    then have "norm (z - y\<^sub>0) < rB"
-      unfolding RO_def by (simp add: dist_norm norm_minus_commute)
-    moreover have "norm (z - x) \<le> norm (z - y\<^sub>0) + norm (y\<^sub>0 - x)"
-    proof -
-      have "z - x = (z - y\<^sub>0) + (y\<^sub>0 - x)" by simp
-      then show ?thesis
-        by (metis norm_triangle_ineq)
-    qed
-    ultimately show "norm (z - x) \<le> Rn" unfolding Rn_def by linarith
-  qed
-  have unitRO: "norm (uvec y\<^sub>0 \<rho> z) = 1" if z: "z \<in> RO" for z
-  proof -
-    have "\<rho> \<le> norm (z - y\<^sub>0)" using z unfolding RO_def by auto
-    then show ?thesis by (rule uvec_unit[OF rho0])
-  qed
-  have killRO: "transpose (SF z) *v (c' *\<^sub>R (x - y\<^sub>0)
-      + (c' *\<^sub>R mat 1) *v (z - x)) = 0"
-    if z: "z \<in> RO" for z c'
-  proof -
-    have far: "\<rho> \<le> norm (z - y\<^sub>0)" using z unfolding RO_def by auto
-    have arg: "c' *\<^sub>R (x - y\<^sub>0) + (c' *\<^sub>R mat 1) *v (z - x)
-        = c' *\<^sub>R (z - y\<^sub>0)"
-      by (simp add: scaleR_matrix_vector
-          scaleR_right_diff_distrib scaleR_add_right)
-    have k0: "tanp (uvec y\<^sub>0 \<rho> z) *v (z - y\<^sub>0) = 0"
-      by (rule tanp_kill[OF unitRO[OF z] uvec_par[OF rho0 far]])
-    have "transpose (SF z) *v (c' *\<^sub>R (z - y\<^sub>0))
-        = c' *\<^sub>R (SF z *v (z - y\<^sub>0))"
-      unfolding SF_def tanp_sym
-      by (simp add: matrix_vector_mult_scaleR)
-    also have "\<dots> = 0" unfolding SF_def using k0 by simp
-    finally show ?thesis unfolding arg .
-  qed
-  have sqRO: "SF z ** transpose (SF z) = tanp (uvec y\<^sub>0 \<rho> z)"
-    if z: "z \<in> RO" for z
-    unfolding SF_def
-    by (simp add: tanp_sym tanp_sq[OF unitRO[OF z]])
-  have trRO: "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
-      = c' * (real CARD('n) - 1)"
-    if z: "z \<in> RO" for z c'
-  proof -
-    have "(c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z))
-        = c' *\<^sub>R (SF z ** transpose (SF z))"
-      by (simp add: scaleR_matrix_mult)
-    then have "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
-        = c' * trace (SF z ** transpose (SF z))"
-      by (simp add: trace_scaleR)
-    also have "trace (SF z ** transpose (SF z))
-        = real CARD('n) - 1"
-      unfolding sqRO[OF z] by (rule tanp_trace[OF unitRO[OF z]])
-    finally show ?thesis .
-  qed
-  have sym1: "transpose ((2::real) *\<^sub>R mat 1 :: real^'n^'n)
-      = (2::real) *\<^sub>R mat 1"
-    by (simp add: transpose_scalar)
-  have sym2: "transpose ((-2::real) *\<^sub>R mat 1 :: real^'n^'n)
-      = (-2::real) *\<^sub>R mat 1"
-    by (simp add: transpose_def vec_eq_iff mat_def)
-  obtain P where P: "P \<in> exit_class k L T x"
-    and AE2: "AE \<omega> in P. \<forall>t.
-      0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
-      (t * (2 * (real CARD('n) - 1)) / 2
-        \<le> (2 *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
-          + (1/2) * ((fst (\<omega> t) - x)
-              \<bullet> (((2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))
-      \<and> (t * (- 2 * (real CARD('n) - 1)) / 2
-        \<le> ((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
-          + (1/2) * ((fst (\<omega> t) - x)
-              \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))"
-  proof -
-    have kill1: "\<And>z. z \<in> RO \<Longrightarrow> transpose (SF z)
-        *v (2 *\<^sub>R (x - y\<^sub>0) + ((2::real) *\<^sub>R mat 1) *v (z - x)) = 0"
-      using killRO by blast
-    have kill2: "\<And>z. z \<in> RO \<Longrightarrow> transpose (SF z)
-        *v ((-2) *\<^sub>R (x - y\<^sub>0) + ((-2::real) *\<^sub>R mat 1) *v (z - x)) = 0"
-      using killRO by blast
-    have marg1: "\<And>z. z \<in> RO \<Longrightarrow> 2 * (real CARD('n) - 1)
-        \<le> trace (((2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
-      using trRO by simp
-    have marg2: "\<And>z. z \<in> RO \<Longrightarrow> - 2 * (real CARD('n) - 1)
-        \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
-    proof -
-      fix z assume zRO: "z \<in> RO"
-      show "- 2 * (real CARD('n) - 1)
-          \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
-        using trRO[OF zRO, of "-2"] by simp
-    qed
-    show ?thesis
-      using eulerp_limit_good2_region[OF T0 L1 SFc SFs sym1 sym2
-          ROo ROb kill1 marg1 kill2 marg2] that by blast
-  qed
-  show ?thesis
-  proof (intro bexI[OF _ P])
-    show "AE \<omega> in P. \<forall>t.
-        0 < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB)
-        \<longrightarrow> (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
-          = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
-      using AE2
-    proof (eventually_elim)
-      case (elim \<omega>)
-      show ?case
-      proof (intro allI impI)
-        fix t assume t0: "0 < t" and tT: "t \<le> T"
-          and inb: "\<forall>s\<in>{0..t}. fst (\<omega> s)
-            \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
-        have inb': "\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO"
-          using inb unfolding RO_def by blast
-        have g1: "t * (2 * (real CARD('n) - 1)) / 2
-            \<le> (2 *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
-              + (1/2) * ((fst (\<omega> t) - x)
-                  \<bullet> (((2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x)))"
-          and g2: "t * (- 2 * (real CARD('n) - 1)) / 2
-            \<le> ((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
-              + (1/2) * ((fst (\<omega> t) - x)
-                  \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x)))"
-          using elim t0 tT inb' by blast+
-        define d where "d = fst (\<omega> t) - x"
-        have e1: "(2 *\<^sub>R (x - y\<^sub>0)) \<bullet> d = 2 * ((x - y\<^sub>0) \<bullet> d)"
-          by simp
-        have e2: "((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> d = - 2 * ((x - y\<^sub>0) \<bullet> d)"
-          by simp
-        have e3: "d \<bullet> (((2::real) *\<^sub>R mat 1) *v d) = 2 * (d \<bullet> d)"
-          by (simp add: scaleR_matrix_vector)
-
-        have negmv: "\<And>A :: real^'n^'n. (- A) *v d = - (A *v d)"
-          by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
-        have e4: "d \<bullet> (((-2::real) *\<^sub>R mat 1) *v d) = - 2 * (d \<bullet> d)"
-          by (simp add: negmv scaleR_matrix_vector)
-
-        have id1: "t * (2 * (real CARD('n) - 1)) / 2
-            = t * (real CARD('n) - 1)" by simp
-        have id2: "t * (- 2 * (real CARD('n) - 1)) / 2
-            = - (t * (real CARD('n) - 1))" by (simp add: field_simps)
-        have both: "2 * ((x - y\<^sub>0) \<bullet> d) + d \<bullet> d
-            = t * (real CARD('n) - 1)"
-          using g1[unfolded id1] g2[unfolded id2]
-          unfolding d_def[symmetric] e1 e2 e3 e4
-          by linarith
-        have split: "(norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
-            = (norm (x - y\<^sub>0))\<^sup>2 + (2 * ((x - y\<^sub>0) \<bullet> d) + d \<bullet> d)"
-        proof -
-          have dd: "fst (\<omega> t) - y\<^sub>0 = (x - y\<^sub>0) + d"
-            unfolding d_def by simp
-          have "(norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
-              = (fst (\<omega> t) - y\<^sub>0) \<bullet> (fst (\<omega> t) - y\<^sub>0)"
-            by (simp add: dot_square_norm)
-          also have "\<dots> = (x - y\<^sub>0) \<bullet> (x - y\<^sub>0)
-              + 2 * ((x - y\<^sub>0) \<bullet> d) + d \<bullet> d"
-            unfolding dd
-            by (simp add: inner_add_left inner_add_right
-                inner_commute)
-          also have "(x - y\<^sub>0) \<bullet> (x - y\<^sub>0) = (norm (x - y\<^sub>0))\<^sup>2"
-            by (simp add: dot_square_norm)
-          finally show ?thesis by simp
-        qed
-        show "(norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
-            = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
-          unfolding split both by (rule refl)
-      qed
-    qed
-  qed
-qed
-
-subsection \<open>Deterministic confinement and the ball lower bound\<close>
-
-text \<open>Paths of the tangential member cannot leave the annulus before the
-  deterministic time \<open>(rB\<^sup>2 - |x-y\<^sub>0|\<^sup>2)/(n-1)\<close>: the inner boundary is
-  unreachable because the squared distance only grows, and reaching the
-  outer sphere pins the time exactly.  Feeding the constant-time DPP
-  @{thm [source] exit_val_dpp_sup_ge} turns confinement into the lower
-  bound \<open>v(x) \<ge> min(T/2, \<delta>/2)\<close> whenever the ball sits inside \<open>K\<close>, a
-  (non-sharp) form of Example 3.1's lower bound.\<close>
-
-
-theorem exit_val_ball_lower_plus:
-  fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
-    and rB T \<beta> :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
-    and kn: "k < CARD('n)"
-    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
-    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
-    and b0: "0 \<le> \<beta>"
-    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow>
-      \<beta> \<le> enn2real (exit_val k L T K w)"
-  shows "ennreal (min (T / 2)
-      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
-      + min \<beta> (T / 2))
-      \<le> exit_val k L T K x"
-proof -
-  define \<rho>\<^sub>0 where "\<rho>\<^sub>0 = norm (x - y\<^sub>0)"
-  define \<rho> where "\<rho> = \<rho>\<^sub>0 / 2"
-  define cn where "cn = real CARD('n) - 1"
-  define \<delta>f where "\<delta>f = (rB\<^sup>2 - \<rho>\<^sub>0\<^sup>2) / cn"
-  define cc where "cc = min (T / 2) (\<delta>f / 2)"
-  let ?RO = "{w :: real^'n. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
-  have r00: "0 < \<rho>\<^sub>0" unfolding \<rho>\<^sub>0_def using xy by simp
-  have rho0: "0 < \<rho>" unfolding \<rho>_def using r00 by simp
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  have cn1: "1 \<le> cn"
-  proof -
-    have "(2::real) \<le> real CARD('n)"
-      using n2 by (simp add: of_nat_le_iff [where m = 2, symmetric])
-    then show ?thesis unfolding cn_def by linarith
-  qed
-  have cn0: "0 < cn" using cn1 by linarith
-  have rr: "\<rho>\<^sub>0 < rB" using xin unfolding \<rho>\<^sub>0_def .
-  have rB0: "0 < rB" using r00 rr by linarith
-  have sq_lt: "\<rho>\<^sub>0\<^sup>2 < rB\<^sup>2"
-    using r00 rr by (intro power_strict_mono) simp_all
-  have df0: "0 < \<delta>f" unfolding \<delta>f_def using sq_lt cn0 by simp
-  have cc0: "0 < cc" unfolding cc_def using T0 df0 by simp
-  have ccT: "cc < T" unfolding cc_def using T0 by simp
-  have ccT2: "cc \<le> T / 2" unfolding cc_def by simp
-  have ccdf: "cc < \<delta>f" unfolding cc_def using df0 by simp
-  obtain P where P: "P \<in> exit_class k L T x"
-    and AEg: "AE \<omega> in P. \<forall>t.
-      0 < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ?RO) \<longrightarrow>
-      (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2
-        = (norm (x - y\<^sub>0))\<^sup>2 + t * (real CARD('n) - 1)"
-    using tangential_exact_growth[OF T0 L1 k1 kn rho0,
-        where y\<^sub>0 = y\<^sub>0 and rB = rB and x = x]
-    by blast
-  have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF P])
-  have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsP])
-  have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule exit_class_start[OF P])
-  have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
-  have AEfun: "AE \<omega> in P. ennreal (cc + min \<beta> (T / 2))
-      \<le> ennreal (pexit cc K (\<lambda>t. fst (\<omega> t))
-        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))"
-    using AEg start sp
-  proof (eventually_elim)
-    case (elim \<omega>)
-    have wm: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using elim(3) by (simp add: spaceP)
-    have x0: "fst (\<omega> 0) = x" using elim(2) by blast
-    have cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
-      by (rule path_sets_fst_continuous[OF setsP])
-        (use elim(3) in simp)
-    have grow: "\<And>t. 0 < t \<Longrightarrow> t \<le> T \<Longrightarrow>
-        (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ?RO) \<Longrightarrow>
-        (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * cn"
-      unfolding cn_def using elim(1) by blast
-    have xRO: "x \<in> ?RO"
-      using rho0 rr r00 unfolding \<rho>_def \<rho>\<^sub>0_def
-      by (auto simp: dist_norm norm_minus_commute)
-    have ROopen: "open ?RO"
-    proof -
-      have "open {w :: real^'n. \<rho> < norm (w - y\<^sub>0)}"
-        by (intro open_Collect_less continuous_intros
-            continuous_on_const)
-      then show ?thesis by (intro open_Int open_ball)
-    qed
-    have cc0': "0 \<le> cc" using cc0 by linarith
-    have contc: "continuous_on {0..cc} (\<lambda>t. fst (\<omega> t))"
-      by (rule continuous_on_subset[OF cont]) (use ccT in auto)
-    \<comment> \<open>the path stays in the annulus strictly before \<open>cc\<close>\<close>
-    have IN: "fst (\<omega> s) \<in> ?RO" if s0: "0 \<le> s" and sc: "s < cc" for s
-    proof -
-      define e where "e = pexit cc ?RO (\<lambda>t. fst (\<omega> t))"
-      have eup: "e \<le> cc" unfolding e_def by (rule pexit_le_T[OF cc0'])
-      have before: "fst (\<omega> u) \<in> ?RO"
-        if u0: "0 \<le> u" and ue: "u < e" for u
-      proof (rule ccontr)
-        assume nb: "fst (\<omega> u) \<notin> ?RO"
-        have uc: "u \<le> cc" using ue eup by linarith
-        have "pexit cc ?RO (\<lambda>t. fst (\<omega> t)) \<le> u"
-          by (rule pexit_le_of_mem[OF cc0' u0 uc]) (use nb in simp)
-        then show False using ue unfolding e_def by linarith
-      qed
-      have ecc: "e = cc"
-      proof (rule ccontr)
-        assume "e \<noteq> cc"
-        then have elt: "e < cc" using eup by linarith
-        have Xe: "fst (\<omega> e) \<notin> ?RO"
-          using pexit_mem_of_less_T[OF cc0' ROopen contc]
-          using elt unfolding e_def by simp
-        have e0': "0 < e"
-        proof (rule ccontr)
-          assume "\<not> 0 < e"
-          moreover have "0 \<le> e"
-            unfolding e_def by (rule pexit_nonneg[OF cc0'])
-          ultimately have "e = 0" by linarith
-          then show False using Xe x0 xRO by simp
-        qed
-        have esq: "(norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2
-            = (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
-        proof (rule radial_sq_upto[OF wm grow e0'])
-          show "e \<le> T" using elt ccT by linarith
-          show "\<And>s. 0 \<le> s \<Longrightarrow> s < e \<Longrightarrow> fst (\<omega> s) \<in> ?RO"
-            by (rule before)
-        qed
-        have dichot: "norm (fst (\<omega> e) - y\<^sub>0) \<le> \<rho>
-            \<or> rB \<le> norm (fst (\<omega> e) - y\<^sub>0)"
-          using Xe
-          by (auto simp: dist_norm norm_minus_commute)
-        show False
-        proof (cases rule: disjE[OF dichot])
-          case 1
-          have "(norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2 \<le> \<rho>\<^sup>2"
-            using 1 rho0 by (intro power_mono) simp_all
-          moreover have "\<rho>\<^sup>2 < \<rho>\<^sub>0\<^sup>2"
-            unfolding \<rho>_def using r00 by (simp add: power_divide)
-          moreover have "\<rho>\<^sub>0\<^sup>2 \<le> (norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2"
-            unfolding esq \<rho>\<^sub>0_def using e0' cn0
-            by simp
-          ultimately show False by linarith
-        next
-          case 2
-          have "rB\<^sup>2 \<le> (norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2"
-            using 2 rB0 by (intro power_mono) simp_all
-          then have "rB\<^sup>2 - \<rho>\<^sub>0\<^sup>2 \<le> e * cn"
-            unfolding esq \<rho>\<^sub>0_def by linarith
-          then have "\<delta>f \<le> e"
-            unfolding \<delta>f_def using cn0 by (simp add: pos_divide_le_eq)
-          then show False using elt ccdf by linarith
-        qed
-      qed
-      show ?thesis using before[OF s0] sc unfolding ecc by simp
-    qed
-    \<comment> \<open>hence in \<open>K\<close> through \<open>cc\<close>, including the endpoint\<close>
-    have inB: "fst (\<omega> s) \<in> ball y\<^sub>0 rB"
-      if s0: "0 \<le> s" and sc: "s \<le> cc" for s
-    proof (cases "s < cc")
-      case True
-      show ?thesis using IN[OF s0 True] by blast
-    next
-      case False
-      then have seq: "s = cc" using sc by linarith
-      have csq: "(norm (fst (\<omega> cc) - y\<^sub>0))\<^sup>2
-          = (norm (x - y\<^sub>0))\<^sup>2 + cc * cn"
-      proof (rule radial_sq_upto[OF wm grow cc0])
-        show "cc \<le> T" using ccT by linarith
-        show "\<And>s. 0 \<le> s \<Longrightarrow> s < cc \<Longrightarrow> fst (\<omega> s)
-            \<in> {w. \<rho> < norm (w - y\<^sub>0)} \<inter> ball y\<^sub>0 rB"
-          by (rule IN)
-      qed
-      have "(norm (fst (\<omega> cc) - y\<^sub>0))\<^sup>2 < rB\<^sup>2"
-      proof -
-        have "cc * cn < \<delta>f * cn"
-          using ccdf cn0 by (intro mult_strict_right_mono)
-        also have "\<delta>f * cn = rB\<^sup>2 - \<rho>\<^sub>0\<^sup>2"
-          unfolding \<delta>f_def using cn0 by simp
-        finally show ?thesis
-          unfolding csq \<rho>\<^sub>0_def[symmetric] by linarith
-      qed
-      then have "norm (fst (\<omega> cc) - y\<^sub>0) < rB"
-        using rB0 by (metis power2_le_imp_le
-            linorder_not_less nless_le)
-      then have "fst (\<omega> cc) \<in> ball y\<^sub>0 rB"
-        by (simp add: dist_norm norm_minus_commute)
-      then show ?thesis unfolding seq .
-    qed
-    have inK: "fst (\<omega> s) \<in> K" if s0: "0 \<le> s" and sc: "s \<le> cc" for s
-      using inB[OF s0 sc] sub ball_subset_cball by blast
-    have pex: "pexit cc K (\<lambda>t. fst (\<omega> t)) = cc"
-      by (rule pexit_eq_of_stays[OF cc0']) (use inK in simp)
-    have XccK: "fst (\<omega> cc) \<in> K" using inK[of cc] cc0 by simp
-    have fn: "pexit cc K (\<lambda>t. fst (\<omega> t))
-        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0)
-        = cc + enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))"
-      using pex XccK by simp
-    have XccB: "fst (\<omega> cc) \<in> ball y\<^sub>0 rB"
-      using inB[of cc] cc0 by simp
-    have s1: "0 \<le> T - cc" using ccT by linarith
-    have s2: "T - cc \<le> T" using cc0 by linarith
-    have cap: "enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))
-        = min (enn2real (exit_val k L T K (fst (\<omega> cc)))) (T - cc)"
-      by (rule enn2real_paper_v_horizon_cap[OF s1 s2 L1 Kc])
-    have vge: "min \<beta> (T / 2)
-        \<le> enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))"
-    proof -
-      have b1: "\<beta> \<le> enn2real (exit_val k L T K (fst (\<omega> cc)))"
-        by (rule vlow[OF XccB])
-      have b2: "T / 2 \<le> T - cc" using ccT2 by linarith
-      have c1: "min \<beta> (T / 2) \<le> \<beta>" by (rule min.cobounded1)
-      have c2: "min \<beta> (T / 2) \<le> T / 2" by (rule min.cobounded2)
-      have d1: "min \<beta> (T / 2)
-          \<le> enn2real (exit_val k L T K (fst (\<omega> cc)))"
-        using c1 b1 by linarith
-      have d2: "min \<beta> (T / 2) \<le> T - cc" using c2 b2 by linarith
-      show ?thesis unfolding cap using d1 d2 by simp
-    qed
-    have "cc + min \<beta> (T / 2)
-        \<le> cc + enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))"
-      using vge by linarith
-    then show ?case unfolding fn by (intro ennreal_leI) simp
-  qed
-  have essge: "ennreal (cc + min \<beta> (T / 2)) \<le> ess_inf_time P
-      (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
-        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))"
-    unfolding ess_inf_time_def
-    by (rule Sup_upper) (use AEfun in blast)
-  have esle: "ess_inf_time P
-      (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
-        + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))
-      \<le> exit_val k L T K x"
-  proof -
-    have "ess_inf_time P
-        (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
-          + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-             then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0))
-        \<le> (SUP P' \<in> exit_class k L T x. ess_inf_time P'
-          (\<lambda>\<omega>. pexit cc K (\<lambda>t. fst (\<omega> t))
-            + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-               then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))
-               else 0)))"
-      by (rule SUP_upper[OF P])
-    also have "\<dots> \<le> exit_val k L T K x"
-      by (rule exit_val_dpp_sup_ge[OF less_imp_le[OF cc0] ccT L1 Kc])
-    finally show ?thesis .
-  qed
-  have "ennreal (cc + min \<beta> (T / 2)) \<le> exit_val k L T K x"
-    by (rule order_trans[OF essge esle])
-  moreover have "cc = min (T / 2)
-      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))"
-  proof -
-    have e: "\<delta>f / 2
-        = (rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))"
-      unfolding \<delta>f_def \<rho>\<^sub>0_def cn_def
-      using cn0 unfolding cn_def by (simp add: mult_ac)
-    show ?thesis unfolding cc_def e by (rule refl)
-  qed
-  ultimately show ?thesis by simp
-qed
-
-text \<open>The original ball bound is the case \<open>\<beta> = 0\<close>: the value at the
-  exit point is simply dropped.\<close>
-
 
 (*<*)
 end
